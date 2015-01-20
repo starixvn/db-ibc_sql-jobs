@@ -54,7 +54,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Archive 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/SQL "\Thien - Archive sum_winloss_old to DBSPARE.bodb_Archive13.dbo.Sum_Winloss_2013_MANUALLY" /SERVER DBSPARE /USER thien /PASSWORD "Sj(al#e4r" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/SQL "\Thien - Archive sum_winloss_old to DBSPARE.bodb_Archive13.dbo.Sum_Winloss_2013_MANUALLY" /SERVER DBSPARE /USER thien /PASSWORD "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback

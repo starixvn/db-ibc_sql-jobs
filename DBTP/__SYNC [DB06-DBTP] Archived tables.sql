@@ -67,7 +67,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'statemen
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - statement.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - statement.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -82,7 +82,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'transfer
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - transfer_bk.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - transfer_bk.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -97,7 +97,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'betParla
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - betParlayResult.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - betParlayResult.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -112,7 +112,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'bettrans
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - bettransG.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - bettransG.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -127,7 +127,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'bettrans
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - bettransM.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - bettransM.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -142,7 +142,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Dot_Admi
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - Dot_Admin_Assignment_Operator_bk.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - Dot_Admin_Assignment_Operator_bk.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -157,7 +157,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Dot_Admi
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - Dot_Admin_LiveLog.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - Dot_Admin_LiveLog.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -172,7 +172,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'odds_bk'
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - odds_bk.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - odds_bk.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -187,7 +187,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'match_bk
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - match_bk.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - match_bk.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -202,7 +202,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'bingobal
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - bingoBall_bk.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - bingoBall_bk.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -217,7 +217,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'SS_GameS
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - SS_GameState_bk.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - SS_GameState_bk.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -232,7 +232,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'outright
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - outright_bk.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - outright_bk.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -247,7 +247,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'bettrans
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - bettrans_bk.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - bettrans_bk.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -262,7 +262,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'VS Outri
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - vsOutright_bk.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - vsOutright_bk.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -277,7 +277,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'update_d
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - update_done.dtsx" /DECRYPT "ss1s@w3e" /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/FILE "H:\IBC_DB\_SSIS_library\DB06 to DBTP\Viet - DB06 to DBTP - update_done.dtsx" /DECRYPT "PASSWORD" /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
