@@ -51,7 +51,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Step 2 :
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/SQL "\DBTrans-bodb02-Task_BackupUserLog" /SERVER DBSPARE /USER sa /PASSWORD "(!@#$sa%^&*)" /DECRYPT r4g95x /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/SQL "\DBTrans-bodb02-Task_BackupUserLog" /SERVER DBSPARE /USER sa /PASSWORD "PASSWORD" /DECRYPT DECRYPT /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback

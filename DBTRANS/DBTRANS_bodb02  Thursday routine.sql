@@ -57,7 +57,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Archive_
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/SQL "\DBTrans-Task_Archive_SelectSum_Winloss to DB054" /SERVER DBSpare /USER sa /PASSWORD "(!@#$sa%^&*)" /DECRYPT r4g95x /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/SQL "\DBTrans-Task_Archive_SelectSum_Winloss to DB054" /SERVER DBSpare /USER sa /PASSWORD "PASSWORD" /DECRYPT DECRYPT /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -72,7 +72,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Archive_
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/SQL "\DBTrans-Task_Archive_SelectSum_Winloss to DB053" /SERVER DBSPARE /USER sa /PASSWORD "(!@#$sa%^&*)" /DECRYPT r4g95x /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/SQL "\DBTrans-Task_Archive_SelectSum_Winloss to DB053" /SERVER DBSPARE /USER sa /PASSWORD "PASSWORD" /DECRYPT DECRYPT /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -87,7 +87,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Archive_
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/SQL "\DBTrans-Task_Archive_SelectBetStatement to DB06" /SERVER DBSPARE /USER sa /PASSWORD "(!@#$sa%^&*)" /DECRYPT r4g95x /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/SQL "\DBTrans-Task_Archive_SelectBetStatement to DB06" /SERVER DBSPARE /USER sa /PASSWORD "PASSWORD" /DECRYPT DECRYPT /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -102,7 +102,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Archive_
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/SQL "\DBTrans-Task_Archive_SelectStatement to DB06" /SERVER DBSPARE /USER sa /PASSWORD "(!@#$sa%^&*)" /DECRYPT r4g95x /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/SQL "\DBTrans-Task_Archive_SelectStatement to DB06" /SERVER DBSPARE /USER sa /PASSWORD "PASSWORD" /DECRYPT DECRYPT /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -117,7 +117,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Archvie_
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/SQL "\DBTrans-Task_Archive_SelectTransfer to DB06" /SERVER DBSPARE /USER sa /PASSWORD "(!@#$sa%^&*)" /DECRYPT r4g95x /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/SQL "\DBTrans-Task_Archive_SelectTransfer to DB06" /SERVER DBSPARE /USER sa /PASSWORD "PASSWORD" /DECRYPT DECRYPT /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -147,7 +147,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Archive_
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/SQL "\DBTrans-Task_Archive_SelectBettransG to DB06" /SERVER DBSPARE /USER sa /PASSWORD "(!@#$sa%^&*)" /DECRYPT r4g95x /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/SQL "\DBTrans-Task_Archive_SelectBettransG to DB06" /SERVER DBSPARE /USER sa /PASSWORD "PASSWORD" /DECRYPT DECRYPT /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -162,7 +162,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Archive_
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/SQL "\DBTrans-Task_Archive_SelectBettransm to DB06" /SERVER DBSpare /USER sa /PASSWORD "(!@#$sa%^&*)" /DECRYPT r4g95x /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/SQL "\DBTrans-Task_Archive_SelectBettransm to DB06" /SERVER DBSpare /USER sa /PASSWORD "PASSWORD" /DECRYPT DECRYPT /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -177,7 +177,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Archive_
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'SSIS', 
-		@command=N'/SQL "\DBTrans-Task_Archive_SelectBettrans to DB06" /SERVER DBSpare /USER sa /PASSWORD "(!@#$sa%^&*)" /DECRYPT r4g95x /CHECKPOINTING OFF /REPORTING E', 
+		@command=N'/SQL "\DBTrans-Task_Archive_SelectBettrans to DB06" /SERVER DBSpare /USER sa /PASSWORD "PASSWORD" /DECRYPT DECRYPT /CHECKPOINTING OFF /REPORTING E', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
