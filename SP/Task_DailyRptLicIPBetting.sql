@@ -1,13 +1,12 @@
 USE [bodb02]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_DailyRptLicIPBetting]    Script Date: 01/19/2015 05:31:41 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DailyRptLicIPBetting]    Script Date: 01/27/2015 02:03:05 ******/
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER ON
 GO
-
 
 /****** Object:  Stored Procedure dbo.Task_DailyRptLicIPBetting    Script Date: 10/22/2012 2:48:58 PM ******/
 CREATE PROCEDURE [dbo].[Task_DailyRptLicIPBetting]
@@ -83,7 +82,6 @@ SELECT @winlostdate,l.LicenseeID, bc.CountryShort, bettrans.currency,bettrans.cu
 			WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115
 			ELSE bettrans.statusID END 
 		
-
 
 
 GO

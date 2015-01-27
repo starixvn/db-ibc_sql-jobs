@@ -1,7 +1,7 @@
 USE [bodb_RMS]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_RMS_SumWinloss_Archive]    Script Date: 01/19/2015 05:36:13 ******/
+/****** Object:  StoredProcedure [dbo].[Task_RMS_SumWinloss_Archive]    Script Date: 01/27/2015 04:28:17 ******/
 SET ANSI_NULLS ON
 GO
 

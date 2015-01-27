@@ -1,7 +1,7 @@
 USE [bodb02]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Lrf_SelBalanceUpDay]    Script Date: 01/20/2015 01:48:18 ******/
+/****** Object:  StoredProcedure [dbo].[Lrf_SelBalanceUpDay]    Script Date: 01/27/2015 05:05:28 ******/
 SET ANSI_NULLS ON
 GO
 

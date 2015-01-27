@@ -1,7 +1,7 @@
 USE [bodb_Report]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_DepWinlostSUM]    Script Date: 01/22/2015 00:06:56 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DepWinlostSUM]    Script Date: 01/27/2015 01:56:45 ******/
 SET ANSI_NULLS ON
 GO
 
