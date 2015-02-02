@@ -1,7 +1,7 @@
 USE [bodb02]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_DOT_AGCasino_DailySummary]    Script Date: 01/27/2015 03:09:44 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DOT_AGCasino_DailySummary]    Script Date: 02/01/2015 23:09:53 ******/
 SET ANSI_NULLS ON
 GO
 

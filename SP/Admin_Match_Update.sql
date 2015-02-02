@@ -1,0 +1,244 @@
+USE [bodb02]
+GO
+
+/****** Object:  StoredProcedure [dbo].[Admin_Match_Update]    Script Date: 01/28/2015 00:30:49 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+/****** Object:  Stored Procedure dbo.Admin_Match_Update    Script Date: 5/16/2014 2:50:51 AM ******/
+/****** Object:  Stored Procedure dbo.Admin_Match_Update    Script Date: 13/05/2014 4:06:53 PM ******/
+/****** Object:  Stored Procedure dbo.Admin_Match_Update    Script Date: 12/19/2013 5:51:04 PM ******/
+
+CREATE PROCEDURE [dbo].[Admin_Match_Update]
+(
+	@Command VARCHAR(100),
+	@MatchID INT,
+	@FTHome SMALLINT = NULL,
+	@FTAway SMALLINT = NULL,
+	@HTHome SMALLINT = NULL,
+	@HTAway SMALLINT = NULL,
+	@BetStatus NVARCHAR(50) = NULL,
+	@GoalRecord VARCHAR(50) = NULL,
+	@Action VARCHAR(10) = NULL,
+	@FTDone BIT = 0,
+	@HTDone BIT = 0,
+	@RowCount INT = 0 OUTPUT,
+	@Creator INT = 0
+) 
+AS
+/*
+	Created: 20110602@Lukas
+	Task : Update information into match table (when run settlement)
+	DB: DB02.bodb02
+	Original:
+
+	Revisions:
+		@20110109@Victor: Add Live Casino
+		- 20120117@Viet: fix the case of @goalrecord = ''
+		- 20120428@Viet: remove the condition eventstatus='completed' for UNDO settlement case
+		- 20120830@Victor: Add Live Roulette
+		- 20120912@Sophia: revise code: ISNULL(betstatus,'') for 'Admin_Settlement_RefundFT'
+		- 20120930@Victor: Add Sporting Solution
+		- 20130315@Lukas: correct betstatus & goalrecord
+		- 20130320@Dan: Add virtual racing
+		- 20130320@Johnson: Correct betstatus in case 'Refund All' have first goal status
+		- 20130415@Lukas: temporarily rollback 
+							- Admin_Settlement_Refund_All
+							- Admin_Settlement_Refund_FGLG
+		- 20130507@Lukas: remove rollback part in 20130415@Lukas
+		- 20140423@Kathy: Modify betstatus value (Offer 1H FGLG) [Redmine:#14718]
+*/
+BEGIN
+	SET @BetStatus = ISNULL(@BetStatus, N'')
+	
+	IF @Command = 'Admin_Settlement_1-UNDO'
+	BEGIN
+		UPDATE dbo.match WITH(ROWLOCK,UPDLOCK)
+		SET eventstatus = 'running', finalhomescore = NULL, finalawayscore = NULL, hthomescore = NULL, htawayscore = NULL, betstatus = N'', GoalRecord = ''
+			, changetime = GETDATE(), settleTime = GETDATE()
+		WHERE matchid = @MatchID-- and eventstatus = 'completed'
+	END
+	IF @Command = 'Admin_Settlement_1-CAL'
+	BEGIN
+		UPDATE dbo.match with (ROWLOCK,UPDLOCK)
+		SET
+			finalhomescore = @FTHome, finalawayscore = @FTAway,
+			hthomescore = @HTHome, htawayscore = @HTAway,
+			betstatus = CASE WHEN @action = 'CAL-FT' AND CHARINDEX('Refund HT;',betstatus)>0 THEN 'Refund HT;' + ISNULL(@betstatus,'') ELSE @betstatus END,
+			goalrecord = CASE WHEN @goalrecord IS NULL OR @goalrecord = '' THEN goalrecord ELSE @goalrecord END,
+			eventstatus = CASE	WHEN @action = 'CAL' THEN N'completed'
+								WHEN @action = 'CAL-HT' AND @FTDone = 1 THEN N'completed'
+								WHEN @action = 'CAL-FT' AND @HTDone = 1 THEN N'completed'
+							ELSE eventstatus END,
+			changetime = GETDATE(),
+			settleTime = CASE 
+							WHEN @action = 'CAL' THEN GETDATE()
+							WHEN @action = 'CAL-FT' THEN GETDATE()
+							ELSE settleTime END	
+		WHERE matchid = @MatchID
+	END
+	IF @Command = 'Admin_Settlement_Refund_All'
+	BEGIN
+		UPDATE match WITH(ROWLOCK,UPDLOCK) 
+		SET eventstatus='Completed', ruben=1, finalhomescore=0, finalawayscore=0, hthomescore=0, htawayscore=0
+			--,betstatus= 'Refund' + CASE WHEN CHARINDEX('FL:',ISNULL(betstatus,'')) = 0 THEN '' ELSE ';' + betstatus END	
+			,betstatus = 'Refund' + CASE when CHARINDEX('FL:',ISNULL(betstatus,'')) = 0  THEN ''
+										 when CHARINDEX('1FL:',ISNULL(betstatus,'')) = 0 AND CHARINDEX('FL:',ISNULL(betstatus,'')) <> 0 THEN ';' + SUBSTRING(betstatus,CHARINDEX('FL:', betstatus),LEN(betstatus))
+										 ELSE ';' + SUBSTRING(betstatus,CHARINDEX('1FL', betstatus),LEN(betstatus))
+									END 
+			,GoalRecord =''
+			,changetime = GETDATE(), settleTime = GETDATE()
+		WHERE matchid=@MatchID
+	END
+	IF @Command = 'Admin_Settlement_RefundFT'
+	BEGIN
+		UPDATE dbo.match WITH(ROWLOCK,UPDLOCK) 
+		SET finalhomescore=0, finalawayscore=0, 
+			betstatus = CASE WHEN CHARINDEX('Refund;', betstatus) > 0 THEN betstatus ELSE 'Refund FT;' + replace(ISNULL(betstatus,''), 'Refund FT;', '') END ,
+			eventstatus = 'Completed', changetime = GETDATE(), settleTime = GETDATE()
+		WHERE matchid=@MatchID AND @HTDone = 1
+
+		--- get rowcount
+		SET @RowCount = @@ROWCOUNT
+	END
+	IF @Command = 'Admin_Settlement_RefundHT'
+	BEGIN
+		UPDATE dbo.match WITH(ROWLOCK,UPDLOCK) 
+		SET hthomescore=0, htawayscore=0, 
+			betstatus = CASE WHEN CHARINDEX('Refund;', betstatus) > 0 THEN betstatus ELSE 'Refund HT;' + replace(ISNULL(betstatus,''), 'Refund HT;', '') END,
+			changetime = GETDATE()
+		WHERE matchid=@MatchID
+
+		--- get rowcount
+		SET @RowCount = @@ROWCOUNT
+	END
+	IF @Command = 'Admin_Settlement_FGLG'
+	BEGIN
+		UPDATE match WITH(ROWLOCK,UPDLOCK)
+		SET	betstatus = @BetStatus, goalrecord = @GoalRecord, changetime = GETDATE()
+		WHERE matchid = @MatchID
+	END
+	IF @Command = 'Admin_Settlement_Refund_FGLG'
+	BEGIN
+		UPDATE match WITH(ROWLOCK,UPDLOCK) SET betstatus = @BetStatus, changetime = GETDATE() WHERE matchid=@MatchID
+	END
+	IF @Command = 'Admin_Settlement_Parlay'
+	BEGIN
+		UPDATE match WITH(ROWLOCK,UPDLOCK) SET multiple=multiple, changetime = GETDATE() WHERE matchid=@MatchID
+	END
+	IF @Command = 'Admin_Settlement_s161-Refund'
+	BEGIN
+		UPDATE dbo.match WITH(ROWLOCK,UPDLOCK)
+		SET betstatus = 'Refund',
+			eventstatus = 'Completed', changetime = CURRENT_TIMESTAMP, settleTime = CURRENT_TIMESTAMP
+		WHERE matchid=@MatchID
+	END
+	IF @Command = 'Admin_Settlement_s161-Refund_FT'
+	BEGIN
+		UPDATE dbo.match WITH(ROWLOCK,UPDLOCK)
+		SET eventstatus = 'Completed',
+			betstatus = 'Refund FT',
+			changetime = CURRENT_TIMESTAMP
+
+		WHERE matchid=@MatchID
+	END
+	IF @Command = 'Admin_Settlement_s161-CAL'
+	BEGIN
+		UPDATE dbo.match WITH(ROWLOCK,UPDLOCK)
+		SET		
+			betstatus = '',
+			eventstatus = 'Completed',
+			changetime = CURRENT_TIMESTAMP,
+			settleTime = CURRENT_TIMESTAMP
+		WHERE matchid = @MatchID
+	END
+	IF @Command = 'Admin_Settlement_s162-Refund'
+	BEGIN
+		UPDATE dbo.match WITH(ROWLOCK,UPDLOCK)
+		SET betstatus = 'Refund',
+			eventstatus = 'Completed', changetime = CURRENT_TIMESTAMP, settleTime = CURRENT_TIMESTAMP
+		WHERE matchid=@MatchID
+	END
+	IF @Command = 'Admin_Settlement_s162-CAL'
+	BEGIN
+		UPDATE dbo.match WITH(ROWLOCK,UPDLOCK)
+		SET		
+			eventstatus = 'Completed',
+			changetime = CURRENT_TIMESTAMP,
+			settleTime = CURRENT_TIMESTAMP
+		WHERE matchid = @MatchID
+	END
+	IF @Command = 'Admin_Settlement_s162-1102-CAL'
+	BEGIN
+		select @BetStatus = Resource_en from RefResource with (rowlock) 
+		where refid ='RouNumProperty' and 
+		resourceid in (select Finalhomescore from  match with (rowlock) where matchid = @MatchID)
+		
+		UPDATE dbo.match WITH(ROWLOCK,UPDLOCK)
+		SET		
+			betstatus = @BetStatus,
+			eventstatus = 'Completed',
+			changetime = CURRENT_TIMESTAMP,
+			settleTime = CURRENT_TIMESTAMP
+		WHERE matchid = @MatchID
+	END
+	IF @Command = 'Admin_Settlement_SS-CAL'
+	BEGIN
+		UPDATE dbo.match WITH(ROWLOCK,UPDLOCK)
+		SET		
+			eventstatus = 'Completed',
+			changetime = CURRENT_TIMESTAMP,
+			settleTime = CURRENT_TIMESTAMP
+		WHERE matchid = @MatchID
+	END
+	IF @Command = 'Admin_Settlement_VS_181-CAL'
+	BEGIN
+		UPDATE dbo.VSRaceInfo WITH(ROWLOCK,UPDLOCK)
+		SET					
+			calculate = 1,
+			eventstatus = 'Completed',
+			betstatus = NULL ,
+			changetime = CURRENT_TIMESTAMP
+		WHERE EventID = @MatchID
+
+		UPDATE [dbo].[VSOutright] WITH(ROWLOCK,UPDLOCK)
+		SET					
+			eventstatus = 'Completed',			
+			changetime = CURRENT_TIMESTAMP
+		WHERE EventID = @MatchID
+	END
+	IF @Command = 'Admin_Settlement_VS_181-Refund'
+	BEGIN
+		UPDATE dbo.VSRaceInfo WITH(ROWLOCK,UPDLOCK)
+		SET	
+			betstatus = 'Refund',			
+			eventstatus = 'Completed',
+			calculate = 1,
+			changetime = CURRENT_TIMESTAMP
+		WHERE EventID = @MatchID
+
+		UPDATE [dbo].[VSOutright] WITH(ROWLOCK,UPDLOCK)
+		SET					
+			eventstatus = 'Completed',
+			changetime = CURRENT_TIMESTAMP
+		WHERE EventID = @MatchID
+	END	
+END
+GO
+
+GRANT EXECUTE ON [dbo].[Admin_Match_Update] TO [bodbAdminNet] AS [dbo]
+GO
+
+GRANT EXECUTE ON [dbo].[Admin_Match_Update] TO [bodbAdminNet2] AS [dbo]
+GO
+
+GRANT EXECUTE ON [dbo].[Admin_Match_Update] TO [Dot_Member] AS [dbo]
+GO
+
+GRANT VIEW DEFINITION ON [dbo].[Admin_Match_Update] TO [vnteam] AS [dbo]
+GO
+
+
