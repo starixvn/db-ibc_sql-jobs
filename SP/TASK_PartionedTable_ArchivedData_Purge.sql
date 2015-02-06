@@ -1,15 +1,12 @@
 USE [bodb_Archive]
 GO
-
-/****** Object:  StoredProcedure [dbo].[TASK_PartionedTable_ArchivedData_Purge]    Script Date: 01/22/2015 00:16:38 ******/
+/****** Object:  StoredProcedure [dbo].[TASK_PartionedTable_ArchivedData_Purge]    Script Date: 02/06/2015 05:48:32 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
 
-
-CREATE PROCEDURE [dbo].[TASK_PartionedTable_ArchivedData_Purge]
+ALTER PROCEDURE [dbo].[TASK_PartionedTable_ArchivedData_Purge]
 
 
 AS
@@ -31,6 +28,12 @@ BEGIN
 	declare @purgedDate smalldatetime, @purgedMonth int, @purgedYear int
 	declare @sqlexec varchar (4000) = ''
 	declare @tmpTable table (purgedTable varchar(255), stagingTable varchar(255), isfinished bit)
+	
+	--get the first day of the month that is 19-month-ago from the current time 
+	select @purgedDate = DATEADD(MONTH, DATEDIFF(MONTH, 0, DATEADD(MONTH,-18,GETDATE())), 0)
+	
+	select @purgedMonth = MONTH (@purgedDate)
+	select @purgedYear = YEAR (@purgedDate)
 	
 	--Step 1: Create staging tables
 	--bettrans_bk, bettransG, bettransm, transfer_bk
@@ -123,8 +126,4 @@ END
 
 
 GO
-
 GRANT VIEW DEFINITION ON [dbo].[TASK_PartionedTable_ArchivedData_Purge] TO [vnteam] AS [dbo]
-GO
-
-
