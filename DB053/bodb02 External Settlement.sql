@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02: External Settlement]    Script Date: 01/08/2015 22:53:33 ******/
+/****** Object:  Job [bodb02: External Settlement]    Script Date: 02/11/2015 02:46:55 ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 01/08/2015 22:53:33 ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 02/11/2015 02:46:55 ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -15,7 +15,7 @@ END
 
 DECLARE @jobId BINARY(16)
 EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02: External Settlement', 
-		@enabled=1, 
+		@enabled=0, 
 		@notify_level_eventlog=0, 
 		@notify_level_email=2, 
 		@notify_level_netsend=0, 
@@ -26,7 +26,7 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02: External Settlement'
 		@owner_login_name=N'sa', 
 		@notify_email_operator_name=N'VNTeam', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [go go go]    Script Date: 01/08/2015 22:53:33 ******/
+/****** Object:  Step [go go go]    Script Date: 02/11/2015 02:46:55 ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'go go go', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
