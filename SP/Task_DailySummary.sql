@@ -8,9 +8,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-
-/****** Object:  Stored Procedure dbo.Task_DailySummary    Script Date: 3/13/2014 10:38:31 AM ******/
-CREATE PROCEDURE [dbo].[Task_DailySummary]
+ALTER PROCEDURE [dbo].[Task_DailySummary]
 	@winlostdate datetime,
 	@TestMode tinyint = 0
 AS
@@ -45,6 +43,7 @@ Revisions:
 					   Use DBPRO instead of DB02, DBACC instead of DB06
 	- 20140305@Vivi: add move translog to translog14
 	- 20140313@Elodie: Add Keno product in sum_winloss table
+	- 20150511@Sophia: Add Gold Deluxe in sum_winloss table
  */
 
 SET NOCOUNT ON
@@ -448,6 +447,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
 		0 -- netTurnover
@@ -473,6 +473,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -512,6 +513,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*apositiontaking)/2 else ABS(stake*apositiontaking) end) --netTurnover
@@ -539,6 +541,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -579,6 +582,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*mpositiontaking)/2 else ABS(stake*mpositiontaking) end) --netTurnover
@@ -606,6 +610,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -646,6 +651,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*spositiontaking)/2 else ABS(stake*spositiontaking) end) --netTurnover
@@ -673,6 +679,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -726,8 +733,6 @@ SET @Doing = 'Task_DailySummary : End (with Finish)'
 EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
 
 PRINT CONVERT(varchar(10), @winlostdate, 120)
-
-
 
 
 
