@@ -1,14 +1,4 @@
-USE [bodb02]
-GO
-
-/****** Object:  StoredProcedure [dbo].[Task_BalanceNegative]    Script Date: 01/26/2015 04:12:59 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE PROCEDURE [dbo].[Task_BalanceNegative]
+ALTER PROCEDURE [dbo].[Task_BalanceNegative]
 AS
 /*
 	Created by: Viet
@@ -18,51 +8,42 @@ AS
 	ORIGINAL SP: Task_BalanceNegativeHistoryIns_Cust, Task_BalanceNegativeDel_CustCredit
 	
 	Revision: 		
+		- 20150316@Elodie: Support Negative Balance function for all licensee [Red:#30840]
+		- 20150624@Elodie: Add Bodog Licensee (Licenseeid = 14)
 */
 BEGIN
-	SET NOCOUNT ON;
+	SET NOCOUNT ON
 
-	DECLARE	@Site VARCHAR(50)
-	SET	@Site='haifa'
-
+	CREATE TABLE #tmpRecommend (custid INT PRIMARY KEY, site VARCHAR(50))
 	CREATE TABLE #tmpBalanceLic (custid INT PRIMARY KEY, balance MONEY)
 	DECLARE @tmpMatch TABLE (MatchID INT PRIMARY KEY)
 
-	SELECT custid
-	INTO #tmpRecommend
-	FROM DBLIC.bodb_licensee.dbo.LicenseeCust
-	WHERE licenseeid IN (
-			SELECT licenseeid
-			FROM DBLIC.bodb_licensee.dbo.Licensees WITH (NOLOCK)
-			WHERE licenseename = @Site
-			)
+	INSERT INTO #tmpRecommend (custid, site)
+	SELECT c.custid, c.site
+	FROM DBLIC.bodb_licensee.dbo.LicenseeCust lc
+		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = lc.custid
+	WHERE licenseeid IN (1, 2, 3, 9, 12, 14) -- '12Bet', 'asiabet88', 'mansion88', 'Mayfair', 'Haifa'
 					
 	INSERT INTO @tmpMatch (MatchID)
 	SELECT DISTINCT MatchID
-	FROM dbo.BalanceNegative WITH (NOLOCK)
+	FROM dbo.BalanceNegative bn WITH (NOLOCK)
+		INNER JOIN CustDB.dbo.custInfo c WITH (NOLOCK) ON bn.CustID = c.custid
 	WHERE StatusID = 0 
-		AND CustID IN (
-			SELECT CustID
-			FROM CustDB.dbo.custInfo WITH (NOLOCK)
-			WHERE Recommend IN (SELECT custid FROM #tmpRecommend) 
-				AND roleid = 1
-			)
+		AND c.roleid = 1
+		AND c.recommend IN (SELECT custid FROM #tmpRecommend)						
+							
+						
 
 	IF @@ROWCOUNT > 0 -- found some matches
 	BEGIN
 		-- turn to use bettrans in realtime
 		INSERT INTO #tmpBalanceLic (CustID, Balance)
-		SELECT custid, SUM(winlost - actual_stake + playercomm)
-		FROM bettrans WITH (NOLOCK)
-		WHERE custid IN (
-				SELECT custid
-				FROM CustDB.dbo.custinfo WITH (NOLOCK)
-				WHERE Recommend IN (SELECT custid FROM #tmpRecommend)
-					AND roleid = 1 
-				)
-		GROUP BY custid
+		SELECT b.custid, SUM(winlost - actual_stake + playercomm)
+		FROM bettrans b WITH (NOLOCK)
+			INNER JOIN CustDB.dbo.custInfo c WITH (NOLOCK) ON b.CustID = c.custid
+		WHERE c.roleid = 1 AND c.recommend IN (SELECT custid FROM #tmpRecommend)								
+		GROUP BY b.custid
 		HAVING SUM(winlost - actual_stake + playercomm) < 0 -- negative balance
-
 
 		IF @@ROWCOUNT <> 0 
 		BEGIN
@@ -89,12 +70,14 @@ BEGIN
 					, bn.Balance
 					, t.balance
 					, 0
-					, @Site
+					, ag.site
 					, bn.Remark 
 			FROM	#tmpBalanceLic t WITH (NOLOCK)
 					INNER JOIN dbo.BalanceNegative bn WITH (NOLOCK) ON t.custID = bn.CustID 
+					INNER JOIN CustDB.dbo.CustInfo c WITH (NOLOCK) ON bn.CustID = c.custid
+					INNER JOIN #tmpRecommend ag ON c.recommend = ag.custid
 			WHERE	bn.MatchID IN (SELECT MatchID FROM @tmpMatch ) 
-					AND bn.StatusID = 0 			
+					AND bn.StatusID = 0 AND c.roleid = 1														
 		END
 
 		UPDATE dbo.BalanceNegative WITH(UPDLOCK,ROWLOCK)
@@ -105,7 +88,7 @@ BEGIN
 		DROP TABLE #tmpBalanceLic
 	END
 
-	-- Remove Credit Customer (Not Haifa) out BalanceNegative
+	-- Remove Credit Customer out BalanceNegative
 	SELECT distinct CustID
 	INTO #TempCustomer
 	FROM dbo.BalanceNegative WITH (NOLOCK)
@@ -113,12 +96,11 @@ BEGIN
 	IF @@ROWCOUNT > 0
 	BEGIN
 		DELETE #TempCustomer
-		WHERE CustID IN (
-			SELECT custid
-			FROM CustDB.dbo.custinfo WITH (NOLOCK)
-			WHERE Recommend IN (SELECT custid FROM #tmpRecommend)
-				AND roleid = 1
-			)
+		WHERE CustID IN (	SELECT custid
+							FROM CustDB.dbo.custinfo WITH (NOLOCK)
+							WHERE Recommend IN (SELECT custid FROM #tmpRecommend)
+								AND roleid = 1
+							)		
 			
 		DELETE dbo.BalanceNegative
 		FROM #TempCustomer c
@@ -128,6 +110,3 @@ BEGIN
 	DROP TABLE #TempCustomer
 	DROP TABLE #tmpRecommend
 END
-GO
-
-
