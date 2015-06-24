@@ -22,7 +22,7 @@ BEGIN
 	SELECT c.custid, c.site
 	FROM DBLIC.bodb_licensee.dbo.LicenseeCust lc
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = lc.custid
-	WHERE licenseeid IN (1, 2, 3, 9, 12, 14) -- '12Bet', 'asiabet88', 'mansion88', 'Mayfair', 'Haifa'
+	WHERE licenseeid IN (1, 2, 3, 9, 12, 14) -- '12Bet', 'asiabet88', 'mansion88', 'Mayfair', 'Haifa', 'Bodog'
 					
 	INSERT INTO @tmpMatch (MatchID)
 	SELECT DISTINCT MatchID
