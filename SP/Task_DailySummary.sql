@@ -44,6 +44,7 @@ Revisions:
 	- 20140305@Vivi: add move translog to translog14
 	- 20140313@Elodie: Add Keno product in sum_winloss table
 	- 20150511@Sophia: Add Gold Deluxe in sum_winloss table
+	- 20150619@Sophia: Add 1 more bettype for Gold Deluxe, AG Casino and Vegas Game [#37683]
  */
 
 SET NOCOUNT ON
@@ -447,7 +448,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN Bettype = 1800 THEN 250 --- AG Casino 
+			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
 		0 -- netTurnover
@@ -473,7 +476,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN Bettype = 1800 THEN 250 --- AG Casino 
+			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -513,7 +518,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN Bettype = 1800 THEN 250 --- AG Casino 
+			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*apositiontaking)/2 else ABS(stake*apositiontaking) end) --netTurnover
@@ -541,7 +548,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN Bettype = 1800 THEN 250 --- AG Casino 
+			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -582,7 +591,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN Bettype = 1800 THEN 250 --- AG Casino 
+			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*mpositiontaking)/2 else ABS(stake*mpositiontaking) end) --netTurnover
@@ -610,7 +621,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN Bettype = 1800 THEN 250 --- AG Casino 
+			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -651,7 +664,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN Bettype = 1800 THEN 250 --- AG Casino 
+			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*spositiontaking)/2 else ABS(stake*spositiontaking) end) --netTurnover
@@ -679,7 +694,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1701 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
+			WHEN Bettype = 1800 THEN 250 --- AG Casino 
+			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
