@@ -8,7 +8,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[ExecRep_APL_01]
+ALTER PROCEDURE [dbo].[ExecRep_APL_01]
 	@Winlostdate Datetime
 AS
 /*
@@ -22,6 +22,7 @@ AS
 		- 20140911@Lukas: add table MatchMaxbet 
 		- 20141006@Lukas: remove table SS_GameState
 		- 20141024@Lukas: add table ResultDetail
+		- 20150727@Sophia: add table ResultDetail3rd
 */ 
 BEGIN
 
@@ -77,6 +78,13 @@ BEGIN
 	BEGIN
 		delete from ResultDetail WITH(ROWLOCK)
 		where matchid in (select matchid from match WITH(NOLOCK) where eventdate=@winlostdate)
+	END
+
+	-- delete ResultDetail
+	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'ResultDetail3rd' AND type = 'U')
+	BEGIN
+		DELETE FROM ResultDetail3rd WITH(ROWLOCK)
+		WHERE matchid in (SELECT matchid FROM match WITH(NOLOCK) WHERE eventdate = @winlostdate)
 	END
 
 	-- delete match	
