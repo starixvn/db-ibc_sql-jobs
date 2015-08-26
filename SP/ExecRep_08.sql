@@ -1,14 +1,11 @@
 USE [bodb02]
 GO
-
-/****** Object:  StoredProcedure [dbo].[ExecRep_08]    Script Date: 02/01/2015 22:52:38 ******/
+/****** Object:  StoredProcedure [dbo].[ExecRep_08]    Script Date: 07/19/2015 22:20:12 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-CREATE PROCEDURE [dbo].[ExecRep_08]
+ALTER PROCEDURE [dbo].[ExecRep_08]
 	@recommend int,
 	@winlostdate smalldatetime,
 	@parlay bit = 0
@@ -54,13 +51,13 @@ BEGIN
 		translogid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking,
         playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake,
         currency, CurrencyName, recommend, mrecommend, srecommend,ip, statusID, balance, Username, transdesc,
-        productID, gameID, eventID, vendorID
+        productID, gameID, eventID, vendorID, GameId3rd, TranId3rd
 		)
 	select 
 		translogid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking,
         playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake,
         currency, CurrencyName, recommend, mrecommend, srecommend,ip, statusID, balance, Username, transdesc,
-        productID, gameID, eventID, vendorID
+        productID, gameID, eventID, vendorID, GameId3rd, TranId3rd
 	from translog with (nolock)
 	where recommend = @recommend AND winlostdate=@winlostdate
 		
@@ -136,13 +133,13 @@ BEGIN
 			mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount, discount, 
 			adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, 
 			statuswinlost, ruben, bettype, spositiontaking, swinlost, sdiscount, scomm, statusID, 
-			virtualrate, SiteID)
+			virtualrate, SiteID, transdesc, BetID3rd)
 		select transid, custid, transdate, oddsid, odds, stake, status, winlost, 
 			betteam, creator, refno, winlostdate, betfrom, checktime, apositiontaking, 
 			mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount, discount, 
 			adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, 
 			statuswinlost, ruben, bettype, spositiontaking, swinlost, sdiscount, scomm, statusID, 
-			virtualrate, SiteID
+			virtualrate, SiteID, transdesc, BetID3rd
 		from bettransG with (nolock)
 		where  
 			winlostdate=@winlostdate
@@ -151,8 +148,5 @@ BEGIN
 	
 END
 GO
-
 GRANT VIEW DEFINITION ON [dbo].[ExecRep_08] TO [vnteam] AS [dbo]
 GO
-
-

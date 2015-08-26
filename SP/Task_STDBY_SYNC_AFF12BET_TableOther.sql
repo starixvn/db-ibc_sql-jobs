@@ -1,14 +1,11 @@
 USE [Affiliate_12BET]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_STDBY_SYNC_AFF12BET_TableOther]    Script Date: 01/20/2015 22:52:08 ******/
+/****** Object:  StoredProcedure [dbo].[Task_STDBY_SYNC_AFF12BET_TableOther]    Script Date: 08/24/2015 04:51:13 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-CREATE PROCEDURE [dbo].[Task_STDBY_SYNC_AFF12BET_TableOther]
+ALTER PROCEDURE [dbo].[Task_STDBY_SYNC_AFF12BET_TableOther]
 
 AS
 /*
@@ -18,6 +15,7 @@ AS
 	Original:
 	Revisions:
 		- 20141204@Dan: Add more tables (CommGroupHistory, GroupSettingHistory, DeductionSettingHistory, AffGroupHistory)
+		- 20150824@Francis: Add more tables (MemberRemoval)
 	Param's Explanation:
 */
 BEGIN
@@ -629,6 +627,16 @@ BEGIN
 	SELECT	[RefName]
 			,[RefNo]
 	FROM	DBAFF12BET.[Affiliate_12bet].[dbo].[Ref] WITH (NOLOCK)
+	
+	TRUNCATE TABLE [MemberRemoval]
+	INSERT INTO [Affiliate_12bet].[dbo].[MemberRemoval]
+           ([IBCCustID]
+			,[RemovedDate]
+			,[RemovedBy])
+	SELECT	[IBCCustID]
+			,[RemovedDate]
+			,[RemovedBy]
+	FROM	DBAFF12BET.[Affiliate_12bet].[dbo].[MemberRemoval] WITH (NOLOCK)
 
 
 	-- CommGroupHistory, GroupSettingHistory, DeductionSettingHistory, AffGroupHistory
@@ -666,6 +674,3 @@ BEGIN
 	END
 
 END
-GO
-
-

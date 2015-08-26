@@ -1,15 +1,13 @@
 USE [bodb_Report]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_DailyRptStatement]    Script Date: 01/27/2015 02:35:05 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DailyRptStatement]    Script Date: 07/19/2015 22:22:39 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-/****** Object:  Stored Procedure dbo.Task_DailyRptStatement    Script Date: 1/14/2015 12:34:13 PM ******/
-CREATE PROCEDURE [dbo].[Task_DailyRptStatement]
+/****** Object:  Stored Procedure dbo.Task_DailyRptStatement    Script Date: 2/3/2015 8:48:09 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DailyRptStatement    Script Date: 2/3/2015 8:31:22 AM ******/
+ALTER PROCEDURE [dbo].[Task_DailyRptStatement]
 	@Winlostdate DATE
 AS
 
@@ -19,6 +17,7 @@ Date: 20141216
 Task: insert/ update data on rptStatement
 DB: DBRPT.bodb_Report
 Revisions:
+	- 20150727@Sophia: Apply Bettrade, exclude ticket Bettrade Comm (903) for Void/reject [#36905]
 	
  */
 
@@ -56,16 +55,18 @@ BEGIN
 		SELECT
 			winlostdate
 			,custid
-			,SUM(CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake)/2 ELSE ABS(stake) END) AS Turnover
+			,SUM(CASE WHEN statusID NOT IN(103) 
+				  THEN CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake)/2 ELSE ABS(stake) END 
+				  ELSE 0 END) AS Turnover
 			,0 AS netTurnover
 			,SUM(winlost - actual_stake) AS winlost
 			,SUM(playercomm) AS comm
-			,COUNT(transid) AS betcount
+			,COUNT(CASE WHEN Bettype = 903 THEN 0 ELSE transid END) AS betcount
 		FROM
 			bodb02.dbo.Bettrans WITH(NOLOCK)
 		WHERE
 			winlostdate = @Winlostdate
-			AND statusID NOT IN (0,1,102,101,103) -- 'running','waiting','VOID','REJECT','REFUND'
+			AND statusID NOT IN (0,1,102,101) -- 'running','waiting','VOID','REJECT'
 			AND bettype <= 19999
 			AND ruben = 1
 		GROUP BY
@@ -84,16 +85,20 @@ BEGIN
 		SELECT
 			winlostdate
 			,recommend
-			,SUM(CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake)/2 ELSE ABS(stake) END) AS Turnover
-			,SUM(CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake*apositiontaking)/2 ELSE ABS(stake*apositiontaking) END) AS netTurnover
+			,SUM(CASE WHEN statusID NOT IN(103) 
+				  THEN CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake)/2 ELSE ABS(stake) END
+				  ELSE 0 END) AS Turnover
+			,SUM(CASE WHEN statusID NOT IN(103) 
+				  THEN CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake*apositiontaking)/2 ELSE ABS(stake*apositiontaking) END 
+				  ELSE 0 END) AS netTurnover
 			,SUM(awinlost) AS winlost
 			,SUM(comm - playercomm) AS comm
-			,COUNT(transid) AS betcount
+			,COUNT(CASE WHEN Bettype = 903 THEN 0 ELSE transid END) AS betcount
 		FROM
 			bodb02.dbo.Bettrans WITH(NOLOCK)
 		WHERE
 			winlostdate = @Winlostdate
-			AND statusID NOT IN (0,1,102,101,103) -- 'running','waiting','VOID','REJECT','REFUND'
+			AND statusID NOT IN (0,1,102,101) -- 'running','waiting','VOID','REJECT'
 			AND bettype <= 19999
 			AND ruben = 1
 		GROUP BY
@@ -112,16 +117,20 @@ BEGIN
 		SELECT
 			winlostdate
 			,mrecommend
-			,SUM(CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake)/2 ELSE ABS(stake) END) AS Turnover
-			,SUM(CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake*mpositiontaking)/2 ELSE ABS(stake*mpositiontaking) END) AS netTurnover
+			,SUM(CASE WHEN statusID NOT IN(103) 
+				  THEN CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake)/2 ELSE ABS(stake) END 
+				  ELSE 0 END) AS Turnover
+			,SUM(CASE WHEN statusID NOT IN(103) 
+				  THEN CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake*mpositiontaking)/2 ELSE ABS(stake*mpositiontaking) END 
+				  ELSE 0 END) AS netTurnover
 			,SUM(mwinlost) AS winlost
 			,SUM(acomm - comm) AS comm
-			,COUNT(transid) AS betcount
+			,COUNT(CASE WHEN Bettype = 903 THEN 0 ELSE transid END) AS betcount
 		FROM
 			bodb02.dbo.Bettrans WITH(NOLOCK)
 		WHERE
 			winlostdate = @Winlostdate
-			AND statusID NOT IN (0,1,102,101,103) -- 'running','waiting','VOID','REJECT','REFUND'
+			AND statusID NOT IN (0,1,102,101) -- 'running','waiting','VOID','REJECT'
 			AND bettype <= 19999
 			AND ruben = 1
 		GROUP BY
@@ -140,16 +149,20 @@ BEGIN
 		SELECT
 			winlostdate
 			,srecommend
-			,SUM(CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake)/2 ELSE ABS(stake) END) AS Turnover
-			,SUM(CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake*spositiontaking)/2 ELSE ABS(stake*spositiontaking) END) AS netTurnover
+			,SUM(CASE WHEN statusID NOT IN(103) 
+				  THEN CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake)/2 ELSE ABS(stake) END
+				  ELSE 0 END) AS Turnover
+			,SUM(CASE WHEN statusID NOT IN(103) 
+				  THEN CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake*spositiontaking)/2 ELSE ABS(stake*spositiontaking) END 
+				  ELSE 0 END) AS netTurnover
 			,SUM(swinlost) AS winlost
 			,SUM(scomm - acomm) AS comm
-			,COUNT(transid) AS betcount
+			,COUNT(CASE WHEN Bettype = 903 THEN 0 ELSE transid END) AS betcount
 		FROM
 			bodb02.dbo.Bettrans WITH(NOLOCK)
 		WHERE
 			winlostdate = @Winlostdate
-			AND statusID NOT IN (0,1,102,101,103) -- 'running','waiting','VOID','REJECT','REFUND'
+			AND statusID NOT IN (0,1,102,101) -- 'running','waiting','VOID','REJECT'
 			AND bettype <= 19999
 			AND ruben = 1
 		GROUP BY
@@ -173,6 +186,7 @@ BEGIN
 		WHERE 
 			statusID in (101, 102) -- 'VOID','REJECT'
 			AND bettype <= 19999
+			AND Bettype <> 903
 			AND winlostdate = @Winlostdate
 		GROUP BY 
 			winlostdate, custid    
@@ -351,5 +365,3 @@ BEGIN
 				
 END
 GO
-
-

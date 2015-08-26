@@ -1,32 +1,35 @@
 USE [bodb02]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_DailySummary_DB02_Copy]    Script Date: 02/01/2015 22:50:43 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DailySummary_DB02_Copy]    Script Date: 07/19/2015 22:21:13 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-/****** Object:  Stored Procedure dbo.Task_DailySummary_DB02_Copy    Script Date: 1/8/2015 3:12:08 PM ******/
-CREATE PROCEDURE [dbo].[Task_DailySummary_DB02_Copy]
+ALTER PROCEDURE [dbo].[Task_DailySummary_DB02_Copy]
 	@winlostdate datetime
 AS
-	BEGIN
-	-- Run on DB02 (ProductDB)
-	-- call by TransDB : Task_DailySummary
+/*
+-- Run on DB02 (ProductDB)
+-- call by TransDB : Task_DailySummary
 
-	-- move match/odds/outright/bingoBall/SS_GameState/VSOutright into [14] table
-	-- 20110802@Sylvia: Insert Dot_Admin_Assignment_Operator to archive
-	-- 20121014@Viet: add match.homeid2,match.awayid2
-	-- 20121031@Sylvia: 1.add odds.Resourceid, odds.ResultKey
-	--					2.add move SS_GameState table
-	-- 20130520@Victor: add move data into VSOutright14 table
-	-- 20140911@Lukas: add table MatchMaxbet14
-	-- 20141006@Lukas: remove table SS_GameState14
-	-- 20141024@Lukas: add table ResultDetail14
-	-- 20141225@Jamie: Add OtherInfo into ResultDetail14
-	
+-- move match/odds/outright/bingoBall/SS_GameState/VSOutright into [14] table
+-- 20110802@Sylvia: Insert Dot_Admin_Assignment_Operator to archive
+-- 20121014@Viet: add match.homeid2,match.awayid2
+-- 20121031@Sylvia: 1.add odds.Resourceid, odds.ResultKey
+--					2.add move SS_GameState table
+-- 20130520@Victor: add move data into VSOutright14 table
+-- 20140911@Lukas: add table MatchMaxbet14
+-- 20141006@Lukas: remove table SS_GameState14
+-- 20141024@Lukas: add table ResultDetail14
+-- 20141225@Jamie: Add OtherInfo into ResultDetail14
+-- 20150306@Cooper: Add MatchMaxbet.Spread into MatchMaxbet14
+-- 20150506@Victor(DB02): Add ParentID to Match14 and Match_BK
+-- 20150720@Sophia: Add ResultDetail3rd14 table
+*/
+
+BEGIN
+SET NOCOUNT ON
+
 	insert into odds14
 		([oddsid], [matchid], [bettype], [switch], [hdp1], [hdp2],
 		 [odds1a], [odds2a], [odds1b], [odds2b], [odds1c], [odds2c], [odds1e], 
@@ -75,7 +78,7 @@ AS
 		[kickofftime], [closedtime], [showtime], [hthomescore], [htawayscore],
 		[ruben], [multiple], [tstamp], exrisk, sporttype,
 		DisplayMode, LeaguePatternID, HomeDisplayPatternID, 
-		AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime)
+		AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime, ParentID)
 	select
 		[matchid], [leagueid], [homeid], [awayid], homeid2, awayid2, [eventdate], 
 		[eventstatus], [betstatus], [livehomescore], [liveawayscore],
@@ -83,7 +86,7 @@ AS
 		[kickofftime], [closedtime], [showtime], [hthomescore], [htawayscore],
 		[ruben], [multiple], [tstamp], exrisk, sporttype,
 		DisplayMode, LeaguePatternID, HomeDisplayPatternID, 
-		AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime
+		AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime, ParentID
 	from match
 	where eventdate=@winlostdate --and eventstatus='Completed'
 
@@ -128,8 +131,8 @@ AS
 	FROM Dot_Admin_Assignment_Operator
 	WHERE MatchID in (SELECT MatchID from Match where eventdate = @winlostdate)
 	
-	INSERT INTO MatchMaxbet14(MatchId, BetType, Maxbet, OperatorId)
-	SELECT MatchId, BetType, Maxbet, OperatorId
+	INSERT INTO MatchMaxbet14(MatchId, BetType, Maxbet, OperatorId, Spread )
+	SELECT MatchId, BetType, Maxbet, OperatorId, Spread 
 	FROM MatchMaxbet WITH(NOLOCK)
 	WHERE matchid IN (SELECT MatchID from Match where eventdate = @winlostdate)	
 	
@@ -137,11 +140,13 @@ AS
 	SELECT MatchId, ResourceId, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateDate, LastModifyDate, CreateBy, LastModifyBy, OtherInfo
 	FROM ResultDetail WITH(NOLOCK)
 	WHERE matchid IN (SELECT MatchID from Match where eventdate = @winlostdate)
+
+	INSERT INTO ResultDetail3rd14 (ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate)
+	SELECT	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate
+	FROM	ResultDetail3rd WITH(NOLOCK)
+	WHERE	matchid IN (SELECT MatchID from Match where eventdate = @winlostdate)
 	
 END
 GO
-
 GRANT VIEW DEFINITION ON [dbo].[Task_DailySummary_DB02_Copy] TO [vnteam] AS [dbo]
 GO
-
-
