@@ -20,7 +20,6 @@ AS
 
 	Param use:
 
-
 	Logic & Process:
 		check if member got bet in match being settle (exit if true)
 		compute balance and compare
