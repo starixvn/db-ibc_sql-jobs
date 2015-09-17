@@ -8,8 +8,9 @@ AS
 	ORIGINAL SP: Task_BalanceNegativeHistoryIns_Cust, Task_BalanceNegativeDel_CustCredit
 	
 	Revision: 		
-		- 20150316@Elodie: Support Negative Balance function for all licensee [Red:#30840]
+		- 20150316@Elodie: Support Negative Balance function for more licensee ('12Bet', 'asiabet88', 'mansion88', 'Mayfair') [Red:#30840]
 		- 20150624@Elodie: Add Bodog Licensee (Licenseeid = 14)
+		- 20150917@Elodie: Support Negative Balance function for all licensee [Red:#30840]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -22,7 +23,7 @@ BEGIN
 	SELECT c.custid, c.site
 	FROM DBLIC.bodb_licensee.dbo.LicenseeCust lc
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = lc.custid
-	WHERE licenseeid IN (1, 2, 3, 9, 12, 14) -- '12Bet', 'asiabet88', 'mansion88', 'Mayfair', 'Haifa', 'Bodog'
+	--WHERE licenseeid IN (1, 2, 3, 9, 12, 14) -- '12Bet', 'asiabet88', 'mansion88', 'Mayfair', 'Haifa', 'Bodog'
 					
 	INSERT INTO @tmpMatch (MatchID)
 	SELECT DISTINCT MatchID
@@ -31,8 +32,6 @@ BEGIN
 	WHERE StatusID = 0 
 		AND c.roleid = 1
 		AND c.recommend IN (SELECT custid FROM #tmpRecommend)						
-							
-						
 
 	IF @@ROWCOUNT > 0 -- found some matches
 	BEGIN
