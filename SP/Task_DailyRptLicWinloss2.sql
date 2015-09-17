@@ -1,16 +1,7 @@
-USE [bodb02]
+﻿USE [bodb02]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_DailyRptLicWinloss2]    Script Date: 01/27/2015 02:10:16 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2    Script Date: 8/22/2014 10:59:45 AM ******/
-
-CREATE PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
+ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
 	@winlostdate DATETIME
 AS
 /*
@@ -30,17 +21,14 @@ Revisions:
 	- 20131128@Jim: revert code to Group by All Virtual Sport into sporttypeID=180
 	- 20140310@Jim: offer KENO 
 	- 20140820@Jim: support to add more value bet BetEffective (RedmineID : #20518)
-   
+	- 20150618@Patrick: #36263: Fix super balance issue for: AGC, GD & VG
+    - 20150630@Jim: add MicroGaming 
+	- 20150702@Patrick: Support BetTrade
+	- 20150824@Patrick: Not category BA's bettrade ticket
+	- 20150909@Patrick: Changes the way generate data from bettrans instead bettrans14
  */
 
 SET NOCOUNT ON 
-
-IF NOT EXISTS(SELECT TOP 1 1 FROM dbo.bettrans14 WITH(nolock) WHERE winlostdate = @winlostdate)
-OR EXISTS(SELECT 1 FROM DB06.bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VValue = '1' AND VName in ('isMovingBet','isArchivingBet'))
-BEGIN
-	PRINT 'data not in bettrans14 OR movebet/archive process is now running!!!!'
-	RETURN
-END
 
 DELETE FROM bodb_Licensee.dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate
 
@@ -114,8 +102,12 @@ SELECT @winlostdate
 		WHEN bettype BETWEEN 51 AND 69 THEN 201
 		WHEN bettype IN (31,32,33,41,42,43) THEN 151
 		WHEN bettype BETWEEN 1501  AND 1599 THEN 202 -- Keno
+		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
+		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
+		WHEN bettype BETWEEN 2001 AND 2099 THEN 203
 		ELSE 0 END sporttype
-	,CASE WHEN bettype IN (71,72,1000) THEN bettype ELSE 0 END bettype
+	,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END bettype
 	--114: half win, 115: half lose
 	,CASE 
 		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114 
@@ -131,7 +123,7 @@ SELECT @winlostdate
 FROM
 	dbo.bettrans14 bettrans WITH (NOLOCK)
 	INNER JOIN dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
-	LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) ON bettrans.transid = BA.transid
+	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction ba ON bettrans.transid = ba.transid
 WHERE
 	bettrans.winlostdate = @winlostdate AND
 	customer.srecommend IN (SELECT custid FROM f_DepSuper_1('All')) AND
@@ -155,8 +147,12 @@ GROUP BY
 		WHEN bettype BETWEEN 51 AND 69 THEN 201
 		WHEN bettype IN (31,32,33,41,42,43) THEN 151
 		WHEN bettype BETWEEN 1501  AND 1599 THEN 202
+		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
+		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
+		WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- Microgame
 		ELSE 0 END
-	,CASE WHEN bettype IN (71,72,1000) THEN bettype ELSE 0 END
+	,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END
 	,CASE 
 		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114 
 		WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115
@@ -414,12 +410,3 @@ GROUP BY
 	,b.isBA
 	,b.isMobile
 	,b.betfrom
-GO
-
-GRANT EXECUTE ON [dbo].[Task_DailyRptLicWinloss2] TO [vnteam] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicWinloss2] TO [vnteam] AS [dbo]
-GO
-
-
