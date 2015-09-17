@@ -108,7 +108,7 @@ BEGIN
 	 LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) ON bettrans.transid = BA.transid  
 	WHERE  
 	 bettrans.winlostdate = @winlostdate AND  
-	 customer.srecommend IN (SELECT custid FROM f_DepSuper_1('All')) AND  
+	 bettrans.srecommend IN (SELECT custid FROM f_DepSuper_1('All')) AND  
 	 bettrans.statusID IN (101,111,112,113) AND --REJECT, DRAW, WON, LOSE  
 	 bettrans.bettype<=19999  
 	GROUP BY  
