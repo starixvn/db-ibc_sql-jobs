@@ -10,7 +10,7 @@ AS
 	Revision: 		
 		- 20150316@Elodie: Support Negative Balance function for more licensee ('12Bet', 'asiabet88', 'mansion88', 'Mayfair') [Red:#30840]
 		- 20150624@Elodie: Add Bodog Licensee (Licenseeid = 14)
-		- 20150917@Elodie: Support Negative Balance function for all licensee [Red:#30840]
+		- 20150917@Elodie: Support Negative Balance function for all licensee [Red:#43705]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -32,6 +32,8 @@ BEGIN
 	WHERE StatusID = 0 
 		AND c.roleid = 1
 		AND c.recommend IN (SELECT custid FROM #tmpRecommend)						
+							
+						
 
 	IF @@ROWCOUNT > 0 -- found some matches
 	BEGIN
