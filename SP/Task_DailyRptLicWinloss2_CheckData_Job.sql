@@ -15,9 +15,9 @@ BEGIN
 	SET NOCOUNT ON   
 	DECLARE @MoveBetSchedule TABLE(RowId TINYINT IDENTITY(1,1), ScheduleId TINYINT, MoveBetDay SMALLDATETIME)
 	DECLARE @RowId TINYINT, @WinlostDate SMALLDATETIME, @TotalDayMoveBet TINYINT
-		, @TotalDayMoveBetCompleted TINYINT, @Tomorrow DATETIME, @Yesterday DATETIME
+		, @TotalDayMoveBetCompleted TINYINT, @Tomorrow DATETIME, @Today DATETIME
 	
-	SELECT @RowId = 1, @Tomorrow = DATEADD(dd, 1, CAST(GETDATE() AS DATE)), @Yesterday = DATEADD(dd, -1, CAST(GETDATE() AS DATE))
+	SELECT @RowId = 1, @Tomorrow = DATEADD(dd, 1, CAST(GETDATE() AS DATE)), @Today = DATEADD(dd, -1, CAST(GETDATE() AS DATE))
 
 	INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
 	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
@@ -27,7 +27,7 @@ BEGIN
 	SELECT @TotalDayMoveBetCompleted = COUNT(1)
 	FROM DBACC.bodb02.dbo.userlog WITH(NOLOCK)
 	WHERE userid = 25520 AND doing = 'Task_DailySummary : End (with Finish)'
-		AND logdate > @Yesterday AND logdate < @Tomorrow
+		AND logdate > @Today AND logdate < @Tomorrow
 	
 	IF @TotalDayMoveBet <> @TotalDayMoveBetCompleted
 		RETURN --move is processing or move bet does not run
