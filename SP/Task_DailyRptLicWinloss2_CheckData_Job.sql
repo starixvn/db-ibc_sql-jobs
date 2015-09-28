@@ -22,6 +22,11 @@ BEGIN
 	INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
 	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
 
+	IF NOT EXISTS (SELECT TOP 1 1 FROM @MoveBetSchedule)
+	BEGIN
+		RETURN
+	END
+
 	SELECT @TotalDayMoveBet = COUNT(1) FROM @MoveBetSchedule
 
 	SELECT @TotalDayMoveBetCompleted = COUNT(1)
