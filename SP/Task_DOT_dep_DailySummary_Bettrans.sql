@@ -1,6 +1,6 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DOT_dep_DailySummary_Bettrans]    Script Date: 09/28/2015 13:32:47 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DOT_dep_DailySummary_Bettrans]    Script Date: 09/28/2015 13:48:14 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -581,7 +581,7 @@ BEGIN
 	   FROM dbo.bettransLC lc with (ROWLOCK)
 			--inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
 			INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = lc.srecommend AND s.Currency = lc.currency
-	   WHERE g.winlostdate >= @date  
+	   WHERE lc.winlostdate >= @date  
 	   GROUP BY lc.custid, lc.currency
 	WHILE (1 = 1)
 	BEGIN
@@ -714,10 +714,7 @@ BEGIN
 
 	SET NOCOUNT OFF
 END
-GO
-
 GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [Dot_Admin] AS [dbo]
 GO
 
 GRANT VIEW DEFINITION ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [vnteam] AS [dbo]
-GO
