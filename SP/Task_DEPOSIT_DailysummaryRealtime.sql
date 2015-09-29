@@ -1,14 +1,6 @@
 USE [bodb02]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_DEPOSIT_DailysummaryRealtime]    Script Date: 01/20/2015 23:52:25 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE PROCEDURE [dbo].[Task_DEPOSIT_DailysummaryRealtime] 
+ALTER PROCEDURE [dbo].[Task_DEPOSIT_DailysummaryRealtime] 
 	@winlostdate datetime
 AS
 /*   
@@ -24,7 +16,13 @@ AS
   - 20140515@Victor: Change Playtech Casino summary data process
   - 20140814@Don: Add AG Casino
   - 20141120@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
-                 
+  - 20150116@Winnie: get tranferin tranferout for AG Casino
+  - 20150324@Patrick: Re-arrange code to easy to plugin 3rd product
+  - 20150618@Patrick: #36263: Fix super balance issue for: AGC, GD & VG
+  - 20150625@Patrick: #37769: Exclude cancel transfer tickets for AG Casino (merge)
+  - 20150630@Patrick: #38387: Support bettrade
+  - 20150911@Jim: add MicroGaming RNG
+  
  Param's Explanation:  
  • @winlostdate: The date need to summary  
 */  
@@ -56,7 +54,14 @@ DELETE TOP (10) FROM Dep_CustomerPendingCalculate
 OUTPUT deleted.custid into @TempCustID
 WHERE winlostdate = @date
 
-IF @@ROWCOUNT = 0 RETURN 
+IF @@ROWCOUNT = 0 RETURN
+
+--get bettype transfer of 3rd products
+DECLARE @CasinoPartner TABLE (PartnerId INT, TransferId INT, CancelTransferId INT)
+INSERT INTO @CasinoPartner(PartnerId, TransferId, CancelTransferId)
+SELECT PartnerId, TransferId, CancelTransferId
+FROM bodb02.dbo.tblCasinoPartners WITH(NOLOCK)
+WHERE TransferId IS NOT NULL OR CancelTransferId IS NOT NULL
   
 INSERT INTO dbo.rptDepwinlost_staging (winlostdate, custid,currency, recommend, mrecommend, srecommend, Deposit,Aff2MemTransfer,  
 	Withdrawal, Bonus, Adjustment, Transfer3rd, Turnover, DrawGame, Outstanding, Winloss, playercomm, turnover_ba, comm_ba, Amountdueto_ba, Transfer3rdOthers)
@@ -84,8 +89,10 @@ SELECT @date,
 	SUM(CASE WHEN winlostdate=@date and isBA=1 and ruben=1 and statusid not in (101,102,103) THEN stake ELSE 0 END),-- turnover_ba
 	SUM(CASE WHEN winlostdate=@date and isBA=1 and ruben=1 and statusid not in (101,102,103) THEN comm ELSE 0 END),-- comm_ba
 	SUM(CASE WHEN winlostdate=@date and isBA=1 and ruben=1 and statusid not in (101,102,103) THEN winlost-actual_stake+awinlost+comm ELSE 0 END),-- Amountdueto_ba
-	SUM( CASE WHEN winlostdate = @date AND bettype in (22008,22009,22010,22011,22014,22015) then winlost-actual_stake ELSE 0 END)--Transfer3rdOthers  
-FROM bettransDEP b with(nolock)   	
+	--SUM( CASE WHEN winlostdate = @date AND bettype in (22008,22009,22010,22011,22014,22015) then winlost-actual_stake ELSE 0 END)--Transfer3rdOthers  
+	SUM( CASE WHEN winlostdate = @date AND bettype IN (p.TransferId, p.CancelTransferId) then winlost-actual_stake ELSE 0 END)--Transfer3rdOthers  
+FROM bettransDEP b with(nolock) 
+	LEFT JOIN @CasinoPartner p ON b.bettype IN (p.TransferId, p.CancelTransferId) 	  	
 WHERE winlostdate >= @date
 	and custid in (select custid from @TempCustID)
 	and custid <> 0	
@@ -98,25 +105,60 @@ GROUP BY b.custid,
 	END, -- currency
 	recommend, mrecommend, srecommend    
 
+;WITH bettradeData AS (  
+	SELECT b.custid
+		, SUM(CASE WHEN b.bettype = 903 THEN b.awinlost ELSE 0 END) AS comm_bettrade
+		, SUM(CASE WHEN b.bettype = 903 THEN b.winlost - b.actual_stake ELSE 0 END) AS comm_bettrade_full
+		, SUM(CASE WHEN bt.CustId IS NOT NULL AND b.bettype NOT IN (902,903) THEN b.winlost - b.actual_stake ELSE 0 END) AS WLBeticket --WL of bet ticket of bettrade
+		, SUM(CASE WHEN b.bettype = 902 THEN b.winlost - b.actual_stake ELSE 0 END) AS WLBoughtTicket --WL of bought ticket of bettrade
+	FROM dbo.bettransDEP b with(nolock)  
+		LEFT JOIN dbo.f_GetBetTradeCustList('All') bt ON b.custid = bt.Custid AND b.Currency = bt.currency
+	WHERE b.winlostdate = @date  
+		AND (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 1301 AND 1399)
+		AND b.ruben = 1  
+		AND b.statusID NOT IN (101, 102, 103)  
+	GROUP BY b.custid
+)  
+UPDATE tmp WITH(ROWLOCK, UPDLOCK) 
+SET comm_bettrade = ISNULL(d.comm_bettrade, 0)
+	, comm_bettrade_full = ISNULL(d.comm_bettrade_full, 0)
+	, Amountdueto_bettrade = ISNULL(d.WLBeticket, 0) + ISNULL(d.WLBoughtTicket, 0) - ISNULL(d.comm_bettrade, 0)
+FROM dbo.rptDepwinlost_staging tmp
+	INNER JOIN bettradeData d ON tmp.custid = d.custid
+
 --Keno product's turnover, Outstanding
 CREATE TABLE #tempDepWinlost_staging (winlostdate datetime, custid int, currency int, recommend int, mrecommend int, srecommend int,
 									  turnover money default (0), outstanding money default (0))
 INSERT INTO #tempDepWinlost_staging (winlostdate, custid, currency, recommend, mrecommend, srecommend, turnover, outstanding)
 	SELECT @date AS winlostdate
-	,tl.custid
-	,tl.currency
-	,tl.recommend
-	,tl.mrecommend
-	,tl.srecommend
-    ,SUM(CASE WHEN winlostdate = @date AND tl.statusID IN (0,1) then stake ELSE 0 END) AS turnover
-	,SUM(CASE WHEN winlostdate = @date AND tl.statusID IN (0,1) then actual_stake ELSE 0 END) AS outstanding 
+		,tl.custid
+		,tl.currency
+		,tl.recommend
+		,tl.mrecommend
+		,tl.srecommend
+		,SUM(CASE WHEN winlostdate = @date AND tl.statusID IN (0,1) then stake ELSE 0 END) AS turnover
+		,SUM(CASE WHEN winlostdate = @date AND tl.statusID IN (0,1) then actual_stake ELSE 0 END) AS outstanding 
     FROM translog tl with (ROWLOCK)
 	WHERE tl.winlostdate >= @date  
 		  and tl.custid in (select custid from @TempCustID)
 		  and tl.custid <> 0
 		  and tl.productID = 202
-	GROUP BY tl.custid,tl.currency,tl.recommend,tl.mrecommend,tl.srecommend;
-
+	GROUP BY tl.custid,tl.currency,tl.recommend,tl.mrecommend,tl.srecommend
+	UNION
+	SELECT @date AS winlostdate
+		,g.custid
+		,g.currency
+		,g.recommend
+		,g.mrecommend
+		,g.srecommend
+		,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then stake ELSE 0 END) AS turnover
+		,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then actual_stake ELSE 0 END) AS outstanding 
+    FROM dbo.bettransRnG g WITH (rowlock)
+	WHERE g.winlostdate >= @date  
+		  and g.custid in (select custid from @TempCustID)
+		  and g.custid <> 0
+	GROUP BY g.custid,g.currency,g.recommend,g.mrecommend,g.srecommend;
+	
 --insert additional Keno's product OpeningBalance, turnover, Outstanding, ClosingBalance
 MERGE dbo.rptDepwinlost_staging AS target
 USING (SELECT s.winlostdate, s.custid, s.currency, s.recommend, s.mrecommend, s.srecommend,
@@ -153,6 +195,10 @@ SELECT
 		WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 		WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport		
 		WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+		WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- MicroGaming
+		WHEN bettype = 901 THEN -2 -- BetTrade - Sold
+		WHEN bettype = 902 THEN -3 -- BetTrade - Bought
+		WHEN bettype = 903 THEN -4 -- BetTrade - Commission
 	ELSE 0 END, -- sporttype
 	--b.currency,
 	CASE 
@@ -181,6 +227,10 @@ GROUP BY b.custid,
 		WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 		WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport
 		WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+		WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- MicroGaming
+		WHEN bettype = 901 THEN -2 -- BetTrade - Sold
+		WHEN bettype = 902 THEN -3 -- BetTrade - Bought
+		WHEN bettype = 903 THEN -4 -- BetTrade - Commission
 	ELSE 0 END,
 	--b.currency
 	CASE 
@@ -207,6 +257,36 @@ WHERE custid in (select custid from @TempCustID)
 	and bettype IN (71,72,23002)
 GROUP BY b.custid, b.currency
 
+--processing data for 3rd products
+INSERT INTO dbo.rptDepWinlostByProduct_staging(winlostdate, custid, sporttype, currency, turnover, drawTO, winlost, playercomm, betcount, outstanding)
+SELECT  
+	@date, b.custid, 
+	CASE				
+		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
+		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
+	ELSE -1 END, -- sporttype
+	b.currency,
+	SUM(CASE WHEN winlostdate = @date AND [status] not in ('VOID', 'REJECT', 'Refund') then stake ELSE 0 END),--Turnover  
+	SUM(case when winlostdate = @date AND [status] = 'DRAW' then stake else 0 end), -- Draw game TO			
+	SUM(CASE WHEN winlostdate = @date AND ruben=1 then b.winlost-b.actual_stake ELSE 0 END), --Winloss      
+	SUM(CASE WHEN winlostdate = @date AND ruben=1 then b.playercomm ELSE 0 END), --Playercomm      
+	SUM(CASE WHEN winlostdate = @date AND [status] not in ('VOID', 'REJECT', 'Refund') then 1 ELSE 0 END), --betcount
+	SUM(CASE WHEN @date = @today THEN CASE WHEN ruben=0 then actual_stake ELSE 0 END
+		ELSE CASE WHEN winlostdate = @date AND ruben=0 then actual_stake ELSE 0 END END)	--Outstanding 
+FROM dbo.bettransDEP b with(rowlock)   
+WHERE custid in (select custid from @TempCustID)
+	and winlostdate >= @date
+	and matchid = 0
+	and bettype BETWEEN 1700 AND 1999
+GROUP BY b.custid,
+	CASE
+		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
+		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
+	ELSE -1 END,
+	b.currency
+
 --Keno product's turnover, betcount, Outstanding
 CREATE TABLE #tempDepWinlostByProduct_staging (winlostdate datetime, custid int, sporttype int, currency int, turnover money default(0), 
 					                           betcount int default(0), outstanding money default(0))
@@ -224,7 +304,22 @@ INSERT INTO #tempDepWinlostByProduct_staging (winlostdate,custid,sporttype,curre
 		 and custid in (select custid from @TempCustID)
 		 and custid <> 0
 		 and tl.productID = 202
-   GROUP BY tl.custid, tl.productID,tl.currency;
+   GROUP BY tl.custid, tl.productID,tl.currency
+   UNION 
+   SELECT @date AS winlostdate
+	,g.custid   
+    ,g.productID AS sporttype
+    ,g.currency
+	,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then stake ELSE 0 END) AS turnover
+	,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then 1 ELSE 0 END) AS Betcount
+	,SUM(CASE WHEN @date = @today THEN CASE WHEN g.statusID IN (0,1) then actual_stake ELSE 0 END
+		 ELSE CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then actual_stake ELSE 0 END END) AS outstanding
+   FROM dbo.bettransRnG g WITH (rowlock)
+   WHERE g.winlostdate >= @date  
+		 and custid in (select custid from @TempCustID)
+		 and custid <> 0
+		 
+   GROUP BY g.custid, g.productID,g.currency;
 
 --insert additional Keno's product Outstanding, turnover, betcount
 MERGE dbo.rptDepWinlostByProduct_staging AS target
@@ -244,29 +339,53 @@ DROP TABLE #tempDepWinlostByProduct_staging
 -- Execute SP to insert Playtech Casino data to staging tables
 EXEC Task_DEPOSIT_PlaytechCS_DailySummaryRealtime
 
-INSERT INTO dbo.rptDepWinlost_Transfer3rdOthers_Staging (winlostdate,CustId,Currency,Recommend,MRecommend,SRecommend,PartnerId,TransferAmount)
-SELECT @date, 
-	b.custid, b.currency, b.recommend, b.mrecommend, b.srecommend,
-	CASE 
-		WHEN b.bettype in (22008,22009) THEN 1 --Hogaming
-		WHEN b.bettype in (22010,22011) THEN 2 --OPus
-		WHEN b.bettype in (22014,22015) THEN 3 --AG
-		ELSE -1 
-	END PartnerId,
-	SUM(winlost-actual_stake)--Transfer3rdOthers  
-FROM bettransDEP b with(nolock)   	
+--get refno has bettpe cancelled
+DECLARE @RefNoList TABLE (RefNo BIGINT)
+INSERT INTO @RefNoList(RefNo)
+SELECT refno
+FROM dbo.bettransDEP b with(rowlock)
+	INNER JOIN @CasinoPartner p ON b.bettype = p.CancelTransferId
 WHERE winlostdate >= @date
 	and custid in (select custid from @TempCustID)
 	and custid <> 0	
-	and bettype in (22008,22009,22010,22011,22014,22015)
-GROUP BY b.custid,currency, recommend, mrecommend, srecommend,
-	CASE 
-		WHEN b.bettype in (22008,22009) THEN 1 --Hogaming
-		WHEN b.bettype in (22010,22011) THEN 2 --OPus
-		WHEN b.bettype in (22014,22015) THEN 3 --AG
-		ELSE -1 
-	END
+GROUP BY refno
+
+INSERT INTO dbo.rptDepWinlost_Transfer3rdOthers_Staging (winlostdate,CustId,Currency,Recommend,MRecommend,SRecommend,PartnerId,TransferAmount,TransferIn,TransferOut)
+(
+	SELECT @date, tmp.custid, tmp.currency, tmp.recommend, tmp.mrecommend, tmp.srecommend, tmp.PartnerId
+		, Transfer3rdOthers
+		, tmp.TransferIn - ISNULL(tmp2.TransferIn, 0) --TransferIn
+		, tmp.TransferOut - ISNULL(tmp2.TransferOut, 0) --TransferOut
+	FROM (
+		SELECT b.custid, b.currency, b.recommend, b.mrecommend, b.srecommend,
+			CASE WHEN bettype in (p.TransferId, p.CancelTransferId) THEN p.PartnerId ELSE -1 END PartnerId,
+			SUM(winlost-actual_stake) AS Transfer3rdOthers,
+			SUM(CASE WHEN (winlost-actual_stake) < 0 THEN -(winlost-actual_stake) ELSE 0 END) AS TransferIn,  
+			SUM(CASE WHEN (winlost-actual_stake) > 0 THEN -(winlost-actual_stake) ELSE 0 END) AS TransferOut 
+		FROM bettransDEP b with(nolock)
+			INNER JOIN @CasinoPartner p ON b.bettype IN (p.TransferId, p.CancelTransferId)
+			INNER JOIN bodb02.dbo.customer c with(nolock) on b.custid = c.custid  
+			INNER JOIN bodb02.dbo.customer agent with(nolock) on b.recommend = agent.custid
+		WHERE winlostdate >= @date
+			and b.custid in (select custid from @TempCustID)
+			and b.custid <> 0
+			and (c.username2 IS NOT NULL OR (c.username2 IS NULL AND agent.username NOT LIKE '%ACC%'))				
+			--and bettype in (22008,22009,22010,22011,22014,22015)
+		GROUP BY b.custid, b.currency, b.recommend, b.mrecommend, b.srecommend,
+			CASE WHEN bettype in (p.TransferId, p.CancelTransferId) THEN p.PartnerId ELSE -1 END
+	)tmp LEFT JOIN (
+		--get cancelled transfer data
+		SELECT b.CustId, b.currency, b.recommend, b.mrecommend, b.srecommend, p.PartnerId
+			, SUM( CASE WHEN (b.winlost-b.actual_stake) < 0 THEN -(b.winlost-b.actual_stake) ELSE 0 END) AS TransferIn
+			, SUM( CASE WHEN (b.winlost-b.actual_stake) > 0 THEN -(b.winlost-b.actual_stake) ELSE 0 END) AS TransferOut
+		FROM dbo.bettransDEP b with(rowlock)
+			INNER JOIN @CasinoPartner p ON b.bettype IN (p.CancelTransferId, p.TransferId)
+		WHERE b.matchid = 0 and b.winlostdate >= @date
+			and b.custid in (select custid from @TempCustID)
+			and b.custid <> 0
+			and b.refno in (select refno from @RefNoList)
+		GROUP BY b.custid, b.currency, b.recommend, b.mrecommend, b.srecommend, p.PartnerId
+	)tmp2 ON tmp.custid = tmp2.custid and tmp.currency = tmp2.currency and tmp.PartnerId = tmp2.PartnerId
+)
+
 SET NOCOUNT OFF
-GO
-
-

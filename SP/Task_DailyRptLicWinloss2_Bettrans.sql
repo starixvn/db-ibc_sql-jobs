@@ -103,12 +103,13 @@ BEGIN
 	 ,CASE      
 	  WHEN bettrans.betfrom IN ('s','m','h','l') THEN bettrans.betfrom ELSE '' END AS betfrom   
 	FROM  
-	 dbo.bettrans bettrans WITH (NOLOCK)  
-	 INNER JOIN dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid  
+	 dbo.bettrans bettrans WITH (NOLOCK)
+	 INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON bettrans.srecommend = s.CustId
+	 INNER JOIN dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
 	 LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) ON bettrans.transid = BA.transid  
 	WHERE  
 	 bettrans.winlostdate = @winlostdate AND  
-	 bettrans.srecommend IN (SELECT custid FROM f_DepSuper_1('All')) AND  
+	 --bettrans.srecommend IN (SELECT custid FROM f_DepSuper_1('All')) AND  
 	 bettrans.statusID IN (101,111,112,113) AND --REJECT, DRAW, WON, LOSE  
 	 bettrans.bettype<=19999  
 	GROUP BY  
@@ -146,7 +147,8 @@ BEGIN
 	  WHEN bettrans.betfrom IN ('s','m','h','l') THEN 1 ELSE 0 END  
 	 ,CASE      
 	  WHEN bettrans.betfrom IN ('s','m','h','l') THEN bettrans.betfrom ELSE '' END  
-  
+	 OPTION (MAXDOP 8)
+
 	--Agent Level (sum on member)  
 	INSERT INTO bodb_Licensee.dbo.rptLicWinloss2  
 			(  
