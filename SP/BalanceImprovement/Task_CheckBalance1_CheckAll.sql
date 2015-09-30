@@ -1,6 +1,6 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_CheckBalance_CheckAll]    Script Date: 09/06/2015 21:57:53 ******/
+/****** Object:  StoredProcedure [dbo].[Task_CheckBalance1_CheckAll]    Script Date: 09/11/2015 11:27:01 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -56,7 +56,7 @@ BEGIN
 	)
 	SELECT cb.*, ISNULL(q2.Outstanding,0) Outstanding, 
 	   cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance 
-	   - db1.Balance - db2.Balance + db3.Balance + db4.Balance AS FromBalanceTable
+	   - db1.Balance - db2.Balance - db3.Balance - db4.Balance AS FromBalanceTable
 	INTO #QuestionLists
 	FROM cb	
 		INNER JOIN dbo.BalCreditTransfer cd1 with (nolock) ON cb.custid = cd1.custid
@@ -136,8 +136,12 @@ BEGIN
 	WHERE
 		cb.Balance - ISNULL(q2.Outstanding,0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
 		AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE cb.custid = ex.custid)
-		AND NOT EXISTS (SELECT 1 FROM dbo.BalancePendingCredit pc with (nolock) WHERE cb.custid = pc.custid)
-		AND NOT EXISTS (SELECT 1 FROM dbo.BalancePendingDebit pd with (nolock) WHERE cb.custid = pd.custid)
+		AND NOT EXISTS (SELECT 1 FROM dbo.BalCreditSportsPending cdp2 with (nolock) WHERE cb.custid = cdp2.custid)
+		AND NOT EXISTS (SELECT 1 FROM dbo.BalCreditCasinoPending cdp3 with (nolock) WHERE cb.custid = cdp3.custid)
+		AND NOT EXISTS (SELECT 1 FROM dbo.BalCreditOthersPending cdp4 with (nolock) WHERE cb.custid = cdp4.custid)
+		AND NOT EXISTS (SELECT 1 FROM dbo.BalDebitSportsPending dbp2 with (nolock) WHERE cb.custid = dbp2.custid)
+		AND NOT EXISTS (SELECT 1 FROM dbo.BalDebitCasinoPending dbp3 with (nolock) WHERE cb.custid = dbp3.custid)
+		AND NOT EXISTS (SELECT 1 FROM dbo.BalDebitOthersPending dbp4 with (nolock) WHERE cb.custid = dbp4.custid)
 		
 	PRINT @msg + ' -' + CAST(@RD as varchar(50)) + ' -> ' + CAST(@@ROWCOUNT as varchar(50)) + ' accounts add to verify balance'
 	

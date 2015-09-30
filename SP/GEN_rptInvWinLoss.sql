@@ -1,16 +1,11 @@
 USE [bodb_Invoice]
 GO
-
-/****** Object:  StoredProcedure [dbo].[GEN_rptInvWinLoss]    Script Date: 01/19/2015 03:45:40 ******/
+/****** Object:  StoredProcedure [dbo].[GEN_rptInvWinLoss]    Script Date: 06/23/2015 04:21:10 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-
-
-CREATE PROCEDURE [dbo].[GEN_rptInvWinLoss]
+ALTER PROCEDURE [dbo].[GEN_rptInvWinLoss]
     @date datetime, 
     @date2 datetime = null
 AS
@@ -20,7 +15,6 @@ Task: Generate data into rptInvWinLoss
 DB: DB052.bodb_Invoice
 
 Revisions:
-	- 20140922@Don: Use hardcode of test site IIBC
 
 Param's Explanation:
 
@@ -36,7 +30,6 @@ WHERE rptDate>=@date AND rptDate<@date2
 		b.rptDate
 		,CASE 
 			WHEN b.SiteID >= 1 AND b.SiteID < 1000 THEN b.SiteID 
-			WHEN b.SiteID = 1147 THEN b.SiteID -- test site, IIBC serves Indian project
 			WHEN b.SiteID >= 1000 AND lbl.LicenseeID IS NOT NULL THEN lbl.LicenseeID
 			ELSE 0
 		END LicenseeID
@@ -70,7 +63,6 @@ WHERE rptDate>=@date AND rptDate<@date2
 		b.rptDate
 		,CASE 
 			WHEN b.SiteID >= 1 AND b.SiteID < 1000 THEN b.SiteID 
-			WHEN b.SiteID = 1147 THEN b.SiteID -- test site, IIBC serves Indian project
 			WHEN b.SiteID >= 1000 AND lbl.LicenseeID IS NOT NULL THEN lbl.LicenseeID
 			ELSE 0
 		END
@@ -148,8 +140,3 @@ INSERT INTO dbo.rptInvWinLoss
 		,Status
 		,CustomerCategory
 		,isBA
-
-
-GO
-
-
