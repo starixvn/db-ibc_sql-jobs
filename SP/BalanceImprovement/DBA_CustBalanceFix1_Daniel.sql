@@ -1,5 +1,6 @@
 ALTER PROCEDURE [dbo].[DBA_CustBalanceFix1_Daniel]
-	@custid INT
+	@custid INT,
+	@reset BIT = 0
 AS
 /*
 	Task: Compare balance vs BalanceTable(new) for spec member and FIX at once
@@ -10,12 +11,25 @@ AS
 	   20151007@Daniel: Created
 
 	Param use:
+	 - @reset = FALSE: Add bal diff in SB group only
+	 - @reset = TRUE: Clear balance (bal = 0) on other bal groups, keep the whole bal in SB group
 
 */
 DECLARE @DiffBalance money, @result int
 
 SET @DiffBalance = 0
 SET @result = 0
+
+IF (@reset = 1)
+BEGIN
+	UPDATE BalCreditTransfer WITH (ROWLOCK, UPDLOCK) SET Balance = 0 WHERE custid = @custid
+	UPDATE BalCreditCasino WITH (ROWLOCK, UPDLOCK) SET Balance = 0 WHERE custid = @custid
+	UPDATE BalCreditOthers WITH (ROWLOCK, UPDLOCK) SET Balance = 0 WHERE custid = @custid
+	
+	UPDATE BalDebitTransfer WITH (ROWLOCK, UPDLOCK) SET Balance = 0 WHERE custid = @custid
+	UPDATE BalDebitCasino WITH (ROWLOCK, UPDLOCK) SET Balance = 0 WHERE custid = @custid
+	UPDATE BalDebitOthers WITH (ROWLOCK, UPDLOCK) SET Balance = 0 WHERE custid = @custid
+END
 
 ;WITH
 cb AS (

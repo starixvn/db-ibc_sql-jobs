@@ -25,10 +25,14 @@ q2 AS (
 	WHERE tl.statusID=0 --summary running tickets only
 		AND custid = @custid
 )
-SELECT cb.Balance - ISNULL(q2.Outstanding,0) Bal_bettrans, 
+SELECT cb.Balance - ISNULL(q2.Outstanding,0) Bal_bettrans,
    cd.Balance - db.Balance Bal_BalTable,
-   (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance) Bal_BalTable_New,
-   cb.Balance - ISNULL(q2.Outstanding,0) - (cd.Balance - db.Balance) DiffBal,  
+   cb.Balance - ISNULL(q2.Outstanding,0) - (cd.Balance - db.Balance) DiffBal,
+   cd2.Balance - db2.Balance BalSports,
+   cd3.Balance - db3.Balance BalCasino,
+   cd1.Balance - db1.Balance BalTransfer,
+   cd4.Balance - db4.Balance BalOthers,
+   (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance) Bal_NewBalTableALL,
    cb.Balance - ISNULL(q2.Outstanding,0)
 	- (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance) DiffBal_New
 FROM cb
