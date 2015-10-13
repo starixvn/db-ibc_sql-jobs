@@ -1,3 +1,5 @@
+Use bodb_report 
+Go
 ALTER PROCEDURE [dbo].[Task_DuplicatedTicketsCheck]	
 AS
 /*
@@ -7,7 +9,7 @@ DB: DBRPT/bodb_report
 Original: Acc_CheckDuplicateTickets
 
 Revisions:
-	 
+	 - 20151009@Sophia: group by IP [#45176]
 Param's Explanation:
 
 */
@@ -27,7 +29,8 @@ BEGIN
 			b.balance, 
 			b.bettype,
 			b.winlostdate, 
-			b.matchid 		 
+			b.matchid,
+			b.ip		 
 	FROM	bodb02.dbo.bettrans b WITH(NOLOCK , Index = PK_bettrans)
 	WHERE	b.TransID BETWEEN @TransId - 5000 AND @MaxTransId
 			AND b.bettype < 19000
@@ -45,7 +48,8 @@ BEGIN
 			b.balance, 
 			b.bettype,
 			b.winlostdate, 
-			b.matchid 		
+			b.matchid,
+			b.ip 		
 	INTO	#TempData
 	FROM	AllTicket b							
 	GROUP BY	b.custid, 
@@ -54,7 +58,8 @@ BEGIN
 				b.balance, 
 				b.bettype,
 				b.winlostdate, 
-				b.matchid
+				b.matchid,
+				b.ip
 	HAVING COUNT(*) > 1
 	 
 
@@ -70,6 +75,7 @@ BEGIN
 			AND b.bettype = t.bettype
 			AND b.winlostdate = t.winlostdate
 			AND b.matchid = t.matchid
+			AND b.ip = t.ip
 	WHERE NOT EXISTS (SELECT 1 FROM dbo.DuplicatedTicket d WITH (NOLOCK) WHERE d.TransID = b.TransId)	
 	DROP TABLE #TempData
 	
