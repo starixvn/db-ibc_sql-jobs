@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[DBA_BalanceProblemList1_Daniel]
+ALTER PROCEDURE [dbo].[DBA_BalanceProblemList1_Daniel]
 AS
 /*
 	Task: Compute/Compare balance vs BalanceTable(new) for all members and output the list directly
