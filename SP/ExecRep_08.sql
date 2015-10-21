@@ -1,6 +1,6 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[ExecRep_08]    Script Date: 07/19/2015 22:20:12 ******/
+/****** Object:  StoredProcedure [dbo].[ExecRep_08]    Script Date: 10/12/2015 02:46:19 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,17 +10,19 @@ ALTER PROCEDURE [dbo].[ExecRep_08]
 	@winlostdate smalldatetime,
 	@parlay bit = 0
 AS
-/*
-Created by:[]
-Date:
-Task: 
-DB: DB02.BODB02
-Revisions:
-    - 20110523@Henry: change bettype to new range
-    - 20120316@Victor: add move bettransG to bettransG14
-	- 20140305@Vivi: add move translog to translog14
+	/*
+	Created by:[]
+	Date:
+	Task: 
+	DB: DBTXN.BODB02
+	Revisions:
+		- 20110523@Henry: change bettype to new range
+		- 20120316@Victor: add move bettransG to bettransG14
+		- 20140305@Vivi: add move translog to translog14
+		- 20151012@Sophia: Add Move BettransLC and BettransRNG 
     
- */
+    
+	 */
 IF @@SERVERNAME NOT LIKE 'DB04%'
 BEGIN
 
@@ -61,6 +63,37 @@ BEGIN
 	from translog with (nolock)
 	where recommend = @recommend AND winlostdate=@winlostdate
 		
+	INSERT INTO BettransLC14 
+		(
+		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
+		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
+		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
+		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd
+		)
+	SELECT 
+		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
+		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
+		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
+		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd
+	FROM dbo.BettransLC WITH (NOLOCK)
+	WHERE recommend = @recommend AND winlostdate=@winlostdate
+
+	
+	INSERT INTO BettransRNG14
+		(
+		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
+		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
+		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
+		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd	
+		)
+	SELECT 
+		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
+		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
+		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
+		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd
+	FROM dbo.BettransRNG WITH (NOLOCK)
+	WHERE recommend = @recommend AND winlostdate=@winlostdate
+
 END
 
 
@@ -149,4 +182,3 @@ BEGIN
 END
 GO
 GRANT VIEW DEFINITION ON [dbo].[ExecRep_08] TO [vnteam] AS [dbo]
-GO

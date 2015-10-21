@@ -1,26 +1,32 @@
 USE [bodb02]
 GO
-
-/****** Object:  StoredProcedure [dbo].[ExecRep_02]    Script Date: 01/26/2015 04:53:19 ******/
+/****** Object:  StoredProcedure [dbo].[ExecRep_02]    Script Date: 10/12/2015 02:46:58 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-CREATE PROCEDURE [dbo].[ExecRep_02]
+ALTER PROCEDURE [dbo].[ExecRep_02]
 	@tmp1 sql_variant = NULL,
 	@tmp2 sql_variant = NULL,
 	@tmp3 sql_variant = NULL,
 	@winlostdate datetime = NULL,
 	@Command varchar(20) = NULL
 AS
-SET NOCOUNT ON
--- call from Joe : ClearData14 working routine
 
+SET NOCOUNT ON
+/*
+	Created by:[]
+	Date:
+	Task: call from Joe : ClearData14 working routine
+	DB: DBTXN.BODB02
+	Revisions:		
+		- 20151012@Sophia: Add delete BettransLC14 and BettransRNG14
+    
+ */
 -- =======================
 -- Parameter check\control
 -- =======================
+
 IF @Command IS NULL OR @winlostdate IS NULL
 BEGIN
 	PRINT 'Invalid input parameters'
@@ -80,6 +86,26 @@ BEGIN
 	
 	IF @@ROWCOUNT > 0 RETURN
 	PRINT 'Continue'
+
+	--------------------
+
+	DELETE TOP (250000)
+	FROM dbo.bettransLC14
+	WHERE winlostdate = @winlostdate
+	
+	IF @@ROWCOUNT > 0 RETURN
+	PRINT 'Continue'
+
+	---------------------
+
+	DELETE TOP (250000)
+	FROM dbo.bettransRNG14
+	WHERE winlostdate = @winlostdate
+	
+	IF @@ROWCOUNT > 0 RETURN
+	PRINT 'Continue'
+
+	--------------------
 
 	CREATE TABLE #btm (rn int PRIMARY KEY IDENTITY(1,1), transid int)
 
@@ -177,8 +203,4 @@ END
 SET NOCOUNT OFF
 
 GO
-
 GRANT VIEW DEFINITION ON [dbo].[ExecRep_02] TO [vnteam] AS [dbo]
-GO
-
-
