@@ -3,14 +3,20 @@ Go
 ALTER PROCEDURE [dbo].[Task_DuplicatedTicketsCheck]	
 AS
 /*
-Created: 20150211@Sophia
-Task : Job run to check duplicate tickets on bettrans table and insert the result into DuplicateTicket table to view report later
-DB: DBRPT/bodb_report
-Original: Acc_CheckDuplicateTickets
+	Created: 20150211@Sophia
+	Task : Job run to check duplicate tickets on bettrans table and insert the result into DuplicateTicket table to view report later
+	DB: DBRPT/bodb_report
+	Original: Acc_CheckDuplicateTickets
 
-Revisions:
+	Revisions:
 	 - 20151009@Sophia: group by IP [#45176]
-Param's Explanation:
+	 - 20151021@Sophia: Modify the SPs to only cover the tickets of the following products [#45898] 
+						1	Sportsbook [inclusive of : Metric Gaming - Superlive and BetTrade tickets (heck the refno)]
+						3	Number Game
+						4	SLI - Live Casino
+						5	Virtual Sports
+								
+	Param's Explanation:
 
 */
 BEGIN
@@ -20,6 +26,14 @@ BEGIN
 
 	SELECT @TransId = CONVERT(BIGINT,VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'DuplTicketLastID'
 	SELECT @MaxTransId = MAX(TransId) FROM bodb02.dbo.Bettrans WITH (NOLOCK)
+	
+	----Get Sport Bettype Matrix------
+	DECLARE @SportBettype TABLE(ProductID INT, Bettype INT,EventType INT,SubProduct VARCHAR(500))
+	INSERT INTO @SportBettype (ProductID  , Bettype  ,EventType  ,SubProduct)
+	EXEC bodb02.dbo.Acc_SportBettypeMatrix_Sel  @mode = 5
+
+	DELETE  @SportBettype 
+	WHERE	ProductID NOT IN (1, 3, 4, 5)
 
 
  	; WITH AllTicket AS(	 
@@ -30,10 +44,12 @@ BEGIN
 			b.bettype,
 			b.winlostdate, 
 			b.matchid,
-			b.ip		 
+			b.ip,
+			b.RefNo		 
 	FROM	bodb02.dbo.bettrans b WITH(NOLOCK , Index = PK_bettrans)
+		INNER JOIN @SportBettype s ON s.bettype = b.bettype
 	WHERE	b.TransID BETWEEN @TransId - 5000 AND @MaxTransId
-			AND b.bettype < 19000
+			----AND b.bettype < 19000			
 			AND b.matchid > 0
 			AND b.custid NOT IN (50057, 879241, 103873, 851668, 878902) --betdaq
 			AND b.custid NOT IN (1077687) -- Betfair
@@ -49,7 +65,8 @@ BEGIN
 			b.bettype,
 			b.winlostdate, 
 			b.matchid,
-			b.ip 		
+			b.ip,
+			b.RefNo		
 	INTO	#TempData
 	FROM	AllTicket b							
 	GROUP BY	b.custid, 
@@ -59,7 +76,8 @@ BEGIN
 				b.bettype,
 				b.winlostdate, 
 				b.matchid,
-				b.ip
+				b.ip,
+				b.RefNo
 	HAVING COUNT(*) > 1
 	 
 
@@ -76,6 +94,7 @@ BEGIN
 			AND b.winlostdate = t.winlostdate
 			AND b.matchid = t.matchid
 			AND b.ip = t.ip
+			AND b.RefNo = t.RefNo
 	WHERE NOT EXISTS (SELECT 1 FROM dbo.DuplicatedTicket d WITH (NOLOCK) WHERE d.TransID = b.TransId)	
 	DROP TABLE #TempData
 	
