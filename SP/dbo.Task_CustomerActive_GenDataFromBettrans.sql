@@ -15,6 +15,7 @@ AS
 		- 20150318@Patrick: Duplicate data for BA tickets
 		- 20150916@Jim: support microgaming
 	    - 20150921@Jim: support AG Casino
+		- 20151112@Jim: separate micro gamming into 2 products
 	 Param's Explanation:
 */
 
@@ -85,12 +86,12 @@ BEGIN
 	INSERT INTO #DataTmp(TransDate, CustId, Recommend, CurrencyId, ProductId)
 	SELECT b.TransDate, b.CustId, b.Recommend, b.currency, b.ProductId
 	FROM (
-	SELECT g.transdate,g.custid,g.recommend,g.currency,14 ProductId
+	SELECT g.transdate,g.custid,g.recommend,g.currency,17 ProductId
 	FROM bodb02.dbo.bettransRnG g WITH (NOLOCK) 
 		INNER JOIN bodb_licensee.dbo.LicenseeCust lc WITH(NOLOCK) ON g.recommend = lc.custid
 	WHERE g.transdate  > @FromDate AND g.transdate < @ToDate
 	) b
-	LEFT JOIN #DataTmp tmp ON b.TransDate = tmp.TransDate AND b.custid = tmp.CustId AND tmp.ProductID=14
+	LEFT JOIN #DataTmp tmp ON b.TransDate = tmp.TransDate AND b.custid = tmp.CustId AND tmp.ProductID=17
 	WHERE tmp.TransDate IS NULL
 	GROUP BY b.TransDate, b.CustId, b.Recommend, b.currency, b.ProductId
 	--- AG Casino
