@@ -91,7 +91,19 @@ BEGIN
 	--WHERE Winlostdate = @TransDate
 	--GROUP BY CAST(TransDate AS DATE), b.CustID, b.recommend, b.currency
 	--OPTION (RECOMPILE) --> Currently, playtech cs is terminated
-
+	-- Microgaming RNG
+	INSERT INTO #DataTmp(TransDate, CustId, Recommend, CurrencyId, ProductId)
+	SELECT b.TransDate, b.CustId, b.Recommend, b.currency, b.ProductId
+	FROM (
+	SELECT g.transdate,g.custid,g.recommend,g.currency,17 ProductId
+	FROM bodb02.dbo.bettransRnG g WITH (NOLOCK) 
+		INNER JOIN bodb_licensee.dbo.LicenseeCust lc WITH(NOLOCK) ON g.recommend = lc.custid
+	WHERE g.transdate  > @FromDate AND g.transdate < @ToDate
+	) b
+	LEFT JOIN #DataTmp tmp ON b.TransDate = tmp.TransDate AND b.custid = tmp.CustId AND tmp.ProductID=17
+	WHERE tmp.TransDate IS NULL
+	GROUP BY b.TransDate, b.CustId, b.Recommend, b.currency, b.ProductId
+	
 	-- For AG Casino
 	INSERT INTO #DataTmp(TransDate, CustId, Recommend, CurrencyId, ProductId)
 	SELECT CAST(TransDate AS DATE) AS TransDate, b.CustID, b.recommend, b.currency, 10 AS ProductId
