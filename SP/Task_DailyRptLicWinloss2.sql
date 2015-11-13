@@ -1,5 +1,10 @@
 ﻿USE [bodb02]
 GO
+/****** Object:  StoredProcedure [dbo].[Task_DailyRptLicWinloss2]    Script Date: 11/13/2015 12:47:53 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
 	@winlostdate DATETIME
@@ -26,6 +31,7 @@ Revisions:
 	- 20150702@Patrick: Support BetTrade
 	- 20150824@Patrick: Not category BA's bettrade ticket
 	- 20150909@Patrick: Changes the way generate data from bettrans instead bettrans14
+	- 20151113@Jim: separate Microgaming into 2 products
  */
 
 SET NOCOUNT ON 
@@ -105,7 +111,8 @@ SELECT @winlostdate
 		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
 		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
 		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
-		WHEN bettype BETWEEN 2001 AND 2099 THEN 203
+		WHEN bettype BETWEEN 2001 AND 2007 THEN 203
+		WHEN bettype BETWEEN 2008 AND 2009 THEN 205
 		ELSE 0 END sporttype
 	,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END bettype
 	--114: half win, 115: half lose
@@ -150,7 +157,8 @@ GROUP BY
 		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
 		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
 		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
-		WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- Microgame
+		WHEN bettype BETWEEN 2001 AND 2007 THEN 203
+		WHEN bettype BETWEEN 2008 AND 2009 THEN 205
 		ELSE 0 END
 	,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END
 	,CASE 
