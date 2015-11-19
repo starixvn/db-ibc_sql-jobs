@@ -87,26 +87,7 @@ BEGIN
 	IF @@ROWCOUNT > 0 RETURN
 	PRINT 'Continue'
 
-	--------------------
-
-	DELETE TOP (250000)
-	FROM dbo.bettransLC14
-	WHERE winlostdate = @winlostdate
 	
-	IF @@ROWCOUNT > 0 RETURN
-	PRINT 'Continue'
-
-	---------------------
-
-	DELETE TOP (250000)
-	FROM dbo.bettransRNG14
-	WHERE winlostdate = @winlostdate
-	
-	IF @@ROWCOUNT > 0 RETURN
-	PRINT 'Continue'
-
-	--------------------
-
 	CREATE TABLE #btm (rn int PRIMARY KEY IDENTITY(1,1), transid int)
 
 	IF @@SERVERNAME LIKE 'DB04%'
@@ -178,6 +159,31 @@ BEGIN
 		COMMIT TRANSACTION
 	END
 
+	
+	SET @rc = 1
+	WHILE @RC > 0
+	BEGIN
+		BEGIN TRANSACTION
+		DELETE TOP (5000)
+		FROM bettransLC14 WITH (ROWLOCK)
+		WHERE winlostdate = @winlostdate
+
+		SET @rc = @@ROWCOUNT
+		COMMIT TRANSACTION
+	END
+
+	
+	SET @rc = 1
+	WHILE @RC > 0
+	BEGIN
+		BEGIN TRANSACTION
+		DELETE TOP (5000)
+		FROM bettransRNG14 WITH (ROWLOCK)
+		WHERE winlostdate = @winlostdate
+
+		SET @rc = @@ROWCOUNT
+		COMMIT TRANSACTION
+	END
 
 	IF EXISTS (select * from dbo.sysobjects where name = 'bettranssum') 
 	BEGIN
