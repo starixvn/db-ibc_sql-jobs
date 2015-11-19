@@ -73,6 +73,11 @@ AS (
 			WHEN BA.transid IS NOT NULL
 				THEN 1
 			END AS isBA
+		,CASE WHEN a.statusID IN (112,113) 
+		  THEN SUM(ABS(a.winlost-a.actual_stake)) 
+		  ELSE 0
+		  END BetEffective
+		  
 		--,sum(awinlost) awinlost
 		--,sum(comm) comm
 	FROM dbo.bettrans14 a WITH (NOLOCK)
@@ -114,6 +119,7 @@ AS (
 			WHEN BA.transid IS NOT NULL
 				THEN 1
 			END
+		,a.statusID		
 	)
 	,cte_raceinfo
 AS (
@@ -176,6 +182,7 @@ SELECT a.CustID
 	,winlostdate
 	,sum(a.betcount) betcount
 	,a.isba
+	,SUM(BetEffective)
 	--,sum(awinlost) awinlost
 	--,sum(comm) comm
 FROM cte_bettrans a
