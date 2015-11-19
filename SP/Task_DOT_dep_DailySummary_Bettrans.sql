@@ -193,7 +193,7 @@ BEGIN
 			--inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
 			INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend AND s.Currency = tl.currency
 	   WHERE tl.winlostdate >= @date  
-			 and tl.productID = 202
+			 and tl.productID IN (202,203)
 	   GROUP BY tl.custid,tl.currency,tl.recommend,tl.mrecommend,tl.srecommend
 	  
 	   
@@ -553,7 +553,7 @@ BEGIN
 			--inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
 			INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend AND s.Currency = tl.currency
 	   WHERE tl.winlostdate >= @date  
-			 and tl.productID = 202
+			 and tl.productID IN (202,203)
 	   GROUP BY tl.custid, tl.productID, tl.currency
 	UNION ALL -- Micro Gamming RNG
 		SELECT @date AS winlostdate
