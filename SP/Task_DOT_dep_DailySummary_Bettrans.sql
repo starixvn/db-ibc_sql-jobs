@@ -1,6 +1,6 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DOT_dep_DailySummary_Bettrans]    Script Date: 09/28/2015 13:48:14 ******/
+ 
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -50,7 +50,7 @@ AS
   - 20150630@Patrick: #38387: Support bettrade
   - 20150911@Jim: add MicroGaming RNG
   - 20150921@Jim: Implement the changes on reports for AG Casino (#43172)
-
+  - 20151119@Jim: separate MicroGame into 2 product (#46454 )
  Param's Explanation:  
 
  ? @winlostdate: The date need to summary  
@@ -443,7 +443,8 @@ BEGIN
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sport
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- MicroGaming
+			WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
+			WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
 			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
@@ -476,7 +477,8 @@ BEGIN
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299  THEN 180 --Virtual Sport
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- MicroGaming
+			WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
+			WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
 			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
@@ -556,7 +558,7 @@ BEGIN
 	UNION ALL -- Micro Gamming RNG
 		SELECT @date AS winlostdate
 		,g.custid   
-		,203 AS sporttype
+		,205 AS sporttype
 		,g.currency
 		,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then stake ELSE 0 END) AS turnover
 		,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then 1 ELSE 0 END) AS Betcount

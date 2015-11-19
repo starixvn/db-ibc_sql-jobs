@@ -62,6 +62,11 @@ AS (
 			WHEN BA.transid IS NULL THEN 0
 			WHEN BA.transid IS NOT NULL THEN 1
 			END AS isBA
+		,CASE WHEN a.statusID IN (112,113) 
+		  THEN SUM(ABS(a.winlost-a.actual_stake)) 
+		  ELSE 0
+		  END BetEffective
+		  
 	--,sum(awinlost) awinlost  
 	--,sum(comm) comm  
 	FROM dbo.bettrans a WITH (NOLOCK)
@@ -102,6 +107,7 @@ AS (
 			WHEN BA.transid IS NULL THEN 0
 			WHEN BA.transid IS NOT NULL THEN 1
 			END
+		,a.statusID		
 	)
 	,cte_raceinfo
 AS (
@@ -136,6 +142,7 @@ SELECT a.CustID
 		WHEN a.bettype BETWEEN 1501
 				AND 1599 THEN 202 -- Keno  
 		WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 151
+		
 		ELSE isNULL(b.sporttype, 0)
 		END sporttype
 	,a.Currency
@@ -159,8 +166,7 @@ SELECT a.CustID
 	,winlostdate
 	,sum(a.betcount) betcount
 	,a.isba
---,sum(awinlost) awinlost  
---,sum(comm) comm  
+	,SUM(BetEffective)
 FROM cte_bettrans a
 	LEFT JOIN dbo.match b WITH (NOLOCK)
 	ON a.matchid = b.matchid
