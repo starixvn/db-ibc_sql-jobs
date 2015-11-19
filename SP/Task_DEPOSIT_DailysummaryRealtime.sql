@@ -144,7 +144,7 @@ INSERT INTO #tempDepWinlost_staging (winlostdate, custid, currency, recommend, m
 	WHERE tl.winlostdate >= @date  
 		  and tl.custid in (select custid from @TempCustID)
 		  and tl.custid <> 0
-		  and tl.productID = 202
+		  and tl.productID IN (202,203)
 	GROUP BY tl.custid,tl.currency,tl.recommend,tl.mrecommend,tl.srecommend
 	UNION
 	SELECT @date AS winlostdate
@@ -159,7 +159,7 @@ INSERT INTO #tempDepWinlost_staging (winlostdate, custid, currency, recommend, m
 	WHERE g.winlostdate >= @date  
 		  and g.custid in (select custid from @TempCustID)
 		  and g.custid <> 0
-	GROUP BY g.custid,g.currency,g.recommend,g.mrecommend,g.srecommend;
+	GROUP BY g.custid,g.currency,g.recommend,g.mrecommend,g.srecommend 
 	UNION
 	SELECT @date AS winlostdate
 		,g.custid
@@ -322,7 +322,7 @@ INSERT INTO #tempDepWinlostByProduct_staging (winlostdate,custid,sporttype,curre
    WHERE tl.winlostdate >= @date  
 		 and custid in (select custid from @TempCustID)
 		 and custid <> 0
-		 and tl.productID = 202
+		 and tl.productID IN( 202,203)
    GROUP BY tl.custid, tl.productID,tl.currency
    UNION 
    SELECT @date AS winlostdate
