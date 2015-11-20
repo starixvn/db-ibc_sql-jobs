@@ -210,7 +210,7 @@ BEGIN
 				  --inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
 				  INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend AND s.Currency = tl.currency
 			WHERE tl.winlostdate <= @date  
-				  and tl.productID = 202
+				  and tl.productID IN (202,203)
 			GROUP BY tl.custid
 	   ) a
 	   ON t.winlostdate = a. winlostdate and t.custid = a.custid
@@ -612,10 +612,10 @@ BEGIN
 	--insert additional Keno's product OpeningBalance, turnover, Outstanding, ClosingBalance
 	MERGE bodb_Report.dbo.rptDepWinlost AS target
 	USING (SELECT s.winlostdate, s.custid, s.currency, s.recommend, s.mrecommend, s.srecommend,
-				  s.OpeningBalance, s.turnover, s.outstanding, MIN(e.ActualRate) FROM #tempDepWinlost s
+				  SUM(s.OpeningBalance), SUM(s.turnover), SUM(s.outstanding), MIN(e.ActualRate) FROM #tempDepWinlost s
 				  inner join exchangedailyoanda e with(nolock) on s.currency = e.ExchangeId and e.ExchangeDate = s.winlostdate
-		   GROUP BY s.winlostdate, s.custid, s.currency, s.recommend, s.mrecommend, s.srecommend,
-				  s.OpeningBalance, s.turnover, s.outstanding) 
+		   GROUP BY s.winlostdate, s.custid, s.currency, s.recommend, s.mrecommend, s.srecommend
+				   ) 
 		   AS source (winlostdate, custid, currency, recommend, mrecommend, srecommend, OpeningBalance, turnover, outstanding, actualrate)
 			ON (target.winlostdate = source.winlostdate AND target.custid = source.custid)
 		WHEN MATCHED THEN 
@@ -646,7 +646,9 @@ BEGIN
 
 	--insert additional Keno's product Outstanding, turnover, betcount
 	MERGE bodb_Report.dbo.rptDepWinlostByProduct AS target
-	USING (SELECT s.winlostdate, s.custid, s.sporttype, s.currency, s.turnover, s.betcount, s.outstanding FROM #tempDepWinlostByProduct s) 
+	USING (SELECT s.winlostdate, s.custid, s.sporttype, s.currency, SUM(s.turnover), SUM(s.betcount), SUM(s.outstanding) FROM #tempDepWinlostByProduct s
+				GROUP BY s.winlostdate, s.custid, s.sporttype, s.currency
+				) 
 		   AS source (winlostdate, custid, sporttype, currency, turnover, betcount,outstanding)
 		ON (target.winlostdate = source.winlostdate AND target.custid = source.custid AND target.sporttype = source.sporttype)
 		WHEN MATCHED THEN 
