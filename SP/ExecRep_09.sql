@@ -1,32 +1,48 @@
 USE [bodb02]
 GO
-
-/****** Object:  StoredProcedure [dbo].[ExecRep_09]    Script Date: 02/01/2015 22:52:44 ******/
+/****** Object:  StoredProcedure [dbo].[ExecRep_09]    Script Date: 10/12/2015 02:45:38 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-CREATE PROCEDURE [dbo].[ExecRep_09]
+ALTER PROCEDURE [dbo].[ExecRep_09]
 	@recommend int,
 	@winlostdate smalldatetime,
 	@parlay tinyint = 0
 AS
 SET NOCOUNT ON
---Thien@20100207: manipulate the flag isMovingBet on DB06.bodb02.dbo.SystemSettings for Parlay settlement
---Vivi@20140305: add delete translog
+/*
+	Created by:[]
+	Date:
+	Task: 
+	DB: DBTXN.BODB02
+	Revisions:
+		- 20100207@Thien: manipulate the flag isMovingBet on DB06.bodb02.dbo.SystemSettings for Parlay settlement
+		- 20140305@Vivi: add delete translog
+		- 20151012@Sophia: Add delete BettransLC and BettransRNG 
+    
+ */
 
 IF @parlay = 29
 BEGIN
 
 	if exists (select * from dbo.sysobjects where name = 'betParlayResult')
 	BEGIN
+		Declare @refNos TABLE (refno bigint PRIMARY KEY)
+		INSERT INTO @refNos
+		SELECT refno
+		FROM dbo.bettrans14 with (nolock)
+		WHERE winlostdate <= @winlostdate AND bettype = 29
+	
 		DELETE FROM dbo.betParlayResult WITH(ROWLOCK, UPDLOCK)
-		WHERE winlostdate <= @winlostdate
+		WHERE
+			--winlostdate <= @winlostdate
+			RefNo IN (SELECT RefNo FROM @refNos)
 		
 		DELETE FROM dbo.betParlayDetail WITH(ROWLOCK, UPDLOCK)
-		WHERE winlostdate <= DATEADD(day, -14, @winlostdate)
+		WHERE
+			winlostdate <= DATEADD(day, -14, @winlostdate)
+			--RefNo IN (SELECT RefNo FROM @refNos)
 	END
 	
 	RETURN
@@ -75,6 +91,13 @@ BEGIN
 
 	DELETE FROM translog WITH(ROWLOCK, UPDLOCK)
 	WHERE recommend = @recommend AND winlostdate = @winlostdate
+		
+	DELETE FROM bettransLC WITH(ROWLOCK, UPDLOCK)
+	WHERE recommend = @recommend AND winlostdate = @winlostdate  
+
+	DELETE FROM bettransRNG WITH(ROWLOCK, UPDLOCK)
+	WHERE recommend = @recommend AND winlostdate = @winlostdate 
+
 END
 IF @parlay = 1
 BEGIN
@@ -137,8 +160,4 @@ DROP TABLE #m
 
 
 GO
-
 GRANT VIEW DEFINITION ON [dbo].[ExecRep_09] TO [vnteam] AS [dbo]
-GO
-
-

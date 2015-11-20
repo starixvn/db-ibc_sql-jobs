@@ -47,6 +47,7 @@ Revisions:
 	- 20150619@Sophia: Add 1 more bettype for Gold Deluxe, AG Casino and Vegas Game [#37683]
 	- 20150721@Sophia: Apply Microgaming product in sum_winloss table [#39772]
 	- 20150914@Sophia: Apply Colosuss Bets and expand the range of AG Casino product in sum_winloss table [#39772]
+	- 20151118@Sophia: Apply Microgaming - RNG Casino [RedmineId: #46450]
  */
 
 SET NOCOUNT ON
@@ -466,7 +467,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2099 THEN 203 --- Microgaming
+			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
+			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
@@ -496,7 +498,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2099 THEN 203 --- Microgaming
+			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
+			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
@@ -540,7 +543,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2099 THEN 203 --- Microgaming
+			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
+			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
@@ -572,7 +576,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2099 THEN 203 --- Microgaming
+			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
+			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
@@ -617,7 +622,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2099 THEN 203 --- Microgaming
+			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
+			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
@@ -649,7 +655,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2099 THEN 203 --- Microgaming
+			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
+			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
@@ -694,7 +701,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2099 THEN 203 --- Microgaming
+			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
+			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
@@ -726,7 +734,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2099 THEN 203 --- Microgaming
+			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
+			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
