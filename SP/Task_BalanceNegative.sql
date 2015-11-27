@@ -11,6 +11,7 @@ AS
 		- 20150316@Elodie: Support Negative Balance function for more licensee ('12Bet', 'asiabet88', 'mansion88', 'Mayfair') [Red:#30840]
 		- 20150624@Elodie: Add Bodog Licensee (Licenseeid = 14)
 		- 20150917@Elodie: Support Negative Balance function for all licensee [Red:#43705]
+		- 20151126@Elodie: Remove BetTrade accounts in Negative Balance process [Red:#36480]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -78,7 +79,8 @@ BEGIN
 					INNER JOIN CustDB.dbo.CustInfo c WITH (NOLOCK) ON bn.CustID = c.custid
 					INNER JOIN #tmpRecommend ag ON c.recommend = ag.custid
 			WHERE	bn.MatchID IN (SELECT MatchID FROM @tmpMatch ) 
-					AND bn.StatusID = 0 AND c.roleid = 1														
+					AND bn.StatusID = 0 AND c.roleid = 1	
+					AND NOT EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.BetTradeCust WHERE CustID = bn.CustID)													
 		END
 
 		UPDATE dbo.BalanceNegative WITH(UPDLOCK,ROWLOCK)
