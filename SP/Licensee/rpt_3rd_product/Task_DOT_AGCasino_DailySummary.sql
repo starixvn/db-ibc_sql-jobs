@@ -1,15 +1,4 @@
-USE [bodb02]
-GO
-
-/****** Object:  StoredProcedure [dbo].[Task_DOT_AGCasino_DailySummary]    Script Date: 02/01/2015 23:09:53 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DOT_AGCasino_DailySummary    Script Date: 11/24/2014 10:49:04 AM ******/
-CREATE PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
+ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
 	@winlostdate DATETIME
 AS
 /*   
@@ -20,6 +9,7 @@ Original:
 Revisions:
 	- 20141017@Victor: remove RAISEERROR statement to avoid affection to rptDepWinlost Summary job
 	- 20141121@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
+	- 20151005@Don: Add filter by status
 Param's Explanation:
 	- @winlostdate: The date need to summary
 */  
@@ -55,6 +45,7 @@ BEGIN TRY
 			ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount
 		FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino b WITH (ROWLOCK)
 		WHERE Winlostdate = @winlostdate
+			AND StatusId IN (111, 112, 113)
 		GROUP BY b.CustID, b.currency, isVIPGame
 	END
 	ELSE -- Get data in bettrans_AGCasino_bk table
@@ -72,6 +63,7 @@ BEGIN TRY
 			ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount
 		FROM bodb_archive.dbo.bettrans_AGCasino_bk b WITH (ROWLOCK)
 		WHERE Winlostdate = @winlostdate
+			AND StatusId IN (111, 112, 113)
 		GROUP BY b.CustID, b.currency, isVIPGame
 	END
 
@@ -92,6 +84,3 @@ BEGIN CATCH
 	PRINT 'Error occured in AGCasino summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
-GO
-
-

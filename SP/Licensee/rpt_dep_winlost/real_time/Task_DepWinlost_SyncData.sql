@@ -1,17 +1,8 @@
 USE [bodb02]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_DepWinlost_SyncData]    Script Date: 01/20/2015 23:57:59 ******/
-SET ANSI_NULLS ON
-GO
 
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DepWinlost_SyncData    Script Date: 11/26/2014 1:05:11 PM ******/
-
-
-CREATE PROCEDURE [dbo].[Task_DepWinlost_SyncData]	
+ALTER PROCEDURE [dbo].[Task_DepWinlost_SyncData]	
 AS
 /*   
  Task : arrange bettransDEP data
@@ -115,5 +106,3 @@ BEGIN
 	SET NOCOUNT OFF
 END
 GO
-
-

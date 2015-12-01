@@ -1,15 +1,11 @@
 USE [bodb_Report]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_rptDepwinlost_PlaytechCS_MERGE]    Script Date: 01/27/2015 04:20:31 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-/****** Object:  Stored Procedure dbo.Task_rptDepwinlost_PlaytechCS_MERGE    Script Date: 5/28/2014 10:12:58 AM ******/
-CREATE PROCEDURE [dbo].[Task_rptDepwinlost_PlaytechCS_MERGE] 		
+ALTER PROCEDURE [dbo].[Task_rptDepwinlost_PlaytechCS_MERGE] 		
 	@strXML varchar(max)
 AS
 /*   
@@ -90,6 +86,3 @@ FROM #TEMP
 
 DROP TABLE #TEMP
 SET NOCOUNT OFF
-GO
-
-

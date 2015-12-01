@@ -1,14 +1,11 @@
 USE [bodb_Report]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_rptDepWinlost_Transfer3rdOthers_MERGE]    Script Date: 01/27/2015 04:20:24 ******/
+/****** Object:  StoredProcedure [dbo].[Task_rptDepWinlost_Transfer3rdOthers_MERGE]    Script Date: 04/09/2014 21:17:11 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-CREATE PROCEDURE [dbo].[Task_rptDepWinlost_Transfer3rdOthers_MERGE] 	
+ALTER PROCEDURE [dbo].[Task_rptDepWinlost_Transfer3rdOthers_MERGE] 	
 	@strXML varchar(MAX)
 AS
 /*   
@@ -67,6 +64,3 @@ INSERT INTO dbo.rptDepWinlost_Transfer3rdOthers(winlostdate,CustId,Currency,Part
 DROP TABLE #TEMP
 
 SET NOCOUNT OFF
-GO
-
-

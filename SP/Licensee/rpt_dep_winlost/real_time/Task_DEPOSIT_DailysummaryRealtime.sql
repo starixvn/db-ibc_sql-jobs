@@ -22,8 +22,8 @@ AS
   - 20150625@Patrick: #37769: Exclude cancel transfer tickets for AG Casino (merge)
   - 20150630@Patrick: #38387: Support bettrade
   - 20150911@Jim: add MicroGaming RNG
-  - 20150911@Jim: add MicroGaming RNG
-  - 20151119@Jim: separate MicroGame into 2 product (#46454 )
+  - 20150921@Jim: Implement the changes on reports for AG Casino (#43172)
+  
   
  Param's Explanation:  
  • @winlostdate: The date need to summary  
@@ -32,6 +32,7 @@ SET NOCOUNT ON
 declare @date datetime  
 select @date = @winlostdate
   
+
   
 IF EXISTS(SELECT 1 FROM DBACC.bodb02.dbo.SystemSettings WITH(NOLOCK) WHERE VValue = 1 AND VName = 'isCalculatingDEPdata')
 BEGIN
@@ -144,7 +145,7 @@ INSERT INTO #tempDepWinlost_staging (winlostdate, custid, currency, recommend, m
 	WHERE tl.winlostdate >= @date  
 		  and tl.custid in (select custid from @TempCustID)
 		  and tl.custid <> 0
-		  and tl.productID IN (202,203)
+		  and tl.productID = 202
 	GROUP BY tl.custid,tl.currency,tl.recommend,tl.mrecommend,tl.srecommend
 	UNION
 	SELECT @date AS winlostdate
@@ -159,7 +160,7 @@ INSERT INTO #tempDepWinlost_staging (winlostdate, custid, currency, recommend, m
 	WHERE g.winlostdate >= @date  
 		  and g.custid in (select custid from @TempCustID)
 		  and g.custid <> 0
-	GROUP BY g.custid,g.currency,g.recommend,g.mrecommend,g.srecommend 
+	GROUP BY g.custid,g.currency,g.recommend,g.mrecommend,g.srecommend
 	UNION
 	SELECT @date AS winlostdate
 		,g.custid
@@ -210,8 +211,7 @@ SELECT
 		WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 		WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport		
 		WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-		WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
-		WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
+		WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- MicroGaming
 		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
 		WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 		WHEN bettype = 902 THEN -3 -- BetTrade - Bought
@@ -244,9 +244,8 @@ GROUP BY b.custid,
 		WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 		WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport
 		WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-		WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
-		WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
-		WHEN bettype BETWEEN 1800 AND 1899 THEN 250
+		WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- MicroGaming
+		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
 		WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 		WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 		WHEN bettype = 903 THEN -4 -- BetTrade - Commission
@@ -322,12 +321,12 @@ INSERT INTO #tempDepWinlostByProduct_staging (winlostdate,custid,sporttype,curre
    WHERE tl.winlostdate >= @date  
 		 and custid in (select custid from @TempCustID)
 		 and custid <> 0
-		 and tl.productID IN( 202,203)
+		 and tl.productID = 202
    GROUP BY tl.custid, tl.productID,tl.currency
    UNION 
    SELECT @date AS winlostdate
 	,g.custid   
-    ,g.productID AS sporttype
+    ,203 AS sporttype
     ,g.currency
 	,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then stake ELSE 0 END) AS turnover
 	,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then 1 ELSE 0 END) AS Betcount
@@ -338,8 +337,8 @@ INSERT INTO #tempDepWinlostByProduct_staging (winlostdate,custid,sporttype,curre
 		 and custid in (select custid from @TempCustID)
 		 and custid <> 0
 		 
-   GROUP BY g.custid, g.productID,g.currency
-	 UNION 
+   GROUP BY g.custid,  g.currency
+   UNION 
    SELECT @date AS winlostdate
 	,lc.custid   
     ,250 AS sporttype
@@ -354,6 +353,7 @@ INSERT INTO #tempDepWinlostByProduct_staging (winlostdate,custid,sporttype,curre
 		 and custid <> 0
 		 
    GROUP BY lc.custid, lc.currency;
+
 --insert additional Keno's product Outstanding, turnover, betcount
 MERGE dbo.rptDepWinlostByProduct_staging AS target
 USING (SELECT s.winlostdate, s.custid, s.sporttype, s.currency, s.turnover, s.betcount, s.outstanding FROM #tempDepWinlostByProduct_staging s) 

@@ -1,15 +1,4 @@
-USE [bodb02]
-GO
-
-/****** Object:  StoredProcedure [dbo].[Task_DOT_PlaytechCS_DailySummary]    Script Date: 02/01/2015 23:09:29 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DOT_PlaytechCS_DailySummary    Script Date: 10/17/2014 3:30:47 PM ******/
-CREATE PROCEDURE [dbo].[Task_DOT_PlaytechCS_DailySummary]
+ALTER PROCEDURE [dbo].[Task_DOT_PlaytechCS_DailySummary]
 	@winlostdate datetime
 AS
 /*   
@@ -105,6 +94,3 @@ BEGIN CATCH
 	PRINT 'Error occured in PlaytechCasino summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
-GO
-
-

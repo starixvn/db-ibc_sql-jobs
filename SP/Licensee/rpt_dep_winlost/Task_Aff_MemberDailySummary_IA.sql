@@ -1,15 +1,12 @@
 USE [bodb02]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_Aff_MemberDailySummary_IA]    Script Date: 01/21/2015 03:32:18 ******/
+/****** Object:  StoredProcedure [dbo].[Task_Aff_MemberDailySummary_IA]    Script Date: 04/09/2014 21:05:51 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
 /****** Object:  Stored Procedure dbo.Task_Aff_MemberDailySummary_IA    Script Date: 3/15/2013 2:07:21 PM ******/
-CREATE PROCEDURE [dbo].[Task_Aff_MemberDailySummary_IA]  
+ALTER PROCEDURE [dbo].[Task_Aff_MemberDailySummary_IA]  
  @winlostdate datetime  
 AS  
 /*  
@@ -25,7 +22,7 @@ AS
      20130307@Peter:  Get data from  DB052.bodb_Licensee  
   
  Param's Explanation:  
- • @winlostdate: The data need to summary  
+ â€¢ @winlostdate: The data need to summary  
 */  
   
 -- HARD CODE: not cal before 1st June 2011 (Start time to support Income Access Platform)  
@@ -357,12 +354,3 @@ WHERE  Deposit<>0 or
   
 drop table #Data  
 drop table #Member
-GO
-
-GRANT EXECUTE ON [dbo].[Task_Aff_MemberDailySummary_IA] TO [vnteam] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[Task_Aff_MemberDailySummary_IA] TO [vnteam] AS [dbo]
-GO
-
-

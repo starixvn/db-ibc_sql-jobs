@@ -1,17 +1,8 @@
 USE [bodb02]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_DailyArchiveRptDepWinlost]    Script Date: 01/22/2015 00:04:40 ******/
-SET ANSI_NULLS ON
-GO
 
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DailyArchiveRptDepWinlost    Script Date: 11/24/2014 10:49:04 AM ******/
-
-
-CREATE PROCEDURE [dbo].[Task_DailyArchiveRptDepWinlost]
+ALTER PROCEDURE [dbo].[Task_DailyArchiveRptDepWinlost]
 AS
 
 /*   
@@ -23,6 +14,7 @@ Revisions:
 	-- 20120911@Viet: add new product by bettype
 	-- 20130705@Don: add table rptDepWinlost_Transfer3rdOthers
 	-- 20141120@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
+	-- 20150713@Patrick: Support bettrade
 */  
 
 DECLARE @winlostdate SMALLDATETIME, @todate SMALLDATETIME
@@ -38,11 +30,11 @@ BEGIN
 		INSERT INTO bodb_report.dbo.rptDepWinlost_bk (
 			winlostdate, custid, currency, OpeningBalance, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover, Outstanding, Winloss, 
 			ClosingBalance, recommend, mrecommend, srecommend, actualrate, Transfer3rd, DrawGame, Turnover_tdate, Turnover_BA, Comm_BA, 
-			AmountDueTo_BA, playercomm, Transfer3rdOthers
+			AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade
 		)
 		SELECT winlostdate, custid, currency, OpeningBalance, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover, Outstanding, Winloss, 
 			ClosingBalance, recommend, mrecommend, srecommend, actualrate, Transfer3rd, DrawGame, Turnover_tdate, Turnover_BA, Comm_BA, 
-			AmountDueTo_BA, playercomm, Transfer3rdOthers
+			AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade
 		FROM bodb_report.dbo.rptDepWinlost WITH(nolock)
 		WHERE WINLOSTDATE = @winlostdate
 
@@ -87,5 +79,3 @@ BEGIN
 	SELECT @winlostdate = DATEADD(dd, 1, @winlostdate)	
 END
 GO
-
-

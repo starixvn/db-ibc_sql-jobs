@@ -1,15 +1,12 @@
-USE [bodb02]
+﻿USE [bodb02]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_DailyRptLicIPBetting]    Script Date: 01/27/2015 02:03:05 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DailyRptLicIPBetting_xtest]    Script Date: 12/24/2014 02:21:28 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
 /****** Object:  Stored Procedure dbo.Task_DailyRptLicIPBetting    Script Date: 10/22/2012 2:48:58 PM ******/
-CREATE PROCEDURE [dbo].[Task_DailyRptLicIPBetting]
+ALTER PROCEDURE [dbo].[Task_DailyRptLicIPBetting]
 	@winlostdate DATETIME
 AS
 /*
@@ -18,10 +15,8 @@ Date: 2012-05-30
 Task: daily summary IP betting for Licensee
 DB: DB052.BODB02
 Revisions:
-	@20141211: Improve performance, support gen from bettrans14 only
-	
+	20141211@Daniel:: Improve performance, support gen from bettrans14 only
 
-[Task_DailyRptLicIPBetting_xtest] '2014-12-6'   
  */
 
 SET NOCOUNT ON 
@@ -83,13 +78,7 @@ SELECT @winlostdate,l.LicenseeID, bc.CountryShort, bettrans.currency,bettrans.cu
 			ELSE bettrans.statusID END 
 		
 
-
 GO
-
 GRANT EXECUTE ON [dbo].[Task_DailyRptLicIPBetting] TO [vnteam] AS [dbo]
 GO
-
 GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicIPBetting] TO [vnteam] AS [dbo]
-GO
-
-

@@ -1,14 +1,11 @@
 USE [bodb02]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_DOT_Dep_DailySummary_FULL]    Script Date: 01/21/2015 02:16:04 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DOT_Dep_DailySummary_FULL]    Script Date: 04/09/2014 20:18:21 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-CREATE PROCEDURE [dbo].[Task_DOT_Dep_DailySummary_FULL]
+ALTER PROCEDURE [dbo].[Task_DOT_Dep_DailySummary_FULL]
 	@winlostdate datetime
 AS
 
@@ -18,7 +15,7 @@ AS
 	Date: 
 		             
 	Param's Explanation:
-	• @winlostdate: The date need to summary
+	â€¢ @winlostdate: The date need to summary
 	
 	Revisions:	
 		- 20110810@DAniel: Add summary TST data
@@ -58,14 +55,4 @@ BEGIN
 		--EXEC [dbo].[Task_DOT_dep_DailySummaryBA14] @winlostdate
 	END
 END
-
-
-
-
-
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[Task_DOT_Dep_DailySummary_FULL] TO [vnteam] AS [dbo]
-GO
-
 
