@@ -1,14 +1,15 @@
-USE [bodb_licensee]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[GET_DepositDataToValidate_CustomerMatch]    Script Date: 13/03/2014 9:22:29 AM ******/
-SET ANSI_NULLS ON
+SET ANSI_NULLS ON 
 GO
-SET QUOTED_IDENTIFIER ON
-GO
+
+/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_CustomerMatch    Script Date: 12/1/2015 2:38:00 AM ******/
+/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_CustomerMatch    Script Date: 12/02/2015 09:52:23 AM ******/
 
 /****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_Betting    Script Date: 3/26/2013 4:34:06 PM ******/
 
-ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_CustomerMatch] 
+CREATE PROCEDURE [dbo].[GET_DepositDataToValidate_CustomerMatch] 
 	@Date SMALLDATETIME		= NULL
 	, @DrawFilter TINYINT	= 1
 
@@ -159,8 +160,18 @@ SELECT 3, @SbBetCount, @RbBetCount, @NgBetCount, @BaBetCount, @CsBetCount
 
 DROP TABLE #DATA
 SET NOCOUNT OFF
+GO
 
+SET QUOTED_IDENTIFIER OFF 
 GO
-GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerMatch] TO [bodbLicenseeNet] 
-GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_CustomerMatch] TO [vnteam] 
+SET ANSI_NULLS ON 
 GO
+
+
+GO 
+ GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerMatch] TO [vnteam]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_CustomerMatch] TO [vnteam]
+GO 
+ GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerMatch] TO [bodbLicenseeNet]
+GO 

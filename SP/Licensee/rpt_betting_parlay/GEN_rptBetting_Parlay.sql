@@ -4,7 +4,8 @@ GO
 SET ANSI_NULLS ON 
 GO
 
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_Parlay    Script Date: 9/15/2015 4:14:02 PM ******/
+/****** Object:  Stored Procedure dbo.GEN_rptBetting_Parlay    Script Date: 12/1/2015 2:38:00 AM ******/
+/****** Object:  Stored Procedure dbo.GEN_rptBetting_Parlay    Script Date: 9/23/2015 10:44:42 AM ******/
 CREATE PROCEDURE [dbo].[GEN_rptBetting_Parlay] 
 	@date SMALLDATETIME = NULL
 	,@date2 SMALLDATETIME = NULL
@@ -164,7 +165,6 @@ BEGIN
 		,b.livehomescore
 		,b.isBA
 END
-
 GO
 
 SET QUOTED_IDENTIFIER OFF 

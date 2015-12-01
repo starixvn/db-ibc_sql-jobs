@@ -1,13 +1,10 @@
-USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_rptCustomerMatch_Bettrans14]    Script Date: 01/27/2015 02:16:06 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.Task_rptCustomerMatch_Bettrans14    Script Date: 12/1/2015 2:38:00 AM ******/
 /****** Object:  Stored Procedure dbo.Task_rptCustomerMatch_Bettrans14    Script Date: 11/26/2014 1:05:13 PM ******/
 
 
@@ -196,4 +193,10 @@ GROUP BY a.CustID
 	,a.currency
 GO
 
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
 
+
+GO 

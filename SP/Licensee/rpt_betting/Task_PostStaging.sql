@@ -1,13 +1,10 @@
-USE [bodb_Licensee]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_PostStaging]    Script Date: 01/19/2015 04:00:02 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.Task_PostStaging    Script Date: 12/1/2015 2:38:01 AM ******/
 CREATE PROCEDURE [dbo].[Task_PostStaging]     
 AS  
 /*
@@ -32,4 +29,10 @@ DBCC SHRINKFILE (N'DW_staging_DATA_01', 0, TRUNCATEONLY)
 
 GO
 
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
 
+
+GO 

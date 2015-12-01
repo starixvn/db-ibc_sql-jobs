@@ -1,13 +1,10 @@
-USE [bodb_Licensee]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[GEN_Customer_Account2]    Script Date: 01/19/2015 03:38:03 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.GEN_Customer_Account2    Script Date: 12/1/2015 2:38:01 AM ******/
 
 
 CREATE PROCEDURE [dbo].[GEN_Customer_Account2] 
@@ -105,4 +102,10 @@ END
 
 GO
 
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
 
+
+GO 

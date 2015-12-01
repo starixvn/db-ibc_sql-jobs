@@ -1,12 +1,13 @@
-﻿USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DailyRptLicWinloss2]    Script Date: 11/13/2015 12:47:53 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+SET ANSI_NULLS ON 
 GO
 
-ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
+/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2    Script Date: 12/1/2015 2:37:59 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2    Script Date: 11/24/2015 3:56:11 PM ******/
+
+CREATE PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
 	@winlostdate DATETIME
 AS
 /*
@@ -418,3 +419,14 @@ GROUP BY
 	,b.isBA
 	,b.isMobile
 	,b.betfrom
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicWinloss2] TO [vnteam]
+GO 

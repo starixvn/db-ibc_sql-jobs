@@ -1,11 +1,12 @@
-USE [bodb_Report]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[Task_rptDepwinlost_MERGE]    Script Date: 04/09/2014 21:16:12 ******/
-SET ANSI_NULLS ON
+SET ANSI_NULLS ON 
 GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[Task_rptDepwinlost_MERGE] 	
+
+/****** Object:  Stored Procedure dbo.Task_rptDepwinlost_MERGE    Script Date: 12/1/2015 2:38:01 AM ******/
+/****** Object:  Stored Procedure dbo.Task_rptDepwinlost_MERGE    Script Date: 8/21/2015 1:13:38 PM ******/
+CREATE PROCEDURE [dbo].[Task_rptDepwinlost_MERGE] 	
 	@cnt int,
 	@strXML varchar(MAX)
 AS
@@ -80,7 +81,7 @@ UPDATE d
 		,Turnover = s.Turnover
 		,Outstanding = s.Outstanding
 		,Winloss = s.Winloss
-		,ClosingBalance = s.openingbalance + s.Deposit + s.Aff2MemTransfer - s.Withdrawal + s.Bonus + s.Adjustment - s.Outstanding + s.Winloss + s.playercomm + s.Transfer3rd + s.transfer3rdothers - s.amountdueto_bettrade_full
+		,ClosingBalance = s.openingbalance + s.Deposit + s.Aff2MemTransfer - s.Withdrawal + s.Bonus + s.Adjustment - s.Outstanding + s.Winloss + s.playercomm + s.Transfer3rd + s.transfer3rdothers - s.comm_bettrade_full
 		--,recommend = s.recommend
 		--,mrecommend = s.mrecommend
 		--,srecommend = s.srecommend
@@ -108,10 +109,19 @@ insert into dbo.rptDepWinlost
 	turnover_ba, comm_ba, Amountdueto_ba, playercomm, Transfer3rdOthers, Comm_BetTrade, AmountDueTo_BetTrade)
 select winlostdate, custid, s.currency, OpeningBalance, Deposit, Aff2MemTransfer, Withdrawal, Bonus, Adjustment, Transfer3rd,  
 	Turnover, DrawGame, Outstanding, Winloss, recommend, mrecommend, srecommend,   
-	OpeningBalance + Deposit + Aff2MemTransfer - Withdrawal + Bonus + Adjustment - Outstanding + Winloss + playercomm + Transfer3rd - amountdueto_bettrade_full, -- closingbalance  
+	OpeningBalance + Deposit + Aff2MemTransfer - Withdrawal + Bonus + Adjustment - Outstanding + Winloss + playercomm + Transfer3rd - comm_bettrade_full, -- closingbalance  
 	e.actualrate,turnover_ba, comm_ba, Amountdueto_ba , playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade
 from #TEMP s
 	inner join bodb02.dbo.exchangedailyoanda e with(nolock) on s.currency = e.exchangeid and s.winlostdate = e.exchangedate 
 
 drop table #TEMP
 SET NOCOUNT OFF
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

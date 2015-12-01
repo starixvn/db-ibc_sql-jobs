@@ -1,13 +1,10 @@
-USE [bodb_Licensee]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[GEN_rptBetting_Parlay14]    Script Date: 01/27/2015 02:18:05 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.GEN_rptBetting_Parlay14    Script Date: 12/1/2015 2:38:01 AM ******/
 /****** Object:  Stored Procedure dbo.GEN_rptBetting_Parlay14    Script Date: 6/27/2014 1:56:20 PM ******/
 CREATE PROCEDURE [dbo].[GEN_rptBetting_Parlay14]
 						@datefrom smalldatetime=null
@@ -159,10 +156,14 @@ GROUP BY
 	b.isBA
 GO
 
-GRANT EXECUTE ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam] AS [dbo]
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
 GO
 
-GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam] AS [dbo]
-GO
 
-
+GO 
+ GRANT EXECUTE ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam]
+GO 

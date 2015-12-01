@@ -1,14 +1,15 @@
-USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DOT_dep_DailySummary_Bettrans14]    Script Date: 06/10/2015 02:53:45 ******/
-SET ANSI_NULLS ON
+SET ANSI_NULLS ON 
 GO
-SET QUOTED_IDENTIFIER ON
-GO
+
+/****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans14    Script Date: 12/1/2015 2:37:58 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans14    Script Date: 8/21/2015 1:13:20 PM ******/
 /****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans14    Script Date: 4/14/2015 10:03:51 AM ******/
 
 
-ALTER PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans14]
+CREATE PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans14]
 	@winlostdate datetime
 AS
 /*	
@@ -47,10 +48,9 @@ AS
 		- 20150625@Patrick: #37769: Remove dummy account & exclude cancel transfer tickets for AG Casino (merge)
 		- 20150630@Jim: add MicroGaming
 		- 20150630@Patrick: #38387: Support bettrade
-		 
 
 	Param's Explanation:
-	? @date: The date need to summary
+	• @date: The date need to summary
 */
 SET NOCOUNT ON
 declare @date datetime
@@ -116,8 +116,6 @@ SELECT
 	SUM( CASE WHEN winlostdate = @date AND bettype IN (p.TransferId, p.CancelTransferId) then winlost-actual_stake ELSE 0 END), --Transfer3rdOthers
 	SUM( CASE WHEN winlostdate = @date AND bettype IN (p.TransferId, p.CancelTransferId) AND (winlost-actual_stake) < 0 THEN -(winlost-actual_stake) ELSE 0 END), --Transfer3rdOthers_In
 	SUM( CASE WHEN winlostdate = @date AND bettype IN (p.TransferId, p.CancelTransferId) AND (winlost-actual_stake) > 0 THEN -(winlost-actual_stake) ELSE 0 END) --Transfer3rdOthers_Out
-	--SUM( CASE WHEN winlostdate = @date AND bettype =p.TransferId AND b.transdesc NOT LIKE '%(transfer cancelled)%' AND (winlost-actual_stake) < 0 THEN -(winlost-actual_stake) ELSE 0 END), --Transfer3rdOthers_In
-	--SUM( CASE WHEN winlostdate = @date AND bettype =p.TransferId AND b.transdesc NOT LIKE '%(transfer cancelled)%' AND (winlost-actual_stake) > 0 THEN -(winlost-actual_stake) ELSE 0 END) --Transfer3rdOthers_Out
 FROM dbo.bettrans b	with(readpast)
 	--inner join dep_custsuper s with(nolock) on s.custid = b.srecommend
 	INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = b.srecommend AND s.Currency = b.currency
@@ -377,6 +375,15 @@ DROP TABLE #DepositCustSuper
 
 SET NOCOUNT OFF
 GO
-GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans14] TO [Dot_Admin] AS [dbo]
+
+SET QUOTED_IDENTIFIER OFF 
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_DOT_dep_DailySummary_Bettrans14] TO [vnteam] AS [dbo]
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans14] TO [Dot_Admin]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_DOT_dep_DailySummary_Bettrans14] TO [vnteam]
+GO 

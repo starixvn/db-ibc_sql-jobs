@@ -1,7 +1,13 @@
-USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-ALTER PROCEDURE [dbo].[TASK_PopulateRptdepwinlost]
+/****** Object:  Stored Procedure dbo.TASK_PopulateRptdepwinlost    Script Date: 12/1/2015 2:37:57 AM ******/
+/****** Object:  Stored Procedure dbo.TASK_PopulateRptdepwinlost    Script Date: 8/21/2015 1:13:19 PM ******/
+
+CREATE PROCEDURE [dbo].[TASK_PopulateRptdepwinlost]
 AS
 /*   
  Task : transfer rptDepwinlost_staging / rptDepwinlostbyproduct_staging to DBACC.bodb_report
@@ -111,3 +117,11 @@ SET NOCOUNT ON
 		EXEC DBACC.bodb_report.dbo.Task_rptDepWinlost_PlaytechCS_MERGE @strXML = @strXML4
 SET NOCOUNT OFF
 GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

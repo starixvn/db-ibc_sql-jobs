@@ -1,12 +1,12 @@
-﻿USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DailyRptLicIPBetting_Job]    Script Date: 12/26/2014 03:26:11 ******/
-SET ANSI_NULLS ON
+SET ANSI_NULLS ON 
 GO
-SET QUOTED_IDENTIFIER ON
-GO
+
+/****** Object:  Stored Procedure dbo.Task_DailyRptLicIPBetting_Job    Script Date: 12/1/2015 2:37:59 AM ******/
 /****** Object:  Stored Procedure dbo.Task_DailyRptLicIPBetting_Job    Script Date: 6/19/2012 11:25:07 AM ******/
-ALTER PROCEDURE [dbo].[Task_DailyRptLicIPBetting_Job_xtest] 
+CREATE PROCEDURE [dbo].[Task_DailyRptLicIPBetting_Job] 
 AS
 /*	Created by: Henry 
 	Date: 2012-05-30
@@ -38,5 +38,16 @@ BEGIN
 	END
 	
 END
+
+
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicIPBetting_Job] TO [vnteam] AS [dbo]
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicIPBetting_Job] TO [vnteam]
+GO 

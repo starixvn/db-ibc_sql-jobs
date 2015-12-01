@@ -1,11 +1,11 @@
-USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DOT_Dep_DailySummary_FULL]    Script Date: 04/09/2014 20:18:21 ******/
-SET ANSI_NULLS ON
+SET ANSI_NULLS ON 
 GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[Task_DOT_Dep_DailySummary_FULL]
+
+/****** Object:  Stored Procedure dbo.Task_DOT_Dep_DailySummary_FULL    Script Date: 12/1/2015 2:37:58 AM ******/
+CREATE PROCEDURE [dbo].[Task_DOT_Dep_DailySummary_FULL]
 	@winlostdate datetime
 AS
 
@@ -56,3 +56,18 @@ BEGIN
 	END
 END
 
+
+
+
+
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_DOT_Dep_DailySummary_FULL] TO [vnteam]
+GO 

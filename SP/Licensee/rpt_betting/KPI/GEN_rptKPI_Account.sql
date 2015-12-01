@@ -1,13 +1,10 @@
-USE [bodb_Licensee]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[GEN_rptKPI_Account]    Script Date: 01/26/2015 23:39:20 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.GEN_rptKPI_Account    Script Date: 12/1/2015 2:38:01 AM ******/
 
 
 CREATE PROCEDURE [dbo].[GEN_rptKPI_Account]
@@ -343,13 +340,16 @@ exec dbo.GEN_RptKPI_MTD_Account
 
 GO
 
-GRANT EXECUTE ON [dbo].[GEN_rptKPI_Account] TO [bodbLicenseeNet] AS [dbo]
+SET QUOTED_IDENTIFIER OFF 
 GO
-
-GRANT EXECUTE ON [dbo].[GEN_rptKPI_Account] TO [vnteam] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[GEN_rptKPI_Account] TO [vnteam] AS [dbo]
+SET ANSI_NULLS ON 
 GO
 
 
+GO 
+ GRANT EXECUTE ON [dbo].[GEN_rptKPI_Account] TO [vnteam]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[GEN_rptKPI_Account] TO [vnteam]
+GO 
+ GRANT EXECUTE ON [dbo].[GEN_rptKPI_Account] TO [bodbLicenseeNet]
+GO 

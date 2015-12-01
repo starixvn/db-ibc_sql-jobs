@@ -1,11 +1,13 @@
-USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DOT_dep_DailySummary_Bettrans_xpre]    Script Date: 09/11/2015 15:49:07 ******/
-SET ANSI_NULLS ON
+SET ANSI_NULLS ON 
 GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans]
+
+/****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans    Script Date: 12/1/2015 2:37:57 AM ******/
+
+
+CREATE PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans]
 	@winlostdate datetime
 AS
 /*   
@@ -50,7 +52,7 @@ AS
   - 20150630@Patrick: #38387: Support bettrade
   - 20150911@Jim: add MicroGaming RNG
   - 20150921@Jim: Implement the changes on reports for AG Casino (#43172)
-
+  - 20151119@Jim: separate MicroGame into 2 product (#46454 )
  Param's Explanation:  
 
  ? @winlostdate: The date need to summary  
@@ -193,7 +195,7 @@ BEGIN
 			--inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
 			INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend AND s.Currency = tl.currency
 	   WHERE tl.winlostdate >= @date  
-			 and tl.productID = 202
+			 and tl.productID IN (202,203)
 	   GROUP BY tl.custid,tl.currency,tl.recommend,tl.mrecommend,tl.srecommend
 	  
 	   
@@ -210,7 +212,7 @@ BEGIN
 				  --inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
 				  INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend AND s.Currency = tl.currency
 			WHERE tl.winlostdate <= @date  
-				  and tl.productID = 202
+				  and tl.productID IN (202,203)
 			GROUP BY tl.custid
 	   ) a
 	   ON t.winlostdate = a. winlostdate and t.custid = a.custid
@@ -333,7 +335,7 @@ BEGIN
 			--inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
 			INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend AND s.Currency = tl.currency
 		WHERE tl.winlostdate <= @date  
-			  and tl.productID = 202
+			  and tl.productID IN(202,203)
 		GROUP BY tl.custid,tl.currency,tl.recommend,tl.mrecommend,tl.srecommend
 		UNION -- microgaming_RNG
 		 SELECT @date AS winlostdate
@@ -443,7 +445,8 @@ BEGIN
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sport
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- MicroGaming
+			WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
+			WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
 			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
@@ -476,7 +479,8 @@ BEGIN
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299  THEN 180 --Virtual Sport
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- MicroGaming
+			WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
+			WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
 			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
@@ -551,12 +555,12 @@ BEGIN
 			--inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
 			INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend AND s.Currency = tl.currency
 	   WHERE tl.winlostdate >= @date  
-			 and tl.productID = 202
+			 and tl.productID IN (202,203)
 	   GROUP BY tl.custid, tl.productID, tl.currency
 	UNION ALL -- Micro Gamming RNG
 		SELECT @date AS winlostdate
 		,g.custid   
-		,203 AS sporttype
+		,205 AS sporttype
 		,g.currency
 		,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then stake ELSE 0 END) AS turnover
 		,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then 1 ELSE 0 END) AS Betcount
@@ -610,10 +614,10 @@ BEGIN
 	--insert additional Keno's product OpeningBalance, turnover, Outstanding, ClosingBalance
 	MERGE bodb_Report.dbo.rptDepWinlost AS target
 	USING (SELECT s.winlostdate, s.custid, s.currency, s.recommend, s.mrecommend, s.srecommend,
-				  s.OpeningBalance, s.turnover, s.outstanding, MIN(e.ActualRate) FROM #tempDepWinlost s
+				  SUM(s.OpeningBalance), SUM(s.turnover), SUM(s.outstanding), MIN(e.ActualRate) FROM #tempDepWinlost s
 				  inner join exchangedailyoanda e with(nolock) on s.currency = e.ExchangeId and e.ExchangeDate = s.winlostdate
-		   GROUP BY s.winlostdate, s.custid, s.currency, s.recommend, s.mrecommend, s.srecommend,
-				  s.OpeningBalance, s.turnover, s.outstanding) 
+		   GROUP BY s.winlostdate, s.custid, s.currency, s.recommend, s.mrecommend, s.srecommend
+				   ) 
 		   AS source (winlostdate, custid, currency, recommend, mrecommend, srecommend, OpeningBalance, turnover, outstanding, actualrate)
 			ON (target.winlostdate = source.winlostdate AND target.custid = source.custid)
 		WHEN MATCHED THEN 
@@ -644,7 +648,9 @@ BEGIN
 
 	--insert additional Keno's product Outstanding, turnover, betcount
 	MERGE bodb_Report.dbo.rptDepWinlostByProduct AS target
-	USING (SELECT s.winlostdate, s.custid, s.sporttype, s.currency, s.turnover, s.betcount, s.outstanding FROM #tempDepWinlostByProduct s) 
+	USING (SELECT s.winlostdate, s.custid, s.sporttype, s.currency, SUM(s.turnover), SUM(s.betcount), SUM(s.outstanding) FROM #tempDepWinlostByProduct s
+				GROUP BY s.winlostdate, s.custid, s.sporttype, s.currency
+				) 
 		   AS source (winlostdate, custid, sporttype, currency, turnover, betcount,outstanding)
 		ON (target.winlostdate = source.winlostdate AND target.custid = source.custid AND target.sporttype = source.sporttype)
 		WHEN MATCHED THEN 
@@ -717,6 +723,15 @@ END
 GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [Dot_Admin] AS [dbo]
 
 GO
-GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [Dot_Admin] AS [dbo]
+
+SET QUOTED_IDENTIFIER OFF 
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [vnteam] AS [dbo]
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [Dot_Admin]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [vnteam]
+GO 

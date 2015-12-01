@@ -1,13 +1,10 @@
-USE [bodb_Licensee]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[GEN_RptKPI_MTD_Betting_3rdproduct]    Script Date: 01/28/2015 01:43:31 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.GEN_RptKPI_MTD_Betting_3rdproduct    Script Date: 12/1/2015 2:38:00 AM ******/
 /****** Object:  Stored Procedure dbo.GEN_RptKPI_MTD_Betting_3rdproduct    Script Date: 5/29/2014 1:43:33 PM ******/
 
 
@@ -132,10 +129,14 @@ END
 DROP TABLE #Betting
 GO
 
-GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Betting_3rdproduct] TO [bodbLicenseeNet] AS [dbo]
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
 GO
 
-GRANT VIEW DEFINITION ON [dbo].[GEN_RptKPI_MTD_Betting_3rdproduct] TO [vnteam] AS [dbo]
-GO
 
-
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[GEN_RptKPI_MTD_Betting_3rdproduct] TO [vnteam]
+GO 
+ GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Betting_3rdproduct] TO [bodbLicenseeNet]
+GO 

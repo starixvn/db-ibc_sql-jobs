@@ -4,7 +4,8 @@ GO
 SET ANSI_NULLS ON 
 GO
 
-/****** Object:  Stored Procedure dbo.Task_rptCustomerMatch_Bettrans    Script Date: 9/15/2015 4:14:01 PM ******/
+/****** Object:  Stored Procedure dbo.Task_rptCustomerMatch_Bettrans    Script Date: 12/1/2015 2:37:59 AM ******/
+/****** Object:  Stored Procedure dbo.Task_rptCustomerMatch_Bettrans    Script Date: 9/23/2015 10:44:40 AM ******/
 CREATE PROCEDURE [dbo].[Task_rptCustomerMatch_Bettrans] 
 	@Date SMALLDATETIME
 AS   
@@ -192,7 +193,6 @@ GROUP BY a.CustID
 	,a.currency
 
 END
-
 GO
 
 SET QUOTED_IDENTIFIER OFF 

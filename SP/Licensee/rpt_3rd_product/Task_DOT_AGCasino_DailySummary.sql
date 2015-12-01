@@ -1,4 +1,13 @@
-ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
+GO
+
+/****** Object:  Stored Procedure dbo.Task_DOT_AGCasino_DailySummary    Script Date: 12/1/2015 2:37:57 AM ******/
+
+
+CREATE PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
 	@winlostdate DATETIME
 AS
 /*   
@@ -84,3 +93,12 @@ BEGIN CATCH
 	PRINT 'Error occured in AGCasino summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

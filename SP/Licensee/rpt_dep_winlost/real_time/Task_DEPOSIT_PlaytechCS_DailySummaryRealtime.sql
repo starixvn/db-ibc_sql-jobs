@@ -1,4 +1,12 @@
-ALTER PROCEDURE [dbo].[Task_DEPOSIT_PlaytechCS_DailySummaryRealtime]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
+GO
+
+/****** Object:  Stored Procedure dbo.Task_DEPOSIT_PlaytechCS_DailySummaryRealtime    Script Date: 12/1/2015 2:37:57 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DEPOSIT_PlaytechCS_DailySummaryRealtime    Script Date: 5/28/2014 10:12:57 AM ******/
+CREATE PROCEDURE [dbo].[Task_DEPOSIT_PlaytechCS_DailySummaryRealtime]
 AS
 /*   
  Task : Summary data for PlaytechCasino and insert into rptDepWinlost_PlaytechCS (DB054 Realtime Job)
@@ -110,3 +118,12 @@ BEGIN CATCH
 	RAISERROR(15000,1,1,'Error occured in summarizing Playtech Casino data.')
 	RETURN
 END CATCH
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

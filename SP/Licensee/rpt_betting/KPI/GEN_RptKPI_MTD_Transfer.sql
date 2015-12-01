@@ -1,13 +1,10 @@
-USE [bodb_Licensee]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[GEN_RptKPI_MTD_Transfer]    Script Date: 01/28/2015 04:41:57 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.GEN_RptKPI_MTD_Transfer    Script Date: 12/1/2015 2:38:01 AM ******/
 /****** Object:  Stored Procedure dbo.GEN_RptKPI_MTD_Transfer    Script Date: 8/22/2012 11:20:22 AM ******/
 
 CREATE PROCEDURE [dbo].[GEN_RptKPI_MTD_Transfer]
@@ -49,7 +46,12 @@ INSERT INTO dbo.rptKPI_MTD_Cross
         ) f(StatID,MTD)
 GO
 
-GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Transfer] TO [bodbLicenseeNet] AS [dbo]
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
 GO
 
 
+GO 
+ GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Transfer] TO [bodbLicenseeNet]
+GO 

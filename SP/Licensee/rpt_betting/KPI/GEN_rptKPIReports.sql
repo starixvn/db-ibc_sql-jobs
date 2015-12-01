@@ -1,13 +1,10 @@
-USE [bodb_Licensee]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[GEN_rptKPIReports]    Script Date: 01/19/2015 03:41:44 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.GEN_rptKPIReports    Script Date: 12/1/2015 2:38:01 AM ******/
 CREATE PROCEDURE [dbo].[GEN_rptKPIReports]
     @genType tinyint = 0 
     ,@isBA bit = null
@@ -120,7 +117,12 @@ AS
 
 GO
 
-GRANT EXECUTE ON [dbo].[GEN_rptKPIReports] TO [bodbLicenseeNet] AS [dbo]
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
 GO
 
 
+GO 
+ GRANT EXECUTE ON [dbo].[GEN_rptKPIReports] TO [bodbLicenseeNet]
+GO 

@@ -1,6 +1,12 @@
-USE bodb_LicenseeReport
+
+SET QUOTED_IDENTIFIER ON 
 GO
-alter PROCEDURE dbo.Task_CustomerActive_GenDataForPlaytechCS_AGCasino @FromDate DATE
+SET ANSI_NULLS ON 
+GO
+
+/****** Object:  Stored Procedure dbo.Task_CustomerActive_GenDataForPlaytechCS_AGCasino    Script Date: 12/1/2015 2:38:00 AM ******/
+/****** Object:  Stored Procedure dbo.Task_CustomerActive_GenDataForPlaytechCS_AGCasino    Script Date: 3/5/2015 11:19:28 AM ******/
+CREATE PROCEDURE dbo.Task_CustomerActive_GenDataForPlaytechCS_AGCasino @FromDate DATE
 	, @ToDate DATE
 AS
 /*   
@@ -60,7 +66,14 @@ BEGIN
 
 	DROP TABLE #DataTmp
 END
+GO
 
+SET QUOTED_IDENTIFIER OFF 
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_CustomerActive_GenDataForPlaytechCS_AGCasino] TO [vnteam] AS [dbo]
+SET ANSI_NULLS ON 
 GO
+
+
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_CustomerActive_GenDataForPlaytechCS_AGCasino] TO [vnteam]
+GO 

@@ -1,18 +1,15 @@
-USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_rptCustomerTurnOver_Bettrans14]    Script Date: 01/27/2015 02:13:00 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_Bettrans14    Script Date: 12/1/2015 2:37:59 AM ******/
 /****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_Bettrans14    Script Date: 12/1/2014 12:58:52 PM ******/
 
 
 CREATE PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans14] 
-	@Date DATETIME
+	@Date SMALLDATETIME
 AS
 /*	
 	Created	: Florent Nguyen
@@ -24,6 +21,7 @@ AS
 		-20140305@Florent: Change way to get BA tickets
 		-20140315@Florent: Offer Keno sport	
 		-20141130@Jim: change the way to retrieve currency value		
+		-20150714@Francis: Adjustment to serve to change KeenOcean's currency RMB to HK$
 	Parameter's Explanation:			
 */
 SET NOCOUNT ON;
@@ -73,18 +71,13 @@ AS (
 			WHEN BA.transid IS NOT NULL
 				THEN 1
 			END AS isBA
-		,CASE WHEN a.statusID IN (112,113) 
-		  THEN SUM(ABS(a.winlost-a.actual_stake)) 
-		  ELSE 0
-		  END BetEffective
-		  
 		--,sum(awinlost) awinlost
 		--,sum(comm) comm
 	FROM dbo.bettrans14 a WITH (NOLOCK)
-	INNER JOIN bodb_licensee.dbo.LicenseeCust lc ON a.recommend = lc.custid
+	INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC ON a.recommend = lc.custid AND a.currency = lc.currency
 	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction AS BA ON a.transid = ba.transid
 	WHERE a.winlostdate =@date 
-			AND a.statusID IN (111, 112, 113)
+	  	  AND a.statusID IN (111, 112, 113)
 	GROUP BY a.matchid
 		,a.CustID
 		,a.currency
@@ -119,7 +112,6 @@ AS (
 			WHEN BA.transid IS NOT NULL
 				THEN 1
 			END
-		,a.statusID		
 	)
 	,cte_raceinfo
 AS (
@@ -182,7 +174,6 @@ SELECT a.CustID
 	,winlostdate
 	,sum(a.betcount) betcount
 	,a.isba
-	,SUM(BetEffective)
 	--,sum(awinlost) awinlost
 	--,sum(comm) comm
 FROM cte_bettrans a
@@ -236,9 +227,19 @@ GROUP BY a.CustID
 		END
 	,winlostdate
 	,a.isba
+
+
+
+
+
 GO
 
-GRANT VIEW DEFINITION ON [dbo].[Task_rptCustomerTurnOver_Bettrans14] TO [vnteam] AS [dbo]
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
 GO
 
 
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_rptCustomerTurnOver_Bettrans14] TO [vnteam]
+GO 

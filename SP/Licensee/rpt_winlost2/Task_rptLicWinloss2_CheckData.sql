@@ -1,6 +1,12 @@
-USE bodb02
+
+SET QUOTED_IDENTIFIER ON 
 GO
-ALTER PROCEDURE dbo.Task_rptLicWinloss2_CheckData @WinlostDate SMALLDATETIME
+SET ANSI_NULLS ON 
+GO
+
+/****** Object:  Stored Procedure dbo.Task_rptLicWinloss2_CheckData    Script Date: 12/1/2015 2:37:59 AM ******/
+/****** Object:  Stored Procedure dbo.Task_rptLicWinloss2_CheckData    Script Date: 9/23/2015 10:22:45 AM ******/
+CREATE PROCEDURE dbo.Task_rptLicWinloss2_CheckData @WinlostDate SMALLDATETIME
 AS
 /*
 	Created: 20150910@Patrick
@@ -41,9 +47,16 @@ BEGIN
 		OR ISNULL(@S_BetCount, 0) <> ISNULL(@T_BetCount, 0)
 	BEGIN
 		PRINT 'Re-generate data for RptLicWinloss2 on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' date.'
-		EXEC dbo.Task_DailyRptLicWinloss2 @winlostdate = @WinlostDate
+				EXEC dbo.Task_DailyRptLicWinloss2 @winlostdate = @WinlostDate
 		RETURN
 	END
 END
-
 GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

@@ -1,7 +1,13 @@
-USE bodb02
+
+SET QUOTED_IDENTIFIER ON 
 GO
+SET ANSI_NULLS ON 
+GO
+
+/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2_Job    Script Date: 12/1/2015 2:37:59 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2_Job    Script Date: 9/23/2015 10:22:46 AM ******/
   
-ALTER PROCEDURE dbo.Task_DailyRptLicWinloss2_Job
+CREATE PROCEDURE dbo.Task_DailyRptLicWinloss2_Job
 AS  
 /* Created by: Henry   
  Date: 2011-09-20  
@@ -46,7 +52,7 @@ BEGIN
 		WHILE @Retry <= @MaxRetry
 		BEGIN
 			BEGIN TRY
-				EXEC dbo.Task_DailyRptLicWinloss2_Bettrans @winlostdate = @WinlostDate
+								EXEC dbo.Task_DailyRptLicWinloss2_Bettrans @winlostdate = @WinlostDate
 				SET @HasError = 0
 				BREAK
 			END TRY
@@ -106,7 +112,7 @@ BEGIN
 		WHILE @Retry <= @MaxRetry
 		BEGIN
 			BEGIN TRY
-				EXEC bodb_Licensee.dbo.GEN_rptBetting_Parlay @date = @WinlostDate, @date2 = @WinlostDate
+								EXEC bodb_Licensee.dbo.GEN_rptBetting_Parlay @date = @WinlostDate, @date2 = @WinlostDate
 				SET @HasError = 0
 				BREAK
 			END TRY
@@ -124,5 +130,14 @@ BEGIN
 		RAISERROR ('Error occurred during generation of Licensee Winloss.', 16, 1)
 	END
 END
-
 GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicWinloss2_Job] TO [vnteam]
+GO 

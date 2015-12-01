@@ -1,13 +1,11 @@
-USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_DOT_AGCasino_MonthlyReSummary]    Script Date: 01/22/2015 00:09:21 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.Task_DOT_AGCasino_MonthlyReSummary    Script Date: 12/1/2015 2:37:57 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DOT_AGCasino_MonthlyReSummary    Script Date: 10/1/2015 4:32:32 PM ******/
 /****** Object:  Stored Procedure dbo.Task_DOT_AGCasino_MonthlyReSummary    Script Date: 12/10/2014 11:10:40 AM ******/
 CREATE PROCEDURE [dbo].[Task_DOT_AGCasino_MonthlyReSummary]	
 AS
@@ -17,6 +15,7 @@ Task: Summary AG Casino data and insert into rptDepWinlost_AGCasino
 DB: DBACC/bodb02
 Original:
 Revisions:	
+- 20151001@Winnie: Add Gold deluxe
 Param's Explanation:
 */ 
 BEGIN 
@@ -31,6 +30,7 @@ BEGIN TRY
 	WHILE(@DayOfMonth<getdate())
 	BEGIN
 	EXEC dbo.Task_DOT_AGCasino_DailySummary @winlostdate = @DayOfMonth
+	EXEC DBPTCS.bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @DayOfMonth
 	print 'exec'
 	print @DayOfMonth
 	SET @DayOfMonth=DATEADD(day,1,@DayOfMonth)
@@ -40,10 +40,16 @@ END TRY
 BEGIN CATCH
 	-- This SPs called from another SP in rptDepwinlost Summary process, failure of this SP should not affect to that process
 	--RAISERROR(15000,1,1,'Error occured in summarizing AG Casino data.')
-	PRINT 'Error occured in AGCasino summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
+	PRINT 'Error occured in AGCasino, Gold Deluxe summary data monthly process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
 END
 GO
 
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
 
+
+GO 

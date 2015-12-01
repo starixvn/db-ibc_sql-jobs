@@ -1,13 +1,10 @@
-USE [bodb_Licensee]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[GEN_Betting]    Script Date: 01/19/2015 03:39:45 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.GEN_Betting    Script Date: 12/1/2015 2:38:01 AM ******/
 CREATE PROCEDURE [dbo].[GEN_Betting]
     @isBA bit = null
 AS
@@ -59,13 +56,16 @@ AS
 
 GO
 
-GRANT EXECUTE ON [dbo].[GEN_Betting] TO [bodbLicenseeNet] AS [dbo]
+SET QUOTED_IDENTIFIER OFF 
 GO
-
-GRANT EXECUTE ON [dbo].[GEN_Betting] TO [vnteam] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[GEN_Betting] TO [vnteam] AS [dbo]
+SET ANSI_NULLS ON 
 GO
 
 
+GO 
+ GRANT EXECUTE ON [dbo].[GEN_Betting] TO [vnteam]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[GEN_Betting] TO [vnteam]
+GO 
+ GRANT EXECUTE ON [dbo].[GEN_Betting] TO [bodbLicenseeNet]
+GO 

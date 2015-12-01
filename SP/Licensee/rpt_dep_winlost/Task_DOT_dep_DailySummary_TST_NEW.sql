@@ -1,12 +1,11 @@
-USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_DOT_dep_DailySummary_TST_NEW]    Script Date: 11/04/2014 03:49:00 ******/
-SET ANSI_NULLS ON
-GO
+/****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_TST_NEW    Script Date: 12/1/2015 2:37:58 AM ******/
 
-SET QUOTED_IDENTIFIER ON
-GO
 
 CREATE PROCEDURE [dbo].[Task_DOT_dep_DailySummary_TST_NEW] 
 	@winlostdate datetime
@@ -19,12 +18,16 @@ AS
 		- 20111007@Daniel: remove redundant rows		
 		- 20121006@Viet: enhance SP to save server's resources
 		- 20141104@Don: Delete on batches of data in table rptDepWinlostTST for one day instead
-		             
+		- 20141230@Don: Put WITH(NOLOCK) to avoid deadlock temporarily
+		            
 	Param's Explanation:
 	• @winlostdate: The date need to summary
 	
 	[Task_DOT_dep_DailySummary_TST] '2012-9-5'
 */
+
+return  --- do not use this SP any more 20150107@Lukas
+ 
 SET NOCOUNT ON
 declare @date datetime
 select @date = @winlostdate
@@ -52,7 +55,7 @@ SELECT c.custid, c.currency, winlostdate, DATEADD(dd, DATEDIFF(dd, 0, transdate)
 	,sum(isnull(playercomm,0)) as playercomm
 INTO #bettrans_TEMP
 FROM #DATA c 
-	INNER JOIN bettrans b on c.custid = b.custid
+	INNER JOIN bettrans b WITH(NOLOCK) on c.custid = b.custid -- 20141230@Don: Put WITH(NOLOCK) to avoid deadlock temporarily
 WHERE b.winlostdate >= DATEADD(dd, -1, @date)
 	and matchid > 0
 	and b.bettype < 19999
@@ -140,6 +143,13 @@ DROP TABLE #DATA
 DROP TABLE #bettrans_TEMP
 
 
+
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
 GO
 
 
+GO 

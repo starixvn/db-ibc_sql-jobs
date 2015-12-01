@@ -1,13 +1,10 @@
-USE [bodb_Licensee]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[GET_DepositDataToValidate_LicenseeWL]    Script Date: 02/04/2015 02:19:41 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_LicenseeWL    Script Date: 12/1/2015 2:38:00 AM ******/
 
 
 CREATE PROCEDURE [dbo].[GET_DepositDataToValidate_LicenseeWL] 
@@ -173,10 +170,14 @@ SET NOCOUNT OFF
 
 GO
 
-GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_LicenseeWL] TO [bodbLicenseeNet] AS [dbo]
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
 GO
 
-GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_LicenseeWL] TO [vnteam] AS [dbo]
-GO
 
-
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_LicenseeWL] TO [vnteam]
+GO 
+ GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_LicenseeWL] TO [bodbLicenseeNet]
+GO 

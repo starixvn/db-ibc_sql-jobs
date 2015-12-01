@@ -1,13 +1,10 @@
-USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_rptWinlostbyleague_Bettrans14]    Script Date: 01/27/2015 02:14:40 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.Task_rptWinlostbyleague_Bettrans14    Script Date: 12/1/2015 2:38:00 AM ******/
 /****** Object:  Stored Procedure dbo.Task_rptWinlostbyleague_Bettrans14    Script Date: 11/26/2014 1:05:13 PM ******/
 
 
@@ -202,10 +199,14 @@ GROUP BY a.winlostdate
 	,a.currency
 GO
 
-GRANT EXECUTE ON [dbo].[Task_rptWinlostbyleague_Bettrans14] TO [bodbLicenseeNet] AS [dbo]
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
 GO
 
-GRANT VIEW DEFINITION ON [dbo].[Task_rptWinlostbyleague_Bettrans14] TO [vnteam] AS [dbo]
-GO
 
-
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_rptWinlostbyleague_Bettrans14] TO [vnteam]
+GO 
+ GRANT EXECUTE ON [dbo].[Task_rptWinlostbyleague_Bettrans14] TO [bodbLicenseeNet]
+GO 

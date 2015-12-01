@@ -1,8 +1,14 @@
-USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
+/****** Object:  Stored Procedure dbo.Task_DailyArchiveRptDepWinlost    Script Date: 12/1/2015 2:37:57 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DailyArchiveRptDepWinlost    Script Date: 8/21/2015 1:13:21 PM ******/
 
-ALTER PROCEDURE [dbo].[Task_DailyArchiveRptDepWinlost]
+
+CREATE PROCEDURE [dbo].[Task_DailyArchiveRptDepWinlost]
 AS
 
 /*   
@@ -23,7 +29,7 @@ SELECT @winlostdate = MIN(winlostdate) FROM bodb_report.dbo.rptDepWinlost WITH(n
 
 WHILE (@winlostdate < @todate)
 BEGIN
-	EXEC bodb_report.dbo.Task_DepWinlostSUM @winlostdate
+		EXEC bodb_report.dbo.Task_DepWinlostSUM @winlostdate
 	
 	-- rptdepwinlost
 	BEGIN TRANSACTION
@@ -79,3 +85,11 @@ BEGIN
 	SELECT @winlostdate = DATEADD(dd, 1, @winlostdate)	
 END
 GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

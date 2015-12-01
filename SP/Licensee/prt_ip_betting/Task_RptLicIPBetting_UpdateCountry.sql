@@ -1,4 +1,12 @@
-﻿ALTER PROCEDURE [dbo].[Task_RptLicIPBetting_UpdateCountry]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
+GO
+
+/****** Object:  Stored Procedure dbo.Task_RptLicIPBetting_UpdateCountry    Script Date: 12/1/2015 2:38:00 AM ******/
+/****** Object:  Stored Procedure dbo.Task_RptLicIPBetting_UpdateCountry    Script Date: 8/13/2012 11:25:37 AM ******/
+CREATE PROCEDURE [dbo].[Task_RptLicIPBetting_UpdateCountry]
 	@Fromdate DATETIME,
 	@Todate	DATETIME
 AS
@@ -107,15 +115,16 @@ BEGIN
 END
 
 SELECT IP, countrySHORT as 'unknown Country' FROM bodb_Licensee.dbo.IPCountry WITH (NOLOCK)  WHERE ISNULL(countrySHORT,'') IN ('-','')
-
-
-
-
-
-
-
-
-		
 GO
-GRANT EXECUTE ON [dbo].[Task_RptLicIPBetting_UpdateCountry] TO [vnteam]
-GO		   
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT EXECUTE ON [dbo].[Task_RptLicIPBetting_UpdateCountry] TO [vnteam]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_RptLicIPBetting_UpdateCountry] TO [vnteam]
+GO 

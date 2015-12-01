@@ -1,12 +1,12 @@
-USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[Task_Aff_MemberDailySummary_IA]    Script Date: 04/09/2014 21:05:51 ******/
-SET ANSI_NULLS ON
+SET ANSI_NULLS ON 
 GO
-SET QUOTED_IDENTIFIER ON
-GO
+
+/****** Object:  Stored Procedure dbo.Task_Aff_MemberDailySummary_IA    Script Date: 12/1/2015 2:37:58 AM ******/
 /****** Object:  Stored Procedure dbo.Task_Aff_MemberDailySummary_IA    Script Date: 3/15/2013 2:07:21 PM ******/
-ALTER PROCEDURE [dbo].[Task_Aff_MemberDailySummary_IA]  
+CREATE PROCEDURE [dbo].[Task_Aff_MemberDailySummary_IA]  
  @winlostdate datetime  
 AS  
 /*  
@@ -354,3 +354,16 @@ WHERE  Deposit<>0 or
   
 drop table #Data  
 drop table #Member
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT EXECUTE ON [dbo].[Task_Aff_MemberDailySummary_IA] TO [vnteam]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_Aff_MemberDailySummary_IA] TO [vnteam]
+GO 

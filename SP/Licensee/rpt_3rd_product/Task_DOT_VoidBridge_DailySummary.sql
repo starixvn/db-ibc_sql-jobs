@@ -1,11 +1,12 @@
-use bodb_3rdProduct
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DOT_VoidBridge_DailySummary]    Script Date: 3/31/2015 10:26:14 AM ******/
-SET ANSI_NULLS ON
+SET ANSI_NULLS ON 
 GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[Task_DOT_VoidBridge_DailySummary]
+
+/****** Object:  Stored Procedure dbo.Task_DOT_VoidBridge_DailySummary    Script Date: 12/1/2015 2:38:01 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DOT_VoidBridge_DailySummary    Script Date: 09/07/2015 10:18:13 AM ******/
+CREATE PROCEDURE [dbo].[Task_DOT_VoidBridge_DailySummary]
 	@winlostdate DATETIME
 AS
 /*   
@@ -15,7 +16,7 @@ DB: DBLIC/bodb_3rdproduct
 Original:
 Revisions:	
 	- 20150519@Florent: change product name Void Bridge to Vegas Games
-	- 20150705@Florent: change product name Vegas Games to Macau
+	- 20150519@Florent: change product name Vegas Games to Macau
 Param's Explanation:
 	- @winlostdate: The date need to summary
 */  
@@ -70,3 +71,12 @@ BEGIN CATCH
 	PRINT 'Error occured in Macau summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

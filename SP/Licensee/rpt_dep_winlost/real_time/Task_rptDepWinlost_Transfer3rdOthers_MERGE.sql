@@ -1,11 +1,12 @@
-USE [bodb_Report]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[Task_rptDepWinlost_Transfer3rdOthers_MERGE]    Script Date: 04/09/2014 21:17:11 ******/
-SET ANSI_NULLS ON
+SET ANSI_NULLS ON 
 GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[Task_rptDepWinlost_Transfer3rdOthers_MERGE] 	
+
+/****** Object:  Stored Procedure dbo.Task_rptDepWinlost_Transfer3rdOthers_MERGE    Script Date: 12/1/2015 2:38:01 AM ******/
+/****** Object:  Stored Procedure dbo.Task_rptDepWinlost_Transfer3rdOthers_MERGE    Script Date: 3/4/2015 1:17:47 PM ******/
+CREATE PROCEDURE [dbo].[Task_rptDepWinlost_Transfer3rdOthers_MERGE] 	
 	@strXML varchar(MAX)
 AS
 /*   
@@ -13,6 +14,7 @@ AS
  DB: DB06.bodb_report
  Revisions:   
 	- 20130626@Don: Creating SP
+	- 20150116@Winnie: get tranferin tranferout for AG Casino
                  
  Param's Explanation:  
 
@@ -35,7 +37,9 @@ SELECT
 	T.C.value('./@d4', 'int') recommend,
 	T.C.value('./@d5', 'int') mrecommend,
 	T.C.value('./@d6', 'int') srecommend,
-	ISNULL(T.C.value('./@d7', 'money'), 0) transferamount
+	ISNULL(T.C.value('./@d7', 'money'), 0) transferamount,
+	ISNULL(T.C.value('./@d8', 'money'), 0) transferin,
+	ISNULL(T.C.value('./@d9', 'money'), 0) transferout
 INTO #TEMP		
 FROM @_xml.nodes('/root/r') AS [T](C)
 
@@ -49,6 +53,8 @@ UPDATE d
 		,MRecommend = s.mrecommend
 		,SRecommend = s.srecommend
 		,TransferAmount = s.transferamount
+		,transferin=s.transferin
+		,transferout=s.transferout
 OUTPUT inserted.custid, inserted.winlostdate INTO @updated_list		
 FROM dbo.rptDepWinlost_Transfer3rdOthers d WITH(ROWLOCK, UPDLOCK)
 	INNER JOIN #TEMP s on d.custid = s.custid and d.winlostdate = s.winlostdate
@@ -57,10 +63,19 @@ DELETE D
 FROM #TEMP D
 	INNER JOIN @updated_list s on d.custid = s.custid and d.winlostdate = s.winlostdate
 
-INSERT INTO dbo.rptDepWinlost_Transfer3rdOthers(winlostdate,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount)
-	SELECT winlostdate,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount
+INSERT INTO dbo.rptDepWinlost_Transfer3rdOthers(winlostdate,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount,transferin,transferout)
+	SELECT winlostdate,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount,transferin,transferout
 	FROM #TEMP
 
 DROP TABLE #TEMP
 
 SET NOCOUNT OFF
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

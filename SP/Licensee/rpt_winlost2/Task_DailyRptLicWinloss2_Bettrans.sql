@@ -1,7 +1,13 @@
-USE bodb02
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-ALTER PROCEDURE dbo.Task_DailyRptLicWinloss2_Bettrans @winlostdate DATETIME  
+/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2_Bettrans    Script Date: 12/1/2015 2:37:59 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2_Bettrans    Script Date: 9/23/2015 10:22:45 AM ******/
+
+CREATE PROCEDURE dbo.Task_DailyRptLicWinloss2_Bettrans @winlostdate DATETIME  
 AS  
 /*  
 	Created: 20150911@Patrick
@@ -148,7 +154,6 @@ BEGIN
 	 ,CASE      
 	  WHEN bettrans.betfrom IN ('s','m','h','l') THEN bettrans.betfrom ELSE '' END  
 	 OPTION (MAXDOP 8)
-
 	--Agent Level (sum on member)  
 	INSERT INTO bodb_Licensee.dbo.rptLicWinloss2  
 			(  
@@ -396,3 +401,11 @@ BEGIN
 	 ,b.betfrom
 END
 GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

@@ -1,7 +1,13 @@
-USE bodb02
+
+SET QUOTED_IDENTIFIER ON 
 GO
+SET ANSI_NULLS ON 
+GO
+
+/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2_CheckData_Job    Script Date: 12/1/2015 2:37:59 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2_CheckData_Job    Script Date: 9/23/2015 10:22:46 AM ******/
   
-ALTER PROCEDURE dbo.Task_DailyRptLicWinloss2_CheckData_Job
+CREATE PROCEDURE [dbo].[Task_DailyRptLicWinloss2_CheckData_Job]
 AS  
 /* 
 	Created by: 20150911@Patrick   
@@ -17,7 +23,7 @@ BEGIN
 	DECLARE @RowId TINYINT, @WinlostDate SMALLDATETIME, @TotalDayMoveBet TINYINT
 		, @TotalDayMoveBetCompleted TINYINT, @Tomorrow DATETIME, @Today DATETIME
 	
-	SELECT @RowId = 1, @Tomorrow = DATEADD(dd, 1, CAST(GETDATE() AS DATE)), @Today = DATEADD(dd, -1, CAST(GETDATE() AS DATE))
+	SELECT @RowId = 1, @Tomorrow = DATEADD(dd, 1, CAST(GETDATE() AS DATE)), @Today = CAST(GETDATE() AS DATE)
 
 	INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
 	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
@@ -26,9 +32,9 @@ BEGIN
 	BEGIN
 		RETURN
 	END
-
+	
 	SELECT @TotalDayMoveBet = COUNT(1) FROM @MoveBetSchedule
-
+	
 	SELECT @TotalDayMoveBetCompleted = COUNT(1)
 	FROM DBACC.bodb02.dbo.userlog WITH(NOLOCK)
 	WHERE userid = 25520 AND doing = 'Task_DailySummary : End (with Finish)'
@@ -50,14 +56,14 @@ BEGIN
 		PRINT 'WinlostDate: ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
 
 		BEGIN TRY
-			EXEC dbo.Task_rptLicWinloss2_CheckData @winlostdate = @WinlostDate
+						EXEC dbo.Task_rptLicWinloss2_CheckData @winlostdate = @WinlostDate
 		END TRY
 		BEGIN CATCH
 			SET @ErrorMsg = 'Failed to check & correct data for rptLicWinloss2 on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
 		END CATCH
 
 		BEGIN TRY
-			EXEC dbo.Task_rptCustomerTurnOver_CheckData @winlostdate = @WinlostDate
+						EXEC dbo.Task_rptCustomerTurnOver_CheckData @winlostdate = @WinlostDate
 		END TRY
 		BEGIN CATCH 
 			SET @ErrorMsg = @ErrorMsg + 'Failed to check & correct data for rptCustomerTurnOver on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) 
@@ -78,7 +84,7 @@ BEGIN
 		END CATCH
 
 		BEGIN TRY
-			EXEC bodb_Licensee.dbo.Task_rptBettingParlay_CheckData @winlostdate = @WinlostDate
+						EXEC bodb_Licensee.dbo.Task_rptBettingParlay_CheckData @winlostdate = @WinlostDate
 		END TRY
 		BEGIN CATCH 
 			SET @ErrorMsg = @ErrorMsg + 'Failed to check & correct data for rptBettingParlay on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) 
@@ -90,5 +96,12 @@ BEGIN
 		RAISERROR (@ErrorMsg, 16, 1)
 	END
 END
-
 GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

@@ -1,12 +1,13 @@
-USE [bodb_licensee]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[GET_DepositDataToValidate_CustomerTurnover]    Script Date: 13/03/2014 10:27:05 AM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+SET ANSI_NULLS ON 
 GO
 
-ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_CustomerTurnover] 
+/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_CustomerTurnover    Script Date: 12/1/2015 2:38:00 AM ******/
+/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_CustomerTurnover    Script Date: 12/02/2015 09:52:23 AM ******/
+
+CREATE PROCEDURE [dbo].[GET_DepositDataToValidate_CustomerTurnover] 
 	@Date SMALLDATETIME		= NULL
 	, @DrawFilter TINYINT	= 1
 
@@ -145,10 +146,18 @@ SELECT 3, @SbBetCount, @RbBetCount, @NgBetCount, @BaBetCount, @CsBetCount
 
 DROP TABLE #DATA
 SET NOCOUNT OFF
-
-
-
 GO
-GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerTurnover] TO [bodbLicenseeNet] 
-GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_CustomerTurnover] TO [vnteam] 
+
+SET QUOTED_IDENTIFIER OFF 
 GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerTurnover] TO [vnteam]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_CustomerTurnover] TO [vnteam]
+GO 
+ GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerTurnover] TO [bodbLicenseeNet]
+GO 

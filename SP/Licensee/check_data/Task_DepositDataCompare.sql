@@ -1,13 +1,10 @@
-USE [bodb_Licensee]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_DepositDataCompare]    Script Date: 01/27/2015 05:06:03 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/****** Object:  Stored Procedure dbo.Task_DepositDataCompare    Script Date: 12/1/2015 2:38:00 AM ******/
 
 
 CREATE PROCEDURE [dbo].[Task_DepositDataCompare] 
@@ -213,4 +210,10 @@ DROP TABLE #TempData
 SET NOCOUNT OFF
 GO
 
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
 
+
+GO 

@@ -1,8 +1,14 @@
-USE [bodb_Report]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
+/****** Object:  Stored Procedure dbo.Task_DepWinlostSUM    Script Date: 12/1/2015 2:38:01 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DepWinlostSUM    Script Date: 8/21/2015 1:13:38 PM ******/
 
-ALTER PROCEDURE [dbo].[Task_DepWinlostSUM]
+
+CREATE PROCEDURE [dbo].[Task_DepWinlostSUM]
 	@date smalldatetime
 AS
 /*   
@@ -12,7 +18,6 @@ AS
   - 20121010@viet: create SP   
   - 20130628@Don: Adding one column to rptDepWinlost_SUM (Transfer3rdOthers)
   - 20141120@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
-  - 20150713@Patrick: Support bettrade
                  
  Param's Explanation:  
  • @winlostdate: The date need to summary  
@@ -91,8 +96,6 @@ SET NOCOUNT ON
 		,AmountDueTo_BA
 		,playercomm
 		,Transfer3rdOthers
-		,comm_bettrade
-		,amountdueto_bettrade
 	)
 	SELECT
 		winlostdate
@@ -118,10 +121,17 @@ SET NOCOUNT ON
 		,SUM(ISNULL(AmountDueTo_BA,0))
 		,SUM(ISNULL(playercomm,0))
 		,SUM(ISNULL(Transfer3rdOthers,0))
-		,SUM(ISNULL(comm_bettrade,0))
-		,SUM(ISNULL(amountdueto_bettrade,0))
 	FROM dbo.rptdepwinlost WITH(nolock)
 	WHERE winlostdate = @date
 	GROUP BY winlostdate, recommend, currency, srecommend
 
 SET NOCOUNT OFF
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

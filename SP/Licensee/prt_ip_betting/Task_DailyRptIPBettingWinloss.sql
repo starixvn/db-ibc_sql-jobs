@@ -1,11 +1,13 @@
-﻿ USE [bodb02]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DailyRptIPBettingWinloss]    Script Date: 01/24/2013 02:05:18 ******/
-SET ANSI_NULLS ON
+SET ANSI_NULLS ON 
 GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[Task_DailyRptIPBettingWinloss]
+
+/****** Object:  Stored Procedure dbo.Task_DailyRptIPBettingWinloss    Script Date: 12/1/2015 2:37:58 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DailyRptIPBettingWinloss    Script Date: 2/5/2013 11:07:18 PM ******/
+/****** Object:  Stored Procedure dbo.Task_DailyRptIPBettingWinloss    Script Date: 2/4/2013 6:25:40 PM ******/
+CREATE PROCEDURE [dbo].[Task_DailyRptIPBettingWinloss]
 	@winlostdate DATETIME
 AS
 /*
@@ -159,9 +161,14 @@ SELECT @winlostdate,l.LicenseeID as siteid,bettrans.currency,bettrans.ip,
 			WHEN bettrans.status = 'DRAW' THEN 111
 			END 
 END
-
-		
-
-
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptIPBettingWinloss] TO [vnteam] AS [dbo]
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptIPBettingWinloss] TO [vnteam]
+GO 

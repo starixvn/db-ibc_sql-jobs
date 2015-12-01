@@ -1,8 +1,14 @@
-USE [bodb_Report]
+
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
 GO
 
+/****** Object:  Stored Procedure dbo.Task_rptDepwinlostByProduct_MERGE    Script Date: 12/1/2015 2:38:02 AM ******/
+/****** Object:  Stored Procedure dbo.Task_rptDepwinlostByProduct_MERGE    Script Date: 11/24/2014 10:49:05 AM ******/
 
-ALTER PROCEDURE [dbo].[Task_rptDepwinlostByProduct_MERGE] 		
+
+CREATE PROCEDURE [dbo].[Task_rptDepwinlostByProduct_MERGE] 		
 	@strXML varchar(max)
 AS
 /*   
@@ -77,3 +83,12 @@ FROM #TEMP
 
 DROP TABLE #TEMP
 --SET NOCOUNT OFF
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 

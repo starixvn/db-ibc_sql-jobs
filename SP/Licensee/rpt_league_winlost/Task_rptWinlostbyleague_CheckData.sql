@@ -4,7 +4,8 @@ GO
 SET ANSI_NULLS ON 
 GO
 
-/****** Object:  Stored Procedure dbo.Task_rptWinlostbyleague_CheckData    Script Date: 9/15/2015 4:14:02 PM ******/
+/****** Object:  Stored Procedure dbo.Task_rptWinlostbyleague_CheckData    Script Date: 12/1/2015 2:38:00 AM ******/
+/****** Object:  Stored Procedure dbo.Task_rptWinlostbyleague_CheckData    Script Date: 9/23/2015 10:44:41 AM ******/
 CREATE PROCEDURE [dbo].[Task_rptWinlostbyleague_CheckData]
 	@WinlostDate SMALLDATETIME
 AS
@@ -50,7 +51,6 @@ BEGIN
 		EXEC dbo.Task_rptWinlostbyleague_Bettrans14 @WinlostDate
 	END
 END
-
 GO
 
 SET QUOTED_IDENTIFIER OFF 

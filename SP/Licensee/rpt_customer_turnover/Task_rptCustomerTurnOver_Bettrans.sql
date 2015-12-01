@@ -1,9 +1,11 @@
+
 SET QUOTED_IDENTIFIER ON 
 GO
 SET ANSI_NULLS ON 
 GO
 
-/****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_Bettrans    Script Date: 9/15/2015 4:14:01 PM ******/
+/****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_Bettrans    Script Date: 12/1/2015 2:37:59 AM ******/
+/****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_Bettrans    Script Date: 9/23/2015 10:44:40 AM ******/
 CREATE PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans] 
 	@Date SMALLDATETIME
 AS
@@ -62,11 +64,6 @@ AS (
 			WHEN BA.transid IS NULL THEN 0
 			WHEN BA.transid IS NOT NULL THEN 1
 			END AS isBA
-		,CASE WHEN a.statusID IN (112,113) 
-		  THEN SUM(ABS(a.winlost-a.actual_stake)) 
-		  ELSE 0
-		  END BetEffective
-		  
 	--,sum(awinlost) awinlost  
 	--,sum(comm) comm  
 	FROM dbo.bettrans a WITH (NOLOCK)
@@ -107,7 +104,6 @@ AS (
 			WHEN BA.transid IS NULL THEN 0
 			WHEN BA.transid IS NOT NULL THEN 1
 			END
-		,a.statusID		
 	)
 	,cte_raceinfo
 AS (
@@ -142,7 +138,6 @@ SELECT a.CustID
 		WHEN a.bettype BETWEEN 1501
 				AND 1599 THEN 202 -- Keno  
 		WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 151
-		
 		ELSE isNULL(b.sporttype, 0)
 		END sporttype
 	,a.Currency
@@ -166,7 +161,8 @@ SELECT a.CustID
 	,winlostdate
 	,sum(a.betcount) betcount
 	,a.isba
-	,SUM(BetEffective)
+--,sum(awinlost) awinlost  
+--,sum(comm) comm  
 FROM cte_bettrans a
 	LEFT JOIN dbo.match b WITH (NOLOCK)
 	ON a.matchid = b.matchid
@@ -214,8 +210,7 @@ GROUP BY a.CustID
 	,winlostdate
 	,a.isba
  
- END 
-
+ END
 GO
 
 SET QUOTED_IDENTIFIER OFF 

@@ -1,6 +1,12 @@
-USE [bodb_Licensee]
+
+SET QUOTED_IDENTIFIER ON 
 GO
-ALTER PROCEDURE [dbo].[GEN_rptBetting_BA]
+SET ANSI_NULLS ON 
+GO
+
+/****** Object:  Stored Procedure dbo.GEN_rptBetting_BA    Script Date: 12/1/2015 2:38:00 AM ******/
+/****** Object:  Stored Procedure dbo.GEN_rptBetting_BA    Script Date: 8/21/2015 1:13:37 PM ******/
+CREATE PROCEDURE [dbo].[GEN_rptBetting_BA]
     @date datetime, 
     @date2 datetime = null
 AS
@@ -12,6 +18,7 @@ DB: DB052.bodb_Licensee
 Revisions:
 20110726@Daniel: Process data for BA
 20150623@Patrick: Support BetTrade
+20150917@Francis: Cast LiveIndicator to 0 if it is NULL
 
 Param's Explanation:
 
@@ -56,7 +63,7 @@ INSERT INTO dbo.rpt_Betting_BA
         END AS leagueid,	
 	    b.currency,
 	    ISNULL(sta.statusid,-1) [Status],
-	    b.liveindicator,
+	    ISNULL(b.liveindicator,0) liveindicator,
         COUNT(*) Betcount,
         COUNT(DISTINCT b.custid) MemberCount,
         SUM(stake) Turnover,
@@ -106,3 +113,19 @@ EXEC dbo.GEN_RptKPI_MTD_Betting
     @date2 = @date2,
     @stattype = 2,
     @isBA = 1*/
+
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT EXECUTE ON [dbo].[GEN_rptBetting_BA] TO [vnteam]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_BA] TO [vnteam]
+GO 
+ GRANT EXECUTE ON [dbo].[GEN_rptBetting_BA] TO [bodbLicenseeNet]
+GO 
