@@ -1,3 +1,10 @@
+USE [bodb02]
+GO
+/****** Object:  StoredProcedure [dbo].[DBA_CustBalanceFix_Daniel]    Script Date: 12/08/2015 22:18:23 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[DBA_CustBalanceFix_Daniel]
 	@custid INT
 AS
@@ -8,6 +15,7 @@ AS
 
 	Revision:
 	   20151007@Daniel: Created
+		20151210@Daniel: calc balance from table bettransRNG & bettransLC 
 
 	Param use:
 
@@ -29,15 +37,29 @@ q2 AS (
 	FROM dbo.translog tl with (nolock)
 	WHERE tl.statusID=0 --summary running tickets only
 		AND custid = @custid
+),
+q3 AS (
+	SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
+	FROM dbo.bettransRNG WITH(NOLOCK)
+	WHERE IsSum = 0
+	GROUP BY custid
+),
+q4 AS (
+	SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalLC
+	FROM dbo.bettransLC WITH(NOLOCK)
+	WHERE IsSum = 0
+	GROUP BY custid
 )
-SELECT @Diffbalance = cb.Balance - ISNULL(q2.Outstanding,0) - (cd.Balance - db.Balance)
+SELECT @Diffbalance = cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) - (cd.Balance - db.Balance)
 FROM cb	
 	INNER JOIN dbo.BalanceCredit cd with (nolock) ON cb.custid = cd.custid
 	INNER JOIN dbo.BalanceDebit db with (nolock) ON cb.custid = db.custid
 	LEFT OUTER JOIN q2 ON cb.custid = q2.custid
+	LEFT OUTER JOIN q3 ON cb.custid = q3.custid
+	LEFT OUTER JOIN q4 ON cb.custid = q4.custid	
 WHERE
-	cb.Balance - ISNULL(q2.Outstanding,0) <> cd.Balance - db.Balance
-	AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE @custid = ex.custid)
+	cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) <> cd.Balance - db.Balance
+	--AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE @custid = ex.custid)
 
 IF @DiffBalance = 0 RETURN
 
@@ -65,15 +87,29 @@ q2 AS (
 	FROM dbo.translog tl with (nolock)
 	WHERE tl.statusID=0 --summary running tickets only
 		AND custid = @custid
+),
+q3 AS (
+	SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
+	FROM dbo.bettransRNG WITH(NOLOCK)
+	WHERE IsSum = 0
+	GROUP BY custid
+),
+q4 AS (
+	SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalLC
+	FROM dbo.bettransLC WITH(NOLOCK)
+	WHERE IsSum = 0
+	GROUP BY custid
 )
-SELECT @Diffbalance = cb.Balance - ISNULL(q2.Outstanding,0) - (cd.Balance - db.Balance)
+SELECT @Diffbalance = cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) - (cd.Balance - db.Balance)
 FROM cb	
 	INNER JOIN dbo.BalanceCredit cd with (nolock) ON cb.custid = cd.custid
 	INNER JOIN dbo.BalanceDebit db with (nolock) ON cb.custid = db.custid
 	LEFT OUTER JOIN q2 ON cb.custid = q2.custid
+	LEFT OUTER JOIN q3 ON cb.custid = q3.custid
+	LEFT OUTER JOIN q4 ON cb.custid = q4.custid		
 WHERE
-	cb.Balance - ISNULL(q2.Outstanding,0) <> cd.Balance - db.Balance
-	AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE @custid = ex.custid)
+	cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) <> cd.Balance - db.Balance
+	--AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE @custid = ex.custid)
 	AND NOT EXISTS (SELECT 1 FROM dbo.BalancePendingCredit cdp with (nolock) WHERE @custid = cdp.custid)
 	AND NOT EXISTS (SELECT 1 FROM dbo.BalancePendingDebit dbp with (nolock) WHERE @custid = dbp.custid)
 	

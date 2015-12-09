@@ -1,6 +1,6 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_CheckBalance1_FixOne]    Script Date: 10/07/2015 03:19:40 ******/
+/****** Object:  StoredProcedure [dbo].[Task_CheckBalance1_FixOne]    Script Date: 12/08/2015 02:33:20 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -8,7 +8,8 @@ GO
 ALTER PROCEDURE [dbo].[Task_CheckBalance1_FixOne]
 	@custid int,
 	@DiffBalance money OUTPUT,
-	@result int OUTPUT
+	@result int OUTPUT,
+	@IsUUS bit = 0 OUTPUT
 AS
 /*
 	Task: Correct member balance (balance tables) for one given account
@@ -17,6 +18,8 @@ AS
 
 	Revision:
 	   20150907@Daniel: Clone from Task_CheckBalance_FixOne & apply new set of bal tables
+		20151210@Daniel: calc balance from table bettransRNG & bettransLC 
+	   
 
 	Param use:
 
@@ -39,7 +42,7 @@ END
 ELSE
 BEGIN
 	Declare @FromBettrans money, 
-			@FromTransLog money
+			@FromTransLog money, @FromBettransRNG money, @FromBettransLC money
 
 	--
 	-- Skip if Pending Found
@@ -62,9 +65,17 @@ BEGIN
 		--
 		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	FROM dbo.bettrans with (rowlock) WHERE custid = @custid
 		SELECT @FromTransLog = SUM(actual_stake)	FROM dbo.translog with (rowlock) WHERE custid = @custid and statusID = 0
+
+		SELECT @FromBettransRNG = SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) 
+		FROM dbo.bettransRNG WITH(NOLOCK)
+		WHERE IsSum = 0 AND custid = @custid
 		
+		SELECT @FromBettransLC = SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) 
+		FROM dbo.bettransLC WITH(NOLOCK)
+		WHERE IsSum = 0 AND custid = @custid
+				
 		SELECT 
-			@DiffBalance = IsNull(@FromBettrans, 0) - IsNull(@FromTransLog, 0) 
+			@DiffBalance = IsNull(@FromBettrans, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) 
 			- (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance)
 		FROM 
 			dbo.BalCreditTransfer cd1 WITH (ROWLOCK)
@@ -86,5 +97,8 @@ BEGIN
 			INSERT INTO dbo.BalDebitSportsPending  (custid, Balance) VALUES (@custid,-@DiffBalance)
 			
 		SET @result = 0
+		SELECT @IsUUS = CASE WHEN Currency = 20 THEN 1 ELSE 0 END
+			FROM custdb.dbo.custInfo WITH (NOLOCK)
+			WHERE custid = @custid
 	END
 END

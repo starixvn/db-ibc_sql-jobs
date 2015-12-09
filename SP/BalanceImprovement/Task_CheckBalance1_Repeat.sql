@@ -1,6 +1,6 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_CheckBalance_Repeat]    Script Date: 09/07/2015 03:09:22 ******/
+/****** Object:  StoredProcedure [dbo].[Task_CheckBalance1_Repeat]    Script Date: 12/08/2015 02:28:32 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -14,6 +14,8 @@ AS
 
 	Revision:
 	   20150907@Daniel: Clone from Task_CheckBalance_Repeat & apply new set of bal tables
+		20151210@Daniel: calc balance from table bettransRNG & bettransLC 
+	   
 	Param use:
 
 
@@ -40,8 +42,20 @@ q2 AS (
 		--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON tl.custid = c.custid AND c.roleid = 1 and
 	WHERE tl.statusID=0 --summary running tickets only
 	GROUP BY tl.custid
+),
+q3 AS (
+	SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
+	FROM dbo.bettransRNG WITH(NOLOCK)
+	WHERE IsSum = 0
+	GROUP BY custid
+),
+q4 AS (
+	SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalLC
+	FROM dbo.bettransLC WITH(NOLOCK)
+	WHERE IsSum = 0
+	GROUP BY custid
 )
-SELECT cb.*, ISNULL(q2.Outstanding,0) Outstanding, 
+SELECT cb.*, ISNULL(q2.Outstanding,0) Outstanding, ISNULL(q3.BalRNG, 0) BalRNG, ISNULL(q4.BalLC, 0) BalLC, 
     cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance AS FromBalanceTable
 INTO #QuestionLists
 FROM cb
@@ -54,13 +68,14 @@ FROM cb
 	INNER JOIN dbo.BalDebitCasino db3 with (nolock) ON cb.custid = db3.custid
 	INNER JOIN dbo.BalDebitOthers db4 with (nolock) ON cb.custid = db4.custid
 	LEFT OUTER JOIN q2 ON cb.custid = q2.custid
-
+	LEFT OUTER JOIN q3 ON cb.custid = q3.custid
+	LEFT OUTER JOIN q4 ON cb.custid = q4.custid
 UPDATE cb
 SET roundVerified = 
-		CASE q.Balance-q.Outstanding-q.FromBalanceTable
+		CASE q.Balance-q.Outstanding+BalRNG+BalLC-q.FromBalanceTable
 		WHEN cb.DiffBalance THEN roundVerified + 1 -- if Diff value remain the same amount, increase counter, ELSE reset counter
 		ELSE 0 END,
-	DiffBalance = q.Balance-q.Outstanding-q.FromBalanceTable -- update new Diff
+	DiffBalance = q.Balance-q.Outstanding+BalRNG+BalLC-q.FromBalanceTable -- update new Diff
 FROM dbo.Task_Cust_CheckBalanceVerify1 cb
 	INNER JOIN #QuestionLists q ON cb.custid = q.custid
 
@@ -83,7 +98,7 @@ END
 ELSE IF EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE roundVerified >= 5)
 BEGIN
 	PRINT 'Start FixOne'
-	Declare @i int, @maxRN int, @custid int, @roundVerified int, @DiffBalance money, @result int
+	Declare @i int, @maxRN int, @custid int, @roundVerified int, @DiffBalance money, @result int, @IsUUS bit
 	
 	CREATE TABLE #c (RN int IDENTITY(1,1) PRIMARY KEY, custid int, roundVerified int)
 	INSERT INTO #c (custid, roundVerified) SELECT custid, roundVerified FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE roundVerified >= 5
@@ -93,7 +108,7 @@ BEGIN
 	WHILE @i <= @maxRN
 	BEGIN
 		SELECT @custid = custid, @roundVerified = roundVerified FROM #c WHERE RN = @i
-		EXEC dbo.Task_CheckBalance1_FixOne @custid, @DiffBalance OUTPUT, @result OUTPUT
+		EXEC dbo.Task_CheckBalance1_FixOne @custid, @DiffBalance OUTPUT, @result OUTPUT, @IsUUS OUTPUT
 		
 		IF @result = 0
 		BEGIN
@@ -102,7 +117,7 @@ BEGIN
 			-- LOG
 			INSERT INTO dbo.Task_Cust_BalanceProblem1 (UserName, custid, DiffBalance, IsFixed, Remark)
 			SELECT
-				username, @custid, @DiffBalance, 1, 'roundVerified = ' + CAST(@roundVerified as varchar(50))
+				username, @custid, @DiffBalance, 1, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE @IsUUS WHEN 1 THEN ' UUS' ELSE '' END
 			FROM
 				CustDB.dbo.custInfo with (nolock)
 			WHERE

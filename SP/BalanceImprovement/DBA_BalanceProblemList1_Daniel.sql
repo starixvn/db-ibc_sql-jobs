@@ -7,6 +7,7 @@ AS
 
 	Revision:
 	   20151007@Daniel: Created
+		20151210@Daniel: calc balance from table bettransRNG & bettransLC 
 
 	Param use:
 
@@ -25,8 +26,20 @@ q2 AS (
 		--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON tl.custid = c.custid AND c.roleid = 1 and
 	WHERE tl.statusID=0 --summary running tickets only
 	GROUP BY tl.custid
+),
+q3 AS (
+	SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
+	FROM dbo.bettransRNG WITH(NOLOCK)
+	WHERE IsSum = 0
+	GROUP BY custid
+),
+q4 AS (
+	SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalLC
+	FROM dbo.bettransLC WITH(NOLOCK)
+	WHERE IsSum = 0
+	GROUP BY custid
 )
-SELECT cb.*, ISNULL(q2.Outstanding,0) Outstanding, 
+SELECT cb.*, ISNULL(q2.Outstanding,0) Outstanding, ISNULL(q3.BalRNG, 0) BalRNG, ISNULL(q4.BalLC, 0) BalLC, 
    cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance 
    - db1.Balance - db2.Balance - db3.Balance - db4.Balance AS FromBalanceTable
 INTO #QuestionLists
@@ -40,8 +53,10 @@ FROM cb
 	INNER JOIN dbo.BalDebitCasino db3 with (nolock) ON cb.custid = db3.custid
 	INNER JOIN dbo.BalDebitOthers db4 with (nolock) ON cb.custid = db4.custid
 	LEFT OUTER JOIN q2 ON cb.custid = q2.custid
+	LEFT OUTER JOIN q3 ON cb.custid = q3.custid
+	LEFT OUTER JOIN q4 ON cb.custid = q4.custid			
 WHERE
-	cb.Balance - ISNULL(q2.Outstanding,0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
+	cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
 	AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE cb.custid = ex.custid)
 
 -- remove settlement involvement
@@ -73,10 +88,22 @@ q2 AS (
 	FROM dbo.translog tl with (nolock)
 	WHERE tl.statusID=0 --summary running tickets only
 	GROUP BY tl.custid
+),
+q3 AS (
+	SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
+	FROM dbo.bettransRNG WITH(NOLOCK)
+	WHERE IsSum = 0
+	GROUP BY custid
+),
+q4 AS (
+	SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalLC
+	FROM dbo.bettransLC WITH(NOLOCK)
+	WHERE IsSum = 0
+	GROUP BY custid
 )
-SELECT cb.custid, Username, cb.Balance - ISNULL(q2.Outstanding,0) Bal_bettrans, 
+SELECT cb.custid, Username, cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) Bal_bettrans, 
    (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance) Bal_BalTable_New,
-   cb.Balance - ISNULL(q2.Outstanding,0)
+   cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0)
 	- (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance) DiffBal
 FROM cb
 	INNER JOIN dbo.BalCreditTransfer cd1 with (nolock) ON cb.custid = cd1.custid
@@ -88,9 +115,11 @@ FROM cb
 	INNER JOIN dbo.BalDebitCasino db3 with (nolock) ON cb.custid = db3.custid
 	INNER JOIN dbo.BalDebitOthers db4 with (nolock) ON cb.custid = db4.custid
 	LEFT OUTER JOIN q2 ON cb.custid = q2.custid
+	LEFT OUTER JOIN q3 ON cb.custid = q3.custid
+	LEFT OUTER JOIN q4 ON cb.custid = q4.custid			
 	INNER JOIN custDB.dbo.custinfo c WITH (nolock) ON cb.custid = c.custid
 WHERE
-	cb.Balance - ISNULL(q2.Outstanding,0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
+	cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
 	AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE cb.custid = ex.custid)
 	AND NOT EXISTS (SELECT 1 FROM dbo.BalCreditSportsPending cdp2 with (nolock) WHERE cb.custid = cdp2.custid)
 	AND NOT EXISTS (SELECT 1 FROM dbo.BalCreditCasinoPending cdp3 with (nolock) WHERE cb.custid = cdp3.custid)
