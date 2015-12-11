@@ -5,7 +5,7 @@ SET ANSI_NULLS ON
 GO
 
 /****** Object:  Stored Procedure dbo.Task_Microgaming_Bettrans14    Script Date: 12/11/2015 4:24:24 PM ******/
-CREATE PROCEDURE [dbo].[Task_Microgaming_Bettrans14] 
+CREATE PROCEDURE [dbo].[\] 
 	@Fromdate	DATE
 	, @Todate	DATE 
 AS
