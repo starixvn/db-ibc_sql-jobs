@@ -4,10 +4,8 @@ GO
 SET ANSI_NULLS ON 
 GO
 
-/****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans14    Script Date: 12/1/2015 2:37:58 AM ******/
-/****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans14    Script Date: 8/21/2015 1:13:20 PM ******/
-/****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans14    Script Date: 4/14/2015 10:03:51 AM ******/
-
+/****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans14    Script Date: 12/11/2015 4:24:22 PM ******/
+ 
 
 CREATE PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans14]
 	@winlostdate datetime
@@ -48,6 +46,7 @@ AS
 		- 20150625@Patrick: #37769: Remove dummy account & exclude cancel transfer tickets for AG Casino (merge)
 		- 20150630@Jim: add MicroGaming
 		- 20150630@Patrick: #38387: Support bettrade
+		- 20151119@Jim: separate MicroGame into 2 product (#46454 )
 
 	Param's Explanation:
 	• @date: The date need to summary
@@ -266,7 +265,8 @@ SELECT
 		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
 		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
 		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
-		WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- MicroGaming
+		WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
+		WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
 		WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 		WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 		WHEN bettype = 903 THEN -4 -- BetTrade - Commission
@@ -292,7 +292,8 @@ GROUP BY b.custid,
 		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
 		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
 		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
-		WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- MicroGaming
+		WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
+		WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
 		WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 		WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 		WHEN bettype = 903 THEN -4 -- BetTrade - Commission
@@ -374,6 +375,7 @@ DROP TABLE #Data
 DROP TABLE #DepositCustSuper
 
 SET NOCOUNT OFF
+
 GO
 
 SET QUOTED_IDENTIFIER OFF 
@@ -383,7 +385,7 @@ GO
 
 
 GO 
- GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans14] TO [Dot_Admin]
-GO 
  GRANT VIEW DEFINITION ON [dbo].[Task_DOT_dep_DailySummary_Bettrans14] TO [vnteam]
+GO 
+ GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans14] TO [Dot_Admin]
 GO 

@@ -4,8 +4,8 @@ GO
 SET ANSI_NULLS ON 
 GO
 
-/****** Object:  Stored Procedure dbo.Task_PrepareStaging    Script Date: 12/1/2015 2:38:01 AM ******/
-/****** Object:  Stored Procedure dbo.Task_PrepareStaging    Script Date: 9/17/2015 1:11:05 PM ******/
+/****** Object:  Stored Procedure dbo.Task_PrepareStaging    Script Date: 12/11/2015 4:24:24 PM ******/
+
 CREATE PROCEDURE [dbo].[Task_PrepareStaging]  
     @datefrom smalldatetime=null
     ,@dateto smalldatetime=null
@@ -23,6 +23,7 @@ Revisions:
 	-20150324@Jim: exclude waiting ticket
 	-20150623@Patrick: Support BetTrade
 	-20150003@Patrick: #42910 (Exclude ticket 901 for BA ticket)
+	-20150929@Patrick: Revise code of BetTrade
 
 Param's Explanation:
 
@@ -139,12 +140,14 @@ BEGIN
                 b.discount,
                 b.tpositiontaking,
                 CASE WHEN b.recommend=52466 THEN 27 --8RM
-					 WHEN b.recommend=5707545  THEN 28 -- BARM
-					ELSE -1 END customercategory,
-				CASE WHEN b.transid2 = 1 AND btc.CustId IS NOT NULL AND b.bettype NOT IN (901,902,903) THEN 1 ELSE 0 END --for BA's bettrade tickets (original tickets)
-			FROM bodb02.dbo.bettrans b-- with(NOLOCK)
+					 WHEN b.recommend=5707545 THEN 28 	--BARM
+					 WHEN b.bettype = 901 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1001 ELSE 1002 END --bettrade
+				ELSE -1 END customercategory,
+				--CASE WHEN b.transid2 = 1 AND btc.CustId IS NOT NULL AND b.bettype NOT IN (901,902,903) THEN 1 ELSE 0 END, --for BA's bettrade tickets (original tickets)
+				CASE WHEN b.transid2 = 1 THEN 1 ELSE 0 END
+			FROM bodb02.dbo.bettrans b (NOLOCK)
 			    INNER JOIN @Recommend_List r ON b.recommend=r.t_recommend
-				LEFT JOIN #BetTradeCust btc ON b.CustId = btc.CustId
+				--LEFT JOIN #BetTradeCust btc ON b.CustId = btc.CustId
 			WHERE b.bettype<19000
 			    --AND b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
 	            AND b.winlostdate=@tmpDate
@@ -207,17 +210,25 @@ BEGIN
                 b.tpositiontaking,
                 CASE WHEN b.recommend=52466 THEN 27 --8RM
 					 WHEN b.recommend=5707545 THEN 28 	--BARM
+					 WHEN b.bettype = 901 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1001 ELSE 1002 END --bettrade
 					ELSE -1 END customercategory,
-				CASE WHEN b.transid2 = 1 AND btc.custid IS NOT NULL AND b.bettype NOT IN (901,902,903) THEN 1 ELSE 0 END --for BA's bettrade tickets (original tickets)
-			FROM bodb02.dbo.bettrans14 b --(NOLOCK)
+				--CASE WHEN b.transid2 = 1 AND btc.CustId IS NOT NULL AND b.bettype NOT IN (901,902,903) THEN 1 ELSE 0 END, --for BA's bettrade tickets (original tickets)
+				CASE WHEN b.transid2 = 1 THEN 1 ELSE 0 END
+			FROM bodb02.dbo.bettrans14 b (NOLOCK)
 			    INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
-				LEFT JOIN #BetTradeCust btc ON b.CustId = btc.CustId
+				--LEFT JOIN #BetTradeCust btc ON b.CustId = btc.CustId
 			WHERE b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
         END
 
 		SELECT @count = @count - 1
 	END
 	
+	UPDATE b
+		SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (901,902,903) THEN 1 ELSE 0 END
+			, customercategory = CASE WHEN isBA = 0 THEN 1001 ELSE 1002 END --bettrade
+	FROM dbo.bettrans b
+		INNER JOIN #BetTradeCust btc ON b.CustId = btc.CustId
+			
 	--DROP TABLE #Recommend_List
 	DROP TABLE #Customer
 		
@@ -245,16 +256,9 @@ BEGIN
 
 	DROP TABLE #BATransids
 
-	--turn on bettrade members
-	UPDATE dbo.bettrans 
-    SET customercategory = 1001 --bettrade
-    WHERE custid IN (SELECT CustId FROM #BetTradeCust)
-		OR Bettype = 901
-
 	DROP TABLE #BetTradeCust
 	  
 END
-
 
 GO
 

@@ -4,17 +4,17 @@ GO
 SET ANSI_NULLS ON 
 GO
 
-/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2_Bettrans    Script Date: 12/1/2015 2:37:59 AM ******/
-/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2_Bettrans    Script Date: 9/23/2015 10:22:45 AM ******/
+/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2_Bettrans    Script Date: 12/11/2015 4:24:23 PM ******/
 
-CREATE PROCEDURE dbo.Task_DailyRptLicWinloss2_Bettrans @winlostdate DATETIME  
+CREATE PROCEDURE dbo.Task_DailyRptLicWinloss2_Bettrans 
+	@winlostdate DATETIME  
 AS  
 /*  
 	Created: 20150911@Patrick
 	Task: daily summary for Licensee  from bettrans
 	DB: DBEXT.BODB02
 	Revisions:  
-   
+	- 20151113@Jim: separate Microgaming into 2 products
 */  
 BEGIN
 	SET NOCOUNT ON
@@ -93,7 +93,8 @@ BEGIN
 	  WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC  
 	  WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD  
 	  WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG  
-	  WHEN bettype BETWEEN 2001 AND 2099 THEN 203  
+	  WHEN bettype BETWEEN 2001 AND 2007 THEN 203
+	  WHEN bettype BETWEEN 2008 AND 2009 THEN 205  
 	  ELSE 0 END sporttype  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
@@ -139,7 +140,8 @@ BEGIN
 	  WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC  
 	  WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD  
 	  WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG  
-	  WHEN bettype BETWEEN 2001 AND 2099 THEN 203 -- Microgame  
+	  WHEN bettype BETWEEN 2001 AND 2007 THEN 203
+	  WHEN bettype BETWEEN 2008 AND 2009 THEN 205  
 	  ELSE 0 END  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END  
 	 ,CASE   
@@ -154,6 +156,7 @@ BEGIN
 	 ,CASE      
 	  WHEN bettrans.betfrom IN ('s','m','h','l') THEN bettrans.betfrom ELSE '' END  
 	 OPTION (MAXDOP 8)
+
 	--Agent Level (sum on member)  
 	INSERT INTO bodb_Licensee.dbo.rptLicWinloss2  
 			(  
@@ -400,6 +403,7 @@ BEGIN
 	 ,b.isMobile  
 	 ,b.betfrom
 END
+
 GO
 
 SET QUOTED_IDENTIFIER OFF 
