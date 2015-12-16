@@ -1,11 +1,10 @@
-
 SET QUOTED_IDENTIFIER ON 
 GO
 SET ANSI_NULLS ON 
 GO
 
-/****** Object:  Stored Procedure dbo.GEN_rptBetting    Script Date: 12/1/2015 2:38:00 AM ******/
-/****** Object:  Stored Procedure dbo.GEN_rptBetting    Script Date: 8/21/2015 1:13:37 PM ******/
+/****** Object:  Stored Procedure dbo.GEN_rptBetting    Script Date: 12/14/2015 5:04:57 PM ******/
+ 
 CREATE PROCEDURE [dbo].[GEN_rptBetting]
     @date datetime, 
     @date2 datetime = null
@@ -18,13 +17,14 @@ Task: Generate data into rpt_Betting
 DB: DB052.bodb_Licensee
 
 Revisions:
-20110708@Elly: Process data of Fee and Comm
-20110726@Daniel: Process Non-BA data only
-20111115@Don: Add information to identify 8RM (customercategory=27)
-20121102@Jim: add process to generate data for KPI NumberGame report
-20130903@Jim: support Virtual Horse Racing
-20150623@Patrick: Support BetTrade
-20150917@Francis: Cast LiveIndicator to 0 if it is NULL
+	20110708@Elly: Process data of Fee and Comm
+	20110726@Daniel: Process Non-BA data only
+	20111115@Don: Add information to identify 8RM (customercategory=27)
+	20121102@Jim: add process to generate data for KPI NumberGame report
+	20130903@Jim: support Virtual Horse Racing
+	20150623@Patrick: Support BetTrade
+	20150917@Francis: Cast LiveIndicator to 0 if it is NULL
+	20151119@Jim: separate MicroGame into 2 product (#46454 )
 
 Param's Explanation:
 
@@ -109,7 +109,63 @@ INSERT INTO dbo.rpt_Betting
 	    b.statusid,
 	    b.liveindicator,
 	    b.customercategory
-
+ 
+	SELECT  
+	    b.winlostdate,
+        ISNULL(site.SiteID,-1) siteid,
+	    b.gameID AS bettype,
+        b.currency,
+	    
+	    SUM(betcount) Betcount 
+	    INTO #bRnG
+	FROM
+			(	SELECT COUNT(b.transid) betcount
+					   ,b.winlostdate
+					   , b.gameID
+					   , b.currency
+						,b.recommend
+			FROM bodb02.dbo.bettransRNG b (NOLOCK) 
+				WHERE b.winlostdate BETWEEN @date AND @date2
+					AND b.IsSum=1
+					AND b.gameID IN (2008,2009)
+			GROUP BY   b.winlostdate
+					   ,b.gameID
+					   ,b.currency
+					   ,b.recommend 
+							
+				UNION ALL
+				SELECT COUNT(b1.transid) betcount
+					   ,b1.winlostdate
+					   , b1.gameID
+					   , b1.currency
+						,b1.recommend
+				FROM bodb02.dbo.bettransRNG14 b1 (NOLOCK) 
+				WHERE b1.winlostdate BETWEEN @date AND @date2
+					AND b1.IsSum=1
+					AND b1.gameID IN (2008,2009) 
+				GROUP BY  b1.winlostdate
+						  ,b1.gameID
+					      ,b1.currency
+						  ,b1.recommend	
+			)b
+			LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
+			LEFT JOIN bodb02.dbo.Site ibcsite (NOLOCK) ON ag.site=ibcsite.site
+	        LEFT JOIN dbo.view_site_list [site] (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
+	GROUP BY
+		   b.winlostdate,
+			ISNULL(site.SiteID,-1)  ,
+			b.gameID,
+			b.currency  
+	 
+UPDATE 	rpt_Betting  
+SET BetCount= bRnG.BetCount
+FROM dbo.rpt_Betting b WITH (NOLOCK)
+	INNER JOIN #bRnG bRnG ON b.rptDate= bRnG.winlostdate
+								AND b.siteid= bRnG.siteid	
+								AND b.Bettype = bRnG.bettype
+								AND b.CurrencyID = bRnG.currency
+								 
+DROP TABLE #bRnG
 --update MTD table
 EXEC dbo.GEN_RptKPI_MTD_Betting
     @date = @date, 
@@ -125,6 +181,8 @@ exec GEN_RptKPI_MTD_Betting_3rdproduct
     @date2 = @date2,
     @stattype = 2,
     @isBA = 0*/
+
+
 
 
 GO
