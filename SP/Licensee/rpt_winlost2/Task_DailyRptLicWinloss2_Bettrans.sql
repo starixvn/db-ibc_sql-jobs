@@ -1,12 +1,7 @@
-
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
+USE bodb02
 GO
 
-/****** Object:  Stored Procedure dbo.Task_DailyRptLicWinloss2_Bettrans    Script Date: 12/11/2015 4:24:23 PM ******/
-
-CREATE PROCEDURE dbo.Task_DailyRptLicWinloss2_Bettrans 
+ALTER PROCEDURE dbo.Task_DailyRptLicWinloss2_Bettrans 
 	@winlostdate DATETIME  
 AS  
 /*  
@@ -15,6 +10,7 @@ AS
 	DB: DBEXT.BODB02
 	Revisions:  
 	- 20151113@Jim: separate Microgaming into 2 products
+	- 20151231@Patrick: Add more field buybackamt
 */  
 BEGIN
 	SET NOCOUNT ON
@@ -51,6 +47,7 @@ BEGIN
 	  ,[isBA]  
 	  ,[isMobile]  
 	  ,[betfrom]  
+	  ,[BuyBackAmt]
 	  )  
 	SELECT @winlostdate  
 	   ,customer.username  
@@ -109,6 +106,7 @@ BEGIN
 	  WHEN bettrans.betfrom IN ('s','m','h','l') THEN 1 ELSE 0 END AS isMobile   
 	 ,CASE      
 	  WHEN bettrans.betfrom IN ('s','m','h','l') THEN bettrans.betfrom ELSE '' END AS betfrom   
+	 ,SUM(CASE WHEN bettrans.bettype = 902 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	FROM  
 	 dbo.bettrans bettrans WITH (NOLOCK)
 	 INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON bettrans.srecommend = s.CustId
@@ -158,9 +156,8 @@ BEGIN
 	 OPTION (MAXDOP 8)
 
 	--Agent Level (sum on member)  
-	INSERT INTO bodb_Licensee.dbo.rptLicWinloss2  
-			(  
-			[winlostdate]  
+	INSERT INTO bodb_Licensee.dbo.rptLicWinloss2  (  
+		[winlostdate]
 	  ,[username]  
 	  ,[username2]  
 	  ,[custid]  
@@ -169,7 +166,7 @@ BEGIN
 	  ,[mrecommend]  
 	  ,[srecommend]  
 	  ,[turnover]  
-			,[winlost]  
+	  ,[winlost]  
 	  ,[BetEffective]  
 	  ,[awinlost]  
 	  ,[mwinlost]  
@@ -187,10 +184,11 @@ BEGIN
 	  ,[statusID]  
 	  ,[isBA]  
 	  ,[isMobile]  
-	  ,[betfrom]  
-			)  
-		SELECT  
-			@winlostdate  
+	  ,[betfrom]
+	  ,[BuyBackAmt]
+	)  
+	SELECT  
+		@winlostdate  
 	  ,c.username  
 	  ,c.username2  
 	  ,c.custid  
@@ -217,7 +215,8 @@ BEGIN
 			,b.statusID  
 	  ,b.isBA  
 	  ,b.isMobile  
-	  ,b.betfrom  
+	  ,b.betfrom
+	  ,SUM(BuyBackAmt) 
 		FROM  
 			bodb_Licensee.dbo.rptLicWinloss2 b (nolock)  
 			INNER JOIN dbo.customer c (nolock) ON b.recommend = c.custid  
@@ -270,7 +269,8 @@ BEGIN
 	  ,[statusID]  
 	  ,[isBA]  
 	  ,[isMobile]  
-	  ,[betfrom]  
+	  ,[betfrom] 
+	  ,[BuyBackAmt] 
 			)  
 	SELECT  
 		@winlostdate  
@@ -300,7 +300,8 @@ BEGIN
 		,b.statusID  
 	 ,b.isBA  
 	 ,b.isMobile  
-	 ,b.betfrom  
+	 ,b.betfrom
+	 ,SUM(BuyBackAmt)   
 	FROM  
 		bodb_Licensee.dbo.rptLicWinloss2 b (NOLOCK)  
 		INNER JOIN dbo.customer c (NOLOCK) ON b.mrecommend = c.custid  
@@ -353,6 +354,7 @@ BEGIN
 	  ,[isBA]  
 	  ,[isMobile]  
 	  ,[betfrom]  
+	  ,[BuyBackAmt]
 			)  
 	SELECT  
 	 @winlostdate  
@@ -382,7 +384,8 @@ BEGIN
 	 ,b.statusID  
 	 ,b.isBA  
 	 ,b.isMobile  
-	 ,b.betfrom  
+	 ,b.betfrom 
+	 ,SUM(BuyBackAmt)  
 	FROM  
 		bodb_Licensee.dbo.rptLicWinloss2 b (nolock)  
 		INNER join dbo.customer c (nolock) ON b.srecommend = c.custid  
