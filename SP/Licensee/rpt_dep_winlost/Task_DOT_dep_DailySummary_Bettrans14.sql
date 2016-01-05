@@ -7,7 +7,7 @@ GO
 /****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans14    Script Date: 12/11/2015 4:24:22 PM ******/
  
 
-CREATE PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans14]
+ALTER PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans14]
 	@winlostdate datetime
 AS
 /*	
@@ -47,6 +47,7 @@ AS
 		- 20150630@Jim: add MicroGaming
 		- 20150630@Patrick: #38387: Support bettrade
 		- 20151119@Jim: separate MicroGame into 2 product (#46454 )
+		- 20160105@Bobby: #49196 - Implement OneRnG product
 
 	Param's Explanation:
 	• @date: The date need to summary
@@ -270,6 +271,9 @@ SELECT
 		WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 		WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 		WHEN bettype = 903 THEN -4 -- BetTrade - Commission
+		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
+		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
+		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 	ELSE 0 END, -- sporttype
 	b.currency,
 	SUM(CASE WHEN [status] not in ('VOID', 'REJECT', 'Refund') then stake ELSE 0 END),--Turnover  
@@ -297,6 +301,9 @@ GROUP BY b.custid,
 		WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 		WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 		WHEN bettype = 903 THEN -4 -- BetTrade - Commission
+		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
+		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
+		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 	ELSE 0 END,
 	b.currency
 
