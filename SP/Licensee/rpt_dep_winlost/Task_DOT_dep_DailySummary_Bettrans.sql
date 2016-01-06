@@ -1,4 +1,5 @@
-
+USE bodb02
+GO
 SET QUOTED_IDENTIFIER ON 
 GO
 SET ANSI_NULLS ON 
@@ -219,7 +220,7 @@ BEGIN
 	   ) a
 	   ON t.winlostdate = a. winlostdate and t.custid = a.custid
 
-	   --- MicroGaming_RNG
+	   --- MicroGaming_RNG & OneRnG
 	   INSERT INTO #tempDepWinlost (winlostdate, custid, currency, recommend, mrecommend, srecommend, OpeningBalance, turnover, outstanding)	
 	   SELECT @date AS winlostdate
 			  ,g.custid
@@ -339,7 +340,7 @@ BEGIN
 		WHERE tl.winlostdate <= @date  
 			  and tl.productID IN(202,203)
 		GROUP BY tl.custid,tl.currency,tl.recommend,tl.mrecommend,tl.srecommend
-		UNION -- microgaming_RNG
+		UNION -- microgaming_RNG & OneRnG
 		 SELECT @date AS winlostdate
 			  ,g.custid
 			  ,g.currency
@@ -563,10 +564,10 @@ BEGIN
 	   WHERE tl.winlostdate >= @date  
 			 and tl.productID IN (202,203)
 	   GROUP BY tl.custid, tl.productID, tl.currency
-	UNION ALL -- Micro Gamming RNG
+	UNION ALL -- Micro Gamming RNG & OneRnG
 		SELECT @date AS winlostdate
 		,g.custid   
-		,205 AS sporttype
+		,g.productID AS sporttype
 		,g.currency
 		,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then stake ELSE 0 END) AS turnover
 		,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then 1 ELSE 0 END) AS Betcount
@@ -577,7 +578,9 @@ BEGIN
 			--inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
 			INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = g.srecommend AND s.Currency = g.currency
 	   WHERE g.winlostdate >= @date  
-	   GROUP BY g.custid, g.currency
+	   GROUP BY g.custid
+		,g.productID
+	   , g.currency
 	UNION ALL -- AG Casino
 		SELECT @date AS winlostdate
 		,lc.custid   
