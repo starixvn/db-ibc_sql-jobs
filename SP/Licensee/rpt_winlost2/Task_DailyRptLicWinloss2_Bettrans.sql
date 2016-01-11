@@ -10,7 +10,7 @@ AS
 	DB: DBEXT.BODB02
 	Revisions:  
 	- 20151113@Jim: separate Microgaming into 2 products
-	- 20151231@Patrick: Add more field buybackamt
+	- 20151231@Patrick: Add more field buybackamt & BABuyBackAmt
 */  
 BEGIN
 	SET NOCOUNT ON
@@ -48,6 +48,7 @@ BEGIN
 	  ,[isMobile]  
 	  ,[betfrom]  
 	  ,[BuyBackAmt]
+	  ,[BABuyBackAmt]
 	  )  
 	SELECT @winlostdate  
 	   ,customer.username  
@@ -106,7 +107,8 @@ BEGIN
 	  WHEN bettrans.betfrom IN ('s','m','h','l') THEN 1 ELSE 0 END AS isMobile   
 	 ,CASE      
 	  WHEN bettrans.betfrom IN ('s','m','h','l') THEN bettrans.betfrom ELSE '' END AS betfrom   
-	 ,SUM(CASE WHEN bettrans.bettype = 902 THEN actual_stake ELSE 0 END) AS BuyBackAmt
+	 ,SUM(CASE WHEN bettrans.bettype = 902 AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
+	 ,SUM(CASE WHEN bettrans.bettype = 902 AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
 	FROM  
 	 dbo.bettrans bettrans WITH (NOLOCK)
 	 INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON bettrans.srecommend = s.CustId
@@ -186,6 +188,7 @@ BEGIN
 	  ,[isMobile]  
 	  ,[betfrom]
 	  ,[BuyBackAmt]
+	  ,[BABuyBackAmt]
 	)  
 	SELECT  
 		@winlostdate  
@@ -217,6 +220,7 @@ BEGIN
 	  ,b.isMobile  
 	  ,b.betfrom
 	  ,SUM(BuyBackAmt) 
+	  ,SUM(BABuyBackAmt) 
 		FROM  
 			bodb_Licensee.dbo.rptLicWinloss2 b (nolock)  
 			INNER JOIN dbo.customer c (nolock) ON b.recommend = c.custid  
@@ -271,6 +275,7 @@ BEGIN
 	  ,[isMobile]  
 	  ,[betfrom] 
 	  ,[BuyBackAmt] 
+	  ,[BABuyBackAmt]
 			)  
 	SELECT  
 		@winlostdate  
@@ -301,7 +306,8 @@ BEGIN
 	 ,b.isBA  
 	 ,b.isMobile  
 	 ,b.betfrom
-	 ,SUM(BuyBackAmt)   
+	 ,SUM(BuyBackAmt)  
+	 ,SUM(BABuyBackAmt)   
 	FROM  
 		bodb_Licensee.dbo.rptLicWinloss2 b (NOLOCK)  
 		INNER JOIN dbo.customer c (NOLOCK) ON b.mrecommend = c.custid  
@@ -355,6 +361,7 @@ BEGIN
 	  ,[isMobile]  
 	  ,[betfrom]  
 	  ,[BuyBackAmt]
+	  ,[BABuyBackAmt]
 			)  
 	SELECT  
 	 @winlostdate  
@@ -385,7 +392,8 @@ BEGIN
 	 ,b.isBA  
 	 ,b.isMobile  
 	 ,b.betfrom 
-	 ,SUM(BuyBackAmt)  
+	 ,SUM(BuyBackAmt)
+	 ,SUM(BABuyBackAmt)    
 	FROM  
 		bodb_Licensee.dbo.rptLicWinloss2 b (nolock)  
 		INNER join dbo.customer c (nolock) ON b.srecommend = c.custid  
