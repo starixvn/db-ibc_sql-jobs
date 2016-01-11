@@ -1,11 +1,12 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
+/****** Object:  StoredProcedure [dbo].[Task_Microgaming_Bettrans]    Script Date: 01/11/2016 02:01:38 ******/
+SET ANSI_NULLS ON
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 /****** Object:  Stored Procedure dbo.Task_Microgaming_Bettrans    Script Date: 12/11/2015 4:24:24 PM ******/
-CREATE PROCEDURE [dbo].[Task_Microgaming_Bettrans] @Winlossdate DATE
+ALTER PROCEDURE [dbo].[Task_Microgaming_Bettrans] @Winlossdate DATE
 AS
 /*
 	 Creator: 20150731@Florent
@@ -13,7 +14,7 @@ AS
 	 DB: DBLIC/bodb_LicenseeReport
 	 Revisions: 		
 		- 20150930@Florent: support Microgaming RNG
-		- 20151208@Jim: sepated MicroGame into 2 products (#45454)
+		- 20151208@Jim: seperate MicroGame into 2 products (#45454)
 	 Param's Explanation:
 */
 
@@ -80,18 +81,7 @@ BEGIN
 	)OPTION (MAXDOP 1)
 END
 
-
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[Task_Microgaming_Bettrans] TO [bodbAdminNet] AS [dbo]
 GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Task_Microgaming_Bettrans] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Task_Microgaming_Bettrans] TO [bodbAdminNet]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[Task_Microgaming_Bettrans] TO [vnteam] AS [dbo]
