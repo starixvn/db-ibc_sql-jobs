@@ -23,6 +23,7 @@ AS
 		- 20141006@Lukas: remove table SS_GameState
 		- 20141024@Lukas: add table ResultDetail
 		- 20150727@Sophia: add table ResultDetail3rd
+		- 20150105@Sophia: add table EventInfo3rd
 */ 
 BEGIN
 
@@ -103,6 +104,13 @@ BEGIN
 	BEGIN
 		delete from VSOutright
 		where eventdate = @winlostdate AND EventStatus = 'Completed'
+	END
+
+	-- delete EventInfo3rd
+	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'EventInfo3rd' AND type = 'U')
+	BEGIN
+		DELETE dbo.EventInfo3rd
+		WHERE eventdate = @winlostdate  
 	END
 
 END

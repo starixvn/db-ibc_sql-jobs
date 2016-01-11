@@ -22,6 +22,7 @@ AS
 		- 20150626@Cooper(DB02): Add match_remark table Arcihve column 'HomeSubstitutes,AwaySubstitutes,StartTeam,HomePenalty,AwayPenalty'
 		- 20150703@Cooper(DB02): Add match_remark table Arcihve column 'HomeYellowCard,AwayYellowCard'
 		- 20150720@Sophia: Add ResultDetail3rd14 table
+		- 20150105@Sophia: Add EventInfo3rd_bk table for Cockfighting 
  */
 
 	INSERT INTO DB06.bodb_archive.dbo.odds_bk
@@ -98,7 +99,12 @@ AS
 	FROM ResultDetail3rd14 WITH(NOLOCK)
 	WHERE matchid IN (SELECT MatchID from Match14 where eventdate = @winlostdate)
 
-
+	INSERT INTO DB06.bodb_Archive.dbo.[EventInfo3rd_bk](EventInfoID,ArenaID,FightNo,EventDate,HomeOwner,AwayOwner)
+	SELECT EventInfoID,ArenaID,FightNo,EventDate,HomeOwner,AwayOwner
+	FROM dbo.EventInfo3rd14 WITH(NOLOCK)
+	WHERE EventDate = @winlostdate
+	
+	
 	
 	DELETE FROM odds14  WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
 	DELETE FROM BingoBall14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
@@ -109,8 +115,10 @@ AS
 	
 	DELETE FROM outright14 WHERE eventdate = @winlostdate
 	DELETE FROM VSOutright14 WHERE eventdate = @winlostdate
+	DELETE FROM EventInfo3rd14 WHERE Eventdate = @winlostdate
 
 	DELETE FROM match14 WHERE eventdate = @winlostdate
+	
 GO
 GRANT VIEW DEFINITION ON [dbo].[Task_Archive_Event] TO [vnteam] AS [dbo]
 GO
