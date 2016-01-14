@@ -27,7 +27,7 @@ Revisions:
 	- 20150824@Patrick: Not category BA's bettrade ticket
 	- 20150909@Patrick: Changes the way generate data from bettrans instead bettrans14
 	- 20151113@Jim: separate Microgaming into 2 products
-	- 20151231@Patrick: Add more field buybackamt
+	- 20151231@Patrick: Add more field buybackamt & BABuyBackAmt
  */
 
 SET NOCOUNT ON 
@@ -66,6 +66,7 @@ INSERT INTO bodb_Licensee.dbo.rptLicWinloss2
 		,[isMobile]
 		,[betfrom]
 		,[BuyBackAmt]
+		,[BABuyBackAmt]
 		)
 SELECT @winlostdate
 	  ,customer.username
@@ -124,7 +125,8 @@ SELECT @winlostdate
 		WHEN bettrans.betfrom IN ('s','m','h','l') THEN 1 ELSE 0 END AS isMobile	
 	,CASE    
 		WHEN bettrans.betfrom IN ('s','m','h','l') THEN bettrans.betfrom ELSE '' END AS betfrom
-	,SUM(CASE WHEN bettrans.bettype = 902 THEN actual_stake ELSE 0 END) AS BuyBackAmt
+	,SUM(CASE WHEN bettrans.bettype = 902 AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
+	,SUM(CASE WHEN bettrans.bettype = 902 AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
 FROM
 	dbo.bettrans14 bettrans WITH (NOLOCK)
 	INNER JOIN dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
@@ -203,6 +205,7 @@ INSERT INTO bodb_Licensee.dbo.rptLicWinloss2
 		,[isMobile]
 		,[betfrom]
 		,[BuyBackAmt]
+		,[BABuyBackAmt]
         )
     SELECT
         @winlostdate
@@ -234,6 +237,7 @@ INSERT INTO bodb_Licensee.dbo.rptLicWinloss2
 		,b.isMobile
 		,b.betfrom
 		,SUM(BuyBackAmt)
+		,SUM(BABuyBackAmt)
     FROM
         bodb_Licensee.dbo.rptLicWinloss2 b (nolock)
         INNER JOIN dbo.customer c (nolock) ON b.recommend = c.custid
@@ -288,6 +292,7 @@ INSERT INTO bodb_Licensee.dbo.rptLicWinloss2
 		,[isMobile]
 		,[betfrom]
 		,[BuyBackAmt]
+		,[BABuyBackAmt]
         )
 SELECT
     @winlostdate
@@ -319,6 +324,7 @@ SELECT
 	,b.isMobile
 	,b.betfrom
 	,SUM(BuyBackAmt)
+	,SUM(BABuyBackAmt)
 FROM
     bodb_Licensee.dbo.rptLicWinloss2 b (NOLOCK)
     INNER JOIN dbo.customer c (NOLOCK) ON b.mrecommend = c.custid
@@ -372,6 +378,7 @@ INSERT INTO bodb_Licensee.dbo.rptLicWinloss2
 		,[isMobile]
 		,[betfrom]
 		,[BuyBackAmt]
+		,[BABuyBackAmt]
         )
 SELECT
 	@winlostdate
@@ -403,6 +410,7 @@ SELECT
 	,b.isMobile
 	,b.betfrom
 	,SUM(BuyBackAmt)
+	,SUM(BABuyBackAmt)
 FROM
     bodb_Licensee.dbo.rptLicWinloss2 b (nolock)
     INNER join dbo.customer c (nolock) ON b.srecommend = c.custid
