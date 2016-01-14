@@ -1,3 +1,6 @@
+USE bodb02
+GO
+
 ALTER PROCEDURE [dbo].[Task_EventInfo3rdMovement]	
 AS
 
@@ -27,7 +30,7 @@ BEGIN
 	SELECT DISTINCT custom2, gameid3rd, winlostdate 
 	FROM dbo.translog WITH (NOLOCK)
 	WHERE GameId = 1003
-		AND statusID = 0
+		AND statusID IN (0,1)
 		AND winlostdate < @winlostdate		
 	IF @@ROWCOUNT = 0 RETURN
 
@@ -39,22 +42,22 @@ BEGIN
 			ON e.ArenaID = t.custom2
 				AND e.FightNo = t.gameid3rd
 				AND e.EventDate = t.winlostdate
-		WHERE	t.statusID <> 0 
-				AND t.winlostdate <= @winlostdate
+		WHERE	t.statusID NOT IN (0,1)
+				AND t.winlostdate < @winlostdate
 				AND t.gameID = 1003
-				AND t.currency <> 20
+				AND t.currency NOT IN (20,27,28)
 			)
-		OR EXISTS (
-			SELECT 1  
-			FROM dbo.bettrans t WITH (NOLOCK)
-			INNER JOIN #EventInfo3rd e
-				ON e.ArenaID = t.betcheck
-					AND e.FightNo = t.betdaqid
-					AND e.EventDate = t.winlostdate
-			WHERE	t.StatusId <> 0
-					AND t.winlostdate <= @winlostdate
-					AND t.bettype = 1003
-					AND t.currency <> 20
+	OR EXISTS (
+		SELECT 1  
+		FROM dbo.bettrans t WITH (NOLOCK)
+		INNER JOIN #EventInfo3rd e
+			ON e.ArenaID = t.betcheck
+				AND e.FightNo = t.betdaqid
+				AND e.EventDate = t.winlostdate
+		WHERE	t.statusID NOT IN (0,1)
+				AND t.winlostdate < @winlostdate
+				AND t.bettype = 1003
+				AND t.currency NOT IN (20,27,28)
 			)
 						
 	BEGIN
@@ -82,7 +85,7 @@ BEGIN
 				AND OT.FightNo = t.gameid3rd
 				AND OT.EventDate = t.winlostdate
 	WHERE	t.statusID <> 0 
-			AND t.winlostdate <= @winlostdate
+			AND t.winlostdate < @winlostdate
 			AND t.gameID = 1003 
 
 	DECLARE @Doing VARCHAR(4000)
