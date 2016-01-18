@@ -4,6 +4,8 @@ GO
 SET ANSI_NULLS ON 
 GO
 
+/****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_Bettrans14    Script Date: 1/14/2016 10:09:56 AM ******/
+
 /****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_Bettrans14    Script Date: 12/1/2015 2:37:59 AM ******/
 /****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_Bettrans14    Script Date: 12/1/2014 12:58:52 PM ******/
 
@@ -22,6 +24,7 @@ AS
 		-20140315@Florent: Offer Keno sport	
 		-20141130@Jim: change the way to retrieve currency value		
 		-20150714@Francis: Adjustment to serve to change KeenOcean's currency RMB to HK$
+		-20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
 	Parameter's Explanation:			
 */
 SET NOCOUNT ON;
@@ -40,6 +43,7 @@ AS (
 		,a.bettype
 		,SUM(ABS(a.stake)) AS stake
 		,sum(a.winlost - a.actual_stake) winlost
+		,SUM(ABS(winlost - actual_stake)) AS BetEffective
 		,sum(a.PlayerComm) PlayerComm
 		,a.Odds
 		,a.oddsid
@@ -174,6 +178,7 @@ SELECT a.CustID
 	,winlostdate
 	,sum(a.betcount) betcount
 	,a.isba
+	,sum(a.BetEffective) BetEffective
 	--,sum(awinlost) awinlost
 	--,sum(comm) comm
 FROM cte_bettrans a
@@ -227,6 +232,7 @@ GROUP BY a.CustID
 		END
 	,winlostdate
 	,a.isba
+
 
 
 
