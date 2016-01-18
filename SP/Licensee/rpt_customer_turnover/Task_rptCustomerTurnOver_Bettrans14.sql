@@ -1,9 +1,3 @@
-
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
-GO
-
  
 CREATE PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans14] 
 	@Date SMALLDATETIME

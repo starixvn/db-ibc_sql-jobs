@@ -2,10 +2,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON 
 GO
-
-
-/****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_Bettrans    Script Date: 1/14/2016 10:09:56 AM ******/
-
+ 
  
 CREATE PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans] 
 	@Date SMALLDATETIME
