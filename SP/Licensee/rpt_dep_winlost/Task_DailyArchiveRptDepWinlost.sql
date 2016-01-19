@@ -4,9 +4,6 @@ GO
 SET ANSI_NULLS ON 
 GO
 
-/****** Object:  Stored Procedure dbo.Task_DailyArchiveRptDepWinlost    Script Date: 12/1/2015 2:37:57 AM ******/
-/****** Object:  Stored Procedure dbo.Task_DailyArchiveRptDepWinlost    Script Date: 8/21/2015 1:13:21 PM ******/
-
 
 CREATE PROCEDURE [dbo].[Task_DailyArchiveRptDepWinlost]
 AS
@@ -21,6 +18,7 @@ Revisions:
 	-- 20130705@Don: add table rptDepWinlost_Transfer3rdOthers
 	-- 20141120@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
 	-- 20150713@Patrick: Support bettrade
+	-- 20160121@Jim: get tranferin tranferout for AG Casino
 */  
 
 DECLARE @winlostdate SMALLDATETIME, @todate SMALLDATETIME
@@ -74,8 +72,8 @@ BEGIN
 	-- rptDepWinlost_Transfer3rdOthers
 	BEGIN TRANSACTION
 		INSERT INTO bodb_report.dbo.rptDepWinlost_Transfer3rdOthers_Bk (
-			winlostdate,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount)
-		SELECT winlostdate,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount
+			winlostdate,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount,TransferIn,TransferOut)
+		SELECT winlostdate,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount,TransferIn,TransferOut
 		FROM bodb_report.dbo.rptDepWinlost_Transfer3rdOthers WITH(NOLOCK)
 		WHERE WINLOSTDATE = @winlostdate
 
