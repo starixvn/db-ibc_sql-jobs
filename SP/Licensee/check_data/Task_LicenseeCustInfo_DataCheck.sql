@@ -1,10 +1,3 @@
-USE [bodb02]
-GO
-/****** Object:  StoredProcedure [dbo].[Task_LicenseeCustInfo_DataCheck]    Script Date: 01/13/2016 04:22:45 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[Task_LicenseeCustInfo_DataCheck]
 /*
 	Creator: 20160113@Francis
@@ -32,6 +25,7 @@ BEGIN
 		,ag.Username [DummyAgent]
 		,c.Username [Member]
 		,c.CustId
+		,c.creatdate [CreatedDate]
 	FROM #member t
 		INNER JOIN dbo.Customer c WITH(NOLOCK) ON t.CustId = c.CustId
 		INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON c.CustId = ci.CustId
@@ -97,7 +91,8 @@ BEGIN
 		e.Currency [Currency], 
 		d.DummySuperId [DummySuperId],
 		ag.CustId [DummyAgentId],
-		ag.username [DummyAgent]
+		ag.username [DummyAgent],
+		ag.creatdate [DummyAgentCreatedDate]
 	FROM #Dummy d WITH(NOLOCK)
 		INNER JOIN dbo.Customer ag WITH(NOLOCK) ON d.DummyAgentId = ag.CustId
 		INNER JOIN dbo.Exchange e WITH(NOLOCK) ON ag.Currency = e.ExchangeId
@@ -141,5 +136,6 @@ BEGIN
 END
 
 GRANT VIEW DEFINITION ON Task_LicenseeCustInfo_DataCheck TO vnteam
+
 GO
 GRANT VIEW DEFINITION ON [dbo].[Task_LicenseeCustInfo_DataCheck] TO [vnteam] AS [dbo]
