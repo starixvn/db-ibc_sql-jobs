@@ -15,6 +15,7 @@ AS
 	Revision:
 	   20150907@Daniel: Clone from Task_CheckBalance_Repeat & apply new set of bal tables
 		20151210@Daniel: calc balance from table bettransRNG & bettransLC 
+		20160112@Daniel: Remove redundant RowVersion MAX(tstamp)
 	   
 	Param use:
 
@@ -29,7 +30,7 @@ SET NOCOUNT ON
 
 ;WITH
 cb AS (
-	SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance, MAX(tstamp) as RowVersion
+	SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance
 	FROM dbo.bettrans b with (nolock)
 		--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON b.custid = c.custid AND c.roleid = 1
 		INNER JOIN dbo.Task_Cust_CheckBalanceVerify1 q ON b.custid = q.custid

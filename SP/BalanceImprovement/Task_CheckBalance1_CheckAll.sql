@@ -16,6 +16,8 @@ AS
 	Revision:
 	   20150907@Daniel: Clone from Task_CheckBalance_CheckAll & apply new set of bal tables
 		20151210@Daniel: calc balance from table bettransRNG & bettransLC 
+		20160112@Daniel: enhance using FULL JOIN when get data from translog, bettransRNG, bettransLC
+		
 	   
 
 	Param use:
@@ -41,14 +43,8 @@ WHERE custid NOT IN (SELECT custid FROM dbo.Task_Cust_CheckBalance_Exception ce 
 
 IF NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1)
 BEGIN
-	;WITH
-	cb AS (
-		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance, MAX(tstamp) as RowVersion
-		FROM dbo.bettrans b with (nolock)
-			--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON b.custid = c.custid AND c.roleid = 1
-		GROUP BY b.custid
-	),
-	q2 AS (
+
+	;WITH q2 AS (
 		-- translog
 		SELECT tl.custid, SUM(actual_stake) AS Outstanding
 		FROM dbo.translog tl with (nolock)
@@ -67,8 +63,22 @@ BEGIN
 		FROM dbo.bettransLC WITH(NOLOCK)
 		WHERE IsSum = 0
 		GROUP BY custid
-	)	
-	SELECT cb.*, ISNULL(q2.Outstanding,0) Outstanding, ISNULL(q3.BalRNG, 0) BalRNG, ISNULL(q4.BalLC, 0) BalLC, 
+	)
+	SELECT DISTINCT ISNULL(q2.custid, ISNULL(q3.custid, q4.custid)) custid, ISNULL(Outstanding, 0) Outstanding, ISNULL(BalRNG, 0) BalRNG, ISNULL(BalLC, 0) BalLC
+	INTO #tmpCal
+	FROM q2 FULL OUTER JOIN q3 ON q2.custid = q3.custid
+	FULL OUTER JOIN q4 ON q2.custid = q4.custid
+
+	CREATE CLUSTERED INDEX CIX_t ON #tmpCal (custid)
+
+	;WITH
+	cb AS (
+		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance, 0 as RowVersion
+		FROM dbo.bettrans b with (nolock)
+			--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON b.custid = c.custid AND c.roleid = 1
+		GROUP BY b.custid
+	)
+	SELECT cb.*, ISNULL(qq.Outstanding,0) Outstanding, ISNULL(qq.BalRNG, 0) BalRNG, ISNULL(qq.BalLC, 0) BalLC, 
 	   cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance 
 	   - db1.Balance - db2.Balance - db3.Balance - db4.Balance AS FromBalanceTable
 	INTO #QuestionLists
@@ -81,11 +91,9 @@ BEGIN
 		INNER JOIN dbo.BalDebitSports db2 with (nolock) ON cb.custid = db2.custid
 		INNER JOIN dbo.BalDebitCasino db3 with (nolock) ON cb.custid = db3.custid
 		INNER JOIN dbo.BalDebitOthers db4 with (nolock) ON cb.custid = db4.custid
-		LEFT OUTER JOIN q2 ON cb.custid = q2.custid
-		LEFT OUTER JOIN q3 ON cb.custid = q3.custid
-		LEFT OUTER JOIN q4 ON cb.custid = q4.custid		
+		LEFT OUTER JOIN #tmpCal qq ON cb.custid = qq.custid
 	WHERE
-		cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
+		cb.Balance - ISNULL(qq.Outstanding,0) + ISNULL(qq.BalRNG, 0) + ISNULL(qq.BalLC, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
 		AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE cb.custid = ex.custid)
 
 	SET @RC = @@ROWCOUNT
@@ -122,7 +130,7 @@ BEGIN
 	-- check one more time (with less accounts)
 	;WITH
 	cb AS (
-		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance, MAX(tstamp) as RowVersion
+		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance, 0 as RowVersion
 		FROM dbo.bettrans b with (nolock)
 			--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON b.custid = c.custid AND c.roleid = 1
 			INNER JOIN #QuestionLists q ON b.custid = q.custid
@@ -176,7 +184,9 @@ BEGIN
 		
 	PRINT @msg + ' -' + CAST(@RD as varchar(50)) + ' -> ' + CAST(@@ROWCOUNT as varchar(50)) + ' accounts add to verify balance'
 	
+	DROP TABLE #tmpCal
 	DROP TABLE #QuestionLists
+
 END
 
 

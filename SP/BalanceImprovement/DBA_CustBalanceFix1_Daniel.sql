@@ -64,7 +64,7 @@ q4 AS (
 	WHERE IsSum = 0
 	GROUP BY custid
 )
-SELECT @Diffbalance = cb.Balance - ISNULL(q2.Outstanding,0) 
+SELECT @Diffbalance = cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) 
 	   - (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance)
 FROM cb	
 	INNER JOIN dbo.BalCreditTransfer cd1 with (nolock) ON cb.custid = cd1.custid
@@ -79,7 +79,7 @@ FROM cb
 	LEFT OUTER JOIN q3 ON cb.custid = q3.custid
 	LEFT OUTER JOIN q4 ON cb.custid = q4.custid		
 WHERE
-	cb.Balance - ISNULL(q2.Outstanding,0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
+	cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
 	--AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE @custid = ex.custid)
 
 IF @DiffBalance = 0 RETURN
@@ -121,7 +121,7 @@ q4 AS (
 	WHERE IsSum = 0
 	GROUP BY custid
 )
-SELECT @Diffbalance = cb.Balance - ISNULL(q2.Outstanding,0) 
+SELECT @Diffbalance = cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) 
 	   - (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance)
 FROM cb	
 	INNER JOIN dbo.BalCreditTransfer cd1 with (nolock) ON cb.custid = cd1.custid
@@ -136,7 +136,7 @@ FROM cb
 	LEFT OUTER JOIN q3 ON cb.custid = q3.custid
 	LEFT OUTER JOIN q4 ON cb.custid = q4.custid		
 WHERE
-	cb.Balance - ISNULL(q2.Outstanding,0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
+	cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
 	--AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE @custid = ex.custid)
 	AND NOT EXISTS (SELECT 1 FROM dbo.BalCreditSportsPending cdp2 with (nolock) WHERE @custid = cdp2.custid)
 	AND NOT EXISTS (SELECT 1 FROM dbo.BalCreditCasinoPending cdp3 with (nolock) WHERE @custid = cdp3.custid)
