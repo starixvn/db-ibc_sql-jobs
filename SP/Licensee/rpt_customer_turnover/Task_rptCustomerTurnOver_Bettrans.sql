@@ -1,11 +1,9 @@
-
 SET QUOTED_IDENTIFIER ON 
 GO
 SET ANSI_NULLS ON 
 GO
-
-/****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_Bettrans    Script Date: 12/1/2015 2:37:59 AM ******/
-/****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_Bettrans    Script Date: 9/23/2015 10:44:40 AM ******/
+ 
+ 
 CREATE PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans] 
 	@Date SMALLDATETIME
 AS
@@ -15,7 +13,7 @@ AS
 	 Task: Gen data from bettrans before Move bets
 	 Original: Task_rptCustomerTurnOver_Bettrans14
 	 Revisions:   
-    
+		  - 20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
 */ 
 BEGIN 
 SET NOCOUNT ON;
@@ -39,6 +37,7 @@ AS (
 		,a.bettype
 		,SUM(ABS(a.stake)) AS stake
 		,sum(a.winlost - a.actual_stake) winlost
+		,SUM(ABS(winlost - actual_stake)) AS BetEffective
 		,sum(a.PlayerComm) PlayerComm
 		,a.Odds
 		,a.oddsid
@@ -161,6 +160,7 @@ SELECT a.CustID
 	,winlostdate
 	,sum(a.betcount) betcount
 	,a.isba
+	,sum(BetEffective) BetEffective
 --,sum(awinlost) awinlost  
 --,sum(comm) comm  
 FROM cte_bettrans a
@@ -211,6 +211,7 @@ GROUP BY a.CustID
 	,a.isba
  
  END
+
 GO
 
 SET QUOTED_IDENTIFIER OFF 
