@@ -1,14 +1,11 @@
 USE [bodb02]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_DailySummary_Verify]    Script Date: 01/27/2015 02:47:18 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DailySummary_Verify]    Script Date: 01/19/2016 23:27:53 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
-CREATE PROCEDURE [dbo].[Task_DailySummary_Verify]
+ALTER PROCEDURE [dbo].[Task_DailySummary_Verify]
 	@winlostdate datetime,
 	@TestMode tinyint = 1
 AS
@@ -19,6 +16,9 @@ Date: 20111018
 Task: to verify the move bet process at tomorrow's mornings
 DB: DB052.BODB02
 
+Revision:
+	20160119@Daniel: check table bettransRNG & bettransLC
+
  */
 
 SET NOCOUNT ON
@@ -27,6 +27,50 @@ DECLARE @transid bigint
 -- ====================
 -- DATA VERIFICATION
 -- ====================
+-- ==================== Check running ticket at translog =================
+IF EXISTS (
+	SELECT 1 FROM translog with (nolock)
+	WHERE	statusID = 0
+			AND custid <> 0
+			AND winlostdate <= @winlostdate
+			AND currency <> 20
+)
+BEGIN
+
+	IF @@ROWCOUNT > 0
+
+	RAISERROR ('FAILED: Have translog running tickets', 16, 1)
+	RETURN
+END
+
+
+-- ==================== Check running ticket/ not summed at bettransRNG & bettransLC =================
+IF EXISTS (
+	SELECT 1 FROM bettransRNG with (nolock)
+	WHERE	(statusID = 0 OR isSum = 0)
+			AND custid <> 0
+			AND winlostdate <= @winlostdate
+			AND currency <> 20
+)
+BEGIN
+	RAISERROR ('FAILED: bettransRNG have running tickets or not summed to bettrans yet', 16, 1)
+	RETURN
+END
+
+IF EXISTS (
+	SELECT 1 FROM bettransLC with (nolock)
+	WHERE	(statusID = 0 OR isSum = 0)
+			AND custid <> 0
+			AND winlostdate <= @winlostdate
+			AND currency <> 20
+)
+BEGIN
+	RAISERROR ('FAILED: bettransLC have running tickets or not summed to bettrans yet', 16, 1)
+	RETURN
+END
+
+
+-- ==================== Check running ticket at bettrans =================
 IF EXISTS (
 	SELECT transid FROM bettrans with (nolock)
 	WHERE	--[status] = 'running' 
@@ -136,14 +180,5 @@ BEGIN
 END
 
 
-
-
-GO
-
-GRANT EXECUTE ON [dbo].[Task_DailySummary_Verify] TO [vnteam] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[Task_DailySummary_Verify] TO [vnteam] AS [dbo]
-GO
 
 

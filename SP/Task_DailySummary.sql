@@ -48,6 +48,8 @@ Revisions:
 	- 20150721@Sophia: Apply Microgaming product in sum_winloss table [#39772]
 	- 20150914@Sophia: Apply Colosuss Bets and expand the range of AG Casino product in sum_winloss table [#39772]
 	- 20151118@Sophia: Apply Microgaming - RNG Casino [RedmineId: #46450]
+	- 20160114@Daniel: Data verification: check table bettransRNG & bettransLC
+	
  */
 
 SET NOCOUNT ON
@@ -157,6 +159,33 @@ BEGIN
 	RETURN
 END
 -- ====================
+
+-- ============================================
+-- DATA VERIFICATION - bettransRNG & bettransLC
+-- ============================================
+IF EXISTS (
+	SELECT 1 FROM bettransRNG with (nolock)
+	WHERE	(statusID = 0 OR isSum = 0)
+			AND winlostdate <= @winlostdate
+			AND currency <> 20
+)
+BEGIN
+	RAISERROR ('FAILED: bettransRNG have running tickets or not summed to bettrans yet', 16, 1)
+	RETURN
+END
+
+IF EXISTS (
+	SELECT 1 FROM bettransLC with (nolock)
+	WHERE	(statusID = 0 OR isSum = 0)
+			AND winlostdate <= @winlostdate
+			AND currency <> 20
+)
+BEGIN
+	RAISERROR ('FAILED: bettransLC have running tickets or not summed to bettrans yet', 16, 1)
+	RETURN
+END
+-- ============================================
+
 IF EXISTS (
 	SELECT transid FROM bettrans with (nolock)
 	WHERE srecommend <= 100 AND (scomm <> acomm OR swinlost <> 0)
