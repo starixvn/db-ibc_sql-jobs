@@ -1,3 +1,10 @@
+USE [bodb02]
+GO
+/****** Object:  StoredProcedure [dbo].[DBA_CheckRunningTickets]    Script Date: 1/20/2016 3:30:38 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[DBA_CheckRunningTickets]
 @vendorID tinyint
 AS
@@ -82,10 +89,10 @@ END
 
 		select @vendorID as vendorID into ##vendorID 
 		select @MailTo = Case 
-			when @ErrorCode = 1 then 'DBATW@onelab.tw ; austin.su@onelab.tw'
-			when @ErrorCode = 2 then 'DBATW@onelab.tw ; tony.yu@onelab.tw ; sobi.chen@onelab.tw'
-			when @ErrorCode = 3 then 'DBATW@onelab.tw ; walter.hsu@onelab.tw'
-			when @ErrorCode = 4 then 'DBATW@onelab.tw ; tony.yu@onelab.tw ; austin.su@onelab.tw'
+			when @ErrorCode = 1 then ''
+			when @ErrorCode = 2 then ''
+			when @ErrorCode = 3 then ''
+			when @ErrorCode = 4 then''
 			end 
 
 

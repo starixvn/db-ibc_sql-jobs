@@ -48,7 +48,7 @@ Revisions:
 	- 20150721@Sophia: Apply Microgaming product in sum_winloss table [#39772]
 	- 20150914@Sophia: Apply Colosuss Bets and expand the range of AG Casino product in sum_winloss table [#39772]
 	- 20151118@Sophia: Apply Microgaming - RNG Casino [RedmineId: #46450]
-	- 20150105@Sophia: Apply Cockfighting [Redmine: #48601]
+	- 20160105@Sophia: Apply Cockfighting [Redmine: #48601]
 	- 20160114@Daniel: Data verification: check table bettransRNG & bettransLC
 	- 20160125@Sophia: Apply OW RNG Casino[Redmine: #49297]
  */

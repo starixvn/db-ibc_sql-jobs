@@ -150,8 +150,8 @@ SET NOCOUNT ON
 	WHERE	matchid IN (SELECT MatchID from Match where eventdate = @winlostdate)
 
 
-	INSERT INTO dbo.EventInfo3rd14 (EventInfoID, ArenaID, FightNo, EventDate, HomeOwner, AwayOwner)
-	SELECT	EventInfoID, ArenaID, FightNo, EventDate, HomeOwner, AwayOwner
+	INSERT INTO dbo.EventInfo3rd14 (EventInfo3rdID, ArenaID, FightNo, EventDate, HomeOwner, AwayOwner)
+	SELECT	EventInfo3rdID, ArenaID, FightNo, EventDate, HomeOwner, AwayOwner
 	FROM	dbo.EventInfo3rd WITH (NOLOCK)
 	WHERE	EventDate = @winlostdate
 	
