@@ -1,6 +1,6 @@
 use bodb_licensee
 go
-ALTER PROCEDURE [dbo].[Task_PrepareStaging_xtest]  
+ALTER PROCEDURE [dbo].[Task_PrepareStaging]  
     @datefrom smalldatetime=null
     ,@dateto smalldatetime=null
 WITH RECOMPILE
