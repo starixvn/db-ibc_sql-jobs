@@ -49,7 +49,7 @@ Revisions:
 	- 20150914@Sophia: Apply Colosuss Bets and expand the range of AG Casino product in sum_winloss table [#39772]
 	- 20151118@Sophia: Apply Microgaming - RNG Casino [RedmineId: #46450]
 	- 20160114@Daniel: Data verification: check table bettransRNG & bettransLC
-	
+	- 20160125@Sophia: Apply OW RNG Casino[Redmine: #49297]
  */
 
 SET NOCOUNT ON
@@ -499,6 +499,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
 		0 -- netTurnover
@@ -530,6 +533,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -575,6 +581,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*apositiontaking)/2 else ABS(stake*apositiontaking) end) --netTurnover
@@ -608,6 +617,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -654,6 +666,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*mpositiontaking)/2 else ABS(stake*mpositiontaking) end) --netTurnover
@@ -687,6 +702,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -733,6 +751,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*spositiontaking)/2 else ABS(stake*spositiontaking) end) --netTurnover
@@ -766,6 +787,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
