@@ -114,7 +114,7 @@ AS
 	DELETE FROM ResultDetail3rd14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
 	
 	DELETE FROM outright14 WHERE eventdate = @winlostdate
-	DELETE FROM outright14 WHERE eventdate = @winlostdate
+	
 	DELETE FROM VSOutright14 WHERE eventdate = @winlostdate
 	DELETE FROM EventInfo3rd14 WHERE Eventdate = @winlostdate
 

@@ -101,6 +101,6 @@ BEGIN
 
 END
 
-
+GO
 GRANT VIEW DEFINITION ON [dbo].[Task_EventInfo3rdMovement] TO [vnteam] AS [dbo]
 GO
