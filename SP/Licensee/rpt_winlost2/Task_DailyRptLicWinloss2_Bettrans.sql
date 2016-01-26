@@ -11,6 +11,7 @@ AS
 	Revisions:  
 	- 20151113@Jim: separate Microgaming into 2 products
 	- 20151231@Patrick: Add more field buybackamt & BABuyBackAmt
+	- 20160105@Bobby: #49196 - Implement OneRnG product
 */  
 BEGIN
 	SET NOCOUNT ON
@@ -79,20 +80,23 @@ BEGIN
 	 ,SUM ((comm)*virtualrate) AS CommVirtual  
 	 ,COUNT(bettrans.transid) BetCount  
 	 ,bettrans.currency  
-	 ,CASE  
-	  WHEN bettype IN (71,72) THEN 251 --casino  
-	  WHEN bettype = 1000 THEN 253 --games  
-	  WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game   
-	  WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live casino  
-	  WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport  
-	  WHEN bettype BETWEEN 51 AND 69 THEN 201  
-	  WHEN bettype IN (31,32,33,41,42,43) THEN 151  
-	  WHEN bettype BETWEEN 1501  AND 1599 THEN 202 -- Keno  
-	  WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC  
-	  WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD  
-	  WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG  
-	  WHEN bettype BETWEEN 2001 AND 2007 THEN 203
-	  WHEN bettype BETWEEN 2008 AND 2009 THEN 205  
+	 ,CASE
+		WHEN bettype IN (71,72) THEN 251 --casino  
+		WHEN bettype = 1000 THEN 253 --games  
+		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game   
+		WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live casino  
+		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport  
+		WHEN bettype BETWEEN 51 AND 69 THEN 201  
+		WHEN bettype IN (31,32,33,41,42,43) THEN 151  
+		WHEN bettype BETWEEN 1501  AND 1599 THEN 202 -- Keno  
+		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC  
+		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD  
+		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG  
+		WHEN bettype BETWEEN 2001 AND 2007 THEN 203
+		WHEN bettype BETWEEN 2008 AND 2009 THEN 205
+		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
+		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
+		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 	  ELSE 0 END sporttype  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
@@ -128,20 +132,23 @@ BEGIN
 	 ,customer.username2  
 	 ,bettrans.currency  
 	 ,bettrans.statusID  
-	 ,CASE  
-	  WHEN bettype IN (71,72) THEN 251 --casino  
-	  WHEN bettype = 1000 THEN 253 --games  
-	  WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game   
-	  WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live casino  
-	  WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport  
-	  WHEN bettype BETWEEN 51 AND 69 THEN 201  
-	  WHEN bettype IN (31,32,33,41,42,43) THEN 151  
-	  WHEN bettype BETWEEN 1501  AND 1599 THEN 202  
-	  WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC  
-	  WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD  
-	  WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG  
-	  WHEN bettype BETWEEN 2001 AND 2007 THEN 203
-	  WHEN bettype BETWEEN 2008 AND 2009 THEN 205  
+	 ,CASE
+		WHEN bettype IN (71,72) THEN 251 --casino  
+		WHEN bettype = 1000 THEN 253 --games  
+		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game   
+		WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live casino  
+		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport  
+		WHEN bettype BETWEEN 51 AND 69 THEN 201  
+		WHEN bettype IN (31,32,33,41,42,43) THEN 151  
+		WHEN bettype BETWEEN 1501  AND 1599 THEN 202  
+		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC  
+		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD  
+		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG  
+		WHEN bettype BETWEEN 2001 AND 2007 THEN 203
+		WHEN bettype BETWEEN 2008 AND 2009 THEN 205
+		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
+		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
+		WHEN bettype BETWEEN 2301 AND 2399 THEN 210		
 	  ELSE 0 END  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END  
 	 ,CASE   

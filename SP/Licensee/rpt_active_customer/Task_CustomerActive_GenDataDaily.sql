@@ -10,6 +10,8 @@ AS
   Revisions: 
   - 20150326@Patrick: Missing tickets for SB
   - 20150911@Jim: add MicroGaming RNG
+  - 20160106@Bobby: add OneRnG Casino
+  
   Param's Explanation:
 */
 BEGIN
@@ -118,17 +120,19 @@ BEGIN
 	INSERT INTO #DataTmp (TransDate, CustId, Recommend, CurrencyId, ProductId)
 	SELECT b.TransDate, b.CustId, b.Recommend, b.currency, b.ProductId
 	FROM (
-		SELECT g.transdate, g.custid, g.recommend, g.currency, 17 ProductId
+		SELECT g.transdate, g.custid, g.recommend, g.currency
+		, b.ProductId
 		FROM bodb02.dbo.bettransRnG g WITH (NOLOCK)
 			INNER JOIN bodb_licensee.dbo.LicenseeCust lc WITH (NOLOCK)
 			ON g.recommend = lc.custid
+			INNER JOIN #Bettype b ON g.gameID = b.bettype
 		WHERE g.transdate > @FromDate
 			AND g.transdate < @ToDate
 		) b
 		LEFT JOIN #DataTmp tmp
 		ON b.TransDate = tmp.TransDate
 			AND b.custid = tmp.CustId
-			AND tmp.ProductID = 17
+			AND tmp.ProductID = b.ProductId
 	WHERE tmp.TransDate IS NULL
 	GROUP BY b.TransDate, b.CustId, b.Recommend, b.currency, b.ProductId
 

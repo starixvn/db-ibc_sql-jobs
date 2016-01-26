@@ -1,3 +1,6 @@
+USE bodb_Licensee
+GO
+
 SET QUOTED_IDENTIFIER ON 
 GO
 SET ANSI_NULLS ON 
@@ -5,7 +8,7 @@ GO
 
 /****** Object:  Stored Procedure dbo.GEN_rptBetting    Script Date: 12/14/2015 5:04:57 PM ******/
  
-CREATE PROCEDURE [dbo].[GEN_rptBetting]
+ALTER PROCEDURE [dbo].[GEN_rptBetting]
     @date datetime, 
     @date2 datetime = null
 AS
@@ -25,6 +28,7 @@ Revisions:
 	20150623@Patrick: Support BetTrade
 	20150917@Francis: Cast LiveIndicator to 0 if it is NULL
 	20151119@Jim: separate MicroGame into 2 product (#46454 )
+	20160106@Bobby: add OneRnG Casino
 
 Param's Explanation:
 
@@ -127,7 +131,7 @@ INSERT INTO dbo.rpt_Betting
 			FROM bodb02.dbo.bettransRNG b (NOLOCK) 
 				WHERE b.winlostdate BETWEEN @date AND @date2
 					AND b.IsSum=1
-					AND b.gameID IN (2008,2009)
+					--AND b.gameID IN (2008,2009)
 			GROUP BY   b.winlostdate
 					   ,b.gameID
 					   ,b.currency
@@ -142,7 +146,7 @@ INSERT INTO dbo.rpt_Betting
 				FROM bodb02.dbo.bettransRNG14 b1 (NOLOCK) 
 				WHERE b1.winlostdate BETWEEN @date AND @date2
 					AND b1.IsSum=1
-					AND b1.gameID IN (2008,2009) 
+					--AND b1.gameID IN (2008,2009) 
 				GROUP BY  b1.winlostdate
 						  ,b1.gameID
 					      ,b1.currency

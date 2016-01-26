@@ -1,4 +1,5 @@
-
+USE bodb02
+GO
 SET QUOTED_IDENTIFIER ON 
 GO
 SET ANSI_NULLS ON 
@@ -7,7 +8,7 @@ GO
 /****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans    Script Date: 12/1/2015 2:37:57 AM ******/
 
 
-CREATE PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans]
+ALTER PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans]
 	@winlostdate datetime
 AS
 /*   
@@ -53,6 +54,8 @@ AS
   - 20150911@Jim: add MicroGaming RNG
   - 20150921@Jim: Implement the changes on reports for AG Casino (#43172)
   - 20151119@Jim: separate MicroGame into 2 product (#46454 )
+  - 20160105@Bobby: #49196 - Implement OneRnG product
+  
  Param's Explanation:  
 
  ? @winlostdate: The date need to summary  
@@ -217,7 +220,7 @@ BEGIN
 	   ) a
 	   ON t.winlostdate = a. winlostdate and t.custid = a.custid
 
-	   --- MicroGaming_RNG
+	   --- MicroGaming_RNG & OneRnG
 	   INSERT INTO #tempDepWinlost (winlostdate, custid, currency, recommend, mrecommend, srecommend, OpeningBalance, turnover, outstanding)	
 	   SELECT @date AS winlostdate
 			  ,g.custid
@@ -337,7 +340,7 @@ BEGIN
 		WHERE tl.winlostdate <= @date  
 			  and tl.productID IN(202,203)
 		GROUP BY tl.custid,tl.currency,tl.recommend,tl.mrecommend,tl.srecommend
-		UNION -- microgaming_RNG
+		UNION -- microgaming_RNG & OneRnG
 		 SELECT @date AS winlostdate
 			  ,g.custid
 			  ,g.currency
@@ -439,7 +442,6 @@ BEGIN
 		b.custid, 
 		CASE				
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
-			--WHEN bettype IN (71,72) THEN 251 --casino
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
 			WHEN bettype = 1000 THEN 253 --games
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
@@ -451,6 +453,9 @@ BEGIN
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 			WHEN bettype = 903 THEN -4 -- BetTrade - Commission
+			WHEN bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 		ELSE 0 END, -- sporttype
 		--b.currency,
 		CASE 
@@ -473,7 +478,6 @@ BEGIN
 	GROUP BY b.custid,
 		CASE
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
-			--WHEN bettype IN (71,72) THEN 251 --casino
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
 			WHEN bettype = 1000 THEN 253 --games
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
@@ -485,6 +489,9 @@ BEGIN
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 			WHEN bettype = 903 THEN -4 -- BetTrade - Commission
+			WHEN bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 		ELSE 0 END,
 		CASE 
 			WHEN b.recommend = 14373731 AND @date < '20141128' THEN 13
@@ -557,10 +564,10 @@ BEGIN
 	   WHERE tl.winlostdate >= @date  
 			 and tl.productID IN (202,203)
 	   GROUP BY tl.custid, tl.productID, tl.currency
-	UNION ALL -- Micro Gamming RNG
+	UNION ALL -- Micro Gamming RNG & OneRnG
 		SELECT @date AS winlostdate
 		,g.custid   
-		,205 AS sporttype
+		,g.productID AS sporttype
 		,g.currency
 		,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then stake ELSE 0 END) AS turnover
 		,SUM(CASE WHEN winlostdate = @date AND g.statusID IN (0,1) then 1 ELSE 0 END) AS Betcount
@@ -571,7 +578,9 @@ BEGIN
 			--inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
 			INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = g.srecommend AND s.Currency = g.currency
 	   WHERE g.winlostdate >= @date  
-	   GROUP BY g.custid, g.currency
+	   GROUP BY g.custid
+		,g.productID
+	   , g.currency
 	UNION ALL -- AG Casino
 		SELECT @date AS winlostdate
 		,lc.custid   
