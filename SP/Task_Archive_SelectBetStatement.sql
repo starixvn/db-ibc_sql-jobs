@@ -15,6 +15,8 @@ AS
 	DB: DBTXN.bodb02
 	Revisions:
 		- 20150831@Sophia: Apply Colossus Bets - get Grand Prize [#42428] 
+		- 20151113@Sophia: Add Grand Prize for Microgaming - Table PayoutTrans [RedmineId: #46450] 
+		- 20160108@Sophia: Change request for Colossus bet [Redmine: #49967]
 	
  */
 
@@ -46,16 +48,29 @@ BEGIN
 
 	UNION ALL
 	--INSERT INTO DB06.bodb_Report.dbo.statement
-		SELECT b.custid, b.winlostdate AS accdate, SUM(bm.winlost - bm.stake) AS totalamt, 'GP' AS transtype, 'Grand Prize' AS transdesc
-		FROM bettrans14 b WITH (NOLOCK)
-			INNER JOIN bettransm14 bm WITH (NOLOCK)
-				ON b.refno = bm.refno
-		WHERE b.bettype = 18000
-			AND b.winlostdate BETWEEN @min_winlostdate AND @max_winlostdate
-			AND bm.statuswinlost <> 0
-		GROUP BY b.winlostdate, b.custid
-		HAVING SUM(bm.winlost - bm.stake) <> 0
+	SELECT custid, accdate, SUM(totalamt) as totalamt, 'GP' AS transtype, 'Grand Prize' AS transdesc
+	FROM (
+			--SELECT b.custid, b.winlostdate AS accdate, SUM(bm.winlost - bm.stake) AS totalamt
+			--FROM bettrans14 b WITH (NOLOCK)
+			--	INNER JOIN bettransm14 bm WITH (NOLOCK)
+			--		ON b.refno = bm.refno
+			--WHERE b.bettype = 18000
+			--	AND b.winlostdate BETWEEN @min_winlostdate AND @max_winlostdate
+			--	AND bm.statuswinlost <> 0
+			--GROUP BY b.winlostdate, b.custid
+			--HAVING SUM(bm.winlost - bm.stake) <> 0
 
+			--UNION ALL
+			SELECT b.custid, b.winlostdate AS accdate, SUM(b.WinAmount) AS totalamt
+			FROM DBACC.bodb02.dbo.PayoutTrans b WITH(NOLOCK) 
+			WHERE b.winlostdate BETWEEN @min_winlostdate AND @max_winlostdate	
+				AND PayoutStatusId = 4 ---Completed  			
+			GROUP BY b.winlostdate, b.custid
+			HAVING SUM(b.WinAmount) <> 0
+		) GP
+	GROUP BY custid, accdate
+
+		
 
 	UNION ALL
 	-- Agent - position & commission

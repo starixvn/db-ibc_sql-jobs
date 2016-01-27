@@ -25,6 +25,9 @@ AS
 -- 20150306@Cooper: Add MatchMaxbet.Spread into MatchMaxbet14
 -- 20150506@Victor(DB02): Add ParentID to Match14 and Match_BK
 -- 20150720@Sophia: Add ResultDetail3rd14 table
+-- 20151225@Sophia: Add EventInfo3rd14 table for Cockfighting 
+
+
 */
 
 BEGIN
@@ -145,6 +148,12 @@ SET NOCOUNT ON
 	SELECT	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate
 	FROM	ResultDetail3rd WITH(NOLOCK)
 	WHERE	matchid IN (SELECT MatchID from Match where eventdate = @winlostdate)
+
+
+	INSERT INTO dbo.EventInfo3rd14 (EventInfo3rdID, ArenaID, FightNo, EventDate, HomeOwner, AwayOwner)
+	SELECT	EventInfo3rdID, ArenaID, FightNo, EventDate, HomeOwner, AwayOwner
+	FROM	dbo.EventInfo3rd WITH (NOLOCK)
+	WHERE	EventDate = @winlostdate
 	
 END
 GO

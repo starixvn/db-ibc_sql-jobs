@@ -48,6 +48,7 @@ Revisions:
 	- 20150721@Sophia: Apply Microgaming product in sum_winloss table [#39772]
 	- 20150914@Sophia: Apply Colosuss Bets and expand the range of AG Casino product in sum_winloss table [#39772]
 	- 20151118@Sophia: Apply Microgaming - RNG Casino [RedmineId: #46450]
+	- 20160105@Sophia: Apply Cockfighting [Redmine: #48601]
 	- 20160114@Daniel: Data verification: check table bettransRNG & bettransLC
 	- 20160125@Sophia: Apply OW RNG Casino[Redmine: #49297]
  */
@@ -499,6 +500,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
@@ -533,6 +535,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
@@ -581,6 +584,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
@@ -617,6 +621,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
@@ -666,6 +671,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
@@ -702,6 +708,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
@@ -751,6 +758,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
@@ -787,6 +795,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
 			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
+			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
