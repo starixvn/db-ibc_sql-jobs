@@ -5,7 +5,7 @@ SET ANSI_NULLS ON
 GO
 
 /****** Object:  Stored Procedure dbo.Task_DOT_Dep_DailySummary_FULL    Script Date: 12/1/2015 2:37:58 AM ******/
-CREATE PROCEDURE [dbo].[Task_DOT_Dep_DailySummary_FULL]
+ALTER PROCEDURE [dbo].[Task_DOT_Dep_DailySummary_FULL]
 	@winlostdate datetime
 AS
 
@@ -21,6 +21,7 @@ AS
 		- 20110810@DAniel: Add summary TST data
 		- 20110907@Viet: skip this SP during movebet and balance up 
 		- 20110901@DAniel: Add summary BA data
+		- 20160130@Don: Add hard code to ignore bet type 18000
 */
 
 
@@ -29,7 +30,7 @@ BEGIN
 	return
 END
 
-IF EXISTS(SELECT TOP 1 1 FROM bettrans with (nolock) WHERE winlostdate = @winlostdate AND bettype < 19999)
+IF EXISTS(SELECT TOP 1 1 FROM bettrans with (nolock) WHERE winlostdate = @winlostdate AND bettype < 19999 AND bettype != 18000)
 BEGIN
 	print '*** bettrans - ' + convert(varchar(10), @winlostdate, 111) + ' ***'
 	EXEC [dbo].[Task_DOT_dep_DailySummary_Bettrans] @winlostdate
