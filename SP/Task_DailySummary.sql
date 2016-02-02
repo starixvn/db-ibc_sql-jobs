@@ -51,6 +51,7 @@ Revisions:
 	- 20160105@Sophia: Apply Cockfighting [Redmine: #48601]
 	- 20160114@Daniel: Data verification: check table bettransRNG & bettransLC
 	- 20160125@Sophia: Apply OW RNG Casino[Redmine: #49297]
+	- 20160125@Sophia: Apply Cricket - exclude betcount of bettype 500 [Redmine: #50027]
  */
 
 SET NOCOUNT ON
@@ -479,7 +480,7 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(comm) comm,
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
-		COUNT(transid) BetCount,
+		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
 		--sum(scomm / (1-tpositiontaking)) grosscomm,
 		-- 01-Dec-2009, apply gross commission by level
 		-- 07 Jun 2012, apply case for P2P gross comission
@@ -565,7 +566,7 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(comm) comm,
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
-		COUNT(transid) BetCount,
+		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
 		--sum(scomm / (1-tpositiontaking)) grosscomm,
 		SUM(CASE bettype WHEN 1000 THEN oddsspread ELSE ISNULL( acomm/(1-apositiontaking - mpositiontaking) ,0) END) grosscomm, 
 		CASE
@@ -651,7 +652,7 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(comm) comm,
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
-		COUNT(transid) BetCount,
+		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
 		SUM(CASE bettype WHEN 1000 THEN oddsspread ELSE 
 			CASE tpositiontaking WHEN 1 THEN 0 ELSE scomm / (1-tpositiontaking) END
 			END) grosscomm,
@@ -738,7 +739,7 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(comm) comm,
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
-		COUNT(transid) BetCount,
+		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
 		SUM(CASE bettype WHEN 1000 THEN oddsspread ELSE 
 			CASE tpositiontaking WHEN 1 THEN 0 ELSE scomm / (1-tpositiontaking) END
 			END) grosscomm,
