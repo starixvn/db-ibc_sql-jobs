@@ -174,7 +174,7 @@ BEGIN
 					SELECT 30, SoldTicketCount UNION ALL
 					SELECT 31, Actual_Stake UNION ALL
 					SELECT 32, BuyBackAmount UNION ALL
-					SELECT 35, TotalCommission
+					SELECT 33, TotalCommission
 				) f(StatID,MTD)
                 
 	DROP TABLE #Betting
