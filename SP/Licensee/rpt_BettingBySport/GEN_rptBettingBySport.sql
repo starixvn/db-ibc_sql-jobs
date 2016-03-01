@@ -1,8 +1,13 @@
 USE [bodb_LicenseeReport]
 GO
+/****** Object:  StoredProcedure [dbo].[GEN_rptBettingBySport]    Script Date: 03/01/2016 03:11:26 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[GEN_rptBettingBySport]
     @FromDate smalldatetime,
-    @ToDate smalldatetime = NULL
+    @ToDate smalldatetime
 AS
 /*
     Created: 20150226@Francis
@@ -12,13 +17,10 @@ AS
     Revisions:
 
 */ 
+BEGIN
+    DELETE FROM dbo.rpt_BettingBySport
+	WHERE rptDate BETWEEN @FromDate AND @ToDate
 
-    IF @ToDate IS NULL SET @ToDate = @FromDate
-	SET @ToDate = DATEADD(day,1,@ToDate)
-
-	DELETE FROM dbo.rpt_BettingBySport
-	WHERE rptDate >= @FromDate AND rptDate < @ToDate
-	
 	
 	--For Muay Thai
 	INSERT INTO dbo.rpt_BettingBySport(rptDate 
@@ -52,20 +54,13 @@ AS
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site = ibcsite.site
 		LEFT JOIN DBLIC.bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid=siteT.IbcSiteID
-	WHERE b.winlostdate between @fromdate and @todate
+	WHERE b.winlostdate BETWEEN @fromdate AND @todate
 	GROUP BY b.winlostdate, isnull(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory  
-   
-
+END  
 
 GO
-
 GRANT EXECUTE ON [dbo].[GEN_rptBettingBySport] TO [bodbLicenseeNet] AS [dbo]
 GO
-
 GRANT EXECUTE ON [dbo].[GEN_rptBettingBySport] TO [vnteam] AS [dbo]
 GO
-
 GRANT VIEW DEFINITION ON [dbo].[GEN_rptBettingBySport] TO [vnteam] AS [dbo]
-GO
-
-
