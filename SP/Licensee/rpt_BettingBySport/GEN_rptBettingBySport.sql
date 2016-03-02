@@ -1,6 +1,6 @@
 USE [bodb_LicenseeReport]
 GO
-/****** Object:  StoredProcedure [dbo].[GEN_rptBettingBySport]    Script Date: 03/01/2016 03:11:26 ******/
+/****** Object:  StoredProcedure [dbo].[GEN_rptBettingBySport]    Script Date: 03/02/2016 03:54:42 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -46,8 +46,8 @@ BEGIN
 			, sum (stake) AS Turnover --Turnover
 			, count (1) AS BetCount --Total Bets
 			, sum(actual_stake - winlost) * 0.03 as WLShare -- Winloss Share with Muay Thai partner
-			, sum(scomm) as CommissionS -- Commission for Licensee
-			, sum(scomm * 0.03/(1 - tpositiontaking)) as CommShare -- Commission for Licensee share with Muay Thai partner
+			, -sum(scomm) as CommissionS -- Commission for Licensee
+			, -sum(scomm * 0.03/(1 - tpositiontaking)) as CommShare -- Commission for Licensee share with Muay Thai partner
 			, b.customercategory AS CustomerCategory
 	FROM bodb_Licensee.dbo.bettrans b with (nolock)
 		INNER JOIN (SELECT matchid FROM bodb02.dbo.match WITH (NOLOCK) WHERE eventdate BETWEEN @fromdate AND @todate AND SportType = 44) m ON b.matchid = m.matchid
@@ -57,6 +57,7 @@ BEGIN
 	WHERE b.winlostdate BETWEEN @fromdate AND @todate
 	GROUP BY b.winlostdate, isnull(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory  
 END  
+
 
 GO
 GRANT EXECUTE ON [dbo].[GEN_rptBettingBySport] TO [bodbLicenseeNet] AS [dbo]
