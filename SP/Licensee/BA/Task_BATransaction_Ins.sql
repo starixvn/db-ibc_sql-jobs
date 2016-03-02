@@ -1,5 +1,10 @@
-﻿use bodb02
-go
+﻿USE [bodb02]
+GO
+/****** Object:  StoredProcedure [dbo].[Task_BATransaction_Ins]    Script Date: 03/01/2016 23:00:19 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
 ALTER PROCEDURE [dbo].[Task_BATransaction_Ins]
 AS  
@@ -16,6 +21,7 @@ AS
   20121030@Viet: change the way to get data, reduce load for server.  
   20150127@Don: Expand bet type ranges for Sportbook when processing BA
   20150903@Patrick: #42910: Exclude ticket 901 for BetTrade
+  20160301@Don: Add hard-code of [transid < 100000000000]
  */  
 SET NOCOUNT ON   
   
@@ -27,7 +33,7 @@ SET NOCOUNT ON
  FROM bodb_licensee.dbo.LICSettings with(rowlock)   
  WHERE vname = 'BA_transid'   
   
- SELECT @maxtransID = max(transid) FROM dbo.bettrans with(nolock)   
+ SELECT @maxtransID = max(transid) FROM dbo.bettrans with(nolock) WHERE transid < 100000000000
        
  UPDATE bodb_licensee.dbo.LICSettings with(rowlock, updlock)  
  SET vvalue = vvalue2  
@@ -65,5 +71,6 @@ SET NOCOUNT ON
  INSERT INTO Bodb_Licensee.dbo.LicenseeBATransaction_active (TransID, Transdate, custid, recommend, srecommend)  
  SELECT TransID, Transdate, custid, recommend, srecommend  
  FROM @temptrans
+
 GO
 GRANT VIEW DEFINITION ON [dbo].[Task_BATransaction_Ins] TO [vnteam] AS [dbo]
