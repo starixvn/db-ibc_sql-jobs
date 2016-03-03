@@ -52,6 +52,7 @@ Revisions:
 	- 20160114@Daniel: Data verification: check table bettransRNG & bettransLC
 	- 20160125@Sophia: Apply OW RNG Casino[Redmine: #49297]
 	- 20160203@Sophia: Apply Cricket - exclude betcount of bettype 500 [Redmine: #50027]
+	- 20160204@Sophia: Apply Allbet [Redmine: #50605]
 	- 20160225@Sophia: Add new column TurnoverNoDraw [Redmine: #51427]
 	
  */
@@ -507,11 +508,18 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
+			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
 		0 AS netTurnover,
 		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
-					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) THEN ABS(stake)/2
+					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+						---- Sportsbook
+						AND Bettype < 999 
+						AND bettype BETWEEN 1301 AND 1399
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120			
+						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						---- Sportsbook
 						AND Bettype < 999 
@@ -553,6 +561,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
+			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -602,17 +611,24 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210			
+			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*apositiontaking)/2 else ABS(stake*apositiontaking) end) AS netTurnover,
 		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
-					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) THEN ABS(stake)/2
+					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+						---- Sportsbook
+						AND Bettype < 999 
+						AND bettype BETWEEN 1301 AND 1399
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120			
+						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						---- Sportsbook
 						AND Bettype < 999 
 						AND bettype BETWEEN 1301 AND 1399
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
-						AND Bettype NOT BETWEEN 81 AND 120	
+						AND Bettype NOT BETWEEN 81 AND 120						
 						THEN 0
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
@@ -650,6 +666,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
+			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -700,17 +717,24 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
+			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*mpositiontaking)/2 else ABS(stake*mpositiontaking) end) AS netTurnover,
 		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
-					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) THEN ABS(stake)/2
+					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+						---- Sportsbook
+						AND Bettype < 999 
+						AND bettype BETWEEN 1301 AND 1399
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120			
+						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						---- Sportsbook
 						AND Bettype < 999 
 						AND bettype BETWEEN 1301 AND 1399
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
-						AND Bettype NOT BETWEEN 81 AND 120	
+						AND Bettype NOT BETWEEN 81 AND 120						
 						THEN 0
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
@@ -748,6 +772,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
+			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -798,17 +823,24 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
+			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*spositiontaking)/2 else ABS(stake*spositiontaking) end) AS netTurnover,
 		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
-					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) THEN ABS(stake)/2
+					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+						---- Sportsbook
+						AND Bettype < 999 
+						AND bettype BETWEEN 1301 AND 1399
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120			
+						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						---- Sportsbook
 						AND Bettype < 999 
 						AND bettype BETWEEN 1301 AND 1399
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
-						AND Bettype NOT BETWEEN 81 AND 120	
+						AND Bettype NOT BETWEEN 81 AND 120						
 						THEN 0
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
@@ -846,6 +878,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
+			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
