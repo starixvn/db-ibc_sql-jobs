@@ -515,15 +515,13 @@ INSERT INTO dbo.sum_winloss_tmp
 		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
 					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
 						---- Sportsbook
-						AND Bettype < 999 
-						AND bettype BETWEEN 1301 AND 1399
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120			
 						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						---- Sportsbook
-						AND Bettype < 999 
-						AND bettype BETWEEN 1301 AND 1399
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120						
 						THEN 0
@@ -618,15 +616,13 @@ INSERT INTO dbo.sum_winloss_tmp
 		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
 					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
 						---- Sportsbook
-						AND Bettype < 999 
-						AND bettype BETWEEN 1301 AND 1399
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120			
 						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						---- Sportsbook
-						AND Bettype < 999 
-						AND bettype BETWEEN 1301 AND 1399
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120						
 						THEN 0
@@ -724,15 +720,13 @@ INSERT INTO dbo.sum_winloss_tmp
 		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
 					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
 						---- Sportsbook
-						AND Bettype < 999 
-						AND bettype BETWEEN 1301 AND 1399
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120			
 						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						---- Sportsbook
-						AND Bettype < 999 
-						AND bettype BETWEEN 1301 AND 1399
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120						
 						THEN 0
@@ -830,15 +824,13 @@ INSERT INTO dbo.sum_winloss_tmp
 		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
 					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
 						---- Sportsbook
-						AND Bettype < 999 
-						AND bettype BETWEEN 1301 AND 1399
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120			
 						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						---- Sportsbook
-						AND Bettype < 999 
-						AND bettype BETWEEN 1301 AND 1399
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120						
 						THEN 0
