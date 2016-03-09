@@ -22,7 +22,7 @@ FROM dbo.Task_ArchiveDate
 SELECT
  [winlostdate],[username],[custid],[roleid],[recommend],[mrecommend],[srecommend],
  [turnover],[winlost],[awinlost],[mwinlost],[swinlost],[playercomm],[comm],[acomm],[scomm],
- [BetCount],[grosscomm],[sporttype],[bettype],[netTurnOver],[TurnoverNoDraw]
+ [BetCount],[grosscomm],[sporttype],[bettype],[netTurnOver],[TunroverNoDraw]
 FROM dbo.sum_winloss
 WHERE winlostdate
 BETWEEN @min_winlostdate AND @max_winlostdate

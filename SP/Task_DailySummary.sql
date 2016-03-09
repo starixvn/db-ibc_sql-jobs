@@ -465,7 +465,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	(winlostdate, roleid, custid, recommend, mrecommend, srecommend, username,
 	turnover, winlost, awinlost, mwinlost, swinlost,
 	playercomm, comm, acomm, scomm, betcount, grosscomm,
-	sporttype, bettype, netTurnover, TurnoverNoDraw)
+	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 1,
 		customer.custid, customer.recommend, customer.mrecommend, customer.srecommend, customer.username,
 		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
@@ -568,7 +568,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	(winlostdate, roleid, custid, recommend, mrecommend, srecommend, username,
 	turnover, winlost, awinlost, mwinlost, swinlost,
 	playercomm, comm, acomm, scomm, betcount, grosscomm,
-	sporttype, bettype, netTurnover, TurnoverNoDraw)
+	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 2,
 		ag.custid, customer.recommend, customer.mrecommend, customer.srecommend, ag.username,
 		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
@@ -671,7 +671,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	(winlostdate, roleid, custid, recommend, mrecommend, srecommend, username,
 	turnover, winlost, awinlost, mwinlost, swinlost,
 	playercomm, comm, acomm, scomm, betcount, grosscomm,
-	sporttype, bettype, netTurnover, TurnoverNoDraw)
+	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 3,
 		ma.custid, 0 recommend, customer.mrecommend, customer.srecommend, ma.username,
 		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
@@ -775,7 +775,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	(winlostdate, roleid, custid, recommend, mrecommend, srecommend, username,
 	turnover, winlost, awinlost, mwinlost, swinlost,
 	playercomm, comm, acomm, scomm, betcount, grosscomm,
-	sporttype, bettype, netTurnover, TurnoverNoDraw)
+	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 4,
 		sa.custid, 0 recommend, 0 mrecommend, customer.srecommend, sa.username,
 		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
