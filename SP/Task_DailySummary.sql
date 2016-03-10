@@ -53,6 +53,7 @@ Revisions:
 	- 20160125@Sophia: Apply OW RNG Casino[Redmine: #49297]
 	- 20160203@Sophia: Apply Cricket - exclude betcount of bettype 500 [Redmine: #50027]
 	- 20160204@Sophia: Apply Allbet [Redmine: #50605]
+	- 20160225@Sophia: Add new column TurnoverNoDraw [Redmine: #51427]
 	
  */
 
@@ -464,7 +465,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	(winlostdate, roleid, custid, recommend, mrecommend, srecommend, username,
 	turnover, winlost, awinlost, mwinlost, swinlost,
 	playercomm, comm, acomm, scomm, betcount, grosscomm,
-	sporttype, bettype, netTurnover)
+	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 1,
 		customer.custid, customer.recommend, customer.mrecommend, customer.srecommend, customer.username,
 		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
@@ -510,7 +511,22 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
-		0 -- netTurnover
+		0 AS netTurnover,
+		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
+					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+						---- Sportsbook
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120			
+						THEN ABS(stake)/2
+					WHEN StatusID = 111  
+						---- Sportsbook
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120						
+						THEN 0
+					ELSE ABS(stake) 
+				END) AS TurnoverNoDraw
 	FROM
 		CustDB.dbo.customer with (nolock),
 		dbo.bettrans14 bettrans with (nolock)
@@ -552,7 +568,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	(winlostdate, roleid, custid, recommend, mrecommend, srecommend, username,
 	turnover, winlost, awinlost, mwinlost, swinlost,
 	playercomm, comm, acomm, scomm, betcount, grosscomm,
-	sporttype, bettype, netTurnover)
+	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 2,
 		ag.custid, customer.recommend, customer.mrecommend, customer.srecommend, ag.username,
 		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
@@ -592,11 +608,26 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
-			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
+			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210			
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
-		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*apositiontaking)/2 else ABS(stake*apositiontaking) end) --netTurnover
+		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*apositiontaking)/2 else ABS(stake*apositiontaking) end) AS netTurnover,
+		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
+					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+						---- Sportsbook
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120			
+						THEN ABS(stake)/2
+					WHEN StatusID = 111  
+						---- Sportsbook
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120						
+						THEN 0
+					ELSE ABS(stake) 
+				END) AS TurnoverNoDraw
 	FROM
 		CustDB.dbo.customer with (nolock),
 		CustDB.dbo.customer ag with (nolock),
@@ -640,7 +671,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	(winlostdate, roleid, custid, recommend, mrecommend, srecommend, username,
 	turnover, winlost, awinlost, mwinlost, swinlost,
 	playercomm, comm, acomm, scomm, betcount, grosscomm,
-	sporttype, bettype, netTurnover)
+	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 3,
 		ma.custid, 0 recommend, customer.mrecommend, customer.srecommend, ma.username,
 		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
@@ -685,7 +716,22 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
-		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*mpositiontaking)/2 else ABS(stake*mpositiontaking) end) --netTurnover
+		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*mpositiontaking)/2 else ABS(stake*mpositiontaking) end) AS netTurnover,
+		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
+					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+						---- Sportsbook
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120			
+						THEN ABS(stake)/2
+					WHEN StatusID = 111  
+						---- Sportsbook
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120						
+						THEN 0
+					ELSE ABS(stake) 
+				END) AS TurnoverNoDraw
 	FROM
 		CustDB.dbo.customer with (nolock),
 		CustDB.dbo.customer ma with (nolock),
@@ -729,7 +775,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	(winlostdate, roleid, custid, recommend, mrecommend, srecommend, username,
 	turnover, winlost, awinlost, mwinlost, swinlost,
 	playercomm, comm, acomm, scomm, betcount, grosscomm,
-	sporttype, bettype, netTurnover)
+	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 4,
 		sa.custid, 0 recommend, 0 mrecommend, customer.srecommend, sa.username,
 		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
@@ -774,7 +820,22 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
-		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*spositiontaking)/2 else ABS(stake*spositiontaking) end) --netTurnover
+		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*spositiontaking)/2 else ABS(stake*spositiontaking) end) AS netTurnover,
+		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
+					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+						---- Sportsbook
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120			
+						THEN ABS(stake)/2
+					WHEN StatusID = 111  
+						---- Sportsbook
+						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399)
+						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT BETWEEN 81 AND 120						
+						THEN 0
+					ELSE ABS(stake) 
+				END) AS TurnoverNoDraw
 	FROM
 		CustDB.dbo.customer with (nolock),
 		CustDB.dbo.customer sa with (nolock),
