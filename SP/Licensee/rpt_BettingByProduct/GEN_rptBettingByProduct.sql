@@ -22,6 +22,7 @@ AS
 		- 20151105@Victor: Summary data for Racing by bettype [Redmine: #44873]
 		- 20151201@Bravo: Change Product code: MGC -> MGCLC
 		- 20151222@Francis: Add GD Single Wallet data for Credit
+		- 20160226@Victor: Support Cock Fighting data [Redmine: #52452]
 */
 
 BEGIN  
@@ -36,7 +37,7 @@ BEGIN
 	
 	INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 	SELECT Bettype, ProductId 
-	FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD')
+	FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF')
 
 	INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 	SELECT Bettype, ProductId 
