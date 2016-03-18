@@ -15,7 +15,7 @@ AS
     DB: DB052.bodb_LicenseeReport
 
     Revisions:
-
+	
 */ 
 BEGIN
     DELETE FROM dbo.rpt_BettingBySport
@@ -29,6 +29,7 @@ BEGIN
 									   , SportType 
 									   , CurrencyId
 									   , StatusId
+									   , LicenseeWL
 									   , CustomerWL
 									   , Turnover
 									   , BetCount
@@ -42,6 +43,10 @@ BEGIN
 			, 44 AS SportType
 			, b.currency AS CurrencyId
 			, b.statusid AS StatusId
+			, case l.LabelID when null
+				   then 0
+				   else sum (actual_stake - winlost - swinlost - mwinlost -  awinlost - scomm)
+			  end as LicenseeWL
 			, sum(winlost - actual_stake) AS CustomerWL -- Customer Winlosss
 			, sum (stake) AS Turnover --Turnover
 			, count (1) AS BetCount --Total Bets
@@ -53,15 +58,10 @@ BEGIN
 		INNER JOIN (SELECT matchid FROM bodb02.dbo.match WITH (NOLOCK) WHERE eventdate BETWEEN @fromdate AND @todate AND SportType = 44) m ON b.matchid = m.matchid
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site = ibcsite.site
-		LEFT JOIN DBLIC.bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid=siteT.IbcSiteID
+		LEFT JOIN bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid=siteT.IbcSiteID
+		LEFT JOIN bodb_Licensee.dbo.Labels l WITH (NOLOCK) ON SiteT.SiteID = l.LabelID
 	WHERE b.winlostdate BETWEEN @fromdate AND @todate
 	GROUP BY b.winlostdate, isnull(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory  
 END  
-
-
-GO
-GRANT EXECUTE ON [dbo].[GEN_rptBettingBySport] TO [bodbLicenseeNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[GEN_rptBettingBySport] TO [vnteam] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[GEN_rptBettingBySport] TO [vnteam] AS [dbo]
