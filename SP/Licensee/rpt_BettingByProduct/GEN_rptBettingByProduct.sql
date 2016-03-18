@@ -23,6 +23,7 @@ AS
 		- 20151201@Bravo: Change Product code: MGC -> MGCLC
 		- 20151222@Francis: Add GD Single Wallet data for Credit
 		- 20160226@Victor: Support Cock Fighting data [Redmine: #52452]
+		- 20160315@Bruce: Summary data for Colossus bets(CB)
 */
 
 BEGIN  
@@ -37,7 +38,7 @@ BEGIN
 	
 	INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 	SELECT Bettype, ProductId 
-	FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF')
+	FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB')
 
 	INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 	SELECT Bettype, ProductId 
@@ -58,12 +59,14 @@ BEGIN
 			,[BetCount]
 			,[CommissionA]
 			,[CommissionP]
-			,[BuyBackAmount])
+			,[BuyBackAmount]
+			,[WinPrizeAmount]
+			,[CashOutAmount])
 	SELECT
 		[rptDate]
 		,[SiteID]
 		,bt.ProductID
-		,CASE WHEN bt.ProductID IN (1,13,14,17) THEN b.[Bettype] ELSE -1 END [Bettype]
+		,CASE WHEN bt.ProductID IN (1,13,14,17,15) THEN b.[Bettype] ELSE -1 END [Bettype]
 		,[CurrencyId]
 		,Status [StatusId]
 		,ISNULL([CustomerCategory],-1)
@@ -74,15 +77,17 @@ BEGIN
 		,SUM(ISNULL([CommissionA],0)) [CommissionA]
 		,SUM(ISNULL([CommissionP],0)) [CommissionP]
 		,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
+		,SUM(ISNULL([WinPrizeAmount],0)) [WinPrizeAmount]
+		,SUM(ISNULL([CashOutAmount],0)) [CashOutAmount]
 	FROM bodb_licensee.dbo.rpt_Betting b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2
 		AND b.Status IN (111,112,113,114,115,101,102,103)
-		AND [CurrencyID] <> 20    
+		AND [CurrencyID] <> 20
 	GROUP BY [rptDate]
 			,[SiteID]
 			, bt.ProductID
-			,CASE WHEN bt.ProductID IN (1,13,14,17) THEN b.[Bettype] ELSE -1 END 
+			,CASE WHEN bt.ProductID IN (1,13,14,17,15) THEN b.[Bettype] ELSE -1 END 
 			,[CurrencyId]
 			,Status
 			,ISNULL([CustomerCategory],-1)
@@ -102,11 +107,13 @@ BEGIN
 		,SUM(ISNULL([CommissionA],0)) [CommissionA]
 		,SUM(ISNULL([CommissionP],0)) [CommissionP]
 		,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
+		,0 [WinPrizeAmount]
+		,0 [CashOutAmount]
 	FROM bodb_licensee.dbo.rpt_Betting_BA b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2
 		AND b.Status IN (111,112,113,114,115,101,102,103)
-		AND [CurrencyID] <> 20    
+		AND [CurrencyID] <> 20
 	GROUP BY [rptDate]
 			,[SiteID]
 			, bt.ProductID
@@ -156,7 +163,9 @@ BEGIN
 			,[BetCount]
 			,[CommissionA]
 			,[CommissionP]
-			,[BuyBackAmount])
+			,[BuyBackAmount]
+			,[WinPrizeAmount]
+			,[CashOutAmount])
 	SELECT td.rptDate
 		, ISNULL(site.SiteID,-1) AS SiteId
 		, td.productId
@@ -175,6 +184,8 @@ BEGIN
 		, 0 AS CommissionA
 		, SUM(ISNULL(PlayerComm,0)) AS CommissionP
 		, 0 AS BuyBackAmount
+		, 0 [WinPrizeAmount]
+		, 0 [CashOutAmount]
 	FROM #tmpData td WITH (NOLOCK)
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.Custid = td.CustID AND c.roleid = 1
 		LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON c.recommend = ag.custid AND ag.roleid = 2
