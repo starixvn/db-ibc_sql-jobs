@@ -43,7 +43,7 @@ BEGIN
 			, 44 AS SportType
 			, b.currency AS CurrencyId
 			, b.statusid AS StatusId
-			, case l.LabelID when null
+			, case isnull(l.LabelID,0) when 0
 				   then 0
 				   else sum (actual_stake - winlost - swinlost - mwinlost -  awinlost - scomm)
 			  end as LicenseeWL
@@ -61,7 +61,7 @@ BEGIN
 		LEFT JOIN bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid=siteT.IbcSiteID
 		LEFT JOIN bodb_Licensee.dbo.Labels l WITH (NOLOCK) ON SiteT.SiteID = l.LabelID
 	WHERE b.winlostdate BETWEEN @fromdate AND @todate
-	GROUP BY b.winlostdate, isnull(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory  
+	GROUP BY b.winlostdate, isnull(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory, l.LabelID 
 END  
 GO
 GRANT VIEW DEFINITION ON [dbo].[GEN_rptBettingBySport] TO [vnteam] AS [dbo]
