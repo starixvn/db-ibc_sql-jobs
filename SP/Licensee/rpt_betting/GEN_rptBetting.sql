@@ -95,11 +95,11 @@ INSERT INTO dbo.rpt_Betting
 	    b.customercategory,
 		SUM(CASE 
 				WHEN b.bettype IN (901) THEN winlost 
-				WHEN b.bettype = 18000 THEN CashInAmount
+				WHEN b.bettype = 18000 THEN ISNULL(CashInAmount,0)
 				ELSE 0 
 			END) BuyBackAmount,
-		SUM(WinPrizeAmount) WinPrizeAmount,
-		SUM(CashOutAmount) CashOutAmount
+		SUM(ISNULL(WinPrizeAmount,0)) WinPrizeAmount,
+		SUM(ISNULL(CashOutAmount,0)) CashOutAmount
     FROM
 	    dbo.bettrans b (NOLOCK) 
 	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
