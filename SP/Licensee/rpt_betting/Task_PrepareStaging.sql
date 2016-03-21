@@ -157,8 +157,14 @@ BEGIN
 			(	
 				SELECT b.transid, 
 					SUM(CASE WHEN bm.bettype = 18002 THEN bm.oddsspread ELSE 0 END) AS CashInAmount, 
-					SUM(CASE WHEN bm.bettype = 18002 THEN bm.winlost-bm.stake ELSE 0 END) AS CashOutAmount,
-					SUM(CASE WHEN bm.bettype IN (18004, 18005, 18006) THEN bm.Winlost-bm.stake ELSE 0 END) AS WinPrizeAmount
+					SUM(CASE 
+							WHEN b.winlost = 0 THEN 0
+							ELSE CASE WHEN bm.bettype = 18002 THEN bm.winlost-bm.stake ELSE 0 END
+						END) AS CashOutAmount,
+					SUM(CASE 
+							WHEN b.winlost = 0 THEN 0
+							ELSE CASE WHEN bm.bettype IN (18004, 18005, 18006) THEN bm.Winlost-bm.stake ELSE 0 END
+						END) AS WinPrizeAmount
 				FROM dbo.bettrans b WITH (NOLOCK) 
 					INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 				WHERE b.bettype = 18000 AND b.winlostdate=@tmpDate
@@ -243,8 +249,14 @@ BEGIN
 			(	
 				SELECT b.transid, 
 					SUM(CASE WHEN bm.bettype = 18002 THEN bm.oddsspread ELSE 0 END) AS CashInAmount, 
-					SUM(CASE WHEN bm.bettype = 18002 THEN bm.winlost-bm.stake ELSE 0 END) AS CashOutAmount,
-					SUM(CASE WHEN bm.bettype IN (18004, 18005, 18006) THEN bm.Winlost-bm.stake ELSE 0 END) AS WinPrizeAmount
+					SUM(CASE 
+							WHEN b.winlost = 0 THEN 0
+							ELSE CASE WHEN bm.bettype = 18002 THEN bm.winlost-bm.stake ELSE 0 END
+						END) AS CashOutAmount,
+					SUM(CASE 
+							WHEN b.winlost = 0 THEN 0
+							ELSE CASE WHEN bm.bettype IN (18004, 18005, 18006) THEN bm.Winlost-bm.stake ELSE 0 END
+						END) AS WinPrizeAmount
 				FROM dbo.bettrans b WITH (NOLOCK) 
 					INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 				WHERE b.bettype = 18000 AND b.winlostdate=@tmpDate
