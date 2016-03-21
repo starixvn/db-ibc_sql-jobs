@@ -30,6 +30,7 @@ Revisions:
 	20151119@Jim: separate MicroGame into 2 product (#46454 )
 	20160106@Bobby: add OneRnG Casino
 	20160129@Jim: fix bug #51781
+	20160321@Victor: Support Colossus bet [Redmine: #52575]
 	
 Param's Explanation:
 
@@ -62,7 +63,9 @@ INSERT INTO dbo.rpt_Betting
         ,[WinLossVirtual]
         ,[CommissionSVirtual]
         ,[CustomerCategory]
-		,[BuyBackAmount])
+		,[BuyBackAmount]
+		,[WinPrizeAmount]
+		,[CashOutAmount])
     SELECT  
 	    b.winlostdate,
         ISNULL(site.SiteID,-1) siteid,
@@ -90,7 +93,13 @@ INSERT INTO dbo.rpt_Betting
 	    SUM((winlost-actual_stake)*virtualrate) WinLossVirtual,
 	    SUM(scomm*virtualrate) CommissionSVirtual,
 	    b.customercategory,
-		SUM(CASE WHEN b.bettype IN (901) THEN winlost ELSE 0 END)
+		SUM(CASE 
+				WHEN b.bettype IN (901) THEN winlost 
+				WHEN b.bettype = 18000 THEN CashInAmount
+				ELSE 0 
+			END) BuyBackAmount,
+		SUM(WinPrizeAmount) WinPrizeAmount,
+		SUM(CashOutAmount) CashOutAmount
     FROM
 	    dbo.bettrans b (NOLOCK) 
 	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
