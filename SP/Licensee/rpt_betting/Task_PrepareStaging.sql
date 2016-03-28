@@ -19,7 +19,7 @@ Revisions:
 	-20150003@Patrick: #42910 (Exclude ticket 901 for BA ticket)
 	-20150929@Patrick: Revise code of BetTrade
 	-20160118@Patrick: Hotfix: #51053 for bettrade - turn off BA for ticket 901
-
+	-20160318@Victor: Support Colossus bet - [Redmine: #52575]
 Param's Explanation:
 
 */
@@ -112,7 +112,8 @@ BEGIN
                 ,discount
                 ,tpositiontaking
                 ,customercategory
-				,isBA)
+				,isBA
+				,refno)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -139,7 +140,8 @@ BEGIN
 					 WHEN b.bettype = 901 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1001 ELSE 1002 END --bettrade
 				ELSE -1 END customercategory,
 				--CASE WHEN b.transid2 = 1 AND btc.CustId IS NOT NULL AND b.bettype NOT IN (901,902,903) THEN 1 ELSE 0 END, --for BA's bettrade tickets (original tickets)
-				CASE WHEN b.transid2 = 1 AND b.bettype <> 901 THEN 1 ELSE 0 END
+				CASE WHEN b.transid2 = 1 AND b.bettype <> 901 THEN 1 ELSE 0 END,
+				b.refno
 			FROM bodb02.dbo.bettrans b (NOLOCK)
 			    INNER JOIN @Recommend_List r ON b.recommend=r.t_recommend
 				--LEFT JOIN #BetTradeCust btc ON b.CustId = btc.CustId
@@ -149,6 +151,32 @@ BEGIN
 	            AND b.custid>0
 	            
             DELETE dbo.bettrans WHERE winlostdate=@tmpDate AND statusid IN (0,1,101,102,121)
+
+			-- Colossus bet tickets
+			;WITH CBAmount AS
+			(	
+				SELECT b.transid, 
+					SUM(CASE WHEN bm.bettype = 18002 THEN bm.oddsspread ELSE 0 END) AS CashInAmount, 
+					SUM(CASE 
+							WHEN b.winlost = 0 THEN 0
+							ELSE CASE WHEN bm.bettype = 18002 THEN bm.winlost-bm.stake ELSE 0 END
+						END) AS CashOutAmount,
+					SUM(CASE 
+							WHEN b.winlost = 0 THEN 0
+							ELSE CASE WHEN bm.bettype IN (18004, 18005, 18006) THEN bm.Winlost-bm.stake ELSE 0 END
+						END) AS WinPrizeAmount
+				FROM dbo.bettrans b WITH (NOLOCK) 
+					INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
+				WHERE b.bettype = 18000 AND b.winlostdate=@tmpDate
+				GROUP BY b.transid
+			)
+			UPDATE b
+			SET b.CashInAmount = cb.CashInAmount,
+				b.WinPrizeAmount = cb.WinPrizeAmount,
+				b.CashOutAmount = cb.CashOutAmount
+			FROM dbo.bettrans b
+				INNER JOIN CBAmount cb ON cb.transid = b.transid
+			WHERE b.bettype = 18000 AND b.Winlostdate = @tmpDate
         END
 		ELSE
         BEGIN
@@ -181,7 +209,8 @@ BEGIN
                 ,discount
                 ,tpositiontaking
                 ,customercategory
-				,isBA)
+				,isBA
+				,refno)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -208,11 +237,38 @@ BEGIN
 					 WHEN b.bettype = 901 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1001 ELSE 1002 END --bettrade
 					ELSE -1 END customercategory,
 				--CASE WHEN b.transid2 = 1 AND btc.CustId IS NOT NULL AND b.bettype NOT IN (901,902,903) THEN 1 ELSE 0 END, --for BA's bettrade tickets (original tickets)
-				CASE WHEN b.transid2 = 1 AND b.bettype <> 901 THEN 1 ELSE 0 END
+				CASE WHEN b.transid2 = 1 AND b.bettype <> 901 THEN 1 ELSE 0 END,
+				b.refno
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
 			    INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
 				--LEFT JOIN #BetTradeCust btc ON b.CustId = btc.CustId
 			WHERE b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
+
+			-- Colossus bet tickets
+			;WITH CBAmount AS
+			(	
+				SELECT b.transid, 
+					SUM(CASE WHEN bm.bettype = 18002 THEN bm.oddsspread ELSE 0 END) AS CashInAmount, 
+					SUM(CASE 
+							WHEN b.winlost = 0 THEN 0
+							ELSE CASE WHEN bm.bettype = 18002 THEN bm.winlost-bm.stake ELSE 0 END
+						END) AS CashOutAmount,
+					SUM(CASE 
+							WHEN b.winlost = 0 THEN 0
+							ELSE CASE WHEN bm.bettype IN (18004, 18005, 18006) THEN bm.Winlost-bm.stake ELSE 0 END
+						END) AS WinPrizeAmount
+				FROM dbo.bettrans b WITH (NOLOCK) 
+					INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
+				WHERE b.bettype = 18000 AND b.winlostdate=@tmpDate
+				GROUP BY b.transid
+			)
+			UPDATE b
+			SET b.CashInAmount = cb.CashInAmount,
+				b.WinPrizeAmount = cb.WinPrizeAmount,
+				b.CashOutAmount = cb.CashOutAmount
+			FROM dbo.bettrans b
+				INNER JOIN CBAmount cb ON cb.transid = b.transid
+			WHERE b.bettype = 18000 AND b.Winlostdate = @tmpDate
         END
 
 		SELECT @count = @count - 1
