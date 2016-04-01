@@ -1,10 +1,11 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_Archive_Event]    Script Date: 07/19/2015 22:21:13 ******/
+/****** Object:  StoredProcedure [dbo].[Task_Archive_Event]    Script Date: 03/29/2016 22:53:09 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+/****** Object:  Stored Procedure dbo.Task_Archive_Event    Script Date: 1/26/2016 3:02:38 PM ******/
 ALTER PROCEDURE [dbo].[Task_Archive_Event]
 	@winlostdate datetime
 AS
@@ -23,11 +24,12 @@ AS
 		- 20150703@Cooper(DB02): Add match_remark table Arcihve column 'HomeYellowCard,AwayYellowCard'
 		- 20150720@Sophia: Add ResultDetail3rd14 table
 		- 20160120@Sophia: Add EventInfo3rd_bk table for Cockfighting 
+		- 20160401@Sophia: Add Column Matchmaxbet.Spread [Redmind: #55115]
  */
 
 	INSERT INTO DB06.bodb_archive.dbo.odds_bk
 		SELECT * FROM odds14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
-
+ 
 	INSERT INTO DB06.bodb_archive.dbo.match_bk
 		SELECT
 			matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore,
@@ -84,8 +86,8 @@ AS
 	FROM match_remark
 	WHERE MatchID in (SELECT MatchID from Match14 where eventdate = @winlostdate)
 
-	INSERT INTO DB06.bodb_Archive.dbo.[MatchMaxbet_bk](MatchId, BetType, Maxbet, OperatorId)
-	SELECT MatchId, BetType, Maxbet, OperatorId
+	INSERT INTO DB06.bodb_Archive.dbo.[MatchMaxbet_bk](MatchId, BetType, Maxbet, OperatorId, Spread)
+	SELECT MatchId, BetType, Maxbet, OperatorId, Spread
 	FROM matchMaxbet14 WITH(NOLOCK)
 	WHERE matchid IN (SELECT MatchID from Match14 where eventdate = @winlostdate)
 	
@@ -110,16 +112,16 @@ AS
 	DELETE FROM BingoBall14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
 	DELETE FROM match_Remark WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
 	--DELETE FROM SS_GameState14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
+
+	DELETE FROM matchMaxbet14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
 	DELETE FROM ResultDetail14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
 	DELETE FROM ResultDetail3rd14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
 	
 	DELETE FROM outright14 WHERE eventdate = @winlostdate
-	
 	DELETE FROM VSOutright14 WHERE eventdate = @winlostdate
 	DELETE FROM EventInfo3rd14 WHERE Eventdate = @winlostdate
 
 	DELETE FROM match14 WHERE eventdate = @winlostdate
-	
+
 GO
 GRANT VIEW DEFINITION ON [dbo].[Task_Archive_Event] TO [vnteam] AS [dbo]
-GO
