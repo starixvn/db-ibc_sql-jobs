@@ -16,7 +16,7 @@ AS
 	Revisions:
 		- 20150831@Sophia: Apply Colossus Bets - get Grand Prize [#42428] 
 		- 20151113@Sophia: Add Grand Prize for Microgaming - Table PayoutTrans [RedmineId: #46450] 
-		- 20160108@Sophia: Change request for Colossus bet [Redmine: #49967]
+		- 20160328@Sophia: Check status Of PayOutTrans, get status Completed and Expired [Redmine: #54643]
 	
  */
 
@@ -62,9 +62,9 @@ BEGIN
 
 			--UNION ALL
 			SELECT b.custid, b.winlostdate AS accdate, SUM(b.WinAmount) AS totalamt
-			FROM DBACC.bodb02.dbo.PayoutTrans b WITH(NOLOCK) 
+			FROM dbo.PayoutTrans b WITH(NOLOCK) 
 			WHERE b.winlostdate BETWEEN @min_winlostdate AND @max_winlostdate	
-				AND PayoutStatusId = 4 ---Completed  			
+				  AND PayoutStatusId IN (4, 5)  ----- 'Completed', 'Expired'			
 			GROUP BY b.winlostdate, b.custid
 			HAVING SUM(b.WinAmount) <> 0
 		) GP
