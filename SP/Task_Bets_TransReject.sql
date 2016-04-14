@@ -1,15 +1,12 @@
 USE [bk]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_Bets_TransReject]    Script Date: 01/19/2015 01:49:46 ******/
+/****** Object:  StoredProcedure [dbo].[Task_Bets_TransReject]    Script Date: 04/13/2016 22:26:36 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
 /****** Object:  Stored Procedure dbo.GetBetTransReject    Script Date: 1/30/2013 11:24:41 AM ******/
-CREATE   PROCEDURE [dbo].[Task_Bets_TransReject]
+ALTER   PROCEDURE [dbo].[Task_Bets_TransReject]
 	@transid bigint
 AS
 -- 20120904@Viet: add new sportsbook and number game bettype
@@ -28,8 +25,4 @@ Where
 	--and NOT (bettype IN (31,32,33) AND status = N'void')
 
 GO
-
 GRANT VIEW DEFINITION ON [dbo].[Task_Bets_TransReject] TO [vnteam] AS [dbo]
-GO
-
-

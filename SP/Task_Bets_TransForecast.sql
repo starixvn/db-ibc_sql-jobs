@@ -1,15 +1,12 @@
 USE [bk]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_Bets_TransForecast]    Script Date: 01/19/2015 01:47:32 ******/
+/****** Object:  StoredProcedure [dbo].[Task_Bets_TransForecast]    Script Date: 04/13/2016 22:27:36 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
 /****** Object:  Stored Procedure dbo.GetBetTransForecast    Script Date: 1/30/2013 11:24:41 AM ******/
-CREATE PROCEDURE [dbo].[Task_Bets_TransForecast]
+ALTER PROCEDURE [dbo].[Task_Bets_TransForecast]
 	@transid bigint
 AS
 -- 20120904@Viet: add new sportsbook and number bettypes
@@ -31,8 +28,4 @@ Where  transid > @transid --and bettype<41
 and (bettype < 50 OR bettype between 81 and 999 OR bettype between 1201 and 1299)
 
 GO
-
 GRANT VIEW DEFINITION ON [dbo].[Task_Bets_TransForecast] TO [vnteam] AS [dbo]
-GO
-
-
