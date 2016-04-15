@@ -30,6 +30,7 @@ Revisions:
 	- 20151231@Patrick: Add more field buybackamt & BABuyBackAmt
 	- 20160105@Bobby: #49196 - Implement OneRnG product
 	- 20160301@Victor: Redefine betfrom value [Redmine: #50939]
+	- 20160415@Victor: Support Voidbridge product [Redmine: #55057]
  */
 
 SET NOCOUNT ON 
@@ -116,6 +117,7 @@ SELECT @winlostdate
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
+		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB 
 		ELSE 0 END sporttype
 	,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END bettype
 	--114: half win, 115: half lose
@@ -167,6 +169,7 @@ GROUP BY
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
+		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB 
 		ELSE 0 END
 	,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END
 	,CASE 
