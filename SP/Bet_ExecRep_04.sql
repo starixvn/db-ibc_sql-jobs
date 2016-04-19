@@ -23,7 +23,7 @@ AS
  		- 20131108@Elodie: Splitting bodb02 into CustDB (call custinfo, exchange by link database)
  		- 20140124@Viet: fix splitting issue
 		- 20140701@Jamie: Get virtualmultiplier of bettrans 
-		- 20160412@Sophia: Add related tables: BettransRNG, BettransLC, Translog
+		- 20160412@Sophia: Add related tables: BettransRNG, BettransLC, Translog (will apply on bettransm later)
  		
  	Param's Explanation: 
  		@Winlostdate: the date that new rates are updated		
