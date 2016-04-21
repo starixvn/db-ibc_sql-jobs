@@ -25,6 +25,7 @@ AS
 		- 20150720@Sophia: Add ResultDetail3rd14 table
 		- 20160120@Sophia: Add EventInfo3rd_bk table for Cockfighting 
 		- 20160401@Sophia: Add Column Matchmaxbet.Spread [Redmind: #55115]
+		- 20160421@Sophia: Add AutoPayoutResult, ProviderResultDetail tables [Redmine: #49958]
  */
 
 	INSERT INTO DB06.bodb_archive.dbo.odds_bk
@@ -105,7 +106,16 @@ AS
 	SELECT EventInfo3rdId,ArenaID,FightNo,EventDate,HomeOwner,AwayOwner
 	FROM dbo.EventInfo3rd14 WITH(NOLOCK)
 	WHERE EventDate = @winlostdate
+		
+	INSERT INTO DB06.bodb_Archive.dbo.[AutoPayoutResult_bk] (MatchId, CalculationType, SourceId, HomeValue, AwayValue, StatusId, TryCount, CreatedDate, ModifiedDate)
+	SELECT 	MatchId, CalculationType, SourceId, HomeValue, AwayValue, StatusId, TryCount, CreatedDate, ModifiedDate
+	FROM 	dbo.AutoPayoutResult14 WITH(NOLOCK)
+	WHERE 	matchid IN (SELECT MatchID from Match14 where eventdate = @winlostdate)
 	
+	INSERT INTO DB06.bodb_Archive.dbo.[ProviderResultDetail_bk] (MatchId, SourceId, TypeId, HomeValue, AwayValue, CreatedDate)
+	SELECT  MatchId, SourceId, TypeId, HomeValue, AwayValue, CreatedDate
+	FROM 	dbo.ProviderResultDetail14 WITH(NOLOCK)
+	WHERE 	matchid IN (SELECT MatchID from Match14 where eventdate = @winlostdate)
 	
 	
 	DELETE FROM odds14  WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
@@ -116,6 +126,9 @@ AS
 	DELETE FROM matchMaxbet14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
 	DELETE FROM ResultDetail14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
 	DELETE FROM ResultDetail3rd14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
+	
+	DELETE FROM AutoPayoutResult14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
+	DELETE FROM ProviderResultDetail14 WHERE matchid in (select matchid from match14 where eventdate = @winlostdate)
 	
 	DELETE FROM outright14 WHERE eventdate = @winlostdate
 	DELETE FROM VSOutright14 WHERE eventdate = @winlostdate

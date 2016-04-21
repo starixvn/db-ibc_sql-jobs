@@ -28,6 +28,7 @@ AS
 -- 20150720@Sophia: Add ResultDetail3rd14 table
 -- 20151225@Sophia: Add EventInfo3rd14 table for Cockfighting 
 -- 20160302@Joychen: Add column  [cs99],[bal99] on odds For PH 
+-- 20160421@Sophia: Add AutoPayoutResult, ProviderResultDetail tables [Redmine: #49958]
 
 */
 
@@ -84,7 +85,7 @@ SET NOCOUNT ON
 		[kickofftime], [closedtime], [showtime], [hthomescore], [htawayscore],
 		[ruben], [multiple], [tstamp], exrisk, sporttype,
 		DisplayMode, LeaguePatternID, HomeDisplayPatternID, 
-		AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime, ParentID)
+		AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime, ParentID, IsAutoPayout)
 	select
 		[matchid], [leagueid], [homeid], [awayid], homeid2, awayid2, [eventdate], 
 		[eventstatus], [betstatus], [livehomescore], [liveawayscore],
@@ -92,7 +93,7 @@ SET NOCOUNT ON
 		[kickofftime], [closedtime], [showtime], [hthomescore], [htawayscore],
 		[ruben], [multiple], [tstamp], exrisk, sporttype,
 		DisplayMode, LeaguePatternID, HomeDisplayPatternID, 
-		AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime, ParentID
+		AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime, ParentID, IsAutoPayout
 	from match
 	where eventdate=@winlostdate --and eventstatus='Completed'
 
@@ -157,6 +158,17 @@ SET NOCOUNT ON
 	SELECT	EventInfo3rdID, ArenaID, FightNo, EventDate, HomeOwner, AwayOwner
 	FROM	dbo.EventInfo3rd WITH (NOLOCK)
 	WHERE	EventDate = @winlostdate
+
+	INSERT INTO AutoPayoutResult14 (MatchId, CalculationType, SourceId, HomeValue, AwayValue, StatusId, TryCount, CreatedDate, ModifiedDate)
+	SELECT	MatchId, CalculationType, SourceId, HomeValue, AwayValue, StatusId, TryCount, CreatedDate, ModifiedDate
+	FROM	dbo.AutoPayoutResult WITH (NOLOCK)
+	WHERE	Matchid IN (SELECT MatchID from dbo.Match where eventdate = @winlostdate)	
+
+	INSERT INTO ProviderResultDetail14 (MatchId, SourceId, TypeId, HomeValue, AwayValue, CreatedDate)
+	SELECT	MatchId, SourceId, TypeId, HomeValue, AwayValue, CreatedDate
+	FROM	dbo.ProviderResultDetail WITH (NOLOCK)
+	WHERE	Matchid IN (SELECT MatchID from dbo.Match where eventdate = @winlostdate)	
+
 	
 END
 GO
