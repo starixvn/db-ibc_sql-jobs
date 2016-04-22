@@ -1,10 +1,10 @@
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
+USE [bodb02]
 GO
 
-/****** Object:  Stored Procedure dbo.Task_DEPOSIT_DailysummaryRealtime    Script Date: 12/11/2015 4:24:21 PM ******/
-
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
  
 ALTER PROCEDURE [dbo].[Task_DEPOSIT_DailysummaryRealtime] 
 	@winlostdate datetime
@@ -152,7 +152,7 @@ INSERT INTO #tempDepWinlost_staging (winlostdate, custid, currency, recommend, m
 		  and tl.custid <> 0
 		  and tl.productID IN (202,203)
 	GROUP BY tl.custid,tl.currency,tl.recommend,tl.mrecommend,tl.srecommend
-	UNION
+	UNION ALL
 	SELECT @date AS winlostdate
 		,g.custid
 		,g.currency
@@ -165,7 +165,8 @@ INSERT INTO #tempDepWinlost_staging (winlostdate, custid, currency, recommend, m
 	WHERE g.winlostdate >= @date  
 		  and g.custid in (select custid from @TempCustID)
 		  and g.custid <> 0
-	GROUP BY g.custid,g.currency,g.recommend,g.mrecommend,g.srecommend;
+	GROUP BY g.custid,g.currency,g.recommend,g.mrecommend,g.srecommend
+	OPTION (MAXDOP 8);
 	
 --insert additional Keno's product OpeningBalance, turnover, Outstanding, ClosingBalance
 MERGE dbo.rptDepwinlost_staging AS target
@@ -319,7 +320,7 @@ INSERT INTO #tempDepWinlostByProduct_staging (winlostdate,custid,sporttype,curre
 		 and custid <> 0
 		 and tl.productID IN (202,203)
    GROUP BY tl.custid, tl.productID,tl.currency
-   UNION 
+   UNION ALL
    SELECT @date AS winlostdate
 	,g.custid   
     ,g.productID AS sporttype
@@ -331,10 +332,10 @@ INSERT INTO #tempDepWinlostByProduct_staging (winlostdate,custid,sporttype,curre
    FROM dbo.bettransRnG g WITH (rowlock)
    WHERE g.winlostdate >= @date  
 		 and custid in (select custid from @TempCustID)
-		 and custid <> 0
-		 
-   GROUP BY g.custid, g.productID,g.currency;
-
+		 and custid <> 0		 
+   GROUP BY g.custid, g.productID,g.currency
+	OPTION (MAXDOP 8);
+	
 --insert additional Keno's product Outstanding, turnover, betcount
 MERGE dbo.rptDepWinlostByProduct_staging AS target
 USING (SELECT s.winlostdate, s.custid, s.sporttype, s.currency, s.turnover, s.betcount, s.outstanding FROM #tempDepWinlostByProduct_staging s) 
@@ -403,13 +404,3 @@ INSERT INTO dbo.rptDepWinlost_Transfer3rdOthers_Staging (winlostdate,CustId,Curr
 )
 
 SET NOCOUNT OFF
-
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
