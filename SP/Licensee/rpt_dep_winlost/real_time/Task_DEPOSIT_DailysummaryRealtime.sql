@@ -30,6 +30,7 @@ AS
   - 20150911@Jim: add MicroGaming RNG
   - 20151208@Jim: sepated MicroGame into 2 products (#45454)
   - 20160105@Bobby: #49196 - Implement OneRnG product
+  - 20160422@Victor: Add product Voidbridge [Redmine: #55057]
   
  Param's Explanation:  
  ? @winlostdate: The date need to summary  
@@ -205,6 +206,7 @@ SELECT
 		WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 		WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
 		WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
+		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- Voidbridge
 		WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 		WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 		WHEN bettype = 903 THEN -4 -- BetTrade - Commission
@@ -240,6 +242,7 @@ GROUP BY b.custid,
 		WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 		WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
 		WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
+		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- Voidbridge
 		WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 		WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 		WHEN bettype = 903 THEN -4 -- BetTrade - Commission
