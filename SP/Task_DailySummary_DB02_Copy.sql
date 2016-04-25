@@ -1,10 +1,11 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DailySummary_DB02_Copy]    Script Date: 07/19/2015 22:21:13 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DailySummary_DB02_Copy]    Script Date: 04/25/2016 06:09:32 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+/****** Object:  Stored Procedure dbo.Task_DailySummary_DB02_Copy    Script Date: 1/26/2016 3:02:38 PM ******/
 ALTER PROCEDURE [dbo].[Task_DailySummary_DB02_Copy]
 	@winlostdate datetime
 AS
@@ -26,7 +27,7 @@ AS
 -- 20150506@Victor(DB02): Add ParentID to Match14 and Match_BK
 -- 20150720@Sophia: Add ResultDetail3rd14 table
 -- 20151225@Sophia: Add EventInfo3rd14 table for Cockfighting 
-
+-- 20160302@Joychen: Add column  [cs99],[bal99] on odds For PH 
 
 */
 
@@ -51,7 +52,8 @@ SET NOCOUNT ON
 		 [bal02], [bal30], [bal31], [bal32], [bal33], [bal23], [bal13], [bal03], 
 		 [bal40], [bal41], [bal42], [bal43], [bal44], [bal34], [bal24], [bal14],
 		 [bal04], [bal50], [bal05], [maxbet], [multiple], [allowance], [risk2], 
-		 [stakerange2], [allowance2], [hometotal], [awaytotal], sporttype, Resourceid, ResultKey)
+		 [stakerange2], [allowance2], [hometotal], [awaytotal], sporttype, Resourceid, ResultKey,
+		 [cs99],[bal99])
 	select
 		[oddsid], [matchid], [bettype], [switch], [hdp1], [hdp2],
 		[odds1a], [odds2a], [odds1b], [odds2b], [odds1c], [odds2c], [odds1e], 
@@ -70,7 +72,8 @@ SET NOCOUNT ON
 		[bal02], [bal30], [bal31], [bal32], [bal33], [bal23], [bal13], [bal03], 
 		[bal40], [bal41], [bal42], [bal43], [bal44], [bal34], [bal24], [bal14],
 		[bal04], [bal50], [bal05], [maxbet], [multiple], [allowance], [risk2], 
-		[stakerange2], [allowance2], [hometotal], [awaytotal], sporttype, Resourceid, ResultKey
+		[stakerange2], [allowance2], [hometotal], [awaytotal], sporttype, Resourceid, ResultKey,
+		[cs99],[bal99]
 	from odds
 	where matchid in (select matchid from match where eventdate=@winlostdate /* and eventstatus='Completed'*/)
 
@@ -158,4 +161,3 @@ SET NOCOUNT ON
 END
 GO
 GRANT VIEW DEFINITION ON [dbo].[Task_DailySummary_DB02_Copy] TO [vnteam] AS [dbo]
-GO
