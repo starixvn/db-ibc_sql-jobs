@@ -85,7 +85,7 @@ BEGIN
 			, SUM(b.comm) AS AComm
 			, SUM(b.playercomm) AS PComm
 			, SUM(ISNULL(ABS(b.stake) * r.Contribution,0)) AS ProgressiveContribution
-			, SUM(ISNULL(WinAmount,0)) AS ProgressivePayout
+			, SUM(ISNULL(p.WinAmount,0)) AS ProgressivePayout
 		FROM bodb_Archive.dbo.bettransRnG_bk b WITH (NOLOCK)
 			LEFT JOIN @ContributionRate r ON b.transdesc = r.ResourceID
 			LEFT JOIN DBTXN.bodb02.dbo.PayoutTrans p ON b.transid = p.RefNo			
@@ -114,10 +114,10 @@ BEGIN
 	BEGIN
 		IF EXISTS (SELECT TOP 1 1 FROM dbo.rpt_ThirdPartyWL_ExtraGMT WITH (NOLOCK) WHERE RptDate = @Winlostdate)
 		BEGIN
-			DELETE DB054.bodb_LicenseeReport.dbo.rpt_ThirdPartyWL_ExtraGMT WITH (ROWLOCK, UPDLOCK) WHERE RptDate = @Winlostdate
+			DELETE DBLIC.bodb_LicenseeReport.dbo.rpt_ThirdPartyWL_ExtraGMT WITH (ROWLOCK, UPDLOCK) WHERE RptDate = @Winlostdate
 		END
 		
-		INSERT INTO DB054.bodb_LicenseeReport.dbo.rpt_ThirdPartyWL_ExtraGMT (RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout)
+		INSERT INTO DBLIC.bodb_LicenseeReport.dbo.rpt_ThirdPartyWL_ExtraGMT (RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout)
 			SELECT RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout
 			FROM dbo.rpt_ThirdPartyWL_ExtraGMT
 			WHERE rptDate = @WinlostDate

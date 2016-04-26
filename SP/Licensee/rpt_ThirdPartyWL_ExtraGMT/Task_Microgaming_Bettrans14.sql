@@ -80,7 +80,7 @@ BEGIN
 			, SUM(b.comm) AS AComm
 			, SUM(b.playercomm) AS PComm
 			, SUM(ISNULL(ABS(b.stake) * r.Contribution,0)) AS ProgressiveContribution
-			, SUM(ISNULL(WinAmount,0)) AS ProgressivePayout
+			, SUM(ISNULL(p.WinAmount,0)) AS ProgressivePayout
 		FROM bodb02.dbo.bettransRnG14 b WITH (NOLOCK)
 			LEFT JOIN dbo.view_MGCRNG_ProgressiveContribution_Rate r ON b.transdesc = r.ResourceID
 			LEFT JOIN DBTXN.bodb02.dbo.PayoutTrans p ON b.transid = p.RefNo			
