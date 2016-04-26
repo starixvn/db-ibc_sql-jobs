@@ -1,11 +1,9 @@
 USE [bodb_LicenseeReport]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_Microgaming_Bettrans]    Script Date: 01/11/2016 02:01:38 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-/****** Object:  Stored Procedure dbo.Task_Microgaming_Bettrans    Script Date: 12/11/2015 4:24:24 PM ******/
 ALTER PROCEDURE [dbo].[Task_Microgaming_Bettrans] @Winlossdate DATE
 AS
 /*
@@ -15,6 +13,7 @@ AS
 	 Revisions: 		
 		- 20150930@Florent: support Microgaming RNG
 		- 20151208@Jim: seperate MicroGame into 2 products (#45454)
+		- 20160422@Francis: add Progressive Contribution and Progressive Payout for Microgaming RNG
 	 Param's Explanation:
 */
 
@@ -34,7 +33,7 @@ BEGIN
 	FROM bodb_licensee.dbo.Sport_Bettype_Reference WITH (NOLOCK)
 	WHERE Sporttype IN (203,205) 
 
-	INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm)
+	INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout)
 	(
 		SELECT CAST(b.winlostdate AS DATE)	AS Rptdate
 			, CAST(b.checktime AS DATE)	AS RptDate3rd
@@ -47,6 +46,8 @@ BEGIN
 			, SUM(winlost - actual_stake) AS Winloss		
 			, SUM(b.comm) AS AComm
 			, SUM(b.playercomm) AS PComm
+			, 0 AS ProgressiveContribution
+			, 0 AS ProgressivePayout
 		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 			INNER JOIN @Bettype bt ON b.bettype = bt.Bettype
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
@@ -69,7 +70,11 @@ BEGIN
 			, SUM(winlost - actual_stake) AS Winloss		
 			, SUM(b.comm) AS AComm
 			, SUM(b.playercomm) AS PComm
-		FROM bodb02.dbo.bettransRnG b WITH (NOLOCK)			
+			, SUM(ISNULL(ABS(b.stake) * r.Contribution,0)) AS ProgressiveContribution
+			, SUM(ISNULL(WinAmount,0)) AS ProgressivePayout
+		FROM bodb02.dbo.bettransRnG b WITH (NOLOCK)
+			LEFT JOIN dbo.view_MGCRNG_ProgressiveContribution_Rate r ON b.transdesc = r.ResourceID
+			LEFT JOIN DBTXN.bodb02.dbo.PayoutTrans p ON b.transid = p.RefNo
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
