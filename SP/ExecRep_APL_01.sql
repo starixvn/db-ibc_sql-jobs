@@ -24,6 +24,7 @@ AS
 		- 20141024@Lukas: add table ResultDetail
 		- 20150727@Sophia: add table ResultDetail3rd
 		- 20150105@Sophia: add table EventInfo3rd
+		- 20160421@Sophia: Add AutoPayoutResult, ProviderResultDetail tables [Redmine: #49958]
 */ 
 BEGIN
 
@@ -87,6 +88,20 @@ BEGIN
 		DELETE FROM ResultDetail3rd WITH(ROWLOCK)
 		WHERE matchid in (SELECT matchid FROM match WITH(NOLOCK) WHERE eventdate = @winlostdate)
 	END
+	
+	-- delete AutoPayoutResult
+	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'AutoPayoutResult' AND type = 'U')
+	BEGIN
+		DELETE FROM AutoPayoutResult WITH(ROWLOCK)
+		WHERE matchid in (SELECT matchid FROM match WITH(NOLOCK) WHERE eventdate = @winlostdate)
+	END
+	
+	-- delete ProviderResultDetail
+	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'ProviderResultDetail' AND type = 'U')
+	BEGIN
+		DELETE FROM ProviderResultDetail WITH(ROWLOCK)
+		WHERE matchid in (SELECT matchid FROM match WITH(NOLOCK) WHERE eventdate = @winlostdate)
+	END
 
 	-- delete match	
 	delete from match 
@@ -112,6 +127,8 @@ BEGIN
 		DELETE dbo.EventInfo3rd
 		WHERE eventdate = @winlostdate  
 	END
+	
+	
 
 END
 
