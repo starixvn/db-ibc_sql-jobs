@@ -1,10 +1,10 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DailySummary]    Script Date: 07/19/2015 22:20:12 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DailySummary]    Script Date: 05/04/2016 02:48:53 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
-GO 
+GO
 /****** Object:  Stored Procedure dbo.Task_DailySummary    Script Date: 6/24/2015 9:33:49 AM ******/
 
 ALTER PROCEDURE [dbo].[Task_DailySummary]
@@ -377,7 +377,7 @@ EXEC dbo.Task_BalanceCheck @winlostdate, 1
 EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
 
 -- =====================
-SET @Doing = 'Task_DailySummary : MoveBet start'
+SET @Doing = 'Task_DailySummary : MoveBet start.1'
 EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
 
 SET NOCOUNT ON
@@ -392,6 +392,10 @@ EXEC dbo.ExecRep_09 @recommend =  0, @winlostdate = @winlostdate, @parlay = 1
 -- Delete bettransG for whole day of @winlostdate
 EXEC dbo.ExecRep_09 @recommend =  0, @winlostdate = @winlostdate, @parlay = 2
 
+SET @Doing = 'Task_DailySummary : MoveBet start.2'
+EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+
+DECLARE @rec_cnt int SET @rec_cnt = 0
 DECLARE @recommend_List TABLE (recommend int PRIMARY KEY)
 INSERT INTO @recommend_List
 SELECT DISTINCT recommend FROM bettrans (nolock) WHERE winlostdate = @winlostdate AND bettype < 19999
@@ -438,6 +442,15 @@ BEGIN
 		AND b.recommend = @recommend
 	COMMIT TRANSACTION
 
+	SET @rec_cnt = @rec_cnt + 1
+	IF @rec_cnt = 10
+	BEGIN
+		SET @rec_cnt = 0
+		
+		SET @Doing = 'Task_DailySummary : MoveBet ' + CAST(@recommend as varchar(20))
+		EXEC dbo.WriteLog_UserLog @UserID = 25521, @Doing = @Doing 
+	END
+	
 	FETCH NEXT FROM CS_recommend INTO @recommend
 END
 
@@ -924,8 +937,8 @@ SET @Doing = 'Task_DailySummary : End (with Finish)'
 EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
 
 PRINT CONVERT(varchar(10), @winlostdate, 120)
+
 GO
 GRANT VIEW DEFINITION ON [dbo].[Task_DailySummary] TO [ITVivi] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Task_DailySummary] TO [vnteam] AS [dbo]
-GO
