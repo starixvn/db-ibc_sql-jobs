@@ -1,3 +1,10 @@
+USE [bodb02]
+GO
+/****** Object:  StoredProcedure [dbo].[DBA_LicenseeCustInfo_InsertMissingData]    Script Date: 05/04/2016 03:45:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[DBA_LicenseeCustInfo_InsertMissingData]
 AS
 BEGIN 
@@ -94,7 +101,9 @@ BEGIN
 	  AND ag.Username NOT LIKE '%ACC' + e.currency + '%'  
 	  AND ag.Username NOT LIKE '%ACC' + e.code + '%' 
 	  AND ag.Username NOT LIKE '%Cas' + e.currency + '%'  
-	  AND ag.Username NOT LIKE '%Bank' + e.currency + '%'  
+	  AND ag.Username NOT LIKE '%Bank' + e.currency + '%'
+	  --Hard code to remove KeenOcenan rule-broken usernames  
+	  AND d.DummyAgentId NOT IN (14373733)
 	   
 	 SET @RowCount = @@ROWCOUNT  
 	     
@@ -124,6 +133,8 @@ BEGIN
 	 DROP TABLE #Dummy
  END
  
-GRANT VIEW DEFINITION ON DBA_LicenseeCustInfo_InsertMissingData TO vnteam
+ GRANT VIEW DEFINITION ON DBA_LicenseeCustInfo_InsertMissingData TO vnteam
+
+
 GO
 GRANT VIEW DEFINITION ON [dbo].[DBA_LicenseeCustInfo_InsertMissingData] TO [vnteam] AS [dbo]

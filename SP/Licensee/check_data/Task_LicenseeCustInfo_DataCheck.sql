@@ -1,3 +1,10 @@
+USE [bodb02]
+GO
+/****** Object:  StoredProcedure [dbo].[Task_LicenseeCustInfo_DataCheck]    Script Date: 05/04/2016 03:45:21 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Task_LicenseeCustInfo_DataCheck]
 /*
 	Creator: 20160113@Francis
@@ -43,33 +50,6 @@ BEGIN
 		AND t.custid NOT IN (14373737, 14373735, 14373736, 18200278)
 
 	SET @RowCount = @@ROWCOUNT
-
-	/*
-	-- Fixed
-	IF @RowCount > 0
-		INSERT INTO bodb_Licensee.dbo.LicenseeCustinfo(Custid,recommend,username,username2,currency,SpecialLevel)
-			SELECT 
-				c.CustId
-				,c.Recommend
-				,c.Username
-				,c.Username2
-				,c.Currency
-				,0 SpecialLevel
-			FROM #member t
-				INNER JOIN dbo.Customer c WITH(NOLOCK) ON t.CustId = c.CustId
-				INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON c.CustId = ci.CustId
-				INNER JOIN dbo.Customer ag WITH(NOLOCK) ON c.Recommend = ag.CustId
-				INNER JOIN dbo.Exchange e WITH(NOLOCK) ON c.Currency = e.exchangeid
-				INNER JOIN bodb_Licensee.dbo.Licensees l WITH(NOLOCK) ON ag.Site = l.LicenseeName
-			WHERE
-				c.Currency <> 20
-				AND c.Username NOT LIKE '%Transfer%'	
-				AND ag.Username NOT LIKE '%ACC' + e.currency + '%' 
-				AND ag.Username NOT LIKE '%ACC' + e.code + '%' 
-				AND ag.Username NOT LIKE '%cas' + e.currency + '%' 
-				AND ag.Username NOT LIKE '%Bank' + e.currency + '%'	
-	*/
-
 	DROP TABLE #member
 
 	IF (@RowCount > 0)
@@ -103,31 +83,9 @@ BEGIN
 		AND ag.Username NOT LIKE '%ACC' + e.code + '%'
 		AND ag.Username NOT LIKE '%Cas' + e.currency + '%' 
 		AND ag.Username NOT LIKE '%Bank' + e.currency + '%' 
-
+		--Hard code to remove KeenOcenan rule-broken usernames
+		AND d.DummyAgentId NOT IN (14373733)
 	SET @RowCount = @@ROWCOUNT
-
-	/*
-	-- Fixed
-	IF @RowCount > 0
-		INSERT INTO bodb_Licensee.dbo.LicenseeCust([LicenseeID],[CustID],[RoleID],[Currency],[CurrencyName],[Description])
-			SELECT l.LicenseeId, 
-				ag.CustId [DummyAgentId],
-				2 [RoleID],
-				ag.Currency [Currency], 
-				CASE ag.Currency WHEN 20 THEN 'UUS' ELSE e.Code END [CurrencyName],
-				'' [Description]
-			FROM #Dummy d WITH(NOLOCK)
-				INNER JOIN dbo.Customer ag WITH(NOLOCK) ON d.DummyAgentId = ag.CustId
-				INNER JOIN dbo.Exchange e WITH(NOLOCK) ON ag.Currency = e.ExchangeId
-				INNER JOIN bodb_licensee.dbo.Licensees l WITH(NOLOCK) ON ag.Site = l.LicenseeName
-			WHERE ag.Currency <> 20
-				AND ag.Username NOT LIKE '%Aff%'
-				AND ag.Username NOT LIKE '%ACC' + e.currency + '%' 
-				AND ag.Username NOT LIKE '%ACC' + e.code + '%'
-				AND ag.Username NOT LIKE '%cas' + e.currency + '%' 
-				AND ag.Username NOT LIKE '%Bank' + e.currency + '%' 
-	*/
-
 	DROP TABLE #Dummy
 
 	IF (@RowCount > 0)
@@ -136,6 +94,8 @@ BEGIN
 END
 
 GRANT VIEW DEFINITION ON Task_LicenseeCustInfo_DataCheck TO vnteam
+
+
 
 GO
 GRANT VIEW DEFINITION ON [dbo].[Task_LicenseeCustInfo_DataCheck] TO [vnteam] AS [dbo]
