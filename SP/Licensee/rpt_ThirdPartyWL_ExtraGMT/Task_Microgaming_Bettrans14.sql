@@ -1,11 +1,9 @@
 USE [bodb_LicenseeReport]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_Microgaming_Bettrans14]    Script Date: 01/11/2016 02:02:01 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-/****** Object:  Stored Procedure dbo.Task_Microgaming_Bettrans14    Script Date: 12/11/2015 4:24:24 PM ******/
 ALTER PROCEDURE [dbo].[Task_Microgaming_Bettrans14] 
 	@Fromdate	DATE
 	, @Todate	DATE 
@@ -16,6 +14,7 @@ AS
 	 DB: DBLIC/bodb_LicenseeReport
 	 Revisions: 		
 	 - 20151208@Jim: separate MicroGame into 2 products (#45454)
+	 - 20160422@Francis: add Progressive Contribution and Progressive Payout for Microgaming RNG
 	 Param's Explanation:
 */
 
@@ -44,7 +43,7 @@ BEGIN
 			DELETE dbo.rpt_ThirdPartyWL_ExtraGMT WITH (ROWLOCK, UPDLOCK) WHERE RptDate = @Winlostdate
 		END
 
-		INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm)
+		INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout)
 		(SELECT CAST(b.winlostdate AS DATE)	AS Rptdate
 			, CAST(b.checktime AS DATE)	AS RptDate3rd
 			, ISNULL(site.SiteID, -1) AS siteid
@@ -55,7 +54,9 @@ BEGIN
 			, SUM(ABS(b.stake)) AS Turnover
 			, SUM(winlost - actual_stake) AS Winloss		
 			, SUM(b.comm) AS AComm
-			, SUM(b.playercomm) AS PComm		
+			, SUM(b.playercomm) AS PComm
+			, 0 AS ProgressiveContribution
+			, 0 AS ProgressivePayout		
 		FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 			INNER JOIN @Bettype bt ON b.bettype = bt.Bettype
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
@@ -78,7 +79,11 @@ BEGIN
 			, SUM(winlost - actual_stake) AS Winloss		
 			, SUM(b.comm) AS AComm
 			, SUM(b.playercomm) AS PComm
-		FROM bodb02.dbo.bettransRnG14 b WITH (NOLOCK)			
+			, SUM(ISNULL(ABS(b.stake) * r.Contribution,0)) AS ProgressiveContribution
+			, SUM(ISNULL(p.WinAmount,0)) AS ProgressivePayout
+		FROM bodb02.dbo.bettransRnG14 b WITH (NOLOCK)
+			LEFT JOIN dbo.view_MGCRNG_ProgressiveContribution_Rate r ON b.transdesc = r.ResourceID
+			LEFT JOIN DBTXN.bodb02.dbo.PayoutTrans p ON b.transid = p.RefNo			
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
