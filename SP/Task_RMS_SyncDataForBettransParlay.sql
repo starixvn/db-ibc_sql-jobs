@@ -9,7 +9,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 /****** Object:  Stored Procedure dbo.Task_RMS_SyncDataForBettransParlay    Script Date: 6/25/2014 3:31:02 PM ******/
-CREATE PROCEDURE [dbo].[Task_RMS_SyncDataForBettransParlay]	
+ALTER PROCEDURE [dbo].[Task_RMS_SyncDataForBettransParlay]	
 AS
 /*   
  Task : arrange bettransParlay data
@@ -20,7 +20,9 @@ AS
   - 20140121@Johnson: add system parlay into rmTransaction
   - 20140417@Johnson: add column combo into rmBettrans to store number of selections 
   - 20140620@Johnson: calculate total odds for system parlay tickets
+  - 20160422@Winnie: intergrate Combo parlay
 */  
+
 SET NOCOUNT ON
 SET DEADLOCK_PRIORITY LOW	
 
@@ -53,12 +55,13 @@ BEGIN
 			scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
 			SecAcceptFlag, transid2, CASE when matchid = 9 then RIGHT(betcheck,LEN(betcheck)-1) else LEN(betteam) end
 	FROM bodb02.dbo.bettrans with (NOLOCK)
-	WHERE matchid in (9,29)
+	WHERE matchid in (9,29) 
+	-- bettype 29 old
 	
 	INSERT INTO @tmpRef(refno)
 	SELECT refno 
 	FROM rmBettrans with (NOLOCK)
-	WHERE matchid = 29
+	WHERE matchid = 29 AND betcheck IS NULL
 	
 	INSERT INTO #bettransm(refno, odds, rn)
 	SELECT refno, r.odds , ROW_NUMBER() OVER (PARTITION BY refno ORDER BY refno) rn	
@@ -206,13 +209,60 @@ BEGIN
 					as odds
 			from #bettransm
 			group by refno 
-		) r ON b.refno = r.refno 
-		
+		) r ON b.refno = r.refno
+	-- end bettype 29 old
+
+	;WITH ParlayTotalBet AS(
+		SELECT TransID, SUM (rcs.cnt) AS TotalBet
+		FROM rmBettrans b WITH(NOLOCK)
+			INNER JOIN bodb02.dbo.RefCombinationSet_xtest rcs WITH(NOLOCK) ON b.hdp2 = rcs.N
+		WHERE b.bettype=29 AND betcheck IS NOT NULL AND (b.betteam & rcs.bitmapR) > 0
+		GROUP BY b.transid
+	)
+	UPDATE b
+	SET b.TotalBet = pt.TotalBet
+	FROM rmBettrans b 
+	INNER JOIN ParlayTotalBet pt ON b.TransID = pt.TransID
+	WHERE b.bettype=29 AND betcheck IS NOT NULL 
+
+	;WITH tmpbettrans AS(
+		SELECT b.hdp2 AS selection_cnt, CAST(b.betteam as int) AS bitmapR, bm.odds, bm.stake AS SetStake, bm.refno, b.transid
+			,RN = ROW_NUMBER() OVER (PARTITION BY bm.refno ORDER BY bm.matchid) --RN
+		FROM rmBettrans b WITH (NOLOCK) 
+			INNER JOIN
+					(	select refno, odds, stake, matchid
+						from bodb02.dbo.bettransm WITH(NOLOCK)
+						union all
+						select refno, odds, stake, matchid
+						from bodb02.dbo.bettransm14 WITH(NOLOCK)
+					)bm ON bm.refno = b.refno
+			WHERE b.bettype=29  AND betcheck IS NOT NULL
+	),
+	ParlayStake AS (SELECT refno, RN, SetStake FROM tmpbettrans)
+	SELECT EXP(SUM(LOG(odds))) AS Odds, b.transid, ps.SetStake
+	INTO #tmp2
+	FROM tmpbettrans b WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.RefCombinationSet_xtest rcs WITH (NOLOCK) ON b.selection_cnt = rcs.N AND (b.bitmapR & rcs.bitmapR) > 0  
+		INNER JOIN bodb02.dbo.RefCombination_xtest rc  WITH (NOLOCK) ON rcs.N = rc.N AND rcs.R = rc.R AND b.RN = rc.seq
+		INNER JOIN ParlayStake ps ON ps.refno = b.refno AND ps.RN = rc.R
+	GROUP BY b.transid, ps.SetStake, serial
+
+	;WITH tmp AS(
+		SELECT b.transid AS transid , CASE WHEN b.stake = 0 THEN 0 ELSE SUM (r.odds * r.SetStake)/b.stake END AS Odds2
+		FROM rmBettrans b WITH(NOLOCK)
+			INNER JOIN #tmp2 r ON b.transid = r.transid 
+		GROUP BY b.transid, b.stake, b.TotalBet
+	)
+	UPDATE b
+	SET b.odds2 = t.Odds2
+	FROM rmBettrans b	
+		INNER JOIN tmp t ON b.transid = t.transid	
+
 END
 ELSE 
 BEGIN
 	select @max_transid = ISNULL(MAX(transid),0) from rmBettrans (NOLOCK) 
-	
+
 	SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost, playercomm, comm, acomm, 
 			apositiontaking, mpositiontaking, tpositiontaking, playerdiscount, discount, adiscount, livehomescore, liveawayscore, 
 			liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
@@ -222,7 +272,7 @@ BEGIN
 	INTO #temp			
 	FROM bodb02.dbo.bettrans with (NOLOCK)
 	WHERE tstamp between @tstamp_min and @tstamp_max
-		and matchid in (9,29)
+		AND matchid in (9,29)
 		
 	MERGE dbo.rmBettrans as d
 		USING #temp s on d.transid = s.transid	
@@ -306,14 +356,20 @@ BEGIN
 			s.CurrencyName, s.virtualrate, s.oddstype, s.statusID, s.currency2, s.balance, s.SecAcceptFlag, s.transid2, s.combo
 			)
 	;--end MERGE
+
 	
 	MERGE	dbo.rmTransaction as dt
 	USING	#temp s on dt.transid = s.transid	
 	WHEN NOT MATCHED THEN 
-		INSERT(transid, refno, custid, combo)
-		VALUES(s.transid,s.refno,s.custid,s.combo)
+		INSERT(transid, refno, custid, combo,Selection)
+		VALUES(s.transid,s.refno,s.custid,s.combo,s.hdp2)
 	; -- END OF MERGE rmTransaction
-	
+
+	SELECT refno 
+	FROM #temp 
+	WHERE matchid = 29
+		AND transid > @max_transid
+
 	INSERT INTO @tmpRef(refno)
 	SELECT refno 
 	FROM #temp 
@@ -321,14 +377,13 @@ BEGIN
 		AND transid > @max_transid
 	
 	IF @@ROWCOUNT <> 0
-	BEGIN		
-		INSERT INTO #bettransm(refno, odds, rn)
+	BEGIN	
+	--bettype 29 Old
+	INSERT INTO #bettransm(refno, odds, rn)
 		SELECT refno, odds , ROW_NUMBER() OVER (PARTITION BY refno ORDER BY refno) rn	
 		from bodb02.dbo.bettransm WITH(NOLOCK)
-		where refno in (select refno from @tmpRef)
-			
-		
-		UPDATE b
+		where refno in (select refno from @tmpRef) AND betcheck IS NULL
+	UPDATE b
 		SET b.odds2 = r.odds
 		FROM rmBettrans b WITH(UPDLOCK,ROWLOCK)
 			INNER JOIN (
@@ -463,8 +518,55 @@ BEGIN
 			from #bettransm
 			group by refno 
 			) r ON b.refno = r.refno 
+	-- end bettype 29 old
+	;WITH ParlayTotalBet AS(
+		SELECT TransID, SUM (rcs.cnt) AS TotalBet
+		FROM rmBettrans b WITH(NOLOCK)
+			INNER JOIN bodb02.dbo.RefCombinationSet_xtest rcs WITH(NOLOCK) ON b.hdp2 = rcs.N
+		WHERE b.bettype=29 AND betcheck IS NOT NULL AND (b.betteam & rcs.bitmapR) > 0
+		AND refno in (select refno from @tmpRef)
+		GROUP BY b.transid
+	)
+	UPDATE b
+	SET b.TotalBet = pt.TotalBet
+	FROM rmBettrans b 
+	INNER JOIN ParlayTotalBet pt ON b.TransID = pt.TransID
+	WHERE b.bettype=29 AND betcheck IS NOT NULL AND refno in (select refno from @tmpRef)
+
+	;WITH tmpbettrans AS(
+		SELECT b.hdp2 AS selection_cnt, CAST(b.betteam as int) AS bitmapR, bm.odds, bm.stake AS SetStake, bm.refno, b.transid
+			,RN = ROW_NUMBER() OVER (PARTITION BY bm.refno ORDER BY bm.matchid) --RN
+		FROM rmBettrans b WITH (NOLOCK) 
+			INNER JOIN
+					(	select refno, odds, stake, matchid
+						from bodb02.dbo.bettransm WITH(NOLOCK)
+						union all
+						select refno, odds, stake, matchid
+						from bodb02.dbo.bettransm14 WITH(NOLOCK)
+					)bm ON bm.refno = b.refno
+			WHERE b.refno in (select refno from @tmpRef) AND b.bettype=29 AND betcheck IS NOT NULL
+	),
+	ParlayStake AS (SELECT refno, RN, SetStake FROM tmpbettrans)
+	SELECT EXP(SUM(LOG(odds))) AS Odds, b.transid, ps.SetStake
+	INTO #tmp
+	FROM tmpbettrans b 
+		INNER JOIN bodb02.dbo.RefCombinationSet_xtest rcs WITH(NOLOCK) ON b.selection_cnt = rcs.N AND (b.bitmapR & rcs.bitmapR) > 0  
+		INNER JOIN bodb02.dbo.RefCombination_xtest rc WITH(NOLOCK) ON rcs.N = rc.N AND rcs.R = rc.R AND b.RN = rc.seq
+		INNER JOIN ParlayStake ps ON ps.refno = b.refno AND ps.RN = rc.R
+	GROUP BY b.transid, ps.SetStake, serial
+
+	;WITH tmp AS(
+		SELECT b.transid AS transid , CASE WHEN b.stake = 0 THEN 0 ELSE SUM (r.odds * r.SetStake)/b.stake END AS Odds2
+		FROM rmBettrans b WITH(NOLOCK)
+			INNER JOIN #tmp r ON b.transid = r.transid 
+		GROUP BY b.transid, b.stake, b.TotalBet
+	)
+	UPDATE b
+	SET b.odds2 = t.Odds2
+	FROM rmBettrans b	
+		INNER JOIN tmp t ON b.transid = t.transid		
 	END			
-END
+	END
 
 UPDATE dbo.rmSettings with(rowlock, updlock)
 SET VValue = CAST(CAST(@tstamp_max as bigint) as varchar(200))

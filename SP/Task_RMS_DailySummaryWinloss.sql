@@ -9,7 +9,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 
-CREATE PROCEDURE [dbo].[Task_RMS_DailySummaryWinloss]
+ALTER PROCEDURE [dbo].[Task_RMS_DailySummaryWinloss]
 	@winlostdate	DATETIME,
 	@ErrCode		INT = 0				OUTPUT,
 	@ErrMsg			VARCHAR(1000) = ''	OUTPUT 
@@ -27,26 +27,132 @@ AS
 			- 20130814@Johnson: import data into rmSumWinloss2
 			- 20130918@Johnson: change to use table rmSumWinloss instead of rmSumWinloss2
 			- 20130924@Johnson: add column recommend into rmSumWinloss
+			- 20160510@Winnie: Add combo parlay
 		Parameter's Explanation:
 	*/
 SET NOCOUNT ON
 	
-	IF NOT EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans14 WITH(NOLOCK) WHERE bettype = 9 AND matchid = 9 AND winlostdate = @winlostdate)
+	IF NOT EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans14 WITH(NOLOCK) WHERE bettype IN(9,29) AND matchid IN(9,29)  AND winlostdate = @winlostdate)
 	BEGIN
 		SELECT	 @ErrMsg= 'WARNING:Data is not moved to bettrans14.'
 				,@ErrCode = 101
 		RETURN
 	END
 	
-	IF EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans WITH(NOLOCK) WHERE bettype = 9 AND matchid = 9 AND winlostdate = @winlostdate)
+	IF EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans WITH(NOLOCK) WHERE bettype IN(9,29)  AND matchid IN(9,29)  AND winlostdate = @winlostdate)
 	BEGIN
 		SELECT	 @ErrMsg= 'WARNING:Data is still in bettrans.'
 				,@ErrCode = 102
 		RETURN
 	END
-	
+	CREATE TABLE  #TemprmSumWinloss(
+	[winlostdate] [smalldatetime] NOT NULL,
+	[custid] [int] NOT NULL,
+	[sporttype] [tinyint] NOT NULL,
+	[statusid] [tinyint] NOT NULL,
+	[combo] [tinyint] NOT NULL,
+	[username] [varchar](30) NOT NULL,
+	[currency] [tinyint] NULL,
+	[stake] [money] NULL,
+	[winlost] [money] NULL,
+	[company_stake] [money] NULL,
+	[company_winlost] [money] NULL,
+	[actualrate] [float] NULL,
+	[odds] [smallmoney] NULL,
+	[betcount] [int] NULL,
+	[recommend] [int] NULL,
+	[IsMixParlay] [bit] NULL	
+	)
 	IF NOT EXISTS (SELECT TOP 1 1 FROM rmSumWinloss WITH(NOLOCK) WHERE winlostdate = @winlostdate)
 	BEGIN
+		INSERT INTO #TemprmSumWinloss (winlostdate
+				,custid
+				,sporttype
+				,statusid
+				,combo
+				,username
+				,currency
+				,stake
+				,winlost
+				,company_stake
+				,company_winlost
+				,actualrate
+				,odds
+				,betcount
+				,recommend
+				,IsMixParlay
+				)
+		SELECT	 winlostdate
+				,b.custid
+				,liveawayscore
+				,statusid
+				,CASE WHEN RIGHT(betcheck,len(betcheck)-1) >= 10 then 10 else RIGHT(betcheck,len(betcheck)-1) END as combo
+				,username
+				,currency
+				,SUM(stake)
+				,SUM(winlost)
+				,SUM(stake*(1-tpositiontaking))
+				,SUM(-(winlost-stake)*(1-tpositiontaking))
+				,actualrate
+				,SUM(modds)
+				,count(1)
+				,recommend 
+				,1
+				
+		FROM	bodb02.dbo.bettrans14 b WITH(NOLOCK) 
+		WHERE	b.winlostdate = @winlostdate
+				AND matchid =9 
+				AND bettype =9
+				AND b.statusid IN (111,112,113)
+		GROUP BY winlostdate, b.custid, liveawayscore, statusid, username, currency, actualrate, CASE WHEN RIGHT(betcheck,len(betcheck)-1) >= 10 then 10 else RIGHT(betcheck,len(betcheck)-1) END, recommend
+		
+		IF @@ERROR > 0
+		BEGIN			
+			SELECT	 @ErrMsg = 'FAILED:Process summary data failed for :' + CAST(@winlostdate AS VARCHAR(10))
+					,@ErrCode = 201
+			RETURN
+		END		
+		INSERT INTO #TemprmSumWinloss (winlostdate
+				,custid
+				,sporttype
+				,statusid
+				,combo
+				,username
+				,currency
+				,stake
+				,winlost
+				,company_stake
+				,company_winlost
+				,actualrate
+				,odds
+				,betcount
+				,recommend
+				,IsMixParlay
+				)
+		SELECT	 winlostdate
+				,b.custid
+				,liveawayscore
+				,statusid
+				,b.hdp2 as combo
+				,username
+				,currency
+				,SUM(stake)
+				,SUM(winlost)
+				,SUM(stake*(1-tpositiontaking))
+				,SUM(-(winlost-stake)*(1-tpositiontaking))
+				,actualrate
+				,NULL
+				,count(1)
+				,recommend 
+				,CASE WHEN b.betteam=1 THEN 1 ELSE 0 END AS IsMixParlay
+				
+		FROM	bodb02.dbo.bettrans14 b WITH(NOLOCK) 
+		WHERE	b.winlostdate = @winlostdate
+				AND matchid =29
+				AND bettype =29
+				AND b.statusid IN (111,112,113)
+		GROUP BY winlostdate, b.custid, liveawayscore, statusid, username, currency, actualrate,CASE WHEN b.betteam=1 THEN 1 ELSE 0 END,b.hdp2, recommend	
+
 		INSERT INTO rmSumWinloss (winlostdate
 				,custid
 				,sporttype
@@ -61,38 +167,36 @@ SET NOCOUNT ON
 				,actualrate
 				,odds
 				,betcount
-				,recommend)
-		SELECT	 winlostdate
-				,b.custid
-				,liveawayscore
+				,recommend
+				,IsMixParlay
+				)
+			SELECT winlostdate
+				,custid
+				,sporttype
 				,statusid
-				,CASE WHEN RIGHT(betcheck,len(betcheck)-1) >= 6 then 6 else RIGHT(betcheck,len(betcheck)-1) END as combo
+				,combo
 				,username
 				,currency
 				,SUM(stake)
 				,SUM(winlost)
-				,SUM(stake*(1-tpositiontaking))
-				,SUM(-(winlost-stake)*(1-tpositiontaking))
+				,SUM(company_stake)
+				,SUM(company_winlost)
 				,actualrate
-				,SUM(modds)
-				,count(1)
-				,recommend 
-		FROM	bodb02.dbo.bettrans14 b WITH(NOLOCK) 
-		WHERE	b.winlostdate = @winlostdate
-				AND matchid = 9
-				AND bettype = 9
-				AND b.statusid IN (111,112,113)
-		GROUP BY winlostdate, b.custid, liveawayscore, statusid, username, currency, actualrate, CASE WHEN RIGHT(betcheck,len(betcheck)-1) >= 6 then 6 else RIGHT(betcheck,len(betcheck)-1) END, recommend
+				,SUM(odds)
+				,SUM(betcount)
+				,recommend
+				,IsMixParlay				
+			FROM #TemprmSumWinloss
+			GROUP BY winlostdate, custid, sporttype, statusid, username, currency, actualrate,IsMixParlay,combo,recommend
 		
 		IF @@ERROR > 0
 		BEGIN			
 			SELECT	 @ErrMsg = 'FAILED:Process summary data failed for :' + CAST(@winlostdate AS VARCHAR(10))
 					,@ErrCode = 201
 			RETURN
-		END					
+		END			
 	END	
 	
-
 GO
 
 
