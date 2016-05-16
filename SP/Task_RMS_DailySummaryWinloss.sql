@@ -86,7 +86,7 @@ SET NOCOUNT ON
 				,b.custid
 				,liveawayscore
 				,statusid
-				,CASE WHEN RIGHT(betcheck,len(betcheck)-1) >= 10 then 10 else RIGHT(betcheck,len(betcheck)-1) END as combo
+				,CASE WHEN bettype=9 THEN RIGHT(betcheck,len(betcheck)-1) ELSE b.hdp2 END  AS combo
 				,username
 				,currency
 				,SUM(stake)
@@ -97,14 +97,15 @@ SET NOCOUNT ON
 				,SUM(modds)
 				,count(1)
 				,recommend 
-				,1
-				
+				,CASE WHEN bettype=9 OR betteam=1 THEN 1 ELSE 0 END AS IsMixParlay				
 		FROM	bodb02.dbo.bettrans14 b WITH(NOLOCK) 
 		WHERE	b.winlostdate = @winlostdate
-				AND matchid =9 
-				AND bettype =9
+				AND matchid IN(9,29)
+				AND bettype IN(9,29)
 				AND b.statusid IN (111,112,113)
-		GROUP BY winlostdate, b.custid, liveawayscore, statusid, username, currency, actualrate, CASE WHEN RIGHT(betcheck,len(betcheck)-1) >= 10 then 10 else RIGHT(betcheck,len(betcheck)-1) END, recommend
+		GROUP BY winlostdate, b.custid, liveawayscore, statusid, username, currency, actualrate,
+				CASE WHEN bettype=9 THEN RIGHT(betcheck,len(betcheck)-1) ELSE b.hdp2 END,
+				CASE WHEN bettype=9 OR betteam=1 THEN 1 ELSE 0 END, recommend
 		
 		IF @@ERROR > 0
 		BEGIN			
@@ -112,46 +113,6 @@ SET NOCOUNT ON
 					,@ErrCode = 201
 			RETURN
 		END		
-		INSERT INTO #TemprmSumWinloss (winlostdate
-				,custid
-				,sporttype
-				,statusid
-				,combo
-				,username
-				,currency
-				,stake
-				,winlost
-				,company_stake
-				,company_winlost
-				,actualrate
-				,odds
-				,betcount
-				,recommend
-				,IsMixParlay
-				)
-		SELECT	 winlostdate
-				,b.custid
-				,liveawayscore
-				,statusid
-				,b.hdp2 as combo
-				,username
-				,currency
-				,SUM(stake)
-				,SUM(winlost)
-				,SUM(stake*(1-tpositiontaking))
-				,SUM(-(winlost-stake)*(1-tpositiontaking))
-				,actualrate
-				,NULL
-				,count(1)
-				,recommend 
-				,CASE WHEN b.betteam=1 THEN 1 ELSE 0 END AS IsMixParlay
-				
-		FROM	bodb02.dbo.bettrans14 b WITH(NOLOCK) 
-		WHERE	b.winlostdate = @winlostdate
-				AND matchid =29
-				AND bettype =29
-				AND b.statusid IN (111,112,113)
-		GROUP BY winlostdate, b.custid, liveawayscore, statusid, username, currency, actualrate,CASE WHEN b.betteam=1 THEN 1 ELSE 0 END,b.hdp2, recommend	
 
 		INSERT INTO rmSumWinloss (winlostdate
 				,custid
