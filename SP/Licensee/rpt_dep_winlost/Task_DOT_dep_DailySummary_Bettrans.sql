@@ -1,12 +1,10 @@
-USE bodb02
-GO
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
+USE [bodb02]
 GO
 
-/****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans    Script Date: 12/1/2015 2:37:57 AM ******/
-
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
 ALTER PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans]
 	@winlostdate datetime
@@ -55,6 +53,7 @@ AS
   - 20150921@Jim: Implement the changes on reports for AG Casino (#43172)
   - 20151119@Jim: separate MicroGame into 2 product (#46454 )
   - 20160105@Bobby: #49196 - Implement OneRnG product
+  - 20160422@Victor: Add product Voidbridge [Redmine: #55057]
   
  Param's Explanation:  
 
@@ -220,7 +219,7 @@ BEGIN
 	   ) a
 	   ON t.winlostdate = a. winlostdate and t.custid = a.custid
 
-	   --- MicroGaming_RNG & OneRnG
+	   --- MicroGaming_RNG & OneRnG & Voidbridge
 	   INSERT INTO #tempDepWinlost (winlostdate, custid, currency, recommend, mrecommend, srecommend, OpeningBalance, turnover, outstanding)	
 	   SELECT @date AS winlostdate
 			  ,g.custid
@@ -340,7 +339,7 @@ BEGIN
 		WHERE tl.winlostdate <= @date  
 			  and tl.productID IN(202,203)
 		GROUP BY tl.custid,tl.currency,tl.recommend,tl.mrecommend,tl.srecommend
-		UNION -- microgaming_RNG & OneRnG
+		UNION -- microgaming_RNG & OneRnG & Voidbridge
 		 SELECT @date AS winlostdate
 			  ,g.custid
 			  ,g.currency
@@ -450,6 +449,7 @@ BEGIN
 			WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
 			WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
 			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
+			WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- Voidbridge
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 			WHEN bettype = 903 THEN -4 -- BetTrade - Commission
@@ -486,6 +486,7 @@ BEGIN
 			WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
 			WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
 			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
+			WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- Voidbridge
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 			WHEN bettype = 903 THEN -4 -- BetTrade - Commission
@@ -564,7 +565,7 @@ BEGIN
 	   WHERE tl.winlostdate >= @date  
 			 and tl.productID IN (202,203)
 	   GROUP BY tl.custid, tl.productID, tl.currency
-	UNION ALL -- Micro Gamming RNG & OneRnG
+	UNION ALL -- Micro Gamming RNG & OneRnG & Voidbridge
 		SELECT @date AS winlostdate
 		,g.custid   
 		,g.productID AS sporttype
@@ -732,15 +733,6 @@ END
 GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [Dot_Admin] AS [dbo]
 
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [Dot_Admin] AS [dbo]
 GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [Dot_Admin]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [vnteam]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[Task_DOT_dep_DailySummary_Bettrans] TO [vnteam] AS [dbo]
