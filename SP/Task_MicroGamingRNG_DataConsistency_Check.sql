@@ -2,7 +2,8 @@ USE [bodb02]
 GO
 ALTER procedure [dbo].[Task_MicroGamingRNG_DataConsistency_Check]
 	@FDate smalldatetime, 
-	@TDate smalldatetime
+	@TDate smalldatetime,
+	@ErrMessage varchar(512) = '' output
 as
 /*
 	Created: Francis
@@ -15,6 +16,7 @@ begin
 
 	select @FromDate = @FDate
 	select @ToDate = @TDate
+	set @ErrMessage = ''
 
 	declare @tempdata table (custid int, username varchar(50), transid bigint
 		, stake money, actual_stake money, playerdiscount decimal (9,8), ProductID int
@@ -105,7 +107,11 @@ begin
 		or s.status <> t.status
 		
 	IF @@ROWCOUNT > 0
-		RAISERROR('Microgaming RNG - Case 1: Check ticket details between bettrans and bettransRNG --INCONSISTENT--', 16, 1);	
+	BEGIN
+		SET @ErrMessage = @ErrMessage + 'Microgaming RNG - Case 1: Check ticket details between bettrans and bettransRNG --INCONSISTENT--'
+		RETURN
+		--RAISERROR('Microgaming RNG - Case 1: Check ticket details between bettrans and bettransRNG --INCONSISTENT--', 16, 1);	
+	END
 	--------------------------
 
 	--Case 2,3,4,5
@@ -135,7 +141,12 @@ begin
 				(stake*playerdiscount<>playercomm) --Case 5b: playercomm is wrong
 			)
 	IF @@ROWCOUNT > 0
+	BEGIN
+		SET @ErrMessage = @ErrMessage + 'Microgaming RNG - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettransRNG --INCONSISTENT--'
+		RETURN
 		RAISERROR('Microgaming RNG - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettransRNG --INCONSISTENT--', 16, 1);	
+	END
+	
 	/*
 	--Case 5 
 	insert into @wrongdata (custid , username , transid 
@@ -188,7 +199,11 @@ begin
 		OR t.apositiontaking+t.mpositiontaking+t.spositiontaking<>t.tpositiontaking --Case 7: detect apositiontaking + mpositiontaking + spositiontaking <>tpositiontaking
 		)
 	IF @@ROWCOUNT > 0
-		RAISERROR('Microgaming RNG - Case 6,7: Check PT and discount value of tickets in bettransRNG --INCONSISTENT--', 16, 1);
+	BEGIN
+		SET @ErrMessage = @ErrMessage + 'Microgaming RNG - Case 6,7: Check PT and discount value of tickets in bettransRNG --INCONSISTENT--'
+		RETURN
+		--RAISERROR('Microgaming RNG - Case 6,7: Check PT and discount value of tickets in bettransRNG --INCONSISTENT--', 16, 1);
+	END
 	--select * from @wrongdataPT
 end
 grant view definition on Task_MicroGamingRNG_DataConsistency_Check to vnteam

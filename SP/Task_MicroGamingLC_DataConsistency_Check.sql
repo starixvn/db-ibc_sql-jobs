@@ -1,8 +1,9 @@
 USE [bodb02]
 GO
-ALTER procedure [dbo].[Task_MicroGamingLC_DataConsistency_Check]
+alter procedure [dbo].[Task_MicroGamingLC_DataConsistency_Check]
 	@FDate smalldatetime, 
-	@TDate smalldatetime
+	@TDate smalldatetime,
+	@ErrMessage varchar(512) = '' output
 as
 /*
 	Created: Francis
@@ -16,7 +17,7 @@ begin
 	select @FromDate = @FDate
 	select @ToDate = @TDate
 	
-	
+	set @ErrMessage = ''
 
 --Temp table is used to check wrong setting when placing bet
 /*
@@ -32,7 +33,7 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 */
 	
 --Case 1: check data between translog & bettrans
-	SELECT TOP 100 'Case 1' as [CASE], * FROM bettrans bt with (nolock)
+	SELECT TOP 1 'Case 1' as [CASE], * FROM bettrans bt with (nolock)
 		INNER JOIN Translog tl with (nolock) on bt.refno=tl.translogid
 	WHERE bt.winlostdate BETWEEN @FromDate AND @ToDate
 		AND matchid IN (203)--MGC LC
@@ -55,13 +56,17 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 				OR bt.statusID <> tl.statusID
 			)
 	IF @@ROWCOUNT > 0
-		RAISERROR('MicroGaming LC - Case 1: Check ticket details between translog and bettrans --INCONSISTENT--', 16, 1);
+	BEGIN
+		SET @ErrMessage = @ErrMessage + 'MicroGaming LC - Case 1: Check ticket details between translog and bettrans --INCONSISTENT--'
+		RETURN
+		--RAISERROR('MicroGaming LC - Case 1: Check ticket details between translog and bettrans --INCONSISTENT--', 16, 1);
+	END
 	
 	--Case 2,3,4,5
 	--insert into @wrongdata (custid , username , transid 
 	--	, stake , winlost , actual_stake , playercomm , playerdiscount , awinlost , apositiontaking , comm ,
 	--	discount , winlostdate , bettype, status , issue )
-	select top 100 'Case 2,3,4,5' as [CASE], custid,username,transid,stake,winlost,actual_stake,playercomm,playerdiscount,awinlost,apositiontaking,comm,discount,winlostdate,bettype,status,
+	select top 1 'Case 2,3,4,5' as [CASE], custid,username,transid,stake,winlost,actual_stake,playercomm,playerdiscount,awinlost,apositiontaking,comm,discount,winlostdate,bettype,status,
 			case when winlost>actual_stake then 'Issue: Status should be WON'
 				 when winlost=actual_stake then 'Issue: Status should be DRAW'
 				 when winlost<actual_stake then 'Issue: Status should be LOSE'
@@ -86,7 +91,11 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 				(stake*playerdiscount<>playercomm) --Case 5b: check player wrong playercomm
 			)
 	IF @@ROWCOUNT > 0
-		RAISERROR('MicroGaming LC - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettrans --INCONSISTENT--', 16, 1);	
+	BEGIN
+		SET @ErrMessage = @ErrMessage + 'MicroGaming LC - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettrans --INCONSISTENT--'
+		RETURN
+		--RAISERROR('MicroGaming LC - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettrans --INCONSISTENT--', 16, 1);	
+	END
 	
 	/*
 	--Case 5 
@@ -117,7 +126,7 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 	--Case 6,7: 
 	--insert into @wrongdataPT (custid, transid, bettype, playerdiscount, discount, 
 	--	adiscount, sdiscount, apositiontaking, mpositiontaking, spositiontaking, transdate)
-	select 'Case 6,7' AS [CASE] , t.custid, t.translogid, t.gameID, t.playerdiscount, t.discount,  
+	select top 1 'Case 6,7' AS [CASE] , t.custid, t.translogid, t.gameID, t.playerdiscount, t.discount,  
 			t.adiscount, t.sdiscount, t.apositiontaking, t.mpositiontaking, t.spositiontaking, t.transdate
 	from (
 		select custid, gameid, max(translogid) as translogid
@@ -141,13 +150,17 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 		OR t.apositiontaking+t.mpositiontaking+t.spositiontaking<>t.tpositiontaking --Case 7: detect apositiontaking + mpositiontaking + spositiontaking <>tpositiontaking
 		)
 	IF @@ROWCOUNT > 0
-		RAISERROR('MicroGaming LC - Case 6,7: Check PT and discount value of tickets in tranlog --INCONSISTENT--', 16, 1);	
+	BEGIN
+		SET @ErrMessage = @ErrMessage + 'MicroGaming LC - Case 6,7: Check PT and discount value of tickets in tranlog --INCONSISTENT--'
+		RETURN
+		--RAISERROR('MicroGaming LC - Case 6,7: Check PT and discount value of tickets in tranlog --INCONSISTENT--', 16, 1);	
+	END
 		
 	--select * from @wrongdataPT
 
 	------------------
 	--case 8
-	select 'Case 8' AS [CASE]
+	select top 1 'Case 8' AS [CASE]
 	, tt1.gameID AS TranslogGameID, tt1.count AS TranslogCount, tt2.bettype AS BettransBettype, tt2.count AS BetTransCount
 	from (
 		select count(1) as count
@@ -173,7 +186,12 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 	where tt1.count <> tt2.count
 	
 	IF @@ROWCOUNT > 0
-		RAISERROR('MicroGaming LC - Case 8: Check betcount between translog and bettrans --INCONSISTENT--', 16, 1);	
+	BEGIN
+		SET @ErrMessage = @ErrMessage + 'MicroGaming LC - Case 8: Check betcount between translog and bettrans --INCONSISTENT--'
+		RETURN
+		--RAISERROR('MicroGaming LC - Case 8: Check betcount between translog and bettrans --INCONSISTENT--', 16, 1);		
+	END
+
 end
 grant view definition on Task_MicroGamingLC_DataConsistency_Check to vnteam
 
