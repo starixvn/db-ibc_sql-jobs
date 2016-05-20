@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02: MGC RNG and MGC LC - Check consistency of tickets]    Script Date: 03/18/2016 03:21:00 ******/
+/****** Object:  Job [bodb02: MGC RNG and MGC LC - Check consistency of tickets]    Script Date: 5/20/2016 9:44:15 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 03/18/2016 03:21:01 ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 5/20/2016 9:44:15 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -17,16 +17,15 @@ DECLARE @jobId BINARY(16)
 EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02: MGC RNG and MGC LC - Check consistency of tickets', 
 		@enabled=1, 
 		@notify_level_eventlog=0, 
-		@notify_level_email=2, 
+		@notify_level_email=0, 
 		@notify_level_netsend=0, 
 		@notify_level_page=0, 
 		@delete_level=0, 
 		@description=N'No description available.', 
 		@category_name=N'[Uncategorized (Local)]', 
-		@owner_login_name=N'sa', 
-		@notify_email_operator_name=N'vnDBA', @job_id = @jobId OUTPUT
+		@owner_login_name=N'dbateam', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Check consistency of tickets]    Script Date: 03/18/2016 03:21:01 ******/
+/****** Object:  Step [Check consistency of tickets]    Script Date: 5/20/2016 9:44:16 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check consistency of tickets', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
@@ -37,13 +36,30 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check co
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'declare @Fromdate smalldatetime, @Todate smalldatetime
+		@command=N'declare @Fromdate smalldatetime, @Todate smalldatetime, @ErrMessage varchar(1024), @ErrorTmp varchar(1024)
 
 select @Todate = getdate()
-select @Fromdate = DATEADD(day,-2,@Todate)
+select @Fromdate = dateadd(day, -2, @Todate)
 
-exec dbo.Task_MicroGamingRNG_DataConsistency_Check @FDate = @Fromdate, @TDate = @Todate
-exec dbo.Task_MicroGamingLC_DataConsistency_Check @FDate = @Fromdate, @TDate = @Todate', 
+select @ErrorTmp = '''', @ErrMessage = ''''
+
+exec dbo.Task_RNG_Check_Data_Consistency_Job @FromDate = @Fromdate
+	, @ToDate = @Todate
+	, @ErrMessage = @ErrorTmp OUTPUT
+
+if isnull(@ErrorTmp, '''') <> ''''
+	set @ErrMessage = @ErrMessage + @ErrorTmp
+
+set @ErrorTmp = ''''
+exec dbo.Task_MicroGamingLC_DataConsistency_Check @FDate = @Fromdate
+	, @TDate = @Todate
+	, @ErrMessage =  @ErrorTmp OUTPUT
+
+if isnull(@ErrorTmp, '''') <> ''''
+	set @ErrMessage = @ErrMessage + @ErrorTmp
+
+if isnull(@ErrMessage, '''') <> ''''
+	raiserror(@ErrMessage, 16, 1)', 
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
