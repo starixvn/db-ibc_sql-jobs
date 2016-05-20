@@ -166,6 +166,15 @@ BEGIN
 	END
 	
 	SELECT * 
+	INTO #tempdataSetting
+	FROM (
+	SELECT t.*,row_number() OVER(PARTITION BY custid,gameid ORDER BY transid DESC) AS rn
+	FROM #tempdata t
+	) tmp
+	WHERE rn = 1
+	
+	
+	SELECT * 
 	INTO #Sport_Bettype_Reference_Setting
 	FROM DBTXN.bodb02.dbo.Sport_Bettype_Reference_Setting WITH(NOLOCK) 
 	WHERE sporttype = @ProductId AND isLive = 0 AND Site = 'ALL'
@@ -177,7 +186,7 @@ BEGIN
 		,main.apositiontaking, ISNULL(idvpt.AgentPT, grppt.AgentPT) AgentPT
 		,main.mpositiontaking, ISNULL(idvpt.MasterPT, grppt.MasterPT) MasterPT
 		,main.spositiontaking, ISNULL(idvpt.SuperPT, grppt.SuperPT) SuperPT
-	FROM #tempdata main WITH(NOLOCK)
+	FROM #tempdataSetting main WITH(NOLOCK)
 		INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON ci.custid = main.custid
 		INNER JOIN #Sport_Bettype_Reference_Setting ref WITH(NOLOCK) 
 				ON ref.Sporttype = main.productid 
@@ -217,7 +226,7 @@ BEGIN
 		,main.apositiontaking, ISNULL(idvpt.AgentPT, grppt.AgentPT) AgentPT
 		,main.mpositiontaking, ISNULL(idvpt.MasterPT, grppt.MasterPT) MasterPT
 		,main.spositiontaking, ISNULL(idvpt.SuperPT, grppt.SuperPT) SuperPT
-	FROM #tempdata main WITH(NOLOCK)
+	FROM #tempdataSetting main WITH(NOLOCK)
 		INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON ci.custid = main.custid
 		INNER JOIN #Sport_Bettype_Reference_Setting ref WITH(NOLOCK) 
 				ON ref.Sporttype = main.productid 
@@ -258,7 +267,7 @@ BEGIN
 		, main.discount, comm.AgentDiscount AgentDiscount
 		, main.adiscount, comm.MasterDiscount MasterDiscount
 		, main.sdiscount, comm.SuperDiscount SuperDiscount
-	FROM #tempdata main WITH(NOLOCK)
+	FROM #tempdataSetting main WITH(NOLOCK)
 		INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON ci.custid = main.custid
 		INNER JOIN #Sport_Bettype_Reference_Setting ref WITH(NOLOCK) 
 				ON ref.Sporttype = main.productid 
