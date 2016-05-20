@@ -17,7 +17,7 @@ AS
 BEGIN
 	SET @ErrMessage = ''
 
-	DECLARE @tempdata TABLE (custid INT, username VARCHAR(50), transid BIGINT, ProductID INT, gameid smallint
+	CREATE TABLE #tempdata(custid INT, username VARCHAR(50), transid BIGINT, ProductID INT, gameid smallint
 		, stake MONEY, actual_stake MONEY, netstake MONEY
 		, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, spositiontaking SMALLMONEY, tpositiontaking SMALLMONEY
 		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8)
@@ -39,7 +39,7 @@ BEGIN
 		, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, spositiontaking SMALLMONEY, tpositiontaking SMALLMONEY
 		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8))
 
-	INSERT INTO @tempdata (custid, username, transid, ProductID, gameid
+	INSERT INTO #tempdata (custid, username, transid, ProductID, gameid
 		, stake, actual_stake, netstake
 		, apositiontaking, mpositiontaking, spositiontaking, tpositiontaking
 		, playerdiscount, discount, adiscount, sdiscount
@@ -71,7 +71,7 @@ BEGIN
 		, AVG(apositiontaking) AS apositiontaking, AVG(mpositiontaking) AS mpositiontaking
 		, AVG(spositiontaking) AS spositiontaking, AVG(tpositiontaking) AS tpositiontaking
 		, AVG(playerdiscount) AS playerdiscount, AVG(discount) AS discount, AVG(adiscount) AS adiscount, AVG(sdiscount) AS sdiscount
-	FROM @tempdata
+	FROM #tempdata
 	WHERE issum = 1
 	GROUP BY custid, username, productid, gameid, winlostdate
 
@@ -141,7 +141,7 @@ BEGIN
 				 WHEN (netstake * adiscount * (1 - (mpositiontaking + apositiontaking)) <> acomm) THEN 'Issue: acomm is wrong'
 				 WHEN (netstake * sdiscount * (1 - (spositiontaking + mpositiontaking + apositiontaking)) <> scomm) THEN 'Issue: scomm is wrong'
 			END AS 'Comment'
-	FROM @tempdata t
+	FROM #tempdata t
 	WHERE StatusId NOT IN (0,1)
 		AND ((winlost > actual_stake AND status <> 'WON')--Case 2: Check data in BettransLC - if winlost - actual_stake > 0 -> status=WON
 			OR (winlost = actual_stake AND status  not in ('DRAW', 'REFUND'))--Case 3: Check data in BettransLC - if winlost - actual_stake = 0 -> status=DRAW
@@ -165,6 +165,128 @@ BEGIN
 		RETURN
 	END
 	
+	SELECT * 
+	INTO #Sport_Bettype_Reference_Setting
+	FROM DBTXN.bodb02.dbo.Sport_Bettype_Reference_Setting WITH(NOLOCK) 
+	WHERE sporttype = @ProductId AND isLive = 0 AND Site = 'ALL'
+	
+	/*DCS checking*/
+	--PT@Credit
+	SELECT TOP 1 'Case 6.1' AS [CASE]
+		, main.transid, main.custid, main.productid, main.gameid
+		,main.apositiontaking, ISNULL(idvpt.AgentPT, grppt.AgentPT) AgentPT
+		,main.mpositiontaking, ISNULL(idvpt.MasterPT, grppt.MasterPT) MasterPT
+		,main.spositiontaking, ISNULL(idvpt.SuperPT, grppt.SuperPT) SuperPT
+	FROM #tempdata main WITH(NOLOCK)
+		INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON ci.custid = main.custid
+		INNER JOIN #Sport_Bettype_Reference_Setting ref WITH(NOLOCK) 
+				ON ref.Sporttype = main.productid 
+					AND ref.Bettype = main.gameid
+					AND ref.isLicensee = 0
+		LEFT JOIN dbo.CustPTSetting3rd_Member idvpt WITH(NOLOCK) 
+				ON idvpt.custid = main.custid
+					AND idvpt.sporttype = ref.SportTypeRefPT
+					AND idvpt.bettype = ref.BetTypeRefPT
+					AND idvpt.isLive = ref.isLivePT
+		LEFT JOIN dbo.CustPTGroupSetting3rd_Member grppt WITH(NOLOCK) 
+				ON grppt.AgentID = ci.recommend
+					AND grppt.sporttype = ref.SportTypeRefPT
+					AND grppt.bettype = ref.BetTypeRefPT
+					AND grppt.isLive = ref.isLivePT
+	WHERE ci.srecommend NOT IN (SELECT CustID FROM dbo.Dep_CustSuper WITH(NOLOCK))
+		AND 
+		(
+			main.apositiontaking * 100 <> ISNULL(idvpt.AgentPT, grppt.AgentPT)
+			OR
+			main.mpositiontaking * 100 <> ISNULL(idvpt.MasterPT, grppt.MasterPT)
+			OR
+			main.spositiontaking * 100 <> ISNULL(idvpt.SuperPT, grppt.SuperPT)
+		)
+		
+	IF @@ROWCOUNT > 0
+	BEGIN
+		SET @ErrMessage = @ErrMessage
+			+ 'Inconsistent - RnG Game - ProductId: ' + CAST(@ProductId AS VARCHAR)
+			+ ' - Case 6.1: Check inconsistent PT in bettransRNG.'
+		RETURN
+	END
+	
+	--PT@Deposit
+	SELECT TOP 1 'Case 6.2' AS [CASE]
+		, main.transid, main.custid, main.productid, main.gameid
+		,main.apositiontaking, ISNULL(idvpt.AgentPT, grppt.AgentPT) AgentPT
+		,main.mpositiontaking, ISNULL(idvpt.MasterPT, grppt.MasterPT) MasterPT
+		,main.spositiontaking, ISNULL(idvpt.SuperPT, grppt.SuperPT) SuperPT
+	FROM #tempdata main WITH(NOLOCK)
+		INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON ci.custid = main.custid
+		INNER JOIN #Sport_Bettype_Reference_Setting ref WITH(NOLOCK) 
+				ON ref.Sporttype = main.productid 
+					AND ref.Bettype = main.gameid
+					AND ref.isLicensee = 1
+		LEFT JOIN Dep_CustPTSetting_Member idvpt WITH(NOLOCK) 
+				ON idvpt.custid = main.custid
+					AND idvpt.sporttype = ref.SportTypeRefPT
+					AND idvpt.bettype = ref.BetTypeRefPT
+					AND idvpt.isLive = ref.isLivePT
+		LEFT JOIN dbo.Dep_CustPTGroupSetting_Member grppt WITH(NOLOCK) 
+				ON grppt.AgentID = ci.recommend
+					AND grppt.sporttype = ref.SportTypeRefPT
+					AND grppt.bettype = ref.BetTypeRefPT
+					AND grppt.isLive = ref.isLivePT
+	WHERE ci.srecommend IN (SELECT CustID FROM dbo.Dep_CustSuper WITH(NOLOCK))
+		AND 
+		(
+			main.apositiontaking * 100 <> ISNULL(idvpt.AgentPT, grppt.AgentPT)
+			OR
+			main.mpositiontaking * 100 <> ISNULL(idvpt.MasterPT, grppt.MasterPT)
+			OR
+			main.spositiontaking * 100 <> ISNULL(idvpt.SuperPT, grppt.SuperPT)
+		)
+		
+	IF @@ROWCOUNT > 0
+	BEGIN
+		SET @ErrMessage = @ErrMessage
+			+ 'Inconsistent - RnG Game - ProductId: ' + CAST(@ProductId AS VARCHAR)
+			+ ' - Case 6.2: Check inconsistent PT in bettransRNG.'
+		RETURN
+	END
+	
+	--Comm@Credit
+	SELECT TOP 1 'Case 7.1' AS [CASE]
+		, main.transid, main.custid, main.productid, main.gameid
+		, main.playerdiscount, comm.PlayerDiscount PlayerDiscount
+		, main.discount, comm.AgentDiscount AgentDiscount
+		, main.adiscount, comm.MasterDiscount MasterDiscount
+		, main.sdiscount, comm.SuperDiscount SuperDiscount
+	FROM #tempdata main WITH(NOLOCK)
+		INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON ci.custid = main.custid
+		INNER JOIN #Sport_Bettype_Reference_Setting ref WITH(NOLOCK) 
+				ON ref.Sporttype = main.productid 
+					AND ref.Bettype = main.gameid
+					AND ref.isLicensee = 0
+		INNER JOIN dbo.CustDiscount3rd_member comm WITH(NOLOCK) 
+				ON comm.custid = main.custid
+					AND comm.sporttype = ref.SportTypeRefComm
+					AND comm.bettype = ref.BetTypeRefComm
+	WHERE ci.srecommend NOT IN (SELECT CustID FROM dbo.Dep_CustSuper WITH(NOLOCK))
+		AND 
+		(
+			main.playerdiscount <> comm.PlayerDiscount
+			OR
+			main.discount <> comm.AgentDiscount
+			OR
+			main.adiscount <> comm.MasterDiscount
+			OR
+			main.sdiscount <> comm.SuperDiscount
+		)
+
+	IF @@ROWCOUNT > 0
+	BEGIN
+		SET @ErrMessage = @ErrMessage
+			+ 'Inconsistent - RnG Game - ProductId: ' + CAST(@ProductId AS VARCHAR)
+			+ ' - Case 7.1: Check inconsistent Comm in bettransRNG.'
+		RETURN
+	END
 END
 GRANT VIEW DEFINITION ON Task_RNG_DataConsistency_Check TO vnteam
 
