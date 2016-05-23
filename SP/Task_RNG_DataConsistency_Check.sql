@@ -7,8 +7,7 @@ ALTER PROCEDURE dbo.Task_RNG_DataConsistency_Check @FromDate SMALLDATETIME
 	, @ErrMessage VARCHAR(512) = '' OUTPUT
 AS
 /*
-	Created: Francis
-	CreatedDate: 20160316
+	Created: 20160518@Patrick
 	Task: Check data between bettrans & bettransRNG for RNG Game (Run on DB06/DBTP)
 	Revision:
 		- 20160517@Patrick: VoidBridge Integration [Redmine: #57675]
@@ -18,7 +17,7 @@ BEGIN
 	SET @ErrMessage = ''
 
 	CREATE TABLE #tempdata(custid INT, username VARCHAR(50), transid BIGINT, ProductID INT, gameid smallint
-		, stake MONEY, actual_stake MONEY, netstake MONEY
+		, stake MONEY, actual_stake MONEY
 		, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, spositiontaking SMALLMONEY, tpositiontaking SMALLMONEY
 		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8)
 		, winlost MONEY, awinlost MONEY, mwinlost MONEY, swinlost MONEY
@@ -40,14 +39,14 @@ BEGIN
 		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8))
 
 	INSERT INTO #tempdata (custid, username, transid, ProductID, gameid
-		, stake, actual_stake, netstake
+		, stake, actual_stake
 		, apositiontaking, mpositiontaking, spositiontaking, tpositiontaking
 		, playerdiscount, discount, adiscount, sdiscount
 		, winlost, awinlost, mwinlost, swinlost
 		, playercomm, comm, acomm, scomm
 		, winlostdate, status, issum, StatusID)
 	SELECT custid, username, transid, ProductID, gameid
-		, stake, actual_stake, netstake
+		, stake, actual_stake
 		, apositiontaking, mpositiontaking, spositiontaking, tpositiontaking
 		, playerdiscount, discount, adiscount, sdiscount
 		, winlost, awinlost, mwinlost, swinlost
@@ -128,7 +127,7 @@ BEGIN
 		RETURN
 	END
 	
-	SELECT TOP 1 'Case 2,3,4' AS [CASE]
+	SELECT TOP 1 'Case 2,3,4,5' AS [CASE]
 		, t.*
 		, CASE WHEN (winlost > actual_stake AND status <> 'WON') THEN 'Issue: Status should be WON'
 				 WHEN (winlost = actual_stake AND status not in ('DRAW', 'REFUND')) THEN 'Issue: Status should be DRAW/REFUND'
@@ -137,24 +136,24 @@ BEGIN
 				 WHEN (-(winlost - actual_stake) * mpositiontaking <> mwinlost) THEN 'Issue: mwinlost is calculated wrongly' 
 				 WHEN (-(winlost - actual_stake) * spositiontaking <> swinlost) THEN 'Issue: swinlost is calculated wrongly' 
 				 WHEN (stake * playerdiscount <> playercomm) THEN 'Issue: playercomm is wrong'
-				 WHEN (netstake * discount * (1 - apositiontaking) <> comm) THEN 'Issue: comm is wrong'
-				 WHEN (netstake * adiscount * (1 - (mpositiontaking + apositiontaking)) <> acomm) THEN 'Issue: acomm is wrong'
-				 WHEN (netstake * sdiscount * (1 - (spositiontaking + mpositiontaking + apositiontaking)) <> scomm) THEN 'Issue: scomm is wrong'
+				 WHEN (stake * discount * (1 - apositiontaking) <> comm) THEN 'Issue: comm is wrong'
+				 WHEN (stake * adiscount * (1 - (mpositiontaking + apositiontaking)) <> acomm) THEN 'Issue: acomm is wrong'
+				 WHEN (stake * sdiscount * (1 - (spositiontaking + mpositiontaking + apositiontaking)) <> scomm) THEN 'Issue: scomm is wrong'
 			END AS 'Comment'
 	FROM #tempdata t
 	WHERE StatusId NOT IN (0,1)
-		AND ((winlost > actual_stake AND status <> 'WON')--Case 2: Check data in BettransLC - if winlost - actual_stake > 0 -> status=WON
-			OR (winlost = actual_stake AND status  not in ('DRAW', 'REFUND'))--Case 3: Check data in BettransLC - if winlost - actual_stake = 0 -> status=DRAW
-			OR (winlost < actual_stake AND status <> 'LOSE')--Case 4: Check data in BettransLC - if winlost - actual_stake < 0 -> status=LOSE
+		AND ((winlost > actual_stake AND status <> 'WON')--Case 2: Check data in BettransRnG - if winlost - actual_stake > 0 -> status=WON
+			OR (winlost = actual_stake AND status  not in ('DRAW', 'REFUND'))--Case 3: Check data in BettransRnG - if winlost - actual_stake = 0 -> status=DRAW
+			OR (winlost < actual_stake AND status <> 'LOSE')--Case 4: Check data in BettransRnG - if winlost - actual_stake < 0 -> status=LOSE
 			
-			OR (-(winlost - actual_stake) * apositiontaking <> awinlost) --Case 5: Check data in BettransLC - awinlost, playercomm are calculated correctly
+			OR (-(winlost - actual_stake) * apositiontaking <> awinlost) --Case 5: Check data in BettransRnG - awinlost, playercomm are calculated correctly
 			OR (-(winlost - actual_stake) * mpositiontaking <> mwinlost)
 			OR (-(winlost - actual_stake) * spositiontaking <> swinlost)
 			
-			OR (statusid IN (112,113) AND (cast(netstake * playerdiscount AS money) <> playercomm)) --Case 5b: playercomm is wrong
-			OR (statusid IN (112,113) AND (cast(netstake * discount * (1 - apositiontaking) AS money) <> comm)) --Case 5c: comm is wrong
-			OR (statusid IN (112,113) AND (cast(netstake * adiscount * (1 - (mpositiontaking + apositiontaking)) AS money) <> acomm)) --Case 5d: acomm is wrong		
-			OR (statusid IN (112,113) AND (cast(netstake * sdiscount * (1 - (spositiontaking + mpositiontaking + apositiontaking)) AS money) <> scomm)) --Case 5e: scomm is wrong
+			OR (statusid IN (112,113) AND (cast(stake * playerdiscount AS money) <> playercomm)) --Case 5b: playercomm is wrong
+			OR (statusid IN (112,113) AND (cast(stake * discount * (1 - apositiontaking) AS money) <> comm)) --Case 5c: comm is wrong
+			OR (statusid IN (112,113) AND (cast(stake * adiscount * (1 - (mpositiontaking + apositiontaking)) AS money) <> acomm)) --Case 5d: acomm is wrong		
+			OR (statusid IN (112,113) AND (cast(stake * sdiscount * (1 - (spositiontaking + mpositiontaking + apositiontaking)) AS money) <> scomm)) --Case 5e: scomm is wrong
 			)
 	
 	IF @@ROWCOUNT > 0

@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02: MGC RNG and MGC LC - Check consistency of tickets]    Script Date: 5/20/2016 9:44:15 AM ******/
+/****** Object:  Job [bodb02: MGC RNG and MGC LC - Check consistency of tickets]    Script Date: 5/23/2016 9:49:15 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 5/20/2016 9:44:15 AM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 5/23/2016 9:49:15 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -25,7 +25,7 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02: MGC RNG and MGC LC -
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'dbateam', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Check consistency of tickets]    Script Date: 5/20/2016 9:44:16 AM ******/
+/****** Object:  Step [Check consistency of tickets]    Script Date: 5/23/2016 9:49:15 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check consistency of tickets', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
@@ -41,24 +41,24 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check co
 select @Todate = getdate()
 select @Fromdate = dateadd(day, -2, @Todate)
 
-select @ErrorTmp = '''', @ErrMessage = ''''
+select @ErrorTmp = '', @ErrMessage = ''
 
 exec dbo.Task_RNG_Check_Data_Consistency_Job @FromDate = @Fromdate
 	, @ToDate = @Todate
 	, @ErrMessage = @ErrorTmp OUTPUT
 
-if isnull(@ErrorTmp, '''') <> ''''
+if isnull(@ErrorTmp, '') <> ''
 	set @ErrMessage = @ErrMessage + @ErrorTmp
 
-set @ErrorTmp = ''''
+set @ErrorTmp = ''
 exec dbo.Task_MicroGamingLC_DataConsistency_Check @FDate = @Fromdate
 	, @TDate = @Todate
 	, @ErrMessage =  @ErrorTmp OUTPUT
 
-if isnull(@ErrorTmp, '''') <> ''''
+if isnull(@ErrorTmp, '') <> ''
 	set @ErrMessage = @ErrMessage + @ErrorTmp
 
-if isnull(@ErrMessage, '''') <> ''''
+if isnull(@ErrMessage, '') <> ''
 	raiserror(@ErrMessage, 16, 1)', 
 		@database_name=N'bodb02', 
 		@flags=0
