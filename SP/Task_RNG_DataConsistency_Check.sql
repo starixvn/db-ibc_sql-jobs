@@ -167,7 +167,7 @@ BEGIN
 	SELECT * 
 	INTO #tempdataSetting
 	FROM (
-	SELECT t.*,row_number() OVER(PARTITION BY custid,gameid ORDER BY transid DESC) AS rn
+	SELECT t.*,row_number() OVER(PARTITION BY custid ORDER BY transid DESC) AS rn
 	FROM #tempdata t
 	) tmp
 	WHERE rn = 1
