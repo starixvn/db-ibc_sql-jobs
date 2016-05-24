@@ -10,6 +10,7 @@ as
 	CreatedDate: 20160316
 	Task: Check data between bettrans & bettransRNG for MGC RNG (Run on DB06/DBTP)
 	Revision:
+		- 20160517@Patrick: VoidBridge Integration [Redmine: #57675]
 */
 begin
 	declare @FromDate smalldatetime, @ToDate smalldatetime
@@ -92,7 +93,7 @@ begin
 		and statusid not in (0,1)
 	group by custid, username, matchid, bettype, winlostdate, status
 
-	select 'Case 1' AS [CASE], s.*, t.*
+	select top 1 'Case 1' AS [CASE], s.*, t.*
 	from @sourcedata s
 		inner join @targetdata t on s.custid = t.custid and s.bettype = t.bettype and s.winlostdate = t.winlostdate
 	where s.turnover <> t.turnover 
@@ -118,7 +119,7 @@ begin
 	--insert into @wrongdata (custid , username , transid 
 	--	, stake , winlost , actual_stake , playercomm , playerdiscount , awinlost , apositiontaking , comm ,
 	--	discount , winlostdate ,gameid, status , issue )
-	select top 100 'Case 2,3,4' AS [CASE]
+	select top 1 'Case 2,3,4,5' AS [CASE]
 	,custid,username,transid,stake,winlost,actual_stake,playercomm,playerdiscount,awinlost,apositiontaking,comm,discount,winlostdate,gameid,status,
 			case when winlost>actual_stake then 'Issue: Status should be WON'
 				 when winlost=actual_stake then 'Issue: Status should be DRAW'
@@ -173,7 +174,7 @@ begin
 	--Case 6,7: 
 	--insert into @wrongdataPT (custid, transid, bettype, playerdiscount, discount, 
 	--	adiscount, sdiscount, apositiontaking, mpositiontaking, spositiontaking, transdate)
-	select 'Case 6,7' AS [CASE], t.custid, t.transid, t.gameID, t.playerdiscount, t.discount,  
+	select top 1 'Case 6,7' AS [CASE], t.custid, t.transid, t.gameID, t.playerdiscount, t.discount,  
 			t.adiscount, t.sdiscount, t.apositiontaking, t.mpositiontaking, t.spositiontaking, t.transdate
 	from bettransRnG t with (nolock)
 	inner join (

@@ -10,6 +10,7 @@ as
 	CreatedDate: 20160316
 	Task: Check data between bettrans & translog for MGC LC (Run on DB06/DBTP)
 	Revision:
+		- 20160517@Patrick: VoidBridge Integration [Redmine: #57675]
 */
 begin
 	declare @FromDate smalldatetime, @ToDate smalldatetime
