@@ -97,7 +97,7 @@ SET NOCOUNT ON
 				,SUM(modds)
 				,count(1)
 				,recommend 
-				,CASE WHEN bettype=9 OR betteam=1 THEN 1 ELSE 0 END AS IsMixParlay				
+				,CASE WHEN bettype=9 OR betteam='1' THEN 1 ELSE 0 END AS IsMixParlay				
 		FROM	bodb02.dbo.bettrans14 b WITH(NOLOCK) 
 		WHERE	b.winlostdate = @winlostdate
 				AND matchid IN(9,29)
@@ -105,7 +105,7 @@ SET NOCOUNT ON
 				AND b.statusid IN (111,112,113)
 		GROUP BY winlostdate, b.custid, liveawayscore, statusid, username, currency, actualrate,
 				CASE WHEN bettype=9 THEN RIGHT(betcheck,len(betcheck)-1) ELSE b.hdp2 END,
-				CASE WHEN bettype=9 OR betteam=1 THEN 1 ELSE 0 END, recommend
+				CASE WHEN bettype=9 OR betteam='1' THEN 1 ELSE 0 END, recommend
 		
 		IF @@ERROR > 0
 		BEGIN			
