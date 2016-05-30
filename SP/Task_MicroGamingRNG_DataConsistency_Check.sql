@@ -2,19 +2,22 @@ USE [bodb02]
 GO
 ALTER procedure [dbo].[Task_MicroGamingRNG_DataConsistency_Check]
 	@FDate smalldatetime, 
-	@TDate smalldatetime
+	@TDate smalldatetime,
+	@ErrMessage varchar(512) = '' output
 as
 /*
 	Created: Francis
 	CreatedDate: 20160316
 	Task: Check data between bettrans & bettransRNG for MGC RNG (Run on DB06/DBTP)
 	Revision:
+		- 20160517@Patrick: VoidBridge Integration [Redmine: #57675]
 */
 begin
 	declare @FromDate smalldatetime, @ToDate smalldatetime
 
 	select @FromDate = @FDate
 	select @ToDate = @TDate
+	set @ErrMessage = ''
 
 	declare @tempdata table (custid int, username varchar(50), transid bigint
 		, stake money, actual_stake money, playerdiscount decimal (9,8), ProductID int
@@ -87,10 +90,10 @@ begin
 	where --custid in (select custid from @CustIds) and
 		matchid in (205)--MGC RNG
 		and winlostdate BETWEEN @FromDate AND @ToDate
-		and statusid not in (0,1)
+		and statusid not in (0,1,131)
 	group by custid, username, matchid, bettype, winlostdate, status
 
-	select 'Case 1' AS [CASE], s.*, t.*
+	select top 1 'Case 1' AS [CASE], s.*, t.*
 	from @sourcedata s
 		inner join @targetdata t on s.custid = t.custid and s.bettype = t.bettype and s.winlostdate = t.winlostdate
 	where s.turnover <> t.turnover 
@@ -105,17 +108,21 @@ begin
 		or s.status <> t.status
 		
 	IF @@ROWCOUNT > 0
-		RAISERROR('Microgaming RNG - Case 1: Check ticket details between bettrans and bettransRNG --INCONSISTENT--', 16, 1);	
+	BEGIN
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - RnG Game - ProductId: 205 - Case 1: Check ticket details between bettrans and bettransRNG.'
+		RETURN
+		--RAISERROR('Microgaming RNG - Case 1: Check ticket details between bettrans and bettransRNG --INCONSISTENT--', 16, 1);	
+	END
 	--------------------------
 
 	--Case 2,3,4,5
 	--insert into @wrongdata (custid , username , transid 
 	--	, stake , winlost , actual_stake , playercomm , playerdiscount , awinlost , apositiontaking , comm ,
 	--	discount , winlostdate ,gameid, status , issue )
-	select top 100 'Case 2,3,4' AS [CASE]
+	select top 1 'Case 2,3,4,5' AS [CASE]
 	,custid,username,transid,stake,winlost,actual_stake,playercomm,playerdiscount,awinlost,apositiontaking,comm,discount,winlostdate,gameid,status,
 			case when winlost>actual_stake then 'Issue: Status should be WON'
-				 when winlost=actual_stake then 'Issue: Status should be DRAW'
+				 when winlost=actual_stake then 'Issue: Status should be DRAW/REFUND'
 				 when winlost<actual_stake then 'Issue: Status should be LOSE'
 				 when -(winlost-actual_stake)*apositiontaking<>awinlost then 'Issue: awinlost is calculated wrongly' 
 				 when stake*playerdiscount<>playercomm then 'Issue: playercomm is wrong' 
@@ -126,7 +133,7 @@ begin
 		AND (
 				(winlost>actual_stake AND status<>'WON')--Case 2: Check data in BettransRNG - if winlost - actual_stake > 0 -> status=WON
 				OR
-				(winlost=actual_stake AND status<>'DRAW')--Case 3: Check data in BettransRNG - if winlost - actual_stake = 0 -> status=DRAW
+				(winlost=actual_stake AND status not in ('DRAW', 'REFUND'))--Case 3: Check data in BettransRNG - if winlost - actual_stake = 0 -> status=DRAW
 				OR
 				(winlost<actual_stake AND status<>'LOSE')--Case 4: Check data in BettransRNG - if winlost - actual_stake < 0 -> status=LOSE			
 				OR
@@ -135,7 +142,12 @@ begin
 				(stake*playerdiscount<>playercomm) --Case 5b: playercomm is wrong
 			)
 	IF @@ROWCOUNT > 0
-		RAISERROR('Microgaming RNG - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettransRNG --INCONSISTENT--', 16, 1);	
+	BEGIN
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - RnG Game - ProductId: 205 - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettransRNG.'
+		RETURN
+		--RAISERROR('Microgaming RNG - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettransRNG --INCONSISTENT--', 16, 1);	
+	END
+	
 	/*
 	--Case 5 
 	insert into @wrongdata (custid , username , transid 
@@ -162,7 +174,7 @@ begin
 	--Case 6,7: 
 	--insert into @wrongdataPT (custid, transid, bettype, playerdiscount, discount, 
 	--	adiscount, sdiscount, apositiontaking, mpositiontaking, spositiontaking, transdate)
-	select 'Case 6,7' AS [CASE], t.custid, t.transid, t.gameID, t.playerdiscount, t.discount,  
+	select top 1 'Case 6,7' AS [CASE], t.custid, t.transid, t.gameID, t.playerdiscount, t.discount,  
 			t.adiscount, t.sdiscount, t.apositiontaking, t.mpositiontaking, t.spositiontaking, t.transdate
 	from bettransRnG t with (nolock)
 	inner join (
@@ -188,7 +200,11 @@ begin
 		OR t.apositiontaking+t.mpositiontaking+t.spositiontaking<>t.tpositiontaking --Case 7: detect apositiontaking + mpositiontaking + spositiontaking <>tpositiontaking
 		)
 	IF @@ROWCOUNT > 0
-		RAISERROR('Microgaming RNG - Case 6,7: Check PT and discount value of tickets in bettransRNG --INCONSISTENT--', 16, 1);
+	BEGIN
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - RnG Game - ProductId: 205 - Case 6,7: Check PT and discount value of tickets in bettransRNG.'
+		RETURN
+		--RAISERROR('Microgaming RNG - Case 6,7: Check PT and discount value of tickets in bettransRNG --INCONSISTENT--', 16, 1);
+	END
 	--select * from @wrongdataPT
 end
 grant view definition on Task_MicroGamingRNG_DataConsistency_Check to vnteam
