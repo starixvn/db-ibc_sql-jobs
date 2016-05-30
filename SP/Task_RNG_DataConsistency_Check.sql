@@ -87,7 +87,7 @@ BEGIN
 	FROM dbo.bettrans WITH(NOLOCK)
 	WHERE matchid = @ProductId
 		AND winlostdate BETWEEN @fromdate AND @todate
-		AND statusid NOT IN (0, 1)
+		AND statusid NOT IN (0, 1, 131)
 	GROUP BY custid, username, matchid, bettype, winlostdate, status
 	
 	SELECT TOP 1 'Case 1' AS [CASE], s.*, t.*
@@ -130,7 +130,7 @@ BEGIN
 	SELECT TOP 1 'Case 2,3,4,5' AS [CASE]
 		, t.*
 		, CASE WHEN (winlost > actual_stake AND status <> 'WON') THEN 'Issue: Status should be WON'
-				 WHEN (winlost = actual_stake AND status not in ('DRAW', 'REFUND')) THEN 'Issue: Status should be DRAW/REFUND'
+				 WHEN (winlost = actual_stake AND status NOT IN ('DRAW', 'REFUND', 'VOID')) THEN 'Issue: Status should be DRAW/REFUND'
 				 WHEN (winlost < actual_stake AND status <> 'LOSE') THEN 'Issue: Status should be LOSE'
 				 WHEN (-(winlost - actual_stake) * apositiontaking <> awinlost) THEN 'Issue: awinlost is calculated wrongly' 
 				 WHEN (-(winlost - actual_stake) * mpositiontaking <> mwinlost) THEN 'Issue: mwinlost is calculated wrongly' 
@@ -143,7 +143,7 @@ BEGIN
 	FROM #tempdata t
 	WHERE StatusId NOT IN (0,1)
 		AND ((winlost > actual_stake AND status <> 'WON')--Case 2: Check data in BettransRnG - if winlost - actual_stake > 0 -> status=WON
-			OR (winlost = actual_stake AND status  not in ('DRAW', 'REFUND'))--Case 3: Check data in BettransRnG - if winlost - actual_stake = 0 -> status=DRAW
+			OR (winlost = actual_stake AND status  NOT IN ('DRAW', 'REFUND', 'VOID'))--Case 3: Check data in BettransRnG - if winlost - actual_stake = 0 -> status=DRAW
 			OR (winlost < actual_stake AND status <> 'LOSE')--Case 4: Check data in BettransRnG - if winlost - actual_stake < 0 -> status=LOSE
 			
 			OR (-(winlost - actual_stake) * apositiontaking <> awinlost) --Case 5: Check data in BettransRnG - awinlost, playercomm are calculated correctly

@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02: MGC RNG and MGC LC - Check consistency of tickets]    Script Date: 5/23/2016 9:49:15 AM ******/
+/****** Object:  Job [bodb02: RNG and LC Game - Check consistency of tickets]    Script Date: 5/30/2016 4:53:08 PM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 5/23/2016 9:49:15 AM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 5/30/2016 4:53:08 PM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -14,8 +14,8 @@ IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 END
 
 DECLARE @jobId BINARY(16)
-EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02: MGC RNG and MGC LC - Check consistency of tickets', 
-		@enabled=1, 
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02: RNG and LC Game - Check consistency of tickets', 
+		@enabled=0, 
 		@notify_level_eventlog=0, 
 		@notify_level_email=0, 
 		@notify_level_netsend=0, 
@@ -25,42 +25,70 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02: MGC RNG and MGC LC -
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'dbateam', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Check consistency of tickets]    Script Date: 5/23/2016 9:49:15 AM ******/
+/****** Object:  Step [Check consistency of tickets]    Script Date: 5/30/2016 4:53:08 PM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check consistency of tickets', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
-		@on_success_action=1, 
+		@on_success_action=3, 
 		@on_success_step_id=0, 
-		@on_fail_action=1, 
+		@on_fail_action=2, 
 		@on_fail_step_id=0, 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'declare @Fromdate smalldatetime, @Todate smalldatetime, @ErrMessage varchar(1024), @ErrorTmp varchar(1024)
+		@command=N'declare @Fromdate smalldatetime, @Todate smalldatetime
+	, @ErrMessage varchar(max), @count int = 1
 
 select @Todate = getdate()
 select @Fromdate = dateadd(day, -2, @Todate)
 
-select @ErrorTmp = '', @ErrMessage = ''
+while @count <= 3
+begin
+	select  @ErrMessage = ''''
 
-exec dbo.Task_RNG_Check_Data_Consistency_Job @FromDate = @Fromdate
-	, @ToDate = @Todate
-	, @ErrMessage = @ErrorTmp OUTPUT
+	exec dbo.Task_RNG_Check_Data_Consistency_Job @FromDate = @Fromdate
+		, @ToDate = @Todate
+		, @ErrMessage = @ErrMessage OUTPUT
 
-if isnull(@ErrorTmp, '') <> ''
-	set @ErrMessage = @ErrMessage + @ErrorTmp
+	
+	if isnull(@ErrMessage, '''') = ''''
+	break
 
-set @ErrorTmp = ''
-exec dbo.Task_MicroGamingLC_DataConsistency_Check @FDate = @Fromdate
-	, @TDate = @Todate
-	, @ErrMessage =  @ErrorTmp OUTPUT
+	waitfor delay ''00:00:30.000''
+	set @count = @count + 1
+end
 
-if isnull(@ErrorTmp, '') <> ''
-	set @ErrMessage = @ErrMessage + @ErrorTmp
+if isnull(@ErrMessage, '''') <> ''''
+begin
+	declare @job_name varchar(125), @subject varchar(125)
+	set @job_name = ''bodb02: RNG and LC Game - Check consistency of tickets''
+	select @subject = ''SQL Server Job System: '''''' + @job_name + '''''' completed on \\'' + @@servername
 
-if isnull(@ErrMessage, '') <> ''
-	raiserror(@ErrMessage, 16, 1)', 
+	exec msdb.dbo.sp_send_dbmail @recipients=''patrick.pham@starixsoft.com''
+				, @subject = @subject
+				, @body = @ErrMessage
+				, @body_format = ''HTML''
+	raiserror(@ErrMessage, 16, 1)
+end
+
+', 
 		@database_name=N'bodb02', 
+		@flags=0
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [WAIT FOR DELAY]    Script Date: 5/30/2016 4:53:08 PM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'WAIT FOR DELAY', 
+		@step_id=2, 
+		@cmdexec_success_code=0, 
+		@on_success_action=1, 
+		@on_success_step_id=0, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'declare @tmp int
+set @tmp = 1', 
+		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1

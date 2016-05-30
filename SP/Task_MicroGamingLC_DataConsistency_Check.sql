@@ -58,7 +58,7 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 			)
 	IF @@ROWCOUNT > 0
 	BEGIN
-		SET @ErrMessage = @ErrMessage + 'MicroGaming LC - Case 1: Check ticket details between translog and bettrans --INCONSISTENT--'
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - LC Game - ProductId: 203 - Case 1: Check ticket details between translog and bettrans.'
 		RETURN
 		--RAISERROR('MicroGaming LC - Case 1: Check ticket details between translog and bettrans --INCONSISTENT--', 16, 1);
 	END
@@ -69,7 +69,7 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 	--	discount , winlostdate , bettype, status , issue )
 	select top 1 'Case 2,3,4,5' as [CASE], custid,username,transid,stake,winlost,actual_stake,playercomm,playerdiscount,awinlost,apositiontaking,comm,discount,winlostdate,bettype,status,
 			case when winlost>actual_stake then 'Issue: Status should be WON'
-				 when winlost=actual_stake then 'Issue: Status should be DRAW'
+				 when winlost=actual_stake then 'Issue: Status should be DRAW/REFUND'
 				 when winlost<actual_stake then 'Issue: Status should be LOSE'
 				 when -(winlost-actual_stake)*apositiontaking<>awinlost then 'Issue: awinlost is calculated wrongly' 
 				 when stake*playerdiscount<>playercomm then 'Issue: playercomm is wrong'
@@ -83,7 +83,7 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 		AND (
 				(winlost>actual_stake AND status<>'WON')--Case : Check data in Bettrans: if winlost - actual_stake > 0 -> status=WON
 				OR
-				(winlost=actual_stake AND status<>'DRAW')--Case : Check data in Bettrans: if winlost - actual_stake = 0 -> status=DRAW
+				(winlost=actual_stake AND status not in ('DRAW','REFUND'))--Case : Check data in Bettrans: if winlost - actual_stake = 0 -> status=DRAW
 				OR
 				(winlost<actual_stake AND status<>'LOSE')--Case : Check data in Bettrans: if winlost - actual_stake < 0 -> status=LOSE
 				OR
@@ -93,7 +93,7 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 			)
 	IF @@ROWCOUNT > 0
 	BEGIN
-		SET @ErrMessage = @ErrMessage + 'MicroGaming LC - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettrans --INCONSISTENT--'
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - LC Game - ProductId: 203 - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettrans.'
 		RETURN
 		--RAISERROR('MicroGaming LC - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettrans --INCONSISTENT--', 16, 1);	
 	END
@@ -152,7 +152,7 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 		)
 	IF @@ROWCOUNT > 0
 	BEGIN
-		SET @ErrMessage = @ErrMessage + 'MicroGaming LC - Case 6,7: Check PT and discount value of tickets in tranlog --INCONSISTENT--'
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - LC Game - ProductId: 203 - Case 6,7: Check PT and discount value of tickets in tranlog.'
 		RETURN
 		--RAISERROR('MicroGaming LC - Case 6,7: Check PT and discount value of tickets in tranlog --INCONSISTENT--', 16, 1);	
 	END
@@ -171,6 +171,7 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 		where productID= 203
 			and gameid between 2001 and 2007
 			and winlostdate BETWEEN @FromDate AND @ToDate
+			and statusid not in (0,1)
 		group by --productid, 
 				 gameid
 	 ) tt1
@@ -188,7 +189,7 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 	
 	IF @@ROWCOUNT > 0
 	BEGIN
-		SET @ErrMessage = @ErrMessage + 'MicroGaming LC - Case 8: Check betcount between translog and bettrans --INCONSISTENT--'
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - LC Game - ProductId: 203 - Case 8: Check betcount between translog and bettrans.'
 		RETURN
 		--RAISERROR('MicroGaming LC - Case 8: Check betcount between translog and bettrans --INCONSISTENT--', 16, 1);		
 	END

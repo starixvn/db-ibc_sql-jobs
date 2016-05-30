@@ -90,7 +90,7 @@ begin
 	where --custid in (select custid from @CustIds) and
 		matchid in (205)--MGC RNG
 		and winlostdate BETWEEN @FromDate AND @ToDate
-		and statusid not in (0,1)
+		and statusid not in (0,1,131)
 	group by custid, username, matchid, bettype, winlostdate, status
 
 	select top 1 'Case 1' AS [CASE], s.*, t.*
@@ -109,7 +109,7 @@ begin
 		
 	IF @@ROWCOUNT > 0
 	BEGIN
-		SET @ErrMessage = @ErrMessage + 'Microgaming RNG - Case 1: Check ticket details between bettrans and bettransRNG --INCONSISTENT--'
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - RnG Game - ProductId: 205 - Case 1: Check ticket details between bettrans and bettransRNG.'
 		RETURN
 		--RAISERROR('Microgaming RNG - Case 1: Check ticket details between bettrans and bettransRNG --INCONSISTENT--', 16, 1);	
 	END
@@ -122,7 +122,7 @@ begin
 	select top 1 'Case 2,3,4,5' AS [CASE]
 	,custid,username,transid,stake,winlost,actual_stake,playercomm,playerdiscount,awinlost,apositiontaking,comm,discount,winlostdate,gameid,status,
 			case when winlost>actual_stake then 'Issue: Status should be WON'
-				 when winlost=actual_stake then 'Issue: Status should be DRAW'
+				 when winlost=actual_stake then 'Issue: Status should be DRAW/REFUND'
 				 when winlost<actual_stake then 'Issue: Status should be LOSE'
 				 when -(winlost-actual_stake)*apositiontaking<>awinlost then 'Issue: awinlost is calculated wrongly' 
 				 when stake*playerdiscount<>playercomm then 'Issue: playercomm is wrong' 
@@ -133,7 +133,7 @@ begin
 		AND (
 				(winlost>actual_stake AND status<>'WON')--Case 2: Check data in BettransRNG - if winlost - actual_stake > 0 -> status=WON
 				OR
-				(winlost=actual_stake AND status<>'DRAW')--Case 3: Check data in BettransRNG - if winlost - actual_stake = 0 -> status=DRAW
+				(winlost=actual_stake AND status not in ('DRAW', 'REFUND'))--Case 3: Check data in BettransRNG - if winlost - actual_stake = 0 -> status=DRAW
 				OR
 				(winlost<actual_stake AND status<>'LOSE')--Case 4: Check data in BettransRNG - if winlost - actual_stake < 0 -> status=LOSE			
 				OR
@@ -143,9 +143,9 @@ begin
 			)
 	IF @@ROWCOUNT > 0
 	BEGIN
-		SET @ErrMessage = @ErrMessage + 'Microgaming RNG - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettransRNG --INCONSISTENT--'
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - RnG Game - ProductId: 205 - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettransRNG.'
 		RETURN
-		RAISERROR('Microgaming RNG - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettransRNG --INCONSISTENT--', 16, 1);	
+		--RAISERROR('Microgaming RNG - Case 2,3,4,5: Check status/awinlost/playercomm of tickets in bettransRNG --INCONSISTENT--', 16, 1);	
 	END
 	
 	/*
@@ -201,7 +201,7 @@ begin
 		)
 	IF @@ROWCOUNT > 0
 	BEGIN
-		SET @ErrMessage = @ErrMessage + 'Microgaming RNG - Case 6,7: Check PT and discount value of tickets in bettransRNG --INCONSISTENT--'
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - RnG Game - ProductId: 205 - Case 6,7: Check PT and discount value of tickets in bettransRNG.'
 		RETURN
 		--RAISERROR('Microgaming RNG - Case 6,7: Check PT and discount value of tickets in bettransRNG --INCONSISTENT--', 16, 1);
 	END
