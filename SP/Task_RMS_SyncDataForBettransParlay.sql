@@ -29,7 +29,7 @@ SET DEADLOCK_PRIORITY LOW
 declare @tstamp_min binary(8), @tstamp_max binary(8), @max_transid bigint
 
 DECLARE @bitmap VARCHAR(21) = ''
-CREATE TABLE #tmpBettrans (transid BIGINT PRIMARY KEY, hdp1 SMALLMONEY, hdp2 SMALLINT, betteam NVARCHAR(10), betcheck NVARCHAR(50))
+CREATE TABLE #tmpBettrans (transid BIGINT PRIMARY KEY, hdp1 SMALLMONEY, hdp2 SMALLINT, betteam NVARCHAR(10), betcheck BIGINT)
 
 SELECT @tstamp_min = CAST(CAST(ISNULL(VValue, 0) as bigint)+1 as binary(8))
 FROM dbo.rmSettings with (rowlock)
@@ -74,7 +74,7 @@ BEGIN
 	SET hdp1  = tmp.hdp1
 		,hdp2 = tmp.hdp2
 		,betteam = tmp.betteam
-		,betcheck = tmp.betcheck		
+		,betcheck = tmp.betcheck 	
 	FROM	dbo.rmbettrans b
 	INNER JOIN #tmpBettrans tmp
 		ON	b.transid = tmp.transid
@@ -86,7 +86,7 @@ BEGIN
 	;WITH ParlayTotalBet AS(
 		SELECT TransID, SUM (rcs.cnt) AS TotalBet
 		FROM rmBettrans b WITH(NOLOCK)
-			INNER JOIN bodb02.dbo.RefCombinationSet_xtest rcs WITH(NOLOCK) ON b.hdp2 = rcs.N
+			INNER JOIN bodb02.dbo.RefCombinationSet_xpre rcs WITH(NOLOCK) ON b.hdp2 = rcs.N
 		WHERE b.bettype=29 AND (b.betteam & rcs.bitmapR) > 0
 		GROUP BY b.transid
 	)
@@ -113,8 +113,8 @@ BEGIN
 	SELECT EXP(SUM(LOG(odds))) AS Odds, b.transid, ps.SetStake
 	INTO #tmp2
 	FROM tmpbettrans b WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.RefCombinationSet_xtest rcs WITH (NOLOCK) ON b.selection_cnt = rcs.N AND (b.bitmapR & rcs.bitmapR) > 0  
-		INNER JOIN bodb02.dbo.RefCombination_xtest rc  WITH (NOLOCK) ON rcs.N = rc.N AND rcs.R = rc.R AND b.RN = rc.seq
+		INNER JOIN bodb02.dbo.RefCombinationSet_xpre rcs WITH (NOLOCK) ON b.selection_cnt = rcs.N AND (b.bitmapR & rcs.bitmapR) > 0  
+		INNER JOIN bodb02.dbo.RefCombination_xpre rc  WITH (NOLOCK) ON rcs.N = rc.N AND rcs.R = rc.R AND b.RN = rc.seq
 		INNER JOIN ParlayStake ps ON ps.refno = b.refno AND ps.RN = rc.R
 	GROUP BY b.transid, ps.SetStake, serial
 
@@ -243,7 +243,7 @@ BEGIN
 	SET hdp1  = tmp.hdp1
 		,hdp2 = tmp.hdp2
 		,betteam = tmp.betteam
-		,betcheck = tmp.betcheck	
+		,betcheck = tmp.betcheck 
 	FROM	dbo.rmbettrans b
 	INNER JOIN #tmpBettrans tmp
 		ON	b.transid = tmp.transid
@@ -254,7 +254,7 @@ BEGIN
 		;WITH ParlayTotalBet AS(
 			SELECT b.TransID, SUM (rcs.cnt) AS TotalBet
 			FROM rmBettrans b WITH(NOLOCK)
-				INNER JOIN bodb02.dbo.RefCombinationSet_xtest rcs WITH(NOLOCK) ON b.hdp2 = rcs.N
+				INNER JOIN bodb02.dbo.RefCombinationSet_xpre rcs WITH(NOLOCK) ON b.hdp2 = rcs.N
 				INNER JOIN #temp c ON b.transid=c.transid
 			WHERE (b.betteam & rcs.bitmapR) > 0 AND b.transid>@max_transid	
 			GROUP BY b.transid
@@ -282,8 +282,8 @@ BEGIN
 		SELECT EXP(SUM(LOG(odds))) AS Odds, b.transid, ps.SetStake
 		INTO #tmp
 		FROM tmpbettrans b 
-			INNER JOIN bodb02.dbo.RefCombinationSet_xtest rcs WITH(NOLOCK) ON b.selection_cnt = rcs.N AND (b.bitmapR & rcs.bitmapR) > 0  
-			INNER JOIN bodb02.dbo.RefCombination_xtest rc WITH(NOLOCK) ON rcs.N = rc.N AND rcs.R = rc.R AND b.RN = rc.seq
+			INNER JOIN bodb02.dbo.RefCombinationSet_xpre rcs WITH(NOLOCK) ON b.selection_cnt = rcs.N AND (b.bitmapR & rcs.bitmapR) > 0  
+			INNER JOIN bodb02.dbo.RefCombination_xpre rc WITH(NOLOCK) ON rcs.N = rc.N AND rcs.R = rc.R AND b.RN = rc.seq
 			INNER JOIN ParlayStake ps ON ps.refno = b.refno AND ps.RN = rc.R
 		GROUP BY b.transid, ps.SetStake, serial
 
@@ -298,11 +298,19 @@ BEGIN
 		FROM rmBettrans b	
 			INNER JOIN tmp t ON b.transid = t.transid		
 		END			
+
 	MERGE	dbo.rmTransaction as dt
 	USING	#temp s on dt.transid = s.transid	
 	WHEN NOT MATCHED THEN 
 	INSERT(transid, refno, custid, combo,Selection)
 	VALUES(s.transid,s.refno,s.custid,s.combo,s.hdp2);
+
+	UPDATE b WITH(ROWLOCK, UPDLOCK)
+	SET b.selection=tmp.hdp2
+	FROM	dbo.rmTransaction b
+	INNER JOIN #tmpBettrans tmp
+		ON	b.transid = tmp.transid
+			
 	END
 
 	UPDATE dbo.rmSettings with(rowlock, updlock)
@@ -310,7 +318,4 @@ BEGIN
 	WHERE VName = 'rmBettransSync'	
 
 SET NOCOUNT OFF
-
-GO
-
 
