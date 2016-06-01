@@ -144,7 +144,7 @@ BEGIN
 	FROM bodb02.dbo.bettrans with (NOLOCK)
 	WHERE tstamp between @tstamp_min and @tstamp_max
 		AND matchid in (9,29)
-		
+
 	MERGE dbo.rmBettrans as d
 		USING #temp s on d.transid = s.transid	
 		WHEN MATCHED THEN 
@@ -265,7 +265,7 @@ BEGIN
 		INNER JOIN ParlayTotalBet pt ON b.TransID = pt.TransID
 	
 		;WITH tmpbettrans AS(
-			SELECT b.hdp2 AS selection_cnt, CAST(b.betteam as int) AS bitmapR, bm.odds, bm.stake AS SetStake, bm.refno, b.transid
+			SELECT b.hdp2 AS selection_cnt, b.betteam AS bitmapR, bm.odds, bm.stake AS SetStake, bm.refno, b.transid
 				,RN = ROW_NUMBER() OVER (PARTITION BY bm.refno ORDER BY bm.matchid) --RN
 			FROM rmBettrans b WITH (NOLOCK) 
 				INNER JOIN
@@ -286,7 +286,7 @@ BEGIN
 			INNER JOIN bodb02.dbo.RefCombination_xpre rc WITH(NOLOCK) ON rcs.N = rc.N AND rcs.R = rc.R AND b.RN = rc.seq
 			INNER JOIN ParlayStake ps ON ps.refno = b.refno AND ps.RN = rc.R
 		GROUP BY b.transid, ps.SetStake, serial
-
+		
 		;WITH tmp AS(
 			SELECT b.transid AS transid , CASE WHEN b.stake = 0 THEN 0 ELSE SUM (r.odds * r.SetStake)/b.stake END AS Odds2
 			FROM rmBettrans b WITH(NOLOCK)
@@ -302,14 +302,8 @@ BEGIN
 	MERGE	dbo.rmTransaction as dt
 	USING	#temp s on dt.transid = s.transid	
 	WHEN NOT MATCHED THEN 
-	INSERT(transid, refno, custid, combo,Selection)
-	VALUES(s.transid,s.refno,s.custid,s.combo,s.hdp2);
-
-	UPDATE b WITH(ROWLOCK, UPDLOCK)
-	SET b.selection=tmp.hdp2
-	FROM	dbo.rmTransaction b
-	INNER JOIN #tmpBettrans tmp
-		ON	b.transid = tmp.transid
+	INSERT(transid, refno, custid, combo)
+	VALUES(s.transid,s.refno,s.custid,s.combo);
 			
 	END
 
@@ -318,4 +312,3 @@ BEGIN
 	WHERE VName = 'rmBettransSync'	
 
 SET NOCOUNT OFF
-
