@@ -1,41 +1,35 @@
-USE [bodb_TGRS]
+SET ANSI_NULLS ON;
+GO
+SET QUOTED_IDENTIFIER ON;
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_StagingTraderPerformanceByDate]    Script Date: 01/21/2015 23:53:56 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE PROCEDURE [dbo].[Task_StagingTraderPerformanceByDate]
-	@Date DATE = NULL
-	 
+ALTER PROCEDURE	[dbo].[Task_StagingTraderPerformanceByDate]
+					@Date DATE = NULL
 AS
-
 /*
- Created:	20140604@Tom.Vo
- Task :		Staging Data on TGRS DB By Date
- DB:		DBTGRS.bodb_TGRS
- Original:  
+	Created:	20140604@Tom.Vo
+	Task :		Staging Data on TGRS DB By Date
+	DB:			DBTGRS.bodb_TGRS
+	Original:  
   
- Revisions:      
+	Revisions:      
+		- 20141203@Tom.Vo:	Staging data with new requirement
+		- 20160307@Billy:	Add new field Spread for staging data - [Redmine: #53240]
    			
- Param's Explanation:  
-	 
- Exam: 
-
-
+	Param's Explanation:  
+	
+	Exam: 
 
 */
 
-SET NOCOUNT ON
+SET NOCOUNT ON;
 
-	DELETE [bodb_TGRS].[dbo].[TraderPerformance]	WHERE EventDate = @Date
+	DELETE [bodb_TGRS].[dbo].[TraderPerformance]	WHERE EventDate = @Date;
 
 	INSERT INTO [dbo].[TraderPerformance]
            ([CustId]
            ,[MatchId]
+		   ,[WorkShift]
 		   ,[MatchCode]
            ,[EventDate]
            ,[SportType]
@@ -49,10 +43,12 @@ SET NOCOUNT ON
            ,[WinLost]
            ,[Comm]
            ,[BetCount]
+		   ,[Spread]
            )
  
 	SELECT [CustId]
            ,[MatchId]
+		   ,[WorkShift]
 		   ,[MatchCode]
            ,[EventDate]
            ,[SportType]
@@ -66,15 +62,17 @@ SET NOCOUNT ON
            ,[WinLost]
            ,[Comm]
            ,[BetCount]
+		   ,[Spread]
 	  FROM [dbo].[Staging_TraderPerformance] WITH(NOLOCK)
-	  WHERE EventDate = @Date
+	  WHERE EventDate = @Date;
  
-	DELETE [dbo].[SummaryByBetType_Daily]	WHERE EventDate = @Date
+	DELETE [dbo].[SummaryByBetType_Daily]	WHERE EventDate = @Date;
 
 	INSERT INTO [dbo].[SummaryByBetType_Daily]
 		([EventDate]
 		  ,[LeagueId]
 		  ,[BetType]
+		   ,[WorkShift]
 		  ,[Stake]
 		  ,[WinLost]
 		  ,[Comm]
@@ -84,6 +82,7 @@ SET NOCOUNT ON
 	SELECT @Date [EventDate]
 		  ,[LeagueId]
 		  ,[BetType]
+		   ,[WorkShift]
 		  ,SUM([Stake]) [Stake]
 		  ,SUM([WinLost]) [WinLost]
 		  ,SUM([Comm]) [Comm]
@@ -93,12 +92,14 @@ SET NOCOUNT ON
 	  WHERE EventDate = @Date
 	  GROUP BY [LeagueId]
 		  ,[BetType]
+		   ,[WorkShift];
 
-	DELETE [dbo].[SummaryByLeague_Daily]	WHERE EventDate = @Date
+	DELETE [dbo].[SummaryByLeague_Daily]	WHERE EventDate = @Date;
 
 	INSERT INTO [dbo].[SummaryByLeague_Daily]
 		([EventDate]
 		  ,[LeagueId]
+		   ,[WorkShift]
 		  ,[Stake]
 		  ,[WinLost]
 		  ,[Comm]
@@ -107,6 +108,7 @@ SET NOCOUNT ON
 		)
 	SELECT @Date [EventDate]
 		  ,[LeagueId]
+		   ,[WorkShift]
 		  ,SUM([Stake]) [Stake]
 		  ,SUM([WinLost]) [WinLost]
 		  ,SUM([Comm]) [Comm]
@@ -115,12 +117,14 @@ SET NOCOUNT ON
 	  FROM [dbo].[Staging_TraderPerformance] WITH(NOLOCK)
 	  WHERE EventDate = @Date
 	  GROUP BY [LeagueId]
+		   ,[WorkShift];
 
-	DELETE [dbo].[SummaryByTeam_Daily]	WHERE EventDate = @Date
+	DELETE [dbo].[SummaryByTeam_Daily]	WHERE EventDate = @Date;
 
 	INSERT INTO [dbo].[SummaryByTeam_Daily]
 		([EventDate]
 		  ,[TeamId]
+		   ,[WorkShift]
 		  ,[Stake]
 		  ,[WinLost]
 		  ,[Comm]
@@ -129,6 +133,7 @@ SET NOCOUNT ON
 		)
 	SELECT @Date [EventDate]
 		  ,[TeamId]
+		   ,[WorkShift]
 		  ,SUM([Stake]) [Stake]
 		  ,SUM([WinLost]) [WinLost]
 		  ,SUM([Comm]) [Comm]
@@ -137,14 +142,9 @@ SET NOCOUNT ON
 	  FROM [dbo].[Staging_TraderPerformance] WITH(NOLOCK)
 	  WHERE EventDate = @Date
 	  GROUP BY [TeamId]
-
+		   ,[WorkShift];
 
 GO
 
-GRANT EXECUTE ON [dbo].[Task_StagingTraderPerformanceByDate] TO [bodbTGRSNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Task_StagingTraderPerformanceByDate] TO [bodbTGRSNet] AS [dbo];
 GO
-
-GRANT VIEW DEFINITION ON [dbo].[Task_StagingTraderPerformanceByDate] TO [vnteam] AS [dbo]
-GO
-
-
