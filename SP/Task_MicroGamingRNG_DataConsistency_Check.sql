@@ -205,7 +205,7 @@ begin
 		)
 	IF @@ROWCOUNT > 0
 	BEGIN
-		SET @ErrMessage = @ErrMessage + 'Inconsistent - RnG Game - ProductId: 205 - Case 6,7: Check PT and discount value of tickets in bettransRNG.'
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - RnG Game - ProductId: 205 - Case 7: Check PT and discount value of tickets in bettransRNG.'
 		RETURN
 		--RAISERROR('Microgaming RNG - Case 6,7: Check PT and discount value of tickets in bettransRNG --INCONSISTENT--', 16, 1);
 	END

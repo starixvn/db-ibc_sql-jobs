@@ -158,7 +158,7 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 		)
 	IF @@ROWCOUNT > 0
 	BEGIN
-		SET @ErrMessage = @ErrMessage + 'Inconsistent - LC Game - ProductId: 203 - Case 6,7: Check PT and discount value of tickets in tranlog.'
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - LC Game - ProductId: 203 - Case 7: Check PT and discount value of tickets in tranlog.'
 		RETURN
 		--RAISERROR('MicroGaming LC - Case 6,7: Check PT and discount value of tickets in tranlog --INCONSISTENT--', 16, 1);	
 	END
