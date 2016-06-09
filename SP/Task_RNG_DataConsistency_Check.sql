@@ -260,7 +260,7 @@ BEGIN
 			+ ' - Case 6.2: Check inconsistent PT in bettransRNG.'
 		RETURN
 	END
-	*/
+	
 	--Comm@Credit
 	SELECT TOP 1 'Case 7.1' AS [CASE]
 		, main.transid, main.custid, main.productid, main.gameid
@@ -297,6 +297,8 @@ BEGIN
 			+ ' - Case 7.1: Check inconsistent Comm in bettransRNG.'
 		RETURN
 	END
+	*/
+	
 END
 GRANT VIEW DEFINITION ON Task_RNG_DataConsistency_Check TO vnteam
 

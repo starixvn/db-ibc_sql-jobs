@@ -192,16 +192,16 @@ begin
 				end
 		and st.sporttype = 203
 	where productID=205
-	and (t.playerdiscount<>st.playerdiscount
-		OR t.discount<>st.discount
-		OR t.adiscount<>st.adiscount 
-		OR t.sdiscount<>st.sdiscount
-		
+	and (
+		--t.playerdiscount<>st.playerdiscount
+		--OR t.discount<>st.discount
+		--OR t.adiscount<>st.adiscount 
+		--OR t.sdiscount<>st.sdiscount
 		--OR t.apositiontaking<>st.apositiontaking --Case 6: detect apositiontaking is wrong when placing bet
 		--OR t.mpositiontaking<>st.mpositiontaking --Case 6: detect mpositiontaking is wrong when placing bet
 		--OR t.spositiontaking<>st.spositiontaking --Case 6: detect spositiontaking is wrong when placing bet
-		
-		OR t.apositiontaking+t.mpositiontaking+t.spositiontaking<>t.tpositiontaking --Case 7: detect apositiontaking + mpositiontaking + spositiontaking <>tpositiontaking
+		--OR 
+		t.apositiontaking+t.mpositiontaking+t.spositiontaking<>t.tpositiontaking --Case 7: detect apositiontaking + mpositiontaking + spositiontaking <>tpositiontaking
 		)
 	IF @@ROWCOUNT > 0
 	BEGIN
