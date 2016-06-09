@@ -9,8 +9,10 @@ as
 	Created: Francis
 	CreatedDate: 20160316
 	Task: Check data between bettrans & bettransRNG for MGC RNG (Run on DB06/DBTP)
+	DB: DBTP.bodb02
 	Revision:
 		- 20160517@Patrick: VoidBridge Integration [Redmine: #57675]
+		- 20160609@Helen: Remove case 6 from service to check ticket correctness - [Redmine: 58904]
 */
 begin
 	declare @FromDate smalldatetime, @ToDate smalldatetime
@@ -174,7 +176,7 @@ begin
 	--Case 6,7: 
 	--insert into @wrongdataPT (custid, transid, bettype, playerdiscount, discount, 
 	--	adiscount, sdiscount, apositiontaking, mpositiontaking, spositiontaking, transdate)
-	select top 1 'Case 6,7' AS [CASE], t.custid, t.transid, t.gameID, t.playerdiscount, t.discount,  
+	select top 1 'Case 7' AS [CASE], t.custid, t.transid, t.gameID, t.playerdiscount, t.discount,  
 			t.adiscount, t.sdiscount, t.apositiontaking, t.mpositiontaking, t.spositiontaking, t.transdate
 	from bettransRnG t with (nolock)
 	inner join (
@@ -194,9 +196,11 @@ begin
 		OR t.discount<>st.discount
 		OR t.adiscount<>st.adiscount 
 		OR t.sdiscount<>st.sdiscount
-		OR t.apositiontaking<>st.apositiontaking --Case 6: detect apositiontaking is wrong when placing bet
-		OR t.mpositiontaking<>st.mpositiontaking --Case 6: detect mpositiontaking is wrong when placing bet
-		OR t.spositiontaking<>st.spositiontaking --Case 6: detect spositiontaking is wrong when placing bet
+		
+		--OR t.apositiontaking<>st.apositiontaking --Case 6: detect apositiontaking is wrong when placing bet
+		--OR t.mpositiontaking<>st.mpositiontaking --Case 6: detect mpositiontaking is wrong when placing bet
+		--OR t.spositiontaking<>st.spositiontaking --Case 6: detect spositiontaking is wrong when placing bet
+		
 		OR t.apositiontaking+t.mpositiontaking+t.spositiontaking<>t.tpositiontaking --Case 7: detect apositiontaking + mpositiontaking + spositiontaking <>tpositiontaking
 		)
 	IF @@ROWCOUNT > 0
