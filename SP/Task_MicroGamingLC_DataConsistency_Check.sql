@@ -9,8 +9,11 @@ as
 	Created: Francis
 	CreatedDate: 20160316
 	Task: Check data between bettrans & translog for MGC LC (Run on DB06/DBTP)
+	DB: DBTP.bodb02
+		
 	Revision:
 		- 20160517@Patrick: VoidBridge Integration [Redmine: #57675]
+		- 20160609@Helen: Remove case 6 from service to check ticket correctness - [Redmine: 58904]
 */
 begin
 	declare @FromDate smalldatetime, @ToDate smalldatetime
@@ -127,7 +130,7 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 	--Case 6,7: 
 	--insert into @wrongdataPT (custid, transid, bettype, playerdiscount, discount, 
 	--	adiscount, sdiscount, apositiontaking, mpositiontaking, spositiontaking, transdate)
-	select top 1 'Case 6,7' AS [CASE] , t.custid, t.translogid, t.gameID, t.playerdiscount, t.discount,  
+	select top 1 'Case 7' AS [CASE] , t.custid, t.translogid, t.gameID, t.playerdiscount, t.discount,  
 			t.adiscount, t.sdiscount, t.apositiontaking, t.mpositiontaking, t.spositiontaking, t.transdate
 	from (
 		select custid, gameid, max(translogid) as translogid
@@ -141,18 +144,21 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 				end = st.Bettype				
 			and st.sporttype=203			
 	where productID=203
-	and (t.playerdiscount<>st.playerdiscount
-		OR t.discount<>st.discount
-		OR t.adiscount<>st.adiscount 
-		OR t.sdiscount<>st.sdiscount
-		OR t.apositiontaking<>st.apositiontaking --Case 6: detect apositiontaking is wrong when placing bet
-		OR t.mpositiontaking<>st.mpositiontaking --Case 6: detect mpositiontaking is wrong when placing bet
-		OR t.spositiontaking<>st.spositiontaking --Case 6: detect spositiontaking is wrong when placing bet
-		OR t.apositiontaking+t.mpositiontaking+t.spositiontaking<>t.tpositiontaking --Case 7: detect apositiontaking + mpositiontaking + spositiontaking <>tpositiontaking
+	and (
+		--t.playerdiscount<>st.playerdiscount
+		--OR t.discount<>st.discount
+		--OR t.adiscount<>st.adiscount 
+		--OR t.sdiscount<>st.sdiscount
+		
+		--OR t.apositiontaking<>st.apositiontaking --Case 6: detect apositiontaking is wrong when placing bet
+		--OR t.mpositiontaking<>st.mpositiontaking --Case 6: detect mpositiontaking is wrong when placing bet
+		--OR t.spositiontaking<>st.spositiontaking --Case 6: detect spositiontaking is wrong when placing bet
+		
+		t.apositiontaking+t.mpositiontaking+t.spositiontaking<>t.tpositiontaking --Case 7: detect apositiontaking + mpositiontaking + spositiontaking <>tpositiontaking
 		)
 	IF @@ROWCOUNT > 0
 	BEGIN
-		SET @ErrMessage = @ErrMessage + 'Inconsistent - LC Game - ProductId: 203 - Case 6,7: Check PT and discount value of tickets in tranlog.'
+		SET @ErrMessage = @ErrMessage + 'Inconsistent - LC Game - ProductId: 203 - Case 7: Check PT and discount value of tickets in tranlog.'
 		RETURN
 		--RAISERROR('MicroGaming LC - Case 6,7: Check PT and discount value of tickets in tranlog --INCONSISTENT--', 16, 1);	
 	END

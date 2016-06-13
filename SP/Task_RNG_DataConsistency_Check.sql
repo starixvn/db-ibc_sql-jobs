@@ -9,9 +9,10 @@ AS
 /*
 	Created: 20160518@Patrick
 	Task: Check data between bettrans & bettransRNG for RNG Game (Run on DB06/DBTP)
+	DB: DBTP.bodb02
 	Revision:
 		- 20160517@Patrick: VoidBridge Integration [Redmine: #57675]
-
+		- 20160609@Helen: Remove case 6 from service to check ticket correctness - [Redmine: 58904]
 */
 BEGIN
 	SET @ErrMessage = ''
@@ -179,6 +180,7 @@ BEGIN
 	WHERE sporttype = @ProductId AND isLive = 0 AND Site = 'ALL'
 	
 	/*DCS checking*/
+	/*
 	--PT@Credit
 	SELECT TOP 1 'Case 6.1' AS [CASE]
 		, main.transid, main.custid, main.productid, main.gameid
@@ -295,6 +297,8 @@ BEGIN
 			+ ' - Case 7.1: Check inconsistent Comm in bettransRNG.'
 		RETURN
 	END
+	*/
+	
 END
 GRANT VIEW DEFINITION ON Task_RNG_DataConsistency_Check TO vnteam
 
