@@ -54,6 +54,7 @@ AS
   - 20151119@Jim: separate MicroGame into 2 product (#46454 )
   - 20160105@Bobby: #49196 - Implement OneRnG product
   - 20160422@Victor: Add product Voidbridge [Redmine: #55057]
+  - 20160620@Victor: Include bettrade comm on ClosingBalance amount [Redmine: #58318]
   
  Param's Explanation:  
 
@@ -267,7 +268,7 @@ BEGIN
 			CASE WHEN bettype in (p.TransferId, p.CancelTransferId) THEN p.PartnerId --3rd
 				ELSE -1 
 			END PartnerId,
-			SUM(CASE WHEN winlostdate < @date THEN CASE WHEN bettype = 903 THEN 0 ELSE winlost - actual_stake + playercomm END ELSE 0 END), --openingbalance: exclude ticket bettrade comm
+			SUM(CASE WHEN winlostdate < @date THEN winlost - actual_stake + playercomm ELSE 0 END), --openingbalance
 			SUM( CASE WHEN winlostdate = @date AND bettype = 22001 then winlost-actual_stake ELSE 0 END), --Deposit  
 			SUM( CASE WHEN winlostdate = @date AND bettype = 21006 then winlost-actual_stake ELSE 0 END), --Aff2MemTransfer  
 			-SUM(CASE WHEN winlostdate = @date AND bettype in (22002,22003) then winlost-actual_stake ELSE 0 END),--Withdrawal  
@@ -613,7 +614,7 @@ BEGIN
 		turnover_ba, comm_ba, Amountdueto_ba, playercomm, Transfer3rdOthers, Comm_BetTrade, AmountDueTo_BetTrade)  
 	SELECT @date, custid, d.currency, SUM(OpeningBalance), SUM(Deposit), SUM(Aff2MemTransfer), SUM(Withdrawal), SUM(Bonus), SUM(Adjustment), SUM(Transfer3rd),  
 		SUM(Turnover), SUM(DrawGame), SUM(Outstanding), SUM(Winloss), recommend, mrecommend, srecommend,   
-		SUM(OpeningBalance + Deposit + Aff2MemTransfer - Withdrawal + Bonus + Adjustment - Outstanding + Winloss + playercomm + Transfer3rd + Transfer3rdOthers - comm_bettrade_full) , -- closingbalance  
+		SUM(OpeningBalance + Deposit + Aff2MemTransfer - Withdrawal + Bonus + Adjustment - Outstanding + Winloss + playercomm + Transfer3rd + Transfer3rdOthers) , -- closingbalance  
 		MIN(e.actualrate),SUM(turnover_ba), SUM(comm_ba), SUM(Amountdueto_ba), SUM(playercomm), SUM(Transfer3rdOthers), --Transfer3rdOthers
 		SUM(Comm_BetTrade), SUM(AmountDueTo_BetTrade)
 	FROM #Data d  
