@@ -6,7 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 /****** Object:  Stored Procedure dbo.Task_MoveBetsDayByScheduleSel    Script Date: 8/17/2015 10:18:00 AM ******/
-ALTER PROCEDURE [dbo].[Task_MoveBetsDayByScheduleSel]
+ALTER PROCEDURE Task_MoveBetsDayByScheduleSel
 AS  
 
 /*		
@@ -20,7 +20,7 @@ AS
 		20160201@Harris: Skip move bet for 27Jan again
 		20160517@Harris: #57686 change move bet for 13May to 20160518 morning(gmt+7)  
 		20160614@Harris: #59313 change move bet in period 15-19Jun  
-
+		20160615@Harris: #59317 Modify for EC schedule
 */
 BEGIN 
 	SET NOCOUNT ON 	
@@ -31,8 +31,9 @@ BEGIN
 			,@Todaym3 DATETIME
 			,@Todaym4 DATETIME
 			,@WeekDay TINYINT
-	
+	--IF ISNULL(@today,'') = ''
 	SET @Today = CURRENT_TIMESTAMP
+	
 	--select  cast (@today as DATE)
 	SET @WeekDay = DATEPART(WEEKDAY, @Today)
 
@@ -56,40 +57,6 @@ BEGIN
 	--- Update schedule manually
 	--	20160614@Harris: #59313 change move bet in period 15-19Jun  
 
-	IF CAST (@today as DATE) = '20160614' -- Wednesday morning 
-		BEGIN
-			update @Schedule
-			set IsManual = 1, WeekDay = 3,ManualDay = '20160612'
-			where scheduleID = 4 -- move bet for Sunday 12Jun // Saturday is moved by current schedule
-		END
-	
-	IF CAST (@today as DATE) = '20160615' -- Thursday morning 
-		BEGIN
-			update @Schedule
-			set IsManual = 1,ManualDay = '20160613'
-			where scheduleID = 4 -- move bet for Monday 13Jun 
-		END
-	
-	-- Friday morning is skipped as default
-	
-	IF CAST (@today as DATE) = '20160617' -- Saturday morning 
-		BEGIN
-			update @Schedule
-			set IsManual = 1,ManualDay = '20160614'
-			where scheduleID = 5 -- move bet for Tuesday 14Jun 
-			
-			update @Schedule
-			set IsManual = 1,ManualDay = '20160615'
-			where scheduleID = 6 -- move bet for Wednesday 15Jun 
-		END
-	
-	IF CAST (@today as DATE) = '20160618' -- Sunday morning
-		BEGIN
-			update @Schedule
-			set IsManual = 1,ManualDay = '20160616'
-			where scheduleID = 7 -- move bet for Thursday 16Jun 
-		END
-	
 	/*UPDATE	@Schedule
 	SET		ManualDay = @Todaym2 
 			, IsManual = 1
@@ -100,8 +67,33 @@ BEGIN
 			, IsManual = 1
 	WHERE	ScheduleId = 2
  */
-	
- 
+	--		20160615@Harris: #59317 Modify for EC schedule
+	IF CAST(@today as date) between '20160620' and '20160717' -- one week after EC
+		BEGIN
+			DELETE @Schedule
+			
+			INSERT INTO @Schedule (ScheduleId, WeekDay, RunningDay, ManualDay, IsManual)  
+			VALUES	  (1, 2, @Todaym3, NULL , 0 ) --- Friday
+					, (2, 2, @Todaym2, NULL , 0 ) --- Saturday 
+					, (3, 3, @Todaym2, NULL , 0 ) --- Sunday
+					, (4, 4, @Todaym2, NULL , 0 ) --- Monday
+					, (5, 6, @Todaym3, NULL , 0 ) --- Tuesday
+					, (6, 6, @Todaym2, NULL , 0 ) --- Wednesday
+					, (7, 7, @Todaym2, NULL , 0 ) --- Thursday
+			
+			IF CAST (@today as DATE) = '20160715' -- Saturday morning // weekday = 6
+				BEGIN
+					update @Schedule
+					set IsManual = 1,WeekDay = 0
+					where scheduleID = 6 -- only move 1 day on Saturday morning 
+				END
+			IF CAST (@today as DATE) = '20160716' -- Sunday morning // weekday = 7
+				BEGIN
+					update @Schedule
+					set IsManual = 1,ManualDay = '20160713'
+					where scheduleID = 7  
+				END		
+		END
  
 	SELECT	ScheduleId, CASE WHEN IsManual = 0 THEN RunningDay ELSE ManualDay END AS MoveBetsDay
 	FROM	@Schedule 
