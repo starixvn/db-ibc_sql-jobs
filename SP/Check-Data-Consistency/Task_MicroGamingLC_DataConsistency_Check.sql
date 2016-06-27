@@ -171,27 +171,27 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 	, tt1.gameID AS TranslogGameID, tt1.count AS TranslogCount, tt2.bettype AS BettransBettype, tt2.count AS BetTransCount
 	from (
 		select count(1) as count
-			   --, productid
-			   , gameid
+			   , isnull(gameid, 0) as gameid
+			   , isnull(winlostdate, '2016-01-01') as winlostdate
 		from translog with (nolock)
 		where productID= 203
 			and gameid between 2001 and 2007
 			and winlostdate BETWEEN @FromDate AND @ToDate
 			and statusid not in (0,1)
-		group by --productid, 
-				 gameid
+		group by gameid, winlostdate
 	 ) tt1
-	  inner join (
+	  full outer join (
 	  select count(1) as count
 			--, matchid
-			, bettype
+			, isnull(bettype, 0) as bettype
+			, isnull(winlostdate, '2016-01-01') as winlostdate
 	  from bettrans with (nolock)
 	  where bettype between 2001 and 2007
 		and matchid = 203
 		and winlostdate BETWEEN @FromDate AND @ToDate
-	  group by --matchid, 
-			   bettype) tt2 on tt1.gameid = tt2.bettype
-	where tt1.count <> tt2.count
+	  group by bettype, winlostdate
+	  ) tt2 on tt1.gameid = tt2.bettype and tt1.winlostdate = tt2.winlostdate
+	where isnull(tt1.count, 0) <> isnull(tt2.count, 0)
 	
 	IF @@ROWCOUNT > 0
 	BEGIN
@@ -201,7 +201,6 @@ declare @wrongdata table (custid int, username varchar(50), transid bigint
 	END
 
 end
-grant view definition on Task_MicroGamingLC_DataConsistency_Check to vnteam
 
 GO
 GRANT EXECUTE ON [dbo].[Task_MicroGamingLC_DataConsistency_Check] TO [vnteam] AS [dbo]
