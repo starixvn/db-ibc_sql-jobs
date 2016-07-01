@@ -8,7 +8,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[Task_RMS_SumWinloss_Archive]
+ALTER PROCEDURE [dbo].[Task_RMS_SumWinloss_Archive]
 	@winlostdate	DATETIME,
 	@errCode		INT				= 0 OUTPUT,
 	@errMsg			VARCHAR(1000)	= '' OUTPUT
@@ -23,6 +23,7 @@ CREATE PROCEDURE [dbo].[Task_RMS_SumWinloss_Archive]
 			- 20130814@Johnson: archive rmSumWinloss2
 			- 20130918@Johnson: change to use table rmSumWinloss_Old instead of rmSumWinloss_Old2
 			- 20130924@Johnson: add column recommend into rmSumWinloss_Old
+			- 20160601@Winnie: add column IsMixParlay
 		Parameter's Explanation:
 		
 	*/
@@ -44,6 +45,7 @@ BEGIN
       ,[odds]
       ,[betcount]
       ,[recommend]
+      ,parlaytype
 	)
 	SELECT [winlostdate]
       ,[custid]
@@ -60,6 +62,7 @@ BEGIN
       ,[odds]
       ,[betcount]
       ,[recommend]
+      ,parlaytype
   FROM [dbo].[rmSumWinloss] WITH(NOLOCK)
   WHERE winlostdate = @winlostdate
   
