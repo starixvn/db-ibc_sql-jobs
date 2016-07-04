@@ -1,10 +1,12 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DailySummary]    Script Date: 05/04/2016 02:48:53 ******/
+/****** Object:  StoredProcedure [dbo].[Task_DailySummary]    Script Date: 7/4/2016 10:05:57 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+
+/****** Object:  Stored Procedure dbo.Task_DailySummary    Script Date: 5/4/2016 2:05:02 PM ******/
 /****** Object:  Stored Procedure dbo.Task_DailySummary    Script Date: 6/24/2015 9:33:49 AM ******/
 
 ALTER PROCEDURE [dbo].[Task_DailySummary]
@@ -55,6 +57,7 @@ Revisions:
 	- 20160204@Sophia: Apply Allbet [Redmine: #50605]
 	- 20160225@Sophia: Add new column TurnoverNoDraw [Redmine: #51427]
 	- 20160426@Sophia: Apply Voidbridge [Redmine: #55259]
+	- 20160704@Lukas: add waittime to wait for completely done whole move events before start next day
 	
  */
 
@@ -71,7 +74,7 @@ DECLARE @transTable TABLE (transid bigint primary key, winlostdate datetime)
 INSERT INTO @transTable
 SELECT b.transid, o.eventdate
 FROM dbo.bettrans b with (nolock)
-	INNER JOIN dbo.outright o ON b.matchid = o.orid
+	INNER JOIN dbo.outright o witH(nolock) ON b.matchid = o.orid
 WHERE b.winlostdate <> o.eventdate 
 	--and b.bettype NOT BETWEEN 1501 AND 1599 --no need to move keno bettype because orid <> keno.eventid
 	AND b.bettype IN (10,31,32,33, 41,42,43)
@@ -80,7 +83,7 @@ WHERE b.winlostdate <> o.eventdate
 INSERT INTO @transTable
 SELECT b.transid, m.eventdate
 FROM dbo.bettrans b with (nolock)
-	INNER JOIN dbo.match m ON b.matchid = m.matchid
+	INNER JOIN dbo.match m witH(nolock) ON b.matchid = m.matchid
 WHERE b.winlostdate <> m.eventdate
 	AND b.bettype NOT IN (1231,1232,1233,1237,1238) -- exclude vsoutright
 	AND b.bettype NOT IN (10,31,32,33, 41,42,43) -- exclude outright 
@@ -90,7 +93,7 @@ WHERE b.winlostdate <> m.eventdate
 INSERT INTO @transTable
 SELECT b.transid, o.EventDate
 FROM dbo.bettrans b with (nolock)
-	INNER JOIN dbo.VSOutright o ON b.matchid = o.EventID AND b.oddsid = o.Orid
+	INNER JOIN dbo.VSOutright o witH(nolocK) ON b.matchid = o.EventID AND b.oddsid = o.Orid
 WHERE b.winlostdate <> o.eventdate
 	--and b.bettype NOT BETWEEN 1501 AND 1599 --no need to move keno bettype because orid <> keno.eventid
 	and b.bettype IN (1231,1232,1233,1237,1238)
@@ -449,7 +452,7 @@ BEGIN
 		SET @rec_cnt = 0
 		
 		SET @Doing = 'Task_DailySummary : MoveBet ' + CAST(@recommend as varchar(20))
-		EXEC dbo.WriteLog_UserLog @UserID = 25521, @Doing = @Doing 
+		--EXEC dbo.WriteLog_UserLog @UserID = 25521, @Doing = @Doing 
 	END
 	
 	FETCH NEXT FROM CS_recommend INTO @recommend
@@ -945,9 +948,7 @@ EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Delete @winlostdate
 SET @Doing = 'Task_DailySummary : End (with Finish)'
 EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
 
+WAITFOR DELAY '00:02:00' --- add this wait to make sure the delete event part run completely before start next day
+
 PRINT CONVERT(varchar(10), @winlostdate, 120)
 
-GO
-GRANT VIEW DEFINITION ON [dbo].[Task_DailySummary] TO [ITVivi] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Task_DailySummary] TO [vnteam] AS [dbo]
