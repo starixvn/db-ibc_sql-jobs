@@ -322,14 +322,13 @@ BEGIN
 		SET b.odds2 = t.Odds2
 		FROM rmBettrans b	
 			INNER JOIN tmp t ON b.transid = t.transid		
-		
+	END	
+			
 	MERGE	dbo.rmTransaction as dt
 	USING	#temp s on dt.transid = s.transid	
 	WHEN NOT MATCHED THEN 
 	INSERT(transid, refno, custid, combo)
 	VALUES(s.transid,s.refno,s.custid,s.combo);
-	
-	END	
 	END
 
 	UPDATE dbo.rmSettings with(rowlock, updlock)
