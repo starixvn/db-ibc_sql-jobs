@@ -17,8 +17,7 @@ AS
 		DB: DB054.bodb_RMS
 		
 		Revisions:
-			- 20130124@Jamie: Copy tickets by batch
-			- 20160614@Winnie: copy tickets from rmbettrans
+			- 20130124@Jamie: Copy tickets by batch		
 		Paramter's Explanation:
 	*/
 BEGIN
@@ -68,7 +67,7 @@ BEGIN
 			   ,[refno]
 			   ,[custid]
 			   ,[combo]
-		 FROM	rmBettrans WITH(NOLOCK)
+		 FROM	rmTransaction WITH(NOLOCK)
 		 WHERE	transid BETWEEN @from_transid AND @maxTransID14
 		 
 		 SELECT  @rowcnt	= @@ROWCOUNT
