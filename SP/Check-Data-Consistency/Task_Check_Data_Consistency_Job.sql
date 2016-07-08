@@ -1,4 +1,6 @@
-ALTER PROCEDURE dbo.Task_Check_Data_Consistency_Job @Recipients VARCHAR(1024)
+USE [bodb02]
+GO
+ALTER PROCEDURE [dbo].[Task_Check_Data_Consistency_Job] @Recipients VARCHAR(1024)
 	, @Copy_recipients VARCHAR(1024) = ''
 	, @Mode VARCHAR(20) = ''
 AS
@@ -15,33 +17,33 @@ BEGIN
 	DECLARE @ErrorsTmp TABLE (ProductId INT, ProductName VARCHAR(100), FromDate SMALLDATETIME, ToDate SMALLDATETIME, ErrMessage VARCHAR(512))
 
 	SELECT @ErrMessage = '', @ErrorTmp = '', @CurrentDate = GETDATE(), @Retry = 0
+	
+	--step #1: check winlostdate concistency by match
+	SET @ErrorTmp = ''
+	IF DATEPART(HOUR, GETDATE()) % 2 = 0 OR @Mode = 'UAT'
+	BEGIN
+		EXEC dbo.Task_CheckWinlostdate_Consistency @ErrMessage = @ErrorTmp OUTPUT
+		IF ISNULL(@ErrorTmp, '') <> ''
+		BEGIN
+			INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
+			VALUES(0, 'All', CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE), @ErrorTmp)
+		END
+	END
+	
+	--step #2: verify settled ticket
+	SET @ErrorTmp = ''
+	IF DATEPART(HOUR, @CurrentDate) = 7 OR DATEPART(HOUR, GETDATE()) = 7 OR @Mode = 'UAT' --run at 7AM
+	BEGIN
+		EXEC dbo.Task_DailysettledTicket_Verify @mode = 1, @ErrMessage = @ErrorTmp OUTPUT
+		IF ISNULL(@ErrorTmp, '') <> ''
+		BEGIN
+			INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
+			VALUES(0, 'All', CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE), @ErrorTmp)
+		END
+	END
 
 	WHILE @Retry < 3
 	BEGIN
-		SET @ErrorTmp = ''
-		--step #1: check winlostdate concistency by match
-		IF DATEPART(HOUR, @CurrentDate) = 7 OR @Mode = 'UAT' --run at 7AM
-		BEGIN
-			EXEC dbo.Task_CheckWinlostdate_Consistency @ErrMessage = @ErrorTmp OUTPUT
-			IF ISNULL(@ErrorTmp, '') <> ''
-			BEGIN
-				INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
-				VALUES(0, 'All', CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE), @ErrorTmp)
-			END
-		END
-
-		--step #2: verify settled ticket
-		SET @ErrorTmp = ''
-		IF DATEPART(HOUR, GETDATE()) % 2 = 0 OR DATEPART(HOUR, @CurrentDate) % 2 = 0 OR @Mode = 'UAT'
-		BEGIN
-			EXEC dbo.Task_DailysettledTicket_Verify @mode = 1, @ErrMessage = @ErrorTmp OUTPUT
-			IF ISNULL(@ErrorTmp, '') <> ''
-			BEGIN
-				INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
-				VALUES(0, 'All', CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE), @ErrorTmp)
-			END
-		END
-
 		--step #3: check data consistency between bettrans and bettransRnG
 		IF DATEPART(HOUR, GETDATE()) = 2 OR DATEPART(HOUR, @CurrentDate) = 2 OR @Mode = 'UAT' --run at 2AM
 		BEGIN
@@ -89,13 +91,13 @@ BEGIN
 			END
 		END
 
-		IF NOT EXISTS (SELECT TOP 1 1 FROM @ErrorsTmp)
+		IF NOT EXISTS (SELECT TOP 1 1 FROM @ErrorsTmp) OR @Retry = 2
 			BREAK
 
 		SET @Retry = @Retry + 1
-		WAITFOR DELAY '00:00:10:000' --retry after 10 minutes
+		WAITFOR DELAY '00:02:00:000' --retry after 2 minutes
 
-		DELETE FROM @ErrorsTmp
+		DELETE FROM @ErrorsTmp WHERE ProductId <> 0
 	END
 
 	--add more check data at here...
@@ -120,11 +122,11 @@ BEGIN
 									FOR XML PATH('tr'), TYPE 
 								) AS NVARCHAR(MAX) ) + N'</table>'
 
-		IF @Mode = 'UAT'--for testing purpose
-		BEGIN
-			SELECT @Recipients = 'patrick.pham@starixsoft.com', @Copy_recipients = CASE WHEN ISNULL(@Copy_recipients, '') <> '' THEN 'francis.le@starixsoft.com' 
-																					ELSE @Copy_recipients END
-		END
+		--IF @Mode = 'UAT'--for testing purpose
+		--BEGIN
+		--	SELECT @Recipients = 'patrick.pham@starixsoft.com', @Copy_recipients = CASE WHEN ISNULL(@Copy_recipients, '') <> '' THEN 'francis.le@starixsoft.com' 
+		--																			ELSE @Copy_recipients END
+		--END
 
 		EXEC msdb.dbo.sp_send_dbmail @recipients = @Recipients
 			, @subject = @subject
