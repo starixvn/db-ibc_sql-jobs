@@ -46,7 +46,7 @@ SET NOCOUNT ON
 	CREATE TABLE  #TemprmSumWinloss(
 	[winlostdate] [smalldatetime] NOT NULL,
 	[custid] [int] NOT NULL,
-	[sporttype] [tinyint] NULL,
+	[sporttype] [SMALLINT] NULL,
 	[statusid] [tinyint] NOT NULL,
 	[combo] [tinyint] NOT NULL,
 	[username] [varchar](30) NOT NULL,
@@ -247,6 +247,7 @@ SET NOCOUNT ON
 		END			
 	END	
 	
+
 GO
 
 
