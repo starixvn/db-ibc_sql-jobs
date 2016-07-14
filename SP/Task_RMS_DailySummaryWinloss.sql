@@ -7,7 +7,6 @@ GO
 
 SET QUOTED_IDENTIFIER ON
 GO
-
 ALTER PROCEDURE [dbo].[Task_RMS_DailySummaryWinloss]
 	@winlostdate	DATETIME,
 	@ErrCode		INT = 0				OUTPUT,
@@ -47,7 +46,7 @@ SET NOCOUNT ON
 	CREATE TABLE  #TemprmSumWinloss(
 	[winlostdate] [smalldatetime] NOT NULL,
 	[custid] [int] NOT NULL,
-	[sporttype] [tinyint] NOT NULL,
+	[sporttype] [tinyint] NULL,
 	[statusid] [tinyint] NOT NULL,
 	[combo] [tinyint] NOT NULL,
 	[username] [varchar](30) NOT NULL,
@@ -146,7 +145,7 @@ SET NOCOUNT ON
 	INNER JOIN bodb02.dbo.match c(NOLOCK) ON a.matchid=c.matchid	
 	GROUP BY b.refno) aa ON aa.refno=bb.refno	
 			
-				
+		
 	IF @@ERROR > 0
 		BEGIN			
 			SELECT	 @ErrMsg = 'FAILED:Process summary data failed for :' + CAST(@winlostdate AS VARCHAR(10))
