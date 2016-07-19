@@ -1,61 +1,137 @@
-USE [bodb02]
-GO
-
-/****** Object:  StoredProcedure [dbo].[Task_BalanceGameResetYesterday]    Script Date: 01/26/2015 03:30:17 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_BalanceGameResetYesterday    Script Date: 12/24/2013 12:27:58 PM ******/
-CREATE PROCEDURE [dbo].[Task_BalanceGameResetYesterday]
+ALTER PROCEDURE [dbo].[Task_BalanceGameResetYesterday] 
+	@sporttype SMALLINT = -1
+	, @bettype SMALLINT = 1101
 AS
 /*
 		Created: Dan	
 		Date: 20121009
-		Task: reset yesterday balance for love casino
+		Task: reset yesterday balance for live casino
 		DB: DBTRANS.BODB02
 		
 		Revisions:
 			- 20131108@Elodie: Splitting bodb02 into CustDB (call CustInfo by link database)
+			- 20150710@Patrick: Remove insert default balance value & remove deposit account & support Gold deluxe
+			- 20150910@Patrick: Re-arrange code to reduce time & CPU cost
+			- 20160201@Elodie: Apply new rule for auto reset of OneRNG 
+			- 20160204@Elodie: Add WinLossLimit setting type for DCS [Redmine: #49606]
+			- 20160718@Elodie: Reset data from yesterday backward [Redmine: #60993]
+
 		Parameters Explanation:	
 */
 SET NOCOUNT ON	
-CREATE TABLE #WeeklyResetCustomer(custid INT)
+CREATE TABLE #WeeklyResetCustomer(custid INT, srecommend INT)
 
-INSERT INTO #WeeklyResetCustomer(custid)
-SELECT custid  
-FROM CustDB.dbo.custinfo WITH (NOLOCK)
-WHERE roleid=1 AND MaxWinLiveCasino>0 AND isAutoResetLiveCasino = 0
+IF @bettype = 1101 --LiveCS
+BEGIN
+	INSERT INTO #WeeklyResetCustomer(custid, srecommend)
+	SELECT custid, srecommend
+	FROM CustDB.dbo.custinfo WITH (NOLOCK)
+	WHERE roleid = 1 AND MaxWinLiveCasino > 0 AND isAutoResetLiveCasino = 0
+END
+ELSE IF @bettype IN (1701,2101) --GoldDeluxe & OneRNG
+BEGIN
+	INSERT INTO #WeeklyResetCustomer(custid, srecommend)
+	SELECT c.custid, srecommend
+	FROM CustDB.dbo.custinfo c WITH (NOLOCK)
+		INNER JOIN DBCUST.CustDB.dbo.CustWinLimit cwl WITH (NOLOCK) ON cwl.CustId = c.custid AND cwl.sporttype = @sporttype AND cwl.bettype = @bettype
+	WHERE c.roleid = 1 AND IsAutoReset = 0 AND ((BetType = 1701 AND MaxWinlimit > 0) OR BetType = 2101)
+	
+END
+ELSE --others DCS products
+BEGIN
+	INSERT INTO #WeeklyResetCustomer(custid, srecommend)
+	SELECT c.custid, srecommend
+	FROM CustDB.dbo.custinfo c WITH (NOLOCK)
+		INNER JOIN DBCUST.CustDB.dbo.CustWinLossLimit_Member cwl WITH (NOLOCK) ON cwl.CustId = c.custid AND cwl.sporttype = @sporttype AND cwl.bettype = @bettype
+	WHERE c.roleid = 1 AND IsAutoReset = 0
+	
+END
 
-DECLARE @today smalldatetime
-SET @today = convert(nvarchar(10), current_timestamp,120)
+DECLARE @Yesterday SMALLDATETIME
+SET @Yesterday = DATEADD(dd, -1, CAST(GETDATE() AS DATE))
 
 --delete yesterday balance for daily reset and unlimited balance
-DELETE dbo.BalanceCreditGame with (ROWLOCK)
-WHERE custid NOT IN (SELECT CustID FROM #WeeklyResetCustomer)
-	and winlostdate < @today
+WHILE 1 = 1
+BEGIN
+	DELETE TOP (50000) bal
+	FROM dbo.BalanceCreditGame bal WITH (ROWLOCK)
+		LEFT JOIN #WeeklyResetCustomer t ON bal.CustId = t.CustId
+	WHERE winlostdate <= @Yesterday AND bettype = @bettype
+		 AND t.CustId IS NULL
+	OPTION (MAXDOP 4)
+		
+	IF @@ROWCOUNT < 50000
+		BREAK
+			
+	WAITFOR DELAY '00:00:00.280'
+END
 
-DELETE dbo.BalanceDebitGame WITH (ROWLOCK)
-WHERE custid NOT IN (SELECT CustID FROM #WeeklyResetCustomer)
-	and winlostdate < @today
+WHILE 1 = 1
+BEGIN
+	DELETE TOP (50000) bal
+	FROM dbo.BalanceDebitGame bal WITH (ROWLOCK)
+		LEFT JOIN #WeeklyResetCustomer t ON bal.CustId = t.CustId
+	WHERE winlostdate <= @Yesterday AND bettype = @bettype
+		 AND t.CustId IS NULL
+	OPTION (MAXDOP 4)
+		
+	IF @@ROWCOUNT < 50000
+		BREAK
+			
+	WAITFOR DELAY '00:00:00.280'
+END
 
--- insert default today balance values for weekly reset customer if missing
-INSERT dbo.BalanceCreditGame(custid, winlostdate, Balance)
-SELECT custid, @today, 0 
-FROM #WeeklyResetCustomer cust 
-WHERE NOT EXISTS(SELECT 1 
-				FROM dbo.BalanceCreditGame bal WITH (NOLOCK)
-				WHERE bal.custid=cust.custid AND bal.winlostdate=@today)
-				
-INSERT dbo.BalanceDebitGame(custid, winlostdate, Balance)
-SELECT custid, @today, 0 
-FROM #WeeklyResetCustomer cust 
-WHERE NOT EXISTS(SELECT 1 
-				FROM dbo.BalanceDebitGame bal WITH (NOLOCK)
-				WHERE bal.custid=cust.custid AND bal.winlostdate=@today)
-GO
+--remove credit account
+DELETE t
+FROM #WeeklyResetCustomer t
+	LEFT JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK) ON t.srecommend = s.custid
+WHERE s.custid IS NULL
+
+IF NOT EXISTS (SELECT TOP 1 1 FROM #WeeklyResetCustomer)
+BEGIN
+	DROP TABLE #WeeklyResetCustomer
+	RETURN
+END
+
+--remove deposit account
+IF EXISTS (	SELECT TOP 1 1 FROM dbo.BalanceCreditGame bal WITH(NOLOCK)
+				INNER JOIN #WeeklyResetCustomer t ON bal.CustId = t.custid AND bal.bettype = @bettype 
+			WHERE winlostdate <= @Yesterday
+		)
+BEGIN
+	WHILE 1 = 1
+	BEGIN
+		DELETE TOP (50000) bal
+		FROM dbo.BalanceCreditGame bal WITH (ROWLOCK)
+			INNER JOIN #WeeklyResetCustomer t ON bal.CustId = t.custid AND bal.bettype = @bettype 
+		WHERE winlostdate <= @Yesterday
+		
+		IF @@ROWCOUNT < 50000
+			BREAK
+			
+		WAITFOR DELAY '00:00:00.280'
+	END
+END
+
+IF EXISTS (	SELECT TOP 1 1 FROM dbo.BalanceDebitGame bal WITH(NOLOCK)
+				INNER JOIN #WeeklyResetCustomer t ON bal.CustId = t.custid AND bal.bettype = @bettype 
+			WHERE winlostdate <= @Yesterday
+		)
+BEGIN
+	WHILE 1 = 1
+	BEGIN
+		DELETE TOP (50000) bal
+		FROM dbo.BalanceDebitGame bal WITH (ROWLOCK)
+			INNER JOIN #WeeklyResetCustomer t ON bal.CustId = t.custid AND bal.bettype = @bettype 
+		WHERE winlostdate <= @Yesterday
+		
+		IF @@ROWCOUNT < 50000
+			BREAK
+			
+		WAITFOR DELAY '00:00:00.280'
+	END
+END	
+DROP TABLE #WeeklyResetCustomer
 
 GRANT VIEW DEFINITION ON [dbo].[Task_BalanceGameResetYesterday] TO [vnteam] AS [dbo]
 GO
