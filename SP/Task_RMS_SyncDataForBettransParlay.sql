@@ -21,6 +21,7 @@ AS
   - 20140417@Johnson: add column combo into rmBettrans to store number of selections 
   - 20140620@Johnson: calculate total odds for system parlay tickets
   - 20160422@Winnie: intergrate Combo parlay
+  - 20160720@Winnie: fix bug Executed as user: DB054\SQL. Conversion failed when converting the nvarchar value 'a' to data type int. [SQLSTATE 22018] (Error 245).  The step failed.
 */  
 
 SET NOCOUNT ON
@@ -281,7 +282,7 @@ BEGIN
 			FROM rmBettrans b WITH(NOLOCK)
 				INNER JOIN bodb02.dbo.RefCombinationSet rcs WITH(NOLOCK) ON b.hdp2 = rcs.N
 				INNER JOIN #temp c ON b.transid=c.transid
-			WHERE (b.betteam & rcs.bitmapR) > 0 AND b.transid>@max_transid	
+			WHERE b.bettype=29 AND (b.betteam & rcs.bitmapR) > 0 AND b.transid>@max_transid	
 			GROUP BY b.transid
 		)
 		UPDATE b
@@ -301,7 +302,7 @@ BEGIN
 							from bodb02.dbo.bettransm14 WITH(NOLOCK)
 						)bm ON bm.refno = b.refno
 				INNER JOIN #temp c ON b.transid=c.transid	
-				WHERE  b.transid>@max_transid				
+				WHERE  b.bettype=29 AND b.transid>@max_transid				
 		),
 		ParlayStake AS (SELECT refno, RN, SetStake FROM tmpbettrans)
 		SELECT EXP(SUM(LOG(odds))) AS Odds, b.transid, ps.SetStake
