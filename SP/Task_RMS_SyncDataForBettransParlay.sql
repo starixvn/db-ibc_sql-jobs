@@ -9,7 +9,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 /****** Object:  Stored Procedure dbo.Task_RMS_SyncDataForBettransParlay    Script Date: 6/25/2014 3:31:02 PM ******/
-CREATE PROCEDURE [dbo].[Task_RMS_SyncDataForBettransParlay]	
+ALTER PROCEDURE [dbo].[Task_RMS_SyncDataForBettransParlay]	
 AS
 /*   
  Task : arrange bettransParlay data
@@ -20,14 +20,17 @@ AS
   - 20140121@Johnson: add system parlay into rmTransaction
   - 20140417@Johnson: add column combo into rmBettrans to store number of selections 
   - 20140620@Johnson: calculate total odds for system parlay tickets
+  - 20160422@Winnie: intergrate Combo parlay
+  - 20160720@Winnie: fix bug Executed as user: DB054\SQL. Conversion failed when converting the nvarchar value 'a' to data type int. [SQLSTATE 22018] (Error 245).  The step failed.
 */  
+
 SET NOCOUNT ON
 SET DEADLOCK_PRIORITY LOW	
 
 declare @tstamp_min binary(8), @tstamp_max binary(8), @max_transid bigint
 
-CREATE TABLE #bettransm (refno bigint, odds smallmoney, rn int)
-DECLARE @tmpRef TABLE(refno bigint primary key)
+DECLARE @bitmap VARCHAR(21) = ''
+CREATE TABLE #tmpBettrans (transid BIGINT PRIMARY KEY, hdp1 SMALLMONEY, hdp2 SMALLINT, betteam NVARCHAR(10), betcheck BIGINT)
 
 SELECT @tstamp_min = CAST(CAST(ISNULL(VValue, 0) as bigint)+1 as binary(8))
 FROM dbo.rmSettings with (rowlock)
@@ -51,178 +54,122 @@ BEGIN
 			liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
 			recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, sdiscount, 
 			scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
-			SecAcceptFlag, transid2, CASE when matchid = 9 then RIGHT(betcheck,LEN(betcheck)-1) else LEN(betteam) end
+			SecAcceptFlag, transid2, CASE when matchid = 9 then RIGHT(betcheck,LEN(betcheck)-1) 
+										  WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam) ELSE hdp2 end
 	FROM bodb02.dbo.bettrans with (NOLOCK)
 	WHERE matchid in (9,29)
+		 
+	-- bettype 29 old	
+	INSERT INTO #tmpBettrans (transid, hdp1, hdp2,betcheck)
+	SELECT	transid, 0, LEN(betteam),hdp2 -- number of match
+	FROM	dbo.rmBettrans
+	WHERE	bettype = 29
+			AND betcheck IS NULL
 	
-	INSERT INTO @tmpRef(refno)
-	SELECT refno 
-	FROM rmBettrans with (NOLOCK)
-	WHERE matchid = 29
+	UPDATE tmpb
+	SET @bitmap = REPLICATE('1', hdp2 - 1) + '0'
+		,betteam = (SELECT result FROM dbo.f_BinaryToDecimal(REVERSE(@bitmap)))	
+	FROM #tmpBettrans tmpb
+
+	UPDATE b WITH(ROWLOCK, UPDLOCK)
+	SET hdp1  = tmp.hdp1
+		,hdp2 = tmp.hdp2
+		,betteam = tmp.betteam
+		,betcheck = tmp.betcheck 	
+	FROM	dbo.rmbettrans b
+	INNER JOIN #tmpBettrans tmp
+		ON	b.transid = tmp.transid
+			AND b.matchid = 29
+			AND b.bettype = 29
 	
-	INSERT INTO #bettransm(refno, odds, rn)
-	SELECT refno, r.odds , ROW_NUMBER() OVER (PARTITION BY refno ORDER BY refno) rn	
-	from
-	(	select refno , odds
-		from bodb02.dbo.bettransm WITH(NOLOCK)
-		where refno in (select refno from @tmpRef)
-		union all
-		select refno , odds
-		from bodb02.dbo.bettransm14 WITH(NOLOCK)
-		where refno in (select refno from @tmpRef)
-	)r
-	
+	-- end bettype 29 old
+
+	;WITH ParlayTotalBet AS(
+		SELECT TransID, SUM (rcs.cnt) AS TotalBet
+		FROM rmBettrans b WITH(NOLOCK)
+			INNER JOIN bodb02.dbo.RefCombinationSet rcs WITH(NOLOCK) ON b.hdp2 = rcs.N
+		WHERE b.bettype=29 AND (b.betteam & rcs.bitmapR) > 0
+		GROUP BY b.transid
+	)
 	UPDATE b
-	SET b.odds2 = r.odds
-	FROM rmBettrans b WITH(UPDLOCK,ROWLOCK)
-		INNER JOIN (
-			select refno,  max(CASE when rn = 1 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 1 THEN odds ELSE 0 end) 
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 2 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 3 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)										
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 2 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 3 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 3 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 3 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)											
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)	
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)	
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)	
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)	
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)												
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					as odds
-			from #bettransm
-			group by refno 
-		) r ON b.refno = r.refno 
-		
+	SET b.TotalBet = pt.TotalBet		
+	FROM rmBettrans b 
+	INNER JOIN ParlayTotalBet pt ON b.TransID = pt.TransID
+	WHERE b.bettype=29 
+
+	;WITH tmpbettrans AS(
+		SELECT b.hdp2 AS selection_cnt, CAST(b.betteam as int) AS bitmapR, bm.odds, bm.stake AS SetStake, bm.refno, b.transid
+			,RN = ROW_NUMBER() OVER (PARTITION BY bm.refno ORDER BY bm.matchid) --RN			
+		FROM rmBettrans b WITH (NOLOCK) 
+			INNER JOIN
+					(	select refno, odds, stake,matchid
+						from bodb02.dbo.bettransm WITH(NOLOCK)
+						union all
+						select refno, odds, stake,matchid
+						from bodb02.dbo.bettransm14 WITH(NOLOCK)
+					)bm ON bm.refno = b.refno
+			WHERE b.bettype=29  
+	),
+	ParlayStake AS (SELECT refno, RN, SetStake FROM tmpbettrans)
+	SELECT EXP(SUM(LOG(odds))) AS Odds, b.transid, ps.SetStake
+	INTO #tmp2
+	FROM tmpbettrans b WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.RefCombinationSet rcs WITH (NOLOCK) ON b.selection_cnt = rcs.N AND (b.bitmapR & rcs.bitmapR) > 0  
+		INNER JOIN bodb02.dbo.RefCombination rc  WITH (NOLOCK) ON rcs.N = rc.N AND rcs.R = rc.R AND b.RN = rc.seq
+		INNER JOIN ParlayStake ps ON ps.refno = b.refno AND ps.RN = rc.R
+	GROUP BY b.transid, ps.SetStake, serial
+
+	;WITH tmp AS(
+		SELECT b.transid AS transid , CASE WHEN b.stake = 0 THEN 0 ELSE SUM (r.odds * r.SetStake)/b.stake END AS Odds2
+		FROM rmBettrans b WITH(NOLOCK)
+			INNER JOIN #tmp2 r ON b.transid = r.transid 
+		GROUP BY b.transid, b.stake, b.TotalBet
+	)
+	UPDATE b
+	SET b.odds2 = t.Odds2
+	FROM rmBettrans b	
+		INNER JOIN tmp t ON b.transid = t.transid	
+	
+	UPDATE bb
+	SET bb.transid2 = aa.transid2
+	FROM rmBettrans bb (NOLOCK) INNER JOIN 
+	(SELECT b.refno,
+	CASE WHEN COUNT(DISTINCT(sporttype))=1 THEN MIN(sporttype)
+	WHEN COUNT(DISTINCT(sporttype))<>1 AND MIN(sporttype)=1 THEN  -3
+	ELSE -1
+	END AS transid2
+	FROM rmBettrans b (NOLOCK)
+	INNER JOIN bodb02.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
+	INNER JOIN bodb02.dbo.match c(NOLOCK) ON a.matchid=c.matchid	
+	GROUP BY b.refno) aa ON aa.refno=bb.refno
 END
 ELSE 
 BEGIN
 	select @max_transid = ISNULL(MAX(transid),0) from rmBettrans (NOLOCK) 
-	
 	SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost, playercomm, comm, acomm, 
 			apositiontaking, mpositiontaking, tpositiontaking, playerdiscount, discount, adiscount, livehomescore, liveawayscore, 
 			liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
 			recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, sdiscount, 
 			scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
-			SecAcceptFlag, transid2, CASE when matchid = 9 then RIGHT(betcheck,LEN(betcheck)-1) else LEN(betteam) end as combo
+			SecAcceptFlag, transid2, CASE when matchid = 9 then RIGHT(betcheck,LEN(betcheck)-1)
+										  WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam) ELSE hdp2 END combo
 	INTO #temp			
 	FROM bodb02.dbo.bettrans with (NOLOCK)
 	WHERE tstamp between @tstamp_min and @tstamp_max
-		and matchid in (9,29)
+		AND matchid in (9,29)
+		
+	UPDATE bb
+	SET bb.transid2 = aa.transid2
+	FROM #temp  bb (NOLOCK) INNER JOIN 
+	(SELECT b.refno,
+	CASE WHEN COUNT(DISTINCT(sporttype))=1 THEN MIN(sporttype)
+	WHEN COUNT(DISTINCT(sporttype))<>1 AND MIN(sporttype)=1 THEN  -3
+	ELSE -1
+	END AS transid2
+	FROM #temp b (NOLOCK)
+	INNER JOIN bodb02.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
+	INNER JOIN bodb02.dbo.match c(NOLOCK) ON a.matchid=c.matchid	
+	GROUP BY b.refno) aa ON aa.refno=bb.refno	
 		
 	MERGE dbo.rmBettrans as d
 		USING #temp s on d.transid = s.transid	
@@ -230,9 +177,7 @@ BEGIN
 			UPDATE SET 
 				custid = s.custid
 				,transdate = s.transdate
-				,oddsid = s.oddsid
-				,hdp1 = s.hdp1
-				,hdp2 = s.hdp2
+				,oddsid = s.oddsid				
 				,odds = s.odds
 				,stake = s.stake
 				,status = s.status
@@ -250,14 +195,12 @@ BEGIN
 				,adiscount = s.adiscount
 				,livehomescore = s.livehomescore
 				,liveawayscore = s.liveawayscore
-				,liveindicator = s.liveindicator
-				,betteam = s.betteam
+				,liveindicator = s.liveindicator				
 				,creator = s.creator
 				,refno = s.refno
 				,comstatus = s.comstatus
 				,winlostdate = s.winlostdate
-				,betfrom = s.betfrom
-				,betcheck = s.betcheck
+				,betfrom = s.betfrom				
 				,checktime = s.checktime
 				,oddsspread = s.oddsspread
 				,actualrate = s.actualrate
@@ -305,172 +248,92 @@ BEGIN
 			s.actual_stake, s.currency, s.ip, s.transdesc, s.sdiscount, s.scomm, s.spositiontaking, s.swinlost, s.srecommend, s.Username, 
 			s.CurrencyName, s.virtualrate, s.oddstype, s.statusID, s.currency2, s.balance, s.SecAcceptFlag, s.transid2, s.combo
 			)
-	;--end MERGE
+	;--end MERGE	
+
+	; -- END OF MERGE rmTransaction	
 	
+	IF EXISTS(SELECT TOP 1 1 FROM #temp WHERE matchid = 29)
+	BEGIN	
+		--bettype 29 Old
+	INSERT INTO #tmpBettrans (transid, hdp1, hdp2,betcheck)
+	SELECT	transid, 0, LEN(betteam),hdp2 -- number of match
+	FROM	#temp 
+	WHERE	bettype = 29
+			AND betcheck IS NULL
+	
+	UPDATE tmpb
+	SET betteam = (SELECT result FROM dbo.f_BinaryToDecimal(REVERSE(REPLICATE('1', hdp2 - 1) + '0')))	
+	FROM #tmpBettrans tmpb
+
+	UPDATE b WITH(ROWLOCK, UPDLOCK)
+	SET hdp1  = tmp.hdp1
+		,hdp2 = tmp.hdp2
+		,betteam = tmp.betteam
+		,betcheck = tmp.betcheck 
+	FROM	dbo.rmbettrans b
+	INNER JOIN #tmpBettrans tmp
+		ON	b.transid = tmp.transid
+			AND b.matchid = 29
+			AND b.bettype = 29
+
+		-- end bettype 29 old
+		;WITH ParlayTotalBet AS(
+			SELECT b.TransID, SUM (rcs.cnt) AS TotalBet
+			FROM rmBettrans b WITH(NOLOCK)
+				INNER JOIN bodb02.dbo.RefCombinationSet rcs WITH(NOLOCK) ON b.hdp2 = rcs.N
+				INNER JOIN #temp c ON b.transid=c.transid
+			WHERE b.bettype=29 AND (b.betteam & rcs.bitmapR) > 0 AND b.transid>@max_transid	
+			GROUP BY b.transid
+		)
+		UPDATE b
+		SET b.TotalBet = pt.TotalBet		
+		FROM rmBettrans b 
+		INNER JOIN ParlayTotalBet pt ON b.TransID = pt.TransID
+	
+		;WITH tmpbettrans AS(
+			SELECT b.hdp2 AS selection_cnt, b.betteam AS bitmapR, bm.odds, bm.stake AS SetStake, bm.refno, b.transid
+				,RN = ROW_NUMBER() OVER (PARTITION BY bm.refno ORDER BY bm.matchid) --RN
+			FROM rmBettrans b WITH (NOLOCK) 
+				INNER JOIN
+						(	select refno, odds, stake,matchid
+							from bodb02.dbo.bettransm WITH(NOLOCK)
+							union all
+							select refno, odds, stake,matchid
+							from bodb02.dbo.bettransm14 WITH(NOLOCK)
+						)bm ON bm.refno = b.refno
+				INNER JOIN #temp c ON b.transid=c.transid	
+				WHERE  b.bettype=29 AND b.transid>@max_transid				
+		),
+		ParlayStake AS (SELECT refno, RN, SetStake FROM tmpbettrans)
+		SELECT EXP(SUM(LOG(odds))) AS Odds, b.transid, ps.SetStake
+		INTO #tmp
+		FROM tmpbettrans b 
+			INNER JOIN bodb02.dbo.RefCombinationSet rcs WITH(NOLOCK) ON b.selection_cnt = rcs.N AND (b.bitmapR & rcs.bitmapR) > 0  
+			INNER JOIN bodb02.dbo.RefCombination rc WITH(NOLOCK) ON rcs.N = rc.N AND rcs.R = rc.R AND b.RN = rc.seq
+			INNER JOIN ParlayStake ps ON ps.refno = b.refno AND ps.RN = rc.R
+		GROUP BY b.transid, ps.SetStake, serial
+		
+		;WITH tmp AS(
+			SELECT b.transid AS transid , CASE WHEN b.stake = 0 THEN 0 ELSE SUM (r.odds * r.SetStake)/b.stake END AS Odds2
+			FROM rmBettrans b WITH(NOLOCK)
+				INNER JOIN #tmp r ON b.transid = r.transid 
+			GROUP BY b.transid, b.stake, b.TotalBet
+		)
+		UPDATE b
+		SET b.odds2 = t.Odds2
+		FROM rmBettrans b	
+			INNER JOIN tmp t ON b.transid = t.transid		
+	END	
+			
 	MERGE	dbo.rmTransaction as dt
 	USING	#temp s on dt.transid = s.transid	
 	WHEN NOT MATCHED THEN 
-		INSERT(transid, refno, custid, combo)
-		VALUES(s.transid,s.refno,s.custid,s.combo)
-	; -- END OF MERGE rmTransaction
-	
-	INSERT INTO @tmpRef(refno)
-	SELECT refno 
-	FROM #temp 
-	WHERE matchid = 29
-		AND transid > @max_transid
-	
-	IF @@ROWCOUNT <> 0
-	BEGIN		
-		INSERT INTO #bettransm(refno, odds, rn)
-		SELECT refno, odds , ROW_NUMBER() OVER (PARTITION BY refno ORDER BY refno) rn	
-		from bodb02.dbo.bettransm WITH(NOLOCK)
-		where refno in (select refno from @tmpRef)
-			
-		
-		UPDATE b
-		SET b.odds2 = r.odds
-		FROM rmBettrans b WITH(UPDLOCK,ROWLOCK)
-			INNER JOIN (
-				select refno,  max(CASE when rn = 1 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 1 THEN odds ELSE 0 end) 
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 2 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 3 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)										
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 2 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 3 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 3 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 3 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 4 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 5 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)											
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)					
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)			
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 6 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)	
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)	
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)	
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)	
-					+ max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)												
-					+ max(CASE when rn = 1 THEN odds ELSE 0 END)*max(CASE when rn = 2 THEN odds ELSE 0 END)*max(CASE when rn = 3 THEN odds ELSE 0 END)*max(CASE when rn = 4 THEN odds ELSE 0 END)*max(CASE when rn = 5 THEN odds ELSE 0 END)*max(CASE when rn = 6 THEN odds ELSE 0 END)*max(CASE when rn = 7 THEN odds ELSE 0 END)*SUM(CASE WHEN rn > 7 THEN odds ELSE 0 end)
-					as odds
-			from #bettransm
-			group by refno 
-			) r ON b.refno = r.refno 
-	END			
-END
+	INSERT(transid, refno, custid, combo)
+	VALUES(s.transid,s.refno,s.custid,s.combo);
+	END
 
-UPDATE dbo.rmSettings with(rowlock, updlock)
-SET VValue = CAST(CAST(@tstamp_max as bigint) as varchar(200))
-WHERE VName = 'rmBettransSync'	
+	UPDATE dbo.rmSettings with(rowlock, updlock)
+	SET VValue = CAST(CAST(@tstamp_max as bigint) as varchar(200))
+	WHERE VName = 'rmBettransSync'	
 
 SET NOCOUNT OFF
-GO
-
-

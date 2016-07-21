@@ -8,7 +8,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[Task_RMS_Transaction_Archive]
+ALTER PROCEDURE [dbo].[Task_RMS_Transaction_Archive]
 AS
 	/*
 		Created: Johnson	
@@ -17,12 +17,10 @@ AS
 		DB: DB054.bodb_RMS
 		
 		Revisions:
-			- 20130124@Jamie: Copy tickets by batch
-		
+			- 20130124@Jamie: Copy tickets by batch		
 		Paramter's Explanation:
 	*/
 BEGIN
-
 	SET NOCOUNT ON
 
 	DECLARE @from_transid	BIGINT,
@@ -74,8 +72,7 @@ BEGIN
 		 
 		 SELECT  @rowcnt	= @@ROWCOUNT
 				,@errCode	= @@ERROR
-				
-		     
+	     
 		 IF @errCode <> 0 
 		 BEGIN
 			SELECT	@errMesg = 'FAILED: Archiving rmTransaction unsucessful!'	
@@ -83,14 +80,6 @@ BEGIN
 			RETURN 
 	     
 		 END    
-		 
-		 IF @rowcnt = 0 
-		 BEGIN 
-			UPDATE rmSettings WITH(UPDLOCK,ROWLOCK)
-			SET VValue = CAST(@maxTransID14 AS VARCHAR(50))
-			WHERE VName = 'rmTransaction'
-			RETURN 
-	     END
 	     
 		 IF @rowCnt <> 0 
 		 BEGIN
@@ -122,37 +111,36 @@ BEGIN
 		 END      	 
 	END
 
-/*-- END :Copy tickets from rmTransaction to rmTransaction_BK */
+-- END :Copy tickets from rmTransaction to rmTransaction_BK
 
-/*-- DELETE Old rmTransaction  **/
+	---- DELETE Old rmTransaction 
 
-	DECLARE	 @maxTransID_Del	BIGINT
-			,@minRMTrans		BIGINT
+	--DECLARE	 @maxTransID_Del	BIGINT
+	--		,@minRMTrans		BIGINT
 
-	SELECT	@maxTransID_Del = ISNULL(CONVERT(BIGINT,VValue),0) 
-	FROM	rmSettings WITH(NOLOCK)
-	WHERE	VName = 'rmTransaction'
+	--SELECT	@maxTransID_Del = ISNULL(CONVERT(BIGINT,VValue),0) 
+	--FROM	rmSettings WITH(NOLOCK)
+	--WHERE	VName = 'rmTransaction'
 
-	SELECT	@minRMTrans = MIN(TransID)
-	FROM	rmTransaction WITH (NOLOCK)
+	--SELECT	@minRMTrans = MIN(TransID)
+	--FROM	rmTransaction WITH (NOLOCK)
 
-	IF	@minRMTrans > @maxTransID_Del RETURN
+	--IF	@minRMTrans > @maxTransID_Del RETURN
 
-	WHILE (1=1)
-	BEGIN
-		DELETE TOP (30000)
-		FROM	rmTransaction WITH (ROWLOCK)
-		WHERE	transid <= @maxTransID_Del
+	--WHILE (1=1)
+	--BEGIN
+	--	DELETE TOP (30000)
+	--	FROM	rmTransaction WITH (ROWLOCK)
+	--	WHERE	transid <= @maxTransID_Del
 		
-		IF @@ROWCOUNT < 30000
-			BREAK
+	--	IF @@ROWCOUNT < 30000
+	--		BREAK
 
-	END
+	--END
 
 
-/*-- END: DELETE Old rmTransaction  */
+	---- END: DELETE Old rmTransaction  
 END
-
 GO
 
 
