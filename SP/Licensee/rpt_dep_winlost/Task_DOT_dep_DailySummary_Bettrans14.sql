@@ -49,7 +49,7 @@ AS
 		- 20160105@Bobby: #49196 - Implement OneRnG product
 		- 20160422@Victor: Add product Voidbridge [Redmine: #55057]
 		- 20160620@Victor: Include bettrade comm on ClosingBalance amount [Redmine: #58318]
-
+		- 20160721@Jim: Add product Allbet [Redmine: #59624]
 	Param's Explanation:
 	• @date: The date need to summary
 */
@@ -276,6 +276,7 @@ SELECT
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
+		WHEN bettype BETWEEN 2401 AND 2499 THEN 211
 	ELSE 0 END, -- sporttype
 	b.currency,
 	SUM(CASE WHEN [status] not in ('VOID', 'REJECT', 'Refund') then stake ELSE 0 END),--Turnover  
@@ -307,6 +308,7 @@ GROUP BY b.custid,
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
+		WHEN bettype BETWEEN 2401 AND 2499 THEN 211
 	ELSE 0 END,
 	b.currency
 

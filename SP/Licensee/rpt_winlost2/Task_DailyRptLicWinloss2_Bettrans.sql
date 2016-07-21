@@ -14,6 +14,7 @@ AS
 	- 20160105@Bobby: #49196 - Implement OneRnG product
 	- 20160301@Victor: Redefine betfrom value [Redmine: #50939]
 	- 20160415@Victor: Support Voidbridge product [Redmine: #55057]
+	- 20160721@Jim: Add product Allbet [Redmine: #59624]
 	- 20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
 */  
 BEGIN
@@ -101,6 +102,7 @@ BEGIN
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB
+		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 	  ELSE 0 END sporttype  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
@@ -154,6 +156,7 @@ BEGIN
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 		WHEN bettype BETWEEN 2301 AND 2399 THEN 210		
 		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB
+		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 	  ELSE 0 END  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904) THEN bettype ELSE 0 END  
 	 ,CASE   
