@@ -454,6 +454,7 @@ BEGIN
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 			WHEN bettype = 903 THEN -4 -- BetTrade - Commission
+			WHEN bettype = 904 THEN -5 -- Bettrade - Winloss
 			WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN bettype BETWEEN 2301 AND 2399 THEN 210
@@ -491,6 +492,7 @@ BEGIN
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
 			WHEN bettype = 903 THEN -4 -- BetTrade - Commission
+			WHEN bettype = 904 THEN -5 -- Bettrade - Winloss
 			WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN bettype BETWEEN 2301 AND 2399 THEN 210

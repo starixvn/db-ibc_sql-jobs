@@ -31,6 +31,7 @@ Revisions:
 	- 20160105@Bobby: #49196 - Implement OneRnG product
 	- 20160301@Victor: Redefine betfrom value [Redmine: #50939]
 	- 20160415@Victor: Support Voidbridge product [Redmine: #55057]
+	- 20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
  */
 
 SET NOCOUNT ON 
@@ -119,7 +120,7 @@ SELECT @winlostdate
 		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB 
 		ELSE 0 END sporttype
-	,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END bettype
+	,CASE WHEN bettype IN (71,72,1000,901,902,903,904) THEN bettype ELSE 0 END bettype
 	--114: half win, 115: half lose
 	,CASE 
 		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114 
@@ -171,7 +172,7 @@ GROUP BY
 		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB 
 		ELSE 0 END
-	,CASE WHEN bettype IN (71,72,1000,901,902,903) THEN bettype ELSE 0 END
+	,CASE WHEN bettype IN (71,72,1000,901,902,903,904) THEN bettype ELSE 0 END
 	,CASE 
 		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114 
 		WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115
