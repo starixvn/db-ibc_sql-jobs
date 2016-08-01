@@ -20,6 +20,7 @@ Revisions:
 	-20150929@Patrick: Revise code of BetTrade
 	-20160118@Patrick: Hotfix: #51053 for bettrade - turn off BA for ticket 901
 	-20160318@Victor: Support Colossus bet - [Redmine: #52575]
+	-20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
 Param's Explanation:
 
 */
@@ -275,7 +276,7 @@ BEGIN
 	END
 	
 	UPDATE b
-	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (902, 903) THEN 1 ELSE 0 END
+	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (902, 903,904) THEN 1 ELSE 0 END
 		, customercategory = CASE WHEN isBA = 0 THEN 1001 ELSE 1002 END --bettrade
 	FROM dbo.bettrans b
 		INNER JOIN #BetTradeCust btc ON b.CustId = btc.CustId
@@ -299,7 +300,7 @@ BEGIN
 	            ON b.custid=h.custid AND (transdate BETWEEN OnDate AND ISNULL(OffDate,@today))
         WHERE (Bettype<31 OR (Bettype>=121 AND Bettype<1000) OR (Bettype>=1301 AND Bettype<1400))
 	        AND tpositiontaking=0
-			AND b.bettype NOT IN (901,902,903)
+			AND b.bettype NOT IN (901,902,903,904)
 
     UPDATE dbo.bettrans
     SET IsBA=1
