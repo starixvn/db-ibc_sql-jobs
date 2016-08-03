@@ -1,21 +1,14 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_Licensee]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DepositDataCompare    Script Date: 12/1/2015 2:38:00 AM ******/
-
-
-CREATE PROCEDURE [dbo].[Task_DepositDataCompare] 
+ALTER PROCEDURE [dbo].[Task_DepositDataCompare] 
     @Date smalldatetime = null
 	,@DrawFilter tinyint = 1
 AS
 /*
 Created: 20140312@Florent
-Task : Compare data from 4 tables sum
+Task : Compare data from 5 tables sum
 
-DB: bodb_Licensee
+DB: bodb_LicenseeReport
 Original:
 
 Revisions:		
@@ -110,8 +103,14 @@ exec dbo.GET_DepositDataToValidate_WLByLeague @Date=@Date
 INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,CS)
 SELECT @id,* from #TempData
 DELETE  #tempdata
+SET @id=@id+1
 
-
+--rpt_Betting
+INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,CS)
+exec dbo.GET_DepositDataToValidate_Betting @Date=@Date
+INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,CS)
+SELECT @id,* from #TempData
+DELETE  #tempdata
 
 
 SET @table_num=@id
@@ -195,6 +194,8 @@ END
 			SET @output=@output+'Table rptCustomerMatch, Date: '+Convert(nvarchar,@Date,102)+ ' ; '
 		IF(CHARINDEX('4',@mesg)>=1)	
 			SET @output=@output+'Table rptWinlossbyLeague, Date: '+Convert(nvarchar,@Date,102)+' ; '
+		IF(CHARINDEX('5',@mesg)>=1)	
+			SET @output=@output+'Table rpt_Betting, Date: '+Convert(nvarchar,@Date,102)+' ; '
 		 RAISERROR (@output,16,1); 
 	END 
 /*-- Test Email
@@ -208,12 +209,3 @@ DROP TABLE #Data1
 DROP TABLE #TempData 
 
 SET NOCOUNT OFF
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
