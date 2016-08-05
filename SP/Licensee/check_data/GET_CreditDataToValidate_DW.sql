@@ -24,6 +24,7 @@ Revisions:
 	- 20160523@Francis: Change bettype range for RNG Casino (hotfix #55730)
 	- 20160602@Jim: include Casino refund ticket (#58453)
 	- 20160616@Jim: Changes to data integrity automail (#59249)	
+	- 20160805@Jim: Exclude bettype 18999 [Redmine #62052]
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
     
@@ -77,7 +78,8 @@ SELECT DISTINCT p.ProductPrefix,s.bettype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 WHERE p.ProductPrefix IN ('SB','CB','GD','KN','LC','NG','RB','CS','VS')
-
+	AND s.bettype <>18999
+	
 DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),StatusID INT, stake MONEY,WinLoss MONEY,BetCount INT)
 INSERT INTO @tblData (ProductPrefix ,statusID, stake ,WinLoss ,BetCount )
 SELECT  	t.ProductPrefix

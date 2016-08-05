@@ -1,5 +1,10 @@
 USE [bodb_Licensee]
 GO
+/****** Object:  StoredProcedure [dbo].[Task_DepositDataCompare]    Script Date: 08/05/2016 02:42:00 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Task_DepositDataCompare] 
     @Date smalldatetime = null
 	,@DrawFilter tinyint = 1
@@ -13,6 +18,7 @@ Original:
 
 Revisions:		
 	- 20140429@Florent: fix bug and change message error
+	- 20160805@Jim: Revise SP due to [Redmine: #62052]
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
 
@@ -56,7 +62,7 @@ CREATE TABLE #TempData
        ,Racing bigint
        ,NumberGame bigint
 	   ,BA bigint
-	   ,CS bigint
+	   ,LC bigint
 	   )
 
 CREATE TABLE #Data1 
@@ -66,14 +72,49 @@ CREATE TABLE #Data1
        ,Racing bigint
        ,NumberGame bigint
 	   ,BA bigint
-	   ,CS bigint
+	   ,LC bigint
 	   )
-
+DECLARE @tblTmp AS TABLE (ID INT
+						   ,Sportbook bigint
+						   ,Racing bigint
+						   ,NumberGame bigint
+						   ,BA bigint
+						   ,CS bigint
+						   ,BT bigint
+						   ,LC bigint
+						   ,AG bigint
+						   ,GD bigint
+						   ,KN bigint
+						   ,VG bigint
+						   ,VB bigint
+						   ,MGCLC bigint
+						   ,MGCRNG bigint
+						   ,VS bigint)
+						   
 --exec 
 --rptLicWinloss2
-INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,CS)
-exec dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date
-INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,CS)
+INSERT INTO @tblTmp	(ID
+					,Sportbook  
+					,Racing  
+					,NumberGame  
+					,BA  
+					,CS  
+					,BT  
+					,LC  
+					,AG  
+					,GD  
+					,KN  
+					,VG  
+					,VB  
+					,MGCLC  
+					,MGCRNG  
+					,VS  )	
+exec dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date	
+				
+INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
+SELECT ID,Sportbook,Racing,NumberGame,BA,LC FROM @tblTmp
+ 
+INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,LC)
 SELECT @id,* from #TempData
 DELETE  #tempdata
 SET @id=@id+1
@@ -81,35 +122,56 @@ SET @id=@id+1
 
 
 --rptCustomerTurnover
-INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,CS)
+INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
 exec dbo.GET_DepositDataToValidate_CustomerTurnover @Date=@Date
-INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,CS)
+INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,LC)
 SELECT @id,* from #TempData
 DELETE  #tempdata
 SET @id=@id+1
 
 --rptCustomerMatch
-INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,CS)
+INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
 exec dbo.GET_DepositDataToValidate_CustomerMatch @Date=@Date
-INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,CS)
+INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,LC)
 SELECT @id,* from #TempData
 DELETE  #tempdata
 SET @id=@id+1
 
 
 --rptWinlossByLeague
-INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,CS)
+INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
 exec dbo.GET_DepositDataToValidate_WLByLeague @Date=@Date
-INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,CS)
+INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,LC)
 SELECT @id,* from #TempData
 DELETE  #tempdata
 SET @id=@id+1
 
 --rpt_Betting
-INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,CS)
+DELETE @tblTmp
+ 
+INSERT INTO @tblTmp	(ID
+					,Sportbook  
+					,Racing  
+					,NumberGame  
+					,BA  
+					,CS  
+					,BT  
+					,LC  
+					,AG  
+					,GD  
+					,KN  
+					,VG  
+					,VB  
+					,MGCLC  
+					,MGCRNG  
+					,VS  )					   
 exec dbo.GET_DepositDataToValidate_Betting @Date=@Date
-INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,CS)
-SELECT @id,* from #TempData
+					
+INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
+SELECT ID,Sportbook,Racing,NumberGame,BA,LC FROM @tblTmp
+ 
+INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,LC)
+SELECT @id,ID,Sportbook,Racing,NumberGame,BA,LC from #TempData
 DELETE  #tempdata
 
 
@@ -126,7 +188,7 @@ BEGIN
 			SELECT  @PivotNumb_SB=Sportbook,
 					@PivotNumb_RB=Racing,
 					@PivotNumb_NG=NumberGame,
-					@PivotNumb_CS=CS,
+					@PivotNumb_CS=LC,
 					@PivotNumb_BA=BA
 			FROM #Data1 WHERE Typeid=@typeid and id=@id
 		IF @typeid<>1 		
@@ -134,7 +196,7 @@ BEGIN
 				SELECT  @NumberTemp_SB=Sportbook,
 						@NumberTemp_RB=Racing,
 						@NumberTemp_NG=NumberGame,
-						@NumberTemp_CS=CS,
+						@NumberTemp_CS=LC,
 						@NumberTemp_BA=BA
 				FROM #Data1 WHERE Typeid=@typeid and id=@id					
 				SET @mesg2='' 
