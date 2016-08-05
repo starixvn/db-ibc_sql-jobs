@@ -36,7 +36,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Run SP',
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'exec bodb02.dbo.Task_CleanOLDdataBettransParlay
+		@command=N'--exec bodb02.dbo.Task_CleanOLDdataBettransParlay
 
 -- REMOVE old data rmBettrans
 
