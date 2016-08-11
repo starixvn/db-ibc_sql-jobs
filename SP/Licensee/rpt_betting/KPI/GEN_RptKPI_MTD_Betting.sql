@@ -11,7 +11,8 @@ Task: Generate data into GEN_RptKPI_MTD from rpt_Betting
 DB: DB052.bodb_Licensee
 
 Revisions:
--20160116Francis: Support Bettrade
+-20160116@Francis: Support Bettrade
+-20160810@Francis: Bet Trade commercial terms changed [Redmine: #62111]
     
 Param's Explanation:
 
@@ -40,10 +41,13 @@ BEGIN
 		 rptDate datetime
 		,SiteID int
 		,CurrencyID int
-		,SoldTicketCount int
+		,BoughtTicketCount int
 		,Actual_Stake money
 		,BuyBackAmount money
-		,TotalCommission money
+		,ProfitOnBuyBack money
+		,BoughtTicketWL money
+		,CommShare money
+		,ProfitSharing money
 	)
 
 	DECLARE @Labels TABLE(LabelID int, TnxRate money, PRIMARY KEY(LabelID))
@@ -149,32 +153,42 @@ BEGIN
 	END
 
 	--For BetTrade
-	  INSERT INTO #BettingBetTrade (rptDate, SiteID, CurrencyID, SoldTicketCount, Actual_Stake, BuyBackAmount, TotalCommission)
+	INSERT INTO #BettingBetTrade (rptDate, SiteID, CurrencyID, BoughtTicketCount, Actual_Stake, BuyBackAmount, ProfitOnBuyBack, BoughtTicketWL, CommShare)
         SELECT 
              b.rptDate 
             ,b.SiteID 
             ,b.CurrencyID
-            ,sum(case when b.Bettype = 901 then b.BetCount else 0 end) as SoldTicketCount
+            ,sum(case when b.Bettype = 901 then b.BetCount else 0 end) as BoughtTicketCount
             ,sum(case when b.Bettype = 901 then b.BuyBackAmount - b.WinLoss else 0 end) as Actual_Stake
             ,sum(case when b.Bettype = 901 then b.BuyBackAmount else 0 end) as BuyBackAmount
-            ,sum(case when b.Bettype = 903 then abs(b.WinLoss) - abs(b.WinLossA) else 0 end) as TotalCommission
+            ,sum(case when b.Bettype = 901 then -b.WinLoss else 0 end) as ProfitOnBuyBack
+            ,sum(case when b.Bettype NOT IN (901,902,903,904) then b.WinLoss else 0 end) as BoughtTicketWL --only count BetTrade original tickets
+            ,sum(case when b.Bettype = 903 then abs(b.WinLoss) - abs(b.WinLossA) else 0 end) as CommShare
         FROM dbo.rpt_Betting b (NOLOCK)
         WHERE b.rptDate >= @date AND b.rptDate < @date2
             AND b.status NOT IN (-1,103)
             AND b.CurrencyID <> 20
-            AND b.Bettype IN (901,903)
+            AND b.CustomerCategory IN (1001,1002) --All BetTrade tickets with original tickets included
         GROUP BY b.rptDate, b.SiteID, b.CurrencyID     
+       
+    UPDATE #BettingBetTrade WITH (ROWLOCK, UPDLOCK)
+    SET ProfitSharing = (ProfitOnBuyBack + BoughtTicketWL) / 2 + CommShare  
     
-    DELETE dbo.rptKPI_MTD_Cross WHERE rptDate >= @date AND rptDate < @date2 AND StatID BETWEEN 30 AND 35
+    DELETE dbo.rptKPI_MTD_Cross WHERE rptDate >= @date AND rptDate < @date2 AND StatID BETWEEN 30 AND 40
     
     INSERT INTO dbo.rptKPI_MTD_Cross
 			SELECT b.rptDate, b.SiteID, b.CurrencyID, cast(f.StatID as int) StatID, f.MTD
 			FROM #BettingBetTrade b
 				CROSS APPLY (
-					SELECT 30, SoldTicketCount UNION ALL
+					SELECT 30, BoughtTicketCount UNION ALL
+					SELECT 35, BoughtTicketCount UNION ALL
 					SELECT 31, Actual_Stake UNION ALL
 					SELECT 32, BuyBackAmount UNION ALL
-					SELECT 33, TotalCommission
+					SELECT 33, CommShare UNION ALL
+					SELECT 38, CommShare UNION ALL
+					SELECT 36, ProfitOnBuyBack UNION ALL
+					SELECT 37, BoughtTicketWL UNION ALL
+					SELECT 39, ProfitSharing
 				) f(StatID,MTD)
                 
 	DROP TABLE #Betting
@@ -182,3 +196,5 @@ BEGIN
 END
 GO
 GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Betting] TO [bodbLicenseeNet] AS [dbo]
+GO
+GRANT VIEW DEFINITION ON [dbo].[GEN_RptKPI_MTD_Betting] TO [vnteam] AS [dbo]
