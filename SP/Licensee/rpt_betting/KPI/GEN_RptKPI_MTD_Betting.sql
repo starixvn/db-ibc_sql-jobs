@@ -11,8 +11,8 @@ Task: Generate data into GEN_RptKPI_MTD from rpt_Betting
 DB: DB052.bodb_Licensee
 
 Revisions:
--20160116@Francis: Support Bettrade
--20160810@Francis: Bet Trade commercial terms changed [Redmine: #62111]
+-20160116@Francis: Support BetTrade
+-20160810@Francis: BetTrade commercial terms changed [Redmine: #62111]
     
 Param's Explanation:
 
