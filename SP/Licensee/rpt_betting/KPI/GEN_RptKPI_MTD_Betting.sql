@@ -80,7 +80,7 @@ BEGIN
 			WHERE b.rptDate >= @date AND b.rptDate < @date2
 				AND b.status NOT IN (-1,103)
 				AND b.CurrencyID <> 20
-				AND (b.bettype < 31 OR (b.bettype >= 121 AND b.bettype < 1000 AND b.Bettype NOT IN (901,902,903)))
+				AND (b.bettype < 31 OR (b.bettype >= 121 AND b.bettype < 1000 AND b.Bettype NOT IN (901,902,903,904)))
 				AND isnull(b.customercategory,0) NOT IN (27,28)
 			GROUP BY b.rptDate, b.SiteID, b.CurrencyID
 	        
