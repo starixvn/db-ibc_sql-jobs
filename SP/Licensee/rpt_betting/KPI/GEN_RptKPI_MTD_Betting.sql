@@ -1,4 +1,4 @@
-USE [bodb_Licensee]
+USE [bodb_licensee]
 GO
 ALTER PROCEDURE [dbo].[GEN_RptKPI_MTD_Betting]
     @date datetime, 
@@ -171,6 +171,24 @@ BEGIN
             AND b.CustomerCategory IN (1001,1002) --All BetTrade tickets with original tickets included
         GROUP BY b.rptDate, b.SiteID, b.CurrencyID     
        
+       
+   MERGE #BettingBetTrade AS TARGET
+   USING     
+			(SELECT 
+				 b.rptDate 
+				,b.SiteID 
+				,b.CurrencyID
+				,sum(case when b.Bettype NOT IN (901,902,903,904) then b.WinLoss else 0 end) as BoughtTicketWL --only count BetTrade BA original tickets
+			FROM dbo.rpt_Betting_BA b (NOLOCK)
+			WHERE b.rptDate >= @date AND b.rptDate < @date2
+				AND b.status NOT IN (-1,103)
+				AND b.CurrencyID <> 20
+				AND b.CustomerCategory IN (1001,1002) --All BetTrade tickets with original tickets included
+			GROUP BY b.rptDate, b.SiteID, b.CurrencyID)
+	AS SOURCE (rptDate, SiteID, CurrencyID, BoughtTicketWL) ON (TARGET.rptDate = SOURCE.rptDate AND TARGET.SiteID = SOURCE.SiteID AND TARGET.CurrencyID = SOURCE.CurrencyID)
+	WHEN MATCHED THEN
+		UPDATE SET TARGET.BoughtTicketWL = TARGET.BoughtTicketWL + SOURCE.BoughtTicketWL;
+    
     UPDATE #BettingBetTrade WITH (ROWLOCK, UPDLOCK)
     SET ProfitSharing = (ProfitOnBuyBack + BoughtTicketWL) / 2 + CommShare  
     
@@ -194,6 +212,7 @@ BEGIN
 	DROP TABLE #Betting
 	DROP TABLE #BettingBetTrade
 END
+
 GO
 GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Betting] TO [bodbLicenseeNet] AS [dbo]
 GO
