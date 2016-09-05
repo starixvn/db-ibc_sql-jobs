@@ -1,17 +1,7 @@
 USE [bodb_ACC]
 GO
 
-/****** Object:  StoredProcedure [dbo].[NAP_Task_SaveBet_GenerateServiceJob]    Script Date: 01/21/2015 01:32:39 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.NAP_Task_SaveBet_GenerateServiceJob    Script Date: 9/16/2014 9:41:31 AM ******/
-
-/****** Object:  Stored Procedure dbo.NAP_Task_SaveBet_GenerateServiceJob    Script Date: 9/10/2014 3:22:01 PM ******/
-CREATE PROCEDURE [dbo].[NAP_Task_SaveBet_GenerateServiceJob]
+ALTER PROCEDURE [dbo].[NAP_Task_SaveBet_GenerateServiceJob]
 AS
 
 /*
@@ -21,6 +11,9 @@ AS
 	DB: DB06.BODB_ACC
 	
 	Revisions:
+		-20150529@Jim: add Metric Gaming
+		- 20150728@Jim: apply Bettrade (Feature #38815)
+		- 20160819@Robert: Add Bet Trade Winloss bettype=904 (#62630)
 */
 
 BEGIN
@@ -46,7 +39,7 @@ BEGIN
 	FROM bodb02.dbo.bettrans WITH(NOLOCK)
 	WHERE matchid IN (SELECT MatchID FROM #Match)
 		AND bettype NOT IN(SELECT bettype FROM bodb02.dbo.f_VSHorseRacingByBettype())
-
+		AND bettype NOT IN (901,902,903,904)
 	SET @ID = 1
 	SELECT @ID = 1,@Total = COUNT(*) FROM #Match
 
@@ -66,13 +59,17 @@ BEGIN
 			SELECT @MatchID, Bettype, liveindicator, 'TB', typenamee
 			FROM #MatchBettype mb INNER JOIN bodb02.dbo.bettype WITH(NOLOCK) ON typeid = mb.bettype
 			WHERE MatchID = @MatchID 
-				AND bettype IN (1,3,7,8,20)
+				AND (bettype IN (1,3,7,8,20)
+					OR bettype BETWEEN 801 AND 808
+					)
 				AND liveindicator = 0
 			UNION ALL
 			SELECT @MatchID, Bettype, liveindicator, 'TB', typenamee
 			FROM #MatchBettype  mb INNER JOIN bodb02.dbo.bettype WITH(NOLOCK) ON typeid = mb.bettype
 			WHERE MatchID = @MatchID 
-				AND bettype IN (1,3,7,8,20)
+				AND (bettype IN (1,3,7,8,20)
+					OR bettype BETWEEN 801 AND 808
+					)
 				AND liveindicator = 1
 			UNION ALL
 			SELECT @MatchID, Bettype, liveindicator, 'BETS', typenamee
