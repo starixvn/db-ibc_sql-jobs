@@ -16,6 +16,7 @@ Revisions:
 	- 20160608@Jim: Separate Bettrade (#57353)
 	- 20160616@Jim: Changes to data integrity automail (#59249)	
 	- 20160805@Jim: Exclude bettype 18999 [Redmine #62052]
+	- 20160906@Jim: Correct value of SB & BA [Redmine #63571]
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
     
@@ -102,7 +103,7 @@ WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG'
 DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),Status INT, Turnover MONEY, Winloss MONEY,BetCount INT)	
 
 INSERT INTO @tblData  (ProductPrefix ,Status,Turnover,Winloss,BetCount)	
-SELECT  CASE WHEN b.bettype IN (901,902,903) THEN 'BT' ELSE t.ProductPrefix END 
+SELECT  CASE WHEN b.bettype IN (901,902,903,904) THEN 'BT' ELSE t.ProductPrefix END 
 		 ,Status
 		 ,SUM(TurnOver) TurnOver
 		 ,SUM(Winloss) Winloss
@@ -113,7 +114,7 @@ FROM dbo.rpt_Betting b (NOLOCK)
 WHERE b.rptDate=@Date
 	AND b.Status IN (111,112,113,114,115)
     AND b.currencyID NOT IN(20,27,28)
-GROUP BY CASE WHEN b.bettype IN (901,902,903) THEN 'BT' ELSE t.ProductPrefix END 
+GROUP BY CASE WHEN b.bettype IN (901,902,903,904) THEN 'BT' ELSE t.ProductPrefix END 
 		 ,Status	
   
 ---SB
@@ -125,7 +126,7 @@ SELECT @SbTurnover=SUM(CASE
     ,@SbCustomerWl=SUM(WinLoss)
     ,@SbBetCount=SUM(CASE WHEN @DrawFilter=2 AND Status = 111 THEN 0 ELSE BetCount END)
 FROM @tblData 
-WHERE ProductPrefix = 'SB'
+WHERE ProductPrefix IN  ('SB','BT')
 
 SELECT @SbTurnover 	 = ISNULL (@SbTurnover, 0),
 	   @SbCustomerWl = ISNULL (@SbCustomerWl, 0),
