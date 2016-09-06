@@ -153,7 +153,7 @@ BEGIN
 	END
 
 	--For BetTrade
-	INSERT INTO #BettingBetTrade (rptDate, SiteID, CurrencyID, BoughtTicketCount, Actual_Stake, BuyBackAmount, ProfitOnBuyBack, BoughtTicketWL, CommShare)
+	INSERT INTO #BettingBetTrade (rptDate, SiteID, CurrencyID, BoughtTicketCount, Actual_Stake, BuyBackAmount, ProfitOnBuyBack, BoughtTicketWL, CommShare, ProfitSharing)
         SELECT 
              b.rptDate 
             ,b.SiteID 
@@ -163,7 +163,8 @@ BEGIN
             ,sum(case when b.Bettype = 901 then b.BuyBackAmount else 0 end) as BuyBackAmount
             ,sum(case when b.Bettype = 901 then -b.WinLoss else 0 end) as ProfitOnBuyBack
             ,sum(case when b.Bettype NOT IN (901,902,903,904) then b.WinLoss else 0 end) as BoughtTicketWL --only count BetTrade original tickets
-            ,sum(case when b.Bettype = 903 then -abs(b.WinLoss) - abs(b.WinLossA) else 0 end) as CommShare
+            ,sum(case when b.Bettype = 903 then -b.WinLoss - b.WinLossA else 0 end) as CommShare
+            ,sum(case when b.Bettype IN (903,904) then b.WinLoss + b.WinLossA else 0 end) as ProfitSharing
         FROM dbo.rpt_Betting b (NOLOCK)
         WHERE b.rptDate >= @date AND b.rptDate < @date2
             AND b.status NOT IN (-1,103)
@@ -188,9 +189,6 @@ BEGIN
 	AS SOURCE (rptDate, SiteID, CurrencyID, BoughtTicketWL) ON (TARGET.rptDate = SOURCE.rptDate AND TARGET.SiteID = SOURCE.SiteID AND TARGET.CurrencyID = SOURCE.CurrencyID)
 	WHEN MATCHED THEN
 		UPDATE SET TARGET.BoughtTicketWL = TARGET.BoughtTicketWL + SOURCE.BoughtTicketWL;
-    
-    UPDATE #BettingBetTrade WITH (ROWLOCK, UPDLOCK)
-    SET ProfitSharing = (ProfitOnBuyBack + BoughtTicketWL) / 2 + CommShare  
     
     DELETE dbo.rptKPI_MTD_Cross WHERE rptDate >= @date AND rptDate < @date2 AND StatID BETWEEN 30 AND 40
     
