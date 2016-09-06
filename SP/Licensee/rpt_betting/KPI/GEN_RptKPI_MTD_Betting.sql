@@ -163,15 +163,14 @@ BEGIN
             ,sum(case when b.Bettype = 901 then b.BuyBackAmount else 0 end) as BuyBackAmount
             ,sum(case when b.Bettype = 901 then -b.WinLoss else 0 end) as ProfitOnBuyBack
             ,sum(case when b.Bettype NOT IN (901,902,903,904) then b.WinLoss else 0 end) as BoughtTicketWL --only count BetTrade original tickets
-            ,sum(case when b.Bettype = 903 then -b.WinLoss - b.WinLossA else 0 end) as CommShare
-            ,sum(case when b.Bettype IN (903,904) then b.WinLoss + b.WinLossA else 0 end) as ProfitSharing
+            ,sum(case when b.Bettype = 903 then -(b.WinLoss + b.WinLossA) else 0 end) as CommShare
+            ,sum(case when b.Bettype IN (903,904) then -(b.WinLoss + b.WinLossA) else 0 end) as ProfitSharing
         FROM dbo.rpt_Betting b (NOLOCK)
         WHERE b.rptDate >= @date AND b.rptDate < @date2
             AND b.status NOT IN (-1,103)
             AND b.CurrencyID <> 20
             AND b.CustomerCategory IN (1001,1002) --All BetTrade tickets with original tickets included
         GROUP BY b.rptDate, b.SiteID, b.CurrencyID     
-       
        
    MERGE #BettingBetTrade AS TARGET
    USING     
