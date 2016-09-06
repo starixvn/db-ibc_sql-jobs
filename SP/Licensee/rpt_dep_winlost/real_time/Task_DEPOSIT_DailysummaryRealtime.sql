@@ -31,7 +31,7 @@ AS
   - 20151208@Jim: sepated MicroGame into 2 products (#45454)
   - 20160105@Bobby: #49196 - Implement OneRnG product
   - 20160422@Victor: Add product Voidbridge [Redmine: #55057]
-  
+  - 20160721@Jim: Add product Allbet [Redmine: #59624]
  Param's Explanation:  
  ? @winlostdate: The date need to summary  
 */  
@@ -213,6 +213,7 @@ SELECT
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
+		WHEN bettype BETWEEN 2401 AND 2499 THEN 211
 	ELSE 0 END, -- sporttype
 	--b.currency,
 	CASE 
@@ -249,6 +250,7 @@ GROUP BY b.custid,
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
+		WHEN bettype BETWEEN 2401 AND 2499 THEN 211
 	ELSE 0 END,
 	--b.currency
 	CASE 
