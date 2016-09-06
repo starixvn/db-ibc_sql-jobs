@@ -163,7 +163,7 @@ BEGIN
             ,sum(case when b.Bettype = 901 then b.BuyBackAmount else 0 end) as BuyBackAmount
             ,sum(case when b.Bettype = 901 then -b.WinLoss else 0 end) as ProfitOnBuyBack
             ,sum(case when b.Bettype NOT IN (901,902,903,904) then b.WinLoss else 0 end) as BoughtTicketWL --only count BetTrade original tickets
-            ,sum(case when b.Bettype = 903 then abs(b.WinLoss) - abs(b.WinLossA) else 0 end) as CommShare
+            ,sum(case when b.Bettype = 903 then -abs(b.WinLoss) - abs(b.WinLossA) else 0 end) as CommShare
         FROM dbo.rpt_Betting b (NOLOCK)
         WHERE b.rptDate >= @date AND b.rptDate < @date2
             AND b.status NOT IN (-1,103)
