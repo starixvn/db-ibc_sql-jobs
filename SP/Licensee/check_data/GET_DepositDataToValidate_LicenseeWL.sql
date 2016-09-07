@@ -21,6 +21,7 @@ Revisions:
 - 20140310@daniel: exclude currency C & H
 - 20160608@Jim: Separate Bettrade (#57353) 	
 - 20160616@Jim: Changes to data integrity automail (#59249)	
+- 20160906@Jim: Correct value of SB & BA [Redmine #63571]
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
 
@@ -118,11 +119,11 @@ FROM dbo.rptLicWinloss2 b (NOLOCK)
 	INNER JOIN @tblSporttype t ON b.sporttype = t.sporttype
 WHERE b.winlostdate=@Date
      AND b.statusID IN (111,112,113,114,115)
-     AND b.currency NOT IN(20,27,28)
+     AND b.currency NOT IN (20,27,28)
      AND b.roleid = 4
      AND b.srecommend IN (SELECT custid FROM bodb02.dbo.f_Depsuper_1('All'))
      AND isBA = CONVERT(bit,0)
-	 AND b.bettype NOT IN (901,902,903)	
+	-- AND b.bettype NOT IN (901,902,903)	
 GROUP BY t.ProductPrefix ,statusID 
 -- Sportbook
 SELECT @SbTurnover = SUM(CASE 
@@ -154,7 +155,7 @@ WHERE b.winlostdate = @Date
     AND b.roleid = 4
     AND b.srecommend IN (SELECT custid FROM bodb02.dbo.f_Depsuper_1('All'))
     AND isBA = CONVERT(bit,0)
-	AND b.bettype   IN (901,902,903)
+	AND b.bettype   IN (901,902,903,904)
 	
 SELECT @BTTurnover 	 = ISNULL (@BTTurnover, 0),
 	   @BTCustomerWl = ISNULL (@BTCustomerWl, 0),

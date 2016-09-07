@@ -448,7 +448,6 @@ BEGIN
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
 			WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
-			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
 			WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- Voidbridge
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
@@ -487,7 +486,6 @@ BEGIN
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 2001 AND 2007 THEN 203 -- Live MicroGaming
 			WHEN bettype BETWEEN 2008 AND 2009 THEN 205 -- RNG MicroGaming
-			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
 			WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- Voidbridge
 			WHEN bettype = 901 THEN -2 -- BetTrade - Sold
 			WHEN bettype = 902 THEN -3 -- BetTrade - Bought
@@ -589,7 +587,7 @@ BEGIN
 	UNION ALL -- AG Casino
 		SELECT @date AS winlostdate
 		,lc.custid   
-		,250 AS sporttype
+		,lc.productID AS sporttype
 		,lc.currency
 		,SUM(CASE WHEN winlostdate = @date AND lc.statusID IN (0,1) then stake ELSE 0 END) AS turnover
 		,SUM(CASE WHEN winlostdate = @date AND lc.statusID IN (0,1) then 1 ELSE 0 END) AS Betcount
@@ -600,7 +598,7 @@ BEGIN
 			--inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
 			INNER JOIN #DepositCustSuper s WITH(NOLOCK) ON s.custid = lc.srecommend AND s.Currency = lc.currency
 	   WHERE lc.winlostdate >= @date  
-	   GROUP BY lc.custid, lc.currency
+	   GROUP BY lc.custid, lc.currency,lc.productID
 	WHILE (1 = 1)
 	BEGIN
 		DELETE tmp FROM (SELECT TOP 50000 * FROM bodb_Report.dbo.rptDepWinlost WITH(NOLOCK) WHERE Winlostdate = @date)tmp
