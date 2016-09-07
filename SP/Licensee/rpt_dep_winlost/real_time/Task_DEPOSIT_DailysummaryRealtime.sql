@@ -167,6 +167,23 @@ INSERT INTO #tempDepWinlost_staging (winlostdate, custid, currency, recommend, m
 		  and g.custid in (select custid from @TempCustID)
 		  and g.custid <> 0
 	GROUP BY g.custid,g.currency,g.recommend,g.mrecommend,g.srecommend
+	---
+	UNION ALL -- AG Casino
+	SELECT @date AS winlostdate
+			,lc.custid   
+			,lc.currency
+			,lc.recommend
+			,lc.mrecommend
+			,lc.srecommend
+			,SUM(CASE WHEN winlostdate = @date AND lc.statusID IN (0,1) then stake ELSE 0 END) AS turnover
+			,SUM(CASE WHEN winlostdate = @date AND lc.statusID IN (0,1) then actual_stake ELSE 0 END) AS outstanding 
+   FROM dbo.bettransLC lc with (ROWLOCK)
+		--inner join dep_custsuper s with(nolock) on s.custid = tl.srecommend
+	WHERE lc.winlostdate >= @date  
+		  and lc.custid in (select custid from @TempCustID)
+		  and lc.custid <> 0
+	GROUP BY lc.custid,lc.currency,lc.recommend,lc.mrecommend,lc.srecommend
+	   
 	OPTION (MAXDOP 8);
 	
 --insert additional Keno's product OpeningBalance, turnover, Outstanding, ClosingBalance
@@ -339,6 +356,21 @@ INSERT INTO #tempDepWinlostByProduct_staging (winlostdate,custid,sporttype,curre
 		 and custid in (select custid from @TempCustID)
 		 and custid <> 0		 
    GROUP BY g.custid, g.productID,g.currency
+   UNION ALL
+   SELECT @date AS winlostdate
+	,lc.custid   
+    ,lc.productID AS sporttype
+    ,lc.currency
+	,SUM(CASE WHEN winlostdate = @date AND lc.statusID IN (0,1) then stake ELSE 0 END) AS turnover
+	,SUM(CASE WHEN winlostdate = @date AND lc.statusID IN (0,1) then 1 ELSE 0 END) AS Betcount
+	,SUM(CASE WHEN @date = @today THEN CASE WHEN lc.statusID IN (0,1) then actual_stake ELSE 0 END
+		 ELSE CASE WHEN winlostdate = @date AND lc.statusID IN (0,1) then actual_stake ELSE 0 END END) AS outstanding
+   FROM dbo.bettransLC lc WITH (rowlock)
+   WHERE lc.winlostdate >= @date  
+		 and custid in (select custid from @TempCustID)
+		 and custid <> 0		 
+   GROUP BY lc.custid, lc.productID,lc.currency
+   
 	OPTION (MAXDOP 8);
 	
 --insert additional Keno's product Outstanding, turnover, betcount
