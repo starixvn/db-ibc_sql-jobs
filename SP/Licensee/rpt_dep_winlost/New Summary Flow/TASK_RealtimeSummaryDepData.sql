@@ -214,14 +214,6 @@ BEGIN
 			GROUP BY t.custid, t.SportType
 		END
 		
-		--Delete redundant data
-		DELETE FROM #rptDepWinlostDetails  
-		WHERE Deposit = 0 AND Withdrawal = 0 AND Aff2MemTransfer = 0 AND Bonus = 0 AND Adjustment = 0 AND TurnOver = 0 AND OutStanding = 0 AND Winloss = 0 
-			  AND Transfer3rd = 0 AND DrawGame = 0 AND playercomm = 0 AND Comm_BetTrade = 0 AND Comm_BetTrade_Full = 0 AND WLBoughtTicket_BetTrade = 0 AND BetCount = 0
-		DELETE FROM #rptDepWinlostOutstanding
-		WHERE TurnOver = 0 AND OutStanding = 0 AND BetCount = 0
-		
-		
 		--Update Transfer3rdOthers attribute
 		UPDATE #rptDepWinlostDetails 
 		SET PartnerID = t.PartnerId,
@@ -297,6 +289,15 @@ BEGIN
 					AND b.statusID NOT IN(101, 102, 103)  
 			  GROUP BY b.custid) t
 		WHERE #rptDepWinlost.custid = t.custid
+		
+		--Delete redundant data
+		DELETE FROM #rptDepWinlost  
+		WHERE Deposit = 0 AND Withdrawal = 0 AND Aff2MemTransfer = 0 AND Bonus = 0 AND Adjustment = 0 AND TurnOver = 0 AND OutStanding = 0 AND Winloss = 0 
+			  AND Transfer3rd = 0 AND DrawGame = 0 AND Turnover_BA = 0 AND Comm_BA = 0 AND AmountDueTo_BA = 0 AND playercomm = 0 AND Transfer3rdOthers = 0
+			  AND Comm_BetTrade = 0 AND Comm_BetTrade_Full = 0 AND AmountDueTo_BetTrade = 0 AND BetCount = 0 AND TransferAmount = 0 AND TransferIn = 0 AND TransferOut = 0
+ 
+		DELETE FROM #rptDepWinlostOutstanding
+		WHERE TurnOver = 0 AND OutStanding = 0 AND BetCount = 0
 
 		--Start update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
 		MERGE #rptDepWinlost AS TARGET
