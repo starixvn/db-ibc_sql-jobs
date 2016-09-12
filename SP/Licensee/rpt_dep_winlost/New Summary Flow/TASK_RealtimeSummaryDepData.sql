@@ -34,7 +34,7 @@ BEGIN
 	IF NOT EXISTS(SELECT TOP 1 1 FROM dbo.bettrans WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype != 18000)
 	   OR @WinlostDate > @CurrentDate
 		BEGIN
-			PRINT 'TASK_RealtimeSummaryDepData: There is no data in bettrans to summarize or input @Winlostdate is greater than current day'
+			PRINT 'EXEC TASK_RealtimeSummaryDepData: There is no data in bettrans to summarize or input @Winlostdate is greater than current day ==> RETURN'
 			RETURN
 		END
 	
@@ -418,7 +418,7 @@ BEGIN
 		INNER JOIN dbo.customer c WITH (NOLOCK) ON t.custid = c.custid  
 		INNER JOIN dbo.customer agent WITH (NOLOCK) ON c.recommend = agent.custid
 		LEFT JOIN @TransferData d ON t.custid = d.CustId AND t.PartnerId = d.PartnerId
-		WHERE b.PartnerId > -1
+		WHERE t.PartnerId > -1
 			  AND (c.username2 IS NOT NULL OR (c.username2 IS NULL AND agent.username NOT LIKE '%ACC%'))	
 		GROUP BY t.CustId, t.PartnerId
 		/*--END PREPARE DATA FOR rptDepWinlostTransfer3rdOthers--*/
@@ -444,7 +444,7 @@ BEGIN
 			
 		--For rptDepWinlost_Transfer3rdOthers
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, TransferAmount, TransferIn, TransferOut)
-			SELECT @Winlostdate, CustID, SportType, PartnerID, TransferAmount, TransferIn, TransferOut
+			SELECT @Winlostdate, CustID, -1, PartnerID, TransferAmount, TransferIn, TransferOut
 			FROM #rptDepWinlostTransfer3rdOthers
 		
 		SET @isSuccessful = 1
@@ -452,17 +452,17 @@ BEGIN
 		--6.Update Log
 		SELECT @LogDesc = @LogDesc + CONVERT(VARCHAR(20),@Winlostdate) + ' (No. of Customer affected: ' + CONVERT(VARCHAR(20), @NumberofCus) + '); Type: realtime'
 		
-		UPDATE dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
+		UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
 		SET EndTime = CURRENT_TIMESTAMP, LogDesc = @LogDesc, StatusID = 1
 		WHERE LogID = @LogID
 		
 	END TRY
 	BEGIN CATCH
 		SET @isSuccessful = 0
-		UPDATE dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
+		UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
 		SET EndTime = CURRENT_TIMESTAMP, LogDesc = @LogDesc, StatusID = 0
 		WHERE LogID = @LogID	
-		PRINT 'ErrMsg: ' + ERROR_MESSAGE()
+		PRINT 'EXEC TASK_RealtimeSummaryDepData, Winlostdate = ' + CONVERT(VARCHAR(20),@Winlostdate,112) + ', ErrMsg: ' + ERROR_MESSAGE()
 	END CATCH
 	
 	DROP TABLE #rptDepWinlostDetails 

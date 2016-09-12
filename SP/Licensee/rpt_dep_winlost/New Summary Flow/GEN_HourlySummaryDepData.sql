@@ -20,8 +20,7 @@ AS
 BEGIN
 	IF @Winlostdate > CURRENT_TIMESTAMP OR NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype != 18000)
 		BEGIN
-			PRINT 'GEN_HourlySummaryDepData: There is no data in bettrans to summarize or input @Winlostdate is greater than current day'
-			RETURN
+			PRINT 'EXEC GEN_HourlySummaryDepData: There is no data in bettrans to summarize or input @Winlostdate is greater than current day ==> RETURN'
 			RETURN
 		END
 	DECLARE @i TINYINT = 1
@@ -43,7 +42,10 @@ BEGIN
 		IF @isSuccessful = 1
 			SET @isSuccessful = 0
 		ELSE
-			RETURN
+			BEGIN
+				PRINT 'EXEC GEN_HourlySummaryDepData: Unsuccessfully generated data for rptDepWinlost_Trans ==> RETURN'
+				RETURN
+			END
 		--2.Check if the input @Winlostdate's data has not been summarized for rptDepWinlost_Main
 		IF NOT EXISTS (SELECT TOP 1 1 FROM bodb_Report.dbo.rptDepWinlost_Main WITH (NOLOCK) WHERE winlostdate = @Winlostdate)
 		BEGIN
@@ -56,7 +58,7 @@ BEGIN
 						, m.actualrate, m.srecommend, m.mrecommend, m.recommend, m.currency
 				FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
 					LEFT JOIN bodb_Report.dbo.rptDepWinlost_Trans t WITH (NOLOCK) 
-					ON m.Winlostdate = t.Winlostdate AND m.CustID = t.CustID
+					ON m.Winlostdate = t.Winlostdate AND m.CustID = t.CustID AND t.SportType = -1 AND t.PartnerID = -1 --only get attributes of rptDepWinlost
 				WHERE m.Winlostdate = @PreviousDay
 			SELECT @NumberofCus = @@ROWCOUNT
 		END
@@ -70,7 +72,7 @@ BEGIN
 						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0))--compute @Winlostdate's OpeningBalance
 				FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
 					 INNER JOIN bodb_Report.dbo.rptDepWinlost_Trans t WITH (NOLOCK) 
-					 ON m.Winlostdate = t.Winlostdate AND m.CustID = t.CustID
+					 ON m.Winlostdate = t.Winlostdate AND m.CustID = t.CustID AND t.SportType = -1 AND t.PartnerID = -1--only get attributes of rptDepWinlost
 				WHERE m.Winlostdate = @PreviousDay
 			
 			UPDATE m
@@ -86,26 +88,34 @@ BEGIN
 		SELECT CustID
 		FROM bodb_Report.dbo.rptDepWinlost_Trans WITH (NOLOCK) 
 		WHERE Winlostdate = @Winlostdate
+			  AND SportType = -1 AND PartnerID = -1 --only get attributes of rptDepWinlost
 			  AND CustID NOT IN (SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Main WITH (NOLOCK) WHERE Winlostdate = @Winlostdate)
 		
-		UPDATE t
-		SET t.OpeningBalance = (m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
+		UPDATE mt
+		SET mt.OpeningBalance = temp.OpeningBalance
+		FROM #rptDepWinlost_Main mt
+			INNER JOIN 
+			(SELECT m.CustID
+					, m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
 						   + ISNULL(t.Adjustment,0) - ISNULL(t.Outstanding,0) + ISNULL(t.Winloss,0) + ISNULL(t.playercomm,0) + ISNULL(t.Transfer3rd,0) 
-						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0))
-		FROM #rptDepWinlost_Main t
-			INNER JOIN rptDepWinlost_Main m ON t.CustID = m.CustID AND m.Winlostdate = @PreviousDay
+						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0) AS OpeningBalance
+			 FROM bodb_Report.dbo.rptDepWinlost_Main m 
+				  INNER JOIN bodb_Report.dbo.rptDepWinlost_Trans t
+				  ON t.CustID = m.CustID AND m.Winlostdate = @PreviousDay AND t.Winlostdate = @PreviousDay) temp 
+			ON mt.CustID = temp.CustID
 			
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Main (Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
 			SELECT @Winlostdate, t.CustID, t.OpeningBalance, e.ActualRate, c.srecommend, c.mrecommend, c.recommend, c.currency
 			FROM #rptDepWinlost_Main t
-			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON m.CustID = c.custid
-			INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON c.currency = e.ExchangeId
+			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON t.CustID = c.custid AND c.roleid = 1
+			INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON c.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate
 			
 		SELECT @NumberofCus = @NumberofCus + @@ROWCOUNT
 		
 		SET @isSuccessful = 1	
 	END TRY
 	BEGIN CATCH
+		PRINT 'EXEC GEN_HourlySummaryDepData, Winlostdate = ' + CONVERT(VARCHAR(20),@Winlostdate,112) + ', ErrMsg: ' + ERROR_MESSAGE()
 		SET @isSuccessful = 0
 	END CATCH
 	

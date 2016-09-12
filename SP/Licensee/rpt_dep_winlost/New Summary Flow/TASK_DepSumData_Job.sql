@@ -27,24 +27,24 @@ BEGIN
 	SELECT @Earlyday = DATEADD(DAY,-2,@CurrentDate)
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
 --2.Check system movebet and balanceup
-	IF EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isMovingBet','isArchivingBet') AND VValue = '1')
+	IF EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isMovingBet','isArchivingBet','isArchivingDEPdata','isSummaryingDEPdata') AND VValue = '1')
 		BEGIN
-			PRINT 'TASK_DepSumDataJob: MoveBet/BalanceUp is performing'
+			PRINT 'EXEC TASK_DepSumDataJob: MoveBet/BalanceUp/ArchivingDEPdata/SummaryingDEPdata is performing ==> RETURN'
 			RETURN
 		END
 --4.Check today's daily archive
-		IF NOT EXISTS (SELECT 1 FROM bodb_Report.dbo.rptDepWinlost_Log WITH (NOLOCK) WHERE LogDate = @CurrentDate AND StatusID = 1 AND LogType = 2 --Daily Type
-					   UNION ALL SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isArchivingDEPdata','isSummaryingDEPdata') AND VValue = '1')
+		IF NOT EXISTS (SELECT 1 FROM bodb_Report.dbo.rptDepWinlost_Log WITH (NOLOCK) WHERE LogDate = @CurrentDate AND StatusID = 1 AND LogType = 2) --Daily Type
 			BEGIN
+				--PRINT 'EXEC TASK_DailyArchiveDepData'
 				EXEC bodb_Report.dbo.TASK_DailyArchiveDepData
 				EXEC dbo.Task_DOT_AGCasino_MonthlyReSummary
 			END
 		ELSE
 		BEGIN--3,5,6.Check today's hourly summary at the current's hour
-				IF (NOT EXISTS (SELECT 1 FROM bodb_Report.dbo.rptDepWinlost_Log WITH (NOLOCK) WHERE LogDate = @CurrentDate AND LogHour = @CurrentHour AND StatusID = 1 AND LogType BETWEEN 1 AND 3 --Daily/Manually/Hourly Type
-					   UNION ALL SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isArchivingDEPdata','isSummaryingDEPdata') AND VValue = '1')
+				IF (NOT EXISTS (SELECT 1 FROM bodb_Report.dbo.rptDepWinlost_Log WITH (NOLOCK) WHERE LogDate = @CurrentDate AND LogHour = @CurrentHour AND StatusID = 1 AND LogType BETWEEN 1 AND 3) --Daily/Manually/Hourly Type
 					AND 0 = CASE WHEN @CurrentHour < @IdlingHour THEN 0 ELSE @CurrentHour % 2 END)
 				BEGIN
+					--PRINT 'EXEC TASK_HourlySummaryDepData'
 					--
 					EXEC dbo.Task_rptWinLost_UpdateTable @winlostdate = @CurrentDate
 					EXEC dbo.Task_rptWinLost_UpdateTable @winlostdate = @Yesterday
@@ -58,8 +58,8 @@ BEGIN
 				END
 				ELSE
 				BEGIN
-					IF NOT EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isArchivingDEPdata','isSummaryingDEPdata') AND VValue = '1')
-						EXEC dbo.TASK_RealtimeSummaryDepData
+					--PRINT 'EXEC TASK_RealtimeSummaryDepData'
+					EXEC dbo.TASK_RealtimeSummaryDepData
 				END
 		END		
 END

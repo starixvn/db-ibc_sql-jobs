@@ -39,7 +39,7 @@ BEGIN
 	WHERE bettype = 20000 and matchid = 0 and custid = 3
 	
 	SELECT @MoveBetDay = MAX(eventdate)
-	FROM dbo.match14 WITH(NOLOCK)
+	FROM bodb02.dbo.match14 WITH(NOLOCK)
 	
 	--Check if is there any day need to be manually resummarized
 	IF EXISTS (SELECT TOP 1 1 FROM dbo.rptDepWinlost_Manual WITH (NOLOCK) WHERE IsSummarized = 0)
@@ -59,7 +59,7 @@ BEGIN
 	--1.Check if there is any day to summarize or not
 	IF @MinDate < @BalanceUpDay OR @MinDate > @MaxDate
 		BEGIN
-			PRINT 'TASK_HourlySummaryDepData: There is no day to summarize or that day is earlier than balance up day'
+			PRINT 'EXEC TASK_HourlySummaryDepData: There is no day to summarize or that day is earlier than balance up day ==> RETURN'
 			RETURN
 		END
 	
@@ -101,10 +101,11 @@ BEGIN
 		IF @TempDay <= @MaxSumDate AND @isDailyArc = 0
 			EXEC dbo.Task_DepWinlostSUM @date = @TempDay 
 		
+		-- Execute SP to insert data for Playtech Casino
+		EXEC bodb02.dbo.Task_DOT_PlaytechCS_DailySummary_xtest @winlostdate = @TempDay
+		
 		IF @isManual = 0
 		BEGIN
-			-- Execute SP to insert data for Playtech Casino
-			EXEC bodb02.dbo.Task_DOT_PlaytechCS_DailySummary @winlostdate = @TempDay
 			-- Execute SP to insert data for AG Casino
 			EXEC bodb02.dbo.Task_DOT_AGCasino_DailySummary @winlostdate = @TempDay
 		END

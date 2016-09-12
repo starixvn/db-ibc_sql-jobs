@@ -1,12 +1,6 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb02]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DOT_PlaytechCS_DailySummary    Script Date: 12/1/2015 2:37:58 AM ******/
-/****** Object:  Stored Procedure dbo.Task_DOT_PlaytechCS_DailySummary    Script Date: 10/17/2014 3:30:47 PM ******/
-CREATE PROCEDURE [dbo].[Task_DOT_PlaytechCS_DailySummary]
+ALTER PROCEDURE [dbo].[Task_DOT_PlaytechCS_DailySummary]
 	@winlostdate datetime
 AS
 /*   
@@ -17,6 +11,7 @@ AS
 	- 20140519@Victor: update NetGaming formula
 	- 20140528@Victor: remove NetGaming column
 	- 20141017@Victor: remove RAISEERROR statement to avoid affection to rptDepWinlost Summary job
+	- 20160908@Francis: revise SP to adapt new summary flow [RedmineID: #61001]
  Param's Explanation:  
 
  - @winlostdate: The date need to summary
@@ -86,11 +81,11 @@ BEGIN TRY
 	FROM #PlaytechData
 
 	-- Insert data to rptDepWinlostByProduct
-	DELETE FROM bodb_report.dbo.rptDepWinlostByProduct WHERE Winlostdate = @Winlostdate AND sporttype = 254 
+	DELETE FROM bodb_report.dbo.rptDepWinlost_Trans WHERE Winlostdate = @Winlostdate AND sporttype = 254 AND PartnerID = -1
 
-	INSERT INTO bodb_report.dbo.rptDepWinlostByProduct (winlostdate, custid, sporttype, turnover, 
-														drawTO, winlost, playercomm, BetCount, Outstanding)
-	SELECT @winlostdate, custid, sporttype, turnover, 
+	INSERT INTO bodb_report.dbo.rptDepWinlost_Trans (Winlostdate, CustID, SportType, PartnerID, Turnover, 
+														DrawGame, Winloss, playercomm, BetCount, Outstanding)
+	SELECT @winlostdate, custid, sporttype, -1, turnover, 
 		drawTO, winlost, playercomm, BetCount, Outstanding
 	FROM #PlaytechData
 
