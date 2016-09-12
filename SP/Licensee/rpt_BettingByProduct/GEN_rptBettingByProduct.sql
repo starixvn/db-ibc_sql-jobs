@@ -25,6 +25,7 @@ AS
 		- 20160226@Victor: Support Cock Fighting data [Redmine: #52452]
 		- 20160315@Bruce: Summary data for Colossus bets(CB)
 		- 20160509@Bruce: Summary data for Voidbridge(VB)
+		- 20160907@Harper: #62820_Add AllBet for ProductMapping
 */
 
 BEGIN  
@@ -39,7 +40,7 @@ BEGIN
 	
 	INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 	SELECT Bettype, ProductId 
-	FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB')
+	FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB')  
 
 	INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 	SELECT Bettype, ProductId 
