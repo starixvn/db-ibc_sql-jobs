@@ -28,7 +28,10 @@ BEGIN
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
 --2.Check system movebet and balanceup
 	IF EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isMovingBet','isArchivingBet') AND VValue = '1')
-		RETURN
+		BEGIN
+			PRINT 'TASK_DepSumDataJob: MoveBet/BalanceUp is performing'
+			RETURN
+		END
 --4.Check today's daily archive
 		IF NOT EXISTS (SELECT 1 FROM bodb_Report.dbo.rptDepWinlost_Log WITH (NOLOCK) WHERE LogDate = @CurrentDate AND StatusID = 1 AND LogType = 2 --Daily Type
 					   UNION ALL SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isArchivingDEPdata','isSummaryingDEPdata') AND VValue = '1')

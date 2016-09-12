@@ -58,7 +58,10 @@ BEGIN
 		
 	--1.Check if there is any day to summarize or not
 	IF @MinDate < @BalanceUpDay OR @MinDate > @MaxDate
-		RETURN
+		BEGIN
+			PRINT 'TASK_HourlySummaryDepData: There is no day to summarize or that day is earlier than balance up day'
+			RETURN
+		END
 	
 	SELECT @TempDay = @MinDate, @MaxSumDate = CONVERT(DATE,DATEADD(DAY,-6,CURRENT_TIMESTAMP),112)
 

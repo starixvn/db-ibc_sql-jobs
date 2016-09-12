@@ -19,7 +19,11 @@ AS
 	*/
 BEGIN
 	IF @Winlostdate > CURRENT_TIMESTAMP OR NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype != 18000)
-		RETURN
+		BEGIN
+			PRINT 'GEN_HourlySummaryDepData: There is no data in bettrans to summarize or input @Winlostdate is greater than current day'
+			RETURN
+			RETURN
+		END
 	DECLARE @i TINYINT = 1
 	DECLARE @PreviousDay DATE = DATEADD(DAY,-1,@WinlostDate)
 	
