@@ -31,19 +31,6 @@ BEGIN
 	END
 	ELSE --incase moving bet
 	BEGIN
-		--DECLARE @MoveBetSchedule TABLE(ScheduleId TINYINT, MoveBetDay SMALLDATETIME)
-		--INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
-		--EXEC dbo.Task_MoveBetsDayByScheduleSel
-
-		--SELECT @TotalDays = COUNT(1)
-		--FROM @MoveBetSchedule
-
-		--SET @TotalDays = ISNULL(@TotalDays, 0)
-		--IF @TotalDays = 0 --no move bet on that day
-		--BEGIN
-		--	RETURN
-		--END
-
 		--get MB's duration from config
 		SELECT @Duration = CAST(ISNULL(VValue, '60') AS INT)
 		FROM dbo.SystemSettings WITH(NOLOCK)
