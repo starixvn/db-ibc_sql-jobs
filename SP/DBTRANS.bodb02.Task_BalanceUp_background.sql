@@ -27,13 +27,6 @@ Revisions:
 Param's Explanation: 
 
 */
---record endtime
-DECLARE @CurrentDateTime DATETIME
-SELECT @CurrentDateTime = GETDATE()
-
-EXEC dbo.Task_EstimatedTimeForJobDone @IsMoveBet = 0
-	, @CurrentDateTime = @CurrentDateTime
-	, @TotalMoveBetDays = NULL
 			
 IF @fdate IS NULL
 BEGIN
@@ -161,6 +154,14 @@ END
 IF @step = 2
 BEGIN
 -- ================== Clear BalanceTable and Perform Backup
+	
+	--record endtime
+	DECLARE @CurrentDateTime DATETIME
+	SELECT @CurrentDateTime = GETDATE()
+
+	EXEC dbo.Task_EstimatedTimeForJobDone @IsMoveBet = 0
+		, @CurrentDateTime = @CurrentDateTime
+		, @TotalMoveBetDays = NULL
 
 	-- UPDATE DBACC.bodb02.dbo.SystemSettings
 	-- SET VValue = '1'
