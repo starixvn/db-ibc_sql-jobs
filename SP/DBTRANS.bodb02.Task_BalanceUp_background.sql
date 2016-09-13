@@ -1,11 +1,6 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_BalanceUp_background]    Script Date: 10/12/2015 02:47:31 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Task_BalanceUp_background    Script Date: 7/6/2015 4:06:56 PM ******/
+
 ALTER PROCEDURE [dbo].[Task_BalanceUp_background]
 	@fdate as datetime = NULL,
 	@step as tinyint = 1
@@ -27,11 +22,12 @@ Revisions:
 	- 20131108@Elodie: Splitting bodb02 into CustDB (call custinfo, Customer, Exchange, ExchangeDailyOanda, by link database)		
 					   Use DBACC instead of DB06
     - 20150702@Daniel: Separated custDB to server DBCUST					   
+	- 20160909@Patrick: Record EndTime & IsArchiving to systemsettings table on DBTXN.bodb02
 	
 Param's Explanation: 
 
 */
-
+			
 IF @fdate IS NULL
 BEGIN
 	SELECT TOP(1) @fdate = DATEADD(day, 7, winlostdate)
@@ -44,6 +40,7 @@ BEGIN
 END
 
 PRINT '@fdate = ' + CONVERT(varchar(10), @fdate, 120)
+
 
 -- verify @fdate
 Declare @testdate datetime
@@ -157,10 +154,20 @@ END
 IF @step = 2
 BEGIN
 -- ================== Clear BalanceTable and Perform Backup
+	
+	--record endtime
+	DECLARE @CurrentDateTime DATETIME
+	SELECT @CurrentDateTime = GETDATE()
 
-	UPDATE DBACC.bodb02.dbo.SystemSettings
-	SET VValue = '1'
-	WHERE VName = 'isArchivingBet' 
+	EXEC dbo.Task_EstimatedTimeForJobDone @IsMoveBet = 0
+		, @CurrentDateTime = @CurrentDateTime
+		, @TotalMoveBetDays = NULL
+
+	-- UPDATE DBACC.bodb02.dbo.SystemSettings
+	-- SET VValue = '1'
+	-- WHERE VName = 'isArchivingBet' 
+	EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
+	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
 
 	-- for safety, shutdown trigger in balanceTable_tmp
 	EXEC dbo.Task_BalanceUp_TriggerControl @step = 1, @on = 0
@@ -470,7 +477,7 @@ BEGIN
 		from dbo.balancetable b
 			INNER JOIN CustDB.dbo.custinfo c ON b.custid = c.custid
 			INNER JOIN CustDB.dbo.exchange e ON c.currency = e.exchangeid
-			LEFT OUTER JOIN CustDB.dbo.ExchangeDailyOanda ed ON c.currency = ed.ExchangeId AND ed.ExchangeDate = @fdate
+			LEFT OUTER JOIN CustDB.dbo.ExchangeDailyOanda ed ON c.currency = ed.ExchangeId AND ed.ExchangeDate = DATEADD(day, -1, @fdate)
 
 
 		-- copy data, ready for insertion
@@ -547,9 +554,11 @@ BEGIN
 
 		EXEC dbo.balancecheck @fdate, 21
 
-	UPDATE DBACC.bodb02.dbo.SystemSettings
-	SET VValue = '0'
-	WHERE VName = 'isArchivingBet' 
+	-- UPDATE DBACC.bodb02.dbo.SystemSettings
+	-- SET VValue = '0'
+	-- WHERE VName = 'isArchivingBet' 
+	EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
+	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
 
 	SET @Doing = 'Task_BalanceUp_background : Done'
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
@@ -557,4 +566,5 @@ BEGIN
 END
 -- ================== Finishing
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_BalanceUp_background] TO [vnteam] AS [dbo]
+
+

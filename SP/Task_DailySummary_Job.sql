@@ -1,10 +1,6 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DailySummary_Job]    Script Date: 08/06/2015 02:01:42 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 ALTER PROCEDURE [dbo].[Task_DailySummary_Job]
 AS
 /*  
@@ -12,15 +8,16 @@ AS
 		- if modify anything here.  
 		- go check and modify SP Task_DailySummary_Job_IP2Country as well  
    
-    Created by: Unknown  
-	Date: Unknown  
+    Created by: Unknow  
+	Date: Unknow  
 	Task: Job Move Bets
 	DB: DBTXN.bodb02  
 
 	Revision:  
 		- 20140622@Thien: revise the job schedule for WC 2014, to perform Move Bet every day except Friday's morning (Balance Up day) 
 		- 20150806@Sophia: Control schedule by a new store procedure
-   
+		- 20160615@Viet: delete old data @ bettranssum before movebet
+		- 20160909@Patrick: Record EndTime value to systemsettings table on dbtrans.bodb02
  */
 
 BEGIN 
@@ -81,7 +78,7 @@ BEGIN
 	
 	DECLARE @Days AS TABLE (ScheduleId TINYINT, RunningDay DATETIME, IsFinish BIT DEFAULT (0))
 	INSERT INTO @Days (ScheduleId, RunningDay)
-	EXEC dbo.Task_MoveBetsDayByScheduleSel 
+		EXEC dbo.Task_MoveBetsDayByScheduleSel 
 
 	DECLARE @RunningDay DATETIME , @ScheduleId TINYINT
 	
@@ -91,6 +88,18 @@ BEGIN
 	END 
 	ELSE
 	BEGIN 
+		--Record endtime to systemsettings table
+		DECLARE @TotalMoveBetDays TINYINT, @CurrentDateTime DATETIME
+		SELECT @TotalMoveBetDays = COUNT(1), @CurrentDateTime = GETDATE()
+		FROM @Days
+		
+		EXEC dbo.Task_EstimatedTimeForJobDone @IsMoveBet = 1
+			, @CurrentDateTime = @CurrentDateTime
+			, @TotalMoveBetDays = @TotalMoveBetDays
+			
+		-- delete old data from bettranssum before movebet
+		TRUNCATE TABLE dbo.bettranssum
+		
 		WHILE 1 = 1 
 		BEGIN 
 			IF EXISTS (SELECT TOP 1 1 FROM @Days WHERE IsFinish = 0)
@@ -111,9 +120,5 @@ BEGIN
 				BREAK
 		END	
 	END
-END 
-
-
+END
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_DailySummary_Job] TO [vnteam] AS [dbo]
-

@@ -1,13 +1,5 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DailySummary]    Script Date: 7/4/2016 10:05:57 AM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DailySummary    Script Date: 5/4/2016 2:05:02 PM ******/
-/****** Object:  Stored Procedure dbo.Task_DailySummary    Script Date: 6/24/2015 9:33:49 AM ******/
 
 ALTER PROCEDURE [dbo].[Task_DailySummary]
 	@winlostdate datetime,
@@ -58,6 +50,7 @@ Revisions:
 	- 20160225@Sophia: Add new column TurnoverNoDraw [Redmine: #51427]
 	- 20160426@Sophia: Apply Voidbridge [Redmine: #55259]
 	- 20160704@Lukas: add waittime to wait for completely done whole move events before start next day
+	- 20160909@Patrick: Record IsMovingBet value to systemsettings table on dbtrans.bodb02
 	
  */
 
@@ -378,7 +371,9 @@ EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Copy @winlostdate
 EXEC dbo.Task_BalanceCheck @winlostdate, 1
 
 -- viet ----
+EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
 EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
+
 
 -- =====================
 SET @Doing = 'Task_DailySummary : MoveBet start.1'
@@ -446,6 +441,7 @@ BEGIN
 		AND b.recommend = @recommend
 	COMMIT TRANSACTION
 
+/*
 	SET @rec_cnt = @rec_cnt + 1
 	IF @rec_cnt = 10
 	BEGIN
@@ -454,7 +450,9 @@ BEGIN
 		SET @Doing = 'Task_DailySummary : MoveBet ' + CAST(@recommend as varchar(20))
 		--EXEC dbo.WriteLog_UserLog @UserID = 25521, @Doing = @Doing 
 	END
+*/
 	
+	WAITFOR DELAY '00:00:00:020'
 	FETCH NEXT FROM CS_recommend INTO @recommend
 END
 
@@ -470,6 +468,7 @@ SET @Doing = 'Task_DailySummary : MoveBet done'
 EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing 
 
 -- viet ----
+EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
 EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
  
 -- =====================
@@ -951,4 +950,8 @@ EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 WAITFOR DELAY '00:02:00' --- add this wait to make sure the delete event part run completely before start next day
 
 PRINT CONVERT(varchar(10), @winlostdate, 120)
+
+
+GO
+
 
