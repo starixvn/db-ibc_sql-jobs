@@ -15,6 +15,7 @@ AS
 				   -1: Summarize data from the minimum (winlostdate which has not been regenerated) in table rptDepWinlost_Manual til the day before yesterday
 	*/
 BEGIN
+	SET NOCOUNT ON
 	DECLARE @CurrentDate DATE,
 			@CurrentHour TINYINT,
 			@LogDesc VARCHAR(8000) = 'Date generated: ',
@@ -75,7 +76,6 @@ BEGIN
 				, CURRENT_TIMESTAMP AS StartTime		
 	SELECT @LogID = @@IDENTITY
 	
-
 	--3.Update SystemSettings
 	UPDATE bodb02.dbo.SystemSettings WITH (ROWLOCK, UPDLOCK) 
 	SET VValue = '1'
@@ -90,7 +90,7 @@ BEGIN
 		ELSE
 		EXEC bodb02.dbo.GEN_HourlySummaryDepData_Bettrans14 @Winlostdate = @TempDay, @NumberofCus = @NumberofCus OUTPUT
 												 , @isSuccessful = @isSuccessful OUTPUT
-												 
+								 
 		SELECT @LogDesc = @LogDesc + CONVERT(VARCHAR(20),@TempDay) + ' (No. of Customer affected: ' + CONVERT(VARCHAR(20), @NumberofCus) + 
 				CASE WHEN @TempDay < @MaxDate THEN '), ' ELSE ')' END
 				, @TotalSuccessfulDay = @TotalSuccessfulDay + @isSuccessful
@@ -100,9 +100,6 @@ BEGIN
 		
 		IF @TempDay <= @MaxSumDate AND @isDailyArc = 0
 			EXEC dbo.Task_DepWinlostSUM @date = @TempDay 
-		
-		-- Execute SP to insert data for Playtech Casino
-		EXEC bodb02.dbo.Task_DOT_PlaytechCS_DailySummary_xtest @winlostdate = @TempDay
 		
 		IF @isManual = 0
 		BEGIN
@@ -127,7 +124,7 @@ BEGIN
 		SELECT @LogDesc = @LogDesc + ' Type: hourly'
 	
 	--7.Check if all days have been summarized successfully
-	IF @TotalSuccessfulDay = DATEDIFF(DAY,@MinDate,@MaxDate)
+	IF (@TotalSuccessfulDay - 1) = DATEDIFF(DAY,@MinDate,@MaxDate)
 	BEGIN
 		SET @isSuccessful = 1
 		IF @isManual = 1

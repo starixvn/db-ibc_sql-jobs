@@ -15,6 +15,7 @@ AS
 						 -0: Data of the whole day has not been summarized completely
 	*/
 BEGIN
+	SET NOCOUNT ON
 	--1.Set low deadlock priority
 	SET DEADLOCK_PRIORITY LOW
 	
@@ -294,7 +295,7 @@ BEGIN
 		DELETE FROM #rptDepWinlost  
 		WHERE Deposit = 0 AND Withdrawal = 0 AND Aff2MemTransfer = 0 AND Bonus = 0 AND Adjustment = 0 AND TurnOver = 0 AND OutStanding = 0 AND Winloss = 0 
 			  AND Transfer3rd = 0 AND DrawGame = 0 AND Turnover_BA = 0 AND Comm_BA = 0 AND AmountDueTo_BA = 0 AND playercomm = 0 AND Transfer3rdOthers = 0
-			  AND Comm_BetTrade = 0 AND Comm_BetTrade_Full = 0 AND AmountDueTo_BetTrade = 0 AND BetCount = 0 AND TransferAmount = 0 AND TransferIn = 0 AND TransferOut = 0
+			  AND Comm_BetTrade = 0 AND AmountDueTo_BetTrade = 0
  
 		DELETE FROM #rptDepWinlostOutstanding
 		WHERE TurnOver = 0 AND OutStanding = 0 AND BetCount = 0

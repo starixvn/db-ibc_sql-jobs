@@ -18,16 +18,20 @@ AS
 						 -0: Data of the whole day has not been summarized completely
 	*/
 BEGIN
+	SET NOCOUNT ON
+	SET @isSuccessful = 1
 	RETURN
 	IF EXISTS(SELECT TOP 1 1 FROM dbo.bettrans WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype != 18000)
 		BEGIN
 			BEGIN TRY
 				IF EXISTS (SELECT TOP 1 1 FROM bodb_Report.dbo.rptDepWinlost_Trans WITH (NOLOCK) WHERE Winlostdate = @Winlostdate)
 					BEGIN
+						SET @isSuccessful = 1
 						PRINT 'GEN FROM bettrans14'
 					END
 				ELSE
 					BEGIN
+						SET @isSuccessful = 1
 						PRINT 'GEN FROM bettrans14'
 					END
 			END TRY
@@ -39,6 +43,7 @@ BEGIN
 	IF EXISTS(SELECT TOP 1 1 FROM dbo.bettrans14 WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype != 18000)
 		BEGIN
 			BEGIN TRY
+				SET @isSuccessful = 1
 				PRINT 'GEN FROM bettrans14'
 			END TRY
 			BEGIN CATCH

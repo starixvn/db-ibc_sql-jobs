@@ -18,6 +18,7 @@ AS
 						 -0: Data of the whole day has not been summarized completely
 	*/
 BEGIN
+	SET NOCOUNT ON
 	IF @Winlostdate > CURRENT_TIMESTAMP OR NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype != 18000)
 		BEGIN
 			PRINT 'EXEC GEN_HourlySummaryDepData: There is no data in bettrans to summarize or input @Winlostdate is greater than current day ==> RETURN'
@@ -82,7 +83,7 @@ BEGIN
 			SELECT @NumberofCus = @@ROWCOUNT 
 		END
 		
-		--3.Insert customers that are missing from rptDepWinlost_Main compared with rptDepwinlost_Trans 
+		--3.Insert customers that are missing from rptDepWinlost_Main compared with rptDepwinlost_Trans (first transaction)
 		TRUNCATE TABLE #rptDepWinlost_Main
 		INSERT INTO #rptDepWinlost_Main (CustID)
 		SELECT CustID
@@ -101,7 +102,7 @@ BEGIN
 						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0) AS OpeningBalance
 			 FROM bodb_Report.dbo.rptDepWinlost_Main m 
 				  INNER JOIN bodb_Report.dbo.rptDepWinlost_Trans t
-				  ON t.CustID = m.CustID AND m.Winlostdate = @PreviousDay AND t.Winlostdate = @PreviousDay) temp 
+				  ON t.CustID = m.CustID AND m.Winlostdate = @PreviousDay AND t.Winlostdate = @PreviousDay AND t.SportType = -1 AND t.PartnerID = -1) temp 
 			ON mt.CustID = temp.CustID
 			
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Main (Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
