@@ -1,7 +1,7 @@
 USE [bodb02]
 GO
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
-	@Winlostdate SMALLDATETIME = NULL,
+	@Winlostdate DATE = NULL,
 	@isSuccessful BIT = 0 OUTPUT
 AS
 	/*
@@ -464,7 +464,7 @@ BEGIN
 		UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
 		SET EndTime = CURRENT_TIMESTAMP, LogDesc = @LogDesc, StatusID = 0
 		WHERE LogID = @LogID	
-		PRINT 'EXEC TASK_RealtimeSummaryDepData, Winlostdate = ' + CONVERT(VARCHAR(20),@Winlostdate,112) + ', ErrMsg: ' + ERROR_MESSAGE()
+		PRINT 'EXEC TASK_RealtimeSummaryDepData, Winlostdate = ' + CONVERT(VARCHAR(20),@Winlostdate,120) + ', ErrMsg: ' + ERROR_MESSAGE()
 	END CATCH
 	
 	DROP TABLE #rptDepWinlostDetails 
