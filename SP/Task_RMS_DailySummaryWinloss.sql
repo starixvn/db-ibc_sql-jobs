@@ -81,8 +81,24 @@ SET NOCOUNT ON
 	modds   SMALLMONEY NULL,
 	betteam NVARCHAR(10) NULL,
 	refno BIGINT NOT NULL,
-	matchId INT NULL,
+	matchId INT NULL
 	)
+	CREATE NONCLUSTERED INDEX [IX_refno] ON [dbo].#tmpbettrans 
+	(
+		[refno] ASC
+	)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
+	
+
+	CREATE TABLE #tmpbettransm(	
+	refno BIGINT NOT NULL,
+	sporttype INT NULL)	
+	
+	CREATE CLUSTERED INDEX [IX_refno] ON [dbo].#tmpbettransm 
+	(
+		[refno] ASC
+	)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
+	
+	
 	IF NOT EXISTS (SELECT TOP 1 1 FROM rmSumWinloss WITH(NOLOCK) WHERE winlostdate = @winlostdate)
 	BEGIN
 	INSERT INTO #tmpbettrans(
@@ -132,6 +148,26 @@ SET NOCOUNT ON
 				AND matchid IN(9,29)
 				AND bettype IN(9,29)
 				AND b.statusid IN (111,112,113)
+				
+	INSERT INTO #tmpbettransm(	refno ,	sporttype)
+	SELECT a.refno,m.sporttype 
+	FROM #tmpbettrans b (NOLOCK)
+	INNER JOIN DBARC.bodb_Archive.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
+	INNER JOIN DBARC.bodb_Archive.dbo.match_bk m(NOLOCK) ON a.matchid=m.matchid	
+	
+	INSERT INTO #tmpbettransm(	refno ,	sporttype)
+	SELECT a.refno,m.sporttype 
+	FROM #tmpbettrans b (NOLOCK)
+	INNER JOIN bodb02.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
+	INNER JOIN bodb02.dbo.match m(NOLOCK) ON a.matchid=m.matchid	
+	
+	INSERT INTO #tmpbettransm(	refno ,	sporttype)
+	SELECT a.refno,m.sporttype 
+	FROM #tmpbettrans b (NOLOCK)
+	INNER JOIN bodb02.dbo.bettransm14 a(NOLOCK) ON a.refno=b.refno
+	INNER JOIN bodb02.dbo.match14 m(NOLOCK) ON a.matchid=m.matchid	
+	
+	
 	UPDATE bb
 	SET bb.transid2 = aa.transid2
 	FROM #tmpbettrans  bb (NOLOCK) INNER JOIN 
@@ -140,11 +176,8 @@ SET NOCOUNT ON
 	WHEN COUNT(DISTINCT(sporttype))<>1 AND MIN(sporttype)=1 THEN  -3
 	ELSE -1
 	END AS transid2
-	FROM #tmpbettrans b (NOLOCK)
-	INNER JOIN bodb02.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
-	INNER JOIN bodb02.dbo.match c(NOLOCK) ON a.matchid=c.matchid	
-	GROUP BY b.refno) aa ON aa.refno=bb.refno	
-			
+	FROM #tmpbettransm) aa ON aa.refno=bb.refno	
+		
 		
 	IF @@ERROR > 0
 		BEGIN			
@@ -246,7 +279,9 @@ SET NOCOUNT ON
 			RETURN
 		END			
 	END	
-	
+		drop table #tmpbettrans
+		drop table #TemprmSumWinloss
+		drop table #tmpbettransm
 
 GO
 
