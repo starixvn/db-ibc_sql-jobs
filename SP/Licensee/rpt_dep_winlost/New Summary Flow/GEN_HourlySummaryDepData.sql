@@ -1,7 +1,7 @@
 USE [bodb02]
 GO
 ALTER PROCEDURE [dbo].[GEN_HourlySummaryDepData]
-	@Winlostdate SMALLDATETIME,
+	@Winlostdate DATE,
 	@NumberofCus INT = 0 OUTPUT,
 	@isSuccessful BIT = 0 OUTPUT
 AS
@@ -94,14 +94,13 @@ BEGIN
 			WHEN NOT MATCHED THEN	
 				INSERT (Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
 				VALUES (@Winlostdate, SOURCE.CustID, SOURCE.OpeningBalance, SOURCE.actualrate, SOURCE.srecommend, SOURCE.mrecommend, SOURCE.recommend, SOURCE.currency);
-					
-			--UPDATE m
-			--SET m.OpeningBalance = t.OpeningBalance
-			--FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (ROWLOCK, UPDLOCK) 
-			--	INNER JOIN #rptDepWinlost_Main t ON m.CustID = t.CustID AND m.Winlostdate = @Winlostdate
 				
 			SELECT @NumberofCus = @@ROWCOUNT 
 		END
+		
+		--Delete redundant data
+		DELETE FROM bodb_Report.dbo.rptDepWinlost_Main WITH (ROWLOCK, UPDLOCK) 
+		WHERE OpeningBalance = 0 AND Winlostdate = @Winlostdate
 		
 		--3.Insert customers that are missing from rptDepWinlost_Main compared with rptDepwinlost_Trans (first transaction)
 		TRUNCATE TABLE #rptDepWinlost_Main

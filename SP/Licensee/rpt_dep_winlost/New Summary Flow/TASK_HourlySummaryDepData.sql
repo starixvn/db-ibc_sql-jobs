@@ -91,7 +91,7 @@ BEGIN
 		EXEC bodb02.dbo.GEN_HourlySummaryDepData_Bettrans14 @Winlostdate = @TempDay, @NumberofCus = @NumberofCus OUTPUT
 												 , @isSuccessful = @isSuccessful OUTPUT
 								 
-		SELECT @LogDesc = @LogDesc + CONVERT(VARCHAR(20),@TempDays) + ' (No. of Customer affected: ' + CONVERT(VARCHAR(20), @NumberofCus) + 
+		SELECT @LogDesc = @LogDesc + CONVERT(VARCHAR(20),@TempDay) + ' (No. of Customer affected: ' + CONVERT(VARCHAR(20), @NumberofCus) + 
 				CASE WHEN @TempDay < @MaxDate THEN '), ' ELSE ')' END
 				, @TotalSuccessfulDay = @TotalSuccessfulDay + @isSuccessful
 		
