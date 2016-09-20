@@ -171,14 +171,14 @@ SET NOCOUNT ON
 	
 	UPDATE bb
 	SET bb.transid2 = aa.transid2
-	FROM #tmpbettrans  bb (NOLOCK) INNER JOIN 
+	FROM #tmpbettrans  bb INNER JOIN 
 	(SELECT b.refno,
 	CASE WHEN COUNT(DISTINCT(sporttype))=1 THEN MIN(sporttype)
 	WHEN COUNT(DISTINCT(sporttype))<>1 AND MIN(sporttype)=1 THEN  -3
 	ELSE -1
 	END AS transid2
-	FROM #tmpbettransm) aa ON aa.refno=bb.refno	
-		
+	FROM #tmpbettransm b 		
+	GROUP BY b.refno) aa ON aa.refno=bb.refno	
 		
 	IF @@ERROR > 0
 		BEGIN			
@@ -283,6 +283,7 @@ SET NOCOUNT ON
 		drop table #tmpbettrans
 		drop table #TemprmSumWinloss
 		drop table #tmpbettransm
+
 
 GO
 
