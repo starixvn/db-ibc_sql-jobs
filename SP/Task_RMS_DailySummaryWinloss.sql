@@ -26,6 +26,7 @@ AS
 			- 20130918@Johnson: change to use table rmSumWinloss instead of rmSumWinloss2
 			- 20130924@Johnson: add column recommend into rmSumWinloss
 			- 20160510@Winnie: Add combo parlay
+			- 20160920@Winnie: hot fix NULL in sporttype RedmineID: #64286
 		Parameter's Explanation:
 	*/
 SET NOCOUNT ON
