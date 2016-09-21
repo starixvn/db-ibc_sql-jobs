@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02 : WinLost report update]    Script Date: 01/15/2015 03:17:18 ******/
+/****** Object:  Job [bodb02 : WinLost report update]    Script Date: 09/15/2016 07:04:21 ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 01/15/2015 03:17:18 ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 09/15/2016 07:04:21 ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -15,7 +15,7 @@ END
 
 DECLARE @jobId BINARY(16)
 EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : WinLost report update', 
-		@enabled=0, 
+		@enabled=1, 
 		@notify_level_eventlog=2, 
 		@notify_level_email=2, 
 		@notify_level_netsend=0, 
@@ -26,12 +26,12 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : WinLost report upda
 		@owner_login_name=N'vnDBA', 
 		@notify_email_operator_name=N'vnDBA', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Cal Job : Task_rptWinLost_UpdateTable]    Script Date: 01/15/2015 03:17:18 ******/
+/****** Object:  Step [Cal Job : Task_rptWinLost_UpdateTable]    Script Date: 09/15/2016 07:04:21 ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Cal Job : Task_rptWinLost_UpdateTable', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
 		@on_success_action=3, 
-		@on_success_step_id=0, 
+		@on_success_step_id=4, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
 		@retry_attempts=0, 
@@ -65,7 +65,7 @@ END',
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Cal Job : Task_DOT_Dep_DailySummary_FULL]    Script Date: 01/15/2015 03:17:18 ******/
+/****** Object:  Step [Cal Job : Task_DOT_Dep_DailySummary_FULL]    Script Date: 09/15/2016 07:04:21 ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Cal Job : Task_DOT_Dep_DailySummary_FULL', 
 		@step_id=2, 
 		@cmdexec_success_code=0, 
@@ -108,7 +108,7 @@ END',
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Cal Job : Check data on rptDepWinlost and rptDepWinlostByProduct]    Script Date: 01/15/2015 03:17:18 ******/
+/****** Object:  Step [Cal Job : Check data on rptDepWinlost and rptDepWinlostByProduct]    Script Date: 09/15/2016 07:04:21 ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Cal Job : Check data on rptDepWinlost and rptDepWinlostByProduct', 
 		@step_id=3, 
 		@cmdexec_success_code=0, 
@@ -119,7 +119,8 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Cal Job 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'DECLARE @FromDate SMALLDATETIME, @ToDate SMALLDATETIME
+		@command=N'
+DECLARE @FromDate SMALLDATETIME, @ToDate SMALLDATETIME
 DECLARE @NumberOfDays INT
 SELECT @FromDate = MIN(winlostdate) FROM bodb_Report.dbo.rptDepWinlost WITH(NOLOCK)
 SELECT @ToDate = CONVERT(VARCHAR(10), GETDATE(), 120)
@@ -136,7 +137,7 @@ FROM (
 PRINT ''rptDepWinlost - Check on data from '' + CONVERT(VARCHAR(10), @FromDate, 120) + '' to '' + CONVERT(VARCHAR(10), @ToDate, 120)
 IF ( @NumberOfDays != (DATEDIFF(DAY, @FromDate, @ToDate) + 1) )
 BEGIN
-    RAISERROR(15000,1,1,''Please have a check on rptDepWinlost immediately due to some days without data'')
+    RAISERROR(''Please have a check on rptDepWinlost immediately due to some days without data'',16,1)
 END
  
 /* rptDepWinlostByProduct */
@@ -151,12 +152,12 @@ FROM (
 PRINT ''rptDepWinlostByProduct - Check on data from '' + CONVERT(VARCHAR(10), @FromDate, 120) + '' to '' + CONVERT(VARCHAR(10), @ToDate, 120)
 IF ( @NumberOfDays != (DATEDIFF(DAY, @FromDate, @ToDate) + 1) )
 BEGIN
-    RAISERROR(15000,1,1,''Please have a check on rptDepWinlostByProduct immediately due to some days without data'')
+    RAISERROR(''Please have a check on rptDepWinlostByProduct immediately due to some days without data'',16,1)
 END', 
 		@database_name=N'bodb_Report', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Cal Job : Task_Aff_MemberDailySummary_IA]    Script Date: 01/15/2015 03:17:18 ******/
+/****** Object:  Step [Cal Job : Task_Aff_MemberDailySummary_IA]    Script Date: 09/15/2016 07:04:21 ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Cal Job : Task_Aff_MemberDailySummary_IA', 
 		@step_id=4, 
 		@cmdexec_success_code=0, 
@@ -201,12 +202,12 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Every 2 H
 		@freq_type=4, 
 		@freq_interval=1, 
 		@freq_subday_type=8, 
-		@freq_subday_interval=2, 
+		@freq_subday_interval=1, 
 		@freq_relative_interval=0, 
 		@freq_recurrence_factor=0, 
 		@active_start_date=20070130, 
 		@active_end_date=99991231, 
-		@active_start_time=430, 
+		@active_start_time=3030, 
 		@active_end_time=235959, 
 		@schedule_uid=N'bb2fd07b-9c42-4a4a-a97c-9d6fc10e43d9'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback

@@ -1,5 +1,10 @@
 USE [bodb02]
 GO
+/****** Object:  StoredProcedure [dbo].[GEN_HourlySummaryDepData]    Script Date: 09/21/2016 04:33:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[GEN_HourlySummaryDepData]
 	@Winlostdate DATE,
 	@NumberofCus INT = 0 OUTPUT,
@@ -50,40 +55,38 @@ BEGIN
 		--2.Check if the input @Winlostdate's data has not been summarized for rptDepWinlost_Main
 		IF NOT EXISTS (SELECT TOP 1 1 FROM bodb_Report.dbo.rptDepWinlost_Main WITH (NOLOCK) WHERE winlostdate = @Winlostdate)
 		BEGIN
-			--Insert if not exists
+			--Insert if data do not exists 
 			INSERT INTO bodb_Report.dbo.rptDepWinlost_Main (Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
 				SELECT @Winlostdate, m.CustID
 						, (m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
 						   + ISNULL(t.Adjustment,0) - ISNULL(t.Outstanding,0) + ISNULL(t.Winloss,0) + ISNULL(t.playercomm,0) + ISNULL(t.Transfer3rd,0) 
 						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0))--compute @Winlostdate's OpeningBalance
-						, m.actualrate, m.srecommend, m.mrecommend, m.recommend, m.currency
+						, e.actualrate, m.srecommend, m.mrecommend, m.recommend, m.currency
 				FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
+					INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) 
+					ON m.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate
 					LEFT JOIN bodb_Report.dbo.rptDepWinlost_Trans t WITH (NOLOCK) 
-					ON m.Winlostdate = t.Winlostdate AND m.CustID = t.CustID AND t.SportType = -1 AND t.PartnerID = -1 --only get attributes of rptDepWinlost
+					ON m.Winlostdate = t.Winlostdate AND m.CustID = t.CustID AND t.SportType = -1 AND t.PartnerID = -1 --only get attributes of rptDepWinlost]
 				WHERE m.Winlostdate = @PreviousDay
 			SELECT @NumberofCus = @@ROWCOUNT
 		END
 		ELSE
 		BEGIN
-			--Merge OpeningBalance if exists
-			INSERT INTO #rptDepWinlost_Main (CustID, OpeningBalance)
+			--Merge customers' @Winlostdate OpeningBalance if customers have transactions on @PreviousDay
+			INSERT INTO #rptDepWinlost_Main (CustID, OpeningBalance, srecommend, mrecommend, recommend, currency)
 				SELECT m.CustID
 					   , (m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
 						   + ISNULL(t.Adjustment,0) - ISNULL(t.Outstanding,0) + ISNULL(t.Winloss,0) + ISNULL(t.playercomm,0) + ISNULL(t.Transfer3rd,0) 
 						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0))--compute @Winlostdate's OpeningBalance
+					   , m.srecommend, m.mrecommend, m.recommend, m.currency
 				FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
 					 INNER JOIN bodb_Report.dbo.rptDepWinlost_Trans t WITH (NOLOCK) 
-					 ON m.CustID = t.CustID AND m.Winlostdate = @PreviousDay AND t.Winlostdate = @PreviousDay AND t.SportType = -1 AND t.PartnerID = -1--only get attributes of rptDepWinlost
+					 ON t.CustID = m.CustID AND m.Winlostdate = @PreviousDay AND t.Winlostdate = @PreviousDay AND t.SportType = -1 AND t.PartnerID = -1--only get attributes of rptDepWinlost
 			
 			UPDATE mt
 			SET mt.actualrate = e.ActualRate
-				, mt.srecommend = c.srecommend
-				, mt.mrecommend = c.mrecommend
-				, mt.recommend = c.recommend
-				, mt.currency = c.currency
 			FROM #rptDepWinlost_Main mt
-				 INNER JOIN dbo.custInfo c WITH (NOLOCK) ON mt.CustID = c.custid AND c.roleid = 1
-				 INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON c.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate	
+				 INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON mt.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate	
 			
 			MERGE bodb_Report.dbo.rptDepWinlost_Main AS TARGET
 			USING (SELECT CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency FROM #rptDepWinlost_Main)
@@ -96,6 +99,23 @@ BEGIN
 				VALUES (@Winlostdate, SOURCE.CustID, SOURCE.OpeningBalance, SOURCE.actualrate, SOURCE.srecommend, SOURCE.mrecommend, SOURCE.recommend, SOURCE.currency);
 				
 			SELECT @NumberofCus = @@ROWCOUNT 
+			
+			--Update customers' @Winlostdate OpeningBalance = @PreviousDay OpeningBalance if customers don't have transactions on @PreviousDay
+			--This is for the case that winlostdate of one or some tickets (in the past) have been updated
+			TRUNCATE TABLE #rptDepWinlost_Main
+			INSERT INTO #rptDepWinlost_Main (CustID, OpeningBalance)
+				SELECT m.CustID, m.OpeningBalance
+				FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK)
+				WHERE m.Winlostdate = @PreviousDay
+					AND m.CustID NOT IN (SELECT CustID 
+										 FROM bodb_Report.dbo.rptDepWinlost_Trans t WITH (NOLOCK) 
+										 WHERE t.Winlostdate = @PreviousDay AND t.SportType = -1 AND t.PartnerID = -1)--only get attributes of rptDepWinlost
+										 
+			UPDATE m WITH (UPDLOCK, ROWLOCK)
+			SET m.OpeningBalance = mt.OpeningBalance
+			FROM bodb_Report.dbo.rptDepWinlost_Main m 
+				INNER JOIN #rptDepWinlost_Main mt ON m.CustID = mt.CustID AND m.Winlostdate = @Winlostdate 
+			WHERE m.OpeningBalance != mt.OpeningBalance
 		END
 		
 		--Delete redundant data

@@ -114,7 +114,7 @@ BEGIN
 				  AND b.matchid >= 0
 				  AND c.roleid = 1
 			GROUP BY b.custid, b.bettype
-			OPTION (RECOMPILE)
+			OPTION (RECOMPILE, MAXDOP 8)
 			
 			INSERT INTO #rptDepWinlostOutstanding (CustID, SportType, TurnOver, OutStanding, BetCount)
 			SELECT t.custid, t.SportType, SUM(t.TurnOver), SUM(t.OutStanding), SUM(t.BetCount)
@@ -178,7 +178,7 @@ BEGIN
 				  AND b.matchid >= 0
 				  AND c.roleid = 1
 			GROUP BY b.custid, b.bettype
-			OPTION (RECOMPILE)
+			OPTION (RECOMPILE, MAXDOP 8)
 			
 			INSERT INTO #rptDepWinlostOutstanding (CustID, SportType, TurnOver, OutStanding, BetCount)
 			SELECT t.custid, t.SportType, SUM(t.TurnOver), SUM(t.OutStanding), SUM(t.BetCount)
