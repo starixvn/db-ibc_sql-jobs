@@ -100,7 +100,6 @@ SET NOCOUNT ON
 		[refno] ASC
 	)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 	
-	CREATE TABLE #tmpBettransOLD (transid BIGINT PRIMARY KEY,hdp2 SMALLINT, betteam NVARCHAR(10), betcheck BIGINT)
 	
 	IF NOT EXISTS (SELECT TOP 1 1 FROM rmSumWinloss WITH(NOLOCK) WHERE winlostdate = @winlostdate)
 	BEGIN
@@ -181,26 +180,7 @@ SET NOCOUNT ON
 	END AS transid2
 	FROM #tmpbettransm b 		
 	GROUP BY b.refno) aa ON aa.refno=bb.refno	
-	-- bettype 29 old	
-	INSERT INTO #tmpBettransOLD (transid,  hdp2,betcheck)
-	SELECT	transid,  LEN(betteam),hdp2 -- number of match
-	FROM	#tmpbettrans 
-	WHERE	bettype = 29
-			AND betcheck IS NULL	
 	
-	UPDATE tmpb
-	SET betteam = (SELECT result FROM dbo.f_BinaryToDecimal(REVERSE(REPLICATE('1', hdp2 - 1) + '0')))	
-	FROM #tmpBettransOLD tmpb
-
-	UPDATE b WITH(ROWLOCK, UPDLOCK)
-	SET	hdp2 = tmp.hdp2
-		,betteam = tmp.betteam
-		,betcheck = tmp.betcheck 	
-	FROM	#tmpbettrans b
-	INNER JOIN #tmpBettransOLD tmp
-		ON	b.transid = tmp.transid
-			AND b.matchid = 29
-			AND b.bettype = 29
 			
 	IF @@ERROR > 0
 		BEGIN			
@@ -230,7 +210,9 @@ SET NOCOUNT ON
 				,b.custid
 				,transid2
 				,statusid
-				,CASE WHEN bettype=9 THEN RIGHT(betcheck,len(betcheck)-1) ELSE b.hdp2 END  AS combo
+				,CASE WHEN bettype=9 THEN RIGHT(betcheck,len(betcheck)-1) 
+					WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam)
+					ELSE hdp2 END AS combo
 				,username
 				,currency
 				,SUM(stake)
@@ -246,7 +228,9 @@ SET NOCOUNT ON
 					  ELSE 3 END AS ParlayType	
 		FROM #tmpbettrans b			
 		GROUP BY winlostdate, b.custid, transid2, statusid, username, currency, actualrate,
-				CASE WHEN bettype=9 THEN RIGHT(betcheck,len(betcheck)-1) ELSE b.hdp2 END,
+					CASE WHEN bettype=9 THEN RIGHT(betcheck,len(betcheck)-1) 
+					  WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam)
+					ELSE hdp2 END, 
 				recommend,
 				CASE WHEN bettype=9 THEN 1 
 					  WHEN bettype=29 AND betteam='1' THEN 2
