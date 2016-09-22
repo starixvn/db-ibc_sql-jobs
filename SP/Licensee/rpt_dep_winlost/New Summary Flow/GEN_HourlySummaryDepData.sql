@@ -19,8 +19,8 @@ AS
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized
 		- @NumberofCus: The number of customer have been summarized
-		- @isSuccessful: -1: Data of the whole day has been summarized completely
-						 -0: Data of the whole day has not been summarized completely
+		- @isSuccessful: -0: Data of the whole day have not been summarized completely
+						 -1: Data of the whole day have been summarized completely
 	*/
 BEGIN
 	SET NOCOUNT ON
@@ -31,6 +31,7 @@ BEGIN
 		END
 	DECLARE @i TINYINT = 1
 	DECLARE @PreviousDay DATE = DATEADD(DAY,-1,@WinlostDate)
+	SET @isSuccessful = 0
 	
 	CREATE TABLE #rptDepWinlost_Main (CustID INT, OpeningBalance MONEY DEFAULT (0), actualrate FLOAT DEFAULT (0), srecommend INT, mrecommend INT, recommend INT, currency INT
 											  UNIQUE CLUSTERED (CustID))
@@ -146,14 +147,21 @@ BEGIN
 			ON mt.CustID = tmp.CustID
 			
 		UPDATE mt
-			SET mt.actualrate = e.ActualRate
-				, mt.srecommend = c.srecommend
-				, mt.mrecommend = c.mrecommend
-				, mt.recommend = c.recommend
-				, mt.currency = c.currency
-			FROM #rptDepWinlost_Main mt
-				 INNER JOIN dbo.custInfo c WITH (NOLOCK) ON mt.CustID = c.custid AND c.roleid = 1
-				 INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON c.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate		
+		SET mt.srecommend = c.srecommend
+			, mt.mrecommend = c.mrecommend
+			, mt.recommend = c.recommend
+			, mt.currency = CASE 
+								WHEN c.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
+								WHEN c.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
+								ELSE c.currency 
+							END
+		FROM #rptDepWinlost_Main mt
+			 INNER JOIN dbo.custInfo c WITH (NOLOCK) ON mt.CustID = c.custid AND c.roleid = 1
+			 
+		UPDATE mt
+		SET mt.actualrate = e.ActualRate
+		FROM #rptDepWinlost_Main mt	 
+			INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON mt.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate		
 			
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Main (Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
 			SELECT @Winlostdate, CustID, OpeningBalance, ActualRate, srecommend, mrecommend, recommend, currency
