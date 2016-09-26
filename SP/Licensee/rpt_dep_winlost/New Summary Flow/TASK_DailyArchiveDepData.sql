@@ -19,7 +19,7 @@ BEGIN
 			@MaxArchiveDate DATE,
 			@MaxSumDate DATE,
 			@LogID BIGINT,
-			@isSuccessful BIT,
+			@isSuccessful BIT = 0,
 			@NumberofCus INT
 			
 	SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112)
@@ -42,8 +42,6 @@ BEGIN
 	
 	WHILE @MinSumDate <= @MaxSumDate
 	BEGIN
-		--5.Call sp 'Task_DepWinlostSUM' to regen data for 9 days (from the minimum winlostdate of rptDepWinlost)
-		EXEC dbo.Task_DepWinlostSUM @date = @MinSumDate 	
 		IF @MinSumDate <= @MaxArchiveDate
 			BEGIN
 				--3.Copy data for rptDepWinlost
@@ -92,6 +90,9 @@ BEGIN
 				SELECT @LogDesc = @LogDesc + CONVERT(VARCHAR(20),@MinSumDate) + ' (No. of Customer affected: ' + CONVERT(VARCHAR(20), @NumberofCus) + 
 						CASE WHEN @MinSumDate < @MaxArchiveDate THEN '), ' ELSE ')' END
 			END
+		--5.Call sp 'Task_DepWinlostSUM' to regen data for 9 days (from the minimum winlostdate of rptDepWinlost)
+		EXEC dbo.Task_DepWinlostSUM @date = @MinSumDate 	
+		
 		SELECT @MinSumDate = DATEADD(DAY,1,@MinSumDate)
 	END
 	
