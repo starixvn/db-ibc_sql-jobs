@@ -27,7 +27,7 @@ AS
 			- 20130924@Johnson: add column recommend into rmSumWinloss
 			- 20160510@Winnie: Add combo parlay
 			- 20160920@Winnie: hot fix NULL in sporttype  RedmineID: #64286
-			- 20160922@Winnie: fix ticket bettype 29 old format  RedmineID: #64286
+			- 20160922@Winnie: fix ticket bettype 29 old format & confict refno with racing  RedmineID: #64286
 		Parameter's Explanation:
 	*/
 SET NOCOUNT ON
@@ -156,19 +156,21 @@ SET NOCOUNT ON
 	FROM #tmpbettrans b (NOLOCK)
 	INNER JOIN DBARC.bodb_Archive.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
 	INNER JOIN DBARC.bodb_Archive.dbo.match_bk m(NOLOCK) ON a.matchid=m.matchid	
+	WHERE m.sporttype<99
 	
 	INSERT INTO #tmpbettransm(	refno ,	sporttype)
 	SELECT a.refno,m.sporttype 
 	FROM #tmpbettrans b (NOLOCK)
 	INNER JOIN bodb02.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
 	INNER JOIN bodb02.dbo.match m(NOLOCK) ON a.matchid=m.matchid	
+	WHERE m.sporttype<99
 	
 	INSERT INTO #tmpbettransm(	refno ,	sporttype)
 	SELECT a.refno,m.sporttype 
 	FROM #tmpbettrans b (NOLOCK)
 	INNER JOIN bodb02.dbo.bettransm14 a(NOLOCK) ON a.refno=b.refno
 	INNER JOIN bodb02.dbo.match14 m(NOLOCK) ON a.matchid=m.matchid	
-	
+	WHERE m.sporttype<99
 	
 	UPDATE bb
 	SET bb.transid2 = aa.transid2
