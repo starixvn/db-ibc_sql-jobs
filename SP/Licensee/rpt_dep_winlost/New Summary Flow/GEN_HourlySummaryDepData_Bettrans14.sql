@@ -1,5 +1,10 @@
 USE [bodb02]
 GO
+/****** Object:  StoredProcedure [dbo].[GEN_HourlySummaryDepData_Bettrans14]    Script Date: 09/26/2016 02:49:28 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[GEN_HourlySummaryDepData_Bettrans14]
 	@Winlostdate SMALLDATETIME,
 	@NumberofCus INT = 0 OUTPUT,
@@ -38,7 +43,7 @@ BEGIN
 		WHILE (@i <= 3 AND @isSuccessful = 0)
 			BEGIN
 				WAITFOR DELAY '00:00:01.000'
-				EXEC dbo.TASK_RealtimeSummaryDepData @Winlostdate = @Winlostdate, @isSuccessful = @isSuccessful OUTPUT
+				EXEC dbo.TASK_RealtimeSummaryDepData_Bettrans14 @Winlostdate = @Winlostdate, @isSuccessful = @isSuccessful OUTPUT
 				SELECT @i = @i + 1 
 			END
 		IF @isSuccessful = 1

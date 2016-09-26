@@ -1,6 +1,6 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]    Script Date: 09/23/2016 02:58:10 ******/
+/****** Object:  StoredProcedure [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]    Script Date: 09/26/2016 02:50:04 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
