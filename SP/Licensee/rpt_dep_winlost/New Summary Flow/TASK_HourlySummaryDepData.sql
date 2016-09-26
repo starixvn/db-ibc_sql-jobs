@@ -11,17 +11,11 @@ AS
 		DB: DBRPT.bodb_Report
 		Revisions:
 		Input Params:	
-		- @isDailyArc: -0: Called for data re-summary of hourly summary task (data will be re-summarize from the minimum day of early day and manually summarized day til today)
-				       -1: Called for data re-summary of daily archive task (data will be re-summarize from the latest day in bettrans14 til today)
-		- @isSuccessful: -0: Data of all days have not been summarized completely
-						 -1: Data of all days have been summarized completely
-						 		  
+		@isManual: -0: Summarize data for 2 days: today and yesterday
+				   -1: Summarize data from the minimum (winlostdate which has not been regenerated) in table rptDepWinlost_Manual til the day before yesterday
 	*/
 BEGIN
 	SET NOCOUNT ON
-	
-	SET @isSuccessful = 0
-	
 	DECLARE @CurrentDate DATE,
 			@CurrentHour TINYINT,
 			@LogDesc VARCHAR(8000) = 'Date generated: ',
@@ -32,6 +26,7 @@ BEGIN
 			@isManual BIT = 0,
 			@LogID BIGINT,
 			@NumberofCus INT= 0,
+			@ErrMsg VARCHAR(MAX) = '',
 			@TempDay DATE = NULL,
 			@TotalSuccessfulDay TINYINT = 0,
 			@MoveBetDay SMALLDATETIME,
@@ -40,12 +35,12 @@ BEGIN
 	SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112)
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
 	
-	SELECT @MoveBetDay = MAX(eventdate)
-	FROM bodb02.dbo.match14 WITH(NOLOCK)
-	
 	SELECT TOP 1 @BalanceUpDay = winlostdate
 	FROM bodb02.dbo.bettrans WITH(NOLOCK)
 	WHERE bettype = 20000 and matchid = 0 and custid = 3
+	
+	SELECT @MoveBetDay = MAX(eventdate)
+	FROM bodb02.dbo.match14 WITH(NOLOCK)
 	
 	--Check if is there any day need to be manually resummarized
 	IF EXISTS (SELECT TOP 1 1 FROM dbo.rptDepWinlost_Manual WITH (NOLOCK) WHERE IsSummarized = 0)

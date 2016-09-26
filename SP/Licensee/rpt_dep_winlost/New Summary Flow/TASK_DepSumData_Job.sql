@@ -15,7 +15,7 @@ AS
 		DB: DBACC.bodb02
 		Revisions:
 		Input Params:	
-		- @IdlingHour: The time when the system is more idle
+		- @IdlingHour: 	The point when the system is more idle
 	*/
 BEGIN
 --1.Check server's CPU <= 65%
