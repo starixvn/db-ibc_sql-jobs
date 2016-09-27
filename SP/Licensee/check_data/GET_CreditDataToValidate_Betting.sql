@@ -1,11 +1,5 @@
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_licensee]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GET_CreditDataToValidate_Betting    Script Date: 7/15/2016 10:24:59 AM ******/
-
-
 ALTER PROCEDURE [dbo].[GET_CreditDataToValidate_Betting] 
      @Date smalldatetime 
 	,@DrawFilter tinyint = 1
@@ -23,6 +17,7 @@ Revisions:
     - 20150119@daniel: Fix SB bettype condition
     - 20160523@Francis: Change bettype range for RNG Casino (hotfix #55730)
 	- 20160616@Jim: Changes to data integrity automail (#59249)	
+	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -87,7 +82,7 @@ SELECT  ProductPrefix
 	    ,SUM(TurnOver)
 	    ,SUM(Winloss)
 	    ,SUM(BetCount)
-FROM dbo.rpt_Betting b (NOLOCK)
+FROM bodb_LicenseeReport.dbo.rpt_Betting b (NOLOCK)
 	INNER JOIN  @tblSport s ON b.bettype = s.bettype
 WHERE b.rptDate = @Date
 	  AND b.Status IN (111,112,113,114,115)
@@ -237,15 +232,6 @@ SET NOCOUNT OFF
 
 
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[GET_CreditDataToValidate_Betting] TO [bodbLicenseeNet] AS [dbo]
 GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[GET_CreditDataToValidate_Betting] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[GET_CreditDataToValidate_Betting] TO [bodbLicenseeNet]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[GET_CreditDataToValidate_Betting] TO [vnteam] AS [dbo]
