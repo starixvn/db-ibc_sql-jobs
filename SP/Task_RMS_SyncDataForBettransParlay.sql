@@ -106,12 +106,12 @@ BEGIN
 					(	select refno, odds, stake,a.matchid
 						from bodb02.dbo.bettransm a WITH(NOLOCK)
 						inner join bodb02.dbo.match m WITH(NOLOCK) ON a.matchid=m.matchid
-						where m.sporttype<99
+						where m.sporttype<=99
 						union all
 						select refno, odds, stake,a.matchid
 						from bodb02.dbo.bettransm14 a WITH(NOLOCK)
 						inner join bodb02.dbo.match14 m WITH(NOLOCK) ON a.matchid=m.matchid
-						where m.sporttype<99
+						where m.sporttype<=99
 					)bm ON bm.refno = b.refno
 			WHERE b.bettype=29  
 	),
@@ -146,7 +146,7 @@ BEGIN
 	FROM rmBettrans b (NOLOCK)
 	INNER JOIN bodb02.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
 	INNER JOIN bodb02.dbo.match c(NOLOCK) ON a.matchid=c.matchid
-	WHERE c.sporttype<99	
+	WHERE c.sporttype<=99	
 	GROUP BY b.refno) aa ON aa.refno=bb.refno
 END
 ELSE 
@@ -175,7 +175,7 @@ BEGIN
 	FROM #temp b (NOLOCK)
 	INNER JOIN bodb02.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
 	INNER JOIN bodb02.dbo.match c(NOLOCK) ON a.matchid=c.matchid	
-	WHERE c.sporttype<99
+	WHERE c.sporttype<=99
 	GROUP BY b.refno) aa ON aa.refno=bb.refno	
 		
 	MERGE dbo.rmBettrans as d
@@ -305,12 +305,12 @@ BEGIN
 						(	select refno, odds, stake,a.matchid
 							from bodb02.dbo.bettransm a WITH(NOLOCK)
 							inner join bodb02.dbo.match m WITH(NOLOCK) ON a.matchid=m.matchid
-							where m.sporttype<99							
+							where m.sporttype<=99							
 							union all
 							select refno, odds, stake,a.matchid
 							from bodb02.dbo.bettransm14 a WITH(NOLOCK)
 							inner join bodb02.dbo.match14 m WITH(NOLOCK) ON a.matchid=m.matchid
-							where m.sporttype<99
+							where m.sporttype<=99
 						)bm ON bm.refno = b.refno
 				INNER JOIN #temp c ON b.transid=c.transid	
 				WHERE  b.bettype=29 AND b.transid>@max_transid				
