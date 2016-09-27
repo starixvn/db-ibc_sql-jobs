@@ -1,22 +1,16 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_rptKPI_Account_BA    Script Date: 12/1/2015 2:38:01 AM ******/
-/****** Object:  Stored Procedure dbo.GEN_rptKPI_Account_BA    Script Date: 9/7/2012 9:38:02 AM ******/
-CREATE PROCEDURE [dbo].[GEN_rptKPI_Account_BA]
+ALTER PROCEDURE [dbo].[GEN_rptKPI_Account_BA]
     @datefrom datetime, 
     @dateto datetime = -1
 AS
 /*
 Created: 20111107@Don
 Task: Generate data into rptKPI_Account_BA from Staging
-DB: DB052.bodb_Licensee
+DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
-    
+20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]   
 Param's Explanation:
 
 */
@@ -51,7 +45,7 @@ insert into dbo.rptKPI_Account_BA(rptDate,[hour],siteid,UniqueBettorCount)
         inner join bodb02.dbo.Customer cust (nolock) on bet.custid = cust.custid
         inner join bodb02.dbo.Customer cust_a (nolock) on cust.recommend = cust_a.custid
         left join bodb02.dbo.Site ibcsite with (nolock) on cust_a.site=ibcsite.site
-	    left join dbo.view_site_list s with (nolock) on ibcsite.siteid=s.IbcSiteID
+	    left join bodb_Licensee.dbo.view_site_list s with (nolock) on ibcsite.siteid=s.IbcSiteID
     where 
         transdate >= @date and transdate < @date2
         and isBA = 1
@@ -115,13 +109,4 @@ exec dbo.GEN_RptKPI_MTD_Account
     @stattype = 3,
     @isBA = 1*/
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[GEN_rptKPI_Account_BA] TO [bodbLicenseeNet]
-GO 
+GRANT EXECUTE ON [dbo].[GEN_rptKPI_Account_BA] TO [bodbLicenseeNet] AS [dbo]

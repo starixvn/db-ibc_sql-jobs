@@ -1,24 +1,19 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_BA    Script Date: 12/1/2015 2:38:00 AM ******/
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_BA    Script Date: 8/21/2015 1:13:37 PM ******/
-CREATE PROCEDURE [dbo].[GEN_rptBetting_BA]
+ALTER PROCEDURE [dbo].[GEN_rptBetting_BA]
     @date datetime, 
     @date2 datetime = null
 AS
 /*
 Created: 20110517@Daniel
 Task: Generate data into rpt_Betting 
-DB: DB052.bodb_Licensee
+DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
 20110726@Daniel: Process data for BA
 20150623@Patrick: Support BetTrade
 20150917@Francis: Cast LiveIndicator to 0 if it is NULL
+20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 
 Param's Explanation:
 
@@ -83,10 +78,10 @@ INSERT INTO dbo.rpt_Betting_BA
 	    dbo.bettrans b (NOLOCK) 
 	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
 	    LEFT JOIN bodb02.dbo.Site ibcsite (NOLOCK) ON ag.site=ibcsite.site
-	    LEFT JOIN dbo.view_site_list [site] (NOLOCK) ON ibcsite.siteid=site.IbcSiteID	
+	    LEFT JOIN bodb_Licensee.dbo.view_site_list [site] (NOLOCK) ON ibcsite.siteid=site.IbcSiteID	
 	    LEFT JOIN dbo.match m (NOLOCK) ON b.matchid = m.matchid
 	    LEFT JOIN dbo.outright o (NOLOCK) ON b.matchid = o.matchid
-	    LEFT JOIN dbo.view_status_list sta (NOLOCK) ON b.Status = sta.StatusName
+	    LEFT JOIN bodb_Licensee.dbo.view_status_list sta (NOLOCK) ON b.Status = sta.StatusName
     WHERE isBA=1
     GROUP BY
 	    b.winlostdate,
@@ -114,18 +109,11 @@ EXEC dbo.GEN_RptKPI_MTD_Betting
     @stattype = 2,
     @isBA = 1*/
 
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
 
 
-GO 
- GRANT EXECUTE ON [dbo].[GEN_rptBetting_BA] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_BA] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[GEN_rptBetting_BA] TO [bodbLicenseeNet]
-GO 
+GO
+GRANT EXECUTE ON [dbo].[GEN_rptBetting_BA] TO [bodbLicenseeNet] AS [dbo]
+GO
+GRANT EXECUTE ON [dbo].[GEN_rptBetting_BA] TO [vnteam] AS [dbo]
+GO
+GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_BA] TO [vnteam] AS [dbo]

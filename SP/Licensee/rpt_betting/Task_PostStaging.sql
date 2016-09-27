@@ -1,16 +1,11 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_PostStaging    Script Date: 12/1/2015 2:38:01 AM ******/
-CREATE PROCEDURE [dbo].[Task_PostStaging]     
+ALTER PROCEDURE [dbo].[Task_PostStaging]     
 AS  
 /*
 Created: Viet @ 20121031
 Task: clean up staging data to save diskspace
-DB: DB052.bodb_licensee
+DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
     
@@ -19,20 +14,8 @@ Param's Explanation:
 */
 SET NOCOUNT ON
 
-TRUNCATE TABLE bodb_licensee.dbo.bettrans
-TRUNCATE TABLE bodb_licensee.dbo.match
-TRUNCATE TABLE bodb_licensee.dbo.outright
+TRUNCATE TABLE dbo.bettrans
+TRUNCATE TABLE dbo.match
+TRUNCATE TABLE dbo.outright
 
-DBCC SHRINKFILE (N'DW_staging_DATA_01', 0, TRUNCATEONLY)	
-
-
-
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
+DBCC SHRINKFILE (N'LicenseeReport_Staging_Data', 0, TRUNCATEONLY)

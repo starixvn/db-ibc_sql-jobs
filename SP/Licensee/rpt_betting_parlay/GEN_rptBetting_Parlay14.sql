@@ -1,21 +1,16 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_Parlay14    Script Date: 12/1/2015 2:38:01 AM ******/
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_Parlay14    Script Date: 6/27/2014 1:56:20 PM ******/
-CREATE PROCEDURE [dbo].[GEN_rptBetting_Parlay14]
+ALTER PROCEDURE [dbo].[GEN_rptBetting_Parlay14]
 						@datefrom smalldatetime=null
 						,@dateto smalldatetime=null
 AS 
 /*	
 	Created: 20140625@Jim
 	Date:[]
-	DB: DBLIC.bodb_licensee
+	DB: DBLIC.bodb_licenseeReport
 	Original: 
 	Revisions:
+	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		
 */
 DECLARE @tmp_bettrans AS TABLE 
@@ -88,7 +83,7 @@ SELECT
 	0 isBA,
 	b.tpositiontaking
 FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
-	INNER JOIN dbo.licenseecust lc WITH (NOLOCK) ON b.Recommend=lc.CustID
+	INNER JOIN bodb_Licensee.dbo.licenseecust lc WITH (NOLOCK) ON b.Recommend=lc.CustID
 WHERE b.bettype IN (9,29)
 	AND b.custid>0
 	AND b.statusid NOT IN (0,101,102,121)	
@@ -99,7 +94,7 @@ DECLARE @BATransids AS TABLE (transID bigint)
 INSERT @BATransids
 SELECT transid
 FROM @tmp_bettrans b 
-INNER JOIN dbo.LicenseeBAHistory h (NOLOCK) 
+INNER JOIN bodb_Licensee.dbo.LicenseeBAHistory h (NOLOCK) 
 	ON b.custid=h.custid 
 WHERE  tpositiontaking=0
 
@@ -107,9 +102,9 @@ UPDATE @tmp_bettrans
 SET IsBA=1
 WHERE transid IN (SELECT transid FROM @BATransids)
 
-DELETE bodb_licenseeReport.dbo.rpt_BettingParlay WHERE rptDate BETWEEN @datefrom AND @dateto
+DELETE dbo.rpt_BettingParlay WHERE rptDate BETWEEN @datefrom AND @dateto
 
-INSERT INTO bodb_licenseeReport.dbo.rpt_BettingParlay (
+INSERT INTO dbo.rpt_BettingParlay (
 	[rptDate] ,
 	[SiteID] ,
 	[Bettype] ,
@@ -145,7 +140,7 @@ SELECT
 FROM  @tmp_bettrans b
 	LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
 	LEFT JOIN bodb02.dbo.Site ibcsite (NOLOCK) ON ag.site=ibcsite.site
-	LEFT JOIN dbo.view_site_list [site] (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
+	LEFT JOIN bodb_Licensee.dbo.view_site_list [site] (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
 GROUP BY
 	b.winlostdate,
 	ISNULL(site.SiteID,-1),
@@ -155,15 +150,6 @@ GROUP BY
 	b.livehomescore,
 	b.isBA
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam] AS [dbo]
 GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam] AS [dbo]

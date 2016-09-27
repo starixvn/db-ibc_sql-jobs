@@ -1,13 +1,14 @@
-USE bodb_licensee
+USE [bodb_LicenseeReport]
 GO
-ALTER PROCEDURE dbo.Task_rptBettingParlay_CheckData @WinlostDate SMALLDATETIME
+ALTER PROCEDURE [dbo].[Task_rptBettingParlay_CheckData] @WinlostDate SMALLDATETIME
 AS
 /*
 	Created: 20150910@Patrick
 	Task : Check & correct data for rptBettingParlay
-	DB: DB052.bodb02
+	DB: DBLIC.bodb_LicenseeReport
 	Original:
 	Revisions:	
+	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -27,7 +28,7 @@ BEGIN
 	SELECT @T_Winlost = SUM(winloss)
 		, @T_Turnover = SUM(Turnover)
 		, @T_BetCount = SUM(BetCount)
-	FROM bodb_licenseeReport.dbo.rpt_BettingParlay b WITH(NOLOCK)
+	FROM dbo.rpt_BettingParlay b WITH(NOLOCK)
 	WHERE b.rptDate = @WinlostDate
 	
 	--if diff then generate data again
@@ -36,7 +37,7 @@ BEGIN
 		OR ISNULL(@T_BetCount, 0) <> ISNULL(@S_BetCount, 0)
 	BEGIN
 		PRINT 'Re-generate data for rptBettingParlay on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' date.'
-		EXEC bodb_licensee.dbo.GEN_rptBetting_Parlay14 @datefrom = @WinlostDate, @dateto = @WinlostDate
+		EXEC dbo.GEN_rptBetting_Parlay14 @datefrom = @WinlostDate, @dateto = @WinlostDate
 		RETURN
 	END
 

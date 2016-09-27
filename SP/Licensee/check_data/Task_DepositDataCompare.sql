@@ -1,9 +1,4 @@
-USE [bodb_Licensee]
-GO
-/****** Object:  StoredProcedure [dbo].[Task_DepositDataCompare]    Script Date: 08/05/2016 02:42:00 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[Task_DepositDataCompare] 
     @Date smalldatetime = null
@@ -18,6 +13,7 @@ Original:
 
 Revisions:		
 	- 20140429@Florent: fix bug and change message error
+	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20160805@Jim: Revise SP due to [Redmine: #62052]
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only

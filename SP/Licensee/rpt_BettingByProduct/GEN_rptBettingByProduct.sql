@@ -1,11 +1,5 @@
 USE [bodb_LicenseeReport]
 GO
-
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
 ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct] (
 	@date DATE,
 	@date2 DATE = NULL
@@ -25,6 +19,7 @@ AS
 		- 20160226@Victor: Support Cock Fighting data [Redmine: #52452]
 		- 20160315@Bruce: Summary data for Colossus bets(CB)
 		- 20160509@Bruce: Summary data for Voidbridge(VB)
+		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		- 20160907@Harper: #62820_Add AllBet for ProductMapping
 */
 
@@ -81,7 +76,7 @@ BEGIN
 		,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
 		,SUM(ISNULL([WinPrizeAmount],0)) [WinPrizeAmount]
 		,SUM(ISNULL([CashOutAmount],0)) [CashOutAmount]
-	FROM bodb_licensee.dbo.rpt_Betting b WITH (NOLOCK)
+	FROM dbo.rpt_Betting b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2
 		AND b.Status IN (111,112,113,114,115,101,102,103)
@@ -111,7 +106,7 @@ BEGIN
 		,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
 		,0 [WinPrizeAmount]
 		,0 [CashOutAmount]
-	FROM bodb_licensee.dbo.rpt_Betting_BA b WITH (NOLOCK)
+	FROM dbo.rpt_Betting_BA b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2
 		AND b.Status IN (111,112,113,114,115,101,102,103)

@@ -1,12 +1,5 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_RptKPI_MTD_Betting_3rdproduct    Script Date: 12/1/2015 2:38:00 AM ******/
-/****** Object:  Stored Procedure dbo.GEN_RptKPI_MTD_Betting_3rdproduct    Script Date: 5/29/2014 1:43:33 PM ******/
-
 
 /*
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[GEN_RptKPI_MTD_Betting_product]') AND type in (N'P', N'PC'))
@@ -18,20 +11,21 @@ GO
 	@date='2012-10-30',
 	@date2='2012-11-30'
 */
-CREATE PROCEDURE [dbo].[GEN_RptKPI_MTD_Betting_3rdproduct]
+ALTER PROCEDURE [dbo].[GEN_RptKPI_MTD_Betting_3rdproduct]
     @date datetime, 
     @date2 datetime
 AS
 /*
 Created: 20121024@Jim
 Task: OWA - Add Number Game data to KPI report
-DB: DB052.bodb_Licensee
+DB: DBLIC.bodb_LicenseeReport
 Original :[GEN_RptKPI_MTD_Betting]
 
 Revisions:
     -20121109@Jim: add Virtual Sports data
 	-20121226@Jim: add Live Casino data 
 	-20140528@Jim: add Keno data
+	-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 Param's Explanation:
 	
 */
@@ -59,7 +53,7 @@ DECLARE @Labels TABLE(LabelID int, TnxRate money, PRIMARY KEY(LabelID))
 BEGIN
 
     INSERT INTO @Labels 
-        SELECT LabelID, TnxRate FROM dbo.view_kpi_labels (NOLOCK) WHERE ResellerID <> 3
+        SELECT LabelID, TnxRate FROM bodb_Licensee.dbo.view_kpi_labels (NOLOCK) WHERE ResellerID <> 3
     
     INSERT INTO #Betting
         SELECT 
@@ -128,15 +122,6 @@ END
 
 DROP TABLE #Betting
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Betting_3rdproduct] TO [bodbLicenseeNet] AS [dbo]
 GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[GEN_RptKPI_MTD_Betting_3rdproduct] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Betting_3rdproduct] TO [bodbLicenseeNet]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[GEN_RptKPI_MTD_Betting_3rdproduct] TO [vnteam] AS [dbo]

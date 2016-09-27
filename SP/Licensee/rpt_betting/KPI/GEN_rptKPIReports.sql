@@ -1,21 +1,16 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_rptKPIReports    Script Date: 12/1/2015 2:38:01 AM ******/
-CREATE PROCEDURE [dbo].[GEN_rptKPIReports]
+ALTER PROCEDURE [dbo].[GEN_rptKPIReports]
     @genType tinyint = 0 
     ,@isBA bit = null
 AS
 /*
     Created: 20110519@Don
     Task: 
-    DB: DBDW2.bodb_KPI
+    DB: DBLIC.bodb_LicenseeReport
 
     Revisions:
-        
+    20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
     Param's Explanation:
         - @genType: 1 (generate transfer), 3 (generate account)
 
@@ -112,17 +107,5 @@ AS
             EXECUTE dbo.GEN_rptKPI_Account @strDateStart, @strDateEnd
         end
     end
-
-
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[GEN_rptKPIReports] TO [bodbLicenseeNet]
-GO 
+GRANT EXECUTE ON [dbo].[GEN_rptKPIReports] TO [bodbLicenseeNet] AS [dbo]

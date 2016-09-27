@@ -1,21 +1,16 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_Parlay    Script Date: 12/1/2015 2:38:00 AM ******/
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_Parlay    Script Date: 9/23/2015 10:44:42 AM ******/
-CREATE PROCEDURE [dbo].[GEN_rptBetting_Parlay] 
+ALTER PROCEDURE [dbo].[GEN_rptBetting_Parlay] 
 	@date SMALLDATETIME = NULL
 	,@date2 SMALLDATETIME = NULL
 AS
 /*   
  Created: 20150910@Sophia  
- DB: DBLIC.bodb_licensee  
+ DB: DBLIC.bodb_licenseeReport  
  Task: Gen data from bettrans before Move bets
  Original:  GEN_rptBetting_Parlay14
  Revisions:   
+ - 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
     
 */
 BEGIN
@@ -87,7 +82,7 @@ BEGIN
 		,0 isBA
 		,b.tpositiontaking
 	FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-		INNER JOIN dbo.licenseecust lc WITH (NOLOCK)
+		INNER JOIN bodb_Licensee.dbo.licenseecust lc WITH (NOLOCK)
 		ON b.Recommend = lc.CustID
 	WHERE b.bettype IN (9, 29)
 		AND b.MatchID > 0
@@ -102,7 +97,7 @@ BEGIN
 	INSERT @BATransids
 	SELECT transid
 	FROM @tmp_bettrans b
-		INNER JOIN dbo.LicenseeBAHistory h(NOLOCK)
+		INNER JOIN bodb_Licensee.dbo.LicenseeBAHistory h(NOLOCK)
 		ON b.custid = h.custid
 	WHERE tpositiontaking = 0
 
@@ -113,11 +108,11 @@ BEGIN
 			FROM @BATransids
 			)
 
-	DELETE bodb_licenseeReport.dbo.rpt_BettingParlay
+	DELETE dbo.rpt_BettingParlay
 	WHERE rptDate BETWEEN @date
 			AND @date2
 
-	INSERT INTO bodb_licenseeReport.dbo.rpt_BettingParlay (
+	INSERT INTO dbo.rpt_BettingParlay (
 		[rptDate]
 		,[SiteID]
 		,[Bettype]
@@ -155,7 +150,7 @@ BEGIN
 			AND ag.roleid = 2
 		LEFT JOIN bodb02.dbo.Site ibcsite(NOLOCK)
 		ON ag.site = ibcsite.site
-		LEFT JOIN dbo.view_site_list [site](NOLOCK)
+		LEFT JOIN bodb_Licensee.dbo.view_site_list [site](NOLOCK)
 		ON ibcsite.siteid = site.IbcSiteID
 	GROUP BY b.winlostdate
 		,ISNULL(site.SiteID, - 1)
@@ -166,13 +161,4 @@ BEGIN
 		,b.isBA
 END
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_Parlay] TO [vnteam]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_Parlay] TO [vnteam] AS [dbo]

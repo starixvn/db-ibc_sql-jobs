@@ -1,20 +1,15 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_rptWinlostbyleague_Bettrans    Script Date: 12/1/2015 2:38:00 AM ******/
-/****** Object:  Stored Procedure dbo.Task_rptWinlostbyleague_Bettrans    Script Date: 9/23/2015 10:44:41 AM ******/
-CREATE PROCEDURE [dbo].[Task_rptWinlostbyleague_Bettrans]
+ALTER PROCEDURE [dbo].[Task_rptWinlostbyleague_Bettrans]
 	@Date SMALLDATETIME
 AS
 /*   
 	 Created: 20150910@Sophia  
-	 DB: DBEXT/bodb02  
+	 DB: DBLIC.bodb_Report
 	 Task: Gen data from bettrans before Move bets
 	 Original: Task_rptWinlostbyleague_Bettrans14
 	 Revisions:   
+	 -20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
     
 */ 
 BEGIN
@@ -22,11 +17,11 @@ SET NOCOUNT ON;
 
 IF EXISTS (
 		SELECT TOP 1 1
-		FROM bodb_LicenseeReport.dbo.rptWinlostbyLeague WITH (NOLOCK)
+		FROM dbo.rptWinlostbyLeague WITH (NOLOCK)
 		WHERE winlostdate = @Date
 		)
 BEGIN
-	DELETE bodb_LicenseeReport.dbo.rptWinlostbyLeague
+	DELETE dbo.rptWinlostbyLeague
 	WHERE winlostdate = @Date
 END;
 
@@ -65,7 +60,7 @@ AS (
 			WHEN BA.transid IS NOT NULL THEN 1
 			END AS isBA
 		,a.currency
-	FROM dbo.bettrans a WITH (NOLOCK)
+	FROM bodb02.dbo.bettrans a WITH (NOLOCK)
 		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC
 		ON a.recommend = lc.custid
 			AND a.currency = lc.currency
@@ -111,13 +106,13 @@ AS (
 		,r.EventTime
 		,o.EventID
 		,o.RacerID
-	FROM dbo.VSOutright o WITH (NOLOCK)
-		INNER JOIN dbo.VSRaceInfo r WITH (NOLOCK)
+	FROM bodb02.dbo.VSOutright o WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK)
 		ON r.EventID = o.EventID
 	WHERE o.EventDate BETWEEN @Date
 			AND DATEADD(DAY, 1, @Date)
 	)
-INSERT INTO bodb_LicenseeReport.dbo.rptWinlostbyLeague (
+INSERT INTO dbo.rptWinlostbyLeague (
 	winlostdate
 	,matchid
 	,oddsid
@@ -163,11 +158,11 @@ SELECT a.winlostdate
 	,isba
 	,a.currency
 FROM cte_bettrans a
-	LEFT JOIN dbo.match b WITH (NOLOCK)
+	LEFT JOIN bodb02.dbo.match b WITH (NOLOCK)
 	ON a.matchid = b.matchid
 	LEFT JOIN cte_raceinfo result
 	ON a.oddsid = result.Orid
-	LEFT JOIN dbo.outright AS ob WITH (NOLOCK)
+	LEFT JOIN bodb02.dbo.outright AS ob WITH (NOLOCK)
 	ON a.matchid = ob.orid
 GROUP BY a.winlostdate
 	,a.matchid
@@ -190,12 +185,3 @@ GROUP BY a.winlostdate
 	,isba
 	,a.currency
 END
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 

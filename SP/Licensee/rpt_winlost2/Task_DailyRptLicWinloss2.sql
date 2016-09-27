@@ -1,6 +1,5 @@
-USE bodb02
+USE [bodb_LicenseeReport]
 GO
-
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
 	@winlostdate DATETIME
 AS
@@ -8,7 +7,7 @@ AS
 Created by:[Henry]
 Date: 2011-09-20
 Task: daily summary for Licensee
-DB: DBEXT.BODB02
+DB: DBLIC.bodb_LicenseeReport
 Revisions:
 	- 20111208@Jim: Change bettype condition (bettype<=19000=>bettype<999)
 	- 20120116@Henry: Add column IsMobile and Sum the bets that from mobile
@@ -32,16 +31,17 @@ Revisions:
 	- 20160301@Victor: Redefine betfrom value [Redmine: #50939]
 	- 20160415@Victor: Support Voidbridge product [Redmine: #55057]
 	- 20160721@Jim: Add product Allbet [Redmine: #59624]
+	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
  */
 
 SET NOCOUNT ON 
 
-DELETE FROM bodb_Licensee.dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate
+DELETE FROM dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate
 
 --Member Level
-INSERT INTO bodb_Licensee.dbo.rptLicWinloss2
+INSERT INTO dbo.rptLicWinloss2
 		(
 		[winlostdate]
 		,[username]
@@ -140,12 +140,12 @@ SELECT @winlostdate
 	,SUM(CASE WHEN bettrans.bettype = 902 AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	,SUM(CASE WHEN bettrans.bettype = 902 AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
 FROM
-	dbo.bettrans14 bettrans WITH (NOLOCK)
-	INNER JOIN dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
+	bodb02.dbo.bettrans14 bettrans WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
 	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction ba ON bettrans.transid = ba.transid
 WHERE
 	bettrans.winlostdate = @winlostdate AND
-	customer.srecommend IN (SELECT custid FROM f_DepSuper_1('All')) AND
+	customer.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All')) AND
 	bettrans.statusID IN (101,111,112,113) AND --REJECT, DRAW, WON, LOSE
 	bettrans.bettype<=19999
 GROUP BY
@@ -192,7 +192,7 @@ GROUP BY
 		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END
 
 --Agent Level (sum on member)
-INSERT INTO bodb_Licensee.dbo.rptLicWinloss2
+INSERT INTO dbo.rptLicWinloss2
         (
         [winlostdate]
 		,[username]
@@ -257,8 +257,8 @@ INSERT INTO bodb_Licensee.dbo.rptLicWinloss2
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
     FROM
-        bodb_Licensee.dbo.rptLicWinloss2 b (nolock)
-        INNER JOIN dbo.customer c (nolock) ON b.recommend = c.custid
+        dbo.rptLicWinloss2 b (nolock)
+        INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid
     WHERE
         b.winlostdate = @winlostdate
         and b.roleid = 1
@@ -279,7 +279,7 @@ INSERT INTO bodb_Licensee.dbo.rptLicWinloss2
 		,b.betfrom
 
 --Master Level (sum on member)
-INSERT INTO bodb_Licensee.dbo.rptLicWinloss2
+INSERT INTO dbo.rptLicWinloss2
         (
         [winlostdate]
 		,[username]
@@ -344,8 +344,8 @@ SELECT
 	,SUM(BuyBackAmt)
 	,SUM(BABuyBackAmt)
 FROM
-    bodb_Licensee.dbo.rptLicWinloss2 b (NOLOCK)
-    INNER JOIN dbo.customer c (NOLOCK) ON b.mrecommend = c.custid
+    dbo.rptLicWinloss2 b (NOLOCK)
+    INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.mrecommend = c.custid
 WHERE
     b.winlostdate = @winlostdate
     AND b.roleid = 1
@@ -365,7 +365,7 @@ GROUP BY
 	,b.betfrom
 
 --Super Level (Sum on member)
-INSERT INTO bodb_Licensee.dbo.rptLicWinloss2
+INSERT INTO dbo.rptLicWinloss2
         (
         [winlostdate]
 		,[username]
@@ -430,8 +430,8 @@ SELECT
 	,SUM(BuyBackAmt)
 	,SUM(BABuyBackAmt)
 FROM
-    bodb_Licensee.dbo.rptLicWinloss2 b (nolock)
-    INNER join dbo.customer c (nolock) ON b.srecommend = c.custid
+    dbo.rptLicWinloss2 b (nolock)
+    INNER join bodb02.dbo.customer c (nolock) ON b.srecommend = c.custid
 WHERE
     b.winlostdate = @winlostdate
     and b.roleid = 1
@@ -449,13 +449,4 @@ GROUP BY
 	,b.isMobile
 	,b.betfrom
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicWinloss2] TO [vnteam]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicWinloss2] TO [vnteam] AS [dbo]

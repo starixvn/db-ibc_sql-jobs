@@ -1,12 +1,13 @@
- 
-CREATE PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans14] 
+USE [bodb_LicenseeReport]
+GO
+ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans14] 
 	@Date SMALLDATETIME
 AS
 /*	
 	Created	: Florent Nguyen
 	Task: Customer Performance Report
 	Date: 2013-11-25
-	DB: DBEXT.bodb02
+	DB: DBLIC.bodb_LicenseeReport
 	Original: 
 	Revision:
 		-20140305@Florent: Change way to get BA tickets
@@ -14,13 +15,14 @@ AS
 		-20141130@Jim: change the way to retrieve currency value		
 		-20150714@Francis: Adjustment to serve to change KeenOcean's currency RMB to HK$
 		-20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
+		-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	Parameter's Explanation:			
 */
 SET NOCOUNT ON;
 
-IF exists(SELECT TOP 1 1 FROM bodb_LicenseeReport.dbo.rptCustomerTurnover AS rct WITH (NOLOCK) WHERE rct.winlostdate=@date)
+IF exists(SELECT TOP 1 1 FROM dbo.rptCustomerTurnover AS rct WITH (NOLOCK) WHERE rct.winlostdate=@date)
 	BEGIN
-		DELETE bodb_LicenseeReport.dbo.rptCustomerTurnover WHERE winlostdate=@Date
+		DELETE dbo.rptCustomerTurnover WHERE winlostdate=@Date
 	END 	
 	
 ;WITH cte_bettrans
@@ -66,7 +68,7 @@ AS (
 			END AS isBA
 		--,sum(awinlost) awinlost
 		--,sum(comm) comm
-	FROM dbo.bettrans14 a WITH (NOLOCK)
+	FROM bodb02.dbo.bettrans14 a WITH (NOLOCK)
 	INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC ON a.recommend = lc.custid AND a.currency = lc.currency
 	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction AS BA ON a.transid = ba.transid
 	WHERE a.winlostdate =@date 
@@ -111,11 +113,11 @@ AS (
 	SELECT o.Orid
 		,r.SportType
 		,r.LeagueID
-	FROM dbo.VSOutright14 o WITH (NOLOCK)
-	INNER JOIN dbo.VSRaceInfo r WITH (NOLOCK) ON r.EventID = o.EventID
+	FROM bodb02.dbo.VSOutright14 o WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK) ON r.EventID = o.EventID
 	WHERE EventDate =@Date
 	)
-INSERT INTO bodb_LicenseeReport.dbo.rptCustomerTurnover
+INSERT INTO dbo.rptCustomerTurnover
 SELECT a.CustID
 	,a.bettype
 	,CASE 
@@ -171,9 +173,9 @@ SELECT a.CustID
 	--,sum(awinlost) awinlost
 	--,sum(comm) comm
 FROM cte_bettrans a
-LEFT JOIN dbo.match14 b WITH (NOLOCK) ON a.matchid = b.matchid
+LEFT JOIN bodb02.dbo.match14 b WITH (NOLOCK) ON a.matchid = b.matchid
 LEFT JOIN cte_raceinfo result ON a.oddsid = result.Orid
-LEFT JOIN dbo.outright14 AS ob WITH (NOLOCK) ON a.matchid = ob.orid
+LEFT JOIN bodb02.dbo.outright14 AS ob WITH (NOLOCK) ON a.matchid = ob.orid
 GROUP BY a.CustID
 	,a.bettype
 	,CASE 
@@ -221,20 +223,5 @@ GROUP BY a.CustID
 		END
 	,winlostdate
 	,a.isba
-
-
-
-
-
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Task_rptCustomerTurnOver_Bettrans14] TO [vnteam]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[Task_rptCustomerTurnOver_Bettrans14] TO [vnteam] AS [dbo]

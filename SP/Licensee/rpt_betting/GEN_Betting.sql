@@ -1,19 +1,15 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_Betting    Script Date: 12/1/2015 2:38:01 AM ******/
-CREATE PROCEDURE [dbo].[GEN_Betting]
+ALTER PROCEDURE [dbo].[GEN_Betting]
     @isBA bit = null
 AS
 /*
     Created: 20111021@Don
     Task: 
-    DB: DB052.bodb_Licensee
+    DB: DBLIC.bodb_LicenseeReport
 
     Revisions:
+    20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 
 */ 
 
@@ -51,21 +47,9 @@ AS
         print 'GEN_rptBetting ' + cast(@strDateStart as varchar) + ', ' + cast(@strDateEnd as varchar)
         EXECUTE dbo.GEN_rptBetting @strDateStart, @strDateEnd
     end
-    
-
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[GEN_Betting] TO [bodbLicenseeNet] AS [dbo]
 GO
-SET ANSI_NULLS ON 
+GRANT EXECUTE ON [dbo].[GEN_Betting] TO [vnteam] AS [dbo]
 GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[GEN_Betting] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[GEN_Betting] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[GEN_Betting] TO [bodbLicenseeNet]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[GEN_Betting] TO [vnteam] AS [dbo]

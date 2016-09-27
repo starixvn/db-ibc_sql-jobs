@@ -1,13 +1,5 @@
-﻿USE [bodb02]
+﻿USE [bodb_LicenseeReport]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DailyRptLicIPBetting_Archive]    Script Date: 12/23/2014 04:37:35 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Task_DailyRptLicIPBetting_Archive    Script Date: 2/5/2013 11:07:19 PM ******/
-/****** Object:  Stored Procedure dbo.Task_DailyRptLicIPBetting_Archive    Script Date: 2/4/2013 6:25:40 PM ******/
-/****** Object:  Stored Procedure dbo.Task_DailyRptLicIPBetting_Archive    Script Date: 6/19/2012 11:25:08 AM ******/
 ALTER PROCEDURE [dbo].[Task_DailyRptLicIPBetting_Archive]
 	@winlostdate DATETIME
 AS
@@ -15,11 +7,11 @@ AS
 Created by:[Henry]
 Date: 2012-05-30
 Task: daily summary IP betting for Licensee
-DB: DBLIC/BODB02
+DB: DBLIC.bodb_LicenseeReport
 Revisions:
     - 20130124@Daniel: Change link server alias
-    - 20141211@Daniel: Improve performance, use column countryCode
-
+    - @20141211: Improve performance, use column countryCode
+	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	
    
  */
@@ -29,10 +21,10 @@ SET NOCOUNT ON
 
 IF NOT EXISTS(SELECT top 1 (1) FROM DBARC.bodb_archive.dbo.bettrans_bk WITH(NOLOCK) WHERE winlostdate = @winlostdate) RETURN
 
-DELETE FROM bodb_Licensee.dbo.rptLicIPBetting WHERE winlostdate = @winlostdate	
+DELETE FROM dbo.rptLicIPBetting WHERE winlostdate = @winlostdate	
 
 	
-INSERT INTO bodb_Licensee.dbo.rptLicIPBetting
+INSERT INTO dbo.rptLicIPBetting
 	(
 		[winlostdate]
 		,[LicenseeID]
@@ -84,7 +76,6 @@ GROUP BY
 	WHEN bettrans.status = 'LOSE' THEN 113
 	WHEN bettrans.status = 'DRAW' THEN 111
 	END
-
 GO
 GRANT EXECUTE ON [dbo].[Task_DailyRptLicIPBetting_Archive] TO [vnteam] AS [dbo]
 GO
