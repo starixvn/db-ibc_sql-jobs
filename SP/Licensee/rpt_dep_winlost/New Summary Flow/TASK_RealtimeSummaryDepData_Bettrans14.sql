@@ -163,7 +163,7 @@ BEGIN
 				INNER JOIN bettrans14 b WITH (NOLOCK) on b.custid = d.CustID 
 			WHERE b.winlostdate = @Winlostdate
 			GROUP BY b.custid, b.bettype
-			OPTION(OPTIMIZE FOR (@n =1)) --Trick SQL optimizer to use nested loop
+			OPTION(OPTIMIZE FOR (@n = 1)) --Trick SQL optimizer to use nested loop
 			
 		/*--PREPARE DATA FOR rptDepWinlost--*/
 		INSERT INTO #rptDepWinlost (CustID, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd

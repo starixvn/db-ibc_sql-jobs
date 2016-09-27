@@ -1,10 +1,5 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[GEN_HourlySummaryDepData_Bettrans14]    Script Date: 09/26/2016 02:49:28 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[GEN_HourlySummaryDepData_Bettrans14]
 	@Winlostdate SMALLDATETIME,
 	@NumberofCus INT = 0 OUTPUT,
@@ -104,19 +99,42 @@ BEGIN
 			--Update customers' @Winlostdate OpeningBalance = @PreviousDay OpeningBalance if customers don't have transactions on @PreviousDay
 			--This is for the case that winlostdate of one or some tickets (in the past) have been updated
 			TRUNCATE TABLE #rptDepWinlost_Main
-			INSERT INTO #rptDepWinlost_Main (CustID, OpeningBalance)
-				SELECT m.CustID, m.OpeningBalance
+			INSERT INTO #rptDepWinlost_Main (CustID, OpeningBalance, srecommend, mrecommend, recommend, currency)
+				SELECT m.CustID, m.OpeningBalance, m.srecommend, m.mrecommend, m.recommend, m.currency
 				FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK)
 				WHERE m.Winlostdate = @PreviousDay
 					AND m.CustID NOT IN (SELECT CustID 
 										 FROM bodb_Report.dbo.rptDepWinlost_Trans t WITH (NOLOCK) 
 										 WHERE t.Winlostdate = @PreviousDay AND t.SportType = -1 AND t.PartnerID = -1)--only get attributes of rptDepWinlost
-										 
+									 
 			UPDATE m WITH (UPDLOCK, ROWLOCK)
 			SET m.OpeningBalance = mt.OpeningBalance
 			FROM bodb_Report.dbo.rptDepWinlost_Main m 
 				INNER JOIN #rptDepWinlost_Main mt ON m.CustID = mt.CustID AND m.Winlostdate = @Winlostdate 
 			WHERE m.OpeningBalance != mt.OpeningBalance
+			
+			--Force merge join query
+			DECLARE @n INT = 2147483647
+			
+			IF EXISTS (SELECT TOP (@n) 1 
+			           FROM #rptDepWinlost_Main mt
+					   LEFT JOIN  bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
+							ON mt.CustID = m.CustID AND m.Winlostdate = @Winlostdate
+					   WHERE m.CustID IS NULL
+					   )							      
+					   
+			BEGIN
+				UPDATE mt
+				SET mt.actualrate = e.ActualRate
+				FROM #rptDepWinlost_Main mt
+					 INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON mt.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate
+							 
+				INSERT INTO bodb_Report.dbo.rptDepWinlost_Main (Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
+					SELECT @Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency
+					FROM #rptDepWinlost_Main 
+					WHERE CustID NOT IN (SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Main WHERE Winlostdate = @Winlostdate)
+			END
+			
 		END
 		
 		--Delete redundant data
