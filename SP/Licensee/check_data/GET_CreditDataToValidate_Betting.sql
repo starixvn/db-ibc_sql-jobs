@@ -6,7 +6,7 @@ GO
 /****** Object:  Stored Procedure dbo.GET_CreditDataToValidate_Betting    Script Date: 7/15/2016 10:24:59 AM ******/
 
 
-CREATE PROCEDURE [dbo].[GET_CreditDataToValidate_Betting] 
+ALTER PROCEDURE [dbo].[GET_CreditDataToValidate_Betting] 
      @Date smalldatetime 
 	,@DrawFilter tinyint = 1
 AS
