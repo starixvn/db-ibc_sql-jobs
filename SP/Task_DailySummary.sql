@@ -51,6 +51,7 @@ Revisions:
 	- 20160426@Sophia: Apply Voidbridge [Redmine: #55259]
 	- 20160704@Lukas: add waittime to wait for completely done whole move events before start next day
 	- 20160909@Patrick: Record IsMovingBet value to systemsettings table on dbtrans.bodb02
+	- 20160809@Percy: Modify Net Turnover for Allbet [RedmineID: #60501]
 	
  */
 
@@ -542,6 +543,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120						
 						THEN 0
+					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
 	FROM
@@ -645,6 +647,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120						
 						THEN 0
+					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
 	FROM
@@ -751,6 +754,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120						
 						THEN 0
+					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
 	FROM
@@ -857,6 +861,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
 						AND Bettype NOT BETWEEN 81 AND 120						
 						THEN 0
+					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
 	FROM
