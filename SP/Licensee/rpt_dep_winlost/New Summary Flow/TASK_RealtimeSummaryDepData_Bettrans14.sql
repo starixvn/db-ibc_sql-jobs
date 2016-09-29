@@ -1,10 +1,5 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]    Script Date: 09/26/2016 02:50:04 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
 	@Winlostdate DATE,
 	@isSuccessful BIT = 0 OUTPUT
@@ -80,20 +75,10 @@ BEGIN
 			UNIQUE CLUSTERED (CustID)
 			)
 			
-	CREATE TABLE #Data (CustID INT, Bettype INT, TurnOver MONEY DEFAULT(0), OutStanding MONEY DEFAULT(0), Winloss MONEY DEFAULT(0), DrawGame MONEY DEFAULT(0)
-			, playercomm MONEY DEFAULT(0), Comm_BetTrade MONEY DEFAULT(0), WLBoughtTicket_BetTrade MONEY DEFAULT(0), BetCount INT DEFAULT (0)
-			UNIQUE CLUSTERED (CustID, Bettype)
-			)
-			
-	CREATE TABLE #BATrans(TransID BIGINT PRIMARY KEY)
+	CREATE TABLE #BATrans(TransID BIGINT UNIQUE CLUSTERED (TransID))
 	
-	CREATE TABLE #DepCustID (CustID INT PRIMARY KEY)
+	CREATE TABLE #DepCustID (CustID INT UNIQUE CLUSTERED (CustID))
 						
-	CREATE TABLE #rptDepWinlostByProduct (CustID INT, SportType SMALLINT, turnover MONEY DEFAULT(0), drawTO MONEY DEFAULT(0), Winlost MONEY DEFAULT(0)
-			, playercomm MONEY DEFAULT(0), BetCount INT DEFAULT(0), OutStanding MONEY DEFAULT(0)
-			UNIQUE CLUSTERED (CustID, SportType)
-			)
-			
 	CREATE TABLE #rptDepWinlostTransfer3rdOthers (CustID INT, PartnerID INT, TransferAmount MONEY DEFAULT(0), TransferIn MONEY DEFAULT(0), TransferOut MONEY DEFAULT(0)
 			UNIQUE CLUSTERED (CustID, PartnerID)
 			)
@@ -114,16 +99,21 @@ BEGIN
 			INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
 			INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
 		WHERE b.winlostdate = @Winlostdate
+			  AND b.bettype > 20000 --Exclude bet tickets
 			  AND b.matchid >= 0
 			  AND c.roleid = 1
 		GROUP BY b.custid, b.bettype
 		OPTION (RECOMPILE, MAXDOP 8)
 		
 		INSERT INTO #DepCustID (CustID)
-		SELECT CustID
-		FROM #rptDepWinlostDetails
-		WHERE PartnerID = -1
-		GROUP BY CustID
+		SELECT b.custid
+		FROM dbo.bettrans b WITH (NOLOCK)
+			INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
+			INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
+		WHERE b.winlostdate <= @Winlostdate
+			  AND b.matchid >= 0
+			  AND c.roleid = 1
+		GROUP BY b.custid
 		
 		--Update Transfer3rdOthers attributes
 		UPDATE #rptDepWinlostDetails 
@@ -144,13 +134,37 @@ BEGIN
 			  GROUP BY b.custid, p.PartnerId, b.bettype) t
 		WHERE #rptDepWinlostDetails.CustID = t.custid AND #rptDepWinlostDetails.Bettype = t.bettype
 		
-		--Force seek predicate on custid for bettrans14 part
+		
+		/*--Force seek predicate on custid for bettrans14 part
 		DECLARE @n INT = 2147483647
+		*/
 		
 		INSERT INTO #rptDepWinlostDetails (CustID, BetType, TurnOver, OutStanding, Winloss, DrawGame, playercomm, Comm_BetTrade, WLBoughtTicket_BetTrade, BetCount)
 			SELECT
 				b.custid,
-				b.bettype,
+				CASE				
+					WHEN b.bettype IN (31,32,33,41,42,43) THEN 151--Horse Racing
+					WHEN b.bettype BETWEEN 81 AND 120 THEN 161--Number Game 
+					WHEN b.bettype IN (71,72,23002) THEN 251--Casino
+					WHEN b.bettype = 1000 THEN 253--games
+					WHEN b.bettype BETWEEN 1101 AND 1199 THEN 162--Live Casino
+					WHEN b.bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
+					WHEN b.bettype BETWEEN 1501 AND 1599 THEN 202--Keno
+					WHEN b.bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
+					WHEN b.bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
+					WHEN b.bettype BETWEEN 4001 AND 7999 THEN 212--Voidbridge
+					WHEN b.bettype = 901 THEN -2--BetTrade - Sold
+					WHEN b.bettype = 902 THEN -3--BetTrade - Bought.
+					WHEN b.bettype = 903 THEN -4--BetTrade - Commission
+					WHEN b.bettype = 904 THEN -5--BetTrade - Winloss
+					WHEN b.bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+					WHEN b.bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
+					WHEN b.bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
+					WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
+					WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
+					WHEN b.bettype BETWEEN 2301 AND 2399 THEN 210
+					WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
+				ELSE 0 END,--SportType
 				SUM(CASE WHEN b.statusID NOT IN(101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 				SUM(CASE WHEN b.ruben=0 THEN b.actual_stake ELSE 0 END),--Outstanding
 				SUM(CASE WHEN b.ruben=1 THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss				
@@ -159,11 +173,42 @@ BEGIN
 				SUM(CASE WHEN b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.awinlost ELSE 0 END),--Comm_BetTrade
 				SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 				SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END) --BetCount
-			FROM (SELECT TOP (@n) custid FROM #DepCustID) d
+			FROM bettrans14 b WITH (NOLOCK) 
+				INNER JOIN #DepCustID d on b.custid = d.CustID
+			/*
+				FROM (SELECT TOP (@n) custid FROM #DepCustID) d
 				INNER JOIN bettrans14 b WITH (NOLOCK) on b.custid = d.CustID 
+				WHERE b.winlostdate = @Winlostdate
+				GROUP BY b.custid, b.bettype
+				OPTION(OPTIMIZE FOR (@n = 1)) --Trick SQL optimizer to use nested loop
+			*/	
 			WHERE b.winlostdate = @Winlostdate
-			GROUP BY b.custid, b.bettype
-			OPTION(OPTIMIZE FOR (@n = 1)) --Trick SQL optimizer to use nested loop
+				AND b.bettype < 19999
+			GROUP BY b.custid,
+				CASE				
+					WHEN b.bettype IN (31,32,33,41,42,43) THEN 151--Horse Racing
+					WHEN b.bettype BETWEEN 81 AND 120 THEN 161--Number Game 
+					WHEN b.bettype IN (71,72,23002) THEN 251--Casino
+					WHEN b.bettype = 1000 THEN 253--games
+					WHEN b.bettype BETWEEN 1101 AND 1199 THEN 162--Live Casino
+					WHEN b.bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
+					WHEN b.bettype BETWEEN 1501 AND 1599 THEN 202--Keno
+					WHEN b.bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
+					WHEN b.bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
+					WHEN b.bettype BETWEEN 4001 AND 7999 THEN 212--Voidbridge
+					WHEN b.bettype = 901 THEN -2--BetTrade - Sold
+					WHEN b.bettype = 902 THEN -3--BetTrade - Bought.
+					WHEN b.bettype = 903 THEN -4--BetTrade - Commission
+					WHEN b.bettype = 904 THEN -5--BetTrade - Winloss
+					WHEN b.bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+					WHEN b.bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
+					WHEN b.bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
+					WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
+					WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
+					WHEN b.bettype BETWEEN 2301 AND 2399 THEN 210
+					WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
+				ELSE 0 END--SportType
+			OPTION (RECOMPILE, MAXDOP 8)
 			
 		/*--PREPARE DATA FOR rptDepWinlost--*/
 		INSERT INTO #rptDepWinlost (CustID, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
@@ -232,66 +277,6 @@ BEGIN
 			  AND Comm_BetTrade = 0 AND AmountDueTo_BetTrade = 0
 		/*--END PREPARE DATA FOR rptDepWinlost--*/
 		
-		/*--PREPARE DATA FOR rptDepWinlostByProduct--*/
-		INSERT INTO #rptDepWinlostByProduct (CustID, SportType, turnover, drawTO, Winlost
-			, playercomm, BetCount, OutStanding)
-		SELECT CustID,
-			   CASE				
-					WHEN bettype IN (31,32,33,41,42,43) THEN 151--Horse Racing
-					WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game 
-					WHEN bettype IN (71,72,23002) THEN 251--Casino
-					WHEN bettype = 1000 THEN 253--games
-					WHEN bettype BETWEEN 1101 AND 1199 THEN 162--Live Casino
-					WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
-					WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
-					WHEN bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
-					WHEN bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
-					WHEN bettype BETWEEN 4001 AND 7999 THEN 212--Voidbridge
-					WHEN bettype = 901 THEN -2--BetTrade - Sold
-					WHEN bettype = 902 THEN -3--BetTrade - Bought.
-					WHEN bettype = 903 THEN -4--BetTrade - Commission
-					WHEN bettype = 904 THEN -5--BetTrade - Winloss
-					WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
-					WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-					WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
-					WHEN bettype BETWEEN 2101 AND 2199 THEN 208
-					WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-					WHEN bettype BETWEEN 2301 AND 2399 THEN 210
-					WHEN bettype BETWEEN 2401 AND 2499 THEN 211
-				ELSE 0 END,--SportType
-				SUM(TurnOver),--Turnover  
-				SUM(DrawGame),--Draw game TO			
-				SUM(Winloss),--Winloss      
-				SUM(playercomm),--Playercomm      
-				SUM(BetCount),--BetCount
-				SUM(OutStanding)--Outstanding 
-		FROM #rptDepWinlostDetails
-		GROUP BY CustID, 
-				 CASE
-					WHEN bettype IN (31,32,33,41,42,43) THEN 151--Horse Racing
-					WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game 
-					WHEN bettype IN (71,72,23002) THEN 251--Casino
-					WHEN bettype = 1000 THEN 253--games
-					WHEN bettype BETWEEN 1101 AND 1199 THEN 162--Live Casino
-					WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
-					WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
-					WHEN bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
-					WHEN bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
-					WHEN bettype BETWEEN 4001 AND 7999 THEN 212--Voidbridge
-					WHEN bettype = 901 THEN -2--BetTrade - Sold
-					WHEN bettype = 902 THEN -3--BetTrade - Bought
-					WHEN bettype = 903 THEN -4--BetTrade - Commission
-					WHEN bettype = 904 THEN -5--BetTrade Winloss Sharing
-					WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
-					WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-					WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
-					WHEN bettype BETWEEN 2101 AND 2199 THEN 208
-					WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-					WHEN bettype BETWEEN 2301 AND 2399 THEN 210
-					WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
-				ELSE 0 END
-		/*--END PREPARE DATA FOR rptDepWinlostByProduct--*/
-		
 		/*--PREPARE DATA FOR rptDepWinlostTransfer3rdOthers--*/
 		DECLARE @RefNoList AS TABLE (RefNo BIGINT)
 		DECLARE @TransferData AS TABLE (CustId INT, PartnerID INT, TransferIn MONEY, TransferOut MONEY)
@@ -346,8 +331,10 @@ BEGIN
 		
 		--For rptDepWinlostByProduct
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, Turnover, DrawGame, Winloss, playercomm, BetCount, Outstanding)
-			SELECT @Winlostdate, CustID, SportType, -1, turnover, drawTO, Winlost, playercomm, BetCount, OutStanding
-			FROM #rptDepWinlostByProduct
+			SELECT @Winlostdate, CustID, Bettype, -1, TurnOver, DrawGame, Winloss, playercomm, BetCount, OutStanding
+			FROM #rptDepWinlostDetails
+			WHERE Bettype < 19999 --Only get SportType of bet ticket
+				AND PartnerID = -1
 			
 		--For rptDepWinlost_Transfer3rdOthers
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, TransferAmount, TransferIn, TransferOut)
@@ -374,10 +361,8 @@ BEGIN
 	
 	DROP TABLE #rptDepWinlostDetails
 	DROP TABLE #rptDepWinlost 
-	DROP TABLE #rptDepWinlostByProduct
 	DROP TABLE #rptDepWinlostTransfer3rdOthers
 	DROP TABLE #BATrans
 	DROP TABLE #DepCustID
-	DROP TABLE #Data
 END
 

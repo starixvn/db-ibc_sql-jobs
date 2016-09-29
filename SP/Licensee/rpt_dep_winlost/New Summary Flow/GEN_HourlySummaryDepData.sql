@@ -175,15 +175,11 @@ BEGIN
 							END
 		FROM #rptDepWinlost_Main mt
 			 INNER JOIN dbo.custInfo c WITH (NOLOCK) ON mt.CustID = c.custid AND c.roleid = 1
-			 
-		UPDATE mt
-		SET mt.actualrate = e.ActualRate
-		FROM #rptDepWinlost_Main mt	 
-			INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON mt.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate		
 			
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Main (Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
-			SELECT @Winlostdate, CustID, OpeningBalance, ActualRate, srecommend, mrecommend, recommend, currency
-			FROM #rptDepWinlost_Main 
+			SELECT @Winlostdate, mt.CustID, mt.OpeningBalance, e.ActualRate, mt.srecommend, mt.mrecommend, mt.recommend, mt.currency
+			FROM #rptDepWinlost_Main mt	 
+			INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON mt.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate
 			
 		SELECT @NumberofCus = @NumberofCus + @@ROWCOUNT
 		

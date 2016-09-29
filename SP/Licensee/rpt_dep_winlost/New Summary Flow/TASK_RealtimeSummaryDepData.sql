@@ -69,6 +69,7 @@ BEGIN
 			, AmountDueTo_BetTrade MONEY DEFAULT(0)
 			UNIQUE CLUSTERED (CustID)
 			)
+			
 						
 	CREATE TABLE #rptDepWinlostByProduct (CustID INT, SportType SMALLINT, turnover MONEY DEFAULT(0), drawTO MONEY DEFAULT(0), Winlost MONEY DEFAULT(0)
 			, playercomm MONEY DEFAULT(0), BetCount INT DEFAULT(0), OutStanding MONEY DEFAULT(0)
@@ -348,6 +349,8 @@ BEGIN
 				SUM(BetCount),--BetCount
 				SUM(OutStanding)--Outstanding 
 		FROM #rptDepWinlostDetails
+		WHERE Bettype < 19999
+			AND PartnerID = -1
 		GROUP BY CustID, 
 				 CASE
 					WHEN bettype IN (31,32,33,41,42,43) THEN 151--Horse Racing
