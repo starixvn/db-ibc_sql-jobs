@@ -125,13 +125,14 @@ BEGIN
 			
 			IF @rowcount = 1
 			BEGIN
+				SET @n = 2147483647
 				UPDATE mt
 				SET mt.actualrate = e.ActualRate
 				FROM #rptDepWinlost_Main mt
 					 INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON mt.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate
 							 
 				INSERT INTO bodb_Report.dbo.rptDepWinlost_Main (Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
-					SELECT @Winlostdate, mt.CustID, mt.OpeningBalance, mt.actualrate, mt.srecommend, mt.mrecommend, mt.recommend, mt.currency
+					SELECT TOP (@n) @Winlostdate, mt.CustID, mt.OpeningBalance, mt.actualrate, mt.srecommend, mt.mrecommend, mt.recommend, mt.currency
 					FROM #rptDepWinlost_Main mt
 					   LEFT JOIN  bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
 								  ON mt.CustID = m.CustID AND m.Winlostdate = @Winlostdate
