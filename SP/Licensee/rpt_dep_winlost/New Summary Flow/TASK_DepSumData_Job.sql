@@ -1,10 +1,11 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[TASK_DepSumData_Job]    Script Date: 09/21/2016 04:35:38 ******/
+/****** Object:  StoredProcedure [dbo].[TASK_DepSumData_Job]    Script Date: 09/30/2016 05:34:39 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+/****** Object:  Stored Procedure dbo.TASK_DepSumData_Job    Script Date: 9/30/2016 09:30:14 ******/
 ALTER PROCEDURE [dbo].[TASK_DepSumData_Job]
 	@IdlingHour TINYINT = 9
 AS
@@ -13,7 +14,8 @@ AS
 		Created Date: 20160815
 		Task: Flow controlling for Depopsit Data Summary system 		
 		DB: DBACC.bodb02
-		Revisions:
+		Revisions
+		
 		Input Params:	
 		- @IdlingHour: The time when the system is more idle
 	*/
@@ -68,9 +70,8 @@ BEGIN
 				ELSE
 				BEGIN
 					--PRINT 'EXEC TASK_RealtimeSummaryDepData'
-					EXEC dbo.TASK_RealtimeSummaryDepData
 					EXEC dbo.TASK_RealtimeSummaryDepData @Winlostdate = @Yesterday
+					EXEC dbo.TASK_RealtimeSummaryDepData
 				END
 		END		
 END
-
