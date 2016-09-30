@@ -67,7 +67,7 @@ BEGIN
 				,bm.bettype
 				,b.Currency CurrencyID
 				,bm.statusID
-				, COUNT(1) TotalTrans
+				, COUNT(DISTINCT b.refno) TotalTrans
 				, SUM(ABS(b.Stake)) TurnOver
 				, SUM(CASE 
 						WHEN b.winlost = 0
