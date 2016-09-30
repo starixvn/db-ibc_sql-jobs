@@ -7,21 +7,23 @@ AS
 	/*
 		Created By: Francis
 		Created Date: 20160815
-		Task: Summarize data for every 10 seconds for table rptDepWinlost_Trans for the current day 		
+		Task: Summarize data (for every 10 seconds) for table rptDepWinlost_Trans for the input @Winlostdate 		
 		DB: DBACC.bodb02
-		Revisions:	
+		Revisions:
 			- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 		Input Params:	
-		- @isSuccessful: -1: Data of the whole day has been summarized completely
-						 -0: Data of the whole day has not been summarized completely
+		- @isSuccessful: -1: Data of the whole day have been summarized completely
+						 -0: Data of the whole day have not been summarized completely
 	*/
 BEGIN
 	SET NOCOUNT ON
+	
+	SET @isSuccessful = 0
+	
 	--1.Set low deadlock priority
 	SET DEADLOCK_PRIORITY LOW
 	
 	DECLARE @CurrentDate DATE,
-			@Yesterday DATE,
 			@CurrentHour TINYINT,
 			@LogDesc VARCHAR(8000) = 'Date generated: ',
 			@LogID BIGINT,
@@ -51,9 +53,7 @@ BEGIN
 	SELECT PartnerId, TransferId, CancelTransferId
 	FROM bodb_report.dbo.tblCasinoPartners WITH(NOLOCK)
 	WHERE TransferId IS NOT NULL OR CancelTransferId IS NOT NULL
-	
-	--CREATE TABLE #Data (CustID INT, SportType SMALLINT, PartnerID INT, ID SMALLINT, Amount MONEY)
-	
+		
 	CREATE TABLE #rptDepWinlostDetails (CustID INT, PartnerID INT DEFAULT(-1), Bettype INT, Deposit MONEY DEFAULT(0), Withdrawal MONEY DEFAULT(0)
 			, Aff2MemTransfer MONEY DEFAULT(0), Bonus MONEY DEFAULT(0), Adjustment MONEY DEFAULT(0), TurnOver MONEY DEFAULT(0), OutStanding MONEY DEFAULT(0)
 			, Winloss MONEY DEFAULT(0), Transfer3rd MONEY DEFAULT(0), DrawGame MONEY DEFAULT(0), Turnover_BA MONEY DEFAULT(0), Comm_BA MONEY DEFAULT(0)
@@ -70,6 +70,7 @@ BEGIN
 			, AmountDueTo_BetTrade MONEY DEFAULT(0)
 			UNIQUE CLUSTERED (CustID)
 			)
+			
 						
 	CREATE TABLE #rptDepWinlostByProduct (CustID INT, SportType SMALLINT, turnover MONEY DEFAULT(0), drawTO MONEY DEFAULT(0), Winlost MONEY DEFAULT(0)
 			, playercomm MONEY DEFAULT(0), BetCount INT DEFAULT(0), OutStanding MONEY DEFAULT(0)
@@ -115,7 +116,7 @@ BEGIN
 				  AND b.matchid >= 0
 				  AND c.roleid = 1
 			GROUP BY b.custid, b.bettype
-			OPTION (RECOMPILE)
+			OPTION (RECOMPILE, MAXDOP 8)
 			
 			INSERT INTO #rptDepWinlostOutstanding (CustID, SportType, TurnOver, OutStanding, BetCount)
 			SELECT t.custid, t.SportType, SUM(t.TurnOver), SUM(t.OutStanding), SUM(t.BetCount)
@@ -151,7 +152,7 @@ BEGIN
 				  GROUP BY l.custid, l.productID) t
 			GROUP BY t.custid, t.SportType
 		END
-		ELSE --@Winlostdate  = @CurrentDate
+		ELSE --@Winlostdate = @CurrentDate
 		BEGIN	
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 												, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount)
@@ -179,7 +180,7 @@ BEGIN
 				  AND b.matchid >= 0
 				  AND c.roleid = 1
 			GROUP BY b.custid, b.bettype
-			OPTION (RECOMPILE)
+			OPTION (RECOMPILE, MAXDOP 8)
 			
 			INSERT INTO #rptDepWinlostOutstanding (CustID, SportType, TurnOver, OutStanding, BetCount)
 			SELECT t.custid, t.SportType, SUM(t.TurnOver), SUM(t.OutStanding), SUM(t.BetCount)
@@ -216,7 +217,7 @@ BEGIN
 			GROUP BY t.custid, t.SportType
 		END
 		
-		--Update Transfer3rdOthers attribute
+		--Update Transfer3rdOthers attributes
 		UPDATE #rptDepWinlostDetails 
 		SET PartnerID = t.PartnerId,
 			Transfer3rdOthers = t.Transfer3rdOthers,
@@ -234,7 +235,7 @@ BEGIN
 					AND b.matchid = 0
 			  GROUP BY b.custid, p.PartnerId, b.bettype) t
 		WHERE #rptDepWinlostDetails.CustID = t.custid AND #rptDepWinlostDetails.Bettype = t.bettype
-	
+		
 		/*--PREPARE DATA FOR rptDepWinlost--*/
 		INSERT INTO #rptDepWinlost (CustID, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 											, DrawGame, playercomm, Transfer3rdOthers, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade)
@@ -350,6 +351,8 @@ BEGIN
 				SUM(BetCount),--BetCount
 				SUM(OutStanding)--Outstanding 
 		FROM #rptDepWinlostDetails
+		WHERE Bettype < 19999
+			AND PartnerID = -1
 		GROUP BY CustID, 
 				 CASE
 					WHEN bettype IN (31,32,33,41,42,43) THEN 151--Horse Racing
@@ -396,9 +399,9 @@ BEGIN
 		
 		INSERT INTO @RefNoList(RefNo)
 		SELECT b.refno
-		FROM dbo.bettrans b with(rowlock)
+		FROM dbo.bettrans b WITH (NOLOCK)
 			INNER JOIN @CasinoPartner p ON b.bettype = p.CancelTransferId
-			INNER JOIN dbo.CustInfo c with(nolock) on b.custid = c.custid
+			INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
 			INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = c.srecommend
 		WHERE b.matchid = 0 AND b.winlostdate = @Winlostdate AND c.roleid = 1
 		GROUP BY b.refno
@@ -408,8 +411,8 @@ BEGIN
 		    , p.PartnerId
 			, SUM(CASE WHEN (b.winlost-b.actual_stake) < 0 THEN -(b.winlost-b.actual_stake) ELSE 0 END)--TransferIn
 			, SUM(CASE WHEN (b.winlost-b.actual_stake) > 0 THEN -(b.winlost-b.actual_stake) ELSE 0 END) --TransferOut
-		FROM dbo.bettrans b with(rowlock)
-			INNER JOIN @CasinoPartner p ON b.bettype in (p.CancelTransferId, p.PartnerId)
+		FROM dbo.bettrans b WITH (NOLOCK)
+			INNER JOIN @CasinoPartner p ON b.bettype IN (p.CancelTransferId, p.PartnerId)
 		WHERE b.refno IN (SELECT RefNo FROM @RefNoList)
 		GROUP BY b.custid, p.PartnerId
 		
@@ -428,7 +431,7 @@ BEGIN
 		GROUP BY t.CustId, t.PartnerId
 		/*--END PREPARE DATA FOR rptDepWinlostTransfer3rdOthers--*/
 		
-		--5.Delete/Reinsert data of the input @Winlostdate
+		--4.Delete/Reinsert data of the input @Winlostdate
 		DELETE FROM bodb_Report.dbo.rptDepWinlost_Trans WITH (ROWLOCK, UPDLOCK) WHERE Winlostdate = @Winlostdate
 		
 		--For rptDepWinlost
@@ -454,18 +457,18 @@ BEGIN
 		
 		SET @isSuccessful = 1
 		
-		--6.Update Log
+		--5.Update Log
 		SELECT @LogDesc = @LogDesc + CONVERT(VARCHAR(20),@Winlostdate) + ' (No. of Customer affected: ' + CONVERT(VARCHAR(20), @NumberofCus) + '); Type: realtime'
 		
 		UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
-		SET EndTime = CURRENT_TIMESTAMP, LogDesc = @LogDesc, StatusID = 1
+		SET EndTime = CURRENT_TIMESTAMP, LogDesc = @LogDesc, StatusID = @isSuccessful
 		WHERE LogID = @LogID
 		
 	END TRY
 	BEGIN CATCH
 		SET @isSuccessful = 0
 		UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
-		SET EndTime = CURRENT_TIMESTAMP, LogDesc = @LogDesc, StatusID = 0
+		SET EndTime = CURRENT_TIMESTAMP, LogDesc = @LogDesc, StatusID = @isSuccessful
 		WHERE LogID = @LogID	
 		PRINT 'EXEC TASK_RealtimeSummaryDepData, Winlostdate = ' + CONVERT(VARCHAR(20),@Winlostdate,120) + ', ErrMsg: ' + ERROR_MESSAGE()
 	END CATCH
