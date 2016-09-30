@@ -113,6 +113,8 @@ BEGIN
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 				ON b.refno = bm.refno
+			INNER JOIN dbo.LicenseeCust lc WITH (NOLOCK)	
+				ON b.Recommend = lc.CustID
 			WHERE b.bettype = 18000
 				AND b.winlostdate BETWEEN @date
 							AND @date2

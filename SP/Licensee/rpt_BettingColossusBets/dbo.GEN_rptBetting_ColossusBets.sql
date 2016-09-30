@@ -31,6 +31,7 @@ BEGIN
 			,CustID INT
 			, GrandAmt MONEY
 			)
+	
 	INSERT INTO @tmpGrandAmt (
 		rptDate
 		, CustID
@@ -46,7 +47,7 @@ BEGIN
 			AND @date2
 	GROUP BY CustID
 			,winlostdate
-
+	
 	INSERT INTO @tmpRawData (
 				rptDate,
 				CustID,
@@ -113,6 +114,8 @@ BEGIN
 			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK)
 				ON b.refno = bm.refno
+			INNER JOIN dbo.LicenseeCust lc WITH (NOLOCK) 
+				ON b.Recommend = lc.CustID
 			WHERE b.bettype = 18000
 				AND b.winlostdate BETWEEN @date
 							AND @date2
