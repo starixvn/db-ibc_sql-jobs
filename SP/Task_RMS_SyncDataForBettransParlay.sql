@@ -22,7 +22,7 @@ AS
   - 20140620@Johnson: calculate total odds for system parlay tickets
   - 20160422@Winnie: intergrate Combo parlay
   - 20160720@Winnie: fix bug Executed as user: DB054\SQL. Conversion failed when converting the nvarchar value 'a' to data type int. [SQLSTATE 22018] (Error 245).  The step failed.
-  - 20160926@Winnie: fix issue conflict refno with racing
+  - 20160926@Winnie: fix issue conflict refno with racing RedmineID: #64286
 */  
 
 SET NOCOUNT ON
