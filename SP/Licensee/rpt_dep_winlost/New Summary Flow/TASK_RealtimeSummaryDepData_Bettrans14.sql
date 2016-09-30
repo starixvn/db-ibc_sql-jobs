@@ -1,5 +1,10 @@
 USE [bodb02]
 GO
+/****** Object:  StoredProcedure [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]    Script Date: 09/29/2016 04:09:07 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
 	@Winlostdate DATE,
 	@isSuccessful BIT = 0 OUTPUT
@@ -99,21 +104,16 @@ BEGIN
 			INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
 			INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
 		WHERE b.winlostdate = @Winlostdate
-			  AND b.bettype > 20000 --Exclude bet tickets
 			  AND b.matchid >= 0
 			  AND c.roleid = 1
 		GROUP BY b.custid, b.bettype
 		OPTION (RECOMPILE, MAXDOP 8)
 		
 		INSERT INTO #DepCustID (CustID)
-		SELECT b.custid
-		FROM dbo.bettrans b WITH (NOLOCK)
-			INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
-			INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
-		WHERE b.winlostdate <= @Winlostdate
-			  AND b.matchid >= 0
-			  AND c.roleid = 1
-		GROUP BY b.custid
+		SELECT CustID
+		FROM #rptDepWinlostDetails
+		WHERE PartnerID = -1
+		GROUP BY CustID
 		
 		--Update Transfer3rdOthers attributes
 		UPDATE #rptDepWinlostDetails 

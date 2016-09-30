@@ -114,15 +114,16 @@ BEGIN
 			WHERE m.OpeningBalance != mt.OpeningBalance
 			
 			--Force merge join query
-			DECLARE @n INT = 2147483647
-			
-			IF EXISTS (SELECT TOP (@n) 1 
-			           FROM #rptDepWinlost_Main mt
-					   LEFT JOIN bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
-							ON mt.CustID = m.CustID AND m.Winlostdate = @Winlostdate
+			DECLARE @n INT = 1, @rowcount INT = 0
+				
+			SELECT TOP (@n) @rowcount = 1 
+					   FROM #rptDepWinlost_Main mt
+					   LEFT JOIN  bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
+								  ON mt.CustID = m.CustID AND m.Winlostdate = @Winlostdate
 					   WHERE m.CustID IS NULL
-					   )
-											      
+			OPTION (OPTIMIZE FOR (@n = 2147483647))
+			
+			IF @rowcount = 1
 			BEGIN
 				UPDATE mt
 				SET mt.actualrate = e.ActualRate
@@ -130,9 +131,12 @@ BEGIN
 					 INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON mt.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate
 							 
 				INSERT INTO bodb_Report.dbo.rptDepWinlost_Main (Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
-					SELECT @Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency
-					FROM #rptDepWinlost_Main 
-					WHERE CustID NOT IN (SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Main WHERE Winlostdate = @Winlostdate)
+					SELECT @Winlostdate, mt.CustID, mt.OpeningBalance, mt.actualrate, mt.srecommend, mt.mrecommend, mt.recommend, mt.currency
+					FROM #rptDepWinlost_Main mt
+					   LEFT JOIN  bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
+								  ON mt.CustID = m.CustID AND m.Winlostdate = @Winlostdate
+					   WHERE m.CustID IS NULL
+					OPTION (OPTIMIZE FOR (@n = 2147483647))
 			END
 			
 		END
