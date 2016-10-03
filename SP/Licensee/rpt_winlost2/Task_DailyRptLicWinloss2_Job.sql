@@ -19,7 +19,7 @@ AS
   - 20140117@Don: Add step to generate data to [bodb_LicenseeReport.rptWinlostbyleague]  
   - 20140725@Don: Add step to generate data to [bodb_LicenseeReport.rpt_BettingParlay]  
   - 20150909@Patrick: Changes the way generate data from bettrans instead bettrans14
-  - 20161003@Jim: Add step to generate data to [bodb_LicenseeReport.ColossusBets]  [RedminID : #63785]
+  - 20161003@Jim: Add step to generate data to [bodb_LicenseeReport.rpt_BettingColossusBets]  [RedminID : #63785]
 */  
 BEGIN  
 	SET NOCOUNT ON   
