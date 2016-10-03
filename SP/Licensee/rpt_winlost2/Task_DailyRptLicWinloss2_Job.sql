@@ -19,7 +19,7 @@ AS
   - 20140117@Don: Add step to generate data to [bodb_LicenseeReport.rptWinlostbyleague]  
   - 20140725@Don: Add step to generate data to [bodb_LicenseeReport.rpt_BettingParlay]  
   - 20150909@Patrick: Changes the way generate data from bettrans instead bettrans14
-  
+  - 20161003@Jim: Add step to generate data to [bodb_LicenseeReport.ColossusBets]  [RedminID : #63785]
 */  
 BEGIN  
 	SET NOCOUNT ON   
@@ -118,6 +118,21 @@ BEGIN
 			END TRY
 			BEGIN CATCH
 				PRINT 'Failed to generate data for rptBetting_Parlay on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' Retry times: ' + CAST(@Retry AS VARCHAR)
+				SET @Retry = @Retry + 1
+				WAITFOR DELAY '000:00:05.280'
+			END CATCH
+		END
+		
+		SELECT @Retry = 1, @HasError = 1
+		WHILE @Retry <= @MaxRetry
+		BEGIN
+			BEGIN TRY
+								EXEC bodb_Licensee.dbo.GEN_rptBetting_ColossusBets @date = @WinlostDate, @date2 = @WinlostDate
+				SET @HasError = 0
+				BREAK
+			END TRY
+			BEGIN CATCH
+				PRINT 'Failed to generate data for GEN_rptBetting_ColossusBets on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' Retry times: ' + CAST(@Retry AS VARCHAR)
 				SET @Retry = @Retry + 1
 				WAITFOR DELAY '000:00:05.280'
 			END CATCH
