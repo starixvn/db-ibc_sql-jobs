@@ -28,7 +28,7 @@ BEGIN
 	DECLARE @PreviousDay DATE = DATEADD(DAY,-1,@WinlostDate)
 	SET @isSuccessful = 0
 	
-	Declare @BalanceUpDay smalldatetime
+	DECLARE @BalanceUpDay SMALLDATETIME
 	SELECT @BalanceUpDay = winlostdate
 	FROM Bettrans WITH(NOLOCK)
 	WHERE bettype = 20000 and matchid = 0 and custid = 3
@@ -245,8 +245,8 @@ BEGIN
 		END
 	END TRY
 	BEGIN CATCH
-		PRINT 'EXEC GEN_HourlySummaryDepData_Bettrans14, Winlostdate = ' + CONVERT(VARCHAR(20),@Winlostdate,112) + ', ErrMsg: ' + ERROR_MESSAGE()
 		SET @isSuccessful = 0
+		PRINT 'EXEC GEN_HourlySummaryDepData_Bettrans14, Winlostdate = ' + CONVERT(VARCHAR(20),@Winlostdate,112) + ', ErrMsg: ' + ERROR_MESSAGE()
 	END CATCH
 	
 	DROP TABLE #rptDepWinlost_Main

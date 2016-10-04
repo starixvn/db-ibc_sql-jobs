@@ -16,7 +16,9 @@ AS
 		DB: DBACC.bodb02
 		Revisions:
 		- 20160924@Francis: Enhance performance when querying data from bettrans14
-		Input Params:	
+		- 20161004@Francis: Add Error Message to Log when issue happens
+		Input Params:
+		- @Winlostdate: The input Winlostdate to be summarized	
 		- @isSuccessful: -1: Data of the whole day have been summarized completely
 						 -0: Data of the whole day have not been summarized completely
 	*/
@@ -33,17 +35,13 @@ BEGIN
 			@LogID BIGINT,
 			@NumberofCus INT= 0,
 			@MoveBetDay SMALLDATETIME,
-			@BalanceUpDay SMALLDATETIME
+			@ErrMsg VARCHAR(1000) = ''
 	
 	SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112)
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
 	
 	SELECT @MoveBetDay = MAX(eventdate)
 	FROM dbo.match14 WITH(NOLOCK)
-	
-	SELECT TOP 1 @BalanceUpDay = winlostdate
-	FROM dbo.bettrans WITH(NOLOCK)
-	WHERE bettype = 20000 and matchid = 0 and custid = 3
 			
 	IF NOT EXISTS(SELECT TOP 1 1 FROM dbo.bettrans14 WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype != 18000)
 	   OR @WinlostDate > @MoveBetDay
@@ -341,7 +339,7 @@ BEGIN
 			SELECT @Winlostdate, CustID, -1, PartnerID, TransferAmount, TransferIn, TransferOut
 			FROM #rptDepWinlostTransfer3rdOthers
 		
-		SET @isSuccessful = 1
+		SELECT @isSuccessful = 1, @ErrMsg = ''
 		
 		--5.Update Log
 		SELECT @LogDesc = @LogDesc + CONVERT(VARCHAR(20),@Winlostdate) + ' (No. of Customer affected: ' + CONVERT(VARCHAR(20), @NumberofCus) + '); Type: realtime'
@@ -352,7 +350,8 @@ BEGIN
 		
 	END TRY
 	BEGIN CATCH
-		SET @isSuccessful = 0
+		SELECT @isSuccessful = 0, @ErrMsg = LEFT(ERROR_MESSAGE(),1000)
+		SELECT @LogDesc = @LogDesc + '; Type: realtime' + '; ErrMsg: ' + @ErrMsg
 		UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
 		SET ENDTime = CURRENT_TIMESTAMP, LogDesc = @LogDesc, StatusID = @isSuccessful
 		WHERE LogID = @LogID	

@@ -191,8 +191,8 @@ BEGIN
 		SET @isSuccessful = 1	
 	END TRY
 	BEGIN CATCH
-		PRINT 'EXEC GEN_HourlySummaryDepData, Winlostdate = ' + CONVERT(VARCHAR(20),@Winlostdate,112) + ', ErrMsg: ' + ERROR_MESSAGE()
 		SET @isSuccessful = 0
+		PRINT 'EXEC GEN_HourlySummaryDepData, Winlostdate = ' + CONVERT(VARCHAR(20),@Winlostdate,112) + ', ErrMsg: ' + ERROR_MESSAGE()
 	END CATCH
 	
 	DROP TABLE #rptDepWinlost_Main

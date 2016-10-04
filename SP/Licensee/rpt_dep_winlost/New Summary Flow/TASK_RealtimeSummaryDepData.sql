@@ -10,7 +10,9 @@ AS
 		Task: Summarize data (for every 10 seconds) for table rptDepWinlost_Trans for the input @Winlostdate 		
 		DB: DBACC.bodb02
 		Revisions:
-		Input Params:	
+		- 20161004@Francis: Add Error Message to Log when issue happens
+		Input Params:
+		- @Winlostdate: The input Winlostdate to be summarized
 		- @isSuccessful: -1: Data of the whole day have been summarized completely
 						 -0: Data of the whole day have not been summarized completely
 	*/
@@ -26,7 +28,8 @@ BEGIN
 			@CurrentHour TINYINT,
 			@LogDesc VARCHAR(8000) = 'Date generated: ',
 			@LogID BIGINT,
-			@NumberofCus INT= 0
+			@NumberofCus INT= 0,
+			@ErrMsg VARCHAR(1000) = ''
 	
 	SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112)
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
@@ -452,7 +455,7 @@ BEGIN
 			SELECT @Winlostdate, CustID, -1, PartnerID, TransferAmount, TransferIn, TransferOut
 			FROM #rptDepWinlostTransfer3rdOthers
 		
-		SET @isSuccessful = 1
+		SELECT @isSuccessful = 1, @ErrMsg = ''
 		
 		--5.Update Log
 		SELECT @LogDesc = @LogDesc + CONVERT(VARCHAR(20),@Winlostdate) + ' (No. of Customer affected: ' + CONVERT(VARCHAR(20), @NumberofCus) + '); Type: realtime'
@@ -463,7 +466,8 @@ BEGIN
 		
 	END TRY
 	BEGIN CATCH
-		SET @isSuccessful = 0
+		SELECT @isSuccessful = 0, @ErrMsg = LEFT(ERROR_MESSAGE(),1000)
+		SELECT @LogDesc = @LogDesc + '; Type: realtime' + '; ErrMsg: ' + @ErrMsg
 		UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
 		SET EndTime = CURRENT_TIMESTAMP, LogDesc = @LogDesc, StatusID = @isSuccessful
 		WHERE LogID = @LogID	
