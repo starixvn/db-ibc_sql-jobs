@@ -41,12 +41,12 @@ BEGIN
 	SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112)
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
 	
-	DECLARE @MoveBetSchedule TABLE(ScheduleId TINYINT, MoveBetDay SMALLDATETIME)
-	INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
-	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+	SELECT @MoveBetDay = MAX(eventdate)
+	FROM bodb02.dbo.match14 WITH(NOLOCK)
 	
-	SELECT @MoveBetDay = MIN(MoveBetDay)
-	FROM @MoveBetSchedule
+	--Re-summarize from 2 days before MoveBetDay for BetTrade Comm ClosingBalance case
+	SELECT @MoveBetDay = DATEADD(DAY,-2,@MoveBetDay)
+	FROM bodb02.dbo.match14 WITH(NOLOCK)
 	
 	SELECT TOP 1 @BalanceUpDay = winlostdate
 	FROM bodb02.dbo.bettrans WITH(NOLOCK)

@@ -21,7 +21,7 @@ BEGIN
 	SET NOCOUNT ON
 	IF @Winlostdate > CURRENT_TIMESTAMP OR NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans14 WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype != 18000)
 		BEGIN
-			PRINT 'EXEC GEN_HourlySummaryDepData_Bettrans14: There is no data in bettrans to summarize or input @Winlostdate is greater than current day ==> RETURN'
+			PRINT 'EXEC GEN_HourlySummaryDepData_Bettrans14: There is no data in bettrans14 to summarize or input @Winlostdate is greater than current day ==> RETURN'
 			RETURN
 		END
 	DECLARE @i TINYINT = 1
