@@ -44,10 +44,6 @@ BEGIN
 	SELECT @MoveBetDay = MAX(eventdate)
 	FROM bodb02.dbo.match14 WITH(NOLOCK)
 	
-	--Re-summarize from 2 days before MoveBetDay for BetTrade Comm ClosingBalance case
-	SELECT @MoveBetDay = DATEADD(DAY,-2,@MoveBetDay)
-	FROM bodb02.dbo.match14 WITH(NOLOCK)
-	
 	SELECT TOP 1 @BalanceUpDay = winlostdate
 	FROM bodb02.dbo.bettrans WITH(NOLOCK)
 	WHERE bettype = 20000 and matchid = 0 and custid = 3
@@ -61,9 +57,10 @@ BEGIN
 	--4.Set date range due to @isDailyArc	
 	SELECT @MaxDate = CONVERT(DATE,CURRENT_TIMESTAMP,112)
 	SELECT @MinDate = DATEADD(DAY,-2,@MaxDate)
-
-	IF @isDailyArc = 1 AND @MoveBetDay < @MinDate
-		SELECT @MinDate = @MoveBetDay
+	
+	--Re-summarize from 2 days before MoveBetDay for BetTrade Comm ClosingBalance case
+	IF @isDailyArc = 1 AND DATEADD(DAY,-2,@MoveBetDay) < @MinDate
+		SELECT @MinDate = DATEADD(DAY, -2, @MoveBetDay)
 	IF @isManual = 1 AND @MinManualDate < @MinDate
 		SELECT @MinDate = @MinManualDate
 		
