@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [winlost report update (daily)]    Script Date: 01/16/2015 01:57:27 ******/
+/****** Object:  Job [winlost report update (daily)]    Script Date: 10/05/2016 00:18:10 ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 01/16/2015 01:57:27 ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 10/05/2016 00:18:10 ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -26,7 +26,7 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'winlost report update (daily
 		@owner_login_name=N'vnDBA', 
 		@notify_email_operator_name=N'Viet', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Task_DailyArchiveRptDepWinlost]    Script Date: 01/16/2015 01:57:27 ******/
+/****** Object:  Step [Task_DailyArchiveRptDepWinlost]    Script Date: 10/05/2016 00:18:10 ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Task_DailyArchiveRptDepWinlost', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
@@ -51,7 +51,7 @@ END',
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [SUM data]    Script Date: 01/16/2015 01:57:27 ******/
+/****** Object:  Step [SUM data]    Script Date: 10/05/2016 00:18:10 ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'SUM data', 
 		@step_id=2, 
 		@cmdexec_success_code=0, 
@@ -62,21 +62,34 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'SUM data
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'Declare @Today smalldatetime
-Declare @Yesterday smalldatetime
-Declare @Earlyday smalldatetime
-Declare @Temp smalldatetime
+		@command=N'
+DECLARE @Yesterday SMALLDATETIME
+    , @WinlostDate SMALLDATETIME
+    , @MoveBetsDay SMALLDATETIME
+    , @Temp SMALLDATETIME
+    , @ThreeDaysAgo SMALLDATETIME
+     
+SELECT @Yesterday = DATEADD(dd, -1, CONVERT(NVARCHAR(10), CURRENT_TIMESTAMP, 120))
+SELECT @ThreeDaysAgo = DATEADD(dd, -2, @Yesterday)
+ 
+SELECT @MoveBetsDay = MAX(eventdate)
+FROM dbo.match14 WITH(NOLOCK)
+IF @MoveBetsDay IS NULL
+    RETURN
 
-SELECT @Today = CONVERT(nvarchar(10), CURRENT_TIMESTAMP, 120)
-SELECT @Yesterday = DATEADD(day, -1, @Today), @Earlyday = DATEADD(day, -2, @Today)
+SET @Temp = DATEADD(DAY,-1,@MoveBetsDay)
 
-select @Temp = DATEADD(day, -3, @Today)
-EXEC dbo.Task_DOT_Dep_DailySummary_FULL @Temp
+IF @ThreeDaysAgo < DATEADD(DAY,-1,@MoveBetsDay)
+BEGIN
+    SET @Temp = @ThreeDaysAgo
+END
 
-EXEC dbo.Task_DOT_Dep_DailySummary_FULL @Earlyday
-
-
-EXEC dbo.Task_DOT_Dep_DailySummary_FULL @Yesterday
+WHILE @Temp <= @Yesterday
+BEGIN
+    PRINT ''WinlostDate: '' + CONVERT(NVARCHAR(10), @Temp, 120)
+    EXEC dbo.Task_DOT_Dep_DailySummary_FULL @Temp
+    SET @Temp = DATEADD(dd, 1, @Temp)
+END
 ', 
 		@database_name=N'bodb02', 
 		@flags=0

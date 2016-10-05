@@ -194,7 +194,7 @@ BEGIN
 		INSERT INTO #rptDepWinlost_Main (CustID)
 		SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Main WITH (NOLOCK) 
 		WHERE Winlostdate = @Winlostdate AND OpeningBalance != 0
-			  AND CustID NOT IN (SELECT CustID FROM rptDepWinlost_Main WITH (NOLOCK) WHERE Winlostdate = @PreviousDay)
+			  AND CustID NOT IN (SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Main WITH (NOLOCK) WHERE Winlostdate = @PreviousDay)
 			  
 		IF EXISTS (SELECT TOP 1 1 FROM #rptDepWinlost_Main)
 		BEGIN
