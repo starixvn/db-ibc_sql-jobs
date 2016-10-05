@@ -241,6 +241,23 @@ BEGIN
 				
 				SELECT @NumberofCus = @@ROWCOUNT
 				
+				--4.Delete customers who have OpeningBalance ( != 0 ) for @Winlostdate but don't have OpeningBalance for the previous day
+				--because if one customer who doesn't have OpeningBalnce for the previous day, his OpeningBalance for @Winlostdate (if he does the 1st deposit transaction) should be 0
+				TRUNCATE TABLE #rptDepWinlost_Main
+				INSERT INTO #rptDepWinlost_Main (CustID)
+				SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Main WITH (NOLOCK) 
+				WHERE Winlostdate = @Winlostdate AND OpeningBalance != 0
+					  AND CustID NOT IN (SELECT CustID FROM rptDepWinlost_Main WITH (NOLOCK) WHERE Winlostdate = @PreviousDay)
+					  
+				IF EXISTS (SELECT TOP 1 1 FROM #rptDepWinlost_Main)
+				BEGIN
+				DELETE FROM bodb_Report.dbo.rptDepWinlost_Main WITH (ROWLOCK, UPDLOCK)
+				WHERE Winlostdate = @Winlostdate AND CustID IN (SELECT CustID FROM #rptDepWinlost_Main)
+					  AND OpeningBalance != 0
+
+				SELECT @NumberofCus = @NumberofCus - @@ROWCOUNT
+				END
+				
 				SET @isSuccessful = 1
 		END
 	END TRY

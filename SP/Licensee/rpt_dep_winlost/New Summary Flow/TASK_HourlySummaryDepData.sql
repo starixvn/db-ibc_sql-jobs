@@ -10,6 +10,7 @@ AS
 		Task: Hourly Summary for Depopsit Data summary system every each 1 or 2 hours
 		DB: DBRPT.bodb_Report
 		Revisions:
+		- 20161004@Francis: Check movebet schedule to regen data for bettrans14
 		Input Params:	
 		- @isDailyArc: -0: Called for data re-summary of hourly summary task (data will be re-summarize from the minimum day of early day and manually summarized day til today)
 				       -1: Called for data re-summary of daily archive task (data will be re-summarize from the latest day in bettrans14 til today)
@@ -40,8 +41,12 @@ BEGIN
 	SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112)
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
 	
-	SELECT @MoveBetDay = MAX(eventdate)
-	FROM bodb02.dbo.match14 WITH(NOLOCK)
+	DECLARE @MoveBetSchedule TABLE(ScheduleId TINYINT, MoveBetDay SMALLDATETIME)
+	INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
+	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+	
+	SELECT @MoveBetDay = MIN(MoveBetDay)
+	FROM @MoveBetSchedule
 	
 	SELECT TOP 1 @BalanceUpDay = winlostdate
 	FROM bodb02.dbo.bettrans WITH(NOLOCK)
