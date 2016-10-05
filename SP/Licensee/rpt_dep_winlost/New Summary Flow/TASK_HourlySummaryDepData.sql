@@ -60,7 +60,7 @@ BEGIN
 	
 	--Re-summarize from 2 days before MoveBetDay for BetTrade Comm ClosingBalance case
 	IF @isDailyArc = 1 AND DATEADD(DAY,-2,@MoveBetDay) < @MinDate
-		SELECT @MinDate = DATEADD(DAY, -2, @MoveBetDay)
+		SELECT @MinDate = DATEADD(DAY,-2,@MoveBetDay)
 	IF @isManual = 1 AND @MinManualDate < @MinDate
 		SELECT @MinDate = @MinManualDate
 		

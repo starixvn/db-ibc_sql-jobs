@@ -213,8 +213,7 @@ BEGIN
 
 			SELECT @NumberofCus = @NumberofCus - @@ROWCOUNT
 			END
-				
-			
+
 			SET @isSuccessful = 1	
 		END
 		ELSE --
