@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[GEN_rptBetting_ColossusBets] 
+ALTER PROCEDURE [dbo].[GEN_rptBetting_ColossusBets14] 
 	@date SMALLDATETIME = NULL
 	,@date2 SMALLDATETIME = NULL
 AS
