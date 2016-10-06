@@ -1,11 +1,11 @@
-CREATE PROCEDURE [dbo].[GEN_rptBetting_ColossusBets14] 
+CREATE PROCEDURE [dbo].[GEN_rptBetting_ColossusBets] 
 	@date SMALLDATETIME = NULL
 	,@date2 SMALLDATETIME = NULL
 AS
 /*   
  Created:  20160928@Jim
  DB: DBLIC.bodb_licensee  
- Task: Gen data from bettrans14 after Move bets [RedminID : #63785]
+ Task: Gen data from bettrans before Move bets [RedminID : #63785]
  Original:   
  Revisions:   
     
@@ -31,6 +31,18 @@ BEGIN
 			,CustID INT
 			, GrandAmt MONEY
 			)
+	DECLARE @tmpBettrans AS TABLE (
+			custid INT
+			, refno BIGINT
+			, winlostdate DATETIME
+			, Currency INT
+			, TurnOver MONEY
+			, TotalTrans INT
+			, Winlost MONEY
+			, STATUS NVARCHAR(20)
+			, GrandAmt MONEY
+			)
+			
 	INSERT INTO @tmpGrandAmt (
 		rptDate
 		, CustID
@@ -46,7 +58,42 @@ BEGIN
 			AND @date2
 	GROUP BY CustID
 			,winlostdate
-
+	INSERT INTO @tmpBettrans (
+			custid
+			,refno
+			, winlostdate
+			, Currency
+			, TurnOver
+			, TotalTrans
+			, Winlost
+			, STATUS
+			, GrandAmt
+			)
+		SELECT b.CustId 
+			, b.refno
+			, b.winlostdate
+			, b.Currency
+			, SUM(ABS(b.Stake)) TurnOver
+			, COUNT(DISTINCT b.refno) TotalTrans
+			, b.Winlost
+			, b.STATUS
+			, SUM(a.GrandAmt) AS GrandAmt
+		FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
+		INNER JOIN dbo.LicenseeCust t
+			ON b.recommend = t.CustID
+				AND b.Currency = t.Currency
+		LEFT JOIN @tmpGrandAmt a
+			ON b.CustID = a.CustID
+				AND b.winlostdate = a.rptDate
+		WHERE b.bettype = 18000
+			AND b.winlostdate BETWEEN @date
+			AND @date2
+		GROUP BY b.CustId 
+			, b.refno
+			, b.winlostdate
+			, b.Currency
+			, b.Winlost
+			, b.STATUS
 	INSERT INTO @tmpRawData (
 				rptDate,
 				CustID,
@@ -68,7 +115,7 @@ BEGIN
 				,b.Currency CurrencyID
 				,bm.statusID
 				, COUNT(DISTINCT b.refno) TotalTrans
-				, SUM(ABS(b.Stake)) TurnOver
+				, 0 TurnOver
 				, SUM(CASE 
 						WHEN b.winlost = 0
 							THEN 0
@@ -110,25 +157,33 @@ BEGIN
 						ELSE 0
 						END) CommAmt
 				, 0 AS GrandAmt
-			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
-			INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK)
+			FROM @tmpBettrans b  
+			INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK)
 				ON b.refno = bm.refno
-			INNER JOIN dbo.LicenseeCust lc WITH (NOLOCK)	
-				ON b.Recommend = lc.CustID
-			WHERE b.bettype = 18000
-				AND b.winlostdate BETWEEN @date
-							AND @date2
+			WHERE  bm.bettype BETWEEN 18001
+				AND 18006
 			GROUP BY b.winlostdate  
 				,b.CustID
 				,bm.bettype
 				,b.Currency  
 				,bm.statusID
-	UPDATE d
-	SET GrandAmt = s.GrandAmt
-	FROM @tmpRawData d
-	INNER JOIN @tmpGrandAmt s
-		ON  s.rptDate = d.rptDate
-			AND s.CustID = d.CustID
+	;WITH cte_TO
+		AS (
+			SELECT Currency
+				, winlostdate
+				, SUM(TurnOver) TurnOver
+				, SUM(GrandAmt) GrandAmt
+			FROM @tmpBettrans
+			GROUP BY Currency
+				, winlostdate
+			)
+		UPDATE d
+		SET TurnOver = s.TurnOver
+			,GrandAmt = s.GrandAmt
+		FROM @tmpRawData d
+		INNER JOIN cte_TO s
+			ON d.CurrencyID = s.Currency
+				AND d.rptDate = s.Winlostdate 
 	
 	DELETE bodb_licenseereport.dbo.rpt_BettingColossusBets
 	WHERE rptDate BETWEEN @date
