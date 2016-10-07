@@ -15,6 +15,7 @@ AS
 	DB: DB052.bodb02  
   
 	Revision:   
+	-20161007@Jim: Check & correct data for rpt_BettingColossusBets [RedminID : #63785]
   
 */  
 BEGIN  
@@ -88,6 +89,12 @@ BEGIN
 		END TRY
 		BEGIN CATCH 
 			SET @ErrorMsg = @ErrorMsg + 'Failed to check & correct data for rptBettingParlay on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) 
+		END CATCH
+		BEGIN TRY
+						EXEC  dbo.Task_rptBettingColossusBets_CheckData @winlostdate = @WinlostDate
+		END TRY
+		BEGIN CATCH 
+			SET @ErrorMsg = @ErrorMsg + 'Failed to check & correct data for rpt_BettingColossusBets on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) 
 		END CATCH
 		
 	END

@@ -158,7 +158,7 @@ BEGIN
 						END) CommAmt
 				, 0 AS GrandAmt
 			FROM @tmpBettrans b  
-			INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 				ON b.refno = bm.refno
 			WHERE  bm.bettype BETWEEN 18001
 				AND 18006
