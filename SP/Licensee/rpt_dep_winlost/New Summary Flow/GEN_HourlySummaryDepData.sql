@@ -152,9 +152,10 @@ BEGIN
 		SELECT CustID
 		FROM bodb_Report.dbo.rptDepWinlost_Trans WITH (NOLOCK) 
 		WHERE Winlostdate = @Winlostdate
-			  AND SportType = -1 AND PartnerID = -1 --only get attributes of rptDepWinlost
+			  AND SportType = -1 --only get attributes of rptDepWinlost and rptDepWinlost_Transfer3rd_Others
 			  AND CustID NOT IN (SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Main WITH (NOLOCK) WHERE Winlostdate = @Winlostdate)
-		
+		GROUP BY CustID
+	
 		IF EXISTS (SELECT TOP 1 1 FROM #rptDepWinlost_Main)
 		UPDATE mt
 		SET mt.OpeningBalance = tmp.OpeningBalance
