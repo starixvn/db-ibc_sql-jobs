@@ -15,6 +15,7 @@ AS
 	 Revisions: 		
 	 - 20151208@Jim: separate MicroGame into 2 products (#45454)
 	 - 20160422@Francis: add Progressive Contribution and Progressive Payout for Microgaming RNG
+	 - 20160907@Harper: #62820_Add ValidBetAmount for AllBet
 	 Param's Explanation:
 */
 
@@ -43,7 +44,7 @@ BEGIN
 			DELETE dbo.rpt_ThirdPartyWL_ExtraGMT WITH (ROWLOCK, UPDLOCK) WHERE RptDate = @Winlostdate
 		END
 
-		INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout)
+		INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
 		(SELECT CAST(b.winlostdate AS DATE)	AS Rptdate
 			, CAST(b.checktime AS DATE)	AS RptDate3rd
 			, ISNULL(site.SiteID, -1) AS siteid
@@ -56,7 +57,8 @@ BEGIN
 			, SUM(b.comm) AS AComm
 			, SUM(b.playercomm) AS PComm
 			, 0 AS ProgressiveContribution
-			, 0 AS ProgressivePayout		
+			, 0 AS ProgressivePayout	
+			, 0 AS ValidBetAmount	
 		FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 			INNER JOIN @Bettype bt ON b.bettype = bt.Bettype
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
@@ -81,6 +83,7 @@ BEGIN
 			, SUM(b.playercomm) AS PComm
 			, SUM(ISNULL(ABS(b.stake) * r.Contribution,0)) AS ProgressiveContribution
 			, SUM(ISNULL(p.WinAmount,0)) AS ProgressivePayout
+			, 0 AS ValidBetAmount
 		FROM bodb02.dbo.bettransRnG14 b WITH (NOLOCK)
 			LEFT JOIN dbo.view_MGCRNG_ProgressiveContribution_Rate r ON b.transdesc = r.ResourceID
 			LEFT JOIN DBTXN.bodb02.dbo.PayoutTrans p ON b.transid = p.RefNo			
@@ -91,7 +94,33 @@ BEGIN
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
 			AND b.gameID IN (2008, 2009)
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID
-			, b.currency, b.statusID		
+			, b.currency, b.statusID	
+			
+		UNION ALL-- AllBet
+
+		SELECT CAST(b.winlostdate AS DATE)	AS Rptdate
+			, CAST(b.Transdate3rd AS DATE)	AS RptDate3rd
+			, ISNULL(site.SiteID, -1) AS siteid
+			, b.gameID AS BetTypeId		
+			, b.currency
+			, b.statusID
+			, COUNT(1) AS BetCount
+			, SUM(ABS(b.stake)) AS Turnover
+			, SUM(winlost - actual_stake) AS Winloss		
+			, SUM(b.comm) AS AComm
+			, SUM(b.playercomm) AS PComm
+			, 0 AS ProgressiveContribution
+			, 0 AS ProgressivePayout
+			, SUM(ISNULL(b.NetStake, 0)) AS ValidBetAmount
+		FROM bodb02.dbo.bettransLC14 b WITH (NOLOCK)
+			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
+			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
+		WHERE b.winlostdate = @Winlostdate
+			AND b.statusID NOT IN (0, 1, 101, 102, 121)
+			AND b.gameID BETWEEN 2401 AND 2499
+		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID
+			, b.currency, b.statusID	
 		)
 		OPTION (MAXDOP 1)
 
