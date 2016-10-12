@@ -1,7 +1,7 @@
 USE [bodb_Licensee]
 
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Lbs_Rpt_Winloss]') AND type in (N'P', N'PC'))
-DROP PROCEDURE [dbo].[Lbs_Rpt_Winloss]
+DROP PROCEDURE [dbo].[DELETED_Lbs_Rpt_Winloss]
 GO
 
 CREATE PROCEDURE [dbo].Lbs_Rpt_Winloss

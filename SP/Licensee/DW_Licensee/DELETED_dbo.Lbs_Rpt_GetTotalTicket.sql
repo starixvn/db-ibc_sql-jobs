@@ -4,7 +4,7 @@ IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Lbs_R
 DROP PROCEDURE [dbo].[Lbs_Rpt_GetTotalTicket]
 GO
 
-CREATE PROCEDURE [dbo].Lbs_Rpt_GetTotalTicket
+CREATE PROCEDURE [dbo].DELETED_Lbs_Rpt_GetTotalTicket
 	@LicenseeID int
 	,@FromDate smalldatetime
 	,@ToDate smalldatetime

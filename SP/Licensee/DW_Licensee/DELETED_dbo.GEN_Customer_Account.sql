@@ -9,7 +9,7 @@ USE [bodb_Licensee]
 GO
 
 
-CREATE PROCEDURE [dbo].[GEN_Customer_Account] 
+CREATE PROCEDURE [dbo].[DELETED_GEN_Customer_Account] 
 AS  
 /*
 Created: 20110617@Elly.Nguyen
@@ -34,7 +34,7 @@ BEGIN
 		inner join bodb02.dbo.bettrans b with (nolock) on b.transid = ca.transid
 	WHERE b.bettype > 19999 AND b.matchid = 0 
 		AND (ca.deleted=0 or ca.deleted is null) 
-		AND b.custid <> 0--AND not deleted
+		AND b.custid <> 0 --AND not deleted
 
 	UPDATE ca
 	SET deleted = 1

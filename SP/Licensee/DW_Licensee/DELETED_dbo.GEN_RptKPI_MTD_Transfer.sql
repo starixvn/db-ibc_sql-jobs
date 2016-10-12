@@ -2,7 +2,7 @@
 DROP PROCEDURE [dbo].[GEN_RptKPI_MTD_Transfer]
 GO
 
-CREATE PROCEDURE [dbo].[GEN_RptKPI_MTD_Transfer]
+CREATE PROCEDURE [dbo].[DELETED_GEN_RptKPI_MTD_Transfer]
     @date datetime, 
     @date2 datetime
 AS

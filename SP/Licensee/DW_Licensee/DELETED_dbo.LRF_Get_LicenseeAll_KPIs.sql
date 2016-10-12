@@ -3,7 +3,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[LRF_Get_LicenseeAll_KPIs]
+ALTER PROCEDURE [dbo].[DELETED_LRF_Get_LicenseeAll_KPIs]
 AS
 /*
     Created: 20111012@Don

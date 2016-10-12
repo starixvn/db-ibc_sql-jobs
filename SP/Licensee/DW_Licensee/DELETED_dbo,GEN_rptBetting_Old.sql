@@ -5,7 +5,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[GEN_rptBetting_Old]
+ALTER PROCEDURE [dbo].[DELETED_GEN_rptBetting_Old]
     @date datetime, 
     @date2 datetime = -1,
     @IsBefore2011 bit = 0

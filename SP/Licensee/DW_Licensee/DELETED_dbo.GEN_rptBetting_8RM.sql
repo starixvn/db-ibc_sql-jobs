@@ -1,4 +1,4 @@
-﻿ALTER PROCEDURE [dbo].[GEN_rptBetting_8RM]
+﻿ALTER PROCEDURE [dbo].[DELETED_GEN_rptBetting_8RM]
     @date datetime, 
     @date2 datetime = -1
 AS

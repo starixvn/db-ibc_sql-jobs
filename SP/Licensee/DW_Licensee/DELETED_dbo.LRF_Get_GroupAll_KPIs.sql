@@ -3,7 +3,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
  -- a sample testcase : exec LRF_Get_GroupAll_KPIs
-ALTER PROCEDURE [dbo].[LRF_Get_GroupAll_KPIs]
+ALTER PROCEDURE [dbo].[DELETED_LRF_Get_GroupAll_KPIs]
 AS
 /*
     Created: 20111012@Don

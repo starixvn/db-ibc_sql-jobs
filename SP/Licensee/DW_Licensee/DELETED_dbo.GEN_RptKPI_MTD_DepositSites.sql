@@ -2,7 +2,7 @@
 DROP PROCEDURE [dbo].[GEN_RptKPI_MTD_DepositSites]
 GO
 
-CREATE PROCEDURE [dbo].[GEN_RptKPI_MTD_DepositSites]
+CREATE PROCEDURE [dbo].[DELETED_GEN_RptKPI_MTD_DepositSites]
     @date datetime, 
     @date2 datetime = -1,
     @stattype tinyint = 0,

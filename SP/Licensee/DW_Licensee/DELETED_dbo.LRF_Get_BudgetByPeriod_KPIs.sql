@@ -3,7 +3,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[LRF_Get_BudgetByPeriod_KPIs]
+ALTER PROCEDURE [dbo].[DELETED_LRF_Get_BudgetByPeriod_KPIs]
     @ReportDate smalldatetime
     ,@TimeType smallint
 AS

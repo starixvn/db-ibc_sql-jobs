@@ -2,7 +2,7 @@
 DROP PROCEDURE [dbo].[GEN_RptKPI_MTD_Betting]
 GO
 
-CREATE PROCEDURE [dbo].[GEN_RptKPI_MTD_Betting]
+CREATE PROCEDURE [dbo].[DELETED_GEN_RptKPI_MTD_Betting]
     @date datetime, 
     @date2 datetime,
     @isBA bit = 0

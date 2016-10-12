@@ -2,7 +2,7 @@
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[LRF_Get_CurrentDate]
+ALTER PROCEDURE [dbo].[DELETED_LRF_Get_CurrentDate]
 AS
 /*
     Created: 20111012@Don

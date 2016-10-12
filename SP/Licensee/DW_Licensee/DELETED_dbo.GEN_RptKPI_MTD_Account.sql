@@ -2,7 +2,7 @@
 DROP PROCEDURE [dbo].[GEN_RptKPI_MTD_Account]
 GO
 
-CREATE PROCEDURE [dbo].[GEN_RptKPI_MTD_Account]
+CREATE PROCEDURE [dbo].[DELETED_GEN_RptKPI_MTD_Account]
     @date datetime, 
     @date2 datetime,
     @isBA bit = 0

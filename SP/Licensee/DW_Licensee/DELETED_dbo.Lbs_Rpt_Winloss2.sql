@@ -1,4 +1,4 @@
-﻿ ALTER PROCEDURE Lbs_Rpt_Winloss2
+﻿ ALTER PROCEDURE DELETED_Lbs_Rpt_Winloss2
 	@LicenseeID int,
 	@Currency int = 0,
 	@FromDate smalldatetime,

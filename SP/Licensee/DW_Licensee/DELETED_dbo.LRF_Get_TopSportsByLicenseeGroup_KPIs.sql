@@ -3,7 +3,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[LRF_Get_TopSportsByLicenseeGroup_KPIs]
+ALTER PROCEDURE [dbo].[DELETED_LRF_Get_TopSportsByLicenseeGroup_KPIs]
     @ReportDate datetime = NULL
     ,@LicenseeGroupID int
     ,@TimeType int

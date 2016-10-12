@@ -1,4 +1,4 @@
-﻿ALTER PROCEDURE [dbo].[GEN_rptBetting_CreditSites]
+﻿ALTER PROCEDURE [dbo].[DELETED_GEN_rptBetting_CreditSites]
     @date datetime, 
     @date2 datetime = null
 AS

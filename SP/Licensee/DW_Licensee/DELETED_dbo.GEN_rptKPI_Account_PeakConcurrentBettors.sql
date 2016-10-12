@@ -2,7 +2,7 @@
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[GEN_rptKPI_Account_PeakConcurrentBettors]
+CREATE PROCEDURE [dbo].[DELETED_GEN_rptKPI_Account_PeakConcurrentBettors]
     @date datetime
 AS
 /*

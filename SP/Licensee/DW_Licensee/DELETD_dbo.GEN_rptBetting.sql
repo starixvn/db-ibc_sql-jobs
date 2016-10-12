@@ -7,7 +7,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 /****** Object:  Stored Procedure dbo.GEN_rptBetting    Script Date: 9/25/2013 3:47:41 PM ******/
 
-ALTER PROCEDURE [dbo].[GEN_rptBetting]
+ALTER PROCEDURE [dbo].[DELETED_GEN_rptBetting]
     @date datetime, 
     @date2 datetime = null
 AS

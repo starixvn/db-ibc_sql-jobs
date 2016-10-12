@@ -2,7 +2,7 @@
 DROP PROCEDURE [dbo].[GEN_RptKPI_MTD_PeakConcurrentBettors]
 GO
 
-CREATE PROCEDURE [dbo].[GEN_RptKPI_MTD_PeakConcurrentBettors]
+CREATE PROCEDURE [dbo].[DELETED_GEN_RptKPI_MTD_PeakConcurrentBettors]
     @date datetime, 
     @date2 datetime = -1,
     @stattype tinyint = 0,

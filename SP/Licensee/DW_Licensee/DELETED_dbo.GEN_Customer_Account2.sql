@@ -7,7 +7,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 
-ALTER PROCEDURE [dbo].[GEN_Customer_Account2] 
+ALTER PROCEDURE [dbo].[DELETED_GEN_Customer_Account2] 
     @datefrom datetime=null
     ,@dateto datetime=null
 AS  

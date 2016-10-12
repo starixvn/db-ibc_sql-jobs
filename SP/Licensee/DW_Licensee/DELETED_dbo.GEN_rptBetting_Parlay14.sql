@@ -5,7 +5,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER  PROCEDURE [dbo].[GEN_rptBetting_Parlay14]
+ALTER  PROCEDURE [dbo].[DELETED_GEN_rptBetting_Parlay14]
 						@datefrom smalldatetime=null
 						,@dateto smalldatetime=null
 AS 

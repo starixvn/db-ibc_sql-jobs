@@ -3,7 +3,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER  PROCEDURE [dbo].[LRF_GET_Licensees_KPIs_2]
+ALTER  PROCEDURE [dbo].[DELETED_LRF_GET_Licensees_KPIs_2]
     @ReportDate datetime = NULL
 AS
 /*

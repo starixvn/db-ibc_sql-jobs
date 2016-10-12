@@ -6,7 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[LRF_Get_TopSportsAll_KPIs]
+ALTER PROCEDURE [dbo].[DELETED_LRF_Get_TopSportsAll_KPIs]
     @ReportDate datetime = NULL
     ,@TimeType int
 WITH RECOMPILE

@@ -2,7 +2,7 @@
 DROP PROCEDURE [dbo].[GEN_RptKPI_MTD_FDL]
 GO
 
-CREATE PROCEDURE [dbo].[GEN_RptKPI_MTD_FDL]
+CREATE PROCEDURE [dbo].[DELETED_GEN_RptKPI_MTD_FDL]
     @date datetime, 
     @date2 datetime = -1,
     @stattype tinyint = 0,
