@@ -1,0 +1,160 @@
+USE [bodb_licensee]
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[DELTED_GEN_rptbettingParlay_old]  
+						@datefrom smalldatetime=null
+						,@dateto smalldatetime=null
+AS 
+/*	
+	Created: 20140625@Jim
+	Date:[]
+	DB: DBLIC.bodb_licensee
+	Original: 
+	Revisions:
+		
+*/
+DECLARE @tmp_bettrans AS TABLE 
+	(
+	transid BIGINT,
+	transdate  DATETIME,
+	winlostdate DATETIME,
+	livehomescore SMALLINT,
+	bettype INT,
+	custid INT,
+	stake MONEY,
+	actual_stake MONEY,
+	winlost MONEY,
+	awinlost MONEY,
+	acomm MONEY, 
+	playercomm MONEY,
+	comm MONEY,
+	matchid INT,
+	currency INT, 
+	recommend INT,
+	statusid SMALLINT,
+	virtualrate FLOAT,
+	isBA SMALLINT,
+	tpositiontaking SMALLMONEY
+	)
+
+INSERT INTO @tmp_bettrans (
+			transid,
+			transdate,
+			winlostdate,
+			livehomescore,
+			bettype,
+			custid ,
+			stake,
+			actual_stake,
+			winlost ,
+			awinlost,
+			acomm, 
+			playercomm,
+			comm,
+			matchid,
+			currency, 
+			recommend,
+			statusid,
+			virtualrate,
+			isBA,
+			tpositiontaking
+			)
+			
+			
+SELECT 
+	b.transid,
+	b.transdate,
+	b.winlostdate,
+	b.livehomescore ,
+	b.bettype,
+	b.custid,
+	ABS(b.stake) stake,
+	b.actual_stake,
+	b.winlost,
+	b.awinlost,
+	b.acomm,
+	b.playercomm,
+	b.comm,
+	b.matchid,
+	b.currency, 
+	b.recommend,
+	b.statusid,
+	b.virtualrate,
+	0 isBA,
+	b.tpositiontaking
+FROM DBARC.bodb_archive.dbo.bettrans_bk b WITH (NOLOCK)
+	INNER JOIN dbo.licenseecustInfo lc WITH (NOLOCK) ON b.CustId=lc.CustID
+WHERE b.bettype IN (9,29)
+	AND b.custid>0
+	AND b.statusid NOT IN (0,101,102,121)	
+	AND b.winlostdate BETWEEN @datefrom AND @dateto
+---BA	
+DECLARE @BATransids AS TABLE (transID bigint)
+
+INSERT @BATransids
+SELECT transid
+FROM @tmp_bettrans b 
+INNER JOIN dbo.LicenseeBAHistory h (NOLOCK) 
+	ON b.custid=h.custid 
+WHERE  tpositiontaking=0
+
+UPDATE @tmp_bettrans
+SET IsBA=1
+WHERE transid IN (SELECT transid FROM @BATransids)
+
+DELETE bodb_licenseeReport.dbo.rpt_BettingParlay
+WHERE rptdate BETWEEN  @datefrom AND @dateto
+
+INSERT INTO bodb_licenseeReport.dbo.rpt_BettingParlay (
+	[rptDate] ,
+	[SiteID] ,
+	[Bettype] ,
+	[CurrencyID] ,
+	[Status] ,
+	[IsLive] ,
+	[BetCount] ,
+	[MemberCount] ,
+	[Turnover] ,
+	[WinLoss] ,
+	[WinLossA] ,
+	[CommissionP] ,
+	[CommissionA] ,
+	[WinLossVirtual] ,
+	[isBA] 
+)
+SELECT 
+	b.winlostdate AS rptDate,
+	ISNULL(site.SiteID,-1) siteid,
+	b.bettype,
+	b.Currency AS CurrencyID,
+	b.statusid Status,
+	b.livehomescore IsLive,
+	COUNT(*) Betcount,
+	COUNT(DISTINCT b.custid) MemberCount,
+	SUM(b.stake) Turnover,
+    SUM(b.winlost-b.actual_stake) winloss,
+    SUM(b.awinlost) winlossA,
+	SUM(b.playercomm) commissionP,
+	SUM(b.comm) commissionA,
+	SUM((b.winlost-b.actual_stake)*b.virtualrate) WinLossVirtual,
+	b.isBA
+FROM  @tmp_bettrans b
+	LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
+	LEFT JOIN bodb02.dbo.Site ibcsite (NOLOCK) ON ag.site=ibcsite.site
+	LEFT JOIN dbo.view_site_list [site] (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
+GROUP BY
+	b.winlostdate,
+	ISNULL(site.SiteID,-1),
+	b.bettype,
+	b.currency,
+	b.statusid,
+	b.livehomescore,
+	b.isBA
+
+		
+		
+	    
