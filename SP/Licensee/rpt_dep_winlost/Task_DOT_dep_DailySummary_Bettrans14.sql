@@ -1,12 +1,6 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb02]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DOT_dep_DailySummary_Bettrans14    Script Date: 9/5/2016 11:01:46 AM ******/
-
-CREATE PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans14]
+ALTER PROCEDURE [dbo].[Task_DOT_dep_DailySummary_Bettrans14]
 	@winlostdate datetime
 AS
 /*	
@@ -50,6 +44,7 @@ AS
 		- 20160422@Victor: Add product Voidbridge [Redmine: #55057]
 		- 20160620@Victor: Include bettrade comm on ClosingBalance amount [Redmine: #58318]
 		- 20160721@Jim: Add product Allbet [Redmine: #59624]
+		- 20161010@Francis: Change to use new summary system, replace rptDepwinlost by rptDepwinlost_original [Readmine: #61001]
 	Param's Explanation:
 	• @date: The date need to summary
 */
@@ -315,9 +310,9 @@ GROUP BY b.custid,
 	b.currency
 
 ------
-DELETE bodb_Report.dbo.rptDepWinlost WHERE Winlostdate = @date
+DELETE bodb_Report.dbo.rptDepWinlost_original WHERE Winlostdate = @date
 
-insert into bodb_Report.dbo.rptDepWinlost
+insert into bodb_Report.dbo.rptDepWinlost_original
 	(winlostdate, custid, currency, OpeningBalance, Deposit, Aff2MemTransfer, Withdrawal, Bonus, Adjustment, Transfer3rd,
 	Turnover, DrawGame, Outstanding, Winloss, recommend, mrecommend, srecommend,ClosingBalance, actualrate,
 	turnover_ba, comm_ba, Amountdueto_ba, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade)
@@ -332,9 +327,9 @@ where exchangedate = @date
 group by custid, currency, recommend, mrecommend, srecommend
 
 -----
-DELETE bodb_Report.dbo.rptDepWinlostByProduct WHERE Winlostdate = @date 
+DELETE bodb_Report.dbo.rptDepWinlostByProduct_original WHERE Winlostdate = @date 
 
-insert into bodb_Report.dbo.rptDepWinlostByProduct (
+insert into bodb_Report.dbo.rptDepWinlostByProduct_original (
 	winlostdate, custid, sporttype, currency, turnover, drawTO, winlost, playercomm, betcount, outstanding)
 select @date, custid, sporttype, currency, turnover, drawTO, winlost, playercomm, betcount, 0
 from #DataByProduct
@@ -342,7 +337,7 @@ from #DataByProduct
 DROP TABLE #DataByProduct
 
 -- Execute SP to insert data for Playtech Casino
-EXEC Task_DOT_PlaytechCS_DailySummary @winlostdate = @date
+--EXEC Task_DOT_PlaytechCS_DailySummary_xtest @winlostdate = @date
 
 -- Execute SP to insert data for AG Casino
 EXEC Task_DOT_AGCasino_DailySummary @winlostdate = @date
@@ -375,9 +370,9 @@ INSERT INTO #rptDepWinlost_Transfer3rdOthers(CustId,Currency,PartnerId,Recommend
 
 DELETE #rptDepWinlost_Transfer3rdOthers WHERE TransferAmount = 0 AND TransferIn=0 AND TransferOut=0
 
-DELETE bodb_Report.dbo.rptDepWinlost_Transfer3rdOthers WHERE Winlostdate = @date
+DELETE bodb_Report.dbo.rptDepWinlost_Transfer3rdOthers_original WHERE Winlostdate = @date
 
-INSERT INTO bodb_Report.dbo.rptDepWinlost_Transfer3rdOthers(winlostdate,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount,TransferIn,TransferOut)
+INSERT INTO bodb_Report.dbo.rptDepWinlost_Transfer3rdOthers_original(winlostdate,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount,TransferIn,TransferOut)
 	SELECT @date,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount,TransferIn,TransferOut
 	FROM #rptDepWinlost_Transfer3rdOthers
 
@@ -389,18 +384,3 @@ DROP TABLE #Data
 DROP TABLE #DepositCustSuper
 
 SET NOCOUNT OFF
-
-
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Task_DOT_dep_DailySummary_Bettrans14] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Task_DOT_dep_DailySummary_Bettrans14] TO [Dot_Admin]
-GO 

@@ -6,7 +6,7 @@ AS
 		Created By: Francis
 		Created Date: 20161010
 		Task: Check Status for Deposit Summary Data Job	
-		DB: DBACC.bodb02
+		DB: DBRPT.bodb_Report
 		Revisions:
 		Input Params:	
 	*/
@@ -97,7 +97,7 @@ BEGIN
 										FOR XML PATH('tr'), TYPE 
 									) AS NVARCHAR(MAX) ) + N'</table>'
 		
-		EXEC msdb.dbo.sp_send_dbmail @recipients='francis.le@starixsoft.com'
+		EXEC msdb.dbo.sp_send_dbmail @recipients='dbaadmin@starixsoft.com'
 					, @subject = @subject
 					, @body = @ErrorMessage
 					, @body_format = 'HTML'
