@@ -1,11 +1,6 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb02]
 GO
-SET ANSI_NULLS ON 
-GO
-
-
-CREATE PROCEDURE [dbo].[Task_DailyArchiveRptDepWinlost]
+ALTER PROCEDURE [dbo].[Task_DailyArchiveRptDepWinlost]
 AS
 
 /*   
@@ -19,8 +14,10 @@ Revisions:
 	-- 20141120@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
 	-- 20150713@Patrick: Support bettrade
 	-- 20160121@Jim: get tranferin tranferout for AG Casino
+	-- 20161010@Francis: Change to use new summary system, return sp [Readmine: #61001]
 */  
-
+RETURN
+/*
 DECLARE @winlostdate SMALLDATETIME, @todate SMALLDATETIME
 SELECT @todate = DATEADD(dd, DATEDIFF(d, 0, CURRENT_TIMESTAMP)-14, 0)
 SELECT @winlostdate = MIN(winlostdate) FROM bodb_report.dbo.rptDepWinlost WITH(nolock)
@@ -41,7 +38,7 @@ BEGIN
 			AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade
 		FROM bodb_report.dbo.rptDepWinlost WITH(nolock)
 		WHERE WINLOSTDATE = @winlostdate
-
+		
 		DELETE FROM bodb_report.dbo.rptDepWinlost WITH(rowlock) WHERE Winlostdate = @winlostdate
 	COMMIT TRANSACTION
 	
@@ -82,12 +79,4 @@ BEGIN
 		
 	SELECT @winlostdate = DATEADD(dd, 1, @winlostdate)	
 END
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
+*/
