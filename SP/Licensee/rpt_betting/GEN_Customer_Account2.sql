@@ -1,13 +1,6 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_Licensee]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_Customer_Account2    Script Date: 12/1/2015 2:38:01 AM ******/
-
-
-CREATE PROCEDURE [dbo].[GEN_Customer_Account2] 
+ALTER PROCEDURE [dbo].[GEN_Customer_Account2] 
     @datefrom datetime=null
     ,@dateto datetime=null
 AS  
@@ -22,9 +15,11 @@ Revisions:
     20120116@Don:
         + Take care of extra bettype 22003 (Withdrawal Cancelled)
         + Improve performance
+    20161017@Francis: Return SP, drop table bodb_Licensee.dbo.tbl_Customer_Account to change to use in bodb_LicenseeReport (#Redmine: 60449)
 Param's Explanation:
 */
 BEGIN
+	RETURN
 	SET NOCOUNT ON	
 	
 	-- Process input value @datefrom, @dateto
@@ -99,13 +94,3 @@ BEGIN
 
 	SET NOCOUNT OFF
 END
-
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
