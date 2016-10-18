@@ -21,6 +21,7 @@ Revisions:
 	-20160118@Patrick: Hotfix: #51053 for bettrade - turn off BA for ticket 901
 	-20160318@Victor: Support Colossus bet - [Redmine: #52575]
 	-20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
+	-20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785 :fix refno issue]
 Param's Explanation:
 
 */
@@ -169,6 +170,7 @@ BEGIN
 				FROM dbo.bettrans b WITH (NOLOCK) 
 					INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 				WHERE b.bettype = 18000 AND b.winlostdate=@tmpDate
+					 AND bm.bettype BETWEEN 18000 AND 18006	
 				GROUP BY b.transid
 			)
 			UPDATE b
