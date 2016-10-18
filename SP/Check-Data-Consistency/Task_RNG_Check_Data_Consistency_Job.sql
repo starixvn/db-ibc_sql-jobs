@@ -1,6 +1,12 @@
-USE bodb02
+USE [bodb02]
 GO
-ALTER PROCEDURE Task_RNG_Check_Data_Consistency_Job @FromDate SMALLDATETIME
+/****** Object:  StoredProcedure [dbo].[Task_RNG_Check_Data_Consistency_Job]    Script Date: 10/11/2016 07:11:52 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+/****** Object:  Stored Procedure dbo.Task_RNG_Check_Data_Consistency_Job    Script Date: 5/26/2016 3:00:44 PM ******/
+ALTER PROCEDURE [dbo].[Task_RNG_Check_Data_Consistency_Job] @FromDate SMALLDATETIME
 	, @ToDate SMALLDATETIME
 	, @ErrMessage NVARCHAR(MAX) = '' OUTPUT
 AS
@@ -8,6 +14,7 @@ AS
 	Created: 20160517@Patrick
 	Task: Check data between bettrans & bettransRNG for RNG Game (Run on DB06/DBTP)
 	Revision:
+		2016-10-10@Patrick: Allbet integration
 */
 BEGIN
 	SET NOCOUNT ON
@@ -54,6 +61,20 @@ BEGIN
 		INSERT INTO @ErrorsTmp(ProductId, ProductName, ErrMessage)
 		VALUES(203, 'Microgaming Live Casino', @ErrorTmp)
 	END
+	
+	--For Allbet
+	SET @ErrorTmp = ''
+	EXEC dbo.Task_LC_DataConsistency_Check @FromDate = @FromDate
+		, @ToDate = @ToDate
+		, @ProductId = 211
+
+		, @ErrMessage = @ErrorTmp OUTPUT
+
+	IF ISNULL(@ErrorTmp, '') <> ''
+	BEGIN
+		INSERT INTO @ErrorsTmp(ProductId, ProductName, ErrMessage)
+		VALUES(211, 'Allbet', @ErrorTmp)	
+	END
 
 	--will be sent mail if any error 
 	IF EXISTS (SELECT TOP 1 1 FROM @ErrorsTmp)
@@ -73,5 +94,3 @@ BEGIN
 	END
 		
 END
-
-GO
