@@ -1,11 +1,8 @@
 USE [msdb]
 GO
-
-/****** Object:  Job [winlost report update (daily)]    Script Date: 10/05/2016 00:18:10 ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 10/05/2016 00:18:10 ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -26,7 +23,7 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'winlost report update (daily
 		@owner_login_name=N'vnDBA', 
 		@notify_email_operator_name=N'Viet', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Task_DailyArchiveRptDepWinlost]    Script Date: 10/05/2016 00:18:10 ******/
+/****** Object:  Step [Task_DailyArchiveRptDepWinlost]    Script Date: 10/24/2016 00:13:46 ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Task_DailyArchiveRptDepWinlost', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
@@ -39,19 +36,11 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Task_Dai
 		@os_run_priority=0, @subsystem=N'TSQL', 
 		@command=N'EXEC [dbo].[Task_DailyArchiveRptDepWinlost]
 GO
-
-DECLARE @date smalldatetime
-SELECT @date = MIN(winlostdate) FROM bodb_report.dbo.rptDepWinlost WITH(nolock)
-
-WHILE (@date < DATEADD(dd, DATEDIFF(d, 0, CURRENT_TIMESTAMP)-5, 0))
-BEGIN
-	EXEC bodb_report.dbo.Task_DepWinlostSUM @date
-	SELECT @date=dateadd(dd, 1, @date)
-END', 
+', 
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [SUM data]    Script Date: 10/05/2016 00:18:10 ******/
+/****** Object:  Step [SUM data]    Script Date: 10/24/2016 00:13:46 ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'SUM data', 
 		@step_id=2, 
 		@cmdexec_success_code=0, 
