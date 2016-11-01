@@ -10,7 +10,7 @@ AS
   
 	Revision:   
     - 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
-	-20161007@Jim: Check & correct data for rpt_BettingColossusBets [RedminID : #63785]
+	- 20161007@Jim: Check & correct data for rpt_BettingColossusBets [RedminID : #63785]
 */  
 BEGIN  
 	SET NOCOUNT ON   
