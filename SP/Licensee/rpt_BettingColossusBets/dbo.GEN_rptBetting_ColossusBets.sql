@@ -1,14 +1,16 @@
-CREATE PROCEDURE [dbo].[GEN_rptBetting_ColossusBets] 
+USE [bodb_LicenseeReport]
+GO
+ALTER PROCEDURE [dbo].[GEN_rptBetting_ColossusBets] 
 	@date SMALLDATETIME = NULL
 	,@date2 SMALLDATETIME = NULL
 AS
 /*   
  Created:  20160928@Jim
- DB: DBLIC.bodb_licensee  
+ DB: DBLIC.bodb_LicenseeReport   
  Task: Gen data from bettrans before Move bets [RedminID : #63785]
  Original:   
  Revisions:   
-    
+ - 20161101@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 */
 BEGIN
 	DECLARE @tmpRawData AS TABLE (
@@ -190,11 +192,11 @@ BEGIN
 			ON d.CurrencyID = s.Currency
 				AND d.rptDate = s.Winlostdate 
 	
-	DELETE bodb_licenseereport.dbo.rpt_BettingColossusBets
+	DELETE dbo.rpt_BettingColossusBets
 	WHERE rptDate BETWEEN @date
 						AND @date2
 
-	INSERT INTO bodb_licenseereport.dbo.rpt_BettingColossusBets
+	INSERT INTO dbo.rpt_BettingColossusBets
 				(
 				rptDate,
 				CustID,

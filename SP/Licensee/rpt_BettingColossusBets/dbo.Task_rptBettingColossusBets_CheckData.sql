@@ -1,15 +1,14 @@
-USE bodb02
+USE [bodb_LicenseeReport]
 GO
-
-CREATE PROCEDURE dbo.Task_rptBettingColossusBets_CheckData @WinlostDate SMALLDATETIME
+ALTER PROCEDURE [dbo].[Task_rptBettingColossusBets_CheckData] @WinlostDate SMALLDATETIME
 AS
 /*   
  Created:  20160928@Jim
- DB: DBEXT/bodb02  
+ DB: DBLIC/bodb_LicenseeReport  
  Task: Check & correct data for rpt_BettingColossusBets [RedminID : #63785]
  Original:   
  Revisions:   
-    
+ - 20161101@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 */
 BEGIN
 	DECLARE @S_TotalTrans INT
@@ -91,7 +90,7 @@ BEGIN
 		, b.Winlost
 		, b.STATUS
 		, SUM(a.GrandAmt) AS GrandAmt
-	FROM .dbo.bettrans14 b WITH (NOLOCK)
+	FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 	INNER JOIN bodb_licensee.dbo.LicenseeCust t
 		ON b.recommend = t.CustID
 			AND b.Currency = t.Currency
@@ -162,7 +161,7 @@ BEGIN
 				END) CommAmt
 		, 0 AS GrandAmt
 	FROM @tmpBettrans b
-	INNER JOIN dbo.bettransm14 bm WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 		ON b.refno = bm.refno
 	WHERE bm.bettype BETWEEN 18001
 			AND 18006
@@ -208,7 +207,7 @@ BEGIN
 		, @D_CashInShare = SUM(CashInShare)
 		, @D_CommAmt = SUM(CommAmt)
 		, @D_GrandAmt = SUM(GrandAmt)
-	FROM bodb_licenseereport.dbo.rpt_BettingColossusBets WITH (NOLOCK)
+	FROM dbo.rpt_BettingColossusBets WITH (NOLOCK)
 	WHERE rptDate = @Winlostdate
 	------------------------------------
 	--if diff then generate data again
@@ -222,7 +221,7 @@ BEGIN
 		OR ISNULL(@D_GrandAmt, 0) <> ISNULL(@S_GrandAmt, 0)
 	BEGIN
 		PRINT 'Re-generate data for rpt_BettingColossusBets on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' date.'
-		EXEC bodb_licensee.dbo.GEN_rptBetting_ColossusBets14 @date  = @WinlostDate, @date2 = @WinlostDate
+								EXEC dbo.GEN_rptBetting_ColossusBets14 @date  = @WinlostDate, @date2 = @WinlostDate
 		RETURN
 	END
 	
