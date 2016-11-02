@@ -1,4 +1,8 @@
-use [bodb_Report]
+USE [bodb_Report]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 ALTER PROCEDURE [dbo].[TASK_DepSumData_Job_CheckStatus]
 AS
@@ -8,98 +12,172 @@ AS
 		Task: Check Status for Deposit Summary Data Job	
 		DB: DBRPT.bodb_Report
 		Revisions:
+		-20161101@Francis: Add Opening Balance checking function
+		-20161102@Francis: Only check at the beginning and middle of the day
 		Input Params:	
 	*/
 BEGIN
 
 	SET NOCOUNT ON
 	
-	DECLARE @CurrentDate DATE,
-			@CurrentHour TINYINT,
-			@Count SMALLINT = 0,
-			@Date DATE,
-			@Subject VARCHAR(500) = '',
-			@isValid BIT = 0,
-			@ErrMsg VARCHAR(500) = '',
-			@ErrorMessage VARCHAR(8000)
-
-	DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), JobType VARCHAR(50), ErrMsg VARCHAR(500))
-			
-	SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112)
+	DECLARE @CurrentHour TINYINT
+	
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
-	SELECT @Date = MIN(Winlostdate)
-	FROM dbo.rptDepWinlost_Main WITH (NOLOCK)
-
-	WHILE (@Date <= @CurrentDate)
+	
+	IF (@CurrentHour = 1 OR @CurrentHour = 13)
 	BEGIN
-		IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.rptDepWinlost_Main WITH (NOLOCK) WHERE Winlostdate = @Date)
+		DECLARE @CurrentDate DATE,
+				@Yesterday DATE,
+				@FailedHour TINYINT,
+				@Count SMALLINT = 0,
+				@Date DATE,
+				@Subject VARCHAR(500) = '',
+				@ErrMsg VARCHAR(500) = '',
+				@ErrorMessage VARCHAR(8000)
+
+		DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), JobType VARCHAR(50), ErrMsg VARCHAR(500))
+					
+		SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112), @Yesterday = DATEADD(DAY,-1,@CurrentDate)
+		SELECT @Date = MIN(Winlostdate)
+		FROM dbo.rptDepWinlost_Main WITH (NOLOCK)
+
+		--Check the adequacy of summarized days
+		WHILE (@Date <= @CurrentDate)
 		BEGIN
-			SELECT @ErrMsg = 'Missing data on: ' + CONVERT(VARCHAR(20),@Date)
-			INSERT INTO @ErrMsgTab (JobType, ErrMsg) SELECT 'Check the adequacy of summarized days', @ErrMsg
+			IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.rptDepWinlost_Main WITH (NOLOCK) WHERE Winlostdate = @Date)
+			BEGIN
+				SELECT @ErrMsg = 'Missing data on: ' + CONVERT(VARCHAR(20),@Date)
+				INSERT INTO @ErrMsgTab (JobType, ErrMsg) SELECT 'ADEQUACY OF SUMMARIZED DAYS', @ErrMsg
+			END
+			SELECT @Date = DATEADD(DAY,1,@Date)
 		END
-		SELECT @Date = DATEADD(DAY,1,@Date)
-	END
 
-	--Check realtime job status
-	SELECT @ErrMsg = ''
-	SELECT @Count = ISNULL(COUNT(LogID),0)
-	FROM dbo.rptDepWinlost_Log WITH (NOLOCK)
-	WHERE StatusID = 0 AND LogDate = @CurrentDate AND LogHour = @CurrentHour AND LogType = 4
-	HAVING COUNT(LogID) >= 10
-	
-	IF @Count > 0
-	BEGIN
-		SELECT @ErrMsg = 'Realtime job failed for ' + CONVERT(VARCHAR(20),@Count) + ' time(s) on: ' + CONVERT(VARCHAR(20),@CurrentHour) 
-						+ CASE WHEN @CurrentHour < 12 THEN ' AM ' ELSE ' PM ' END + 'range, day: ' + CONVERT(VARCHAR(20),@CurrentDate) + CHAR(13) --Line break
-		INSERT INTO @ErrMsgTab (Jobtype, ErrMsg) SELECT 'REALTIME', @ErrMsg
-	END
-						  
-	--Check hourly job status
-	SELECT @ErrMsg = ''
-	SELECT @Count = ISNULL(COUNT(LogID),0)
-	FROM dbo.rptDepWinlost_Log WITH (NOLOCK)
-	WHERE StatusID = 0 AND LogDate = @CurrentDate AND LogHour = @CurrentHour AND LogType = 3
-	HAVING COUNT(LogID) >= 4
-	
-	IF @Count > 0
-	BEGIN
-		SELECT @ErrMsg = 'Hourly job failed for ' + CONVERT(VARCHAR(20),@Count) + ' time(s) on: ' + CONVERT(VARCHAR(20),@CurrentHour) 
-					  + CASE WHEN @CurrentHour < 12 THEN ' AM ' ELSE ' PM ' END + 'range, day: ' + CONVERT(VARCHAR(20),@CurrentDate) + CHAR(13) --Line break
-		INSERT INTO @ErrMsgTab (Jobtype, ErrMsg) SELECT 'HOURLY', @ErrMsg
-	END
+		--Check realtime job status
+		SELECT TOP 1 @FailedHour = LogHour, @Count = ISNULL(COUNT(LogID),0)
+		FROM dbo.rptDepWinlost_Log WITH (NOLOCK)
+		WHERE StatusID = 0 AND LogDate = @CurrentDate AND LogType = 4
+		GROUP BY LogHour
+		HAVING COUNT(LogID) >= 10
+		ORDER BY COUNT(LogID) DESC
+		
+		IF @Count > 0
+		BEGIN
+			SELECT @ErrMsg = 'Realtime job failed for ' + CONVERT(VARCHAR(20),@Count) + ' time(s) on: ' + CONVERT(VARCHAR(20),@FailedHour) 
+							+ CASE WHEN @FailedHour < 12 THEN ' AM ' ELSE ' PM ' END + 'range, day: ' + CONVERT(VARCHAR(20),@CurrentDate) + CHAR(13) --Line break
+			INSERT INTO @ErrMsgTab (JobType, ErrMsg) SELECT 'REALTIME', @ErrMsg
+		END
+							  
+		--Check hourly job status
+		SELECT @ErrMsg = ''
+		SELECT TOP 1 @FailedHour = LogHour, @Count = ISNULL(COUNT(LogID),0)
+		FROM dbo.rptDepWinlost_Log WITH (NOLOCK)
+		WHERE StatusID = 0 AND LogDate = @CurrentDate AND LogType = 3
+		GROUP BY LogHour
+		HAVING COUNT(LogID) >= 4
+		ORDER BY COUNT(LogID) DESC
+		
+		IF @Count > 0
+		BEGIN
+			SELECT @ErrMsg = 'Hourly job failed for ' + CONVERT(VARCHAR(20),@Count) + ' time(s) on: ' + CONVERT(VARCHAR(20),@FailedHour) 
+						  + CASE WHEN @FailedHour < 12 THEN ' AM ' ELSE ' PM ' END + 'range, day: ' + CONVERT(VARCHAR(20),@CurrentDate) + CHAR(13) --Line break
+			INSERT INTO @ErrMsgTab (Jobtype, ErrMsg) SELECT 'HOURLY', @ErrMsg
+		END
 
-	--Check daily job status
-	SELECT @ErrMsg = ''
-	SELECT @Count = ISNULL(COUNT(LogID),0)
-	FROM dbo.rptDepWinlost_Log WITH (NOLOCK)
-	WHERE StatusID = 0 AND LogDate = @CurrentDate AND LogType = 2
-	HAVING COUNT(LogID) >= 3
-	
-	IF @Count > 0
-	BEGIN
-		SELECT @ErrMsg = 'Daily job failed for ' + CONVERT(VARCHAR(20),@Count) + ' time(s) on: ' + CONVERT(VARCHAR(20),@CurrentHour) 
-						  + CASE WHEN @CurrentHour < 12 THEN ' AM ' ELSE ' PM ' END + 'range, day: ' + CONVERT(VARCHAR(20),@CurrentDate) + CHAR(13) --Line break
-	
-		INSERT INTO @ErrMsgTab (Jobtype, ErrMsg) SELECT 'DAILY', @ErrMsg
+		--Check daily job status
+		SELECT @ErrMsg = ''
+		SELECT TOP 1 @FailedHour = LogHour, @Count = ISNULL(COUNT(LogID),0)
+		FROM dbo.rptDepWinlost_Log WITH (NOLOCK)
+		WHERE StatusID = 0 AND LogDate = @CurrentDate AND LogType = 2
+		GROUP BY LogHour
+		HAVING COUNT(LogID) >= 3
+		ORDER BY COUNT(LogID) DESC
+		
+		IF @Count > 0
+		BEGIN
+			SELECT @ErrMsg = 'Daily job failed for ' + CONVERT(VARCHAR(20),@Count) + ' time(s) on: ' + CONVERT(VARCHAR(20),@FailedHour) 
+							  + CASE WHEN @FailedHour < 12 THEN ' AM ' ELSE ' PM ' END + 'range, day: ' + CONVERT(VARCHAR(20),@CurrentDate) + CHAR(13) --Line break
+		
+			INSERT INTO @ErrMsgTab (Jobtype, ErrMsg) SELECT 'DAILY', @ErrMsg
+		END	
+			
+		IF EXISTS (SELECT TOP 1 1 FROM @ErrMsgTab)
+		BEGIN
+			SELECT @Subject = 'SQL Server Job System:'' bodb02: Deposit Report Summary'' completed on \\' + @@SERVERNAME
+			
+			SELECT @ErrorMessage = '<H3>Deposit Data Summary Job was run on ['+ CONVERT(VARCHAR(20),@CurrentDate) + ']. Status: FAILED</H3>'
+								 + '<table border="1"> '
+								 + '<tr><th>No.</th><th>Job type</th><th>Error Message</th></tr>'
+								  + CAST(( SELECT    td = NoID, '',
+													 td = JobType, '',
+													 td = ErrMsg, ''
+											FROM @ErrMsgTab
+											FOR XML PATH('tr'), TYPE 
+										) AS NVARCHAR(MAX) ) + N'</table>'
+			
+			EXEC msdb.dbo.sp_send_dbmail @recipients = 'francis.le@starixsoft.com'
+						, @subject = @subject
+						, @body = @ErrorMessage
+						, @body_format = 'HTML'
+		END
+		
+		--Check opening balance of customers for yesterday only
+		CREATE TABLE #Result(CustID INT, OpeningBalance_DepWL MONEY, OpeningBalance_Bettrans MONEY)
+
+		-- Get opening balance of customer from rptDepWinlost_Main & bettrans
+		INSERT INTO #Result(CustID, OpeningBalance_DepWL, OpeningBalance_Bettrans)
+		SELECT DepWL.CustID, DepWL.OpeningBalance, bettrans.OpeningBalance
+			FROM (
+					SELECT m.CustID, m.OpeningBalance
+					FROM bodb_Report.dbo.rptDepWinlost_Main m WITH(NOLOCK)
+					WHERE m.Winlostdate = @Yesterday
+				) DepWL
+				CROSS APPLY (
+					SELECT 
+						ISNULL( 
+							SUM(
+								CASE
+									WHEN b.bettype = 903 THEN 0
+									ELSE (b.winlost - b.actual_stake + b.playercomm)
+								END
+							), 0
+						) AS OpeningBalance
+					FROM bodb02.dbo.bettrans b WITH(NOLOCK, INDEX = IX_Report)
+					WHERE b.winlostdate < @Yesterday
+						AND b.custid = DepWL.CustID
+				) bettrans
+			WHERE DepWL.OpeningBalance != bettrans.OpeningBalance
+		
+		SELECT @Count = @@ROWCOUNT
+			
+		IF @Count > 0
+		BEGIN
+			DELETE FROM @ErrMsgTab
+			SELECT @ErrMsg = 'Opening balances of ' + CONVERT(VARCHAR(20),@Count) +  ' customer(s) are different compared with bettrans on: ' + CONVERT(VARCHAR(20),@Yesterday)
+							 + CHAR(13) --Line break
+			INSERT INTO @ErrMsgTab (JobType, ErrMsg) SELECT 'OPENING BALANCE', @ErrMsg
+			
+			SELECT @Subject = 'SQL Server Job System:'' bodb02: Deposit Report Summary'' completed on \\' + @@SERVERNAME
+			
+			SELECT @ErrorMessage = '<H3>Deposit Data Summary Job was run on ['+ CONVERT(VARCHAR(20),@CurrentDate) + ']. Status: FAILED</H3>'
+								 + '<table border="1"> '
+								 + '<tr><th>No.</th><th>Job type</th><th>Error Message</th></tr>'
+								  + CAST(( SELECT    td = NoID, '',
+													 td = JobType, '',
+													 td = ErrMsg, ''
+											FROM @ErrMsgTab
+											FOR XML PATH('tr'), TYPE 
+										) AS NVARCHAR(MAX) ) + N'</table>'
+			
+			EXEC msdb.dbo.sp_send_dbmail @recipients = 'francis.le@starixsoft.com'
+						, @subject = @subject
+						, @body = @ErrorMessage
+						, @body_format = 'HTML'
+						, @copy_recipients = 'don.pham@starixsoft.com'
+		END
+
+	DROP TABLE #Result
 	END
-		
-	IF EXISTS (SELECT TOP 1 1 FROM @ErrMsgTab)
-	BEGIN
-		SELECT @Subject = 'SQL Server Job System:'' bodb02: Deposit Report Summary'' completed on \\' + @@SERVERNAME
-		
-		SELECT @ErrorMessage = '<H3>Deposit Data Summary Job was run on ['+ CONVERT(VARCHAR(20),@CurrentDate) + ']. Status: FAILED</H3>'
-							 + '<table border="1"> '
-							 + '<tr><th>No.</th><th>Job type</th><th>Error Message</th></tr>'
-							  + CAST(( SELECT    td = NoID, '',
-												 td = JobType, '',
-												 td = ErrMsg, ''
-										FROM @ErrMsgTab
-										FOR XML PATH('tr'), TYPE 
-									) AS NVARCHAR(MAX) ) + N'</table>'
-		
-		EXEC msdb.dbo.sp_send_dbmail @recipients='dbaadmin@starixsoft.com'
-					, @subject = @subject
-					, @body = @ErrorMessage
-					, @body_format = 'HTML'
-	END
+	ELSE
+	RETURN
+	
 END
