@@ -1,13 +1,6 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_RptKPI_MTD_Account    Script Date: 12/1/2015 2:38:01 AM ******/
-/****** Object:  Stored Procedure dbo.GEN_RptKPI_MTD_Account    Script Date: 8/22/2012 11:20:22 AM ******/
-
-CREATE PROCEDURE [dbo].[GEN_RptKPI_MTD_Account]
+ALTER PROCEDURE [dbo].[GEN_RptKPI_MTD_Account]
     @date datetime, 
     @date2 datetime,
     @isBA bit = 0
@@ -15,9 +8,10 @@ AS
 /*
 Created: 20120810@Don
 Task: Generate data into GEN_RptKPI_MTD from rptKPI_Account
-DB: DB052.bodb_Licensee
+DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
+20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
     
 Param's Explanation:
 
@@ -66,13 +60,4 @@ BEGIN
             
 END
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Account] TO [bodbLicenseeNet]
-GO 
+GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Account] TO [bodbLicenseeNet] AS [dbo]

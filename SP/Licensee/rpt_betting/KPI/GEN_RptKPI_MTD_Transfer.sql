@@ -1,22 +1,16 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_RptKPI_MTD_Transfer    Script Date: 12/1/2015 2:38:01 AM ******/
-/****** Object:  Stored Procedure dbo.GEN_RptKPI_MTD_Transfer    Script Date: 8/22/2012 11:20:22 AM ******/
-
-CREATE PROCEDURE [dbo].[GEN_RptKPI_MTD_Transfer]
+ALTER PROCEDURE [dbo].[GEN_RptKPI_MTD_Transfer]
     @date datetime, 
     @date2 datetime
 AS
 /*
 Created: 20120810@Don
 Task: Generate data into GEN_RptKPI_MTD from rptKPI_Transfer
-DB: DB052.bodb_Licensee
+DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
+- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
     
 Param's Explanation:
 
@@ -45,13 +39,4 @@ INSERT INTO dbo.rptKPI_MTD_Cross
             SELECT 4, TransferOutCount
         ) f(StatID,MTD)
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Transfer] TO [bodbLicenseeNet]
-GO 
+GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Transfer] TO [bodbLicenseeNet] AS [dbo]

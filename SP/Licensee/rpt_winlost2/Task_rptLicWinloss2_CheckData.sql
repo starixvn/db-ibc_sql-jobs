@@ -1,19 +1,14 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_rptLicWinloss2_CheckData    Script Date: 12/1/2015 2:37:59 AM ******/
-/****** Object:  Stored Procedure dbo.Task_rptLicWinloss2_CheckData    Script Date: 9/23/2015 10:22:45 AM ******/
-CREATE PROCEDURE dbo.Task_rptLicWinloss2_CheckData @WinlostDate SMALLDATETIME
+ALTER PROCEDURE [dbo].[Task_rptLicWinloss2_CheckData] @WinlostDate SMALLDATETIME
 AS
 /*
 	Created: 20150910@Patrick
 	Task : Check & correct data for licensee winloss2
-	DB: DB052.bodb02
+	DB: DBLIC.bodb_LicenseeReport
 	Original:
-	Revisions:	
+	Revisions:
+	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -23,20 +18,21 @@ BEGIN
 		, @S_Turnover = SUM(CASE WHEN b.liveawayscore = 0 AND b.bettype IN(33,43) THEN ABS(b.stake/2) ELSE ABS(b.stake) END) --TurnOver
 		, @S_BetCount = COUNT(b.TransId) --BetCount
 	FROM bodb02.dbo.bettrans14 b WITH(NOLOCK)
-		INNER JOIN dbo.customer c WITH (NOLOCK) ON b.custid = c.custid
+		INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.custid = c.custid
 	WHERE b.winlostdate = @WinlostDate
-		AND c.srecommend IN (SELECT custid FROM dbo.f_DepSuper_1('All'))
+		AND c.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All'))
 		AND b.statusID IN (101,111,112,113) --REJECT, DRAW, WON, LOSE
 		AND b.bettype <= 19999
 		AND c.roleid = 1
+	OPTION (RECOMPILE)
 
 	SELECT @T_Winlost = SUM(winlost)
 		, @T_Turnover = SUM(turnover)
 		, @T_BetCount = SUM(BetCount)
-	FROM bodb_licensee.dbo.rptLicWinloss2 b WITH(NOLOCK)
-		INNER JOIN dbo.customer c WITH (NOLOCK) ON b.custid = c.custid
+	FROM dbo.rptLicWinloss2 b WITH(NOLOCK)
+		INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.custid = c.custid
 	WHERE b.winlostdate = @WinlostDate
-		AND c.srecommend IN (SELECT custid FROM dbo.f_DepSuper_1('All'))
+		AND c.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All'))
 		AND b.statusID IN (101,111,112,113,114,115) --REJECT, DRAW, WON, LOSE, HALF-WON, HALF-LOSE
 		AND b.bettype <= 19999
 		AND b.roleid = 1
@@ -51,12 +47,3 @@ BEGIN
 		RETURN
 	END
 END
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 

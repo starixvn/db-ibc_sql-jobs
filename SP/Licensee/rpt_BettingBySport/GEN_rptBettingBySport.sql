@@ -1,10 +1,5 @@
 USE [bodb_LicenseeReport]
 GO
-/****** Object:  StoredProcedure [dbo].[GEN_rptBettingBySport]    Script Date: 03/02/2016 03:54:42 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[GEN_rptBettingBySport]
     @FromDate smalldatetime,
     @ToDate smalldatetime
@@ -15,7 +10,7 @@ AS
     DB: DB052.bodb_LicenseeReport
 
     Revisions:
-	
+	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 */ 
 BEGIN
     DELETE FROM dbo.rpt_BettingBySport
@@ -54,7 +49,7 @@ BEGIN
 			, -sum(scomm) as CommissionS -- Commission for Licensee
 			, -sum(scomm * 0.03/(1 - tpositiontaking)) as CommShare -- Commission for Licensee share with Muay Thai partner
 			, b.customercategory AS CustomerCategory
-	FROM bodb_Licensee.dbo.bettrans b with (nolock)
+	FROM dbo.bettrans b with (nolock)
 		INNER JOIN (SELECT matchid FROM bodb02.dbo.match WITH (NOLOCK) WHERE eventdate BETWEEN @fromdate AND @todate AND SportType = 44) m ON b.matchid = m.matchid
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site = ibcsite.site
@@ -63,5 +58,4 @@ BEGIN
 	WHERE b.winlostdate BETWEEN @fromdate AND @todate
 	GROUP BY b.winlostdate, isnull(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory, l.LabelID 
 END  
-GO
-GRANT VIEW DEFINITION ON [dbo].[GEN_rptBettingBySport] TO [vnteam] AS [dbo]
+

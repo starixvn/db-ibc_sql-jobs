@@ -1,32 +1,25 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_rptWinlostbyleague_Bettrans14    Script Date: 12/1/2015 2:38:00 AM ******/
-/****** Object:  Stored Procedure dbo.Task_rptWinlostbyleague_Bettrans14    Script Date: 11/26/2014 1:05:13 PM ******/
-
-
-CREATE PROCEDURE [dbo].[Task_rptWinlostbyleague_Bettrans14] 
+ALTER PROCEDURE [dbo].[Task_rptWinlostbyleague_Bettrans14] 
 	 @Date SMALLDATETIME
 AS
 /*	
 	Created	: Florent Nguyen
 	Task: Gen data for table bodb_LicenseeReport.dbo.rptWinlostbyLeague
 	Date: 2013-11-30
-	DB: DBEXT.bodb02
+	DB: DBLIC.bodb_LicenseeReport
 	Original: 
 	Revision:
 		-20140314@Florent: change way to get BA tickets		
 		-20141121@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
+		-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	Parameter's Explanation:			
 */
 SET NOCOUNT ON;
 
-IF EXISTS (SELECT TOP 1 1 FROM bodb_LicenseeReport.dbo.rptWinlostbyLeague WITH (nolock) WHERE winlostdate =@Date)
+IF EXISTS (SELECT TOP 1 1 FROM dbo.rptWinlostbyLeague WITH (nolock) WHERE winlostdate =@Date)
 BEGIN 
-	DELETE bodb_LicenseeReport.dbo.rptWinlostbyLeague
+	DELETE dbo.rptWinlostbyLeague
 	WHERE winlostdate =@Date
 END;
 
@@ -71,7 +64,7 @@ AS (
 				THEN 1
 			END AS isBA
 		,a.currency
-	FROM dbo.bettrans14 a WITH (NOLOCK)
+	FROM bodb02.dbo.bettrans14 a WITH (NOLOCK)
 		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC ON a.recommend = lc.custid AND a.currency = lc.currency
 		LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) ON a.transid=ba.transid
 	WHERE a.winlostdate = @Date
@@ -118,12 +111,12 @@ AS (
 		,r.EventTime
 		,o.EventID
 		,o.RacerID
-	FROM dbo.VSOutright14 o WITH (NOLOCK)
-	INNER JOIN dbo.VSRaceInfo r WITH (NOLOCK) ON r.EventID = o.EventID
+	FROM bodb02.dbo.VSOutright14 o WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK) ON r.EventID = o.EventID
 	WHERE o.EventDate BETWEEN @Date AND DATEADD(DAY, 1, @Date)
 )
 
-INSERT INTO bodb_LicenseeReport.dbo.rptWinlostbyLeague (
+INSERT INTO dbo.rptWinlostbyLeague (
 	 winlostdate
 	,matchid
 	,oddsid
@@ -171,9 +164,9 @@ SELECT a.winlostdate
 	,isba
 	,a.currency
 FROM cte_bettrans a
-	LEFT JOIN dbo.match14 b WITH (NOLOCK) ON a.matchid = b.matchid
+	LEFT JOIN bodb02.dbo.match14 b WITH (NOLOCK) ON a.matchid = b.matchid
 	LEFT JOIN cte_raceinfo result ON a.oddsid = result.Orid
-	LEFT JOIN dbo.outright14 AS ob WITH (NOLOCK) ON a.matchid = ob.orid
+	LEFT JOIN bodb02.dbo.outright14 AS ob WITH (NOLOCK) ON a.matchid = ob.orid
 GROUP BY a.winlostdate
 	,a.matchid
 	,a.oddsid
@@ -198,15 +191,6 @@ GROUP BY a.winlostdate
 	,isba
 	,a.currency
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[Task_rptWinlostbyleague_Bettrans14] TO [bodbLicenseeNet] AS [dbo]
 GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Task_rptWinlostbyleague_Bettrans14] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Task_rptWinlostbyleague_Bettrans14] TO [bodbLicenseeNet]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[Task_rptWinlostbyleague_Bettrans14] TO [vnteam] AS [dbo]

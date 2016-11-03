@@ -1,20 +1,13 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_rptKPI_Account    Script Date: 12/1/2015 2:38:01 AM ******/
-
-
-CREATE PROCEDURE [dbo].[GEN_rptKPI_Account]
+ALTER PROCEDURE [dbo].[GEN_rptKPI_Account]
     @datefrom datetime, 
     @dateto datetime = null
 AS
 /*
 Created: 20110517@Daniel
 Task: Generate data into rptKPI_Account from Staging and DB03.ON_USER.dbo.TotalOnline (refer to SP [Dot_Admin_GetTotalOnline_Report] for more detail)
-DB: DB052.bodb_Licensee
+DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
     20110526@Don: Generate number of unique members that place bets and concurrent online members
@@ -40,6 +33,7 @@ Revisions:
 	20140523@Don: (DB05.ON_USER) Add THBET,Livv88(KeenOcean),9Club,XTD3,28bet
 	20140606@Don: (DB05.ON_USER): Add LivebetKR,HONBET,Q8Bola,BE7,iBET
 	20140611@Don: (DB05.ON_USER): Add IIBC
+	20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
     
 Param's Explanation:
 
@@ -68,7 +62,7 @@ insert into dbo.rptKPI_Account(rptDate,[hour],siteid,UniqueBettorCount)
         inner join bodb02.dbo.Customer cust (nolock) on bet.custid = cust.custid
         inner join bodb02.dbo.Customer cust_a (nolock) on cust.recommend = cust_a.custid
         left join bodb02.dbo.Site ibcsite with (nolock) on cust_a.site=ibcsite.site
-	    left join dbo.view_site_list s with (nolock) on ibcsite.siteid=s.IbcSiteID
+	    left join bodb_Licensee.dbo.view_site_list s with (nolock) on ibcsite.siteid=s.IbcSiteID
     where 
         transdate >= @date and transdate < @date2
         and bettype not between 31 and 120
@@ -299,7 +293,7 @@ insert into #temp
 update acc
 set acc.PeakBettorCount = isnull(b.PeakBettorCount,0)
 from #temp b
-    left join dbo.view_kpi_labels lbl on b.FullSiteName = lbl.LabelName
+    left join bodb_Licensee.dbo.view_kpi_labels lbl on b.FullSiteName = lbl.LabelName
     inner join dbo.rptKPI_Account acc 
         on lbl.LabelID = acc.SiteID and b.LogHour = acc.Hour and acc.rptDate = dateadd(day,-1,@date2)
 where lbl.resellerid <> 3 
@@ -331,25 +325,9 @@ exec dbo.GEN_RptKPI_MTD_Account
     @date2 = @date2,
     @stattype = 3,
     @isBA = 0*/
-
-
-
-
-
-
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[GEN_rptKPI_Account] TO [bodbLicenseeNet] AS [dbo]
 GO
-SET ANSI_NULLS ON 
+GRANT EXECUTE ON [dbo].[GEN_rptKPI_Account] TO [vnteam] AS [dbo]
 GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[GEN_rptKPI_Account] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[GEN_rptKPI_Account] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[GEN_rptKPI_Account] TO [bodbLicenseeNet]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[GEN_rptKPI_Account] TO [vnteam] AS [dbo]

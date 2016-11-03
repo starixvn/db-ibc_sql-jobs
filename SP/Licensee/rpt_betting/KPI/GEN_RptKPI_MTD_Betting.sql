@@ -1,4 +1,4 @@
-USE [bodb_licensee]
+USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[GEN_RptKPI_MTD_Betting]
     @date datetime, 
@@ -8,10 +8,11 @@ AS
 /*
 Created: 20120810@Don
 Task: Generate data into GEN_RptKPI_MTD from rpt_Betting
-DB: DB052.bodb_Licensee
+DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
--20160116@Francis: Support BetTrade
+-20160116@Francis: Support Bettrade
+-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 -20160810@Francis: BetTrade commercial terms changed [Redmine: #62111]
     
 Param's Explanation:
@@ -56,7 +57,7 @@ BEGIN
 	BEGIN
 
 		INSERT INTO @Labels 
-			SELECT LabelID, TnxRate FROM dbo.view_kpi_labels (NOLOCK) WHERE ResellerID <> 3
+			SELECT LabelID, TnxRate FROM bodb_Licensee.dbo.view_kpi_labels (NOLOCK) WHERE ResellerID <> 3
 	    
 		INSERT INTO #Betting (rptDate, SiteID, CurrencyID, BetCount, Turnover, WLOfTicketsLoss, WLOfTicketsWon, SportRevenueTransaction, SportRevenueTicketsLoss
 							  ,SportRevenueOthers, BetCountNoDraw, TurnoverNoDraw, BetCountLive, TurnoverLive)
@@ -107,7 +108,7 @@ BEGIN
 	BEGIN
 
 		INSERT INTO @Labels 
-			SELECT LabelID, TnxRate FROM dbo.view_kpi_labels (NOLOCK) WHERE ResellerID = 3
+			SELECT LabelID, TnxRate FROM bodb_Licensee.dbo.view_kpi_labels (NOLOCK) WHERE ResellerID = 3
 	        
 		INSERT INTO #Betting
 			SELECT 
@@ -153,7 +154,7 @@ BEGIN
 	END
 
 	--For BetTrade
-	INSERT INTO #BettingBetTrade (rptDate, SiteID, CurrencyID, BoughtTicketCount, Actual_Stake, BuyBackAmount, ProfitOnBuyBack, BoughtTicketWL, CommShare, ProfitSharing)
+	  INSERT INTO #BettingBetTrade (rptDate, SiteID, CurrencyID, BoughtTicketCount, Actual_Stake, BuyBackAmount, ProfitOnBuyBack, BoughtTicketWL, CommShare, ProfitSharing)
         SELECT 
              b.rptDate 
             ,b.SiteID 
@@ -209,7 +210,6 @@ BEGIN
 	DROP TABLE #Betting
 	DROP TABLE #BettingBetTrade
 END
-
 GO
 GRANT EXECUTE ON [dbo].[GEN_RptKPI_MTD_Betting] TO [bodbLicenseeNet] AS [dbo]
 GO

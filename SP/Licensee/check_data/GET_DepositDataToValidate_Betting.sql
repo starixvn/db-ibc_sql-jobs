@@ -1,20 +1,21 @@
-USE [bodb_Licensee]
+USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_Betting] 
     @Date smalldatetime = null
-    ,@DrawFilter tinyint = 1
+	,@DrawFilter tinyint = 1
 AS
 /*
 Created: 20111208@Don
 Task : Get deposit data from table db052.bodb_Licensee.dbo.rpt_Betting
 
-DB: bodb_Licensee
+DB: bodb_LicenseeReport
 Original:
 
 Revisions:	
 	- 20140310@daniel: exclude currency C & H
 	- 20160608@Jim: Separate Bettrade (#57353)
-	- 20160616@Jim: Changes to data integrity automail (#59249)	
+	- 20160616@Jim: Changes to data integrity automail (#59249)
+	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20160805@Jim: Exclude bettype 18999 [Redmine #62052]
 	- 20160906@Jim: Correct value of SB & BA [Redmine #63571]
 Param's Explanation:
@@ -97,7 +98,7 @@ SELECT DISTINCT ProductPrefix,bettype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB')	
-	AND s.bettype <>18999
+	 
  
 -- Data Source 
 DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),Status INT, Turnover MONEY, Winloss MONEY,BetCount INT)	
@@ -109,7 +110,7 @@ SELECT  CASE WHEN b.bettype IN (901,902,903,904) THEN 'BT' ELSE t.ProductPrefix 
 		 ,SUM(Winloss) Winloss
 		 ,SUM(Betcount) Betcount
 FROM dbo.rpt_Betting b (NOLOCK)
-    INNER JOIN dbo.Licensees lic (NOLOCK) ON b.SiteID=lic.LicenseeID AND IsDeposit=CONVERT(bit,1)
+    INNER JOIN bodb_Licensee.dbo.Licensees lic (NOLOCK) ON b.SiteID=lic.LicenseeID AND IsDeposit=CONVERT(bit,1)
 	INNER JOIN @tblBettype t ON b.bettype = t.bettype 
 WHERE b.rptDate=@Date
 	AND b.Status IN (111,112,113,114,115)
@@ -176,7 +177,7 @@ SELECT @BaTurnover=SUM(CASE
     ,@BaCustomerWl=SUM(b.WinLoss) 
     ,@BaBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
 FROM dbo.rpt_Betting_BA b (NOLOCK)
-    INNER JOIN dbo.Licensees lic (NOLOCK) ON b.SiteID=lic.LicenseeID AND IsDeposit=CONVERT(bit,1)
+    INNER JOIN bodb_Licensee.dbo.Licensees lic (NOLOCK) ON b.SiteID=lic.LicenseeID AND IsDeposit=CONVERT(bit,1)
 WHERE b.rptDate=@Date
     AND b.Status IN (111,112,113,114,115)
     AND b.currencyID NOT IN(20,27,28)
@@ -367,5 +368,7 @@ SELECT 3, @SbBetCount
 		, @VsBetCount	
 
 SET NOCOUNT OFF
- GO
- GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_Betting] TO [bodbLicenseeNet]  
+GO
+GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_Betting] TO [bodbLicenseeNet] AS [dbo]
+GO
+GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_Betting] TO [vnteam] AS [dbo]

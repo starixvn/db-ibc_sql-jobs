@@ -1,5 +1,5 @@
-use bodb_licensee
-go
+USE [bodb_LicenseeReport]
+GO
 ALTER PROCEDURE [dbo].[Task_PrepareStaging]  
     @datefrom smalldatetime=null
     ,@dateto smalldatetime=null
@@ -8,7 +8,7 @@ AS
 /*
 Created: 
 Task: 
-DB: DB052.bodb_Licensee
+DB: DB052.bodb_LicenseeReport
 
 Revisions:
     -20120423@Jim: Add more information for BARM agent 
@@ -20,9 +20,10 @@ Revisions:
 	-20150929@Patrick: Revise code of BetTrade
 	-20160118@Patrick: Hotfix: #51053 for bettrade - turn off BA for ticket 901
 	-20160318@Victor: Support Colossus bet - [Redmine: #52575]
-	-20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
+	-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+	-20160727@Jim: LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
+	-20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785 :fix refno issue]
 Param's Explanation:
-
 */
 BEGIN
 	
@@ -150,7 +151,7 @@ BEGIN
 			    --AND b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
 	            AND b.winlostdate=@tmpDate
 	            AND b.custid>0
-	            
+	        
             DELETE dbo.bettrans WHERE winlostdate=@tmpDate AND statusid IN (0,1,101,102,121)
 
 			-- Colossus bet tickets
@@ -169,6 +170,7 @@ BEGIN
 				FROM dbo.bettrans b WITH (NOLOCK) 
 					INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 				WHERE b.bettype = 18000 AND b.winlostdate=@tmpDate
+					 AND bm.bettype BETWEEN 18000 AND 18006	
 				GROUP BY b.transid
 			)
 			UPDATE b
@@ -245,6 +247,7 @@ BEGIN
 				--LEFT JOIN #BetTradeCust btc ON b.CustId = btc.CustId
 			WHERE b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
 
+
 			-- Colossus bet tickets
 			;WITH CBAmount AS
 			(	
@@ -276,7 +279,7 @@ BEGIN
 	END
 	
 	UPDATE b
-	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (902, 903,904) THEN 1 ELSE 0 END
+	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (902,903,904) THEN 1 ELSE 0 END
 		, customercategory = CASE WHEN isBA = 0 THEN 1001 ELSE 1002 END --bettrade
 	FROM dbo.bettrans b
 		INNER JOIN #BetTradeCust btc ON b.CustId = btc.CustId
@@ -296,7 +299,7 @@ BEGIN
     INSERT #BATransids(transid)
         SELECT b.transid
         FROM dbo.bettrans b (NOLOCK)
-	        INNER JOIN dbo.LicenseeBAHistory h (NOLOCK) 
+	        INNER JOIN bodb_Licensee.dbo.LicenseeBAHistory h (NOLOCK) 
 	            ON b.custid=h.custid AND (transdate BETWEEN OnDate AND ISNULL(OffDate,@today))
         WHERE (Bettype<31 OR (Bettype>=121 AND Bettype<1000) OR (Bettype>=1301 AND Bettype<1400))
 	        AND tpositiontaking=0
@@ -311,17 +314,7 @@ BEGIN
 	DROP TABLE #BetTradeCust
 	  
 END
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[Task_PrepareStaging] TO [vnteam] AS [dbo]
 GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[Task_PrepareStaging] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Task_PrepareStaging] TO [vnteam]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[Task_PrepareStaging] TO [vnteam] AS [dbo]

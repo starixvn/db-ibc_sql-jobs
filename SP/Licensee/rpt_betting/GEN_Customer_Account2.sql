@@ -1,4 +1,4 @@
-USE [bodb_Licensee]
+USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[GEN_Customer_Account2] 
     @datefrom datetime=null
@@ -7,7 +7,7 @@ AS
 /*
 Created: 20110617@Elly.Nguyen
 Task : Generate data for Customer Account
-DB: DB052.bodb_licensee
+DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
     20111129@Don: 
@@ -15,11 +15,10 @@ Revisions:
     20120116@Don:
         + Take care of extra bettype 22003 (Withdrawal Cancelled)
         + Improve performance
-    20161017@Francis: Return SP, drop table bodb_Licensee.dbo.tbl_Customer_Account to change to use in bodb_LicenseeReport (#Redmine: 60449)
+    20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 Param's Explanation:
 */
 BEGIN
-	RETURN
 	SET NOCOUNT ON	
 	
 	-- Process input value @datefrom, @dateto
@@ -39,11 +38,7 @@ BEGIN
         FROM bodb02.dbo.bettrans (NOLOCK) 
         WHERE bettype IN (22001,22002,22003)
             AND matchid=0
-	
-	/*DELETE ca
-	FROM dbo.tbl_Customer_Account ca WITH(READPAST)
-		INNER JOIN bodb02.dbo.bettrans b WITH(READPAST) ON b.transid = ca.transid
-	WHERE b.bettype IN (22001,22002) AND b.matchid = 0 */
+            
 	DELETE ca
 	FROM dbo.tbl_Customer_Account ca
 	WHERE ca.transid IN (

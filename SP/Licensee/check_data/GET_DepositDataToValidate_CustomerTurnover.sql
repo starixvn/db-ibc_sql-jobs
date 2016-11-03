@@ -1,13 +1,6 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_CustomerTurnover    Script Date: 12/1/2015 2:38:00 AM ******/
-/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_CustomerTurnover    Script Date: 12/02/2015 09:52:23 AM ******/
-
-CREATE PROCEDURE [dbo].[GET_DepositDataToValidate_CustomerTurnover] 
+ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_CustomerTurnover] 
 	@Date SMALLDATETIME		= NULL
 	, @DrawFilter TINYINT	= 1
 
@@ -16,11 +9,12 @@ AS
 Created: 20140312@Florent
 Task : Get deposit data from table db052.bodb_Licenseereport.dbo.rptCustomerTurnover
 
-DB: bodb_Licensee
+DB: bodb_LicenseeReport
 Original:
 
 Revisions:	
 	- 20150211@Florent: add Sporting Solution bettype
+	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
     
@@ -45,7 +39,7 @@ DECLARE @SbTurnover			MONEY
 
 SELECT B.* 
 INTO #DATA
-FROM bodb_LicenseeReport.dbo.rptCustomerTurnover b WITH (NOLOCK)
+FROM dbo.rptCustomerTurnover b WITH (NOLOCK)
 WHERE B.winlostdate = @DATE 
 	AND b.currency NOT IN (20, 27, 28)
 
@@ -147,17 +141,8 @@ SELECT 3, @SbBetCount, @RbBetCount, @NgBetCount, @BaBetCount, @CsBetCount
 DROP TABLE #DATA
 SET NOCOUNT OFF
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerTurnover] TO [bodbLicenseeNet] AS [dbo]
 GO
-SET ANSI_NULLS ON 
+GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerTurnover] TO [vnteam] AS [dbo]
 GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerTurnover] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_CustomerTurnover] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerTurnover] TO [bodbLicenseeNet]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_CustomerTurnover] TO [vnteam] AS [dbo]

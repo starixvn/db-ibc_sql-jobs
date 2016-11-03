@@ -1,23 +1,14 @@
-USE bodb_Licensee
+USE [bodb_LicenseeReport]
 GO
-
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GEN_rptBetting    Script Date: 12/14/2015 5:04:57 PM ******/
- 
 ALTER PROCEDURE [dbo].[GEN_rptBetting]
     @date datetime, 
     @date2 datetime = null
 AS
 
-
 /*
 Created: 20110517@Elly
 Task: Generate data into rpt_Betting 
-DB: DB052.bodb_Licensee
+DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
 	20110708@Elly: Process data of Fee and Comm
@@ -31,6 +22,7 @@ Revisions:
 	20160106@Bobby: add OneRnG Casino
 	20160129@Jim: fix bug #51781
 	20160321@Victor: Support Colossus bet [Redmine: #52575]
+	20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	
 Param's Explanation:
 
@@ -104,7 +96,7 @@ INSERT INTO dbo.rpt_Betting
 	    dbo.bettrans b (NOLOCK) 
 	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
 	    LEFT JOIN bodb02.dbo.Site ibcsite (NOLOCK) ON ag.site=ibcsite.site
-	    LEFT JOIN dbo.view_site_list [site] (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
+	    LEFT JOIN bodb_Licensee.dbo.view_site_list [site] (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
 	    LEFT JOIN dbo.match m (NOLOCK) ON b.matchid = m.matchid
 	    LEFT JOIN dbo.outright o (NOLOCK) ON b.matchid = o.matchid
 	    LEFT JOIN DBRPT.bodb02.dbo.VSRaceInfo RaceInfo WITH (NOLOCK) ON b.matchid = RaceInfo.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
@@ -140,22 +132,9 @@ exec GEN_RptKPI_MTD_Betting_3rdproduct
     @date2 = @date2,
     @stattype = 2,
     @isBA = 0*/
-
-
-
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[GEN_rptBetting] TO [bodbLicenseeNet] AS [dbo]
 GO
-SET ANSI_NULLS ON 
+GRANT EXECUTE ON [dbo].[GEN_rptBetting] TO [vnteam] AS [dbo]
 GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[GEN_rptBetting] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[GEN_rptBetting] TO [bodbLicenseeNet]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting] TO [vnteam] AS [dbo]

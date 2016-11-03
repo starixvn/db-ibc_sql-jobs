@@ -1,24 +1,19 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_LicenseeWL    Script Date: 7/4/2016 1:07:46 PM ******/
-
-CREATE PROCEDURE [dbo].[GET_DepositDataToValidate_LicenseeWL] 
+ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_LicenseeWL] 
     @Date smalldatetime 
-    ,@DrawFilter tinyint = 1
+	,@DrawFilter tinyint = 1
 AS
 /*
 Created: 20111209@Don
 Task : Get deposit data from table db052.bodb_Licensee.dbo.rptLicWinloss2
 
-DB: bodb_Licensee
+DB: bodb_LicenseeReport
 Original:
 
 Revisions:	
 - 20140310@daniel: exclude currency C & H
+- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 - 20160608@Jim: Separate Bettrade (#57353) 	
 - 20160616@Jim: Changes to data integrity automail (#59249)	
 - 20160906@Jim: Correct value of SB & BA [Redmine #63571]
@@ -380,18 +375,7 @@ SELECT 3, @SbBetCount
 		, @VsBetCount
 
 SET NOCOUNT OFF
-
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
+GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_LicenseeWL] TO [bodbLicenseeNet] AS [dbo]
 GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_LicenseeWL] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_LicenseeWL] TO [bodbLicenseeNet]
-GO 
+GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_LicenseeWL] TO [vnteam] AS [dbo]

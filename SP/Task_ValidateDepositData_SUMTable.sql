@@ -1,28 +1,18 @@
-USE [bodb_Licensee]
+USE [bodb_LicenseeReport]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_ValidateDepositData_SUMTable]    Script Date: 01/19/2015 03:25:20 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_ValidateDepositData_SUMTable    Script Date: 5/6/2014 09:31:21  ******/
-
-
-CREATE PROCEDURE [dbo].[Task_ValidateDepositData_SUMTable] 
+ALTER PROCEDURE [dbo].[Task_ValidateDepositData_SUMTable] 
 	@DrawFilter tinyint = 1
 AS
 /*
 Created: 20140505@Francis
 Task : Validate data from bettrans14 for SUM Tables
 
-DB: bodb_Licensee
+DB: bodb_LicenseeReport
 Original:
 
 Revisions:		
 -20140506@Francis: Remove datetime param
+-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 Param's Explanation:
 
 Examples:
@@ -51,6 +41,3 @@ BEGIN
 END
 
 SET NOCOUNT OFF
-GO
-
-

@@ -1,30 +1,27 @@
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
- 
- 
-CREATE PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans] 
+ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans] 
 	@Date SMALLDATETIME
 AS
 /*   
 	 Created: 20150910@Sophia  
-	 DB: DBEXT/bodb02  
+	 DB: DBLIC.bodb_LicenseeReport  
 	 Task: Gen data from bettrans before Move bets
 	 Original: Task_rptCustomerTurnOver_Bettrans14
 	 Revisions:   
 		  - 20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
+		  - 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 */ 
 BEGIN 
 SET NOCOUNT ON;
 
 IF EXISTS (
 		SELECT TOP 1 1
-		FROM bodb_LicenseeReport.dbo.rptCustomerTurnover AS rct WITH (NOLOCK)
+		FROM dbo.rptCustomerTurnover AS rct WITH (NOLOCK)
 		WHERE rct.winlostdate = @date
 		)
 BEGIN
-	DELETE bodb_LicenseeReport.dbo.rptCustomerTurnover
+	DELETE dbo.rptCustomerTurnover
 	WHERE winlostdate = @Date
 END;
 
@@ -65,7 +62,7 @@ AS (
 			END AS isBA
 	--,sum(awinlost) awinlost  
 	--,sum(comm) comm  
-	FROM dbo.bettrans a WITH (NOLOCK)
+	FROM bodb02.dbo.bettrans a WITH (NOLOCK)
 		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC
 		ON a.recommend = lc.custid
 			AND a.currency = lc.currency
@@ -109,14 +106,14 @@ AS (
 	SELECT o.Orid
 		,r.SportType
 		,r.LeagueID
-	FROM dbo.VSOutright o WITH (NOLOCK)
-		INNER JOIN dbo.VSRaceInfo r WITH (NOLOCK)
+	FROM bodb02.dbo.VSOutright o WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK)
 		ON r.EventID = o.EventID
 	WHERE EventDate = @Date
 	)
 
 
-INSERT INTO bodb_LicenseeReport.dbo.rptCustomerTurnover
+INSERT INTO dbo.rptCustomerTurnover
 SELECT a.CustID
 	,a.bettype
 	,CASE 
@@ -164,11 +161,11 @@ SELECT a.CustID
 --,sum(awinlost) awinlost  
 --,sum(comm) comm  
 FROM cte_bettrans a
-	LEFT JOIN dbo.match b WITH (NOLOCK)
+	LEFT JOIN bodb02.dbo.match b WITH (NOLOCK)
 	ON a.matchid = b.matchid
 	LEFT JOIN cte_raceinfo result
 	ON a.oddsid = result.Orid
-	LEFT JOIN dbo.outright AS ob WITH (NOLOCK)
+	LEFT JOIN bodb02.dbo.outright AS ob WITH (NOLOCK)
 	ON a.matchid = ob.orid
 GROUP BY a.CustID
 	,a.bettype
@@ -211,13 +208,3 @@ GROUP BY a.CustID
 	,a.isba
  
  END
-
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 

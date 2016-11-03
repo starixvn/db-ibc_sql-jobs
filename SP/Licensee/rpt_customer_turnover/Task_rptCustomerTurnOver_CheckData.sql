@@ -1,19 +1,14 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_CheckData    Script Date: 12/1/2015 2:37:59 AM ******/
-/****** Object:  Stored Procedure dbo.Task_rptCustomerTurnOver_CheckData    Script Date: 9/23/2015 10:22:45 AM ******/
-CREATE PROCEDURE dbo.Task_rptCustomerTurnOver_CheckData @WinlostDate SMALLDATETIME
+ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_CheckData] @WinlostDate SMALLDATETIME
 AS
 /*
 	Created: 20150910@Patrick
 	Task : Check & correct data for rptCustomerTurnOver
-	DB: DB052.bodb02
+	DB: DBLIC.bodb_LicenseeReport
 	Original:
 	Revisions:	
+	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -31,7 +26,7 @@ BEGIN
 	SELECT @T_Winlost = SUM(winlost)
 		, @T_Turnover = SUM(stake)
 		, @T_BetCount = SUM(betcount)
-	FROM bodb_licenseereport.dbo.rptCustomerTurnover b WITH(NOLOCK)
+	FROM dbo.rptCustomerTurnover b WITH(NOLOCK)
 		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) lc ON b.recommend = lc.custid	AND b.currency = lc.currency
 	WHERE b.winlostdate = @WinlostDate
 		AND b.statusID IN (111,112,113,114,115) --DRAW, WON, LOSE
@@ -47,12 +42,3 @@ BEGIN
 		RETURN
 	END
 END
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
