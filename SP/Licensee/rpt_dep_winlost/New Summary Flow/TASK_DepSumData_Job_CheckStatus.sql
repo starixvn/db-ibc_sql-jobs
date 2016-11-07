@@ -1,9 +1,5 @@
 USE [bodb_Report]
 GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[TASK_DepSumData_Job_CheckStatus]
 AS
 	/*
@@ -14,30 +10,36 @@ AS
 		Revisions:
 		-20161101@Francis: Add Opening Balance checking function
 		-20161102@Francis: Only check at the beginning and middle of the day
+		-20161107@Francis: Add new LogType = 5 (checkStatus) for checking status routine
 		Input Params:	
 	*/
 BEGIN
 
 	SET NOCOUNT ON
-	
-	DECLARE @CurrentHour TINYINT
-	
+	DECLARE @CurrentDate DATE, @Yesterday DATE, @CurrentHour TINYINT, @CheckStatusCount TINYINT
+	SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112), @Yesterday = DATEADD(DAY,-1,@CurrentDate)
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
+	SELECT @CheckStatusCount = COUNT(LogID) FROM bodb_Report.dbo.rptDepWinlost_Log WITH (NOLOCK) WHERE LogDate = @CurrentDate AND StatusID = 1 AND LogType = 5
 	
-	IF (@CurrentHour = 1 OR @CurrentHour = 13)
+	IF ((@CurrentHour = 1 AND @CheckStatusCount < 1) OR (@CurrentHour = 13 AND @CheckStatusCount < 2)) --Check 2 times perday, at the beginning and the mddile of the day
 	BEGIN
-		DECLARE @CurrentDate DATE,
-				@Yesterday DATE,
-				@FailedHour TINYINT,
-				@Count SMALLINT = 0,
-				@Date DATE,
-				@Subject VARCHAR(500) = '',
-				@ErrMsg VARCHAR(500) = '',
-				@ErrorMessage VARCHAR(8000)
+	
+		DECLARE @LogID BIGINT,
+			@FailedHour TINYINT,
+			@Count SMALLINT = 0,
+			@Date DATE,
+			@Subject VARCHAR(500) = '',
+			@ErrMsg VARCHAR(500) = '',
+			@ErrorMessage VARCHAR(8000)
 
 		DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), JobType VARCHAR(50), ErrMsg VARCHAR(500))
+		
+		--Insert Log
+		INSERT INTO bodb_Report.dbo.rptDepWinlost_Log(Logdate, LogHour, LogType, StartTime)
+		SELECT @CurrentDate, @CurrentHour, 5, CURRENT_TIMESTAMP AS StartTime
+		
+		SELECT @LogID = @@IDENTITY
 					
-		SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112), @Yesterday = DATEADD(DAY,-1,@CurrentDate)
 		SELECT @Date = MIN(Winlostdate)
 		FROM dbo.rptDepWinlost_Main WITH (NOLOCK)
 
@@ -176,6 +178,12 @@ BEGIN
 		END
 
 	DROP TABLE #Result
+	
+	UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
+		SET EndTime = CURRENT_TIMESTAMP, LogDesc = 'Date checked: ' +  CONVERT(VARCHAR(20),@CurrentDate) + '; Type: checkStatus'
+			, StatusID = 1
+		WHERE LogID = @LogID
+	
 	END
 	ELSE
 	RETURN
