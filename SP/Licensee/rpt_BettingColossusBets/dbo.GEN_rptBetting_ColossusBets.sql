@@ -1,6 +1,6 @@
-USE [bodb_LicenseeReport]
-GO
-ALTER PROCEDURE [dbo].[GEN_rptBetting_ColossusBets] 
+
+ 
+CREATE PROCEDURE [dbo].[GEN_rptBetting_ColossusBets] 
 	@date SMALLDATETIME = NULL
 	,@date2 SMALLDATETIME = NULL
 AS
@@ -43,6 +43,7 @@ BEGIN
 			, TotalTrans INT
 			, Winlost MONEY
 			, STATUS NVARCHAR(20)
+			, statusID INT
 			, GrandAmt MONEY
 			)
 			
@@ -73,6 +74,7 @@ BEGIN
 			, TotalTrans
 			, Winlost
 			, STATUS
+			, statusID
 			, GrandAmt
 			)
 		SELECT b.CustId 
@@ -83,9 +85,10 @@ BEGIN
 			, COUNT(DISTINCT b.refno) TotalTrans
 			, b.Winlost
 			, b.STATUS
+			, b.statusID
 			, SUM(a.GrandAmt) AS GrandAmt
 		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-		INNER JOIN dbo.LicenseeCust t WITH (NOLOCK)
+		INNER JOIN bodb_licensee.dbo.LicenseeCust t WITH (NOLOCK)
 			ON b.recommend = t.CustID
 				AND b.Currency = t.Currency
 		LEFT JOIN @tmpGrandAmt a
@@ -95,12 +98,14 @@ BEGIN
 		WHERE b.bettype = 18000
 			AND b.winlostdate BETWEEN @date
 			AND @date2
+			AND b.StatusID IN (111, 112, 113)
 		GROUP BY b.CustId 
 			, b.refno
 			, b.winlostdate
 			, b.Currency
 			, b.Winlost
 			, b.STATUS
+			, b.statusID
 	INSERT INTO @tmpRawData (
 				rptDate,
 				CustID,
@@ -118,9 +123,9 @@ BEGIN
 				)			
 	SELECT		b.winlostdate rptDate
 				,b.CustID
-				,bm.bettype
+				,18000 bettype
 				,b.Currency CurrencyID
-				,bm.statusID
+				,b.statusID
 				, COUNT(DISTINCT b.refno) TotalTrans
 				, 0 TurnOver
 				, SUM(CASE 
@@ -171,9 +176,8 @@ BEGIN
 				AND 18006
 			GROUP BY b.winlostdate  
 				,b.CustID
-				,bm.bettype
 				,b.Currency  
-				,bm.statusID
+				,b.statusID
 	;WITH cte_TO
 		AS (
 			SELECT Currency
@@ -233,3 +237,12 @@ BEGIN
 			CurrencyID,
 			StatusID
 END
+GO
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
