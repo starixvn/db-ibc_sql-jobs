@@ -49,8 +49,7 @@ BEGIN
 		FROM sb.ConfigurationReferenceDetail WITH (NOLOCK)
 		WHERE FunctionName = @functionName
 	END			
-		
-	--select * FROM sb.ConfigurationReferenceDetail WITH (NOLOCK)	
+			
 	SET @Count = @@ROWCOUNT		
 	
 	SET @IsError = 0

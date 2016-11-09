@@ -24,7 +24,7 @@ BEGIN
 	SET @sql_string='SEND ON CONVERSATION @handle
 					 MESSAGE TYPE ' + @MessageType + '(@xml)'
 	BEGIN TRY
-			EXEC SP_EXECUTESQL @sql_string,N'@handle uniqueidentifier, @xml xml', @handle, @xml
+		EXEC SP_EXECUTESQL @sql_string,N'@handle uniqueidentifier, @xml xml', @handle, @xml
 		PRINT @sql_string
 	END TRY
 	

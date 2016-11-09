@@ -7,7 +7,7 @@ ALTER PROCEDURE sb.CustomerLog_MsgProcess_UserLog_Login
 	Created By: Helen
 	Created Date: 20161027
 	Task: Apply Service Broker for login function
-	DB:DBLOG/bodb_CustomerLog
+	DB:DBLOG_BK/bodb_CustomerLog
 	-- For testing
 	DECLARE @XmlData XML = '<root>
 							<row LogID="76" UserID="0" RoleID="0" SubAccID="0" ServerID="0" IP="10.19.10.112" LogDate="2012-04-16T09:32:18.123" ActionID="1310" Doing="Account:12BETRMB01 - Login Result:Failed (User_Not_Found)" DomainName="10.18.200.201" BrowserName="Firefox 3.6" Platform="Windows NT" CountryCode="-" Duration="423" />
@@ -22,30 +22,7 @@ BEGIN
 	
 	DECLARE @_hdoc INT, @error_Message VARCHAR(MAX), @message_body VARCHAR(MAX)
 	
-	EXECUTE sys.sp_xml_preparedocument @_hdoc OUTPUT, @XmlMessage
-	
-	--SELECT @XmlMessage AS message_processed
-	
-	SELECT	LogID,UserID, RoleID, SubAccID, ServerID, IP, DomainName, LogDate, ActionID, Doing, BrowserName, Platform, CountryCode, Duration, Username2, CreatedDate
-	FROM	OPENXML(@_hdoc,'/root/row', 1)   
-		WITH (
-			LogID		BIGINT			'@LogID'
-		,	UserID		INT				'@UserID'
-		,	RoleID		TINYINT			'@RoleID'
-		,	SubAccID	INT				'@SubAccID'
-		,	ServerID	INT				'@ServerID'
-		,	IP			VARCHAR(20)		'@IP'
-		,	DomainName	NVARCHAR(253)	'@DomainName'
-		,	LogDate		DATETIME		'@LogDate'
-		,	ActionID	INT				'@ActionID'
-		,	Doing		VARCHAR(300)	'@Doing'
-		,	BrowserName	NVARCHAR(255)	'@BrowserName'
-		,	Platform	NVARCHAR(255) 	'@Platform'
-		,	CountryCode	VARCHAR(64) 	'@CountryCode'
-		,	Duration	INT 			'@Duration'
-		,	Username2	VARCHAR(50)		'@Username2'
-		,	CreatedDate	DATETIME		'@CreatedDate'
-		)
+	EXECUTE sys.sp_xml_preparedocument @_hdoc OUTPUT, @XmlMessage		
 		
 	BEGIN TRY
 		INSERT INTO	dbo.UserLog_Login(LogID,UserID, RoleID, SubAccID, ServerID, IP, DomainName, LogDate, ActionID, Doing, BrowserName, Platform, CountryCode, Duration, Username2, CreatedDate)   

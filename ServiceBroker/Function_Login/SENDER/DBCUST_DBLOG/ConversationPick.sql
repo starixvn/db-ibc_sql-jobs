@@ -10,7 +10,7 @@ AS
 	Created Date: 20161028
 	Task: Apply Service Broker for Writing Log - [Redmine: 65806]
 	DB: DBCUST/bodb_CustomerLog; DBLOG/bodb_CustomerLog
-	s
+	
 	Para's explaination
 */
 BEGIN 
@@ -22,7 +22,9 @@ BEGIN
 	SELECT @Cnt = Cnt
 	FROM sb.ConversationCount WITH (NOLOCK)
 	WHERE FunctionName = @functionName AND contractName = @ContractName
-		
+	
+	SET @Cnt = ISNULL(@Cnt, 0)
+	
 	IF @Cnt = 0
 	BEGIN
 		SET @handle = NULL
@@ -34,7 +36,9 @@ BEGIN
 	SELECT @handle = ConversationHandle
 	FROM sb.ConversationManagement WITH (NOLOCK)
 	WHERE FunctionName = @functionName
-			AND ConversationNo = @ConversationNo AND IsValid = 1 AND contractName = @ContractName	  	  
+			AND contractName = @ContractName
+			AND ConversationNo = @ConversationNo 
+			AND IsValid = 1	  	  
 	  
 	SET NOCOUNT OFF  
 

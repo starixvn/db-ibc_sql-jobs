@@ -4,7 +4,7 @@ AS
 	Create By: Helen
 	Created Date: 20161028
 	Task: Apply Service Broker for Writing Log - [Redmine: 65806]
-	DB: DBLOG/bodb_CustomerLog & DBLOG_BK/bodb_CustomerLog & 
+	DB: DBLOG_BK/bodb_CustomerLog
 	
 	Para's explaination
 */
@@ -20,8 +20,7 @@ BEGIN
 	SELECT @timeout = MaxReceiveTimeOut
 	FROM sb.ConfigurationReference	WITH (NOLOCK) 
 	WHERE FunctionName = 'Login'
-	
-	--SELECT @xml = NULL, @handle = NULL
+		
 	DECLARE @Messages TABLE (conversation_handle UNIQUEIDENTIFIER, message_type_name NVARCHAR(256), message_body XML)
 	DECLARE @EndDialogMessages TABLE 
 	(
@@ -40,7 +39,7 @@ BEGIN
 	IF (@@ROWCOUNT = 0)
 		RETURN
 		
-	-- code here: to filter http://schemas.microsoft.com/SQL/ServiceBroker/EndDialog and http://schemas.microsoft.com/SQL/ServiceBroker/Error 					
+	-- filter http://schemas.microsoft.com/SQL/ServiceBroker/EndDialog and http://schemas.microsoft.com/SQL/ServiceBroker/Error 					
 	DELETE FROM @Messages
 	OUTPUT DELETED.conversation_handle
 		 , DELETED.message_type_name
