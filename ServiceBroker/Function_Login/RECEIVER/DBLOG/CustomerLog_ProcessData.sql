@@ -14,8 +14,15 @@ BEGIN
 	DECLARE @handle UNIQUEIDENTIFIER
 	
 	DECLARE @i INT, @countDeleted INT
-		 
+	
+	DECLARE @ReceiveMax INT, @timeout INT
+	
+	SELECT @ReceiveMax = MaxReceiveMsg, @timeout = MaxReceiveTimeOut
+	FROM sb.ConfigurationReference	WITH (NOLOCK) 
+	WHERE FunctionName = 'Login'
+	
 	--SELECT @xml = NULL, @handle = NULL
+	
 	DECLARE @Messages TABLE (conversation_handle UNIQUEIDENTIFIER, message_type_name NVARCHAR(256), message_body XML)
 	DECLARE @EndDialogMessages TABLE 
 	(
@@ -25,11 +32,11 @@ BEGIN
 		message_body XML
 	)
 	 
-	WAITFOR (RECEIVE TOP (100)conversation_handle,
+	WAITFOR (RECEIVE TOP (@ReceiveMax)conversation_handle,
 					message_type_name, 
 					message_body
 			FROM queue_DBLOG
-			INTO @Messages ), TIMEOUT 0;
+			INTO @Messages ), TIMEOUT @timeout;
 			
 	IF (@@ROWCOUNT = 0)
 		RETURN
@@ -79,17 +86,22 @@ BEGIN
 	
 	IF @xml_Alpha IS NOT NULL
 	BEGIN
+		--Debug: PRINT 'UserLog_Login' + CONVERT(VARCHAR(MAX),@xml_Alpha)
 		EXEC [sb].[CustomerLog_MsgProcess_UserLog_Login] @xml_Alpha
 	END	 	
 	
 	IF @xml_externalNap IS NOT NULL
 	BEGIN
+		--Debug: PRINT 'eaUserLog_Login'  + CONVERT(VARCHAR(MAX),@xml_externalNap)
 		EXEC [sb].[CustomerLog_MsgProcess_eaUserLog_Login] @xml_externalNap
 	END
-	/*
+	
 	IF @xml_RMS IS NOT NULL
 	BEGIN
-		EXEC [sb].[CustomerLog_MsgProcess_rmUserLog_Login] @xml_externalNap
+		--Debug: PRINT 'rmUserLog_Login'  + CONVERT(VARCHAR(MAX),@xml_RMS)
+		EXEC [sb].[CustomerLog_MsgProcess_rmUserLog_Login] @xml_RMS
 	END
-	*/
+	
+	
 END
+

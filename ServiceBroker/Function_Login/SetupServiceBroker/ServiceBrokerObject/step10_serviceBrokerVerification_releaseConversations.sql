@@ -1,0 +1,35 @@
+/*
+	Create By: Helen
+	Created Date: 20161028
+	Task: Apply Service Broker for Writing Log - [Redmine: 65806]
+	DB: dblog/bodb_CustomerLog; dbcust/bodb_CustomerLog
+	
+*/	
+USE bodb_CustomerLog
+GO
+CREATE TABLE #sb_temp (ID INT IDENTITY (1,1), name VARCHAR(100),handle UNIQUEIDENTIFIER)
+
+INSERT INTO #sb_temp (name,handle)
+SELECT s.name, e.conversation_handle
+from sys.conversation_endpoints e WITH(NOLOCK)
+	inner join sys.services s WITH(NOLOCK) on e.service_id = s.service_id
+WHERE e.far_service LIKE 'Service_CustomerLog_%' AND e.is_initiator = 1
+
+SELECT * FROM #sb_temp
+
+DECLARE @end INT, @start INT = 1, @handle UNIQUEIDENTIFIER
+
+SET @end = (SELECT MAX(ID) FROM #sb_temp)
+IF EXISTS (SELECT 1 FROM #sb_temp)
+BEGIN
+	WHILE @start <= @end
+	BEGIN
+		SET @handle = (SELECT handle FROM #sb_temp WHERE ID= @start)
+		PRINT 'Deleted handle:' + CAST(@handle AS VARCHAR(MAX))
+		END CONVERSATION @handle WITH CLEANUP
+		
+		SET @start = @start + 1 
+	END
+END	
+
+DROP TABLE #sb_temp

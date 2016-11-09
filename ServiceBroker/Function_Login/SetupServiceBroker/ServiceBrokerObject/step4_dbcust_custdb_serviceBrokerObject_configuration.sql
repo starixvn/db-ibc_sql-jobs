@@ -7,14 +7,24 @@
 */	
 ------------ Setup Distributed --------------
 /***************Step 1: configuration: Endpoint: creating port for target to connect, database, create window login of target machine (cross)*********/	
-USE master
-go
+-- Enable service broker
+USE [master]
+GO
+ALTER DATABASE bodb_CustomerLog SET  SINGLE_USER WITH ROLLBACK IMMEDIATE
+GO
+ALTER DATABASE bodb_CustomerLog SET  ENABLE_BROKER WITH NO_WAIT
+GO
+ALTER DATABASE bodb_CustomerLog SET TRUSTWORTHY ON
+GO
+ALTER DATABASE bodb_CustomerLog SET MULTI_USER
+GO
+
 IF EXISTS (SELECT TOP 1 1
 		   FROM sys.endpoints
-		   WHERE name = 'InitiatorEndpoint')
-	DROP ENDPOINT InitiatorEndpoint
+		   WHERE name = 'Endpoint_DBCust')
+	DROP ENDPOINT Endpoint_DBCust
 GO
-CREATE ENDPOINT InitiatorEndpoint
+CREATE ENDPOINT Endpoint_DBCust
 STATE = STARTED
 AS TCP
 (
@@ -35,7 +45,10 @@ GO
 CREATE LOGIN [NT SERVICE\MSSQL$SQLSERVER2008R2] FROM WINDOWS
 */
 GO
-GRANT CONNECT ON ENDPOINT::InitiatorEndpoint TO [NT SERVICE\MSSQLSERVER]
+--GRANT CONNECT ON ENDPOINT::Endpoint_DBCust TO [NT SERVICE\MSSQLSERVER]
+-- Local Test
+GRANT CONNECT ON ENDPOINT::SSBSTargetEP TO [NT SERVICE\MSSQLSERVER]
+
 GO
 
 ---ALTER DATABASE ServiceBroker_Initiator_OLTP SET TRUSTWORTHY ON: IF THE SAME INSTANCE
@@ -65,52 +78,60 @@ IF EXISTS (SELECT TOP 1 1
 GO
 
 IF EXISTS (SELECT TOP 1 1
-		   FROM sys.service_contracts
-		   WHERE name = 'Contract_CustomerLog')
-	DROP CONTRACT Contract_CustomerLog
-GO	
-IF EXISTS (SELECT TOP 1 1
 		   FROM sys.service_message_types
 		   WHERE name = 'MessageType_CustomerLog_UserLog_Login')
 	DROP MESSAGE TYPE MessageType_CustomerLog_UserLog_Login
 GO
+
 
 IF EXISTS (SELECT TOP 1 1
 		   FROM sys.service_message_types
 		   WHERE name = 'MessageType_CustomerLog_eaUserLog_Login')
 	DROP MESSAGE TYPE MessageType_CustomerLog_eaUserLog_Login
 GO
+
+IF EXISTS (SELECT TOP 1 1
+		   FROM sys.service_message_types
+		   WHERE name = 'MessageType_CustomerLog_rmUserLog_Login')
+	DROP MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login
+GO
+
 CREATE MESSAGE TYPE MessageType_CustomerLog_UserLog_Login
 GO
 
 CREATE MESSAGE TYPE MessageType_CustomerLog_eaUserLog_Login
 
-CREATE CONTRACT Contract_CustomerLog
-(MessageType_CustomerLog_UserLog_Login SENT BY ANY,
- MessageType_CustomerLog_eaUserLog_Login SENT BY ANY)
+go
+CREATE MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login
+go
+CREATE CONTRACT Contract_CustomerLog_UserLog_Login
+(MessageType_CustomerLog_UserLog_Login SENT BY ANY)
+
+CREATE CONTRACT Contract_CustomerLog_eaUserLog_Login
+(MessageType_CustomerLog_eaUserLog_Login SENT BY ANY)
+
+
+CREATE CONTRACT Contract_CustomerLog_rmUserLog_Login
+( MessageType_CustomerLog_rmUserLog_Login SENT BY ANY)
+
+
 GO
 
---create contract Contract_CustomerLog_tmp (MessageType_CustomerLog_eaUserLog_Login SENT BY ANY)
-
-
-
---alter SERVICE Service_CustomerLog_DBCUST
---(add contract Contract_CustomerLog_tmp)
---GO
 --------------------------------------
-
-
 CREATE QUEUE Queue_DBCUST WITH RETENTION = OFF
 
 CREATE SERVICE Service_CustomerLog_DBCUST
 ON QUEUE Queue_DBCUST
-(Contract_CustomerLog)
+(Contract_CustomerLog_UserLog_Login,Contract_CustomerLog_eaUserLog_Login,Contract_CustomerLog_rmUserLog_Login)
 
 GO
 
-create ROUTE Route_CustomerLog_DBCUST -- point to destination
+CREATE ROUTE Route_CustomerLog_DBCUST -- point to destination
 WITH SERVICE_NAME='Service_CustomerLog_DBLOG',
-ADDRESS='TCP://DB231:4022' -- target server address
+--local test
+ADDRESS='TCP://DB215:4022' -- target server address
+--local dev
+--ADDRESS='TCP://DB231:4022' -- target server address
 GO
 
 
@@ -130,7 +151,22 @@ DECLARE @Message NVARCHAR(128)
 BEGIN DIALOG CONVERSATION @SBDialog
 FROM SERVICE Service_CustomerLog_DBCUST
 TO SERVICE 'Service_CustomerLog_DBLOG'
-ON CONTRACT Contract_CustomerLog
+ON CONTRACT Contract_CustomerLog_UserLog_Login
+WITH ENCRYPTION = OFF
+
+-- Send messages on Dialog
+SET @Message = N'Very First Message';
+SEND ON CONVERSATION @SBDialog
+MESSAGE TYPE MessageType_CustomerLog_UserLog_Login (@Message)
+
+---
+DECLARE @SBDialog uniqueidentifier
+DECLARE @Message NVARCHAR(128)
+
+BEGIN DIALOG CONVERSATION @SBDialog
+FROM SERVICE Service_CustomerLog_DBCUST
+TO SERVICE 'Service_CustomerLog_DBLOG'
+ON CONTRACT Contract_CustomerLog_eaUserLog_Login
 WITH ENCRYPTION = OFF
 
 -- Send messages on Dialog
@@ -138,9 +174,21 @@ SET @Message = N'Very First Message';
 SEND ON CONVERSATION @SBDialog
 MESSAGE TYPE MessageType_CustomerLog_eaUserLog_Login (@Message)
 
-SET @Message = N'Second Message';
+---
+DECLARE @SBDialog uniqueidentifier
+DECLARE @Message NVARCHAR(128)
+
+BEGIN DIALOG CONVERSATION @SBDialog
+FROM SERVICE Service_CustomerLog_DBCUST
+TO SERVICE 'Service_CustomerLog_DBLOG'
+ON CONTRACT Contract_CustomerLog_rmUserLog_Login
+WITH ENCRYPTION = OFF
+
+-- Send messages on Dialog
+SET @Message = N'Very First Message';
 SEND ON CONVERSATION @SBDialog
-MESSAGE TYPE MessageType_CustomerLog_UserLog_Login (@Message)
+MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login (@Message)
+
 
 SELECT * FROM sys.transmission_queue
 --Connection attempt failed with error: '10061(No connection could be made because the target machine actively refused it.)'.
