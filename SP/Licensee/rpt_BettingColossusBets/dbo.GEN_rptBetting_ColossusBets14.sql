@@ -1,3 +1,9 @@
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+/****** Object:  Stored Procedure dbo.GEN_rptBetting_ColossusBets14    Script Date: 11/9/2016 4:18:55 PM ******/
   
 CREATE PROCEDURE [dbo].[GEN_rptBetting_ColossusBets14] 
 	@date SMALLDATETIME = NULL
@@ -182,11 +188,13 @@ BEGIN
 		AS (
 			SELECT Currency
 				, winlostdate
+				, custid
 				, SUM(TurnOver) TurnOver
 				, SUM(GrandAmt) GrandAmt
 			FROM @tmpBettrans
 			GROUP BY Currency
 				, winlostdate
+				, custid
 			)
 		UPDATE d
 		SET TurnOver = s.TurnOver
@@ -195,6 +203,7 @@ BEGIN
 		INNER JOIN cte_TO s
 			ON d.CurrencyID = s.Currency
 				AND d.rptDate = s.Winlostdate 
+				AND d.custId = s.CustID
 	
 	DELETE dbo.rpt_BettingColossusBets
 	WHERE rptDate BETWEEN @date
@@ -237,6 +246,7 @@ BEGIN
 			CurrencyID,
 			StatusID
 END
+
 
 GO
 
