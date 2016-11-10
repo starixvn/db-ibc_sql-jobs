@@ -21,7 +21,6 @@ BEGIN
 	FROM sb.ConfigurationReference	WITH (NOLOCK) 
 	WHERE FunctionName = 'Login'
 		
-	DECLARE @Messages TABLE (conversation_handle UNIQUEIDENTIFIER, message_type_name NVARCHAR(256), message_body XML)
 	DECLARE @EndDialogMessages TABLE 
 	(
 		ID INT IDENTITY(1, 1) PRIMARY KEY, 
@@ -30,43 +29,22 @@ BEGIN
 		message_body XML
 	)
 	 
-	WAITFOR (RECEIVE TOP (1) conversation_handle,
+	WAITFOR (RECEIVE TOP (1) @handle = conversation_handle,
 					@MessageType = message_type_name, 
 					@xml = message_body
-			FROM queue_DBLOG_BK 
-			INTO @Messages ), TIMEOUT @timeout;
+			FROM queue_DBLOG_BK ), TIMEOUT @timeout;
 			
 	IF (@@ROWCOUNT = 0)
 		RETURN
-		
+	
+	-- WHEN CONVERSATION IS ENDED AT INITIATOR	
 	-- filter http://schemas.microsoft.com/SQL/ServiceBroker/EndDialog and http://schemas.microsoft.com/SQL/ServiceBroker/Error 					
-	DELETE FROM @Messages
-	OUTPUT DELETED.conversation_handle
-		 , DELETED.message_type_name
-		 , DELETED.message_body	
-			INTO @EndDialogMessages
-	WHERE message_type_name IN ('http://schemas.microsoft.com/SQL/ServiceBroker/EndDialog'
-							  , 'http://schemas.microsoft.com/SQL/ServiceBroker/Error')							  
-	
-	SET @countDeleted = @@ROWCOUNT
-	
-	IF @countDeleted > 0
-	BEGIN
-		SET @i = 1
-		
-		WHILE @i <= @countDeleted
-		BEGIN
-			SELECT @handle = conversation_handle
-			FROM @EndDialogMessages
-			WHERE ID = @i;
-			
-			END CONVERSATION @handle WITH CLEANUP;
-			
-			SET @i = @i + 1;
-		END
-	END							  						  
-	
-	IF @MessageType = 'MessageType_CustomerLog_UserLog_Login' -- Alpha
+	IF @MessageType IN ('http://schemas.microsoft.com/SQL/ServiceBroker/EndDialog'
+					  , 'http://schemas.microsoft.com/SQL/ServiceBroker/Error')
+	BEGIN					  
+		END CONVERSATION @handle WITH CLEANUP;						  						  	
+	END
+	ELSE IF @MessageType = 'MessageType_CustomerLog_UserLog_Login' -- Alpha
 	BEGIN
 		EXEC [sb].[CustomerLog_MsgProcess_UserLog_Login] @xml
 	END
