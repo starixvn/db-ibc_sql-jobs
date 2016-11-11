@@ -36,15 +36,8 @@ BEGIN
 			
 	IF (@@ROWCOUNT = 0)
 		RETURN
-	
-	-- WHEN CONVERSATION IS ENDED AT INITIATOR	
-	-- filter http://schemas.microsoft.com/SQL/ServiceBroker/EndDialog and http://schemas.microsoft.com/SQL/ServiceBroker/Error 					
-	IF @MessageType IN ('http://schemas.microsoft.com/SQL/ServiceBroker/EndDialog'
-					  , 'http://schemas.microsoft.com/SQL/ServiceBroker/Error')
-	BEGIN					  
-		END CONVERSATION @handle WITH CLEANUP;						  						  	
-	END
-	ELSE IF @MessageType = 'MessageType_CustomerLog_UserLog_Login' -- Alpha
+		
+	IF @MessageType = 'MessageType_CustomerLog_UserLog_Login' -- Alpha
 	BEGIN
 		EXEC [sb].[CustomerLog_MsgProcess_UserLog_Login] @xml
 	END
@@ -55,6 +48,12 @@ BEGIN
 	ELSE IF @MessageType = 'MessageType_CustomerLog_rmUserLog_Login' -- RMS
 	BEGIN
 		EXEC [sb].[CustomerLog_MsgProcess_rmUserLog_Login] @xml
+	END
+	-- WHEN CONVERSATION IS ENDED AT INITIATOR	
+	-- filter http://schemas.microsoft.com/SQL/ServiceBroker/EndDialog and http://schemas.microsoft.com/SQL/ServiceBroker/Error 					
+	ELSE
+	BEGIN					  
+		END CONVERSATION @handle WITH CLEANUP;						  						  	
 	END
 	
 END

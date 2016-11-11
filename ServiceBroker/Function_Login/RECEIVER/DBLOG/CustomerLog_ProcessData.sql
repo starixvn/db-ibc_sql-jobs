@@ -17,6 +17,8 @@ BEGIN
 	
 	DECLARE @ReceiveMax INT, @timeout INT
 	
+	DECLARE @message_type_name NVARCHAR(256)
+	
 	SELECT @ReceiveMax = MaxReceiveMsg, @timeout = MaxReceiveTimeOut
 	FROM sb.ConfigurationReference	WITH (NOLOCK) 
 	WHERE FunctionName = 'Login'	
@@ -30,7 +32,8 @@ BEGIN
 		message_body XML
 	)
 	 
-	WAITFOR (RECEIVE TOP (@ReceiveMax)conversation_handle,
+	WAITFOR (RECEIVE TOP (@ReceiveMax)
+					conversation_handle,
 					message_type_name, 
 					message_body
 			FROM queue_DBLOG
@@ -46,60 +49,49 @@ BEGIN
 		 , DELETED.message_body	
 			INTO @EndDialogMessages
 	WHERE message_type_name IN ('http://schemas.microsoft.com/SQL/ServiceBroker/EndDialog'
-							  , 'http://schemas.microsoft.com/SQL/ServiceBroker/Error')							  
+							  , 'http://schemas.microsoft.com/SQL/ServiceBroker/Error')	
 	
 	SET @countDeleted = @@ROWCOUNT
 	
 	IF @countDeleted > 0
 	BEGIN
-		SET @i = 1
+		SELECT TOP 1 @handle = conversation_handle
+		FROM @EndDialogMessages
 		
-		WHILE @i <= @countDeleted
-		BEGIN
-			SELECT @handle = conversation_handle
-			FROM @EndDialogMessages
-			WHERE ID = @i;
-			
-			END CONVERSATION @handle WITH CLEANUP;
-			
-			SET @i = @i + 1;
-		END
-	END							  						  
+		END CONVERSATION @handle WITH CLEANUP;
+	END			
 	
-	SET @xml_Alpha = (SELECT message_body AS 'node()'
-				FROM @Messages
-				WHERE message_type_name = 'MessageType_CustomerLog_UserLog_Login'
-				FOR XML PATH (''), ROOT)
-				
-	SET @xml_externalNap = (SELECT message_body AS 'node()'
-				FROM @Messages
-				WHERE message_type_name = 'MessageType_CustomerLog_eaUserLog_Login'
-				FOR XML PATH (''), ROOT)
+	SELECT TOP 1 
+		   @handle = conversation_handle
+		 , @message_type_name = message_type_name
+	FROM @Messages						  						  
 	
-	SET @xml_RMS = (SELECT message_body AS 'node()'
-				FROM @Messages
-				WHERE message_type_name = 'MessageType_CustomerLog_rmUserLog_Login'
-				FOR XML PATH (''), ROOT)
-							
-	
-	IF @xml_Alpha IS NOT NULL
+	IF @message_type_name = 'MessageType_CustomerLog_UserLog_Login'
 	BEGIN
+		SET @xml_Alpha = (SELECT message_body AS 'node()'
+						  FROM @Messages					
+						  FOR XML PATH (''), ROOT)
+					
 		--Debug: PRINT 'UserLog_Login' + CONVERT(VARCHAR(MAX),@xml_Alpha)
-		EXEC [sb].[CustomerLog_MsgProcess_UserLog_Login] @xml_Alpha
-	END	 	
-	
-	IF @xml_externalNap IS NOT NULL
-	BEGIN
+		EXEC [sb].[CustomerLog_MsgProcess_UserLog_Login] @xml_Alpha					
+	END
+	ELSE IF @message_type_name = 'MessageType_CustomerLog_eaUserLog_Login'
+	BEGIN			
+		SET @xml_externalNap = (SELECT message_body AS 'node()'
+								FROM @Messages					
+								FOR XML PATH (''), ROOT)
+					
 		--Debug: PRINT 'eaUserLog_Login'  + CONVERT(VARCHAR(MAX),@xml_externalNap)
-		EXEC [sb].[CustomerLog_MsgProcess_eaUserLog_Login] @xml_externalNap
+		EXEC [sb].[CustomerLog_MsgProcess_eaUserLog_Login] @xml_externalNap					
 	END
-	
-	IF @xml_RMS IS NOT NULL
+	ELSE IF @message_type_name = 'MessageType_CustomerLog_rmUserLog_Login'
 	BEGIN
+		SET @xml_RMS = (SELECT message_body AS 'node()'
+						FROM @Messages					
+						FOR XML PATH (''), ROOT)
+					
 		--Debug: PRINT 'rmUserLog_Login'  + CONVERT(VARCHAR(MAX),@xml_RMS)
-		EXEC [sb].[CustomerLog_MsgProcess_rmUserLog_Login] @xml_RMS
-	END
-	
-	
+		EXEC [sb].[CustomerLog_MsgProcess_rmUserLog_Login] @xml_RMS					
+	END			
 END
 
