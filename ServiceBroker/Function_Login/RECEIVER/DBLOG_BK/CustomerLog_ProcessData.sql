@@ -17,7 +17,7 @@ BEGIN
 	
 	DECLARE @ReceiveMax INT, @timeout INT
 	
-	SELECT @timeout = MaxReceiveTimeOut
+	SELECT @timeout = ISNULL(MaxReceiveTimeOut, 0)
 	FROM sb.ConfigurationReference	WITH (NOLOCK) 
 	WHERE FunctionName = 'Login'
 		

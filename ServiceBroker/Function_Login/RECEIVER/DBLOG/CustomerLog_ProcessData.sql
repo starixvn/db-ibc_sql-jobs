@@ -19,7 +19,7 @@ BEGIN
 	
 	DECLARE @message_type_name NVARCHAR(256)
 	
-	SELECT @ReceiveMax = MaxReceiveMsg, @timeout = MaxReceiveTimeOut
+	SELECT TOP 1 @ReceiveMax = ISNULL(MaxReceiveMsg, 1), @timeout = ISNULL(MaxReceiveTimeOut, 0)
 	FROM sb.ConfigurationReference	WITH (NOLOCK) 
 	WHERE FunctionName = 'Login'	
 	
