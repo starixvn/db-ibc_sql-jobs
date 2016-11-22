@@ -9,6 +9,7 @@ AS
  Original:   
  Revisions:   
  - 20161101@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+ - 20161121@Sophia: Correct CashOutAmount,WinPrizeAmount value [RedmineID : #67473] 
 */
 BEGIN
 	DECLARE @S_TotalTrans INT
@@ -52,6 +53,7 @@ BEGIN
 		, TurnOver MONEY
 		, TotalTrans INT
 		, Winlost MONEY
+		, Actual_Stake MONEY
 		, STATUS NVARCHAR(20)
 		, GrandAmt MONEY
 		)
@@ -78,6 +80,7 @@ BEGIN
 		, TurnOver
 		, TotalTrans
 		, Winlost
+		, Actual_Stake
 		, STATUS
 		, GrandAmt
 		)
@@ -88,6 +91,7 @@ BEGIN
 		, SUM(ABS(b.Stake)) TurnOver
 		, COUNT(DISTINCT b.refno) TotalTrans
 		, b.Winlost
+		, b.Actual_Stake
 		, b.STATUS
 		, SUM(a.GrandAmt) AS GrandAmt
 	FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
@@ -104,6 +108,7 @@ BEGIN
 		, b.winlostdate
 		, b.Currency
 		, b.Winlost
+		, b.Actual_Stake
 		, b.STATUS
 
 	INSERT INTO @tmpRawData (
@@ -121,25 +126,23 @@ BEGIN
 		, COUNT(DISTINCT b.refno) TotalTrans
 		, 0 TurnOver
 		, SUM(CASE 
-				WHEN b.winlost = 0
+				WHEN (b.winlost - b.actual_stake ) < 0 AND b.STATUS = 'WON'
 					THEN 0
 				ELSE CASE 
 						WHEN bm.bettype IN (
 								18004
 								, 18005
 								, 18006
-								)
-							AND b.STATUS = 'WON'
+								)							
 							THEN bm.Winlost - bm.stake
 						ELSE 0
 						END
 				END) AS WinningPrize
 		, SUM(CASE 
-				WHEN b.winlost = 0
+				WHEN (b.winlost - b.actual_stake ) < 0 AND b.STATUS = 'WON'
 					THEN 0
 				ELSE CASE 
 						WHEN bm.bettype = 18002
-							AND b.STATUS = 'WON'
 							THEN bm.winlost - bm.stake
 						ELSE 0
 						END
@@ -165,21 +168,22 @@ BEGIN
 		ON b.refno = bm.refno
 	WHERE bm.bettype BETWEEN 18001
 			AND 18006
-	GROUP BY b.winlostdate
-		, b.CustID
-		, bm.bettype
-		, b.Currency
-		, bm.statusID;
+	GROUP BY b.winlostdate;
+		---, b.CustID
+		---, bm.bettype
+		---, b.Currency
+		---, bm.statusID;
 
 	WITH cte_TO
 	AS (
-		SELECT Currency
-			, winlostdate
+		SELECT 
+			--Currency
+			winlostdate
 			, SUM(TurnOver) TurnOver
 			, SUM(GrandAmt) GrandAmt
 		FROM @tmpBettrans
-		GROUP BY Currency
-			, winlostdate
+		GROUP BY ---Currency
+			winlostdate
 		)
 	UPDATE d
 	SET TurnOver = s.TurnOver
@@ -226,4 +230,4 @@ BEGIN
 	END
 	
 END
-	---
+ 

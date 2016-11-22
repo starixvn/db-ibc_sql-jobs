@@ -1,13 +1,15 @@
-
-SET QUOTED_IDENTIFIER OFF 
+USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON 
+/****** Object:  StoredProcedure [dbo].[GEN_rptBetting_ColossusBets]    Script Date: 11/21/2016 06:30:14 ******/
+SET ANSI_NULLS ON
 GO
+SET QUOTED_IDENTIFIER OFF
+GO
+/****** Object:  Stored Procedure dbo.GEN_rptBetting_ColossusBets    Script Date: 11/21/2016 4:39:11 PM ******/
 
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_ColossusBets    Script Date: 11/9/2016 4:18:55 PM ******/
-
+/****** Object:  Stored Procedure dbo.GEN_rptBetting_ColossusBets    Script Date: 11/18/2016 5:30:32 PM ******/
  
-CREATE PROCEDURE [dbo].[GEN_rptBetting_ColossusBets] 
+ALTER PROCEDURE [dbo].[GEN_rptBetting_ColossusBets] 
 	@date SMALLDATETIME = NULL
 	,@date2 SMALLDATETIME = NULL
 AS
@@ -18,6 +20,8 @@ AS
  Original:   
  Revisions:   
  - 20161101@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+ - 20161118@Jim: Correct CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
+ - 20161121@Sophia: Correct formular CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
 */
 BEGIN
 	DECLARE @tmpRawData AS TABLE (
@@ -49,6 +53,7 @@ BEGIN
 			, TurnOver MONEY
 			, TotalTrans INT
 			, Winlost MONEY
+			, actual_stake MONEY
 			, STATUS NVARCHAR(20)
 			, statusID INT
 			, GrandAmt MONEY
@@ -80,6 +85,7 @@ BEGIN
 			, TurnOver
 			, TotalTrans
 			, Winlost
+			, actual_stake
 			, STATUS
 			, statusID
 			, GrandAmt
@@ -91,6 +97,7 @@ BEGIN
 			, SUM(ABS(b.Stake)) TurnOver
 			, COUNT(DISTINCT b.refno) TotalTrans
 			, b.Winlost
+			, b.actual_stake
 			, b.STATUS
 			, b.statusID
 			, SUM(a.GrandAmt) AS GrandAmt
@@ -111,6 +118,7 @@ BEGIN
 			, b.winlostdate
 			, b.Currency
 			, b.Winlost
+			, b.actual_stake
 			, b.STATUS
 			, b.statusID
 	INSERT INTO @tmpRawData (
@@ -136,7 +144,7 @@ BEGIN
 				, COUNT(DISTINCT b.refno) TotalTrans
 				, 0 TurnOver
 				, SUM(CASE 
-						WHEN b.winlost = 0
+						WHEN (b.winlost - b.actual_stake ) < 0 AND b.statusID = 112 
 							THEN 0
 						ELSE CASE 
 								WHEN bm.bettype IN (
@@ -144,17 +152,15 @@ BEGIN
 										, 18005
 										, 18006
 										)
-									AND b.STATUS = 'WON'			
 									THEN bm.Winlost - bm.stake
 								ELSE 0
 								END
 						END) AS WinningPrize
 				, SUM(CASE 
-						WHEN b.winlost = 0
+						WHEN (b.winlost - b.actual_stake ) < 0 AND b.statusID = 112 
 							THEN 0
 						ELSE CASE 
 								WHEN bm.bettype = 18002
-									AND b.STATUS = 'WON'		
 									THEN bm.winlost - bm.stake
 								ELSE 0
 								END
@@ -189,13 +195,15 @@ BEGIN
 		AS (
 			SELECT Currency
 				, winlostdate
-				, custID
+				, custid
+				, StatusID
 				, SUM(TurnOver) TurnOver
 				, SUM(GrandAmt) GrandAmt
 			FROM @tmpBettrans
 			GROUP BY Currency
 				, winlostdate
-				, custID
+				, custid
+				, StatusID
 			)
 		UPDATE d
 		SET TurnOver = s.TurnOver
@@ -204,7 +212,8 @@ BEGIN
 		INNER JOIN cte_TO s
 			ON d.CurrencyID = s.Currency
 				AND d.rptDate = s.Winlostdate 
-				AND d.CustID = s.CustID
+				AND d.custId = s.CustID
+				AND d.StatusID = s.StatusID
 	
 	DELETE dbo.rpt_BettingColossusBets
 	WHERE rptDate BETWEEN @date
@@ -247,13 +256,3 @@ BEGIN
 			CurrencyID,
 			StatusID
 END
-
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
