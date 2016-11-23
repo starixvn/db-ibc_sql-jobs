@@ -28,7 +28,7 @@ Revisions:
 	-20160727@Jim: LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
 	-20160913@Jim: LRF - Implement Colossus Bets [Redmine: #63785 :fix refno issue]
 	-20161118@Jim: Correct CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
-	-20161121@Sophia: Correct fomular CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
+	-20161121@Sophia: Correct formula CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
 Param's Explanation:
 */
 BEGIN

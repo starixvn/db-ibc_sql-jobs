@@ -21,7 +21,7 @@ AS
  Revisions:   
  - 20161101@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
  - 20161118@Jim: Correct CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
- - 20161121@Sophia: Correct formular CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
+ - 20161121@Sophia: Correct fomular CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
 */
 BEGIN
 	DECLARE @tmpRawData AS TABLE (
