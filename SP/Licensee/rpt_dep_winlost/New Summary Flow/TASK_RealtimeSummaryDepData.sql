@@ -1,5 +1,5 @@
 USE [bodb02]
-GO
+GO 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
 	@Winlostdate DATE = NULL,
 	@isSuccessful BIT = 0 OUTPUT
@@ -11,6 +11,7 @@ AS
 		DB: DBACC.bodb02
 		Revisions:
 		- 20161004@Francis: Add Error Message to Log when issue happens
+		- 20161013@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
 		- @isSuccessful: -1: Data of the whole day have been summarized completely
@@ -130,7 +131,7 @@ BEGIN
 				  FROM dbo.translog tl WITH (ROWLOCK)
 						INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend
 				  WHERE tl.winlostdate = @Winlostdate
-						AND tl.productID IN(202,203)
+						AND tl.productID IN (202,203,204)
 				  GROUP BY tl.custid, tl.productID
 				  UNION ALL -- microgaming_RNG & OneRnG & Voidbridge
 				  SELECT g.custid
@@ -194,7 +195,7 @@ BEGIN
 				  FROM dbo.translog tl WITH (ROWLOCK)
 						INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend
 				  WHERE tl.winlostdate >= @Winlostdate
-						AND tl.productID IN(202,203)
+						AND tl.productID IN (202,203,204)
 				  GROUP BY tl.custid, tl.productID
 				  UNION ALL -- microgaming_RNG & OneRnG & Voidbridge
 				  SELECT g.custid
@@ -331,6 +332,7 @@ BEGIN
 					WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 					WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
 					WHEN bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
+					WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --Colossus Bet
 					WHEN bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
 					WHEN bettype BETWEEN 4001 AND 7999 THEN 212--Voidbridge
 					WHEN bettype = 901 THEN -2--BetTrade - Sold
@@ -364,6 +366,7 @@ BEGIN
 					WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 					WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
 					WHEN bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
+					WHEN bettype BETWEEN 18000 AND 18006 THEN 204 -- Colossus Bet
 					WHEN bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
 					WHEN bettype BETWEEN 4001 AND 7999 THEN 212--Voidbridge
 					WHEN bettype = 901 THEN -2--BetTrade - Sold

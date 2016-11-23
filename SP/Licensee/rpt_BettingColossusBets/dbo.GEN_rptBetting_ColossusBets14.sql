@@ -1,14 +1,5 @@
 USE [bodb_LicenseeReport]
 GO
-/****** Object:  StoredProcedure [dbo].[GEN_rptBetting_ColossusBets14]    Script Date: 11/21/2016 06:32:23 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_ColossusBets14    Script Date: 11/21/2016 4:39:11 PM ******/
-
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_ColossusBets14    Script Date: 11/9/2016 4:18:55 PM ******/
-  
 ALTER PROCEDURE [dbo].[GEN_rptBetting_ColossusBets14] 
 	@date SMALLDATETIME = NULL
 	,@date2 SMALLDATETIME = NULL

@@ -168,21 +168,16 @@ BEGIN
 		ON b.refno = bm.refno
 	WHERE bm.bettype BETWEEN 18001
 			AND 18006
-	GROUP BY b.winlostdate;
-		---, b.CustID
-		---, bm.bettype
-		---, b.Currency
-		---, bm.statusID;
+	GROUP BY b.winlostdate 
 
-	WITH cte_TO
+	;WITH cte_TO
 	AS (
 		SELECT 
-			--Currency
 			winlostdate
 			, SUM(TurnOver) TurnOver
 			, SUM(GrandAmt) GrandAmt
 		FROM @tmpBettrans
-		GROUP BY ---Currency
+		GROUP BY  
 			winlostdate
 		)
 	UPDATE d

@@ -1,13 +1,5 @@
 USE [bodb_LicenseeReport]
 GO
-/****** Object:  StoredProcedure [dbo].[GEN_rptBetting_ColossusBets]    Script Date: 11/21/2016 06:30:14 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER OFF
-GO
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_ColossusBets    Script Date: 11/21/2016 4:39:11 PM ******/
-
-/****** Object:  Stored Procedure dbo.GEN_rptBetting_ColossusBets    Script Date: 11/18/2016 5:30:32 PM ******/
  
 ALTER PROCEDURE [dbo].[GEN_rptBetting_ColossusBets] 
 	@date SMALLDATETIME = NULL
@@ -20,7 +12,6 @@ AS
  Original:   
  Revisions:   
  - 20161101@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
- - 20161118@Jim: Correct CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
  - 20161121@Sophia: Correct fomular CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
 */
 BEGIN

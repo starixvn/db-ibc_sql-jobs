@@ -17,6 +17,7 @@ AS
 		Revisions:
 		- 20160924@Francis: Enhance performance when querying data from bettrans14
 		- 20161004@Francis: Add Error Message to Log when issue happens
+		- 20161013@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
 		- @isSuccessful: -1: Data of the whole day have been summarized completely
@@ -149,6 +150,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 					WHEN b.bettype BETWEEN 1501 AND 1599 THEN 202--Keno
 					WHEN b.bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
+					WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --Colossus Bet
 					WHEN b.bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
 					WHEN b.bettype BETWEEN 4001 AND 7999 THEN 212--Voidbridge
 					WHEN b.bettype = 901 THEN -2--BetTrade - Sold
@@ -192,6 +194,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 					WHEN b.bettype BETWEEN 1501 AND 1599 THEN 202--Keno
 					WHEN b.bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
+					WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --Colossus Bet
 					WHEN b.bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
 					WHEN b.bettype BETWEEN 4001 AND 7999 THEN 212--Voidbridge
 					WHEN b.bettype = 901 THEN -2--BetTrade - Sold
