@@ -1,5 +1,9 @@
-USE [bodb_LicenseeReport]
+SET QUOTED_IDENTIFIER OFF 
 GO
+SET ANSI_NULLS ON 
+GO
+
+/****** Object:  Stored Procedure dbo.Task_PrepareStaging    Script Date: 11/18/2016 5:30:32 PM ******/
 ALTER PROCEDURE [dbo].[Task_PrepareStaging]  
     @datefrom smalldatetime=null
     ,@dateto smalldatetime=null
@@ -22,7 +26,8 @@ Revisions:
 	-20160318@Victor: Support Colossus bet - [Redmine: #52575]
 	-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	-20160727@Jim: LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
-	-20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785 :fix refno issue]
+	-20160913@Jim: LRF - Implement Colossus Bets [Redmine: #63785 :fix refno issue]
+	-20161121@Sophia: Correct formula CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
 Param's Explanation:
 */
 BEGIN
@@ -160,12 +165,20 @@ BEGIN
 				SELECT b.transid, 
 					SUM(CASE WHEN bm.bettype = 18002 THEN bm.oddsspread ELSE 0 END) AS CashInAmount, 
 					SUM(CASE 
-							WHEN b.winlost = 0 THEN 0
-							ELSE CASE WHEN bm.bettype = 18002 THEN bm.winlost-bm.stake ELSE 0 END
+							WHEN (b.winlost - b.actual_stake ) < 0 AND b.statusID = 112 
+								 THEN 0
+							ELSE CASE WHEN bm.bettype = 18002 
+									  THEN bm.winlost-bm.stake 
+									  ELSE 0 
+							END
 						END) AS CashOutAmount,
 					SUM(CASE 
-							WHEN b.winlost = 0 THEN 0
-							ELSE CASE WHEN bm.bettype IN (18004, 18005, 18006) THEN bm.Winlost-bm.stake ELSE 0 END
+							WHEN (b.winlost - b.actual_stake ) < 0 AND b.statusID = 112 
+							THEN 0
+							ELSE CASE WHEN bm.bettype IN (18004, 18005, 18006) 
+									  THEN bm.Winlost-bm.stake 
+									  ELSE 0 
+							END
 						END) AS WinPrizeAmount
 				FROM dbo.bettrans b WITH (NOLOCK) 
 					INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
@@ -254,12 +267,20 @@ BEGIN
 				SELECT b.transid, 
 					SUM(CASE WHEN bm.bettype = 18002 THEN bm.oddsspread ELSE 0 END) AS CashInAmount, 
 					SUM(CASE 
-							WHEN b.winlost = 0 THEN 0
-							ELSE CASE WHEN bm.bettype = 18002 THEN bm.winlost-bm.stake ELSE 0 END
+							WHEN (b.winlost - b.actual_stake ) < 0 AND b.statusID = 112 
+							THEN 0
+							ELSE CASE WHEN bm.bettype = 18002   
+									  THEN bm.winlost-bm.stake 
+									   ELSE 0 
+							END
 						END) AS CashOutAmount,
 					SUM(CASE 
-							WHEN b.winlost = 0 THEN 0
-							ELSE CASE WHEN bm.bettype IN (18004, 18005, 18006) THEN bm.Winlost-bm.stake ELSE 0 END
+							WHEN (b.winlost - b.actual_stake ) < 0 AND b.statusID = 112 
+							THEN 0
+							ELSE CASE WHEN bm.bettype IN (18004, 18005, 18006) 
+									  THEN bm.Winlost-bm.stake 
+									  ELSE 0 
+							END
 						END) AS WinPrizeAmount
 				FROM dbo.bettrans b WITH (NOLOCK) 
 					INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
@@ -314,7 +335,17 @@ BEGIN
 	DROP TABLE #BetTradeCust
 	  
 END
+
 GO
-GRANT EXECUTE ON [dbo].[Task_PrepareStaging] TO [vnteam] AS [dbo]
+
+SET QUOTED_IDENTIFIER OFF 
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_PrepareStaging] TO [vnteam] AS [dbo]
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT EXECUTE ON [dbo].[Task_PrepareStaging] TO [vnteam]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_PrepareStaging] TO [vnteam]
+GO 
