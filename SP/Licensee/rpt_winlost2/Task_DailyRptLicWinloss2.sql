@@ -34,7 +34,6 @@ Revisions:
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
-	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
  */
 
 SET NOCOUNT ON 
@@ -124,7 +123,6 @@ SELECT @winlostdate
 		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB 
 		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
-		WHEN bettype =1011  THEN 219 -- FW
 		ELSE 0 END sporttype
 	,CASE WHEN bettype IN (71,72,1000,901,902,903,904) THEN bettype ELSE 0 END bettype
 	--114: half win, 115: half lose
@@ -179,7 +177,6 @@ GROUP BY
 		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB 
 		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204
-		WHEN bettype =1011  THEN 219 -- FW
 		ELSE 0 END
 	,CASE WHEN bettype IN (71,72,1000,901,902,903,904) THEN bettype ELSE 0 END
 	,CASE 

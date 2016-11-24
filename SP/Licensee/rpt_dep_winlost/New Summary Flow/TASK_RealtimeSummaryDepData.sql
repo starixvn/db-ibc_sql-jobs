@@ -12,7 +12,6 @@ AS
 		Revisions:
 		- 20161004@Francis: Add Error Message to Log when issue happens
 		- 20161013@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
-		- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
 		- @isSuccessful: -1: Data of the whole day have been summarized completely
@@ -347,7 +346,6 @@ BEGIN
 					WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 					WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 					WHEN bettype BETWEEN 2401 AND 2499 THEN 211
-					WHEN bettype =1011  THEN 219 -- FW
 				ELSE 0 END,--SportType
 				SUM(TurnOver),--Turnover  
 				SUM(DrawGame),--Draw game TO			
@@ -382,7 +380,6 @@ BEGIN
 					WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 					WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 					WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
-					WHEN bettype =1011  THEN 219 -- FW
 				ELSE 0 END
 		--Start update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
 		MERGE #rptDepWinlostByProduct AS TARGET
