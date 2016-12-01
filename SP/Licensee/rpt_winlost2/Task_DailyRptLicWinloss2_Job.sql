@@ -122,7 +122,7 @@ BEGIN
 		WHILE @Retry <= @MaxRetry
 		BEGIN
 			BEGIN TRY
-								EXEC bodb_Licensee.dbo.GEN_rptBetting_ColossusBets @date = @WinlostDate, @date2 = @WinlostDate
+				EXEC dbo.GEN_rptBetting_ColossusBets @date = @WinlostDate, @date2 = @WinlostDate
 				SET @HasError = 0
 				BREAK
 			END TRY
