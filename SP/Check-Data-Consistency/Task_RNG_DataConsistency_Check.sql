@@ -164,7 +164,7 @@ BEGIN
 			+ ' - Case 2,3,4,5: Check status/awinlost/mwinlost/swinlost/playercomm/comm/acomm/scomm of tickets in bettransRNG.'
 		RETURN
 	END
-	
+	/*
 	SELECT * 
 	INTO #tempdataSetting
 	FROM (
@@ -180,7 +180,7 @@ BEGIN
 	WHERE sporttype = @ProductId AND isLive = 0 AND Site = 'ALL'
 	
 	/*DCS checking*/
-	/*
+	
 	--PT@Credit
 	SELECT TOP 1 'Case 6.1' AS [CASE]
 		, main.transid, main.custid, main.productid, main.gameid

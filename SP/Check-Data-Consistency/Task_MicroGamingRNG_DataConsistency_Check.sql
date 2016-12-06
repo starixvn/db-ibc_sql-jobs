@@ -211,8 +211,6 @@ begin
 	END
 	--select * from @wrongdataPT
 end
-grant view definition on Task_MicroGamingRNG_DataConsistency_Check to vnteam
-
 GO
 GRANT EXECUTE ON [dbo].[Task_MicroGamingRNG_DataConsistency_Check] TO [vnteam] AS [dbo]
 GO
