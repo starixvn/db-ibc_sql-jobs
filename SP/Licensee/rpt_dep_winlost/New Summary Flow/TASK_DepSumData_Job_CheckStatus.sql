@@ -1,5 +1,10 @@
 USE [bodb_Report]
 GO
+/****** Object:  StoredProcedure [dbo].[TASK_DepSumData_Job_CheckStatus]    Script Date: 12/06/2016 05:48:58 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[TASK_DepSumData_Job_CheckStatus]
 AS
 	/*
@@ -11,6 +16,7 @@ AS
 		-20161101@Francis: Add Opening Balance checking function
 		-20161102@Francis: Only check at the beginning and middle of the day
 		-20161107@Francis: Add new LogType = 5 (checkStatus) for checking status routine
+		-20161201@Francis: Update lastest code [RedmineID: #68063]
 		Input Params:	
 	*/
 BEGIN
@@ -116,20 +122,20 @@ BEGIN
 											FOR XML PATH('tr'), TYPE 
 										) AS NVARCHAR(MAX) ) + N'</table>'
 			
-			EXEC msdb.dbo.sp_send_dbmail @recipients = 'francis.le@starixsoft.com'
+			EXEC msdb.dbo.sp_send_dbmail @recipients = 'dbaadmin@starixsoft.com'
 						, @subject = @subject
 						, @body = @ErrorMessage
 						, @body_format = 'HTML'
 		END
 		
 		--Check opening balance of customers for yesterday only
-		CREATE TABLE #Result(CustID INT, OpeningBalance_DepWL MONEY, OpeningBalance_Bettrans MONEY)
+		CREATE TABLE #Result(CustID INT, Currency INT, OpeningBalance_DepWL MONEY, OpeningBalance_Bettrans MONEY)
 
 		-- Get opening balance of customer from rptDepWinlost_Main & bettrans
-		INSERT INTO #Result(CustID, OpeningBalance_DepWL, OpeningBalance_Bettrans)
-		SELECT DepWL.CustID, DepWL.OpeningBalance, bettrans.OpeningBalance
+		INSERT INTO #Result(CustID, Currency, OpeningBalance_DepWL, OpeningBalance_Bettrans)
+		SELECT DepWL.CustID, DepWL.currency, DepWL.OpeningBalance, bettrans.OpeningBalance
 			FROM (
-					SELECT m.CustID, m.OpeningBalance
+					SELECT m.CustID, m.currency, m.OpeningBalance
 					FROM bodb_Report.dbo.rptDepWinlost_Main m WITH(NOLOCK)
 					WHERE m.Winlostdate = @Yesterday
 				) DepWL
@@ -150,11 +156,21 @@ BEGIN
 			WHERE DepWL.OpeningBalance != bettrans.OpeningBalance
 		
 		SELECT @Count = @@ROWCOUNT
+		
+		DECLARE @haveRealCurrency BIT = 0
+	
+		IF EXISTS (SELECT TOP 1 1 FROM #Result WHERE Currency != 20)
+			SET @haveRealCurrency = 1
 			
 		IF @Count > 0
 		BEGIN
 			DELETE FROM @ErrMsgTab
-			SELECT @ErrMsg = 'Opening balances of ' + CONVERT(VARCHAR(20),@Count) +  ' customer(s) are different compared with bettrans on: ' + CONVERT(VARCHAR(20),@Yesterday)
+			SELECT @ErrMsg = 'Opening balances of ' + CONVERT(VARCHAR(20),@Count) +  ' customer(s) ' 
+							 + CASE @haveRealCurrency 
+									WHEN 1 THEN '(include customer(s) with real currencies) '							
+									ELSE '(all are test currency) ' 
+							   END
+							 + 'are different compared with bettrans on: ' + CONVERT(VARCHAR(20),@Yesterday)
 							 + CHAR(13) --Line break
 			INSERT INTO @ErrMsgTab (JobType, ErrMsg) SELECT 'OPENING BALANCE', @ErrMsg
 			
