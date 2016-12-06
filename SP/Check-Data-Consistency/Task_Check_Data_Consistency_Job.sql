@@ -1,5 +1,11 @@
 USE [bodb02]
 GO
+/****** Object:  StoredProcedure [dbo].[Task_Check_Data_Consistency_Job]    Script Date: 10/11/2016 07:12:56 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+/****** Object:  Stored Procedure dbo.Task_Check_Data_Consistency_Job    Script Date: 6/30/2016 9:18:35 AM ******/
 ALTER PROCEDURE [dbo].[Task_Check_Data_Consistency_Job] @Recipients VARCHAR(1024)
 	, @Copy_recipients VARCHAR(1024) = ''
 	, @Mode VARCHAR(20) = ''
@@ -13,10 +19,10 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @ErrMessage VARCHAR(MAX), @ErrorTmp VARCHAR(512), @CurrentDate DATETIME, @Retry INT
+	DECLARE @ErrMessage VARCHAR(MAX), @ErrorTmp VARCHAR(512), @CurrentDate DATETIME, @Retry INT, @HasError BIT
 	DECLARE @ErrorsTmp TABLE (ProductId INT, ProductName VARCHAR(100), FromDate SMALLDATETIME, ToDate SMALLDATETIME, ErrMessage VARCHAR(512))
 
-	SELECT @ErrMessage = '', @ErrorTmp = '', @CurrentDate = GETDATE(), @Retry = 0
+	SELECT @ErrMessage = '', @ErrorTmp = '', @CurrentDate = GETDATE(), @Retry = 0, @HasError = 0
 	
 	--step #1: check winlostdate concistency by match
 	SET @ErrorTmp = ''
@@ -25,6 +31,7 @@ BEGIN
 		EXEC dbo.Task_CheckWinlostdate_Consistency @ErrMessage = @ErrorTmp OUTPUT
 		IF ISNULL(@ErrorTmp, '') <> ''
 		BEGIN
+			SET @HasError = 1
 			INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
 			VALUES(0, 'All', CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE), @ErrorTmp)
 		END
@@ -37,11 +44,14 @@ BEGIN
 		EXEC dbo.Task_DailysettledTicket_Verify @mode = 1, @ErrMessage = @ErrorTmp OUTPUT
 		IF ISNULL(@ErrorTmp, '') <> ''
 		BEGIN
-			INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
-			VALUES(0, 'All', CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE), @ErrorTmp)
+			SET @HasError = 1
 		END
+		--only this kind need to send email when completed
+		INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
+		VALUES(0, 'All', CAST(GETDATE() AS DATE), CAST(GETDATE() AS DATE), CASE WHEN ISNULL(@ErrorTmp, '') <> '' THEN @ErrorTmp ELSE 'Successful' END)
 	END
 
+	DECLARE @HasError1 BIT
 	WHILE @Retry < 3
 	BEGIN
 		--step #3: check data consistency between bettrans and bettransRnG
@@ -60,6 +70,7 @@ BEGIN
 		
 			IF ISNULL(@ErrorTmp, '') <> ''
 			BEGIN
+				SET @HasError1 = 1
 				INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
 				VALUES(205, 'Microgaming RNG Casino', @Fromdate, @Todate, @ErrorTmp)
 			END
@@ -74,8 +85,9 @@ BEGIN
 	
 			IF ISNULL(@ErrorTmp, '') <> ''
 			BEGIN
+				SET @HasError1 = 1
 				INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
-				VALUES(212, 'Macau Games', @Fromdate, @Todate, @ErrorTmp)
+				VALUES(212, 'Macau Games', @Fromdate, @Todate, @ErrorTmp)	
 			END
 
 			--For Microgaming Live Casino
@@ -86,33 +98,54 @@ BEGIN
 
 			IF ISNULL(@ErrorTmp, '') <> ''
 			BEGIN
+				SET @HasError1 = 1
 				INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
 				VALUES(203, 'Microgaming Live Casino', @Fromdate, @Todate, @ErrorTmp)
 			END
+			
+			--For Allbet
+			SET @ErrorTmp = ''
+			EXEC dbo.Task_LC_DataConsistency_Check @FromDate = @FromDate
+				, @ToDate = @ToDate
+				, @ProductId = 211
+
+				, @ErrMessage = @ErrorTmp OUTPUT
+	
+			IF ISNULL(@ErrorTmp, '') <> ''
+			BEGIN
+				SET @HasError1 = 1
+				INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
+				VALUES(211, 'Allbet', @Fromdate, @Todate, @ErrorTmp)	
+			END
+			
 		END
 
-		IF NOT EXISTS (SELECT TOP 1 1 FROM @ErrorsTmp) OR @Retry = 2
+		IF NOT EXISTS (SELECT TOP 1 1 FROM @ErrorsTmp WHERE ProductId <> 0) OR @Retry = 2
 			BREAK
 
 		SET @Retry = @Retry + 1
 		WAITFOR DELAY '00:02:00:000' --retry after 2 minutes
 
 		DELETE FROM @ErrorsTmp WHERE ProductId <> 0
+		SET @HasError1 = 0
+	END
+	
+	IF @HasError <> @HasError1 AND @HasError1 = 1
+	BEGIN
+		SET @HasError = @HasError1
 	END
 
 	--add more check data at here...
-
+		
 	--if any error then send mail
 	IF EXISTS (SELECT TOP 1 1 FROM @ErrorsTmp)
 	BEGIN
-		
 		DECLARE @job_name VARCHAR(125), @subject VARCHAR(125)
 		SET @job_name = 'bodb02: Check consistency of data'
 		SELECT @subject = 'SQL Server Job System: ''' + @job_name + ''' completed on \\' + @@servername
-
-		SELECT @ErrMessage = N'<H3>Failed to check consistency of tickets'-- from ['+ CAST(@FromDate AS VARCHAR) +'] to ['+ CAST(@ToDate AS VARCHAR) +']</H3>'
+		SELECT @ErrMessage = N'<H3>Status of check the ticket consistency'-- from ['+ CAST(@FromDate AS VARCHAR) +'] to ['+ CAST(@ToDate AS VARCHAR) +']</H3>'
 							 + N'<table border="1">'
-							 + N'<tr><th>Product Name</th><th>From Date</th><th>To Date</th><th>Error Message</th></tr>'
+							 + N'<tr><th>Product Name</th><th>From Date</th><th>To Date</th><th>Message</th></tr>'
 							 + CAST(( SELECT --td = ProductId, '',
 											 td = ProductName, '',
 											 td = CONVERT(VARCHAR(20), FromDate, 110), '',
@@ -134,6 +167,9 @@ BEGIN
 			, @body_format = 'HTML'
 			, @copy_recipients = @Copy_recipients
 
-		RAISERROR (@ErrMessage, 16, 1)
+		IF @HasError = 1
+		BEGIN
+			RAISERROR (@ErrMessage, 16, 1)
+		END
 	END
 END
