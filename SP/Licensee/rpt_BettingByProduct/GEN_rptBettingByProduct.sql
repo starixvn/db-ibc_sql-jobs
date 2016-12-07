@@ -109,6 +109,7 @@ BEGIN
 		,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
 		,0 [WinPrizeAmount]
 		,0 [CashOutAmount]
+		,0 [ValidBetAmount]
 	FROM dbo.rpt_Betting_BA b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2
