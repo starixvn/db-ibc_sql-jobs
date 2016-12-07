@@ -21,6 +21,7 @@ AS
 		- 20160509@Bruce: Summary data for Voidbridge(VB)
 		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		- 20160907@Harper: #62820_Add AllBet for ProductMapping
+		- 20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 */
 
 BEGIN  
@@ -58,7 +59,8 @@ BEGIN
 			,[CommissionP]
 			,[BuyBackAmount]
 			,[WinPrizeAmount]
-			,[CashOutAmount])
+			,[CashOutAmount]
+			,[ValidBetAmount])
 	SELECT
 		[rptDate]
 		,[SiteID]
@@ -76,6 +78,7 @@ BEGIN
 		,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
 		,SUM(ISNULL([WinPrizeAmount],0)) [WinPrizeAmount]
 		,SUM(ISNULL([CashOutAmount],0)) [CashOutAmount]
+		,SUM(ISNULL([oddsspread],0)) 	[ValidBetAmount]
 	FROM dbo.rpt_Betting b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2

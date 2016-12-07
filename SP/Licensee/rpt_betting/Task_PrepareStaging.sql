@@ -28,6 +28,7 @@ Revisions:
 	-20160727@Jim: LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
 	-20160913@Jim: LRF - Implement Colossus Bets [Redmine: #63785 :fix refno issue]
 	-20161121@Sophia: Correct formula CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
+	-20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 Param's Explanation:
 */
 BEGIN
@@ -120,7 +121,8 @@ BEGIN
                 ,tpositiontaking
                 ,customercategory
 				,isBA
-				,refno)
+				,refno
+				,oddsspread)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -148,7 +150,8 @@ BEGIN
 				ELSE -1 END customercategory,
 				--CASE WHEN b.transid2 = 1 AND btc.CustId IS NOT NULL AND b.bettype NOT IN (901,902,903) THEN 1 ELSE 0 END, --for BA's bettrade tickets (original tickets)
 				CASE WHEN b.transid2 = 1 AND b.bettype <> 901 THEN 1 ELSE 0 END,
-				b.refno
+				b.refno,
+				oddsspread
 			FROM bodb02.dbo.bettrans b (NOLOCK)
 			    INNER JOIN @Recommend_List r ON b.recommend=r.t_recommend
 				--LEFT JOIN #BetTradeCust btc ON b.CustId = btc.CustId
@@ -226,7 +229,8 @@ BEGIN
                 ,tpositiontaking
                 ,customercategory
 				,isBA
-				,refno)
+				,refno
+				,oddsspread)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -254,7 +258,8 @@ BEGIN
 					ELSE -1 END customercategory,
 				--CASE WHEN b.transid2 = 1 AND btc.CustId IS NOT NULL AND b.bettype NOT IN (901,902,903) THEN 1 ELSE 0 END, --for BA's bettrade tickets (original tickets)
 				CASE WHEN b.transid2 = 1 AND b.bettype <> 901 THEN 1 ELSE 0 END,
-				b.refno
+				b.refno,
+				oddsspread
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
 			    INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
 				--LEFT JOIN #BetTradeCust btc ON b.CustId = btc.CustId
