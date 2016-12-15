@@ -23,6 +23,7 @@ Revisions:
 	20160129@Jim: fix bug #51781
 	20160321@Victor: Support Colossus bet [Redmine: #52575]
 	20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+	20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 	
 Param's Explanation:
 
@@ -57,7 +58,8 @@ INSERT INTO dbo.rpt_Betting
         ,[CustomerCategory]
 		,[BuyBackAmount]
 		,[WinPrizeAmount]
-		,[CashOutAmount])
+		,[CashOutAmount]
+		,[oddsspread])
     SELECT  
 	    b.winlostdate,
         ISNULL(site.SiteID,-1) siteid,
@@ -91,7 +93,8 @@ INSERT INTO dbo.rpt_Betting
 				ELSE 0 
 			END) BuyBackAmount,
 		SUM(ISNULL(WinPrizeAmount,0)) WinPrizeAmount,
-		SUM(ISNULL(CashOutAmount,0)) CashOutAmount
+		SUM(ISNULL(CashOutAmount,0)) CashOutAmount,
+		SUM(ISNULL(oddsspread,0))    oddsspread
     FROM
 	    dbo.bettrans b (NOLOCK) 
 	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
