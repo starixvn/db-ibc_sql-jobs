@@ -230,7 +230,7 @@ END
 --ADD NEW LICENSEE CONFIG INTO SystemLicensee  
 IF ISNULL(@SystemisActive, '') <> ''
 BEGIN
-	EXEC DBA_ActiveLicenseeSystem @LicenseeName = @LicenseeName
+	EXEC DBA_Lrf_ActiveLicenseeSystem @LicenseeName = @LicenseeName
 		, @SystemisActive = @SystemisActive
 END
 --- SET BETSETTING IS ACTIVE AS DEFAULT

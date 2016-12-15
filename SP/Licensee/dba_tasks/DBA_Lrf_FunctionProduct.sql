@@ -1,9 +1,5 @@
-/****** Object:  Stored Procedure dbo.DBA_Lrf_FunctionProduct    Script Date: 7/20/2016 4:54:21 PM ******/  
   
-/****** Object:  Stored Procedure dbo.DBA_Lrf_FunctionProduct    Script Date: 5/30/2016 11:30:31 AM ******/  
-   
-  
-CREATE PROCEDURE [dbo].[DBA_Lrf_FunctionProduct]  
+ALTER PROCEDURE [dbo].[DBA_Lrf_FunctionProduct]  
 (  
  @ProductCode VARCHAR(100) = ''  
 )  
@@ -21,6 +17,7 @@ Revisions:
  - 20150727@Jim: exclude Casino Balance report when offer SB  
  - 20150825@Jim: exclude Microgaming Winloss report when offer SB   
  - 20160128@Jim: add more Product MGCRNG  
+ - 20161124@Jim: config for Product Colossus Bets  [RedmineID :#63785]
 Param's Explanation:  
     
    
@@ -62,6 +59,7 @@ BEGIN
          ,67 -- Microgaming Winloss  
          ,68 -- Casino Progressive Wins  
          ,69 -- Weekly Live Matches  
+		 ,71 -- Colossus Bets Win loss
          )   
    UNION ALL   
    SELECT 0 AS ProductId -- SB  
@@ -330,7 +328,20 @@ BEGIN
          ,68   -- CasinoProgressiveWins  
          )  
   END   
-    
+  
+IF @ProductCode = 'CB'    
+  BEGIN   
+   INSERT INTO @tblFunctions (ProductId, FunctionId,TypeID)  
+   SELECT 15 AS ProductId -- CB  
+     ,FunctionID    
+     ,1 AS TypeId  -- Lrf Function  
+   FROM dbo.Functions WITH (NOLOCK)  
+   WHERE FunctionId    IN (  
+          3  -- REPORTS  
+         ,71   -- Colossus Bets Win loss 
+         )  
+  END
+  
  SELECT DISTINCT ProductId, FunctionId,TypeID  
  FROM @tblFunctions ORDER BY ProductId,FunctionId  ASC  
   /*  
