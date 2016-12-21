@@ -20,9 +20,9 @@ ALTER DATABASE bodb_CustomerLog ADD FILE ( NAME = N'serviceBroker_01'
 -- local dev
 --, FILENAME = N'E:\SQLSERVER2008R2\IBC_DB\bodb_CustomerLog\serviceBroker\serviceBroker_01.ndf' 
 -- local test
-, FILENAME = N'D:\DB233\IBC_DB\ServiceBroker\serviceBroker_01.ndf' 
+--, FILENAME = N'D:\DB233\IBC_DB\ServiceBroker\serviceBroker_01.ndf' 
 -- Production
---, FILENAME = N'G:\IBC_DB\custdb\serviceBroker\serviceBroker_01.ndf' 
+, FILENAME = N'G:\IBC_DB\bodb_CustomerLog\serviceBroker_01.ndf' 
 , SIZE = 2048KB , FILEGROWTH = 32768KB ) TO FILEGROUP [ServiceBroker]
 
 GO

@@ -6,8 +6,8 @@
 	
 */	
 
+--------------- PLEASE RUN STEPS BY STEPS -----------------------------
 /***************Step 1: configuration: Endpoint: creating port for target to connect, database, create window login of initiator machine (cross)*********/	
-
 -- Enable service broker
 USE [master]
 GO
@@ -40,19 +40,23 @@ FOR SERVICE_BROKER
 	AUTHENTICATION = WINDOWS
 )
 GO
+--Create window login of target machine (cross), please double check first before running command below, IF it exists we will use it
+/*
+IF EXISTS (SELECT TOP 1 1
+		   FROM sys.server_principals
+		   WHERE name = 'NT SERVICE\MSSQLSERVER'
+		   AND [type] = 'G')
+	DROP LOGIN [NT SERVICE\MSSQLSERVER]
+GO
+CREATE LOGIN [NT SERVICE\MSSQLSERVER] FROM WINDOWS
+*/
 
---IF EXISTS (SELECT TOP 1 1
---		   FROM sys.server_principals
---		   WHERE name = 'NT SERVICE\MSSQLSERVER'
---		   AND [type] = 'G')
---	DROP LOGIN [NT SERVICE\MSSQLSERVER]
---GO
---CREATE LOGIN [NT SERVICE\MSSQLSERVER] FROM WINDOWS
 --GO
 
 -- LOCAL DEV
---GRANT CONNECT ON ENDPOINT::Endpoint_DBLOG_BK TO [NT SERVICE\MSSQLSERVER]
-GRANT CONNECT ON ENDPOINT::SSBSTargetEP TO [NT SERVICE\MSSQLSERVER]
+--GRANT CONNECT ON ENDPOINT::SSBSTargetEP TO [NT SERVICE\MSSQLSERVER]
+-- Production
+GRANT CONNECT ON ENDPOINT::Endpoint_DBLOG_BK TO [NT SERVICE\MSSQLSERVER]
 GO
 
 /***************END OF Step 1: configuration: Endpoint: creating port for souce to target, database, create window login of initiator machine (cross)*********/	
@@ -146,8 +150,10 @@ ON QUEUE Queue_DBLOG_BK
 
 CREATE ROUTE Route_CustomerLog_DBLOG_BK -- point back to sourcxe
 WITH SERVICE_NAME='Service_CustomerLog_DBLOG',
+-- Production
+ADDRESS='TCP://DBLOG:4022'
 -- local test
-ADDRESS='TCP://DB215:4022'
+--ADDRESS='TCP://DB215:4022'
 --local dev
 --ADDRESS='TCP://DB230:4742' -- Source address	
 GO
@@ -171,15 +177,4 @@ WITH
 				EXECUTE AS 'dbo'
 			);	
 /***************END OF Step 3: Setup logic to receive message: create table,sp(s), logic to receive message  *********/					
-/*
-RECEIVE TOP(5) CONVERT(NVARCHAR(MAX), message_body) AS Message
-FROM Queue_DBLOG
-
-select * FROM Queue_DBLOG
-select * from 
-
-RECEIVE TOP(5) CONVERT(NVARCHAR(MAX), message_body) AS Message
-FROM Queue_DBLOG
-
-*/
 

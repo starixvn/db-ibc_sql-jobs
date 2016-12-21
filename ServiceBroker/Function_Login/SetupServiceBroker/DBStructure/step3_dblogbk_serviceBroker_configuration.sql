@@ -2,7 +2,7 @@
 	Create By: Helen
 	Created Date: 20161028
 	Task: Apply Service Broker for Writing Log - [Redmine: 65806]
-	DB: SERVER DBLOG/bodb_CustomerLog
+	DB: SERVER DBLOG_BK/bodb_CustomerLog
 	
 */
 
@@ -21,10 +21,10 @@ GO
 ALTER DATABASE [bodb_CustomerLog] ADD FILE ( NAME = N'serviceBroker_01'
 --, FILENAME = N'E:\IBC_DB\bodb_CustomerLog\serviceBroker\serviceBroker_01.ndf' 
 -- Local test
-, FILENAME = N'D:\DB234_SQLSERVER2008R2\IBC_DB\ServiceBroker\serviceBroker_01.ndf' 
+--, FILENAME = N'D:\DB234_SQLSERVER2008R2\IBC_DB\ServiceBroker\serviceBroker_01.ndf' 
 
 -- Production
---, FILENAME = N'G:\IBC_DB\bodb_CustomerLog\serviceBroker\serviceBroker_01.ndf' 
+, FILENAME = N'G:\IBC_DB\bodb_CustomerLog\serviceBroker_01.ndf' 
 , SIZE = 2048KB , FILEGROWTH = 32768KB ) TO FILEGROUP [ServiceBroker]
 GO
 

@@ -5,61 +5,63 @@
 	DB: SERVER DBLOG/bodb_CustomerLog; 
 	
 */	
-
+--------------- PLEASE RUN STEPS BY STEPS -----------------------------
 /***************Step 1: configuration: Endpoint: creating port for target to connect, database, create window login of initiator machine (cross)*********/	
 
--- Enable service broker
-USE [master]
-GO
-ALTER DATABASE [bodb_CustomerLog] SET  SINGLE_USER WITH ROLLBACK IMMEDIATE
-GO
-ALTER DATABASE [bodb_CustomerLog] SET  ENABLE_BROKER WITH NO_WAIT
-GO
-ALTER DATABASE [bodb_CustomerLog] SET TRUSTWORTHY ON
-GO
-ALTER DATABASE [bodb_CustomerLog] SET MULTI_USER
-GO
-------------------------------------------------
-USE master
-go
+	-- Enable service broker
+	USE [master]
+	GO
+	ALTER DATABASE [bodb_CustomerLog] SET  SINGLE_USER WITH ROLLBACK IMMEDIATE
+	GO
+	ALTER DATABASE [bodb_CustomerLog] SET  ENABLE_BROKER WITH NO_WAIT
+	GO
+	ALTER DATABASE [bodb_CustomerLog] SET TRUSTWORTHY ON
+	GO
+	ALTER DATABASE [bodb_CustomerLog] SET MULTI_USER
+	GO
+	------------------------------------------------
+	USE master
+	go
 
-IF EXISTS (SELECT TOP 1 1
-		   FROM sys.endpoints
-		   WHERE name = 'DBLOGEndpoint')
-	DROP ENDPOINT Endpoint_DBLOG
-GO
+	IF EXISTS (SELECT TOP 1 1
+			   FROM sys.endpoints
+			   WHERE name = 'DBLOGEndpoint')
+		DROP ENDPOINT Endpoint_DBLOG
+	GO
 
-CREATE ENDPOINT Endpoint_DBLOG
-STATE = STARTED
-AS TCP
-(
-	LISTENER_PORT = 4741
-)
-FOR SERVICE_BROKER
-(
-	AUTHENTICATION = WINDOWS
-)
-GO
+	CREATE ENDPOINT Endpoint_DBLOG
+	STATE = STARTED
+	AS TCP
+	(
+		LISTENER_PORT = 4741
+	)
+	FOR SERVICE_BROKER
+	(
+		AUTHENTICATION = WINDOWS
+	)
+	GO
+	--Create window login of target machine (cross), please double check first before running command below, IF it exists we will use it
+	/*
+	IF EXISTS (SELECT TOP 1 1
+			   FROM sys.server_principals
+			   WHERE name = 'NT SERVICE\MSSQLSERVER'
+			   AND [type] = 'G')
+		DROP LOGIN [NT SERVICE\MSSQLSERVER]
+	GO
+	CREATE LOGIN [NT SERVICE\MSSQLSERVER] FROM WINDOWS
+	*/
+	--GO
 
---IF EXISTS (SELECT TOP 1 1
---		   FROM sys.server_principals
---		   WHERE name = 'NT SERVICE\MSSQLSERVER'
---		   AND [type] = 'G')
---	DROP LOGIN [NT SERVICE\MSSQLSERVER]
---GO
---CREATE LOGIN [NT SERVICE\MSSQLSERVER] FROM WINDOWS
---GO
+	GRANT CONNECT ON ENDPOINT::Endpoint_DBLOG TO [NT SERVICE\MSSQLSERVER] -- window account of dbcust
+	GO
+	GRANT CONNECT ON ENDPOINT::Endpoint_DBLOG TO [NT SERVICE\MSSQLSERVER] --window account of dblog_bk
 
---GRANT CONNECT ON ENDPOINT::Endpoint_DBLOG TO [NT SERVICE\MSSQLSERVER] -- window account of dbcust
-GO
---GRANT CONNECT ON ENDPOINT::Endpoint_DBLOG TO [NT SERVICE\MSSQLSERVER] --window account of dblog_bk
-
--- Local test
-GRANT CONNECT ON ENDPOINT::SSBSTargetEP TO [NT SERVICE\MSSQLSERVER] -- window account of dbcust
-
-GRANT CONNECT ON ENDPOINT::SSBSTargetEP TO [NT SERVICE\MSSQLSERVER] --window account of dblog_bk
-
-GO
+	-- Local test
+	/*
+	GRANT CONNECT ON ENDPOINT::SSBSTargetEP TO [NT SERVICE\MSSQLSERVER] -- window account of dbcust
+	GRANT CONNECT ON ENDPOINT::SSBSTargetEP TO [NT SERVICE\MSSQLSERVER] --window account of dblog_bk
+	*/
+	GO
 
 /***************END OF Step 1: configuration: Endpoint: creating port for souce to target, database, create window login of initiator machine (cross)*********/	
 
@@ -156,23 +158,40 @@ ON QUEUE Queue_DBLOG
 
 CREATE ROUTE Route_CustomerLog_DBLOG -- point back to sourcxe
 WITH SERVICE_NAME='Service_CustomerLog_DBCUST',
+-- Production
+ADDRESS='TCP://DBCUST:4022' -- Source address	
 --local test
-ADDRESS='TCP://DB233:4022' -- Source address	
+--ADDRESS='TCP://DB233:4022' -- Source address	
 -- local dev
 --ADDRESS='TCP://DB230:4740' -- Source address	
 GO
 
 CREATE ROUTE Route_CustomerLog_DBLOG_BK -- point  to dblog_bk
 WITH SERVICE_NAME='Service_CustomerLog_DBLOG_BK',
+-- Production
+ADDRESS='TCP://DBLOG_BK:4022' -- target address	
 -- local test
-ADDRESS='TCP://DB234:4022' -- Source address	
+--ADDRESS='TCP://DB234:4022' -- target address	
 -- local dev
---ADDRESS='TCP://DB231:4742' -- Source address	
+--ADDRESS='TCP://DB231:4742' -- target address	
 GO
 
 go
 GRANT SEND ON SERVICE::[Service_CustomerLog_DBLOG] TO PUBLIC -- Grant send permission, only need to run against target side
 GO
+
+GRANT SEND ON SERVICE::Service_CustomerLog_DBLOG TO [bodbExtAccNet]
+GRANT SEND ON SERVICE::Service_CustomerLog_DBLOG  TO bodbDownlineNet
+GRANT SEND ON SERVICE::Service_CustomerLog_DBLOG  TO [bodbRMSNet]
+GRANT SEND ON SERVICE::Service_CustomerLog_DBLOG  TO [bodbDownlineNetView]
+GRANT SEND ON SERVICE::Service_CustomerLog_DBLOG  TO [vnteam]
+GO
+GRANT RECEIVE ON Queue_DBLOG TO [bodbExtAccNet]
+GRANT RECEIVE ON Queue_DBLOG TO bodbDownlineNet
+GRANT RECEIVE ON Queue_DBLOG TO [bodbRMSNet]
+GRANT RECEIVE ON Queue_DBLOG TO [bodbDownlineNetView]
+GRANT RECEIVE ON Queue_DBLOG TO [vnteam]
+
 /***************END OF Step 2: CREATE SERVICE BROKER COMPONENT: route (independant: alias of service want to connect): deploy distributed, message type, contract, queue, service *********/	
 
 /***************Step 3: Setup logic to receive message: create table,sp(s), logic to receive message  *********/	
@@ -192,15 +211,4 @@ WITH
 			);	
 			
 /***************END OF Step 3: Setup logic to receive message: create table,sp(s), logic to receive message  *********/					
-/*
-RECEIVE TOP(5) CONVERT(NVARCHAR(MAX), message_body) AS Message
-FROM Queue_DBLOG
-
-select * FROM Queue_DBLOG
-select * from 
-
-RECEIVE TOP(5) CONVERT(NVARCHAR(MAX), message_body) AS Message
-FROM Queue_DBLOG
-
-*/
 

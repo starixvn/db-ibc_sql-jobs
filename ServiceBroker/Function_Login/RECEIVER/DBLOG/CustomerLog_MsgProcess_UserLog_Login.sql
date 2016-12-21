@@ -1,4 +1,4 @@
-ALTER PROCEDURE sb.CustomerLog_MsgProcess_UserLog_Login
+ALTER PROCEDURE [sb].[CustomerLog_MsgProcess_UserLog_Login]
 (
 	@XmlMessage XML
 )
@@ -70,9 +70,39 @@ BEGIN
 			,	CountryCode	VARCHAR(64) 	'@CountryCode'
 			,	Duration	INT 			'@Duration'
 			,	Username2	DATETIME  		'@Username2'
-			)
-			
-	 
+			)					
+	
+		SET @xml_dblog_bk = (SELECT LogID AS '@LogID'
+									, UserID AS '@UserID'
+									, RoleID AS '@RoleID'
+									, SubAccID AS '@SubAccID'
+									, ServerID AS '@ServerID'
+									, IP AS '@IP'
+									, DomainName AS '@DomainName'
+									, LogDate AS '@LogDate'
+									, ActionID AS '@ActionID'
+									, Doing AS '@Doing'
+									, BrowserName AS '@BrowserName'
+									, Platform AS '@Platform'
+									, CountryCode AS '@CountryCode'
+									, Duration AS '@Duration'
+									, Username2 AS '@Username2'
+									, CreatedDate AS '@CreatedDate'
+							 FROM #UserLog_Login
+							 FOR XML path('row'),root ('root')
+								 )
+		
+		-- Send message to DBLOG_BK	
+		EXEC sb.CustomerLog_SendMessage @xml = @xml_dblog_bk,@MessageType='MessageType_CustomerLog_UserLog_Login', @SB_Error = @SB_Error out
+		
+		IF @SB_Error = 1
+			RAISERROR (
+						   'Inserted DBLog already, but can not send to DBLog_BK', -- Message text.  
+						   16, -- Severity.  
+						   1 -- State.  
+					   );  			
+		
+		EXECUTE	sys.sp_xml_removedocument @_hdoc
 	END TRY
 	BEGIN CATCH
 		SET @error_Message = ERROR_MESSAGE()
@@ -84,42 +114,10 @@ BEGIN
 		-- Send Email to Production team for notification
 		EXEC sb.EmailNotification @QueueName = 'Queue_DBLOG',@message_body = @message_body,@error_message = @error_Message, @functionName = 'Login'
 		
-		EXECUTE	sys.sp_xml_removedocument @_hdoc
-		
-		RETURN
-		
-	END CATCH	
-	
-	EXECUTE	sys.sp_xml_removedocument @_hdoc
-	
-	SET @xml_dblog_bk = (SELECT LogID AS '@LogID'
-								, UserID AS '@UserID'
-								, RoleID AS '@RoleID'
-								, SubAccID AS '@SubAccID'
-								, ServerID AS '@ServerID'
-								, IP AS '@IP'
-								, DomainName AS '@DomainName'
-								, LogDate AS '@LogDate'
-								, ActionID AS '@ActionID'
-								, Doing AS '@Doing'
-								, BrowserName AS '@BrowserName'
-								, Platform AS '@Platform'
-								, CountryCode AS '@CountryCode'
-								, Duration AS '@Duration'
-								, Username2 AS '@Username2'
-								, CreatedDate AS '@CreatedDate'
-						 FROM #UserLog_Login
-						 FOR XML path('row'),root ('root')
-							 )
-	
-	-- Send message to DBLOG_BK	
-	EXEC sb.CustomerLog_SendMessage @xml = @xml_dblog_bk,@MessageType='MessageType_CustomerLog_UserLog_Login', @SB_Error = @SB_Error out			
+		EXECUTE	sys.sp_xml_removedocument @_hdoc		
+	END CATCH			
 	
 	SET NOCOUNT OFF
 	
 	
 END	
-GO
-
-
-

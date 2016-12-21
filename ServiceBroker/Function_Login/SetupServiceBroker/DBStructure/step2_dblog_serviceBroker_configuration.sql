@@ -21,10 +21,10 @@ GO
 ALTER DATABASE [bodb_CustomerLog] ADD FILE ( NAME = N'serviceBroker_01'
 --, FILENAME = N'E:\IBC_DB\bodb_CustomerLog\serviceBroker\serviceBroker_01.ndf' 
 -- Local test
-, FILENAME = N'D:\IBC_DB\ServiceBroker\serviceBroker_01.ndf' 
+--, FILENAME = N'D:\IBC_DB\ServiceBroker\serviceBroker_01.ndf' 
 
 -- Production
---, FILENAME = N'G:\IBC_DB\bodb_CustomerLog\serviceBroker\serviceBroker_01.ndf' 
+, FILENAME = N'G:\IBC_DB\bodb_CustomerLog\serviceBroker\serviceBroker_01.ndf' 
 , SIZE = 2048KB , FILEGROWTH = 32768KB ) TO FILEGROUP [ServiceBroker]
 GO
 
@@ -108,6 +108,7 @@ CREATE TABLE [Sb].[FailedMessageMonitoring](
 	[ErrorMessage] varchar(max) null ,
 	[CreatedDate] datetime null,
 	[IsResolved] BIT null, 
+	
 	[ResolvedDate] datetime null
 	
 ) ON [ServiceBroker]
