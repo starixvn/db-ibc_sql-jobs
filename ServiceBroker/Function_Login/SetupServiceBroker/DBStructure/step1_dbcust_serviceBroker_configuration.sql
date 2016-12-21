@@ -2,7 +2,7 @@
 	Create By: Helen
 	Created Date: 20161028
 	Task: Apply Service Broker for Writing Log - [Redmine: 65806]
-	DB: SERVER DBCUST/CUSTDB 
+	DB: SERVER DBCUST/bodb_CustomerLog 
 	
 */	
 
