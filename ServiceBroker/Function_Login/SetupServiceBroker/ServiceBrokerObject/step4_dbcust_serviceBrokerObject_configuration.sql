@@ -130,8 +130,10 @@
 
 	CREATE ROUTE Route_CustomerLog_DBCUST -- point to destination
 	WITH SERVICE_NAME='Service_CustomerLog_DBLOG',
+	-- Production
+	ADDRESS='TCP://DBLOG:4022' -- target server address
 	--local test
-	ADDRESS='TCP://DB215:4022' -- target server address
+	--ADDRESS='TCP://DB215:4022' -- target server address
 	--local dev
 	--ADDRESS='TCP://DB231:4022' -- target server address
 	GO
