@@ -131,4 +131,4 @@ GO
 ALTER TABLE eaUserLog_Login ADD CreatedDate DATETIME NULL
 
 GO
-ALTER TABLE  rmUserLog_Login ADD CreatedDate DATETIME NULL
+--ALTER TABLE  rmUserLog_Login ADD CreatedDate DATETIME NULL

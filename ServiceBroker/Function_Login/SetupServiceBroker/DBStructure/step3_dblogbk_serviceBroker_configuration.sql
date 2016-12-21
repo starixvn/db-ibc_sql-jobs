@@ -53,6 +53,7 @@ GO
 ALTER TABLE [sb].[ConfigurationReference] ADD  CONSTRAINT [DF_ConfigurationReference_MaxReceiveTimeOut]  DEFAULT (1) FOR [MaxReceiveTimeOut]
 GO
 
+/*
 CREATE TABLE [sb].[ConfigurationReferenceDetail](
 	[FunctionName] varchar(50),
 	[ContractName] varchar(200),
@@ -72,7 +73,7 @@ ALTER TABLE [sb].[ConfigurationReferenceDetail] ADD  CONSTRAINT [DF_Configuratio
 GO
 ALTER TABLE [sb].[ConfigurationReferenceDetail] ADD  CONSTRAINT [DF_ConfigurationReferenceDetail_MaxConversation]  DEFAULT (20) FOR [MaxConversation]
 GO
-
+*/
 CREATE TABLE [Sb].[FailedMessageMonitoring](
 	[ID] [bigint] Identity (1,1),
 	[FunctionName] varchar(50), 
@@ -125,4 +126,4 @@ ALTER TABLE UserLog_Login ADD CreatedDate DATETIME NULL
 GO
 ALTER TABLE eaUserLog_Login ADD CreatedDate DATETIME NULL
 GO
-ALTER TABLE  rmUserLog_Login ADD CreatedDate DATETIME NULL
+--ALTER TABLE  rmUserLog_Login ADD CreatedDate DATETIME NULL
