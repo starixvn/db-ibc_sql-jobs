@@ -69,7 +69,7 @@ BEGIN
 			,	Platform	NVARCHAR(255) 	'@Platform'
 			,	CountryCode	VARCHAR(64) 	'@CountryCode'
 			,	Duration	INT 			'@Duration'
-			,	Username2	DATETIME  		'@Username2'
+			,	Username2	VARCHAR(50)		'@Username2'
 			)					
 	
 		SET @xml_dblog_bk = (SELECT LogID AS '@LogID'
