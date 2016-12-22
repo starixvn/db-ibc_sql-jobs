@@ -16,6 +16,7 @@ AS
 	 - 20151208@Jim: separate MicroGame into 2 products (#45454)
 	 - 20160422@Francis: add Progressive Contribution and Progressive Payout for Microgaming RNG
 	 - 20160907@Harper: #62820_Add ValidBetAmount for AllBet
+	 - 20161222@Jim: LA/ Invoice - Integrate Fishing World (GMT + 8) [Redmine:#68677]
 	 Param's Explanation:
 */
 
@@ -66,6 +67,8 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
 		WHERE b.winlostdate = @Winlostdate		
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
+			AND b.bettype NOT IN (2008, 2009)
+			AND b.bettype NOT BETWEEN 1011 AND 1020
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.checktime AS DATE), ISNULL(site.SiteID,-1), b.bettype
 		, b.currency, b.statusID
 		UNION ALL
@@ -92,7 +95,9 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
 		WHERE b.winlostdate = @Winlostdate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND b.gameID IN (2008, 2009)
+			AND ( b.gameID IN (2008, 2009)
+				 OR b.gameID BETWEEN 1011 AND 1020
+				 )
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID
 			, b.currency, b.statusID	
 			
