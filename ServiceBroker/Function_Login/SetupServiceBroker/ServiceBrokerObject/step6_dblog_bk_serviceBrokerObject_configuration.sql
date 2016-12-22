@@ -151,7 +151,7 @@ ON QUEUE Queue_DBLOG_BK
 CREATE ROUTE Route_CustomerLog_DBLOG_BK -- point back to sourcxe
 WITH SERVICE_NAME='Service_CustomerLog_DBLOG',
 -- Production
-ADDRESS='TCP://DBLOG:4022'
+ADDRESS='TCP://DBLOG:4741'
 -- local test
 --ADDRESS='TCP://DB215:4022'
 --local dev

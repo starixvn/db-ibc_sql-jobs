@@ -159,7 +159,7 @@ ON QUEUE Queue_DBLOG
 CREATE ROUTE Route_CustomerLog_DBLOG -- point back to sourcxe
 WITH SERVICE_NAME='Service_CustomerLog_DBCUST',
 -- Production
-ADDRESS='TCP://DBCUST:4022' -- Source address	
+ADDRESS='TCP://DBCUST:4740' -- Source address	
 --local test
 --ADDRESS='TCP://DB233:4022' -- Source address	
 -- local dev
@@ -169,7 +169,7 @@ GO
 CREATE ROUTE Route_CustomerLog_DBLOG_BK -- point  to dblog_bk
 WITH SERVICE_NAME='Service_CustomerLog_DBLOG_BK',
 -- Production
-ADDRESS='TCP://DBLOG_BK:4022' -- target address	
+ADDRESS='TCP://DBLOG_BK:4742' -- target address	
 -- local test
 --ADDRESS='TCP://DB234:4022' -- target address	
 -- local dev
