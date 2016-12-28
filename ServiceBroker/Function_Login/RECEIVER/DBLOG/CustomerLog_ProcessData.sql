@@ -88,14 +88,14 @@ BEGIN
 		EXEC [sb].[CustomerLog_MsgProcess_eaUserLog_Login] @XmlMessage = @xml_externalNap
 														 , @IsExistingTarget = @IsExistingTarget
 	END
-	ELSE IF @message_type_name = 'MessageType_CustomerLog_rmUserLog_Login'
-	BEGIN
-		SET @xml_RMS = (SELECT message_body AS 'node()'
-						FROM @Messages					
-						FOR XML PATH (''), ROOT)
+	--ELSE IF @message_type_name = 'MessageType_CustomerLog_rmUserLog_Login'
+	--BEGIN
+	--	SET @xml_RMS = (SELECT message_body AS 'node()'
+	--					FROM @Messages					
+	--					FOR XML PATH (''), ROOT)
 					
-		--Debug: PRINT 'rmUserLog_Login'  + CONVERT(VARCHAR(MAX),@xml_RMS)
-		EXEC [sb].[CustomerLog_MsgProcess_rmUserLog_Login] @XmlMessage = @xml_RMS
-														 , @IsExistingTarget = @IsExistingTarget
-	END			
+	--	--Debug: PRINT 'rmUserLog_Login'  + CONVERT(VARCHAR(MAX),@xml_RMS)
+	--	EXEC [sb].[CustomerLog_MsgProcess_rmUserLog_Login] @XmlMessage = @xml_RMS
+	--													 , @IsExistingTarget = @IsExistingTarget
+	--END			
 END

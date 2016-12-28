@@ -96,11 +96,11 @@ IF EXISTS (SELECT TOP 1 1
 	DROP CONTRACT Contract_CustomerLog_eaUserLog_Login
 GO	
 
-IF EXISTS (SELECT TOP 1 1
-		   FROM sys.service_contracts
-		   WHERE name = 'Contract_CustomerLog_rmUserLog_Login')
-	DROP CONTRACT Contract_CustomerLog_rmUserLog_Login
-GO	
+--IF EXISTS (SELECT TOP 1 1
+--		   FROM sys.service_contracts
+--		   WHERE name = 'Contract_CustomerLog_rmUserLog_Login')
+--	DROP CONTRACT Contract_CustomerLog_rmUserLog_Login
+--GO	
 
 IF EXISTS (SELECT TOP 1 1
 		   FROM sys.service_message_types
@@ -116,17 +116,17 @@ IF EXISTS (SELECT TOP 1 1
 	
 GO
 
-IF EXISTS (SELECT TOP 1 1
-		   FROM sys.service_message_types
-		   WHERE name = 'MessageType_CustomerLog_rmUserLog_Login')
-	DROP MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login
+--IF EXISTS (SELECT TOP 1 1
+--		   FROM sys.service_message_types
+--		   WHERE name = 'MessageType_CustomerLog_rmUserLog_Login')
+--	DROP MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login
 
 
 CREATE MESSAGE TYPE MessageType_CustomerLog_UserLog_Login
 GO
 CREATE MESSAGE TYPE MessageType_CustomerLog_eaUserLog_Login
 go
-CREATE MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login
+--CREATE MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login
 GO
 
 go
@@ -136,9 +136,9 @@ GO
 CREATE CONTRACT Contract_CustomerLog_eaUserLog_Login
 (MessageType_CustomerLog_eaUserLog_Login SENT BY ANY)
 GO
-CREATE CONTRACT Contract_CustomerLog_rmUserLog_Login
-(MessageType_CustomerLog_rmUserLog_Login SENT BY ANY)
-GO
+--CREATE CONTRACT Contract_CustomerLog_rmUserLog_Login
+--(MessageType_CustomerLog_rmUserLog_Login SENT BY ANY)
+--GO
 -----------------------------------------------------------------
 GO
 CREATE QUEUE Queue_DBLOG_BK WITH RETENTION = OFF ON servicebroker
@@ -146,7 +146,9 @@ GO
 
 CREATE SERVICE Service_CustomerLog_DBLOG_BK
 ON QUEUE Queue_DBLOG_BK
-(Contract_CustomerLog_UserLog_Login,Contract_CustomerLog_eaUserLog_Login,Contract_CustomerLog_rmUserLog_Login)
+(Contract_CustomerLog_UserLog_Login,Contract_CustomerLog_eaUserLog_Login
+--,Contract_CustomerLog_rmUserLog_Login
+)
 
 CREATE ROUTE Route_CustomerLog_DBLOG_BK -- point back to sourcxe
 WITH SERVICE_NAME='Service_CustomerLog_DBLOG',

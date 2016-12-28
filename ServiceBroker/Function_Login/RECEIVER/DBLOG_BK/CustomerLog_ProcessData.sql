@@ -45,10 +45,12 @@ BEGIN
 	BEGIN
 		EXEC [sb].[CustomerLog_MsgProcess_eaUserLog_Login] @xml
 	END
+	/*
 	ELSE IF @MessageType = 'MessageType_CustomerLog_rmUserLog_Login' -- RMS
 	BEGIN
 		EXEC [sb].[CustomerLog_MsgProcess_rmUserLog_Login] @xml
 	END
+	*/
 	-- WHEN CONVERSATION IS ENDED AT INITIATOR	
 	-- filter http://schemas.microsoft.com/SQL/ServiceBroker/EndDialog and http://schemas.microsoft.com/SQL/ServiceBroker/Error 					
 	ELSE

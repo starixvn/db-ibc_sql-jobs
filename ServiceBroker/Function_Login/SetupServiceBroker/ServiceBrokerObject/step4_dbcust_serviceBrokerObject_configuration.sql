@@ -61,6 +61,22 @@
 	USE bodb_CustomerLog
 	GO
 	IF EXISTS (SELECT TOP 1 1
+		   FROM sys.service_contracts
+		   WHERE name = 'Contract_CustomerLog_UserLog_Login')
+	DROP CONTRACT Contract_CustomerLog_UserLog_Login
+	GO
+	IF EXISTS (SELECT TOP 1 1
+			   FROM sys.service_contracts
+			   WHERE name = 'Contract_CustomerLog_eaUserLog_Login')
+		DROP CONTRACT Contract_CustomerLog_eaUserLog_Login
+	GO
+	--IF EXISTS (SELECT TOP 1 1
+	--		   FROM sys.service_contracts
+	--		   WHERE name = 'Contract_CustomerLog_rmUserLog_Login')
+	--	DROP CONTRACT Contract_CustomerLog_rmUserLog_Login
+	--GO	
+
+	IF EXISTS (SELECT TOP 1 1
 			   FROM sys.service_queues
 			   WHERE name = 'Queue_DBCUST')
 		DROP QUEUE Queue_DBCUST
@@ -92,11 +108,11 @@
 		DROP MESSAGE TYPE MessageType_CustomerLog_eaUserLog_Login
 	GO
 
-	IF EXISTS (SELECT TOP 1 1
-			   FROM sys.service_message_types
-			   WHERE name = 'MessageType_CustomerLog_rmUserLog_Login')
-		DROP MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login
-	GO
+	--IF EXISTS (SELECT TOP 1 1
+	--		   FROM sys.service_message_types
+	--		   WHERE name = 'MessageType_CustomerLog_rmUserLog_Login')
+	--	DROP MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login
+	--GO
 
 	CREATE MESSAGE TYPE MessageType_CustomerLog_UserLog_Login
 	GO
@@ -104,17 +120,17 @@
 	CREATE MESSAGE TYPE MessageType_CustomerLog_eaUserLog_Login
 
 	go
-	CREATE MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login
+	--CREATE MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login
 	go
 	CREATE CONTRACT Contract_CustomerLog_UserLog_Login
 	(MessageType_CustomerLog_UserLog_Login SENT BY ANY)
-
+	go
 	CREATE CONTRACT Contract_CustomerLog_eaUserLog_Login
 	(MessageType_CustomerLog_eaUserLog_Login SENT BY ANY)
 
-
-	CREATE CONTRACT Contract_CustomerLog_rmUserLog_Login
-	( MessageType_CustomerLog_rmUserLog_Login SENT BY ANY)
+	go
+	--CREATE CONTRACT Contract_CustomerLog_rmUserLog_Login
+	--( MessageType_CustomerLog_rmUserLog_Login SENT BY ANY)
 
 
 	GO
@@ -124,7 +140,9 @@
 
 	CREATE SERVICE Service_CustomerLog_DBCUST
 	ON QUEUE Queue_DBCUST
-	(Contract_CustomerLog_UserLog_Login,Contract_CustomerLog_eaUserLog_Login,Contract_CustomerLog_rmUserLog_Login)
+	(Contract_CustomerLog_UserLog_Login,Contract_CustomerLog_eaUserLog_Login
+	--,Contract_CustomerLog_rmUserLog_Login
+	)
 
 	GO
 
@@ -140,14 +158,14 @@
 
 	GRANT SEND ON SERVICE::Service_CustomerLog_DBCUST TO [bodbExtAccNet]
 	GRANT SEND ON SERVICE::Service_CustomerLog_DBCUST  TO bodbDownlineNet
-	GRANT SEND ON SERVICE::Service_CustomerLog_DBCUST  TO [bodbRMSNet]
+	--GRANT SEND ON SERVICE::Service_CustomerLog_DBCUST  TO [bodbRMSNet]
 	GRANT SEND ON SERVICE::Service_CustomerLog_DBCUST  TO [bodbDownlineNetView]
 	GRANT SEND ON SERVICE::Service_CustomerLog_DBCUST  TO [vnteam]
 
 
 	GRANT RECEIVE ON Queue_DBCUST TO [bodbExtAccNet]
 	GRANT RECEIVE ON Queue_DBCUST TO bodbDownlineNet
-	GRANT RECEIVE ON Queue_DBCUST TO [bodbRMSNet]
+	--GRANT RECEIVE ON Queue_DBCUST TO [bodbRMSNet]
 	GRANT RECEIVE ON Queue_DBCUST TO [bodbDownlineNetView]
 	GRANT RECEIVE ON Queue_DBCUST TO [vnteam]
 

@@ -38,7 +38,7 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [Sb].[MsgSent] TO [bodbRMSNet]
+--GRANT EXECUTE ON [Sb].[MsgSent] TO [bodbRMSNet]
 GO
 GRANT EXECUTE ON [Sb].[MsgSent] TO [bodbDownlineNet] AS [dbo]
 GO

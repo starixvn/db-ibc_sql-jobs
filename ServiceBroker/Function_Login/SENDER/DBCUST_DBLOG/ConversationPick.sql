@@ -47,7 +47,7 @@ END
 GO
 
 GO
-GRANT EXECUTE ON [Sb].[ConversationPick] TO [bodbRMSNet]
+--GRANT EXECUTE ON [Sb].[ConversationPick] TO [bodbRMSNet]
 GO
 GRANT EXECUTE ON [Sb].[ConversationPick] TO [bodbDownlineNet] AS [dbo]
 GO

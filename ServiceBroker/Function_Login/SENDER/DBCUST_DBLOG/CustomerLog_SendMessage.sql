@@ -46,7 +46,7 @@ BEGIN
 	
 END
 GO
-GRANT EXECUTE ON sb.CustomerLog_SendMessage TO [bodbRMSNet]
+--GRANT EXECUTE ON sb.CustomerLog_SendMessage TO [bodbRMSNet]
 GO
 GRANT EXECUTE ON sb.CustomerLog_SendMessage TO [bodbDownlineNet] AS [dbo]
 GO
