@@ -1,6 +1,9 @@
+
+
 ALTER PROCEDURE [sb].[CustomerLog_MsgProcess_eaUserLog_Login]
 (
 	@XmlMessage XML
+  , @IsExistingTarget BIT
 )
 
 /*
@@ -63,22 +66,25 @@ BEGIN
 				Duration INT '@Duration'
 				)
 		
-		SET @xml_dblog_bk = (SELECT [LogID] AS '@LogID',[UserID] AS '@UserID',[IP] AS '@IP',[LogDate] AS '@LogDate'
-									,[ActionID] '@ActionID',[TrackingValue] '@TrackingValue',[DomainName] AS '@DomainName',[BrowserName] AS '@BrowserName',[Platform] AS '@Platform'
-									,[CountryCode] AS '@CountryCode',[Duration] AS '@Duration'
-									, [CreatedDate] AS '@CreatedDate'
-							 FROM #eaUserLog_Login
-							 FOR XML path('row'),root ('root')
-							 )
-		-- Send message to DBLOG_BK		
-		EXEC sb.CustomerLog_SendMessage @xml = @xml_dblog_bk,@MessageType='MessageType_CustomerLog_eaUserLog_Login', @SB_Error = @SB_Error out					 				
-	
-		IF @SB_Error = 1
-			RAISERROR (
-						   'Inserted DBLog already, but can not send to DBLog_BK', -- Message text.  
-						   16, -- Severity.  
-						   1 -- State.  
-					   );
+		IF @IsExistingTarget = 1
+		BEGIN
+			SET @xml_dblog_bk = (SELECT [LogID] AS '@LogID',[UserID] AS '@UserID',[IP] AS '@IP',[LogDate] AS '@LogDate'
+										,[ActionID] '@ActionID',[TrackingValue] '@TrackingValue',[DomainName] AS '@DomainName',[BrowserName] AS '@BrowserName',[Platform] AS '@Platform'
+										,[CountryCode] AS '@CountryCode',[Duration] AS '@Duration'
+										, [CreatedDate] AS '@CreatedDate'
+								 FROM #eaUserLog_Login
+								 FOR XML path('row'),root ('root')
+								 )
+			-- Send message to DBLOG_BK		
+			EXEC sb.CustomerLog_SendMessage @xml = @xml_dblog_bk,@MessageType='MessageType_CustomerLog_eaUserLog_Login', @SB_Error = @SB_Error out					 				
+		
+			IF @SB_Error = 1
+				RAISERROR (
+							   'Inserted DBLog already, but can not send to DBLog_BK', -- Message text.  
+							   16, -- Severity.  
+							   1 -- State.  
+						   );
+		END					   
 	
 		EXECUTE	sys.sp_xml_removedocument @_hdoc
 	END TRY
@@ -99,3 +105,4 @@ BEGIN
 	SET NOCOUNT OFF
 	
 END	
+

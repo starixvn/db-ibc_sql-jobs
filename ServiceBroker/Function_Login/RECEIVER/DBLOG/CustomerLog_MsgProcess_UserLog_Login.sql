@@ -1,6 +1,9 @@
+
+
 ALTER PROCEDURE [sb].[CustomerLog_MsgProcess_UserLog_Login]
 (
 	@XmlMessage XML
+  , @IsExistingTarget BIT
 )
 
 /*
@@ -72,35 +75,38 @@ BEGIN
 			,	Username2	VARCHAR(50)		'@Username2'
 			)					
 	
-		SET @xml_dblog_bk = (SELECT LogID AS '@LogID'
-									, UserID AS '@UserID'
-									, RoleID AS '@RoleID'
-									, SubAccID AS '@SubAccID'
-									, ServerID AS '@ServerID'
-									, IP AS '@IP'
-									, DomainName AS '@DomainName'
-									, LogDate AS '@LogDate'
-									, ActionID AS '@ActionID'
-									, Doing AS '@Doing'
-									, BrowserName AS '@BrowserName'
-									, Platform AS '@Platform'
-									, CountryCode AS '@CountryCode'
-									, Duration AS '@Duration'
-									, Username2 AS '@Username2'
-									, CreatedDate AS '@CreatedDate'
-							 FROM #UserLog_Login
-							 FOR XML path('row'),root ('root')
-								 )
-		
-		-- Send message to DBLOG_BK	
-		EXEC sb.CustomerLog_SendMessage @xml = @xml_dblog_bk,@MessageType='MessageType_CustomerLog_UserLog_Login', @SB_Error = @SB_Error out
-		
-		IF @SB_Error = 1
-			RAISERROR (
-						   'Inserted DBLog already, but can not send to DBLog_BK', -- Message text.  
-						   16, -- Severity.  
-						   1 -- State.  
-					   );  			
+		IF @IsExistingTarget = 1
+		BEGIN
+			SET @xml_dblog_bk = (SELECT LogID AS '@LogID'
+										, UserID AS '@UserID'
+										, RoleID AS '@RoleID'
+										, SubAccID AS '@SubAccID'
+										, ServerID AS '@ServerID'
+										, IP AS '@IP'
+										, DomainName AS '@DomainName'
+										, LogDate AS '@LogDate'
+										, ActionID AS '@ActionID'
+										, Doing AS '@Doing'
+										, BrowserName AS '@BrowserName'
+										, Platform AS '@Platform'
+										, CountryCode AS '@CountryCode'
+										, Duration AS '@Duration'
+										, Username2 AS '@Username2'
+										, CreatedDate AS '@CreatedDate'
+								 FROM #UserLog_Login
+								 FOR XML path('row'),root ('root')
+									 )
+			
+			-- Send message to DBLOG_BK	
+			EXEC sb.CustomerLog_SendMessage @xml = @xml_dblog_bk,@MessageType='MessageType_CustomerLog_UserLog_Login', @SB_Error = @SB_Error out
+			
+			IF @SB_Error = 1
+				RAISERROR (
+							   'Inserted DBLog already, but can not send to DBLog_BK', -- Message text.  
+							   16, -- Severity.  
+							   1 -- State.  
+						   );
+		END  			
 		
 		EXECUTE	sys.sp_xml_removedocument @_hdoc
 	END TRY
@@ -121,3 +127,4 @@ BEGIN
 	
 	
 END	
+

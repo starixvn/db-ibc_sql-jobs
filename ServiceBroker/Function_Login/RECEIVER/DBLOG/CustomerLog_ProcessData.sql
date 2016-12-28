@@ -15,11 +15,13 @@ BEGIN
 	
 	DECLARE @i INT, @countDeleted INT
 	
-	DECLARE @ReceiveMax INT, @timeout INT
+	DECLARE @ReceiveMax INT, @timeout INT, @IsExistingTarget BIT
 	
 	DECLARE @message_type_name NVARCHAR(256)
 	
-	SELECT TOP 1 @ReceiveMax = ISNULL(MaxReceiveMsg, 1), @timeout = ISNULL(MaxReceiveTimeOut, 0)
+	SELECT TOP 1 @ReceiveMax = ISNULL(MaxReceiveMsg, 1)
+			   , @timeout = ISNULL(MaxReceiveTimeOut, 0)
+			   , @IsExistingTarget = ISNULL(IsExistingTarget, 0)
 	FROM sb.ConfigurationReference	WITH (NOLOCK) 
 	WHERE FunctionName = 'Login'	
 	
@@ -73,7 +75,8 @@ BEGIN
 						  FOR XML PATH (''), ROOT)
 					
 		--Debug: PRINT 'UserLog_Login' + CONVERT(VARCHAR(MAX),@xml_Alpha)
-		EXEC [sb].[CustomerLog_MsgProcess_UserLog_Login] @xml_Alpha					
+		EXEC [sb].[CustomerLog_MsgProcess_UserLog_Login] @XmlMessage = @xml_Alpha
+													   , @IsExistingTarget = @IsExistingTarget
 	END
 	ELSE IF @message_type_name = 'MessageType_CustomerLog_eaUserLog_Login'
 	BEGIN			
@@ -82,7 +85,8 @@ BEGIN
 								FOR XML PATH (''), ROOT)
 					
 		--Debug: PRINT 'eaUserLog_Login'  + CONVERT(VARCHAR(MAX),@xml_externalNap)
-		EXEC [sb].[CustomerLog_MsgProcess_eaUserLog_Login] @xml_externalNap					
+		EXEC [sb].[CustomerLog_MsgProcess_eaUserLog_Login] @XmlMessage = @xml_externalNap
+														 , @IsExistingTarget = @IsExistingTarget
 	END
 	ELSE IF @message_type_name = 'MessageType_CustomerLog_rmUserLog_Login'
 	BEGIN
@@ -91,7 +95,7 @@ BEGIN
 						FOR XML PATH (''), ROOT)
 					
 		--Debug: PRINT 'rmUserLog_Login'  + CONVERT(VARCHAR(MAX),@xml_RMS)
-		EXEC [sb].[CustomerLog_MsgProcess_rmUserLog_Login] @xml_RMS					
+		EXEC [sb].[CustomerLog_MsgProcess_rmUserLog_Login] @XmlMessage = @xml_RMS
+														 , @IsExistingTarget = @IsExistingTarget
 	END			
 END
-

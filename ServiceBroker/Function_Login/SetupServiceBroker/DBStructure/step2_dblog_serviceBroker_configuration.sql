@@ -38,7 +38,8 @@ go
 CREATE TABLE [sb].[ConfigurationReference](
 	[FunctionName] varchar(50),
 	[MaxReceiveMsg] [int] ,
-	[MaxReceiveTimeOut] [int] 
+	[MaxReceiveTimeOut] [int],
+	[IsExistingTarget] [BIT] 
 	
 ) ON [ServiceBroker]
 GO
