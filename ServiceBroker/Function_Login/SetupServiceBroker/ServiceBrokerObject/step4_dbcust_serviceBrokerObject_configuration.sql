@@ -135,7 +135,7 @@
 	GO
 
 	--------------------------------------
-	CREATE QUEUE Queue_DBCUST WITH RETENTION = OFF
+	CREATE QUEUE Queue_DBCUST WITH RETENTION = OFF ON [ServiceBroker]
 
 	CREATE SERVICE Service_CustomerLog_DBCUST
 	ON QUEUE Queue_DBCUST
