@@ -86,7 +86,7 @@ CREATE TABLE [Sb].[ConversationManagement](
 	[IsValid] BIT null
 ) ON [ServiceBroker]
 
-CREATE CLUSTERED INDEX inx_ConversationManagement ON sb.ConversationManagement(FunctionName,ContractName, ConversationNo)
+CREATE CLUSTERED INDEX inx_ConversationManagement ON sb.ConversationManagement(FunctionName,ContractName, ConversationNo) ON [ServiceBroker]
 GO
 --DROP TABLE sb.ConversationCount
 GO

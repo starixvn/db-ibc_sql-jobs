@@ -22,7 +22,7 @@ GO
 GO
 INSERT INTO [sb].[ConfigurationReferenceDetail]([FunctionName],[ContractName],[MessageType],[MinConversation],[MaxConversation])
 VALUES ('Login','Contract_CustomerLog_UserLog_Login','MessageType_CustomerLog_UserLog_Login',5,20)
-	  ,('Login','Contract_CustomerLog_rmUserLog_Login','MessageType_CustomerLog_rmUserLog_Login',5,20)
+	  --,('Login','Contract_CustomerLog_rmUserLog_Login','MessageType_CustomerLog_rmUserLog_Login',5,20)
 	  ,('Login','Contract_CustomerLog_eaUserLog_Login','MessageType_CustomerLog_eaUserLog_Login',5,20)
 GO
 	  
