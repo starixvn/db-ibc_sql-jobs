@@ -61,6 +61,12 @@
 	USE bodb_CustomerLog
 	GO
 	IF EXISTS (SELECT TOP 1 1
+			   FROM sys.services
+			   WHERE name = 'Service_CustomerLog_DBCUST')
+		DROP SERVICE Service_CustomerLog_DBCUST
+	GO
+	
+	IF EXISTS (SELECT TOP 1 1
 		   FROM sys.service_contracts
 		   WHERE name = 'Contract_CustomerLog_UserLog_Login')
 	DROP CONTRACT Contract_CustomerLog_UserLog_Login
@@ -86,13 +92,6 @@
 			   FROM sys.routes
 			   WHERE name = 'Route_CustomerLog_DBCUST')
 		DROP ROUTE Route_CustomerLog_DBCUST
-	GO
-
-	-----------------------
-	IF EXISTS (SELECT TOP 1 1
-			   FROM sys.services
-			   WHERE name = 'Service_CustomerLog_DBCUST')
-		DROP SERVICE Service_CustomerLog_DBCUST
 	GO
 
 	IF EXISTS (SELECT TOP 1 1

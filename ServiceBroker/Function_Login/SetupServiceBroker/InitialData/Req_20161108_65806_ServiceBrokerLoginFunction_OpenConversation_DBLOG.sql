@@ -11,20 +11,23 @@ EXEC [Sb].[ConversationManagement_Upd]
 	  , @fromService = 'Service_CustomerLog_DBLOG'
 	  , @toService = 'Service_CustomerLog_DBLOG_BK'
 	  , @newCnt = 10
-EXEC [Sb].[ConversationManagement_Upd] 
-		@functionName = 'Login'
-	  , @contractName = 'Contract_CustomerLog_rmUserLog_Login'		  
-	  , @fromService = 'Service_CustomerLog_DBLOG'
-	  , @toService = 'Service_CustomerLog_DBLOG_BK'
-	  , @newCnt = 5
+	  
+GO
+--EXEC [Sb].[ConversationManagement_Upd] 
+--		@functionName = 'Login'
+--	  , @contractName = 'Contract_CustomerLog_rmUserLog_Login'		  
+--	  , @fromService = 'Service_CustomerLog_DBLOG'
+--	  , @toService = 'Service_CustomerLog_DBLOG_BK'
+--	  , @newCnt = 5
+--GO
 EXEC [Sb].[ConversationManagement_Upd] 
 		@functionName = 'Login'
 	  , @contractName = 'Contract_CustomerLog_eaUserLog_Login'		  
 	  , @fromService = 'Service_CustomerLog_DBLOG'
 	  , @toService = 'Service_CustomerLog_DBLOG_BK'
 	  , @newCnt = 5	  
+GO	  
 
-	  
 ----- CHECKING DATA ------------------
 SELECT * FROM [sb].[ConfigurationReference] WITH (NOLOCK)	  
 

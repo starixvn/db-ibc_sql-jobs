@@ -45,21 +45,23 @@ MESSAGE TYPE MessageType_CustomerLog_eaUserLog_Login (@Message)
 
 GO
 -- if exist messsage from this queue, we will continue to receive message and send to dblog bk
-DECLARE @SBDialog uniqueidentifier
-DECLARE @Message NVARCHAR(128)
+--DECLARE @SBDialog uniqueidentifier
+--DECLARE @Message NVARCHAR(128)
 
-BEGIN DIALOG CONVERSATION @SBDialog
-FROM SERVICE Service_CustomerLog_DBLOG
-TO SERVICE 'Service_CustomerLog_DBLOG_BK'
-ON CONTRACT Contract_CustomerLog_rmUserLog_Login
-WITH ENCRYPTION = OFF;
+--BEGIN DIALOG CONVERSATION @SBDialog
+--FROM SERVICE Service_CustomerLog_DBLOG
+--TO SERVICE 'Service_CustomerLog_DBLOG_BK'
+--ON CONTRACT Contract_CustomerLog_rmUserLog_Login
+--WITH ENCRYPTION = OFF;
 
--- Send messages on Dialog
-RECEIVE TOP (1) @Message = message_body 
-FROM QUEUE_DBLOG;
+---- Send messages on Dialog
+--RECEIVE TOP (1) @Message = message_body 
+--FROM QUEUE_DBLOG;
 
-SEND ON CONVERSATION @SBDialog
-MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login (@Message)
+--SEND ON CONVERSATION @SBDialog
+--MESSAGE TYPE MessageType_CustomerLog_rmUserLog_Login (@Message)
+
+--GO
 
 
 -- Select 
