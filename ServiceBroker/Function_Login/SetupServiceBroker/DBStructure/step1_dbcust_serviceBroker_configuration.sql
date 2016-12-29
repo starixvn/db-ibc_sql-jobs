@@ -100,6 +100,8 @@ CREATE TABLE sb.ConversationCount
 CREATE CLUSTERED INDEX inx_ConversationCount ON sb.ConversationCount(FunctionName,ContractName)  ON [ServiceBroker]
 GO
 --- UserLog_Login
+/* since Production donn't have these tables
 ALTER TABLE UserLog_Login ADD CreatedDate DATETIME NULL
 GO
 ALTER TABLE eaUserLog_Login ADD CreatedDate DATETIME NULL
+*/
