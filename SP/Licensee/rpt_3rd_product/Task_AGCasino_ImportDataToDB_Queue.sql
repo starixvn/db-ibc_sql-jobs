@@ -1,5 +1,10 @@
 USE [bodb_PlaytechCS]
 GO
+/****** Object:  StoredProcedure [dbo].[Task_AGCasino_ImportDataToDB_Queue]    Script Date: 01/05/2017 00:03:04 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Task_AGCasino_ImportDataToDB_Queue]
 	@QueueIDInput BIGINT = 0
 AS 
@@ -12,7 +17,7 @@ DB: DBPTCS.bodb_PlaytechCS
 Original:
 
 Revisions:
-	- 20161229@Francis: Improve the way to retrieve XmlData
+	- 20161229@Francis: Improve the way to retrieve XmlData [RedmineID: #68972]
 
 Param explanation:
 
