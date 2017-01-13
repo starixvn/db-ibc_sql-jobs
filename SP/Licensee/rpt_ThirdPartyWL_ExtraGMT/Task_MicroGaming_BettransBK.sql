@@ -1,9 +1,11 @@
 USE [bodb_Report]
 GO
+/****** Object:  StoredProcedure [dbo].[Task_MicroGaming_BettransBK]    Script Date: 01/05/2017 02:34:42 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+/****** Object:  Stored Procedure dbo.Task_MicroGaming_BettransBK    Script Date: 1/4/2017 2:07:28 PM ******/
 
 ALTER PROCEDURE [dbo].[Task_MicroGaming_BettransBK] 
 	@FromDate SMALLDATETIME
@@ -16,6 +18,8 @@ AS
 	Revisions: 	
 	- 20160422@Francis: add Progressive Contribution and Progressive Payout for Microgaming RNG
 	- 20160907@Harper: #62820_Add ValidBetAmount for AllBet
+	- 20161222@Jim: LA/ Invoice - Integrate Fishing World (GMT + 8) [Redmine:#68677]
+	- 20170105@Jim: correct servername for table bettransLC_bk [Redmine:#68677]
 	Param's Explanation:	
 */
 BEGIN
@@ -49,7 +53,7 @@ BEGIN
 
 	WHILE @WinlostDate <= @ToDate
 	BEGIN
-		INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout)
+		INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout,ValidBetAmount)
 		(SELECT CAST(b.winlostdate AS DATE)	AS Rptdate
 			, CAST(b.checktime AS DATE)	AS RptDate3rd
 			, ISNULL(site.SiteID, -1) AS siteid
@@ -63,7 +67,7 @@ BEGIN
 			, SUM(b.playercomm) AS PComm
 			, 0 AS ProgressiveContribution
 			, 0 AS ProgressivePayout
-			, 0 AS ValidBetAmount		
+			, 0 AS ValidBetAmount	 	
 		FROM bodb_Archive.dbo.bettrans_bk b WITH (NOLOCK)
 			INNER JOIN @Bettype bt ON b.bettype = bt.Bettype
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
@@ -71,6 +75,8 @@ BEGIN
 			LEFT JOIN @Sitelist [site] ON s.siteid = site.IbcSiteID
 		WHERE b.winlostdate = @Winlostdate		
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
+			AND b.bettype NOT IN (2008, 2009)
+			AND b.bettype NOT BETWEEN 1011 AND 1020
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.checktime AS DATE), ISNULL(site.SiteID,-1), b.bettype
 		, b.currency, b.statusID
 		UNION ALL
@@ -88,7 +94,7 @@ BEGIN
 			, SUM(b.playercomm) AS PComm
 			, SUM(ISNULL(ABS(b.stake) * r.Contribution,0)) AS ProgressiveContribution
 			, SUM(ISNULL(p.WinAmount,0)) AS ProgressivePayout
-			, 0 AS ValidBetAmount
+			, 0 AS ValidBetAmount 
 		FROM bodb_Archive.dbo.bettransRnG_bk b WITH (NOLOCK)
 			LEFT JOIN @ContributionRate r ON b.transdesc = r.ResourceID
 			LEFT JOIN DBTXN.bodb02.dbo.PayoutTrans p ON b.transid = p.RefNo			
@@ -97,7 +103,8 @@ BEGIN
 			LEFT JOIN @Sitelist [site] ON s.siteid = site.IbcSiteID			
 		WHERE b.winlostdate = @Winlostdate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND b.gameID IN (2008, 2009)
+			AND (b.gameID IN (2008, 2009)
+				OR b.gameID BETWEEN 1011 AND 1020)
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID
 			, b.currency, b.statusID	
 				
@@ -117,10 +124,10 @@ BEGIN
 			, 0 AS ProgressiveContribution
 			, 0 AS ProgressivePayout
 			, SUM(ISNULL(b.NetStake, 0)) AS ValidBetAmount
-		FROM bodb02.dbo.bettransLC_bk b WITH (NOLOCK)
+		FROM bodb_Archive.dbo.bettransLC_bk b WITH (NOLOCK)
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
-			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
+			LEFT JOIN DBLIC.bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
 		WHERE b.winlostdate = @Winlostdate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
 			AND b.gameID BETWEEN 2401 AND 2499
