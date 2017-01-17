@@ -1,12 +1,6 @@
-
-SET QUOTED_IDENTIFIER ON 
+USE [bodb_PlaytechCS]
 GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DOT_GoldDeluxe_DailySummary    Script Date: 12/1/2015 2:38:01 AM ******/
-/****** Object:  Stored Procedure dbo.Task_DOT_GoldDeluxe_DailySummary    Script Date: 4/1/2015 9:19:47 AM ******/
-CREATE PROCEDURE [dbo].[Task_DOT_GoldDeluxe_DailySummary]
+ALTER PROCEDURE [dbo].[Task_DOT_GoldDeluxe_DailySummary]
 	@winlostdate DATETIME
 AS
 /*   
@@ -15,6 +9,7 @@ Task: Summary GoldDeluxe data and insert into rptDepWinlost_ThirdParty
 DB: DBPTCS/bodb_PlaytechCS
 Original:
 Revisions:	
+- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
 Param's Explanation:
 	- @winlostdate: The date need to summary
 */  
@@ -27,13 +22,38 @@ BEGIN TRY
 	PRINT 'Error occured in Gold Deluxe summary data process does not exist product'
 	RETURN
 	END
+	
+	DECLARE @WLDateTab AS TABLE (ID SMALLINT IDENTITY (1,1), winlostdate DATE)
+	DECLARE @i SMALLINT = 1
+	
+	INSERT INTO @WLDateTab
+	SELECT DISTINCT (t.winlostdate)
+	FROM
+		(SELECT CAST(@winlostdate AS DATE) AS Winlostdate
+		 UNION ALL
+		 SELECT DISTINCT Winlostdate AS Winlostdate
+		 FROM dbo.Product3rd_ImportQueue WITH (NOLOCK)
+		 WHERE FinishedTime IS NOT NULL 
+			   AND isSummarized = 0 --Winlostdate that has been finished to generate into raw data table bust has not been summarized to sum table
+			   AND ProductID = @ProductId) t --GD
+	
 	CREATE TABLE #TicketData (	custid			INT,								
 								currency		INT,							
 								turnover		MONEY,							
 								winlost			MONEY,	
 								drawTO			MONEY,	
 								drawBetCount	INT,						
-								betCount		INT)	
+								betCount		INT)
+	
+	
+	WHILE EXISTS (SELECT TOP 1 1 FROM @WLDateTab WHERE ID = @i)
+	BEGIN
+		SELECT @winlostdate = winlostdate
+		FROM @WLDateTab
+		WHERE ID = @i
+	
+		TRUNCATE TABLE #TicketData
+		
 		INSERT INTO #TicketData (custid, currency, turnover,winlost,drawTO,drawBetCount,betCount )
 		SELECT b.CustID, 		
 				b.currency,				
@@ -48,14 +68,22 @@ BEGIN TRY
 		GROUP BY b.CustID, b.currency
 	
 
-	-- Insert data to rptDepWinlost_ThirdParty
-	DELETE FROM [bodb_LicenseeReport].dbo.rptDepWinlost_ThirdParty WHERE Winlostdate = @Winlostdate and ProductId=@ProductId
+		-- Insert data to rptDepWinlost_ThirdParty
+		DELETE FROM [bodb_LicenseeReport].dbo.rptDepWinlost_ThirdParty WHERE Winlostdate = @winlostdate and ProductId=@ProductId
 
-	INSERT INTO [bodb_LicenseeReport].dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, turnover,
-														winlost,drawTO,drawBetCount, BetCount,ProductId)
-	SELECT @winlostdate, custid,  currency, turnover,
-		winlost,drawTO,drawBetCount,  BetCount, @ProductId
-	FROM #TicketData
+		INSERT INTO [bodb_LicenseeReport].dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, turnover,
+															winlost,drawTO,drawBetCount, BetCount,ProductId)
+		SELECT @winlostdate, custid,  currency, turnover,
+			winlost,drawTO,drawBetCount,  BetCount, @ProductId
+		FROM #TicketData
+		
+		UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
+		SET isSummarized = 1
+		WHERE Winlostdate = @winlostdate AND isSummarized = 0
+			AND ProductID = @ProductId
+		
+		SELECT @i = @i + 1
+	END
 
 	DROP TABLE #TicketData
 END TRY
@@ -65,12 +93,3 @@ BEGIN CATCH
 	PRINT 'Error occured in Gold Deluxe summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
-GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
