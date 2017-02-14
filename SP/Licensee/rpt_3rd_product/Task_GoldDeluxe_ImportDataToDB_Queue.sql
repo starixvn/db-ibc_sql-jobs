@@ -1,10 +1,11 @@
 USE [bodb_PlaytechCS]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_GoldDeluxe_ImportDataToDB_Queue]    Script Date: 01/05/2017 00:03:01 ******/
+/****** Object:  StoredProcedure [dbo].[Task_GoldDeluxe_ImportDataToDB_Queue]    Script Date: 2/14/2017 4:08:37 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+/****** Object:  Stored Procedure dbo.Task_GoldDeluxe_ImportDataToDB_Queue    Script Date: 1/16/2017 18:13:39 ******/
 ALTER PROCEDURE [dbo].[Task_GoldDeluxe_ImportDataToDB_Queue]
 	@QueueIDInput BIGINT = 0
 AS 
@@ -18,6 +19,7 @@ Original:
 
 Revisions:
 	- 20161229@Francis: Improve the way to retrieve XmlData [RedmineID: #68972]
+	- 20170214@Francis: Keep about 5000 finished rows in Queue
 
 Param explanation:
 
@@ -187,14 +189,13 @@ BEGIN
 					AND SettingName LIKE 'GoldDeluxe_VersionKey'
 			END	
 			ELSE 
-			--
-						
+			--		
 			--Delete old data that has been finished
 			IF (@QueueID >= 2000 AND @QueueID % 1000 = 0)
 				DELETE 
 				FROM dbo.Product3rd_ImportQueue
 				WHERE QueueID IN (
-					SELECT TOP (1000) QueueID
+					SELECT TOP (@QueueID - 5000) QueueID
 					FROM dbo.Product3rd_ImportQueue WITH (NOLOCK)
 					WHERE FinishedTime IS NOT NULL 
 						--AND ProductID = 11

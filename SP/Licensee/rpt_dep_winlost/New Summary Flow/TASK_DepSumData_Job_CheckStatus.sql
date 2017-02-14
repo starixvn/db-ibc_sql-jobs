@@ -1,10 +1,5 @@
 USE [bodb_Report]
 GO
-/****** Object:  StoredProcedure [dbo].[TASK_DepSumData_Job_CheckStatus]    Script Date: 12/06/2016 05:48:58 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[TASK_DepSumData_Job_CheckStatus]
 AS
 	/*
@@ -106,26 +101,6 @@ BEGIN
 		
 			INSERT INTO @ErrMsgTab (Jobtype, ErrMsg) SELECT 'DAILY', @ErrMsg
 		END	
-			
-		IF EXISTS (SELECT TOP 1 1 FROM @ErrMsgTab)
-		BEGIN
-			SELECT @Subject = 'SQL Server Job System:'' bodb02: Deposit Report Summary'' completed on \\' + @@SERVERNAME
-			
-			SELECT @ErrorMessage = '<H3>Deposit Data Summary Job was run on ['+ CONVERT(VARCHAR(20),@CurrentDate) + ']. Status: FAILED</H3>'
-								 + '<table border="1"> '
-								 + '<tr><th>No.</th><th>Job type</th><th>Error Message</th></tr>'
-								  + CAST(( SELECT    td = NoID, '',
-													 td = JobType, '',
-													 td = ErrMsg, ''
-											FROM @ErrMsgTab
-											FOR XML PATH('tr'), TYPE 
-										) AS NVARCHAR(MAX) ) + N'</table>'
-			
-			EXEC msdb.dbo.sp_send_dbmail @recipients = 'dbaadmin@starixsoft.com'
-						, @subject = @subject
-						, @body = @ErrorMessage
-						, @body_format = 'HTML'
-		END
 		
 		--Check opening balance of customers for yesterday only
 		CREATE TABLE #Result(CustID INT, Currency INT, OpeningBalance_DepWL MONEY, OpeningBalance_Bettrans MONEY)
@@ -163,7 +138,7 @@ BEGIN
 			
 		IF @Count > 0
 		BEGIN
-			DELETE FROM @ErrMsgTab
+			SELECT @ErrMsg = ''
 			SELECT @ErrMsg = 'Opening balances of ' + CONVERT(VARCHAR(20),@Count) +  ' customer(s) ' 
 							 + CASE @haveRealCurrency 
 									WHEN 1 THEN '(include customer(s) with real currencies) '							
@@ -172,7 +147,12 @@ BEGIN
 							 + 'are different compared with bettrans on: ' + CONVERT(VARCHAR(20),@Yesterday)
 							 + CHAR(13) --Line break
 			INSERT INTO @ErrMsgTab (JobType, ErrMsg) SELECT 'OPENING BALANCE', @ErrMsg
-			
+		END
+
+		DROP TABLE #Result
+
+		IF EXISTS (SELECT TOP 1 1 FROM @ErrMsgTab)
+		BEGIN
 			SELECT @Subject = 'SQL Server Job System:'' bodb02: Deposit Report Summary'' completed on \\' + @@SERVERNAME
 			
 			SELECT @ErrorMessage = '<H3>Deposit Data Summary Job was run on ['+ CONVERT(VARCHAR(20),@CurrentDate) + ']. Status: FAILED</H3>'
@@ -185,14 +165,11 @@ BEGIN
 											FOR XML PATH('tr'), TYPE 
 										) AS NVARCHAR(MAX) ) + N'</table>'
 			
-			EXEC msdb.dbo.sp_send_dbmail @recipients = 'francis.le@starixsoft.com'
+			EXEC msdb.dbo.sp_send_dbmail @recipients = 'dbaadmin@starixsoft.com'
 						, @subject = @subject
 						, @body = @ErrorMessage
 						, @body_format = 'HTML'
-						, @copy_recipients = 'don.pham@starixsoft.com'
 		END
-
-	DROP TABLE #Result
 	
 	UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
 		SET EndTime = CURRENT_TIMESTAMP, LogDesc = 'Date checked: ' +  CONVERT(VARCHAR(20),@CurrentDate) + '; Type: checkStatus'

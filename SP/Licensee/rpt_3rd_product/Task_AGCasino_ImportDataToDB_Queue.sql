@@ -1,10 +1,11 @@
 USE [bodb_PlaytechCS]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_AGCasino_ImportDataToDB_Queue]    Script Date: 01/05/2017 00:03:04 ******/
+/****** Object:  StoredProcedure [dbo].[Task_AGCasino_ImportDataToDB_Queue]    Script Date: 2/14/2017 4:08:33 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+/****** Object:  Stored Procedure dbo.Task_AGCasino_ImportDataToDB_Queue    Script Date: 1/16/2017 18:13:39 ******/
 ALTER PROCEDURE [dbo].[Task_AGCasino_ImportDataToDB_Queue]
 	@QueueIDInput BIGINT = 0
 AS 
@@ -18,7 +19,7 @@ Original:
 
 Revisions:
 	- 20161229@Francis: Improve the way to retrieve XmlData [RedmineID: #68972]
-
+	- 20170214@Francis: Keep about 5000 finished rows in Queue
 Param explanation:
 
 */
@@ -173,7 +174,7 @@ BEGIN
 				DELETE 
 				FROM dbo.Product3rd_ImportQueue
 				WHERE QueueID IN (
-					SELECT TOP (1000) QueueID
+					SELECT TOP (@QueueID - 5000) QueueID
 					FROM dbo.Product3rd_ImportQueue WITH (NOLOCK)
 					WHERE FinishedTime IS NOT NULL 
 						--AND ProductID = 10
