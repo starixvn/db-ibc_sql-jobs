@@ -53,6 +53,7 @@ Revisions:
 	- 20160909@Patrick: Record IsMovingBet value to systemsettings table on dbtrans.bodb02
 	- 20160809@Percy: Modify Net Turnover for Allbet [RedmineID: #60501]
 	- 20161010@Patrick: Apply NG2 [Redmine: #65460]
+	- 20170105@Percy: Apply Fishing World [Redmine: #65731]
 	
  */
 
@@ -528,11 +529,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
-			WHEN Bettype BETWEEN 2501 AND 2539 THEN 213 --NG2 -
-			WHEN Bettype BETWEEN 2541 AND 2579 THEN 214 --NG2 -
-			WHEN Bettype BETWEEN 2581 AND 2619 THEN 215 --NG2 -
-			WHEN Bettype BETWEEN 2621 AND 2659 THEN 216 --NG2 -
-			WHEN Bettype BETWEEN 2681 AND 2699 THEN 218 --NG2 -
+			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
+			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
 		0 AS netTurnover,
@@ -586,11 +584,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
-			WHEN Bettype BETWEEN 2501 AND 2539 THEN 213 --NG2 -
-			WHEN Bettype BETWEEN 2541 AND 2579 THEN 214 --NG2 -
-			WHEN Bettype BETWEEN 2581 AND 2619 THEN 215 --NG2 -
-			WHEN Bettype BETWEEN 2621 AND 2659 THEN 216 --NG2 -
-			WHEN Bettype BETWEEN 2681 AND 2699 THEN 218 --NG2 -
+			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
+			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -642,11 +637,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210			
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
-			WHEN Bettype BETWEEN 2501 AND 2539 THEN 213 --NG2 -
-			WHEN Bettype BETWEEN 2541 AND 2579 THEN 214 --NG2 -
-			WHEN Bettype BETWEEN 2581 AND 2619 THEN 215 --NG2 -
-			WHEN Bettype BETWEEN 2621 AND 2659 THEN 216 --NG2 -
-			WHEN Bettype BETWEEN 2681 AND 2699 THEN 218 --NG2 -
+			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
+			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*apositiontaking)/2 else ABS(stake*apositiontaking) end) AS netTurnover,
@@ -702,11 +694,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
-			WHEN Bettype BETWEEN 2501 AND 2539 THEN 213 --NG2 -
-			WHEN Bettype BETWEEN 2541 AND 2579 THEN 214 --NG2 -
-			WHEN Bettype BETWEEN 2581 AND 2619 THEN 215 --NG2 -
-			WHEN Bettype BETWEEN 2621 AND 2659 THEN 216 --NG2 -
-			WHEN Bettype BETWEEN 2681 AND 2699 THEN 218 --NG2 -
+			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
+			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -759,11 +748,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
-			WHEN Bettype BETWEEN 2501 AND 2539 THEN 213 --NG2 -
-			WHEN Bettype BETWEEN 2541 AND 2579 THEN 214 --NG2 -
-			WHEN Bettype BETWEEN 2581 AND 2619 THEN 215 --NG2 -
-			WHEN Bettype BETWEEN 2621 AND 2659 THEN 216 --NG2 -
-			WHEN Bettype BETWEEN 2681 AND 2699 THEN 218 --NG2 -
+			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
+			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*mpositiontaking)/2 else ABS(stake*mpositiontaking) end) AS netTurnover,
@@ -819,11 +805,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
-			WHEN Bettype BETWEEN 2501 AND 2539 THEN 213 --NG2 -
-			WHEN Bettype BETWEEN 2541 AND 2579 THEN 214 --NG2 -
-			WHEN Bettype BETWEEN 2581 AND 2619 THEN 215 --NG2 -
-			WHEN Bettype BETWEEN 2621 AND 2659 THEN 216 --NG2 -
-			WHEN Bettype BETWEEN 2681 AND 2699 THEN 218 --NG2 -
+			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
+			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -876,11 +859,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
-			WHEN Bettype BETWEEN 2501 AND 2539 THEN 213 --NG2 -
-			WHEN Bettype BETWEEN 2541 AND 2579 THEN 214 --NG2 -
-			WHEN Bettype BETWEEN 2581 AND 2619 THEN 215 --NG2 -
-			WHEN Bettype BETWEEN 2621 AND 2659 THEN 216 --NG2 -
-			WHEN Bettype BETWEEN 2681 AND 2699 THEN 218 --NG2 -
+			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
+			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*spositiontaking)/2 else ABS(stake*spositiontaking) end) AS netTurnover,
@@ -936,11 +916,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2301 AND 2399 THEN 210
 			WHEN Bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
-			WHEN Bettype BETWEEN 2501 AND 2539 THEN 213 --NG2 -
-			WHEN Bettype BETWEEN 2541 AND 2579 THEN 214 --NG2 -
-			WHEN Bettype BETWEEN 2581 AND 2619 THEN 215 --NG2 -
-			WHEN Bettype BETWEEN 2621 AND 2659 THEN 216 --NG2 -
-			WHEN Bettype BETWEEN 2681 AND 2699 THEN 218 --NG2 -
+			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
+			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
