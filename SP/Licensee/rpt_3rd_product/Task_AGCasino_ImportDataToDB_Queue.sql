@@ -1,6 +1,6 @@
 USE [bodb_PlaytechCS]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_AGCasino_ImportDataToDB_Queue]    Script Date: 2/14/2017 4:08:33 AM ******/
+/****** Object:  StoredProcedure [dbo].[Task_AGCasino_ImportDataToDB_Queue]    Script Date: 2/17/2017 12:08:16 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -174,12 +174,11 @@ BEGIN
 				DELETE 
 				FROM dbo.Product3rd_ImportQueue
 				WHERE QueueID IN (
-					SELECT TOP (@QueueID - 5000) QueueID
+					SELECT QueueID
 					FROM dbo.Product3rd_ImportQueue WITH (NOLOCK)
 					WHERE FinishedTime IS NOT NULL 
-						--AND ProductID = 10
-						AND QueueID < @QueueID
-					ORDER BY QueueID ASC)
+						AND isSummarized = 1
+						AND QueueID < (@QueueID - 5000))
 			--
 			
 			--Update QueueID set FinishedTime and additional Log Info
