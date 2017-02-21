@@ -1,5 +1,5 @@
 USE [bodb02]
-GO 
+GO
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
 	@Winlostdate DATE = NULL,
 	@isSuccessful BIT = 0 OUTPUT
@@ -486,4 +486,3 @@ BEGIN
 	DROP TABLE #rptDepWinlostTransfer3rdOthers
 	DROP TABLE #rptDepWinlostOutstanding
 END
-

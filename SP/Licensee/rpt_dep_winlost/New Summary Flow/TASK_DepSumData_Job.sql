@@ -1,11 +1,5 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[TASK_DepSumData_Job]    Script Date: 09/30/2016 05:34:39 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.TASK_DepSumData_Job    Script Date: 9/30/2016 09:30:14 ******/
 ALTER PROCEDURE [dbo].[TASK_DepSumData_Job]
 	@IdlingHour TINYINT = 9
 AS
@@ -44,9 +38,7 @@ BEGIN
 			BEGIN
 				--PRINT 'EXEC TASK_DailyArchiveDepData'
 				EXEC bodb_Report.dbo.TASK_DailyArchiveDepData
-				/*
 				EXEC dbo.Task_DOT_AGCasino_MonthlyReSummary
-				*/
 			END
 		ELSE
 		BEGIN--3,5,6.Check today's hourly summary at the current's hour
@@ -54,7 +46,6 @@ BEGIN
 					AND 0 = CASE WHEN @CurrentHour < @IdlingHour THEN 0 ELSE @CurrentHour % 2 END)
 				BEGIN
 					--PRINT 'EXEC TASK_HourlySummaryDepData'
-					/*
 					--
 					EXEC dbo.Task_rptWinLost_UpdateTable @winlostdate = @CurrentDate
 					EXEC dbo.Task_rptWinLost_UpdateTable @winlostdate = @Yesterday
@@ -64,7 +55,6 @@ BEGIN
 					EXEC dbo.Task_Aff_MemberDailySummary_IA @winlostdate = @Yesterday
 					EXEC dbo.Task_Aff_MemberDailySummary_IA @winlostdate = @Earlyday
 					--
-					*/
 					EXEC bodb_Report.dbo.TASK_HourlySummaryDepData
 				END
 				ELSE
