@@ -1,10 +1,5 @@
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]    Script Date: 09/29/2016 04:09:07 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
 	@Winlostdate DATE,
 	@isSuccessful BIT = 0 OUTPUT
@@ -370,4 +365,3 @@ BEGIN
 	DROP TABLE #BATrans
 	DROP TABLE #DepCustID
 END
-

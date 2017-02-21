@@ -71,7 +71,7 @@ BEGIN
 					SELECT winlostdate,CustId,Currency,PartnerId,Recommend,MRecommend,SRecommend,TransferAmount,TransferIn,TransferOut
 					FROM dbo.rptDepWinlost_Transfer3rdOthers WITH (NOLOCK)
 					WHERE winlostdate = @MinSumDate
-				
+
 				--4.Delete data for related tables
 				DELETE FROM dbo.rptDepWinlost_Log WITH (ROWLOCK) 
 				WHERE Logdate <= @MinSumDate
@@ -111,4 +111,3 @@ BEGIN
 	SET EndTime = CURRENT_TIMESTAMP, LogDesc = @LogDesc, StatusID = @isSuccessful
 	WHERE LogID = @LogID
 END
-
