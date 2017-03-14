@@ -22,6 +22,7 @@ AS
 		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		- 20160907@Harper: #62820_Add AllBet for ProductMapping
 		- 20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
+		- 20170314@Sophia: Integrate Fishing World [Redmine: #73303]
 */
 
 BEGIN  
@@ -36,7 +37,7 @@ BEGIN
 	
 	INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 	SELECT Bettype, ProductId 
-	FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB')  
+	FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW')  
 
 	INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 	SELECT Bettype, ProductId 
