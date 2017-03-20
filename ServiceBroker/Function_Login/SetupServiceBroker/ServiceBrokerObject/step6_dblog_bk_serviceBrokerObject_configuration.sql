@@ -175,6 +175,7 @@ WITH
 	ACTIVATION(
 				STATUS = OFF,
 				PROCEDURE_NAME = [sb].CustomerLog_ProcessData,
+				--PROCEDURE_NAME = [sb].CustomerLog_ProcessData_bk, -- in case DBLOG shut down and switch to DBLOG_BK
 				MAX_QUEUE_READERS = 10, -- Maximum Number of queue reader can be started at the same time
 				EXECUTE AS 'dbo'
 			);	
