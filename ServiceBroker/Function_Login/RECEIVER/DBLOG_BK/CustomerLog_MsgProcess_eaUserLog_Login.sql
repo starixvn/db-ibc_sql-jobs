@@ -27,6 +27,7 @@ BEGIN
 	EXECUTE sys.sp_xml_preparedocument @_hdoc OUTPUT, @XmlMessage
 	
 	BEGIN TRY
+		SET IDENTITY_INSERT dbo.eaUserLog_Login ON
 		INSERT INTO [dbo].[eaUserLog_Login]([LogID],[UserID],[IP],[LogDate],[ActionID],[TrackingValue],[DomainName],[BrowserName],[Platform],[CountryCode],[Duration], [CreatedDate])    
 		SELECT [LogID], [UserID],[IP],[LogDate],[ActionID],[TrackingValue],[DomainName],[BrowserName],[Platform],[CountryCode],[Duration], [CreatedDate] AS [CreatedDate]      
 		FROM OPENXML(@_hdoc,'/root/row', 1)   
@@ -43,7 +44,7 @@ BEGIN
 				Duration INT '@Duration',
 				CreatedDate DATETIME '@CreatedDate'
 				)
-						
+		SET IDENTITY_INSERT dbo.eaUserLog_Login OFF				
 	END TRY
 	BEGIN CATCH
 		

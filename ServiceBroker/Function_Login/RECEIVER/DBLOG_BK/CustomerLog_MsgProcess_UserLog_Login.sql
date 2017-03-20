@@ -25,6 +25,7 @@ BEGIN
 	EXECUTE sys.sp_xml_preparedocument @_hdoc OUTPUT, @XmlMessage		
 		
 	BEGIN TRY
+		SET IDENTITY_INSERT dbo.UserLog_Login ON
 		INSERT INTO	dbo.UserLog_Login(LogID,UserID, RoleID, SubAccID, ServerID, IP, DomainName, LogDate, ActionID, Doing, BrowserName, Platform, CountryCode, Duration, Username2, CreatedDate)   
 		SELECT	LogID,UserID, RoleID, SubAccID, ServerID, IP, DomainName, LogDate, ActionID, Doing, BrowserName, Platform, CountryCode, Duration, Username2, CreatedDate
 		FROM	OPENXML(@_hdoc,'/root/row', 1)   
@@ -46,7 +47,7 @@ BEGIN
 			,	Username2	VARCHAR(50)		'@Username2'
 			,	CreatedDate	DATETIME		'@CreatedDate'
 			)
-			
+		SET IDENTITY_INSERT dbo.UserLog_Login OFF	
 	 
 	END TRY
 	BEGIN CATCH
