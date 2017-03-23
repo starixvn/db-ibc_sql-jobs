@@ -18,6 +18,7 @@ AS
 	- 20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
+	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
 */  
 BEGIN
 	SET NOCOUNT ON
@@ -108,7 +109,7 @@ BEGIN
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 	  ELSE 0 END sporttype  
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904) THEN bettype ELSE 0 END bettype  
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
 	 ,CASE   
 	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
@@ -121,8 +122,8 @@ BEGIN
 	  WHEN bettrans.betfrom IN ('s','m','l') THEN 1 ELSE 0 END AS isMobile   
 	 ,CASE      
 	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END AS betfrom   
-	 ,SUM(CASE WHEN bettrans.bettype = 902 AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
-	 ,SUM(CASE WHEN bettrans.bettype = 902 AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
+	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
+	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
 	FROM  
 	 bodb02.dbo.bettrans bettrans WITH (NOLOCK)
 	 INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK) ON bettrans.srecommend = s.CustId
@@ -164,7 +165,7 @@ BEGIN
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 	  ELSE 0 END  
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904) THEN bettype ELSE 0 END  
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END  
 	 ,CASE   
 	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
 	  WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115  
@@ -435,3 +436,5 @@ BEGIN
 	 ,b.isMobile  
 	 ,b.betfrom
 END
+GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicWinloss2_Bettrans] TO [vnteam] AS [dbo]
+GO

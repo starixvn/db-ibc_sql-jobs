@@ -13,6 +13,7 @@ AS
 		- 20161004@Francis: Add Error Message to Log when issue happens
 		- 20161013@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 		- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
+		- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
 		- @isSuccessful: -1: Data of the whole day have been summarized completely
@@ -260,6 +261,7 @@ BEGIN
 			SUM(Comm_BetTrade_Full),--Comm_BetTrade_Full
 			SUM(WLBoughtTicket_BetTrade)--WLBoughtTicket_BetTrade
 		FROM #rptDepWinlostDetails
+		WHERE Bettype NOT IN (913, 914)
 		GROUP BY custid
 		
 		--Update BA attributes
@@ -340,6 +342,10 @@ BEGIN
 					WHEN bettype = 902 THEN -3--BetTrade - Bought.
 					WHEN bettype = 903 THEN -4--BetTrade - Commission
 					WHEN bettype = 904 THEN -5--BetTrade - Winloss
+					WHEN bettype = 911 THEN -6--Cash Out - Sold
+					WHEN bettype = 912 THEN -7--Cash Out - Bought.
+					WHEN bettype = 913 THEN -8--Cash Out - Commission
+					WHEN bettype = 914 THEN -9--Cash Out - Winloss
 					WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
 					WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
 					WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
@@ -375,6 +381,10 @@ BEGIN
 					WHEN bettype = 902 THEN -3--BetTrade - Bought
 					WHEN bettype = 903 THEN -4--BetTrade - Commission
 					WHEN bettype = 904 THEN -5--BetTrade Winloss Sharing
+					WHEN bettype = 911 THEN -6--Cash Out - Sold
+					WHEN bettype = 912 THEN -7--Cash Out - Bought.
+					WHEN bettype = 913 THEN -8--Cash Out - Commission
+					WHEN bettype = 914 THEN -9--Cash Out - Winloss
 					WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
 					WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
 					WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
