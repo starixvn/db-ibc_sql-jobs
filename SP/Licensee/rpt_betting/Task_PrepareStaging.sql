@@ -23,12 +23,14 @@ Revisions:
 	-20150003@Patrick: #42910 (Exclude ticket 901 for BA ticket)
 	-20150929@Patrick: Revise code of BetTrade
 	-20160118@Patrick: Hotfix: #51053 for bettrade - turn off BA for ticket 901
-	-20160318@Victor: Support Colossus bet - [Redmine: #52575]
+	-20160318@Victor:  Support Colossus bet - [Redmine: #52575]
 	-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	-20160727@Jim: LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
 	-20160913@Jim: LRF - Implement Colossus Bets [Redmine: #63785 :fix refno issue]
 	-20161121@Sophia: Correct formula CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
 	-20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
+	-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
+
 Param's Explanation:
 */
 BEGIN
@@ -76,9 +78,13 @@ BEGIN
     
     CREATE TABLE #Customer (t_custid int PRIMARY KEY)
 	CREATE TABLE #BetTradeCust (custid int PRIMARY KEY)
+	CREATE TABLE #CashoutCust (cusid INT PRIMARY KEY)
 
 	INSERT INTO #BetTradeCust(CustId)
 	SELECT CustId FROM bodb02.dbo.f_GetBetTradeCustList('ALL')
+
+	INSERT INTO #CashoutCust(CustId)
+	SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL')
     
     DECLARE @count int,@movebetdate smalldatetime,@tmpDate smalldatetime
 	SELECT @count=DATEDIFF(DAY,@thedaybefore,@today) - 1
@@ -139,7 +145,6 @@ BEGIN
                 b.currency, 
                 b.recommend,b.mrecommend,
                 b.transdate,
-                --CASE WHEN b.status='HALF WON' THEN 114 WHEN b.status='HALF LOSE' THEN 115 ELSE b.statusid END statusid, -- Error due to [status] column above
                 b.statusid,
                 b.virtualrate,
                 b.discount,
@@ -147,16 +152,14 @@ BEGIN
                 CASE WHEN b.recommend=52466 THEN 27 --8RM
 					 WHEN b.recommend=5707545 THEN 28 	--BARM
 					 WHEN b.bettype = 901 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1001 ELSE 1002 END --bettrade
+					 WHEN b.bettype = 911 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1003 ELSE 1004 END -- cashout
 				ELSE -1 END customercategory,
-				--CASE WHEN b.transid2 = 1 AND btc.CustId IS NOT NULL AND b.bettype NOT IN (901,902,903) THEN 1 ELSE 0 END, --for BA's bettrade tickets (original tickets)
-				CASE WHEN b.transid2 = 1 AND b.bettype <> 901 THEN 1 ELSE 0 END,
+				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread
 			FROM bodb02.dbo.bettrans b (NOLOCK)
 			    INNER JOIN @Recommend_List r ON b.recommend=r.t_recommend
-				--LEFT JOIN #BetTradeCust btc ON b.CustId = btc.CustId
 			WHERE b.bettype<19000
-			    --AND b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
 	            AND b.winlostdate=@tmpDate
 	            AND b.custid>0
 	        
@@ -247,7 +250,6 @@ BEGIN
                 b.currency, 
                 b.recommend,b.mrecommend,
                 b.transdate,
-                --CASE WHEN b.status='HALF WON' THEN 114 WHEN b.status='HALF LOSE' THEN 115 ELSE b.statusid END statusid,
                 b.statusid,
                 b.virtualrate,
                 b.discount,
@@ -255,14 +257,13 @@ BEGIN
                 CASE WHEN b.recommend=52466 THEN 27 --8RM
 					 WHEN b.recommend=5707545 THEN 28 	--BARM
 					 WHEN b.bettype = 901 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1001 ELSE 1002 END --bettrade
+					 WHEN b.bettype = 911 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1003 ELSE 1004 END -- cashout
 					ELSE -1 END customercategory,
-				--CASE WHEN b.transid2 = 1 AND btc.CustId IS NOT NULL AND b.bettype NOT IN (901,902,903) THEN 1 ELSE 0 END, --for BA's bettrade tickets (original tickets)
-				CASE WHEN b.transid2 = 1 AND b.bettype <> 901 THEN 1 ELSE 0 END,
+				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
 			    INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
-				--LEFT JOIN #BetTradeCust btc ON b.CustId = btc.CustId
 			WHERE b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
 
 
@@ -304,11 +305,29 @@ BEGIN
 		SELECT @count = @count - 1
 	END
 	
+	-- Cashout Product
+	UPDATE b
+	SET b.CashOutAmount = b.actual_stake
+	FROM dbo.bettrans b
+	WHERE b.bettype = 911
+
+	UPDATE b
+	SET b.TicketPayout = b.winlost
+	FROM dbo.bettrans b
+		INNER JOIN #CashoutCust ctc ON b.CustId = ctc.CustId
+	WHERE b.bettype NOT IN (912, 913, 914)
+
 	UPDATE b
 	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (902,903,904) THEN 1 ELSE 0 END
 		, customercategory = CASE WHEN isBA = 0 THEN 1001 ELSE 1002 END --bettrade
 	FROM dbo.bettrans b
 		INNER JOIN #BetTradeCust btc ON b.CustId = btc.CustId
+
+	UPDATE b
+	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (912, 913, 914) THEN 1 ELSE 0 END
+		, customercategory = CASE WHEN isBA = 0 THEN 1003 ELSE 1004 END -- Cashout
+	FROM dbo.bettrans b
+		INNER JOIN #CashoutCust ctc ON b.CustId = ctc.CustId
 			
 	--DROP TABLE #Recommend_List
 	DROP TABLE #Customer
@@ -327,12 +346,12 @@ BEGIN
         FROM dbo.bettrans b (NOLOCK)
 	        INNER JOIN bodb_Licensee.dbo.LicenseeBAHistory h (NOLOCK) 
 	            ON b.custid=h.custid AND (transdate BETWEEN OnDate AND ISNULL(OffDate,@today))
-        WHERE (Bettype<31 OR (Bettype>=121 AND Bettype<1000) OR (Bettype>=1301 AND Bettype<1400))
-	        AND tpositiontaking=0
-			AND b.bettype NOT IN (901,902,903,904)
+        WHERE (Bettype < 31 OR (Bettype >= 121 AND Bettype < 1000) OR (Bettype >= 1301 AND Bettype < 1400))
+	        AND tpositiontaking = 0
+			AND b.bettype NOT IN (901, 902, 903, 904, 911, 912, 913, 914)
 
     UPDATE dbo.bettrans
-    SET IsBA=1
+    SET IsBA = 1
     WHERE transid IN (SELECT transid FROM #BATransids)
 
 	DROP TABLE #BATransids

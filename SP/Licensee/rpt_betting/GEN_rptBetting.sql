@@ -24,7 +24,8 @@ Revisions:
 	20160321@Victor: Support Colossus bet [Redmine: #52575]
 	20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
-	
+	-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
+
 Param's Explanation:
 
 */
@@ -44,6 +45,7 @@ INSERT INTO dbo.rpt_Betting
         ,[IsLive]
         ,[BetCount]
         ,[MemberCount]
+		,[CashoutTicket]
         ,[Turnover]
         ,[WinLoss]
         ,[WinLossA]
@@ -59,6 +61,7 @@ INSERT INTO dbo.rpt_Betting
 		,[BuyBackAmount]
 		,[WinPrizeAmount]
 		,[CashOutAmount]
+		,[TicketPayout]
 		,[oddsspread])
     SELECT  
 	    b.winlostdate,
@@ -75,6 +78,7 @@ INSERT INTO dbo.rpt_Betting
 	    ISNULL(b.liveindicator,0) liveindicator,
         COUNT(*) Betcount,
         COUNT(DISTINCT b.custid) MemberCount,
+		COUNT(DISTINCT b.refno) CashoutTicket,
         SUM(stake) Turnover,
         SUM(winlost-actual_stake) winloss,
         SUM(awinlost) winlossA,
@@ -88,12 +92,13 @@ INSERT INTO dbo.rpt_Betting
 	    SUM(scomm*virtualrate) CommissionSVirtual,
 	    b.customercategory,
 		SUM(CASE 
-				WHEN b.bettype IN (901) THEN winlost 
+				WHEN b.bettype IN (901, 911) THEN winlost 
 				WHEN b.bettype = 18000 THEN ISNULL(CashInAmount,0)
 				ELSE 0 
 			END) BuyBackAmount,
 		SUM(ISNULL(WinPrizeAmount,0)) WinPrizeAmount,
-		SUM(ISNULL(CashOutAmount,0)) CashOutAmount,
+		SUM(ISNULL(CashOutAmount,0)) CashOutAmount, -- Cashout Value of Cashout Product
+		SUM(ISNULL(TicketPayout, 0)) TicketPayout,
 		SUM(ISNULL(oddsspread,0))    oddsspread
     FROM
 	    dbo.bettrans b (NOLOCK) 
