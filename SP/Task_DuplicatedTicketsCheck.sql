@@ -11,11 +11,17 @@ AS
 	Revisions:
 	 - 20151009@Sophia: group by IP [#45176]
 	 - 20151021@Sophia: Modify the SPs to only cover the tickets of the following products [#45898] 
-						1	Sportsbook [inclusive of : Metric Gaming - Superlive and BetTrade tickets (heck the refno)]
+						1	Sportsbook [inclusive of : Metric Gaming - Superlive and BetTrade tickets (check the refno)]
 						3	Number Game
 						4	SLI - Live Casino
 						5	Virtual Sports
-								
+	 - 20170323@Sophia: Fix Parlay issue ( can't detect Parlay ticket if checking RefNo) [Redmine: #73884]
+						1	Sportsbook
+						2	Number Game
+						3	SLI - Live Casino
+						4	Virtual Sports
+						5   Metric Gaming - Superlive
+						6   BetTrade (check the refno)
 	Param's Explanation:
 
 */
@@ -27,13 +33,26 @@ BEGIN
 	SELECT @TransId = CONVERT(BIGINT,VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'DuplTicketLastID'
 	SELECT @MaxTransId = MAX(TransId) FROM bodb02.dbo.Bettrans WITH (NOLOCK)
 	
-	----Get Sport Bettype Matrix------
-	DECLARE @SportBettype TABLE(ProductID INT, Bettype INT,EventType INT,SubProduct VARCHAR(500))
-	INSERT INTO @SportBettype (ProductID  , Bettype  ,EventType  ,SubProduct)
-	EXEC bodb02.dbo.Acc_SportBettypeMatrix_Sel  @mode = 5
+	
+	------Get Sport Bettype Matrix------
+	-- Check SP Version	 
+	DECLARE @isTest BIT = 0
+	SELECT  @isTest = dbo.f_CheckSPVersion(@@PROCID)
+ 
+	CREATE TABLE #SportBettype (ProductID INT, Bettype INT,EventType INT, SubProduct VARCHAR(500), RefTable TINYINT, CasinoType TINYINT)
+	INSERT INTO #SportBettype ( ProductID, Bettype, EventType, SubProduct, RefTable, CasinoType)
+	SELECT ProductID,
+        Bettype,
+        EventType,
+        SubProduct,
+		RefTable,
+		CasinoType
+    FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', @isTest)
 
-	DELETE  @SportBettype 
-	WHERE	ProductID NOT IN (1, 3, 4, 5)
+	DELETE  #SportBettype 
+	WHERE	ProductID NOT IN (1, 3, 4, 5) 	
+	--- End Sport Bettype Matrix------
+	
 
 
  	; WITH AllTicket AS(	 
@@ -45,9 +64,9 @@ BEGIN
 			b.winlostdate, 
 			b.matchid,
 			b.ip,
-			b.RefNo		 
+			CASE WHEN b.Bettype IN (901,902,903,904) THEN b.RefNo ELSE 0 END as RefNo
 	FROM	bodb02.dbo.bettrans b WITH(NOLOCK , Index = PK_bettrans)
-		INNER JOIN @SportBettype s ON s.bettype = b.bettype
+		INNER JOIN #SportBettype s ON s.bettype = b.bettype
 	WHERE	b.TransID BETWEEN @TransId - 5000 AND @MaxTransId
 			----AND b.bettype < 19000			
 			AND b.matchid > 0
@@ -94,7 +113,7 @@ BEGIN
 			AND b.winlostdate = t.winlostdate
 			AND b.matchid = t.matchid
 			AND b.ip = t.ip
-			AND b.RefNo = t.RefNo
+			AND CASE WHEN b.bettype IN (901,902,903,904) THEN b.RefNo ELSE 0 END = CASE WHEN t.bettype IN (901,902,903,904) THEN t.RefNo ELSE 0 END  
 	WHERE NOT EXISTS (SELECT 1 FROM dbo.DuplicatedTicket d WITH (NOLOCK) WHERE d.TransID = b.TransId)	
 	DROP TABLE #TempData
 	
