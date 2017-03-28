@@ -62,7 +62,9 @@ BEGIN
 			,[BuyBackAmount]
 			,[WinPrizeAmount]
 			,[CashOutAmount]
-			,[ValidBetAmount])
+			,[ValidBetAmount]
+			,[CashoutTicket]
+			,[TicketPayout])
 	SELECT
 		[rptDate]
 		,[SiteID]
@@ -81,6 +83,8 @@ BEGIN
 		,SUM(ISNULL([WinPrizeAmount],0)) [WinPrizeAmount]
 		,SUM(ISNULL([CashOutAmount],0)) [CashOutAmount]
 		,SUM(ISNULL([oddsspread],0)) 	[ValidBetAmount]
+		,SUM(ISNULL([CashoutTicket],0)) [CashoutTicket]
+		,SUM(ISNULL([TicketPayout],0)) [TicketPayout]
 	FROM dbo.rpt_Betting b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2
@@ -112,6 +116,8 @@ BEGIN
 		,0 [WinPrizeAmount]
 		,0 [CashOutAmount]
 		,0 [ValidBetAmount]
+		,0 [CashoutTicket]
+		,SUM(ISNULL([TicketPayout],0)) [TicketPayout]
 	FROM dbo.rpt_Betting_BA b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2
