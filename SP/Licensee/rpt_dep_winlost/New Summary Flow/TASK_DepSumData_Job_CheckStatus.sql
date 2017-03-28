@@ -11,6 +11,7 @@ AS
 		-20161101@Francis: Add Opening Balance checking function
 		-20161102@Francis: Only check at the beginning and middle of the day
 		-20161107@Francis: Add new LogType = 5 (checkStatus) for checking status routine
+		-20170328@Paul: Implement Cash Out [RedmineID :#71727]
 		Input Params:	
 	*/
 BEGIN
@@ -118,7 +119,7 @@ BEGIN
 						ISNULL( 
 							SUM(
 								CASE
-									WHEN b.bettype = 903 THEN 0
+									WHEN b.bettype IN (903, 913, 914) THEN 0
 									ELSE (b.winlost - b.actual_stake + b.playercomm)
 								END
 							), 0
