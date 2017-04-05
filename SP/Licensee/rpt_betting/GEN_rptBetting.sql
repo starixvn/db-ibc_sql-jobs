@@ -114,7 +114,7 @@ INSERT INTO dbo.rpt_Betting
 	    ISNULL(site.SiteID,-1),
 	    b.bettype,
         CASE 
-            WHEN b.bettype=9 THEN -9 
+            WHEN b.bettype = 9 THEN -9 
             WHEN b.bettype = 10 OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1) 
             WHEN b.bettype IN(1231,1232,1233,1237,1238) THEN RaceInfo.LeagueID
             ELSE ISNULL(m.leagueid,-1) 
@@ -123,8 +123,7 @@ INSERT INTO dbo.rpt_Betting
 	    b.statusid,
 	    b.liveindicator,
 	    b.customercategory
- 
-	 
+ 	 
 --update MTD table
 EXEC dbo.GEN_RptKPI_MTD_Betting
     @date = @date, 

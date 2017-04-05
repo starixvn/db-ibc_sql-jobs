@@ -1,5 +1,6 @@
 USE [bodb_LicenseeReport]
 GO
+
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans] 
 	@winlostdate DATETIME  
 AS  
@@ -19,6 +20,7 @@ AS
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
 	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
+	- 20170331@Harper: Cashout - Add Cashout Ticket Count [RedmineID :#71727]
 */  
 BEGIN
 	SET NOCOUNT ON
@@ -57,6 +59,7 @@ BEGIN
 	  ,[betfrom]  
 	  ,[BuyBackAmt]
 	  ,[BABuyBackAmt]
+	  ,[COTicketCount]
 	  )  
 	SELECT @winlostdate  
 	   ,customer.username  
@@ -124,6 +127,7 @@ BEGIN
 	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END AS betfrom   
 	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
+	 ,COUNT(DISTINCT bettrans.refno) AS COTicketCount
 	FROM  
 	 bodb02.dbo.bettrans bettrans WITH (NOLOCK)
 	 INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK) ON bettrans.srecommend = s.CustId
@@ -211,59 +215,61 @@ BEGIN
 	  ,[betfrom]
 	  ,[BuyBackAmt]
 	  ,[BABuyBackAmt]
+	  ,[COTicketCount]
 	)  
 	SELECT  
-		@winlostdate  
-	  ,c.username  
-	  ,c.username2  
-	  ,c.custid  
-	  ,2 AS roleid  
-	  ,b.recommend  
-	  ,b.mrecommend  
-	  ,b.srecommend  
-			,SUM(turnover)  
-			,SUM(winlost)  
-	  ,SUM(BetEffective)  
-			,SUM(awinlost)  
-			,SUM(mwinlost)  
-			,SUM(swinlost)  
-			,SUM(playercomm)  
-			,SUM(comm)  
-			,SUM(acomm)  
-			,SUM(scomm)  
-			,SUM(winlostvirtual)  
-			,SUM(commvirtual)  
-			,SUM(BetCount)  
-			,b.currency  
-			,b.sporttype  
-			,b.bettype  
-			,b.statusID  
-	  ,b.isBA  
-	  ,b.isMobile  
-	  ,b.betfrom
-	  ,SUM(BuyBackAmt) 
-	  ,SUM(BABuyBackAmt) 
-		FROM  
-			dbo.rptLicWinloss2 b (nolock)  
-			INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid  
-		WHERE  
-			b.winlostdate = @winlostdate  
-			and b.roleid = 1  
-			and c.roleid = 2  
-		GROUP BY  
-			c.username  
-	  ,c.username2  
-	  ,c.custid  
-	  ,b.recommend  
-	  ,b.mrecommend  
-	  ,b.srecommend  
-			,b.currency  
-			,b.sporttype  
-			,b.bettype  
-			,b.statusID  
-	  ,b.isBA  
-	  ,b.isMobile  
-	  ,b.betfrom  
+	@winlostdate  
+	,c.username  
+	,c.username2  
+	,c.custid  
+	,2 AS roleid  
+	,b.recommend  
+	,b.mrecommend  
+	,b.srecommend  
+	,SUM(turnover)  
+	,SUM(winlost)  
+	,SUM(BetEffective)  
+	,SUM(awinlost)  
+	,SUM(mwinlost)  
+	,SUM(swinlost)  
+	,SUM(playercomm)  
+	,SUM(comm)  
+	,SUM(acomm)  
+	,SUM(scomm)  
+	,SUM(winlostvirtual)  
+	,SUM(commvirtual)  
+	,SUM(BetCount)  
+	,b.currency  
+	,b.sporttype  
+	,b.bettype  
+	,b.statusID  
+	,b.isBA  
+	,b.isMobile  
+	,b.betfrom
+	,SUM(BuyBackAmt) 
+	,SUM(BABuyBackAmt) 
+	,SUM(COTicketCount)
+	FROM  
+		dbo.rptLicWinloss2 b (nolock)  
+		INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid  
+	WHERE  
+		b.winlostdate = @winlostdate  
+		and b.roleid = 1  
+		and c.roleid = 2  
+	GROUP BY  
+		c.username  
+	,c.username2  
+	,c.custid  
+	,b.recommend  
+	,b.mrecommend  
+	,b.srecommend  
+		,b.currency  
+		,b.sporttype  
+		,b.bettype  
+		,b.statusID  
+	,b.isBA  
+	,b.isMobile  
+	,b.betfrom  
   
 	--Master Level (sum on member)  
 	INSERT INTO dbo.rptLicWinloss2  
@@ -298,6 +304,7 @@ BEGIN
 	  ,[betfrom] 
 	  ,[BuyBackAmt] 
 	  ,[BABuyBackAmt]
+	  ,[COTicketCount]
 			)  
 	SELECT  
 		@winlostdate  
@@ -329,7 +336,8 @@ BEGIN
 	 ,b.isMobile  
 	 ,b.betfrom
 	 ,SUM(BuyBackAmt)  
-	 ,SUM(BABuyBackAmt)   
+	 ,SUM(BABuyBackAmt) 
+	 ,SUM(COTicketCount)  
 	FROM  
 		dbo.rptLicWinloss2 b (NOLOCK)  
 		INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.mrecommend = c.custid  
@@ -384,6 +392,7 @@ BEGIN
 	  ,[betfrom]  
 	  ,[BuyBackAmt]
 	  ,[BABuyBackAmt]
+	  ,[COTicketCount]
 			)  
 	SELECT  
 	 @winlostdate  
@@ -415,7 +424,8 @@ BEGIN
 	 ,b.isMobile  
 	 ,b.betfrom 
 	 ,SUM(BuyBackAmt)
-	 ,SUM(BABuyBackAmt)    
+	 ,SUM(BABuyBackAmt)   
+	 ,SUM(COTicketCount) 
 	FROM  
 		dbo.rptLicWinloss2 b (nolock)  
 		INNER join bodb02.dbo.customer c (nolock) ON b.srecommend = c.custid  

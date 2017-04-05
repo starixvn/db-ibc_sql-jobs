@@ -36,6 +36,7 @@ Revisions:
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
 	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
+	- 20170331@Harper: Cashout - Add Cashout Ticket Count [RedmineID :#71727]
  */
 
 SET NOCOUNT ON 
@@ -75,6 +76,7 @@ INSERT INTO dbo.rptLicWinloss2
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
+		,[COTicketCount]
 		)
 SELECT @winlostdate
 	  ,customer.username
@@ -142,6 +144,7 @@ SELECT @winlostdate
 		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END AS betfrom
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
+	,COUNT(DISTINCT bettrans.refno) AS COTicketCount
 FROM
 	bodb02.dbo.bettrans14 bettrans WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
@@ -228,6 +231,7 @@ INSERT INTO dbo.rptLicWinloss2
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
+		,[COTicketCount]
         )
     SELECT
         @winlostdate
@@ -260,6 +264,7 @@ INSERT INTO dbo.rptLicWinloss2
 		,b.betfrom
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
+		,SUM(COTicketCount)
     FROM
         dbo.rptLicWinloss2 b (nolock)
         INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid
@@ -315,6 +320,7 @@ INSERT INTO dbo.rptLicWinloss2
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
+		,[COTicketCount]
         )
 SELECT
     @winlostdate
@@ -347,6 +353,7 @@ SELECT
 	,b.betfrom
 	,SUM(BuyBackAmt)
 	,SUM(BABuyBackAmt)
+	,SUM(COTicketCount)
 FROM
     dbo.rptLicWinloss2 b (NOLOCK)
     INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.mrecommend = c.custid
@@ -401,6 +408,7 @@ INSERT INTO dbo.rptLicWinloss2
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
+		,[COTicketCount]
         )
 SELECT
 	@winlostdate
@@ -433,6 +441,7 @@ SELECT
 	,b.betfrom
 	,SUM(BuyBackAmt)
 	,SUM(BABuyBackAmt)
+	,SUM(COTicketCount)
 FROM
     dbo.rptLicWinloss2 b (nolock)
     INNER join bodb02.dbo.customer c (nolock) ON b.srecommend = c.custid
