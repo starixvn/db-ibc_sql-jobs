@@ -162,7 +162,7 @@ EXEC msdb.dbo.sp_send_dbmail
 @subject = @strsubject,
 @body = @tableHTML,
 @body_format = ''HTML''
-,@copy_recipients =''francis.le@starixsoft.com;ann.nguyen@starixsoft.com;it@starixsoft.com''	
+,@copy_recipients =''ann.nguyen@starixsoft.com;it@starixsoft.com''	
 	
 --PRINT @tableHTML
 	
