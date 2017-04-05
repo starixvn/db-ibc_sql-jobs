@@ -1,5 +1,4 @@
-USE [bodb02]
-GO
+/*<info serverAlias="DBTXN-bodb02,DBPRO-bodb02" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0|1" isNested=”0|1”></info>*/
 ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
 	@winlostdate DATETIME
 AS
