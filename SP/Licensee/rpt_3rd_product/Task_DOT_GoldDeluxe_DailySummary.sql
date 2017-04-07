@@ -1,7 +1,7 @@
-USE [bodb_PlaytechCS]
-GO
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS," executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
 ALTER PROCEDURE [dbo].[Task_DOT_GoldDeluxe_DailySummary]
 	@winlostdate DATETIME
+	,@IsManual BIT = 0 
 AS
 /*   
 Created: 20140313@Winnie
@@ -10,6 +10,10 @@ DB: DBPTCS/bodb_PlaytechCS
 Original:
 Revisions:	
 - 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
+- 20170407@Sophia:  Automatically sum data to Rpt_bettingByProduct [Redmine: #72914]
+					Add rule auto regen data :
+							1st -> 5th : Can Edit data of Previous month  and currenct Month
+							6th -> end of the month : Edit data of current month only
 Param's Explanation:
 	- @winlostdate: The date need to summary
 */  
@@ -25,6 +29,17 @@ BEGIN TRY
 	
 	DECLARE @WLDateTab AS TABLE (ID SMALLINT IDENTITY (1,1), winlostdate DATE)
 	DECLARE @i SMALLINT = 1
+	
+	DECLARE @Day TINYINT, @MinDate DATE 
+	SELECT @Day = DAY(GETDATE())
+	IF @Day <= 5 --- 1st -> 5th of the month
+	BEGIN 
+		SELECT @MinDate = DATEADD(mm, DATEDIFF(mm, 0, GETDATE()) - 1, 0)  ----- FirstOfPreviousMonth 
+	END
+	ELSE
+	BEGIN 
+		SELECT @MinDate =  DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0) --- FirstOfCurrentMonth
+	END
 	
 	INSERT INTO @WLDateTab
 	SELECT DISTINCT (t.winlostdate)
@@ -52,38 +67,97 @@ BEGIN TRY
 		FROM @WLDateTab
 		WHERE ID = @i
 	
-		TRUNCATE TABLE #TicketData
+		IF @winlostdate >= @MinDate OR @IsManual = 1
+		BEGIN 
+			TRUNCATE TABLE #TicketData
+			
+			INSERT INTO #TicketData (custid, currency, turnover,winlost,drawTO,drawBetCount,betCount )
+			SELECT b.CustID, 		
+					b.currency,				
+					ISNULL(SUM(b.Stake),0) AS Turnover,			
+					ISNULL(SUM(b.Winlost - b.Stake),0) AS Winlost,	
+					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN b.Stake ELSE 0 END),0) AS DrawTO,	
+					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount,	
+				ISNULL(COUNT(b.TicketId),0) AS Betcount			
+
+			FROM dbo.bettrans_GoldDeluxe b WITH (ROWLOCK)
+			WHERE Winlostdate = @winlostdate AND StatusId IN (111,112,113)
+			GROUP BY b.CustID, b.currency
 		
-		INSERT INTO #TicketData (custid, currency, turnover,winlost,drawTO,drawBetCount,betCount )
-		SELECT b.CustID, 		
-				b.currency,				
-				ISNULL(SUM(b.Stake),0) AS Turnover,			
-				ISNULL(SUM(b.Winlost - b.Stake),0) AS Winlost,	
-				ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN b.Stake ELSE 0 END),0) AS DrawTO,	
-				ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount,	
-			ISNULL(COUNT(b.TicketId),0) AS Betcount			
 
-		FROM dbo.bettrans_GoldDeluxe b WITH (ROWLOCK)
-		WHERE Winlostdate = @winlostdate AND StatusId IN (111,112,113)
-		GROUP BY b.CustID, b.currency
-	
+			-- Insert data to rptDepWinlost_ThirdParty
+			DELETE FROM bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty WITH (ROWLOCK) WHERE Winlostdate = @winlostdate and ProductId=@ProductId
 
-		-- Insert data to rptDepWinlost_ThirdParty
-		DELETE FROM [bodb_LicenseeReport].dbo.rptDepWinlost_ThirdParty WHERE Winlostdate = @winlostdate and ProductId=@ProductId
+			INSERT INTO bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, turnover,
+																winlost,drawTO,drawBetCount, BetCount,ProductId)
+			SELECT @winlostdate, custid,  currency, turnover,
+				winlost,drawTO,drawBetCount,  BetCount, @ProductId
+			FROM #TicketData
+					
+			-- Insert data to rpt_BettingByProduct
+			DELETE FROM bodb_LicenseeReport.dbo.rpt_BettingByProduct WITH (ROWLOCK) WHERE rptDate = @winlostdate and ProductId=@ProductId
 
-		INSERT INTO [bodb_LicenseeReport].dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, turnover,
-															winlost,drawTO,drawBetCount, BetCount,ProductId)
-		SELECT @winlostdate, custid,  currency, turnover,
-			winlost,drawTO,drawBetCount,  BetCount, @ProductId
-		FROM #TicketData
-		
-		UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
-		SET isSummarized = 1
-		WHERE Winlostdate = @winlostdate AND isSummarized = 0
-			AND ProductID = @ProductId
+			INSERT INTO dbo.rpt_BettingByProduct
+				([rptDate]
+				,[SiteID]
+				,[ProductID]
+				,[Bettype]
+				,[CurrencyId]
+				,[StatusId]
+				,[CustomerCategory]
+				,[GrossWL]
+				,[MemberWL]
+				,[Turnover]
+				,[BetCount]
+				,[CommissionA]
+				,[CommissionP]
+				,[BuyBackAmount]
+				,[WinPrizeAmount]
+				,[CashOutAmount])
+			SELECT @winlostdate
+				, ISNULL(site.SiteID,-1) AS SiteId
+				, @ProductId
+				, -1 AS bettype
+				, td.CurrencyId
+				, CASE 
+					WHEN td.Winlost > 0 THEN 112
+					WHEN td.Winlost < 0 THEN 113
+					ELSE 111
+				  END AS StatusId
+				, -1 AS CustomerCategory
+				, 0 AS GrossWL
+				, SUM(ISNULL(td.Winlost,0)) AS MemberWL
+				, SUM(ISNULL(td.Turnover,0)) AS Turnover
+				, SUM(ISNULL(td.BetCount,0)) AS BetCount
+				, 0 AS CommissionA
+				, 0 AS CommissionP
+				, 0 AS BuyBackAmount
+				, 0 [WinPrizeAmount]
+				, 0 [CashOutAmount]
+			FROM #TicketData td WITH (NOLOCK)
+				LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.Custid = td.CustID AND c.roleid = 1
+				LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON c.recommend = ag.custid AND ag.roleid = 2
+				LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON ag.site=ibcsite.site
+				LEFT JOIN bodb_licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
+			WHERE td.Currency <> 20
+			GROUP BY 
+				ISNULL(site.SiteID,-1)
+				, td.CurrencyId
+				, CASE 
+					WHEN td.Winlost > 0 THEN 112
+					WHEN td.Winlost < 0 THEN 113
+					ELSE 111 END
+					
+			---Update flag isSummarized to queue  
+			UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
+			SET isSummarized = 1
+			WHERE Winlostdate = @winlostdate AND isSummarized = 0
+				AND ProductID = @ProductId
+		END 
 		
 		SELECT @i = @i + 1
 	END
+	
 
 	DROP TABLE #TicketData
 END TRY

@@ -1,6 +1,7 @@
-/*<info serverAlias="DBTXN-bodb02,DBPRO-bodb02" executers="bodbAdminNet,bodbDownlineNet" viewers="vnteam" isFunction="0|1" isNested=”0|1”></info>*/
+/*<info serverAlias="DBACC-bodb02," executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
 ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
 	@winlostdate DATETIME
+	,@IsManual BIT = 0 
 AS
 /*   
 Created: 20140911@Victor
@@ -12,6 +13,10 @@ Revisions:
 	- 20141121@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
 	- 20151005@Don: Add filter by status
 	- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
+	- 20170407@Sophia:  Automatically sum data to Rpt_bettingByProduct [Redmine: #72914]
+						Add rule auto regen data :
+							1st -> 5th : Can Edit data of Previous month  and currenct Month
+							6th -> end of the month : Edit data of current month only
 Param's Explanation:
 	- @winlostdate: The date need to summary
 */  
@@ -24,6 +29,17 @@ BEGIN TRY
 	DECLARE @WLDateTab AS TABLE (ID SMALLINT IDENTITY (1,1), winlostdate DATE)
 	DECLARE @i SMALLINT = 1, @SqlStr VARCHAR (1000) = ''
 	
+	DECLARE @Day TINYINT, @MinDate DATE 
+	SELECT @Day = DAY(GETDATE())
+	IF @Day <= 5 --- 1st -> 5th of the month
+	BEGIN 
+		SELECT @MinDate = DATEADD(mm, DATEDIFF(mm, 0, GETDATE()) - 1, 0)  ----- FirstOfPreviousMonth 
+	END
+	ELSE
+	BEGIN 
+		SELECT @MinDate =  DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0) --- FirstOfCurrentMonth
+	END
+		
 	INSERT INTO @WLDateTab
 	SELECT DISTINCT (t.winlostdate)
 	FROM
@@ -53,61 +69,120 @@ BEGIN TRY
 		FROM @WLDateTab
 		WHERE ID = @i
 	
-		TRUNCATE TABLE #TicketData
+		IF @winlostdate >= @MinDate OR @IsManual = 1
+		BEGIN 
 		
-		IF @winlostdate >= @BackupDay -- Get data in bettrans_AGCasino table
-		BEGIN
-			INSERT INTO #TicketData (custid, sporttype, currency, isVipGame, turnover, drawTO, winlost, playercomm, betCount, drawBetCount)
-			SELECT b.CustID, 
-				250 AS SportType,
-				b.currency,
-				isVIPGame,
-				ISNULL(SUM(b.Stake),0) AS Turnover,
-				ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN b.Stake ELSE 0 END),0) AS DrawTO,
-				ISNULL(SUM(b.Winlost - b.Actual_Stake),0) AS Winlost,
-				0 AS PlayerComm,
-				ISNULL(COUNT(*),0) AS Betcount,
-				ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount
-			FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino b WITH (ROWLOCK)
-			WHERE Winlostdate = @winlostdate
-				AND StatusId IN (111, 112, 113)
-			GROUP BY b.CustID, b.currency, isVIPGame
-		END
-		ELSE -- Get data in bettrans_AGCasino_bk table
-		BEGIN
-			INSERT INTO #TicketData (custid, sporttype, currency, isVipGame, turnover, drawTO, winlost, playercomm, BetCount, drawBetCount)
-			SELECT b.CustID, 
-				250 AS SportType,
-				b.currency,
-				isVIPGame,
-				ISNULL(SUM(b.Stake),0) AS Turnover,
-				ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN b.Stake ELSE 0 END),0) AS DrawTO,
-				ISNULL(SUM(b.Winlost - b.Actual_Stake),0) AS Winlost,
-				0 AS PlayerComm,
-				ISNULL(COUNT(*),0) AS Betcount,
-				ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount
-			FROM bodb_archive.dbo.bettrans_AGCasino_bk b WITH (ROWLOCK)
-			WHERE Winlostdate = @winlostdate
-				AND StatusId IN (111, 112, 113)
-			GROUP BY b.CustID, b.currency, isVIPGame
-		END
-		
-		--Insert data to rptDepWinlost_AGCasino
-		DELETE FROM bodb_report.dbo.rptDepWinlost_AGCasino WHERE Winlostdate = @winlostdate
-
-		INSERT INTO bodb_report.dbo.rptDepWinlost_AGCasino (winlostdate, custid, sporttype, currency, turnover, drawTO, 
-															winlost, playercomm, BetCount, drawBetCount, IsVIPGame)
-		SELECT @winlostdate, custid, sporttype, currency, turnover, drawTO, 
-			winlost, playercomm, BetCount, drawBetCount, IsVIPGame
-		FROM #TicketData
-		
-		SET @SqlStr = 'UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
-		SET isSummarized = 1
-		WHERE Winlostdate = ''' + CONVERT(VARCHAR(20),@winlostdate,112) + ''' AND isSummarized = 0
-			AND ProductID = 10;'
+			TRUNCATE TABLE #TicketData
 			
-		EXEC(@SqlStr) AT [DBPTCS];
-		
+			IF @winlostdate >= @BackupDay -- Get data in bettrans_AGCasino table
+			BEGIN
+				INSERT INTO #TicketData (custid, sporttype, currency, isVipGame, turnover, drawTO, winlost, playercomm, betCount, drawBetCount)
+				SELECT b.CustID, 
+					250 AS SportType,
+					b.currency,
+					isVIPGame,
+					ISNULL(SUM(b.Stake),0) AS Turnover,
+					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN b.Stake ELSE 0 END),0) AS DrawTO,
+					ISNULL(SUM(b.Winlost - b.Actual_Stake),0) AS Winlost,
+					0 AS PlayerComm,
+					ISNULL(COUNT(*),0) AS Betcount,
+					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount
+				FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino b WITH (ROWLOCK)
+				WHERE Winlostdate = @winlostdate
+					AND StatusId IN (111, 112, 113)
+				GROUP BY b.CustID, b.currency, isVIPGame
+			END
+			ELSE -- Get data in bettrans_AGCasino_bk table
+			BEGIN
+				INSERT INTO #TicketData (custid, sporttype, currency, isVipGame, turnover, drawTO, winlost, playercomm, BetCount, drawBetCount)
+				SELECT b.CustID, 
+					250 AS SportType,
+					b.currency,
+					isVIPGame,
+					ISNULL(SUM(b.Stake),0) AS Turnover,
+					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN b.Stake ELSE 0 END),0) AS DrawTO,
+					ISNULL(SUM(b.Winlost - b.Actual_Stake),0) AS Winlost,
+					0 AS PlayerComm,
+					ISNULL(COUNT(*),0) AS Betcount,
+					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount
+				FROM bodb_archive.dbo.bettrans_AGCasino_bk b WITH (ROWLOCK)
+				WHERE Winlostdate = @winlostdate
+					AND StatusId IN (111, 112, 113)
+				GROUP BY b.CustID, b.currency, isVIPGame
+			END
+			
+			--Insert data to rptDepWinlost_AGCasino
+			DELETE FROM bodb_report.dbo.rptDepWinlost_AGCasino WITH (ROWLOCK) WHERE Winlostdate = @winlostdate
+
+			INSERT INTO bodb_report.dbo.rptDepWinlost_AGCasino (winlostdate, custid, sporttype, currency, turnover, drawTO, 
+																winlost, playercomm, BetCount, drawBetCount, IsVIPGame)
+			SELECT @winlostdate, custid, sporttype, currency, turnover, drawTO, 
+				winlost, playercomm, BetCount, drawBetCount, IsVIPGame
+			FROM #TicketData
+			
+			-- Insert data to rpt_BettingByProduct
+			DELETE FROM bodb_LicenseeReport.dbo.rpt_BettingByProduct WITH (ROWLOCK) WHERE rptDate = @winlostdate and ProductId = 10
+
+			INSERT INTO DBLIC.bodb_LicenseeReport.dbo.rpt_BettingByProduct 
+				([rptDate]
+				,[SiteID]
+				,[ProductID]
+				,[Bettype]
+				,[CurrencyId]
+				,[StatusId]
+				,[CustomerCategory]
+				,[GrossWL]
+				,[MemberWL]
+				,[Turnover]
+				,[BetCount]
+				,[CommissionA]
+				,[CommissionP]
+				,[BuyBackAmount]
+				,[WinPrizeAmount]
+				,[CashOutAmount])
+			SELECT @winlostdate
+				, ISNULL(site.SiteID,-1) AS SiteId
+				, 10 AS ProductId
+				, -1 AS bettype
+				, td.CurrencyId
+				, CASE 
+					WHEN td.Winlost > 0 THEN 112
+					WHEN td.Winlost < 0 THEN 113
+					ELSE 111
+				  END AS StatusId
+				, -1 AS CustomerCategory
+				, 0 AS GrossWL
+				, SUM(ISNULL(td.Winlost,0)) AS MemberWL
+				, SUM(ISNULL(td.Turnover,0)) AS Turnover
+				, SUM(ISNULL(td.BetCount,0)) AS BetCount
+				, 0 AS CommissionA
+				, 0 AS CommissionP
+				, 0 AS BuyBackAmount
+				, 0 [WinPrizeAmount]
+				, 0 [CashOutAmount]
+			FROM #TicketData td WITH (NOLOCK)
+				LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.Custid = td.CustID AND c.roleid = 1
+				LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON c.recommend = ag.custid AND ag.roleid = 2
+				LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON ag.site=ibcsite.site
+				LEFT JOIN bodb_licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
+			WHERE Currency <> 20
+			GROUP BY 
+				ISNULL(site.SiteID,-1)
+				, td.CurrencyId
+				, CASE 
+					WHEN td.Winlost > 0 THEN 112
+					WHEN td.Winlost < 0 THEN 113
+					ELSE 111 END
+									
+			
+			SET @SqlStr = 'UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
+			SET isSummarized = 1
+			WHERE Winlostdate = ''' + CONVERT(VARCHAR(20),@winlostdate,112) + ''' AND isSummarized = 0
+				AND ProductID = 10;'
+				
+			EXEC(@SqlStr) AT [DBPTCS]
+			
+		END
 		SELECT @i = @i + 1	
 	END
 
