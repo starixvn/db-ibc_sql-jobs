@@ -23,7 +23,7 @@ AS
 		- 20160907@Harper: #62820_Add AllBet for ProductMapping
 		- 20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 		- 20170314@Sophia: Integrate Fishing World [Redmine: #73303]
-		-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
+		- 20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 */
 
 BEGIN  
@@ -63,7 +63,7 @@ BEGIN
 			,[WinPrizeAmount]
 			,[CashOutAmount]
 			,[ValidBetAmount]
-			,[CashoutTicket]
+			,[COTicketCount]
 			,[TicketPayout])
 	SELECT
 		[rptDate]
@@ -83,7 +83,7 @@ BEGIN
 		,SUM(ISNULL([WinPrizeAmount],0)) [WinPrizeAmount]
 		,SUM(ISNULL([CashOutAmount],0)) [CashOutAmount]
 		,SUM(ISNULL([oddsspread],0)) 	[ValidBetAmount]
-		,SUM(ISNULL([CashoutTicket],0)) [CashoutTicket]
+		,SUM(ISNULL([COTicketCount],0)) [COTicketCount]
 		,SUM(ISNULL([TicketPayout],0)) [TicketPayout]
 	FROM dbo.rpt_Betting b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype

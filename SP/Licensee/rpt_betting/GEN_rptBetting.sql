@@ -45,7 +45,7 @@ INSERT INTO dbo.rpt_Betting
         ,[IsLive]
         ,[BetCount]
         ,[MemberCount]
-		,[CashoutTicket]
+		,[COTicketCount]
         ,[Turnover]
         ,[WinLoss]
         ,[WinLossA]
@@ -78,7 +78,7 @@ INSERT INTO dbo.rpt_Betting
 	    ISNULL(b.liveindicator,0) liveindicator,
         COUNT(*) Betcount,
         COUNT(DISTINCT b.custid) MemberCount,
-		COUNT(DISTINCT b.refno) CashoutTicket,
+		COUNT(DISTINCT b.refno) COTicketCount,
         SUM(stake) Turnover,
         SUM(winlost-actual_stake) winloss,
         SUM(awinlost) winlossA,

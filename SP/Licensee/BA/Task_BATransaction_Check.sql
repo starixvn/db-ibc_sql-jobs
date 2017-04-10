@@ -9,11 +9,12 @@ Date: 2011-06-20
 Task: Check missing BA tickets  
 DB: DB052.BODB02  
 Revisions:   
-    20110824@Henry: Insert the missing tickets if happen  
- 20110905@Jamie: Modify remove comma ','  
- 20111208@Jim: change bettype condition   
- 20150204@Don: Expand bet type ranges for Sportbook when processing BA  
- 20150904@Patrick: Exclude bettype 901 for bettrade
+	20110824@Henry: Insert the missing tickets if happen  
+	20110905@Jamie: Modify remove comma ','  
+	20111208@Jim: change bettype condition   
+	20150204@Don: Expand bet type ranges for Sportbook when processing BA  
+	20150904@Patrick: Exclude bettype 901 for bettrade
+	20170410@Harper: Implement Cashout Product
  */  
 SET NOCOUNT ON   
    
@@ -42,7 +43,7 @@ StartLoop:
             AND transdate BETWEEN @ondate AND @offdate  
             AND tpositiontaking = 0  
             AND (bettype < 31 OR (bettype BETWEEN 121 AND 999) OR (bettype BETWEEN 1301 AND 1399))  
-			AND bettype <> 901
+			AND bettype NOT IN (901, 911)
                    
     DELETE FROM @BAHistory_Done WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate  
   
@@ -72,7 +73,7 @@ StartLoop_r:
             AND transdate >= @ondate_r  
             AND tpositiontaking =0  
             AND (bettype < 31 OR (bettype BETWEEN 121 AND 999) OR (bettype BETWEEN 1301 AND 1399))  
-			AND bettype <> 901
+			AND bettype NOT IN (901, 911)
          
     DELETE FROM @BAHistory_Running WHERE custid = @custid_r AND ondate = @ondate_r  
   
