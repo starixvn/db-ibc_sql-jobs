@@ -18,7 +18,7 @@ AS
      --check data has ready yet?
     IF NOT EXISTS (SELECT TOP 1 1 
 				FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH(NOLOCK)
-				WHERE Winlostdate = @WinlostDate AND isSummarized = 0)
+				WHERE Winlostdate = @WinlostDate AND FinishedTime IS NULL)  
 	   AND EXISTS (SELECT TOP 1 1
 				FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH(NOLOCK)
 				WHERE Winlostdate = @WinlostDate)
