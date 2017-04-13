@@ -37,7 +37,7 @@ BEGIN
 	CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
 	
 	INSERT INTO #BettypeProductMapping (Bettype, ProductID)
-	SELECT Bettype, ProductId 
+	SELECT Bettype, ProductId
 	FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO')  
 
 	INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
@@ -69,7 +69,7 @@ BEGIN
 		[rptDate]
 		,[SiteID]
 		,bt.ProductID
-		,CASE WHEN bt.ProductID IN (1,13,14,17,15) THEN b.[Bettype] ELSE -1 END [Bettype]
+		,CASE WHEN bt.ProductID IN (1,13,14,17,15,25) THEN b.[Bettype] ELSE -1 END [Bettype]
 		,[CurrencyId]
 		,Status [StatusId]
 		,ISNULL([CustomerCategory],-1)
@@ -93,7 +93,7 @@ BEGIN
 	GROUP BY [rptDate]
 			,[SiteID]
 			, bt.ProductID
-			,CASE WHEN bt.ProductID IN (1,13,14,17,15) THEN b.[Bettype] ELSE -1 END 
+			,CASE WHEN bt.ProductID IN (1,13,14,17,15,25) THEN b.[Bettype] ELSE -1 END 
 			,[CurrencyId]
 			,Status
 			,ISNULL([CustomerCategory],-1)
