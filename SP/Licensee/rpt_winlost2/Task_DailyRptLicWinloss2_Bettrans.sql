@@ -20,13 +20,24 @@ AS
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
 	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
-	- 20170331@Harper: Cashout - Add Cashout Ticket Count [RedmineID :#71727]
+	- 20170331@Harper: Cashout - Add Cashout Ticket Count and Ticket Payout[RedmineID :#71727]
+
+	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-13'
 */  
 BEGIN
 	SET NOCOUNT ON
     
 	DELETE FROM dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate  
-  
+	
+	-- Prepare Data for Ticket Payout
+	DECLARE @PayoutOfCOCust AS TABLE (Refno BIGINT, TicketPayout MONEY)
+	INSERT INTO @PayoutOfCOCust (Refno, TicketPayout)
+	SELECT b.refno, SUM(b.winlost)
+	FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+		INNER JOIN (SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL')) c ON b.custid = c.CustId
+	WHERE b.bettype NOT IN (912, 913, 914)		
+	GROUP BY b.refno
+
 	--Member Level  
 	INSERT INTO dbo.rptLicWinloss2(  
 	  [winlostdate]  
@@ -60,6 +71,7 @@ BEGIN
 	  ,[BuyBackAmt]
 	  ,[BABuyBackAmt]
 	  ,[COTicketCount]
+	  ,[TicketPayout]
 	  )  
 	SELECT @winlostdate  
 	   ,customer.username  
@@ -128,11 +140,13 @@ BEGIN
 	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
 	 ,COUNT(DISTINCT bettrans.refno) AS COTicketCount
+	 ,SUM(CASE WHEN bettrans.bettype = 911 THEN ISNULL(co.TicketPayout, 0) ELSE 0 END) AS TicketPayout
 	FROM  
 	 bodb02.dbo.bettrans bettrans WITH (NOLOCK)
 	 INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK) ON bettrans.srecommend = s.CustId
 	 INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
 	 LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) ON bettrans.transid = BA.transid  
+	 LEFT JOIN @PayoutOfCOCust co ON bettrans.transid = co.Refno
 	WHERE  
 	 bettrans.winlostdate = @winlostdate AND  
 	 --bettrans.srecommend IN (SELECT custid FROM f_DepSuper_1('All')) AND  
@@ -216,6 +230,7 @@ BEGIN
 	  ,[BuyBackAmt]
 	  ,[BABuyBackAmt]
 	  ,[COTicketCount]
+	  ,[TicketPayout]
 	)  
 	SELECT  
 	@winlostdate  
@@ -249,6 +264,7 @@ BEGIN
 	,SUM(BuyBackAmt) 
 	,SUM(BABuyBackAmt) 
 	,SUM(COTicketCount)
+	,SUM(TicketPayout)
 	FROM  
 		dbo.rptLicWinloss2 b (nolock)  
 		INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid  
@@ -274,7 +290,7 @@ BEGIN
 	--Master Level (sum on member)  
 	INSERT INTO dbo.rptLicWinloss2  
 			(  
-			[winlostdate]  
+		[winlostdate]  
 	  ,[username]  
 	  ,[username2]  
 	  ,[custid]  
@@ -283,7 +299,7 @@ BEGIN
 	  ,[mrecommend]  
 	  ,[srecommend]  
 	  ,[turnover]  
-			,[winlost]  
+	  ,[winlost]  
 	  ,[BetEffective]  
 	  ,[awinlost]  
 	  ,[mwinlost]  
@@ -305,6 +321,7 @@ BEGIN
 	  ,[BuyBackAmt] 
 	  ,[BABuyBackAmt]
 	  ,[COTicketCount]
+	  ,[TicketPayout]
 			)  
 	SELECT  
 		@winlostdate  
@@ -338,6 +355,7 @@ BEGIN
 	 ,SUM(BuyBackAmt)  
 	 ,SUM(BABuyBackAmt) 
 	 ,SUM(COTicketCount)  
+	 ,SUM(TicketPayout)
 	FROM  
 		dbo.rptLicWinloss2 b (NOLOCK)  
 		INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.mrecommend = c.custid  
@@ -393,6 +411,7 @@ BEGIN
 	  ,[BuyBackAmt]
 	  ,[BABuyBackAmt]
 	  ,[COTicketCount]
+	  ,[TicketPayout]
 			)  
 	SELECT  
 	 @winlostdate  
@@ -426,6 +445,7 @@ BEGIN
 	 ,SUM(BuyBackAmt)
 	 ,SUM(BABuyBackAmt)   
 	 ,SUM(COTicketCount) 
+	 ,SUM(TicketPayout)
 	FROM  
 		dbo.rptLicWinloss2 b (nolock)  
 		INNER join bodb02.dbo.customer c (nolock) ON b.srecommend = c.custid  
