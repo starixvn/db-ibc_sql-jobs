@@ -12,7 +12,7 @@ Revisions:
 - 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
 - 20170407@Sophia:  Automatically sum data to Rpt_bettingByProduct [Redmine: #72914]
 					Add rule auto regen data :
-							1st -> 5th : Can Edit data of Previous month  and currenct Month
+							1st -> 5th : Can Edit data of Previous month  and current Month
 							6th -> end of the month : Edit data of current month only
 Param's Explanation:
 	- @winlostdate: The date need to summary
@@ -97,7 +97,7 @@ BEGIN TRY
 			-- Insert data to rpt_BettingByProduct
 			DELETE FROM bodb_LicenseeReport.dbo.rpt_BettingByProduct WITH (ROWLOCK) WHERE rptDate = @winlostdate and ProductId=@ProductId
 
-			INSERT INTO dbo.rpt_BettingByProduct
+			INSERT INTO bodb_LicenseeReport.dbo.rpt_BettingByProduct
 				([rptDate]
 				,[SiteID]
 				,[ProductID]
@@ -118,7 +118,7 @@ BEGIN TRY
 				, ISNULL(site.SiteID,-1) AS SiteId
 				, @ProductId
 				, -1 AS bettype
-				, td.CurrencyId
+				, td.Currency
 				, CASE 
 					WHEN td.Winlost > 0 THEN 112
 					WHEN td.Winlost < 0 THEN 113
@@ -142,7 +142,7 @@ BEGIN TRY
 			WHERE td.Currency <> 20
 			GROUP BY 
 				ISNULL(site.SiteID,-1)
-				, td.CurrencyId
+				, td.Currency
 				, CASE 
 					WHEN td.Winlost > 0 THEN 112
 					WHEN td.Winlost < 0 THEN 113

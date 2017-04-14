@@ -15,7 +15,7 @@ Revisions:
 	- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
 	- 20170407@Sophia:  Automatically sum data to Rpt_bettingByProduct [Redmine: #72914]
 						Add rule auto regen data :
-							1st -> 5th : Can Edit data of Previous month  and currenct Month
+							1st -> 5th : Can Edit data of Previous month  and current Month
 							6th -> end of the month : Edit data of current month only
 Param's Explanation:
 	- @winlostdate: The date need to summary
@@ -121,7 +121,7 @@ BEGIN TRY
 			FROM #TicketData
 			
 			-- Insert data to rpt_BettingByProduct
-			DELETE FROM bodb_LicenseeReport.dbo.rpt_BettingByProduct WITH (ROWLOCK) WHERE rptDate = @winlostdate and ProductId = 10
+			DELETE FROM DBLIC.bodb_LicenseeReport.dbo.rpt_BettingByProduct WITH (ROWLOCK) WHERE rptDate = @winlostdate and ProductId = 10
 
 			INSERT INTO DBLIC.bodb_LicenseeReport.dbo.rpt_BettingByProduct 
 				([rptDate]
@@ -144,7 +144,7 @@ BEGIN TRY
 				, ISNULL(site.SiteID,-1) AS SiteId
 				, 10 AS ProductId
 				, -1 AS bettype
-				, td.CurrencyId
+				, td.Currency
 				, CASE 
 					WHEN td.Winlost > 0 THEN 112
 					WHEN td.Winlost < 0 THEN 113
@@ -165,10 +165,10 @@ BEGIN TRY
 				LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON c.recommend = ag.custid AND ag.roleid = 2
 				LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON ag.site=ibcsite.site
 				LEFT JOIN bodb_licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
-			WHERE Currency <> 20
+			WHERE td.Currency <> 20
 			GROUP BY 
 				ISNULL(site.SiteID,-1)
-				, td.CurrencyId
+				, td.Currency
 				, CASE 
 					WHEN td.Winlost > 0 THEN 112
 					WHEN td.Winlost < 0 THEN 113
