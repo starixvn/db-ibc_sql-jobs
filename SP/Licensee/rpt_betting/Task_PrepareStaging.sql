@@ -311,11 +311,17 @@ BEGIN
 	FROM dbo.bettrans b
 	WHERE b.bettype = 911
 
+	;WITH payout AS (
+					SELECT b.refno, b.winlost
+					FROM dbo.bettrans b
+						INNER JOIN #CashoutCust ctc ON b.CustId = ctc.CustId
+					WHERE b.bettype NOT IN (912, 913, 914)
+	)
 	UPDATE b
-	SET b.TicketPayout = b.winlost
+	SET b.TicketPayout = p.winlost
 	FROM dbo.bettrans b
-		INNER JOIN #CashoutCust ctc ON b.CustId = ctc.CustId
-	WHERE b.bettype NOT IN (912, 913, 914)
+		INNER JOIN payout p ON b.transid = p.refno
+	WHERE b.bettype = 911
 
 	UPDATE b
 	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (902,903,904) THEN 1 ELSE 0 END
