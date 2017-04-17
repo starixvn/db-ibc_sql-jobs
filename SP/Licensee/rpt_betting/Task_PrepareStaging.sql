@@ -78,7 +78,7 @@ BEGIN
     
     CREATE TABLE #Customer (t_custid int PRIMARY KEY)
 	CREATE TABLE #BetTradeCust (custid int PRIMARY KEY)
-	CREATE TABLE #CashoutCust (cusid INT PRIMARY KEY)
+	CREATE TABLE #CashoutCust (CustId INT PRIMARY KEY)
 
 	INSERT INTO #BetTradeCust(CustId)
 	SELECT CustId FROM bodb02.dbo.f_GetBetTradeCustList('ALL')
