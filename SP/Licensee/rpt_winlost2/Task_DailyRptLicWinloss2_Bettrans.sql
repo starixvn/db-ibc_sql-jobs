@@ -20,9 +20,9 @@ AS
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
 	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
-	- 20170331@Harper: Cashout - Add Cashout Ticket Count and Ticket Payout[RedmineID :#71727]
+	- 20170331@Harper: Cashout - Add Refno for just Cashout and Ticket Payout[RedmineID :#71727]
 
-	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-13'
+	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-17'
 */  
 BEGIN
 	SET NOCOUNT ON
@@ -70,7 +70,7 @@ BEGIN
 	  ,[betfrom]  
 	  ,[BuyBackAmt]
 	  ,[BABuyBackAmt]
-	  ,[COTicketCount]
+	  ,[Refno]
 	  ,[TicketPayout]
 	  )  
 	SELECT @winlostdate  
@@ -139,7 +139,7 @@ BEGIN
 	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END AS betfrom   
 	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
-	 ,COUNT(DISTINCT bettrans.refno) AS COTicketCount
+	 ,CASE WHEN bettrans.bettype = 911 THEN bettrans.refno ELSE 0 END AS Refno
 	 ,SUM(CASE WHEN bettrans.bettype = 911 THEN ISNULL(co.TicketPayout, 0) ELSE 0 END) AS TicketPayout
 	FROM  
 	 bodb02.dbo.bettrans bettrans WITH (NOLOCK)
@@ -195,6 +195,7 @@ BEGIN
 	  WHEN bettrans.betfrom IN ('s','m','l') THEN 1 ELSE 0 END  
 	 ,CASE      
 	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END  
+	 ,CASE WHEN bettrans.bettype = 911 THEN bettrans.refno ELSE 0 END
 	 OPTION (MAXDOP 8)
 
 	--Agent Level (sum on member)  
@@ -229,7 +230,7 @@ BEGIN
 	  ,[betfrom]
 	  ,[BuyBackAmt]
 	  ,[BABuyBackAmt]
-	  ,[COTicketCount]
+	  ,[Refno]
 	  ,[TicketPayout]
 	)  
 	SELECT  
@@ -263,7 +264,7 @@ BEGIN
 	,b.betfrom
 	,SUM(BuyBackAmt) 
 	,SUM(BABuyBackAmt) 
-	,SUM(COTicketCount)
+	,b.Refno
 	,SUM(TicketPayout)
 	FROM  
 		dbo.rptLicWinloss2 b (nolock)  
@@ -286,7 +287,7 @@ BEGIN
 	,b.isBA  
 	,b.isMobile  
 	,b.betfrom  
-  
+	,b.Refno   
 	--Master Level (sum on member)  
 	INSERT INTO dbo.rptLicWinloss2  
 			(  
@@ -320,7 +321,7 @@ BEGIN
 	  ,[betfrom] 
 	  ,[BuyBackAmt] 
 	  ,[BABuyBackAmt]
-	  ,[COTicketCount]
+	  ,[Refno]
 	  ,[TicketPayout]
 			)  
 	SELECT  
@@ -354,7 +355,7 @@ BEGIN
 	 ,b.betfrom
 	 ,SUM(BuyBackAmt)  
 	 ,SUM(BABuyBackAmt) 
-	 ,SUM(COTicketCount)  
+	 ,b.Refno  
 	 ,SUM(TicketPayout)
 	FROM  
 		dbo.rptLicWinloss2 b (NOLOCK)  
@@ -375,7 +376,8 @@ BEGIN
 		,b.statusID  
 	 ,b.isBA  
 	 ,b.isMobile  
-	 ,b.betfrom  
+	 ,b.betfrom 
+	 ,b.Refno 
   
 	--Super Level (Sum on member)  
 	INSERT INTO dbo.rptLicWinloss2  
@@ -410,7 +412,7 @@ BEGIN
 	  ,[betfrom]  
 	  ,[BuyBackAmt]
 	  ,[BABuyBackAmt]
-	  ,[COTicketCount]
+	  ,[Refno]
 	  ,[TicketPayout]
 			)  
 	SELECT  
@@ -444,7 +446,7 @@ BEGIN
 	 ,b.betfrom 
 	 ,SUM(BuyBackAmt)
 	 ,SUM(BABuyBackAmt)   
-	 ,SUM(COTicketCount) 
+	 ,b.Refno 
 	 ,SUM(TicketPayout)
 	FROM  
 		dbo.rptLicWinloss2 b (nolock)  
@@ -465,6 +467,7 @@ BEGIN
 	 ,b.isBA  
 	 ,b.isMobile  
 	 ,b.betfrom
+	 ,b.refno
 END
 GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicWinloss2_Bettrans] TO [vnteam] AS [dbo]
 GO

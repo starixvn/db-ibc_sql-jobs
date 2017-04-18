@@ -24,6 +24,9 @@ AS
 		- 20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 		- 20170314@Sophia: Integrate Fishing World [Redmine: #73303]
 		- 20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
+
+	EXEC GEN_rptBettingByProduct '2017-04-16', '2017-04-17'
+
 */
 
 BEGIN  
@@ -63,7 +66,7 @@ BEGIN
 			,[WinPrizeAmount]
 			,[CashOutAmount]
 			,[ValidBetAmount]
-			,[COTicketCount]
+			,[Refno]
 			,[TicketPayout])
 	SELECT
 		[rptDate]
@@ -83,7 +86,7 @@ BEGIN
 		,SUM(ISNULL([WinPrizeAmount],0)) [WinPrizeAmount]
 		,SUM(ISNULL([CashOutAmount],0)) [CashOutAmount]
 		,SUM(ISNULL([oddsspread],0)) 	[ValidBetAmount]
-		,SUM(ISNULL([COTicketCount],0)) [COTicketCount]
+		,Refno
 		,SUM(ISNULL([TicketPayout],0)) [TicketPayout]
 	FROM dbo.rpt_Betting b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
@@ -97,6 +100,7 @@ BEGIN
 			,[CurrencyId]
 			,Status
 			,ISNULL([CustomerCategory],-1)
+			,Refno
 	UNION ALL
 	SELECT
 		[rptDate]
@@ -116,7 +120,7 @@ BEGIN
 		,0 [WinPrizeAmount]
 		,0 [CashOutAmount]
 		,0 [ValidBetAmount]
-		,0 [CashoutTicket]
+		,0 [Refno]
 		,SUM(ISNULL([TicketPayout],0)) [TicketPayout]
 	FROM dbo.rpt_Betting_BA b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype

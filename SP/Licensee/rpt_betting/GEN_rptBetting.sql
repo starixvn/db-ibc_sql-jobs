@@ -28,6 +28,7 @@ Revisions:
 
 Param's Explanation:
 
+EXEC GEN_rptBetting '2017-04-16', '2017-04-17'
 */
 IF @date2 IS NULL SET @date2 = @date
 SET @date2 = DATEADD(day,1,@date2)
@@ -44,8 +45,7 @@ INSERT INTO dbo.rpt_Betting
         ,[Status]
         ,[IsLive]
         ,[BetCount]
-        ,[MemberCount]
-		,[COTicketCount]
+        ,[MemberCount]		
         ,[Turnover]
         ,[WinLoss]
         ,[WinLossA]
@@ -62,6 +62,7 @@ INSERT INTO dbo.rpt_Betting
 		,[WinPrizeAmount]
 		,[CashOutAmount]
 		,[TicketPayout]
+		,[Refno]
 		,[oddsspread])
     SELECT  
 	    b.winlostdate,
@@ -77,8 +78,7 @@ INSERT INTO dbo.rpt_Betting
 	    b.statusid Status,
 	    ISNULL(b.liveindicator,0) liveindicator,
         COUNT(*) Betcount,
-        COUNT(DISTINCT b.custid) MemberCount,
-		COUNT(DISTINCT b.refno) COTicketCount,
+        COUNT(DISTINCT b.custid) MemberCount,		
         SUM(stake) Turnover,
         SUM(winlost-actual_stake) winloss,
         SUM(awinlost) winlossA,
@@ -99,6 +99,7 @@ INSERT INTO dbo.rpt_Betting
 		SUM(ISNULL(WinPrizeAmount,0)) WinPrizeAmount,
 		SUM(ISNULL(CashOutAmount,0)) CashOutAmount, -- Cashout Value of Cashout Product
 		SUM(ISNULL(TicketPayout, 0)) TicketPayout,
+		CASE WHEN b.bettype = 911 THEN b.refno ELSE 0 END,
 		SUM(ISNULL(oddsspread,0))    oddsspread
     FROM
 	    dbo.bettrans b (NOLOCK) 
@@ -122,7 +123,8 @@ INSERT INTO dbo.rpt_Betting
 	    b.currency,
 	    b.statusid,
 	    b.liveindicator,
-	    b.customercategory
+	    b.customercategory,
+		CASE WHEN b.bettype = 911 THEN b.refno ELSE 0 END
  	 
 --update MTD table
 EXEC dbo.GEN_RptKPI_MTD_Betting
