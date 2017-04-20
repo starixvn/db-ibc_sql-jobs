@@ -35,102 +35,91 @@ Revisions:
 	- 20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
-	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
-	- 20170331@Harper: Cashout - Add Cashout Ticket Count and Ticket Payout[RedmineID :#71727]
+	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]	
 
-	EXEC Task_DailyRptLicWinloss2 '2017-04-13'
+	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */  
 BEGIN
 	SET NOCOUNT ON
     
-	DELETE FROM dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate  
-	
-	-- Prepare Data for Ticket Payout
-	DECLARE @PayoutOfCOCust AS TABLE (Refno BIGINT, TicketPayout MONEY)
-	INSERT INTO @PayoutOfCOCust (Refno, TicketPayout)
-	SELECT b.refno, SUM(b.winlost)
-	FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-		INNER JOIN (SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL')) c ON b.custid = c.CustId
-	WHERE b.bettype NOT IN (912, 913, 914)		
-	GROUP BY b.refno
+	DELETE FROM dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate  	
 
---Member Level
-INSERT INTO dbo.rptLicWinloss2
-		(
-		[winlostdate]
-		,[username]
-		,[username2]
-		,[custid]
-		,[roleid]
-		,[recommend]
-		,[mrecommend]
-		,[srecommend]
-		,[turnover]
-		,[winlost]
-		,[BetEffective]
-		,[awinlost]
-		,[mwinlost]
-		,[swinlost]
-		,[playercomm]
-		,[comm]
-		,[acomm]
-		,[scomm]
-		,[winlostvirtual]
-		,[commvirtual]
-		,[BetCount]
-		,[Currency]
-		,[sporttype]
-		,[bettype]
-		,[statusID]
-		,[isBA]
-		,[isMobile]
-		,[betfrom]
-		,[BuyBackAmt]
-		,[BABuyBackAmt]
-		,[COTicketCount]
-		,[TicketPayout]
-		)
-SELECT @winlostdate
-	  ,customer.username
-	  ,customer.username2
-	  ,customer.custid
-	  ,1
-	  ,customer.recommend
-	  ,customer.mrecommend
-	  ,customer.srecommend
-	,SUM(		
-		CASE WHEN bettrans.liveawayscore = 0 AND bettrans.bettype IN(33,43) 
-			 THEN ABS(bettrans.stake/2) ELSE ABS(bettrans.stake) 
-			 END
-		) AS TurnOver
-	,SUM(winlost-actual_stake)  winlost
-	,CASE WHEN bettrans.statusID IN (112,113) 
-		  THEN SUM(ABS(winlost-actual_stake)) 
-		  ELSE 0
-		  END BetEffective 
-	,SUM(awinlost) awinlost
-	,SUM(mwinlost) mwinlost
-	,SUM(ISNULL(swinlost,0)) swinlost
-	,SUM(playercomm) playercomm
-	,SUM(comm) comm
-	,SUM(acomm) acomm
-	,SUM(ISNULL(scomm,0)) scomm
-	,SUM((winlost - actual_stake)*virtualrate) AS WinlostVirtual
-	,SUM ((comm)*virtualrate) AS CommVirtual
-	,COUNT(bettrans.transid) BetCount
-	,bettrans.currency
-	,CASE
-		WHEN bettype IN (71,72) THEN 251 --casino
-		WHEN bettype = 1000 THEN 253 --games
-		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game 
-		WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live casino
-		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
-		WHEN bettype BETWEEN 51 AND 69 THEN 201
-		WHEN bettype IN (31,32,33,41,42,43) THEN 151
-		WHEN bettype BETWEEN 1501  AND 1599 THEN 202 -- Keno
-		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
-		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
+	--Member Level  
+	INSERT INTO dbo.rptLicWinloss2(  
+	  [winlostdate]  
+	  ,[username]  
+	  ,[username2]  
+	  ,[custid]  
+	  ,[roleid]  
+	  ,[recommend]  
+	  ,[mrecommend]  
+	  ,[srecommend]  
+	  ,[turnover]  
+	  ,[winlost]  
+	  ,[BetEffective]  
+	  ,[awinlost]  
+	  ,[mwinlost]  
+	  ,[swinlost]  
+	  ,[playercomm]  
+	  ,[comm]  
+	  ,[acomm]  
+	  ,[scomm]  
+	  ,[winlostvirtual]  
+	  ,[commvirtual]  
+	  ,[BetCount]  
+	  ,[Currency]  
+	  ,[sporttype]  
+	  ,[bettype]  
+	  ,[statusID]  
+	  ,[isBA]  
+	  ,[isMobile]  
+	  ,[betfrom]  
+	  ,[BuyBackAmt]
+	  ,[BABuyBackAmt]	 
+	  ,[TicketPayout]
+	  ,[COTicketCount]
+	  )  
+	SELECT @winlostdate  
+	   ,customer.username  
+	   ,customer.username2  
+	   ,customer.custid  
+	   ,1  
+	   ,customer.recommend  
+	   ,customer.mrecommend  
+	   ,customer.srecommend  
+	 ,SUM(    
+	  CASE WHEN bettrans.liveawayscore = 0 AND bettrans.bettype IN(33,43)   
+		THEN ABS(bettrans.stake/2) ELSE ABS(bettrans.stake)   
+		END  
+	  ) AS TurnOver  
+	 ,SUM(winlost-actual_stake)  winlost  
+	 ,CASE WHEN bettrans.statusID IN (112,113)   
+		THEN SUM(ABS(winlost-actual_stake))   
+		ELSE 0  
+		END BetEffective   
+	 ,SUM(awinlost) awinlost  
+	 ,SUM(mwinlost) mwinlost  
+	 ,SUM(ISNULL(swinlost,0)) swinlost  
+	 ,SUM(playercomm) playercomm  
+	 ,SUM(comm) comm  
+	 ,SUM(acomm) acomm  
+	 ,SUM(ISNULL(scomm,0)) scomm  
+	 ,SUM((winlost - actual_stake)*virtualrate) AS WinlostVirtual  
+	 ,SUM ((comm)*virtualrate) AS CommVirtual  
+	 ,COUNT(bettrans.transid) BetCount  
+	 ,bettrans.currency  
+	 ,CASE
+		WHEN bettype IN (71,72) THEN 251 --casino  
+		WHEN bettype = 1000 THEN 253 --games  
+		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game   
+		WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live casino  
+		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport  
+		WHEN bettype BETWEEN 51 AND 69 THEN 201  
+		WHEN bettype IN (31,32,33,41,42,43) THEN 151  
+		WHEN bettype BETWEEN 1501  AND 1599 THEN 202 -- Keno  
+		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC  
+		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD  
+		WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG  
 		WHEN bettype BETWEEN 2001 AND 2007 THEN 203
 		WHEN bettype BETWEEN 2008 AND 2009 THEN 205
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
@@ -156,13 +145,14 @@ SELECT @winlostdate
 		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END AS betfrom
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
-	,COUNT(DISTINCT bettrans.refno) AS COTicketCount
 	 ,SUM(CASE WHEN bettrans.bettype = 911 THEN ISNULL(co.TicketPayout, 0) ELSE 0 END) AS TicketPayout
+	 ,SUM(CASE WHEN bettrans.bettype = 911 THEN ISNULL(ti.IsCashout, 0) ELSE 0 END) AS COTicketCount
 FROM
 	bodb02.dbo.bettrans14 bettrans WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
 	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction ba ON bettrans.transid = ba.transid
 	 LEFT JOIN @PayoutOfCOCust co ON bettrans.transid = co.Refno
+	 LEFT JOIN @CashoutTicket ti ON ti.TransID = bettrans.transid
 WHERE
 	bettrans.winlostdate = @winlostdate AND
 	customer.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All')) AND
@@ -245,8 +235,8 @@ INSERT INTO dbo.rptLicWinloss2
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
+		,[TicketPayout]
 		,[COTicketCount]
-	    ,[TicketPayout]
         )
     SELECT
         @winlostdate
@@ -279,8 +269,8 @@ INSERT INTO dbo.rptLicWinloss2
 		,b.betfrom
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
-		,SUM(COTicketCount)
 		,SUM(TicketPayout)
+		,SUM(b.COTicketCount)
     FROM
         dbo.rptLicWinloss2 b (nolock)
         INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid
@@ -336,8 +326,8 @@ INSERT INTO dbo.rptLicWinloss2
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
-		,[COTicketCount]
 		,[TicketPayout]
+		,[COTicketCount]
         )
 SELECT
     @winlostdate
@@ -369,9 +359,9 @@ SELECT
 	,b.isMobile
 	,b.betfrom
 	,SUM(BuyBackAmt)
-	,SUM(BABuyBackAmt)
-	,SUM(COTicketCount)
+	,SUM(BABuyBackAmt)	
 	,SUM(TicketPayout)
+	,SUM(COTicketCount)
 FROM
     dbo.rptLicWinloss2 b (NOLOCK)
     INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.mrecommend = c.custid
@@ -426,8 +416,8 @@ INSERT INTO dbo.rptLicWinloss2
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
-		,[COTicketCount]
 		,[TicketPayout]
+		,[COTicketCount]
         )
 SELECT
 	@winlostdate
@@ -460,8 +450,8 @@ SELECT
 	,b.betfrom
 	,SUM(BuyBackAmt)
 	,SUM(BABuyBackAmt)
-	,SUM(COTicketCount)
 	,SUM(TicketPayout)
+	,SUM(b.COTicketCount)
 FROM
     dbo.rptLicWinloss2 b (nolock)
     INNER join bodb02.dbo.customer c (nolock) ON b.srecommend = c.custid

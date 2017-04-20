@@ -9,7 +9,8 @@ AS
     DB: DBLIC.bodb_LicenseeReport
 
     Revisions:
-    20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		20170420@Harper: Add more job gen data for Cashout [#71727]
 
 */ 
 
@@ -46,7 +47,12 @@ AS
     begin
         print 'GEN_rptBetting ' + cast(@strDateStart as varchar) + ', ' + cast(@strDateEnd as varchar)
         EXECUTE dbo.GEN_rptBetting @strDateStart, @strDateEnd
-    end
+    END
+    
+	-- Cashout
+	PRINT 'GEN_rptLicCashoutSummary ' + CAST(@strDateStart AS VARCHAR) + ', ' + CAST(@strDateEnd AS VARCHAR)
+	EXEC dbo.GEN_rptLicCashoutSummary @strDateStart, @strDateEnd, 'CO'
+
 GO
 GRANT EXECUTE ON [dbo].[GEN_Betting] TO [bodbLicenseeNet] AS [dbo]
 GO

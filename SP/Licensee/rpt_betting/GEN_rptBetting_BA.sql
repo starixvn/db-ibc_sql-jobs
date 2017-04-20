@@ -48,7 +48,7 @@ INSERT INTO dbo.rpt_Betting_BA
         ,[CommissionSVirtual]
 		,[customercategory]
 		,[BuyBackAmount]
-		,[TicketPayout])
+		)
     SELECT  
 	    b.winlostdate,
         ISNULL(site.SiteID,-1) siteid,
@@ -75,8 +75,7 @@ INSERT INTO dbo.rpt_Betting_BA
 	    SUM((winlost-actual_stake)*virtualrate) WinLossVirtual,
 	    SUM(scomm*virtualrate) CommissionSVirtual,
 		b.customercategory,
-		SUM(CASE WHEN b.bettype IN (901) THEN winlost ELSE 0 END),
-		SUM(TicketPayout)
+		SUM(CASE WHEN b.bettype IN (901) THEN winlost ELSE 0 END)		
     FROM
 	    dbo.bettrans b (NOLOCK) 
 	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2

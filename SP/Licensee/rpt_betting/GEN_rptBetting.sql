@@ -28,7 +28,7 @@ Revisions:
 
 Param's Explanation:
 
-EXEC GEN_rptBetting '2017-04-16', '2017-04-17'
+EXEC GEN_rptBetting '2017-04-15', '2017-04-16'
 */
 IF @date2 IS NULL SET @date2 = @date
 SET @date2 = DATEADD(day,1,@date2)
@@ -60,9 +60,7 @@ INSERT INTO dbo.rpt_Betting
         ,[CustomerCategory]
 		,[BuyBackAmount]
 		,[WinPrizeAmount]
-		,[CashOutAmount]
-		,[TicketPayout]
-		,[Refno]
+		,[CashOutAmount]		
 		,[oddsspread])
     SELECT  
 	    b.winlostdate,
@@ -97,9 +95,7 @@ INSERT INTO dbo.rpt_Betting
 				ELSE 0 
 			END) BuyBackAmount,
 		SUM(ISNULL(WinPrizeAmount,0)) WinPrizeAmount,
-		SUM(ISNULL(CashOutAmount,0)) CashOutAmount, -- Cashout Value of Cashout Product
-		SUM(ISNULL(TicketPayout, 0)) TicketPayout,
-		CASE WHEN b.bettype = 911 THEN b.refno ELSE 0 END,
+		SUM(ISNULL(CashOutAmount,0)) CashOutAmount, -- Cashout Value of Cashout Product		
 		SUM(ISNULL(oddsspread,0))    oddsspread
     FROM
 	    dbo.bettrans b (NOLOCK) 
@@ -123,9 +119,8 @@ INSERT INTO dbo.rpt_Betting
 	    b.currency,
 	    b.statusid,
 	    b.liveindicator,
-	    b.customercategory,
-		CASE WHEN b.bettype = 911 THEN b.refno ELSE 0 END
- 	 
+	    b.customercategory
+
 --update MTD table
 EXEC dbo.GEN_RptKPI_MTD_Betting
     @date = @date, 

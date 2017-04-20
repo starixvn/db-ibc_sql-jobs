@@ -32,6 +32,7 @@ Revisions:
 	-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 
 Param's Explanation:
+	EXEC Task_PrepareStaging '2017-04-16', '2017-04-18'
 */
 BEGIN
 	
@@ -128,7 +129,8 @@ BEGIN
                 ,customercategory
 				,isBA
 				,refno
-				,oddsspread)
+				,oddsspread
+				,ExtraInfo)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -156,7 +158,8 @@ BEGIN
 				ELSE -1 END customercategory,
 				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
-				oddsspread
+				oddsspread,
+				b.ExtraInfo
 			FROM bodb02.dbo.bettrans b (NOLOCK)
 			    INNER JOIN @Recommend_List r ON b.recommend=r.t_recommend
 			WHERE b.bettype<19000
@@ -233,7 +236,8 @@ BEGIN
                 ,customercategory
 				,isBA
 				,refno
-				,oddsspread)
+				,oddsspread
+				,ExtraInfo)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -261,7 +265,8 @@ BEGIN
 					ELSE -1 END customercategory,
 				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
-				oddsspread
+				oddsspread,
+				b.ExtraInfo
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
 			    INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
 			WHERE b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
@@ -311,30 +316,18 @@ BEGIN
 	FROM dbo.bettrans b
 	WHERE b.bettype = 911
 
-	;WITH payout AS (
-					SELECT b.refno, b.winlost
-					FROM dbo.bettrans b
-						INNER JOIN #CashoutCust ctc ON b.CustId = ctc.CustId
-					WHERE b.bettype NOT IN (912, 913, 914)
-	)
-	UPDATE b
-	SET b.TicketPayout = p.winlost
-	FROM dbo.bettrans b
-		INNER JOIN payout p ON b.transid = p.refno
-	WHERE b.bettype = 911
-
-	UPDATE b
-	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (902,903,904) THEN 1 ELSE 0 END
-		, customercategory = CASE WHEN isBA = 0 THEN 1001 ELSE 1002 END --bettrade
-	FROM dbo.bettrans b
-		INNER JOIN #BetTradeCust btc ON b.CustId = btc.CustId
-
 	UPDATE b
 	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (912, 913, 914) THEN 1 ELSE 0 END
 		, customercategory = CASE WHEN isBA = 0 THEN 1003 ELSE 1004 END -- Cashout
 	FROM dbo.bettrans b
 		INNER JOIN #CashoutCust ctc ON b.CustId = ctc.CustId
 			
+	UPDATE b
+	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (902,903,904) THEN 1 ELSE 0 END
+		, customercategory = CASE WHEN isBA = 0 THEN 1001 ELSE 1002 END --bettrade
+	FROM dbo.bettrans b
+		INNER JOIN #BetTradeCust btc ON b.CustId = btc.CustId
+
 	--DROP TABLE #Recommend_List
 	DROP TABLE #Customer
 		

@@ -25,7 +25,7 @@ AS
 		- 20170314@Sophia: Integrate Fishing World [Redmine: #73303]
 		- 20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 
-	EXEC GEN_rptBettingByProduct '2017-04-16', '2017-04-17'
+	EXEC GEN_rptBettingByProduct '2017-04-16', '2017-04-16'
 
 */
 
@@ -65,9 +65,8 @@ BEGIN
 			,[BuyBackAmount]
 			,[WinPrizeAmount]
 			,[CashOutAmount]
-			,[ValidBetAmount]
-			,[Refno]
-			,[TicketPayout])
+			,[ValidBetAmount]			
+			)
 	SELECT
 		[rptDate]
 		,[SiteID]
@@ -85,9 +84,7 @@ BEGIN
 		,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
 		,SUM(ISNULL([WinPrizeAmount],0)) [WinPrizeAmount]
 		,SUM(ISNULL([CashOutAmount],0)) [CashOutAmount]
-		,SUM(ISNULL([oddsspread],0)) 	[ValidBetAmount]
-		,Refno
-		,SUM(ISNULL([TicketPayout],0)) [TicketPayout]
+		,SUM(ISNULL([oddsspread],0)) 	[ValidBetAmount]	
 	FROM dbo.rpt_Betting b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2
@@ -100,7 +97,6 @@ BEGIN
 			,[CurrencyId]
 			,Status
 			,ISNULL([CustomerCategory],-1)
-			,Refno
 	UNION ALL
 	SELECT
 		[rptDate]
@@ -119,9 +115,7 @@ BEGIN
 		,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
 		,0 [WinPrizeAmount]
 		,0 [CashOutAmount]
-		,0 [ValidBetAmount]
-		,0 [Refno]
-		,SUM(ISNULL([TicketPayout],0)) [TicketPayout]
+		,0 [ValidBetAmount]	
 	FROM dbo.rpt_Betting_BA b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2
