@@ -75,9 +75,7 @@ BEGIN
 	  ,[isMobile]  
 	  ,[betfrom]  
 	  ,[BuyBackAmt]
-	  ,[BABuyBackAmt]	 
-	  ,[TicketPayout]
-	  ,[COTicketCount]
+	  ,[BABuyBackAmt] 
 	  )  
 	SELECT @winlostdate  
 	   ,customer.username  
@@ -145,14 +143,10 @@ BEGIN
 		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END AS betfrom
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
-	 ,SUM(CASE WHEN bettrans.bettype = 911 THEN ISNULL(co.TicketPayout, 0) ELSE 0 END) AS TicketPayout
-	 ,SUM(CASE WHEN bettrans.bettype = 911 THEN ISNULL(ti.IsCashout, 0) ELSE 0 END) AS COTicketCount
 FROM
 	bodb02.dbo.bettrans14 bettrans WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
 	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction ba ON bettrans.transid = ba.transid
-	 LEFT JOIN @PayoutOfCOCust co ON bettrans.transid = co.Refno
-	 LEFT JOIN @CashoutTicket ti ON ti.TransID = bettrans.transid
 WHERE
 	bettrans.winlostdate = @winlostdate AND
 	customer.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All')) AND
@@ -235,8 +229,6 @@ INSERT INTO dbo.rptLicWinloss2
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
-		,[TicketPayout]
-		,[COTicketCount]
         )
     SELECT
         @winlostdate
@@ -269,8 +261,6 @@ INSERT INTO dbo.rptLicWinloss2
 		,b.betfrom
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
-		,SUM(TicketPayout)
-		,SUM(b.COTicketCount)
     FROM
         dbo.rptLicWinloss2 b (nolock)
         INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid
@@ -325,9 +315,7 @@ INSERT INTO dbo.rptLicWinloss2
 		,[isMobile]
 		,[betfrom]
 		,[BuyBackAmt]
-		,[BABuyBackAmt]
-		,[TicketPayout]
-		,[COTicketCount]
+		,[BABuyBackAmt]		
         )
 SELECT
     @winlostdate
@@ -359,9 +347,7 @@ SELECT
 	,b.isMobile
 	,b.betfrom
 	,SUM(BuyBackAmt)
-	,SUM(BABuyBackAmt)	
-	,SUM(TicketPayout)
-	,SUM(COTicketCount)
+	,SUM(BABuyBackAmt)		
 FROM
     dbo.rptLicWinloss2 b (NOLOCK)
     INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.mrecommend = c.custid
@@ -415,9 +401,7 @@ INSERT INTO dbo.rptLicWinloss2
 		,[isMobile]
 		,[betfrom]
 		,[BuyBackAmt]
-		,[BABuyBackAmt]
-		,[TicketPayout]
-		,[COTicketCount]
+		,[BABuyBackAmt]		
         )
 SELECT
 	@winlostdate
@@ -449,9 +433,7 @@ SELECT
 	,b.isMobile
 	,b.betfrom
 	,SUM(BuyBackAmt)
-	,SUM(BABuyBackAmt)
-	,SUM(TicketPayout)
-	,SUM(b.COTicketCount)
+	,SUM(BABuyBackAmt)	
 FROM
     dbo.rptLicWinloss2 b (nolock)
     INNER join bodb02.dbo.customer c (nolock) ON b.srecommend = c.custid
