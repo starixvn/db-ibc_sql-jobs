@@ -9,9 +9,9 @@ AS
 /*
 	Created: 20170419@Harper
 	Description: Daily summary data of Cashout [#71727]
-	DB: DBEXT/bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport
 
-	EXEC GEN_rptLicCashoutSummary '20170417'
+	EXEC GEN_rptLicCashoutSummary '20170418'
 */
 BEGIN
 	IF @ToDate IS NULL
@@ -29,8 +29,8 @@ BEGIN
 
 	CREATE TABLE #CashoutCust (CustId INT PRIMARY KEY)
 	INSERT INTO #CashoutCust(CustId)
-	SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL')
-
+	SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL', 14) -- Cashout
+	
 	-- Member Level
 	INSERT INTO dbo.rptLicCashoutSummary(
 			Winlostdate,	
@@ -46,43 +46,58 @@ BEGIN
 			CashoutComm,
 			CashoutAmount,
 			BuyBackAmt,	
-			BABuyBackAmt,
-			NumOfCashoutTicket,
+			BABuyBackAmt,			
 			NumOfCashoutTrans
 	)
 	SELECT b.winlostdate, b.custid, b.currency
 		, ISNULL(site.SiteID,-1) siteid
-		, ISNULL(bt.ProductID, 25)
+		, 25
 		, 1
 		, customer.recommend, customer.mrecommend, customer.srecommend
 		, SUM(ISNULL(po.winlost, 0))
-		, SUM(CASE WHEN b.bettype = 913 THEN b.awinlost ELSE 0 END)
+		, SUM(ISNULL(comm.Comm, 0))
 		, SUM(CASE WHEN b.bettype = 911 THEN b.actual_stake ELSE 0 END)
 		, SUM(CASE WHEN b.bettype = 911 AND b.customercategory = 1003 THEN b.winlost ELSE 0 END)
-		, SUM(CASE WHEN b.bettype = 911 AND b.customercategory = 1004 THEN b.winlost ELSE 0 END)
-		, SUM(CASE WHEN ISNULL(b.ExtraInfo, '') <> '' AND b.bettype <> 911 THEN 1 ELSE 0 END)
+		, SUM(CASE WHEN b.bettype = 911 AND b.customercategory = 1004 THEN b.winlost ELSE 0 END)		
 		, SUM(CASE WHEN b.bettype = 911 THEN 1 ELSE 0 END)
-	FROM dbo.bettrans b WITH (NOLOCK)	
-		INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK) ON b.srecommend = s.CustId
-		INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON b.custid = customer.custid
+	FROM dbo.bettrans b WITH (NOLOCK)
 		LEFT JOIN (
-					SELECT b.refno, b.winlost
-					FROM dbo.bettrans b
-						INNER JOIN #CashoutCust ctc ON b.CustId = ctc.CustId
-					WHERE b.bettype NOT IN (912, 913, 914)
+					SELECT b2.refno, SUM(b2.winlost) AS winlost
+					FROM dbo.bettrans b2 WITH (NOLOCK)
+						INNER JOIN #CashoutCust ctc ON b2.CustId = ctc.CustId
+					WHERE b2.bettype NOT IN (SELECT bettype FROM #Bettype WHERE ProductID = 25)						
+					GROUP BY b2.refno
 				) po ON po.refno = b.transid
-		LEFT JOIN #Bettype bt ON b.bettype = bt.Bettype
-		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON customer.site = ibcsite.site
+		LEFT JOIN ( 
+					SELECT b2.refno, SUM(b2.awinlost) AS Comm
+					FROM dbo.bettrans b2 WITH (NOLOCK)						
+					WHERE b2.bettype = 913						
+					GROUP BY b2.refno
+				) comm ON comm.refno = b.transid
+		INNER JOIN #Bettype bt ON b.bettype = bt.Bettype		
+		INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON b.custid = customer.custid AND customer.roleid = 1
+		LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON customer.recommend = ag.custid AND ag.roleid = 2
+		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON ag.site = ibcsite.site
 		LEFT JOIN bodb_Licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
-	WHERE statusid IN (111, 112, 113)
-		AND (EXISTS (SELECT 1 FROM #Bettype bt2 WHERE b.bettype = bt2.Bettype) OR b.ExtraInfo IS NOT NULL)
+	WHERE statusid IN (111, 112, 113)	
+		AND NOT EXISTS (SELECT 1 FROM #CashoutCust co WHERE co.CustId = b.CustID)
 	GROUP BY Winlostdate,	
 		b.CustID,		
 		b.Currency,
-		ISNULL(site.SiteID,-1),
-		ISNULL(bt.ProductID, 25),		
+		ISNULL(site.SiteID,-1),			
 		customer.recommend, customer.mrecommend, customer.srecommend	
-
+	
+	;WITH cte AS (
+			SELECT b.winlostdate, b.custid, b.currency, COUNT (*) AS numOfTicket
+			FROM dbo.bettrans b WITH (NOLOCK)
+			WHERE ISNULL(b.ExtraInfo, '') <> '' AND b.bettype <> 911
+			GROUP BY b.winlostdate, b.custid, b.currency
+	)
+	UPDATE b
+	SET b.NumOfCashoutTicket = cte.numOfTicket
+	FROM dbo.rptLicCashoutSummary b
+		INNER JOIN cte ON b.Winlostdate = cte.winlostdate AND b.Currency = cte.currency AND b.CustID = cte.custid
+						                              
 	-- Agent Level (Sum on member)
 	INSERT INTO dbo.rptLicCashoutSummary(
 			Winlostdate,	

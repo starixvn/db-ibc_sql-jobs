@@ -85,12 +85,12 @@ BEGIN
 	SELECT CustId FROM bodb02.dbo.f_GetBetTradeCustList('ALL')
 
 	INSERT INTO #CashoutCust(CustId)
-	SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL')
+	SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL', 14)
     
     DECLARE @count int,@movebetdate smalldatetime,@tmpDate smalldatetime
 	SELECT @count=DATEDIFF(DAY,@thedaybefore,@today) - 1
 	SELECT @movebetdate=MAX(winlostdate) FROM bodb02.dbo.bettrans14 (NOLOCK)
-
+		
 	WHILE (@count>=0)
 	BEGIN
 		SELECT @tmpDate=DATEADD(DAY,@count,@thedaybefore)

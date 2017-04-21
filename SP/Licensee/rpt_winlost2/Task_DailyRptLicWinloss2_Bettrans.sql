@@ -135,7 +135,7 @@ BEGIN
 	WHERE  
 	 bettrans.winlostdate = @winlostdate AND  
 	 bettrans.statusID IN (101,111,112,113) AND --REJECT, DRAW, WON, LOSE  
-	 bettrans.bettype<=19999  
+	 bettrans.bettype <= 19999  
 	GROUP BY  
 	 customer.custid  
 	 ,customer.recommend  
