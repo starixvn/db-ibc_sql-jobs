@@ -85,7 +85,7 @@ BEGIN
 	SELECT CustId FROM bodb02.dbo.f_GetBetTradeCustList('ALL')
 
 	INSERT INTO #CashoutCust(CustId)
-	SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL', 14)
+	SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL', 14) -- 14: VendorID of Cashout
     
     DECLARE @count int,@movebetdate smalldatetime,@tmpDate smalldatetime
 	SELECT @count=DATEDIFF(DAY,@thedaybefore,@today) - 1

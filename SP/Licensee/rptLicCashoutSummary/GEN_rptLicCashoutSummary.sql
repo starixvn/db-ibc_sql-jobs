@@ -8,7 +8,7 @@ ALTER PROCEDURE [dbo].[GEN_rptLicCashoutSummary]
 AS
 /*
 	Created: 20170419@Harper
-	Description: Daily summary data of Cashout [#71727]
+	Description: Daily summary data of Cashout [RedmineID: #71727]
 	DB: DBLIC.bodb_LicenseeReport
 
 	EXEC GEN_rptLicCashoutSummary '20170418'
@@ -29,7 +29,7 @@ BEGIN
 
 	CREATE TABLE #CashoutCust (CustId INT PRIMARY KEY)
 	INSERT INTO #CashoutCust(CustId)
-	SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL', 14) -- Cashout
+	SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL', 14) -- VendorID of Cashout
 	
 	-- Member Level
 	INSERT INTO dbo.rptLicCashoutSummary(
