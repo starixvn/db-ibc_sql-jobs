@@ -67,6 +67,7 @@ BEGIN
 
 			SELECT custid
 			FROM dbo.TradeCust WITH(NOLOCK)
+			WHERE VendorID = 14
 		) 
 
    
