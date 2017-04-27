@@ -22,6 +22,7 @@ AS
   20150127@Don: Expand bet type ranges for Sportbook when processing BA
   20150903@Patrick: #42910: Exclude ticket 901 for BetTrade
   20160301@Don: Add hard-code of [transid < 100000000000]
+  20160416@Francis: Revert hard-code of [transid < 100000000000]
  */  
 SET NOCOUNT ON   
   
@@ -33,7 +34,7 @@ SET NOCOUNT ON
  FROM bodb_licensee.dbo.LICSettings with(rowlock)   
  WHERE vname = 'BA_transid'   
   
- SELECT @maxtransID = max(transid) FROM dbo.bettrans with(nolock) WHERE transid < 100000000000
+ SELECT @maxtransID = max(transid) FROM dbo.bettrans with(nolock) --WHERE transid < 100000000000
        
  UPDATE bodb_licensee.dbo.LICSettings with(rowlock, updlock)  
  SET vvalue = vvalue2  
