@@ -1,5 +1,6 @@
 USE [bodb_LicenseeReport]
 GO
+
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans] 
 	@winlostdate DATETIME  
 AS  
@@ -18,12 +19,15 @@ AS
 	- 20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
+	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]	
+
+	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
 BEGIN
 	SET NOCOUNT ON
     
-	DELETE FROM dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate  
-  
+	DELETE FROM dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate 
+
 	--Member Level  
 	INSERT INTO dbo.rptLicWinloss2(  
 	  [winlostdate]  
@@ -108,7 +112,7 @@ BEGIN
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 	  ELSE 0 END sporttype  
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904) THEN bettype ELSE 0 END bettype  
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
 	 ,CASE   
 	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
@@ -121,18 +125,17 @@ BEGIN
 	  WHEN bettrans.betfrom IN ('s','m','l') THEN 1 ELSE 0 END AS isMobile   
 	 ,CASE      
 	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END AS betfrom   
-	 ,SUM(CASE WHEN bettrans.bettype = 902 AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
-	 ,SUM(CASE WHEN bettrans.bettype = 902 AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
+	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
+	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt	 
 	FROM  
 	 bodb02.dbo.bettrans bettrans WITH (NOLOCK)
 	 INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK) ON bettrans.srecommend = s.CustId
 	 INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
-	 LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) ON bettrans.transid = BA.transid  
+	 LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) ON bettrans.transid = BA.transid 	 
 	WHERE  
 	 bettrans.winlostdate = @winlostdate AND  
-	 --bettrans.srecommend IN (SELECT custid FROM f_DepSuper_1('All')) AND  
 	 bettrans.statusID IN (101,111,112,113) AND --REJECT, DRAW, WON, LOSE  
-	 bettrans.bettype<=19999  
+	 bettrans.bettype <= 19999  
 	GROUP BY  
 	 customer.custid  
 	 ,customer.recommend  
@@ -164,7 +167,7 @@ BEGIN
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 	  ELSE 0 END  
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904) THEN bettype ELSE 0 END  
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END  
 	 ,CASE   
 	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
 	  WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115  
@@ -175,7 +178,7 @@ BEGIN
 	 ,CASE   
 	  WHEN bettrans.betfrom IN ('s','m','l') THEN 1 ELSE 0 END  
 	 ,CASE      
-	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END  
+	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END
 	 OPTION (MAXDOP 8)
 
 	--Agent Level (sum on member)  
@@ -212,62 +215,62 @@ BEGIN
 	  ,[BABuyBackAmt]
 	)  
 	SELECT  
-		@winlostdate  
-	  ,c.username  
-	  ,c.username2  
-	  ,c.custid  
-	  ,2 AS roleid  
-	  ,b.recommend  
-	  ,b.mrecommend  
-	  ,b.srecommend  
-			,SUM(turnover)  
-			,SUM(winlost)  
-	  ,SUM(BetEffective)  
-			,SUM(awinlost)  
-			,SUM(mwinlost)  
-			,SUM(swinlost)  
-			,SUM(playercomm)  
-			,SUM(comm)  
-			,SUM(acomm)  
-			,SUM(scomm)  
-			,SUM(winlostvirtual)  
-			,SUM(commvirtual)  
-			,SUM(BetCount)  
-			,b.currency  
-			,b.sporttype  
-			,b.bettype  
-			,b.statusID  
-	  ,b.isBA  
-	  ,b.isMobile  
-	  ,b.betfrom
-	  ,SUM(BuyBackAmt) 
-	  ,SUM(BABuyBackAmt) 
-		FROM  
-			dbo.rptLicWinloss2 b (nolock)  
-			INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid  
-		WHERE  
-			b.winlostdate = @winlostdate  
-			and b.roleid = 1  
-			and c.roleid = 2  
-		GROUP BY  
-			c.username  
-	  ,c.username2  
-	  ,c.custid  
-	  ,b.recommend  
-	  ,b.mrecommend  
-	  ,b.srecommend  
-			,b.currency  
-			,b.sporttype  
-			,b.bettype  
-			,b.statusID  
-	  ,b.isBA  
-	  ,b.isMobile  
-	  ,b.betfrom  
-  
+	@winlostdate  
+	,c.username  
+	,c.username2  
+	,c.custid  
+	,2 AS roleid  
+	,b.recommend  
+	,b.mrecommend  
+	,b.srecommend  
+	,SUM(turnover)  
+	,SUM(winlost)  
+	,SUM(BetEffective)  
+	,SUM(awinlost)  
+	,SUM(mwinlost)  
+	,SUM(swinlost)  
+	,SUM(playercomm)  
+	,SUM(comm)  
+	,SUM(acomm)  
+	,SUM(scomm)  
+	,SUM(winlostvirtual)  
+	,SUM(commvirtual)  
+	,SUM(BetCount)  
+	,b.currency  
+	,b.sporttype  
+	,b.bettype  
+	,b.statusID  
+	,b.isBA  
+	,b.isMobile  
+	,b.betfrom
+	,SUM(BuyBackAmt) 
+	,SUM(BABuyBackAmt)		
+	FROM  
+		dbo.rptLicWinloss2 b (nolock)  
+		INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid  
+	WHERE  
+		b.winlostdate = @winlostdate  
+		and b.roleid = 1  
+		and c.roleid = 2  
+	GROUP BY  
+		c.username  
+	,c.username2  
+	,c.custid  
+	,b.recommend  
+	,b.mrecommend  
+	,b.srecommend  
+		,b.currency  
+		,b.sporttype  
+		,b.bettype  
+		,b.statusID  
+	,b.isBA  
+	,b.isMobile  
+	,b.betfrom  
+		 
 	--Master Level (sum on member)  
 	INSERT INTO dbo.rptLicWinloss2  
 			(  
-			[winlostdate]  
+		[winlostdate]  
 	  ,[username]  
 	  ,[username2]  
 	  ,[custid]  
@@ -276,7 +279,7 @@ BEGIN
 	  ,[mrecommend]  
 	  ,[srecommend]  
 	  ,[turnover]  
-			,[winlost]  
+	  ,[winlost]  
 	  ,[BetEffective]  
 	  ,[awinlost]  
 	  ,[mwinlost]  
@@ -328,7 +331,7 @@ BEGIN
 	 ,b.isMobile  
 	 ,b.betfrom
 	 ,SUM(BuyBackAmt)  
-	 ,SUM(BABuyBackAmt)   
+	 ,SUM(BABuyBackAmt) 
 	FROM  
 		dbo.rptLicWinloss2 b (NOLOCK)  
 		INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.mrecommend = c.custid  
@@ -348,7 +351,7 @@ BEGIN
 		,b.statusID  
 	 ,b.isBA  
 	 ,b.isMobile  
-	 ,b.betfrom  
+	 ,b.betfrom 	
   
 	--Super Level (Sum on member)  
 	INSERT INTO dbo.rptLicWinloss2  
@@ -362,7 +365,7 @@ BEGIN
 	  ,[mrecommend]  
 	  ,[srecommend]  
 	  ,[turnover]  
-			,[winlost]  
+	  ,[winlost]  
 	  ,[BetEffective]  
 	  ,[awinlost]  
 	  ,[mwinlost]  
@@ -382,7 +385,7 @@ BEGIN
 	  ,[isMobile]  
 	  ,[betfrom]  
 	  ,[BuyBackAmt]
-	  ,[BABuyBackAmt]
+	  ,[BABuyBackAmt]	
 			)  
 	SELECT  
 	 @winlostdate  
@@ -414,7 +417,7 @@ BEGIN
 	 ,b.isMobile  
 	 ,b.betfrom 
 	 ,SUM(BuyBackAmt)
-	 ,SUM(BABuyBackAmt)    
+	 ,SUM(BABuyBackAmt) 
 	FROM  
 		dbo.rptLicWinloss2 b (nolock)  
 		INNER join bodb02.dbo.customer c (nolock) ON b.srecommend = c.custid  
@@ -433,5 +436,7 @@ BEGIN
 		,b.statusID  
 	 ,b.isBA  
 	 ,b.isMobile  
-	 ,b.betfrom
+	 ,b.betfrom	
 END
+GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicWinloss2_Bettrans] TO [vnteam] AS [dbo]
+GO

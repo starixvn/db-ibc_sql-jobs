@@ -23,6 +23,10 @@ AS
 		- 20160907@Harper: #62820_Add AllBet for ProductMapping
 		- 20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 		- 20170314@Sophia: Integrate Fishing World [Redmine: #73303]
+		- 20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
+
+	EXEC GEN_rptBettingByProduct '2017-04-16', '2017-04-16'
+
 */
 
 BEGIN  
@@ -36,8 +40,8 @@ BEGIN
 	CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
 	
 	INSERT INTO #BettypeProductMapping (Bettype, ProductID)
-	SELECT Bettype, ProductId 
-	FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW')  
+	SELECT Bettype, ProductId
+	FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO')  
 
 	INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 	SELECT Bettype, ProductId 
@@ -61,12 +65,13 @@ BEGIN
 			,[BuyBackAmount]
 			,[WinPrizeAmount]
 			,[CashOutAmount]
-			,[ValidBetAmount])
+			,[ValidBetAmount]			
+			)
 	SELECT
 		[rptDate]
 		,[SiteID]
 		,bt.ProductID
-		,CASE WHEN bt.ProductID IN (1,13,14,17,15) THEN b.[Bettype] ELSE -1 END [Bettype]
+		,CASE WHEN bt.ProductID IN (1,13,14,17,15,25) THEN b.[Bettype] ELSE -1 END [Bettype]
 		,[CurrencyId]
 		,Status [StatusId]
 		,ISNULL([CustomerCategory],-1)
@@ -79,7 +84,7 @@ BEGIN
 		,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
 		,SUM(ISNULL([WinPrizeAmount],0)) [WinPrizeAmount]
 		,SUM(ISNULL([CashOutAmount],0)) [CashOutAmount]
-		,SUM(ISNULL([oddsspread],0)) 	[ValidBetAmount]
+		,SUM(ISNULL([oddsspread],0)) 	[ValidBetAmount]	
 	FROM dbo.rpt_Betting b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2
@@ -88,7 +93,7 @@ BEGIN
 	GROUP BY [rptDate]
 			,[SiteID]
 			, bt.ProductID
-			,CASE WHEN bt.ProductID IN (1,13,14,17,15) THEN b.[Bettype] ELSE -1 END 
+			,CASE WHEN bt.ProductID IN (1,13,14,17,15,25) THEN b.[Bettype] ELSE -1 END 
 			,[CurrencyId]
 			,Status
 			,ISNULL([CustomerCategory],-1)
@@ -110,7 +115,7 @@ BEGIN
 		,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
 		,0 [WinPrizeAmount]
 		,0 [CashOutAmount]
-		,0 [ValidBetAmount]
+		,0 [ValidBetAmount]	
 	FROM dbo.rpt_Betting_BA b WITH (NOLOCK)
 		INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype
 	WHERE rptDate >= @date AND rptDate < @date2

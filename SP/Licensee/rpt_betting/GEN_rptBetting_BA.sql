@@ -14,6 +14,7 @@ Revisions:
 20150623@Patrick: Support BetTrade
 20150917@Francis: Cast LiveIndicator to 0 if it is NULL
 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 
 Param's Explanation:
 
@@ -46,7 +47,8 @@ INSERT INTO dbo.rpt_Betting_BA
         ,[WinLossVirtual]
         ,[CommissionSVirtual]
 		,[customercategory]
-		,[BuyBackAmount])
+		,[BuyBackAmount]
+		)
     SELECT  
 	    b.winlostdate,
         ISNULL(site.SiteID,-1) siteid,
@@ -73,7 +75,7 @@ INSERT INTO dbo.rpt_Betting_BA
 	    SUM((winlost-actual_stake)*virtualrate) WinLossVirtual,
 	    SUM(scomm*virtualrate) CommissionSVirtual,
 		b.customercategory,
-		SUM(CASE WHEN b.bettype IN (901) THEN winlost ELSE 0 END)
+		SUM(CASE WHEN b.bettype IN (901) THEN winlost ELSE 0 END)		
     FROM
 	    dbo.bettrans b (NOLOCK) 
 	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2

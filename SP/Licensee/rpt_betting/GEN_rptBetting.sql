@@ -24,9 +24,11 @@ Revisions:
 	20160321@Victor: Support Colossus bet [Redmine: #52575]
 	20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
-	
+	-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
+
 Param's Explanation:
 
+EXEC GEN_rptBetting '2017-04-15', '2017-04-16'
 */
 IF @date2 IS NULL SET @date2 = @date
 SET @date2 = DATEADD(day,1,@date2)
@@ -43,7 +45,7 @@ INSERT INTO dbo.rpt_Betting
         ,[Status]
         ,[IsLive]
         ,[BetCount]
-        ,[MemberCount]
+        ,[MemberCount]		
         ,[Turnover]
         ,[WinLoss]
         ,[WinLossA]
@@ -58,7 +60,7 @@ INSERT INTO dbo.rpt_Betting
         ,[CustomerCategory]
 		,[BuyBackAmount]
 		,[WinPrizeAmount]
-		,[CashOutAmount]
+		,[CashOutAmount]		
 		,[oddsspread])
     SELECT  
 	    b.winlostdate,
@@ -74,7 +76,7 @@ INSERT INTO dbo.rpt_Betting
 	    b.statusid Status,
 	    ISNULL(b.liveindicator,0) liveindicator,
         COUNT(*) Betcount,
-        COUNT(DISTINCT b.custid) MemberCount,
+        COUNT(DISTINCT b.custid) MemberCount,		
         SUM(stake) Turnover,
         SUM(winlost-actual_stake) winloss,
         SUM(awinlost) winlossA,
@@ -88,12 +90,12 @@ INSERT INTO dbo.rpt_Betting
 	    SUM(scomm*virtualrate) CommissionSVirtual,
 	    b.customercategory,
 		SUM(CASE 
-				WHEN b.bettype IN (901) THEN winlost 
+				WHEN b.bettype IN (901, 911) THEN winlost 
 				WHEN b.bettype = 18000 THEN ISNULL(CashInAmount,0)
 				ELSE 0 
 			END) BuyBackAmount,
 		SUM(ISNULL(WinPrizeAmount,0)) WinPrizeAmount,
-		SUM(ISNULL(CashOutAmount,0)) CashOutAmount,
+		SUM(ISNULL(CashOutAmount,0)) CashOutAmount, -- Cashout Value of Cashout Product		
 		SUM(ISNULL(oddsspread,0))    oddsspread
     FROM
 	    dbo.bettrans b (NOLOCK) 
@@ -109,7 +111,7 @@ INSERT INTO dbo.rpt_Betting
 	    ISNULL(site.SiteID,-1),
 	    b.bettype,
         CASE 
-            WHEN b.bettype=9 THEN -9 
+            WHEN b.bettype = 9 THEN -9 
             WHEN b.bettype = 10 OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1) 
             WHEN b.bettype IN(1231,1232,1233,1237,1238) THEN RaceInfo.LeagueID
             ELSE ISNULL(m.leagueid,-1) 
@@ -118,8 +120,7 @@ INSERT INTO dbo.rpt_Betting
 	    b.statusid,
 	    b.liveindicator,
 	    b.customercategory
- 
-	 
+
 --update MTD table
 EXEC dbo.GEN_RptKPI_MTD_Betting
     @date = @date, 
