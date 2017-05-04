@@ -14,7 +14,7 @@ Revisions:
 	20111208@Jim: change bettype condition   
 	20150204@Don: Expand bet type ranges for Sportbook when processing BA  
 	20150904@Patrick: Exclude bettype 901 for bettrade
-	20170410@Harper: Implement Cashout Product
+	20170410@Harper: Implement Cashout Product [RedmineID: #71727]
  */  
 SET NOCOUNT ON   
    
