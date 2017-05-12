@@ -20,26 +20,40 @@ AS
 BEGIN
 	SET NOCOUNT ON 
 	
-	SELECT @errCode 	= 0
+	DECLARE @Retry 		INT = 0 
+		,@Success 		BIT = 0
 	
-	BEGIN TRY
-		--UPDATE into bonus credit table
-		UPDATE bc WITH(ROWLOCK, UPDLOCK)
-		SET bonus	 		+= @balance
-		FROM dbo.BonusWalletCredit bc 				
-		WHERE bc.custID 	= @custID
-			AND bc.bonusId 	= @bonusId
-		
-		IF(@@ROWCOUNT = 0)
-			SET @errCode = 104
-	END TRY
-	BEGIN CATCH
-		SET @errCode = 103
-		
-		INSERT INTO BalanceErr ( Custid, BalanceGroup, BalanceAmt, ExecutedSP, ErrMsg )
-		VALUES ( @custid, 1, @balance,'Dot_BalanceCredit_BonusWalletlUpd',LEFT(ERROR_MESSAGE(),500))
-		
-	END CATCH 
+	SELECT @errCode 	= 0
+	WHILE (@Success = 0 AND @Retry < 3)
+	BEGIN
+		BEGIN TRY
+			SET @Retry = @Retry + 1
+			SET @Success = 1
+			
+			--UPDATE into bonus credit table
+			UPDATE bc WITH(ROWLOCK, UPDLOCK)
+			SET bonus	 		+= @balance
+			FROM dbo.BonusWalletCredit bc 				
+			WHERE bc.custID 	= @custID
+				AND bc.bonusId 	= @bonusId
+			
+			IF(@@ROWCOUNT = 0)
+			BEGIN
+				SET @errCode = 104
+				INSERT INTO BalanceErr ( Custid, BalanceGroup, BalanceAmt, ExecutedSP, ErrMsg, bonusId )
+				VALUES ( @custid, 1, @balance,'Dot_BalanceCredit_BonusWalletlUpd', 'This member custid=' + CAST(@custid AS VARCHAR(20)) + ' does not exist for the balance''s bonus wallet.', @bonusId)
+			END
+		END TRY
+		BEGIN CATCH
+			SET @errCode = 103
+			SET @Success = 0
+			
+			INSERT INTO BalanceErr ( Custid, BalanceGroup, BalanceAmt, ExecutedSP, ErrMsg, bonusId )
+			VALUES ( @custid, 1, @balance,'Dot_BalanceCredit_BonusWalletlUpd',LEFT(ERROR_MESSAGE(),500), @bonusId)
+			
+		END CATCH 
+	END
+	
 	RETURN
 END
 GO
