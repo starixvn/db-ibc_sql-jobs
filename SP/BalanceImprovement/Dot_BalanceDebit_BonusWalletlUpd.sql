@@ -6,7 +6,6 @@ CREATE PROCEDURE [dbo].[Dot_BalanceDebit_BonusWalletlUpd]
 	@balance		MONEY,
 	@Bonus			MONEY = 0 OUTPUT,
 	@LockedAmt		MONEY = 0 OUTPUT,
-	@CombinedBonus	MONEY = 0 OUTPUT,
 	@errCode		INT = 0 OUTPUT	
 )
 AS
@@ -27,7 +26,6 @@ BEGIN
 		,@Success 		BIT = 0
 	
 	SELECT @errCode 	= 0
-		,@CombinedBonus	= 0
 		,@Bonus 		= 0
 		,@LockedAmt		= 0
 	
@@ -41,7 +39,6 @@ BEGIN
 			UPDATE bd WITH(ROWLOCK, UPDLOCK)
 			SET @Bonus 			= bc.initBonus + bc.Bonus - (bd.bonus + @balance)
 				,@LockedAmt 	= bc.initLockedAmt + bc.LockedAmt - bd.LockedAmt
-				,@CombinedBonus = @Bonus + @LockedAmt
 				,bonus	 		+= @balance
 				
 			FROM dbo.BonusWalletDebit bd 
