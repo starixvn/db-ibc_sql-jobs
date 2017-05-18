@@ -12,6 +12,7 @@ AS
 		-20161102@Francis: Only check at the beginning and middle of the day
 		-20161107@Francis: Add new LogType = 5 (checkStatus) for checking status routine
 		-20170328@Paul: Implement Cash Out [RedmineID :#71727]
+		-20170516@Harper:  Show detail for real customer and check translog table [RedmineID: #76208]
 		Input Params:	
 	*/
 BEGIN
@@ -139,8 +140,13 @@ BEGIN
 			
 		IF @Count > 0
 		BEGIN
+			-- Get list of licensee
+			DECLARE @CustomerIDs VARCHAR(1000)
+			SELECT	@CustomerIDs = COALESCE(@CustomerIDs + ',', '') + CONVERT(VARCHAR(10), CustID) FROM #Result
+
 			SELECT @ErrMsg = ''
 			SELECT @ErrMsg = 'Opening balances of ' + CONVERT(VARCHAR(20),@Count) +  ' customer(s) ' 
+							 + '(Including: ' + @CustomerIDs + ') '						 
 							 + CASE @haveRealCurrency 
 									WHEN 1 THEN '(include customer(s) with real currencies) '							
 									ELSE '(all are test currency) ' 
@@ -148,6 +154,31 @@ BEGIN
 							 + 'are different compared with bettrans on: ' + CONVERT(VARCHAR(20),@Yesterday)
 							 + CHAR(13) --Line break
 			INSERT INTO @ErrMsgTab (JobType, ErrMsg) SELECT 'OPENING BALANCE', @ErrMsg
+
+			-- Check data in translog table
+			DECLARE @tranlog AS TABLE (Info NVARCHAR(200))
+
+			INSERT INTO @tranlog( Info )
+			SELECT DISTINCT (CONVERT(VARCHAR(20), lg.eventID) + ', ' + CONVERT(VARCHAR(20), lg.gameID) + ', ' + s.SportName) AS Info
+			FROM bodb02.dbo.translog lg WITH (NOLOCK)
+				INNER JOIN bodb02.dbo.Sports s WITH (NOLOCK) ON lg.productID = s.SportType
+				--INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON lg.eventID = m.matchid
+				--INNER JOIN @SportBettype s ON s.Bettype = lg.gameID
+			WHERE statusID IN (0,1) AND lg.winlostdate = @Yesterday
+
+			SELECT @Count = @@ROWCOUNT
+			IF @Count > 0
+			BEGIN
+				DECLARE @translogInfo NVARCHAR(1000)
+				SELECT @translogInfo = COALESCE(@translogInfo + CHAR(13) + CHAR(10), '') + CONVERT(NVARCHAR(200), Info) FROM @tranlog
+
+				SELECT @ErrMsg = ''
+				SELECT @ErrMsg = 'We have running ticket in translog table. Below is the list, include MatchID, Bettype and SportTypeName: '
+								+ @translogInfo
+								+ CHAR(13)
+
+				INSERT INTO @ErrMsgTab (JobType, ErrMsg) SELECT 'OPENING BALANCE', @ErrMsg
+			END
 		END
 
 		DROP TABLE #Result
