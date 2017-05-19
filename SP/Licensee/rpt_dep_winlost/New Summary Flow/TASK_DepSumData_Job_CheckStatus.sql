@@ -1,5 +1,6 @@
 USE [bodb_Report]
 GO
+
 ALTER PROCEDURE [dbo].[TASK_DepSumData_Job_CheckStatus]
 AS
 	/*
@@ -13,7 +14,9 @@ AS
 		-20161107@Francis: Add new LogType = 5 (checkStatus) for checking status routine
 		-20170328@Paul: Implement Cash Out [RedmineID :#71727]
 		-20170516@Harper:  Show detail for real customer and check translog table [RedmineID: #76208]
+
 		Input Params:	
+		EXEC TASK_DepSumData_Job_CheckStatus
 	*/
 BEGIN
 
@@ -31,10 +34,10 @@ BEGIN
 			@Count SMALLINT = 0,
 			@Date DATE,
 			@Subject VARCHAR(500) = '',
-			@ErrMsg VARCHAR(500) = '',
-			@ErrorMessage VARCHAR(8000)
+			@ErrMsg VARCHAR(MAX) = '',
+			@ErrorMessage VARCHAR(MAX)
 
-		DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), JobType VARCHAR(50), ErrMsg VARCHAR(500))
+		DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), JobType VARCHAR(50), ErrMsg VARCHAR(MAX))
 		
 		--Insert Log
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Log(Logdate, LogHour, LogType, StartTime)
@@ -141,18 +144,22 @@ BEGIN
 		IF @Count > 0
 		BEGIN
 			-- Get list of licensee
-			DECLARE @CustomerIDs VARCHAR(1000)
-			SELECT	@CustomerIDs = COALESCE(@CustomerIDs + ',', '') + CONVERT(VARCHAR(10), CustID) FROM #Result
+			DECLARE @CustomerIDs VARCHAR(MAX)
+			SELECT	@CustomerIDs = COALESCE(@CustomerIDs + ',', '') + CONVERT(VARCHAR(10), CustID) FROM #Result WHERE Currency <> 20
 
 			SELECT @ErrMsg = ''
-			SELECT @ErrMsg = 'Opening balances of ' + CONVERT(VARCHAR(20),@Count) +  ' customer(s) ' 
-							 + '(Including: ' + @CustomerIDs + ') '						 
+			SELECT @ErrMsg = 'Opening balances of ' + CONVERT(VARCHAR(20),@Count) +  ' customer(s) ' 							 					 
 							 + CASE @haveRealCurrency 
 									WHEN 1 THEN '(include customer(s) with real currencies) '							
 									ELSE '(all are test currency) ' 
 							   END
 							 + 'are different compared with bettrans on: ' + CONVERT(VARCHAR(20),@Yesterday)
-							 + CHAR(13) --Line break
+							 + CHAR(10) +CHAR(13) --Line break
+							 + CASE @haveRealCurrency 
+									WHEN 1 THEN '. List of customers with real currencies: ' + @CustomerIDs							
+									ELSE '.' 
+							   END							 
+							 + CHAR(13)	
 			INSERT INTO @ErrMsgTab (JobType, ErrMsg) SELECT 'OPENING BALANCE', @ErrMsg
 
 			-- Check data in translog table
@@ -165,19 +172,20 @@ BEGIN
 				--INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON lg.eventID = m.matchid
 				--INNER JOIN @SportBettype s ON s.Bettype = lg.gameID
 			WHERE statusID IN (0,1) AND lg.winlostdate = @Yesterday
+					AND EXISTS (SELECT 1 FROM #Result r WHERE r.CustID = lg.custid AND r.Currency <> 20)
 
 			SELECT @Count = @@ROWCOUNT
 			IF @Count > 0
 			BEGIN
 				DECLARE @translogInfo NVARCHAR(1000)
-				SELECT @translogInfo = COALESCE(@translogInfo + CHAR(13) + CHAR(10), '') + CONVERT(NVARCHAR(200), Info) FROM @tranlog
+				SELECT @translogInfo = COALESCE(@translogInfo + ' - ', '') + CONVERT(NVARCHAR(200), Info) FROM @tranlog
 
 				SELECT @ErrMsg = ''
 				SELECT @ErrMsg = 'We have running ticket in translog table. Below is the list, include MatchID, Bettype and SportTypeName: '
 								+ @translogInfo
 								+ CHAR(13)
 
-				INSERT INTO @ErrMsgTab (JobType, ErrMsg) SELECT 'OPENING BALANCE', @ErrMsg
+				INSERT INTO @ErrMsgTab (JobType, ErrMsg) SELECT 'RUNNING TRANSLOG', @ErrMsg
 			END
 		END
 
