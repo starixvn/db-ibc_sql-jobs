@@ -9,14 +9,18 @@ AS
 	Original:
 	Revisions:
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+	- 20170508@Paul: Check awinlost, comm - [Redmine: #76206]
 */
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @S_Winlost MONEY, @T_Winlost MONEY, @S_Turnover MONEY, @T_Turnover MONEY, @S_BetCount MONEY, @T_BetCount MONEY
+	DECLARE @S_Winlost MONEY, @T_Winlost MONEY, @S_Turnover MONEY, @T_Turnover MONEY, @S_BetCount MONEY, @T_BetCount MONEY,
+			@S_AWinlost MONEY, @T_AWinlost MONEY, @S_Comm MONEY, @T_Comm MONEY
 	
 	SELECT @S_Winlost = SUM(b.winlost - b.actual_stake)
 		, @S_Turnover = SUM(CASE WHEN b.liveawayscore = 0 AND b.bettype IN(33,43) THEN ABS(b.stake/2) ELSE ABS(b.stake) END) --TurnOver
 		, @S_BetCount = COUNT(b.TransId) --BetCount
+		, @S_AWinlost = SUM(awinlost)
+		, @S_Comm = SUM(comm)
 	FROM bodb02.dbo.bettrans14 b WITH(NOLOCK)
 		INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.custid = c.custid
 	WHERE b.winlostdate = @WinlostDate
@@ -29,6 +33,8 @@ BEGIN
 	SELECT @T_Winlost = SUM(winlost)
 		, @T_Turnover = SUM(turnover)
 		, @T_BetCount = SUM(BetCount)
+		, @T_AWinlost = SUM(awinlost)
+		, @T_Comm = SUM(comm)
 	FROM dbo.rptLicWinloss2 b WITH(NOLOCK)
 		INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.custid = c.custid
 	WHERE b.winlostdate = @WinlostDate
@@ -41,6 +47,8 @@ BEGIN
 	IF ISNULL(@S_Winlost, 0) <> ISNULL(@T_Winlost, 0)
 		OR ISNULL(@S_Turnover, 0) <> ISNULL(@T_Turnover, 0)
 		OR ISNULL(@S_BetCount, 0) <> ISNULL(@T_BetCount, 0)
+		OR ISNULL(@S_AWinlost, 0) <> ISNULL(@T_AWinlost, 0)
+		OR ISNULL(@S_Comm, 0) <> ISNULL(@T_Comm, 0)
 	BEGIN
 		PRINT 'Re-generate data for RptLicWinloss2 on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' date.'
 				EXEC dbo.Task_DailyRptLicWinloss2 @winlostdate = @WinlostDate
