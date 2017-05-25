@@ -1,3 +1,6 @@
+USE [bodb_LicenseeReport]
+GO
+
 SET QUOTED_IDENTIFIER OFF 
 GO
 SET ANSI_NULLS ON 
@@ -7,6 +10,7 @@ GO
 ALTER PROCEDURE [dbo].[Task_PrepareStaging]  
     @datefrom smalldatetime=null
     ,@dateto smalldatetime=null
+	,@ErrorMsg VARCHAR(MAX) = '' OUTPUT
 WITH RECOMPILE
 AS  
 /*
@@ -30,12 +34,26 @@ Revisions:
 	-20161121@Sophia: Correct formula CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
 	-20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 	-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
+	-20170525@Paul: Check IsStagingBettrans flag before staging bettrans [Redmine: #72914]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2017-04-16', '2017-04-18'
 */
 BEGIN
-	
+	SET NOCOUNT ON;
+
+	UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+	SET VValue = 1
+	WHERE VName = 'IsStagingBettrans'
+		AND VValue = 0
+
+	IF @@ROWCOUNT = 0
+	BEGIN
+		SET @ErrorMsg = 'Another task is using staging bettrans';
+
+		RETURN;
+	END
+
 	DECLARE @today datetime, @thedaybefore datetime
 	SELECT @today=@dateto, @thedaybefore=@datefrom
 	
