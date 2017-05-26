@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport," executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport," executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
 USE bodb_LicenseeReport
 GO
 ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData]
@@ -8,7 +8,7 @@ AS
 
 /*
 Created: 20170522@Sophia
-Task: Check sum rpt_Betting vs Bettrans/bettrans14 table (Exclude separate wallet 3rd Product : AGC and GD) [Redmine: #72914]
+Task: Check sum rpt_Betting vs Staging bettrans table (Exclude separate wallet 3rd Product : AGC and GD) [Redmine: #72914]
 DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
@@ -16,7 +16,7 @@ Revisions:
 Param's Explanation:
 
 DECLARE @HasDataMismatch BIT
-EXEC Task_rptBetting_CheckData @WinlostDate = '2017-05-05',   @HasDataMismatch= @HasDataMismatch OUTPUT
+EXEC Task_rptBetting_CheckData @WinlostDate = '2017-05-05',   @HasDataMismatch = @HasDataMismatch OUTPUT
 SELECT @HasDataMismatch 
 
 */
@@ -25,7 +25,6 @@ BEGIN
 
 	CREATE TABLE #Source 
 	(
-		rptDate		DATETIME,
 		SiteID		INT,
 		Bettype		SMALLINT,
 		CurrencyID	INT,
@@ -50,7 +49,6 @@ BEGIN
 
 	CREATE TABLE #Target 
 	(
-		rptDate		DATETIME,
 		SiteID		INT,
 		Bettype		SMALLINT,
 		CurrencyID	INT,
@@ -74,22 +72,15 @@ BEGIN
 	);
 
 	DECLARE @S_Count INT, @T_Count INT,
-			@i INT;
+			@i INT
 
-	INSERT INTO #Source (rptDate, SiteID,Bettype, CurrencyID, Status, BetCount, MemberCount,	
+	INSERT INTO #Source (SiteID,Bettype, CurrencyID, Status, BetCount, MemberCount,	
 						Turnover, WinLoss, WinLossA, WinLossM, WinLossS, 
 						CommissionP, CommissionA, CommissionM, CommissionS,	CustomerCategory, 
 						BuyBackAmount, WinPrizeAmount, CashOutAmount, oddsspread)
 	SELECT  
-	    b.winlostdate,
-        ISNULL(site.SiteID,-1) siteid,
-	    b.bettype,
-        --CASE 
-        --    WHEN b.bettype=9 THEN -9 
-        --    WHEN b.bettype = 10 OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1)
-        --    WHEN b.bettype IN(1231,1232,1233,1237,1238) THEN RaceInfo.LeagueID
-        --    ELSE ISNULL(m.leagueid,-1) 
-        --END AS leagueid,
+	    ISNULL(site.SiteID,-1) siteid,
+	    b.bettype, 
 	    b.currency,
 	    b.statusid Status,
         COUNT(*) Betcount,
@@ -117,72 +108,63 @@ BEGIN
 	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
 	    LEFT JOIN bodb02.dbo.Site ibcsite (NOLOCK) ON ag.site=ibcsite.site
 	    LEFT JOIN bodb_Licensee.dbo.view_site_list [site] (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
-	    LEFT JOIN dbo.match m (NOLOCK) ON b.matchid = m.matchid
-	    LEFT JOIN dbo.outright o (NOLOCK) ON b.matchid = o.matchid
-	   -- LEFT JOIN DBRPT.bodb02.dbo.VSRaceInfo RaceInfo WITH (NOLOCK) ON b.matchid = RaceInfo.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
     WHERE isBA=0
     GROUP BY
-	    b.winlostdate,
 	    ISNULL(site.SiteID,-1),
-	    b.bettype,
-        --CASE 
-        --    WHEN b.bettype = 9 THEN -9 
-        --    WHEN b.bettype = 10 OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1) 
-        --    WHEN b.bettype IN(1231,1232,1233,1237,1238) THEN RaceInfo.LeagueID
-        --    ELSE ISNULL(m.leagueid,-1) 
-        --END,	
+	    b.bettype, 
 	    b.currency,
 	    b.statusid,
 	    b.liveindicator,
 	    b.customercategory
 
-	SET @S_Count = @@ROWCOUNT;
+	SET @S_Count = @@ROWCOUNT
 
 
-	INSERT INTO #Target (rptDate, SiteID, Bettype, CurrencyID, Status, BetCount, MemberCount,	
+	INSERT INTO #Target (SiteID, Bettype, CurrencyID, Status, BetCount, MemberCount,	
 						Turnover, WinLoss, WinLossA, WinLossM, WinLossS, 
 						CommissionP, CommissionA, CommissionM, CommissionS,	CustomerCategory, 
 						BuyBackAmount, WinPrizeAmount, CashOutAmount, oddsspread)
-	SELECT	TOP(@S_Count + 1) RptDate,
-			SiteID, Bettype, CurrencyID, Status, SUM(BetCount), SUM(MemberCount),	
+	SELECT	TOP(@S_Count + 1) SiteID, Bettype, CurrencyID, Status, SUM(BetCount), SUM(MemberCount),	
 			SUM(Turnover), SUM(WinLoss), SUM(WinLossA), SUM(WinLossM), SUM(WinLossS), 
 			SUM(CommissionP), SUM(CommissionA), SUM(CommissionM), SUM(CommissionS),	CustomerCategory, 
 			SUM(BuyBackAmount),SUM( WinPrizeAmount), SUM(CashOutAmount), SUM(oddsspread)
 	FROM dbo.rpt_betting WITH (NOLOCK)
 	WHERE RptDate = @WinlostDate 
-	GROUP BY RptDate, SiteID, Bettype, CurrencyID, Status, CustomerCategory
+	GROUP BY SiteID, Bettype, CurrencyID, Status, CustomerCategory
 		   
-	SET @T_Count = @@ROWCOUNT;
+	SET @T_Count = @@ROWCOUNT
 
 
 	IF @S_Count = 0 AND @T_Count = 0
 	BEGIN
-		RETURN;
+		RETURN
 	END
 
 	IF @S_Count <> @T_Count
 	BEGIN
-		SET @HasDataMismatch = 1;
+		SET @HasDataMismatch = 1
 
 		RETURN;
 	END
 
-	SELECT TOP(@S_Count + 1) @i = 1
+	SELECT TOP(1) @i = 1
 	FROM #Source s
-		FULL OUTER JOIN #Target t 
-			ON s.SiteId = t.SiteId AND s.Bettype = t.Bettype AND s.CurrencyID = t.CurrencyID 
+	WHERE NOT EXISTS (
+		SELECT 1
+		FROM #Target t 
+		WHERE s.SiteId = t.SiteId AND s.Bettype = t.Bettype AND s.CurrencyID = t.CurrencyID 
 				AND s.Status = t.Status AND s.CustomerCategory = t.CustomerCategory AND s.BetCount = t.BetCount
 				AND s.MemberCount = t.MemberCount AND s.Turnover = t.Turnover AND s.WinLoss = t.WinLoss
 				AND s.WinLossA = t.WinLossA AND s.WinLossM = t.WinLossM AND s.WinLossS = t.WinLossS 
 				AND s.CommissionP = t.CommissionP AND s.CommissionA = t.CommissionA AND s.CommissionM = t.CommissionM
 				AND s.CommissionS = t.CommissionS AND s.BuyBackAmount = t.BuyBackAmount AND s.WinPrizeAmount = t.WinPrizeAmount
-				AND s.CashOutAmount = t.CashOutAmount AND s.oddsspread = t.oddsspread 
+				AND s.CashOutAmount = t.CashOutAmount AND s.oddsspread = t.oddsspread) 
 	
-	SET @T_Count = @@ROWCOUNT;
+	SET @T_Count = @@ROWCOUNT
 
-	IF @S_Count <> @T_Count
+	IF @T_Count = 1
 	BEGIN
-		SET @HasDataMismatch = 1;
+		SET @HasDataMismatch = 1
 	END
 			
 END 

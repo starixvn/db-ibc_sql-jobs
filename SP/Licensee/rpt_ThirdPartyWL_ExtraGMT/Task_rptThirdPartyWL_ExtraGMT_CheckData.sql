@@ -24,7 +24,6 @@ BEGIN
 
 	CREATE TABLE #Source
 	(
-		RptDate					DATE,
 		RptDate3rd				DATE,
 		SiteId					INT,
 		BetTypeId				INT,
@@ -42,7 +41,6 @@ BEGIN
 
 	CREATE TABLE #Target
 	(
-		RptDate					DATE,
 		RptDate3rd				DATE,
 		SiteId					INT,
 		BetTypeId				INT,
@@ -68,10 +66,9 @@ BEGIN
 	FROM bodb_licensee.dbo.Sport_Bettype_Reference WITH (NOLOCK)
 	WHERE Sporttype IN (203, 205);
 
-	INSERT INTO #Source(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
+	INSERT INTO #Source(RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
 	(
-		SELECT	CAST(b.winlostdate AS DATE)	AS Rptdate,
-				CAST(b.checktime AS DATE)	AS RptDate3rd,
+		SELECT	CAST(b.checktime AS DATE) AS RptDate3rd,
 				ISNULL(site.SiteID, -1) AS siteid,
 				b.bettype AS BetTypeId,
 				b.currency,
@@ -93,13 +90,12 @@ BEGIN
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
 			AND b.bettype NOT IN (2008, 2009)
 			AND b.bettype NOT BETWEEN 1011 AND 1020
-		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.checktime AS DATE), ISNULL(site.SiteID,-1), b.bettype,
+		GROUP BY CAST(b.checktime AS DATE), ISNULL(site.SiteID,-1), b.bettype,
 			b.currency, b.statusID
 
 		UNION ALL
  
-		SELECT	CAST(b.winlostdate AS DATE)	AS Rptdate,
-				CAST(b.Transdate3rd AS DATE)	AS RptDate3rd,
+		SELECT	CAST(b.Transdate3rd AS DATE)	AS RptDate3rd,
 				ISNULL(site.SiteID, -1) AS siteid,
 				b.gameID	 AS BetTypeId,
 				b.currency,
@@ -123,13 +119,12 @@ BEGIN
 			AND ( b.gameID IN (2008, 2009)
 				 OR b.gameID BETWEEN 1011 AND 1020
 				 )
-		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
+		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
 			b.currency, b.statusID	
 			
 		UNION ALL
 
-		SELECT	CAST(b.winlostdate AS DATE)	AS Rptdate,
-				CAST(b.Transdate3rd AS DATE)	AS RptDate3rd,
+		SELECT	CAST(b.Transdate3rd AS DATE)	AS RptDate3rd,
 				ISNULL(site.SiteID, -1) AS siteid,
 				b.gameID AS BetTypeId,
 				b.currency,
@@ -149,29 +144,29 @@ BEGIN
 		WHERE b.winlostdate = @WinlostDate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
 			AND b.gameID BETWEEN 2401 AND 2499
-		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
+		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
 			b.currency, b.statusID	
 	);
 
 	SET @S_Count = @@ROWCOUNT;
 	
-	INSERT INTO #Target(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
-	SELECT	TOP(@S_Count + 1) RptDate,
-			RptDate3rd,
+	INSERT INTO #Target(RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
+	SELECT	TOP(@S_Count + 1) RptDate3rd,
 			SiteId,
 			BetTypeId,
 			CurrencyId,
 			StatusId,
-			BetCount,
-			Turnover,
-			Winloss,
-			AComm,
-			PComm,
-			ProgressiveContribution,
-			ProgressivePayout,
-			ValidBetAmount
+			SUM(BetCount),
+			SUM(Turnover),
+			SUM(Winloss),
+			SUM(AComm),
+			SUM(PComm),
+			SUM(ProgressiveContribution),
+			SUM(ProgressivePayout),
+			SUM(ValidBetAmount)
 	FROM dbo.rpt_ThirdPartyWL_ExtraGMT WITH(NOLOCK)
-	WHERE RptDate = @WinlostDate;
+	WHERE RptDate = @WinlostDate
+	GROUP BY RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId;
 
 	SET @T_Count = @@ROWCOUNT;
 
@@ -187,17 +182,19 @@ BEGIN
 		RETURN;
 	END
 
-	SELECT TOP(@S_Count + 1) @i = 1
+	SELECT TOP(1) @i = 1
 	FROM #Source s
-		FULL OUTER JOIN #Target t
-			ON s.RptDate3rd = t.RptDate3rd AND s.SiteId = t.SiteId AND s.BetTypeId = t.BetTypeId AND s.CurrencyId = t.CurrencyId
-				AND s.StatusId = t.StatusId AND s.BetCount = t.BetCount AND s.Turnover = t.Turnover AND s.Winloss = t.Winloss
-				AND s.AComm = t.AComm AND s.PComm = t.PComm AND s.ProgressiveContribution = t.ProgressiveContribution
-				AND s.ProgressivePayout = t.ProgressivePayout AND s.ValidBetAmount = t.ValidBetAmount;
+	WHERE NOT EXISTS (
+		SELECT 1
+		FROM #Target t
+		WHERE s.RptDate3rd = t.RptDate3rd AND s.SiteId = t.SiteId AND s.BetTypeId = t.BetTypeId AND s.CurrencyId = t.CurrencyId
+			AND s.StatusId = t.StatusId AND s.BetCount = t.BetCount AND s.Turnover = t.Turnover AND s.Winloss = t.Winloss
+			AND s.AComm = t.AComm AND s.PComm = t.PComm AND s.ProgressiveContribution = t.ProgressiveContribution
+			AND s.ProgressivePayout = t.ProgressivePayout AND s.ValidBetAmount = t.ValidBetAmount);
 
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @S_Count <> @T_Count
+	IF @T_Count = 1
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END

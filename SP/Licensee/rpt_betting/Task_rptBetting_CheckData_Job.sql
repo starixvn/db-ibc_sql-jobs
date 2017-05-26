@@ -61,15 +61,15 @@ SET NOCOUNT ON
 	
 	SELECT @TotalDayMoveBet = COUNT(1) FROM @MoveBetSchedule
 	
-	--SELECT @TotalDayMoveBetCompleted = COUNT(1)
-	--FROM DBACC.bodb02.dbo.userlog WITH(NOLOCK)
-	--WHERE userid = 25520 AND doing = 'Task_DailySummary : End (with Finish)'
-	--	AND logdate > @Today AND logdate < @Tomorrow
+	SELECT @TotalDayMoveBetCompleted = COUNT(1)
+	FROM DBACC.bodb02.dbo.userlog WITH(NOLOCK)
+	WHERE userid = 25520 AND doing = 'Task_DailySummary : End (with Finish)'
+		AND logdate > @Today AND logdate < @Tomorrow
 	
-	--IF @TotalDayMoveBet <> @TotalDayMoveBetCompleted
-	--	RETURN --move is processing or move bet does not run
+	IF @TotalDayMoveBet <> @TotalDayMoveBetCompleted
+		RETURN --move is processing or move bet does not run
 
-	DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), Date VARCHAR(20), ErrMsg VARCHAR(MAX))
+	DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), Date VARCHAR(50), ErrMsg VARCHAR(MAX))
 
 	DECLARE @Subject VARCHAR(1000) = '', @ErrorMessage VARCHAR(MAX) = '', 
 			@ErrorMsgStaging VARCHAR(500) = '',

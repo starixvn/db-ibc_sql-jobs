@@ -6,7 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[Task_rptBettingBySport_CheckData]
+ALTER PROCEDURE [dbo].[Task_rptBettingBySport_CheckData]
 	@WinlostDate SMALLDATETIME,
 	@HasDataMismatch BIT = 0 OUTPUT
 AS
@@ -24,7 +24,6 @@ BEGIN
 
 	CREATE TABLE #Source
 	(
-		rptDate				DATETIME,
 		SiteID				INT,
 		CurrencyId			INT,
 		StatusId			SMALLINT,
@@ -39,7 +38,6 @@ BEGIN
 
 	CREATE TABLE #Target
 	(
-		rptDate				DATETIME,
 		SiteID				INT,
 		CurrencyId			INT,
 		StatusId			SMALLINT,
@@ -55,10 +53,9 @@ BEGIN
 	DECLARE @S_Count INT, @T_Count INT,
 			@i INT;
 
-	INSERT INTO #Source(rptDate, SiteID, CurrencyId, StatusId, LicenseeWL, CustomerWL,
+	INSERT INTO #Source(SiteID, CurrencyId, StatusId, LicenseeWL, CustomerWL,
 						Turnover, BetCount, CommissionS, CommShare, CustomerCategory)
-	SELECT	b.winlostdate AS rptDate,
-			ISNULL(siteT.SiteID,-1) AS SiteID,
+	SELECT	ISNULL(siteT.SiteID,-1) AS SiteID,
 			b.currency AS CurrencyId,
 			b.statusid AS StatusId,
 			CASE ISNULL(l.LabelID,0) 
@@ -78,16 +75,19 @@ BEGIN
 		LEFT JOIN bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid = siteT.IbcSiteID
 		LEFT JOIN bodb_Licensee.dbo.Labels l WITH (NOLOCK) ON SiteT.SiteID = l.LabelID
 	WHERE b.winlostdate = @WinlostDate
-	GROUP BY b.winlostdate, ISNULL(siteT.SiteID, -1), b.currency, b.statusid, b.customercategory, l.LabelID;
+	GROUP BY ISNULL(siteT.SiteID, -1), b.currency, b.statusid, b.customercategory, l.LabelID;
 
 	SET @S_Count = @@ROWCOUNT;
 
-	INSERT INTO #Target(rptDate, SiteID, CurrencyId, StatusId, LicenseeWL, CustomerWL,
+	INSERT INTO #Target(SiteID, CurrencyId, StatusId, LicenseeWL, CustomerWL,
 						Turnover, BetCount, CommissionS, CommShare, CustomerCategory)
-	SELECT	TOP(@S_Count + 1) rptDate, SiteID, CurrencyId, StatusId, LicenseeWL, CustomerWL,
-			Turnover, BetCount, CommissionS, CommShare, CustomerCategory
+	SELECT	TOP(@S_Count + 1) SiteID, CurrencyId, StatusId, CustomerCategory, 
+			SUM(LicenseeWL), SUM(CustomerWL),
+			SUM(Turnover), SUM(BetCount), 
+			SUM(CommissionS), SUM(CommShare)
 	FROM dbo.rpt_BettingBySport WITH(NOLOCK)
-	WHERE rptDate = @WinlostDate;
+	WHERE rptDate = @WinlostDate
+	GROUP BY SiteID, CurrencyId, StatusId, CustomerCategory;
 
 	SET @T_Count = @@ROWCOUNT;
 
@@ -103,16 +103,18 @@ BEGIN
 		RETURN;
 	END
 
-	SELECT TOP(@S_Count + 1) @i = 1
+	SELECT TOP(1) @i = 1
 	FROM #Source s
-		FULL OUTER JOIN #Target t
-			ON s.SiteID = t.SiteID AND s.CurrencyId = t.CurrencyId AND s.StatusId = t.StatusId AND s.LicenseeWL = t.LicenseeWL
-				AND s.CustomerWL = t.CustomerWL AND s.Turnover = t.Turnover AND s.BetCount = t.BetCount
-				AND s.CommissionS = t.CommissionS AND s.CommShare = t.CommShare AND s.CustomerCategory = t.CustomerCategory;
+	WHERE NOT EXISTS(
+		SELECT 1
+		FROM #Target t
+		WHERE s.SiteID = t.SiteID AND s.CurrencyId = t.CurrencyId AND s.StatusId = t.StatusId AND s.LicenseeWL = t.LicenseeWL
+			AND s.CustomerWL = t.CustomerWL AND s.Turnover = t.Turnover AND s.BetCount = t.BetCount
+			AND s.CommissionS = t.CommissionS AND s.CommShare = t.CommShare AND s.CustomerCategory = t.CustomerCategory);
 
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @S_Count <> @T_Count
+	IF @T_Count = 1
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END

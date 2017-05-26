@@ -24,11 +24,9 @@ BEGIN
 
 	CREATE TABLE #Source 
 	(
-		Winlostdate			SMALLDATETIME,
 		CustID				INT,
 		Currency			INT,
-		SiteID				INT,
-		Recommend			INT,
+		recommend			INT,
 		TicketPayout		MONEY,
 		CashoutComm			MONEY,
 		CashoutAmount		MONEY,
@@ -40,11 +38,9 @@ BEGIN
 
 	CREATE TABLE #Target 
 	(
-		Winlostdate			SMALLDATETIME,
 		CustID				INT,
 		Currency			INT,
-		SiteID				INT,
-		Recommend			INT,
+		recommend			INT,
 		TicketPayout		MONEY,
 		CashoutComm			MONEY,
 		CashoutAmount		MONEY,
@@ -71,11 +67,9 @@ BEGIN
 
 	INSERT INTO #Source
 	(
-			Winlostdate,	
 			CustID,		
 			Currency,
-			SiteID,
-			Recommend,	
+			recommend,
 			TicketPayout,
 			CashoutComm,
 			CashoutAmount,
@@ -83,9 +77,8 @@ BEGIN
 			BABuyBackAmt,			
 			NumOfCashoutTrans
 	)
-	SELECT	b.winlostdate, b.custid, b.currency,
-			ISNULL(site.SiteID,-1) siteid,
-			customer.recommend,
+	SELECT	b.custid, b.currency,
+			b.recommend,
 			SUM(ISNULL(po.winlost, 0)),
 			SUM(ISNULL(comm.Comm, 0)),
 			SUM(CASE WHEN b.bettype = 911 THEN b.actual_stake ELSE 0 END),
@@ -108,37 +101,33 @@ BEGIN
 				) comm ON comm.refno = b.transid
 		INNER JOIN #Bettype bt ON b.bettype = bt.Bettype		
 		INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON b.custid = customer.custid AND customer.roleid = 1
-		LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON customer.recommend = ag.custid AND ag.roleid = 2
-		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON ag.site = ibcsite.site
-		LEFT JOIN bodb_Licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
 	WHERE statusid IN (111, 112, 113)	
 		AND NOT EXISTS (SELECT 1 FROM #CashoutCust co WHERE co.CustId = b.CustID)
-	GROUP BY Winlostdate,	
-		b.CustID,		
+		AND b.winlostdate = @WinlostDate
+	GROUP BY b.CustID,		
 		b.Currency,
-		ISNULL(site.SiteID,-1),			
-		customer.recommend;
+		b.recommend;
 
 	SET @S_Count = @@ROWCOUNT;
 
 	WITH cte AS (
-			SELECT b.winlostdate, b.custid, b.currency, COUNT (*) AS numOfTicket
+			SELECT b.custid, b.currency, COUNT (*) AS numOfTicket
 			FROM dbo.bettrans b WITH (NOLOCK)
-			WHERE ISNULL(b.ExtraInfo, '') <> '' AND b.bettype <> 911
-			GROUP BY b.winlostdate, b.custid, b.currency
+			WHERE ISNULL(b.ExtraInfo, '') <> '' 
+				AND b.bettype <> 911
+				AND b.winlostdate = @WinlostDate
+			GROUP BY b.custid, b.currency
 	)
 	UPDATE b
 	SET b.NumOfCashoutTicket = cte.numOfTicket
 	FROM #Source b
-		INNER JOIN cte ON b.Winlostdate = cte.winlostdate AND b.Currency = cte.currency AND b.CustID = cte.custid;
+		INNER JOIN cte ON b.Currency = cte.currency AND b.CustID = cte.custid;
 
 	INSERT INTO #Target
 	(
-			Winlostdate,	
 			CustID,		
 			Currency,
-			SiteID,
-			Recommend,	
+			recommend,	
 			TicketPayout,
 			CashoutComm,
 			CashoutAmount,
@@ -147,21 +136,20 @@ BEGIN
 			NumOfCashoutTicket,
 			NumOfCashoutTrans
 	)
-	SELECT	TOP(@S_Count + 1) Winlostdate,	
-			CustID,		
+	SELECT	TOP(@S_Count + 1) CustID,		
 			Currency,
-			SiteID,
-			Recommend,	
-			TicketPayout,
-			CashoutComm,
-			CashoutAmount,
-			BuyBackAmt,	
-			BABuyBackAmt,		
-			NumOfCashoutTicket,
-			NumOfCashoutTrans
+			Recommend,
+			SUM(TicketPayout),
+			SUM(CashoutComm),
+			SUM(CashoutAmount),
+			SUM(BuyBackAmt),	
+			SUM(BABuyBackAmt),		
+			SUM(NumOfCashoutTicket),
+			SUM(NumOfCashoutTrans)
 	FROM dbo.rptLicCashoutSummary WITH(NOLOCK)
 	WHERE Winlostdate = @WinlostDate
-		AND RoleID = 1;
+		AND RoleID = 1
+	GROUP BY CustID, Currency, Recommend;
 
 	SET @T_Count = @@ROWCOUNT;
 
@@ -177,17 +165,19 @@ BEGIN
 		RETURN;
 	END
 
-	SELECT TOP(@S_Count + 1) @i = 1
+	SELECT TOP(1) @i = 1
 	FROM #Source s
-		FULL OUTER JOIN #Target t 
-			ON s.CustID = t.CustID AND s.Currency = t.Currency AND s.SiteID = t.SiteID AND s.Recommend = t.Recommend
-				AND s.TicketPayout = t.TicketPayout AND s.CashoutComm = t.CashoutComm AND s.CashoutAmount = t.CashoutAmount 
-				AND s.BuyBackAmt = t.BuyBackAmt AND s.BABuyBackAmt = t.BABuyBackAmt AND s.NumOfCashoutTrans = t.NumOfCashoutTrans
-				AND s.NumOfCashoutTicket = t.NumOfCashoutTicket
+	WHERE NOT EXISTS (
+		SELECT 1
+		FROM #Target t 
+		WHERE s.CustID = t.CustID AND s.Currency = t.Currency AND s.recommend = t.recommend
+			AND s.TicketPayout = t.TicketPayout AND s.CashoutComm = t.CashoutComm AND s.CashoutAmount = t.CashoutAmount 
+			AND s.BuyBackAmt = t.BuyBackAmt AND s.BABuyBackAmt = t.BABuyBackAmt AND s.NumOfCashoutTrans = t.NumOfCashoutTrans
+			AND s.NumOfCashoutTicket = t.NumOfCashoutTicket);
 	
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @S_Count <> @T_Count
+	IF @T_Count = 1
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END
