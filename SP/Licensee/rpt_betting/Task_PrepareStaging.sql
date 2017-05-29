@@ -34,7 +34,7 @@ Revisions:
 	-20161121@Sophia: Correct formula CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
 	-20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 	-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
-	-20170525@Paul: Check IsStagingBettrans flag before staging bettrans [Redmine: #72914]
+	-20170525@Paul: Check IsStagingBettrans flag before staging bettrans; insert sporttype, eventdate into staging match table [Redmine: #72914]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2017-04-16', '2017-04-18'
@@ -69,7 +69,7 @@ BEGIN
 	    SELECT orid AS matchid, leagueid
         FROM bodb02.dbo.outright (NOLOCK)
         WHERE eventdate>=@thedaybefore AND eventdate<@today
-        UNION 
+        UNION ALL
         SELECT orid AS matchid, leagueid
         FROM bodb02.dbo.outright14 (NOLOCK)
         WHERE eventdate>=@thedaybefore AND eventdate<@today
@@ -77,12 +77,12 @@ BEGIN
 	---------PROCESS MATCH DATA--------------------------------------------------------------------------------------------  
 	TRUNCATE TABLE dbo.match  
 	
-    INSERT INTO dbo.match(matchid, leagueid)
-	    SELECT matchid, leagueid
+    INSERT INTO dbo.match(matchid, leagueid, sporttype, eventdate)
+	    SELECT matchid, leagueid, sporttype, eventdate
         FROM bodb02.dbo.match (NOLOCK)
         WHERE eventdate>=@thedaybefore AND eventdate<@today
-        UNION
-        SELECT matchid, leagueid
+        UNION ALL
+        SELECT matchid, leagueid, sporttype, eventdate
         FROM bodb02.dbo.match14 (NOLOCK)
         WHERE eventdate>=@thedaybefore AND eventdate<@today
 	  

@@ -2,8 +2,8 @@
 USE bodb_LicenseeReport
 GO
 ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData]
-    @WinlostDate datetime
-	,@HasDataMismatch BIT = 0 OUTPUT 
+    @WinlostDate		datetime
+	,@HasDataMismatch	BIT OUTPUT 
 AS
 
 /*
@@ -22,6 +22,8 @@ SELECT @HasDataMismatch
 */
 BEGIN 
 	SET NOCOUNT ON 	
+
+	SET @HasDataMismatch = 0
 
 	CREATE TABLE #Source 
 	(

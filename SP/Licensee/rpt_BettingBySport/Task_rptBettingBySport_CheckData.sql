@@ -7,8 +7,8 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 ALTER PROCEDURE [dbo].[Task_rptBettingBySport_CheckData]
-	@WinlostDate SMALLDATETIME,
-	@HasDataMismatch BIT = 0 OUTPUT
+	@WinlostDate		SMALLDATETIME,
+	@HasDataMismatch	BIT OUTPUT
 AS
 
 /*
@@ -21,6 +21,8 @@ AS
 
 BEGIN
 	SET NOCOUNT ON;
+
+	SET @HasDataMismatch = 0;
 
 	CREATE TABLE #Source
 	(
@@ -69,7 +71,12 @@ BEGIN
 			-SUM(scomm * 0.03/(1 - tpositiontaking)) AS CommShare, -- Commission for Licensee share with Muay Thai partner
 			b.customercategory AS CustomerCategory
 	FROM dbo.bettrans b with (nolock)
-		INNER JOIN (SELECT matchid FROM bodb02.dbo.match WITH (NOLOCK) WHERE eventdate = @WinlostDate AND SportType = 44) m ON b.matchid = m.matchid
+		INNER JOIN (
+			SELECT matchid 
+			FROM dbo.match WITH (NOLOCK) 
+			WHERE eventdate = @WinlostDate 
+				AND SportType = 44
+		) m ON b.matchid = m.matchid
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site = ibcsite.site
 		LEFT JOIN bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid = siteT.IbcSiteID

@@ -28,7 +28,7 @@ ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 */  
 AS 
 BEGIN 	
-SET NOCOUNT ON   
+	SET NOCOUNT ON   
 
 	DECLARE @MoveBetSchedule TABLE(RowId TINYINT IDENTITY(1,1), ScheduleId TINYINT, MoveBetDay DATE)
 
@@ -109,13 +109,16 @@ SET NOCOUNT ON
 
 			----- 1.3. Get Msg 
 			IF @GenRptKenoWinloss = 1 
+			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				VALUES (@WinlostDate, 'Has data mismatch between rptKenoWinloss table and source')			 
+				VALUES (@WinlostDate, 'Has data mismatch between rptKenoWinloss table and source')	
+			END		 
 		
 			IF @GenExtraGMT = 1 
+			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
 				VALUES (@WinlostDate, 'Has data mismatch between rpt_ThirdPartyWL_ExtraGMT table and source')		 
-				
+			END
 
 		END 
 		
@@ -123,13 +126,15 @@ SET NOCOUNT ON
 		IF @Step IN (0,2)
 		BEGIN 		 
 			-----2.1. Staging bettrans table
-			EXEC dbo.Task_PrepareStaging @datefrom = @WinlostDate, @dateto = @WinlostDate , @ErrorMsg = @ErrorMsgStaging OUTPUT				
-				IF @ErrorMsgStaging <> '' 
-				BEGIN 
-					INSERT INTO @ErrMsgTab (Date, ErrMsg)
-					VALUES (@WinlostDate, @ErrorMsgStaging)
-					BREAK
-				END 
+			EXEC dbo.Task_PrepareStaging @datefrom = @WinlostDate, @dateto = @WinlostDate , @ErrorMsg = @ErrorMsgStaging OUTPUT	
+						
+			IF @ErrorMsgStaging <> '' 
+			BEGIN 
+				INSERT INTO @ErrMsgTab (Date, ErrMsg)
+				VALUES (@WinlostDate, @ErrorMsgStaging)
+
+				BREAK
+			END 
 		 
 			-----2.2 Check data mismatch  
 			EXEC dbo.Task_rptBetting_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptBetting OUTPUT
@@ -175,42 +180,50 @@ SET NOCOUNT ON
 
 			---- 2.5. Get Msg
 			IF @GenRptBetting = 1
+			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
 				VALUES (@WinlostDate, 'Has data mismatch between rpt_betting, rpt_BettingbyProduct tables and source') 
+			END
 
 			IF @GenRptBettingBA = 1 
+			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
 				VALUES (@WinlostDate, 'Has data mismatch between rpt_betting_BA, rpt_BettingbyProduct tables and source') 
+			END
 
 			IF @GenRptLicCashout = 1 
+			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
 				VALUES (@WinlostDate, 'Has data mismatch between rptLicCashoutSummary table and source') 
+			END
 
 			IF @GenRptBettingBySport = 1 
+			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
 				VALUES (@WinlostDate, 'Has data mismatch between rpt_BettingBySport table and source') 
+			END
 		END 
 	END 		
 	 
 	IF EXISTS (SELECT TOP 1 1 FROM @ErrMsgTab)
-		BEGIN
-			SELECT @Subject = 'SQL Server Job System:'' bodb_LicenseeReport: DW - Generate Daily - Check and correct'' completed on \\' + @@SERVERNAME
+	BEGIN
+		SELECT @Subject = 'SQL Server Job System:'' bodb_LicenseeReport: DW - Generate Daily - Check and correct'' completed on \\' + @@SERVERNAME
 			
-			SELECT @ErrorMessage = '<H3>Rpt_betting group tables has data mismatch</H3>'
-								 + '<table border="1"> '
-								 + '<tr><th>No.</th><th>Date</th><th>Error Message</th></tr>'
-								  + CAST(( SELECT    td = NoID, '',
-													 td = Date, '',
-													 td = ErrMsg, ''
-											FROM @ErrMsgTab
-											FOR XML PATH('tr'), TYPE 
-										) AS NVARCHAR(MAX) ) + N'</table>'
+		SELECT @ErrorMessage = '<H3>Rpt_betting group tables has data mismatch</H3>'
+								+ '<table border="1"> '
+								+ '<tr><th>No.</th><th>Date</th><th>Error Message</th></tr>'
+								+ CAST(( SELECT    td = NoID, '',
+													td = Date, '',
+													td = ErrMsg, ''
+										FROM @ErrMsgTab
+										FOR XML PATH('tr'), TYPE 
+									) AS NVARCHAR(MAX) ) + N'</table>'
 			
-			EXEC msdb.dbo.sp_send_dbmail @recipients = 'Sophia.nguyen@starixsoft.com, Paul.tran@Starixsoft.com'
-						, @subject = @subject
-						, @body = @ErrorMessage
-						, @body_format = 'HTML'
-		END
+		EXEC msdb.dbo.sp_send_dbmail @recipients = 'Sophia.nguyen@starixsoft.com, Paul.tran@Starixsoft.com'
+					, @subject = @subject
+					, @body = @ErrorMessage
+					, @body_format = 'HTML'
+	END
 
 	--IF ISNULL(@ErrorMsgStaging, '') <> ''
 	--BEGIN

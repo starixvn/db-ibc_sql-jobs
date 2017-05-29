@@ -7,8 +7,8 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 ALTER PROCEDURE [dbo].[Task_rptLicCashoutSummary_CheckData]
-	@WinlostDate SMALLDATETIME,
-	@HasDataMismatch BIT = 0 OUTPUT
+	@WinlostDate		SMALLDATETIME,
+	@HasDataMismatch	BIT OUTPUT
 AS
 
 /*
@@ -21,6 +21,8 @@ AS
 
 BEGIN
 	SET NOCOUNT ON;
+
+	SET @HasDataMismatch = 0;
 
 	CREATE TABLE #Source 
 	(
