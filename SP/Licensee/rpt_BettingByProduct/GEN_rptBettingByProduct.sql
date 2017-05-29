@@ -41,8 +41,11 @@ BEGIN
 		IF @date2 IS NULL SET @date2 = @date
 		SET @date2 = DATEADD(day,1,@date2)
 
-		DELETE FROM dbo.rpt_BettingByProduct
-		WHERE rptDate>=@date AND rptDate<@date2
+		DELETE p 
+		FROM dbo.rpt_BettingByProduct p
+		WHERE p.rptDate >= @date AND p.rptDate < @date2
+			  AND NOT (p.ProductID IN (10,11) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC	  	 
+
 
 		CREATE TABLE #BettypeProductMapping (Bettype INT, ProductID INT)
 		CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
@@ -141,6 +144,12 @@ BEGIN
 	
 	IF @DataSource IN ('All', '3rdProduct')
 	BEGIN 	
+
+		DELETE p 
+		FROM dbo.rpt_BettingByProduct p
+		WHERE p.rptDate >= @date AND p.rptDate < @date2
+			  AND (p.ProductID IN (10,11) AND p.SiteID <= 1000) ---- Delete only Separate Wallet of GD and AGC
+
 		-- Collect data of 3rd party products
 		CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY)
 
