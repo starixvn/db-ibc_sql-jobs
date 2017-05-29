@@ -3,7 +3,8 @@ GO
 ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct] (
 	@date DATE,
 	@date2 DATE = NULL,
-	@DataSource VARCHAR(20) = 'All'
+	@DataSource VARCHAR(20) = 'All',
+	@SeparatedProductID TINYINT = 0
 	)
 AS
 /*  Created: 20150710@Victor
@@ -11,8 +12,11 @@ AS
     DB: DBLIC/bodb_LicenseeReport  
     Param's Explanation:   
 		@DataSource = 'Rpt_Betting'
-					= '3rdProduct'
+					= 'SeparatedProduct'
 					= 'All'
+		@SeparatedProductID = 10: AGC
+							= 11: GD
+							= 0 : All Separate products
 	Revisions:
 		- 20150923@Victor: Fix third party data summary issues (AGCS, VG, GD)
 		- 20151002@Victor: Move all Bettrade detail tickets (901,902,903) to product BT
@@ -28,7 +32,7 @@ AS
 		- 20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 		- 20170314@Sophia: Integrate Fishing World [Redmine: #73303]
 		- 20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
-		- 20170526@Sophia: add Param @DataSource [Redmine: #72914]
+		- 20170526@Sophia: add Param @DataSource, @SeparatedProductID [Redmine: #72914]
 
 	EXEC GEN_rptBettingByProduct '2017-04-16', '2017-04-16'
 
@@ -45,7 +49,7 @@ BEGIN
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
 			  AND NOT (p.ProductID IN (10,11) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC	  	 
-
+			
 
 		CREATE TABLE #BettypeProductMapping (Bettype INT, ProductID INT)
 		CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
@@ -142,31 +146,38 @@ BEGIN
 	
 	END
 	
-	IF @DataSource IN ('All', '3rdProduct')
+	IF @DataSource IN ('All', 'SeparatedProduct')
 	BEGIN 	
 
 		DELETE p 
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
 			  AND (p.ProductID IN (10,11) AND p.SiteID <= 1000) ---- Delete only Separate Wallet of GD and AGC
+			  AND ( p.ProductID = @SeparatedProductID OR @SeparatedProductID = 0)
 
 		-- Collect data of 3rd party products
 		CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY)
 
-		-- GD, VG
-		INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm)
-		SELECT Winlostdate, Custid, ProductId, Currency, Winlost, Turnover, BetCount, 0 AS PlayerComm
-		FROM dbo.rptDepWinlost_ThirdParty WITH (NOLOCK)
-		WHERE Winlostdate >= @date AND Winlostdate < @date2
-			AND [Currency] <> 20
-
+		-- GD, VG (separate wallet)
+		IF @SeparatedProductID IN (0, 11)
+		BEGIN 
+			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm)
+			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, Turnover, BetCount, 0 AS PlayerComm
+			FROM dbo.rptDepWinlost_ThirdParty WITH (NOLOCK)
+			WHERE Winlostdate >= @date AND Winlostdate < @date2
+				AND [Currency] <> 20 
+		END
+		
 		-- AGCS (separate wallet)
-		INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm)
-		SELECT Winlostdate, Custid, 10 AS ProductId, Currency, SUM(Winlost), SUM(Turnover), SUM(BetCount), SUM(PlayerComm)
-		FROM DBRPT.bodb_report.dbo.rptDepWinlost_AGCasino WITH (NOLOCK)
-		WHERE Winlostdate >= @date AND Winlostdate < @date2
-			AND [Currency] <> 20
-		GROUP BY Winlostdate, Custid, Currency
+		IF @SeparatedProductID IN (0, 10)
+		BEGIN 
+			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm)
+			SELECT Winlostdate, Custid, 10 AS ProductId, Currency, SUM(Winlost), SUM(Turnover), SUM(BetCount), SUM(PlayerComm)
+			FROM DBRPT.bodb_report.dbo.rptDepWinlost_AGCasino WITH (NOLOCK)
+			WHERE Winlostdate >= @date AND Winlostdate < @date2
+				AND [Currency] <> 20
+			GROUP BY Winlostdate, Custid, Currency
+		END
 
 		-- PTCS
 		/*	

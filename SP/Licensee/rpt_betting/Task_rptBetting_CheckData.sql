@@ -116,7 +116,6 @@ BEGIN
 	    b.bettype, 
 	    b.currency,
 	    b.statusid,
-	    b.liveindicator,
 	    b.customercategory
 
 	SET @S_Count = @@ROWCOUNT

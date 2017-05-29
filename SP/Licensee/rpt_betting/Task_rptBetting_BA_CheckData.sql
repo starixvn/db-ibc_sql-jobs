@@ -106,7 +106,6 @@ BEGIN
 	    b.bettype,       
 	    b.currency,
 	    ISNULL(sta.statusid,-1),
-	    b.liveindicator,
 	    b.customercategory
 
 
