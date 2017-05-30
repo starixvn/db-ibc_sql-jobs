@@ -95,58 +95,10 @@ BEGIN TRY
 			FROM #TicketData
 					
 			-- Insert data to rpt_BettingByProduct
-			DELETE FROM bodb_LicenseeReport.dbo.rpt_BettingByProduct WITH (ROWLOCK) WHERE rptDate = @winlostdate and ProductId=@ProductId
-
-			INSERT INTO bodb_LicenseeReport.dbo.rpt_BettingByProduct
-				([rptDate]
-				,[SiteID]
-				,[ProductID]
-				,[Bettype]
-				,[CurrencyId]
-				,[StatusId]
-				,[CustomerCategory]
-				,[GrossWL]
-				,[MemberWL]
-				,[Turnover]
-				,[BetCount]
-				,[CommissionA]
-				,[CommissionP]
-				,[BuyBackAmount]
-				,[WinPrizeAmount]
-				,[CashOutAmount])
-			SELECT @winlostdate
-				, ISNULL(site.SiteID,-1) AS SiteId
-				, @ProductId
-				, -1 AS bettype
-				, td.Currency
-				, CASE 
-					WHEN td.Winlost > 0 THEN 112
-					WHEN td.Winlost < 0 THEN 113
-					ELSE 111
-				  END AS StatusId
-				, -1 AS CustomerCategory
-				, 0 AS GrossWL
-				, SUM(ISNULL(td.Winlost,0)) AS MemberWL
-				, SUM(ISNULL(td.Turnover,0)) AS Turnover
-				, SUM(ISNULL(td.BetCount,0)) AS BetCount
-				, 0 AS CommissionA
-				, 0 AS CommissionP
-				, 0 AS BuyBackAmount
-				, 0 [WinPrizeAmount]
-				, 0 [CashOutAmount]
-			FROM #TicketData td WITH (NOLOCK)
-				LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.Custid = td.CustID AND c.roleid = 1
-				LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON c.recommend = ag.custid AND ag.roleid = 2
-				LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON ag.site=ibcsite.site
-				LEFT JOIN bodb_licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
-			WHERE td.Currency <> 20
-			GROUP BY 
-				ISNULL(site.SiteID,-1)
-				, td.Currency
-				, CASE 
-					WHEN td.Winlost > 0 THEN 112
-					WHEN td.Winlost < 0 THEN 113
-					ELSE 111 END
+			
+			-- Insert data to rpt_BettingByProduct
+			EXEC bodb_LicenseeReport.dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 11
+		
 					
 			---Update flag isSummarized to queue  
 			UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)

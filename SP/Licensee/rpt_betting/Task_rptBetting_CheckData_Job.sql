@@ -234,7 +234,7 @@ BEGIN
 														ELSE 0 
 														END															
 													END						
-					EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'rpt_betting' , @SeparatedProductID = @SeparatedProductID   
+					EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = @SeparatedProductID   
 				END
 				
 			END 		   
