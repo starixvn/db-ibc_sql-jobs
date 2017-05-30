@@ -39,6 +39,12 @@ AS
 */
 
 BEGIN  
+	CREATE TABLE #BettypeProductMapping (Bettype INT, ProductID INT)
+	CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
+
+	-- Collect data of 3rd party products
+	CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY)
+
 	IF @DataSource IN ('ALL', 'Rpt_Betting')
 	BEGIN 
 	
@@ -51,8 +57,7 @@ BEGIN
 			  AND NOT (p.ProductID IN (10,11) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC	  	 
 			
 
-		CREATE TABLE #BettypeProductMapping (Bettype INT, ProductID INT)
-		CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
+		
 		
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
@@ -154,9 +159,6 @@ BEGIN
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
 			  AND (p.ProductID IN (10,11) AND p.SiteID <= 1000) ---- Delete only Separate Wallet of GD and AGC
 			  AND ( p.ProductID = @SeparatedProductID OR @SeparatedProductID = 0)
-
-		-- Collect data of 3rd party products
-		CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY)
 
 		-- GD, VG (separate wallet)
 		IF @SeparatedProductID IN (0, 11)
