@@ -209,9 +209,9 @@ BEGIN
 		IF @Step IN (0,3)
 		BEGIN 		  
 			-----3.1 Check data mismatch  
-			EXEC dbo.Task_rptDepWinlost_ThirdParty_CheckData @winlostdate = @WinlostDate, @ProductID = 10, @HasDataMismatch = @GenAGC OUTPUT   ---- AGC
+			EXEC dbo.Task_rptDepWinlost_AGCasino_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenAGC OUTPUT   ---- AGC
 			
-			EXEC dbo.Task_rptDepWinlost_ThirdParty_CheckData @winlostdate = @WinlostDate, @ProductID = 11, @HasDataMismatch = @GenGD OUTPUT	   ----- GD
+			EXEC dbo.Task_rptDepWinlost_ThirdParty_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenGD OUTPUT	   ----- GD
 			
 			-----3.2. Correct data
 			IF @AllowCorrect = 1

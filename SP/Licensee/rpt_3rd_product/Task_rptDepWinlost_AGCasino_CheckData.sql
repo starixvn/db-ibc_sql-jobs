@@ -6,14 +6,14 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-ALTER PROCEDURE [dbo].[Task_rptDepWinlost_ThirdParty_CheckData_AGC]
+CREATE PROCEDURE [dbo].[Task_rptDepWinlost_AGCasino_CheckData]
 	@WinlostDate		SMALLDATETIME,
 	@HasDataMismatch	BIT OUTPUT
 AS
 
 /*
 	Created: 20170530@Paul
-	Task : Check & correct data of rptDepWinlost_ThirdParty - AGCasino
+	Task : Check & correct data of rptDepWinlost_AGCasino
 	DB: DBLIC.bodb_LicenseeReport
 	Original:
 	Revisions:
