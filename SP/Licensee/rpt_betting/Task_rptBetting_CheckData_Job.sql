@@ -218,12 +218,12 @@ BEGIN
 			BEGIN 
 				IF @GenAGC = 1 --- AGC 
 				BEGIN 
-					EXEC bodb_3rdproduct.dbo.Task_DOT_VoidBridge_DailySummary @winlostdate = @winlostdate
+					EXEC DBACC.bodb02.dbo.Task_DOT_AGCasino_DailySummary @winlostdate = @winlostdate
 				END 
 				
 				IF @GenGD = 1 --- GD   
 				BEGIN 
-					EXEC DBPTCS.bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
+					EXEC bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
 				END
 				
 			-----3.3.b. Correct data of Rpt_BettingByProduct table because of AGC and GD have been corrected 
