@@ -105,7 +105,6 @@ BEGIN
 		INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON b.custid = customer.custid AND customer.roleid = 1
 	WHERE statusid IN (111, 112, 113)	
 		AND NOT EXISTS (SELECT 1 FROM #CashoutCust co WHERE co.CustId = b.CustID)
-		AND b.winlostdate = @WinlostDate
 	GROUP BY b.CustID,		
 		b.Currency,
 		b.recommend;
@@ -117,7 +116,6 @@ BEGIN
 			FROM dbo.bettrans b WITH (NOLOCK)
 			WHERE ISNULL(b.ExtraInfo, '') <> '' 
 				AND b.bettype <> 911
-				AND b.winlostdate = @WinlostDate
 			GROUP BY b.custid, b.currency
 	)
 	UPDATE b

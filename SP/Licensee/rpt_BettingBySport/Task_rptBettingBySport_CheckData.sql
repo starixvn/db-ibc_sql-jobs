@@ -74,27 +74,24 @@ BEGIN
 		INNER JOIN (
 			SELECT matchid 
 			FROM dbo.match WITH (NOLOCK) 
-			WHERE eventdate = @WinlostDate 
-				AND SportType = 44
+			WHERE SportType = 44
 		) m ON b.matchid = m.matchid
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site = ibcsite.site
 		LEFT JOIN bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid = siteT.IbcSiteID
 		LEFT JOIN bodb_Licensee.dbo.Labels l WITH (NOLOCK) ON SiteT.SiteID = l.LabelID
-	WHERE b.winlostdate = @WinlostDate
 	GROUP BY ISNULL(siteT.SiteID, -1), b.currency, b.statusid, b.customercategory, l.LabelID;
 
 	SET @S_Count = @@ROWCOUNT;
 
-	INSERT INTO #Target(SiteID, CurrencyId, StatusId, LicenseeWL, CustomerWL,
-						Turnover, BetCount, CommissionS, CommShare, CustomerCategory)
+	INSERT INTO #Target(SiteID, CurrencyId, StatusId, CustomerCategory, LicenseeWL, CustomerWL,
+						Turnover, BetCount, CommissionS, CommShare)
 	SELECT	TOP(@S_Count + 1) SiteID, CurrencyId, StatusId, CustomerCategory, 
-			SUM(LicenseeWL), SUM(CustomerWL),
-			SUM(Turnover), SUM(BetCount), 
-			SUM(CommissionS), SUM(CommShare)
+			LicenseeWL, CustomerWL,
+			Turnover, BetCount, 
+			CommissionS, CommShare
 	FROM dbo.rpt_BettingBySport WITH(NOLOCK)
-	WHERE rptDate = @WinlostDate
-	GROUP BY SiteID, CurrencyId, StatusId, CustomerCategory;
+	WHERE rptDate = @WinlostDate;
 
 	SET @T_Count = @@ROWCOUNT;
 
@@ -109,7 +106,7 @@ BEGIN
 
 		RETURN;
 	END
-
+	
 	SELECT TOP(1) @i = 1
 	FROM #Source s
 	WHERE NOT EXISTS(

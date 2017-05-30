@@ -74,39 +74,60 @@ BEGIN
 						Turnover, WinLoss, WinLossA, WinLossM, WinLossS, 
 						CommissionP, CommissionA, CommissionM, CommissionS,	CustomerCategory, 
 						BuyBackAmount)
-	  SELECT 	    
-        ISNULL(site.SiteID,-1) siteid,
-	    b.bettype,       
-	    b.currency,
-	    ISNULL(sta.statusid,-1) [Status],
-        COUNT(*) Betcount,
-        COUNT(DISTINCT b.custid) MemberCount,
-        SUM(stake) Turnover,
-        SUM(winlost-actual_stake) winloss,
-        SUM(awinlost) winlossA,
-	    SUM(mwinlost) winlossM,
-	    SUM(swinlost) winlossS,
-	    SUM(playercomm) commissionP,
-	    SUM(comm) commissionA,
-	    SUM(acomm) commissionM,
-	    SUM(scomm) commissionS,
-		b.customercategory,
-		SUM(CASE WHEN b.bettype IN (901) THEN winlost ELSE 0 END) BuyBackAmount		
-    FROM
-	    dbo.bettrans b (NOLOCK) 
-	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
-	    LEFT JOIN bodb02.dbo.Site ibcsite (NOLOCK) ON ag.site=ibcsite.site
-	    LEFT JOIN bodb_Licensee.dbo.view_site_list [site] (NOLOCK) ON ibcsite.siteid=site.IbcSiteID	
-	    LEFT JOIN dbo.match m (NOLOCK) ON b.matchid = m.matchid
-	    LEFT JOIN dbo.outright o (NOLOCK) ON b.matchid = o.matchid
-	    LEFT JOIN bodb_Licensee.dbo.view_status_list sta (NOLOCK) ON b.Status = sta.StatusName
-    WHERE isBA=1
-    GROUP BY
-	    ISNULL(site.SiteID,-1),
-	    b.bettype,       
-	    b.currency,
-	    ISNULL(sta.statusid,-1),
-	    b.customercategory
+	SELECT	SiteID, Bettype, Currency, Status, SUM(BetCount), SUM(MemberCount),	
+			SUM(Turnover), SUM(WinLoss), SUM(WinLossA), SUM(WinLossM), SUM(WinLossS), 
+			SUM(CommissionP), SUM(CommissionA), SUM(CommissionM), SUM(CommissionS),	CustomerCategory, 
+			SUM(BuyBackAmount)
+	FROM (
+		SELECT  
+			ISNULL(site.SiteID,-1) siteid,
+			b.bettype,
+			CASE 
+				WHEN b.bettype=9 THEN -9 
+				WHEN (b.bettype=10) OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1) 
+				ELSE ISNULL(m.leagueid,-1) 
+			END AS leagueid,	
+			b.currency,
+			ISNULL(sta.statusid,-1) [Status],
+			ISNULL(b.liveindicator,0) liveindicator,
+			COUNT(*) Betcount,
+			COUNT(DISTINCT b.custid) MemberCount,
+			SUM(stake) Turnover,
+			SUM(winlost-actual_stake) winloss,
+			SUM(awinlost) winlossA,
+			SUM(mwinlost) winlossM,
+			SUM(swinlost) winlossS,
+			SUM(playercomm) commissionP,
+			SUM(comm) commissionA,
+			SUM(acomm) commissionM,
+			SUM(scomm) commissionS,
+			SUM((winlost-actual_stake)*virtualrate) WinLossVirtual,
+			SUM(scomm*virtualrate) CommissionSVirtual,
+			b.customercategory,
+			SUM(CASE WHEN b.bettype IN (901) THEN winlost ELSE 0 END) AS BuyBackAmount	
+		FROM
+			dbo.bettrans b (NOLOCK) 
+			LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
+			LEFT JOIN bodb02.dbo.Site ibcsite (NOLOCK) ON ag.site=ibcsite.site
+			LEFT JOIN bodb_Licensee.dbo.view_site_list [site] (NOLOCK) ON ibcsite.siteid=site.IbcSiteID	
+			LEFT JOIN dbo.match m (NOLOCK) ON b.matchid = m.matchid
+			LEFT JOIN dbo.outright o (NOLOCK) ON b.matchid = o.matchid
+			LEFT JOIN bodb_Licensee.dbo.view_status_list sta (NOLOCK) ON b.Status = sta.StatusName
+		WHERE isBA=1
+		GROUP BY
+			ISNULL(site.SiteID,-1),
+			b.bettype,
+			CASE 
+				WHEN b.bettype=9 THEN -9 
+				WHEN (b.bettype=10) OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1) 
+				ELSE ISNULL(m.leagueid,-1) 
+			END,	
+			b.currency,
+			ISNULL(sta.statusid,-1),
+			b.liveindicator,
+			b.customercategory
+	) d
+	GROUP BY SiteID, Bettype, Currency, Status, CustomerCategory
 
 
 	SET @S_Count = @@ROWCOUNT
