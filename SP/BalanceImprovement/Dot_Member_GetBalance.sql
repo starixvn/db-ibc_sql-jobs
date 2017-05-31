@@ -11,15 +11,14 @@ SET NOCOUNT ON;
 	-- 20170505@Bobby: Implement bonus wallet
 
 	DECLARE @Balance money 
-	DECLARE @Bonus MONEY, @LockedAmt MONEY
+	DECLARE @Bonus MONEY
 	select @Balance=0
 
-	EXEC dbo.Dot_BalanceMemberSel @custid, @Balance out,@WalletFlag = @WalletFlag, @Bonus = @Bonus OUT, @LockedAmt = @LockedAmt OUT
+	EXEC dbo.Dot_BalanceMemberSel @custid, @Balance out,@WalletFlag = @WalletFlag, @Bonus = @Bonus OUT
 
 	SELECT 
 		@Balance AS finalbalance--,@Credit as credit
 		,@Bonus AS Bonus
-		,@LockedAmt AS LockedAmt
 END
 GO
 

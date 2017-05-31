@@ -28,12 +28,12 @@ BEGIN
 	DECLARE @Balance money
 	DECLARE @BalanceCredit money, @BalanceDebit money
 	Declare @OuSTxn money, @Total money, @MaxTrans datetime
-	DECLARE @Bonus MONEY, @LockedAmt MONEY
+	DECLARE @Bonus MONEY
 	
 	select @TotalTranslog = 0;
 
 	EXEC Dot_GetOutStanding @custid,@OutStanding out,@MaxTrans out
-	EXEC Dot_BalanceMemberSel @custid, @Balance out, @WalletFlag = @WalletFlag, @Bonus = @Bonus OUT, @LockedAmt = @LockedAmt OUT
+	EXEC Dot_BalanceMemberSel @custid, @Balance out, @WalletFlag = @WalletFlag, @Bonus = @Bonus OUT
 
 	-- compare balance from bettrans -vs- balanceTable
 	--IF ISNULL(@Balance, 0) <> ISNULL(@Total, 0)
@@ -43,8 +43,7 @@ BEGIN
 			IsNull(@Balance, 0) Balance,
 			ISNULL(@Balance, 0) Total,
 			@MaxTrans MaxTrans,
-			@Bonus AS Bonus,
-			@LockedAmt AS LockedAmt
+			@Bonus AS Bonus
 			
 END
 GO
