@@ -118,12 +118,8 @@ BEGIN TRY
 																winlost, playercomm, BetCount, drawBetCount, IsVIPGame)
 			SELECT @winlostdate, custid, sporttype, currency, turnover, drawTO, 
 				winlost, playercomm, BetCount, drawBetCount, IsVIPGame
-			FROM #TicketData
-			
-			-- Insert data to rpt_BettingByProduct
-			EXEC DBLIC.bodb_LicenseeReport.dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 10
-						
-			
+			FROM #TicketData					
+		
 			SET @SqlStr = 'UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
 			SET isSummarized = 1
 			WHERE Winlostdate = ''' + CONVERT(VARCHAR(20),@winlostdate,112) + ''' AND isSummarized = 0

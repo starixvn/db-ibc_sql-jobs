@@ -92,13 +92,7 @@ BEGIN TRY
 																winlost,drawTO,drawBetCount, BetCount,ProductId)
 			SELECT @winlostdate, custid,  currency, turnover,
 				winlost,drawTO,drawBetCount,  BetCount, @ProductId
-			FROM #TicketData
-					
-			-- Insert data to rpt_BettingByProduct
-			
-			-- Insert data to rpt_BettingByProduct
-			EXEC bodb_LicenseeReport.dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 11
-		
+			FROM #TicketData					
 					
 			---Update flag isSummarized to queue  
 			UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
