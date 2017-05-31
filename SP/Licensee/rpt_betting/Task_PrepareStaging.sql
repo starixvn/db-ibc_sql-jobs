@@ -51,6 +51,8 @@ BEGIN
 	BEGIN
 		SET @ErrorMsg = 'Another task is using staging bettrans';
 
+		RAISERROR(@ErrorMsg, 16, 1)
+
 		RETURN;
 	END
 

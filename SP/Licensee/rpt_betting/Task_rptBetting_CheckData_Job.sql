@@ -276,10 +276,5 @@ BEGIN
 					, @body_format = 'HTML'
 	END
 
-	--IF ISNULL(@ErrorMsgStaging, '') <> ''
-	--BEGIN
-	--	RAISERROR (@ErrorMsgStaging, 16, 1)
-	--END
-
- END
+END
    
