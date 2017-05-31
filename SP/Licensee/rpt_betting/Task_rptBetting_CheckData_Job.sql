@@ -270,7 +270,7 @@ BEGIN
 										FOR XML PATH('tr'), TYPE 
 									) AS NVARCHAR(MAX) ) + N'</table>'
 			
-		EXEC msdb.dbo.sp_send_dbmail @recipients = 'Sophia.nguyen@starixsoft.com, Paul.tran@Starixsoft.com'
+		EXEC msdb.dbo.sp_send_dbmail @recipients = 'Sophia.nguyen@starixsoft.com, Paul.tran@starixsoft.com, Patrick.pham@starixsoft.com'
 					, @subject = @subject
 					, @body = @ErrorMessage
 					, @body_format = 'HTML'
