@@ -33,7 +33,7 @@ BEGIN
 	DECLARE @MoveBetSchedule TABLE(RowId TINYINT IDENTITY(1,1), ScheduleId TINYINT, MoveBetDay DATE)
 
 	DECLARE @RowId TINYINT, @WinlostDate SMALLDATETIME, 
-			@TotalDayMoveBet TINYINT, @TotalDayMoveBetCompleted TINYINT, 
+			@VValue TINYINT, 
 			@Tomorrow DATETIME, @Today DATETIME
 	
 	SELECT @RowId = 1, @Tomorrow = DATEADD(dd, 1, CAST(GETDATE() AS DATE)), @Today = CAST(GETDATE() AS DATE)
@@ -56,18 +56,14 @@ BEGIN
 
 	IF NOT EXISTS (SELECT TOP 1 1 FROM @MoveBetSchedule)
 	BEGIN
-		RETURN
+		RETURN  ---  move bet does not run
 	END
-	
-	SELECT @TotalDayMoveBet = COUNT(1) FROM @MoveBetSchedule
-	
-	SELECT @TotalDayMoveBetCompleted = COUNT(1)
-	FROM DBACC.bodb02.dbo.userlog WITH(NOLOCK)
-	WHERE userid = 25520 AND doing = 'Task_DailySummary : End (with Finish)'
-		AND logdate > @Today AND logdate < @Tomorrow
-	
-	IF @TotalDayMoveBet <> @TotalDayMoveBetCompleted
-		RETURN --move is processing or move bet does not run
+	 
+	SELECT @VValue = VValue FROM DBACC.bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'isMovingBet'		
+	IF @VValue = 1
+	BEGIN 			
+		RETURN --move bets is processing 
+	END
 
 	DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), Date VARCHAR(50), ErrMsg VARCHAR(MAX))
 
