@@ -61,7 +61,9 @@ BEGIN
 	 
 	SELECT @VValue = VValue FROM DBACC.bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'isMovingBet'		
 	IF @VValue = 1
-	BEGIN 			
+	BEGIN 	
+		RAISERROR('Move bets is processing. Automatically retry after 15mins.', 16, 1)
+		
 		RETURN --move bets is processing 
 	END
 
