@@ -185,6 +185,7 @@ BEGIN
 			WHERE b.bettype<19000
 	            AND b.winlostdate=@tmpDate
 	            AND b.custid>0
+				AND b.recommend > 0
 	        
             DELETE dbo.bettrans WHERE winlostdate=@tmpDate AND statusid IN (0,1,101,102,121)
 
