@@ -66,6 +66,11 @@ BEGIN
 		
 		RETURN --move bets is processing 
 	END
+	ELSE 
+	BEGIN 
+		WAITFOR DELAY '00:15:00'
+		UPDATE STATISTICS bodb02.dbo.bettrans14
+	END
 
 	DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), Date VARCHAR(50), ErrMsg VARCHAR(MAX))
 
