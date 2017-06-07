@@ -86,7 +86,7 @@ BEGIN
 
 	INSERT INTO #Target(SiteID, CurrencyId, StatusId, CustomerCategory, LicenseeWL, CustomerWL,
 						Turnover, BetCount, CommissionS, CommShare)
-	SELECT	TOP(@S_Count + 1) SiteID, CurrencyId, StatusId, CustomerCategory, 
+	SELECT	SiteID, CurrencyId, StatusId, CustomerCategory, 
 			LicenseeWL, CustomerWL,
 			Turnover, BetCount, 
 			CommissionS, CommShare
@@ -100,28 +100,50 @@ BEGIN
 		RETURN;
 	END
 
-	IF @S_Count <> @T_Count
-	BEGIN
-		SET @HasDataMismatch = 1;
+	CREATE TABLE #Log(TableName VARCHAR(100), CurrencyId INT, Turnover MONEY, Winloss MONEY)
 
-		RETURN;
-	END
-	
-	SELECT TOP(1) @i = 1
+	INSERT INTO #Log(TableName, CurrencyId, Turnover, Winloss)
+	SELECT 'staging bettrans', CurrencyID, SUM(Turnover), SUM(CustomerWL)
 	FROM #Source s
-	WHERE NOT EXISTS(
+	WHERE NOT EXISTS (
 		SELECT 1
 		FROM #Target t
 		WHERE s.SiteID = t.SiteID AND s.CurrencyId = t.CurrencyId AND s.StatusId = t.StatusId AND s.LicenseeWL = t.LicenseeWL
 			AND s.CustomerWL = t.CustomerWL AND s.Turnover = t.Turnover AND s.BetCount = t.BetCount
-			AND s.CommissionS = t.CommissionS AND s.CommShare = t.CommShare AND s.CustomerCategory = t.CustomerCategory);
+			AND s.CommissionS = t.CommissionS AND s.CommShare = t.CommShare AND s.CustomerCategory = t.CustomerCategory)
+	GROUP BY CurrencyId
+	
+	UNION ALL
+	
+	SELECT 'rpt_BettingBySport', CurrencyID, SUM(Turnover), SUM(CustomerWL)
+	FROM #Target t
+	WHERE NOT EXISTS (
+		SELECT 1
+		FROM #Source s
+		WHERE s.SiteID = t.SiteID AND s.CurrencyId = t.CurrencyId AND s.StatusId = t.StatusId AND s.LicenseeWL = t.LicenseeWL
+			AND s.CustomerWL = t.CustomerWL AND s.Turnover = t.Turnover AND s.BetCount = t.BetCount
+			AND s.CommissionS = t.CommissionS AND s.CommShare = t.CommShare AND s.CustomerCategory = t.CustomerCategory)
+	GROUP BY CurrencyId;
 
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @T_Count = 1
+	IF @T_Count > 0
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END
+
+	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, CurrencyId, Turnover, Winloss)
+	SELECT	@WinlostDate, 
+			'Task_rptBettingBySport_CheckData', 
+			TableName, 
+			CurrencyId, 
+			Turnover, 
+			Winloss
+	FROM #Log;
+
+	DROP TABLE #Log;
+	DROP TABLE #Source;
+	DROP TABLE #Target;
 
 	SET NOCOUNT OFF;
 END

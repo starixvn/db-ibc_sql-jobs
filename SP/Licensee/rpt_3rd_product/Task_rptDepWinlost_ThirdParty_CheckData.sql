@@ -83,27 +83,48 @@ BEGIN
 		RETURN;
 	END
 
-	IF @S_Count <> @T_Count
-	BEGIN
-		SET @HasDataMismatch = 1;
+	CREATE TABLE #Log(TableName VARCHAR(100), CurrencyId INT, Turnover MONEY, Winloss MONEY);
 
-		RETURN;
-	END
-
-	SELECT TOP(1) @i = 1
+	INSERT INTO #Log(TableName, CurrencyId, Turnover, Winloss)
+	SELECT 'bettrans_GoldDeluxe', Currency, SUM(turnover), SUM(winlost)
 	FROM #Source s
 	WHERE NOT EXISTS (
 		SELECT 1
 		FROM #Target t
 		WHERE s.custid = t.custid AND s.currency = t.currency AND s.turnover = t.turnover AND s.winlost = t.winlost
-			AND s.drawTO = t.drawTO AND s.drawBetCount = t.drawBetCount AND s.betCount = t.betCount);
+			AND s.drawTO = t.drawTO AND s.drawBetCount = t.drawBetCount AND s.betCount = t.betCount)
+	GROUP BY currency
+	
+	UNION ALL
+	
+	SELECT 'rptDepWinlost_ThirdParty', Currency, SUM(turnover), SUM(winlost)
+	FROM #Target t
+	WHERE NOT EXISTS (
+		SELECT 1
+		FROM #Source s
+		WHERE s.custid = t.custid AND s.currency = t.currency AND s.turnover = t.turnover AND s.winlost = t.winlost
+			AND s.drawTO = t.drawTO AND s.drawBetCount = t.drawBetCount AND s.betCount = t.betCount)
+	GROUP BY currency;
 
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @T_Count = 1
+	IF @T_Count > 0
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END
+
+	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, CurrencyId, Turnover, Winloss)
+	SELECT	@WinlostDate, 
+			'Task_rptDepWinlost_ThirdParty_CheckData', 
+			TableName, 
+			CurrencyId, 
+			Turnover, 
+			Winloss
+	FROM #Log;
+
+	DROP TABLE #Log;
+	DROP TABLE #Source;
+	DROP TABLE #Target;
 
 	SET NOCOUNT OFF;
 END

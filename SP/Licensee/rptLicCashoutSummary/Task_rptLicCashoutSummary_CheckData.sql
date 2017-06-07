@@ -136,7 +136,7 @@ BEGIN
 			NumOfCashoutTicket,
 			NumOfCashoutTrans
 	)
-	SELECT	TOP(@S_Count + 1) CustID,		
+	SELECT	CustID,		
 			Currency,
 			Recommend,
 			SUM(TicketPayout),
@@ -158,14 +158,10 @@ BEGIN
 		RETURN;
 	END
 
-	IF @S_Count <> @T_Count
-	BEGIN
-		SET @HasDataMismatch = 1;
+	CREATE TABLE #Log(TableName VARCHAR(100), CurrencyId INT, Turnover MONEY, Winloss MONEY);
 
-		RETURN;
-	END
-
-	SELECT TOP(1) @i = 1
+	INSERT INTO #Log(TableName, CurrencyId, Turnover, Winloss)
+	SELECT 'staging bettrans', Currency, SUM(CashoutAmount), SUM(BuyBackAmt + BABuyBackAmt)
 	FROM #Source s
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -173,14 +169,43 @@ BEGIN
 		WHERE s.CustID = t.CustID AND s.Currency = t.Currency AND s.recommend = t.recommend
 			AND s.TicketPayout = t.TicketPayout AND s.CashoutComm = t.CashoutComm AND s.CashoutAmount = t.CashoutAmount 
 			AND s.BuyBackAmt = t.BuyBackAmt AND s.BABuyBackAmt = t.BABuyBackAmt AND s.NumOfCashoutTrans = t.NumOfCashoutTrans
-			AND s.NumOfCashoutTicket = t.NumOfCashoutTicket);
+			AND s.NumOfCashoutTicket = t.NumOfCashoutTicket)
+	GROUP BY Currency		
+	
+	UNION ALL
+	
+	SELECT 'rptLicCashoutSummary', Currency, SUM(CashoutAmount), SUM(BuyBackAmt + BABuyBackAmt)
+	FROM #Target t
+	WHERE NOT EXISTS (
+		SELECT 1
+		FROM #Source s 
+		WHERE s.CustID = t.CustID AND s.Currency = t.Currency AND s.recommend = t.recommend
+			AND s.TicketPayout = t.TicketPayout AND s.CashoutComm = t.CashoutComm AND s.CashoutAmount = t.CashoutAmount 
+			AND s.BuyBackAmt = t.BuyBackAmt AND s.BABuyBackAmt = t.BABuyBackAmt AND s.NumOfCashoutTrans = t.NumOfCashoutTrans
+			AND s.NumOfCashoutTicket = t.NumOfCashoutTicket)
+	GROUP BY Currency;
 	
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @T_Count = 1
+	IF @T_Count > 0
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END
+
+	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, CurrencyId, Turnover, Winloss)
+	SELECT	@WinlostDate, 
+			'Task_rptLicCashoutSummary_CheckData', 
+			TableName, 
+			CurrencyId, 
+			Turnover, 
+			Winloss
+	FROM #Log;
+
+	DROP TABLE #Bettype;
+	DROP TABLE #CashoutCust;
+	DROP TABLE #Log;
+	DROP TABLE #Source;
+	DROP TABLE #Target;
 
 	SET NOCOUNT OFF;
 END

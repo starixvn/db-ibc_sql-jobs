@@ -143,12 +143,11 @@ BEGIN
 
 	SET @S_Count = @@ROWCOUNT
 
-
 	INSERT INTO #Target (SiteID, Bettype, CurrencyID, Status, BetCount, MemberCount,	
 						Turnover, WinLoss, WinLossA, WinLossM, WinLossS, 
 						CommissionP, CommissionA, CommissionM, CommissionS,	CustomerCategory, 
 						BuyBackAmount, WinPrizeAmount, CashOutAmount, oddsspread)
-	SELECT	TOP(@S_Count + 1) SiteID, Bettype, CurrencyID, Status, SUM(BetCount), SUM(MemberCount),	
+	SELECT	SiteID, Bettype, CurrencyID, Status, SUM(BetCount), SUM(MemberCount),	
 			SUM(Turnover), SUM(WinLoss), SUM(WinLossA), SUM(WinLossM), SUM(WinLossS), 
 			SUM(CommissionP), SUM(CommissionA), SUM(CommissionM), SUM(CommissionS),	CustomerCategory, 
 			SUM(BuyBackAmount),SUM( WinPrizeAmount), SUM(CashOutAmount), SUM(oddsspread)
@@ -158,20 +157,15 @@ BEGIN
 		   
 	SET @T_Count = @@ROWCOUNT
 
-
 	IF @S_Count = 0 AND @T_Count = 0
 	BEGIN
 		RETURN
 	END
+	
+	CREATE TABLE #Log(TableName VARCHAR(100), BetTypeId INT, CurrencyId INT, Turnover MONEY, Winloss MONEY)
 
-	IF @S_Count <> @T_Count
-	BEGIN
-		SET @HasDataMismatch = 1
-
-		RETURN;
-	END
-
-	SELECT TOP(1) @i = 1
+	INSERT INTO #Log(TableName, BetTypeId, CurrencyId, Turnover, Winloss)
+	SELECT 'staging bettrans', Bettype, CurrencyID, SUM(Turnover), SUM(WinLoss)
 	FROM #Source s
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -182,13 +176,45 @@ BEGIN
 				AND s.WinLossA = t.WinLossA AND s.WinLossM = t.WinLossM AND s.WinLossS = t.WinLossS 
 				AND s.CommissionP = t.CommissionP AND s.CommissionA = t.CommissionA AND s.CommissionM = t.CommissionM
 				AND s.CommissionS = t.CommissionS AND s.BuyBackAmount = t.BuyBackAmount AND s.WinPrizeAmount = t.WinPrizeAmount
-				AND s.CashOutAmount = t.CashOutAmount AND s.oddsspread = t.oddsspread) 
-	
+				AND s.CashOutAmount = t.CashOutAmount AND s.oddsspread = t.oddsspread)
+	GROUP BY Bettype, CurrencyID
+
+	UNION ALL
+
+	SELECT 'rpt_betting', Bettype, CurrencyID, SUM(Turnover), SUM(WinLoss)
+	FROM #Target t
+	WHERE NOT EXISTS (
+		SELECT 1
+		FROM #Source s 
+		WHERE s.SiteId = t.SiteId AND s.Bettype = t.Bettype AND s.CurrencyID = t.CurrencyID 
+				AND s.Status = t.Status AND s.CustomerCategory = t.CustomerCategory AND s.BetCount = t.BetCount
+				AND s.MemberCount = t.MemberCount AND s.Turnover = t.Turnover AND s.WinLoss = t.WinLoss
+				AND s.WinLossA = t.WinLossA AND s.WinLossM = t.WinLossM AND s.WinLossS = t.WinLossS 
+				AND s.CommissionP = t.CommissionP AND s.CommissionA = t.CommissionA AND s.CommissionM = t.CommissionM
+				AND s.CommissionS = t.CommissionS AND s.BuyBackAmount = t.BuyBackAmount AND s.WinPrizeAmount = t.WinPrizeAmount
+				AND s.CashOutAmount = t.CashOutAmount AND s.oddsspread = t.oddsspread)
+	GROUP BY Bettype, CurrencyID
+
 	SET @T_Count = @@ROWCOUNT
 
-	IF @T_Count = 1
+	IF @T_Count > 0
 	BEGIN
 		SET @HasDataMismatch = 1
 	END
-			
+
+	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, BetTypeId, CurrencyId, Turnover, Winloss)
+	SELECT	@WinlostDate, 
+			'Task_rptBetting_CheckData', 
+			TableName, 
+			BetTypeId, 
+			CurrencyId, 
+			Turnover, 
+			Winloss
+	FROM #Log
+
+	DROP TABLE #Log
+	DROP TABLE #Source
+	DROP TABLE #Target
+
+	SET NOCOUNT OFF
 END 

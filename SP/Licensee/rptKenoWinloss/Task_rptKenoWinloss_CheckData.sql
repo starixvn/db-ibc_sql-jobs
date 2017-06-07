@@ -75,7 +75,7 @@ BEGIN
 	SET @S_Count = @@ROWCOUNT;
 
 	INSERT INTO #Target(SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss)
-	SELECT	TOP(@S_Count + 1) SiteId,
+	SELECT	SiteId,
 			BetTypeId,
 			CurrencyId,
 			StatusId,
@@ -93,27 +93,50 @@ BEGIN
 		RETURN;
 	END
 
-	IF @S_Count <> @T_Count
-	BEGIN
-		SET @HasDataMismatch = 1;
+	CREATE TABLE #Log(TableName VARCHAR(100), BetTypeId INT, CurrencyId INT, Turnover MONEY, Winloss MONEY);
 
-		RETURN;
-	END
-
-	SELECT TOP(1) @i = 1
+	INSERT INTO #Log(TableName, BetTypeId, CurrencyId, Turnover, Winloss)
+	SELECT 'bettrans14', BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss)
 	FROM #Source s
 	WHERE NOT EXISTS ( 
 		SELECT 1 
 		FROM #Target t 
 		WHERE s.SiteId = t.SiteId AND s.BetTypeId = t.BetTypeId AND s.CurrencyId = t.CurrencyId AND s.StatusId = t.StatusId
-			AND s.BetCount = t.BetCount AND s.Turnover = t.Turnover AND s.Winloss = t.Winloss);
-	
+			AND s.BetCount = t.BetCount AND s.Turnover = t.Turnover AND s.Winloss = t.Winloss)
+	GROUP BY BetTypeId, CurrencyId
+
+	UNION ALL
+
+	SELECT 'rptKenoWinloss', BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss)
+	FROM #Target t
+	WHERE NOT EXISTS ( 
+		SELECT 1 
+		FROM #Source s
+		WHERE s.SiteId = t.SiteId AND s.BetTypeId = t.BetTypeId AND s.CurrencyId = t.CurrencyId AND s.StatusId = t.StatusId
+			AND s.BetCount = t.BetCount AND s.Turnover = t.Turnover AND s.Winloss = t.Winloss)
+	GROUP BY BetTypeId, CurrencyId;
+
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @T_Count = 1
+	IF @T_Count > 0
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END
+
+	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, BetTypeId, CurrencyId, Turnover, Winloss)
+	SELECT	@WinlostDate, 
+			'Task_rptKenoWinloss_CheckData', 
+			TableName, 
+			BetTypeId,
+			CurrencyId, 
+			Turnover, 
+			Winloss
+	FROM #Log;
+
+	DROP TABLE #Bettype;
+	DROP TABLE #Log;
+	DROP TABLE #Source;
+	DROP TABLE #Target;
 
 	SET NOCOUNT OFF;
 END
