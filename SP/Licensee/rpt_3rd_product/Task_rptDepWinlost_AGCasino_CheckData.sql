@@ -8,7 +8,7 @@ GO
 
 ALTER PROCEDURE [dbo].[Task_rptDepWinlost_AGCasino_CheckData]
 	@WinlostDate		SMALLDATETIME,
-	@HasDataMismatch	BIT OUTPUT
+	@HasDataMismatch	TINYINT OUTPUT --0: No mismatch; 1: Has real currencies; 2: UUS only
 AS
 
 /*
@@ -87,10 +87,16 @@ BEGIN
 		RETURN;
 	END
 
-	CREATE TABLE #Log(TableName VARCHAR(100), CurrencyId INT, Turnover MONEY, Winloss MONEY);
+	CREATE TABLE #Log(TableName VARCHAR(100), IsSource BIT, CurrencyId INT, Turnover MONEY, Winloss MONEY, BetCount INT, ExtraInfo VARCHAR(MAX));
 
-	INSERT INTO #Log(TableName, CurrencyId, Turnover, Winloss)
-	SELECT 'bettrans_AGCasino', Currency, SUM(turnover), SUM(winlost)
+	INSERT INTO #Log(TableName, IsSource, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
+	SELECT	'bettrans_AGCasino', 1, Currency, SUM(turnover), SUM(winlost), SUM(betCount),
+			(
+				SELECT SUM(drawTO) AS drawTO, SUM(drawBetCount) AS drawBetCnt
+				FROM #Source s1
+				WHERE s1.currency = s.currency
+				FOR XML PATH('')
+			) AS ExtraInfo
 	FROM #Source s
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -101,7 +107,13 @@ BEGIN
 	
 	UNION ALL 
 	
-	SELECT 'rptDepWinlost_AGCasino', Currency, SUM(turnover), SUM(winlost)
+	SELECT 'rptDepWinlost_AGCasino', 0, Currency, SUM(turnover), SUM(winlost), SUM(betCount),
+			(
+				SELECT SUM(drawTO) AS drawTO, SUM(drawBetCount) AS drawBetCnt
+				FROM #Target t1
+				WHERE t1.currency = t.currency
+				FOR XML PATH('')
+			) AS ExtraInfo
 	FROM #Target t
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -112,18 +124,30 @@ BEGIN
 
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @T_Count > 0
+	IF @T_Count = 0
+	BEGIN
+		RETURN;
+	END
+
+	IF EXISTS (SELECT 1 FROM #Log WHERE CurrencyId <> 20)
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END
+	ELSE
+	BEGIN
+		SET @HasDataMismatch = 2;
+	END
 
-	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, CurrencyId, Turnover, Winloss)
+	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, IsSource, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
 	SELECT	@WinlostDate, 
 			'Task_rptDepWinlost_AGCasino_CheckData', 
 			TableName, 
+			IsSource,
 			CurrencyId, 
 			Turnover, 
-			Winloss
+			Winloss,
+			BetCount,
+			ExtraInfo
 	FROM #Log;
 
 	DROP TABLE #Log;

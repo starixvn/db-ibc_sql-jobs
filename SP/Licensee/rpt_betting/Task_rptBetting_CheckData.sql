@@ -3,7 +3,7 @@ USE bodb_LicenseeReport
 GO
 ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData]
     @WinlostDate		datetime
-	,@HasDataMismatch	BIT OUTPUT 
+	,@HasDataMismatch	TINYINT OUTPUT --0: No mismatch; 1: Has real currencies; 2: UUS only
 AS
 
 /*
@@ -150,7 +150,7 @@ BEGIN
 	SELECT	SiteID, Bettype, CurrencyID, Status, SUM(BetCount), SUM(MemberCount),	
 			SUM(Turnover), SUM(WinLoss), SUM(WinLossA), SUM(WinLossM), SUM(WinLossS), 
 			SUM(CommissionP), SUM(CommissionA), SUM(CommissionM), SUM(CommissionS),	CustomerCategory, 
-			SUM(BuyBackAmount),SUM( WinPrizeAmount), SUM(CashOutAmount), SUM(oddsspread)
+			SUM(BuyBackAmount),SUM(WinPrizeAmount), SUM(CashOutAmount), SUM(oddsspread)
 	FROM dbo.rpt_betting WITH (NOLOCK)
 	WHERE RptDate = @WinlostDate 
 	GROUP BY SiteID, Bettype, CurrencyID, Status, CustomerCategory
@@ -162,10 +162,19 @@ BEGIN
 		RETURN
 	END
 	
-	CREATE TABLE #Log(TableName VARCHAR(100), BetTypeId INT, CurrencyId INT, Turnover MONEY, Winloss MONEY)
+	CREATE TABLE #Log(TableName VARCHAR(100), IsSource BIT, BetTypeId INT, CurrencyId INT, Turnover MONEY, Winloss MONEY, BetCount INT, ExtraInfo VARCHAR(MAX))
 
-	INSERT INTO #Log(TableName, BetTypeId, CurrencyId, Turnover, Winloss)
-	SELECT 'staging bettrans', Bettype, CurrencyID, SUM(Turnover), SUM(WinLoss)
+	INSERT INTO #Log(TableName, IsSource, BetTypeId, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
+	SELECT 'staging bettrans', 1, Bettype, CurrencyID, SUM(Turnover), SUM(WinLoss), SUM(BetCount),
+			(
+				SELECT	SUM(MemberCount) AS MemCnt, SUM(WinLossA) AS WLA, SUM(WinLossM) AS WLM, SUM(WinLossS) AS WLS, 
+						SUM(CommissionP) AS CommP, SUM(CommissionA) AS CommA, SUM(CommissionM) AS CommM, SUM(CommissionS) AS CommS,
+						SUM(BuyBackAmount) AS BuyBackAmt, SUM(WinPrizeAmount) AS WinPrizeAmt, SUM(CashOutAmount) AS COAmt, SUM(oddsspread) AS oddsspread
+				FROM #Source s1
+				WHERE s1.Bettype = s.Bettype
+					AND s1.CurrencyID = s.CurrencyID
+				FOR XML PATH('')
+			) AS ExtraInfo
 	FROM #Source s
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -181,7 +190,16 @@ BEGIN
 
 	UNION ALL
 
-	SELECT 'rpt_betting', Bettype, CurrencyID, SUM(Turnover), SUM(WinLoss)
+	SELECT 'rpt_betting', 0, Bettype, CurrencyID, SUM(Turnover), SUM(WinLoss), SUM(BetCount),
+			(
+				SELECT	SUM(MemberCount) AS MemCnt, SUM(WinLossA) AS WLA, SUM(WinLossM) AS WLM, SUM(WinLossS) AS WLS, 
+						SUM(CommissionP) AS CommP, SUM(CommissionA) AS CommA, SUM(CommissionM) AS CommM, SUM(CommissionS) AS CommS,
+						SUM(BuyBackAmount) AS BuyBackAmt, SUM(WinPrizeAmount) AS WinPrizeAmt, SUM(CashOutAmount) AS COAmt, SUM(oddsspread) AS oddsspread
+				FROM #Target t1
+				WHERE t1.Bettype = t.Bettype
+					AND t1.CurrencyID = t.CurrencyID
+				FOR XML PATH('')
+			) AS ExtraInfo
 	FROM #Target t
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -197,19 +215,31 @@ BEGIN
 
 	SET @T_Count = @@ROWCOUNT
 
-	IF @T_Count > 0
+	IF @T_Count = 0
+	BEGIN
+		RETURN
+	END
+
+	IF EXISTS (SELECT 1 FROM #Log WHERE CurrencyId <> 20)
 	BEGIN
 		SET @HasDataMismatch = 1
 	END
+	ELSE
+	BEGIN
+		SET @HasDataMismatch = 2
+	END
 
-	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, BetTypeId, CurrencyId, Turnover, Winloss)
+	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, IsSource, BetTypeId, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
 	SELECT	@WinlostDate, 
 			'Task_rptBetting_CheckData', 
 			TableName, 
+			IsSource,
 			BetTypeId, 
 			CurrencyId, 
 			Turnover, 
-			Winloss
+			Winloss,
+			BetCount,
+			ExtraInfo
 	FROM #Log
 
 	DROP TABLE #Log

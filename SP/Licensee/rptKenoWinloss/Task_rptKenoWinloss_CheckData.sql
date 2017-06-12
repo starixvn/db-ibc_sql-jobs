@@ -8,7 +8,7 @@ GO
 
 ALTER PROCEDURE [dbo].[Task_rptKenoWinloss_CheckData]
 	@WinlostDate		SMALLDATETIME,
-	@HasDataMismatch	BIT OUTPUT
+	@HasDataMismatch	TINYINT OUTPUT --0: No mismatch; 1: Has real currencies; 2: UUS only
 AS
 
 /*
@@ -93,10 +93,10 @@ BEGIN
 		RETURN;
 	END
 
-	CREATE TABLE #Log(TableName VARCHAR(100), BetTypeId INT, CurrencyId INT, Turnover MONEY, Winloss MONEY);
+	CREATE TABLE #Log(TableName VARCHAR(100), IsSource BIT, BetTypeId INT, CurrencyId INT, Turnover MONEY, Winloss MONEY, BetCount INT);
 
-	INSERT INTO #Log(TableName, BetTypeId, CurrencyId, Turnover, Winloss)
-	SELECT 'bettrans14', BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss)
+	INSERT INTO #Log(TableName, IsSource, BetTypeId, CurrencyId, Turnover, Winloss, BetCount)
+	SELECT 'bettrans14', 1, BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss), SUM(BetCount)
 	FROM #Source s
 	WHERE NOT EXISTS ( 
 		SELECT 1 
@@ -107,7 +107,7 @@ BEGIN
 
 	UNION ALL
 
-	SELECT 'rptKenoWinloss', BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss)
+	SELECT 'rptKenoWinloss', 0, BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss), SUM(BetCount)
 	FROM #Target t
 	WHERE NOT EXISTS ( 
 		SELECT 1 
@@ -118,19 +118,30 @@ BEGIN
 
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @T_Count > 0
+	IF @T_Count = 0
+	BEGIN
+		RETURN;
+	END
+
+	IF EXISTS (SELECT 1 FROM #Log WHERE CurrencyId <> 20)
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END
+	ELSE
+	BEGIN
+		SET @HasDataMismatch = 2;
+	END
 
-	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, BetTypeId, CurrencyId, Turnover, Winloss)
+	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, IsSource, BetTypeId, CurrencyId, Turnover, Winloss, BetCount)
 	SELECT	@WinlostDate, 
 			'Task_rptKenoWinloss_CheckData', 
 			TableName, 
+			IsSource,
 			BetTypeId,
 			CurrencyId, 
 			Turnover, 
-			Winloss
+			Winloss,
+			BetCount
 	FROM #Log;
 
 	DROP TABLE #Bettype;

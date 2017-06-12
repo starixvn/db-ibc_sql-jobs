@@ -8,7 +8,7 @@ GO
 
 ALTER PROCEDURE [dbo].[Task_rptBettingBySport_CheckData]
 	@WinlostDate		SMALLDATETIME,
-	@HasDataMismatch	BIT OUTPUT
+	@HasDataMismatch	TINYINT OUTPUT --0: No mismatch; 1: Has real currencies; 2: UUS only
 AS
 
 /*
@@ -100,10 +100,16 @@ BEGIN
 		RETURN;
 	END
 
-	CREATE TABLE #Log(TableName VARCHAR(100), CurrencyId INT, Turnover MONEY, Winloss MONEY)
+	CREATE TABLE #Log(TableName VARCHAR(100), IsSource BIT, CurrencyId INT, Turnover MONEY, Winloss MONEY, BetCount INT, ExtraInfo VARCHAR(MAX))
 
-	INSERT INTO #Log(TableName, CurrencyId, Turnover, Winloss)
-	SELECT 'staging bettrans', CurrencyID, SUM(Turnover), SUM(CustomerWL)
+	INSERT INTO #Log(TableName, IsSource, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
+	SELECT	'staging bettrans', 1, CurrencyID, SUM(Turnover), SUM(CustomerWL), SUM(BetCount),
+			(
+				SELECT	SUM(LicenseeWL) AS LicWL, SUM(CommissionS) AS CommS, SUM(CommShare) AS CommShare
+				FROM #Source s1
+				WHERE s1.CurrencyId = s.CurrencyId
+				FOR XML PATH('')
+			) AS ExtraInfo
 	FROM #Source s
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -115,7 +121,13 @@ BEGIN
 	
 	UNION ALL
 	
-	SELECT 'rpt_BettingBySport', CurrencyID, SUM(Turnover), SUM(CustomerWL)
+	SELECT 'rpt_BettingBySport', 0, CurrencyID, SUM(Turnover), SUM(CustomerWL), SUM(BetCount),
+			(
+				SELECT	SUM(LicenseeWL) AS LicWL, SUM(CommissionS) AS CommS, SUM(CommShare) AS CommShare
+				FROM #Target t1
+				WHERE t1.CurrencyId = t.CurrencyId
+				FOR XML PATH('')
+			) AS ExtraInfo
 	FROM #Target t
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -127,18 +139,30 @@ BEGIN
 
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @T_Count > 0
+	IF @T_Count = 0
+	BEGIN
+		RETURN;
+	END
+
+	IF EXISTS (SELECT 1 FROM #Log WHERE CurrencyId <> 20)
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END
+	ELSE
+	BEGIN
+		SET @HasDataMismatch = 2;
+	END
 
-	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, CurrencyId, Turnover, Winloss)
+	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, IsSource, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
 	SELECT	@WinlostDate, 
 			'Task_rptBettingBySport_CheckData', 
 			TableName, 
+			IsSource,
 			CurrencyId, 
 			Turnover, 
-			Winloss
+			Winloss,
+			BetCount,
+			ExtraInfo
 	FROM #Log;
 
 	DROP TABLE #Log;

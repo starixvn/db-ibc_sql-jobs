@@ -72,14 +72,26 @@ BEGIN
 		UPDATE STATISTICS bodb02.dbo.bettrans14
 	END
 
+	DECLARE @Dates AS TABLE(BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+
 	DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), Date VARCHAR(50), ErrMsg VARCHAR(MAX))
 
 	DECLARE @Subject VARCHAR(1000) = '', @ErrorMessage VARCHAR(MAX) = '', 
 			@ErrorMsgStaging VARCHAR(500) = '',
-			@GenRptKenoWinloss BIT = 0, @GenExtraGMT BIT = 0,
-			@GenRptBetting BIT = 0, @GenRptBettingBA BIT = 0, 
-			@GenRptLicCashout BIT = 0, @GenRptBettingBySport BIT = 0,
-			@GenAGC BIT = 0, @GenGD BIT = 0, @SeparatedProductID TINYINT
+			@GenRptKenoWinloss TINYINT = 0, @GenExtraGMT TINYINT = 0,
+			@GenRptBetting TINYINT = 0, @GenRptBettingBA TINYINT = 0, 
+			@GenRptLicCashout TINYINT = 0, @GenRptBettingBySport TINYINT = 0,
+			@GenAGC TINYINT = 0, @GenGD TINYINT = 0, @SeparatedProductID TINYINT,
+			@BalanceUpDay SMALLDATETIME
+
+	INSERT INTO @Dates(BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+
+	SELECT @BalanceUpDay = BalanceUpDay 
+	FROM @Dates
+
+	DELETE dbo.DataCheckingLog
+	WHERE WinlostDate < @BalanceUpDay
 
 	WHILE EXISTS (SELECT 1 FROM @MoveBetSchedule WHERE RowId = @RowId)
 	BEGIN
@@ -100,30 +112,37 @@ BEGIN
 			-----1.2 Correct data
 			IF @AllowCorrect = 1
 			BEGIN 
-				IF @GenRptKenoWinloss = 1 
+				IF @GenRptKenoWinloss <> 0 
 				BEGIN 
 					EXEC dbo.Task_KenoWinloss_GenDataFromBettrans14 @Fromdate = @WinlostDate, @ToDate = @WinlostDate
 				END
 
-				IF @GenExtraGMT = 1 
+				IF @GenExtraGMT <> 0 
 				BEGIN 
 					EXEC dbo.Task_Microgaming_Bettrans14 @Fromdate = @WinlostDate, @ToDate = @WinlostDate
 				END 
 			END
 
 			----- 1.3. Get Msg 
-			IF @GenRptKenoWinloss = 1 
+			IF @GenRptKenoWinloss <> 0 
 			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				VALUES (@WinlostDate, 'Has data mismatch between rptKenoWinloss table and source')	
+				SELECT	@WinlostDate,
+						CASE @GenRptKenoWinloss
+							WHEN 1 THEN ''
+							WHEN 2 THEN '(UUS only) '
+						END + 'Has data mismatch between rptKenoWinloss table and source'
 			END		 
 		
-			IF @GenExtraGMT = 1 
+			IF @GenExtraGMT <> 0
 			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				VALUES (@WinlostDate, 'Has data mismatch between rpt_ThirdPartyWL_ExtraGMT table and source')		 
+				SELECT	@WinlostDate,
+						CASE @GenExtraGMT
+							WHEN 1 THEN ''
+							WHEN 2 THEN '(UUS only) '
+						END + 'Has data mismatch between rpt_ThirdPartyWL_ExtraGMT table and source'
 			END
-
 		END 
 		
 		----Check and correct rpt_betting, rpt_betting_BA, rptLicCashoutSummary, rpt_BettingBySport table (using Staging bettrans)
@@ -152,28 +171,28 @@ BEGIN
 			-----2.3. Correct data
 			IF @AllowCorrect = 1
 			BEGIN 
-				IF @GenRptBetting = 1   
+				IF @GenRptBetting <> 0
 				BEGIN 
 					EXEC dbo.GEN_rptBetting @date = @WinlostDate, @date2 = @WinlostDate
 				END
 
-				IF @GenRptBettingBA = 1   
+				IF @GenRptBettingBA <> 0
 				BEGIN 
 					EXEC dbo.GEN_rptBetting_BA @date = @WinlostDate, @date2 = @WinlostDate
 				END 
 
-				IF @GenRptLicCashout = 1 
+				IF @GenRptLicCashout <> 0
 				BEGIN   
 					EXEC dbo.GEN_rptLicCashoutSummary @FromDate = @WinlostDate, @ToDate = @WinlostDate, @ProductCodes = 'CO'
 				END 
 
-				IF @GenRptBettingBySport = 1 
+				IF @GenRptBettingBySport <> 0
 				BEGIN   
 					EXEC dbo.GEN_rptBettingBySport @FromDate = @WinlostDate, @ToDate = @WinlostDate 
 				END 
 
 				-----2.3.b. Correct data of Rpt_BettingByProduct table because of rpt_betting , rpt_betting_BA has been corrected 
-				IF @GenRptBetting = 1 OR @GenRptBetting = 1
+				IF @GenRptBetting <> 0 OR @GenRptBetting <> 0
 				BEGIN 
 					EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'rpt_betting' , @SeparatedProductID = 0   
 				END
@@ -183,28 +202,44 @@ BEGIN
 			EXEC dbo.Task_PostStaging 	
 
 			---- 2.5. Get Msg
-			IF @GenRptBetting = 1
+			IF @GenRptBetting <> 0
 			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				VALUES (@WinlostDate, 'Has data mismatch between rpt_betting, rpt_BettingbyProduct tables and source') 
+				SELECT	@WinlostDate,
+						CASE @GenRptBetting
+							WHEN 1 THEN ''
+							WHEN 2 THEN '(UUS only) '
+						END + 'Has data mismatch between rpt_betting, rpt_BettingbyProduct tables and source'
 			END
 
-			IF @GenRptBettingBA = 1 
+			IF @GenRptBettingBA <> 0
 			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				VALUES (@WinlostDate, 'Has data mismatch between rpt_betting_BA, rpt_BettingbyProduct tables and source') 
+				SELECT	@WinlostDate,
+						CASE @GenRptBettingBA
+							WHEN 1 THEN ''
+							WHEN 2 THEN '(UUS only) '
+						END + 'Has data mismatch between rpt_betting_BA, rpt_BettingbyProduct tables and source'
 			END
 
-			IF @GenRptLicCashout = 1 
+			IF @GenRptLicCashout <> 0
 			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				VALUES (@WinlostDate, 'Has data mismatch between rptLicCashoutSummary table and source') 
+				SELECT	@WinlostDate,
+						CASE @GenRptLicCashout
+							WHEN 1 THEN ''
+							WHEN 2 THEN '(UUS only) '
+						END + 'Has data mismatch between rptLicCashoutSummary table and source'
 			END
 
-			IF @GenRptBettingBySport = 1 
+			IF @GenRptBettingBySport <> 0
 			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				VALUES (@WinlostDate, 'Has data mismatch between rpt_BettingBySport table and source') 
+				SELECT	@WinlostDate,
+						CASE @GenRptBettingBySport
+							WHEN 1 THEN ''
+							WHEN 2 THEN '(UUS only) '
+						END + 'Has data mismatch between rpt_BettingBySport table and source'
 			END
 		END 
 		
@@ -219,18 +254,18 @@ BEGIN
 			-----3.2. Correct data
 			IF @AllowCorrect = 1
 			BEGIN 
-				IF @GenAGC = 1 --- AGC 
+				IF @GenAGC <> 0 --- AGC 
 				BEGIN 
 					EXEC DBACC.bodb02.dbo.Task_DOT_AGCasino_DailySummary @winlostdate = @winlostdate
 				END 
 				
-				IF @GenGD = 1 --- GD   
+				IF @GenGD <> 0 --- GD   
 				BEGIN 
 					EXEC bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
 				END
 				
 			-----3.3.b. Correct data of Rpt_BettingByProduct table because of AGC and GD have been corrected 
-				IF @GenAGC = 1 OR @GenGD = 1
+				IF @GenAGC <> 0 OR @GenGD <> 0
 				BEGIN 
 					SELECT @SeparatedProductID = CASE WHEN @GenAGC = 1 AND @GenGD = 0 THEN 10
 													ELSE CASE WHEN @GenAGC = 0 AND @GenGD = 1 THEN 11 
@@ -244,18 +279,25 @@ BEGIN
 	
 	
 			---- 3.2. Get Msg
-			IF @GenAGC = 1
+			IF @GenAGC <> 0
 			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				VALUES (@WinlostDate, 'Has data mismatch between Bettrans_AGCasino and sum tables') 
+				SELECT	@WinlostDate,
+						CASE @GenAGC
+							WHEN 1 THEN ''
+							WHEN 2 THEN '(UUS only) '
+						END + 'Has data mismatch between Bettrans_AGCasino and sum tables'
 			END
 			 
-			IF @GenGD = 1
+			IF @GenGD <> 0
 			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				VALUES (@WinlostDate, 'Has data mismatch between Bettrans_GoldDeluxe and sum tables') 
+				SELECT	@WinlostDate,
+						CASE @GenGD
+							WHEN 1 THEN ''
+							WHEN 2 THEN '(UUS only) '
+						END + 'Has data mismatch between Bettrans_GoldDeluxe and sum tables'
 			END
-				
 		END 
 	END 		
 	 

@@ -8,7 +8,7 @@ GO
 
 ALTER PROCEDURE [dbo].[Task_rptLicCashoutSummary_CheckData]
 	@WinlostDate		SMALLDATETIME,
-	@HasDataMismatch	BIT OUTPUT
+	@HasDataMismatch	TINYINT OUTPUT --0: No mismatch; 1: Has real currencies; 2: UUS only
 AS
 
 /*
@@ -158,10 +158,16 @@ BEGIN
 		RETURN;
 	END
 
-	CREATE TABLE #Log(TableName VARCHAR(100), CurrencyId INT, Turnover MONEY, Winloss MONEY);
+	CREATE TABLE #Log(TableName VARCHAR(100), IsSource BIT, CurrencyId INT, Turnover MONEY, Winloss MONEY, BetCount INT, ExtraInfo VARCHAR(MAX));
 
-	INSERT INTO #Log(TableName, CurrencyId, Turnover, Winloss)
-	SELECT 'staging bettrans', Currency, SUM(CashoutAmount), SUM(BuyBackAmt + BABuyBackAmt)
+	INSERT INTO #Log(TableName, IsSource, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
+	SELECT	'staging bettrans', 1, Currency, SUM(CashoutAmount), SUM(BuyBackAmt + BABuyBackAmt), SUM(NumOfCashoutTicket),
+			(
+				SELECT SUM(TicketPayout) AS TicketPayout, SUM(CashoutComm) AS COComm, SUM(NumOfCashoutTrans) AS COTransCnt
+				FROM #Source s1
+				WHERE s1.Currency = s.Currency
+				FOR XML PATH('')
+			) AS ExtraInfo
 	FROM #Source s
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -174,7 +180,13 @@ BEGIN
 	
 	UNION ALL
 	
-	SELECT 'rptLicCashoutSummary', Currency, SUM(CashoutAmount), SUM(BuyBackAmt + BABuyBackAmt)
+	SELECT 'rptLicCashoutSummary', 0, Currency, SUM(CashoutAmount), SUM(BuyBackAmt + BABuyBackAmt), SUM(NumOfCashoutTicket),
+			(
+				SELECT SUM(TicketPayout) AS TicketPayout, SUM(CashoutComm) AS COComm, SUM(NumOfCashoutTrans) AS COTransCnt
+				FROM #Target t1
+				WHERE t1.Currency = t.Currency
+				FOR XML PATH('')
+			) AS ExtraInfo
 	FROM #Target t
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -187,18 +199,30 @@ BEGIN
 	
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @T_Count > 0
+	IF @T_Count = 0
+	BEGIN
+		RETURN;
+	END
+
+	IF EXISTS (SELECT 1 FROM #Log WHERE CurrencyId <> 20)
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END
+	ELSE
+	BEGIN
+		SET @HasDataMismatch = 2;
+	END
 
-	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, CurrencyId, Turnover, Winloss)
+	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, IsSource, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
 	SELECT	@WinlostDate, 
 			'Task_rptLicCashoutSummary_CheckData', 
 			TableName, 
+			IsSource,
 			CurrencyId, 
 			Turnover, 
-			Winloss
+			Winloss,
+			BetCount,
+			ExtraInfo
 	FROM #Log;
 
 	DROP TABLE #Bettype;

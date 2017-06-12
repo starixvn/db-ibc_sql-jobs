@@ -8,7 +8,7 @@ GO
 
 ALTER PROCEDURE [dbo].[Task_rptThirdPartyWL_ExtraGMT_CheckData]
 	@WinlostDate		SMALLDATETIME,
-	@HasDataMismatch	BIT OUTPUT
+	@HasDataMismatch	TINYINT OUTPUT --0: No mismatch; 1: Has real currencies; 2: UUS only
 AS
 
 /*
@@ -181,10 +181,19 @@ BEGIN
 		RETURN;
 	END
 
-	CREATE TABLE #Log(TableName VARCHAR(100), BetTypeId INT, CurrencyId INT, Turnover MONEY, Winloss MONEY);
+	CREATE TABLE #Log(TableName VARCHAR(100), IsSource BIT, BetTypeId INT, CurrencyId INT, Turnover MONEY, Winloss MONEY, BetCount INT, ExtraInfo VARCHAR(MAX));
 
-	INSERT INTO #Log(TableName, BetTypeId, CurrencyId, Turnover, Winloss)
-	SELECT TableName, BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss)
+	INSERT INTO #Log(TableName, IsSource, BetTypeId, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
+	SELECT	TableName, 1, BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss), SUM(BetCount),
+			(
+				SELECT	SUM(AComm) AS AComm, SUM(PComm) AS PComm, SUM(ProgressiveContribution) AS ProgContrib,
+						SUM(ProgressivePayout) AS ProgPayout, SUM(ValidBetAmount) AS ValidBetAmt
+				FROM #Source s1
+				WHERE s1.TableName = s.TableName
+					AND s1.BetTypeId = s.BetTypeId
+					AND s1.CurrencyId = s.CurrencyId
+				FOR XML PATH('')
+			) AS ExtraInfo
 	FROM #Source s
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -197,7 +206,15 @@ BEGIN
 			
 	UNION ALL
 	
-	SELECT 'rpt_ThirdPartyWL_ExtraGMT', BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss)
+	SELECT 'rpt_ThirdPartyWL_ExtraGMT', 0, BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss), SUM(BetCount),
+			(
+				SELECT	SUM(AComm) AS AComm, SUM(PComm) AS PComm, SUM(ProgressiveContribution) AS ProgContrib,
+						SUM(ProgressivePayout) AS ProgPayout, SUM(ValidBetAmount) AS ValidBetAmt
+				FROM #Target t1
+				WHERE t1.BetTypeId = t.BetTypeId
+					AND t1.CurrencyId = t.CurrencyId
+				FOR XML PATH('')
+			) AS ExtraInfo
 	FROM #Target t
 	WHERE NOT EXISTS (
 		SELECT 1
@@ -210,19 +227,31 @@ BEGIN
 
 	SET @T_Count = @@ROWCOUNT;
 
-	IF @T_Count > 0
+	IF @T_Count = 0
+	BEGIN
+		RETURN;
+	END
+
+	IF EXISTS (SELECT 1 FROM #Log WHERE CurrencyId <> 20)
 	BEGIN
 		SET @HasDataMismatch = 1;
 	END
+	ELSE
+	BEGIN
+		SET @HasDataMismatch = 2;
+	END
 
-	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, BetTypeId, CurrencyId, Turnover, Winloss)
+	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, IsSource, BetTypeId, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
 	SELECT	@WinlostDate, 
 			'Task_rptThirdPartyWL_ExtraGMT_CheckData', 
 			TableName, 
+			IsSource,
 			BetTypeId,
 			CurrencyId, 
 			Turnover, 
-			Winloss
+			Winloss,
+			BetCount,
+			ExtraInfo
 	FROM #Log;
 
 	DROP TABLE #Log;
