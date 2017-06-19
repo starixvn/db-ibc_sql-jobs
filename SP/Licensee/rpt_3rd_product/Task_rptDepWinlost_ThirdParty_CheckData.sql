@@ -65,7 +65,7 @@ BEGIN
 	SET @S_Count = @@ROWCOUNT;
 	
 	INSERT INTO #Target(custid, currency, turnover, winlost, drawTO, drawBetCount, betCount)
-	SELECT	TOP(@S_Count + 1) custid,
+	SELECT	custid,
 			currency,
 			turnover,
 			winlost,

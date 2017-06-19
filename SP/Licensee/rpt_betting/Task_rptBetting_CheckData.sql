@@ -80,10 +80,11 @@ BEGIN
 						Turnover, WinLoss, WinLossA, WinLossM, WinLossS, 
 						CommissionP, CommissionA, CommissionM, CommissionS,	CustomerCategory, 
 						BuyBackAmount, WinPrizeAmount, CashOutAmount, oddsspread)
-	SELECT	SiteID, Bettype, Currency, Status, SUM(BetCount), SUM(MemberCount),	
-			SUM(Turnover), SUM(WinLoss), SUM(WinLossA), SUM(WinLossM), SUM(WinLossS), 
-			SUM(CommissionP), SUM(CommissionA), SUM(CommissionM), SUM(CommissionS),	CustomerCategory, 
-			SUM(BuyBackAmount),SUM( WinPrizeAmount), SUM(CashOutAmount), SUM(oddsspread)
+	SELECT	SiteID, Bettype, Currency, Status, ISNULL(SUM(BetCount), 0), ISNULL(SUM(MemberCount), 0),	
+			ISNULL(SUM(Turnover), 0), ISNULL(SUM(WinLoss), 0), ISNULL(SUM(WinLossA), 0), ISNULL(SUM(WinLossM), 0),
+			ISNULL(SUM(WinLossS), 0), ISNULL(SUM(CommissionP), 0), ISNULL(SUM(CommissionA), 0), ISNULL(SUM(CommissionM), 0),
+			ISNULL(SUM(CommissionS), 0), CustomerCategory, ISNULL(SUM(BuyBackAmount), 0), ISNULL(SUM(WinPrizeAmount), 0),
+			ISNULL(SUM(CashOutAmount), 0), ISNULL(SUM(oddsspread), 0)
 	FROM (
 		SELECT  
 			ISNULL(site.SiteID,-1) siteid,
@@ -147,10 +148,11 @@ BEGIN
 						Turnover, WinLoss, WinLossA, WinLossM, WinLossS, 
 						CommissionP, CommissionA, CommissionM, CommissionS,	CustomerCategory, 
 						BuyBackAmount, WinPrizeAmount, CashOutAmount, oddsspread)
-	SELECT	SiteID, Bettype, CurrencyID, Status, SUM(BetCount), SUM(MemberCount),	
-			SUM(Turnover), SUM(WinLoss), SUM(WinLossA), SUM(WinLossM), SUM(WinLossS), 
-			SUM(CommissionP), SUM(CommissionA), SUM(CommissionM), SUM(CommissionS),	CustomerCategory, 
-			SUM(BuyBackAmount),SUM(WinPrizeAmount), SUM(CashOutAmount), SUM(oddsspread)
+	SELECT	SiteID, Bettype, CurrencyID, Status, ISNULL(SUM(BetCount), 0), ISNULL(SUM(MemberCount), 0),	
+			ISNULL(SUM(Turnover), 0), ISNULL(SUM(WinLoss), 0), ISNULL(SUM(WinLossA), 0), ISNULL(SUM(WinLossM), 0),
+			ISNULL(SUM(WinLossS), 0), ISNULL(SUM(CommissionP), 0), ISNULL(SUM(CommissionA), 0), ISNULL(SUM(CommissionM), 0),
+			ISNULL(SUM(CommissionS), 0), CustomerCategory, ISNULL(SUM(BuyBackAmount), 0), ISNULL(SUM(WinPrizeAmount), 0),
+			ISNULL(SUM(CashOutAmount), 0), ISNULL(SUM(oddsspread), 0)
 	FROM dbo.rpt_betting WITH (NOLOCK)
 	WHERE RptDate = @WinlostDate 
 	GROUP BY SiteID, Bettype, CurrencyID, Status, CustomerCategory

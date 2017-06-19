@@ -62,13 +62,13 @@ BEGIN
 			b.statusid AS StatusId,
 			CASE ISNULL(l.LabelID,0) 
 				WHEN 0 THEN 0
-				ELSE SUM(actual_stake - winlost - swinlost - mwinlost -  awinlost - scomm)
+				ELSE ISNULL(SUM(actual_stake - winlost - swinlost - mwinlost -  awinlost - scomm), 0)
 			END AS LicenseeWL,
-			SUM(winlost - actual_stake) AS CustomerWL, -- Customer Winlosss
-			SUM(stake) AS Turnover, --Turnover
-			COUNT(1) AS BetCount, --Total Bets
-			-SUM(scomm) AS CommissionS, -- Commission for Licensee
-			-SUM(scomm * 0.03/(1 - tpositiontaking)) AS CommShare, -- Commission for Licensee share with Muay Thai partner
+			ISNULL(SUM(winlost - actual_stake), 0) AS CustomerWL, -- Customer Winlosss
+			ISNULL(SUM(stake), 0) AS Turnover, --Turnover
+			ISNULL(COUNT(1), 0) AS BetCount, --Total Bets
+			ISNULL(-SUM(scomm), 0) AS CommissionS, -- Commission for Licensee
+			ISNULL(-SUM(scomm * 0.03/(1 - tpositiontaking)), 0) AS CommShare, -- Commission for Licensee share with Muay Thai partner
 			b.customercategory AS CustomerCategory
 	FROM dbo.bettrans b with (nolock)
 		INNER JOIN (
@@ -87,9 +87,9 @@ BEGIN
 	INSERT INTO #Target(SiteID, CurrencyId, StatusId, CustomerCategory, LicenseeWL, CustomerWL,
 						Turnover, BetCount, CommissionS, CommShare)
 	SELECT	SiteID, CurrencyId, StatusId, CustomerCategory, 
-			LicenseeWL, CustomerWL,
-			Turnover, BetCount, 
-			CommissionS, CommShare
+			ISNULL(LicenseeWL, 0), ISNULL(CustomerWL, 0),
+			ISNULL(Turnover, 0), ISNULL(BetCount, 0), 
+			ISNULL(CommissionS, 0), ISNULL(CommShare, 0)
 	FROM dbo.rpt_BettingBySport WITH(NOLOCK)
 	WHERE rptDate = @WinlostDate;
 

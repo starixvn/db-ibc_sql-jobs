@@ -60,9 +60,9 @@ BEGIN
 			b.bettype AS BetTypeId,
 			b.currency,
 			b.statusID,
-			COUNT(1) AS BetCount,
-			SUM(ABS(b.stake)) AS Turnover,
-			SUM(winlost - actual_stake) AS Winloss		
+			ISNULL(COUNT(1), 0) AS BetCount,
+			ISNULL(SUM(ABS(b.stake)), 0) AS Turnover,
+			ISNULL(SUM(winlost - actual_stake), 0) AS Winloss		
 	FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 		INNER JOIN #Bettype bt ON b.bettype = bt.Bettype
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
@@ -79,9 +79,9 @@ BEGIN
 			BetTypeId,
 			CurrencyId,
 			StatusId,
-			SUM(BetCount),
-			SUM(Turnover),
-			SUM(Winloss)
+			ISNULL(SUM(BetCount), 0),
+			ISNULL(SUM(Turnover), 0),
+			ISNULL(SUM(Winloss), 0)
 	FROM dbo.rptKenoWinloss WITH(NOLOCK)
 	WHERE RptDate = @WinlostDate
 	GROUP BY SiteId, BetTypeId, CurrencyId, StatusId;

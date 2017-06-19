@@ -35,6 +35,7 @@ Revisions:
 	-20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 	-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 	-20170525@Paul: Check IsStagingBettrans flag before staging bettrans; insert sporttype, eventdate into staging match table [Redmine: #72914]
+	-20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2017-04-16', '2017-04-18'
@@ -150,7 +151,8 @@ BEGIN
 				,isBA
 				,refno
 				,oddsspread
-				,ExtraInfo)
+				,ExtraInfo
+				,betdaqid)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -179,7 +181,8 @@ BEGIN
 				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread,
-				b.ExtraInfo
+				b.ExtraInfo,
+				b.betdaqid
 			FROM bodb02.dbo.bettrans b (NOLOCK)
 			    INNER JOIN @Recommend_List r ON b.recommend=r.t_recommend
 			WHERE b.bettype<19000
@@ -258,7 +261,8 @@ BEGIN
 				,isBA
 				,refno
 				,oddsspread
-				,ExtraInfo)
+				,ExtraInfo
+				,betdaqid)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -287,7 +291,8 @@ BEGIN
 				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread,
-				b.ExtraInfo
+				b.ExtraInfo,
+				b.betdaqid
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
 			    INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
 			WHERE b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'

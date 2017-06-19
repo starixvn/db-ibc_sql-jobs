@@ -77,11 +77,11 @@ BEGIN
 				b.bettype AS BetTypeId,
 				b.currency,
 				b.statusID,
-				COUNT(1) AS BetCount,
-				SUM(ABS(b.stake)) AS Turnover,
-				SUM(winlost - actual_stake) AS Winloss,
-				SUM(b.comm) AS AComm,
-				SUM(b.playercomm) AS PComm,
+				ISNULL(COUNT(1), 0) AS BetCount,
+				ISNULL(SUM(ABS(b.stake)), 0) AS Turnover,
+				ISNULL(SUM(winlost - actual_stake), 0) AS Winloss,
+				ISNULL(SUM(b.comm), 0) AS AComm,
+				ISNULL(SUM(b.playercomm), 0) AS PComm,
 				0 AS ProgressiveContribution,
 				0 AS ProgressivePayout,
 				0 AS ValidBetAmount	
@@ -105,13 +105,13 @@ BEGIN
 				b.gameID	 AS BetTypeId,
 				b.currency,
 				b.statusID,
-				COUNT(1) AS BetCount,
-				SUM(ABS(b.stake)) AS Turnover,
-				SUM(winlost - actual_stake) AS Winloss,
-				SUM(b.comm) AS AComm,
-				SUM(b.playercomm) AS PComm,
-				SUM(ISNULL(ABS(b.stake) * r.Contribution,0)) AS ProgressiveContribution,
-				SUM(ISNULL(p.WinAmount,0)) AS ProgressivePayout,
+				ISNULL(COUNT(1), 0) AS BetCount,
+				ISNULL(SUM(ABS(b.stake)), 0) AS Turnover,
+				ISNULL(SUM(winlost - actual_stake), 0) AS Winloss,
+				ISNULL(SUM(b.comm), 0) AS AComm,
+				ISNULL(SUM(b.playercomm), 0) AS PComm,
+				ISNULL(SUM(ISNULL(ABS(b.stake) * r.Contribution,0)), 0) AS ProgressiveContribution,
+				ISNULL(SUM(ISNULL(p.WinAmount,0)), 0) AS ProgressivePayout,
 				0 AS ValidBetAmount
 		FROM bodb02.dbo.bettransRnG14 b WITH (NOLOCK)
 			LEFT JOIN dbo.view_MGCRNG_ProgressiveContribution_Rate r ON b.transdesc = r.ResourceID
@@ -135,14 +135,14 @@ BEGIN
 				b.gameID AS BetTypeId,
 				b.currency,
 				b.statusID,
-				COUNT(1) AS BetCount,
-				SUM(ABS(b.stake)) AS Turnover,
-				SUM(winlost - actual_stake) AS Winloss,
-				SUM(b.comm) AS AComm,
-				SUM(b.playercomm) AS PComm,
+				ISNULL(COUNT(1), 0) AS BetCount,
+				ISNULL(SUM(ABS(b.stake)), 0) AS Turnover,
+				ISNULL(SUM(winlost - actual_stake), 0) AS Winloss,
+				ISNULL(SUM(b.comm), 0) AS AComm,
+				ISNULL(SUM(b.playercomm), 0) AS PComm,
 				0 AS ProgressiveContribution,
 				0 AS ProgressivePayout,
-				SUM(ISNULL(b.NetStake, 0)) AS ValidBetAmount
+				ISNULL(SUM(ISNULL(b.NetStake, 0)), 0) AS ValidBetAmount
 		FROM bodb02.dbo.bettransLC14 b WITH (NOLOCK)
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
@@ -162,14 +162,14 @@ BEGIN
 			BetTypeId,
 			CurrencyId,
 			StatusId,
-			SUM(BetCount),
-			SUM(Turnover),
-			SUM(Winloss),
-			SUM(AComm),
-			SUM(PComm),
-			SUM(ProgressiveContribution),
-			SUM(ProgressivePayout),
-			SUM(ValidBetAmount)
+			ISNULL(SUM(BetCount), 0),
+			ISNULL(SUM(Turnover), 0),
+			ISNULL(SUM(Winloss), 0),
+			ISNULL(SUM(AComm), 0),
+			ISNULL(SUM(PComm), 0),
+			ISNULL(SUM(ProgressiveContribution), 0),
+			ISNULL(SUM(ProgressivePayout), 0),
+			ISNULL(SUM(ValidBetAmount), 0)
 	FROM dbo.rpt_ThirdPartyWL_ExtraGMT WITH(NOLOCK)
 	WHERE RptDate = @WinlostDate
 	GROUP BY RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId;

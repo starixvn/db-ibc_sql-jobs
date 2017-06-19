@@ -77,16 +77,18 @@ BEGIN
 			CashoutAmount,
 			BuyBackAmt,	
 			BABuyBackAmt,			
+			NumOfCashoutTicket,
 			NumOfCashoutTrans
 	)
 	SELECT	b.custid, b.currency,
 			b.recommend,
-			SUM(ISNULL(po.winlost, 0)),
-			SUM(ISNULL(comm.Comm, 0)),
-			SUM(CASE WHEN b.bettype = 911 THEN b.actual_stake ELSE 0 END),
-			SUM(CASE WHEN b.bettype = 911 AND b.customercategory = 1003 THEN b.winlost ELSE 0 END),
-			SUM(CASE WHEN b.bettype = 911 AND b.customercategory = 1004 THEN b.winlost ELSE 0 END),
-			SUM(CASE WHEN b.bettype = 911 THEN 1 ELSE 0 END)
+			ISNULL(SUM(ISNULL(po.winlost, 0)), 0),
+			ISNULL(SUM(ISNULL(comm.Comm, 0)), 0),
+			ISNULL(SUM(CASE WHEN b.bettype = 911 THEN b.actual_stake ELSE 0 END), 0),
+			ISNULL(SUM(CASE WHEN b.bettype = 911 AND b.customercategory = 1003 THEN b.winlost ELSE 0 END), 0),
+			ISNULL(SUM(CASE WHEN b.bettype = 911 AND b.customercategory = 1004 THEN b.winlost ELSE 0 END), 0),
+			0,
+			ISNULL(SUM(CASE WHEN b.bettype = 911 THEN 1 ELSE 0 END), 0)
 	FROM dbo.bettrans b WITH (NOLOCK)
 		LEFT JOIN (
 					SELECT b2.refno, SUM(b2.winlost) AS winlost
@@ -114,12 +116,13 @@ BEGIN
 	WITH cte AS (
 			SELECT b.custid, b.currency, COUNT (*) AS numOfTicket
 			FROM dbo.bettrans b WITH (NOLOCK)
-			WHERE ISNULL(b.ExtraInfo, '') <> '' 
-				AND b.bettype <> 911
+			WHERE betdaqid = 0 
+				AND b.bettype <> 911 
+				AND CAST(ExtraInfo AS XML).exist('/p25/@s') = 1
 			GROUP BY b.custid, b.currency
 	)
 	UPDATE b
-	SET b.NumOfCashoutTicket = cte.numOfTicket
+	SET b.NumOfCashoutTicket = ISNULL(cte.numOfTicket, 0)
 	FROM #Source b
 		INNER JOIN cte ON b.Currency = cte.currency AND b.CustID = cte.custid;
 
@@ -139,13 +142,13 @@ BEGIN
 	SELECT	CustID,		
 			Currency,
 			Recommend,
-			SUM(TicketPayout),
-			SUM(CashoutComm),
-			SUM(CashoutAmount),
-			SUM(BuyBackAmt),	
-			SUM(BABuyBackAmt),		
-			SUM(NumOfCashoutTicket),
-			SUM(NumOfCashoutTrans)
+			ISNULL(SUM(TicketPayout), 0),
+			ISNULL(SUM(CashoutComm), 0),
+			ISNULL(SUM(CashoutAmount), 0),
+			ISNULL(SUM(BuyBackAmt), 0),	
+			ISNULL(SUM(BABuyBackAmt), 0),		
+			ISNULL(SUM(NumOfCashoutTicket), 0),
+			ISNULL(SUM(NumOfCashoutTrans), 0)
 	FROM dbo.rptLicCashoutSummary WITH(NOLOCK)
 	WHERE Winlostdate = @WinlostDate
 		AND RoleID = 1
