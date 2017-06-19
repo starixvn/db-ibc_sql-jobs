@@ -38,7 +38,7 @@ Revisions:
 	-20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]
 
 Param's Explanation:
-	EXEC Task_PrepareStaging '2017-04-16', '2017-04-18'
+	EXEC Task_PrepareStaging '2017-06-16', '2017-06-18'
 */
 BEGIN
 	SET NOCOUNT ON;
