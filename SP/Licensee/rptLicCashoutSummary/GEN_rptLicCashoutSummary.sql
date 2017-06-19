@@ -11,7 +11,10 @@ AS
 	Description: Daily summary data of Cashout [RedmineID: #71727]
 	DB: DBLIC.bodb_LicenseeReport
 
-	EXEC GEN_rptLicCashoutSummary '20170418'
+	Revision:
+		-20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]
+
+	EXEC GEN_rptLicCashoutSummary '20170618'
 */
 BEGIN
 	IF @ToDate IS NULL
@@ -47,7 +50,8 @@ BEGIN
 			CashoutAmount,
 			BuyBackAmt,	
 			BABuyBackAmt,			
-			NumOfCashoutTrans
+			NumOfCashoutTrans,
+			NumOfCashoutTicket
 	)
 	SELECT b.winlostdate, b.custid, b.currency
 		, ISNULL(site.SiteID,-1) siteid
@@ -60,6 +64,7 @@ BEGIN
 		, SUM(CASE WHEN b.bettype = 911 AND b.customercategory = 1003 THEN b.winlost ELSE 0 END)
 		, SUM(CASE WHEN b.bettype = 911 AND b.customercategory = 1004 THEN b.winlost ELSE 0 END)		
 		, SUM(CASE WHEN b.bettype = 911 THEN 1 ELSE 0 END)
+		, 0
 	FROM dbo.bettrans b WITH (NOLOCK)
 		LEFT JOIN (
 					SELECT b2.refno, SUM(b2.winlost) AS winlost
@@ -90,7 +95,7 @@ BEGIN
 	;WITH cte AS (
 			SELECT b.winlostdate, b.custid, b.currency, COUNT (*) AS numOfTicket
 			FROM dbo.bettrans b WITH (NOLOCK)
-			WHERE ISNULL(b.ExtraInfo, '') <> '' AND b.bettype <> 911
+			WHERE betdaqid = 0 AND b.bettype <> 911 AND CAST(ExtraInfo AS XML).exist('/p25/@s') = 1
 			GROUP BY b.winlostdate, b.custid, b.currency
 	)
 	UPDATE b
