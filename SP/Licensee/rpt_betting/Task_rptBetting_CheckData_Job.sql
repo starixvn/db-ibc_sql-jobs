@@ -81,8 +81,11 @@ BEGIN
 			@GenRptKenoWinloss TINYINT = 0, @GenExtraGMT TINYINT = 0,
 			@GenRptBetting TINYINT = 0, @GenRptBettingBA TINYINT = 0, 
 			@GenRptLicCashout TINYINT = 0, @GenRptBettingBySport TINYINT = 0,
-			@GenAGC TINYINT = 0, @GenGD TINYINT = 0, @SeparatedProductID TINYINT,
-			@BalanceUpDay SMALLDATETIME
+			@GenAGC TINYINT = 0, @Gen3rdParty TINYINT = 0, @SeparatedProductID TINYINT,
+			@BalanceUpDay SMALLDATETIME,
+			@KenoWinlossBetTypes VARCHAR(MAX), @ExtraGMTBetTypes VARCHAR(MAX),
+			@BettingBetTypes VARCHAR(MAX), @BettingBABetTypes VARCHAR(MAX),
+			@3rdProducts VARCHAR(MAX)
 
 	INSERT INTO @Dates(BalanceUpDay, MoveBetsDay)
 	EXEC bodb02.dbo.Age_SelBalanceUpDay
@@ -105,9 +108,9 @@ BEGIN
 		IF @Step IN (0,1)
 		BEGIN 			
 			------1.1 Check data mismatch
-			EXEC dbo.Task_rptKenoWinloss_CheckData @WinlostDate = @WinlostDate, @HasDataMismatch = @GenRptKenoWinloss OUTPUT
+			EXEC dbo.Task_rptKenoWinloss_CheckData @WinlostDate = @WinlostDate, @HasDataMismatch = @GenRptKenoWinloss OUTPUT, @BetTypes = @KenoWinlossBetTypes OUTPUT
 
-			EXEC dbo.Task_rptThirdPartyWL_ExtraGMT_CheckData @WinlostDate = @WinlostDate, @HasDataMismatch = @GenExtraGMT OUTPUT
+			EXEC dbo.Task_rptThirdPartyWL_ExtraGMT_CheckData @WinlostDate = @WinlostDate, @HasDataMismatch = @GenExtraGMT OUTPUT, @BetTypes = @ExtraGMTBetTypes OUTPUT
 
 			-----1.2 Correct data
 			IF @AllowCorrect = 1
@@ -131,7 +134,7 @@ BEGIN
 						CASE @GenRptKenoWinloss
 							WHEN 1 THEN ''
 							WHEN 2 THEN '(UUS only) '
-						END + 'Has data mismatch between rptKenoWinloss table and source'
+						END + 'Has data mismatch between rptKenoWinloss table and source with bet types (' + @KenoWinlossBetTypes + ')'
 			END		 
 		
 			IF @GenExtraGMT <> 0
@@ -141,7 +144,7 @@ BEGIN
 						CASE @GenExtraGMT
 							WHEN 1 THEN ''
 							WHEN 2 THEN '(UUS only) '
-						END + 'Has data mismatch between rpt_ThirdPartyWL_ExtraGMT table and source'
+						END + 'Has data mismatch between rpt_ThirdPartyWL_ExtraGMT table and source with bettypes (' + @ExtraGMTBetTypes + ')'
 			END
 		END 
 		
@@ -160,9 +163,9 @@ BEGIN
 			END 
 		 
 			-----2.2 Check data mismatch  
-			EXEC dbo.Task_rptBetting_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptBetting OUTPUT
+			EXEC dbo.Task_rptBetting_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptBetting OUTPUT, @BetTypes = @BettingBetTypes OUTPUT
 
-			EXEC dbo.Task_rptBetting_BA_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptBettingBA OUTPUT
+			EXEC dbo.Task_rptBetting_BA_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptBettingBA OUTPUT, @BetTypes = @BettingBABetTypes OUTPUT
 
 			EXEC dbo.Task_rptLicCashoutSummary_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptLicCashout OUTPUT
 
@@ -209,7 +212,7 @@ BEGIN
 						CASE @GenRptBetting
 							WHEN 1 THEN ''
 							WHEN 2 THEN '(UUS only) '
-						END + 'Has data mismatch between rpt_betting, rpt_BettingbyProduct tables and source'
+						END + 'Has data mismatch between rpt_betting, rpt_BettingbyProduct tables and source with bet types (' + @BettingBetTypes + ')'
 			END
 
 			IF @GenRptBettingBA <> 0
@@ -219,7 +222,7 @@ BEGIN
 						CASE @GenRptBettingBA
 							WHEN 1 THEN ''
 							WHEN 2 THEN '(UUS only) '
-						END + 'Has data mismatch between rpt_betting_BA, rpt_BettingbyProduct tables and source'
+						END + 'Has data mismatch between rpt_betting_BA, rpt_BettingbyProduct tables and source with bet types (' + @BettingBABetTypes + ')'
 			END
 
 			IF @GenRptLicCashout <> 0
@@ -249,7 +252,7 @@ BEGIN
 			-----3.1 Check data mismatch  
 			EXEC dbo.Task_rptDepWinlost_AGCasino_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenAGC OUTPUT   ---- AGC
 			
-			EXEC dbo.Task_rptDepWinlost_ThirdParty_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenGD OUTPUT	   ----- GD
+			EXEC dbo.Task_rptDepWinlost_ThirdParty_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @Gen3rdParty OUTPUT, @ProductIDs = @3rdProducts OUTPUT
 			
 			-----3.2. Correct data
 			IF @AllowCorrect = 1
@@ -259,20 +262,21 @@ BEGIN
 					EXEC DBACC.bodb02.dbo.Task_DOT_AGCasino_DailySummary @winlostdate = @winlostdate
 				END 
 				
-				IF @GenGD <> 0 --- GD   
+				IF @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 11,%' --- GD   
 				BEGIN 
 					EXEC bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
 				END
 				
 			-----3.3.b. Correct data of Rpt_BettingByProduct table because of AGC and GD have been corrected 
-				IF @GenAGC <> 0 OR @GenGD <> 0
+				IF @GenAGC <> 0 OR @Gen3rdParty <> 0
 				BEGIN 
-					SELECT @SeparatedProductID = CASE WHEN @GenAGC = 1 AND @GenGD = 0 THEN 10
-													ELSE CASE WHEN @GenAGC = 0 AND @GenGD = 1 THEN 11 
+					SELECT @SeparatedProductID = CASE WHEN @GenAGC <> 0 AND @Gen3rdParty = 0 THEN 10
+													ELSE CASE WHEN @GenAGC = 0 AND @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 11,%' THEN 11 
 														ELSE 0 
 														END															
-													END						
-					EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = @SeparatedProductID   
+													END			
+																
+					EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = @SeparatedProductID  
 				END
 				
 			END 		   
@@ -286,17 +290,17 @@ BEGIN
 						CASE @GenAGC
 							WHEN 1 THEN ''
 							WHEN 2 THEN '(UUS only) '
-						END + 'Has data mismatch between Bettrans_AGCasino and sum tables'
+						END + 'Has data mismatch between rptDepWinlost_AGCasino table and source'
 			END
 			 
-			IF @GenGD <> 0
+			IF @Gen3rdParty <> 0
 			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
 				SELECT	@WinlostDate,
-						CASE @GenGD
+						CASE @Gen3rdParty
 							WHEN 1 THEN ''
 							WHEN 2 THEN '(UUS only) '
-						END + 'Has data mismatch between Bettrans_GoldDeluxe and sum tables'
+						END + 'Has data mismatch between rptDepWinlost_ThirdParty table and source with products (' + @3rdProducts + ')'
 			END
 		END 
 	END 		

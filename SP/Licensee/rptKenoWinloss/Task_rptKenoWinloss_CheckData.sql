@@ -8,7 +8,8 @@ GO
 
 ALTER PROCEDURE [dbo].[Task_rptKenoWinloss_CheckData]
 	@WinlostDate		SMALLDATETIME,
-	@HasDataMismatch	TINYINT OUTPUT --0: No mismatch; 1: Has real currencies; 2: UUS only
+	@HasDataMismatch	TINYINT OUTPUT, --0: No mismatch; 1: Has real currencies; 2: UUS only
+	@BetTypes			VARCHAR(MAX) OUTPUT
 AS
 
 /*
@@ -131,6 +132,14 @@ BEGIN
 	BEGIN
 		SET @HasDataMismatch = 2;
 	END
+
+	SELECT @BetTypes = STUFF(
+			(
+				SELECT DISTINCT ', ' + CAST(BetTypeId AS VARCHAR(10))
+				FROM #Log
+				FOR XML PATH('')
+			), 1, 2, ''
+		);
 
 	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, IsSource, BetTypeId, CurrencyId, Turnover, Winloss, BetCount)
 	SELECT	@WinlostDate, 

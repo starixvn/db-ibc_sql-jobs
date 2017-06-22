@@ -2,8 +2,9 @@
 USE bodb_LicenseeReport
 GO
 ALTER PROCEDURE [dbo].[Task_rptBetting_BA_CheckData]
-    @WinlostDate		datetime
+    @WinlostDate		DATETIME
 	,@HasDataMismatch	TINYINT OUTPUT --0: No mismatch; 1: Has real currencies; 2: UUS only
+	,@BetTypes			VARCHAR(MAX) OUTPUT
 AS
 
 /*
@@ -212,6 +213,14 @@ BEGIN
 	BEGIN
 		SET @HasDataMismatch = 2
 	END
+
+	SELECT @BetTypes = STUFF(
+			(
+				SELECT DISTINCT ', ' + CAST(BetTypeId AS VARCHAR(10))
+				FROM #Log
+				FOR XML PATH('')
+			), 1, 2, ''
+		)
 
 	INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, IsSource, BetTypeId, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
 	SELECT	@WinlostDate, 
