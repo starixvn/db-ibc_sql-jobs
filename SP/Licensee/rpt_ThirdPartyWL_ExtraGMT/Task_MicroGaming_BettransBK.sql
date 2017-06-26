@@ -20,6 +20,7 @@ AS
 	- 20160907@Harper: #62820_Add ValidBetAmount for AllBet
 	- 20161222@Jim: LA/ Invoice - Integrate Fishing World (GMT + 8) [Redmine:#68677]
 	- 20170105@Jim: correct servername for table bettransLC_bk [Redmine:#68677]
+	- 20170626@Paul: Add sport type 205 [Redmine:#72914]
 	Param's Explanation:	
 */
 BEGIN
@@ -49,7 +50,7 @@ BEGIN
 	DECLARE @Bettype AS TABLE(Bettype INT)
     INSERT INTO @Bettype (Bettype)
     SELECT Bettype
-    FROM OPENQUERY(DBLIC, 'SELECT Bettype FROM bodb_Licensee.dbo.Sport_Bettype_Reference WITH (NOLOCK) WHERE Sporttype = 203')
+    FROM OPENQUERY(DBLIC, 'SELECT Bettype FROM bodb_Licensee.dbo.Sport_Bettype_Reference WITH (NOLOCK) WHERE Sporttype IN (203, 205)')
 
 	WHILE @WinlostDate <= @ToDate
 	BEGIN
