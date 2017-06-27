@@ -195,7 +195,7 @@ BEGIN
 				END 
 
 				-----2.3.b. Correct data of Rpt_BettingByProduct table because of rpt_betting , rpt_betting_BA has been corrected 
-				IF @GenRptBetting <> 0 OR @GenRptBetting <> 0
+				IF @GenRptBetting <> 0 OR @GenRptBettingBA <> 0
 				BEGIN 
 					EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'rpt_betting' , @SeparatedProductID = 0   
 				END
