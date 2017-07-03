@@ -18,6 +18,7 @@ Revisions:
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20160805@Jim: Exclude bettype 18999 [Redmine #62052]
 	- 20160906@Jim: Correct value of SB & BA [Redmine #63571]
+	- 20170627@Sophia: Include CO into SB group [Redmine: #79061]
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
     
@@ -97,7 +98,7 @@ INSERT INTO @tblBettype (ProductPrefix,Bettype)
 SELECT DISTINCT ProductPrefix,bettype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB')	
+WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CO')	
 	 
  
 -- Data Source 
@@ -127,7 +128,7 @@ SELECT @SbTurnover=SUM(CASE
     ,@SbCustomerWl=SUM(WinLoss)
     ,@SbBetCount=SUM(CASE WHEN @DrawFilter=2 AND Status = 111 THEN 0 ELSE BetCount END)
 FROM @tblData 
-WHERE ProductPrefix IN  ('SB','BT')
+WHERE ProductPrefix IN  ('SB','BT','CO')
 
 SELECT @SbTurnover 	 = ISNULL (@SbTurnover, 0),
 	   @SbCustomerWl = ISNULL (@SbCustomerWl, 0),
