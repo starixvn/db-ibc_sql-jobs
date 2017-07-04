@@ -1,5 +1,4 @@
-USE [bodb_LicenseeReport]
-GO
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptWinlostbyleague_CheckData]
 	@WinlostDate SMALLDATETIME
 AS
@@ -11,6 +10,7 @@ AS
 	Revisions:
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20170522@Paul: Check awinlost, comm - [Redmine: #76206]
+	- 20170703@Paul: Check more columns - [Redmine: #79262]
 */
 
 BEGIN 
@@ -21,12 +21,14 @@ BEGIN
 			,@B_Betcount INT, @R_Betcount INT
 			,@B_AWinlost MONEY, @R_AWinlost MONEY
 			,@B_Comm MONEY, @R_Comm MONEY
+			,@B_PlayerComm MONEY, @R_PlayerComm MONEY
 	
 	SELECT @B_Winlost = SUM(b.winlost - b.actual_stake)
 			,@B_Stake = SUM (ABS(Stake))
 			,@B_Betcount = COUNT (*)
 			,@B_AWinlost = SUM(awinlost)
 			,@B_Comm = SUM(comm)
+			,@B_PlayerComm = SUM(playercomm)
 	FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)		
 	INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC
 		ON b.recommend = lc.custid
@@ -40,6 +42,7 @@ BEGIN
 			,@R_Betcount = SUM (Betcount)
 			,@R_AWinlost = SUM(awinlost)
 			,@R_Comm = SUM(comm)
+			,@R_PlayerComm = SUM(playercomm)
 	FROM	dbo.rptWinlostbyLeague WITH (NOLOCK)	
 	WHERE	winlostdate = @WinlostDate
 	 
@@ -48,10 +51,12 @@ BEGIN
 		OR ISNULL(@B_Stake, 0) <> ISNULL(@R_Stake, 0) 
 		OR ISNULL(@B_Betcount, 0) <> ISNULL(@R_Betcount, 0)
 		OR ISNULL(@B_AWinlost, 0) <> ISNULL(@R_AWinlost, 0)
-		OR ISNULL(@B_Comm, 0) <> ISNULL(@R_Comm, 0)  
+		OR ISNULL(@B_Comm, 0) <> ISNULL(@R_Comm, 0) 
+		OR ISNULL(@B_PlayerComm, 0) <> ISNULL(@R_PlayerComm, 0)  
 	BEGIN 
 		PRINT 'Re-generate data for rptWinlostbyleague on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' date.'	
 
 		EXEC dbo.Task_rptWinlostbyleague_Bettrans14 @WinlostDate
 	END
 END
+GO
