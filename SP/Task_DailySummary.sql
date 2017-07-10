@@ -1,6 +1,3 @@
-USE [bodb02]
-GO
-
 ALTER PROCEDURE [dbo].[Task_DailySummary]
 	@winlostdate datetime,
 	@TestMode tinyint = 0
@@ -54,6 +51,7 @@ Revisions:
 	- 20160809@Percy: Modify Net Turnover for Allbet [RedmineID: #60501]
 	- 20161010@Patrick: Apply NG2 [Redmine: #65460]
 	- 20170105@Percy: Apply Fishing World [Redmine: #65731]
+	- 20170530@Patrick: Modify Auto Void block code to prevent deadlock
 	
  */
 
@@ -289,19 +287,30 @@ END
 	BEGIN
 		Declare @custs TABLE (custid int)
 		
-		update dbo.bettrans with (ROWLOCK, UPDLOCK)  
-		SET winlost=actual_stake,ruben=1,statuswinlost=6, status = 'Void', statusid = 102,
-		awinlost = 0, mwinlost = 0, swinlost = 0, playercomm = 0, comm  = 0, acomm = 0, scomm = 0,
-		transdesc = '[AutoVoid]' + transdesc
+		CREATE TABLE #__AutoVoid_TransList(TransId BIGINT PRIMARY KEY)
+		INSERT INTO #__AutoVoid_TransList(TransId)
+		SELECT TransId
+		FROM dbo.bettrans b WITH(NOLOCK)
+		WHERE b.currency = 20 AND winlostdate = @winlostdate 
+			AND bettype <= 19000 AND statusID IN (0, 1)
+
+		UPDATE b
+		SET winlost=actual_stake,ruben=1,statuswinlost=6, status = 'Void', statusid = 102
+			, awinlost = 0, mwinlost = 0, swinlost = 0, playercomm = 0, comm  = 0, acomm = 0
+			, scomm = 0, transdesc = '[AutoVoid]' + transdesc
 		OUTPUT deleted.custid INTO @custs
-		where currency = 20 AND winlostdate = @winlostdate AND bettype <=19000
-		AND statusID IN (0,1)
+		FROM #__AutoVoid_TransList t
+			INNER JOIN dbo.bettrans b WITH (ROWLOCK, UPDLOCK) ON t.TransId = b.transid
+		OPTION (FORCE ORDER) --hint for case bad plan
 		
 		INSERT INTO dbo.Task_Cust_CheckBalanceVerify (custid)
 		SELECT DISTINCT custid
 		FROM @custs
 		
-				EXEC dbo.[Task_CheckBalance] @step = 33, @Action = 'JustFix'
+		EXEC dbo.[Task_CheckBalance] @step = 33, @Action = 'JustFix'
+
+		DROP TABLE #__AutoVoid_TransList
+
 	END
 
 IF @TestMode <> 0 -- @TestMode = 2
@@ -368,7 +377,7 @@ GROUP BY
 		FROM bettrans with (nolock) 
 		WHERE bettype = 10 AND winlostdate = @winlostdate AND statusID <> 0 --AND status <> 'running'
 		)
-
+		 
 EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Copy @winlostdate
 
 EXEC dbo.Task_BalanceCheck @winlostdate, 1
@@ -973,8 +982,5 @@ EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 WAITFOR DELAY '00:02:00' --- add this wait to make sure the delete event part run completely before start next day
 
 PRINT CONVERT(varchar(10), @winlostdate, 120)
-
-
-GO
 
 
