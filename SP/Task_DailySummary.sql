@@ -50,8 +50,9 @@ Revisions:
 	- 20160909@Patrick: Record IsMovingBet value to systemsettings table on dbtrans.bodb02
 	- 20160809@Percy: Modify Net Turnover for Allbet [RedmineID: #60501]
 	- 20161010@Patrick: Apply NG2 [Redmine: #65460]
-	- 20170105@Percy: Apply Fishing World [Redmine: #65731]
+	- 20170105@Percy: Apply Fishing World [RedmineID: #65731]
 	- 20170530@Patrick: Modify Auto Void block code to prevent deadlock
+	- 20170710@Percy: Apply Betradar Virtual Sport [RedmineID: #78339]
 	
  */
 
@@ -520,7 +521,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
-			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport
+			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sport
+			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sport
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype = 73 THEN 252 --Bingo 
@@ -575,7 +577,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
-			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport
+			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
+			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype = 73 THEN 252 --Bingo 
@@ -628,7 +631,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
-			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport
+			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
+			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype = 73 THEN 252 --Bingo 
@@ -685,7 +689,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
-			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport
+			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
+			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype = 73 THEN 252 --Bingo 
@@ -739,7 +744,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
-			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport
+			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
+			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype = 73 THEN 252 --Bingo 
@@ -796,7 +802,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
-			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport
+			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
+			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype = 73 THEN 252 --Bingo 
@@ -850,7 +857,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
-			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport
+			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
+			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype = 73 THEN 252 --Bingo 
@@ -907,7 +915,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
-			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 --Virtual Sport
+			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
+			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype = 73 THEN 252 --Bingo 
