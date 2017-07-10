@@ -53,7 +53,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check an
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.Task_rptBetting_CheckData_Job @AllowCorrect = 1', 
+		@command=N'EXEC dbo.Task_rptBetting_CheckData_Job @AllowCorrect = 0', 
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
