@@ -13,8 +13,7 @@ Revisions:
 	- 20141121@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
 	- 20151005@Don: Add filter by status
 	- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
-	- 20170407@Sophia:  Automatically sum data to Rpt_bettingByProduct [Redmine: #72914]
-						Add rule auto regen data :
+	- 20170407@Sophia:: Add rule auto regen data : [Redmine: #72914]
 							1st -> 5th : Can Edit data of Previous month  and current Month
 							6th -> end of the month : Edit data of current month only
 Param's Explanation:
