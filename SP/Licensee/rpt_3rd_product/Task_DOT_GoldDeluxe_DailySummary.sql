@@ -1,7 +1,7 @@
-USE [bodb_PlaytechCS]
-GO
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS," executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
 ALTER PROCEDURE [dbo].[Task_DOT_GoldDeluxe_DailySummary]
 	@winlostdate DATETIME
+	,@IsManual BIT = 0 
 AS
 /*   
 Created: 20140313@Winnie
@@ -10,6 +10,9 @@ DB: DBPTCS/bodb_PlaytechCS
 Original:
 Revisions:	
 - 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
+- 20170407@Sophia: 	Add rule auto regen data : [Redmine: #72914]
+							1st -> 5th : Can Edit data of Previous month  and current Month
+							6th -> end of the month : Edit data of current month only
 Param's Explanation:
 	- @winlostdate: The date need to summary
 */  
@@ -25,6 +28,17 @@ BEGIN TRY
 	
 	DECLARE @WLDateTab AS TABLE (ID SMALLINT IDENTITY (1,1), winlostdate DATE)
 	DECLARE @i SMALLINT = 1
+	
+	DECLARE @Day TINYINT, @MinDate DATE 
+	SELECT @Day = DAY(GETDATE())
+	IF @Day <= 5 --- 1st -> 5th of the month
+	BEGIN 
+		SELECT @MinDate = DATEADD(mm, DATEDIFF(mm, 0, GETDATE()) - 1, 0)  ----- FirstOfPreviousMonth 
+	END
+	ELSE
+	BEGIN 
+		SELECT @MinDate =  DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0) --- FirstOfCurrentMonth
+	END
 	
 	INSERT INTO @WLDateTab
 	SELECT DISTINCT (t.winlostdate)
@@ -52,38 +66,43 @@ BEGIN TRY
 		FROM @WLDateTab
 		WHERE ID = @i
 	
-		TRUNCATE TABLE #TicketData
+		IF @winlostdate >= @MinDate OR @IsManual = 1
+		BEGIN 
+			TRUNCATE TABLE #TicketData
+			
+			INSERT INTO #TicketData (custid, currency, turnover,winlost,drawTO,drawBetCount,betCount )
+			SELECT b.CustID, 		
+					b.currency,				
+					ISNULL(SUM(b.Stake),0) AS Turnover,			
+					ISNULL(SUM(b.Winlost - b.Stake),0) AS Winlost,	
+					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN b.Stake ELSE 0 END),0) AS DrawTO,	
+					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount,	
+				ISNULL(COUNT(b.TicketId),0) AS Betcount			
+
+			FROM dbo.bettrans_GoldDeluxe b WITH (ROWLOCK)
+			WHERE Winlostdate = @winlostdate AND StatusId IN (111,112,113)
+			GROUP BY b.CustID, b.currency
 		
-		INSERT INTO #TicketData (custid, currency, turnover,winlost,drawTO,drawBetCount,betCount )
-		SELECT b.CustID, 		
-				b.currency,				
-				ISNULL(SUM(b.Stake),0) AS Turnover,			
-				ISNULL(SUM(b.Winlost - b.Stake),0) AS Winlost,	
-				ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN b.Stake ELSE 0 END),0) AS DrawTO,	
-				ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount,	
-			ISNULL(COUNT(b.TicketId),0) AS Betcount			
 
-		FROM dbo.bettrans_GoldDeluxe b WITH (ROWLOCK)
-		WHERE Winlostdate = @winlostdate AND StatusId IN (111,112,113)
-		GROUP BY b.CustID, b.currency
-	
+			-- Insert data to rptDepWinlost_ThirdParty
+			DELETE FROM bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty WITH (ROWLOCK) WHERE Winlostdate = @winlostdate and ProductId=@ProductId
 
-		-- Insert data to rptDepWinlost_ThirdParty
-		DELETE FROM [bodb_LicenseeReport].dbo.rptDepWinlost_ThirdParty WHERE Winlostdate = @winlostdate and ProductId=@ProductId
-
-		INSERT INTO [bodb_LicenseeReport].dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, turnover,
-															winlost,drawTO,drawBetCount, BetCount,ProductId)
-		SELECT @winlostdate, custid,  currency, turnover,
-			winlost,drawTO,drawBetCount,  BetCount, @ProductId
-		FROM #TicketData
-		
-		UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
-		SET isSummarized = 1
-		WHERE Winlostdate = @winlostdate AND isSummarized = 0
-			AND ProductID = @ProductId
+			INSERT INTO bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, turnover,
+																winlost,drawTO,drawBetCount, BetCount,ProductId)
+			SELECT @winlostdate, custid,  currency, turnover,
+				winlost,drawTO,drawBetCount,  BetCount, @ProductId
+			FROM #TicketData					
+					
+			---Update flag isSummarized to queue  
+			UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
+			SET isSummarized = 1
+			WHERE Winlostdate = @winlostdate AND isSummarized = 0
+				AND ProductID = @ProductId
+		END 
 		
 		SELECT @i = @i + 1
 	END
+	
 
 	DROP TABLE #TicketData
 END TRY

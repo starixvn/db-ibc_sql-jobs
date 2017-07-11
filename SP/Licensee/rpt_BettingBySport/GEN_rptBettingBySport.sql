@@ -11,6 +11,7 @@ AS
 
     Revisions:
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+	- 20170529@Paul: Get matchid from staging match table [Redmine: #72914]
 */ 
 BEGIN
     DELETE FROM dbo.rpt_BettingBySport
@@ -50,7 +51,12 @@ BEGIN
 			, -sum(scomm * 0.03/(1 - tpositiontaking)) as CommShare -- Commission for Licensee share with Muay Thai partner
 			, b.customercategory AS CustomerCategory
 	FROM dbo.bettrans b with (nolock)
-		INNER JOIN (SELECT matchid FROM bodb02.dbo.match WITH (NOLOCK) WHERE eventdate BETWEEN @fromdate AND @todate AND SportType = 44) m ON b.matchid = m.matchid
+		INNER JOIN (
+			SELECT matchid 
+			FROM dbo.match WITH (NOLOCK) 
+			WHERE eventdate BETWEEN @fromdate AND @todate 
+				AND SportType = 44
+		) m ON b.matchid = m.matchid
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site = ibcsite.site
 		LEFT JOIN bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid=siteT.IbcSiteID

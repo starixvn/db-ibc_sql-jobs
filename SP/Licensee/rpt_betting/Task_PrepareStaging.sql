@@ -1,3 +1,6 @@
+USE [bodb_LicenseeReport]
+GO
+
 SET QUOTED_IDENTIFIER OFF 
 GO
 SET ANSI_NULLS ON 
@@ -7,6 +10,7 @@ GO
 ALTER PROCEDURE [dbo].[Task_PrepareStaging]  
     @datefrom smalldatetime=null
     ,@dateto smalldatetime=null
+	,@ErrorMsg VARCHAR(MAX) = '' OUTPUT
 WITH RECOMPILE
 AS  
 /*
@@ -30,12 +34,29 @@ Revisions:
 	-20161121@Sophia: Correct formula CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
 	-20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 	-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
+	-20170525@Paul: Check IsStagingBettrans flag before staging bettrans; insert sporttype, eventdate into staging match table [Redmine: #72914]
+	-20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2017-04-16', '2017-04-18'
 */
 BEGIN
-	
+	SET NOCOUNT ON;
+
+	UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+	SET VValue = 1
+	WHERE VName = 'IsStagingBettrans'
+		AND VValue = 0
+
+	IF @@ROWCOUNT = 0
+	BEGIN
+		SET @ErrorMsg = 'Another task is using staging bettrans';
+
+		RAISERROR(@ErrorMsg, 16, 1)
+
+		RETURN;
+	END
+
 	DECLARE @today datetime, @thedaybefore datetime
 	SELECT @today=@dateto, @thedaybefore=@datefrom
 	
@@ -51,7 +72,7 @@ BEGIN
 	    SELECT orid AS matchid, leagueid
         FROM bodb02.dbo.outright (NOLOCK)
         WHERE eventdate>=@thedaybefore AND eventdate<@today
-        UNION 
+        UNION ALL
         SELECT orid AS matchid, leagueid
         FROM bodb02.dbo.outright14 (NOLOCK)
         WHERE eventdate>=@thedaybefore AND eventdate<@today
@@ -59,12 +80,12 @@ BEGIN
 	---------PROCESS MATCH DATA--------------------------------------------------------------------------------------------  
 	TRUNCATE TABLE dbo.match  
 	
-    INSERT INTO dbo.match(matchid, leagueid)
-	    SELECT matchid, leagueid
+    INSERT INTO dbo.match(matchid, leagueid, sporttype, eventdate)
+	    SELECT matchid, leagueid, sporttype, eventdate
         FROM bodb02.dbo.match (NOLOCK)
         WHERE eventdate>=@thedaybefore AND eventdate<@today
-        UNION
-        SELECT matchid, leagueid
+        UNION ALL
+        SELECT matchid, leagueid, sporttype, eventdate
         FROM bodb02.dbo.match14 (NOLOCK)
         WHERE eventdate>=@thedaybefore AND eventdate<@today
 	  
@@ -130,7 +151,8 @@ BEGIN
 				,isBA
 				,refno
 				,oddsspread
-				,ExtraInfo)
+				,ExtraInfo
+				,betdaqid)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -159,12 +181,14 @@ BEGIN
 				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread,
-				b.ExtraInfo
+				b.ExtraInfo,
+				b.betdaqid
 			FROM bodb02.dbo.bettrans b (NOLOCK)
 			    INNER JOIN @Recommend_List r ON b.recommend=r.t_recommend
 			WHERE b.bettype<19000
 	            AND b.winlostdate=@tmpDate
 	            AND b.custid>0
+				AND b.recommend > 0
 	        
             DELETE dbo.bettrans WHERE winlostdate=@tmpDate AND statusid IN (0,1,101,102,121)
 
@@ -237,7 +261,8 @@ BEGIN
 				,isBA
 				,refno
 				,oddsspread
-				,ExtraInfo)
+				,ExtraInfo
+				,betdaqid)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -266,7 +291,8 @@ BEGIN
 				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread,
-				b.ExtraInfo
+				b.ExtraInfo,
+				b.betdaqid
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
 			    INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
 			WHERE b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'

@@ -8,6 +8,7 @@ Task: clean up staging data to save diskspace
 DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
+	- 20170525@Paul: Update IsStagingBettrans flag after generating data [Redmine: #72914]
     
 Param's Explanation:
 
@@ -19,3 +20,8 @@ TRUNCATE TABLE dbo.match
 TRUNCATE TABLE dbo.outright
 
 DBCC SHRINKFILE (N'LicenseeReport_Staging_Data', 0, TRUNCATEONLY)
+
+UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+SET VValue = 0
+WHERE VName = 'IsStagingBettrans'
+	AND VValue = 1

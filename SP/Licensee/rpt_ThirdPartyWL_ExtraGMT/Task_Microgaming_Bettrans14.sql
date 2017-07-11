@@ -17,6 +17,7 @@ AS
 	 - 20160422@Francis: add Progressive Contribution and Progressive Payout for Microgaming RNG
 	 - 20160907@Harper: #62820_Add ValidBetAmount for AllBet
 	 - 20161222@Jim: LA/ Invoice - Integrate Fishing World (GMT + 8) [Redmine:#68677]
+	 - 20170523@Paul: Add sport type 205 [Redmine:#72914]
 	 Param's Explanation:
 */
 
@@ -36,7 +37,7 @@ BEGIN
     INSERT INTO @Bettype (Bettype)
     SELECT Bettype
 	FROM bodb_licensee.dbo.Sport_Bettype_Reference WITH (NOLOCK)
-	WHERE Sporttype = 203 
+	WHERE Sporttype IN (203, 205)
 	
 	WHILE (@Winlostdate <= @Todate)
 	BEGIN
