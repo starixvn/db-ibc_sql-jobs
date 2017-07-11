@@ -1,12 +1,4 @@
-USE [bodb_LicenseeReport]
-GO
-/****** Object:  StoredProcedure [dbo].[Task_rptCustomerMatch_CheckData]    Script Date: 09/27/2016 15:27:22 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Task_rptCustomerMatch_CheckData    Script Date: 9/27/2016 2:40:13 AM ******/
-/****** Object:  Stored Procedure dbo.Task_rptCustomerMatch_CheckData    Script Date: 8/1/2016 09:30:35 ******/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptCustomerMatch_CheckData]
 	@WinlostDate SMALLDATETIME
 AS
@@ -18,6 +10,7 @@ AS
 	Revisions:	
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20170522@Paul: Check awinlost, comm - [Redmine: #76206]
+	- 20170703@Paul: Check more columns - [Redmine: #79262]
 */
 
 BEGIN 
@@ -28,12 +21,14 @@ BEGIN
 			,@B_Betcount INT, @R_Betcount INT
 			,@B_AWinlost MONEY, @R_AWinlost MONEY
 			,@B_Comm MONEY, @R_Comm MONEY
+			,@B_PlayerComm MONEY, @R_PlayerComm MONEY
 	
 	SELECT @B_Winlost = SUM(b.winlost - b.actual_stake)
 			,@B_Stake = SUM (ABS(Stake))
 			,@B_Betcount = COUNT (*)
 			,@B_AWinlost = SUM(awinlost)
 			,@B_Comm = SUM(comm)
+			,@B_PlayerComm = SUM(playercomm)
 	FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) lc
 		ON b.recommend = lc.custid
@@ -47,6 +42,7 @@ BEGIN
 			,@R_Betcount = SUM (Betcount)
 			,@R_AWinlost = SUM(awinlost)
 			,@R_Comm = SUM(comm)
+			,@R_PlayerComm = SUM(playercomm)
 	FROM	dbo.rptCustomerMatch WITH (NOLOCK)	
 	WHERE	winlostdate = @WinlostDate
 	 
@@ -56,6 +52,7 @@ BEGIN
 		OR ISNULL(@B_Betcount, 0) <> ISNULL(@R_Betcount, 0) 
 		OR ISNULL(@B_AWinlost, 0) <> ISNULL(@R_AWinlost, 0)
 		OR ISNULL(@B_Comm, 0) <> ISNULL(@R_Comm, 0)
+		OR ISNULL(@B_PlayerComm, 0) <> ISNULL(@R_PlayerComm, 0)
 	BEGIN 
 		PRINT 'Re-generate data for rptCustomerMatch on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' date.'
 
@@ -63,3 +60,4 @@ BEGIN
 	END 
 	
 END
+GO
