@@ -20,7 +20,7 @@ AS
 		- 20120316@Victor: add move bettransG to bettransG14
 		- 20140305@Vivi: add move translog to translog14
 		- 20151012@Sophia: Add Move BettransLC and BettransRNG 
-    
+		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
     
 	 */
 IF @@SERVERNAME NOT LIKE 'DB04%'
@@ -119,7 +119,7 @@ BEGIN
 		oddstype, statusID, currency2, balance, SecAcceptFlag, transid2
 	from bettrans (nolock)
 	where recommend = @recommend AND winlostdate=@winlostdate
-		and bettype IN (9, 29)
+		and bettype IN (9, 29, 2799)
 END
 
 

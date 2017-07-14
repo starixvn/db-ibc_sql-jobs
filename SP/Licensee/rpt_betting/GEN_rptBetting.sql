@@ -24,7 +24,8 @@ Revisions:
 	20160321@Victor: Support Colossus bet [Redmine: #52575]
 	20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
-	-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
+	20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
+	20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 
 Param's Explanation:
 
@@ -68,6 +69,7 @@ INSERT INTO dbo.rpt_Betting
 	    b.bettype,
         CASE 
             WHEN b.bettype=9 THEN -9 
+			WHEN b.bettype = 2799 THEN -2799
             WHEN b.bettype = 10 OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1)
             WHEN b.bettype IN(1231,1232,1233,1237,1238) THEN RaceInfo.LeagueID
             ELSE ISNULL(m.leagueid,-1) 
@@ -112,6 +114,7 @@ INSERT INTO dbo.rpt_Betting
 	    b.bettype,
         CASE 
             WHEN b.bettype = 9 THEN -9 
+			WHEN b.bettype = 2799 THEN - 2799
             WHEN b.bettype = 10 OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1) 
             WHEN b.bettype IN(1231,1232,1233,1237,1238) THEN RaceInfo.LeagueID
             ELSE ISNULL(m.leagueid,-1) 

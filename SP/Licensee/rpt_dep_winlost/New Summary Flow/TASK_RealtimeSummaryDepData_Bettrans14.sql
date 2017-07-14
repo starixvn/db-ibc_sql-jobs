@@ -15,6 +15,8 @@ AS
 		- 20161013@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 		- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
 		- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
+		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
 		- @isSuccessful: -1: Data of the whole day have been summarized completely
@@ -166,6 +168,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 2301 AND 2399 THEN 210
 					WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
 					WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
+					WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				ELSE 0 END,--SportType
 				SUM(CASE WHEN b.statusID NOT IN(101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 				SUM(CASE WHEN b.ruben=0 THEN b.actual_stake ELSE 0 END),--Outstanding
@@ -215,6 +218,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 2301 AND 2399 THEN 210
 					WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
 					WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
+					WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				ELSE 0 END--SportType
 			OPTION (RECOMPILE, MAXDOP 8)
 			

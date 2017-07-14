@@ -18,6 +18,7 @@ DB: DB052.BODB02
 
 Revision:
 	20160119@Daniel: check table bettransRNG & bettransLC
+	20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 
  */
 
@@ -84,7 +85,7 @@ BEGIN
 	WHERE	winlostdate <= @winlostdate 
 			--AND [status] = 'running'
 			AND statusID = 0 
-			AND bettype <=19000 and bettype NOT IN (9, 10, 29)
+			AND bettype <=19000 and bettype NOT IN (9, 10, 29, 2799)
 
 	SELECT DISTINCT 'EXEC matchname ' + CAST(bm.matchid as varchar(10)) matchid, m.eventdate, bm.matchid, ',' [Comma]
 	FROM dbo.bettrans b (nolock)
@@ -93,16 +94,16 @@ BEGIN
 	WHERE	b.winlostdate <= @winlostdate 
 			--AND b.[status] = 'running' AND bm.[status] = 'running'
 			AND b.statusID = 0 AND bm.statusID = 0 
-			AND b.bettype in (9,29)
+			AND b.bettype in (9,29,2799)
 			--AND b.matchid = 0
-			AND b.matchID in (9,29)
+			AND b.matchID in (9,29,2799)
 			AND b.currency <> 20
 	ORDER BY m.eventdate
 
 	IF @@ROWCOUNT > 0
 	BEGIN
 		PRINT '--'
-		PRINT '--SELECT * FROM bettrans (nolock) WHERE status = ''running'' AND matchid IN (9,29) AND bettype IN (9,29) AND winlostdate <= ''' + CONVERT(varchar(10), @winlostdate, 120) + ''''
+		PRINT '--SELECT * FROM bettrans (nolock) WHERE status = ''running'' AND matchid IN (9,29,2799) AND bettype IN (9,29,2799) AND winlostdate <= ''' + CONVERT(varchar(10), @winlostdate, 120) + ''''
 		PRINT '--UPDATE dbo.bettrans SET winlostdate = ''' + CONVERT(varchar(10), DATEADD(day,1,@winlostdate), 120) + ''' WHERE transid IN ( xxxxx )'
 		PRINT '--'
 	END

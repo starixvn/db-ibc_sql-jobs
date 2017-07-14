@@ -33,7 +33,7 @@ AS
 		- 20170314@Sophia: Integrate Fishing World [Redmine: #73303]
 		- 20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 		- 20170526@Sophia: add Param @DataSource, @SeparatedProductID [Redmine: #72914]
-
+		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	EXEC GEN_rptBettingByProduct '2017-04-16', '2017-04-16'
 
 */
@@ -61,7 +61,7 @@ BEGIN
 		
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO')  
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO,BRVS')   
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 		SELECT Bettype, ProductId 

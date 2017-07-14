@@ -13,6 +13,7 @@ AS
 		-20140314@Florent: change way to get BA tickets		
 		-20141121@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
 		-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	Parameter's Explanation:			
 */
 SET NOCOUNT ON;
@@ -147,8 +148,8 @@ SELECT a.winlostdate
 	,sum(playercomm) playercomm
 	,a.recommend
 	,CASE 
-		WHEN a.bettype IN (9, 29)
-			THEN - 9
+		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30
@@ -174,8 +175,8 @@ GROUP BY a.winlostdate
 	,a.oddstype
 	,a.recommend
 	,CASE 
-		WHEN a.bettype IN (9, 29)
-			THEN - 9
+		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30

@@ -10,7 +10,7 @@ AS
 				- Single: from yesterday and before
 				- Parlay: from the day before yesterday and earlier
 	- 20160624@Patrick: Move SP to DBTP & Rearrange code [Redmine: #59643]
-
+	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
  */
 BEGIN
 	SET NOCOUNT ON
@@ -32,7 +32,7 @@ BEGIN
 				statusID = 0
 				AND custid <> 0
 				AND bettype <= 19000
-				AND bettype NOT IN (9, 29, 10)
+				AND bettype NOT IN (9, 29, 10, 2799)
 				AND winlostdate <= @winlostdate
 				AND currency <> 20
 			) -- check single tickets from yesterday and before
@@ -42,7 +42,7 @@ BEGIN
 			--AND [status] = 'running'  
 			AND statusID = 0
 			AND bettype <= 19000
-			AND bettype NOT IN (9, 10, 29)
+			AND bettype NOT IN (9, 10, 29, 2799)
 
 	SELECT @rowcount = @@ROWCOUNT
 
@@ -53,7 +53,7 @@ BEGIN
 				statusID = 0
 				AND custid <> 0
 				AND bettype <= 19000
-				AND bettype IN (9, 29)
+				AND bettype IN (9, 29, 2799)
 				AND winlostdate < @winlostdate
 				AND currency <> 20
 			) -- Check parlay tickets of the day before yesterday and earlier
@@ -68,9 +68,9 @@ BEGIN
 			--AND b.[status] = 'running' AND bm.[status] = 'running'  
 			AND b.statusID = 0
 			AND bm.statusID = 0
-			AND b.bettype IN (9, 29)
+			AND b.bettype IN (9, 29, 2799)
 			--AND b.matchid = 0  
-			AND b.matchID IN (9, 29)
+			AND b.matchID IN (9, 29, 2799)
 			AND b.currency <> 20
 		ORDER BY m.eventdate
 
@@ -78,7 +78,7 @@ BEGIN
 		OR @rowcount > 0
 	BEGIN
 		PRINT '--'
-		PRINT '--SELECT * FROM bettrans (nolock) WHERE status = ''running'' AND matchid IN (9,29) AND bettype IN (9,29) AND winlostdate <= ''' + CONVERT(VARCHAR(10), @winlostdate, 120) + ''''
+		PRINT '--SELECT * FROM bettrans (nolock) WHERE status = ''running'' AND matchid IN (9,29,2799) AND bettype IN (9,29,2799) AND winlostdate <= ''' + CONVERT(VARCHAR(10), @winlostdate, 120) + ''''
 		PRINT '--UPDATE dbo.bettrans SET winlostdate = ''' + CONVERT(VARCHAR(10), DATEADD(day, 1, @winlostdate), 120) + ''' WHERE transid IN ( xxxxx )'
 		PRINT '--'
 

@@ -1,4 +1,6 @@
-/****** Object:  Stored Procedure dbo.DBA_CreateLicenseeAgent    Script Date: 8/6/2013 2:29:34 PM ******/
+USE bodb_licensee
+GO
+
 CREATE PROCEDURE [dbo].[DBA_CreateLicenseeAgent] @LicenseeName VARCHAR(50)
 	, @SuperWildCard VARCHAR(50)
 	, @Currency INT = 0
@@ -19,9 +21,10 @@ AS
  - username ending with 03: banner  
  - username ending with 04: income access  
  Revisions:  
- - 20120509@Henry: add 1 more param: @IsDeposit (default = 1)  
- - 20120611@Henry: only get from real agent (condition: username NOT like @LicenseeName + 'ACC%')  
- - 20130603@Jim: restrict permission of Licensee User  
+	 - 20120509@Henry: add 1 more param: @IsDeposit (default = 1)  
+	 - 20120611@Henry: only get from real agent (condition: username NOT like @LicenseeName + 'ACC%')  
+	 - 20130603@Jim: restrict permission of Licensee User  
+	 - 20170707@Harper: fix CurrencyUser when we still have this licensee and currency
 */
 DECLARE @LicenseeID INT
 DECLARE @agent AS TABLE (
@@ -212,6 +215,7 @@ DECLARE @tblCurrency AS TABLE (
 	LicenseeID INT
 	, CurrencyID INT
 	)
+
 DECLARE @usr AS TABLE (
 	LicenseeID INT
 	, UserID INT
@@ -224,13 +228,6 @@ INSERT INTO @tblCurrency (
 SELECT DISTINCT LicenseeID
 	, Currency AS CurrencyID
 FROM dbo.LicenseeCust WITH (NOLOCK)
-WHERE LicenseeID = @LicenseeID
-
-EXCEPT
-
-SELECT DISTINCT LicenseeID
-	, CurrencyID
-FROM dbo.CurrencyUser WITH (NOLOCK)
 WHERE LicenseeID = @LicenseeID
 
 INSERT INTO @usr (
@@ -255,5 +252,17 @@ SELECT userID
 	, 1
 	, 1 ---- System=1 is default for LRF  
 FROM @usr u
-INNER JOIN @tblCurrency c
-	ON u.LicenseeID = c.LicenseeID
+	INNER JOIN @tblCurrency c ON u.LicenseeID = c.LicenseeID
+WHERE NOT EXISTS (SELECT 1 
+				FROM dbo.CurrencyUser cur WITH (NOLOCK) 
+				WHERE cur.SystemID = 1
+					AND cur.usrID = u.UserID
+					AND cur.LicenseeID = u.LicenseeID
+					AND cur.CurrencyID = c.CurrencyID)
+GO
+
+GO 
+ GRANT EXECUTE ON [dbo].[DBA_CreateLicenseeAgent] TO [vnteam]
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[DBA_CreateLicenseeAgent] TO [vnteam]
+GO 

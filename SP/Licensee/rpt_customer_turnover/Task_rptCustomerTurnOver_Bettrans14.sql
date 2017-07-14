@@ -16,6 +16,7 @@ AS
 		-20150714@Francis: Adjustment to serve to change KeenOcean's currency RMB to HK$
 		-20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
 		-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		-20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	Parameter's Explanation:			
 */
 SET NOCOUNT ON;
@@ -137,12 +138,14 @@ SELECT a.CustID
 						THEN b.sporttype
 					ELSE 180 --Virtual Sport
 					END --Virtual Sport
-		WHEN a.bettype BETWEEN 51 AND 69
-			THEN 201
-		WHEN a.bettype BETWEEN 1501 AND 1599
-			THEN 202-- Keno
-		WHEN a.bettype IN (31, 32, 33, 41, 42, 43)
-			THEN 151
+		WHEN a.bettype BETWEEN 51 AND 69 THEN 201
+		WHEN a.bettype BETWEEN 1501 AND 1599 THEN 202-- Keno
+		WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 151
+		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
+				WHEN result.sporttype IS NOT NULL THEN result.sporttype
+				WHEN b.sporttype IS NOT NULL THEN b.sporttype
+				ELSE 190 -- Betradar VS
+				END -- Betradar VS
 		ELSE isNULL(b.sporttype, 0)
 		END sporttype
 	,a.Currency
@@ -154,8 +157,8 @@ SELECT a.CustID
 	,a.statusID
 	,a.recommend
 	,CASE 
-		WHEN a.bettype IN (9, 29)
-			THEN - 9
+		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30
@@ -201,6 +204,11 @@ GROUP BY a.CustID
 			THEN 202-- Keno
 		WHEN a.bettype IN (31, 32, 33, 41, 42, 43)
 			THEN 151
+		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
+				WHEN result.sporttype IS NOT NULL THEN result.sporttype
+				WHEN b.sporttype IS NOT NULL THEN b.sporttype
+				ELSE 190 -- Betradar VS
+				END -- Betradar VS
 		ELSE isNULL(b.sporttype, 0)
 		END
 	,a.Currency
@@ -209,8 +217,8 @@ GROUP BY a.CustID
 	,a.statusID
 	,a.recommend
 	,CASE 
-		WHEN a.bettype IN (9, 29)
-			THEN - 9
+		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30

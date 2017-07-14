@@ -10,12 +10,12 @@ Task: Generate data into rpt_Betting
 DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
-20110726@Daniel: Process data for BA
-20150623@Patrick: Support BetTrade
-20150917@Francis: Cast LiveIndicator to 0 if it is NULL
-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
-
+	20110726@Daniel: Process data for BA
+	20150623@Patrick: Support BetTrade
+	20150917@Francis: Cast LiveIndicator to 0 if it is NULL
+	20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+	20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
+	20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 Param's Explanation:
 
 */
@@ -54,7 +54,8 @@ INSERT INTO dbo.rpt_Betting_BA
         ISNULL(site.SiteID,-1) siteid,
 	    b.bettype,
         CASE 
-            WHEN b.bettype=9 THEN -9 
+            WHEN b.bettype = 9 THEN -9 
+			WHEN b.bettype = 2799 THEN -2799
             WHEN (b.bettype=10) OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1) 
             ELSE ISNULL(m.leagueid,-1) 
         END AS leagueid,	
@@ -90,7 +91,8 @@ INSERT INTO dbo.rpt_Betting_BA
 	    ISNULL(site.SiteID,-1),
 	    b.bettype,
         CASE 
-            WHEN b.bettype=9 THEN -9 
+            WHEN b.bettype = 9 THEN -9 
+			WHEN b.bettype = 2799 THEN -2799
             WHEN (b.bettype=10) OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1) 
             ELSE ISNULL(m.leagueid,-1) 
         END,	

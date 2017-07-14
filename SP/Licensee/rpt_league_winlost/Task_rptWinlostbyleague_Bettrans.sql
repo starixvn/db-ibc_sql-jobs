@@ -10,6 +10,7 @@ AS
 	 Original: Task_rptWinlostbyleague_Bettrans14
 	 Revisions:   
 	 -20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+	 - 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
     
 */ 
 BEGIN
@@ -145,6 +146,7 @@ SELECT a.winlostdate
 	,a.recommend
 	,CASE 
 		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30
@@ -172,6 +174,7 @@ GROUP BY a.winlostdate
 	,a.recommend
 	,CASE 
 		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30

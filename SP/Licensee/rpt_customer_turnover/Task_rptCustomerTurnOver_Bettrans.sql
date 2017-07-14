@@ -11,6 +11,7 @@ AS
 	 Revisions:   
 		  - 20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
 		  - 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		  - 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 */ 
 BEGIN 
 SET NOCOUNT ON;
@@ -123,17 +124,19 @@ SELECT a.CustID
 				AND 120 THEN 161 --Number Game   
 		WHEN a.bettype BETWEEN 1101
 				AND 1199 THEN 162 -- Live casino  
-		WHEN a.bettype BETWEEN 1201
-				AND 1299 THEN CASE 
+		WHEN a.bettype BETWEEN 1201 AND 1299 THEN CASE 
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 180 --Virtual Sport  
 				END --Virtual Sport  
-		WHEN a.bettype BETWEEN 51
-				AND 69 THEN 201
-		WHEN a.bettype BETWEEN 1501
-				AND 1599 THEN 202 -- Keno  
+		WHEN a.bettype BETWEEN 51 AND 69 THEN 201
+		WHEN a.bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno  
 		WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 151
+		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
+				WHEN result.sporttype IS NOT NULL THEN result.sporttype
+				WHEN b.sporttype IS NOT NULL THEN b.sporttype
+				ELSE 190 -- Betradar VS
+				END -- Betradar VS
 		ELSE isNULL(b.sporttype, 0)
 		END sporttype
 	,a.Currency
@@ -146,6 +149,7 @@ SELECT a.CustID
 	,a.recommend
 	,CASE 
 		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30
@@ -187,6 +191,11 @@ GROUP BY a.CustID
 		WHEN a.bettype BETWEEN 1501
 				AND 1599 THEN 202 -- Keno  
 		WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 151
+		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
+				WHEN result.sporttype IS NOT NULL THEN result.sporttype
+				WHEN b.sporttype IS NOT NULL THEN b.sporttype
+				ELSE 190 -- Betradar VS
+				END -- Betradar VS
 		ELSE isNULL(b.sporttype, 0)
 		END
 	,a.Currency
@@ -196,6 +205,7 @@ GROUP BY a.CustID
 	,a.recommend
 	,CASE 
 		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30
