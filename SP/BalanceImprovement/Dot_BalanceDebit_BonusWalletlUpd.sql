@@ -14,6 +14,7 @@ AS
 	DB: DBTXN/bodb02
 		
 	Revisions:
+		- 20170505@Bobby: Initialize
 		
 	Params explanation
 */

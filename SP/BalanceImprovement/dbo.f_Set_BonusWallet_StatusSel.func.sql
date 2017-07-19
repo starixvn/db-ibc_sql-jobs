@@ -7,7 +7,8 @@ AS
 	Task: 72789 - Implement bonus system into NAP Settlement
 	DB: DBTXN/BODB02
 	Revisions:
-			
+		- 20170419@Bobby: Initialize
+		
 	Parameters Explanation:	
 		- @BonusFlag: TINYINT
 			+ 0: ALL

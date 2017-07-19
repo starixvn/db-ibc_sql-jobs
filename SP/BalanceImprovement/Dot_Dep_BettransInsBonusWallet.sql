@@ -21,7 +21,8 @@ Task : Record transactions for initializing & cancelling bonus wallet for Deposi
 DB: DBTXN/bodb02
 
 Revisions:
-
+	- 20170518@Bobby: Initialize
+	
 Param's Explanation:
 	- @custid: player account who joined bonus program
 	- @bal_custid: Custid of "Balance" (dummy) account to record opposite value for transaction
