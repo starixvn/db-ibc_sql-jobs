@@ -22,6 +22,7 @@ AS
   - 20140620@Johnson: calculate total odds for system parlay tickets
   - 20160422@Winnie: intergrate Combo parlay
   - 20160720@Winnie: fix bug Executed as user: DB054\SQL. Conversion failed when converting the nvarchar value 'a' to data type int. [SQLSTATE 22018] (Error 245).  The step failed.
+  - 20160926@Winnie: fix issue conflict refno with racing RedmineID: #64286
 */  
 
 SET NOCOUNT ON
@@ -102,11 +103,15 @@ BEGIN
 			,RN = ROW_NUMBER() OVER (PARTITION BY bm.refno ORDER BY bm.matchid) --RN			
 		FROM rmBettrans b WITH (NOLOCK) 
 			INNER JOIN
-					(	select refno, odds, stake,matchid
-						from bodb02.dbo.bettransm WITH(NOLOCK)
+					(	select refno, odds, stake,a.matchid
+						from bodb02.dbo.bettransm a WITH(NOLOCK)
+						inner join bodb02.dbo.match m WITH(NOLOCK) ON a.matchid=m.matchid
+						where m.sporttype<=99
 						union all
-						select refno, odds, stake,matchid
-						from bodb02.dbo.bettransm14 WITH(NOLOCK)
+						select refno, odds, stake,a.matchid
+						from bodb02.dbo.bettransm14 a WITH(NOLOCK)
+						inner join bodb02.dbo.match14 m WITH(NOLOCK) ON a.matchid=m.matchid
+						where m.sporttype<=99
 					)bm ON bm.refno = b.refno
 			WHERE b.bettype=29  
 	),
@@ -140,7 +145,8 @@ BEGIN
 	END AS transid2
 	FROM rmBettrans b (NOLOCK)
 	INNER JOIN bodb02.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
-	INNER JOIN bodb02.dbo.match c(NOLOCK) ON a.matchid=c.matchid	
+	INNER JOIN bodb02.dbo.match c(NOLOCK) ON a.matchid=c.matchid
+	WHERE c.sporttype<=99	
 	GROUP BY b.refno) aa ON aa.refno=bb.refno
 END
 ELSE 
@@ -169,6 +175,7 @@ BEGIN
 	FROM #temp b (NOLOCK)
 	INNER JOIN bodb02.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
 	INNER JOIN bodb02.dbo.match c(NOLOCK) ON a.matchid=c.matchid	
+	WHERE c.sporttype<=99
 	GROUP BY b.refno) aa ON aa.refno=bb.refno	
 		
 	MERGE dbo.rmBettrans as d
@@ -295,11 +302,15 @@ BEGIN
 				,RN = ROW_NUMBER() OVER (PARTITION BY bm.refno ORDER BY bm.matchid) --RN
 			FROM rmBettrans b WITH (NOLOCK) 
 				INNER JOIN
-						(	select refno, odds, stake,matchid
-							from bodb02.dbo.bettransm WITH(NOLOCK)
+						(	select refno, odds, stake,a.matchid
+							from bodb02.dbo.bettransm a WITH(NOLOCK)
+							inner join bodb02.dbo.match m WITH(NOLOCK) ON a.matchid=m.matchid
+							where m.sporttype<=99							
 							union all
-							select refno, odds, stake,matchid
-							from bodb02.dbo.bettransm14 WITH(NOLOCK)
+							select refno, odds, stake,a.matchid
+							from bodb02.dbo.bettransm14 a WITH(NOLOCK)
+							inner join bodb02.dbo.match14 m WITH(NOLOCK) ON a.matchid=m.matchid
+							where m.sporttype<=99
 						)bm ON bm.refno = b.refno
 				INNER JOIN #temp c ON b.transid=c.transid	
 				WHERE  b.bettype=29 AND b.transid>@max_transid				
