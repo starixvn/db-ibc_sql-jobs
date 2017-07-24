@@ -28,11 +28,9 @@ BEGIN
 		SELECT bn.CustID
 			, bn.BonusID
 			, bn.balance AS Bonus
-			, bd.LockedAmt
+			, 0 AS LockedAmt
 		FROM @BonusWalletChange bn
-			INNER JOIN dbo.BonusWalletCredit bd WITH(NOLOCK)
-			ON bn.custid 	= bd.custid
-			AND bn.BonusID 	= bd.BonusID
+			
 	END TRY	
 	BEGIN CATCH
 	
