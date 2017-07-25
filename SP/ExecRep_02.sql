@@ -1,6 +1,4 @@
-Text
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-/****** Object:  Stored Procedure dbo.ExecRep_02    Script Date: 11/19/2015 8:54:15 AM ******/
+ /*<info serverAlias="DBTXN-bodb02" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[ExecRep_02]
 	@tmp1 sql_variant = NULL,
 	@tmp2 sql_variant = NULL,
@@ -18,6 +16,7 @@ SET NOCOUNT ON
 	Revisions:		
 		- 20151012@Sophia: Add delete BettransLC14 and BettransRNG14
     	- 20160526@Victor: Add delete TransLog14 
+		- 20170725@Sophia: Change Datatype of TransID [Redmine: #73545]
  */
 -- =======================
 -- Parameter check\control
@@ -96,7 +95,7 @@ BEGIN
 	PRINT 'Continue'
 
 	
-	CREATE TABLE #btm (rn int PRIMARY KEY IDENTITY(1,1), transid int)
+	CREATE TABLE #btm (rn int PRIMARY KEY IDENTITY(1,1), transid BIGINT)
 
 	IF @@SERVERNAME LIKE 'DB04%'
 	BEGIN
@@ -225,5 +224,5 @@ BEGIN
 	END
 END
 
-SET NOCOUNT OFF
+GO
 
