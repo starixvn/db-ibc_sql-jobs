@@ -1,11 +1,7 @@
-USE [bodb02]
-GO
-/****** Object:  StoredProcedure [dbo].[ExecRep_02]    Script Date: 10/12/2015 02:46:58 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[ExecRep_02]
+Text
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/****** Object:  Stored Procedure dbo.ExecRep_02    Script Date: 11/19/2015 8:54:15 AM ******/
+CREATE PROCEDURE [dbo].[ExecRep_02]
 	@tmp1 sql_variant = NULL,
 	@tmp2 sql_variant = NULL,
 	@tmp3 sql_variant = NULL,
@@ -21,7 +17,7 @@ SET NOCOUNT ON
 	DB: DBTXN.BODB02
 	Revisions:		
 		- 20151012@Sophia: Add delete BettransLC14 and BettransRNG14
-    
+    	- 20160526@Victor: Add delete TransLog14 
  */
 -- =======================
 -- Parameter check\control
@@ -50,6 +46,18 @@ BEGIN
 	-- BEGIN DELETE DATA
 	-- =================
 	PRINT 'DELETE DATA'
+
+	-- if specific command come, do it and quit
+	IF CONVERT(varchar(50), @tmp1) = 'Delete bettrans14 by custid range'
+	BEGIN
+		DELETE B14
+		FROM dbo.bettrans14 B14 WITH (ROWLOCK)
+		WHERE
+			winlostdate = @winlostdate
+			AND custid BETWEEN CAST(@tmp2 AS int) AND CAST(@tmp3 AS int)
+
+		RETURN
+	END
 
 	Declare @rc int, @rn int, @rn2 int
 
@@ -80,8 +88,8 @@ BEGIN
 	END
 	DROP TABLE #c
 	*/
-	DELETE TOP (250000)
-	FROM dbo.bettrans14
+	DELETE TOP (2500) B14
+	FROM dbo.bettrans14 B14 WITH (ROWLOCK, INDEX=IX_bettrans14)
 	WHERE winlostdate = @winlostdate
 	
 	IF @@ROWCOUNT > 0 RETURN
@@ -116,7 +124,7 @@ BEGIN
 
 
 	SET @rn  = 1
-	SET @rn2 = 50000
+	SET @rn2 = 2500
 	SET @rc  = 1
 	WHILE @rc > 0
 	BEGIN
@@ -130,8 +138,8 @@ BEGIN
 			SET @rc = @@ROWCOUNT
 		COMMIT TRANSACTION
 
-		SET @rn  = @rn  + 50000
-		SET @rn2 = @rn2 + 50000
+		SET @rn  = @rn  + 2500
+		SET @rn2 = @rn2 + 2500
 	END
 	DROP TABLE #btm
 
@@ -139,7 +147,7 @@ BEGIN
 	WHILE @RC > 0
 	BEGIN
 		BEGIN TRANSACTION
-		DELETE TOP (5000)
+		DELETE TOP (2500)
 		FROM sum_winloss with (ROWLOCK)
 		WHERE winlostdate <= @winlostdate
 
@@ -151,7 +159,7 @@ BEGIN
 	WHILE @RC > 0
 	BEGIN
 		BEGIN TRANSACTION
-		DELETE TOP (5000)
+		DELETE TOP (2500)
 		FROM bettransG14 with (ROWLOCK)
 		WHERE winlostdate = @winlostdate
 
@@ -159,12 +167,23 @@ BEGIN
 		COMMIT TRANSACTION
 	END
 
+	SET @rc = 1
+	WHILE @RC > 0
+	BEGIN
+		BEGIN TRANSACTION
+		DELETE TOP (2500)
+		FROM TransLog14  with (ROWLOCK)
+		WHERE winlostdate = @winlostdate
+
+		SET @rc = @@ROWCOUNT
+		COMMIT TRANSACTION
+	END
 	
 	SET @rc = 1
 	WHILE @RC > 0
 	BEGIN
 		BEGIN TRANSACTION
-		DELETE TOP (5000)
+		DELETE TOP (2500)
 		FROM bettransLC14 WITH (ROWLOCK)
 		WHERE winlostdate = @winlostdate
 
@@ -177,7 +196,7 @@ BEGIN
 	WHILE @RC > 0
 	BEGIN
 		BEGIN TRANSACTION
-		DELETE TOP (5000)
+		DELETE TOP (2500)
 		FROM bettransRNG14 WITH (ROWLOCK)
 		WHERE winlostdate = @winlostdate
 
@@ -208,5 +227,3 @@ END
 
 SET NOCOUNT OFF
 
-GO
-GRANT VIEW DEFINITION ON [dbo].[ExecRep_02] TO [vnteam] AS [dbo]
