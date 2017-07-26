@@ -1,6 +1,4 @@
-USE [bodb_Report]
-GO
-
+/*<info serverAlias="DBRPT-bodb_report" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[TASK_DepSumData_Job_CheckStatus]
 AS
 	/*
@@ -14,7 +12,7 @@ AS
 		-20161107@Francis: Add new LogType = 5 (checkStatus) for checking status routine
 		-20170328@Paul: Implement Cash Out [RedmineID :#71727]
 		-20170516@Harper:  Show detail for real customer and check translog table [RedmineID: #76208]
-
+		-20170725@Sophia: Exclude Cashout WL when compare Openning Balance [RedmineID: #79346]
 		Input Params:	
 		EXEC TASK_DepSumData_Job_CheckStatus
 	*/
@@ -108,6 +106,9 @@ BEGIN
 		END	
 		
 		--Check opening balance of customers for yesterday only
+		---- Gen data for TradeCust Winlost on the days when move bets
+		EXEC dbo.GEN_rptTradeCustWinlost
+		
 		CREATE TABLE #Result(CustID INT, Currency INT, OpeningBalance_DepWL MONEY, OpeningBalance_Bettrans MONEY)
 
 		-- Get opening balance of customer from rptDepWinlost_Main & bettrans
@@ -119,21 +120,31 @@ BEGIN
 					WHERE m.Winlostdate = @Yesterday
 				) DepWL
 				CROSS APPLY (
-					SELECT 
-						ISNULL( 
-							SUM(
-								CASE
-									WHEN b.bettype IN (903, 913, 914) THEN 0
-									ELSE (b.winlost - b.actual_stake + b.playercomm)
-								END
-							), 0
-						) AS OpeningBalance
-					FROM bodb02.dbo.bettrans b WITH(NOLOCK, INDEX = IX_Report)
-					WHERE b.winlostdate < @Yesterday
-						AND b.custid = DepWL.CustID
-				) bettrans
+					SELECT  B.CustID, (B.OpeningBalance - C.WinlossCO) as OpeningBalance
+					FROM ( 
+							SELECT b.CustID, 
+									ISNULL( 
+										SUM(
+											CASE
+												WHEN b.bettype IN (903, 913, 914) THEN 0
+												ELSE (b.winlost - b.actual_stake + b.playercomm) 
+											END
+										), 0
+									) AS OpeningBalance  
+							FROM bodb02.dbo.bettrans b WITH(NOLOCK) 					
+							WHERE b.winlostdate < @Yesterday
+								AND b.custid = DepWL.CustID
+							GROUP BY  b.CustID 
+							) B
+					LEFT JOIN (
+							SELECT 	c.CustID, SUM (Winloss) as WinlossCO
+							FROM 	bodb_Report.dbo.rptTradeCustWinlost C WITH (NOLOCK)
+							GROUP BY C.CustID			
+							) C  ON C.CustID = B.CustID				
+						) bettrans
 			WHERE DepWL.OpeningBalance != bettrans.OpeningBalance
-		
+			
+			
 		SELECT @Count = @@ROWCOUNT
 		
 		DECLARE @haveRealCurrency BIT = 0
@@ -221,3 +232,4 @@ BEGIN
 	RETURN
 	
 END
+GO
