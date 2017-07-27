@@ -127,7 +127,6 @@ BEGIN
 	WHERE	winlostdate <= @winlostdate 
 			--AND [status] = 'running'
 			AND statusID = 0 
-			AND bettype <=19000 and bettype NOT IN (9, 10, 29, 2799)
 			AND currency <> 20
 
 	SELECT DISTINCT 'EXEC DBA_matchname ' + CAST(bm.matchid as varchar(10)) matchid, m.eventdate, bm.matchid, ',' [Comma]
@@ -146,7 +145,6 @@ BEGIN
 	IF @@ROWCOUNT > 0
 	BEGIN
 		PRINT '--'
-		PRINT '--SELECT * FROM bettrans (nolock) WHERE status = ''running'' AND matchid IN (9,29,2799) AND bettype IN (9,29,2799) AND winlostdate <= ''' + CONVERT(varchar(10), @winlostdate, 120) + ''''
 		PRINT '--SELECT * FROM bettrans (nolock) WHERE status = ''running'' AND matchid IN (9,29) AND bettype IN (9,29) AND winlostdate <= ''' + CONVERT(varchar(10), @winlostdate, 120) + ''''
 		PRINT '--UPDATE dbo.bettrans SET winlostdate = ''' + CONVERT(varchar(10), DATEADD(day,1,@winlostdate), 120) + ''' WHERE transid IN ( xxxxx )'
 		PRINT '--'
