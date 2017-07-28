@@ -1,5 +1,6 @@
 USE [bodb02]
 GO
+
 ALTER PROCEDURE [dbo].[TASK_DepSumData_Job]
 	@IdlingHour TINYINT = 9
 AS
@@ -8,16 +9,17 @@ AS
 		Created Date: 20160815
 		Task: Flow controlling for Depopsit Data Summary system 		
 		DB: DBACC.bodb02
-		Revisions
+		Revisions:
+			20170728@Patrick: Remove code check HighCPU
 		
 		Input Params:	
 		- @IdlingHour: The time when the system is more idle
 	*/
 BEGIN
 --1.Check server's CPU <= 65%
-	DECLARE @ispermit BIT
-	EXEC dbo.Server_IsHeavyLoadPermitted @ispermit OUTPUT
-	IF @ispermit = 0 RETURN
+	--DECLARE @ispermit BIT
+	--EXEC dbo.Server_IsHeavyLoadPermitted @ispermit OUTPUT
+	--IF @ispermit = 0 RETURN
 	
 	DECLARE @CurrentDate DATE,
 			@Yesterday DATE,
