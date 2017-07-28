@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" executers="Dot_Member" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Dot_Dep_BettransInsBonusWallet] 
+ALTER PROCEDURE [dbo].[Dot_Dep_BettransInsBonusWallet] 
 	@custid 		INT,
 	@bal_custid 	INT,
 	@bettype 		SMALLINT = 22026,
@@ -167,7 +167,7 @@ BEGIN
 		RETURN
 	END
 	
-	IF @RefNo = 0
+	IF ISNULL(@RefNo,0) = 0
 	BEGIN	
 		EXEC dbo.Acc_SelRefNo @RefNo = @RefNo OUTPUT
 		SELECT @RefNo = @RefNo + 100000000000	

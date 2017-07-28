@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="vnteam" isFunction="0" isNested="1"></info>*/
-CREATE PROCEDURE [dbo].[Dot_BalancePendingBonusIns]
+ALTER PROCEDURE [dbo].[Dot_BalancePendingBonusIns]
 	@BonusWalletChange	TVP_BalanceWalletChange	READONLY
 AS
 /* 
@@ -34,11 +34,15 @@ BEGIN
 	END TRY	
 	BEGIN CATCH
 	
-		INSERT INTO dbo.BalanceErr ( Custid, BalanceGroup, BalanceAmt, ExecutedSP, ErrMsg )
-		VALUES ( 0, 1, 0,'Dot_BalancePendingBonusIns',LEFT(ERROR_MESSAGE(),500)  )
+		INSERT INTO dbo.BalanceErr ( Custid, BalanceGroup, BalanceAmt, ExecutedSP, ErrMsg, BonusID)
+		SELECT bn.Custid
+			, 1 AS BalanceGroup
+			, bn.balance AS BalanceAmt
+			, 'Dot_BalancePendingBonusIns' AS ExecutedSP
+			, LEFT(ERROR_MESSAGE(),500) AS ErrMsg
+			, bn.BonusID
+		FROM @BonusWalletChange bn
 		
 	END CATCH
-	
-	RETURN
 END
 GO
