@@ -299,7 +299,8 @@ BEGIN
 		FROM dbo.Functions WITH (NOLOCK)  
 		WHERE FunctionId    IN (  
 									3	-- REPORTS  
-									,62 -- AG Casino Win Loss  
+									,62 -- AG Casino Win Loss 
+									,63 -- AG Casino Balance 
 								)  
 	END 
     
@@ -338,7 +339,21 @@ BEGIN
 		FROM dbo.Functions WITH (NOLOCK)  
 		WHERE FunctionId IN (  
 								3		-- REPORTS  
+								,67 -- Microgamming WL
 								,68	-- CasinoProgressiveWins  
+							)  
+	END   
+
+	IF @ProductCode = 'MGCLC'    
+	BEGIN   
+		INSERT INTO @tblFunctions (ProductId, FunctionId,TypeID)  
+		SELECT 14 AS ProductId -- MGCLC  
+			,FunctionID    
+			,1 AS TypeId  -- Lrf Function  
+		FROM dbo.Functions WITH (NOLOCK)  
+		WHERE FunctionId IN (  
+								3	-- REPORTS 
+								,67 -- Microgamming WL								
 							)  
 	END   
   
