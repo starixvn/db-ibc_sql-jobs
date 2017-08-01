@@ -87,7 +87,7 @@ DECLARE @tblTmp AS TABLE (ID INT
 						   ,MGCLC bigint
 						   ,MGCRNG bigint
 						   ,VS BIGINT
-						   ,BRVS BIGINT)
+						   ,VS2 BIGINT)
 						   
 --exec 
 --rptLicWinloss2
@@ -107,7 +107,7 @@ INSERT INTO @tblTmp	(ID
 					,MGCLC  
 					,MGCRNG  
 					,VS
-					,BRVS  )	
+					,VS2  )	
 exec dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date	
 				
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
@@ -164,7 +164,7 @@ INSERT INTO @tblTmp	(ID
 					,MGCLC  
 					,MGCRNG  
 					,VS
-					,BRVS  )					   
+					,VS2  )					   
 exec dbo.GET_DepositDataToValidate_Betting @Date=@Date
 					
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)

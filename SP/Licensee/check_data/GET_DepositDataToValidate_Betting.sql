@@ -93,17 +93,17 @@ DECLARE --SB
 	   ,@VsTurnover MONEY
        ,@VsCustomerWl MONEY
        ,@VsBetCount MONEY
-	   	----BRVS
-	   ,@BrvsTurnover MONEY
-       ,@BrvsCustomerWl MONEY
-       ,@BrvsBetCount MONEY
+	   	----VS2
+	   ,@VS2Turnover MONEY
+       ,@VS2CustomerWl MONEY
+       ,@VS2BetCount MONEY
 	   
 DECLARE @tblBettype AS TABLE(ProductPrefix VARCHAR (10),Bettype INT)	   
 INSERT INTO @tblBettype (ProductPrefix,Bettype)
 SELECT DISTINCT ProductPrefix,bettype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CO','BRVS')	
+WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CO','VS2')	
 	 
  
 -- Data Source 
@@ -321,19 +321,19 @@ SELECT @VsTurnover 		= ISNULL(@VsTurnover,0)
        ,@VsCustomerWl	= ISNULL(@VsCustomerWl,0)
        ,@VsBetCount 	= ISNULL(@VsBetCount,0)	
 	   
-----BRVS
- SELECT  @BrvsTurnover=SUM(CASE 
+----VS2
+ SELECT  @VS2Turnover=SUM(CASE 
                     WHEN @DrawFilter IN (2,3) THEN 
                         CASE WHEN b.Status = 111 THEN 0 WHEN b.Status IN (114,115) THEN 0.5 ELSE 1 END
                     ELSE 1
                 END * b.Turnover)
-		,@BrvsCustomerWl=SUM(b.WinLoss)
-		,@BrvsBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
+		,@VS2CustomerWl=SUM(b.WinLoss)
+		,@VS2BetCount=SUM(CASE WHEN @DrawFilter=2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
 FROM @tblData b
-WHERE ProductPrefix = 'BRVS'
-SELECT @BrvsTurnover 		= ISNULL(@BrvsTurnover,0)
-       ,@BrvsCustomerWl	= ISNULL(@BrvsCustomerWl,0)
-       ,@BrvsBetCount 	= ISNULL(@BrvsBetCount,0)	 
+WHERE ProductPrefix = 'VS2'
+SELECT @VS2Turnover 		= ISNULL(@VS2Turnover,0)
+       ,@VS2CustomerWl	= ISNULL(@VS2CustomerWl,0)
+       ,@VS2BetCount 	= ISNULL(@VS2BetCount,0)	 
 -- Result
 
 SELECT 1 AS Id, @SbTurnover AS Sb
@@ -351,7 +351,7 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @MGCLCTurnover  AS MGCLC 
 			  , @MGCRNGTurnover AS  MGCRNG
 			  , @VsTurnover AS VS
-			  , @BrvsTurnover AS BRVS
+			  , @VS2Turnover AS VS2
 			  
 UNION
 SELECT 2, @SbCustomerWl
@@ -369,7 +369,7 @@ SELECT 2, @SbCustomerWl
 		, @MGCLCCustomerWl
 		, @MGCRNGCustomerWl
 		, @VsCustomerWl
-		, @BrvsCustomerWl
+		, @VS2CustomerWl
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -386,7 +386,7 @@ SELECT 3, @SbBetCount
 		, @MGCLCBetCount
 		, @MGCRNGBetCount
 		, @VsBetCount	
-		, @BrvsBetCount
+		, @VS2BetCount
 
 SET NOCOUNT OFF
 GO
