@@ -1,6 +1,4 @@
-USE [bodb_LicenseeReport]
-GO
-
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans] 
 	@winlostdate DATETIME  
 AS  
@@ -20,6 +18,7 @@ AS
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
 	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]	
+	- 20170802@Sophia: Add new Flatfrom [redmine: #80687]
 	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
@@ -124,9 +123,9 @@ BEGIN
 	  WHEN BA.transid IS NULL THEN 0  
 	  WHEN BA.transid IS NOT NULL THEN 1 END AS isBA  
 	 ,CASE   
-	  WHEN bettrans.betfrom IN ('s','m','l') THEN 1 ELSE 0 END AS isMobile   
+	  WHEN bettrans.betfrom IN ('s','m','l','r') THEN 1 ELSE 0 END AS isMobile   
 	 ,CASE      
-	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END AS betfrom   
+	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z') THEN bettrans.betfrom ELSE '' END AS betfrom   
 	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt	 
 	FROM  
@@ -179,9 +178,9 @@ BEGIN
 	  WHEN BA.transid IS NULL THEN 0  
 	  WHEN BA.transid IS NOT NULL THEN 1 END  
 	 ,CASE   
-	  WHEN bettrans.betfrom IN ('s','m','l') THEN 1 ELSE 0 END  
+	  WHEN bettrans.betfrom IN ('s','m','l','r') THEN 1 ELSE 0 END  
 	 ,CASE      
-	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l') THEN bettrans.betfrom ELSE '' END
+	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z') THEN bettrans.betfrom ELSE '' END
 	 OPTION (MAXDOP 8)
 
 	--Agent Level (sum on member)  
@@ -441,5 +440,4 @@ BEGIN
 	 ,b.isMobile  
 	 ,b.betfrom	
 END
-GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptLicWinloss2_Bettrans] TO [vnteam] AS [dbo]
 GO
