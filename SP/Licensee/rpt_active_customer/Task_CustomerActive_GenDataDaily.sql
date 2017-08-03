@@ -11,6 +11,7 @@ AS
   - 20150326@Patrick: Missing tickets for SB
   - 20150911@Jim: add MicroGaming RNG
   - 20160106@Bobby: add OneRnG Casino
+  - 20170803@Patrick: remove maxdop option
   
   Param's Explanation:
 */
@@ -86,7 +87,7 @@ BEGIN
 			WHEN ba.transid IS NOT NULL THEN 3
 			ELSE bt.ProductID
 			END
-	OPTION (MAXDOP 1)
+	--OPTION (MAXDOP 1)
 
 	--For Keno from translog table
 	INSERT INTO #DataTmp (TransDate, CustId, Recommend, CurrencyId, ProductId)
@@ -107,7 +108,7 @@ BEGIN
 			AND b.custid = tmp.CustId
 			AND b.ProductId = tmp.ProductId
 	WHERE tmp.TransDate IS NULL
-	OPTION (MAXDOP 1)
+	--OPTION (MAXDOP 1)
 
 	-- For Playtech Casino --merge
 	--INSERT INTO #DataTmp(TransDate, CustId, Recommend, CurrencyId, ProductId)
@@ -153,7 +154,7 @@ BEGIN
 			AND tmp.CustId = rpt.CustId
 			AND tmp.ProductId = rpt.ProductId
 	WHERE rpt.TransDate IS NULL
-	OPTION (MAXDOP 1)
+	--OPTION (MAXDOP 1)
 
 	DROP TABLE #Bettype
 
@@ -162,3 +163,6 @@ END
 GO
 
 GRANT VIEW DEFINITION ON [dbo].[Task_CustomerActive_GenDataDaily] TO [vnteam] AS [dbo]
+GO
+
+
