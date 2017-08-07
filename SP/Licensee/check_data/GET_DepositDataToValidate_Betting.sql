@@ -1,5 +1,5 @@
-USE [bodb_LicenseeReport]
-GO
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_Betting] 
     @Date smalldatetime = null
 	,@DrawFilter tinyint = 1
@@ -20,6 +20,8 @@ Revisions:
 	- 20160906@Jim: Correct value of SB & BA [Redmine #63571]
 	- 20170627@Sophia: Include CO into SB group [Redmine: #79061]
 	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+	- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
+
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
     
@@ -97,13 +99,17 @@ DECLARE --SB
 	   ,@VS2Turnover MONEY
        ,@VS2CustomerWl MONEY
        ,@VS2BetCount MONEY
-	   
+	   --LT
+	   ,@LTTurnover MONEY
+       ,@LTCustomerWl MONEY
+       ,@LTBetCount MONEY
+
 DECLARE @tblBettype AS TABLE(ProductPrefix VARCHAR (10),Bettype INT)	   
 INSERT INTO @tblBettype (ProductPrefix,Bettype)
 SELECT DISTINCT ProductPrefix,bettype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CO','VS2')	
+WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CO','VS2','LT')	
 	 
  
 -- Data Source 
@@ -333,7 +339,22 @@ FROM @tblData b
 WHERE ProductPrefix = 'VS2'
 SELECT @VS2Turnover 		= ISNULL(@VS2Turnover,0)
        ,@VS2CustomerWl	= ISNULL(@VS2CustomerWl,0)
-       ,@VS2BetCount 	= ISNULL(@VS2BetCount,0)	 
+       ,@VS2BetCount 	= ISNULL(@VS2BetCount,0)	
+
+---LT
+SELECT  @LTTurnover=SUM(CASE 
+                    WHEN @DrawFilter IN (2,3) THEN 
+                        CASE WHEN b.Status = 111 THEN 0 WHEN b.Status IN (114,115) THEN 0.5 ELSE 1 END
+                    ELSE 1
+                END * b.Turnover)
+		,@LTCustomerWl=SUM(b.WinLoss)
+		,@LTBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
+FROM @tblData b
+WHERE ProductPrefix = 'LT'
+SELECT @LTTurnover  	= ISNULL(@LTTurnover,0)
+       ,@LTCustomerWl   = ISNULL(@LTCustomerWl,0)
+       ,@LTBetCount   	= ISNULL(@LTBetCount,0)	   
+	    
 -- Result
 
 SELECT 1 AS Id, @SbTurnover AS Sb
@@ -352,6 +373,7 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @MGCRNGTurnover AS  MGCRNG
 			  , @VsTurnover AS VS
 			  , @VS2Turnover AS VS2
+			  , @LTTurnover AS LT
 			  
 UNION
 SELECT 2, @SbCustomerWl
@@ -370,6 +392,7 @@ SELECT 2, @SbCustomerWl
 		, @MGCRNGCustomerWl
 		, @VsCustomerWl
 		, @VS2CustomerWl
+		, @LTCustomerWl
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -387,6 +410,7 @@ SELECT 3, @SbBetCount
 		, @MGCRNGBetCount
 		, @VsBetCount	
 		, @VS2BetCount
+		, @LTBetCount
 
 SET NOCOUNT OFF
 GO

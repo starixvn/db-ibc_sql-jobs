@@ -1,5 +1,5 @@
-﻿USE [bodb_Licensee]
-GO
+﻿/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 /****** Object:  StoredProcedure [dbo].[GET_DepositDataToValidate_SumWLOld]    Script Date: 03/13/2014 01:32:27 ******/
 SET ANSI_NULLS ON
 GO
@@ -23,6 +23,7 @@ Revisions:
 - 20160608@Jim: Separate Bettrade (#57353) 
 - 20160616@Jim: Changes to data integrity automail (#59249)	
 - 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 	
 Param's Explanation:
     @DrawFilter Only support 1:Normal 
@@ -109,14 +110,19 @@ DECLARE @SbTurnover MONEY
 	   	----VS2
 	   ,@VS2Turnover MONEY
        ,@VS2CustomerWl MONEY
-       ,@VS2BetCount MONEY    
+       ,@VS2BetCount MONEY 
+	   ----LT
+	   ,@LTTurnover MONEY
+       ,@LTCustomerWl MONEY
+       ,@LTBetCount MONEY    
+
 DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),Sporttype INT)
 
 INSERT INTO @tblSport (ProductPrefix,Sporttype)
 SELECT DISTINCT ProductPrefix,s.Sporttype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'VS2')
+WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'VS2', 'LT')
 
 INSERT INTO @tblSport(ProductPrefix,Sporttype)
 SELECT 'SB',0
@@ -200,8 +206,7 @@ WHERE ProductPrefix ='CS'
     
 SELECT @CsTurnover = ISNULL (@CsTurnover, 0),
 	   @CsCustomerWl = ISNULL (@CsCustomerWl, 0),
-	   @CsBetCount = ISNULL (@CsBetCount, 0)
- 
+	   @CsBetCount = ISNULL (@CsBetCount, 0) 
  
 -- GD
 SELECT @GDTurnover=SUM(b.Turnover)
@@ -213,6 +218,7 @@ WHERE ProductPrefix ='GD'
 SELECT  @GDTurnover =ISNULL (@GDTurnover, 0)
        ,@GDCustomerWl = ISNULL (@GDCustomerWl, 0)
        ,@GDBetCount = ISNULL (@GDBetCount, 0)
+
 --- Keno
 SELECT @KNTurnover=SUM(b.Turnover)
       ,@KNCustomerWl=SUM(b.Winlost) 
@@ -223,6 +229,7 @@ WHERE ProductPrefix ='KN'
 SELECT @KNTurnover =ISNULL (@KNTurnover, 0)
        ,@KNCustomerWl = ISNULL (@KNCustomerWl, 0)
        ,@KNBetCount  = ISNULL (@KNBetCount, 0)
+
 ----VS
 SELECT @VSTurnover=SUM(b.Turnover)
       ,@VSCustomerWl=SUM(b.Winlost) 
@@ -233,6 +240,7 @@ WHERE ProductPrefix ='VS'
 SELECT  @VsTurnover =ISNULL (@VsTurnover, 0)
        ,@VsCustomerWl = ISNULL (@VsCustomerWl, 0)
        ,@VsBetCount  = ISNULL (@VsBetCount, 0)
+
 -- AG
 SELECT @AGTurnover=SUM( b.Turnover)
     ,@AGCustomerWl=SUM(b.Winlost)
@@ -243,6 +251,7 @@ WHERE ProductPrefix = 'AGC'
 SELECT @AGTurnover    = ISNULL(@AGTurnover,0)
 	   ,@AGCustomerWl = ISNULL(@AGCustomerWl,0)
 	   ,@AGBetCount   = ISNULL(@AGBetCount,0)
+
 --VG: Macau
  SELECT  @VGTurnover=SUM(b.Turnover )
 		,@VGCustomerWl=SUM(b.Winlost)
@@ -252,6 +261,7 @@ WHERE ProductPrefix = 'VG'
 SELECT  @VGTurnover  	= ISNULL(@VGTurnover,0)	
        ,@VGCustomerWl   = ISNULL(@VGCustomerWl,0)
        ,@VGBetCount     = ISNULL(@VGBetCount,0)
+
  --VB: Macau Games
 SELECT  @VBTurnover=SUM( b.Turnover)
 		,@VBCustomerWl=SUM(b.Winlost)
@@ -261,6 +271,7 @@ WHERE ProductPrefix = 'VB'
  SELECT @VBTurnover 	= ISNULL(@VBTurnover,0)	
        ,@VBCustomerWl 	= ISNULL(@VBCustomerWl,0)
        ,@VBBetCount 	= ISNULL(@VBBetCount,0)
+
 --MGCLC:Microgaming - Live Casino
 SELECT  @MGCLCTurnover=SUM( b.Turnover)
 		,@MGCLCCustomerWl=SUM(b.Winlost)
@@ -293,7 +304,18 @@ WHERE ProductPrefix ='VS2'
 SELECT  @VS2Turnover =ISNULL (@VS2Turnover, 0)
        ,@VS2CustomerWl = ISNULL (@VS2CustomerWl, 0)
        ,@VS2BetCount  = ISNULL (@VS2BetCount, 0)	
-		   
+
+--- Lottery
+SELECT @LTTurnover=SUM(b.Turnover)
+      ,@LTCustomerWl=SUM(b.Winlost) 
+      ,@LTBetCount=SUM(b.BetCount) 
+FROM @tblData b 
+WHERE ProductPrefix ='LT'
+	
+SELECT  @LTTurnover =ISNULL (@LTTurnover, 0)
+       ,@LTCustomerWl = ISNULL (@LTCustomerWl, 0)
+       ,@LTBetCount  = ISNULL (@LTBetCount, 0)	
+	   		   
 -- Result
 
 SELECT 1 AS Id, @SbTurnover AS Sb
@@ -312,6 +334,7 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @MGCRNGTurnover AS  MGCRNG
 			  , @VsTurnover AS VS
 			  , @VS2Turnover AS VS2
+			  , @LTTurnover AS LT
 			  
 UNION
 SELECT 2, @SbCustomerWl
@@ -330,6 +353,7 @@ SELECT 2, @SbCustomerWl
 		, @MGCRNGCustomerWl
 		, @VsCustomerWl
 		, @VS2CustomerWl
+		, @LTCustomerWl
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -347,6 +371,7 @@ SELECT 3, @SbBetCount
 		, @MGCRNGBetCount
 		, @VsBetCount	
 		, @VS2BetCount
+		, @LTBetCount
  
 
 SET NOCOUNT OFF
