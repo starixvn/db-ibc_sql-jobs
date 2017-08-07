@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans] 
 	@winlostdate DATETIME  
 AS  
@@ -20,6 +20,7 @@ AS
 	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]	
 	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	- 20170802@Sophia: Add new betfrom [redmine: #80687]
+	- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -112,6 +113,7 @@ BEGIN
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 		WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
+		WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 	  ELSE 0 END sporttype  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
@@ -168,6 +170,7 @@ BEGIN
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 		WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
+		WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 	  ELSE 0 END  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END  
 	 ,CASE   

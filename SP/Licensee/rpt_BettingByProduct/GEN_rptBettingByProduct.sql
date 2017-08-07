@@ -1,5 +1,5 @@
-USE [bodb_LicenseeReport]
-GO
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct] (
 	@date DATE,
 	@date2 DATE = NULL,
@@ -34,6 +34,7 @@ AS
 		- 20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 		- 20170526@Sophia: add Param @DataSource, @SeparatedProductID [Redmine: #72914]
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 	EXEC GEN_rptBettingByProduct '2017-04-16', '2017-04-16'
 
 */
@@ -61,7 +62,7 @@ BEGIN
 		
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO,VS2')   
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT')   
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 		SELECT Bettype, ProductId 
