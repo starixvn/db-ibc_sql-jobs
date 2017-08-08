@@ -1,5 +1,5 @@
-USE [bodb_LicenseeReport]
-GO
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans14] 
 	@Date SMALLDATETIME
 AS
@@ -26,13 +26,27 @@ IF exists(SELECT TOP 1 1 FROM dbo.rptCustomerTurnover AS rct WITH (NOLOCK) WHERE
 		DELETE dbo.rptCustomerTurnover WHERE winlostdate=@Date
 	END 	
 	
-;WITH cte_bettrans
+;WITH cte_parlayinfo
+AS (
+	SELECT b.transid, bm.sporttype
+	FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+		CROSS APPLY (	SELECT TOP 1 m.sporttype
+						FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
+						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
+						WHERE b.refno = bm.refno
+					) AS bm
+	WHERE b.bettype = 2799		
+		AND b.winlostdate = @date
+		AND b.statusID IN (111, 112, 113)
+	) 
+	,cte_bettrans
 AS (
 	SELECT a.CustID
 		,a.currency
 		,a.recommend
 		,a.matchid
 		,a.bettype
+		,p.sporttype
 		,SUM(ABS(a.stake)) AS stake
 		,sum(a.winlost - a.actual_stake) winlost
 		,SUM(ABS(winlost - actual_stake)) AS BetEffective
@@ -72,13 +86,14 @@ AS (
 	FROM bodb02.dbo.bettrans14 a WITH (NOLOCK)
 	INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC ON a.recommend = lc.custid AND a.currency = lc.currency
 	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction AS BA ON a.transid = ba.transid
-	WHERE a.winlostdate =@date 
-	  	  AND a.statusID IN (111, 112, 113)
+	LEFT JOIN cte_parlayinfo p ON a.transid = p.transid
+	WHERE a.winlostdate = @date AND a.statusID IN (111, 112, 113)
 	GROUP BY a.matchid
 		,a.CustID
 		,a.currency
 		,a.recommend
 		,a.bettype
+		,p.sporttype
 		,a.Odds
 		,a.oddsid
 		,a.oddstype
@@ -142,10 +157,11 @@ SELECT a.CustID
 		WHEN a.bettype BETWEEN 1501 AND 1599 THEN 202-- Keno
 		WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 151
 		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
-				WHEN result.sporttype IS NOT NULL THEN result.sporttype
-				WHEN b.sporttype IS NOT NULL THEN b.sporttype
-				ELSE 190 -- Betradar VS
-				END -- Betradar VS
+			WHEN a.bettype = 2799 THEN a.sporttype
+			WHEN result.sporttype IS NOT NULL THEN result.sporttype
+			WHEN b.sporttype IS NOT NULL THEN b.sporttype
+			ELSE 190 -- Betradar VS
+			END -- Betradar VS		
 		ELSE isNULL(b.sporttype, 0)
 		END sporttype
 	,a.Currency
@@ -205,10 +221,11 @@ GROUP BY a.CustID
 		WHEN a.bettype IN (31, 32, 33, 41, 42, 43)
 			THEN 151
 		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
-				WHEN result.sporttype IS NOT NULL THEN result.sporttype
-				WHEN b.sporttype IS NOT NULL THEN b.sporttype
-				ELSE 190 -- Betradar VS
-				END -- Betradar VS
+			WHEN a.bettype = 2799 THEN a.sporttype
+			WHEN result.sporttype IS NOT NULL THEN result.sporttype
+			WHEN b.sporttype IS NOT NULL THEN b.sporttype
+			ELSE 190 -- Betradar VS
+			END -- Betradar VS		
 		ELSE isNULL(b.sporttype, 0)
 		END
 	,a.Currency
