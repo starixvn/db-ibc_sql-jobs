@@ -28,16 +28,17 @@ IF exists(SELECT TOP 1 1 FROM dbo.rptCustomerTurnover AS rct WITH (NOLOCK) WHERE
 	
 ;WITH cte_parlayinfo
 AS (
-	SELECT b.transid, bm.sporttype
-	FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+	SELECT DISTINCT b.transid, s.sporttype
+	FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 		CROSS APPLY (	SELECT TOP 1 m.sporttype
-						FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
-						WHERE b.refno = bm.refno
-					) AS bm
+						FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
+						INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
+						WHERE b.refno = bm.refno AND b.custid = bm.custid
+					) AS s
 	WHERE b.bettype = 2799		
 		AND b.winlostdate = @date
 		AND b.statusID IN (111, 112, 113)
+		AND b.matchid = 2799
 	) 
 	,cte_bettrans
 AS (

@@ -28,17 +28,18 @@ END;
 
 WITH cte_parlayinfo
 AS (
-		SELECT b.transid, bm.sporttype
+		SELECT DISTINCT b.transid, s.sporttype
 		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-			CROSS APPLY (SELECT TOP 1 m.sporttype
+			CROSS APPLY (	SELECT TOP 1 m.sporttype
 							FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-							INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
-							WHERE b.refno = bm.refno
-						) AS bm
+								INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
+							WHERE b.refno = bm.refno AND b.custid = bm.custid
+						) AS s
 		WHERE b.bettype = 2799
 			AND b.winlostdate = @date
-			AND b.statusID IN (111, 112, 113)		
-) 
+			AND b.statusID IN (111, 112, 113)
+			AND b.matchid = 2799		
+)	
 	,cte_bettrans
 AS (
 	SELECT a.CustID
