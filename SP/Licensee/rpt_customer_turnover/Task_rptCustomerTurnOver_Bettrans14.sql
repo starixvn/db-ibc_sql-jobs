@@ -229,7 +229,7 @@ GROUP BY a.CustID
 			WHEN result.sporttype IS NOT NULL THEN result.sporttype
 			WHEN b.sporttype IS NOT NULL THEN b.sporttype
 			ELSE 190 -- Betradar VS
-			END -- Betradar 
+			END -- Betradar VS
 		WHEN a.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery		
 		ELSE isNULL(b.sporttype, 0)
 		END
