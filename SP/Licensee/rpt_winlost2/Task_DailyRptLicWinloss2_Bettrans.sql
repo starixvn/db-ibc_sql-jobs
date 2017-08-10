@@ -18,8 +18,8 @@ AS
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
 	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]	
-	- 20170802@Sophia: Add new Flatfrom and add new range bettype for One RNG [redmine: #80687]
 	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+	- 20170802@Sophia: Add new betfrom [redmine: #80687]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -106,7 +106,7 @@ BEGIN
 		WHEN bettype BETWEEN 2008 AND 2009 THEN 205
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-		WHEN (bettype BETWEEN 2301 AND 2399) OR (bettype BETWEEN 2901 AND 2999) THEN 210
+		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB
 		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
@@ -162,7 +162,7 @@ BEGIN
 		WHEN bettype BETWEEN 2008 AND 2009 THEN 205
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-		WHEN (bettype BETWEEN 2301 AND 2399) OR (bettype BETWEEN 2901 AND 2999) THEN 210		
+		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
 		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB
 		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
