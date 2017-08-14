@@ -1,4 +1,5 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans] 
 	@winlostdate DATETIME  
 AS  
@@ -21,6 +22,7 @@ AS
 	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	- 20170802@Sophia: Add new betfrom [redmine: #80687]
 	- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
+	- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -107,7 +109,7 @@ BEGIN
 		WHEN bettype BETWEEN 2008 AND 2009 THEN 205
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
+		WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
 		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB
 		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
@@ -164,7 +166,7 @@ BEGIN
 		WHEN bettype BETWEEN 2008 AND 2009 THEN 205
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-		WHEN bettype BETWEEN 2301 AND 2399 THEN 210
+		WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210		
 		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB
 		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
