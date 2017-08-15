@@ -8,6 +8,7 @@ AS
 
     Revisions:  
 		- 20170726@Sophia: Add new SP [RedmineID: #79346]
+		- 20170815@Sophia: Regen data BETWEEN MoveBetDays - 3 AND <= MoveBetDays  [Redmine :#81411]
 
 	Explanation:   
 
@@ -15,12 +16,14 @@ AS
 BEGIN 
 SET NOCOUNT ON 
 
-	DECLARE @MoveBetSchedule TABLE(ScheduleId TINYINT, MoveBetDay DATE)
-	INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
-	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
-
-	DECLARE @DateFrom SMALLDATETIME, @DateTo SMALLDATETIME
-	SELECT @DateFrom = MIN(MoveBetDay), @DateTo = MAX(MoveBetDay) FROM @MoveBetSchedule 
+	DECLARE @DateFrom SMALLDATETIME, @DateTo SMALLDATETIME, @MoveBetsDay SMALLDATETIME
+	
+	SELECT  @MoveBetsDay = MAX(eventdate) 
+	FROM bodb02.dbo.match14 WITH(NOLOCK)
+			
+	SELECT @DateFrom = DATEADD (DD, -3,  @MoveBetsDay) 
+	SELECT @DateTo = @MoveBetsDay 
+ 
 
 	----Gen data for move bet days
 	DELETE dbo.rptTradeCustWinlost WITH (ROWLOCK, UPDLOCK) WHERE Winlostdate BETWEEN @DateFrom AND @DateTo
