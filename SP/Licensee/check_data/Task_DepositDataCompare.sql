@@ -15,7 +15,6 @@ Revisions:
 	- 20140429@Florent: fix bug and change message error
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20160805@Jim: Revise SP due to [Redmine: #62052]
-	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
 
@@ -86,8 +85,7 @@ DECLARE @tblTmp AS TABLE (ID INT
 						   ,VB bigint
 						   ,MGCLC bigint
 						   ,MGCRNG bigint
-						   ,VS BIGINT
-						   ,VS2 BIGINT)
+						   ,VS bigint)
 						   
 --exec 
 --rptLicWinloss2
@@ -106,8 +104,7 @@ INSERT INTO @tblTmp	(ID
 					,VB  
 					,MGCLC  
 					,MGCRNG  
-					,VS
-					,VS2  )	
+					,VS  )	
 exec dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date	
 				
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
@@ -163,8 +160,7 @@ INSERT INTO @tblTmp	(ID
 					,VB  
 					,MGCLC  
 					,MGCRNG  
-					,VS
-					,VS2  )					   
+					,VS  )					   
 exec dbo.GET_DepositDataToValidate_Betting @Date=@Date
 					
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)

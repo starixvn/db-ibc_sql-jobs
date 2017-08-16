@@ -18,6 +18,7 @@ DB: DB052.BODB02
 
 Revision:
 	20160119@Daniel: check table bettransRNG & bettransLC
+	20170719@Patrick: check valid ip for bettrans, bettransrng, bettranslc, translog
 	20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 
  */
@@ -158,6 +159,50 @@ BEGIN
 	RETURN
 END
 
+--//check invalid IP  
+--//bettrans  
+IF EXISTS (  
+ SELECT TOP 1 1  
+ FROM dbo.bettrans WITH(NOLOCK)  
+ WHERE winlostdate = @winlostdate AND ISNUMERIC(REPLACE(ip, '.', '')) = 0 AND ip <> ''  
+)  
+BEGIN  
+ RAISERROR ('FAILED: Invalid IP on bettrans', 16, 1)  
+ RETURN  
+END  
+  
+--//bettransrng  
+IF EXISTS (  
+ SELECT TOP 1 1  
+ FROM dbo.bettransrng WITH(NOLOCK)  
+ WHERE winlostdate = @winlostdate AND ISNUMERIC(REPLACE(ip, '.', '')) = 0 AND ip <> ''  
+)  
+BEGIN  
+ RAISERROR ('FAILED: Invalid IP on bettransrng', 16, 1)  
+ RETURN  
+END  
+  
+--//bettranslc  
+IF EXISTS (  
+	SELECT TOP 1 1  
+	FROM dbo.bettranslc WITH(NOLOCK)  
+	WHERE winlostdate = @winlostdate AND ISNUMERIC(REPLACE(ip, '.', '')) = 0 AND ip <> ''  
+)  
+BEGIN  
+	RAISERROR ('FAILED: Invalid IP on bettranslc', 16, 1)  
+	RETURN  
+END  
+  
+--//translog  
+IF EXISTS (  
+	SELECT TOP 1 1  
+	FROM dbo.translog WITH(NOLOCK)  
+	WHERE winlostdate = @winlostdate AND ISNUMERIC(REPLACE(ip, '.', '')) = 0 AND ip <> ''  
+)  
+BEGIN  
+	RAISERROR ('FAILED: Invalid IP on translog', 16, 1)  
+	RETURN  
+END  
 
 IF @TestMode = 1
 BEGIN
