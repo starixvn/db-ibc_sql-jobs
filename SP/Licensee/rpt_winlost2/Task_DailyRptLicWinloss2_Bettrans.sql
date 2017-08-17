@@ -20,6 +20,7 @@ AS
 	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
 	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]	
+	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -111,6 +112,7 @@ BEGIN
 		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
+		WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
 	  ELSE 0 END sporttype  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
@@ -166,6 +168,7 @@ BEGIN
 		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
+		WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
 	  ELSE 0 END  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END  
 	 ,CASE   

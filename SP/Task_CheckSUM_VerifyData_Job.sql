@@ -16,6 +16,7 @@ AS
 	DB: DB054.bodb_staging
 
 	Revisions:
+		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	
 */
 SET NOCOUNT ON
@@ -63,7 +64,7 @@ SET NOCOUNT ON
 	INSERT INTO #Tempdata(mode, ID, hasCalled)
 	SELECT 'parlay', transid, 0		
 	FROM bodb02.dbo.bettrans b with(nolock) 		
-	WHERE matchid in (9,29)
+	WHERE matchid in (9,29,2799)
 		and ruben = 1
 		and winlostdate >= @date						
 		

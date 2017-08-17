@@ -1,5 +1,5 @@
-USE [bodb_LicenseeReport]
-GO
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans14] 
 	@Date SMALLDATETIME
 AS
@@ -16,6 +16,7 @@ AS
 		-20150714@Francis: Adjustment to serve to change KeenOcean's currency RMB to HK$
 		-20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
 		-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		-20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	Parameter's Explanation:			
 */
 SET NOCOUNT ON;
@@ -25,13 +26,28 @@ IF exists(SELECT TOP 1 1 FROM dbo.rptCustomerTurnover AS rct WITH (NOLOCK) WHERE
 		DELETE dbo.rptCustomerTurnover WHERE winlostdate=@Date
 	END 	
 	
-;WITH cte_bettrans
+;WITH cte_parlayinfo
+AS (
+	SELECT DISTINCT b.transid, s.sporttype
+	FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
+		CROSS APPLY (	SELECT TOP 1 m.sporttype
+						FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
+						INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
+						WHERE b.refno = bm.refno AND b.custid = bm.custid
+					) AS s
+	WHERE b.bettype = 2799		
+		AND b.winlostdate = @date
+		AND b.statusID IN (111, 112, 113)
+		AND b.matchid = 2799
+	) 
+	,cte_bettrans
 AS (
 	SELECT a.CustID
 		,a.currency
 		,a.recommend
 		,a.matchid
 		,a.bettype
+		,p.sporttype
 		,SUM(ABS(a.stake)) AS stake
 		,sum(a.winlost - a.actual_stake) winlost
 		,SUM(ABS(winlost - actual_stake)) AS BetEffective
@@ -71,13 +87,14 @@ AS (
 	FROM bodb02.dbo.bettrans14 a WITH (NOLOCK)
 	INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC ON a.recommend = lc.custid AND a.currency = lc.currency
 	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction AS BA ON a.transid = ba.transid
-	WHERE a.winlostdate =@date 
-	  	  AND a.statusID IN (111, 112, 113)
+	LEFT JOIN cte_parlayinfo p ON a.transid = p.transid
+	WHERE a.winlostdate = @date AND a.statusID IN (111, 112, 113)
 	GROUP BY a.matchid
 		,a.CustID
 		,a.currency
 		,a.recommend
 		,a.bettype
+		,p.sporttype
 		,a.Odds
 		,a.oddsid
 		,a.oddstype
@@ -137,12 +154,15 @@ SELECT a.CustID
 						THEN b.sporttype
 					ELSE 180 --Virtual Sport
 					END --Virtual Sport
-		WHEN a.bettype BETWEEN 51 AND 69
-			THEN 201
-		WHEN a.bettype BETWEEN 1501 AND 1599
-			THEN 202-- Keno
-		WHEN a.bettype IN (31, 32, 33, 41, 42, 43)
-			THEN 151
+		WHEN a.bettype BETWEEN 51 AND 69 THEN 201
+		WHEN a.bettype BETWEEN 1501 AND 1599 THEN 202-- Keno
+		WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 151
+		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
+			WHEN a.bettype = 2799 THEN a.sporttype
+			WHEN result.sporttype IS NOT NULL THEN result.sporttype
+			WHEN b.sporttype IS NOT NULL THEN b.sporttype
+			ELSE 190 -- Betradar VS
+			END -- Betradar VS		
 		ELSE isNULL(b.sporttype, 0)
 		END sporttype
 	,a.Currency
@@ -154,8 +174,8 @@ SELECT a.CustID
 	,a.statusID
 	,a.recommend
 	,CASE 
-		WHEN a.bettype IN (9, 29)
-			THEN - 9
+		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30
@@ -201,6 +221,12 @@ GROUP BY a.CustID
 			THEN 202-- Keno
 		WHEN a.bettype IN (31, 32, 33, 41, 42, 43)
 			THEN 151
+		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
+			WHEN a.bettype = 2799 THEN a.sporttype
+			WHEN result.sporttype IS NOT NULL THEN result.sporttype
+			WHEN b.sporttype IS NOT NULL THEN b.sporttype
+			ELSE 190 -- Betradar VS
+			END -- Betradar VS		
 		ELSE isNULL(b.sporttype, 0)
 		END
 	,a.Currency
@@ -209,8 +235,8 @@ GROUP BY a.CustID
 	,a.statusID
 	,a.recommend
 	,CASE 
-		WHEN a.bettype IN (9, 29)
-			THEN - 9
+		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30

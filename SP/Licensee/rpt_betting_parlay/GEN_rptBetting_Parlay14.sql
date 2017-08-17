@@ -10,8 +10,8 @@ AS
 	DB: DBLIC.bodb_licenseeReport
 	Original: 
 	Revisions:
-	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
-		
+		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 */
 DECLARE @tmp_bettrans AS TABLE 
 	(
@@ -84,7 +84,7 @@ SELECT
 	b.tpositiontaking
 FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 	INNER JOIN bodb_Licensee.dbo.licenseecust lc WITH (NOLOCK) ON b.Recommend=lc.CustID
-WHERE b.bettype IN (9,29)
+WHERE b.bettype IN (9, 29, 2799)
 	AND b.custid>0
 	AND b.statusid NOT IN (0,101,102,121)	
 	AND b.winlostdate BETWEEN @datefrom AND @dateto

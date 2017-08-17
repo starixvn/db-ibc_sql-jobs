@@ -1,5 +1,5 @@
-USE [bodb_LicenseeReport]
-GO
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans] 
 	@Date SMALLDATETIME
 AS
@@ -11,6 +11,7 @@ AS
 	 Revisions:   
 		  - 20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
 		  - 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		  - 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 */ 
 BEGIN 
 SET NOCOUNT ON;
@@ -25,13 +26,28 @@ BEGIN
 	WHERE winlostdate = @Date
 END;
 
-WITH cte_bettrans
+WITH cte_parlayinfo
+AS (
+		SELECT DISTINCT b.transid, s.sporttype
+		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+			CROSS APPLY (	SELECT TOP 1 m.sporttype
+							FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
+								INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
+							WHERE b.refno = bm.refno AND b.custid = bm.custid
+						) AS s
+		WHERE b.bettype = 2799
+			AND b.winlostdate = @date
+			AND b.statusID IN (111, 112, 113)
+			AND b.matchid = 2799		
+)	
+	,cte_bettrans
 AS (
 	SELECT a.CustID
 		,a.currency
 		,a.recommend
 		,a.matchid
 		,a.bettype
+		,p.sporttype
 		,SUM(ABS(a.stake)) AS stake
 		,sum(a.winlost - a.actual_stake) winlost
 		,SUM(ABS(winlost - actual_stake)) AS BetEffective
@@ -64,10 +80,10 @@ AS (
 	--,sum(comm) comm  
 	FROM bodb02.dbo.bettrans a WITH (NOLOCK)
 		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC
-		ON a.recommend = lc.custid
-			AND a.currency = lc.currency
+		ON a.recommend = lc.custid AND a.currency = lc.currency
 		LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction AS BA
 		ON a.transid = ba.transid
+		LEFT JOIN cte_parlayinfo p ON a.transid = p.transid
 	WHERE a.winlostdate = @date
 		AND a.statusID IN (111, 112, 113)
 		AND a.bettype < 19999
@@ -77,6 +93,7 @@ AS (
 		,a.currency
 		,a.recommend
 		,a.bettype
+		,p.sporttype
 		,a.Odds
 		,a.oddsid
 		,a.oddstype
@@ -112,7 +129,6 @@ AS (
 	WHERE EventDate = @Date
 	)
 
-
 INSERT INTO dbo.rptCustomerTurnover
 SELECT a.CustID
 	,a.bettype
@@ -123,17 +139,20 @@ SELECT a.CustID
 				AND 120 THEN 161 --Number Game   
 		WHEN a.bettype BETWEEN 1101
 				AND 1199 THEN 162 -- Live casino  
-		WHEN a.bettype BETWEEN 1201
-				AND 1299 THEN CASE 
+		WHEN a.bettype BETWEEN 1201 AND 1299 THEN CASE 
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 180 --Virtual Sport  
 				END --Virtual Sport  
-		WHEN a.bettype BETWEEN 51
-				AND 69 THEN 201
-		WHEN a.bettype BETWEEN 1501
-				AND 1599 THEN 202 -- Keno  
+		WHEN a.bettype BETWEEN 51 AND 69 THEN 201
+		WHEN a.bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno  
 		WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 151
+		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
+				WHEN a.bettype = 2799 THEN a.sporttype
+				WHEN result.sporttype IS NOT NULL THEN result.sporttype
+				WHEN b.sporttype IS NOT NULL THEN b.sporttype
+				ELSE 190 -- Betradar VS
+				END -- Betradar VS
 		ELSE isNULL(b.sporttype, 0)
 		END sporttype
 	,a.Currency
@@ -146,6 +165,7 @@ SELECT a.CustID
 	,a.recommend
 	,CASE 
 		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30
@@ -187,6 +207,12 @@ GROUP BY a.CustID
 		WHEN a.bettype BETWEEN 1501
 				AND 1599 THEN 202 -- Keno  
 		WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 151
+		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
+				WHEN a.bettype = 2799 THEN a.sporttype
+				WHEN result.sporttype IS NOT NULL THEN result.sporttype
+				WHEN b.sporttype IS NOT NULL THEN b.sporttype
+				ELSE 190 -- Betradar VS
+				END -- Betradar VS
 		ELSE isNULL(b.sporttype, 0)
 		END
 	,a.Currency
@@ -196,6 +222,7 @@ GROUP BY a.CustID
 	,a.recommend
 	,CASE 
 		WHEN a.bettype IN (9, 29) THEN - 9
+		WHEN a.bettype = 2799 THEN -2799
 		WHEN a.bettype = 10
 			OR (
 				a.bettype > 30
