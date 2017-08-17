@@ -24,7 +24,7 @@ AS
 	 - 20120509@Henry: add 1 more param: @IsDeposit (default = 1)  
 	 - 20120611@Henry: only get from real agent (condition: username NOT like @LicenseeName + 'ACC%')  
 	 - 20130603@Jim: restrict permission of Licensee User  
-	 - 20170707@Harper: fix CurrencyUser when we still have this licensee and currency
+	 - 20170707@Harper: fix CurrencyUser when we still have this licensee and currency [RedmineID: #79235]
 */
 DECLARE @LicenseeID INT
 DECLARE @agent AS TABLE (

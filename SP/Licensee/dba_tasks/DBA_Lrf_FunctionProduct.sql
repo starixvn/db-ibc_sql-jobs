@@ -20,7 +20,7 @@ Revisions:
  - 20150825@Jim: exclude Microgaming Winloss report when offer SB   
  - 20160128@Jim: add more Product MGCRNG  
  - 20161124@Jim: config for Product Colossus Bets  [RedmineID :#63785]
- - 20170707@Harper: config for CO, AB, FW Winloss
+ - 20170707@Harper: config for CO, AB, FW Winloss [RedmineID: #79838]
 
 Param's Explanation:  
     
