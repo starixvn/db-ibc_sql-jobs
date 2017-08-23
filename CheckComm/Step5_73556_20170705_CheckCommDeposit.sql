@@ -9,7 +9,7 @@ Revisions:
 
 USE CheckResultDB
 GO
-truncate table dbo.CheckCommResult_DepositNew
+
 DECLARE @srecommend INT
 CREATE TABLE #supers (custid int,isfinished bit default(0))
 	
