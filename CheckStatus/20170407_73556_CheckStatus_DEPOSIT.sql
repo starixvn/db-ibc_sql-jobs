@@ -3,15 +3,13 @@ Created: 20170328@Helen
 Task: Monthly check Status setting for credit/deposit customers - [Redmine:73556]
 DB: DB054.CheckResultDB
 Revisions:
+-- 20170822@Winnie: Remove check VirtualSports
 For products using table custinfo to manage status	
 */
 USE CheckResultDB
 GO
 ------------------------------------ #1: Number Game	161	81	3	CustInfo.DisableNumber ---------------------------------------------------------
 --EXEC [DBA_CheckStatus_Deposit] @sportType=161, @bettype = 81, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableNumber', @HiddenTable='', @HiddenColumnName='',@SynTable='',@SynColumnName = ''
-
------------------------------------- #3: "VirtualSports(SportType:180 BetType: 1201	180	1201	5		CustInfo.DisableVirtualSports	CustInfo.HideVirtualSports ---------------------------------------------------------
-EXEC [DBA_CheckStatus_Deposit] @sportType=180, @bettype = 1201, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableVirtualSports', @HiddenTable='CustInfo', @HiddenColumnName = 'HideVirtualSports',@SynTable='',@SynColumnName = ''
 
 ------------------------------------ #4: Gold Deluxe	255	1700	12		CustInfo.DisableGoldDeluxe	CustInfo.HideGoldDeluxe ---------------------------------------------------------
 --EXEC [DBA_CheckStatus_Deposit] @sportType=255, @bettype = 1700, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableGoldDeluxe', @HiddenTable='CustInfo', @HiddenColumnName = 'HideGoldDeluxe',@SynTable='',@SynColumnName = ''
