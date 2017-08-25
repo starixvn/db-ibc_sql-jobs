@@ -23,8 +23,6 @@ Revisions:
 - 20140310@daniel: exclude currency C & H
 - 20160608@Jim: Separate Bettrade (#57353) 	
 - 20160616@Jim: Changes to data integrity automail (#59249)	
-- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
-- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 
 Param's Explanation:
     @DrawFilter Only support 1:Normal 
@@ -42,11 +40,11 @@ SET NOCOUNT ON
 IF @DrawFilter <> 1
 BEGIN
 	
-	SELECT 1 AS Id, CONVERT(MONEY, 0) AS Sb, CONVERT(MONEY, 0) AS Rb, CONVERT(MONEY, 0) AS Ng , CONVERT(MONEY, 0)  AS BA,CONVERT(MONEY, 0) AS CS,  CONVERT(MONEY, 0) AS BT,CONVERT(MONEY, 0) AS LC, CONVERT(MONEY, 0) AS AG ,CONVERT(MONEY, 0) AS GD,CONVERT(MONEY, 0) AS KN ,CONVERT(MONEY, 0) AS VG,CONVERT(MONEY, 0) AS VB,CONVERT(MONEY, 0) AS MGCLC,CONVERT(MONEY, 0) AS MGCRNG,CONVERT(MONEY, 0) AS VS,CONVERT(MONEY, 0) AS VS2,CONVERT(MONEY, 0) AS LT
+	SELECT 1 AS Id, CONVERT(MONEY, 0) AS Sb, CONVERT(MONEY, 0) AS Rb, CONVERT(MONEY, 0) AS Ng , CONVERT(MONEY, 0)  AS BA,CONVERT(MONEY, 0) AS CS,  CONVERT(MONEY, 0) AS BT,CONVERT(MONEY, 0) AS LC, CONVERT(MONEY, 0) AS AG ,CONVERT(MONEY, 0) AS GD,CONVERT(MONEY, 0) AS KN ,CONVERT(MONEY, 0) AS VG,CONVERT(MONEY, 0) AS VB,CONVERT(MONEY, 0) AS MGCLC,CONVERT(MONEY, 0) AS MGCRNG,CONVERT(MONEY, 0) AS VS
 	UNION
-	SELECT 2, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0),  CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0) ,CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0)
+	SELECT 2, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0),  CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0) ,CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0)
 	UNION
-	SELECT 3, CONVERT(MONEY, 0)t, CONVERT(MONEY, 0), CONVERT(MONEY, 0),   CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0)
+	SELECT 3, CONVERT(MONEY, 0)t, CONVERT(MONEY, 0), CONVERT(MONEY, 0),   CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0)
 
 	RETURN;
 	
@@ -111,15 +109,7 @@ DECLARE @SbTurnover MONEY
 	   --MGCRNG:Microgaming - RNG Casino
 	   ,@MGCRNGTurnover MONEY
        ,@MGCRNGCustomerWl MONEY
-       ,@MGCRNGBetCount MONEY
-	   ----VS2
-	   ,@VS2Turnover MONEY
-       ,@VS2CustomerWl MONEY
-       ,@VS2BetCount MONEY
-	   --LT
-	   ,@LTTurnover MONEY
-       ,@LTCustomerWl MONEY
-       ,@LTBetCount MONEY
+       ,@MGCRNGBetCount MONEY	   
 ---
 DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),Sporttype INT)
 
@@ -127,7 +117,7 @@ INSERT INTO @tblSport (ProductPrefix,Sporttype)
 SELECT DISTINCT ProductPrefix,s.Sporttype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','VS2','LT')	
+WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB')	
 
 INSERT INTO @tblSport(ProductPrefix,Sporttype)
 SELECT 'SB',0
@@ -290,28 +280,6 @@ SELECT  @MGCRNGTurnover 	= ISNULL(@MGCRNGTurnover,0)
         ,@MGCRNGCustomerWl  = ISNULL(@MGCRNGCustomerWl,0)
 	    ,@MGCRNGBetCount    = ISNULL(@MGCRNGBetCount,0)		
 		   
-----VS2
-SELECT @VS2Turnover=SUM(b.Turnover)
-      ,@VS2CustomerWl=SUM(b.Winlost) 
-      ,@VS2BetCount=SUM(b.BetCount) 
-FROM @tblData b 
-WHERE ProductPrefix ='VS2'
-
-SELECT  @VS2Turnover =ISNULL (@VS2Turnover, 0)
-       ,@VS2CustomerWl = ISNULL (@VS2CustomerWl, 0)
-       ,@VS2BetCount  = ISNULL (@VS2BetCount, 0) 
-
-----LT
-SELECT @LTTurnover=SUM(b.Turnover)
-      ,@LTCustomerWl=SUM(b.Winlost) 
-      ,@LTBetCount=SUM(b.BetCount) 
-FROM @tblData b 
-WHERE ProductPrefix ='LT'
-
-SELECT  @LTTurnover =ISNULL (@LTTurnover, 0)
-       ,@LTCustomerWl = ISNULL (@LTCustomerWl, 0)
-       ,@LTBetCount  = ISNULL (@LTBetCount, 0) 
-
 -- Result
 
 SELECT 1 AS Id, @SbTurnover AS Sb
@@ -328,9 +296,7 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @VBTurnover AS VB 
 			  , @MGCLCTurnover  AS MGCLC 
 			  , @MGCRNGTurnover AS  MGCRNG
-			  , @VsTurnover AS VS
-			  , @VS2Turnover AS VS2
-			  , @LTTurnover AS LT
+			  , @VsTurnover AS VS			  
 			  
 UNION
 SELECT 2, @SbCustomerWl
@@ -347,9 +313,7 @@ SELECT 2, @SbCustomerWl
 		, @VBCustomerWl
 		, @MGCLCCustomerWl
 		, @MGCRNGCustomerWl
-		, @VsCustomerWl
-		, @VS2CustomerWl
-		, @LTCustomerWl
+		, @VsCustomerWl		
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -365,9 +329,7 @@ SELECT 3, @SbBetCount
 		, @VBBetCount
 		, @MGCLCBetCount
 		, @MGCRNGBetCount
-		, @VsBetCount	
-		, @VS2BetCount
-		, @LTBetCount
+		, @VsBetCount			
 
 
 SET NOCOUNT OFF

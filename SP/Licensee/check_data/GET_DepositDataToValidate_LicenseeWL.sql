@@ -17,8 +17,6 @@ Revisions:
 - 20160608@Jim: Separate Bettrade (#57353) 	
 - 20160616@Jim: Changes to data integrity automail (#59249)	
 - 20160906@Jim: Correct value of SB & BA [Redmine #63571]
-- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
-- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -92,22 +90,14 @@ DECLARE --SB
 	    ----VS
 	   ,@VsTurnover MONEY
        ,@VsCustomerWl MONEY
-       ,@VsBetCount MONEY
-	   ----VS2
-	   ,@VS2Turnover MONEY
-       ,@VS2CustomerWl MONEY
-       ,@VS2BetCount MONEY
-	   --LT
-	   ,@LTTurnover MONEY
-       ,@LTCustomerWl MONEY
-       ,@LTBetCount MONEY
+       ,@VsBetCount MONEY	   
 	         
 DECLARE @tblSporttype AS TABLE(ProductPrefix VARCHAR (10),Sporttype INT)	   
 INSERT INTO @tblSporttype (ProductPrefix,Sporttype)
 SELECT DISTINCT ProductPrefix,Sporttype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','VS2','LT')	
+WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB')	
 
 INSERT INTO  @tblSporttype
 SELECT 'SB',0
@@ -333,35 +323,7 @@ FROM @tblData b
 WHERE ProductPrefix = 'VS'
 SELECT @VsTurnover 		= ISNULL(@VsTurnover,0)
        ,@VsCustomerWl	= ISNULL(@VsCustomerWl,0)
-       ,@VsBetCount 	= ISNULL(@VsBetCount,0)		   
-
-----VS2
- SELECT  @VS2Turnover=SUM(CASE 
-                    WHEN @DrawFilter IN (2,3) THEN 
-                        CASE WHEN b.StatusID = 111 THEN 0 WHEN b.StatusID IN (114,115) THEN 0.5 ELSE 1 END
-                    ELSE 1
-                END * b.Turnover)
-		,@VS2CustomerWl=SUM(b.winlost)
-		,@VS2BetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END) 
-FROM @tblData b
-WHERE ProductPrefix = 'VS2'
-SELECT @VS2Turnover 		= ISNULL(@VS2Turnover,0)
-       ,@VS2CustomerWl	= ISNULL(@VS2CustomerWl,0)
-       ,@VS2BetCount 	= ISNULL(@VS2BetCount,0)	
-
----LT
-SELECT  @LTTurnover=SUM(CASE 
-                    WHEN @DrawFilter IN (2,3) THEN 
-                        CASE WHEN b.StatusID = 111 THEN 0 WHEN b.StatusID IN (114,115) THEN 0.5 ELSE 1 END
-                    ELSE 1
-                END * b.Turnover)
-		,@LTCustomerWl=SUM(b.winlost)
-		,@LTBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END) 
-FROM @tblData b
-WHERE ProductPrefix = 'LT'
-SELECT @LTTurnover  	= ISNULL(@LTTurnover,0)
-       ,@LTCustomerWl   = ISNULL(@LTCustomerWl,0)
-       ,@LTBetCount   	= ISNULL(@LTBetCount,0)
+       ,@VsBetCount 	= ISNULL(@VsBetCount,0)		
 
 -- Result
 
@@ -379,10 +341,7 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @VBTurnover AS VB 
 			  , @MGCLCTurnover  AS MGCLC 
 			  , @MGCRNGTurnover AS  MGCRNG
-			  , @VsTurnover AS VS
-			  , @VS2Turnover AS VS2
-			  , @LTTurnover AS LT
-			  
+			  , @VsTurnover AS VS	
 UNION
 SELECT 2, @SbCustomerWl
 		, @RbCustomerWl
@@ -398,9 +357,7 @@ SELECT 2, @SbCustomerWl
 		, @VBCustomerWl
 		, @MGCLCCustomerWl
 		, @MGCRNGCustomerWl
-		, @VsCustomerWl
-		, @VS2CustomerWl
-		, @LTCustomerWl
+		, @VsCustomerWl		
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -416,9 +373,7 @@ SELECT 3, @SbBetCount
 		, @VBBetCount
 		, @MGCLCBetCount
 		, @MGCRNGBetCount
-		, @VsBetCount
-		, @VS2BetCount
-		, @LTBetCount
+		, @VsBetCount		
 
 SET NOCOUNT OFF
 GO
