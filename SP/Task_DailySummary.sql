@@ -57,6 +57,7 @@ Revisions:
 	- 20170105@Percy: Apply Fishing World [RedmineID: #65731]
 	- 20170530@Patrick: Modify Auto Void block code to prevent deadlock
 	- 20170710@Percy: Apply Betradar Virtual Sport [RedmineID: #78339]
+	- 20170710@Percy: Apply Keno Lottery [RedmineID: #78064]
 	- 20170726@Percy: Expand bettype range of OneRnG Casino - Tablet Game [RedmineID: #78424]
 	
  */
@@ -88,6 +89,7 @@ WHERE b.winlostdate <> m.eventdate
 	AND b.bettype NOT IN (1231,1232,1233,1237,1238) -- exclude vsoutright
 	AND b.bettype NOT IN (10,31,32,33, 41,42,43) -- exclude outright 
 	AND b.bettype NOT BETWEEN 1501 AND 1599  --- exclude keno
+	AND b.bettype NOT BETWEEN 1021 AND 1049  --- exclude lottery
 	
 --UPDATE b SET winlostdate = o.eventdate
 INSERT INTO @transTable
@@ -533,6 +535,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -589,6 +592,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -643,6 +647,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -701,6 +706,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -756,6 +762,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -814,6 +821,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -869,6 +877,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -927,6 +936,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype = 73 THEN 252 --Bingo 
 			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
