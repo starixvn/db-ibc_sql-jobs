@@ -1,5 +1,5 @@
-﻿USE [bodb_licensee]
-GO
+﻿/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 /****** Object:  StoredProcedure [dbo].[GET_DepositDataToValidate_SumWL]    Script Date: 07/04/2016 12:56:51 ******/
 SET ANSI_NULLS ON
 GO
@@ -109,7 +109,7 @@ DECLARE @SbTurnover MONEY
 	   --MGCRNG:Microgaming - RNG Casino
 	   ,@MGCRNGTurnover MONEY
        ,@MGCRNGCustomerWl MONEY
-       ,@MGCRNGBetCount MONEY
+       ,@MGCRNGBetCount MONEY	   
 ---
 DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),Sporttype INT)
 
@@ -278,8 +278,8 @@ WHERE ProductPrefix = 'MGCRNG'
  
 SELECT  @MGCRNGTurnover 	= ISNULL(@MGCRNGTurnover,0)
         ,@MGCRNGCustomerWl  = ISNULL(@MGCRNGCustomerWl,0)
-	    ,@MGCRNGBetCount    = ISNULL(@MGCRNGBetCount,0)		   
- 
+	    ,@MGCRNGBetCount    = ISNULL(@MGCRNGBetCount,0)		
+		   
 -- Result
 
 SELECT 1 AS Id, @SbTurnover AS Sb
@@ -296,7 +296,7 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @VBTurnover AS VB 
 			  , @MGCLCTurnover  AS MGCLC 
 			  , @MGCRNGTurnover AS  MGCRNG
-			  , @VsTurnover AS VS
+			  , @VsTurnover AS VS			  
 			  
 UNION
 SELECT 2, @SbCustomerWl
@@ -313,7 +313,7 @@ SELECT 2, @SbCustomerWl
 		, @VBCustomerWl
 		, @MGCLCCustomerWl
 		, @MGCRNGCustomerWl
-		, @VsCustomerWl
+		, @VsCustomerWl		
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -329,7 +329,7 @@ SELECT 3, @SbBetCount
 		, @VBBetCount
 		, @MGCLCBetCount
 		, @MGCRNGBetCount
-		, @VsBetCount	
+		, @VsBetCount			
 
 
 SET NOCOUNT OFF

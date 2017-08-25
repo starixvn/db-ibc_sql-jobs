@@ -1,5 +1,5 @@
-USE [bodb_LicenseeReport]
-GO
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_LicenseeWL] 
     @Date smalldatetime 
 	,@DrawFilter tinyint = 1
@@ -17,6 +17,7 @@ Revisions:
 - 20160608@Jim: Separate Bettrade (#57353) 	
 - 20160616@Jim: Changes to data integrity automail (#59249)	
 - 20160906@Jim: Correct value of SB & BA [Redmine #63571]
+
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
 
@@ -89,7 +90,7 @@ DECLARE --SB
 	    ----VS
 	   ,@VsTurnover MONEY
        ,@VsCustomerWl MONEY
-       ,@VsBetCount MONEY
+       ,@VsBetCount MONEY	   
 	         
 DECLARE @tblSporttype AS TABLE(ProductPrefix VARCHAR (10),Sporttype INT)	   
 INSERT INTO @tblSporttype (ProductPrefix,Sporttype)
@@ -322,7 +323,8 @@ FROM @tblData b
 WHERE ProductPrefix = 'VS'
 SELECT @VsTurnover 		= ISNULL(@VsTurnover,0)
        ,@VsCustomerWl	= ISNULL(@VsCustomerWl,0)
-       ,@VsBetCount 	= ISNULL(@VsBetCount,0)		   
+       ,@VsBetCount 	= ISNULL(@VsBetCount,0)		
+
 -- Result
 
 SELECT 1 AS Id, @SbTurnover AS Sb
@@ -339,8 +341,7 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @VBTurnover AS VB 
 			  , @MGCLCTurnover  AS MGCLC 
 			  , @MGCRNGTurnover AS  MGCRNG
-			  , @VsTurnover AS VS
-			  
+			  , @VsTurnover AS VS	
 UNION
 SELECT 2, @SbCustomerWl
 		, @RbCustomerWl
@@ -356,7 +357,7 @@ SELECT 2, @SbCustomerWl
 		, @VBCustomerWl
 		, @MGCLCCustomerWl
 		, @MGCRNGCustomerWl
-		, @VsCustomerWl
+		, @VsCustomerWl		
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -372,7 +373,7 @@ SELECT 3, @SbBetCount
 		, @VBBetCount
 		, @MGCLCBetCount
 		, @MGCRNGBetCount
-		, @VsBetCount
+		, @VsBetCount		
 
 SET NOCOUNT OFF
 GO

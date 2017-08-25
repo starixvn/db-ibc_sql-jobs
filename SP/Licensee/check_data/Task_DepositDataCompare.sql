@@ -1,5 +1,5 @@
-USE [bodb_LicenseeReport]
-GO
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Task_DepositDataCompare] 
     @Date smalldatetime = null
 	,@DrawFilter tinyint = 1
@@ -15,6 +15,7 @@ Revisions:
 	- 20140429@Florent: fix bug and change message error
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20160805@Jim: Revise SP due to [Redmine: #62052]
+
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
 
@@ -85,7 +86,7 @@ DECLARE @tblTmp AS TABLE (ID INT
 						   ,VB bigint
 						   ,MGCLC bigint
 						   ,MGCRNG bigint
-						   ,VS bigint)
+						   ,VS BIGINT)
 						   
 --exec 
 --rptLicWinloss2
@@ -104,7 +105,7 @@ INSERT INTO @tblTmp	(ID
 					,VB  
 					,MGCLC  
 					,MGCRNG  
-					,VS  )	
+					,VS	)	
 exec dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date	
 				
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
@@ -160,7 +161,7 @@ INSERT INTO @tblTmp	(ID
 					,VB  
 					,MGCLC  
 					,MGCRNG  
-					,VS  )					   
+					,VS)					   
 exec dbo.GET_DepositDataToValidate_Betting @Date=@Date
 					
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
@@ -267,3 +268,4 @@ DROP TABLE #Data1
 DROP TABLE #TempData 
 
 SET NOCOUNT OFF
+GO

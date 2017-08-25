@@ -1,5 +1,5 @@
-﻿USE [bodb_Licensee]
-GO
+﻿/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 /****** Object:  StoredProcedure [dbo].[GET_DepositDataToValidate_SumWLOld]    Script Date: 03/13/2014 01:32:27 ******/
 SET ANSI_NULLS ON
 GO
@@ -45,13 +45,9 @@ BEGIN
 	UNION
 	SELECT 3, CONVERT(MONEY, 0)t, CONVERT(MONEY, 0), CONVERT(MONEY, 0),   CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0)
 
-	RETURN;
-	
-
- 
+	RETURN; 
 
 END
-
 
 DECLARE @SbTurnover MONEY
        ,@SbCustomerWl MONEY
@@ -108,7 +104,8 @@ DECLARE @SbTurnover MONEY
 	   --MGCRNG:Microgaming - RNG Casino
 	   ,@MGCRNGTurnover MONEY
        ,@MGCRNGCustomerWl MONEY
-       ,@MGCRNGBetCount MONEY     
+       ,@MGCRNGBetCount MONEY  	    
+
 DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),Sporttype INT)
 
 INSERT INTO @tblSport (ProductPrefix,Sporttype)
@@ -199,8 +196,7 @@ WHERE ProductPrefix ='CS'
     
 SELECT @CsTurnover = ISNULL (@CsTurnover, 0),
 	   @CsCustomerWl = ISNULL (@CsCustomerWl, 0),
-	   @CsBetCount = ISNULL (@CsBetCount, 0)
- 
+	   @CsBetCount = ISNULL (@CsBetCount, 0) 
  
 -- GD
 SELECT @GDTurnover=SUM(b.Turnover)
@@ -212,6 +208,7 @@ WHERE ProductPrefix ='GD'
 SELECT  @GDTurnover =ISNULL (@GDTurnover, 0)
        ,@GDCustomerWl = ISNULL (@GDCustomerWl, 0)
        ,@GDBetCount = ISNULL (@GDBetCount, 0)
+
 --- Keno
 SELECT @KNTurnover=SUM(b.Turnover)
       ,@KNCustomerWl=SUM(b.Winlost) 
@@ -222,6 +219,7 @@ WHERE ProductPrefix ='KN'
 SELECT @KNTurnover =ISNULL (@KNTurnover, 0)
        ,@KNCustomerWl = ISNULL (@KNCustomerWl, 0)
        ,@KNBetCount  = ISNULL (@KNBetCount, 0)
+
 ----VS
 SELECT @VSTurnover=SUM(b.Turnover)
       ,@VSCustomerWl=SUM(b.Winlost) 
@@ -232,6 +230,7 @@ WHERE ProductPrefix ='VS'
 SELECT  @VsTurnover =ISNULL (@VsTurnover, 0)
        ,@VsCustomerWl = ISNULL (@VsCustomerWl, 0)
        ,@VsBetCount  = ISNULL (@VsBetCount, 0)
+
 -- AG
 SELECT @AGTurnover=SUM( b.Turnover)
     ,@AGCustomerWl=SUM(b.Winlost)
@@ -242,6 +241,7 @@ WHERE ProductPrefix = 'AGC'
 SELECT @AGTurnover    = ISNULL(@AGTurnover,0)
 	   ,@AGCustomerWl = ISNULL(@AGCustomerWl,0)
 	   ,@AGBetCount   = ISNULL(@AGBetCount,0)
+
 --VG: Macau
  SELECT  @VGTurnover=SUM(b.Turnover )
 		,@VGCustomerWl=SUM(b.Winlost)
@@ -251,6 +251,7 @@ WHERE ProductPrefix = 'VG'
 SELECT  @VGTurnover  	= ISNULL(@VGTurnover,0)	
        ,@VGCustomerWl   = ISNULL(@VGCustomerWl,0)
        ,@VGBetCount     = ISNULL(@VGBetCount,0)
+
  --VB: Macau Games
 SELECT  @VBTurnover=SUM( b.Turnover)
 		,@VBCustomerWl=SUM(b.Winlost)
@@ -260,6 +261,7 @@ WHERE ProductPrefix = 'VB'
  SELECT @VBTurnover 	= ISNULL(@VBTurnover,0)	
        ,@VBCustomerWl 	= ISNULL(@VBCustomerWl,0)
        ,@VBBetCount 	= ISNULL(@VBBetCount,0)
+
 --MGCLC:Microgaming - Live Casino
 SELECT  @MGCLCTurnover=SUM( b.Turnover)
 		,@MGCLCCustomerWl=SUM(b.Winlost)
@@ -280,7 +282,8 @@ WHERE ProductPrefix = 'MGCRNG'
  
 SELECT  @MGCRNGTurnover 	= ISNULL(@MGCRNGTurnover,0)
         ,@MGCRNGCustomerWl  = ISNULL(@MGCRNGCustomerWl,0)
-	    ,@MGCRNGBetCount    = ISNULL(@MGCRNGBetCount,0)		   
+	    ,@MGCRNGBetCount    = ISNULL(@MGCRNGBetCount,0)		
+			   		   
 -- Result
 
 SELECT 1 AS Id, @SbTurnover AS Sb
@@ -297,8 +300,7 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @VBTurnover AS VB 
 			  , @MGCLCTurnover  AS MGCLC 
 			  , @MGCRNGTurnover AS  MGCRNG
-			  , @VsTurnover AS VS
-			  
+			  , @VsTurnover AS VS	
 UNION
 SELECT 2, @SbCustomerWl
 		, @RbCustomerWl
@@ -314,7 +316,7 @@ SELECT 2, @SbCustomerWl
 		, @VBCustomerWl
 		, @MGCLCCustomerWl
 		, @MGCRNGCustomerWl
-		, @VsCustomerWl
+		, @VsCustomerWl		
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -331,13 +333,7 @@ SELECT 3, @SbBetCount
 		, @MGCLCBetCount
 		, @MGCRNGBetCount
 		, @VsBetCount	
- 
 
 SET NOCOUNT OFF
-
-
-
-
-
 GO
 GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_SumWLOld] TO [bodbLicenseeNet] AS [dbo]

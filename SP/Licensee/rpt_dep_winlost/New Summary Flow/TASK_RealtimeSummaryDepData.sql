@@ -1,5 +1,5 @@
-USE [bodb02]
-GO
+/*<info serverAlias="DBACC-bodb02" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
 	@Winlostdate DATE = NULL,
 	@isSuccessful BIT = 0 OUTPUT
@@ -15,6 +15,7 @@ AS
 		- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
 		- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -357,6 +358,7 @@ BEGIN
 					WHEN bettype BETWEEN 2401 AND 2499 THEN 211
 					WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
+					WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 				ELSE 0 END,--SportType
 				SUM(TurnOver),--Turnover  
 				SUM(DrawGame),--Draw game TO			
@@ -397,6 +399,7 @@ BEGIN
 					WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
 					WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
+					WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 				ELSE 0 END
 		--Start update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
 		MERGE #rptDepWinlostByProduct AS TARGET
@@ -500,3 +503,4 @@ BEGIN
 	DROP TABLE #rptDepWinlostTransfer3rdOthers
 	DROP TABLE #rptDepWinlostOutstanding
 END
+GO

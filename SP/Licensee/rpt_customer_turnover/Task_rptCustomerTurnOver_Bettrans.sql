@@ -12,6 +12,7 @@ AS
 		  - 20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
 		  - 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		  - 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+		  - 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 */ 
 BEGIN 
 SET NOCOUNT ON;
@@ -153,6 +154,7 @@ SELECT a.CustID
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 190 -- Betradar VS
 				END -- Betradar VS
+		WHEN a.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		ELSE isNULL(b.sporttype, 0)
 		END sporttype
 	,a.Currency
@@ -213,6 +215,7 @@ GROUP BY a.CustID
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 190 -- Betradar VS
 				END -- Betradar VS
+		WHEN a.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		ELSE isNULL(b.sporttype, 0)
 		END
 	,a.Currency
@@ -235,3 +238,4 @@ GROUP BY a.CustID
 	,a.isba
  
  END
+ GO
