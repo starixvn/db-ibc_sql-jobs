@@ -248,3 +248,4 @@ BEGIN
 	DROP TABLE #BettypeProductMapping
 	DROP TABLE #BettypeProductMappingBA
 END
+GO

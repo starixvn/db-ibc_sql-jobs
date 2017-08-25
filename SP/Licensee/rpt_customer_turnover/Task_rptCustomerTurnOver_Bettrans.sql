@@ -238,3 +238,4 @@ GROUP BY a.CustID
 	,a.isba
  
  END
+ GO

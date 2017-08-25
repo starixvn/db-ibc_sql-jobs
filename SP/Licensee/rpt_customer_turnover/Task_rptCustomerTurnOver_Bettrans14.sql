@@ -253,5 +253,6 @@ GROUP BY a.CustID
 		END
 	,winlostdate
 	,a.isba
+
 GO
 GRANT VIEW DEFINITION ON [dbo].[Task_rptCustomerTurnOver_Bettrans14] TO [vnteam] AS [dbo]

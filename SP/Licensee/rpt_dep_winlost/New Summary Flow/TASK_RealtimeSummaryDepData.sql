@@ -503,3 +503,4 @@ BEGIN
 	DROP TABLE #rptDepWinlostTransfer3rdOthers
 	DROP TABLE #rptDepWinlostOutstanding
 END
+GO
