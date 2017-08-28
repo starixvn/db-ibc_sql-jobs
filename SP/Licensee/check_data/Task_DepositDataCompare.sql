@@ -15,6 +15,7 @@ Revisions:
 	- 20140429@Florent: fix bug and change message error
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20160805@Jim: Revise SP due to [Redmine: #62052]
+	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -53,6 +54,7 @@ DECLARE
 	   --Number of table must compare
 	   ,@table_num INT =0
 	   ,@output NVARCHAR(4000)=''
+
 CREATE TABLE #TempData 
 		(ID INT
 	   ,Sportbook bigint
@@ -71,6 +73,7 @@ CREATE TABLE #Data1
 	   ,BA bigint
 	   ,LC bigint
 	   )
+
 DECLARE @tblTmp AS TABLE (ID INT
 						   ,Sportbook bigint
 						   ,Racing bigint

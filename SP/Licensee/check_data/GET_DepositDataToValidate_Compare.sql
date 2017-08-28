@@ -111,8 +111,6 @@ SELECT @id,* from #TempData
 DELETE  #tempdata
 
 
-
-
 SET @table_num=@id
 SET @id=1 
 --compare Turnover
