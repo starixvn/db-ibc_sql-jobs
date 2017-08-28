@@ -16,6 +16,7 @@ AS
 		- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
+		- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -354,7 +355,7 @@ BEGIN
 					WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
 					WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 					WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-					WHEN bettype BETWEEN 2301 AND 2399 THEN 210
+					WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
 					WHEN bettype BETWEEN 2401 AND 2499 THEN 211
 					WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
@@ -395,7 +396,7 @@ BEGIN
 					WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
 					WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 					WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-					WHEN bettype BETWEEN 2301 AND 2399 THEN 210
+					WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
 					WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
 					WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
