@@ -476,6 +476,13 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @MGCLCTurnover  AS MGCLC 
 			  , @MGCRNGTurnover AS  MGCRNG
 			  , @VsTurnover AS VS
+			  , @CBTurnover  AS CB
+			  , @ABTurnover	 AS AB
+			  , @NG2Turnover AS NG2
+			  , @FWTurnover  AS FW
+			  , @COTurnover  AS CO
+			  , @VS2Turnover AS VS2
+			  , @LTTurnover  AS LT
 UNION
 SELECT 2, @SbCustomerWl
 		, @RbCustomerWl
@@ -491,7 +498,14 @@ SELECT 2, @SbCustomerWl
 		, @VBCustomerWl
 		, @MGCLCCustomerWl
 		, @MGCRNGCustomerWl
-		, @VsCustomerWl		
+		, @VsCustomerWl	
+		, @CBCustomerWl	
+		, @ABCustomerWl
+		, @NG2CustomerWl
+		, @FWCustomerWl
+		, @COCustomerWl
+		, @VS2CustomerWl
+		, @LTCustomerWl
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -508,6 +522,13 @@ SELECT 3, @SbBetCount
 		, @MGCLCBetCount
 		, @MGCRNGBetCount
 		, @VsBetCount
+		, @CBBetCount
+		, @ABBetCount
+		, @NG2BetCount
+		, @FWBetCount
+		, @COBetCount
+		, @VS2BetCount
+		, @LTBetCount
 
 SET NOCOUNT OFF
 END

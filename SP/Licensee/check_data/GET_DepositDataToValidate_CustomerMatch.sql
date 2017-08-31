@@ -1,11 +1,4 @@
-USE [bodb_LicenseeReport]
-GO
- 
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
- 
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_CustomerMatch] 
 	@Date SMALLDATETIME		= NULL
@@ -22,6 +15,8 @@ Original:
 Revisions:	
 	- 20150211@Florent: add Sporting Solution bettype
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
+
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
     

@@ -1,12 +1,9 @@
+/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
-GO
 
 /****** Object:  Stored Procedure dbo.GET_CreditDataToValidate_DW    Script Date: 7/4/2016 1:07:46 PM ******/
 
-CREATE PROCEDURE [dbo].[GET_CreditDataToValidate_DW]
+ALTER PROCEDURE [dbo].[GET_CreditDataToValidate_DW]
      @Date smalldatetime 
 	,@DrawFilter tinyint = 1
 AS
@@ -24,7 +21,8 @@ Revisions:
 	- 20160523@Francis: Change bettype range for RNG Casino (hotfix #55730)
 	- 20160602@Jim: include Casino refund ticket (#58453)
 	- 20160616@Jim: Changes to data integrity automail (#59249)	
-	 
+	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
+
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
     
@@ -71,13 +69,34 @@ DECLARE @SbTurnover MONEY
        ,@CsCustomerWl MONEY
        ,@CsBetCount MONEY
 
-	   DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),bettype INT)
+	    ----AB
+		,@ABTurnover MONEY
+		,@ABCustomerWl MONEY
+		,@ABBetCount MONEY
+		----NG2
+		,@NG2Turnover MONEY
+		,@NG2CustomerWl MONEY
+		,@NG2BetCount MONEY
+		----FW
+		,@FWTurnover MONEY
+		,@FWCustomerWl MONEY
+		,@FWBetCount MONEY		
+		----VS2
+		,@VS2Turnover MONEY
+		,@VS2CustomerWl MONEY
+		,@VS2BetCount MONEY
+		----LT
+		,@LTTurnover MONEY
+		,@LTCustomerWl MONEY
+		,@LTBetCount MONEY
+
+DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),bettype INT)
 
 INSERT INTO @tblSport (ProductPrefix,bettype)
 SELECT DISTINCT p.ProductPrefix,s.bettype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-WHERE p.ProductPrefix IN ('SB','CB','GD','KN','LC','NG','RB','CS','VS')
+WHERE p.ProductPrefix IN ('SB','CB','GD','KN','LC','NG','RB','CS','VS','AB','NG2','FW','VS2','LT')
 	 
 	
 DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),StatusID INT, stake MONEY,WinLoss MONEY,BetCount INT)
@@ -207,7 +226,62 @@ WHERE  ProductPrefix = 'KN'
 
 SELECT @KNTurnover = ISNULL (@KNTurnover, 0),
 	   @KNCustomerWl = ISNULL (@KNCustomerWl, 0),
-	   @KNBetCount = ISNULL (@KNBetCount, 0)	   
+	   @KNBetCount = ISNULL (@KNBetCount, 0)	
+
+-- AB
+SELECT @ABTurnover = SUM(CASE WHEN @DrawFilter IN (2,3) AND StatusID = 111 THEN 0 ELSE stake END)
+       ,@ABCustomerWl = -SUM(WinLoss )
+	   ,@ABBetCount = SUM(BetCount)
+FROM @tblData
+WHERE  ProductPrefix = 'AB'
+
+SELECT @ABTurnover = ISNULL (@ABTurnover, 0),
+	   @ABCustomerWl = ISNULL (@ABCustomerWl, 0),
+	   @ABBetCount = ISNULL (@ABBetCount, 0)	
+	   
+-- NG2
+SELECT @NG2Turnover = SUM(CASE WHEN @DrawFilter IN (2,3) AND StatusID = 111 THEN 0 ELSE stake END)
+       ,@NG2CustomerWl = -SUM(WinLoss )
+	   ,@NG2BetCount = SUM(BetCount)
+FROM @tblData
+WHERE  ProductPrefix = 'NG2'
+
+SELECT @NG2Turnover = ISNULL (@NG2Turnover, 0),
+	   @NG2CustomerWl = ISNULL (@NG2CustomerWl, 0),
+	   @NG2BetCount = ISNULL (@NG2BetCount, 0)	   
+
+-- FW
+SELECT @FWTurnover = SUM(CASE WHEN @DrawFilter IN (2,3) AND StatusID = 111 THEN 0 ELSE stake END)
+       ,@FWCustomerWl = -SUM(WinLoss )
+	   ,@FWBetCount = SUM(BetCount)
+FROM @tblData
+WHERE  ProductPrefix = 'FW'
+
+SELECT @FWTurnover = ISNULL (@FWTurnover, 0),
+	   @FWCustomerWl = ISNULL (@FWCustomerWl, 0),
+	   @FWBetCount = ISNULL (@FWBetCount, 0)	
+	   
+-- VS2
+SELECT @VS2Turnover = SUM(CASE WHEN @DrawFilter IN (2,3) AND StatusID = 111 THEN 0 ELSE stake END)
+       ,@VS2CustomerWl = -SUM(WinLoss )
+	   ,@VS2BetCount = SUM(BetCount)
+FROM @tblData
+WHERE  ProductPrefix = 'VS2'
+
+SELECT @VS2Turnover = ISNULL (@VS2Turnover, 0),
+	   @VS2CustomerWl = ISNULL (@VS2CustomerWl, 0),
+	   @VS2BetCount = ISNULL (@VS2BetCount, 0)	
+
+-- LT
+SELECT @LTTurnover = SUM(CASE WHEN @DrawFilter IN (2,3) AND StatusID = 111 THEN 0 ELSE stake END)
+       ,@LTCustomerWl = -SUM(WinLoss )
+	   ,@LTBetCount = SUM(BetCount)
+FROM @tblData
+WHERE  ProductPrefix = 'LT'
+
+SELECT @LTTurnover = ISNULL (@LTTurnover, 0),
+	   @LTCustomerWl = ISNULL (@LTCustomerWl, 0),
+	   @LTBetCount = ISNULL (@LTBetCount, 0)	
 -- Result
 
 SELECT 1 AS Id, @SbTurnover  AS Sb
@@ -219,6 +293,11 @@ SELECT 1 AS Id, @SbTurnover  AS Sb
 			  ,	@GDTurnover  AS GD
 			  ,	@KNTurnover  AS KN
 			  ,	@CSTurnover  AS CS
+			  , @ABTurnover	 AS AB
+			  , @NG2Turnover AS NG2
+			  , @FWTurnover  AS FW
+			  , @VS2Turnover AS VS2
+			  , @LTTurnover  AS LT
 UNION	
 SELECT 2, @SbCustomerWl
 		, @RbCustomerWl
@@ -229,6 +308,11 @@ SELECT 2, @SbCustomerWl
 		, @GDCustomerWl
 		, @KNCustomerWl
 		, @CSCustomerWl
+		, @ABCustomerWl
+		, @NG2CustomerWl
+		, @FWCustomerWl
+		, @VS2CustomerWl
+		, @LTCustomerWl
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -239,6 +323,11 @@ SELECT 3, @SbBetCount
 		, @GDBetCount
 		, @KNBetCount
 		, @CSBetCount
+		, @ABBetCount
+		, @NG2BetCount
+		, @FWBetCount
+		, @VS2BetCount
+		, @LTBetCount
 
 SET NOCOUNT OFF
 
