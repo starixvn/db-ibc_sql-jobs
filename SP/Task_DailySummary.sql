@@ -59,7 +59,7 @@ Revisions:
 	- 20170710@Percy: Apply Betradar Virtual Sport [RedmineID: #78339]
 	- 20170710@Percy: Apply Keno Lottery [RedmineID: #78064]
 	- 20170726@Percy: Expand bettype range of OneRnG Casino - Tablet Game [RedmineID: #78424]
-	
+	- 20170906@Percy: Apply Lucky 3 [RedmineID: #76770]
  */
 
 SET NOCOUNT ON
@@ -550,6 +550,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
+			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
 		0 AS netTurnover,
@@ -607,6 +608,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
+			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -662,6 +664,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
+			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*apositiontaking)/2 else ABS(stake*apositiontaking) end) AS netTurnover,
@@ -721,6 +724,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
+			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -777,6 +781,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
+			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*mpositiontaking)/2 else ABS(stake*mpositiontaking) end) AS netTurnover,
@@ -836,6 +841,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
+			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -892,6 +898,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
+			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*spositiontaking)/2 else ABS(stake*spositiontaking) end) AS netTurnover,
@@ -951,6 +958,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4001 AND 7999 THEN 212 --Voidbridge
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
+			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
