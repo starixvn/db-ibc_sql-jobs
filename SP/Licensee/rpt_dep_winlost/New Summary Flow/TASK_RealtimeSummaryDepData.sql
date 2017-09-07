@@ -17,6 +17,7 @@ AS
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 		- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
+		- 20170831@Paul: Resolve deadlock issue [RedmineID: #82516]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -93,7 +94,25 @@ BEGIN
 	CREATE TABLE #rptDepWinlostOutstanding (CustID INT, SportType SMALLINT DEFAULT(-1), TurnOver MONEY DEFAULT(0), OutStanding MONEY DEFAULT(0), BetCount INT DEFAULT(0)
 			UNIQUE CLUSTERED (CustID, SportType)
 			)
+
+	DECLARE @recommend TABLE (recommend INT PRIMARY KEY)
+	DECLARE @recommend1 TABLE (recommend INT PRIMARY KEY)
+
+	INSERT INTO @recommend1 (recommend)
+	SELECT c.custid
+	FROM dbo.Customer c WITH(NOLOCK)
+		INNER JOIN dbo.Dep_CustSuper cs WITH(NOLOCK) ON c.srecommend = cs.custid
+	WHERE c.roleid = 2
 	
+	INSERT INTO @recommend (recommend)
+	SELECT r.recommend 
+	FROM @recommend1 r
+	WHERE EXISTS (
+		SELECT 1 
+		FROM dbo.bettransRnG b WITH(NOLOCK) 
+		WHERE b.recommend = r.recommend AND b.winlostdate = @Winlostdate
+	)
+
 	BEGIN TRY
 		--3.Prepare staging data for table rptDepWinlost_Trans
 		--Insert Details for rptDepWinlost/rptDepWinlostByProduct/rptDepWinlostTransfer3rdOthers
@@ -146,7 +165,7 @@ BEGIN
 						,SUM(CASE WHEN g.statusID IN (0,1) then g.actual_stake ELSE 0 END) AS OutStanding
 						,SUM(CASE WHEN g.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount
 				  FROM dbo.bettransRnG g WITH (ROWLOCK)
-						INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = g.srecommend
+						INNER JOIN @recommend r on g.recommend = r.recommend
 				  WHERE g.winlostdate = @Winlostdate  
 				  GROUP BY g.custid, g.productID
 				  UNION ALL -- AG Casino, Allbet
@@ -210,7 +229,7 @@ BEGIN
 						,SUM(CASE WHEN g.statusID IN (0,1) then g.actual_stake ELSE 0 END) AS OutStanding
 						,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount
 				  FROM dbo.bettransRnG g WITH (ROWLOCK)
-						INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = g.srecommend
+						INNER JOIN @recommend r on g.recommend = r.recommend
 				  WHERE g.winlostdate >= @Winlostdate  
 				  GROUP BY g.custid, g.productID
 				  UNION ALL -- AG Casino, Allbet
