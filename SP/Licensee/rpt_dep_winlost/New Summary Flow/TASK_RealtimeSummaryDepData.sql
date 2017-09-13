@@ -1,7 +1,7 @@
 /*<info serverAlias="DBACC-bodb02" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
-	@Winlostdate DATE = NULL,
+	@Winlostdate SMALLDATETIME = NULL,
 	@isSuccessful BIT = 0 OUTPUT
 AS
 	/*
@@ -17,7 +17,7 @@ AS
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 		- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
-		- 20170831@Paul: Resolve deadlock issue [RedmineID: #82516]
+		- 20170831@Paul: Resolve deadlock issue on bettransRnG; Change datatype of @Winlostdate [RedmineID: #82516]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -98,26 +98,28 @@ BEGIN
 	DECLARE @recommend TABLE (recommend INT PRIMARY KEY)
 	DECLARE @recommend1 TABLE (recommend INT PRIMARY KEY)
 
+	--Get agent list in deposit system
 	INSERT INTO @recommend1 (recommend)
 	SELECT c.custid
 	FROM dbo.Customer c WITH(NOLOCK)
 		INNER JOIN dbo.Dep_CustSuper cs WITH(NOLOCK) ON c.srecommend = cs.custid
 	WHERE c.roleid = 2
-	
-	INSERT INTO @recommend (recommend)
-	SELECT r.recommend 
-	FROM @recommend1 r
-	WHERE EXISTS (
-		SELECT 1 
-		FROM dbo.bettransRnG b WITH(NOLOCK) 
-		WHERE b.recommend = r.recommend AND b.winlostdate = @Winlostdate
-	)
 
 	BEGIN TRY
 		--3.Prepare staging data for table rptDepWinlost_Trans
 		--Insert Details for rptDepWinlost/rptDepWinlostByProduct/rptDepWinlostTransfer3rdOthers
 		IF @Winlostdate < @CurrentDate
 		BEGIN
+			--Filter agents having tickets in bettransRnG
+			INSERT INTO @recommend (recommend)
+			SELECT r.recommend 
+			FROM @recommend1 r
+			WHERE EXISTS (
+				SELECT 1 
+				FROM dbo.bettransRnG b WITH(NOLOCK) 
+				WHERE b.recommend = r.recommend AND b.winlostdate = @Winlostdate
+			)
+
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 												, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount)
 			SELECT b.custid, 
@@ -181,7 +183,17 @@ BEGIN
 			GROUP BY t.custid, t.SportType
 		END
 		ELSE --@Winlostdate = @CurrentDate
-		BEGIN	
+		BEGIN
+			--Filter agents having tickets in bettransRnG	
+			INSERT INTO @recommend (recommend)
+			SELECT r.recommend 
+			FROM @recommend1 r
+			WHERE EXISTS (
+				SELECT 1 
+				FROM dbo.bettransRnG b WITH(NOLOCK) 
+				WHERE b.recommend = r.recommend AND b.winlostdate >= @Winlostdate
+			)
+				
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 												, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount)
 			SELECT b.custid, 
