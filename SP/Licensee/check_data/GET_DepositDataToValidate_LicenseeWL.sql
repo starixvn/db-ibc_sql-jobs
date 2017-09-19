@@ -17,7 +17,7 @@ Revisions:
 	- 20160608@Jim: Separate Bettrade (#57353) 	
 	- 20160616@Jim: Changes to data integrity automail (#59249)	
 	- 20160906@Jim: Correct value of SB & BA [Redmine #63571]
-	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
+	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT, LK3 into data validation email [RedmineID: #81708]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only

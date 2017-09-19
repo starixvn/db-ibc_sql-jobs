@@ -18,7 +18,7 @@ Revisions:
     - 20160523@Francis: Change bettype range for RNG Casino (hotfix #55730)
 	- 20160616@Jim: Changes to data integrity automail (#59249)	
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
-	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
+	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT, LK3 into data validation email [RedmineID: #81708]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -88,6 +88,10 @@ DECLARE -- SB
 		,@LTTurnover MONEY
 		,@LTCustomerWl MONEY
 		,@LTBetCount MONEY
+		----LK3
+		,@LK3Turnover MONEY
+		,@LK3CustomerWl MONEY
+		,@LK3BetCount MONEY
 
 DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),bettype INT)
 
@@ -95,7 +99,7 @@ INSERT INTO @tblSport (ProductPrefix,bettype)
 SELECT DISTINCT p.ProductPrefix,s.bettype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-WHERE p.ProductPrefix IN ('SB','CB','GD','KN','LC','NG','RB','CS','VS','AB','NG2','FW','VS2','LT')
+WHERE p.ProductPrefix IN ('SB','CB','GD','KN','LC','NG','RB','CS','VS','AB','NG2','FW','VS2','LT','LK3')
 	 
 DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),Status INT, TurnOver MONEY,WinLoss MONEY,BetCount INT)
 
@@ -278,6 +282,16 @@ SELECT @LTTurnover = ISNULL (@LTTurnover, 0),
 	   @LTCustomerWl = ISNULL (@LTCustomerWl, 0),
 	   @LTBetCount = ISNULL (@LTBetCount, 0)  
 
+-- LK3
+SELECT	@LK3Turnover = SUM(CASE WHEN @DrawFilter IN (2,3) AND b.Status = 111 THEN 0 ELSE ISNULL(b.Turnover,0) END)
+		,@LK3CustomerWl = SUM(ISNULL(b.WinLoss,0))
+		,@LK3BetCount = SUM(CASE WHEN @DrawFilter = 2 AND b.Status = 111 THEN 0 ELSE ISNULL(b.BetCount,0) END) 
+FROM @tblData b
+WHERE ProductPrefix ='LK3'
+
+SELECT @LK3Turnover = ISNULL (@LK3Turnover, 0),
+	   @LK3CustomerWl = ISNULL (@LK3CustomerWl, 0),
+	   @LK3BetCount = ISNULL (@LK3BetCount, 0)  
 -- Result
 
 SELECT 1 AS Id, @SbTurnover  AS Sb
@@ -294,6 +308,7 @@ SELECT 1 AS Id, @SbTurnover  AS Sb
 			  , @FWTurnover  AS FW
 			  , @VS2Turnover AS VS2
 			  , @LTTurnover  AS LT
+			  , @LK3Turnover AS LK3
 UNION	
 SELECT 2, @SbCustomerWl
 		, @RbCustomerWl
@@ -309,6 +324,7 @@ SELECT 2, @SbCustomerWl
 		, @FWCustomerWl
 		, @VS2CustomerWl
 		, @LTCustomerWl
+		, @LK3CustomerWl
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -324,6 +340,7 @@ SELECT 3, @SbBetCount
 		, @FWBetCount
 		, @VS2BetCount
 		, @LTBetCount
+		, @LK3BetCount
 SET NOCOUNT OFF
 
 

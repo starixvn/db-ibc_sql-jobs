@@ -45,9 +45,40 @@ DECLARE
 	   ,@PivotNumb_NG BIGINT
 	   ,@NumberTemp_BA BIGINT
 	   ,@PivotNumb_BA BIGINT
+	   ,@NumberTemp_LC BIGINT
+	   ,@PivotNumb_LC BIGINT
+	   ,@NumberTemp_VS BIGINT
+	   ,@PivotNumb_VS BIGINT
 	   ,@NumberTemp_CS BIGINT
 	   ,@PivotNumb_CS BIGINT
-
+	   ,@NumberTemp_KN BIGINT
+	   ,@PivotNumb_KN BIGINT
+	   ,@NumberTemp_AG BIGINT
+	   ,@PivotNumb_AG BIGINT
+	   ,@NumberTemp_GD BIGINT
+	   ,@PivotNumb_GD BIGINT
+	   ,@NumberTemp_MGCLC BIGINT
+	   ,@PivotNumb_MGCLC BIGINT
+	   ,@NumberTemp_MGCRNG BIGINT
+	   ,@PivotNumb_MGCRNG BIGINT
+	   ,@NumberTemp_VG BIGINT
+	   ,@PivotNumb_VG BIGINT
+	   ,@NumberTemp_VB BIGINT
+	   ,@PivotNumb_VB BIGINT
+	   ,@NumberTemp_CB BIGINT
+	   ,@PivotNumb_CB BIGINT
+	   ,@NumberTemp_AB BIGINT
+	   ,@PivotNumb_AB BIGINT
+	   ,@NumberTemp_NG2 BIGINT
+	   ,@PivotNumb_NG2 BIGINT
+	   ,@NumberTemp_FW BIGINT
+	   ,@PivotNumb_FW BIGINT
+	   ,@NumberTemp_CO BIGINT
+	   ,@PivotNumb_CO BIGINT
+	   ,@NumberTemp_VS2 BIGINT
+	   ,@PivotNumb_VS2 BIGINT
+	   ,@NumberTemp_LT BIGINT
+	   ,@PivotNumb_LT BIGINT
 	   ,@id INT=1
 	   ,@mesg Nvarchar (Max)=''
 	   
@@ -138,6 +169,7 @@ SET @id=@id+1
 --rptCustomerTurnover
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
 exec dbo.GET_DepositDataToValidate_CustomerTurnover @Date=@Date
+
 INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,LC)
 SELECT @id,* from #TempData
 DELETE  #tempdata
@@ -146,6 +178,7 @@ SET @id=@id+1
 --rptCustomerMatch
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
 exec dbo.GET_DepositDataToValidate_CustomerMatch @Date=@Date
+
 INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,LC)
 SELECT @id,* from #TempData
 DELETE  #tempdata
@@ -155,6 +188,7 @@ SET @id=@id+1
 --rptWinlossByLeague
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
 exec dbo.GET_DepositDataToValidate_WLByLeague @Date=@Date
+
 INSERT INTO #Data1(Typeid,ID,Sportbook,Racing,NumberGame,BA,LC)
 SELECT @id,* from #TempData
 DELETE  #tempdata

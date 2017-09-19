@@ -1,12 +1,5 @@
 ﻿/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
-/****** Object:  StoredProcedure [dbo].[GET_DepositDataToValidate_SumWL]    Script Date: 07/04/2016 12:56:51 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
-
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_SumWLOld] 
     @Date smalldatetime
 	,@DrawFilter tinyint = 1
@@ -468,8 +461,9 @@ BEGIN
 			, @VS2BetCount
 			, @LTBetCount
 
-
 	SET NOCOUNT OFF
 END
 GO
+
 GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_SumWLOld] TO [bodbLicenseeNet] AS [dbo]
+GO

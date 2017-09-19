@@ -1,12 +1,5 @@
 ﻿/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
-/****** Object:  StoredProcedure [dbo].[GET_DepositDataToValidate_SumWL]    Script Date: 07/04/2016 12:56:51 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_SumWL    Script Date: 3/26/2013 4:34:06 PM ******/
 
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_SumWL] 
     @Date smalldatetime
@@ -52,7 +45,6 @@ BEGIN
 	
 		RETURN; 
 	END
-
 
 	DECLARE @SbTurnover MONEY
 		   ,@SbCustomerWl MONEY
@@ -467,9 +459,8 @@ BEGIN
 			, @COBetCount
 			, @VS2BetCount
 			, @LTBetCount
-
-
-	SET NOCOUNT OFF
+		
+	SET NOCOUNT OFF		
 END
 GO
 
