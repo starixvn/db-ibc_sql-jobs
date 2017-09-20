@@ -1,5 +1,5 @@
- /*<info serverAlias="DBTXN-bodb02" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[ExecRep_02]
+ /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[ExecRep_02]
 	@tmp1 sql_variant = NULL,
 	@tmp2 sql_variant = NULL,
 	@tmp3 sql_variant = NULL,
@@ -17,6 +17,7 @@ SET NOCOUNT ON
 		- 20151012@Sophia: Add delete BettransLC14 and BettransRNG14
     	- 20160526@Victor: Add delete TransLog14 
 		- 20170725@Sophia: Change Datatype of TransID [Redmine: #73545]
+		- 20170914@Patrick: Integrate with Lucky3 [RedmineId: #83190]
  */
 -- =======================
 -- Parameter check\control
@@ -207,6 +208,24 @@ BEGIN
 	BEGIN
 		DELETE FROM bettranssum WHERE winlostdate = @winlostdate
 	END
+
+	IF EXISTS (
+		SELECT TOP 1 1 
+		FROM dbo.sysobjects WHERE name = 'BetLucky3Result14'
+	) 
+	BEGIN
+		SET @rc = 1
+		WHILE @rc > 0
+		BEGIN
+			BEGIN TRANSACTION
+			DELETE TOP (2500)
+			FROM dbo.BetLucky3Result14 WITH (ROWLOCK)
+			WHERE winlostdate = @winlostdate
+
+			SET @rc = @@ROWCOUNT
+			COMMIT TRANSACTION
+		END
+	END
 	-- =====
 	--  END
 	-- =====
@@ -224,5 +243,6 @@ BEGIN
 	END
 END
 
+SET NOCOUNT OFF
 GO
 

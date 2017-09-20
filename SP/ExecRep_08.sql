@@ -1,15 +1,13 @@
-USE [bodb02]
-GO
-/****** Object:  StoredProcedure [dbo].[ExecRep_08]    Script Date: 10/12/2015 02:46:19 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[ExecRep_08]
 	@recommend int,
 	@winlostdate smalldatetime,
 	@parlay bit = 0
 AS
+-- *** IMPORTANT ***
+-- IF new fields add, must to go alter related SP of ExecRep_Queue @ DBTP
+-- *****************
+
 	/*
 	Created by:[]
 	Date:
@@ -20,9 +18,23 @@ AS
 		- 20120316@Victor: add move bettransG to bettransG14
 		- 20140305@Vivi: add move translog to translog14
 		- 20151012@Sophia: Add Move BettransLC and BettransRNG 
-    
-    
+		
+		- 20160121@Joe : move command to run in ExecRep_Queue @ DBTP (to solve Blocking problem which cause replication delay)
+		- 20160121@Joy : Add Move column :transdesc on bettransm
+		- 20160428@Joy : 1. Add Move column :Additional on bettransrng
+		-                2. remove Move column :NetStake on bettransrng
+		- 20170412@Joy :Add Move column  ExtraInfo on bettrans14 
+		- 20170914@Patrick: Integrate with Lucky3 [RedmineId: #83190]
 	 */
+	 
+IF @@SERVERNAME = 'DBTP' AND @parlay = 0
+BEGIN
+	IF NOT EXISTS (SELECT 1 FROM dbo.ExecRep_Queue WHERE command = 'ExecRep_08' AND datevalue = @winlostdate)
+		INSERT INTO dbo.ExecRep_Queue (command, datevalue, qPriority) VALUES ('ExecRep_08',@winlostdate, 1)
+		
+	RETURN
+END
+
 IF @@SERVERNAME NOT LIKE 'DB04%'
 BEGIN
 
@@ -34,7 +46,7 @@ BEGIN
 		winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, recommend, mrecommend, 
 		ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, 
 		sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName, 
-		oddstype, statusID, currency2, balance, SecAcceptFlag, transid2
+		oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo
 		)
 	select 
 		transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost, 
@@ -43,7 +55,7 @@ BEGIN
 		winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, recommend, mrecommend, 
 		ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, 
 		sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName, 
-		oddstype, statusID, currency2, balance, SecAcceptFlag, transid2
+		oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo
 	from bettrans (nolock)
 	where recommend = @recommend AND winlostdate=@winlostdate
 		and bettype <= 19000
@@ -68,13 +80,13 @@ BEGIN
 		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
 		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
 		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
-		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd
+		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd, NetStake
 		)
 	SELECT 
 		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
 		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
 		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
-		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd
+		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd, NetStake
 	FROM dbo.BettransLC WITH (NOLOCK)
 	WHERE recommend = @recommend AND winlostdate=@winlostdate
 
@@ -84,13 +96,13 @@ BEGIN
 		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
 		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
 		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
-		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd	
+		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd, Additional,SiteID	
 		)
 	SELECT 
 		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
 		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
 		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
-		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd
+		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd, Additional,SiteID
 	FROM dbo.BettransRNG WITH (NOLOCK)
 	WHERE recommend = @recommend AND winlostdate=@winlostdate
 
@@ -107,7 +119,7 @@ BEGIN
 		winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, recommend, mrecommend, 
 		ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, 
 		sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName, 
-		oddstype, statusID, currency2, balance, SecAcceptFlag, transid2
+		oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo
 		)
 	select 
 		transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost, 
@@ -116,7 +128,7 @@ BEGIN
 		winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, recommend, mrecommend, 
 		ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, 
 		sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName, 
-		oddstype, statusID, currency2, balance, SecAcceptFlag, transid2
+		oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo
 	from bettrans (nolock)
 	where recommend = @recommend AND winlostdate=@winlostdate
 		and bettype IN (9, 29)
@@ -130,13 +142,13 @@ BEGIN
 	BEGIN
 		--set true for the flag isMovingBet on DB06.bodb02.dbo.SystemSettings
 		--to prevent the Mix Parlay calculation while this process is running
-		IF @@SERVERNAME = 'DB06'
-		BEGIN
-			if exists (select * from dbo.sysobjects where name = 'SystemSettings')
-			BEGIN
-				UPDATE SystemSettings set VValue = 1 where VName = 'isMovingBet'
-			END
-		END
+		--IF @@SERVERNAME = 'DB06'
+		--BEGIN
+		--	if exists (select * from dbo.sysobjects where name = 'SystemSettings')
+		--	BEGIN
+		--		UPDATE SystemSettings set VValue = 1 where VName = 'isMovingBet'
+		--	END
+		--END
 
 		insert into bettransm14
 			(
@@ -145,7 +157,7 @@ BEGIN
 			checktime, oddsspread, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost, 
 			playerdiscount, discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, 
 			finalodds, isfinish, statuswinlost, ruben, bettype, spositiontaking, swinlost, sdiscount, scomm, 
-			statusID
+			statusID, transdesc
 			)
 		select
 			transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, [status], winlost, livehomescore, 
@@ -153,7 +165,7 @@ BEGIN
 			checktime, oddsspread, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost, 
 			playerdiscount, discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, 
 			finalodds, isfinish, statuswinlost, ruben, bettype, spositiontaking, swinlost, sdiscount, scomm, 
-			statusID
+			statusID, transdesc
 		from bettransm b (nolock)
 			--INNER JOIN custinfo c (nolock) ON b.custid = c.custid
 		where --recommend = @recommend AND 
@@ -177,8 +189,21 @@ BEGIN
 		where  
 			winlostdate=@winlostdate
 
+		--copy ticket to [14] for lucky3
+		IF (SELECT COUNT(1) FROM dbo.sysobjects WHERE name IN ('BetLucky3Result', 'BetLucky3Result14')) = 2
+		BEGIN
+			INSERT INTO dbo.BetLucky3Result14(MatchId, TransId, CustId, Bettype, Currency, Hdp1, Odds
+				, StatusId, Hits, Prize, PrizeAmount, Winlost, aWinlost, mWinlost, sWinlost, PlayerComm
+				, Comm, aComm, sComm, aPositionTaking, mPositionTaking, sPositionTaking, PlayerDiscount
+				, Discount, aDiscount, sDiscount, TransDesc, WinlostDate)
+			SELECT MatchId, TransId, CustId, Bettype, Currency, Hdp1, Odds
+				, StatusId, Hits, Prize, PrizeAmount, Winlost, aWinlost, mWinlost, sWinlost, PlayerComm
+				, Comm, aComm, sComm, aPositionTaking, mPositionTaking, sPositionTaking, PlayerDiscount
+				, Discount, aDiscount, sDiscount, TransDesc, WinlostDate
+			FROM dbo.BetLucky3Result b WITH(NOLOCK)
+			WHERE WinlostDate = @winlostdate
+		END
 	END
 	
 END
 GO
-GRANT VIEW DEFINITION ON [dbo].[ExecRep_08] TO [vnteam] AS [dbo]
