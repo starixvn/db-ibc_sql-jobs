@@ -1,7 +1,7 @@
 /*<info serverAlias="DBACC-bodb02" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
-	@Winlostdate DATE = NULL,
+	@Winlostdate SMALLDATETIME = NULL,
 	@isSuccessful BIT = 0 OUTPUT
 AS
 	/*
@@ -17,6 +17,7 @@ AS
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 		- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
+		- 20170831@Paul: Resolve deadlock issue on bettransRnG; Change datatype of @Winlostdate [RedmineID: #82516]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -36,7 +37,8 @@ BEGIN
 			@LogDesc VARCHAR(8000) = 'Date generated: ',
 			@LogID BIGINT,
 			@NumberofCus INT= 0,
-			@ErrMsg VARCHAR(1000) = ''
+			@ErrMsg VARCHAR(1000) = '',
+			@i INT = 2147483647
 	
 	SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112)
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
@@ -93,12 +95,31 @@ BEGIN
 	CREATE TABLE #rptDepWinlostOutstanding (CustID INT, SportType SMALLINT DEFAULT(-1), TurnOver MONEY DEFAULT(0), OutStanding MONEY DEFAULT(0), BetCount INT DEFAULT(0)
 			UNIQUE CLUSTERED (CustID, SportType)
 			)
-	
+
+	DECLARE @recommend TABLE (recommend INT PRIMARY KEY)
+
+	CREATE TABLE #transid (transid BIGINT PRIMARY KEY)
+
+	--Get agent list in deposit system
+	INSERT INTO @recommend (recommend)
+	SELECT c.custid
+	FROM dbo.Customer c WITH(NOLOCK)
+		INNER JOIN dbo.Dep_CustSuper cs WITH(NOLOCK) ON c.srecommend = cs.custid
+	WHERE c.roleid = 2
+
 	BEGIN TRY
 		--3.Prepare staging data for table rptDepWinlost_Trans
 		--Insert Details for rptDepWinlost/rptDepWinlostByProduct/rptDepWinlostTransfer3rdOthers
 		IF @Winlostdate < @CurrentDate
 		BEGIN
+			--Filter tickets in bettransRnG
+			INSERT INTO #transid(transid)
+			SELECT transid
+			FROM dbo.bettransRnG b WITH(NOLOCK)
+				JOIN (SELECT TOP(@i) recommend FROM @recommend) r ON b.recommend = r.recommend
+			WHERE b.winlostdate = @Winlostdate
+			OPTION(OPTIMIZE FOR (@i = 1)) --Make it use nested loops
+
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 												, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount)
 			SELECT b.custid, 
@@ -129,40 +150,50 @@ BEGIN
 			
 			INSERT INTO #rptDepWinlostOutstanding (CustID, SportType, TurnOver, OutStanding, BetCount)
 			SELECT t.custid, t.SportType, SUM(t.TurnOver), SUM(t.OutStanding), SUM(t.BetCount)
-			FROM (SELECT tl.custid
-					   , tl.productID AS SportType
-					   ,SUM(CASE WHEN tl.statusID IN (0,1) then tl.stake ELSE 0 END) AS TurnOver
-					   ,SUM(CASE WHEN tl.statusID IN (0,1) then tl.actual_stake ELSE 0 END) AS OutStanding 
-					   ,SUM(CASE WHEN tl.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount 
-				  FROM dbo.translog tl WITH (ROWLOCK)
-						INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend
-				  WHERE tl.winlostdate = @Winlostdate
-						AND tl.productID IN (202,203,204)
-				  GROUP BY tl.custid, tl.productID
-				  UNION ALL -- microgaming_RNG & OneRnG & Voidbridge
-				  SELECT g.custid
-						,g.productID AS SportType
-						,SUM(CASE WHEN g.statusID IN (0,1) then g.stake ELSE 0 END) AS TurnOver
-						,SUM(CASE WHEN g.statusID IN (0,1) then g.actual_stake ELSE 0 END) AS OutStanding
-						,SUM(CASE WHEN g.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount
-				  FROM dbo.bettransRnG g WITH (ROWLOCK)
-						INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = g.srecommend
-				  WHERE g.winlostdate = @Winlostdate  
-				  GROUP BY g.custid, g.productID
-				  UNION ALL -- AG Casino, Allbet
-				  SELECT l.custid
-						,l.productID AS SportType
-						,SUM(CASE WHEN l.statusID IN (0,1) then l.stake ELSE 0 END) AS TurnOver
-						,SUM(CASE WHEN l.statusID IN (0,1) then l.actual_stake ELSE 0 END) AS OutStanding
-						,SUM(CASE WHEN l.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount
-				  FROM dbo.bettransLC l WITH (ROWLOCK)
-						INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = l.srecommend
-				  WHERE l.winlostdate = @Winlostdate
-				  GROUP BY l.custid, l.productID) t
+			FROM (
+				SELECT tl.custid
+					, tl.productID AS SportType
+					,SUM(CASE WHEN tl.statusID IN (0,1) then tl.stake ELSE 0 END) AS TurnOver
+					,SUM(CASE WHEN tl.statusID IN (0,1) then tl.actual_stake ELSE 0 END) AS OutStanding 
+					,SUM(CASE WHEN tl.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount 
+				FROM dbo.translog tl WITH (ROWLOCK)
+					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend
+				WHERE tl.winlostdate = @Winlostdate
+					AND tl.productID IN (202,203,204)
+				GROUP BY tl.custid, tl.productID
+				UNION ALL -- microgaming_RNG & OneRnG & Voidbridge
+				SELECT g.custid
+					,g.productID AS SportType
+					,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) then g.stake ELSE 0 END) AS TurnOver
+					,SUM(CASE WHEN g.statusID IN (0,1) then g.actual_stake ELSE 0 END) AS OutStanding
+					,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount
+				FROM dbo.bettransRnG g WITH (ROWLOCK)
+					INNER JOIN (SELECT TOP(@i) transid FROM #transid) t ON g.transid = t.transid
+				GROUP BY g.custid, g.productID
+				UNION ALL -- AG Casino, Allbet
+				SELECT l.custid
+					,l.productID AS SportType
+					,SUM(CASE WHEN l.statusID IN (0,1) then l.stake ELSE 0 END) AS TurnOver
+					,SUM(CASE WHEN l.statusID IN (0,1) then l.actual_stake ELSE 0 END) AS OutStanding
+					,SUM(CASE WHEN l.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount
+				FROM dbo.bettransLC l WITH (ROWLOCK)
+					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = l.srecommend
+				WHERE l.winlostdate = @Winlostdate
+				GROUP BY l.custid, l.productID
+			) t
 			GROUP BY t.custid, t.SportType
+			OPTION(RECOMPILE, OPTIMIZE FOR (@i = 1))
 		END
 		ELSE --@Winlostdate = @CurrentDate
-		BEGIN	
+		BEGIN
+			--Filter tickets in bettransRnG
+			INSERT INTO #transid(transid)
+			SELECT transid
+			FROM dbo.bettransRnG b WITH(NOLOCK)
+				JOIN (SELECT TOP(@i) recommend FROM @recommend) r ON b.recommend = r.recommend
+			WHERE b.winlostdate >= @Winlostdate
+			OPTION(OPTIMIZE FOR (@i = 1)) --Make it use nested loops
+				
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 												, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount)
 			SELECT b.custid, 
@@ -193,37 +224,39 @@ BEGIN
 			
 			INSERT INTO #rptDepWinlostOutstanding (CustID, SportType, TurnOver, OutStanding, BetCount)
 			SELECT t.custid, t.SportType, SUM(t.TurnOver), SUM(t.OutStanding), SUM(t.BetCount)
-			FROM (SELECT tl.custid
-					   , tl.productID AS SportType
-					   ,SUM(CASE WHEN tl.winlostdate = @Winlostdate AND tl.statusID IN (0,1) then tl.stake ELSE 0 END) AS TurnOver
-					   ,SUM(CASE WHEN tl.statusID IN (0,1) then tl.actual_stake ELSE 0 END) AS OutStanding 
-					   ,SUM(CASE WHEN tl.winlostdate = @Winlostdate AND tl.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount 
-				  FROM dbo.translog tl WITH (ROWLOCK)
-						INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend
-				  WHERE tl.winlostdate >= @Winlostdate
-						AND tl.productID IN (202,203,204)
-				  GROUP BY tl.custid, tl.productID
-				  UNION ALL -- microgaming_RNG & OneRnG & Voidbridge
-				  SELECT g.custid
-						,g.productID AS SportType
-						,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) then g.stake ELSE 0 END) AS TurnOver
-						,SUM(CASE WHEN g.statusID IN (0,1) then g.actual_stake ELSE 0 END) AS OutStanding
-						,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount
-				  FROM dbo.bettransRnG g WITH (ROWLOCK)
-						INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = g.srecommend
-				  WHERE g.winlostdate >= @Winlostdate  
-				  GROUP BY g.custid, g.productID
-				  UNION ALL -- AG Casino, Allbet
-				  SELECT l.custid
-						,l.productID AS SportType
-						,SUM(CASE WHEN l.winlostdate = @Winlostdate AND l.statusID IN (0,1) then l.stake ELSE 0 END) AS TurnOver
-						,SUM(CASE WHEN l.statusID IN (0,1) then l.actual_stake ELSE 0 END) AS OutStanding
-						,SUM(CASE WHEN l.winlostdate = @Winlostdate AND l.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount
-				  FROM dbo.bettransLC l WITH (ROWLOCK)
-						INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = l.srecommend
-				  WHERE l.winlostdate >= @Winlostdate
-				  GROUP BY l.custid, l.productID) t
+			FROM (
+				SELECT tl.custid
+					, tl.productID AS SportType
+					,SUM(CASE WHEN tl.winlostdate = @Winlostdate AND tl.statusID IN (0,1) then tl.stake ELSE 0 END) AS TurnOver
+					,SUM(CASE WHEN tl.statusID IN (0,1) then tl.actual_stake ELSE 0 END) AS OutStanding 
+					,SUM(CASE WHEN tl.winlostdate = @Winlostdate AND tl.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount 
+				FROM dbo.translog tl WITH (ROWLOCK)
+					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend
+				WHERE tl.winlostdate >= @Winlostdate
+					AND tl.productID IN (202,203,204)
+				GROUP BY tl.custid, tl.productID
+				UNION ALL -- microgaming_RNG & OneRnG & Voidbridge
+				SELECT g.custid
+					,g.productID AS SportType
+					,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) then g.stake ELSE 0 END) AS TurnOver
+					,SUM(CASE WHEN g.statusID IN (0,1) then g.actual_stake ELSE 0 END) AS OutStanding
+					,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount
+				FROM dbo.bettransRnG g WITH (ROWLOCK)
+					INNER JOIN (SELECT TOP(@i) transid FROM #transid) t ON g.transid = t.transid
+				GROUP BY g.custid, g.productID
+				UNION ALL -- AG Casino, Allbet
+				SELECT l.custid
+					,l.productID AS SportType
+					,SUM(CASE WHEN l.winlostdate = @Winlostdate AND l.statusID IN (0,1) then l.stake ELSE 0 END) AS TurnOver
+					,SUM(CASE WHEN l.statusID IN (0,1) then l.actual_stake ELSE 0 END) AS OutStanding
+					,SUM(CASE WHEN l.winlostdate = @Winlostdate AND l.statusID IN (0,1) then 1 ELSE 0 END) AS BetCount
+				FROM dbo.bettransLC l WITH (ROWLOCK)
+					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = l.srecommend
+				WHERE l.winlostdate >= @Winlostdate
+				GROUP BY l.custid, l.productID
+			) t
 			GROUP BY t.custid, t.SportType
+			OPTION(RECOMPILE, OPTIMIZE FOR (@i = 1))
 		END
 		
 		--Update Transfer3rdOthers attributes
@@ -503,5 +536,6 @@ BEGIN
 	DROP TABLE #rptDepWinlostByProduct
 	DROP TABLE #rptDepWinlostTransfer3rdOthers
 	DROP TABLE #rptDepWinlostOutstanding
+	DROP TABLE #transid
 END
 GO
