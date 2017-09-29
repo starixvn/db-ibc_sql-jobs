@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
+
 ALTER PROCEDURE [dbo].[DBA_CheckCommGame_Credit]  
 (	@srecommend INT   
 	,@SportType SMALLINT = 0  
@@ -11,7 +13,7 @@ AS
 	DB: DBCHECK.CheckResultDB  
 
 	Revisions:  :
-
+		- 20170929@Johnson: Add rule 44,45,46 check comm of SMA on member
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (36->41)  
@@ -154,4 +156,41 @@ BEGIN
 		FROM #MemberComm csmem
 		WHERE csmem.AgentDiscount < csmem.PlayerDiscount
 	END  
+	
+	---- 44. Super''s Discount <> Super''s Discount on member level
+	IF @RuleId IN (0,44)  
+	BEGIN  
+		----PRINT '44. Super''s Discount <> Super''s Discount on member level'  
+		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
+		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.SuperDiscount  
+		FROM #SuperComm css 
+			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.srecommend = css.custid
+		WHERE css.Discount <> csmem.SuperDiscount
+		
+	END  
+	
+	---- 45. Master''s Discount <> Master''s Discount on member level
+	IF @RuleId IN (0,45)  
+	BEGIN  
+		----PRINT '45. Master''s Discount < Master''s Discount on member level'  
+		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
+		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.MasterDiscount
+		FROM #MasterComm css 
+			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.mrecommend = css.custid
+		WHERE css.Discount <> csmem.MasterDiscount
+		
+	END 
+	
+	---- 46. Agent''s Discount <> Agent''s Discount on member level
+	IF @RuleId IN (0,46)  
+	BEGIN  
+		----PRINT '46. Agent''s Discount < Agent''s Discount on member level'  
+		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
+		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.AgentDiscount  
+		FROM #AgentComm css 
+			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.recommend = css.custid
+		WHERE css.Discount <> csmem.AgentDiscount
+		
+	END
 END
+GO
