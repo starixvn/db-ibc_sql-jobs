@@ -333,7 +333,7 @@ BEGIN
 		FROM #AgentComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.recommend = css.custid
 		WHERE css.Discount <> csmem.AgentDiscount 			
-			AND csm.bettype NOT IN (1, 2, 3, 7, 8)
+			AND csmem.bettype NOT IN (1, 2, 3, 7, 8)
 
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
 		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupa, csmem.AgentDiscount  
