@@ -13,7 +13,7 @@ AS
 	DB: DBCHECK.CheckResultDB  
 
 	Revisions:  :
-		- 20170929@Johnson: Add rule 44,45,46 check comm of SMA on member
+		- 20170929@Johnson: Add rule 44,45,46 check comm of SMA on member [Redmine: #73556]
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (36->41)  

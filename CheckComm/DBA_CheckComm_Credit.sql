@@ -13,7 +13,7 @@ AS
 	DB: DBCHECK.CheckResultDB  
 
 	Revisions:  :
-		- 20170928@Johnson: Add rule 44,45,46 check comm of SMA on member
+		- 20170928@Johnson: Add rule 44,45,46 check comm of SMA on member [Redmine: #73556]
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (36->41)  
@@ -241,35 +241,43 @@ BEGIN
 	BEGIN
 		----PRINT '44. SuperDiscount <> SuperDiscount on member level'  
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.Discount  
+		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.SuperDiscount  
 		FROM #SuperComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.srecommend = css.custid
 		WHERE css.Discount <> csmem.SuperDiscount 			
 			AND csm.bettype NOT IN (1, 2, 3, 7, 8)
 
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupa, csmem.groupa  
+		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupa, csmem.SuperDiscount  
 		FROM #SuperComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.srecommend = css.custid
-		WHERE css.groupa<>csmem.groupa AND csmem.bettype  IN (1, 2, 3, 7, 8)
+		WHERE css.groupa<>csmem.SuperDiscount 
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('a', 'hka', 'dea')
 
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupb, csmem.groupb  
+		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupb, csmem.SuperDiscount  
 		FROM #SuperComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.srecommend = css.custid
-		WHERE css.groupb<>csmem.groupb  AND csmem.bettype  IN (1, 2, 3, 7, 8)
+		WHERE css.groupb<>csmem.SuperDiscount  
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('b', 'hkb', 'deb')
 
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupc, csmem.groupc  
+		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupc, csmem.SuperDiscount  
 		FROM #SuperComm css 
 			INNER JOIN #MemberComm csmem ON csm.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.srecommend = css.custid
-		WHERE css.groupc<>csmem.groupc  AND csmem.bettype  IN (1, 2, 3, 7, 8)
-		
+		WHERE css.groupc<>csmem.SuperDiscount  
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('c', 'hkc', 'dec')
+			
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupd, csmem.groupd  
+		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupd, csmem.SuperDiscount  
 		FROM #SuperComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.srecommend = css.custid
-		WHERE css.groupd<>csmem.groupd   AND csmem.bettype  IN (1, 2, 3, 7, 8)
+		WHERE css.groupd<>csmem.SuperDiscount   
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('d', 'hkd', 'ded')
 	END
 	
 	---45. MasterDiscount <> MasterDiscount on member level
@@ -277,35 +285,43 @@ BEGIN
 	BEGIN
 		----PRINT '45. MasterDiscount <> MasterDiscount on member level'  
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.Discount  
+		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.MasterDiscount  
 		FROM #MasterComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.mrecommend = css.custid
 		WHERE css.Discount <> csmem.MasterDiscount 			
 			AND csm.bettype NOT IN (1, 2, 3, 7, 8)
 
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupa, csmem.groupa  
+		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupa, csmem.MasterDiscount  
 		FROM #MasterComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.mrecommend = css.custid
-		WHERE css.groupa<>csmem.groupa AND csmem.bettype  IN (1, 2, 3, 7, 8)
+		WHERE css.groupa<>csmem.MasterDiscount 
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('a', 'hka', 'dea')
 
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupb, csmem.groupb  
+		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupb, csmem.MasterDiscount  
 		FROM #MasterComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.mrecommend = css.custid
-		WHERE css.groupb<>csmem.groupb  AND csmem.bettype  IN (1, 2, 3, 7, 8)
+		WHERE css.groupb<>csmem.MasterDiscount  
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('b', 'hkb', 'deb')
 
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupc, csmem.groupc  
+		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupc, csmem.MasterDiscount  
 		FROM #MasterComm css 
 			INNER JOIN #MemberComm csmem ON csm.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.mrecommend = css.custid
-		WHERE css.groupc<>csmem.groupc  AND csmem.bettype  IN (1, 2, 3, 7, 8)
+		WHERE css.groupc<>csmem.MasterDiscount  
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('c', 'hkc', 'dec')
 		
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupd, csmem.groupd  
+		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupd, csmem.MasterDiscount  
 		FROM #MasterComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.mrecommend = css.custid
-		WHERE css.groupd<>csmem.groupd   AND csmem.bettype  IN (1, 2, 3, 7, 8)
+		WHERE css.groupd<>csmem.MasterDiscount   
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('d', 'hkd', 'ded')
 	END
 	
 	---46. AgentDiscount <> AgentDiscount on member level
@@ -313,35 +329,43 @@ BEGIN
 	BEGIN
 		----PRINT '46. AgentDiscount <> AgentDiscount on member level'  
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.Discount  
+		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.AgentDiscount  
 		FROM #AgentComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.recommend = css.custid
 		WHERE css.Discount <> csmem.AgentDiscount 			
 			AND csm.bettype NOT IN (1, 2, 3, 7, 8)
 
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupa, csmem.groupa  
+		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupa, csmem.AgentDiscount  
 		FROM #AgentComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.recommend = css.custid
-		WHERE css.groupa<>csmem.groupa AND csmem.bettype  IN (1, 2, 3, 7, 8)
+		WHERE css.groupa<>csmem.AgentDiscount 
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('a', 'hka', 'dea')
 
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupb, csmem.groupb  
+		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupb, csmem.AgentDiscount  
 		FROM #AgentComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.recommend = css.custid
-		WHERE css.groupb<>csmem.groupb  AND csmem.bettype  IN (1, 2, 3, 7, 8)
+		WHERE css.groupb<>csmem.AgentDiscount  
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('b', 'hkb', 'deb')
 
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupc, csmem.groupc  
+		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupc, csmem.AgentDiscount  
 		FROM #AgentComm css 
 			INNER JOIN #MemberComm csmem ON csm.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.recommend = css.custid
-		WHERE css.groupc<>csmem.groupc  AND csmem.bettype  IN (1, 2, 3, 7, 8)
+		WHERE css.groupc<>csmem.AgentDiscount  
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('c', 'hkc', 'dec')
 		
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupd, csmem.groupd  
+		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupd, csmem.AgentDiscount  
 		FROM #AgentComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.recommend = css.custid
-		WHERE css.groupd<>csmem.groupd   AND csmem.bettype  IN (1, 2, 3, 7, 8)
+		WHERE css.groupd<>csmem.AgentDiscount   
+			AND csmem.bettype  IN (1, 2, 3, 7, 8)
+			AND ugroup IN('d', 'hkd', 'ded')
 	END
 END
 GO
