@@ -36,6 +36,7 @@ Revisions:
 	-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 	-20170525@Paul: Check IsStagingBettrans flag before staging bettrans; insert sporttype, eventdate into staging match table [Redmine: #72914]
 	-20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]
+	-20170930@Harper: Get more info for MuayThai Parlay [Redmine: #82827]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2017-06-16', '2017-06-18'
@@ -43,19 +44,19 @@ Param's Explanation:
 BEGIN
 	SET NOCOUNT ON;
 
-	UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
-	SET VValue = 1
-	WHERE VName = 'IsStagingBettrans'
-		AND VValue = 0
+	--UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+	--SET VValue = 1
+	--WHERE VName = 'IsStagingBettrans'
+	--	AND VValue = 0
 
-	IF @@ROWCOUNT = 0
-	BEGIN
-		SET @ErrorMsg = 'Another task is using staging bettrans';
+	--IF @@ROWCOUNT = 0
+	--BEGIN
+	--	SET @ErrorMsg = 'Another task is using staging bettrans';
 
-		RAISERROR(@ErrorMsg, 16, 1)
+	--	RAISERROR(@ErrorMsg, 16, 1)
 
-		RETURN;
-	END
+	--	RETURN;
+	--END
 
 	DECLARE @today datetime, @thedaybefore datetime
 	SELECT @today=@dateto, @thedaybefore=@datefrom
@@ -152,7 +153,8 @@ BEGIN
 				,refno
 				,oddsspread
 				,ExtraInfo
-				,betdaqid)
+				,betdaqid
+				,hdp2)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -182,7 +184,8 @@ BEGIN
 				b.refno,
 				oddsspread,
 				b.ExtraInfo,
-				b.betdaqid
+				b.betdaqid,
+				b.hdp2
 			FROM bodb02.dbo.bettrans b (NOLOCK)
 			    INNER JOIN @Recommend_List r ON b.recommend=r.t_recommend
 			WHERE b.bettype<19000
@@ -262,7 +265,8 @@ BEGIN
 				,refno
 				,oddsspread
 				,ExtraInfo
-				,betdaqid)
+				,betdaqid
+				,hdp2)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -292,7 +296,8 @@ BEGIN
 				b.refno,
 				oddsspread,
 				b.ExtraInfo,
-				b.betdaqid
+				b.betdaqid,
+				b.hdp2
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
 			    INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
 			WHERE b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
