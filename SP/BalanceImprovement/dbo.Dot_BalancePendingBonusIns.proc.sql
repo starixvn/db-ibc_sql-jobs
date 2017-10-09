@@ -10,7 +10,8 @@ AS
 
 	Revisions:  
 		- 20170419@Bobby: Initialize
-		
+		- 20171009@Kathy: Change column name of BonusWalletPending [Redmine:#72789]
+
 	Param's Explanation:   
 	 
 */
@@ -22,13 +23,11 @@ BEGIN
 		INSERT INTO dbo.BonusWalletPending	(
 			CustID
 			, BonusID
-			, Bonus
-			, LockedAmt
+			, Amount
 		)
 		SELECT bn.CustID
 			, bn.BonusID
-			, bn.balance AS Bonus
-			, 0 AS LockedAmt
+			, bn.balance AS Amount
 		FROM @BonusWalletChange bn
 			
 	END TRY	

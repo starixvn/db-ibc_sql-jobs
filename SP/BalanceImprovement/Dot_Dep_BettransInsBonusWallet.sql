@@ -22,7 +22,8 @@ DB: DBTXN/bodb02
 
 Revisions:
 	- 20170518@Bobby: Initialize
-	
+	- 20171009@Kathy: Change column name of BonusWalletCredit, BonusWalletDebit [Redmine:#72789]
+
 Param's Explanation:
 	- @custid: player account who joined bonus program
 	- @bal_custid: Custid of "Balance" (dummy) account to record opposite value for transaction
@@ -248,9 +249,8 @@ BEGIN
 				   ,@BonusID AS BonusID
 				   ,4 AS StatusID --running
 				   ,@bonus_amount AS initBonus
-				   ,@lockedAmount AS initLockedAmt
-				   ,0 AS Bonus
-				   ,0 AS LockedAmt
+				   ,@lockedAmount AS LockedAmt
+				   ,0 AS Amount
 			)
 			MERGE [dbo].[BonusWalletCredit] AS bc
 			USING CTE_BonusCredit AS temp 
@@ -261,25 +261,23 @@ BEGIN
 				   ,[BonusID]
 				   ,[StatusID]
 				   ,[initBonus]
-				   ,[initLockedAmt]
-				   ,[Bonus]
-				   ,[LockedAmt])
+				   ,[LockedAmt]
+				   ,[Amount]
+				  )
 				VALUES (
 					temp.[CustID]
 				   ,temp.[BonusID]
 				   ,temp.[StatusID]
 				   ,temp.[initBonus]
-				   ,temp.[initLockedAmt]
-				   ,temp.[Bonus]
 				   ,temp.[LockedAmt]
+				   ,temp.[Amount]
 				)
 			WHEN MATCHED THEN
 				UPDATE
 				SET [StatusID]		= temp.[StatusID]
 				   ,[initBonus]		= temp.[initBonus]
-				   ,[initLockedAmt] = temp.[initLockedAmt]
-				   ,[Bonus]			= temp.[Bonus]
 				   ,[LockedAmt]		= temp.[LockedAmt]
+				   ,[Amount]		= temp.[Amount]
 			;			
 			
 			--insert bonus debit
@@ -287,8 +285,7 @@ BEGIN
 				SELECT 
 					@CustID AS CustID
 				   ,@BonusID AS BonusID
-				   ,0 AS Bonus
-				   ,0 AS LockedAmt
+				   ,0 AS Amount
 			)
 			MERGE [dbo].[BonusWalletDebit] AS bd
 			USING CTE_BonusDebit AS temp
@@ -296,18 +293,16 @@ BEGIN
 			WHEN NOT MATCHED THEN
 				INSERT ([CustID]
 				   ,[BonusID]
-				   ,[Bonus]
-				   ,[LockedAmt])
+				   ,[Amount]
+				  )
 				VALUES(
 					[CustID]
 				   ,[BonusID]
-				   ,[Bonus]
-				   ,[LockedAmt]
+				   ,[Amount]
 				)
 			WHEN MATCHED THEN
 				UPDATE
-				SET [Bonus] = temp.[Bonus]
-				   ,[LockedAmt] = temp.[LockedAmt]
+				SET [Amount] = temp.[Amount]
 			;
 			
 			---Update Credit Balance	

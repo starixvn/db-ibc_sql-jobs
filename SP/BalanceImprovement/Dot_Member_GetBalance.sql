@@ -9,16 +9,17 @@ SET NOCOUNT ON;
  
 	-- 20160111@TWJoe: new create, copy from Dot_Member_VendorGame_GetFinalBalance_cust
 	-- 20170505@Bobby: Implement bonus wallet
+	-- 20171009@Kathy: Change parameter of SP Dot_BalanceMemberSel
 
 	DECLARE @Balance money 
-	DECLARE @Bonus MONEY
+	DECLARE @Amount MONEY
 	select @Balance=0
 
-	EXEC dbo.Dot_BalanceMemberSel @custid, @Balance out,@WalletFlag = @WalletFlag, @Bonus = @Bonus OUT
+	EXEC dbo.Dot_BalanceMemberSel @custid, @Balance out,@WalletFlag = @WalletFlag, @Amount = @Amount OUT
 
 	SELECT 
 		@Balance AS finalbalance--,@Credit as credit
-		,@Bonus AS Bonus
+		,@Amount AS Amount
 END
 GO
 

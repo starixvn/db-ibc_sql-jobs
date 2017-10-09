@@ -14,6 +14,7 @@ AS
 		
 	Revisions:
 		- 20170419@Bobby: Initialize
+		- 20171009@Kathy: Change column name of BonusWalletCredit [Redmine:#72789]
 		
 	Params explanation
 */
@@ -33,7 +34,7 @@ BEGIN
 			
 			--UPDATE into bonus credit table
 			UPDATE bc WITH(ROWLOCK, UPDLOCK)
-			SET bonus	 		+= @balance
+			SET Amount	 		+= @balance
 			FROM dbo.BonusWalletCredit bc 				
 			WHERE bc.custID 	= @custID
 				AND bc.bonusId 	= @bonusId

@@ -4,7 +4,7 @@ CREATE PROCEDURE [dbo].[Dot_BalanceDebit_BonusWalletlUpd]
 	@custID			INT,
 	@bonusId		INT,
 	@balance		MONEY,
-	@Bonus			MONEY = 0 OUTPUT,
+	@Amount			MONEY = 0 OUTPUT,
 	@errCode		INT = 0 OUTPUT	
 )
 AS
@@ -15,6 +15,7 @@ AS
 		
 	Revisions:
 		- 20170505@Bobby: Initialize
+		- 20171009@Kathy: Change column name of BonusWalletDebit [Redmine:#72789]
 		
 	Params explanation
 */
@@ -26,7 +27,7 @@ BEGIN
 		,@Success 		BIT = 0
 	
 	SELECT @errCode 	= 0
-		,@Bonus 		= 0
+		,@Amount 		= 0
 	
 	WHILE (@Success = 0 AND @Retry < 3)
 	BEGIN
@@ -36,8 +37,8 @@ BEGIN
 			
 			--UPDATE into bonus debit table
 			UPDATE bd WITH(ROWLOCK, UPDLOCK)
-			SET @Bonus 			= bc.initBonus + bc.Bonus + bc.initLockedAmt - (bd.bonus + @balance)
-				,bonus	 		+= @balance
+			SET @Amount 			= bc.initBonus + bc.Amount + bc.LockedAmt - (bd.Amount + @balance)
+				,Amount	 		+= @balance
 			FROM dbo.BonusWalletDebit bd 
 				INNER JOIN dbo.BonusWalletCredit bc WITH(NOLOCK)
 				ON bd.custID 	= bc.custID

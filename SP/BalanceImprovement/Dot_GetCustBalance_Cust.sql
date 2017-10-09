@@ -18,6 +18,7 @@ AS
 		-- 20160112@TWJoe(DBtrans): New Balance
 		-- 2010112@TWJoe(DBtrans): New Balance
 		-- 20170505@Bobby: Implement bonus wallet. Add output Bonus & LockedAmt info
+		-- 20171009@Kathy: Change output name Bonus --> Amount
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -28,12 +29,12 @@ BEGIN
 	DECLARE @Balance money
 	DECLARE @BalanceCredit money, @BalanceDebit money
 	Declare @OuSTxn money, @Total money, @MaxTrans datetime
-	DECLARE @Bonus MONEY
+	DECLARE @Amount MONEY
 	
 	select @TotalTranslog = 0;
 
 	EXEC Dot_GetOutStanding @custid,@OutStanding out,@MaxTrans out
-	EXEC Dot_BalanceMemberSel @custid, @Balance out, @WalletFlag = @WalletFlag, @Bonus = @Bonus OUT
+	EXEC Dot_BalanceMemberSel @custid, @Balance out, @WalletFlag = @WalletFlag, @Amount = @Amount OUT
 
 	-- compare balance from bettrans -vs- balanceTable
 	--IF ISNULL(@Balance, 0) <> ISNULL(@Total, 0)
@@ -43,7 +44,7 @@ BEGIN
 			IsNull(@Balance, 0) Balance,
 			ISNULL(@Balance, 0) Total,
 			@MaxTrans MaxTrans,
-			@Bonus AS Bonus
+			@Amount AS Amount
 			
 END
 GO
