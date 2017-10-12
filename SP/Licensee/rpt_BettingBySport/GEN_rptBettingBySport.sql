@@ -2,8 +2,7 @@ USE [bodb_LicenseeReport]
 GO
 
 ALTER PROCEDURE [dbo].[GEN_rptBettingBySport]
-    @FromDate smalldatetime,
-    @ToDate smalldatetime
+    @Date smalldatetime
 AS
 /*
     Created: 20150226@Francis
@@ -17,21 +16,75 @@ AS
 */ 
 BEGIN
     DELETE FROM dbo.rpt_BettingBySport
-	WHERE rptDate BETWEEN @FromDate AND @ToDate
+	WHERE rptDate = @Date
 
-	-- Prepare Data for MuayThai Parlay
-	DECLARE @MoveBetDate SMALLDATETIME, @TempFromDate SMALLDATETIME, @TempToDate SMALLDATETIME
-	SELECT @MoveBetDate = MAX(winlostdate) FROM bodb02.dbo.bettrans14 (NOLOCK)
-
-	DECLARE @tmpBettrans AS TABLE (transid BIGINT, NoOfSubParlay INT, NoOfMuayThai INT)
-
-	SELECT @TempFromDate = CASE WHEN @FromDate <= @MoveBetDate THEN DATEADD(DAY,1, @MoveBetDate) ELSE @FromDate END
-	SELECT @TempToDate = CASE WHEN @ToDate >= @MoveBetDate THEN @MoveBetDate ELSE @ToDate END
-
+	CREATE TABLE #Match (MatchID INT)
+	CREATE TABLE #tmpBettransm (refno BIGINT, NoOfMuayThai INT, NoOfSubParlay SMALLMONEY)
+	CREATE TABLE #tmpBettrans (transID BIGINT, NoOfMuayThai INT , NoOfSubParlay SMALLMONEY)
 	CREATE TABLE #bettrans (transid BIGINT, winlostdate SMALLDATETIME, recommend INT, ProductID INT, SportType INT
-							, currency TINYINT, statusid TINYINT, NoOfSubParlay SMALLMONEY, NoOfMuayThai SMALLINT, swinlost MONEY
+							, currency TINYINT, statusid TINYINT, NoOfSubParlay SMALLMONEY, NoOfMuayThai INT, swinlost MONEY
 							, mwinlost MONEY, awinlost MONEY, winlost MONEY, actual_stake MONEY, stake MONEY, scomm MONEY
-							, tpositiontaking SMALLMONEY, customercategory SMALLINT)
+							, tpositiontaking SMALLMONEY, customercategory SMALLINT, IsParlay BIT)
+
+	INSERT INTO #Match ( MatchID )
+	SELECT m.matchid
+	FROM bodb02.dbo.match m WITH (NOLOCK)
+	WHERE m.sporttype = 44
+	UNION ALL
+	SELECT m.matchid
+	FROM bodb02.dbo.match14 m WITH (NOLOCK)
+	WHERE m.sporttype = 44	
+
+	INSERT INTO #tmpBettransm ( refno, NoOfMuayThai )	
+	SELECT b.refno, COUNT(b.transid) AS NoOfMuayThai
+	FROM
+		(
+			SELECT bm.refno, bm.transid
+			FROM #Match m 
+				INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON m.MatchID = bm.matchid	
+			WHERE bm.statusID NOT IN (101, 102, 103) -- reject, void, refund
+			UNION ALL
+			SELECT bm.refno, bm.transid
+			FROM #Match m 
+				INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON m.MatchID = bm.matchid
+			WHERE bm.statusID NOT IN (101, 102, 103) 
+		) AS b
+	GROUP BY b.refno
+
+	CREATE CLUSTERED INDEX IX_refno ON #tmpBettransm (refno)
+
+	;WITH selection AS
+	(   
+		SELECT b.refno, COUNT(b.transid) AS NoOfSubParlay
+		FROM
+			(
+				SELECT bm.refno, bm.transid
+				FROM #tmpBettransm b
+					INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno	
+				WHERE bm.statusID NOT IN (101, 102, 103)
+				UNION ALL
+				SELECT bm.refno, bm.transid
+				FROM #tmpBettransm b 
+					INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno	
+				WHERE bm.statusID NOT IN (101, 102, 103)
+			) AS b
+		GROUP BY b.refno
+	)
+	UPDATE b
+	SET b.NoOfSubParlay = bm.NoOfSubParlay
+	FROM #tmpBettransm b
+		INNER JOIN selection bm ON b.refno = bm.refno
+
+	INSERT INTO #tmpBettrans ( transID, NoOfMuayThai, NoOfSubParlay )	
+	SELECT b.transid, bm.NoOfMuayThai, bm.NoOfSubParlay
+	FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+		INNER JOIN #tmpBettransm bm ON b.refno = bm.refno
+	WHERE b.bettype IN (9, 29) AND b.matchid IN (9, 29)	
+		AND b.statusID IN (111, 112, 113)
+		AND b.winlostdate = @Date			
+
+	CREATE CLUSTERED INDEX IX_transid ON #tmpBettrans (transID)
+
 	INSERT INTO #bettrans
 	        ( transid ,
 	          winlostdate ,
@@ -50,17 +103,18 @@ BEGIN
 	          stake ,
 	          scomm ,
 	          tpositiontaking ,
-	          customercategory
-	        )	
+	          customercategory,
+			  IsParlay
+	        )
 	SELECT b.transid -- Parlay MuayThai ticket
 			, b.winlostdate
 			, b.recommend
 			, 0 AS ProductID
-			, 29 AS SportType
+			, 44 AS SportType
 			, b.currency
 			, b.statusid
-			, b.hdp2 AS NoOfSubParlay
-			, SUM (mu.NoOfMuayThai) AS NoOfMuayThai
+			, t.NoOfSubParlay AS NoOfSubParlay
+			, t.NoOfMuayThai AS NoOfMuayThai
 			, b.swinlost 
 			, b.mwinlost
 			, b.awinlost
@@ -69,27 +123,12 @@ BEGIN
 			, b.stake		
 			, b.scomm 
 			, b.tpositiontaking
-			, b.customercategory		
-	FROM dbo.bettrans b WITH (NOLOCK)
-		INNER JOIN 
-				(
-					SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai
-					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-						LEFT JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid	
-					WHERE m.sporttype = 44 --AND m.eventstatus <> 'running' --AND m.eventdate BETWEEN @TempFromDate AND @ToDate
-					GROUP BY bm.refno
-
-					UNION ALL
-
-					SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai
-					FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
-						INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid	
-					WHERE m.sporttype = 44 --AND bm.winlostdate BETWEEN @FromDate AND @TempToDate				
-					GROUP BY bm.refno
-				) mu ON mu.refno = b.refno
-	WHERE b.bettype IN (9, 29) AND b.winlostdate BETWEEN @FromDate AND @ToDate
-	GROUP BY b.transid, b.winlostdate, b.recommend, b.currency, b.statusid, b.hdp2 
-		, b.swinlost, b.mwinlost, b.awinlost, b.winlost, b.actual_stake, b.stake, b.scomm, b.tpositiontaking, b.customercategory
+			, CASE   WHEN b.recommend = 52466 THEN 27 --8RM
+						WHEN b.recommend = 5707545 THEN 28 	--BARM
+			ELSE -1 END	AS Customercategory
+			, 1 -- Parlay of MuayThai
+	FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+		INNER JOIN #tmpBettrans t ON t.transID = b.transid
 
 	UNION ALL
 	
@@ -110,54 +149,76 @@ BEGIN
 			, stake		
 			, scomm 
 			, tpositiontaking
-			, b.customercategory
-	FROM dbo.bettrans b with (nolock)
-		INNER JOIN (
-						SELECT matchid 
-						FROM dbo.match WITH (NOLOCK) 
-						WHERE eventdate BETWEEN @fromdate AND @todate AND SportType = 44
-					) m ON b.matchid = m.matchid
-	WHERE b.winlostdate BETWEEN @fromdate AND @todate
+			, CASE   WHEN b.recommend = 52466 THEN 27 --8RM
+						WHEN b.recommend = 5707545 THEN 28 	--BARM
+			ELSE -1 END AS Customercategory
+			, 0 -- Single Ticket of MuayThai
+	FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+		INNER JOIN #Match m ON b.matchid = m.matchid
+	WHERE ( b.bettype < 31
+			OR b.bettype BETWEEN 121 AND 999
+			OR b.Bettype BETWEEN 1301 and 1399 --new tennis's bettypes
+		) 
+		AND b.statusID IN (111, 112, 113)
+		AND b.winlostdate = @Date
 
-	CREATE CLUSTERED INDEX IDX_Index_BT ON #bettrans(recommend, winlostdate)	
-
-	--For Muay Thai
-	INSERT INTO dbo.rpt_BettingBySport(rptDate 
+	-- Insert data to sum table
+	INSERT INTO dbo.rpt_BettingBySport( rptDate 
 									   , SiteID 
 									   , ProductID
 									   , SportType 
 									   , CurrencyId
-									   , StatusId
+									   , StatusId	
 									   , LicenseeWL
+									   , LicenseeWLOfParlay
 									   , CustomerWL
+									   , CustomerWLOfParlay
 									   , Turnover
 									   , BetCount
 									   , WLShare
 									   , CommissionS
+									   , CommissionSOfParlay
 									   , CommShare
-									   , CustomerCategory)							   																	   
+									   , CommShareOfParlay
+									   , CustomerCategory
+									   , IsParlay
+									)	
 	SELECT	b.winlostdate AS rptDate
-			, isnull(siteT.SiteID,-1) AS SiteID
-			, 0 AS ProductID
-			, 44 AS SportType
+			, ISNULL(siteT.SiteID,-1) AS SiteID
+			, ProductID AS ProductID
+			, SportType AS SportType
 			, b.currency AS CurrencyId
 			, b.statusid AS StatusId
-			, case isnull(l.LabelID,0) when 0
-				   then 0
-				   else sum ((actual_stake - winlost - swinlost - mwinlost -  awinlost - scomm) * (b.NoOfMuayThai/b.NoOfSubParlay))
-			  end as LicenseeWL
-			, SUM((winlost - actual_stake) * (b.NoOfMuayThai/b.NoOfSubParlay)) AS CustomerWL -- Customer Winlosss
-			, sum (stake) AS Turnover --Turnover
-			, count (1) AS BetCount --Total Bets
-			, sum(actual_stake - winlost) * 0.03 as WLShare -- Winloss Share with Muay Thai partner
-			, -SUM((scomm) * (b.NoOfMuayThai/b.NoOfSubParlay)) as CommissionS -- Commission for Licensee
-			, -sum(scomm * 0.03/(1 - tpositiontaking)) as CommShare -- Commission for Licensee share with Muay Thai partner
+			, CASE ISNULL(ibcsite.isDeposit, 1) WHEN 1
+				   THEN 0
+				   ELSE SUM (actual_stake - winlost - swinlost - mwinlost -  awinlost - scomm)
+			  END AS LicenseeWL
+			, CASE ISNULL(ibcsite.isDeposit, 1) WHEN 1
+				   THEN 0
+				   ELSE SUM ((actual_stake - winlost - swinlost - mwinlost -  awinlost - scomm) * (b.NoOfMuayThai/b.NoOfSubParlay))
+			  end as LicenseeWLParlay
+			, SUM(winlost - actual_stake) AS CustomerWL -- Customer Winlosss
+			, SUM((winlost - actual_stake) * (b.NoOfMuayThai/b.NoOfSubParlay)) AS CustomerWLParlay
+			, SUM (stake) AS Turnover --Turnover
+			, COUNT (1) AS BetCount --Total Bets
+			, SUM(actual_stake - winlost) as WLShare -- Winloss Share with Muay Thai partner
+			, -SUM(scomm) AS CommissionS -- Commission for Licensee
+			, -SUM((scomm) * (b.NoOfMuayThai/b.NoOfSubParlay)) AS CommissionSParlay 
+			, -SUM(scomm * (1 - tpositiontaking)) as CommShare -- Commission for Licensee share with Muay Thai partner
+			, -SUM(scomm * (b.NoOfMuayThai/b.NoOfSubParlay) * (1 - tpositiontaking)) as CommShareParlay
 			, b.customercategory AS CustomerCategory
+			, b.IsParlay
 	FROM #bettrans b
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site = ibcsite.site
 		LEFT JOIN bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid = siteT.IbcSiteID
-		LEFT JOIN bodb_Licensee.dbo.Labels l WITH (NOLOCK) ON SiteT.SiteID = l.LabelID	
-	GROUP BY b.winlostdate, isnull(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory, l.LabelID 
+		--LEFT JOIN bodb_Licensee.dbo.Labels l WITH (NOLOCK) ON SiteT.SiteID = l.LabelID	
+	GROUP BY b.winlostdate, ISNULL(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory, ibcsite.isDeposit 
+			, ProductID, b.SportType, IsParlay
+	
+	DROP TABLE #bettrans
+	DROP TABLE #tmpBettrans
+	DROP TABLE #Match
+	DROP TABLE #tmpBettransm
 END  
 
