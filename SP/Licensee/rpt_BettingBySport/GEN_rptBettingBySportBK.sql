@@ -1,3 +1,5 @@
+/*<info serverAlias="DBARC-bodb_archive" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_archive]
 GO
 
@@ -270,4 +272,4 @@ BEGIN
 	DROP TABLE #tmpMuayThai
 	DROP TABLE #tmpSubParlay	
 END  
-
+GO

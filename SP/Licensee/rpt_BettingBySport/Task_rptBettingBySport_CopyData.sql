@@ -1,3 +1,5 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_LicenseeReport]
 GO
 
@@ -31,53 +33,50 @@ BEGIN
 	IF NOT EXISTS (SELECT TOP 1 1 FROM @IndexTable )
 		RETURN
 
-	DECLARE @rptDate DATE, @RowIndex INT
-	SET @RowIndex = 1
+	DECLARE @rptDate DATE	
+	SELECT @rptDate = rptDate FROM @IndexTable WHERE RowIndex = 1		
 
-	WHILE EXISTS (SElECT 1 FROM @IndexTable WHERE RowIndex = @RowIndex)
+	SELECT @sql = 'SELECT rptDate, SiteID, ProductID, SportType, CurrencyId, StatusId, LicenseeWL, AdjustedLicenseeWL, CustomerWL, AdjustedCustomerWL
+						, Turnover, BetCount, WLShare, CommissionS, AdjustedCommissionS, CommShare, AdjustedCommShare, CustomerCategory, IsParlay
+					FROM OPENQUERY(DBARC, ''SELECT rptDate, SiteID, ProductID, SportType, CurrencyId, StatusId, LicenseeWL, AdjustedLicenseeWL, CustomerWL, AdjustedCustomerWL
+												, Turnover, BetCount, WLShare, CommissionS, AdjustedCommissionS, CommShare, AdjustedCommShare, CustomerCategory, IsParlay
+											FROM ##rpt_BettingBySport_Temp	 
+											WHERE rptDate = ''''' + CAST(@rptDate AS VARCHAR(20)) + '''''
+					OPTION (MAXDOP 1)'')'
+		
+	IF EXISTS ( SELECT TOP 1 1 FROM dbo.rpt_BettingBySport WITH (NOLOCK) WHERE RptDate = @rptDate)
 	BEGIN
-		SELECT @rptDate = rptDate FROM @IndexTable WHERE RowIndex = @RowIndex
-		SELECT @RowIndex = @RowIndex + 1, @sql = ''
+		DELETE dbo.rpt_BettingBySport WITH (ROWLOCK, UPDLOCK)
+		WHERE RptDate = @rptDate
+	END
+		
+	INSERT INTO dbo.rpt_BettingBySport( rptDate 
+									, SiteID 
+									, ProductID
+									, SportType 
+									, CurrencyId
+									, StatusId	
+									, LicenseeWL
+									, AdjustedLicenseeWL
+									, CustomerWL
+									, AdjustedCustomerWL
+									, Turnover
+									, BetCount
+									, WLShare
+									, CommissionS
+									, AdjustedCommissionS
+									, CommShare
+									, AdjustedCommShare
+									, CustomerCategory
+									, IsParlay
+								)
+	EXECUTE (@sql)
+		
+	WAITFOR DELAY '00:00:00.280'
 
-		SELECT @sql = 'SELECT rptDate, SiteID, ProductID, SportType, CurrencyId, StatusId, LicenseeWL, AdjustedLicenseeWL, CustomerWL, AdjustedCustomerWL
-							, Turnover, BetCount, WLShare, CommissionS, AdjustedCommissionS, CommShare, AdjustedCommShare, CustomerCategory, IsParlay
-						FROM OPENQUERY(DBARC, ''SELECT rptDate, SiteID, ProductID, SportType, CurrencyId, StatusId, LicenseeWL, AdjustedLicenseeWL, CustomerWL, AdjustedCustomerWL
-													, Turnover, BetCount, WLShare, CommissionS, AdjustedCommissionS, CommShare, AdjustedCommShare, CustomerCategory, IsParlay
-												FROM ##rpt_BettingBySport_Temp	 
-												WHERE rptDate = ''''' + CAST(@rptDate AS VARCHAR(20)) + '''''
-						OPTION (MAXDOP 1)'')'
-		
-		IF EXISTS ( SELECT TOP 1 1 FROM dbo.rpt_BettingBySport WITH (NOLOCK) WHERE RptDate = @rptDate)
-		BEGIN
-			DELETE dbo.rpt_BettingBySport WITH (ROWLOCK, UPDLOCK)
-			WHERE RptDate = @rptDate
-		END
-		
-		INSERT INTO dbo.rpt_BettingBySport( rptDate 
-									   , SiteID 
-									   , ProductID
-									   , SportType 
-									   , CurrencyId
-									   , StatusId	
-									   , LicenseeWL
-									   , AdjustedLicenseeWL
-									   , CustomerWL
-									   , AdjustedCustomerWL
-									   , Turnover
-									   , BetCount
-									   , WLShare
-									   , CommissionS
-									   , AdjustedCommissionS
-									   , CommShare
-									   , AdjustedCommShare
-									   , CustomerCategory
-									   , IsParlay
-									)
-		EXECUTE (@sql)
-		
-		WAITFOR DELAY '00:00:00.280'
-	END	
+	DELETE OPENQUERY(DBARC, 'SELECT * FROM ##rpt_BettingBySport_Temp')
 END
 
 GO
 GRANT VIEW DEFINITION ON [dbo].[Task_rptBettingBySport_CopyData] TO [vnteam] AS [dbo]
+GO

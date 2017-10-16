@@ -1,3 +1,5 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_LicenseeReport]
 GO
 
@@ -242,4 +244,4 @@ BEGIN
 	DROP TABLE #Match
 	DROP TABLE #tmpMuayThai
 END  
-
+GO
