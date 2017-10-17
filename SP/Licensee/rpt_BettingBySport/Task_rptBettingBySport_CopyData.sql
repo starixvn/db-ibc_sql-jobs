@@ -13,41 +13,29 @@ AS
 
     Revisions:	
 		- 20171016@Harper: Get more info for MuayThai Parlay [Redmine: #82827]	
+
+	Task_rptBettingBySport_CopyData '2017-09-30'
 */ 
 BEGIN
 	SET NOCOUNT ON
 
 	IF @Date IS NULL
 		RETURN
-
+		--DECLARE @Date SMALLDATETIME = '2017-09-30'
 	DECLARE @sql VARCHAR(MAX)
-	DECLARE @IndexTable TABLE (RowIndex INT IDENTITY(1,1), rptDate DATE)	
 	
-	INSERT INTO @IndexTable(rptDate)
-	SELECT rptDate
-	FROM OPENQUERY(DBARC, 'SELECT rptDate 
-						FROM ##rpt_BettingBySport_Temp				
-						GROUP BY rptDate OPTION (MAXDOP 1)')
-	WHERE rptDate = @Date
-
-	IF NOT EXISTS (SELECT TOP 1 1 FROM @IndexTable )
-		RETURN
-
-	DECLARE @rptDate DATE	
-	SELECT @rptDate = rptDate FROM @IndexTable WHERE RowIndex = 1		
-
 	SELECT @sql = 'SELECT rptDate, SiteID, ProductID, SportType, CurrencyId, StatusId, LicenseeWL, AdjustedLicenseeWL, CustomerWL, AdjustedCustomerWL
 						, Turnover, BetCount, WLShare, CommissionS, AdjustedCommissionS, CommShare, AdjustedCommShare, CustomerCategory, IsParlay
 					FROM OPENQUERY(DBARC, ''SELECT rptDate, SiteID, ProductID, SportType, CurrencyId, StatusId, LicenseeWL, AdjustedLicenseeWL, CustomerWL, AdjustedCustomerWL
 												, Turnover, BetCount, WLShare, CommissionS, AdjustedCommissionS, CommShare, AdjustedCommShare, CustomerCategory, IsParlay
 											FROM ##rpt_BettingBySport_Temp	 
-											WHERE rptDate = ''''' + CAST(@rptDate AS VARCHAR(20)) + '''''
+											WHERE rptDate = ''''' + CAST(@Date AS VARCHAR(20)) + '''''
 					OPTION (MAXDOP 1)'')'
-		
-	IF EXISTS ( SELECT TOP 1 1 FROM dbo.rpt_BettingBySport WITH (NOLOCK) WHERE RptDate = @rptDate)
+	--EXECUTE (@sql)
+	IF EXISTS ( SELECT TOP 1 1 FROM dbo.rpt_BettingBySport WITH (NOLOCK) WHERE RptDate = @Date)
 	BEGIN
 		DELETE dbo.rpt_BettingBySport WITH (ROWLOCK, UPDLOCK)
-		WHERE RptDate = @rptDate
+		WHERE RptDate = @Date
 	END
 		
 	INSERT INTO dbo.rpt_BettingBySport( rptDate 
@@ -70,11 +58,12 @@ BEGIN
 									, CustomerCategory
 									, IsParlay
 								)
-	EXECUTE (@sql)
-		
-	WAITFOR DELAY '00:00:00.280'
+	EXECUTE (@sql)	
 
-	DELETE OPENQUERY(DBARC, 'SELECT * FROM ##rpt_BettingBySport_Temp')
+	SELECT @sql = ''
+	SELECT @sql = 'DELETE OPENQUERY(DBARC, ''SELECT * FROM ##rpt_BettingBySport_Temp WHERE rptDate = ''''' + CAST(@Date AS VARCHAR(20)) + ''''''')'
+	EXECUTE (@sql)
+
 END
 
 GO

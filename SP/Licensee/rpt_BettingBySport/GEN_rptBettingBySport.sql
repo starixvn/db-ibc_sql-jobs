@@ -105,7 +105,7 @@ BEGIN
 			AND b.statusID IN (111, 112, 113)
 			AND b.winlostdate = @Date			
 	END
-
+	
 	CREATE CLUSTERED INDEX IX_transid ON #tmpBettrans (transID)
 
 	INSERT INTO #bettrans

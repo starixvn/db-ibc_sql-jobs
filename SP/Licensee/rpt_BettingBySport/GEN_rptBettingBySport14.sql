@@ -30,11 +30,11 @@ BEGIN
 
 	CREATE TABLE #tmpMuayThai (refno BIGINT, NoOfMuayThai INT, IsBettran BIT)	
 	CREATE TABLE #tmpSubParlay (refno BIGINT, NoOfSubParlay SMALLMONEY)
-	CREATE TABLE #bettrans (transid BIGINT, refno BIGINT, winlostdate SMALLDATETIME, recommend INT, ProductID INT, SportType INT
+	CREATE TABLE #tmpbettrans (transid BIGINT, refno BIGINT, winlostdate SMALLDATETIME, recommend INT, ProductID INT, SportType INT
 							, currency TINYINT, statusid TINYINT, NoOfSubParlay SMALLMONEY, NoOfMuayThai INT, swinlost MONEY
 							, mwinlost MONEY, awinlost MONEY, winlost MONEY, actual_stake MONEY, stake MONEY, scomm MONEY
 							, tpositiontaking SMALLMONEY, customercategory SMALLINT, IsExists BIT)
-	INSERT INTO #bettrans
+	INSERT INTO #tmpbettrans
 	        ( transid ,
 	          refno ,
 	          winlostdate ,
@@ -59,7 +59,7 @@ BEGIN
 			, b.winlostdate
 			, b.recommend
 			, 0 AS ProductID
-			, 0 AS SportType
+			, 44 AS SportType
 			, b.currency
 			, b.statusid
 			, b.hdp2			
@@ -78,12 +78,12 @@ BEGIN
 	WHERE b.bettype IN (9, 29) AND b.matchid IN (9, 29) AND b.statusID IN (111, 112, 113) -- win, lose, raw
 		AND b.winlostdate = @Date
 
-	CREATE CLUSTERED INDEX [IX_refno] ON #bettrans ([refno] ASC)	
+	CREATE CLUSTERED INDEX [IX_refno] ON #tmpbettrans ([refno] ASC)	
 		
 	-- bettransm14
 	INSERT INTO #tmpMuayThai ( refno, NoOfMuayThai )
 	SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai
-	FROM #bettrans b
+	FROM #tmpbettrans b
 		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE m.sporttype = 44 AND bm.statusID NOT IN (101, 102, 103) -- reject, void, refund	
@@ -93,7 +93,7 @@ BEGIN
 	-- bettransm
 	INSERT INTO #tmpMuayThai ( refno, NoOfMuayThai, IsBettran )
 	SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai, 1
-	FROM #bettrans b 
+	FROM #tmpbettrans b 
 		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON bm.refno = b.refno
 		INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid	
 	WHERE m.sporttype = 44 AND bm.statusID NOT IN (101, 102, 103)
@@ -107,7 +107,7 @@ BEGIN
 
 	INSERT INTO #bettransmBK ( refno )
 	SELECT DISTINCT b.refno
-	FROM #bettrans b
+	FROM #tmpbettrans b
 		LEFT JOIN #tmpMuayThai t ON b.refno = t.refno	
 	WHERE ISNULL(t.IsBettran, 0) = 0	
 
@@ -148,38 +148,45 @@ BEGIN
 		DROP TABLE #bettransmBK
 	END	
 
-	INSERT INTO #tmpSubParlay( refno, NoOfSubParlay )	
-	SELECT DISTINCT bm.refno, COUNT(bm.transid)
-	FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-	WHERE bm.statusID NOT IN (101, 102, 103)
-		AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)
-		AND bm.winlostdate > @MoveBetsDay 
-	GROUP BY bm.refno
+	IF EXISTS (SELECT 1 FROM #tmpMuayThai)
+	BEGIN
+		INSERT INTO #tmpSubParlay( refno, NoOfSubParlay )	
+		SELECT bm.refno, COUNT(bm.transid)
+		FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
+		WHERE bm.statusID NOT IN (101, 102, 103)
+			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)
+			AND bm.winlostdate > @MoveBetsDay 
+		GROUP BY bm.refno
 
-	INSERT INTO #tmpSubParlay( refno, NoOfSubParlay )	
-	SELECT DISTINCT bm.refno, COUNT(bm.transid)
-	FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
-	WHERE bm.statusID NOT IN (101, 102, 103)
-		AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)
-		AND bm.winlostdate <= @MoveBetsDay AND bm.winlostdate >= @BalanceUpDay 	 
-	GROUP BY bm.refno
+		INSERT INTO #tmpSubParlay( refno, NoOfSubParlay )	
+		SELECT bm.refno, COUNT(bm.transid)
+		FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
+		WHERE bm.statusID NOT IN (101, 102, 103)
+			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)
+			AND bm.winlostdate <= @MoveBetsDay AND bm.winlostdate >= @BalanceUpDay 	 
+		GROUP BY bm.refno
 	
-	DELETE b
-	FROM #bettrans b
-	WHERE NOT EXISTS (SELECT 1 FROM #tmpMuayThai muay WHERE b.refno = muay.refno)
+		DELETE b
+		FROM #tmpbettrans b
+		WHERE NOT EXISTS (SELECT 1 FROM #tmpMuayThai muay WHERE b.refno = muay.refno)
 
-	UPDATE b
-	SET b.NoOfMuayThai = muay.NoOfMuayThai,
-		b.NoOfSubParlay = sub.NoOfSubParlay
-	FROM #bettrans b
-		INNER JOIN ( SELECT refno, SUM (NoOfMuayThai) AS NoOfMuayThai
-					 FROM #tmpMuayThai
-					 GROUP BY refno
-				) muay ON b.refno = muay.refno	
-		INNER JOIN ( SELECT refno, SUM (NoOfSubParlay) AS NoOfSubParlay
-					 FROM #tmpSubParlay
-					 GROUP BY refno
-				) sub ON b.refno = sub.refno
+		UPDATE b
+		SET b.NoOfMuayThai = muay.NoOfMuayThai,
+			b.NoOfSubParlay = sub.NoOfSubParlay
+		FROM #tmpbettrans b
+			INNER JOIN ( SELECT refno, SUM (NoOfMuayThai) AS NoOfMuayThai
+						 FROM #tmpMuayThai
+						 GROUP BY refno
+					) muay ON b.refno = muay.refno	
+			INNER JOIN ( SELECT refno, SUM (NoOfSubParlay) AS NoOfSubParlay
+						 FROM #tmpSubParlay
+						 GROUP BY refno
+					) sub ON b.refno = sub.refno
+	END
+	ELSE
+	BEGIN
+		DELETE #tmpbettrans
+	END
 
 	INSERT INTO dbo.rpt_BettingBySport( rptDate 
 									   , SiteID 
@@ -246,7 +253,7 @@ BEGIN
 					, b.tpositiontaking
 					, b.customercategory
 					, 1 AS IsParlay
-			FROM #bettrans b			
+			FROM #tmpbettrans b			
 			UNION ALL
 			SELECT b.transid -- Single MuayThai Ticket
 					, b.winlostdate
@@ -286,7 +293,7 @@ BEGIN
 	GROUP BY b.winlostdate, ISNULL(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory, ibcsite.isDeposit
 			, ProductID, b.SportType, b.IsParlay
 
-	DROP TABLE #bettrans
+	DROP TABLE #tmpbettrans
 	DROP TABLE #tmpMuayThai
 	DROP TABLE #tmpSubParlay	
 END  

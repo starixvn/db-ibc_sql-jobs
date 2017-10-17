@@ -102,7 +102,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON bm.refno = b.refno
 		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid	
 	WHERE m.sporttype = 44 AND bm.statusID NOT IN (101, 102, 103)
-		AND bm.winlostdate >= @BalanceUpDay
+		AND bm.winlostdate >= @BalanceUpDay AND bm.winlostdate <= @MoveBetsDay
 	GROUP BY bm.refno	
 
 	IF EXISTS (SELECT 1 FROM #tmpMuayThai)
@@ -141,27 +141,10 @@ BEGIN
 					) sub ON b.refno = sub.refno
 	
 	END
-
-	CREATE TABLE ##rpt_BettingBySport_Temp ( rptDate	DATETIME
-									   , SiteID			INT
-									   , ProductID		INT
-									   , SportType		INT
-									   , CurrencyId		INT
-									   , StatusId		SMALLINT
-									   , LicenseeWL		MONEY
-									   , AdjustedLicenseeWL MONEY
-									   , CustomerWL			MONEY
-									   , AdjustedCustomerWL MONEY
-									   , Turnover		MONEY
-									   , BetCount		INT
-									   , WLShare		MONEY
-									   , CommissionS	MONEY
-									   , AdjustedCommissionS MONEY
-									   , CommShare			MONEY
-									   , AdjustedCommShare	MONEY
-									   , CustomerCategory	INT
-									   , IsParlay			BIT
-									)
+	ELSE
+	BEGIN
+		DELETE #bettrans		
+	END		
 
 	INSERT INTO ##rpt_BettingBySport_Temp( rptDate 
 									   , SiteID 
@@ -273,3 +256,4 @@ BEGIN
 	DROP TABLE #tmpSubParlay	
 END  
 GO
+--DROP TABLE ##rpt_BettingBySport_Temp
