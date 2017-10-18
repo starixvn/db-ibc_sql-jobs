@@ -116,7 +116,8 @@ BEGIN
 		INSERT INTO #MatchBK ( MatchID )	
 		SELECT m.matchid
 		FROM DBARC.bodb_Archive.dbo.match_bk m WITH (NOLOCK)
-		WHERE m.sporttype = 44 AND m.eventdate >= DATEADD(DAY, -14, @Date)
+		WHERE m.sporttype = 44 
+			AND m.eventdate >= DATEADD(DAY, -14, @Date) AND m.eventdate < @BalanceUpDay
 
 		IF EXISTS (SELECT 1 FROM #MatchBK)
 		BEGIN					
