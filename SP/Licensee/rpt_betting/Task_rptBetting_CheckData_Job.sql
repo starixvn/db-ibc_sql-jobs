@@ -14,14 +14,14 @@ ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 	DB: DBLIC.bodb_LicenseeReport  
 	Param's Explanation: 
 		@FromDate , @ToDaate :  NULL then check MovebetDays by Schedule 
-		@Step = 1 : Check and correct rptKenoWinloss and rpt_ThirdPartyWL_ExtraGMT
-			  = 2 : Check and correct rpt_betting, rpt_betting_BA, rptLicCashoutSummary, rpt_BettingBySport tables (using Staging bettrans)
+		@Step = 1 : Check and correct rptKenoWinloss, rpt_ThirdPartyWL_ExtraGMT and rpt_BettingBySport
+			  = 2 : Check and correct rpt_betting, rpt_betting_BA, rptLicCashoutSummary tables (using Staging bettrans)
 			  = 3 : 3rd table
 			  = 0 : ALL
 		@AllowCorrect = 1: Check and correct
 					  = 0: Check only, do no Correct data  
 	Revisions:  		 
-
+		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
 
 	EXEC Task_rptBetting_CheckData_Job @FromDate = '2017-05-01', @ToDate = '2017-05-07', @Step = 0,  @AllowCorrect = 1
     
@@ -85,7 +85,7 @@ BEGIN
 			@BalanceUpDay SMALLDATETIME,
 			@KenoWinlossBetTypes VARCHAR(MAX), @ExtraGMTBetTypes VARCHAR(MAX),
 			@BettingBetTypes VARCHAR(MAX), @BettingBABetTypes VARCHAR(MAX),
-			@3rdProducts VARCHAR(MAX)
+			@3rdProducts VARCHAR(MAX), @IsParLay VARCHAR(20)
 
 	INSERT INTO @Dates(BalanceUpDay, MoveBetsDay)
 	EXEC bodb02.dbo.Age_SelBalanceUpDay
@@ -112,6 +112,8 @@ BEGIN
 
 			EXEC dbo.Task_rptThirdPartyWL_ExtraGMT_CheckData @WinlostDate = @WinlostDate, @HasDataMismatch = @GenExtraGMT OUTPUT, @BetTypes = @ExtraGMTBetTypes OUTPUT
 
+			EXEC dbo.Task_rptBettingBySport_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptBettingBySport OUTPUT, @IsParLay = @IsParLay OUTPUT
+
 			-----1.2 Correct data
 			IF @AllowCorrect = 1
 			BEGIN 
@@ -124,6 +126,11 @@ BEGIN
 				BEGIN 
 					EXEC dbo.Task_Microgaming_Bettrans14 @Fromdate = @WinlostDate, @ToDate = @WinlostDate
 				END 
+
+				IF @GenRptBettingBySport <> 0
+				BEGIN
+					EXEC dbo.GEN_rptBettingBySport14 @Date = @WinlostDate
+				END
 			END
 
 			----- 1.3. Get Msg 
@@ -145,6 +152,16 @@ BEGIN
 							WHEN 1 THEN ''
 							WHEN 2 THEN '(UUS only) '
 						END + 'Has data mismatch between rpt_ThirdPartyWL_ExtraGMT table and source with bettypes (' + @ExtraGMTBetTypes + ')'
+			END
+
+			IF @GenRptBettingBySport <> 0
+			BEGIN
+				INSERT INTO @ErrMsgTab (Date, ErrMsg)
+				SELECT	@WinlostDate,
+						CASE @GenRptBettingBySport
+							WHEN 1 THEN ''
+							WHEN 2 THEN '(UUS only) '
+						END + 'Has data mismatch between rpt_BettingBySport table and source with kind of ticket is: (' + @IsParLay + ')'
 			END
 		END 
 		
@@ -169,8 +186,7 @@ BEGIN
 
 			EXEC dbo.Task_rptLicCashoutSummary_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptLicCashout OUTPUT
 
-			EXEC dbo.Task_rptBettingBySport_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptBettingBySport OUTPUT
-
+			
 			-----2.3. Correct data
 			IF @AllowCorrect = 1
 			BEGIN 
@@ -187,12 +203,7 @@ BEGIN
 				IF @GenRptLicCashout <> 0
 				BEGIN   
 					EXEC dbo.GEN_rptLicCashoutSummary @FromDate = @WinlostDate, @ToDate = @WinlostDate, @ProductCodes = 'CO'
-				END 
-
-				IF @GenRptBettingBySport <> 0
-				BEGIN   
-					EXEC dbo.GEN_rptBettingBySport @FromDate = @WinlostDate, @ToDate = @WinlostDate 
-				END 
+				END 			
 
 				-----2.3.b. Correct data of Rpt_BettingByProduct table because of rpt_betting , rpt_betting_BA has been corrected 
 				IF @GenRptBetting <> 0 OR @GenRptBettingBA <> 0
@@ -233,17 +244,7 @@ BEGIN
 							WHEN 1 THEN ''
 							WHEN 2 THEN '(UUS only) '
 						END + 'Has data mismatch between rptLicCashoutSummary table and source'
-			END
-
-			IF @GenRptBettingBySport <> 0
-			BEGIN
-				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				SELECT	@WinlostDate,
-						CASE @GenRptBettingBySport
-							WHEN 1 THEN ''
-							WHEN 2 THEN '(UUS only) '
-						END + 'Has data mismatch between rpt_BettingBySport table and source'
-			END
+			END			
 		END 
 		
 		----3. Check and correct 3rdProduct table - AGC and GD Separate Wallet (not use staging bettrans)
