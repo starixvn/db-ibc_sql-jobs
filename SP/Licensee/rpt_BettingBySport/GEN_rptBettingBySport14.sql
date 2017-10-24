@@ -13,7 +13,7 @@ AS
 
     Revisions:	
 		- 20170930@Harper: Get more info for MuayThai Parlay [Redmine: #82827]
-	GEN_rptBettingBySport14 '2017-10-01'
+	GEN_rptBettingBySport14 '2017-10-08'
 */ 
 BEGIN
     DELETE FROM dbo.rpt_BettingBySport
@@ -84,9 +84,8 @@ BEGIN
 	INSERT INTO #tmpMuayThai ( refno, NoOfMuayThai )
 	SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai
 	FROM #tmpbettrans b
-		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
-		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
-	WHERE m.sporttype = 44 AND bm.statusID NOT IN (101, 102, 103) -- reject, void, refund	
+		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno		
+	WHERE bm.oddsspread = 44 AND bm.statusID NOT IN (101, 102, 103) -- reject, void, refund	
 		AND bm.winlostdate <= @MoveBetsDay AND bm.winlostdate >= @BalanceUpDay 	
 	GROUP BY bm.refno
 
@@ -94,14 +93,13 @@ BEGIN
 	INSERT INTO #tmpMuayThai ( refno, NoOfMuayThai, IsBettran )
 	SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai, 1
 	FROM #tmpbettrans b 
-		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON bm.refno = b.refno
-		INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid	
-	WHERE m.sporttype = 44 AND bm.statusID NOT IN (101, 102, 103)
+		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON bm.refno = b.refno		
+	WHERE bm.oddsspread = 44 AND bm.statusID NOT IN (101, 102, 103)
 		AND bm.winlostdate > @MoveBetsDay
 	GROUP BY bm.refno
 	
 	-- Handle data for bettransM_BK		
-	CREATE TABLE #tmpBK (refno BIGINT, transID BIGINT, matchID INT)
+	CREATE TABLE #tmpBK (refno BIGINT, transID BIGINT, matchID INT, oddsspread MONEY)
 	CREATE TABLE #MatchBK (MatchID INT PRIMARY KEY)
 	CREATE TABLE #bettransmBK (refno BIGINT PRIMARY KEY)
 
@@ -121,8 +119,8 @@ BEGIN
 
 		IF EXISTS (SELECT 1 FROM #MatchBK)
 		BEGIN					
-			INSERT INTO #tmpBK ( refno, transID, matchID )		
-			SELECT bm.refno, bm.transid, bm.matchid
+			INSERT INTO #tmpBK ( refno, transID, matchID, oddsspread )		
+			SELECT bm.refno, bm.transid, bm.matchid, bm.oddsspread
 			FROM DBARC.bodb_Archive.dbo.bettransm bm WITH (NOLOCK)
 				INNER JOIN #bettransmBK b ON bm.refno = b.refno
 			WHERE bm.winlostdate >= DATEADD(DAY, -14, @Date) 
@@ -134,7 +132,7 @@ BEGIN
 			INSERT INTO #tmpMuayThai( refno, NoOfMuayThai)
 			SELECT bk.refno, COUNT(bk.transID)
 			FROM #tmpBK bk
-				INNER JOIN #MatchBK m ON bk.matchID = m.MatchID		
+			WHERE bk.oddsspread = 44
 			GROUP BY bk.refno			
 
 			INSERT INTO #tmpSubParlay ( refno, NoOfSubParlay )		
@@ -290,7 +288,6 @@ BEGIN
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site = ibcsite.site
 		LEFT JOIN bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid = siteT.IbcSiteID
-		--LEFT JOIN bodb_Licensee.dbo.Labels l WITH (NOLOCK) ON SiteT.SiteID = l.LabelID	
 	GROUP BY b.winlostdate, ISNULL(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory, ibcsite.isDeposit
 			, ProductID, b.SportType, b.IsParlay
 

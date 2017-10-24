@@ -16,9 +16,7 @@ AS
 
 	GEN_rptBettingBySportBK '2017-09-30'
 */ 
-BEGIN
-    --DELETE FROM DBLIC.bodb_LicenseeReport.dbo.rpt_BettingBySport
-	--WHERE rptDate = @Date
+BEGIN    
 
 	DECLARE @MoveBetsDay	SMALLDATETIME, 
 			@BalanceUpDay	SMALLDATETIME
@@ -31,7 +29,7 @@ BEGIN
 
 	CREATE TABLE #tmpMuayThai (refno BIGINT, NoOfMuayThai INT, IsBettran BIT)	
 	CREATE TABLE #tmpSubParlay (refno BIGINT, NoOfSubParlay SMALLMONEY)
-	CREATE TABLE #bettrans (transid BIGINT, refno BIGINT, winlostdate SMALLDATETIME, recommend INT, ProductID INT, SportType INT
+	CREATE TABLE #tmpbettrans (transid BIGINT, refno BIGINT, winlostdate SMALLDATETIME, recommend INT, ProductID INT, SportType INT
 							, currency TINYINT, statusid TINYINT, NoOfSubParlay SMALLMONEY, NoOfMuayThai INT, swinlost MONEY
 							, mwinlost MONEY, awinlost MONEY, winlost MONEY, actual_stake MONEY, stake MONEY, scomm MONEY
 							, tpositiontaking SMALLMONEY, customercategory SMALLINT, IsExists BIT)
@@ -41,7 +39,7 @@ BEGIN
 	SELECT IbcSiteID, SiteID
 	FROM OPENQUERY(DBLIC, 'SELECT IbcSiteID, SiteID FROM bodb_Licensee.dbo.view_site_list')	
 
-	INSERT INTO #bettrans
+	INSERT INTO #tmpbettrans
 	        ( transid ,
 	          refno ,
 	          winlostdate ,
@@ -85,23 +83,21 @@ BEGIN
 	WHERE b.bettype IN (9, 29) AND b.matchid IN (9, 29) AND b.statusID IN (111, 112, 113) -- win, lose, raw
 		AND b.winlostdate = @Date
 
-	CREATE CLUSTERED INDEX [IX_refno] ON #bettrans ([refno] ASC)		
+	CREATE CLUSTERED INDEX [IX_refno] ON #tmpbettrans ([refno] ASC)		
 
 	INSERT INTO #tmpMuayThai ( refno, NoOfMuayThai )
 	SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai
-	FROM #bettrans b
-		INNER JOIN bodb_archive.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
-		INNER JOIN bodb_archive.dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
-	WHERE m.sporttype = 44 AND bm.statusID NOT IN (101, 102, 103) -- reject, void, refund	
+	FROM #tmpbettrans b
+		INNER JOIN bodb_archive.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno		
+	WHERE bm.oddsspread = 44 AND bm.statusID NOT IN (101, 102, 103) -- reject, void, refund	
 		AND bm.winlostdate < @BalanceUpDay 	
 	GROUP BY bm.refno
 	
 	INSERT INTO #tmpMuayThai ( refno, NoOfMuayThai )
 	SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai
-	FROM #bettrans b 
-		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON bm.refno = b.refno
-		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid	
-	WHERE m.sporttype = 44 AND bm.statusID NOT IN (101, 102, 103)
+	FROM #tmpbettrans b 
+		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON bm.refno = b.refno		
+	WHERE bm.oddsspread = 44 AND bm.statusID NOT IN (101, 102, 103)
 		AND bm.winlostdate >= @BalanceUpDay AND bm.winlostdate <= @MoveBetsDay
 	GROUP BY bm.refno	
 
@@ -124,13 +120,13 @@ BEGIN
 		GROUP BY bm.refno					
 
 		DELETE b
-		FROM #bettrans b
+		FROM #tmpbettrans b
 		WHERE NOT EXISTS (SELECT 1 FROM #tmpMuayThai muay WHERE b.refno = muay.refno)
 		
 		UPDATE b
 		SET b.NoOfMuayThai = muay.NoOfMuayThai,
 			b.NoOfSubParlay = sub.NoOfSubParlay
-		FROM #bettrans b
+		FROM #tmpbettrans b
 			INNER JOIN ( SELECT refno, SUM (NoOfMuayThai) AS NoOfMuayThai
 						 FROM #tmpMuayThai
 						 GROUP BY refno
@@ -143,7 +139,7 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		DELETE #bettrans		
+		DELETE #tmpbettrans		
 	END		
 
 	INSERT INTO ##rpt_BettingBySport_Temp( rptDate 
@@ -211,7 +207,7 @@ BEGIN
 					, b.tpositiontaking
 					, b.customercategory
 					, 1 AS IsParlay
-			FROM #bettrans b			
+			FROM #tmpbettrans b			
 			UNION ALL
 			SELECT b.transid -- Single MuayThai Ticket
 					, b.winlostdate
@@ -247,13 +243,11 @@ BEGIN
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site = ibcsite.site
 		LEFT JOIN @Sitelist siteT ON ibcsite.siteid = siteT.IbcSiteID
-		--LEFT JOIN bodb_Licensee.dbo.Labels l WITH (NOLOCK) ON SiteT.SiteID = l.LabelID	
 	GROUP BY b.winlostdate, ISNULL(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory, ibcsite.isDeposit
 			, ProductID, b.SportType, b.IsParlay
 
-	DROP TABLE #bettrans
+	DROP TABLE #tmpbettrans
 	DROP TABLE #tmpMuayThai
 	DROP TABLE #tmpSubParlay	
 END  
 GO
---DROP TABLE ##rpt_BettingBySport_Temp
