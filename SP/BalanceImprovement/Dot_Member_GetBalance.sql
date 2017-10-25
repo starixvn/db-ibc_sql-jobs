@@ -2,7 +2,7 @@
 CREATE PROCEDURE [dbo].[Dot_Member_GetBalance]
 	@custid 	INT,
 	-------- bonus wallet --------
-	@WalletFlag	TINYINT = 0
+	@BonusWalletFlag BIT = 0
 AS
 BEGIN
 SET NOCOUNT ON; 
@@ -15,7 +15,7 @@ SET NOCOUNT ON;
 	DECLARE @Amount MONEY
 	select @Balance=0
 
-	EXEC dbo.Dot_BalanceMemberSel @custid, @Balance out,@WalletFlag = @WalletFlag, @Amount = @Amount OUT
+	EXEC dbo.Dot_BalanceMemberSel @custid, @Balance out,@BonusWalletFlag = @BonusWalletFlag, @Amount = @Amount OUT
 
 	SELECT 
 		@Balance AS finalbalance--,@Credit as credit

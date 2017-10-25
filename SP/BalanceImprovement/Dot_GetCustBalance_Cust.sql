@@ -2,7 +2,7 @@
 ALTER PROCEDURE [dbo].[Dot_GetCustBalance_Cust]
 	@custid 	INT,
 	-------- bonus wallet --------
-	@WalletFlag	TINYINT = 0
+	@BonusWalletFlag BIT = 0
 AS
 /*
 	Created: 20120506@vivi
@@ -34,7 +34,7 @@ BEGIN
 	select @TotalTranslog = 0;
 
 	EXEC Dot_GetOutStanding @custid,@OutStanding out,@MaxTrans out
-	EXEC Dot_BalanceMemberSel @custid, @Balance out, @WalletFlag = @WalletFlag, @Amount = @Amount OUT
+	EXEC Dot_BalanceMemberSel @custid, @Balance out, @BonusWalletFlag = @BonusWalletFlag, @Amount = @Amount OUT
 
 	-- compare balance from bettrans -vs- balanceTable
 	--IF ISNULL(@Balance, 0) <> ISNULL(@Total, 0)

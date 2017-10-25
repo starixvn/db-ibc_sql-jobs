@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="vnteam" isFunction="0" isNested="1"></info>*/
-CREATE PROCEDURE [dbo].[Dot_BalanceDebit_BonusWalletlUpd]
+CREATE PROCEDURE [dbo].[Dot_BalanceDebit_BonusWalletUpd]
 (
 	@custID			INT,
 	@bonusId		INT,
@@ -52,7 +52,7 @@ BEGIN
 				SET @errCode = 104
 				
 				INSERT INTO BalanceErr ( Custid, BalanceGroup, BalanceAmt, ExecutedSP, ErrMsg, bonusId )
-				VALUES ( @custid, 1, @balance,'Dot_BalanceDebit_BonusWalletlUpd', 'This member custid=' + CAST(@custid AS VARCHAR(20)) + ' does not exist for the balance''s bonus wallet.', @bonusId)
+				VALUES ( @custid, 1, @balance,'Dot_BalanceDebit_BonusWalletUpd', 'This member custid=' + CAST(@custid AS VARCHAR(20)) + ' does not exist for the balance''s bonus wallet.', @bonusId)
 			END
 				
 		END TRY
@@ -61,7 +61,7 @@ BEGIN
 			SET @Success = 0
 			
 			INSERT INTO BalanceErr ( Custid, BalanceGroup, BalanceAmt, ExecutedSP, ErrMsg, bonusId )
-			VALUES ( @custid, 1, @balance,'Dot_BalanceDebit_BonusWalletlUpd',LEFT(ERROR_MESSAGE(),500), @bonusId)
+			VALUES ( @custid, 1, @balance,'Dot_BalanceDebit_BonusWalletUpd',LEFT(ERROR_MESSAGE(),500), @bonusId)
 			
 		END CATCH 
 	END
