@@ -13,7 +13,7 @@ AS
 
     Revisions:	
 		- 20170930@Harper: Get more info for MuayThai Parlay [Redmine: #82827]
-	GEN_rptBettingBySport14 '2017-10-08'
+	GEN_rptBettingBySport14 '2017-10-13'
 */ 
 BEGIN
     DELETE FROM dbo.rpt_BettingBySport
@@ -27,6 +27,8 @@ BEGIN
 	EXEC bodb02.dbo.Age_SelBalanceUpDay
 
 	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDay = BalanceUpDay FROM @tmpdate
+
+	DECLARE @ShareRate MONEY = 0.03
 
 	CREATE TABLE #tmpMuayThai (refno BIGINT, NoOfMuayThai INT, IsBettran BIT)	
 	CREATE TABLE #tmpSubParlay (refno BIGINT, NoOfSubParlay SMALLMONEY)
@@ -228,8 +230,8 @@ BEGIN
 			, SUM(actual_stake - winlost) as WLShare -- Winloss Share with Muay Thai partner
 			, -SUM(scomm) AS CommissionS -- Commission for Licensee
 			, -SUM((scomm) * (b.NoOfMuayThai/b.NoOfSubParlay)) AS CommissionSParlay 
-			, -SUM(scomm * (1 - tpositiontaking)) as CommShare -- Commission for Licensee share with Muay Thai partner
-			, -SUM(scomm * (b.NoOfMuayThai/b.NoOfSubParlay) * (1 - tpositiontaking)) as CommShareParlay
+			, -SUM(@ShareRate / (1 - tpositiontaking) * scomm) as CommShare -- Commission for Licensee share with Muay Thai partner
+			, -SUM(@ShareRate / (1 - tpositiontaking) * scomm * (b.NoOfMuayThai/b.NoOfSubParlay) ) as CommShareParlay
 			, b.customercategory AS CustomerCategory
 			, b.IsParlay
 	FROM (

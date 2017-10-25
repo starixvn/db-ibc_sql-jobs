@@ -39,6 +39,8 @@ BEGIN
 	SELECT IbcSiteID, SiteID
 	FROM OPENQUERY(DBLIC, 'SELECT IbcSiteID, SiteID FROM bodb_Licensee.dbo.view_site_list')	
 
+	DECLARE @ShareRate MONEY = 0.03
+
 	INSERT INTO #tmpbettrans
 	        ( transid ,
 	          refno ,
@@ -183,8 +185,8 @@ BEGIN
 			, SUM(actual_stake - winlost) as WLShare -- Winloss Share with Muay Thai partner
 			, -SUM(scomm) AS CommissionS -- Commission for Licensee
 			, -SUM((scomm) * (b.NoOfMuayThai/b.NoOfSubParlay)) AS CommissionSParlay 
-			, -SUM(scomm * (1 - tpositiontaking)) as CommShare -- Commission for Licensee share with Muay Thai partner
-			, -SUM(scomm * (b.NoOfMuayThai/b.NoOfSubParlay) * (1 - tpositiontaking)) as CommShareParlay
+			, -SUM(@ShareRate / (1 - tpositiontaking) * scomm) as CommShare -- Commission for Licensee share with Muay Thai partner
+			, -SUM(@ShareRate / (1 - tpositiontaking) * scomm * (b.NoOfMuayThai/b.NoOfSubParlay) ) as CommShareParlay
 			, b.customercategory AS CustomerCategory
 			, b.IsParlay
 	FROM (

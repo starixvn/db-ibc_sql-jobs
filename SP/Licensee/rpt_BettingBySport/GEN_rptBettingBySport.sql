@@ -16,7 +16,7 @@ AS
 	- 20170529@Paul: Get matchid from staging match table [Redmine: #72914]
 	- 20170930@Harper: Get more info for MuayThai Parlay [Redmine: #82827]
 
-	EXEC GEN_rptBettingBySport '2017-10-08'
+	EXEC GEN_rptBettingBySport '2017-10-28'
 */ 
 BEGIN
     DELETE FROM dbo.rpt_BettingBySport
@@ -30,6 +30,8 @@ BEGIN
 	EXEC bodb02.dbo.Age_SelBalanceUpDay
 
 	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDay = BalanceUpDay FROM @tmpdate
+
+	DECLARE @ShareRate MONEY = 0.03
 
 	CREATE TABLE #Match (MatchID INT)
 	CREATE TABLE #tmpMuayThai (refno BIGINT, NoOfMuayThai INT)
@@ -227,15 +229,14 @@ BEGIN
 			, SUM(actual_stake - winlost) as WLShare -- Winloss Share with Muay Thai partner
 			, -SUM(scomm) AS CommissionS -- Commission for Licensee
 			, -SUM((scomm) * (b.NoOfMuayThai/b.NoOfSubParlay)) AS CommissionSParlay 
-			, -SUM(scomm * (1 - tpositiontaking)) as CommShare -- Commission for Licensee share with Muay Thai partner
-			, -SUM(scomm * (b.NoOfMuayThai/b.NoOfSubParlay) * (1 - tpositiontaking)) as CommShareParlay
+			, -SUM(@ShareRate / (1 - tpositiontaking) * scomm) as CommShare -- Commission for Licensee share with Muay Thai partner
+			, -SUM(@ShareRate / (1 - tpositiontaking) * scomm * (b.NoOfMuayThai/b.NoOfSubParlay) ) as CommShareParlay
 			, b.customercategory AS CustomerCategory
 			, b.IsParlay
 	FROM #bettrans b
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site = ibcsite.site
-		LEFT JOIN bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid = siteT.IbcSiteID
-		--LEFT JOIN bodb_Licensee.dbo.Labels l WITH (NOLOCK) ON SiteT.SiteID = l.LabelID	
+		LEFT JOIN bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid = siteT.IbcSiteID		
 	GROUP BY b.winlostdate, ISNULL(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory, ibcsite.isDeposit 
 			, ProductID, b.SportType, IsParlay
 	

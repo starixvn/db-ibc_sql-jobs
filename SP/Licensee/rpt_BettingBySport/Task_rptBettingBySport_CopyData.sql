@@ -60,9 +60,9 @@ BEGIN
 								)
 	EXECUTE (@sql)	
 
-	SELECT @sql = ''
-	SELECT @sql = 'DELETE OPENQUERY(DBARC, ''SELECT * FROM ##rpt_BettingBySport_Temp WHERE rptDate = ''''' + CAST(@Date AS VARCHAR(20)) + ''''''')'
-	EXECUTE (@sql)
+	--SELECT @sql = ''
+	--SELECT @sql = 'DELETE OPENQUERY(DBARC, ''SELECT * FROM ##rpt_BettingBySport_Temp WHERE rptDate = ''''' + CAST(@Date AS VARCHAR(20)) + ''''''')'
+	--EXECUTE (@sql)
 
 END
 
