@@ -208,7 +208,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Generate
 		@os_run_priority=0, @subsystem=N'TSQL', 
 		@command=N'DECLARE @WinlossDate DATE
 SET @WinlossDate = DATEADD(DAY, -1, CONVERT(VARCHAR(10), GETDATE(), 120))
-EXEC dbo.GEN_rptBettingBySport @WinlossDate = @WinlossDate', 
+EXEC dbo.GEN_rptBettingBySport @Date = @WinlossDate', 
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
