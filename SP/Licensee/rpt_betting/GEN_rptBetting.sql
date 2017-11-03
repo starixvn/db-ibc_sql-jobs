@@ -26,6 +26,7 @@ Revisions:
 	20161205@Jim: LA - GD commercial terms changed for credit sites [RedmineID #67310]
 	20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 	20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+	20171019@Harper: LA - Shutdown KPI Report [RedmineID: #83983]
 
 Param's Explanation:
 
@@ -124,21 +125,6 @@ INSERT INTO dbo.rpt_Betting
 	    b.liveindicator,
 	    b.customercategory
 
---update MTD table
-EXEC dbo.GEN_RptKPI_MTD_Betting
-    @date = @date, 
-    @date2 = @date2,
-    @isBA = 0
---update KPI NumberGame
-exec GEN_RptKPI_MTD_Betting_3rdproduct
-    @date = @date, 
-    @date2 = @date2    
-    
-/*EXEC [dbo].[GEN_RptKPI_MTD]
-    @date = @date, 
-    @date2 = @date2,
-    @stattype = 2,
-    @isBA = 0*/
 GO
 GRANT EXECUTE ON [dbo].[GEN_rptBetting] TO [bodbLicenseeNet] AS [dbo]
 GO

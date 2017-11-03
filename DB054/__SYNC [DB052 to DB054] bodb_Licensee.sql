@@ -25,21 +25,6 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'__SYNC: [DB052 to DB054] bod
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'vnDBA', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [KPI - Sync data]    Script Date: 01/08/2015 23:27:54 ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'KPI - Sync data', 
-		@step_id=1, 
-		@cmdexec_success_code=0, 
-		@on_success_action=3, 
-		@on_success_step_id=0, 
-		@on_fail_action=2, 
-		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
-		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.Task_Stdby_Sync_Dep_KPI', 
-		@database_name=N'bodb_licensee', 
-		@flags=0
-IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 /****** Object:  Step [OA - Sync data]    Script Date: 01/08/2015 23:27:54 ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'OA - Sync data', 
 		@step_id=2, 
