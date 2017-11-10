@@ -161,7 +161,7 @@ BEGIN
 						CASE @GenRptBettingBySport
 							WHEN 1 THEN ''
 							WHEN 2 THEN '(UUS only) '
-						END + 'Has data mismatch between rpt_BettingBySport table and source with kind of ticket is: (' + @IsParLay + ')'
+						END + 'Has data mismatch between rpt_BettingBySport table and source with kind of ticket is: (' + @IsParLay + ' ticket)'
 			END
 		END 
 		

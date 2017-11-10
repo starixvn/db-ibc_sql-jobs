@@ -9,7 +9,7 @@ GO
 ALTER PROCEDURE [dbo].[Task_rptBettingBySport_CheckData]
 	@WinlostDate		SMALLDATETIME,
 	@HasDataMismatch	TINYINT OUTPUT, --0: No mismatch; 1: Has real currencies; 2: UUS only
-	@IsParlay			VARCHAR(5) OUTPUT -- 0: single ticket; 1: parlay ticket
+	@IsParlay			VARCHAR(20) OUTPUT -- 0: single ticket; 1: parlay ticket
 AS
 
 /*
@@ -20,7 +20,7 @@ AS
 	Revisions:
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
 
-	DECLARE @HasDataMismatch TINYINT, @IsParlay VARCHAR(5)
+	DECLARE @HasDataMismatch TINYINT, @IsParlay VARCHAR(20)
 	EXEC Task_rptBettingBySport_CheckData @WinlostDate = '2017-09-29', @HasDataMismatch = @HasDataMismatch OUTPUT, @IsParlay = @IsParlay OUTPUT
 	SELECT @HasDataMismatch, @IsParlay
 */
@@ -365,10 +365,13 @@ BEGIN
 	INSERT INTO #Log(TableName, IsSource, IsParlay, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
 	SELECT	'bettrans14', 1, IsParlay, CurrencyID, SUM(Turnover), SUM(CustomerWL), SUM(BetCount),
 			(
-				SELECT	SUM(LicenseeWL) AS LicWL, SUM(CommissionS) AS CommS, SUM(CommShare) AS CommShare,
-						SUM(AdjustedLicenseeWL) AS ALicWL, SUM(AdjustedCustomerWL) AS AWL, SUM(AdjustedCommissionS) AS ACommS, SUM(AdjustedCommShare) AS ACommShare
+				SELECT	s1.StatusId AS StatusId, s1.SiteID AS siteID, s1.CustomerCategory AS CC
+						, SUM(LicenseeWL) AS LicWL, SUM(CommissionS) AS CommS, SUM(CommShare) AS CommShare
+						, SUM(AdjustedLicenseeWL) AS ALicWL, SUM(AdjustedCustomerWL) AS AWL, SUM(AdjustedCommissionS) AS ACommS, SUM(AdjustedCommShare) AS ACommShare
 				FROM #Source s1
-				WHERE s1.CurrencyId = s.CurrencyId AND s1.IsParlay = s.IsParlay
+				WHERE s1.CurrencyId = s.CurrencyId AND s1.IsParlay = s.IsParlay AND s1.StatusId = s.StatusId AND s1.SiteID = s.SiteID
+						AND s1.CustomerCategory = s.CustomerCategory
+				GROUP BY StatusId, SiteID, CustomerCategory
 				FOR XML PATH('')
 			) AS ExtraInfo
 	FROM #Source s
@@ -380,16 +383,19 @@ BEGIN
 			AND s.AdjustedLicenseeWL = t.AdjustedLicenseeWL AND s.AdjustedCustomerWL = t.AdjustedCustomerWL
 			AND s.AdjustedCommissionS = t.AdjustedCommissionS AND s.AdjustedCommShare = t.AdjustedCommShare
 			AND s.CustomerCategory = t.CustomerCategory AND s.IsParlay = t.IsParlay)
-	GROUP BY CurrencyId, IsParlay
+	GROUP BY CurrencyId, IsParlay, StatusId, SiteID, CustomerCategory
 	
 	UNION ALL
 	
 	SELECT 'rpt_BettingBySport', 0, IsParlay, CurrencyID, SUM(Turnover), SUM(CustomerWL), SUM(BetCount),
 			(
-				SELECT	SUM(LicenseeWL) AS LicWL, SUM(CommissionS) AS CommS, SUM(CommShare) AS CommShare,
-					    SUM(AdjustedLicenseeWL) AS ALicWL, SUM(AdjustedCustomerWL) AS AWL, SUM(AdjustedCommissionS) AS ACommS, SUM(AdjustedCommShare) AS ACommShare
+				SELECT	t1.StatusId AS StatusId, t1.SiteID AS siteID, t1.CustomerCategory AS CC
+						, SUM(LicenseeWL) AS LicWL, SUM(CommissionS) AS CommS, SUM(CommShare) AS CommShare
+					    , SUM(AdjustedLicenseeWL) AS ALicWL, SUM(AdjustedCustomerWL) AS AWL, SUM(AdjustedCommissionS) AS ACommS, SUM(AdjustedCommShare) AS ACommShare 
 				FROM #Target t1
-				WHERE t1.CurrencyId = t.CurrencyId AND t1.IsParlay = t.IsParlay
+				WHERE t1.CurrencyId = t.CurrencyId AND t1.IsParlay = t.IsParlay AND t1.StatusId = t.StatusId AND t1.SiteID = t.SiteID
+					AND t1.CustomerCategory = t.CustomerCategory
+				GROUP BY SiteID, StatusId, CustomerCategory
 				FOR XML PATH('')
 			) AS ExtraInfo
 	FROM #Target t
@@ -402,7 +408,7 @@ BEGIN
 			AND s.AdjustedLicenseeWL = t.AdjustedLicenseeWL AND s.AdjustedCustomerWL = t.AdjustedCustomerWL
 			AND s.AdjustedCommissionS = t.AdjustedCommissionS AND s.AdjustedCommShare = t.AdjustedCommShare
 			AND s.CustomerCategory = t.CustomerCategory AND s.IsParlay = t.IsParlay)
-	GROUP BY CurrencyId, IsParlay;
+	GROUP BY CurrencyId, IsParlay, StatusId, SiteID, CustomerCategory;
 
 	SET @T_Count = @@ROWCOUNT;
 
@@ -422,7 +428,7 @@ BEGIN
 
 	SELECT @IsParlay = STUFF(
 			(
-				SELECT DISTINCT ', ' + CAST(IsParlay AS VARCHAR(5))
+				SELECT DISTINCT ', ' + CASE WHEN IsParlay = 1 THEN 'Parlay' ELSE 'Normal' END
 				FROM #Log
 				FOR XML PATH('')
 			), 1, 2, ''
