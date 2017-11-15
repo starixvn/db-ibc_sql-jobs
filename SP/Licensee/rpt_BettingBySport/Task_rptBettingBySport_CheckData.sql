@@ -19,6 +19,7 @@ AS
 	Original:
 	Revisions:
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
+		- 20171114@Harper: Fix Date Range when get detail ticket 
 
 	DECLARE @HasDataMismatch TINYINT, @IsParlay VARCHAR(20)
 	EXEC Task_rptBettingBySport_CheckData @WinlostDate = '2017-09-29', @HasDataMismatch = @HasDataMismatch OUTPUT, @IsParlay = @IsParlay OUTPUT
@@ -85,14 +86,6 @@ BEGIN
 				
 	
 	-- Source
-	DECLARE @MoveBetsDay	SMALLDATETIME, 
-			@BalanceUpDay	SMALLDATETIME
-	DECLARE @tmpdate		TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME) 
-
-	INSERT INTO @tmpdate(BalanceUpDay, MoveBetsDay)
-	EXEC bodb02.dbo.Age_SelBalanceUpDay
-
-	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDay = BalanceUpDay FROM @tmpdate
 
 	DECLARE @ShareRate MONEY = 0.03
 
@@ -153,8 +146,7 @@ BEGIN
 	SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai
 	FROM #tmpbettrans b
 		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno		
-	WHERE bm.oddsspread = 44 AND bm.statusID NOT IN (101, 102, 103) -- reject, void, refund	
-		AND bm.winlostdate <= @MoveBetsDay AND bm.winlostdate >= @BalanceUpDay 	
+	WHERE bm.oddsspread = 44 AND bm.statusID NOT IN (101, 102, 103) -- reject, void, refund			
 	GROUP BY bm.refno
 
 	-- bettransm
@@ -162,8 +154,7 @@ BEGIN
 	SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai, 1
 	FROM #tmpbettrans b 
 		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON bm.refno = b.refno		
-	WHERE bm.oddsspread = 44 AND bm.statusID NOT IN (101, 102, 103)
-		AND bm.winlostdate > @MoveBetsDay
+	WHERE bm.oddsspread = 44 AND bm.statusID NOT IN (101, 102, 103)		
 	GROUP BY bm.refno
 	
 	-- Handle data for bettransM_BK		
@@ -183,7 +174,7 @@ BEGIN
 		SELECT m.matchid
 		FROM DBARC.bodb_Archive.dbo.match_bk m WITH (NOLOCK)
 		WHERE m.sporttype = 44 
-			AND m.eventdate >= DATEADD(DAY, -14, @WinlostDate) AND m.eventdate < @BalanceUpDay
+			AND m.eventdate >= DATEADD(DAY, -14, @WinlostDate)
 
 		IF EXISTS (SELECT 1 FROM #MatchBK)
 		BEGIN					
@@ -191,8 +182,7 @@ BEGIN
 			SELECT bm.refno, bm.transid, bm.matchid, bm.oddsspread
 			FROM DBARC.bodb_Archive.dbo.bettransm bm WITH (NOLOCK)
 				INNER JOIN #bettransmBK b ON bm.refno = b.refno
-			WHERE bm.winlostdate >= DATEADD(DAY, -14, @WinlostDate) 
-				AND bm.winlostdate < @BalanceUpDay
+			WHERE bm.winlostdate >= DATEADD(DAY, -14, @WinlostDate) 				
 				AND bm.statusID NOT IN (101, 102, 103)
 
 			CREATE CLUSTERED INDEX [IX_refnoBK] ON #tmpBK ([refno])
@@ -221,16 +211,14 @@ BEGIN
 		SELECT bm.refno, COUNT(bm.transid)
 		FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
 		WHERE bm.statusID NOT IN (101, 102, 103)
-			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)
-			AND bm.winlostdate > @MoveBetsDay 
+			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)			
 		GROUP BY bm.refno
 
 		INSERT INTO #tmpSubParlay( refno, NoOfSubParlay )	
 		SELECT bm.refno, COUNT(bm.transid)
 		FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 		WHERE bm.statusID NOT IN (101, 102, 103)
-			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)
-			AND bm.winlostdate <= @MoveBetsDay AND bm.winlostdate >= @BalanceUpDay 	 
+			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)			
 		GROUP BY bm.refno
 	
 		DELETE b

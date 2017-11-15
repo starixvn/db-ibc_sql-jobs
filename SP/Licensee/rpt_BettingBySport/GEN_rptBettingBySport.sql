@@ -15,21 +15,13 @@ AS
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20170529@Paul: Get matchid from staging match table [Redmine: #72914]
 	- 20170930@Harper: Get more info for MuayThai Parlay [Redmine: #82827]
+	- 20171114@Harper: Fix Date Range when get detail ticket 
 
 	EXEC GEN_rptBettingBySport '2017-10-28'
 */ 
 BEGIN
     DELETE FROM dbo.rpt_BettingBySport
-	WHERE rptDate = @Date
-
-	DECLARE @MoveBetsDay	SMALLDATETIME, 
-			@BalanceUpDay	SMALLDATETIME
-	DECLARE @tmpdate		TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME) 
-
-	INSERT INTO @tmpdate(BalanceUpDay, MoveBetsDay)
-	EXEC bodb02.dbo.Age_SelBalanceUpDay
-
-	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDay = BalanceUpDay FROM @tmpdate
+	WHERE rptDate = @Date	
 
 	DECLARE @ShareRate MONEY = 0.03
 
@@ -56,8 +48,7 @@ BEGIN
 	SELECT bm.refno, COUNT(bm.transid)
 	FROM #Match m 
 		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON m.MatchID = bm.matchid	
-	WHERE bm.statusID NOT IN (101, 102, 103) -- reject, void, refund
-		AND bm.winlostdate > @MoveBetsDay 
+	WHERE bm.statusID NOT IN (101, 102, 103) -- reject, void, refund		
 	GROUP BY bm.refno
 
 	-- bettransm14
@@ -65,8 +56,7 @@ BEGIN
 	SELECT bm.refno, COUNT(bm.transid)
 	FROM #Match m 
 		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON m.MatchID = bm.matchid
-	WHERE bm.statusID NOT IN (101, 102, 103) 
-		AND bm.winlostdate <= @MoveBetsDay
+	WHERE bm.statusID NOT IN (101, 102, 103) 		
 	GROUP BY bm.refno
 
 	CREATE CLUSTERED INDEX IX_refno ON #tmpMuayThai (refno)
@@ -79,8 +69,7 @@ BEGIN
 		SELECT bm.refno, COUNT(bm.transid)
 		FROM bodb02.dbo.bettransm bm WITH (NOLOCK) 			
 		WHERE bm.statusID NOT IN (101, 102, 103)			
-			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)
-			AND bm.winlostdate > @MoveBetsDay 
+			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)			 
 		GROUP BY bm.refno
 
 		-- bettransm14
@@ -88,8 +77,7 @@ BEGIN
 		SELECT bm.refno, COUNT(bm.transid)
 		FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 		WHERE bm.statusID NOT IN (101, 102, 103)			
-			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)
-			AND bm.winlostdate <= @MoveBetsDay
+			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)			
 		GROUP BY bm.refno
 
 		INSERT INTO #tmpBettrans ( transID, NoOfMuayThai, NoOfSubParlay )	
