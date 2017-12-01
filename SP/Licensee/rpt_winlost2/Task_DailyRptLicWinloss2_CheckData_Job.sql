@@ -11,6 +11,7 @@ AS
 	Revision:   
     - 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20161007@Jim: Check & correct data for rpt_BettingColossusBets [RedminID : #63785]
+	- 20171130@Sophia: Add step Check & correct data to rptLicWinlossGMT [Redmine: #84932]
 */  
 BEGIN  
 	SET NOCOUNT ON   
@@ -84,11 +85,19 @@ BEGIN
 		BEGIN CATCH 
 			SET @ErrorMsg = @ErrorMsg + 'Failed to check & correct data for rptBettingParlay on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) 
 		END CATCH
+		
 		BEGIN TRY
-						EXEC  dbo.Task_rptBettingColossusBets_CheckData @winlostdate = @WinlostDate
+			EXEC  dbo.Task_rptBettingColossusBets_CheckData @winlostdate = @WinlostDate
 		END TRY
 		BEGIN CATCH 
 			SET @ErrorMsg = @ErrorMsg + 'Failed to check & correct data for rpt_BettingColossusBets on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) 
+		END CATCH
+		
+		BEGIN TRY
+			EXEC dbo.Task_rptLicWinlossGMT_CheckData @winlostdate = @WinlostDate
+		END TRY
+		BEGIN CATCH
+			SET @ErrorMsg = 'Failed to check & correct data for rptLicWinlossGMT on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
 		END CATCH
 		
 	END
