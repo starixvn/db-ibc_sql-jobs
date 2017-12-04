@@ -135,8 +135,8 @@ DECLARE --SB
 	DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),Status INT, Turnover MONEY, Winloss MONEY,BetCount INT)	
 
 	INSERT INTO @tblData  (ProductPrefix ,Status,Turnover,Winloss,BetCount)	
-	SELECT  CASE WHEN b.bettype IN (901,902,903) THEN 'BT' 
-				WHEN b.bettype IN (911, 912, 913) THEN 'CO' 
+	SELECT  CASE WHEN b.bettype IN (901,902,903,904) THEN 'BT' 
+				WHEN b.bettype IN (911, 912, 913, 914) THEN 'CO' 
 				ELSE t.ProductPrefix END ProductPrefix 
 			 ,Status
 			 ,SUM(TurnOver) TurnOver
@@ -148,8 +148,8 @@ DECLARE --SB
 	WHERE b.rptDate = @Date
 		AND b.Status IN (111,112,113,114,115)
 		AND b.currencyID NOT IN(20,27,28)
-	GROUP BY CASE WHEN b.bettype IN (901,902,903) THEN 'BT' 
-				WHEN b.bettype IN (911, 912, 913) THEN 'CO' 
+	GROUP BY CASE WHEN b.bettype IN (901,902,903,904) THEN 'BT' 
+				WHEN b.bettype IN (911, 912, 913, 914) THEN 'CO' 
 				ELSE t.ProductPrefix END
 			 ,Status	
   
