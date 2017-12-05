@@ -212,7 +212,14 @@ INSERT INTO @tblTmp	(ID
 					,VB  
 					,MGCLC  
 					,MGCRNG  
-					,VS)					   
+					,VS
+					,CB
+					,AB
+					,NG2
+					,FW
+					,CO
+					,VS2
+					,LT)					   
 EXEC dbo.GET_DepositDataToValidate_Betting @Date=@Date
 					
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
