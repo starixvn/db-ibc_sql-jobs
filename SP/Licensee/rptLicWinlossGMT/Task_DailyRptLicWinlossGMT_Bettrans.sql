@@ -1,6 +1,6 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinlossGMT_Bettrans] 
-	@Winlostdate SMALLDATETIME 
+	@RptDate SMALLDATETIME 
 AS  
 /*  
 	Created: 20171130@Sophia
@@ -14,13 +14,13 @@ AS
 BEGIN
 	SET NOCOUNT ON
     
-	DELETE FROM dbo.rptLicWinlossGMT WITH (ROWLOCK) WHERE Winlostdate = @Winlostdate 
+	DELETE FROM dbo.rptLicWinlossGMT WITH (ROWLOCK) WHERE RptDate = @RptDate 
 
 	--Member Level  
 	INSERT INTO dbo.rptLicWinlossGMT(  
 		TimeZone
-		,WinlostDate
-		,WinlostDate2
+		,RptDate
+		,RptDateGMT
 		,Username
 		,Username2
 		,Custid
@@ -53,7 +53,7 @@ BEGIN
 	SELECT 
 		8 AS TimeZone	
 		,b.winlostdate    
-		,CONVERT(DATE,DATEADD(HOUR, 12, ISNULL(m.GlobalShowTime,b.Winlostdate))) AS WinlostDate2
+		,CONVERT(DATE,DATEADD(HOUR, 12, ISNULL(m.GlobalShowTime,b.Winlostdate))) AS RptDateGMT
 		,c.username  
 		,c.username2  
 		,c.custid  
@@ -103,7 +103,7 @@ BEGIN
 		LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) 
 			ON b.transid = BA.transid 	 
 	WHERE  
-			 b.winlostdate = @winlostdate   
+			 b.winlostdate = @RptDate   
 			AND b.statusID IN (101,111,112,113)  --REJECT, DRAW, WON, LOSE  
 			AND b.bettype <= 19999   
 			AND c.roleid = 1 	 
@@ -144,8 +144,8 @@ BEGIN
 	--Agent Level (sum on member)  
 	INSERT INTO dbo.rptLicWinlossGMT (  
 		TimeZone
-		,WinlostDate
-		,WinlostDate2
+		,RptDate
+		,RptDateGMT
 		,Username
 		,Username2
 		,Custid
@@ -177,8 +177,8 @@ BEGIN
 	)  
 	SELECT  
 		b.TimeZone
-		,b.WinlostDate
-		,b.WinlostDate2
+		,b.RptDate
+		,b.RptDateGMT
 		,c.Username
 		,c.Username2
 		,c.Custid
@@ -211,13 +211,13 @@ BEGIN
 		dbo.rptLicWinlossGMT b WITH (NOLOCK)  
 		INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid  
 	WHERE  
-		b.winlostdate = @winlostdate  
+		b.RptDate = @RptDate  
 		and b.roleid = 1  
 		and c.roleid = 2  
 	GROUP BY
 		b.TimeZone
-		,b.WinlostDate
-		,b.WinlostDate2
+		,b.RptDate
+		,b.RptDateGMT
 		,c.Username
 		,c.Username2
 		,c.Custid
