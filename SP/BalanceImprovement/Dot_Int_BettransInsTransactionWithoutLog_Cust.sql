@@ -55,6 +55,7 @@ History:
 	- 20151120@Francis: remove unecessary log values, remove calling linkserver DBLOG and return log params
 	- 20160118@Kathy: get balance from bettransRNG & bettransLC [Redmine:#50674]
 	- 20170110@Walter: Insert before balance into bettrans.balance
+	- 20171102:Patrick: Can't make transfer/withdrawal during MB/BU time [Redmine:#82768]
 	- 20170815@Bobby: 80775 - Update bonus info when depositing cash to join into bonus program
 
 
@@ -246,6 +247,19 @@ BEGIN
 		RETURN
 	END
 
+	--//1st check: MB/BU is running?
+	 EXEC dbo.Acc_Core_IsMainProcessRunning
+		  @CustId = @custid
+		, @UplineId = @recommend
+		, @IsDepositMember = 1
+		, @ErrCode = @ErrCode OUTPUT
+		, @ErrMsg = @ErrMsg OUTPUT
+
+	IF @ErrCode <> 0
+	BEGIN
+		SELECT @ErrMsg = @ErrMsg, @ErrCode = 333	
+		RETURN
+	END
 	----------------------------------
 	--Check enough balance for withdrawing
 	SELECT @balance = SUM(winlost-actual_stake+playercomm) FROM dbo.bettrans WITH(NOLOCK) WHERE custid = @custid
@@ -264,7 +278,21 @@ BEGIN
 	FROM	dbo.bettransLC WITH(NOLOCK)
 	WHERE	custid = @custID 
 			AND IsSum=0
-  
+	
+	--//2nd check: MB/BU is running?
+	 EXEC dbo.Acc_Core_IsMainProcessRunning
+		  @CustId = @custid
+		, @UplineId = @recommend
+		, @IsDepositMember = 1
+		, @ErrCode = @ErrCode OUTPUT
+		, @ErrMsg = @ErrMsg OUTPUT
+
+	IF @ErrCode <> 0
+	BEGIN
+		SELECT @ErrMsg = @ErrMsg, @ErrCode = 333	
+		RETURN
+	END
+
 	SELECT @balance_bettransRNG = ISNULL(@balance_bettransRNG,0)
 			,@balance_bettransLC = ISNULL(@balance_bettransLC,0)
 
@@ -445,4 +473,4 @@ BEGIN
 	EXEC dbo.WriteLog_UserLog @UserID = @custid, @Doing = @LogData
 
 END
-GO
+GO 

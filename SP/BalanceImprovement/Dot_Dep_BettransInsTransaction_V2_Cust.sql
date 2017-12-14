@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="Dot_Member" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="Dot_Member,Dot_Bonus" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE  [dbo].[Dot_Dep_BettransInsTransaction_V2_Cust] 
 	@amount money,	
 	@custid int,
@@ -53,10 +53,11 @@ History:
 	- 20160105@Cooper:add bettype 22005 set  @IsForced = 1 for 12bet dummy to dummy transfer 
 	- 20160118@Kathy: get balance from bettransRNG & bettransLC [Redmine:#50674]
 	- 20160921@Scott(DBTrans): Add @BetCheck of parameter for record Licensee DB transation ID.
+	- 20171102:Patrick: Can't make transfer/withdrawal during MB/BU time [Redmine:#82768]
 	- 20170815@Bobby: 80775 - Update bonus info when depositing cash to join into bonus program
 
 Param's Explanation:
-‧ @bal_custid: Custid of "Balance" (dummy) account to record opposite value for transaction
+? @bal_custid: Custid of "Balance" (dummy) account to record opposite value for transaction
 				For ex: 12BetManilaBankUS$, 12BetNetellerGBP
 	
 		Full structure of balance accounts:
@@ -66,11 +67,11 @@ Param's Explanation:
 
 		--ACC Member	12BETMBankUS$		12BETMBankEURO
 
-‧ @amount:
+? @amount:
 	Deposit, Withdrawal, Bonus: positive value
 	Adjustment: can be either positive or negative, depend on the inputted amount
 
-‧ @bettype:
+? @bettype:
 		
 	22001: DEPOSIT
 	22002: WITHDRAWAL
@@ -80,13 +81,13 @@ Param's Explanation:
 	22006: TRANSFER BETWEEN IBC AND THIRD PARTY SYSTEM (For Playtech and AsiaBet88)
 	
 	
-‧ @ErrCode:
+? @ErrCode:
 	= 0: Transaction recorded successfully.
 	> 0: Specific Error.
 	
-‧ @ErrMsg: Error description.
+? @ErrMsg: Error description.
 
-‧ @IsCharge:
+? @IsCharge:
 	= 1: is charge transation, so not check the negative balance
 
 */
@@ -206,6 +207,20 @@ END
 	if @bettype=@DWIT
 		AND @IsCharge = 0 --only check when not Charge transaction, and is Withdrawal
 	BEGIN
+		--//1st check: MB/BU is running?
+		EXEC dbo.Acc_Core_IsMainProcessRunning
+			  @CustId = @custid
+			, @UplineId = @recommend
+			, @IsDepositMember = 1
+			, @ErrCode = @ErrCode OUTPUT
+			, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			SELECT @ErrMsg = @ErrMsg, @ErrCode = 333
+			RETURN
+		END
+
 		select @balance = sum(winlost-actual_stake+playercomm) from bettrans with (NOLOCK) where custid = @custid
 		select @balance = isnull(@balance, 0)	
 		
@@ -222,7 +237,21 @@ END
 		FROM	dbo.bettransLC WITH(NOLOCK)
 		WHERE	custid = @custID 
 				AND IsSum=0
-	  
+		
+		--//2nd check: MB/BU is running?
+		EXEC dbo.Acc_Core_IsMainProcessRunning
+			  @CustId = @custid
+			, @UplineId = @recommend
+			, @IsDepositMember = 1
+			, @ErrCode = @ErrCode OUTPUT
+			, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			SELECT @ErrMsg = @ErrMsg, @ErrCode = 333
+			RETURN
+		END
+
 		SELECT @balance_bettransRNG = ISNULL(@balance_bettransRNG,0)
 				,@balance_bettransLC = ISNULL(@balance_bettransLC,0)
 
@@ -423,5 +452,5 @@ END TRY
 BEGIN CATCH
 	-- if write log error: not return error code
 END CATCH
-GO
+GO 
 
