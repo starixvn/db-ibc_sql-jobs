@@ -1,5 +1,5 @@
 /*<info serverAlias="DBRPT-bodb_report" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_DailyRptLicWinlossGMT_BettransBK]
+ALTER PROCEDURE [dbo].[Task_DailyRptLicWinlossGMT_BettransBK]
 	@FromDate SMALLDATETIME,
 	@ToDate	SMALLDATETIME = NULL,
 	@TimeZone SMALLINT = NULL
@@ -11,7 +11,7 @@ AS
 	Revisions:  
 	- 20171213@Paul: initial data. Apply for Sportsbook first [redmine: #84932]
 	
-	EXEC Task_DailyRptLicWinlossGMT_Bettrans14 '2017-11-30'
+	EXEC Task_DailyRptLicWinlossGMT_BettransBK '2017-11-01'
 */  
 BEGIN
 	SET NOCOUNT ON
@@ -35,62 +35,25 @@ BEGIN
 	END
 
 	DECLARE @RecordID TINYINT = 1,
-			@RptDate SMALLDATETIME
+			@RptDate SMALLDATETIME,
+			@ProcessingTimeZone SMALLINT
 
-	CREATE TABLE #rptLicWinlossGMT(
-		[TimeZone] [smallint] NULL,
-		[RptDate] [smalldatetime] NULL,
-		[RptDateGMT] [smalldatetime] NULL,
-		[Username] [nvarchar](50) NULL,
-		[Username2] [nvarchar](50) NULL,
-		[Custid] [int] NULL,
-		[Roleid] [int] NULL,
-		[Recommend] [int] NULL,
-		[Mrecommend] [int] NULL,
-		[Srecommend] [int] NULL,
-		[Bettype] [smallint] NULL,
-		[Sporttype] [smallint] NULL,
-		[ProductId] [smallint] NULL,
-		[Turnover] [money] NULL,
-		[Winlost] [money] NULL,
-		[AWinlost] [money] NULL,
-		[MWinlost] [money] NULL,
-		[SWinlost] [money] NULL,
-		[PlayerComm] [money] NULL,
-		[Comm] [money] NULL,
-		[AComm] [money] NULL,
-		[SComm] [money] NULL,
-		[BetEffective] [money] NULL,
-		[WinlostVirtual] [money] NULL,
-		[CommVirtual] [money] NULL,
-		[BetCount] [int] NULL,
-		[Currency] [smallint] NULL,
-		[StatusID] [smallint] NULL,
-		[IsBA] [bit] NULL,
-		[IsMobile] [bit] NULL,
-		[Betfrom] [nvarchar](1) NULL
-	)
-
-	WHILE 1 = 1
+	WHILE EXISTS(SELECT 1 FROM @TimeZones WHERE RecordID = @RecordID)
 	BEGIN
-		TRUNCATE TABLE #rptLicWinlossGMT
+		SELECT	@RptDate = @FromDate
 
-		SELECT	@TimeZone = NULL,
-				@RptDate = @FromDate
-
-		SELECT @TimeZone = TimeZone
+		SELECT @ProcessingTimeZone = TimeZone
 		FROM @TimeZones
 		WHERE RecordID = @RecordID
-
-		IF @TimeZone IS NULL
-		BEGIN
-			BREAK
-		END
 	
 		WHILE @RptDate <= @ToDate
 		BEGIN
+			DELETE FROM dbo.rptLicWinlossGMTTmp WITH(ROWLOCK, UPDLOCK) 
+			WHERE RptDate = @RptDate 
+				AND TimeZone = @ProcessingTimeZone
+
 			--Member Level  
-			INSERT INTO #rptLicWinlossGMT(  
+			INSERT INTO dbo.rptLicWinlossGMTTmp(  
 				TimeZone
 				,RptDate
 				,RptDateGMT
@@ -124,9 +87,9 @@ BEGIN
 				,Betfrom
 			  )  
 			SELECT 
-				@TimeZone AS TimeZone	
+				@ProcessingTimeZone AS TimeZone	
 				,b.winlostdate    
-				,CONVERT(DATE, DATEADD(HOUR, @TimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate))) AS RptDateGMT
+				,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate))) AS RptDateGMT
 				,c.username  
 				,c.username2  
 				,c.custid  
@@ -190,7 +153,7 @@ BEGIN
 			 
 			GROUP BY 
 				b.winlostdate
-				,CONVERT(DATE, DATEADD(HOUR, @TimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate)))
+				,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate)))
 				,c.username  
 				,c.username2  
 				,c.custid 
@@ -213,7 +176,7 @@ BEGIN
 					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z') THEN b.betfrom ELSE '' END   
 
 			--Agent Level (sum on member)  
-			INSERT INTO #rptLicWinlossGMT (  
+			INSERT INTO dbo.rptLicWinlossGMTTmp (  
 				TimeZone
 				,RptDate
 				,RptDateGMT
@@ -254,9 +217,9 @@ BEGIN
 				,c.Username2
 				,c.Custid
 				,2
-				,b.Recommend
-				,b.Mrecommend
-				,b.Srecommend
+				,c.Recommend
+				,c.Mrecommend
+				,c.Srecommend
 				,b.Bettype
 				,b.Sporttype
 				,b.ProductId
@@ -279,12 +242,12 @@ BEGIN
 				,b.IsMobile
 				,b.Betfrom
 			FROM  
-				#rptLicWinlossGMT b WITH (NOLOCK)  
+				dbo.rptLicWinlossGMTTmp b WITH (NOLOCK)  
 				INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid  
-			WHERE  
-				b.RptDate = @RptDate  
-				and b.roleid = 1  
-				and c.roleid = 2  
+			WHERE b.RptDate = @RptDate  
+				AND b.TimeZone = @ProcessingTimeZone
+				AND b.roleid = 1  
+				AND c.roleid = 2 
 			GROUP BY
 				b.TimeZone
 				,b.RptDate
@@ -292,9 +255,9 @@ BEGIN
 				,c.Username
 				,c.Username2
 				,c.Custid
-				,b.Recommend
-				,b.Mrecommend
-				,b.Srecommend
+				,c.Recommend
+				,c.Mrecommend
+				,c.Srecommend
 				,b.Bettype
 				,b.Sporttype
 				,b.ProductId 
@@ -305,79 +268,8 @@ BEGIN
 				,b.Betfrom
 
 			SET @RptDate = DATEADD(DAY, 1, @RptDate)
-		END
 
-		IF EXISTS(SELECT 1 FROM #rptLicWinlossGMT)
-		BEGIN
-			DELETE DBLIC.bodb_LicenseeReport.dbo.rptLicWinlossGMT WITH(ROWLOCK, UPDLOCK)
-			WHERE RptDate = @RptDate
-				AND TimeZone = @TimeZone
-
-			INSERT INTO DBLIC.bodb_LicenseeReport.dbo.rptLicWinlossGMT(  
-				TimeZone
-				,RptDate
-				,RptDateGMT
-				,Username
-				,Username2
-				,Custid
-				,Roleid
-				,Recommend
-				,Mrecommend
-				,Srecommend
-				,Bettype
-				,Sporttype
-				,ProductId
-				,Turnover
-				,Winlost
-				,AWinlost
-				,MWinlost
-				,SWinlost
-				,BetEffective
-				,playercomm
-				,Comm
-				,AComm
-				,SComm		
-				,WinlostVirtual
-				,CommVirtual
-				,BetCount
-				,Currency
-				,StatusID
-				,IsBA
-				,IsMobile
-				,Betfrom
-			)
-			SELECT	TimeZone
-					,RptDate
-					,RptDateGMT
-					,Username
-					,Username2
-					,Custid
-					,Roleid
-					,Recommend
-					,Mrecommend
-					,Srecommend
-					,Bettype
-					,Sporttype
-					,ProductId
-					,Turnover
-					,Winlost
-					,AWinlost
-					,MWinlost
-					,SWinlost
-					,BetEffective
-					,playercomm
-					,Comm
-					,AComm
-					,SComm		
-					,WinlostVirtual
-					,CommVirtual
-					,BetCount
-					,Currency
-					,StatusID
-					,IsBA
-					,IsMobile
-					,Betfrom
-			FROM #rptLicWinlossGMT
+			WAITFOR DELAY '00:00:00.280'
 		END
 
 		SET @RecordID = @RecordID + 1

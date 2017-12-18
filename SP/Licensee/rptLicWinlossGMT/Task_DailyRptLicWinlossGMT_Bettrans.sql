@@ -35,27 +35,22 @@ BEGIN
 	END
 
 	DECLARE @RecordID TINYINT = 1,
-			@RptDate SMALLDATETIME
+			@RptDate SMALLDATETIME,
+			@ProcessingTimeZone SMALLINT
 
-	WHILE 1 = 1
+	WHILE EXISTS(SELECT 1 FROM @TimeZones WHERE RecordID = @RecordID)
 	BEGIN
-		SELECT	@TimeZone = NULL,
-				@RptDate = @FromDate
+		SELECT	@RptDate = @FromDate
 
-		SELECT @TimeZone = TimeZone
+		SELECT @ProcessingTimeZone = TimeZone
 		FROM @TimeZones
 		WHERE RecordID = @RecordID
-
-		IF @TimeZone IS NULL
-		BEGIN
-			BREAK
-		END
 	
 		WHILE @RptDate <= @ToDate
 		BEGIN
 			DELETE FROM dbo.rptLicWinlossGMT WITH(ROWLOCK, UPDLOCK) 
 			WHERE RptDate = @RptDate 
-				AND TimeZone = @TimeZone
+				AND TimeZone = @ProcessingTimeZone
 
 			--Member Level  
 			INSERT INTO dbo.rptLicWinlossGMT(  
@@ -92,9 +87,9 @@ BEGIN
 				,Betfrom
 			  )  
 			SELECT 
-				@TimeZone AS TimeZone	
+				@ProcessingTimeZone AS TimeZone	
 				,b.winlostdate    
-				,CONVERT(DATE, DATEADD(HOUR, @TimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate))) AS RptDateGMT
+				,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate))) AS RptDateGMT
 				,c.username  
 				,c.username2  
 				,c.custid  
@@ -158,7 +153,7 @@ BEGIN
 			 
 			GROUP BY 
 				b.winlostdate
-				,CONVERT(DATE, DATEADD(HOUR, @TimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate))) 
+				,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate))) 
 				,c.username  
 				,c.username2  
 				,c.custid 
@@ -222,9 +217,9 @@ BEGIN
 				,c.Username2
 				,c.Custid
 				,2
-				,b.Recommend
-				,b.Mrecommend
-				,b.Srecommend
+				,c.Recommend
+				,c.Mrecommend
+				,c.Srecommend
 				,b.Bettype
 				,b.Sporttype
 				,b.ProductId
@@ -249,10 +244,10 @@ BEGIN
 			FROM  
 				dbo.rptLicWinlossGMT b WITH (NOLOCK)  
 				INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid  
-			WHERE  
-				b.RptDate = @RptDate  
-				and b.roleid = 1  
-				and c.roleid = 2  
+			WHERE b.RptDate = @RptDate  
+				AND b.TimeZone = @ProcessingTimeZone
+				AND b.roleid = 1  
+				AND c.roleid = 2  
 			GROUP BY
 				b.TimeZone
 				,b.RptDate
@@ -260,9 +255,9 @@ BEGIN
 				,c.Username
 				,c.Username2
 				,c.Custid
-				,b.Recommend
-				,b.Mrecommend
-				,b.Srecommend
+				,c.Recommend
+				,c.Mrecommend
+				,c.Srecommend
 				,b.Bettype
 				,b.Sporttype
 				,b.ProductId 

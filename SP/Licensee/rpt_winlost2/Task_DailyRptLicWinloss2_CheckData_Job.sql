@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
  
@@ -106,3 +107,4 @@ BEGIN
 		RAISERROR (@ErrorMsg, 16, 1)
 	END
 END
+GO

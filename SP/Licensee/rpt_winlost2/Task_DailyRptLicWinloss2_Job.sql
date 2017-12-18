@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO 
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Job]
@@ -137,7 +138,7 @@ BEGIN
 		WHILE @Retry <= @MaxRetry
 		BEGIN
 			BEGIN TRY
-				EXEC dbo.Task_DailyRptLicWinlossGMT_Bettrans @winlostdate = @WinlostDate
+				EXEC dbo.Task_DailyRptLicWinlossGMT_Bettrans @FromDate = @WinlostDate
 				SET @HasError = 0
 				BREAK
 			END TRY
