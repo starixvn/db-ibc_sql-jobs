@@ -10,6 +10,7 @@ AS
 	Task: #36263 - Daily summary history data 3rd products: AGC, GD & VG
 	DB: DBTRANS.bodb02
 	Revisions: 
+		- 20171213@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -25,7 +26,7 @@ BEGIN
 	END
 
 	CREATE TABLE #LicenseeProductTable (RowId INT IDENTITY(1,1), LicenseeId INT, LicenseeName VARCHAR(50), CurrencyId TINYINT, ProductId TINYINT)
-	CREATE TABLE #3rdData (Stake MONEY, Actual_Stake MONEY, Winlost MONEY, CurrencyId TINYINT, Bettype SMALLINT)
+	CREATE TABLE #3rdData (Stake MONEY, Actual_Stake MONEY, Winlost MONEY, CurrencyId TINYINT, Bettype SMALLINT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0))
 	CREATE TABLE #ChargeRate (PartyId INT, LicenseeId INT, ProductId INT, Rate MONEY, FromDate SMALLDATETIME, ToDate SMALLDATETIME)
 	DECLARE @LicenseeTable TABLE (RowId INT IDENTITY(1,1), LicenseeId INT, LicenseeName VARCHAR(50), CurrencyId TINYINT)
 	DECLARE @DataTmp TABLE (RowId INT, CurrencyId TINYINT, Bettype SMALLINT)
@@ -44,7 +45,7 @@ BEGIN
 			FROM bodb_licensee.dbo.LicenseeCust c WITH(NOLOCK)
 				INNER JOIN bodb_licensee.dbo.Licensees l WITH(NOLOCK) ON c.LicenseeId = l.LicenseeId
 				INNER JOIN bodb_licensee.dbo.LicenseeProduct3rd p WITH(NOLOCK) ON c.LicenseeId = p.LicenseeId
-			WHERE p.ProductId IN (10,11,12)
+			WHERE p.ProductId IN (10,11,12,31)
 			GROUP BY l.LicenseeId, l.LicenseeName, c.Currency, p.ProductId
 			'')'
 	
@@ -70,7 +71,7 @@ BEGIN
 	FROM (
 		SELECT FromParty
 		FROM DBLIC.bodb_licensee.dbo.OAS_ChargeInfo WITH(NOLOCK)
-		WHERE ProductId IN (10,11,12)
+		WHERE ProductId IN (10,11,12,31)
 		GROUP BY FromParty
 	)tmp
 	
@@ -79,7 +80,7 @@ BEGIN
 	SELECT @SqlQueryChargeRate = 'SELECT PartyId, LicenseeId, ProductId, DI_Rate, Fromdate, Todate
 			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_ChargeInfo(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + '''''
-												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG'''', ''''OA'''', 1)
+												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
 			WHERE DI_Rate > 0'')'
 	
 	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
@@ -90,7 +91,7 @@ BEGIN
 	SELECT @SqlQueryChargeRate = 'SELECT PartyId, LicenseeId, ProductId, DI_Rate, Fromdate, Todate
 			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + '''''
-												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG'''', ''''OA'''', 1)
+												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
 			WHERE DI_Rate > 0'')'
 	
 	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
@@ -107,7 +108,7 @@ BEGIN
 
 	DECLARE @FinalData TABLE (CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
 		, StatusId TINYINT, Status VARCHAR(10), apositiontaking MONEY, awinlost MONEY, RefNo BIGINT, actualrate FLOAT
-		, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50))
+		, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50), PlayerComm MONEY, Comm MONEY)
 
 	WHILE EXISTS (SELECT 1 FROM @LicenseeTable WHERE RowId = @RowId)
 	BEGIN
@@ -145,6 +146,10 @@ BEGIN
 		IF CHARINDEX('12', @ProductIds, 0) > 0
 		BEGIN
 			SET @BettypeIds = @BettypeIds + ',1900'
+		END	
+		IF CHARINDEX('31', @ProductIds, 0) > 0
+		BEGIN
+			SET @BettypeIds = @BettypeIds + ',8000'
 		END	
 		
 		IF CHARINDEX('10', @ProductIds, 0) > 0 --AG Casino
@@ -203,6 +208,26 @@ BEGIN
 			EXEC (@SqlQueryFor3rd)
 		END
 		
+		IF CHARINDEX('31', @ProductIds, 0) > 0 --Exchange
+		BEGIN
+			--print ('Vegas games')
+			SELECT @SqlQueryFor3rd = ''
+				SELECT @SqlQueryFor3rd = 'SELECT Currency, 8000 AS Bettype, Stake, Actual_stake, Winlost, PlayerComm, Comm
+				FROM OPENQUERY(DBLIC, ''SELECT b.Currency, SUM(b.stakeTotal/ExVirtualRate) AS Stake, SUM(b.stakeTotal/ExVirtualRate) AS Actual_stake, 
+				SUM((b.marketTotal+b.stakeTotal)/ExVirtualRate) AS Winlost, SUM(b.commission/ExVirtualRate) AS PlayerComm, SUM(b.agentComission/ExVirtualRate) AS Comm
+				FROM bodb_3rdProduct.dbo.Sum_winloss_Exchange b WITH (NOLOCK)
+					INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) ON c.CustID = b.CustID AND c.roleid = 1
+					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON c.recommend = f.custid AND b.currency = f.currency 
+				WHERE 1 = 1'
+					+ ' AND WinlostDate BETWEEN ''''' + CONVERT(VARCHAR(10), @FromDate, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @ToDate, 112) + ''''''
+					+ ' AND b.Currency = ' + CAST(@CurrencyId AS VARCHAR)
+					+ ' AND Status IN (''''WIN'''',''''LOSE'''')'
+				+ ' GROUP BY b.Currency'
+				+ ''' )'
+			INSERT INTO #3rdData(CurrencyId, Bettype, Stake, Actual_stake, Winlost, PlayerComm, Comm)
+			EXEC (@SqlQueryFor3rd)
+		END
+		
 		IF NOT EXISTS (SELECT TOP 1 1 FROM #3rdData)
 		BEGIN
 			--PRINT('No data on that day. - WinlostDate: ' + CONVERT(VARCHAR(10), @WinlostDate, 112))
@@ -247,8 +272,8 @@ BEGIN
 							WHERE d.CurrencyId = @CurrencyIdTmp AND d.Bettype = @BettypeTmp
 								AND d.Stake = dd.Stake AND d.Actual_Stake = dd.Actual_stake AND d.Winlost = dd.Winlost)
 			BEGIN
-				INSERT INTO @FinalData(CustId, WinlostDate, Stake, Actual_Stake, Winlost, RefNo, actualrate, CurrencyId, Bettype)
-				SELECT @CustDummyId, @WinlostDate, Stake, Actual_Stake, Winlost, @RefNo, @ExchangeRate, @CurrencyIdTmp, @BettypeTmp
+				INSERT INTO @FinalData(CustId, WinlostDate, Stake, Actual_Stake, Winlost, RefNo, actualrate, CurrencyId, Bettype, PlayerComm, Comm)
+				SELECT @CustDummyId, @WinlostDate, Stake, Actual_Stake, Winlost, @RefNo, @ExchangeRate, @CurrencyIdTmp, @BettypeTmp, PlayerComm, Comm
 				FROM #3rdData tmp
 				WHERE tmp.CurrencyId = @CurrencyIdTmp AND tmp.Bettype = @BettypeTmp
 			END
@@ -364,9 +389,9 @@ BEGIN
 			, winlost
 			, awinlost
 			, 0 mwinlost
-			, 0 playercomm
-			, 0 comm
-			, 0 acomm
+			, playercomm
+			, comm
+			, comm AS acomm
 			, apositiontaking
 			, 0 mpositiontaking
 			, apositiontaking tpositiontaking --apos + mpos + spos
@@ -401,7 +426,7 @@ BEGIN
 			, '' ip
 			, transdesc
 			, 0 sdiscount
-			, 0 scomm
+			, comm AS scomm
 			, 0 spositiontaking
 			, 0 swinlost
 			, srecommend
