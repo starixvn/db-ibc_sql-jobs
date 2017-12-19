@@ -284,7 +284,8 @@ BEGIN
 		UPDATE tmp
 		SET TransDesc = CASE WHEN tmp.Bettype = 1800 THEN 'AGC' 
 							 WHEN tmp.Bettype = 1700 THEN 'GD' 
-							 WHEN tmp.Bettype = 1900 THEN 'VG' END + @AdjustmentIndicator + CONVERT(VARCHAR(10), @AdjustDate, 120)
+							 WHEN tmp.Bettype = 1900 THEN 'VG' 
+							 WHEN tmp.Bettype = 8000 THEN 'BX' END + @AdjustmentIndicator + CONVERT(VARCHAR(10), @AdjustDate, 120)
 			, awinlost = -(Winlost - Actual_stake) * (1 - r.Rate)
 			, apositiontaking = 1 - r.Rate
 			, Status = CASE WHEN Winlost - Actual_stake > 0 THEN 'WON'
