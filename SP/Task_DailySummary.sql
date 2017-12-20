@@ -60,6 +60,11 @@ Revisions:
 	- 20170710@Percy: Apply Keno Lottery [RedmineID: #78064]
 	- 20170726@Percy: Expand bettype range of OneRnG Casino - Tablet Game [RedmineID: #78424]
 	- 20170906@Percy: Apply Lucky 3 [RedmineID: #76770]
+	- 20170915@Patrick: Update code for:
+			+ Delete data bettrans/translog/bettransRnG/bettransLC/bettransG batch by batch
+			+ Add more signal to replicated servers when MB/BU starting or done
+			+ Set current datetime value to checktime field when insert ticket 19999
+			+ When processing a line then insert itself and upline's to [List]
  */
 
 SET NOCOUNT ON
@@ -414,6 +419,10 @@ EXEC dbo.ExecRep_09 @recommend =  0, @winlostdate = @winlostdate, @parlay = 2
 SET @Doing = 'Task_DailySummary : MoveBet start.2'
 EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
 
+--//remove all data in processing list
+DELETE FROM dbo.ProcessingCustList WITH(ROWLOCK)
+
+DECLARE @RowDeleted INT SET @rowDeleted = 1
 DECLARE @rec_cnt int SET @rec_cnt = 0
 DECLARE @recommend_List TABLE (recommend int PRIMARY KEY)
 INSERT INTO @recommend_List
@@ -431,34 +440,99 @@ FETCH NEXT FROM CS_recommend INTO @recommend
 
 WHILE @@FETCH_STATUS = 0
 BEGIN
+	
+	DECLARE @strRecommend VARCHAR(50), @delayTimeValue VARCHAR(20)
+	SELECT @strRecommend = CAST(@recommend AS VARCHAR(50)), @delayTimeValue = '00:00:00:020'
+	
+	--insert processing list
+	EXEC dbo.Task_Core_ProcessingCustListIns @CustIds = @strRecommend
+
+	SELECT @delayTimeValue = dbo.f_BU_GetDelayTime('Key6')
+	WAITFOR DELAY @delayTimeValue
+
 	BEGIN TRANSACTION
 		EXEC dbo.ExecRep_08 @recommend, @winlostdate /* copy ticket from [active] to [14] for bettrans */
 	COMMIT TRANSACTION
 
+	--//bettransLC
+	--//for first round
 	BEGIN TRANSACTION
-		EXEC dbo.ExecRep_09 @recommend, @winlostdate /* delete ticket from bettrans/bettransm */
+		EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettransLC', @firstRound = 1
+	COMMIT TRANSACTION
 
-	insert into bettrans
-		(ruben, [status], statusID, matchid, bettype, refno, creator, transdate,
-		custid, currency, recommend, mrecommend, srecommend,
-		winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
-		actual_stake, playercomm, comm, acomm, scomm, 
-		apositiontaking, mpositiontaking, spositiontaking, tpositiontaking,
-		actualrate, virtualrate, Username, CurrencyName, comstatus)
-	select
-		1, 'SUM', 142, 0, 19999, refno, 8, winlostdate, --99
-		b.custid, b.currency, b.recommend, b.mrecommend, b.srecommend,
-		winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
-		actual_stake, playercomm, comm, acomm, scomm,
-		0, 0, 0, 0,
-		e.actualrate, e.actualrate, c.username, e.CurrencyName, '0'
-	from 
-		bettranssum b with (nolock)
-		INNER JOIN @Exchange e ON b.currency = e.currency
-		INNER JOIN CustDB.dbo.custinfo c with (nolock) ON b.custid = c.custid AND c.roleid = 1
-	where
-		winlostdate=@winlostdate
-		AND b.recommend = @recommend
+	--//delete data on DBTrans
+	SET @RowDeleted = 1	WHILE @RowDeleted > 0
+	BEGIN
+		BEGIN TRANSACTION
+			EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettransLC', @RowDeleted = @RowDeleted OUTPUT
+		COMMIT TRANSACTION
+	END
+	
+	--//bettransRNG
+	--//for first round
+	BEGIN TRANSACTION
+		EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettransRNG', @firstRound = 1
+	COMMIT TRANSACTION
+
+	--//delete data on DBTrans
+	SET @RowDeleted = 1	WHILE @RowDeleted > 0
+	BEGIN
+		BEGIN TRANSACTION
+			EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettransRNG', @RowDeleted = @RowDeleted OUTPUT
+		COMMIT TRANSACTION
+	END
+
+	--//translog
+	--//for first round
+	BEGIN TRANSACTION
+		EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'translog', @firstRound = 1
+	COMMIT TRANSACTION
+
+	--//delete data on DBTrans
+	SET @RowDeleted = 1	WHILE @RowDeleted > 0
+	BEGIN
+		BEGIN TRANSACTION
+			EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'translog', @RowDeleted = @RowDeleted OUTPUT
+		COMMIT TRANSACTION
+	END
+
+	--//bettrans
+	--//for first round
+	BEGIN TRANSACTION
+		EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettrans', @firstRound = 1
+	COMMIT TRANSACTION
+
+	--//delete data on DBTrans
+	SET @RowDeleted = 1	WHILE @RowDeleted > 0
+	BEGIN
+		BEGIN TRANSACTION
+			EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettrans', @RowDeleted = @RowDeleted OUTPUT
+		COMMIT TRANSACTION
+	END
+
+	BEGIN TRANSACTION
+		insert into bettrans
+			(ruben, [status], statusID, matchid, bettype, refno, creator, transdate,
+			custid, currency, recommend, mrecommend, srecommend,
+			winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
+			actual_stake, playercomm, comm, acomm, scomm, 
+			apositiontaking, mpositiontaking, spositiontaking, tpositiontaking,
+			actualrate, virtualrate, Username, CurrencyName, comstatus, checktime)
+		select
+			1, 'SUM', 142, 0, 19999, refno, 8, winlostdate, --99
+			b.custid, b.currency, b.recommend, b.mrecommend, b.srecommend,
+			winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
+			actual_stake, playercomm, comm, acomm, scomm,
+			0, 0, 0, 0,
+			e.actualrate, e.actualrate, c.username, e.CurrencyName, '0', getdate()
+		from 
+			bettranssum b with (nolock)
+			INNER JOIN @Exchange e ON b.currency = e.currency
+			INNER JOIN CustDB.dbo.custinfo c with (nolock) ON b.custid = c.custid AND c.roleid = 1
+		where
+			winlostdate=@winlostdate
+			AND b.recommend = @recommend
+
 	COMMIT TRANSACTION
 
 /*
@@ -471,14 +545,18 @@ BEGIN
 		--EXEC dbo.WriteLog_UserLog @UserID = 25521, @Doing = @Doing 
 	END
 */
-	
-	WAITFOR DELAY '00:00:00:020'
+	--delete processing list
+	EXEC dbo.Task_Core_ProcessingCustListDel @CustIds = @strRecommend
+
+	--WAITFOR DELAY '00:00:00:020'
 	FETCH NEXT FROM CS_recommend INTO @recommend
 END
 
 CLOSE CS_recommend
 DEALLOCATE CS_recommend
 
+--//remove all data in processing list
+DELETE FROM dbo.ProcessingCustList WITH(ROWLOCK)
 
 -- =====================
 SET DEADLOCK_PRIORITY NORMAL
@@ -1014,5 +1092,6 @@ EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 WAITFOR DELAY '00:02:00' --- add this wait to make sure the delete event part run completely before start next day
 
 PRINT CONVERT(varchar(10), @winlostdate, 120)
+
 
 GO
