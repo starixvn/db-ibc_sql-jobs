@@ -401,7 +401,8 @@ BEGIN
 				SELECT FromDate, ToDate, Rate
 					, CASE WHEN ProductId = 10 THEN 1800
 						WHEN ProductId = 11 THEN 1700
-						WHEN ProductId = 12 THEN 1900 END Bettype
+						WHEN ProductId = 12 THEN 1900 
+						WHEN ProductId = 31 THEN 8000 END Bettype
 				FROM #ChargeRate WHERE LicenseeId = @LicenseeId
 			) r ON tmp.WinlostDate BETWEEN r.FromDate AND r.ToDate AND r.Bettype = tmp.Bettype
 			INNER JOIN CustDB.dbo.Customer c WITH(NOLOCK) ON tmp.CustId = c.custid AND c.roleid = 1
