@@ -144,7 +144,7 @@ BEGIN
 		FROM #LicenseeProductTable
 		WHERE CurrencyId = @CurrencyId AND LicenseeName = @LicenseeName
 
-		EXEC dbo.Lrf_Get_DummyAccount3rd @LicenseeName = @LicenseeName
+				EXEC dbo.Lrf_Get_DummyAccount3rd @LicenseeName = @LicenseeName
 			, @CurrencyId = @CurrencyId
 			, @CustId = @CustDummyId OUTPUT
 		

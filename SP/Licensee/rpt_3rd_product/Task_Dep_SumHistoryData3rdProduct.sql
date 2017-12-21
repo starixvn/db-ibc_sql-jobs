@@ -127,7 +127,7 @@ BEGIN
 		FROM #LicenseeProductTable
 		WHERE CurrencyId = @CurrencyId AND LicenseeName = @LicenseeName
 
-		EXEC dbo.Lrf_Get_DummyAccount3rd @LicenseeName = @LicenseeName
+				EXEC dbo.Lrf_Get_DummyAccount3rd @LicenseeName = @LicenseeName
 			, @CurrencyId = @CurrencyId
 			, @CustId = @CustDummyId OUTPUT
 		
@@ -425,6 +425,7 @@ BEGIN
 	DROP TABLE #3rdData
 	DROP TABLE #ChargeRate
 END
+
 GO
 GRANT VIEW DEFINITION ON [dbo].[Task_Dep_SumHistoryData3rdProduct] TO [vnteam] AS [dbo]
 GO
