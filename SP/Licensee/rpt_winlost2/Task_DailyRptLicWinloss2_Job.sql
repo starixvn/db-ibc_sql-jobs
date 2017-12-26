@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO 
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Job]
@@ -14,7 +15,7 @@ AS
   - 20150909@Patrick: Changes the way generate data from bettrans instead bettrans14
   - 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
   - 20161003@Jim: Add step to generate data to [bodb_LicenseeReport.rpt_BettingColossusBets]  [RedminID : #63785]
-  
+  - 20171130@Sophia: Add step gen data to rptLicWinlossGMT [Redmine: #84932]
 */  
 BEGIN  
 	SET NOCOUNT ON   
@@ -128,6 +129,21 @@ BEGIN
 			END TRY
 			BEGIN CATCH
 				PRINT 'Failed to generate data for GEN_rptBetting_ColossusBets on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' Retry times: ' + CAST(@Retry AS VARCHAR)
+				SET @Retry = @Retry + 1
+				WAITFOR DELAY '000:00:05.280'
+			END CATCH
+		END
+		
+		SELECT @Retry = 1, @HasError = 1
+		WHILE @Retry <= @MaxRetry
+		BEGIN
+			BEGIN TRY
+				EXEC dbo.Task_DailyRptLicWinlossGMT_Bettrans @FromDate = @WinlostDate
+				SET @HasError = 0
+				BREAK
+			END TRY
+			BEGIN CATCH
+				PRINT 'Failed to generate data for RptLicWinlossGMT on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' Retry times: ' + CAST(@Retry AS VARCHAR)
 				SET @Retry = @Retry + 1
 				WAITFOR DELAY '000:00:05.280'
 			END CATCH
