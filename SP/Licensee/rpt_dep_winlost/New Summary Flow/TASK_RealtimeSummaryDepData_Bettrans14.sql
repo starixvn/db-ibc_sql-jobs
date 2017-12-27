@@ -172,6 +172,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 					WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+					WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				ELSE 0 END,--SportType
 				SUM(CASE WHEN b.statusID NOT IN(101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 				SUM(CASE WHEN b.ruben=0 THEN b.actual_stake ELSE 0 END),--Outstanding
@@ -223,6 +224,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 					WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+					WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				ELSE 0 END--SportType
 			OPTION (RECOMPILE, MAXDOP 8)
 			

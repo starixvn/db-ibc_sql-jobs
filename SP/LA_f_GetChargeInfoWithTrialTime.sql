@@ -23,7 +23,7 @@ RETURNS @tbChargeInfo TABLE (ChargeId INT
 AS
 /*  Created: 20150618@Patrick
     Task : Get charge information for trial time but have charge rate for summary data to bettrans only
-    DB: DB052/bodb_Licensee  
+    DB: DBLIC/bodb_Licensee  
     Param's Explanation:
 	Revisions:
 		- 20171227@Sophia: output column ChargeType [Redmine: #82408]
