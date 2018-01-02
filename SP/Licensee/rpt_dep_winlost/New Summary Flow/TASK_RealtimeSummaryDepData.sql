@@ -18,7 +18,7 @@ AS
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 		- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
 		- 20170831@Paul: Resolve deadlock issue on bettransRnG; Change datatype of @Winlostdate [RedmineID: #82516]
-		- 20171213@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
+		- 20171225@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized

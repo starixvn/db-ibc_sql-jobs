@@ -99,7 +99,7 @@ BEGIN
 			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_ChargeInfo(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + '''''
 												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
-			WHERE DI_Rate > 0'')'
+			WHERE DI_Rate > 0 AND ChargeType = 1 '')'
 	
 	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
 	EXEC (@SqlQueryChargeRate)
@@ -110,7 +110,7 @@ BEGIN
 			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + '''''
 												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
-			WHERE DI_Rate > 0'')'
+			WHERE DI_Rate > 0 AND ChargeType = 1 '')'
 	
 	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
 	EXEC (@SqlQueryChargeRate)
