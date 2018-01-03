@@ -230,7 +230,7 @@ BEGIN
 		
 		IF CHARINDEX('31', @ProductIds, 0) > 0 --Exchange
 		BEGIN
-			--print ('Gold Deluxe')
+			--print ('Exchange')
 			SELECT @SqlQueryFor3rd = ''
 			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 8000 AS Bettype, Stake, Actual_stake, Winlost, PlayerComm, Comm
 				FROM OPENQUERY(DBLIC, ''SELECT CONVERT(Date,b.SettledDate) as WinlostDate, b.Currency, SUM(b.stakeTotal/ExVirtualRate) AS Stake, SUM(b.stakeTotal/ExVirtualRate) AS Actual_stake, 

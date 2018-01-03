@@ -50,7 +50,7 @@ SELECT @WinlostDate = CONVERT(VARCHAR(10), DATEADD(dd, -1, GETDATE()), 112)
 
 IF EXISTS (SELECT 1
 				FROM bodb02.dbo.bettrans WITH(NOLOCK)
-				WHERE winlostdate = @WinlostDate AND bettype IN (1700, 1800, 1900))
+				WHERE winlostdate = @WinlostDate AND bettype IN (1700, 1800, 1900, 8000))
 BEGIN
     SET @ErrrMessage = ''* already generated data for winlostdate: '' + CONVERT(VARCHAR(10), @WinlostDate, 112) + '' *''
     RAISERROR (@ErrrMessage, -- Message text.
