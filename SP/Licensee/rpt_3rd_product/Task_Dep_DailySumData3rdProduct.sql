@@ -234,12 +234,12 @@ BEGIN
 			SELECT @SqlQueryFor3rd = ''
 			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 8000 AS Bettype, Stake, Actual_stake, Winlost, PlayerComm, Comm
 				FROM OPENQUERY(DBLIC, ''SELECT CONVERT(Date,b.SettledDate) as WinlostDate, b.Currency, SUM(b.stakeTotal/ExVirtualRate) AS Stake, SUM(b.stakeTotal/ExVirtualRate) AS Actual_stake, 
-				SUM((b.marketTotal+b.stakeTotal)/ExVirtualRate) AS Winlost, SUM(b.commission/ExVirtualRate) AS PlayerComm, SUM(b.agentComission/ExVirtualRate) AS Comm
+				SUM((b.marketTotal+b.stakeTotal)/ExVirtualRate) AS Winlost, SUM(b.commission/ExVirtualRate) AS PlayerComm, SUM(b.agentCommission/ExVirtualRate) AS Comm
 				FROM bodb_3rdProduct.dbo.Sum_winloss_Exchange b WITH (NOLOCK)
 					INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) ON c.CustID = b.CustID AND c.roleid = 1
 					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON c.recommend = f.custid AND b.currency = f.currency 
 				WHERE 1 = 1'
-					+ ' AND WinlostDate BETWEEN ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''''
+					+ ' AND CONVERT(Date,b.SettledDate) BETWEEN ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''''
 					+ ' AND b.Currency = ' + CAST(@CurrencyId AS VARCHAR)
 					+ ' GROUP BY CONVERT(Date,b.SettledDate), b.Currency'
 				+ ''' )'
