@@ -46,7 +46,7 @@ BEGIN
 	CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
 
 	-- Collect data of 3rd party products
-	CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY, AgentComm MONEY, ValidBetAmount MONEY)
+	CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY, AgentComm MONEY, ValidBetAmount MONEY, GrossWL MONEY)
 
 	IF @DataSource IN ('ALL', 'Rpt_Betting')
 	BEGIN 
@@ -187,8 +187,8 @@ BEGIN
 			WHERE (p.ProductID = 31 AND p.SiteID <= 1000) 
 				AND EXISTS (SELECT 1 FROM @WLDateList WHERE Winlostdate = p.rptDate)
 		
-			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm, AgentComm, ValidBetAmount)
-			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, Turnover, BetCount
+			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, GrossWL, Turnover, BetCount, PlayerComm, AgentComm, ValidBetAmount)
+			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, WinlostA, Turnover, BetCount
 				, CommissionP AS PlayerComm
 				, CommissionA AS AgentComm
 				, ValidBetAmount
@@ -272,7 +272,7 @@ BEGIN
 				ELSE 111
 			  END AS StatusId
 			, -1 AS CustomerCategory
-			, 0 AS GrossWL
+			, SUM(ISNULL(td.GrossWL,0)) AS GrossWL
 			, SUM(ISNULL(td.Winlost,0)) AS MemberWL
 			, SUM(ISNULL(td.Turnover,0)) AS Turnover
 			, SUM(ISNULL(td.BetCount,0)) AS BetCount
