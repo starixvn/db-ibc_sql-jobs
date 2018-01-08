@@ -48,11 +48,11 @@ BEGIN
 	-- Collect data of 3rd party products
 	CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY, AgentComm MONEY, ValidBetAmount MONEY, GrossWL MONEY)
 
+	IF @date2 IS NULL SET @date2 = @date
+	SET @date2 = DATEADD(day,1,@date2)
+
 	IF @DataSource IN ('ALL', 'Rpt_Betting')
-	BEGIN 
-	
-		IF @date2 IS NULL SET @date2 = @date
-		SET @date2 = DATEADD(day,1,@date2)
+	BEGIN 		
 
 		DELETE p 
 		FROM dbo.rpt_BettingByProduct p
@@ -160,7 +160,7 @@ BEGIN
 			DECLARE @WLDateList AS TABLE (ID SMALLINT IDENTITY (1,1), Winlostdate DATE)
 
 			DECLARE @start_date DATE = @date;
-			DECLARE @end_date DATE = @date2;
+			DECLARE @end_date DATE = DATEADD(DAY, -1, @date2);
 
 			INSERT INTO @ResettledDateList ( ID, SettledDate )
 			SELECT h.ID, h.WinlostDate
@@ -174,7 +174,7 @@ BEGIN
 								WHERE DATEADD(DAY, 1, [Date]) < @end_date )	
 			INSERT INTO @WLDateList	(Winlostdate)
 			SELECT [Date] AS Winlostdate
-			FROM WLDate
+			FROM WLDate OPTION (MAXRECURSION 0)
 			
 			INSERT INTO @WLDateList ( Winlostdate )
 			SELECT DISTINCT r.SettledDate
