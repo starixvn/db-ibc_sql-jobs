@@ -1,27 +1,25 @@
+/*<info serverAlias="DBEXT-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_DailySummary_Verify]    Script Date: 01/19/2016 23:27:53 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 ALTER PROCEDURE [dbo].[Task_DailySummary_Verify]
 	@winlostdate datetime,
 	@TestMode tinyint = 1
 AS
 
 /*
-Created by:Thien
-Date: 20111018
-Task: to verify the move bet process at tomorrow's mornings
-DB: DB052.BODB02
+	Created by:Thien
+	Date: 20111018
+	Task: to verify the move bet process at tomorrow's mornings
+	DB: DBEXT.bodb02
 
-Revision:
-	20160119@Daniel: check table bettransRNG & bettransLC
-	20170719@Patrick: check valid ip for bettrans, bettransrng, bettranslc, translog
-	20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+	Revisions:
+		- 20160119@Daniel: check table bettransRNG & bettransLC
+		- 20170719@Patrick: check valid ip for bettrans, bettransrng, bettranslc, translog
+		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+		- 20171010@Percy: Apply Bullfighting [RedmineID: #84690]
 
- */
+*/
 
 SET NOCOUNT ON
 
@@ -29,10 +27,10 @@ DECLARE @transid bigint
 -- ====================
 -- DATA VERIFICATION
 -- ====================
--- ==================== Check running ticket at translog =================
+-- ==================== Check running/waiting ticket at translog =================
 IF EXISTS (
 	SELECT 1 FROM translog with (nolock)
-	WHERE	statusID = 0
+	WHERE	statusID IN (0, 1)
 			AND custid <> 0
 			AND winlostdate <= @winlostdate
 			AND currency <> 20
