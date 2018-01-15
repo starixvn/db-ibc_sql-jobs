@@ -469,7 +469,7 @@ BEGIN
 			, NULL RecommDate
 		FROM @FinalData
 
-		UPDATE DBLIC.bodb_3rdProduct.Product3rd_SummarizedDateHistory
+		UPDATE DBLIC.bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory
 		SET    SumToBettransDate = GETDATE()
 		WHERE  ProductID = 31 AND Winlostdate = @WinlostDate
 		
