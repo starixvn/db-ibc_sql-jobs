@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="vnteam" isFunction="1" isNested="0"></info>*/
 USE [bodb_licensee]
 GO
 
@@ -73,14 +74,3 @@ BEGIN
 	RETURN
 END
 GO
-
-GRANT SELECT ON [dbo].[LA_f_GetChargeInfoWithTrialTime] TO [bodbAdminNet] AS [dbo]
-GO
-
-GRANT SELECT ON [dbo].[LA_f_GetChargeInfoWithTrialTime] TO [vnteam] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[LA_f_GetChargeInfoWithTrialTime] TO [vnteam] AS [dbo]
-GO
-
-

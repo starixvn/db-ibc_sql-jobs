@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_licensee" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DEP_SeparatedWallet_Data_Check] @WinlostDate SMALLDATETIME
         , @IsReady BIT = 0 OUTPUT
 AS
@@ -37,4 +38,5 @@ AS
     END
 
  END
+ GO
 

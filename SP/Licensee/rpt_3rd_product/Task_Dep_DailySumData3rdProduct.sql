@@ -1,3 +1,4 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE bodb02
 GO
 ALTER PROCEDURE dbo.Task_Dep_DailySumData3rdProduct @WinlostDate SMALLDATETIME
@@ -481,6 +482,4 @@ BEGIN
 	DROP TABLE #3rdData
 	DROP TABLE #ChargeRate
 END
-GO
-GRANT VIEW DEFINITION ON [dbo].[Task_Dep_DailySumData3rdProduct] TO [vnteam] AS [dbo]
 GO
