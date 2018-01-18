@@ -35,6 +35,8 @@ AS
 		- 20170526@Sophia: add Param @DataSource, @SeparatedProductID [Redmine: #72914]
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
+		- 20171220@Harper: LRF - Integrate separate wallet Exchange product [RedmineID: #86640]
+
 	EXEC GEN_rptBettingByProduct '2017-04-16', '2017-04-16'
 
 */
@@ -44,25 +46,22 @@ BEGIN
 	CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
 
 	-- Collect data of 3rd party products
-	CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY)
+	CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY, AgentComm MONEY, ValidBetAmount MONEY, GrossWL MONEY)
+
+	IF @date2 IS NULL SET @date2 = @date
+	SET @date2 = DATEADD(day,1,@date2)
 
 	IF @DataSource IN ('ALL', 'Rpt_Betting')
-	BEGIN 
-	
-		IF @date2 IS NULL SET @date2 = @date
-		SET @date2 = DATEADD(day,1,@date2)
+	BEGIN 		
 
 		DELETE p 
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
-			  AND NOT (p.ProductID IN (10,11) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC	  	 
-			
-
-		
-		
+			  AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange 	 
+					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT')   
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,BX')   
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 		SELECT Bettype, ProductId 
@@ -154,11 +153,64 @@ BEGIN
 	
 	IF @DataSource IN ('All', 'SeparatedProduct')
 	BEGIN 	
+		-- Exchange product (separate wallet)
+		IF @SeparatedProductID IN (0, 31)
+		BEGIN
+			DECLARE @ResettledDateList AS TABLE (ID BIGINT, SettledDate DATE)
+			DECLARE @WLDateList AS TABLE (ID SMALLINT IDENTITY (1,1), Winlostdate DATE)
 
+			DECLARE @start_date DATE = @date;
+			DECLARE @end_date DATE = DATEADD(DAY, -1, @date2);
+
+			INSERT INTO @ResettledDateList ( ID, SettledDate )
+			SELECT h.ID, h.WinlostDate
+			FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory h WITH (NOLOCK)
+			WHERE h.ProductID = 31 AND h.SumToThirdPartyDate IS NOT NULL AND h.SumToBettingProductDate IS NULL
+
+			;WITH WLDate AS (	SELECT @start_date AS [Date]
+								UNION ALL
+								SELECT DATEADD(DAY, 1, [Date])
+								FROM WLDate
+								WHERE DATEADD(DAY, 1, [Date]) < @end_date )	
+			INSERT INTO @WLDateList	(Winlostdate)
+			SELECT [Date] AS Winlostdate
+			FROM WLDate OPTION (MAXRECURSION 0)
+			
+			INSERT INTO @WLDateList ( Winlostdate )
+			SELECT DISTINCT r.SettledDate
+			FROM @ResettledDateList r
+			WHERE NOT EXISTS (SELECT 1 FROM @WLDateList d WHERE r.SettledDate = d.Winlostdate)
+			
+			-- Delete data for exchange product
+			DELETE p 
+			FROM dbo.rpt_BettingByProduct p
+			WHERE (p.ProductID = 31 AND p.SiteID <= 1000) 
+				AND EXISTS (SELECT 1 FROM @WLDateList WHERE Winlostdate = p.rptDate)
+		
+			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, GrossWL, Turnover, BetCount, PlayerComm, AgentComm, ValidBetAmount)
+			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, WinlostA, Turnover, BetCount
+				, CommissionP AS PlayerComm
+				, CommissionA AS AgentComm
+				, ValidBetAmount
+			FROM dbo.rptDepWinlost_ThirdParty p WITH (NOLOCK)
+			WHERE p.ProductId = 31 
+				AND EXISTS (SELECT 1 FROM @WLDateList l WHERE p.Winlostdate = l.Winlostdate)
+				AND [Currency] <> 20
+			
+			UPDATE h
+			SET h.SumToBettingProductDate = GETDATE()
+			FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory h WITH (ROWLOCK)
+			WHERE EXISTS (SELECT 1 FROM @WLDateList d WHERE h.WinlostDate = d.Winlostdate)
+				AND EXISTS (SELECT 1 FROM @ResettledDateList r WHERE h.ID = r.ID)
+
+		END
+		-- End Exchange product
+
+		---- Delete only Separate Wallet of GD and AGC
 		DELETE p 
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
-			  AND (p.ProductID IN (10,11) AND p.SiteID <= 1000) ---- Delete only Separate Wallet of GD and AGC
+			  AND (p.ProductID IN (10,11) AND p.SiteID <= 1000) 
 			  AND ( p.ProductID = @SeparatedProductID OR @SeparatedProductID = 0)
 
 		-- GD, VG (separate wallet)
@@ -168,6 +220,7 @@ BEGIN
 			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, Turnover, BetCount, 0 AS PlayerComm
 			FROM dbo.rptDepWinlost_ThirdParty WITH (NOLOCK)
 			WHERE Winlostdate >= @date AND Winlostdate < @date2
+				AND ProductId = 11
 				AND [Currency] <> 20 
 		END
 		
@@ -219,7 +272,7 @@ BEGIN
 				ELSE 111
 			  END AS StatusId
 			, -1 AS CustomerCategory
-			, 0 AS GrossWL
+			, SUM(ISNULL(td.GrossWL,0)) AS GrossWL
 			, SUM(ISNULL(td.Winlost,0)) AS MemberWL
 			, SUM(ISNULL(td.Turnover,0)) AS Turnover
 			, SUM(ISNULL(td.BetCount,0)) AS BetCount

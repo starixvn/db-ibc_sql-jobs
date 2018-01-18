@@ -7,7 +7,7 @@ GO
 /****** Object:  Stored Procedure dbo.Task_DOT_3rd_DailySummary    Script Date: 12/1/2015 2:38:01 AM ******/
 
 
-CREATE PROCEDURE [dbo].[Task_DOT_3rd_DailySummary]
+ALTER PROCEDURE [dbo].[Task_DOT_3rd_DailySummary]
 	@winlostdate datetime
 AS
 
@@ -20,6 +20,7 @@ AS
 
 	Revisions:	
 	- 20150327@Winnie Add GoldDeluxe_DailySummary
+	- 20180102@Harper: Add separate product Exchange_DailySummary [RedmineID: #86640]
 */
 BEGIN
 	SET NOCOUNT ON	
@@ -28,6 +29,8 @@ BEGIN
 	EXEC DBPTCS.bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
 
 	EXEC bodb_3rdproduct.dbo.Task_DOT_VoidBridge_DailySummary @winlostdate = @winlostdate
+
+	EXEC bodb_3rdproduct.dbo.Task_DOT_Exchange_DailySummary @winlostdate = @winlostdate
 
 	--add more 3rd product at here
 END

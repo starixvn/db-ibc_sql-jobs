@@ -65,6 +65,7 @@ Revisions:
 			+ Add more signal to replicated servers when MB/BU starting or done
 			+ Set current datetime value to checktime field when insert ticket 19999
 			+ When processing a line then insert itself and upline's to [List]
+	- 20171225@Sophia: Integrate CitiBet Exchange Products [Redmine: #82408]
  */
 
 SET NOCOUNT ON
@@ -629,6 +630,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
 		0 AS netTurnover,
@@ -687,6 +689,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -743,6 +746,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*apositiontaking)/2 else ABS(stake*apositiontaking) end) AS netTurnover,
@@ -803,6 +807,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -860,6 +865,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*mpositiontaking)/2 else ABS(stake*mpositiontaking) end) AS netTurnover,
@@ -920,6 +926,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -977,6 +984,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*spositiontaking)/2 else ABS(stake*spositiontaking) end) AS netTurnover,
@@ -1037,6 +1045,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 

@@ -18,6 +18,7 @@ AS
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 		- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
 		- 20170831@Paul: Resolve deadlock issue on bettransRnG; Change datatype of @Winlostdate [RedmineID: #82516]
+		- 20171225@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -393,6 +394,7 @@ BEGIN
 					WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 					WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+					WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				ELSE 0 END,--SportType
 				SUM(TurnOver),--Turnover  
 				SUM(DrawGame),--Draw game TO			
@@ -434,6 +436,7 @@ BEGIN
 					WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 					WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+					WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				ELSE 0 END
 		--Start update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
 		MERGE #rptDepWinlostByProduct AS TARGET
