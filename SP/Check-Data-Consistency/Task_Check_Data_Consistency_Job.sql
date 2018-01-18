@@ -18,6 +18,7 @@ AS
 	Task: Check data consistency
 	DB: DBTP/bodb02
 	Revision:
+		- 20171011@Patrick: Move code check setting for FW
 		
 */
 BEGIN
@@ -263,22 +264,22 @@ BEGIN
 	END
 	
 	--check case have a ticket before lauching date
-	SET @ErrorTmp = ''
-	DECLARE @SettingDate DATETIME, @LaunchedDate DATETIME
-	SELECT @SettingDate = '2017-03-23', @LaunchedDate = '2017-03-30'
-	EXEC dbo.DBA_CheckingTicketAfterInitializingSetting	@SettingDate = @SettingDate	
-		, @LaunchedDate = @LaunchedDate
-		, @ProductID = 24 --Products.ProductId
-		, @ListSite = '611111,722222,766666,789y,7aa666,XYZbet,Best-odds'
-		, @ListCurrency = ''
-		, @ErrorMsg = @ErrorTmp OUTPUT
+	--SET @ErrorTmp = ''
+	--DECLARE @SettingDate DATETIME, @LaunchedDate DATETIME
+	--SELECT @SettingDate = '2017-03-23', @LaunchedDate = '2017-03-30'
+	--EXEC dbo.DBA_CheckingTicketAfterInitializingSetting	@SettingDate = @SettingDate	
+	--	, @LaunchedDate = @LaunchedDate
+	--	, @ProductID = 24 --Products.ProductId
+	--	, @ListSite = '611111,722222,766666,789y,7aa666,XYZbet,Best-odds'
+	--	, @ListCurrency = ''
+	--	, @ErrorMsg = @ErrorTmp OUTPUT
 
-	IF ISNULL(@ErrorTmp, '') <> ''
-	BEGIN
-		SET @HasError1 = 1
-		INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
-		VALUES(219, 'Fishing World', @SettingDate, @LaunchedDate, @ErrorTmp)
-	END
+	--IF ISNULL(@ErrorTmp, '') <> ''
+	--BEGIN
+	--	SET @HasError1 = 1
+	--	INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
+	--	VALUES(219, 'Fishing World', @SettingDate, @LaunchedDate, @ErrorTmp)
+	--END
 	
 	IF @HasError <> @HasError1 AND @HasError1 = 1
 	BEGIN
