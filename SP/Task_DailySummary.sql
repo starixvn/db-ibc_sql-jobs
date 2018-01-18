@@ -173,7 +173,7 @@ IF EXISTS (
 			AND currency <> 20
 )
 BEGIN
-	RAISERROR ('FAILED: translog have running or waiting tickets', 16, 1)
+	RAISERROR ('FAILED: translog have running/waiting tickets', 16, 1)
 	RETURN
 END
 -- ====================

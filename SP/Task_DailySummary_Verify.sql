@@ -39,7 +39,7 @@ BEGIN
 
 	IF @@ROWCOUNT > 0
 
-	RAISERROR ('FAILED: Have translog running tickets', 16, 1)
+	RAISERROR ('FAILED: Have translog running/wating tickets', 16, 1)
 	RETURN
 END
 
@@ -222,7 +222,4 @@ BEGIN
 
 	RETURN
 END
-
-
-
-
+GO
