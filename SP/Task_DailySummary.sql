@@ -65,6 +65,7 @@ Revisions:
 			+ Add more signal to replicated servers when MB/BU starting or done
 			+ Set current datetime value to checktime field when insert ticket 19999
 			+ When processing a line then insert itself and upline's to [List]
+	- 20171010@Percy: Apply Bullfighting [RedmineID: #84690]
 	- 20171225@Sophia: Integrate CitiBet Exchange Products [Redmine: #82408]
  */
 
@@ -167,12 +168,12 @@ END
 -- ========================================
 IF EXISTS (
 	SELECT translogid FROM translog with (nolock)
-	WHERE	statusID = 0 --[status] = 'running' 
+	WHERE	statusID IN (0, 1) --[status] IN ('running' , 'waiting')
 			AND winlostdate <= @winlostdate
 			AND currency <> 20
 )
 BEGIN
-	RAISERROR ('FAILED: translog Have running tickets', 16, 1)
+	RAISERROR ('FAILED: translog have running/waiting tickets', 16, 1)
 	RETURN
 END
 -- ====================
@@ -630,6 +631,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
@@ -689,6 +691,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
@@ -746,6 +749,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
@@ -807,6 +811,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
@@ -865,6 +870,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
@@ -926,6 +932,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
@@ -984,6 +991,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
@@ -1045,6 +1053,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
+			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
