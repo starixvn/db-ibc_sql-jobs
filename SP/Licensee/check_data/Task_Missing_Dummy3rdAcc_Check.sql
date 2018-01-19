@@ -1,4 +1,4 @@
-CREATE procedure [dbo].[Task_Missing_Dummy3rdAcc_Check] @DateCheck datetime
+ALTER procedure [dbo].[Task_Missing_Dummy3rdAcc_Check] @DateCheck datetime
 	, @IsDebug bit = 0
 as
 /*   
@@ -163,7 +163,7 @@ begin
 	IF @IsDebug = 0 and @hasError = 1
 	BEGIN
 		EXECUTE msdb.dbo.sp_send_dbmail @profile_name	= DEFAULT
-			, @recipients			 = 'patrick.pham@starixsoft.com;lukas.luu@starixsoft.com;daniel.truong@starixsoft.com;billy.bui@starixsoft.com'
+			, @recipients			 = 'pontus@starixsoft.com'
 			, @copy_recipients		 = ''
 			, @blind_copy_recipients	 = ''
 			, @subject				 = @subject
