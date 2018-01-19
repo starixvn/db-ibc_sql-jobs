@@ -9,7 +9,7 @@ AS
 	DB: DBTRANS.bodb02
 	Revisions: 
 		- 20171213@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
-		
+		- 20180119@Sophia: Check data exchange have been existed before update the Flag
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -470,14 +470,17 @@ BEGIN
 			, NULL RecommDate
 		FROM @FinalData
 
-		UPDATE DBLIC.bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory
-		SET    SumToBettransDate = GETDATE()
-		WHERE  ProductID = 31 AND Winlostdate = @WinlostDate
 		
 		WAITFOR DELAY '000:00:00.280'
 		
 	END
 	
+	----Update flag to indicate we have just done data for Exchange product:
+	IF EXISTS (SELECT 1 FROM dbo.Bettrans WITH (NOLOCK) WHERE Bettype = 8000 and Winlostdate = @WinlostDate)
+		UPDATE DBLIC.bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory
+		SET    SumToBettransDate = GETDATE()
+		WHERE  ProductID = 31 AND Winlostdate = @WinlostDate
+				
 	DROP TABLE #LicenseeProductTable
 	DROP TABLE #3rdData
 	DROP TABLE #ChargeRate
