@@ -276,8 +276,8 @@ BEGIN
 			, SUM(ISNULL(td.Winlost,0)) AS MemberWL
 			, SUM(ISNULL(td.Turnover,0)) AS Turnover
 			, SUM(ISNULL(td.BetCount,0)) AS BetCount
-			, 0 AS CommissionA
-			, SUM(ISNULL(PlayerComm,0)) AS CommissionP
+			, SUM(ISNULL(td.AgentComm,0)) AS CommissionA
+			, SUM(ISNULL(td.PlayerComm,0)) AS CommissionP
 			, 0 AS BuyBackAmount
 			, 0 [WinPrizeAmount]
 			, 0 [CashOutAmount]
