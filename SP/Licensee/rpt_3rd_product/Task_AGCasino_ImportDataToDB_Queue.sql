@@ -1,37 +1,38 @@
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 USE [bodb_PlaytechCS]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_AGCasino_ImportDataToDB_Queue]    Script Date: 2/17/2017 12:08:16 AM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Task_AGCasino_ImportDataToDB_Queue    Script Date: 1/16/2017 18:13:39 ******/
+
 ALTER PROCEDURE [dbo].[Task_AGCasino_ImportDataToDB_Queue]
-	@QueueIDInput BIGINT = 0
-AS 
+	@QueueIDInput	BIGINT = 0,
+	@ErrCode		INT = 0 OUTPUT,
+	@ErrMsg			NVARCHAR(2000) = '' OUTPUT
+AS
+
 /*
-Created: 20161227@Francis
-Task : [Task_AGCasino_ImportDataToDB]
-Description: Pulling GD bet tickets from API
-DB: DBPTCS.bodb_PlaytechCS
+	Created: 20161227@Francis
+	Task : [Task_AGCasino_ImportDataToDB]
+	Description: Pulling GD bet tickets from API
+	DB: DBPTCS.bodb_PlaytechCS
 
-Original:
+	Revisions:
+		- 20161229@Francis: Improve the way to retrieve XmlData [RedmineID: #68972]
+		- 20170214@Francis: Keep about 5000 finished rows in Queue
+		- 20171218@Percy: Add ErrCode, ErrMsg replace RAISERROR [RedmineID: #88325]
 
-Revisions:
-	- 20161229@Francis: Improve the way to retrieve XmlData [RedmineID: #68972]
-	- 20170214@Francis: Keep about 5000 finished rows in Queue
-Param explanation:
-
+	Param explanation:
+	
 */
+
 BEGIN
 	SET NOCOUNT ON
 
 	IF @QueueIDInput != 0
 		IF (SELECT ProductID FROM dbo.Product3rd_ImportQueue WITH (NOLOCK) WHERE QueueID = @QueueIDInput) != 10
-			BEGIN
-				RAISERROR('Input QueueID is not compitable with the product, pls check again!',0,1)
-				RETURN
-			END
+		BEGIN
+			SELECT	@ErrCode = 100,
+					@ErrMsg = N'Input QueueID is not compitable with the product, please check again!'
+			RETURN
+		END
 	
 	DECLARE @OldVersionKey BIGINT, @NewVersionKey BIGINT, @LicenseeName VARCHAR(50), @Winlostdate DATE
 	DECLARE @QueueID BIGINT = NULL, @XmlData XML, @LogDesc VARCHAR(2000) = NULL
@@ -194,18 +195,24 @@ BEGIN
 			IF @QueueIDInput != 0
 			BREAK
 		END
-	DROP TABLE #TmpData	
+	
+		DROP TABLE #TmpData	
 	END TRY
 	BEGIN CATCH --Write ErrLog
-	SELECT @LogDesc = 'MsgError: ' + ERROR_MESSAGE()
+		SELECT	@ErrCode = 101,
+				@ErrMsg = ERROR_MESSAGE()
+
+		SELECT  @LogDesc = 'MsgError: ' + @ErrMsg
 	
-	UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
-	SET FinishedTime = NULL
-		, LogDesc = @LogDesc
-	WHERE QueueID = ISNULL(@QueueID,0)
+		UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
+		SET FinishedTime = NULL, LogDesc = @LogDesc
+		WHERE QueueID = ISNULL(@QueueID,0)
 	
+		DROP TABLE #TmpData
+
+		SELECT @ErrMsg = 'QueueID = ' + CONVERT(VARCHAR(20), @QueueID) + ', ProductID = 10, MsgError = ' + @ErrMsg
 	
-	PRINT (ERROR_MESSAGE())
-	DROP TABLE #TmpData
+		RETURN
 	END CATCH
 END
+GO
