@@ -5,41 +5,73 @@ as
  Task : Check Sum missing dummy 3rd acc
  DB: DB054.bodb_PlaytechCS
  Revisions:
-
+	- Patrick : initial SP
+	- 20180122@Sophia: Add Exchange product, check dummy by new way [Redmine: #89799]
 */  
 
 begin
 	set nocount on
+	WAITFOR DELAY '000:10:00'   --- wait for the Job insert data from raw tables from API into bettrans table Done
 	
 	declare @MissingData table (productName varchar(100), LicenseeName varchar(200), currency varchar(50))
 	declare @MissingSumData table (productName varchar(100), LicenseeName varchar(200), currency varchar(50), winlostdate date)
 
 	declare @fromDate smalldatetime
 	set @fromDate = @DateCheck--dateadd(day, -2, @DateCheck)
-
-	insert into @MissingData(productName, LicenseeName, currency)
+	
+	DECLARE @DummyCust AS TABLE (CustID INT, LicenseeName Varchar(200), CurrencyName Varchar(50))
+	
+	;WITH M  AS ( SELECT custid , site, e.currency
+				FROM bodb02.dbo.Customer c WITH (NOLOCK) 
+				INNER JOIN bodb02.dbo.Exchange (NOLOCK) e ON E.exchangeId = c.currency 
+				WHERE Username LIKE '%Acc%' AND Roleid=3 
+				) 	
+	INSERT INTO @DummyCust (CustID, LicenseeName, CurrencyName )
+	SELECT	c.CustId, M.site, M.Currency
+	FROM	bodb02.dbo.customer c with(nolock)
+	INNER JOIN M ON M.CustID = C.mrecommend
+	WHERE   username LIKE '%Dummy3rd%'
+			AND roleid = 1
+			
+			
+	insert into @MissingData(productName, LicenseeName, currency)		
 	select 'AG Casino' as productName, LicenseeName, currency
 	from (
-		select l.LicenseeName, e.currency
+		select l.LicenseeName, e.currency, b.custID
 		from dbo.bettrans_AGCasino b with(nolock)
 			inner join bodb_licensee.dbo.LicenseeCust lc with(nolock) on b.recommend = lc.custid
 			inner join bodb_licensee.dbo.Licensees l with(nolock) on lc.LicenseeID = l.LicenseeId
 			inner join bodb02.dbo.Exchange e with(nolock) on lc.currency = e.exchangeId
 		where b.winlostdate = @DateCheck
-		group by l.LicenseeName, e.currency
-	) t where not exists (select top 1 1 from bodb02.dbo.Customer ci with(nolock) where ci.username = t.LicenseeName + 'dummy3rd' + t.currency)
+		group by l.LicenseeName, e.currency, b.custID
+	) t where not exists (select top 1 1 from @DummyCust ci where ci.LicenseeName = t.LicenseeName AND ci.Currencyname = t.Currency)
 
 	insert into @MissingData(productName, LicenseeName, currency)
 	select 'Gold Deluxe' as productName, LicenseeName, currency
 	from (
-		select l.LicenseeName, e.currency
+		select l.LicenseeName, e.currency, b.custID
 		from dbo.bettrans_GoldDeluxe b with(nolock)
 			inner join bodb_licensee.dbo.LicenseeCust lc with(nolock) on b.recommend = lc.custid
 			inner join bodb_licensee.dbo.Licensees l with(nolock) on lc.LicenseeID = l.LicenseeId
 			inner join bodb02.dbo.Exchange e with(nolock) on lc.currency = e.exchangeId
 		where b.winlostdate = @DateCheck
-		group by l.LicenseeName, e.currency
-	) t where not exists (select top 1 1 from bodb02.dbo.Customer ci with(nolock) where ci.username = t.LicenseeName + 'dummy3rd' + t.currency)
+		group by l.LicenseeName, e.currency, b.custID
+	) t where not exists (select top 1 1 from @DummyCust ci where ci.LicenseeName = t.LicenseeName AND ci.Currencyname = t.Currency)
+	
+	insert into @MissingData(productName, LicenseeName, currency)
+	select 'Exchange' as productName, LicenseeName, currency
+	from (
+		select l.LicenseeName, e.currency, b.custID
+		from bodb_3rdProduct.dbo.sum_winloss_exchange b with(nolock)
+			INNER JOIN bodb_licensee.dbo.LicenseeCustinfo d With (NOLOCK) ON d.CustID = B.CustID
+			inner join bodb_licensee.dbo.LicenseeCust lc with(nolock) on d.recommend = lc.custid
+			inner join bodb_licensee.dbo.Licensees l with(nolock) on lc.LicenseeID = l.LicenseeId
+			inner join bodb02.dbo.Exchange e with(nolock) on lc.currency = e.exchangeId
+		where CONVERT(Date,b.SettledDate) = @DateCheck
+		group by l.LicenseeName, e.currency, b.custID
+	) t where not exists (select top 1 1 from @DummyCust ci where ci.LicenseeName = t.LicenseeName AND ci.Currencyname = t.Currency)
+	
+	
 
 	insert into @MissingSumData(productName, LicenseeName, currency, winlostdate)
 	select 'AG Casino' as productName, LicenseeName, currency, t.Winlostdate
@@ -51,9 +83,13 @@ begin
 			inner join bodb02.dbo.Exchange e with(nolock) on lc.currency = e.exchangeId
 		where b.winlostdate between @fromDate and @DateCheck
 		group by l.LicenseeName, e.currency, Winlostdate
-	) t where not exists (select top 1 1 
+	) t where not exists ( 	select top 1 1 
 							from bodb02.dbo.bettrans ci with(nolock) 
-							where ci.username = t.LicenseeName + 'dummy3rd' + t.currency and ci.winlostdate = t.Winlostdate and bettype = 1800)
+							INNER JOIN @DummyCust D	ON D.CustID = ci.CustID
+							where ci.winlostdate = t.Winlostdate and bettype = 1800
+								AND d.LicenseeName = t.LicenseeName
+								AND d.CurrencyName = t.currency
+							)
 
 	insert into @MissingSumData(productName, LicenseeName, currency, winlostdate)
 	select 'Gold Deluxe' as productName, LicenseeName, currency, @DateCheck
@@ -65,9 +101,33 @@ begin
 			inner join bodb02.dbo.Exchange e with(nolock) on lc.currency = e.exchangeId
 		where b.winlostdate between @fromDate and @DateCheck
 		group by l.LicenseeName, e.currency, Winlostdate
-	) t where not exists (select top 1 1 
+	) t where not exists  ( select top 1 1 
 							from bodb02.dbo.bettrans ci with(nolock) 
-							where ci.username = t.LicenseeName + 'dummy3rd' + t.currency and ci.winlostdate = t.Winlostdate and bettype = 1700)
+							INNER JOIN @DummyCust D	ON D.CustID = ci.CustID
+							where ci.winlostdate = t.Winlostdate and bettype = 1700
+								AND d.LicenseeName = t.LicenseeName
+								AND d.CurrencyName = t.currency
+							)
+							
+	insert into @MissingSumData(productName, LicenseeName, currency, winlostdate)
+	select 'Exchange' as productName, LicenseeName, currency, @DateCheck
+	from (
+		select l.LicenseeName, e.currency, CONVERT(Date,b.SettledDate) as Winlostdate 
+		from bodb_3rdProduct.dbo.sum_winloss_exchange b with(nolock)
+			INNER JOIN bodb_licensee.dbo.LicenseeCustinfo d With (NOLOCK) ON d.CustID = B.CustID
+			inner join bodb_licensee.dbo.LicenseeCust lc with(nolock) on d.recommend = lc.custid
+			inner join bodb_licensee.dbo.Licensees l with(nolock) on lc.LicenseeID = l.LicenseeId
+			inner join bodb02.dbo.Exchange e with(nolock) on lc.currency = e.exchangeId
+		where CONVERT(Date,b.SettledDate) between @fromDate and @DateCheck
+		group by l.LicenseeName, e.currency, CONVERT(Date,b.SettledDate) 
+	) t where not exists  ( select top 1 1 
+							from bodb02.dbo.bettrans ci with(nolock) 
+							INNER JOIN @DummyCust D	ON D.CustID = ci.CustID
+							where ci.winlostdate = t.Winlostdate and bettype = 8000
+								AND d.LicenseeName = t.LicenseeName
+								AND d.CurrencyName = t.currency
+							)
+
 
 
 	declare @email_body nvarchar(max), @subject nvarchar(200), @RowData varchar(max), @hasError bit = 0
