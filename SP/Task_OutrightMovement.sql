@@ -1,15 +1,6 @@
 USE [bodb02]
-GO
-
-/****** Object:  StoredProcedure [dbo].[Task_OutrightMovement]    Script Date: 01/26/2015 04:38:46 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_OutrightMovement    Script Date: 12/24/2013 12:27:58 PM ******/
-CREATE PROCEDURE [dbo].[Task_OutrightMovement]	
+GO 
+ALTER PROCEDURE [dbo].[Task_OutrightMovement]	
 AS
 
 /*
@@ -20,6 +11,7 @@ AS
 	Revisions:
         - 20131108@Elodie: Splitting bodb02 into CustDB (call exchange by link database)	
 						   Use DBPRO instead of DB02
+		- 20180128@Lukas: update virtualrate = actualrate, when move winlostdate 
 */
 
 SET NOCOUNT ON
@@ -48,6 +40,7 @@ SET NOCOUNT ON
 	UPDATE b
 	SET winlostdate = @winlostdate
 		,actualrate = e.actualrate
+		,virtualrate = e.actualrate
 	FROM bettrans b WITH(UPDLOCK, ROWLOCK) 
 		inner join CustDB.dbo.exchange e with(nolock) on b.currency = e.exchangeid	
 	WHERE bettype = 10 AND matchid IN (SELECT orid FROM @outright)
@@ -61,8 +54,6 @@ SET NOCOUNT ON
 	), 1,1,'')
 
 	EXEC dbo.WriteLog_UserLog @UserID = 862400, @Doing = @Doing
-
-GO
 
 GRANT VIEW DEFINITION ON [dbo].[Task_OutrightMovement] TO [vnteam] AS [dbo]
 GO
