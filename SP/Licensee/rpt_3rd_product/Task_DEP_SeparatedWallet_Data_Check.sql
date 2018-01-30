@@ -10,6 +10,7 @@ AS
 	Revisions:
 		-20170412@Patrick: Fix bug for hotfix #74966
 		-20170104@Sophia: Integrate Exchange Products [Redmine: #86640]
+		-20180130@Sophia: remove the block code of Exchange for UAT Testing, will add later when releasing Exchange [redmine: #90213]
    
  */
  BEGIN
@@ -27,10 +28,10 @@ AS
 				FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH(NOLOCK)
 				WHERE ProductID IN (10,11,12) --- AGC, GD, Vegas Games
 						AND Winlostdate = @WinlostDate)
-		AND EXISTS (SELECT TOP 1 1
-					FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory WITH (NOLOCK)
-					WHERE ProductID = 31 AND Winlostdate = @WinlostDate
-					)
+		--AND EXISTS (SELECT TOP 1 1
+		--			FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory WITH (NOLOCK)
+		--			WHERE ProductID = 31 AND Winlostdate = @WinlostDate
+		--			)
 						
     BEGIN
 	   SET @IsReady = 1
