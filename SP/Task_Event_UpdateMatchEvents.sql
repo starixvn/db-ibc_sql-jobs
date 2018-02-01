@@ -1,14 +1,7 @@
 USE [bodb_LCC]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_Event_UpdateMatchEvents]    Script Date: 01/19/2015 03:16:01 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE PROCEDURE [dbo].[Task_Event_UpdateMatchEvents]
+ALTER PROCEDURE [dbo].[Task_Event_UpdateMatchEvents]
 AS
 /*
 Created by: Phuong
@@ -17,6 +10,8 @@ Task: Update match events: score, HT...
 
 Revisions:
 	- 2013/12/12: Update disallowed events - Ricky
+	- 2016-09-12@Patrick: Fix issue Arithmetic overflow error for data type tinyint
+	- 20180201@Patrick: Move userlog_p table to LogDB database
 
 */
 
@@ -42,10 +37,10 @@ CREATE TABLE #scoreChanges(
 	[matchid]		INT NOT NULL,
 	[homeid]		INT NOT NULL,
 	[awayid]		INT NOT NULL,
-	[homescore]		TINYINT NOT NULL,--Current home/away score
-	[awayscore]		TINYINT NOT NULL,
-	[chartHomeScore]TINYINT NOT NULL,--Chart Home/Away Score
-	[chartAwayScore]TINYINT NOT NULL,
+	[homescore]		SMALLINT NOT NULL,--Current home/away score
+	[awayscore]		SMALLINT NOT NULL,
+	[chartHomeScore]SMALLINT NOT NULL,--Chart Home/Away Score
+	[chartAwayScore]SMALLINT NOT NULL,
 	[homegoals]		SMALLINT NOT NULL,--Home/away score gap between sportbook data & chart data
 	[awaygoals]		SMALLINT NOT NULL,
 	[matchstatus]	VARCHAR(50) NOT NULL,
@@ -116,12 +111,12 @@ WHILE(EXISTS(SELECT * FROM #scoreChanges WHERE homegoals > 0 OR awaygoals > 0))
 	END
 -- GOAL EVENTS DECREASE
 DECLARE @matchId INT, 
-		@homeScore TINYINT, 
-		@awayScore TINYINT, 
-		@chartHomeScore TINYINT, 
-		@chartAwayScore TINYINT,
-		@homeId TINYINT,
-		@awayId TINYINT
+		@homeScore SMALLINT, 
+		@awayScore SMALLINT, 
+		@chartHomeScore SMALLINT, 
+		@chartAwayScore SMALLINT,
+		@homeId INT,
+		@awayId INT
 WHILE(EXISTS(SELECT * FROM #scoreChanges WHERE homegoals < 0 OR awaygoals < 0))
 	BEGIN
 		SELECT TOP 1 @matchId = matchid, @homeScore = homescore, @chartHomeScore = chartHomeScore, 
@@ -225,7 +220,7 @@ INSERT INTO [event](matchid,teamid,eventtype,value,[minute])
 	UNION ALL
 	SELECT ht.matchid,0,202,'HT',DATEDIFF(mi, mq.kickofftime, ht.logdate)
 	FROM (SELECT mq.matchid,ul.logdate 
-	 FROM match_queue mq INNER JOIN DB06.bodb02.dbo.UserLog_P AS ul(NOLOCK) 
+	 FROM match_queue mq INNER JOIN DB06.LogDB.dbo.UserLog_P AS ul(NOLOCK) 
 		ON ul.extend=mq.matchid
 		AND mq.matchid NOT IN 
 		(SELECT e.matchid FROM [event] AS e(NOLOCK) INNER JOIN match_queue AS mq (NOLOCK) ON e.matchid=mq.matchid AND e.eventtype=202)
@@ -252,7 +247,4 @@ FROM #scoreChanges m
 WHERE match_queue.matchid=m.matchid
 
 
-DROP TABLE #scoreChanges 
-GO
-
-
+DROP TABLE #scoreChanges
