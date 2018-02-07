@@ -36,6 +36,7 @@ AS
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 		- 20171220@Harper: LRF - Integrate separate wallet Exchange product [RedmineID: #86640]
+		- 20180207@Harper: LA - Fix bug date range for Exchange product [RedmineID: #87754]
 
 	EXEC GEN_rptBettingByProduct '2017-04-16', '2017-04-16'
 
@@ -157,21 +158,18 @@ BEGIN
 		IF @SeparatedProductID IN (0, 31)
 		BEGIN
 			DECLARE @ResettledDateList AS TABLE (ID BIGINT, SettledDate DATE)
-			DECLARE @WLDateList AS TABLE (ID SMALLINT IDENTITY (1,1), Winlostdate DATE)
-
-			DECLARE @start_date DATE = @date;
-			DECLARE @end_date DATE = DATEADD(DAY, -1, @date2);
+			DECLARE @WLDateList AS TABLE (ID SMALLINT IDENTITY (1,1), Winlostdate DATE)			
 
 			INSERT INTO @ResettledDateList ( ID, SettledDate )
 			SELECT h.ID, h.WinlostDate
 			FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory h WITH (NOLOCK)
 			WHERE h.ProductID = 31 AND h.SumToThirdPartyDate IS NOT NULL AND h.SumToBettingProductDate IS NULL
 
-			;WITH WLDate AS (	SELECT @start_date AS [Date]
+			;WITH WLDate AS (	SELECT @date AS [Date]
 								UNION ALL
 								SELECT DATEADD(DAY, 1, [Date])
 								FROM WLDate
-								WHERE DATEADD(DAY, 1, [Date]) < @end_date )	
+								WHERE DATEADD(DAY, 1, [Date]) < @date2 )	
 			INSERT INTO @WLDateList	(Winlostdate)
 			SELECT [Date] AS Winlostdate
 			FROM WLDate OPTION (MAXRECURSION 0)
