@@ -19,6 +19,7 @@ AS
 		- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
 		- 20170831@Paul: Resolve deadlock issue on bettransRnG; Change datatype of @Winlostdate [RedmineID: #82516]
 		- 20171225@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
+		- 20180212@Harper: Remove LC from product list [Redmine: #85965]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -369,7 +370,6 @@ BEGIN
 					WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game 
 					WHEN bettype IN (71,72,23002) THEN 251--Casino
 					WHEN bettype = 1000 THEN 253--games
-					WHEN bettype BETWEEN 1101 AND 1199 THEN 162--Live Casino
 					WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 					WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
 					WHEN bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
@@ -411,7 +411,6 @@ BEGIN
 					WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game 
 					WHEN bettype IN (71,72,23002) THEN 251--Casino
 					WHEN bettype = 1000 THEN 253--games
-					WHEN bettype BETWEEN 1101 AND 1199 THEN 162--Live Casino
 					WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 					WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
 					WHEN bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming

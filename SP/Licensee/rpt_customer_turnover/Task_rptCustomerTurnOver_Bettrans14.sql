@@ -18,6 +18,7 @@ AS
 		-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		-20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
+		- 20180212@Harper: Remove LC from product list [Redmine: #85965]
 
 	Parameter's Explanation:			
 */
@@ -145,9 +146,7 @@ SELECT a.CustID
 		WHEN a.bettype = 1000
 			THEN 253 --games
 		WHEN a.bettype BETWEEN 81 AND 120
-			THEN 161 --Number Game 
-		WHEN a.bettype BETWEEN 1101 AND 1199
-			THEN 162 -- Live casino
+			THEN 161 --Number Game 		
 		WHEN a.bettype BETWEEN 1201 AND 1299
 			THEN CASE 
 					WHEN result.sporttype IS NOT NULL
@@ -207,9 +206,7 @@ GROUP BY a.CustID
 		WHEN a.bettype = 1000
 			THEN 253 --games
 		WHEN a.bettype BETWEEN 81 AND 120
-			THEN 161 --Number Game 
-		WHEN a.bettype BETWEEN 1101 AND 1199
-			THEN 162 -- Live casino
+			THEN 161 --Number Game 		
 		WHEN a.bettype BETWEEN 1201 AND 1299
 			THEN CASE 
 					WHEN result.sporttype IS NOT NULL
