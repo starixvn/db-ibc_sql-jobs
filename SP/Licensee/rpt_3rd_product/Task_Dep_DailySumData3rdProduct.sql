@@ -10,6 +10,7 @@ AS
 	Revisions: 
 		- 20171213@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
 		- 20180119@Sophia: Check data exchange have been existed before update the Flag
+		- 20180223@Sophia: Change betform = 'd' for Exchange [Redmine: #91014]
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -128,7 +129,7 @@ BEGIN
 	DECLARE @FinalData TABLE (CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
 			, StatusId TINYINT, Status VARCHAR(10), apositiontaking MONEY, awinlost MONEY, RefNo BIGINT, actualrate FLOAT
 			, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50)
-			, PlayerComm MONEY, Comm MONEY )
+			, PlayerComm MONEY, Comm MONEY, betfrom NVARCHAR(1))
 
 	WHILE EXISTS (SELECT 1 FROM @LicenseeTable WHERE RowId = @RowId)
 	BEGIN
@@ -323,7 +324,10 @@ BEGIN
 			, mrecommend = c.mrecommend
 			, recommend = c.recommend
 			, UserName = c.username
-			, CurrencyName = ex.currency			
+			, CurrencyName = ex.currency
+			, Betfrom = CASE WHEN tmp.Bettype = 8000 THEN 'd' 
+							 ELSE 'i'
+						END
 		FROM @FinalData tmp
 			INNER JOIN (
 				SELECT FromDate, ToDate, Rate
@@ -434,7 +438,7 @@ BEGIN
 			, refno
 			, 0 comstatus
 			, @WinlostDate winlostdate
-			, 'i' betfrom
+			, betfrom
 			, 0 betcheck
 			, NULL checktime
 			, NULL oddsspread
