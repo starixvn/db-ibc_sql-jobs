@@ -41,6 +41,7 @@ Revisions:
 	- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 	- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
 	- 20171225@Sophia: Integrate Exchange Products [Redmine: #86640]
+	- 20180212@Harper: Remove LC from product list [Redmine: #85965]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */  
@@ -115,7 +116,6 @@ BEGIN
 		WHEN bettype IN (71,72) THEN 251 --casino  
 		WHEN bettype = 1000 THEN 253 --games  
 		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game   
-		WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live casino  
 		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport  
 		WHEN bettype BETWEEN 51 AND 69 THEN 201  
 		WHEN bettype IN (31,32,33,41,42,43) THEN 151  
@@ -173,7 +173,6 @@ GROUP BY
 		WHEN bettype IN (71,72) THEN 251 --casino
 		WHEN bettype = 1000 THEN 253 --games
 		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game 
-		WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live casino
 		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
 		WHEN bettype BETWEEN 51 AND 69 THEN 201
 		WHEN bettype IN (31,32,33,41,42,43) THEN 151

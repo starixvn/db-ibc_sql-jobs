@@ -13,6 +13,7 @@ AS
 		  - 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		  - 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		  - 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
+		  - 20180212@Harper: Remove LC from product list [Redmine: #85965]
 */ 
 BEGIN 
 SET NOCOUNT ON;
@@ -137,9 +138,7 @@ SELECT a.CustID
 		WHEN a.bettype IN (71, 72) THEN 251 --casino  
 		WHEN a.bettype = 1000 THEN 253 --games  
 		WHEN a.bettype BETWEEN 81
-				AND 120 THEN 161 --Number Game   
-		WHEN a.bettype BETWEEN 1101
-				AND 1199 THEN 162 -- Live casino  
+				AND 120 THEN 161 --Number Game   		 
 		WHEN a.bettype BETWEEN 1201 AND 1299 THEN CASE 
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
@@ -195,9 +194,7 @@ GROUP BY a.CustID
 		WHEN a.bettype IN (71, 72) THEN 251 --casino  
 		WHEN a.bettype = 1000 THEN 253 --games  
 		WHEN a.bettype BETWEEN 81
-				AND 120 THEN 161 --Number Game   
-		WHEN a.bettype BETWEEN 1101
-				AND 1199 THEN 162 -- Live casino  
+				AND 120 THEN 161 --Number Game   		
 		WHEN a.bettype BETWEEN 1201
 				AND 1299 THEN CASE 
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
