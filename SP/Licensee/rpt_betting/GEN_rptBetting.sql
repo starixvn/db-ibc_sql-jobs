@@ -27,10 +27,11 @@ Revisions:
 	20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 	20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	20171019@Harper: LA - Shutdown KPI Report [RedmineID: #83983]
+	20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
 
 Param's Explanation:
 
-EXEC GEN_rptBetting '2017-04-15', '2017-04-16'
+EXEC GEN_rptBetting '2018-02-01', '2018-02-28'
 */
 IF @date2 IS NULL SET @date2 = @date
 SET @date2 = DATEADD(day,1,@date2)
@@ -63,7 +64,9 @@ INSERT INTO dbo.rpt_Betting
 		,[BuyBackAmount]
 		,[WinPrizeAmount]
 		,[CashOutAmount]		
-		,[oddsspread])
+		,[oddsspread]
+		,[TicketType]
+		,[ExtraAmount])
     SELECT  
 	    b.winlostdate,
         ISNULL(site.SiteID,-1) siteid,
@@ -99,7 +102,9 @@ INSERT INTO dbo.rpt_Betting
 			END) BuyBackAmount,
 		SUM(ISNULL(WinPrizeAmount,0)) WinPrizeAmount,
 		SUM(ISNULL(CashOutAmount,0)) CashOutAmount, -- Cashout Value of Cashout Product		
-		SUM(ISNULL(oddsspread,0))    oddsspread
+		SUM(ISNULL(oddsspread,0))    oddsspread,
+		b.TicketType,
+		SUM(CONVERT(MONEY, ISNULL(b.ExtraInfo, 0)))
     FROM
 	    dbo.bettrans b (NOLOCK) 
 	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
@@ -123,7 +128,8 @@ INSERT INTO dbo.rpt_Betting
 	    b.currency,
 	    b.statusid,
 	    b.liveindicator,
-	    b.customercategory
+	    b.customercategory,
+		b.TicketType
 
 GO
 GRANT EXECUTE ON [dbo].[GEN_rptBetting] TO [bodbLicenseeNet] AS [dbo]
