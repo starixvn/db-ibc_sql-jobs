@@ -11,43 +11,50 @@ AS
  Task: Gen data from bettrans before Move bets [RedminID : #63785]
  Original:   
  Revisions:   
- - 20161101@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
- - 20161121@Sophia: Correct fomular CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
+	 - 20161101@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+	 - 20161121@Sophia: Correct fomular CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
+	 - 20180305@Harper: Implement CB free play ticket [RedmineID: #90768]
+
+ EXEC GEN_rptBetting_ColossusBets '2018-02-01', '2018-03-08'
 */
 BEGIN
 	DECLARE @tmpRawData AS TABLE (
-			rptDate datetime
-			, CustID int
-			, Bettype smallint
-			, CurrencyID int
-			, StatusID smallint
-			, TotalTrans int
-			, Turnover money
-			, WinningPrize money
-			, CashOutAmt money
-			, CashInAmt money
-			, CommAmt money
-			, GrandAmt money
-			, CashInShare money
+			rptDate			DATETIME
+			, CustID		INT
+			, Bettype		SMALLINT
+			, CurrencyID	INT
+            , TicketType	TINYINT
+			, StatusID		SMALLINT
+			, TotalTrans	INT
+			, Turnover		MONEY
+			, WinningPrize	MONEY
+			, CashOutAmt	MONEY
+			, CashInAmt		MONEY
+			, CommAmt		MONEY
+			, GrandAmt		MONEY
+			, CashInShare	MONEY
 			)
+
 	DECLARE @tmpGrandAmt AS TABLE (
-			refno BIGINT
-			,rptDate DATETIME
-			,CustID INT
-			, GrandAmt MONEY
+			refno		BIGINT
+			,rptDate	DATETIME
+			,CustID		INT
+			, GrandAmt	MONEY
 			)
+
 	DECLARE @tmpBettrans AS TABLE (
-			custid INT
-			, refno BIGINT
-			, winlostdate DATETIME
-			, Currency INT
-			, TurnOver MONEY
-			, TotalTrans INT
-			, Winlost MONEY
-			, actual_stake MONEY
-			, STATUS NVARCHAR(20)
-			, statusID INT
-			, GrandAmt MONEY
+			custid			INT
+			, refno			BIGINT
+			, winlostdate	DATETIME
+			, Currency		INT
+			, TicketType	TINYINT
+			, TurnOver		MONEY
+			, TotalTrans	INT
+			, Winlost		MONEY
+			, actual_stake	MONEY
+			, STATUS		NVARCHAR(20)
+			, statusID		INT
+			, GrandAmt		MONEY
 			)
 			
 	INSERT INTO @tmpGrandAmt (
@@ -63,16 +70,17 @@ BEGIN
 		, SUM(WinAmount) AS GrandAmt
 	FROM DBACC.bodb02.dbo.PayoutTrans p WITH (NOLOCK)
 	WHERE productId = 204
-		AND p.winlostdate BETWEEN @date
-			AND @date2
+		AND p.winlostdate BETWEEN @date	AND @date2
 	GROUP BY CustID
 			,winlostdate
 			,refno	
+	
 	INSERT INTO @tmpBettrans (
 			custid
 			,refno
 			, winlostdate
 			, Currency
+			, TicketType
 			, TurnOver
 			, TotalTrans
 			, Winlost
@@ -85,6 +93,7 @@ BEGIN
 			, b.refno
 			, b.winlostdate
 			, b.Currency
+			, ISNULL(b.currency2, 0) -- NULL is Money Play
 			, SUM(ABS(b.Stake)) TurnOver
 			, COUNT(DISTINCT b.refno) TotalTrans
 			, b.Winlost
@@ -108,15 +117,18 @@ BEGIN
 			, b.refno
 			, b.winlostdate
 			, b.Currency
+			, ISNULL(b.currency2, 0) -- NULL is Money Play
 			, b.Winlost
 			, b.actual_stake
 			, b.STATUS
 			, b.statusID
+			
 	INSERT INTO @tmpRawData (
 				rptDate,
 				CustID,
 				Bettype,
 				CurrencyID,
+				TicketType,
 				StatusID,
 				TotalTrans,
 				Turnover,
@@ -131,6 +143,7 @@ BEGIN
 				,b.CustID
 				,18000 bettype
 				,b.Currency CurrencyID
+				,b.TicketType
 				,b.statusID
 				, COUNT(DISTINCT b.refno) TotalTrans
 				, 0 TurnOver
@@ -174,17 +187,18 @@ BEGIN
 						END) CommAmt
 				, 0 AS GrandAmt
 			FROM @tmpBettrans b  
-			INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK)
-				ON b.refno = bm.refno
-			WHERE  bm.bettype BETWEEN 18001
-				AND 18006
+			INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
+			WHERE  bm.bettype BETWEEN 18001 AND 18006
 			GROUP BY b.winlostdate  
-				,b.CustID
-				,b.Currency  
-				,b.statusID
+				, b.CustID
+				, b.Currency  
+				, b.TicketType
+				, b.statusID
+
 	;WITH cte_TO
 		AS (
 			SELECT Currency
+				, TicketType
 				, winlostdate
 				, custid
 				, StatusID
@@ -192,6 +206,7 @@ BEGIN
 				, SUM(GrandAmt) GrandAmt
 			FROM @tmpBettrans
 			GROUP BY Currency
+				, TicketType
 				, winlostdate
 				, custid
 				, StatusID
@@ -202,13 +217,13 @@ BEGIN
 		FROM @tmpRawData d
 		INNER JOIN cte_TO s
 			ON d.CurrencyID = s.Currency
+				AND d.TicketType = s.TicketType
 				AND d.rptDate = s.Winlostdate 
 				AND d.custId = s.CustID
 				AND d.StatusID = s.StatusID
 	
 	DELETE dbo.rpt_BettingColossusBets
-	WHERE rptDate BETWEEN @date
-						AND @date2
+	WHERE rptDate BETWEEN @date AND @date2
 
 	INSERT INTO dbo.rpt_BettingColossusBets
 				(
@@ -216,6 +231,7 @@ BEGIN
 				CustID,
 				Bettype,
 				CurrencyID,
+				TicketType,
 				StatusID,
 				TotalTrans,
 				Turnover,
@@ -231,6 +247,7 @@ BEGIN
 			CustID,
 			Bettype,
 			CurrencyID,
+			TicketType,
 			StatusID,
 			SUM(TotalTrans),
 			SUM(Turnover),
@@ -245,5 +262,7 @@ BEGIN
 			CustID,
 			Bettype,
 			CurrencyID,
+			TicketType,
 			StatusID
 END
+GO
