@@ -2,7 +2,7 @@
 ALTER PROCEDURE [dbo].[Dot_Dep_BettransInsBonusWallet] 
 	@custid 		INT,
 	@bal_custid 	INT,
-	@bettype 		SMALLINT = 22026,
+	@bettype 		SMALLINT = 22200,
 	@bonusId 		INT,
 	@amount 		MONEY,	
 	@lockedAmount	MONEY = 0,	
@@ -23,6 +23,7 @@ DB: DBTXN/bodb02
 Revisions:
 	- 20170518@Bobby: Initialize
 	- 20171009@Kathy: Change column name of BonusWalletCredit, BonusWalletDebit [Redmine:#72789]
+	- 20180323@Kathy: Change 2 bonus bettypes [Redmine:#66797]
 
 Param's Explanation:
 	- @custid: player account who joined bonus program
@@ -36,13 +37,13 @@ Param's Explanation:
 	
 	- @bonusId: Id of bonus program being joined by customer
 	- @amount: 
-		+ @bettype=22026: Given amount when  initializing bonus wallet. 
-		+ @bettype=22027: Take out the bonus amount when  cancelling bonus wallet
+		+ @bettype=22200: Given amount when  initializing bonus wallet. 
+		+ @bettype=22201: Take out the bonus amount when  cancelling bonus wallet
 		
-	- @lockedAmount:  Initial locked bonus amount when @bettype = 22026
+	- @lockedAmount:  Initial locked bonus amount when @bettype = 22200
 	- @bettype:
-		+ 22026: Transfer Bonus for initial bonus wallet
-		+ 22027: Transfer Bonus for cancelling / zerolize bonus wallet
+		+ 22200: Transfer Bonus for initial bonus wallet
+		+ 22201: Transfer Bonus for cancelling / zerolize bonus wallet
 	
 	
 	- @ErrCode:
@@ -85,8 +86,8 @@ BEGIN
 
 	SELECT @ErrCode				= 0,
 			@ErrMsg				= '',
-			@bonus_initial		= 22026,
-			@bonus_zerolize		= 22027,
+			@bonus_initial		= 22200,
+			@bonus_zerolize		= 22201,
 			@walletType			= 1
 			
 
