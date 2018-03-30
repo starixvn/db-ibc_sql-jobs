@@ -17,6 +17,7 @@ AS
 
 	Revisions:
 		- 20171117@Percy: Initial SP [RedmineID: #86477]
+		- 20180330@Don: Hot fix [Redmine: #92980]
 
 	Param's Explanation:
 		@QueueID: manual import
@@ -530,7 +531,8 @@ BEGIN
 								matchStake,matchAvgOdds,profitLoss,dateMatched,betstatus
 							)
 							ON s.betId = src.betId
-						WHEN MATCHED AND ((@JobType <> 2) OR (@JobType = 2 AND s.APIEndDate IS NOT NULL AND s.APIEndDate < @endDate)) THEN
+						--WHEN MATCHED AND ((@JobType <> 2) OR (@JobType = 2 AND s.APIEndDate IS NOT NULL AND s.APIEndDate < @endDate)) THEN
+						WHEN MATCHED AND ((@JobType <> 2) OR (@JobType = 2 AND (s.APIEndDate IS NULL OR s.APIEndDate < @endDate))) THEN
 							UPDATE SET
 								s.site = src.site,
 								s.currencyType = src.currencyType,
