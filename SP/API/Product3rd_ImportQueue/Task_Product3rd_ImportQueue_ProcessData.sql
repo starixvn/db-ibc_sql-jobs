@@ -1,8 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdProduct" executers="" viewers="" isFunction="0" isNested="1"></info>*/
-USE [bodb_3rdProduct]
-GO
-
-ALTER PROCEDURE [dbo].[Task_Product3rd_ImportQueue_ProcessData]
+CREATE PROCEDURE [dbo].[Task_Product3rd_ImportQueue_ProcessData]
 	@QueueIDInput	BIGINT = 0,
 	@ProductID		INT,
 	@ErrCode		INT = 0 OUTPUT,
@@ -17,7 +13,6 @@ AS
 
 	Revisions:
 		- 20171117@Percy: Initial SP [RedmineID: #86477]
-		- 20180330@Don: Hot fix [Redmine: #92980]
 
 	Param's Explanation:
 		@QueueID: manual import
@@ -56,7 +51,6 @@ BEGIN
 		betPlaced		DATETIME NULL,
 		ip				VARCHAR(15) NULL,
 		matchOddsReq	SMALLMONEY NULL,
-		matchAmount		MONEY NULL,
 		unMatchAmount	MONEY NULL,
 		reduction		MONEY NULL,
 		userId			VARCHAR(16) NOT NULL,
@@ -124,7 +118,7 @@ BEGIN
 	DECLARE @updated_userId TABLE
 	(
 		userId VARCHAR(16), eventId INT, marketId VARCHAR(50),
-		SettledDate DATETIME, ProfitLoss MONEY
+		SettledDate DATETIME, ProfitLoss MONEY, MarketTotal MONEY
 		PRIMARY KEY (userId, eventId, marketId)
 	)
 
@@ -355,8 +349,8 @@ BEGIN
 								src.startTime,src.settledDate,src.profitLoss,src.marketTotal,src.commission,src.agentCommission,src.stakeTotal,
 								src.resettledDate,src.CustID,src.Currency,src.ExVirtualRate
 							)
-						OUTPUT INSERTED.userId, INSERTED.eventID, INSERTED.marketID, INSERTED.settledDate, INSERTED.profitLoss
-							INTO @updated_userId (userId, eventId, marketId, SettledDate, ProfitLoss);
+						OUTPUT INSERTED.userId, INSERTED.eventID, INSERTED.marketID, INSERTED.settledDate, INSERTED.profitLoss, INSERTED.marketTotal
+							INTO @updated_userId (userId, eventId, marketId, SettledDate, ProfitLoss, MarketTotal);
 
 						IF @JobType = 3
 						BEGIN
@@ -398,7 +392,7 @@ BEGIN
 									FROM dbo.Bettrans_Exchange WITH (NOLOCK)
 									GROUP BY userId, eventID, marketID
 								) AS b ON u.userId = b.userId AND u.eventId = b.eventID AND u.marketId = b.marketID
-							WHERE ISNULL(u.ProfitLoss, 0) <> ISNULL(b.ProfitLoss, 0)
+							WHERE ISNULL(u.MarketTotal, 0) <> ISNULL(b.ProfitLoss, 0)
 						END
 					END
 					/* Bettrans_Exchange, BettransM_Exchange */
@@ -424,7 +418,6 @@ BEGIN
 							betPlaced,
 							ip,
 							matchOddsReq,
-							matchAmount,
 							unMatchAmount,
 							reduction,
 							userId,
@@ -457,7 +450,6 @@ BEGIN
 							t.c.value('@betPlaced', 'DATETIME') AS betPlaced,
 							t.c.value('@ip', 'VARCHAR(15)') AS ip,
 							t.c.value('@matchOddsReq', 'SMALLMONEY') AS matchOddsReq,
-							t.c.value('@matchAmount', 'MONEY') AS matchAmount,
 							t.c.value('@unMatchAmount', 'MONEY') AS unMatchAmount,
 							t.c.value('@reduction', 'MONEY') AS reduction,
 							t.c.value('@userId', 'VARCHAR(16)') AS userId,
@@ -465,7 +457,7 @@ BEGIN
 							t.c.value('@matchStake', 'MONEY') AS matchStake,
 							t.c.value('@matchAvgOdds', 'SMALLMONEY') AS matchAvgOdds,
 							t.c.value('@profitLoss', 'MONEY') AS profitLoss,
-							t.c.value('@dateMatched', 'DATETIME') AS dateMatched,
+							NULLIF(t.c.value('@dateMatched', 'DATETIME'), '') AS dateMatched,
 							t.c.value('@betstatus', 'VARCHAR(15)') AS betstatus,
 							-- for detail
 							t1.c1.value('@betTaken', 'DATETIME') AS betTaken,
@@ -513,7 +505,7 @@ BEGIN
 								SELECT
 									site,currencyType,eventType,eventTypeName,eventName,eventID,marketName,marketID,
 									selectionName,selectionID,matchType,betID,betPlaced,ip,matchOddsReq,
-									matchAmount,unMatchAmount,reduction,userId,extension1,
+									unMatchAmount,reduction,userId,extension1,
 									matchStake,matchAvgOdds,profitLoss,dateMatched,betstatus
 								FROM
 								(
@@ -527,7 +519,7 @@ BEGIN
 							(
 								site,currencyType,eventType,eventTypeName,eventName,eventID,marketName,marketID,
 								selectionName,selectionID,matchType,betID,betPlaced,ip,matchOddsReq,
-								matchAmount,unMatchAmount,reduction,userId,extension1,
+								unMatchAmount,reduction,userId,extension1,
 								matchStake,matchAvgOdds,profitLoss,dateMatched,betstatus
 							)
 							ON s.betId = src.betId
@@ -549,7 +541,6 @@ BEGIN
 								s.betPlaced = src.betPlaced,
 								s.ip = src.ip,
 								s.matchOddsReq = src.matchOddsReq,
-								s.matchAmount = src.matchAmount,
 								s.unMatchAmount = src.unMatchAmount,
 								s.reduction = src.reduction,
 								s.userId = src.userId,
@@ -565,14 +556,14 @@ BEGIN
 							(
 								site,currencyType,eventType,eventTypeName,eventName,eventID,marketName,marketID,
 								selectionName,selectionID,matchType,betID,betPlaced,ip,matchOddsReq,
-								matchAmount,unMatchAmount,reduction,userId,extension1,
+								unMatchAmount,reduction,userId,extension1,
 								matchStake,matchAvgOdds,profitLoss,dateMatched,betstatus,APIEndDate
 							)
 							VALUES
 							(
 								src.site,src.currencyType,src.eventType,src.eventTypeName,src.eventName,src.eventID,src.marketName,src.marketID,
 								src.selectionName,src.selectionID,src.matchType,src.betID,src.betPlaced,src.ip,src.matchOddsReq,
-								src.matchAmount,src.unMatchAmount,src.reduction,src.userId,src.extension1,
+								src.unMatchAmount,src.reduction,src.userId,src.extension1,
 								src.matchStake,src.matchAvgOdds,src.profitLoss,src.dateMatched,src.betstatus,CASE WHEN @JobType = 2 THEN @endDate ELSE NULL END
 							)
 						OUTPUT INSERTED.betID INTO @updated_betId (betId);
@@ -699,3 +690,4 @@ BEGIN
 	END
 END
 GO
+
