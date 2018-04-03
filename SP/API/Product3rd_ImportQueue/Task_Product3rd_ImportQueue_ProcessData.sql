@@ -1,4 +1,8 @@
-CREATE PROCEDURE [dbo].[Task_Product3rd_ImportQueue_ProcessData]
+/*<info serverAlias="DBLIC-bodb_3rdProduct" executers="" viewers="" isFunction="0" isNested="1"></info>*/
+USE [bodb_3rdProduct]
+GO
+
+ALTER PROCEDURE [dbo].[Task_Product3rd_ImportQueue_ProcessData]
 	@QueueIDInput	BIGINT = 0,
 	@ProductID		INT,
 	@ErrCode		INT = 0 OUTPUT,

@@ -19,26 +19,38 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	CREATE TABLE #UserIds (UserId VARCHAR(16), SettledDate SMALLDATETIME)
+	--CREATE TABLE #UserIds (UserId VARCHAR(16), SettledDate SMALLDATETIME)
 
-	DECLARE @CheckInTime DATETIME, @Id BIGINT
+	--DECLARE @CheckInTime DATETIME, @Id BIGINT
 
-	SELECT TOP 1 @CheckInTime = CheckInTime, @Id = Id
+	--SELECT TOP 1 @CheckInTime = CheckInTime, @Id = Id
+	--FROM Product3rd_ResettledBetHistory WITH (NOLOCK)
+	--WHERE FinishedTime IS NULL
+	--	AND Status = 'waiting'
+	--	AND ProductId = @ProductId
+	--ORDER BY Id ASC
+
+	--UPDATE dbo.Product3rd_ResettledBetHistory WITH (ROWLOCK, UPDLOCK)
+	--SET Status = 'running'
+	--	OUTPUT DELETED.UserId, DELETED.SettledDate
+	--	INTO #UserIds (UserId, SettledDate)
+	--WHERE Id >= @Id AND CheckInTime = @CheckInTime
+
+	SELECT Id, UserId, SettledDate
+	INTO #__TempDate
 	FROM Product3rd_ResettledBetHistory WITH (NOLOCK)
 	WHERE FinishedTime IS NULL
 		AND Status = 'waiting'
 		AND ProductId = @ProductId
-	ORDER BY Id ASC
 
-	UPDATE dbo.Product3rd_ResettledBetHistory WITH (ROWLOCK, UPDLOCK)
+	UPDATE h 
 	SET Status = 'running'
-		OUTPUT DELETED.UserId, DELETED.SettledDate
-		INTO #UserIds (UserId, SettledDate)
-	WHERE Id >= @Id AND CheckInTime = @CheckInTime
+	FROM dbo.Product3rd_ResettledBetHistory h WITH (ROWLOCK, UPDLOCK)
+		INNER JOIN #__TempDate t ON h.Id = t.Id
 
-	SELECT UserId, SettledDate
-	FROM #UserIds
+	SELECT DISTINCT UserId, SettledDate, CONVERT(INT, REPLACE(REPLACE(REPLACE(UserId, 'poc', ''), 'sit', ''), 'uat', '')) AS IBCCustID
+	FROM #__TempDate
 
-	DROP TABLE #UserIds
+	DROP TABLE #__TempDate
 END
 GO
