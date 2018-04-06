@@ -46,19 +46,19 @@ Param's Explanation:
 BEGIN
 	SET NOCOUNT ON;
 
-	--UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
-	--SET VValue = 1
-	--WHERE VName = 'IsStagingBettrans'
-	--	AND VValue = 0
+	UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+	SET VValue = 1
+	WHERE VName = 'IsStagingBettrans'
+		AND VValue = 0
 
-	--IF @@ROWCOUNT = 0
-	--BEGIN
-	--	SET @ErrorMsg = 'Another task is using staging bettrans';
+	IF @@ROWCOUNT = 0
+	BEGIN
+		SET @ErrorMsg = 'Another task is using staging bettrans';
 
-	--	RAISERROR(@ErrorMsg, 16, 1)
+		RAISERROR(@ErrorMsg, 16, 1)
 
-	--	RETURN;
-	--END
+		RETURN;
+	END
 
 	DECLARE @today datetime, @thedaybefore datetime
 	SELECT @today=@dateto, @thedaybefore=@datefrom
