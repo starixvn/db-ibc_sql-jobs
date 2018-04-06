@@ -229,7 +229,7 @@ BEGIN
 			SET b.CashInAmount = cb.CashInAmount,
 				b.WinPrizeAmount = cb.WinPrizeAmount,
 				b.CashOutAmount = cb.CashOutAmount,
-				b.ExtraInfo = cb.transdesc -- Save Real TO of CB Free Play 
+				b.ExtraInfo = cb.transdesc -- Extra Info contain real TO value of CB Free Play ticket
 			FROM dbo.bettrans b
 				INNER JOIN CBAmount cb ON cb.transid = b.transid
 			WHERE b.bettype = 18000 AND b.Winlostdate = @tmpDate

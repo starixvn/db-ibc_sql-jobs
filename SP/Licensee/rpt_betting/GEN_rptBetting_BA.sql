@@ -86,7 +86,7 @@ INSERT INTO dbo.rpt_Betting_BA
 		b.customercategory,
 		SUM(CASE WHEN b.bettype IN (901) THEN winlost ELSE 0 END),
 		b.TicketType,
-		SUM(CONVERT(MONEY, ISNULL(b.ExtraInfo, 0)))
+		SUM(CASE WHEN b.bettype = 18000 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0)) ELSE 0 END) -- Extra Amount For CB Free Play Ticket
     FROM
 	    dbo.bettrans b (NOLOCK) 
 	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
