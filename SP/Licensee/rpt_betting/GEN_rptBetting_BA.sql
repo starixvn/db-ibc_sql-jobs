@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[GEN_rptBetting_BA]
