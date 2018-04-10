@@ -34,7 +34,7 @@ BEGIN
 	BEGIN
 		IF EXISTS (
 			SELECT TOP 1 1 FROM dbo.SystemSettings WITH(NOLOCK)
-			WHERE VName = 'isMovingBet' AND VValue = '1'
+			WHERE VName = 'isMovingBet_Local' AND VValue = '1'
 		)
 		BEGIN
 			SET @StatusID = 1
@@ -48,7 +48,7 @@ BEGIN
 		)
 		AND EXISTS (
 			SELECT TOP 1 1 FROM dbo.SystemSettings WITH(NOLOCK)
-			WHERE VName = 'isMovingBet' AND VValue = '0'
+			WHERE VName = 'isMovingBet_Local' AND VValue = '0'
 		)
 		BEGIN
 			SET @StatusID = 2
