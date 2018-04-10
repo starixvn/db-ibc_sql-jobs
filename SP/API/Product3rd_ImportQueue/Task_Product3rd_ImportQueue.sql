@@ -3,13 +3,14 @@ USE [bodb_PlaytechCS]
 GO
 
 ALTER PROCEDURE [dbo].[Task_Product3rd_ImportQueue]
-	@XmlData	NVARCHAR(MAX),
-	@StartDate	DATETIME,
-	@EndDate	DATETIME,
-	@JobType	TINYINT,
-	@ProductId	INT,
-	@ErrCode	INT = 0 OUTPUT,
-	@ErrMsg		NVARCHAR(500) = '' OUTPUT
+	@XmlData		NVARCHAR(MAX),
+	@StartDate		DATETIME,
+	@EndDate		DATETIME,
+	@JobType		TINYINT,
+	@ProductId		INT,
+	@IsForceUpdate	BIT = 0,
+	@ErrCode		INT = 0 OUTPUT,
+	@ErrMsg			NVARCHAR(500) = '' OUTPUT
 AS
 
 /*
@@ -19,7 +20,7 @@ AS
 	Task:
 
 	Revisions:
-		- 20171117@Percy: Initial SP [RedmineID: #86477]
+		- 20171117@Percy: Initialize SP [RedmineID: #86477]
 */
 
 BEGIN
@@ -31,8 +32,8 @@ BEGIN
 		SELECT @XmlData = REPLACE(REPLACE (@XmlData, CHAR(10), ''), CHAR(13), '')
 		SELECT @Xml = CONVERT (XML, @XmlData)
 
-		INSERT INTO dbo.Product3rd_ImportQueue (CheckInTime, ProductID, XmlData, JobType, StartDate, EndDate)
-		SELECT CURRENT_TIMESTAMP, @ProductId, @XmlData, @JobType, @StartDate, @EndDate
+		INSERT INTO dbo.Product3rd_ImportQueue (CheckInTime, ProductID, XmlData, JobType, StartDate, EndDate, IsForceUpdate)
+		SELECT CURRENT_TIMESTAMP, @ProductId, @Xml, @JobType, @StartDate, @EndDate, @IsForceUpdate
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = ERROR_NUMBER(), @ErrMsg = ERROR_MESSAGE()

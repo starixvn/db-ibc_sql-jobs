@@ -3,7 +3,7 @@ USE [bodb_PlaytechCS]
 GO
 
 ALTER PROCEDURE [dbo].[Task_Product3rd_ResettledBetHistory_Sel]
-	@ProductId INT = 31
+	@ProductId	INT = 31
 AS
 
 /*
@@ -19,37 +19,20 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	--CREATE TABLE #UserIds (UserId VARCHAR(16), SettledDate SMALLDATETIME)
-
-	--DECLARE @CheckInTime DATETIME, @Id BIGINT
-
-	--SELECT TOP 1 @CheckInTime = CheckInTime, @Id = Id
-	--FROM Product3rd_ResettledBetHistory WITH (NOLOCK)
-	--WHERE FinishedTime IS NULL
-	--	AND Status = 'waiting'
-	--	AND ProductId = @ProductId
-	--ORDER BY Id ASC
-
-	--UPDATE dbo.Product3rd_ResettledBetHistory WITH (ROWLOCK, UPDLOCK)
-	--SET Status = 'running'
-	--	OUTPUT DELETED.UserId, DELETED.SettledDate
-	--	INTO #UserIds (UserId, SettledDate)
-	--WHERE Id >= @Id AND CheckInTime = @CheckInTime
-
 	SELECT Id, UserId, SettledDate
-	INTO #__TempDate
+		INTO #__TempDate
 	FROM Product3rd_ResettledBetHistory WITH (NOLOCK)
 	WHERE FinishedTime IS NULL
 		AND Status = 'waiting'
 		AND ProductId = @ProductId
 
-	UPDATE h 
-	SET Status = 'running'
-	FROM dbo.Product3rd_ResettledBetHistory h WITH (ROWLOCK, UPDLOCK)
-		INNER JOIN #__TempDate t ON h.Id = t.Id
-
-	SELECT DISTINCT UserId, SettledDate, CONVERT(INT, REPLACE(REPLACE(REPLACE(UserId, 'poc', ''), 'sit', ''), 'uat', '')) AS IBCCustID
-	FROM #__TempDate
+	SELECT
+		STUFF(
+			(SELECT ',' + CONVERT(VARCHAR(20), Id) FROM #__TempDate t1 WHERE t1.UserId = t2.UserId AND t1.SettledDate = t2.SettledDate FOR XML PATH (''))
+			, 1, 1, '') AS Ids,
+		UserId, SettledDate, CONVERT(INT, REPLACE(REPLACE(REPLACE(UserId, 'poc', ''), 'sit', ''), 'uat', '')) AS IBCCustID
+	FROM #__TempDate t2
+	GROUP BY UserId, SettledDate, CONVERT(INT, REPLACE(REPLACE(REPLACE(UserId, 'poc', ''), 'sit', ''), 'uat', ''))
 
 	DROP TABLE #__TempDate
 END

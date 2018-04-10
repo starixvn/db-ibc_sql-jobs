@@ -16,7 +16,7 @@ AS
 	Task:
 
 	Revisions:
-		- 20171117@Percy: Initial SP [RedmineID: #86477]
+		- 20171117@Percy: Initialize SP [RedmineID: #86477]
 
 	Param's Explanation:
 		@QueueID: manual import
@@ -35,7 +35,8 @@ BEGIN
 		END
 	END
 
-	DECLARE @QueueID BIGINT = NULL, @XmlData XML, @LogDesc VARCHAR(2000) = NULL, @JobType TINYINT, @numOftry TINYINT, @startDate DATETIME, @endDate DATETIME
+	DECLARE @QueueID BIGINT = NULL, @XmlData XML, @LogDesc VARCHAR(2000) = NULL, @JobType TINYINT, @IsForceUpdate BIT,
+		@numOftry TINYINT, @startDate DATETIME, @endDate DATETIME
 
 	-- Bettrans_exchange
 	CREATE TABLE #tmpBettrans_Exchange
@@ -123,8 +124,10 @@ BEGIN
 	(
 		userId VARCHAR(16), eventId INT, marketId VARCHAR(50),
 		SettledDate DATETIME, ProfitLoss MONEY, MarketTotal MONEY
-		PRIMARY KEY (userId, eventId, marketId)
+		--PRIMARY KEY (userId, eventId, marketId, SettledDate)
 	)
+
+	CREATE TABLE #tempId (Id BIGINT)
 
 	DECLARE @currentTime DATETIME, @statisDate DATETIME, @isInvalidUserId BIT, @isDuplicatedBetId BIT, @winlostdatelist NVARCHAR(MAX)
 	SELECT  @statisDate = '1970-01-01', @isInvalidUserId = 0, @isDuplicatedBetId = 0
@@ -137,11 +140,11 @@ BEGIN
 	BEGIN
 		-- Get XmlData
 		IF @QueueIDInput <> 0
-			SELECT @QueueID = QueueID, @XmlData = XmlData, @JobType = JobType, @startDate = StartDate, @endDate = endDate
+			SELECT @QueueID = QueueID, @XmlData = XmlData, @JobType = JobType, @startDate = StartDate, @endDate = endDate, @IsForceUpdate = IsForceUpdate
 			FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
-			WHERE QueueID = @QueueIDInput
+			WHERE QueueID = @QueueIDInput AND ProductID = @ProductID
 		ELSE
-			SELECT TOP 1 @QueueID = QueueID, @XmlData = XmlData, @JobType = JobType, @startDate = StartDate, @endDate = endDate
+			SELECT TOP 1 @QueueID = QueueID, @XmlData = XmlData, @JobType = JobType, @startDate = StartDate, @endDate = endDate, @IsForceUpdate = IsForceUpdate
 			FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
 			WHERE FinishedTime IS NULL AND ProductID = @ProductID
 			ORDER BY QueueID ASC
@@ -160,6 +163,7 @@ BEGIN
 					BEGIN
 						TRUNCATE TABLE #tmpSum_winloss_Exchange
 						TRUNCATE TABLE #tmpSum_winloss_Exchange_Detail
+						DELETE @updated_userId
 
 						INSERT INTO #tmpSum_winloss_Exchange
 						(
@@ -253,23 +257,6 @@ BEGIN
 						IF @@ROWCOUNT <> 0
 							SELECT @isInvalidUserId = 1
 						
-						-- filter duplicate data: per (userId, eventId, marketId) on resettledDate
-						DELETE t
-						FROM
-						(
-							SELECT *, ROW_NUMBER() OVER(PARTITION BY userId, eventId, marketId ORDER BY resettledDate DESC) AS rownum
-							FROM #tmpSum_winloss_Exchange
-						) AS t
-						WHERE t.rownum > 1
-
-						DELETE t
-						FROM
-						(
-							SELECT *, ROW_NUMBER() OVER(PARTITION BY userId, eventId, marketId ORDER BY resettledDate DESC) AS rownum
-							FROM #tmpSum_winloss_Exchange_Detail
-						) AS t
-						WHERE t.rownum > 1
-
 						-- Detect duplicate betId per userId
 						DELETE t
 						FROM (
@@ -361,11 +348,12 @@ BEGIN
 							MERGE dbo.Bettrans_Exchange AS s
 							USING
 								(
-									SELECT betId, userId, eventId, marketId,
-										SUM(txStake) AS txStake,
-										SUM(profitLoss) AS profitLoss
-									FROM #tmpSum_winloss_Exchange_Detail
-									GROUP BY betId, userId, eventId, marketId
+									SELECT d.betId, d.userId, d.eventId, d.marketId,
+										SUM(d.txStake) AS txStake,
+										SUM(d.profitLoss) AS profitLoss
+									FROM #tmpSum_winloss_Exchange_Detail d
+										INNER JOIN @updated_userId u ON d.userId = u.userId AND d.eventId = u.eventId AND d.marketId = u.marketId
+									GROUP BY d.betId, d.userId, d.eventId, d.marketId
 								)
 							AS src
 								(
@@ -396,7 +384,7 @@ BEGIN
 									FROM dbo.Bettrans_Exchange WITH (NOLOCK)
 									GROUP BY userId, eventID, marketID
 								) AS b ON u.userId = b.userId AND u.eventId = b.eventID AND u.marketId = b.marketID
-							WHERE ISNULL(u.MarketTotal, 0) <> ISNULL(b.ProfitLoss, 0)
+							WHERE ABS(ISNULL(u.MarketTotal, 0) - ISNULL(b.ProfitLoss, 0)) > 0.01
 						END
 					END
 					/* Bettrans_Exchange, BettransM_Exchange */
@@ -501,6 +489,15 @@ BEGIN
 
 							BREAK
 						END
+
+						IF @JobType = 2 AND @IsForceUpdate = 0
+						BEGIN
+							DELETE b
+							FROM #tmpBettrans_Exchange b
+								INNER JOIN dbo.Sum_winloss_Exchange s WITH (NOLOCK)
+									ON s.userId = b.userId AND s.eventId = b.eventID AND s.marketId = b.marketID
+							WHERE s.resettledDate IS NOT NULL
+						END
 						
 						-- import data
 						MERGE dbo.Bettrans_Exchange AS s
@@ -527,8 +524,7 @@ BEGIN
 								matchStake,matchAvgOdds,profitLoss,dateMatched,betstatus
 							)
 							ON s.betId = src.betId
-						--WHEN MATCHED AND ((@JobType <> 2) OR (@JobType = 2 AND s.APIEndDate IS NOT NULL AND s.APIEndDate < @endDate)) THEN
-						WHEN MATCHED AND ((@JobType <> 2) OR (@JobType = 2 AND (s.APIEndDate IS NULL OR s.APIEndDate < @endDate))) THEN
+						WHEN MATCHED THEN
 							UPDATE SET
 								s.site = src.site,
 								s.currencyType = src.currencyType,
@@ -554,7 +550,7 @@ BEGIN
 								s.profitLoss = src.profitLoss,
 								s.dateMatched = src.dateMatched,
 								s.betstatus = src.betstatus,
-								s.APIEndDate = CASE WHEN @JobType = 2 THEN @endDate ELSE NULL END
+								s.APIEndDate = CASE WHEN @JobType = 2 AND @IsForceUpdate = 0 THEN @endDate ELSE NULL END
 						WHEN NOT MATCHED THEN
 							INSERT
 							(
@@ -594,17 +590,33 @@ BEGIN
 								src.betId,src.betTaken,src.txStake,src.txOddsMatched,src.actualOdds
 							);
 
-						IF @JobType = 4
+						IF @JobType = 2 AND @IsForceUpdate = 1
 						BEGIN
-							UPDATE bh WITH (ROWLOCK, UPDLOCK)
-							SET
-								bh.Status = 'completed',
-								bh.FinishedTime = GETDATE()
-							FROM bodb_PlaytechCS.dbo.Product3rd_ResettledBetHistory bh
-							WHERE EXISTS (
-								SELECT 1 FROM #tmpBettrans_Exchange tmp
-								WHERE bh.UserId = tmp.userId AND bh.EventId = tmp.eventID AND bh.MarketId = tmp.marketID)
-							AND bh.Status = 'running'
+							DECLARE @Ids VARCHAR(MAX)
+
+							INSERT INTO #tempId (Id)
+							SELECT Id
+							FROM bodb_PlaytechCS.dbo.Product3rd_ResettledBetHistory h WITH (NOLOCK)
+								INNER JOIN dbo.Bettrans_Exchange b WITH (NOLOCK) ON h.UserId = b.userId AND h.EventId = b.eventID AND h.MarketId = b.marketID
+								INNER JOIN @updated_betId u ON b.betID = u.betId
+							WHERE h.FinishedTime IS NULL
+								AND h.Status = 'running'
+								AND h.ProductId = @ProductId
+
+							SELECT @Ids = STUFF(
+								(SELECT ',' + CONVERT(VARCHAR(20), Id) FROM #tempId FOR XML PATH (''))
+								, 1, 1, '')
+							FROM #tempId
+
+							EXEC bodb_PlaytechCS.dbo.Task_Product3rd_ResettledBetHistory_Upd
+								@ProductId	= @ProductId,
+								@Ids		= @Ids,
+								@Status		= 'Completed',
+								@ErrCode	= @ErrCode OUTPUT,
+								@ErrMsg		= @ErrMsg OUTPUT
+
+							IF @ErrCode <> 0
+								BREAK
 						END
 					END
 					
@@ -618,18 +630,22 @@ BEGIN
 					BEGIN
 						SELECT	@ErrCode = 101,
 								@ErrMsg = ERROR_MESSAGE()
+
+								
 						BREAK
 					END
 				END CATCH
 			END
 		END
-		
+
 		-- Update Queue
 		IF @ErrCode = 0
+		BEGIN
 			UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (ROWLOCK, UPDLOCK)
 			SET FinishedTime = CASE WHEN FinishedTime IS NULL THEN CURRENT_TIMESTAMP ELSE FinishedTime END,
 				LogDesc = 'StartDate="' + CONVERT(VARCHAR(20), @startDate, 120) + '",EndDate="' + CONVERT(VARCHAR(20), @endDate, 120) + '",Msg="Successfull"'
 			WHERE QueueID = @QueueID
+		END
 		ELSE
 		BEGIN
 			UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (ROWLOCK, UPDLOCK)
@@ -692,6 +708,11 @@ BEGIN
 		IF @ErrCode <> 0
 			RETURN
 	END
+
+	DROP TABLE #tempId
+	DROP TABLE #tmpBettrans_Exchange
+	DROP TABLE #tmpSum_winloss_Exchange
+	DROP TABLE #tmpSum_winloss_Exchange_Detail
 END
 GO
 
