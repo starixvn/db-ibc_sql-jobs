@@ -83,7 +83,7 @@ BEGIN
 			@GenRptKenoWinloss TINYINT = 0, @GenExtraGMT TINYINT = 0,
 			@GenRptBetting TINYINT = 0, @GenRptBettingBA TINYINT = 0, 
 			@GenRptLicCashout TINYINT = 0, @GenRptBettingBySport TINYINT = 0,
-			@GenAGC TINYINT = 0, @Gen3rdParty TINYINT = 0, @SeparatedProductID TINYINT, @GenBX TINYINT = 0,
+			@GenAGC TINYINT = 0, @Gen3rdParty TINYINT = 0, @SeparatedProductID TINYINT,
 			@BalanceUpDay SMALLDATETIME,
 			@KenoWinlossBetTypes VARCHAR(MAX), @ExtraGMTBetTypes VARCHAR(MAX),
 			@BettingBetTypes VARCHAR(MAX), @BettingBABetTypes VARCHAR(MAX),
@@ -256,9 +256,7 @@ BEGIN
 			EXEC dbo.Task_rptDepWinlost_AGCasino_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenAGC OUTPUT   ---- AGC
 			
 			EXEC dbo.Task_rptDepWinlost_ThirdParty_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @Gen3rdParty OUTPUT, @ProductIDs = @3rdProducts OUTPUT
-			
-			EXEC dbo.Task_rptDepWinlost_Exchange_CheckData @WinlostDate = @WinlostDate, @HasDataMismatch = @GenBX OUTPUT -- Exchange Product
-			        
+						        
 			-----3.2. Correct data
 			IF @AllowCorrect = 1
 			BEGIN 
@@ -272,16 +270,16 @@ BEGIN
 					EXEC bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
 				END
 
-				IF @GenBX <> 0 -- Exchange Product
+				IF @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 31,%' --- Exchange   
 				BEGIN
 					EXEC bodb_3rdProduct.dbo.Task_DOT_Exchange_DailySummary @winlostdate = @WinlostDate					
 				END
 				
 			-----3.3.b. Correct data of Rpt_BettingByProduct table because of AGC and GD have been corrected 
-				IF @GenAGC <> 0 OR @Gen3rdParty <> 0 OR @GenBX <> 0
+				IF @GenAGC <> 0 OR @Gen3rdParty <> 0
 				BEGIN
 					
-					IF (@Gen3rdParty <> 0 AND @GenAGC <> 0) OR (@Gen3rdParty <> 0 AND @GenBX <> 0) OR (@GenAGC <> 0 AND @GenBX <> 0)
+					IF (@Gen3rdParty <> 0 AND @GenAGC <> 0) OR (@Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 11,%' AND ', ' + @3rdProducts + ',' LIKE '%, 31,%')
 					BEGIN
 						EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 0 -- run for all separate product  
 					END
@@ -296,7 +294,7 @@ BEGIN
 						EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 10 
 					END
 					
-					ELSE IF @GenBX <> 0 
+					ELSE IF @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 31,%'
 					BEGIN
 						EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 31 
 					END								
@@ -325,17 +323,7 @@ BEGIN
 							WHEN 1 THEN ''
 							WHEN 2 THEN '(UUS only) '
 						END + 'Has data mismatch between rptDepWinlost_ThirdParty table and source with products (' + @3rdProducts + ')'
-			END
-
-			IF @GenBX <> 0
-			BEGIN
-				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				SELECT	@WinlostDate,
-						CASE @GenBX
-							WHEN 1 THEN ''
-							WHEN 2 THEN '(UUS only) '
-						END + 'Has data mismatch between rptDepWinlost_ThirdParty table and source with Exchange product'
-			END
+			END			
 		END 
 	END 		
 	 
