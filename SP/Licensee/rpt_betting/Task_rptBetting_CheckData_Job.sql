@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport," executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
 USE [bodb_LicenseeReport]
 GO
 
@@ -22,8 +22,9 @@ ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 					  = 0: Check only, do no Correct data  
 	Revisions:  		 
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
+		- 20170405@Harper: Include Exchange (separate wallet) to check data [RedmineID: #92485]
 
-	EXEC Task_rptBetting_CheckData_Job @FromDate = '2017-05-01', @ToDate = '2017-05-07', @Step = 0,  @AllowCorrect = 1
+	EXEC Task_rptBetting_CheckData_Job @FromDate = '2018-04-01', @ToDate = '2018-04-10', @Step = 0,  @AllowCorrect = 1
     
 */  
 AS 
@@ -81,7 +82,7 @@ BEGIN
 			@GenRptKenoWinloss TINYINT = 0, @GenExtraGMT TINYINT = 0,
 			@GenRptBetting TINYINT = 0, @GenRptBettingBA TINYINT = 0, 
 			@GenRptLicCashout TINYINT = 0, @GenRptBettingBySport TINYINT = 0,
-			@GenAGC TINYINT = 0, @Gen3rdParty TINYINT = 0, @SeparatedProductID TINYINT,
+			@GenAGC TINYINT = 0, @Gen3rdParty TINYINT = 0, @SeparatedProductID TINYINT, @GenBX TINYINT = 0,
 			@BalanceUpDay SMALLDATETIME,
 			@KenoWinlossBetTypes VARCHAR(MAX), @ExtraGMTBetTypes VARCHAR(MAX),
 			@BettingBetTypes VARCHAR(MAX), @BettingBABetTypes VARCHAR(MAX),
@@ -247,7 +248,7 @@ BEGIN
 			END			
 		END 
 		
-		----3. Check and correct 3rdProduct table - AGC and GD Separate Wallet (not use staging bettrans)
+		----3. Check and correct 3rdProduct table - AGC and GD Separate Wallet (not use staging bettrans) and Exchange (separate wallet)
 		IF @Step IN (0,3)
 		BEGIN 		  
 			-----3.1 Check data mismatch  
@@ -255,6 +256,8 @@ BEGIN
 			
 			EXEC dbo.Task_rptDepWinlost_ThirdParty_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @Gen3rdParty OUTPUT, @ProductIDs = @3rdProducts OUTPUT
 			
+			EXEC dbo.Task_rptDepWinlost_Exchange_CheckData @WinlostDate = @WinlostDate, @HasDataMismatch = @GenBX OUTPUT -- Exchange Product
+			        
 			-----3.2. Correct data
 			IF @AllowCorrect = 1
 			BEGIN 
@@ -267,17 +270,36 @@ BEGIN
 				BEGIN 
 					EXEC bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
 				END
+
+				IF @GenBX <> 0 -- Exchange Product
+				BEGIN
+					EXEC bodb_3rdProduct.dbo.Task_DOT_Exchange_DailySummary @winlostdate = @WinlostDate					
+				END
 				
 			-----3.3.b. Correct data of Rpt_BettingByProduct table because of AGC and GD have been corrected 
-				IF @GenAGC <> 0 OR @Gen3rdParty <> 0
-				BEGIN 
-					SELECT @SeparatedProductID = CASE WHEN @GenAGC <> 0 AND @Gen3rdParty = 0 THEN 10
-													ELSE CASE WHEN @GenAGC = 0 AND @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 11,%' THEN 11 
-														ELSE 0 
-														END															
-													END			
-																
-					EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = @SeparatedProductID  
+				IF @GenAGC <> 0 OR @Gen3rdParty <> 0 OR @GenBX <> 0
+				BEGIN
+					
+					IF (@Gen3rdParty <> 0 AND @GenAGC <> 0) OR (@Gen3rdParty <> 0 AND @GenBX <> 0) OR (@GenAGC <> 0 AND @GenBX <> 0)
+					BEGIN
+						EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 0 -- run for all separate product  
+					END
+					
+					ELSE IF @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 11,%'
+					BEGIN
+						EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 11 
+					END
+					
+					ELSE IF @GenAGC <> 0 
+					BEGIN
+						EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 10 
+					END
+					
+					ELSE IF @GenBX <> 0 
+					BEGIN
+						EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 31 
+					END								
+					
 				END
 				
 			END 		   
@@ -303,6 +325,16 @@ BEGIN
 							WHEN 2 THEN '(UUS only) '
 						END + 'Has data mismatch between rptDepWinlost_ThirdParty table and source with products (' + @3rdProducts + ')'
 			END
+
+			IF @GenBX <> 0
+			BEGIN
+				INSERT INTO @ErrMsgTab (Date, ErrMsg)
+				SELECT	@WinlostDate,
+						CASE @GenBX
+							WHEN 1 THEN ''
+							WHEN 2 THEN '(UUS only) '
+						END + 'Has data mismatch between rptDepWinlost_ThirdParty table and source with Exchange product'
+			END
 		END 
 	END 		
 	 
@@ -320,7 +352,7 @@ BEGIN
 										FOR XML PATH('tr'), TYPE 
 									) AS NVARCHAR(MAX) ) + N'</table>'
 			
-		EXEC msdb.dbo.sp_send_dbmail @recipients = 'Sophia.nguyen@starixsoft.com;Paul.tran@starixsoft.com;Patrick.pham@starixsoft.com'
+		EXEC msdb.dbo.sp_send_dbmail @recipients = 'Harper.huynh@starixsoft.com'
 					, @subject = @subject
 					, @body = @ErrorMessage
 					, @body_format = 'HTML'
