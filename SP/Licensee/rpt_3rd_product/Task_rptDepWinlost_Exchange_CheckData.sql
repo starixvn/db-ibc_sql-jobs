@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested=”0”></info>*/
 
 USE [bodb_LicenseeReport]
 GO
@@ -312,3 +312,4 @@ BEGIN
 
 	SET NOCOUNT OFF;
 END
+GO

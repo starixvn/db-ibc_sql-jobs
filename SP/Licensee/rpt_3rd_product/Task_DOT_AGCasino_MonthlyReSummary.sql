@@ -1,4 +1,4 @@
-/*<info serverAlias="DBACC-bodb02" executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested=”0”></info>*/
 
 SET QUOTED_IDENTIFIER ON 
 GO
