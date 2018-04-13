@@ -37,8 +37,9 @@ AS
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 		- 20171220@Harper: LRF - Integrate separate wallet Exchange product [RedmineID: #86640]
 		- 20180207@Harper: LA - Fix bug date range for Exchange product [RedmineID: #87754]
+		- 20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
 
-	EXEC GEN_rptBettingByProduct '2017-04-16', '2017-04-16'
+	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 
 */
 
@@ -86,7 +87,9 @@ BEGIN
 				,[BuyBackAmount]
 				,[WinPrizeAmount]
 				,[CashOutAmount]
-				,[ValidBetAmount]			
+				,[ValidBetAmount]
+				,[ExtraAmount]
+				,[TicketType]	
 				)
 		SELECT
 			[rptDate]
@@ -105,7 +108,9 @@ BEGIN
 			,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
 			,SUM(ISNULL([WinPrizeAmount],0)) [WinPrizeAmount]
 			,SUM(ISNULL([CashOutAmount],0)) [CashOutAmount]
-			,SUM(ISNULL([oddsspread],0)) 	[ValidBetAmount]	
+			,SUM(ISNULL([oddsspread],0)) 	[ValidBetAmount]
+			,SUM(ISNULL([ExtraAmount],0)) [ExtraAmount]
+			,TicketType
 		FROM dbo.rpt_Betting b WITH (NOLOCK)
 			INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
 		WHERE rptDate >= @date AND rptDate < @date2
@@ -118,6 +123,7 @@ BEGIN
 				,[CurrencyId]
 				,Status
 				,ISNULL([CustomerCategory],-1)
+				,TicketType
 		UNION ALL
 		SELECT
 			[rptDate]
@@ -137,6 +143,8 @@ BEGIN
 			,0 [WinPrizeAmount]
 			,0 [CashOutAmount]
 			,0 [ValidBetAmount]	
+			,SUM(ISNULL([ExtraAmount],0)) [ExtraAmount]
+			,TicketType 
 		FROM dbo.rpt_Betting_BA b WITH (NOLOCK)
 			INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype
 		WHERE rptDate >= @date AND rptDate < @date2
@@ -149,6 +157,7 @@ BEGIN
 				,[CurrencyId]
 				,Status
 				,ISNULL([CustomerCategory],-1)
+				,TicketType
 	
 	END
 	
@@ -258,7 +267,9 @@ BEGIN
 				,[CommissionP]
 				,[BuyBackAmount]
 				,[WinPrizeAmount]
-				,[CashOutAmount])
+				,[CashOutAmount]
+				,[ExtraAmount]
+				,[TicketType])
 		SELECT td.rptDate
 			, ISNULL(site.SiteID,-1) AS SiteId
 			, td.productId
@@ -279,6 +290,8 @@ BEGIN
 			, 0 AS BuyBackAmount
 			, 0 [WinPrizeAmount]
 			, 0 [CashOutAmount]
+			, 0 AS [ExtraAmount]				
+			, 0 AS [TicketType]
 		FROM #tmpData td WITH (NOLOCK)
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.Custid = td.CustID AND c.roleid = 1
 			LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON c.recommend = ag.custid AND ag.roleid = 2

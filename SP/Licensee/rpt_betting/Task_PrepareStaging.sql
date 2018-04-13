@@ -38,9 +38,10 @@ Revisions:
 	-20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 	-20170525@Paul: Check IsStagingBettrans flag before staging bettrans; insert sporttype, eventdate into staging match table [Redmine: #72914]
 	-20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]
+	-20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
 
 Param's Explanation:
-	EXEC Task_PrepareStaging '2017-06-16', '2017-06-18'
+	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -154,7 +155,8 @@ BEGIN
 				,refno
 				,oddsspread
 				,ExtraInfo
-				,betdaqid)
+				,betdaqid
+				,TicketType)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -184,7 +186,8 @@ BEGIN
 				b.refno,
 				oddsspread,
 				b.ExtraInfo,
-				b.betdaqid
+				b.betdaqid,
+				ISNULL(b.currency2, 0)
 			FROM bodb02.dbo.bettrans b (NOLOCK)
 			    INNER JOIN @Recommend_List r ON b.recommend=r.t_recommend
 			WHERE b.bettype<19000
@@ -214,7 +217,8 @@ BEGIN
 									  THEN bm.Winlost-bm.stake 
 									  ELSE 0 
 							END
-						END) AS WinPrizeAmount
+						END) AS WinPrizeAmount,
+				SUM(CONVERT(MONEY,bm.transdesc)) AS transdesc
 				FROM dbo.bettrans b WITH (NOLOCK) 
 					INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 				WHERE b.bettype = 18000 AND b.winlostdate=@tmpDate
@@ -224,7 +228,8 @@ BEGIN
 			UPDATE b
 			SET b.CashInAmount = cb.CashInAmount,
 				b.WinPrizeAmount = cb.WinPrizeAmount,
-				b.CashOutAmount = cb.CashOutAmount
+				b.CashOutAmount = cb.CashOutAmount,
+				b.ExtraInfo = cb.transdesc -- Extra Info contain real TO value of CB Free Play ticket
 			FROM dbo.bettrans b
 				INNER JOIN CBAmount cb ON cb.transid = b.transid
 			WHERE b.bettype = 18000 AND b.Winlostdate = @tmpDate
@@ -264,7 +269,8 @@ BEGIN
 				,refno
 				,oddsspread
 				,ExtraInfo
-				,betdaqid)
+				,betdaqid
+				,TicketType)
 			SELECT 
 			    b.transid,
 	            b.winlostdate,
@@ -294,7 +300,8 @@ BEGIN
 				b.refno,
 				oddsspread,
 				b.ExtraInfo,
-				b.betdaqid
+				b.betdaqid,
+				ISNULL(b.currency2, 0)
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
 			    INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
 			WHERE b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
@@ -320,7 +327,8 @@ BEGIN
 									  THEN bm.Winlost-bm.stake 
 									  ELSE 0 
 							END
-						END) AS WinPrizeAmount
+						END) AS WinPrizeAmount,
+					SUM(CONVERT(MONEY,bm.transdesc)) AS transdesc
 				FROM dbo.bettrans b WITH (NOLOCK) 
 					INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 				WHERE b.bettype = 18000 AND b.winlostdate=@tmpDate
@@ -329,7 +337,8 @@ BEGIN
 			UPDATE b
 			SET b.CashInAmount = cb.CashInAmount,
 				b.WinPrizeAmount = cb.WinPrizeAmount,
-				b.CashOutAmount = cb.CashOutAmount
+				b.CashOutAmount = cb.CashOutAmount,
+				b.ExtraInfo = cb.transdesc
 			FROM dbo.bettrans b
 				INNER JOIN CBAmount cb ON cb.transid = b.transid
 			WHERE b.bettype = 18000 AND b.Winlostdate = @tmpDate

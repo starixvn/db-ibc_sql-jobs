@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[GEN_rptBetting_BA]
@@ -17,8 +18,11 @@ Revisions:
 	20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 	20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	20171019@Harper: LA - Shutdown KPI Report [RedmineID: #83983]
+	20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
 
 Param's Explanation:
+
+EXEC GEN_rptBetting_BA '2018-01-01', '2018-01-28'
 
 */
 IF @date2 IS NULL SET @date2 = @date
@@ -50,6 +54,8 @@ INSERT INTO dbo.rpt_Betting_BA
         ,[CommissionSVirtual]
 		,[customercategory]
 		,[BuyBackAmount]
+		,[TicketType]
+		,[ExtraAmount]
 		)
     SELECT  
 	    b.winlostdate,
@@ -78,7 +84,9 @@ INSERT INTO dbo.rpt_Betting_BA
 	    SUM((winlost-actual_stake)*virtualrate) WinLossVirtual,
 	    SUM(scomm*virtualrate) CommissionSVirtual,
 		b.customercategory,
-		SUM(CASE WHEN b.bettype IN (901) THEN winlost ELSE 0 END)		
+		SUM(CASE WHEN b.bettype IN (901) THEN winlost ELSE 0 END),
+		b.TicketType,
+		SUM(CASE WHEN b.bettype = 18000 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0)) ELSE 0 END) -- Extra Amount For CB Free Play Ticket
     FROM
 	    dbo.bettrans b (NOLOCK) 
 	    LEFT JOIN bodb02.dbo.customer ag (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
@@ -101,7 +109,8 @@ INSERT INTO dbo.rpt_Betting_BA
 	    b.currency,
 	    ISNULL(sta.statusid,-1),
 	    b.liveindicator,
-	    b.customercategory
+	    b.customercategory,
+		b.TicketType
 		
 GO
 GRANT EXECUTE ON [dbo].[GEN_rptBetting_BA] TO [bodbLicenseeNet] AS [dbo]
