@@ -65,19 +65,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id = @jobId
 										  ,@retry_interval = 0
 										  ,@os_run_priority = 0
 										  ,@subsystem = N'TSQL'
-										  ,@command = N'DECLARE @MBStatusID TINYINT = 0
-
-EXEC dbo.Task_MoveBets_Status @StatusID = @MBStatusID OUTPUT
-
-IF @MBStatusID = 0 -- this day not have MB
-BEGIN
-	RETURN
-END
-ELSE IF @MBStatusID = 1 -- MB is running
-BEGIN
-	RAISERROR(''Move bets is processing. Automatically retry after 15mins.'', 16, 1)
-	RETURN
-END'
+										  ,@command = N'EXEC dbo.Task_MoveBets_Status_Job'
 										  ,@database_name = N'bodb02'
 										  ,@flags = 0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
