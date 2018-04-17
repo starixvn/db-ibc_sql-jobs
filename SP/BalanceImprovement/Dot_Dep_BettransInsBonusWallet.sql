@@ -8,6 +8,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_BettransInsBonusWallet]
 	@lockedAmount	MONEY = 0,	
 	@transdesc 		NVARCHAR(300) = '',
 	@ip				NVARCHAR(15)='',
+	@betcheck		NVARCHAR(50) = NULL,
 	@transid 		BIGINT = 0 OUTPUT,	
 	@bal_transid 	BIGINT = 0 OUTPUT,
 	@RefNo 			BIGINT = 0 OUTPUT,
@@ -24,6 +25,7 @@ Revisions:
 	- 20170518@Bobby: Initialize
 	- 20171009@Kathy: Change column name of BonusWalletCredit, BonusWalletDebit [Redmine:#72789]
 	- 20180323@Kathy: Change 2 bonus bettypes [Redmine:#66797]
+	- 20180417@Kathy: Add more input param @betcheck [Redmine:#66797]
 
 Param's Explanation:
 	- @custid: player account who joined bonus program
@@ -191,10 +193,10 @@ BEGIN
 
 	INSERT INTO bettrans 
 		(custid, username, refno, transdate, matchid, bettype, transdesc,winlost, actual_stake, winlostdate, 
-		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid)
+		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid, betcheck)
 	VALUES 
 		(@CustID, @username, @RefNo, @transdate, 0, @bettype, @transdesc,@cust_winlost, @cust_actual_stake, convert(nvarchar(10), @transdate, 120), 
-		 @CustID, @Recommend, @MRecommend, @SRecommend, @Currency,@actualrate, @currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId)
+		 @CustID, @Recommend, @MRecommend, @SRecommend, @Currency,@actualrate, @currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId, @betcheck)
 
 	IF @@ERROR <> 0
 	BEGIN						
@@ -215,10 +217,10 @@ BEGIN
 	---Insert bonus transfer for bal acc
 	INSERT INTO bettrans 
 		(custid, username, refno, transdate, matchid, bettype, transdesc,winlost, actual_stake, winlostdate, 
-		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid)
+		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid, betcheck)
 	VALUES 
 		(@bal_custID, @bal_Username, @RefNo, @transdate, 0, @bettype, @transdesc, @bal_winlost, @bal_actual_stake, convert(nvarchar(10), @transdate, 120), 
-		 @CustID, @bal_recommend, @bal_mrecommend, @bal_srecommend, @bal_currency, @bal_actualrate, @bal_currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId)
+		 @CustID, @bal_recommend, @bal_mrecommend, @bal_srecommend, @bal_currency, @bal_actualrate, @bal_currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId, @betcheck)
 
 	IF @@ERROR <> 0
 	BEGIN
