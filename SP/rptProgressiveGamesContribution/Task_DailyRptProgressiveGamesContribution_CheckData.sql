@@ -8,12 +8,12 @@ ALTER PROCEDURE [dbo].[Task_DailyRptProgressiveGamesContribution_CheckData]
 AS
 
 /*
-	Created by: 20180222@Sophia.Nguyen
-	Task: Job Gen data for rptProgressiveGamesContribution [Redmine: #83787]
+	Created: 20180222@Percy
+	Task: SP check data for rptProgressiveGamesContribution [Redmine: #83787]
 	DB: DBSUM.bodb_Summary
 	
 	Revisions:
-		- 20180222@Sophia: Initialize SP [RedmineID: #83787]
+		- 20180222@Percy: Initialize SP [RedmineID: #83787]
 
 	Param's Explanation:
 */
@@ -36,276 +36,290 @@ BEGIN
 		RETURN
 	END
 
-	-- Check MB has done yet
-	DECLARE @MBStatusID TINYINT = 1
-
-	EXEC bodb02.dbo.Task_MoveBets_Status @StatusID = @MBStatusID OUTPUT
-
-	IF @MBStatusID = 0 -- this day not have MB
-	BEGIN
-		RETURN
-	END
-	ELSE IF @MBStatusID = 1 -- MB is running
-	BEGIN
-		RAISERROR('Move bets is processing. Automatically retry after 15mins.', 16, 1)
-		RETURN
-	END
-
-	CREATE TABLE #Source
-	(
-		WinlostDate		SMALLDATETIME,
-		CustId			INT,
-		RoleId			INT,
-		Recommend		INT,
-		MRecommend		INT,
-		SRecommend		INT,
-		ProductId		SMALLINT,
-		GameId			SMALLINT,
-		Betcount		INT,
-		Turnover		MONEY,
-		Contribution	MONEY,
-		ContributionA	MONEY,
-		ContributionM	MONEY,
-		ContributionS	MONEY
-	)
-
-	CREATE TABLE #UpdateDate
-	(
-		WinlostDate		SMALLDATETIME,
-		CustId			INT,
-		RoleId			INT,
-		Recommend		INT,
-		MRecommend		INT,
-		SRecommend		INT,
-		ProductId		SMALLINT,
-		GameId			SMALLINT,
-		Betcount		INT,
-		Turnover		MONEY,
-		Contribution	MONEY,
-		ContributionA	MONEY,
-		ContributionM	MONEY,
-		ContributionS	MONEY
-	)
-
 	DECLARE @Bettype TABLE (ProductID INT, Bettype INT)
 
 	INSERT INTO @Bettype (ProductID, Bettype)
 	SELECT ProductID, Bettype
 	FROM bodb02.dbo.f_ProgressiveGamesContribution_Bettype_Sel('All')
 
-	-- Get data source
-	INSERT INTO #Source (
-				WinlostDate,
-				CustId,
-				RoleId,
-				Recommend,
-				MRecommend,
-				SRecommend,
-				ProductId,
-				GameId,
-				Betcount,
-				Turnover,
-				Contribution,
-				ContributionA,
-				ContributionM,
-				ContributionS)
+	/* Get data source */
+	CREATE TABLE #rptProgressiveGamesContribution_Source
+	(
+		WinlostDate		SMALLDATETIME,
+		CustId			INT,
+		RoleId			INT,
+		Recommend		INT,
+		MRecommend		INT,
+		SRecommend		INT,
+		ProductId		SMALLINT,
+		GameId			SMALLINT,
+		Betcount		INT,
+		Turnover		MONEY,
+		Contribution	MONEY,
+		ContributionA	MONEY,
+		ContributionM	MONEY,
+		ContributionS	MONEY
+	)
 
-	SELECT		b.WinlostDate,
-				b.CustId,
-				1 AS RoleId,
-				b.Recommend,
-				b.MRecommend,
-				b.SRecommend,
-				g.ProductId,
-				b.GameID,
-				COUNT(b.TransID) AS Betcount,
-				SUM(b.Stake) AS Turnover,
-				SUM(b.Stake * b.ContributionRate) AS Contribution,
-				-SUM(b.Stake * b.ContributionRate * apositiontaking) AS ContributionA,
-				-SUM(b.Stake * b.ContributionRate * mpositiontaking) AS ContributionM,
-				-SUM(b.Stake * b.ContributionRate * spositiontaking) AS ContributionS
-	FROM		bodb02.dbo.BettransRnG14 b WITH (NOLOCK)
-		INNER JOIN @Bettype g ON g.Bettype = b.GameId	
-	WHERE	b.WinlostDate = @WinlostDate
-			AND b.StatusID NOT IN (0,1,102,101,103)		 
-	GROUP BY 	b.WinlostDate,
-				b.CustId,
-				b.Recommend,
-				b.MRecommend,
-				b.SRecommend,
-				g.ProductId,
-				b.GameID
-
-	-- Agent - RoleId = 2
-	INSERT INTO #Source (
-				WinlostDate,
-				CustId,
-				RoleId,
-				Recommend,
-				MRecommend,
-				SRecommend,
-				ProductId,
-				GameId,
-				Betcount,
-				Turnover,
-				Contribution,
-				ContributionA,
-				ContributionM,
-				ContributionS)
-
-	SELECT		b.WinlostDate,
-				b.Recommend AS CustId,
-				2 AS RoleId,
-				b.Recommend,
-				b.MRecommend,
-				b.SRecommend,
-				ProductId,
-				GameId,
-				SUM(Betcount) AS Betcount,
-				SUM(Turnover) AS Turnover,
-				SUM(Contribution) AS Contribution,
-				SUM(ContributionA) AS ContributionA,
-				SUM(ContributionM) AS ContributionM,
-				SUM(ContributionS) AS ContributionS
-	FROM	#Source b WITH (NOLOCK)
-	WHERE	b.RoleId = 1 
-			AND b.WinlostDate = @WinlostDate
-	GROUP BY	b.WinlostDate,
-				b.Recommend,
-				b.MRecommend,
-				b.SRecommend,
-				ProductId,
-				GameId
-				
-	-- Master - RoleId = 3
-	INSERT INTO #Source (
-				WinlostDate,
-				CustId,
-				RoleId,
-				Recommend,
-				MRecommend,
-				SRecommend,
-				ProductId,
-				GameId,
-				Betcount,
-				Turnover,
-				Contribution,
-				ContributionA,
-				ContributionM,
-				ContributionS)
-
-	SELECT		b.WinlostDate,
-				b.MRecommend AS CustId,
-				3 AS RoleId,
-				0 AS Recommend,
-				b.MRecommend,
-				b.SRecommend,
-				ProductId,
-				GameId,
-				SUM(Betcount) AS Betcount,
-				SUM(Turnover) AS Turnover,
-				SUM(Contribution) AS Contribution,
-				SUM(ContributionA) AS ContributionA,
-				SUM(ContributionM) AS ContributionM,
-				SUM(ContributionS) AS ContributionS
-	FROM	#Source b WITH (NOLOCK)
-	WHERE	b.RoleId = 1 
-			AND b.WinlostDate = @WinlostDate
-	GROUP BY	b.WinlostDate, 
-				b.MRecommend,
-				b.SRecommend,
-				ProductId,
-				GameId
-							
-	-- Super - RoleId = 4
-	INSERT INTO #Source (
-				WinlostDate,
-				CustId,
-				RoleId,
-				Recommend,
-				MRecommend,
-				SRecommend,
-				ProductId,
-				GameId,
-				Betcount,
-				Turnover,
-				Contribution,
-				ContributionA,
-				ContributionM,
-				ContributionS)
-
-	SELECT		b.WinlostDate,
-				b.SRecommend AS CustId,
-				4 AS RoleId,
-				0 AS Recommend,
-				0 AS MRecommend,
-				b.SRecommend,
-				ProductId,
-				GameId,
-				SUM(Betcount) AS Betcount,
-				SUM(Turnover) AS Turnover,
-				SUM(Contribution) AS Contribution,
-				SUM(ContributionA) AS ContributionA,
-				SUM(ContributionM) AS ContributionM,
-				SUM(ContributionS) AS ContributionS
-	FROM	#Source b WITH (NOLOCK)
-	WHERE	b.RoleId = 1 
-			AND b.WinlostDate = @WinlostDate
-	GROUP BY	b.WinlostDate, 
-				b.SRecommend,
-				ProductId,
-				GameId
-
-	-- Compare data
-	INSERT INTO #UpdateDate (
-				WinlostDate,
-				CustId,
-				RoleId,
-				Recommend,
-				MRecommend,
-				SRecommend,
-				ProductId,
-				GameId,
-				Betcount,
-				Turnover,
-				Contribution,
-				ContributionA,
-				ContributionM,
-				ContributionS)
-	SELECT
-		s.WinlostDate,
-		CASE
-			WHEN s.CustId IS NULL THEN -1
-			WHEN rpt.CustId IS NULL THEN -2
-			ELSE s.CustId END AS CustId,
-		s.RoleId,
-		s.Recommend,
-		s.MRecommend,
-		s.SRecommend,
-		s.ProductId,
-		s.GameId,
-		s.Betcount,
-		s.Turnover,
-		s.Contribution,
-		s.ContributionA,
-		s.ContributionM,
-		s.ContributionS
-	FROM #Source s
-		FULL OUTER JOIN dbo.rptProgressiveGamesContribution rpt WITH (NOLOCK)
-			ON s.CustId = rpt.CustId AND s.WinlostDate = rpt.WinlostDate AND s.ProductId = rpt.ProductId AND s.GameId = s.GameId
-	WHERE
-		rpt.WinlostDate = @WinlostDate
-		AND (
-			s.CustId IS NULL OR rpt.CustId IS NULL
-			OR s.Betcount <> rpt.Betcount
-			OR s.Turnover <> rpt.Turnover
-			OR s.Contribution <> rpt.Contribution
-			OR s.ContributionA <> rpt.ContributionA
-			OR s.ContributionM <> rpt.ContributionM
-			OR s.ContributionS <> rpt.ContributionS
+	-- Member - RoleId = 1
+	BEGIN
+		INSERT INTO #rptProgressiveGamesContribution_Source
+		(
+			WinlostDate,
+			CustId,
+			RoleId,
+			Recommend,
+			MRecommend,
+			SRecommend,
+			ProductId,
+			GameId,
+			Betcount,
+			Turnover,
+			Contribution,
+			ContributionA,
+			ContributionM,
+			ContributionS
 		)
 
-	IF EXISTS (SELECT TOP 1 1 FROM #UpdateDate)
+		SELECT
+			b.WinlostDate,
+			b.CustId,
+			1 AS RoleId,
+			b.Recommend,
+			b.MRecommend,
+			b.SRecommend,
+			g.ProductId,
+			b.GameID,
+			COUNT(b.TransID) AS Betcount,
+			SUM(ISNULL(b.Stake, 0)) AS Turnover,
+			SUM(ISNULL(b.Stake * b.ContributionRate, 0)) AS Contribution,
+			-SUM(ISNULL(b.Stake * b.ContributionRate * apositiontaking, 0)) AS ContributionA,
+			-SUM(ISNULL(b.Stake * b.ContributionRate * mpositiontaking, 0)) AS ContributionM,
+			-SUM(ISNULL(b.Stake * b.ContributionRate * spositiontaking, 0)) AS ContributionS
+		FROM bodb02.dbo.BettransRNG14 b WITH (NOLOCK)
+			INNER JOIN @Bettype g ON g.Bettype = b.GameId	
+		WHERE b.WinlostDate = @WinlostDate
+			AND b.StatusID NOT IN (0,1,102,101,103)		 
+		GROUP BY
+			b.WinlostDate,
+			b.CustId,
+			b.Recommend,
+			b.MRecommend,
+			b.SRecommend,
+			g.ProductId,
+			b.GameId
+	END
+
+	-- Agent - RoleId = 2
+	BEGIN
+		INSERT INTO #rptProgressiveGamesContribution_Source
+		(
+			WinlostDate,
+			CustId,
+			RoleId,
+			Recommend,
+			MRecommend,
+			SRecommend,
+			ProductId,
+			GameId,
+			Betcount,
+			Turnover,
+			Contribution,
+			ContributionA,
+			ContributionM,
+			ContributionS
+		)
+
+		SELECT
+			WinlostDate,
+			Recommend AS CustId,
+			2 AS RoleId,
+			Recommend,
+			MRecommend,
+			SRecommend,
+			ProductId,
+			GameId,
+			SUM(Betcount) AS Betcount,
+			SUM(Turnover) AS Turnover,
+			SUM(Contribution) AS Contribution,
+			SUM(ContributionA) AS ContributionA,
+			SUM(ContributionM) AS ContributionM,
+			SUM(ContributionS) AS ContributionS
+		FROM #rptProgressiveGamesContribution_Source
+		WHERE RoleId = 1 
+		GROUP BY
+			WinlostDate,
+			Recommend,
+			MRecommend,
+			SRecommend,
+			ProductId,
+			GameId
+	END
+				
+	-- Master - RoleId = 3
+	BEGIN
+		INSERT INTO #rptProgressiveGamesContribution_Source
+		(
+			WinlostDate,
+			CustId,
+			RoleId,
+			Recommend,
+			MRecommend,
+			SRecommend,
+			ProductId,
+			GameId,
+			Betcount,
+			Turnover,
+			Contribution,
+			ContributionA,
+			ContributionM,
+			ContributionS
+		)
+
+		SELECT
+			WinlostDate,
+			MRecommend AS CustId,
+			3 AS RoleId,
+			0 AS Recommend,
+			MRecommend,
+			SRecommend,
+			ProductId,
+			GameId,
+			SUM(Betcount) AS Betcount,
+			SUM(Turnover) AS Turnover,
+			SUM(Contribution) AS Contribution,
+			SUM(ContributionA) AS ContributionA,
+			SUM(ContributionM) AS ContributionM,
+			SUM(ContributionS) AS ContributionS
+		FROM #rptProgressiveGamesContribution_Source
+		WHERE RoleId = 1 
+		GROUP BY
+			WinlostDate,
+			MRecommend,
+			SRecommend,
+			ProductId,
+			GameId
+	END
+							
+	-- Super - RoleId = 4
+	BEGIN
+		INSERT INTO #rptProgressiveGamesContribution_Source
+		(
+			WinlostDate,
+			CustId,
+			RoleId,
+			Recommend,
+			MRecommend,
+			SRecommend,
+			ProductId,
+			GameId,
+			Betcount,
+			Turnover,
+			Contribution,
+			ContributionA,
+			ContributionM,
+			ContributionS
+		)
+
+		SELECT
+			WinlostDate,
+			SRecommend AS CustId,
+			4 AS RoleId,
+			0 AS Recommend,
+			0 AS MRecommend,
+			SRecommend,
+			ProductId,
+			GameId,
+			SUM(Betcount) AS Betcount,
+			SUM(Turnover) AS Turnover,
+			SUM(Contribution) AS Contribution,
+			SUM(ContributionA) AS ContributionA,
+			SUM(ContributionM) AS ContributionM,
+			SUM(ContributionS) AS ContributionS
+		FROM #rptProgressiveGamesContribution_Source
+		WHERE RoleId = 1 
+		GROUP BY
+			WinlostDate,
+			SRecommend,
+			ProductId,
+			GameId
+	END
+
+	/* Get data target */
+	CREATE TABLE #rptProgressiveGamesContribution_Target
+	(
+		WinlostDate		SMALLDATETIME,
+		CustId			INT,
+		RoleId			INT,
+		Recommend		INT,
+		MRecommend		INT,
+		SRecommend		INT,
+		ProductId		SMALLINT,
+		GameId			SMALLINT,
+		Betcount		INT,
+		Turnover		MONEY,
+		Contribution	MONEY,
+		ContributionA	MONEY,
+		ContributionM	MONEY,
+		ContributionS	MONEY
+	)
+
+	BEGIN
+		INSERT INTO #rptProgressiveGamesContribution_Target
+		(
+			WinlostDate,
+			CustId,
+			RoleId,
+			Recommend,
+			MRecommend,
+			SRecommend,
+			ProductId,
+			GameId,
+			Betcount,
+			Turnover,
+			Contribution,
+			ContributionA,
+			ContributionM,
+			ContributionS
+		)
+		SELECT
+			WinlostDate,
+			CustId,
+			RoleId,
+			Recommend,
+			MRecommend,
+			SRecommend,
+			ProductId,
+			GameId,
+			Betcount,
+			Turnover,
+			Contribution,
+			ContributionA,
+			ContributionM,
+			ContributionS
+		FROM dbo.rptProgressiveGamesContribution WITH (NOLOCK)
+		WHERE WinlostDate = @WinlostDate
+	END
+
+	/* Compare data */
+	CREATE NONCLUSTERED INDEX IX_CustID ON #rptProgressiveGamesContribution_Source (CustId, ProductId, GameId)
+	CREATE NONCLUSTERED INDEX IX_CustID ON #rptProgressiveGamesContribution_Target (CustId, ProductId, GameId)
+
+	IF EXISTS (
+		SELECT 1
+		FROM #rptProgressiveGamesContribution_Source s
+			FULL OUTER JOIN #rptProgressiveGamesContribution_Target t
+				ON s.CustId = t.CustId AND s.ProductId = t.ProductId AND s.GameId = t.GameId AND s.WinlostDate = t.WinlostDate
+		WHERE
+				s.CustId IS NULL
+				OR t.CustId IS NULL
+				OR s.Betcount <> t.Betcount
+				OR s.Turnover <> t.Turnover
+				OR s.Contribution <> t.Contribution
+				OR s.ContributionA <> t.ContributionA
+				OR s.ContributionM <> t.ContributionM
+				OR s.ContributionS <> t.ContributionS
+	)
 	BEGIN
 		IF @IsCheckDataOnly = 1 --just check data
 		BEGIN
@@ -313,43 +327,45 @@ BEGIN
 		END
 		ELSE -- correct data
 		BEGIN
-			DELETE dbo.rptProgressiveGamesContribution WITH (ROWLOCK, UPDLOCK) WHERE WinlostDate = @WinlostDate
-
-			INSERT INTO dbo.rptProgressiveGamesContribution
-			(
-				WinlostDate,
-				CustId,
-				RoleId,
-				Recommend,
-				MRecommend,
-				SRecommend,
-				ProductId,
-				GameId,
-				Betcount,
-				Turnover,
-				Contribution,
-				ContributionA,
-				ContributionM,
-				ContributionS
-			)
-			SELECT
-				WinlostDate,
-				CustId,
-				RoleId,
-				Recommend,
-				MRecommend,
-				SRecommend,
-				ProductId,
-				GameId,
-				Betcount,
-				Turnover,
-				Contribution,
-				ContributionA,
-				ContributionM,
-				ContributionS
-			FROM #UpdateDate
-			WHERE CustId <> -1
+			MERGE dbo.rptProgressiveGamesContribution AS TARGET
+			USING #rptProgressiveGamesContribution_Source AS SOURCE
+				ON		TARGET.WinlostDate	= SOURCE.WinlostDate
+					AND TARGET.CustId		= SOURCE.CustId
+					AND TARGET.ProductId	= SOURCE.ProductId
+					AND TARGET.GameId		= SOURCE.GameId
+			WHEN MATCHED THEN
+				UPDATE SET
+					TARGET.RoleId			= SOURCE.RoleId,
+					TARGET.Recommend		= SOURCE.Recommend,
+					TARGET.MRecommend		= SOURCE.MRecommend,
+					TARGET.SRecommend		= SOURCE.SRecommend,
+					TARGET.Betcount			= SOURCE.Betcount,
+					TARGET.Turnover			= SOURCE.Turnover,
+					TARGET.Contribution		= SOURCE.Contribution,
+					TARGET.ContributionA	= SOURCE.ContributionA,
+					TARGET.ContributionM	= SOURCE.ContributionM,
+					TARGET.ContributionS	= SOURCE.ContributionS
+			WHEN NOT MATCHED BY TARGET THEN
+				INSERT
+				(
+					WinlostDate,CustId,RoleId,
+					Recommend,MRecommend,SRecommend,
+					ProductId,GameId,Betcount,Turnover,
+					Contribution,ContributionA,ContributionM,ContributionS
+				)
+				VALUES
+				(
+					SOURCE.WinlostDate,SOURCE.CustId,SOURCE.RoleId,
+					SOURCE.Recommend,SOURCE.MRecommend,SOURCE.SRecommend,
+					SOURCE.ProductId,SOURCE.GameId,SOURCE.Betcount,SOURCE.Turnover,
+					SOURCE.Contribution,SOURCE.ContributionA,SOURCE.ContributionM,SOURCE.ContributionS
+				)
+			WHEN NOT MATCHED BY SOURCE AND TARGET.WinlostDate = @Winlostdate THEN
+				DELETE;
 		END
 	END
+
+	DROP TABLE #rptProgressiveGamesContribution_Source
+	DROP TABLE #rptProgressiveGamesContribution_Target
 END
 GO

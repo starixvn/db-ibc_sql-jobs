@@ -6,12 +6,12 @@ ALTER PROCEDURE [dbo].[Task_DailyRptProgressiveGamesContribution_CheckData_Job]
 AS
 
 /*
-	Created by: 20180222@Sophia.Nguyen
-	Task: Job Gen data for rptProgressiveGamesContribution [Redmine: #83787]
+	Created: 20180222@Percy
+	Task: Job check data for rptProgressiveGamesContribution [Redmine: #83787]
 	DB: DBSUM.bodb_Summary
 	
 	Revisions:
-		- 20180222@Sophia: Initialize SP [RedmineID: #83787]
+		- 20180222@Percy: Initialize SP [RedmineID: #83787]
 
 	Param's Explanation:
 */
