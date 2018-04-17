@@ -15,10 +15,10 @@ AS
 		- 20180305@Percy: Initialize SP [RedmineID: #83787]
 	
 	Parameters Explanations:
-		@StatusID = NULL --> MB does not start yet
-		@StatusID = 0 --> this day not have MB
+		@StatusID = NULL --> this day not have MB
+		@StatusID = 0 --> MB has commpleted
 		@StatusID = 1 --> MB has not commpleted yet (is running)
-		@StatusID = 2 --> MB has commpleted
+		@StatusID = 2 --> MB does not start yet
 
 */
 
@@ -32,7 +32,7 @@ BEGIN
 	-- Not have MB
 	IF NOT EXISTS (SELECT 1 FROM @MoveBetSchedule)
 	BEGIN
-		SET @StatusID = 0
+		SET @StatusID = NULL
 
 		RETURN
 	END
@@ -59,13 +59,13 @@ BEGIN
 			WHERE VName = 'isMovingBet_Local' AND VValue = '0'
 		)
 		BEGIN
-			SET @StatusID = 2
+			SET @StatusID = 0
 
 			RETURN
 		END
 
 		-- MB does not start yet
-		SET @StatusID = NULL
+		SET @StatusID = 2
 	END
 END
 GO

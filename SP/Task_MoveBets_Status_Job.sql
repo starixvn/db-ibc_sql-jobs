@@ -22,10 +22,7 @@ BEGIN
 	EXEC dbo.Task_MoveBets_Status @StatusID = @MBStatusID OUTPUT
 
 	-- MB does not start yet or is running --> loop 15 minutes
-	IF (
-		@MBStatusID IS NULL -- not start yet
-		OR @MBStatusID = 1 -- is running
-	)
+	IF ISNULL(@MBStatusID, 0) <> 0
 	BEGIN
 		RAISERROR('Move bets is processing. Automatically retry after 15mins.', 16, 1)
 		RETURN
