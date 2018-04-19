@@ -24,6 +24,7 @@ AS
 	- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
 	- 20171225@Sophia: Integrate Exchange Products [Redmine: #86640]
 	- 20180212@Harper: Remove LC from product list [Redmine: #85965]
+	- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
