@@ -16,6 +16,7 @@ Revisions:
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20160805@Jim: Revise SP due to [Redmine: #62052]
 	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
+	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -79,6 +80,8 @@ DECLARE
 	   ,@PivotNumb_VS2 BIGINT
 	   ,@NumberTemp_LT BIGINT
 	   ,@PivotNumb_LT BIGINT
+	   ,@NumberTemp_PP BIGINT
+	   ,@PivotNumb_PP BIGINT
 	   ,@id INT=1
 	   ,@mesg Nvarchar (Max)=''
 	   
@@ -127,7 +130,8 @@ DECLARE @tblTmp AS TABLE (ID INT
 						   ,FW BIGINT
 						   ,CO BIGINT
 						   ,VS2 BIGINT
-						   ,LT BIGINT)
+						   ,LT BIGINT
+						   ,PP BIGINT)
 						   
 --exec 
 --rptLicWinloss2
@@ -153,7 +157,8 @@ INSERT INTO @tblTmp	(ID
 					,FW
 					,CO
 					,VS2
-					,LT	)	
+					,LT
+					,PP	)	
 EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date	
 				
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
@@ -219,7 +224,8 @@ INSERT INTO @tblTmp	(ID
 					,FW
 					,CO
 					,VS2
-					,LT)					   
+					,LT
+					,PP)					   
 EXEC dbo.GET_DepositDataToValidate_Betting @Date=@Date
 					
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)

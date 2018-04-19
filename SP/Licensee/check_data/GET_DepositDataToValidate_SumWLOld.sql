@@ -16,6 +16,7 @@ Revisions:
 - 20160608@Jim: Separate Bettrade (#57353) 
 - 20160616@Jim: Changes to data integrity automail (#59249)	
 - 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
+- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 
 Param's Explanation:
     @DrawFilter Only support 1:Normal 
@@ -34,13 +35,13 @@ BEGIN
 	BEGIN
 	
 		SELECT 1 AS Id, CONVERT(MONEY, 0) AS Sb, CONVERT(MONEY, 0) AS Rb, CONVERT(MONEY, 0) AS Ng , CONVERT(MONEY, 0)  AS BA,CONVERT(MONEY, 0) AS CS,  CONVERT(MONEY, 0) AS BT,CONVERT(MONEY, 0) AS LC, CONVERT(MONEY, 0) AS AG ,CONVERT(MONEY, 0) AS GD,CONVERT(MONEY, 0) AS KN ,CONVERT(MONEY, 0) AS VG,CONVERT(MONEY, 0) AS VB,CONVERT(MONEY, 0) AS MGCLC,CONVERT(MONEY, 0) AS MGCRNG, CONVERT(MONEY, 0) AS VS
-						, CONVERT(MONEY, 0) AS CB, CONVERT(MONEY, 0) AS AB, CONVERT(MONEY, 0) AS NG2, CONVERT(MONEY, 0) AS FW, CONVERT(MONEY, 0) AS CO, CONVERT(MONEY, 0) AS VS2, CONVERT(MONEY, 0) AS LT
+						, CONVERT(MONEY, 0) AS CB, CONVERT(MONEY, 0) AS AB, CONVERT(MONEY, 0) AS NG2, CONVERT(MONEY, 0) AS FW, CONVERT(MONEY, 0) AS CO, CONVERT(MONEY, 0) AS VS2, CONVERT(MONEY, 0) AS LT, CONVERT(MONEY, 0) AS PP
 		UNION
 		SELECT 2, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0),  CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0) ,CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0)
-					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0)
+					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0)
 		UNION
 		SELECT 3, CONVERT(MONEY, 0)t, CONVERT(MONEY, 0), CONVERT(MONEY, 0),   CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0)
-					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0)
+					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0)
 	
 		RETURN; 
 	END
@@ -130,6 +131,10 @@ BEGIN
 			,@LTTurnover MONEY
 			,@LTCustomerWl MONEY
 			,@LTBetCount MONEY
+			----PP
+			,@PPTurnover MONEY
+			,@PPCustomerWl MONEY
+			,@PPBetCount MONEY
 
 	---
 	DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),Sporttype INT)
@@ -138,7 +143,7 @@ BEGIN
 	SELECT DISTINCT ProductPrefix,s.Sporttype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT')	
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP')	
 
 	INSERT INTO @tblSport(ProductPrefix,Sporttype)
 	SELECT 'SB',0
@@ -387,7 +392,16 @@ BEGIN
 	SELECT @LTTurnover 		= ISNULL(@LTTurnover,0)
 		   ,@LTCustomerWl	= ISNULL(@LTCustomerWl,0)
 		   ,@LTBetCount 	= ISNULL(@LTBetCount,0)
+	----PP
+	 SELECT  @PPTurnover = SUM( b.Turnover)
+			,@PPCustomerWl = SUM(b.winlost)
+			,@PPBetCount = SUM( b.BetCount)  
+	FROM @tblData b
+	WHERE ProductPrefix = 'PP'
 
+	SELECT @PPTurnover 		= ISNULL(@PPTurnover,0)
+		   ,@PPCustomerWl	= ISNULL(@PPCustomerWl,0)
+		   ,@PPBetCount 	= ISNULL(@PPBetCount,0)
 
 	-- Result
 
@@ -413,6 +427,7 @@ BEGIN
 				  , @COTurnover  AS CO
 				  , @VS2Turnover AS VS2
 				  , @LTTurnover  AS LT
+				  , @PPTurnover  AS PP
 			  
 	UNION
 	SELECT 2, @SbCustomerWl
@@ -437,6 +452,7 @@ BEGIN
 			, @COCustomerWl
 			, @VS2CustomerWl
 			, @LTCustomerWl
+			, @PPCustomerWl
 	UNION
 	SELECT 3, @SbBetCount
 			, @RbBetCount
@@ -460,6 +476,7 @@ BEGIN
 			, @COBetCount
 			, @VS2BetCount
 			, @LTBetCount
+			, @PPBetCount
 
 	SET NOCOUNT OFF
 END
