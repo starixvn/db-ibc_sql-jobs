@@ -13,15 +13,14 @@ AS
     - 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20161007@Jim: Check & correct data for rpt_BettingColossusBets [RedminID : #63785]
 	- 20171130@Sophia: Add step Check & correct data to rptLicWinlossGMT [Redmine: #84932]
+	- 20180423@Percy: Remove logic check MB (job handle) [RedmineID: #94129]
 */  
 BEGIN  
 	SET NOCOUNT ON   
 	DECLARE @MoveBetSchedule TABLE(RowId TINYINT IDENTITY(1,1), ScheduleId TINYINT, MoveBetDay SMALLDATETIME)
-	DECLARE @RowId TINYINT, @WinlostDate SMALLDATETIME, @TotalDayMoveBet TINYINT
-		, @TotalDayMoveBetCompleted TINYINT, @Tomorrow DATETIME, @Today DATETIME
+	DECLARE @RowId TINYINT, @WinlostDate SMALLDATETIME
 	
-	SELECT @RowId = 1, @Tomorrow = DATEADD(dd, 1, CAST(GETDATE() AS DATE)), @Today = CAST(GETDATE() AS DATE)
-
+	SELECT @RowId = 1
 	INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
 	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
 
@@ -30,6 +29,8 @@ BEGIN
 		RETURN
 	END
 	
+	-- 20180423@Percy: Remove logic check MB (job handle)
+	/*
 	SELECT @TotalDayMoveBet = COUNT(1) FROM @MoveBetSchedule
 	
 	SELECT @TotalDayMoveBetCompleted = COUNT(1)
@@ -39,6 +40,7 @@ BEGIN
 	
 	IF @TotalDayMoveBet <> @TotalDayMoveBetCompleted
 		RETURN --move is processing or move bet does not run
+	*/
 
 	DECLARE @ErrorMsg VARCHAR(1000)
 	SET @ErrorMsg = ''

@@ -9,7 +9,7 @@ ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 	, @Step TINYINT = 0
 	, @AllowCorrect BIT = 0
 
- /* 
+/* 
 	Created by: 20170525@Sophia
 	Task: Check & correct data after move bet for rptBetting group [Redmine: #72914]
 	DB: DBLIC.bodb_LicenseeReport  
@@ -24,6 +24,7 @@ ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 	Revisions:  		 
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
 		- 20170405@Harper: Include Exchange (separate wallet) to check data [RedmineID: #92485]
+		- 20180423@Percy: Remove logic check MB (job handle), update statistics bettrans14 [RedmineID: #94129]
 
 	EXEC Task_rptBetting_CheckData_Job @FromDate = '2018-04-01', @ToDate = '2018-04-10', @Step = 0,  @AllowCorrect = 1
     
@@ -60,7 +61,9 @@ BEGIN
 	BEGIN
 		RETURN  ---  move bet does not run
 	END
-	 
+	
+	-- 20180423@Percy: Remove logic check MB (job handle), update statistics bettrans14
+	/*
 	SELECT @VValue = VValue FROM DBACC.bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'isMovingBet'		
 	IF @VValue = 1
 	BEGIN 	
@@ -73,6 +76,7 @@ BEGIN
 		WAITFOR DELAY '00:15:00'
 		UPDATE STATISTICS bodb02.dbo.bettrans14
 	END
+	*/
 
 	DECLARE @Dates AS TABLE(BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
 
