@@ -173,7 +173,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
 					WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
-					WHEN b.bettype BETWEEN 2801 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
+					WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 					WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 					WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				ELSE 0 END,--SportType
@@ -225,7 +225,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
 					WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
-					WHEN b.bettype BETWEEN 2801 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
+					WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 					WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 					WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				ELSE 0 END--SportType

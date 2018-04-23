@@ -154,7 +154,7 @@ SELECT a.CustID
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 190 -- Betradar VS
 				END -- Betradar VS
-		WHEN a.bettype BETWEEN 2801 AND 2829 THEN CASE 
+		WHEN a.bettype BETWEEN 2800 AND 2829 THEN CASE 
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 193 -- Betradar VS: Virtual Basketball
@@ -218,7 +218,7 @@ GROUP BY a.CustID
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 190 -- Betradar VS
 				END -- Betradar VS
-		WHEN a.bettype BETWEEN 2801 AND 2829 THEN CASE 
+		WHEN a.bettype BETWEEN 2800 AND 2829 THEN CASE 
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 193 -- Betradar VS: Virtual Basketball
