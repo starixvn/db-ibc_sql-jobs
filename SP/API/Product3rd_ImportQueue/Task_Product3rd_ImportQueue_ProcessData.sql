@@ -490,15 +490,6 @@ BEGIN
 							BREAK
 						END
 
-						IF @JobType = 2 AND @IsForceUpdate = 0
-						BEGIN
-							DELETE b
-							FROM #tmpBettrans_Exchange b
-								INNER JOIN dbo.Sum_winloss_Exchange s WITH (NOLOCK)
-									ON s.userId = b.userId AND s.eventId = b.eventID AND s.marketId = b.marketID
-							WHERE s.resettledDate IS NOT NULL
-						END
-						
 						-- import data
 						MERGE dbo.Bettrans_Exchange AS s
 						USING
@@ -550,7 +541,7 @@ BEGIN
 								s.profitLoss = src.profitLoss,
 								s.dateMatched = src.dateMatched,
 								s.betstatus = src.betstatus,
-								s.APIEndDate = CASE WHEN @JobType = 2 AND @IsForceUpdate = 0 THEN @endDate ELSE NULL END
+								s.APIEndDate = CASE WHEN @JobType = 2 THEN @endDate ELSE NULL END
 						WHEN NOT MATCHED THEN
 							INSERT
 							(
@@ -595,7 +586,7 @@ BEGIN
 							DECLARE @Ids VARCHAR(MAX)
 
 							INSERT INTO #tempId (Id)
-							SELECT Id
+							SELECT DISTINCT h.Id
 							FROM bodb_PlaytechCS.dbo.Product3rd_ResettledBetHistory h WITH (NOLOCK)
 								INNER JOIN dbo.Bettrans_Exchange b WITH (NOLOCK) ON h.UserId = b.userId AND h.EventId = b.eventID AND h.MarketId = b.marketID
 								INNER JOIN @updated_betId u ON b.betID = u.betId
@@ -630,8 +621,6 @@ BEGIN
 					BEGIN
 						SELECT	@ErrCode = 101,
 								@ErrMsg = ERROR_MESSAGE()
-
-								
 						BREAK
 					END
 				END CATCH
