@@ -394,7 +394,7 @@ BEGIN
 					WHEN bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
 					WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --Colossus Bet
 					WHEN bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
-					WHEN bettype BETWEEN 4001 AND 4099 THEN 212--Voidbridge
+					WHEN bettype BETWEEN 4001 AND 4100 THEN 212--Voidbridge
 					WHEN bettype = 901 THEN -2--BetTrade - Sold
 					WHEN bettype = 902 THEN -3--BetTrade - Bought.
 					WHEN bettype = 903 THEN -4--BetTrade - Commission
@@ -437,7 +437,7 @@ BEGIN
 					WHEN bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
 					WHEN bettype BETWEEN 18000 AND 18006 THEN 204 -- Colossus Bet
 					WHEN bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
-					WHEN bettype BETWEEN 4001 AND 4099 THEN 212--Voidbridge
+					WHEN bettype BETWEEN 4001 AND 4100 THEN 212--Voidbridge
 					WHEN bettype = 901 THEN -2--BetTrade - Sold
 					WHEN bettype = 902 THEN -3--BetTrade - Bought
 					WHEN bettype = 903 THEN -4--BetTrade - Commission
