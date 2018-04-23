@@ -24,7 +24,7 @@ BEGIN
 	-- MB does not start yet or is running --> loop 15 minutes
 	IF ISNULL(@MBStatusID, 0) <> 0
 	BEGIN
-		RAISERROR('Move bets is processing. Automatically retry after 15mins.', 16, 1)
+		RAISERROR('* LOOP * Move bets is processing. Automatically retry after 15mins.', 16, 1)
 		RETURN
 	END
 END
