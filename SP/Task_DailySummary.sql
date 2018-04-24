@@ -67,6 +67,7 @@ Revisions:
 			+ When processing a line then insert itself and upline's to [List]
 	- 20171010@Percy: Apply Bullfighting [RedmineID: #84690]
 	- 20171225@Sophia: Integrate CitiBet Exchange Products [Redmine: #82408]
+	- 20180117@Patrick: Integrate with Bonus project
  */
 
 SET NOCOUNT ON
@@ -409,6 +410,9 @@ EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 SET NOCOUNT ON
 SET DEADLOCK_PRIORITY HIGH
 -- =====================
+--//create a sum record for Bonus
+EXEC dbo.Task_Bonus_DailySummary @WinlostDate = @WinlostDate
+
 -- Copy bettransm/bettransg -> bettransm14/bettransg14 for whole day of @winlostdate
 EXEC dbo.ExecRep_08 @recommend =  0, @winlostdate = @winlostdate, @parlay = 1
 
@@ -1110,6 +1114,4 @@ EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 WAITFOR DELAY '00:02:00' --- add this wait to make sure the delete event part run completely before start next day
 
 PRINT CONVERT(varchar(10), @winlostdate, 120)
-
-
 GO
