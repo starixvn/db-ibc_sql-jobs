@@ -14,6 +14,7 @@ AS
 	
 	Revisions:
 		- 20180222@Percy: Initialize SP [RedmineID: #83787]
+		- 20180420@Percy: Change stake to actual_stake for Contribution formula [RedmineID: #94025]
 
 	Param's Explanation:
 */
@@ -92,10 +93,10 @@ BEGIN
 			b.GameID,
 			COUNT(b.TransID) AS Betcount,
 			SUM(ISNULL(b.Stake, 0)) AS Turnover,
-			SUM(ISNULL(b.Stake * b.ContributionRate, 0)) AS Contribution,
-			-SUM(ISNULL(b.Stake * b.ContributionRate * apositiontaking, 0)) AS ContributionA,
-			-SUM(ISNULL(b.Stake * b.ContributionRate * mpositiontaking, 0)) AS ContributionM,
-			-SUM(ISNULL(b.Stake * b.ContributionRate * spositiontaking, 0)) AS ContributionS
+			SUM(ISNULL(b.actual_stake * b.ContributionRate, 0)) AS Contribution,
+			-SUM(ISNULL(b.actual_stake * b.ContributionRate * apositiontaking, 0)) AS ContributionA,
+			-SUM(ISNULL(b.actual_stake * b.ContributionRate * mpositiontaking, 0)) AS ContributionM,
+			-SUM(ISNULL(b.actual_stake * b.ContributionRate * spositiontaking, 0)) AS ContributionS
 		FROM bodb02.dbo.BettransRNG14 b WITH (NOLOCK)
 			INNER JOIN @Bettype g ON g.Bettype = b.GameId	
 		WHERE b.WinlostDate = @WinlostDate
