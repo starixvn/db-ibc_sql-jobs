@@ -68,6 +68,7 @@ Revisions:
 	- 20171010@Percy: Apply Bullfighting [RedmineID: #84690]
 	- 20171225@Sophia: Integrate CitiBet Exchange Products [Redmine: #82408]
 	- 20180117@Patrick: Integrate with Bonus project
+	- 20180424@Percy: Check condition of GrossComm formula to prevent case division zero [RedmineID: #94234]
  */
 
 SET NOCOUNT ON
@@ -607,7 +608,9 @@ INSERT INTO dbo.sum_winloss_tmp
 		--sum(scomm / (1-tpositiontaking)) grosscomm,
 		-- 01-Dec-2009, apply gross commission by level
 		-- 07 Jun 2012, apply case for P2P gross comission
-		SUM(CASE bettype WHEN 1000 THEN oddsspread ELSE ISNULL( comm/(1-apositiontaking) ,0) END) grosscomm, 
+		SUM(CASE bettype WHEN 1000 THEN oddsspread
+				ELSE CASE WHEN apositiontaking = 1 THEN 0
+					ELSE ISNULL(comm/(1-apositiontaking),0) END END) grosscomm, 
 		CASE
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
@@ -725,7 +728,9 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(IsNull(scomm,0)) scomm,
 		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
 		--sum(scomm / (1-tpositiontaking)) grosscomm,
-		SUM(CASE bettype WHEN 1000 THEN oddsspread ELSE ISNULL( acomm/(1-apositiontaking - mpositiontaking) ,0) END) grosscomm, 
+		SUM(CASE bettype WHEN 1000 THEN oddsspread
+				ELSE CASE WHEN apositiontaking+mpositiontaking = 1 THEN 0
+					ELSE ISNULL(acomm/(1-apositiontaking-mpositiontaking), 0) END END) grosscomm, 
 		CASE
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
