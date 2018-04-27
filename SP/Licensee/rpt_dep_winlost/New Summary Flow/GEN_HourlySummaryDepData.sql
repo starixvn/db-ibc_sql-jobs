@@ -62,8 +62,8 @@ BEGIN
 				SELECT @Winlostdate, m.CustID
 						, (m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
 						   + ISNULL(t.Adjustment,0) - ISNULL(t.Outstanding,0) + ISNULL(t.Winloss,0) + ISNULL(t.playercomm,0) + ISNULL(t.Transfer3rd,0) 
-						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0))--compute @Winlostdate's OpeningBalance
-						   + ISNULL(t.BonusWallet, 0) + ISNULL(t.AdjBonusWallet, 0)
+						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0)
+						   + ISNULL(t.BonusWallet, 0) + ISNULL(t.AdjBonusWallet, 0))--compute @Winlostdate's OpeningBalance
 						, e.actualrate, m.srecommend, m.mrecommend, m.recommend, m.currency
 				FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
 					INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) 
@@ -80,8 +80,8 @@ BEGIN
 				SELECT m.CustID
 					   , (m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
 						   + ISNULL(t.Adjustment,0) - ISNULL(t.Outstanding,0) + ISNULL(t.Winloss,0) + ISNULL(t.playercomm,0) + ISNULL(t.Transfer3rd,0) 
-						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0))--compute @Winlostdate's OpeningBalance
-						   + ISNULL(t.BonusWallet, 0) + ISNULL(t.AdjBonusWallet, 0)
+						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0)
+						   + ISNULL(t.BonusWallet, 0) + ISNULL(t.AdjBonusWallet, 0))--compute @Winlostdate's OpeningBalance
 					   , m.srecommend, m.mrecommend, m.recommend, m.currency
 				FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
 					 INNER JOIN bodb_Report.dbo.rptDepWinlost_Trans t WITH (NOLOCK) 
