@@ -14,6 +14,7 @@ AS
 		DB: DBACC.bodb02
 		Revisions:
 		- 20180502@Joseph: Add <info> comment
+			- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
 
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized
