@@ -43,7 +43,7 @@ UPDATE STATISTICS rptCustomerMatch
 UPDATE STATISTICS rpt_BettingParlay
 UPDATE STATISTICS rpt_BettingColossusBets
 UPDATE STATISTICS rptLicWinlossGMT', 
-		@database_name=N'bodb02', 
+		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 /****** Object:  Step [Gen data for @ rptLicWinloss2]    Script Date: 4/24/2018 10:27:21 AM ******/
