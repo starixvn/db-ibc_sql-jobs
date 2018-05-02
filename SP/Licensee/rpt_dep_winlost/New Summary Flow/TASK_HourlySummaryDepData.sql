@@ -157,4 +157,4 @@ BEGIN
 		WHERE LogID = @LogID
 	END
 END
-
+GO
