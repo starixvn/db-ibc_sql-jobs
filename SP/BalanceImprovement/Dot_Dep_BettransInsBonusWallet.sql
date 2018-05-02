@@ -2,12 +2,13 @@
 ALTER PROCEDURE [dbo].[Dot_Dep_BettransInsBonusWallet] 
 	@custid 		INT,
 	@bal_custid 	INT,
-	@bettype 		SMALLINT = 22026,
+	@bettype 		SMALLINT = 22200,
 	@bonusId 		INT,
 	@amount 		MONEY,	
 	@lockedAmount	MONEY = 0,	
 	@transdesc 		NVARCHAR(300) = '',
 	@ip				NVARCHAR(15)='',
+	@betcheck		NVARCHAR(50) = NULL,
 	@transid 		BIGINT = 0 OUTPUT,	
 	@bal_transid 	BIGINT = 0 OUTPUT,
 	@RefNo 			BIGINT = 0 OUTPUT,
@@ -23,6 +24,8 @@ DB: DBTXN/bodb02
 Revisions:
 	- 20170518@Bobby: Initialize
 	- 20171009@Kathy: Change column name of BonusWalletCredit, BonusWalletDebit [Redmine:#72789]
+	- 20180323@Kathy: Change 2 bonus bettypes [Redmine:#66797]
+	- 20180417@Kathy: Add more input param @betcheck [Redmine:#66797]
 
 Param's Explanation:
 	- @custid: player account who joined bonus program
@@ -36,13 +39,13 @@ Param's Explanation:
 	
 	- @bonusId: Id of bonus program being joined by customer
 	- @amount: 
-		+ @bettype=22026: Given amount when  initializing bonus wallet. 
-		+ @bettype=22027: Take out the bonus amount when  cancelling bonus wallet
+		+ @bettype=22200: Given amount when  initializing bonus wallet. 
+		+ @bettype=22201: Take out the bonus amount when  cancelling bonus wallet
 		
-	- @lockedAmount:  Initial locked bonus amount when @bettype = 22026
+	- @lockedAmount:  Initial locked bonus amount when @bettype = 22200
 	- @bettype:
-		+ 22026: Transfer Bonus for initial bonus wallet
-		+ 22027: Transfer Bonus for cancelling / zerolize bonus wallet
+		+ 22200: Transfer Bonus for initial bonus wallet
+		+ 22201: Transfer Bonus for cancelling / zerolize bonus wallet
 	
 	
 	- @ErrCode:
@@ -85,8 +88,8 @@ BEGIN
 
 	SELECT @ErrCode				= 0,
 			@ErrMsg				= '',
-			@bonus_initial		= 22026,
-			@bonus_zerolize		= 22027,
+			@bonus_initial		= 22200,
+			@bonus_zerolize		= 22201,
 			@walletType			= 1
 			
 
@@ -190,10 +193,10 @@ BEGIN
 
 	INSERT INTO bettrans 
 		(custid, username, refno, transdate, matchid, bettype, transdesc,winlost, actual_stake, winlostdate, 
-		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid)
+		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid, betcheck)
 	VALUES 
 		(@CustID, @username, @RefNo, @transdate, 0, @bettype, @transdesc,@cust_winlost, @cust_actual_stake, convert(nvarchar(10), @transdate, 120), 
-		 @CustID, @Recommend, @MRecommend, @SRecommend, @Currency,@actualrate, @currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId)
+		 @CustID, @Recommend, @MRecommend, @SRecommend, @Currency,@actualrate, @currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId, @betcheck)
 
 	IF @@ERROR <> 0
 	BEGIN						
@@ -214,10 +217,10 @@ BEGIN
 	---Insert bonus transfer for bal acc
 	INSERT INTO bettrans 
 		(custid, username, refno, transdate, matchid, bettype, transdesc,winlost, actual_stake, winlostdate, 
-		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid)
+		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid, betcheck)
 	VALUES 
 		(@bal_custID, @bal_Username, @RefNo, @transdate, 0, @bettype, @transdesc, @bal_winlost, @bal_actual_stake, convert(nvarchar(10), @transdate, 120), 
-		 @CustID, @bal_recommend, @bal_mrecommend, @bal_srecommend, @bal_currency, @bal_actualrate, @bal_currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId)
+		 @CustID, @bal_recommend, @bal_mrecommend, @bal_srecommend, @bal_currency, @bal_actualrate, @bal_currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId, @betcheck)
 
 	IF @@ERROR <> 0
 	BEGIN
