@@ -1,3 +1,5 @@
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
 USE [bodb02]
 GO
 ALTER PROCEDURE [dbo].[GEN_HourlySummaryDepData_Bettrans14]
@@ -269,4 +271,4 @@ BEGIN
 	
 	DROP TABLE #rptDepWinlost_Main
 END
-
+GO
