@@ -13,6 +13,8 @@ AS
 		Task: Generate data for Deposit Data summary system for one winlostdate from bettrans14 		
 		DB: DBACC.bodb02
 		Revisions:
+		- 20180502@Joseph: Add <info> comment
+
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized
 		- @NumberofCus: The number of customer have been summarized
