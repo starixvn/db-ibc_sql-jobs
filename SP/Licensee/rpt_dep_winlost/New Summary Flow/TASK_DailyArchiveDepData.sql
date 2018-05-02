@@ -49,10 +49,10 @@ BEGIN
 					INSERT INTO dbo.rptDepWinlost_bk (
 						winlostdate, custid, currency, OpeningBalance, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover, Outstanding, Winloss, 
 						ClosingBalance, recommend, mrecommend, srecommend, actualrate, Transfer3rd, DrawGame, Turnover_tdate, Turnover_BA, Comm_BA, 
-						AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade, BonusWallet, AdjBonusWallet)
+						AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade)
 					SELECT winlostdate, custid, currency, OpeningBalance, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover, Outstanding, Winloss, 
 							ClosingBalance, recommend, mrecommend, srecommend, actualrate, Transfer3rd, DrawGame, NULL, Turnover_BA, Comm_BA, 
-							AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade, BonusWallet, AdjBonusWallet
+							AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade
 					FROM dbo.rptDepWinlost WITH (NOLOCK)
 					WHERE winlostdate = @MinSumDate
 							

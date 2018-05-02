@@ -67,6 +67,11 @@ BEGIN
 	SELECT PartnerId, TransferId, CancelTransferId
 	FROM bodb_report.dbo.tblCasinoPartners WITH(NOLOCK)
 	WHERE TransferId IS NOT NULL OR CancelTransferId IS NOT NULL
+
+	-- For Bonus
+	DECLARE @BonusList TABLE (BonusType TINYINT, BonusBettype INT, AdjustmentBettype INT)
+	INSERT INTO @BonusList(BonusType, BonusBettype, AdjustmentBettype)
+	VALUES( 1, 22200, 22201) -- Bonus Wallet
 	
 	CREATE TABLE #rptDepWinlostDetails (CustID INT, PartnerID INT DEFAULT(-1), Bettype INT, Deposit MONEY DEFAULT(0), Withdrawal MONEY DEFAULT(0)
 			, Aff2MemTransfer MONEY DEFAULT(0), Bonus MONEY DEFAULT(0), Adjustment MONEY DEFAULT(0), TurnOver MONEY DEFAULT(0), OutStanding MONEY DEFAULT(0)
@@ -94,7 +99,12 @@ BEGIN
 			UNIQUE CLUSTERED (CustID, PartnerID)
 			)
 	
+	CREATE TABLE #rptDepWinlostBonusWallet (CustID INT, BonusType TINYINT DEFAULT(1), Bonus MONEY DEFAULT(0), Adjustment MONEY DEFAULT(0)
+			UNIQUE CLUSTERED (CustID, BonusType)
+			)
+
 	BEGIN TRY
+
 		--3.Prepare staging data for table rptDepWinlost_Trans
 		--Insert Details for rptDepWinlost/rptDepWinlostByProduct/rptDepWinlostTransfer3rdOthers
 		INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Transfer3rd, BonusWallet, AdjBonusWallet)
@@ -344,17 +354,30 @@ BEGIN
 		GROUP BY t.CustId, t.PartnerId
 		/*--END PREPARE DATA FOR rptDepWinlostTransfer3rdOthers--*/
 		
+		/*--PREPARE DATA FOR rptDepWinlostBonusWallet--*/
+		INSERT INTO #rptDepWinlostBonusWallet(CustID, BonusType, Bonus, Adjustment)		
+		SELECT t.CustId
+			, d.BonusType			
+			, SUM(ISNULL(t.BonusWallet, 0)) -- Bonus value of Bonus Wallet
+			, SUM(ISNULL(t.AdjBonusWallet, 0))-- Adjustment value of Bonus Wallet
+		FROM #rptDepWinlostDetails t
+			INNER JOIN @BonusList d ON t.Bettype IN (d.BonusBettype, d.AdjustmentBettype)			  
+		GROUP BY t.CustId, d.BonusType
+
+		/*--END PREPARE DATA FOR rptDepWinlostBonusWallet--*/
+
 		--4.Delete/Reinsert data of the input @Winlostdate
 		DELETE FROM bodb_Report.dbo.rptDepWinlost_Trans WITH (ROWLOCK, UPDLOCK) WHERE Winlostdate = @Winlostdate
-		
+		DELETE FROM bodb_Report.dbo.rptDepWinlost_BonusWallet WITH (ROWLOCK, UPDLOCK) WHERE Winlostdate = @Winlostdate
+
 		--For rptDepWinlost
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover
 			, Outstanding, Winloss, Transfer3rd, DrawGame, Turnover_BA, Comm_BA, AmountDueTo_BA, playercomm, Transfer3rdOthers, Comm_BetTrade, Comm_BetTrade_Full
-			, AmountDueTo_BetTrade, BonusWallet, AdjBonusWallet
+			, AmountDueTo_BetTrade
 			)
 			SELECT @Winlostdate, CustID, -1, -1, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver
 			, OutStanding, Winloss, Transfer3rd, DrawGame, Turnover_BA, Comm_BA, AmountDueTo_BA, playercomm, Transfer3rdOthers, Comm_BetTrade, 0
-			, AmountDueTo_BetTrade, BonusWallet, AdjBonusWallet
+			, AmountDueTo_BetTrade
 			FROM #rptDepWinlost	
 		SELECT @NumberofCus = @@ROWCOUNT
 		
@@ -369,6 +392,11 @@ BEGIN
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, TransferAmount, TransferIn, TransferOut)
 			SELECT @Winlostdate, CustID, -1, PartnerID, TransferAmount, TransferIn, TransferOut
 			FROM #rptDepWinlostTransfer3rdOthers
+
+		--For rptDepWinlost_BonusWallet
+		INSERT INTO bodb_Report.dbo.rptDepWinlost_BonusWallet(Winlostdate, CustID, BonusType, Bonus, Adjustment)
+		SELECT @Winlostdate, CustID, BonusType, Bonus, Adjustment
+		FROM #rptDepWinlostBonusWallet
 		
 		SELECT @isSuccessful = 1, @ErrMsg = ''
 		
@@ -392,6 +420,7 @@ BEGIN
 	DROP TABLE #rptDepWinlostDetails
 	DROP TABLE #rptDepWinlost 
 	DROP TABLE #rptDepWinlostTransfer3rdOthers
+	DROP TABLE #rptDepWinlostBonusWallet
 	DROP TABLE #BATrans
 	DROP TABLE #DepCustID
 END
