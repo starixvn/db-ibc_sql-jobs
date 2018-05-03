@@ -1,3 +1,5 @@
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
 USE [bodb02]
 GO
 ALTER PROCEDURE [dbo].[GEN_HourlySummaryDepData_Bettrans14]
@@ -11,6 +13,8 @@ AS
 		Task: Generate data for Deposit Data summary system for one winlostdate from bettrans14 		
 		DB: DBACC.bodb02
 		Revisions:
+		- 20180502@Joseph: Add <info> comment
+
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized
 		- @NumberofCus: The number of customer have been summarized
@@ -269,4 +273,4 @@ BEGIN
 	
 	DROP TABLE #rptDepWinlost_Main
 END
-
+GO

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans] 
 	@winlostdate DATETIME  
 AS  
@@ -24,6 +24,7 @@ AS
 	- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
 	- 20171225@Sophia: Integrate Exchange Products [Redmine: #86640]
 	- 20180212@Harper: Remove LC from product list [Redmine: #85965]
+	- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -115,6 +116,7 @@ BEGIN
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 		WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
+		WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
 		WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 	  ELSE 0 END sporttype  
@@ -172,6 +174,7 @@ BEGIN
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 		WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
+		WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
 		WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 	  ELSE 0 END  

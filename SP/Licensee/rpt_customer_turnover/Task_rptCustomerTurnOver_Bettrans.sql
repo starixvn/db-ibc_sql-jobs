@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans] 
 	@Date SMALLDATETIME
@@ -14,6 +14,7 @@ AS
 		  - 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		  - 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 		  - 20180212@Harper: Remove LC from product list [Redmine: #85965]
+		  - 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 */ 
 BEGIN 
 SET NOCOUNT ON;
@@ -153,6 +154,11 @@ SELECT a.CustID
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 190 -- Betradar VS
 				END -- Betradar VS
+		WHEN a.bettype BETWEEN 2800 AND 2829 THEN CASE 
+				WHEN result.sporttype IS NOT NULL THEN result.sporttype
+				WHEN b.sporttype IS NOT NULL THEN b.sporttype
+				ELSE 193 -- Betradar VS: Virtual Basketball
+				END -- Betradar VS: Virtual Basketball
 		WHEN a.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		ELSE isNULL(b.sporttype, 0)
 		END sporttype
@@ -212,6 +218,11 @@ GROUP BY a.CustID
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 190 -- Betradar VS
 				END -- Betradar VS
+		WHEN a.bettype BETWEEN 2800 AND 2829 THEN CASE 
+				WHEN result.sporttype IS NOT NULL THEN result.sporttype
+				WHEN b.sporttype IS NOT NULL THEN b.sporttype
+				ELSE 193 -- Betradar VS: Virtual Basketball
+				END -- Betradar VS: Virtual Basketball
 		WHEN a.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		ELSE isNULL(b.sporttype, 0)
 		END

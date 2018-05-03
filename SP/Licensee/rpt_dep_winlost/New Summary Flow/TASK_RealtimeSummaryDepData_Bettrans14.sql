@@ -1,4 +1,4 @@
-/*<info serverAlias="DBACC-bodb02" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
 	@Winlostdate DATE,
@@ -20,6 +20,7 @@ AS
 		- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
 		- 20171225@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
 		- 20180212@Harper: Remove LC from product list [Redmine: #85965]
+		- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -172,6 +173,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
 					WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
+					WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 					WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 					WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				ELSE 0 END,--SportType
@@ -223,6 +225,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
 					WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
 					WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
+					WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 					WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 					WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				ELSE 0 END--SportType

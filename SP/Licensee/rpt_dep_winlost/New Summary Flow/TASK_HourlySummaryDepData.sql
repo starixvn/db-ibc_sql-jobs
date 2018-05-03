@@ -1,3 +1,4 @@
+/*<info serverAlias="DBRPT-bodb_Report" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_Report]
 GO
 ALTER PROCEDURE [dbo].[TASK_HourlySummaryDepData]
@@ -156,4 +157,4 @@ BEGIN
 		WHERE LogID = @LogID
 	END
 END
-
+GO
