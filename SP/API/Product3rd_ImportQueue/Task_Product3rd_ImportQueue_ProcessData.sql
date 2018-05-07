@@ -17,6 +17,7 @@ AS
 
 	Revisions:
 		- 20171117@Percy: Initialize SP [RedmineID: #86477]
+		- 20180507@Percy: Update condition of resettledDate for case re-import manually [RedmineID: #94555]
 
 	Param's Explanation:
 		@QueueID: manual import
@@ -311,7 +312,7 @@ BEGIN
 								resettledDate,CustID,Currency,ExVirtualRate
 							)
 							ON s.userId = src.userId AND s.eventID = src.eventId AND s.marketID = src.marketId AND s.settledDate = src.settledDate
-						WHEN MATCHED AND ISNULL(s.resettledDate, @statisDate) < ISNULL(src.resettledDate, @statisDate) THEN
+						WHEN MATCHED AND ISNULL(s.resettledDate, @statisDate) <= ISNULL(src.resettledDate, @statisDate) THEN
 							UPDATE SET
 								s.agentId = src.agentId,
 								s.eventTypeName = src.eventTypeName,
