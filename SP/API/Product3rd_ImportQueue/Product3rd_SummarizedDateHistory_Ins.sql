@@ -13,7 +13,7 @@ AS
 	Task: Insert winlostdate if it's not summarized
 
 	Revisions:
-		- 20180105@Percy: Initial sp [RedmineID: #87526]
+		- 20180105@Percy: Initialize SP [RedmineID: #87526]
 */
 
 BEGIN
