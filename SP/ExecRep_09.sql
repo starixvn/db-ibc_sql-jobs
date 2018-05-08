@@ -6,7 +6,10 @@ ALTER PROCEDURE [dbo].[ExecRep_09]
 	@recommend int,
 	@winlostdate smalldatetime,
 	@parlay tinyint = 0,
-	@tableName varchar(125) = ''
+	@tableName varchar(125) = '',
+	@refnos varchar(max) = '',
+	@rowDeleted int = 0 OUTPUT,
+	@firstRound bit = 0
 AS
 -- *** IMPORTANT ***
 -- IF code altered, must to go check related SP of ExecRep_Queue @ DBTP
