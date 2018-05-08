@@ -23,6 +23,10 @@ Revisions:
 					   Use DBACC instead of DB06
     - 20150702@Daniel: Separated custDB to server DBCUST					   
 	- 20160909@Patrick: Record EndTime & IsArchiving to systemsettings table on DBTXN.bodb02
+	- 20170511@patrick: Set deadlock_priority high
+	- 20170915@Patrick: Update code for:
+			+ Output a signal when processing itself and upline's
+			+ Add more signal to replicated servers when MB/BU starting or done
 	
 Param's Explanation: 
 
@@ -169,6 +173,9 @@ BEGIN
 	EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
 	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
 
+	--//turn on isArchivingBet_Local flag
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 5, @tableName = 'SystemSettings'
+
 	-- for safety, shutdown trigger in balanceTable_tmp
 	EXEC dbo.Task_BalanceUp_TriggerControl @step = 1, @on = 0
 	EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 0
@@ -183,7 +190,7 @@ BEGIN
 	SET @suffix = 'bbu' + RIGHT(CONVERT(varchar(10), @fdate,120),5)
 	EXEC dbo.Task_BackupFULL @suffix
 	EXEC DB02.bodb02.dbo.Task_BackupFULL @suffix
-		EXEC DBCUST.custDB.dbo.Task_BackupFull_Cust @suffix = 'FULL' -- Viet: add full backup for custdb also
+	EXEC DBCUST.custDB.dbo.Task_BackupFull_Cust @suffix = 'FULL' -- Viet: add full backup for custdb also
 	-- doing backup : end
 
 -- ================== END STEP : 2
@@ -502,6 +509,9 @@ BEGIN
 		EXEC DB02.bodb02.dbo.Task_BalanceUp_DB02 @fdate
 
 	EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 1
+	
+	--//remove all data in processing list
+	DELETE FROM dbo.ProcessingCustList WITH(ROWLOCK)
 
 -- ================== END STEP : 3
 END
@@ -516,29 +526,49 @@ END
 -- ================== STEP : 4
 IF @step = 4
 BEGIN
+
+	SET DEADLOCK_PRIORITY HIGH
+
+	--insert processing list
+	EXEC dbo.Task_Core_ProcessingCustListIns @CustIds = '3'
+	WAITFOR DELAY '00:00:03:000'
+
 	BEGIN TRANSACTION
+
 	DELETE FROM dbo.balanceTable_tmp
 	WHERE srecommend = 3 AND recommend = 0
 
 	EXEC dbo.ExecRep_07 3, 0, 44, @fdate
+
 	COMMIT TRANSACTION
+
+	--delete processing list
+	EXEC dbo.Task_Core_ProcessingCustListDel @CustIds = '3'
 
 -- ================== BalanceUp Agent
 	SET NOCOUNT ON
 	EXEC dbo.Task_BalanceUp_SubAgent @fdate
 	SET NOCOUNT OFF
 -- ================== END STEP : 4
+	
+	SET DEADLOCK_PRIORITY NORMAL
+
 END
 -- ================== BalanceUp Agent
 
 -- ================== STEP : 5
 IF @step = 5
 BEGIN
+	SET DEADLOCK_PRIORITY HIGH
+
 -- ================== BalanceUp Super
 	SET NOCOUNT ON
 	EXEC dbo.Task_BalanceUp_SubSuper @fdate
 	SET NOCOUNT OFF
 -- ================== END STEP : 5
+
+	SET DEADLOCK_PRIORITY NORMAL
+
 END
 -- ================== BalanceUp Super
 
@@ -547,6 +577,8 @@ END
 IF @step = 6
 BEGIN
 -- ================== Finishing
+	--//remove all data in processing list
+	DELETE FROM dbo.ProcessingCustList WITH(ROWLOCK)
 
 	EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 0
 
@@ -560,11 +592,12 @@ BEGIN
 	EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
 	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
 
+	--//turn off isArchivingBet_Local flag
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 6, @tableName = 'SystemSettings'
+
 	SET @Doing = 'Task_BalanceUp_background : Done'
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 -- ================== END STEP : 6
 END
 -- ================== Finishing
 GO
-
-

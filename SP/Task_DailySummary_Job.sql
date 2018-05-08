@@ -18,6 +18,11 @@ AS
 		- 20150806@Sophia: Control schedule by a new store procedure
 		- 20160615@Viet: delete old data @ bettranssum before movebet
 		- 20160909@Patrick: Record EndTime value to systemsettings table on dbtrans.bodb02
+		- 20170915@Patrick: Update code for:
+			+ Delete data bettrans/translog/bettransRnG/bettransLC/bettransG batch by batch
+			+ Add more signal to replicated servers when MB/BU starting or done
+			+ Set current datetime value to checktime field when insert ticket 19999
+			+ When processing a line then insert itself and upline's to [List]
  */
 
 BEGIN 
@@ -96,7 +101,10 @@ BEGIN
 		EXEC dbo.Task_EstimatedTimeForJobDone @IsMoveBet = 1
 			, @CurrentDateTime = @CurrentDateTime
 			, @TotalMoveBetDays = @TotalMoveBetDays
-			
+		
+		--//turn on isMovingBet_Local flag
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 3, @tableName = 'SystemSettings'
+
 		-- delete old data from bettranssum before movebet
 		TRUNCATE TABLE dbo.bettranssum
 		
@@ -118,7 +126,10 @@ BEGIN
 			END
 			ELSE 
 				BREAK
-		END	
+		END
+		
+		--//turn off isMovingBet_Local flag
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 4, @tableName = 'SystemSettings'	
 	END
 END
 GO

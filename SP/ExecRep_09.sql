@@ -1,5 +1,9 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[ExecRep_09] @recommend int,
+USE [bodb02]
+GO
+
+ALTER PROCEDURE [dbo].[ExecRep_09]
+	@recommend int,
 	@winlostdate smalldatetime,
 	@parlay tinyint = 0,
 	@tableName varchar(125) = ''
@@ -7,11 +11,9 @@ AS
 -- *** IMPORTANT ***
 -- IF code altered, must to go check related SP of ExecRep_Queue @ DBTP
 -- *****************
-
-SET NOCOUNT ON
 /*
 	Created by:[]
-	Date:
+	Date: f
 	Task: 
 	DB: DBTXN.BODB02
 	Revisions:   
@@ -22,250 +24,263 @@ SET NOCOUNT ON
 		- 20160816@Lukas: comment update isMovingBet section      
 		- 20170222@Patrick: delete betparlaydetail & betparlayresult by batch
 		- 20170914@Patrick: Integrate with Lucky3 [RedmineId: #83190] 
- 
+		- 20171017@Lukas: rewrite deleting betparlayDetail part for improving performance on replicated DB (avoid many loop inside transaction)
+		- 20171102@Patrick: Update code for:
+			+ Delete data bettrans/translog/bettransRnG/bettransLC/bettransG batch by batch
+			+ Add more signal to replicated servers when MB/BU starting or done
+			+ Set current datetime value to checktime field when insert ticket 19999
+			+ When processing a line then insert itself and upline's to [List]
  */
-
-IF @@SERVERNAME = 'DBTP' AND @parlay = 0
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM dbo.ExecRep_Queue WHERE command = 'ExecRep_09' AND datevalue = @winlostdate)
-		INSERT INTO dbo.ExecRep_Queue (command, datevalue, qPriority) VALUES ('ExecRep_09',@winlostdate, 2)
-		
-	RETURN
-END
-
-IF @parlay = 29
-BEGIN
-	DECLARE @rx INT, @ry INT--, @debugMessage VARCHAR(200)
-
-	IF EXISTS (SELECT TOP 1 1 FROM dbo.sysobjects WHERE name = @tableName)
-		AND @tableName = 'betParlayResult'
+	--SET NOCOUNT ON 
+	IF @@SERVERNAME = 'DBTP' AND @parlay = 0
 	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM dbo.ExecRep_Queue WHERE command = 'ExecRep_09' AND datevalue = @winlostdate)
+			INSERT INTO dbo.ExecRep_Queue (command, datevalue, qPriority) VALUES ('ExecRep_09',@winlostdate, 2)
 		
-		CREATE TABLE #RefNoList (RefNo BIGINT, RowId INT IDENTITY(1,1) PRIMARY KEY)
-		CREATE TABLE #CurrRefNoList (RefNo BIGINT)
+		RETURN
+	END
 
-		INSERT INTO #RefNoList(RefNo)
-		SELECT RefNo
-		FROM dbo.bettrans14 WITH (NOLOCK)
-		WHERE winlostdate <= @winlostdate AND bettype = 29
-
-		SET @rx = 1
-		SET @ry = 3000
-
-		WHILE 1 = 1
+	IF @tableName = 'SystemSettings'
+	BEGIN
+		IF EXISTS (
+			SELECT TOP 1 1 
+			FROM dbo.sysobjects WHERE name = 'SystemSettings'
+		)
 		BEGIN
+			--//@parlay = 3 will turn on isMovingBet_Local flag, @parlay = 4 will turn off isMovingBet_Local flag
+			IF @parlay IN (3,4) --used for turn on flag for MB case
+			BEGIN
+				UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK) 
+				SET VValue = CASE WHEN @parlay = 3 THEN 1 ELSE 0 END
+				WHERE VName = 'isMovingBet_Local'
+			END
+			--//@parlay = 5 well turn on isArchivingBet_Local flag, @parlay = 6 will turn off isArchivingBet_Local flag
+			ELSE IF @parlay IN (5,6)
+			BEGIN
+				UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK) 
+				SET VValue = CASE WHEN @parlay = 5 THEN 1 ELSE 0 END
+				WHERE VName = 'isArchivingBet_Local'
+			END
+		END
+		RETURN
+	END
 
-			TRUNCATE TABLE #CurrRefNoList
+	IF @parlay = 29
+	BEGIN
+		DECLARE @rx INT, @ry INT--, @debugMessage VARCHAR(200)
 
-			INSERT INTO #CurrRefNoList(RefNo)
+		IF EXISTS (SELECT TOP 1 1 FROM dbo.sysobjects WHERE name = @tableName)
+			AND @tableName = 'betParlayResult'
+		BEGIN
+		
+			CREATE TABLE #RefNoList (RefNo BIGINT, RowId INT IDENTITY(1,1) PRIMARY KEY)
+			CREATE TABLE #CurrRefNoList (RefNo BIGINT)
+
+			INSERT INTO #RefNoList(RefNo)
 			SELECT RefNo
-			FROM #RefNoList t WHERE t.RowId BETWEEN @rx AND @ry
+			FROM dbo.bettrans14 WITH (NOLOCK)
+			WHERE winlostdate <= @winlostdate AND bettype = 29
 
-			IF @@ROWCOUNT <= 0
-				BREAK
+			SET @rx = 1
+			SET @ry = 3000
 
-			RetryDelete_betParlayResult:
-			BEGIN TRY
-				DELETE TOP(3000) bpr
-				FROM #CurrRefNoList t
-					INNER JOIN dbo.betParlayResult bpr WITH(ROWLOCK) ON bpr.RefNo = t.refNo
-				OPTION(FORCE ORDER)
+			WHILE 1 = 1
+			BEGIN
 
-				IF @@ROWCOUNT = 3000
+				TRUNCATE TABLE #CurrRefNoList
+
+				INSERT INTO #CurrRefNoList(RefNo)
+				SELECT RefNo
+				FROM #RefNoList t WHERE t.RowId BETWEEN @rx AND @ry
+
+				IF @@ROWCOUNT <= 0
+					BREAK
+
+				RetryDelete_betParlayResult:
+				BEGIN TRY
+					DELETE TOP(3000) bpr
+					FROM #CurrRefNoList t
+						INNER JOIN dbo.betParlayResult bpr WITH(ROWLOCK) ON bpr.RefNo = t.refNo
+					OPTION(FORCE ORDER)
+
+					IF @@ROWCOUNT = 3000
+						GOTO RetryDelete_betParlayResult
+
+					SET @rx = @rx + 3000
+					SET @ry = @ry + 3000
+
+				END TRY
+				BEGIN CATCH
+					PRINT 'Error here!!!'
 					GOTO RetryDelete_betParlayResult
+				END CATCH
+			END
 
-				SET @rx = @rx + 3000
-				SET @ry = @ry + 3000
-
-			END TRY
-			BEGIN CATCH
-				PRINT 'Error here!!!'
-				GOTO RetryDelete_betParlayResult
-			END CATCH
-
-			--SET @debugMessage = 'betParlayResult -- ' + convert(varchar(50), getdate(), 121)
-			--RAISERROR(@debugMessage, 0, 0) with nowait
-
-		END
-
-		DROP TABLE #CurrRefNoList
-		DROP TABLE #RefNoList
+			DROP TABLE #CurrRefNoList
+			DROP TABLE #RefNoList
 		
-	END
-	ELSE IF EXISTS (SELECT TOP 1 1 FROM dbo.sysobjects WHERE name = @tableName)
-		AND @tableName = 'betParlayDetail'
-	BEGIN
-
-		CREATE TABLE #IdList (rId BIGINT, RowId INT IDENTITY(1,1) PRIMARY KEY)
-		CREATE TABLE #CurrIdList (rId BIGINT)
-
-		INSERT INTO #IdList(rId)
-		SELECT rID
-		FROM dbo.BetParlayDetail WITH (NOLOCK)
-		WHERE winlostdate <= DATEADD(DAY, - 14, @winlostdate)
-
-		SET @rx = 1
-		SET @ry = 3000
-
-		WHILE 1 = 1
+		END
+		ELSE IF EXISTS (SELECT TOP 1 1 FROM dbo.sysobjects WHERE name = @tableName)
+			AND @tableName = 'betParlayDetail'
 		BEGIN
 
-			TRUNCATE TABLE #CurrIdList
+			DECLARE @refnoTable TABLE(refno BIGINT PRIMARY KEY CLUSTERED)
+			DECLARE @xmlData XML
+			SET @xmlData = CONVERT(XML, REPLACE('<root><r t="' + @refnos + '"/></root>', '^', '"/><r t="'))
 
-			INSERT INTO #CurrIdList(rId)
-			SELECT rId
-			FROM #IdList t WHERE t.RowId BETWEEN @rx AND @ry
+			INSERT INTO @refnoTable (refno)
+			SELECT T.C.value('./@t', 'BIGINT') AS transid
+			FROM @xmlData.nodes('//r') AS T(C)
+			OPTION (OPTIMIZE FOR (@xmlData = NULL))
 
-			IF @@ROWCOUNT <= 0
-				BREAK
+			WHILE 1 = 1 
+			BEGIN
+				DELETE TOP(5000) dt
+				FROM @refnoTable r
+					INNER LOOP JOIN betParlayDetail dt ON r.refno = dt.refno
+				WHERE winlostdate <= DATEADD(DAY, - 14, @winlostdate)
 
-			RetryDelete_BetParlayDetail:
-			BEGIN TRY
-				DELETE bpd
-				FROM #CurrIdList t
-					INNER JOIN dbo.BetParlayDetail bpd WITH(ROWLOCK) ON bpd.rID = t.rId
-				OPTION(FORCE ORDER)
-
-				SET @rx = @rx + 3000
-				SET @ry = @ry + 3000
-
-			END TRY
-			BEGIN CATCH
-				PRINT 'Error here!!!'
-				GOTO RetryDelete_BetParlayDetail
-			END CATCH
-
-			--SET @debugMessage = 'BetParlayDetail -- ' + convert(varchar(50), getdate(), 121)
-			--RAISERROR(@debugMessage, 0, 0) with nowait
-
+				IF @@ROWCOUNT = 0 
+					BREAK
+			END
 		END
-
-		DROP TABLE #IdList
-		DROP TABLE #CurrIdList
-
+		RETURN
 	END
 
-	RETURN
-END
-
-Declare @rc int, @rn int, @rn2 int
-Declare @matchid int
-CREATE TABLE #m (rn int PRIMARY KEY IDENTITY(1,1), matchid int)
-
-IF @@SERVERNAME LIKE 'DB04%'
-BEGIN
-/*	INSERT INTO #m (matchid)
-	SELECT distinct matchid
-	FROM dbo.bettrans with (nolock)
-	WHERE winlostdate = @winlostdate AND bettype < 19999
-	SET @rn2 = @@ROWCOUNT
-	
-	IF @rn2 = 0 GOTO NothingToDelete
-
-	DELETE FROM bettrans WHERE winlostdate = @winlostdate AND matchid = 0 AND bettype < 19999
-	DELETE FROM bettrans WHERE winlostdate = @winlostdate AND matchid IN (9,29)
-*/	
-	SET @rn  = 1
-	
-/*	NextMatchID:
-	SELECT @matchid = matchid FROM #m WHERE rn = @rn
-	IF @@ROWCOUNT = 0 GOTO NoMoreMatchID
-	
-	DELETE FROM bettrans WHERE matchid = @matchid AND winlostdate = @winlostdate
-	DELETE FROM #m WHERE rn = @rn
-	SET @rn = @rn + 1
-	GOTO NextMatchID
-
-	NoMoreMatchID:
-	DELETE FROM bettrans WHERE winlostdate = @winlostdate AND bettype < 19999
-	
-	NothingToDelete:
-*/
-END
-ELSE
-BEGIN
-	DELETE FROM bettrans WITH(ROWLOCK, UPDLOCK)
-	WHERE recommend = @recommend AND winlostdate = @winlostdate AND bettype < 19999
-
-	DELETE FROM translog WITH(ROWLOCK, UPDLOCK)
-	WHERE recommend = @recommend AND winlostdate = @winlostdate
-		
-	DELETE FROM bettransLC WITH(ROWLOCK, UPDLOCK)
-	WHERE recommend = @recommend AND winlostdate = @winlostdate  
-
-	DELETE FROM bettransRNG WITH(ROWLOCK, UPDLOCK)
-	WHERE recommend = @recommend AND winlostdate = @winlostdate 
-
-END
-IF @parlay = 1
-BEGIN
-	--IF @@SERVERNAME = N'DB04' RETURN -- not delete bettransm on DB04
-	
-	--IF @@SERVERNAME IN ( N'DB04', N'DB042' )
-	--	DELETE FROM bettransm
-	--	WHERE matchid IN (SELECT matchid FROM match WHERE eventdate = @winlostdate)
-	--ELSE
-
-	INSERT INTO #m (matchid)
-	SELECT DISTINCT m.matchid
-	FROM dbo.bettransm b with (nolock)
-		INNER JOIN dbo.match m with (nolock) ON b.matchid = m.matchid
-	WHERE winlostdate = @winlostdate
-	SET @rn2 = @@ROWCOUNT
-	
-	SET @rn = 1
-
-	NextMatchIDm:
-	SELECT @matchid = matchid FROM #m WHERE rn = @rn
-	IF @@ROWCOUNT = 0 GOTO NoMoreMatchIDm
-	
-	DELETE FROM bettransm WITH(ROWLOCK, UPDLOCK) WHERE matchid = @matchid --AND winlostdate = @winlostdate
-	
-	DELETE FROM #m WHERE rn = @rn
-	SET @rn = @rn + 1
-	GOTO NextMatchIDm
-	
-	NoMoreMatchIDm:
-	DELETE FROM bettransm WITH(ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
-	
-END
-
-
-IF @parlay = 2
-BEGIN
-	--IF @@SERVERNAME = N'DB04' RETURN -- not delete bettransG on DB04
-	
-	--IF @@SERVERNAME IN ( N'DB04', N'DB042' )
-	--	DELETE FROM bettransG
-	--	WHERE matchid IN (SELECT matchid FROM match WHERE eventdate = @winlostdate)
-	--ELSE
-
-	DELETE FROM bettransG WITH(ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
-
-	IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'BetLucky3Result')
+	IF @@SERVERNAME LIKE 'DB04%'
 	BEGIN
-		WHILE 1 = 1
-		BEGIN
-			DELETE TOP(2500) 
-			FROM dbo.BetLucky3Result WITH(ROWLOCK)
-			WHERE WinlostDate = @winlostdate
+		PRINT 'nothing'
+	END
+	ELSE
+	BEGIN
+		SET @rowDeleted = 0
 
-			IF @@ROWCOUNT = 0
-				BREAK
+		--//for bettrans
+		IF @tableName = 'bettrans'
+		BEGIN
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02')
+			BEGIN
+				DELETE TOP (2000) FROM bettrans WITH(ROWLOCK)
+				WHERE recommend = @recommend AND winlostdate = @winlostdate AND bettype < 19999
+
+				SET @RowDeleted = @@ROWCOUNT
+			END
+			ELSE IF @firstRound = 1 --for all replicated servers, will delete by recommend
+			BEGIN
+				DELETE FROM bettrans WITH(ROWLOCK)
+				WHERE recommend = @recommend AND winlostdate = @winlostdate AND bettype < 19999
+
+				SET @RowDeleted = @@ROWCOUNT
+			END
+
+			RETURN
+		END
+		
+		--//for translog
+		IF @tableName = 'translog'
+		BEGIN
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02')
+			BEGIN
+				DELETE TOP (2000) FROM translog WITH(ROWLOCK)
+				WHERE recommend = @recommend AND winlostdate = @winlostdate
+
+				SET @RowDeleted = @@ROWCOUNT
+			END
+			ELSE IF @firstRound = 1 --for all replicated servers, will delete by recommend
+			BEGIN
+				DELETE FROM translog WITH(ROWLOCK)
+				WHERE recommend = @recommend AND winlostdate = @winlostdate
+
+				SET @RowDeleted = @@ROWCOUNT
+			END
+
+			RETURN
+		END
+
+		--//for bettransLC
+		IF @tableName = 'bettransLC'
+		BEGIN
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02')
+			BEGIN	
+				DELETE TOP (2000) FROM bettransLC WITH(ROWLOCK)
+				WHERE recommend = @recommend AND winlostdate = @winlostdate  
+
+				SET @RowDeleted = @@ROWCOUNT
+			END
+			ELSE IF @firstRound = 1 --for all replicated servers, will delete by recommend
+			BEGIN
+				DELETE FROM bettransLC WITH(ROWLOCK)
+				WHERE recommend = @recommend AND winlostdate = @winlostdate  
+
+				SET @RowDeleted = @@ROWCOUNT
+			END
+
+			RETURN
+		END
+
+		--//for bettransRNG
+		IF @tableName = 'bettransRNG'
+		BEGIN
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02')
+			BEGIN
+				DELETE TOP (2000) FROM bettransRNG WITH(ROWLOCK)
+				WHERE recommend = @recommend AND winlostdate = @winlostdate 
+
+				SET @RowDeleted = @@ROWCOUNT
+			END
+			ELSE IF @firstRound = 1 --for all replicated servers, will delete by recommend
+			BEGIN
+				DELETE FROM bettransRNG WITH(ROWLOCK)
+				WHERE recommend = @recommend AND winlostdate = @winlostdate 
+
+				SET @RowDeleted = @@ROWCOUNT
+			END
+
+			RETURN
 		END
 	END
 
-	----set FALSE for the flag isMovingBet on DB06.bodb02.dbo.SystemSettings
-	----to allow the Mix Parlay calculation again
-	--IF @@SERVERNAME = 'DB06'
-	--BEGIN
-	--	if exists (select * from dbo.sysobjects where name = 'SystemSettings')
-	--	BEGIN
-	--		UPDATE SystemSettings WITH(ROWLOCK, UPDLOCK) set VValue = 0 where VName = 'isMovingBet'
-	--	END
-	--END	
+	IF @parlay = 1
+	BEGIN
+		Declare @rc int, @rn int, @rn2 int
+		Declare @matchid int
+		CREATE TABLE #m (rn int PRIMARY KEY IDENTITY(1,1), matchid int)
+
+		INSERT INTO #m (matchid)
+		SELECT DISTINCT m.matchid
+		FROM dbo.bettransm b with (nolock)
+			INNER JOIN dbo.match m with (nolock) ON b.matchid = m.matchid
+		WHERE winlostdate = @winlostdate
+
+		SET @rn2 = @@ROWCOUNT
+	
+		SET @rn = 1
+
+		NextMatchIDm:
+		SELECT @matchid = matchid FROM #m WHERE rn = @rn
+		IF @@ROWCOUNT = 0 GOTO NoMoreMatchIDm
+	
+		DELETE FROM bettransm WITH(ROWLOCK) WHERE matchid = @matchid
+
+		DELETE FROM #m WHERE rn = @rn
+		SET @rn = @rn + 1
+		GOTO NextMatchIDm
+	
+		NoMoreMatchIDm:
+		DELETE FROM bettransm WITH(ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
+	
+		DROP TABLE #m
+	END
+
+	IF @parlay = 2
+	BEGIN	
+		
+		DELETE FROM bettransG WITH(ROWLOCK) WHERE winlostdate = @winlostdate
+
+		IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'BetLucky3Result')
+		BEGIN
+			DELETE FROM dbo.BetLucky3Result WITH(ROWLOCK) WHERE WinlostDate = @winlostdate
+		END
+	END
 END
-
-
-DROP TABLE #m
-GO
