@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
 USE [bodb02]
 GO
 
@@ -33,6 +33,7 @@ AS
 			+ Add more signal to replicated servers when MB/BU starting or done
 			+ Set current datetime value to checktime field when insert ticket 19999
 			+ When processing a line then insert itself and upline's to [List]
+		- 20180329@Percy: Enhance MBBU process [RedmineID: #92391]
  */
 BEGIN
 	--SET NOCOUNT ON 
@@ -51,19 +52,51 @@ BEGIN
 			FROM dbo.sysobjects WHERE name = 'SystemSettings'
 		)
 		BEGIN
-			--//@parlay = 3 will turn on isMovingBet_Local flag, @parlay = 4 will turn off isMovingBet_Local flag
-			IF @parlay IN (3,4) --used for turn on flag for MB case
+			/*
+			@parlay:
+				3: MB on
+				4: MB off
+				5: BU on
+				6: BU off
+			*/
+			DECLARE @flag TINYINT, @VName VARCHAR(200)
+
+			SELECT @VName = CASE WHEN @parlay IN (3,4) THEN 'isMovingBet_Local' WHEN @parlay IN (5,6) THEN 'isArchivingBet_Local' END
+
+			SELECT @flag = CONVERT(TINYINT, VValue)
+			FROM dbo.SystemSettings WITH (NOLOCK)
+			WHERE VName = @VName
+			
+			--//@parlay = 3,5: turn on flag --> input start time, @parlay = 4,6: turn off flag --> input end time
+			IF @parlay IN (3,5)
 			BEGIN
-				UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK) 
-				SET VValue = CASE WHEN @parlay = 3 THEN 1 ELSE 0 END
-				WHERE VName = 'isMovingBet_Local'
+				IF @flag = 0
+				BEGIN
+					UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+					SET VValue = CONVERT(VARCHAR(200), GETDATE(), 121)
+					WHERE VName = 'StartMoving_Local'
+				END
+
+				SELECT @flag = @flag + 1
+
+				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+				SET VValue = CONVERT(VARCHAR(200), @flag)
+				WHERE VName = @VName
 			END
-			--//@parlay = 5 well turn on isArchivingBet_Local flag, @parlay = 6 will turn off isArchivingBet_Local flag
-			ELSE IF @parlay IN (5,6)
+			ELSE IF @parlay IN (4,6)
 			BEGIN
-				UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK) 
-				SET VValue = CASE WHEN @parlay = 5 THEN 1 ELSE 0 END
-				WHERE VName = 'isArchivingBet_Local'
+				IF @flag = 1
+				BEGIN
+					UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+					SET VValue = CONVERT(VARCHAR(200), GETDATE(), 121)
+					WHERE VName = 'EndMoving_Local'
+				END
+
+				SELECT @flag = @flag - 1
+
+				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+				SET VValue = CONVERT(VARCHAR(200), @flag)
+				WHERE VName = @VName
 			END
 		END
 		RETURN
@@ -287,3 +320,4 @@ BEGIN
 		END
 	END
 END
+GO
