@@ -14,7 +14,7 @@ AS
 	Task:
 
 	Revisions:
-		- 20171117@Percy: Initial SP [RedmineID: #86477]
+		- 20171117@Percy: Initialize SP [RedmineID: #86477]
 */
 
 BEGIN

@@ -12,7 +12,7 @@ AS
 	Task: Import raw data
 
 	Revisions:
-		- 20171218@Percy: Inital SP [RedmineID: #88325]
+		- 20171218@Percy: Initalize SP [RedmineID: #88325]
 */
 
 BEGIN

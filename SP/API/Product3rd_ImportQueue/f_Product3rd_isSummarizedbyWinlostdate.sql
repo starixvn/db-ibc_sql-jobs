@@ -17,7 +17,7 @@ AS
 	Task: Check winlostdate is summarized or not
 
 	Revisions:
-		- 20180105@Percy: Initial function [RedmineID: #87526]
+		- 20180105@Percy: Initialize function [RedmineID: #87526]
 
 	Param's Explanation:
 		@RefTable:
