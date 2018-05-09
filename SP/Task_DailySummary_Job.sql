@@ -1,3 +1,4 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
 USE [bodb02]
 GO
 
@@ -23,6 +24,7 @@ AS
 			+ Add more signal to replicated servers when MB/BU starting or done
 			+ Set current datetime value to checktime field when insert ticket 19999
 			+ When processing a line then insert itself and upline's to [List]
+		- 20180329@Percy: Add Bet_ExecRep_09 [RedmineID: #92391]
  */
 
 BEGIN 
@@ -103,6 +105,7 @@ BEGIN
 			, @TotalMoveBetDays = @TotalMoveBetDays
 		
 		--//turn on isMovingBet_Local flag
+		EXEC dbo.Bet_ExecRep_09 @mode = 3
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 3, @tableName = 'SystemSettings'
 
 		-- delete old data from bettranssum before movebet
@@ -129,6 +132,7 @@ BEGIN
 		END
 		
 		--//turn off isMovingBet_Local flag
+		EXEC dbo.Bet_ExecRep_09 @mode = 4
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 4, @tableName = 'SystemSettings'	
 	END
 END

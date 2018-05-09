@@ -1,3 +1,4 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
 USE [bodb02]
 GO
 
@@ -27,6 +28,7 @@ Revisions:
 	- 20170915@Patrick: Update code for:
 			+ Output a signal when processing itself and upline's
 			+ Add more signal to replicated servers when MB/BU starting or done
+	- 20180329@Percy: Add Bet_ExecRep_09 [RedmineID: #92391]
 	
 Param's Explanation: 
 
@@ -174,6 +176,7 @@ BEGIN
 	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
 
 	--//turn on isArchivingBet_Local flag
+	EXEC dbo.Bet_ExecRep_09 @mode = 5
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 5, @tableName = 'SystemSettings'
 
 	-- for safety, shutdown trigger in balanceTable_tmp
@@ -593,6 +596,7 @@ BEGIN
 	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
 
 	--//turn off isArchivingBet_Local flag
+	EXEC dbo.Bet_ExecRep_09 @mode = 6
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 6, @tableName = 'SystemSettings'
 
 	SET @Doing = 'Task_BalanceUp_background : Done'
