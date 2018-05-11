@@ -13,6 +13,7 @@ AS
 		-20170328@Paul: Implement Cash Out [RedmineID :#71727]
 		-20170516@Harper:  Show detail for real customer and check translog table [RedmineID: #76208]
 		-20170725@Sophia: Exclude Cashout WL when compare Openning Balance [RedmineID: #79346]
+		-20180412@Harper: Add ISNULL for CO WL [RedmineID: 91740]
 		Input Params:	
 		EXEC TASK_DepSumData_Job_CheckStatus
 	*/
