@@ -21,6 +21,7 @@ AS
 		- 20171225@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
 		- 20180212@Harper: Remove LC from product list [Redmine: #85965]
 		- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
+		- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -66,6 +67,11 @@ BEGIN
 	SELECT PartnerId, TransferId, CancelTransferId
 	FROM bodb_report.dbo.tblCasinoPartners WITH(NOLOCK)
 	WHERE TransferId IS NOT NULL OR CancelTransferId IS NOT NULL
+
+	-- For Bonus
+	DECLARE @BonusList TABLE (BonusType TINYINT, BonusBettype INT, AdjustmentBettype INT)
+	INSERT INTO @BonusList(BonusType, BonusBettype, AdjustmentBettype)
+	VALUES( 1, 22200, 22201) -- Bonus Wallet
 	
 	CREATE TABLE #rptDepWinlostDetails (CustID INT, PartnerID INT DEFAULT(-1), Bettype INT, Deposit MONEY DEFAULT(0), Withdrawal MONEY DEFAULT(0)
 			, Aff2MemTransfer MONEY DEFAULT(0), Bonus MONEY DEFAULT(0), Adjustment MONEY DEFAULT(0), TurnOver MONEY DEFAULT(0), OutStanding MONEY DEFAULT(0)
@@ -73,6 +79,7 @@ BEGIN
 			, AmountDueTo_BA MONEY DEFAULT(0), playercomm MONEY DEFAULT(0), Transfer3rdOthers MONEY DEFAULT(0), Transfer3rdOthers_In MONEY DEFAULT(0)
 			, Transfer3rdOthers_Out MONEY DEFAULT(0), Comm_BetTrade MONEY DEFAULT(0), Comm_BetTrade_Full MONEY DEFAULT(0)
 			, WLBoughtTicket_BetTrade MONEY DEFAULT(0), AmountDueTo_BetTrade MONEY DEFAULT(0), BetCount INT DEFAULT(0)
+			, BonusWallet MONEY DEFAULT(0), AdjBonusWallet MONEY DEFAULT(0)
 			UNIQUE CLUSTERED (CustID, PartnerID, Bettype)
 			)
 	
@@ -80,6 +87,7 @@ BEGIN
 			, Bonus MONEY DEFAULT(0), Adjustment MONEY DEFAULT(0), TurnOver MONEY DEFAULT(0), OutStanding MONEY DEFAULT(0), Winloss MONEY DEFAULT(0), Transfer3rd MONEY DEFAULT(0)
 			, DrawGame MONEY DEFAULT(0), Turnover_BA MONEY DEFAULT(0), Comm_BA MONEY DEFAULT(0), AmountDueTo_BA MONEY DEFAULT(0), playercomm MONEY DEFAULT(0)
 			, Transfer3rdOthers MONEY DEFAULT(0), Comm_BetTrade MONEY DEFAULT(0), WLBoughtTicket_BetTrade MONEY DEFAULT(0), AmountDueTo_BetTrade MONEY DEFAULT(0)
+			, BonusWallet MONEY DEFAULT(0), AdjBonusWallet MONEY DEFAULT(0)
 			UNIQUE CLUSTERED (CustID)
 			)
 			
@@ -91,10 +99,15 @@ BEGIN
 			UNIQUE CLUSTERED (CustID, PartnerID)
 			)
 	
+	CREATE TABLE #rptDepWinlostBonusWallet (CustID INT, BonusType TINYINT DEFAULT(1), Bonus MONEY DEFAULT(0), Adjustment MONEY DEFAULT(0)
+			UNIQUE CLUSTERED (CustID, BonusType)
+			)
+
 	BEGIN TRY
+
 		--3.Prepare staging data for table rptDepWinlost_Trans
 		--Insert Details for rptDepWinlost/rptDepWinlostByProduct/rptDepWinlostTransfer3rdOthers
-		INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Transfer3rd)
+		INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Transfer3rd, BonusWallet, AdjBonusWallet)
 		SELECT b.custid, 
 			b.bettype,
 			SUM(CASE WHEN b.bettype = 22001 THEN b.winlost-b.actual_stake ELSE 0 END), --Deposit
@@ -102,7 +115,9 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 21006 THEN b.winlost-b.actual_stake ELSE 0 END), --Aff2MemTransfer
 			SUM(CASE WHEN b.bettype = 22004 THEN b.winlost-b.actual_stake ELSE 0 END),--Bonus
 			SUM(CASE WHEN b.bettype IN (21001, 21002, 21003, 21004, 21005, 22005) THEN b.winlost-b.actual_stake ELSE 0 END), --Adjustment
-			SUM(CASE WHEN b.bettype IN (22006,22007) THEN b.winlost-b.actual_stake ELSE 0 END)--Transfer3rd
+			SUM(CASE WHEN b.bettype IN (22006,22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd
+			SUM(CASE WHEN b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
+			SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END) -- AdjBonusWallet
 		FROM dbo.bettrans b WITH (NOLOCK)
 			INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
 			INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
@@ -233,7 +248,7 @@ BEGIN
 			
 		/*--PREPARE DATA FOR rptDepWinlost--*/
 		INSERT INTO #rptDepWinlost (CustID, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
-											, DrawGame, playercomm, Transfer3rdOthers, Comm_BetTrade, WLBoughtTicket_BetTrade)
+											, DrawGame, playercomm, Transfer3rdOthers, Comm_BetTrade, WLBoughtTicket_BetTrade, BonusWallet, AdjBonusWallet)
 		SELECT custid,
 			SUM(Deposit), --Deposit  
 			SUM(Withdrawal),--Withdrawal  
@@ -248,7 +263,9 @@ BEGIN
 			SUM(Playercomm),--Playercomm 
 			SUM(Transfer3rdOthers),--Transfer3rdOthers 	
 			SUM(Comm_BetTrade),--Comm_BetTrade
-			SUM(WLBoughtTicket_BetTrade)--WLBoughtTicket_BetTrade
+			SUM(WLBoughtTicket_BetTrade),--WLBoughtTicket_BetTrade
+			SUM(BonusWallet), -- Bonus Wallet
+			SUM(AdjBonusWallet) -- Adjustment Bonus Wallet
 		FROM #rptDepWinlostDetails
 		WHERE Bettype NOT IN (-8, -9)
 		GROUP BY custid
@@ -296,7 +313,7 @@ BEGIN
 		DELETE FROM #rptDepWinlost  
 		WHERE Deposit = 0 AND Withdrawal = 0 AND Aff2MemTransfer = 0 AND Bonus = 0 AND Adjustment = 0 AND TurnOver = 0 AND OutStanding = 0 AND Winloss = 0 
 			  AND Transfer3rd = 0 AND DrawGame = 0 AND Turnover_BA = 0 AND Comm_BA = 0 AND AmountDueTo_BA = 0 AND playercomm = 0 AND Transfer3rdOthers = 0
-			  AND Comm_BetTrade = 0 AND AmountDueTo_BetTrade = 0
+			  AND Comm_BetTrade = 0 AND AmountDueTo_BetTrade = 0 AND BonusWallet = 0 AND AdjBonusWallet = 0
 		/*--END PREPARE DATA FOR rptDepWinlost--*/
 		
 		/*--PREPARE DATA FOR rptDepWinlostTransfer3rdOthers--*/
@@ -337,9 +354,22 @@ BEGIN
 		GROUP BY t.CustId, t.PartnerId
 		/*--END PREPARE DATA FOR rptDepWinlostTransfer3rdOthers--*/
 		
+		/*--PREPARE DATA FOR rptDepWinlostBonusWallet--*/
+		INSERT INTO #rptDepWinlostBonusWallet(CustID, BonusType, Bonus, Adjustment)		
+		SELECT t.CustId
+			, d.BonusType			
+			, SUM(ISNULL(t.BonusWallet, 0)) -- Bonus value of Bonus Wallet
+			, SUM(ISNULL(t.AdjBonusWallet, 0))-- Adjustment value of Bonus Wallet
+		FROM #rptDepWinlostDetails t
+			INNER JOIN @BonusList d ON t.Bettype IN (d.BonusBettype, d.AdjustmentBettype)			  
+		GROUP BY t.CustId, d.BonusType
+
+		/*--END PREPARE DATA FOR rptDepWinlostBonusWallet--*/
+
 		--4.Delete/Reinsert data of the input @Winlostdate
 		DELETE FROM bodb_Report.dbo.rptDepWinlost_Trans WITH (ROWLOCK, UPDLOCK) WHERE Winlostdate = @Winlostdate
-		
+		DELETE FROM bodb_Report.dbo.rptDepWinlost_BonusWallet WITH (ROWLOCK, UPDLOCK) WHERE Winlostdate = @Winlostdate
+
 		--For rptDepWinlost
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover
 			, Outstanding, Winloss, Transfer3rd, DrawGame, Turnover_BA, Comm_BA, AmountDueTo_BA, playercomm, Transfer3rdOthers, Comm_BetTrade, Comm_BetTrade_Full
@@ -362,6 +392,11 @@ BEGIN
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, TransferAmount, TransferIn, TransferOut)
 			SELECT @Winlostdate, CustID, -1, PartnerID, TransferAmount, TransferIn, TransferOut
 			FROM #rptDepWinlostTransfer3rdOthers
+
+		--For rptDepWinlost_BonusWallet
+		INSERT INTO bodb_Report.dbo.rptDepWinlost_BonusWallet(Winlostdate, CustID, BonusType, Bonus, Adjustment)
+		SELECT @Winlostdate, CustID, BonusType, Bonus, Adjustment
+		FROM #rptDepWinlostBonusWallet
 		
 		SELECT @isSuccessful = 1, @ErrMsg = ''
 		
@@ -385,6 +420,7 @@ BEGIN
 	DROP TABLE #rptDepWinlostDetails
 	DROP TABLE #rptDepWinlost 
 	DROP TABLE #rptDepWinlostTransfer3rdOthers
+	DROP TABLE #rptDepWinlostBonusWallet
 	DROP TABLE #BATrans
 	DROP TABLE #DepCustID
 END

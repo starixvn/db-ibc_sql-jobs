@@ -120,7 +120,7 @@ BEGIN
 					WHERE m.Winlostdate = @Yesterday
 				) DepWL
 				CROSS APPLY (
-					SELECT  B.CustID, (B.OpeningBalance - C.WinlossCO) as OpeningBalance
+					SELECT  B.CustID, (B.OpeningBalance - ISNULL(C.WinlossCO, 0)) as OpeningBalance
 					FROM ( 
 							SELECT b.CustID, 
 									ISNULL( 
