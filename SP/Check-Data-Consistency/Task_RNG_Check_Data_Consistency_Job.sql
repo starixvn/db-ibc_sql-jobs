@@ -1,11 +1,4 @@
-USE [bodb02]
-GO
-/****** Object:  StoredProcedure [dbo].[Task_RNG_Check_Data_Consistency_Job]    Script Date: 10/11/2016 07:11:52 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Task_RNG_Check_Data_Consistency_Job    Script Date: 5/26/2016 3:00:44 PM ******/
+/*<info serverAlias="DBTP-bodb02" executers="" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_RNG_Check_Data_Consistency_Job] @FromDate SMALLDATETIME
 	, @ToDate SMALLDATETIME
 	, @ErrMessage NVARCHAR(MAX) = '' OUTPUT
@@ -76,6 +69,62 @@ BEGIN
 		VALUES(211, 'Allbet', @ErrorTmp)	
 	END
 
+	--Fishing World
+	SET @ErrorTmp = ''
+	EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @FromDate
+		, @ToDate = @ToDate
+		, @ProductId = 219
+
+		, @ErrMessage = @ErrorTmp OUTPUT
+
+	IF ISNULL(@ErrorTmp, '') <> ''
+	BEGIN
+		INSERT INTO @ErrorsTmp(ProductId, ProductName, ErrMessage)
+		VALUES(219, 'Fishing World', @ErrorTmp)	
+	END
+
+	--RNG - RNG Game
+	SET @ErrorTmp = ''
+	EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @FromDate
+		, @ToDate = @ToDate
+		, @ProductId = 208
+
+		, @ErrMessage = @ErrorTmp OUTPUT
+
+	IF ISNULL(@ErrorTmp, '') <> ''
+	BEGIN
+		INSERT INTO @ErrorsTmp(ProductId, ProductName, ErrMessage)
+		VALUES(208, 'RNG - RNG Game', @ErrorTmp)	
+	END
+
+	--RNG - Mini Games
+	SET @ErrorTmp = ''
+	EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @FromDate
+		, @ToDate = @ToDate
+		, @ProductId = 209
+
+		, @ErrMessage = @ErrorTmp OUTPUT
+
+	IF ISNULL(@ErrorTmp, '') <> ''
+	BEGIN
+		INSERT INTO @ErrorsTmp(ProductId, ProductName, ErrMessage)
+		VALUES(209, 'RNG - Mini Games', @ErrorTmp)	
+	END
+
+	--RNG - Mobile
+	SET @ErrorTmp = ''
+	EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @FromDate
+		, @ToDate = @ToDate
+		, @ProductId = 210
+
+		, @ErrMessage = @ErrorTmp OUTPUT
+
+	IF ISNULL(@ErrorTmp, '') <> ''
+	BEGIN
+		INSERT INTO @ErrorsTmp(ProductId, ProductName, ErrMessage)
+		VALUES(210, 'RNG - Mobile', @ErrorTmp)	
+	END
+
 	--will be sent mail if any error 
 	IF EXISTS (SELECT TOP 1 1 FROM @ErrorsTmp)
 	BEGIN
@@ -94,3 +143,6 @@ BEGIN
 	END
 		
 END
+
+
+GO
