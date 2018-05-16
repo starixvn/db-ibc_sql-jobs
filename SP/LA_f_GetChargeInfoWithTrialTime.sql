@@ -28,7 +28,8 @@ AS
     Param's Explanation:
 	Revisions:
 		- 20171227@Sophia: output column ChargeType [Redmine: #82408]
-		
+		- 20180508@Harper: Change PayToSupplier term of Exchange product [RedmineID: #94281]
+
     select * FROM dbo.LA_f_GetChargeInfoWithTrialTime ('14','2016-06-01','2016-06-30','GD','OA', 0)
 */
 
@@ -69,6 +70,7 @@ BEGIN
 								FROM bodb02.dbo.strSplit(@ProductCodes, ',') s
 								LEFT JOIN dbo.Product3rd p3 WITH (NOLOCK) ON s.val = p3.ProductPrefix
 							)
+		AND NOT EXISTS (SELECT 1 FROM dbo.OAS_Party t WITH (NOLOCK) WHERE DI.FromParty NOT IN (25, 30) AND DI.ToParty = t.PartyID AND t.PartyType = 3 AND (t.OldRefID IS NULL OR t.OldRefID IN (2, 3, 5, 6)))
 	ORDER BY p.PartyID, Di.ProductID
 
 	RETURN
