@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb_LicenseeReport: DW - Check and Correct Data]    Script Date: 4/17/2018 10:17:24 AM ******/
+/****** Object:  Job [bodb_LicenseeReport: DW - Check and Correct Data]    Script Date: 5/15/2018 9:11:31 PM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 4/17/2018 10:17:24 AM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 5/15/2018 9:11:31 PM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -15,7 +15,7 @@ END
 
 DECLARE @jobId BINARY(16)
 EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb_LicenseeReport: DW - Check and Correct Data', 
-		@enabled=0, 
+		@enabled=1, 
 		@notify_level_eventlog=0, 
 		@notify_level_email=0, 
 		@notify_level_netsend=0, 
@@ -25,14 +25,14 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb_LicenseeReport: DW - Ch
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Check Move Bets Finish]    Script Date: 4/17/2018 10:17:24 AM ******/
+/****** Object:  Step [Check Move Bets Finish]    Script Date: 5/15/2018 9:11:31 PM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check Move Bets Finish', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
 		@on_success_action=4, 
 		@on_success_step_id=3, 
-		@on_fail_action=4, 
-		@on_fail_step_id=2, 
+		@on_fail_action=3, 
+		@on_fail_step_id=0, 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
@@ -40,14 +40,14 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check Mo
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Delay 15 minutes]    Script Date: 4/17/2018 10:17:24 AM ******/
+/****** Object:  Step [Delay 15 minutes]    Script Date: 5/15/2018 9:11:31 PM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Delay 15 minutes', 
 		@step_id=2, 
 		@cmdexec_success_code=0, 
 		@on_success_action=4, 
 		@on_success_step_id=1, 
 		@on_fail_action=2, 
-		@on_fail_step_id=1, 
+		@on_fail_step_id=0, 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
@@ -55,19 +55,18 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Delay 15
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Check and Correct Data]    Script Date: 4/17/2018 10:17:24 AM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check and Correct Data', 
+/****** Object:  Step [Check and correct data]    Script Date: 5/15/2018 9:11:31 PM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check and correct data', 
 		@step_id=3, 
 		@cmdexec_success_code=0, 
 		@on_success_action=1, 
 		@on_success_step_id=0, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
+		@retry_attempts=3, 
+		@retry_interval=5, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'WAITFOR DELAY ''00:00:30.000''
-
+		@command=N'WAITFOR DELAY ''00:03:00.000''
 EXEC dbo.Task_rptBetting_CheckData_Job @AllowCorrect = 1', 
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
