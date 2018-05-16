@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20180329@Percy: Initialize SP [RedmineID: #92391]
+		- 20180516@Percy: Remove time value on WinlostDateList field [RedmineID: #95238]
 */
 
 BEGIN
@@ -25,8 +26,7 @@ BEGIN
 		@IsMoving			TINYINT,
 		@MovingType			TINYINT,
 		@LogDate			DATETIME,
-		@flag_DBTRANS		VARCHAR(200),
-		@flag_DBOthers		VARCHAR(200)
+		@flag				VARCHAR(200)
 
 	DECLARE @CurrentDate DATETIME
 	SELECT  @LogDate = GETDATE()
@@ -66,10 +66,9 @@ BEGIN
 		RETURN
 	END
 
-	SELECT @flag_DBTRANS = CASE @MovingType WHEN 1 THEN 'isMovingBet' WHEN 2 THEN 'isArchivingBet' END
-	SELECT @flag_DBOthers = CASE @MovingType WHEN 1 THEN 'isMovingBet_Local' WHEN 2 THEN 'isArchivingBet_Local' END
+	SELECT @flag = CASE @MovingType WHEN 1 THEN 'isMovingBet_Local' WHEN 2 THEN 'isArchivingBet_Local' END
 
-	SELECT @WinlostDateList = STUFF((SELECT ',' + CONVERT(VARCHAR(50), Winlostdate, 121) FROM @MBBUSchedule ORDER BY Winlostdate FOR XML PATH('')), 1, 1, '')
+	SELECT @WinlostDateList = STUFF((SELECT ',' + CONVERT(VARCHAR(10), Winlostdate, 120) FROM @MBBUSchedule ORDER BY Winlostdate FOR XML PATH('')), 1, 1, '')
 	FROM @MBBUSchedule
 
 	IF NOT EXISTS (SELECT 1 FROM dbo.DBALog_MBU_Process_History WITH (NOLOCK) WHERE LogDate >= @CurrentDate)
@@ -83,9 +82,9 @@ BEGIN
 							CASE WHEN ISDATE(VValue) = 1 THEN CONVERT(DATETIME, VValue) ELSE GETDATE() END
 						ELSE @EndTime END,
 			@ServerName = 'DBTRANS',
-			@IsMoving = CASE WHEN VName = @flag_DBTRANS THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
+			@IsMoving = CASE WHEN VName = @flag THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
 		FROM DBTXN.bodb02.dbo.SystemSettings WITH (NOLOCK)
-		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag_DBTRANS)
+		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag)
 
 		INSERT INTO dbo.DBALog_MBU_Process_History (WinlostDateList, StartTime, EndTime, ServerName, IsMoving, MovingType, LogDate)
 		VALUES (@WinlostDateList, @StartTime, @EndTime, @ServerName, @IsMoving, @MovingType, @LogDate)
@@ -99,9 +98,9 @@ BEGIN
 							CASE WHEN ISDATE(VValue) = 1 THEN CONVERT(DATETIME, VValue) ELSE GETDATE() END
 						ELSE @EndTime END,
 			@ServerName = 'DB06',
-			@IsMoving = CASE WHEN VName = @flag_DBOthers THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
+			@IsMoving = CASE WHEN VName = @flag THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
 		FROM DBACC.bodb02.dbo.SystemSettings WITH (NOLOCK)
-		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag_DBOthers)
+		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag)
 
 		INSERT INTO dbo.DBALog_MBU_Process_History (WinlostDateList, StartTime, EndTime, ServerName, IsMoving, MovingType, LogDate)
 		VALUES (@WinlostDateList, @StartTime, @EndTime, @ServerName, @IsMoving, @MovingType, @LogDate)
@@ -115,9 +114,9 @@ BEGIN
 							CASE WHEN ISDATE(VValue) = 1 THEN CONVERT(DATETIME, VValue) ELSE GETDATE() END
 						ELSE @EndTime END,
 			@ServerName = 'DB052',
-			@IsMoving = CASE WHEN VName = @flag_DBOthers THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
+			@IsMoving = CASE WHEN VName = @flag THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
 		FROM DBLIC.bodb02.dbo.SystemSettings WITH (NOLOCK)
-		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag_DBOthers)
+		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag)
 
 		INSERT INTO dbo.DBALog_MBU_Process_History (WinlostDateList, StartTime, EndTime, ServerName, IsMoving, MovingType, LogDate)
 		VALUES (@WinlostDateList, @StartTime, @EndTime, @ServerName, @IsMoving, @MovingType, @LogDate)
@@ -131,9 +130,9 @@ BEGIN
 							CASE WHEN ISDATE(VValue) = 1 THEN CONVERT(DATETIME, VValue) ELSE GETDATE() END
 						ELSE @EndTime END,
 			@ServerName = 'DB053',
-			@IsMoving = CASE WHEN VName = @flag_DBOthers THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
+			@IsMoving = CASE WHEN VName = @flag THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
 		FROM DBAGE.bodb02.dbo.SystemSettings WITH (NOLOCK)
-		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag_DBOthers)
+		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag)
 
 		INSERT INTO dbo.DBALog_MBU_Process_History (WinlostDateList, StartTime, EndTime, ServerName, IsMoving, MovingType, LogDate)
 		VALUES (@WinlostDateList, @StartTime, @EndTime, @ServerName, @IsMoving, @MovingType, @LogDate)
@@ -147,9 +146,9 @@ BEGIN
 							CASE WHEN ISDATE(VValue) = 1 THEN CONVERT(DATETIME, VValue) ELSE GETDATE() END
 						ELSE @EndTime END,
 			@ServerName = 'DB054',
-			@IsMoving = CASE WHEN VName = @flag_DBOthers THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
+			@IsMoving = CASE WHEN VName = @flag THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
 		FROM DB054.bodb02.dbo.SystemSettings WITH (NOLOCK)
-		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag_DBOthers)
+		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag)
 
 		INSERT INTO dbo.DBALog_MBU_Process_History (WinlostDateList, StartTime, EndTime, ServerName, IsMoving, MovingType, LogDate)
 		VALUES (@WinlostDateList, @StartTime, @EndTime, @ServerName, @IsMoving, @MovingType, @LogDate)
@@ -163,9 +162,9 @@ BEGIN
 							CASE WHEN ISDATE(VValue) = 1 THEN CONVERT(DATETIME, VValue) ELSE GETDATE() END
 						ELSE @EndTime END,
 			@ServerName = 'DB05',
-			@IsMoving = CASE WHEN VName = @flag_DBOthers THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
+			@IsMoving = CASE WHEN VName = @flag THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
 		FROM DB05.bodb02.dbo.SystemSettings WITH (NOLOCK)
-		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag_DBOthers)
+		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag)
 
 		INSERT INTO dbo.DBALog_MBU_Process_History (WinlostDateList, StartTime, EndTime, ServerName, IsMoving, MovingType, LogDate)
 		VALUES (@WinlostDateList, @StartTime, @EndTime, @ServerName, @IsMoving, @MovingType, @LogDate)
