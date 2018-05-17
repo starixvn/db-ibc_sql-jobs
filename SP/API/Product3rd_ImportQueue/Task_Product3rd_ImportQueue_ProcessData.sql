@@ -564,7 +564,12 @@ BEGIN
 
 						DELETE bm
 						FROM dbo.BettransM_Exchange bm WITH (ROWLOCK, UPDLOCK)
-						WHERE EXISTS (SELECT 1 FROM @updated_betId b WHERE bm.betID = b.betId)
+						WHERE EXISTS (
+								SELECT 1
+								FROM @updated_betId b
+									INNER JOIN #tmpBettrans_Exchange tmp ON b.betId = tmp.betId
+								WHERE bm.betID = b.betId
+							)
 						
 						INSERT INTO dbo.BettransM_Exchange
 						(
