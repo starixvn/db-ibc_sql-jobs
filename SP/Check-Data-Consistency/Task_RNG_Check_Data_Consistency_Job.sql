@@ -7,7 +7,8 @@ AS
 	Created: 20160517@Patrick
 	Task: Check data between bettrans & bettransRNG for RNG Game (Run on DB06/DBTP)
 	Revision:
-		2016-10-10@Patrick: Allbet integration
+		- 20161010@Patrick: Allbet integration
+		- 20180516@Paul: Add code for PP [Redmine:#95284]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -123,6 +124,20 @@ BEGIN
 	BEGIN
 		INSERT INTO @ErrorsTmp(ProductId, ProductName, ErrMessage)
 		VALUES(210, 'RNG - Mobile', @ErrorTmp)	
+	END
+
+	--PP
+	SET @ErrorTmp = ''
+	EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @FromDate
+		, @ToDate = @ToDate
+		, @ProductId = 248
+
+		, @ErrMessage = @ErrorTmp OUTPUT
+
+	IF ISNULL(@ErrorTmp, '') <> ''
+	BEGIN
+		INSERT INTO @ErrorsTmp(ProductId, ProductName, ErrMessage)
+		VALUES(248, 'PP', @ErrorTmp)	
 	END
 
 	--will be sent mail if any error 
