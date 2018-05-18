@@ -1,3 +1,4 @@
+/*<info serverAlias="DBTP-bodb02" executers="" viewers="vnteam" isFunction="0"></info>*/
 USE [bodb02]
 GO
 
@@ -19,6 +20,7 @@ AS
 	DB: DBTP/bodb02
 	Revision:
 		- 20171011@Patrick: Move code check setting for FW
+		- 20180516@Paul: Add code for PP [Redmine:#95284]
 		
 */
 BEGIN
@@ -257,6 +259,29 @@ BEGIN
 			VALUES(211, 'Allbet', @CheckDate, @CheckDate, @ErrorTmp)
 		END
 		
+		--For PP
+		OneMore_248:
+		SELECT @ErrorTmp = '', @Retry = 1
+		EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @CheckDate
+			, @ToDate = @CheckDate
+			, @ProductId = 248
+
+			, @ErrMessage = @ErrorTmp OUTPUT
+	
+		IF ISNULL(@ErrorTmp, '') <> ''
+		BEGIN
+			IF @Retry < 3
+			BEGIN
+				WAITFOR DELAY '00:02:00:000' --retry after 2 minutes
+				SET @Retry = @Retry + 1
+				GOTO OneMore_248
+			END
+
+			SET @HasError1 = 1
+			INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
+			VALUES(248, 'PP', @CheckDate, @CheckDate, @ErrorTmp)	
+		END
+
 		PRINT @CheckDate
 		SET @CheckDate =  DATEADD(DAY, 1, @CheckDate)
 
