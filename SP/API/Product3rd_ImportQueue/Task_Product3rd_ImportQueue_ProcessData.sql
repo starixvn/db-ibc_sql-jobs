@@ -124,7 +124,7 @@ BEGIN
 	DECLARE @updated_userId TABLE
 	(
 		userId VARCHAR(16), eventId INT, marketId VARCHAR(50),
-		SettledDate DATETIME, ProfitLoss MONEY, MarketTotal MONEY
+		SettledDate DATETIME, stakeTotal MONEY, MarketTotal MONEY
 		--PRIMARY KEY (userId, eventId, marketId, SettledDate)
 	)
 
@@ -341,8 +341,8 @@ BEGIN
 								src.startTime,src.settledDate,src.profitLoss,src.marketTotal,src.commission,src.agentCommission,src.stakeTotal,
 								src.resettledDate,src.CustID,src.Currency,src.ExVirtualRate
 							)
-						OUTPUT INSERTED.userId, INSERTED.eventID, INSERTED.marketID, INSERTED.settledDate, INSERTED.profitLoss, INSERTED.marketTotal
-							INTO @updated_userId (userId, eventId, marketId, SettledDate, ProfitLoss, MarketTotal);
+						OUTPUT INSERTED.userId, INSERTED.eventID, INSERTED.marketID, INSERTED.settledDate, INSERTED.stakeTotal, INSERTED.marketTotal
+							INTO @updated_userId (userId, eventId, marketId, SettledDate, stakeTotal, MarketTotal);
 
 						IF @JobType = 3
 						BEGIN
@@ -381,11 +381,13 @@ BEGIN
 							SELECT u.SettledDate, u.userId, u.eventId, u.marketId, 31, @currentTime, 'waiting'
 							FROM @updated_userId u
 								LEFT JOIN (
-									SELECT userId, eventID, marketID, SUM(ISNULL(profitLoss, 0)) AS profitLoss
+									SELECT userId, eventID, marketID, SUM(ISNULL(profitLoss, 0)) AS profitLoss, SUM(ISNULL(matchStake, 0)) AS matchStake
 									FROM dbo.Bettrans_Exchange WITH (NOLOCK)
+									WHERE betstatus = 'Settled'
 									GROUP BY userId, eventID, marketID
 								) AS b ON u.userId = b.userId AND u.eventId = b.eventID AND u.marketId = b.marketID
 							WHERE ABS(ISNULL(u.MarketTotal, 0) - ISNULL(b.ProfitLoss, 0)) > 0.01
+								OR ABS(ISNULL(u.stakeTotal, 0) - ISNULL(b.matchStake, 0)) > 0.01
 						END
 					END
 					/* Bettrans_Exchange, BettransM_Exchange */
@@ -560,27 +562,22 @@ BEGIN
 							)
 						OUTPUT INSERTED.betID INTO @updated_betId (betId);
 
-						MERGE dbo.BettransM_Exchange AS s
-						USING
-							(
-								SELECT betId,betTaken,txStake,txOddsMatched,actualOdds
-								FROM #tmpBettrans_Exchange tmp
-								WHERE EXISTS (SELECT 1 FROM @updated_betId b WHERE tmp.betID = b.betId)
+						DELETE bm
+						FROM dbo.BettransM_Exchange bm WITH (ROWLOCK, UPDLOCK)
+						WHERE EXISTS (
+								SELECT 1
+								FROM @updated_betId b
+									INNER JOIN #tmpBettrans_Exchange tmp ON b.betId = tmp.betId
+								WHERE bm.betID = b.betId
 							)
-						AS src
-							(
-								betId,betTaken,txStake,txOddsMatched,actualOdds
-							)
-							ON s.betId = src.betId
-						WHEN NOT MATCHED THEN
-							INSERT
-							(
-								betId,betTaken,txStake,txOddsMatched,actualOdds
-							)
-							VALUES
-							(
-								src.betId,src.betTaken,src.txStake,src.txOddsMatched,src.actualOdds
-							);
+						
+						INSERT INTO dbo.BettransM_Exchange
+						(
+							betId,betTaken,txStake,txOddsMatched,actualOdds
+						)
+						SELECT betId,betTaken,txStake,txOddsMatched,actualOdds
+						FROM #tmpBettrans_Exchange tmp
+						WHERE EXISTS (SELECT 1 FROM @updated_betId b WHERE tmp.betID = b.betId)
 
 						IF @JobType = 2 AND @IsForceUpdate = 1
 						BEGIN
