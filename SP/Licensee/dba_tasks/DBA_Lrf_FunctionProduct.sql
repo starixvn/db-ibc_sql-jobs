@@ -23,6 +23,8 @@ ALTER   PROCEDURE [dbo].[DBA_Lrf_FunctionProduct]
 		- 20170526@Harper: add new product AllBet, Macau Game, Number Game 2, Fishing World and CashOut
 		- 20171208@Harper: add new product CB, LT, VS2
 		- 20171214@Harper: Edit for GMT +8 and Exchange Product
+		- 20180521@Harper: Remove CasinoProgressiveWins report
+
 	Param's Explanation:
 		
 	
@@ -108,24 +110,7 @@ BEGIN
 								,54  -- SpecialBA
 								)
 	END
-
-	IF @ProductCode = 'LC'
-	BEGIN 
-		INSERT INTO @tblFunctions (ProductId, FunctionId,TypeID)
-		SELECT	4 AS ProductId -- LC
-				,FunctionID  
-				,1 AS TypeId	 -- Lrf special Function
-		FROM dbo.Functions WITH (NOLOCK)
-		WHERE FunctionId    IN (
-								3 -- REPORTS						
-								,68  -- Casino Progressive Wins
-								)
-		UNION ALL		
-		SELECT 	4 AS ProductId -- LC
-		,17 AS FunctionID ---Live Casino Win Loss
-		,2 AS TypeId	--- LA Function	
-	END
-
+	
 	IF @ProductCode = 'VS'
 	BEGIN 
 		INSERT INTO @tblFunctions (ProductId, FunctionId,TypeID)		
@@ -137,18 +122,9 @@ BEGIN
 
 	IF @ProductCode = 'CS'
 	BEGIN 
-		INSERT INTO @tblFunctions (ProductId, FunctionId,TypeID)	
-		SELECT	6 AS ProductId -- CS
-				,FunctionID  
-				,1 AS TypeId	 -- Lrf special Function
-		FROM dbo.Functions WITH (NOLOCK)
-		WHERE FunctionId    IN (
-								3 -- REPORTS						
-								,68  -- Casino Progressive Wins
-								)
-		UNION ALL			
+		INSERT INTO @tblFunctions (ProductId, FunctionId,TypeID)					
 		SELECT 	6 AS ProductId -- CS
-		,21 AS FunctionID ---RNG Casino Win Loss
+		,19 AS FunctionID ---RNG Casino Win Loss
 		,2 AS TypeId	--- LA Function
 			
 	END
@@ -174,8 +150,7 @@ BEGIN
 		FROM dbo.Functions WITH (NOLOCK)
 		WHERE FunctionId    IN (
 									3  -- REPORTS
-								,61 -- Playtech Casino Win Loss
-								,68 -- Casino Progressive Wins
+								,61 -- Playtech Casino Win Loss								
 								)
 	END
 
@@ -189,8 +164,7 @@ BEGIN
 		WHERE FunctionId    IN (
 								3  -- REPORTS
 								,62 -- AG Casino Win Loss
-								,63 -- AG Casino Balance
-								,68 -- Casino Progressive Wins
+								,63 -- AG Casino Balance								
 								)
 		UNION ALL
 		SELECT 10 AS ProductId -- AGC
