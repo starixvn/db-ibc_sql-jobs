@@ -256,3 +256,4 @@ BEGIN CATCH
 	PRINT 'Error occured in Exchange summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
+GO
