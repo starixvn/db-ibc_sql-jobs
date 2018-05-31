@@ -166,8 +166,15 @@ BEGIN
 	FROM #TicketData b
 		INNER JOIN #ChargeRate r ON b.SiteID = r.LicenseeId
 	WHERE @WinlostDate BETWEEN r.FromDate AND r.ToDate
+	
+	DELETE #TicketData 
+	WHERE ISNULL(Turnover,0) = 0 AND ISNULL(Winlost,0) = 0 AND ISNULL(WinLostA,0) = 0 AND ISNULL(CommissionP,0) = 0 AND ISNULL(CommissionA,0) = 0 
+		  AND ISNULL(BetCount,0) = 0 AND ISNULL(DrawBetCount,0) = 0 AND ISNULL(DrawTO,0) = 0 AND ISNULL(ValidBetAmount,0) = 0		  
+		  AND ISNULL(eventType,-1) = -1  				  
 
 	----------------###1. rptDepWinlost_ThirdParty ###---------------------
+	CREATE TABLE #Log(TableName VARCHAR(100), IsSource BIT, CurrencyId INT, BetTypeId INT, Turnover MONEY, Winloss MONEY, BetCount INT, ExtraInfo VARCHAR(MAX));
+	
 	-- For Exchange Product
 	INSERT INTO #Source
 	        ( TableName ,
@@ -246,9 +253,6 @@ BEGIN
 
 	IF @S_Count <> 0 OR @T_Count = 0 
 	BEGIN
-
-		CREATE TABLE #Log(TableName VARCHAR(100), IsSource BIT, CurrencyId INT, BetTypeId INT, Turnover MONEY, Winloss MONEY, BetCount INT, ExtraInfo VARCHAR(MAX));
-
 		INSERT INTO #Log(TableName, IsSource, CurrencyId, BetTypeId, Turnover, Winloss, BetCount, ExtraInfo)
 		SELECT TableName, 1, Currency, ProductID, SUM(ISNULL(turnover, 0)), SUM(ISNULL(winlost, 0)), SUM(ISNULL(betCount, 0)),
 				(
@@ -327,8 +331,10 @@ BEGIN
 	----------------------------------------------------------------------
 	-------#### 2. For Exchange Performance vs rptDepWinlost_ThirdParty_Performance ####--------------
 
-	DELETE #Source
-	DELETE #Target
+	TRUNCATE TABLE #Source
+	TRUNCATE TABLE #Target
+	
+	CREATE TABLE #LogPerformance(TableName VARCHAR(100), IsSource BIT, CurrencyId INT, BetTypeId INT, EventType SMALLINT, Turnover MONEY, Winloss MONEY, BetCount INT, ExtraInfo VARCHAR(MAX));
 	
 	-- For Exchange Performance
 	INSERT INTO #Source
@@ -361,7 +367,7 @@ BEGIN
 			SUM(ISNULL(CommissionP, 0)), 
 			SUM(ISNULL(CommissionA, 0)), 
 			SUM(ISNULL(ValidBetAmount, 0))			
-	FROM #TicketData b 
+	FROM #TicketData b 		
 	GROUP BY b.CustID, b.CurrencyID, EventType
 	
 	SET @S_Count = @@ROWCOUNT;
@@ -394,10 +400,6 @@ BEGIN
 
 	IF @S_Count <> 0 OR @T_Count = 0 
 	BEGIN
- 
-
-		CREATE TABLE #LogPerformance(TableName VARCHAR(100), IsSource BIT, CurrencyId INT, BetTypeId INT, EventType SMALLINT, Turnover MONEY, Winloss MONEY, BetCount INT, ExtraInfo VARCHAR(MAX));
-
 		INSERT INTO #LogPerformance(TableName, IsSource, CurrencyId, BetTypeId, EventType, Turnover, Winloss, BetCount, ExtraInfo )
 		SELECT TableName, 1, Currency, ProductID, EventType, SUM(ISNULL(turnover, 0)), SUM(ISNULL(winlost, 0)), SUM(ISNULL(betCount, 0)),
 				(
@@ -449,11 +451,11 @@ BEGIN
 			 
 			IF EXISTS (SELECT 1 FROM #LogPerformance WHERE CurrencyId <> 20)
 			BEGIN
-				SELECT @HasDataMismatch = 1 ;
+				SELECT @HasDataMismatch = 3 ;
 			END
 			ELSE
 			BEGIN
-				SET @HasDataMismatch = 2;
+				SET @HasDataMismatch = 4;
 			END
 
 			SELECT @ProductIDs = STUFF(
