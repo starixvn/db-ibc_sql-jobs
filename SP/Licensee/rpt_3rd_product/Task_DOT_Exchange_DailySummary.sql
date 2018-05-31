@@ -172,7 +172,7 @@ BEGIN TRY
 				b.eventType = ISNULL(d.eventType,-1),
 				b.EventTypeName = ISNULL(d.EventTypeName, 'Invalid')
 			FROM #TicketData b
-				INNER JOIN #DetailData d ON d.userId = b.userId AND d.eventID = b.eventID AND d.marketID = b.marketID
+				LEFT JOIN #DetailData d ON d.userId = b.userId AND d.eventID = b.eventID AND d.marketID = b.marketID
 				
 			UPDATE b
 			SET b.WinLostA = - (ISNULL(Winlost, 0)) * (1 - ISNULL(r.Rate, 0))
@@ -213,7 +213,7 @@ BEGIN TRY
 					, SUM(ISNULL(turnover, 0)), SUM(ISNULL(Winlost, 0)), SUM(ISNULL(WinLostA, 0))
 					, SUM(ISNULL(DrawTO, 0)), SUM(ISNULL(DrawBetCount, 0)), SUM(ISNULL(BetCount, 0))
 					, SUM(ISNULL(CommissionP, 0)), SUM(ISNULL(CommissionA, 0)), SUM(ISNULL(ValidBetAmount, 0))		
-					, EventType
+					, ISNULL(EventType,-1)
 			FROM #TicketData					
 			GROUP BY Custid, SiteID, CurrencyID, EventType
 
