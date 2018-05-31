@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdproduct," executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
+/*<info serverAlias="DBLIC-bodb_3rdproduct" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DOT_Exchange_DailySummary]
 	@winlostdate DATETIME	
