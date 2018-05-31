@@ -481,6 +481,7 @@ BEGIN
 	
 
 	DROP TABLE #Log
+	DROP TABLE #LogPerformance
 	DROP TABLE #Source
 	DROP TABLE #Target
 	DROP TABLE #DetailData
