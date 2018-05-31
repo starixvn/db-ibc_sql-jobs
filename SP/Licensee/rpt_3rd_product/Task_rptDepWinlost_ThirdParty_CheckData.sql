@@ -21,6 +21,7 @@ AS
 	Original:
 	Revisions:
 		- 20180406@Harper: Check & correct data of rptDepWinlost_ThirdParty - Exchange [RedmineID: #92485]
+		- 20180530@Sophia: Check & correct data into new table rptDepWinlost_ThirdParty_Performance for Nap report performance [redmine: #93582]
 
 	DECLARE @HasDataMismatch	TINYINT, @ProductID VARCHAR(MAX)
 	EXEC Task_rptDepWinlost_ThirdParty_CheckData @WinlostDate = '2018-04-09', @HasDataMismatch = @HasDataMismatch OUTPUT, @ProductIDs = @ProductID OUTPUT
@@ -63,7 +64,8 @@ BEGIN
 		BetCount		INT,
 		CommissionP		MONEY,
 		CommissionA		MONEY,
-		ValidBetAmount	MONEY
+		ValidBetAmount	MONEY,
+		SportType 		SMALLINT
 	)
 
 	CREATE TABLE #TicketData 
@@ -82,7 +84,8 @@ BEGIN
 		BetCount		INT,
 		ValidBetAmount	MONEY,
 		CommissionP		MONEY,
-		CommissionA		MONEY
+		CommissionA		MONEY,
+		EventType		SMALLINT
 	)
 							
 	CREATE TABLE #DetailData 
@@ -94,7 +97,8 @@ BEGIN
 		DrawBetCount	INT,						
 		BetCount		INT,
 		Lay				MONEY,
-		Back			MONEY
+		Back			MONEY,
+		EventType		SMALLINT
 	)
 
 	CREATE TABLE #ChargeRate 
