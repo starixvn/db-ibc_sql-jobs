@@ -159,7 +159,7 @@ BEGIN
 		b.ValidBetAmount = ABS(ISNULL(d.Lay, 0) - ISNULL(d.Back, 0)),
 		b.EventType = ISNULL(d.EventType, -1)
 	FROM #TicketData b
-		INNER JOIN #DetailData d ON d.userId = b.userId AND d.eventID = b.eventID AND d.marketID = b.marketID
+		LEFT JOIN #DetailData d ON d.userId = b.userId AND d.eventID = b.eventID AND d.marketID = b.marketID
 				
 	UPDATE b
 	SET b.WinLostA = - (ISNULL(Winlost, 0)) * (1 - ISNULL(r.Rate, 0))
