@@ -16,6 +16,7 @@ AS
 		- 20180222@Percy: Initialize SP [RedmineID: #83787]
 		- 20180420@Percy: Change stake to actual_stake for Contribution formula [RedmineID: #94025]
 		- 20180529@Percy: Change Contribution formula [RedmineID: #96053]
+		- 20180607@Percy: Change Contribution data type [RedmineID: #96053]
 
 	Param's Explanation:
 */
@@ -57,7 +58,7 @@ BEGIN
 		GameId			SMALLINT,
 		Betcount		INT,
 		Turnover		MONEY,
-		Contribution	MONEY,
+		Contribution	DECIMAL(19,8),
 		ContributionA	MONEY,
 		ContributionM	MONEY,
 		ContributionS	MONEY
@@ -260,7 +261,7 @@ BEGIN
 		GameId			SMALLINT,
 		Betcount		INT,
 		Turnover		MONEY,
-		Contribution	MONEY,
+		Contribution	DECIMAL(19,8),
 		ContributionA	MONEY,
 		ContributionM	MONEY,
 		ContributionS	MONEY
