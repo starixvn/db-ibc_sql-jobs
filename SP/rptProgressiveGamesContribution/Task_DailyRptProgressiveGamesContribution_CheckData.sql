@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20180222@Percy: Initialize SP [RedmineID: #83787]
 		- 20180420@Percy: Change stake to actual_stake for Contribution formula [RedmineID: #94025]
+		- 20180529@Percy: Change Contribution formula [RedmineID: #96053]
 
 	Param's Explanation:
 */
@@ -37,10 +38,10 @@ BEGIN
 		RETURN
 	END
 
-	DECLARE @Bettype TABLE (ProductID INT, Bettype INT)
+	DECLARE @Bettype TABLE (ProductID INT, ContributionBettype INT)
 
-	INSERT INTO @Bettype (ProductID, Bettype)
-	SELECT ProductID, Bettype
+	INSERT INTO @Bettype (ProductID, ContributionBettype)
+	SELECT ProductID, ContributionBettype
 	FROM bodb02.dbo.f_ProgressiveGamesContribution_Bettype_Sel('All')
 
 	/* Get data source */
@@ -90,15 +91,15 @@ BEGIN
 			b.MRecommend,
 			b.SRecommend,
 			g.ProductId,
-			b.GameID,
+			b.Bettype,
 			COUNT(b.TransID) AS Betcount,
-			SUM(ISNULL(b.Stake, 0)) AS Turnover,
-			SUM(ISNULL(b.actual_stake * b.ContributionRate, 0)) AS Contribution,
-			-SUM(ISNULL(b.actual_stake * b.ContributionRate * apositiontaking, 0)) AS ContributionA,
-			-SUM(ISNULL(b.actual_stake * b.ContributionRate * mpositiontaking, 0)) AS ContributionM,
-			-SUM(ISNULL(b.actual_stake * b.ContributionRate * spositiontaking, 0)) AS ContributionS
-		FROM bodb02.dbo.BettransRNG14 b WITH (NOLOCK)
-			INNER JOIN @Bettype g ON g.Bettype = b.GameId	
+			SUM(ISNULL(b.oddsspread, 0)),
+			SUM(ISNULL(CONVERT(DECIMAL, b.betid)/100000000, 0)),
+			SUM(ISNULL(b.awinlost, 0)) AS ContributionA,
+			SUM(ISNULL(b.mwinlost, 0)) AS ContributionM,
+			SUM(ISNULL(b.swinlost, 0)) AS ContributionS
+		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK)
+			INNER JOIN @Bettype g ON b.Bettype = g.ContributionBettype
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID NOT IN (0,1,102,101,103)		 
 		GROUP BY
@@ -108,7 +109,7 @@ BEGIN
 			b.MRecommend,
 			b.SRecommend,
 			g.ProductId,
-			b.GameId
+			b.Bettype
 	END
 
 	-- Agent - RoleId = 2
