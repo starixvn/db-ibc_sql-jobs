@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 SET ANSI_NULLS ON
@@ -18,6 +19,7 @@ AS
 	 - 20160907@Harper: #62820_Add ValidBetAmount for AllBet
 	 - 20161222@Jim: LA/ Invoice - Integrate Fishing World (GMT + 8) [Redmine:#68677]
 	 - 20170523@Paul: Add sport type 205 [Redmine:#72914]
+	 - 20180608@Bruce: LA - Implement sum job for Pragmatic (GMT+0) [RedmineId #93958]
 	 Param's Explanation:
 */
 
@@ -68,8 +70,9 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
 		WHERE b.winlostdate = @Winlostdate		
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND b.bettype NOT IN (2008, 2009)
-			AND b.bettype NOT BETWEEN 1011 AND 1020
+			AND b.bettype NOT IN (2008, 2009) -- MGCRNG
+			AND b.bettype NOT BETWEEN 1011 AND 1020 -- FW
+			AND b.bettype NOT BETWEEN 4101 AND 4300 -- PP
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.checktime AS DATE), ISNULL(site.SiteID,-1), b.bettype
 		, b.currency, b.statusID
 		UNION ALL
@@ -96,9 +99,11 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
 		WHERE b.winlostdate = @Winlostdate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND ( b.gameID IN (2008, 2009)
-				 OR b.gameID BETWEEN 1011 AND 1020
-				 )
+			AND (
+				b.gameID IN (2008, 2009) -- MGCRNG
+				OR b.gameID BETWEEN 1011 AND 1020 -- FW
+				OR b.gameID BETWEEN 4101 AND 4300 -- PP
+			)
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID
 			, b.currency, b.statusID	
 			
