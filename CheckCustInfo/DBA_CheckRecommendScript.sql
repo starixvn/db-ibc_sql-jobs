@@ -1,7 +1,7 @@
 /*
 Created: 20180606@Winnie
 Task: Scripts check recommend setting for customers 
-DB: DBCHECK.CheckResultDB
+DB: DBCHECK.CheckResultDB test
 Revisions:
 Param's Explanation: 
 */
