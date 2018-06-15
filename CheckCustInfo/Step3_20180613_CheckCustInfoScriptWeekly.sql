@@ -33,5 +33,3 @@ END
 
 DROP TABLE #supers
 
-
-
