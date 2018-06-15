@@ -18,3 +18,7 @@ ALTER TABLE [dbo].[CheckCustInfoResult] ADD  CONSTRAINT [DF_CheckRecommendRule_C
 GO
 
 
+ALTER TABLE Rule_Credit ALTER COLUMN RuleName VARCHAR(200) NULL;  
+GO
+
+
