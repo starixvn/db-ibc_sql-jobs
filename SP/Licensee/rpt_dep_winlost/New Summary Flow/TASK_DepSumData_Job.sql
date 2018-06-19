@@ -1,3 +1,4 @@
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
 
@@ -11,6 +12,7 @@ AS
 		DB: DBACC.bodb02
 		Revisions:
 			20170728@Patrick: Remove code check HighCPU
+			20180618@Sophia: Change the flag of Movebet and Balanceup  [redmine: #97071]
 		
 		Input Params:	
 		- @IdlingHour: The time when the system is more idle
@@ -30,7 +32,7 @@ BEGIN
 	SELECT @Earlyday = DATEADD(DAY,-2,@CurrentDate)
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
 --2.Check system movebet and balanceup
-	IF EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isMovingBet','isArchivingBet','isArchivingDEPdata','isSummaryingDEPdata') AND VValue = '1')
+	IF EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isMovingBet_Local','isArchivingBet_Local','isArchivingDEPdata','isSummaryingDEPdata') AND VValue <> '0')
 		BEGIN
 			PRINT 'EXEC TASK_DepSumDataJob: MoveBet/BalanceUp/ArchivingDEPdata/SummaryingDEPdata is performing ==> RETURN'
 			RETURN
@@ -67,3 +69,4 @@ BEGIN
 				END
 		END		
 END
+GO
