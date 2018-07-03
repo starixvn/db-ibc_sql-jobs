@@ -1,13 +1,8 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_LicenseeReport]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_KenoWinloss_GenDataFromBettrans]    Script Date: 01/11/2016 01:57:06 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Task_KenoWinloss_GenDataFromBettrans    Script Date: 25/03/2015 09:53:08 AM ******/
 
-/****** Object:  Stored Procedure dbo.Task_KenoWinloss_GenDataFromBettrans    Script Date: 05/03/2015 15:08:26 PM ******/
 ALTER PROCEDURE [dbo].[Task_KenoWinloss_GenDataFromBettrans] @Winlossdate DATE
 AS
 /*
@@ -16,13 +11,22 @@ AS
 	 DB: DBLIC/bodb_LicenseeReport
 	 Revisions: 
 		- 20150323@Florent: remove void, reject ticket
+		- 20180703@Sophia: Check @Winlossdate <= Movebetday will return because this day don't have data on Bettrans[Redmine: #97567] 
 	 Param's Explanation:
 */
 
 BEGIN
 	SET NOCOUNT ON
+	
 	IF @Winlossdate IS NULL
 		RETURN
+	
+	DECLARE @Dates AS TABLE(BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @Dates(BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+		
+	IF EXISTS (SELECT 1 FROM @Dates WHERE MoveBetsDay >= @Winlossdate)
+	   RETURN
 	
 	DELETE rptKenoWinloss WITH(ROWLOCK, UPDLOCK)
 	WHERE RptDate = @Winlossdate
@@ -61,4 +65,3 @@ BEGIN
 	DROP TABLE #Bettype	
 END
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_KenoWinloss_GenDataFromBettrans] TO [vnteam] AS [dbo]

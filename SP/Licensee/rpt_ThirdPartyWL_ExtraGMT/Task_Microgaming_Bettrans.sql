@@ -1,9 +1,8 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 USE [bodb_LicenseeReport]
 GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 ALTER PROCEDURE [dbo].[Task_Microgaming_Bettrans] @Winlossdate DATE
 AS
 /*
@@ -16,6 +15,7 @@ AS
 		- 20160422@Francis: add Progressive Contribution and Progressive Payout for Microgaming RNG
 		- 20160907@Harper: #62820_Add ValidBetAmount for AllBet
 		- 20161222@Jim: LA/ Invoice - Integrate Fishing World (GMT + 8) [Redmine:#68677]
+		- 20180703@Sophia: Check @Winlossdate <= Movebetday will return because this day don't have data on Bettrans [Redmine: #97567] 
 	 Param's Explanation:
 */
 
@@ -23,8 +23,14 @@ BEGIN
 	SET NOCOUNT ON
 	IF @Winlossdate IS NULL
 		RETURN
-	IF NOT EXISTS(SELECT TOP 1 1 FROM bodb02.dbo.bettrans WITH (NOLOCK) WHERE winlostdate = @Winlossdate)
-		RETURN
+	
+	DECLARE @Dates AS TABLE(BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @Dates(BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+		
+	IF EXISTS (SELECT 1 FROM @Dates WHERE MoveBetsDay >= @Winlossdate)
+	   RETURN
+  
 	DELETE dbo.rpt_ThirdPartyWL_ExtraGMT WITH(ROWLOCK, UPDLOCK)
 	WHERE RptDate = @Winlossdate
 
@@ -115,8 +121,4 @@ BEGIN
 			, b.currency, b.statusID		
 	)OPTION (MAXDOP 1)
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Task_Microgaming_Bettrans] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Task_Microgaming_Bettrans] TO [vnteam] AS [dbo]
