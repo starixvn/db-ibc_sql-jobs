@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
 USE [bodb_LicenseeReport]
 GO
@@ -16,10 +16,23 @@ AS
 	- 20170529@Paul: Get matchid from staging match table [Redmine: #72914]
 	- 20170930@Harper: Get more info for MuayThai Parlay [Redmine: #82827]
 	- 20171114@Harper: Fix Date Range when get detail ticket 
+	- 20180703@Sophia: Check @Date <= Movebetday will return because this day don't have data on Bettrans [Redmine: #97567] 
 
 	EXEC GEN_rptBettingBySport '2017-10-28'
 */ 
 BEGIN
+
+	IF @Date IS NULL
+		RETURN
+	
+	DECLARE @Dates AS TABLE(BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @Dates(BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+		
+	IF EXISTS (SELECT 1 FROM @Dates WHERE MoveBetsDay >= @Date)
+	   RETURN
+	
+
     DELETE FROM dbo.rpt_BettingBySport
 	WHERE rptDate = @Date	
 
