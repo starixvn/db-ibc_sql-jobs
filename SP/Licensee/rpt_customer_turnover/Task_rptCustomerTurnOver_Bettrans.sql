@@ -29,108 +29,108 @@ BEGIN
 	WHERE winlostdate = @Date
 END;
 
-WITH cte_parlayinfo
-AS (
-		SELECT DISTINCT b.transid, s.sporttype
-		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-			CROSS APPLY (	SELECT TOP 1 m.sporttype
-							FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-								INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
-							WHERE b.refno = bm.refno AND b.custid = bm.custid
-						) AS s
-		WHERE b.bettype = 2799
-			AND b.winlostdate = @date
-			AND b.statusID IN (111, 112, 113)
-			AND b.matchid = 2799		
-)	
-	,cte_bettrans
-AS (
-	SELECT a.CustID
-		,a.currency
-		,a.recommend
-		,a.matchid
-		,a.bettype
-		,p.sporttype
-		,SUM(ABS(a.stake)) AS stake
-		,sum(a.winlost - a.actual_stake) winlost
-		,SUM(ABS(winlost - actual_stake)) AS BetEffective
-		,sum(a.PlayerComm) PlayerComm
-		,a.Odds
-		,a.oddsid
-		,a.oddstype
-		,CASE 
-			WHEN a.statusID = 112
-				AND a.bettype IN (33, 43)
-				AND a.liveawayscore = 0 THEN 114
-			WHEN a.statusID = 113
-				AND a.bettype IN (33, 43)
-				AND a.liveawayscore = 0 THEN 115
-			WHEN a.statusID = 112
-				AND a.bettype IN (1, 3, 7, 8, 17, 18)
-				AND ABS(modds) = 0.25 THEN 114
-			WHEN a.statusID = 113
-				AND a.bettype IN (1, 3, 7, 8, 17, 18)
-				AND ABS(modds) = 0.25 THEN 115
-			ELSE a.statusID
-			END AS statusID
-		,a.winlostdate
-		,COUNT(a.custid) betcount
-		,CASE 
-			WHEN BA.transid IS NULL THEN 0
-			WHEN BA.transid IS NOT NULL THEN 1
-			END AS isBA
-	--,sum(awinlost) awinlost  
-	--,sum(comm) comm  
-	FROM bodb02.dbo.bettrans a WITH (NOLOCK)
-		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC
-		ON a.recommend = lc.custid AND a.currency = lc.currency
-		LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction AS BA
-		ON a.transid = ba.transid
-		LEFT JOIN cte_parlayinfo p ON a.transid = p.transid
-	WHERE a.winlostdate = @date
-		AND a.statusID IN (111, 112, 113)
-		AND a.bettype < 19999
-		AND a.matchid >= 0 
-	GROUP BY a.matchid
-		,a.CustID
-		,a.currency
-		,a.recommend
-		,a.bettype
-		,p.sporttype
-		,a.Odds
-		,a.oddsid
-		,a.oddstype
-		,CASE 
-			WHEN a.statusID = 112
-				AND a.bettype IN (33, 43)
-				AND a.liveawayscore = 0 THEN 114
-			WHEN a.statusID = 113
-				AND a.bettype IN (33, 43)
-				AND a.liveawayscore = 0 THEN 115
-			WHEN a.statusID = 112
-				AND a.bettype IN (1, 3, 7, 8, 17, 18)
-				AND ABS(modds) = 0.25 THEN 114
-			WHEN a.statusID = 113
-				AND a.bettype IN (1, 3, 7, 8, 17, 18)
-				AND ABS(modds) = 0.25 THEN 115
-			ELSE a.statusID
-			END
-		,a.winlostdate
-		,CASE 
-			WHEN BA.transid IS NULL THEN 0
-			WHEN BA.transid IS NOT NULL THEN 1
-			END
-	)
-	,cte_raceinfo
-AS (
-	SELECT o.Orid
-		,r.SportType
-		,r.LeagueID
-	FROM bodb02.dbo.VSOutright o WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK)
-		ON r.EventID = o.EventID
-	WHERE EventDate = @Date
-	)
+
+SELECT DISTINCT b.transid, s.sporttype
+INTO #__cte_parlayinfo 
+FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+	CROSS APPLY (	SELECT TOP 1 m.sporttype
+					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
+						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
+					WHERE b.refno = bm.refno AND b.custid = bm.custid
+				) AS s
+WHERE b.bettype = 2799
+	AND b.winlostdate = @date
+	AND b.statusID IN (111, 112, 113)
+	AND b.matchid = 2799		
+	
+
+SELECT a.CustID
+	,a.currency
+	,a.recommend
+	,a.matchid
+	,a.bettype
+	,p.sporttype
+	,SUM(ABS(a.stake)) AS stake
+	,sum(a.winlost - a.actual_stake) winlost
+	,SUM(ABS(winlost - actual_stake)) AS BetEffective
+	,sum(a.PlayerComm) PlayerComm
+	,a.Odds
+	,a.oddsid
+	,a.oddstype
+	,CASE 
+		WHEN a.statusID = 112
+			AND a.bettype IN (33, 43)
+			AND a.liveawayscore = 0 THEN 114
+		WHEN a.statusID = 113
+			AND a.bettype IN (33, 43)
+			AND a.liveawayscore = 0 THEN 115
+		WHEN a.statusID = 112
+			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND ABS(modds) = 0.25 THEN 114
+		WHEN a.statusID = 113
+			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND ABS(modds) = 0.25 THEN 115
+		ELSE a.statusID
+		END AS statusID
+	,a.winlostdate
+	,COUNT(a.custid) betcount
+	,CASE 
+		WHEN BA.transid IS NULL THEN 0
+		WHEN BA.transid IS NOT NULL THEN 1
+		END AS isBA
+--,sum(awinlost) awinlost  
+--,sum(comm) comm  
+INTO #__cte_bettrans  
+FROM bodb02.dbo.bettrans a WITH (NOLOCK)
+	INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC
+	ON a.recommend = lc.custid AND a.currency = lc.currency
+	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction AS BA
+	ON a.transid = ba.transid
+	LEFT JOIN #__cte_parlayinfo p ON a.transid = p.transid
+WHERE a.winlostdate = @date
+	AND a.statusID IN (111, 112, 113)
+	AND a.bettype < 19999
+	AND a.matchid >= 0 
+GROUP BY a.matchid
+	,a.CustID
+	,a.currency
+	,a.recommend
+	,a.bettype
+	,p.sporttype
+	,a.Odds
+	,a.oddsid
+	,a.oddstype
+	,CASE 
+		WHEN a.statusID = 112
+			AND a.bettype IN (33, 43)
+			AND a.liveawayscore = 0 THEN 114
+		WHEN a.statusID = 113
+			AND a.bettype IN (33, 43)
+			AND a.liveawayscore = 0 THEN 115
+		WHEN a.statusID = 112
+			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND ABS(modds) = 0.25 THEN 114
+		WHEN a.statusID = 113
+			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND ABS(modds) = 0.25 THEN 115
+		ELSE a.statusID
+		END
+	,a.winlostdate
+	,CASE 
+		WHEN BA.transid IS NULL THEN 0
+		WHEN BA.transid IS NOT NULL THEN 1
+		END
+
+
+SELECT o.Orid
+	,r.SportType
+	,r.LeagueID
+INTO #__cte_raceinfo
+FROM bodb02.dbo.VSOutright o WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK)
+	ON r.EventID = o.EventID
+WHERE EventDate = @Date
+
 
 INSERT INTO dbo.rptCustomerTurnover
 SELECT a.CustID
@@ -187,10 +187,10 @@ SELECT a.CustID
 	,sum(BetEffective) BetEffective
 --,sum(awinlost) awinlost  
 --,sum(comm) comm  
-FROM cte_bettrans a
+FROM #__cte_bettrans a
 	LEFT JOIN bodb02.dbo.match b WITH (NOLOCK)
 	ON a.matchid = b.matchid
-	LEFT JOIN cte_raceinfo result
+	LEFT JOIN #__cte_raceinfo result
 	ON a.oddsid = result.Orid
 	LEFT JOIN bodb02.dbo.outright AS ob WITH (NOLOCK)
 	ON a.matchid = ob.orid
