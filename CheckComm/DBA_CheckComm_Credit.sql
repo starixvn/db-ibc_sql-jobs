@@ -266,7 +266,7 @@ BEGIN
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
 		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupc, csmem.SuperDiscount  
 		FROM #SuperComm css 
-			INNER JOIN #MemberComm csmem ON csm.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.srecommend = css.custid
+			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.srecommend = css.custid
 		WHERE css.groupc<>csmem.SuperDiscount  
 			AND csmem.bettype  IN (1, 2, 3, 7, 8)
 			AND ugroup IN('c', 'hkc', 'dec')
@@ -310,7 +310,7 @@ BEGIN
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
 		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupc, csmem.MasterDiscount  
 		FROM #MasterComm css 
-			INNER JOIN #MemberComm csmem ON csm.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.mrecommend = css.custid
+			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.mrecommend = css.custid
 		WHERE css.groupc<>csmem.MasterDiscount  
 			AND csmem.bettype  IN (1, 2, 3, 7, 8)
 			AND ugroup IN('c', 'hkc', 'dec')
@@ -354,7 +354,7 @@ BEGIN
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
 		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.groupc, csmem.AgentDiscount  
 		FROM #AgentComm css 
-			INNER JOIN #MemberComm csmem ON csm.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.recommend = css.custid
+			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.recommend = css.custid
 		WHERE css.groupc<>csmem.AgentDiscount  
 			AND csmem.bettype  IN (1, 2, 3, 7, 8)
 			AND ugroup IN('c', 'hkc', 'dec')
