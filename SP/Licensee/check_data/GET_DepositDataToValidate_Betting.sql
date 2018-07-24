@@ -20,6 +20,7 @@ Revisions:
 	- 20160906@Jim: Correct value of SB & BA [Redmine #63571]
 	- 20170627@Sophia: Include CO into SB group [Redmine: #79061]	
 	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
+	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -123,13 +124,17 @@ DECLARE --SB
 		,@LTTurnover MONEY
 		,@LTCustomerWl MONEY
 		,@LTBetCount MONEY
+		----PP
+		,@PPTurnover MONEY
+		,@PPCustomerWl MONEY
+		,@PPBetCount MONEY
 
 	DECLARE @tblBettype AS TABLE(ProductPrefix VARCHAR (10),Bettype INT)	   
 	INSERT INTO @tblBettype (ProductPrefix,Bettype)
 	SELECT DISTINCT ProductPrefix,bettype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT')	
+	WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP')	
 	  
 	-- Data Source 
 	DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),Status INT, Turnover MONEY, Winloss MONEY,BetCount INT)	
@@ -469,6 +474,21 @@ DECLARE --SB
 	SELECT @LTTurnover 		= ISNULL(@LTTurnover,0)
 		   ,@LTCustomerWl	= ISNULL(@LTCustomerWl,0)
 		   ,@LTBetCount 	= ISNULL(@LTBetCount,0)	   
+	
+	----PP
+	 SELECT  @LTTurnover=SUM(CASE 
+						WHEN @DrawFilter IN (2,3) THEN 
+							CASE WHEN b.Status = 111 THEN 0 WHEN b.Status IN (114,115) THEN 0.5 ELSE 1 END
+						ELSE 1
+					END * b.Turnover)
+			,@PPCustomerWl=SUM(b.WinLoss)
+			,@PPBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
+	FROM @tblData b
+	WHERE ProductPrefix = 'PP'
+
+	SELECT @PPTurnover 		= ISNULL(@PPTurnover,0)
+		   ,@PPCustomerWl	= ISNULL(@PPCustomerWl,0)
+		   ,@PPBetCount 	= ISNULL(@PPBetCount,0)	   
  
 -- Result
 
@@ -494,6 +514,7 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @COTurnover  AS CO
 			  , @VS2Turnover AS VS2
 			  , @LTTurnover  AS LT
+			  , @PPTurnover  AS PP
 UNION
 SELECT 2, @SbCustomerWl
 		, @RbCustomerWl
@@ -517,6 +538,7 @@ SELECT 2, @SbCustomerWl
 		, @COCustomerWl
 		, @VS2CustomerWl
 		, @LTCustomerWl
+		, @PPCustomerWl
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -540,6 +562,7 @@ SELECT 3, @SbBetCount
 		, @COBetCount
 		, @VS2BetCount
 		, @LTBetCount
+		, @PPBetCount
 
 SET NOCOUNT OFF
 END

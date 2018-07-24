@@ -25,6 +25,7 @@ AS
 	- 20171225@Sophia: Integrate Exchange Products [Redmine: #86640]
 	- 20180212@Harper: Remove LC from product list [Redmine: #85965]
 	- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
+	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -111,7 +112,7 @@ BEGIN
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 		WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
-		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB
+		WHEN bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
 		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
@@ -119,6 +120,7 @@ BEGIN
 		WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
 		WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
+		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 	  ELSE 0 END sporttype  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
@@ -169,7 +171,7 @@ BEGIN
 		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 		WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210		
-		WHEN bettype BETWEEN 4001 AND 7999 THEN 212 -- VB
+		WHEN bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
 		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
@@ -177,6 +179,7 @@ BEGIN
 		WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
 		WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
+		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 	  ELSE 0 END  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END  
 	 ,CASE   

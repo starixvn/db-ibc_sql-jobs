@@ -1,4 +1,6 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+USE bodb_LicenseeReport
+GO
 
 ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct] (
 	@date DATE,
@@ -38,6 +40,7 @@ AS
 		- 20171220@Harper: LRF - Integrate separate wallet Exchange product [RedmineID: #86640]
 		- 20180207@Harper: LA - Fix bug date range for Exchange product [RedmineID: #87754]
 		- 20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
+		- 20180420@Bruce: LA - Implement sum job for Pragmatic [RedmineId #93958]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 
@@ -63,7 +66,7 @@ BEGIN
 					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,BX')   
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,BX,PP')
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 		SELECT Bettype, ProductId 
