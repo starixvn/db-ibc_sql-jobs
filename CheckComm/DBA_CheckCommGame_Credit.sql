@@ -1,4 +1,6 @@
 /*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
+USE CheckResultDB
+GO 
 
 ALTER PROCEDURE [dbo].[DBA_CheckCommGame_Credit]  
 (	@srecommend INT   
@@ -10,13 +12,13 @@ AS
 /*  
 	Created: 20170110@Winnie
 	Task: Monthly check commission setting for CustSettinggame  
-	DB: DBCHECK.CheckResultDB  
+	DB: DBCHECK/CheckResultDB  
 
 	Revisions:  :
-		- 20170929@Johnson: Add rule 44,45,46 check comm of SMA on member [Redmine: #73556]
+		- 20170928@Johnson: Add rule 107,108,109 check comm of SMA on member [Redmine: #73556]
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
-	 @RuleId IN (36->41)  
+	 @RuleId IN (101->200) 
 	
 	TRUNCATE TABLE CheckCommResult_Credit  
 	
@@ -47,6 +49,7 @@ BEGIN
 			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
 						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
 						ELSE 0 END
+			AND cs.SportType NOT IN (162) --don't offer the product anymore
 	
 	SELECT cs.CustID,ci.recommend,ci.mrecommend,ci.srecommend, cs.SportType,cs.BetType,cs.Discount
 	INTO #AgentComm
@@ -60,6 +63,7 @@ BEGIN
 			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
 						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
 						ELSE 0 END
+			AND cs.SportType NOT IN (162) --don't offer the product anymore
 			
 	SELECT cs.CustID,ci.recommend,ci.mrecommend,ci.srecommend, cs.SportType,cs.BetType,cs.adiscount AS Discount
 	INTO #MasterComm
@@ -73,6 +77,7 @@ BEGIN
 			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
 						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
 						ELSE 0 END
+			AND cs.SportType NOT IN (162) --don't offer the product anymore
 
 	SELECT cs.CustID, cs.SportType,cs.BetType,cs.sdiscount AS Discount
 	INTO #SuperComm
@@ -86,107 +91,108 @@ BEGIN
 			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
 						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
 						ELSE 0 END
+			AND cs.SportType NOT IN (162) --don't offer the product anymore
 			
 	-- End of DATA PREPARATION				
 	
 	-- Starting check Comm Rule
-	---- 36. Super''s Discount < Master''s Discount
-	IF @RuleId IN (0,36)  
+	---- 101. Super''s Discount < Master''s Discount
+	IF @RuleId IN (0,101)  
 	BEGIN  
-		----PRINT '36. Super''s Discount < Master''s Discount'  
+		----PRINT '101. Super''s Discount < Master''s Discount'  
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 36 AS RuleId, css.BetType, css.SportType, css.CustId, csm.CustId, css.Discount, csm.Discount  
+		SELECT 101 AS RuleId, css.BetType, css.SportType, css.CustId, csm.CustId, css.Discount, csm.Discount  
 		FROM #SuperComm css 
 			INNER JOIN #MasterComm csm ON csm.BetType = css.BetType AND csm.SportType = css.SportType AND csm.srecommend = css.custid
 		WHERE css.Discount < csm.Discount
 		
 	END  
 
-	----37. Master''s Discount < Agent''s Discount
-	IF @RuleId IN (0,37)  
+	----102. Master''s Discount < Agent''s Discount
+	IF @RuleId IN (0,102)  
 	BEGIN  
-		----PRINT '37. Master''s Discount < Agent''s Discount'
+		----PRINT '102. Master''s Discount < Agent''s Discount'
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)  
-		SELECT 37 AS RuleId, csa.BetType, csa.SportType, csm.CustId, csa.CustId, csm.Discount, csa.Discount  
+		SELECT 102 AS RuleId, csa.BetType, csa.SportType, csm.CustId, csa.CustId, csm.Discount, csa.Discount  
 		FROM #AgentComm csa
 			INNER JOIN #MasterComm csm ON csm.BetType = csa.BetType AND csm.SportType = csa.SportType AND csa.mrecommend = csm.CustID
 		WHERE csm.Discount < csa.Discount
 		
 	END  
 
-	----38. Agent''s Discount < Player''s Discount
-	IF @RuleId IN (0,38)  
+	----103. Agent''s Discount < Player''s Discount
+	IF @RuleId IN (0,103)  
 	BEGIN   
-		----PRINT '38. Agent''s Discount < Player''s Discount'
+		----PRINT '103. Agent''s Discount < Player''s Discount'
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)  
-		SELECT 38 AS RuleId, csa.BetType, csa.SportType, csa.CustId, csmem.CustId, csa.Discount, csmem.PlayerDiscount
+		SELECT 103 AS RuleId, csa.BetType, csa.SportType, csa.CustId, csmem.CustId, csa.Discount, csmem.PlayerDiscount
 		FROM #AgentComm csa
 			INNER JOIN #MemberComm csmem ON csmem.BetType = csa.BetType AND csmem.SportType = csa.SportType AND csmem.recommend = csa.CustID
 		WHERE csa.Discount < csmem.PlayerDiscount
 
 	END  
 
-	----39. SuperDiscount < MasterDiscount on member level
-	IF @RuleId IN (0,39)  
+	----104. SuperDiscount < MasterDiscount on member level
+	IF @RuleId IN (0,104)  
 	BEGIN  
-		----PRINT '39. SuperDiscount < MasterDiscount on member level'
+		----PRINT '104. SuperDiscount < MasterDiscount on member level'
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)  
-		SELECT 39 as RuleId, csmem.BetType, csmem.SportType, csmem.CustId, csmem.CustId, csmem.SuperDiscount, csmem.MasterDiscount
+		SELECT 104 as RuleId, csmem.BetType, csmem.SportType, csmem.CustId, csmem.CustId, csmem.SuperDiscount, csmem.MasterDiscount
 		FROM #MemberComm csmem
 		WHERE csmem.SuperDiscount < csmem.MasterDiscount
 	END  
 	
-	----40. MasterDiscount < AgentDiscount on member level
-	IF @RuleId IN (0,40)  
+	----105. MasterDiscount < AgentDiscount on member level
+	IF @RuleId IN (0,105)  
 	BEGIN   
-		----PRINT '40. MasterDiscount < AgentDiscount on member level'
+		----PRINT '105. MasterDiscount < AgentDiscount on member level'
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)  
-		SELECT 40 as RuleId, csmem.BetType, csmem.SportType, csmem.CustId, csmem.CustId, csmem.MasterDiscount, csmem.AgentDiscount
+		SELECT 105 as RuleId, csmem.BetType, csmem.SportType, csmem.CustId, csmem.CustId, csmem.MasterDiscount, csmem.AgentDiscount
 		FROM #MemberComm csmem
 		WHERE csmem.MasterDiscount < csmem.AgentDiscount
 
 	END  
 
-	----41. AgentDiscount < PlayerDiscount on member level
-	IF @RuleId IN (0,41)  
+	----106. AgentDiscount < PlayerDiscount on member level
+	IF @RuleId IN (0,106)  
 	BEGIN   
-		----PRINT '41. AgentDiscount < PlayerDiscount on member level'
+		----PRINT '106. AgentDiscount < PlayerDiscount on member level'
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)  
-		SELECT 41 as RuleId, csmem.BetType, csmem.SportType, csmem.CustId, csmem.CustId, csmem.AgentDiscount, csmem.PlayerDiscount
+		SELECT 106 as RuleId, csmem.BetType, csmem.SportType, csmem.CustId, csmem.CustId, csmem.AgentDiscount, csmem.PlayerDiscount
 		FROM #MemberComm csmem
 		WHERE csmem.AgentDiscount < csmem.PlayerDiscount
 	END  
 	
-	---- 44. Super''s Discount <> Super''s Discount on member level
-	IF @RuleId IN (0,44)  
+	---- 107. Super''s Discount <> Super''s Discount on member level
+	IF @RuleId IN (0,107)  
 	BEGIN  
-		----PRINT '44. Super''s Discount <> Super''s Discount on member level'  
+		----PRINT '107. Super''s Discount <> Super''s Discount on member level'  
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 44 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.SuperDiscount  
+		SELECT 107 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.SuperDiscount  
 		FROM #SuperComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.srecommend = css.custid
 		WHERE css.Discount <> csmem.SuperDiscount
 		
 	END  
 	
-	---- 45. Master''s Discount <> Master''s Discount on member level
-	IF @RuleId IN (0,45)  
+	---- 108. Master''s Discount <> Master''s Discount on member level
+	IF @RuleId IN (0,108)  
 	BEGIN  
-		----PRINT '45. Master''s Discount < Master''s Discount on member level'  
+		----PRINT '108. Master''s Discount < Master''s Discount on member level'  
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 45 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.MasterDiscount
+		SELECT 108 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.MasterDiscount
 		FROM #MasterComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.mrecommend = css.custid
 		WHERE css.Discount <> csmem.MasterDiscount
 		
 	END 
 	
-	---- 46. Agent''s Discount <> Agent''s Discount on member level
-	IF @RuleId IN (0,46)  
+	---- 109. Agent''s Discount <> Agent''s Discount on member level
+	IF @RuleId IN (0,109)  
 	BEGIN  
-		----PRINT '46. Agent''s Discount < Agent''s Discount on member level'  
+		----PRINT '109. Agent''s Discount < Agent''s Discount on member level'  
 		INSERT INTO CheckCommResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB)   
-		SELECT 46 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.AgentDiscount  
+		SELECT 109 AS RuleId, css.BetType, css.SportType, css.CustId, csmem.CustId, css.Discount, csmem.AgentDiscount  
 		FROM #AgentComm css 
 			INNER JOIN #MemberComm csmem ON csmem.BetType = css.BetType AND csmem.SportType = css.SportType AND csmem.recommend = css.custid
 		WHERE css.Discount <> csmem.AgentDiscount

@@ -1,3 +1,7 @@
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
+USE CheckResultDB
+GO
+
 ALTER PROCEDURE [dbo].[DBA_CheckComm_Deposit]  
 (	@srecommend INT   
 	,@SportType SMALLINT = 0  
@@ -8,7 +12,7 @@ AS
 /*  
 	Created: 20170705@Winnie
 	Task: Monthly check commission setting for Dep_CustSetting  
-	DB: DBCHECK.CheckResultDB  
+	DB: DBCHECK/CheckResultDB  
 
 	Revisions:  :
 
