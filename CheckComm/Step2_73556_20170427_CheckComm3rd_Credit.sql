@@ -16,14 +16,12 @@ CREATE TABLE #supers (custid int,isfinished bit default(0))
 	
 INSERT INTO #supers(custid)
 SELECT ci.custid
-FROM CheckCustDB.dbo.Customer ci WITH(NOLOCK)
-	INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON ci.custid=c.custid
+FROM CheckCustDB.dbo.custInfo ci WITH(NOLOCK) 
 	INNER JOIN CheckCustDB.dbo.custSuper s WITH(NOLOCK) ON ci.custid=s.custid
 WHERE ci.roleid = 4 	
 	AND ci.custid NOT IN (SELECT custid FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK))
-	AND c.Enabled=1
+	AND ci.Enabled=1
 	AND s.IsInternal = 0
-	AND NOT EXISTS (SELECT 1 FROM CheckCustDB.dbo.CustNoComm WITH(NOLOCK) WHERE custid = ci.custid)
 
 WHILE (1 = 1)
 BEGIN
