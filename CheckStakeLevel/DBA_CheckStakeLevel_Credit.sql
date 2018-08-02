@@ -66,6 +66,12 @@ BEGIN
 		AND GameTypeID IN (SELECT GameTypeID FROM @GameType)
 		AND ci.Enabled = 1
 		AND ci.Currency NOT IN (20,27,28)
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'		 
 	
 	INSERT INTO #MasterStakeLevel(custid,GameTypeID,StakeLevelList)
 	SELECT cs.custid, GameTypeID, StakeLevelList
@@ -74,7 +80,13 @@ BEGIN
 	WHERE ci.srecommend = @srecommend
 		AND roleid = 3
 		AND Enabled = 1
-		AND ci.Currency NOT IN (20,27,28) 
+		AND ci.Currency NOT IN (20,27,28)
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'		 
 		AND GameTypeID IN (SELECT GameTypeID FROM @GameType)
 	
 	INSERT INTO #AgentStakeLevel(custid,mrecommend,GameTypeID,StakeLevelList)
@@ -85,6 +97,12 @@ BEGIN
 		AND roleid = 2
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,27,28) 
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	
 		AND GameTypeID IN (SELECT GameTypeID FROM @GameType)
 	
 	INSERT INTO #MemberStakeLevel(custid,recommend,GameTypeID,StakeLevelList)
@@ -94,6 +112,12 @@ BEGIN
 	WHERE ci.srecommend = @srecommend
 		AND roleid = 1
 		AND Enabled = 1
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	
 		AND ci.Currency NOT IN (20,27,28) 
 		AND GameTypeID IN (SELECT GameTypeID FROM @GameType)
 	
@@ -129,6 +153,12 @@ BEGIN
 	WHERE ci.custid = @srecommend
 		AND roleid = 4
 		AND Enabled = 1
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	
 		AND ci.Currency NOT IN (20,27,28) 
 		AND NOT EXISTS (SELECT 1 FROM #SuperStakeLevel cs WHERE cs.custid = ci.custid)
 	
@@ -138,6 +168,12 @@ BEGIN
 	WHERE srecommend = @srecommend
 		AND roleid = 3
 		AND Enabled = 1
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	
 		AND Currency NOT IN (20,27,28) 
 		AND NOT EXISTS (SELECT 1 FROM #MasterStakeLevel cs WHERE cs.custid = ci.custid)
 	
@@ -148,6 +184,12 @@ BEGIN
 		AND roleid = 2
 		AND Enabled = 1
 		AND Currency NOT IN (20,27,28) 
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	
 		AND NOT EXISTS (SELECT 1 FROM #AgentStakeLevel cs WHERE cs.custid = ci.custid)
 	
 	INSERT INTO #MemberMissingStakeLevel(custid)
@@ -156,6 +198,12 @@ BEGIN
 	WHERE srecommend = @srecommend
 		AND roleid = 1
 		AND Enabled = 1
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	
 		AND Currency NOT IN (20,27,28) 
 		AND NOT EXISTS (SELECT 1 FROM #MemberStakeLevel cs WHERE cs.custid = ci.custid)
 	

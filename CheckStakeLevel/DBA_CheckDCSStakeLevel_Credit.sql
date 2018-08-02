@@ -75,11 +75,20 @@ BEGIN
 	GROUP BY t.SportType,  s1.GameTypeID
 			
 	INSERT INTO #SuperStakeLevel(custid,sporttype,bettype,StakeLevelList)
-	SELECT custid, cs.sporttype, cs.bettype, StakeLevelList
+	SELECT cs.custid, cs.sporttype, cs.bettype, StakeLevelList
 	FROM CheckCustDB.dbo.CustStakeLevel_Agent cs WITH(NOLOCK)
+		INNER JOIN CheckCustDB.dbo.custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
 		INNER JOIN @sportBettypeFilter t ON cs.sporttype = t.sporttype
 											AND cs.bettype = t.bettype
-	WHERE custid = @srecommend		
+	WHERE ci.custid = @srecommend	
+		AND Enabled = 1
+		AND ci.Currency NOT IN (20,27,28) 
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	
 	
 	INSERT INTO #MasterStakeLevel(custid,sporttype,bettype,StakeLevelList)
 	SELECT cs.custid, cs.sporttype,cs.bettype,StakeLevelList
@@ -91,6 +100,12 @@ BEGIN
 		AND roleid = 3
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,27,28) 
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	
 			
 	INSERT INTO #AgentStakeLevel(custid,mrecommend,sporttype,bettype,StakeLevelList)
 	SELECT cs.custid, mrecommend, cs.sporttype, cs.bettype, StakeLevelList
@@ -102,6 +117,12 @@ BEGIN
 		AND roleid = 2
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,27,28) 
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	
 			
 	INSERT INTO #MemberStakeLevel(custid,recommend,sporttype,bettype,StakeLevelList)
 	SELECT cs.custid, recommend, cs.sporttype, cs.bettype, StakeLevelList
@@ -113,7 +134,13 @@ BEGIN
 		AND roleid = 1
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,27,28) 
-	
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	
+		
 	--check missing stake level
 	SELECT custid
 	INTO #SuperMissingStakeLevel
@@ -146,7 +173,13 @@ BEGIN
 	WHERE ci.custid = @srecommend
 		AND roleid = 4
 		AND Enabled = 1
-		AND ci.Currency NOT IN (20,27,28) 
+		AND ci.Currency NOT IN (20,27,28) 	
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	
 		AND NOT EXISTS (SELECT 1 FROM #SuperStakeLevel cs WHERE cs.custid = ci.custid)
 	
 	INSERT INTO #MasterMissingStakeLevel(custid)
@@ -155,7 +188,13 @@ BEGIN
 	WHERE srecommend = @srecommend
 		AND roleid = 3
 		AND Enabled = 1
-		AND Currency NOT IN (20,27,28) 		
+		AND Currency NOT IN (20,27,28)
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'	 		
 		AND NOT EXISTS (SELECT 1 FROM #MasterStakeLevel cs WHERE cs.custid = ci.custid)
 	
 	INSERT INTO #AgentMissingStakeLevel(custid)
@@ -164,7 +203,13 @@ BEGIN
 	WHERE srecommend = @srecommend
 		AND roleid = 2
 		AND Enabled = 1	
-		AND Currency NOT IN (20,27,28) 
+		AND Currency NOT IN (20,27,28)
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'			
 		AND NOT EXISTS (SELECT 1 FROM #AgentStakeLevel cs WHERE cs.custid = ci.custid)
 	
 	INSERT INTO #MemberMissingStakeLevel(custid)
@@ -174,6 +219,12 @@ BEGIN
 		AND roleid = 1
 		AND Enabled = 1	
 		AND Currency NOT IN (20,27,28) 
+		AND CI.username NOT LIKE '%Acc%'
+		AND CI.username NOT LIKE '%3rdSuper%'
+		AND CI.username NOT LIKE 'STEST%'
+		AND CI.username NOT LIKE '%cashout%'
+		AND CI.username NOT LIKE '%dummy%'
+		AND CI.username NOT LIKE '%BetTrade%'
 		AND NOT EXISTS (SELECT 1 FROM #MemberStakeLevel cs WHERE cs.custid = ci.custid)
 	
 	--check missing setting
