@@ -1,3 +1,12 @@
+/*
+	Created: 20180802@Elodie
+	Task: Add ISPO into IgnoredCust
+	DB: DBCHECK.CheckResultDB  
+*/
+
+USE CheckResultDB
+GO
+
 INSERT INTO dbo.IgnoredCust
         ( CustID ,
           RoleID ,
