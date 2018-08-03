@@ -1,6 +1,6 @@
 /*
-	Created: 20180802@Elodie
-	Task: Add ISPO into IgnoredCust
+	Created: 20180803@Elodie
+	Task: Add some custs into IgnoredCust
 	DB: DBCHECK.CheckResultDB  
 */
 
