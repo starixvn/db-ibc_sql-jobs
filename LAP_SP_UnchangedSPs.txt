@@ -1,1 +1,2 @@
-SP\Licensee\rpt_dep_winlost\New Summary Flow\TASK_HourlySummaryDepData.sql
+SP\Licensee\rptLicWinlossGMT\Task_rptLicWinlossGMT_CheckData.sql
+SP\Licensee\rpt_winlost2\Task_DailyRptLicWinloss2_Job.sql
