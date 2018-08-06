@@ -26,81 +26,81 @@ SET NOCOUNT ON
 	CREATE TABLE #tempUsername	(Username2 VARCHAR(30))
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 51,Custid,GETDATE()
+	SELECT 401,Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ci WITH(NOLOCK)
 	WHERE ci.srecommend=@srecommend AND ci.roleid=4 AND ci.custid<>ci.srecommend AND ci.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 52,Custid,GETDATE()
+	SELECT 402,Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ci WITH(NOLOCK)
 	WHERE ci.srecommend=@srecommend AND ci.roleid=3 AND ci.custid<>ci.mrecommend AND ci.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 53,Custid,GETDATE()
+	SELECT 403,Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ci WITH(NOLOCK)
 	WHERE ci.srecommend=@srecommend AND ci.roleid=3 AND ci.custid=ci.srecommend AND ci.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 54,ma.Custid,GETDATE()
+	SELECT 404,ma.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ma WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON ma.srecommend=ci.CustID
 	WHERE ci.roleid<>4  AND ma.roleid=3 AND ma.srecommend=@srecommend AND ma.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 55,Custid,GETDATE()
+	SELECT 405,Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ci WITH(NOLOCK)
 	WHERE ci.srecommend=@srecommend AND ci.roleid=2 AND ci.custid<>ci.recommend AND ci.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 56,Custid,GETDATE()
+	SELECT 406,Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ci WITH(NOLOCK)
 	WHERE ci.srecommend=@srecommend AND ci.roleid=2 AND (ci.custid=ci.srecommend OR ci.CustID=ci.mrecommend) AND ci.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 57,ag.Custid,GETDATE()
+	SELECT 407,ag.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ag WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON ag.srecommend=ci.CustID
 	WHERE ci.roleid<>4 AND ag.roleid=2 AND ag.srecommend=@srecommend AND ag.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 58,ag.Custid,GETDATE()
+	SELECT 408,ag.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ag WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON ag.mrecommend=ci.CustID
 	WHERE ci.roleid<>3 AND ag.roleid=2 AND ag.srecommend=@srecommend AND ag.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 59,ag.Custid,GETDATE()
+	SELECT 409,ag.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ag WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer m WITH(NOLOCK) ON ag.mrecommend=m.CustID
 		INNER JOIN CheckCustDB.dbo.customer s WITH(NOLOCK) ON ag.srecommend=s.CustID
 	WHERE m.srecommend <> s.srecommend  AND ag.roleid=2 AND ag.srecommend=@srecommend AND ag.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 60,Custid,GETDATE()
+	SELECT 410,Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ci WITH(NOLOCK)
 	WHERE ci.srecommend=@srecommend AND ci.roleid=1 AND (ci.custid=ci.srecommend OR ci.CustID=ci.mrecommend OR ci.CustID=ci.recommend) 
 		AND ci.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 61,mem.Custid,GETDATE()
+	SELECT 411,mem.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer mem WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON mem.srecommend=ci.CustID
 	WHERE ci.roleid<>4 AND mem.roleid=1 AND mem.srecommend=@srecommend AND mem.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 	
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 62,mem.Custid,GETDATE()
+	SELECT 412,mem.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer mem WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON mem.mrecommend=ci.CustID
 	WHERE ci.roleid<>3 AND mem.roleid=1 AND mem.srecommend=@srecommend AND mem.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 63,mem.Custid,GETDATE()
+	SELECT 413,mem.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer mem WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON mem.recommend=ci.CustID
 	WHERE ci.roleid<>2 AND mem.roleid=1 AND mem.srecommend=@srecommend AND mem.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 64,mem.Custid,GETDATE()
+	SELECT 414,mem.Custid,GETDATE()
 	FROM  CheckCustDB.dbo.customer mem WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer m WITH(NOLOCK) ON mem.mrecommend=m.CustID
 		INNER JOIN CheckCustDB.dbo.customer s WITH(NOLOCK) ON mem.srecommend=s.CustID
@@ -110,93 +110,93 @@ SET NOCOUNT ON
 
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 65,mem.Custid,GETDATE()
+	SELECT 415,mem.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer mem WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer m WITH(NOLOCK) ON mem.mrecommend=m.CustID
 		INNER JOIN CheckCustDB.dbo.customer r WITH(NOLOCK) ON mem.recommend=r.CustID
 	WHERE r.mrecommend<>m.mrecommend AND mem.roleid=1 AND mem.srecommend=@srecommend AND mem.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate		
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 66,c.Custid,GETDATE()
+	SELECT 416,c.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer c WITH(NOLOCK) 
 		INNER JOIN CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) ON c.CustID=ci.CustID
 	WHERE c.srecommend=@srecommend AND c.roleid=1  AND c.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 		AND (c.mrecommend<>ci.mrecommend OR c.recommend<>ci.recommend OR c.srecommend<>ci.srecommend)
 		
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 66,c.Custid,GETDATE()
+	SELECT 416,c.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer c WITH(NOLOCK) 
 		INNER JOIN CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) ON c.CustID=ci.CustID
 	WHERE c.srecommend=@srecommend AND c.roleid=2  AND c.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 		AND (c.mrecommend<>ci.mrecommend OR c.recommend<>ci.recommend OR c.srecommend<>ci.srecommend)
 	
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 66,c.Custid,GETDATE()
+	SELECT 416,c.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer c WITH(NOLOCK) 
 		INNER JOIN CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) ON c.CustID=ci.CustID
 	WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate 
 		AND (c.mrecommend<>ci.mrecommend OR c.recommend<>ci.recommend OR c.srecommend<>ci.srecommend)
 	
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 66,c.Custid,GETDATE()
+	SELECT 416,c.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer c WITH(NOLOCK) 
 		INNER JOIN CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) ON c.CustID=ci.CustID
 	WHERE c.srecommend=@srecommend AND c.roleid=4  AND c.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 		AND (c.mrecommend<>ci.mrecommend OR c.recommend<>ci.recommend OR c.srecommend<>ci.srecommend)
 	
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 67,c.Custid,GETDATE()
+	SELECT 417,c.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer c WITH(NOLOCK) 	
 	WHERE c.srecommend=@srecommend AND c.roleid=4 		
 		AND c.Custid NOT IN (SELECT custid FROM CheckCustDB.dbo.Custsuper WITH(NOLOCK)) 
 		AND c.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate	
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 68,c.Custid,GETDATE()
+	SELECT 418,c.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer c WITH(NOLOCK) 
 	WHERE c.srecommend=@srecommend AND c.roleid=3
 		AND c.Custid NOT IN (SELECT custid FROM CheckCustDB.dbo.Custmaster WITH(NOLOCK)) 
 		AND c.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 69,c.Custid,GETDATE()
+	SELECT 419,c.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer c WITH(NOLOCK) 
 	WHERE c.srecommend=@srecommend AND c.roleid=2
 		AND c.Custid NOT IN (SELECT custid FROM CheckCustDB.dbo.CustAgent WITH(NOLOCK)) 
 		AND c.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 71,ma.Custid,GETDATE()
+	SELECT 421,ma.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ma WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON ma.srecommend=ci.custid
 	WHERE ma.currency<>ci.Currency AND ma.roleid=3 AND ma.srecommend=@srecommend AND ma.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 72,ag.Custid,GETDATE()
+	SELECT 422,ag.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ag WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON ag.mrecommend=c.custid
 	WHERE ag.currency<>c.Currency AND ag.roleid=2 AND ag.srecommend=@srecommend AND ag.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 72,ag.Custid,GETDATE()
+	SELECT 422,ag.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer ag WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON ag.srecommend=ci.custid
 	WHERE ag.currency<>ci.Currency AND ag.roleid=2 AND ag.srecommend=@srecommend AND ag.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 73,mem.Custid,GETDATE()
+	SELECT 423,mem.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer mem WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer r WITH(NOLOCK) ON mem.recommend=r.custid
 	WHERE mem.roleid=1 AND mem.srecommend=@srecommend AND mem.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate AND mem.currency<>r.Currency
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 73,mem.Custid,GETDATE()
+	SELECT 423,mem.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer mem WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON mem.mrecommend=ci.custid
 	WHERE	mem.roleid=1 AND mem.srecommend=@srecommend AND mem.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate AND mem.currency<>ci.Currency
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 73,mem.Custid,GETDATE()
+	SELECT 423,mem.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer mem WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON mem.srecommend=ci.custid
 	WHERE mem.roleid=1 AND mem.srecommend=@srecommend AND mem.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate AND mem.currency<>ci.Currency 
@@ -235,15 +235,15 @@ SET NOCOUNT ON
 		AND ci.Enabled=1
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 75,t.Custid,GETDATE()
+	SELECT 425,t.Custid,GETDATE()
 	FROM #DirectMaster t WHERE t.CustID NOT IN (SELECT CustID FROM CheckCustDB.dbo.CustDirectAccount WITH(NOLOCK))
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 75,t.Custid,GETDATE()
+	SELECT 425,t.Custid,GETDATE()
 	FROM #DirectAgent t WHERE t.CustID NOT IN (SELECT CustID FROM CheckCustDB.dbo.CustDirectAccount WITH(NOLOCK))
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 75,t.Custid,GETDATE()
+	SELECT 425,t.Custid,GETDATE()
 	FROM #DirectMember t WHERE t.CustID NOT IN (SELECT CustID FROM CheckCustDB.dbo.CustDirectAccount WITH(NOLOCK))
 
 	INSERT INTO #Dummy (CustID)
@@ -268,7 +268,7 @@ SET NOCOUNT ON
 	FROM #DirectMaster D
 
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
-	SELECT 74,t.Custid,GETDATE()
+	SELECT 424,t.Custid,GETDATE()
 	FROM #Dummy t WHERE t.CustID NOT IN (SELECT CustID FROM CheckCustDB.dbo.acc_custdirect WITH(NOLOCK))
 
 	INSERT INTO #tempUsername(Username2)
@@ -280,7 +280,7 @@ SET NOCOUNT ON
 		GROUP BY Username2 HAVING COUNT(Username2)>1
 
 	INSERT INTO CheckCustInfoResult (RuleID,CustID,CreatedDate)
-	SELECT 70,c.Custid,GETDATE()
+	SELECT 420,c.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer c WITH(NOLOCK) 
 		INNER JOIN #tempUsername t ON c.username2=t.username2
 
