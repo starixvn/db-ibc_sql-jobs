@@ -2,13 +2,6 @@
 USE [bodb02]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_Check_Data_Consistency_Job]    Script Date: 9/28/2017 11:57:21 PM ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
 ALTER PROCEDURE [dbo].[Task_Check_Data_Consistency_Job] @Recipients VARCHAR(1024)
 	, @Copy_recipients VARCHAR(1024) = ''
 	, @Mode VARCHAR(20) = ''
@@ -21,6 +14,7 @@ AS
 	Revision:
 		- 20171011@Patrick: Move code check setting for FW
 		- 20180516@Paul: Add code for PP [Redmine:#95284]
+		- 20180518@Kathy: Add code for Bullfighting [Redmine:#95199]
 		
 */
 BEGIN
@@ -99,8 +93,9 @@ BEGIN
 		END
 				
 		--For Macau Games
+		SELECT @Retry = 1
 		OneMore_212:
-		SELECT @ErrorTmp = '', @Retry = 1
+		SELECT @ErrorTmp = ''
 		EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @CheckDate
 			, @ToDate = @CheckDate
 			, @ProductId = 212
@@ -122,8 +117,9 @@ BEGIN
 		END
 
 		--Fishing World
+		SELECT @Retry = 1
 		OneMore_219:
-		SELECT @ErrorTmp = '', @Retry = 1
+		SELECT @ErrorTmp = ''
 		EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @CheckDate
 			, @ToDate = @CheckDate
 			, @ProductId = 219
@@ -145,8 +141,9 @@ BEGIN
 		END
 
 		--RNG - RNG Game
+		SELECT @Retry = 1
 		OneMore_208:
-		SELECT @ErrorTmp = '', @Retry = 1
+		SELECT @ErrorTmp = ''
 		EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @CheckDate
 			, @ToDate = @CheckDate
 			, @ProductId = 208
@@ -168,9 +165,9 @@ BEGIN
 		END
 
 		--RNG - Mini Games
+		SELECT @Retry = 1
 		OneMore_209:
-		SELECT @ErrorTmp = '', @Retry = 1
-		SET @ErrorTmp = ''
+		SELECT @ErrorTmp = ''
 		EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @CheckDate
 			, @ToDate = @CheckDate
 			, @ProductId = 209
@@ -192,9 +189,9 @@ BEGIN
 		END
 
 		--RNG - Mobile
+		SELECT @Retry = 1
 		OneMore_210:
-		SELECT @ErrorTmp = '', @Retry = 1
-		SET @ErrorTmp = ''
+		SELECT @ErrorTmp = ''
 		EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @CheckDate
 			, @ToDate = @CheckDate
 			, @ProductId = 210
@@ -216,10 +213,12 @@ BEGIN
 		END
 
 		--For Microgaming Live Casino
+		SELECT @Retry = 1
 		OneMore_MGCLC:
-		SELECT @ErrorTmp = '', @Retry = 1
+		SELECT @ErrorTmp = ''
 		EXEC dbo.Task_MicroGamingLC_DataConsistency_Check @FDate = @CheckDate
 			, @TDate = @CheckDate
+			, @ProductId = 203
 			, @ErrMessage =  @ErrorTmp OUTPUT
 
 		IF ISNULL(@ErrorTmp, '') <> ''
@@ -237,8 +236,9 @@ BEGIN
 		END
 			
 		--For Allbet
+		SELECT @Retry = 1
 		OneMore_211:
-		SELECT @ErrorTmp = '', @Retry = 1
+		SELECT @ErrorTmp = ''
 		EXEC dbo.Task_LC_DataConsistency_Check @FromDate = @CheckDate
 			, @ToDate = @CheckDate
 			, @ProductId = 211
@@ -260,8 +260,9 @@ BEGIN
 		END
 		
 		--For PP
+		SELECT @Retry = 1
 		OneMore_248:
-		SELECT @ErrorTmp = '', @Retry = 1
+		SELECT @ErrorTmp = ''
 		EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @CheckDate
 			, @ToDate = @CheckDate
 			, @ProductId = 248
@@ -280,6 +281,30 @@ BEGIN
 			SET @HasError1 = 1
 			INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
 			VALUES(248, 'PP', @CheckDate, @CheckDate, @ErrorTmp)	
+		END
+
+		--For Bullfighting
+		SELECT @Retry = 1
+		OneMore_207:
+		SELECT @ErrorTmp = ''
+		EXEC dbo.Task_MicroGamingLC_DataConsistency_Check @FDate = @CheckDate
+			, @TDate = @CheckDate
+			, @ProductId = 207
+
+			, @ErrMessage = @ErrorTmp OUTPUT
+	
+		IF ISNULL(@ErrorTmp, '') <> ''
+		BEGIN
+			IF @Retry < 3
+			BEGIN
+				WAITFOR DELAY '00:02:00:000' --retry after 2 minutes
+				SET @Retry = @Retry + 1
+				GOTO OneMore_207
+			END
+
+			SET @HasError1 = 1
+			INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
+			VALUES(207, 'Bullfighting', @CheckDate, @CheckDate, @ErrorTmp)	
 		END
 
 		PRINT @CheckDate
@@ -355,7 +380,6 @@ BEGIN
 		END
 	END
 END
-
 GO
 
 
