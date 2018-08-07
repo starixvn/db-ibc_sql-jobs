@@ -16,6 +16,7 @@ Revisions:
 	- 20141111@Sophia: Correct bettype LiveCasino
 	- 20150728@Elodie: Add GoldDeluxe product
 	- 20170508@Elodie: Count PT Setting rows
+	- 20180807@Elodie: Apply f_GetSportNotOffer function
 
 Param's Explanation: 
 	@RuleId = 0 : 'all' 
@@ -35,6 +36,7 @@ BEGIN
 	INTO #DataSample
 	FROM CheckCustDB.dbo.custsettinggame cs WITH (NOLOCK)
 	WHERE custid = 73104
+		AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 
 	SELECT @RowCount = COUNT(1)
 	FROM #DataSample
@@ -48,6 +50,7 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 	
 	INSERT INTO #AgentPT (CustID, mrecommend, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino)
 	SELECT ci.CustID, mrecommend, srecommend, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino
@@ -59,6 +62,7 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 
 	INSERT INTO #MasterPT (CustID, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino)
 	SELECT ci.CustID, srecommend, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino
@@ -70,6 +74,7 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 
 	INSERT INTO #SuperPT (CustID, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino)
 	SELECT ci.CustID, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino
@@ -80,6 +85,7 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 	
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 		
 	SELECT CustID, COUNT(1) cnt
 	INTO #MemberMissSetting

@@ -20,6 +20,7 @@ Revisions:
 	- 20140729@Sophia: Live is only apply for Soccer (bettype 1,3,7,8)
 	- 20140910@Sophia: Change the Filter of customer from closed = 0 and Reject = 0 to Enabled = 1
 	- 20170508@Elodie: Count PT Setting rows
+	- 20180807@Elodie: Apply f_GetSportNotOffer function
 Param's Explanation: 
 	@RuleId = 0 : 'all'
 	@RuleId IN (1->29)
@@ -42,6 +43,7 @@ Param's Explanation:
 	INTO #DataSample
 	FROM CheckCustDB.dbo.CustSetting cs WITH (NOLOCK)
 	WHERE custid = 73104
+		AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSetting')) 
 
 	SELECT @RowCount = COUNT(1)
 	FROM #DataSample
@@ -57,6 +59,7 @@ Param's Explanation:
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSetting')) 
 	
 	INSERT INTO #AgentPT (CustID, mrecommend, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, Maxpositiontaking,
 							slivepositiontaking, mlivepositiontaking, alivepositiontaking, isautolivempositiontaking, autolivempositiontaking, isautolivepositiontaking, autolivepositiontaking, MinLivepositiontaking, MaxLivepositiontaking)
@@ -70,6 +73,7 @@ Param's Explanation:
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSetting')) 
 
 	INSERT INTO #MasterPT (CustID, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, Maxpositiontaking,
 							slivepositiontaking, mlivepositiontaking, alivepositiontaking, isautolivempositiontaking, autolivempositiontaking, isautolivepositiontaking, autolivepositiontaking, MinLivepositiontaking, MaxLivepositiontaking)
@@ -83,6 +87,7 @@ Param's Explanation:
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSetting')) 
 
 	INSERT INTO #SuperPT (CustID, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, Maxpositiontaking,
 							slivepositiontaking, mlivepositiontaking, alivepositiontaking, isautolivempositiontaking, autolivempositiontaking, isautolivepositiontaking, autolivepositiontaking, MinLivepositiontaking, MaxLivepositiontaking)
@@ -95,6 +100,7 @@ Param's Explanation:
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 	
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSetting')) 
 		
 	SELECT CustID, COUNT(1) cnt
 	INTO #MemberMissSetting

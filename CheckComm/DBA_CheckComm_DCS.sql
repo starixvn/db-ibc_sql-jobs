@@ -16,6 +16,8 @@ AS
 
 	Revisions:  :
 		- 20171003@Johnson: Add rule 107,108,109 check comm of SMA on member [Redmine: #73556]
+		- 20180807@Elodie: Apply f_GetSportNotOffer function
+
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (101->200)  
@@ -50,7 +52,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (50,206) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSettingDCS')) 
 			AND (
 					ISNULL(bitmapOrder,0) = 1
 					OR 
@@ -68,7 +70,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (50,206) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSettingDCS')) 
 			AND (
 					ISNULL(bitmapOrder,0) = 1
 					OR 
@@ -86,7 +88,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (50,206) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSettingDCS')) 
 			AND (
 					ISNULL(bitmapOrder,0) = 1
 					OR 
@@ -104,7 +106,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (50,206) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSettingDCS')) 
 			AND (
 					ISNULL(bitmapOrder,0) = 1
 					OR 

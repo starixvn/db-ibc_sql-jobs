@@ -16,6 +16,8 @@ AS
 
 	Revisions:  :
 		- 20170928@Johnson: Add rule 107,108,109 check comm of SMA on member [Redmine: #73556]
+		- 20180807@Elodie: Apply f_GetSportNotOffer function
+
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (101->200) 
@@ -49,7 +51,7 @@ BEGIN
 			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
 						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
 						ELSE 0 END
-			AND cs.SportType NOT IN (162) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 	
 	SELECT cs.CustID,ci.recommend,ci.mrecommend,ci.srecommend, cs.SportType,cs.BetType,cs.Discount
 	INTO #AgentComm
@@ -63,7 +65,7 @@ BEGIN
 			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
 						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
 						ELSE 0 END
-			AND cs.SportType NOT IN (162) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 			
 	SELECT cs.CustID,ci.recommend,ci.mrecommend,ci.srecommend, cs.SportType,cs.BetType,cs.adiscount AS Discount
 	INTO #MasterComm
@@ -77,7 +79,7 @@ BEGIN
 			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
 						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
 						ELSE 0 END
-			AND cs.SportType NOT IN (162) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 
 	SELECT cs.CustID, cs.SportType,cs.BetType,cs.sdiscount AS Discount
 	INTO #SuperComm
@@ -91,7 +93,7 @@ BEGIN
 			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
 						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
 						ELSE 0 END
-			AND cs.SportType NOT IN (162) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 			
 	-- End of DATA PREPARATION				
 	

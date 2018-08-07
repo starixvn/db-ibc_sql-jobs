@@ -16,6 +16,8 @@ AS
 
 	Revisions:  :
 		- 20170928@Johnson: Add rule 107,108,109 check comm of SMA on member [Redmine: #73556]
+		- 20180807@Elodie: Apply f_GetSportNotOffer function
+
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (101->200)  
@@ -50,7 +52,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (154) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('Custsetting')) 
 	
 	SELECT cs.CustID,ci.recommend,ci.mrecommend,ci.srecommend, cs.SportType,cs.BetType,cs.Discount
 	,cs.groupa,cs.groupb,cs.groupc,cs.groupd
@@ -62,7 +64,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (154) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('Custsetting')) 
 			
 	SELECT cs.CustID,ci.recommend,ci.mrecommend,ci.srecommend, cs.SportType,cs.BetType,cs.adiscount AS Discount
 	,cs.groupa,cs.groupb,cs.groupc,cs.groupd
@@ -74,7 +76,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (154) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('Custsetting')) 
 		
 	SELECT cs.CustID, cs.SportType,cs.BetType,cs.sdiscount AS Discount
 	,cs.groupa,cs.groupb,cs.groupc,cs.groupd
@@ -86,7 +88,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (154) --don't offer the product anymore
+			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('Custsetting')) 
 			
 	-- End of DATA PREPARATION				
 	
