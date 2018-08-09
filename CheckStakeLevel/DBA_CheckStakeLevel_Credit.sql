@@ -16,7 +16,7 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @GameType TABLE(SportType INT, GameTypeID INT)
-	DECLARE @currency INT, @Rowcount INT
+	DECLARE @currency INT
 	
 	CREATE TABLE #SuperStakeLevel (CustID INT, SportType INT, GameTypeID INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,GameTypeID))
 	CREATE TABLE #MasterStakeLevel (CustID INT, SportType INT, GameTypeID INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,GameTypeID))
@@ -43,10 +43,7 @@ BEGIN
 	SELECT @currency = currency 
 	FROM CheckCustDB.dbo.custinfo WITH(NOLOCK)
 	WHERE custid = @srecommend
-	
-	SELECT @Rowcount = COUNT(1)
-	FROM @GameType
-	
+		
 	INSERT INTO #GlobalStakeLevel(GameTypeID,StakeLevelList)		
 	SELECT GameTypeID,  STUFF((SELECT ',' + cast(StakeLevelID as VARCHAR(10)) 
 						from CheckCustDB.dbo.StakeLevel s2 (NOLOCK) 
@@ -65,7 +62,7 @@ BEGIN
 	WHERE ci.custid = @srecommend
 		AND GameTypeID IN (SELECT GameTypeID FROM @GameType)
 		AND ci.Enabled = 1
-		AND ci.Currency NOT IN (20,27,28)
+		AND ci.Currency NOT IN (20,72,27,28)
 		AND CI.username NOT LIKE '%Acc%'
 		AND CI.username NOT LIKE '%3rdSuper%'
 		AND CI.username NOT LIKE 'STEST%'
@@ -80,7 +77,7 @@ BEGIN
 	WHERE ci.srecommend = @srecommend
 		AND roleid = 3
 		AND Enabled = 1
-		AND ci.Currency NOT IN (20,27,28)
+		AND ci.Currency NOT IN (20,72,27,28)
 		AND CI.username NOT LIKE '%Acc%'
 		AND CI.username NOT LIKE '%3rdSuper%'
 		AND CI.username NOT LIKE 'STEST%'
@@ -96,7 +93,7 @@ BEGIN
 	WHERE ci.srecommend = @srecommend
 		AND roleid = 2
 		AND Enabled = 1
-		AND ci.Currency NOT IN (20,27,28) 
+		AND ci.Currency NOT IN (20,72,27,28) 
 		AND CI.username NOT LIKE '%Acc%'
 		AND CI.username NOT LIKE '%3rdSuper%'
 		AND CI.username NOT LIKE 'STEST%'
@@ -118,130 +115,85 @@ BEGIN
 		AND CI.username NOT LIKE '%cashout%'
 		AND CI.username NOT LIKE '%dummy%'
 		AND CI.username NOT LIKE '%BetTrade%'	
-		AND ci.Currency NOT IN (20,27,28) 
+		AND ci.Currency NOT IN (20,72,27,28)
 		AND GameTypeID IN (SELECT GameTypeID FROM @GameType)
-	
-	--check missing stake level
-	SELECT custid
-	INTO #SuperMissingStakeLevel
-	FROM #SuperStakeLevel
-	GROUP BY custid
-	HAVING COUNT(1) < @Rowcount
-	
-	SELECT custid
-	INTO #MasterMissingStakeLevel
-	FROM #MasterStakeLevel
-	GROUP BY custid
-	HAVING COUNT(1) < @Rowcount
-	
-	SELECT custid
-	INTO #AgentMissingStakeLevel
-	FROM #AgentStakeLevel
-	GROUP BY custid
-	HAVING COUNT(1) < @Rowcount
-	
-	SELECT custid
-	INTO #MemberMissingStakeLevel
-	FROM #MemberStakeLevel
-	GROUP BY custid
-	HAVING COUNT(1) < @Rowcount
-	
-	--miss all stakelevel
-	INSERT INTO #SuperMissingStakeLevel(custid)
-	SELECT custid	
-	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) 
-	WHERE ci.custid = @srecommend
-		AND roleid = 4
-		AND Enabled = 1
-		AND CI.username NOT LIKE '%Acc%'
-		AND CI.username NOT LIKE '%3rdSuper%'
-		AND CI.username NOT LIKE 'STEST%'
-		AND CI.username NOT LIKE '%cashout%'
-		AND CI.username NOT LIKE '%dummy%'
-		AND CI.username NOT LIKE '%BetTrade%'	
-		AND ci.Currency NOT IN (20,27,28) 
-		AND NOT EXISTS (SELECT 1 FROM #SuperStakeLevel cs WHERE cs.custid = ci.custid)
-	
-	INSERT INTO #MasterMissingStakeLevel(custid)
-	SELECT custid	
-	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) 
-	WHERE srecommend = @srecommend
-		AND roleid = 3
-		AND Enabled = 1
-		AND CI.username NOT LIKE '%Acc%'
-		AND CI.username NOT LIKE '%3rdSuper%'
-		AND CI.username NOT LIKE 'STEST%'
-		AND CI.username NOT LIKE '%cashout%'
-		AND CI.username NOT LIKE '%dummy%'
-		AND CI.username NOT LIKE '%BetTrade%'	
-		AND Currency NOT IN (20,27,28) 
-		AND NOT EXISTS (SELECT 1 FROM #MasterStakeLevel cs WHERE cs.custid = ci.custid)
-	
-	INSERT INTO #AgentMissingStakeLevel(custid)
-	SELECT custid	
-	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) 
-	WHERE srecommend = @srecommend
-		AND roleid = 2
-		AND Enabled = 1
-		AND Currency NOT IN (20,27,28) 
-		AND CI.username NOT LIKE '%Acc%'
-		AND CI.username NOT LIKE '%3rdSuper%'
-		AND CI.username NOT LIKE 'STEST%'
-		AND CI.username NOT LIKE '%cashout%'
-		AND CI.username NOT LIKE '%dummy%'
-		AND CI.username NOT LIKE '%BetTrade%'	
-		AND NOT EXISTS (SELECT 1 FROM #AgentStakeLevel cs WHERE cs.custid = ci.custid)
-	
-	INSERT INTO #MemberMissingStakeLevel(custid)
-	SELECT custid	
-	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) 
-	WHERE srecommend = @srecommend
-		AND roleid = 1
-		AND Enabled = 1
-		AND CI.username NOT LIKE '%Acc%'
-		AND CI.username NOT LIKE '%3rdSuper%'
-		AND CI.username NOT LIKE 'STEST%'
-		AND CI.username NOT LIKE '%cashout%'
-		AND CI.username NOT LIKE '%dummy%'
-		AND CI.username NOT LIKE '%BetTrade%'	
-		AND Currency NOT IN (20,27,28) 
-		AND NOT EXISTS (SELECT 1 FROM #MemberStakeLevel cs WHERE cs.custid = ci.custid)
+	-- End of DATA PREPARATION
 	
 	IF @ruleid IN (0,301)
 	BEGIN
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
-		SELECT DISTINCT 301 as RuleId,t.sportType,t.GameTypeID,cs1.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
-		FROM #SuperMissingStakeLevel cs1
+		SELECT DISTINCT 301 as RuleId,t.sportType,t.GameTypeID,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
+		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
 			CROSS APPLY (SELECT SportType, GameTypeID FROM @GameType) t
-		WHERE NOT EXISTS (SELECT 1 FROM #SuperStakeLevel cs2 
-						WHERE cs1.custid = cs2.custid
-							AND t.GameTypeID = cs2.GameTypeID
-						)
+		WHERE ci.custid = @srecommend
+			AND roleid = 4
+			AND Enabled = 1
+			AND CI.username NOT LIKE '%Acc%'
+			AND CI.username NOT LIKE '%3rdSuper%'
+			AND CI.username NOT LIKE 'STEST%'
+			AND CI.username NOT LIKE '%cashout%'
+			AND CI.username NOT LIKE '%dummy%'
+			AND CI.username NOT LIKE '%BetTrade%'	
+			AND ci.Currency NOT IN (20,72,27,28) 
+			AND NOT EXISTS (SELECT 1 FROM #SuperStakeLevel cs2 
+							WHERE ci.custid = cs2.custid
+								AND t.GameTypeID = cs2.GameTypeID
+							)
 		
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
-		SELECT DISTINCT 301 as RuleId,t.sportType,t.GameTypeID,cs1.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
-		FROM #MasterMissingStakeLevel cs1
+		SELECT DISTINCT 301 as RuleId,t.sportType,t.GameTypeID,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
+		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
 			CROSS APPLY (SELECT SportType, GameTypeID FROM @GameType) t
-		WHERE NOT EXISTS (SELECT 1 FROM #MasterStakeLevel cs2 
-						WHERE cs1.custid = cs2.custid
+		WHERE ci.srecommend = @srecommend
+			AND roleid = 3
+			AND Enabled = 1
+			AND CI.username NOT LIKE '%Acc%'
+			AND CI.username NOT LIKE '%3rdSuper%'
+			AND CI.username NOT LIKE 'STEST%'
+			AND CI.username NOT LIKE '%cashout%'
+			AND CI.username NOT LIKE '%dummy%'
+			AND CI.username NOT LIKE '%BetTrade%'	
+			AND ci.Currency NOT IN (20,72,27,28) 
+			AND NOT EXISTS (SELECT 1 FROM #MasterStakeLevel cs2 
+						WHERE ci.custid = cs2.custid
 							AND t.GameTypeID = cs2.GameTypeID
 						)
 						
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
-		SELECT DISTINCT 301 as RuleId,t.sportType,t.GameTypeID,cs1.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
-		FROM #AgentMissingStakeLevel cs1
+		SELECT DISTINCT 301 as RuleId,t.sportType,t.GameTypeID,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
+		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
 			CROSS APPLY (SELECT SportType, GameTypeID FROM @GameType) t
-		WHERE NOT EXISTS (SELECT 1 FROM #AgentStakeLevel cs2 
-						WHERE cs1.custid = cs2.custid
+		WHERE ci.srecommend = @srecommend
+			AND roleid = 2
+			AND Enabled = 1
+			AND CI.username NOT LIKE '%Acc%'
+			AND CI.username NOT LIKE '%3rdSuper%'
+			AND CI.username NOT LIKE 'STEST%'
+			AND CI.username NOT LIKE '%cashout%'
+			AND CI.username NOT LIKE '%dummy%'
+			AND CI.username NOT LIKE '%BetTrade%'	
+			AND ci.Currency NOT IN (20,72,27,28) 
+			AND NOT EXISTS (SELECT 1 FROM #AgentStakeLevel cs2 
+						WHERE ci.custid = cs2.custid
 							AND t.GameTypeID = cs2.GameTypeID
 						)
 
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
-		SELECT DISTINCT 301 as RuleId,t.sportType,t.GameTypeID,cs1.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
-		FROM #MemberMissingStakeLevel cs1
+		SELECT DISTINCT 301 as RuleId,t.sportType,t.GameTypeID,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
+		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
 			CROSS APPLY (SELECT SportType, GameTypeID FROM @GameType) t
-		WHERE NOT EXISTS (SELECT 1 FROM #MemberStakeLevel cs2 
-						WHERE cs1.custid = cs2.custid
+		WHERE ci.srecommend = @srecommend
+			AND roleid = 1
+			AND Enabled = 1
+			AND CI.username NOT LIKE '%Acc%'
+			AND CI.username NOT LIKE '%3rdSuper%'
+			AND CI.username NOT LIKE 'STEST%'
+			AND CI.username NOT LIKE '%cashout%'
+			AND CI.username NOT LIKE '%dummy%'
+			AND CI.username NOT LIKE '%BetTrade%'	
+			AND ci.Currency NOT IN (20,72,27,28) 
+			AND NOT EXISTS (SELECT 1 FROM #MemberStakeLevel cs2 
+						WHERE ci.custid = cs2.custid
 							AND t.GameTypeID = cs2.GameTypeID
 						)				
 	END
