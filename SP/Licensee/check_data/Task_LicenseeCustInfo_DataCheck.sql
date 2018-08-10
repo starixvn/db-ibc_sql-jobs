@@ -7,53 +7,14 @@ ALTER PROCEDURE [dbo].[Task_LicenseeCustInfo_DataCheck]
 	Task: Check missing data for bodb_Licensee.dbo.LicenseeCustInfo and bodb_Licensee.dbo.LicenseeCust
 	DB: DBEXT/bodb02
 	Revisions: 
-	-20170208@Fracis: Add @CheckType param to separate LicenseeCustInfo and LicenseeCust 
+	- 20170208@Fracis: Add @CheckType param to separate LicenseeCustInfo and LicenseeCust 
+	- 20180809@Sophia: HA - remove LicenseeCustInfo table [Redmine: #99464]
 	Param's Explanation:
 */
 AS 
 BEGIN
 	DECLARE @RowCount INT = 0
-	IF @CheckType = 0
-	BEGIN
-		-- Step 1: Checking for LicenseeCustInfo
-		SELECT ds.Username,c.CustId
-		INTO #member
-		FROM dbo.Dep_CustSuper ds WITH(NOLOCK)
-			INNER JOIN dbo.Customer c WITH(NOLOCK) ON ds.CustId = c.SRecommend AND c.RoleId = 1
-			LEFT JOIN bodb_licensee.dbo.LicenseeCustInfo lci WITH(NOLOCK) ON c.CustId = lci.CustId
-		WHERE lci.Custid IS NULL
-
-		SELECT 
-			l.LicenseeID
-			,ag.Site
-			,e.Currency
-			,t.Username [DummySuper]
-			,ag.Username [DummyAgent]
-			,c.Username [Member]
-			,c.CustId
-			,c.creatdate [CreatedDate]
-		FROM #member t
-			INNER JOIN dbo.Customer c WITH(NOLOCK) ON t.CustId = c.CustId
-			INNER JOIN dbo.CustInfo ci WITH(NOLOCK) ON c.CustId = ci.CustId
-			INNER JOIN dbo.Customer ag WITH(NOLOCK) ON c.Recommend = ag.CustId
-			INNER JOIN dbo.Exchange e WITH(NOLOCK) ON c.Currency = e.exchangeid
-			INNER JOIN bodb_Licensee.dbo.Licensees l WITH(NOLOCK) ON ag.Site = l.LicenseeName
-		WHERE
-			c.Currency <> 20
-			AND c.Username NOT LIKE '%Transfer%'	
-			AND ag.Username NOT LIKE '%ACC' + e.currency + '%' 
-			AND ag.Username NOT LIKE '%ACC' + e.code + '%' 
-			AND ag.Username NOT LIKE '%Cas' + e.currency + '%' 
-			AND ag.Username NOT LIKE '%Bank' + e.currency + '%'
-			--Hard code to remove KeenOcenan rule-broken usernames
-			AND t.custid NOT IN (14373737, 14373735, 14373736, 18200278)
-
-		SET @RowCount = @@ROWCOUNT
-		DROP TABLE #member
-
-		IF (@RowCount > 0)
-			RAISERROR('Missing data for bodb_License: LicenseeCustInfo', 16, 1);
-	END	
+	
 
 	IF @CheckType = 1
 	BEGIN
