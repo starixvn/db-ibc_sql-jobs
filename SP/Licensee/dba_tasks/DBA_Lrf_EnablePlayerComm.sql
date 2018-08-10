@@ -1,4 +1,4 @@
- 
+/*<info serverAlias="DBLIC-bodb_Licensee" executers="" viewers="vnteam" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Lrf_EnablePlayerComm] (@LicenseeName VARCHAR(500))
 AS
 /*  
@@ -8,7 +8,8 @@ DB: DBLIC.bodb_licensee
 Original :  
    
 Revisions:  
-   -20160912@Jim: add more parlaycomm
+   - 20160912@Jim: add more parlaycomm
+   - 20180809@Sophia: HA - remove LicenseeCustInfo table [Redmine: #99464]
    
 Param's Explanation:  
   
@@ -95,9 +96,10 @@ BEGIN
 			FROM @tblLicensee t
 			INNER JOIN dbo.LicenseeCust lc WITH (NOLOCK)
 				ON t.LicenseeID = lc.LicenseeID
-			INNER JOIN dbo.LicenseeCustinfo lci WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.Customer lci WITH (NOLOCK)
 				ON lc.CustID = lci.recommend
 			WHERE t.ID = @i
+				AND lci.RoleID = 1
 				AND lci.CustID NOT IN (
 					SELECT CustId
 					FROM LicenseeCustComm WITH (NOLOCK)
@@ -162,3 +164,4 @@ BEGIN
 		SET @i = @i + 1
 	END
 END
+GO

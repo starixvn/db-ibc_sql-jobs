@@ -1,3 +1,4 @@
+/*<info serverAlias="DBEXT-bodb02" executers="" viewers="vnteam" isFunction="0"></info>*/
 USE [bodb02]
 GO
 ALTER PROCEDURE [dbo].[Task_LicenseeCustInfo_DataCheck]
@@ -53,7 +54,4 @@ BEGIN
 	END
 
 END
-
-GRANT VIEW DEFINITION ON Task_LicenseeCustInfo_DataCheck TO vnteam
-
-
+GO
