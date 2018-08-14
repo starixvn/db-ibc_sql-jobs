@@ -57,7 +57,8 @@ BEGIN
 			END isHidden
 		FROM CheckCustDB.dbo.ProductSettingDetail ps 
 		WHERE SettingType in (7,8)
-			AND sportType NOT IN (SELECT sportType FROM dbo.f_f_GetSportNotOffer(NULL))
+			AND sportType NOT IN (SELECT sportType FROM dbo.f_GetSportNotOffer(NULL))
+			AND sportType = CASE WHEN @sportType = 0 THEN sportType ELSE @sportType END
 	)t 
 	WHERE isHidden IS NOT NULL
 			
@@ -104,12 +105,6 @@ BEGIN
 	WHERE ci.custid = @srecommend	
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,72,27,28)
-		AND CI.username NOT LIKE '%Acc%'
-		AND CI.username NOT LIKE '%3rdSuper%'
-		AND CI.username NOT LIKE 'STEST%'
-		AND CI.username NOT LIKE '%cashout%'
-		AND CI.username NOT LIKE '%dummy%'
-		AND CI.username NOT LIKE '%BetTrade%'	
 	
 	INSERT INTO #MasterStakeLevel(custid,sporttype,bettype,StakeLevelList)
 	SELECT cs.custid, cs.sporttype,cs.bettype,StakeLevelList
@@ -121,12 +116,6 @@ BEGIN
 		AND roleid = 3
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,72,27,28)
-		AND CI.username NOT LIKE '%Acc%'
-		AND CI.username NOT LIKE '%3rdSuper%'
-		AND CI.username NOT LIKE 'STEST%'
-		AND CI.username NOT LIKE '%cashout%'
-		AND CI.username NOT LIKE '%dummy%'
-		AND CI.username NOT LIKE '%BetTrade%'	
 			
 	INSERT INTO #AgentStakeLevel(custid,mrecommend,sporttype,bettype,StakeLevelList)
 	SELECT cs.custid, mrecommend, cs.sporttype, cs.bettype, StakeLevelList
@@ -138,12 +127,6 @@ BEGIN
 		AND roleid = 2
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,72,27,28)
-		AND CI.username NOT LIKE '%Acc%'
-		AND CI.username NOT LIKE '%3rdSuper%'
-		AND CI.username NOT LIKE 'STEST%'
-		AND CI.username NOT LIKE '%cashout%'
-		AND CI.username NOT LIKE '%dummy%'
-		AND CI.username NOT LIKE '%BetTrade%'	
 			
 	INSERT INTO #MemberStakeLevel(custid,recommend,sporttype,bettype,StakeLevelList)
 	SELECT cs.custid, recommend, cs.sporttype, cs.bettype, StakeLevelList
@@ -155,12 +138,6 @@ BEGIN
 		AND roleid = 1
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,72,27,28)
-		AND CI.username NOT LIKE '%Acc%'
-		AND CI.username NOT LIKE '%3rdSuper%'
-		AND CI.username NOT LIKE 'STEST%'
-		AND CI.username NOT LIKE '%cashout%'
-		AND CI.username NOT LIKE '%dummy%'
-		AND CI.username NOT LIKE '%BetTrade%'	
 	-- End of DATA PREPARATION	
 	
 	--check missing setting
@@ -173,13 +150,7 @@ BEGIN
 		WHERE CI.roleid = 4
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
-			AND CI.Currency NOT IN (20,72,27,28)
-			AND CI.username NOT LIKE '%Acc%'
-			AND CI.username NOT LIKE '%3rdSuper%'
-			AND CI.username NOT LIKE 'STEST%'
-			AND CI.username NOT LIKE '%cashout%'
-			AND CI.username NOT LIKE '%dummy%'
-			AND CI.username NOT LIKE '%BetTrade%'		
+			AND CI.Currency NOT IN (20,72,27,28)		
 			AND NOT EXISTS (SELECT 1 FROM #SuperStakeLevel cs2 
 						WHERE ci.custid = cs2.custid
 							AND t.bettype = cs2.bettype
@@ -193,13 +164,7 @@ BEGIN
 		WHERE CI.roleid = 3
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
-			AND CI.Currency NOT IN (20,72,27,28)
-			AND CI.username NOT LIKE '%Acc%'
-			AND CI.username NOT LIKE '%3rdSuper%'
-			AND CI.username NOT LIKE 'STEST%'
-			AND CI.username NOT LIKE '%cashout%'
-			AND CI.username NOT LIKE '%dummy%'
-			AND CI.username NOT LIKE '%BetTrade%'		
+			AND CI.Currency NOT IN (20,72,27,28)	
 			AND NOT EXISTS (SELECT 1 FROM #MasterStakeLevel cs2 
 						WHERE ci.custid = cs2.custid
 							AND t.bettype = cs2.bettype
@@ -213,13 +178,7 @@ BEGIN
 		WHERE CI.roleid = 2
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
-			AND CI.Currency NOT IN (20,72,27,28)
-			AND CI.username NOT LIKE '%Acc%'
-			AND CI.username NOT LIKE '%3rdSuper%'
-			AND CI.username NOT LIKE 'STEST%'
-			AND CI.username NOT LIKE '%cashout%'
-			AND CI.username NOT LIKE '%dummy%'
-			AND CI.username NOT LIKE '%BetTrade%'		
+			AND CI.Currency NOT IN (20,72,27,28)		
 			AND NOT EXISTS (SELECT 1 FROM #AgentStakeLevel cs2 
 						WHERE ci.custid = cs2.custid
 							AND t.bettype = cs2.bettype
@@ -233,13 +192,7 @@ BEGIN
 		WHERE CI.roleid = 1
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
-			AND CI.Currency NOT IN (20,72,27,28)
-			AND CI.username NOT LIKE '%Acc%'
-			AND CI.username NOT LIKE '%3rdSuper%'
-			AND CI.username NOT LIKE 'STEST%'
-			AND CI.username NOT LIKE '%cashout%'
-			AND CI.username NOT LIKE '%dummy%'
-			AND CI.username NOT LIKE '%BetTrade%'		
+			AND CI.Currency NOT IN (20,72,27,28)	
 			AND NOT EXISTS (SELECT 1 FROM #MemberStakeLevel cs2 
 						WHERE ci.custid = cs2.custid
 							AND t.bettype = cs2.bettype
