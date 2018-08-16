@@ -11,7 +11,7 @@ Revisions:
 USE CheckResultDB
 GO
 
-TRUNCATE TABLE CheckCommissionResult_Deposit
+--TRUNCATE TABLE CheckCommissionResult_Deposit
 
 DECLARE @srecommend INT
 CREATE TABLE #supers (custid int,isfinished bit default(0))
@@ -36,6 +36,3 @@ BEGIN
 END
 
 DROP TABLE #supers
-
-
-select * from CheckCommissionResult_Deposit
