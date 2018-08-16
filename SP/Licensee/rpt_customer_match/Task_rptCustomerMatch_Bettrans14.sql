@@ -13,6 +13,7 @@ AS
 		- 20141121@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
 		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
 	Parameter's Explanation:			
 */
 SET NOCOUNT ON;
@@ -39,17 +40,9 @@ AS (
 			AND a.bettype IN (1, 3, 7, 8, 17, 18)
 			AND ABS(modds) = 0.25
 			THEN 114
-		WHEN a.statusID = 112
-			AND a.liveawayscore = 0 
-			AND a.bettype IN(33,43) 
-			THEN 114
 		WHEN a.statusID = 113
 			AND a.bettype IN (1, 3, 7, 8, 17, 18)
 			AND ABS(modds) = 0.25
-			THEN 115
-		WHEN a.statusID = 113
-			AND a.liveawayscore = 0 
-			AND a.bettype IN(33,43)
 			THEN 115
 		ELSE a.statusID
 		END AS statusID
@@ -79,17 +72,9 @@ AS (
 			AND a.bettype IN (1, 3, 7, 8, 17, 18)
 			AND ABS(modds) = 0.25
 			THEN 114
-		WHEN a.statusID = 112
-			AND a.liveawayscore = 0 
-			AND a.bettype IN(33,43) 
-			THEN 114
 		WHEN a.statusID = 113
 			AND a.bettype IN (1, 3, 7, 8, 17, 18)
 			AND ABS(modds) = 0.25
-			THEN 115
-		WHEN a.statusID = 113
-			AND a.liveawayscore = 0 
-			AND a.bettype IN(33,43)
 			THEN 115
 		ELSE a.statusID
 		END
@@ -133,12 +118,7 @@ SELECT a.CustID
 	,CASE 
 		WHEN a.bettype IN (9, 29) THEN - 9
 		WHEN a.bettype = 2799 THEN -2799
-		WHEN a.bettype = 10
-			OR (
-				a.bettype > 30
-				AND a.bettype < 50
-				)
-			THEN ISNULL(ob.leagueid, - 1)
+		WHEN a.bettype = 10 THEN ISNULL(ob.leagueid, - 1)
 		WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238)
 			THEN isnull(result.LeagueID,-1)
 		ELSE isnull(b.LeagueID, - 1)
@@ -174,12 +154,7 @@ GROUP BY a.CustID
 	,CASE 
 		WHEN a.bettype IN (9, 29) THEN - 9
 		WHEN a.bettype = 2799 THEN -2799
-		WHEN a.bettype = 10
-			OR (
-				a.bettype > 30
-				AND a.bettype < 50
-				)
-			THEN ISNULL(ob.leagueid, - 1)
+		WHEN a.bettype = 10 THEN ISNULL(ob.leagueid, - 1)
 		WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238)
 			THEN isnull(result.LeagueID,-1)
 		ELSE isnull(b.LeagueID, - 1)

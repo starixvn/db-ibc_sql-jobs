@@ -20,6 +20,7 @@ AS
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 		- 20180212@Harper: Remove LC from product list [Redmine: #85965]
 		- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
+		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
 
 	Parameter's Explanation:			
 */
@@ -61,14 +62,6 @@ AS (
 		,a.oddstype
 		,CASE
 			WHEN a.statusID = 112
-				AND a.bettype IN (33, 43)
-				AND a.liveawayscore = 0
-				THEN 114			
-			WHEN a.statusID = 113
-				AND a.bettype IN (33, 43)
-				AND a.liveawayscore = 0
-				THEN 115
-			WHEN a.statusID = 112
 				AND a.bettype IN (1, 3, 7, 8, 17, 18)
 				AND ABS(modds) = 0.25
 				THEN 114			
@@ -103,14 +96,6 @@ AS (
 		,a.oddsid
 		,a.oddstype
 		,CASE
-			WHEN a.statusID = 112
-				AND a.bettype IN (33, 43)
-				AND a.liveawayscore = 0
-				THEN 114			
-			WHEN a.statusID = 113
-				AND a.bettype IN (33, 43)
-				AND a.liveawayscore = 0
-				THEN 115
 			WHEN a.statusID = 112
 				AND a.bettype IN (1, 3, 7, 8, 17, 18)
 				AND ABS(modds) = 0.25
@@ -158,7 +143,6 @@ SELECT a.CustID
 					END --Virtual Sport
 		WHEN a.bettype BETWEEN 51 AND 69 THEN 201
 		WHEN a.bettype BETWEEN 1501 AND 1599 THEN 202-- Keno
-		WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 151
 		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
 			WHEN a.bettype = 2799 THEN a.sporttype
 			WHEN result.sporttype IS NOT NULL THEN result.sporttype
@@ -184,12 +168,7 @@ SELECT a.CustID
 	,CASE 
 		WHEN a.bettype IN (9, 29) THEN - 9
 		WHEN a.bettype = 2799 THEN -2799
-		WHEN a.bettype = 10
-			OR (
-				a.bettype > 30
-				AND a.bettype < 50
-				)
-			THEN ISNULL(ob.leagueid, - 1)
+		WHEN a.bettype = 10 THEN ISNULL(ob.leagueid, - 1)
 		WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238)
 			THEN isnull(result.LeagueID, - 1)
 		ELSE isnull(b.LeagueID, - 1)
@@ -225,8 +204,6 @@ GROUP BY a.CustID
 			THEN 201
 		WHEN a.bettype BETWEEN 1501 AND 1599
 			THEN 202-- Keno
-		WHEN a.bettype IN (31, 32, 33, 41, 42, 43)
-			THEN 151
 		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
 			WHEN a.bettype = 2799 THEN a.sporttype
 			WHEN result.sporttype IS NOT NULL THEN result.sporttype
@@ -249,12 +226,7 @@ GROUP BY a.CustID
 	,CASE 
 		WHEN a.bettype IN (9, 29) THEN - 9
 		WHEN a.bettype = 2799 THEN -2799
-		WHEN a.bettype = 10
-			OR (
-				a.bettype > 30
-				AND a.bettype < 50
-				)
-			THEN ISNULL(ob.leagueid, - 1)
+		WHEN a.bettype = 10 THEN ISNULL(ob.leagueid, - 1)
 		WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238)
 			THEN isnull(result.LeagueID, - 1)
 		ELSE isnull(b.LeagueID, - 1)

@@ -26,6 +26,7 @@ AS
 	- 20180212@Harper: Remove LC from product list [Redmine: #85965]
 	- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
+	- 20180814@Joseph: Remove Racing [RedmineID: #99378]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -75,11 +76,7 @@ BEGIN
 	   ,customer.recommend  
 	   ,customer.mrecommend  
 	   ,customer.srecommend  
-	 ,SUM(    
-	  CASE WHEN bettrans.liveawayscore = 0 AND bettrans.bettype IN(33,43)   
-		THEN ABS(bettrans.stake/2) ELSE ABS(bettrans.stake)   
-		END  
-	  ) AS TurnOver  
+	 ,SUM(ABS(bettrans.stake)) AS TurnOver  
 	 ,SUM(winlost-actual_stake)  winlost  
 	 ,CASE WHEN bettrans.statusID IN (112,113)   
 		THEN SUM(ABS(winlost-actual_stake))   
@@ -102,7 +99,6 @@ BEGIN
 		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game   
 		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport  
 		WHEN bettype BETWEEN 51 AND 69 THEN 201  
-		WHEN bettype IN (31,32,33,41,42,43) THEN 151  
 		WHEN bettype BETWEEN 1501  AND 1599 THEN 202 -- Keno  
 		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC  
 		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD  
@@ -161,7 +157,6 @@ BEGIN
 		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game   
 		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport  
 		WHEN bettype BETWEEN 51 AND 69 THEN 201  
-		WHEN bettype IN (31,32,33,41,42,43) THEN 151  
 		WHEN bettype BETWEEN 1501  AND 1599 THEN 202  
 		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC  
 		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD  
