@@ -18,7 +18,7 @@ BEGIN
 	INSERT INTO @tblSite (site)	
 	SELECT site 
 	FROM CheckCustDB.dbo.site WITH (NOLOCK)
-	WHERE site IN ('IMBC','spotico','Y987')
+	WHERE site IN ('IMBC','spotico','Y987','Select')
 		OR isLicensee = 1
 		OR isActive = 0
 	
