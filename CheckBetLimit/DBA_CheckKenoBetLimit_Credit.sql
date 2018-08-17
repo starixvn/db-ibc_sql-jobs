@@ -31,9 +31,10 @@ BEGIN
 	
 	BEGIN TRY
 		INSERT INTO @GameType (SportType,GameTypeID)
-		SELECT 202 as SportType, GameTypeID
-		FROM bodb02.dbo.GameType WITH(NOLOCK)
-		WHERE IBCBetTypeID BETWEEN 1501 AND 1599
+		SELECT SportType, GameTypeID
+		FROM CheckCustDB.dbo.GameType WITH(NOLOCK)
+		WHERE GameTypeID NOT IN (2,7,9)-- exclude not offered games
+			AND sportType = 202
 	END TRY
 	BEGIN CATCH
 		DECLARE @tmpID TABLE(ID INT IDENTITY(1,1),custID INT)
@@ -51,6 +52,7 @@ BEGIN
 		SELECT 202 as sporType, ID as GameTypeID
 		FROM @tmpID
 		WHERE ID <= @GameTypeID_max
+			AND ID NOT IN (2,7,9)-- exclude not offered games
 	END CATCH
 	
 	INSERT INTO #CGT_Super (custID,SportType,GameTypeID,minbet,maxbet,MaxPerGameType)
@@ -96,7 +98,7 @@ BEGIN
 	-- Rule 311: min bet > max bet						
 	IF @RuleId IN (0,311)
 	BEGIN
-		INSERT INTO CheckBetLimitResult_DCS (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
+		INSERT INTO CheckBetLimitResult (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
 		SELECT 311,T1.SportType,T1.GameTypeID,T1.custID,T1.custID,T1.minbet,T1.maxbet,@CreatedDate,0
 		FROM #CGT_Super T1
 		WHERE T1.minbet > T1.maxbet
@@ -130,7 +132,7 @@ BEGIN
 	-- Rule 312: max per match < max bet						
 	IF @RuleId IN (0,312)
 	BEGIN
-		INSERT INTO CheckBetLimitResult_DCS (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
+		INSERT INTO CheckBetLimitResult (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
 		SELECT 312,T1.SportType,T1.GameTypeID,T1.custID,T1.custID,T1.maxpergametype,T1.maxbet,@CreatedDate,0
 		FROM #CGT_Super T1
 		WHERE T1.maxpergametype < T1.maxbet
@@ -164,7 +166,7 @@ BEGIN
 	-- Rule 313: Missing bet limit setting, for keno								
 	IF @RuleId IN (0,313)
 	BEGIN
-		INSERT INTO CheckBetLimitResult_DCS (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
+		INSERT INTO CheckBetLimitResult (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
 		SELECT 313,T.SportType,T.GameTypeID,CI.custID,CI.custID,NULL,NULL,@CreatedDate,0
 		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
 			CROSS JOIN @GameType AS T
@@ -216,7 +218,7 @@ BEGIN
 	-- Rule 314: minbet < 0								
 	IF @RuleId IN (0,314)
 	BEGIN
-		INSERT INTO CheckBetLimitResult_DCS (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
+		INSERT INTO CheckBetLimitResult (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
 		SELECT 314,T1.SportType,T1.GameTypeID,T1.custID,T1.custID,T1.minbet,T1.minbet,@CreatedDate,0
 		FROM #CGT_Super T1
 		WHERE T1.minbet < 0
@@ -251,7 +253,7 @@ BEGIN
 	-- Rule 315: maxbet < 0										
 	IF @RuleId IN (0,315)
 	BEGIN
-		INSERT INTO CheckBetLimitResult_DCS (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
+		INSERT INTO CheckBetLimitResult (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
 		SELECT 315,T1.SportType,T1.GameTypeID,T1.custID,T1.custID,T1.maxbet,T1.maxbet,@CreatedDate,0
 		FROM #CGT_Super T1
 		WHERE T1.maxbet < 0
@@ -285,7 +287,7 @@ BEGIN
 	-- Rule 316: max per match < 0								
 	IF @RuleId IN (0,316)
 	BEGIN
-		INSERT INTO CheckBetLimitResult_DCS (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
+		INSERT INTO CheckBetLimitResult (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
 		SELECT 316,T1.SportType,T1.GameTypeID,T1.custID,T1.custID,T1.maxpergametype,T1.maxpergametype,@CreatedDate,0
 		FROM #CGT_Super T1
 		WHERE T1.maxpergametype < 0
