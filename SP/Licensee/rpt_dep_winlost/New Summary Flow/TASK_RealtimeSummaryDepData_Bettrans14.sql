@@ -23,6 +23,7 @@ AS
 		- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 		- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
 		- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
+		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
