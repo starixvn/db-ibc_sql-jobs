@@ -1,12 +1,12 @@
-﻿USE [bodb02]
+﻿
+SET QUOTED_IDENTIFIER ON 
 GO
-/****** Object:  StoredProcedure [dbo].[Task_BATransaction_Ins]    Script Date: 03/01/2016 23:00:19 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+SET ANSI_NULLS ON 
 GO
 
-ALTER PROCEDURE [dbo].[Task_BATransaction_Ins]
+/****** Object:  Stored Procedure dbo.Task_BATransaction_Ins    Script Date: 8/7/2018 5:16:56 PM ******/
+
+CREATE PROCEDURE [dbo].[Task_BATransaction_Ins]
 AS  
 /*  
 	Created by:[Henry]  
@@ -24,6 +24,7 @@ AS
 		20160301@Don: Add hard-code of [transid < 100000000000]
 		20160416@Francis: Revert hard-code of [transid < 100000000000]
 		20170410@Paul: Implement Cash Out [RedmineID :#71727]
+		20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
  */  
 BEGIN
 	SET NOCOUNT ON   
@@ -82,6 +83,27 @@ BEGIN
 	INSERT INTO Bodb_Licensee.dbo.LicenseeBATransaction_active (TransID, Transdate, custid, recommend, srecommend)  
 	SELECT TransID, Transdate, custid, recommend, srecommend  
 	FROM @temptrans
+
+	--Add more code to sync data to DB042 --> temporary solution
+	DECLARE @XmlData NVARCHAR(MAX)
+	SET @XmlData = (
+		SELECT TransId AS t, Transdate AS td, custid AS c, recommend AS r, srecommend AS s
+		FROM @temptrans
+		FOR XML RAW('r'), root
+	)
+	IF @XmlData IS NOT NULL
+		EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
+
 END
+
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_BATransaction_Ins] TO [vnteam] AS [dbo]
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_BATransaction_Ins] TO [vnteam]
+GO 

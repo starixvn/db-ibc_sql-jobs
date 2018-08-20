@@ -1,20 +1,26 @@
-﻿use bodb02
-go
+﻿
+SET QUOTED_IDENTIFIER ON 
+GO
+SET ANSI_NULLS ON 
+GO
+
+/****** Object:  Stored Procedure dbo.Task_BATransaction_Check    Script Date: 8/7/2018 5:16:56 PM ******/
 
 ALTER PROCEDURE [dbo].[Task_BATransaction_Check]  
 AS  
 /*  
-Created by:[Henry]  
-Date: 2011-06-20  
-Task: Check missing BA tickets  
-DB: DB052.BODB02  
-Revisions:   
-	20110824@Henry: Insert the missing tickets if happen  
-	20110905@Jamie: Modify remove comma ','  
-	20111208@Jim: change bettype condition   
-	20150204@Don: Expand bet type ranges for Sportbook when processing BA  
-	20150904@Patrick: Exclude bettype 901 for bettrade
-	20170410@Harper: Implement Cashout Product [RedmineID: #71727]
+	Created by:[Henry]  
+	Date: 2011-06-20  
+	Task: Check missing BA tickets  
+	DB: DB052.BODB02  
+	Revisions:   
+		20110824@Henry: Insert the missing tickets if happen  
+		20110905@Jamie: Modify remove comma ','  
+		20111208@Jim: change bettype condition   
+		20150204@Don: Expand bet type ranges for Sportbook when processing BA  
+		20150904@Patrick: Exclude bettype 901 for bettrade
+		20170410@Harper: Implement Cashout Product
+		20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
  */  
 SET NOCOUNT ON   
    
@@ -25,9 +31,12 @@ DECLARE @BAHistory_Done TABLE (custid INT, ondate DATETIME, offdate DATETIME)
 INSERT INTO @BAHistory_Done  
 SELECT custid, ondate, offdate  
 FROM bodb_Licensee.dbo.LicenseeBAHistory WITH (nolock)  
-WHERE   
- LicenseeID IN (SELECT LicenseeID FROM bodb_Licensee.dbo.LicenseeBAConfig (NOLOCK) WHERE EnableBA = 1)  
- AND status = 'Done'  
+WHERE LicenseeID IN (
+	SELECT LicenseeID 
+	FROM bodb_Licensee.dbo.LicenseeBAConfig (NOLOCK) 
+	WHERE EnableBA = 1
+)  
+AND status = 'Done'  
   
 DECLARE @custid INT, @ondate DATETIME, @offdate DATETIME, @cnt INT  
 StartLoop:  
@@ -55,8 +64,11 @@ DECLARE @BAHistory_Running TABLE (custid INT, ondate DATETIME)
 INSERT INTO @BAHistory_Running  
 SELECT custid, ondate  
 FROM bodb_Licensee.dbo.LicenseeBAHistory WITH (NOLOCK)  
-WHERE   
-LicenseeID IN (SELECT LicenseeID FROM bodb_Licensee.dbo.LicenseeBAConfig (NOLOCK) WHERE EnableBA = 1)  
+WHERE LicenseeID IN (
+	SELECT LicenseeID 
+	FROM bodb_Licensee.dbo.LicenseeBAConfig (NOLOCK) 
+	WHERE EnableBA = 1
+)  
 AND STATUS = 'running'  
   
 DECLARE @custid_r INT, @ondate_r DATETIME, @cnt_r INT  
@@ -81,46 +93,64 @@ StartLoop_r:
 EndLoop_r:  
   
 IF (SELECT count(a.transid)   
-FROM @BATransaction a  
- LEFT JOIN bodb_licensee.dbo.licenseebatransaction b (nolock) ON a.transid = b.transid  
-WHERE b.transid IS NULL) > 0  
+	FROM @BATransaction a  
+		LEFT JOIN bodb_licensee.dbo.licenseebatransaction b (nolock) ON a.transid = b.transid  
+	WHERE b.transid IS NULL) > 0  
 BEGIN  
- DECLARE @BATicket TABLE (TransID BIGINT, Transdate DATETIME)  
+	DECLARE @BATicket TABLE (TransID BIGINT, Transdate DATETIME)  
    
- INSERT INTO @BATicket(TransID, Transdate)  
- SELECT a.transid,a.transdate FROM @BATransaction a  
- LEFT JOIN bodb_licensee.dbo.licenseebatransaction b (nolock) ON a.transid = b.transid  
- WHERE b.transid IS NULL  
+	INSERT INTO @BATicket(TransID, Transdate)  
+	SELECT a.transid,a.transdate 
+	FROM @BATransaction a  
+		LEFT JOIN bodb_licensee.dbo.licenseebatransaction b (nolock) ON a.transid = b.transid  
+	WHERE b.transid IS NULL  
    
- DECLARE @tickets VARCHAR(7500)  
- DECLARE @alert VARCHAR(8000),   
-   @currentMaxTransID VARCHAR(50)  
+	DECLARE @tickets VARCHAR(7500)  
+	DECLARE @alert VARCHAR(8000), @currentMaxTransID VARCHAR(50)  
    
- SELECT @tickets=''  
- SELECT @tickets =@tickets  + CAST(TransID AS varchar(20)) +','  
- FROM @BATicket    
+	SELECT @tickets=''  
+	SELECT @tickets =@tickets  + CAST(TransID AS varchar(20)) + ','  
+	FROM @BATicket    
   
- IF LEN(RTRIM(LTRIM(@tickets)))>1  
- BEGIN  
-  INSERT INTO bodb_licensee.dbo.licenseebatransaction (TransID,Transdate)  
-  SELECT transid,transdate FROM @BATicket  
+	IF LEN(RTRIM(LTRIM(@tickets))) > 1  
+	BEGIN  
+		INSERT INTO bodb_licensee.dbo.licenseebatransaction (TransID,Transdate)  
+		SELECT transid,transdate FROM @BATicket  
     
-    
-  INSERT INTO bodb_licensee.dbo.licenseebatransaction_active (TransID,Transdate, custid, recommend, srecommend)  
-  SELECT transid, transdate, custid, recommend, srecommend  
-  FROM dbo.bettrans with(nolock)  
-  where transid in (select transid from @BATicket)  
-  
-  SELECT @currentMaxTransID = VValue  
-  FROM DBTRANS.BODB02.DBO.SystemSettings WITH (NOLOCK)  
-  WHERE VName='MaxTransID'  
-  
-  SELECT @tickets = substring(@tickets,0,len(@tickets)) --remove last comma  
-  SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + ' .The job has just inserted the missing tickets.' + ' Current Max TransID:' + @currentMaxTransID  
-  RAISERROR (@alert, 16, 1)    
-  
- END  
-END
+		INSERT INTO bodb_licensee.dbo.licenseebatransaction_active (TransID,Transdate, custid, recommend, srecommend)  
+		SELECT transid, transdate, custid, recommend, srecommend  
+		FROM dbo.bettrans with(nolock)  
+		where transid in (select transid from @BATicket)
 
+		--Add more code to sync data to DB042 --> temporary solution
+		DECLARE @XmlData NVARCHAR(MAX)
+		SET @XmlData = (
+			SELECT TransId AS t, Transdate AS td, custid AS c, recommend AS r, srecommend AS s
+			FROM bodb_licensee.dbo.LicenseeBATransaction_active t
+			WHERE EXISTS (SELECT TOP 1 1 FROM @BATicket tt WHERE t.TransID = tt.TransID)
+			FOR XML RAW('r'), root
+		)
+		IF @XmlData IS NOT NULL
+			EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
+  
+		SELECT @currentMaxTransID = VValue  
+		FROM DBTRANS.BODB02.DBO.SystemSettings WITH (NOLOCK)  
+		WHERE VName='MaxTransID'  
+  
+		SELECT @tickets = substring(@tickets,0,len(@tickets)) --remove last comma  
+		SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + ' .The job has just inserted the missing tickets.' + ' Current Max TransID:' + @currentMaxTransID  
+		RAISERROR (@alert, 16, 1)    
+  
+	END
+END
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_BATransaction_Check] TO [vnteam]
+
+SET QUOTED_IDENTIFIER OFF 
+GO
+SET ANSI_NULLS ON 
+GO
+
+
+GO 
+ GRANT VIEW DEFINITION ON [dbo].[Task_BATransaction_Check] TO [vnteam]
+GO 
