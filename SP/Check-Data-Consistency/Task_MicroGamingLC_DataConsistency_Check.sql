@@ -111,7 +111,7 @@ BEGIN
 					WHEN winlost = actual_stake AND status NOT IN ('DRAW', 'REFUND', 'VOID') THEN 'Issue: Status should be DRAW/REFUND/VOID'
 					WHEN winlost < actual_stake AND status <> 'LOSE' THEN 'Issue: Status should be LOSE'
 					WHEN -(winlost - actual_stake) * apositiontaking <> awinlost THEN 'Issue: awinlost is calculated wrongly'
-					WHEN status NOT IN ('REFUND', 'VOID') AND stake * playerdiscount <> playercomm THEN 'Issue: playercomm is wrong'
+					WHEN status NOT IN ('REFUND', 'VOID', 'DRAW') AND stake * playerdiscount <> playercomm THEN 'Issue: playercomm is wrong'
 				END AS 'Comment'
 		FROM	dbo.bettrans b WITH (NOLOCK)
 			INNER JOIN (
@@ -135,7 +135,7 @@ BEGIN
 					OR
 					(-(winlost - actual_stake) * apositiontaking <> awinlost) --Case 5: Check data in Bettrans: awinlost,playercomm are calculated correctly
 					OR
-					(status NOT IN ('REFUND', 'VOID') AND stake * playerdiscount <> playercomm) --Case 5b: check player wrong playercomm
+					(status NOT IN ('REFUND', 'VOID', 'DRAW') AND stake * playerdiscount <> playercomm) --Case 5b: check player wrong playercomm
 				)
 
 		IF @@ROWCOUNT > 0
