@@ -283,7 +283,7 @@ BEGIN
 						WHEN tl.sdiscount < tl.adiscount THEN 'Issue: sdiscount must be larger than adiscount'
 						WHEN tl.adiscount < tl.discount THEN 'Issue: sdiscount must be larger than adiscount'
 						WHEN tl.discount < tl.playerdiscount THEN 'Issue: sdiscount must be larger than adiscount'
-						WHEN (tl.tpositiontaking = 0 OR tl.spositiontaking = 0 OR tl.mpositiontaking = 0 OR tl.apositiontaking = 0) THEN 'Issue: positiontaking must be larger than 0'
+						WHEN (tl.tpositiontaking + tl.spositiontaking + tl.mpositiontaking + tl.apositiontaking = 0) THEN 'Issue: positiontaking must be larger than 0'
 					END AS 'Comment'
 					,sdiscount
 					,adiscount
@@ -296,7 +296,7 @@ BEGIN
 			WHERE	(tl.sdiscount < tl.adiscount
 						OR tl.adiscount < tl.discount 
 						OR tl.discount < tl.playerdiscount
-						OR ((tl.tpositiontaking = 0 OR tl.spositiontaking = 0 OR tl.mpositiontaking = 0 OR tl.apositiontaking = 0) AND currency <> 20)
+						OR ((tl.tpositiontaking + tl.spositiontaking + OR tl.mpositiontaking + tl.apositiontaking = 0) AND currency <> 20)
 
 					)
 
