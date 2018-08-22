@@ -19,11 +19,13 @@ CREATE PROCEDURE [dbo].[Dot_Member_rptDep_atTickets_InsertOrUpdate]
 		@credit_amount money,
 		@net_amount money
 AS
--- =============================================
--- Author: TW
--- Create date: 20180816
--- Description: Insert Or Update rptDep_atTickets 
--- =============================================
+/*  Created: 20180816@TW
+    Description: Insert Or Update rptDep_atTickets
+    DB: DBLIC.bodb_LicenseeReport
+   
+    Revisions:  
+		- 20180816@TW: Created SP to Insert/Update rptDep_atTickets [RedmineID: #99777]
+*/
      BEGIN
          SET NOCOUNT ON;
 		  BEGIN
