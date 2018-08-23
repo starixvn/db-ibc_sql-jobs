@@ -296,7 +296,7 @@ BEGIN
 			WHERE	(tl.sdiscount < tl.adiscount
 						OR tl.adiscount < tl.discount 
 						OR tl.discount < tl.playerdiscount
-						OR ((tl.tpositiontaking + tl.spositiontaking + OR tl.mpositiontaking + tl.apositiontaking = 0) AND currency <> 20)
+						OR ((tl.tpositiontaking + tl.spositiontaking + tl.mpositiontaking + tl.apositiontaking = 0) AND currency <> 20)
 
 					)
 
