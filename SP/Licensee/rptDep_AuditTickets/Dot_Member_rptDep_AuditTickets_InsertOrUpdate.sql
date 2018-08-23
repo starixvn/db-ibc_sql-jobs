@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodbLicenseeReport" executers="dotmember" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="dot_member" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
 CREATE PROCEDURE [dbo].[Dot_Member_rptDep_AuditTickets_InsertOrUpdate]
 	     @Playerno INT,
@@ -21,7 +21,7 @@ CREATE PROCEDURE [dbo].[Dot_Member_rptDep_AuditTickets_InsertOrUpdate]
 AS
 /*  Created: 20180816@TW
     Description: Insert Or Update rptDepatTickets
-    DB: DBLIC.bodbLicenseeReport
+    DB: DBLIC.bodb_LicenseeReport
    
     Revisions:  
 		- 20180816@TW: Created SP to Insert/Update rptDepatTickets [RedmineID: #99777]
