@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="dot_member" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
 CREATE PROCEDURE [dbo].[Dot_Member_rptDep_AuditTickets_InsertOrUpdate]
 	     @Playerno INT,
