@@ -16,6 +16,7 @@ AS
 		- 20160517@Patrick: VoidBridge Integration [Redmine: #57675]
 		- 20160609@Helen: Remove case 6 from service to check ticket correctness - [Redmine: 58904]
 		- 20180518@Kathy: Add code for Bullfighting [Redmine:#95199]
+		- 20180827@Kathy: remove PT checking rule on Bullfighting [Redmine:#95199]
 */
 BEGIN
 	DECLARE	@FromDate SMALLDATETIME
@@ -283,7 +284,7 @@ BEGIN
 						WHEN tl.sdiscount < tl.adiscount THEN 'Issue: sdiscount must be larger than adiscount'
 						WHEN tl.adiscount < tl.discount THEN 'Issue: sdiscount must be larger than adiscount'
 						WHEN tl.discount < tl.playerdiscount THEN 'Issue: sdiscount must be larger than adiscount'
-						WHEN (tl.tpositiontaking + tl.spositiontaking + tl.mpositiontaking + tl.apositiontaking = 0) THEN 'Issue: positiontaking must be larger than 0'
+						WHEN tl.apositiontaking + tl.mpositiontaking + tl.spositiontaking <> tl.tpositiontaking THEN 'Issue: SMA PT must be = tpositiontaking'
 					END AS 'Comment'
 					,sdiscount
 					,adiscount
@@ -296,7 +297,7 @@ BEGIN
 			WHERE	(tl.sdiscount < tl.adiscount
 						OR tl.adiscount < tl.discount 
 						OR tl.discount < tl.playerdiscount
-						OR ((tl.tpositiontaking + tl.spositiontaking + tl.mpositiontaking + tl.apositiontaking = 0) AND currency <> 20)
+						OR (tl.apositiontaking + tl.mpositiontaking + tl.spositiontaking <> tl.tpositiontaking)
 
 					)
 
