@@ -36,7 +36,7 @@ AS
                      WHERE Transactionid = @Transactionid 
                  )
                      BEGIN
-						UPDATE [dbo].[rptDep_AuditTickets]
+						UPDATE [dbo].[rptDep_AuditTickets] WITH (ROWLOCK, UPDLOCK)
 						   SET [Playerno] = @Playerno
 							  ,[Playername] = @Playername
 							  ,[Playertype] = @Playertype
@@ -53,7 +53,7 @@ AS
 							  ,[Debitamount] = @Debitamount
 							  ,[Creditamount] = @Creditamount
 							  ,[Netamount] = @Netamount
-							  ,[WinLostDate]=CAST(@Settlementdate as date)
+							  ,[WinLostDate] = @Settlementdate
 						 WHERE Transactionid = @Transactionid 
 
                  END;
@@ -97,7 +97,7 @@ AS
 							   ,@Debitamount
 							   ,@Creditamount
 							   ,@Netamount
-							   ,CAST(@Settlementdate as date)
+							   ,@Settlementdate
 							   )
                  END;
          END;
