@@ -21,6 +21,17 @@ AS
 */
 SET NOCOUNT ON
 BEGIN
+	CREATE TABLE #Dummy (CustID INT PRIMARY KEY)
+	CREATE TABLE #Trade (CustID INT PRIMARY KEY)
+	DECLARE @site VARCHAR(20)
+	SELECT @site = Site FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK) WHERE custid=@srecommend
+
+	INSERT INTO #Dummy(CustID)
+	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=3 AND username LIKE '%Acc%'
+
+	INSERT INTO #Trade(CustID)
+	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=1 AND (username LIKE '%Bettrade%' OR username LIKE '%CashOut%')
+
 	IF @RuleId IN (0,43)  
 	BEGIN  
 		INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
@@ -128,7 +139,7 @@ BEGIN
 		SELECT c.custid, s.sporttype,s.bettype,s.islive,s.mpositiontaking
 		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid	
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
 
 		INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 44,s.sporttype,s.bettype,NULL,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
@@ -148,7 +159,7 @@ BEGIN
 		SELECT c.custid, s.sporttype,s.bettype,s.islive,s.mpositiontaking
 		FROM CheckCustDB.dbo.Dep_CustSetting3d s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid	
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
 
 		INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 44,s.sporttype,s.bettype,NULL,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
@@ -168,7 +179,7 @@ BEGIN
 		SELECT c.custid, s.sporttype,s.bettype,0,s.mpositiontaking
 		FROM CheckCustDB.dbo.Dep_CustSettingGame s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid	
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
 
 		INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 44,s.sporttype,s.bettype,NULL,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
@@ -188,7 +199,7 @@ BEGIN
 		SELECT c.custid, s.sporttype,s.bettype,IsLive,s.MasterPT
 		FROM CheckCustDB.dbo.Dep_CustPTSetting_Agent s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid	
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
 
 		INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 44,s.sporttype,s.bettype,NULL,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
@@ -205,7 +216,7 @@ BEGIN
 		SELECT s.custid, s.sporttype,s.bettype,s.islive,s.mpositiontaking
 		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)	
 			INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid		
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
 		
 		INSERT INTO #tmpA45 (CustID,Sporttype , Bettype , Islive , PT,mrecommend)
 		SELECT c.custid, s.sporttype,s.bettype,s.islive,s.apositiontaking,c.mrecommend
@@ -226,7 +237,7 @@ BEGIN
 		SELECT s.custid, s.sporttype,s.bettype,s.islive,s.mpositiontaking
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)	
 			INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid		
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
 		
 		INSERT INTO #tmpA45 (CustID,Sporttype , Bettype , Islive , PT,mrecommend)
 		SELECT c.custid, s.sporttype,s.bettype,s.islive,s.apositiontaking,c.mrecommend
@@ -247,7 +258,7 @@ BEGIN
 		SELECT s.custid, s.sporttype,s.bettype,0,s.mpositiontaking
 		FROM CheckCustDB.dbo.Dep_CustSettingGame s WITH(NOLOCK)	
 			INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid		
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
 		
 		INSERT INTO #tmpA45 (CustID,Sporttype , Bettype , Islive , PT,mrecommend)
 		SELECT c.custid, s.sporttype,s.bettype,0,s.apositiontaking,c.mrecommend
@@ -268,7 +279,7 @@ BEGIN
 		SELECT s.custid, s.sporttype,s.bettype,IsLive,s.MasterPT
 		FROM CheckCustDB.dbo.Dep_CustPTSetting_Agent s WITH(NOLOCK)	
 			INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid		
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
 		
 		INSERT INTO #tmpA45 (CustID,Sporttype , Bettype , Islive , PT,mrecommend)
 		SELECT c.custid, s.sporttype,s.bettype,IsLive,s.AgentPT,c.mrecommend
@@ -409,36 +420,67 @@ BEGIN
 		WHERE c.srecommend=@srecommend AND c.roleid=2 AND s.SuperPT + s.MasterPT <> 0	
 	END
 	IF @RuleId IN(0,48)
-	BEGIN
-		DECLARE @site VARCHAR(20)
-		SELECT @site = Site FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK) WHERE custid=@srecommend
+	BEGIN		
 		IF @site ='Haifa'
 		BEGIN
 			INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.spositiontaking,NULL,GETDATE(),s.islive 
-			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)			
-			WHERE s.custid=@srecommend AND (s.sporttype<99 OR s.sporttype=154) AND s.spositiontaking <> 0.85	
+			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
+			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)		
+				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid	
+			WHERE s.custid=@srecommend AND c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND s.apositiontaking <> 0.905	
+		END
+		ELSE IF @site ='Tonybet'
+		BEGIN
+			INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
+			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)		
+				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid		
+			WHERE s.custid=@srecommend AND c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND s.apositiontaking <> 0.90	
 		END
 		ELSE
 		BEGIN
 			INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.spositiontaking,NULL,GETDATE(),s.islive 
+			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
 			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)			
-			WHERE s.custid=@srecommend AND (s.sporttype<99 OR s.sporttype=154) AND s.spositiontaking <> 0.85	
+				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid	
+			WHERE s.custid=@srecommend AND (s.sporttype<99 OR s.sporttype=154) AND s.apositiontaking <> 0.85	
 		END
-
-
-		INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-		SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.spositiontaking,NULL,GETDATE(),s.islive 
-		FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)			
-		WHERE s.custid=@srecommend AND s.sporttype=161 AND s.spositiontaking <> 0.85	
-
-		INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-		SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.SuperPT,NULL,GETDATE(),s.islive 
-		FROM CheckCustDB.dbo.Dep_CustPTSetting_Agent s WITH(NOLOCK)			
-		WHERE s.custid=@srecommend AND s.sporttype BETWEEN 180 AND 186 AND s.SuperPT <> 85	
-
-		
+		IF @site ='Haifa'
+		BEGIN
+			INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
+			FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)	
+				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid			
+			WHERE s.custid=@srecommend AND c.roleid=1 AND s.sporttype=161 AND s.apositiontaking <> 0.925
+		END
+		ELSE
+		BEGIN
+			INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
+			FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)		
+				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid		
+			WHERE s.custid=@srecommend  AND c.roleid=1 AND s.sporttype=161 AND s.apositiontaking <> 0.85	
+		END
+		IF @site ='Haifa'
+		BEGIN
+			INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
+			FROM CheckCustDB.dbo.Dep_CustPTSetting_Agent s WITH(NOLOCK)		
+				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid			
+			WHERE s.custid=@srecommend AND c.roleid=1 AND s.sporttype BETWEEN 180 AND 186 AND s.AgentPT <> 87.5
+		END
+		ELSE 
+		BEGIN
+			INSERT INTO [dbo].CheckPositionTakingResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
+			FROM CheckCustDB.dbo.Dep_CustPTSetting_Agent s WITH(NOLOCK)			
+				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid		
+			WHERE s.custid=@srecommend AND c.roleid=1 AND s.sporttype BETWEEN 180 AND 186 AND s.AgentPT <> 85	
+		END		
+	END
+	IF @RuleId IN (0,49)
+	BEGIN
+		print 'test'
 	END
 END
 	
