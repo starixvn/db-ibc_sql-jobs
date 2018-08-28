@@ -53,7 +53,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,COUNT(c.custid)
 		FROM CheckCustDB.dbo.Dep_CustSetting cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=1
+		WHERE c.srecommend=@srecommend AND c.roleid=1 AND c.username NOT LIKE '%Bettrade%' AND c.username NOT LIKE '%CashOut%'
 		GROUP BY c.custid,cs.sporttype,cs.bettype,c.recommend
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
@@ -103,7 +103,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,COUNT(c.custid)
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=1
+		WHERE c.srecommend=@srecommend AND c.roleid=1 AND c.username NOT LIKE '%Bettrade%' AND c.username NOT LIKE '%CashOut%'
 		GROUP BY c.custid,cs.sporttype,cs.bettype
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
@@ -153,7 +153,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,COUNT(c.custid)
 		FROM CheckCustDB.dbo.Dep_CustSettingGame cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=1
+		WHERE c.srecommend=@srecommend AND c.roleid=1 AND c.username NOT LIKE '%Bettrade%' AND c.username NOT LIKE '%CashOut%'
 		GROUP BY c.custid,cs.sporttype,cs.bettype
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
@@ -203,7 +203,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,COUNT(c.custid)
 		FROM CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=1
+		WHERE c.srecommend=@srecommend AND c.roleid=1 AND c.username NOT LIKE '%Bettrade%' AND c.username NOT LIKE '%CashOut%'
 		GROUP BY c.custid,cs.sporttype,cs.bettype
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
@@ -265,7 +265,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,cs.islive,Minbet
 		FROM CheckCustDB.dbo.Dep_CustSetting cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent319(CustID ,SporttypeID ,BettypeID,IsLive ,Minbet,mrecommend)
 		SELECT cs.custid,cs.sporttype,cs.bettype,cs.islive,Minbet,mrecommend
@@ -304,7 +304,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,cs.islive,Minbet
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent319(CustID ,SporttypeID ,BettypeID,IsLive ,Minbet,mrecommend)
 		SELECT cs.custid,cs.sporttype,cs.bettype,cs.islive,Minbet,mrecommend
@@ -343,7 +343,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,0,Minbet
 		FROM CheckCustDB.dbo.Dep_CustBetSetting_Agent cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent319(CustID ,SporttypeID ,BettypeID,IsLive ,Minbet,mrecommend)
 		SELECT cs.custid,cs.sporttype,cs.bettype,0,Minbet,mrecommend
@@ -411,7 +411,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,cs.islive,Maxbet
 		FROM CheckCustDB.dbo.Dep_CustSetting cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent321(CustID ,SporttypeID ,BettypeID,IsLive ,Maxbet,mrecommend)
 		SELECT cs.custid,cs.sporttype,cs.bettype,cs.islive,Maxbet,mrecommend
@@ -450,7 +450,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,cs.islive,Maxbet
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=3	
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'	 
 
 		INSERT INTO #Agent321(CustID ,SporttypeID ,BettypeID,IsLive ,Maxbet,mrecommend)
 		SELECT cs.custid,cs.sporttype,cs.bettype,cs.islive,Maxbet,mrecommend
@@ -489,7 +489,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,0,Maxbet
 		FROM CheckCustDB.dbo.Dep_CustBetSetting_Agent cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent321(CustID ,SporttypeID ,BettypeID,IsLive ,Maxbet,mrecommend)
 		SELECT cs.custid,cs.sporttype,cs.bettype,0,Maxbet,mrecommend
@@ -600,7 +600,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,cs.MaxPerMatch
 		FROM CheckCustDB.dbo.Dep_CustBetSetting_Agent cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT cs.custid,cs.sporttype,cs.bettype,cs.MaxPerMatch,mrecommend
@@ -638,7 +638,7 @@ BEGIN
 		INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
 		SELECT c.custid,1,1,MaxPerMatch
 		FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT c.custid,1,1,MaxPerMatch,mrecommend
@@ -675,7 +675,7 @@ BEGIN
 		INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
 		SELECT c.custid,2,1,MaxPerMatch2
 		FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
-		WHERE c.srecommend=@srecommend AND c.roleid=3 
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%' 
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT c.custid,2,1,MaxPerMatch2,mrecommend
@@ -712,7 +712,7 @@ BEGIN
 		INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
 		SELECT c.custid,3,1,MaxPerMatch3
 		FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK)
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT c.custid,3,1,MaxPerMatch3,mrecommend
@@ -749,7 +749,7 @@ BEGIN
 		INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
 		SELECT c.custid,5,1,MaxPerMatch5
 		FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK)
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT c.custid,5,1,MaxPerMatch5,mrecommend
@@ -786,7 +786,7 @@ BEGIN
 		INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
 		SELECT c.custid,8,1,MaxPerMatch8
 		FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
-		WHERE c.srecommend=@srecommend AND c.roleid=3 
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT c.custid,8,1,MaxPerMatch8,mrecommend
@@ -823,7 +823,7 @@ BEGIN
 		INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
 		SELECT c.custid,10,1,MaxPerMatch10
 		FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK)
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT c.custid,10,1,MaxPerMatch10,mrecommend
@@ -860,7 +860,7 @@ BEGIN
 		INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
 		SELECT c.custid,11,1,MaxPerMatch11
 		FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT c.custid,11,1,MaxPerMatch11,mrecommend
@@ -897,7 +897,7 @@ BEGIN
 		INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
 		SELECT c.custid,44,1,MaxPerMatch44
 		FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
-		WHERE c.srecommend=@srecommend AND c.roleid=3 
+		WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT c.custid,44,1,MaxPerMatch44,mrecommend
@@ -934,7 +934,7 @@ BEGIN
 		INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
 		SELECT c.custid,161,81,MaxPerMatch161
 		FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT c.custid,161,81,MaxPerMatch161,mrecommend
@@ -971,7 +971,7 @@ BEGIN
 		INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
 		SELECT c.custid,99,1,MaxPerMatch99
 		FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
-		WHERE c.srecommend=@srecommend AND c.roleid=3 
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT c.custid,99,1,MaxPerMatch99,mrecommend
@@ -1008,7 +1008,7 @@ BEGIN
 		INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
 		SELECT c.custid,99,9,MaxPerMatch99MP
 		FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
 		SELECT c.custid,99,9,MaxPerMatch99MP,mrecommend
@@ -1055,7 +1055,7 @@ BEGIN
 		INSERT INTO #Master325(CustID ,SporttypeID ,BettypeID ,MaxPerBall)
 		SELECT c.custid,161,81,c.MaxPerBall161
 		FROM  CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
-		WHERE c.srecommend=@srecommend AND c.roleid=3
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.username NOT LIKE '%ACC%'
 
 		INSERT INTO #Agent325(CustID ,SporttypeID ,BettypeID,MaxPerBall,mrecommend)
 		SELECT c.custid,161,81,c.MaxPerBall161,mrecommend
