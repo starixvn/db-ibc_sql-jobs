@@ -53,6 +53,7 @@ AS
 							  ,[Debitamount] = @Debitamount
 							  ,[Creditamount] = @Creditamount
 							  ,[Netamount] = @Netamount
+							  ,[WinLostDate]=CAST(@Settlementdate as date)
 						 WHERE Transactionid = @Transactionid 
 
                  END;
@@ -75,7 +76,9 @@ AS
 							   ,[Betamount]
 							   ,[Debitamount]
 							   ,[Creditamount]
-							   ,[Netamount])
+							   ,[Netamount]
+							   ,[WinLostDate]
+							   )
 						 VALUES
 								(@Playerno
 							   ,@Playername
@@ -93,7 +96,9 @@ AS
 							   ,@Betamount
 							   ,@Debitamount
 							   ,@Creditamount
-							   ,@Netamount)
+							   ,@Netamount
+							   ,CAST(@Settlementdate as date)
+							   )
                  END;
          END;
      END;
