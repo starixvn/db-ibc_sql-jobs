@@ -166,6 +166,8 @@ BEGIN
 									WHERE srecommend=@srecommend 
 										AND username like '%Acc%' AND roleid=3)
 			AND Currency NOT IN (20,72,27,28) 
+			AND ci.username NOT LIKE '%cashout%'
+			AND ci.username NOT LIKE '%BetTrade%'
 			AND NOT EXISTS (SELECT 1 FROM #MemberStakeLevel cs2 
 						WHERE ci.custid = cs2.custid
 							AND t.bettype = cs2.bettype
