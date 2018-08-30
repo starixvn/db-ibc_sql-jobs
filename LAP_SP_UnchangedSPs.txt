@@ -1,2 +1,1 @@
-SP\Licensee\rptLicWinlossGMT\Task_rptLicWinlossGMT_CheckData.sql
 SP\Licensee\rpt_winlost2\Task_DailyRptLicWinloss2_Job.sql

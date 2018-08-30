@@ -8,6 +8,7 @@ AS
 	DB: DBLIC.bodb_LicenseeReport
 	Revisions:  
 	- 20171130@Sophia: initial data. Apply for Sportsbook first [redmine: #84932]
+	- 20180830@Amanda: support GMT +7 [redmine: #95878]
 	
 	EXEC Task_rptLicWinlossGMT_CheckData '2017-11-30'
 
@@ -72,7 +73,7 @@ BEGIN
 	DECLARE @TimeZones TABLE (RecordID TINYINT IDENTITY(1, 1), TimeZone SMALLINT);
 
 	INSERT INTO @TimeZones(TimeZone)
-	VALUES(8);
+	VALUES(8),(7);
 
 	DECLARE @S_Count INT = 0, @T_Count INT = 0,
 			@i INT, @RecordID TINYINT = 1,
