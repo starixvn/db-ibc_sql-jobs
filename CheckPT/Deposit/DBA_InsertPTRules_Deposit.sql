@@ -23,15 +23,15 @@ SELECT 46,'A1 <>A2',GETDATE()
 UNION
 SELECT 47,'M1 + S1 <>0 member level',GETDATE()
 UNION
-SELECT 48,'S4 <>0.85  (sportsbook,NG,VS)',GETDATE()
+SELECT 48,'A1 <>0.85  (sportsbook,NG,VS)',GETDATE()
 UNION
-SELECT 49,'S4 <>0.85  (Allbet Athena,VS, VS2)',GETDATE()
+SELECT 49,'A1 <>0.85  (Allbet Athena,VS, VS2)',GETDATE()
 UNION
-SELECT 50,'S4<>0.9 (Keno, Lotery, Fishing World Athena)',GETDATE()
+SELECT 50,'A1<>0.9 (Keno, Lotery, Fishing World Athena)',GETDATE()
 UNION
-SELECT 51,'S4<>0.92 (Allbet API, Fishing World API)',GETDATE()
+SELECT 51,'A1<>0.92 (Allbet API, Fishing World API)',GETDATE()
 UNION
-SELECT 52,'S4<> 0.93 (Macaugame)',GETDATE()
+SELECT 52,'A1<> 0.93 (Macaugame)',GETDATE()
 UNION
 SELECT 53,'A1+M1+S1 <>0 (BA member )',GETDATE()
 UNION
