@@ -24,7 +24,7 @@ BEGIN
 	FROM CheckCustDB.dbo.CustGameType CPS (NOLOCK)
 	WHERE GameTypeID < 100--keno
 			
-	SELECT 202 as sporType, ID as GameTypeID
+	SELECT 202 as sportType, ID as GameTypeID
 	INTO CheckCustDB.dbo.GameType
 	FROM @tmpID
 	WHERE ID <= @GameTypeID_max

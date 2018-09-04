@@ -49,7 +49,7 @@ BEGIN
 		WHERE GameTypeID < 100--keno
 		
 		INSERT INTO @GameType (SportType,GameTypeID)
-		SELECT 202 as sporType, ID as GameTypeID
+		SELECT 202 as sportType, ID as GameTypeID
 		FROM @tmpID
 		WHERE ID <= @GameTypeID_max
 			AND ID NOT IN (2,7,9)-- exclude not offered games
