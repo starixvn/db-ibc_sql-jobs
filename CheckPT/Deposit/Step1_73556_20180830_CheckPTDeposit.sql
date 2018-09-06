@@ -1,4 +1,12 @@
 
+/*
+Created: 20180822@Winnie
+Task: Monthly check PT for deposit customers - [Redmine:73556]
+DB: DB054.CheckResultDB
+Revisions:
+
+*/
+
 USE CheckResultDB
 GO
 
