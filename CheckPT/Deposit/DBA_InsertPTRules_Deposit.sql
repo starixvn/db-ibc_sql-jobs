@@ -41,7 +41,7 @@ SELECT 55,'Missing PT setting SMA',GETDATE()
 UNION
 SELECT 56,'Missing member setting mode (Dep_CustSettingMode)',GETDATE()
 UNION
-SELECT 57,'HousePT <> 1 (Cashout) (TradeComm)',GETDATE()
+SELECT 57,'HousePT <> 1 (Cashout product)',GETDATE()
 UNION
 SELECT 58,'BetTradeComm.HousePT <>0.5',GETDATE()
 UNION

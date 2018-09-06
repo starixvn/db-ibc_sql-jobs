@@ -7,9 +7,9 @@ GO
 	DB: DBCHECK/CheckResultDB  
 
 */  
+DROP TABLE CheckPTResult_Deposit
 
-
-CREATE TABLE [dbo].[CheckPositionTakingResult_Deposit](
+CREATE TABLE [dbo].[CheckPTResult_Deposit](
 	[RuleId] [smallint] NULL,
 	[SportType] [smallint] NULL,
 	[BetType] [smallint] NULL,
@@ -17,7 +17,7 @@ CREATE TABLE [dbo].[CheckPositionTakingResult_Deposit](
 	[CustIdB] [int] NULL,
 	[ValueA] [smallmoney] NULL,
 	[ValueB] [smallmoney] NULL,
-	[CreatedDate] [datetime] NULL CONSTRAINT [DF_CheckPositionTakingResultDeposit_CreatedDate]  DEFAULT (getdate()),
+	[CreatedDate] [datetime] NULL CONSTRAINT [DF_CheckPTResultDeposit_CreatedDate]  DEFAULT (getdate()),
 	[IsLive] [bit] NULL DEFAULT ((0))
 ) ON [CheckResultData]
 
