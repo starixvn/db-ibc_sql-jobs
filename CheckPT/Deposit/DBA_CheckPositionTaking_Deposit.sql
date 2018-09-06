@@ -475,7 +475,7 @@ BEGIN
 			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
 			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)		
 				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid	
-			WHERE c.srecommend=@srecommend AND c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND s.apositiontaking <> 0.905	
+			WHERE c.srecommend=@srecommend AND c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND s.apositiontaking <> 0.905 AND s.apositiontaking<>0
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 				AND c.custid NOT IN(SELECT custid FROM #Trade)	
 		END
@@ -485,7 +485,7 @@ BEGIN
 			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
 			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)		
 				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid		
-			WHERE c.srecommend=@srecommend AND c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND s.apositiontaking <> 0.90	
+			WHERE c.srecommend=@srecommend AND c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND s.apositiontaking <> 0.90	AND s.apositiontaking<>0
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 				AND c.custid NOT IN(SELECT custid FROM #Trade)	
 		END
@@ -495,7 +495,7 @@ BEGIN
 			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
 			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)			
 				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid	
-			WHERE c.srecommend=@srecommend AND c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND s.apositiontaking <> 0.85	
+			WHERE c.srecommend=@srecommend AND c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND s.apositiontaking <> 0.85	AND s.apositiontaking<>0
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 				AND c.custid NOT IN(SELECT custid FROM #Trade)	
 		END
@@ -505,7 +505,7 @@ BEGIN
 			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
 			FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)		
 				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.custid=c.custid		
-			WHERE c.srecommend=@srecommend  AND c.roleid=1 AND s.sporttype=161 AND s.apositiontaking <> 0.85	
+			WHERE c.srecommend=@srecommend  AND c.roleid=1 AND s.sporttype=161 AND s.apositiontaking <> 0.85 AND s.apositiontaking<>0	
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 				AND c.custid NOT IN(SELECT custid FROM #Trade)	
 		END		
@@ -575,7 +575,7 @@ BEGIN
 		SELECT 50,s.sporttype,s.bettype,s.CustID,NULL,s.apositiontaking,NULL,GETDATE(),0
 		FROM CheckCustDB.dbo.CustSettingGame s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.CustID=c.custid			
-		WHERE c.srecommend=@srecommend AND c.roleid=1 AND s.sporttype =202 AND s.apositiontaking <> 0.9
+		WHERE c.srecommend=@srecommend AND c.roleid=1 AND s.sporttype =202 AND s.apositiontaking <> 0.9 AND s.apositiontaking<>0
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 			AND c.custid NOT IN(SELECT custid FROM #Trade)	
 
