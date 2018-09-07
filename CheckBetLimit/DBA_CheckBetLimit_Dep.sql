@@ -25,7 +25,7 @@ BEGIN
 	CREATE TABLE #Trade (CustID INT PRIMARY KEY)
 
 	INSERT INTO #Dummy(CustID)
-	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=3 AND username LIKE '%Acc%'
+	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=3 AND (username LIKE '%Acc%' OR username LIKE '%Cas%' OR username LIKE '%LocalBank%')
 
 	INSERT INTO #Trade(CustID)
 	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=1 AND (username LIKE '%Bettrade%' OR username LIKE '%CashOut%')
