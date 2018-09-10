@@ -41,6 +41,7 @@ AS
 		- 20180207@Harper: LA - Fix bug date range for Exchange product [RedmineID: #87754]
 		- 20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
 		- 20180420@Bruce: LA - Implement sum job for Pragmatic [RedmineId #93958]
+		- 20180910@Bruce: LA - WL report for Poker Games & Bullfighting [#98487]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 
@@ -66,7 +67,7 @@ BEGIN
 					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,BX,PP')
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,BX,PP,BF,PG')
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 		SELECT Bettype, ProductId 
@@ -92,13 +93,13 @@ BEGIN
 				,[CashOutAmount]
 				,[ValidBetAmount]
 				,[ExtraAmount]
-				,[TicketType]	
+				,[TicketType]
 				)
 		SELECT
 			[rptDate]
 			,[SiteID]
 			,bt.ProductID
-			,CASE WHEN bt.ProductID IN (1,13,14,17,15,25) THEN b.[Bettype] ELSE -1 END [Bettype]
+			,CASE WHEN bt.ProductID IN (1,13,14,17,15,25) OR b.Bettype = 1499 THEN b.[Bettype] ELSE -1 END [Bettype]
 			,[CurrencyId]
 			,Status [StatusId]
 			,ISNULL([CustomerCategory],-1)
@@ -122,7 +123,7 @@ BEGIN
 		GROUP BY [rptDate]
 				,[SiteID]
 				, bt.ProductID
-				,CASE WHEN bt.ProductID IN (1,13,14,17,15,25) THEN b.[Bettype] ELSE -1 END 
+				,CASE WHEN bt.ProductID IN (1,13,14,17,15,25) OR b.Bettype = 1499 THEN b.[Bettype] ELSE -1 END
 				,[CurrencyId]
 				,Status
 				,ISNULL([CustomerCategory],-1)

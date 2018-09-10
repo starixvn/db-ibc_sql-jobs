@@ -39,6 +39,7 @@ Revisions:
 	-20170525@Paul: Check IsStagingBettrans flag before staging bettrans; insert sporttype, eventdate into staging match table [Redmine: #72914]
 	-20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]
 	-20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
+	-20180910@Bruce: LA - WL report for Poker Games & Bullfighting [#98487]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'
@@ -185,7 +186,7 @@ BEGIN
 				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread,
-				b.ExtraInfo,
+				CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN b.transid2 ELSE b.ExtraInfo END, -- poker games: gem & insurance
 				b.betdaqid,
 				ISNULL(b.currency2, 0)
 			FROM bodb02.dbo.bettrans b (NOLOCK)
@@ -299,7 +300,7 @@ BEGIN
 				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread,
-				b.ExtraInfo,
+				CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN b.transid2 ELSE b.ExtraInfo END, -- poker games: gem & insurance
 				b.betdaqid,
 				ISNULL(b.currency2, 0)
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
