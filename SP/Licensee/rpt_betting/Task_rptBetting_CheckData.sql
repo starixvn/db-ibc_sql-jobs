@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport," executers="" viewers="vnteam" isFunction="0" isNested=�0�></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE bodb_LicenseeReport
 GO
 ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData]
@@ -142,8 +142,9 @@ BEGIN
 			ISNULL(site.SiteID,-1),
 			b.bettype, 
 			CASE 
-				WHEN b.bettype = 9 THEN -9 
-				WHEN b.bettype = 10 OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1) 
+				WHEN b.bettype=9 THEN -9 
+				WHEN b.bettype = 2799 THEN -2799
+				WHEN b.bettype = 10 OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1)
 				WHEN b.bettype IN(1231,1232,1233,1237,1238) THEN RaceInfo.LeagueID
 				ELSE ISNULL(m.leagueid,-1) 
 			END,	
@@ -153,7 +154,7 @@ BEGIN
 			b.customercategory,
 			b.TicketType
 	) d
-	GROUP BY SiteID, Bettype, Currency, Status, CustomerCategory
+	GROUP BY SiteID, Bettype, Currency, Status, CustomerCategory, TicketType
 
 	SET @S_Count = @@ROWCOUNT
 
@@ -207,7 +208,7 @@ BEGIN
 
 	UNION ALL
 
-	SELECT 'rpt_betting', 0, Bettype, CurrencyID,TicketType, SUM(Turnover), SUM(WinLoss), SUM(BetCount),
+	SELECT 'rpt_betting', 0, Bettype, CurrencyID, SUM(Turnover), SUM(WinLoss), SUM(BetCount),
 			(
 				SELECT	SUM(MemberCount) AS MemCnt, SUM(WinLossA) AS WLA, SUM(WinLossM) AS WLM, SUM(WinLossS) AS WLS, 
 						SUM(CommissionP) AS CommP, SUM(CommissionA) AS CommA, SUM(CommissionM) AS CommM, SUM(CommissionS) AS CommS,
