@@ -131,7 +131,7 @@ BEGIN
 				,CASE      
 					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z') THEN b.betfrom ELSE '' END AS betfrom   		
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
-				INNER JOIN bodb02.dbo.Match14 m WITH (NOLOCK)
+				LEFT JOIN bodb02.dbo.Match14 m WITH (NOLOCK)
 					ON m.MatchId = b.MatchId
 				INNER JOIN bodb02.dbo.Dep_CustSuper s WITH (NOLOCK) 
 					ON b.srecommend = s.CustId
