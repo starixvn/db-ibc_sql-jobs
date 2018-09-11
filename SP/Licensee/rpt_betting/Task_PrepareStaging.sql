@@ -1,11 +1,9 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-
 USE [bodb_LicenseeReport]
 GO
 
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
 GO
 
 /****** Object:  Stored Procedure dbo.Task_PrepareStaging    Script Date: 11/18/2016 5:30:32 PM ******/
