@@ -10,6 +10,7 @@ AS
 	DB: DBRPT.bodb_report
 	Revisions:  
 	- 20171213@Paul: initial data. Apply for Sportsbook first [redmine: #84932]
+	- 20180806@Amanda: support GMT +7 [redmine: #95878]
 	
 	EXEC Task_DailyRptLicWinlossGMT_BettransBK '2017-11-01'
 */  
@@ -26,7 +27,7 @@ BEGIN
 	IF @TimeZone IS NULL
 	BEGIN
 		INSERT INTO @TimeZones(TimeZone)
-		VALUES(8)
+		VALUES(8),(7)
 	END
 	ELSE
 	BEGIN
@@ -130,7 +131,7 @@ BEGIN
 				,CASE      
 					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z') THEN b.betfrom ELSE '' END AS betfrom   		
 			FROM bodb_Archive.dbo.bettrans_bk b WITH (NOLOCK)
-				INNER JOIN bodb_Archive.dbo.Match_bk m WITH (NOLOCK)
+				LEFT JOIN bodb_Archive.dbo.Match_bk m WITH (NOLOCK)
 					ON m.MatchId = b.MatchId
 				INNER JOIN bodb02.dbo.Dep_CustSuper s WITH (NOLOCK) 
 					ON b.srecommend = s.CustId
