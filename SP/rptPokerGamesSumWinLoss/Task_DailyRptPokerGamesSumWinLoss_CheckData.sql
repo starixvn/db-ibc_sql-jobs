@@ -395,18 +395,18 @@ BEGIN
 				SOURCE.CustId IS NULL
 				OR TARGET.CustId IS NULL
 				OR TARGET.RoleId			<> SOURCE.RoleId
-				OR TARGET.Recommend		<> SOURCE.Recommend
+				OR TARGET.Recommend			<> SOURCE.Recommend
 				OR TARGET.MRecommend		<> SOURCE.MRecommend
 				OR TARGET.SRecommend		<> SOURCE.SRecommend
 				OR TARGET.Betcount			<> SOURCE.Betcount
 				OR TARGET.RoundCount		<> SOURCE.RoundCount
 				OR TARGET.Turnover			<> SOURCE.Turnover
 				OR TARGET.NetTurnover		<> SOURCE.NetTurnover
-				OR TARGET.TotalComm		<> SOURCE.TotalComm
+				OR TARGET.TotalComm			<> SOURCE.TotalComm
 				OR TARGET.WinLoss			<> SOURCE.WinLoss
 				OR TARGET.InsGemMemberWinLoss	<> SOURCE.InsGemMemberWinLoss
 				OR TARGET.PlayerComm		<> SOURCE.PlayerComm
-				OR TARGET.AgWinLoss		<> SOURCE.AgWinLoss
+				OR TARGET.AgWinLoss			<> SOURCE.AgWinLoss
 				OR TARGET.AgComm			<> SOURCE.AgComm
 				OR TARGET.MAgWinLoss		<> SOURCE.MAgWinLoss
 				OR TARGET.MAgComm			<> SOURCE.MAgComm
