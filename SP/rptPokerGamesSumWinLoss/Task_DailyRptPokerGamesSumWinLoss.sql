@@ -167,7 +167,7 @@ BEGIN
 			SUM(MAgComm) AS MAgComm,
 			SUM(SAgWinLoss) AS SAgWinLoss,
 			SUM(SAgComm) AS SAgComm		
-		FROM #rptProgressiveGamesContribution
+		FROM #RptPokerGamesSumWinLoss
 		WHERE RoleId = 1 
 		GROUP BY
 			WinlostDate,
@@ -225,7 +225,7 @@ BEGIN
 			SUM(MAgComm) AS MAgComm,
 			SUM(SAgWinLoss) AS SAgWinLoss,
 			SUM(SAgComm) AS SAgComm		
-		FROM #rptProgressiveGamesContribution
+		FROM #RptPokerGamesSumWinLoss
 		WHERE RoleId = 1 
 		GROUP BY
 			WinlostDate,
@@ -262,7 +262,7 @@ BEGIN
 		)
 		SELECT	
 			WinlostDate,
-			Mrecommend AS CustID,
+			Srecommend AS CustID,
 			Bettype,
 			4 AS RoleID,
 			0 AS Recommend,
@@ -282,7 +282,7 @@ BEGIN
 			SUM(MAgComm) AS MAgComm,
 			SUM(SAgWinLoss) AS SAgWinLoss,
 			SUM(SAgComm) AS SAgComm		
-		FROM #rptProgressiveGamesContribution
+		FROM #RptPokerGamesSumWinLoss
 		WHERE RoleId = 1 
 		GROUP BY
 			WinlostDate,
