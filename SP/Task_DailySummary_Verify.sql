@@ -1,3 +1,4 @@
+/*<info serverAlias="DBEXT-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
 
@@ -17,7 +18,7 @@ AS
 		- 20170719@Patrick: check valid ip for bettrans, bettransrng, bettranslc, translog
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20171010@Percy: Apply Bullfighting [RedmineID: #84690]
-		- 20180918@Patrick: Add more rule check if a custid belong to more than an upline
+		- 20180918@Patrick: Add more rule check if a custid belong to more than an upline [RedmineID: #101549]
 */
 
 SET NOCOUNT ON
