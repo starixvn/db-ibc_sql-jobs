@@ -1,4 +1,3 @@
-/*<info serverAlias="DBEXT-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
 
@@ -18,7 +17,7 @@ AS
 		- 20170719@Patrick: check valid ip for bettrans, bettransrng, bettranslc, translog
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20171010@Percy: Apply Bullfighting [RedmineID: #84690]
-
+		- 20180918@Patrick: Add more rule check if a custid belong to more than an upline
 */
 
 SET NOCOUNT ON
@@ -202,6 +201,34 @@ BEGIN
 	RETURN  
 END  
 
+--//check a custid belong to more than a upline
+IF EXISTS (
+	SELECT TOP 10 custid, currency
+	FROM (
+		SELECT srecommend, mrecommend, recommend, custid, currency
+		FROM dbo.bettrans WITH(NOLOCK) 
+		WHERE custid > 0 --ignore case ticket with status completed
+		GROUP BY srecommend, mrecommend, recommend, custid, currency
+	)t
+	GROUP BY custid, currency
+	HAVING COUNT(1) > 1
+)
+BEGIN
+	RAISERROR ('FAILED: One more than custid belong to multiple uplines', 16, 1)
+	PRINT('sql statement: ^^^ 
+		SELECT TOP 10 custid, currency
+		FROM (
+			SELECT srecommend, mrecommend, recommend, custid, currency
+			FROM dbo.bettrans WITH(NOLOCK) 
+			WHERE custid > 0 --ignore case ticket with status completed
+			GROUP BY srecommend, mrecommend, recommend, custid, currency
+		)t
+		GROUP BY custid, currency
+		HAVING COUNT(1) > 1 ^^^')
+
+	RETURN
+END
+
 IF @TestMode = 1
 BEGIN
 	PRINT 'DATA OK'
@@ -222,4 +249,3 @@ BEGIN
 
 	RETURN
 END
-GO
