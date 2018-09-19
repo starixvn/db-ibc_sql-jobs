@@ -46,7 +46,7 @@ BEGIN
 
 
 	/* Get data source */
-	CREATE TABLE #RptPokerGamesSumWinLoss_Source
+	CREATE TABLE #RptPokerGamesSumWinLoss
 	(
 		WinlostDate	smalldatetime,
 		CustID		int,
@@ -383,12 +383,12 @@ BEGIN
 	END
 
 	/* Compare data */
-	CREATE NONCLUSTERED INDEX IX_CustID ON #RptPokerGamesSumWinLoss_Source (WinlostDate, CustId, Bettype)
+	CREATE NONCLUSTERED INDEX IX_CustID ON #RptPokerGamesSumWinLoss (WinlostDate, CustId, Bettype)
 	CREATE NONCLUSTERED INDEX IX_CustID ON #RptPokerGamesSumWinLoss_Target (WinlostDate, CustId, Bettype)
 
 	IF EXISTS (
 		SELECT 1
-		FROM #RptPokerGamesSumWinLoss_Source SOURCE
+		FROM #RptPokerGamesSumWinLoss SOURCE
 			FULL OUTER JOIN #RptPokerGamesSumWinLoss_Target TARGET
 				ON SOURCE.CustId = TARGET.CustId AND SOURCE.Bettype = TARGET.Bettype AND SOURCE.WinlostDate = TARGET.WinlostDate
 		WHERE
@@ -420,7 +420,7 @@ BEGIN
 		ELSE -- correct data
 		BEGIN
 			MERGE dbo.RptPokerGamesSumWinLoss AS TARGET
-			USING #RptPokerGamesSumWinLoss_Source AS SOURCE
+			USING #RptPokerGamesSumWinLoss AS SOURCE
 					ON	TARGET.WinlostDate	= SOURCE.WinlostDate
 					AND TARGET.CustId		= SOURCE.CustId
 					AND TARGET.Bettype		= SOURCE.Bettype
@@ -462,7 +462,7 @@ BEGIN
 		END
 	END
 
-	DROP TABLE #RptPokerGamesSumWinLoss_Source
+	DROP TABLE #RptPokerGamesSumWinLoss
 	DROP TABLE #RptPokerGamesSumWinLoss_Target
 END
 GO 
