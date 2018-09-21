@@ -45,7 +45,7 @@ Param's Explanation:
 BEGIN
 	SET NOCOUNT ON;
 
-	UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+	/*UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
 	SET VValue = 1
 	WHERE VName = 'IsStagingBettrans'
 		AND VValue = 0
@@ -57,7 +57,7 @@ BEGIN
 		RAISERROR(@ErrorMsg, 16, 1)
 
 		RETURN;
-	END
+	END*/
 
 	DECLARE @today datetime, @thedaybefore datetime
 	SELECT @today=@dateto, @thedaybefore=@datefrom
@@ -95,10 +95,6 @@ BEGIN
 	TRUNCATE TABLE dbo.[bettrans]  
 	
 	DECLARE @Recommend_List TABLE (t_recommend int PRIMARY KEY)
-
-    /*create table #Recommend_List(t_recommend int)
-    --create clustered index cix_t_recommend on #Recommend_List(t_recommend)
-    create unique nonclustered index ix_t_recommend on #Recommend_List(t_recommend)*/
     
     CREATE TABLE #Customer (t_custid int PRIMARY KEY)
 	CREATE TABLE #BetTradeCust (custid int PRIMARY KEY)
@@ -125,9 +121,6 @@ BEGIN
 		
 		    INSERT INTO @Recommend_List
                 SELECT DISTINCT recommend FROM bodb02.dbo.bettrans (NOLOCK) WHERE winlostdate=@tmpDate AND bettype<19000
-                
-            /*INSERT INTO #Recommend_List
-                SELECT DISTINCT recommend FROM bettrans (NOLOCK) WHERE winlostdate=@tmpDate AND bettype<19000 */
             
 			INSERT INTO dbo.bettrans
 			    ([transid]
@@ -184,7 +177,7 @@ BEGIN
 				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread,
-				CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN b.transid2 ELSE b.ExtraInfo END, -- poker games: gem & insurance
+				CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) ELSE b.ExtraInfo END, -- poker games: gem & insurance
 				b.betdaqid,
 				ISNULL(b.currency2, 0)
 			FROM bodb02.dbo.bettrans b (NOLOCK)
@@ -298,7 +291,7 @@ BEGIN
 				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread,
-				CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN b.transid2 ELSE b.ExtraInfo END, -- poker games: gem & insurance
+				CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) ELSE b.ExtraInfo END, -- poker games: gem & insurance
 				b.betdaqid,
 				ISNULL(b.currency2, 0)
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
