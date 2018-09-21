@@ -128,12 +128,3 @@ BEGIN
 	DROP TABLE #tmpData
 END
 GO
-
-GRANT EXECUTE ON [dbo].[GEN_rptBetting] TO [bodbLicenseeNet] AS [dbo]
-GO
-
-GRANT EXECUTE ON [dbo].[GEN_rptBetting] TO [vnteam] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting] TO [vnteam] AS [dbo]
-GO

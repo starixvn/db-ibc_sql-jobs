@@ -387,17 +387,4 @@ BEGIN
 	DROP TABLE #BetTradeCust
 	  
 END
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[Task_PrepareStaging] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Task_PrepareStaging] TO [vnteam]
-GO 
