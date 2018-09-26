@@ -6,6 +6,7 @@ AS
 	Task: Check consistency data for archiving process
 		
 	Revisions:
+		- 20180926@Patrick:	Initial - [RedmineId: #101207]
 */
 BEGIN
 	SET NOCOUNT ON
