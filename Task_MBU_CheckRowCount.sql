@@ -21,7 +21,7 @@ BEGIN
 	CREATE TABLE #__activeResult (winlostdate SMALLDATETIME, tableName VARCHAR(128), activeRowCount INT)
 	CREATE TABLE #__archiveResult (winlostdate SMALLDATETIME, tableName VARCHAR(128), archiveRowCount INT)
 
-	DECLARE @rowIndex INT, @winlostdate SMALLDATETIME, @xmlData XML, @hasDiff BIT
+	DECLARE @rowIndex INT, @winlostdate SMALLDATETIME, @OutputData VARCHAR(4000), @xmlData XML, @hasDiff BIT
 	SET @rowIndex = 1
 	WHILE EXISTS (SELECT TOP 1 1 FROM #__archiveDate WHERE rid = @rowIndex)
 	BEGIN
@@ -35,57 +35,61 @@ BEGIN
 
 		--Event in active
 		SET @xmlData = NULL
-		EXEC DB02.bodb02.dbo.Task_MBU_Event_BK_CheckRowCount_Sel
+		EXEC DB02.bodb02.dbo.Task_MBU_Event_CheckRowCount_Sel
 			@DateCheck = @winlostdate,
-			@OutputData = @xmlData OUTPUT
+			@OutputData = @OutputData OUTPUT
 		
-		IF @xmlData IS NOT NULL
+		IF @OutputData IS NOT NULL
 		BEGIN
+			SET @xmlData = CAST(@OutputData AS XML)
 			INSERT #__activeResult(winlostdate, tableName, activeRowCount)
 			SELECT @winlostdate, r.value('./@t','varchar(128)'), r.value('./@r','int')
-			FROM @xmlData.nodes('//root/r') AS RECORDS(r)
+			FROM @xmlData.nodes('//r') AS RECORDS(r)
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ))
 		END
 
 		--Bet in active
-		SET @xmlData = NULL
+		SET @OutputData = NULL
 		EXEC DBTRANS.bodb02.dbo.Task_MBU_Bet_CheckRowCount_Sel
 			@DateCheck = @winlostdate,
-			@OutputData = @xmlData OUTPUT
+			@OutputData = @OutputData OUTPUT
 
-		IF @xmlData IS NOT NULL
+		IF @OutputData IS NOT NULL
 		BEGIN
+			SET @xmlData = CAST(@OutputData AS XML)
 			INSERT #__activeResult(winlostdate, tableName, activeRowCount)
 			SELECT @winlostdate, r.value('./@t','varchar(128)'), r.value('./@r','int')
-			FROM @xmlData.nodes('//root/r') AS RECORDS(r)
+			FROM @xmlData.nodes('//r') AS RECORDS(r)
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ))
 		END
 		
 		--//event in archive
-		SET @xmlData = NULL
+		SET @OutputData = NULL
 		EXEC DBARC.bodb_Archive.dbo.Task_MBU_Event_BK_CheckRowCount_Sel
 			@DateCheck = @winlostdate,
-			@OutputData = @xmlData OUTPUT
+			@OutputData = @OutputData OUTPUT
 		
-		IF @xmlData IS NOT NULL
+		IF @OutputData IS NOT NULL
 		BEGIN
+			SET @xmlData = CAST(@OutputData AS XML)
 			INSERT #__archiveResult(winlostdate, tableName, archiveRowCount)
 			SELECT @winlostdate, r.value('./@t','varchar(128)'), r.value('./@r','int')
-			FROM @xmlData.nodes('//root/r') AS RECORDS(r)
+			FROM @xmlData.nodes('//r') AS RECORDS(r)
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ))
 		END
 
 		--//Bet in archive
-		SET @xmlData = NULL
+		SET @OutputData = NULL
 		EXEC DBARC.bodb_Archive.dbo.Task_MBU_Bet_BK_CheckRowCount_Sel
 			@DateCheck = @winlostdate,
-			@OutputData = @xmlData OUTPUT
+			@OutputData = @OutputData OUTPUT
 		
-		IF @xmlData IS NOT NULL
+		IF @OutputData IS NOT NULL
 		BEGIN
+			SET @xmlData = CAST(@OutputData AS XML)
 			INSERT #__archiveResult(winlostdate, tableName, archiveRowCount)
 			SELECT @winlostdate, r.value('./@t','varchar(128)'), r.value('./@r','int')
-			FROM @xmlData.nodes('//root/r') AS RECORDS(r)
+			FROM @xmlData.nodes('//r') AS RECORDS(r)
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ))
 		END
 	END
@@ -105,9 +109,16 @@ BEGIN
     SET @email_body = '
 	   <html>
 		 <body>
-		  <h1>Archiving Process Row Count Check!</h1>
+		  <style>
+				table {border-collapse: collapse;}
+				table, td, th {border: 1px solid black;}
+				/*tr:nth-child(even) {background-color: #f2f2f2}*/
+				th {text-align: left; padding: 8px;}
+				/*th {background-color: #4CAF50; color: white;}*/
+			</style>
+		  <h1>Archiving Data Row Count Check!</h1>
 		  <p><b>Check time:</b> ' + CONVERT(VARCHAR(50), GETDATE(), 121) + ' </p> ' +
-		  CASE WHEN @hasDiff = 1 THEN '<div style="background-color:red;color:white;text-align:center">Failure</div> <p><b> Error message:</b> ' + 'Some things mismatch data between active and archive. Please check!!!' + ''
+		  CASE WHEN @hasDiff = 1 THEN '<div style="background-color:red;color:white;text-align:center">Failure</div> <p><b> Error message:</b> ' + 'One or more tables has mismatch data when archiving data. Please check!!!' + ''
 		  ELSE '<div style="background-color:green;color:white;text-align:center">Success</div>' END + '
 		  <p></p>
 		  {<table1>}
@@ -129,25 +140,25 @@ BEGIN
 		</table>'
 
 	SET @rowData = CONVERT(VARCHAR(MAX), (
-		SELECT ISNULL(t.winlostdate, tt.winlostdate) AS 'td1'
+		SELECT CONVERT(VARCHAR(10), ISNULL(t.winlostdate, tt.winlostdate), 121) AS 'td1'
 			, ISNULL(t.tableName, tt.tableName) AS 'td2'
 			, ISNULL(t.activeRowCount, 0) AS 'td1'
 			, ISNULL(tt.archiveRowCount, 0) AS 'td2'
-			, ISNULL(tt.archiveRowCount, 0) - ISNULL(tt.archiveRowCount, 0) AS 'td1'
+			, ISNULL(t.activeRowCount, 0) - ISNULL(tt.archiveRowCount, 0) AS 'td1'
 		FROM #__activeResult t
 		FULL OUTER JOIN #__archiveResult tt ON t.winlostdate = tt.winlostdate AND t.tableName = tt.tableName
 		ORDER BY ISNULL(t.winlostdate, tt.winlostdate), ISNULL(t.tableName, tt.tableName)
 		FOR XML PATH('tr'), TYPE
-	))    
-	
+	))
+
 	SET @rowData = REPLACE(REPLACE(@rowData, 'td1>', 'td>'), 'td2>', 'td>')
 	SET @table1 = REPLACE(@table1, '{<row>}', @rowData)
 	SET @email_body = REPLACE(@email_body, '{<table1>}', @table1)
 
-    SELECT @subject	= N'Archving process check - KBT@' + @@SERVERNAME
+    SELECT @subject	= N'Archving process check count - KBT@' + @@SERVERNAME
 					
     EXECUTE msdb.dbo.sp_send_dbmail @profile_name	= DEFAULT
-	   , @recipients			 = 'patrick.pham@starixsoft.com'
+	   , @recipients			 = 'pontus@starixsoft.com'
 	   , @copy_recipients		 = ''
 	   , @blind_copy_recipients	 = ''
 	   , @subject				 = @subject
