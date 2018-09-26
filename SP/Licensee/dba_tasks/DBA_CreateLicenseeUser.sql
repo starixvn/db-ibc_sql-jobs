@@ -30,6 +30,7 @@ AS
 		Jim@20150112: re-structure data flow for support multi licensee 
 		Jim@20160523: Currency permision restrict (#53882)
 		Harper@20170905: Add Role when verify User (RedmineID: 82675)
+		20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 */
 
 DECLARE @LicenseeID INT
@@ -78,7 +79,7 @@ BEGIN
 		FROM dbo.LicenseeCust WITH (NOLOCK) 
 		WHERE LicenseeID = @LicenseeID
 			AND Currency NOT IN (SELECT DISTINCT CurrencyID 
-								FROM dbo.Lrf_f_LicenseeCurrencyLimit() 
+								FROM dbo.LAP_f_LicenseeCurrencyLimit() 
 								WHERE LicenseeID = @LicenseeID)
 				
 		IF ISNULL(@LicenseeID,0) = 0

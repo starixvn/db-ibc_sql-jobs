@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE bodb_licensee
 GO
 
@@ -10,7 +11,7 @@ AS
 /*  
  Created by: [20110127@Henry]  
  Task: Create Licensee and the Agents for that Licensee  
- DB: DB052.bodb_Licensee  
+ DB: DBCUST-bodb_Licensee  
  Param's Explanation:  
  + @LicenseeName example: 12BET  
  + @SuperWildCard example: 12BETSuper%  
@@ -25,6 +26,7 @@ AS
 	 - 20120611@Henry: only get from real agent (condition: username NOT like @LicenseeName + 'ACC%')  
 	 - 20130603@Jim: restrict permission of Licensee User  
 	 - 20170707@Harper: fix CurrencyUser when we still have this licensee and currency [RedmineID: #79235]
+	 - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 */
 DECLARE @LicenseeID INT
 DECLARE @agent AS TABLE (
@@ -78,7 +80,7 @@ IF @Currency = 0
 BEGIN
 	INSERT INTO @super (CustID)
 	SELECT custid
-	FROM bodb02.dbo.custinfo(NOLOCK)
+	FROM CUSTDB.dbo.custinfo(NOLOCK)
 	WHERE roleid = 4
 		AND username LIKE @SuperWildCard
 END
@@ -86,7 +88,7 @@ ELSE
 BEGIN
 	INSERT INTO @super (CustID)
 	SELECT custid
-	FROM bodb02.dbo.custinfo(NOLOCK)
+	FROM CUSTDB.dbo.custinfo(NOLOCK)
 	WHERE roleid = 4
 		AND username LIKE @SuperWildCard
 		AND currency = @Currency
@@ -115,8 +117,8 @@ BEGIN
 			ELSE e.Code
 			END AS currencyName
 		, '' AS [description]
-	FROM bodb02.dbo.custinfo c(NOLOCK)
-	INNER JOIN bodb02.dbo.exchange e(NOLOCK)
+	FROM CUSTDB.dbo.custinfo c(NOLOCK)
+	INNER JOIN CUSTDB.dbo.exchange e(NOLOCK)
 		ON c.currency = e.exchangeid
 	WHERE srecommend IN (
 			SELECT custid
@@ -149,8 +151,8 @@ BEGIN
 			ELSE e.Code
 			END AS currencyName
 		, '' AS [description]
-	FROM bodb02.dbo.custinfo c(NOLOCK)
-	INNER JOIN bodb02.dbo.exchange e(NOLOCK)
+	FROM CUSTDB.dbo.custinfo c(NOLOCK)
+	INNER JOIN CUSTDB.dbo.exchange e(NOLOCK)
 		ON c.currency = e.exchangeid
 	WHERE srecommend IN (
 			SELECT custid
