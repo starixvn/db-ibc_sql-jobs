@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
   
 ALTER PROCEDURE [dbo].[DBA_Lrf_LaunchProduct]  
 (  
@@ -10,11 +10,11 @@ AS
 /*  
 	Created: 20150126@Jim  
 	Task : re-structure create new licensee flow  
-	DB: DBLIC.bodb_licensee  
+	DB: DBCUST.bodb_licensee  
 	Original :  
    
 	Revisions:  
-   
+		-20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 	Param's Explanation:  
    
 */  
@@ -36,3 +36,4 @@ BEGIN
 	 WHERE LicenseeId = @LicenseeID  
 		AND ProductId = @ProductID  
 END
+GO

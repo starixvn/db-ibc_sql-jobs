@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[DBA_CreateLicenseeUser]
 	@LicenseeName varchar(50)='All',
@@ -17,7 +17,7 @@ AS
 /*
 	Created by: [20110127@Henry]
 	Task: Create User and grant access to a licensee
-	DB: DBLIC.bodb_Licensee
+	DB: DBCUST.bodb_Licensee
 	Param's Explanation:
 	+ @LicenseeName example: 12BET
 	+ @PageAccess: TotalBets, Forecast, Reports, ManageMember, DataWarehouse, ManageAccount

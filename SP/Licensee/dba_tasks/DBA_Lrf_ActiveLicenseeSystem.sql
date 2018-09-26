@@ -1,4 +1,7 @@
-CREATE PROCEDURE [dbo].[DBA_Lrf_ActiveLicenseeSystem] (
+ /*<info serverAlias="DBCUST-bodb_Licensee" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+USE bodb_Licensee
+GO
+ CREATE PROCEDURE [dbo].[DBA_Lrf_ActiveLicenseeSystem] (
 	@LicenseeName VARCHAR(50)
 	, @SystemisActive VARCHAR(100) = ''
 	, @SystemDeactivate VARCHAR(100) = ''
@@ -8,10 +11,12 @@ CREATE PROCEDURE [dbo].[DBA_Lrf_ActiveLicenseeSystem] (
 	/*  
 Created: 20140502@Jim  
 Task : re-structure create new licensee flow  
-DB: DBLIC.bodb_licensee  
+DB: DBCUST-bodb_Licensee
 Original :  
-   - 20160912@Jim: add pull service into this flow
+  
 Revisions:  
+   - 20160912@Jim: add pull service into this flow
+   - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
    
 Param's Explanation:  
    
@@ -40,7 +45,7 @@ BEGIN
 	SELECT 0
 		, val
 		, 1
-	FROM bodb02.dbo.strSplit(@SystemisActive, ',')
+	FROM CUSTDB.dbo.strSplit(@SystemisActive, ',')
 END
 
 IF ISNULL(@SystemDeactivate, '') <> ''
@@ -53,7 +58,7 @@ BEGIN
 	SELECT 0
 		, val
 		, 0
-	FROM bodb02.dbo.strSplit(@SystemDeactivate, ',')
+	FROM CUSTDB.dbo.strSplit(@SystemDeactivate, ',')
 END
 
 ----- Correct Data   
@@ -134,3 +139,4 @@ BEGIN
 		--AND SettingName  IN ('GoldDeluxe_VersionKey','AGCasino_VersionKey')
 END
 		--------------------------------------------------------------------
+GO

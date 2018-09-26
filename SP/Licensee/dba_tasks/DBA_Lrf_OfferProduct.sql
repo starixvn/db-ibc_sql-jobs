@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE bodb_licensee
 GO  
 
@@ -14,7 +14,7 @@ AS
 /*  
 	Created: 20140502@Jim  
 	Task : re-structure create new licensee flow  
-	DB: DBLIC.bodb_licensee  
+	DB: DBCUST.bodb_licensee  
 	Original :  
    
 	Revisions:  
@@ -22,6 +22,7 @@ AS
 	  - 20150427@Jim: support product Gold Deluxe   
 	  - 20160224@Jim: add pull service option  
 	  - 20170912@Harper: Clean code [RedmineID: #82673] 
+	  - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 
 	Param's Explanation:    
    

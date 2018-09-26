@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[DBA_Lrf_DisableProduct]  
 (  
@@ -10,10 +10,11 @@ AS
 /*
 	Created: 20170920@Harper
 	Description : Active 2 special func for licensee if requested
-	DB: DBLIC.bodb_licensee  
+	DB: DBCUST.bodb_licensee  
 	
 	Revisions:  
 	  - 20150320@Harper: Document LRF Setting [RedmineID: #82673]
+	  - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 */
 BEGIN
 	
@@ -23,7 +24,7 @@ BEGIN
 	INSERT INTO @tmpProduct (ProductID, ProductCode)
 	SELECT Productid, ProductPrefix
 	FROM dbo.Product3rd (NOLOCK)
-	WHERE ProductPrefix IN ( SELECT val FROM bodb02.dbo.strSplit(@ProductCodes, ',') )
+	WHERE ProductPrefix IN ( SELECT val FROM CUSTDB.dbo.strSplit(@ProductCodes, ',') )
 
 	SELECT @LicenseeID = LicenseeID
 	FROM dbo.Licensees (NOLOCK)
