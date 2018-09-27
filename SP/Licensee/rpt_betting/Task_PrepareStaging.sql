@@ -1,11 +1,9 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-
 USE [bodb_LicenseeReport]
 GO
 
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
 GO
 
 /****** Object:  Stored Procedure dbo.Task_PrepareStaging    Script Date: 11/18/2016 5:30:32 PM ******/
@@ -39,6 +37,7 @@ Revisions:
 	-20170525@Paul: Check IsStagingBettrans flag before staging bettrans; insert sporttype, eventdate into staging match table [Redmine: #72914]
 	-20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]
 	-20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
+	-20180910@Bruce: LA - WL report for Poker Games & Bullfighting [#98487]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'
@@ -96,10 +95,6 @@ BEGIN
 	TRUNCATE TABLE dbo.[bettrans]  
 	
 	DECLARE @Recommend_List TABLE (t_recommend int PRIMARY KEY)
-
-    /*create table #Recommend_List(t_recommend int)
-    --create clustered index cix_t_recommend on #Recommend_List(t_recommend)
-    create unique nonclustered index ix_t_recommend on #Recommend_List(t_recommend)*/
     
     CREATE TABLE #Customer (t_custid int PRIMARY KEY)
 	CREATE TABLE #BetTradeCust (custid int PRIMARY KEY)
@@ -126,9 +121,6 @@ BEGIN
 		
 		    INSERT INTO @Recommend_List
                 SELECT DISTINCT recommend FROM bodb02.dbo.bettrans (NOLOCK) WHERE winlostdate=@tmpDate AND bettype<19000
-                
-            /*INSERT INTO #Recommend_List
-                SELECT DISTINCT recommend FROM bettrans (NOLOCK) WHERE winlostdate=@tmpDate AND bettype<19000 */
             
 			INSERT INTO dbo.bettrans
 			    ([transid]
@@ -182,10 +174,10 @@ BEGIN
 					 WHEN b.bettype = 901 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1001 ELSE 1002 END --bettrade
 					 WHEN b.bettype = 911 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1003 ELSE 1004 END -- cashout
 				ELSE -1 END customercategory,
-				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
+				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread,
-				b.ExtraInfo,
+				CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) ELSE b.ExtraInfo END, -- poker games: gem & insurance
 				b.betdaqid,
 				ISNULL(b.currency2, 0)
 			FROM bodb02.dbo.bettrans b (NOLOCK)
@@ -296,10 +288,10 @@ BEGIN
 					 WHEN b.bettype = 901 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1001 ELSE 1002 END --bettrade
 					 WHEN b.bettype = 911 AND b.recommend NOT IN (52466,5707545) THEN CASE WHEN b.transid2 = 0 THEN 1003 ELSE 1004 END -- cashout
 					ELSE -1 END customercategory,
-				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) THEN 1 ELSE 0 END,
+				CASE WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1 ELSE 0 END,
 				b.refno,
 				oddsspread,
-				b.ExtraInfo,
+				CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) ELSE b.ExtraInfo END, -- poker games: gem & insurance
 				b.betdaqid,
 				ISNULL(b.currency2, 0)
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
@@ -395,17 +387,4 @@ BEGIN
 	DROP TABLE #BetTradeCust
 	  
 END
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[Task_PrepareStaging] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Task_PrepareStaging] TO [vnteam]
-GO 
