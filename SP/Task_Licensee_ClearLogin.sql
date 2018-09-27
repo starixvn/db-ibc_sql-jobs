@@ -1,13 +1,8 @@
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="" viewers="vnteam" isFunction="0"></info>*/
 USE [bodb_Licensee]
 GO
 
-/****** Object:  StoredProcedure [dbo].[Task_Licensee_ClearLogin]    Script Date: 01/19/2015 06:39:03 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+ 
 CREATE PROCEDURE [dbo].[Task_Licensee_ClearLogin]
 	
 AS
@@ -15,10 +10,11 @@ AS
 /*
 	Created:  20101209@Henry
 	Task: Clear Login
-	DB: DB052.bodb_Licensee
+	DB: DBCUST.bodb_Licensee
 	Original SP:
 	
 	Revisions:
+		- 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 		
 */
 SET NOCOUNT ON

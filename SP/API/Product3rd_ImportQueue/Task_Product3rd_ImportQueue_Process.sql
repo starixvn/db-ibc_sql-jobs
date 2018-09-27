@@ -13,6 +13,7 @@ AS
 
 	Revisions:
 		- 20171218@Percy: Initalize SP [RedmineID: #88325]
+		- 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST - remove linked server DBLIC [redmine: #99855]
 */
 
 BEGIN
@@ -66,7 +67,7 @@ BEGIN
 													td = p.ProductName, '',
 													td = e.ErrMsg, ''
 										FROM @ErrTable e
-											INNER JOIN DBLIC.bodb_licensee.dbo.Product3rd p WITH (NOLOCK) ON e.ProductId = p.ProductID
+											INNER JOIN bodb_licensee.dbo.Product3rd p WITH (NOLOCK) ON e.ProductId = p.ProductID
 										FOR XML PATH('tr'), TYPE 
 									) AS NVARCHAR(MAX) ) + N'</table>'
 			

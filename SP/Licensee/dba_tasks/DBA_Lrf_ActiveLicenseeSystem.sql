@@ -134,7 +134,7 @@ IF EXISTS (
 			AND SystemID = 1
 		)
 BEGIN
-	DELETE [bodb_PlaytechCS].[dbo].[LicIntegrationSetting]
+	DELETE DBPTCS.[bodb_PlaytechCS].[dbo].[LicIntegrationSetting]
 	WHERE LicenseeName = @LicenseeName
 		--AND SettingName  IN ('GoldDeluxe_VersionKey','AGCasino_VersionKey')
 END
