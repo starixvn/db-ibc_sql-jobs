@@ -45,7 +45,7 @@ Param's Explanation:
 BEGIN
 	SET NOCOUNT ON;
 
-	/*UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+	UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
 	SET VValue = 1
 	WHERE VName = 'IsStagingBettrans'
 		AND VValue = 0
@@ -57,7 +57,7 @@ BEGIN
 		RAISERROR(@ErrorMsg, 16, 1)
 
 		RETURN;
-	END*/
+	END
 
 	DECLARE @today datetime, @thedaybefore datetime
 	SELECT @today=@dateto, @thedaybefore=@datefrom
