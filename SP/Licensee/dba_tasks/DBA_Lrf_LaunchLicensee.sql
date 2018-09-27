@@ -1,5 +1,4 @@
-/****** Object:  Stored Procedure dbo.DBA_Lrf_LaunchLicensee    Script Date: 2/2/2015 6:27:46 PM ******/  
-  
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="" viewers="vnteam" isFunction="0"></info>*/  
 CREATE PROCEDURE [dbo].[DBA_Lrf_LaunchLicensee]  
 (  
  @LicenseeName VARCHAR(10),  
@@ -9,11 +8,11 @@ AS
 /*  
 Created: 20150126@Jim  
 Task : re-structure create new licensee flow  
-DB: DBLIC.bodb_licensee  
+DB: DBCUST.bodb_licensee  
 Original :  
    
 Revisions:  
-   
+   - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 Param's Explanation:  
   
    
@@ -31,3 +30,4 @@ BEGIN
  WHERE LicenseeId = @LicenseeId  
     
 END
+GO

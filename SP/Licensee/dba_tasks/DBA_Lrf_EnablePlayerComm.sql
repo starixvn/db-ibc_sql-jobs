@@ -1,15 +1,16 @@
-/*<info serverAlias="DBLIC-bodb_Licensee" executers="" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="" viewers="vnteam" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Lrf_EnablePlayerComm] (@LicenseeName VARCHAR(500))
 AS
 /*  
 Created: 20140502@Jim  
 Task : re-structure create new licensee flow  
-DB: DBLIC.bodb_licensee  
+DB: DBCUST.bodb_licensee  
 Original :  
    
 Revisions:  
    - 20160912@Jim: add more parlaycomm
    - 20180809@Sophia: HA - remove LicenseeCustInfo table [Redmine: #99464]
+   - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
    
 Param's Explanation:  
   
@@ -37,7 +38,7 @@ BEGIN
 	FROM dbo.Licensees l WITH (NOLOCK)
 	WHERE l.licenseename IN (
 			SELECT val AS LicenseeName
-			FROM bodb02.dbo.strSplit(@LicenseeName, ',')
+			FROM CUSTDB.dbo.strSplit(@LicenseeName, ',')
 			)
 
 	UPDATE dbo.Licensees

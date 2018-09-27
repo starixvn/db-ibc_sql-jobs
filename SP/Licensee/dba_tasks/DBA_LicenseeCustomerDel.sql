@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_Licensee" executers="" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="" viewers="vnteam" isFunction="0"></info>*/
 USE [bodb_Licensee]
 GO
 CREATE PROCEDURE [dbo].[DBA_LicenseeCustomerDel]
@@ -10,11 +10,12 @@ AS
 /*
 Created: 
 Task : Delete Licensee Customer
-DB: DB052.bodb_licensee
+DB: DBCUST.bodb_licensee
 Original:
 
 Revisions:
 	- 20180809@Sophia: HA - remove LicenseeCustInfo table [Redmine: #99464]
+	- 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 	
 Param's Explanation:
 	@username: pass the username of customer you want to delete.

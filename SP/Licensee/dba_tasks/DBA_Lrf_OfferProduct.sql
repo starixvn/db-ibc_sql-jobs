@@ -49,7 +49,7 @@ BEGIN
 	-------------------------------------------* GET PRODUCT LIST *-------------------------------------
 	INSERT INTO @tblProductPrefix (ProductId,ProductCode,EffectiveDate)  
 	SELECT 0,val,null  
-	FROM bodb02.dbo.strSplit(@ProductCode,',')  
+	FROM CUSTDB.dbo.strSplit(@ProductCode,',')  
    
 	UPDATE a  
 	SET ProductId = b.ProductId   
@@ -135,24 +135,24 @@ BEGIN
 	
 	-- OA_Function
 
-	INSERT INTO dbo.OA_FunctionResellers (FunctionID, ResellerId)  
+	INSERT INTO DBLIC.bodb_licensee.dbo.OA_FunctionResellers (FunctionID, ResellerId)  
 	SELECT oaf.FunctionID, @ResellerID  
-	FROM dbo.OA_Functions oaf WITH (NOLOCK)    
+	FROM DBLIC.bodb_licensee.dbo.OA_Functions oaf WITH (NOLOCK)    
 		INNER JOIN @tblProductFunctions pf ON oaf.FunctionID = pf.FunctionId  
 	WHERE pf.FunctionId NOT IN (SELECT FunctionId  
-		FROM dbo.OA_FunctionResellers WITH (NOLOCK)  
+		FROM DBLIC.bodb_licensee.dbo.OA_FunctionResellers WITH (NOLOCK)  
 		WHERE ResellerID = @ResellerID  
 		)  
 	AND pf.TypeId = 2  
 
-	INSERT INTO dbo.OA_FunctionLicensees (FunctionID, ResellerID, LicenseeID)  
+	INSERT INTO DBLIC.bodb_licensee.dbo.OA_FunctionLicensees (FunctionID, ResellerID, LicenseeID)  
 	SELECT DISTINCT oaf.FunctionID  
 		,@ResellerID  
 		,@LicenseeId  
-	FROM dbo.OA_Functions oaf WITH (NOLOCK)    
+	FROM DBLIC.bodb_licensee.dbo.OA_Functions oaf WITH (NOLOCK)    
 	INNER JOIN @tblProductFunctions pf ON oaf.FunctionID = pf.FunctionId  
 	WHERE pf.FunctionId NOT IN (SELECT FunctionId  
-		FROM dbo.OA_FunctionLicensees WITH (NOLOCK)  
+		FROM DBLIC.bodb_licensee.dbo.OA_FunctionLicensees WITH (NOLOCK)  
 		WHERE LicenseeID   = @LicenseeId   
 			AND ResellerID = @ResellerID  
 		)  
@@ -186,7 +186,7 @@ BEGIN
      
 			--insert Licensee to BA reseller to OA group (OA_GroupLicensees)  
 			INSERT INTO @TempGroupID(GroupID)  
-			SELECT DISTINCT GroupID FROM dbo.OA_GroupLicensees WITH (NOLOCK)  
+			SELECT DISTINCT GroupID FROM DBLIC.bodb_licensee.dbo.OA_GroupLicensees WITH (NOLOCK)  
 		
 			SET @j = 0  
 			SELECT @MaxID = MAX(id) FROM @TempGroupID  
@@ -195,17 +195,17 @@ BEGIN
 				SET @j = @j + 1  
 				SELECT @GroupID = GroupID FROM @TempGroupID WHERE id = @j  
       
-				IF EXISTS (SELECT 1 FROM dbo.OA_GroupLicensees WITH (NOLOCK) WHERE GroupID = @GroupID AND ResellerID <> 3 AND LicenseeID = @LicenseeID)  
+				IF EXISTS (SELECT 1 FROM DBLIC.bodb_licensee.dbo.OA_GroupLicensees WITH (NOLOCK) WHERE GroupID = @GroupID AND ResellerID <> 3 AND LicenseeID = @LicenseeID)  
 				BEGIN  
-					IF NOT EXISTS (SELECT 1 FROM dbo.OA_GroupLicensees WITH (NOLOCK) WHERE GroupID=@GroupID AND ResellerID = 3 AND LicenseeID = @LicenseeID)  
+					IF NOT EXISTS (SELECT 1 FROM DBLIC.bodb_licensee.dbo.OA_GroupLicensees WITH (NOLOCK) WHERE GroupID=@GroupID AND ResellerID = 3 AND LicenseeID = @LicenseeID)  
 					BEGIN  
-						INSERT INTO dbo.OA_GroupLicensees (GroupID,ResellerID,LicenseeID) VALUES (@GroupID,3,@LicenseeID)  
+						INSERT INTO DBLIC.bodb_licensee.dbo.OA_GroupLicensees (GroupID,ResellerID,LicenseeID) VALUES (@GroupID,3,@LicenseeID)  
 					END  
 				END   
 
 				--insert Licensee to BA reseller to OA Users (OA_UserLicensees)  
 				INSERT INTO @TempUserID(UserID)  
-				SELECT DISTINCT UserID FROM dbo.OA_UserLicensees WITH (NOLOCK)  
+				SELECT DISTINCT UserID FROM DBLIC.bodb_licensee.dbo.OA_UserLicensees WITH (NOLOCK)  
   
 				SET @j = 0  
 				SELECT @MAXID = MAX(id) FROM @TempUserID  
@@ -215,11 +215,11 @@ BEGIN
 					SET @j = @j + 1  
 					SELECT @UserID = UserID FROM @TempUserID WHERE id = @j  
        
-					IF EXISTS (SELECT 1 FROM dbo.OA_UserLicensees WITH (NOLOCK) WHERE UserID = @UserID AND ResellerID <> 3 AND LicenseeID = @LicenseeID)  
+					IF EXISTS (SELECT 1 FROM DBLIC.bodb_licensee.dbo.OA_UserLicensees WITH (NOLOCK) WHERE UserID = @UserID AND ResellerID <> 3 AND LicenseeID = @LicenseeID)  
 					BEGIN  
-						IF NOT EXISTS (SELECT 1 FROM dbo.OA_UserLicensees WITH (NOLOCK) WHERE UserID=@UserID AND ResellerID = 3 AND LicenseeID = @LicenseeID)  
+						IF NOT EXISTS (SELECT 1 FROM DBLIC.bodb_licensee.dbo.OA_UserLicensees WITH (NOLOCK) WHERE UserID=@UserID AND ResellerID = 3 AND LicenseeID = @LicenseeID)  
 						BEGIN  
-							INSERT INTO dbo.OA_UserLicensees (UserID,ResellerID,LicenseeID) VALUES (@UserID,3,@LicenseeID)  
+							INSERT INTO DBLIC.bodb_licensee.dbo.OA_UserLicensees (UserID,ResellerID,LicenseeID) VALUES (@UserID,3,@LicenseeID)  
 						END  
 					END   
 				END  

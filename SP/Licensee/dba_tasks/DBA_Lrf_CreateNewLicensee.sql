@@ -1,4 +1,4 @@
- 
+ /*<info serverAlias="DBCUST-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Lrf_CreateNewLicensee] (
 	@LicenseeName VARCHAR(50)
 	, @SuperWildCard VARCHAR(100) = ''
@@ -20,7 +20,7 @@ AS
 Created: Henry  
 Date: 20120409  
 Task : Procedure to create a new Licensee  
-DB: DB052.bodb_Licensee  
+DB: DBCUST.bodb_Licensee  
 Original:  
   
 Revisions:  
@@ -38,6 +38,7 @@ Revisions:
  +20160224@Jim: add pull service option  
  +20160526@Jim: add more admin users  
  +20160909@Jim: config edit betsetting role
+ +20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 Param's Explanation:  
  + @IsSpecial: if 1 then update column Description to normal, or affiliate or banner depend on:  
   - username ending with 01: normal  
@@ -189,12 +190,12 @@ WHERE ResellerName = @ResellerName
 ---- REGIST NEW RESELLER IN L.A  
 IF NOT EXISTS (
 		SELECT 1
-		FROM dbo.OA_GroupLicensees WITH (NOLOCK)
+		FROM DBLIC.bodb_Licensee.dbo.OA_GroupLicensees WITH (NOLOCK)
 		WHERE ResellerID = @ResellerID
 			AND LicenseeID = @LicenseeID
 		)
 BEGIN
-	INSERT INTO dbo.OA_GroupLicensees (
+	INSERT INTO DBLIC.bodb_Licensee.dbo.OA_GroupLicensees (
 		GroupID
 		, ResellerID
 		, LicenseeID
@@ -202,19 +203,19 @@ BEGIN
 	SELECT Groupid
 		, @resellerid
 		, @LicenseeID
-	FROM dbo.OA_GroupLicensees WITH (NOLOCK)
+	FROM DBLIC.bodb_Licensee.dbo.OA_GroupLicensees WITH (NOLOCK)
 	WHERE licenseeid = 9
 		AND resellerid = 2
 END
 
 IF NOT EXISTS (
 		SELECT 1
-		FROM dbo.OA_UserLicensees WITH (NOLOCK)
+		FROM DBLIC.bodb_Licensee.dbo.OA_UserLicensees WITH (NOLOCK)
 		WHERE ResellerID = @ResellerID
 			AND LicenseeID = @LicenseeID
 		)
 BEGIN
-	INSERT INTO dbo.OA_UserLicensees (
+	INSERT INTO DBLIC.bodb_Licensee.dbo.OA_UserLicensees (
 		UserID
 		, ResellerID
 		, LicenseeID
@@ -222,7 +223,7 @@ BEGIN
 	SELECT Userid
 		, @resellerid
 		, @LicenseeID
-	FROM dbo.OA_UserLicensees WITH (NOLOCK)
+	FROM DBLIC.bodb_Licensee.dbo.OA_UserLicensees WITH (NOLOCK)
 	WHERE licenseeid = 9
 		AND resellerid = 2
 END
@@ -587,3 +588,5 @@ EXEC DBA_LicenseeBAConfig_Ins @LicenseeID = @licenseeid
 	, @OtherComm = 0.005
 	, @EnableBA = 0
 	, @UserID = 862400 --pgmViet
+
+GO

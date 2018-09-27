@@ -1,6 +1,4 @@
-/****** Object:  Stored Procedure dbo.DBA_Lrf_FunctionUserRole    Script Date: 5/4/2015 3:12:04 PM ******/  
-/****** Object:  Stored Procedure dbo.DBA_Lrf_FunctionUserRole    Script Date: 1/26/2015 3:18:48 PM ******/  
-  
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Lrf_FunctionUserRole]  
 (  
  @UserRole VARCHAR(50),  
@@ -10,13 +8,14 @@ CREATE PROCEDURE [dbo].[DBA_Lrf_FunctionUserRole]
 /*  
 Created: 20140502@Jim  
 Task : re-structure create new licensee flow  
-DB: DBLIC.bodb_licensee  
+DB: DBCUST.bodb_licensee  
 Original :  
    
 Revisions:  
- +20150504@Jim: correct function permission for GD,Void Bridge,AG,Playtech,  
-  @UserRole : admin , who get all of funtion with typeid=2  
-     normal , who get all of funtion with typeid=1  
+	- 20150504@Jim: correct function permission for GD,Void Bridge,AG,Playtech,  
+				  @UserRole : admin , who get all of funtion with typeid=2  
+					 normal , who get all of funtion with typeid=1  
+	- 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
    
 */    
   
@@ -53,7 +52,7 @@ IF EXISTS (SELECT TOP 1 1  FROM @tblFunctions )
  BEGIN   
   INSERT INTO @tblFunctions(FunctionId,TypeID)   
   SELECT FunctionID,3 AS TypeID   
-  FROM dbo.OA_Functions WITH (NOLOCK)  
+  FROM DBLIC.bodb_licensee.dbo.OA_Functions WITH (NOLOCK)  
   WHERE FunctionID IN   
     (  
      4, --Total Transaction  
