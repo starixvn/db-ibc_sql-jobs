@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBEXT-BODB02" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+﻿/*<info serverAlias="DBEXT-BODB02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 Use bodb02
 GO    
 

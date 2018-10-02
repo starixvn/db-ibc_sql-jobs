@@ -1,4 +1,4 @@
-/*<info serverAlias="DB053-bodb_Licensee,DB042-bodb_Licensee" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DB053-bodb_Licensee,DB042-bodb_Licensee" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 Use bodb_Licensee
 GO    
 
