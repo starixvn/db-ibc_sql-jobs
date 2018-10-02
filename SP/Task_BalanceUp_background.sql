@@ -29,6 +29,7 @@ Revisions:
 			+ Output a signal when processing itself and upline's
 			+ Add more signal to replicated servers when MB/BU starting or done
 	- 20180329@Percy: Add Bet_ExecRep_09 [RedmineID: #92391]
+	- 20181002@Dominic: Get username in archived DB  [Redmine:99882]
 	
 Param's Explanation: 
 
@@ -488,6 +489,22 @@ BEGIN
 			INNER JOIN CustDB.dbo.custinfo c ON b.custid = c.custid
 			INNER JOIN CustDB.dbo.exchange e ON c.currency = e.exchangeid
 			LEFT OUTER JOIN CustDB.dbo.ExchangeDailyOanda ed ON c.currency = ed.ExchangeId AND ed.ExchangeDate = DATEADD(day, -1, @fdate)
+
+		update b
+		set
+			roleid = 1,
+			recommend = c.recommend,
+			mrecommend= ag.mrecommend,
+			srecommend= ag.srecommend,
+			currency  = ag.currency,
+			UserName  = c.username,
+			CurrencyName = e.currency,
+			actualrate = IsNull(ed.ActualRate, e.ActualRate)
+		from dbo.balancetable b
+			INNER JOIN CustDB.dbo.Dep_Customer_Archived c ON b.custid = c.custid
+			INNER JOIN CustDB.dbo.custinfo ag ON ag.custid = c.Recommend
+			INNER JOIN CustDB.dbo.exchange e ON ag.currency = e.exchangeid
+			LEFT OUTER JOIN CustDB.dbo.ExchangeDailyOanda ed ON ag.currency = ed.ExchangeId AND ed.ExchangeDate = DATEADD(day, -1, @fdate)
 
 
 		-- copy data, ready for insertion
