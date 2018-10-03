@@ -119,6 +119,7 @@ BEGIN
 			WHERE betdaqid = 0 
 				AND b.bettype <> 911 
 				AND CAST(ExtraInfo AS XML).exist('/p25/@s') = 1
+				AND b.statusid IN (111, 112, 113)
 			GROUP BY b.custid, b.currency
 	)
 	UPDATE b
