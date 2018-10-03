@@ -53,7 +53,18 @@ BEGIN
 	--Insert into UserLog_LicenseeBAConfig (LicenseeID, groupa, groupb, groupc, groupd,  [1x2Comm], [OtherComm], EnableBA , IP, ActionID, ModifyBy, ModifyDate)
 	--values (@LicenseeID, @groupa, @groupb, @groupc, @groupd,  @1x2Comm, @OtherComm, @EnableBA , @IP, 217, @UserID, getdate())
 	
-	--EXEC LAP_WriteLog_UserLog_LicenseeBAConfig ....
+	EXEC LAP_WriteLog_UserLog_LicenseeBAConfig_Wrapper 
+		@UserID = @UserID,
+		@LicenseeID = @LicenseeID,
+		@1x2Comm = @1x2Comm,
+		@OtherComm = @OtherComm,
+		@EnableBA = @EnableBA,
+		@IP = @IP,
+		@ActionID = 217,	
+		@Groupa = @groupa,			
+		@Groupb = @groupb,
+		@Groupc = @groupc,
+		@Groupd = @groupd
 	
 	
 END
