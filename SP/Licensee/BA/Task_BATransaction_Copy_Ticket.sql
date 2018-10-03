@@ -1,10 +1,7 @@
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
-GO
+/*<info serverAlias="DB053-bodb_Licensee,DB042-bodb_Licensee" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+Use bodb_Licensee
+GO    
 
-/****** Object:  Stored Procedure dbo.Task_BATransaction_Copy_Ticket    Script Date: 8/7/2018 5:16:54 PM ******/
- 
 CREATE PROCEDURE dbo.Task_BATransaction_Copy_Ticket @XmlData NVARCHAR(MAX), @ErrorCode INT = 0 OUTPUT
 AS  
 /*  
@@ -12,7 +9,7 @@ AS
 	Task: Copy BA ticket from DB052 for temporary
 	DB: DB042.bodb_Licensee  
 	Revisions: 
-		
+		- 20181002@Sophia: Sync BA ticket to DB053 [Redmine #99855]
  */  
 BEGIN
 	SET NOCOUNT ON
@@ -42,11 +39,4 @@ END
 
 
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
+ 

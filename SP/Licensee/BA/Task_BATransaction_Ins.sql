@@ -1,10 +1,6 @@
-﻿
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_BATransaction_Ins    Script Date: 8/7/2018 5:16:56 PM ******/
+﻿/*<info serverAlias="DBEXT-BODB02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+Use bodb02
+GO    
 
 CREATE PROCEDURE [dbo].[Task_BATransaction_Ins]
 AS  
@@ -25,6 +21,7 @@ AS
 		20160416@Francis: Revert hard-code of [transid < 100000000000]
 		20170410@Paul: Implement Cash Out [RedmineID :#71727]
 		20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
+		20181002@Sophia: Sync BA ticket to DB053 [Redmine #99855]
  */  
 BEGIN
 	SET NOCOUNT ON   
@@ -93,6 +90,7 @@ BEGIN
 	)
 	IF @XmlData IS NOT NULL
 		EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
+		EXEC DB053.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
 
 END
 
