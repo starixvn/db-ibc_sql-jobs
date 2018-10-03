@@ -1,10 +1,11 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
-SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
 GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 
 ALTER PROCEDURE [dbo].[Task_rptLicCashoutSummary_CheckData]
 	@WinlostDate		SMALLDATETIME,
@@ -16,7 +17,8 @@ AS
 	Task : Check & correct data of rptLicCashoutSummary
 	DB: DBLIC.bodb_LicenseeReport
 	Original:
-	Revisions:
+	Revision:
+		-20181003@Bruce: LA - Should not include refund ticket for Cash Out Tickets [Redmine: #102578]
 */
 
 BEGIN
