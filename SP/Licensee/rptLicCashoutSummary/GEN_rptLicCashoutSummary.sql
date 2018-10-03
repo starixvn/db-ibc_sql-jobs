@@ -102,7 +102,7 @@ BEGIN
 	;WITH cte AS (
 			SELECT b.winlostdate, b.custid, b.currency, COUNT (*) AS numOfTicket
 			FROM dbo.bettrans b WITH (NOLOCK)
-			WHERE betdaqid = 0 AND b.bettype <> 911 AND CAST(ExtraInfo AS XML).exist('/p25/@s') = 1 and b.statusid IN (111, 112, 113)
+			WHERE betdaqid = 0 AND b.bettype <> 911 AND CAST(ExtraInfo AS XML).exist('/p25/@s') = 1 and b.statusid IN (111, 112, 113, 114, 115)
 			GROUP BY b.winlostdate, b.custid, b.currency
 	)
 	UPDATE b
