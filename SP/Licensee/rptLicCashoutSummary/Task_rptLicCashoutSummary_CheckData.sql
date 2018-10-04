@@ -1,10 +1,11 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
-SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
 GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 
 ALTER PROCEDURE [dbo].[Task_rptLicCashoutSummary_CheckData]
 	@WinlostDate		SMALLDATETIME,
@@ -16,7 +17,8 @@ AS
 	Task : Check & correct data of rptLicCashoutSummary
 	DB: DBLIC.bodb_LicenseeReport
 	Original:
-	Revisions:
+	Revision:
+		-20181003@Bruce: LA - Should not include refund ticket for Cash Out Tickets [Redmine: #102578]
 */
 
 BEGIN
@@ -119,6 +121,7 @@ BEGIN
 			WHERE betdaqid = 0 
 				AND b.bettype <> 911 
 				AND CAST(ExtraInfo AS XML).exist('/p25/@s') = 1
+				AND b.statusid IN (111, 112, 113, 114, 115)
 			GROUP BY b.custid, b.currency
 	)
 	UPDATE b

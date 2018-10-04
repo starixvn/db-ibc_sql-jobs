@@ -1,5 +1,11 @@
-USE bodb_LicenseeReport
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+USE [bodb_LicenseeReport]
 GO
+
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
+
 
 ALTER PROCEDURE [dbo].[GEN_rptLicCashoutSummary]
 	@FromDate DATETIME,
@@ -13,6 +19,7 @@ AS
 
 	Revision:
 		-20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]
+		-20181003@Bruce: LA - Should not include refund ticket for Cash Out Tickets [Redmine: #102578]
 
 	EXEC GEN_rptLicCashoutSummary '20170618'
 */
@@ -95,7 +102,7 @@ BEGIN
 	;WITH cte AS (
 			SELECT b.winlostdate, b.custid, b.currency, COUNT (*) AS numOfTicket
 			FROM dbo.bettrans b WITH (NOLOCK)
-			WHERE betdaqid = 0 AND b.bettype <> 911 AND CAST(ExtraInfo AS XML).exist('/p25/@s') = 1
+			WHERE betdaqid = 0 AND b.bettype <> 911 AND CAST(ExtraInfo AS XML).exist('/p25/@s') = 1 and b.statusid IN (111, 112, 113, 114, 115)
 			GROUP BY b.winlostdate, b.custid, b.currency
 	)
 	UPDATE b
@@ -223,7 +230,4 @@ BEGIN
 	DROP TABLE #CashoutCust	
 
 END
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[GEN_rptLicCashoutSummary] TO [vnteam] AS [dbo]
 GO
