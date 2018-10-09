@@ -1,5 +1,5 @@
-USE [bodb_LicenseeReport]
-GO
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Task_rptWinlostbyleague_Bettrans14] 
 	 @Date SMALLDATETIME
 AS
@@ -169,6 +169,3 @@ GROUP BY a.winlostdate
 	,isba
 	,a.currency
 GO
-GRANT EXECUTE ON [dbo].[Task_rptWinlostbyleague_Bettrans14] TO [bodbLicenseeNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Task_rptWinlostbyleague_Bettrans14] TO [vnteam] AS [dbo]

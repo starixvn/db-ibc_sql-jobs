@@ -169,3 +169,4 @@ GROUP BY a.winlostdate
 	,isba
 	,a.currency
 END
+GO
