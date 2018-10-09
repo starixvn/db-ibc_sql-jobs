@@ -1,5 +1,5 @@
-USE [bodb_LicenseeReport]
-GO
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Task_rptCustomerMatch_Bettrans14] 
 	@Date SMALLDATETIME
 AS
@@ -16,6 +16,7 @@ AS
 		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
 	Parameter's Explanation:			
 */
+BEGIN
 SET NOCOUNT ON;
 	--DECLARE @Fromdate DATETIME,
 	--	@Todate DATETIME
@@ -160,3 +161,5 @@ GROUP BY a.CustID
 		ELSE isnull(b.LeagueID, - 1)
 		END 
 	,a.currency
+END
+GO
