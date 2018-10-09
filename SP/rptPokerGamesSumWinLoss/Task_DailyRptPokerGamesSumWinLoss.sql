@@ -1,7 +1,4 @@
 /*<info serverAlias="DBSUM-bodb_Summary" executers="vnteam" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_Summary]
-GO
-
 ALTER PROCEDURE [dbo].[Task_DailyRptPokerGamesSumWinLoss]
 	@WinlostDate AS SMALLDATETIME
 AS
@@ -13,8 +10,12 @@ AS
 	
 	Revisions:
 		- 20180912@Sophia: Initialize SP [RedmineID: #101376]
-
+		- 20181003@Helen: Modify code to adapt indexes changed on DB053 [Redmine:101405]
+		
 	Param's Explanation:
+	
+	Notes: Since Product offers for Credit, can use CustSuper to utilize index of srecommend
+			If offer Deposit, please get data from Dep_CustSuper accordingly.
 */
 
 
@@ -82,10 +83,11 @@ BEGIN
 			SAgWinLoss,
 			SAgComm
 		)
-
+		
+		
 		SELECT
 			WinlostDate,
-			CustID,
+			b.CustID,
 			Bettype,
 			1 AS RoleID,
 			Recommend,
@@ -105,13 +107,14 @@ BEGIN
 			SUM(ISNULL(b.acomm,0)) AS MAgComm,
 			SUM(b.swinlost) AS SAgWinLoss,
 			SUM(ISNULL(b.scomm,0)) SAgComm
-		FROM bodb02.dbo.Bettrans b WITH (NOLOCK)
+		FROM bodb02.dbo.CustSuper CS WITH (NOLOCK) 
+			INNER JOIN bodb02.dbo.Bettrans b WITH (NOLOCK) ON CS.custid = b.srecommend
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID IN (111,112,113) 
 			AND EXISTS (SELECT 1 FROM @Bettype t WHERE t.bettype = b.bettype)			
 		GROUP BY
 			WinlostDate,
-			CustID,
+			b.CustID,
 			Bettype,
 			Recommend,
 			MRecommend,
