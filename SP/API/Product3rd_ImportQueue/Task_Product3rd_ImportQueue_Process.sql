@@ -14,6 +14,7 @@ AS
 	Revisions:
 		- 20171218@Percy: Initalize SP [RedmineID: #88325]
 		- 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST - remove linked server DBLIC [redmine: #99855]
+		- 20181003@Percy: Using colum JobType to apply Tip [RedmineID: #70177]
 */
 
 BEGIN
@@ -24,33 +25,50 @@ BEGIN
 	DECLARE @ErrTable TABLE (ProductId INT, ErrCode INT, ErrMsg NVARCHAR(2000))
 
 	-- Gold Deluxe
-	SELECT  @ErrCode = 0, @ErrMsg = ''
-	EXEC dbo.Task_GoldDeluxe_ImportDataToDB_Queue @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-
-	IF @ErrCode <> 0
 	BEGIN
-		INSERT INTO @ErrTable (ProductId, ErrCode, ErrMsg)
-		VALUES (11, @ErrCode, @ErrMsg)
+		-- 1. bettrans_GoldDeluxe -- Jobtype = 0
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_GoldDeluxe_ImportDataToDB_Queue @JobType = 0, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (ProductId, ErrCode, ErrMsg)
+			VALUES (11, @ErrCode, @ErrMsg)
+		END
+
+		-- 2. GoldDeluxe_Tip -- Jobtype = 1
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_GoldDeluxe_ImportDataToDB_Queue @JobType = 1, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (ProductId, ErrCode, ErrMsg)
+			VALUES (11, @ErrCode, @ErrMsg)
+		END
 	END
 
 	-- AG Casino
-	SELECT  @ErrCode = 0, @ErrMsg = ''
-	EXEC dbo.Task_AGCasino_ImportDataToDB_Queue @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-
-	IF @ErrCode <> 0
 	BEGIN
-		INSERT INTO @ErrTable (ProductId, ErrCode, ErrMsg)
-		VALUES (10, @ErrCode, @ErrMsg)
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_AGCasino_ImportDataToDB_Queue @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (ProductId, ErrCode, ErrMsg)
+			VALUES (10, @ErrCode, @ErrMsg)
+		END
 	END
 
 	-- Exchange
-	SELECT  @ErrCode = 0, @ErrMsg = ''
-	EXEC bodb_3rdProduct.dbo.Task_Product3rd_ImportQueue_ProcessData @ProductID = 31, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-
-	IF @ErrCode <> 0
 	BEGIN
-		INSERT INTO @ErrTable (ProductId, ErrCode, ErrMsg)
-		VALUES (31, @ErrCode, @ErrMsg)
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC bodb_3rdProduct.dbo.Task_Product3rd_ImportQueue_ProcessData @ProductID = 31, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (ProductId, ErrCode, ErrMsg)
+			VALUES (31, @ErrCode, @ErrMsg)
+		END
 	END
 
 	DECLARE @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX) 
