@@ -23,6 +23,7 @@ AS
 		- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 		- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
 		- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
+		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -162,7 +163,6 @@ BEGIN
 			SELECT
 				b.custid,
 				CASE				
-					WHEN b.bettype IN (31,32,33,41,42,43) THEN 151--Horse Racing
 					WHEN b.bettype BETWEEN 81 AND 120 THEN 161--Number Game 
 					WHEN b.bettype IN (71,72,23002) THEN 251--Casino
 					WHEN b.bettype = 1000 THEN 253--games
@@ -215,7 +215,6 @@ BEGIN
 				AND b.bettype < 19999
 			GROUP BY b.custid,
 				CASE				
-					WHEN b.bettype IN (31,32,33,41,42,43) THEN 151--Horse Racing
 					WHEN b.bettype BETWEEN 81 AND 120 THEN 161--Number Game 
 					WHEN b.bettype IN (71,72,23002) THEN 251--Casino
 					WHEN b.bettype = 1000 THEN 253--games
