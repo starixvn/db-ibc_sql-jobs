@@ -1,16 +1,20 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE bodb02
 GO
-ALTER PROCEDURE dbo.Task_Dep_DailySumData3rdProduct @WinlostDate SMALLDATETIME
+ALTER PROCEDURE dbo.Task_Dep_DailySumData3rdProduct
+	@WinlostDate SMALLDATETIME
 AS
 /*
 	Created by: 20150601@Patrick
 	Task: #36263 - Daily summary data 3rd product
-	DB: DBTRANS.bodb02
-	Revisions: 
+	DB: DBTXN.bodb02
+
+	Revisions:
 		- 20171213@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
 		- 20180119@Sophia: Check data exchange have been existed before update the Flag
 		- 20180223@Sophia: Change betform = 'd' for Exchange [Redmine: #91014]
+		- 20181003@Percy: Integrate GoldDeluxe Tip [RedmineID: #70177]
+
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -35,7 +39,7 @@ BEGIN
 	DECLARE @RowId INT, @LicenseeName VARCHAR(50), @CurrencyId TINYINT, @ProductId TINYINT
 		, @SqlQueryFor3rd VARCHAR(8000), @CustDummyId INT, @SqlQueryChargeRate VARCHAR(8000)
 		, @RefNo BIGINT, @SqlQuery VARCHAR(8000), @ExchangeRate FLOAT, @ProductIds VARCHAR(512)
-		, @LicenseeId INT, @BettypeIds VARCHAR(512), @PartyList VARCHAR(4000), @BettingIndicator VARCHAR(125)
+		, @LicenseeId INT, @PartyList VARCHAR(4000), @BettingIndicator VARCHAR(125)
 		, @MoveBetsDay SMALLDATETIME
 	
 	--check @WinlostDate less than @MoveBetDay
@@ -142,7 +146,7 @@ BEGIN
 		FROM @LicenseeTable WHERE RowId = @RowId
 		
 		SELECT @RowId = @RowId + 1, @RefNo = 0
-			, @ProductIds = NULL, @CustDummyId = NULL, @BettypeIds = ''
+			, @ProductIds = NULL, @CustDummyId = NULL
 			
 		--get product list by @licensee & @currency
 		SELECT @ProductIds = COALESCE(@ProductIds + ',' + CAST(ProductId AS VARCHAR), CAST(ProductId AS VARCHAR))
@@ -156,24 +160,6 @@ BEGIN
 		IF ISNULL(@CustDummyId, 0) = 0 OR ISNULL(@ProductIds, '') = ''
 			CONTINUE
 		
-		IF CHARINDEX('10', @ProductIds, 0) > 0
-		BEGIN
-			SET @BettypeIds = '1800'
-		END	
-		IF CHARINDEX('11', @ProductIds, 0) > 0
-		BEGIN
-			SET @BettypeIds = @BettypeIds + ',1700'
-		END	
-		IF CHARINDEX('12', @ProductIds, 0) > 0
-		BEGIN
-			SET @BettypeIds = @BettypeIds + ',1900'
-		END	
-		IF CHARINDEX('31', @ProductIds, 0) > 0
-		BEGIN
-			SET @BettypeIds = @BettypeIds + ',8000'
-		END	
-
-
 		IF CHARINDEX('10', @ProductIds, 0) > 0 --AG Casino
 		BEGIN
 			--print ('AG Casino')
@@ -196,6 +182,8 @@ BEGIN
 		IF CHARINDEX('11', @ProductIds, 0) > 0 --Gold Deluxe
 		BEGIN
 			--print ('Gold Deluxe')
+			
+			-- bettrans_GoldDeluxe
 			SELECT @SqlQueryFor3rd = ''
 			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 1700 AS Bettype, Stake, Actual_stake, Winlost
 				FROM OPENQUERY(DBLIC, ''SELECT WinlostDate, b.Currency, SUM(ABS(Stake)) AS Stake, SUM(ABS(Stake)) AS Actual_stake, SUM(ABS(Winlost)) AS Winlost
@@ -206,6 +194,21 @@ BEGIN
 					+ ' AND b.Currency = ' + CAST(@CurrencyId AS VARCHAR)
 					+ ' AND StatusId IN (112,113,111)'
 				+ ' GROUP BY WinlostDate, b.Currency'
+				+ ''' )'
+			
+			INSERT INTO #3rdData(WinlostDate, CurrencyId, Bettype, Stake, Actual_stake, Winlost)
+			EXEC (@SqlQueryFor3rd)
+
+			-- GoldDeluxe_Tip
+			SELECT @SqlQueryFor3rd = ''
+			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 1706 AS Bettype, Stake, Actual_stake, Winlost
+				FROM OPENQUERY(DBLIC, ''SELECT b.WinlostDate, b.Currency, SUM(ABS(b.Amount)) AS Stake, SUM(ABS(b.Amount)) AS Actual_stake, 0 AS Winlost
+				FROM bodb_PlaytechCS.dbo.GoldDeluxe_Tip b WITH (NOLOCK)
+					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON b.recommend = f.custid AND b.currency = f.currency 
+				WHERE 1 = 1'
+					+ ' AND b.WinlostDate BETWEEN ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''''
+					+ ' AND b.Currency = ' + CAST(@CurrencyId AS VARCHAR)
+				+ ' GROUP BY b.WinlostDate, b.Currency'
 				+ ''' )'
 			
 			INSERT INTO #3rdData(WinlostDate, CurrencyId, Bettype, Stake, Actual_stake, Winlost)
@@ -249,8 +252,6 @@ BEGIN
 			INSERT INTO #3rdData(WinlostDate, CurrencyId, Bettype, Stake, Actual_stake, Winlost, PlayerComm, Comm)
 			EXEC (@SqlQueryFor3rd)
 		END
-		
-		
 		
 		IF NOT EXISTS (SELECT TOP 1 1 FROM #3rdData)
 		BEGIN
@@ -308,7 +309,7 @@ BEGIN
 		--AGC Adjustment - Date: 2015-05-26
 		UPDATE tmp
 		SET TransDesc = CASE WHEN tmp.Bettype = 1800 THEN 'AGC' 
-							 WHEN tmp.Bettype = 1700 THEN 'GD' 
+							 WHEN tmp.Bettype IN (1700, 1706) THEN 'GD' 
 							 WHEN tmp.Bettype = 1900 THEN 'VG' 
 							 WHEN tmp.Bettype = 8000 THEN 'BX' 
 							 END + @BettingIndicator + 'Transfer back to Sportsbook'

@@ -226,7 +226,7 @@ BEGIN
 					TipId, IBCCustId, Deposit_CustId, PlayerName, TipTime, Amount, Currency, AnchorId
 				)
 				SELECT 
-					x.v.value('(TIPID/text())[1]','VARCHAR(50)')		AS TipId,
+					x.v.value('(TIPSID/text())[1]','VARCHAR(50)')		AS TipId,
 					x.v.value('(IBCCUSTID/text())[1]', 'INT')			AS IBCCustId,
 					x.v.value('(DEPOSIT_CUSTID/text())[1]', 'INT')		AS Deposit_CustId,
 					x.v.value('(PLAYERNAME/text())[1]', 'VARCHAR(50)')	AS playerName,
@@ -251,12 +251,13 @@ BEGIN
 						d.AnchorId,
 						c.recommend,
 						c.mrecommend,
-						c.srecommend
+						c.srecommend,
+						CONVERT(DATE, d.TipTime) AS WinlostDate
 					FROM #GoldDeluxe_Tip d
 						INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = d.IBCCustID
 					) AS src
 						(
-							TipId,IBCCustId,Deposit_CustId,playerName,TipTime,Amount,currency,AnchorId,recommend,mrecommend,srecommend
+							TipId,IBCCustId,Deposit_CustId,playerName,TipTime,Amount,currency,AnchorId,recommend,mrecommend,srecommend,WinlostDate
 						) ON (dest.TipId = src.TipId)
 				WHEN MATCHED THEN UPDATE
 				SET dest.IBCCustId		= src.IBCCustId,
@@ -268,14 +269,15 @@ BEGIN
 					dest.AnchorId		= src.AnchorId,
 					dest.recommend		= src.recommend,
 					dest.mrecommend		= src.mrecommend,
-					dest.srecommend		= src.srecommend
+					dest.srecommend		= src.srecommend,
+					dest.WinlostDate	= src.WinlostDate
 				WHEN NOT MATCHED BY TARGET THEN INSERT
 					(
-						TipId,IBCCustId,Deposit_CustId,playerName,TipTime,Amount,currency,AnchorId,recommend,mrecommend,srecommend
+						TipId,IBCCustId,Deposit_CustId,playerName,TipTime,Amount,currency,AnchorId,recommend,mrecommend,srecommend,WinlostDate
 					)
 					VALUES
 					(
-						TipId,IBCCustId,Deposit_CustId,playerName,TipTime,Amount,currency,AnchorId,recommend,mrecommend,srecommend
+						TipId,IBCCustId,Deposit_CustId,playerName,TipTime,Amount,currency,AnchorId,recommend,mrecommend,srecommend,WinlostDate
 					);
 			END
 
