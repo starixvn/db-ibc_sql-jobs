@@ -79,7 +79,7 @@ BEGIN
 		FROM dbo.LicenseeCust WITH (NOLOCK) 
 		WHERE LicenseeID = @LicenseeID
 			AND Currency NOT IN (SELECT DISTINCT CurrencyID 
-								FROM dbo.LAP_f_LicenseeCurrencyLimit() 
+								FROM dbo.Lrf_f_LicenseeCurrencyLimit_Main() 
 								WHERE LicenseeID = @LicenseeID)
 				
 		IF ISNULL(@LicenseeID,0) = 0
