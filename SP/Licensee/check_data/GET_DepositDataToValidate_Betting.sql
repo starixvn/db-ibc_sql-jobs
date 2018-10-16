@@ -1,4 +1,6 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+USE bodb_LicenseeReport
+GO
 
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_Betting] 
     @Date smalldatetime = null
@@ -476,7 +478,7 @@ DECLARE --SB
 		   ,@LTBetCount 	= ISNULL(@LTBetCount,0)	   
 	
 	----PP
-	 SELECT  @LTTurnover=SUM(CASE 
+	 SELECT  @PPTurnover=SUM(CASE 
 						WHEN @DrawFilter IN (2,3) THEN 
 							CASE WHEN b.Status = 111 THEN 0 WHEN b.Status IN (114,115) THEN 0.5 ELSE 1 END
 						ELSE 1
