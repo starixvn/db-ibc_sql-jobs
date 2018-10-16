@@ -10,6 +10,8 @@ AS
 	DB: DB042.bodb_Licensee  
 	Revisions: 
 		- 20181002@Sophia: Sync BA ticket to DB053 [Redmine #99855]
+		- 20181016@Sophia: Sync more table LicenseeBATransaction to DB053 [Redmine #99855]
+						   This step support for UAT, when release on PRO will remove
  */  
 BEGIN
 	SET NOCOUNT ON
@@ -26,6 +28,7 @@ BEGIN
 	FROM @xml.nodes('//root/r') AS RECORDS(r)
 	OPTION (OPTIMIZE FOR (@xml = NULL ))
 
+	----- server DB042 and DB053
 	INSERT INTO dbo.LicenseeBATransaction_active(TransID, transdate, custid, recommend, srecommend)
 	SELECT transid, transdate, custId, recommend, srecommend
 	FROM @__BATransData t
@@ -34,6 +37,19 @@ BEGIN
 		FROM dbo.LicenseeBATransaction_active b WITH(NOLOCK)
 		WHERE t.transid = b.TransID
 	)
+	
+	IF @@SERVERNAME = 'DB053'
+	BEGIN 
+	----- server DB053
+	INSERT INTO dbo.LicenseeBATransaction (TransID, transdate)
+	SELECT transid, transdate
+	FROM @__BATransData t
+	WHERE NOT EXISTS (
+		SELECT TOP 1 1 
+		FROM dbo.LicenseeBATransaction  b WITH(NOLOCK)
+		WHERE t.transid = b.TransID
+	)
+	END 
 
 END
 
