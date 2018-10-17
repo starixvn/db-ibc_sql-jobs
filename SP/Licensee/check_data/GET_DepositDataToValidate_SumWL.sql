@@ -1,5 +1,10 @@
 ﻿/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+USE bodb_Licensee
+GO
 
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
 
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_SumWL] 
     @Date smalldatetime
@@ -47,94 +52,94 @@ BEGIN
 		RETURN; 
 	END
 
-	DECLARE @SbTurnover MONEY
-		   ,@SbCustomerWl MONEY
-		   ,@SbBetCount MONEY
-	   
-		   ,@RbTurnover MONEY
-		   ,@RbCustomerWl MONEY
-		   ,@RbBetCount MONEY
-	   
-		   ,@NgTurnover MONEY
-		   ,@NgCustomerWl MONEY
-		   ,@NgBetCount MONEY
-		   --- RNG Casino
-		   ,@CsTurnover MONEY
-		   ,@CsCustomerWl MONEY
-		   ,@CsBetCount MONEY
-		  -- Live Casino	
-			,@LCTurnover MONEY
-			,@LCCustomerWl MONEY
-			,@LCBetCount MONEY
-     
-		 --GD
-		   ,@GDTurnover MONEY
-		   ,@GDCustomerWl MONEY
-		   ,@GDBetCount MONEY
-		  --KN
-		   ,@KNTurnover MONEY
-		   ,@KNCustomerWl MONEY
-		   ,@KNBetCount MONEY
+	DECLARE
+		 @SbTurnover MONEY
+		,@SbCustomerWl MONEY
+		,@SbBetCount MONEY
+
+		,@RbTurnover MONEY
+		,@RbCustomerWl MONEY
+		,@RbBetCount MONEY
+
+		,@NgTurnover MONEY
+		,@NgCustomerWl MONEY
+		,@NgBetCount MONEY
+		--- RNG Casino
+		,@CsTurnover MONEY
+		,@CsCustomerWl MONEY
+		,@CsBetCount MONEY
+		-- Live Casino	
+		,@LCTurnover MONEY
+		,@LCCustomerWl MONEY
+		,@LCBetCount MONEY
+		--GD
+		,@GDTurnover MONEY
+		,@GDCustomerWl MONEY
+		,@GDBetCount MONEY
+		--KN
+		,@KNTurnover MONEY
+		,@KNCustomerWl MONEY
+		,@KNBetCount MONEY
 		----VS
-		   ,@VsTurnover MONEY
-		   ,@VsCustomerWl MONEY
-		   ,@VsBetCount MONEY 
-		 --AG
-		   ,@AGTurnover MONEY
-		   ,@AGCustomerWl MONEY
-		   ,@AGBetCount MONEY
+		,@VsTurnover MONEY
+		,@VsCustomerWl MONEY
+		,@VsBetCount MONEY 
+		--AG
+		,@AGTurnover MONEY
+		,@AGCustomerWl MONEY
+		,@AGBetCount MONEY
 		--BT
-		   ,@BTTurnover MONEY
-		   ,@BTCustomerWl MONEY
-		   ,@BTBetCount MONEY
-		  --VG: Macau
-		   ,@VGTurnover MONEY
-		   ,@VGCustomerWl MONEY
-		   ,@VGBetCount MONEY  
-		   --VB: Macau Games
-		   ,@VBTurnover MONEY
-		   ,@VBCustomerWl MONEY
-		   ,@VBBetCount MONEY  
-			 --MGCLC:Microgaming - Live Casino
-		   ,@MGCLCTurnover MONEY
-		   ,@MGCLCCustomerWl MONEY
-		   ,@MGCLCBetCount MONEY
-		   --MGCRNG:Microgaming - RNG Casino
-		   ,@MGCRNGTurnover MONEY
-		   ,@MGCRNGCustomerWl MONEY
-		   ,@MGCRNGBetCount MONEY
-		   ----CB
-			,@CBTurnover MONEY
-			,@CBCustomerWl MONEY
-			,@CBBetCount MONEY
-			----AB
-			,@ABTurnover MONEY
-			,@ABCustomerWl MONEY
-			,@ABBetCount MONEY
-			----NG2
-			,@NG2Turnover MONEY
-			,@NG2CustomerWl MONEY
-			,@NG2BetCount MONEY
-			----FW
-			,@FWTurnover MONEY
-			,@FWCustomerWl MONEY
-			,@FWBetCount MONEY
-			----CO
-			,@COTurnover MONEY
-			,@COCustomerWl MONEY
-			,@COBetCount MONEY
-			----VS2
-			,@VS2Turnover MONEY
-			,@VS2CustomerWl MONEY
-			,@VS2BetCount MONEY
-			----LT
-			,@LTTurnover MONEY
-			,@LTCustomerWl MONEY
-			,@LTBetCount MONEY
-			----PP
-			,@PPTurnover MONEY
-			,@PPCustomerWl MONEY
-			,@PPBetCount MONEY
+		,@BTTurnover MONEY
+		,@BTCustomerWl MONEY
+		,@BTBetCount MONEY
+		--VG: Macau
+		,@VGTurnover MONEY
+		,@VGCustomerWl MONEY
+		,@VGBetCount MONEY  
+		--VB: Macau Games
+		,@VBTurnover MONEY
+		,@VBCustomerWl MONEY
+		,@VBBetCount MONEY  
+		--MGCLC:Microgaming - Live Casino
+		,@MGCLCTurnover MONEY
+		,@MGCLCCustomerWl MONEY
+		,@MGCLCBetCount MONEY
+		--MGCRNG:Microgaming - RNG Casino
+		,@MGCRNGTurnover MONEY
+		,@MGCRNGCustomerWl MONEY
+		,@MGCRNGBetCount MONEY
+		----CB
+		,@CBTurnover MONEY
+		,@CBCustomerWl MONEY
+		,@CBBetCount MONEY
+		----AB
+		,@ABTurnover MONEY
+		,@ABCustomerWl MONEY
+		,@ABBetCount MONEY
+		----NG2
+		,@NG2Turnover MONEY
+		,@NG2CustomerWl MONEY
+		,@NG2BetCount MONEY
+		----FW
+		,@FWTurnover MONEY
+		,@FWCustomerWl MONEY
+		,@FWBetCount MONEY
+		----CO
+		,@COTurnover MONEY
+		,@COCustomerWl MONEY
+		,@COBetCount MONEY
+		----VS2
+		,@VS2Turnover MONEY
+		,@VS2CustomerWl MONEY
+		,@VS2BetCount MONEY
+		----LT
+		,@LTTurnover MONEY
+		,@LTCustomerWl MONEY
+		,@LTBetCount MONEY
+		----PP
+		,@PPTurnover MONEY
+		,@PPCustomerWl MONEY
+		,@PPBetCount MONEY
 
 	---
 	DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),Sporttype INT)
@@ -143,7 +148,7 @@ BEGIN
 	SELECT DISTINCT ProductPrefix,s.Sporttype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP')	
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP')
 
 	INSERT INTO @tblSport(ProductPrefix,Sporttype)
 	SELECT 'SB',0
@@ -477,10 +482,8 @@ BEGIN
 			, @VS2BetCount
 			, @LTBetCount
 			, @PPBetCount
-		
-	SET NOCOUNT OFF		
 END
 GO
 
 GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_SumWL] TO [bodbLicenseeNet] AS [dbo]
- 
+GO

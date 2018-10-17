@@ -2,6 +2,10 @@
 USE bodb_LicenseeReport
 GO
 
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
+
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_Betting] 
     @Date smalldatetime = null
 	,@DrawFilter tinyint = 1
@@ -572,4 +576,6 @@ GO
 
 GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_Betting] TO [bodbLicenseeNet] AS [dbo]
 GO
+
 GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_Betting] TO [vnteam] AS [dbo]
+GO
