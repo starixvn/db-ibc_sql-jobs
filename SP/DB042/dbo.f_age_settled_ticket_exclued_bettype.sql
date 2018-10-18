@@ -9,12 +9,11 @@ AS
 	Revisions: 
 		- 20180906@Sophia: Add Poker Games [Redmine : #93050]
 		- 20180924@Sophia: add more bettype of Macau Games by remove hardcode bettype and use SportBettypeMatrix [Redmind: #100793]
-		- 20180924@Sophia: revise code, exclude SB only [Redmind: #100793]
 */
 
 RETURN (
 	SELECT DISTINCT Bettype 
 	FROM SportBettypeMatrix WITH (NOLOCK) 
-	WHERE PRODUCTID NOT IN (1)
-)
+	WHERE PRODUCTID IN (6,8,11,12,15,17,21,22,23,24,28,32,33)
+	)
 GO
