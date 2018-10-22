@@ -2,7 +2,7 @@
 Use bodb02
 GO    
 
-CREATE PROCEDURE [dbo].[Task_BATransaction_Ins]
+ALTER PROCEDURE [dbo].[Task_BATransaction_Ins]
 AS  
 /*  
 	Created by:[Henry]  
@@ -83,13 +83,14 @@ BEGIN
 	FROM @temptrans
 
 	--Add more code to sync data to DB042 --> temporary solution
-	DECLARE @XmlData NVARCHAR(MAX)
+	DECLARE @XmlData NVARCHAR(MAX) 
 	SET @XmlData = (
 		SELECT TransId AS t, Transdate AS td, custid AS c, recommend AS r, srecommend AS s
 		FROM @temptrans
 		FOR XML RAW('r'), root
-	)
-	IF @XmlData IS NOT NULL
+	)	
+	
+	IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB052' 
 		EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
 		
 END

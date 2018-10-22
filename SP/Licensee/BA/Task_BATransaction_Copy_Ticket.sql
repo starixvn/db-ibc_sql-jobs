@@ -2,7 +2,7 @@
 Use bodb_Licensee
 GO    
 
-CREATE PROCEDURE dbo.Task_BATransaction_Copy_Ticket @XmlData NVARCHAR(MAX), @ErrorCode INT = 0 OUTPUT
+ALTER PROCEDURE dbo.Task_BATransaction_Copy_Ticket @XmlData NVARCHAR(MAX), @ErrorCode INT = 0 OUTPUT
 AS  
 /*  
 	Created: 20180806@Patrick
