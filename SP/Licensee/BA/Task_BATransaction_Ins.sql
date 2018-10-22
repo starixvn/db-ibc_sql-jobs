@@ -21,7 +21,8 @@ AS
 		20160416@Francis: Revert hard-code of [transid < 100000000000]
 		20170410@Paul: Implement Cash Out [RedmineID :#71727]
 		20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
-		20181002@Sophia: Sync BA ticket to DB053 [Redmine #99855]
+		20181002@Sophia: Sync BA ticket to DB053 (UAT) [Redmine #99855]
+		20181025@Sophia: Revert SPs not to sync BA ticket to DB053, due to DB053 has the job Gen BA ticket by itself (PRO) [Redmine #99855]	
  */  
 BEGIN
 	SET NOCOUNT ON   
@@ -90,8 +91,7 @@ BEGIN
 	)
 	IF @XmlData IS NOT NULL
 		EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
-		EXEC DB053.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
-
+		
 END
 
 GO
