@@ -1,12 +1,5 @@
-USE [bodb_RMS]
-GO
+/*<info serverAlias="DBRMS-bodb_RMS" executers="bodbRMSNet" viewers="" isFunction="0" isNested="0"></info>*/
 
-/****** Object:  StoredProcedure [dbo].[Task_RMS_SumWinloss_Archive]    Script Date: 01/27/2015 04:28:17 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
 
 ALTER PROCEDURE [dbo].[Task_RMS_SumWinloss_Archive]
 	@winlostdate	DATETIME,
@@ -24,6 +17,7 @@ ALTER PROCEDURE [dbo].[Task_RMS_SumWinloss_Archive]
 			- 20130918@Johnson: change to use table rmSumWinloss_Old instead of rmSumWinloss_Old2
 			- 20130924@Johnson: add column recommend into rmSumWinloss_Old
 			- 20160601@Winnie: add column IsMixParlay
+			- 20180927@Jacob: Apply Extra PT and Super Comm to Report.  RedmineID: #100951 		
 		Parameter's Explanation:
 		
 	*/
@@ -45,7 +39,11 @@ BEGIN
       ,[odds]
       ,[betcount]
       ,[recommend]
-      ,parlaytype
+      ,[parlaytype]
+	 ,[scomm]
+	 ,[extra_comm]
+	 ,[extra_winlost]
+	 ,[extra_stake]
 	)
 	SELECT [winlostdate]
       ,[custid]
@@ -62,7 +60,11 @@ BEGIN
       ,[odds]
       ,[betcount]
       ,[recommend]
-      ,parlaytype
+      ,[parlaytype]
+	 ,[scomm]
+	 ,[extra_comm]
+	 ,[extra_winlost]
+	 ,[extra_stake]
   FROM [dbo].[rmSumWinloss] WITH(NOLOCK)
   WHERE winlostdate = @winlostdate
   
@@ -73,10 +75,9 @@ BEGIN
   ELSE
   BEGIN
 	SELECT  @ErrCode = 100,
-			@ErrMsg = 'Archiving data failed for date :' + CONVERT(VARCHAR(10),@winlostdate,120)
+			@ErrMsg = 'Archiving data if table rmSumWinloss failed for date :' + CONVERT(VARCHAR(10),@winlostdate,120)
 	RETURN
  END
- 
  
 END  
 
