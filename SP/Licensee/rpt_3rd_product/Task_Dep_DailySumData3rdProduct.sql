@@ -1,6 +1,7 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE bodb02
 GO
+
 ALTER PROCEDURE dbo.Task_Dep_DailySumData3rdProduct
 	@WinlostDate SMALLDATETIME
 AS
@@ -31,7 +32,7 @@ BEGIN
 
 	CREATE TABLE #LicenseeProductTable (RowId INT IDENTITY(1,1), LicenseeId INT, LicenseeName VARCHAR(50), CurrencyId TINYINT, ProductId TINYINT)
 	CREATE TABLE #3rdData (WinlostDate SMALLDATETIME, Stake MONEY, Actual_Stake MONEY, Winlost MONEY, CurrencyId TINYINT, Bettype SMALLINT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0))
-	CREATE TABLE #ChargeRate (PartyId INT, LicenseeId INT, ProductId INT, Rate MONEY, FromDate SMALLDATETIME, ToDate SMALLDATETIME)
+	CREATE TABLE #ChargeRate (PartyId INT, LicenseeId INT, ProductId INT, ChargeType TINYINT, Rate MONEY, FromDate SMALLDATETIME, ToDate SMALLDATETIME)
 	DECLARE @LicenseeTable TABLE (RowId INT IDENTITY(1,1), LicenseeId INT, LicenseeName VARCHAR(50), CurrencyId TINYINT)
 	DECLARE @DataTmp TABLE (RowId INT, CurrencyId TINYINT, Bettype SMALLINT)
 	DECLARE @BalanceUpTable TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME) 
@@ -101,24 +102,24 @@ BEGIN
 	
 	--get charge rate
 	SET @SqlQueryChargeRate = ''
-	SELECT @SqlQueryChargeRate = 'SELECT PartyId, LicenseeId, ProductId, DI_Rate, Fromdate, Todate
-			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
+	SELECT @SqlQueryChargeRate = 'SELECT PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, Fromdate, Todate
+			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_ChargeInfo(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + '''''
 												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
-			WHERE DI_Rate > 0 AND ChargeType = 1 '')'
+			WHERE DI_Rate > 0 AND ChargeType IN (1,12) '')'
 	
-	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
+	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, ChargeType, Rate, FromDate, ToDate)
 	EXEC (@SqlQueryChargeRate)
 
 	--get more charge rate for trial time
 	SET @SqlQueryChargeRate = ''
-	SELECT @SqlQueryChargeRate = 'SELECT PartyId, LicenseeId, ProductId, DI_Rate, Fromdate, Todate
-			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
+	SELECT @SqlQueryChargeRate = 'SELECT PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, Fromdate, Todate
+			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + '''''
 												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
-			WHERE DI_Rate > 0 AND ChargeType = 1 '')'
+			WHERE DI_Rate > 0 AND ChargeType IN (1,12) '')'
 	
-	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
+	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, ChargeType, Rate, FromDate, ToDate)
 	EXEC (@SqlQueryChargeRate)
 
 	IF NOT EXISTS (SELECT TOP 1 1 FROM #ChargeRate)
@@ -202,7 +203,7 @@ BEGIN
 			-- GoldDeluxe_Tip
 			SELECT @SqlQueryFor3rd = ''
 			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 1706 AS Bettype, Stake, Actual_stake, Winlost
-				FROM OPENQUERY(DBLIC, ''SELECT b.WinlostDate, b.Currency, SUM(ABS(b.Amount)) AS Stake, SUM(ABS(b.Amount)) AS Actual_stake, 0 AS Winlost
+				FROM OPENQUERY(DBLIC, ''SELECT b.WinlostDate, b.Currency, 0 AS Stake, SUM(ABS(b.Amount)) AS Actual_stake, 0 AS Winlost
 				FROM bodb_PlaytechCS.dbo.GoldDeluxe_Tip b WITH (NOLOCK)
 					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON b.recommend = f.custid AND b.currency = f.currency 
 				WHERE 1 = 1'
@@ -333,7 +334,7 @@ BEGIN
 			INNER JOIN (
 				SELECT FromDate, ToDate, Rate
 					, CASE WHEN ProductId = 10 THEN 1800
-						WHEN ProductId = 11 THEN 1700
+						WHEN ProductId = 11 THEN CASE WHEN ChargeType = 1 THEN 1700 WHEN ChargeType = 12 THEN 1706 END
 						WHEN ProductId = 12 THEN 1900 
 						WHEN ProductId = 31 THEN 8000 
 						END Bettype

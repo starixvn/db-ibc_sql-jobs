@@ -279,6 +279,12 @@ BEGIN
 					(
 						TipId,IBCCustId,Deposit_CustId,playerName,TipTime,Amount,currency,AnchorId,recommend,mrecommend,srecommend,WinlostDate
 					);
+
+				SELECT @WinlostDate = MIN(CONVERT(DATE, TipTime)) FROM #GoldDeluxe_Tip
+
+				SELECT @LogDesc = COALESCE(@LogDesc + '; ', '') + CONVERT(DATE, TipTime) + ' (No. of tickets: ' + CONVERT(VARCHAR(20), COUNT(TipId)) + ')'
+				FROM #GoldDeluxe_Tip
+				GROUP BY TipTime
 			END
 
 			-- Delete old data that has been finished

@@ -13,6 +13,7 @@ AS
 		- 20150703@Patrick: Filter data by range balanceup & movebet
 		- 20150824@Patrick: Call sp: Lrf_SelBalanceUpDay via link server
 		- 20171213@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
+		- 20181003@Percy: Integrate GoldDeluxe Tip [RedmineID: #70177]
 		
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
@@ -139,7 +140,8 @@ BEGIN
 
 	DECLARE @FinalData TABLE (CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
 			, StatusId TINYINT, Status VARCHAR(10), apositiontaking MONEY, awinlost MONEY, RefNo BIGINT, actualrate FLOAT
-			, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50), PlayerComm MONEY , Comm MONEY )
+			, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50)
+			, PlayerComm MONEY, Comm MONEY, betfrom NVARCHAR(1))
 
 	WHILE EXISTS (SELECT 1 FROM @LicenseeTable WHERE RowId = @RowId)
 	BEGIN
@@ -172,7 +174,7 @@ BEGIN
 		END	
 		IF CHARINDEX('11', @ProductIds, 0) > 0
 		BEGIN
-			SET @BettypeIds = @BettypeIds + '1700,'
+			SET @BettypeIds = @BettypeIds + '1700,1706'
 		END	
 		IF CHARINDEX('12', @ProductIds, 0) > 0
 		BEGIN
@@ -254,10 +256,28 @@ BEGIN
 		IF CHARINDEX('11', @ProductIds, 0) > 0 --Gold Deluxe
 		BEGIN
 			--print ('Gold Deluxe')
+
+			-- bettrans_GoldDeluxe
 			SELECT @SqlQueryFor3rd = ''
 			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 1700 AS Bettype, Stake, Actual_stake, Winlost
 				FROM OPENQUERY(DBLIC, ''SELECT WinlostDate, b.Currency, SUM(ABS(Stake)) AS Stake, SUM(ABS(Stake)) AS Actual_stake, SUM(ABS(Winlost)) AS Winlost
 				FROM bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b WITH (NOLOCK)
+					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON b.recommend = f.custid AND b.currency = f.currency 
+				WHERE 1 = 1'
+					+ ' AND WinlostDate BETWEEN ''''' + CONVERT(VARCHAR(10), @FirstDateOfLastMonth, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''''
+					+ ' AND b.Currency = ' + CAST(@CurrencyId AS VARCHAR)
+					+ ' AND StatusId IN (112,113,111)'
+				+ ' GROUP BY WinlostDate, b.Currency'
+				+ ''' )'
+			
+			INSERT INTO #3rdData(WinlostDate, CurrencyId, Bettype, Stake, Actual_stake, Winlost)
+			EXEC (@SqlQueryFor3rd)
+
+			-- GoldDeluxe_Tip
+			SELECT @SqlQueryFor3rd = ''
+			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 1706 AS Bettype, Stake, Actual_stake, Winlost
+				FROM OPENQUERY(DBLIC, ''SELECT WinlostDate, b.Currency, 0 AS Stake, SUM(ABS(Stake)) AS Actual_stake, 0 AS Winlost
+				FROM bodb_PlaytechCS.dbo.GoldDeluxe_Tip b WITH (NOLOCK)
 					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON b.recommend = f.custid AND b.currency = f.currency 
 				WHERE 1 = 1'
 					+ ' AND WinlostDate BETWEEN ''''' + CONVERT(VARCHAR(10), @FirstDateOfLastMonth, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''''
@@ -397,11 +417,14 @@ BEGIN
 			, recommend = c.recommend
 			, UserName = c.username
 			, CurrencyName = ex.currency
+			, Betfrom = CASE WHEN tmp.Bettype = 8000 THEN 'd'
+							 ELSE 'i'
+						END
 		FROM @FinalData tmp
 			INNER JOIN (
 				SELECT FromDate, ToDate, Rate
 					, CASE WHEN ProductId = 10 THEN 1800
-						WHEN ProductId = 11 THEN 1700
+						WHEN ProductId = 11 THEN CASE WHEN ChargeType = 1 THEN 1700 WHEN ChargeType = 12 THEN 1706 END
 						WHEN ProductId = 12 THEN 1900 
 						WHEN ProductId = 31 THEN 8000 END Bettype
 				FROM #ChargeRate WHERE LicenseeId = @LicenseeId
@@ -511,7 +534,7 @@ BEGIN
 			, refno
 			, 0 comstatus
 			, @WinlostDate winlostdate
-			, 'i' betfrom
+			, betfrom
 			, 0 betcheck
 			, NULL checktime
 			, NULL oddsspread
