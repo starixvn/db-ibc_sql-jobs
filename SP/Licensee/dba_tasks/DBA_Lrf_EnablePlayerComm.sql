@@ -11,7 +11,7 @@ Revisions:
    - 20160912@Jim: add more parlaycomm
    - 20180809@Sophia: HA - remove LicenseeCustInfo table [Redmine: #99464]
    - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
-   
+   - 20181031@Sophia: remove bodb02 [redmine: #99855]
 Param's Explanation:  
   
    
@@ -97,7 +97,7 @@ BEGIN
 			FROM @tblLicensee t
 			INNER JOIN dbo.LicenseeCust lc WITH (NOLOCK)
 				ON t.LicenseeID = lc.LicenseeID
-			INNER JOIN bodb02.dbo.Customer lci WITH (NOLOCK)
+			INNER JOIN dbo.Customer lci WITH (NOLOCK)
 				ON lc.CustID = lci.recommend
 			WHERE t.ID = @i
 				AND lci.RoleID = 1
