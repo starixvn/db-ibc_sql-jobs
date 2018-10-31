@@ -1,38 +1,39 @@
-/****** Object:  Stored Procedure dbo.DBA_Lrf_LaunchProduct    Script Date: 2/4/2015 10:04:49 AM ******/  
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
   
-CREATE PROCEDURE [dbo].[DBA_Lrf_LaunchProduct]  
+ALTER PROCEDURE [dbo].[DBA_Lrf_LaunchProduct]  
 (  
- @LicenseeName VARCHAR(10),  
- @ProductCode   VARCHAR(100)='',  
- @EffectiveDate SMALLDATETIME =''  
+	@LicenseeName VARCHAR(10),  
+	@ProductCode   VARCHAR(100)='',  
+	@EffectiveDate SMALLDATETIME =''  
 )  
 AS  
 /*  
-Created: 20150126@Jim  
-Task : re-structure create new licensee flow  
-DB: DBLIC.bodb_licensee  
-Original :  
+	Created: 20150126@Jim  
+	Task : re-structure create new licensee flow  
+	DB: DBCUST.bodb_licensee  
+	Original :  
    
-Revisions:  
-   
-Param's Explanation:  
-  
+	Revisions:  
+		-20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
+	Param's Explanation:  
    
 */  
   
 BEGIN   
- DECLARE @LicenseeId INT  
-   ,@ProductID INT  
- SELECT @LicenseeId  = LicenseeId   
- FROM dbo.Licensees WITH (NOLOCK)   
- WHERE LicenseeName = @LicenseeName  
+	 DECLARE @LicenseeId	INT  
+			,@ProductID		INT  
+
+	 SELECT @LicenseeId  = LicenseeId   
+	 FROM dbo.Licensees WITH (NOLOCK)   
+	 WHERE LicenseeName = @LicenseeName  
    
- SELECT @ProductId = ProductId  
- FROM dbo.Product3rd WITH (NOLOCK)  
- WHERE ProductPrefix  = @ProductCode  
+	 SELECT @ProductId = ProductId  
+	 FROM dbo.Product3rd WITH (NOLOCK)  
+	 WHERE ProductPrefix  = @ProductCode  
    
- UPDATE dbo.LicenseeProduct3rd   
- SET EffectiveDate = @EffectiveDate  
- WHERE LicenseeId = @LicenseeID  
-  AND ProductId = @ProductID  
+	 UPDATE dbo.LicenseeProduct3rd   
+	 SET EffectiveDate = @EffectiveDate  
+	 WHERE LicenseeId = @LicenseeID  
+		AND ProductId = @ProductID  
 END
+GO

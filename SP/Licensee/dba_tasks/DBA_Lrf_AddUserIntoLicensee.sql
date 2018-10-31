@@ -1,5 +1,6 @@
-/****** Object:  Stored Procedure dbo.DBA_Lrf_AddUserIntoLicensee    Script Date: 8/7/2015 11:08:19 AM ******/
-/****** Object:  Stored Procedure dbo.DBA_Lrf_AddUserIntoLicensee    Script Date: 1/21/2015 5:15:12 PM ******/
+ /*<info serverAlias="DBCUST-bodb_Licensee" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+USE bodb_Licensee
+GO
 CREATE PROCEDURE [dbo].[DBA_Lrf_AddUserIntoLicensee] (
 	@LicenseeName VARCHAR(50)
 	, @UserName VARCHAR(50)
@@ -9,11 +10,11 @@ AS
 /*  
 Created: 20150121@Jim  
 Task : #29593 (Add David to the list of users who can use XTD3)  
-DB: DBLIC.bodb_licensee  
+DB: DBCUST-bodb_Licensee
 Original :  
    
 Revisions:  
-   
+    - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 Param's Explanation:  
   
    
@@ -123,3 +124,4 @@ BEGIN
 		WHERE LicenseeID = @LicenseeId
 	END
 END
+GO

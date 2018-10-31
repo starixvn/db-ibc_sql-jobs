@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 USE [bodb_licensee]
 GO
 /****** Object:  StoredProcedure [dbo].[DBA_Lrf_FunctionProduct]    Script Date: 05/04/2015 15:07:49 ******/
@@ -13,7 +14,7 @@ ALTER   PROCEDURE [dbo].[DBA_Lrf_FunctionProduct]
 /*
 	Created: 20140502@Jim
 	Task : re-structure create new licensee flow
-	DB: DBLIC.bodb_licensee
+	DB: DBCUST.bodb_licensee
 	Original :
 	
 	Revisions:
@@ -25,6 +26,7 @@ ALTER   PROCEDURE [dbo].[DBA_Lrf_FunctionProduct]
 		- 20171214@Harper: Edit for GMT +8 and Exchange Product
 		- 20180521@Harper: Remove CasinoProgressiveWins report
 		- 20180820@Harper: AG Casino Balance report just using for 12bet
+		- 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 
 	Param's Explanation:
 		

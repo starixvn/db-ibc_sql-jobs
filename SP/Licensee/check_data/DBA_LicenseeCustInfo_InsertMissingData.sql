@@ -1,5 +1,5 @@
-/*<info serverAlias="DBEXT-bodb02" executers="" viewers="vnteam" isFunction="0"></info>*/
-USE [bodb02]
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="" viewers="vnteam" isFunction="0"></info>*/
+USE [bodb_Licensee]
 GO
  
 ALTER PROCEDURE [dbo].[DBA_LicenseeCustInfo_InsertMissingData]
@@ -8,11 +8,12 @@ AS
 /*    
 	Created:     
 	Task : 
-	DB:   DBEXT-bodb02
+	DB:   DBCUST-bodb_Licensee
 	Original:    
 	    
 	Revisions:    
 	 - 20180809@Sophia: HA - remove LicenseeCustInfo table [Redmine: #99464]
+	 - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 	 
 */
 
@@ -26,9 +27,9 @@ BEGIN
 	   
 	 SELECT ds.CustId DummySuperId, ag.CustId DummyAgentId  
 	 INTO #Dummy  
-	 FROM dbo.Dep_CustSuper ds WITH(NOLOCK)  
-	  INNER JOIN dbo.Customer ag WITH(NOLOCK) ON ds.CustId = ag.SRecommend AND ag.RoleId = 2  
-	  LEFT JOIN bodb_Licensee.dbo.LicenseeCust lc WITH(NOLOCK) ON ag.CustId = lc.CustId  
+	 FROM CUSTDB.dbo.Dep_CustSuper ds WITH(NOLOCK)  
+	  INNER JOIN CUSTDB.dbo.Customer ag WITH(NOLOCK) ON ds.CustId = ag.SRecommend AND ag.RoleId = 2  
+	  LEFT JOIN dbo.LicenseeCust lc WITH(NOLOCK) ON ag.CustId = lc.CustId  
 	 WHERE lc.CustId IS NULL 
 	   
 	 SELECT l.LicenseeId,   
@@ -39,9 +40,9 @@ BEGIN
 	  ag.username [DummyAgent],
 	  ag.creatdate [DummyAgentCreatedDate]  
 	 FROM #Dummy d WITH(NOLOCK)  
-	  INNER JOIN dbo.Customer ag WITH(NOLOCK) ON d.DummyAgentId = ag.CustId  
-	  INNER JOIN dbo.Exchange e WITH(NOLOCK) ON ag.Currency = e.ExchangeId  
-	  INNER JOIN bodb_licensee.dbo.Licensees l WITH(NOLOCK) ON ag.Site = l.LicenseeName  
+	  INNER JOIN CUSTDB.dbo.Customer ag WITH(NOLOCK) ON d.DummyAgentId = ag.CustId  
+	  INNER JOIN CUSTDB.dbo.Exchange e WITH(NOLOCK) ON ag.Currency = e.ExchangeId  
+	  INNER JOIN dbo.Licensees l WITH(NOLOCK) ON ag.Site = l.LicenseeName  
 	 WHERE ag.Currency <> 20  
 	  AND ag.Username NOT LIKE '%Aff%' 
 	  AND ag.Username NOT LIKE '%ACC' + e.currency + '%'  
@@ -54,7 +55,7 @@ BEGIN
 	 SET @RowCount = @@ROWCOUNT  
 	     
 	 IF @RowCount > 0  
-	  INSERT INTO bodb_Licensee.dbo.LicenseeCust([LicenseeID],[CustID],[RoleID],[Currency],[CurrencyName],[Description])  
+	  INSERT INTO dbo.LicenseeCust([LicenseeID],[CustID],[RoleID],[Currency],[CurrencyName],[Description])  
 	   SELECT l.LicenseeId,   
 		ag.CustId [DummyAgentId],  
 		2 [RoleID],  
@@ -62,9 +63,9 @@ BEGIN
 		CASE ag.Currency WHEN 20 THEN 'UUS' ELSE e.Code END [CurrencyName],  
 		'' [Description]  
 	   FROM #Dummy d WITH(NOLOCK)  
-		INNER JOIN dbo.Customer ag WITH(NOLOCK) ON d.DummyAgentId = ag.CustId  
-		INNER JOIN dbo.Exchange e WITH(NOLOCK) ON ag.Currency = e.ExchangeId  
-		INNER JOIN bodb_licensee.dbo.Licensees l WITH(NOLOCK) ON ag.Site = l.LicenseeName  
+		INNER JOIN CUSTDB.dbo.Customer ag WITH(NOLOCK) ON d.DummyAgentId = ag.CustId  
+		INNER JOIN CUSTDB.dbo.Exchange e WITH(NOLOCK) ON ag.Currency = e.ExchangeId  
+		INNER JOIN dbo.Licensees l WITH(NOLOCK) ON ag.Site = l.LicenseeName  
 	   WHERE ag.Currency <> 20  
 		AND ag.Username NOT LIKE '%Aff%' 
 		AND ag.Username NOT LIKE '%ACC' + e.currency + '%'  

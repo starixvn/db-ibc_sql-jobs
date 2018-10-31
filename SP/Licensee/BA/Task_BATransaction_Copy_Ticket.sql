@@ -1,8 +1,8 @@
-/*<info serverAlias="DB053-bodb_Licensee,DB042-bodb_Licensee" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DB042-bodb_Licensee" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 Use bodb_Licensee
 GO    
 
-CREATE PROCEDURE dbo.Task_BATransaction_Copy_Ticket @XmlData NVARCHAR(MAX), @ErrorCode INT = 0 OUTPUT
+ALTER PROCEDURE dbo.Task_BATransaction_Copy_Ticket @XmlData NVARCHAR(MAX), @ErrorCode INT = 0 OUTPUT
 AS  
 /*  
 	Created: 20180806@Patrick
@@ -10,6 +10,9 @@ AS
 	DB: DB042.bodb_Licensee  
 	Revisions: 
 		- 20181002@Sophia: Sync BA ticket to DB053 [Redmine #99855]
+		- 20181016@Sophia: Sync more table LicenseeBATransaction to DB053 [Redmine #99855]
+						   This step support for UAT, when on PRO will remove later
+		- 20181025@Sophia: Revert SPs not to sync BA ticket to DB053, due to DB053 has the job Gen BA ticket by itself (PRO) [Redmine #99855]				   
  */  
 BEGIN
 	SET NOCOUNT ON
@@ -25,7 +28,7 @@ BEGIN
 		, r.value('./@r','int'), r.value('./@s','int')
 	FROM @xml.nodes('//root/r') AS RECORDS(r)
 	OPTION (OPTIMIZE FOR (@xml = NULL ))
-
+	
 	INSERT INTO dbo.LicenseeBATransaction_active(TransID, transdate, custid, recommend, srecommend)
 	SELECT transid, transdate, custId, recommend, srecommend
 	FROM @__BATransData t
@@ -34,6 +37,7 @@ BEGIN
 		FROM dbo.LicenseeBATransaction_active b WITH(NOLOCK)
 		WHERE t.transid = b.TransID
 	)
+		 
 
 END
 

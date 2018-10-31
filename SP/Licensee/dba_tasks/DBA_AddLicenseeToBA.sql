@@ -1,4 +1,4 @@
-/****** Object:  Stored Procedure dbo.DBA_AddLicenseeToBA    Script Date: 6/28/2012 4:37:27 PM ******/  
+/*<info serverAlias="DBCUST-bodb_Licensee" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_AddLicenseeToBA]  
 (  
  @LicenseeID  INT,  
@@ -9,10 +9,11 @@ AS
 Created: Henry  
 Date: 20120702  
 Task : Add licensee to BA Reseller  
-DB: DB052.bodb_Licensee  
+DB: DBCUST-bodb_Licensee  
 Original:  
   
 Revisions:  
+	- 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
    
    
 Param's Explanation:  
@@ -42,7 +43,7 @@ END
 --insert Licensee to BA reseller to OA group (OA_GroupLicensees)  
   
 INSERT INTO @TempGroupID(GroupID)  
-SELECT DISTINCT GroupID FROM OA_GroupLicensees (NOLOCK)  
+SELECT DISTINCT GroupID FROM DBLIC.bodb_Licensee.dbo.OA_GroupLicensees WITH (NOLOCK)  
   
 SET @i = 0  
 SELECT @MAX = MAX(id) FROM @TempGroupID  
@@ -52,18 +53,18 @@ BEGIN
     SET @i = @i + 1  
     SELECT @GroupID = GroupID FROM @TempGroupID WHERE id = @i  
       
-    IF EXISTS (SELECT 1 FROM OA_GroupLicensees (NOLOCK) WHERE GroupID = @GroupID AND ResellerID <> 3 AND LicenseeID = @LicenseeID)  
+    IF EXISTS (SELECT 1 FROM DBLIC.bodb_Licensee.dbo.OA_GroupLicensees WITH (NOLOCK) WHERE GroupID = @GroupID AND ResellerID <> 3 AND LicenseeID = @LicenseeID)  
     BEGIN  
-  IF NOT EXISTS (SELECT 1 FROM OA_GroupLicensees (NOLOCK) WHERE GroupID=@GroupID AND ResellerID = 3 AND LicenseeID = @LicenseeID)  
+  IF NOT EXISTS (SELECT 1 FROM DBLIC.bodb_Licensee.dbo.OA_GroupLicensees WITH (NOLOCK) WHERE GroupID=@GroupID AND ResellerID = 3 AND LicenseeID = @LicenseeID)  
   BEGIN  
-   INSERT INTO OA_GroupLicensees (GroupID,ResellerID,LicenseeID) VALUES (@GroupID,3,@LicenseeID)  
+   INSERT INTO DBLIC.bodb_Licensee.dbo.OA_GroupLicensees (GroupID,ResellerID,LicenseeID) VALUES (@GroupID,3,@LicenseeID)  
   END  
     END   
 END  
   
 --insert Licensee to BA reseller to OA Users (OA_UserLicensees)  
 INSERT INTO @TempUserID(UserID)  
-SELECT DISTINCT UserID FROM OA_UserLicensees (NOLOCK)  
+SELECT DISTINCT UserID FROM DBLIC.bodb_Licensee.dbo.OA_UserLicensees WITH (NOLOCK)  
   
 SET @i = 0  
 SELECT @MAX = MAX(id) FROM @TempUserID  
@@ -73,11 +74,11 @@ BEGIN
  SET @i = @i + 1  
  SELECT @UserID = UserID FROM @TempUserID WHERE id = @i  
    
- IF EXISTS (SELECT 1 FROM OA_UserLicensees (NOLOCK) WHERE UserID = @UserID AND ResellerID <> 3 AND LicenseeID = @LicenseeID)  
+ IF EXISTS (SELECT 1 FROM DBLIC.bodb_Licensee.dbo.OA_UserLicensees WITH (NOLOCK) WHERE UserID = @UserID AND ResellerID <> 3 AND LicenseeID = @LicenseeID)  
     BEGIN  
-  IF NOT EXISTS (SELECT 1 FROM OA_UserLicensees (NOLOCK) WHERE UserID=@UserID AND ResellerID = 3 AND LicenseeID = @LicenseeID)  
+  IF NOT EXISTS (SELECT 1 FROM DBLIC.bodb_Licensee.dbo.OA_UserLicensees WITH (NOLOCK) WHERE UserID=@UserID AND ResellerID = 3 AND LicenseeID = @LicenseeID)  
   BEGIN  
-   INSERT INTO OA_UserLicensees (UserID,ResellerID,LicenseeID) VALUES (@UserID,3,@LicenseeID)  
+   INSERT INTO DBLIC.bodb_Licensee.dbo.OA_UserLicensees (UserID,ResellerID,LicenseeID) VALUES (@UserID,3,@LicenseeID)  
   END  
     END   
 END  
@@ -107,3 +108,4 @@ END
    
   
 END
+GO

@@ -2,7 +2,7 @@
 Use bodb02
 GO    
 
-CREATE PROCEDURE [dbo].[Task_BATransaction_Ins]
+ALTER PROCEDURE [dbo].[Task_BATransaction_Ins]
 AS  
 /*  
 	Created by:[Henry]  
@@ -21,7 +21,8 @@ AS
 		20160416@Francis: Revert hard-code of [transid < 100000000000]
 		20170410@Paul: Implement Cash Out [RedmineID :#71727]
 		20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
-		20181002@Sophia: Sync BA ticket to DB053 [Redmine #99855]
+		20181002@Sophia: Sync BA ticket to DB053 (UAT) [Redmine #99855]
+		20181025@Sophia: Revert SPs not to sync BA ticket to DB053, due to DB053 has the job Gen BA ticket by itself (PRO) [Redmine #99855]	
  */  
 BEGIN
 	SET NOCOUNT ON   
@@ -82,16 +83,16 @@ BEGIN
 	FROM @temptrans
 
 	--Add more code to sync data to DB042 --> temporary solution
-	DECLARE @XmlData NVARCHAR(MAX)
+	DECLARE @XmlData NVARCHAR(MAX) 
 	SET @XmlData = (
 		SELECT TransId AS t, Transdate AS td, custid AS c, recommend AS r, srecommend AS s
 		FROM @temptrans
 		FOR XML RAW('r'), root
-	)
-	IF @XmlData IS NOT NULL
+	)	
+	
+	IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB052' 
 		EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
-		EXEC DB053.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
-
+		
 END
 
 GO
