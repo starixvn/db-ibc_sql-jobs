@@ -97,7 +97,7 @@ BEGIN
 			FROM @tblLicensee t
 			INNER JOIN dbo.LicenseeCust lc WITH (NOLOCK)
 				ON t.LicenseeID = lc.LicenseeID
-			INNER JOIN dbo.Customer lci WITH (NOLOCK)
+			INNER JOIN CUSTDB.dbo.Customer lci WITH (NOLOCK)
 				ON lc.CustID = lci.recommend
 			WHERE t.ID = @i
 				AND lci.RoleID = 1
