@@ -8,6 +8,12 @@
 
 USE bodb_CustomerLog
 GO
+WHILE(1=1)
+BEGIN
+	RECEIVE TOP (1) * FROM dbo.Queue_UserLog_Credit
+	IF @@ROWCOUNT = 0 BREAK;	
+END
+
 CREATE TABLE #sb_temp (ID INT IDENTITY (1,1), name VARCHAR(100),handle UNIQUEIDENTIFIER)
 
 INSERT INTO #sb_temp (name,handle)
@@ -32,5 +38,7 @@ BEGIN
 		SET @start = @start + 1 
 	END
 END	
+
+
 
 DROP TABLE #sb_temp
