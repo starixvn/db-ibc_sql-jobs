@@ -1,10 +1,3 @@
-USE [bodb02]
-GO
-/****** Object:  StoredProcedure [dbo].[Bet_ExecRep_04]    Script Date: 04/07/2016 03:05:17 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[Bet_ExecRep_04] 
 	@Winlostdate DATETIME = NULL
 	,@Target VARCHAR(30) = 'DBTRANS' -- DBTRANS/REPLICATED
@@ -24,11 +17,11 @@ AS
  		- 20140124@Viet: fix splitting issue
 		- 20140701@Jamie: Get virtualmultiplier of bettrans 
 		- 20160412@Sophia: Add related tables: BettransRNG, BettransLC, Translog (will apply on bettransm later)
- 		
+ 		- 20171020@Lukas: move to ExecRep_00, this SP is no longer use 
  	Param's Explanation: 
  		@Winlostdate: the date that new rates are updated		
  */
-SET NOCOUNT ON
+
 BEGIN
 	IF @Winlostdate IS NULL RETURN
 	IF @Target NOT IN ('DBTRANS', 'REPLICATED') RETURN
@@ -39,286 +32,111 @@ BEGIN
 
 	DECLARE @Cnt INT
 	DECLARE @virtualmultiplier SMALLMONEY
+	
+	CREATE TABLE #tmp (transid BIGINT, actualrate float, virtualrate float)
+	CREATE TABLE #translog (translogid BIGINT, actualrate float, virtualrate float)
+	CREATE TABLE #bettransRnG (transid BIGINT, actualrate float, virtualrate float)
+	CREATE TABLE #bettransLC (transid BIGINT, actualrate float, virtualrate float)
+	
+	SET NOCOUNT OFF
 
 	IF @@SERVERNAME = 'DBTRANS'
 	BEGIN
+		
 		-- update for SB's tickets (using virtualrate)
-		PRINT '1.----------------'
+		PRINT '1.--------SB''s tickets (using virtualrate)--------'
+			
+		insert into #tmp(transid, actualrate, virtualrate)
+		select transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
+		FROM dbo.bettrans b WITH(nolock) 
+			INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK) ON b.currency = e.exchangeid
+		WHERE b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate 
+			AND (b.bettype <= 30 OR b.bettype BETWEEN 50 AND 19998) AND b.actualrate <> b.virtualrate
 
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET @virtualmultiplier = b.virtualrate/b.actualrate 
-				,actualrate = e.actualrate
-				,virtualrate = e.actualrate * @virtualmultiplier
-				--,virtualrate = e.actualrate * c.virtualmultiplier
-			FROM dbo.bettrans b WITH(ROWLOCK, UPDLOCK)
-				--,CustDB.dbo.custinfo c WITH (NOLOCK)
-				,CustDB.dbo.exchange e WITH (NOLOCK)
-			WHERE --b.custid = c.custid AND 
-				b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND (b.bettype <= 30 OR b.bettype BETWEEN 50 AND 19998) AND b.actualrate <> b.virtualrate
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds    
-		END
-
-		PRINT '2.----------------'
-
+			 
+		PRINT '2.--------SB''s tickets (without virtualrate)--------'
 		-- update for SB's tickets (without virtualrate)
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-				,virtualrate = e.actualrate
-			FROM dbo.bettrans b WITH(ROWLOCK, UPDLOCK)
-				,CustDB.dbo.exchange e WITH (NOLOCK)
-			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND (b.bettype <= 30 OR b.bettype BETWEEN 50 AND 19998) AND b.actualrate = b.virtualrate
+		 
+		insert into #tmp(transid, actualrate, virtualrate)
+		select transid, e.actualrate, e.actualrate 
+		FROM dbo.bettrans b WITH(nolock) 
+			,CustDB.dbo.exchange e WITH (NOLOCK)
+		WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND (b.bettype <= 30 OR b.bettype BETWEEN 50 AND 19998) AND b.actualrate = b.virtualrate
+ 
 
-			SELECT @Cnt = @@ROWCOUNT
+		PRINT '3.----------------'			
+		insert into #tmp(transid, actualrate, virtualrate)
+		select transid, e.actualrate, e.actualrate 
+		FROM dbo.bettrans b WITH(nolock) 
+			,CustDB.dbo.exchange e WITH (NOLOCK)
+		WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype BETWEEN 31 AND 49 AND b.actualrate = b.virtualrate AND b.currency2 IS NULL
+ 
 
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
-
-		PRINT '3.----------------'
-
-		-- update for TOTE tickets
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-				,virtualrate = e.actualrate
-			FROM dbo.bettrans b WITH(ROWLOCK, UPDLOCK)
-				,CustDB.dbo.exchange e WITH (NOLOCK)
-			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype BETWEEN 31 AND 49 AND b.actualrate = b.virtualrate AND b.currency2 IS NULL
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
-
-		PRINT '4.----------------'
+		PRINT '4.-------OPENTOTE tickets---------'
 
 		-- OPENTOTE tickets
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-			FROM dbo.bettrans b WITH(ROWLOCK, UPDLOCK)
-				,CustDB.dbo.exchange e WITH (NOLOCK)
-			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype BETWEEN 31 AND 49 AND b.currency2 IS NOT NULL
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
-
-		PRINT '5.----------------'
-
-		-- transfer tickets
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-			FROM dbo.bettrans b WITH(ROWLOCK, UPDLOCK)
-				,CustDB.dbo.exchange e WITH (NOLOCK)
-			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
+			
+		insert into #tmp(transid, actualrate, virtualrate)
+		select transid, e.actualrate, b.virtualrate
+		FROM dbo.bettrans b WITH(nolock) 
+			,CustDB.dbo.exchange e WITH (NOLOCK)
+		WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype BETWEEN 31 AND 49 AND b.currency2 IS NOT NULL
 
 
+		PRINT '5.-------transfer tickets---------'
+		-- transfer tickets		 
+			
+		insert into #tmp(transid, actualrate, virtualrate)
+		select transid, e.actualrate, b.virtualrate
+		FROM dbo.bettrans b WITH(nolock) 
+			,CustDB.dbo.exchange e WITH (NOLOCK)
+		WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
+ 
 		-- update for TransLog table (using virtualrate)
-		PRINT '6.----------------'
-
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET @virtualmultiplier = b.virtualrate/b.actualrate 
-				,actualrate = e.actualrate
-				,virtualrate = e.actualrate * @virtualmultiplier
-			FROM dbo.TransLog b WITH(ROWLOCK, UPDLOCK)				
-				INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 
-			WHERE 
-				b.winlostdate >= @Winlostdate
-				AND b.actualrate <> b.virtualrate 
-				AND b.actualrate <> e.actualrate 				
-				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds    
-		END
-
-		PRINT '7.----------------'
-
-		-- -- update for TransLog table (without virtualrate)
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-				,virtualrate = e.actualrate
-			FROM dbo.TransLog b WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 			
-			WHERE b.winlostdate >= @Winlostdate
-				AND b.actualrate = b.virtualrate 
-				AND b.actualrate <> e.actualrate  
-				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
-
-
+		PRINT '6.--------TransLog table--------' 
+							
+		insert into #translog(translogid, actualrate, virtualrate)
+		select translogid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
+		FROM dbo.TransLog b WITH(nolock) 				
+			INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)
+				ON b.currency = e.exchangeid 
+		WHERE 
+			b.winlostdate >= @Winlostdate
+			--AND b.actualrate <> b.virtualrate 
+			AND b.actualrate <> e.actualrate 				
+			 
+ 
 		
 		-- update for BettransRNG table (using virtualrate)
-		PRINT '8.----------------'
+		PRINT '8.--------BettransRNG table--------'
 
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET @virtualmultiplier = b.virtualrate/b.actualrate 
-				,actualrate = e.actualrate
-				,virtualrate = e.actualrate * @virtualmultiplier
-			FROM dbo.BettransRNG b WITH(ROWLOCK, UPDLOCK)				
-				INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 
-			WHERE 
-				b.winlostdate >= @Winlostdate
-				AND b.actualrate <> b.virtualrate 
-				AND b.actualrate <> e.actualrate 				
-				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds    
-		END
-
-		PRINT '9.----------------'
-
-		-- update for BettransRNG table (without virtualrate)
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-				,virtualrate = e.actualrate
-			FROM dbo.BettransRNG b WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 			
-			WHERE b.winlostdate >= @Winlostdate
-				AND b.actualrate = b.virtualrate 
-				AND b.actualrate <> e.actualrate  
-				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
+			 
+		insert into #bettransRnG(transid, actualrate, virtualrate)
+		select transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
+		FROM dbo.BettransRNG b WITH(nolock) 				
+			INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)
+				ON b.currency = e.exchangeid 
+		WHERE 
+			b.winlostdate >= @Winlostdate
+			--AND b.actualrate <> b.virtualrate 
+			AND b.actualrate <> e.actualrate 				
+				 
 
 		-- update for BettransLC table (using virtualrate)
-		PRINT '10.----------------'
-
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET @virtualmultiplier = b.virtualrate/b.actualrate 
-				,actualrate = e.actualrate
-				,virtualrate = e.actualrate * @virtualmultiplier
-			FROM dbo.BettransLC b WITH(ROWLOCK, UPDLOCK)				
-				INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 
-			WHERE 
-				b.winlostdate >= @Winlostdate
-				AND b.actualrate <> b.virtualrate 
-				AND b.actualrate <> e.actualrate 				
+		PRINT '10.--------BettransLC table--------'
+ 
+			 
+		insert into #bettransLC(transid, actualrate, virtualrate)
+		select transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
+		FROM dbo.BettransLC b WITH(nolock) 				
+			INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)
+				ON b.currency = e.exchangeid 
+		WHERE 
+			b.winlostdate >= @Winlostdate
+			--AND b.actualrate <> b.virtualrate 
+			AND b.actualrate <> e.actualrate 				
 				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds    
-		END
-
-		PRINT '11.----------------'
-
-		-- update for BettransLC table (without virtualrate)
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-				,virtualrate = e.actualrate
-			FROM dbo.BettransLC b WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 			
-			WHERE b.winlostdate >= @Winlostdate
-				AND b.actualrate = b.virtualrate 
-				AND b.actualrate <> e.actualrate  
-				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
-
+		PRINT 'END: Reminder of UPDATE Exchange Rate Oanda: EXEC CustDB.dbo.DBA_ExchangeDailyOandaUpd_Actualrate @ExchangeDate=''xxx'''
 	END
 	
 	IF @@SERVERNAME <> 'DBTRANS'
@@ -328,290 +146,179 @@ BEGIN
 			FROM sysobjects
 			WHERE NAME IN ('custinfo', 'bettrans', 'exchange') AND type = 'U'
 		) < 3 RETURN
-		
 		-- update for SB's tickets (using virtualrate)
-		PRINT '1.----------------'
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET @virtualmultiplier = b.virtualrate/b.actualrate 
-				,actualrate = e.actualrate
-				,virtualrate = e.actualrate * @virtualmultiplier
-				--,virtualrate = e.actualrate * c.virtualmultiplier
-			FROM dbo.bettrans b WITH(ROWLOCK, UPDLOCK)
-				--,dbo.custinfo c WITH (NOLOCK)
-				,dbo.exchange e WITH (NOLOCK)
-			WHERE --b.custid = c.custid AND 
-					b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND (b.bettype <= 30 OR b.bettype BETWEEN 50 AND 19998) AND b.actualrate <> b.virtualrate
+		PRINT '1.-------SB''s tickets (using virtualrate)---------'
+			
+		insert into #tmp(transid, actualrate, virtualrate)
+		select transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
+		FROM dbo.bettrans b WITH(nolock) 
+			INNER JOIN bodb02.dbo.exchange e WITH (NOLOCK) ON b.currency = e.exchangeid
+		WHERE b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate 
+			AND (b.bettype <= 30 OR b.bettype BETWEEN 50 AND 19998) AND b.actualrate <> b.virtualrate
 
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds    
-		END
-
-		PRINT '2.----------------'
+			 
+		PRINT '2.-------- SB''s tickets (without virtualrate)--------'
 
 		-- update for SB's tickets (without virtualrate)
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-				,virtualrate = e.actualrate
-			FROM dbo.bettrans b WITH(ROWLOCK, UPDLOCK)
-				,dbo.exchange e WITH (NOLOCK)
-			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND (b.bettype <= 30 OR b.bettype BETWEEN 50 AND 19998) AND b.actualrate = b.virtualrate
+		  
+				
+		insert into #tmp(transid, actualrate, virtualrate)
+		select transid, e.actualrate, e.actualrate 
+		FROM dbo.bettrans b WITH(nolock) 
+			,bodb02.dbo.exchange e WITH (NOLOCK)
+		WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND (b.bettype <= 30 OR b.bettype BETWEEN 50 AND 19998) AND b.actualrate = b.virtualrate
+ 
 
-			SELECT @Cnt = @@ROWCOUNT
+		PRINT '3.----------------' 
+			 
+		insert into #tmp(transid, actualrate, virtualrate)
+		select transid, e.actualrate, e.actualrate 
+		FROM dbo.bettrans b WITH(nolock) 
+			,bodb02.dbo.exchange e WITH (NOLOCK)
+		WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype BETWEEN 31 AND 49 AND b.actualrate = b.virtualrate AND b.currency2 IS NULL
+ 
 
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
-
-		PRINT '3.----------------'
-
-		-- update for TOTE tickets
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-				,virtualrate = e.actualrate
-			FROM dbo.bettrans b WITH(ROWLOCK, UPDLOCK)
-				,dbo.exchange e WITH (NOLOCK)
-			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype BETWEEN 31 AND 49 AND b.actualrate = b.virtualrate AND b.currency2 IS NULL
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
-
-		PRINT '4.----------------'
+		PRINT '4.-------OPENTOTE tickets---------'
 
 		-- OPENTOTE tickets
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-			FROM dbo.bettrans b WITH(ROWLOCK, UPDLOCK)
-				,dbo.exchange e WITH (NOLOCK)
-			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype BETWEEN 31 AND 49 AND b.currency2 IS NOT NULL
+		 
+			
+		insert into #tmp(transid, actualrate, virtualrate)
+		select transid, e.actualrate, b.virtualrate
+		FROM dbo.bettrans b WITH(nolock) 
+			,bodb02.dbo.exchange e WITH (NOLOCK)
+		WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype BETWEEN 31 AND 49 AND b.currency2 IS NOT NULL
 
-			SELECT @Cnt = @@ROWCOUNT
 
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
-
-		PRINT '5.----------------'
-
+		PRINT '5.-------transfer tickets---------'
 		-- transfer tickets
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-			FROM dbo.bettrans b WITH(ROWLOCK, UPDLOCK)
-				,dbo.exchange e WITH (NOLOCK)
-			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
-
-		
+		 
+			--UPDATE TOP (5000) b
+			--SET actualrate = e.actualrate
+		insert into #tmp(transid, actualrate, virtualrate)
+		select transid, e.actualrate, b.virtualrate
+		FROM dbo.bettrans b WITH(nolock) 
+			,bodb02.dbo.exchange e WITH (NOLOCK)
+		WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
+ 
 		-- update for TransLog table (using virtualrate)
-		PRINT '6.----------------'
-
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET @virtualmultiplier = b.virtualrate/b.actualrate 
-				,actualrate = e.actualrate
-				,virtualrate = e.actualrate * @virtualmultiplier
-			FROM dbo.TransLog b WITH(ROWLOCK, UPDLOCK)				
-				INNER JOIN dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 
-			WHERE 
-				b.winlostdate >= @Winlostdate
-				AND b.actualrate <> b.virtualrate 
-				AND b.actualrate <> e.actualrate 				
+		PRINT '6.--------TransLog table--------' 
+			 
 				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds    
-		END
-
-		PRINT '7.----------------'
-
-		-- -- update for TransLog table (without virtualrate)
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-				,virtualrate = e.actualrate
-			FROM dbo.TransLog b WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 			
-			WHERE b.winlostdate >= @Winlostdate
-				AND b.actualrate = b.virtualrate 
-				AND b.actualrate <> e.actualrate  
-				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
-
-
+		insert into #translog(translogid, actualrate, virtualrate)
+		select translogid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
+		FROM dbo.TransLog b WITH(nolock) 			
+			INNER JOIN bodb02.dbo.exchange e WITH (NOLOCK)
+				ON b.currency = e.exchangeid 
+		WHERE 
+			b.winlostdate >= @Winlostdate
+			--AND b.actualrate <> b.virtualrate 
+			AND b.actualrate <> e.actualrate 				
+			 
+ 
 		
 		-- update for BettransRNG table (using virtualrate)
-		PRINT '8.----------------'
-
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET @virtualmultiplier = b.virtualrate/b.actualrate 
-				,actualrate = e.actualrate
-				,virtualrate = e.actualrate * @virtualmultiplier
-			FROM dbo.BettransRNG b WITH(ROWLOCK, UPDLOCK)				
-				INNER JOIN dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 
-			WHERE 
-				b.winlostdate >= @Winlostdate
-				AND b.actualrate <> b.virtualrate 
-				AND b.actualrate <> e.actualrate 				
-				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds    
-		END
-
-		PRINT '9.----------------'
-
-		-- update for BettransRNG table (without virtualrate)
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-				,virtualrate = e.actualrate
-			FROM dbo.BettransRNG b WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 			
-			WHERE b.winlostdate >= @Winlostdate
-				AND b.actualrate = b.virtualrate 
-				AND b.actualrate <> e.actualrate  
-				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
+		PRINT '8.-------BettransRNG table---------' 
+			 
+		insert into #bettransRnG(transid, actualrate, virtualrate)
+		select transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
+		FROM dbo.BettransRNG b WITH(nolock) 			
+			INNER JOIN bodb02.dbo.exchange e WITH (NOLOCK)
+				ON b.currency = e.exchangeid 
+		WHERE 
+			b.winlostdate >= @Winlostdate
+			--AND b.actualrate <> b.virtualrate 
+			AND b.actualrate <> e.actualrate 				
+				 
 
 		-- update for BettransLC table (using virtualrate)
-		PRINT '10.----------------'
+		PRINT '10.-------BettransLC table---------' 
 
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET @virtualmultiplier = b.virtualrate/b.actualrate 
-				,actualrate = e.actualrate
-				,virtualrate = e.actualrate * @virtualmultiplier
-			FROM dbo.BettransLC b WITH(ROWLOCK, UPDLOCK)				
-				INNER JOIN dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 
-			WHERE 
-				b.winlostdate >= @Winlostdate
-				AND b.actualrate <> b.virtualrate 
-				AND b.actualrate <> e.actualrate 				
-				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds    
-		END
-
-		PRINT '11.----------------'
-
-		-- update for BettransLC table (without virtualrate)
-		WHILE 1 = 1
-		BEGIN
-			UPDATE TOP (5000) b
-			SET actualrate = e.actualrate
-				,virtualrate = e.actualrate
-			FROM dbo.BettransLC b WITH(ROWLOCK, UPDLOCK)
-				INNER JOIN dbo.exchange e WITH (NOLOCK)
-					ON b.currency = e.exchangeid 			
-			WHERE b.winlostdate >= @Winlostdate
-				AND b.actualrate = b.virtualrate 
-				AND b.actualrate <> e.actualrate  
-				
-
-			SELECT @Cnt = @@ROWCOUNT
-
-			PRINT '  ' + Cast(@Cnt AS VARCHAR(10)) + ' row(s) affected'
-
-			IF @Cnt < 5000
-				BREAK
-
-			WAITFOR DELAY '00:00:01' -- Delay 1 Seconds
-		END
-
-	END
+		insert into #BettransLC(transid, actualrate, virtualrate)
+		select transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
+		FROM dbo.BettransLC b WITH(nolock) 				
+			INNER JOIN bodb02.dbo.exchange e WITH (NOLOCK)
+				ON b.currency = e.exchangeid 
+		WHERE 
+			b.winlostdate >= @Winlostdate
+			--AND b.actualrate <> b.virtualrate 
+			AND b.actualrate <> e.actualrate 	 
+		PRINT 'END: Reminder of UPDATE Exchange Rate Oanda: EXEC CustDB.dbo.DBA_ExchangeDailyOandaUpd_Actualrate @ExchangeDate=''xxx'''
+	end 
 	
-	PRINT 'END: Reminder of UPDATE Exchange Rate Oanda: EXEC CustDB.dbo.DBA_ExchangeDailyOandaUpd_Actualrate @ExchangeDate=''xxx'''
-
+	SET NOCOUNT ON 
+	-- update bettransRnG
+	declare @table table (transid bigint, actualrate float, virtualrate float)
+	declare @rowcount int = 1
+	
+	while @rowcount <> 0
+	begin
+		delete from @table
+		
+		delete top(2000) 		
+		from #bettransRnG
+		output deleted.transid, deleted.actualrate, deleted.virtualrate into @table
+		set @rowcount = @@ROWCOUNT
+		
+		update b with(rowlock,updlock)
+		set b.actualrate = t.actualrate,
+			b.virtualrate = t.virtualrate
+		from @table t 
+			inner join bettransRnG b on t.transid = b.transid
+	end
+	
+	set @rowcount = 1 
+	-- update for bettransLC 
+	while @rowcount <> 0
+	begin
+		delete from @table
+		
+		delete top(2000) 		
+		from #bettransLC
+		output deleted.transid, deleted.actualrate, deleted.virtualrate into @table
+		set @rowcount = @@ROWCOUNT
+		
+		update b with(rowlock,updlock)
+		set b.actualrate = t.actualrate,
+			b.virtualrate = t.virtualrate
+		from @table t 
+			inner join bettransLC b on t.transid = b.transid 
+	end
+	
+	set @rowcount = 1 
+	-- update for translog 
+	while @rowcount <> 0
+	begin
+		delete from @table
+		
+		delete top(2000) 		
+		from #translog
+		output deleted.translogid, deleted.actualrate, deleted.virtualrate into @table
+		set @rowcount = @@ROWCOUNT
+		
+		update b with(rowlock,updlock)
+		set b.actualrate = t.actualrate,
+			b.virtualrate = t.virtualrate
+		from @table t 
+			inner join translog b on t.transid = b.translogid 
+	end
+	
+	set @rowcount = 1 
+	-- update for bettrans 
+	while @rowcount <> 0
+	begin
+		delete from @table
+		
+		delete top(2000) 		
+		from #tmp 
+		output deleted.transid, deleted.actualrate, deleted.virtualrate into @table
+		set @rowcount = @@ROWCOUNT
+		
+		update b with(rowlock,updlock)
+		set b.actualrate = t.actualrate,
+			b.virtualrate = t.virtualrate
+		from @table t 
+			inner join bettrans b on t.transid = b.transid 
+	end
 END
 
-
-
-GO
-GRANT VIEW DEFINITION ON [dbo].[Bet_ExecRep_04] TO [vnteam] AS [dbo]
