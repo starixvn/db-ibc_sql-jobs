@@ -1,4 +1,6 @@
 /*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+USE [bodb02]
+GO
 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
 	@Winlostdate DATE,
@@ -24,6 +26,7 @@ AS
 		- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
 		- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
+		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -273,13 +276,9 @@ BEGIN
 		GROUP BY custid
 		
 		--Update BA attributes
-		DECLARE @sqlQuery VARCHAR(1024)
-		SELECT @sqlQuery = 'SELECT transid
-						FROM OPENQUERY(DBLIC, ''SELECT transid, WinlostDate
-						FROM bodb_Licensee.dbo.LicenseeBATransaction_bk WITH (NOLOCK) WHERE WinlostDate = ''''' + CAST(@Winlostdate AS VARCHAR(20)) + ''''''')'
-						
 		INSERT INTO #BATrans (transid)
-			EXEC (@sqlQuery)
+		SELECT transid
+		FROM bodb_Licensee.dbo.LicenseeBATransaction_bk WITH (NOLOCK) WHERE WinlostDate = @Winlostdate
 		
 		UPDATE #rptDepWinlost
 		SET Turnover_BA = ISNULL(t.turnover_ba,0),

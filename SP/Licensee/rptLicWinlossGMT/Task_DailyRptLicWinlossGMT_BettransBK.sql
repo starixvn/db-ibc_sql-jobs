@@ -1,4 +1,7 @@
-/*<info serverAlias="DBRPT-bodb_report" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBRPT-bodb_Report" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+USE [bodb_Report]
+GO
+
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinlossGMT_BettransBK]
 	@FromDate SMALLDATETIME,
 	@ToDate	SMALLDATETIME = NULL,
@@ -8,9 +11,11 @@ AS
 	Created: 20171213@Paul
 	Task: Daily summary for RptLicWinlossGMT from bettrans14
 	DB: DBRPT.bodb_report
+	
 	Revisions:  
-	- 20171213@Paul: initial data. Apply for Sportsbook first [redmine: #84932]
-	- 20180806@Amanda: support GMT +7 [redmine: #95878]
+		- 20171213@Paul: initial data. Apply for Sportsbook first [redmine: #84932]
+		- 20180806@Amanda: support GMT +7 [redmine: #95878]
+		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
 	
 	EXEC Task_DailyRptLicWinlossGMT_BettransBK '2017-11-01'
 */  
@@ -137,7 +142,7 @@ BEGIN
 					ON b.srecommend = s.CustId
 				INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) 
 					ON b.custid = c.custid
-				LEFT JOIN DBLIC.bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) 
+				LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) 
 					ON b.transid = BA.transid 	 
 			WHERE  
 					 b.Winlostdate = @RptDate   

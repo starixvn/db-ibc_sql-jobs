@@ -1,5 +1,4 @@
-/*<info serverAlias="DBARC-bodb_archive" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-
+/*<info serverAlias="DBARC-bodb_archive" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_archive]
 GO
 
@@ -13,6 +12,7 @@ AS
 
     Revisions:	
 		- 20170930@Harper: Get more info for MuayThai Parlay [Redmine: #82827]
+		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
 
 	GEN_rptBettingBySportBK '2017-09-30'
 */ 
@@ -37,7 +37,7 @@ BEGIN
 	DECLARE @Sitelist AS TABLE (IbcSiteID INT, SiteID INT)	
 	INSERT INTO @Sitelist (IbcSiteID, SiteID)
 	SELECT IbcSiteID, SiteID
-	FROM OPENQUERY(DBLIC, 'SELECT IbcSiteID, SiteID FROM bodb_Licensee.dbo.view_site_list')	
+	FROM bodb_Licensee.dbo.view_site_list
 
 	DECLARE @ShareRate MONEY = 0.03
 
