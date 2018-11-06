@@ -1,3 +1,4 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Bet_ExecRep_04] 
 	@Winlostdate DATETIME = NULL
 	,@Target VARCHAR(30) = 'DBTRANS' -- DBTRANS/REPLICATED
@@ -18,6 +19,8 @@ AS
 		- 20140701@Jamie: Get virtualmultiplier of bettrans 
 		- 20160412@Sophia: Add related tables: BettransRNG, BettransLC, Translog (will apply on bettransm later)
  		- 20171020@Lukas: move to ExecRep_00, this SP is no longer use 
+		- 20181106@Sophia: Add table Transfer_Coll [Redmine: #98621]
+	
  	Param's Explanation: 
  		@Winlostdate: the date that new rates are updated		
  */
@@ -134,7 +137,17 @@ BEGIN
 		WHERE 
 			b.winlostdate >= @Winlostdate
 			--AND b.actualrate <> b.virtualrate 
-			AND b.actualrate <> e.actualrate 				
+			AND b.actualrate <> e.actualrate 		
+
+		PRINT '11.-------Transfer_Coll table ---------'
+		-- Transfer_Coll tickets		 
+			
+		insert into #tmp(transid, actualrate, virtualrate)
+		select b.transid, e.actualrate, e.actualrate
+		FROM dbo.Transfer_Coll b WITH(nolock) 
+			,CustDB.dbo.exchange e WITH (NOLOCK)
+		WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
+		
 				
 		PRINT 'END: Reminder of UPDATE Exchange Rate Oanda: EXEC CustDB.dbo.DBA_ExchangeDailyOandaUpd_Actualrate @ExchangeDate=''xxx'''
 	END
@@ -243,7 +256,20 @@ BEGIN
 			b.winlostdate >= @Winlostdate
 			--AND b.actualrate <> b.virtualrate 
 			AND b.actualrate <> e.actualrate 	 
+			
+			
+		PRINT '11.-------Transfer_Coll table ---------'
+		-- Transfer_Coll tickets		 
+			
+		insert into #tmp(transid, actualrate, virtualrate)
+		select b.transid, e.actualrate, e.actualrate
+		FROM dbo.Transfer_Coll b WITH(nolock) 
+			,CustDB.dbo.exchange e WITH (NOLOCK)
+		WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
+		
+		
 		PRINT 'END: Reminder of UPDATE Exchange Rate Oanda: EXEC CustDB.dbo.DBA_ExchangeDailyOandaUpd_Actualrate @ExchangeDate=''xxx'''
+		
 	end 
 	
 	SET NOCOUNT ON 
@@ -319,6 +345,23 @@ BEGIN
 			b.virtualrate = t.virtualrate
 		from @table t 
 			inner join bettrans b on t.transid = b.transid 
+	end
+	
+	set @rowcount = 1 
+	-- update for Transfer_Coll
+	while @rowcount <> 0
+	begin
+		delete from @table
+		
+		delete top(2000) 		
+		from #tmp 
+		output deleted.transid, deleted.actualrate, deleted.virtualrate into @table
+		set @rowcount = @@ROWCOUNT
+		
+		update b with(rowlock,updlock)
+		set b.actualrate = t.actualrate			
+		from @table t 
+			inner join Transfer_Coll b on t.transid = b.transid 
 	end
 END
 
