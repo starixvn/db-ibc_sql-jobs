@@ -11,7 +11,7 @@ ALTER PROCEDURE [dbo].[Task_PrepareStaging]
     @datefrom smalldatetime=null
     ,@dateto smalldatetime=null
 	,@ErrorMsg VARCHAR(MAX) = '' OUTPUT
-WITH RECOMPILE
+--WITH RECOMPILE
 AS  
 /*
 Created: 
@@ -38,6 +38,7 @@ Revisions:
 	-20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]
 	-20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
 	-20180910@Bruce: LA - WL report for Poker Games & Bullfighting [#98487]
+	-20181107@Patrick: DB052 Indexes Revolution [Redmine: #103572]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'
@@ -94,9 +95,9 @@ BEGIN
 	---------PROCESS BETTRANS DATA--------------------------------------------------------------------------------------------  
 	TRUNCATE TABLE dbo.[bettrans]  
 	
-	DECLARE @Recommend_List TABLE (t_recommend int PRIMARY KEY)
+	DECLARE @__matchIds TABLE (matchid int PRIMARY KEY)
     
-    CREATE TABLE #Customer (t_custid int PRIMARY KEY)
+    --CREATE TABLE #Customer (t_custid int PRIMARY KEY)
 	CREATE TABLE #BetTradeCust (custid int PRIMARY KEY)
 	CREATE TABLE #CashoutCust (CustId INT PRIMARY KEY)
 
@@ -117,10 +118,10 @@ BEGIN
 		IF (@tmpDate > @movebetdate)
 		BEGIN
 			--Copy LIVE data (bettrans) 
-			DELETE @Recommend_List
+			DELETE @__matchIds
 		
-		    INSERT INTO @Recommend_List
-                SELECT DISTINCT recommend FROM bodb02.dbo.bettrans (NOLOCK) WHERE winlostdate=@tmpDate AND bettype<19000
+		    INSERT INTO @__matchIds(matchid)
+            SELECT matchid FROM bodb02.dbo.bettrans (NOLOCK) WHERE winlostdate=@tmpDate AND bettype<19000 GROUP BY matchid
             
 			INSERT INTO dbo.bettrans
 			    ([transid]
@@ -181,13 +182,15 @@ BEGIN
 				b.betdaqid,
 				ISNULL(b.currency2, 0)
 			FROM bodb02.dbo.bettrans b (NOLOCK)
-			    INNER JOIN @Recommend_List r ON b.recommend=r.t_recommend
+			    INNER JOIN @__matchIds r ON b.matchid=r.matchid
 			WHERE b.bettype<19000
 	            AND b.winlostdate=@tmpDate
 	            AND b.custid>0
 				AND b.recommend > 0
+				--AND b.matchid > 0
+				AND statusid NOT IN (0,1,101,102,121)
 	        
-            DELETE dbo.bettrans WHERE winlostdate=@tmpDate AND statusid IN (0,1,101,102,121)
+            --DELETE dbo.bettrans WHERE winlostdate=@tmpDate AND statusid IN (0,1,101,102,121)
 
 			-- Colossus bet tickets
 			;WITH CBAmount AS
@@ -229,12 +232,12 @@ BEGIN
 		ELSE
         BEGIN
 			--Copy archived data (bettrans14)
-			TRUNCATE TABLE #Customer
+			--TRUNCATE TABLE #Customer
 			
-			INSERT INTO #Customer
-	            SELECT DISTINCT custid
-	            FROM bodb02.dbo.bettrans14 (NOLOCK)
-	            WHERE winlostdate=@tmpDate AND custid>0
+			--INSERT INTO #Customer
+	  --          SELECT DISTINCT custid
+	  --          FROM bodb02.dbo.bettrans14 (NOLOCK)
+	  --          WHERE winlostdate=@tmpDate AND custid>0
 	            
 			INSERT INTO dbo.bettrans
 			    ([transid]
@@ -295,8 +298,9 @@ BEGIN
 				b.betdaqid,
 				ISNULL(b.currency2, 0)
 			FROM bodb02.dbo.bettrans14 b (NOLOCK)
-			    INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
+			    --INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
 			WHERE b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
+				AND b.winlostdate = @tmpDate AND b.custid > 0
 
 
 			-- Colossus bet tickets
@@ -358,7 +362,7 @@ BEGIN
 		INNER JOIN #BetTradeCust btc ON b.CustId = btc.CustId
 
 	--DROP TABLE #Recommend_List
-	DROP TABLE #Customer
+	--DROP TABLE #Customer
 		
 	UPDATE dbo.bettrans
 	SET statusid=CASE WHEN [status]='HALF WON' THEN 114 WHEN [status]='HALF LOSE' THEN 115 END

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBEXT-BODB02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+﻿/*<info serverAlias="DBEXT-BODB02,DBACC-BODB02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 Use bodb02
 GO    
 
@@ -23,6 +23,7 @@ AS
 		20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
 		20181002@Sophia: Sync BA ticket to DB053 (UAT) [Redmine #99855]
 		20181025@Sophia: Revert SPs not to sync BA ticket to DB053, due to DB053 has the job Gen BA ticket by itself (PRO) [Redmine #99855]	
+		20181107@Patrick: DB052 Indexes Revolution [Redmine: #103572]
  */  
 BEGIN
 	SET NOCOUNT ON   
@@ -44,7 +45,7 @@ BEGIN
   
 	INSERT INTO @temptrans (transid, transdate, custid, recommend, srecommend)  
 	SELECT transid, transdate, custid, recommend, srecommend
-	FROM dbo.bettrans WITH(NOLOCK, index=IXU_transid)
+	FROM dbo.bettrans WITH(NOLOCK, index=PK_bettrans) --IXU_transid/PK_bettrans
 	WHERE TransID BETWEEN @smallID AND @maxtransID  
 		AND (Bettype < 31 OR (Bettype BETWEEN 121 AND 999) OR (BETTYPE >= 1301 AND BETTYPE < 1400))  
 		AND StatusID <> 121 --DONE  
