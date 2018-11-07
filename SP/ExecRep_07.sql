@@ -1,48 +1,128 @@
-USE [bodb02]
-GO
-
-/****** Object:  StoredProcedure [dbo].[ExecRep_07]    Script Date: 01/26/2015 23:23:14 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
 CREATE PROCEDURE [dbo].[ExecRep_07]
-	@custids varchar(2000),
+	@custids varchar(4000),
 	@custid int,
 	@roleid int,
-	@winlostdate smalldatetime
+	@winlostdate smalldatetime,
+	@transIds varchar(max) = ''
 AS
---SET NOCOUNT ON
--- called from procedure BBU
-	BEGIN TRANSACTION
+/*
+	Created: unknow
+	Task : 	Delete Data after archive - Balance Up Process
+	DB: DBTXN.bodb02
+	Original:
+
+	Revisions:
+		
+		
+	Param's Explanation:
+*/
+BEGIN
+
+	CREATE TABLE #ticketList (rn int PRIMARY KEY IDENTITY(0,1), transid bigint)
+	DECLARE @tc int -- ticket count
+	DECLARE @r int
 
 	IF @roleid = 44
-		DELETE FROM bettrans
-		WHERE recommend = 0 AND srecommend IN (SELECT val FROM dbo.strSplit(@custids, ','))
-		AND ruben = 1 AND winlostdate < @winlostdate
+	BEGIN
+
+		;WITH
+			CTE AS (SELECT transid, srecommend FROM dbo.bettrans WITH (NOLOCK) WHERE recommend = 0 AND ruben = 1 AND winlostdate < @winlostdate)
+			,s AS (SELECT val AS srecommend FROM dbo.strSplit_Key(@custids, ','))
+		INSERT INTO #ticketList (transid)
+		SELECT transid
+		FROM CTE
+			INNER JOIN s ON CTE.srecommend = s.srecommend
+			--WHERE srecommend IN (SELECT val FROM dbo.strSplit_Key(@custids, ','))
+
+		SET @tc = @@ROWCOUNT
+	END
 	ELSE IF @roleid = 22
-		DELETE FROM dbo.bettrans
-		WHERE recommend IN (SELECT val FROM dbo.strSplit(@custids, ','))
-		AND ruben = 1 AND winlostdate < @winlostdate
+	BEGIN
+	   
+		;WITH a AS (SELECT val AS recommend FROM dbo.strSplit_Key(@custids, ','))
+		INSERT INTO #ticketList (transid)
+		SELECT transid
+		FROM dbo.bettrans b WITH (NOLOCK)
+			INNER JOIN a ON b.recommend = a.recommend
+			WHERE 
+				--recommend IN (SELECT val FROM dbo.strSplit_Key(@custids, ',')) AND
+				ruben = 1 AND winlostdate < @winlostdate
+
+		SET @tc = @@ROWCOUNT
+	END
 	ELSE IF @roleid = 11
-		DELETE FROM bettrans
-		WHERE recommend = @custid AND custid IN (SELECT val FROM dbo.strSplit(@custids, ','))
-		AND ruben = 1 AND winlostdate < @winlostdate
+	BEGIN
+	   
+		;WITH c AS (SELECT val AS custid FROM dbo.strSplit_Key(@custids, ','))
+		INSERT INTO #ticketList (transid)
+		SELECT transid
+		FROM dbo.bettrans b WITH (NOLOCK)
+			INNER JOIN c ON b.recommend = @custid AND b.custid = c.custid
+			WHERE 
+				--recommend = @custid AND custid IN (SELECT val FROM dbo.strSplit_Key(@custids, ',')) AND
+				ruben = 1 AND winlostdate < @winlostdate
+
+		SET @tc = @@ROWCOUNT
+	END
 	ELSE IF @roleid = 2
-		DELETE FROM bettrans
-		WHERE recommend = @custid
-		AND ruben = 1 AND winlostdate < @winlostdate
+	BEGIN
+	  
+		INSERT INTO #ticketList (transid)
+		SELECT transid
+		FROM dbo.bettrans WITH (NOLOCK)
+			WHERE recommend = @custid
+			AND ruben = 1 AND winlostdate < @winlostdate
 
-	COMMIT TRANSACTION
+		SET @tc = @@ROWCOUNT
+	END
+	ELSE IF @roleid = 222 -- special handle for HAIFA
+	BEGIN
+	 
+		INSERT INTO #ticketList (transid)
+		SELECT transid
+		FROM dbo.bettrans WITH (NOLOCK)
+			WHERE recommend = @custid AND RIGHT(custid, 1) = @custids
+			AND ruben = 1 AND winlostdate < @winlostdate
 
-GO
+		SET @tc = @@ROWCOUNT
+		SET @custids = CAST(@custid as varchar(50)) + ',' + @custids
+	END
+	ELSE IF @roleid = 111
+	BEGIN
+		DECLARE @xmlData XML
+		SET @xmlData = CONVERT(XML, REPLACE('<root><r t="' + @transIds + '"/></root>', '^', '"/><r t="'))
 
-GRANT EXECUTE ON [dbo].[ExecRep_07] TO [vnteam] AS [dbo]
-GO
+		INSERT INTO #ticketList (transid)
+		SELECT T.C.value('./@t', 'BIGINT') AS transid
+		FROM @xmlData.nodes('//r') AS T(C)
+		OPTION (OPTIMIZE FOR (@xmlData = NULL))
 
-GRANT VIEW DEFINITION ON [dbo].[ExecRep_07] TO [vnteam] AS [dbo]
-GO
+		SET @tc = @@ROWCOUNT
+	END
 
+ 	
+	Declare @rn int, @rx int
+	SET @rn = 0
+	SET @rx = 2000
+
+	WHILE @rn < @tc
+	BEGIN
+		BEGIN TRY
+		  
+			DELETE B WITH (ROWLOCK)
+			FROM #ticketList tl
+				INNER LOOP JOIN dbo.bettrans B ON B.transid = tl.transid
+			WHERE
+				tl.rn BETWEEN @rn AND @rx
+			OPTION(FORCE ORDER, MAXDOP 4)
+
+			SET @rn = @rn + 2000
+			SET @rx = @rx + 2000
+		END TRY
+		BEGIN CATCH
+			SET @r = 1
+		END CATCH
+	END
+ 
+END
 
