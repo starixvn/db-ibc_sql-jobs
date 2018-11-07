@@ -15,7 +15,7 @@ ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 	DB: DBLIC.bodb_LicenseeReport  
 	Param's Explanation: 
 		@FromDate , @ToDaate :  NULL then check MovebetDays by Schedule 
-		@Step = 1 : Check and correct rptKenoWinloss, rpt_ThirdPartyWL_ExtraGMT and rpt_BettingBySport
+		@Step = 1 : Check and correct rpt_ThirdPartyWL_ExtraGMT and rpt_BettingBySport
 			  = 2 : Check and correct rpt_betting, rpt_betting_BA, rptLicCashoutSummary tables (using Staging bettrans)
 			  = 3 : 3rd table
 			  = 0 : ALL
@@ -84,12 +84,12 @@ BEGIN
 
 	DECLARE @Subject VARCHAR(1000) = '', @ErrorMessage VARCHAR(MAX) = '', 
 			@ErrorMsgStaging VARCHAR(500) = '',
-			@GenRptKenoWinloss TINYINT = 0, @GenExtraGMT TINYINT = 0,
+			@GenExtraGMT TINYINT = 0,
 			@GenRptBetting TINYINT = 0, @GenRptBettingBA TINYINT = 0, 
 			@GenRptLicCashout TINYINT = 0, @GenRptBettingBySport TINYINT = 0,
 			@GenAGC TINYINT = 0, @Gen3rdParty TINYINT = 0, @SeparatedProductID TINYINT,
 			@BalanceUpDay SMALLDATETIME,
-			@KenoWinlossBetTypes VARCHAR(MAX), @ExtraGMTBetTypes VARCHAR(MAX),
+			@ExtraGMTBetTypes VARCHAR(MAX),
 			@BettingBetTypes VARCHAR(MAX), @BettingBABetTypes VARCHAR(MAX),
 			@3rdProducts VARCHAR(MAX), @IsParLay VARCHAR(20)
 
@@ -110,12 +110,10 @@ BEGIN
 		IF NOT EXISTS (SELECT TOP 1 1 FROM bodb02.dbo.bettrans14 WITH(NOLOCK) WHERE WinlostDate = @WinlostDate)
 			CONTINUE --does not exist data in bettrans 14
 					
-		--- Check and correct rptKenoWinloss and rpt_ThirdPartyWL_ExtraGMT tables
+		--- Check and correct rpt_ThirdPartyWL_ExtraGMT tables
 		IF @Step IN (0,1)
 		BEGIN 			
 			------1.1 Check data mismatch
-			EXEC dbo.Task_rptKenoWinloss_CheckData @WinlostDate = @WinlostDate, @HasDataMismatch = @GenRptKenoWinloss OUTPUT, @BetTypes = @KenoWinlossBetTypes OUTPUT
-
 			EXEC dbo.Task_rptThirdPartyWL_ExtraGMT_CheckData @WinlostDate = @WinlostDate, @HasDataMismatch = @GenExtraGMT OUTPUT, @BetTypes = @ExtraGMTBetTypes OUTPUT
 
 			EXEC dbo.Task_rptBettingBySport_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptBettingBySport OUTPUT, @IsParLay = @IsParLay OUTPUT
@@ -123,11 +121,6 @@ BEGIN
 			-----1.2 Correct data
 			IF @AllowCorrect = 1
 			BEGIN 
-				IF @GenRptKenoWinloss <> 0 
-				BEGIN 
-					EXEC dbo.Task_KenoWinloss_GenDataFromBettrans14 @Fromdate = @WinlostDate, @ToDate = @WinlostDate
-				END
-
 				IF @GenExtraGMT <> 0 
 				BEGIN 
 					EXEC dbo.Task_Microgaming_Bettrans14 @Fromdate = @WinlostDate, @ToDate = @WinlostDate
@@ -139,17 +132,6 @@ BEGIN
 				END
 			END
 
-			----- 1.3. Get Msg 
-			IF @GenRptKenoWinloss <> 0 
-			BEGIN
-				INSERT INTO @ErrMsgTab (Date, ErrMsg)
-				SELECT	@WinlostDate,
-						CASE @GenRptKenoWinloss
-							WHEN 1 THEN ''
-							WHEN 2 THEN '(UUS only) '
-						END + 'Has data mismatch between rptKenoWinloss table and source with bet types (' + @KenoWinlossBetTypes + ')'
-			END		 
-		
 			IF @GenExtraGMT <> 0
 			BEGIN
 				INSERT INTO @ErrMsgTab (Date, ErrMsg)
