@@ -1,5 +1,9 @@
 USE [msdb]
 GO
+/* 
+	Revisions:  		 
+		- 20181109@bruce: clear code keno winloss [#103958]    
+*/ 
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0

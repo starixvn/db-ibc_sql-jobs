@@ -25,6 +25,7 @@ ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
 		- 20170405@Harper: Include Exchange (separate wallet) to check data [RedmineID: #92485]
 		- 20180423@Percy: Remove logic check MB (job handle), update statistics bettrans14 [RedmineID: #94129]
+		- 20181109@bruce: clear code keno winloss [#103958]
 
 	EXEC Task_rptBetting_CheckData_Job @FromDate = '2018-04-01', @ToDate = '2018-04-10', @Step = 0,  @AllowCorrect = 1
     
