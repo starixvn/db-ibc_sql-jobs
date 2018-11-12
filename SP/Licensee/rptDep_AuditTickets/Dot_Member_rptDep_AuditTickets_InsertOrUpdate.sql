@@ -19,7 +19,8 @@ ALTER PROCEDURE [dbo].[Dot_Member_rptDep_AuditTickets_InsertOrUpdate]
 		@Betamount money,
 		@Debitamount money,
 		@Creditamount money,
-		@Netamount money
+		@Netamount money,
+		@IsMainServer bit = 1
 AS
 /*  Created: 20180816@TW
     Description: Insert Or Update rptDepatTickets
@@ -106,6 +107,7 @@ BEGIN
 	END;
 
 	---- Also insert/update on DB052/DB053
+	IF @IsMainServer = 1
 	BEGIN
 		DECLARE @Servername VARCHAR(20);
 		SELECT  @Servername = @@SERVERNAME;
@@ -130,6 +132,7 @@ BEGIN
 				,@Debitamount		= @Debitamount
 				,@Creditamount		= @Creditamount
 				,@Netamount			= @Netamount
+				,@IsMainServer		= 0
 		END;
 		ELSE IF @Servername = 'DB053'
 		BEGIN
@@ -151,6 +154,7 @@ BEGIN
 				,@Debitamount		= @Debitamount
 				,@Creditamount		= @Creditamount
 				,@Netamount			= @Netamount
+				,@IsMainServer		= 0
 		END
 	END;
 END;
