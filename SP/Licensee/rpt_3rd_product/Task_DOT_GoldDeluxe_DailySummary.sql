@@ -1,23 +1,28 @@
 /*<info serverAlias="DBPTCS-bodb_PlaytechCS," executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
+USE bodb_PlaytechCS
+GO
+
 ALTER PROCEDURE [dbo].[Task_DOT_GoldDeluxe_DailySummary]
 	@winlostdate DATETIME
 	,@IsManual BIT = 0 
 AS
-/*   
-Created: 20140313@Winnie
-Task: Summary GoldDeluxe data and insert into rptDepWinlost_ThirdParty
-DB: DBPTCS/bodb_PlaytechCS
-Original:
-Revisions:	
-- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
-- 20170407@Sophia: 	Add rule auto regen data : [Redmine: #72914]
-							1st -> 5th : Can Edit data of Previous month  and current Month
-							6th -> end of the month : Edit data of current month only
-Param's Explanation:
-	- @winlostdate: The date need to summary
+/*
+	Created: 20140313@Winnie
+	Task: Summary GoldDeluxe data and insert into rptDepWinlost_ThirdParty
+	DB: DBPTCS/bodb_PlaytechCS
+	Original:
+	Revisions:
+		- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
+		- 20170407@Sophia: 	Add rule auto regen data : [Redmine: #72914]
+									1st -> 5th : Can Edit data of Previous month  and current Month
+									6th -> end of the month : Edit data of current month only
+		- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
+
+	Param's Explanation:
+		- @winlostdate: The date need to summary
 */  
 SET NOCOUNT ON
-BEGIN TRY	
+BEGIN TRY
 	DECLARE @ProductId INT
 	SELECT @ProductId= ProductId FROM bodb_Licensee.dbo.Product3rd WITH(NOLOCK) WHERE ProductName='Gold Deluxe'
 	IF(@ProductId IS NULL)
@@ -51,13 +56,15 @@ BEGIN TRY
 			   AND isSummarized = 0 --Winlostdate that has been finished to generate into raw data table bust has not been summarized to sum table
 			   AND ProductID = @ProductId) t --GD
 	
-	CREATE TABLE #TicketData (	custid			INT,								
-								currency		INT,							
-								turnover		MONEY,							
-								winlost			MONEY,	
-								drawTO			MONEY,	
-								drawBetCount	INT,						
-								betCount		INT)
+	CREATE TABLE #TicketData (
+		custid			INT,
+		currency		INT,
+		turnover		MONEY,
+		winlost			MONEY,
+		drawTO			MONEY,
+		drawBetCount	INT,
+		betCount		INT,
+		bettype			SMALLINT)
 	
 	
 	WHILE EXISTS (SELECT TOP 1 1 FROM @WLDateTab WHERE ID = @i)
@@ -70,28 +77,35 @@ BEGIN TRY
 		BEGIN 
 			TRUNCATE TABLE #TicketData
 			
-			INSERT INTO #TicketData (custid, currency, turnover,winlost,drawTO,drawBetCount,betCount )
+			INSERT INTO #TicketData (custid, currency, turnover,winlost,drawTO,drawBetCount,betCount,bettype)
 			SELECT b.CustID, 		
 					b.currency,				
 					ISNULL(SUM(b.Stake),0) AS Turnover,			
 					ISNULL(SUM(b.Winlost - b.Stake),0) AS Winlost,	
 					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN b.Stake ELSE 0 END),0) AS DrawTO,	
 					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount,	
-				ISNULL(COUNT(b.TicketId),0) AS Betcount			
-
+				ISNULL(COUNT(b.TicketId),0) AS Betcount,
+				-1 AS Bettype
 			FROM dbo.bettrans_GoldDeluxe b WITH (ROWLOCK)
 			WHERE Winlostdate = @winlostdate AND StatusId IN (111,112,113)
 			GROUP BY b.CustID, b.currency
-		
+
+			-- GD tips
+			-- bettype = 1706
+			INSERT INTO #TicketData (custid, currency, turnover,winlost,drawTO,drawBetCount,betCount,bettype)
+			SELECT IBCCustId, Currency, 0, SUM(-Amount), 0, 0, COUNT(TipId), 1706
+			FROM dbo.GoldDeluxe_Tip WITH(NOLOCK)
+			WHERE Winlostdate = @winlostdate 
+			GROUP BY IBCCustId, currency
 
 			-- Insert data to rptDepWinlost_ThirdParty
 			DELETE FROM bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty WITH (ROWLOCK) WHERE Winlostdate = @winlostdate and ProductId=@ProductId
 
 			INSERT INTO bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, turnover,
-																winlost,drawTO,drawBetCount, BetCount,ProductId)
+																winlost,drawTO,drawBetCount, BetCount,ProductId, bettype)
 			SELECT @winlostdate, custid,  currency, turnover,
-				winlost,drawTO,drawBetCount,  BetCount, @ProductId
-			FROM #TicketData					
+				winlost,drawTO,drawBetCount,  BetCount, @ProductId, bettype
+			FROM #TicketData
 					
 			---Update flag isSummarized to queue  
 			UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)

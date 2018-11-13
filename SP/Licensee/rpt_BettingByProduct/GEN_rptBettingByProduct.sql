@@ -46,6 +46,7 @@ AS
 		- 20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
 		- 20180420@Bruce: LA - Implement sum job for Pragmatic [RedmineId #93958]
 		- 20180910@Bruce: LA - WL report for Poker Games & Bullfighting [#98487]
+		- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 
@@ -56,7 +57,7 @@ BEGIN
 	CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
 
 	-- Collect data of 3rd party products
-	CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY, AgentComm MONEY, ValidBetAmount MONEY, GrossWL MONEY)
+	CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY, AgentComm MONEY, ValidBetAmount MONEY, GrossWL MONEY, Bettype SMALLINT)
 
 	IF @date2 IS NULL SET @date2 = @date
 	SET @date2 = DATEADD(day,1,@date2)
@@ -231,8 +232,8 @@ BEGIN
 		-- GD, VG (separate wallet)
 		IF @SeparatedProductID IN (0, 11)
 		BEGIN 
-			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm)
-			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, Turnover, BetCount, 0 AS PlayerComm
+			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm, Bettype)
+			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, Turnover, BetCount, 0 AS PlayerComm, Bettype
 			FROM dbo.rptDepWinlost_ThirdParty WITH (NOLOCK)
 			WHERE Winlostdate >= @date AND Winlostdate < @date2
 				AND ProductId = 11
@@ -281,7 +282,7 @@ BEGIN
 		SELECT td.rptDate
 			, ISNULL(site.SiteID,-1) AS SiteId
 			, td.productId
-			, -1 AS bettype
+			, ISNULL(td.Bettype, -1) AS bettype
 			, td.CurrencyId
 			, CASE 
 				WHEN td.Winlost > 0 THEN 112
@@ -307,6 +308,7 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
 		GROUP BY rptDate
 			, ISNULL(site.SiteID,-1)
+			, ISNULL(td.Bettype, -1)
 			, td.productId
 			, td.CurrencyId
 			, CASE 
