@@ -44,6 +44,7 @@ Revisions:
 	- 20180212@Harper: Remove LC from product list [Redmine: #85965]
 	- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
+	- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */  
@@ -150,9 +151,9 @@ BEGIN
 		WHEN BA.transid IS NULL THEN 0
 		WHEN BA.transid IS NOT NULL THEN 1 END AS isBA
 	,CASE 
-		WHEN bettrans.betfrom IN ('s','m','l','r') THEN 1 ELSE 0 END AS isMobile	
+		WHEN bettrans.betfrom IN ('s','m','l','r','o') THEN 1 ELSE 0 END AS isMobile	
 	,CASE    
-		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z') THEN bettrans.betfrom ELSE '' END AS betfrom
+		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o') THEN bettrans.betfrom ELSE '' END AS betfrom
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
 FROM
@@ -208,9 +209,9 @@ GROUP BY
 		WHEN BA.transid IS NULL THEN 0
 		WHEN BA.transid IS NOT NULL THEN 1 END
 	,CASE 
-		WHEN bettrans.betfrom IN ('s','m','l','r') THEN 1 ELSE 0 END
+		WHEN bettrans.betfrom IN ('s','m','l','r','o') THEN 1 ELSE 0 END
 	,CASE    
-		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z') THEN bettrans.betfrom ELSE '' END
+		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o') THEN bettrans.betfrom ELSE '' END
 
 --Agent Level (sum on member)
 INSERT INTO dbo.rptLicWinloss2
