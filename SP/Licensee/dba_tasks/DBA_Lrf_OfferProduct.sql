@@ -59,7 +59,7 @@ BEGIN
 	SELECT @MaxID = MAX(ID)  
 	FROM @tblProductPrefix  
    
-	IF (@MaxID=1 AND @EffectiveDate IS NOT NULL)  
+	IF (@MaxID=1 AND ISNULL(@EffectiveDate,'') <> '')  
 	BEGIN   
 		UPDATE @tblProductPrefix  
 		SET EffectiveDate = @EffectiveDate  
