@@ -142,7 +142,7 @@ BEGIN
 					ON b.srecommend = s.CustId
 				INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) 
 					ON b.custid = c.custid
-				LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) 
+				LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_bk BA WITH (NOLOCK) 
 					ON b.transid = BA.transid 	 
 			WHERE  
 					 b.Winlostdate = @RptDate   
