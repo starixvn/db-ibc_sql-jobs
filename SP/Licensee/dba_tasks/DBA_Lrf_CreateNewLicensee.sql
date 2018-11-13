@@ -1,19 +1,14 @@
  /*<info serverAlias="DBCUST-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[DBA_Lrf_CreateNewLicensee] (
+ALTER PROCEDURE [dbo].[DBA_Lrf_CreateNewLicensee] (
 	@LicenseeName VARCHAR(50)
 	, @SuperWildCard VARCHAR(100) = ''
 	, @ResellerName VARCHAR(50) = ''
 	, @IsSpecial BIT = 0
 	, @ProductCode VARCHAR(100) = ''
 	, @SystemisActive VARCHAR(100) = ''
-	, @IsAllowedDW BIT = 0
-	, @IsOfferLas BIT = 0
 	, @IsAllowMemberComm BIT = 0
 	, @IsAllowWLbyLeague BIT = 0
-	, @IsDeposit BIT = 0
 	, @IsPullService BIT = 1
-	, @ErrCode INT = 0 OUTPUT
-	, @ErrMsg NVARCHAR(1000) = '' OUTPUT
 	)
 AS
 /*  
@@ -39,6 +34,8 @@ Revisions:
  +20160526@Jim: add more admin users  
  +20160909@Jim: config edit betsetting role
  +20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
+ +20181109@Amanda: remove unused params [redmine: #83584]
+ 
 Param's Explanation:  
  + @IsSpecial: if 1 then update column Description to normal, or affiliate or banner depend on:  
   - username ending with 01: normal  
@@ -49,6 +46,7 @@ Param's Explanation:
  + @ResellerID : Reseller who new Licensee must to belong   
  + @IsAllowedDW : offer DW :1  else :0  
 */
+BEGIN
 SET NOCOUNT ON
 
 ----- DECLARE VARIABLE   
@@ -94,73 +92,30 @@ IF ISNULL(@licenseeid, 0) = 0
 			)
 
 -- add new licensee config into SystemLicensee   
-IF NOT EXISTS (
-		SELECT 1
+INSERT INTO dbo.SystemLicensee (
+	SystemID
+	, LicenseeID
+	, IsActive
+)
+SELECT ID
+	, @LicenseeID AS LicenseeID
+	, CASE 
+		WHEN ID IN (1, 2) THEN 1
+		ELSE 0
+	END AS IsActive
+FROM dbo.Systems WITH (NOLOCK)
+WHERE ID NOT IN (
+		SELECT DISTINCT SystemID
 		FROM dbo.SystemLicensee WITH (NOLOCK)
 		WHERE LicenseeID = @licenseeid
-		)
-BEGIN
-	INSERT INTO dbo.SystemLicensee (
-		SystemID
-		, LicenseeID
-		, IsActive
-		)
-	SELECT ID
-		, @LicenseeID AS LicenseeID
-		, CASE 
-			WHEN ID IN (
-					1
-					, 2
-					)
-				THEN 1
-			ELSE 0
-			END AS IsActive
-	FROM dbo.Systems WITH (NOLOCK)
-END
-ELSE
-BEGIN
-	INSERT INTO dbo.SystemLicensee (
-		SystemID
-		, LicenseeID
-		, IsActive
-		)
-	SELECT ID
-		, @LicenseeID AS LicenseeID
-		, CASE 
-			WHEN ID IN (
-					1
-					, 2
-					)
-				THEN 1
-			ELSE 0
-			END AS IsActive
-	FROM dbo.Systems WITH (NOLOCK)
-	WHERE ID NOT IN (
-			SELECT DISTINCT SystemID
-			FROM dbo.SystemLicensee WITH (NOLOCK)
-			WHERE LicenseeID = @licenseeid
-			)
-END
+)
 
 -------RESELLER  
-IF EXISTS (
+IF NOT EXISTS (
 		SELECT 1
 		FROM dbo.Resellers WITH (NOLOCK)
 		WHERE ResellerName = @ResellerName
 		)
-BEGIN
-	INSERT INTO dbo.LicenseeReseller (
-		ResellerID
-		, LicenseeID
-		, TnxRate
-		)
-	SELECT ResellerId
-		, @LicenseeID AS LicenseeID
-		, 0.13 AS TnxRate
-	FROM dbo.Resellers WITH (NOLOCK)
-	WHERE ResellerName = @ResellerName
-END
-ELSE
 BEGIN
 	INSERT INTO dbo.Resellers (
 		ResellerName
@@ -170,18 +125,18 @@ BEGIN
 	SELECT @ResellerName
 		, NULL
 		, 2
-
-	INSERT INTO dbo.LicenseeReseller (
-		ResellerID
-		, LicenseeID
-		, TnxRate
-		)
-	SELECT ResellerId
-		, @LicenseeID AS LicenseeID
-		, 0.13 AS TnxRate
-	FROM dbo.Resellers WITH (NOLOCK)
-	WHERE ResellerName = @ResellerName
 END
+
+INSERT INTO dbo.LicenseeReseller (
+	ResellerID
+	, LicenseeID
+	, TnxRate
+	)
+SELECT ResellerId
+	, @LicenseeID AS LicenseeID
+	, 0.13 AS TnxRate
+FROM dbo.Resellers WITH (NOLOCK)
+WHERE ResellerName = @ResellerName
 
 SELECT @ResellerID = ResellerID
 FROM dbo.Resellers WITH (NOLOCK)
@@ -234,6 +189,7 @@ BEGIN
 	EXEC DBA_Lrf_ActiveLicenseeSystem @LicenseeName = @LicenseeName
 		, @SystemisActive = @SystemisActive
 END
+
 --- SET BETSETTING IS ACTIVE AS DEFAULT
 IF @ResellerName IN ('Zelianta','Boping')
 BEGIN 
@@ -275,53 +231,30 @@ SELECT UserID
 	, Username
 FROM @AdminUser
 WHERE UserID IN (
-		1
-		, -- dbaThien  
-		3
-		, -- pgmviet  
-		5
-		, -- pgmSon  
-		63
-		, -- Martin  
-		64
-		, -- Justin  
-		68
-		, -- pgmChuong  
-		74
-		, -- pgmkiwi  
-		87
-		, -- CSD_11101  
-		157
-		, -- pgmAnn  
-		160
-		, -- Anthony  
-		369
-		, -- dbaDon  
-		2939
-		, -- standbyteam  
-		3232
-		, -- dbaVictor  
-		3652
-		, -- pgmWilliam  
-		3783
-		, -- twLesley  
-		3784
-		, -- twKai  
-		3834
-		, --dbaFrancis  
-		8436
-		, -- StarixQC2  
-		8437
-		, -- StarixQC3  
-		8438
-		, -- StarixQC4  
-		8439
-		, -- StarixQC5  
-		8440
-		, -- starix1  
-		8441
-		, -- starix2  
-		8442 -- starix3  
+		1, -- dbaThien
+		3, -- pgmviet
+		5, -- pgmSon
+		63, -- Martin
+		64, -- Justin
+		68, -- pgmChuong
+		74, -- pgmkiwi
+		87, -- CSD_11101
+		157, -- pgmAnn
+		160, -- Anthony
+		369, -- dbaDon
+		2939, -- standbyteam
+		3232, -- dbaVictor
+		3652, -- pgmWilliam
+		3783, -- twLesley
+		3784, -- twKai
+		3834, --dbaFrancis
+		8436, -- StarixQC2
+		8437, -- StarixQC3
+		8438, -- StarixQC4
+		8439, -- StarixQC5
+		8440, -- starix1
+		8441, -- starix2
+		8442 -- starix3
 		)
 
 INSERT INTO @CommonFunction (
@@ -343,56 +276,6 @@ WHERE FunctionID NOT IN (
 		WHERE LicenseeId = @LicenseeId
 		)
 	AND TypeId = 11
-
-IF (@IsAllowedDW = 1)
-BEGIN
-	DELETE dbo.LicenseeFunctions
-	WHERE LicenseeId = @LicenseeId
-		AND FunctionID IN (
-			5
-			, 44
-			, 45
-			)
-
-	INSERT INTO dbo.LicenseeFunctions (
-		LicenseeId
-		, FunctionId
-		)
-	SELECT @LicenseeId
-		, Functionid
-	FROM dbo.Functions WITH (NOLOCK)
-	WHERE FunctionID IN (
-			5
-			, 44
-			, 45
-			)
-
-	DELETE dbo.LicenseeUserFunctions
-	WHERE LicenseeId = @LicenseeId
-		AND FunctionID IN (
-			5
-			, 44
-			, 45
-			)
-
-	INSERT INTO dbo.LicenseeUserFunctions (
-		UserId
-		, FunctionId
-		, LicenseeId
-		)
-	SELECT lu.UserId
-		, lf.FunctionId
-		, @LicenseeID
-	FROM dbo.LicenseeFunctions lf WITH (NOLOCK)
-	INNER JOIN dbo.LicenseeUser lu WITH (NOLOCK)
-		ON lf.LicenseeId = lu.LicenseeId
-	WHERE lf.LicenseeId = @LicenseeId
-		AND lf.FunctionId IN (
-			5
-			, 44
-			, 45
-			)
-END
 
 IF (@IsAllowWLbyLeague = 1)
 BEGIN
@@ -565,9 +448,7 @@ SELECT u.UserID
 FROM @usr u
 INNER JOIN @Currency c
 	ON u.LicenseeID = c.LicenseeID
-
 EXCEPT
-
 SELECT usrID
 	, LicenseeID
 	, CurrencyID
@@ -589,4 +470,5 @@ EXEC DBA_LicenseeBAConfig_Ins @LicenseeID = @licenseeid
 	, @EnableBA = 0
 	, @UserID = 862400 --pgmViet
 
+END
 GO
