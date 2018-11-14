@@ -1,11 +1,4 @@
 /*<info serverAlias="DBCUST-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
-USE [bodb_licensee]
-GO
-/****** Object:  StoredProcedure [dbo].[DBA_Lrf_FunctionProduct]    Script Date: 05/04/2015 15:07:49 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 
 ALTER   PROCEDURE [dbo].[DBA_Lrf_FunctionProduct]
 (
@@ -27,13 +20,16 @@ ALTER   PROCEDURE [dbo].[DBA_Lrf_FunctionProduct]
 		- 20180521@Harper: Remove CasinoProgressiveWins report
 		- 20180820@Harper: AG Casino Balance report just using for 12bet
 		- 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
+		- 20181114@Amanda: Add function Betting ticket center [redmine: #83584]
 
 	Param's Explanation:
 		
 	
 */
 AS
-BEGIN 
+BEGIN
+	SET NOCOUNT ON
+
 	DECLARE @tblFunctions AS TABLE (ProductId INT,FunctionId INT,TypeID INT)
 	IF @ProductCode = 'SB'
 	BEGIN 
@@ -50,7 +46,8 @@ BEGIN
 								,64 -- Active Customer Summary
 								,69 -- Weekly Live Matches
 								,70 -- Edit Bet Setting		
-								,76 -- GMT +8							
+								,76 -- GMT +8
+								,79 -- Betting ticket center
 								)
 			OR FunctionId BETWEEN 51 AND 56
 			OR FunctionId BETWEEN 36 AND 43
@@ -325,3 +322,4 @@ BEGIN
 			EXEC DBA_FunctionProduct
 		*/
 END
+GO
