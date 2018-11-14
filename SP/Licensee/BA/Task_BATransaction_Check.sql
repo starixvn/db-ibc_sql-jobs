@@ -1,18 +1,11 @@
-﻿
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_BATransaction_Check    Script Date: 8/7/2018 5:16:56 PM ******/
-
-ALTER PROCEDURE [dbo].[Task_BATransaction_Check]  
+﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[Task_BATransaction_CheckAndCorrect]  
 AS  
 /*  
 	Created by:[Henry]  
 	Date: 2011-06-20  
 	Task: Check missing BA tickets  
-	DB: DB052.BODB02  
+	DB: DBEXT-bodb02,DBACC-bodb02
 	Revisions:   
 		20110824@Henry: Insert the missing tickets if happen  
 		20110905@Jamie: Modify remove comma ','  
@@ -21,6 +14,7 @@ AS
 		20150904@Patrick: Exclude bettype 901 for bettrade
 		20170410@Harper: Implement Cashout Product
 		20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
+		20181114@Sophia: Revise Job Verify BA - Rename SP from Task_BATransaction_Check To Task_BATransaction_CheckAndCorrect [Redmine: #103653]
  */  
 SET NOCOUNT ON   
    
@@ -130,11 +124,12 @@ BEGIN
 			WHERE EXISTS (SELECT TOP 1 1 FROM @BATicket tt WHERE t.TransID = tt.TransID)
 			FOR XML RAW('r'), root
 		)
-		IF @XmlData IS NOT NULL
+		
+		IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB052' 
 			EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
   
 		SELECT @currentMaxTransID = VValue  
-		FROM DBTRANS.BODB02.DBO.SystemSettings WITH (NOLOCK)  
+		FROM DBTXN.BODB02.DBO.SystemSettings WITH (NOLOCK)  
 		WHERE VName='MaxTransID'  
   
 		SELECT @tickets = substring(@tickets,0,len(@tickets)) --remove last comma  
