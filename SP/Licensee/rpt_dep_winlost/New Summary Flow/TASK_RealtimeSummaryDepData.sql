@@ -1,4 +1,6 @@
 /*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+USE [bodb02]
+GO
 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
 	@Winlostdate SMALLDATETIME = NULL,
@@ -24,6 +26,7 @@ AS
 		- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
 		- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
+		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -334,7 +337,7 @@ BEGIN
 					 -SUM(b.winlost - b.actual_stake + b.awinlost + b.comm) AS AmountDueTo_BA    
 			  FROM bettrans b WITH(NOLOCK)  
 			  WHERE transid IN (			
-									SELECT transid FROM DBLIC.bodb_licensee.dbo.LicenseeBATransaction_active WITH (NOLOCK)
+									SELECT transid FROM bodb_licensee.dbo.LicenseeBATransaction_active WITH (NOLOCK)
 									UNION ALL
 									SELECT NULL --Force intermediate materialization
 								)
