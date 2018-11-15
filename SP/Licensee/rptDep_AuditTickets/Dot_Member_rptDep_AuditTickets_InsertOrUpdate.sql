@@ -23,12 +23,14 @@ ALTER PROCEDURE [dbo].[Dot_Member_rptDep_AuditTickets_InsertOrUpdate]
 		@IsMainServer bit = 1
 AS
 /*  Created: 20180816@TW
-    Description: Insert Or Update rptDepatTickets
-    DB: DBLIC.bodb_LicenseeReport
+    Description: Insert Or Update rptDepatTickets (managed by TW team)
+    DB: DB052.bodb_LicenseeReportArchive, DB053.bodb_LicenseeReportArchive
+	
+	Note: Deploy both DB052 and DB053
    
     Revisions:  
 		- 20180816@TW: Created SP to Insert/Update rptDepatTickets [RedmineID: #99777]
-		- 20181111@Percy: Temporary sync data between DB052 and DB053 [RedmineID: #103653]
+		- 20181111@Percy: Sync data between DB052 and DB053 [RedmineID: #103653]
 */
 BEGIN
 	SET NOCOUNT ON;
