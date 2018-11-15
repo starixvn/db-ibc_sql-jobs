@@ -13,8 +13,8 @@ DECLARE @SBDialog uniqueidentifier
 DECLARE @Message NVARCHAR(128)
 
 BEGIN DIALOG CONVERSATION @SBDialog
-FROM SERVICE Service_UserLog_Credit_DBCUST
-TO SERVICE 'Service_UserLog_Credit_DBLOG'
+FROM SERVICE Service_UserLog_Others_DBCUST
+TO SERVICE 'Service_UserLog_Others_DBLOG'
 ON CONTRACT Contract_CustomerLog_UserLog_Credit
 WITH ENCRYPTION = OFF
 

@@ -7,9 +7,9 @@
 USE [bodb_CustomerLog]
 GO
 IF EXISTS(SELECT TOP 1 1 FROM sys.services
-		WHERE name = 'Service_UserLog_Credit_DBLOG'
+		WHERE name = 'Service_UserLog_Others_DBLOG'
 		)
-DROP SERVICE Service_UserLog_Credit_DBLOG
+DROP SERVICE Service_UserLog_Others_DBLOG
 GO
 	
 IF EXISTS(SELECT TOP 1 1 FROM sys.service_contracts 
@@ -18,13 +18,18 @@ DROP CONTRACT Contract_CustomerLog_UserLog_Credit
 GO
 
 IF EXISTS (SELECT TOP 1 1 FROM sys.service_queues
-		   WHERE name = 'Queue_UserLog_Credit')
-DROP QUEUE Queue_UserLog_Credit
+		   WHERE name = 'Queue_Others')
+DROP QUEUE Queue_Others
 GO
 
 IF EXISTS (SELECT TOP 1 1 FROM sys.routes
-		WHERE name = 'Route_UserLog_Credit_DBLOG')
-DROP ROUTE Route_UserLog_Credit_DBLOG
+		WHERE name = 'Route_UserLog_Others_To_DBCUST')
+DROP ROUTE Route_UserLog_Others_To_DBCUST
+GO
+
+IF EXISTS (SELECT TOP 1 1 FROM sys.routes
+		WHERE name = 'Route_UserLog_Others_To_DBLOGBK')
+DROP ROUTE Route_UserLog_Others_To_DBLOGBK
 GO
 
 IF EXISTS(SELECT TOP 1 1 FROM sys.service_message_types 
@@ -40,19 +45,21 @@ CREATE CONTRACT [Contract_CustomerLog_UserLog_Credit] AUTHORIZATION [dbo]
 ([MessageType_CustomerLog_UserLog_Credit] SENT BY ANY)
 GO
 
-CREATE QUEUE [dbo].[Queue_UserLog_Credit] WITH STATUS = ON , RETENTION = OFF ,
+CREATE QUEUE [dbo].[Queue_Others] WITH STATUS = ON , RETENTION = OFF ,
 POISON_MESSAGE_HANDLING (STATUS = ON)  ON [ServiceBrokerData] 
 GO
 
-ALTER QUEUE Queue_UserLog_Credit 
-WITH ACTIVATION (  STATUS = ON , PROCEDURE_NAME = [sb].[QueueUserLogCredit_ProcessData] , MAX_QUEUE_READERS = 10 , EXECUTE AS N'dbo'  )
+ALTER QUEUE Queue_Others 
+WITH ACTIVATION (  STATUS = ON , PROCEDURE_NAME = [sb].[QueueOthers_ProcessData] , MAX_QUEUE_READERS = 10 , EXECUTE AS N'dbo'  )
 GO
 
-CREATE SERVICE [Service_UserLog_Credit_DBLOG] AUTHORIZATION [dbo] ON QUEUE dbo.[Queue_UserLog_Credit](Contract_CustomerLog_UserLog_Credit)
+CREATE SERVICE [Service_UserLog_Others_DBLOG] AUTHORIZATION [dbo] ON QUEUE dbo.[Queue_Others](Contract_CustomerLog_UserLog_Credit)
 GO
 
-CREATE ROUTE [Route_UserLog_Credit_DBLOG] AUTHORIZATION dbo
-WITH  SERVICE_NAME  = N'Service_UserLog_Credit_DBCUST' , 
+--create route to DBCUST
+
+CREATE ROUTE [Route_UserLog_Others_To_DBCUST] AUTHORIZATION dbo
+WITH  SERVICE_NAME  = N'Service_UserLog_Others_DBCUST' , 
 --Production  
 ADDRESS='TCP://DBCUST:4740' -- target server address
 --Local Test
@@ -61,13 +68,26 @@ ADDRESS='TCP://DBCUST:4740' -- target server address
 --ADDRESS='TCP://DB230:4740' -- target server address
 GO 
 
---Grant send/receive for accounts
-GRANT SEND ON SERVICE::Service_UserLog_Credit_DBLOG TO [bodbExtAccNet]
-GRANT SEND ON SERVICE::Service_UserLog_Credit_DBLOG  TO bodbDownlineNet
-GRANT SEND ON SERVICE::Service_UserLog_Credit_DBLOG  TO [bodbDownlineNetView]
-GRANT SEND ON SERVICE::Service_UserLog_Credit_DBLOG  TO [vnteam]
+--create Route to DBLOG_BK
+CREATE ROUTE [Route_UserLog_Others_To_DBLOGBK] AUTHORIZATION dbo
+WITH  SERVICE_NAME  = N'Service_UserLog_Others_DBLOGBK' , 
+--Production  
+ADDRESS='TCP://DB054:4742' -- target server address
+--Local Test
+--ADDRESS='TCP://DB234:4742' -- target server address
+--Local Dev
+--ADDRESS='TCP://DB231:4742' -- target server address
+GO 
 
-GRANT RECEIVE ON Queue_UserLog_Credit TO [bodbExtAccNet]
-GRANT RECEIVE ON Queue_UserLog_Credit TO bodbDownlineNet
-GRANT RECEIVE ON Queue_UserLog_Credit TO [bodbDownlineNetView]
-GRANT RECEIVE ON Queue_UserLog_Credit TO [vnteam]
+--Grant send/receive for accounts
+GRANT SEND ON SERVICE::Service_UserLog_Others_DBLOG TO [bodbExtAccNet]
+GRANT SEND ON SERVICE::Service_UserLog_Others_DBLOG  TO bodbDownlineNet
+GRANT SEND ON SERVICE::Service_UserLog_Others_DBLOG  TO [bodbDownlineNetView]
+GRANT SEND ON SERVICE::Service_UserLog_Others_DBLOG  TO [vnteam]
+GRANT SEND ON SERVICE::Service_UserLog_Others_DBLOG  TO public
+
+GRANT RECEIVE ON Queue_Others TO [bodbExtAccNet]
+GRANT RECEIVE ON Queue_Others TO bodbDownlineNet
+GRANT RECEIVE ON Queue_Others TO [bodbDownlineNetView]
+GRANT RECEIVE ON Queue_Others TO [vnteam]
+GRANT RECEIVE ON Queue_Others TO public
