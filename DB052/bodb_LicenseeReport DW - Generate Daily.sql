@@ -1,8 +1,11 @@
 USE [msdb]
 GO
+
+/****** Object:  Job [bodb_LicenseeReport: DW - Generate Daily]    Script Date: 11/16/2018 3:36:13 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
+/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 11/16/2018 3:36:13 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -23,7 +26,7 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb_LicenseeReport: DW - Ge
 		@owner_login_name=N'sa', 
 		@notify_email_operator_name=N'vnDBA', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Check Readiness]    Script Date: 3/9/2017 5:32:34 AM ******/
+/****** Object:  Step [Check Readiness]    Script Date: 11/16/2018 3:36:13 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check Readiness', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
@@ -38,12 +41,12 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check Re
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Process staging data]    Script Date: 3/9/2017 5:32:34 AM ******/
+/****** Object:  Step [Process staging data]    Script Date: 11/16/2018 3:36:13 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Process staging data', 
 		@step_id=2, 
 		@cmdexec_success_code=0, 
 		@on_success_action=3, 
-		@on_success_step_id=4, 
+		@on_success_step_id=0, 
 		@on_fail_action=4, 
 		@on_fail_step_id=1, 
 		@retry_attempts=3, 
@@ -53,7 +56,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Process 
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [GEN report 3rd Product]    Script Date: 3/9/2017 5:32:34 AM ******/
+/****** Object:  Step [GEN report 3rd Product]    Script Date: 11/16/2018 3:36:13 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'GEN report 3rd Product', 
 		@step_id=3, 
 		@cmdexec_success_code=0, 
@@ -61,8 +64,8 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'GEN repo
 		@on_success_step_id=0, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
+		@retry_attempts=3, 
+		@retry_interval=5, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
 		@command=N'DECLARE @WinlossDate DATE
 SET @WinlossDate = DATEADD(DAY, -1, CONVERT(VARCHAR(10), GETDATE(), 120))
@@ -70,46 +73,31 @@ EXEC dbo.Task_DOT_3rd_DailySummary @WinlostDate = @WinlossDate',
 		@database_name=N'bodb_3rdProduct', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Generate Customer Account]    Script Date: 3/9/2017 5:32:34 AM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Generate Customer Account', 
+/****** Object:  Step [Generate Betting]    Script Date: 11/16/2018 3:36:13 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Generate Betting', 
 		@step_id=4, 
 		@cmdexec_success_code=0, 
 		@on_success_action=3, 
 		@on_success_step_id=0, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
+		@retry_attempts=3, 
+		@retry_interval=5, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.GEN_Customer_Account2', 
+		@command=N'EXEC dbo.GEN_Betting', 
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Generate Betting]    Script Date: 3/9/2017 5:32:34 AM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Generate Betting', 
+/****** Object:  Step [Generate rpt_BettingByProduct @ bodb_licenseeReport]    Script Date: 11/16/2018 3:36:13 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Generate rpt_BettingByProduct @ bodb_licenseeReport', 
 		@step_id=5, 
 		@cmdexec_success_code=0, 
 		@on_success_action=3, 
 		@on_success_step_id=0, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
-		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.GEN_Betting', 
-		@database_name=N'bodb_LicenseeReport', 
-		@flags=0
-IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Generate rpt_BettingByProduct @ bodb_licenseeReport]    Script Date: 3/9/2017 5:32:34 AM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Generate rpt_BettingByProduct @ bodb_licenseeReport', 
-		@step_id=7, 
-		@cmdexec_success_code=0, 
-		@on_success_action=3, 
-		@on_success_step_id=0, 
-		@on_fail_action=2, 
-		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
+		@retry_attempts=3, 
+		@retry_interval=5, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
 		@command=N'DECLARE @fromDate datetime, @toDate datetime
 SELECT @fromDate = min(winlostdate) FROM bodb02.dbo.bettrans14 (NOLOCK)
@@ -119,16 +107,16 @@ EXEC dbo.GEN_rptBettingByProduct @fromDate, @toDate',
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Gen data for Active Customer Report @bodb_LicenseeReport]    Script Date: 3/9/2017 5:32:34 AM ******/
+/****** Object:  Step [Gen data for Active Customer Report @bodb_LicenseeReport]    Script Date: 11/16/2018 3:36:13 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data for Active Customer Report @bodb_LicenseeReport', 
-		@step_id=8, 
+		@step_id=6, 
 		@cmdexec_success_code=0, 
 		@on_success_action=3, 
 		@on_success_step_id=0, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
+		@retry_attempts=3, 
+		@retry_interval=5, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
 		@command=N'DECLARE @TransDate DATE
 SET @TransDate = DATEADD(DAY, -1, CONVERT(VARCHAR(10), GETDATE(), 120))
@@ -136,38 +124,16 @@ EXEC dbo.Task_CustomerActive_GenDataDaily @TransDate = @TransDate',
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Gen data for Keno winloss Report @bodb_LicenseeReport]    Script Date: 3/9/2017 5:32:34 AM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data for Keno winloss Report @bodb_LicenseeReport', 
-		@step_id=9, 
-		@cmdexec_success_code=0, 
-		@on_success_action=3, 
-		@on_success_step_id=0, 
-		@on_fail_action=2, 
-		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
-		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'DECLARE @WinlossDate DATE, @BF_EarlyDay DATE
-SET @WinlossDate = DATEADD(DAY, -1, CONVERT(VARCHAR(10), GETDATE(), 120))
-SET @BF_EarlyDay = DATEADD(DAY, -2, @WinlossDate)
-WHILE @WinlossDate >= @BF_EarlyDay
-BEGIN
-	EXEC dbo.Task_KenoWinloss_GenDataFromBettrans @WinlossDate = @WinlossDate
-	SET @WinlossDate = DATEADD(DAY, -1, @WinlossDate)		
-END', 
-		@database_name=N'bodb_LicenseeReport', 
-		@flags=0
-IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Gen data for Microgaming Casino Report @bodb_LicenseeReport]    Script Date: 3/9/2017 5:32:34 AM ******/
+/****** Object:  Step [Gen data for Microgaming Casino Report @bodb_LicenseeReport]    Script Date: 11/16/2018 3:36:13 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data for Microgaming Casino Report @bodb_LicenseeReport', 
-		@step_id=10, 
+		@step_id=7, 
 		@cmdexec_success_code=0, 
 		@on_success_action=3, 
 		@on_success_step_id=0, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
+		@retry_attempts=3, 
+		@retry_interval=5, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
 		@command=N'DECLARE @WinlossDate DATE, @BF_EarlyDay DATE
 SET @WinlossDate = DATEADD(DAY, -1, CONVERT(VARCHAR(10), GETDATE(), 120))
@@ -180,16 +146,16 @@ END',
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Generate rpt_BettingBySport @ bodb_LicenseeReport]    Script Date: 3/9/2017 5:32:34 AM ******/
+/****** Object:  Step [Generate rpt_BettingBySport @ bodb_LicenseeReport]    Script Date: 11/16/2018 3:36:13 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Generate rpt_BettingBySport @ bodb_LicenseeReport', 
-		@step_id=11, 
+		@step_id=8, 
 		@cmdexec_success_code=0, 
 		@on_success_action=3, 
 		@on_success_step_id=0, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
+		@retry_attempts=3, 
+		@retry_interval=5, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
 		@command=N'DECLARE @WinlossDate DATE
 SET @WinlossDate = DATEADD(DAY, -1, CONVERT(VARCHAR(10), GETDATE(), 120))
@@ -197,9 +163,9 @@ EXEC dbo.GEN_rptBettingBySport @Date = @WinlossDate',
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [POST staging :)]    Script Date: 3/9/2017 5:32:34 AM ******/
+/****** Object:  Step [POST staging :)]    Script Date: 11/16/2018 3:36:13 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'POST staging :)', 
-		@step_id=12, 
+		@step_id=9, 
 		@cmdexec_success_code=0, 
 		@on_success_action=1, 
 		@on_success_step_id=0, 
