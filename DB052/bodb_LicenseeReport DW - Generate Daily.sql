@@ -37,7 +37,8 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check Re
 		@retry_attempts=12, 
 		@retry_interval=10, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.Task_DW_CheckReadiness', 
+		@command=N'EXEC dbo.Task_DW_CheckReadiness
+		EXEC bodb_LicenseeReport.dbo.Task_PostStaging', 
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
