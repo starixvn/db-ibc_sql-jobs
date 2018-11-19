@@ -11,7 +11,7 @@ ALTER PROCEDURE [dbo].[Task_PrepareStaging]
     @datefrom smalldatetime=null
     ,@dateto smalldatetime=null
 	,@ErrorMsg VARCHAR(MAX) = '' OUTPUT
---WITH RECOMPILE
+WITH RECOMPILE
 AS  
 /*
 Created: 
