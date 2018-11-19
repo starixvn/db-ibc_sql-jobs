@@ -34,8 +34,9 @@ BEGIN
 			   ,[ip]
 			   ,[doing]
 			   ,[ActionID]
-			   ,[ActualRate])
-		SELECT LogID,UserID, CustID, logdate,OldValue, NewValue, IP, Doing, ActionID,ActualRate	
+			   ,[ActualRate]
+			   ,[CreatedDate])
+		SELECT LogID,UserID, CustID, logdate,OldValue, NewValue, IP, Doing, ActionID,ActualRate, getdate()	
 		FROM OPENXML(@handle,'/Root/Row',1) 
 				WITH (LogID INT,
 					UserID  int,

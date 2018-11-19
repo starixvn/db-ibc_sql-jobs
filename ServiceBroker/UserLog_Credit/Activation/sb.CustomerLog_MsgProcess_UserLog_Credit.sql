@@ -28,7 +28,8 @@ BEGIN
 						  NewValue MONEY,
 						  IP VARCHAR(15),
 						  ActionID INT,
-						  ActualRate FLOAT)
+						  ActualRate FLOAT,
+						  logdate DATETIME)
 	
 	CREATE TABLE #LogOutput(
 			[logid] [bigint],
@@ -52,8 +53,9 @@ BEGIN
 						NewValue, 
 						IP, 
 						ActionID,
-						ActualRate)
-	SELECT UserID, CustID, Doing, OldValue, NewValue, IP, ActionID, 0 as ActualRate	
+						ActualRate,
+						LogDate)
+	SELECT UserID, CustID, Doing, OldValue, NewValue, IP, ActionID, 0 as ActualRate, LogDate	
 	FROM OPENXML(@handle,'/Root/Row',1) 
 			WITH (UserID  int,  
                   CustID int,
@@ -61,7 +63,8 @@ BEGIN
                   OldValue money,
                   NewValue money,
                   IP VARCHAR(15),
-                  ActionID int
+                  ActionID int,
+				  LogDate DATETIME
                   ); 
 	
 	EXEC sp_xml_removedocument @handle; 
@@ -81,7 +84,9 @@ BEGIN
 								NewValue, 
 								IP, 
 								ActionID,
-								ActualRate)  
+								ActualRate,
+								LogDate,
+								CreatedDate)  
 		OUTPUT inserted.logid,inserted.userid,inserted.custid,inserted.logdate,inserted.OldValue,
 			inserted.NewValue,inserted.ip,inserted.doing,inserted.ActionID,inserted.ActualRate
 		INTO #LogOutput([logid],[userid],[custid],[logdate],[OldValue],[NewValue],[ip],[doing],[ActionID],[ActualRate])	
@@ -92,7 +97,9 @@ BEGIN
 			NewValue, 
 			IP, 
 			ActionID,
-			ActualRate
+			ActualRate,
+			LogDate,
+			getdate()
 		FROM @tmpLog
 		
 		IF @IsExistingTarget = 1
