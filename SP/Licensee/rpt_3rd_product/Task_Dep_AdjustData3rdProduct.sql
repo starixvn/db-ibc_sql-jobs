@@ -112,7 +112,7 @@ BEGIN
 			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_ChargeInfo(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @FirstDateOfLastMonth, 112) + '''''
 												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
-			WHERE DI_Rate > 0 AND ChargeType = 1 '')'
+			WHERE DI_Rate > 0 AND ChargeType IN (1,12) '')'
 	
 	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
 	EXEC (@SqlQueryChargeRate)
@@ -123,7 +123,7 @@ BEGIN
 			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @FirstDateOfLastMonth, 112) + '''''
 												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
-			WHERE DI_Rate > 0 AND ChargeType = 1 '')'
+			WHERE DI_Rate > 0 AND ChargeType IN (1,12) '')'
 	
 	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
 	EXEC (@SqlQueryChargeRate)
@@ -276,13 +276,12 @@ BEGIN
 			-- GoldDeluxe_Tip
 			SELECT @SqlQueryFor3rd = ''
 			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 1706 AS Bettype, Stake, Actual_stake, Winlost
-				FROM OPENQUERY(DBLIC, ''SELECT WinlostDate, b.Currency, 0 AS Stake, SUM(ABS(Stake)) AS Actual_stake, 0 AS Winlost
+				FROM OPENQUERY(DBLIC, ''SELECT WinlostDate, b.Currency, 0 AS Stake, SUM(ABS(Amount)) AS Actual_stake, 0 AS Winlost
 				FROM bodb_PlaytechCS.dbo.GoldDeluxe_Tip b WITH (NOLOCK)
 					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON b.recommend = f.custid AND b.currency = f.currency 
 				WHERE 1 = 1'
 					+ ' AND WinlostDate BETWEEN ''''' + CONVERT(VARCHAR(10), @FirstDateOfLastMonth, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''''
 					+ ' AND b.Currency = ' + CAST(@CurrencyId AS VARCHAR)
-					+ ' AND StatusId IN (112,113,111)'
 				+ ' GROUP BY WinlostDate, b.Currency'
 				+ ''' )'
 			
@@ -401,7 +400,7 @@ BEGIN
 		--AGC Adjustment - Date: 2015-05-26
 		UPDATE tmp
 		SET TransDesc = CASE WHEN tmp.Bettype = 1800 THEN 'AGC' 
-							 WHEN tmp.Bettype = 1700 THEN 'GD' 
+							 WHEN tmp.Bettype IN (1700, 1706) THEN 'GD' 
 							 WHEN tmp.Bettype = 1900 THEN 'VG' 
 							 WHEN tmp.Bettype = 8000 THEN 'BX' END + @AdjustmentIndicator + CONVERT(VARCHAR(10), WinlostDate, 120) + ' - Ex.Rate: ' + CAST(tmp.ActualRate AS VARCHAR)
 			, awinlost = -(Winlost - Actual_stake) * (1 - r.Rate)
