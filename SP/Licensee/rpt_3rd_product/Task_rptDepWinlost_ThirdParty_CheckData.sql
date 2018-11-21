@@ -1,4 +1,7 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+USE bodb_LicenseeReport
+GO
+
 ALTER PROCEDURE [dbo].[Task_rptDepWinlost_ThirdParty_CheckData]
 	@WinlostDate		SMALLDATETIME,
 	@HasDataMismatch	TINYINT OUTPUT, --0: No mismatch; 1: Has real currencies; 2: UUS only
@@ -13,6 +16,7 @@ AS
 	Revisions:
 		- 20180406@Harper: Check & correct data of rptDepWinlost_ThirdParty - Exchange [RedmineID: #92485]
 		- 20180530@Sophia: Check & correct data into new table rptDepWinlost_ThirdParty_Performance for Nap report performance [redmine: #93582]
+		- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
 
 	DECLARE @HasDataMismatch	TINYINT, @ProductID VARCHAR(MAX)
 	EXEC Task_rptDepWinlost_ThirdParty_CheckData @WinlostDate = '2018-04-09', @HasDataMismatch = @HasDataMismatch OUTPUT, @ProductIDs = @ProductID OUTPUT
@@ -39,8 +43,8 @@ BEGIN
 		CommissionP		MONEY,
 		CommissionA		MONEY,
 		ValidBetAmount	MONEY,
-		EventType		SMALLINT
-
+		EventType		SMALLINT,
+		Bettype			SMALLINT
 	)
 
 	CREATE TABLE #Target
@@ -57,7 +61,8 @@ BEGIN
 		CommissionP		MONEY,
 		CommissionA		MONEY,
 		ValidBetAmount	MONEY,
-		EventType		SMALLINT
+		EventType		SMALLINT,
+		Bettype			SMALLINT
 	)
 
 	CREATE TABLE #TicketData 
@@ -210,7 +215,7 @@ BEGIN
 	SET @S_Count = @@ROWCOUNT;
 	
 	-- For GoldDeluxe
-	INSERT INTO #Source(TableName, custid, currency, turnover, winlost, drawTO, drawBetCount, betCount, ProductID)
+	INSERT INTO #Source(TableName, custid, currency, turnover, winlost, drawTO, drawBetCount, betCount, ProductID, Bettype)
 	SELECT	'bettrans_GoldDeluxe',
 			b.CustID, 		
 			b.currency,				
@@ -219,7 +224,8 @@ BEGIN
 			ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN b.Stake ELSE 0 END),0) AS DrawTO,	
 			ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount,	
 			ISNULL(COUNT(b.TicketId),0) AS Betcount,
-			11 AS ProductID	
+			11 AS ProductID,
+			-1 AS Bettype
 	FROM bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b WITH (ROWLOCK)
 	WHERE Winlostdate = @winlostdate
 		AND StatusId IN (111,112,113)
@@ -227,10 +233,19 @@ BEGIN
 
 	SET @S_Count = @S_Count + @@ROWCOUNT;
 	
+	INSERT INTO #Source(TableName, custid, currency, turnover, winlost, drawTO, drawBetCount, betCount, ProductID, Bettype)
+	SELECT	'GoldDeluxe_Tip',IBCCustId, Currency, 0, SUM(-Amount), 0, 0, COUNT(TipId), 11, 1706
+	FROM bodb_PlaytechCS.dbo.GoldDeluxe_Tip WITH(NOLOCK)
+	WHERE Winlostdate = @winlostdate 
+	GROUP BY IBCCustId, currency
+
+	SET @S_Count = @S_Count + @@ROWCOUNT;
+	
 	INSERT INTO #Target
 	        ( Custid ,
 	          Currency ,
 	          ProductID ,
+			  Bettype,
 	          Turnover ,
 	          Winlost ,
 	          WinlostA ,
@@ -241,13 +256,13 @@ BEGIN
 	          CommissionA ,
 	          ValidBetAmount
 	        )
-	SELECT custid, Currency, t.ProductId
+	SELECT custid, Currency, t.ProductId, Bettype
 					, SUM(ISNULL(turnover, 0)), SUM(ISNULL(Winlost, 0)), SUM(ISNULL(WinLostA, 0))
 					, SUM(ISNULL(DrawTO, 0)), SUM(ISNULL(DrawBetCount, 0)), SUM(ISNULL(BetCount, 0))
 					, SUM(ISNULL(CommissionP, 0)), SUM(ISNULL(CommissionA, 0)), SUM(ISNULL(ValidBetAmount, 0))		
 	FROM bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty t WITH (NOLOCK)
 	WHERE t.Winlostdate = @WinlostDate
-	GROUP BY t.CustID, t.Currency, t.ProductId
+	GROUP BY t.CustID, t.Currency, t.ProductId, Bettype
 
 	SET @T_Count = @@ROWCOUNT;
 
@@ -270,7 +285,9 @@ BEGIN
 			FROM #Target t
 			WHERE s.custid = t.custid AND s.currency = t.currency AND s.ProductID = t.ProductID AND s.turnover = t.turnover AND s.winlost = t.winlost
 				AND s.drawTO = t.drawTO AND s.drawBetCount = t.drawBetCount AND s.betCount = t.betCount AND ISNULL(t.WinlostA, 0) = ISNULL(s.WinlostA, 0)
-				AND ISNULL(t.CommissionP, 0) = ISNULL(s.CommissionP, 0) AND ISNULL(t.CommissionA, 0) = ISNULL(s.CommissionA, 0) AND ISNULL(t.ValidBetAmount, 0) = ISNULL(s.ValidBetAmount, 0))
+				AND ISNULL(t.CommissionP, 0) = ISNULL(s.CommissionP, 0) AND ISNULL(t.CommissionA, 0) = ISNULL(s.CommissionA, 0) AND ISNULL(t.ValidBetAmount, 0) = ISNULL(s.ValidBetAmount, 0)
+				AND t.Bettype = s.Bettype
+			)
 		GROUP BY TableName, ProductID, currency
 		
 		UNION ALL
@@ -290,7 +307,9 @@ BEGIN
 			FROM #Source s
 			WHERE s.custid = t.custid AND s.currency = t.currency AND s.ProductID = t.ProductID AND s.turnover = t.turnover AND s.winlost = t.winlost
 				AND s.drawTO = t.drawTO AND s.drawBetCount = t.drawBetCount AND s.betCount = t.betCount AND ISNULL(s.WinlostA, 0) = ISNULL(t.WinlostA, 0) 
-				AND ISNULL(s.CommissionP, 0) = ISNULL(t.CommissionP, 0) AND ISNULL(s.CommissionA, 0) = ISNULL(t.CommissionA, 0) AND ISNULL(s.ValidBetAmount, 0) = ISNULL(t.ValidBetAmount, 0))
+				AND ISNULL(s.CommissionP, 0) = ISNULL(t.CommissionP, 0) AND ISNULL(s.CommissionA, 0) = ISNULL(t.CommissionA, 0) AND ISNULL(s.ValidBetAmount, 0) = ISNULL(t.ValidBetAmount, 0)
+				AND s.Bettype=t.Bettype
+			)
 		GROUP BY ProductID, currency
 
 	SET @T_Count = @@ROWCOUNT;
