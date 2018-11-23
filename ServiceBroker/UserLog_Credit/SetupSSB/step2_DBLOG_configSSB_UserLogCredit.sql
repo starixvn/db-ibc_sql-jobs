@@ -50,7 +50,7 @@ POISON_MESSAGE_HANDLING (STATUS = ON)  ON [ServiceBrokerData]
 GO
 
 ALTER QUEUE Queue_Others 
-WITH ACTIVATION (  STATUS = ON , PROCEDURE_NAME = [sb].[QueueOthers_ProcessData] , MAX_QUEUE_READERS = 10 , EXECUTE AS N'dbo'  )
+WITH ACTIVATION (  STATUS = ON , PROCEDURE_NAME = [sb].[QueueOthersDBLOG_ProcessData] , MAX_QUEUE_READERS = 10 , EXECUTE AS N'dbo'  )
 GO
 
 CREATE SERVICE [Service_UserLog_Others_DBLOG] AUTHORIZATION [dbo] ON QUEUE dbo.[Queue_Others](Contract_CustomerLog_UserLog_Credit)
