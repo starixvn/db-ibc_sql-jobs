@@ -15,6 +15,7 @@ AS
 		20170410@Harper: Implement Cashout Product
 		20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
 		20181114@Sophia: Revise Job Verify BA - Rename SP from Task_BATransaction_Check To Task_BATransaction_CheckAndCorrect [Redmine: #103653]
+		20181120@Sophia: Change 'DB052' To 'DB053' for steap switch to DB053 [Redmine: #103653]
  */  
 SET NOCOUNT ON   
    
@@ -125,7 +126,7 @@ BEGIN
 			FOR XML RAW('r'), root
 		)
 		
-		IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB052' 
+		IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB053' 
 			EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
   
 		SELECT @currentMaxTransID = VValue  

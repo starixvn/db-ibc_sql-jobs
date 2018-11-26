@@ -24,6 +24,7 @@ AS
 		20181002@Sophia: Sync BA ticket to DB053 (UAT) [Redmine #99855]
 		20181025@Sophia: Revert SPs not to sync BA ticket to DB053, due to DB053 has the job Gen BA ticket by itself (PRO) [Redmine #99855]	
 		20181107@Patrick: DB052 Indexes Revolution [Redmine: #103572]
+		20181120@Sophia: Change 'DB052' To 'DB053' for steap switch to DB053 [Redmine: #103653]
  */  
 BEGIN
 	SET NOCOUNT ON   
@@ -91,7 +92,7 @@ BEGIN
 		FOR XML RAW('r'), root
 	)	
 	
-	IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB052' 
+	IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB053' 
 		EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
 		
 END
