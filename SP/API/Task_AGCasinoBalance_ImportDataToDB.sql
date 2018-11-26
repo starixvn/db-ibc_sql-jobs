@@ -1,3 +1,4 @@
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="" viewers="" isNested="0"></info>*/
 USE [bodb_PlaytechCS]
 GO
 ALTER PROCEDURE [dbo].[Task_AGCasinoBalance_ImportDataToDB]
@@ -14,6 +15,7 @@ DB: DBPTCS.bodb_PlaytechCS
 Original:
 
 Revisions:
+	- 20181126@Patrick: Add optimize for option [Redmine: #105365]
 
 Param explanation:
 
@@ -55,6 +57,7 @@ BEGIN TRY
 		x.v.value('CURRENCY[1]', 'SMALLINT') AS Currency,
 		x.v.value('DATE[1]', 'DATETIME') AS createdate
 	FROM    @XmlData.nodes('/TransList/TRANSACTION') x(v)
+	OPTION (OPTIMIZE FOR (@XmlData = NULL ))
 	
 
 END TRY
