@@ -158,9 +158,9 @@ BEGIN
 						WHEN BA.transid IS NULL THEN 0  
 						WHEN BA.transid IS NOT NULL THEN 1 END  
 					,CASE   
-						WHEN b.betfrom IN ('s','m','l','r') THEN 1 ELSE 0 END  
+						WHEN b.betfrom IN ('s','m','l','r','o') THEN 1 ELSE 0 END  
 					,CASE      
-						WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z') THEN b.betfrom ELSE '' END;
+						WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z', 'o') THEN b.betfrom ELSE '' END;
 
 		SET @S_Count = @S_Count + @@ROWCOUNT;
 
