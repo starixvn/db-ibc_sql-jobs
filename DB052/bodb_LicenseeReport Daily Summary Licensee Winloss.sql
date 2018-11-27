@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb_LicenseeReport: Daily Summary Licensee Winloss]    Script Date: 4/24/2018 10:27:21 AM ******/
+/****** Object:  Job [bodb_LicenseeReport: Daily Summary Licensee Winloss]    Script Date: 11/27/2018 9:56:01 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 4/24/2018 10:27:21 AM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 11/27/2018 9:56:01 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -25,7 +25,7 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb_LicenseeReport: Daily S
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Update statistics]    Script Date: 4/24/2018 10:27:21 AM ******/
+/****** Object:  Step [Update statistics]    Script Date: 11/27/2018 9:56:01 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Update statistics', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
@@ -46,7 +46,7 @@ UPDATE STATISTICS rptLicWinlossGMT',
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Gen data for @ rptLicWinloss2]    Script Date: 4/24/2018 10:27:21 AM ******/
+/****** Object:  Step [Gen data for @ rptLicWinloss2]    Script Date: 11/27/2018 9:56:01 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data for @ rptLicWinloss2', 
 		@step_id=2, 
 		@cmdexec_success_code=0, 
@@ -61,7 +61,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Gen data for @ rptCustomerTurnover]    Script Date: 4/24/2018 10:27:21 AM ******/
+/****** Object:  Step [Gen data for @ rptCustomerTurnover]    Script Date: 11/27/2018 9:56:01 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data for @ rptCustomerTurnover', 
 		@step_id=3, 
 		@cmdexec_success_code=0, 
@@ -76,7 +76,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Gen data for @ rptWinlostbyLeague]    Script Date: 4/24/2018 10:27:21 AM ******/
+/****** Object:  Step [Gen data for @ rptWinlostbyLeague]    Script Date: 11/27/2018 9:56:01 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data for @ rptWinlostbyLeague', 
 		@step_id=4, 
 		@cmdexec_success_code=0, 
@@ -91,7 +91,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Gen data for @ rptCustomerMatch]    Script Date: 4/24/2018 10:27:21 AM ******/
+/****** Object:  Step [Gen data for @ rptCustomerMatch]    Script Date: 11/27/2018 9:56:02 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data for @ rptCustomerMatch', 
 		@step_id=5, 
 		@cmdexec_success_code=0, 
@@ -106,7 +106,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Gen data for @ rpt_BettingParlay]    Script Date: 4/24/2018 10:27:22 AM ******/
+/****** Object:  Step [Gen data for @ rpt_BettingParlay]    Script Date: 11/27/2018 9:56:02 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data for @ rpt_BettingParlay', 
 		@step_id=6, 
 		@cmdexec_success_code=0, 
@@ -121,7 +121,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Gen data for @ rpt_BettingColossusBets]    Script Date: 4/24/2018 10:27:22 AM ******/
+/****** Object:  Step [Gen data for @ rpt_BettingColossusBets]    Script Date: 11/27/2018 9:56:02 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data for @ rpt_BettingColossusBets', 
 		@step_id=7, 
 		@cmdexec_success_code=0, 
@@ -136,7 +136,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Gen data for @ rptLicWinlossGMT]    Script Date: 4/24/2018 10:27:22 AM ******/
+/****** Object:  Step [Gen data for @ rptLicWinlossGMT]    Script Date: 11/27/2018 9:56:02 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data for @ rptLicWinlossGMT', 
 		@step_id=8, 
 		@cmdexec_success_code=0, 
@@ -151,7 +151,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 2
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Everyday before MoveBet New', 
 		@enabled=1, 
