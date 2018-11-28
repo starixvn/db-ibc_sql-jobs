@@ -23,6 +23,7 @@ AS
 	  - 20160224@Jim: add pull service option  
 	  - 20170912@Harper: Clean code [RedmineID: #82673] 
 	  - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
+	  - 20181123@Amanda: Update effective date for LicenseePorduct3rd if call SP with multi products and use DBA_lrf_EnableService to add pull service setting [redmine: #83584]
 
 	Param's Explanation:    
    
@@ -59,7 +60,7 @@ BEGIN
 	SELECT @MaxID = MAX(ID)  
 	FROM @tblProductPrefix  
    
-	IF (@MaxID=1 AND ISNULL(@EffectiveDate,'') <> '')  
+	IF (@MaxID >= 1 AND ISNULL(@EffectiveDate,'') <> '')  
 	BEGIN   
 		UPDATE @tblProductPrefix  
 		SET EffectiveDate = @EffectiveDate  
@@ -161,12 +162,12 @@ BEGIN
 	----------------------------------------* PULL DATA INTO SERVICE *----------------------------------
 	IF EXISTS (SELECT 1 FROM @tblProductPrefix WHERE ProductCode = 'AGC') AND @IsPullService =1  
 	BEGIN   
-		EXEC DBPTCS.bodb_PlaytechCS.[dbo].[DBA_EnableAGCasinoService] @LicenseeName = @LicenseeName, @SettingName ='AGCasino_VersionKey'  
+		EXEC DBPTCS.bodb_PlaytechCS.[dbo].[DBA_lrf_EnableService] @LicenseeID = @LicenseeId, @LicenseeName = @LicenseeName, @SettingName ='AGCasino_VersionKey'  
 	END  
 
 	IF EXISTS (SELECT 1 FROM @tblProductPrefix WHERE ProductCode = 'GD') AND @IsPullService =1  
 	BEGIN   
-		EXEC DBPTCS.bodb_PlaytechCS.[dbo].[DBA_EnableGoldDeluxeService] @LicenseeName = @LicenseeName, @SettingName ='GoldDeluxe_VersionKey'  
+		EXEC DBPTCS.bodb_PlaytechCS.[dbo].[DBA_lrf_EnableService] @LicenseeID = @LicenseeId, @LicenseeName = @LicenseeName, @SettingName ='GoldDeluxe_VersionKey'  
 	END   
 
 	IF EXISTS (SELECT 1 FROM @tblProductPrefix WHERE ProductCode = 'BA')  
