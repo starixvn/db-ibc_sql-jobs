@@ -1,0 +1,93 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
+ALTER PROCEDURE [dbo].[Task_DailyRptCasinoTurnover_Bettrans]
+	@winlostdate DATETIME
+AS
+/*
+Created:20181129@Joseph
+Task: daily summary for casino turnover
+DB: DBLIC.bodb_LicenseeReport
+Revisions:
+	- 20181129@Joseph: Create [Redmine: #95178]
+*/  
+BEGIN
+	SET NOCOUNT ON
+    
+	DELETE FROM dbo.rptCasinoTurnover WITH (rowlock) WHERE winlostdate = @winlostdate  	
+
+	INSERT INTO dbo.rptCasinoTurnover(  
+	 [WinlostDate]
+      ,[CustId]
+      ,[Recommend]
+      ,[ProductId]
+      ,[StatusId]
+      ,[Currency]
+      ,[BetCount]
+      ,[Turnover]
+      ,[Winlost]
+      ,[ValidBetAmount]
+	  )  
+	( 
+		-- RNG Casino and Macau Games
+		SELECT @winlostdate  
+	   ,customer.custid  
+	   ,customer.recommend
+	   ,p3rd.ProductID
+	   ,bettrans.statusID
+	   ,bettrans.currency 
+	   ,COUNT(bettrans.transid) AS BetCount  
+		,SUM(bettrans.stake) AS Turnover
+		,SUM(bettrans.winlost-bettrans.actual_stake) AS  winlost  
+		,SUM(bettrans.stake) AS ValidBetAmount 
+		FROM
+			bodb02.dbo.bettransRnG bettrans WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.SportBettypeMatrix matrix WITH(NOLOCK) ON bettrans.gameid = matrix.bettype
+			INNER JOIN bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductID = matrix.productId
+			INNER JOIN bodb_licensee.dbo.product3rd p3rd WITH (NOLOCK) ON p.ProductPrefix = p3rd.ProductPrefix
+			INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
+		WHERE
+			bettrans.winlostdate = @winlostdate AND
+			customer.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All')) AND
+			bettrans.statusID IN (111,112,113) AND -- DRAW, WON, LOSE
+			matrix.ProductID IN (6, 22) -- RNG Casino, Macau Games
+		GROUP BY
+			customer.custid
+			,customer.recommend
+			,p3rd.ProductID
+			,bettrans.statusID
+			,bettrans.currency
+		
+		UNION ALL
+
+		-- All Bet
+		SELECT @winlostdate  
+		,customer.custid  
+		,customer.recommend
+		,p3rd.ProductID
+		,bettrans.statusID
+		,bettrans.currency 
+		,COUNT(bettrans.transid) AS BetCount  
+		,SUM(bettrans.stake) AS Turnover
+		,SUM(bettrans.winlost-bettrans.actual_stake) AS  winlost  
+		,SUM(bettrans.netstake) AS ValidBetAmount 
+		FROM
+			bodb02.dbo.bettransLC bettrans WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.SportBettypeMatrix matrix WITH(NOLOCK) ON bettrans.gameid = matrix.bettype
+			INNER JOIN bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductID = matrix.productId
+			INNER JOIN bodb_licensee.dbo.product3rd p3rd WITH (NOLOCK) ON p.ProductPrefix = p3rd.ProductPrefix
+			INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
+		WHERE
+			bettrans.winlostdate = @winlostdate AND
+			customer.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All')) AND
+			bettrans.statusID IN (111,112,113) AND -- DRAW, WON, LOSE
+			matrix.ProductID IN (21) -- AllBet
+		GROUP BY
+			customer.custid
+			,customer.recommend
+			,p3rd.ProductID
+			,bettrans.statusID
+			,bettrans.currency
+	)
+	
+END
+GO
