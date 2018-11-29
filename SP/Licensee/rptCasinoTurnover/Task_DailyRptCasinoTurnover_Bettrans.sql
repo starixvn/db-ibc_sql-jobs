@@ -30,8 +30,8 @@ BEGIN
 	( 
 		-- RNG Casino and Macau Games
 		SELECT @winlostdate  
-	   ,customer.custid  
-	   ,customer.recommend
+	   ,bettrans.custid  
+	   ,bettrans.recommend
 	   ,p3rd.ProductID
 	   ,bettrans.statusID
 	   ,bettrans.currency 
@@ -44,15 +44,13 @@ BEGIN
 			INNER JOIN bodb02.dbo.SportBettypeMatrix matrix WITH(NOLOCK) ON bettrans.gameid = matrix.bettype
 			INNER JOIN bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductID = matrix.productId
 			INNER JOIN bodb_licensee.dbo.product3rd p3rd WITH (NOLOCK) ON p.ProductPrefix = p3rd.ProductPrefix
-			INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
 		WHERE
 			bettrans.winlostdate = @winlostdate AND
-			customer.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All')) AND
 			bettrans.statusID IN (111,112,113) AND -- DRAW, WON, LOSE
 			matrix.ProductID IN (6, 22) -- RNG Casino, Macau Games
 		GROUP BY
-			customer.custid
-			,customer.recommend
+			bettrans.custid
+			,bettrans.recommend
 			,p3rd.ProductID
 			,bettrans.statusID
 			,bettrans.currency
@@ -61,8 +59,8 @@ BEGIN
 
 		-- All Bet
 		SELECT @winlostdate  
-		,customer.custid  
-		,customer.recommend
+		,bettrans.custid  
+		,bettrans.recommend
 		,p3rd.ProductID
 		,bettrans.statusID
 		,bettrans.currency 
@@ -75,15 +73,13 @@ BEGIN
 			INNER JOIN bodb02.dbo.SportBettypeMatrix matrix WITH(NOLOCK) ON bettrans.gameid = matrix.bettype
 			INNER JOIN bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductID = matrix.productId
 			INNER JOIN bodb_licensee.dbo.product3rd p3rd WITH (NOLOCK) ON p.ProductPrefix = p3rd.ProductPrefix
-			INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
 		WHERE
 			bettrans.winlostdate = @winlostdate AND
-			customer.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All')) AND
 			bettrans.statusID IN (111,112,113) AND -- DRAW, WON, LOSE
 			matrix.ProductID IN (21) -- AllBet
 		GROUP BY
-			customer.custid
-			,customer.recommend
+			bettrans.custid
+			,bettrans.recommend
 			,p3rd.ProductID
 			,bettrans.statusID
 			,bettrans.currency

@@ -24,13 +24,10 @@ SELECT @S_Winlost = SUM(winlost)
 		, COUNT(b.TransId) as betcount
 		, SUM(b.stake) as validbetamount
 		FROM bodb02.dbo.bettransRng14 b WITH(NOLOCK)
-			INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.custid = c.custid
 			INNER JOIN bodb02.dbo.SportBettypeMatrix matrix WITH(NOLOCK) ON b.gameid = matrix.bettype
 		WHERE b.winlostdate = @WinlostDate
-			AND c.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All'))
 			AND b.statusID IN (111,112,113) -- DRAW, WON, LOSE
 			AND matrix.ProductID IN (6, 22) -- RNG Casino, Macau Games
-			AND c.roleid = 1
 
 		UNION ALL
 
@@ -40,13 +37,10 @@ SELECT @S_Winlost = SUM(winlost)
 			, COUNT(b.TransId) as betcount
 			, SUM(b.stake) as validbetamount
 		FROM bodb02.dbo.bettransLC14 b WITH(NOLOCK)
-			INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.custid = c.custid
 			INNER JOIN bodb02.dbo.SportBettypeMatrix matrix WITH(NOLOCK) ON b.gameid = matrix.bettype
 		WHERE b.winlostdate = @WinlostDate
-			AND c.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All'))
 			AND b.statusID IN (111,112,113) -- DRAW, WON, LOSE
 			AND matrix.ProductID IN (21) -- All bet
-			AND c.roleid = 1
 	) t
 	OPTION (RECOMPILE)
 
@@ -55,12 +49,9 @@ SELECT @S_Winlost = SUM(winlost)
 		, @T_BetCount = SUM(BetCount)
 		, @T_ValidBetAmount = SUM(ValidBetAmount)
 	FROM dbo.rptCasinoTurnover b WITH(NOLOCK)
-		INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.custid = c.custid
 	WHERE b.winlostdate = @WinlostDate
-		AND c.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All'))
 		AND b.statusID IN (111,112,113) -- DRAW, WON, LOSE
 		AND b.ProductID IN (6, 22, 21) -- RNG Casino, Macau Games, All Bet
-		AND b.roleid = 1
 
 	-- compare 
 	IF ISNULL(@S_Winlost, 0) <> ISNULL(@T_Winlost, 0)
