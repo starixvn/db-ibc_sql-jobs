@@ -162,12 +162,12 @@ BEGIN
 	----------------------------------------* PULL DATA INTO SERVICE *----------------------------------
 	IF EXISTS (SELECT 1 FROM @tblProductPrefix WHERE ProductCode = 'AGC') AND @IsPullService =1  
 	BEGIN   
-		EXEC DBPTCS.bodb_PlaytechCS.[dbo].[DBA_lrf_EnableService] @LicenseeID = @LicenseeId, @LicenseeName = @LicenseeName, @SettingName ='AGCasino_VersionKey'  
+		EXEC DBPTCS.bodb_PlaytechCS.[dbo].[DBA_Lrf_PullServiceSetting] @LicenseeID = @LicenseeId, @LicenseeName = @LicenseeName, @SettingName ='AGCasino_VersionKey'  
 	END  
 
 	IF EXISTS (SELECT 1 FROM @tblProductPrefix WHERE ProductCode = 'GD') AND @IsPullService =1  
 	BEGIN   
-		EXEC DBPTCS.bodb_PlaytechCS.[dbo].[DBA_lrf_EnableService] @LicenseeID = @LicenseeId, @LicenseeName = @LicenseeName, @SettingName ='GoldDeluxe_VersionKey'  
+		EXEC DBPTCS.bodb_PlaytechCS.[dbo].[DBA_Lrf_PullServiceSetting] @LicenseeID = @LicenseeId, @LicenseeName = @LicenseeName, @SettingName ='GoldDeluxe_VersionKey'  
 	END   
 
 	IF EXISTS (SELECT 1 FROM @tblProductPrefix WHERE ProductCode = 'BA')  
