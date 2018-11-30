@@ -40,6 +40,7 @@ BEGIN
 	CREATE TABLE #translog (translogid BIGINT, actualrate float, virtualrate float)
 	CREATE TABLE #bettransRnG (transid BIGINT, actualrate float, virtualrate float)
 	CREATE TABLE #bettransLC (transid BIGINT, actualrate float, virtualrate float)
+	CREATE TABLE #Transfer_Coll (transid BIGINT, actualrate float)
 	
 	SET NOCOUNT OFF
 
@@ -142,8 +143,8 @@ BEGIN
 		PRINT '11.-------Transfer_Coll table ---------'
 		-- Transfer_Coll tickets		 
 			
-		insert into #tmp(transid, actualrate, virtualrate)
-		select b.transid, e.actualrate, e.actualrate
+		insert into #Transfer_Coll(transid, actualrate)
+		select b.transid, e.actualrate
 		FROM dbo.Transfer_Coll b WITH(nolock) 
 			,CustDB.dbo.exchange e WITH (NOLOCK)
 		WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
@@ -354,7 +355,7 @@ BEGIN
 		delete from @table
 		
 		delete top(2000) 		
-		from #tmp 
+		from #Transfer_Coll 
 		output deleted.transid, deleted.actualrate, deleted.virtualrate into @table
 		set @rowcount = @@ROWCOUNT
 		
