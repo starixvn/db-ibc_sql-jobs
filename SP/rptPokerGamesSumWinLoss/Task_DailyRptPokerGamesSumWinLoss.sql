@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSUM-bodb_Summary" executers="vnteam" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBSUM-bodb_Summary" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailyRptPokerGamesSumWinLoss]
 	@WinlostDate AS SMALLDATETIME
 AS
@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20180912@Sophia: Initialize SP [RedmineID: #101376]
 		- 20181003@Helen: Modify code to adapt indexes changed on DB053 [Redmine:101405]
+		
 		
 	Param's Explanation:
 	

@@ -12,7 +12,7 @@ AS
 	
 	Revisions:
 		- 20180222@Percy: Initialize SP [RedmineID: #83787]
-
+ 
 	Param's Explanation:
 */
 
