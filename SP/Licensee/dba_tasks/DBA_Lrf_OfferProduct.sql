@@ -23,7 +23,7 @@ AS
 	  - 20160224@Jim: add pull service option  
 	  - 20170912@Harper: Clean code [RedmineID: #82673] 
 	  - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
-	  - 20181123@Amanda: Update effective date for LicenseePorduct3rd if call SP with multi products and use DBA_lrf_EnableService to add pull service setting [redmine: #83584]
+	  - 20181123@Amanda: Update effective date for LicenseePorduct3rd if call SP with multi products and use DBA_Lrf_PullServiceSetting to add pull service setting [redmine: #83584]
 
 	Param's Explanation:    
    
