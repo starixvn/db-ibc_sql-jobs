@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSUM-bodb_Summary" executers="vnteam" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBSUM-bodb_Summary" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_Summary]
 GO
 
@@ -14,8 +14,7 @@ AS
 	
 	Revisions:
 		- 20180912@Sophia: Initialize SP [RedmineID: #101376]
-		
-		
+				
 	Param's Explanation:
 */
 
