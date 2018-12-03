@@ -1,4 +1,4 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="" viewers="" isNested="0"></info>*/
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="bodbLicenseeNet" viewers="" isNested="0"></info>*/
 USE [bodb_PlaytechCS]
 GO
 ALTER PROCEDURE [dbo].[Task_AGCasinoBalance_ImportDataToDB]
