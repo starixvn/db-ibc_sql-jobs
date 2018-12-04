@@ -33,7 +33,7 @@ BEGIN
 	CREATE TABLE #3rdData (WinlostDate SMALLDATETIME, Stake MONEY, Actual_Stake MONEY, Winlost MONEY, CurrencyId TINYINT, Bettype SMALLINT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0))
 	CREATE TABLE #3rdDummnyData (CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300), RefNo BIGINT
 		, Apositiontaking SMALLMONEY, actualrate FLOAT, CurrencyId TINYINT, Bettype SMALLINT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0))
-	CREATE TABLE #ChargeRate (PartyId INT, LicenseeId INT, ProductId INT, Rate MONEY, FromDate SMALLDATETIME, ToDate SMALLDATETIME)
+	CREATE TABLE #ChargeRate (PartyId INT, LicenseeId INT, ProductId INT, ChargeType TINYINT, Rate MONEY, FromDate SMALLDATETIME, ToDate SMALLDATETIME)
 	DECLARE @LicenseeTable TABLE (RowId INT IDENTITY(1,1), LicenseeId INT, LicenseeName VARCHAR(50), CurrencyId TINYINT)
 	DECLARE @BalanceUpTable TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME) 
 	
@@ -108,24 +108,24 @@ BEGIN
 
 	--get charge rate
 	SET @SqlQueryChargeRate = ''
-	SELECT @SqlQueryChargeRate = 'SELECT PartyId, LicenseeId, ProductId, DI_Rate, Fromdate, Todate
-			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
+	SELECT @SqlQueryChargeRate = 'SELECT PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, Fromdate, Todate
+			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_ChargeInfo(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @FirstDateOfLastMonth, 112) + '''''
 												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
 			WHERE DI_Rate > 0 AND ChargeType IN (1,12) '')'
 	
-	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
+	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, ChargeType, Rate, FromDate, ToDate)
 	EXEC (@SqlQueryChargeRate)
 
 	--get more charge rate for trial time
 	SET @SqlQueryChargeRate = ''
-	SELECT @SqlQueryChargeRate = 'SELECT PartyId, LicenseeId, ProductId, DI_Rate, Fromdate, Todate
-			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
+	SELECT @SqlQueryChargeRate = 'SELECT PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, Fromdate, Todate
+			FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @FirstDateOfLastMonth, 112) + '''''
 												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
 			WHERE DI_Rate > 0 AND ChargeType IN (1,12) '')'
 	
-	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
+	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, ChargeType, Rate, FromDate, ToDate)
 	EXEC (@SqlQueryChargeRate)
 
 	IF NOT EXISTS (SELECT TOP 1 1 FROM #ChargeRate)
@@ -174,7 +174,7 @@ BEGIN
 		END	
 		IF CHARINDEX('11', @ProductIds, 0) > 0
 		BEGIN
-			SET @BettypeIds = @BettypeIds + '1700,1706'
+			SET @BettypeIds = @BettypeIds + '1700,1706,'
 		END	
 		IF CHARINDEX('12', @ProductIds, 0) > 0
 		BEGIN

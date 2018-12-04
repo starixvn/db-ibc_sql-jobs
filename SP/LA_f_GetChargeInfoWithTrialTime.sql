@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_licensee" executers="bodbAdminNet" viewers="vnteam" isFunction="1" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_licensee" selecters="bodbAdminNet" viewers="" isFunction="1" isNested="0"></info>*/
 USE [bodb_licensee]
 GO
 
@@ -29,6 +29,7 @@ AS
 	Revisions:
 		- 20171227@Sophia: output column ChargeType [Redmine: #82408]
 		- 20180508@Harper: Change PayToSupplier term of Exchange product [RedmineID: #94281]
+		- 20181003@Percy: Add chargeType = 12 for GoldDeluxe Tip [RedmineID: #70177]
 
     select * FROM dbo.LA_f_GetChargeInfoWithTrialTime ('14','2016-06-01','2016-06-30','GD','OA', 0)
 */
@@ -60,7 +61,7 @@ BEGIN
 			END
 		, DI.ChargeType 
 	FROM dbo.OAS_Party p WITH (NOLOCK)	
-		INNER JOIN dbo.OAS_ChargeInfo DI WITH (NOLOCK) ON DI.FromParty = p.PartyID	AND DI.ChargeType = 1 AND p.PartyType = 1
+		INNER JOIN dbo.OAS_ChargeInfo DI WITH (NOLOCK) ON DI.FromParty = p.PartyID	AND DI.ChargeType IN (1, 12) AND p.PartyType = 1
 		LEFT JOIN dbo.OAS_ChargeInfo OW WITH (NOLOCK) ON DI.ParentChargeID = OW.ChargeID
 		LEFT JOIN dbo.OAS_PartyDetail pd WITH (NOLOCK) ON pd.PartyID = p.PartyID
 		LEFT JOIN dbo.labels lb(NOLOCK) ON p.OldRefID = lb.LicenseeID
