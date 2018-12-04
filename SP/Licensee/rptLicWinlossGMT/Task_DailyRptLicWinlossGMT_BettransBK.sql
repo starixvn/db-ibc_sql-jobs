@@ -16,6 +16,7 @@ AS
 		- 20171213@Paul: initial data. Apply for Sportsbook first [redmine: #84932]
 		- 20180806@Amanda: support GMT +7 [redmine: #95878]
 		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
+	- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
 	
 	EXEC Task_DailyRptLicWinlossGMT_BettransBK '2017-11-01'
 */  
@@ -132,9 +133,9 @@ BEGIN
 					WHEN BA.transid IS NULL THEN 0  
 					WHEN BA.transid IS NOT NULL THEN 1 END AS isBA  
 				,CASE   
-					WHEN b.betfrom IN ('s','m','l','r') THEN 1 ELSE 0 END AS isMobile   
+					WHEN b.betfrom IN ('s','m','l','r','o') THEN 1 ELSE 0 END AS isMobile   
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z') THEN b.betfrom ELSE '' END AS betfrom   		
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o') THEN b.betfrom ELSE '' END AS betfrom   		
 			FROM bodb_Archive.dbo.bettrans_bk b WITH (NOLOCK)
 				LEFT JOIN bodb_Archive.dbo.Match_bk m WITH (NOLOCK)
 					ON m.MatchId = b.MatchId
@@ -177,9 +178,9 @@ BEGIN
 					WHEN BA.transid IS NULL THEN 0  
 					WHEN BA.transid IS NOT NULL THEN 1 END  
 				,CASE   
-					WHEN b.betfrom IN ('s','m','l','r') THEN 1 ELSE 0 END  
+					WHEN b.betfrom IN ('s','m','l','r','o') THEN 1 ELSE 0 END  
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z') THEN b.betfrom ELSE '' END   
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o') THEN b.betfrom ELSE '' END   
 
 			--Agent Level (sum on member)  
 			INSERT INTO dbo.rptLicWinlossGMTTmp (  
