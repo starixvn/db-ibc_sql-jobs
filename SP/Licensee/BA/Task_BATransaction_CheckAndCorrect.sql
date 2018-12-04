@@ -1,4 +1,7 @@
-﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+USE [bodb02]
+GO  
+
 ALTER PROCEDURE [dbo].[Task_BATransaction_CheckAndCorrect]  
 AS  
 /*  
@@ -16,6 +19,7 @@ AS
 		20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
 		20181114@Sophia: Revise Job Verify BA - Rename SP from Task_BATransaction_Check To Task_BATransaction_CheckAndCorrect [Redmine: #103653]
 		20181120@Sophia: Change 'DB052' To 'DB053' for steap switch to DB053 [Redmine: #103653]
+		20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
  */  
 SET NOCOUNT ON   
    
@@ -46,7 +50,7 @@ StartLoop:
         WHERE custid = @custid  
             AND transdate BETWEEN @ondate AND @offdate  
             AND tpositiontaking = 0  
-            AND (bettype < 31 OR (bettype BETWEEN 121 AND 999) OR (bettype BETWEEN 1301 AND 1399))  
+            AND (bettype < 31 OR (bettype BETWEEN 121 AND 999) OR (bettype BETWEEN 1301 AND 1399) OR (bettype BETWEEN 9001 AND 9399))  
 			AND bettype NOT IN (901, 911)
                    
     DELETE FROM @BAHistory_Done WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate  
@@ -79,7 +83,7 @@ StartLoop_r:
         WHERE custid = @custid_r  
             AND transdate >= @ondate_r  
             AND tpositiontaking =0  
-            AND (bettype < 31 OR (bettype BETWEEN 121 AND 999) OR (bettype BETWEEN 1301 AND 1399))  
+            AND (bettype < 31 OR (bettype BETWEEN 121 AND 999) OR (bettype BETWEEN 1301 AND 1399) OR (bettype BETWEEN 9001 AND 9399))  
 			AND bettype NOT IN (901, 911)
          
     DELETE FROM @BAHistory_Running WHERE custid = @custid_r AND ondate = @ondate_r  
@@ -140,13 +144,3 @@ BEGIN
 	END
 END
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Task_BATransaction_Check] TO [vnteam]
-GO 
