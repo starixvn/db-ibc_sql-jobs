@@ -24,7 +24,7 @@ BEGIN
 		RETURN 
 	END
 
-	IF NOT EXISTS (SELECT 1 FROM dbo.LicIntegrationSetting WHERE LicenseeID = @LicenseeID AND SettingName = @SettingName)
+	IF NOT EXISTS (SELECT 1 FROM dbo.LicIntegrationSetting WITH (NOLOCK) WHERE LicenseeID = @LicenseeID AND SettingName = @SettingName)
 	BEGIN
 		INSERT INTO dbo.LicIntegrationSetting (LicenseeID, LicenseeName, SettingName, SettingValue, AllowApiBalance)
 		SELECT @LicenseeID, @LicenseeName, @SettingName, 0,0
