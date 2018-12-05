@@ -16,6 +16,7 @@ AS
 		  - 20180212@Harper: Remove LC from product list [Redmine: #85965]
 		  - 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 		  - 20180814@Joseph: Remove Racing [RedmineID: #99378]
+		  - 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
 */ 
 BEGIN 
 SET NOCOUNT ON;
