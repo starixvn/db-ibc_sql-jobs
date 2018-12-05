@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinlossGMT_Bettrans14]
 	@FromDate SMALLDATETIME,
 	@ToDate	SMALLDATETIME = NULL,
@@ -11,6 +11,7 @@ AS
 	Revisions:  
 	- 20171130@Sophia: initial data. Apply for Sportsbook first [redmine: #84932]
 	- 20180806@Amanda: support GMT +7 [redmine: #95878]
+	- 20181019@Amanda: Add new bet types for E-Sports 2.0 [RedmineID: #100721]
 	- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
 	
 	EXEC Task_DailyRptLicWinlossGMT_Bettrans14 '2017-11-30'
@@ -149,6 +150,7 @@ BEGIN
 							b.bettype < 31
 							OR b.bettype BETWEEN 121 AND 999
 							OR b.Bettype BETWEEN 1301 and 1399 --new tennis's bettypes
+							OR b.Bettype BETWEEN 9001 and 9086 -- E-Sports 2.0
 						)
 					AND (b.bettype < 901 OR b.bettype > 904)
 					AND (b.bettype < 911 OR b.bettype > 914) 		 			 
