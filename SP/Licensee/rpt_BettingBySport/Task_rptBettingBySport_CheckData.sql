@@ -1,9 +1,5 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
-GO
-
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
 GO
 
 ALTER PROCEDURE [dbo].[Task_rptBettingBySport_CheckData]
@@ -20,6 +16,7 @@ AS
 	Revisions:
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
 		- 20171114@Harper: Fix Date Range when get detail ticket
+		- 20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
 
 	DECLARE @HasDataMismatch TINYINT, @IsParlay VARCHAR(20)
 	EXEC Task_rptBettingBySport_CheckData @WinlostDate = '2017-09-29', @HasDataMismatch = @HasDataMismatch OUTPUT, @IsParlay = @IsParlay OUTPUT
@@ -315,7 +312,8 @@ BEGIN
 			WHERE m.sporttype = 44
 				AND ( b.bettype < 31
 						OR b.bettype BETWEEN 121 AND 999
-						OR b.Bettype BETWEEN 1301 and 1399 --new tennis's bettypes
+						OR b.bettype BETWEEN 1301 AND 1399 --new tennis's bettypes
+						OR b.bettype BETWEEN 9001 AND 9399
 					) 
 				AND b.statusID IN (111, 112, 113)
 				AND b.winlostdate = @WinlostDate 
@@ -440,3 +438,4 @@ BEGIN
 
 	SET NOCOUNT OFF;
 END
+GO
