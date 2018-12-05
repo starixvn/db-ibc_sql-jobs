@@ -1,5 +1,5 @@
 ﻿/*<info serverAlias="DBEXT-BODB02,DBACC-BODB02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-Use bodb02
+USE [bodb02]
 GO    
 
 ALTER PROCEDURE [dbo].[Task_BATransaction_Ins]
@@ -25,6 +25,7 @@ AS
 		20181025@Sophia: Revert SPs not to sync BA ticket to DB053, due to DB053 has the job Gen BA ticket by itself (PRO) [Redmine #99855]	
 		20181107@Patrick: DB052 Indexes Revolution [Redmine: #103572]
 		20181120@Sophia: Change 'DB052' To 'DB053' for steap switch to DB053 [Redmine: #103653]
+		20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
  */  
 BEGIN
 	SET NOCOUNT ON   
@@ -48,7 +49,7 @@ BEGIN
 	SELECT transid, transdate, custid, recommend, srecommend
 	FROM dbo.bettrans WITH(NOLOCK, index=PK_bettrans) --IXU_transid/PK_bettrans
 	WHERE TransID BETWEEN @smallID AND @maxtransID  
-		AND (Bettype < 31 OR (Bettype BETWEEN 121 AND 999) OR (BETTYPE >= 1301 AND BETTYPE < 1400))  
+		AND (Bettype < 31 OR (Bettype BETWEEN 121 AND 999) OR (Bettype BETWEEN 1301 AND 1399) OR (Bettype BETWEEN 9001 AND 9399))  
 		AND StatusID <> 121 --DONE  
 		AND tpositiontaking = 0
 		AND (bettype < 901 OR bettype > 904)
@@ -96,15 +97,4 @@ BEGIN
 		EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
 		
 END
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Task_BATransaction_Ins] TO [vnteam]
-GO 
