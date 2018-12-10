@@ -27,6 +27,7 @@ AS
 		- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
 		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
+		- 20181210@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -390,6 +391,7 @@ BEGIN
 		SELECT CustID,
 			   CASE				
 					WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game 
+					WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: Happy 5
 					WHEN bettype IN (71,72,23002) THEN 251--Casino
 					WHEN bettype = 1000 THEN 253--games
 					WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
@@ -432,6 +434,7 @@ BEGIN
 		GROUP BY CustID, 
 				 CASE
 					WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game 
+					WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: Happy 5
 					WHEN bettype IN (71,72,23002) THEN 251--Casino
 					WHEN bettype = 1000 THEN 253--games
 					WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
