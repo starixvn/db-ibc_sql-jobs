@@ -210,20 +210,23 @@ BEGIN
 		END; --- end of deleting bettransRNG14
 		
 		IF	@deletedTarget = 'Transfer_Coll' --- delete Transfer_Coll
-		BEGIN;
-			SELECT	@rowcount = 0;
+		BEGIN
+			IF EXISTS (SELECT 1 FROM sys.objects WHERE Object_Name(Object_ID) = 'Transfer_Coll')
+			BEGIN;
+				SELECT	@rowcount = 0;
 
-			BEGIN TRANSACTION;
+				BEGIN TRANSACTION;
 
-			DELETE	TOP(2500)
-			FROM	dbo.Transfer_Coll WITH (ROWLOCK)
-			WHERE	winlostdate = @winlostdate;
+				DELETE	TOP(2500)
+				FROM	dbo.Transfer_Coll WITH (ROWLOCK)
+				WHERE	winlostdate = @winlostdate;
 
-			SELECT	@rowcount = @@ROWCOUNT;
+				SELECT	@rowcount = @@ROWCOUNT;
 
-			COMMIT TRANSACTION;
+				COMMIT TRANSACTION;
 
-			RETURN;
+			RETURN;	
+			END
 		END; --- end of deleting Transfer_Coll
 		
 		IF	@deletedTarget = 'others' --- for deleting all other small tables
