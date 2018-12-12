@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_3rdproduct" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 SET QUOTED_IDENTIFIER ON 
 GO
@@ -17,6 +18,8 @@ Original:
 Revisions:	
 	- 20150519@Florent: change product name Void Bridge to Vegas Games
 	- 20150519@Florent: change product name Vegas Games to Macau
+	- 20181212@Bruce: New Games Sicbo & Bidme - Add bettype [#102624]
+	
 Param's Explanation:
 	- @winlostdate: The date need to summary
 */  
@@ -57,9 +60,9 @@ BEGIN TRY
 	DELETE FROM [bodb_LicenseeReport].dbo.rptDepWinlost_ThirdParty WHERE Winlostdate = @Winlostdate and ProductId=@ProductId
 
 	INSERT INTO [bodb_LicenseeReport].dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, turnover,
-														winlost,drawTO,drawBetCount, BetCount,ProductId)
+														winlost,drawTO,drawBetCount, BetCount,ProductId, bettype)
 	SELECT @winlostdate, custid,  currency, turnover,
-		winlost,drawTO,drawBetCount,  BetCount, @ProductId
+		winlost,drawTO,drawBetCount,  BetCount, @ProductId, -1-- default bettype
 	FROM #TicketData
 
 	DROP TABLE #TicketData
