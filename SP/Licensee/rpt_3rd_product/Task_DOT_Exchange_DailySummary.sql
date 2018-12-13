@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdproduct" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_3rdproduct" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DOT_Exchange_DailySummary]
 	@winlostdate DATETIME	
@@ -12,6 +12,7 @@ AS
 	Revisions:	
 		- 20171220@Harper: Create new SP [RedmineID: #86640]
 		- 20180528@Sophia: Gen data into new table rptDepWinlost_ThirdParty_Performance for Nap report performance [redmine: #93582]
+		- 20181212@Bruce: New Games Sicbo & Bidme - Add bettype [#102624]
 	
 	Param's Explanation:
 		- @winlostdate: The date need to summary
@@ -193,11 +194,12 @@ BEGIN TRY
 
 			INSERT INTO bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, ProductId,
 														 turnover, Winlost, WinLostA, drawTO, drawBetCount, BetCount, 
-														 CommissionP, CommissionA, ValidBetAmount)
+														 CommissionP, CommissionA, ValidBetAmount, bettype)
 			SELECT @WLDate, custid, CurrencyID, @ProductId
 					, SUM(ISNULL(turnover, 0)), SUM(ISNULL(Winlost, 0)), SUM(ISNULL(WinLostA, 0))
 					, SUM(ISNULL(DrawTO, 0)), SUM(ISNULL(DrawBetCount, 0)), SUM(ISNULL(BetCount, 0))
-					, SUM(ISNULL(CommissionP, 0)), SUM(ISNULL(CommissionA, 0)), SUM(ISNULL(ValidBetAmount, 0))				
+					, SUM(ISNULL(CommissionP, 0)), SUM(ISNULL(CommissionA, 0)), SUM(ISNULL(ValidBetAmount, 0))		
+					, -1-- bettype
 			FROM #TicketData					
 			GROUP BY Custid, CurrencyID
 			

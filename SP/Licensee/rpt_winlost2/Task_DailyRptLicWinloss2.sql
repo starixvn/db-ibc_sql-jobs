@@ -45,6 +45,7 @@ Revisions:
 	- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 	- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
+	- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */  
@@ -141,7 +142,7 @@ BEGIN
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 		ELSE 0 END sporttype
-	,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END bettype
+	,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706) THEN bettype ELSE 0 END bettype
 	--114: half win, 115: half lose
 	,CASE 
 		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114 
@@ -200,7 +201,7 @@ GROUP BY
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 		ELSE 0 END
-	,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914) THEN bettype ELSE 0 END
+	,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706) THEN bettype ELSE 0 END
 	,CASE 
 		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114 
 		WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115
