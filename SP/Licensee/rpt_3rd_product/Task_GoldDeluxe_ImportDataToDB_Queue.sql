@@ -282,9 +282,9 @@ BEGIN
 
 				SELECT @WinlostDate = MIN(CONVERT(DATE, TipTime)) FROM #GoldDeluxe_Tip
 
-				SELECT @LogDesc = COALESCE(@LogDesc + '; ', '') + CONVERT(DATE, TipTime) + ' (No. of tickets: ' + CONVERT(VARCHAR(20), COUNT(TipId)) + ')'
+				SELECT @LogDesc = COALESCE(@LogDesc + '; ', '') + CONVERT(VARCHAR(10), CONVERT(DATE, TipTime)) + ' (No. of tickets: ' + CONVERT(VARCHAR(20), COUNT(TipId)) + ')'
 				FROM #GoldDeluxe_Tip
-				GROUP BY TipTime
+				GROUP BY CONVERT(DATE, TipTime)
 			END
 
 			-- Delete old data that has been finished
