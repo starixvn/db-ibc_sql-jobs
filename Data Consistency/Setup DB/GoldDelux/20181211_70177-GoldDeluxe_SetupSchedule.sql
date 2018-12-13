@@ -6,6 +6,9 @@
 */
 USE bodb_Consistency
 GO
+DELETE [dbo].[DBA_Schedules] WHERE TaskId >= 12
+DELETE [dbo].[DBA_JobActivity] WHERE ScheduleId >= 12
+
 --- INSERT DATA
 DECLARE @ErrCode INT, @ErrMsg VARCHAR(100)
 --Discount

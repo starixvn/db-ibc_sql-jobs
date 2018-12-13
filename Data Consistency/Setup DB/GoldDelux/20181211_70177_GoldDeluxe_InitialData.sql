@@ -5,13 +5,17 @@
 */
 USE [bodb_Consistency]
 GO
-SET IDENTITY_INSERT [dbo].[DBA_Rules] ON 
+
+DELETE [dbo].[DBA_TASKS] WHERE TaskId >= 12
+DELETE [dbo].[DBA_Rules] WHERE RuleId >= 12
 
 GO
+
+SET IDENTITY_INSERT [dbo].[DBA_Rules] ON 
 INSERT [dbo].[DBA_Rules] ([RuleId], [Name], [Description], [SeverityLevel]) VALUES (12, N'Check oddsspread value for GoldDeluxe', N'oddsspread >= 0 AND WHEN statusid in (101,102,103,111) THEN oddsspread = 0
 WHEN statusid in (112,113) THEN oddsspread <= stake', N'High')
-GO
 SET IDENTITY_INSERT [dbo].[DBA_Rules] OFF
+
 GO
 -------------- TASKS ------------------------------------------------
 
