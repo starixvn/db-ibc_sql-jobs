@@ -13,10 +13,10 @@ BEGIN
 	DECLARE @S_Winlost MONEY, @T_Winlost MONEY, @S_Turnover MONEY, @T_Turnover MONEY, @S_BetCount INT, @T_BetCount INT,
 			@S_ValidBetAmount MONEY, @T_ValidBetAmount MONEY
 	
-SELECT @S_Winlost = SUM(winlost)
-		, @S_Turnover = SUM(turnover)
-		, @S_BetCount = COUNT(betcount)
-		, @S_ValidBetAmount = SUM(validbetamount)
+SELECT @S_Winlost = SUM(ISNULL(winlost,0))
+		, @S_Turnover = SUM(ISNULL(turnover,0))
+		, @S_BetCount = COUNT(ISNULL(betcount,0))
+		, @S_ValidBetAmount = SUM(ISNULL(validbetamount,0))
 	FROM (
 		-- RNG and Macau Games
 		SELECT SUM(b.winlost - b.actual_stake) as winlost
