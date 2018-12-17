@@ -67,7 +67,7 @@ BEGIN
 		,COUNT(bettrans.transid) AS BetCount  
 		,SUM(bettrans.stake) AS Turnover
 		,SUM(bettrans.winlost-bettrans.actual_stake) AS  winlost  
-		,SUM(bettrans.netstake) AS ValidBetAmount 
+		,SUM(ISNULL(bettrans.netstake, 0)) AS ValidBetAmount 
 		FROM
 			bodb02.dbo.bettransLC14 bettrans WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.SportBettypeMatrix matrix WITH(NOLOCK) ON bettrans.gameid = matrix.bettype
