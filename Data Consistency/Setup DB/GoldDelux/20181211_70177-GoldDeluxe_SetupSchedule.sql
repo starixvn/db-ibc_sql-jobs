@@ -19,12 +19,12 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Discount value'
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2018-12-11' 
+ ,@ActiveStartDate = '2018-12-15' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- ,@Emails = 'helen.do@starixsoft.com'
+ ,@Emails = 'rita.bui@starixsoft.com,helen.do@starixsoft.com'
  --,@Emails = 'it@starixsoft.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
@@ -39,12 +39,12 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check PT value'
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2018-12-11'  
+ ,@ActiveStartDate = '2018-12-15'  
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- ,@Emails = 'helen.do@starixsoft.com'
+ ,@Emails = 'rita.bui@starixsoft.com,helen.do@starixsoft.com'
  --,@Emails = 'it@starixsoft.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
@@ -60,12 +60,12 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Stake >0 for dedicated betty
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2018-12-11' 
+ ,@ActiveStartDate = '2018-12-15' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- ,@Emails = 'helen.do@starixsoft.com'
+ ,@Emails = 'rita.bui@starixsoft.com,helen.do@starixsoft.com'
  --,@Emails = 'it@starixsoft.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
@@ -82,12 +82,12 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check all yesterday tickets must b
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2018-12-11' 
+ ,@ActiveStartDate = '2018-12-15' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '01:30'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- ,@Emails = 'helen.do@starixsoft.com'
+ ,@Emails = 'rita.bui@starixsoft.com,helen.do@starixsoft.com'
  --,@Emails = 'it@starixsoft.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
@@ -105,12 +105,12 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check oddsspread value'
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2018-12-11' 
+ ,@ActiveStartDate = '2018-12-15' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- ,@Emails = 'helen.do@starixsoft.com'
+ ,@Emails = 'rita.bui@starixsoft.com,helen.do@starixsoft.com'
  --,@Emails = 'it@starixsoft.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
@@ -119,7 +119,53 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check oddsspread value'
  
  GO
  
+GO
+DECLARE @ErrCode INT, @ErrMsg VARCHAR(100)
 
+EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check oddsspread value'
+ ,@TaskId = 17
+ ,@IsEnable  = 1
+ ,@FrequenceType = 4 -- daily = 4, weekly = 8
+ ,@FrequenceInterval = 1 -- every xx days
+ ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
+ ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
+ ,@ActiveStartDate = '2018-12-15' 
+ ,@ActiveEndDate = NULL
+ ,@ActiveStartTime  = '00:00'
+ ,@ActiveEndTime = NULL
+ ,@NotifyLevelEmail = 2
+ ,@Emails = 'rita.bui@starixsoft.com,helen.do@starixsoft.com'
+ --,@Emails = 'it@starixsoft.com'
+ ,@ErrCode  = @ErrCode OUTPUT
+ ,@ErrMsg = @ErrMsg OUTPUT
+ 
+ SELECT 'winlost' RuleChecking, @ErrCode, @ErrMsg
+ 
+ GO
+ 
+ GO
+DECLARE @ErrCode INT, @ErrMsg VARCHAR(100)
+
+EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check oddsspread value'
+ ,@TaskId = 18
+ ,@IsEnable  = 1
+ ,@FrequenceType = 4 -- daily = 4, weekly = 8
+ ,@FrequenceInterval = 1 -- every xx days
+ ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
+ ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
+ ,@ActiveStartDate = '2018-12-15' 
+ ,@ActiveEndDate = NULL
+ ,@ActiveStartTime  = '00:00'
+ ,@ActiveEndTime = NULL
+ ,@NotifyLevelEmail = 2
+ ,@Emails = 'rita.bui@starixsoft.com,helen.do@starixsoft.com'
+ --,@Emails = 'it@starixsoft.com'
+ ,@ErrCode  = @ErrCode OUTPUT
+ ,@ErrMsg = @ErrMsg OUTPUT
+ 
+ SELECT 'stake' RuleChecking, @ErrCode, @ErrMsg
+ 
+ GO
 /*
 truncate table DBA_Rules
 truncate table DBA_Tasks

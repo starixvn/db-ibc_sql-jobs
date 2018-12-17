@@ -12,8 +12,12 @@ DELETE [dbo].[DBA_Rules] WHERE RuleId >= 12
 GO
 
 SET IDENTITY_INSERT [dbo].[DBA_Rules] ON 
-INSERT [dbo].[DBA_Rules] ([RuleId], [Name], [Description], [SeverityLevel]) VALUES (12, N'Check oddsspread value for GoldDeluxe', N'oddsspread >= 0 AND WHEN statusid in (101,102,103,111) THEN oddsspread = 0
-WHEN statusid in (112,113) THEN oddsspread <= stake', N'High')
+INSERT [dbo].[DBA_Rules] ([RuleId], [Name], [Description], [SeverityLevel]) VALUES (12, N'Check oddsspread value for GoldDeluxe', N'oddsspread >= 0 AND oddsspread <= stake', N'High')
+
+INSERT [dbo].[DBA_Rules] ([RuleId], [Name], [Description], [SeverityLevel]) VALUES (13, N'Check Winlost value', N'winlost in bettrans = total winlost in bettransG', N'High')
+
+INSERT [dbo].[DBA_Rules] ([RuleId], [Name], [Description], [SeverityLevel]) VALUES (14, N'Check stake value', N'stake in bettrans = total stake in bettransG', N'High')
+
 SET IDENTITY_INSERT [dbo].[DBA_Rules] OFF
 
 GO
@@ -30,7 +34,13 @@ GO
 INSERT [dbo].[DBA_Tasks] ([TaskId], [RuleId], [command]) VALUES (15, 5, N'EXEC dbo.DBA_Consistency_StatusChecking @ProductId = 255, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
 GO
 INSERT [dbo].[DBA_Tasks] ([TaskId], [RuleId], [command]) VALUES (16, 12, N'EXEC dbo.DBA_Consistency_SpecificRulesChecking @ProductId = 255, @Rule = ''oddsspread'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+
 GO
+INSERT [dbo].[DBA_Tasks] ([TaskId], [RuleId], [command]) VALUES (17, 13, N'EXEC dbo.DBA_Consistency_SpecificRulesChecking @ProductId = 255, @Rule = ''winlost'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+
+GO
+INSERT [dbo].[DBA_Tasks] ([TaskId], [RuleId], [command]) VALUES (18, 14, N'EXEC dbo.DBA_Consistency_SpecificRulesChecking @ProductId = 255, @Rule = ''stake'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+
 SET IDENTITY_INSERT [dbo].[DBA_Tasks] OFF
 GO
 
