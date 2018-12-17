@@ -122,7 +122,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check oddsspread value'
 GO
 DECLARE @ErrCode INT, @ErrMsg VARCHAR(100)
 
-EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check oddsspread value'
+EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check winlost value'
  ,@TaskId = 17
  ,@IsEnable  = 1
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
@@ -146,7 +146,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check oddsspread value'
  GO
 DECLARE @ErrCode INT, @ErrMsg VARCHAR(100)
 
-EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check oddsspread value'
+EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check stake value'
  ,@TaskId = 18
  ,@IsEnable  = 1
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
