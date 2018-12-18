@@ -1,3 +1,4 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[ExecRep_00] 
 	@Winlostdate DATETIME = NULL
 	,@Target VARCHAR(30) = 'DBTRANS' -- DBTRANS/REPLICATED
@@ -18,6 +19,7 @@ AS
 		- 20140701@Jamie: Get virtualmultiplier of bettrans 
 		- 20160412@Sophia: Add related tables: BettransRNG, BettransLC, Translog (will apply on bettransm later)
  		- 20171020@Lukas: clone from Bet_ExecRep_04
+		- 20181106@Sophia: Add table Transfer_Coll [Redmine: #98621]
 
  	Param's Explanation: 
  		@Winlostdate: the date that new rates are updated		
@@ -38,6 +40,8 @@ BEGIN
 	CREATE TABLE #translog (translogid BIGINT, actualrate float, virtualrate float)
 	CREATE TABLE #bettransRnG (transid BIGINT, actualrate float, virtualrate float)
 	CREATE TABLE #bettransLC (transid BIGINT, actualrate float, virtualrate float)
+	CREATE TABLE #Transfer_Coll (transid BIGINT, actualrate float)
+	
 	IF @@SERVERNAME = 'DBTRANS'
 	BEGIN
 		-- update for SB's tickets (using virtualrate)
@@ -155,7 +159,19 @@ BEGIN
 		WHERE 
 			b.winlostdate >= @Winlostdate
 			--AND b.actualrate <> b.virtualrate 
-			AND b.actualrate <> e.actualrate 				
+			AND b.actualrate <> e.actualrate 		
+			
+
+		PRINT '11.-------Transfer_Coll table ---------'
+		-- Transfer_Coll tickets		 
+		IF EXISTS (SELECT 1 FROM sys.objects WHERE Object_Name(Object_ID) = 'Transfer_Coll')
+		BEGIN 
+			insert into #Transfer_Coll(transid, actualrate)
+			select b.transid, e.actualrate
+			FROM dbo.Transfer_Coll b WITH(nolock) 
+				,CustDB.dbo.exchange e WITH (NOLOCK)
+			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
+		END
 				
 		PRINT 'END: Reminder of UPDATE Exchange Rate Oanda: EXEC CustDB.dbo.DBA_ExchangeDailyOandaUpd_Actualrate @ExchangeDate=''xxx'''
 	END
@@ -283,6 +299,18 @@ BEGIN
 			b.winlostdate >= @Winlostdate
 			--AND b.actualrate <> b.virtualrate 
 			AND b.actualrate <> e.actualrate 	 
+			
+			
+		PRINT '11.-------Transfer_Coll table ---------'
+		-- Transfer_Coll tickets		 
+		IF EXISTS (SELECT 1 FROM sys.objects WHERE Object_Name(Object_ID) = 'Transfer_Coll')
+		BEGIN 
+			insert into #Transfer_Coll(transid, actualrate)
+			select b.transid, e.actualrate
+			FROM dbo.Transfer_Coll b WITH(nolock) 
+				,CustDB.dbo.exchange e WITH (NOLOCK)
+			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
+		END
 		PRINT 'END: Reminder of UPDATE Exchange Rate Oanda: EXEC CustDB.dbo.DBA_ExchangeDailyOandaUpd_Actualrate @ExchangeDate=''xxx'''
 	end 
 	
@@ -360,5 +388,26 @@ BEGIN
 		from @table t 
 			inner join bettrans b on t.transid = b.transid 
 	end
+	
+	IF EXISTS (SELECT 1 FROM sys.objects WHERE Object_Name(Object_ID) = 'Transfer_Coll')
+	BEGIN 
+		set @rowcount = 1 
+		-- update for Transfer_Coll
+		while @rowcount <> 0
+		begin
+			delete from @table
+			
+			delete top(2000) 		
+			from #Transfer_Coll 
+			output deleted.transid, deleted.actualrate, 0 into @table
+			set @rowcount = @@ROWCOUNT
+			
+			update b with(rowlock,updlock)
+			set b.actualrate = t.actualrate			
+			from @table t 
+				inner join Transfer_Coll b on t.transid = b.transid 
+				
+		end
+	END 
 END
 
