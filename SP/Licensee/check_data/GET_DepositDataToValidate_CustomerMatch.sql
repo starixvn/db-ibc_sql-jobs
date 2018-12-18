@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_CustomerMatch] 
 	@Date SMALLDATETIME		= NULL
@@ -16,6 +16,7 @@ Revisions:
 	- 20150211@Florent: add Sporting Solution bettype
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
+	- 20181218@Joseph: Add new bet types for E-Sports 2.0 [RedmineID: #106592]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -62,7 +63,8 @@ SELECT @SbTurnover=SUM(CASE
 					 END)
 FROM  #DATA b
 WHERE ((b.bettype < 31) OR (b.bettype >= 121 AND b.bettype < 1000) 
-						 OR (b.bettype >= 1301 AND b.bettype <= 1399))
+						 OR (b.bettype >= 1301 AND b.bettype <= 1399)
+						  OR (b.bettype BETWEEN 9001 AND 9086)) -- Esport2
     AND b.statusID IN (111, 112, 113, 114, 115) 
 	and b.isBA = 0
 
@@ -155,8 +157,3 @@ SELECT 3, @SbBetCount, @RbBetCount, @NgBetCount, @BaBetCount, @CsBetCount
 DROP TABLE #DATA
 SET NOCOUNT OFF
 GO
-GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerMatch] TO [bodbLicenseeNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_CustomerMatch] TO [vnteam] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_CustomerMatch] TO [vnteam] AS [dbo]
