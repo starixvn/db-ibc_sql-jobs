@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[GET_DepositDataToValidate_WLByLeague] 
 	@Date SMALLDATETIME		= NULL
 	, @DrawFilter TINYINT	= 1
@@ -9,7 +9,7 @@ AS
 Created: 20140312@Florent
 Task : Get deposit data from table db052.bodb_Licenseereport.dbo.rptWinlostbyLeague
 
-DB: bodb_Licensee
+DB: bodb_LicenseeReport
 Original:
 
 Revisions:	
@@ -41,7 +41,7 @@ DECLARE @SbTurnover			MONEY
 
 SELECT b.* 
 INTO #DATA
-FROM bodb_LicenseeReport.dbo.rptWinlostbyLeague b WITH (NOLOCK)
+FROM dbo.rptWinlostbyLeague b WITH (NOLOCK)
     INNER JOIN bodb_licensee.dbo.LicenseeCust lc WITH (NOLOCK) ON b.recommend=lc.CustID
 	 --inner join (SELECT custid FROM f_DepSuper_1('All')) LC  ON a.srecommend = lc.custid
 WHERE B.winlostdate = @Date
