@@ -13,6 +13,7 @@ AS
 	- 20180806@Amanda: support GMT +7 [redmine: #95878]
 	- 20181019@Amanda: Add new bet types for E-Sports 2.0 [RedmineID: #100721]
 	- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
+	- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
 	
 	EXEC Task_DailyRptLicWinlossGMT_Bettrans14 '2017-11-30'
 */  
@@ -129,9 +130,9 @@ BEGIN
 					WHEN BA.transid IS NULL THEN 0  
 					WHEN BA.transid IS NOT NULL THEN 1 END AS isBA  
 				,CASE   
-					WHEN b.betfrom IN ('s','m','l','r','o') THEN 1 ELSE 0 END AS isMobile   
+					WHEN b.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END AS isMobile   
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o') THEN b.betfrom ELSE '' END AS betfrom   		
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c') THEN b.betfrom ELSE '' END AS betfrom   		
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 				LEFT JOIN bodb02.dbo.Match14 m WITH (NOLOCK)
 					ON m.MatchId = b.MatchId
@@ -175,9 +176,9 @@ BEGIN
 					WHEN BA.transid IS NULL THEN 0  
 					WHEN BA.transid IS NOT NULL THEN 1 END  
 				,CASE   
-					WHEN b.betfrom IN ('s','m','l','r','o') THEN 1 ELSE 0 END  
+					WHEN b.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END  
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o') THEN b.betfrom ELSE '' END   
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c') THEN b.betfrom ELSE '' END   
 
 			--Agent Level (sum on member)  
 			INSERT INTO dbo.rptLicWinlossGMT (  
