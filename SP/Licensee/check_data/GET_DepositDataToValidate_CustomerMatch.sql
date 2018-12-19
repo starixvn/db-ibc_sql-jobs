@@ -17,6 +17,7 @@ Revisions:
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
 	- 20181218@Joseph: Add new bet types for E-Sports 2.0 [RedmineID: #106592]
+	- 20181219@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -99,7 +100,7 @@ SELECT @NgTurnover=SUM(CASE
 						ELSE b.BetCount 
 					 END) 
 FROM  #DATA b
-WHERE b.bettype >= 81 AND b.bettype <= 120
+WHERE (b.bettype BETWEEN 81 AND 120 OR b.bettype BETWEEN 8101 AND 8120)
     AND b.statusID IN (111,112,113,114,115)
 
 SELECT @NgTurnover = ISNULL (@NgTurnover, 0),
