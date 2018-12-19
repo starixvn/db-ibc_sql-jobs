@@ -1,14 +1,4 @@
-
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_WLByLeague    Script Date: 12/1/2015 2:38:00 AM ******/
-/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_WLByLeague    Script Date: 12/02/2015 09:52:23 AM ******/
-
-/****** Object:  Stored Procedure dbo.GET_DepositDataToValidate_Betting    Script Date: 3/26/2013 4:34:06 PM ******/
-
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[GET_DepositDataToValidate_WLByLeague] 
 	@Date SMALLDATETIME		= NULL
 	, @DrawFilter TINYINT	= 1
@@ -19,11 +9,13 @@ AS
 Created: 20140312@Florent
 Task : Get deposit data from table db052.bodb_Licenseereport.dbo.rptWinlostbyLeague
 
-DB: bodb_Licensee
+DB: bodb_LicenseeReport
 Original:
 
 Revisions:	
 	- 20150211@Florent: add Sporting Solution bettype
+	- 20181218@Joseph: Add new bet types for E-Sports 2.0 [RedmineID: #106592]
+
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
     
@@ -49,7 +41,7 @@ DECLARE @SbTurnover			MONEY
 
 SELECT b.* 
 INTO #DATA
-FROM bodb_LicenseeReport.dbo.rptWinlostbyLeague b WITH (NOLOCK)
+FROM dbo.rptWinlostbyLeague b WITH (NOLOCK)
     INNER JOIN bodb_licensee.dbo.LicenseeCust lc WITH (NOLOCK) ON b.recommend=lc.CustID
 	 --inner join (SELECT custid FROM f_DepSuper_1('All')) LC  ON a.srecommend = lc.custid
 WHERE B.winlostdate = @Date
@@ -70,7 +62,8 @@ SELECT @SbTurnover = SUM(CASE
 					 END)
 FROM  #DATA B
 WHERE ((b.bettype < 31) OR (b.bettype >= 121 AND b.bettype < 1000) 
-						 OR (b.bettype >= 1301 AND b.bettype <= 1399))
+						 OR (b.bettype >= 1301 AND b.bettype <= 1399)
+						 OR (b.bettype BETWEEN 9001 AND 9086)) -- Esport2
     AND b.statusID IN (111, 112, 113, 114, 115)
 	AND b.isBA=0
 
@@ -164,17 +157,3 @@ SELECT 3, @SbBetCount, @RbBetCount, @NgBetCount, @BaBetCount, @CsBetCount
 DROP TABLE #data
 SET NOCOUNT OFF
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_WLByLeague] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_WLByLeague] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_WLByLeague] TO [bodbLicenseeNet]
-GO 
