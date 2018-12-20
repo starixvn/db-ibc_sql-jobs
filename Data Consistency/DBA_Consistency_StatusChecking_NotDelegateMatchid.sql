@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTP-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[DBA_Consistency_StatusChecking_NotDelegateMatchId]
+ALTER PROCEDURE [dbo].[DBA_Consistency_StatusChecking_NotDelegateMatchId]
 	@ProductId		INT		
 	,@ErrCode		INT				= 0		OUTPUT
 	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT
@@ -20,7 +20,7 @@ BEGIN
 
 	DECLARE @transId BIGINT
 	DECLARE @yesterday DATETIME
-	DECLARE @tblMatch TABLE (matchid INT NOT NULL UNIQUE)
+	DECLARE @tblMatch TABLE (matchid INT)
 	
 	INSERT INTO @tblMatch(matchid)
 	SELECT matchid
@@ -32,10 +32,10 @@ BEGIN
 
 	SELECT TOP (1) @transId = transid
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		INNER JOIN @tblMatch m ON b.matchid = m.matchid
 	WHERE	b.bettype < 20000
 			AND b.winlostdate = @yesterday
 			AND b.statusID = 0
+			AND b.matchid IN (SELECT matchid FROM @tblMatch)
 	
 	IF @transId IS NOT NULL
 	BEGIN

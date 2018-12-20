@@ -19,7 +19,7 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @transId BIGINT
-	DECLARE @tblMatch TABLE (matchid INT NOT NULL UNIQUE)
+	DECLARE @tblMatch TABLE (matchid INT)
 	
 	INSERT INTO @tblMatch(matchid)
 	SELECT matchid
@@ -29,12 +29,12 @@ BEGIN
 
 	SELECT TOP (1) @transId = transid
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		INNER JOIN @tblMatch m ON b.matchid = m.matchid
 	WHERE	b.bettype < 20000
 			AND 1 = CASE
 						WHEN IP NOT LIKE '%:%' AND NOT EXISTS (SELECT val FROM dbo.f_SplitString(IP, '.') WHERE val > 255 ) THEN 0
 						ELSE 1
 					END
+			AND b.matchid IN (SELECT matchid FROM @tblMatch)
 	OPTION (maxrecursion 0)
 	
 	IF @transId IS NOT NULL

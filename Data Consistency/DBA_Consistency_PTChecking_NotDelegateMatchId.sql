@@ -19,7 +19,7 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @transId BIGINT
-	DECLARE @tblMatch TABLE (matchid INT NOT NULL UNIQUE)
+	DECLARE @tblMatch TABLE (matchid INT)
 	
 	INSERT INTO @tblMatch(matchid)
 	SELECT matchid
@@ -28,8 +28,8 @@ BEGIN
 	
 	SELECT TOP (1) @transId = transid
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		INNER JOIN @tblMatch m ON b.matchid = m.matchid
 	WHERE	b.bettype < 20000
+			AND b.matchid IN (SELECT matchid FROM @tblMatch)
 			AND (b.tpositiontaking < 0
 				OR b.spositiontaking < 0
 				OR b.mpositiontaking < 0

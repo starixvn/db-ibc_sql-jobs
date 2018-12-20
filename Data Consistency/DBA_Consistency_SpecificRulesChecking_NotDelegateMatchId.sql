@@ -23,44 +23,34 @@ BEGIN
 	
 	CREATE TABLE #tmpBettrans (
 		transId				BIGINT
-		,betid				BIGINT
-		,oddsspread			MONEY
-		,tpositiontaking	SMALLMONEY
-		,spositiontaking	SMALLMONEY
-		,mpositiontaking	SMALLMONEY
-		,apositiontaking	SMALLMONEY
-		,swinlost			MONEY
-		,mwinlost			MONEY
-		,awinlost			MONEY
-		,scomm				MONEY
-		,acomm				MONEY
-		,comm				MONEY
-		,playercomm			MONEY
-		,modds				SMALLMONEY
-		,bettype			SMALLINT
-		,statusId			TINYINT
-		,transid2			BIGINT
-		,hdp2				SMALLMONEY
 		,betteam			NVARCHAR(10)
+		,playerdiscount		DECIMAL(9,8)
+		,discount			DECIMAL(9,8)
+		,adiscount			DECIMAL(9,8)
+		,sdiscount			DECIMAL(9,8)
+		,playercomm			MONEY
+		,comm				MONEY
+		,acomm				MONEY
+		,scomm				MONEY
 	)
-	DECLARE @tblMatch TABLE (matchid INT NOT NULL UNIQUE)
+	DECLARE @tblMatch TABLE (matchid INT)
 	
 	INSERT INTO @tblMatch(matchid)
 	SELECT matchid
 	FROM bodb02.dbo.Match m WITH (NOLOCK) 
 	WHERE Sporttype = @ProductId
 
-	INSERT INTO #tmpBettrans(transId, betid, oddsspread, tpositiontaking, spositiontaking, mpositiontaking, apositiontaking
-		,swinlost, mwinlost, awinlost
+	INSERT INTO #tmpBettrans(transId 
+		,playerdiscount,discount,adiscount,sdiscount
 		,scomm, acomm, comm, playercomm
-		,modds, bettype, statusId, transid2, hdp2,betteam)
-	SELECT	transId, betid, oddsspread, tpositiontaking, spositiontaking, mpositiontaking, apositiontaking
-		,swinlost, mwinlost, awinlost
+		,betteam)
+	SELECT	transId
+		,playerdiscount,discount,adiscount,sdiscount
 		,scomm, acomm, comm, playercomm
-		,modds, bettype, statusId, transid2, hdp2,betteam
+		,betteam
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		INNER JOIN @tblMatch m ON b.matchid = m.matchid
 	WHERE	b.bettype < 20000
+			AND b.matchid IN (SELECT matchid FROM @tblMatch)
 
 	
 	IF @Rule = 'betteam'
