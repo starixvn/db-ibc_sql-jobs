@@ -69,21 +69,25 @@ BEGIN
 		RETURN
 	END
 	
-	IF @Rule = 'discount_comm'
+	IF @Rule = 'no_discount_comm'
 	BEGIN
 		
 		SELECT TOP (1) @transId = transid
 		FROM	#tmpBettrans
-		WHERE	(ISNULL(playerdiscount, 0) = 0 	AND ISNULL(discount, 0) = 0 AND ISNULL(adiscount, 0) = 0 AND ISNULL(sdiscount, 0) = 0)
-			 OR (ISNULL(playercomm, 0) = 0 		AND ISNULL(comm, 0) = 0 	AND ISNULL(acomm, 0) = 0 	 AND ISNULL(scomm, 0) = 0)
-
+		WHERE	ISNULL(playerdiscount, 0) <> 0
+				OR ISNULL(discount, 0) <> 0
+				OR ISNULL(adiscount, 0) <> 0
+				OR ISNULL(sdiscount, 0) <> 0
+				OR ISNULL(playercomm, 0) <> 0
+				OR ISNULL(comm, 0) <> 0
+				OR ISNULL(acomm, 0) <> 0
+				OR ISNULL(scomm, 0) <> 0
 			
 		IF @transId IS NOT NULL
 		BEGIN
 			SELECT	@ErrCode = 100
 					,@ErrMsg = 'Wrong discount or comm value on product ' + CAST(@ProductId AS VARCHAR)
 					,@SampleData = 'bettrans.TransId = ' + CAST(@transId AS VARCHAR)
-			
 			
 		END
 		RETURN
