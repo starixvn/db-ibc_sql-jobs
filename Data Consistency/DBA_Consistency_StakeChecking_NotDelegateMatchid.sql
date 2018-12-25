@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_StakeChecking_NotDelegateMatchId]
 	@ProductId		INT		
 	,@ErrCode		INT				= 0		OUTPUT
@@ -8,7 +8,7 @@ AS
 /*
 	CCreated: 20181219@Vicky
 	Task: Data consistency
-	DB: DBTP/bodb_Consistency
+	DB: DBCONSISTENCY-bodb_Consistency
 
 	Revisions: 
 		- 20181219@Vicky: Check Stake for Happy5 [Redmine:#104849]
