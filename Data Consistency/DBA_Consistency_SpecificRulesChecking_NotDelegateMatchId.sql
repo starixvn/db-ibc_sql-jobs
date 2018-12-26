@@ -64,9 +64,10 @@ BEGIN
 		FROM	#tmpBettrans
 		WHERE	ISNULL(betteam,'') = ''
 			
-		IF @transId IS NOT NULL	
+		IF @transId <> ''
 		BEGIN
-			SELECT	@ErrCode = 100
+			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+					,@ErrCode = 100
 					,@ErrMsg = 'Wrong betteam value on product ' + CAST(@ProductId AS VARCHAR)
 					,@SampleData = 'bettrans.TransId in (' + @transId + ')'
 		END
