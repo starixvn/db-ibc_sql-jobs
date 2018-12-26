@@ -11,15 +11,17 @@ AS
 	DB: DBCONSISTENCY-bodb_Consistency
 
 	Revisions: 
-		- 20181219@Vicky: Check IP rules for Happy5 [Redmine:#104849]
+		- 20181219@Vicky: Check IP rules for Happy5 [Redmine:#106481]
 	
 	Param's Expanation:
 */
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @transId BIGINT
+	DECLARE @transId VARCHAR(MAX)
 	DECLARE @tblMatch TABLE (matchid INT)
+	
+	SET @transId = ''
 	
 	INSERT INTO @tblMatch(matchid)
 	SELECT matchid
@@ -27,7 +29,7 @@ BEGIN
 	WHERE Sporttype = @ProductId
 
 
-	SELECT TOP (1) @transId = transid
+	SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
 	WHERE	b.bettype < 20000
 			AND 1 = CASE
@@ -37,11 +39,12 @@ BEGIN
 			AND b.matchid IN (SELECT matchid FROM @tblMatch)
 	OPTION (maxrecursion 0)
 	
-	IF @transId IS NOT NULL
+	IF @transId <> ''
 	BEGIN
-		SELECT	@ErrCode = 100
+		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+				,@ErrCode = 100
 				,@ErrMsg = 'Wrong IP value on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = 'bettrans.TransId = ' + CAST(@transId AS VARCHAR)
+				,@SampleData = 'bettrans.TransId = ' + @transId
 	END
 
 END

@@ -18,8 +18,10 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @transId BIGINT
+	DECLARE @transId VARCHAR(MAX)
 	DECLARE @tblMatch TABLE (matchid INT)
+	
+	SET @transId = ''
 	
 	INSERT INTO @tblMatch(matchid)
 	SELECT matchid
@@ -27,18 +29,19 @@ BEGIN
 	WHERE Sporttype = @ProductId
 	
 	
-	SELECT TOP (1) @transId = transid
+	SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
 	WHERE	b.bettype < 20000
 			AND b.stake <= 0
 			AND b.matchid IN (SELECT matchid FROM @tblMatch)
 			
 	
-	IF @transId IS NOT NULL
+	IF @transId <> ''
 	BEGIN
-		SELECT	@ErrCode = 100
+		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+				,@ErrCode = 100
 				,@ErrMsg = 'Stake must be larger than 0 on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = 'bettrans.TransId = ' + CAST(@transId AS VARCHAR)
+				,@SampleData = 'bettrans.TransId = ' + @transId
 	END
 
 END

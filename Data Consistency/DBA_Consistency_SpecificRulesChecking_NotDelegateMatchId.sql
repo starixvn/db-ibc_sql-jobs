@@ -19,7 +19,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @transId BIGINT
+	DECLARE @transId VARCHAR(MAX)
 	
 	CREATE TABLE #tmpBettrans (
 		transId				BIGINT
@@ -32,8 +32,11 @@ BEGIN
 		,comm				MONEY
 		,acomm				MONEY
 		,scomm				MONEY
+		,srecommend			INT
 	)
 	DECLARE @tblMatch TABLE (matchid INT)
+	
+	SET @transId = ''
 	
 	INSERT INTO @tblMatch(matchid)
 	SELECT matchid
@@ -43,11 +46,12 @@ BEGIN
 	INSERT INTO #tmpBettrans(transId 
 		,playerdiscount,discount,adiscount,sdiscount
 		,scomm, acomm, comm, playercomm
-		,betteam)
+		,betteam, srecommend
+		)
 	SELECT	transId
 		,playerdiscount,discount,adiscount,sdiscount
 		,scomm, acomm, comm, playercomm
-		,betteam
+		,betteam, srecommend
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
 	WHERE	b.bettype < 20000
 			AND b.matchid IN (SELECT matchid FROM @tblMatch)
@@ -56,7 +60,7 @@ BEGIN
 	IF @Rule = 'betteam'
 	BEGIN
 		-- betteam value
-		SELECT TOP (1) @transId = transid
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM	#tmpBettrans
 		WHERE	ISNULL(betteam,'') = ''
 			
@@ -64,7 +68,7 @@ BEGIN
 		BEGIN
 			SELECT	@ErrCode = 100
 					,@ErrMsg = 'Wrong betteam value on product ' + CAST(@ProductId AS VARCHAR)
-					,@SampleData = 'bettrans.TransId = ' + CAST(@transId AS VARCHAR)
+					,@SampleData = 'bettrans.TransId = ' + @transId
 		END
 		RETURN
 	END
@@ -72,22 +76,24 @@ BEGIN
 	IF @Rule = 'no_discount_comm'
 	BEGIN
 		
-		SELECT TOP (1) @transId = transid
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM	#tmpBettrans
-		WHERE	ISNULL(playerdiscount, 0) <> 0
+		WHERE	srecommend NOT IN (SELECT custId FROM bodb02.dbo.dep_custsuper WITH (NOLOCK)) --only check for credit site
+				AND (ISNULL(playerdiscount, 0) <> 0
 				OR ISNULL(discount, 0) <> 0
 				OR ISNULL(adiscount, 0) <> 0
 				OR ISNULL(sdiscount, 0) <> 0
 				OR ISNULL(playercomm, 0) <> 0
 				OR ISNULL(comm, 0) <> 0
 				OR ISNULL(acomm, 0) <> 0
-				OR ISNULL(scomm, 0) <> 0
+				OR ISNULL(scomm, 0) <> 0)
 			
-		IF @transId IS NOT NULL
+		IF @transId <> ''
 		BEGIN
-			SELECT	@ErrCode = 100
+			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+					,@ErrCode = 100
 					,@ErrMsg = 'Wrong discount or comm value on product ' + CAST(@ProductId AS VARCHAR)
-					,@SampleData = 'bettrans.TransId = ' + CAST(@transId AS VARCHAR)
+					,@SampleData = 'bettrans.TransId = ' + @transId
 			
 		END
 		RETURN
