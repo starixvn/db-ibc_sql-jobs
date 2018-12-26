@@ -41,7 +41,7 @@ BEGIN
 		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 				,@ErrCode = 100
 				,@ErrMsg = 'Stake must be larger than 0 on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = 'bettrans.TransId = ' + @transId
+				,@SampleData = 'bettrans.TransId in (' + @transId + ')'
 	END
 
 END

@@ -43,7 +43,7 @@ BEGIN
 		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 				,@ErrCode = 100
 				,@ErrMsg = 'All yesterday tickets must be settled on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = 'bettrans.TransId = ' + @transId
+				,@SampleData = 'bettrans.TransId in (' + @transId + ')'
 	END
 
 END

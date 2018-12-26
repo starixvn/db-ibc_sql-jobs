@@ -68,7 +68,7 @@ BEGIN
 		BEGIN
 			SELECT	@ErrCode = 100
 					,@ErrMsg = 'Wrong betteam value on product ' + CAST(@ProductId AS VARCHAR)
-					,@SampleData = 'bettrans.TransId = ' + @transId
+					,@SampleData = 'bettrans.TransId in (' + @transId + ')'
 		END
 		RETURN
 	END
@@ -93,7 +93,7 @@ BEGIN
 			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 					,@ErrCode = 100
 					,@ErrMsg = 'Wrong discount or comm value on product ' + CAST(@ProductId AS VARCHAR)
-					,@SampleData = 'bettrans.TransId = ' + @transId
+					,@SampleData = 'bettrans.TransId in (' + @transId + ')'
 			
 		END
 		RETURN
