@@ -33,6 +33,7 @@ BEGIN
 		,acomm				MONEY
 		,scomm				MONEY
 		,srecommend			INT
+		,currency			TINYINT		
 	)
 	DECLARE @tblMatch TABLE (matchid INT)
 	
@@ -46,12 +47,12 @@ BEGIN
 	INSERT INTO #tmpBettrans(transId 
 		,playerdiscount,discount,adiscount,sdiscount
 		,scomm, acomm, comm, playercomm
-		,betteam, srecommend
+		,betteam, srecommend, currency
 		)
 	SELECT	transId
 		,playerdiscount,discount,adiscount,sdiscount
 		,scomm, acomm, comm, playercomm
-		,betteam, srecommend
+		,betteam, srecommend, currency
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
 	WHERE	b.bettype < 20000
 			AND b.matchid IN (SELECT matchid FROM @tblMatch)
@@ -80,14 +81,15 @@ BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM	#tmpBettrans
 		WHERE	srecommend NOT IN (SELECT custId FROM bodb02.dbo.dep_custsuper WITH (NOLOCK)) --only check for credit site
+				AND currency <> 20
 				AND (ISNULL(playerdiscount, 0) <> 0
-				OR ISNULL(discount, 0) <> 0
-				OR ISNULL(adiscount, 0) <> 0
-				OR ISNULL(sdiscount, 0) <> 0
-				OR ISNULL(playercomm, 0) <> 0
-				OR ISNULL(comm, 0) <> 0
-				OR ISNULL(acomm, 0) <> 0
-				OR ISNULL(scomm, 0) <> 0)
+						OR ISNULL(discount, 0) <> 0
+						OR ISNULL(adiscount, 0) <> 0
+						OR ISNULL(sdiscount, 0) <> 0
+						OR ISNULL(playercomm, 0) <> 0
+						OR ISNULL(comm, 0) <> 0
+						OR ISNULL(acomm, 0) <> 0
+						OR ISNULL(scomm, 0) <> 0)
 			
 		IF @transId <> ''
 		BEGIN
