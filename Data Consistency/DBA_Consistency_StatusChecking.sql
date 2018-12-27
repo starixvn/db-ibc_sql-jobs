@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_StatusChecking]
 	@ProductId		INT		
 	,@ErrCode		INT				= 0		OUTPUT
