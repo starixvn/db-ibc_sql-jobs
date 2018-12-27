@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb_Consistency" executers="" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_StatusChecking]
 	@ProductId		INT		
 	,@ErrCode		INT				= 0		OUTPUT
@@ -8,7 +8,7 @@ AS
 /*
 	Created: 20180808@Kathy
 	Task: Data consistency
-	DB: DBTP/bodb_Consistency
+	DB: DBCONSISTENCY-bodb_Consistency
 
 	Revisions: 
 		- 20180808@Kathy: Check status rules for poker game [Redmine:#98064]
