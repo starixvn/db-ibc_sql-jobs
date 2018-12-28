@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
@@ -39,6 +39,7 @@ Revisions:
 	-20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
 	-20180910@Bruce: LA - WL report for Poker Games & Bullfighting [#98487]
 	-20181107@Patrick: DB052 Indexes Revolution [Redmine: #103572]
+	-20181226@bruce: Implement E-sport 2 [Redmine: #105723]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'
@@ -378,7 +379,11 @@ BEGIN
         FROM dbo.bettrans b (NOLOCK)
 	        INNER JOIN bodb_Licensee.dbo.LicenseeBAHistory h (NOLOCK) 
 	            ON b.custid=h.custid AND (transdate BETWEEN OnDate AND ISNULL(OffDate,@today))
-        WHERE (Bettype < 31 OR (Bettype >= 121 AND Bettype < 1000) OR (Bettype >= 1301 AND Bettype < 1400))
+        WHERE (Bettype < 31
+				OR (Bettype >= 121 AND Bettype < 1000)
+				OR (Bettype >= 1301 AND Bettype < 1400)
+				OR (Bettype >= 9001 AND Bettype < 9400)
+			)
 	        AND tpositiontaking = 0
 			AND b.bettype NOT IN (901, 902, 903, 904, 911, 912, 913, 914)
 

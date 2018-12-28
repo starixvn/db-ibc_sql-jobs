@@ -47,6 +47,9 @@ AS
 		- 20180420@Bruce: LA - Implement sum job for Pragmatic [RedmineId #93958]
 		- 20180910@Bruce: LA - WL report for Poker Games & Bullfighting [#98487]
 		- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
+		- 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
+			bettype: 8101 - 8120
+			bettypeRef: 8101
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 
@@ -104,7 +107,10 @@ BEGIN
 			[rptDate]
 			,[SiteID]
 			,bt.ProductID
-			,CASE WHEN bt.ProductID IN (1,13,14,17,15,25) OR b.Bettype = 1499 THEN b.[Bettype] ELSE -1 END [Bettype]
+			,CASE 
+				WHEN bt.ProductID IN (1,13,14,17,15,25) OR b.Bettype = 1499 THEN b.[Bettype]
+				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
+				ELSE -1 END [Bettype]
 			,[CurrencyId]
 			,Status [StatusId]
 			,ISNULL([CustomerCategory],-1)
@@ -128,7 +134,10 @@ BEGIN
 		GROUP BY [rptDate]
 				,[SiteID]
 				, bt.ProductID
-				,CASE WHEN bt.ProductID IN (1,13,14,17,15,25) OR b.Bettype = 1499 THEN b.[Bettype] ELSE -1 END
+				,CASE 
+					WHEN bt.ProductID IN (1,13,14,17,15,25) OR b.Bettype = 1499 THEN b.[Bettype]
+					WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
+					ELSE -1 END
 				,[CurrencyId]
 				,Status
 				,ISNULL([CustomerCategory],-1)

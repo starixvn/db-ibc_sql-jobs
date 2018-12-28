@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
@@ -18,6 +19,7 @@ AS
 	DB: DBLIC.bodb_LicenseeReport
 	Original:
 	Revisions:
+		- 20181210@bruce: check Pragmatic data [#105723]
 */
 
 BEGIN
@@ -93,8 +95,9 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
 		WHERE b.winlostdate = @WinlostDate	
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND b.bettype NOT IN (2008, 2009)
-			AND b.bettype NOT BETWEEN 1011 AND 1020
+			AND b.bettype NOT IN (2008, 2009) -- MGCRNG
+			AND b.bettype NOT BETWEEN 1011 AND 1020 -- FW
+			AND b.bettype NOT BETWEEN 4101 AND 4300 -- PP
 		GROUP BY CAST(b.checktime AS DATE), ISNULL(site.SiteID,-1), b.bettype,
 			b.currency, b.statusID
 
@@ -122,8 +125,9 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
 		WHERE b.winlostdate = @WinlostDate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND ( b.gameID IN (2008, 2009)
-				 OR b.gameID BETWEEN 1011 AND 1020
+			AND ( b.gameID IN (2008, 2009) -- MGCRNG
+				 OR b.gameID BETWEEN 1011 AND 1020 -- FW
+				 OR b.gameID BETWEEN 4101 AND 4300 -- PP
 				 )
 		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
 			b.currency, b.statusID	
