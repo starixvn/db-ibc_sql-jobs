@@ -33,10 +33,14 @@ BEGIN
 	DECLARE @tblProductPrefix		AS TABLE(ID INT IDENTITY(1,1), ProductId INT, ProductCode VARCHAR(10))  
 	DECLARE @tblProductFunctions	AS TABLE(ProductId INT, FunctionId INT, TypeId INT)  
 	DECLARE @tblLicensee			AS TABLE(ID INT IDENTITY(1,1), LicenseeId INT, LicenseeName VARCHAR(50), ResellerId INT)
+	DECLARE @tblAdminUserID			AS TABLE (id INT IDENTITY(1,1), UserID INT)
+	DECLARE @tblNoReseller			AS TABLE (LicenseeName VARCHAR(50))
 
 	CREATE TABLE #tblLicenseeProduct (ProductId INT, ProductCode VARCHAR(10))
 	CREATE TABLE #tblLicenseeFunction (FunctionId INT, TypeId INT)
 	CREATE TABLE #tblDupUserFunction (UserId INT, FunctionId INT)
+	CREATE TABLE #tblOAGroupID (GroupID INT)
+	CREATE TABLE #tblOAUserID (id INT IDENTITY(1,1), UserID INT)
 
 	DECLARE  @ProductName	VARCHAR(10)  
 			,@n				INT  
@@ -45,7 +49,7 @@ BEGIN
 			,@LicenseeName	VARCHAR(50) 
 			,@LicenseeId	INT
 			,@ResellerId	INT
-			,@Error			VARCHAR(MAX)
+			,@Error			VARCHAR(MAX) = ''
 	
 	IF ISNULL(@EffectiveDate,'') <> ''
 	BEGIN
@@ -117,13 +121,20 @@ BEGIN
 							FROM @tblProductPrefix
 							WHERE ProductId IS NULL
 						FOR XML PATH('')), 1, 1, '')
-						
+
 		DELETE @tblProductPrefix
 		WHERE ProductId IS NULL
 	END
 	
 	--3--------------------------------------* OFFER PRODUCT TO LICENSEE *----------------------------------
-	DECLARE @tblNoReseller AS TABLE (LicenseeName VARCHAR(50))
+	IF EXISTS (SELECT 1 FROM @tblProductPrefix WHERE ProductCode = 'BA')
+	BEGIN 
+		INSERT INTO @tblAdminUserID(UserID)
+		SELECT userid FROM dbo.users WITH (NOLOCK)
+		WHERE username IN ('justin','martin','anthony')
+			AND UserRole = 'admin'
+			AND isInternal = 0
+	END
 
 	SELECT @n = 1
 		,@m = MAX(ID) FROM @tblLicensee
@@ -229,59 +240,49 @@ BEGIN
 			IF EXISTS (SELECT 1 FROM #tblLicenseeProduct WHERE ProductCode = 'BA')  
 			BEGIN  
 				IF NOT EXISTS(SELECT 1 FROM dbo.LicenseeReseller WITH (NOLOCK) WHERE LicenseeID = @LicenseeID AND ResellerID = 3)
-				BEGIN  
-					DECLARE @TempGroupID AS TABLE (GroupID INT)
-					DECLARE @TempUserID AS TABLE (id INT IDENTITY(1,1), UserID INT)
-
+				BEGIN
 					-- Add Licensee to BA reseller  
 					INSERT INTO dbo.LicenseeReseller (ResellerID,LicenseeID,TnxRate)
 					VALUES (3, @LicenseeID,0.13)
 
 					-- Insert OA group for BA reseller (OA_GroupLicensees)
-					INSERT INTO @TempGroupID(GroupID)
+					INSERT INTO #tblOAGroupID(GroupID)
 					SELECT DISTINCT GroupID FROM DBLIC.bodb_licensee.dbo.OA_GroupLicensees WITH (NOLOCK) WHERE LicenseeID = @LicenseeID AND ResellerID <> 3
 					
 					DELETE g
-					FROM @TempGroupID g
+					FROM #tblOAGroupID g
 					INNER JOIN DBLIC.bodb_licensee.dbo.OA_GroupLicensees o WITH (NOLOCK) ON o.GroupID = g.GroupID
 					WHERE o.ResellerID = 3 AND o.LicenseeID = @LicenseeID
 					
 					INSERT INTO DBLIC.bodb_licensee.dbo.OA_GroupLicensees (GroupID,ResellerID,LicenseeID) 
 					SELECT GroupID, 3, @LicenseeId
-					FROM @TempGroupID
+					FROM #tblOAGroupID
 
 					-- Insert OA Users for BA reseller (OA_UserLicensees)  
-					INSERT INTO @TempUserID(UserID)  
+					INSERT INTO #tblOAUserId(UserID)  
 					SELECT DISTINCT UserID FROM DBLIC.bodb_licensee.dbo.OA_UserLicensees WITH (NOLOCK) WHERE LicenseeID = @LicenseeID AND ResellerID <> 3
 					
 					DELETE u
-					FROM @TempUserID u
+					FROM #tblOAUserId u
 					INNER JOIN DBLIC.bodb_licensee.dbo.OA_UserLicensees o WITH (NOLOCK) ON u.UserID = o.UserID
 					WHERE o.ResellerID = 3 AND o.LicenseeID = @LicenseeID
 					
 					INSERT INTO DBLIC.bodb_licensee.dbo.OA_UserLicensees (UserID,ResellerID,LicenseeID)
 					SELECT UserID, 3, @LicenseeId
-					FROM @TempUserID
+					FROM #tblOAUserId
 				END
 			
 				-- Insert SpecialBA for justin,martin,anthony
-				DECLARE @TempAdminUserID AS TABLE (id INT IDENTITY(1,1), UserID INT)
 				DECLARE @j		INT, 
 						@k		INT,
 						@UserId	INT
 
-				INSERT INTO @TempAdminUserID(UserID)
-				SELECT userid FROM dbo.users WITH (NOLOCK)
-				WHERE username IN ('justin','martin','anthony')
-					AND UserRole = 'admin'
-					AND isInternal = 0
-
 				SET @j = 1
-				SELECT @k = MAX(id) FROM @TempAdminUserID
+				SELECT @k = MAX(id) FROM @tblAdminUserID
 
 				WHILE @j <= @k
 				BEGIN			
-					SELECT @UserID = UserID FROM @TempAdminUserID WHERE id = @j
+					SELECT @UserID = UserID FROM @tblAdminUserID WHERE id = @j
 
 					IF NOT EXISTS (SELECT 1 FROM dbo.LicenseeUserFunctions WITH (NOLOCK) WHERE licenseeid=@LicenseeId AND Userid=@UserId AND Functionid = 54)
 					BEGIN  
@@ -291,6 +292,9 @@ BEGIN
 					
 					SET @j = @j + 1
 				END
+
+				TRUNCATE TABLE #tblOAGroupID
+				TRUNCATE TABLE #tblOAUserId
 			END
 
 			TRUNCATE TABLE #tblLicenseeProduct
@@ -314,10 +318,12 @@ BEGIN
 						FOR XML PATH('')), 1, 1, '')
 	END
 
-	SELECT @Error
+	SELECT @Error AS Error
 	
 	DROP TABLE #tblLicenseeProduct
 	DROP TABLE #tblDupUserFunction
 	DROP TABLE #tblLicenseeFunction
+	DROP TABLE #tblOAGroupID
+	DROP TABLE #tblOAUserId
 END
 GO
