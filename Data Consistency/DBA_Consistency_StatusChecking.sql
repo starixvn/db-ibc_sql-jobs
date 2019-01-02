@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb_Consistency" executers="" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_StatusChecking]
 	@ProductId		INT		
 	,@ErrCode		INT				= 0		OUTPUT
@@ -8,33 +8,36 @@ AS
 /*
 	Created: 20180808@Kathy
 	Task: Data consistency
-	DB: DBTP/bodb_Consistency
+	DB: DBCONSISTENCY-bodb_Consistency
 
 	Revisions: 
 		- 20180808@Kathy: Check status rules for poker game [Redmine:#98064]
+		- 20181219@Vicky: Happy 5- Check Data Consistency [Redmine:#106481]
 	
 	Param's Expanation:
 */
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @transId BIGINT
+	DECLARE @transId VARCHAR(MAX)
 	DECLARE @yesterday DATETIME
 
+	SET @transId = ''
 	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
 
-	SELECT TOP (1) @transId = transid
+	SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
 	WHERE	b.bettype < 20000
 			AND b.winlostdate = @yesterday
 			AND b.statusID = 0
 			AND b.matchid = @ProductId
 	
-	IF @transId IS NOT NULL
+	IF @transId <> ''
 	BEGIN
-		SELECT	@ErrCode = 100
+		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+				,@ErrCode = 100
 				,@ErrMsg = 'All yesterday tickets must be settled on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = 'bettrans.TransId = ' + CAST(@transId AS VARCHAR)
+				,@SampleData = 'bettrans.TransId = ' + @transId
 	END
 
 END
