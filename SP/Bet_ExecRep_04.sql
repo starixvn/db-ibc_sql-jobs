@@ -1,4 +1,10 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+USE [bodb02]
+GO
+/****** Object:  StoredProcedure [dbo].[Bet_ExecRep_04]    Script Date: 12/28/2018 3:23:31 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 ALTER PROCEDURE [dbo].[Bet_ExecRep_04] 
 	@Winlostdate DATETIME = NULL
 	,@Target VARCHAR(30) = 'DBTRANS' -- DBTRANS/REPLICATED
@@ -267,7 +273,7 @@ BEGIN
 			insert into #Transfer_Coll(transid, actualrate)
 			select b.transid, e.actualrate 
 			FROM dbo.Transfer_Coll b WITH(nolock) 
-				,CustDB.dbo.exchange e WITH (NOLOCK)
+				,dbo.exchange e WITH (NOLOCK)
 			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
 		END
 		

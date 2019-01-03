@@ -308,7 +308,7 @@ BEGIN
 			insert into #Transfer_Coll(transid, actualrate)
 			select b.transid, e.actualrate
 			FROM dbo.Transfer_Coll b WITH(nolock) 
-				,CustDB.dbo.exchange e WITH (NOLOCK)
+				,bodb02.dbo.exchange e WITH (NOLOCK)
 			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
 		END
 		PRINT 'END: Reminder of UPDATE Exchange Rate Oanda: EXEC CustDB.dbo.DBA_ExchangeDailyOandaUpd_Actualrate @ExchangeDate=''xxx'''
