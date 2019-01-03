@@ -53,7 +53,7 @@ BEGIN
 	WHERE	b.bettype < 20000
 			AND b.matchid IN (SELECT matchid FROM @tblMatch)
 			AND currency <> 20
-			AND c.site IN (
+			AND c.site NOT IN (
 							SELECT site 
 							FROM #tblSite s
 						   )
