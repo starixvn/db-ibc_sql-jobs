@@ -1,7 +1,8 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_LaunchedSiteChecking]
 	@ProductId		INT		
-	,@sites			VARCHAR(MAX)
+	,@sites			VARCHAR(MAX)	
+	,@IsLaunched	INT				= 1
 	,@ErrCode		INT				= 0		OUTPUT
 	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
 	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
@@ -35,7 +36,8 @@ BEGIN
 	INSERT INTO #tblSrecommend (custid)
 	SELECT custid
 	FROM bodb02.dbo.Customer c WITH (NOLOCK) 
-	WHERE site IN (SELECT val FROM dbo.f_SplitString(@sites, ','))
+	WHERE   (@IsLaunched = 0 OR site IN (SELECT val FROM dbo.f_SplitString(@sites, ',')))
+		AND (@IsLaunched = 1 OR site NOT IN (SELECT val FROM dbo.f_SplitString(@sites, ',')))
 		AND custId IN (SELECT CustId 
 					   FROM bodb02.dbo.Customer c WITH (NOLOCK) 
 					   WHERE roleid=4)
