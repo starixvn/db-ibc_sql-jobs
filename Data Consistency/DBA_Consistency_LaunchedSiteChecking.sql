@@ -39,7 +39,7 @@ BEGIN
 	WHERE   (@IsLaunched = 0 OR site IN (SELECT val FROM dbo.f_SplitString(@sites, ',')))
 		AND (@IsLaunched = 1 OR site NOT IN (SELECT val FROM dbo.f_SplitString(@sites, ',')))
 		AND custId IN (SELECT CustId 
-					   FROM bodb02.dbo.Customer c WITH (NOLOCK) 
+					   FROM bodb02.dbo.Customer c WITH (NOLOCK)
 					   WHERE roleid = 4)
 	----------------------------------------------------------------------------
 	
