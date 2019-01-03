@@ -23,7 +23,8 @@ BEGIN
 	
 	DECLARE @transId VARCHAR(MAX)
 	DECLARE @tblMatch TABLE (matchid INT)
-	CREATE TABLE #tblSrecommend  (custid INT NOT NULL PRIMARY KEY)
+	--CREATE TABLE #tblrecommend  (custid INT NOT NULL PRIMARY KEY)
+	CREATE TABLE #tblSite  (site VARCHAR(50) PRIMARY KEY)
 	----------------------------------------------------------------------------
 	
 	SET @transId = ''
@@ -33,25 +34,28 @@ BEGIN
 	FROM bodb02.dbo.Match m WITH (NOLOCK) 
 	WHERE Sporttype = @ProductId
 	
-	INSERT INTO #tblSrecommend (custid)
+	/*INSERT INTO #tblrecommend (custid)
 	SELECT custid
-	FROM bodb02.dbo.Customer c WITH (NOLOCK) 
+	FROM bodb02.dbo.CustAgent c WITH (NOLOCK) 
+	WHERE   (@IsLaunched = 0 OR site IN (SELECT val FROM dbo.f_SplitString(@sites, ',')))
+		AND (@IsLaunched = 1 OR site NOT IN (SELECT val FROM dbo.f_SplitString(@sites, ',')))*/
+	
+	INSERT INTO #tblSite (site)
+	SELECT site
+	FROM bodb02.dbo.Site s WITH (NOLOCK) 
 	WHERE   (@IsLaunched = 0 OR site IN (SELECT val FROM dbo.f_SplitString(@sites, ',')))
 		AND (@IsLaunched = 1 OR site NOT IN (SELECT val FROM dbo.f_SplitString(@sites, ',')))
-		AND custId IN (SELECT CustId 
-					   FROM bodb02.dbo.Customer c WITH (NOLOCK)
-					   WHERE roleid = 4)
 	----------------------------------------------------------------------------
 	
 	SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.CustAgent c WITH (NOLOCK) ON c.custid = b.recommend
 	WHERE	b.bettype < 20000
 			AND b.matchid IN (SELECT matchid FROM @tblMatch)
 			AND currency <> 20
-			AND NOT EXISTS (
-							SELECT 1 
-							FROM #tblSrecommend s
-							WHERE s.custid = b.srecommend
+			AND c.site IN (
+							SELECT site 
+							FROM #tblSite s
 						   )
 	
 	IF @transId <> ''
