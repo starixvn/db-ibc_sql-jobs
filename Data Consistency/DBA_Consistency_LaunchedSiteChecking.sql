@@ -40,13 +40,14 @@ BEGIN
 		AND (@IsLaunched = 1 OR site NOT IN (SELECT val FROM dbo.f_SplitString(@sites, ',')))
 		AND custId IN (SELECT CustId 
 					   FROM bodb02.dbo.Customer c WITH (NOLOCK) 
-					   WHERE roleid=4)
+					   WHERE roleid = 4)
 	----------------------------------------------------------------------------
 	
 	SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
 	WHERE	b.bettype < 20000
 			AND b.matchid IN (SELECT matchid FROM @tblMatch)
+			AND currency <> 20
 			AND NOT EXISTS (
 							SELECT 1 
 							FROM #tblSrecommend s
