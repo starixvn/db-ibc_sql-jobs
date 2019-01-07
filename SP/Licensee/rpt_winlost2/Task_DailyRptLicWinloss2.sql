@@ -1,4 +1,6 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+USE bodb_LicenseeReport
+GO
 
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
 	@winlostdate DATETIME
@@ -47,6 +49,7 @@ Revisions:
 	- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
 	- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
 	- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
+	- 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */  
@@ -121,6 +124,7 @@ BEGIN
 		WHEN bettype IN (71,72) THEN 251 --casino  
 		WHEN bettype = 1000 THEN 253 --games  
 		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game   
+		WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
 		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport  
 		WHEN bettype BETWEEN 51 AND 69 THEN 201  
 		WHEN bettype IN (31,32,33,41,42,43) THEN 151  
@@ -180,6 +184,7 @@ GROUP BY
 		WHEN bettype IN (71,72) THEN 251 --casino
 		WHEN bettype = 1000 THEN 253 --games
 		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game 
+		WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
 		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
 		WHEN bettype BETWEEN 51 AND 69 THEN 201
 		WHEN bettype IN (31,32,33,41,42,43) THEN 151

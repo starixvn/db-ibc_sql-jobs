@@ -16,6 +16,7 @@ AS
 		  - 20180212@Harper: Remove LC from product list [Redmine: #85965]
 		  - 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 		  - 20180814@Joseph: Remove Racing [RedmineID: #99378]
+		  - 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
 */ 
 BEGIN 
 SET NOCOUNT ON;
@@ -127,13 +128,13 @@ SELECT a.CustID
 	,CASE 
 		WHEN a.bettype IN (71, 72) THEN 251 --casino  
 		WHEN a.bettype = 1000 THEN 253 --games  
-		WHEN a.bettype BETWEEN 81
-				AND 120 THEN 161 --Number Game   		 
+		WHEN a.bettype BETWEEN 81 AND 120 THEN 161 --Number Game
+		WHEN a.bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: HP5
 		WHEN a.bettype BETWEEN 1201 AND 1299 THEN CASE 
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 180 --Virtual Sport  
-				END --Virtual Sport  
+			END --Virtual Sport  
 		WHEN a.bettype BETWEEN 51 AND 69 THEN 201
 		WHEN a.bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno 
 		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
@@ -141,12 +142,12 @@ SELECT a.CustID
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 190 -- Betradar VS
-				END -- Betradar VS
+			END -- Betradar VS
 		WHEN a.bettype BETWEEN 2800 AND 2829 THEN CASE 
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 193 -- Betradar VS: Virtual Basketball
-				END -- Betradar VS: Virtual Basketball
+			END -- Betradar VS: Virtual Basketball
 		WHEN a.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		ELSE isNULL(b.sporttype, 0)
 		END sporttype
@@ -183,29 +184,27 @@ GROUP BY a.CustID
 	,CASE 
 		WHEN a.bettype IN (71, 72) THEN 251 --casino  
 		WHEN a.bettype = 1000 THEN 253 --games  
-		WHEN a.bettype BETWEEN 81
-				AND 120 THEN 161 --Number Game   		
+		WHEN a.bettype BETWEEN 81 AND 120 THEN 161 --Number Game
+		WHEN a.bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: HP5
 		WHEN a.bettype BETWEEN 1201
 				AND 1299 THEN CASE 
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 180 --Virtual Sport  
-				END --Virtual Sport  
-		WHEN a.bettype BETWEEN 51
-				AND 69 THEN 201
-		WHEN a.bettype BETWEEN 1501
-				AND 1599 THEN 202 -- Keno  
+			END --Virtual Sport  
+		WHEN a.bettype BETWEEN 51 AND 69 THEN 201
+		WHEN a.bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno  
 		WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
 				WHEN a.bettype = 2799 THEN a.sporttype
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 190 -- Betradar VS
-				END -- Betradar VS
+			END -- Betradar VS
 		WHEN a.bettype BETWEEN 2800 AND 2829 THEN CASE 
 				WHEN result.sporttype IS NOT NULL THEN result.sporttype
 				WHEN b.sporttype IS NOT NULL THEN b.sporttype
 				ELSE 193 -- Betradar VS: Virtual Basketball
-				END -- Betradar VS: Virtual Basketball
+			END -- Betradar VS: Virtual Basketball
 		WHEN a.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		ELSE isNULL(b.sporttype, 0)
 		END

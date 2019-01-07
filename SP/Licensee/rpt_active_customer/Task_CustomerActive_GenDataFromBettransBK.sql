@@ -14,6 +14,8 @@ AS
 	Revisions:
 		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
 		- 20181204@Bruce: Implement E-sport 2 [RedmineID: #105891]
+		- 20181210@Bruce: Reserved range for esport2 [RedmineID: #105723]
+		- 20181210@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
 
 	Param's Explanation:
 		ProductId: 1: Racing, 2: Number Game, 3: BA, 4: Live Casino, 5: Virtual Sports, 6: RNG Casino
@@ -57,9 +59,9 @@ BEGIN
 		--For SportsBook
 		INSERT INTO dbo.rptCustomerActiveTmp(TransDate, CustId, Recommend, CurrencyId, ProductId, WinLostDate)
 		SELECT CAST(a.transdate AS DATE) AS TransDate, a.CustID, a.recommend, ISNULL(l.currency, a.currency) AS currency
-			, CASE  WHEN (a.bettype < 31 OR (a.bettype >= 121 AND a.bettype < 1000) OR (a.bettype BETWEEN 1301 AND 1399) OR (a.bettype BETWEEN 9001 AND 9086)) AND ba.transid IS NULL THEN 0 -- SB
+			, CASE  WHEN (a.bettype < 31 OR (a.bettype >= 121 AND a.bettype < 1000) OR (a.bettype BETWEEN 1301 AND 1399) OR (a.bettype BETWEEN 9001 AND 9399)) AND ba.transid IS NULL THEN 0 -- SB
 					WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 1	-- Racing
-					WHEN a.bettype BETWEEN 81 AND 120 THEN 2 -- Number Game
+					WHEN (a.bettype BETWEEN 81 AND 120) OR (a.bettype BETWEEN 8101 AND 8120) THEN 2 -- Number Game
 					WHEN ba.transid IS NOT NULL THEN 3	-- BA
 					WHEN a.bettype BETWEEN 1101 AND 1199 THEN 4 -- Live Casino
 					WHEN a.bettype BETWEEN 1201 AND 1299 THEN 5 -- Virtual Sports
@@ -76,9 +78,9 @@ BEGIN
 		WHERE a.winlostdate = @WinlostDate
 			AND bettype < 19999
 		GROUP BY CAST(a.transdate AS DATE), a.CustID, a.recommend, ISNULL(l.currency, a.currency)
-			, CASE  WHEN (a.bettype < 31 OR (a.bettype >= 121 AND a.bettype < 1000) OR (a.bettype BETWEEN 1301 AND 1399) OR (a.bettype BETWEEN 9001 AND 9086)) AND ba.transid IS NULL THEN 0 -- SB
+			, CASE  WHEN (a.bettype < 31 OR (a.bettype >= 121 AND a.bettype < 1000) OR (a.bettype BETWEEN 1301 AND 1399) OR (a.bettype BETWEEN 9001 AND 9399)) AND ba.transid IS NULL THEN 0 -- SB
 					WHEN a.bettype IN (31, 32, 33, 41, 42, 43) THEN 1	-- Racing
-					WHEN a.bettype BETWEEN 81 AND 120 THEN 2 -- Number Game
+					WHEN (a.bettype BETWEEN 81 AND 120) OR (a.bettype BETWEEN 8101 AND 8120) THEN 2 -- Number Game
 					WHEN ba.transid IS NOT NULL THEN 3	-- BA
 					WHEN a.bettype BETWEEN 1101 AND 1199 THEN 4 -- Live Casino
 					WHEN a.bettype BETWEEN 1201 AND 1299 THEN 5 -- Virtual Sports
