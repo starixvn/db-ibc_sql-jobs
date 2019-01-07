@@ -38,6 +38,7 @@ AS
 	 +20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 	 +20181109@Amanda: remove unused params and add new effective date param [redmine: #83584]
 	 +20181129@Amanda: update the way to add admin users and their permissions for new licensee [redmine: #83584]
+	 +20180103@Amanda: update parameters of SP DBA_Lrf_OfferProduct [redmine: #83584]
 	 
 	Param's Explanation:  
 	 + @IsSpecial: if 1 then update column Description to normal, or affiliate or banner depend on:  
@@ -277,8 +278,8 @@ WHERE ResellerName = @ResellerName
 --- OFFER PRODUCT3rd  
 IF ISNULL(@ProductCode, '') <> ''
 BEGIN
-	EXEC DBA_Lrf_OfferProduct @ResellerID = @ResellerID
-		, @LicenseeId = @LicenseeId
+	EXEC DBA_Lrf_OfferProduct
+		@LicenseeNameList = @LicenseeName
 		, @ProductCode = @ProductCode
 		, @IsPullService = @IsPullService
 		, @EffectiveDate = @EffectiveDate
