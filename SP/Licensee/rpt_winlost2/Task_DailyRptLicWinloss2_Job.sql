@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="vnteam" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
@@ -21,6 +21,7 @@ AS
 		- 20161003@Jim: Add step to generate data to [bodb_LicenseeReport.rpt_BettingColossusBets]  [RedminID : #63785]
 		- 20171130@Sophia: Add step gen data to rptLicWinlossGMT [Redmine: #84932]
 		- 20180424@Percy: Add @tablename param to break step of job: process insert sum step by step [RedmineID: #94129]
+		- 20181129@Joseph: Add step to generate data to [bodb_LicenseeReport.rptCasinoTurnover]   [RedmineID: #95178]
 */
  
 BEGIN  
@@ -71,6 +72,10 @@ BEGIN
 		ELSE IF @TableName = 'rptLicWinlossGMT'
 		BEGIN
 			EXEC dbo.Task_DailyRptLicWinlossGMT_Bettrans @FromDate = @WinlostDate
+		END
+		ELSE IF @TableName = 'rptCasinoTurnover'
+		BEGIN
+			EXEC dbo.Task_DailyRptCasinoTurnover_Bettrans @winlostdate = @WinlostDate
 		END
 	END
 END
