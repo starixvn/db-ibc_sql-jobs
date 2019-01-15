@@ -15,6 +15,7 @@ CREATE PROCEDURE [dbo].[DBA_Lrf_ActiveLicenseeSystem] (
 	   - 20160912@Jim: add pull service into this flow
 	   - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 	   - 20181129@Amanda: User SP DBA_Lrf_PullServiceSetting to delete pull service [redmine: #83584]
+	   - 20190115@Amanda: Correct error message [redmine: #83584]
 	   
 	Param's Explanation:
    
@@ -74,7 +75,7 @@ BEGIN
 			WHERE SystemId <> 0
 			)
 	BEGIN
-		RAISERROR ('System is  not correct,please check again', 16, 1)
+		RAISERROR ('System is not correct!', 16, 1)
 		RETURN
 	END
 
