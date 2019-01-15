@@ -22,7 +22,7 @@ BEGIN
 	EXECUTE dbo.DBA_CheckStatus_Deposit @sportType=205, @bettype = 2008, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableMicrogameRNG', @HiddenTable='', @HiddenColumnName = '',@SynTable='',@SynColumnName = '';
 	EXECUTE dbo.DBA_CheckStatus_Deposit @sportType=204, @bettype = 18001, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableColossusBet', @HiddenTable='CustInfo', @HiddenColumnName = 'HideColossusBet',@SynTable='',@SynColumnName = '';
 	EXECUTE dbo.DBA_CheckStatus_Deposit @sportType=251, @bettype = 71, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableCasino', @HiddenTable='', @HiddenColumnName = '',@SynTable='CustInfo',@SynColumnName = 'SyncCasino';
-	EXECUTE dbo.DBA_CheckStatus_Deposit @sportType=43, @bettype = 1, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableEsports', @HiddenTable='', @HiddenColumnName = '',@SynTable='',@SynColumnName = '';
+	--EXECUTE dbo.DBA_CheckStatus_Deposit @sportType=43, @bettype = 1, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableEsports', @HiddenTable='', @HiddenColumnName = '',@SynTable='',@SynColumnName = '';
 	EXECUTE dbo.DBA_CheckStatus_Deposit @sportType=1, @bettype = 801, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableSuperLive', @HiddenTable='', @HiddenColumnName = '',@SynTable='',@SynColumnName = '';
 	EXECUTE dbo.DBA_CheckStatus_Deposit @sportType=202, @bettype = 1501, @DisableTable = '', @DisableColumnName = '', @HiddenTable='CustInfo', @HiddenColumnName = 'HideKeno',@SynTable='',@SynColumnName = '';
 
