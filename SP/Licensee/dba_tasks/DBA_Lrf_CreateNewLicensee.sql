@@ -11,7 +11,10 @@ ALTER PROCEDURE [dbo].[DBA_Lrf_CreateNewLicensee] (
 	, @IsAllowWLbyLeague BIT = 0
 	, @IsPullService BIT = 1
 	, @EffectiveDate DATE = ''
-	)
+	, @Description VARCHAR(100) = NULL
+	, @BrandName VARCHAR(100) = ''
+	, @CompanyName VARCHAR(100) = ''
+)
 AS
 /*  
 	Created: Henry  
@@ -38,7 +41,8 @@ AS
 	 +20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 	 +20181109@Amanda: remove unused params and add new effective date param [redmine: #83584]
 	 +20181129@Amanda: update the way to add admin users and their permissions for new licensee [redmine: #83584]
-	 +20180103@Amanda: update parameters of SP DBA_Lrf_OfferProduct [redmine: #83584]
+	 +20190103@Amanda: update parameters of SP DBA_Lrf_OfferProduct [redmine: #83584]
+	 +20190114@Amanda: add more info for new licensee [redmine: #83584]
 	 
 	Param's Explanation:  
 	 + @IsSpecial: if 1 then update column Description to normal, or affiliate or banner depend on:  
@@ -190,6 +194,14 @@ WHERE ResellerName = @ResellerName
 		WHERE LicenseeID = @LicenseeID
 	END
 --- END: SET BETSETTING IS ACTIVE AS DEFAULT
+
+--- UPDATE Licensee info
+	UPDATE dbo.Licensees WITH (ROWLOCK,UPDLOCK)
+	SET [Description] = @Description,
+		BrandName = @BrandName,
+		CompanyName = @CompanyName
+	WHERE LicenseeID = @LicenseeID
+--- END: UPDATE Licensee info
 
 --- UPDATE AffectedDate
 	IF ISNULL(@EffectiveDate, '') <> ''
