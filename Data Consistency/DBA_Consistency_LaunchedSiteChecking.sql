@@ -14,6 +14,7 @@ AS
 
 	Revisions: 
 		- 20181219@Vicky: check members of un-launched sites have tickets or not [Redmine:#106481]
+		- 20190117@Vicky: un-launched sites [Redmine:#106481]
 	
 	Param's Expanation:
 		- @sites: 'Indo,KORIBC'
