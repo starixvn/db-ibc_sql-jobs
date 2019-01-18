@@ -129,8 +129,6 @@ BEGIN
 							   16, -- Severity.  
 							   1 -- State.  
 						   );
-			
-			EXECUTE	sys.sp_xml_removedocument @handle			   
 		END
 		
 	END TRY
@@ -142,9 +140,8 @@ BEGIN
 		VALUES ('UserLog_Others', @message_body, @error_Message,'UserLog_Credit','MessageType_CustomerLog_UserLog_Credit',GETDATE(),0)
 		
 		-- Send Email to Production team for notification
-		EXEC sb.EmailNotification @QueueName = 'Queue_Others',@message_body = @message_body,@error_message = @error_Message, @functionName = 'Userlog_Others'
-		
-		EXECUTE	sys.sp_xml_removedocument @handle	
+		EXEC sb.EmailNotification @QueueName = 'Queue_Others',@message_body = @message_body,@error_message = @error_Message, @funtionName = 'Userlog_Others'
+			
 	END CATCH
 END
 GO

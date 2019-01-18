@@ -76,7 +76,7 @@ BEGIN
 	BEGIN
 		SET @log = (SELECT message_body AS 'node()'
 				  FROM @Messages					
-				  FOR XML PATH ('Root'))
+				  FOR XML PATH (''), ROOT ('Root'))
 			
 		EXEC [sb].[CustomerLogBK_MsgProcess_UserLog_Credit] @log = @log														  
 	END

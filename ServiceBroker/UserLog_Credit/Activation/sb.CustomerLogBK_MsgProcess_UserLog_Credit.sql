@@ -59,7 +59,7 @@ BEGIN
 		VALUES ('UserLog_Others', @message_body, @error_Message,'UserLog_Others','MessageType_CustomerLog_UserLog_Others',GETDATE(),0)
 		
 		-- Send Email to Production team for notification
-		EXEC sb.EmailNotification @QueueName = 'Queue_Others_BK',@message_body = @message_body,@error_message = @error_Message, @functionName = 'UserLog_Others'
+		EXEC sb.EmailNotification @QueueName = 'Queue_Others_BK',@message_body = @message_body,@error_message = @error_Message, @funtionName = 'UserLog_Others'
 		
 	END CATCH
 	
