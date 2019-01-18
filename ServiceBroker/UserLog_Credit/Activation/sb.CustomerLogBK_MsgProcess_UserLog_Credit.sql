@@ -11,7 +11,7 @@ ALTER PROCEDURE [sb].[CustomerLogBK_MsgProcess_UserLog_Credit]
 	Parameter's explaination
 	
 	Revision:
-	
+		- 20181114@Johnson: create sp [redmine: #105319]
 */
 AS
 BEGIN

@@ -11,7 +11,7 @@ AS
 	Para's explaination
 	
 	Revision:
-	
+		- 20181114@Johnson: create sp [redmine: #105319]
 */
 BEGIN
 	DECLARE @log xml 
