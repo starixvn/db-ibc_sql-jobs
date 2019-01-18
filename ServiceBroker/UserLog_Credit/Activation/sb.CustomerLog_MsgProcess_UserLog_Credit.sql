@@ -1,3 +1,5 @@
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [sb].[CustomerLog_MsgProcess_UserLog_Credit]
 	@log xml,
 	@IsExistingTarget BIT = 0	

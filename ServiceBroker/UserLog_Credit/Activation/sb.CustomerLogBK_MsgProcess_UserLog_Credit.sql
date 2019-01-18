@@ -1,3 +1,5 @@
+/*<info serverAlias="DBLOGBK-bodb_CustomerLog" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [sb].[CustomerLogBK_MsgProcess_UserLog_Credit]
 	@log xml
 /*
