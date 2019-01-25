@@ -87,7 +87,7 @@ BEGIN
 	SELECT c.CustID 
 	FROM Customer c WITH(NOLOCK) 
 		INNER JOIN #supersALL s ON c.srecommend=s.custid
-	WHERE roleid=3 AND (username LIKE '%Acc%' OR username LIKE '%Cas%' OR username LIKE '%LocalBank%')
+	WHERE roleid=3 AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%')
 
 	INSERT INTO #Trade(CustID)
 	SELECT c.CustID 
