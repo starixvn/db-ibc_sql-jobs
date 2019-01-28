@@ -14,6 +14,7 @@ AS
 
 	Revisions: 
 		- 20181219@Vicky: check members of un-launched sites have tickets or not [Redmine:#106481]
+		- 20190117@Vicky: un-launched sites [Redmine:#106481]
 	
 	Param's Expanation:
 		- @sites: 'Indo,KORIBC'
@@ -49,10 +50,10 @@ BEGIN
 	
 	SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.CustAgent c WITH (NOLOCK) ON c.custid = b.recommend
+		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.recommend
 	WHERE	b.bettype < 20000
 			AND b.matchid IN (SELECT matchid FROM @tblMatch)
-			AND currency <> 20
+			AND b.currency <> 20
 			AND c.site NOT IN (
 							SELECT site 
 							FROM #tblSite s
