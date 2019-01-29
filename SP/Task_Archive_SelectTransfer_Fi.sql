@@ -31,15 +31,15 @@ WHERE bettype = 20000 AND matchid = 0 AND custid = 3
 
 INSERT INTO #Refno_temp
     SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
-        INNER join CustDB.dbo.custAgent c WITH (NOLOCK) ON b.recommend = c.custid
+        INNER join DBCUST.CustDB.dbo.custAgent c WITH (NOLOCK) ON b.recommend = c.custid
     WHERE c.isInternal = 1 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
     UNION
     SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
-        INNER join CustDB.dbo.CustMaster c WITH (NOLOCK) ON b.custid = c.custid
+        INNER join DBCUST.CustDB.dbo.CustMaster c WITH (NOLOCK) ON b.custid = c.custid
     WHERE c.isInternal = 1 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
     UNION
     SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
-        INNER join CustDB.dbo.CustSuper c WITH (NOLOCK) ON b.custid = c.custid
+        INNER join DBCUST.CustDB.dbo.CustSuper c WITH (NOLOCK) ON b.custid = c.custid
     WHERE c.isInternal = 1 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
 
 
