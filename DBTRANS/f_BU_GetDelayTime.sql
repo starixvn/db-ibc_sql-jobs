@@ -3,6 +3,14 @@ ALTER FUNCTION [dbo].[f_BU_GetDelayTime]
 (       
 	@KeyId VARCHAR(50)       
 ) 
+/*
+	Created:
+	Task: Delay time list
+	DB: DBTXN/BODB02
+	Revisions:
+		- 20190131@Patrick: Add more key [RedmineID: #108581]
+
+*/
 RETURNS VARCHAR(50)      
 AS
 BEGIN
