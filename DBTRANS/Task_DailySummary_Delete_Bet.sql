@@ -25,7 +25,7 @@ BEGIN
 			INNER JOIN dbo.match m WITH (NOLOCK) ON b.matchid = m.matchid
 		WHERE winlostdate = @winlostdate
 
-		SELECT @rowId = 1, @delayTimeValueM = '00:00:00:020'
+		SELECT @rowId = 1, @delayTimeValueM = '00:00:00:010'
 
 		WHILE EXISTS (SELECT TOP 1 1 FROM #m WHERE rn = @rowId)
 		BEGIN
@@ -38,7 +38,7 @@ BEGIN
 				, @winlostdate = @winlostdate, @parlay = 1
 				, @tableName = 'bettransM', @matchid = @matchid
 
-			SELECT @delayTimeValueM = dbo.f_BU_GetDelayTime('Key6')
+			SELECT @delayTimeValueM = dbo.f_BU_GetDelayTime('Key10')
 			WAITFOR DELAY @delayTimeValueM
 		END
 

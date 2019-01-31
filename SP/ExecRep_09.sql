@@ -293,7 +293,7 @@ BEGIN
 				DELETE TOP(2000) FROM bettransm WITH(ROWLOCK)
 				WHERE matchid = @matchId
 
-				IF @@ROWCOUNT <= 2000
+				IF @@ROWCOUNT < 2000
 					BREAK
 			END
 		END
