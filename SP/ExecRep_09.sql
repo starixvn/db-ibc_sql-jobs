@@ -2,7 +2,7 @@
 USE [bodb02]
 GO
 
-ALTER PROCEDURE [dbo].[ExecRep_09]
+ALTER PROCEDURE	[dbo].[ExecRep_09]
 	@recommend int,
 	@winlostdate smalldatetime,
 	@parlay tinyint = 0,
@@ -34,10 +34,14 @@ AS
 			+ Set current datetime value to checktime field when insert ticket 19999
 			+ When processing a line then insert itself and upline's to [List]
 		- 20180329@Percy: Enhance MBBU process [RedmineID: #92391]
+		- 20181222@Billy:   Remove Queue processing on DBTP - [Redmine: #000000]
 		- 20190131@Patrick: Delete bettransm batch by batch at replicated servers to reduce lock escalation [RedmineID: #108581]
  */
 BEGIN
-	--SET NOCOUNT ON 
+	--SET NOCOUNT ON
+	
+	-- 20181222@Billy: Comment code due to replication issue from DBTP to DBMNL
+/*
 	IF @@SERVERNAME = 'DBTP' AND @parlay = 0
 	BEGIN
 		IF NOT EXISTS (SELECT 1 FROM dbo.ExecRep_Queue WHERE command = 'ExecRep_09' AND datevalue = @winlostdate)
@@ -45,6 +49,7 @@ BEGIN
 		
 		RETURN
 	END
+*/
 
 	IF @tableName = 'SystemSettings'
 	BEGIN
@@ -300,4 +305,5 @@ BEGIN
 		END
 	END
 END
+
 GO
