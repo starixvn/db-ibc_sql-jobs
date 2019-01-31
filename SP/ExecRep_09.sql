@@ -9,7 +9,8 @@ ALTER PROCEDURE	[dbo].[ExecRep_09]
 	@tableName varchar(125) = '',
 	@refnos varchar(max) = '',
 	@rowDeleted int = 0 OUTPUT,
-	@firstRound bit = 0
+	@firstRound bit = 0,
+	@matchId int = 0
 AS
 -- *** IMPORTANT ***
 -- IF code altered, must to go check related SP of ExecRep_Queue @ DBTP
@@ -285,12 +286,21 @@ BEGIN
 
 	IF @parlay = 1
 	BEGIN
-		IF @tableName = 'bettransM'
+		IF @tableName = 'bettransM' AND @matchId > 0
 		BEGIN
-			DELETE TOP (2000) FROM bettransm WITH(ROWLOCK)
-			WHERE winlostdate = @winlostdate
+			WHILE 1 = 1
+			BEGIN
+				DELETE TOP(2000) FROM bettransm WITH(ROWLOCK)
+				WHERE matchid = @matchId
 
-			SET @RowDeleted = @@ROWCOUNT
+				IF @@ROWCOUNT <= 2000
+					BREAK
+			END
+		END
+		ELSE IF @tableName = 'bettransM' AND @matchId = -1 -- last round
+		BEGIN
+			DELETE FROM bettransm WITH(ROWLOCK)
+			WHERE winlostdate = @winlostdate
 		END
 	END
 

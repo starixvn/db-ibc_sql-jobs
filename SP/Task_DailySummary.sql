@@ -423,18 +423,7 @@ EXEC dbo.Task_Bonus_DailySummary @WinlostDate = @WinlostDate
 -- Copy bettransm/bettransg -> bettransm14/bettransg14 for whole day of @winlostdate
 EXEC dbo.ExecRep_08 @recommend =  0, @winlostdate = @winlostdate, @parlay = 1
 
-DECLARE @RowDeletedM INT, @delayTimeValueM VARCHAR(20)
-SELECT @delayTimeValueM = '00:00:00:020', @RowDeletedM = 1
-WHILE @RowDeletedM > 0
-BEGIN
-	
-	SELECT @delayTimeValueM = dbo.f_BU_GetDelayTime('Key6')
-	WAITFOR DELAY @delayTimeValueM
-
-	EXEC dbo.ExecRep_09 @recommend = 0
-		, @winlostdate = @winlostdate, @parlay = 1
-		, @tableName = 'bettransM', @RowDeleted = @RowDeletedM OUTPUT
-END
+EXEC dbo.Task_DailySummary_Delete_Bet @winlostdate = @winlostdate, @tableName = 'bettransm'
 
 -- Delete bettransG for whole day of @winlostdate
 EXEC dbo.ExecRep_09 @recommend =  0, @winlostdate = @winlostdate, @parlay = 2
