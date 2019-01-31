@@ -1,7 +1,6 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
-
 ALTER PROCEDURE [dbo].[Task_DailySummary]
 	@winlostdate datetime,
 	@TestMode tinyint = 0
@@ -74,6 +73,8 @@ Revisions:
 	- 20180912@Percy: Bullfighting - Add data into TurnoverNoDraw column [RedmineID: #101288]
 	- 20180914@Percy: Poker Games - Modify GrossComm [RedmineID: #101550]
 	- 20181023@Percy: Expand bettype range of Sportsbook [RedmineID: #102924]
+	- 20181126@Percy: Incorporate Happy 5 into Number Game [RedmineID: #104283]
+	- 20190131@Patrick: Delete bettransm batch by batch at replicated servers to reduce lock escalation [RedmineID: #108581]
  */
 
 SET NOCOUNT ON
@@ -422,8 +423,18 @@ EXEC dbo.Task_Bonus_DailySummary @WinlostDate = @WinlostDate
 -- Copy bettransm/bettransg -> bettransm14/bettransg14 for whole day of @winlostdate
 EXEC dbo.ExecRep_08 @recommend =  0, @winlostdate = @winlostdate, @parlay = 1
 
--- Delete bettransm for whole day of @winlostdate
-EXEC dbo.ExecRep_09 @recommend =  0, @winlostdate = @winlostdate, @parlay = 1
+DECLARE @RowDeletedM INT, @delayTimeValueM VARCHAR(20)
+SELECT @delayTimeValueM = '00:00:00:020', @RowDeletedM = 1
+WHILE @RowDeletedM > 0
+BEGIN
+	
+	SELECT @delayTimeValueM = dbo.f_BU_GetDelayTime('Key6')
+	WAITFOR DELAY @delayTimeValueM
+
+	EXEC dbo.ExecRep_09 @recommend = 0
+		, @winlostdate = @winlostdate, @parlay = 1
+		, @tableName = 'bettransM', @RowDeleted = @RowDeletedM OUTPUT
+END
 
 -- Delete bettransG for whole day of @winlostdate
 EXEC dbo.ExecRep_09 @recommend =  0, @winlostdate = @winlostdate, @parlay = 2
@@ -619,7 +630,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			ELSE CASE WHEN apositiontaking = 1 THEN 0 ELSE ISNULL(comm/(1-apositiontaking),0) END END) grosscomm, 
 		CASE
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
-			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
+			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sport
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sport
@@ -687,7 +698,7 @@ INSERT INTO dbo.sum_winloss_tmp
 		customer.username,
 		CASE
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
-			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
+			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
@@ -750,7 +761,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			ELSE CASE WHEN apositiontaking+mpositiontaking = 1 THEN 0 ELSE ISNULL(acomm/(1-apositiontaking-mpositiontaking), 0) END END) grosscomm, 
 		CASE
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
-			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
+			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
@@ -820,7 +831,7 @@ INSERT INTO dbo.sum_winloss_tmp
 		ag.username,
 		CASE
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
-			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
+			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
@@ -882,7 +893,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			ELSE CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END END) grosscomm,
 		CASE
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
-			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
+			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
@@ -952,7 +963,7 @@ INSERT INTO dbo.sum_winloss_tmp
 		ma.username,
 		CASE
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
-			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
+			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
@@ -1014,7 +1025,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			ELSE CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END END) grosscomm,
 		CASE
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
-			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
+			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
@@ -1084,7 +1095,7 @@ INSERT INTO dbo.sum_winloss_tmp
 		sa.username,
 		CASE
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
-			WHEN bettype BETWEEN 81 AND 120 THEN 161 -- Number Game 
+			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
