@@ -2,14 +2,15 @@
 USE [bodb02]
 GO
 
-ALTER PROCEDURE [dbo].[ExecRep_09]
+ALTER PROCEDURE	[dbo].[ExecRep_09]
 	@recommend int,
 	@winlostdate smalldatetime,
 	@parlay tinyint = 0,
 	@tableName varchar(125) = '',
 	@refnos varchar(max) = '',
 	@rowDeleted int = 0 OUTPUT,
-	@firstRound bit = 0
+	@firstRound bit = 0,
+	@matchId int = 0
 AS
 -- *** IMPORTANT ***
 -- IF code altered, must to go check related SP of ExecRep_Queue @ DBTP
@@ -34,9 +35,14 @@ AS
 			+ Set current datetime value to checktime field when insert ticket 19999
 			+ When processing a line then insert itself and upline's to [List]
 		- 20180329@Percy: Enhance MBBU process [RedmineID: #92391]
+		- 20181222@Billy:   Remove Queue processing on DBTP - [Redmine: #000000]
+		- 20190131@Patrick: Delete bettransm batch by batch at replicated servers to reduce lock escalation [RedmineID: #108581]
  */
 BEGIN
-	--SET NOCOUNT ON 
+	--SET NOCOUNT ON
+	
+	-- 20181222@Billy: Comment code due to replication issue from DBTP to DBMNL
+/*
 	IF @@SERVERNAME = 'DBTP' AND @parlay = 0
 	BEGIN
 		IF NOT EXISTS (SELECT 1 FROM dbo.ExecRep_Queue WHERE command = 'ExecRep_09' AND datevalue = @winlostdate)
@@ -44,6 +50,7 @@ BEGIN
 		
 		RETURN
 	END
+*/
 
 	IF @tableName = 'SystemSettings'
 	BEGIN
@@ -279,34 +286,22 @@ BEGIN
 
 	IF @parlay = 1
 	BEGIN
-		Declare @rc int, @rn int, @rn2 int
-		Declare @matchid int
-		CREATE TABLE #m (rn int PRIMARY KEY IDENTITY(1,1), matchid int)
+		IF @tableName = 'bettransM' AND @matchId > 0
+		BEGIN
+			WHILE 1 = 1
+			BEGIN
+				DELETE TOP(2000) FROM bettransm WITH(ROWLOCK)
+				WHERE matchid = @matchId
 
-		INSERT INTO #m (matchid)
-		SELECT DISTINCT m.matchid
-		FROM dbo.bettransm b with (nolock)
-			INNER JOIN dbo.match m with (nolock) ON b.matchid = m.matchid
-		WHERE winlostdate = @winlostdate
-
-		SET @rn2 = @@ROWCOUNT
-	
-		SET @rn = 1
-
-		NextMatchIDm:
-		SELECT @matchid = matchid FROM #m WHERE rn = @rn
-		IF @@ROWCOUNT = 0 GOTO NoMoreMatchIDm
-	
-		DELETE FROM bettransm WITH(ROWLOCK) WHERE matchid = @matchid
-
-		DELETE FROM #m WHERE rn = @rn
-		SET @rn = @rn + 1
-		GOTO NextMatchIDm
-	
-		NoMoreMatchIDm:
-		DELETE FROM bettransm WITH(ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
-	
-		DROP TABLE #m
+				IF @@ROWCOUNT < 2000
+					BREAK
+			END
+		END
+		ELSE IF @tableName = 'bettransM' AND @matchId = -1 -- last round
+		BEGIN
+			DELETE FROM bettransm WITH(ROWLOCK)
+			WHERE winlostdate = @winlostdate
+		END
 	END
 
 	IF @parlay = 2
@@ -320,4 +315,5 @@ BEGIN
 		END
 	END
 END
+
 GO
