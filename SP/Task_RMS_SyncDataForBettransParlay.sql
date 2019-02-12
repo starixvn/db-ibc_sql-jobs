@@ -1,14 +1,5 @@
-USE [bodb_RMS]
-GO
+/*<info serverAlias="DBRMS-bodb_RMS" executers="bodbRMSNet" viewers="" isFunction="0" isNested="0"></info>*/
 
-/****** Object:  StoredProcedure [dbo].[Task_RMS_SyncDataForBettransParlay]    Script Date: 01/19/2015 04:36:24 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_RMS_SyncDataForBettransParlay    Script Date: 6/25/2014 3:31:02 PM ******/
 ALTER PROCEDURE [dbo].[Task_RMS_SyncDataForBettransParlay]	
 AS
 /*   
@@ -23,6 +14,7 @@ AS
   - 20160422@Winnie: intergrate Combo parlay
   - 20160720@Winnie: fix bug Executed as user: DB054\SQL. Conversion failed when converting the nvarchar value 'a' to data type int. [SQLSTATE 22018] (Error 245).  The step failed.
   - 20160926@Winnie: fix issue conflict refno with racing RedmineID: #64286
+  - 20190214@Jacob: Add Bet Builder RedmineID: #108694
 */  
 
 SET NOCOUNT ON
@@ -58,7 +50,8 @@ BEGIN
 			SecAcceptFlag, transid2, CASE when matchid = 9 then RIGHT(betcheck,LEN(betcheck)-1) 
 										  WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam) ELSE hdp2 end
 	FROM bodb02.dbo.bettrans with (NOLOCK)
-	WHERE matchid in (9,29)
+	WHERE (matchid in (9,29) OR bettype = 38)
+	
 		 
 	-- bettype 29 old	
 	INSERT INTO #tmpBettrans (transid, hdp1, hdp2,betcheck)
@@ -84,7 +77,11 @@ BEGIN
 			AND b.bettype = 29
 	
 	-- end bettype 29 old
-
+	-- Single Match Parlay
+	UPDATE rmBettrans SET TotalBet = 1 , odds2 = odds, transid2 = 1, liveawayscore = 1 
+	WHERE bettype = 38 
+	-- End of Single Match Parlay
+	
 	;WITH ParlayTotalBet AS(
 		SELECT TransID, SUM (rcs.cnt) AS TotalBet
 		FROM rmBettrans b WITH(NOLOCK)
@@ -97,7 +94,7 @@ BEGIN
 	FROM rmBettrans b 
 	INNER JOIN ParlayTotalBet pt ON b.TransID = pt.TransID
 	WHERE b.bettype=29 
-
+	
 	;WITH tmpbettrans AS(
 		SELECT b.hdp2 AS selection_cnt, CAST(b.betteam as int) AS bitmapR, bm.odds, bm.stake AS SetStake, bm.refno, b.transid
 			,RN = ROW_NUMBER() OVER (PARTITION BY bm.refno ORDER BY bm.matchid) --RN			
@@ -162,7 +159,7 @@ BEGIN
 	INTO #temp			
 	FROM bodb02.dbo.bettrans with (NOLOCK)
 	WHERE tstamp between @tstamp_min and @tstamp_max
-		AND matchid in (9,29)
+		AND ( matchid in (9,29) OR bettype = 38)
 		
 	UPDATE bb
 	SET bb.transid2 = aa.transid2
@@ -284,6 +281,13 @@ BEGIN
 			AND b.bettype = 29
 
 		-- end bettype 29 old
+	-- Single Match Parlay
+	UPDATE b WITH(ROWLOCK, UPDLOCK)
+	SET TotalBet = 1, odds2 = oods, transid2 = 1, liveawayscore = 1
+	FROM rmBettrans b INNER JOIN #temp t ON b.transid = t.transid 
+	WHERE t.bettype = 38
+	
+	-- End Single Match Parlay
 		;WITH ParlayTotalBet AS(
 			SELECT b.TransID, SUM (rcs.cnt) AS TotalBet
 			FROM rmBettrans b WITH(NOLOCK)
@@ -348,3 +352,5 @@ BEGIN
 	WHERE VName = 'rmBettransSync'	
 
 SET NOCOUNT OFF
+
+GO

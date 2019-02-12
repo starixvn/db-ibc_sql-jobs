@@ -22,20 +22,21 @@ AS
 			- 20160920@Winnie: hot fix NULL in sporttype  RedmineID: #64286
 			- 20160922@Winnie: fix ticket bettype 29 old format & confict refno with racing  RedmineID: #64286
 			- 20180927@Jacob: Apply Extra PT and Super Comm to Report.  RedmineID: #100951 		
+			- 20190214@Jacob: Add Bet Builder RedmineID: #108694
 		Parameter's Explanation:
 
 		EXEC [Task_RMS_DailySummaryWinloss] @winlostdate = '20180915'
 	*/
 SET NOCOUNT ON
 	
-	IF NOT EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans14 WITH(NOLOCK) WHERE bettype IN(9,29) AND matchid IN(9,29)  AND winlostdate = @winlostdate)
+	IF NOT EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans14 WITH(NOLOCK) WHERE ((bettype IN(9,29) AND matchid IN(9,29))  OR bettype = 38) AND winlostdate = @winlostdate)
 	BEGIN
 		SELECT	 @ErrMsg= 'WARNING:Data is not moved to bettrans14.'
 				,@ErrCode = 101
 		RETURN
 	END
 	
-	IF EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans WITH(NOLOCK) WHERE bettype IN(9,29)  AND matchid IN(9,29)  AND winlostdate = @winlostdate)
+	IF EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans WITH(NOLOCK) WHERE ((bettype IN(9,29)  AND matchid IN(9,29))  OR bettype = 38)  AND winlostdate = @winlostdate)
 	BEGIN
 		SELECT	 @ErrMsg= 'WARNING:Data is still in bettrans.'
 				,@ErrCode = 102
@@ -161,8 +162,7 @@ SET NOCOUNT ON
 	FROM
 	bodb02.dbo.bettrans14 b WITH(NOLOCK) 
 	WHERE	b.winlostdate = @winlostdate
-				AND matchid IN(9,29)
-				AND bettype IN(9,29)
+				AND ((matchid IN(9,29) AND bettype IN(9,29)) OR bettype = 38)
 				AND b.statusid IN (111,112,113)
 				
 	INSERT INTO #tmpbettransm(	refno ,	sporttype)
@@ -254,7 +254,9 @@ SET NOCOUNT ON
 				,recommend 
 				,CASE WHEN bettype=9 THEN 1 
 					  WHEN bettype=29 AND betteam='1' THEN 2
-					  ELSE 3 END AS ParlayType
+					  WHEN bettype=29 AND betteam <> '1' THEN 3
+					  WHEN bettype=38 THEN 4
+					  ELSE 0 END AS ParlayType
 				,SUM(scomm)
 				,SUM(scomm * ISNULL(a.ExtraPT, 0) / (1 - tpositiontaking))
 				,SUM(stake * ISNULL(a.ExtraPT, 0))
@@ -269,7 +271,9 @@ SET NOCOUNT ON
 				recommend,
 				CASE WHEN bettype=9 THEN 1 
 					  WHEN bettype=29 AND betteam='1' THEN 2
-					  ELSE 3 END 
+					  WHEN bettype=29 AND betteam <> '1' THEN 3
+					  WHEN bettype=38 THEN 4
+					  ELSE 0 END
 				
 		IF @@ERROR > 0
 		BEGIN			
