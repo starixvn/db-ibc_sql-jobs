@@ -16,13 +16,13 @@ DECLARE @Message NVARCHAR(128)
 BEGIN DIALOG CONVERSATION @SBDialog
 FROM SERVICE Service_UserLog_Others_DBLOGBK
 TO SERVICE 'Service_UserLog_Others_DBLOG'
-ON CONTRACT Contract_CustomerLog_UserLog_Credit
+ON CONTRACT Contract_CustomerLog_UserLog_Credit_BK
 WITH ENCRYPTION = OFF
 
 -- Send messages on Dialog
 SET @Message = N'Very First Message  From DBLOGBK to DBLOG';
 SEND ON CONVERSATION @SBDialog
-MESSAGE TYPE MessageType_CustomerLog_UserLog_Credit (@Message)
+MESSAGE TYPE MessageType_CustomerLog_UserLog_Credit_BK (@Message)
 
 GO
 
