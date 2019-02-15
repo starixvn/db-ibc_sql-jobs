@@ -13,8 +13,8 @@ DROP SERVICE Service_UserLog_Others_DBLOGBK
 GO
 	
 IF EXISTS(SELECT TOP 1 1 FROM sys.service_contracts 
-		WHERE name = 'Contract_CustomerLog_UserLog_Credit')
-DROP CONTRACT Contract_CustomerLog_UserLog_Credit
+		WHERE name = 'Contract_CustomerLog_UserLog_Credit_BK')
+DROP CONTRACT Contract_CustomerLog_UserLog_Credit_BK
 GO
 
 IF EXISTS (SELECT TOP 1 1 FROM sys.service_queues
@@ -28,23 +28,23 @@ DROP ROUTE Route_UserLog_Others_To_DBLOG
 GO
 
 IF EXISTS (SELECT TOP 1 1 FROM sys.service_message_types
-		   WHERE name = 'MessageType_CustomerLog_UserLog_Credit')
-DROP MESSAGE TYPE MessageType_CustomerLog_UserLog_Credit
+		   WHERE name = 'MessageType_CustomerLog_UserLog_Credit_BK')
+DROP MESSAGE TYPE MessageType_CustomerLog_UserLog_Credit_BK
 GO
 
 --Create messagetype,contract,service for SSB UserLog_Credit 
-CREATE MESSAGE TYPE MessageType_CustomerLog_UserLog_Credit AUTHORIZATION [dbo] 
+CREATE MESSAGE TYPE MessageType_CustomerLog_UserLog_Credit_BK AUTHORIZATION [dbo] 
 GO
 
-CREATE CONTRACT [Contract_CustomerLog_UserLog_Credit] AUTHORIZATION [dbo]
-([MessageType_CustomerLog_UserLog_Credit] SENT BY ANY)
+CREATE CONTRACT [Contract_CustomerLog_UserLog_Credit_BK] AUTHORIZATION [dbo]
+([MessageType_CustomerLog_UserLog_Credit_BK] SENT BY ANY)
 GO
 
 CREATE QUEUE [dbo].[Queue_Others] WITH STATUS = ON , RETENTION = OFF , 
 POISON_MESSAGE_HANDLING (STATUS = ON)  ON [ServiceBrokerData] 
 GO
 
-CREATE SERVICE [Service_UserLog_Others_DBLOGBK] AUTHORIZATION [dbo] ON QUEUE dbo.[Queue_Others](Contract_CustomerLog_UserLog_Credit)
+CREATE SERVICE [Service_UserLog_Others_DBLOGBK] AUTHORIZATION [dbo] ON QUEUE dbo.[Queue_Others](Contract_CustomerLog_UserLog_Credit_BK)
 GO
 
 CREATE ROUTE [Route_UserLog_Others_To_DBLOG] AUTHORIZATION dbo

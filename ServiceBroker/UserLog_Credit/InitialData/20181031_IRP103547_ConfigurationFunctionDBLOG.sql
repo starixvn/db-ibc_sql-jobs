@@ -2,7 +2,7 @@
 	Created By: Johnson
 	Created Date: 20181031
 	Task: Initial conversations for service UserLog_Credit
-	DB: DBCUST/bodb_CustomerLog	
+	DB: DBLOG/bodb_CustomerLog	
 */
 USE bodb_CustomerLog
 GO
@@ -22,7 +22,7 @@ GO
 --[sb].[ConfigurationReferenceDetail]
 
 INSERT INTO [sb].[ConfigurationReferenceDetail]([FunctionName],[ContractName],[MessageType],[MinConversation],[MaxConversation])
-VALUES ('UserLog_Others','Contract_CustomerLog_UserLog_Credit','MessageType_CustomerLog_UserLog_Credit',5,20)
+VALUES ('UserLog_Others','Contract_CustomerLog_UserLog_Credit_BK','MessageType_CustomerLog_UserLog_Credit_BK',5,20)
 	
 GO
 
@@ -30,7 +30,7 @@ GO
 --open conversations on DBCUST
 EXEC [Sb].[ConversationManagement_Upd] 
 		@functionName = 'UserLog_Others'
-	  , @contractName = 'Contract_CustomerLog_UserLog_Credit'		  
+	  , @contractName = 'Contract_CustomerLog_UserLog_Credit_BK'		  
 	  , @fromService = 'Service_UserLog_Others_DBLOG'
 	  , @toService = 'Service_UserLog_Others_DBLOGBK'
 	  , @newCnt = 5

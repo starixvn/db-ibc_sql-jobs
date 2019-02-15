@@ -17,6 +17,11 @@ IF EXISTS(SELECT TOP 1 1 FROM sys.service_contracts
 DROP CONTRACT Contract_CustomerLog_UserLog_Credit
 GO
 
+IF EXISTS(SELECT TOP 1 1 FROM sys.service_contracts 
+		WHERE name = 'Contract_CustomerLog_UserLog_Credit_BK')
+DROP CONTRACT Contract_CustomerLog_UserLog_Credit_BK
+GO
+
 IF EXISTS (SELECT TOP 1 1 FROM sys.service_queues
 		   WHERE name = 'Queue_Others')
 DROP QUEUE Queue_Others
@@ -37,19 +42,33 @@ IF EXISTS(SELECT TOP 1 1 FROM sys.service_message_types
 DROP MESSAGE TYPE MessageType_CustomerLog_UserLog_Credit
 GO
 
+IF EXISTS(SELECT TOP 1 1 FROM sys.service_message_types 
+		WHERE name = 'MessageType_CustomerLog_UserLog_Credit_BK')
+DROP MESSAGE TYPE MessageType_CustomerLog_UserLog_Credit_BK
+GO
+
 --Create messagetype,contract,service for SSB UserLog_Credit 
 CREATE MESSAGE TYPE MessageType_CustomerLog_UserLog_Credit AUTHORIZATION [dbo]
+GO
+
+CREATE MESSAGE TYPE MessageType_CustomerLog_UserLog_Credit_BK AUTHORIZATION [dbo]
 GO
 
 CREATE CONTRACT [Contract_CustomerLog_UserLog_Credit] AUTHORIZATION [dbo]
 ([MessageType_CustomerLog_UserLog_Credit] SENT BY ANY)
 GO
 
+CREATE CONTRACT [Contract_CustomerLog_UserLog_Credit_BK] AUTHORIZATION [dbo]
+([MessageType_CustomerLog_UserLog_Credit_BK] SENT BY ANY)
+GO
+
 CREATE QUEUE [dbo].[Queue_Others] WITH STATUS = ON , RETENTION = OFF ,
 POISON_MESSAGE_HANDLING (STATUS = ON)  ON [ServiceBrokerData] 
 GO
 
-CREATE SERVICE [Service_UserLog_Others_DBLOG] AUTHORIZATION [dbo] ON QUEUE dbo.[Queue_Others](Contract_CustomerLog_UserLog_Credit)
+CREATE SERVICE [Service_UserLog_Others_DBLOG] AUTHORIZATION [dbo] 
+ON QUEUE dbo.[Queue_Others](Contract_CustomerLog_UserLog_Credit,
+							Contract_CustomerLog_UserLog_Credit_BK)
 GO
 
 --create route to DBCUST

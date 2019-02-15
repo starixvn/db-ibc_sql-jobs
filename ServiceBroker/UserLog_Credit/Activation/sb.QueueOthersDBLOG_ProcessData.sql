@@ -82,8 +82,19 @@ BEGIN
 				   FOR XML PATH (''), ROOT ('Root'))
 			
 		EXEC [sb].[CustomerLog_MsgProcess_UserLog_Credit] @log = @log, 
-														  @IsExistingTarget= @IsExistingTarget
+														@MsgType = @message_type_name,
+														@IsExistingTarget= @IsExistingTarget
 	END
+	
+	IF @message_type_name = 'MessageType_CustomerLog_UserLog_Credit_BK'
+	BEGIN
+		SET @log = (SELECT message_body AS 'node()'
+				  FROM @Messages					
+				   FOR XML PATH (''), ROOT ('Root'))
 			
+		EXEC [sb].[CustomerLog_MsgProcess_UserLog_Credit] @log = @log,
+														@MsgType = @message_type_name,
+														@IsExistingTarget= @IsExistingTarget
+	END	
 END
 GO
