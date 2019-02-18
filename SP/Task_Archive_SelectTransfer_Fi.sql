@@ -29,20 +29,37 @@ SELECT TOP 1 @BalanceUpDay = winlostdate + 7
 FROM dbo.Bettrans WITH(NOLOCK)
 WHERE bettype = 20000 AND matchid = 0 AND custid = 3
 
+CREATE TABLE #InternalAccList (CustID INT, RoleID TINYINT)
+INSERT INTO #InternalAccList (CustID, RoleID)
+SELECT 	CustID, 2 
+FROM 	DBCUST.CustDB.dbo.custAgent c WITH (NOLOCK)
+WHERE 	c.isInternal = 1
+UNION ALL 
+SELECT 	CustID, 3
+FROM 	DBCUST.CustDB.dbo.CustMaster c WITH (NOLOCK)
+WHERE 	c.isInternal = 1
+UNION ALL
+SELECT 	CustID, 4 
+FROM 	DBCUST.CustDB.dbo.CustSuper c WITH (NOLOCK)
+WHERE 	c.isInternal = 1
+
+
 INSERT INTO #Refno_temp
-    SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
-        INNER join DBCUST.CustDB.dbo.custAgent c WITH (NOLOCK) ON b.recommend = c.custid
-    WHERE c.isInternal = 1 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
-    UNION
-    SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
-        INNER join DBCUST.CustDB.dbo.CustMaster c WITH (NOLOCK) ON b.custid = c.custid
-    WHERE c.isInternal = 1 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
-    UNION
-    SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
-        INNER join DBCUST.CustDB.dbo.CustSuper c WITH (NOLOCK) ON b.custid = c.custid
-    WHERE c.isInternal = 1 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
+SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
+	INNER join #InternalAccList c WITH (NOLOCK) ON b.recommend = c.custid
+WHERE c.RoleID = 2 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
+UNION
+SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
+	INNER join #InternalAccList c WITH (NOLOCK) ON b.custid = c.custid
+WHERE c.RoleID = 3 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
+UNION
+SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
+	INNER join #InternalAccList c WITH (NOLOCK) ON b.custid = c.custid
+WHERE c.RoleID = 4 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
 
 
+	
+	
 --INSERT INTO DBSUM.bodb_Summary.dbo.transfer_fi
 --    (
 --        transid, 
