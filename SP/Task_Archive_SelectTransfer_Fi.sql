@@ -2,7 +2,7 @@
 USE [bodb02]
 GO
  
-CREATE PROCEDURE [dbo].[Task_Archive_SelectTransfer_Fi]
+ALTER PROCEDURE [dbo].[Task_Archive_SelectTransfer_Fi]
 AS
  /*
 	Created by: 20190117@Sophia
@@ -17,20 +17,15 @@ AS
  
 SET NOCOUNT ON 
 BEGIN 
-CREATE TABLE #Refno_temp (refno BIGINT, winlostdate SMALLDATETIME)
-CREATE CLUSTERED INDEX [CIX_Winlostdate] ON #Refno_temp
-(
-    [Winlostdate] ASC,
-    [RefNo] ASC
-)
+DECLARE @Refno_temp AS TABLE ( refno BIGINT, winlostdate SMALLDATETIME) 
 
 DECLARE @BalanceUpDay SMALLDATETIME
 SELECT TOP 1 @BalanceUpDay = winlostdate + 7
 FROM dbo.Bettrans WITH(NOLOCK)
 WHERE bettype = 20000 AND matchid = 0 AND custid = 3
 
-CREATE TABLE #InternalAccList (CustID INT, RoleID TINYINT)
-INSERT INTO #InternalAccList (CustID, RoleID)
+DECLARE @InternalAccList AS TABLE (CustID INT, RoleID TINYINT)
+INSERT INTO @InternalAccList (CustID, RoleID)
 SELECT 	CustID, 2 
 FROM 	DBCUST.CustDB.dbo.custAgent c WITH (NOLOCK)
 WHERE 	c.isInternal = 1
@@ -44,17 +39,17 @@ FROM 	DBCUST.CustDB.dbo.CustSuper c WITH (NOLOCK)
 WHERE 	c.isInternal = 1
 
 
-INSERT INTO #Refno_temp
+INSERT INTO @Refno_temp
 SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
-	INNER join #InternalAccList c WITH (NOLOCK) ON b.recommend = c.custid
+	INNER join @InternalAccList c ON b.recommend = c.custid
 WHERE c.RoleID = 2 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
 UNION
 SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
-	INNER join #InternalAccList c WITH (NOLOCK) ON b.custid = c.custid
+	INNER join @InternalAccList c ON b.custid = c.custid
 WHERE c.RoleID = 3 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
 UNION
 SELECT refno, winlostdate FROM bettrans b WITH (NOLOCK)
-	INNER join #InternalAccList c WITH (NOLOCK) ON b.custid = c.custid
+	INNER join @InternalAccList c ON b.custid = c.custid
 WHERE c.RoleID = 4 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
 
 
@@ -90,7 +85,7 @@ WHERE c.RoleID = 4 AND bettype > 20000 AND matchid = 0 AND winlostdate < @Balanc
         actual_stake, 
         winlost, 
         ActualRate, 
-        TransDesc, 
+        CONVERT (NVARCHAR(300),TransDesc) AS TransDesc, 
         b.winlostdate, 
         recommend, 
         mrecommend, 
@@ -98,16 +93,15 @@ WHERE c.RoleID = 4 AND bettype > 20000 AND matchid = 0 AND winlostdate < @Balanc
         currency, 
         b.refno,
         creator,
-        betid, --CheckerID
-        betcheck, --CheckerName
+        betid as CheckerID,
+        CONVERT ( VARCHAR(50),betcheck) as CheckerName,
         checkTime,
         liveindicator isReversal
     FROM dbo.bettrans b WITH (NOLOCK, INDEX=CIX_matchid_bettype)
-        INNER JOIN #Refno_temp r ON b.refno = r.refno AND b.winlostdate=r.winlostdate
+        INNER JOIN @Refno_temp r ON b.refno = r.refno AND b.winlostdate=r.winlostdate
     WHERE b.matchid = 0 AND b.bettype > 20000
     
     
-DROP TABLE #Refno_temp
 END 
 
 GO
