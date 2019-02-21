@@ -20,6 +20,7 @@ AS
 	- 20151109@Sophia: Change Sporttype of Microgaming RNG Casino [RedmineId: #46450] 
 	- 20160328@Sophia: Check status Of PayOutTrans, get status Completed and Expired [Redmine: #54643]
 	- 20170323@Percy: Apply Cash Out [RedmineID: #72164]
+	- 20190128@Sophia: Fix correct data at Void Block code Redmind: #107365]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -413,13 +414,13 @@ BEGIN
 		,Amount
 		,ErrCode
 		)
-	SELECT tmpVoid.Custid
-		,tmpVoid.VoidAmt Amount
-		,30 ErrCode
+	SELECT ISNULL(tmpVoid.Custid, rpt.custID ) as Custid
+			,ISNULL(tmpVoid.VoidAmt, 0) Amount
+			,30 ErrCode
 	FROM 
 		(
 		SELECT 
-			bt.custid custid
+			bt.custid custid,  @winlostdate AS Winlostdate
 			,SUM(CASE WHEN bt.liveawayscore = 0 AND bt.bettype IN(33,43) THEN ABS(bt.stake)/2 ELSE ABS(bt.stake) END) AS VoidAmt
 		FROM 
 			bodb02.dbo.Bettrans14  bt WITH(NOLOCK)
@@ -430,13 +431,15 @@ BEGIN
 			AND bt.bettype NOT IN (500, 903, 913, 914)
 			AND bt.winlostdate = @winlostdate
 			AND bt.statusID in (101, 102) -- 'VOID','REJECT'
-		GROUP BY custid
+		GROUP BY custid 
 		) tmpVoid 
-	LEFT JOIN [dbo].[rptStatement] rpt WITH (NOLOCK) 	
+	FULL JOIN  (Select @winlostdate as winlostdate,  Custid, VoidAmt 
+				From [dbo].[rptStatement] rpt WITH (NOLOCK) 
+				WHERE rpt.winlostdate = @winlostdate
+				) rpt 
 		ON rpt.Custid = tmpVoid.Custid
-			AND rpt.winlostdate = @winlostdate
 	WHERE ABS(ISNULL(tmpVoid.VoidAmt, 0) - ISNULL(rpt.VoidAmt, 0)) > 0
-		
+	
 		
 
 	--STEP 05: Grand Prize
