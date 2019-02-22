@@ -15,7 +15,7 @@ AS
 	DB: DBCUST/bodb_CustomerLog; DBLOG/bodb_CustomerLog
 		
 	Revision:
-	
+		- 20190222@Johnson: grant permission for bodbAdminNet [redmined: #103547]
 	-- For testing
 	SET @xml = '<row UserID="0" RoleID="0" SubAccID="0" ServerID="0" IP="10.19.10.112" LogDate="2012-04-16T09:32:18.123" ActionID="1310" Doing="Account:12BETRMB01 - Login Result:Failed (User_Not_Found)" DomainName="10.18.200.201" BrowserName="Firefox 3.6" Platform="Windows NT" CountryCode="-" Duration="423" />'
 */
