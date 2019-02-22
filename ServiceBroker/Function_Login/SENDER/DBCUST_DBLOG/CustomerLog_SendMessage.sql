@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCUST-bodb_CustomerLog,DBLOG-bodb_CustomerLog" executers="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet,vnteam" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROC sb.CustomerLog_SendMessage 
 (	
 	@xml xml = null
@@ -46,14 +48,4 @@ BEGIN
 	
 END
 GO
---GRANT EXECUTE ON sb.CustomerLog_SendMessage TO [bodbRMSNet]
-GO
-GRANT EXECUTE ON sb.CustomerLog_SendMessage TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON sb.CustomerLog_SendMessage TO [bodbDownlineNetView] AS [dbo]
-GO
-GRANT EXECUTE ON sb.CustomerLog_SendMessage TO [bodbExtAccNet]
-GO
-GRANT EXECUTE ON sb.CustomerLog_SendMessage TO [vnteam] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON sb.CustomerLog_SendMessage TO [vnteam] AS [dbo]
+
