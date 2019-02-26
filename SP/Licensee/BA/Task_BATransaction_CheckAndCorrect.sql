@@ -36,7 +36,12 @@ WHERE LicenseeID IN (
 	FROM bodb_Licensee.dbo.LicenseeBAConfig (NOLOCK) 
 	WHERE EnableBA = 1
 )  
-AND status = 'Done'  
+AND status = 'Done'
+
+DECLARE @maxTransId BIGINT
+SELECT  @maxTransId = cast(isnull(vvalue2,0) AS BIGINT)
+FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)   
+WHERE vname = 'BA_transid'
   
 DECLARE @custid INT, @ondate DATETIME, @offdate DATETIME, @cnt INT  
 StartLoop:  
@@ -54,10 +59,12 @@ StartLoop:
             AND (bettype < 31 OR (bettype BETWEEN 121 AND 999) OR (bettype BETWEEN 1301 AND 1399) OR (bettype BETWEEN 9001 AND 9399))  
 			AND bettype NOT IN (901, 911)
                    
-    DELETE FROM @BAHistory_Done WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate  
+    DELETE FROM @BAHistory_Done WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate
   
     GOTO StartLoop  
-EndLoop:  
+EndLoop:
+
+DELETE FROM @BATransaction WHERE transid > @maxTransId
   
 --Query data with Running status  
 DECLARE @BAHistory_Running TABLE (custid INT, ondate DATETIME)  
@@ -149,22 +156,19 @@ BEGIN
 		SELECT @tickets = substring(@tickets,0,len(@tickets)) --remove last comma
 	END
 
-	IF @FailedCount > 0
-	BEGIN
-		UPDATE bodb_licensee.dbo.LICSettings WITH (ROWLOCK, UPDLOCK)
-		SET VValue = CONVERT(VARCHAR(200), @FailedCount)
-			,VValue2 = CASE @FailedCount WHEN 0 THEN '' WHEN 1 THEN @tickets ELSE ',' + @tickets END
-		WHERE VName = 'BA_MissingTransID'
+	UPDATE bodb_licensee.dbo.LICSettings WITH (ROWLOCK, UPDLOCK)
+	SET VValue = CONVERT(VARCHAR(200), @FailedCount)
+		,VValue2 = CASE @FailedCount WHEN 0 THEN '' WHEN 1 THEN @tickets ELSE VValue2 + ',' + @tickets END
+	WHERE VName = 'BA_MissingTransID'
 
-		IF @FailedCount >= @MaxOfFailedCount
-		BEGIN
-			SELECT @currentMaxTransID = VValue  
-			FROM DBTXN.BODB02.DBO.SystemSettings WITH (NOLOCK)  
-			WHERE VName='MaxTransID'  
+	IF @FailedCount > 0 AND @FailedCount >= @MaxOfFailedCount
+	BEGIN
+		SELECT @currentMaxTransID = VValue  
+		FROM DBTXN.BODB02.DBO.SystemSettings WITH (NOLOCK)  
+		WHERE VName='MaxTransID'  
   
-			SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + ' .The job has just inserted the missing tickets.' + ' Current Max TransID:' + @currentMaxTransID  
-			RAISERROR (@alert, 16, 1)    
-		END
+		SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + ' .The job has just inserted the missing tickets.' + ' Current Max TransID:' + @currentMaxTransID  
+		RAISERROR (@alert, 16, 1)    
 	END
 END
 GO

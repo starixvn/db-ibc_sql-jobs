@@ -26,6 +26,7 @@ AS
 		20181107@Patrick: DB052 Indexes Revolution [Redmine: #103572]
 		20181120@Sophia: Change 'DB052' To 'DB053' for steap switch to DB053 [Redmine: #103653]
 		20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
+		20190226@Percy: Move update max transid after insert data [RedmineID: #109415]
  */  
 BEGIN
 	SET NOCOUNT ON   
@@ -36,14 +37,9 @@ BEGIN
 	-- scan each transid twice to prevent missing by locking  
 	SELECT @smallID = cast(isnull(vvalue,0) AS BIGINT)  
 	FROM bodb_licensee.dbo.LICSettings WITH(ROWLOCK)   
-	WHERE vname = 'BA_transid'   
+	WHERE vname = 'BA_transid'
   
 	SELECT @maxtransID = max(transid) FROM dbo.bettrans WITH(NOLOCK) --WHERE transid < 100000000000
-       
-	UPDATE bodb_licensee.dbo.LICSettings WITH(ROWLOCK, UPDLOCK)  
-	SET vvalue = vvalue2  
-	,vvalue2 = cast(@maxtransID AS VARCHAR(200))  
-	WHERE vname = 'BA_transid'  
   
 	INSERT INTO @temptrans (transid, transdate, custid, recommend, srecommend)  
 	SELECT transid, transdate, custid, recommend, srecommend
@@ -55,46 +51,51 @@ BEGIN
 		AND (bettype < 901 OR bettype > 904)
 		AND (bettype < 911 OR bettype > 914)
   
-	IF @@ROWCOUNT = 0 RETURN  
-   
-	DELETE @temptrans  
-	WHERE custid NOT IN (  
-			SELECT CustID   
-			FROM bodb_Licensee.dbo.LicenseeBAHistory WITH (NOLOCK)   
-			WHERE Status = 'Running'  
-				OR (Status = 'Done'  
-					AND DATEDIFF(MINUTE,OffDate,CURRENT_TIMESTAMP)<=2)  
+	IF @@ROWCOUNT <> 0
+	BEGIN  
+		DELETE @temptrans  
+		WHERE custid NOT IN (  
+				SELECT CustID   
+				FROM bodb_Licensee.dbo.LicenseeBAHistory WITH (NOLOCK)   
+				WHERE Status = 'Running'  
+					OR (Status = 'Done'  
+						AND DATEDIFF(MINUTE,OffDate,CURRENT_TIMESTAMP)<=2)  
 
-			UNION ALL --Cash Out
+				UNION ALL --Cash Out
 
-			SELECT custid
-			FROM dbo.TradeCust WITH(NOLOCK)
-			WHERE VendorID = 14
-		) 
+				SELECT custid
+				FROM dbo.TradeCust WITH(NOLOCK)
+				WHERE VendorID = 14
+			) 
 
    
-	DELETE t   
-	FROM @temptrans t  
-		INNER JOIN bodb_Licensee.dbo.LicenseeBATransaction ba WITH(NOLOCK) ON t.TransID = ba.TransID  
+		DELETE t   
+		FROM @temptrans t  
+			INNER JOIN bodb_Licensee.dbo.LicenseeBATransaction ba WITH(NOLOCK) ON t.TransID = ba.TransID  
    
-	INSERT INTO Bodb_Licensee.dbo.LicenseeBATransaction (TransID, Transdate)  
-	SELECT TransID, Transdate   
-	FROM @temptrans  
+		INSERT INTO Bodb_Licensee.dbo.LicenseeBATransaction (TransID, Transdate)  
+		SELECT TransID, Transdate   
+		FROM @temptrans  
   
-	INSERT INTO Bodb_Licensee.dbo.LicenseeBATransaction_active (TransID, Transdate, custid, recommend, srecommend)  
-	SELECT TransID, Transdate, custid, recommend, srecommend  
-	FROM @temptrans
-
-	--Add more code to sync data to DB042 --> temporary solution
-	DECLARE @XmlData NVARCHAR(MAX) 
-	SET @XmlData = (
-		SELECT TransId AS t, Transdate AS td, custid AS c, recommend AS r, srecommend AS s
+		INSERT INTO Bodb_Licensee.dbo.LicenseeBATransaction_active (TransID, Transdate, custid, recommend, srecommend)  
+		SELECT TransID, Transdate, custid, recommend, srecommend  
 		FROM @temptrans
-		FOR XML RAW('r'), root
-	)	
+
+		--Add more code to sync data to DB042 --> temporary solution
+		DECLARE @XmlData NVARCHAR(MAX) 
+		SET @XmlData = (
+			SELECT TransId AS t, Transdate AS td, custid AS c, recommend AS r, srecommend AS s
+			FROM @temptrans
+			FOR XML RAW('r'), root
+		)	
 	
-	IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB053' 
-		EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
-		
+		IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB053' 
+			EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
+	END
+
+	UPDATE bodb_licensee.dbo.LICSettings WITH(ROWLOCK, UPDLOCK)  
+	SET vvalue = vvalue2  
+		,vvalue2 = cast(@maxtransID AS VARCHAR(200))  
+	WHERE vname = 'BA_transid'  
 END
 GO
