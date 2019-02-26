@@ -20,6 +20,7 @@ AS
 		20181114@Sophia: Revise Job Verify BA - Rename SP from Task_BATransaction_Check To Task_BATransaction_CheckAndCorrect [Redmine: #103653]
 		20181120@Sophia: Change 'DB052' To 'DB053' for steap switch to DB053 [Redmine: #103653]
 		20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
+		20190226@Percy: Apply config setting to raiserror [RedmineID: #109415]
  */  
 SET NOCOUNT ON   
    
@@ -109,8 +110,10 @@ BEGIN
    
 	SELECT @tickets=''  
 	SELECT @tickets =@tickets  + CAST(TransID AS varchar(20)) + ','  
-	FROM @BATicket    
-  
+	FROM @BATicket
+
+	DECLARE @MaxOfFailedCount INT = 1, @FailedCount INT = 0
+
 	IF LEN(RTRIM(LTRIM(@tickets))) > 1  
 	BEGIN  
 		INSERT INTO bodb_licensee.dbo.licenseebatransaction (TransID,Transdate)  
@@ -133,14 +136,35 @@ BEGIN
 		IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB053' 
 			EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
   
-		SELECT @currentMaxTransID = VValue  
-		FROM DBTXN.BODB02.DBO.SystemSettings WITH (NOLOCK)  
-		WHERE VName='MaxTransID'  
+		SELECT @MaxOfFailedCount = CONVERT(INT, VValue)
+		FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)
+		WHERE VName = 'BA_MaxOfFailedCount'
+
+		SELECT @FailedCount = CONVERT(INT, VValue)
+		FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)
+		WHERE VName = 'BA_MissingTransID'
+
+		SELECT @FailedCount = @FailedCount + 1
+
+		SELECT @tickets = substring(@tickets,0,len(@tickets)) --remove last comma
+	END
+
+	IF @FailedCount > 0
+	BEGIN
+		UPDATE bodb_licensee.dbo.LICSettings WITH (ROWLOCK, UPDLOCK)
+		SET VValue = CONVERT(VARCHAR(200), @FailedCount)
+			,VValue2 = CASE @FailedCount WHEN 0 THEN '' WHEN 1 THEN @tickets ELSE ',' + @tickets END
+		WHERE VName = 'BA_MissingTransID'
+
+		IF @FailedCount >= @MaxOfFailedCount
+		BEGIN
+			SELECT @currentMaxTransID = VValue  
+			FROM DBTXN.BODB02.DBO.SystemSettings WITH (NOLOCK)  
+			WHERE VName='MaxTransID'  
   
-		SELECT @tickets = substring(@tickets,0,len(@tickets)) --remove last comma  
-		SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + ' .The job has just inserted the missing tickets.' + ' Current Max TransID:' + @currentMaxTransID  
-		RAISERROR (@alert, 16, 1)    
-  
+			SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + ' .The job has just inserted the missing tickets.' + ' Current Max TransID:' + @currentMaxTransID  
+			RAISERROR (@alert, 16, 1)    
+		END
 	END
 END
 GO
