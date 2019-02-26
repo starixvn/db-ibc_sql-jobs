@@ -165,7 +165,13 @@ BEGIN
 	BEGIN
 		SELECT @currentMaxTransID = VValue  
 		FROM DBTXN.BODB02.DBO.SystemSettings WITH (NOLOCK)  
-		WHERE VName='MaxTransID'  
+		WHERE VName='MaxTransID'
+
+		-- Reset setting
+		UPDATE bodb_licensee.dbo.LICSettings WITH (ROWLOCK, UPDLOCK)
+		SET VValue = 0
+			,VValue2 = ''
+		WHERE VName = 'BA_MissingTransID'
   
 		SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + ' .The job has just inserted the missing tickets.' + ' Current Max TransID:' + @currentMaxTransID  
 		RAISERROR (@alert, 16, 1)    
