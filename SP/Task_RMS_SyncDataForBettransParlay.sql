@@ -128,7 +128,7 @@ BEGIN
 			liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
 			recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, sdiscount, 
 			scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
-			SecAcceptFlag, transid2, hdp2 as combo
+			SecAcceptFlag, transid2
 	INTO #temp			
 	FROM bodb02.dbo.bettrans with (NOLOCK)
 	WHERE tstamp between @tstamp_min and @tstamp_max
@@ -208,7 +208,7 @@ BEGIN
 				,balance = s.balance
 				,SecAcceptFlag = s.SecAcceptFlag
 				,transid2 = s.transid2
-				,combo = s.combo
+				,combo = s.hdp2
 		WHEN NOT MATCHED THEN 
 		INSERT (transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost, playercomm, comm, acomm, 
 			apositiontaking, mpositiontaking, tpositiontaking, playerdiscount, discount, adiscount, livehomescore, liveawayscore, 
@@ -223,7 +223,7 @@ BEGIN
 			s.liveawayscore, s.liveindicator, s.betteam, s.creator, s.refno, s.comstatus, s.winlostdate, s.betfrom, s.betcheck, s.checktime, 
 			s.oddsspread, s.actualrate, s.matchid, s.recommend, s.mrecommend, s.ruben, s.betid, s.statuswinlost, s.modds, s.bettype, s.betdaqid, 
 			s.actual_stake, s.currency, s.ip, s.transdesc, s.sdiscount, s.scomm, s.spositiontaking, s.swinlost, s.srecommend, s.Username, 
-			s.CurrencyName, s.virtualrate, s.oddstype, s.statusID, s.currency2, s.balance, s.SecAcceptFlag, s.transid2, s.combo
+			s.CurrencyName, s.virtualrate, s.oddstype, s.statusID, s.currency2, s.balance, s.SecAcceptFlag, s.transid2, s.hdp2
 			)
 	;--end MERGE	
 
@@ -294,7 +294,7 @@ BEGIN
 	USING	#temp s on dt.transid = s.transid	
 	WHEN NOT MATCHED THEN 
 	INSERT(transid, refno, custid, combo)
-	VALUES(s.transid,s.refno,s.custid,s.combo);
+	VALUES(s.transid,s.refno,s.custid,s.hdp2);
 END
 
 	UPDATE dbo.rmSettings with(rowlock, updlock)
