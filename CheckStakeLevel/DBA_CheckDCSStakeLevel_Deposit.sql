@@ -1,4 +1,4 @@
-
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_CheckDCSStakeLevel_Deposit]
 	 @srecommend INT 
 	,@SportType SMALLINT = 0
