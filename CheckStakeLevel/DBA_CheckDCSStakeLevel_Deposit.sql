@@ -9,7 +9,7 @@ AS
 	Task: Check DCS StakeLevel setting on CustGameType for deposit customers
 	DB: DBCHECK.CheckResultDB
 	Revisions:
-
+		- 20190130@Winnie:	Remove ClearBal Acc - [Redmine: #73556]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -168,6 +168,7 @@ BEGIN
 			AND Currency NOT IN (20,72,27,28) 
 			AND ci.username NOT LIKE '%cashout%'
 			AND ci.username NOT LIKE '%BetTrade%'
+			AND ci.username NOT LIKE '%ClearBal%'
 			AND NOT EXISTS (SELECT 1 FROM #MemberStakeLevel cs2 
 						WHERE ci.custid = cs2.custid
 							AND t.bettype = cs2.bettype
