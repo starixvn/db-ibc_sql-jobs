@@ -81,7 +81,7 @@ BEGIN
 	INSERT INTO #Dummy(CustID)
 	SELECT d.custid
 	FROM #tmpDumMember d
-	WHERE (username LIKE '%Acc%' OR username LIKE '%Cas%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%')	
+	WHERE (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%')	
 	AND d.RoleID=3
 
 	INSERT INTO #Trade(CustID)
