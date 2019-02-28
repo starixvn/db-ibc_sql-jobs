@@ -21,6 +21,8 @@ AS
 */
 SET NOCOUNT ON
 BEGIN
+	IF @srecommend IN(1752415,932209,1574083)--'AB88SuperRM' , '12BETSuperSD$',MS88SuperBND
+	RETURN
 	DECLARE @site VARCHAR(20)	
 	SELECT @site = Site FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK) WHERE custid=@srecommend
 	CREATE TABLE #tmpDumMember (CustID INT , username VARCHAR(30),RoleID INT,PRIMARY KEY(CustID,RoleID))
@@ -56,8 +58,6 @@ BEGIN
 	SELECT c.CustID
 	FROM CheckCustDB.dbo.CustInfo c WITH(NOLOCK)
 		INNER JOIN #Dummy d ON c.mrecommend=d.CustID
-
-	SELECT @site = Site FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK) WHERE custid=@srecommend
 
 	DELETE m
 	FROM #tmpDumMember m

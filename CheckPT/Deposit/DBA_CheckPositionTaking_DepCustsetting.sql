@@ -21,6 +21,9 @@ AS
 */
 SET NOCOUNT ON
 BEGIN
+	IF @srecommend IN(1752415,932209,1574083)--'AB88SuperRM' , '12BETSuperSD$',MS88SuperBND
+	RETURN
+
 	DECLARE @site VARCHAR(20)
 
 	CREATE TABLE #tmpDumMember (CustID INT , username VARCHAR(30),RoleID INT,PRIMARY KEY(CustID,RoleID))
@@ -44,7 +47,7 @@ BEGIN
 	INSERT INTO #Dummy(CustID)
 	SELECT d.custid
 	FROM #tmpDumMember d
-	WHERE (username LIKE '%Acc%' OR username LIKE '%Cas%' OR username LIKE '%LocalBank%')	
+	WHERE (username LIKE '%Acc%' OR username LIKE '%AFF%' OR username LIKE '%LocalBank%')	
 	AND d.RoleID=3
 
 	INSERT INTO #Trade(CustID)
