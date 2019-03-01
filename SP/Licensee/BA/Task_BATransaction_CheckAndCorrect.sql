@@ -39,7 +39,7 @@ WHERE LicenseeID IN (
 AND status = 'Done'
 
 DECLARE @maxTransId BIGINT
-SELECT  @maxTransId = cast(isnull(vvalue2,0) AS BIGINT)
+SELECT  @maxTransId = cast(isnull(vvalue,0) AS BIGINT)
 FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)   
 WHERE vname = 'BA_transid'
   
@@ -174,6 +174,7 @@ BEGIN
 		WHERE VName = 'BA_MissingTransID'
   
 		SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + ' .The job has just inserted the missing tickets.' + ' Current Max TransID:' + @currentMaxTransID  
+						+ ' . Current VValue: ' + CAST(ISNULL(@maxTransId, 0) AS VARCHAR(20))
 		RAISERROR (@alert, 16, 1)    
 	END
 END
