@@ -63,8 +63,6 @@ StartLoop:
   
     GOTO StartLoop  
 EndLoop:
-
-DELETE FROM @BATransaction WHERE transid > @maxTransId
   
 --Query data with Running status  
 DECLARE @BAHistory_Running TABLE (custid INT, ondate DATETIME)  
@@ -98,6 +96,8 @@ StartLoop_r:
   
     GOTO StartLoop_r  
 EndLoop_r:  
+
+DELETE FROM @BATransaction WHERE transid > @maxTransId
   
 IF (SELECT count(a.transid)   
 	FROM @BATransaction a  
