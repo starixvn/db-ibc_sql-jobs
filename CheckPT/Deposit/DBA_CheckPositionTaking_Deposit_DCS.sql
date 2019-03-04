@@ -71,7 +71,7 @@ BEGIN
 	FROM CheckCustDB.dbo.CustInfo c WITH(NOLOCK) 
 	 CROSS APPLY (
 	  SELECT TOP 1 custid, username
-	  FROM CheckCustDB.dbo.vw_Customer cc WITH(NOLOCK)
+	  FROM CheckCustDB.dbo.Customer cc WITH(NOLOCK)
 	  WHERE c.custid = cc.custid 
 	 ) fc
 	WHERE c.srecommend = @srecommend
