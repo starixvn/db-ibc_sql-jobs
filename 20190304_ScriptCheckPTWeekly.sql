@@ -4,11 +4,9 @@
 	DB: DBCheck/CheckCustDB
 	Date: 20190304
 */ 
-USE CheckCustDB
-GO
-
 USE CheckResultDB
 GO
+TRUNCATE TABLE CheckPTResult_Deposit
 
 DECLARE @srecommend INT
 CREATE TABLE #supers (custid int,isfinished bit default(0))	
