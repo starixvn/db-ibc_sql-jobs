@@ -2,8 +2,9 @@
 use bodb_Summary
 GO 
 
-ALTER PROCEDURE [dbo].[Task_DailyRptCS_SumCancelled]
-	@WinlostDate AS SMALLDATETIME
+ALTER PROCEDURE [dbo].[Task_DailyRptCS_SumCancelled_CheckAndCorrect]
+	@WinlostDate AS SMALLDATETIME,
+	@IsCheckDataOnly BIT = 0 
 AS
 
 /*
@@ -81,14 +82,14 @@ BEGIN
 				Count(TransID) As Wagers,
 				SUM(Stake) AS Stake,
 				CS.UplineId AS HeadlineId			 
-		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
+		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
 			INNER JOIN bodb02.dbo.CS_SportBettypeMatrix x WITH (NOLOCK) ON x.Bettype = b.Bettype
 			LEFT JOIN @ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
 					AND x.ProductID = e.ProductID
-			LEFT JOIN bodb02.dbo.Match m WITH (NOLOCK) ON m.MatchID = b.MatchID
+			LEFT JOIN bodb02.dbo.Match14 m WITH (NOLOCK) ON m.MatchID = b.MatchID
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID IN (101,102,103) 
 			AND b.bettype NOT IN (29,10)	
@@ -132,14 +133,14 @@ BEGIN
 				Count(TransID) As Wagers,
 				SUM(Stake) AS Stake,
 				CS.UplineId AS HeadlineId			 
-		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
+		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
 			INNER JOIN bodb02.dbo.CS_SportBettypeMatrix x WITH (NOLOCK) ON x.Bettype = b.Bettype
 			LEFT JOIN @ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
 					AND x.ProductID = e.ProductID
-			LEFT JOIN bodb02.dbo.outright m WITH (NOLOCK) ON m.orid = b.MatchID
+			LEFT JOIN bodb02.dbo.outright14 m WITH (NOLOCK) ON m.orid = b.MatchID
 			INNER JOIN bodb02.dbo.League l WITH (NOLOCK) ON l.leagueid = m.leagueid
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID IN (101,102,103) 
@@ -185,14 +186,14 @@ BEGIN
 				Count(TransID) As Wagers,
 				SUM(Stake) AS Stake,
 				CS.UplineId AS HeadlineId			 
-		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
+		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
 			INNER JOIN bodb02.dbo.CS_SportBettypeMatrix x WITH (NOLOCK) ON x.Bettype = b.Bettype
 			LEFT JOIN @ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
 					AND x.ProductID = e.ProductID
-			LEFT JOIN bodb02.dbo.Match m WITH (NOLOCK) ON m.MatchID = b.MatchID
+			LEFT JOIN bodb02.dbo.Match14 m WITH (NOLOCK) ON m.MatchID = b.MatchID
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID = 102
 			AND b.bettype NOT IN (29,10)	
@@ -235,14 +236,14 @@ BEGIN
 				Count(TransID) As Wagers,
 				SUM(Stake) AS Stake,
 				CS.UplineId AS HeadlineId			 
-		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
+		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
 			INNER JOIN bodb02.dbo.CS_SportBettypeMatrix x WITH (NOLOCK) ON x.Bettype = b.Bettype
 			LEFT JOIN @ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
 					AND x.ProductID = e.ProductID
-			LEFT JOIN bodb02.dbo.outright m WITH (NOLOCK) ON m.orid = b.MatchID
+			LEFT JOIN bodb02.dbo.outright14 m WITH (NOLOCK) ON m.orid = b.MatchID
 			INNER JOIN bodb02.dbo.League l WITH (NOLOCK) ON l.leagueid = m.leagueid
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID IN (101,102,103) 
