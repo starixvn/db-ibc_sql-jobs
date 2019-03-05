@@ -8,7 +8,7 @@ AS
 
 /*
 	Created: 20190301@Sophia
-	Task: SP Gen data for CS_Sum_Winloss   
+	Task: SP Gen data for CS_SumWinloss   
 	DB: DBSUM.bodb_Summary
 	
 	Revisions:
@@ -25,7 +25,7 @@ BEGIN
 	 
 
 	/* Get data source */
-	CREATE TABLE #CS_Sum_Winloss
+	CREATE TABLE #CS_SumWinloss
 	(
 		CustID			int,
 		WinlostDate		smalldatetime,
@@ -73,7 +73,7 @@ BEGIN
 
 	---- Member - RoleId = 1
 	BEGIN
-		INSERT INTO #CS_Sum_Winloss
+		INSERT INTO #CS_SumWinloss
 		(
 			CustID,
 			WinlostDate,
@@ -159,7 +159,7 @@ BEGIN
 
 
 	---Outright and parlay
-	INSERT INTO #CS_Sum_Winloss
+	INSERT INTO #CS_SumWinloss
 		(
 			CustID,
 			WinlostDate,
@@ -248,7 +248,7 @@ BEGIN
 	 
 	-- Agent - RoleId = 2
 	BEGIN
-	INSERT INTO #CS_Sum_Winloss
+	INSERT INTO #CS_SumWinloss
 		(
 			CustID,
 			WinlostDate,
@@ -309,7 +309,7 @@ BEGIN
 				SUM(HeadlineComm) AS HeadlineComm,
 				SUM(HeadlineStock) AS HeadlineStock,
 				b.HeadlineId AS HeadlineId			 
-		FROM  #CS_Sum_Winloss b
+		FROM  #CS_SumWinloss b
 			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) ON c.CustID = b.CustID	
 		WHERE c.RoleID = 1	
 		GROUP BY
@@ -324,7 +324,7 @@ BEGIN
 				
 	---- Master - RoleId = 3
 	BEGIN
-	INSERT INTO #CS_Sum_Winloss
+	INSERT INTO #CS_SumWinloss
 		(
 			CustID,
 			WinlostDate,
@@ -385,7 +385,7 @@ BEGIN
 				SUM(HeadlineComm) AS HeadlineComm,
 				SUM(HeadlineStock) AS HeadlineStock,
 				b.HeadlineId AS HeadlineId			 
-		FROM  #CS_Sum_Winloss b
+		FROM  #CS_SumWinloss b
 			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) ON c.CustID = b.CustID	
 		WHERE c.RoleID = 2	
 		GROUP BY
@@ -401,7 +401,7 @@ BEGIN
 							
 	---- Super - RoleId = 4
 	BEGIN
-	INSERT INTO #CS_Sum_Winloss
+	INSERT INTO #CS_SumWinloss
 		(
 			CustID,
 			WinlostDate,
@@ -462,7 +462,7 @@ BEGIN
 				SUM(HeadlineComm) AS HeadlineComm,
 				SUM(HeadlineStock) AS HeadlineStock,
 				b.HeadlineId AS HeadlineId			 
-		FROM  #CS_Sum_Winloss b
+		FROM  #CS_SumWinloss b
 			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) ON c.CustID = b.CustID	
 		WHERE c.RoleID = 3	
 		GROUP BY
@@ -478,8 +478,8 @@ BEGIN
 
 	/* Gen data */
 	BEGIN
-		MERGE dbo.CS_Sum_Winloss AS TARGET
-		USING #CS_Sum_Winloss AS SOURCE
+		MERGE dbo.CS_SumWinloss AS TARGET
+		USING #CS_SumWinloss AS SOURCE
 				ON	TARGET.WinlostDate	= SOURCE.WinlostDate
 				AND TARGET.CustId		= SOURCE.CustId
 				AND TARGET.ProductID	= SOURCE.ProductID
@@ -575,6 +575,6 @@ BEGIN
 		DELETE;
 	END
 
-	DROP TABLE #CS_Sum_Winloss
+	DROP TABLE #CS_SumWinloss
 END
 GO

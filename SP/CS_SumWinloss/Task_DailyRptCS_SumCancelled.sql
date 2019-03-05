@@ -8,7 +8,7 @@ AS
 
 /*
 	Created: 20190301@Sophia
-	Task: SP Gen data for CS_Sum_Cancelled  
+	Task: SP Gen data for CS_SumCancelled  
 	DB: DBSUM.bodb_Summary
 	
 	Revisions:
@@ -25,7 +25,7 @@ BEGIN
 	 
 
 	/* Get data source */
-	CREATE TABLE #CS_Sum_Cancelled
+	CREATE TABLE #CS_SumCancelled
 	(
 		CustID			int,
 		WinlostDate		smalldatetime,
@@ -56,7 +56,7 @@ BEGIN
 	---- Member - RoleId = 1
 	BEGIN
 		--- Cancelled Bet
-		INSERT INTO #CS_Sum_Cancelled
+		INSERT INTO #CS_SumCancelled
 		(
 			CustID,
 			WinlostDate,
@@ -107,7 +107,7 @@ BEGIN
 				
 				
 		---Cancelled bet parlay and outright		
-		INSERT INTO #CS_Sum_Cancelled
+		INSERT INTO #CS_SumCancelled
 		(
 			CustID,
 			WinlostDate,
@@ -160,7 +160,7 @@ BEGIN
 
 		
 		--- Abnormal Bet
-		INSERT INTO #CS_Sum_Cancelled
+		INSERT INTO #CS_SumCancelled
 		(
 			CustID,
 			WinlostDate,
@@ -210,7 +210,7 @@ BEGIN
 				CS.UplineId
 				
 		--- abnormal parlay and outright			
-		INSERT INTO #CS_Sum_Cancelled
+		INSERT INTO #CS_SumCancelled
 		(
 			CustID,
 			WinlostDate,
@@ -265,7 +265,7 @@ BEGIN
 	 
 	-- Agent - RoleId = 2
 	BEGIN
-	INSERT INTO #CS_Sum_Cancelled
+	INSERT INTO #CS_SumCancelled
 		(
 			CustID,
 			WinlostDate,
@@ -290,7 +290,7 @@ BEGIN
 				SUM(Wagers) As Wagers,
 				SUM(Stake) AS Stake,
 				b.HeadlineId AS HeadlineId			 
-		FROM  #CS_Sum_Cancelled b
+		FROM  #CS_SumCancelled b
 			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) ON c.CustID = b.CustID	
 		WHERE c.RoleID = 1	
 		GROUP BY
@@ -306,7 +306,7 @@ BEGIN
 				
 	---- Master - RoleId = 3
 	BEGIN
-	INSERT INTO #CS_Sum_Cancelled
+	INSERT INTO #CS_SumCancelled
 		(
 			CustID,
 			WinlostDate,
@@ -331,7 +331,7 @@ BEGIN
 				SUM(Wagers) As Wagers,
 				SUM(Stake) AS Stake,
 				b.HeadlineId AS HeadlineId			 
-		FROM  #CS_Sum_Cancelled b
+		FROM  #CS_SumCancelled b
 			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) ON c.CustID = b.CustID	
 		WHERE c.RoleID = 2	
 		GROUP BY
@@ -348,7 +348,7 @@ BEGIN
 							
 	---- Super - RoleId = 4
 	BEGIN
-	INSERT INTO #CS_Sum_Cancelled
+	INSERT INTO #CS_SumCancelled
 		(
 			CustID,
 			WinlostDate,
@@ -373,7 +373,7 @@ BEGIN
 				SUM(Wagers) As Wagers,
 				SUM(Stake) AS Stake,
 				b.HeadlineId AS HeadlineId			 
-		FROM  #CS_Sum_Cancelled b
+		FROM  #CS_SumCancelled b
 			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) ON c.CustID = b.CustID	
 		WHERE c.RoleID = 3	
 		GROUP BY
@@ -390,8 +390,8 @@ BEGIN
 
 	/* Gen data */
 	BEGIN
-		MERGE dbo.CS_Sum_Cancelled AS TARGET
-		USING #CS_Sum_Cancelled AS SOURCE
+		MERGE dbo.CS_SumCancelled AS TARGET
+		USING #CS_SumCancelled AS SOURCE
 				ON	TARGET.WinlostDate	= SOURCE.WinlostDate
 				AND TARGET.CustId		= SOURCE.CustId
 				AND TARGET.ProductID	= SOURCE.ProductID
@@ -433,6 +433,6 @@ BEGIN
 		DELETE;
 	END
 
-	DROP TABLE #CS_Sum_Cancelled
+	DROP TABLE #CS_SumCancelled
 END
 GO

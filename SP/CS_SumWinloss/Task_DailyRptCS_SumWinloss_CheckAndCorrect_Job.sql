@@ -24,7 +24,7 @@ BEGIN
 	DECLARE @RowId TINYINT, @WinlostDate SMALLDATETIME, @MaxWinlostdate SMALLDATETIME
 
 	SELECT @MaxWinlostdate = MAX(WinlostDate)
-	FROM dbo.CS_Sum_Winloss WITH (NOLOCK)
+	FROM dbo.CS_SumWinloss WITH (NOLOCK)
 	
 	SELECT @RowId = 1
 
@@ -56,7 +56,7 @@ BEGIN
 				BREAK
 			END TRY
 			BEGIN CATCH
-				PRINT 'Failed to generate data for CS_Sum_Winloss on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' Retry times: ' + CAST(@Retry AS VARCHAR)
+				PRINT 'Failed to generate data for CS_SumWinloss on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' Retry times: ' + CAST(@Retry AS VARCHAR)
 				SET @Retry = @Retry + 1
 				WAITFOR DELAY '000:00:05.280'
 			END CATCH
@@ -65,7 +65,7 @@ BEGIN
 	
 	IF @HasError = 1
 	BEGIN
-		RAISERROR ('Error occurred during generation of CS_Sum_Winloss.', 16, 1)
+		RAISERROR ('Error occurred during generation of CS_SumWinloss.', 16, 1)
 	END
 	
 END
