@@ -7,6 +7,7 @@
 USE CheckResultDB
 GO
 TRUNCATE TABLE CheckPTResult_Deposit
+exec vnDBA_sp_CheckSetting_SelectSupers
 
 DECLARE @srecommend INT
 CREATE TABLE #supers (custid int,isfinished bit default(0))	
