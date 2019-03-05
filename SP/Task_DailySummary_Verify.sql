@@ -19,6 +19,7 @@ AS
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20171010@Percy: Apply Bullfighting [RedmineID: #84690]
 		- 20180918@Patrick: Add more rule check if a custid belong to more than an upline [RedmineID: #101549]
+		- 20190305@Patrick: Remove statement check rowcount for check running/waiting ticket at translog statement [RedmineID: #109805]
 */
 
 SET NOCOUNT ON
@@ -36,9 +37,6 @@ IF EXISTS (
 			AND currency <> 20
 )
 BEGIN
-
-	IF @@ROWCOUNT > 0
-
 	RAISERROR ('FAILED: Have translog running/wating tickets', 16, 1)
 	RETURN
 END
@@ -250,3 +248,4 @@ BEGIN
 
 	RETURN
 END
+GO
