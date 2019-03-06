@@ -45,13 +45,13 @@ BEGIN
 	)
 	insert into @QueuedTVN (keyid, keyvalue, keyvalue2, createddatetime, eventtype)
 	select keyid, keyvalue, keyvalue2, createddatetime,
-		case when keyid in (1,3,5) then 'match.matchid'
+		case when keyid in (1,3) then 'match.matchid'
 			 when keyid=2 then 'outright.orid'
 			 when keyid=4 then 'vsOutright.eventid & vsRaceinfo.eventid'
+			 when keyid=5 then 'match.matchid & smp_marketid.marketid'
 		else 'others' end as EventType		 
 	from CTE where createddatetime <= dateadd(mi,-10,getdate())
 
-	select * from @QueuedTVN
 	
 	if exists (select 1 from @QueuedTVN)
 	BEGIN
