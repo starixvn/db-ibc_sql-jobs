@@ -1,34 +1,85 @@
-USE [bodb02]
-GO
-
-/****** Object:  StoredProcedure [dbo].[DBA_CheckTempVariableNumberSettleTimeout]    Script Date: 01/26/2015 03:28:28 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE PROCEDURE [dbo].[DBA_CheckTempVariableNumberSettleTimeout]
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[DBA_CheckTempVariableNumberSettleTimeout]
 AS
---20141012@Cooper(DBTrans) Create for check settle time out
+--20141012@Cooper(DBTrans): Create for check settle time out
+--20160918@Victor(DBTrans): add KeyValue not in 19906162
+--20161019@Cooper(DBTrans): add keyid Compare
+--20170103@Vivi(DBTrans): re-write SP
+--20170109@Vivi(DBTrans): change check by TempVariableNumberHistory.CreatedDateTime (temp solution)
+--20190306@Vicky(DBTrans): add KeyValue2
 BEGIN
-	SET NOCOUNT ON 
-	SELECT KeyValue into #tmp FROM bodb02.dbo.TempVariableNumber  with(nolock)
-	
-	WAITFOR DELAY '00:10'
+	SET NOCOUNT ON;
 
-	SELECT 1 FROM #tmp t inner join bodb02.dbo.TempVariableNumber TVN with(nolock)
-		on t.KeyValue = TVN.KeyValue
+	declare @SubjectMessage varchar(300)='', @SendTo varchar(400), @TableHTML varchar(max)=''
+	declare @QueuedTVN TABLE (KeyID int, KeyValue money, KeyValue2 VARCHAR(20), CreatedDateTime datetime, eventtype varchar(100))
 
-	IF @@Rowcount > 0
+	--SET @SendTo = 'dbatw@onelab.tw;dbaadmin@starixsoft.com;'
+	--SET @SendTo = 'vivi.kao@onelab.tw;'
+	IF @@SERVERNAME IN ('DB230', 'DB206', 'SITDBTRANS')
 	BEGIN
-		RAISERROR ('FAILED: Have settle Program time out - TempVariableNumber', 16, 1)
-		RETURN
+		SET @SendTo = 'Vicky.phan@nexcel.vn;'
+	END
+	ELSE
+	BEGIN
+		SET @SendTo = 'dbatw@onelab.tw;dbaadmin@starixsoft.com;'
 	END
 
-	DROP TABLE #tmp
-END
+	
 
+	if not exists (select 1 from bodb02.dbo.TempVariableNumber with (nolock)) return
+		
+	;WITH CTE (keyid, keyvalue, keyvalue2, createddatetime) AS
+	(
+		select TVN.keyid, TVN.keyvalue, TVN.keyvalue2, max(h.createddatetime) as createddatetime
+		from bodb02.dbo.TempVariableNumber TVN with (nolock) 
+		inner join bodb02.dbo.TempVariableNumberHistory h with (nolock) 
+			on TVN.KeyId = h.KeyId and TVN.KeyValue = h.KeyValue AND TVN.KeyValue2 = h.KeyValue2 and h.[action]='I'
+		group by TVN.keyid, TVN.keyvalue, TVN.keyvalue2
+	)
+	insert into @QueuedTVN (keyid, keyvalue, keyvalue2, createddatetime, eventtype)
+	select keyid, keyvalue, keyvalue2, createddatetime,
+		case when keyid in (1,3,5) then 'match.matchid'
+			 when keyid=2 then 'outright.orid'
+			 when keyid=4 then 'vsOutright.eventid & vsRaceinfo.eventid'
+		else 'others' end as EventType		 
+	from CTE where createddatetime <= dateadd(mi,-10,getdate())
+
+	select * from @QueuedTVN
+	
+	if exists (select 1 from @QueuedTVN)
+	BEGIN
+
+		SET @SubjectMessage ='Please check [TempVariableNumber] have event stay in queue more than 10 minutes.'
+		
+		SET @TableHTML = @TableHTML + 
+				N'<br><table border="1">' +
+				N'<tr>' +
+				N'<th>KeyID</th>' +
+				N'<th>KeyValue</th>' +
+				N'<th>KeyValue2</th>' +
+				N'<th>CreatedDatetime</th>' +
+				N'<th>EventType</th></tr>' +
+					CAST ( ( SELECT td = KeyID, '',								
+									td = KeyValue, '',
+									td = KeyValue2, '',
+									td = convert(char(19),createddatetime,120), '',
+									td = EventType
+								FROM @QueuedTVN
+								FOR XML PATH('tr'), TYPE 
+					) AS NVARCHAR(MAX) ) +
+				N'</table>' +
+				N'<H4> select * from bodb02.dbo.TempVariableNumber with (nolock) </H4>' ;
+
+		EXEC msdb.dbo.sp_send_dbmail
+			@recipients = @SendTo,
+			@body = @TableHTML,
+			@body_format = 'HTML',
+			@subject = @SubjectMessage
+
+		RAISERROR ('Failed: Please check [TempVariableNumber] have event stay in queue more than 10 minutes.', 16, 1)
+		RETURN
+	END
+END
 
 GO
 
