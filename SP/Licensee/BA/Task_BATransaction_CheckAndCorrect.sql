@@ -20,6 +20,7 @@ AS
 		20181114@Sophia: Revise Job Verify BA - Rename SP from Task_BATransaction_Check To Task_BATransaction_CheckAndCorrect [Redmine: #103653]
 		20181120@Sophia: Change 'DB052' To 'DB053' for steap switch to DB053 [Redmine: #103653]
 		20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
+		20190226@Percy: Apply config setting to raiserror [RedmineID: #109415]
  */  
 SET NOCOUNT ON   
    
@@ -35,7 +36,12 @@ WHERE LicenseeID IN (
 	FROM bodb_Licensee.dbo.LicenseeBAConfig (NOLOCK) 
 	WHERE EnableBA = 1
 )  
-AND status = 'Done'  
+AND status = 'Done'
+
+DECLARE @maxTransId BIGINT
+SELECT  @maxTransId = cast(isnull(vvalue,0) AS BIGINT)
+FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)   
+WHERE vname = 'BA_transid'
   
 DECLARE @custid INT, @ondate DATETIME, @offdate DATETIME, @cnt INT  
 StartLoop:  
@@ -53,10 +59,10 @@ StartLoop:
             AND (bettype < 31 OR (bettype BETWEEN 121 AND 999) OR (bettype BETWEEN 1301 AND 1399) OR (bettype BETWEEN 9001 AND 9399))  
 			AND bettype NOT IN (901, 911)
                    
-    DELETE FROM @BAHistory_Done WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate  
+    DELETE FROM @BAHistory_Done WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate
   
     GOTO StartLoop  
-EndLoop:  
+EndLoop:
   
 --Query data with Running status  
 DECLARE @BAHistory_Running TABLE (custid INT, ondate DATETIME)  
@@ -90,6 +96,8 @@ StartLoop_r:
   
     GOTO StartLoop_r  
 EndLoop_r:  
+
+DELETE FROM @BATransaction WHERE transid > @maxTransId
   
 IF (SELECT count(a.transid)   
 	FROM @BATransaction a  
@@ -105,12 +113,14 @@ BEGIN
 	WHERE b.transid IS NULL  
    
 	DECLARE @tickets VARCHAR(7500)  
-	DECLARE @alert VARCHAR(8000), @currentMaxTransID VARCHAR(50)  
+	DECLARE @alert VARCHAR(8000)
    
 	SELECT @tickets=''  
 	SELECT @tickets =@tickets  + CAST(TransID AS varchar(20)) + ','  
-	FROM @BATicket    
-  
+	FROM @BATicket
+
+	DECLARE @MaxOfFailedCount INT = 1, @FailedCount INT = 0
+
 	IF LEN(RTRIM(LTRIM(@tickets))) > 1  
 	BEGIN  
 		INSERT INTO bodb_licensee.dbo.licenseebatransaction (TransID,Transdate)  
@@ -133,14 +143,34 @@ BEGIN
 		IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB053' 
 			EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
   
-		SELECT @currentMaxTransID = VValue  
-		FROM DBTXN.BODB02.DBO.SystemSettings WITH (NOLOCK)  
-		WHERE VName='MaxTransID'  
+		SELECT @MaxOfFailedCount = CONVERT(INT, VValue)
+		FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)
+		WHERE VName = 'BA_MaxOfFailedCount'
+
+		SELECT @FailedCount = CONVERT(INT, VValue)
+		FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)
+		WHERE VName = 'BA_MissingTransID'
+
+		SELECT @FailedCount = @FailedCount + 1
+
+		SELECT @tickets = substring(@tickets,0,len(@tickets)) --remove last comma
+	END
+
+	UPDATE bodb_licensee.dbo.LICSettings WITH (ROWLOCK, UPDLOCK)
+	SET VValue = CONVERT(VARCHAR(200), @FailedCount)
+		,VValue2 = CASE @FailedCount WHEN 0 THEN '' WHEN 1 THEN @tickets ELSE VValue2 + ',' + @tickets END
+	WHERE VName = 'BA_MissingTransID'
+
+	IF @FailedCount > 0 AND @FailedCount >= @MaxOfFailedCount
+	BEGIN
+		-- Reset setting
+		UPDATE bodb_licensee.dbo.LICSettings WITH (ROWLOCK, UPDLOCK)
+		SET VValue = 0
+			,VValue2 = ''
+		WHERE VName = 'BA_MissingTransID'
   
-		SELECT @tickets = substring(@tickets,0,len(@tickets)) --remove last comma  
-		SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + ' .The job has just inserted the missing tickets.' + ' Current Max TransID:' + @currentMaxTransID  
+		SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + '. The job has just inserted the missing tickets. Current VValue: ' + CAST(ISNULL(@maxTransId, 0) AS VARCHAR(20))
 		RAISERROR (@alert, 16, 1)    
-  
 	END
 END
 GO
