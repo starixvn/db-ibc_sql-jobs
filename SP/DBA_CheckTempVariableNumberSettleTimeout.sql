@@ -1,12 +1,19 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_CheckTempVariableNumberSettleTimeout]
 AS
---20141012@Cooper(DBTrans): Create for check settle time out
---20160918@Victor(DBTrans): add KeyValue not in 19906162
---20161019@Cooper(DBTrans): add keyid Compare
---20170103@Vivi(DBTrans): re-write SP
---20170109@Vivi(DBTrans): change check by TempVariableNumberHistory.CreatedDateTime (temp solution)
---20190306@Vicky(DBTrans): add KeyValue2
+/*
+	Created by:20190306@Vicky
+	Task: get code from PROD
+	DB: DBTXN/bodb02 
+
+	Revision
+		- 20141012@Cooper(DBTrans): Create for check settle time out
+		- 20160918@Victor(DBTrans): add KeyValue not in 19906162
+		- 20161019@Cooper(DBTrans): add keyid Compare
+		- 20170103@Vivi(DBTrans): re-write SP
+		- 20170109@Vivi(DBTrans): change check by TempVariableNumberHistory.CreatedDateTime (temp solution)
+		- 20190103@Vicky: Incorporate BetBuilder: add column KeyValue2 [Redmine:#106903]
+*/
 BEGIN
 	SET NOCOUNT ON;
 
