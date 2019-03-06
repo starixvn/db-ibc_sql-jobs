@@ -2,7 +2,7 @@
 use bodb_Summary
 GO 
 
-CREATE PROCEDURE [dbo].[Task_DailyRptCS_SumWinloss_CheckAndCorrect]
+ALTER PROCEDURE [dbo].[Task_DailyRptCS_SumWinloss_CheckAndCorrect]
 	@WinlostDate AS SMALLDATETIME,
 	@IsCheckDataOnly BIT = 0 
 AS
@@ -110,9 +110,9 @@ BEGIN
 				b.CustID,
 				b.WinlostDate,
 				x.ProductId,
-				m.Sporttype,
+				ISNULL(m.Sporttype, 0) AS Sporttype, -- parlay = 0 
 				b.Bettype,
-				b.liveindicator As IsLive,
+				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END As IsLive,
 				Count(TransID) As Wagers,
 				SUM(Stake) AS Stake,
 				SUM(ABS(winlost - actual_stake)) ValidStake,
@@ -139,7 +139,7 @@ BEGIN
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN bodb02.dbo.CS_SportBettypeMatrix x WITH (NOLOCK) ON x.Bettype = b.Bettype
+			INNER JOIN (SELECT ProductID, Bettype FROM CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
 			LEFT JOIN @ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
@@ -147,19 +147,19 @@ BEGIN
 			LEFT JOIN bodb02.dbo.Match14 m WITH (NOLOCK) ON m.MatchID = b.MatchID
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID IN (111,112,113) 
-			AND b.bettype NOT IN (29,10)	
+			AND b.bettype <> 10	
 			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID)
 		GROUP BY
 				b.CustID,
 				b.WinlostDate,
 				x.ProductId,
-				m.Sporttype,
+				ISNULL(m.Sporttype, 0),
 				b.Bettype,
-				b.liveindicator,
+				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END ,
 				CS.UplineId
 
 
-	---Outright and parlay
+	---Outright  
 	INSERT INTO #CS_SumWinloss
 		(
 			CustID,
@@ -196,9 +196,9 @@ BEGIN
 				b.CustID,
 				b.WinlostDate,
 				x.ProductId,
-				ISNULL(l.Sporttype, 0) AS Sporttype,
+				ISNULL(l.Sporttype,0) AS Sporttype,
 				b.Bettype,			
-				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END AS isLive,																	
+				b.livehomescore AS isLive,																	
 				Count(TransID) As Wagers,
 				SUM(Stake) AS Stake,
 				SUM(ABS(winlost - actual_stake)) ValidStake,
@@ -225,7 +225,7 @@ BEGIN
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN bodb02.dbo.CS_SportBettypeMatrix x WITH (NOLOCK) ON x.Bettype = b.Bettype
+			INNER JOIN (SELECT ProductID, Bettype FROM CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
 			LEFT JOIN @ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
@@ -234,15 +234,15 @@ BEGIN
 			INNER JOIN bodb02.dbo.League l WITH (NOLOCK) ON l.leagueid = m.leagueid
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID IN (111,112,113) 
-			AND b.bettype IN (29,10)	
+			AND b.bettype = 10 
 			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID)
 		GROUP BY
 				b.CustID,
 				b.WinlostDate,
 				x.ProductId,
-				ISNULL(l.Sporttype, 0) ,
+				ISNULL(l.Sporttype,0),  
 				b.Bettype,
-				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END,
+				b.livehomescore,
 				CS.UplineId
 
 	END
