@@ -40,6 +40,7 @@ Revisions:
 	-20180910@Bruce: LA - WL report for Poker Games & Bullfighting [#98487]
 	-20181107@Patrick: DB052 Indexes Revolution [Redmine: #103572]
 	-20181226@bruce: Implement E-sport 2 [Redmine: #105723]
+	-20190306@Parsons: Implement BetBuilder [Redmine: #108995]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'
@@ -383,6 +384,7 @@ BEGIN
 				OR (Bettype >= 121 AND Bettype < 1000)
 				OR (Bettype >= 1301 AND Bettype < 1400)
 				OR (Bettype >= 9001 AND Bettype < 9400)
+				OR (Bettype = 38)
 			)
 	        AND tpositiontaking = 0
 			AND b.bettype NOT IN (901, 902, 903, 904, 911, 912, 913, 914)
