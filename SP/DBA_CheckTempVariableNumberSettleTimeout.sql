@@ -20,16 +20,8 @@ BEGIN
 	declare @SubjectMessage varchar(300)='', @SendTo varchar(400), @TableHTML varchar(max)=''
 	declare @QueuedTVN TABLE (KeyID int, KeyValue money, KeyValue2 VARCHAR(20), CreatedDateTime datetime, eventtype varchar(100))
 
-	--SET @SendTo = 'dbatw@onelab.tw;dbaadmin@starixsoft.com;'
+	SET @SendTo = 'dbatw@onelab.tw;dbaadmin@starixsoft.com;'
 	--SET @SendTo = 'vivi.kao@onelab.tw;'
-	IF @@SERVERNAME IN ('DB230', 'DB206', 'SITDBTRANS')
-	BEGIN
-		SET @SendTo = 'Vicky.phan@nexcel.vn;'
-	END
-	ELSE
-	BEGIN
-		SET @SendTo = 'dbatw@onelab.tw;dbaadmin@starixsoft.com;'
-	END
 
 	
 
