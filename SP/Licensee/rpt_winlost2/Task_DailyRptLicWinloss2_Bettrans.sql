@@ -30,6 +30,7 @@ AS
 	- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
 	- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
 	- 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
+	- 20190306@Amande: Implement PP Promotion Prize [RedmineID: #109471]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -86,7 +87,7 @@ BEGIN
 	  ) AS TurnOver  
 	 ,SUM(winlost-actual_stake)  winlost  
 	 ,CASE WHEN bettrans.statusID IN (112,113)   
-		THEN SUM(ABS(winlost-actual_stake))   
+		THEN SUM(CASE WHEN bettrans.bettype = 4300 THEN 0 ELSE ABS(winlost-actual_stake) END) -- exclude Promotion Prize from BetEffective
 		ELSE 0  
 		END BetEffective   
 	 ,SUM(awinlost) awinlost  
@@ -126,8 +127,9 @@ BEGIN
 		WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
-	  ELSE 0 END sporttype  
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706) THEN bettype ELSE 0 END bettype  
+	  ELSE 0 END sporttype
+	  -- 1706: bidme tip, 4300 - PP Promotion Prize
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706, 4300) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
 	 ,CASE   
 	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
@@ -187,7 +189,7 @@ BEGIN
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 	  ELSE 0 END  
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706) THEN bettype ELSE 0 END  
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300) THEN bettype ELSE 0 END  
 	 ,CASE   
 	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
 	  WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115  
