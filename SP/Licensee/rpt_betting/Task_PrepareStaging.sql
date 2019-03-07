@@ -384,7 +384,7 @@ BEGIN
 				OR (Bettype >= 121 AND Bettype < 1000)
 				OR (Bettype >= 1301 AND Bettype < 1400)
 				OR (Bettype >= 9001 AND Bettype < 9400)
-				OR (Bettype = 38)
+				OR (Bettype = 38) -- BetBuilder
 			)
 	        AND tpositiontaking = 0
 			AND b.bettype NOT IN (901, 902, 903, 904, 911, 912, 913, 914)

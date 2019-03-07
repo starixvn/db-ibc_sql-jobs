@@ -1,4 +1,9 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
+
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans] 
 	@winlostdate DATETIME  
 AS  
@@ -31,6 +36,7 @@ AS
 	- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
 	- 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
 	- 20190306@Amande: Implement PP Promotion Prize [RedmineID: #109471]
+	- 20190307@Parsons: Implement BetBuilder [Redmine: #108995]
 	- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
@@ -127,8 +133,8 @@ BEGIN
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 	  ELSE 0 END sporttype
-	  -- 1706: bidme tip, 4300 - PP Promotion Prize
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706, 4300) THEN bettype ELSE 0 END bettype  
+	  -- 1706: bidme tip, 4300 - PP Promotion Prize, - 38: Bet builder
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706, 4300,38) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
 	 ,CASE   
 	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
@@ -186,7 +192,7 @@ BEGIN
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 	  ELSE 0 END  
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300) THEN bettype ELSE 0 END  
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,38) THEN bettype ELSE 0 END  
 	 ,CASE   
 	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
 	  WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115  
