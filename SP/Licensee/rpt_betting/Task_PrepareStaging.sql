@@ -40,6 +40,7 @@ Revisions:
 	-20180910@Bruce: LA - WL report for Poker Games & Bullfighting [#98487]
 	-20181107@Patrick: DB052 Indexes Revolution [Redmine: #103572]
 	-20181226@bruce: Implement E-sport 2 [Redmine: #105723]
+	-20190308@Parsons: Integrate PP promotion prize [#109014]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'
@@ -391,9 +392,12 @@ BEGIN
     SET IsBA = 1
     WHERE transid IN (SELECT transid FROM #BATransids)
 
-	DROP TABLE #BATransids
+	-- PP: Promotion Prize Win
+	UPDATE dbo.bettrans
+	SET WinPrizeAmount = winlost - actual_stake
+	WHERE bettype = 4300 -- Promotion Prize Win
 
+	DROP TABLE #BATransids
 	DROP TABLE #BetTradeCust
-	  
 END
 GO

@@ -50,6 +50,7 @@ AS
 		- 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
 			bettype: 8101 - 8120
 			bettypeRef: 8101
+		- 20190308@Parsons: Integrate PP promotion prize [#109014]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 
@@ -108,7 +109,10 @@ BEGIN
 			,[SiteID]
 			,bt.ProductID
 			,CASE 
-				WHEN bt.ProductID IN (1,13,14,17,15,25) OR b.Bettype = 1499 THEN b.[Bettype]
+				WHEN bt.ProductID IN (1,13,14,17,15,25) 
+						OR b.Bettype = 1499 
+						OR b.Bettype = 4300 -- Promotion Prize Win
+					THEN b.[Bettype]
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1 END [Bettype]
 			,[CurrencyId]
@@ -135,7 +139,10 @@ BEGIN
 				,[SiteID]
 				, bt.ProductID
 				,CASE 
-					WHEN bt.ProductID IN (1,13,14,17,15,25) OR b.Bettype = 1499 THEN b.[Bettype]
+					WHEN bt.ProductID IN (1,13,14,17,15,25) 
+							OR b.Bettype = 1499 
+							OR b.Bettype = 4300 -- Promotion Prize Win
+						THEN b.[Bettype]
 					WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 					ELSE -1 END
 				,[CurrencyId]
