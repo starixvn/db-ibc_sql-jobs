@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 USE [bodb_LicenseeReport]
 GO
@@ -16,7 +16,8 @@ AS
 	- 20170529@Paul: Get matchid from staging match table [Redmine: #72914]
 	- 20170930@Harper: Get more info for MuayThai Parlay [Redmine: #82827]
 	- 20171114@Harper: Fix Date Range when get detail ticket 
-	- 20180703@Sophia: Check @Date <= Movebetday will return because this day don't have data on Bettrans [Redmine: #97567] 
+	- 20180703@Sophia: Check @Date <= Movebetday will return because this day don't have data on Bettrans [Redmine: #97567]
+	- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]	
 
 	EXEC GEN_rptBettingBySport '2017-10-28'
 */ 
@@ -184,6 +185,7 @@ BEGIN
 	WHERE ( b.bettype < 31
 			OR b.bettype BETWEEN 121 AND 999
 			OR b.Bettype BETWEEN 1301 and 1399 --new tennis's bettypes
+			OR b.bettype = 38 -- BetBuilder
 		) 
 		AND b.statusID IN (111, 112, 113)
 		AND b.winlostdate = @Date
