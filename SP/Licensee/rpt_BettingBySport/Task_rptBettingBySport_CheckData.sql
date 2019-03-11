@@ -1,5 +1,3 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-
 USE [bodb_LicenseeReport]
 GO
 
@@ -22,7 +20,6 @@ AS
 	Revisions:
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
 		- 20171114@Harper: Fix Date Range when get detail ticket
-		- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]		
 
 	DECLARE @HasDataMismatch TINYINT, @IsParlay VARCHAR(20)
 	EXEC Task_rptBettingBySport_CheckData @WinlostDate = '2017-09-29', @HasDataMismatch = @HasDataMismatch OUTPUT, @IsParlay = @IsParlay OUTPUT
@@ -319,7 +316,6 @@ BEGIN
 				AND ( b.bettype < 31
 						OR b.bettype BETWEEN 121 AND 999
 						OR b.Bettype BETWEEN 1301 and 1399 --new tennis's bettypes
-						OR b.Bettype = 38 -- BetBuilder
 					) 
 				AND b.statusID IN (111, 112, 113)
 				AND b.winlostdate = @WinlostDate 
