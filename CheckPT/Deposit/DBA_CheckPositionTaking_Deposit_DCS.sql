@@ -304,7 +304,7 @@ BEGIN
 			FROM CheckCustDB.dbo.Dep_CustPTSetting_Member s WITH(NOLOCK)			
 				INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid		
 				INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 			
-			WHERE s.custid=@srecommend AND c.roleid=1  AND d.IsGroupedPT=0 AND s.sporttype =219 AND (s.AgentPT <> 90 OR s.SuperPT<>0 OR s.MasterPT<>0)
+			WHERE s.custid=@srecommend AND c.roleid=1  AND d.IsGroupedPT=0 AND (s.sporttype =219 OR  s.sporttype =248) AND (s.AgentPT <> 90 OR s.SuperPT<>0 OR s.MasterPT<>0)
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 				AND c.custid NOT IN(SELECT custid FROM #Trade)	
 
@@ -312,7 +312,7 @@ BEGIN
 			SELECT 50,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
 			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK)		
 				INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid			
-			WHERE c.srecommend=@srecommend AND c.roleid=2 AND s.sporttype =219 AND (s.AgentPT <> 90 OR s.SuperPT<>0 OR s.MasterPT<>0)
+			WHERE c.srecommend=@srecommend AND c.roleid=2 AND (s.sporttype =219 OR  s.sporttype =248) AND (s.AgentPT <> 90 OR s.SuperPT<>0 OR s.MasterPT<>0)
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 		END			
 	END
@@ -325,7 +325,7 @@ BEGIN
 			FROM CheckCustDB.dbo.Dep_CustPTSetting_Member s WITH(NOLOCK)			
 				INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid		
 				INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 			
-			WHERE s.custid=@srecommend AND c.roleid=1  AND d.IsGroupedPT=0 AND (s.sporttype =211 OR s.sporttype =219)  AND (s.AgentPT <> 92 OR s.SuperPT<>0 OR s.MasterPT<>0)
+			WHERE s.custid=@srecommend AND c.roleid=1  AND d.IsGroupedPT=0 AND (s.sporttype =211 OR s.sporttype =219 OR  s.sporttype =248)  AND (s.AgentPT <> 92 OR s.SuperPT<>0 OR s.MasterPT<>0)
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 				AND c.custid NOT IN(SELECT custid FROM #Trade)	
 
@@ -333,7 +333,7 @@ BEGIN
 			SELECT 51,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
 			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK)		
 				INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid			
-			WHERE c.srecommend=@srecommend AND c.roleid=2 AND (s.sporttype =211 OR s.sporttype =219) AND (s.AgentPT <> 92 OR s.SuperPT<>0 OR s.MasterPT<>0)
+			WHERE c.srecommend=@srecommend AND c.roleid=2 AND (s.sporttype =211 OR s.sporttype =219 OR  s.sporttype =248) AND (s.AgentPT <> 92 OR s.SuperPT<>0 OR s.MasterPT<>0)
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 		END		
 	END
