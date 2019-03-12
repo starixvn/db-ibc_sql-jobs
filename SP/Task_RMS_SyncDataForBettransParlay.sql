@@ -230,7 +230,7 @@ BEGIN
 	; -- END OF MERGE rmTransaction	
 	-- Single Match Parlay
 	UPDATE b WITH(ROWLOCK, UPDLOCK)
-	SET TotalBet = 1, odds2 = oods, transid2 = 1, liveawayscore = 1
+	SET TotalBet = 1, odds2 = t.odds, transid2 = 1, liveawayscore = 1
 	FROM rmBettrans b INNER JOIN #temp t ON b.transid = t.transid 
 	WHERE t.bettype = 38
 	
