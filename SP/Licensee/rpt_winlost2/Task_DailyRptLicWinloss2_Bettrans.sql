@@ -133,8 +133,8 @@ BEGIN
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 	  ELSE 0 END sporttype
-	  -- 1706: bidme tip, 4300 - PP Promotion Prize, - 38: Bet builder
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706, 4300,38) THEN bettype ELSE 0 END bettype  
+	  -- 1706: bidme tip, 4300 - PP Promotion Prize
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706, 4300) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
 	 ,CASE   
 	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
@@ -192,7 +192,7 @@ BEGIN
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 	  ELSE 0 END  
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,38) THEN bettype ELSE 0 END  
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300) THEN bettype ELSE 0 END  
 	 ,CASE   
 	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
 	  WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115  
