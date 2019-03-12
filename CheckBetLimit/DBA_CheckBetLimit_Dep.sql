@@ -82,23 +82,26 @@ BEGIN
 			AND c.custid NOT IN(SELECT custid FROM #Trade)		
 		GROUP BY c.custid,cs.sporttype,cs.bettype,c.recommend
 
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #MasterSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
+		IF EXISTS(SELECT TOP 1 1 FROM #MasterSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #MasterSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num
 		
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #AgentSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
+		IF EXISTS(SELECT TOP 1 1 FROM #AgentSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #AgentSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num
 
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #MemberSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
+		IF EXISTS(SELECT TOP 1 1 FROM #MemberSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #MemberSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num
 
 		TRUNCATE TABLE #SuperSetting
 		TRUNCATE TABLE #MasterSetting
@@ -136,24 +139,27 @@ BEGIN
 			AND c.custid NOT IN(SELECT custid FROM #Trade)	
 			AND sporttype NOT BETWEEN 151 AND 154
 		GROUP BY c.custid,cs.sporttype,cs.bettype
-
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #MasterSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
 		
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #AgentSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
+		IF EXISTS(SELECT TOP 1 1 FROM #MasterSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #MasterSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num		
+		
+		IF EXISTS(SELECT TOP 1 1 FROM #AgentSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #AgentSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num
 
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #MemberSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
+		IF EXISTS(SELECT TOP 1 1 FROM #MemberSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #MemberSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num
 
 		TRUNCATE TABLE #SuperSetting
 		TRUNCATE TABLE #MasterSetting
@@ -192,23 +198,26 @@ BEGIN
 			AND cs.sporttype<>203		
 		GROUP BY c.custid,cs.sporttype,cs.bettype
 
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #MasterSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
+		IF EXISTS(SELECT TOP 1 1 FROM #MasterSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #MasterSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num
 		
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #AgentSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
+		IF EXISTS(SELECT TOP 1 1 FROM #AgentSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #AgentSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num
 
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #MemberSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
+		IF EXISTS(SELECT TOP 1 1 FROM #MemberSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #MemberSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num
 
 		TRUNCATE TABLE #SuperSetting
 		TRUNCATE TABLE #MasterSetting
@@ -246,23 +255,26 @@ BEGIN
 			AND c.custid NOT IN(SELECT custid FROM #Trade)			
 		GROUP BY c.custid,cs.sporttype,cs.bettype
 
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #MasterSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
+		IF EXISTS(SELECT TOP 1 1 FROM #MasterSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #MasterSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num
 		
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #AgentSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
+		IF EXISTS(SELECT TOP 1 1 FROM #AgentSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #AgentSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num
 
-		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
-		FROM #SuperSetting s
-			LEFT JOIN #MemberSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
-		WHERE m.CustID IS NULL OR s.Num<>m.Num
+		IF EXISTS(SELECT TOP 1 1 FROM #MemberSetting)
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 317,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Num,m.Num,GETDATE(),1
+			FROM #SuperSetting s
+				LEFT JOIN #MemberSetting m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID
+			WHERE m.CustID IS NULL OR s.Num<>m.Num
 	END  
 	IF @RuleId IN(0,318)
 	BEGIN
