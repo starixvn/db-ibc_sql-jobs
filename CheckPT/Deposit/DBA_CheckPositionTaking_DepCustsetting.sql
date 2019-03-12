@@ -21,7 +21,7 @@ AS
 */
 SET NOCOUNT ON
 BEGIN
-	IF @srecommend IN(1752415,932209,1574083)--'AB88SuperRM' , '12BETSuperSD$',MS88SuperBND
+	IF @srecommend IN(1752415,932209,1574083,179457)--'AB88SuperRM' , '12BETSuperSD$',MS88SuperBND,'ITSA'
 	RETURN
 
 	DECLARE @site VARCHAR(20)
@@ -47,7 +47,7 @@ BEGIN
 	INSERT INTO #Dummy(CustID)
 	SELECT d.custid
 	FROM #tmpDumMember d
-	WHERE (username LIKE '%Acc%' OR username LIKE '%AFF%' OR username LIKE '%LocalBank%')	
+	WHERE (username LIKE '%Acc%' OR username LIKE '%AFF%' OR username LIKE '%LocalBank%' OR username like 'AB88'+'CAS%')	
 	AND d.RoleID=3
 
 	INSERT INTO #Trade(CustID)
@@ -136,7 +136,7 @@ BEGIN
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 46,s.sporttype,s.bettype,s.CustID,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
 		FROM #tmpA1 s 
-			INNER JOIN #tmpA2 m ON s.Sporttype=m.Sporttype AND s.Bettype=m.Bettype AND s.Islive=m.Islive AND s.CustID=s.recommend
+			INNER JOIN #tmpA2 m ON s.Sporttype=m.Sporttype AND s.Bettype=m.Bettype AND s.Islive=m.Islive AND m.CustID=s.recommend
 		WHERE s.PT<>m.PT
 	END
 	IF @RuleId IN(0,48)

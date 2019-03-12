@@ -21,7 +21,7 @@ AS
 */
 SET NOCOUNT ON
 BEGIN
-	IF @srecommend IN(1752415,932209,1574083)--'AB88SuperRM' , '12BETSuperSD$',MS88SuperBND
+	IF @srecommend IN(1752415,932209,1574083,179457)--'AB88SuperRM' , '12BETSuperSD$',MS88SuperBND,'ITSA'
 	RETURN
 	DECLARE @site VARCHAR(20)	
 	SELECT @site = Site FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK) WHERE custid=@srecommend
@@ -46,7 +46,7 @@ BEGIN
 	INSERT INTO #Dummy(CustID)
 	SELECT d.custid
 	FROM #tmpDumMember d
-	WHERE (username LIKE '%Acc%' OR username LIKE '%AFF%' OR username LIKE '%LocalBank%')	
+	WHERE (username LIKE '%Acc%' OR username LIKE '%AFF%' OR username LIKE '%LocalBank%' OR username like 'AB88'+'CAS%')	
 	AND d.RoleID=3
 
 	INSERT INTO #Trade(CustID)
@@ -71,13 +71,14 @@ BEGIN
 		INSERT INTO #tmpS (Sporttype , Bettype , Islive , PT)
 		SELECT s.sporttype,s.bettype,s.islive,s.spositiontaking
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)			
-		WHERE s.custid=@srecommend 
+		WHERE s.custid=@srecommend AND sporttype NOT BETWEEN 151 AND 154 
 		
 		INSERT INTO #tmpM (CustID,Sporttype , Bettype , Islive , PT)
 		SELECT c.custid, s.sporttype,s.bettype,s.islive,s.mpositiontaking
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid	
 		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
+			AND sporttype NOT BETWEEN 151 AND 154 
 
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 44,s.sporttype,s.bettype,@srecommend,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
@@ -96,12 +97,14 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)	
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid		
 		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
+			AND sporttype NOT BETWEEN 151 AND 154 
 		
 		INSERT INTO #tmpA45 (CustID,Sporttype , Bettype , Islive , PT,mrecommend)
 		SELECT c.custid, s.sporttype,s.bettype,s.islive,s.apositiontaking,c.mrecommend
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid	
 		WHERE c.srecommend=@srecommend AND c.roleid=2
+			AND sporttype NOT BETWEEN 151 AND 154 
 
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 45,s.sporttype,s.bettype,s.CustID,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
@@ -114,26 +117,26 @@ BEGIN
 	IF @RuleId IN (0,46)  
 	BEGIN		
 		CREATE TABLE #tmpA1(CustID INT,Sporttype INT, Bettype INT, Islive BIT,recommend INT, PT SMALLMONEY,PRIMARY KEY(CustID,Sporttype,Bettype,Islive,recommend))
-		CREATE TABLE #tmpA2(CustID INT,Sporttype INT, Bettype INT, Islive BIT, PT SMALLMONEY,PRIMARY KEY(CustID,Sporttype,Bettype,Islive))
-
-	
+		CREATE TABLE #tmpA2(CustID INT,Sporttype INT, Bettype INT, Islive BIT, PT SMALLMONEY,PRIMARY KEY(CustID,Sporttype,Bettype,Islive))	
 		
 		INSERT INTO #tmpA2 (CustID, Sporttype , Bettype , Islive , PT)
 		SELECT s.custid, s.sporttype,s.bettype,s.islive,s.apositiontaking
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)	
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid		
 		WHERE c.srecommend=@srecommend AND c.roleid=2 AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
+			AND sporttype NOT BETWEEN 151 AND 154 
 		
 		INSERT INTO #tmpA1 (CustID,Sporttype , Bettype , Islive , PT,recommend)
 		SELECT c.custid, s.sporttype,s.bettype,s.islive,s.apositiontaking,c.recommend
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON s.custid=c.custid				
 		WHERE c.srecommend=@srecommend AND c.roleid=1 AND c.custid NOT IN(SELECT custid FROM #Trade)
+			AND sporttype NOT BETWEEN 151 AND 154 
 
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 46,s.sporttype,s.bettype,s.CustID,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
 		FROM #tmpA1 s 
-			INNER JOIN #tmpA2 m ON s.Sporttype=m.Sporttype AND s.Bettype=m.Bettype AND s.Islive=m.Islive AND s.CustID=s.recommend
+			INNER JOIN #tmpA2 m ON s.Sporttype=m.Sporttype AND s.Bettype=m.Bettype AND s.Islive=m.Islive AND m.CustID=s.recommend
 		WHERE s.PT<>m.PT		
 
 	END
