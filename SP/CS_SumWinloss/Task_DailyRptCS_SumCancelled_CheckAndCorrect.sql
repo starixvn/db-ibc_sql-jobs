@@ -75,7 +75,7 @@ BEGIN
 				b.CustID,
 				b.WinlostDate,
 				x.ProductId,
-				m.Sporttype,
+				ISNULL(m.Sporttype,0) AS Sporttype,
 				b.Bettype,
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END As IsLive,
 				1 AS CancelType,
@@ -101,7 +101,7 @@ BEGIN
 				b.CustID,
 				b.WinlostDate,
 				x.ProductId,
-				m.Sporttype,
+				ISNULL(m.Sporttype,0),
 				b.Bettype,
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END,				
 				CS.UplineId
@@ -141,7 +141,7 @@ BEGIN
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
 					AND x.ProductID = e.ProductID
 			LEFT JOIN bodb02.dbo.outright14 m WITH (NOLOCK) ON m.orid = b.MatchID
-			LEFT JOIN bodb02.dbo.League l WITH (NOLOCK) ON l.leagueid = m.leagueid
+			INNER JOIN bodb02.dbo.League l WITH (NOLOCK) ON l.leagueid = m.leagueid
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID IN (101,102,103) 
 			AND b.bettype = 10 	
@@ -179,7 +179,7 @@ BEGIN
 				b.CustID,
 				b.WinlostDate,
 				x.ProductId,
-				m.Sporttype,
+				ISNULL(m.Sporttype,0) AS Sporttype,
 				b.Bettype,
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END As IsLive,
 				2 AS CancelType,
@@ -205,7 +205,7 @@ BEGIN
 				b.CustID,
 				b.WinlostDate,
 				x.ProductId,
-				m.Sporttype,
+				ISNULL(m.Sporttype,0),
 				b.Bettype,
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END,				
 				CS.UplineId
