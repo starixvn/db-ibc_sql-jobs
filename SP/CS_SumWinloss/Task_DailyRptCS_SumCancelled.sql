@@ -83,7 +83,7 @@ BEGIN
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN (SELECT ProductID, Bettype FROM CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
+			INNER JOIN (SELECT ProductID, Bettype FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
 			LEFT JOIN @ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
@@ -134,7 +134,7 @@ BEGIN
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN (SELECT ProductID, Bettype FROM CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
+			INNER JOIN (SELECT ProductID, Bettype FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
 			LEFT JOIN @ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
@@ -187,7 +187,7 @@ BEGIN
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN (SELECT ProductID, Bettype FROM CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
+			INNER JOIN (SELECT ProductID, Bettype FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
 			LEFT JOIN @ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
@@ -237,7 +237,7 @@ BEGIN
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN (SELECT ProductID, Bettype FROM CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
+			INNER JOIN (SELECT ProductID, Bettype FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
 			LEFT JOIN @ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
