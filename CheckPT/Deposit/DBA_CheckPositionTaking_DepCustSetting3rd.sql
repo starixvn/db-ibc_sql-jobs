@@ -167,17 +167,5 @@ BEGIN
 		END	
 	END
 
-	
-	IF @RuleId IN (0,53)
-	BEGIN	
-	
-		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-		SELECT 53,s.sporttype,s.bettype,c.custid,NULL,s.spositiontaking+s.mpositiontaking+s.apositiontaking,NULL,GETDATE(),s.islive 
-		FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK)
-			INNER JOIN #tmpDumMember c  ON s.custid=c.custid	
-			INNER JOIN CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK) ON c.custid=BA.CustId
-		WHERE c.roleid=1 AND s.spositiontaking+s.mpositiontaking+s.apositiontaking <> 0
-			
-	END
 END
 	
