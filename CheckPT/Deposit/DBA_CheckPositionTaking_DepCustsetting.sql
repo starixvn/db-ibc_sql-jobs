@@ -132,6 +132,7 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)	
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid							
 		WHERE c.srecommend=@srecommend AND 	c.roleid=1 AND c.custid NOT IN(SELECT custid FROM #Trade)
+			AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))
 
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 46,s.sporttype,s.bettype,s.CustID,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
@@ -149,6 +150,7 @@ BEGIN
 				INNER JOIN #tmpDumMember c ON s.custid=c.custid		
 			WHERE 
 				c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND (s.apositiontaking <> 0.905 OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+				AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))
 				
 		END
 		ELSE IF @site ='Tonybet'
@@ -159,6 +161,7 @@ BEGIN
 				INNER JOIN #tmpDumMember c ON s.custid=c.custid		
 			WHERE 
 				c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND (s.apositiontaking <> 0.90	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+				AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))
 				
 		END
 		ELSE
@@ -169,7 +172,7 @@ BEGIN
 				INNER JOIN #tmpDumMember c ON s.custid=c.custid	
 			WHERE
 				c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND (s.apositiontaking <> 0.85	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
-			
+				AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))			
 		END
 	END
 
