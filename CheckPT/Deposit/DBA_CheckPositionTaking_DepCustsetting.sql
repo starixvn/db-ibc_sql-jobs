@@ -149,7 +149,7 @@ BEGIN
 			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)					
 				INNER JOIN #tmpDumMember c ON s.custid=c.custid		
 			WHERE 
-				c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND (s.apositiontaking <> 0.905 OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+				c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking <> 0.905 OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
 				AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))
 				
 		END
@@ -160,7 +160,7 @@ BEGIN
 			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)						
 				INNER JOIN #tmpDumMember c ON s.custid=c.custid		
 			WHERE 
-				c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND (s.apositiontaking <> 0.90	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+				c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking <> 0.90	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
 				AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))
 				
 		END
@@ -171,7 +171,7 @@ BEGIN
 			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)							
 				INNER JOIN #tmpDumMember c ON s.custid=c.custid	
 			WHERE
-				c.roleid=1 AND (s.sporttype<99 OR s.sporttype=154) AND (s.apositiontaking <> 0.85	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+				c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking <> 0.85	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
 				AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))			
 		END
 	END
