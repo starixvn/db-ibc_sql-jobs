@@ -1,25 +1,78 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
-
-/****** Object:  StoredProcedure [dbo].[Task_BalanceUp_SubAgent]    Script Date: 01/26/2015 23:25:00 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE PROCEDURE [dbo].[Task_BalanceUp_SubAgent]
+ALTER PROCEDURE [dbo].[Task_BalanceUp_SubAgent]
 	@winlostdate smalldatetime,
 	@preview bit = 0
 AS
-
-create table #recommend (KeyID int PRIMARY KEY IDENTITY(1,1), recommend int, ticketCount int)
-create table #custid (KeyID int PRIMARY KEY IDENTITY(1,1), custid int, ticketCount int)
-
+/*
+	Created by:[]
+	Date:
+	Task: daily summary
+	DB: DBTXN/BODB02
+	Revisions:
+		- .....
+		- 20190312@Patrick: Fix issue always scan temp table #custid [RedmineID: #110106]
+*/
+CREATE TABLE #recommend (KeyID int PRIMARY KEY IDENTITY(1,1), recommend int, ticketCount int)
+CREATE TABLE #custid (KeyID int PRIMARY KEY IDENTITY(1,1), custid int, ticketCount int)
 Declare @rKeyID int, @cKeyID int
--- Get ticketcount per agent
--- Note that data is sorted by TicketCount DESC, so that agent with less tickets will be picked first.
--- Then for the agents with high tickets (more than 10000), it will loop by member level
+Declare @custid_list varchar(2100), @cnt int, @custid_cnt int, @rc int, @r int
+Declare @keyID int, @custid_listustid int, @recommend int, @ticketCount int
+Declare @custid int, @BAL_TransID bigint
+
+CREATE TABLE #custid_nobet (KeyID int PRIMARY KEY IDENTITY(1,1), custid int, BAL_transid bigint)
+
+;WITH C AS (SELECT custid, 
+	COUNT(*) AS Ticket_Count, 
+	SUM(CASE WHEN matchid = 0 AND bettype = 20000 THEN 1 ELSE 0 END) AS BAL_Count,
+	MAX(CASE WHEN matchid = 0 AND bettype = 20000 THEN transid ELSE 0 END) AS BAL_TransID
+	FROM dbo.bettrans WITH (NOLOCK)
+	WHERE winlostdate < @winlostdate
+	GROUP BY custid
+)
+INSERT INTO #custid_nobet (custid, BAL_transid)
+SELECT c.custid, c.BAL_TransID
+FROM C
+	INNER JOIN dbo.BalanceTable_tmp b WITH (NOLOCK) ON C.custid = b.custid AND b.roleid = 1
+	WHERE C.BAL_Count = 1 AND C.Ticket_Count = 1 -- have only 1 row, and it's BAL
+ORDER BY c.custid
+
+SET @rc = @@ROWCOUNT
+SET @r = 1
+
+DECLARE @tblNoBetTmp TABLE (custid INT, transid BIGINT)
+DECLARE @delayTimeValue VARCHAR(50)
+SET @delayTimeValue = '00:00:01.500'
+
+DECLARE @transIds VARCHAR(MAX)
+SET @transIds = ''
+
+WHILE @r <= @rc
+BEGIN
+	
+	DELETE FROM @tblNoBetTmp
+	SET @transIds = NULL
+
+	INSERT INTO @tblNoBetTmp(custid, transid)
+	SELECT custid, BAL_transid
+	FROM #custid_nobet WITH (NOLOCK) WHERE KeyID BETWEEN @r AND @r + 1000
+	
+	DELETE FROM dbo.balanceTable_tmp WHERE custid IN (SELECT t.custid FROM @tblNoBetTmp t)
+	--DELETE FROM dbo.bettrans WITH (ROWLOCK) WHERE transid IN (SELECT t.transid FROM @tblNoBetTmp t)
+	
+	SELECT @transIds = COALESCE(@transIds + '^' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
+	FROM @tblNoBetTmp
+
+	EXEC dbo.ExecRep_07 @custids = '', @custid = 0, @roleid = 111, @winlostdate = @winlostdate, @transIds = @transIds
+
+	SET @r = @r + 1000
+
+	SELECT @delayTimeValue = dbo.f_BU_GetDelayTime('Key1')
+	WAITFOR DELAY @delayTimeValue
+
+END
+
 insert into #recommend (recommend, ticketCount)
 select recommend, SUM(ticketCount)
 FROM balanceTable_tmp
@@ -27,8 +80,6 @@ WHERE roleid IN (1,2)
 GROUP BY recommend
 ORDER BY 2, 1 --DESC
 
-Declare @custid_list varchar(2100), @cnt int, @custid_cnt int, @rc int, @r int
-Declare @keyID int, @custid_listustid int, @recommend int, @ticketCount int
 
 SET @rKeyID = 1
 SET @r = 1
@@ -67,18 +118,26 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		BEGIN TRANSACTION
+
+		--insert processing list
+		EXEC dbo.Task_Core_ProcessingCustListIns @CustIds = @custid_list
+		SELECT @delayTimeValue = dbo.f_BU_GetDelayTime('Key2')
+		WAITFOR DELAY @delayTimeValue
+
+		--BEGIN TRANSACTION
 		DELETE FROM dbo.balanceTable_tmp
 		WHERE recommend IN (select val from dbo.strSplit(@custid_list, ','))
 
 		EXEC dbo.ExecRep_07 @custid_list, 0, 22, @winlostdate
-		COMMIT TRANSACTION
+		--COMMIT TRANSACTION
 
-		WAITFOR DELAY '000:00:01.200'
+		--WAITFOR DELAY '000:00:01.500'
+		--delete processing list
+		EXEC dbo.Task_Core_ProcessingCustListDel @CustIds = @custid_list
 	END
 END
 
-IF IsNull(@ticketCount,0) > 10000 GOTO PickNextAgent -- if ticketCount per 1 agent over 10000, go to loop for each custid
+IF IsNull(@ticketCount,0) > 5000 GOTO PickNextAgent -- if ticketCount per 1 agent over 5000, go to loop for each custid
 IF @rc > 0 GOTO NewAgentList
 
 PickNextAgent:
@@ -93,7 +152,8 @@ truncate table #custid
 insert into #custid (custid, ticketCount)
 SELECT custid, ticketCount
 FROM dbo.BalanceTable_tmp
-WHERE roleid = 1 AND recommend = @recommend AND TicketCount > 10
+WHERE roleid = 1 AND recommend = @recommend --AND TicketCount > 5
+SET @cKeyID = 1
 
 NewCustIDList:
 SET @custid_list = ''
@@ -103,6 +163,7 @@ SET @custid_cnt = 0
 AddCustID:
 SELECT @keyID = keyID, @custid_listustid = custid, @ticketCount = ticketCount
 FROM #custid
+WHERE keyID = @cKeyID
 --ORDER BY ticketCount
 
 SET @rc = @@ROWCOUNT
@@ -114,6 +175,7 @@ BEGIN
 
 	DELETE FROM #custid WHERE KeyID = @keyID
 END
+SET @cKeyID = @cKeyID + 1
 
 IF (@cnt < 5000) AND LEN(@custid_list) < 2000 AND @custid_cnt < 200 AND @rc > 0 GOTO AddCustID -- loop for add another customer into list
 
@@ -128,14 +190,22 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		BEGIN TRANSACTION
+		--insert processing list
+		EXEC dbo.Task_Core_ProcessingCustListIns @CustIds = @custid_list
+
+		SELECT @delayTimeValue = dbo.f_BU_GetDelayTime('Key3')
+		WAITFOR DELAY @delayTimeValue
+
+		--BEGIN TRANSACTION
 		DELETE FROM dbo.balanceTable_tmp
 		WHERE custid IN (select val from dbo.strSplit(@custid_list, ','))
 
 		EXEC dbo.ExecRep_07 @custid_list, @recommend, 11, @winlostdate
-		COMMIT TRANSACTION
+		--COMMIT TRANSACTION
 
-		WAITFOR DELAY '000:00:01.000'
+		--WAITFOR DELAY '000:00:10.000'
+		--delete processing list
+		EXEC dbo.Task_Core_ProcessingCustListDel @CustIds = @custid_list
 	END
 END
 
@@ -155,22 +225,26 @@ BEGIN
 END
 ELSE
 BEGIN
-	BEGIN TRANSACTION
+	--insert processing list
+	EXEC dbo.Task_Core_ProcessingCustListIns @CustIds = @custid_list
+
+	SELECT @delayTimeValue = dbo.f_BU_GetDelayTime('Key4')
+	WAITFOR DELAY @delayTimeValue
+
+	--BEGIN TRANSACTION
 	DELETE FROM dbo.balanceTable_tmp
 	WHERE recommend = @recommend
 
 	EXEC dbo.ExecRep_07 '', @recommend, 2, @winlostdate
-	COMMIT TRANSACTION
+	--COMMIT TRANSACTION
 
-	WAITFOR DELAY '000:00:01.200'
+	--WAITFOR DELAY '000:00:10.00'
+	EXEC dbo.Task_Core_ProcessingCustListDel @CustIds = @custid_list
 END
 
 GOTO PickNextAgent -- no more customer, loop for next agent
 
 NoMoreAgent:
-
-
-
 GO
 
 GRANT VIEW DEFINITION ON [dbo].[Task_BalanceUp_SubAgent] TO [vnteam] AS [dbo]
