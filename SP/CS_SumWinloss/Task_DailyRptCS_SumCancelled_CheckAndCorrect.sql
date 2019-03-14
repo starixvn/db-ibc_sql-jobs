@@ -232,7 +232,7 @@ BEGIN
 				ISNULL(l.Sporttype, 0) AS Sporttype,
 				b.Bettype,
 				b.Liveindicator AS isLive,
-				1 AS CancelType,
+				2 AS CancelType,
 				Count(TransID) As Wagers,
 				SUM(Actual_stake) AS Stake,
 				CS.UplineId AS HeadlineId			 
@@ -246,7 +246,7 @@ BEGIN
 			LEFT JOIN bodb02.dbo.outright14 m WITH (NOLOCK) ON m.orid = b.MatchID
 			INNER JOIN bodb02.dbo.League l WITH (NOLOCK) ON l.leagueid = m.leagueid
 		WHERE b.WinlostDate = @WinlostDate
-			AND b.StatusID IN (101,102,103) 
+			AND b.StatusID = 102
 			AND b.bettype = 10 	
 			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID) 
 			AND CASE WHEN b.ExtraInfo LIKE '%p1%' THEN
