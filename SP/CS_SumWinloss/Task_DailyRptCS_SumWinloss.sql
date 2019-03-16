@@ -132,8 +132,8 @@ BEGIN
 				SUM(SWinlost) AS SuperWinloss,
 				SUM(SComm - Acomm) AS SuperComm,
 				SUM(ABS(winlost - actual_stake) * (1 - tpositiontaking)) AS SuperStock,
-				SUM ((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * e.ExtraPT) AS HeadlineWinloss,
-				SUM ((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * e.ExtraPT) AS HeadlineComm,
+				SUM ( -1 * (CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * e.ExtraPT) AS HeadlineWinloss,
+				SUM ( -1 * (CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * e.ExtraPT) AS HeadlineComm,
 				SUM (ABS(winlost - actual_stake) * (1 - tpositiontaking - e.ExtraPT)) AS HeadlineStock,
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
@@ -218,8 +218,8 @@ BEGIN
 				SUM(SWinlost) AS SuperWinloss,
 				SUM(SComm - Acomm) AS SuperComm,
 				SUM(ABS(winlost - actual_stake) * (1 - tpositiontaking)) AS SuperStock,
-				SUM ((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * e.ExtraPT) AS HeadlineWinloss,
-				SUM ((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * e.ExtraPT) AS HeadlineComm,
+				SUM ( -1 *(CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * e.ExtraPT) AS HeadlineWinloss,
+				SUM ( -1 *(CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * e.ExtraPT) AS HeadlineComm,
 				SUM (ABS(winlost - actual_stake) * (1 - tpositiontaking - e.ExtraPT)) AS HeadlineStock,
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 

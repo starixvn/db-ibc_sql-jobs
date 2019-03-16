@@ -133,8 +133,8 @@ BEGIN
 				SUM(SWinlost) AS SuperWinloss,
 				SUM(SComm - Acomm) AS SuperComm,
 				SUM(ABS(winlost - actual_stake) * (1 - tpositiontaking)) AS SuperStock,
-				SUM ((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * e.ExtraPT) AS HeadlineWinloss,
-				SUM ((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * e.ExtraPT) AS HeadlineComm,
+				SUM ( -1 * (CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * e.ExtraPT) AS HeadlineWinloss,
+				SUM ( -1 * (CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * e.ExtraPT) AS HeadlineComm,
 				SUM (ABS(winlost - actual_stake) * (1 - tpositiontaking - e.ExtraPT)) AS HeadlineStock,
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK) 
@@ -198,7 +198,7 @@ BEGIN
 				x.ProductId,
 				ISNULL(l.Sporttype,0) AS Sporttype,
 				b.Bettype,			
-				b.livehomescore AS isLive,																	
+				b.Liveindicator AS isLive,																	
 				Count(TransID) As Wagers,
 				SUM(Actual_stake) AS Stake,
 				SUM(ABS(winlost - actual_stake)) ValidStake,
@@ -219,8 +219,8 @@ BEGIN
 				SUM(SWinlost) AS SuperWinloss,
 				SUM(SComm - Acomm) AS SuperComm,
 				SUM(ABS(winlost - actual_stake) * (1 - tpositiontaking)) AS SuperStock,
-				SUM ((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * e.ExtraPT) AS HeadlineWinloss,
-				SUM ((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * e.ExtraPT) AS HeadlineComm,
+				SUM ( -1 *(CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * e.ExtraPT) AS HeadlineWinloss,
+				SUM ( -1 *(CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * e.ExtraPT) AS HeadlineComm,
 				SUM (ABS(winlost - actual_stake) * (1 - tpositiontaking - e.ExtraPT)) AS HeadlineStock,
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK) 
@@ -242,7 +242,7 @@ BEGIN
 				x.ProductId,
 				ISNULL(l.Sporttype,0),  
 				b.Bettype,
-				b.livehomescore,
+				b.Liveindicator,
 				CS.UplineId
 
 	END
