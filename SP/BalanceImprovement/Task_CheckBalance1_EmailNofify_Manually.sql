@@ -10,6 +10,7 @@ AS
 	Location: DBTXN.bodb02
 
 	Revision: 
+		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
 
 */
 

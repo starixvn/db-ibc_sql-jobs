@@ -17,6 +17,7 @@ AS
 		20151210@Daniel: calc balance from table bettransRNG & bettransLC 
 		20171002@Patrick: Update code for Bonus project
 		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
+		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
 
 	Param use:
 

@@ -14,6 +14,7 @@ AS
 		20160112@Daniel: Remove redundant RowVersion MAX(tstamp)
 		20170929@Patrick: Update code for Bonus project
 		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
+		20190319@Patrick: Exclude CN88 account [RedmineID: #110530]
 	   
 	Note: Does not correct data, only dectect different between bettrans and Balance table
 
