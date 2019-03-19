@@ -21,7 +21,7 @@ BEGIN
 
 		INSERT INTO @__tmpTable(tableName)
 		SELECT DISTINCT TableName
-		FROM dbo.Task_Setting_ArchiveData WITH(NOLOCK)
+		FROM dbo.Task_ArchiveData_TableList WITH(NOLOCK)
 
 		WHILE EXISTS (SELECT TOP 1 1 FROM @__tmpTable WHERE rowId = @rowId)
 		BEGIN
@@ -35,14 +35,11 @@ BEGIN
 	ELSE
 	BEGIN
 		DECLARE @__archiveDatetList TABLE (ArchiveDate DATETIME)
-		DECLARE @ArchiveDayCount smallint, @ArchiveDate DATETIME
-			, @ArchiveDateTo DATETIME, @__temp DATETIME
+		DECLARE @ArchiveDate DATETIME, @ArchiveDateTo DATETIME, @__temp DATETIME
 	
-		SELECT @ArchiveDayCount = ArchiveDayCount
-			, @ArchiveDate = ArchiveDate
+		SELECT @ArchiveDate = ArchiveDate
 			, @ArchiveDateTo = DATEADD(DAY, ArchiveDayCount, ArchiveDate)
-		FROM dbo.Task_Setting_ArchiveData WITH(NOLOCK)
-		WHERE TableName = @TableName
+		FROM dbo.Task_ArchiveData_Setting s WITH(NOLOCK)
 
 		WHILE @ArchiveDate < @ArchiveDateTo
 		BEGIN

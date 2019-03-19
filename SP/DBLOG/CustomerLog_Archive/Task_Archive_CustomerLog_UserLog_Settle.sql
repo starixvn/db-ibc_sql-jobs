@@ -23,75 +23,54 @@ BEGIN
 	BEGIN
 		IF EXISTS (
 			SELECT TOP 1 1
-			FROM bodb_CustomerLog_Archive.dbo.UserLog_Settle WITH(NOLOCK)
-			WHERE logdate >= @FromDateTime AND logdate < @ToDateTime
+			FROM dbo.Task_Task_ArchiveData_Transition WITH(NOLOCK)
 		)
 		BEGIN
-			--//for case resume data
-			WHILE 1 = 1
-			BEGIN
-				DELETE TOP(@RowInBatch)
-				FROM bodb_CustomerLog_Archive.dbo.UserLog_Settle WITH(ROWLOCK)
-				WHERE logdate >= @FromDateTime AND logdate < @ToDateTime
-
-				IF @@ROWCOUNT = 0
-					BREAK
-			END
+			RAISERROR('^^^Having data on table [Task_Task_ArchiveData_Transition]. Please check!!!^^^', 16, 1)
+			RETURN
 		END
 
-		SELECT logid INTO #__logIds 
+		INSERT INTO dbo.Task_Task_ArchiveData_Transition(LogId, Logdate)
+		SELECT logid, logdate
 		FROM dbo.UserLog_Settle WITH(NOLOCK)
 		WHERE logdate >= @FromDateTime AND logdate < @ToDateTime
 
-		DECLARE @__tmpId TABLE(logId BIGINT)
+		WHILE 1 = 1
+		BEGIN
+		
+			DELETE TOP(@RowInBatch)
+			FROM dbo.Task_Task_ArchiveData_Transition WITH(ROWLOCK)
+			
+			IF @@ROWCOUNT = 0
+				BREAK
+		END
+
+	END
+	ELSE IF @Mode = 'delete'
+	BEGIN
+		SELECT logid, logdate INTO #__logIds
+		FROM dbo.UserLog_Settle WITH(NOLOCK)
+		WHERE logdate >= @FromDateTime AND logdate < @ToDateTime
+
+		DECLARE @__tmpId TABLE(logId BIGINT, logdate DATETIME)
 
 		WHILE 1 = 1
 		BEGIN
 			DELETE FROM @__tmpId
 
 			DELETE TOP(@RowInBatch) 
-			FROM #__logIds OUTPUT deleted.logid INTO @__tmpId(logId)
-			
-			IF @@ROWCOUNT = 0
-				BREAK
-
-			INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_Settle([LogID], [LogDate], [UserID], [MatchID], [ActionID], [finalhomescore], [finalawayscore], [hthomescore], [htawayscore], [GoalRecord], [betstatus], [Remark], [IP])
-			SELECT [LogID], [LogDate], [UserID], [MatchID], [ActionID], [finalhomescore], [finalawayscore], [hthomescore], [htawayscore], [GoalRecord], [betstatus], [Remark], [IP]
-			FROM dbo.UserLog_Settle l WITH(NOLOCK)
-			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId)
-				AND logdate >= @FromDateTime AND logdate < @ToDateTime
-
-		END
-
-		DROP TABLE #__logIds
-
-	END
-	ELSE IF @Mode = 'delete'
-	BEGIN
-		SELECT logid INTO #__logIds2
-		FROM dbo.UserLog_Settle WITH(NOLOCK)
-		WHERE logdate >= @FromDateTime AND logdate < @ToDateTime
-
-		DECLARE @__tmpId2 TABLE(logId BIGINT)
-
-		WHILE 1 = 1
-		BEGIN
-			DELETE FROM @__tmpId2
-
-			DELETE TOP(@RowInBatch) 
-			FROM #__logIds2 OUTPUT deleted.logid INTO @__tmpId2(logId)
+			FROM #__logIds OUTPUT deleted.logid, deleted.logdate INTO @__tmpId(logId, logdate)
 			
 			IF @@ROWCOUNT = 0
 				BREAK
 
 			DELETE TOP(@RowInBatch) l
 			FROM dbo.UserLog_Settle l WITH(ROWLOCK)
-			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId2 t WHERE l.logid = t.logId)
-				AND logdate >= @FromDateTime AND logdate < @ToDateTime
+			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logdate = t.logdate)
 
 		END
 
-		DROP TABLE #__logIds2
+		DROP TABLE #__logIds
 	END
 END
 GO
