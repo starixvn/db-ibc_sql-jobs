@@ -211,7 +211,7 @@ BEGIN
 		INNER JOIN CustDB.dbo.Customer c WITH(NOLOCK) ON t.custid = c.custid
 	WHERE EXISTS (SELECT TOP 1 1 FROM dbo.CS_CustSuper cs WITH(NOLOCK) WHERE c.srecommend = cs.CustId)
 
-	PRINT @msg + ' -' + CAST(@@ROWCOUNT as varchar(50)) + ' accounts off CN88 was deleted from verify balance list'
+	PRINT @msg + ' -' + CAST(@@ROWCOUNT as varchar(50)) + ' accounts of CN88 was deleted from verify balance list'
 	
 	DROP TABLE #tmpCal
 	DROP TABLE #QuestionLists
