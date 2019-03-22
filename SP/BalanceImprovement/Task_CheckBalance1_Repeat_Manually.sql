@@ -14,7 +14,7 @@ AS
 		20160112@Daniel: Remove redundant RowVersion MAX(tstamp)
 		20170929@Patrick: Update code for Bonus project
 		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
-		20190319@Patrick: Exclude CN88 account [RedmineID: #110530]
+		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
 	   
 	Note: Does not correct data, only dectect different between bettrans and Balance table
 
@@ -120,11 +120,22 @@ BEGIN
 		IF @result = 0
 		BEGIN
 			DELETE FROM dbo.Task_Cust_CheckBalanceVerify1_Manually WHERE custid = @custid
+			DECLARE @IsCN88Member BIT
+			SET @IsCN88Member = 0
 
+			IF EXISTS (
+				SELECT TOP 1 1
+				FROM CustDB.dbo.Customer WITH(NOLOCK)
+				WHERE custid = @custid
+					AND srecommend IN (SELECT c.CustId FROM dbo.CS_CustSuper c WITH(NOLOCK))
+			)
+			BEGIN
+				SET @IsCN88Member = 1
+			END
 			-- LOG
 			INSERT INTO dbo.Task_Cust_BalanceProblem1_Manually (UserName, custid, DiffBalance, IsFixed, Remark)
 			SELECT
-				username, @custid, @DiffBalance, 0, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE @IsUUS WHEN 1 THEN ' UUS' ELSE '' END
+				username, @custid, @DiffBalance, 0, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE @IsUUS WHEN 1 THEN ' UUS' ELSE '' END + CASE @IsCN88Member WHEN 1 THEN ' - Member of CNN88' ELSE '' END
 			FROM
 				CustDB.dbo.custInfo with (nolock)
 			WHERE

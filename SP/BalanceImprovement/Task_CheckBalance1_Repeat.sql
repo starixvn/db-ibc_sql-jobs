@@ -1,11 +1,7 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_CheckBalance1_Repeat]    Script Date: 12/08/2015 02:28:32 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[Task_CheckBalance1_Repeat]
+CREATE PROCEDURE [dbo].[Task_CheckBalance1_Repeat]
 AS
 /*
 	Task: Compute/Compare balance vs BalanceTable for detected account
@@ -16,6 +12,9 @@ AS
 	   20150907@Daniel: Clone from Task_CheckBalance_Repeat & apply new set of bal tables
 		20151210@Daniel: calc balance from table bettransRNG & bettransLC 
 		20160112@Daniel: Remove redundant RowVersion MAX(tstamp)
+		20170929@Patrick: Update code for Bonus project
+		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
+		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
 	   
 	Param use:
 
@@ -41,7 +40,7 @@ q2 AS (
 	SELECT tl.custid, SUM(actual_stake) AS Outstanding
 	FROM dbo.translog tl with (nolock)
 		--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON tl.custid = c.custid AND c.roleid = 1 and
-	WHERE tl.statusID=0 --summary running tickets only
+	WHERE tl.statusID IN (0,1) --summary running tickets only
 	GROUP BY tl.custid
 ),
 q3 AS (
@@ -55,8 +54,14 @@ q4 AS (
 	FROM dbo.bettransLC WITH(NOLOCK)
 	WHERE IsSum = 0
 	GROUP BY custid
-)
-SELECT cb.*, ISNULL(q2.Outstanding,0) Outstanding, ISNULL(q3.BalRNG, 0) BalRNG, ISNULL(q4.BalLC, 0) BalLC, 
+),
+t AS (
+	SELECT custid, SUM(Amount) AS adjustWinlostAmt
+	FROM dbo.BonusAdjustmentTransfer WITH(NOLOCK)
+	WHERE isTransferred = 0
+	GROUP BY custid
+) 
+SELECT cb.*, ISNULL(q2.Outstanding,0) Outstanding, ISNULL(q3.BalRNG, 0) BalRNG, ISNULL(q4.BalLC, 0) BalLC, ISNULL(t.adjustWinlostAmt, 0) adjustWinlostAmt,
     cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance AS FromBalanceTable
 INTO #QuestionLists
 FROM cb
@@ -71,12 +76,13 @@ FROM cb
 	LEFT OUTER JOIN q2 ON cb.custid = q2.custid
 	LEFT OUTER JOIN q3 ON cb.custid = q3.custid
 	LEFT OUTER JOIN q4 ON cb.custid = q4.custid
+	LEFT OUTER JOIN t ON cb.custid = t.CustID
 UPDATE cb
 SET roundVerified = 
-		CASE q.Balance-q.Outstanding+BalRNG+BalLC-q.FromBalanceTable
+		CASE q.Balance-q.Outstanding+BalRNG+BalLC+adjustWinlostAmt-q.FromBalanceTable
 		WHEN cb.DiffBalance THEN roundVerified + 1 -- if Diff value remain the same amount, increase counter, ELSE reset counter
 		ELSE 0 END,
-	DiffBalance = q.Balance-q.Outstanding+BalRNG+BalLC-q.FromBalanceTable -- update new Diff
+	DiffBalance = q.Balance-q.Outstanding+BalRNG+BalLC+adjustWinlostAmt-q.FromBalanceTable -- update new Diff
 FROM dbo.Task_Cust_CheckBalanceVerify1 cb
 	INNER JOIN #QuestionLists q ON cb.custid = q.custid
 
@@ -84,8 +90,6 @@ DROP TABLE #QuestionLists
 
 DELETE FROM dbo.Task_Cust_CheckBalanceVerify1
 WHERE DiffBalance = 0 AND roundVerified >= 3 -- remove record, if compare and no diff for 3 times
-
-
 
 IF NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1)
 BEGIN
@@ -115,10 +119,23 @@ BEGIN
 		BEGIN
 			DELETE FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE custid = @custid
 
+			DECLARE @IsCN88Member BIT
+			SET @IsCN88Member = 0
+
+			IF EXISTS (
+				SELECT TOP 1 1
+				FROM CustDB.dbo.Customer WITH(NOLOCK)
+				WHERE custid = @custid
+					AND srecommend IN (SELECT c.CustId FROM dbo.CS_CustSuper c WITH(NOLOCK))
+			)
+			BEGIN
+				SET @IsCN88Member = 1
+			END
+
 			-- LOG
 			INSERT INTO dbo.Task_Cust_BalanceProblem1 (UserName, custid, DiffBalance, IsFixed, Remark)
 			SELECT
-				username, @custid, @DiffBalance, 1, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE @IsUUS WHEN 1 THEN ' UUS' ELSE '' END
+				username, @custid, @DiffBalance, 1, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE @IsUUS WHEN 1 THEN ' UUS' ELSE '' END + CASE @IsCN88Member WHEN 1 THEN ' - Member of CNN88' ELSE '' END
 			FROM
 				CustDB.dbo.custInfo with (nolock)
 			WHERE
@@ -129,3 +146,6 @@ BEGIN
 		SET @i = @i + 1
 	END
 END
+GO
+
+
