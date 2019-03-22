@@ -79,7 +79,7 @@ BEGIN
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END AS isLive,
 				1 AS CancelType,
 				Count(TransID) As Wagers,
-				SUM(Actual_stake) AS Stake,
+				SUM(Stake) AS Stake,
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
@@ -130,7 +130,7 @@ BEGIN
 				b.Liveindicator AS isLive,
 				1 AS CancelType,
 				Count(TransID) As Wagers,
-				SUM(Actual_stake) AS Stake,
+				SUM(Stake) AS Stake,
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
@@ -183,7 +183,7 @@ BEGIN
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END AS isLive,
 				2 AS CancelType,
 				Count(TransID) As Wagers,
-				SUM(Actual_stake) AS Stake,
+				SUM(Stake) AS Stake,
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
@@ -233,7 +233,7 @@ BEGIN
 				b.Liveindicator AS isLive,
 				2 AS CancelType,
 				Count(TransID) As Wagers,
-				SUM(Actual_stake) AS Stake,
+				SUM(Stake) AS Stake,
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
