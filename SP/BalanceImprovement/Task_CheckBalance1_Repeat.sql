@@ -119,23 +119,10 @@ BEGIN
 		BEGIN
 			DELETE FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE custid = @custid
 
-			DECLARE @IsCN88Member BIT
-			SET @IsCN88Member = 0
-
-			IF EXISTS (
-				SELECT TOP 1 1
-				FROM CustDB.dbo.Customer WITH(NOLOCK)
-				WHERE custid = @custid
-					AND srecommend IN (SELECT c.CustId FROM dbo.CS_CustSuper c WITH(NOLOCK))
-			)
-			BEGIN
-				SET @IsCN88Member = 1
-			END
-
 			-- LOG
 			INSERT INTO dbo.Task_Cust_BalanceProblem1 (UserName, custid, DiffBalance, IsFixed, Remark)
 			SELECT
-				username, @custid, @DiffBalance, 1, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE @IsUUS WHEN 1 THEN ' UUS' ELSE '' END + CASE @IsCN88Member WHEN 1 THEN ' - Member of CNN88' ELSE '' END
+				username, @custid, @DiffBalance, 1, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE @IsUUS WHEN 1 THEN ' UUS' ELSE '' END
 			FROM
 				CustDB.dbo.custInfo with (nolock)
 			WHERE

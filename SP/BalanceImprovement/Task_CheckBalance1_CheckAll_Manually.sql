@@ -204,7 +204,14 @@ BEGIN
 		AND NOT EXISTS (SELECT 1 FROM dbo.BalDebitCasinoPending dbp3 with (nolock) WHERE cb.custid = dbp3.custid)
 		AND NOT EXISTS (SELECT 1 FROM dbo.BalDebitOthersPending dbp4 with (nolock) WHERE cb.custid = dbp4.custid)
 		
-	PRINT @msg + ' -' + CAST(@RD as varchar(50)) + ' -> ' + CAST(@@ROWCOUNT as varchar(50)) + ' accounts add to verify balance'
+	SET @msg = @msg + ' -' + CAST(@RD as varchar(50)) + ' -> ' + CAST(@@ROWCOUNT as varchar(50)) + ' accounts add to verify balance'
+
+	DELETE t
+	FROM dbo.Task_Cust_CheckBalanceVerify1_Manually t WITH(ROWLOCK)
+		INNER JOIN CustDB.dbo.Customer c WITH(NOLOCK) ON t.custid = c.custid
+	WHERE EXISTS (SELECT TOP 1 1 FROM dbo.CS_CustSuper cs WITH(NOLOCK) WHERE c.srecommend = cs.CustId)
+
+	PRINT @msg + ' -' + CAST(@@ROWCOUNT as varchar(50)) + ' accounts off CN88 was deleted from verify balance list'
 	
 	DROP TABLE #tmpCal
 	DROP TABLE #QuestionLists
