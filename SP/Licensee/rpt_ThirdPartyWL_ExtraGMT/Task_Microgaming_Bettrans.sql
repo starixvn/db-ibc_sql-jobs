@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 USE [bodb_LicenseeReport]
 GO
@@ -17,6 +17,7 @@ AS
 		- 20161222@Jim: LA/ Invoice - Integrate Fishing World (GMT + 8) [Redmine:#68677]
 		- 20180703@Sophia: Check @Winlossdate <= Movebetday will return because this day don't have data on Bettrans [Redmine: #97567] 
 		- 20180608@Bruce: LA - Implement sum job for Pragmatic (GMT+0) [RedmineId #93958]
+		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 	 Param's Explanation:
 */
 
@@ -35,42 +36,8 @@ BEGIN
 	DELETE dbo.rpt_ThirdPartyWL_ExtraGMT WITH(ROWLOCK, UPDLOCK)
 	WHERE RptDate = @Winlossdate
 
-	--bettype mapping
-	DECLARE @Bettype AS TABLE(Bettype INT)
-    INSERT INTO @Bettype (Bettype)
-    SELECT Bettype
-	FROM bodb_licensee.dbo.Sport_Bettype_Reference WITH (NOLOCK)
-	WHERE Sporttype IN (203,205) 
-
 	INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
 	(
-		SELECT CAST(b.winlostdate AS DATE)	AS Rptdate
-			, CAST(b.checktime AS DATE)	AS RptDate3rd
-			, ISNULL(site.SiteID, -1) AS siteid
-			, b.bettype	 AS BetTypeId		
-			, b.currency
-			, b.statusID
-			, COUNT(1) AS BetCount
-			, SUM(ABS(b.stake)) AS Turnover
-			, SUM(winlost - actual_stake) AS Winloss		
-			, SUM(b.comm) AS AComm
-			, SUM(b.playercomm) AS PComm
-			, 0 AS ProgressiveContribution
-			, 0 AS ProgressivePayout
-			, 0 AS ValidBetAmount
-		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-			INNER JOIN @Bettype bt ON b.bettype = bt.Bettype
-			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
-			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
-			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
-		WHERE b.winlostdate = @Winlossdate	
-			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND b.bettype NOT IN (2008, 2009) -- MGCRNG
-			AND b.bettype NOT BETWEEN 1011 AND 1020 -- FW
-			AND b.bettype NOT BETWEEN 4101 AND 4300 -- PP
-		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.checktime AS DATE), ISNULL(site.SiteID,-1), b.bettype
-			, b.currency, b.statusID
-		UNION
 		SELECT CAST(b.winlostdate AS DATE)	AS Rptdate
 			, CAST(b.Transdate3rd AS DATE)	AS RptDate3rd
 			, ISNULL(site.SiteID, -1) AS siteid
@@ -93,9 +60,7 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
 		WHERE b.winlostdate = @Winlossdate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND (
-				b.gameID IN (2008, 2009) -- MGCRNG
-				OR b.gameID BETWEEN 1011 AND 1020 -- FW
+			AND (b.gameID BETWEEN 1011 AND 1020 -- FW
 				OR b.gameID BETWEEN 4101 AND 4300 -- PP
 			)
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID

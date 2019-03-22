@@ -52,6 +52,7 @@ AS
 			bettypeRef: 8101
 		- 20190308@Parsons: Integrate PP promotion prize [#109014]
 		- 20190418@Percy: Remove Exchange for Datasource = rpt_Betting [RedmineID: #111937]
+		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 
@@ -77,7 +78,7 @@ BEGIN
 					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,MGCLC,MGCRNG,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG') -- Remove Exchange (BX) due to separate wallet only
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 		SELECT Bettype, ProductId 
@@ -110,7 +111,7 @@ BEGIN
 			,[SiteID]
 			,bt.ProductID
 			,CASE 
-				WHEN bt.ProductID IN (1,13,14,17,15,25) 
+				WHEN bt.ProductID IN (1,13,15,25) 
 						OR b.Bettype = 1499 
 						OR b.Bettype = 4300 -- Promotion Prize Win
 					THEN b.[Bettype]
@@ -140,7 +141,7 @@ BEGIN
 				,[SiteID]
 				, bt.ProductID
 				,CASE 
-					WHEN bt.ProductID IN (1,13,14,17,15,25) 
+					WHEN bt.ProductID IN (1,13,15,25) 
 							OR b.Bettype = 1499 
 							OR b.Bettype = 4300 -- Promotion Prize Win
 						THEN b.[Bettype]
@@ -155,7 +156,7 @@ BEGIN
 			[rptDate]
 			,[SiteID]
 			, bt.ProductID
-			,CASE WHEN bt.ProductID IN (1,13,14,17) THEN b.[Bettype] ELSE -1 END [Bettype]
+			,CASE WHEN bt.ProductID IN (1,13) THEN b.[Bettype] ELSE -1 END [Bettype]
 			,[CurrencyId]
 			,Status [StatusId]
 			,ISNULL([CustomerCategory],-1)
@@ -179,7 +180,7 @@ BEGIN
 		GROUP BY [rptDate]
 				,[SiteID]
 				, bt.ProductID
-				,CASE WHEN bt.ProductID IN (1,13,14,17) THEN b.[Bettype] ELSE -1 END 
+				,CASE WHEN bt.ProductID IN (1,13) THEN b.[Bettype] ELSE -1 END 
 				,[CurrencyId]
 				,Status
 				,ISNULL([CustomerCategory],-1)

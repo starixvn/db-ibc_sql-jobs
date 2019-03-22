@@ -28,6 +28,7 @@ AS
 		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
 		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
 		- 20181210@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
+		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -396,9 +397,7 @@ BEGIN
 					WHEN bettype = 1000 THEN 253--games
 					WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 					WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
-					WHEN bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
 					WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --Colossus Bet
-					WHEN bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
 					WHEN bettype BETWEEN 4001 AND 4100 THEN 212--Voidbridge
 					WHEN bettype = 901 THEN -2--BetTrade - Sold
 					WHEN bettype = 902 THEN -3--BetTrade - Bought.
@@ -439,9 +438,7 @@ BEGIN
 					WHEN bettype = 1000 THEN 253--games
 					WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 					WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
-					WHEN bettype BETWEEN 2001 AND 2007 THEN 203--Live MicroGaming
 					WHEN bettype BETWEEN 18000 AND 18006 THEN 204 -- Colossus Bet
-					WHEN bettype BETWEEN 2008 AND 2009 THEN 205--RNG MicroGaming
 					WHEN bettype BETWEEN 4001 AND 4100 THEN 212--Voidbridge
 					WHEN bettype = 901 THEN -2--BetTrade - Sold
 					WHEN bettype = 902 THEN -3--BetTrade - Bought

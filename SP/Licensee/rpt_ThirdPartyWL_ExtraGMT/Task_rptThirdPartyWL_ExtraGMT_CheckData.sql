@@ -1,12 +1,4 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_LicenseeReport]
-GO
-
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
 ALTER PROCEDURE [dbo].[Task_rptThirdPartyWL_ExtraGMT_CheckData]
 	@WinlostDate		SMALLDATETIME,
 	@HasDataMismatch	TINYINT OUTPUT, --0: No mismatch; 1: Has real currencies; 2: UUS only
@@ -20,6 +12,7 @@ AS
 	Original:
 	Revisions:
 		- 20181210@bruce: check Pragmatic data [#105723]
+		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 */
 
 BEGIN
@@ -65,44 +58,8 @@ BEGIN
 	DECLARE @S_Count INT, @T_Count INT,
 			@i INT;
 
-	DECLARE @Bettype AS TABLE(Bettype INT);
-
-    INSERT INTO @Bettype(Bettype)
-    SELECT Bettype
-	FROM bodb_licensee.dbo.Sport_Bettype_Reference WITH (NOLOCK)
-	WHERE Sporttype IN (203, 205);
-
 	INSERT INTO #Source(TableName, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
 	(
-		SELECT	'bettrans14',
-				CAST(b.checktime AS DATE) AS RptDate3rd,
-				ISNULL(site.SiteID, -1) AS siteid,
-				b.bettype AS BetTypeId,
-				b.currency,
-				b.statusID,
-				ISNULL(COUNT(1), 0) AS BetCount,
-				ISNULL(SUM(ABS(b.stake)), 0) AS Turnover,
-				ISNULL(SUM(winlost - actual_stake), 0) AS Winloss,
-				ISNULL(SUM(b.comm), 0) AS AComm,
-				ISNULL(SUM(b.playercomm), 0) AS PComm,
-				0 AS ProgressiveContribution,
-				0 AS ProgressivePayout,
-				0 AS ValidBetAmount	
-		FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
-			INNER JOIN @Bettype bt ON b.bettype = bt.Bettype
-			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
-			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
-			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
-		WHERE b.winlostdate = @WinlostDate	
-			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND b.bettype NOT IN (2008, 2009) -- MGCRNG
-			AND b.bettype NOT BETWEEN 1011 AND 1020 -- FW
-			AND b.bettype NOT BETWEEN 4101 AND 4300 -- PP
-		GROUP BY CAST(b.checktime AS DATE), ISNULL(site.SiteID,-1), b.bettype,
-			b.currency, b.statusID
-
-		UNION ALL
- 
 		SELECT	'bettransRnG14',
 				CAST(b.Transdate3rd AS DATE)	AS RptDate3rd,
 				ISNULL(site.SiteID, -1) AS siteid,
@@ -125,8 +82,7 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
 		WHERE b.winlostdate = @WinlostDate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND ( b.gameID IN (2008, 2009) -- MGCRNG
-				 OR b.gameID BETWEEN 1011 AND 1020 -- FW
+			AND (b.gameID BETWEEN 1011 AND 1020 -- FW
 				 OR b.gameID BETWEEN 4101 AND 4300 -- PP
 				 )
 		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
