@@ -1,4 +1,4 @@
-ALTER TRIGGER [dbo].[Task_ArchiveData_Transition_DELETE]
+CREATE TRIGGER [dbo].[Task_ArchiveData_Transition_DELETE]
    ON  [dbo].[Task_ArchiveData_Transition]
    AFTER UPDATE
 AS 

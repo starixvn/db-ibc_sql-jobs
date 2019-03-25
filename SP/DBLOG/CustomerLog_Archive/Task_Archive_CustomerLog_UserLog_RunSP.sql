@@ -23,14 +23,14 @@ BEGIN
 	BEGIN
 		IF EXISTS (
 			SELECT TOP 1 1
-			FROM dbo.Task_Task_ArchiveData_Transition WITH(NOLOCK)
+			FROM dbo.Task_ArchiveData_Transition WITH(NOLOCK)
 		)
 		BEGIN
-			RAISERROR('^^^Having data on table [Task_Task_ArchiveData_Transition]. Please check!!!^^^', 16, 1)
+			RAISERROR('^^^Having data on table [Task_ArchiveData_Transition]. Please check!!!^^^', 16, 1)
 			RETURN
 		END
 
-		INSERT INTO dbo.Task_Task_ArchiveData_Transition(LogId, Logdate)
+		INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate)
 		SELECT logid, logdate 
 		FROM dbo.UserLog_RunSP WITH(NOLOCK)
 		WHERE logdate >= @FromDateTime AND logdate < @ToDateTime
@@ -39,7 +39,7 @@ BEGIN
 		BEGIN
 		
 			DELETE TOP(@RowInBatch)
-			FROM dbo.Task_Task_ArchiveData_Transition WITH(ROWLOCK)
+			FROM dbo.Task_ArchiveData_Transition WITH(ROWLOCK)
 			
 			IF @@ROWCOUNT = 0
 				BREAK
