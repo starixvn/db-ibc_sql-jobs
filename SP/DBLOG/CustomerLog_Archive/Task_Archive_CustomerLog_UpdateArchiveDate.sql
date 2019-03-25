@@ -13,13 +13,8 @@ BEGIN
 	SET NOCOUNT ON
 
 	UPDATE a
-	SET ArchiveDate = t.ArchiveDate
-	FROM dbo.Task_Setting_ArchiveData a WITH(UPDLOCK, ROWLOCK)
-		INNER JOIN (
-			SELECT TableName, MAX(ArchiveDate) ArchiveDate
-			FROM dbo.Task_ArchiveData_List WITH(NOLOCK)
-			GROUP BY TableName
-		) t ON a.TableName = t.TableName
+	SET ArchiveDate = DATEADD(DAY, ArchiveDayCount, ArchiveDate)
+	FROM dbo.Task_ArchiveData_Setting a WITH(UPDLOCK, ROWLOCK)
 
 END
 GO
