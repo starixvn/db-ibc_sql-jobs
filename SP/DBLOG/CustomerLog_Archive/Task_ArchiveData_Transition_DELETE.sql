@@ -1,6 +1,6 @@
-CREATE TRIGGER [dbo].[Task_ArchiveData_Transition_DELETE]
+ALTER TRIGGER [dbo].[Task_ArchiveData_Transition_DELETE]
    ON  [dbo].[Task_ArchiveData_Transition]
-   AFTER UPDATE
+   AFTER DELETE
 AS 
 /*
 	Created: 20190227@Patrick
