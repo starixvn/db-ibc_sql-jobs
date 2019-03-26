@@ -27,7 +27,7 @@ BEGIN
 	IF @@ROWCOUNT = 0
 	BEGIN
 		PRINT 'job done!!!'
-		RAISERROR('^^^No data^^^', 16, 1)
+		RAISERROR('* no more data *', 16, 1)
 	END
 
 	SELECT @__dateTimeFrom = CAST(@archiveDate AS DATE)
