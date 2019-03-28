@@ -525,23 +525,32 @@ BEGIN
 	END
 	IF @RuleId IN(0,70)
 	BEGIN
-		IF @site='haifa' 
+		IF @site IN('BBIN2', 'HAIFA')
 		BEGIN
 			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 			SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
 			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member d WITH(NOLOCK)
 				INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
-			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT<>90.5 
+			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT<>92.5 
 				AND d.AgentID NOT IN(SELECT CustID FROM #Trade)
 		END
-		ELSE IF @site<>'asiabet88' OR(@site='asiabet88' AND @currency NOT IN(3,6))
+		ELSE IF @site IN('TLC', 'IBO', 'ZT828') OR(@site='asiabet88' AND @currency NOT IN(3,6))
 		BEGIN
 			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 			SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
 			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member d WITH(NOLOCK)
 				INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
-			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT<>85
+			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT<>91
 			AND d.AgentID NOT IN(SELECT CustID FROM #Trade)
+		END
+		ELSE
+		BEGIN
+			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+			SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
+			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member d WITH(NOLOCK)
+				INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
+			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT<>88
+				AND d.AgentID NOT IN(SELECT CustID FROM #Trade)
 		END
 	END
 	IF @RuleId IN (0,57)
