@@ -18,6 +18,7 @@ AS
 	Revisions:
 		- 20171117@Percy: Initialize SP [RedmineID: #86477]
 		- 20180507@Percy: Update condition of resettledDate for case re-import manually [RedmineID: #94555]
+		- 20190401@Percy: Update JobType correctly [RedmineID: #110692]
 
 	Param's Explanation:
 		@QueueID: manually import
@@ -169,7 +170,7 @@ BEGIN
 				*/
 				BEGIN TRY
 					/* Sum_winloss_Exchange */
-					IF @JobType IN (1,3,6)
+					IF @JobType IN (1,3)
 					BEGIN
 						TRUNCATE TABLE #tmpSum_winloss_Exchange
 						TRUNCATE TABLE #tmpSum_winloss_Exchange_Detail
@@ -291,73 +292,6 @@ BEGIN
 						IF @JobType IN (1,3)
 						BEGIN
 							MERGE dbo.Sum_winloss_Exchange AS s
-							USING
-								(
-									SELECT
-										t.userId,
-										t.agentId,
-										t.eventTypeName,
-										t.eventName,
-										t.eventId,
-										t.marketName,
-										t.marketId,
-										t.startTime,
-										t.settledDate,
-										t.profitLoss,
-										t.marketTotal,
-										t.commission,
-										t.agentCommission,
-										t.stakeTotal,
-										t.resettledDate,
-										c.CustID,
-										c.Currency,
-										e.ExVirtualRate
-									FROM #tmpSum_winloss_Exchange t
-										INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
-										INNER JOIN bodb02.dbo.Exchange e WITH (NOLOCK) ON c.currency = e.exchangeid
-								)
-							AS src
-								(
-									userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
-									startTime,settledDate,profitLoss,marketTotal,commission,agentCommission,stakeTotal,
-									resettledDate,CustID,Currency,ExVirtualRate
-								)
-								ON s.userId = src.userId AND s.eventID = src.eventId AND s.marketID = src.marketId AND s.settledDate = src.settledDate
-							WHEN MATCHED AND ISNULL(s.resettledDate, @statisDate) <= ISNULL(src.resettledDate, @statisDate) THEN
-								UPDATE SET
-									s.agentId = src.agentId,
-									s.eventTypeName = src.eventTypeName,
-									s.eventName = src.eventName,
-									s.marketName = src.marketName,
-									s.startTime = src.startTime,
-									s.profitLoss = src.profitLoss,
-									s.marketTotal = src.marketTotal,
-									s.commission = src.commission,
-									s.agentCommission = src.agentCommission,
-									s.stakeTotal = src.stakeTotal,
-									s.resettledDate = src.resettledDate,
-									s.CustID = src.CustID,
-									s.Currency = src.Currency,
-									s.ExVirtualRate = src.ExVirtualRate
-							WHEN NOT MATCHED THEN
-								INSERT
-								(
-									userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
-									startTime,settledDate,profitLoss,marketTotal,commission,agentCommission,stakeTotal,
-									resettledDate,CustID,Currency,ExVirtualRate
-								)
-								VALUES
-								(
-									src.userId,src.agentId,src.eventTypeName,src.eventName,src.eventId,src.marketName,src.marketId,
-									src.startTime,src.settledDate,src.profitLoss,src.marketTotal,src.commission,src.agentCommission,src.stakeTotal,
-									src.resettledDate,src.CustID,src.Currency,src.ExVirtualRate
-								)
-							OUTPUT INSERTED.userId, INSERTED.eventID, INSERTED.marketID, INSERTED.settledDate, INSERTED.stakeTotal, INSERTED.marketTotal
-								INTO @updated_userId (userId, eventId, marketId, SettledDate, stakeTotal, MarketTotal);
-						END
-						ELSE IF @JobType = 6
-						BEGIN
-							MERGE dbo.Sum_winloss_Exchange_CheckData AS s
 							USING
 								(
 									SELECT
@@ -722,7 +656,7 @@ BEGIN
 		END
 
 		-- Add winlostdate into Product3rd_SummarizedDateHistory
-		IF @ErrCode = 0 AND @JobType <> 6
+		IF @ErrCode = 0
 		BEGIN
 			IF EXISTS (SELECT 1 FROM @updated_userId)
 			BEGIN
