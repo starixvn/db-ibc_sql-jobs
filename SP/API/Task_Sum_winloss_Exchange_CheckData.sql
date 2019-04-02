@@ -221,13 +221,5 @@ BEGIN
 		@subject		= @subject,
 		@body			= @Msg,
 		@body_format	= 'HTML'
-
-	IF @isJob = 1
-	BEGIN
-		-- Update LicSystemSetting
-		EXEC dbo.Task_LicSystemSetting_Upd
-			@IsImported = 0
-			,@ProductId = 31
-	END
 END
 GO
