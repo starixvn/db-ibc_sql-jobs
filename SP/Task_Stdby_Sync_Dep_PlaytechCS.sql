@@ -1,4 +1,3 @@
-/*<info serverAlias="DB052-bodb_PlaytechCS" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_PlaytechCS]
 GO
 
