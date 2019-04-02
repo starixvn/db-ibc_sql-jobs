@@ -7,8 +7,8 @@ ALTER PROCEDURE [dbo].[Task_LicSystemSetting_Upd]
 	,@ProductId			SMALLINT
 	,@FromImportedDate	SMALLDATETIME = NULL
 	,@ToImportedDate	SMALLDATETIME = NULL
-	,@ErrCode			INT = 0
-	,@ErrMsg			NVARCHAR(4000) = ''
+	,@ErrCode			INT = 0	OUTPUT
+	,@ErrMsg			NVARCHAR(4000) = '' OUTPUT
 AS
 
 /*
@@ -28,7 +28,7 @@ BEGIN
 	BEGIN TRY
 		UPDATE dbo.LicSystemSetting WITH (ROWLOCK, UPDLOCK)
 		SET SValue = CASE SName
-						WHEN 'IsImported' THEN @IsImported
+						WHEN 'IsImported' THEN CONVERT(VARCHAR(2), @IsImported)
 						WHEN 'FromImportedDate' THEN CASE WHEN @FromImportedDate IS NULL THEN SValue ELSE CONVERT(VARCHAR(10), @FromImportedDate, 120) END
 						WHEN 'ToImportedDate' THEN CASE WHEN @ToImportedDate IS NULL THEN SValue ELSE CONVERT(VARCHAR(10), @ToImportedDate, 120) END
 						ELSE SValue END
