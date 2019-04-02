@@ -543,6 +543,15 @@ BEGIN
 			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT<>91
 			AND d.AgentID NOT IN(SELECT CustID FROM #Trade)
 		END
+		ELSE IF @site IN('Lucky88', '11bet', 'Fabet', 'One88', 'FB88')
+		BEGIN
+			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+			SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
+			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member d WITH(NOLOCK)
+				INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
+			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT<>85
+			AND d.AgentID NOT IN(SELECT CustID FROM #Trade)
+		END
 		ELSE
 		BEGIN
 			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
