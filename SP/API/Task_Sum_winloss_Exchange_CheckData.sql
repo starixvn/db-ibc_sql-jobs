@@ -22,8 +22,13 @@ BEGIN
 	DECLARE @isJob BIT = 0
 
 	-- For send mail
-	DECLARE @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX) = ''
+	DECLARE @recipients VARCHAR(1000), @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX) = ''
 	SELECT  @Subject = 'SQL Server Job System: ''bodb_3rdProduct: Check Exchange data monthly'' on ' + @@SERVERNAME
+
+	IF @@SERVERNAME IN ('DB052', 'DB053', 'DB054')
+		SELECT @recipients = 'percy.nguyen@starixsoft.com;alex.nguyen@starixsoft.com;ann.nguyen@starixsoft.com;pontus@starixsoft.com'
+	ELSE
+		SELECT @recipients = 'percy.nguyen@starixsoft.com;walter.tran@starixsoft.com'
 
 	IF @FromDate IS NULL OR @ToDate IS NULL -- for job
 	BEGIN
@@ -217,7 +222,7 @@ BEGIN
 	END
 
 	EXEC msdb.dbo.sp_send_dbmail
-		@recipients		= 'percy.nguyen@starixsoft.com;walter.tran@starixsoft.com;alex.nguyen@starixsoft.com;ann.nguyen@starixsoft.com;pontus@starixsoft.com',
+		@recipients		= @recipients,
 		@subject		= @subject,
 		@body			= @Msg,
 		@body_format	= 'HTML'
