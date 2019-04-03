@@ -34,22 +34,19 @@ Revisions:
 Param's Explanation: 
 
 */
-			
+
 IF @fdate IS NULL
 BEGIN
-
-	SELECT TOP(1) @fdate = CASE WHEN @step = 6 THEN winlostdate ELSE DATEADD(day, 7, winlostdate) END
+	SELECT TOP(1) @fdate = DATEADD(day, 7, winlostdate)
 	FROM dbo.bettrans with (nolock)
 	WHERE matchid = 0 and bettype = 20000
 	ORDER BY transid
 	
 	IF @fdate > CURRENT_TIMESTAMP
 		SET @fdate = DATEADD(day, -7, @fdate)
-	
 END
 
 PRINT '@fdate = ' + CONVERT(varchar(10), @fdate, 120)
-
 
 -- verify @fdate
 Declare @testdate datetime
@@ -599,6 +596,11 @@ END
 IF @step = 6
 BEGIN
 -- ================== Finishing
+	SELECT TOP(1) @fdate = winlostdate
+	FROM dbo.bettrans WITH (NOLOCK)
+	WHERE matchid = 0 and bettype = 20000
+	ORDER BY transid
+		
 	--//remove all data in processing list
 	DELETE FROM dbo.ProcessingCustList WITH(ROWLOCK)
 
