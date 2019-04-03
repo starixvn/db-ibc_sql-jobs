@@ -29,7 +29,7 @@ Revisions:
 			+ Add more signal to replicated servers when MB/BU starting or done
 	- 20180329@Percy: Add Bet_ExecRep_09 [RedmineID: #92391]
 	- 20181002@Dominic: Get username from archived DB  [Redmine:99882]
-	- 20190327@Helen: Calculating value of @fdate of step #6 is incorrect  [Redmine:99882]
+	- 20190327@Helen: Calculating value of @fdate of step #6 is incorrect  [Redmine:110974]
 	
 Param's Explanation: 
 
