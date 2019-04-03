@@ -217,7 +217,7 @@ BEGIN
 	END
 
 	EXEC msdb.dbo.sp_send_dbmail
-		@recipients		= 'percy.nguyen@starixsoft.com;walter.tran@starixsoft.com',
+		@recipients		= 'percy.nguyen@starixsoft.com;walter.tran@starixsoft.com;alex.nguyen@starixsoft.com;ann.nguyen@starixsoft.com;pontus@starixsoft.com',
 		@subject		= @subject,
 		@body			= @Msg,
 		@body_format	= 'HTML'
