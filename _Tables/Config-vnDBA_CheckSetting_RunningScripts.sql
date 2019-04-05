@@ -601,7 +601,7 @@ WHERE	VarKey = N''~~~'';
 ');
 
 INSERT INTO	dbo.vnDBA_CheckSetting_RunningScripts (ScriptName, VarKey, Threads, Command)
-VALUES	(N'PT Deposit', N'CheckSettingThreadCount', 0, N'
+VALUES	(N'PT Deposit', N'CheckSettingThreadCount', 6, N'
 SET NOCOUNT ON;
 
 DECLARE @CustId INT;
@@ -616,7 +616,10 @@ BEGIN
 
 	IF @CustId IS NULL BREAK;
 
-	EXECUTE dbo.DBA_CheckPositionTaking_Deposit  @srecommend = @CustId, @RuleId = 0;
+	EXECUTE dbo.DBA_CheckPositionTaking_Deposit_DCS  @srecommend = @CustId, @RuleId = 0;
+	EXECUTE dbo.DBA_CheckPositionTaking_DepCustsetting  @srecommend = @CustId, @RuleId = 0;
+	EXECUTE dbo.DBA_CheckPositionTaking_DepCustSetting3rd  @srecommend = @CustId, @RuleId = 0;
+	EXECUTE dbo.DBA_CheckPositionTaking_DepCustSettingGame  @srecommend = @CustId, @RuleId = 0;
 
 	UPDATE dbo.Deposit_Supers
 	SET PT = 1

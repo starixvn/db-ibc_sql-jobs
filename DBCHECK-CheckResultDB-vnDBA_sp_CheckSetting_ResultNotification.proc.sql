@@ -23,6 +23,7 @@ AS
 		- 20180807@Billy:	Fix bug of rendering result - [Redmine: #99249]
 		- 20180816@Billy:	Integrate Bet Limit & Stake Level checking - [Redmine: #99249]
 		- 20190405@Billy:	Update mail format - [Redmine: #111478]
+		- 20190405@Billy:	Integrate check PT Deposit - [Redmine: #111499]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -373,6 +374,19 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 			ON	c.SportType = s.SportType
 	GROUP BY r.RuleName, c.RuleId, s.SportName, c.SportType, c.BetType, c.IsLive;
 
+	INSERT INTO	#CheckResultPTAgg (RuleName, RuleId, SportName, SportType, BetType, IsLive, IsDeposit, Total)
+	SELECT	ISNULL(r.RuleName, 'N/A'), d.RuleId, ISNULL(s.SportName, 'N/A'), d.SportType, d.BetType, d.IsLive, 1, COUNT(1)
+	FROM		dbo.CheckPTResult_Deposit AS d WITH (NOLOCK)
+	LEFT JOIN	dbo.Rule_Credit AS r WITH (NOLOCK)
+			ON	d.RuleId = r.RuleId
+	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+			ON	d.CustIdA = cus.CustId
+	INNER JOIN	CheckCustDB.dbo.custInfo AS cus1 WITH (NOLOCK)
+			ON	d.CustIdB = cus1.CustId
+	LEFT JOIN	@Sports AS s
+			ON	d.SportType = s.SportType
+	GROUP BY r.RuleName, d.RuleId, s.SportName, d.SportType, d.BetType, d.IsLive;
+
 	SELECT	@countPTCredit = ISNULL(SUM(Total), 0)
 	FROM	#CheckResultPTAgg WITH (NOLOCK)
 	WHERE	IsDeposit = 0;
@@ -398,6 +412,18 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 				ON	c.CustIdB = cus1.CustId
 		LEFT JOIN	@Sports AS s
 				ON	c.SportType = s.SportType;
+
+		INSERT INTO	#CheckResultPT (RuleName, RuleId, SportName, SportType, BetType, CustId_A, Username_A, CustId_B, Value_A, Value_B, CreatedDate, IsLive, IsDeposit)
+		SELECT	ISNULL(r.RuleName, 'N/A'), d.RuleId, ISNULL(s.SportName, 'N/A'), d.SportType, d.BetType, d.CustIdA, cus.username, d.CustIdB, d.ValueA, d.ValueB, d.CreatedDate, d.IsLive, 1
+		FROM		dbo.CheckPTResult_Deposit AS d WITH (NOLOCK)
+		LEFT JOIN	dbo.Rule_Credit AS r WITH (NOLOCK)
+				ON	d.RuleId = r.RuleId
+		INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+				ON	d.CustIdA = cus.CustId
+		INNER JOIN	CheckCustDB.dbo.custInfo AS cus1 WITH (NOLOCK)
+				ON	d.CustIdB = cus1.CustId
+		LEFT JOIN	@Sports AS s
+				ON	d.SportType = s.SportType;
 	END;
 
 
