@@ -642,23 +642,23 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 				,	[br]		= ''
 				,	(	SELECT	[@style]		= N'display:table;width:95%;border-spacing:10px;margin:0 auto;'
 							,	[div/@style]	= N'background-color:' + CASE @countPTCredit WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
-							,	[div/h2]		= N'PT Credit'
+							,	[div/h2]		= N'PT<br/>Credit'
 							,	[div/h3]		= CASE @countPTCredit WHEN 0 THEN N'Success' ELSE CAST(@countPTCredit AS NVARCHAR) END
 							,	NULL
 							,	[div/@style]	= N'background-color:' + CASE @countStatusCredit WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
-							,	[div/h2]		= N'Status Credit'
+							,	[div/h2]		= N'Status<br/>Credit'
 							,	[div/h3]		= CASE @countStatusCredit WHEN 0 THEN N'Success' ELSE CAST(@countStatusCredit AS NVARCHAR) END
 							,	NULL
 							,	[div/@style]	= N'background-color:' + CASE @countCommCredit WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
-							,	[div/h2]		= N'Commission Credit'
+							,	[div/h2]		= N'Commission<br/>Credit'
 							,	[div/h3]		= CASE @countCommCredit WHEN 0 THEN N'Success' ELSE CAST(@countCommCredit AS NVARCHAR) END
 							,	NULL
 							,	[div/@style]	= N'background-color:' + CASE @countBetLimitCredit WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
-							,	[div/h2]		= N'Bet Limit Credit'
+							,	[div/h2]		= N'Bet Limit<br/>Credit'
 							,	[div/h3]		= CASE @countBetLimitCredit WHEN 0 THEN N'Success' ELSE CAST(@countBetLimitCredit AS NVARCHAR) END
 							,	NULL
 							,	[div/@style]	= N'background-color:' + CASE @countStakeLevelCredit WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
-							,	[div/h2]		= N'Stake Level Credit'
+							,	[div/h2]		= N'Stake Level<br/>Credit'
 							,	[div/h3]		= CASE @countStakeLevelCredit WHEN 0 THEN N'Success' ELSE CAST(@countStakeLevelCredit AS NVARCHAR) END
 						FROM	(
 							SELECT	[style]			= N'color:white;text-align:center;width:20%;display:table-cell;'
@@ -669,23 +669,23 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 				,	[br]		= ''
 				,	(	SELECT	[@style]		= N'display:table;width:95%;border-spacing:10px;margin:0 auto;'
 							,	[div/@style]	= N'background-color:' + CASE @countPTDeposit WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
-							,	[div/h2]		= N'PT Deposit'
+							,	[div/h2]		= N'PT<br/>Deposit'
 							,	[div/h3]		= CASE @countPTDeposit WHEN 0 THEN N'Success' ELSE CAST(@countPTDeposit AS NVARCHAR) END
 							,	NULL
 							,	[div/@style]	= N'background-color:' + CASE @countStatusDeposit WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
-							,	[div/h2]		= N'Status Deposit'
+							,	[div/h2]		= N'Status<br/>Deposit'
 							,	[div/h3]		= CASE @countStatusDeposit WHEN 0 THEN N'Success' ELSE CAST(@countStatusDeposit AS NVARCHAR) END
 							,	NULL
 							,	[div/@style]	= N'background-color:' + CASE @countCommDeposit WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
-							,	[div/h2]		= N'Commission Deposit'
+							,	[div/h2]		= N'Commission<br/>Deposit'
 							,	[div/h3]		= CASE @countCommDeposit WHEN 0 THEN N'Success' ELSE CAST(@countCommDeposit AS NVARCHAR) END
 							,	NULL
 							,	[div/@style]	= N'background-color:' + CASE @countBetLimitDeposit WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
-							,	[div/h2]		= N'Bet Limit Deposit'
+							,	[div/h2]		= N'Bet Limit<br/>Deposit'
 							,	[div/h3]		= CASE @countBetLimitDeposit WHEN 0 THEN N'Success' ELSE CAST(@countBetLimitDeposit AS NVARCHAR) END
 							,	NULL
 							,	[div/@style]	= N'background-color:' + CASE @countStakeLevelDeposit WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
-							,	[div/h2]		= N'Stake Level Deposit'
+							,	[div/h2]		= N'Stake Level<br/>Deposit'
 							,	[div/h3]		= CASE @countStakeLevelDeposit WHEN 0 THEN N'Success' ELSE CAST(@countStakeLevelDeposit AS NVARCHAR) END
 						FROM	(
 							SELECT	[style]			= N'color:white;text-align:center;width:20%;display:table-cell;'
@@ -821,6 +821,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 									,	TYPE
 								)
 						WHERE	@countPTCredit + @countPTDeposit <= @rowLimited
+							AND	@countPTCredit + @countPTDeposit > 0
 						FOR XML PATH ('table')
 						,	TYPE
 					)
@@ -951,6 +952,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 									,	TYPE
 								)
 						WHERE	@countStatusCredit + @countStatusDeposit <= @rowLimited
+							AND	@countStatusCredit + @countStatusDeposit > 0
 						FOR XML PATH ('table')
 						,	TYPE
 					)
@@ -1073,6 +1075,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 									,	TYPE
 								)
 						WHERE	@countCommCredit + @countCommDeposit <= @rowLimited
+							AND	@countCommCredit + @countCommDeposit > 0
 						FOR XML PATH ('table')
 						,	TYPE
 					)
@@ -1203,6 +1206,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 									,	TYPE
 								)
 						WHERE	@countBetLimitCredit + @countBetLimitDeposit <= @rowLimited
+							AND	@countBetLimitCredit + @countBetLimitDeposit > 0
 						FOR XML PATH ('table')
 						,	TYPE
 					)
@@ -1325,6 +1329,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 									,	TYPE
 								)
 						WHERE	@countStakeLevelCredit + @countStakeLevelDeposit <= @rowLimited
+							AND	@countStakeLevelCredit + @countStakeLevelDeposit > 0
 						FOR XML PATH ('table')
 						,	TYPE
 					)
