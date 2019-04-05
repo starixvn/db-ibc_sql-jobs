@@ -21,20 +21,23 @@ AS
 		- 20180801@Elodie:	Update filter of commission result - [Redmine: #99249]
 		- 20180806@Elodie:	Exclude ignored cust from table result - [Redmine: #73556]
 		- 20180807@Billy:	Fix bug of rendering result - [Redmine: #99249]
+		- 20180816@Billy:	Integrate Bet Limit & Stake Level checking - [Redmine: #99249]
 */
-BEGIN
-    SET NOCOUNT ON;
-	
-	DECLARE	@subject		NVARCHAR(255)
-		,	@html			NVARCHAR(MAX)
-		,	@countPT		INT
-		,	@countStatus	INT
-		,	@countComm		INT
-		,	@rowLimited		INT
-		,	@logDate		DATETIME
-		,	@fullBackup		NVARCHAR(500)
-		,	@diffBackup		NVARCHAR(500)
-		,	@case			TINYINT
+BEGIN;
+	SET NOCOUNT ON;
+
+	DECLARE	@subject			NVARCHAR(255)
+		,	@html				NVARCHAR(MAX)
+		,	@countPT			INT
+		,	@countStatus		INT
+		,	@countComm			INT
+		,	@countBetLimit		INT
+		,	@countStakeLevel	INT
+		,	@rowLimited			INT
+		,	@logDate			DATETIME
+		,	@fullBackup			NVARCHAR(500)
+		,	@diffBackup			NVARCHAR(500)
+		,	@case				TINYINT
 		;
 
 	WHILE	NOT EXISTS (SELECT 1 FROM dbo.vnDBA_Service_Variables WITH (NOLOCK) WHERE VarKey = 'CheckSettingThreadCount' AND CAST(VarValue AS SMALLINT) = 0)
@@ -121,6 +124,58 @@ BEGIN
 					,	IsDeposit		BIT
 					);
 
+	CREATE TABLE	#CheckResultBetLimit (
+						RuleName		VARCHAR(100)
+					,	RuleId			SMALLINT
+					,	SportName		VARCHAR(500)
+					,	SportType		SMALLINT
+					,	BetType			SMALLINT
+					,	CustId_A		INT
+					,	Username_A		NVARCHAR(50)
+					,	CustId_B		INT
+					,	Value_A			SMALLMONEY
+					,	Value_B			SMALLMONEY
+					,	CreatedDate		DATETIME
+					,	IsDCS			BIT
+					,	IsDeposit		BIT
+					);
+
+	CREATE TABLE	#CheckResultBetLimitAgg (
+						RuleName		VARCHAR(100)
+					,	RuleId			SMALLINT
+					,	SportName		VARCHAR(500)
+					,	SportType		SMALLINT
+					,	BetType			SMALLINT
+					,	Total			INT
+					,	IsDCS			BIT
+					,	IsDeposit		BIT
+					);
+	
+	CREATE TABLE	#CheckResultStakeLevel (
+						RuleName		VARCHAR(100)
+					,	RuleId			SMALLINT
+					,	SportName		VARCHAR(500)
+					,	SportType		SMALLINT
+					,	BetType			SMALLINT
+					,	CustId_A		INT
+					,	Username_A		NVARCHAR(50)
+					,	CustId_B		INT
+					,	Value_A			SMALLMONEY
+					,	Value_B			SMALLMONEY
+					,	CreatedDate		DATETIME
+					,	IsDeposit		BIT
+					);
+
+	CREATE TABLE	#CheckResultStakeLevelAgg (
+						RuleName		VARCHAR(100)
+					,	RuleId			SMALLINT
+					,	SportName		VARCHAR(500)
+					,	SportType		SMALLINT
+					,	BetType			SMALLINT
+					,	Total			INT
+					,	IsDeposit		BIT
+					);
+
 	DECLARE	@Sports AS TABLE (
 				SportType		SMALLINT
 			,	SportName		NVARCHAR(50)
@@ -129,7 +184,7 @@ BEGIN
 
 	INSERT INTO	@Sports (SportType, SportName)
 	SELECT	SportType, SportName
-	FROM	OPENQUERY(DBPRO, '
+	FROM	OPENQUERY(DB02KBT, '
 SELECT	SportType, SportName
 FROM	bodb02.dbo.Sports WITH (NOLOCK);
 ');
@@ -153,7 +208,10 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 	END;
 
 
-	-- Cleanup ignored results --
+	--	BEGIN STEP :
+	--		Cleanup ignored results
+	----------------------------------------------------------------------------------------------------
+
 	DELETE	r WITH (TABLOCK)
 	FROM		dbo.CheckPTResult_Credit AS r
 	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
@@ -231,12 +289,75 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 		OR	EXISTS (SELECT 1 FROM CheckCustDB.dbo.PhoneBettingCustomerList AS pbc WITH (NOLOCK) WHERE cus.username = pbc.username)
 		OR	EXISTS (SELECT 1 FROM CheckCustDB.dbo.PhoneBettingCustomerList AS pbc WITH (NOLOCK) WHERE cus1.username = pbc.username);
 
+	DELETE	r WITH (TABLOCK)
+	FROM		dbo.CheckBetLimitResult AS r
+	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+			ON	r.CustIdA = cus.CustId
+	INNER JOIN	dbo.IgnoredCust ic WITH (NOLOCK)
+			ON	ic.custid = CASE	WHEN ic.Allline = 0 THEN cus.CustId 
+									ELSE CASE	WHEN ic.RoleID = 4 THEN cus.srecommend 
+												WHEN ic.RoleID = 3 THEN cus.mrecommend
+												WHEN ic.RoleID = 2 THEN cus.recommend
+												ELSE cus.CustId
+											END
+							END
+			AND ic.RuleId = CASE WHEN ic.RuleId = 0 THEN ic.RuleId ELSE r.ruleid END
+			AND	ic.sporttype = CASE WHEN ic.sporttype = 0 THEN ic.sporttype ELSE r.sporttype END;
 
-	-- Get PT result --
+	DELETE	r WITH (TABLOCK)
+	FROM		dbo.CheckBetLimitResult_DCS AS r
+	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+			ON	r.CustIdA = cus.CustId
+	INNER JOIN	dbo.IgnoredCust ic WITH (NOLOCK)
+			ON	ic.custid = CASE	WHEN ic.Allline = 0 THEN cus.CustId 
+									ELSE CASE	WHEN ic.RoleID = 4 THEN cus.srecommend 
+												WHEN ic.RoleID = 3 THEN cus.mrecommend
+												WHEN ic.RoleID = 2 THEN cus.recommend
+												ELSE cus.CustId
+											END
+							END
+			AND ic.RuleId = CASE WHEN ic.RuleId = 0 THEN ic.RuleId ELSE r.ruleid END
+			AND	ic.sporttype = CASE WHEN ic.sporttype = 0 THEN ic.sporttype ELSE r.sporttype END;
+
+	DELETE	r WITH (TABLOCK)
+	FROM		dbo.CheckResultStakeLevel_Credit AS r
+	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+			ON	r.CustIdA = cus.CustId
+	INNER JOIN	dbo.IgnoredCust ic WITH (NOLOCK)
+			ON	ic.custid = CASE	WHEN ic.Allline = 0 THEN cus.CustId 
+									ELSE CASE	WHEN ic.RoleID = 4 THEN cus.srecommend 
+												WHEN ic.RoleID = 3 THEN cus.mrecommend
+												WHEN ic.RoleID = 2 THEN cus.recommend
+												ELSE cus.CustId
+											END
+							END
+			AND ic.RuleId = CASE WHEN ic.RuleId = 0 THEN ic.RuleId ELSE r.ruleid END
+			AND	ic.sporttype = CASE WHEN ic.sporttype = 0 THEN ic.sporttype ELSE r.sporttype END;
+
+	DELETE	r WITH (TABLOCK)
+	FROM		dbo.CheckResultStakeLevel_Deposit AS r
+	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+			ON	r.CustIdA = cus.CustId
+	INNER JOIN	dbo.IgnoredCust ic WITH (NOLOCK)
+			ON	ic.custid = CASE	WHEN ic.Allline = 0 THEN cus.CustId 
+									ELSE CASE	WHEN ic.RoleID = 4 THEN cus.srecommend 
+												WHEN ic.RoleID = 3 THEN cus.mrecommend
+												WHEN ic.RoleID = 2 THEN cus.recommend
+												ELSE cus.CustId
+											END
+							END
+			AND ic.RuleId = CASE WHEN ic.RuleId = 0 THEN ic.RuleId ELSE r.ruleid END
+			AND	ic.sporttype = CASE WHEN ic.sporttype = 0 THEN ic.sporttype ELSE r.sporttype END;
+
+
+	--	BEGIN STEP :
+	--		Get PT result
+	----------------------------------------------------------------------------------------------------
+
 	INSERT INTO	#CheckResultPTAgg (RuleName, RuleId, SportName, SportType, BetType, IsLive, IsDeposit, Total)
 	SELECT	ISNULL(r.RuleName, 'N/A'), c.RuleId, ISNULL(s.SportName, 'N/A'), c.SportType, c.BetType, c.IsLive, 0, COUNT(1)
-	FROM		CheckResultDB.dbo.CheckPTResult_Credit AS c WITH (NOLOCK)
-	LEFT JOIN	CheckResultDB.dbo.Rule_Credit AS r WITH (NOLOCK)
+	FROM		dbo.CheckPTResult_Credit AS c WITH (NOLOCK)
+	LEFT JOIN	dbo.Rule_Credit AS r WITH (NOLOCK)
 			ON	c.RuleId = r.RuleId
 	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
 			ON	c.CustIdA = cus.CustId
@@ -257,8 +378,8 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 	BEGIN
 		INSERT INTO	#CheckResultPT (RuleName, RuleId, SportName, SportType, BetType, CustId_A, Username_A, CustId_B, Value_A, Value_B, CreatedDate, IsLive, IsDeposit)
 		SELECT	ISNULL(r.RuleName, 'N/A'), c.RuleId, ISNULL(s.SportName, 'N/A'), c.SportType, c.BetType, c.CustIdA, cus.username, c.CustIdB, c.ValueA, c.ValueB, c.CreatedDate, c.IsLive, 0
-		FROM		CheckResultDB.dbo.CheckPTResult_Credit AS c WITH (NOLOCK)
-		LEFT JOIN	CheckResultDB.dbo.Rule_Credit AS r WITH (NOLOCK)
+		FROM		dbo.CheckPTResult_Credit AS c WITH (NOLOCK)
+		LEFT JOIN	dbo.Rule_Credit AS r WITH (NOLOCK)
 				ON	c.RuleId = r.RuleId
 		INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
 				ON	c.CustIdA = cus.CustId
@@ -269,19 +390,22 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 	END;
 
 
-	-- Get status result --
+	--	BEGIN STEP :
+	--		Get status result
+	----------------------------------------------------------------------------------------------------
+
 	INSERT INTO	#CheckResultStatusAgg (RuleName, RuleId, SportName, SportType, BetType, IsDCS, IsDeposit, Total)
 	SELECT	ISNULL(sr.RuleName, 'N/A'), rd.RuleId, ISNULL(s.SportName, 'N/A'), rd.SportType, rd.BetType, 1, rd.IsDeposit, COUNT(1)
-	FROM		CheckResultDB.dbo.CheckStatusResult_DCS AS rd WITH (NOLOCK)
-	LEFT JOIN	CheckResultDB.dbo.DBA_CheckSetting_ProductStatusRule AS sr WITH (NOLOCK)
+	FROM		dbo.CheckStatusResult_DCS AS rd WITH (NOLOCK)
+	LEFT JOIN	dbo.DBA_CheckSetting_ProductStatusRule AS sr WITH (NOLOCK)
 			ON	rd.RuleId = sr.RuleID
 	LEFT JOIN	@Sports AS s
 			ON	rd.SportType = s.SportType
 	GROUP BY sr.RuleName, rd.RuleId, s.SportName, rd.SportType, rd.BetType, rd.IsDeposit
 	UNION ALL
 	SELECT	ISNULL(sr.RuleName, 'N/A'), r.RuleId, ISNULL(s.SportName, 'N/A'), r.SportType, r.BetType, 0, r.IsDeposit, COUNT(1)
-	FROM		CheckResultDB.dbo.CheckStatusResult AS r WITH (NOLOCK)
-	LEFT JOIN	CheckResultDB.dbo.DBA_CheckSetting_ProductStatusRule AS sr WITH (NOLOCK)
+	FROM		dbo.CheckStatusResult AS r WITH (NOLOCK)
+	LEFT JOIN	dbo.DBA_CheckSetting_ProductStatusRule AS sr WITH (NOLOCK)
 			ON	r.RuleId = sr.RuleID
 	LEFT JOIN	@Sports AS s
 			ON	r.SportType = s.SportType
@@ -298,30 +422,33 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 	BEGIN
 		INSERT INTO	#CheckResultStatus (RuleName, RuleId, SportName, SportType, BetType, CustId_A, Username_A, CustId_B, Value_A, Value_B, CreatedDate, IsDCS, IsDeposit)
 		SELECT	ISNULL(sr.RuleName, 'N/A'), rd.RuleId, ISNULL(s.SportName, 'N/A'), rd.SportType, rd.BetType, rd.CustIdA, ci.username, rd.CustIdB, rd.ValueA, rd.ValueB, rd.CreatedDate, 1, rd.IsDeposit
-		FROM		CheckResultDB.dbo.CheckStatusResult_DCS AS rd WITH (NOLOCK)
+		FROM		dbo.CheckStatusResult_DCS AS rd WITH (NOLOCK)
 		LEFT JOIN	CheckCustDB.dbo.custInfo AS ci WITH (NOLOCK)
 				ON	rd.CustIdA = ci.custid
-		LEFT JOIN	CheckResultDB.dbo.DBA_CheckSetting_ProductStatusRule AS sr WITH (NOLOCK)
+		LEFT JOIN	dbo.DBA_CheckSetting_ProductStatusRule AS sr WITH (NOLOCK)
 				ON	rd.RuleId = sr.RuleID
 		LEFT JOIN	@Sports AS s
 				ON	rd.SportType = s.SportType
 		UNION ALL
 		SELECT	ISNULL(sr.RuleName, 'N/A'), r.RuleId, ISNULL(s.SportName, 'N/A'), r.SportType, r.BetType, r.CustIdA, ci.username, r.CustIdB, r.ValueA, r.ValueB, r.CreatedDate, 0, r.IsDeposit
-		FROM		CheckResultDB.dbo.CheckStatusResult AS r WITH (NOLOCK)
+		FROM		dbo.CheckStatusResult AS r WITH (NOLOCK)
 		LEFT JOIN	CheckCustDB.dbo.custInfo AS ci WITH (NOLOCK)
 				ON	r.CustIdA = ci.custid
-		LEFT JOIN	CheckResultDB.dbo.DBA_CheckSetting_ProductStatusRule AS sr WITH (NOLOCK)
+		LEFT JOIN	dbo.DBA_CheckSetting_ProductStatusRule AS sr WITH (NOLOCK)
 				ON	r.RuleId = sr.RuleID
 		LEFT JOIN	@Sports AS s
 				ON	r.SportType = s.SportType;
 	END;
 
-	
-	-- Get comm result --
+
+	--	BEGIN STEP :
+	--		Get comm result
+	----------------------------------------------------------------------------------------------------
+
 	INSERT INTO	#CheckResultCommAgg (RuleName, RuleId, SportName, SportType, BetType, Total, IsDeposit)
 	SELECT	ISNULL(r.RuleName, 'N/A'), c.RuleId, ISNULL(s.SportName, 'N/A'), c.SportType, c.BetType, COUNT(1), 0
-	FROM		CheckResultDB.dbo.CheckCommResult_Credit AS c WITH (NOLOCK)
-	LEFT JOIN	CheckResultDB.dbo.Rule_Credit AS r WITH (NOLOCK)
+	FROM		dbo.CheckCommResult_Credit AS c WITH (NOLOCK)
+	LEFT JOIN	dbo.Rule_Credit AS r WITH (NOLOCK)
 			ON	c.RuleId = r.RuleId
 	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
 			ON	c.CustIdA = cus.CustId
@@ -342,8 +469,8 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 	BEGIN
 		INSERT INTO	#CheckResultComm (RuleName, RuleId, SportName, SportType, BetType, CustId_A, Username_A, CustId_B, Value_A, Value_B, CreatedDate, IsDeposit)
 		SELECT	ISNULL(r.RuleName, 'N/A'), c.RuleId, ISNULL(s.SportName, 'N/A'), c.SportType, c.BetType, c.CustIdA, cus.username, c.CustIdB, c.ValueA, c.ValueB, c.CreatedDate, 0
-		FROM		CheckResultDB.dbo.CheckCommResult_Credit AS c WITH (NOLOCK)
-		LEFT JOIN	CheckResultDB.dbo.Rule_Credit AS r WITH (NOLOCK)
+		FROM		dbo.CheckCommResult_Credit AS c WITH (NOLOCK)
+		LEFT JOIN	dbo.Rule_Credit AS r WITH (NOLOCK)
 				ON	c.RuleId = r.RuleId
 		INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
 				ON	c.CustIdA = cus.CustId
@@ -354,7 +481,112 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 	END;
 
 
-	-- Send email -- Mode: 1 --
+	--	BEGIN STEP :
+	--		Get bet limit result
+	----------------------------------------------------------------------------------------------------
+
+	INSERT INTO	#CheckResultBetLimitAgg (RuleName, RuleId, SportName, SportType, BetType, IsDCS, IsDeposit, Total)
+	SELECT	ISNULL(rc.RuleName, 'N/A'), rd.RuleId, ISNULL(s.SportName, 'N/A'), rd.SportType, rd.BetType, 1, rd.IsDeposit, COUNT(1)
+	FROM		dbo.CheckBetLimitResult_DCS AS rd WITH (NOLOCK)
+	LEFT JOIN	dbo.Rule_Credit AS rc WITH (NOLOCK)
+			ON	rd.RuleId = rc.RuleID
+	LEFT JOIN	@Sports AS s
+			ON	rd.SportType = s.SportType
+	GROUP BY rc.RuleName, rd.RuleId, s.SportName, rd.SportType, rd.BetType, rd.IsDeposit
+	UNION ALL
+	SELECT	ISNULL(rc.RuleName, 'N/A'), r.RuleId, ISNULL(s.SportName, 'N/A'), r.SportType, r.BetType, 0, r.IsDeposit, COUNT(1)
+	FROM		dbo.CheckBetLimitResult AS r WITH (NOLOCK)
+	LEFT JOIN	dbo.Rule_Credit AS rc WITH (NOLOCK)
+			ON	r.RuleId = rc.RuleID
+	LEFT JOIN	@Sports AS s
+			ON	r.SportType = s.SportType
+	GROUP BY rc.RuleName, r.RuleId, s.SportName, r.SportType, r.BetType, r.IsDeposit;
+	
+	SELECT	@countBetLimit = SUM(Total)
+	FROM	#CheckResultBetLimitAgg;
+
+	UPDATE	StarixDB.dbo.vnDBA_Restore_CheckCustDB_History
+	SET		BetLimitResult = ISNULL(@countBetLimit, 0)
+	WHERE	LogDate = @LogDate;
+
+	IF	@countBetLimit <= @rowLimited
+	BEGIN
+		INSERT INTO	#CheckResultBetLimit (RuleName, RuleId, SportName, SportType, BetType, CustId_A, Username_A, CustId_B, Value_A, Value_B, CreatedDate, IsDCS, IsDeposit)
+		SELECT	ISNULL(rc.RuleName, 'N/A'), rd.RuleId, ISNULL(s.SportName, 'N/A'), rd.SportType, rd.BetType, rd.CustIdA, ci.username, rd.CustIdB, rd.ValueA, rd.ValueB, rd.CreatedDate, 1, rd.IsDeposit
+		FROM		dbo.CheckBetLimitResult_DCS AS rd WITH (NOLOCK)
+		LEFT JOIN	CheckCustDB.dbo.custInfo AS ci WITH (NOLOCK)
+				ON	rd.CustIdA = ci.custid
+		LEFT JOIN	dbo.Rule_Credit AS rc WITH (NOLOCK)
+				ON	rd.RuleId = rc.RuleID
+		LEFT JOIN	@Sports AS s
+				ON	rd.SportType = s.SportType
+		UNION ALL
+		SELECT	ISNULL(rc.RuleName, 'N/A'), r.RuleId, ISNULL(s.SportName, 'N/A'), r.SportType, r.BetType, r.CustIdA, ci.username, r.CustIdB, r.ValueA, r.ValueB, r.CreatedDate, 0, r.IsDeposit
+		FROM		dbo.CheckBetLimitResult AS r WITH (NOLOCK)
+		LEFT JOIN	CheckCustDB.dbo.custInfo AS ci WITH (NOLOCK)
+				ON	r.CustIdA = ci.custid
+		LEFT JOIN	dbo.Rule_Credit AS rc WITH (NOLOCK)
+				ON	r.RuleId = rc.RuleID
+		LEFT JOIN	@Sports AS s
+				ON	r.SportType = s.SportType;
+	END;
+
+
+	--	BEGIN STEP :
+	--		Get stake level result
+	----------------------------------------------------------------------------------------------------
+
+	INSERT INTO	#CheckResultStakeLevelAgg (RuleName, RuleId, SportName, SportType, BetType, IsDeposit, Total)
+	SELECT	ISNULL(rc.RuleName, 'N/A'), r.RuleId, ISNULL(s.SportName, 'N/A'), r.SportType, r.BetType, 0, COUNT(1)
+	FROM		dbo.CheckResultStakeLevel_Credit AS r WITH (NOLOCK)
+	LEFT JOIN	dbo.Rule_Credit AS rc WITH (NOLOCK)
+			ON	r.RuleId = rc.RuleID
+	LEFT JOIN	@Sports AS s
+			ON	r.SportType = s.SportType
+	GROUP BY rc.RuleName, r.RuleId, s.SportName, r.SportType, r.BetType
+	UNION ALL
+	SELECT	ISNULL(rc.RuleName, 'N/A'), r.RuleId, ISNULL(s.SportName, 'N/A'), r.SportType, r.BetType, 1, COUNT(1)
+	FROM		dbo.CheckResultStakeLevel_Deposit AS r WITH (NOLOCK)
+	LEFT JOIN	dbo.Rule_Credit AS rc WITH (NOLOCK)
+			ON	r.RuleId = rc.RuleID
+	LEFT JOIN	@Sports AS s
+			ON	r.SportType = s.SportType
+	GROUP BY rc.RuleName, r.RuleId, s.SportName, r.SportType, r.BetType;
+	
+	SELECT	@countStakeLevel = SUM(Total)
+	FROM	#CheckResultStakeLevelAgg;
+
+	UPDATE	StarixDB.dbo.vnDBA_Restore_CheckCustDB_History
+	SET		StakeLevelResult = ISNULL(@countStakeLevel, 0)
+	WHERE	LogDate = @LogDate;
+
+	IF	@countStatus <= @rowLimited
+	BEGIN
+		INSERT INTO	#CheckResultStakeLevel (RuleName, RuleId, SportName, SportType, BetType, CustId_A, Username_A, CustId_B, Value_A, Value_B, CreatedDate, IsDeposit)
+		SELECT	ISNULL(rc.RuleName, 'N/A'), r.RuleId, ISNULL(s.SportName, 'N/A'), r.SportType, r.BetType, r.CustIdA, ci.username, r.CustIdB, r.ValueA, r.ValueB, r.CreatedDate, 0
+		FROM		dbo.CheckResultStakeLevel_Credit AS r WITH (NOLOCK)
+		LEFT JOIN	CheckCustDB.dbo.custInfo AS ci WITH (NOLOCK)
+				ON	r.CustIdA = ci.custid
+		LEFT JOIN	dbo.Rule_Credit AS rc WITH (NOLOCK)
+				ON	r.RuleId = rc.RuleID
+		LEFT JOIN	@Sports AS s
+				ON	r.SportType = s.SportType
+		UNION ALL
+		SELECT	ISNULL(rc.RuleName, 'N/A'), r.RuleId, ISNULL(s.SportName, 'N/A'), r.SportType, r.BetType, r.CustIdA, ci.username, r.CustIdB, r.ValueA, r.ValueB, r.CreatedDate, 1
+		FROM		dbo.CheckResultStakeLevel_Deposit AS r WITH (NOLOCK)
+		LEFT JOIN	CheckCustDB.dbo.custInfo AS ci WITH (NOLOCK)
+				ON	r.CustIdA = ci.custid
+		LEFT JOIN	dbo.Rule_Credit AS rc WITH (NOLOCK)
+				ON	r.RuleId = rc.RuleID
+		LEFT JOIN	@Sports AS s
+				ON	r.SportType = s.SportType;
+	END;
+
+
+	--	BEGIN STEP :
+	--		Send email -- Mode: 1
+	----------------------------------------------------------------------------------------------------
+
 	IF	@mode & 1 <> 0
 	BEGIN
 		SELECT	@subject	= N'Auto Restore DB CheckCustDB'
@@ -380,17 +612,25 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 				,	(	SELECT	[@style]		= N'display:table;width:95%;border-spacing:10px;margin:0 auto;'
 							,	[div/@style]	= N'background-color:' + CASE ISNULL(@countPT, 0) WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
 							,	[div/h2]		= N'PT'
-							,	[div/h3]		= CASE ISNULL(@countPT, 0) WHEN 0 THEN N'Success' ELSE N'Failure' END
+							,	[div/h3]		= CASE ISNULL(@countPT, 0) WHEN 0 THEN N'Success' ELSE CAST(@countPT AS NVARCHAR) END
 							,	NULL
 							,	[div/@style]	= N'background-color:' + CASE ISNULL(@countStatus, 0) WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
 							,	[div/h2]		= N'Status'
-							,	[div/h3]		= CASE ISNULL(@countStatus, 0) WHEN 0 THEN N'Success' ELSE N'Failure' END
+							,	[div/h3]		= CASE ISNULL(@countStatus, 0) WHEN 0 THEN N'Success' ELSE CAST(@countStatus AS NVARCHAR) END
 							,	NULL
 							,	[div/@style]	= N'background-color:' + CASE ISNULL(@countComm, 0) WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
 							,	[div/h2]		= N'Commission'
-							,	[div/h3]		= CASE ISNULL(@countComm, 0) WHEN 0 THEN N'Success' ELSE N'Failure' END
+							,	[div/h3]		= CASE ISNULL(@countComm, 0) WHEN 0 THEN N'Success' ELSE CAST(@countComm AS NVARCHAR) END
+							,	NULL
+							,	[div/@style]	= N'background-color:' + CASE ISNULL(@countBetLimit, 0) WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
+							,	[div/h2]		= N'Bet Limit'
+							,	[div/h3]		= CASE ISNULL(@countBetLimit, 0) WHEN 0 THEN N'Success' ELSE CAST(@countBetLimit AS NVARCHAR) END
+							,	NULL
+							,	[div/@style]	= N'background-color:' + CASE ISNULL(@countStakeLevel, 0) WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
+							,	[div/h2]		= N'Stake Level'
+							,	[div/h3]		= CASE ISNULL(@countStakeLevel, 0) WHEN 0 THEN N'Success' ELSE CAST(@countStakeLevel AS NVARCHAR) END
 						FROM	(
-							SELECT	[style]			= N'color:white;text-align:center;width:33%;display:table-cell;'
+							SELECT	[style]			= N'color:white;text-align:center;width:20%;display:table-cell;'
 						) s
 						FOR XML PATH ('div')
 						,	TYPE
@@ -433,7 +673,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 									,	TYPE
 								)
 							,	NULL
-							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, SportType, BetType)
+							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, IsDeposit, SportType, BetType, IsLive)
 										,	NULL
 										,	[td]		= RuleName
 										,	NULL
@@ -451,7 +691,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 										,	NULL
 										,	[td]		= CASE IsDeposit WHEN 1 THEN 'Deposit' ELSE 'Credit' END
 									FROM	#CheckResultPTAgg
-									ORDER BY RuleId, SportType, BetType
+									ORDER BY RuleId, IsDeposit, SportType, BetType, IsLive
 									FOR XML PATH ('tr')
 									,	TYPE
 								)
@@ -492,7 +732,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 									,	TYPE
 								)
 							,	NULL
-							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, CustId_A, SportType, BetType)
+							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, IsDeposit, CustId_A, SportType, BetType, IsLive)
 										,	NULL
 										,	[td]		= RuleName
 										,	NULL
@@ -518,7 +758,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 										,	NULL
 										,	[td]		= CASE IsDeposit WHEN 1 THEN 'Deposit' ELSE 'Credit' END
 									FROM	#CheckResultPT
-									ORDER BY RuleId, CustId_A, SportType, BetType
+									ORDER BY RuleId, IsDeposit, CustId_A, SportType, BetType, IsLive
 									FOR XML PATH ('tr')
 									,	TYPE
 								)
@@ -563,7 +803,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 									,	TYPE
 								)
 							,	NULL
-							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, SportType, BetType)
+							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, IsDeposit, IsDCS, SportType, BetType)
 										,	NULL
 										,	[td]		= RuleName
 										,	NULL
@@ -581,7 +821,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 										,	NULL
 										,	[td]		= CASE IsDeposit WHEN 1 THEN 'Deposit' ELSE 'Credit' END
 									FROM	#CheckResultStatusAgg
-									ORDER BY RuleId, SportType, BetType
+									ORDER BY RuleId, IsDeposit, IsDCS, SportType, BetType
 									FOR XML PATH ('tr')
 									,	TYPE
 								)
@@ -778,6 +1018,259 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 						FOR XML PATH ('table')
 						,	TYPE
 					)
+
+				-- Bet Limit Result --
+				,	[br]		= CASE WHEN @countBetLimit IS NOT NULL THEN '' ELSE NULL END
+				,	(	SELECT	[@style]		= N'margin-left:3%'
+							,	[node()]		= 'Check Bet Limit Result'
+						FROM	(
+							SELECT	TOP(1) x = 1
+							FROM	#CheckResultBetLimitAgg
+						) tbl
+						FOR XML PATH ('h3')
+						,	TYPE
+					)
+				,	(	SELECT	[@border]		= 1
+							,	[@cellpadding]	= 5
+							,	[@width]		= N'95%'
+							,	[@style]		= N'margin:0 auto;white-space:nowrap;'
+							,	(	SELECT	[th]		= N'No.'
+										,	NULL
+										,	[th]		= N'Rule'
+										,	NULL
+										,	[th]		= N'ID'
+										,	NULL
+										,	[th]		= N'SportName'
+										,	NULL
+										,	[th]		= N'SportType'
+										,	NULL
+										,	[th]		= N'BetType'
+										,	NULL
+										,	[th]		= N'IsDCS'
+										,	NULL
+										,	[th]		= N'Total'
+										,	NULL
+										,	[th]		= N''
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+							,	NULL
+							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, IsDeposit, IsDCS, SportType, BetType)
+										,	NULL
+										,	[td]		= RuleName
+										,	NULL
+										,	[td]		= RuleID
+										,	NULL
+										,	[td]		= SportName
+										,	NULL
+										,	[td]		= ISNULL(CAST(SportType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= ISNULL(CAST(BetType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= IsDCS
+										,	NULL
+										,	[td]		= Total
+										,	NULL
+										,	[td]		= CASE IsDeposit WHEN 1 THEN 'Deposit' ELSE 'Credit' END
+									FROM	#CheckResultBetLimitAgg
+									ORDER BY RuleId, IsDeposit, IsDCS, SportType, BetType
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+						WHERE	@countBetLimit > @rowLimited
+						FOR XML PATH ('table')
+						,	TYPE
+					)
+				,	(	SELECT	[@border]		= 1
+							,	[@cellpadding]	= 5
+							,	[@width]		= N'95%'
+							,	[@style]		= N'margin:0 auto;white-space:nowrap;'
+							,	(	SELECT	[th]		= N'No.'
+										,	NULL
+										,	[th]		= N'Rule'
+										,	NULL
+										,	[th]		= N'ID'
+										,	NULL
+										,	[th]		= N'SportName'
+										,	NULL
+										,	[th]		= N'SportType'
+										,	NULL
+										,	[th]		= N'BetType'
+										,	NULL
+										,	[th]		= N'CustId A'
+										,	NULL
+										,	[th]		= N'Username A'
+										,	NULL
+										,	[th]		= N'CustId B'
+										,	NULL
+										,	[th]		= N'Value A'
+										,	NULL
+										,	[th]		= N'Value B'
+										,	NULL
+										,	[th]		= N'IsDCS'
+										,	NULL
+										,	[th]		= N''
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+							,	NULL
+							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, IsDeposit, IsDCS, CustId_A, SportType, BetType)
+										,	NULL
+										,	[td]		= RuleName
+										,	NULL
+										,	[td]		= RuleID
+										,	NULL
+										,	[td]		= SportName
+										,	NULL
+										,	[td]		= ISNULL(CAST(SportType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= ISNULL(CAST(BetType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= CustId_A
+										,	NULL
+										,	[td]		= Username_A
+										,	NULL
+										,	[td]		= CustId_B
+										,	NULL
+										,	[td]		= Value_A
+										,	NULL
+										,	[td]		= Value_B
+										,	NULL
+										,	[td]		= IsDCS
+										,	NULL
+										,	[td]		= CASE IsDeposit WHEN 1 THEN 'Deposit' ELSE 'Credit' END
+									FROM	#CheckResultBetLimit
+									ORDER BY RuleId, IsDeposit, IsDCS, CustId_A, SportType, BetType
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+						WHERE	@countBetLimit <= @rowLimited
+						FOR XML PATH ('table')
+						,	TYPE
+					)
+
+				-- Stake Level Result --
+				,	[br]		= CASE WHEN @countStakeLevel IS NOT NULL THEN '' ELSE NULL END
+				,	(	SELECT	[@style]		= N'margin-left:3%'
+							,	[node()]		= 'Check Stake Level Result'
+						FROM	(
+							SELECT	TOP(1) x = 1
+							FROM	#CheckResultStakeLevelAgg
+						) tbl
+						FOR XML PATH ('h3')
+						,	TYPE
+					)
+				,	(	SELECT	[@border]		= 1
+							,	[@cellpadding]	= 5
+							,	[@width]		= N'95%'
+							,	[@style]		= N'margin:0 auto;white-space:nowrap;'
+							,	(	SELECT	[th]		= N'No.'
+										,	NULL
+										,	[th]		= N'Rule'
+										,	NULL
+										,	[th]		= N'ID'
+										,	NULL
+										,	[th]		= N'SportName'
+										,	NULL
+										,	[th]		= N'SportType'
+										,	NULL
+										,	[th]		= N'BetType'
+										,	NULL
+										,	[th]		= N'Total'
+										,	NULL
+										,	[th]		= N''
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+							,	NULL
+							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, IsDeposit, SportType, BetType)
+										,	NULL
+										,	[td]		= RuleName
+										,	NULL
+										,	[td]		= RuleID
+										,	NULL
+										,	[td]		= SportName
+										,	NULL
+										,	[td]		= ISNULL(CAST(SportType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= ISNULL(CAST(BetType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= Total
+										,	NULL
+										,	[td]		= CASE IsDeposit WHEN 1 THEN 'Deposit' ELSE 'Credit' END
+									FROM	#CheckResultStakeLevelAgg
+									ORDER BY RuleId, IsDeposit, SportType, BetType
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+						WHERE	@countStakeLevel > @rowLimited
+						FOR XML PATH ('table')
+						,	TYPE
+					)
+				,	(	SELECT	[@border]		= 1
+							,	[@cellpadding]	= 5
+							,	[@width]		= N'95%'
+							,	[@style]		= N'margin:0 auto;white-space:nowrap;'
+							,	(	SELECT	[th]		= N'No.'
+										,	NULL
+										,	[th]		= N'Rule'
+										,	NULL
+										,	[th]		= N'ID'
+										,	NULL
+										,	[th]		= N'SportName'
+										,	NULL
+										,	[th]		= N'SportType'
+										,	NULL
+										,	[th]		= N'BetType'
+										,	NULL
+										,	[th]		= N'CustId A'
+										,	NULL
+										,	[th]		= N'Username A'
+										,	NULL
+										,	[th]		= N'CustId B'
+										,	NULL
+										,	[th]		= N'Value A'
+										,	NULL
+										,	[th]		= N'Value B'
+										,	NULL
+										,	[th]		= N''
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+							,	NULL
+							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, IsDeposit, CustId_A, SportType, BetType)
+										,	NULL
+										,	[td]		= RuleName
+										,	NULL
+										,	[td]		= RuleID
+										,	NULL
+										,	[td]		= SportName
+										,	NULL
+										,	[td]		= ISNULL(CAST(SportType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= ISNULL(CAST(BetType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= CustId_A
+										,	NULL
+										,	[td]		= Username_A
+										,	NULL
+										,	[td]		= CustId_B
+										,	NULL
+										,	[td]		= Value_A
+										,	NULL
+										,	[td]		= Value_B
+										,	NULL
+										,	[td]		= CASE IsDeposit WHEN 1 THEN 'Deposit' ELSE 'Credit' END
+									FROM	#CheckResultStakeLevel
+									ORDER BY RuleId, IsDeposit, CustId_A, SportType, BetType
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+						WHERE	@countStakeLevel <= @rowLimited
+						FOR XML PATH ('table')
+						,	TYPE
+					)
+
 			FOR XML PATH ('body')
 			,	ROOT ('html')
 		);
@@ -792,8 +1285,12 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 				,	@body_format			= 'HTML'
 				;
 	END;
-	
-	-- Send letstalk -- Mode: 2 --
+
+
+	--	BEGIN STEP :
+	--		Send letstalk -- Mode: 2
+	----------------------------------------------------------------------------------------------------
+
 	IF	@mode & 2 <> 0
 	BEGIN
 		SELECT	@html = N'';
@@ -804,7 +1301,11 @@ Check Setting Result:' + ISNULL(N'
 
 - Status:' + xst.xml.value('.[1]', 'NVARCHAR(MAX)'), N'') + ISNULL(N'
 
-- Comm:' + xcm.xml.value('.[1]', 'NVARCHAR(MAX)'), N'')
+- Commission:' + xcm.xml.value('.[1]', 'NVARCHAR(MAX)'), N'') + ISNULL(N'
+
+- Bet Limit:' + xbl.xml.value('.[1]', 'NVARCHAR(MAX)'), N'') + ISNULL(N'
+
+- Stake Level:' + xsl.xml.value('.[1]', 'NVARCHAR(MAX)'), N'')
 		FROM	(
 			SELECT	N'
     ' + CASE pt.IsDeposit WHEN 0 THEN N'Cre - ' WHEN 1 THEN N'Dep - ' ELSE N'' END + CAST(SUM(pt.Total) AS NVARCHAR)
@@ -831,10 +1332,28 @@ Check Setting Result:' + ISNULL(N'
 			ORDER BY cm.IsDeposit
 			FOR XML PATH ('')
 			,	TYPE
-		) AS xcm(xml);
+		) AS xcm(xml)
+		CROSS APPLY	(
+			SELECT	N'
+    ' + CASE bl.IsDeposit WHEN 0 THEN N'Cre - ' WHEN 1 THEN N'Dep - ' ELSE N'' END + CAST(SUM(bl.Total) AS NVARCHAR)
+			FROM	#CheckResultBetLimitAgg AS bl WITH (NOLOCK)
+			GROUP BY bl.IsDeposit
+			ORDER BY bl.IsDeposit
+			FOR XML PATH ('')
+			,	TYPE
+		) AS xbl(xml)
+		CROSS APPLY	(
+			SELECT	N'
+    ' + CASE sl.IsDeposit WHEN 0 THEN N'Cre - ' WHEN 1 THEN N'Dep - ' ELSE N'' END + CAST(SUM(sl.Total) AS NVARCHAR)
+			FROM	#CheckResultStakeLevelAgg AS sl WITH (NOLOCK)
+			GROUP BY sl.IsDeposit
+			ORDER BY sl.IsDeposit
+			FOR XML PATH ('')
+			,	TYPE
+		) AS xsl(xml);
 
 		SELECT	@subject	= N'vnDBA : Automation Check CustDB'
-			,	@case		= CASE WHEN ISNULL(@countPT, 0) + ISNULL(@countStatus, 0) + ISNULL(@countComm, 0) = 0 THEN 1 ELSE 2 END
+			,	@case		= CASE WHEN ISNULL(@countPT, 0) + ISNULL(@countStatus, 0) + ISNULL(@countComm, 0) + ISNULL(@countBetLimit, 0) + ISNULL(@countStakeLevel, 0) = 0 THEN 1 ELSE 2 END
 			;
 
 		EXECUTE DBMONDW.MonDBDW.dbo.DBA_Letstalk_NewJobMessage
