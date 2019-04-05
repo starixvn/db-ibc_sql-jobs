@@ -235,6 +235,21 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 			AND	ic.sporttype = CASE WHEN ic.sporttype = 0 THEN ic.sporttype ELSE r.sporttype END;
 
 	DELETE	r WITH (TABLOCK)
+	FROM		dbo.CheckPTResult_Deposit AS r
+	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+			ON	r.CustIdA = cus.CustId
+	INNER JOIN	dbo.IgnoredCust ic WITH (NOLOCK)
+			ON	ic.custid = CASE	WHEN ic.Allline = 0 THEN cus.CustId 
+									ELSE CASE	WHEN ic.RoleID = 4 THEN cus.srecommend 
+												WHEN ic.RoleID = 3 THEN cus.mrecommend
+												WHEN ic.RoleID = 2 THEN cus.recommend
+												ELSE cus.CustId
+											END
+							END
+			AND ic.RuleId = CASE WHEN ic.RuleId = 0 THEN ic.RuleId ELSE r.ruleid END
+			AND	ic.sporttype = CASE WHEN ic.sporttype = 0 THEN ic.sporttype ELSE r.sporttype END;
+
+	DELETE	r WITH (TABLOCK)
 	FROM		dbo.CheckStatusResult AS r
 	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
 			ON	r.CustIdA = cus.CustId
@@ -366,10 +381,6 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 	FROM		dbo.CheckPTResult_Credit AS c WITH (NOLOCK)
 	LEFT JOIN	dbo.Rule_Credit AS r WITH (NOLOCK)
 			ON	c.RuleId = r.RuleId
-	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
-			ON	c.CustIdA = cus.CustId
-	INNER JOIN	CheckCustDB.dbo.custInfo AS cus1 WITH (NOLOCK)
-			ON	c.CustIdB = cus1.CustId
 	LEFT JOIN	@Sports AS s
 			ON	c.SportType = s.SportType
 	GROUP BY r.RuleName, c.RuleId, s.SportName, c.SportType, c.BetType, c.IsLive;
@@ -379,10 +390,6 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 	FROM		dbo.CheckPTResult_Deposit AS d WITH (NOLOCK)
 	LEFT JOIN	dbo.Rule_Credit AS r WITH (NOLOCK)
 			ON	d.RuleId = r.RuleId
-	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
-			ON	d.CustIdA = cus.CustId
-	INNER JOIN	CheckCustDB.dbo.custInfo AS cus1 WITH (NOLOCK)
-			ON	d.CustIdB = cus1.CustId
 	LEFT JOIN	@Sports AS s
 			ON	d.SportType = s.SportType
 	GROUP BY r.RuleName, d.RuleId, s.SportName, d.SportType, d.BetType, d.IsLive;
@@ -406,10 +413,8 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 		FROM		dbo.CheckPTResult_Credit AS c WITH (NOLOCK)
 		LEFT JOIN	dbo.Rule_Credit AS r WITH (NOLOCK)
 				ON	c.RuleId = r.RuleId
-		INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+		LEFT JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
 				ON	c.CustIdA = cus.CustId
-		INNER JOIN	CheckCustDB.dbo.custInfo AS cus1 WITH (NOLOCK)
-				ON	c.CustIdB = cus1.CustId
 		LEFT JOIN	@Sports AS s
 				ON	c.SportType = s.SportType;
 
@@ -420,8 +425,6 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 				ON	d.RuleId = r.RuleId
 		INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
 				ON	d.CustIdA = cus.CustId
-		INNER JOIN	CheckCustDB.dbo.custInfo AS cus1 WITH (NOLOCK)
-				ON	d.CustIdB = cus1.CustId
 		LEFT JOIN	@Sports AS s
 				ON	d.SportType = s.SportType;
 	END;
@@ -492,10 +495,8 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 	FROM		dbo.CheckCommResult_Credit AS c WITH (NOLOCK)
 	LEFT JOIN	dbo.Rule_Credit AS r WITH (NOLOCK)
 			ON	c.RuleId = r.RuleId
-	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+	LEFT JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
 			ON	c.CustIdA = cus.CustId
-	INNER JOIN	CheckCustDB.dbo.custInfo AS cus1 WITH (NOLOCK)
-			ON	c.CustIdB = cus1.CustId
 	LEFT JOIN	@Sports AS s
 			ON	c.SportType = s.SportType
 	GROUP BY r.RuleName, c.RuleId, s.SportName, c.SportType, c.BetType;
@@ -519,10 +520,8 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 		FROM		dbo.CheckCommResult_Credit AS c WITH (NOLOCK)
 		LEFT JOIN	dbo.Rule_Credit AS r WITH (NOLOCK)
 				ON	c.RuleId = r.RuleId
-		INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+		LEFT JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
 				ON	c.CustIdA = cus.CustId
-		INNER JOIN	CheckCustDB.dbo.custInfo AS cus1 WITH (NOLOCK)
-				ON	c.CustIdB = cus1.CustId
 		LEFT JOIN	@Sports s
 				ON	c.SportType = s.SportType;
 	END;
