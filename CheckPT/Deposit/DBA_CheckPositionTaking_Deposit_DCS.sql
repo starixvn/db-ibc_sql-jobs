@@ -16,6 +16,7 @@ AS
 	Revisions:
 		-20180827@Winnie.Vu: Create SP
 		-20190128@Winnie: Update PT RedmineID:#108062
+		-20190409@Winnie: Fix check PT RedmineID:#111663
 	Param's Explanation:
 	
 */
@@ -552,7 +553,7 @@ BEGIN
 			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT<>85
 			AND d.AgentID NOT IN(SELECT CustID FROM #Trade)
 		END
-		ELSE
+		ELSE IF @site<>'asiabet88'
 		BEGIN
 			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 			SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
