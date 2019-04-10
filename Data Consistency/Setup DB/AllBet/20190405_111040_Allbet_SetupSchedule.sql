@@ -122,7 +122,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check 2402 - Vip baccarat'
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
- ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
+ ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
  ,@ActiveStartDate = '2019-04-11'
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:15'
