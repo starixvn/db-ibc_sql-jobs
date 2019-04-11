@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSUM-bodb_Summary" executers="vnteam" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBSUM-bodb_Summary" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_Summary]
 GO
 
@@ -34,9 +34,6 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM @MoveBetSchedule)
 		RETURN -- do not move bet on this day
 	
-	IF EXISTS (SELECT TOP 1 1 FROM @MoveBetSchedule WHERE MoveBetDay = @MaxWinlostdate) -- already generate data on that day
-		RETURN
-
 	DECLARE @Retry TINYINT = 1, @MaxRetry TINYINT = 3, @HasError BIT
 	
 	WHILE EXISTS (SELECT 1 FROM @MoveBetSchedule WHERE RowId = @RowId)
