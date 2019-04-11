@@ -181,9 +181,9 @@ BEGIN
 				FROM dbo.translog tl WITH (ROWLOCK)
 					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend
 				WHERE tl.winlostdate = @Winlostdate
-					AND tl.productID IN (202,203,204)
+					AND tl.productID IN (202,204)
 				GROUP BY tl.custid, tl.productID
-				UNION ALL -- microgaming_RNG & OneRnG & Voidbridge
+				UNION ALL -- OneRnG & Voidbridge
 				SELECT g.custid
 					,g.productID AS SportType
 					,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) then g.stake ELSE 0 END) AS TurnOver
@@ -257,9 +257,9 @@ BEGIN
 				FROM dbo.translog tl WITH (ROWLOCK)
 					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend
 				WHERE tl.winlostdate >= @Winlostdate
-					AND tl.productID IN (202,203,204)
+					AND tl.productID IN (202,204)
 				GROUP BY tl.custid, tl.productID
-				UNION ALL -- microgaming_RNG & OneRnG & Voidbridge
+				UNION ALL -- OneRnG & Voidbridge
 				SELECT g.custid
 					,g.productID AS SportType
 					,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) then g.stake ELSE 0 END) AS TurnOver
