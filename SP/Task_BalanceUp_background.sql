@@ -1,7 +1,6 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
 USE [bodb02]
 GO
-
 ALTER PROCEDURE [dbo].[Task_BalanceUp_background]
 	@fdate as datetime = NULL,
 	@step as tinyint = 1
@@ -30,11 +29,12 @@ Revisions:
 			+ Add more signal to replicated servers when MB/BU starting or done
 	- 20180329@Percy: Add Bet_ExecRep_09 [RedmineID: #92391]
 	- 20181002@Dominic: Get username from archived DB  [Redmine:99882]
+	- 20190327@Helen: Calculating value of @fdate of step #6 is incorrect  [Redmine:110974]
 	
 Param's Explanation: 
 
 */
-			
+
 IF @fdate IS NULL
 BEGIN
 	SELECT TOP(1) @fdate = DATEADD(day, 7, winlostdate)
@@ -47,7 +47,6 @@ BEGIN
 END
 
 PRINT '@fdate = ' + CONVERT(varchar(10), @fdate, 120)
-
 
 -- verify @fdate
 Declare @testdate datetime
@@ -597,6 +596,11 @@ END
 IF @step = 6
 BEGIN
 -- ================== Finishing
+	SELECT TOP(1) @fdate = winlostdate
+	FROM dbo.bettrans WITH (NOLOCK)
+	WHERE matchid = 0 and bettype = 20000
+	ORDER BY transid
+		
 	--//remove all data in processing list
 	DELETE FROM dbo.ProcessingCustList WITH(ROWLOCK)
 
