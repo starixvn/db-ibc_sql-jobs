@@ -2,7 +2,7 @@
 USE [bodb02]
 GO
 
-CREATE PROCEDURE [dbo].[Task_bet14_CheckDataIsReady]
+ALTER PROCEDURE [dbo].[Task_bet14_CheckDataIsReady]
 AS
 
 /*
@@ -40,14 +40,14 @@ BEGIN
 		SELECT @@SERVERNAME, 'bettrans14', COUNT(1) FROM dbo.bettrans14 WITH (NOLOCK) WHERE winlostdate = @winlostdate
 
 		INSERT INTO @tmp (ServerName, TableName, RowCnt)
-		SELECT 'DB06', 'bettrans14', COUNT(1) FROM DB06.bodb02.dbo.bettrans14 WITH (NOLOCK) WHERE winlostdate = @winlostdate
+		SELECT 'DB06', 'bettrans14', COUNT(1) FROM DBACC.bodb02.dbo.bettrans14 WITH (NOLOCK) WHERE winlostdate = @winlostdate
 
 		-- bettransm14
 		INSERT INTO @tmp (ServerName, TableName, RowCnt)
 		SELECT @@SERVERNAME, 'bettransm14', COUNT(1) FROM dbo.bettransm14 WITH (NOLOCK) WHERE winlostdate = @winlostdate
 
 		INSERT INTO @tmp (ServerName, TableName, RowCnt)
-		SELECT 'DB06', 'bettransm14', COUNT(1) FROM DB06.bodb02.dbo.bettransm14 WITH (NOLOCK) WHERE winlostdate = @winlostdate
+		SELECT 'DB06', 'bettransm14', COUNT(1) FROM DBACC.bodb02.dbo.bettransm14 WITH (NOLOCK) WHERE winlostdate = @winlostdate
 	END
 
 	DECLARE @TableList VARCHAR(200)
@@ -56,6 +56,7 @@ BEGIN
 	FROM @tmp t1
 		INNER JOIN @tmp t2 ON t1.TableName = t2.TableName AND t1.ServerName = @@SERVERNAME AND t2.ServerName = 'DB06'
 	WHERE t1.RowCnt <> t2.RowCnt
+		OR (t1.RowCnt = 0 AND t2.RowCnt = 0)
 
 	IF @TableList IS NOT NULL
 	BEGIN
