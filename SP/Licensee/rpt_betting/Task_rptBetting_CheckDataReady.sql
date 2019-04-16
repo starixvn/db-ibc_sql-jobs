@@ -11,6 +11,7 @@ AS
 	Revision: 
 		- 20171124@Sophia: Initial, call SP check before send mail House Net Income report [redmine: #87247]
 		- 20190328@Sophia: Check data Licensee and DW before send mail [redmind: #110981]
+		- 20190416@Patrick: Add notification to skype and lestalk [Redmind: #111921]
 
 */
 
@@ -82,6 +83,14 @@ BEGIN
 		ELSE
 		BEGIN 
 			SELECT @IsDataYesterdayReady = 0 
+
+			--set alert to pontus
+			DECLARE @message NVARCHAR(512)
+			SET @message = '[WARNING] - DATA IS NOT READY - Automail Report - House Net Income ' + CONVERT(VARCHAR(50), GETDATE(), 121) + '. Please help to check!'
+			print @message
+			EXECUTE DBMONDW.MonDBDW.dbo.DBA_Letstalk_NewJobMessage @ServerName = N'PONTUS', 
+				@JobId = NULL, @JobName = N'Custom Message', 
+				@Message = @message, @CaseId = 1;
 		END  
 		
 		DROP TABLE #DW
