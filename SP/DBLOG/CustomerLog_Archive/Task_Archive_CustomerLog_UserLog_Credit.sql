@@ -18,7 +18,9 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	
+	DECLARE @__dateFrom DATETIME, @__dateTo DATETIME
+	SELECT @__dateFrom = @FromDateTime, @__dateTo = @ToDateTime
+
 	IF @Mode = 'copy'
 	BEGIN
 		IF EXISTS (
@@ -30,10 +32,10 @@ BEGIN
 			RETURN
 		END
 
-		INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate)
-		SELECT logid, logdate
+		INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid)
+		SELECT logid, logdate, custid
 		FROM dbo.UserLog_Credit WITH(NOLOCK)
-		WHERE logdate >= @FromDateTime AND logdate < @ToDateTime
+		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
 
 		WHILE 1 = 1
 		BEGIN
@@ -48,25 +50,32 @@ BEGIN
 	END
 	ELSE IF @Mode = 'delete'
 	BEGIN
-		SELECT logid, logdate INTO #__logIds
+		CREATE TABLE #__logIds (rowId INT IDENTITY(1,1) PRIMARY KEY, logid BIGINT, logdate DATETIME, custid INT)
+		
+		INSERT INTO #__logIds(logid, logdate, custid)
+		SELECT logid, logdate, custid
 		FROM dbo.UserLog_Credit WITH(NOLOCK)
-		WHERE logdate >= @FromDateTime AND logdate < @ToDateTime
+		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
 
-		DECLARE @__tmpId TABLE(logId BIGINT, logdate DATETIME)
+		DECLARE @__tmpId TABLE(logId BIGINT, logdate DATETIME, custid INT)
+		DECLARE @rowId INT = 1
 
 		WHILE 1 = 1
 		BEGIN
 			DELETE FROM @__tmpId
 
-			DELETE TOP(@RowInBatch) 
-			FROM #__logIds OUTPUT deleted.logid, deleted.logdate INTO @__tmpId(logId, logdate)
+			DELETE 
+			FROM #__logIds OUTPUT deleted.logid, deleted.logdate, deleted.custid INTO @__tmpId(logId, logdate, custid)
+			WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
 			
 			IF @@ROWCOUNT = 0
 				BREAK
 
-			DELETE TOP(@RowInBatch) l
+			SET @rowId = @rowId + @RowInBatch
+
+			DELETE l
 			FROM dbo.UserLog_Credit l WITH(ROWLOCK)
-			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logdate = t.logdate)
+			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logdate = t.logdate AND l.custid = t.custid)
 
 		END
 

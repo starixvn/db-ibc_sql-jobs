@@ -25,7 +25,7 @@ BEGIN
 		SELECT [logid], [userid], [spname], [doing], [logdate], [custid], [ActionID], [TrackingValue]
 			, [Duration], [TrackingValue2]
 		FROM dbo.UserLog_RunSP l WITH(NOLOCK)
-		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND deleted.custid = l.custid)
 
 	END
 	ELSE IF @tableName = 'UserLog_Login'
@@ -33,7 +33,7 @@ BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_Login([LogID], [UserID], [RoleID], [SubAccID], [ServerID], [IP], [LogDate], [ActionID], [Doing], [DomainName], [BrowserName], [Platform], [CountryCode], [Duration], [username2], [CreatedDate])
 		SELECT [LogID], [UserID], [RoleID], [SubAccID], [ServerID], [IP], [LogDate], [ActionID], [Doing], [DomainName], [BrowserName], [Platform], [CountryCode], [Duration], [username2], [CreatedDate]
 		FROM dbo.UserLog_Login l WITH(NOLOCK)
-		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND deleted.custid = l.UserID)
 	END	
 	ELSE IF @tableName = 'UserLog_Settle'
 	BEGIN
@@ -61,27 +61,27 @@ BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_CasinoAPI([LogID], [SystemID], [UserID], [FuncName], [LogDate], [CustID], [ActionID], [ReturnValue], [ReturnCode], [TrackingValue])
 		SELECT [LogID], [SystemID], [UserID], [FuncName], [LogDate], [CustID], [ActionID], [ReturnValue], [ReturnCode], [TrackingValue]
 		FROM dbo.UserLog_CasinoAPI l WITH(NOLOCK)
-		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND deleted.custid = l.CustID)
 	END	
 	ELSE IF @tableName = 'UserLog_Credit'
 	BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_Credit([logid], [userid], [custid], [logdate], [spname], [OldValue], [NewValue], [ip], [doing], [ActionID], [ActualRate], [CreatedDate])
 		SELECT [logid], [userid], [custid], [logdate], [spname], [OldValue], [NewValue], [ip], [doing], [ActionID], [ActualRate], [CreatedDate]
 		FROM dbo.UserLog_Credit l WITH(NOLOCK)
-		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND deleted.custid = l.custid)
 	END	
 	ELSE IF @tableName = 'UserLog_Dep_CustSetting'
 	BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_Dep_CustSetting([LogID], [UserID], [CustID], [logDate], [ActionID], [TrackingValue], [TrackingValue2], [Duration], [Language], [IP])
 		SELECT [LogID], [UserID], [CustID], [logDate], [ActionID], [TrackingValue], [TrackingValue2], [Duration], [Language], [IP]
 		FROM dbo.UserLog_Dep_CustSetting l WITH(NOLOCK)
-		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND deleted.custid = l.CustID)
 	END	
 	ELSE IF @tableName = 'UserLog_ExternalAPI'
 	BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_ExternalAPI([LogID], [LogDate], [SystemID], [ProductID], [UserID], [FuncName], [CustID], [ActionID], [TrackingValue], [ModifiedDate], [StatusID], [isNotified], [ReturnCode], [ReturnValue])
 		SELECT [LogID], [LogDate], [SystemID], [ProductID], [UserID], [FuncName], [CustID], [ActionID], [TrackingValue], [ModifiedDate], [StatusID], [isNotified], [ReturnCode], [ReturnValue]
 		FROM dbo.UserLog_ExternalAPI l WITH(NOLOCK)
-		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND deleted.custid = l.CustID)
 	END	
 END
