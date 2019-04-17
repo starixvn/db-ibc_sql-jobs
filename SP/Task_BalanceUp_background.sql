@@ -30,6 +30,7 @@ Revisions:
 	- 20180329@Percy: Add Bet_ExecRep_09 [RedmineID: #92391]
 	- 20181002@Dominic: Get username from archived DB  [Redmine:99882]
 	- 20190327@Helen: Calculating value of @fdate of step #6 is incorrect  [Redmine:110974]
+	- 20190417@Patrick: Ignore verify data for roleid = 0 [Redmine:#112050]
 	
 Param's Explanation: 
 
@@ -81,7 +82,7 @@ BEGIN
 -- ================== DATA VERIFY
 
 	--- DATA VERIFY
-	IF EXISTS (SELECT * FROM CustDB.dbo.Customer with (nolock) WHERE (recommend is null or mrecommend is null or srecommend is null) AND roleid <= 2)
+	IF EXISTS (SELECT * FROM CustDB.dbo.Customer with (nolock) WHERE (recommend is null or mrecommend is null or srecommend is null) AND roleid IN (2,1))
 	BEGIN
 	--	SELECT 'Some Customer/Agent records have NULL AgentID' Result
 	--	SELECT custid, username, roleid, recommend, mrecommend, srecommend, currency
