@@ -71,11 +71,10 @@ BEGIN
 				ISNULL(SUM(winlost - actual_stake), 0) AS Winloss,
 				ISNULL(SUM(b.comm), 0) AS AComm,
 				ISNULL(SUM(b.playercomm), 0) AS PComm,
-				ISNULL(SUM(ISNULL(ABS(b.stake) * r.Contribution,0)), 0) AS ProgressiveContribution,
+				0 AS ProgressiveContribution,
 				ISNULL(SUM(ISNULL(p.WinAmount,0)), 0) AS ProgressivePayout,
 				0 AS ValidBetAmount
 		FROM bodb02.dbo.bettransRnG14 b WITH (NOLOCK)
-			LEFT JOIN dbo.view_MGCRNG_ProgressiveContribution_Rate r ON b.transdesc = r.ResourceID
 			LEFT JOIN DBTXN.bodb02.dbo.PayoutTrans p ON b.transid = p.RefNo			
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
