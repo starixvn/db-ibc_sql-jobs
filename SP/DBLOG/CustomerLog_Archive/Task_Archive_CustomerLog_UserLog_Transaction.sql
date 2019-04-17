@@ -53,7 +53,7 @@ BEGIN
 		CREATE TABLE #__logIds (rowId INT IDENTITY(1,1) PRIMARY KEY, logid BIGINT, logdate DATETIME)
 		
 		INSERT INTO #__logIds(logid, logdate)
-		SELECT logid, logdate, UserID
+		SELECT logid, logdate
 		FROM dbo.UserLog_Transaction WITH(NOLOCK)
 		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
 
