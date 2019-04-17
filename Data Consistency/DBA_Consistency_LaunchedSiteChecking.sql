@@ -42,7 +42,7 @@ BEGIN
 			AND (@IsLaunched = 1 OR site NOT IN (SELECT val FROM dbo.f_SplitString(@sites, ',')))
 	END
 	
-	IF @IsLicenseeOffer IS NOT NULL
+	IF @IsLicenseeOffer IS NOT NULL AND @IsLaunched = 1
 	BEGIN
 		INSERT INTO #tblSite (site)
 		SELECT site
