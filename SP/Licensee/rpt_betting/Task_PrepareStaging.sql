@@ -394,6 +394,6 @@ BEGIN
 	DROP TABLE #BATransids
 
 	DROP TABLE #BetTradeCust
-	  
+
 END
 GO
