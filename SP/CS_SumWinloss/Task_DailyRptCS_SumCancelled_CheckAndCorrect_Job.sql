@@ -12,6 +12,7 @@ AS
 	
 	Revisions:
 		- 20180912@Sophia: Initialize SP [RedmineID: #101376]
+		- 2019411@Sophia: Fix bug cannot regen data [Redmind: #111693]
 
 	Param's Explanation:
 */
@@ -34,9 +35,6 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM @MoveBetSchedule)
 		RETURN -- do not move bet on this day
 	
-	IF EXISTS (SELECT TOP 1 1 FROM @MoveBetSchedule WHERE MoveBetDay = @MaxWinlostdate) -- already generate data on that day
-		RETURN
-
 	DECLARE @Retry TINYINT = 1, @MaxRetry TINYINT = 3, @HasError BIT
 	
 	WHILE EXISTS (SELECT 1 FROM @MoveBetSchedule WHERE RowId = @RowId)
