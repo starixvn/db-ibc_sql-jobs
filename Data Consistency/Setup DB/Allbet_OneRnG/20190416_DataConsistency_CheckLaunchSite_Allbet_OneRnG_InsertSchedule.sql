@@ -21,8 +21,8 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Allbet - Win 3 Cards - Check un-la
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- ,@Emails = 'helen.do@starixsoft.com;gary.vu@starixsoft.com'
- --,@Emails = 'dbaadmin@starixsoft.com'
+ --,@Emails = 'helen.do@starixsoft.com;gary.vu@starixsoft.com'
+ ,@Emails = 'dbaadmin@starixsoft.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
  
@@ -43,8 +43,8 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Allbet - Win 3 Cards - Check un-la
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- ,@Emails = 'helen.do@starixsoft.com;gary.vu@starixsoft.com'
- --,@Emails = 'dbaadmin@starixsoft.com'
+ --,@Emails = 'helen.do@starixsoft.com;gary.vu@starixsoft.com'
+ ,@Emails = 'dbaadmin@starixsoft.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
  
@@ -65,8 +65,8 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'OneRNG - Mini Dice new game - Batc
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- ,@Emails = 'helen.do@starixsoft.com;gary.vu@starixsoft.com'
- --,@Emails = 'dbaadmin@starixsoft.com'
+ --,@Emails = 'helen.do@starixsoft.com;gary.vu@starixsoft.com'
+ ,@Emails = 'dbaadmin@starixsoft.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
  
