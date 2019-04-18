@@ -21,7 +21,7 @@ AS
 	
 	Param's Expanation:
 		- @sites: 'Indo,KORIBC'
-		- @IsLicenseeOffer : credit = 0 or deposit = 1, null: none
+		- @IsLicenseeOffer : used for @IsLaunched = 1: credit = 0 or deposit = 1, null: none
 */
 BEGIN
 	SET NOCOUNT ON
@@ -62,7 +62,7 @@ BEGIN
 				INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.recommend
 			WHERE	b.bettype = @bettype
 					AND b.matchid = @ProductId
-					AND b.currency <> 20
+					AND b.currency NOT IN (20,27,28,72)
 					AND c.site NOT IN (
 									SELECT site 
 									FROM #tblSite s
@@ -74,7 +74,7 @@ BEGIN
 			FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
 				INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.recommend
 			WHERE	b.matchid = @ProductId
-					AND b.currency <> 20
+					AND b.currency NOT IN (20,27,28,72)
 					AND c.site NOT IN (
 									SELECT site 
 									FROM #tblSite s
@@ -93,7 +93,7 @@ BEGIN
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.recommend
 		WHERE	b.bettype < 20000
 				AND b.matchid IN (SELECT matchid FROM @tblMatch)
-				AND b.currency <> 20
+				AND b.currency NOT IN (20,27,28,72)
 				AND c.site NOT IN (
 								SELECT site 
 								FROM #tblSite s
