@@ -16,6 +16,9 @@ BEGIN
 
 	IF @Action = 'all' AND @TableName = ''
 	BEGIN
+		--reset
+		DELETE FROM dbo.Task_ArchiveData_List
+
 		DECLARE @__tmpTable TABLE (rowId INT IDENTITY(1,1), tableName VARCHAR(200))
 		DECLARE @rowId INT = 1, @tmp_Name VARCHAR(200)
 
