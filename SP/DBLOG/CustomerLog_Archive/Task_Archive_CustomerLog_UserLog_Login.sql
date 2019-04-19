@@ -21,6 +21,7 @@ BEGIN
 
 	DECLARE @__dateFrom DATETIME, @__dateTo DATETIME
 	SELECT @__dateFrom = @FromDateTime, @__dateTo = @ToDateTime
+	DECLARE @rowId INT = 1
 	
 	IF @Mode = 'copy'
 	BEGIN
@@ -32,20 +33,27 @@ BEGIN
 			RAISERROR('^^^Having data on table [Task_ArchiveData_Transition]. Please check!!!^^^', 16, 1)
 			RETURN
 		END
+		
+		--reset identity
+		TRUNCATE TABLE dbo.Task_ArchiveData_Transition
 
-		INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid)
-		SELECT logid, logdate, UserID
+		INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid, TableName)
+		SELECT logid, logdate, UserID, 'UserLog_Login'
 		FROM dbo.UserLog_Login WITH(NOLOCK)
 		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
 
+		SET @rowId = 1
 		WHILE 1 = 1
 		BEGIN
 		
-			DELETE TOP(@RowInBatch)
+			DELETE
 			FROM dbo.Task_ArchiveData_Transition WITH(ROWLOCK)
+			WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
 			
 			IF @@ROWCOUNT = 0
 				BREAK
+
+			SET @rowId = @rowId + @RowInBatch
 		END
 
 	END
@@ -60,8 +68,8 @@ BEGIN
 		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
 
 		DECLARE @__tmpId TABLE(logId BIGINT, logdate DATETIME, userId INT)
-		DECLARE @rowId INT = 1
-
+		
+		SET @rowId = 1
 		WHILE 1 = 1
 		BEGIN
 			DELETE FROM @__tmpId

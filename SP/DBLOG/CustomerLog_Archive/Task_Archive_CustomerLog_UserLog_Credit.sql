@@ -20,6 +20,7 @@ BEGIN
 	SET NOCOUNT ON
 	DECLARE @__dateFrom DATETIME, @__dateTo DATETIME
 	SELECT @__dateFrom = @FromDateTime, @__dateTo = @ToDateTime
+	DECLARE @rowId INT = 1
 
 	IF @Mode = 'copy'
 	BEGIN
@@ -32,19 +33,26 @@ BEGIN
 			RETURN
 		END
 
-		INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid)
-		SELECT logid, logdate, custid
+		--reset identity purpose 
+		TRUNCATE TABLE dbo.Task_ArchiveData_Transition
+
+		INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid, TableName)
+		SELECT logid, logdate, custid, 'UserLog_Credit'
 		FROM dbo.UserLog_Credit WITH(NOLOCK)
 		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
 
+		SET @rowId = 1
 		WHILE 1 = 1
 		BEGIN
 		
-			DELETE TOP(@RowInBatch)
+			DELETE
 			FROM dbo.Task_ArchiveData_Transition WITH(ROWLOCK)
+			WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
 			
 			IF @@ROWCOUNT = 0
 				BREAK
+
+			SET @rowId = @rowId + @RowInBatch
 		END
 
 	END
@@ -55,11 +63,11 @@ BEGIN
 		INSERT INTO #__logIds(logid, logdate, custid)
 		SELECT logid, logdate, custid
 		FROM dbo.UserLog_Credit WITH(NOLOCK)
-		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
+		WHERE logdate >= @__dateFrom AND logdate < @__dateTo AND custid IS NOT NULL
 
 		DECLARE @__tmpId TABLE(logId BIGINT, logdate DATETIME, custid INT)
-		DECLARE @rowId INT = 1
-
+		
+		SET @rowId = 1
 		WHILE 1 = 1
 		BEGIN
 			DELETE FROM @__tmpId
@@ -76,6 +84,33 @@ BEGIN
 			DELETE l
 			FROM dbo.UserLog_Credit l WITH(ROWLOCK)
 			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logdate = t.logdate AND l.custid = t.custid)
+
+		END
+
+		--for case custid is null
+		TRUNCATE TABLE #__logIds
+		INSERT INTO #__logIds(logid, logdate)
+		SELECT logid, logdate
+		FROM dbo.UserLog_Credit WITH(NOLOCK)
+		WHERE logdate >= @__dateFrom AND logdate < @__dateTo AND custid IS NULL
+
+		SET @rowId = 1
+		WHILE 1 = 1
+		BEGIN
+			DELETE FROM @__tmpId
+
+			DELETE 
+			FROM #__logIds OUTPUT deleted.logid, deleted.logdate INTO @__tmpId(logId, logdate)
+			WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
+			
+			IF @@ROWCOUNT = 0
+				BREAK
+
+			SET @rowId = @rowId + @RowInBatch
+
+			DELETE l
+			FROM dbo.UserLog_Credit l WITH(ROWLOCK)
+			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logdate = t.logdate AND l.custid IS NULL)
 
 		END
 
