@@ -13,7 +13,7 @@ AS
 	
 	Revisions:
 		- 20190301@Sophia: Initialize SP [RedmineID: #105660]
-		 
+		- 20190329@Sophia: Implement Non Sports [Redmine: #109521] 
 		
 	Param's Explanation:
 	
@@ -25,6 +25,21 @@ BEGIN
 	 
 
 	/* Get data source */
+	CREATE TABLE #Bettrans
+	(
+		CustID			int,
+		WinlostDate		smalldatetime,
+		ProductId		smallint,
+		EventType		tinyint,
+		MatchId			int,
+		Bettype			smallint,
+		IsLive			bit,
+		CancelType		tinyint,
+		Wagers			int,
+		Stake			money,
+		HeadlineId		int
+	)
+	
 	CREATE TABLE #CS_SumCancelled
 	(
 		CustID			int,
@@ -55,7 +70,60 @@ BEGIN
 
 	---- Member - RoleId = 1
 	BEGIN
-		--- Cancelled Bet
+		INSERT INTO #Bettrans
+			(
+				CustID,
+				WinlostDate,
+				ProductId,
+				EventType,
+				MatchId	,
+				Bettype,
+				IsLive,
+				CancelType,
+				Wagers,
+				Stake,
+				HeadlineId
+			)			
+		SELECT 
+				b.CustID,
+				b.WinlostDate,
+				x.ProductId,
+				x.EventType,
+				b.matchID,
+				b.Bettype,
+				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END AS isLive,		
+				CASE WHEN b.ExtraInfo LIKE '%p1%' AND ISNULL(CAST(('<xml>' + b.ExtraInfo + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT'), 0) = 1   --- Abnormal bet
+						 THEN 1  --- Abnormal bet
+						 ELSE 2  --- Cancelled
+					END AS CancelType,
+				Count(TransID) As Wagers,
+				SUM(Stake) AS Stake,
+				CS.UplineId AS HeadlineId				 
+		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
+			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
+			INNER JOIN (SELECT ProductID, Bettype, EventType FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0) ) x ON x.Bettype = b.Bettype
+			LEFT JOIN #ExtraPT e
+				ON	b.Srecommend = e.SuperID 
+					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
+					AND x.ProductID = e.ProductID
+		WHERE b.WinlostDate = @WinlostDate
+			AND b.StatusID IN (101,102,103)  			 			
+			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID)
+		GROUP BY
+				b.CustID,
+				b.WinlostDate,
+				x.ProductId,
+				x.EventType,
+				b.matchID,
+				b.Bettype,
+				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END ,	
+				CASE WHEN b.ExtraInfo LIKE '%p1%' AND ISNULL(CAST(('<xml>' + b.ExtraInfo + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT'), 0) = 1   --- Abnormal bet
+						 THEN 1  --- Abnormal bet
+						 ELSE 2  --- Cancelled
+					END,
+				CS.UplineId
+				
+		--- Match 
 		INSERT INTO #CS_SumCancelled
 		(
 			CustID,
@@ -71,95 +139,30 @@ BEGIN
 		)
 			
 		SELECT 
-				b.CustID,
-				b.WinlostDate,
-				x.ProductId,
-				ISNULL(m.Sporttype,0) AS Sporttype,
-				b.Bettype,
-				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END AS isLive,
-				1 AS CancelType,
-				Count(TransID) As Wagers,
-				SUM(Stake) AS Stake,
-				CS.UplineId AS HeadlineId			 
-		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
-			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN (SELECT ProductID, Bettype FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
-			LEFT JOIN @ExtraPT e
-				ON	b.Srecommend = e.SuperID 
-					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
-					AND x.ProductID = e.ProductID
-			LEFT JOIN bodb02.dbo.Match m WITH (NOLOCK) ON m.MatchID = b.MatchID
-		WHERE b.WinlostDate = @WinlostDate
-			AND b.StatusID IN (101,102,103) 
-			AND b.bettype <> 10
-			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID) 
-			AND CASE WHEN b.ExtraInfo LIKE '%p1%' THEN
-					ISNULL(CAST(('<xml>' + b.ExtraInfo + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT'), 0) ELSE 0
-				END <> 1 
+				CustID,
+				WinlostDate,
+				ProductId,
+				Sporttype,
+				Bettype,
+				IsLive,
+				CancelType,
+				SUM (Wagers),
+				SUM (Stake),
+				HeadlineId		 
+		FROM #Bettrans b
+			INNER JOIN bodb02.dbo.Match m WITH (NOLOCK) ON m.MatchID = b.MatchID
+		WHERE EventType = 1 
 		GROUP BY
-				b.CustID,
-				b.WinlostDate,
-				x.ProductId,
-				ISNULL(m.Sporttype,0),
-				b.Bettype,
-				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END,		
-				CS.UplineId
-				
-				
-		---Cancelled bet outright		
-		INSERT INTO #CS_SumCancelled
-		(
-			CustID,
-			WinlostDate,
-			ProductId,
-			Sporttype,
-			Bettype,
-			IsLive,
-			CancelType,
-			Wagers,
-			Stake,
-			HeadlineId
-		)
-			
-		SELECT 
-				b.CustID,
-				b.WinlostDate,
-				x.ProductId,
-				ISNULL(l.Sporttype, 0) AS Sporttype,
-				b.Bettype,
-				b.Liveindicator AS isLive,
-				1 AS CancelType,
-				Count(TransID) As Wagers,
-				SUM(Stake) AS Stake,
-				CS.UplineId AS HeadlineId			 
-		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
-			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN (SELECT ProductID, Bettype FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
-			LEFT JOIN @ExtraPT e
-				ON	b.Srecommend = e.SuperID 
-					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
-					AND x.ProductID = e.ProductID
-			LEFT JOIN bodb02.dbo.outright m WITH (NOLOCK) ON m.orid = b.MatchID
-			INNER JOIN bodb02.dbo.League l WITH (NOLOCK) ON l.leagueid = m.leagueid
-		WHERE b.WinlostDate = @WinlostDate
-			AND b.StatusID IN (101,102,103) 
-			AND b.bettype  = 10	
-			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID) 
-			AND CASE WHEN b.ExtraInfo LIKE '%p1%' THEN
-					ISNULL(CAST(('<xml>' + b.ExtraInfo + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT'), 0) ELSE 0
-				END <> 1 
-		GROUP BY
-				b.CustID,
-				b.WinlostDate,
-				x.ProductId,
-				ISNULL(l.Sporttype, 0),
-				b.Bettype,
-				b.Liveindicator,				
-				CS.UplineId
-				
-
+				CustID,
+				WinlostDate,
+				ProductId,
+				Sporttype,
+				Bettype,
+				IsLive,
+				CancelType,
+				HeadlineId	
 		
-		--- Abnormal Bet
+		--- Outright
 		INSERT INTO #CS_SumCancelled
 		(
 			CustID,
@@ -172,94 +175,72 @@ BEGIN
 			Wagers,
 			Stake,
 			HeadlineId
-		)
-			
+		)			
 		SELECT 
-				b.CustID,
-				b.WinlostDate,
-				x.ProductId,
-				ISNULL(m.Sporttype, 0) AS Sporttype,
-				b.Bettype,
-				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END AS isLive,
-				2 AS CancelType,
-				Count(TransID) As Wagers,
-				SUM(Stake) AS Stake,
-				CS.UplineId AS HeadlineId			 
-		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
-			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN (SELECT ProductID, Bettype FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
-			LEFT JOIN @ExtraPT e
-				ON	b.Srecommend = e.SuperID 
-					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
-					AND x.ProductID = e.ProductID
-			LEFT JOIN bodb02.dbo.Match m WITH (NOLOCK) ON m.MatchID = b.MatchID
-		WHERE b.WinlostDate = @WinlostDate
-			AND b.StatusID = 102
-			AND b.bettype <> 10
-			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID) 
-			AND CASE WHEN b.ExtraInfo LIKE '%p1%' THEN
-					ISNULL(CAST(('<xml>' + b.ExtraInfo + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT'), 0) ELSE 0
-				END = 1 
-		GROUP BY
-				b.CustID,
-				b.WinlostDate,
-				x.ProductId,
-				ISNULL(m.Sporttype, 0),
-				b.Bettype,
-				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END,				
-				CS.UplineId
-				
-		--- abnormal outright			
-		INSERT INTO #CS_SumCancelled
-		(
-			CustID,
-			WinlostDate,
-			ProductId,
-			Sporttype,
-			Bettype,
-			IsLive,
-			CancelType,
-			Wagers,
-			Stake,
-			HeadlineId
-		)
-			
-		SELECT 
-				b.CustID,
-				b.WinlostDate,
-				x.ProductId,
-				ISNULL(l.Sporttype, 0) AS Sporttype,
-				b.Bettype,
-				b.Liveindicator AS isLive,
-				2 AS CancelType,
-				Count(TransID) As Wagers,
-				SUM(Stake) AS Stake,
-				CS.UplineId AS HeadlineId			 
-		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
-			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN (SELECT ProductID, Bettype FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
-			LEFT JOIN @ExtraPT e
-				ON	b.Srecommend = e.SuperID 
-					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
-					AND x.ProductID = e.ProductID
-			LEFT JOIN bodb02.dbo.outright m WITH (NOLOCK) ON m.orid = b.MatchID
+				CustID,
+				WinlostDate,
+				ProductId,
+				Sporttype,
+				Bettype,
+				IsLive,
+				CancelType,
+				SUM (Wagers),
+				SUM (Stake),
+				HeadlineId		 
+		FROM #Bettrans b
+			INNER JOIN bodb02.dbo.outright m WITH (NOLOCK) ON m.orid = b.MatchID
 			INNER JOIN bodb02.dbo.League l WITH (NOLOCK) ON l.leagueid = m.leagueid
-		WHERE b.WinlostDate = @WinlostDate
-			AND b.StatusID = 102
-			AND b.bettype = 10
-			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID) 
-			AND CASE WHEN b.ExtraInfo LIKE '%p1%' THEN
-					ISNULL(CAST(('<xml>' + b.ExtraInfo + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT'), 0) ELSE 0
-				END = 1 
+		WHERE EventType = 2	
 		GROUP BY
-				b.CustID,
-				b.WinlostDate,
-				x.ProductId,
-				ISNULL(l.Sporttype, 0),
-				b.Bettype,
-				b.Liveindicator,			
-				CS.UplineId
-					 
+				CustID,
+				WinlostDate,
+				ProductId,
+				Sporttype,
+				Bettype,
+				IsLive,
+				CancelType,
+				HeadlineId	
+				
+		--- VSOutright
+		INSERT INTO #CS_SumCancelled
+		(
+			CustID,
+			WinlostDate,
+			ProductId,
+			Sporttype,
+			Bettype,
+			IsLive,
+			CancelType,
+			Wagers,
+			Stake,
+			HeadlineId
+		)			
+		SELECT 
+				CustID,
+				WinlostDate,
+				ProductId,
+				Sporttype,
+				Bettype,
+				IsLive,
+				CancelType,
+				SUM (Wagers),
+				SUM (Stake),
+				HeadlineId		 
+		FROM  #Bettrans b			
+			INNER JOIN bodb02.dbo.VSOutright o WITH (NOLOCK) ON o.EventID = b.MatchId
+			INNER JOIN bodb02.dbo.VSRaceInfo r WITH(NOLOCK) ON o.EventID = r.EventID
+		WHERE EventType = 3
+		GROUP BY
+				CustID,
+				WinlostDate,
+				ProductId,
+				Sporttype,
+				Bettype,
+				IsLive,
+				CancelType,
+				HeadlineId	
+				
+		
 
 	END
 	 
