@@ -93,9 +93,9 @@ BEGIN
 	)
 
 	---- Get ExtraPT
-	DECLARE @ExtraPT AS TABLE (SuperID INT, ExtraPT DECIMAL(9,8), FromDate DATETIME, ToDate DATETIME, ProductID TINYINT)----, Sporttype SMALLINT, SubProduct VARCHAR (50) )
+	CREATE TABLE #ExtraPT (SuperID INT, ExtraPT DECIMAL(9,8), FromDate DATETIME, ToDate DATETIME, ProductID TINYINT)----, Sporttype SMALLINT, SubProduct VARCHAR (50) )
 
-	INSERT INTO @ExtraPT (SuperID, ExtraPT, FromDate, ToDate, ProductID) 
+	INSERT INTO #ExtraPT (SuperID, ExtraPT, FromDate, ToDate, ProductID) 
 	SELECT DISTINCT e.SuperID, e.ExtraPT, e.FromDate, e.ToDate, e.ProductId 
 	FROM  bodb02.dbo.Acc_GroupExtraPTSetting e WITH (NOLOCK)  		
 	WHERE	e.Sporttype = 0		--- General Sporttype of SB & other products

@@ -55,9 +55,9 @@ BEGIN
 	)
 
 	---- Get ExtraPT
-	DECLARE @ExtraPT AS TABLE (SuperID INT, ExtraPT DECIMAL(9,8), FromDate DATETIME, ToDate DATETIME, ProductID TINYINT)----, Sporttype SMALLINT, SubProduct VARCHAR (50) )
+	CREATE TABLE #ExtraPT (SuperID INT, ExtraPT DECIMAL(9,8), FromDate DATETIME, ToDate DATETIME, ProductID TINYINT)----, Sporttype SMALLINT, SubProduct VARCHAR (50) )
 
-	INSERT INTO @ExtraPT (SuperID, ExtraPT, FromDate, ToDate, ProductID) 
+	INSERT INTO #ExtraPT (SuperID, ExtraPT, FromDate, ToDate, ProductID) 
 	SELECT DISTINCT e.SuperID, e.ExtraPT, e.FromDate, e.ToDate, e.ProductId 
 	FROM  bodb02.dbo.Acc_GroupExtraPTSetting e WITH (NOLOCK)  		
 	WHERE	e.Sporttype = 0		--- General Sporttype of SB & other products
@@ -92,7 +92,7 @@ BEGIN
 				b.matchID,
 				b.Bettype,
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END AS isLive,		
-				CASE WHEN b.ExtraInfo LIKE '%p1%' AND ISNULL(CAST(('<xml>' + b.ExtraInfo + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT'), 0) = 1   --- Abnormal bet
+				CASE WHEN b.ExtraInfo LIKE '%p1%' AND t.c = 1   --- Abnormal bet
 						 THEN 1  --- Abnormal bet
 						 ELSE 2  --- Cancelled
 					END AS CancelType,
@@ -106,6 +106,7 @@ BEGIN
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
 					AND x.ProductID = e.ProductID
+			CROSS APPLY (SELECT CAST(('<xml>' + ISNULL(b.ExtraInfo, '') + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT')) AS t(c)
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID IN (101,102,103)  			 			
 			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID)
@@ -117,7 +118,7 @@ BEGIN
 				b.matchID,
 				b.Bettype,
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END ,	
-				CASE WHEN b.ExtraInfo LIKE '%p1%' AND ISNULL(CAST(('<xml>' + b.ExtraInfo + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT'), 0) = 1   --- Abnormal bet
+				CASE WHEN b.ExtraInfo LIKE '%p1%' AND t.c = 1   --- Abnormal bet
 						 THEN 1  --- Abnormal bet
 						 ELSE 2  --- Cancelled
 					END,
