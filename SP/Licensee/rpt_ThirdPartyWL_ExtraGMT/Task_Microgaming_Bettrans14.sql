@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 SET ANSI_NULLS ON
@@ -20,6 +20,7 @@ AS
 	 - 20161222@Jim: LA/ Invoice - Integrate Fishing World (GMT + 8) [Redmine:#68677]
 	 - 20170523@Paul: Add sport type 205 [Redmine:#72914]
 	 - 20180608@Bruce: LA - Implement sum job for Pragmatic (GMT+0) [RedmineId #93958]
+	 - 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 	 Param's Explanation:
 */
 
@@ -34,13 +35,6 @@ BEGIN
 	DECLARE @Winlostdate DATE
 	SET @Winlostdate = @Fromdate
 
-	--bettype mapping
-	DECLARE @Bettype AS TABLE(Bettype INT)
-    INSERT INTO @Bettype (Bettype)
-    SELECT Bettype
-	FROM bodb_licensee.dbo.Sport_Bettype_Reference WITH (NOLOCK)
-	WHERE Sporttype IN (203, 205)
-	
 	WHILE (@Winlostdate <= @Todate)
 	BEGIN
 		IF EXISTS (SELECT TOP 1 1 FROM dbo.rpt_ThirdPartyWL_ExtraGMT WITH (NOLOCK) WHERE RptDate = @Winlostdate)
@@ -50,34 +44,6 @@ BEGIN
 
 		INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
 		(SELECT CAST(b.winlostdate AS DATE)	AS Rptdate
-			, CAST(b.checktime AS DATE)	AS RptDate3rd
-			, ISNULL(site.SiteID, -1) AS siteid
-			, b.bettype	 AS BetTypeId		
-			, b.currency
-			, b.statusID
-			, COUNT(1) AS BetCount
-			, SUM(ABS(b.stake)) AS Turnover
-			, SUM(winlost - actual_stake) AS Winloss		
-			, SUM(b.comm) AS AComm
-			, SUM(b.playercomm) AS PComm
-			, 0 AS ProgressiveContribution
-			, 0 AS ProgressivePayout	
-			, 0 AS ValidBetAmount	
-		FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
-			INNER JOIN @Bettype bt ON b.bettype = bt.Bettype
-			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
-			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
-			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
-		WHERE b.winlostdate = @Winlostdate		
-			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND b.bettype NOT IN (2008, 2009) -- MGCRNG
-			AND b.bettype NOT BETWEEN 1011 AND 1020 -- FW
-			AND b.bettype NOT BETWEEN 4101 AND 4300 -- PP
-		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.checktime AS DATE), ISNULL(site.SiteID,-1), b.bettype
-		, b.currency, b.statusID
-		UNION ALL
- 
-		SELECT CAST(b.winlostdate AS DATE)	AS Rptdate
 			, CAST(b.Transdate3rd AS DATE)	AS RptDate3rd
 			, ISNULL(site.SiteID, -1) AS siteid
 			, b.gameID	 AS BetTypeId		
@@ -88,20 +54,17 @@ BEGIN
 			, SUM(winlost - actual_stake) AS Winloss		
 			, SUM(b.comm) AS AComm
 			, SUM(b.playercomm) AS PComm
-			, SUM(ISNULL(ABS(b.stake) * r.Contribution,0)) AS ProgressiveContribution
+			, 0 AS ProgressiveContribution
 			, SUM(ISNULL(p.WinAmount,0)) AS ProgressivePayout
 			, 0 AS ValidBetAmount
 		FROM bodb02.dbo.bettransRnG14 b WITH (NOLOCK)
-			LEFT JOIN dbo.view_MGCRNG_ProgressiveContribution_Rate r ON b.transdesc = r.ResourceID
 			LEFT JOIN DBTXN.bodb02.dbo.PayoutTrans p ON b.transid = p.RefNo			
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
 		WHERE b.winlostdate = @Winlostdate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND (
-				b.gameID IN (2008, 2009) -- MGCRNG
-				OR b.gameID BETWEEN 1011 AND 1020 -- FW
+			AND (b.gameID BETWEEN 1011 AND 1020 -- FW
 				OR b.gameID BETWEEN 4101 AND 4300 -- PP
 			)
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID
@@ -138,8 +101,4 @@ BEGIN
 		SET @Winlostdate = DATEADD(D, 1, @Winlostdate)
 	END
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Task_Microgaming_Bettrans14] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Task_Microgaming_Bettrans14] TO [vnteam] AS [dbo]
