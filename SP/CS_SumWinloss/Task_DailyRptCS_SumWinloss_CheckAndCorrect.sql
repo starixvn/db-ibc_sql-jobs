@@ -23,7 +23,10 @@ AS
 
 BEGIN 
 	SET NOCOUNT ON 	
-	 
+
+	------ Check SP Version
+	DECLARE @isTest BIT = 0
+	SELECT  @isTest = dbo.f_CheckSPVersion(@@PROCID)	
 
 	/* Get data source */
 	CREATE TABLE #Bettrans
@@ -174,7 +177,7 @@ BEGIN
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN (SELECT ProductID, Bettype, EventType FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0) ) x ON x.Bettype = b.Bettype
+			INNER JOIN (SELECT ProductID, Bettype, EventType FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,@isTest) ) x ON x.Bettype = b.Bettype
 			LEFT JOIN #ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
