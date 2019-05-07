@@ -195,7 +195,79 @@ BEGIN
 				b.Bettype,
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END ,	
 				CS.UplineId
-				 
+				
+	--- Bettrans only	
+	INSERT INTO #CS_SumWinloss
+		(
+			CustID,
+			WinlostDate,
+			ProductId,
+			Sporttype,
+			Bettype,
+			IsLive,
+			Wagers,
+			Stake,
+			ValidStake,
+			MemberWinloss,
+			MemberComm,
+			Agent,
+			AgentWinloss,
+			AgentComm,
+			AgentStock,
+			AgentResultA,
+			Master,
+			MasterWinloss,
+			MasterComm,
+			MasterStock,
+			Super,
+			SuperWinloss,
+			SuperComm,
+			SuperStock,
+			HeadlineWinloss,
+			HeadlineComm,
+			HeadlineStock,
+			HeadlineId
+		)
+			
+		SELECT 
+				b.CustID,
+				b.WinlostDate,
+				b.ProductId,
+				b.MatchID AS Sporttype,
+				b.Bettype,			
+				b.isLive,																	
+				SUM(Wagers) AS  Wagers ,
+				SUM(Stake) AS Stake,
+				SUM(ValidStake) AS ValidStake,
+				SUM(MemberWinloss) AS MemberWinloss,
+				SUM(MemberComm) AS MemberComm,
+				SUM(Agent) AS Agent,
+				SUM(AgentWinloss) AS AgentWinloss,
+				SUM(AgentComm) AS AgentComm,
+				SUM(AgentStock) AS AgentStock,
+				SUM(AgentResultA) AS AgentResultA,
+				SUM(Master) AS Master,
+				SUM(MasterWinloss) AS MasterWinloss,
+				SUM(MasterComm) AS MasterComm,
+				SUM(MasterStock) AS MasterStock,	
+				SUM(Super) AS Super,
+				SUM(SuperWinloss) AS SuperWinloss,
+				SUM(SuperComm) AS SuperComm,
+				SUM(SuperStock) AS SuperStock,
+				SUM (HeadlineWinloss) AS HeadlineWinloss,
+				SUM (HeadlineComm) AS HeadlineComm,
+				SUM (HeadlineStock) AS HeadlineStock,
+				b.HeadlineId AS HeadlineId			 
+		FROM  #Bettrans b			
+		WHERE EventType = 0
+		GROUP BY
+				b.CustID,
+				b.WinlostDate,
+				b.ProductId,
+				b.MatchID,
+				b.Bettype,			
+				b.isLive,	
+				b.HeadlineId	
 
 	--- Match
 	INSERT INTO #CS_SumWinloss

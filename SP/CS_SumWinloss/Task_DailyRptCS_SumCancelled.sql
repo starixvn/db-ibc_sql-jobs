@@ -127,6 +127,44 @@ BEGIN
 					END,
 				CS.UplineId
 				
+		--- Bettrans only 
+		INSERT INTO #CS_SumCancelled
+		(
+			CustID,
+			WinlostDate,
+			ProductId,
+			Sporttype,
+			Bettype,
+			IsLive,
+			CancelType,
+			Wagers,
+			Stake,
+			HeadlineId
+		)
+			
+		SELECT 
+				CustID,
+				WinlostDate,
+				ProductId,
+				b.MatchID as Sporttype,
+				Bettype,
+				IsLive,
+				CancelType,
+				SUM (Wagers),
+				SUM (Stake),
+				HeadlineId		 
+		FROM #Bettrans b
+		WHERE EventType = 0 
+		GROUP BY
+				CustID,
+				WinlostDate,
+				ProductId,
+				b.MatchID,
+				Bettype,
+				IsLive,
+				CancelType,
+				HeadlineId	
+				
 		--- Match 
 		INSERT INTO #CS_SumCancelled
 		(
