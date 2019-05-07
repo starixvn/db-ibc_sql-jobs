@@ -21,6 +21,7 @@ AS
 	- 20160328@Sophia: Check status Of PayOutTrans, get status Completed and Expired [Redmine: #54643]
 	- 20170323@Percy: Apply Cash Out [RedmineID: #72164]
 	- 20190128@Sophia: Fix correct data at Void Block code Redmind: #107365]
+	- 20190507@Sophia: Add new column OpeningTotalBalance for Credit Collection report use [Redmine: #109293]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -66,6 +67,19 @@ BEGIN
 		Custid INT
 		,OpeningBalance MONEY
 		)
+		
+		
+	IF OBJECT_ID('tempdb..#tmpOpeningTotalBalance') IS NOT NULL
+	BEGIN
+		DROP TABLE #tmpOpeningTotalBalance
+	END
+
+	CREATE TABLE #tmpOpeningTotalBalance (
+		Custid INT
+		,OpeningBalance MONEY
+		,OpeningTotalBalance MONEY
+		)
+		
 	 
 	IF OBJECT_ID('tempdb..#tmpStatement') IS NOT NULL
 	BEGIN
@@ -778,6 +792,95 @@ BEGIN
 			  AND tmpSta.ErrCode = 40
 			
 		
+	END
+	
+	------------Calc OpeningTotalBalance----------
+	--- Member
+	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)
+	SELECT	s.CustID, s.OpeningBalance,	s.OpeningBalance
+	FROM 	dbo.rptStatement s WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
+			ON c.CustID = s.CustID
+	WHERE   s.WinlostDate = @WinlostDate
+			c.RoleID = 1
+			
+	--- Agent	
+	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
+	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash 
+	FROM 	dbo.rptStatement s WITH (NOLOCK)
+		INNER JOIN ( 
+					SELECT	c.recommend, SUM (s.OpeningTotalBalance) as DownlineCash
+					FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
+					INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
+							ON c.CustID = s.CustID
+					WHERE c.RoleID = 1
+					GROUP BY c.recommend
+					) d
+		ON s.CustID = d.recommend
+	
+	-- Master		 
+	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
+	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash
+	FROM 	dbo.rptStatement s WITH (NOLOCK)
+		INNER JOIN ( 
+					SELECT	c.mrecommend, SUM (s.OpeningTotalBalance) as DownlineCash
+					FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
+					INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
+							ON c.CustID = s.CustID
+					WHERE c.RoleID = 2
+					GROUP BY c.mrecommend
+					) d
+		ON s.CustID = d.mrecommend
+			
+	-- Super		 
+	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
+	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash
+	FROM 	dbo.rptStatement s WITH (NOLOCK)
+		INNER JOIN ( 
+					SELECT	c.srecommend, SUM (s.OpeningTotalBalance) as DownlineCash
+					FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
+					INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
+							ON c.CustID = s.CustID
+					WHERE c.RoleID = 3
+					GROUP BY c.srecommend
+					) d
+		ON s.CustID = d.srecommend
+		
+	---------------- Correct Opening Total Balance --------------------
+	IF EXISTS (
+		SELECT 1
+		FROM #tmpOpeningTotalBalance SOURCE
+			FULL OUTER JOIN dbo.rptStatement WITH (NOLOCK) TARGET
+				ON SOURCE.CustId = TARGET.CustId AND SOURCE.WinlostDate = TARGET.WinlostDate
+		WHERE
+				SOURCE.CustId IS NULL
+				OR TARGET.CustId IS NULL				
+				OR TARGET.OpeningBalance 	  <> SOURCE.OpeningBalance				
+				OR TARGET.OpeningTotalBalance <> SOURCE.OpeningTotalBalance		
+	)
+	BEGIN
+		IF @IsCheckDataOnly = 1 --just check data
+		BEGIN
+			SELECT 'Wrong OpeningTotalBalance on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
+		END
+		ELSE -- correct data
+		BEGIN
+			MERGE dbo.rptStatement AS TARGET
+			USING #tmpOpeningTotalBalance AS SOURCE
+					ON	TARGET.WinlostDate	= SOURCE.WinlostDate
+					AND TARGET.CustId		= SOURCE.CustId 
+			WHEN MATCHED THEN
+			UPDATE SET
+				TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance			
+		END
+	END
+	
+		
+	----------------------------------------------------
+	
+	IF OBJECT_ID('tempdb..#tmpOpeningTotalBalance') IS NOT NULL
+	BEGIN
+		DROP TABLE #tmpOpeningTotalBalance
 	END
 	 
 	IF OBJECT_ID('tempdb..#tmpStatement') IS NOT NULL
