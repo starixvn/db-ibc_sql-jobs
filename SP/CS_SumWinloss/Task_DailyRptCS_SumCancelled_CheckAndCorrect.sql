@@ -272,8 +272,7 @@ BEGIN
 				SUM (Stake),
 				HeadlineId		 
 		FROM  #Bettrans b			
-			INNER JOIN bodb02.dbo.VSOutright14 o WITH (NOLOCK) ON o.EventID = b.MatchId
-			INNER JOIN bodb02.dbo.VSRaceInfo r WITH(NOLOCK) ON o.EventID = r.EventID
+			INNER JOIN bodb02.dbo.VSRaceInfo r WITH(NOLOCK) ON b.MatchId = r.EventID -- no need join VSOutright14
 		WHERE EventType = 3
 		GROUP BY
 				CustID,
