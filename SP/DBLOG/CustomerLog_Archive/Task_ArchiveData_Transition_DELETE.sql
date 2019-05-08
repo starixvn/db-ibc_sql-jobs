@@ -13,26 +13,30 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @tableName VARCHAR(200)
-	SELECT TOP (1) @tableName = TableName
+	DECLARE @tableName VARCHAR(200), @custid int
+	SELECT TOP (1) @tableName = TableName, @custid = custid
 	FROM deleted
 
 	IF @tableName = 'UserLog_RunSP'
 	BEGIN
-		INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_RunSP([logid], [userid], [spname], [doing]
-			, [logdate], [custid], [ActionID], [TrackingValue], [Duration], [TrackingValue2])
-
-		SELECT [logid], [userid], [spname], [doing], [logdate], [custid], [ActionID], [TrackingValue]
-			, [Duration], [TrackingValue2]
-		FROM dbo.UserLog_RunSP l WITH(NOLOCK)
-		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.custid IS NULL AND deleted.CustId IS NULL)
-		
-		UNION ALL
-		SELECT [logid], [userid], [spname], [doing], [logdate], [custid], [ActionID], [TrackingValue]
-			, [Duration], [TrackingValue2]
-		FROM dbo.UserLog_RunSP l WITH(NOLOCK)
-		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.custid = deleted.custid)
-
+		IF @custid IS NULL
+		BEGIN
+			INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_RunSP([logid], [userid], [spname], [doing]
+				, [logdate], [custid], [ActionID], [TrackingValue], [Duration], [TrackingValue2])
+			SELECT [logid], [userid], [spname], [doing], [logdate], [custid], [ActionID], [TrackingValue]
+				, [Duration], [TrackingValue2]
+			FROM dbo.UserLog_RunSP l WITH(NOLOCK)
+			WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.custid IS NULL)
+		END
+		ELSE
+		BEGIN
+			INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_RunSP([logid], [userid], [spname], [doing]
+				, [logdate], [custid], [ActionID], [TrackingValue], [Duration], [TrackingValue2])
+			SELECT [logid], [userid], [spname], [doing], [logdate], [custid], [ActionID], [TrackingValue]
+				, [Duration], [TrackingValue2]
+			FROM dbo.UserLog_RunSP l WITH(NOLOCK)
+			WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.custid = deleted.custid)
+		END
 	END
 	ELSE IF @tableName = 'UserLog_Login'
 	BEGIN

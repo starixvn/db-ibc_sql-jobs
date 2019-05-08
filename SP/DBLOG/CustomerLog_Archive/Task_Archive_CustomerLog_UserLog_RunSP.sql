@@ -40,6 +40,31 @@ BEGIN
 		SELECT logid, logdate, custid, 'UserLog_RunSP' AS TableName
 		FROM dbo.UserLog_RunSP WITH(NOLOCK)
 		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
+			AND custid IS NOT NULL
+
+		SET @rowId = 1
+		WHILE 1 = 1
+		BEGIN
+		
+			DELETE
+			FROM dbo.Task_ArchiveData_Transition WITH(ROWLOCK)
+			WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
+			
+			IF @@ROWCOUNT = 0
+				BREAK
+
+			SET @rowId = @rowId + @RowInBatch
+		END
+
+		--for case custid is null
+		--reset identity purpose
+		TRUNCATE TABLE Task_ArchiveData_Transition
+
+		INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid, TableName)
+		SELECT logid, logdate, custid, 'UserLog_RunSP' AS TableName
+		FROM dbo.UserLog_RunSP WITH(NOLOCK)
+		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
+			AND custid IS NULL
 
 		SET @rowId = 1
 		WHILE 1 = 1
