@@ -113,8 +113,8 @@ BEGIN
 					AND x.ProductID = e.ProductID
 			OUTER APPLY (
 				SELECT TOP 1 m.sporttype
-				FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-					INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
+				FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
+					INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 				WHERE bm.refno = b.refno AND b.bettype = 2799
 			) AS bm
 			OUTER APPLY (SELECT CAST(('<xml>' + ISNULL(b.ExtraInfo, '') + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT')) AS t(c)
