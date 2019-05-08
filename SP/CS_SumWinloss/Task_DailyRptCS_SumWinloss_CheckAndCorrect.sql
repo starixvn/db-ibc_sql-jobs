@@ -148,7 +148,7 @@ BEGIN
 				b.WinlostDate,
 				x.ProductId,
 				x.EventType,
-				b.matchID,
+				CASE b.bettype WHEN 29 THEN 0 WHEN 2799 THEN bm.sporttype ELSE b.matchID END,
 				b.Bettype,
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END AS isLive,		
 				Count(TransID) As Wagers,
@@ -182,6 +182,12 @@ BEGIN
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
 					AND x.ProductID = e.ProductID
+			OUTER APPLY (
+				SELECT TOP 1 m.sporttype
+				FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
+					INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
+				WHERE bm.refno = b.refno AND b.bettype = 2799
+			) AS bm
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID IN (111,112,113) 		 
 			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID)
@@ -190,7 +196,7 @@ BEGIN
 				b.WinlostDate,
 				x.ProductId,
 				x.EventType,
-				b.matchID,
+				CASE b.bettype WHEN 29 THEN 0 WHEN 2799 THEN bm.sporttype ELSE b.matchID END,
 				b.Bettype,
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END ,	
 				CS.UplineId
