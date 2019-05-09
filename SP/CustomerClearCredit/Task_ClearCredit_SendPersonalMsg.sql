@@ -5,7 +5,7 @@ AS
 /*
 	Created: 20190509@Elodie
 	Task : Send message for SMAs who cleared given credit
-	DB: DBCust/CustDB
+	DB: DBMSG/bodb_Message
 
 	Revisions:    
 		- 20190509@Elodie: Initial SP [Redmine:#112458]
@@ -94,7 +94,7 @@ BEGIN
 			
 	-- Insert Message Target	
 	INSERT INTO #UplineList (CustId, username, MsgId)
-	SELECT DISTINCT m.custid, m.username, @MessageID1
+	SELECT DISTINCT m.custid, m.username, @MessageID2
 	FROM DBCUST.CustDB.dbo.CustomerClearCredit a
 		INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON a.custid = c.custid
 		INNER JOIN bodb02.dbo.customer m WITH (NOLOCK) ON c.mrecommend = m.custid
