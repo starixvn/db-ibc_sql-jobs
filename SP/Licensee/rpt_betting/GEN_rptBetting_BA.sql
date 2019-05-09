@@ -1,6 +1,11 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
+
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
+
 ALTER PROCEDURE [dbo].[GEN_rptBetting_BA]
     @date datetime, 
     @date2 datetime = null
@@ -18,7 +23,8 @@ Revisions:
 	20170323@Harper: LA - Implement Cashout Product [Redmine: #73310]
 	20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	20171019@Harper: LA - Shutdown KPI Report [RedmineID: #83983]
-	20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
+	20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768] 
+	20190508@Parsons: Implement BetBuilder [Redmine: #108995]
 
 Param's Explanation:
 
@@ -64,7 +70,7 @@ INSERT INTO dbo.rpt_Betting_BA
         CASE 
             WHEN b.bettype = 9 THEN -9 
 			WHEN b.bettype = 2799 THEN -2799
-            WHEN (b.bettype=10) OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1) 
+			WHEN b.bettype = 10 OR (b.bettype<>38 AND b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1)
             ELSE ISNULL(m.leagueid,-1) 
         END AS leagueid,	
 	    b.currency,
@@ -103,7 +109,7 @@ INSERT INTO dbo.rpt_Betting_BA
         CASE 
             WHEN b.bettype = 9 THEN -9 
 			WHEN b.bettype = 2799 THEN -2799
-            WHEN (b.bettype=10) OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1) 
+			WHEN b.bettype = 10 OR (b.bettype<>38 AND b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1)
             ELSE ISNULL(m.leagueid,-1) 
         END,	
 	    b.currency,
@@ -113,8 +119,3 @@ INSERT INTO dbo.rpt_Betting_BA
 		b.TicketType
 		
 GO
-GRANT EXECUTE ON [dbo].[GEN_rptBetting_BA] TO [bodbLicenseeNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[GEN_rptBetting_BA] TO [vnteam] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_BA] TO [vnteam] AS [dbo]
