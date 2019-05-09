@@ -96,8 +96,8 @@ BEGIN
 				b.Bettype,
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END AS isLive,		
 				CASE WHEN b.ExtraInfo LIKE '%p1%' AND t.c = 1   --- Abnormal bet
-						 THEN 1  --- Abnormal bet
-						 ELSE 2  --- Cancelled
+						 THEN 2  --- Abnormal bet
+						 ELSE 1  --- Cancelled
 					END AS CancelType,
 				Count(TransID) As Wagers,
 				SUM(Stake) AS Stake,
@@ -128,8 +128,8 @@ BEGIN
 				b.Bettype,
 				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END ,	
 				CASE WHEN b.ExtraInfo LIKE '%p1%' AND t.c = 1   --- Abnormal bet
-						 THEN 1  --- Abnormal bet
-						 ELSE 2  --- Cancelled
+						 THEN 2  --- Abnormal bet
+						 ELSE 1  --- Cancelled
 					END,
 				CS.UplineId
 				
