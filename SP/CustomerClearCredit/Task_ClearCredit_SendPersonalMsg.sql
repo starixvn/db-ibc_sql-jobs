@@ -1,11 +1,11 @@
-﻿/*<info serverAlias="DBMSG-bodb_Message" executers="" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_ClearCredit_SendPersonalMsg]	
 AS
 /*
 	Created: 20190509@Elodie
 	Task : Send message for SMAs who cleared given credit
-	DB: DBMSG/bodb_Message
+	DB: DBCUST/CustDB
 
 	Revisions:    
 		- 20190509@Elodie: Initial SP [Redmine:#112458]
@@ -39,7 +39,7 @@ BEGIN
 	SET @Content_th = N'"เรียน ลูกค้าที่เคารพ เนื่องจากบางบัญชีของมาสเตอร์ ที่สร้างขึ้นใหม่และไม่ได้ลงชื่อเข้าใช้เว็ปไซต์ตัวแทนภายใน7วันนับจากวันสร้างบัญชี ระบบจะล้างวงเงินเครดิตทั้งหมดออกจากบัญชี เพื่อความปลอดภัยและป้องกันบัญชีของดาวน์ไลน์ถูกใช้โดยบุคคลที่สาม ขอบพระคุณ"'	
 
 	-- Insert message
-	EXEC dbo.Dot_Msg_SetMessage2 
+	EXEC DBMSG.bodb_Message.dbo.Dot_Msg_SetMessage2 
 		@MessageId	= @MessageID1 OUTPUT,
 		@Content_en = @Content_en,
 		@Content_ch = @Content_ch,
@@ -56,11 +56,11 @@ BEGIN
 	-- Insert Message Target	
 	INSERT INTO #UplineList( CustId, MsgId)
 	SELECT DISTINCT m.srecommend, @MessageID1
-	FROM DBCUST.CustDB.dbo.CustomerClearCredit m
+	FROM dbo.CustomerClearCredit m
 	WHERE m.roleid = 3 AND m.LogDate >= @Today AND m.IsSend = 0
 
 	DELETE t 
-	FROM DBCUST.CustDB.dbo.CustomerClearCredit m WITH (NOLOCK)
+	FROM dbo.CustomerClearCredit m WITH (NOLOCK)
 		INNER JOIN #UplineList t ON t.CustId = m.srecommend 
 	WHERE m.IsSend = 1 AND m.roleid = 3 AND m.LogDate >= @Today
 
@@ -81,7 +81,7 @@ BEGIN
 	SET @Content_th = N'"เรียน ลูกค้าที่เคารพ เนื่องจากบางบัญชีของเอเย่นต์ ที่สร้างขึ้นใหม่และไม่ได้ลงชื่อเข้าใช้เว็ปไซต์ตัวแทนภายใน7วันนับจากวันสร้างบัญชี ระบบจะล้างวงเงินเครดิตทั้งหมดออกจากบัญชี เพื่อความปลอดภัยและป้องกันบัญชีของดาวน์ไลน์ถูกใช้โดยบุคคลที่สาม ขอบพระคุณ"'	
 
 	-- Insert message
-	EXEC dbo.Dot_Msg_SetMessage2 
+	EXEC DBMSG.bodb_Message.dbo.Dot_Msg_SetMessage2 
 		@MessageId	= @MessageID2 OUTPUT,
 		@Content_en = @Content_en,
 		@Content_ch = @Content_ch,
@@ -98,11 +98,11 @@ BEGIN
 	-- Insert Message Target	
 	INSERT INTO #UplineList (CustId, MsgId)	
 	SELECT DISTINCT a.mrecommend, @MessageID2
-	FROM DBCUST.CustDB.dbo.CustomerClearCredit a
+	FROM dbo.CustomerClearCredit a
 	WHERE a.roleid = 2 AND a.LogDate >= @Today AND a.IsSend = 0
 
 	DELETE t 
-	FROM DBCUST.CustDB.dbo.CustomerClearCredit a WITH (NOLOCK)
+	FROM dbo.CustomerClearCredit a WITH (NOLOCK)
 		INNER JOIN #UplineList t ON t.CustId = a.mrecommend 
 	WHERE a.IsSend = 1 AND a.roleid = 2 AND a.LogDate >= @Today
 
@@ -114,17 +114,17 @@ BEGIN
 	BEGIN
 		SELECT @CustID = t.custid, @UserName = c.username, @UplineRoleId = c.roleid, @MessageId = MsgId 
 		FROM #UplineList t
-			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.CustId = c.custid
+			INNER JOIN dbo.Customer c WITH (NOLOCK) ON t.CustId = c.custid
 		WHERE ID = @i
 
-		EXEC dbo.Dot_Msg_SetUsrMessage
+		EXEC DBMSG.bodb_Message.dbo.Dot_Msg_SetUsrMessage
 		@MessageId	= @MessageId,
 		@TargetId	= @CustID,
 		@TargetName = @UserName,
 		@PostTime	= @PostTime,
 		@isRead		= 0		
 		
-		EXEC DBCUST.CustDB.dbo.Task_ClearCredit_IsSendMessageUpd @CustID = @CustID, @RoleId = @UplineRoleId
+		EXEC dbo.Task_ClearCredit_IsSendMessageUpd @CustID = @CustID, @RoleId = @UplineRoleId
 
 		SELECT @i = @i + 1
 	END
