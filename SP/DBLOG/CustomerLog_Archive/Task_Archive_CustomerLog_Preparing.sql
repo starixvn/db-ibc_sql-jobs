@@ -12,6 +12,12 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
+	IF EXISTS (SELECT TOP 1 1 FROM Task_ArchiveData_List_Processing WITH(NOLOCK))
+	BEGIN
+		RAISERROR('Having data in [Task_ArchiveData_List_Processing]. Please take a look.', 16, 1)
+		RETURN
+	END
+
 	INSERT INTO Task_ArchiveData_List_Processing(TableName, ArchiveDate)
 	SELECT TableName, ArchiveDate
 	FROM dbo.Task_ArchiveData_List WITH(NOLOCK)
