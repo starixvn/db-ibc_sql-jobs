@@ -124,6 +124,11 @@ BEGIN
 		@PostTime	= @PostTime,
 		@isRead		= 0		
 		
+		UPDATE c 
+		SET IsSend = 1
+		FROM DBCUST.CustDB.dbo.CustomerClearCredit c WITH (ROWLOCK) 
+		WHERE c.LogDate >= @Today AND c.custid = @CustID
+
 		SELECT @i = @i + 1
 	END
 
