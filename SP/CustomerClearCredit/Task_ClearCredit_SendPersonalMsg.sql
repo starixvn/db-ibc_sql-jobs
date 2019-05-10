@@ -124,10 +124,7 @@ BEGIN
 		@PostTime	= @PostTime,
 		@isRead		= 0		
 		
-		UPDATE c 
-		SET IsSend = 1
-		FROM DBCUST.CustDB.dbo.CustomerClearCredit c WITH (ROWLOCK) 
-		WHERE c.LogDate >= @Today AND @CustID = CASE WHEN @UplineRoleId = 4 THEN c.srecommend WHEN @UplineRoleId = 3 THEN c.mrecommend END
+		EXEC DBCUST.CustDB.dbo.Task_ClearCredit_IsSendMessageUpd @CustID = @CustID, @RoleId = @UplineRoleId
 
 		SELECT @i = @i + 1
 	END
