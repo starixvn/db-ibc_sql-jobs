@@ -17,7 +17,7 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @Content_en NVARCHAR(4000), @Content_vn NVARCHAR(4000), @Content_ch NVARCHAR(4000), @Content_cs NVARCHAR(4000), @Content_th NVARCHAR(4000)
-	DECLARE @MessageID INT, @MessageID1 INT, @MessageID2 INT, @Creator INT = 10278938, @CreatorName VARCHAR(50) = 'starixIT', @Max INT, @i INT, @CustID INT, @UserName VARCHAR(30)
+	DECLARE @MessageID INT, @MessageID1 INT, @MessageID2 INT, @Creator INT = 10278938, @CreatorName VARCHAR(50) = 'starixIT', @Max INT, @i INT, @CustID INT, @UserName VARCHAR(30), @UplineRoleId INT
 	DECLARE @PostTime DATETIME = GETDATE()
 	DECLARE @Today DATETIME = CONVERT(date, GETDATE())
 	CREATE TABLE #UplineList (ID INT IDENTITY(1,1), CustId INT, MsgId INT)
@@ -112,7 +112,7 @@ BEGIN
 
 	WHILE @i <= @Max
 	BEGIN
-		SELECT @CustID = t.custid, @UserName = c.username, @MessageId = MsgId 
+		SELECT @CustID = t.custid, @UserName = c.username, @UplineRoleId = c.roleid, @MessageId = MsgId 
 		FROM #UplineList t
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.CustId = c.custid
 		WHERE ID = @i
@@ -127,7 +127,7 @@ BEGIN
 		UPDATE c 
 		SET IsSend = 1
 		FROM DBCUST.CustDB.dbo.CustomerClearCredit c WITH (ROWLOCK) 
-		WHERE c.LogDate >= @Today AND c.custid = @CustID
+		WHERE c.LogDate >= @Today AND @CustID = CASE WHEN @UplineRoleId = 4 THEN c.srecommend WHEN @UplineRoleId = 3 THEN c.mrecommend END
 
 		SELECT @i = @i + 1
 	END
