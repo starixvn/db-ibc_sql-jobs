@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
 
-ALTER  PROCEDURE [dbo].[Task_ClearCredit_CustomerClearCredit]	
+ALTER PROCEDURE [dbo].[Task_ClearCredit_CustomerClearCredit]	
 AS
 /*
 	Created: 20190509@Elodie
@@ -172,8 +172,8 @@ BEGIN
 			END CATCH						
 		END			
 		
-		INSERT INTO dbo.CustomerClearCredit (LogDate, custid, Oldcredit)
-		SELECT GETDATE(), custid, credit
+		INSERT INTO dbo.CustomerClearCredit (LogDate, custid, roleid, srecommend, mrecommend, recommend, Oldcredit)
+		SELECT GETDATE(), custid, 3, srecommend, mrecommend, 0, credit
 		FROM @tmpCust
 
 		DELETE @tmpCust
@@ -227,8 +227,8 @@ BEGIN
 			END CATCH						
 		END	
 
-		INSERT INTO dbo.CustomerClearCredit (LogDate, custid, Oldcredit)
-		SELECT GETDATE(), custid, credit
+		INSERT INTO dbo.CustomerClearCredit (LogDate, custid, roleid, srecommend, mrecommend, recommend, Oldcredit)
+		SELECT GETDATE(), custid, 2, srecommend, mrecommend, custid, credit
 		FROM @tmpCust
 
 		DELETE @tmpCust

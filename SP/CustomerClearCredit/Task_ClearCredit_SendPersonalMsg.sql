@@ -1,6 +1,6 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBMSG-bodb_Message" executers="" viewers="" isFunction="0"></info>*/
 
-ALTER  PROCEDURE [dbo].[Task_ClearCredit_SendPersonalMsg]	
+ALTER PROCEDURE [dbo].[Task_ClearCredit_SendPersonalMsg]	
 AS
 /*
 	Created: 20190509@Elodie
@@ -20,7 +20,7 @@ BEGIN
 	DECLARE @MessageID INT, @MessageID1 INT, @MessageID2 INT, @Creator INT = 10278938, @CreatorName VARCHAR(50) = 'starixIT', @Max INT, @i INT, @CustID INT, @UserName VARCHAR(30)
 	DECLARE @PostTime DATETIME = GETDATE()
 	DECLARE @Today DATETIME = CONVERT(date, GETDATE())
-	CREATE TABLE #UplineList (ID INT IDENTITY(1,1), CustId INT, username VARCHAR(30), MsgId INT)
+	CREATE TABLE #UplineList (ID INT IDENTITY(1,1), CustId INT, MsgId INT)
 
 	--Send personal message for super
 	-- English
@@ -54,12 +54,15 @@ BEGIN
 		@IsBatch	= 0			 -- normal message (no need to replace the symbol @@ by transid when display)
 		
 	-- Insert Message Target	
-	INSERT INTO #UplineList( CustId, username, MsgId)
-	SELECT DISTINCT s.custid, s.username, @MessageID1
+	INSERT INTO #UplineList( CustId, MsgId)
+	SELECT DISTINCT m.srecommend, @MessageID1
 	FROM DBCUST.CustDB.dbo.CustomerClearCredit m
-		INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON m.custid = c.custid
-		INNER JOIN bodb02.dbo.customer s WITH (NOLOCK) ON c.srecommend = s.custid
-	WHERE c.roleid = 3 AND m.LogDate >= @Today
+	WHERE m.roleid = 3 AND m.LogDate >= @Today AND m.IsSend = 0
+
+	DELETE t 
+	FROM DBCUST.CustDB.dbo.CustomerClearCredit m WITH (NOLOCK)
+		INNER JOIN #UplineList t ON t.CustId = m.srecommend 
+	WHERE m.IsSend = 1 AND m.roleid = 3 AND m.LogDate >= @Today
 
 	--Send personal message for master
 	-- English
@@ -93,12 +96,15 @@ BEGIN
 		@IsBatch	= 0			 -- normal message (no need to replace the symbol @@ by transid when display)
 			
 	-- Insert Message Target	
-	INSERT INTO #UplineList (CustId, username, MsgId)
-	SELECT DISTINCT m.custid, m.username, @MessageID2
+	INSERT INTO #UplineList (CustId, MsgId)	
+	SELECT DISTINCT a.mrecommend, @MessageID2
 	FROM DBCUST.CustDB.dbo.CustomerClearCredit a
-		INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON a.custid = c.custid
-		INNER JOIN bodb02.dbo.customer m WITH (NOLOCK) ON c.mrecommend = m.custid
-	WHERE c.roleid = 2 AND a.LogDate >= @Today
+	WHERE a.roleid = 2 AND a.LogDate >= @Today AND a.IsSend = 0
+
+	DELETE t 
+	FROM DBCUST.CustDB.dbo.CustomerClearCredit a WITH (NOLOCK)
+		INNER JOIN #UplineList t ON t.CustId = a.mrecommend 
+	WHERE a.IsSend = 1 AND a.roleid = 2 AND a.LogDate >= @Today
 
 	--Send message for user
 	SET @i = 1
@@ -106,7 +112,10 @@ BEGIN
 
 	WHILE @i <= @Max
 	BEGIN
-		SELECT @CustID = custid, @UserName = username, @MessageId = MsgId FROM #UplineList WHERE ID = @i
+		SELECT @CustID = t.custid, @UserName = c.username, @MessageId = MsgId 
+		FROM #UplineList t
+			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.CustId = c.custid
+		WHERE ID = @i
 
 		EXEC dbo.Dot_Msg_SetUsrMessage
 		@MessageId	= @MessageId,
