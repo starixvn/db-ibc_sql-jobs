@@ -3,6 +3,17 @@
 ALTER PROCEDURE dbo.Acc_CustomerInfo_Execrep_11
 	@CustList VARCHAR(MAX)
 AS
+/*
+	Created: 20190514@Elodie
+	Task : Clear given credit for new created member
+	DB: DBCust/CustDB
+
+	Revisions:    
+		- 20190514@Elodie: Initial SP [Redmine:#112458]
+
+	Param's Explanation:
+		
+*/
 BEGIN
 	SET NOCOUNT ON
 	IF dbo.f_CheckRepTable('CustInfo') = 0 RETURN
