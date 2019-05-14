@@ -17,7 +17,7 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @Content_en NVARCHAR(4000), @Content_vn NVARCHAR(4000), @Content_ch NVARCHAR(4000), @Content_cs NVARCHAR(4000), @Content_th NVARCHAR(4000)
-	DECLARE @MessageID INT, @MessageID1 INT, @MessageID2 INT, @Creator INT = 10278938, @CreatorName VARCHAR(50) = 'starixIT', @Max INT, @i INT, @CustID INT, @UserName VARCHAR(30), @UplineRoleId INT
+	DECLARE @MessageID INT, @MessageID1 INT, @Creator INT = 10278938, @CreatorName VARCHAR(50) = 'starixIT', @Max INT, @i INT, @CustID INT, @UserName VARCHAR(30), @UplineRoleId INT
 	DECLARE @PostTime DATETIME = GETDATE()
 	DECLARE @Today DATETIME = CONVERT(date, GETDATE())
 	CREATE TABLE #UplineList (ID INT IDENTITY(1,1), CustId INT, MsgId INT)
