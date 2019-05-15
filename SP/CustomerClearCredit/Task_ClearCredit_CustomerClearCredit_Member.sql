@@ -52,7 +52,12 @@ BEGIN
 	--exclude exception list used by OPS/Finance (bodb_report.dbo.Task_Cust_ArchiveAcc_Exception)
 	DELETE m 
 	FROM #CustomerList m 
-		INNER JOIN DBACC.bodb_report.dbo.Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.custid	
+		INNER JOIN DBACC.bodb_report.dbo.Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.recommend	
+
+	--exclude phone betting
+	DELETE m 
+	FROM #CustomerList m 
+		INNER JOIN dbo.PhoneBettingCustomerList e WITH (NOLOCK) ON e.username = m.username	
 
 	--exclude internal accounts	
 	DELETE m 
