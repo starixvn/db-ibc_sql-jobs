@@ -33,7 +33,7 @@ BEGIN
 		AND c.creator = c.recommend
 		AND c.roleid = 1
 		AND ci.credit > 0
-		AND c.creatdate < DATEADD(dd,-7, @Today) 
+		AND c.creatdate < DATEADD(dd,-14, @Today) 
 		AND c.lastlogged IS NULL
 
 	--exclude direct accounts

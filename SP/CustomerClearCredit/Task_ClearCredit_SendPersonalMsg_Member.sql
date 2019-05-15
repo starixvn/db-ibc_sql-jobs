@@ -24,7 +24,7 @@ BEGIN
 
 	--Send personal message for agent
 	-- English
-	SET @Content_en = 'Dear valued agents, some of your Masters did not login to agency site within 7 days after creation. The system has already removed these unused accounts'' credit. This is to prevent your unused downlines from being taken advantage by third party. Thank you.'	
+	SET @Content_en = 'Dear valued agents, some of your Members did not login to member site within 14 days after creation. System has already removed these unused accounts'' credit. This is to prevent your unused downlines from being taken advantage by third party. Thank you.'	
 
 	-- VietNamese
 	SET @Content_vn = N'"Kính gửi quý khách hàng, Một số Master của bạn không đăng nhập vào trang Agency trong vòng 7 ngày sau khi tạo. Hệ thống đã thu hồi tín dụng của những tài khoản không sử dụng này. Điều này nhằm ngăn chặn bên thứ ba lợi dụng tuyến dưới không sử dụng của bạn. Trân trọng."'
