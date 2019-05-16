@@ -817,6 +817,7 @@ BEGIN
 					GROUP BY c.recommend
 					) d
 		ON s.CustID = d.recommend
+	WHERE   s.WinlostDate = @WinlostDate
 	
 	-- Master		 
 	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
@@ -831,6 +832,7 @@ BEGIN
 					GROUP BY c.mrecommend
 					) d
 		ON s.CustID = d.mrecommend
+	WHERE   s.WinlostDate = @WinlostDate
 			
 	-- Super		 
 	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
@@ -845,6 +847,7 @@ BEGIN
 					GROUP BY c.srecommend
 					) d
 		ON s.CustID = d.srecommend
+	WHERE   s.WinlostDate = @WinlostDate
 		
 	---------------- Correct Opening Total Balance --------------------
 	IF EXISTS (

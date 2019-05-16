@@ -408,8 +408,13 @@ BEGIN
 				AND s.Winlostdate = t.Winlostdate
 		WHERE s.WinlostDate = @WinlostDate
 		
-		------ Delete from rptTotalBalance_Active					
+		------ Delete from rptTotalBalance_Active		
+
+		DECLARE @OldDate DATE 
+		SELECT @OldDate = DATEADD(DD, -3, @Winlostdate)
+	 
+		
 		DELETE  dbo.rptTotalBalance_Active WITH (ROWLOCK)
-		WHERE 	WinlostDate = @WinlostDate	
+		WHERE 	WinlostDate <= @OldDate
 END
 GO
