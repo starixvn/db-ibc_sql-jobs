@@ -14,7 +14,7 @@ AS
 	
 	Revisions:
 		- 20190301@Sophia: Initialize SP [RedmineID: #105660]
-		 
+		- 20190329@Sophia: Implement Non Sports [Redmine: #109521] 
 		
 	Param's Explanation:
 	
@@ -23,9 +23,46 @@ AS
 
 BEGIN 
 	SET NOCOUNT ON 	
-	 
+
+	------ Check SP Version
+	DECLARE @isTest BIT = 0
+	SELECT  @isTest = dbo.f_CheckSPVersion(@@PROCID)	
 
 	/* Get data source */
+	CREATE TABLE #Bettrans
+	(
+		CustID			int,
+		WinlostDate		smalldatetime,
+		ProductId		smallint,
+		EventType		tinyint,
+		MatchId			int,
+		Bettype			smallint,
+		IsLive			bit,
+		Wagers			int,
+		Stake			money,
+		ValidStake		money,
+		MemberWinloss	money,
+		MemberComm		money,
+		Agent			money,
+		AgentWinloss	money,
+		AgentComm		money,
+		AgentStock		money,
+		AgentResultA	money,
+		Master			money,
+		MasterWinloss	money,
+		MasterComm		money,
+		MasterStock		money,
+		Super			money,
+		SuperWinloss	money,
+		SuperComm		money,
+		SuperStock		money,
+		HeadlineWinloss	money,
+		HeadlineComm	money,
+		HeadlineStock	money,
+		HeadlineId		int
+	)
+
+
 	CREATE TABLE #CS_SumWinloss
 	(
 		CustID			int,
@@ -59,9 +96,9 @@ BEGIN
 	)
 
 	---- Get ExtraPT
-	DECLARE @ExtraPT AS TABLE (SuperID INT, ExtraPT DECIMAL(9,8), FromDate DATETIME, ToDate DATETIME, ProductID TINYINT)----, Sporttype SMALLINT, SubProduct VARCHAR (50) )
+	CREATE TABLE #ExtraPT (SuperID INT, ExtraPT DECIMAL(9,8), FromDate DATETIME, ToDate DATETIME, ProductID TINYINT)----, Sporttype SMALLINT, SubProduct VARCHAR (50) )
 
-	INSERT INTO @ExtraPT (SuperID, ExtraPT, FromDate, ToDate, ProductID) 
+	INSERT INTO #ExtraPT (SuperID, ExtraPT, FromDate, ToDate, ProductID) 
 	SELECT DISTINCT e.SuperID, e.ExtraPT, e.FromDate, e.ToDate, e.ProductId 
 	FROM  bodb02.dbo.Acc_GroupExtraPTSetting e WITH (NOLOCK)  		
 	WHERE	e.Sporttype = 0		--- General Sporttype of SB & other products
@@ -71,15 +108,15 @@ BEGIN
 
 	---- End Get ExtraPT
 
-
 	---- Member - RoleId = 1
 	BEGIN
-		INSERT INTO #CS_SumWinloss
+		INSERT INTO #Bettrans
 		(
 			CustID,
 			WinlostDate,
 			ProductId,
-			Sporttype,
+			EventType,
+			MatchID,
 			Bettype,
 			IsLive,
 			Wagers,
@@ -110,9 +147,10 @@ BEGIN
 				b.CustID,
 				b.WinlostDate,
 				x.ProductId,
-				ISNULL(m.Sporttype, 0) AS Sporttype, -- parlay = 0 
+				x.EventType,
+				CASE b.bettype WHEN 29 THEN 0 WHEN 2799 THEN bm.sporttype ELSE b.matchID END,
 				b.Bettype,
-				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END As IsLive,
+				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END AS isLive,		
 				Count(TransID) As Wagers,
 				SUM(Stake) AS Stake,
 				SUM(ABS(winlost - actual_stake)) ValidStake,
@@ -139,27 +177,31 @@ BEGIN
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN (SELECT ProductID, Bettype FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
-			LEFT JOIN @ExtraPT e
+			INNER JOIN (SELECT ProductID, Bettype, EventType FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,@isTest) ) x ON x.Bettype = b.Bettype
+			LEFT JOIN #ExtraPT e
 				ON	b.Srecommend = e.SuperID 
 					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
 					AND x.ProductID = e.ProductID
-			LEFT JOIN bodb02.dbo.Match14 m WITH (NOLOCK) ON m.MatchID = b.MatchID
+			OUTER APPLY (
+				SELECT TOP 1 m.sporttype
+				FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
+					INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
+				WHERE bm.refno = b.refno AND b.bettype = 2799
+			) AS bm
 		WHERE b.WinlostDate = @WinlostDate
-			AND b.StatusID IN (111,112,113) 
-			AND b.bettype <> 10	
+			AND b.StatusID IN (111,112,113) 		 
 			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID)
 		GROUP BY
 				b.CustID,
 				b.WinlostDate,
 				x.ProductId,
-				ISNULL(m.Sporttype, 0),
+				x.EventType,
+				CASE b.bettype WHEN 29 THEN 0 WHEN 2799 THEN bm.sporttype ELSE b.matchID END,
 				b.Bettype,
-				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END ,
+				CASE WHEN b.bettype = 29 THEN  CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.Liveindicator END ,	
 				CS.UplineId
-
-
-	---Outright  
+	
+	--- bettrans only
 	INSERT INTO #CS_SumWinloss
 		(
 			CustID,
@@ -195,55 +237,266 @@ BEGIN
 		SELECT 
 				b.CustID,
 				b.WinlostDate,
-				x.ProductId,
-				ISNULL(l.Sporttype,0) AS Sporttype,
+				b.ProductId,
+				b.matchID AS Sporttype,
 				b.Bettype,			
-				b.Liveindicator AS isLive,																	
-				Count(TransID) As Wagers,
+				b.isLive,																	
+				SUM(Wagers) AS  Wagers ,
 				SUM(Stake) AS Stake,
-				SUM(ABS(winlost - actual_stake)) ValidStake,
-				SUM(Winlost - actual_stake) AS MemberWinloss,
-				SUM(Playercomm) AS MemberComm,
-				SUM((Winlost - actual_stake)  + (ABS(winlost - actual_stake) * discount) ) AS Agent,
-				SUM(Awinlost) AS AgentWinloss,
-				SUM(Comm - PlayerComm) AS AgentComm,
-				SUM(ABS(winlost - actual_stake) * (1 - apositiontaking)) AS AgentStock,
-				SUM((Winlost - actual_stake + Playercomm)* (1 - APositiontaking)) AS AgentResultA,
-				SUM(((Winlost - actual_stake) * (1-apositiontaking)) + ABS(winlost - actual_stake) * (1 - apositiontaking) * adiscount) AS Master,
-				SUM(MWinlost) AS MasterWinloss,
-				SUM(AComm - Comm) AS MasterComm,
-				SUM(ABS(winlost - actual_stake) * (1 - apositiontaking - mpositiontaking)) AS MasterStock,	
-				SUM( (Winlost - actual_stake)* (1 - apositiontaking - mpositiontaking) 
-									 +  ABS(winlost - actual_stake) * (1 - apositiontaking - mpositiontaking) * sdiscount
-									 ) AS Super,
-				SUM(SWinlost) AS SuperWinloss,
-				SUM(SComm - Acomm) AS SuperComm,
-				SUM(ABS(winlost - actual_stake) * (1 - tpositiontaking)) AS SuperStock,
-				SUM ( -1 *(CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * e.ExtraPT) AS HeadlineWinloss,
-				SUM ( -1 *(CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * e.ExtraPT) AS HeadlineComm,
-				SUM (ABS(winlost - actual_stake) * (1 - tpositiontaking - e.ExtraPT)) AS HeadlineStock,
-				CS.UplineId AS HeadlineId			 
-		FROM bodb02.dbo.Bettrans14 b WITH (NOLOCK) 
-			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
-			INNER JOIN (SELECT ProductID, Bettype FROM bodb02.dbo.CS_F_bettypeMatrix_Sel (0,0,0,0)) x ON x.Bettype = b.Bettype
-			LEFT JOIN @ExtraPT e
-				ON	b.Srecommend = e.SuperID 
-					AND b.winlostdate BETWEEN e.FromDate AND E.ToDate
-					AND x.ProductID = e.ProductID
-			LEFT JOIN bodb02.dbo.outright14 m WITH (NOLOCK) ON m.orid = b.MatchID
-			INNER JOIN bodb02.dbo.League l WITH (NOLOCK) ON l.leagueid = m.leagueid
-		WHERE b.WinlostDate = @WinlostDate
-			AND b.StatusID IN (111,112,113) 
-			AND b.bettype = 10 
-			AND EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper CSS WITH (NOLOCK) WHERE b.srecommend = CSS.CustID)
+				SUM(ValidStake) AS ValidStake,
+				SUM(MemberWinloss) AS MemberWinloss,
+				SUM(MemberComm) AS MemberComm,
+				SUM(Agent) AS Agent,
+				SUM(AgentWinloss) AS AgentWinloss,
+				SUM(AgentComm) AS AgentComm,
+				SUM(AgentStock) AS AgentStock,
+				SUM(AgentResultA) AS AgentResultA,
+				SUM(Master) AS Master,
+				SUM(MasterWinloss) AS MasterWinloss,
+				SUM(MasterComm) AS MasterComm,
+				SUM(MasterStock) AS MasterStock,	
+				SUM(Super) AS Super,
+				SUM(SuperWinloss) AS SuperWinloss,
+				SUM(SuperComm) AS SuperComm,
+				SUM(SuperStock) AS SuperStock,
+				SUM (HeadlineWinloss) AS HeadlineWinloss,
+				SUM (HeadlineComm) AS HeadlineComm,
+				SUM (HeadlineStock) AS HeadlineStock,
+				b.HeadlineId AS HeadlineId			 
+		FROM  #Bettrans b			
+		WHERE EventType = 0	
 		GROUP BY
 				b.CustID,
 				b.WinlostDate,
-				x.ProductId,
-				ISNULL(l.Sporttype,0),  
-				b.Bettype,
-				b.Liveindicator,
-				CS.UplineId
+				b.ProductId,
+				b.MatchId,
+				b.Bettype,			
+				b.isLive,	
+				b.HeadlineId
+
+	--- Match
+	INSERT INTO #CS_SumWinloss
+		(
+			CustID,
+			WinlostDate,
+			ProductId,
+			Sporttype,
+			Bettype,
+			IsLive,
+			Wagers,
+			Stake,
+			ValidStake,
+			MemberWinloss,
+			MemberComm,
+			Agent,
+			AgentWinloss,
+			AgentComm,
+			AgentStock,
+			AgentResultA,
+			Master,
+			MasterWinloss,
+			MasterComm,
+			MasterStock,
+			Super,
+			SuperWinloss,
+			SuperComm,
+			SuperStock,
+			HeadlineWinloss,
+			HeadlineComm,
+			HeadlineStock,
+			HeadlineId
+		)
+			
+		SELECT 
+				b.CustID,
+				b.WinlostDate,
+				b.ProductId,
+				m.Sporttype,
+				b.Bettype,			
+				b.isLive,																	
+				SUM(Wagers) AS  Wagers ,
+				SUM(Stake) AS Stake,
+				SUM(ValidStake) AS ValidStake,
+				SUM(MemberWinloss) AS MemberWinloss,
+				SUM(MemberComm) AS MemberComm,
+				SUM(Agent) AS Agent,
+				SUM(AgentWinloss) AS AgentWinloss,
+				SUM(AgentComm) AS AgentComm,
+				SUM(AgentStock) AS AgentStock,
+				SUM(AgentResultA) AS AgentResultA,
+				SUM(Master) AS Master,
+				SUM(MasterWinloss) AS MasterWinloss,
+				SUM(MasterComm) AS MasterComm,
+				SUM(MasterStock) AS MasterStock,	
+				SUM(Super) AS Super,
+				SUM(SuperWinloss) AS SuperWinloss,
+				SUM(SuperComm) AS SuperComm,
+				SUM(SuperStock) AS SuperStock,
+				SUM (HeadlineWinloss) AS HeadlineWinloss,
+				SUM (HeadlineComm) AS HeadlineComm,
+				SUM (HeadlineStock) AS HeadlineStock,
+				b.HeadlineId AS HeadlineId			 
+		FROM  #Bettrans b			
+			INNER JOIN bodb02.dbo.Match14 m WITH (NOLOCK) ON m.MatchID = b.MatchID
+		WHERE EventType = 1	
+		GROUP BY
+				b.CustID,
+				b.WinlostDate,
+				b.ProductId,
+				m.Sporttype,
+				b.Bettype,			
+				b.isLive,	
+				b.HeadlineId
+
+
+	---Outright 
+	INSERT INTO #CS_SumWinloss
+		(
+			CustID,
+			WinlostDate,
+			ProductId,
+			Sporttype,
+			Bettype,
+			IsLive,
+			Wagers,
+			Stake,
+			ValidStake,
+			MemberWinloss,
+			MemberComm,
+			Agent,
+			AgentWinloss,
+			AgentComm,
+			AgentStock,
+			AgentResultA,
+			Master,
+			MasterWinloss,
+			MasterComm,
+			MasterStock,
+			Super,
+			SuperWinloss,
+			SuperComm,
+			SuperStock,
+			HeadlineWinloss,
+			HeadlineComm,
+			HeadlineStock,
+			HeadlineId
+		)
+			
+		SELECT 
+				b.CustID,
+				b.WinlostDate,
+				b.ProductId,
+				l.Sporttype,
+				b.Bettype,			
+				b.isLive,																	
+				SUM(Wagers) AS  Wagers ,
+				SUM(Stake) AS Stake,
+				SUM(ValidStake) AS ValidStake,
+				SUM(MemberWinloss) AS MemberWinloss,
+				SUM(MemberComm) AS MemberComm,
+				SUM(Agent) AS Agent,
+				SUM(AgentWinloss) AS AgentWinloss,
+				SUM(AgentComm) AS AgentComm,
+				SUM(AgentStock) AS AgentStock,
+				SUM(AgentResultA) AS AgentResultA,
+				SUM(Master) AS Master,
+				SUM(MasterWinloss) AS MasterWinloss,
+				SUM(MasterComm) AS MasterComm,
+				SUM(MasterStock) AS MasterStock,	
+				SUM(Super) AS Super,
+				SUM(SuperWinloss) AS SuperWinloss,
+				SUM(SuperComm) AS SuperComm,
+				SUM(SuperStock) AS SuperStock,
+				SUM (HeadlineWinloss) AS HeadlineWinloss,
+				SUM (HeadlineComm) AS HeadlineComm,
+				SUM (HeadlineStock) AS HeadlineStock,
+				b.HeadlineId AS HeadlineId			 
+		FROM  #Bettrans b			
+			INNER JOIN bodb02.dbo.outright14 m WITH (NOLOCK) ON m.orid = b.MatchID
+			INNER JOIN bodb02.dbo.League l WITH (NOLOCK) ON l.leagueid = m.leagueid
+		WHERE EventType = 2		
+		GROUP BY
+				b.CustID,
+				b.WinlostDate,
+				b.ProductId,
+				l.Sporttype,
+				b.Bettype,			
+				b.isLive,	
+				b.HeadlineId
+
+	---VSOutright 
+	INSERT INTO #CS_SumWinloss
+		(
+			CustID,
+			WinlostDate,
+			ProductId,
+			Sporttype,
+			Bettype,
+			IsLive,
+			Wagers,
+			Stake,
+			ValidStake,
+			MemberWinloss,
+			MemberComm,
+			Agent,
+			AgentWinloss,
+			AgentComm,
+			AgentStock,
+			AgentResultA,
+			Master,
+			MasterWinloss,
+			MasterComm,
+			MasterStock,
+			Super,
+			SuperWinloss,
+			SuperComm,
+			SuperStock,
+			HeadlineWinloss,
+			HeadlineComm,
+			HeadlineStock,
+			HeadlineId
+		)
+			
+		SELECT 
+				b.CustID,
+				b.WinlostDate,
+				b.ProductId,
+				r.Sporttype,
+				b.Bettype,			
+				b.isLive,																	
+				SUM(Wagers) AS  Wagers ,
+				SUM(Stake) AS Stake,
+				SUM(ValidStake) AS ValidStake,
+				SUM(MemberWinloss) AS MemberWinloss,
+				SUM(MemberComm) AS MemberComm,
+				SUM(Agent) AS Agent,
+				SUM(AgentWinloss) AS AgentWinloss,
+				SUM(AgentComm) AS AgentComm,
+				SUM(AgentStock) AS AgentStock,
+				SUM(AgentResultA) AS AgentResultA,
+				SUM(Master) AS Master,
+				SUM(MasterWinloss) AS MasterWinloss,
+				SUM(MasterComm) AS MasterComm,
+				SUM(MasterStock) AS MasterStock,	
+				SUM(Super) AS Super,
+				SUM(SuperWinloss) AS SuperWinloss,
+				SUM(SuperComm) AS SuperComm,
+				SUM(SuperStock) AS SuperStock,
+				SUM (HeadlineWinloss) AS HeadlineWinloss,
+				SUM (HeadlineComm) AS HeadlineComm,
+				SUM (HeadlineStock) AS HeadlineStock,
+				b.HeadlineId AS HeadlineId			 
+		FROM  #Bettrans b			
+			INNER JOIN bodb02.dbo.VSRaceInfo r WITH(NOLOCK) ON b.MatchId = r.EventID -- no need join VSOuright14
+		WHERE EventType = 3		
+		GROUP BY
+				b.CustID,
+				b.WinlostDate,
+				b.ProductId,
+				r.Sporttype,
+				b.Bettype,			
+				b.isLive,	
+				b.HeadlineId
 
 	END
 	 
