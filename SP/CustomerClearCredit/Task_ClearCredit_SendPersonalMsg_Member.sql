@@ -27,7 +27,7 @@ BEGIN
 	SET @Content_en = 'Dear valued agents, some of your Members did not login to member site within 14 days after creation. System has already removed these unused accounts'' credit. This is to prevent your unused downlines from being taken advantage by third party. Thank you.'	
 
 	-- VietNamese
-	SET @Content_vn = N'Kính gửi quý khách hàng, Một số Member của bạn không đăng nhập vào hệ thống trong vòng 14 ngày sau khi tạo. Hệ thống đã thu hồi tín dụng của những tài khoản không sử dụng này. Điều này nhằm ngăn chặn bên thứ ba lợi dụng tuyến dưới không sử dụng của bạn. Trân trọng.'
+	SET @Content_vn = N'Kính gửi quý khách hàng, Một số Member của bạn không đăng nhập vào trang thành viên trong vòng 14 ngày sau khi tạo. Hệ thống đã thu hồi tín dụng của những tài khoản không sử dụng này. Điều này nhằm ngăn chặn bên thứ ba lợi dụng tuyến dưới không sử dụng của bạn. Trân trọng.'
 
 	-- Chinese Traditional
 	SET @Content_ch = N'敬愛的客戶， 由於某些會員在賬號創建後的 14天內無登入會員網故系統將清除無使用賬號的余額。這是為了防範您下線無使用的空白賬號讓第三方有機可乘。謝謝。'
