@@ -95,7 +95,12 @@ StartLoop_r:
         WHERE custid = @custid_r  
             AND transdate >= @ondate_r  
             AND tpositiontaking =0  
-            AND (bettype < 31 OR (bettype BETWEEN 121 AND 999) OR (bettype BETWEEN 1301 AND 1399) OR (bettype BETWEEN 9001 AND 9399))  
+            AND ( bettype < 31 
+					OR (bettype BETWEEN 121 AND 999) 
+					OR (bettype BETWEEN 1301 AND 1399) 
+					OR (bettype BETWEEN 9001 AND 9399)
+					OR bettype = 38 -- BetBuilder
+				)  
 			AND bettype NOT IN (901, 911)
          
     DELETE FROM @BAHistory_Running WHERE custid = @custid_r AND ondate = @ondate_r  
