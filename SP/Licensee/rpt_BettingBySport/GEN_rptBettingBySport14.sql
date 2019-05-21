@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 USE [bodb_LicenseeReport]
 GO
@@ -13,7 +13,7 @@ AS
 
     Revisions:	
 		- 20170930@Harper: Get more info for MuayThai Parlay [Redmine: #82827]
-		- 20171114@Harper: Fix Date Range when get detail ticket 
+		- 20171114@Harper: Fix Date Range when get detail ticket
 
 	GEN_rptBettingBySport14 '2017-10-13'
 */ 

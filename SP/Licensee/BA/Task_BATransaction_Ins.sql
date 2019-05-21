@@ -27,6 +27,7 @@ AS
 		20181120@Sophia: Change 'DB052' To 'DB053' for steap switch to DB053 [Redmine: #103653]
 		20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
 		20190226@Percy: Move update max transid after insert data [RedmineID: #109415]
+		20190311@Parsons: Implement BetBuilder [Redmine: #108995]
  */  
 BEGIN
 	SET NOCOUNT ON   
@@ -45,7 +46,12 @@ BEGIN
 	SELECT transid, transdate, custid, recommend, srecommend
 	FROM dbo.bettrans WITH(NOLOCK, index=PK_bettrans) --IXU_transid/PK_bettrans
 	WHERE TransID BETWEEN @smallID AND @maxtransID  
-		AND (Bettype < 31 OR (Bettype BETWEEN 121 AND 999) OR (Bettype BETWEEN 1301 AND 1399) OR (Bettype BETWEEN 9001 AND 9399))  
+		AND (Bettype < 31 
+				OR (Bettype BETWEEN 121 AND 999) 
+				OR (Bettype BETWEEN 1301 AND 1399) 
+				OR (Bettype BETWEEN 9001 AND 9399)
+				OR (Bettype = 38) -- BetBuilder
+			)  
 		AND StatusID <> 121 --DONE  
 		AND tpositiontaking = 0
 		AND (bettype < 901 OR bettype > 904)

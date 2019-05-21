@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE bodb_LicenseeReport
 GO
 
@@ -18,6 +18,7 @@ DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
 		- 20180910@Bruce: LA - WL report for Poker Games & Bullfighting [#98487]
+		- 20190520@Parsons: Implement BetBuilder [Redmine: #108995]
 		
 Param's Explanation:
 
@@ -104,7 +105,7 @@ BEGIN
 			CASE 
 				WHEN b.bettype=9 THEN -9 
 				WHEN b.bettype = 2799 THEN -2799
-				WHEN b.bettype = 10 OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1)
+				WHEN b.bettype = 10 OR (b.bettype<>38 AND b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1)
 				WHEN b.bettype IN(1231,1232,1233,1237,1238) THEN RaceInfo.LeagueID
 				ELSE ISNULL(m.leagueid,-1) 
 			END AS leagueid,
@@ -151,7 +152,7 @@ BEGIN
 			CASE 
 				WHEN b.bettype=9 THEN -9 
 				WHEN b.bettype = 2799 THEN -2799
-				WHEN b.bettype = 10 OR (b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1)
+				WHEN b.bettype = 10 OR (b.bettype<>38 AND b.bettype>30 AND b.bettype<50) THEN ISNULL(o.leagueid,-1)
 				WHEN b.bettype IN(1231,1232,1233,1237,1238) THEN RaceInfo.LeagueID
 				ELSE ISNULL(m.leagueid,-1) 
 			END,	

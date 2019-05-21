@@ -19,7 +19,7 @@ AS
 	Original:
 	Revisions:
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
-		- 20171114@Harper: Fix Date Range when get detail ticket 
+		- 20171114@Harper: Fix Date Range when get detail ticket
 
 	DECLARE @HasDataMismatch TINYINT, @IsParlay VARCHAR(20)
 	EXEC Task_rptBettingBySport_CheckData @WinlostDate = '2017-09-29', @HasDataMismatch = @HasDataMismatch OUTPUT, @IsParlay = @IsParlay OUTPUT

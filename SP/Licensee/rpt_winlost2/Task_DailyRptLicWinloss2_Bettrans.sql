@@ -1,4 +1,9 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
+
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans] 
 	@winlostdate DATETIME  
 AS  
@@ -31,6 +36,7 @@ AS
 	- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
 	- 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
 	- 20190306@Amande: Implement PP Promotion Prize [RedmineID: #109471]
+	- 20190307@Parsons: Implement BetBuilder [Redmine: #108995]
 	- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'

@@ -21,6 +21,7 @@ AS
 		20181120@Sophia: Change 'DB052' To 'DB053' for steap switch to DB053 [Redmine: #103653]
 		20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
 		20190226@Percy: Apply config setting to raiserror [RedmineID: #109415]
+		20190311@Parsons: Implement BetBuilder [Redmine: #108995]
  */  
 SET NOCOUNT ON   
    
@@ -56,7 +57,12 @@ StartLoop:
         WHERE custid = @custid  
             AND transdate BETWEEN @ondate AND @offdate  
             AND tpositiontaking = 0  
-            AND (bettype < 31 OR (bettype BETWEEN 121 AND 999) OR (bettype BETWEEN 1301 AND 1399) OR (bettype BETWEEN 9001 AND 9399))  
+            AND ( bettype < 31 
+					OR (bettype BETWEEN 121 AND 999) 
+					OR (bettype BETWEEN 1301 AND 1399) 
+					OR (bettype BETWEEN 9001 AND 9399)
+					OR bettype = 38 -- BetBuilder
+				)  
 			AND bettype NOT IN (901, 911)
                    
     DELETE FROM @BAHistory_Done WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate
@@ -89,7 +95,12 @@ StartLoop_r:
         WHERE custid = @custid_r  
             AND transdate >= @ondate_r  
             AND tpositiontaking =0  
-            AND (bettype < 31 OR (bettype BETWEEN 121 AND 999) OR (bettype BETWEEN 1301 AND 1399) OR (bettype BETWEEN 9001 AND 9399))  
+            AND ( bettype < 31 
+					OR (bettype BETWEEN 121 AND 999) 
+					OR (bettype BETWEEN 1301 AND 1399) 
+					OR (bettype BETWEEN 9001 AND 9399)
+					OR bettype = 38 -- BetBuilder
+				)  
 			AND bettype NOT IN (901, 911)
          
     DELETE FROM @BAHistory_Running WHERE custid = @custid_r AND ondate = @ondate_r  
