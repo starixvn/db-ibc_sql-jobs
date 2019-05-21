@@ -1,25 +1,14 @@
-USE [bodb_EAS]
-GO
-
-/****** Object:  StoredProcedure [dbo].[Task_EAS_ClearLogin_Loop]    Script Date: 01/19/2015 02:46:00 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-
-/****** Object:  Stored Procedure dbo.Lrf_CheckIn    Script Date: 6/15/2011 3:52:40 PM ******/
-CREATE PROCEDURE [dbo].[Task_EAS_ClearLogin_Loop]   
+/*<info serverAlias="DBPOL-NAP_UserControl" executers="" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Task_EAS_ClearLogin_Loop]   
 AS  
 /*
 	Created:  20131324
 	Task: Clear Login
-	DB: DBEAS/bodb_EAS
+	DB: DBPOL/NAP_UserControl
 	Original SP:
 	
 	Revisions:
-		
+		- 20190502@Kan: DBPOL/NAP_UserControl Migration, Move sp from DBEAS/bodb_EAS to DBPOL/NAP_UserControl [Redmine: #111865]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -35,8 +24,3 @@ BEGIN
 END
 
 GO
-
-GRANT VIEW DEFINITION ON [dbo].[Task_EAS_ClearLogin_Loop] TO [vnteam] AS [dbo]
-GO
-
-
