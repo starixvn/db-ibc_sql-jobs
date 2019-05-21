@@ -15,20 +15,21 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @yesterday SMALLDATETIME
-	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
+	DECLARE @yesterday SMALLDATETIME, @TheDayBefore DATE
+	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE())), 
+			@TheDayBefore = DATEADD (DD, -1 , @Winlostdate)
 	
-	DECLARE @BalanceUpDay DATE, @MoveBetDay DATE, @Saturday DATE, @TheDayBefore DATE, @i TINYINT
+	DECLARE @BalanceUpDay DATE, @MoveBetDay DATE, @Saturday DATE, @i TINYINT
 	DECLARE @BalanceUpDays AS TABLE (BalanceUpDay DATE, MoveBetDay DATE)
 	
 	INSERT INTO @BalanceUpDays (BalanceUpDay, MoveBetDay)
-	EXEC Age_SelBalanceUpDay
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
 	
 	SELECT @BalanceUpDay = BalanceUpDay, @MoveBetDay = MoveBetDay
 	FROM @BalanceUpDays 
 	
 	SELECT @i = DATEPART (DW,@MoveBetDay) 
-	SELECT @Saturday = DATEADD ( DD, -@i, @MoveBetDay), @TheDayBefore = DATEADD (DD, -1 , @Winlostdate)
+	SELECT @Saturday = DATEADD ( DD, -@i, @MoveBetDay)
 
 	-- Get bettype --
 	DECLARE @isTest BIT = 0
