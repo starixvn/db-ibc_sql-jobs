@@ -1,0 +1,93 @@
+﻿/*<info serverAlias="DBCUST-CustDB" executers="" viewers="" isFunction="0"></info>*/
+
+ALTER PROCEDURE [dbo].[Task_ClearCredit_SendPersonalMsg_Member]	
+AS
+/*
+	Created: 20190509@Elodie
+	Task : Send message for SMAs who cleared given credit
+	DB: DBCUST/CustDB
+
+	Revisions:    
+		- 20190509@Elodie: Initial SP [Redmine:#112458]
+
+	Param's Explanation:
+		
+*/
+BEGIN
+	SET NOCOUNT ON
+
+	DECLARE @Content_en NVARCHAR(4000), @Content_vn NVARCHAR(4000), @Content_ch NVARCHAR(4000), @Content_cs NVARCHAR(4000), @Content_th NVARCHAR(4000)
+	DECLARE @MessageID INT, @MessageID1 INT, @Creator INT = 10278938, @CreatorName VARCHAR(50) = 'starixIT', @Max INT, @i INT, @CustID INT, @UserName VARCHAR(30), @UplineRoleId INT
+	DECLARE @PostTime DATETIME = GETDATE()
+	DECLARE @Today DATETIME = CONVERT(date, GETDATE())
+	CREATE TABLE #UplineList (ID INT IDENTITY(1,1), CustId INT, MsgId INT)
+
+	--Send personal message for agent
+	-- English
+	SET @Content_en = 'Dear valued agents, some of your Members did not login to member site within 14 days after creation. System has already removed these unused accounts'' credit. This is to prevent your unused downlines from being taken advantage by third party. Thank you.'	
+
+	-- VietNamese
+	SET @Content_vn = N'Kính gửi quý khách hàng, Một số Member của bạn không đăng nhập vào trang thành viên trong vòng 14 ngày sau khi tạo. Hệ thống đã thu hồi tín dụng của những tài khoản không sử dụng này. Điều này nhằm ngăn chặn bên thứ ba lợi dụng tuyến dưới không sử dụng của bạn. Trân trọng.'
+
+	-- Chinese Traditional
+	SET @Content_ch = N'敬愛的客戶， 由於某些會員在賬號創建後的 14天內無登入會員網故系統將清除無使用賬號的余額。這是為了防範您下線無使用的空白賬號讓第三方有機可乘。謝謝。'
+	
+	-- Chinese Simplified
+	SET @Content_cs = N'敬爱的客户， 由于某些会员在账号创建后的 14天内无登入会员网故系统将清除无使用账号的余额。这是为了防范您下线无使用的空白账号让第三方有机可乘。谢谢。'
+	
+	-- Thai
+	SET @Content_th = N'เรียน ลูกค้าที่เคารพ เนื่องจากบางบัญชีของสมาชิกที่สร้างขึ้นใหม่และไม่ได้ลงชื่อเข้าใช้เว็ปไซต์เดิมพันภายใน14วันนับจากวันสร้างบัญชี ระบบจะล้างวงเงินเครดิตทั้งหมดออกจากบัญชี เพื่อความปลอดภัยและป้องกันบัญชีของดาวน์ไลน์ถูกใช้โดยบุคคลที่สาม ขอบพระคุณ'	
+
+	-- Insert message
+	EXEC DBMSG.bodb_Message.dbo.Dot_Msg_SetMessage2 
+		@MessageId	= @MessageID1 OUTPUT,
+		@Content_en = @Content_en,
+		@Content_ch = @Content_ch,
+		@Content_cs = @Content_cs,
+		@Content_th = @Content_th,
+		@Content_vn = @Content_vn,
+		@MsgType	= 1,			 -- message to customer (personal)
+		@IsSticky	= 0,			 -- Is special Message or not 
+		@Creator	= @Creator,
+		@CreatorName = @CreatorName,
+		@IsTest		= 0,			 -- Is test or not 
+		@IsBatch	= 0			 -- normal message (no need to replace the symbol @@ by transid when display)
+		
+	-- Insert Message Target	
+	INSERT INTO #UplineList( CustId, MsgId)
+	SELECT DISTINCT m.recommend, @MessageID1
+	FROM dbo.CustomerClearCredit m
+	WHERE m.roleid = 1 AND m.LogDate >= @Today AND m.IsSend = 0
+
+	DELETE t 
+	FROM dbo.CustomerClearCredit m WITH (NOLOCK)
+		INNER JOIN #UplineList t ON t.CustId = m.recommend 
+	WHERE m.IsSend = 1 AND m.roleid = 1 AND m.LogDate >= @Today	
+
+	--Send message for user
+	SET @i = 1
+	SELECT @Max = COUNT(ID) FROM #UplineList
+
+	WHILE @i <= @Max
+	BEGIN
+		SELECT @CustID = t.custid, @UserName = c.username, @UplineRoleId = c.roleid, @MessageId = MsgId 
+		FROM #UplineList t
+			INNER JOIN dbo.Customer c WITH (NOLOCK) ON t.CustId = c.custid
+		WHERE ID = @i
+
+		EXEC DBMSG.bodb_Message.dbo.Dot_Msg_SetUsrMessage
+		@MessageId	= @MessageId,
+		@TargetId	= @CustID,
+		@TargetName = @UserName,
+		@PostTime	= @PostTime,
+		@isRead		= 0		
+		
+		UPDATE c 
+		SET IsSend = 1
+		FROM dbo.CustomerClearCredit c WITH (ROWLOCK) 
+		WHERE c.LogDate >= @Today AND @CustID = c.recommend AND c.roleid = 1
+
+		SELECT @i = @i + 1
+	END
+
+END
