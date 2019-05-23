@@ -224,8 +224,8 @@ BEGIN
 			, SUM(CashoutAmount)
 			, SUM(BuyBackAmt)
 			, SUM(BABuyBackAmt)
-			, SUM(NumOfCashoutTicket)
 			, SUM(NumOfCashoutTrans)
+			, SUM(NumOfCashoutTicket)
 		FROM dbo.rptLicCashoutSummary b WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.recommend = c.custid
 		WHERE Winlostdate >= @FromDate AND Winlostdate < @ToDate
@@ -266,8 +266,8 @@ BEGIN
 			, SUM(CashoutAmount)
 			, SUM(BuyBackAmt)
 			, SUM(BABuyBackAmt)
-			, SUM(NumOfCashoutTicket)
 			, SUM(NumOfCashoutTrans)
+			, SUM(NumOfCashoutTicket)
 		FROM dbo.rptLicCashoutSummary b WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.Mrecommend = c.custid
 		WHERE Winlostdate >= @FromDate AND Winlostdate < @ToDate
@@ -308,8 +308,8 @@ BEGIN
 			, SUM(CashoutAmount)
 			, SUM(BuyBackAmt)
 			, SUM(BABuyBackAmt)
-			, SUM(NumOfCashoutTicket)
 			, SUM(NumOfCashoutTrans)
+			, SUM(NumOfCashoutTicket)
 		FROM dbo.rptLicCashoutSummary b WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.Srecommend = c.custid
 		WHERE Winlostdate >= @FromDate AND Winlostdate < @ToDate
