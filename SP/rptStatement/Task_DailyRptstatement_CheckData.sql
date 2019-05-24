@@ -801,8 +801,8 @@ BEGIN
 	FROM 	dbo.rptStatement s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
 			ON c.CustID = s.CustID
-	WHERE   s.WinlostDate = @WinlostDate
-			c.RoleID = 1
+	WHERE   s.WinlostDate = @WinlostDate 
+			AND c.RoleID = 1
 			
 	--- Agent	
 	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
@@ -853,8 +853,8 @@ BEGIN
 	IF EXISTS (
 		SELECT 1
 		FROM #tmpOpeningTotalBalance SOURCE
-			FULL OUTER JOIN dbo.rptStatement WITH (NOLOCK) TARGET
-				ON SOURCE.CustId = TARGET.CustId AND SOURCE.WinlostDate = TARGET.WinlostDate
+			FULL OUTER JOIN dbo.rptStatement TARGET WITH (NOLOCK) 
+				ON SOURCE.CustId = TARGET.CustId AND TARGET.WinlostDate =@WinlostDate
 		WHERE
 				SOURCE.CustId IS NULL
 				OR TARGET.CustId IS NULL				
@@ -870,11 +870,12 @@ BEGIN
 		BEGIN
 			MERGE dbo.rptStatement AS TARGET
 			USING #tmpOpeningTotalBalance AS SOURCE
-					ON	TARGET.WinlostDate	= SOURCE.WinlostDate
+					ON	TARGET.WinlostDate	= @WinlostDate
 					AND TARGET.CustId		= SOURCE.CustId 
 			WHEN MATCHED THEN
 			UPDATE SET
-				TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance			
+				TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
+			;
 		END
 	END
 	

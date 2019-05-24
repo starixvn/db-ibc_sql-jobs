@@ -2,6 +2,7 @@
  
 ALTER PROCEDURE [dbo].[Task_DailyRptTotalBalance_Active]
 	@Winlostdate DATE
+	,@isCheckDataOnly BIT = 0
 AS
 
 /*
@@ -31,15 +32,6 @@ BEGIN
 	SELECT @i = DATEPART (DW,@MoveBetDay) 
 	SELECT @Saturday = DATEADD ( DD, -@i, @MoveBetDay)
 
-	-- Get bettype --
-	DECLARE @isTest BIT = 0
-	SELECT  @isTest = dbo.f_CheckSPVersion(@@PROCID)
-	
-	CREATE TABLE #SportBettype (bettype INT)
-	INSERT INTO #SportBettype (bettype)
-	SELECT bettype FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', @isTest)
-	WHERE RefTable NOT IN (0, 3) -- exclude bettrans, translog
-
 	-- Get OpeningBalance Information --
 	
 	CREATE TABLE #tmpRptTotalBalance_Active
@@ -47,6 +39,12 @@ BEGIN
 		CustId 			INT, 
 		OpeningBalance  MONEY, 
 		OpeningTotalBalance MONEY
+	)
+	
+	CREATE TABLE  #FinalRptTotalBalance_Active 
+	(
+		CustID INT, WinlostDate DATE, OpeningBalance MONEY, OpeningTotalBalance MONEY
+	
 	)
 	
 	
@@ -58,10 +56,10 @@ BEGIN
 		recommend		INT, 
 		mrecommend		INT,
 		srecommend		INT,	
-		Amount1  		MONEY,
-		Amount2 		MONEY,
-		Amount3 		MONEY,
-		Amount4  		MONEY		
+		Winlost1  		MONEY,
+		Winlost2 		MONEY,
+		Winlost3 		MONEY,
+		Winlost4  		MONEY		
 	)
 	
 	IF @Winlostdate = DATEADD(DD, 1, @MovebetDay)    --- first day on bettrans.OpeningBalance = last day on rptStatement.ClosingBalance
@@ -170,13 +168,13 @@ BEGIN
 				SUM(CASE WHEN custid = recommend THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) Winlost2,
 				SUM(CASE WHEN custid = mrecommend THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) Winlost3,
 				SUM(CASE WHEN custid = srecommend THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) Winlost4 
-		FROM	dbo.bettrans with (nolock)
+		FROM	bodb02.dbo.bettrans with (nolock)
 		WHERE	winlostdate = @TheDayBefore
 				AND ruben = 1
 		GROUP BY custid, recommend, mrecommend, srecommend	
 		
 
-		INSERT INTO dbo.rptTotalBalance_Active (CustID, WinlostDate, OpeningBalance, OpeningTotalBalance)
+		INSERT INTO #FinalRptTotalBalance_Active (CustID, WinlostDate, OpeningBalance, OpeningTotalBalance)
 		SELECT CustID, @WinlostDate as WinlostDate, SUM(Winlost) AS OpeningBalance, SUM(TotalBL) AS OpeningTotalBalance
 		FROM 
 		( 	
@@ -208,7 +206,40 @@ BEGIN
 			WHERE 	RoleID = 1
 			GROUP BY srecommend
 		)	A			
-		GROUP BY CustID 		
+		GROUP BY CustID 	
+
+		---------------- Correct Opening Total Balance --------------------
+		IF EXISTS (
+			SELECT 1
+			FROM #FinalRptTotalBalance_Active SOURCE
+				FULL OUTER JOIN dbo.RptTotalBalance_Active TARGET WITH (NOLOCK) 
+					ON SOURCE.CustId = TARGET.CustId 
+					AND SOURCE.WinlostDate = TARGET.WinlostDate
+			WHERE
+					SOURCE.CustId IS NULL
+					OR TARGET.CustId IS NULL				
+					OR TARGET.OpeningBalance 	  <> SOURCE.OpeningBalance				
+					OR TARGET.OpeningTotalBalance <> SOURCE.OpeningTotalBalance		
+		)
+		BEGIN
+			IF @IsCheckDataOnly = 1 --just check data
+			BEGIN
+				SELECT 'Wrong OpeningTotalBalance on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
+			END
+			ELSE -- correct data
+			BEGIN
+				MERGE dbo.RptTotalBalance_Active AS TARGET
+				USING #FinalRptTotalBalance_Active AS SOURCE
+						ON	TARGET.WinlostDate	= SOURCE.WinlostDate
+						AND TARGET.CustId		= SOURCE.CustId 
+				WHEN MATCHED THEN
+				UPDATE SET
+					TARGET.OpeningBalance = SOURCE.OpeningBalance,		
+					TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
+					;
+			END
+		END
+				
 	END
 	 
 	
