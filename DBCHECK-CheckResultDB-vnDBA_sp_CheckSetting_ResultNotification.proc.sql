@@ -24,6 +24,7 @@ AS
 		- 20180816@Billy:	Integrate Bet Limit & Stake Level checking - [Redmine: #99249]
 		- 20190405@Billy:	Update mail format - [Redmine: #111478]
 		- 20190405@Billy:	Integrate check PT Deposit - [Redmine: #111499]
+		- 20190524@Billy:	Change Letstalk linked server - [Redmine: #113125]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -1435,7 +1436,7 @@ Check Setting Result:' + ISNULL(N'
 									THEN 1 ELSE 2 END
 			;
 
-		EXECUTE DBMONDW.MonDBDW.dbo.DBA_Letstalk_NewJobMessage
+		EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage
 					@ServerName	= @@SERVERNAME
 				,	@JobId		= NULL
 				,	@JobName	= @subject
