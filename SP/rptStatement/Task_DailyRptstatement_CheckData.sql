@@ -854,12 +854,14 @@ BEGIN
 		SELECT 1
 		FROM #tmpOpeningTotalBalance SOURCE
 			FULL OUTER JOIN dbo.rptStatement TARGET WITH (NOLOCK) 
-				ON SOURCE.CustId = TARGET.CustId AND TARGET.WinlostDate =@WinlostDate
-		WHERE
+				ON SOURCE.CustId = TARGET.CustId
+		WHERE TARGET.WinlostDate = @WinlostDate
+			  AND (
 				SOURCE.CustId IS NULL
 				OR TARGET.CustId IS NULL				
 				OR TARGET.OpeningBalance 	  <> SOURCE.OpeningBalance				
 				OR TARGET.OpeningTotalBalance <> SOURCE.OpeningTotalBalance		
+					)
 	)
 	BEGIN
 		IF @IsCheckDataOnly = 1 --just check data
@@ -870,8 +872,8 @@ BEGIN
 		BEGIN
 			MERGE dbo.rptStatement AS TARGET
 			USING #tmpOpeningTotalBalance AS SOURCE
-					ON	TARGET.WinlostDate	= @WinlostDate
-					AND TARGET.CustId		= SOURCE.CustId 
+					ON	TARGET.CustId		= SOURCE.CustId 
+					AND TARGET.WinlostDate	= @WinlostDate					
 			WHEN MATCHED THEN
 			UPDATE SET
 				TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
