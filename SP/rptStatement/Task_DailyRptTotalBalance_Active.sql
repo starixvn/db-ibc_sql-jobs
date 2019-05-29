@@ -64,15 +64,15 @@ BEGIN
 	
 	IF @Winlostdate = DATEADD(DD, 1, @MovebetDay)    --- first day on bettrans.OpeningBalance = last day on rptStatement.ClosingBalance
 	BEGIN 		 
-		;WITH rptStm AS ( 
-					SELECT CustID, MAX(Winlostdate) as Winlostdate, OpeningBalance, ClosingBalance
+		INSERT INTO dbo.rptTotalBalance_Active (CustID, WinlostDate, OpeningBalance)
+		SELECT CustID, @Winlostdate, ClosingBalance 
+		FROM (	
+					SELECT CustID, Winlostdate, ClosingBalance, ROW_NUMBER() OVER (PARTITION BY CustID ORDER BY  Winlostdate DESC) as Num
 					FROM   dbo.rptStatement WITH (NOLOCK) 
 					WHERE  Winlostdate >= @Saturday
-					GROUP BY CustID, OpeningBalance, ClosingBalance				
-					)
-		INSERT INTO dbo.rptTotalBalance_Active (CustID, WinlostDate, OpeningBalance)
-		SELECT 	CustID, @WinlostDate, ClosingBalance AS OpeningBalance
-		FROM 	rptStm 	
+					GROUP BY CustID, Winlostdate, ClosingBalance		
+			) A
+		WHERE  Num = 1
 		
 		/*
 		;WITH rptStm_OLD AS (					
