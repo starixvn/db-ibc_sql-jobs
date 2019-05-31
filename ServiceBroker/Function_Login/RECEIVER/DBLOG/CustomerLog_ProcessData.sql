@@ -1,3 +1,5 @@
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [sb].[CustomerLog_ProcessData]
 AS
 /*
@@ -8,7 +10,8 @@ AS
 	
 	Para's explaination
 	Revision:
-	-- 20170824@Winnie: Add [CustomerLog_MsgProcess_UserLog_LogOut] - [Redmine: 65806]
+		- 20170824@Winnie: Add [CustomerLog_MsgProcess_UserLog_LogOut] [Redmine: 65806]
+		- 20190530@Paul: Add [CustomerLog_MsgProcess_CS_UserLog_Login] [Redmine: #113198]
 */
 BEGIN
 	DECLARE @xml_externalNap XML, @xml_Alpha XML, @xml_RMS XML
@@ -99,5 +102,15 @@ BEGIN
 		--Debug: PRINT 'rmUserLog_Login'  + CONVERT(VARCHAR(MAX),@xml_RMS)
 		EXEC [sb].[CustomerLog_MsgProcess_UserLog_LogOut] @XmlMessage = @xml_RMS
 														 , @IsExistingTarget = @IsExistingTarget
-	END			
+	END	
+	ELSE IF @message_type_name = 'MessageType_CustomerLog_CS_UserLog_Login'
+	BEGIN
+		SET @xml_Alpha = (SELECT message_body AS 'node()'
+						  FROM @Messages					
+						  FOR XML PATH (''), ROOT)
+					
+		--Debug: PRINT 'CS_UserLog_Login' + CONVERT(VARCHAR(MAX),@xml_Alpha)
+		EXEC [sb].[CustomerLog_MsgProcess_CS_UserLog_Login] @XmlMessage = @xml_Alpha
+													   , @IsExistingTarget = @IsExistingTarget
+	END		
 END

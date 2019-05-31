@@ -14,6 +14,7 @@ ALTER PROCEDURE [sb].[CustomerLog_MsgProcess_UserLog_Credit]
 	
 	Revision:
 		- 20181101@Johnson: create sp [redmine: #105319]
+		- 20190530@Paul: Correct param name [Redmine: #113198]
 */
 AS
 BEGIN
@@ -148,7 +149,7 @@ BEGIN
 			VALUES ('UserLog_Others', @message_body, @error_Message,'UserLog_Credit','MessageType_CustomerLog_UserLog_Credit_BK',GETDATE(),0)
 			
 			-- Send Email to Production team for notification
-			EXEC sb.EmailNotification @QueueName = 'Queue_Others',@message_body = @message_body,@error_message = @error_Message, @funtionName = 'Userlog_Others'
+			EXEC sb.EmailNotification @QueueName = 'Queue_Others',@message_body = @message_body,@error_message = @error_Message, @functionName = 'Userlog_Others'
 				
 		END CATCH
 	END	
@@ -194,7 +195,7 @@ BEGIN
 			VALUES ('UserLog_Others', @message_body, @error_Message,'UserLog_Credit','MessageType_CustomerLog_UserLog_Others_BK',GETDATE(),0)
 			
 			-- Send Email to Production team for notification
-			EXEC sb.EmailNotification @QueueName = 'Queue_Others_BK',@message_body = @message_body,@error_message = @error_Message, @funtionName = 'UserLog_Others'
+			EXEC sb.EmailNotification @QueueName = 'Queue_Others_BK',@message_body = @message_body,@error_message = @error_Message, @functionName = 'UserLog_Others'
 			
 		END CATCH
 		

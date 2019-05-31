@@ -1,9 +1,11 @@
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROC sb.EmailNotification
 (
 	@QueueName VARCHAR (200) = 'Queue_DBLOG'
 	, @message_body VARCHAR(MAX)
 	, @error_message VARCHAR(MAX)
-	, @funtionName VARCHAR(200) = 'Login'
+	, @functionName VARCHAR(200) = 'Login'
 )
 AS
 /*
@@ -12,6 +14,9 @@ AS
 	Task: Apply Service Broker for Writing Log - [Redmine: 65806]
 	DB: DBLOG/bodb_CustomerLog; DBLOG_BK (DB054)/bodb_CustomerLog
 	
+	Revision:
+		- 20161027@Helen: Apply Service Broker for Writing Log [Redmine: #65806]
+		- 20190530@Paul: Correct param name [Redmine: #113198]
 */
 BEGIN
 
@@ -31,7 +36,7 @@ BEGIN
 	SET @subject = 'CRITICAL: ' + @@SERVERNAME + ' - Service broker problem notification'
 
 	SET @body = 'Hi There,
-				Funtion Name: ' + @funtionName + '
+				Funtion Name: ' + @functionName + '
 				Queue status: ' + @qstatus + '
 				ERROR: ' + @error_message + ' 
 				
@@ -40,7 +45,7 @@ BEGIN
 				*/
 			'
 	EXEC msdb.dbo.sp_send_dbmail
-		@recipients=N'lukas.luu@nexcel.vn',
+		@recipients=N'patrick.pham@starixsoft.com',
 		@body=@body,
 		@sensitivity ='Personal',
 		@importance ='High',
