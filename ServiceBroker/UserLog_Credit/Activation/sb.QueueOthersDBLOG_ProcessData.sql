@@ -102,7 +102,7 @@ BEGIN
 	BEGIN
 		SET @log = (SELECT message_body AS 'node()'
 				  FROM @Messages					
-				   FOR XML PATH (''), ROOT ('Root'))
+				   FOR XML PATH (''), ROOT)
 			
 		EXEC [sb].[CustomerLog_MsgProcess_CS_UserLog_Credit] @log = @log,
 														@MsgType = @message_type_name,

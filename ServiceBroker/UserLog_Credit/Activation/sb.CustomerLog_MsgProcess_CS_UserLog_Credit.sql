@@ -41,7 +41,8 @@ BEGIN
 		EXECUTE sys.sp_xml_preparedocument @handle OUTPUT, @log
 		
 		INSERT INTO @tmpLog	(UserID, 
-							CustID,						 
+							CustID,	
+							SubAccID,					 
 							Doing, 
 							OldValue, 
 							NewValue, 
@@ -49,8 +50,8 @@ BEGIN
 							ActionID,
 							ActualRate,
 							LogDate)
-		SELECT UserID, CustID, Doing, OldValue, NewValue, IP, ActionID, 0 as ActualRate, LogDate	
-		FROM OPENXML(@handle,'/Root/Row',1) 
+		SELECT UserID, CustID, SubAccID, Doing, OldValue, NewValue, IP, ActionID, 0 as ActualRate, LogDate	
+		FROM OPENXML(@handle,'/root/row',1) 
 				WITH (UserID  int,  
 					  CustID int,
 					  SubAccID INT,
