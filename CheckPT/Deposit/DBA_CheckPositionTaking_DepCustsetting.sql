@@ -17,6 +17,7 @@ AS
 		-20180827@Winnie.Vu: Create SP
 		-20190128@Winnie: Update PT RedmineID:#108062
 		-20190328@Winnie: Update PT SB RedmineID:#110111
+		-20190604@Winnie: [Bobbet,A1game,ig128] Update SB PT to reflect new terms RedmineID:#113387
 	Param's Explanation:
 	
 */
@@ -154,7 +155,7 @@ BEGIN
 				AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))
 				
 		END
-		ELSE IF @site IN('asiabet88', 'TLC', 'IBO', 'ZT828')
+		ELSE IF @site IN('asiabet88', 'TLC', 'IBO', 'ZT828','Bobbet','A1game','ig128')
 		BEGIN
 			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
