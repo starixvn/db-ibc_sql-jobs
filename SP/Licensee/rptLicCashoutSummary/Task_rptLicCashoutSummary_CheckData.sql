@@ -4,7 +4,7 @@ GO
 
 ALTER PROCEDURE [dbo].[Task_rptLicCashoutSummary_CheckData]
 	@WinlostDate		SMALLDATETIME,
-	@HasDataMismatch	TINYINT OUTPUT -- 0: No mismatch; 1: Has real currencies; 2: UUS only
+	@HasDataMismatch	TINYINT = 0 OUTPUT -- 0: No mismatch; 1: Has real currencies; 2: UUS only
 AS
 
 /*
