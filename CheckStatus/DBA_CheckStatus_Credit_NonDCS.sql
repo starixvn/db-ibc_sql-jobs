@@ -1,6 +1,4 @@
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE	[dbo].[DBA_CheckStatus_Credit_NonDCS]
 AS
 /*
@@ -10,7 +8,7 @@ AS
 	
 	Revisions:
 		- 20180328@Billy:	Initial - [Redmine: #00000]
-		
+		- 20190610@Johnson: add step check suspend status [redmine:#105587]
 	Developer's Notes:
 		- @Example:			NULL		- Explaination [DEFAULT]
 		
@@ -39,6 +37,6 @@ BEGIN
 
 	EXECUTE dbo.DBA_CheckStatus_Credit @sportType=202, @bettype = 1501, @DisableTable = '', @DisableColumnName = '', @HiddenTable='CustInfo', @HiddenColumnName = 'HideKeno',@SynTable='',@SynColumnName = '';
 	
+	EXECUTE dbo.DBA_CheckSuspendInfoStatus_Credit
 END;
 GO
-/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
