@@ -1,6 +1,4 @@
-USE [CheckResultDB]
-GO
-
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_CheckPT_Credit]
 	 @srecommend INT 
 	,@SportType SMALLINT = 0
@@ -21,6 +19,7 @@ Revisions:
 	- 20140910@Sophia: Change the Filter of customer from closed = 0 and Reject = 0 to Enabled = 1
 	- 20170508@Elodie: Count PT Setting rows
 	- 20180807@Elodie: Apply f_GetSportNotOffer function
+	- 20190610@Johnson: add rule 36,37 for dummy super [redmine: #114675]
 Param's Explanation: 
 	@RuleId = 0 : 'all'
 	@RuleId IN (1->29)
@@ -28,6 +27,7 @@ Param's Explanation:
 */
 
 	SET NOCOUNT ON 
+	
 	CREATE TABLE #MemberPT (CustID INT, recommend INT, mrecommend INT, srecommend INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY,
 							slivepositiontaking SMALLMONEY, mlivepositiontaking SMALLMONEY, alivepositiontaking SMALLMONEY, isautolivempositiontaking BIT, autolivempositiontaking SMALLMONEY, isautolivepositiontaking BIT, autolivepositiontaking SMALLMONEY)
 	CREATE TABLE #AgentPT (CustID INT, mrecommend INT, srecommend INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY, Maxpositiontaking SMALLMONEY, 
@@ -36,9 +36,24 @@ Param's Explanation:
 							slivepositiontaking SMALLMONEY, mlivepositiontaking SMALLMONEY, alivepositiontaking SMALLMONEY, isautolivempositiontaking BIT, autolivempositiontaking SMALLMONEY, isautolivepositiontaking BIT, autolivepositiontaking SMALLMONEY, MinLivepositiontaking SMALLMONEY, MaxLivepositiontaking SMALLMONEY)
 	CREATE TABLE #SuperPT (CustID INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY, Maxpositiontaking SMALLMONEY, 
 							slivepositiontaking SMALLMONEY, mlivepositiontaking SMALLMONEY, alivepositiontaking SMALLMONEY, isautolivempositiontaking BIT, autolivempositiontaking SMALLMONEY, isautolivepositiontaking BIT, autolivepositiontaking SMALLMONEY, MinLivepositiontaking SMALLMONEY, MaxLivepositiontaking SMALLMONEY)
-
-	DECLARE @RowCount TINYINT
-
+	CREATE TABLE #DirectMaster (CustID INT)
+	
+	DECLARE @RowCount TINYINT,
+		@isDummySuper BIT = 0
+	
+	INSERT INTO #DirectMaster(custid)
+	SELECT custid
+	FROM CheckCustDB.dbo.custInfo ci WITH(NOLOCK) 										
+	WHERE  EXISTS (SELECT custid 
+					FROM CheckCustDB.dbo.CustDirectAccount WITH(NOLOCK) 
+					WHERE CustID = ci.custid)													
+		AND ci.roleid=3 
+		AND ci.srecommend = @srecommend
+	
+	IF @@rowcount > 0	
+		SELECT @isDummySuper = 1
+	
+	
 	SELECT cs.sporttype, cs.bettype
 	INTO #DataSample
 	FROM CheckCustDB.dbo.CustSetting cs WITH (NOLOCK)
@@ -907,4 +922,51 @@ Param's Explanation:
 
 
 	END 
+	
+	IF @isDummySuper = 1
+	BEGIN
+		---- 36. dummy super has s3<> 0
+		IF @RuleId IN (0,36)
+		BEGIN 	
+			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
+			SELECT	36 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId,
+					spositiontaking,
+					0, 
+					0
+			FROM #MasterPT cs
+			WHERE spositiontaking<>0 
+				AND custid IN (SELECT custid FROM #DirectMaster)
+			
+			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
+			SELECT	36 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId,
+					slivepositiontaking,
+					0, 
+					1
+			FROM #MasterPT cs
+			WHERE slivepositiontaking <> 0
+				AND custid IN (SELECT custid FROM #DirectMaster)
+		END
+		
+		--37. dummy super has s1 <> 0
+		IF @RuleId IN (0,37)
+		BEGIN 	
+			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
+			SELECT	37 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId,
+					spositiontaking,
+					0, 
+					0
+			FROM #MemberPT cs
+			WHERE spositiontaking<>0 
+				AND mrecommend IN (SELECT custid FROM #DirectMaster)
+			
+			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
+			SELECT	37 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId,
+					slivepositiontaking,
+					0, 
+					1
+			FROM #MemberPT cs
+			WHERE slivepositiontaking <> 0
+				AND mrecommend IN (SELECT custid FROM #DirectMaster)
+		END
+	END		
 END 
