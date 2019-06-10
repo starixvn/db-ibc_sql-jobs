@@ -100,7 +100,7 @@ BEGIN
            ,[IsDeposit]) 
 	SELECT 17 ruleid, 0, 0, custid as custidA, custidB, reject as valueA, suspendUpline valueB, getdate(), 0     
 	FROM t
-		CROSS APPLY (SELECT cast(suspendInfo as bit) as suspendUpline FROM CheckCustDB.dbo.f_GetSuspendInfoStatus_UAT1(suspendLevel,suspendInfo)) s
+		CROSS APPLY (SELECT cast(suspendInfo as bit) as suspendUpline FROM CheckCustDB.dbo.f_GetSuspendInfoStatus(suspendLevel,suspendInfo)) s
 	WHERE reject <> suspendUpline
 END							
 GO
