@@ -1,4 +1,5 @@
 /*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
+
 ALTER PROCEDURE [dbo].[DBA_CheckSuspendInfoStatus_Credit]
 	@ruleid SMALLINT  = 0
 AS
@@ -18,7 +19,7 @@ BEGIN
 	CREATE TABLE #DCS_Agent (custID INT, SuspendInfo TINYINT)
 	
 	INSERT INTO #DCS_Super (custID,reject)
-	SELECT CPS.CustID, reject
+	SELECT ci.CustID, reject
 	FROM CheckCustDB.dbo.custInfo CI (NOLOCK) 
 		INNER JOIN CheckCustDB.dbo.CustSuper CS WITH (NOLOCK)  ON CI.srecommend = CS.custid AND CS.IsInternal = 0		
 	WHERE CI.roleid = 4 		
@@ -72,7 +73,7 @@ BEGIN
 	CASE WHEN s.reject = 1 THEN 4 
 		ELSE (CASE WHEN m.reject = 1 THEN 3 
 				ELSE (CASE WHEN a.reject = 1 THEN 2
-						ELSE ci.reject = 1 END)
+						ELSE ci.reject END)
 				END) 
 		END suspendLevel,	
 	CASE WHEN s.reject = 1 THEN s.custid 
@@ -104,7 +105,6 @@ BEGIN
 	WHERE reject <> suspendUpline
 END							
 GO
-
 
 
 
