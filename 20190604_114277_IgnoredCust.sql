@@ -1,7 +1,6 @@
 USE [CheckResultDB]
 GO
-USE [bodb_CRM]
-GO
+
 /*
 	Date: 2019-05-30
 	Created: Winnie
