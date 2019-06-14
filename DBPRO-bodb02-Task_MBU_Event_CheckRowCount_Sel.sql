@@ -1,4 +1,6 @@
-/*<info serverAlias="DB02-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
 CREATE PROCEDURE [dbo].[Task_MBU_Event_CheckRowCount_Sel]
 	@DateCheck SMALLDATETIME,
 	@OutputData VARCHAR(4000) = '' OUTPUT
@@ -119,3 +121,4 @@ BEGIN
 
 END
 GO
+/*<info serverAlias="DBPRO-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/

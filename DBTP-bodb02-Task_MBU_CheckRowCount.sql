@@ -1,4 +1,6 @@
-/*<info serverAlias="DBTP-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
 ALTER PROCEDURE [dbo].[Task_MBU_CheckRowCount]
 AS
 /*
@@ -167,3 +169,4 @@ BEGIN
 
 END
 GO
+/*<info serverAlias="DBTP-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
