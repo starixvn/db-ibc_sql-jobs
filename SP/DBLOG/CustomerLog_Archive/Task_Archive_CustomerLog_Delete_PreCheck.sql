@@ -7,7 +7,8 @@ AS
 	DB: DBLog.bodb_CustomerLog
 
 	Revisions: 
-		- 20190227@Patrick: Initalize [RedmineId: #110208] 	
+		- 20190227@Patrick: Initalize [RedmineId: #110208]
+		- 20190618@Patrick: Revise error message [RedmineId: #115227]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -16,8 +17,8 @@ BEGIN
 		FROM dbo.Task_ArchiveData_List_Processing WITH(NOLOCK)
 	)
 	BEGIN
-		PRINT 'Job copy data not done yet. Please check!!!'
-		RAISERROR('Job copy data not done yet. Please check!!!', 16, 1)
+		PRINT 'Job copy data or previous round not done yet. Please check!!!'
+		RAISERROR('Job copy data or previous round not done yet. Please check!!!', 16, 1)
 		RETURN
 	END
 
