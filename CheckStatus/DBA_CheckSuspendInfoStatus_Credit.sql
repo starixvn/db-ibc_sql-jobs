@@ -16,7 +16,7 @@ BEGIN
 		
 	CREATE TABLE #DCS_Super (custID INT, reject BIT)
 	CREATE TABLE #DCS_Master (custID INT, reject BIT)
-	CREATE TABLE #DCS_Agent (custID INT, SuspendInfo TINYINT)
+	CREATE TABLE #DCS_Agent (custID INT, reject BIT)
 	
 	INSERT INTO #DCS_Super (custID,reject)
 	SELECT ci.CustID, reject
@@ -79,7 +79,7 @@ BEGIN
 	CASE WHEN s.reject = 1 THEN s.custid 
 		ELSE (CASE WHEN m.reject = 1 THEN m.custid 
 				ELSE (CASE WHEN a.reject = 1 THEN a.custid
-						ELSE ci.cusitd END)
+						ELSE ci.custid END)
 				END) 
 		END custIDB,	
 		p.SuspendInfo								
