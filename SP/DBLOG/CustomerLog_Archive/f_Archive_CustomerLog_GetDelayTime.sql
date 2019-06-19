@@ -8,6 +8,7 @@ ALTER FUNCTION [dbo].[f_Archive_CustomerLog_GetDelayTime]
 	Task: Delay time list
 	DB: DBLOG/bodb_CustomerLog
 	Revisions:
+		- 20190227@Patrick: Initalize [RedmineId: #115227] 	
 
 */
 RETURNS VARCHAR(50)      
