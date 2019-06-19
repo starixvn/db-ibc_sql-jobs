@@ -6,7 +6,8 @@ ALTER PROCEDURE [dbo].[Task_Archive_CustomerLog_UserLog_ExternalAPI]
 	@FromDateTime DATETIME,
 	@ToDateTime DATETIME,
 	@Mode VARCHAR(20) = 'copy',
-	@RowInBatch INT = 2000
+	@RowInBatch INT = 2000,
+	@ErrorCode INT = 0 OUTPUT
 AS
 /*
 	Created: 20190227@Patrick
@@ -15,13 +16,16 @@ AS
 
 	Revisions: 
 		- 20190227@Patrick: Initalize [RedmineId: #110208] 	
+		- 20190617@Patrick: Add waitfor delay to reduce writelog waittype [RedmineId: #115227]
 */
 BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @__dateFrom DATETIME, @__dateTo DATETIME
-	SELECT @__dateFrom = @FromDateTime, @__dateTo = @ToDateTime
-	DECLARE @rowId INT = 1
+	DECLARE @rowId INT = 1, @delayTimeValue VARCHAR(50)
+
+	SELECT @__dateFrom = @FromDateTime, @__dateTo = @ToDateTime, @delayTimeValue = '00:00:00:100', @ErrorCode = 1
+	SELECT @delayTimeValue = dbo.f_Archive_CustomerLog_GetDelayTime('Key1')
 
 	IF @Mode = 'copy'
 	BEGIN
@@ -30,30 +34,56 @@ BEGIN
 			FROM dbo.Task_ArchiveData_Transition WITH(NOLOCK)
 		)
 		BEGIN
-			RAISERROR('^^^Having data on table [Task_ArchiveData_Transition]. Please check!!!^^^', 16, 1)
-			RETURN
-		END
-
-		--reset identity
-		TRUNCATE TABLE dbo.Task_ArchiveData_Transition
-
-		INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid, TableName)
-		SELECT logid, logdate, CustID, 'UserLog_ExternalAPI'
-		FROM dbo.UserLog_ExternalAPI WITH(NOLOCK)
-		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
-
-		SET @rowId = 1
-		WHILE 1 = 1
-		BEGIN
-		
-			DELETE
-			FROM dbo.Task_ArchiveData_Transition WITH(ROWLOCK)
-			WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
+			IF EXISTS (
+				SELECT TOP 1 1
+				FROM dbo.Task_ArchiveData_Transition WITH(NOLOCK)
+				WHERE TableName <> 'UserLog_ExternalAPI'
+			)
+			BEGIN
+				RAISERROR('^^^ Can not resume the job. Please check!!!^^^', 16, 1)
+				RETURN
+			END
 			
-			IF @@ROWCOUNT = 0
-				BREAK
+			--resume case
+			SELECT @rowId = MIN(RowId) FROM dbo.Task_ArchiveData_Transition WITH(NOLOCK)
+			WHILE 1 = 1
+			BEGIN
+		
+				DELETE
+				FROM dbo.Task_ArchiveData_Transition WITH(ROWLOCK)
+				WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
+			
+				IF @@ROWCOUNT = 0
+					BREAK
 
-			SET @rowId = @rowId + @RowInBatch
+				SET @rowId = @rowId + @RowInBatch
+				WAITFOR DELAY @delayTimeValue
+			END
+		END
+		ELSE
+		BEGIN
+			--reset identity
+			TRUNCATE TABLE dbo.Task_ArchiveData_Transition
+
+			INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid, TableName)
+			SELECT logid, logdate, CustID, 'UserLog_ExternalAPI'
+			FROM dbo.UserLog_ExternalAPI WITH(NOLOCK)
+			WHERE logdate >= @__dateFrom AND logdate < @__dateTo
+
+			SET @rowId = 1
+			WHILE 1 = 1
+			BEGIN
+		
+				DELETE
+				FROM dbo.Task_ArchiveData_Transition WITH(ROWLOCK)
+				WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
+			
+				IF @@ROWCOUNT = 0
+					BREAK
+
+				SET @rowId = @rowId + @RowInBatch
+				WAITFOR DELAY @delayTimeValue
+			END
 		END
 
 	END
@@ -86,6 +116,8 @@ BEGIN
 			FROM dbo.UserLog_ExternalAPI l WITH(ROWLOCK)
 			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logdate = t.logdate AND l.custid = t.custid)
 
+			WAITFOR DELAY @delayTimeValue
+
 		END
 
 		--for case custid is null
@@ -113,9 +145,14 @@ BEGIN
 			FROM dbo.UserLog_ExternalAPI l WITH(ROWLOCK)
 			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logdate = t.logdate AND l.custid IS NULL)
 
+			WAITFOR DELAY @delayTimeValue
+
 		END
 
 		DROP TABLE #__logIds
 	END
+
+	--//complete without error
+	SET @ErrorCode = 0
 END
 GO
