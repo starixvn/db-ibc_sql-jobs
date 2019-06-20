@@ -35,7 +35,7 @@ BEGIN
 		
 
 	INSERT INTO #DCS_Master (custID,reject)
-	SELECT CPS.CustID, reject
+	SELECT ci.CustID, reject
 	FROM CheckCustDB.dbo.custInfo CI (NOLOCK)
 		INNER JOIN CheckCustDB.dbo.CustSuper CS WITH (NOLOCK)  ON CI.srecommend = CS.custid AND CS.IsInternal = 0 		
 	WHERE CI.roleid = 3 
@@ -51,7 +51,7 @@ BEGIN
 		AND CI.username NOT LIKE '%BetTrade%'
 		
 	INSERT INTO #DCS_Agent (custID,reject)
-	SELECT CPS.CustID, reject
+	SELECT ci.CustID, reject
 	FROM CheckCustDB.dbo.custInfo CI (NOLOCK)
 		INNER JOIN CheckCustDB.dbo.CustSuper CS WITH (NOLOCK)  ON CI.srecommend = CS.custid AND CS.IsInternal = 0 		
 	WHERE CI.roleid = 2 
