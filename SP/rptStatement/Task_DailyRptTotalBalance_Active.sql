@@ -105,7 +105,7 @@ BEGIN
 		SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash 
 		FROM 	dbo.rptTotalBalance_Active s WITH (NOLOCK)
 			INNER JOIN ( 
-						SELECT	c.recommend, SUM (s.OpeningBalance) as DownlineCash
+						SELECT	c.recommend, SUM (ISNULL(s.OpeningBalance,0)) as DownlineCash
 						FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
 								ON c.CustID = s.CustID
@@ -120,7 +120,7 @@ BEGIN
 		SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash
 		FROM 	dbo.rptTotalBalance_Active s WITH (NOLOCK)
 			INNER JOIN ( 
-						SELECT	c.mrecommend, SUM (s.OpeningBalance) as DownlineCash
+						SELECT	c.mrecommend, SUM (ISNULL(s.OpeningBalance,0)) as DownlineCash
 						FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
 								ON c.CustID = s.CustID
@@ -135,7 +135,7 @@ BEGIN
 		SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash
 		FROM 	dbo.rptTotalBalance_Active s WITH (NOLOCK)
 			INNER JOIN ( 
-						SELECT	c.srecommend, SUM (s.OpeningBalance) as DownlineCash
+						SELECT	c.srecommend, SUM (ISNULL(s.OpeningBalance,0)) as DownlineCash
 						FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
 								ON c.CustID = s.CustID
