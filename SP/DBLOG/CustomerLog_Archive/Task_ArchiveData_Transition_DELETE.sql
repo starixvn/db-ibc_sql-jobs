@@ -9,6 +9,7 @@ AS
 
 	Revisions: 
 		- 20190227@Patrick: Initalize [RedmineId: #110208] 	
+		- 20190620@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -113,5 +114,33 @@ BEGIN
 		SELECT [LogID], [LogDate], [SystemID], [ProductID], [UserID], [FuncName], [CustID], [ActionID], [TrackingValue], [ModifiedDate], [StatusID], [isNotified], [ReturnCode], [ReturnValue]
 		FROM dbo.UserLog_ExternalAPI l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.CustID IS NULL AND deleted.CustId IS NULL)
+	END	
+	IF @tableName = 'CS_UserLog_RunSP'
+	BEGIN
+		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_RunSP(LogID, UserID, LogDate, CustID, SubAccID, ActionID, TrackingValue, Duration, TrackingValue2)
+		SELECT LogID, UserID, LogDate, CustID, SubAccID, ActionID, TrackingValue, Duration, TrackingValue2
+		FROM dbo.CS_UserLog_RunSP l WITH(NOLOCK)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.custid = deleted.custid)
+	END
+	IF @tableName = 'CS_UserLog_RunSP_MultiTarget'
+	BEGIN
+		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_RunSP_MultiTarget(LogID, UserID, LogDate, ActionID, TrackingValue, Duration, TrackingValue2, MainLogID)
+		SELECT LogID, UserID, LogDate, ActionID, TrackingValue, Duration, TrackingValue2, MainLogID
+		FROM dbo.CS_UserLog_RunSP_MultiTarget l WITH(NOLOCK)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.UserID = deleted.custid)
+	END
+	ELSE IF @tableName = 'CS_UserLog_Login'
+	BEGIN
+		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_Login(LogID, UserID, RoleID, SubAccID, ServerID, IP, LogDate, ActionID, Doing, DomainName, BrowserName, Platform, CountryCode, Duration, username2)
+		SELECT LogID, UserID, RoleID, SubAccID, ServerID, IP, LogDate, ActionID, Doing, DomainName, BrowserName, Platform, CountryCode, Duration, username2
+		FROM dbo.CS_UserLog_Login l WITH(NOLOCK)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.userid = deleted.custid)
+	END	
+	ELSE IF @tableName = 'CS_UserLog_Credit'
+	BEGIN
+		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_Credit(LogID, UserID, CustID, SubAccID, LogDate, OldValue, NewValue, IP, Doing, ActionID, ActualRate)
+		SELECT LogID, UserID, CustID, SubAccID, LogDate, OldValue, NewValue, IP, Doing, ActionID, ActualRate
+		FROM dbo.CS_UserLog_Credit l WITH(NOLOCK)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.userid = deleted.custid)
 	END	
 END
