@@ -172,7 +172,7 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 									,	NULL, [th]	= N'Active RowCount'
 									,	NULL, [th]	= N'Archive RowCount'
 									,	NULL, [th]	= N'Delta'
-								WHERE	@hasDiff NOT IN (0, 1)
+								WHERE	@hasDiff = 1
 								FOR XML PATH ('tr')
 								,	TYPE
 								)
