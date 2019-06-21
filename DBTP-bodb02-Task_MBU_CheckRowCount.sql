@@ -146,7 +146,7 @@ BEGIN;
 					,	[h1/@align]		= N'center'
 					,	[h1]			= N'Archiving Data Row Count Check!'
 					,	[p/b]			= N'Check time: '
-					,	[p]				= REPLACE(CONVERT(NVARCHAR, GETDATE(), 120), N' 00:00:00', N'')
+					,	[p]				= CONVERT(NVARCHAR, GETDATE(), 120)
 					,	[div/@align]	= N'center'
 					,	[div/@style]	= N'\
 background-color:' + s.color + N';\
@@ -175,7 +175,7 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 								,	TYPE
 								)
 							,	(
-								SELECT	NULL, [td]	= ISNULL(active.winlostdate, archive.winlostdate)
+								SELECT	NULL, [td]	= CAST(ISNULL(active.winlostdate, archive.winlostdate) AS DATE)
 									,	NULL, [td]	= ISNULL(active.tableName, archive.tableName)
 									,	NULL, [td]	= ISNULL(active.activeRowCount, 0)
 									,	NULL, [td]	= ISNULL(archive.archiveRowCount, 0)
