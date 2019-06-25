@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 USE bodb_LicenseeReport
 GO
 
@@ -10,13 +10,14 @@ AS
 
 /*
 	Created: 20170530@Paul
-	Task : Check & correct data of rptDepWinlost_ThirdParty - GD
+	Task: Check & correct data of rptDepWinlost_ThirdParty - GD
 	DB: DBLIC.bodb_LicenseeReport
-	Original:
+	
 	Revisions:
 		- 20180406@Harper: Check & correct data of rptDepWinlost_ThirdParty - Exchange [RedmineID: #92485]
 		- 20180530@Sophia: Check & correct data into new table rptDepWinlost_ThirdParty_Performance for Nap report performance [redmine: #93582]
 		- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
+		- 20190625@Percy: Temporary adding DBLIC on OAS_ChargeInfo and related functions [RedmineID: #103658]
 
 	DECLARE @HasDataMismatch	TINYINT, @ProductID VARCHAR(MAX)
 	EXEC Task_rptDepWinlost_ThirdParty_CheckData @WinlostDate = '2018-04-09', @HasDataMismatch = @HasDataMismatch OUTPUT, @ProductIDs = @ProductID OUTPUT
@@ -115,21 +116,33 @@ BEGIN
 	SELECT @PartyList = COALESCE(@PartyList + ',' + CAST(FromParty AS VARCHAR), CAST(FromParty AS VARCHAR))
 	FROM (
 		SELECT FromParty
-		FROM bodb_licensee.dbo.OAS_ChargeInfo WITH(NOLOCK)
+		FROM DBLIC.bodb_licensee.dbo.OAS_ChargeInfo WITH(NOLOCK)
 		WHERE ProductId = 31
 		GROUP BY FromParty
 	)tmp
-	
+
+	-- Get charge rate
+	DECLARE @sql NVARCHAR(MAX)
+	SELECT  @sql = 'SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
+					FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate FROM bodb_licensee.dbo.LA_f_ChargeInfo('
+											+ '''''' + @PartyList + ''''''
+											+ ', ''''' + CONVERT(VARCHAR(10), @WinlostDate, 120) + ''''''
+											+ ', ''''' + CONVERT(VARCHAR(10), @WinlostDate, 120) + ''''''
+											+ ', ''''BX'''', ''''OA'''', 1)
+										WHERE DI_Rate > 0 AND ChargeType = 1'')'
 	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
-	SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
-	FROM bodb_licensee.dbo.LA_f_ChargeInfo(@PartyList, @WinlostDate, @WinlostDate, 'BX', 'OA', 1)
-	WHERE DI_Rate > 0 AND ChargeType = 1
+	EXEC (@sql)
 
 	-- Get more charge rate for trial time
+	SELECT  @sql = 'SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
+					FROM OPENQUERY(DBLIC, ''SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime('
+											+ '''''' + @PartyList + ''''''
+											+ ', ''''' + CONVERT(VARCHAR(10), @WinlostDate, 120) + ''''''
+											+ ', ''''' + CONVERT(VARCHAR(10), @WinlostDate, 120) + ''''''
+											+ ', ''''BX'''', ''''OA'''', 1)
+										WHERE DI_Rate > 0 AND ChargeType = 1'')'
 	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
-	SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
-	FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime(@PartyList, @WinlostDate, @WinlostDate, 'BX', 'OA', 1)
-	WHERE DI_Rate > 0 AND ChargeType = 1
+	EXEC (@sql)
 
 	INSERT INTO #TicketData (custid, SiteID, CurrencyID, ExVirtualRate, UserID, EventID, MarketID
 									, Turnover, Winlost, CommissionP, CommissionA )
