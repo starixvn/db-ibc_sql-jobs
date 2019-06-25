@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO    
 
@@ -8,27 +8,29 @@ AS
 	Created by:[Henry]  
 	Date: 2011-06-20  
 	Task: Insert BA Bets to LicenseeBATransaction  
-	DB: DB052.BODB02  
+	DB: DBEXT.bodb02, DBACC.bodb02
+	
 	Revisions:   
-		20110824@Henry: Change the range of the bettype (not between 31 and 120)  
-		20110909@Viet: revise SP  
-		20111208@Jim: Change bettype condition  
-		20100315@kIWI: Remove @TempBACustID table   
-		20121030@Viet: change the way to get data, reduce load for server.  
-		20150127@Don: Expand bet type ranges for Sportbook when processing BA
-		20150903@Patrick: #42910: Exclude ticket 901 for BetTrade
-		20160301@Don: Add hard-code of [transid < 100000000000]
-		20160416@Francis: Revert hard-code of [transid < 100000000000]
-		20170410@Paul: Implement Cash Out [RedmineID :#71727]
-		20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
-		20181002@Sophia: Sync BA ticket to DB053 (UAT) [Redmine #99855]
-		20181025@Sophia: Revert SPs not to sync BA ticket to DB053, due to DB053 has the job Gen BA ticket by itself (PRO) [Redmine #99855]	
-		20181107@Patrick: DB052 Indexes Revolution [Redmine: #103572]
-		20181120@Sophia: Change 'DB052' To 'DB053' for steap switch to DB053 [Redmine: #103653]
-		20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
-		20190226@Percy: Move update max transid after insert data [RedmineID: #109415]
-		20190311@Parsons: Implement BetBuilder [Redmine: #108995]
- */  
+		- 20110824@Henry: Change the range of the bettype (not between 31 and 120)  
+		- 20110909@Viet: revise SP  
+		- 20111208@Jim: Change bettype condition  
+		- 20100315@kIWI: Remove @TempBACustID table   
+		- 20121030@Viet: change the way to get data, reduce load for server.  
+		- 20150127@Don: Expand bet type ranges for Sportbook when processing BA
+		- 20150903@Patrick: #42910: Exclude ticket 901 for BetTrade
+		- 20160301@Don: Add hard-code of [transid < 100000000000]
+		- 20160416@Francis: Revert hard-code of [transid < 100000000000]
+		- 20170410@Paul: Implement Cash Out [RedmineID :#71727]
+		- 20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
+		- 20181002@Sophia: Sync BA ticket to DB053 (UAT) [Redmine #99855]
+		- 20181025@Sophia: Revert SPs not to sync BA ticket to DB053, due to DB053 has the job Gen BA ticket by itself (PRO) [Redmine #99855]	
+		- 20181107@Patrick: DB052 Indexes Revolution [Redmine: #103572]
+		- 20181120@Sophia: Change 'DB052' To 'DB053' for step switch to DB053 [Redmine: #103653]
+		- 20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
+		- 20190226@Percy: Move update max transid after insert data [RedmineID: #109415]
+		- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]
+		- 20190625@Percy: Change 'DB053' To 'DB052' for step switch to DB052 [Redmine: #103658]
+*/  
 BEGIN
 	SET NOCOUNT ON   
   
@@ -95,7 +97,7 @@ BEGIN
 			FOR XML RAW('r'), root
 		)	
 	
-		IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB053' 
+		IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB052' 
 			EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
 	END
 

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO  
 
@@ -8,21 +8,23 @@ AS
 	Created by:[Henry]  
 	Date: 2011-06-20  
 	Task: Check missing BA tickets  
-	DB: DBEXT-bodb02,DBACC-bodb02
+	DB: DBEXT.bodb02, DBACC.bodb02
+	
 	Revisions:   
-		20110824@Henry: Insert the missing tickets if happen  
-		20110905@Jamie: Modify remove comma ','  
-		20111208@Jim: change bettype condition   
-		20150204@Don: Expand bet type ranges for Sportbook when processing BA  
-		20150904@Patrick: Exclude bettype 901 for bettrade
-		20170410@Harper: Implement Cashout Product
-		20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
-		20181114@Sophia: Revise Job Verify BA - Rename SP from Task_BATransaction_Check To Task_BATransaction_CheckAndCorrect [Redmine: #103653]
-		20181120@Sophia: Change 'DB052' To 'DB053' for steap switch to DB053 [Redmine: #103653]
-		20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
-		20190226@Percy: Apply config setting to raiserror [RedmineID: #109415]
-		20190311@Parsons: Implement BetBuilder [Redmine: #108995]
- */  
+		- 20110824@Henry: Insert the missing tickets if happen  
+		- 20110905@Jamie: Modify remove comma ','  
+		- 20111208@Jim: change bettype condition   
+		- 20150204@Don: Expand bet type ranges for Sportbook when processing BA  
+		- 20150904@Patrick: Exclude bettype 901 for bettrade
+		- 20170410@Harper: Implement Cashout Product
+		- 20180806@Patrick: Sync BA ticket to DB042 [Redmine #98631]
+		- 20181114@Sophia: Revise Job Verify BA - Rename SP from Task_BATransaction_Check To Task_BATransaction_CheckAndCorrect [Redmine: #103653]
+		- 20181120@Sophia: Change 'DB052' To 'DB053' for step switch to DB053 [Redmine: #103653]
+		- 20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
+		- 20190226@Percy: Apply config setting to raiserror [RedmineID: #109415]
+		- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]
+		- 20190625@Percy: Change 'DB053' To 'DB052' for step switch to DB052 [Redmine: #103658]
+*/  
 SET NOCOUNT ON   
    
  --Query data with DONE status  
@@ -151,7 +153,7 @@ BEGIN
 			FOR XML RAW('r'), root
 		)
 		
-		IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB053' 
+		IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB052' 
 			EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
   
 		SELECT @MaxOfFailedCount = CONVERT(INT, VValue)
