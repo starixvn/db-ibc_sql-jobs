@@ -15,7 +15,7 @@ AS
 BEGIN
 	--if this record belong to CN88 member then skip get data from v_BalanceTable.
 	DECLARE @__IsCN88 BIT
-	IF EXISTS (SELECT TOP 1 1 FROM deleted d 
+	IF EXISTS (SELECT TOP 1 1 FROM inserted d 
 				WHERE EXISTS (
 					SELECT TOP 1 1 FROM dbo.CS_CustSuper c WITH(NOLOCK) 
 					WHERE d.srecommend =  c.CustId))
