@@ -25,8 +25,7 @@ BEGIN
 	WHERE CI.roleid = 4 		
 		AND ci.srecommend NOT IN (SELECT custid FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK))
 		AND CI.Enabled = 1
-		AND CI.Currency NOT IN (0,20,72,27)
-		AND CI.username NOT LIKE '%Acc%'
+		AND CI.Currency NOT IN (0,20,72,27)		
 		AND CI.username NOT LIKE '%3rdSuper%'
 		AND CI.username NOT LIKE 'STEST%'
 		AND CI.username NOT LIKE '%cashout%'
@@ -42,8 +41,7 @@ BEGIN
 		AND cs.CustID IN (SELECT CustID FROM #DCS_Super)		
 		AND ci.srecommend NOT IN (SELECT custid FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK))
 		AND CI.Enabled = 1
-		AND CI.Currency NOT IN (0,20,72,27)
-		AND CI.username NOT LIKE '%Acc%'
+		AND CI.Currency NOT IN (0,20,72,27)		
 		AND CI.username NOT LIKE '%3rdSuper%'
 		AND CI.username NOT LIKE 'STEST%'
 		AND CI.username NOT LIKE '%cashout%'
@@ -58,8 +56,7 @@ BEGIN
 		AND cs.CustID IN (SELECT CustID FROM #DCS_Super)		
 		AND ci.srecommend NOT IN (SELECT custid FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK))
 		AND CI.Enabled = 1
-		AND CI.Currency NOT IN (0,20,72,27)
-		AND CI.username NOT LIKE '%Acc%'
+		AND CI.Currency NOT IN (0,20,72,27)		
 		AND CI.username NOT LIKE '%3rdSuper%'
 		AND CI.username NOT LIKE 'STEST%'
 		AND CI.username NOT LIKE '%cashout%'
@@ -87,7 +84,8 @@ BEGIN
 		INNER JOIN CheckCustDB.dbo.custproductstatus p WITH(NOLOCK) on ci.custid = p.custid
 		INNER JOIN #DCS_super s on ci.srecommend = s.custid
 		LEFT JOIN #DCS_Master m on ci.mrecommend = m.custid
-		LEFT JOIN #DCS_Agent a on ci.recommend = a.custid	
+		LEFT JOIN #DCS_Agent a on ci.recommend = a.custid
+	WHERE ci.Enabled = 1	
 	)
 	INSERT INTO [CheckResultDB].[dbo].[CheckStatusResult]
            ([RuleId]
