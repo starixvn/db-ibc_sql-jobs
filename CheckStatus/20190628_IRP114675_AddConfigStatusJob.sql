@@ -10,5 +10,10 @@ INSERT INTO [CheckResultDB].[dbo].[vnDBA_CheckSetting_RunningScripts]
            ,[VarKey]
            ,[Threads]
            ,[Command])
-SELECT 'Status Suspend info Credit','CheckSettingThreadCount',1,'SET NOCOUNT ON;    EXECUTE DBA_CheckSuspendInfoStatus_Credit; UPDATE dbo.vnDBA_Service_Variables WITH (ROWLOCK)  SET  VarValue = ISNULL(CAST(VarValue AS SMALLINT), 0) - 1  WHERE VarKey = N''~~~'';  '
+SELECT 'Status Suspend info Credit','CheckSettingThreadCount',1,
+'SET NOCOUNT ON;    
+EXECUTE DBA_CheckSuspendInfoStatus_Credit; 
+UPDATE dbo.vnDBA_Service_Variables WITH (ROWLOCK)  
+SET  VarValue = ISNULL(CAST(VarValue AS SMALLINT), 0) - 1  
+WHERE VarKey = N''~~~'';  '
 
