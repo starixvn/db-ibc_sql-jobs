@@ -1,5 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
@@ -26,6 +25,7 @@ ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 		- 20170405@Harper: Include Exchange (separate wallet) to check data [RedmineID: #92485]
 		- 20180423@Percy: Remove logic check MB (job handle), update statistics bettrans14 [RedmineID: #94129]
 		- 20181109@bruce: clear code keno winloss [#103958]
+		- 20190627@Percy: Remove paul.tran@starixsoft.com from mail recipient [RedmineID: #115768]
 
 	EXEC Task_rptBetting_CheckData_Job @FromDate = '2018-04-01', @ToDate = '2018-04-10', @Step = 0,  @AllowCorrect = 1
     
@@ -328,7 +328,7 @@ BEGIN
 										FOR XML PATH('tr'), TYPE 
 									) AS NVARCHAR(MAX) ) + N'</table>'
 			
-		EXEC msdb.dbo.sp_send_dbmail @recipients = 'Sophia.nguyen@starixsoft.com;Paul.tran@starixsoft.com;Patrick.pham@starixsoft.com'
+		EXEC msdb.dbo.sp_send_dbmail @recipients = 'Sophia.nguyen@starixsoft.com;Patrick.pham@starixsoft.com'
 					, @subject = @subject
 					, @body = @ErrorMessage
 					, @body_format = 'HTML'
