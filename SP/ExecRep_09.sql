@@ -92,7 +92,7 @@ BEGIN
 			BEGIN
 				UPDATE dbo.SystemSettings WITH (ROWLOCK)
 				SET VValue = CONVERT(VARCHAR(200), CONVERT(SMALLINT, VValue) - 1)
-				OUTPUT DELETED.VValue INTO @updatedFlag (VValue)
+				OUTPUT INSERTED.VValue INTO @updatedFlag (VValue)
 				WHERE VName = @VName
 
 				IF EXISTS (SELECT 1 FROM @updatedFlag WHERE VValue = '0')
