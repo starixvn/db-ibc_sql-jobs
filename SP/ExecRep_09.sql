@@ -38,6 +38,7 @@ AS
 		- 20181222@Billy:   Remove Queue processing on DBTP - [Redmine: #000000]
 		- 20190131@Patrick: Delete bettransm batch by batch at replicated servers to reduce lock escalation [RedmineID: #108581]
 		- 20190319@Patrick: DB06 migration [RedmineID: #110208]
+		- 20190701@Percy: Update directly flag of MBBU process [RedmineID: #115877]
  */
 BEGIN
 	--SET NOCOUNT ON
@@ -67,44 +68,39 @@ BEGIN
 				5: BU on
 				6: BU off
 			*/
-			DECLARE @flag TINYINT, @VName VARCHAR(200)
+			DECLARE @VName VARCHAR(50)
+			SELECT  @VName = CASE WHEN @parlay IN (3,4) THEN 'isMovingBet_Local' WHEN @parlay IN (5,6) THEN 'isArchivingBet_Local' END
 
-			SELECT @VName = CASE WHEN @parlay IN (3,4) THEN 'isMovingBet_Local' WHEN @parlay IN (5,6) THEN 'isArchivingBet_Local' END
+			DECLARE @updatedFlag TABLE (VValue VARCHAR(200))
 
-			SELECT @flag = CONVERT(TINYINT, VValue)
-			FROM dbo.SystemSettings WITH (NOLOCK)
-			WHERE VName = @VName
-			
 			--//@parlay = 3,5: turn on flag --> input start time, @parlay = 4,6: turn off flag --> input end time
 			IF @parlay IN (3,5)
 			BEGIN
-				IF @flag = 0
+				UPDATE dbo.SystemSettings WITH (ROWLOCK)
+				SET VValue = CONVERT(VARCHAR(200), CONVERT(SMALLINT, VValue) + 1)
+				OUTPUT DELETED.VValue INTO @updatedFlag (VValue)
+				WHERE VName = @VName
+
+				IF EXISTS (SELECT 1 FROM @updatedFlag WHERE VValue = '0')
 				BEGIN
-					UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+					UPDATE dbo.SystemSettings WITH (ROWLOCK)
 					SET VValue = CONVERT(VARCHAR(200), GETDATE(), 121)
 					WHERE VName = 'StartMoving_Local'
 				END
-
-				SELECT @flag = @flag + 1
-
-				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
-				SET VValue = CONVERT(VARCHAR(200), @flag)
-				WHERE VName = @VName
 			END
 			ELSE IF @parlay IN (4,6)
 			BEGIN
-				IF @flag = 1
+				UPDATE dbo.SystemSettings WITH (ROWLOCK)
+				SET VValue = CONVERT(VARCHAR(200), CONVERT(SMALLINT, VValue) - 1)
+				OUTPUT DELETED.VValue INTO @updatedFlag (VValue)
+				WHERE VName = @VName
+
+				IF EXISTS (SELECT 1 FROM @updatedFlag WHERE VValue = '0')
 				BEGIN
-					UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+					UPDATE dbo.SystemSettings WITH (ROWLOCK)
 					SET VValue = CONVERT(VARCHAR(200), GETDATE(), 121)
 					WHERE VName = 'EndMoving_Local'
 				END
-
-				SELECT @flag = @flag - 1
-
-				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
-				SET VValue = CONVERT(VARCHAR(200), @flag)
-				WHERE VName = @VName
 			END
 		END
 		RETURN
