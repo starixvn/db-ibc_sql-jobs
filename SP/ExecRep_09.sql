@@ -2,7 +2,7 @@
 USE [bodb02]
 GO
 
-ALTER PROCEDURE	[dbo].[ExecRep_09]
+ALTER PROCEDURE [dbo].[ExecRep_09]
 	@recommend int,
 	@winlostdate smalldatetime,
 	@parlay tinyint = 0,
@@ -37,6 +37,7 @@ AS
 		- 20180329@Percy: Enhance MBBU process [RedmineID: #92391]
 		- 20181222@Billy:   Remove Queue processing on DBTP - [Redmine: #000000]
 		- 20190131@Patrick: Delete bettransm batch by batch at replicated servers to reduce lock escalation [RedmineID: #108581]
+		- 20190319@Patrick: DB06 migration [RedmineID: #110208]
  */
 BEGIN
 	--SET NOCOUNT ON
@@ -202,7 +203,7 @@ BEGIN
 		--//for bettrans
 		IF @tableName = 'bettrans'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02')
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
 			BEGIN
 				DELETE TOP (2000) FROM bettrans WITH(ROWLOCK)
 				WHERE recommend = @recommend AND winlostdate = @winlostdate AND bettype < 19999
@@ -223,7 +224,7 @@ BEGIN
 		--//for translog
 		IF @tableName = 'translog'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02')
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
 			BEGIN
 				DELETE TOP (2000) FROM translog WITH(ROWLOCK)
 				WHERE recommend = @recommend AND winlostdate = @winlostdate
@@ -244,7 +245,7 @@ BEGIN
 		--//for bettransLC
 		IF @tableName = 'bettransLC'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02')
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
 			BEGIN	
 				DELETE TOP (2000) FROM bettransLC WITH(ROWLOCK)
 				WHERE recommend = @recommend AND winlostdate = @winlostdate  
@@ -265,7 +266,7 @@ BEGIN
 		--//for bettransRNG
 		IF @tableName = 'bettransRNG'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02')
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
 			BEGIN
 				DELETE TOP (2000) FROM bettransRNG WITH(ROWLOCK)
 				WHERE recommend = @recommend AND winlostdate = @winlostdate 
