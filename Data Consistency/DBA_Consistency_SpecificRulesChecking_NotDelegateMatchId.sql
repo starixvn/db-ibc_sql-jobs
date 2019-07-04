@@ -13,6 +13,7 @@ AS
 
 	Revisions: 
 		- 20181219@Vicky: Check Specific rules for Happy5 [Redmine:#104849]
+		- 20190704@Kathy: Correct betteam condition [Redmine:#116297]
 	
 	Param's Expanation:
 */
@@ -36,6 +37,7 @@ BEGIN
 		,currency			TINYINT		
 	)
 	DECLARE @tblMatch TABLE (matchid INT)
+	DECLARE @tmBettypes TABLE (Bettype SMALLINT)
 	
 	SET @transId = ''
 	
@@ -43,6 +45,11 @@ BEGIN
 	SELECT matchid
 	FROM bodb02.dbo.Match m WITH (NOLOCK) 
 	WHERE Sporttype = @ProductId
+
+	INSERT INTO @tmBettypes (Bettype)
+	SELECT	DISTINCT BetType
+	FROM	bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+	WHERE	SportType = @ProductId
 
 	INSERT INTO #tmpBettrans(transId 
 		,playerdiscount,discount,adiscount,sdiscount
@@ -56,7 +63,7 @@ BEGIN
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
 	WHERE	b.bettype < 20000
 			AND b.matchid IN (SELECT matchid FROM @tblMatch)
-
+			AND b.bettype IN (SELECT Bettype FROM @tmBettypes)
 	
 	IF @Rule = 'betteam'
 	BEGIN
