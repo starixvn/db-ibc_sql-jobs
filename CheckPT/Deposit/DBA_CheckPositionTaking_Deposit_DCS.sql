@@ -18,6 +18,7 @@ AS
 		-20190128@Winnie: Update PT RedmineID:#108062
 		-20190409@Winnie: Fix check PT RedmineID:#111663
 		-20190604@Winnie: [Bobbet,A1game,ig128] Update SB PT to reflect new terms RedmineID:#113387
+		-20190708@Winnie: Rules PT RedmineID:#116469
 	Param's Explanation:
 	
 */

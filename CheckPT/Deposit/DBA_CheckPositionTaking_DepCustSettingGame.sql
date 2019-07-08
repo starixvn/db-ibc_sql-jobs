@@ -16,6 +16,7 @@ AS
 	Revisions:
 		-20180827@Winnie.Vu: Create SP
 		-20190128@Winnie: Update PT RedmineID:#108062
+		-20190708@Winnie: Rules PT RedmineID:#116469
 	Param's Explanation:
 	
 */
@@ -25,6 +26,13 @@ BEGIN
 	RETURN
 
 	DECLARE @site VARCHAR(20)
+	DECLARE @HideKeno BIT
+
+	SELECT @site = Site FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK) WHERE custid=@srecommend
+	SELECT @HideKeno=HideKeno FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) custid=@srecommend
+
+	IF @HideKeno<>0
+		RETURN
 
 	CREATE TABLE #tmpDumMember (CustID INT , username VARCHAR(30),RoleID INT,PRIMARY KEY(CustID,RoleID))
 	CREATE TABLE #Trade (CustID INT PRIMARY KEY)
@@ -150,7 +158,7 @@ BEGIN
 			FROM CheckCustDB.dbo.CustSettingGame s WITH(NOLOCK)							
 				INNER JOIN #tmpDumMember c ON s.custid=c.custid	
 			WHERE
-				c.roleid=1 AND (s.bettype BETWEEN 1501 AND 1524) AND (s.apositiontaking <> 0.9	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+				c.roleid=1 AND (s.bettype BETWEEN 1501 AND 1524) AND (s.apositiontaking NOT IN(0.9,0.94)	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
 	END
 
 END

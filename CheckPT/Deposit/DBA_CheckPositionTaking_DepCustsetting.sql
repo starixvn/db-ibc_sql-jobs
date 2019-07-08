@@ -18,6 +18,7 @@ AS
 		-20190128@Winnie: Update PT RedmineID:#108062
 		-20190328@Winnie: Update PT SB RedmineID:#110111
 		-20190604@Winnie: [Bobbet,A1game,ig128] Update SB PT to reflect new terms RedmineID:#113387
+		-20190708@Winnie: Rules PT RedmineID:#116469
 	Param's Explanation:
 	
 */
@@ -143,50 +144,14 @@ BEGIN
 		WHERE s.PT<>m.PT
 	END
 	IF @RuleId IN(0,48)
-	BEGIN		
-		IF @site IN('Haifa','BBIN2')
-		BEGIN
-			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
-			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)					
-				INNER JOIN #tmpDumMember c ON s.custid=c.custid		
-			WHERE 
-				c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking <> 0.925 OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
-				AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))
-				
-		END
-		ELSE IF @site IN('asiabet88', 'TLC', 'IBO', 'ZT828','Bobbet','A1game','ig128')
-		BEGIN
-			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
-			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)						
-				INNER JOIN #tmpDumMember c ON s.custid=c.custid		
-			WHERE 
-				c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking <> 0.91	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
-				AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))
-				
-		END		
-		ELSE IF @site IN('Lucky88', '11bet', 'Fabet', 'One88', 'FB88')
-		BEGIN
-			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
-			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)						
-				INNER JOIN #tmpDumMember c ON s.custid=c.custid		
-			WHERE 
-				c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking <> 0.85	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
-				AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))
-				
-		END
-		ELSE
-		BEGIN
-			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-			SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
-			FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)							
-				INNER JOIN #tmpDumMember c ON s.custid=c.custid	
-			WHERE
-				c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking <> 0.88	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
-				AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))			
-		END
+	BEGIN				
+		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+		SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
+		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)					
+			INNER JOIN #tmpDumMember c ON s.custid=c.custid		
+		WHERE 
+			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+			AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))		
 	END
 
 	IF @RuleId IN (0,53)
