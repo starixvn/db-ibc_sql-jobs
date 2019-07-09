@@ -806,9 +806,11 @@ BEGIN
 			
 	--- Agent	
 	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
-	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash 
+	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash,0)
 	FROM 	dbo.rptStatement s WITH (NOLOCK)
-		INNER JOIN ( 
+		INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
+				ON c.CustID = s.CustID AND c.roleID = 2
+		LEFT JOIN ( 
 					SELECT	c.recommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
 					FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
 					INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
@@ -821,9 +823,11 @@ BEGIN
 	
 	-- Master		 
 	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
-	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash
+	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash,0)
 	FROM 	dbo.rptStatement s WITH (NOLOCK)
-		INNER JOIN ( 
+		INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
+				ON c.CustID = s.CustID AND c.roleID = 3
+		LEFT JOIN ( 
 					SELECT	c.mrecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
 					FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
 					INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
@@ -836,9 +840,11 @@ BEGIN
 			
 	-- Super		 
 	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
-	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash
+	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash,0)
 	FROM 	dbo.rptStatement s WITH (NOLOCK)
-		INNER JOIN ( 
+		INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
+				ON c.CustID = s.CustID AND c.roleID = 4
+		LEFT JOIN ( 
 					SELECT	c.srecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
 					FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
 					INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
@@ -877,7 +883,11 @@ BEGIN
 			WHEN MATCHED THEN
 			UPDATE SET
 				TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
-			;
+			
+			WHEN NOT MATCHED BY Target THEN
+				INSERT INTO rptStatement (custid, winlostdate, openingbalance, Openingtotalbalance)
+				VALUES (source.custid, source.winlostdate, source.openingbalance, source.openingtotalbalance) 
+				;
 		END
 	END
 	

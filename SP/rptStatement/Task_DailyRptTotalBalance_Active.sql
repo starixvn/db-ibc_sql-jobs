@@ -102,10 +102,12 @@ BEGIN
 				
 		--- Agent	
 		INSERT INTO #tmpRptTotalBalance_Active (CustID, OpeningBalance, OpeningTotalBalance)	
-		SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash 
+		SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash ,0)
 		FROM 	dbo.rptTotalBalance_Active s WITH (NOLOCK)
-			INNER JOIN ( 
-						SELECT	c.recommend, SUM (ISNULL(s.OpeningBalance,0)) as DownlineCash
+			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
+				ON c.CustID = s.CustID AND c.roleID = 2
+			LEFT JOIN ( 
+						SELECT	c.recommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
 						FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
 								ON c.CustID = s.CustID
@@ -117,10 +119,12 @@ BEGIN
 		
 		-- Master		 
 		INSERT INTO #tmpRptTotalBalance_Active (CustID, OpeningBalance, OpeningTotalBalance)	
-		SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash
+		SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash ,0)
 		FROM 	dbo.rptTotalBalance_Active s WITH (NOLOCK)
-			INNER JOIN ( 
-						SELECT	c.mrecommend, SUM (ISNULL(s.OpeningBalance,0)) as DownlineCash
+			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
+				ON c.CustID = s.CustID AND c.roleID = 3
+			LEFT JOIN ( 
+						SELECT	c.mrecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
 						FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
 								ON c.CustID = s.CustID
@@ -132,10 +136,12 @@ BEGIN
 				
 		-- Super		 
 		INSERT INTO #tmpRptTotalBalance_Active (CustID, OpeningBalance, OpeningTotalBalance)	
-		SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + d.DownlineCash
+		SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash ,0)
 		FROM 	dbo.rptTotalBalance_Active s WITH (NOLOCK)
-			INNER JOIN ( 
-						SELECT	c.srecommend, SUM (ISNULL(s.OpeningBalance,0)) as DownlineCash
+			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
+				ON c.CustID = s.CustID AND c.roleID = 4
+			LEFT JOIN ( 
+						SELECT	c.srecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
 						FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
 								ON c.CustID = s.CustID
@@ -184,27 +190,34 @@ BEGIN
 			GROUP BY CustID 
 			
 			UNION ALL
-			SELECT  CustID, SUM(Winlost1) AS Winlost, SUM(Winlost1 + Winlost2 + Winlost3 + Winlost4) as TotalBL
+			SELECT  CustID, SUM(CASE RoleID 
+									WHEN 1 THEN Winlost1   ---- Transfer and Bet tickets of Member
+									WHEN 2 THEN Winlost2   ---- Transfer of Agent
+									WHEN 3 THEN Winlost3   ---- Transfer of Master
+									WHEN 4 THEN Winlost4   ---- Transfer of Super
+									END
+							) AS Winlost
+					, SUM(Winlost1 + Winlost2 + Winlost3 + Winlost4) as TotalBL					
 			FROM 	#OpenningBalanceBettrans
-			GROUP BY CustID	
+			GROUP BY CustID	   --- All levels
 			
 			UNION ALL
-			SELECT	recommend as CustID, SUM(Winlost2) as Winlost, SUM(Winlost1 + Winlost2 + Winlost3 + Winlost4) as TotalBL
+			SELECT	recommend as CustID, SUM(Winlost2) as Winlost, SUM(Winlost1 + Winlost2) as TotalBL
 			FROM	#OpenningBalanceBettrans
-			WHERE 	RoleID = 1
+			WHERE 	RoleID = 1   -- agent gets on bet tickets
 			GROUP BY recommend
 			
 			UNION ALL 
-			SELECT	mrecommend as CustId, SUM(Winlost3) as Winlost, SUM(Winlost1 + Winlost2 + Winlost3 + Winlost4) as TotalBL
+			SELECT	mrecommend as CustId, SUM(Winlost3) as Winlost, SUM(Winlost1 + Winlost2 + Winlost3) as TotalBL
 			FROM	#OpenningBalanceBettrans
-			WHERE 	RoleID = 1
+			WHERE 	RoleID IN (1,2)  -- master gets on bet tickets & transfer of agent, member
 			GROUP BY mrecommend		
 			
 			UNION ALL			
 			SELECT	srecommend as CustId, SUM(Winlost4) as Winlost, SUM(Winlost1 + Winlost2 + Winlost3 + Winlost4) as TotalBL
 			FROM	#OpenningBalanceBettrans
-			WHERE 	RoleID = 1
-			GROUP BY srecommend
+			WHERE 	RoleID IN (1,2,3)
+			GROUP BY srecommend  -- super gets on bet tickets & transfer of master, agent, member
 		)	A			
 		GROUP BY CustID 	
 
@@ -236,7 +249,11 @@ BEGIN
 				UPDATE SET
 					TARGET.OpeningBalance = SOURCE.OpeningBalance,		
 					TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
-					;
+					
+				WHEN NOT MATCHED BY Target THEN
+				INSERT INTO RptTotalBalance_Active (custid, winlostdate, openingbalance, Openingtotalbalance)
+				VALUES (source.custid, source.winlostdate, source.openingbalance, source.openingtotalbalance) 
+				;
 			END
 		END
 				
