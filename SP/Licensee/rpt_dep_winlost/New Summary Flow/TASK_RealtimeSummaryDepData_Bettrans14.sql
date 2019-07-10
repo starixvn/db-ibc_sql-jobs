@@ -29,6 +29,7 @@ AS
 		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
 		- 20181210@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
 		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
+		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -197,6 +198,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 					WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 					WHEN b.bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
+					WHEN b.bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 				ELSE 0 END,--SportType
 				SUM(CASE WHEN b.statusID NOT IN(101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 				SUM(CASE WHEN b.ruben=0 THEN b.actual_stake ELSE 0 END),--Outstanding
@@ -248,6 +250,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 					WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 					WHEN b.bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
+					WHEN b.bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 				ELSE 0 END--SportType
 			OPTION (RECOMPILE, MAXDOP 8)
 			

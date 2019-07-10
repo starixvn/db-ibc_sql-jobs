@@ -38,6 +38,7 @@ AS
 	- 20190306@Amande: Implement PP Promotion Prize [RedmineID: #109471]
 	- 20190307@Parsons: Implement BetBuilder [Redmine: #108995]
 	- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
+	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -132,6 +133,7 @@ BEGIN
 		WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
+		WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 	  ELSE 0 END sporttype
 	  -- 1706: bidme tip, 4300 - PP Promotion Prize
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706, 4300) THEN bettype ELSE 0 END bettype  
@@ -191,6 +193,7 @@ BEGIN
 		WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
+		WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 	  ELSE 0 END  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300) THEN bettype ELSE 0 END  
 	 ,CASE   
