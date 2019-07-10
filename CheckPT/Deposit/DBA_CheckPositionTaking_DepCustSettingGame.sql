@@ -27,11 +27,13 @@ BEGIN
 
 	DECLARE @site VARCHAR(20)
 	DECLARE @HideKeno BIT
+	DECLARE @DisableKeno BIT
 
 	SELECT @site = Site FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK) WHERE custid=@srecommend
 	SELECT @HideKeno=HideKeno FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) WHERE custid=@srecommend
+	SELECT @DisableKeno=IsDisabled FROM CheckCustDB.dbo.CustgameType WITH(NOLOCK) WHERE custid=@srecommend AND GameTypeID=1
 
-	IF @HideKeno<>0
+	IF @HideKeno<>0 OR @DisableKeno<>0
 		RETURN
 
 	CREATE TABLE #tmpDumMember (CustID INT , username VARCHAR(30),RoleID INT,PRIMARY KEY(CustID,RoleID))
