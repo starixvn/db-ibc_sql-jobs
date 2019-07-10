@@ -27,7 +27,7 @@ BEGIN
 	DECLARE @DisableNumber BIT
 
 	SELECT @site = Site FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK) WHERE custid=@srecommend
-	SELECT @DisableNumber=DisableNumber FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) custid=@srecommend
+	SELECT @DisableNumber=DisableNumber FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) WHERE custid=@srecommend
 	
 	IF @DisableNumber<>0
 		RETURN;
