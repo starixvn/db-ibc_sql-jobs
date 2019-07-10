@@ -29,7 +29,7 @@ BEGIN
 	DECLARE @HideKeno BIT
 
 	SELECT @site = Site FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK) WHERE custid=@srecommend
-	SELECT @HideKeno=HideKeno FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) custid=@srecommend
+	SELECT @HideKeno=HideKeno FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) WHERE custid=@srecommend
 
 	IF @HideKeno<>0
 		RETURN
