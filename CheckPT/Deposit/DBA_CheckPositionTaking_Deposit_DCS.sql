@@ -45,13 +45,13 @@ BEGIN
 	SELECT ISNULL([RegisteredLicenseeName],[LicenseeName])
 	FROM [bodb_OIC].[dbo].[Licensee] l WITH (NOLOCK)
 		INNER JOIN [bodb_OIC].[dbo].[LicenseeType] t WITH (NOLOCK) ON t.LicenseeTypeId = l.LicenseeTypeId
-	WHERE t.LicenseeTypeName LIKE '%API%'
+	WHERE t.LicenseeTypeName LIKE '%API'
 
 	INSERT INTO #SiteAthena(Site)
 	SELECT ISNULL([RegisteredLicenseeName],[LicenseeName])
 	FROM [bodb_OIC].[dbo].[Licensee] l WITH (NOLOCK)
 		INNER JOIN [bodb_OIC].[dbo].[LicenseeType] t WITH (NOLOCK) ON t.LicenseeTypeId = l.LicenseeTypeId
-	WHERE t.LicenseeTypeName LIKE '%Athena%'
+	WHERE t.LicenseeTypeName NOT LIKE '%API'
 
 	CREATE TABLE #tmpDumMember (CustID INT , username VARCHAR(30),RoleID INT,PRIMARY KEY(CustID,RoleID))
 	CREATE TABLE #Trade (CustID INT PRIMARY KEY)
