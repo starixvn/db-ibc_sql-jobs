@@ -187,7 +187,7 @@ BEGIN
 					WHEN b.bettype = 914 THEN -9--Cash Out - Winloss
 					WHEN b.bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
 					WHEN b.bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-					WHEN b.bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
+					WHEN b.bettype = 1900 THEN 249 -- VG
 					WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
 					WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
 					WHEN (b.bettype BETWEEN 2301 AND 2399 OR b.bettype BETWEEN 2901 AND 2999) THEN 210
@@ -239,7 +239,7 @@ BEGIN
 					WHEN b.bettype = 914 THEN -9--Cash Out - Winloss
 					WHEN b.bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
 					WHEN b.bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-					WHEN b.bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
+					WHEN b.bettype = 1900 THEN 249 -- VG
 					WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
 					WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
 					WHEN (b.bettype BETWEEN 2301 AND 2399 OR b.bettype BETWEEN 2901 AND 2999) THEN 210
