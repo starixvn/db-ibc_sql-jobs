@@ -44,7 +44,7 @@ BEGIN
 	SELECT ISNULL([RegisteredLicenseeName],[LicenseeName])
 	FROM [bodb_OIC].[dbo].[Licensee] l WITH (NOLOCK)
 		INNER JOIN [bodb_OIC].[dbo].[LicenseeType] t WITH (NOLOCK) ON t.LicenseeTypeId = l.LicenseeTypeId
-	WHERE t.LicenseeTypeName NOT LIKE '%API'
+	WHERE t.LicenseeTypeName LIKE '%Athena'
 
 	CREATE TABLE #tmpDumMember (CustID INT , username VARCHAR(30),RoleID INT,PRIMARY KEY(CustID,RoleID))
 	CREATE TABLE #Trade (CustID INT PRIMARY KEY)
