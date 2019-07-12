@@ -166,6 +166,7 @@ BEGIN
 	END
 	IF @RuleId IN (0,71)
 	BEGIN	
+		-- VS, VS2
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 71,s.sporttype,s.bettype,s.custid,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
 		FROM CheckCustDB.dbo.Dep_CustPTSetting_Member s WITH(NOLOCK)							
@@ -181,8 +182,8 @@ BEGIN
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid			
 		WHERE c.srecommend=@srecommend AND c.roleid=2 AND  (s.sporttype BETWEEN 180 AND 186 OR s.sporttype BETWEEN 190 AND 194) AND (s.AgentPT NOT IN(85,88) OR s.SuperPT<>0 OR s.MasterPT<>0)
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
-	
-		IF(@IsAthena=0)
+		-- Allbet
+		IF(@IsAthena=1)
 		BEGIN
 			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 			SELECT 71,s.sporttype,s.bettype,s.custid,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
