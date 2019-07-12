@@ -1,0 +1,4 @@
+SP\Licensee\rpt_dep_winlost\New Summary Flow\GEN_HourlySummaryDepData.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\TASK_DepSumData_Job.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\GEN_HourlySummaryDepData_Bettrans14.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\GEN_HourlySummaryDepData_Bettrans14.sql
