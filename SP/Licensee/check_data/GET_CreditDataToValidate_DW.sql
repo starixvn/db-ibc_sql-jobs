@@ -1,11 +1,6 @@
-/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE bodb_Licensee
 GO
-
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
-
 ALTER PROCEDURE [dbo].[GET_CreditDataToValidate_DW]
      @Date smalldatetime 
 	,@DrawFilter tinyint = 1
@@ -26,6 +21,7 @@ Revisions:
 	- 20160616@Jim: Changes to data integrity automail (#59249)	
 	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT, LK3 into data validation email [RedmineID: #81708]
 	- 20181017@Bruce: include PP [#103332]
+	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -101,6 +97,10 @@ DECLARE -- SB
 	,@PPTurnover MONEY
 	,@PPCustomerWl MONEY
 	,@PPBetCount MONEY
+	----CC
+	,@CCTurnover MONEY
+	,@CCCustomerWl MONEY
+	,@CCBetCount MONEY
 
 DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),bettype INT)
 
@@ -108,7 +108,7 @@ INSERT INTO @tblSport (ProductPrefix,bettype)
 SELECT DISTINCT p.ProductPrefix,s.bettype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-WHERE p.ProductPrefix IN ('SB','CB','GD','KN','LC','NG','RB','CS','VS','AB','NG2','FW','VS2','LT','LK3','PP')
+WHERE p.ProductPrefix IN ('SB','CB','GD','KN','LC','NG','RB','CS','VS','AB','NG2','FW','VS2','LT','LK3','PP','CC')
 	 
 	
 DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),StatusID INT, stake MONEY,WinLoss MONEY,BetCount INT)
@@ -317,6 +317,17 @@ SELECT @PPTurnover = ISNULL (@PPTurnover, 0),
 	   @PPCustomerWl = ISNULL (@PPCustomerWl, 0),
 	   @PPBetCount = ISNULL (@PPBetCount, 0)
 
+-- CC
+SELECT @CCTurnover = SUM(CASE WHEN @DrawFilter IN (2,3) AND StatusID = 111 THEN 0 ELSE stake END)
+       ,@CCCustomerWl = -SUM(WinLoss )
+	   ,@CCBetCount = SUM(BetCount)
+FROM @tblData
+WHERE  ProductPrefix = 'CC'
+
+SELECT @CCTurnover = ISNULL (@CCTurnover, 0),
+	   @CCCustomerWl = ISNULL (@CCCustomerWl, 0),
+	   @CCBetCount = ISNULL (@CCBetCount, 0)
+
 -- Result
 SELECT 1 AS Id, @SbTurnover  AS Sb
 			  , @RbTurnover  AS Rb
@@ -334,6 +345,7 @@ SELECT 1 AS Id, @SbTurnover  AS Sb
 			  , @LTTurnover  AS LT
 			  , @LK3Turnover AS LK3
 			  , @PPTurnover  AS PP
+			  , @CCTurnover  AS CC
 UNION	
 SELECT 2, @SbCustomerWl
 		, @RbCustomerWl
@@ -351,6 +363,7 @@ SELECT 2, @SbCustomerWl
 		, @LTCustomerWl
 		, @LK3CustomerWl
 		, @PPCustomerWl
+		, @CCCustomerWl
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -368,12 +381,7 @@ SELECT 3, @SbBetCount
 		, @LTBetCount
 		, @LK3BetCount
 		, @PPBetCount
+		, @CCBetCount
 
 END
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[GET_CreditDataToValidate_DW] TO [vnteam]
-GO
-
-GRANT EXECUTE ON [dbo].[GET_CreditDataToValidate_DW] TO [bodbLicenseeNet]
 GO
