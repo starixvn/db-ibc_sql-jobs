@@ -23,7 +23,7 @@ BEGIN
 		
 	SET @Results = ''
 
-	IF @Rule = 'Selection'
+	IF @Rule = 'SelectionResult'
 	BEGIN
 		SELECT TOP 100 @Results = @Results + 'MatchId: ' + CAST(t.MatchId AS VARCHAR) + ', ' + 'SelectionType: ' + CAST(t.SelectionType AS VARCHAR) + '; '
 		FROM (
@@ -43,7 +43,7 @@ BEGIN
 		END
 	END
 
-	ELSE IF @Rule = 'Market-Selection'
+	ELSE IF @Rule = 'MarketResult'
 	BEGIN
 		SELECT	TOP 100 @Results = @Results + 'MatchId: ' + CAST(m.MatchId AS VARCHAR) + ', ' + 'MarketId: ' + CAST(m.MarketId AS VARCHAR) + '; '
 		FROM	bodb02.dbo.SMP_Market m WITH(NOLOCK)
@@ -68,6 +68,26 @@ BEGIN
 		BEGIN
 			SELECT	@ErrCode = 100
 					,@ErrMsg = 'The result between a settled market and its selections is not correct on ' + @ProductName
+					,@SampleData = @Results
+		END
+	END
+	ELSE IF @Rule = 'Market-Selection-NULL'
+	BEGIN
+		SELECT	TOP 100 @Results = @Results + 'MatchId: ' + CAST(m.MatchId AS VARCHAR) + ', ' + 'MarketId: ' + CAST(m.MarketId AS VARCHAR) + '; '
+		FROM	bodb02.dbo.SMP_Market m WITH(NOLOCK)
+			CROSS APPLY (
+				SELECT TOP 1 ms.MarketSelectionId
+				FROM	bodb02.dbo.SMP_MarketSelection ms WITH(NOLOCK)
+				WHERE	ms.MatchId = m.MatchId
+						AND ms.MarketId = m.MarketId
+						AND ms.Result IS NULL
+			) ms
+		WHERE	m.ResultStatusId  IN (2,5)
+	
+		IF @Results <> ''
+		BEGIN
+			SELECT	@ErrCode = 100
+					,@ErrMsg = 'Settled market has its selection value is null on ' + @ProductName
 					,@SampleData = @Results
 		END
 	END
