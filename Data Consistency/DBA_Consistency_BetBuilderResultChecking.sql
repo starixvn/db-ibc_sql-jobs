@@ -1,7 +1,6 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_BetBuilderResultChecking]
-	@ProductName	VARCHAR(50)		= ''
-	,@Rule			VARCHAR(50)		= ''
+	@Rule			VARCHAR(50)		= ''
 	,@ErrCode		INT				= 0		OUTPUT
 	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
 	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
@@ -20,8 +19,10 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @Results VARCHAR(MAX)
+			@ProductName	VARCHAR(50)	
 		
 	SET @Results = ''
+	SET @ProductName = 'BetBuilder'
 
 	IF @Rule = 'SelectionResult'
 	BEGIN
