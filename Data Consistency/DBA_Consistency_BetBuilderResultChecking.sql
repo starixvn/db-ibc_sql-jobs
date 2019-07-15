@@ -19,7 +19,7 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @Results VARCHAR(MAX)
-			@ProductName	VARCHAR(50)	
+			,@ProductName	VARCHAR(50)	
 		
 	SET @Results = ''
 	SET @ProductName = 'BetBuilder'
