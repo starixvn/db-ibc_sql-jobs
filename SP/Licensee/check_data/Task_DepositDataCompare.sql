@@ -17,6 +17,7 @@ Revisions:
 	- 20160805@Jim: Revise SP due to [Redmine: #62052]
 	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
 	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
+	- 20190715@Amanda: Integrate Card Club [RedmineID: #115449]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -46,42 +47,8 @@ DECLARE
 	   ,@PivotNumb_NG BIGINT
 	   ,@NumberTemp_BA BIGINT
 	   ,@PivotNumb_BA BIGINT
-	   ,@NumberTemp_LC BIGINT
-	   ,@PivotNumb_LC BIGINT
-	   ,@NumberTemp_VS BIGINT
-	   ,@PivotNumb_VS BIGINT
 	   ,@NumberTemp_CS BIGINT
 	   ,@PivotNumb_CS BIGINT
-	   ,@NumberTemp_KN BIGINT
-	   ,@PivotNumb_KN BIGINT
-	   ,@NumberTemp_AG BIGINT
-	   ,@PivotNumb_AG BIGINT
-	   ,@NumberTemp_GD BIGINT
-	   ,@PivotNumb_GD BIGINT
-	   ,@NumberTemp_MGCLC BIGINT
-	   ,@PivotNumb_MGCLC BIGINT
-	   ,@NumberTemp_MGCRNG BIGINT
-	   ,@PivotNumb_MGCRNG BIGINT
-	   ,@NumberTemp_VG BIGINT
-	   ,@PivotNumb_VG BIGINT
-	   ,@NumberTemp_VB BIGINT
-	   ,@PivotNumb_VB BIGINT
-	   ,@NumberTemp_CB BIGINT
-	   ,@PivotNumb_CB BIGINT
-	   ,@NumberTemp_AB BIGINT
-	   ,@PivotNumb_AB BIGINT
-	   ,@NumberTemp_NG2 BIGINT
-	   ,@PivotNumb_NG2 BIGINT
-	   ,@NumberTemp_FW BIGINT
-	   ,@PivotNumb_FW BIGINT
-	   ,@NumberTemp_CO BIGINT
-	   ,@PivotNumb_CO BIGINT
-	   ,@NumberTemp_VS2 BIGINT
-	   ,@PivotNumb_VS2 BIGINT
-	   ,@NumberTemp_LT BIGINT
-	   ,@PivotNumb_LT BIGINT
-	   ,@NumberTemp_PP BIGINT
-	   ,@PivotNumb_PP BIGINT
 	   ,@id INT=1
 	   ,@mesg Nvarchar (Max)=''
 	   
@@ -131,7 +98,8 @@ DECLARE @tblTmp AS TABLE (ID INT
 						   ,CO BIGINT
 						   ,VS2 BIGINT
 						   ,LT BIGINT
-						   ,PP BIGINT)
+						   ,PP BIGINT
+						   ,CC BIGINT)
 						   
 --exec 
 --rptLicWinloss2
@@ -158,7 +126,8 @@ INSERT INTO @tblTmp	(ID
 					,CO
 					,VS2
 					,LT
-					,PP	)	
+					,PP
+					,CC)	
 EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date	
 				
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
@@ -225,7 +194,8 @@ INSERT INTO @tblTmp	(ID
 					,CO
 					,VS2
 					,LT
-					,PP)					   
+					,PP
+					,CC)					   
 EXEC dbo.GET_DepositDataToValidate_Betting @Date=@Date
 					
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
