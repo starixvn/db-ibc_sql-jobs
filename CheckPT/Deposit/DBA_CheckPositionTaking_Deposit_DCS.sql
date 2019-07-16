@@ -172,7 +172,7 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustPTSetting_Member s WITH(NOLOCK)							
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid
 			INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 			
-		WHERE s.custid=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0 AND  (s.sporttype BETWEEN 180 AND 186  OR s.sporttype BETWEEN 190 AND 194) AND (s.AgentPT NOT IN(85,88) OR s.SuperPT<>0 OR s.MasterPT<>0)
+		WHERE s.custid=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0 AND  (s.sporttype BETWEEN 180 AND 186  OR s.sporttype BETWEEN 190 AND 199) AND (s.AgentPT NOT IN(85,88) OR s.SuperPT<>0 OR s.MasterPT<>0)
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 			AND c.custid NOT IN(SELECT custid FROM #Trade)	
 
@@ -180,7 +180,7 @@ BEGIN
 		SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
 		FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid			
-		WHERE c.srecommend=@srecommend AND c.roleid=2 AND  (s.sporttype BETWEEN 180 AND 186 OR s.sporttype BETWEEN 190 AND 194) AND (s.AgentPT NOT IN(85,88) OR s.SuperPT<>0 OR s.MasterPT<>0)
+		WHERE c.srecommend=@srecommend AND c.roleid=2 AND  (s.sporttype BETWEEN 180 AND 186 OR s.sporttype BETWEEN 190 AND 199) AND (s.AgentPT NOT IN(85,88) OR s.SuperPT<>0 OR s.MasterPT<>0)
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 		-- Allbet
 		IF(@IsAthena=1)
