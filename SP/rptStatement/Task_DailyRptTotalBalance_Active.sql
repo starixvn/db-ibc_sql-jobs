@@ -197,7 +197,12 @@ BEGIN
 									WHEN 4 THEN Winlost4   ---- Transfer of Super
 									END
 							) AS Winlost
-					, SUM(Winlost1 + Winlost2 + Winlost3 + Winlost4) as TotalBL					
+					, SUM(CASE RoleID 
+									WHEN 1 THEN Winlost1   ---- Transfer and Bet tickets of Member
+									WHEN 2 THEN Winlost2   ---- Transfer of Agent
+									WHEN 3 THEN Winlost3   ---- Transfer of Master
+									WHEN 4 THEN Winlost4   ---- Transfer of Super
+									END) as TotalBL					
 			FROM 	#OpenningBalanceBettrans
 			GROUP BY CustID	   --- All levels
 			
