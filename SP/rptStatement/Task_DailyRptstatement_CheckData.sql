@@ -858,17 +858,12 @@ BEGIN
 	---------------- Correct Opening Total Balance --------------------
 	IF EXISTS (
 		SELECT 1
-		FROM #tmpOpeningTotalBalance SOURCE
-			FULL OUTER JOIN dbo.rptStatement TARGET WITH (NOLOCK) 
-				ON SOURCE.CustId = TARGET.CustId
-		WHERE TARGET.WinlostDate = @WinlostDate
-			  AND (
-				SOURCE.CustId IS NULL
-				OR TARGET.CustId IS NULL				
-				OR TARGET.OpeningBalance 	  <> SOURCE.OpeningBalance				
-				OR TARGET.OpeningTotalBalance <> SOURCE.OpeningTotalBalance		
-					)
-	)
+		FROM  rptStatement r WITH (NOLOCK)
+			INNER JOIN #tmpOpeningTotalBalance t
+					ON	t.CustId		= r.CustId 
+					AND t.WinlostDate	= r.WinlostDate				
+			WHERE  t.OpeningTotalBalance <> r.OpeningTotalBalance
+			)
 	BEGIN
 		IF @IsCheckDataOnly = 1 --just check data
 		BEGIN
@@ -876,18 +871,13 @@ BEGIN
 		END
 		ELSE -- correct data
 		BEGIN
-			MERGE dbo.rptStatement AS TARGET
-			USING #tmpOpeningTotalBalance AS SOURCE
-					ON	TARGET.CustId		= SOURCE.CustId 
-					AND TARGET.WinlostDate	= @WinlostDate					
-			WHEN MATCHED THEN
-			UPDATE SET
-				TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
-			
-			WHEN NOT MATCHED BY Target THEN
-				INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
-				VALUES (source.custid, source.winlostdate, source.openingbalance, source.openingtotalbalance) 
-				;
+
+			UPDATE r			
+			SET r.OpeningTotalBalance = t.OpeningTotalBalance
+			FROM rptStatement r WITH (ROWLOCK)
+			INNER JOIN #tmpOpeningTotalBalance t
+					ON	t.CustId		= r.CustId 
+					AND t.WinlostDate	= r.WinlostDate						
 		END
 	END
 	

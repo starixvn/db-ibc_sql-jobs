@@ -226,8 +226,9 @@ BEGIN
 			SELECT 1
 			FROM #FinalRptTotalBalance_Active SOURCE
 				FULL OUTER JOIN dbo.RptTotalBalance_Active TARGET WITH (NOLOCK) 
-					ON SOURCE.CustId = TARGET.CustId 
-					AND SOURCE.WinlostDate = TARGET.WinlostDate
+					ON TARGET.CustId = SOURCE.CustId 
+					AND TARGET.WinlostDate = SOURCE.WinlostDate
+					AND TARGET.Winlostdate = @WinlostDate
 			WHERE
 					SOURCE.CustId IS NULL
 					OR TARGET.CustId IS NULL				
@@ -243,16 +244,21 @@ BEGIN
 			BEGIN
 				MERGE dbo.RptTotalBalance_Active AS TARGET
 				USING #FinalRptTotalBalance_Active AS SOURCE
-						ON	TARGET.WinlostDate	= SOURCE.WinlostDate
-						AND TARGET.CustId		= SOURCE.CustId 
+						ON	TARGET.CustId		= SOURCE.CustId
+						AND TARGET.WinlostDate	= SOURCE.WinlostDate
+						AND TARGET.Winlostdate  = @WinlostDate
+						 
 				WHEN MATCHED THEN
 				UPDATE SET
 					TARGET.OpeningBalance = SOURCE.OpeningBalance,		
 					TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
 					
-				WHEN NOT MATCHED BY Target THEN
+				WHEN NOT MATCHED BY TARGET THEN
 				INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
 				VALUES (source.custid, source.winlostdate, source.openingbalance, source.openingtotalbalance) 
+				
+				WHEN NOT MATCHED BY SOURCE THEN
+				DELETE
 				;
 			END
 		END
