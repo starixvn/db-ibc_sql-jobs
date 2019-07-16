@@ -251,7 +251,7 @@ BEGIN
 					TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
 					
 				WHEN NOT MATCHED BY Target THEN
-				INSERT INTO RptTotalBalance_Active (custid, winlostdate, openingbalance, Openingtotalbalance)
+				INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
 				VALUES (source.custid, source.winlostdate, source.openingbalance, source.openingtotalbalance) 
 				;
 			END
