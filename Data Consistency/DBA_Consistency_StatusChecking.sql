@@ -35,7 +35,7 @@ BEGIN
 		BEGIN
 			INSERT INTO @tmpMatchIds (MatchId)
 			SELECT	m.matchid
-			FROM	dbo.match m WITH(NOLOCK)
+			FROM	bodb02.dbo.match m WITH(NOLOCK)
 			WHERE	m.sporttype = 1
 					AND m.eventdate = @yesterday
 
