@@ -42,8 +42,8 @@ BEGIN
 
 	IF EXISTS(
 	SELECT TOP 1 1
-	FROM CheckCustDB.dbo.[Licensee] l WITH (NOLOCK)
-		INNER JOIN CheckCustDB.dbo.[LicenseeType] t WITH (NOLOCK) ON t.LicenseeTypeId = l.LicenseeTypeId
+	FROM [Licensee] l WITH (NOLOCK)
+		INNER JOIN [LicenseeType] t WITH (NOLOCK) ON t.LicenseeTypeId = l.LicenseeTypeId
 	WHERE t.LicenseeTypeName LIKE '%Athena' AND ([LicenseeName]=@site OR [RegisteredLicenseeName]=@site))
 	BEGIN
 		SELECT @IsAthena=1
