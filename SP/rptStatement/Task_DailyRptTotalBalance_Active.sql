@@ -64,6 +64,8 @@ BEGIN
 	
 	IF @Winlostdate = DATEADD(DD, 1, @MovebetDay)    --- first day on bettrans.OpeningBalance = last day on rptStatement.ClosingBalance
 	BEGIN 		 
+		DELETE dbo.rptTotalBalance_Active WHERE WinlostDate = @WinlostDate
+		
 		INSERT INTO dbo.rptTotalBalance_Active (CustID, WinlostDate, OpeningBalance)
 		SELECT CustID, @Winlostdate, ClosingBalance 
 		FROM (	
