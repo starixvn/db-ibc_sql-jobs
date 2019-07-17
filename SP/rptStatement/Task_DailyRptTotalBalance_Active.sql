@@ -262,7 +262,7 @@ BEGIN
 				INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
 				VALUES (source.custid, source.winlostdate, source.openingbalance, source.openingtotalbalance) 
 				
-				WHEN NOT MATCHED BY SOURCE THEN
+				WHEN NOT MATCHED BY SOURCE AND winlostdate = @Winlostdate THEN
 				DELETE
 				;
 			END
