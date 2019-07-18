@@ -38,7 +38,8 @@ BEGIN
 	SELECT @DisableKeno=IsDisabled FROM CheckCustDB.dbo.CustgameType WITH(NOLOCK) WHERE custid=@srecommend AND GameTypeID=1	
 
 	INSERT INTO #Dummy(CustID)
-	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=3 AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%' )
+	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=3 AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%'
+																												OR username LIKE 'AB88'+'CAS%' )
 
 	INSERT INTO #Agent(CustID)
 	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE username IN('12BETSD$02','12BETSD$01')
