@@ -861,7 +861,7 @@ BEGIN
 		FROM  rptStatement r WITH (NOLOCK)
 			INNER JOIN #tmpOpeningTotalBalance t
 					ON	t.CustId		= r.CustId 
-					AND t.WinlostDate	= r.WinlostDate				
+					AND r.WinlostDate	= @WinlostDate				
 			WHERE  t.OpeningTotalBalance <> r.OpeningTotalBalance
 			)
 	BEGIN
@@ -877,7 +877,7 @@ BEGIN
 			FROM rptStatement r WITH (ROWLOCK)
 			INNER JOIN #tmpOpeningTotalBalance t
 					ON	t.CustId		= r.CustId 
-					AND t.WinlostDate	= r.WinlostDate						
+					AND r.WinlostDate	= @WinlostDate				
 		END
 	END
 	
