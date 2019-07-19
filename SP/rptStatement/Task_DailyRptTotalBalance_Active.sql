@@ -131,54 +131,61 @@ BEGIN
 					AND c.RoleID = 1
 					
 			--- Agent	
+			SELECT	c.recommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
+			INTO #__Agent
+			FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
+					ON c.CustID = s.CustID
+			WHERE c.RoleID = 1
+			GROUP BY c.recommend
+			
 			INSERT INTO #tmpRptTotalBalance_Active (CustID, OpeningBalance, OpeningTotalBalance)	
 			SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash ,0)
 			FROM 	dbo.rptTotalBalance_Active s WITH (NOLOCK)
 				INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
 					ON c.CustID = s.CustID AND c.roleID = 2
-				LEFT JOIN ( 
-							SELECT	c.recommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
-							FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
-							INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
-									ON c.CustID = s.CustID
-							WHERE c.RoleID = 1
-							GROUP BY c.recommend
-							) d
-				ON s.CustID = d.recommend
+				LEFT JOIN #__Agent d
+					ON s.CustID = d.recommend
 			WHERE   s.WinlostDate = @WinlostDate
+
+			DROP TABLE #__Agent
 			
-			-- Master		 
+			-- Master	
+			SELECT	c.mrecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
+			INTO #__Master
+			FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
+					ON c.CustID = s.CustID
+			WHERE c.RoleID = 2
+			GROUP BY c.mrecommend	 
+			
 			INSERT INTO #tmpRptTotalBalance_Active (CustID, OpeningBalance, OpeningTotalBalance)	
 			SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash ,0)
 			FROM 	dbo.rptTotalBalance_Active s WITH (NOLOCK)
 				INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
 					ON c.CustID = s.CustID AND c.roleID = 3
-				LEFT JOIN ( 
-							SELECT	c.mrecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
-							FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
-							INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
-									ON c.CustID = s.CustID
-							WHERE c.RoleID = 2
-							GROUP BY c.mrecommend
-							) d
-				ON s.CustID = d.mrecommend
+				LEFT JOIN #__Master d
+					ON s.CustID = d.mrecommend
 			WHERE   s.WinlostDate = @WinlostDate
+
+			DROP TABLE #__Master
 					
 			-- Super		 
+			SELECT	c.srecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
+			INTO #__Super
+			FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
+					ON c.CustID = s.CustID
+			WHERE c.RoleID = 3
+			GROUP BY c.srecommend
+			
 			INSERT INTO #tmpRptTotalBalance_Active (CustID, OpeningBalance, OpeningTotalBalance)	
 			SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash ,0)
 			FROM 	dbo.rptTotalBalance_Active s WITH (NOLOCK)
 				INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
 					ON c.CustID = s.CustID AND c.roleID = 4
-				LEFT JOIN ( 
-							SELECT	c.srecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
-							FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
-							INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
-									ON c.CustID = s.CustID
-							WHERE c.RoleID = 3
-							GROUP BY c.srecommend
-							) d
-				ON s.CustID = d.srecommend
+				LEFT JOIN #__Super d
+					ON s.CustID = d.srecommend
 			WHERE   s.WinlostDate = @WinlostDate
 			
 			----- Update rptTotalBalance_Active.OpeningTotalBalance
@@ -294,7 +301,7 @@ BEGIN
 				INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
 				VALUES (source.custid, source.winlostdate, source.openingbalance, source.openingtotalbalance) 
 				
-				WHEN NOT MATCHED BY SOURCE AND winlostdate = @Winlostdate THEN
+				WHEN NOT MATCHED BY SOURCE AND TARGET.winlostdate = @Winlostdate THEN
 				DELETE
 				;
 			END
