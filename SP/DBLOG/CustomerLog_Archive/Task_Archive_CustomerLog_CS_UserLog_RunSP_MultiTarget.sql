@@ -33,7 +33,7 @@ BEGIN
 			IF EXISTS (
 				SELECT TOP 1 1
 				FROM dbo.Task_ArchiveData_Transition WITH(NOLOCK)
-				WHERE TableName <> 'CS_UserLog_RunSP_MultiTarget'
+				WHERE TableName <> 'CS_UserLog_RunSP_MultiTarget' AND TableName <> 'CS_UserLog_RunSP_LogTarget'
 			)
 			BEGIN
 				RAISERROR('^^^ Can not resume the job. Please check!!!^^^', 16, 1)
@@ -63,6 +63,12 @@ BEGIN
 			TRUNCATE TABLE Task_ArchiveData_Transition
 
 			INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid, TableName)
+			SELECT lt.logid, NULL, NULL, 'CS_UserLog_RunSP_LogTarget' AS TableName
+			FROM dbo.CS_UserLog_RunSP_LogTarget lt WITH(NOLOCK)
+				INNER JOIN dbo.CS_UserLog_RunSP_MultiTarget mt WITH(NOLOCK) ON mt.LogID = lt.LogID
+			WHERE logdate >= @__dateFrom AND logdate < @__dateTo
+
+			INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid, TableName)
 			SELECT logid, logdate, UserID, 'CS_UserLog_RunSP_MultiTarget' AS TableName
 			FROM dbo.CS_UserLog_RunSP_MultiTarget WITH(NOLOCK)
 			WHERE logdate >= @__dateFrom AND logdate < @__dateTo
@@ -85,7 +91,7 @@ BEGIN
 	END
 	ELSE IF @Mode = 'delete'
 	BEGIN
-		CREATE TABLE #__logIds (rowId INT IDENTITY(1,1) PRIMARY KEY, logid BIGINT, logdate DATETIME, custid INT)
+		CREATE TABLE #__logIds (rowId INT IDENTITY(1,1) PRIMARY KEY, logid BIGINT, logdate DATETIME)
 		
 		INSERT INTO #__logIds(logid, logdate)
 		SELECT logid, logdate
@@ -100,7 +106,7 @@ BEGIN
 			DELETE FROM @__tmpId
 
 			DELETE 
-			FROM #__logIds OUTPUT deleted.logid, deleted.logdate, deleted.custid INTO @__tmpId(logId, logdate, custid)
+			FROM #__logIds OUTPUT deleted.logid, deleted.logdate INTO @__tmpId(logId, logdate)
 			WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
 			
 			IF @@ROWCOUNT = 0
@@ -109,8 +115,12 @@ BEGIN
 			SET @rowId = @rowId + @RowInBatch
 
 			DELETE l
+			FROM dbo.CS_UserLog_RunSP_LogTarget l WITH(ROWLOCK)
+			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId)
+
+			DELETE l
 			FROM dbo.CS_UserLog_RunSP_MultiTarget l WITH(ROWLOCK)
-			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logdate = t.logdate AND l.UserID = t.custid)
+			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logdate = t.logdate)
 
 			WAITFOR DELAY @delayTimeValue
 

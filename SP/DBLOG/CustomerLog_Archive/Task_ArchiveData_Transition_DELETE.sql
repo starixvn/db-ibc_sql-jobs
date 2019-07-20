@@ -122,6 +122,13 @@ BEGIN
 		FROM dbo.CS_UserLog_RunSP l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.custid = deleted.custid)
 	END
+	IF @tableName = 'CS_UserLog_RunSP_LogTarget'
+	BEGIN
+		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_RunSP_LogTarget(LogID, LogDate, CustID)
+		SELECT l.LogID, d.LogDate, l.CustID
+		FROM dbo.CS_UserLog_RunSP_LogTarget l WITH(NOLOCK)
+			INNER JOIN deleted d ON d.LogId = l.logid AND l.CustID = d.custid
+	END
 	IF @tableName = 'CS_UserLog_RunSP_MultiTarget'
 	BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_RunSP_MultiTarget(LogID, UserID, LogDate, ActionID, TrackingValue, Duration, TrackingValue2, MainLogID)
