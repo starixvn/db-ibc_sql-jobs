@@ -19,6 +19,7 @@ AS
 		-20190409@Winnie: Fix check PT RedmineID:#111663
 		-20190604@Winnie: [Bobbet,A1game,ig128] Update SB PT to reflect new terms RedmineID:#113387
 		-20190708@Winnie: Rules PT RedmineID:#116469
+		-20190722@Winnie: Remove site Asiabet rule 71 RedmineID:#117350
 	Param's Explanation:
 	
 */
@@ -458,12 +459,15 @@ BEGIN
 	END
 	IF @RuleId IN(0,70)
 	BEGIN		
-		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-		SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
-		FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member d WITH(NOLOCK)
-			INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
-		WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT NOT IN(85,88,91,92.5)
-			AND d.AgentID NOT IN(SELECT CustID FROM #Trade)		
+		IF ((@site='Asiabet88' AND @currency NOT IN(3,6)) OR @site<>'Asiabet88')
+		BEGIN
+			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+			SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
+			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member d WITH(NOLOCK)
+				INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
+			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT NOT IN(85,88,91,92.5)
+				AND d.AgentID NOT IN(SELECT CustID FROM #Trade)		
+		END
 	END
 	IF @RuleId IN (0,57)
 	BEGIN		
