@@ -63,7 +63,7 @@ BEGIN
 			TRUNCATE TABLE Task_ArchiveData_Transition
 
 			INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid, TableName)
-			SELECT lt.logid, NULL, NULL, 'CS_UserLog_RunSP_LogTarget' AS TableName
+			SELECT lt.logid, mt.LogDate, lt.CustID, 'CS_UserLog_RunSP_LogTarget' AS TableName
 			FROM dbo.CS_UserLog_RunSP_LogTarget lt WITH(NOLOCK)
 				INNER JOIN dbo.CS_UserLog_RunSP_MultiTarget mt WITH(NOLOCK) ON mt.LogID = lt.LogID
 			WHERE logdate >= @__dateFrom AND logdate < @__dateTo
