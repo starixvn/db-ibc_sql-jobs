@@ -125,7 +125,7 @@ BEGIN
 	END	
 	ELSE IF @tableName = 'CS_UserLog_Login'
 	BEGIN
-		EXEC dbo.Task_Archive_CustomerLog_UserLog_CS_UserLog_Login
+		EXEC dbo.Task_Archive_CustomerLog_CS_UserLog_Login
 				@FromDateTime = @__dateTimeFrom,
 				@ToDateTime = @__dateTimeTo,
 				@Mode = @Mode,
@@ -134,7 +134,7 @@ BEGIN
 	END	
 	ELSE IF @tableName = 'CS_UserLog_RunSP'
 	BEGIN
-		EXEC dbo.Task_Archive_CustomerLog_UserLog_CS_UserLog_RunSP
+		EXEC dbo.Task_Archive_CustomerLog_CS_UserLog_RunSP
 				@FromDateTime = @__dateTimeFrom,
 				@ToDateTime = @__dateTimeTo,
 				@Mode = @Mode,
