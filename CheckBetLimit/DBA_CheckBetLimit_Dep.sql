@@ -1417,7 +1417,7 @@ BEGIN
 	IF @RuleId IN (0,328)  
 	BEGIN
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-		SELECT 328,s.SportType,bettype,s.CustID,NULL,s.maxbet,c.maxpermatch161,GETDATE(),1
+		SELECT 328,s.SportType,bettype,s.CustID,NULL,s.maxbet,c.MaxPerBall161,GETDATE(),1
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd s WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON s.custid=c.custid
 		WHERE c.srecommend=@srecommend AND s.sporttype=161 AND s.maxbet>c.MaxPerBall161
