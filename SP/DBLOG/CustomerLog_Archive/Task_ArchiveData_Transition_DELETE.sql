@@ -148,6 +148,6 @@ BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_Credit(LogID, UserID, CustID, SubAccID, LogDate, OldValue, NewValue, IP, Doing, ActionID, ActualRate)
 		SELECT LogID, UserID, CustID, SubAccID, LogDate, OldValue, NewValue, IP, Doing, ActionID, ActualRate
 		FROM dbo.CS_UserLog_Credit l WITH(NOLOCK)
-		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.userid = deleted.custid)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.CustID = deleted.custid)
 	END	
 END

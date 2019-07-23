@@ -150,6 +150,15 @@ BEGIN
 				@RowInBatch = @RowInBatch,
 				@ErrorCode = @ErrorCode OUTPUT
 	END	
+	ELSE IF @tableName = 'CS_UserLog_RunSP_LogTarget'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_CS_UserLog_RunSP_LogTarget
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END	
 	ELSE
 	BEGIN
 		PRINT @tableName

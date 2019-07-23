@@ -33,7 +33,7 @@ BEGIN
 			IF EXISTS (
 				SELECT TOP 1 1
 				FROM dbo.Task_ArchiveData_Transition WITH(NOLOCK)
-				WHERE TableName <> 'CS_UserLog_RunSP_MultiTarget' AND TableName <> 'CS_UserLog_RunSP_LogTarget'
+				WHERE TableName <> 'CS_UserLog_RunSP_MultiTarget'
 			)
 			BEGIN
 				RAISERROR('^^^ Can not resume the job. Please check!!!^^^', 16, 1)
@@ -61,12 +61,6 @@ BEGIN
 		
 			--reset identity purpose
 			TRUNCATE TABLE Task_ArchiveData_Transition
-
-			INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid, TableName)
-			SELECT lt.logid, mt.LogDate, lt.CustID, 'CS_UserLog_RunSP_LogTarget' AS TableName
-			FROM dbo.CS_UserLog_RunSP_LogTarget lt WITH(NOLOCK)
-				INNER JOIN dbo.CS_UserLog_RunSP_MultiTarget mt WITH(NOLOCK) ON mt.LogID = lt.LogID
-			WHERE lt.logdate >= @__dateFrom AND lt.logdate < @__dateTo
 
 			INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid, TableName)
 			SELECT logid, logdate, UserID, 'CS_UserLog_RunSP_MultiTarget' AS TableName
@@ -113,10 +107,6 @@ BEGIN
 				BREAK
 
 			SET @rowId = @rowId + @RowInBatch
-
-			DELETE l
-			FROM dbo.CS_UserLog_RunSP_LogTarget l WITH(ROWLOCK)
-			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId)
 
 			DELETE l
 			FROM dbo.CS_UserLog_RunSP_MultiTarget l WITH(ROWLOCK)
