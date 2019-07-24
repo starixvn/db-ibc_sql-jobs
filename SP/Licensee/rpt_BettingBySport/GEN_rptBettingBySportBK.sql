@@ -13,6 +13,7 @@ AS
     Revisions:	
 		- 20170930@Harper: Get more info for MuayThai Parlay [Redmine: #82827]
 		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
+		- 20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
 
 	GEN_rptBettingBySportBK '2017-09-30'
 */ 
@@ -237,7 +238,8 @@ BEGIN
 			WHERE m.sporttype = 44
 				AND ( b.bettype < 31
 						OR b.bettype BETWEEN 121 AND 999
-						OR b.Bettype BETWEEN 1301 and 1399 --new tennis's bettypes
+						OR b.bettype BETWEEN 1301 AND 1399 --new tennis's bettypes
+						OR b.bettype BETWEEN 9001 AND 9399
 					) 
 				AND b.statusID IN (111, 112, 113)
 				AND b.winlostdate = @Date 
