@@ -75,6 +75,7 @@ Revisions:
 	- 20181023@Percy: Expand bettype range of Sportsbook [RedmineID: #102924]
 	- 20181126@Percy: Incorporate Happy 5 into Number Game [RedmineID: #104283]
 	- 20190131@Patrick: Delete bettransm batch by batch at replicated servers to reduce lock escalation [RedmineID: #108581]
+	- 20190701@Percy: Add Card Club [RedmineID: #115611]
  */
 
 SET NOCOUNT ON
@@ -648,6 +649,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
+			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
 		0 AS netTurnover,
@@ -716,6 +718,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
+			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -779,6 +782,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
+			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*apositiontaking)/2 else ABS(stake*apositiontaking) end) AS netTurnover,
@@ -849,6 +853,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
+			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -911,6 +916,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
+			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*mpositiontaking)/2 else ABS(stake*mpositiontaking) end) AS netTurnover,
@@ -981,6 +987,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
+			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
@@ -1043,6 +1050,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
+			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
 		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*spositiontaking)/2 else ABS(stake*spositiontaking) end) AS netTurnover,
@@ -1113,6 +1121,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
+			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
 
