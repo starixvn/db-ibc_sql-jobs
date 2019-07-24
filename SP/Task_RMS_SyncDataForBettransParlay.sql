@@ -1,14 +1,5 @@
-USE [bodb_RMS]
-GO
+/*<info serverAlias="DBRMS-bodb_RMS" executers="bodbRMSNet" viewers="" isFunction="0" isNested="0"></info>*/
 
-/****** Object:  StoredProcedure [dbo].[Task_RMS_SyncDataForBettransParlay]    Script Date: 01/19/2015 04:36:24 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_RMS_SyncDataForBettransParlay    Script Date: 6/25/2014 3:31:02 PM ******/
 ALTER PROCEDURE [dbo].[Task_RMS_SyncDataForBettransParlay]	
 AS
 /*   
@@ -23,6 +14,7 @@ AS
   - 20160422@Winnie: intergrate Combo parlay
   - 20160720@Winnie: fix bug Executed as user: DB054\SQL. Conversion failed when converting the nvarchar value 'a' to data type int. [SQLSTATE 22018] (Error 245).  The step failed.
   - 20160926@Winnie: fix issue conflict refno with racing RedmineID: #64286
+  - 20190214@Jacob: Add Bet Builder RedmineID: #108694
 */  
 
 SET NOCOUNT ON
@@ -55,36 +47,15 @@ BEGIN
 			liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
 			recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, sdiscount, 
 			scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
-			SecAcceptFlag, transid2, CASE when matchid = 9 then RIGHT(betcheck,LEN(betcheck)-1) 
-										  WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam) ELSE hdp2 end
+			SecAcceptFlag, transid2, hdp2
 	FROM bodb02.dbo.bettrans with (NOLOCK)
-	WHERE matchid in (9,29)
-		 
-	-- bettype 29 old	
-	INSERT INTO #tmpBettrans (transid, hdp1, hdp2,betcheck)
-	SELECT	transid, 0, LEN(betteam),hdp2 -- number of match
-	FROM	dbo.rmBettrans
-	WHERE	bettype = 29
-			AND betcheck IS NULL
+	WHERE (matchid = 29 OR bettype = 38)
+			 
+	-- Single Match Parlay
+	UPDATE rmBettrans SET TotalBet = 1 , odds2 = odds, transid2 = 1, liveawayscore = 1 
+	WHERE bettype = 38 
+	-- End of Single Match Parlay
 	
-	UPDATE tmpb
-	SET @bitmap = REPLICATE('1', hdp2 - 1) + '0'
-		,betteam = (SELECT result FROM dbo.f_BinaryToDecimal(REVERSE(@bitmap)))	
-	FROM #tmpBettrans tmpb
-
-	UPDATE b WITH(ROWLOCK, UPDLOCK)
-	SET hdp1  = tmp.hdp1
-		,hdp2 = tmp.hdp2
-		,betteam = tmp.betteam
-		,betcheck = tmp.betcheck 	
-	FROM	dbo.rmbettrans b
-	INNER JOIN #tmpBettrans tmp
-		ON	b.transid = tmp.transid
-			AND b.matchid = 29
-			AND b.bettype = 29
-	
-	-- end bettype 29 old
-
 	;WITH ParlayTotalBet AS(
 		SELECT TransID, SUM (rcs.cnt) AS TotalBet
 		FROM rmBettrans b WITH(NOLOCK)
@@ -97,7 +68,7 @@ BEGIN
 	FROM rmBettrans b 
 	INNER JOIN ParlayTotalBet pt ON b.TransID = pt.TransID
 	WHERE b.bettype=29 
-
+	
 	;WITH tmpbettrans AS(
 		SELECT b.hdp2 AS selection_cnt, CAST(b.betteam as int) AS bitmapR, bm.odds, bm.stake AS SetStake, bm.refno, b.transid
 			,RN = ROW_NUMBER() OVER (PARTITION BY bm.refno ORDER BY bm.matchid) --RN			
@@ -157,12 +128,11 @@ BEGIN
 			liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
 			recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, sdiscount, 
 			scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
-			SecAcceptFlag, transid2, CASE when matchid = 9 then RIGHT(betcheck,LEN(betcheck)-1)
-										  WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam) ELSE hdp2 END combo
+			SecAcceptFlag, transid2
 	INTO #temp			
 	FROM bodb02.dbo.bettrans with (NOLOCK)
 	WHERE tstamp between @tstamp_min and @tstamp_max
-		AND matchid in (9,29)
+		AND ( matchid = 29 OR bettype = 38)
 		
 	UPDATE bb
 	SET bb.transid2 = aa.transid2
@@ -238,7 +208,7 @@ BEGIN
 				,balance = s.balance
 				,SecAcceptFlag = s.SecAcceptFlag
 				,transid2 = s.transid2
-				,combo = s.combo
+				,combo = s.hdp2
 		WHEN NOT MATCHED THEN 
 		INSERT (transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost, playercomm, comm, acomm, 
 			apositiontaking, mpositiontaking, tpositiontaking, playerdiscount, discount, adiscount, livehomescore, liveawayscore, 
@@ -253,37 +223,21 @@ BEGIN
 			s.liveawayscore, s.liveindicator, s.betteam, s.creator, s.refno, s.comstatus, s.winlostdate, s.betfrom, s.betcheck, s.checktime, 
 			s.oddsspread, s.actualrate, s.matchid, s.recommend, s.mrecommend, s.ruben, s.betid, s.statuswinlost, s.modds, s.bettype, s.betdaqid, 
 			s.actual_stake, s.currency, s.ip, s.transdesc, s.sdiscount, s.scomm, s.spositiontaking, s.swinlost, s.srecommend, s.Username, 
-			s.CurrencyName, s.virtualrate, s.oddstype, s.statusID, s.currency2, s.balance, s.SecAcceptFlag, s.transid2, s.combo
+			s.CurrencyName, s.virtualrate, s.oddstype, s.statusID, s.currency2, s.balance, s.SecAcceptFlag, s.transid2, s.hdp2
 			)
 	;--end MERGE	
 
 	; -- END OF MERGE rmTransaction	
+	-- Single Match Parlay
+	UPDATE b WITH(ROWLOCK, UPDLOCK)
+	SET TotalBet = 1, odds2 = t.odds, transid2 = 1, liveawayscore = 1
+	FROM rmBettrans b INNER JOIN #temp t ON b.transid = t.transid 
+	WHERE t.bettype = 38
+	
+	-- End Single Match Parlay
 	
 	IF EXISTS(SELECT TOP 1 1 FROM #temp WHERE matchid = 29)
 	BEGIN	
-		--bettype 29 Old
-	INSERT INTO #tmpBettrans (transid, hdp1, hdp2,betcheck)
-	SELECT	transid, 0, LEN(betteam),hdp2 -- number of match
-	FROM	#temp 
-	WHERE	bettype = 29
-			AND betcheck IS NULL
-	
-	UPDATE tmpb
-	SET betteam = (SELECT result FROM dbo.f_BinaryToDecimal(REVERSE(REPLICATE('1', hdp2 - 1) + '0')))	
-	FROM #tmpBettrans tmpb
-
-	UPDATE b WITH(ROWLOCK, UPDLOCK)
-	SET hdp1  = tmp.hdp1
-		,hdp2 = tmp.hdp2
-		,betteam = tmp.betteam
-		,betcheck = tmp.betcheck 
-	FROM	dbo.rmbettrans b
-	INNER JOIN #tmpBettrans tmp
-		ON	b.transid = tmp.transid
-			AND b.matchid = 29
-			AND b.bettype = 29
-
-		-- end bettype 29 old
 		;WITH ParlayTotalBet AS(
 			SELECT b.TransID, SUM (rcs.cnt) AS TotalBet
 			FROM rmBettrans b WITH(NOLOCK)
@@ -340,11 +294,13 @@ BEGIN
 	USING	#temp s on dt.transid = s.transid	
 	WHEN NOT MATCHED THEN 
 	INSERT(transid, refno, custid, combo)
-	VALUES(s.transid,s.refno,s.custid,s.combo);
-	END
+	VALUES(s.transid,s.refno,s.custid,s.hdp2);
+END
 
 	UPDATE dbo.rmSettings with(rowlock, updlock)
 	SET VValue = CAST(CAST(@tstamp_max as bigint) as varchar(200))
 	WHERE VName = 'rmBettransSync'	
 
 SET NOCOUNT OFF
+
+GO

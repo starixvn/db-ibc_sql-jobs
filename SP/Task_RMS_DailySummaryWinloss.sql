@@ -22,20 +22,21 @@ AS
 			- 20160920@Winnie: hot fix NULL in sporttype  RedmineID: #64286
 			- 20160922@Winnie: fix ticket bettype 29 old format & confict refno with racing  RedmineID: #64286
 			- 20180927@Jacob: Apply Extra PT and Super Comm to Report.  RedmineID: #100951 		
+			- 20190214@Jacob: Add Bet Builder RedmineID: #108694
 		Parameter's Explanation:
 
 		EXEC [Task_RMS_DailySummaryWinloss] @winlostdate = '20180915'
 	*/
 SET NOCOUNT ON
 	
-	IF NOT EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans14 WITH(NOLOCK) WHERE bettype IN(9,29) AND matchid IN(9,29)  AND winlostdate = @winlostdate)
+	IF NOT EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans14 WITH(NOLOCK) WHERE ((bettype = 29 AND matchid = 29)  OR bettype = 38) AND winlostdate = @winlostdate)
 	BEGIN
 		SELECT	 @ErrMsg= 'WARNING:Data is not moved to bettrans14.'
 				,@ErrCode = 101
 		RETURN
 	END
 	
-	IF EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans WITH(NOLOCK) WHERE bettype IN(9,29)  AND matchid IN(9,29)  AND winlostdate = @winlostdate)
+	IF EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans WITH(NOLOCK) WHERE ((bettype = 29  AND matchid = 29)  OR bettype = 38)  AND winlostdate = @winlostdate)
 	BEGIN
 		SELECT	 @ErrMsg= 'WARNING:Data is still in bettrans.'
 				,@ErrCode = 102
@@ -161,8 +162,7 @@ SET NOCOUNT ON
 	FROM
 	bodb02.dbo.bettrans14 b WITH(NOLOCK) 
 	WHERE	b.winlostdate = @winlostdate
-				AND matchid IN(9,29)
-				AND bettype IN(9,29)
+				AND ((matchid = 29 AND bettype = 29) OR bettype = 38)
 				AND b.statusid IN (111,112,113)
 				
 	INSERT INTO #tmpbettransm(	refno ,	sporttype)
@@ -170,22 +170,23 @@ SET NOCOUNT ON
 	FROM #tmpbettrans b (NOLOCK)
 	INNER JOIN DBARC.bodb_Archive.dbo.bettransm a WITH (NOLOCK) ON a.refno=b.refno
 	INNER JOIN DBARC.bodb_Archive.dbo.match_bk m(NOLOCK) ON a.matchid=m.matchid	
-	WHERE m.sporttype<=99
+	WHERE m.sporttype<=99  AND b.bettype = 29
 	
 	INSERT INTO #tmpbettransm(	refno ,	sporttype)
 	SELECT a.refno,m.sporttype 
 	FROM #tmpbettrans b (NOLOCK)
 	INNER JOIN bodb02.dbo.bettransm a(NOLOCK) ON a.refno=b.refno
 	INNER JOIN bodb02.dbo.match m(NOLOCK) ON a.matchid=m.matchid	
-	WHERE m.sporttype<=99
+	WHERE m.sporttype<=99 AND b.bettype = 29
 	
 	INSERT INTO #tmpbettransm(	refno ,	sporttype)
 	SELECT a.refno,m.sporttype 
 	FROM #tmpbettrans b (NOLOCK)
 	INNER JOIN bodb02.dbo.bettransm14 a(NOLOCK) ON a.refno=b.refno
 	INNER JOIN bodb02.dbo.match14 m(NOLOCK) ON a.matchid=m.matchid	
-	WHERE m.sporttype<=99
+	WHERE m.sporttype<=99 AND b.bettype = 29
 	
+	-- Join Bettransm to get sporttype(transid2) for bettype = 29
 	UPDATE bb
 	SET bb.transid2 = aa.transid2
 	FROM #tmpbettrans  bb INNER JOIN 
@@ -194,9 +195,12 @@ SET NOCOUNT ON
 	WHEN COUNT(DISTINCT(sporttype))<>1 AND MIN(sporttype)=1 THEN  -3
 	ELSE -1
 	END AS transid2
-	FROM #tmpbettransm b 		
+	FROM #tmpbettransm b 
 	GROUP BY b.refno) aa ON aa.refno=bb.refno	
 	
+	-- sporttype(transid2) always is 1 for bettype = 38
+	UPDATE #tmpbettrans SET transid2 = 1
+	WHERE bettype = 38
 	
     INSERT INTO #ExtraPT_Sel
 			 ( ProductID, Sporttype, SubProduct, SuperID, FromDate, ToDate, ExtraPT)
@@ -239,8 +243,7 @@ SET NOCOUNT ON
 				,b.custid
 				,transid2
 				,statusid
-				,CASE WHEN bettype=9 THEN RIGHT(betcheck,len(betcheck)-1) 
-					WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam)
+				,CASE WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam)
 					ELSE hdp2 END AS combo
 				,username
 				,currency
@@ -252,9 +255,10 @@ SET NOCOUNT ON
 				,SUM(modds)
 				,count(1)
 				,recommend 
-				,CASE WHEN bettype=9 THEN 1 
-					  WHEN bettype=29 AND betteam='1' THEN 2
-					  ELSE 3 END AS ParlayType
+				,CASE WHEN bettype=29 AND betteam='1' THEN 2
+					  WHEN bettype=29 AND betteam <> '1' THEN 3
+					  WHEN bettype=38 THEN 4
+					  ELSE 0 END AS ParlayType
 				,SUM(scomm)
 				,SUM(scomm * ISNULL(a.ExtraPT, 0) / (1 - tpositiontaking))
 				,SUM(stake * ISNULL(a.ExtraPT, 0))
@@ -263,13 +267,13 @@ SET NOCOUNT ON
 		LEFT JOIN #ExtraPT_Sel AS a ON srecommend = a.SuperId AND winlostdate BETWEEN a.FromDate AND a.Todate
 																		
 		GROUP BY winlostdate, b.custid, transid2, statusid, username, currency, actualrate,
-					CASE WHEN bettype=9 THEN RIGHT(betcheck,len(betcheck)-1) 
-					  WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam)
+					CASE WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam)
 					ELSE hdp2 END, 
 				recommend,
-				CASE WHEN bettype=9 THEN 1 
-					  WHEN bettype=29 AND betteam='1' THEN 2
-					  ELSE 3 END 
+				CASE WHEN bettype=29 AND betteam='1' THEN 2
+					WHEN bettype=29 AND betteam <> '1' THEN 3
+					WHEN bettype=38 THEN 4
+					ELSE 0 END
 				
 		IF @@ERROR > 0
 		BEGIN			
