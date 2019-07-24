@@ -21,6 +21,7 @@ AS
 	- 20160328@Sophia: Check status Of PayOutTrans, get status Completed and Expired [Redmine: #54643]
 	- 20170323@Percy: Apply Cash Out [RedmineID: #72164]
 	- 20190128@Sophia: Fix correct data at Void Block code Redmind: #107365]
+	- 20190507@Sophia: Add new column OpeningTotalBalance for Credit Collection report use [Redmine: #109293]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -66,6 +67,19 @@ BEGIN
 		Custid INT
 		,OpeningBalance MONEY
 		)
+		
+		
+	IF OBJECT_ID('tempdb..#tmpOpeningTotalBalance') IS NOT NULL
+	BEGIN
+		DROP TABLE #tmpOpeningTotalBalance
+	END
+
+	CREATE TABLE #tmpOpeningTotalBalance (
+		Custid INT
+		,OpeningBalance MONEY
+		,OpeningTotalBalance MONEY
+		)
+		
 	 
 	IF OBJECT_ID('tempdb..#tmpStatement') IS NOT NULL
 	BEGIN
@@ -778,6 +792,108 @@ BEGIN
 			  AND tmpSta.ErrCode = 40
 			
 		
+	END
+	
+	------------Calc OpeningTotalBalance----------
+	--- Member
+	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)
+	SELECT	s.CustID, s.OpeningBalance,	s.OpeningBalance
+	FROM 	dbo.rptStatement s WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
+			ON c.CustID = s.CustID
+	WHERE   s.WinlostDate = @WinlostDate 
+			AND c.RoleID = 1
+			
+	--- Agent	
+	SELECT	c.recommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
+	INTO #__Agent
+	FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
+			ON c.CustID = s.CustID
+	WHERE c.RoleID = 1
+	GROUP BY c.recommend
+	
+	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
+	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash,0)
+	FROM 	dbo.rptStatement s WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
+				ON c.CustID = s.CustID AND c.roleID = 2
+		LEFT JOIN #__Agent d
+				ON s.CustID = d.recommend
+	WHERE   s.WinlostDate = @WinlostDate
+
+	DROP TABLE #__Agent
+	
+	-- Master		 
+	SELECT	c.mrecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
+	INTO #__Master
+	FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
+			ON c.CustID = s.CustID
+	WHERE c.RoleID = 2
+	GROUP BY c.mrecommend
+	
+	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
+	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash,0)
+	FROM 	dbo.rptStatement s WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
+				ON c.CustID = s.CustID AND c.roleID = 3
+		LEFT JOIN #__Master d
+				ON s.CustID = d.mrecommend
+	WHERE   s.WinlostDate = @WinlostDate
+
+	DROP TABLE #__Master
+			
+	-- Super		 
+	SELECT	c.srecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
+	INTO #__Super
+	FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
+			ON c.CustID = s.CustID
+	WHERE c.RoleID = 3
+	GROUP BY c.srecommend
+	
+	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
+	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash,0)
+	FROM 	dbo.rptStatement s WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
+				ON c.CustID = s.CustID AND c.roleID = 4
+		LEFT JOIN #__Super d
+				ON s.CustID = d.srecommend
+	WHERE   s.WinlostDate = @WinlostDate
+		
+	---------------- Correct Opening Total Balance --------------------
+	IF EXISTS (
+		SELECT 1
+		FROM  rptStatement r WITH (NOLOCK)
+			INNER JOIN #tmpOpeningTotalBalance t
+					ON	t.CustId		= r.CustId 
+					AND r.WinlostDate	= @WinlostDate				
+			WHERE  t.OpeningTotalBalance <> r.OpeningTotalBalance
+			)
+	BEGIN
+		IF @IsCheckDataOnly = 1 --just check data
+		BEGIN
+			SELECT 'Wrong OpeningTotalBalance on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
+		END
+		ELSE -- correct data
+		BEGIN
+
+			UPDATE r			
+			SET r.OpeningTotalBalance = t.OpeningTotalBalance
+			FROM rptStatement r WITH (ROWLOCK)
+			INNER JOIN #tmpOpeningTotalBalance t
+					ON	t.CustId		= r.CustId 
+					AND r.WinlostDate	= @WinlostDate				
+		END
+	END
+	
+		
+	----------------------------------------------------
+	
+	IF OBJECT_ID('tempdb..#tmpOpeningTotalBalance') IS NOT NULL
+	BEGIN
+		DROP TABLE #tmpOpeningTotalBalance
 	END
 	 
 	IF OBJECT_ID('tempdb..#tmpStatement') IS NOT NULL
