@@ -1,11 +1,7 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
 USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Task_CheckBalance1_CheckAll]    Script Date: 12/08/2015 02:06:11 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[Task_CheckBalance1_CheckAll]
+CREATE PROCEDURE [dbo].[Task_CheckBalance1_CheckAll]
 AS
 
 /*
@@ -17,14 +13,16 @@ AS
 	   20150907@Daniel: Clone from Task_CheckBalance_CheckAll & apply new set of bal tables
 		20151210@Daniel: calc balance from table bettransRNG & bettransLC 
 		20160112@Daniel: enhance using FULL JOIN when get data from translog, bettransRNG, bettransLC
+		20160906@Daniel: add update exception list for BetTrade accounts
+		20170929@Patrick: Update code for Bonus project
+		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
+		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
 		
-	   
-
 	Param use:
 
 
 	Logic & Process:
-		update DWL into Exception table
+		update Exception table
 		1st compute and compare (all members)
 		remove UUS & members having ticket being settle
 		2nd compute and compare (filtered members)
@@ -34,12 +32,19 @@ Declare @RC int, @RD int, @msg varchar(200)
 SET @msg = ''
 SET @RD = 0
 
--- automatic update list from DWL
+-- automatic update exception list list
 INSERT INTO Task_Cust_CheckBalance_Exception
 SELECT custid, 'DWLList'
 FROM DBACC.bodb_ACC.dbo.Acc_DWLList dw with (nolock)
 WHERE custid NOT IN (SELECT custid FROM dbo.Task_Cust_CheckBalance_Exception ce with (nolock))
-
+UNION ALL
+SELECT custid, 'DWLList_ExtraPT'
+FROM DBACC.bodb_ACC.dbo.Acc_DWLList_ExtraPT dwe with (nolock)
+WHERE custid NOT IN (SELECT custid FROM dbo.Task_Cust_CheckBalance_Exception ce with (nolock))
+UNION ALL
+SELECT custid, 'BetTrade Dummy Accounts'
+FROM DBCUST.custDB.dbo.BetTradeCust bt with (nolock)
+WHERE custid NOT IN (SELECT custid FROM dbo.Task_Cust_CheckBalance_Exception ce with (nolock))
 
 IF NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1)
 BEGIN
@@ -49,7 +54,7 @@ BEGIN
 		SELECT tl.custid, SUM(actual_stake) AS Outstanding
 		FROM dbo.translog tl with (nolock)
 			--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON tl.custid = c.custid AND c.roleid = 1 and
-		WHERE tl.statusID=0 --summary running tickets only
+		WHERE tl.statusID IN (0,1) --summary running tickets only
 		GROUP BY tl.custid
 	),
 	q3 AS (
@@ -63,11 +68,19 @@ BEGIN
 		FROM dbo.bettransLC WITH(NOLOCK)
 		WHERE IsSum = 0
 		GROUP BY custid
-	)
-	SELECT DISTINCT ISNULL(q2.custid, ISNULL(q3.custid, q4.custid)) custid, ISNULL(Outstanding, 0) Outstanding, ISNULL(BalRNG, 0) BalRNG, ISNULL(BalLC, 0) BalLC
+	), 
+	t AS (
+		SELECT custid, SUM(Amount) AS adjustWinlostAmt
+		FROM dbo.BonusAdjustmentTransfer WITH(NOLOCK)
+		WHERE isTransferred = 0
+		GROUP BY custid
+	) 
+	SELECT DISTINCT ISNULL(q2.custid, ISNULL(q3.custid, ISNULL(q4.custid, t.CustId))) custid, ISNULL(Outstanding, 0) Outstanding
+		, ISNULL(BalRNG, 0) BalRNG, ISNULL(BalLC, 0) BalLC, ISNULL(adjustWinlostAmt, 0) adjustWinlostAmt
 	INTO #tmpCal
 	FROM q2 FULL OUTER JOIN q3 ON q2.custid = q3.custid
 	FULL OUTER JOIN q4 ON q2.custid = q4.custid
+	FULL OUTER JOIN t ON q2.custid = t.CustID
 
 	CREATE CLUSTERED INDEX CIX_t ON #tmpCal (custid)
 
@@ -81,6 +94,7 @@ BEGIN
 	SELECT cb.*, ISNULL(qq.Outstanding,0) Outstanding, ISNULL(qq.BalRNG, 0) BalRNG, ISNULL(qq.BalLC, 0) BalLC, 
 	   cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance 
 	   - db1.Balance - db2.Balance - db3.Balance - db4.Balance AS FromBalanceTable
+	   , ISNULL(adjustWinlostAmt, 0) adjustWinlostAmt
 	INTO #QuestionLists
 	FROM cb	
 		INNER JOIN dbo.BalCreditTransfer cd1 with (nolock) ON cb.custid = cd1.custid
@@ -93,7 +107,7 @@ BEGIN
 		INNER JOIN dbo.BalDebitOthers db4 with (nolock) ON cb.custid = db4.custid
 		LEFT OUTER JOIN #tmpCal qq ON cb.custid = qq.custid
 	WHERE
-		cb.Balance - ISNULL(qq.Outstanding,0) + ISNULL(qq.BalRNG, 0) + ISNULL(qq.BalLC, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
+		cb.Balance - ISNULL(qq.Outstanding,0) + ISNULL(qq.BalRNG, 0) + ISNULL(qq.BalLC, 0) + ISNULL(adjustWinlostAmt, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
 		AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE cb.custid = ex.custid)
 
 	SET @RC = @@ROWCOUNT
@@ -141,7 +155,7 @@ BEGIN
 		SELECT tl.custid, SUM(actual_stake) AS Outstanding
 		FROM dbo.translog tl with (nolock)
 			--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON tl.custid = c.custid AND c.roleid = 1 and
-		WHERE tl.statusID=0 --summary running tickets only
+		WHERE tl.statusID IN (0,1) --summary running tickets only
 		GROUP BY tl.custid
 	),
 	q3 AS (
@@ -155,10 +169,16 @@ BEGIN
 		FROM dbo.bettransLC WITH(NOLOCK)
 		WHERE IsSum = 0
 		GROUP BY custid
-	)	
+	),
+	t AS (
+		SELECT custid, SUM(Amount) AS adjustWinlostAmt
+		FROM dbo.BonusAdjustmentTransfer WITH(NOLOCK)
+		WHERE isTransferred = 0
+		GROUP BY custid
+	)
 	INSERT INTO dbo.Task_Cust_CheckBalanceVerify1(custid, roundVerified, MaxRowVersion, DiffBalance)
 	SELECT cb.custid, 0, RowVersion, 
-	   cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) 
+	   cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) + ISNULL(t.adjustWinlostAmt, 0)
 	   - (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance)
 	FROM cb
 		INNER JOIN dbo.BalCreditTransfer cd1 with (nolock) ON cb.custid = cd1.custid
@@ -171,9 +191,10 @@ BEGIN
 		INNER JOIN dbo.BalDebitOthers db4 with (nolock) ON cb.custid = db4.custid
 		LEFT OUTER JOIN q2 ON cb.custid = q2.custid
 		LEFT OUTER JOIN q3 ON cb.custid = q3.custid
-		LEFT OUTER JOIN q4 ON cb.custid = q4.custid			
+		LEFT OUTER JOIN q4 ON cb.custid = q4.custid	
+		LEFT OUTER JOIN t ON cb.custid = t.CustID		
 	WHERE
-		cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
+		cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) + ISNULL(t.adjustWinlostAmt, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
 		AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE cb.custid = ex.custid)
 		AND NOT EXISTS (SELECT 1 FROM dbo.BalCreditSportsPending cdp2 with (nolock) WHERE cb.custid = cdp2.custid)
 		AND NOT EXISTS (SELECT 1 FROM dbo.BalCreditCasinoPending cdp3 with (nolock) WHERE cb.custid = cdp3.custid)
@@ -182,11 +203,19 @@ BEGIN
 		AND NOT EXISTS (SELECT 1 FROM dbo.BalDebitCasinoPending dbp3 with (nolock) WHERE cb.custid = dbp3.custid)
 		AND NOT EXISTS (SELECT 1 FROM dbo.BalDebitOthersPending dbp4 with (nolock) WHERE cb.custid = dbp4.custid)
 		
-	PRINT @msg + ' -' + CAST(@RD as varchar(50)) + ' -> ' + CAST(@@ROWCOUNT as varchar(50)) + ' accounts add to verify balance'
+	SET @msg = @msg + ' -' + CAST(@RD as varchar(50)) + ' -> ' + CAST(@@ROWCOUNT as varchar(50)) + ' accounts add to verify balance'
+
+	DELETE t
+	FROM dbo.Task_Cust_CheckBalanceVerify1 t WITH(ROWLOCK)
+		INNER JOIN CustDB.dbo.Customer c WITH(NOLOCK) ON t.custid = c.custid
+	WHERE EXISTS (SELECT TOP 1 1 FROM dbo.CS_CustSuper cs WITH(NOLOCK) WHERE c.srecommend = cs.CustId)
+
+	PRINT @msg + ' -' + CAST(@@ROWCOUNT as varchar(50)) + ' accounts of CN88 was deleted from verify balance list'
 	
 	DROP TABLE #tmpCal
 	DROP TABLE #QuestionLists
 
 END
+GO
 
 
