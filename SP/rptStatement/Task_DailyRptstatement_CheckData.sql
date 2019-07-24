@@ -795,6 +795,7 @@ BEGIN
 	END
 	
 	------------Calc OpeningTotalBalance----------
+	/*
 	--- Member
 	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)
 	SELECT	s.CustID, s.OpeningBalance,	s.OpeningBalance
@@ -895,6 +896,7 @@ BEGIN
 	BEGIN
 		DROP TABLE #tmpOpeningTotalBalance
 	END
+	*/
 	 
 	IF OBJECT_ID('tempdb..#tmpStatement') IS NOT NULL
 	BEGIN
