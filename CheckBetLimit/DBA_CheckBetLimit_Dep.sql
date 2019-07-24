@@ -292,32 +292,32 @@ BEGIN
 			TRUNCATE TABLE #MemberSetting
 
 			INSERT INTO #SuperSetting(SporttypeID ,BettypeID ,Num)
-			SELECT cs.GameTypeID,0,COUNT(cs.custid)
+			SELECT 202,1501,COUNT(cs.custid)
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
-			WHERE cs.CustID=@srecommend  
+			WHERE cs.CustID=@srecommend  AND cs.GameTypeID=1
 			GROUP BY cs.custid,cs.GameTypeID
 
 			INSERT INTO #MasterSetting(CustID ,SporttypeID ,BettypeID ,Num)
-			SELECT c.custid,cs.GameTypeID,0,COUNT(c.custid)
+			SELECT c.custid,202,1501,COUNT(c.custid)
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-			WHERE c.srecommend=@srecommend AND c.roleid=3 
+			WHERE c.srecommend=@srecommend AND c.roleid=3 AND cs.GameTypeID=1
 				AND c.custid NOT IN(SELECT custid FROM #Dummy)
 			GROUP BY c.custid,cs.GameTypeID
 
 			INSERT INTO #AgentSetting(CustID ,SporttypeID ,BettypeID ,Num)
-			SELECT c.custid,cs.GameTypeID,0,COUNT(c.custid)
+			SELECT c.custid,202,1501,COUNT(c.custid)
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-			WHERE c.srecommend=@srecommend AND c.roleid=2
+			WHERE c.srecommend=@srecommend AND c.roleid=2 AND cs.GameTypeID=1
 				AND c.custid NOT IN(SELECT custid FROM #Agent)
 			GROUP BY c.custid,cs.GameTypeID
 
 			INSERT INTO #MemberSetting(CustID ,SporttypeID ,BettypeID ,Num)
-			SELECT c.custid,cs.GameTypeID,0,COUNT(c.custid)
+			SELECT c.custid,202,1501,COUNT(c.custid)
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-			WHERE c.srecommend=@srecommend 
+			WHERE c.srecommend=@srecommend AND cs.GameTypeID=1
 				AND c.roleid=1 
 				AND c.custid NOT IN(SELECT custid FROM #Trade)			
 			GROUP BY c.custid,cs.GameTypeID
@@ -383,10 +383,10 @@ BEGIN
 		IF (@HideKeno=0 AND @DisableKeno=0)
 		BEGIN
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-			SELECT 318,s.GameTypeID,0,s.CustID,NULL,Minbet,NULL,GETDATE(),1
+			SELECT 318,202,1501,s.CustID,NULL,Minbet,NULL,GETDATE(),1
 			FROM CheckCustDB.dbo.CustGameType s WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON s.custid=c.custid
-			WHERE c.srecommend=@srecommend 
+			WHERE c.srecommend=@srecommend AND s.GameTypeID=1
 				AND s.minbet<0  			
 				AND c.custid NOT IN(SELECT custid FROM #Trade)
 		END
@@ -517,23 +517,23 @@ BEGIN
 			TRUNCATE TABLE #Agent319
 
 			INSERT INTO #Super319(SporttypeID ,BettypeID,IsLive ,Minbet)
-			SELECT cs.GameTypeID,0,0,Minbet
+			SELECT 202,1501,0,Minbet
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 			
-			WHERE cs.custid=@srecommend
+			WHERE cs.custid=@srecommend AND cs.GameTypeID=1
 		
 			INSERT INTO #Master319(CustID ,SporttypeID ,BettypeID,IsLive ,Minbet)
-			SELECT c.custid,cs.GameTypeID,0,0,Minbet
+			SELECT c.custid, 202,1501,0,Minbet
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-			WHERE c.srecommend=@srecommend 
+			WHERE c.srecommend=@srecommend AND cs.GameTypeID=1
 				AND c.roleid=3  
 				AND c.custid NOT IN(SELECT custid FROM #Dummy)			
 
 			INSERT INTO #Agent319(CustID ,SporttypeID ,BettypeID,IsLive ,Minbet,mrecommend)
-			SELECT cs.custid,cs.GameTypeID,0,0,Minbet,mrecommend
+			SELECT cs.custid, 202,1501,0,Minbet,mrecommend
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-			WHERE c.srecommend=@srecommend 
+			WHERE c.srecommend=@srecommend AND cs.GameTypeID=1
 				AND c.roleid=2 
 				AND c.custid NOT IN(SELECT custid FROM #Agent)		
 
@@ -586,10 +586,10 @@ BEGIN
 		IF @DisableKeno=0 AND @HideKeno=0
 		BEGIN
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-			SELECT 320,s.GameTypeID,0,s.CustID,NULL,Maxbet,NULL,GETDATE(),1
+			SELECT 320,202,1501,s.CustID,NULL,Maxbet,NULL,GETDATE(),1
 			FROM CheckCustDB.dbo.CustGameType s WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON s.custid=c.custid
-			WHERE c.srecommend=@srecommend AND s.Maxbet<0 
+			WHERE c.srecommend=@srecommend AND s.Maxbet<0 AND s.GameTypeID=1
 				AND c.custid NOT IN(SELECT custid FROM #Trade)
 		END
 	END
@@ -714,21 +714,21 @@ BEGIN
 			TRUNCATE TABLE #Agent321
 				
 			INSERT INTO #Super321(SporttypeID ,BettypeID,IsLive ,Maxbet)
-			SELECT cs.GameTypeID,0,0,Maxbet
+			SELECT 202,1501,0,Maxbet
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 			
-			WHERE cs.custid=@srecommend
+			WHERE cs.custid=@srecommend AND cs.GameTypeID=1
 		
 			INSERT INTO #Master321(CustID ,SporttypeID ,BettypeID,IsLive ,Maxbet)
-			SELECT c.custid,cs.GameTypeID,0,0,Maxbet
+			SELECT c.custid,202,1501,0,Maxbet
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-			WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.custid NOT IN(SELECT custid FROM #Dummy)
+			WHERE c.srecommend=@srecommend AND c.roleid=3  AND c.custid NOT IN(SELECT custid FROM #Dummy) AND cs.GameTypeID=1
 
 			INSERT INTO #Agent321(CustID ,SporttypeID ,BettypeID,IsLive ,Maxbet,mrecommend)
-			SELECT cs.custid,cs.GameTypeID,0,0,Maxbet,mrecommend
+			SELECT cs.custid,202,1501,0,Maxbet,mrecommend
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-			WHERE c.srecommend=@srecommend AND c.roleid=2 AND c.custid NOT IN(SELECT custid FROM #Agent)	
+			WHERE c.srecommend=@srecommend AND c.roleid=2 AND c.custid NOT IN(SELECT custid FROM #Agent) AND cs.GameTypeID=1	 
 
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 			SELECT 321,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Maxbet,m.Maxbet,GETDATE(),1
@@ -822,11 +822,11 @@ BEGIN
 		IF(@DisableKeno=0 AND @HideKeno=0)
 		BEGIN
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-			SELECT 322,s.MaxPerGameType,0,s.CustID,NULL,c.MaxPerMatch,NULL,GETDATE(),1
+			SELECT 322,202,1501,s.CustID,NULL,s.MaxPerGameType,NULL,GETDATE(),1
 			FROM CheckCustDB.dbo.CustGameType s WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON s.custid=c.custid
 			WHERE c.srecommend=@srecommend AND s.MaxPerGameType<0
-				 AND c.custid NOT IN(SELECT custid FROM #Trade)	
+				 AND c.custid NOT IN(SELECT custid FROM #Trade)	AND s.GameTypeID=1
 		END
 	END
 	IF @RuleId IN (0,323)  
@@ -1203,23 +1203,23 @@ BEGIN
 			TRUNCATE TABLE #Agent323	
 
 			INSERT INTO #Super323(SporttypeID ,BettypeID ,MaxPerMatch)
-			SELECT cs.GameTypeID,0,MaxPerGameType
+			SELECT 202,1501,MaxPerGameType
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 			
-			WHERE cs.custid=@srecommend
+			WHERE cs.custid=@srecommend AND cs.GameTypeID=1
 		
 			INSERT INTO #Master323(CustID ,SporttypeID ,BettypeID ,MaxPerMatch)
-			SELECT c.custid,cs.GameTypeID,0,MaxPerGameType
+			SELECT c.custid,202,1501,MaxPerGameType
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
 			WHERE c.srecommend=@srecommend AND c.roleid=3 
-				AND c.custid NOT IN(SELECT custid FROM #Dummy)
+				AND c.custid NOT IN(SELECT custid FROM #Dummy) AND cs.GameTypeID=1
 
 			INSERT INTO #Agent323(CustID ,SporttypeID ,BettypeID,MaxPerMatch,mrecommend)
-			SELECT cs.custid,cs.GameTypeID,0,MaxPerGameType,mrecommend
+			SELECT cs.custid,202,1501,MaxPerGameType,mrecommend
 			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
 			WHERE c.srecommend=@srecommend AND c.roleid=2 
-				AND c.custid NOT IN(SELECT custid FROM #Agent)	
+				AND c.custid NOT IN(SELECT custid FROM #Agent)	AND cs.GameTypeID=1
 
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 			SELECT 323,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.MaxPerMatch,m.MaxPerMatch,GETDATE(),1
@@ -1311,10 +1311,10 @@ BEGIN
 		IF (@HideKeno=0 AND @DisableKeno=0)
 		BEGIN
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-			SELECT 326,s.GameTypeID,0,s.CustID,NULL,s.minbet,s.maxbet,GETDATE(),1
+			SELECT 326,202,1501,s.CustID,NULL,s.minbet,s.maxbet,GETDATE(),1
 			FROM CheckCustDB.dbo.CustGameType s WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON s.custid=c.custid
-			WHERE c.srecommend=@srecommend AND s.minbet>s.maxbet
+			WHERE c.srecommend=@srecommend AND s.minbet>s.maxbet AND s.GameTypeID=1
 				AND c.custid NOT IN(SELECT custid FROM #Trade)	
 		END
 	END
@@ -1407,10 +1407,10 @@ BEGIN
 		IF (@HideKeno=0 AND @DisableKeno=0)
 		BEGIN
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-			SELECT 327,s.GameTypeID,0,s.CustID,NULL,s.maxbet,s.MaxPerGameType,GETDATE(),1
+			SELECT 327,202,1501,s.CustID,NULL,s.maxbet,s.MaxPerGameType,GETDATE(),1
 			FROM CheckCustDB.dbo.CustGameType s WITH(NOLOCK) 
 				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON s.custid=c.custid
-			WHERE c.srecommend=@srecommend AND s.maxbet>s.MaxPerGameType
+			WHERE c.srecommend=@srecommend AND s.maxbet>s.MaxPerGameType AND s.GameTypeID=1
 				AND c.custid NOT IN(SELECT custid FROM #Trade)	
 		END
 	END
