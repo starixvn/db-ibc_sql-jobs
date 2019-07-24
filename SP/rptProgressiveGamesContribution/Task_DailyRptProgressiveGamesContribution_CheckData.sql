@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSUM-bodb_Summary" executers="vnteam" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBSUM-bodb_Summary" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 USE [bodb_Summary]
 GO
 
@@ -17,7 +17,8 @@ AS
 		- 20180420@Percy: Change stake to actual_stake for Contribution formula [RedmineID: #94025]
 		- 20180529@Percy: Change Contribution formula [RedmineID: #96053]
 		- 20180607@Percy: Change Contribution data type [RedmineID: #96053]
-
+		
+  
 	Param's Explanation:
 */
 
