@@ -1,4 +1,7 @@
 /*<info serverAlias="DBSUM-bodb_Summary" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+USE [bodb_Summary]
+GO
+
 ALTER PROCEDURE [dbo].[Task_DailyRptPokerGamesSumWinLoss]
 	@WinlostDate AS SMALLDATETIME
 AS
@@ -11,7 +14,7 @@ AS
 	Revisions:
 		- 20180912@Sophia: Initialize SP [RedmineID: #101376]
 		- 20181003@Helen: Modify code to adapt indexes changed on DB053 [Redmine:101405]
-		
+		- 20190327@Percy: Video Poker Games - Net TO [RedmineID: #107703]
 		
 	Param's Explanation:
 	
@@ -97,7 +100,7 @@ BEGIN
 			COUNT (TransID) AS BetCount,
 			SUM(ISNULL(BetId,0)) AS RoundCount,
 			SUM(ABS(b.stake)) as Turnover, 
-			SUM(CASE WHEN b.bettype = 1499 THEN ABS(b.stake) ELSE ISNULL(CAST(('<xml>' + b.ExtraInfo + '</xml>') AS XML).value('data(/xml/p33/@to)[1]','MONEY'), 0) END ) AS NetTurnover,
+			SUM(CASE WHEN b.bettype = 1499 OR b.bettype BETWEEN 1901 AND 1999 THEN ABS(b.stake) ELSE ISNULL(CAST(('<xml>' + b.ExtraInfo + '</xml>') AS XML).value('data(/xml/p33/@to)[1]','MONEY'), 0) END ) AS NetTurnover,
 			SUM(ISNULL(b.oddsspread,0)) AS TotalComm,
 			SUM(b.winlost - b.actual_stake) AS WinLoss,
 			SUM(ISNULL(b.TransID2,0)/ CONVERT(DECIMAL(19,8),10000)) AS InsGemMemberWinLoss,
