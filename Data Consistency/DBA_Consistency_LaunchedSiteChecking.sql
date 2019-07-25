@@ -18,6 +18,7 @@ AS
 		- 20181219@Vicky: check members of un-launched sites have tickets or not [Redmine:#106481]
 		- 20190117@Vicky: un-launched sites [Redmine:#106481]
 		- 20190412@Helen: Refactor code to support new bettype launch by batch checking [Redmine:#106481]
+		- 20190718@Kathy: check members of un-launched sites have tickets or not [Redmine:#107787]
 	
 	Param's Expanation:
 		- @sites: 'Indo,KORIBC'
@@ -52,7 +53,7 @@ BEGIN
 		
 	END
 		
-	IF @ProductId IN (211,209) -- for 3rd product
+	IF @ProductId IN (211,209, 165) -- for 3rd product
 	BEGIN
 	
 		IF @bettype > 0 
