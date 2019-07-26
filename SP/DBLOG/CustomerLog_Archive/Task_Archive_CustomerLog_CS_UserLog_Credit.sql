@@ -91,7 +91,7 @@ BEGIN
 		INSERT INTO #__logIds(logid, logdate, custid)
 		SELECT logid, logdate, custid
 		FROM dbo.CS_UserLog_Credit WITH(NOLOCK)
-		WHERE logdate >= @__dateFrom AND logdate < @__dateTo AND custid IS NOT NULL
+		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
 
 		DECLARE @__tmpId TABLE(logId BIGINT, logdate DATETIME, custid INT)
 		
@@ -115,36 +115,7 @@ BEGIN
 
 			WAITFOR DELAY @delayTimeValue
 
-		END
-
-		--for case custid is null
-		TRUNCATE TABLE #__logIds
-		INSERT INTO #__logIds(logid, logdate)
-		SELECT logid, logdate
-		FROM dbo.CS_UserLog_Credit WITH(NOLOCK)
-		WHERE logdate >= @__dateFrom AND logdate < @__dateTo AND custid IS NULL
-
-		SET @rowId = 1
-		WHILE 1 = 1
-		BEGIN
-			DELETE FROM @__tmpId
-
-			DELETE 
-			FROM #__logIds OUTPUT deleted.logid, deleted.logdate INTO @__tmpId(logId, logdate)
-			WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
-			
-			IF @@ROWCOUNT = 0
-				BREAK
-
-			SET @rowId = @rowId + @RowInBatch
-
-			DELETE l
-			FROM dbo.CS_UserLog_Credit l WITH(ROWLOCK)
-			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logdate = t.logdate AND l.custid IS NULL)
-
-			WAITFOR DELAY @delayTimeValue
-
-		END
+		END		
 
 		DROP TABLE #__logIds
 	END

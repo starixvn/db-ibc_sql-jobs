@@ -92,7 +92,7 @@ BEGIN
 		FROM dbo.CS_UserLog_RunSP_MultiTarget WITH(NOLOCK)
 		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
 
-		DECLARE @__tmpId TABLE(logId BIGINT, logdate DATETIME, custid INT)
+		DECLARE @__tmpId TABLE(logId BIGINT, logdate DATETIME)
 		SET @rowId = 1
 		
 		WHILE 1 = 1

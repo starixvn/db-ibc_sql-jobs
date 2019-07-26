@@ -100,7 +100,7 @@ BEGIN
 			DELETE FROM @__tmpId
 
 			DELETE 
-			FROM #__logIds OUTPUT deleted.logid, deleted.logdate INTO @__tmpId(logId, logdate)
+			FROM #__logIds OUTPUT deleted.logid, deleted.logdate, deleted.custid INTO @__tmpId(logId, logdate, custid)
 			WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
 			
 			IF @@ROWCOUNT = 0
@@ -110,7 +110,7 @@ BEGIN
 
 			DELETE l
 			FROM dbo.CS_UserLog_RunSP_LogTarget l WITH(ROWLOCK)
-			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId)
+			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.CustID = t.custid)
 
 			WAITFOR DELAY @delayTimeValue
 
