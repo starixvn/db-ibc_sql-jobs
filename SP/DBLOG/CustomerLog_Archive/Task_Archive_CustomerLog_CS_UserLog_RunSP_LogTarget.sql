@@ -85,10 +85,10 @@ BEGIN
 	END
 	ELSE IF @Mode = 'delete'
 	BEGIN
-		CREATE TABLE #__logIds (rowId INT IDENTITY(1,1) PRIMARY KEY, logid BIGINT, logdate DATETIME)
+		CREATE TABLE #__logIds (rowId INT IDENTITY(1,1) PRIMARY KEY, logid BIGINT, logdate DATETIME, custid INT)
 		
-		INSERT INTO #__logIds(logid, logdate)
-		SELECT logid, logdate
+		INSERT INTO #__logIds(logid, logdate, custid)
+		SELECT logid, logdate, custid
 		FROM dbo.CS_UserLog_RunSP_LogTarget WITH(NOLOCK)
 		WHERE logdate >= @__dateFrom AND logdate < @__dateTo
 
