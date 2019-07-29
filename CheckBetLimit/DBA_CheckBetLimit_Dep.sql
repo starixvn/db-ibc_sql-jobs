@@ -298,26 +298,26 @@ BEGIN
 			GROUP BY cs.custid,cs.GameTypeID
 
 			INSERT INTO #MasterSetting(CustID ,SporttypeID ,BettypeID ,Num)
-			SELECT c.custid,202,1501,COUNT(c.custid)
-			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
-				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-			WHERE c.srecommend=@srecommend AND c.roleid=3 AND cs.GameTypeID=1
+			SELECT c.custid,202,1501,COUNT(cs.custid)
+			FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
+				LEFT JOIN CheckCustDB.dbo.CustGameType cs WITH(NOLOCK)  ON cs.Custid=c.custid AND cs.GameTypeID=1
+			WHERE c.srecommend=@srecommend AND c.roleid=3 
 				AND c.custid NOT IN(SELECT custid FROM #Dummy)
 			GROUP BY c.custid,cs.GameTypeID
 
 			INSERT INTO #AgentSetting(CustID ,SporttypeID ,BettypeID ,Num)
-			SELECT c.custid,202,1501,COUNT(c.custid)
-			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
-				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-			WHERE c.srecommend=@srecommend AND c.roleid=2 AND cs.GameTypeID=1
+			SELECT c.custid,202,1501,COUNT(cs.custid)
+			FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
+				LEFT JOIN  CheckCustDB.dbo.CustGameType cs WITH(NOLOCK)   ON cs.Custid=c.custid  AND cs.GameTypeID=1
+			WHERE c.srecommend=@srecommend AND c.roleid=2
 				AND c.custid NOT IN(SELECT custid FROM #Agent)
 			GROUP BY c.custid,cs.GameTypeID
 
 			INSERT INTO #MemberSetting(CustID ,SporttypeID ,BettypeID ,Num)
-			SELECT c.custid,202,1501,COUNT(c.custid)
-			FROM CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) 
-				INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-			WHERE c.srecommend=@srecommend AND cs.GameTypeID=1
+			SELECT c.custid,202,1501,COUNT(cs.custid)
+			FROM  CheckCustDB.dbo.custInfo c WITH(NOLOCK)
+				LEFT JOIN CheckCustDB.dbo.CustGameType cs WITH(NOLOCK)  ON cs.Custid=c.custid  AND cs.GameTypeID=1
+			WHERE c.srecommend=@srecommend
 				AND c.roleid=1 
 				AND c.custid NOT IN(SELECT custid FROM #Trade)			
 			GROUP BY c.custid,cs.GameTypeID
