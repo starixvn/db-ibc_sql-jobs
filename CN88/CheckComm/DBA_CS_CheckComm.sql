@@ -1,0 +1,134 @@
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[DBA_CS_CheckComm]
+	 @srecommend INT 
+	,@SportType SMALLINT = 0
+	,@RuleId	SMALLINT = 0
+AS
+/*
+	Created: 20190722@Johnson
+	Task: Weekly check Comm setting for CN88
+	DB: DBCHECK.CheckResultDB
+	
+	Revisions:
+		- 20190722@Johnson: Initial sp [redmine: #116922]
+*/	
+BEGIN 
+	SET NOCOUNT ON
+	
+	CREATE TABLE #SuperComm (custid INT, sporttype INT, bettype INT, isLive BIT, GroupID INT, Discount DECIMAL(9,8), ValueID INT)
+	CREATE TABLE #MasterComm (custid INT, srecommend INT, sporttype INT, bettype INT, isLive BIT, GroupID INT, Discount DECIMAL(9,8), ValueID INT)
+	CREATE TABLE #AgentComm (custid INT, srecommend INT, mrecommend INT, sporttype INT, bettype INT, isLive BIT, GroupID INT, Discount DECIMAL(9,8), ValueID INT)
+	CREATE TABLE #MemberComm (custid INT, srecommend INT, mrecommend INT, recommend INT, sporttype INT, bettype INT, isLive BIT, GroupID INT, PlayerDiscount DECIMAL(9,8), SuperDiscount DECIMAL(9,8), MasterDiscount DECIMAL(9,8), AgentDiscount DECIMAL(9,8))
+	CREATE TABLE #MemberGroupComm (AgentID INT, srecommend INT, mrecommend INT, sporttype INT, bettype INT, isLive BIT, GroupID INT, PlayerDiscount DECIMAL(9,8), SuperDiscount DECIMAL(9,8), MasterDiscount DECIMAL(9,8), AgentDiscount DECIMAL(9,8))
+		
+	INSERT INTO #SuperComm(custid,sporttype,bettype,isLive,GroupID,Discount,ValueID)
+	SELECT @srecommend,sporttype,bettype,isLive,GroupID,Discount,ValueID
+	FROM CheckCustDB.dbo.f_CS_GetDiscount_Agent(@srecommend) cs
+	WHERE sporttype = CASE WHEN @sporttype = 0 THEN sporttype ELSE @sporttype END
+	
+	INSERT INTO #MasterComm(custid,srecommend,sporttype,bettype,isLive,GroupID,Discount,ValueID)
+	SELECT custid,srecommend,sporttype,bettype,isLive,GroupID,Discount,ValueID
+	FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)
+		CROSS APPLY CheckCustDB.dbo.f_CS_GetDiscount_Agent(custid) cs
+	WHERE srecommend = @srecommend
+		AND roleid = 3
+		AND enabled = 1
+		AND sporttype = CASE WHEN @sporttype = 0 THEN sporttype ELSE @sporttype END
+		
+	INSERT INTO #AgentComm(custid,srecommend,mrecommend,sporttype,bettype,isLive,GroupID,Discount,ValueID)
+	SELECT custid,srecommend,recommend,sporttype,bettype,isLive,GroupID,Discount,ValueID
+	FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)
+		CROSS APPLY CheckCustDB.dbo.f_CS_GetDiscount_Agent(custid) cs
+	WHERE srecommend = @srecommend
+		AND roleid = 2
+		AND enabled = 1
+		AND sporttype = CASE WHEN @sporttype = 0 THEN sporttype ELSE @sporttype END
+	
+	INSERT INTO #MemberComm(custid,srecommend,mrecommend,recommend,sporttype,bettype,isLive,GroupID,PlayerDiscount,SuperDiscount,MasterDiscount,AgentDiscount)
+	SELECT custid,srecommend,mrecommend,recommend,sporttype,bettype,isLive,ISNULL(gc.GroupID,0),PlayerDiscount,SuperDiscount,MasterDiscount,AgentDiscount
+	FROM CheckCustDB.dbo.customer ci WITH(NOLOCK)
+		CROSS APPLY CheckCustDB.dbo.f_CS_GetDiscount_Member(custid) cs
+		LEFT JOIN CheckCustDB.dbo.CS_GroupConfig gc ON gc.SportType = cs.SportType AND gc.BetType = cs.BetType AND gc.IsLive = cs.IsLive AND gc.uGroup = ci.ugroup
+	WHERE srecommend = @srecommend
+		AND roleid = 1
+		AND enabled = 1
+		AND cs.sporttype = CASE WHEN @sporttype = 0 THEN cs.sporttype ELSE @sporttype END
+		
+	INSERT INTO #MemberGroupComm(AgentID,srecommend,mrecommend,sporttype,bettype,isLive,GroupID,PlayerDiscount,SuperDiscount,MasterDiscount,AgentDiscount)
+	SELECT custid,srecommend,mrecommend,sporttype,bettype,isLive,gc.GroupID,PlayerDiscount,SuperDiscount,MasterDiscount,AgentDiscount
+	FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)
+		CROSS APPLY CheckCustDB.dbo.f_CS_GetGroupDiscount_Member(custid) cs
+		INNER JOIN CheckCustDB.dbo.CS_GroupConfig gc ON cs.uGroup = gc.uGroup
+	WHERE srecommend = @srecommend
+		AND roleid = 2
+		AND enabled = 1	
+		AND cs.sporttype = CASE WHEN @sporttype = 0 THEN cs.sporttype ELSE @sporttype END
+		
+	--super discount > default Max Discount
+	IF @ruleid IN (0,10101)
+	BEGIN
+		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive,groupID,custidA,custidB,ValueA,ValueB)
+		SELECT 10101 ruleid, cs.sporttype, cs.bettype, isLive, cs.groupID, cs.custid as custidA, cs.custid as custidB, cs.Discount as ValueA, CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END as ValueB
+		FROM #SuperComm cs
+			INNER JOIN CheckCustDB.dbo.CS_ProductSettingDetail ps  WITH (NOLOCK) ON ps.SportType = cs.SportType AND ps.BetType = cs.BetType AND ps.IsLive = cs.IsLive AND ps.SettingType = 2		
+			LEFT JOIN CheckCustDB.dbo.CS_GroupConfig gc WITH (NOLOCK) ON gc.SportType = ps.SportType AND gc.BetType = ps.BetType AND gc.IsLive = ps.IsLive AND gc.GroupId = cs.GroupId
+		WHERE cs.Discount > CASE WHEN gc.GroupId IS NULL THEN ps.MaxDiscount ELSE gc.MaxValue END
+	END
+	
+	--super's discount < downlines master's discount
+	IF @ruleid IN (0,10102)
+	BEGIN
+		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
+		SELECT 10102 ruleid, cs.sporttype, cs.bettype, isLive, cs.groupID, cs.custid as custidA, mcs.custid as custidB, cs.Discount as ValueA, mcs.Discount as ValueB
+		FROM #SuperComm cs
+			INNER JOIN #MasterComm mcs ON mcs.SportType = cs.SportType 
+										AND mcs.BetType = cs.BetType 
+										AND mcs.IsLive = cs.IsLive	
+										AND mcs.GroupID = cs.GroupID 
+										AND mcs.srecommend = cs.custid		
+		WHERE cs.Discount < mcs.Discount
+	END
+	
+	--master's discount < downlines agent's discount
+	IF @ruleid IN (0,10103)
+	BEGIN
+		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
+		SELECT 10103 ruleid, cs.sporttype, cs.bettype, isLive, cs.groupID, cs.custid as custidA, acs.custid as custidB, cs.Discount as ValueA, acs.Discount as ValueB
+		FROM #MasterComm cs
+			INNER JOIN #AgentComm acs ON acs.SportType = cs.SportType 
+										AND acs.BetType = cs.BetType 
+										AND acs.IsLive = cs.IsLive	
+										AND acs.GroupID = cs.GroupID 
+										AND acs.mrecommend = cs.custid
+		WHERE cs.Discount < mcs.Discount
+	END
+	
+	--Agent discount < individual downline's discount  
+	IF @ruleid IN (0,10104)
+	BEGIN
+		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
+		SELECT 10104 ruleid, cs.sporttype, cs.bettype, isLive, cs.groupID, cs.custid as custidA, acs.custid as custidB, cs.Discount as ValueA, acs.Discount as ValueB
+		FROM #AgentComm acs
+			LEFT JOIN #MemberComm cs ON acs.SportType = cs.SportType 
+										AND acs.BetType = cs.BetType 
+										AND acs.IsLive = cs.IsLive	
+										AND acs.GroupID = cs.GroupID 
+										AND acs.custid = cs.recommend
+		WHERE acs.Discount < cs.PlayerDiscount
+	END
+	
+	--Agent discount < downlines group discount 
+	IF @ruleid IN (0,10105)
+	BEGIN
+		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
+		SELECT 10105 ruleid, cs.sporttype, cs.bettype, isLive, cs.groupID, cs.AgentID as custidA, acs.custid as custidB, cs.Discount as ValueA, acs.Discount as ValueB
+		FROM #AgentComm acs
+			LEFT JOIN #MemberGroupComm cs ON acs.SportType = cs.SportType 
+										AND acs.BetType = cs.BetType 
+										AND acs.IsLive = cs.IsLive	
+										AND acs.GroupID = cs.GroupID 
+										AND acs.custid = cs.custid
+		WHERE acs.Discount < cs.PlayerDiscount
+	END
+END	
+GO
