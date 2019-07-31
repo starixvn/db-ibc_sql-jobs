@@ -125,7 +125,7 @@ BEGIN
 	IF @tableName = 'CS_UserLog_RunSP_LogTarget'
 	BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_RunSP_LogTarget(LogID, LogDate, CustID)
-		SELECT l.LogID, d.LogDate, l.CustID
+		SELECT l.LogID, l.LogDate, l.CustID
 		FROM dbo.CS_UserLog_RunSP_LogTarget l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.CustID = l.CustID)
 	END
