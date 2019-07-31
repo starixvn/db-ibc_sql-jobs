@@ -84,13 +84,17 @@ BEGIN
 		@bonus_initial 		SMALLINT,
 		@bonus_zerolize 	SMALLINT,
 		@bonus_amount		MONEY,
-		@walletType			TINYINT
+		@walletType			TINYINT,
+		@oddsspread			MONEY
 
 	SELECT @ErrCode				= 0,
 			@ErrMsg				= '',
 			@bonus_initial		= 22200,
 			@bonus_zerolize		= 22201,
 			@walletType			= 1
+
+	-- Capture lockedAmt for MNL usages
+	SELECT @oddsspread			= CASE WHEN @bettype = @bonus_initial THEN @lockedAmount ELSE NULL END
 			
 
 	IF (@bettype NOT IN (@bonus_initial, @bonus_zerolize) OR @bonusId <= 0)
@@ -193,10 +197,10 @@ BEGIN
 
 	INSERT INTO bettrans 
 		(custid, username, refno, transdate, matchid, bettype, transdesc,winlost, actual_stake, winlostdate, 
-		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid, betcheck)
+		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid, betcheck, oddsspread)
 	VALUES 
 		(@CustID, @username, @RefNo, @transdate, 0, @bettype, @transdesc,@cust_winlost, @cust_actual_stake, convert(nvarchar(10), @transdate, 120), 
-		 @CustID, @Recommend, @MRecommend, @SRecommend, @Currency,@actualrate, @currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId, @betcheck)
+		 @CustID, @Recommend, @MRecommend, @SRecommend, @Currency,@actualrate, @currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId, @betcheck, @oddsspread)
 
 	IF @@ERROR <> 0
 	BEGIN						
