@@ -11,6 +11,7 @@ AS
 	Revisions: 
 		- 20190227@Patrick: Initalize [RedmineId: #110208] 	
 		- 20190617@Patrick: Add waitfor delay to reduce writelog waittype [RedmineId: #115227]
+		- 20190620@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -107,6 +108,51 @@ BEGIN
 	ELSE IF @tableName = 'UserLog_ExternalAPI'
 	BEGIN
 		EXEC dbo.Task_Archive_CustomerLog_UserLog_ExternalAPI
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END	
+	ELSE IF @tableName = 'CS_UserLog_Credit'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_CS_UserLog_Credit
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END	
+	ELSE IF @tableName = 'CS_UserLog_Login'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_CS_UserLog_Login
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END	
+	ELSE IF @tableName = 'CS_UserLog_RunSP'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_CS_UserLog_RunSP
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END	
+	ELSE IF @tableName = 'CS_UserLog_RunSP_MultiTarget'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_CS_UserLog_RunSP_MultiTarget
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END	
+	ELSE IF @tableName = 'CS_UserLog_RunSP_LogTarget'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_CS_UserLog_RunSP_LogTarget
 				@FromDateTime = @__dateTimeFrom,
 				@ToDateTime = @__dateTimeTo,
 				@Mode = @Mode,
