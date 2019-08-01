@@ -150,7 +150,7 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)					
 			INNER JOIN #tmpDumMember c ON s.custid=c.custid		
 		WHERE 
-			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925,0.89) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
 			AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))		
 	END
 
