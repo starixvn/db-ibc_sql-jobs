@@ -19,6 +19,7 @@ AS
 		-20190328@Winnie: Update PT SB RedmineID:#110111
 		-20190604@Winnie: [Bobbet,A1game,ig128] Update SB PT to reflect new terms RedmineID:#113387
 		-20190708@Winnie: Rules PT RedmineID:#116469
+		-20190801@Winnie: [AE88] Adjust Term for Sportsbook RedmineID:#117629
 	Param's Explanation:
 	
 */
