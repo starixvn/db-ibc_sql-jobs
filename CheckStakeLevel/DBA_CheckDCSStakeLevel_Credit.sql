@@ -1,4 +1,4 @@
-
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_CheckDCSStakeLevel_Credit]
 	 @srecommend INT 
 	,@SportType SMALLINT = 0
@@ -9,7 +9,7 @@ AS
 	Task: Check StakeLevel setting on DCS for credit customers
 	DB: DBCHECK.CheckResultDB
 	Revisions:
-
+		-20190801@Winnie: Change Check stake level RedmineID:#117919
 	Parameter's Explanations:
 */
 BEGIN 
@@ -146,7 +146,7 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.custInfo ci WITH (NOLOCK)
-			CROSS APPLY (SELECT SportType, bettype FROM @sportBettypeFilter) t
+			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE CI.roleid = 4
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
@@ -160,7 +160,7 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.custInfo ci WITH (NOLOCK)
-			CROSS APPLY (SELECT SportType, bettype FROM @sportBettypeFilter) t
+			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE CI.roleid = 3
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
@@ -174,7 +174,7 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.custInfo ci WITH (NOLOCK)
-			CROSS APPLY (SELECT SportType, bettype FROM @sportBettypeFilter) t
+			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE CI.roleid = 2
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
@@ -188,7 +188,7 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.custInfo ci WITH (NOLOCK)
-			CROSS APPLY (SELECT SportType, bettype FROM @sportBettypeFilter) t
+			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE CI.roleid = 1
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1

@@ -10,6 +10,7 @@ AS
 	DB: DBCHECK.CheckResultDB
 	Revisions:
 		- 20190130@Winnie:	Remove ClearBal Acc - [Redmine: #73556]
+		- 20190801@Winnie: Change Check stake level RedmineID:#117919
 	Parameter's Explanations:
 */
 BEGIN 
@@ -107,7 +108,7 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) 
-			CROSS APPLY (SELECT SportType, bettype FROM @sportBettypeFilter) t
+			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE ci.custid = @srecommend
 			AND roleid = 4
 			AND Enabled = 1			
@@ -121,7 +122,7 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) 
-			CROSS APPLY (SELECT SportType, bettype FROM @sportBettypeFilter) t
+			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE ci.srecommend = @srecommend
 			AND roleid = 3
 			AND Enabled = 1
@@ -139,7 +140,7 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) 
-			CROSS APPLY (SELECT SportType, bettype FROM @sportBettypeFilter) t
+			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE ci.srecommend = @srecommend
 			AND roleid = 2
 			AND Enabled = 1
@@ -157,7 +158,7 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) 
-			CROSS APPLY (SELECT SportType, bettype FROM @sportBettypeFilter) t
+			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE ci.srecommend = @srecommend
 			AND roleid = 1
 			AND Enabled = 1
