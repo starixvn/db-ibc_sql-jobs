@@ -26,6 +26,7 @@ Revisions:
 	- 20171009@Kathy: Change column name of BonusWalletCredit, BonusWalletDebit [Redmine:#72789]
 	- 20180323@Kathy: Change 2 bonus bettypes [Redmine:#66797]
 	- 20180417@Kathy: Add more input param @betcheck [Redmine:#66797]
+	- 20190731@Bobby: 1stDeposit - Bonus - Update changes on @oddsspread to log a locked amount [Redmine:#117923]
 
 Param's Explanation:
 	- @custid: player account who joined bonus program
