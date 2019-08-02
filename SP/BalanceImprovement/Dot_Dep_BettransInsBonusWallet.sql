@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="Dot_Member" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="Dot_Member" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_BettransInsBonusWallet] 
 	@custid 		INT,
 	@bal_custid 	INT,
