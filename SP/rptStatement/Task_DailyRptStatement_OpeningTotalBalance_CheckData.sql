@@ -44,92 +44,32 @@ BEGIN
 	-- Every saturday, all customers data will be recored
 	IF DATEPART(WEEKDAY, @WinlostDate) <> 7
 	BEGIN
-		SELECT @Last_Saturday = ''
-
-		CREATE TABLE #__bets (CustId INT) -- bet tickets
-		CREATE TABLE #__transfers (CustId INT PRIMARY KEY) -- transfer tickets
-
-		DECLARE @CustIds TABLE (CustId INT) -- using for nested loop
-
-		SELECT @tmpWinlostDate =  DATEADD(DAY, -1, @WinlostDate) -- loop back to last saturday
-
-		WHILE @tmpWinlostDate >= @Last_Saturday
+		IF @WinlostDate = @BalanceUpDay -- WEEKDAY = 6
 		BEGIN
-			-- Reset data
-			TRUNCATE TABLE #__bets
-			TRUNCATE TABLE #__transfers
-			DELETE FROM @CustIds
+			SELECT @tmpWinlostDate = DATEADD(DAY, 1, @WinlostDate)
 
-			IF @tmpWinlostDate < @BalanceUpDay -- rptStatement_Old
-			BEGIN
-				IF @tmpWinlostDate = @Last_Saturday
-				BEGIN
-					INSERT INTO @CustIds (CustId)
-					SELECT b.CustId FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-					WHERE b.bettype = 20000 AND b.matchid = 0 AND NOT EXISTS (SELECT 1 FROM #SourceOpeningTotalBalance s WHERE s.CustId = b.CustId)
-				END
-				ELSE
-				BEGIN
-					-- bet tickets
-						-- member
-					INSERT INTO #__bets (CustId)
-					SELECT CustId FROM bodb_Archive.dbo.bettrans_bk WITH (NOLOCK) WHERE WinlostDate = @tmpWinlostDate
-					GROUP BY CustId
-						-- SMA
-					INSERT INTO #__bets (CustId)
-					SELECT c.recommend FROM bodb02.dbo.custInfo c WITH (NOLOCK)
-					WHERE EXISTS (SELECT 1 FROM #__bets b WHERE c.CustId = b.CustId)
-						AND c.RoleId = 1
-					GROUP BY c.recommend
-					UNION ALL
-					SELECT c.mrecommend FROM bodb02.dbo.custInfo c WITH (NOLOCK)
-					WHERE EXISTS (SELECT 1 FROM #__bets b WHERE c.CustId = b.CustId)
-						AND c.RoleId = 1
-					GROUP BY c.mrecommend
-					UNION ALL
-					SELECT c.srecommend FROM bodb02.dbo.custInfo c WITH (NOLOCK)
-					WHERE EXISTS (SELECT 1 FROM #__bets b WHERE c.CustId = b.CustId)
-						AND c.RoleId = 1
-					GROUP BY c.srecommend
+			INSERT INTO #SourceOpeningTotalBalance (WinlostDate, CustId, OpeningTotalBalance)
+			SELECT r.WinlostDate, r.CustId, r.ClosingBalance AS OpeningTotalBalance
+			FROM dbo.rptStatement r WITH (NOLOCK)
+			WHERE r.WinlostDate = @tmpWinlostDate
+				AND NOT EXISTS (SELECT 1 FROM #SourceOpeningTotalBalance s WHERE s.CustId = r.CustId)
+		END
+		ELSE -- loop back to last saturday
+		BEGIN
+			SELECT @Last_Saturday	= DATEADD(DAY, -DATEPART(WEEKDAY, @WinlostDate), @WinlostDate)
+			SELECT @tmpWinlostDate	= DATEADD(DAY, -1, @WinlostDate)
 
-					-- transfer tickets
-					INSERT INTO #__transfers (CustId)
-					SELECT CustId FROM bodb_Archive.dbo.transfer_bk WITH (NOLOCK) WHERE WinlostDate = @tmpWinlostDate
-					GROUP BY CustId
-
-					-- mix cust bet + transfer
-					INSERT INTO #__bets (CustId)
-					SELECT t.CustId FROM #__transfers t
-					WHERE NOT EXISTS (SELECT 1 FROM #__bets b WHERE b.CustId = t.CustId)
-
-					-- final cust
-					INSERT INTO @CustIds (CustId)
-					SELECT b.CustId FROM #__bets b WITH (NOLOCK)
-					WHERE NOT EXISTS (SELECT 1 FROM #SourceOpeningTotalBalance s WHERE s.CustId = b.CustId)
-				END
-
-				INSERT INTO #SourceOpeningTotalBalance (WinlostDate, CustId, OpeningTotalBalance)
-				SELECT r.WinlostDate, r.CustId, r.ClosingBalance AS OpeningTotalBalance
-				FROM @CustIds c
-					CROSS APPLY (
-						SELECT TOP (1) r.WinlostDate, r.CustId, r.ClosingBalance FROM dbo.rptStatement_Old r WITH (NOLOCK)
-						WHERE r.CustId = c.CustId AND r.WinlostDate = @tmpWinlostDate
-					) AS r
-			END
-			ELSE -- rptStatement
+			WHILE @tmpWinlostDate >= @Last_Saturday
 			BEGIN
 				INSERT INTO #SourceOpeningTotalBalance (WinlostDate, CustId, OpeningTotalBalance)
 				SELECT r.WinlostDate, r.CustId, r.ClosingBalance AS OpeningTotalBalance
 				FROM dbo.rptStatement r WITH (NOLOCK)
 				WHERE r.WinlostDate = @tmpWinlostDate
 					AND NOT EXISTS (SELECT 1 FROM #SourceOpeningTotalBalance s WHERE s.CustId = r.CustId)
+
+				SELECT @tmpWinlostDate = DATEADD(DAY, -1, @tmpWinlostDate)
 			END
-
-			SELECT @tmpWinlostDate = DATEADD(DAY, -1, @tmpWinlostDate)
 		END
-
-		DROP TABLE #__bets
-		DROP TABLE #__transfers
 	END
 
 	-- update customer info
