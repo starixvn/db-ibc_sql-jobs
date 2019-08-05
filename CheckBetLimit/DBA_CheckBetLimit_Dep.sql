@@ -43,13 +43,15 @@ BEGIN
 
 	INSERT INTO #Agent(CustID)
 	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE username IN('12BETSD$02','12BETSD$01')
+	UNION
+	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE mrecommend IN(SELECT custid FROM #Dummy) AND roleID=2
 
 	INSERT INTO #Trade(CustID)
 	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=1 AND (username LIKE '%Bettrade%' OR username LIKE '%CashOut%' OR username LIKE '%ClearBal%')
 	UNION
-	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE recommend IN(SELECT custid FROM #Agent)
+	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE recommend IN(SELECT custid FROM #Agent) AND roleID=1
 	UNION
-	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE mrecommend IN(SELECT custid FROM #Dummy)
+	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE mrecommend IN(SELECT custid FROM #Dummy) AND roleID=1
 
 	IF @RuleId IN (0,317)  
 	BEGIN  
