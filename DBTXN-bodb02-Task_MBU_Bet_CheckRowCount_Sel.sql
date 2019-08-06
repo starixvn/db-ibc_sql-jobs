@@ -11,6 +11,7 @@ AS
 	
 	Revisions:
 		- 20180926@Patrick:	Initial - [RedmineId: #101207]
+		- 20190806@Patrick: Add transfer_bk - [RedmineId: #118277]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -70,6 +71,14 @@ BEGIN
 	SELECT COUNT(1), 'bettrans' 
 	FROM dbo.bettrans14 WITH(NOLOCK) 
 	WHERE winlostdate = @DateCheck
+
+	--//transfer
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	SELECT COUNT(1), 'transfer'
+	FROM dbo.bettrans WITH(NOLOCK)
+	WHERE ruben = 1 AND matchid = 0 AND bettype > 20000  
+		AND winlostdate = @DateCheck AND custid <> 0
+		AND (winlost + actual_stake) <> 0
 	
 	--//
 	SELECT @OutputData = (
