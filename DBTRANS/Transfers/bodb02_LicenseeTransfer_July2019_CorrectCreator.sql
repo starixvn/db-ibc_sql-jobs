@@ -1,4 +1,8 @@
---DBTXN-bodb02
+/*
+	Created: 20190806@Bobby
+	Bug: 118279 - NAP Automate Licensee WL transfer - Correct the creator in July-2019 transfer tickets within StarixIT account
+	DB: DBTXN-bodb02
+*/
 USE bodb02
 GO
 
