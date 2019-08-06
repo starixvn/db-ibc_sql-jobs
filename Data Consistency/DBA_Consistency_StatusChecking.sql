@@ -31,21 +31,18 @@ BEGIN
 
 	IF @ProductId = 1
 	BEGIN
-		IF @Bettype = 38 -- BetBuilder
-		BEGIN
-			INSERT INTO @tmpMatchIds (MatchId)
-			SELECT	m.matchid
-			FROM	bodb02.dbo.match m WITH(NOLOCK)
-			WHERE	m.sporttype = 1
-					AND m.eventdate = @yesterday
+		INSERT INTO @tmpMatchIds (MatchId)
+		SELECT	m.matchid
+		FROM	bodb02.dbo.match m WITH(NOLOCK)
+		WHERE	m.sporttype = 1
+				AND m.eventdate = @yesterday
 
-			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-			WHERE	b.bettype = @Bettype
-					AND b.winlostdate = @yesterday			
-					AND b.statusID = 0
-					AND b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
-		END
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+		WHERE	b.bettype = ISNULL(@Bettype, b.bettype)
+				AND b.winlostdate = @yesterday			
+				AND b.statusID = 0
+				AND b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
 	END
 	ELSE
 	BEGIN
