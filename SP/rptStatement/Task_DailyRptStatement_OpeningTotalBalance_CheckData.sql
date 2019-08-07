@@ -25,6 +25,12 @@ BEGIN
 			,@BalanceUpDay		DATE
 			,@tmpWinlostDate	DATE
 
+	DECLARE @MBBU TABLE (BalanceUpDay DATE, MoveBetsDay DATE)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+
+	SELECT @BalanceUpDay = BalanceUpDay FROM @MBBU
+
 	CREATE TABLE #SourceOpeningTotalBalance
 	(
 		WinlostDate DATE
@@ -49,7 +55,7 @@ BEGIN
 			SELECT @tmpWinlostDate = DATEADD(DAY, 1, @WinlostDate)
 
 			INSERT INTO #SourceOpeningTotalBalance (WinlostDate, CustId, OpeningTotalBalance)
-			SELECT r.WinlostDate, r.CustId, r.ClosingBalance AS OpeningTotalBalance
+			SELECT r.WinlostDate, r.CustId, r.OpeningBalance AS OpeningTotalBalance
 			FROM dbo.rptStatement r WITH (NOLOCK)
 			WHERE r.WinlostDate = @tmpWinlostDate
 				AND NOT EXISTS (SELECT 1 FROM #SourceOpeningTotalBalance s WHERE s.CustId = r.CustId)
@@ -90,9 +96,9 @@ BEGIN
 		CROSS APPLY (
 			SELECT SUM(su.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance su WHERE s.CustId = su.srecommend AND s.RoleId = 4
 			UNION ALL
-			SELECT SUM(ma.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance ma WHERE s.CustId = ma.srecommend AND s.RoleId = 3
+			SELECT SUM(ma.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance ma WHERE s.CustId = ma.mrecommend AND s.RoleId = 3
 			UNION ALL
-			SELECT SUM(ag.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance ag WHERE s.CustId = ag.srecommend AND s.RoleId = 2
+			SELECT SUM(ag.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance ag WHERE s.CustId = ag.recommend AND s.RoleId = 2
 		) AS t
 	WHERE s.RoleId IN (2,3,4)
 
