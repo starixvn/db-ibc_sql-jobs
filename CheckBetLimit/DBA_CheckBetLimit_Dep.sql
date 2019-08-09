@@ -582,6 +582,8 @@ BEGIN
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON s.custid=c.custid
 		WHERE c.srecommend=@srecommend AND s.Maxbet<0 
 			AND c.custid NOT IN(SELECT custid FROM #Trade)
+			AND c.custid NOT IN(SELECT custid FROM #Dummy)
+			AND c.custid NOT IN(SELECT custid FROM #Agent)
 			AND sporttype NOT BETWEEN 151 AND 154	
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
