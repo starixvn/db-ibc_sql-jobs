@@ -16,6 +16,7 @@ AS
 	Revisions:  :
 		- 20190130@Winnie:	Remove ClearBal Acc - [Redmine: #73556]
 		- 20190717@Winnie:	Check Keno - [Redmine: #73556]
+		- 20190809@Winnie:	Fix Rule 326 - [Redmine: #118471]
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (317->328)  
