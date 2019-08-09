@@ -1,44 +1,44 @@
-/*<info serverAlias="DBRPT-bodb_Report" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBRPT-bodb_Report" executers="" isFunction="0" isNested="0"></info>*/
+USE bodb_Report
+GO
 
 ALTER PROCEDURE [dbo].[Task_DailyRptStatement_CheckData]
-	@winlostdate DATE
-	,@isCheckDataOnly BIT
+	@winlostdate		DATE
+	,@isCheckDataOnly	BIT
 AS
+
 /*  
- Created:	20141202@Tom.Vo
- Task :		check data on rptStatement table
- DB:		DBRPT.bodb_Report
- Original:  
-  
- Revisions:
-	- @20150311@Tom: Change option ReadPast to NOLOCK when select data on bettrans table
-	- @20150402@Tom: Change option NOLOCK to ROWLOCK table hint when select on bettrans to prevent dirty read by NOLOCK
-	- 20150727@Sophia: Apply Bettrade, exclude ticket Bettrade Comm (903) for Void/reject [#36905]
-	- 20150901@Sophia: Apply Colossus Bets [#42428]
-	- 20151019@Sophia: Apply AG Casino - Add table BettransLC [#43810]
-					   Apply MGC - RNG Casino - Add table BettransRNG [#43549]						 
-	- 20151109@Sophia: Change Sporttype of Microgaming RNG Casino [RedmineId: #46450] 
-	- 20160328@Sophia: Check status Of PayOutTrans, get status Completed and Expired [Redmine: #54643]
-	- 20170323@Percy: Apply Cash Out [RedmineID: #72164]
-	- 20190128@Sophia: Fix correct data at Void Block code Redmind: #107365]
-	- 20190507@Sophia: Add new column OpeningTotalBalance for Credit Collection report use [Redmine: #109293]
+	Created: 20141202@Tom.Vo
+	Task: Check data on rptStatement table
+	DB: DBRPT.bodb_Report
+
+	Revisions:
+		- @20150311@Tom: Change option ReadPast to NOLOCK when select data on bettrans table
+		- @20150402@Tom: Change option NOLOCK to ROWLOCK table hint when select on bettrans to prevent dirty read by NOLOCK
+		- 20150727@Sophia: Apply Bettrade, exclude ticket Bettrade Comm (903) for Void/reject [#36905]
+		- 20150901@Sophia: Apply Colossus Bets [#42428]
+		- 20151019@Sophia: Apply AG Casino - Add table BettransLC [#43810]
+							Apply MGC - RNG Casino - Add table BettransRNG [#43549]						 
+		- 20151109@Sophia: Change Sporttype of Microgaming RNG Casino [RedmineId: #46450] 
+		- 20160328@Sophia: Check status Of PayOutTrans, get status Completed and Expired [Redmine: #54643]
+		- 20170323@Percy: Apply Cash Out [RedmineID: #72164]
+		- 20190128@Sophia: Fix correct data at Void Block code [RedmineID: #107365]
+		- 20190801@Percy: Check OpeningTotalBalance for Credit Collection [RedmineID: #109293]
 */
+
 BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @CurrentBU_Date DATETIME
 	DECLARE @CurrentMO_Date DATETIME
 
-	SELECT TOP 1 @CurrentBU_Date = winlostdate
-	FROM bodb02.dbo.bettrans WITH (NOLOCK)
-	WHERE matchid = 0
-		AND bettype = 20000
+	DECLARE @MBBUDate TABLE (BalanceUpDay DATETIME, MoveBetsDay DATETIME)
+	INSERT INTO @MBBUDate (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
 
-	SELECT TOP 1 @CurrentMO_Date =  max(eventdate)
-	FROM bodb02.dbo.match14 WITH (NOLOCK)
+	SELECT @CurrentBU_Date = BalanceUpDay, @CurrentMO_Date = MoveBetsDay FROM @MBBUDate
 
-	IF NOT (@winlostdate >= @CurrentBU_Date 
-		AND @winlostdate <= @CurrentMO_Date) 
+	IF @winlostdate NOT BETWEEN @CurrentBU_Date AND @CurrentMO_Date
 	BEGIN
 		SELECT 999 ErrorCode
 			,'Parameter Winlostdate invalid!!!!' ErrorMsg
@@ -68,19 +68,6 @@ BEGIN
 		,OpeningBalance MONEY
 		)
 		
-		
-	IF OBJECT_ID('tempdb..#tmpOpeningTotalBalance') IS NOT NULL
-	BEGIN
-		DROP TABLE #tmpOpeningTotalBalance
-	END
-
-	CREATE TABLE #tmpOpeningTotalBalance (
-		Custid INT
-		,OpeningBalance MONEY
-		,OpeningTotalBalance MONEY
-		)
-		
-	 
 	IF OBJECT_ID('tempdb..#tmpStatement') IS NOT NULL
 	BEGIN
 		DROP TABLE #tmpStatement
@@ -790,117 +777,16 @@ BEGIN
 			ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID
 		WHERE rpt.CustID IS NULL 
 			  AND tmpSta.ErrCode = 40
-			
-		
 	END
-	
-	------------Calc OpeningTotalBalance----------
-	/*
-	--- Member
-	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)
-	SELECT	s.CustID, s.OpeningBalance,	s.OpeningBalance
-	FROM 	dbo.rptStatement s WITH (NOLOCK)
-	INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
-			ON c.CustID = s.CustID
-	WHERE   s.WinlostDate = @WinlostDate 
-			AND c.RoleID = 1
-			
-	--- Agent	
-	SELECT	c.recommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
-	INTO #__Agent
-	FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
-	INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
-			ON c.CustID = s.CustID
-	WHERE c.RoleID = 1
-	GROUP BY c.recommend
-	
-	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
-	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash,0)
-	FROM 	dbo.rptStatement s WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
-				ON c.CustID = s.CustID AND c.roleID = 2
-		LEFT JOIN #__Agent d
-				ON s.CustID = d.recommend
-	WHERE   s.WinlostDate = @WinlostDate
 
-	DROP TABLE #__Agent
-	
-	-- Master		 
-	SELECT	c.mrecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
-	INTO #__Master
-	FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
-	INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
-			ON c.CustID = s.CustID
-	WHERE c.RoleID = 2
-	GROUP BY c.mrecommend
-	
-	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
-	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash,0)
-	FROM 	dbo.rptStatement s WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
-				ON c.CustID = s.CustID AND c.roleID = 3
-		LEFT JOIN #__Master d
-				ON s.CustID = d.mrecommend
-	WHERE   s.WinlostDate = @WinlostDate
-
-	DROP TABLE #__Master
-			
-	-- Super		 
-	SELECT	c.srecommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
-	INTO #__Super
-	FROM 	#tmpOpeningTotalBalance s WITH (NOLOCK)
-	INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
-			ON c.CustID = s.CustID
-	WHERE c.RoleID = 3
-	GROUP BY c.srecommend
-	
-	INSERT INTO #tmpOpeningTotalBalance (CustID, OpeningBalance, OpeningTotalBalance)	
-	SELECT  s.CustID, s.OpeningBalance, s.OpeningBalance + ISNULL(d.DownlineCash,0)
-	FROM 	dbo.rptStatement s WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK)
-				ON c.CustID = s.CustID AND c.roleID = 4
-		LEFT JOIN #__Super d
-				ON s.CustID = d.srecommend
-	WHERE   s.WinlostDate = @WinlostDate
-		
-	---------------- Correct Opening Total Balance --------------------
-	IF EXISTS (
-		SELECT 1
-		FROM  rptStatement r WITH (NOLOCK)
-			INNER JOIN #tmpOpeningTotalBalance t
-					ON	t.CustId		= r.CustId 
-					AND r.WinlostDate	= @WinlostDate				
-			WHERE  t.OpeningTotalBalance <> r.OpeningTotalBalance
-			)
-	BEGIN
-		IF @IsCheckDataOnly = 1 --just check data
-		BEGIN
-			SELECT 'Wrong OpeningTotalBalance on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
-		END
-		ELSE -- correct data
-		BEGIN
-
-			UPDATE r			
-			SET r.OpeningTotalBalance = t.OpeningTotalBalance
-			FROM rptStatement r WITH (ROWLOCK)
-			INNER JOIN #tmpOpeningTotalBalance t
-					ON	t.CustId		= r.CustId 
-					AND r.WinlostDate	= @WinlostDate				
-		END
-	END
-	
-		
-	----------------------------------------------------
-	
-	IF OBJECT_ID('tempdb..#tmpOpeningTotalBalance') IS NOT NULL
-	BEGIN
-		DROP TABLE #tmpOpeningTotalBalance
-	END
-	*/
-	 
 	IF OBJECT_ID('tempdb..#tmpStatement') IS NOT NULL
 	BEGIN
 		DROP TABLE #tmpStatement
 	END
+
+	------------OpeningTotalBalance------------
+	EXEC dbo.Task_DailyRptStatement_OpeningTotalBalance_CheckData
+		@WinlostDate		= @WinlostDate
+		,@isCheckDataOnly	= @isCheckDataOnly
 END
 GO
