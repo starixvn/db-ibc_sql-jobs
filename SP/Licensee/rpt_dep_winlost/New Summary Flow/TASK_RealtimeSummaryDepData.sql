@@ -1,7 +1,4 @@
 /*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb02]
-GO
-
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
 	@Winlostdate SMALLDATETIME = NULL,
 	@isSuccessful BIT = 0 OUTPUT
