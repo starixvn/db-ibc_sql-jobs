@@ -30,6 +30,7 @@ AS
 		- 20181210@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
 		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
+		- 20190718@Amanda: Add rebate bonus ticket [RedmineID: #115445]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
