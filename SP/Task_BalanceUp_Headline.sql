@@ -6,7 +6,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	CREATE TABLE #__custList (KeyID int PRIMARY KEY IDENTITY(1,1), custid int)
+	CREATE TABLE #__custList (keyId int PRIMARY KEY IDENTITY(1,1), custid int)
 	DECLARE @rc INT, @r INT
 
 	INSERT INTO #__custList(custid)
@@ -17,7 +17,9 @@ BEGIN
 	SET @rc = @@ROWCOUNT
 	SET @r = 1
 
-	DECLARE @tblNoBetTmp TABLE (custid INT, transid BIGINT)
+	DECLARE @__tempData TABLE (transid BIGINT)
+	DECLARE @__tempCustIds TABLE(custid INT)
+
 	DECLARE @delayTimeValue VARCHAR(50)
 	SET @delayTimeValue = '00:00:01.500'
 
@@ -27,26 +29,35 @@ BEGIN
 	WHILE @r <= @rc
 	BEGIN
 	
-		DELETE FROM @tblNoBetTmp
+		DELETE FROM @__tempData
+		DELETE FROM @__tempCustIds
+
 		SET @transIds = NULL
 
-		INSERT INTO @tblNoBetTmp(custid, transid)
-		SELECT custid, BAL_transid
-		FROM #custid_nobet WITH (NOLOCK) WHERE KeyID BETWEEN @r AND @r + 1000
-	
-		DELETE FROM dbo.balanceTable_tmp WHERE custid IN (SELECT t.custid FROM @tblNoBetTmp t)
-		--DELETE FROM dbo.bettrans WITH (ROWLOCK) WHERE transid IN (SELECT t.transid FROM @tblNoBetTmp t)
+		INSERT INTO @__tempCustIds(custid)
+		SELECT t.custid
+		FROM #__custList t WITH (NOLOCK)
+		WHERE keyId >= @r AND keyId < @r + 200
+
+		INSERT INTO @__tempData(transid)
+		SELECT transid
+		FROM dbo.bettrans b WITH(NOLOCK)
+		WHERE b.custid IN (SELECT t.custId FROM @__tempCustIds t)
+			AND b.winlostdate < @winlostdate
 	
 		SELECT @transIds = COALESCE(@transIds + '^' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
-		FROM @tblNoBetTmp
+		FROM @__tempData
 
+		DELETE FROM dbo.balanceTable_tmp WHERE custid IN (SELECT t.custid FROM @__tempCustIds t)
 		EXEC dbo.ExecRep_07 @custids = '', @custid = 0, @roleid = 111, @winlostdate = @winlostdate, @transIds = @transIds
 
-		SET @r = @r + 1000
+		SET @r = @r + 200
 
 		SELECT @delayTimeValue = dbo.f_BU_GetDelayTime('Key1')
 		WAITFOR DELAY @delayTimeValue
 
 	END
+
+	DROP TABLE #__custList
 END
 GO
