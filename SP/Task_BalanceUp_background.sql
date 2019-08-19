@@ -1,7 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
-USE [bodb02]
-GO
-ALTER PROCEDURE [dbo].[Task_BalanceUp_background]
+CREATE PROCEDURE [dbo].[Task_BalanceUp_background]
 	@fdate as datetime = NULL,
 	@step as tinyint = 1
 --	@continue as bit = 0
@@ -31,6 +29,7 @@ Revisions:
 	- 20181002@Dominic: Get username from archived DB  [Redmine:99882]
 	- 20190327@Helen: Calculating value of @fdate of step #6 is incorrect  [Redmine:110974]
 	- 20190417@Patrick: Ignore verify data for roleid = 0 [Redmine:#112050]
+	- 201900816@Patrick: Implement BU for custid have roleid = 0 [Redmine:#118818]
 	
 Param's Explanation: 
 
@@ -592,9 +591,21 @@ BEGIN
 END
 -- ================== BalanceUp Super
 
-
 -- ================== STEP : 6
 IF @step = 6
+BEGIN
+	SET DEADLOCK_PRIORITY HIGH
+
+	EXEC dbo.Task_BalanceUp_Headline @winlostdate = @fdate
+
+	SET DEADLOCK_PRIORITY NORMAL
+
+END
+-- ================== BalanceUp headline (roleid = 0)
+
+
+-- ================== STEP : 7
+IF @step = 7
 BEGIN
 -- ================== Finishing
 	SELECT TOP(1) @fdate = winlostdate
@@ -623,7 +634,8 @@ BEGIN
 
 	SET @Doing = 'Task_BalanceUp_background : Done'
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
--- ================== END STEP : 6
+-- ================== END STEP : 7
 END
 -- ================== Finishing
+
 GO
