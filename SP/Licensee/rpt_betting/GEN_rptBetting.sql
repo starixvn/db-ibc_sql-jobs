@@ -8,7 +8,8 @@ GO
 
 ALTER PROCEDURE [dbo].[GEN_rptBetting]
 	@date DATETIME,
-	@date2 DATETIME = NULL
+	@date2 DATETIME = NULL,
+	@ProductCodes VARCHAR(1000) = ''
 AS
 
 /*
@@ -47,8 +48,14 @@ BEGIN
 	IF @date2 IS NULL SET @date2 = @date
 	SET @date2 = DATEADD(day,1,@date2)
 
+	DECLARE @BettypeProductMapping AS TABLE(Bettype INT, ProductID INT)
+	INSERT INTO @BettypeProductMapping (Bettype, ProductID)
+		SELECT Bettype, ProductId
+			FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @ProductCodes)
+
 	DELETE FROM dbo.rpt_Betting
 	WHERE rptDate>=@date AND rptDate<@date2
+		AND (@ProductCodes = '' OR Bettype IN (SELECT Bettype FROM @BettypeProductMapping))
 
 	SELECT
 		b.winlostdate AS rptDate,
@@ -102,6 +109,7 @@ BEGIN
 		LEFT JOIN dbo.outright o WITH(NOLOCK) ON b.matchid = o.matchid
 		LEFT JOIN DBRPT.bodb02.dbo.VSRaceInfo RaceInfo WITH(NOLOCK) ON b.matchid = RaceInfo.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
 	WHERE isBA=0 AND b.winlostdate>=@date AND b.winlostdate<@date2
+		AND (@ProductCodes = '' OR Bettype IN (SELECT Bettype FROM @BettypeProductMapping))
 	GROUP BY
 		b.winlostdate,
 		ISNULL(site.SiteID,-1),

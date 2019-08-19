@@ -9,6 +9,7 @@ GO
 ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct] (
 	@date DATE,
 	@date2 DATE = NULL,
+	@ProductCodes VARCHAR(1000) = '',
 	@DataSource VARCHAR(20) = 'All',
 	@SeparatedProductID TINYINT = 0
 	)
@@ -23,6 +24,8 @@ AS
 		@SeparatedProductID = 10: AGC
 							= 11: GD
 							= 0 : All Separate products
+		@ProductCodes		= '': Get all data
+							= 'VS, PP ..': Get data by specific product
 	Revisions:
 		- 20150923@Victor: Fix third party data summary issues (AGCS, VG, GD)
 		- 20151002@Victor: Move all Bettrade detail tickets (901,902,903) to product BT
@@ -54,6 +57,7 @@ AS
 		- 20190418@Percy: Remove Exchange for Datasource = rpt_Betting [RedmineID: #111937]
 		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
+		- 20190819@Parsons: Provide House Turnover In NG WL Report [Redmine: #117674]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 
@@ -75,7 +79,8 @@ BEGIN
 		DELETE p 
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
-			  AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange 	 
+			  AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange
+			  AND (@ProductCodes = '' OR ProductID IN (SELECT DISTINCT ProductID FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @ProductCodes))) 	 
 					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
@@ -138,6 +143,7 @@ BEGIN
 		WHERE rptDate >= @date AND rptDate < @date2
 			AND b.Status IN (111,112,113,114,115,101,102,103)
 			AND [CurrencyID] <> 20
+			AND (@ProductCodes = '' OR b.bettype IN (SELECT Bettype FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @ProductCodes)))
 		GROUP BY [rptDate]
 				,[SiteID]
 				, bt.ProductID
@@ -178,6 +184,7 @@ BEGIN
 		WHERE rptDate >= @date AND rptDate < @date2
 			AND b.Status IN (111,112,113,114,115,101,102,103)
 			AND [CurrencyID] <> 20
+			AND (@ProductCodes = '' OR b.bettype IN (SELECT Bettype FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @ProductCodes)))
 		GROUP BY [rptDate]
 				,[SiteID]
 				, bt.ProductID
