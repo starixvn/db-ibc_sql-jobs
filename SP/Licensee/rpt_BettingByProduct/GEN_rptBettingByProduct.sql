@@ -9,9 +9,9 @@ GO
 ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct] (
 	@date DATE,
 	@date2 DATE = NULL,
-	@ProductCodes VARCHAR(1000) = '',
 	@DataSource VARCHAR(20) = 'All',
-	@SeparatedProductID TINYINT = 0
+	@SeparatedProductID TINYINT = 0,
+	@ProductCodes VARCHAR(1000) = ''
 	)
 AS
 /*  Created: 20150710@Victor
@@ -24,7 +24,7 @@ AS
 		@SeparatedProductID = 10: AGC
 							= 11: GD
 							= 0 : All Separate products
-		@ProductCodes		= '': Get all data
+		@ProductCodes		= '': Get all of datum
 							= 'VS, PP ..': Get data by specific product
 	Revisions:
 		- 20150923@Victor: Fix third party data summary issues (AGCS, VG, GD)
@@ -67,6 +67,11 @@ BEGIN
 	CREATE TABLE #BettypeProductMapping (Bettype INT, ProductID INT)
 	CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
 
+	DECLARE @ProductList AS TABLE(ProductId INT, ProductCode VARCHAR(10), ProductName NVARCHAR(100))
+	INSERT INTO @ProductList(ProductId, ProductCode, ProductName)
+		SELECT ProductID, ProductPrefix, ProductName
+			FROM bodb_Licensee.dbo.LA_f_Products3rd(@ProductCodes)
+
 	-- Collect data of 3rd party products
 	CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY, AgentComm MONEY, ValidBetAmount MONEY, GrossWL MONEY, Bettype SMALLINT)
 
@@ -80,15 +85,17 @@ BEGIN
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
 			  AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange
-			  AND (@ProductCodes = '' OR ProductID IN (SELECT DISTINCT ProductID FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @ProductCodes))) 	 
+			  AND (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductList)) 	 
 					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
 		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC') -- Remove Exchange (BX) due to separate wallet only
+		WHERE (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductList)) 
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 		SELECT Bettype, ProductId 
 		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'BA')
+		WHERE (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductList)) 
 
 		-- Import data from rpt_Betting / rpt_Betting_BA
 		INSERT INTO [dbo].[rpt_BettingByProduct]
@@ -143,7 +150,6 @@ BEGIN
 		WHERE rptDate >= @date AND rptDate < @date2
 			AND b.Status IN (111,112,113,114,115,101,102,103)
 			AND [CurrencyID] <> 20
-			AND (@ProductCodes = '' OR b.bettype IN (SELECT Bettype FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @ProductCodes)))
 		GROUP BY [rptDate]
 				,[SiteID]
 				, bt.ProductID
@@ -184,7 +190,6 @@ BEGIN
 		WHERE rptDate >= @date AND rptDate < @date2
 			AND b.Status IN (111,112,113,114,115,101,102,103)
 			AND [CurrencyID] <> 20
-			AND (@ProductCodes = '' OR b.bettype IN (SELECT Bettype FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @ProductCodes)))
 		GROUP BY [rptDate]
 				,[SiteID]
 				, bt.ProductID
