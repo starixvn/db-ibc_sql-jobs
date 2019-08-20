@@ -10,8 +10,8 @@ GO
 ALTER PROCEDURE [dbo].[Task_PrepareStaging]  
     @datefrom smalldatetime=null
     ,@dateto smalldatetime=null
-	,@ProductCodes VARCHAR(1000) = ''
 	,@ErrorMsg VARCHAR(MAX) = '' OUTPUT
+	,@ProductCodes VARCHAR(1000) = ''
 WITH RECOMPILE
 AS  
 /*
