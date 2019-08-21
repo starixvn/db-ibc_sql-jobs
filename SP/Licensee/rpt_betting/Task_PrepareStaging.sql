@@ -119,6 +119,12 @@ BEGIN
 	INSERT INTO @BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
 			FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @ProductCodes)
+
+	DECLARE @HasCBProduct BIT = 1
+	IF(@ProductCodes <> '' AND NOT EXISTS (SELECT TOP 1 1 FROM @BettypeProductMapping WHERE ProductID = 15))
+	BEGIN
+		SET @HasCBProduct = 0
+	END
 		
 	WHILE (@count>=0)
 	BEGIN
@@ -203,11 +209,6 @@ BEGIN
             --DELETE dbo.bettrans WHERE winlostdate=@tmpDate AND statusid IN (0,1,101,102,121)
 
 			-- Colossus bet tickets
-			DECLARE @HasCBProduct BIT = 1
-			IF(@ProductCodes <> '' AND NOT EXISTS (SELECT TOP 1 1 FROM @BettypeProductMapping WHERE ProductID = 15))
-			BEGIN
-				SET @HasCBProduct = 0
-			END
 			;WITH CBAmount AS
 			(	
 				SELECT b.transid, 
@@ -345,7 +346,7 @@ BEGIN
 				FROM dbo.bettrans b WITH (NOLOCK) 
 					INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 				WHERE b.bettype = 18000 AND b.winlostdate=@tmpDate
-					AND (@ProductCodes = '' OR b.bettype IN (SELECT Bettype FROM @BettypeProductMapping))
+					 AND @HasCBProduct = 1
 				GROUP BY b.transid
 			)
 			UPDATE b
