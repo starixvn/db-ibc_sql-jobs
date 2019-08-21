@@ -158,8 +158,15 @@ BEGIN
 				WHERE c.CustId = b.srecommend
 					AND b.statusID IN (111, 112, 113)
 			) AS b
-			CROSS APPLY (SELECT TOP 1 sbm.ProductID, sbm.eventtype FROM bodb02.dbo.CS_SportBettypeMatrix sbm WITH (NOLOCK) WHERE b.bettype = sbm.bettype) AS s
-			OUTER APPLY (SELECT TOP 1 a.ExtraPT FROM bodb02.dbo.Acc_GroupExtraPTSetting a WITH (NOLOCK) WHERE b.srecommend = a.superid AND s.ProductId = a.ProductId AND a.Sporttype = 0 AND a.SubProduct = '') AS e
+			CROSS APPLY (
+				SELECT TOP 1 sbm.ProductID, sbm.eventtype FROM bodb02.dbo.CS_SportBettypeMatrix sbm WITH (NOLOCK)
+				WHERE b.bettype = sbm.bettype
+			) AS s
+			OUTER APPLY (
+				SELECT TOP 1 a.ExtraPT FROM bodb02.dbo.Acc_GroupExtraPTSetting a WITH (NOLOCK)
+				WHERE b.srecommend = a.superid AND s.ProductId = a.ProductId AND a.Sporttype = 0 AND a.SubProduct = ''
+					AND @WinlostDate BETWEEN a.FromDate AND a.ToDate
+			) AS e
 		WHERE b.winlostdate = @WinlostDate
 		GROUP BY
 			b.srecommend
