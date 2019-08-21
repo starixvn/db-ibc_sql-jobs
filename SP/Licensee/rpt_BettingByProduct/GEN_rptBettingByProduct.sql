@@ -84,17 +84,17 @@ BEGIN
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
 			  AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange
-			  AND (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList)) 	 
+			  AND (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList)) 	 
 					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
 		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC') -- Remove Exchange (BX) due to separate wallet only
-		WHERE (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList)) 
+		WHERE (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList)) 
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 		SELECT Bettype, ProductId 
 		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'BA')
-		WHERE (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList)) 
+		WHERE (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList)) 
 
 		-- Import data from rpt_Betting / rpt_Betting_BA
 		INSERT INTO [dbo].[rpt_BettingByProduct]

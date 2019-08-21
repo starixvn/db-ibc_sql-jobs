@@ -55,7 +55,7 @@ BEGIN
 
 	DELETE FROM dbo.rpt_Betting
 	WHERE rptDate>=@date AND rptDate<@date2
-		AND (@ProductCodes = '' OR Bettype IN (SELECT Bettype FROM @BettypeProductMapping))
+		AND (@ProductCodes = '' OR Bettype IN (SELECT bm.Bettype FROM @BettypeProductMapping bm))
 
 	SELECT
 		b.winlostdate AS rptDate,
@@ -109,7 +109,7 @@ BEGIN
 		LEFT JOIN dbo.outright o WITH(NOLOCK) ON b.matchid = o.matchid
 		LEFT JOIN DBRPT.bodb02.dbo.VSRaceInfo RaceInfo WITH(NOLOCK) ON b.matchid = RaceInfo.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
 	WHERE isBA=0 AND b.winlostdate>=@date AND b.winlostdate<@date2
-		AND (@ProductCodes = '' OR Bettype IN (SELECT Bettype FROM @BettypeProductMapping))
+		AND (@ProductCodes = '' OR Bettype IN (SELECT bm.Bettype FROM @BettypeProductMapping bm))
 	GROUP BY
 		b.winlostdate,
 		ISNULL(site.SiteID,-1),
