@@ -67,10 +67,9 @@ BEGIN
 	CREATE TABLE #BettypeProductMapping (Bettype INT, ProductID INT)
 	CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
 
-	DECLARE @ProductList AS TABLE(ProductId INT, ProductCode VARCHAR(10), ProductName NVARCHAR(100))
-	INSERT INTO @ProductList(ProductId, ProductCode, ProductName)
-		SELECT ProductID, ProductPrefix, ProductName
-			FROM bodb_Licensee.dbo.LA_f_Products3rd(@ProductCodes)
+	DECLARE @ProductIdList AS TABLE(ProductId INT)
+	INSERT INTO @ProductIdList(ProductId)
+	SELECT ProductID FROM bodb_Licensee.dbo.LA_f_Products3rd(@ProductCodes)
 
 	-- Collect data of 3rd party products
 	CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY, AgentComm MONEY, ValidBetAmount MONEY, GrossWL MONEY, Bettype SMALLINT)
@@ -85,17 +84,17 @@ BEGIN
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
 			  AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange
-			  AND (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductList)) 	 
+			  AND (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList)) 	 
 					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
 		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC') -- Remove Exchange (BX) due to separate wallet only
-		WHERE (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductList)) 
+		WHERE (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList)) 
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 		SELECT Bettype, ProductId 
 		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'BA')
-		WHERE (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductList)) 
+		WHERE (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList)) 
 
 		-- Import data from rpt_Betting / rpt_Betting_BA
 		INSERT INTO [dbo].[rpt_BettingByProduct]
