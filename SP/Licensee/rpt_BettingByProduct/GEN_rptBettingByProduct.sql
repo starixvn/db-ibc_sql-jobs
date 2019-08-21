@@ -203,7 +203,13 @@ BEGIN
 	IF @DataSource IN ('All', 'SeparatedProduct')
 	BEGIN 	
 		-- Exchange product (separate wallet)
-		IF @SeparatedProductID IN (0, 31)
+		DECLARE @HasExchangeProduct BIT = 1
+		IF(@ProductCodes = '' OR NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 31))
+		BEGIN
+			SET @HasExchangeProduct = 0
+		END
+
+		IF @SeparatedProductID IN (0, 31) AND @HasExchangeProduct = 1
 		BEGIN
 			DECLARE @ResettledDateList AS TABLE (ID BIGINT, SettledDate DATE)
 			DECLARE @WLDateList AS TABLE (ID SMALLINT IDENTITY (1,1), Winlostdate DATE)			
@@ -232,7 +238,6 @@ BEGIN
 			FROM dbo.rpt_BettingByProduct p
 			WHERE (p.ProductID = 31 AND p.SiteID <= 1000) 
 				AND EXISTS (SELECT 1 FROM @WLDateList WHERE Winlostdate = p.rptDate)
-				AND (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList))
 		
 			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, GrossWL, Turnover, BetCount, PlayerComm, AgentComm, ValidBetAmount)
 			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, WinlostA, Turnover, BetCount
@@ -262,18 +267,30 @@ BEGIN
 			  AND (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList))
 
 		-- GD, VG (separate wallet)
-		IF @SeparatedProductID IN (0, 11)
+		DECLARE @HasGDProduct BIT = 1
+		IF(@ProductCodes = '' OR NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 11))
+		BEGIN
+			SET @HasGDProduct = 0
+		END
+
+		IF @SeparatedProductID IN (0, 11) AND @HasGDProduct = 1
 		BEGIN 
 			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm, Bettype)
 			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, Turnover, BetCount, 0 AS PlayerComm, Bettype
 			FROM dbo.rptDepWinlost_ThirdParty WITH (NOLOCK)
 			WHERE Winlostdate >= @date AND Winlostdate < @date2
 				AND ProductId = 11
-				AND [Currency] <> 20 
+				AND [Currency] <> 20
 		END
 		
 		-- AGCS (separate wallet)
-		IF @SeparatedProductID IN (0, 10)
+		DECLARE @HasAGCSProduct BIT = 1
+		IF(@ProductCodes = '' OR NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 10))
+		BEGIN
+			SET @HasAGCSProduct = 0
+		END
+
+		IF @SeparatedProductID IN (0, 10) AND @HasAGCSProduct = 1
 		BEGIN 
 			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm)
 			SELECT Winlostdate, Custid, 10 AS ProductId, Currency, SUM(Winlost), SUM(Turnover), SUM(BetCount), SUM(PlayerComm)
