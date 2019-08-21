@@ -204,7 +204,7 @@ BEGIN
 	BEGIN 	
 		-- Exchange product (separate wallet)
 		DECLARE @HasExchangeProduct BIT = 1
-		IF(@ProductCodes = '' OR NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 31))
+		IF(@ProductCodes <> '' AND NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 31))
 		BEGIN
 			SET @HasExchangeProduct = 0
 		END
@@ -268,7 +268,7 @@ BEGIN
 
 		-- GD, VG (separate wallet)
 		DECLARE @HasGDProduct BIT = 1
-		IF(@ProductCodes = '' OR NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 11))
+		IF(@ProductCodes <> '' AND NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 11))
 		BEGIN
 			SET @HasGDProduct = 0
 		END
@@ -284,13 +284,13 @@ BEGIN
 		END
 		
 		-- AGCS (separate wallet)
-		DECLARE @HasAGCSProduct BIT = 1
-		IF(@ProductCodes = '' OR NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 10))
+		DECLARE @HasAGCProduct BIT = 1
+		IF(@ProductCodes <> '' AND NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 10))
 		BEGIN
-			SET @HasAGCSProduct = 0
+			SET @HasAGCProduct = 0
 		END
 
-		IF @SeparatedProductID IN (0, 10) AND @HasAGCSProduct = 1
+		IF @SeparatedProductID IN (0, 10) AND @HasAGCProduct = 1
 		BEGIN 
 			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm)
 			SELECT Winlostdate, Custid, 10 AS ProductId, Currency, SUM(Winlost), SUM(Turnover), SUM(BetCount), SUM(PlayerComm)
