@@ -232,6 +232,7 @@ BEGIN
 			FROM dbo.rpt_BettingByProduct p
 			WHERE (p.ProductID = 31 AND p.SiteID <= 1000) 
 				AND EXISTS (SELECT 1 FROM @WLDateList WHERE Winlostdate = p.rptDate)
+				AND (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList))
 		
 			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, GrossWL, Turnover, BetCount, PlayerComm, AgentComm, ValidBetAmount)
 			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, WinlostA, Turnover, BetCount
@@ -258,6 +259,7 @@ BEGIN
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
 			  AND (p.ProductID IN (10,11) AND p.SiteID <= 1000) 
 			  AND ( p.ProductID = @SeparatedProductID OR @SeparatedProductID = 0)
+			  AND (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList))
 
 		-- GD, VG (separate wallet)
 		IF @SeparatedProductID IN (0, 11)
