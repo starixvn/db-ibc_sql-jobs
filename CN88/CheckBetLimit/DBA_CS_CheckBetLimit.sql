@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[DBA_CS_CheckBetLimit]
+ALTER PROCEDURE [dbo].[DBA_CS_CheckBetLimit]
 	 @srecommend INT 
 	,@SportType SMALLINT = 0
 	,@RuleId	SMALLINT = 0
@@ -24,7 +24,7 @@ BEGIN
 	
 	SELECT @currency = currency
 	FROM CheckCustDB.dbo.custinfo WITH(NOLOCK)
-	WHERE custid = @custID
+	WHERE custid = @srecommend
 	
 	INSERT INTO #SuperBL(custid,sporttype,bettype,isLive,MaxBet,MaxPerEvent)
 	SELECT custid,sporttype,bettype,isLive,MaxBet,MaxPerEvent
@@ -33,25 +33,25 @@ BEGIN
 		AND sporttype = CASE WHEN @sporttype = 0 THEN cs.sporttype ELSE @sporttype END
 		
 	INSERT INTO #MasterBL(custid,srecommend,sporttype,bettype,isLive,MaxBet,MaxPerEvent)
-	SELECT custid,srecommend,sporttype,bettype,isLive,MaxBet,MaxPerEvent
+	SELECT ci.custid,srecommend,sporttype,bettype,isLive,MaxBet,MaxPerEvent
 	FROM  CheckCustDB.dbo.custinfo ci WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.CS_CustBetSetting_Agent cs WITH(NOLOCK) ON ci.custid = cs.custid
-	WHERE custid = @srecommend
+	WHERE ci.custid = @srecommend
 		AND sporttype = CASE WHEN @sporttype = 0 THEN cs.sporttype ELSE @sporttype END
 		AND roleid = 3
 		AND enabled = 1
 	
 	INSERT INTO #AgentBL(custid,srecommend,mrecommend,sporttype,bettype,isLive,MaxBet,MaxPerEvent)
-	SELECT custid,srecommend,mrecommend,sporttype,bettype,isLive,MaxBet,MaxPerEvent
+	SELECT ci.custid,srecommend,mrecommend,sporttype,bettype,isLive,MaxBet,MaxPerEvent
 	FROM  CheckCustDB.dbo.custinfo ci WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.CS_CustBetSetting_Agent cs WITH(NOLOCK) ON ci.custid = cs.custid
-	WHERE custid = @srecommend
+	WHERE ci.custid = @srecommend
 		AND sporttype = CASE WHEN @sporttype = 0 THEN cs.sporttype ELSE @sporttype END
 		AND roleid = 2
 		AND enabled = 1
 	
 	INSERT INTO #MemberBL(custid,srecommend,mrecommend,recommend,sporttype,bettype,isLive,MaxBet,MaxPerEvent)
-	SELECT custid,srecommend,mrecommend,recommend,sporttype,bettype,isLive,MaxBet,MaxPerEvent
+	SELECT ci.custid,srecommend,mrecommend,recommend,sporttype,bettype,isLive,MaxBet,MaxPerEvent
 	FROM  CheckCustDB.dbo.custinfo ci WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.CS_CustBetSetting_Member cs WITH(NOLOCK) ON ci.custid = cs.custid
 	WHERE srecommend = @srecommend

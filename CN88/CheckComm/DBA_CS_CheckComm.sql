@@ -135,7 +135,7 @@ BEGIN
 	IF @ruleid IN (0,10106)
 	BEGIN
 		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
-		SELECT 10105 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, cs.custid as custidA, 0 as custidB, cs.SuperDiscount as ValueA, cs.MasterDiscount as ValueB
+		SELECT 10106 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, cs.custid as custidA, 0 as custidB, cs.SuperDiscount as ValueA, cs.MasterDiscount as ValueB
 		FROM #MemberComm cs
 		WHERE SuperDiscount < MasterDiscount
 	END
