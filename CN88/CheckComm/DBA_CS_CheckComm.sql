@@ -45,13 +45,14 @@ BEGIN
 		AND sporttype = CASE WHEN @sporttype = 0 THEN sporttype ELSE @sporttype END
 	
 	INSERT INTO #MemberComm(custid,srecommend,mrecommend,recommend,sporttype,bettype,isLive,GroupID,PlayerDiscount,SuperDiscount,MasterDiscount,AgentDiscount)
-	SELECT custid,srecommend,mrecommend,recommend,cs.sporttype,cs.bettype,cs.isLive,ISNULL(gc.GroupID,0),PlayerDiscount,SuperDiscount,MasterDiscount,AgentDiscount
-	FROM CheckCustDB.dbo.customer ci WITH(NOLOCK)
-		CROSS APPLY CheckCustDB.dbo.f_CS_GetDiscount_Member(custid) cs
-		LEFT JOIN CheckCustDB.dbo.CS_GroupConfig gc ON gc.SportType = cs.SportType AND gc.BetType = cs.BetType AND gc.IsLive = cs.IsLive AND gc.uGroup = ci.ugroup
-	WHERE srecommend = @srecommend
-		AND roleid = 1
-		AND enabled = 1
+	SELECT ci.custid,ci.srecommend,ci.mrecommend,ci.recommend,cs.sporttype,cs.bettype,cs.isLive,ISNULL(gc.GroupID,0),PlayerDiscount,SuperDiscount,MasterDiscount,AgentDiscount
+	FROM CheckCustDB.dbo.custInfo ci WITH(NOLOCK)
+		INNER JOIN CheckCustDB.dbo.customer c WITH(NOLOCK) ON ci.custid = c.custid
+		CROSS APPLY CheckCustDB.dbo.f_CS_GetDiscount_Member(ci.custid) cs
+		LEFT JOIN CheckCustDB.dbo.CS_GroupConfig gc ON gc.SportType = cs.SportType AND gc.BetType = cs.BetType AND gc.IsLive = cs.IsLive AND gc.uGroup = c.ugroup
+	WHERE ci.srecommend = @srecommend
+		AND ci.roleid = 1
+		AND ci.enabled = 1
 		AND cs.sporttype = CASE WHEN @sporttype = 0 THEN cs.sporttype ELSE @sporttype END
 		
 	INSERT INTO #MemberGroupComm(AgentID,srecommend,mrecommend,sporttype,bettype,isLive,GroupID,PlayerDiscount,SuperDiscount,MasterDiscount,AgentDiscount)
