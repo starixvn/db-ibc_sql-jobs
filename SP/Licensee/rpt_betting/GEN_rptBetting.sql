@@ -8,7 +8,8 @@ GO
 
 ALTER PROCEDURE [dbo].[GEN_rptBetting]
 	@date DATETIME,
-	@date2 DATETIME = NULL
+	@date2 DATETIME = NULL,
+	@ProductCodes VARCHAR(1000) = ''
 AS
 
 /*
@@ -36,6 +37,7 @@ Revisions:
 	20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768]
 	20180910@Bruce: LA - WL report for Poker Games & Bullfighting [#98487]
 	20190508@Parsons: Implement BetBuilder [Redmine: #108995]
+	20190808@Parsons: Provide House Turnover In NG WL Report [Redmine: #117674]
 
 Param's Explanation:
 
@@ -46,8 +48,14 @@ BEGIN
 	IF @date2 IS NULL SET @date2 = @date
 	SET @date2 = DATEADD(day,1,@date2)
 
+	DECLARE @BettypeProductMapping AS TABLE(Bettype INT, ProductID INT)
+	INSERT INTO @BettypeProductMapping (Bettype, ProductID)
+		SELECT Bettype, ProductId
+			FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @ProductCodes)
+
 	DELETE FROM dbo.rpt_Betting
 	WHERE rptDate>=@date AND rptDate<@date2
+		AND (@ProductCodes = '' OR Bettype IN (SELECT bm.Bettype FROM @BettypeProductMapping bm))
 
 	SELECT
 		b.winlostdate AS rptDate,
@@ -89,6 +97,7 @@ BEGIN
 		SUM(CASE
 			WHEN b.bettype BETWEEN 1401 AND 1499 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0)) -- poker games: gem & insurance
 			WHEN b.bettype = 18000 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0)) -- Extra Amount For CB Free Play Ticket
+			WHEN b.bettype BETWEEN 81 AND 120 OR b.bettype BETWEEN 8101 AND 8120 THEN b.actual_stake * (1 - b.tpositiontaking) -- House Turnover In NG WL
 			ELSE 0 END) ExtraAmount,
 		CASE WHEN b.bettype=1004 THEN b.tpositiontaking ELSE 0 END tpositiontaking -- bullfighting
 	INTO #tmpData
@@ -100,6 +109,7 @@ BEGIN
 		LEFT JOIN dbo.outright o WITH(NOLOCK) ON b.matchid = o.matchid
 		LEFT JOIN DBRPT.bodb02.dbo.VSRaceInfo RaceInfo WITH(NOLOCK) ON b.matchid = RaceInfo.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
 	WHERE isBA=0 AND b.winlostdate>=@date AND b.winlostdate<@date2
+		AND (@ProductCodes = '' OR Bettype IN (SELECT bm.Bettype FROM @BettypeProductMapping bm))
 	GROUP BY
 		b.winlostdate,
 		ISNULL(site.SiteID,-1),

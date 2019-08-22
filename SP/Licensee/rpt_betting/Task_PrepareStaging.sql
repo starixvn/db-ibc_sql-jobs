@@ -11,6 +11,7 @@ ALTER PROCEDURE [dbo].[Task_PrepareStaging]
     @datefrom smalldatetime=null
     ,@dateto smalldatetime=null
 	,@ErrorMsg VARCHAR(MAX) = '' OUTPUT
+	,@ProductCodes VARCHAR(1000) = ''
 WITH RECOMPILE
 AS  
 /*
@@ -41,6 +42,7 @@ Revisions:
 	-20181107@Patrick: DB052 Indexes Revolution [Redmine: #103572]
 	-20181226@bruce: Implement E-sport 2 [Redmine: #105723]
 	-20190306@Parsons: Implement BetBuilder [Redmine: #108995]
+	-20190819@Parsons: Provide House Turnover In NG WL Report [Redmine: #117674]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'
@@ -112,6 +114,17 @@ BEGIN
     DECLARE @count int,@movebetdate smalldatetime,@tmpDate smalldatetime
 	SELECT @count=DATEDIFF(DAY,@thedaybefore,@today) - 1
 	SELECT @movebetdate=MAX(winlostdate) FROM bodb02.dbo.bettrans14 (NOLOCK)
+	
+	DECLARE @BettypeProductMapping AS TABLE(Bettype INT, ProductID INT)
+	INSERT INTO @BettypeProductMapping (Bettype, ProductID)
+		SELECT Bettype, ProductId
+			FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @ProductCodes)
+
+	DECLARE @HasCBProduct BIT = 1
+	IF(@ProductCodes <> '' AND NOT EXISTS (SELECT TOP 1 1 FROM @BettypeProductMapping WHERE ProductID = 15))
+	BEGIN
+		SET @HasCBProduct = 0
+	END
 		
 	WHILE (@count>=0)
 	BEGIN
@@ -191,6 +204,7 @@ BEGIN
 				AND b.recommend > 0
 				--AND b.matchid > 0
 				AND statusid NOT IN (0,1,101,102,121)
+				AND (@ProductCodes = '' OR b.bettype IN (SELECT bm.Bettype FROM @BettypeProductMapping bm))
 	        
             --DELETE dbo.bettrans WHERE winlostdate=@tmpDate AND statusid IN (0,1,101,102,121)
 
@@ -219,7 +233,8 @@ BEGIN
 				FROM dbo.bettrans b WITH (NOLOCK) 
 					INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 				WHERE b.bettype = 18000 AND b.winlostdate=@tmpDate
-					 AND bm.bettype BETWEEN 18000 AND 18006	
+					 AND bm.bettype BETWEEN 18000 AND 18006
+					 AND @HasCBProduct = 1
 				GROUP BY b.transid
 			)
 			UPDATE b
@@ -303,6 +318,7 @@ BEGIN
 			    --INNER JOIN #Customer c (NOLOCK) ON b.winlostdate=@tmpDate AND b.custid=c.t_custid
 			WHERE b.statusid NOT IN (0,101,102,121)  -- 'void', 'reject', 'running','done'
 				AND b.winlostdate = @tmpDate AND b.custid > 0
+				AND (@ProductCodes = '' OR b.bettype IN (SELECT Bettype FROM @BettypeProductMapping))
 
 
 			-- Colossus bet tickets
@@ -330,6 +346,7 @@ BEGIN
 				FROM dbo.bettrans b WITH (NOLOCK) 
 					INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 				WHERE b.bettype = 18000 AND b.winlostdate=@tmpDate
+					 AND @HasCBProduct = 1
 				GROUP BY b.transid
 			)
 			UPDATE b
