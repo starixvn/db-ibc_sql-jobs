@@ -142,7 +142,7 @@ BEGIN
 									 AND mcs.SportType = scs.Sporttype 
 									 AND mcs.BetType = scs.bettype 
 									 AND mcs.IsLive = scs.IsLive
-			INNER JOIN #MemberPT cs ON cs.srecommend = scs.custid 
+			INNER JOIN #AgentPT cs ON cs.srecommend = scs.custid 
 									 AND cs.SportType = scs.Sporttype 
 									 AND cs.BetType = scs.bettype 
 									 AND cs.IsLive = scs.IsLive
@@ -150,7 +150,7 @@ BEGIN
 			OR mcs.SuperPT2 < scs.MinPT2 - (cs.MasterPT2 + cs.AgentPT2)
 	END
 	
-	--s3 > l4 - MAX(m2+a2)
+	--s3 > l4 - (m2+a2)
 	IF @ruleID IN (0,10007)
 	BEGIN
 		INSERT INTO CS_CheckPTResult (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
@@ -165,24 +165,24 @@ BEGIN
 									 AND mcs.SportType = scs.Sporttype 
 									 AND mcs.BetType = scs.bettype 
 									 AND mcs.IsLive = scs.IsLive
-			INNER JOIN #MemberPT cs ON cs.srecommend = scs.custid 
+			INNER JOIN #AgentPT cs ON cs.srecommend = scs.custid 
 									 AND cs.SportType = scs.Sporttype 
 									 AND cs.BetType = scs.bettype 
 									 AND cs.IsLive = scs.IsLive
 		WHERE mcs.SuperPT > scs.MaxPT - (cs.MasterPT + cs.AgentPT)
-			OR mcs.SuperPT2 > scs.MaxT2 - (cs.MasterPT2 + cs.AgentPT2)
+			OR mcs.SuperPT2 > scs.MaxPT2 - (cs.MasterPT2 + cs.AgentPT2)
 	END
 	
 	--m2 > l4
 	IF @ruleID IN (0,10008)
 	BEGIN
 		INSERT INTO CS_CheckPTResult (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
-		SELECT 10008, cs.BetType, cs.SportType, acs.custid, scs.custid, 
+		SELECT 10008, scs.BetType, scs.SportType, acs.custid, scs.custid, 
 			CASE WHEN acs.MasterPT > scs.MaxPT THEN acs.MasterPT ELSE 
 				acs.MasterPT2 END,
 			CASE WHEN acs.MasterPT > scs.MaxPT THEN scs.MaxPT
 				ELSE scs.MaxPT2 END,
-			cs.isLive
+			scs.isLive
 		FROM #SuperPT scs
 			INNER JOIN #AgentPT acs ON acs.srecommend = scs.custid 
 									 AND acs.SportType = scs.Sporttype 
@@ -196,12 +196,12 @@ BEGIN
 	IF @ruleID IN (0,10009)
 	BEGIN
 		INSERT INTO CS_CheckPTResult (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
-		SELECT 10009, cs.BetType, cs.SportType, acs.custid, scs.custid, 
+		SELECT 10009, scs.BetType, scs.SportType, acs.custid, scs.custid, 
 			CASE WHEN acs.AgentPT > scs.MaxPT THEN acs.AgentPT ELSE 
 				acs.AgentPT2 END,
 			CASE WHEN acs.AgentPT > scs.MaxPT THEN scs.MaxPT
 				ELSE scs.MaxPT2 END,
-			cs.isLive
+			scs.isLive
 		FROM #SuperPT scs
 			INNER JOIN #AgentPT acs ON acs.srecommend = scs.custid 
 									 AND acs.SportType = scs.Sporttype 
