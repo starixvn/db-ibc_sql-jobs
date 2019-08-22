@@ -1,11 +1,6 @@
-﻿/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+﻿/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE bodb_Licensee
 GO
-
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
-
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_SumWL] 
     @Date smalldatetime
 	,@DrawFilter tinyint = 1
@@ -23,6 +18,7 @@ Revisions:
 - 20160616@Jim: Changes to data integrity automail (#59249)	
 - 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
 - 20180418@Joseph: Integrate new product PP [Redmine: #92318]
+- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 
 Param's Explanation:
     @DrawFilter Only support 1:Normal 
@@ -41,13 +37,13 @@ BEGIN
 	BEGIN
 	
 		SELECT 1 AS Id, CONVERT(MONEY, 0) AS Sb, CONVERT(MONEY, 0) AS Rb, CONVERT(MONEY, 0) AS Ng , CONVERT(MONEY, 0)  AS BA,CONVERT(MONEY, 0) AS CS,  CONVERT(MONEY, 0) AS BT,CONVERT(MONEY, 0) AS LC, CONVERT(MONEY, 0) AS AG ,CONVERT(MONEY, 0) AS GD,CONVERT(MONEY, 0) AS KN ,CONVERT(MONEY, 0) AS VG,CONVERT(MONEY, 0) AS VB,CONVERT(MONEY, 0) AS MGCLC,CONVERT(MONEY, 0) AS MGCRNG, CONVERT(MONEY, 0) AS VS
-					, CONVERT(MONEY, 0) AS CB, CONVERT(MONEY, 0) AS AB, CONVERT(MONEY, 0) AS NG2, CONVERT(MONEY, 0) AS FW, CONVERT(MONEY, 0) AS CO, CONVERT(MONEY, 0) AS VS2, CONVERT(MONEY, 0) AS LT, CONVERT(MONEY, 0) AS PP
+					, CONVERT(MONEY, 0) AS CB, CONVERT(MONEY, 0) AS AB, CONVERT(MONEY, 0) AS NG2, CONVERT(MONEY, 0) AS FW, CONVERT(MONEY, 0) AS CO, CONVERT(MONEY, 0) AS VS2, CONVERT(MONEY, 0) AS LT, CONVERT(MONEY, 0) AS PP, CONVERT(MONEY, 0) AS CC
 		UNION
 		SELECT 2, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0),  CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0) ,CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0)
-					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0)
+					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0)
 		UNION
 		SELECT 3, CONVERT(MONEY, 0)t, CONVERT(MONEY, 0), CONVERT(MONEY, 0),   CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0)
-					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0)
+					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0)
 	
 		RETURN; 
 	END
@@ -140,6 +136,10 @@ BEGIN
 		,@PPTurnover MONEY
 		,@PPCustomerWl MONEY
 		,@PPBetCount MONEY
+		----CC
+		,@CCTurnover MONEY
+		,@CCCustomerWl MONEY
+		,@CCBetCount MONEY
 
 	---
 	DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),Sporttype INT)
@@ -148,7 +148,7 @@ BEGIN
 	SELECT DISTINCT ProductPrefix,s.Sporttype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP')
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC')
 
 	INSERT INTO @tblSport(ProductPrefix,Sporttype)
 	SELECT 'SB',0
@@ -408,6 +408,17 @@ BEGIN
 		   ,@PPCustomerWl	= ISNULL(@PPCustomerWl,0)
 		   ,@PPBetCount 	= ISNULL(@PPBetCount,0)
 
+	----CC
+	 SELECT  @CCTurnover = SUM( b.Turnover)
+			,@CCCustomerWl = SUM(b.winlost)
+			,@CCBetCount = SUM( b.BetCount)  
+	FROM @tblData b
+	WHERE ProductPrefix = 'CC'
+
+	SELECT @CCTurnover 		= ISNULL(@CCTurnover,0)
+		   ,@CCCustomerWl	= ISNULL(@CCCustomerWl,0)
+		   ,@CCBetCount 	= ISNULL(@CCBetCount,0)
+
 	-- Result
 
 	SELECT 1 AS Id, @SbTurnover AS Sb
@@ -433,6 +444,7 @@ BEGIN
 				  , @VS2Turnover AS VS2
 				  , @LTTurnover  AS LT
 				  , @PPTurnover  AS PP
+				  , @CCTurnover  AS CC
 			  
 	UNION
 	SELECT 2, @SbCustomerWl
@@ -458,6 +470,7 @@ BEGIN
 			, @VS2CustomerWl
 			, @LTCustomerWl
 			, @PPCustomerWl
+			, @CCCustomerWl
 	UNION
 	SELECT 3, @SbBetCount
 			, @RbBetCount
@@ -482,8 +495,6 @@ BEGIN
 			, @VS2BetCount
 			, @LTBetCount
 			, @PPBetCount
+			, @CCBetCount
 END
-GO
-
-GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_SumWL] TO [bodbLicenseeNet] AS [dbo]
 GO

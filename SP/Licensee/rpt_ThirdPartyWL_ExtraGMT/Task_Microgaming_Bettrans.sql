@@ -18,6 +18,7 @@ AS
 		- 20180703@Sophia: Check @Winlossdate <= Movebetday will return because this day don't have data on Bettrans [Redmine: #97567] 
 		- 20180608@Bruce: LA - Implement sum job for Pragmatic (GMT+0) [RedmineId #93958]
 		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
+		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 	 Param's Explanation:
 */
 
@@ -61,6 +62,7 @@ BEGIN
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
 			AND (b.gameID BETWEEN 1011 AND 1020 -- FW
 				OR b.gameID BETWEEN 4101 AND 4300 -- PP
+				OR b.gameID BETWEEN 1901 AND 1999 -- CC
 			)
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID
 			, b.currency, b.statusID

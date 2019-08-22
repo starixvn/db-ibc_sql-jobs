@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20181210@bruce: check Pragmatic data [#105723]
 		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
+		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 */
 
 BEGIN
@@ -83,6 +84,7 @@ BEGIN
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
 			AND (b.gameID BETWEEN 1011 AND 1020 -- FW
 				 OR b.gameID BETWEEN 4101 AND 4300 -- PP
+				 OR b.gameID BETWEEN 1901 AND 1999 -- CC
 				 )
 		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
 			b.currency, b.statusID	

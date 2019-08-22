@@ -1,11 +1,6 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE bodb_LicenseeReport
 GO
-
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
-
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_LicenseeWL] 
     @Date smalldatetime 
 	,@DrawFilter tinyint = 1
@@ -25,6 +20,7 @@ Revisions:
 	- 20160906@Jim: Correct value of SB & BA [Redmine #63571]
 	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT, LK3 into data validation email [RedmineID: #81708]
 	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
+	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -131,13 +127,17 @@ BEGIN
 		   ,@PPTurnover MONEY
 		   ,@PPCustomerWl MONEY
 		   ,@PPBetCount MONEY
+		   ----CC
+		   ,@CCTurnover MONEY
+		   ,@CCCustomerWl MONEY
+		   ,@CCBetCount MONEY
 	         
 	DECLARE @tblSporttype AS TABLE(ProductPrefix VARCHAR (10),Sporttype INT)	   
 	INSERT INTO @tblSporttype (ProductPrefix, Sporttype)
 	SELECT DISTINCT ProductPrefix, Sporttype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP')	
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC')	
 
 	INSERT INTO  @tblSporttype
 	SELECT 'SB', 0
@@ -504,6 +504,22 @@ BEGIN
 	SELECT @PPTurnover 		= ISNULL(@PPTurnover,0)
 		   ,@PPCustomerWl	= ISNULL(@PPCustomerWl,0)
 		   ,@PPBetCount 	= ISNULL(@PPBetCount,0)
+		   
+	----CC
+	SELECT  @CCTurnover=SUM(CASE 
+						WHEN @DrawFilter IN (2,3) THEN 
+							CASE WHEN b.StatusID = 111 THEN 0 WHEN b.StatusID IN (114,115) THEN 0.5 ELSE 1 END
+						ELSE 1
+					END * b.Turnover)
+			,@CCCustomerWl=SUM(b.winlost)
+			,@CCBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END) 
+	FROM @tblData b
+	WHERE ProductPrefix = 'CC'
+
+	SELECT @CCTurnover 		= ISNULL(@CCTurnover,0)
+		   ,@CCCustomerWl	= ISNULL(@CCCustomerWl,0)
+		   ,@CCBetCount 	= ISNULL(@CCBetCount,0)
+
 
 	-- Result
 
@@ -530,6 +546,7 @@ BEGIN
 				  , @VS2Turnover AS VS2
 				  , @LTTurnover  AS LT
 				  , @PPTurnover  AS PP
+				  , @CCTurnover  AS CC
 			  
 	UNION
 	SELECT 2, @SbCustomerWl
@@ -555,6 +572,7 @@ BEGIN
 			, @VS2CustomerWl
 			, @LTCustomerWl
 			, @PPCustomerWl
+			, @CCCustomerWl
 	UNION
 	SELECT 3, @SbBetCount
 			, @RbBetCount
@@ -579,13 +597,8 @@ BEGIN
 			, @VS2BetCount
 			, @LTBetCount
 			, @PPBetCount
+			, @CCBetCount
 
 	SET NOCOUNT OFF
 END
-GO
-
-GRANT EXECUTE ON [dbo].[GET_DepositDataToValidate_LicenseeWL] TO [bodbLicenseeNet] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[GET_DepositDataToValidate_LicenseeWL] TO [vnteam] AS [dbo]
 GO

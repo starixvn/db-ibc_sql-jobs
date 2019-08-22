@@ -29,6 +29,7 @@ AS
 		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
 		- 20181210@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
 		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
+		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -409,7 +410,7 @@ BEGIN
 					WHEN bettype = 914 THEN -9--Cash Out - Winloss
 					WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
 					WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-					WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
+					WHEN bettype = 1900 THEN 249 -- VG
 					WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 					WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 					WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
@@ -420,6 +421,7 @@ BEGIN
 					WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 					WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 					WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
+					WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 				ELSE 0 END,--SportType
 				SUM(TurnOver),--Turnover  
 				SUM(DrawGame),--Draw game TO			
@@ -450,7 +452,7 @@ BEGIN
 					WHEN bettype = 914 THEN -9--Cash Out - Winloss
 					WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
 					WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-					WHEN bettype BETWEEN 1900 AND 1999 THEN 249 -- VG
+					WHEN bettype = 1900 THEN 249 -- VG
 					WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 					WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 					WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
@@ -461,6 +463,7 @@ BEGIN
 					WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 					WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 					WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
+					WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 				ELSE 0 END
 		--Start update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
 		MERGE #rptDepWinlostByProduct AS TARGET
