@@ -10,7 +10,7 @@ AS
 		- 20180130@Harris: Change the error message and including the discrepancy of yesterday
 		- 20190514@Harris: adjust the discrepancy, ignore if others < 5RM or each products < 1RM
 		- 20190819@Patrick: Move to DB061 [RedmineId: #118845]
-
+		- 20190826@Harris: Add more column for new Reset Winning SP [Feature #117809]
 */
 BEGIN
     SET NOCOUNT ON
@@ -20,6 +20,7 @@ BEGIN
 	   , winlost MONEY
 	   , winlostAfterExtraPT MONEY
 	   , [reset] MONEY
+	   , Seq INT
     )
 	
 	 CREATE TABLE #tmpExtra (GroupID int
