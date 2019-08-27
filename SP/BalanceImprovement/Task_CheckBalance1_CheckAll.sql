@@ -17,6 +17,8 @@ AS
 		20170929@Patrick: Update code for Bonus project
 		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
 		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
+		20190827@Patrick: Exclude all members below 8RM account for bet restricion [RedmineID: #117727]
+			+ Fix issue duplicated custid from Acc_DWLList
 		
 	Param use:
 
@@ -37,14 +39,25 @@ INSERT INTO Task_Cust_CheckBalance_Exception
 SELECT custid, 'DWLList'
 FROM DBACC.bodb_ACC.dbo.Acc_DWLList dw with (nolock)
 WHERE custid NOT IN (SELECT custid FROM dbo.Task_Cust_CheckBalance_Exception ce with (nolock))
+GROUP BY custid
 UNION ALL
 SELECT custid, 'DWLList_ExtraPT'
 FROM DBACC.bodb_ACC.dbo.Acc_DWLList_ExtraPT dwe with (nolock)
 WHERE custid NOT IN (SELECT custid FROM dbo.Task_Cust_CheckBalance_Exception ce with (nolock))
+GROUP BY custid
 UNION ALL
 SELECT custid, 'BetTrade Dummy Accounts'
 FROM DBCUST.custDB.dbo.BetTradeCust bt with (nolock)
 WHERE custid NOT IN (SELECT custid FROM dbo.Task_Cust_CheckBalance_Exception ce with (nolock))
+GROUP BY custid
+
+--for 8RM account
+INSERT INTO Task_Cust_CheckBalance_Exception(custid, Remark)
+SELECT custid, '8RM'
+FROM CustDB.dbo.Customer c WITH(NOLOCK)
+WHERE c.recommend IN (SELECT custid FROM CustDB.dbo.Customer t WITH(NOLOCK) WHERE t.username = '8RM' AND roleid = 2)
+	AND c.custid NOT IN (SELECT ce.custid FROM dbo.Task_Cust_CheckBalance_Exception ce WITH (NOLOCK))
+GROUP BY c.custid
 
 IF NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1)
 BEGIN
