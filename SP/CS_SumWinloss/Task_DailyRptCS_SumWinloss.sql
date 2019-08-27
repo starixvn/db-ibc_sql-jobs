@@ -1,5 +1,5 @@
-/*<info serverAlias="DBSUM-bodb_Summary" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-use bodb_Summary
+/*<info serverAlias="DBSUM-bodb_Summary" executers="" isFunction="0" isNested="1"></info>*/
+USE bodb_Summary
 GO 
 
 ALTER PROCEDURE [dbo].[Task_DailyRptCS_SumWinloss]
@@ -13,7 +13,8 @@ AS
 	
 	Revisions:
 		- 20190301@Sophia: Initialize SP [RedmineID: #105660]
-		- 20190329@Sophia: Implement Non Sports [Redmine: #109521] 
+		- 20190329@Sophia: Implement Non Sports [Redmine: #109521]
+		- 20190801@Percy: Set ExtraPT = 0 when nullable value [RedmineID: #117909]
 		
 	Param's Explanation:
 	
@@ -172,9 +173,9 @@ BEGIN
 				SUM(SWinlost) AS SuperWinloss,
 				SUM(SComm - Acomm) AS SuperComm,
 				SUM(ABS(winlost - actual_stake) * (1 - tpositiontaking)) AS SuperStock,
-				SUM ( -1 * (CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * e.ExtraPT) AS HeadlineWinloss,
-				SUM ( -1 * (CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * e.ExtraPT) AS HeadlineComm,
-				SUM (ABS(winlost - actual_stake) * (1 - tpositiontaking - e.ExtraPT)) AS HeadlineStock,
+				SUM ( -1 * (CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * ISNULL(e.ExtraPT, 0)) AS HeadlineWinloss,
+				SUM ( -1 * (CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * ISNULL(e.ExtraPT, 0)) AS HeadlineComm,
+				SUM (ABS(winlost - actual_stake) * (1 - tpositiontaking - ISNULL(e.ExtraPT, 0))) AS HeadlineStock,
 				CS.UplineId AS HeadlineId			 
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.CustSuper CS WITH (NOLOCK) ON b.srecommend = CS.CustID			
