@@ -36,7 +36,7 @@ BEGIN
 	SELECT ci.custid,srecommend,sporttype,bettype,isLive,MaxBet,MaxPerEvent
 	FROM  CheckCustDB.dbo.custinfo ci WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.CS_CustBetSetting_Agent cs WITH(NOLOCK) ON ci.custid = cs.custid
-	WHERE ci.custid = @srecommend
+	WHERE ci.srecommend = @srecommend
 		AND sporttype = CASE WHEN @sporttype = 0 THEN cs.sporttype ELSE @sporttype END
 		AND roleid = 3
 		AND enabled = 1
@@ -45,7 +45,7 @@ BEGIN
 	SELECT ci.custid,srecommend,mrecommend,sporttype,bettype,isLive,MaxBet,MaxPerEvent
 	FROM  CheckCustDB.dbo.custinfo ci WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.CS_CustBetSetting_Agent cs WITH(NOLOCK) ON ci.custid = cs.custid
-	WHERE ci.custid = @srecommend
+	WHERE ci.srecommend = @srecommend
 		AND sporttype = CASE WHEN @sporttype = 0 THEN cs.sporttype ELSE @sporttype END
 		AND roleid = 2
 		AND enabled = 1
