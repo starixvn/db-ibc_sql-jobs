@@ -47,6 +47,7 @@ UNION SELECT 10208,'Master MaxPerEvent < Agent MaxPerEvent'
 UNION SELECT 10209,'Agent maxbet > Agent MaxPerEvent'
 UNION SELECT 10210,'Agent maxbet < Member maxbet'
 UNION SELECT 10211,'Agent MaxPerEvent < Member MaxPerEvent '
+UNION SELECT 10212,'Member MaxBet < Member MaxPerEvent '
 GO
 
 
