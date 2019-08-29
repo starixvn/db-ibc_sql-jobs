@@ -1,7 +1,5 @@
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
-CREATE PROCEDURE [dbo].[Task_DailySummary]
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[Task_DailySummary]
 	@winlostdate datetime,
 	@TestMode tinyint = 0
 AS
@@ -76,6 +74,7 @@ Revisions:
 	- 20181126@Percy: Incorporate Happy 5 into Number Game [RedmineID: #104283]
 	- 20190131@Patrick: Delete bettransm batch by batch at replicated servers to reduce lock escalation [RedmineID: #108581]
 	- 20190701@Percy: Add Card Club [RedmineID: #115611]
+	- 20190826@Percy: Remove inactive products [RedmineID: #118699]
  */
 
 SET NOCOUNT ON
@@ -94,7 +93,7 @@ FROM dbo.bettrans b with (nolock)
 	INNER JOIN dbo.outright o witH(nolock) ON b.matchid = o.orid
 WHERE b.winlostdate <> o.eventdate 
 	--and b.bettype NOT BETWEEN 1501 AND 1599 --no need to move keno bettype because orid <> keno.eventid
-	AND b.bettype IN (10,31,32,33, 41,42,43)
+	AND b.bettype = 10
 	
 --UPDATE b SET winlostdate = m.eventdate
 INSERT INTO @transTable
@@ -103,7 +102,7 @@ FROM dbo.bettrans b with (nolock)
 	INNER JOIN dbo.match m witH(nolock) ON b.matchid = m.matchid
 WHERE b.winlostdate <> m.eventdate
 	AND b.bettype NOT IN (1231,1232,1233,1237,1238) -- exclude vsoutright
-	AND b.bettype NOT IN (10,31,32,33, 41,42,43) -- exclude outright 
+	AND b.bettype <> 10 -- exclude outright 
 	AND b.bettype NOT BETWEEN 1501 AND 1599  --- exclude keno
 	AND b.bettype NOT BETWEEN 1021 AND 1049  --- exclude lottery
 	
@@ -595,13 +594,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 1,
 		customer.custid, customer.recommend, customer.mrecommend, customer.srecommend, customer.username,
-		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
-		SUM(CASE WHEN winlostdate >= @ABSDate 
-				THEN case when liveawayscore = 0 and bettype in(33,43) then ABS(stake)/2 else ABS(stake) end
-				ELSE case when liveawayscore = 0 and bettype in(33,43) then stake/2 else stake end 
-				END
-				) as TurnOver,*/
-		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake)/2 else ABS(stake) end) TurnOver,
+		sum(ABS(stake)) TurnOver,
 		sum(winlost-actual_stake)  winlost,
 		sum(awinlost) awinlost,
 		sum(mwinlost) mwinlost,
@@ -611,32 +604,19 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
 		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
-		--sum(scomm / (1-tpositiontaking)) grosscomm,
-		-- 01-Dec-2009, apply gross commission by level
-		-- 07 Jun 2012, apply case for P2P gross comission
-		SUM(CASE
-			WHEN bettype = 1000 THEN oddsspread
-			WHEN bettype BETWEEN 1401 AND 1499 THEN comm
-			ELSE CASE WHEN apositiontaking = 1 THEN 0 ELSE ISNULL(comm/(1-apositiontaking),0) END END) grosscomm, 
+		SUM(CASE WHEN apositiontaking = 1 THEN 0 ELSE ISNULL(comm/(1-apositiontaking),0) END) grosscomm, 
 		CASE
-			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
-			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sport
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sport
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
-			WHEN bettype = 73 THEN 252 --Bingo 
-			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
-			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
-			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 OR Bettype BETWEEN 2901 AND 2999 THEN 210
@@ -645,31 +625,23 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
-			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
-			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END sporttype,
-		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype, 
+		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype, 
 		0 AS netTurnover,
-		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
-					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+		SUM( CASE	WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
 						---- Sportsbook
 						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399 OR bettype BETWEEN 9001 AND 9399)
-						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT IN (71,72)
 						AND Bettype NOT BETWEEN 81 AND 120			
 						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						AND (
 							---- Sportsbook
-							(
 								(Bettype < 999 OR bettype BETWEEN 1301 AND 1399 OR bettype BETWEEN 9001 AND 9399)
-								AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+								AND Bettype NOT IN (71,72)
 								AND Bettype NOT BETWEEN 81 AND 120
-							)
-							---- Bullfighting
-							OR bettype = 1004
 						)
 						THEN 0
 					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
@@ -688,24 +660,17 @@ INSERT INTO dbo.sum_winloss_tmp
 		customer.custid, customer.recommend, customer.mrecommend, customer.srecommend,
 		customer.username,
 		CASE
-			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
-			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
-			WHEN bettype = 73 THEN 252 --Bingo 
-			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
-			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
-			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 OR Bettype BETWEEN 2901 AND 2999 THEN 210
@@ -714,13 +679,10 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
-			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
-			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END,
-		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
+		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
 
 INSERT INTO dbo.sum_winloss_tmp
@@ -730,13 +692,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 2,
 		ag.custid, customer.recommend, customer.mrecommend, customer.srecommend, ag.username,
-		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
-		SUM(CASE WHEN winlostdate >= @ABSDate 
-				THEN case when liveawayscore = 0 and bettype in(33,43) then ABS(stake)/2 else ABS(stake) end
-				ELSE case when liveawayscore = 0 and bettype in(33,43) then stake/2 else stake end 
-				END
-				) as TurnOver,*/
-		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake)/2 else ABS(stake) end) TurnOver,
+		sum(ABS(stake)) TurnOver,
 		sum(winlost-actual_stake)  winlost,
 		sum(awinlost) awinlost,
 		sum(mwinlost) mwinlost,
@@ -746,30 +702,19 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
 		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
-		--sum(scomm / (1-tpositiontaking)) grosscomm,
-		SUM(CASE
-			WHEN bettype = 1000 THEN oddsspread
-			WHEN bettype BETWEEN 1401 AND 1499 THEN acomm
-			ELSE CASE WHEN apositiontaking+mpositiontaking = 1 THEN 0 ELSE ISNULL(acomm/(1-apositiontaking-mpositiontaking), 0) END END) grosscomm, 
+		SUM(CASE WHEN apositiontaking+mpositiontaking = 1 THEN 0 ELSE ISNULL(acomm/(1-apositiontaking-mpositiontaking), 0) END) grosscomm, 
 		CASE
-			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
-			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
-			WHEN bettype = 73 THEN 252 --Bingo 
-			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
-			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
-			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 OR Bettype BETWEEN 2901 AND 2999 THEN 210			
@@ -778,31 +723,23 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
-			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
-			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END sporttype,
-		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
-		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*apositiontaking)/2 else ABS(stake*apositiontaking) end) AS netTurnover,
-		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
-					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
+		sum(ABS(stake*apositiontaking)) AS netTurnover,
+		SUM( CASE	WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
 						---- Sportsbook
 						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399 OR bettype BETWEEN 9001 AND 9399)
-						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT IN (71,72)
 						AND Bettype NOT BETWEEN 81 AND 120			
 						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						AND (
 							---- Sportsbook
-							(
 								(Bettype < 999 OR bettype BETWEEN 1301 AND 1399 OR bettype BETWEEN 9001 AND 9399)
-								AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+								AND Bettype NOT IN (71,72)
 								AND Bettype NOT BETWEEN 81 AND 120
-							)
-							---- Bullfighting
-							OR bettype = 1004
 						)
 						THEN 0
 					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
@@ -823,24 +760,17 @@ INSERT INTO dbo.sum_winloss_tmp
 		ag.custid, customer.recommend, customer.mrecommend, customer.srecommend,
 		ag.username,
 		CASE
-			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
-			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
-			WHEN bettype = 73 THEN 252 --Bingo 
-			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
-			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
-			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 OR Bettype BETWEEN 2901 AND 2999 THEN 210
@@ -849,13 +779,10 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
-			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
-			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END,
-		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
+		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
 
 INSERT INTO dbo.sum_winloss_tmp
@@ -865,13 +792,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 3,
 		ma.custid, 0 recommend, customer.mrecommend, customer.srecommend, ma.username,
-		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
-		SUM(CASE WHEN winlostdate >= @ABSDate 
-				THEN case when liveawayscore = 0 and bettype in(33,43) then ABS(stake)/2 else ABS(stake) end
-				ELSE case when liveawayscore = 0 and bettype in(33,43) then stake/2 else stake end 
-				END
-				) as TurnOver,*/
-		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake)/2 else ABS(stake) end) TurnOver,
+		sum(ABS(stake)) TurnOver,
 		sum(winlost-actual_stake)  winlost,
 		sum(awinlost) awinlost,
 		sum(mwinlost) mwinlost,
@@ -881,29 +802,19 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
 		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
-		SUM(CASE
-			WHEN bettype = 1000 THEN oddsspread
-			WHEN bettype BETWEEN 1401 AND 1499 THEN scomm
-			ELSE CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END END) grosscomm,
+		SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) grosscomm,
 		CASE
-			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
-			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
-			WHEN bettype = 73 THEN 252 --Bingo 
-			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
-			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
-			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 OR Bettype BETWEEN 2901 AND 2999 THEN 210
@@ -912,31 +823,23 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
-			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
-			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END sporttype,
-		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
-		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*mpositiontaking)/2 else ABS(stake*mpositiontaking) end) AS netTurnover,
-		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
-					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
+		sum(ABS(stake*mpositiontaking)) AS netTurnover,
+		SUM( CASE	WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
 						---- Sportsbook
 						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399 OR bettype BETWEEN 9001 AND 9399)
-						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT IN (71,72)
 						AND Bettype NOT BETWEEN 81 AND 120			
 						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						AND (
 							---- Sportsbook
-							(
 								(Bettype < 999 OR bettype BETWEEN 1301 AND 1399 OR bettype BETWEEN 9001 AND 9399)
-								AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+								AND Bettype NOT IN (71,72)
 								AND Bettype NOT BETWEEN 81 AND 120
-							)
-							---- Bullfighting
-							OR bettype = 1004
 						)
 						THEN 0
 					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
@@ -957,24 +860,17 @@ INSERT INTO dbo.sum_winloss_tmp
 		ma.custid, customer.mrecommend, customer.srecommend, 
 		ma.username,
 		CASE
-			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
-			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
-			WHEN bettype = 73 THEN 252 --Bingo 
-			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
-			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
-			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 OR Bettype BETWEEN 2901 AND 2999 THEN 210
@@ -983,13 +879,10 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
-			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
-			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END,
-		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
+		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
 --20100601: Arrange sum_winloss data for Super Level.
 INSERT INTO dbo.sum_winloss_tmp
@@ -999,13 +892,7 @@ INSERT INTO dbo.sum_winloss_tmp
 	sporttype, bettype, netTurnover, TunroverNoDraw)
 	SELECT @winlostdate, 4,
 		sa.custid, 0 recommend, 0 mrecommend, customer.srecommend, sa.username,
-		/*--sum(CASE WHEN bettype in (33, 43) AND liveawayscore = 0 THEN stake/2 ELSE stake END) turnover,
-		SUM(CASE WHEN winlostdate >= @ABSDate 
-				THEN case when liveawayscore = 0 and bettype in(33,43) then ABS(stake)/2 else ABS(stake) end
-				ELSE case when liveawayscore = 0 and bettype in(33,43) then stake/2 else stake end 
-				END
-				) as TurnOver,*/
-		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake)/2 else ABS(stake) end )  TurnOver,
+		sum(ABS(stake))  TurnOver,
 		sum(winlost-actual_stake)  winlost,
 		sum(awinlost) awinlost,
 		sum(mwinlost) mwinlost,
@@ -1015,29 +902,19 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
 		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
-		SUM(CASE
-			WHEN bettype = 1000 THEN oddsspread
-			WHEN bettype BETWEEN 1401 AND 1499 THEN scomm
-			ELSE CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END END) grosscomm,
+		SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) grosscomm,
 		CASE
-			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
-			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
-			WHEN bettype = 73 THEN 252 --Bingo 
-			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
-			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
-			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 OR Bettype BETWEEN 2901 AND 2999 THEN 210
@@ -1046,31 +923,23 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
-			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
-			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END sporttype,
-		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END bettype,
-		sum(case when liveawayscore = 0 and bettype in(33,43) then ABS(stake*spositiontaking)/2 else ABS(stake*spositiontaking) end) AS netTurnover,
-		SUM( CASE 	WHEN liveawayscore = 0 and bettype in(33,43) THEN ABS(stake)/2 
-					WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
+		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
+		sum(ABS(stake*spositiontaking)) AS netTurnover,
+		SUM( CASE	WHEN StatusID IN (112,113) AND MOdds IN (-0.25, 0.25) 
 						---- Sportsbook
 						AND (Bettype < 999 OR bettype BETWEEN 1301 AND 1399 OR bettype BETWEEN 9001 AND 9399)
-						AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+						AND Bettype NOT IN (71,72)
 						AND Bettype NOT BETWEEN 81 AND 120			
 						THEN ABS(stake)/2
 					WHEN StatusID = 111  
 						AND (
 							---- Sportsbook
-							(
 								(Bettype < 999 OR bettype BETWEEN 1301 AND 1399 OR bettype BETWEEN 9001 AND 9399)
-								AND Bettype NOT IN (31,32,33,41,42,43,71,72,73)
+								AND Bettype NOT IN (71,72)
 								AND Bettype NOT BETWEEN 81 AND 120
-							)
-							---- Bullfighting
-							OR bettype = 1004
 						)
 						THEN 0
 					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
@@ -1091,24 +960,17 @@ INSERT INTO dbo.sum_winloss_tmp
 		sa.custid, customer.srecommend, 
 		sa.username,
 		CASE
-			WHEN bettype IN (31,32,33,41,42,43) THEN 151 -- Horse Racing
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
-			WHEN bettype BETWEEN 1101 AND 1199 THEN 162 -- Live Casino
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
-			WHEN bettype = 73 THEN 252 --Bingo 
-			WHEN bettype = 1000 THEN 253
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
-			WHEN Bettype BETWEEN 2001 AND 2007 THEN 203 --- Microgaming - Live Casino 
-			WHEN Bettype BETWEEN 2008 AND 2009 THEN 205 --- Microgaming - RNG Casino
 			WHEN Bettype BETWEEN  18000 AND 18099 THEN 204 --- Colossus Bets
-			WHEN Bettype = 1003 THEN 206 --- Cockfighting
 			WHEN Bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN Bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN Bettype BETWEEN 2301 AND 2399 OR Bettype BETWEEN 2901 AND 2999 THEN 210
@@ -1117,13 +979,10 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
 			WHEN Bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
-			WHEN Bettype BETWEEN 1600 AND 1610 THEN 160 --Lucky 3 -
-			WHEN Bettype = 1004 THEN 207 -- Bullfighting -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN Bettype BETWEEN 1401 AND 1499 THEN 163 -- Poker Games
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 			ELSE 0 END,
-		CASE WHEN bettype IN (71,72,73,1000) THEN bettype ELSE 0 END
+		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
 
 -- =====================
