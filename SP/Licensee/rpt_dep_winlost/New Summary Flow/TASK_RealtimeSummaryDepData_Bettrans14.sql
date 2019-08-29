@@ -1,7 +1,4 @@
 /*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb02]
-GO
-
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
 	@Winlostdate DATE,
 	@isSuccessful BIT = 0 OUTPUT
@@ -30,6 +27,7 @@ AS
 		- 20181210@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
 		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
+		- 20190718@Amanda: Add rebate bonus ticket [RedmineID: #115445]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -121,8 +119,8 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 22001 THEN b.winlost-b.actual_stake ELSE 0 END), --Deposit
 			-SUM(CASE WHEN b.bettype IN (22002,22003) THEN b.winlost-b.actual_stake ELSE 0 END),--Withdrawal
 			SUM(CASE WHEN b.bettype = 21006 THEN b.winlost-b.actual_stake ELSE 0 END), --Aff2MemTransfer
-			SUM(CASE WHEN b.bettype = 22004 THEN b.winlost-b.actual_stake ELSE 0 END),--Bonus
-			SUM(CASE WHEN b.bettype IN (21001, 21002, 21003, 21004, 21005, 22005) THEN b.winlost-b.actual_stake ELSE 0 END), --Adjustment
+			SUM(CASE WHEN b.bettype IN (22004, 22202) THEN b.winlost-b.actual_stake ELSE 0 END),--Bonus
+			SUM(CASE WHEN b.bettype IN (21001, 21002, 21003, 21004, 21005, 22005, 22203) THEN b.winlost-b.actual_stake ELSE 0 END), --Adjustment
 			SUM(CASE WHEN b.bettype IN (22006,22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd
 			SUM(CASE WHEN b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
 			SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END) -- AdjBonusWallet

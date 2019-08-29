@@ -1,8 +1,4 @@
 /*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-
-USE [bodb02]
-GO
-
 ALTER PROCEDURE [dbo].[GEN_HourlySummaryDepData]
 	@Winlostdate DATE,
 	@NumberofCus INT = 0 OUTPUT,
