@@ -131,7 +131,7 @@ BEGIN
 	IF @ruleID IN (0,10006)
 	BEGIN	
 		INSERT INTO CS_CheckPTResult (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
-		SELECT 10006, cs.BetType, cs.SportType, mcs.custid, cs.AgentID, 
+		SELECT 10006, cs.BetType, cs.SportType, mcs.custid, cs.custid, 
 			CASE WHEN mcs.SuperPT < scs.MinPT - (cs.MasterPT + cs.AgentPT) THEN mcs.SuperPT ELSE 
 				mcs.SuperPT2 END,
 			CASE WHEN mcs.SuperPT < scs.MinPT - (cs.MasterPT + cs.AgentPT) THEN scs.MinPT - (cs.MasterPT + cs.AgentPT)
@@ -154,7 +154,7 @@ BEGIN
 	IF @ruleID IN (0,10007)
 	BEGIN
 		INSERT INTO CS_CheckPTResult (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
-		SELECT 10007, cs.BetType, cs.SportType, mcs.custid, cs.AgentID, 
+		SELECT 10007, cs.BetType, cs.SportType, mcs.custid, cs.custid, 
 			CASE WHEN mcs.SuperPT > scs.MaxPT - (cs.MasterPT + cs.AgentPT) THEN mcs.SuperPT ELSE 
 				mcs.SuperPT2 END,
 			CASE WHEN mcs.SuperPT > scs.MaxPT - (cs.MasterPT + cs.AgentPT) THEN scs.MaxPT - (cs.MasterPT + cs.AgentPT)

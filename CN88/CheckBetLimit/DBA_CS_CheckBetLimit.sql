@@ -184,7 +184,7 @@ BEGIN
 		WHERE cs.MaxPerEvent < mem.MaxPerEvent
 	END	
 	
-	--rule 11: member MaxPerEvent < member MaxBet
+	--rule 12: member MaxPerEvent < member MaxBet
 	IF @ruleid IN (0,10212)
 	BEGIN
 		INSERT INTO dbo.CS_CheckBetLimitResult(ruleID,SportType,bettype,isLive,CustIDA,custidB,ValueA,ValueB)

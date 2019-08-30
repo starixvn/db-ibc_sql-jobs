@@ -108,7 +108,7 @@ BEGIN
 	IF @ruleid IN (0,10104)
 	BEGIN
 		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
-		SELECT 10104 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, cs.custid as custidA, acs.custid as custidB, cs.Discount as ValueA, acs.Discount as ValueB
+		SELECT 10104 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, cs.custid as custidA, acs.custid as custidB, cs.PlayerDiscount as ValueA, acs.Discount as ValueB
 		FROM #AgentComm acs
 			LEFT JOIN #MemberComm cs ON acs.SportType = cs.SportType 
 										AND acs.BetType = cs.BetType 
@@ -128,7 +128,7 @@ BEGIN
 										AND acs.BetType = cs.BetType 
 										AND acs.IsLive = cs.IsLive	
 										AND acs.GroupID = cs.GroupID 
-										AND acs.custid = cs.custid
+										AND acs.custid = cs.AgentID
 		WHERE acs.Discount < cs.PlayerDiscount
 	END
 	
@@ -163,7 +163,7 @@ BEGIN
 	IF @ruleid IN (0,10109)
 	BEGIN
 		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
-		SELECT 10109 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, cs.custid as custidA, 0 as custidB, cs.MasterDiscount as ValueA, cs.AgentDiscount as ValueB
+		SELECT 10109 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, cs.AgentID as custidA, 0 as custidB, cs.MasterDiscount as ValueA, cs.AgentDiscount as ValueB
 		FROM #MemberGroupComm cs
 		WHERE MasterDiscount < AgentDiscount
 	END
@@ -181,7 +181,7 @@ BEGIN
 	IF @ruleid IN (0,10111)
 	BEGIN
 		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
-		SELECT 10111 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, cs.custid as custidA, 0 as custidB, cs.MasterDiscount as ValueA, cs.AgentDiscount as ValueB
+		SELECT 10111 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, cs.AgentID as custidA, 0 as custidB, cs.MasterDiscount as ValueA, cs.AgentDiscount as ValueB
 		FROM #MemberGroupComm cs
 		WHERE AgentDiscount < PlayerDiscount
 	END
@@ -204,7 +204,7 @@ BEGIN
 	IF @ruleid IN (0,10113)
 	BEGIN
 		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
-		SELECT 10113 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, scs.custid as custidA, cs.custid as custidB, scs.Discount as ValueA, cs.SuperDiscount as ValueB
+		SELECT 10113 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, scs.custid as custidA, cs.AgentID as custidB, scs.Discount as ValueA, cs.SuperDiscount as ValueB
 		FROM #SuperComm scs
 			LEFT JOIN #MemberGroupComm cs ON scs.SportType = cs.SportType 
 										AND scs.BetType = cs.BetType 
@@ -260,13 +260,13 @@ BEGIN
 	IF @ruleid IN (0,10117)
 	BEGIN
 		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
-		SELECT 10117 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, acs.custid as custidA, cs.custid as custidB, acs.Discount as ValueA, cs.AgentDiscount as ValueB
+		SELECT 10117 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, acs.custid as custidA, cs.AgentID as custidB, acs.Discount as ValueA, cs.AgentDiscount as ValueB
 		FROM #AgentComm acs
 			LEFT JOIN #MemberGroupComm cs ON acs.SportType = cs.SportType 
 										AND acs.BetType = cs.BetType 
 										AND acs.IsLive = cs.IsLive	
 										AND acs.GroupID = cs.GroupID 
-										AND acs.custid = cs.recommend
+										AND acs.custid = cs.AgentID
 		WHERE acs.Discount <> cs.AgentDiscount
 	END
 	
