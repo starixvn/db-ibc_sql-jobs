@@ -169,24 +169,39 @@ BEGIN
 
 	/* ===== Check and Correct Data ===== */
 	BEGIN
-		IF EXISTS (
-			SELECT 1
+		DECLARE @Rowcount INT
+
+		;WITH CTE_CS_SumCancelled AS (
+			SELECT
+				s.custid
+				,s.ProductId
+				,s.Sporttype
+				,s.bettype
+				,s.IsLive
+				,s.CancelType
+				,s.Wagers
+				,s.Stake
+				,s.HeadlineId
 			FROM dbo.CS_SumCancelled s WITH (NOLOCK)
-				FULL OUTER JOIN #tmpSumCancelled t
-					ON		s.custid		= t.custid
-						AND s.ProductId		= t.ProductId
-						AND s.Sporttype		= t.Sporttype
-						AND s.bettype		= t.bettype
-						AND s.IsLive		= t.IsLive
-						AND s.CancelType	= t.CancelType
-						AND s.WinlostDate	= @WinlostDate
-						AND EXISTS (SELECT 1 FROM bodb02.dbo.custInfo c WITH (NOLOCK) WHERE s.custid = c.custid AND c.roleid = 1)
-			WHERE s.custid IS NULL
-				OR t.custid IS NULL
-				OR s.Wagers		<> t.Wagers
-				OR s.Stake		<> t.Stake
-				OR s.HeadlineId <> t.HeadlineId
+			WHERE s.WinlostDate	= @WinlostDate
+				AND EXISTS (SELECT 1 FROM bodb02.dbo.custInfo c WITH (NOLOCK) WHERE s.custid = c.custid AND c.roleid = 1)
 		)
+		SELECT @Rowcount = COUNT(1)
+		FROM CTE_CS_SumCancelled s
+			FULL OUTER JOIN #tmpSumCancelled t
+				ON		s.custid		= t.custid
+					AND s.ProductId		= t.ProductId
+					AND s.Sporttype		= t.Sporttype
+					AND s.bettype		= t.bettype
+					AND s.IsLive		= t.IsLive
+					AND s.CancelType	= t.CancelType
+		WHERE s.custid IS NULL
+			OR t.custid IS NULL
+			OR s.Wagers		<> t.Wagers
+			OR s.Stake		<> t.Stake
+			OR s.HeadlineId <> t.HeadlineId
+		
+		IF @Rowcount <> 0
 		BEGIN
 			-- Sum for SMA
 			INSERT INTO #tmpSumCancelled

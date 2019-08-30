@@ -1,7 +1,4 @@
 /*<info serverAlias="DBSUM-bodb_Summary" executers="" isFunction="0" isNested="1"></info>*/
-USE bodb_Summary
-GO
-
 ALTER PROCEDURE [dbo].[Task_CS_SumWinloss]
 	@WinlostDate SMALLDATETIME
 AS
@@ -320,43 +317,77 @@ BEGIN
 
 	/* ===== Check and Correct Data ===== */
 	BEGIN
-		IF EXISTS (
-			SELECT 1
+		DECLARE @RowCount INT
+
+		;WITH CTE_CS_SumWinloss AS (
+			SELECT
+				s.custid
+				,s.ProductId
+				,s.Sporttype
+				,s.bettype
+				,s.IsLive
+				,s.Wagers
+				,s.Stake
+				,s.ValidStake
+				,s.MemberWinloss
+				,s.MemberComm
+				,s.Agent
+				,s.AgentWinloss
+				,s.AgentComm
+				,s.AgentStock
+				,s.AgentResultA
+				,s.Master
+				,s.MasterWinloss
+				,s.MasterComm
+				,s.MasterStock
+				,s.Super
+				,s.SuperWinloss
+				,s.SuperComm
+				,s.SuperStock
+				,s.HeadlineWinloss
+				,s.HeadlineComm
+				,s.HeadlineStock
+				,s.HeadlineId
+				,s.HouseTurnover
 			FROM dbo.CS_SumWinloss s WITH (NOLOCK)
-				FULL OUTER JOIN #tmpSumWinloss t
-					ON		s.custid		= t.custid
-						AND s.ProductId		= t.ProductId
-						AND s.Sporttype		= t.Sporttype
-						AND s.bettype		= t.bettype
-						AND s.IsLive		= t.IsLive
-						AND s.WinlostDate	= @WinlostDate
-						AND EXISTS (SELECT 1 FROM bodb02.dbo.custInfo c WITH (NOLOCK) WHERE s.custid = c.custid AND c.roleid = 1)
-			WHERE s.custid IS NULL
-				OR t.custid IS NULL
-				OR s.Wagers				<> t.Wagers
-				OR s.Stake				<> t.Stake
-				OR s.ValidStake			<> t.ValidStake
-				OR s.MemberWinloss		<> t.MemberWinloss
-				OR s.MemberComm			<> t.MemberComm
-				OR s.Agent				<> t.Agent
-				OR s.AgentWinloss		<> t.AgentWinloss
-				OR s.AgentComm			<> t.AgentComm
-				OR s.AgentStock			<> t.AgentStock
-				OR s.AgentResultA		<> t.AgentResultA
-				OR s.Master				<> t.Master
-				OR s.MasterWinloss		<> t.MasterWinloss
-				OR s.MasterComm			<> t.MasterComm
-				OR s.MasterStock		<> t.MasterStock
-				OR s.Super				<> t.Super
-				OR s.SuperWinloss		<> t.SuperWinloss
-				OR s.SuperComm			<> t.SuperComm
-				OR s.SuperStock			<> t.SuperStock
-				OR s.HeadlineWinloss	<> t.HeadlineWinloss
-				OR s.HeadlineComm		<> t.HeadlineComm
-				OR s.HeadlineStock		<> t.HeadlineStock
-				OR s.HeadlineId			<> t.HeadlineId
-				OR s.HouseTurnover		<> t.HouseTurnover
+			WHERE s.WinlostDate	= @WinlostDate
+				AND EXISTS (SELECT 1 FROM bodb02.dbo.custInfo c WITH (NOLOCK) WHERE s.custid = c.custid AND c.roleid = 1)
 		)
+		SELECT @RowCount = COUNT(1)
+		FROM CTE_CS_SumWinloss s
+			FULL OUTER JOIN #tmpSumWinloss t
+				ON		s.custid		= t.custid
+					AND s.ProductId		= t.ProductId
+					AND s.Sporttype		= t.Sporttype
+					AND s.bettype		= t.bettype
+					AND s.IsLive		= t.IsLive
+		WHERE s.custid IS NULL
+			OR t.custid IS NULL
+			OR s.Wagers				<> t.Wagers
+			OR s.Stake				<> t.Stake
+			OR s.ValidStake			<> t.ValidStake
+			OR s.MemberWinloss		<> t.MemberWinloss
+			OR s.MemberComm			<> t.MemberComm
+			OR s.Agent				<> t.Agent
+			OR s.AgentWinloss		<> t.AgentWinloss
+			OR s.AgentComm			<> t.AgentComm
+			OR s.AgentStock			<> t.AgentStock
+			OR s.AgentResultA		<> t.AgentResultA
+			OR s.Master				<> t.Master
+			OR s.MasterWinloss		<> t.MasterWinloss
+			OR s.MasterComm			<> t.MasterComm
+			OR s.MasterStock		<> t.MasterStock
+			OR s.Super				<> t.Super
+			OR s.SuperWinloss		<> t.SuperWinloss
+			OR s.SuperComm			<> t.SuperComm
+			OR s.SuperStock			<> t.SuperStock
+			OR s.HeadlineWinloss	<> t.HeadlineWinloss
+			OR s.HeadlineComm		<> t.HeadlineComm
+			OR s.HeadlineStock		<> t.HeadlineStock
+			OR s.HeadlineId			<> t.HeadlineId
+			OR s.HouseTurnover		<> t.HouseTurnover
+		
+		IF @RowCount <> 0
 		BEGIN
 			-- Sum for SMA
 			INSERT INTO #tmpSumWinloss
