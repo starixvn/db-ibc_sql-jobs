@@ -27,6 +27,22 @@ GO
 ALTER TABLE [dbo].[CS_CheckPTResult] ADD  DEFAULT ((0)) FOR [IsLive]
 GO
 
+CREATE CLUSTERED INDEX [CIX_CS_CheckPTResult] ON [dbo].[CS_CheckPTResult] 
+(
+	[RuleId] ASC,
+	[SportType] ASC,
+	[BetType] ASC,
+	[CustIdA] ASC,
+	[CustIdB] ASC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [CheckResultData]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_CS_CheckPTResult_CreatedDate] ON [dbo].[CS_CheckPTResult] 
+(
+	[CreatedDate] DESC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [CheckResultData]
+GO
+
 
 CREATE TABLE [dbo].[CS_CheckCommResult](
 	[RuleId] [smallint] NULL,
@@ -49,6 +65,21 @@ GO
 ALTER TABLE [dbo].[CS_CheckCommResult] ADD  DEFAULT ((0)) FOR [IsLive]
 GO
 
+CREATE CLUSTERED INDEX [CIX_CS_CheckCommResult] ON [dbo].[CS_CheckCommResult] 
+(
+	[RuleId] ASC,
+	[SportType] ASC,
+	[BetType] ASC,
+	[CustIdA] ASC,
+	[CustIdB] ASC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [CheckResultData]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_CS_CheckCommResult_CreatedDate] ON [dbo].[CS_CheckCommResult] 
+(
+	[CreatedDate] DESC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [CheckResultData]
+GO
 
 CREATE TABLE [dbo].[CS_CheckBetLimitResult](
 	[RuleId] [smallint] NULL,
@@ -70,6 +101,21 @@ GO
 ALTER TABLE [dbo].[CS_CheckBetLimitResult] ADD  DEFAULT ((0)) FOR [IsLive]
 GO
 
+CREATE CLUSTERED INDEX [CIX_CS_CheckBetLimitResult] ON [dbo].[CS_CheckBetLimitResult] 
+(
+	[RuleId] ASC,
+	[SportType] ASC,
+	[BetType] ASC,
+	[CustIdA] ASC,
+	[CustIdB] ASC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [CheckResultData]
+GO
+
+CREATE NONCLUSTERED INDEX [IX_CS_CheckBetLimitResult_CreatedDate] ON [dbo].[CS_CheckBetLimitResult] 
+(
+	[CreatedDate] DESC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [CheckResultData]
+GO
 
 CREATE TABLE [dbo].[CS_Supers](
 	[CustId] [int] NOT NULL,
