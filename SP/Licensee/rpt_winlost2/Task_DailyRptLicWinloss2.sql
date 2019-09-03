@@ -53,6 +53,7 @@ Revisions:
 	- 20190306@Amande: Implement PP Promotion Prize [RedmineID: #109471]
 	- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
+	- 20190903@Amanda: Add betfrom Deep Link(t) [RedmineID: #119010]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */  
@@ -162,7 +163,7 @@ BEGIN
 	,CASE 
 		WHEN bettrans.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END AS isMobile	
 	,CASE    
-		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c') THEN bettrans.betfrom ELSE '' END AS betfrom
+		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t') THEN bettrans.betfrom ELSE '' END AS betfrom
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
 FROM
@@ -220,7 +221,7 @@ GROUP BY
 	,CASE 
 		WHEN bettrans.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END
 	,CASE    
-		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c') THEN bettrans.betfrom ELSE '' END
+		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t') THEN bettrans.betfrom ELSE '' END
 
 --Agent Level (sum on member)
 INSERT INTO dbo.rptLicWinloss2
