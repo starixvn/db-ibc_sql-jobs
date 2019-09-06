@@ -16,6 +16,7 @@ AS
 	- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
 	- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
 	- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]
+	- 20190903@Amanda: Add platform Deep Link(t) [RedmineID: #119010]
 	
 	EXEC Task_DailyRptLicWinlossGMT_Bettrans '2017-11-30'
 */  
@@ -134,7 +135,7 @@ BEGIN
 				,CASE   
 					WHEN b.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END AS isMobile   
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c') THEN b.betfrom ELSE '' END AS betfrom   		
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t') THEN b.betfrom ELSE '' END AS betfrom   		
 			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 				LEFT JOIN bodb02.dbo.Match m WITH (NOLOCK)
 					ON m.MatchId = b.MatchId
@@ -181,7 +182,7 @@ BEGIN
 				,CASE   
 					WHEN b.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END  
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c') THEN b.betfrom ELSE '' END 
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t') THEN b.betfrom ELSE '' END 
 
 			--Agent Level (sum on member)  
 			INSERT INTO dbo.rptLicWinlossGMT (  
