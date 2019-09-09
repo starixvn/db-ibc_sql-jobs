@@ -11,6 +11,7 @@ AS
 	
 	Revisions:
 		- 20190722@Johnson: Initial sp [redmine: #116922]
+		- 20190909@Johnson: hotfix wrong data [redmine:#119871]
 */	
 BEGIN 
 	SET NOCOUNT ON
@@ -145,7 +146,7 @@ BEGIN
 	IF @ruleid IN (0,10107)
 	BEGIN
 		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
-		SELECT 10107 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, cs.custid as custidA, 0 as custidB, cs.SuperDiscount as ValueA, cs.MasterDiscount as ValueB
+		SELECT 10107 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, cs.AgentID as custidA, 0 as custidB, cs.SuperDiscount as ValueA, cs.MasterDiscount as ValueB
 		FROM #MemberGroupComm cs
 		WHERE SuperDiscount < MasterDiscount
 	END
@@ -232,7 +233,7 @@ BEGIN
 	IF @ruleid IN (0,10115)
 	BEGIN
 		INSERT INTO CS_CheckCommResult(ruleid,sporttype,bettype,isLive, groupID,custidA,custidB,ValueA,ValueB)
-		SELECT 10115 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, mcs.custid as custidA, cs.custid as custidB, mcs.Discount as ValueA, cs.MasterDiscount as ValueB
+		SELECT 10115 ruleid, cs.sporttype, cs.bettype, cs.isLive, cs.groupID, mcs.custid as custidA, cs.AgentID as custidB, mcs.Discount as ValueA, cs.MasterDiscount as ValueB
 		FROM #MasterComm mcs
 			LEFT JOIN #MemberGroupComm cs ON mcs.SportType = cs.SportType 
 										AND mcs.BetType = cs.BetType 

@@ -11,6 +11,7 @@ AS
 	
 	Revisions:
 		- 20190718@Johnson: Initial sp [redmine: #116922]
+		- 20190909@Johnson: fix data type range [redmine:#119871]
 */	
 BEGIN 
 	SET NOCOUNT ON
@@ -132,9 +133,9 @@ BEGIN
 	BEGIN	
 		INSERT INTO CS_CheckPTResult (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
 		SELECT 10006, cs.BetType, cs.SportType, mcs.custid, cs.custid, 
-			CASE WHEN mcs.SuperPT < scs.MinPT - (cs.MasterPT + cs.AgentPT) THEN mcs.SuperPT ELSE 
+			CASE WHEN mcs.SuperPT + (cs.MasterPT + cs.AgentPT) < scs.MinPT THEN mcs.SuperPT ELSE 
 				mcs.SuperPT2 END,
-			CASE WHEN mcs.SuperPT < scs.MinPT - (cs.MasterPT + cs.AgentPT) THEN scs.MinPT - (cs.MasterPT + cs.AgentPT)
+			CASE WHEN mcs.SuperPT + (cs.MasterPT + cs.AgentPT) < scs.MinPT THEN scs.MinPT - (cs.MasterPT + cs.AgentPT)
 				ELSE scs.MinPT2 - (cs.MasterPT2 + cs.AgentPT2) END,
 			cs.isLive
 		FROM #SuperPT scs
@@ -146,8 +147,8 @@ BEGIN
 									 AND cs.SportType = scs.Sporttype 
 									 AND cs.BetType = scs.bettype 
 									 AND cs.IsLive = scs.IsLive
-		WHERE mcs.SuperPT < scs.MinPT - (cs.MasterPT + cs.AgentPT)
-			OR mcs.SuperPT2 < scs.MinPT2 - (cs.MasterPT2 + cs.AgentPT2)
+		WHERE mcs.SuperPT + (cs.MasterPT + cs.AgentPT) < scs.MinPT 
+			OR mcs.SuperPT2 + (cs.MasterPT2 + cs.AgentPT2) < scs.MinPT2 
 	END
 	
 	--s3 > l4 - (m2+a2)
@@ -155,9 +156,9 @@ BEGIN
 	BEGIN
 		INSERT INTO CS_CheckPTResult (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
 		SELECT 10007, cs.BetType, cs.SportType, mcs.custid, cs.custid, 
-			CASE WHEN mcs.SuperPT > scs.MaxPT - (cs.MasterPT + cs.AgentPT) THEN mcs.SuperPT ELSE 
+			CASE WHEN mcs.SuperPT + (cs.MasterPT + cs.AgentPT)> scs.MaxPT THEN mcs.SuperPT ELSE 
 				mcs.SuperPT2 END,
-			CASE WHEN mcs.SuperPT > scs.MaxPT - (cs.MasterPT + cs.AgentPT) THEN scs.MaxPT - (cs.MasterPT + cs.AgentPT)
+			CASE WHEN mcs.SuperPT + (cs.MasterPT + cs.AgentPT) > scs.MaxPT THEN scs.MaxPT - (cs.MasterPT + cs.AgentPT)
 				ELSE scs.MaxPT2 - (cs.MasterPT2 + cs.AgentPT2) END,
 			cs.isLive
 		FROM #SuperPT scs
@@ -169,8 +170,8 @@ BEGIN
 									 AND cs.SportType = scs.Sporttype 
 									 AND cs.BetType = scs.bettype 
 									 AND cs.IsLive = scs.IsLive
-		WHERE mcs.SuperPT > scs.MaxPT - (cs.MasterPT + cs.AgentPT)
-			OR mcs.SuperPT2 > scs.MaxPT2 - (cs.MasterPT2 + cs.AgentPT2)
+		WHERE mcs.SuperPT + (cs.MasterPT + cs.AgentPT) > scs.MaxPT 
+			OR mcs.SuperPT2 + (cs.MasterPT2 + cs.AgentPT2) > scs.MaxPT2 
 	END
 	
 	--m2 > l4
