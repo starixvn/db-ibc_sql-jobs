@@ -58,6 +58,7 @@ BEGIN
 			,HeadlineStock		MONEY
 			,HouseTurnover		MONEY
 		)
+		
 		INSERT INTO #tmpBettrans
 		(
 			srecommend

@@ -36,6 +36,22 @@ BEGIN
 			,Wagers		INT
 			,Stake		MONEY
 		)
+
+		INSERT INTO #tmpBettrans
+		(
+			srecommend
+			,mrecommend
+			,recommend
+			,custid
+			,matchid
+			,ProductID
+			,bettype
+			,eventtype
+			,IsLive
+			,CancelType
+			,Wagers
+			,Stake
+		)
 		SELECT
 			b.srecommend
 			,b.mrecommend
@@ -46,6 +62,7 @@ BEGIN
 			,b.bettype
 			,CASE WHEN b.bettype = 2799 THEN 1 ELSE s.eventtype END AS eventtype
 			,b.IsLive
+			,b.CancelType
 			,COUNT(1) AS Wagers
 			,SUM(b.stake) AS Stake
 		FROM bodb02.dbo.CS_CustSuper c WITH (NOLOCK)
@@ -83,6 +100,7 @@ BEGIN
 			,b.bettype
 			,CASE WHEN b.bettype = 2799 THEN 1 ELSE s.eventtype END
 			,b.IsLive
+			,b.CancelType
 
 		-- Sum data
 		CREATE TABLE #tmpSumCancelled
