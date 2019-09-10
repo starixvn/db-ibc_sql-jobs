@@ -12,6 +12,7 @@ AS
 	 -20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	 - 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	 - 20180814@Joseph: Remove Racing [RedmineID: #99378]
+	 - 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
     
 */ 
 BEGIN
@@ -43,10 +44,10 @@ AS (
 		,a.recommend
 		,CASE 
 			WHEN a.statusID = 112
-				AND a.bettype IN (1, 3, 7, 8, 17, 18)
+				AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 				AND ABS(modds) = 0.25 THEN 114
 			WHEN a.statusID = 113
-				AND a.bettype IN (1, 3, 7, 8, 17, 18)
+				AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 				AND ABS(modds) = 0.25 THEN 115
 			ELSE a.statusID
 			END AS statusID
@@ -74,10 +75,10 @@ AS (
 		,a.oddsid
 		,CASE 
 			WHEN a.statusID = 112
-				AND a.bettype IN (1, 3, 7, 8, 17, 18)
+				AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 				AND ABS(modds) = 0.25 THEN 114
 			WHEN a.statusID = 113
-				AND a.bettype IN (1, 3, 7, 8, 17, 18)
+				AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 				AND ABS(modds) = 0.25 THEN 115
 			ELSE a.statusID
 			END

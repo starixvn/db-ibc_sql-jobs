@@ -1,6 +1,4 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-USE bodb_LicenseeReport
-GO
 
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
 	@winlostdate DATETIME
@@ -54,6 +52,7 @@ Revisions:
 	- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 	- 20190903@Amanda: Add betfrom Deep Link(t) [RedmineID: #119010]
+	- 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */  
@@ -154,8 +153,8 @@ BEGIN
 	,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300) THEN bettype ELSE 0 END bettype
 	--114: half win, 115: half lose
 	,CASE 
-		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114 
-		WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115
+		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 114 
+		WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 115
 		ELSE bettrans.statusID END AS statusID
 	,CASE 
 		WHEN BA.transid IS NULL THEN 0
@@ -212,8 +211,8 @@ GROUP BY
 		ELSE 0 END
 	,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300) THEN bettype ELSE 0 END
 	,CASE 
-		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114 
-		WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115
+		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 114 
+		WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 115
 		ELSE bettrans.statusID END
 	,CASE 
 		WHEN BA.transid IS NULL THEN 0

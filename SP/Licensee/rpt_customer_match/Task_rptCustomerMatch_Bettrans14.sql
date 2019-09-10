@@ -38,11 +38,11 @@ AS (
 		,a.oddstype
 		,CASE 
 		WHEN a.statusID = 112
-			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 			AND ABS(modds) = 0.25
 			THEN 114
 		WHEN a.statusID = 113
-			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 			AND ABS(modds) = 0.25
 			THEN 115
 		ELSE a.statusID
@@ -70,11 +70,11 @@ AS (
 		,a.oddstype
 		,CASE 
 		WHEN a.statusID = 112
-			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 			AND ABS(modds) = 0.25
 			THEN 114
 		WHEN a.statusID = 113
-			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 			AND ABS(modds) = 0.25
 			THEN 115
 		ELSE a.statusID
