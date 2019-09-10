@@ -10,6 +10,7 @@ AS
 	
 	Revisions:
 		- 20190610@Johnson: initial sp [redmine: #105587]
+		- 20190910@Johnson: fix suspendlevel [redmine:#119941]
 */
 BEGIN
 	-------------------PREPARATION: GET LIST SUPER/Master/Agent disabled FIRST----------------------------
@@ -67,10 +68,10 @@ BEGIN
 	-- Rule 17: reject status <> suspendInfo on upline 
 	;WITH T AS(
 	SELECT ci.custid,ci.roleid,ci.username, ci.reject, 
-	CASE WHEN s.reject = 1 THEN 4 
-		ELSE (CASE WHEN m.reject = 1 THEN 3 
-				ELSE (CASE WHEN a.reject = 1 THEN 2
-						ELSE ci.reject END)
+	CASE WHEN s.reject = 1 AND ci.roleid < 4 THEN 4 
+		ELSE (CASE WHEN m.reject = 1 AND ci.roleid < 3 THEN 3 
+				ELSE (CASE WHEN a.reject = 1 AND ci.roleid < 2 THEN 2
+						ELSE ci.roleid END)
 				END) 
 		END suspendLevel,	
 	CASE WHEN s.reject = 1 THEN s.custid 
