@@ -23,7 +23,7 @@ BEGIN
 	SET @rc = @@ROWCOUNT
 	SET @r = 1
 
-	DECLARE @__tempData TABLE (transid BIGINT)
+	--DECLARE @__tempTransIds TABLE (transid BIGINT)
 	DECLARE @__tempCustIds TABLE(custid INT)
 
 	DECLARE @delayTimeValue VARCHAR(50)
@@ -35,7 +35,6 @@ BEGIN
 	WHILE @r <= @rc
 	BEGIN
 	
-		DELETE FROM @__tempData
 		DELETE FROM @__tempCustIds
 
 		SET @transIds = NULL
@@ -45,15 +44,11 @@ BEGIN
 		FROM #__custList t WITH (NOLOCK)
 		WHERE keyId >= @r AND keyId < @r + 200
 
-		INSERT INTO @__tempData(transid)
-		SELECT transid
+		SELECT @transIds = COALESCE(@transIds + '^' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
 		FROM dbo.bettrans b WITH(NOLOCK)
 		WHERE b.custid IN (SELECT t.custId FROM @__tempCustIds t)
 			AND b.winlostdate < @winlostdate
 	
-		SELECT @transIds = COALESCE(@transIds + '^' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
-		FROM @__tempData
-
 		DELETE FROM dbo.balanceTable_tmp WHERE custid IN (SELECT t.custid FROM @__tempCustIds t)
 		EXEC dbo.ExecRep_07 @custids = '', @custid = 0, @roleid = 111, @winlostdate = @winlostdate, @transIds = @transIds
 

@@ -591,7 +591,7 @@ BEGIN
 END
 -- ================== BalanceUp Super
 
--- ================== STEP : 6
+-- ================== STEP : 6 BalanceUp Headline
 IF @step = 6
 BEGIN
 	SET DEADLOCK_PRIORITY HIGH
