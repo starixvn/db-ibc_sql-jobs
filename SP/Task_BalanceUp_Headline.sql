@@ -7,7 +7,8 @@ AS
 	Task: Sumup balance amount for headline account
 	Location: DBTXN.bodb02
 
-	Revision: Init [RedmineId: #118818]
+	Revision: 
+		- 20190910@Patrick: Init [RedmineId: #118818]
 */
 BEGIN
 	SET NOCOUNT ON
