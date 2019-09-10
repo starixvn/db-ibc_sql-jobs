@@ -1,19 +1,17 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_LicenseeReport]
-GO
-
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptBetting_CheckDataReady] 
 AS
 /*
 
 	Created: @Sophia
 	Task:  check data of sum rpt_betting done yet 
-	Revision: 
+	
+	Revisions: 
 		- 20171124@Sophia: Initial, call SP check before send mail House Net Income report [redmine: #87247]
 		- 20190328@Sophia: Check data Licensee and DW before send mail [redmind: #110981]
 		- 20190416@Patrick: Add notification to skype and lestalk [Redmind: #111921]
 		- 20190524@Billy:	Change Letstalk linked server - [Redmine: #113125]
-
+		- 20190910@Percy:	Replace FactCustWinloss to FactSitewinloss (get smaller data) + Split code to enhance performance [RedmineID: #119761]
 */
 
 BEGIN 
@@ -62,14 +60,19 @@ BEGIN
 				WHERE rptDate >= @Winlosdate
 				GROUP BY rptDate
 			) t
-		GROUP BY rptDate 
+		GROUP BY rptDate
+
+		SELECT rptDate, CurrencyId, SUM(BetCount) cnt, SUM(stake) stake, SUM(winlossP) winloss
+		INTO #__DW
+		FROM  DBWH.bodb_Account.dbo.FactSitewinloss WITH (NOLOCK)
+		WHERE rptDate >= @Winlosdate
+		GROUP BY rptDate, CurrencyId
 
 		INSERT INTO #DW (rptDate, betcount, Stake, Winloss)
-		SELECT rptDate, SUM(BetCount) cnt, SUM(stake * e.actualrate) stake, SUM(winlossP * e.actualrate) winloss
-		FROM  DBWH.bodb_Account.dbo.FactCustWinloss f WITH(NOLOCK)
+		SELECT rptDate, SUM(cnt) cnt, SUM(stake * e.actualrate) stake, SUM(winloss * e.actualrate) winloss
+		FROM  #__DW f
 			INNER JOIN bodb02.dbo.Exchange e WITH (NOLOCK) ON e.ExchangeID = f.CurrencyId
-		WHERE rptDate >= @Winlosdate
-		GROUP BY rptDate 
+		GROUP BY rptDate
 		
 		IF NOT EXISTS (
 					SELECT l.RptDate, ABS(ISNULL(l.Winloss,0)) - ABS(ISNULL(d.Winloss,0)) AS Winloss
@@ -87,22 +90,19 @@ BEGIN
 
 			--set alert to pontus
 			DECLARE @message NVARCHAR(512)
-			SET @message = '[WARNING] - DATA IS NOT READY - Automail Report - House Net Income ' + CONVERT(VARCHAR(50), GETDATE(), 121) + '. Please help to check!'
+			SET @message = '[WARNING] - DATA IS INCONSISTENT BETWEEN RPT_BETTING AND FACTSITEWINLOSS - Automail Report - House Net Income ' + CONVERT(VARCHAR(50), GETDATE(), 121) + '. Please help to check!'
 			print @message
 			EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = N'PONTUS', 
 				@JobId = NULL, @JobName = N'Custom Message', 
 				@Message = @message, @CaseId = 1;
 		END  
 		
+		DROP TABLE #__DW
 		DROP TABLE #DW
 		DROP TABLE #Lic
 	END
+
 	----- Get info	
-
 	SELECT @IsDataYesterdayReady AS IsDataYesterdayReady
-
-
-END 
-GO 
- 
- 
+END
+GO
