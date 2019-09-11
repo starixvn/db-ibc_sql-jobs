@@ -25,6 +25,26 @@ AS
 */  
 SET NOCOUNT ON
 BEGIN TRY
+
+	--Used as metadata for SSIS in DataWarahouse
+	IF 1 = 2
+	BEGIN
+		SELECT CAST(NULL AS DATE) [Winlostdate]
+			,CAST(NULL AS INT) [Custid]
+			,CAST(NULL AS INT) [Currency]
+			,CAST(NULL AS MONEY) [Turnover]
+			,CAST(NULL AS MONEY) [Winlost]
+			,CAST(NULL AS MONEY) [DrawTO]
+			,CAST(NULL AS INT) [DrawBetCount]
+			,CAST(NULL AS INT) [BetCount]
+			,CAST(NULL AS INT) [ProductId]
+			,CAST(NULL AS SMALLINT) [Bettype]
+			,CAST(NULL AS MONEY) [ValidBetAmount]
+			,CAST(NULL AS MONEY) [CommissionP]
+			,CAST(NULL AS MONEY) [CommissionA]
+			,CAST(NULL AS MONEY) [WinLostA]
+	END
+
 	DECLARE @ProductId INT
 	SELECT @ProductId= ProductId FROM bodb_Licensee.dbo.Product3rd WITH(NOLOCK) WHERE ProductName='Gold Deluxe'
 	IF(@ProductId IS NULL)
@@ -127,8 +147,9 @@ BEGIN TRY
 			-- Output Data For DataWarehouse	  
 	IF @GenForDataWarehouse = 1
 	BEGIN
-		SELECT @winlostdate, custid,  currency, turnover,
-					winlost,drawTO,drawBetCount,  BetCount, @ProductId, bettype
+		SELECT @winlostdate [Winlostdate], custid [Custid],  currency [Currency], turnover [Turnover],
+					winlost [Winlost],drawTO [DrawTO],drawBetCount [DrawBetCount],  BetCount [BetCount], @ProductId ProductId, bettype [Bettype]
+					,0 ValidBetAmount,0 CommissionP,0 CommissionA,0 WinLostA
 		FROM #TicketData
 	END
 

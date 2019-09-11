@@ -24,6 +24,25 @@ Param's Explanation:
 SET NOCOUNT ON
 BEGIN TRY
 
+	--Used as metadata for SSIS in DataWarahouse
+	IF 1 = 2
+	BEGIN
+		SELECT CAST(NULL AS DATE) [Winlostdate]
+			,CAST(NULL AS INT) [Custid]
+			,CAST(NULL AS INT) [Sporttype]
+			,CAST(NULL AS INT) [Currency]
+			,CAST(NULL AS MONEY) [Turnover]
+			,CAST(NULL AS MONEY) [DrawTO]
+			,CAST(NULL AS MONEY) [Winlost]
+			,CAST(NULL AS MONEY) [Playercomm]
+			,CAST(NULL AS INT) [BetCount]
+			,CAST(NULL AS INT) [DrawBetCount]
+			,CAST(NULL AS BIT) [IsVIPGame]
+			,CAST(NULL AS MONEY) [Transfer]
+			,CAST(NULL AS MONEY) [TransferIn]
+			,CAST(NULL AS MONEY) [TransferOut]	
+	END
+
 	DECLARE @BackupDay DATE
 	SELECT @BackupDay = ISNULL(MIN(Winlostdate),'') FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino
 	
@@ -140,8 +159,9 @@ BEGIN TRY
 		-- Output Data For DataWarehouse	  
 	IF @GenForDataWarehouse = 1
 	BEGIN
-		SELECT @winlostdate, custid, sporttype, currency, turnover, drawTO, 
-					winlost, playercomm, BetCount, drawBetCount, IsVIPGame
+		SELECT @winlostdate [Winlostdate], custid [Custid], sporttype [Sporttype], currency [Currency], turnover [Turnover], drawTO [DrawTO], 
+					winlost [Winlost], playercomm [Playercomm], BetCount [BetCount], drawBetCount [DrawBetCount], IsVIPGame [IsVIPGame],
+					0 [Transfer],0 [TransferIn],0 [TransferOut]
 		FROM #TicketData
 	END
 

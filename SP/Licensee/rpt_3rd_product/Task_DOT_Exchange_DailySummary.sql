@@ -25,7 +25,27 @@ AS
 */  
 SET NOCOUNT ON
 
-BEGIN TRY	
+BEGIN TRY
+
+	--Used as metadata for SSIS in DataWarahouse
+	IF 1 = 2
+	BEGIN
+		SELECT CAST(NULL AS DATE) [Winlostdate]
+			,CAST(NULL AS INT) [Custid]
+			,CAST(NULL AS INT) [Currency]
+			,CAST(NULL AS INT) [ProductId]
+			,CAST(NULL AS MONEY) [Turnover]
+			,CAST(NULL AS MONEY) [Winlost]
+			,CAST(NULL AS MONEY) [WinLostA]
+			,CAST(NULL AS MONEY) [DrawTO]
+			,CAST(NULL AS INT) [DrawBetCount]
+			,CAST(NULL AS INT) [BetCount]
+			,CAST(NULL AS MONEY) [CommissionP]
+			,CAST(NULL AS MONEY) [CommissionA]
+			,CAST(NULL AS MONEY) [ValidBetAmount]
+			,CAST(NULL AS SMALLINT) [Bettype]
+	END
+	
 	DECLARE @ProductId INT, @PartyList VARCHAR(4000), @i SMALLINT = 1, @WLDate DATE
 
 	SELECT @ProductId = ProductId 
@@ -258,11 +278,11 @@ BEGIN TRY
 	-- Output Data For DataWarehouse	  
 	IF @GenForDataWarehouse = 1
 	BEGIN
-		SELECT @WLDate, custid, CurrencyID, @ProductId
-					, SUM(ISNULL(turnover, 0)), SUM(ISNULL(Winlost, 0)), SUM(ISNULL(WinLostA, 0))
-					, SUM(ISNULL(DrawTO, 0)), SUM(ISNULL(DrawBetCount, 0)), SUM(ISNULL(BetCount, 0))
-					, SUM(ISNULL(CommissionP, 0)), SUM(ISNULL(CommissionA, 0)), SUM(ISNULL(ValidBetAmount, 0))		
-					, -1-- bettype
+		SELECT @WLDate [Winlostdate], custid [Custid], CurrencyID [Currency], @ProductId [ProductId]
+					, SUM(ISNULL(turnover, 0)) [Turnover], SUM(ISNULL(Winlost, 0)) [Winlost], SUM(ISNULL(WinLostA, 0)) [WinLostA]
+					, SUM(ISNULL(DrawTO, 0)) [DrawTO], SUM(ISNULL(DrawBetCount, 0)) [DrawBetCount], SUM(ISNULL(BetCount, 0)) [BetCount]
+					, SUM(ISNULL(CommissionP, 0)) [CommissionP], SUM(ISNULL(CommissionA, 0)) [CommissionA], SUM(ISNULL(ValidBetAmount, 0)) [ValidBetAmount]	
+					, -1 [Bettype]-- bettype
 			FROM #TicketData					
 			GROUP BY Custid, CurrencyID
 	END
