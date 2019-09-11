@@ -1,7 +1,8 @@
 /*<info serverAlias="DBACC-bodb02," executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
 ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
 	@winlostdate DATETIME
-	,@IsManual BIT = 0 
+	,@IsManual BIT = 0
+	,@GenForDataWarehouse BIT = 0 
 AS
 /*   
 Created: 20140911@Victor
@@ -16,6 +17,7 @@ Revisions:
 	- 20170407@Sophia:: Add rule auto regen data : [Redmine: #72914]
 							1st -> 5th : Can Edit data of Previous month  and current Month
 							6th -> end of the month : Edit data of current month only
+	- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
 Param's Explanation:
 	- @winlostdate: The date need to summary
 */  
@@ -49,7 +51,8 @@ BEGIN TRY
 		 FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
 		 WHERE FinishedTime IS NOT NULL 
 			   AND isSummarized = 0 
-			   AND ProductID = 10')) t  
+			   AND ProductID = 10')
+		 WHERE @GenForDataWarehouse = 0) t  
 	
 	CREATE TABLE #TicketData (	custid			INT,
 								sporttype		SMALLINT,
@@ -68,7 +71,7 @@ BEGIN TRY
 		FROM @WLDateTab
 		WHERE ID = @i
 	
-		IF @winlostdate >= @MinDate OR @IsManual = 1
+		IF @winlostdate >= @MinDate OR @IsManual = 1 OR @GenForDataWarehouse = 1
 		BEGIN 
 		
 			TRUNCATE TABLE #TicketData
@@ -110,24 +113,36 @@ BEGIN TRY
 				GROUP BY b.CustID, b.currency, isVIPGame
 			END
 			
-			--Insert data to rptDepWinlost_AGCasino
-			DELETE FROM bodb_report.dbo.rptDepWinlost_AGCasino WITH (ROWLOCK) WHERE Winlostdate = @winlostdate
+			-- Check flag when insert to sum table	  
+			IF @GenForDataWarehouse = 0
+			BEGIN
+				--Insert data to rptDepWinlost_AGCasino
+				DELETE FROM bodb_report.dbo.rptDepWinlost_AGCasino WITH (ROWLOCK) WHERE Winlostdate = @winlostdate
 
-			INSERT INTO bodb_report.dbo.rptDepWinlost_AGCasino (winlostdate, custid, sporttype, currency, turnover, drawTO, 
-																winlost, playercomm, BetCount, drawBetCount, IsVIPGame)
-			SELECT @winlostdate, custid, sporttype, currency, turnover, drawTO, 
-				winlost, playercomm, BetCount, drawBetCount, IsVIPGame
-			FROM #TicketData					
+				INSERT INTO bodb_report.dbo.rptDepWinlost_AGCasino (winlostdate, custid, sporttype, currency, turnover, drawTO, 
+																	winlost, playercomm, BetCount, drawBetCount, IsVIPGame)
+				SELECT @winlostdate, custid, sporttype, currency, turnover, drawTO, 
+					winlost, playercomm, BetCount, drawBetCount, IsVIPGame
+				FROM #TicketData					
 		
-			SET @SqlStr = 'UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
-			SET isSummarized = 1
-			WHERE Winlostdate = ''' + CONVERT(VARCHAR(20),@winlostdate,112) + ''' AND isSummarized = 0
-				AND ProductID = 10;'
+				SET @SqlStr = 'UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
+				SET isSummarized = 1
+				WHERE Winlostdate = ''' + CONVERT(VARCHAR(20),@winlostdate,112) + ''' AND isSummarized = 0
+					AND ProductID = 10;'
 				
-			EXEC(@SqlStr) AT [DBPTCS]
+				EXEC(@SqlStr) AT [DBPTCS]
+			END
 			
 		END
 		SELECT @i = @i + 1	
+	END
+
+		-- Output Data For DataWarehouse	  
+	IF @GenForDataWarehouse = 1
+	BEGIN
+		SELECT @winlostdate, custid, sporttype, currency, turnover, drawTO, 
+					winlost, playercomm, BetCount, drawBetCount, IsVIPGame
+		FROM #TicketData
 	END
 
 	DROP TABLE #TicketData

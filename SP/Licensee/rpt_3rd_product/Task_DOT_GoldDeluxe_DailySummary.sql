@@ -4,7 +4,8 @@ GO
 
 ALTER PROCEDURE [dbo].[Task_DOT_GoldDeluxe_DailySummary]
 	@winlostdate DATETIME
-	,@IsManual BIT = 0 
+	,@IsManual BIT = 0
+	,@GenForDataWarehouse BIT = 0 
 AS
 /*
 	Created: 20140313@Winnie
@@ -17,6 +18,7 @@ AS
 									1st -> 5th : Can Edit data of Previous month  and current Month
 									6th -> end of the month : Edit data of current month only
 		- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
+		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
 
 	Param's Explanation:
 		- @winlostdate: The date need to summary
@@ -54,7 +56,8 @@ BEGIN TRY
 		 FROM dbo.Product3rd_ImportQueue WITH (NOLOCK)
 		 WHERE FinishedTime IS NOT NULL 
 			   AND isSummarized = 0 --Winlostdate that has been finished to generate into raw data table bust has not been summarized to sum table
-			   AND ProductID = @ProductId) t --GD
+			   AND ProductID = @ProductId
+			   AND @GenForDataWarehouse = 0) t --GD
 	
 	CREATE TABLE #TicketData (
 		custid			INT,
@@ -73,7 +76,7 @@ BEGIN TRY
 		FROM @WLDateTab
 		WHERE ID = @i
 	
-		IF @winlostdate >= @MinDate OR @IsManual = 1
+		IF @winlostdate >= @MinDate OR @IsManual = 1 OR @GenForDataWarehouse = 1
 		BEGIN 
 			TRUNCATE TABLE #TicketData
 			
@@ -98,25 +101,36 @@ BEGIN TRY
 			WHERE Winlostdate = @winlostdate 
 			GROUP BY IBCCustId, currency
 
-			-- Insert data to rptDepWinlost_ThirdParty
-			DELETE FROM bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty WITH (ROWLOCK) WHERE Winlostdate = @winlostdate and ProductId=@ProductId
+			-- Check flag when insert to sum table	  
+			IF @GenForDataWarehouse = 0
+			BEGIN
+				-- Insert data to rptDepWinlost_ThirdParty
+				DELETE FROM bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty WITH (ROWLOCK) WHERE Winlostdate = @winlostdate and ProductId=@ProductId
 
-			INSERT INTO bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, turnover,
-																winlost,drawTO,drawBetCount, BetCount,ProductId, bettype)
-			SELECT @winlostdate, custid,  currency, turnover,
-				winlost,drawTO,drawBetCount,  BetCount, @ProductId, bettype
-			FROM #TicketData
+				INSERT INTO bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, turnover,
+																	winlost,drawTO,drawBetCount, BetCount,ProductId, bettype)
+				SELECT @winlostdate, custid,  currency, turnover,
+					winlost,drawTO,drawBetCount,  BetCount, @ProductId, bettype
+				FROM #TicketData
 					
-			---Update flag isSummarized to queue  
-			UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
-			SET isSummarized = 1
-			WHERE Winlostdate = @winlostdate AND isSummarized = 0
-				AND ProductID = @ProductId
+				---Update flag isSummarized to queue  
+				UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
+				SET isSummarized = 1
+				WHERE Winlostdate = @winlostdate AND isSummarized = 0
+					AND ProductID = @ProductId
+			END
 		END 
 		
 		SELECT @i = @i + 1
 	END
 	
+			-- Output Data For DataWarehouse	  
+	IF @GenForDataWarehouse = 1
+	BEGIN
+		SELECT @winlostdate, custid,  currency, turnover,
+					winlost,drawTO,drawBetCount,  BetCount, @ProductId, bettype
+		FROM #TicketData
+	END
 
 	DROP TABLE #TicketData
 END TRY
