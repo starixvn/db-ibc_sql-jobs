@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="Dot_Member" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="Dot_Member" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_BettransInsBonusWallet] 
 	@custid 		INT,
 	@bal_custid 	INT,
@@ -26,6 +26,7 @@ Revisions:
 	- 20171009@Kathy: Change column name of BonusWalletCredit, BonusWalletDebit [Redmine:#72789]
 	- 20180323@Kathy: Change 2 bonus bettypes [Redmine:#66797]
 	- 20180417@Kathy: Add more input param @betcheck [Redmine:#66797]
+	- 20190731@Bobby: 1stDeposit - Bonus - Update changes on @oddsspread to log a locked amount [Redmine:#117923]
 
 Param's Explanation:
 	- @custid: player account who joined bonus program
@@ -84,13 +85,17 @@ BEGIN
 		@bonus_initial 		SMALLINT,
 		@bonus_zerolize 	SMALLINT,
 		@bonus_amount		MONEY,
-		@walletType			TINYINT
+		@walletType			TINYINT,
+		@oddsspread			MONEY
 
 	SELECT @ErrCode				= 0,
 			@ErrMsg				= '',
 			@bonus_initial		= 22200,
 			@bonus_zerolize		= 22201,
 			@walletType			= 1
+
+	-- Capture lockedAmt for MNL usages
+	SELECT @oddsspread			= CASE WHEN @bettype = @bonus_initial THEN @lockedAmount ELSE NULL END
 			
 
 	IF (@bettype NOT IN (@bonus_initial, @bonus_zerolize) OR @bonusId <= 0)
@@ -193,10 +198,10 @@ BEGIN
 
 	INSERT INTO bettrans 
 		(custid, username, refno, transdate, matchid, bettype, transdesc,winlost, actual_stake, winlostdate, 
-		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid, betcheck)
+		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid, betcheck, oddsspread)
 	VALUES 
 		(@CustID, @username, @RefNo, @transdate, 0, @bettype, @transdesc,@cust_winlost, @cust_actual_stake, convert(nvarchar(10), @transdate, 120), 
-		 @CustID, @Recommend, @MRecommend, @SRecommend, @Currency,@actualrate, @currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId, @betcheck)
+		 @CustID, @Recommend, @MRecommend, @SRecommend, @Currency,@actualrate, @currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId, @betcheck, @oddsspread)
 
 	IF @@ERROR <> 0
 	BEGIN						
