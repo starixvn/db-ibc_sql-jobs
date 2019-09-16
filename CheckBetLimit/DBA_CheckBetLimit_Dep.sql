@@ -17,6 +17,7 @@ AS
 		- 20190130@Winnie:	Remove ClearBal Acc - [Redmine: #73556]
 		- 20190717@Winnie:	Check Keno - [Redmine: #73556]
 		- 20190809@Winnie:	Fix Rule 326 - [Redmine: #118471]
+		- 20190916@Winnie:	Remove check MuayThai - [Redmine: #120271]
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (317->328)  
@@ -71,7 +72,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,COUNT(c.custid)
 		FROM CheckCustDB.dbo.Dep_CustSetting cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=3 AND sporttype NOT BETWEEN 151 AND 154
+		WHERE c.srecommend=@srecommend AND c.roleid=3 AND sporttype NOT BETWEEN 151 AND 154 AND sporttype <>44
 			AND c.custid NOT IN(SELECT custid FROM #Dummy)
 		GROUP BY c.custid,cs.sporttype,cs.bettype
 
@@ -79,7 +80,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,COUNT(cs.custid)
 		FROM CheckCustDB.dbo.Dep_CustSetting cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND c.roleid=2 AND sporttype NOT BETWEEN 151 AND 154
+		WHERE c.srecommend=@srecommend AND c.roleid=2 AND sporttype NOT BETWEEN 151 AND 154  AND sporttype <>44
 			AND c.custid NOT IN(SELECT custid FROM #Agent)
 		GROUP BY c.custid,cs.sporttype,cs.bettype
 
@@ -87,7 +88,7 @@ BEGIN
 		SELECT c.custid,cs.sporttype,cs.bettype,COUNT(c.custid)
 		FROM CheckCustDB.dbo.Dep_CustSetting cs WITH(NOLOCK) 
 			INNER JOIN CheckCustDB.dbo.custInfo c WITH(NOLOCK) ON cs.Custid=c.custid
-		WHERE c.srecommend=@srecommend AND sporttype NOT BETWEEN 151 AND 154
+		WHERE c.srecommend=@srecommend AND sporttype NOT BETWEEN 151 AND 154  AND sporttype <>44
 			AND c.roleid=1 
 			AND c.custid NOT IN(SELECT custid FROM #Trade)		
 		GROUP BY c.custid,cs.sporttype,cs.bettype,c.recommend
@@ -121,7 +122,7 @@ BEGIN
 		INSERT INTO #SuperSetting(SporttypeID ,BettypeID ,Num)
 		SELECT cs.sporttype,cs.bettype,COUNT(cs.custid)
 		FROM CheckCustDB.dbo.Dep_CustSetting3rd cs WITH(NOLOCK) 			
-		WHERE cs.custid=@srecommend AND sporttype NOT BETWEEN 151 AND 154
+		WHERE cs.custid=@srecommend AND sporttype NOT BETWEEN 151 AND 154 
 		GROUP BY cs.custid,cs.sporttype,cs.bettype
 
 		INSERT INTO #MasterSetting(CustID ,SporttypeID ,BettypeID ,Num)
@@ -359,6 +360,7 @@ BEGIN
 			AND c.custid NOT IN(SELECT custid FROM #Dummy)
 			AND c.custid NOT IN(SELECT custid FROM #Agent)
 			AND sporttype NOT BETWEEN 151 AND 154
+			AND sporttype <>44
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 318,s.sporttype,s.bettype,s.CustID,NULL,Minbet,NULL,GETDATE(),1
@@ -370,6 +372,7 @@ BEGIN
 			AND c.custid NOT IN(SELECT custid FROM #Dummy)
 			AND c.custid NOT IN(SELECT custid FROM #Agent)
 			AND sporttype NOT BETWEEN 151 AND 154
+			
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 318,s.sporttype,s.bettype,s.CustID,NULL,Minbet,NULL,GETDATE(),1
@@ -413,7 +416,7 @@ BEGIN
 		INSERT INTO #Super319(SporttypeID ,BettypeID,IsLive ,Minbet)
 		SELECT cs.sporttype,cs.bettype,cs.islive,Minbet
 		FROM CheckCustDB.dbo.Dep_CustSetting cs WITH(NOLOCK) 			
-		WHERE cs.custid=@srecommend AND sporttype NOT BETWEEN 151 AND 154				
+		WHERE cs.custid=@srecommend AND sporttype NOT BETWEEN 151 AND 154	 AND sporttype <>44			
 		
 		INSERT INTO #Master319(CustID ,SporttypeID ,BettypeID,IsLive ,Minbet)
 		SELECT c.custid,cs.sporttype,cs.bettype,cs.islive,Minbet
@@ -422,7 +425,8 @@ BEGIN
 		WHERE c.srecommend=@srecommend 
 			AND c.roleid=3 		
 			AND c.custid NOT IN(SELECT custid FROM #Dummy)		
-			AND sporttype NOT BETWEEN 151 AND 154		
+			AND sporttype NOT BETWEEN 151 AND 154	
+			AND sporttype <>44	
 
 		INSERT INTO #Agent319(CustID ,SporttypeID ,BettypeID,IsLive ,Minbet,mrecommend)
 		SELECT cs.custid,cs.sporttype,cs.bettype,cs.islive,Minbet,mrecommend
@@ -432,6 +436,7 @@ BEGIN
 			AND c.roleid=2 
 			AND c.custid NOT IN(SELECT custid FROM #Agent)	
 			AND sporttype NOT BETWEEN 151 AND 154
+			AND sporttype <>44
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 319,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Minbet,m.Minbet,GETDATE(),1
@@ -575,6 +580,7 @@ BEGIN
 			AND c.custid NOT IN(SELECT custid FROM #Dummy)
 			AND c.custid NOT IN(SELECT custid FROM #Agent)
 			AND sporttype NOT BETWEEN 151 AND 154
+			AND sporttype <>44
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 320,s.sporttype,s.bettype,s.CustID,NULL,Maxbet,NULL,GETDATE(),1
@@ -626,7 +632,8 @@ BEGIN
 		SELECT cs.sporttype,cs.bettype,cs.islive,Maxbet
 		FROM CheckCustDB.dbo.Dep_CustSetting cs WITH(NOLOCK) 			
 		WHERE cs.custid=@srecommend	
-			AND sporttype NOT BETWEEN 151 AND 154		
+			AND sporttype NOT BETWEEN 151 AND 154	
+			AND sporttype <>44	
 		
 		INSERT INTO #Master321(CustID ,SporttypeID ,BettypeID,IsLive ,Maxbet)
 		SELECT c.custid,cs.sporttype,cs.bettype,cs.islive,Maxbet
@@ -635,7 +642,8 @@ BEGIN
 		WHERE c.srecommend=@srecommend 
 			AND c.roleid=3  
 			AND c.custid NOT IN(SELECT custid FROM #Dummy)
-			AND sporttype NOT BETWEEN 151 AND 154			
+			AND sporttype NOT BETWEEN 151 AND 154	
+			AND sporttype <>44		
 
 		INSERT INTO #Agent321(CustID ,SporttypeID ,BettypeID,IsLive ,Maxbet,mrecommend)
 		SELECT cs.custid,cs.sporttype,cs.bettype,cs.islive,Maxbet,mrecommend
@@ -645,6 +653,7 @@ BEGIN
 			AND c.roleid=2	
 			AND c.custid NOT IN(SELECT custid FROM #Agent)	
 			AND sporttype NOT BETWEEN 151 AND 154		
+			AND sporttype <>44
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 321,s.SporttypeID,s.BettypeID,@srecommend,m.CustID,s.Maxbet,m.Maxbet,GETDATE(),1
@@ -1341,6 +1350,7 @@ BEGIN
 			AND s.custid NOT IN(SELECT custid FROM #Trade)
 			AND s.custid NOT IN(SELECT custid FROM #Dummy)
 			AND s.custid NOT IN(SELECT custid FROM #Agent)
+			AND sporttype <>44
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 326,s.SportType,bettype,s.CustID,NULL,s.minbet,s.maxbet,GETDATE(),1
@@ -1390,7 +1400,7 @@ BEGIN
 		WHERE c.srecommend=@srecommend AND s.sporttype=1 AND s.maxbet>c.maxpermatch 
 			AND s.custid NOT IN(SELECT custid FROM #Trade)
 			AND s.custid NOT IN(SELECT custid FROM #Dummy)
-			AND s.custid NOT IN(SELECT custid FROM #Agent)
+			AND s.custid NOT IN(SELECT custid FROM #Agent)			
 
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 327,s.SportType,bettype,s.CustID,NULL,s.maxbet,c.MaxPerMatch99MP,GETDATE(),1
