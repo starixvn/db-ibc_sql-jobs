@@ -17,6 +17,7 @@ AS
 		  - 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 		  - 20180814@Joseph: Remove Racing [RedmineID: #99378]
 		  - 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
+		  - 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
 */ 
 BEGIN 
 SET NOCOUNT ON;
@@ -61,10 +62,10 @@ SELECT a.CustID
 	,a.oddstype
 	,CASE 
 		WHEN a.statusID = 112
-			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 			AND ABS(modds) = 0.25 THEN 114
 		WHEN a.statusID = 113
-			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 			AND ABS(modds) = 0.25 THEN 115
 		ELSE a.statusID
 		END AS statusID
@@ -98,10 +99,10 @@ GROUP BY a.matchid
 	,a.oddstype
 	,CASE 
 		WHEN a.statusID = 112
-			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 			AND ABS(modds) = 0.25 THEN 114
 		WHEN a.statusID = 113
-			AND a.bettype IN (1, 3, 7, 8, 17, 18)
+			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 			AND ABS(modds) = 0.25 THEN 115
 		ELSE a.statusID
 		END

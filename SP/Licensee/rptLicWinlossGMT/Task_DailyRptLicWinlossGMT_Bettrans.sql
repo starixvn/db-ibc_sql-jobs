@@ -17,6 +17,7 @@ AS
 	- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
 	- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]
 	- 20190903@Amanda: Add platform Deep Link(t) [RedmineID: #119010]
+	- 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
 	
 	EXEC Task_DailyRptLicWinlossGMT_Bettrans '2017-11-30'
 */  
@@ -126,8 +127,8 @@ BEGIN
 				,b.currency  
 				--114: half win, 115: half lose  
 				,CASE   
-					WHEN b.statusID = 112 AND b.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
-					WHEN b.statusID = 113 AND b.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115  
+					WHEN b.statusID = 112 AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 114   
+					WHEN b.statusID = 113 AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 115  
 					ELSE b.statusID END AS statusID  
 				,CASE   
 					WHEN BA.transid IS NULL THEN 0  
@@ -173,8 +174,8 @@ BEGIN
 				,b.StatusId
 				--114: half win, 115: half lose  
 				,CASE   
-					WHEN b.statusID = 112 AND b.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 114   
-					WHEN b.statusID = 113 AND b.bettype IN(1,3,7,8,17,18) AND ABS(modds) = 0.25 THEN 115  
+					WHEN b.statusID = 112 AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 114   
+					WHEN b.statusID = 113 AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 115  
 					ELSE b.statusID END  
 				,CASE   
 					WHEN BA.transid IS NULL THEN 0  

@@ -1,12 +1,5 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_LicenseeReport]
-GO
 
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
-
-/****** Object:  Stored Procedure dbo.Task_PrepareStaging    Script Date: 11/18/2016 5:30:32 PM ******/
 ALTER PROCEDURE [dbo].[Task_PrepareStaging]  
     @datefrom smalldatetime=null
     ,@dateto smalldatetime=null
@@ -43,6 +36,7 @@ Revisions:
 	-20181226@bruce: Implement E-sport 2 [Redmine: #105723]
 	-20190306@Parsons: Implement BetBuilder [Redmine: #108995]
 	-20190819@Parsons: Provide House Turnover In NG WL Report [Redmine: #117674]
+	- 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'
@@ -176,7 +170,7 @@ BEGIN
 	            b.winlost,b.awinlost,b.mwinlost,b.swinlost,
 	            b.acomm, b.scomm, b.playercomm, b.comm,
 	            b.matchid,
-	            CASE WHEN (b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125) AND ABS(b.modds) = 0.25 AND [status] IN('WON', 'LOSE')) OR (b.bettype IN (33,43) AND [status] <> 'refund' AND b.liveawayscore=0) THEN 'HALF ' ELSE '' END + b.status AS [status],
+	            CASE WHEN (b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) AND ABS(b.modds) = 0.25 AND [status] IN('WON', 'LOSE')) OR (b.bettype IN (33,43) AND [status] <> 'refund' AND b.liveawayscore=0) THEN 'HALF ' ELSE '' END + b.status AS [status],
                 b.srecommend, 
                 b.currency, 
                 b.recommend,b.mrecommend,
@@ -294,7 +288,7 @@ BEGIN
 	            b.winlost,b.awinlost,b.mwinlost,b.swinlost,
 	            b.acomm, b.scomm, b.playercomm, b.comm,
 	            b.matchid,
-	            CASE WHEN (b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125) AND ABS(b.modds) = 0.25 AND [status] IN('WON', 'LOSE')) OR (b.bettype IN (33,43) AND [status] <> 'refund' AND b.liveawayscore=0) THEN 'HALF ' ELSE '' END + b.status AS [status],
+	            CASE WHEN (b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) AND ABS(b.modds) = 0.25 AND [status] IN('WON', 'LOSE')) OR (b.bettype IN (33,43) AND [status] <> 'refund' AND b.liveawayscore=0) THEN 'HALF ' ELSE '' END + b.status AS [status],
                 b.srecommend, 
                 b.currency, 
                 b.recommend,b.mrecommend,
