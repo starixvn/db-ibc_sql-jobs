@@ -14,6 +14,7 @@ AS
 		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
+		- 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
 	Parameter's Explanation:			
 */
 BEGIN
