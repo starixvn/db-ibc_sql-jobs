@@ -65,7 +65,7 @@ BEGIN
 		INSERT INTO #SuperSetting(SporttypeID ,BettypeID ,Num)
 		SELECT cs.sporttype,cs.bettype,COUNT(cs.custid)
 		FROM CheckCustDB.dbo.Dep_CustSetting cs WITH(NOLOCK) 			
-		WHERE cs.custid=@srecommend AND sporttype NOT BETWEEN 151 AND 154
+		WHERE cs.custid=@srecommend AND sporttype NOT BETWEEN 151 AND 154 AND sporttype <>44
 		GROUP BY cs.custid,cs.sporttype,cs.bettype
 
 		INSERT INTO #MasterSetting(CustID ,SporttypeID ,BettypeID ,Num)
