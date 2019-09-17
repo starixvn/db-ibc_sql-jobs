@@ -603,13 +603,12 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(comm) comm,
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
-		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
+		COUNT(1) BetCount,
 		SUM(CASE WHEN apositiontaking = 1 THEN 0 ELSE ISNULL(comm/(1-apositiontaking),0) END) grosscomm, 
 		CASE
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sport
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sport
-			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
@@ -663,7 +662,6 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
-			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
@@ -701,13 +699,12 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(comm) comm,
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
-		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
+		COUNT(1) BetCount,
 		SUM(CASE WHEN apositiontaking+mpositiontaking = 1 THEN 0 ELSE ISNULL(acomm/(1-apositiontaking-mpositiontaking), 0) END) grosscomm, 
 		CASE
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
-			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
@@ -763,7 +760,6 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
-			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
@@ -801,13 +797,12 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(comm) comm,
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
-		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
+		COUNT(1) BetCount,
 		SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) grosscomm,
 		CASE
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
-			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
@@ -863,7 +858,6 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
-			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
@@ -901,13 +895,12 @@ INSERT INTO dbo.sum_winloss_tmp
 		sum(comm) comm,
 		sum(acomm) acomm,
 		sum(IsNull(scomm,0)) scomm,
-		COUNT(CASE WHEN bettype = 500 THEN NULL ELSE transid END) BetCount,
+		COUNT(1) BetCount,
 		SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) grosscomm,
 		CASE
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
-			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
@@ -963,7 +956,6 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 81 AND 120 OR bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
-			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
