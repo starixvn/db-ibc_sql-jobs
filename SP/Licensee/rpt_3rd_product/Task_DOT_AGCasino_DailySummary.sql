@@ -70,8 +70,7 @@ BEGIN TRY
 		 FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
 		 WHERE FinishedTime IS NOT NULL 
 			   AND isSummarized = 0 
-			   AND ProductID = 10')
-		 WHERE @GenForDataWarehouse = 0) t  
+			   AND ProductID = 10')) t  
 	
 	CREATE TABLE #TicketData (	custid			INT,
 								sporttype		SMALLINT,
@@ -83,6 +82,22 @@ BEGIN TRY
 								playercomm		MONEY,
 								betCount		INT,
 								drawBetCount	INT)
+	CREATE TABLE #TicketDataForDataWarehouse (	
+								[Winlostdate] DATE
+								,[Custid] INT
+								,[Sporttype] INT
+								,[Currency] INT
+								,[Turnover] MONEY
+								,[DrawTO] MONEY
+								,[Winlost] MONEY
+								,[Playercomm] MONEY
+								,[BetCount] INT
+								,[DrawBetCount] INT
+								,[IsVIPGame] BIT
+								,[Transfer] MONEY
+								,[TransferIn] MONEY
+								,[TransferOut] MONEY)
+
 	WHILE EXISTS (SELECT TOP 1 1 FROM @WLDateTab WHERE ID = @i)
 	BEGIN
 		
@@ -151,6 +166,15 @@ BEGIN TRY
 				
 				EXEC(@SqlStr) AT [DBPTCS]
 			END
+			ELSE
+			BEGIN
+				INSERT INTO #TicketDataForDataWarehouse([Winlostdate],[Custid],[Sporttype],[Currency],[Turnover],[DrawTO],[Winlost],[Playercomm]
+														,[BetCount],[DrawBetCount],[IsVIPGame],[Transfer],[TransferIn],[TransferOut])
+				SELECT @winlostdate [Winlostdate], custid [Custid], sporttype [Sporttype], currency [Currency], turnover [Turnover], drawTO [DrawTO], 
+					winlost [Winlost], playercomm [Playercomm], BetCount [BetCount], drawBetCount [DrawBetCount], IsVIPGame [IsVIPGame],
+					0 [Transfer],0 [TransferIn],0 [TransferOut]
+				FROM #TicketData
+			END
 			
 		END
 		SELECT @i = @i + 1	
@@ -159,12 +183,12 @@ BEGIN TRY
 		-- Output Data For DataWarehouse	  
 	IF @GenForDataWarehouse = 1
 	BEGIN
-		SELECT @winlostdate [Winlostdate], custid [Custid], sporttype [Sporttype], currency [Currency], turnover [Turnover], drawTO [DrawTO], 
-					winlost [Winlost], playercomm [Playercomm], BetCount [BetCount], drawBetCount [DrawBetCount], IsVIPGame [IsVIPGame],
-					0 [Transfer],0 [TransferIn],0 [TransferOut]
-		FROM #TicketData
+		SELECT [Winlostdate],[Custid],[Sporttype],[Currency],[Turnover],[DrawTO],[Winlost],[Playercomm]
+														,[BetCount],[DrawBetCount],[IsVIPGame],[Transfer],[TransferIn],[TransferOut]
+		FROM #TicketDataForDataWarehouse
 	END
 
+	DROP TABLE #TicketDataForDataWarehouse
 	DROP TABLE #TicketData
 END TRY
 BEGIN CATCH

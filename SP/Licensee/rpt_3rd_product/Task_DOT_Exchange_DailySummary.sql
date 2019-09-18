@@ -89,7 +89,6 @@ BEGIN TRY
 			UNION ALL
 			SELECT DISTINCT WinlostDate AS Winlostdate
 			FROM @ResettledDateList
-			WHERE @GenForDataWarehouse = 0
 		 )t	
 	-- #EndRegion: Get date range to summarize data
 
@@ -151,6 +150,23 @@ BEGIN TRY
 								Back			MONEY,
 								EventTypeName   Nvarchar(50),
 								EventType 		SMALLINT
+							)
+	
+	CREATE TABLE #TicketDataForDataWarehouse (
+								[Winlostdate] DATE
+								,[Custid] INT
+								,[Currency] INT
+								,[ProductId] INT
+								,[Turnover] MONEY
+								,[Winlost] MONEY
+								,[WinLostA] MONEY
+								,[DrawTO] MONEY
+								,[DrawBetCount] INT
+								,[BetCount] INT
+								,[CommissionP] MONEY
+								,[CommissionA] MONEY
+								,[ValidBetAmount] MONEY	
+								,[Bettype] SMALLINT
 							)	
 
 	WHILE EXISTS (SELECT TOP 1 1 FROM @WLDateList WHERE ID = @i)
@@ -269,6 +285,18 @@ BEGIN TRY
 					INNER JOIN #TicketData t ON s.SportType = T.EventType 
 				WHERE s.ProductID = @ProductId
 					AND s.SportName <> t.EventTypeName
+			END
+			ELSE
+			BEGIN
+				INSERT INTO #TicketDataForDataWarehouse ([Winlostdate],[Custid],[Currency],[ProductId],[Turnover],[Winlost],[WinLostA],[DrawTO]
+																,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount],[Bettype])
+				SELECT @WLDate [Winlostdate], custid [Custid], CurrencyID [Currency], @ProductId [ProductId]
+					, SUM(ISNULL(turnover, 0)) [Turnover], SUM(ISNULL(Winlost, 0)) [Winlost], SUM(ISNULL(WinLostA, 0)) [WinLostA]
+					, SUM(ISNULL(DrawTO, 0)) [DrawTO], SUM(ISNULL(DrawBetCount, 0)) [DrawBetCount], SUM(ISNULL(BetCount, 0)) [BetCount]
+					, SUM(ISNULL(CommissionP, 0)) [CommissionP], SUM(ISNULL(CommissionA, 0)) [CommissionA], SUM(ISNULL(ValidBetAmount, 0)) [ValidBetAmount]	
+					, -1 [Bettype]-- bettype
+				FROM #TicketData					
+				GROUP BY Custid, CurrencyID
 			END 
 		END 
 				
@@ -278,15 +306,12 @@ BEGIN TRY
 	-- Output Data For DataWarehouse	  
 	IF @GenForDataWarehouse = 1
 	BEGIN
-		SELECT @WLDate [Winlostdate], custid [Custid], CurrencyID [Currency], @ProductId [ProductId]
-					, SUM(ISNULL(turnover, 0)) [Turnover], SUM(ISNULL(Winlost, 0)) [Winlost], SUM(ISNULL(WinLostA, 0)) [WinLostA]
-					, SUM(ISNULL(DrawTO, 0)) [DrawTO], SUM(ISNULL(DrawBetCount, 0)) [DrawBetCount], SUM(ISNULL(BetCount, 0)) [BetCount]
-					, SUM(ISNULL(CommissionP, 0)) [CommissionP], SUM(ISNULL(CommissionA, 0)) [CommissionA], SUM(ISNULL(ValidBetAmount, 0)) [ValidBetAmount]	
-					, -1 [Bettype]-- bettype
-			FROM #TicketData					
-			GROUP BY Custid, CurrencyID
+		SELECT [Winlostdate],[Custid],[Currency],[ProductId],[Turnover],[Winlost],[WinLostA],[DrawTO]
+							,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount],[Bettype]
+			FROM #TicketDataForDataWarehouse
 	END
 	
+	DROP TABLE #TicketDataForDataWarehouse
 	DROP TABLE #TicketData
 	DROP TABLE #DetailData
 	DROP TABLE #ChargeRate

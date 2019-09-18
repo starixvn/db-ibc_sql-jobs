@@ -76,8 +76,7 @@ BEGIN TRY
 		 FROM dbo.Product3rd_ImportQueue WITH (NOLOCK)
 		 WHERE FinishedTime IS NOT NULL 
 			   AND isSummarized = 0 --Winlostdate that has been finished to generate into raw data table bust has not been summarized to sum table
-			   AND ProductID = @ProductId
-			   AND @GenForDataWarehouse = 0) t --GD
+			   AND ProductID = @ProductId) t --GD
 	
 	CREATE TABLE #TicketData (
 		custid			INT,
@@ -88,6 +87,22 @@ BEGIN TRY
 		drawBetCount	INT,
 		betCount		INT,
 		bettype			SMALLINT)
+
+	CREATE TABLE #TicketDataForDataWarehouse (
+		[Winlostdate] DATE
+		,[Custid] INT
+		,[Currency] INT
+		,[Turnover] MONEY
+		,[Winlost] MONEY
+		,[DrawTO] MONEY
+		,[DrawBetCount] INT
+		,[BetCount] INT
+		,[ProductId] INT
+		,[Bettype] SMALLINT
+		,[ValidBetAmount] MONEY
+		,[CommissionP] MONEY
+		,[CommissionA] MONEY
+		,[WinLostA] MONEY)
 	
 	
 	WHILE EXISTS (SELECT TOP 1 1 FROM @WLDateTab WHERE ID = @i)
@@ -139,6 +154,15 @@ BEGIN TRY
 				WHERE Winlostdate = @winlostdate AND isSummarized = 0
 					AND ProductID = @ProductId
 			END
+			ELSE
+			BEGIN
+				INSERT INTO #TicketDataForDataWarehouse ([Winlostdate],[Custid],[Currency],[Turnover],[Winlost],[DrawTO],[DrawBetCount]
+														,[BetCount],[ProductId] ,[Bettype],[ValidBetAmount],[CommissionP],[CommissionA],[WinLostA])
+				SELECT @winlostdate [Winlostdate], custid [Custid],  currency [Currency], turnover [Turnover],
+					winlost [Winlost],drawTO [DrawTO],drawBetCount [DrawBetCount],  BetCount [BetCount], @ProductId [ProductId], bettype [Bettype]
+					,0 [ValidBetAmount],0 [CommissionP],0 [CommissionA],0 [WinLostA]
+		FROM #TicketData
+			END
 		END 
 		
 		SELECT @i = @i + 1
@@ -147,12 +171,12 @@ BEGIN TRY
 			-- Output Data For DataWarehouse	  
 	IF @GenForDataWarehouse = 1
 	BEGIN
-		SELECT @winlostdate [Winlostdate], custid [Custid],  currency [Currency], turnover [Turnover],
-					winlost [Winlost],drawTO [DrawTO],drawBetCount [DrawBetCount],  BetCount [BetCount], @ProductId ProductId, bettype [Bettype]
-					,0 ValidBetAmount,0 CommissionP,0 CommissionA,0 WinLostA
-		FROM #TicketData
+		SELECT [Winlostdate],[Custid],[Currency],[Turnover],[Winlost],[DrawTO],[DrawBetCount]
+				,[BetCount],[ProductId] ,[Bettype],[ValidBetAmount],[CommissionP],[CommissionA],[WinLostA]
+		FROM #TicketDataForDataWarehouse
 	END
 
+	DROP TABLE #TicketDataForDataWarehouse
 	DROP TABLE #TicketData
 END TRY
 BEGIN CATCH
