@@ -105,7 +105,7 @@ BEGIN TRY
 		FROM @WLDateTab
 		WHERE ID = @i
 	
-		IF @winlostdate >= @MinDate OR @IsManual = 1 OR @GenForDataWarehouse = 1
+		IF @winlostdate >= @MinDate OR @IsManual = 1
 		BEGIN 
 		
 			TRUNCATE TABLE #TicketData
