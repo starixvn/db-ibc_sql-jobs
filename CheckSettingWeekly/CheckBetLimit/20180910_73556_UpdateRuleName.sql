@@ -1,0 +1,22 @@
+/*
+	Created: 20180910@Winnie.Vu
+	Task :   Update Rule name
+	DB: DB052.CheckResultDB
+	Original:
+	
+*/
+UPDATE [CheckResultDB].[dbo].[Rule_Credit]
+	SET RuleName='Super Minbet > Master Minbet > Agent Minbet'
+WHERE RuleId=319
+
+UPDATE [CheckResultDB].[dbo].[Rule_Credit]
+	SET RuleName='Super Maxbet < Master Maxbet < Agent Maxbet'
+WHERE RuleId=321
+
+UPDATE [CheckResultDB].[dbo].[Rule_Credit]
+	SET RuleName='Super mpx < Master mpx < Agent mpx'
+WHERE RuleId=323
+
+UPDATE [CheckResultDB].[dbo].[Rule_Credit]
+	SET RuleName='Super mpb < Master mpb < Agent mpb'
+WHERE RuleId=325 
