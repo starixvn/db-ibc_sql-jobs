@@ -1,13 +1,13 @@
 /*<info serverAlias="DBRPT-bodb_Report" executers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptStatement_14]
-	@WinlostDate	SMALLDATETIME
+	@WinlostDate	DATE
 	,@CustIds		VARCHAR(MAX)
 AS
 
 /*
 	Created: 20190909@Percy
 	DB: DBRPT.bodb_Report
-	Task: rptStatement - Correct data on bettrans range
+	Task: rptStatement - Correct data on bettrans14 range
 
 	Revisions:
 		- 20190909@Percy: Initialize SP [RedmineID: #115377]
@@ -440,5 +440,10 @@ BEGIN
 
 	DROP TABLE #CustInfo
 	DROP TABLE #rptStatement
+
+	-- OpeningTotalBalance
+	EXEC dbo.Task_rptStatement_OpeningTotalBalance_14
+		@WinlostDate	= @WinlostDate
+		,@CustIds		= @CustIds
 END
 GO
