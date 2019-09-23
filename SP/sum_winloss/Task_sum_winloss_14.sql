@@ -141,7 +141,7 @@ BEGIN
 						ELSE ISNULL(b.acomm / (1 - b.apositiontaking - b.mpositiontaking), 0) END) AS agent_grosscomm
 			,SUM(CASE	WHEN b.tpositiontaking = 1 THEN 0
 						ELSE ISNULL(b.scomm / (1 - b.tpositiontaking), 0) END) AS master_grosscomm
-			,SUM(CASE	WHEN b.apositiontaking = 1 THEN 0
+			,SUM(CASE	WHEN b.tpositiontaking = 1 THEN 0
 						ELSE ISNULL(b.scomm / (1 - b.tpositiontaking), 0) END) AS super_grosscomm
 			,bt.sporttypeRef AS sporttype
 			,bt.bettypeRef AS bettype
