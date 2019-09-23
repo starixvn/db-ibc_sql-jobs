@@ -23,7 +23,7 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb_Summary: Generate Data 
 		@delete_level=0, 
 		@description=N'No description available.', 
 		@category_name=N'[Uncategorized (Local)]', 
-		@owner_login_name=N'spvn\percy.nguyen', @job_id = @jobId OUTPUT
+		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 /****** Object:  Step [CS_SumWinloss/CS_SumCancelled]    Script Date: 9/23/2019 1:19:56 PM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'CS_SumWinloss/CS_SumCancelled', 
@@ -42,7 +42,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'CS_SumWi
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Every 2 hours from 00:00AM to 00:06AM', 
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Every 2 hours from 0:00AM to 6:00AM', 
 		@enabled=1, 
 		@freq_type=4, 
 		@freq_interval=1, 
@@ -53,8 +53,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Every 2 h
 		@active_start_date=20190816, 
 		@active_end_date=99991231, 
 		@active_start_time=0, 
-		@active_end_time=60000, 
-		@schedule_uid=N'd072ef33-62d8-4a58-86c3-7159b21f1967'
+		@active_end_time=60000
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
