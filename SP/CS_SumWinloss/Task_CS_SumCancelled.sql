@@ -1,7 +1,4 @@
 /*<info serverAlias="DBSUM-bodb_Summary" executers="" isFunction="0" isNested="1"></info>*/
-USE bodb_Summary
-GO
-
 ALTER PROCEDURE [dbo].[Task_CS_SumCancelled]
 	@WinlostDate SMALLDATETIME
 AS
@@ -36,6 +33,17 @@ BEGIN
 			,Wagers		INT
 			,Stake		MONEY
 		)
+
+		-- For VS Parlay (bettype = 2799)
+		SELECT b.refno, b.matchid
+		INTO #__refno
+		FROM bodb02.dbo.CS_CustSuper c WITH (NOLOCK)
+			CROSS APPLY (
+				SELECT b.refno, bm.matchid
+				FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+					CROSS APPLY (SELECT TOP 1 bm.matchid FROM bodb02.dbo.bettransm bm WITH (NOLOCK) WHERE b.refno = bm.refno) AS bm
+				WHERE c.custid = b.srecommend AND b.matchid = 2799 AND b.winlostdate = @WinlostDate
+		) AS b
 
 		INSERT INTO #tmpBettrans
 		(
@@ -80,9 +88,7 @@ BEGIN
 					,b.stake
 				FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 					OUTER APPLY (
-						SELECT TOP 1 bm.matchid
-						FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-						WHERE b.refno = bm.refno AND b.bettype = 2799
+						SELECT r.matchid FROM #__refno r WHERE b.refno = r.refno AND b.bettype = 2799
 					) AS s
 					OUTER APPLY (SELECT CAST(('<xml>' + ISNULL(b.ExtraInfo, '') + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT')) AS t(c)
 				WHERE c.CustId = b.srecommend

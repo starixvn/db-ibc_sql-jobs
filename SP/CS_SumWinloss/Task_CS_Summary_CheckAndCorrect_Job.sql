@@ -1,7 +1,4 @@
 /*<info serverAlias="DBSUM-bodb_Summary" executers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_Summary]
-GO
-
 ALTER PROCEDURE [dbo].[Task_CS_Summary_CheckAndCorrect_Job]
 AS
 

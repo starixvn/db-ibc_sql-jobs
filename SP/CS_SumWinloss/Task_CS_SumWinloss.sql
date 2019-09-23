@@ -25,6 +25,7 @@ BEGIN
 			,recommend			INT
 			,custid				INT
 			,matchid			INT
+			,refno				BIGINT
 			,ProductID			INT
 			,bettype			INT
 			,eventtype			TINYINT
@@ -52,7 +53,18 @@ BEGIN
 			,HeadlineStock		MONEY
 			,HouseTurnover		MONEY
 		)
-		
+
+		-- For VS Parlay (bettype = 2799)
+		SELECT b.refno, b.matchid
+		INTO #__refno
+		FROM bodb02.dbo.CS_CustSuper c WITH (NOLOCK)
+			CROSS APPLY (
+				SELECT b.refno, bm.matchid
+				FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+					CROSS APPLY (SELECT TOP 1 bm.matchid FROM bodb02.dbo.bettransm bm WITH (NOLOCK) WHERE b.refno = bm.refno) AS bm
+				WHERE c.custid = b.srecommend AND b.matchid = 2799 AND b.winlostdate = @WinlostDate
+		) AS b
+
 		INSERT INTO #tmpBettrans
 		(
 			srecommend
@@ -149,9 +161,7 @@ BEGIN
 					,b.tpositiontaking
 				FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 					OUTER APPLY (
-						SELECT TOP 1 bm.matchid
-						FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-						WHERE b.refno = bm.refno AND b.bettype = 2799
+						SELECT r.matchid FROM #__refno r WHERE b.refno = r.refno AND b.bettype = 2799
 					) AS s
 				WHERE c.CustId = b.srecommend
 					AND b.statusID IN (111, 112, 113)
@@ -176,6 +186,8 @@ BEGIN
 			,b.bettype
 			,CASE WHEN b.bettype = 2799 THEN 1 ELSE s.eventtype END
 			,b.IsLive
+
+		DROP TABLE #__refno
 
 		-- Sum data
 		CREATE TABLE #tmpSumWinloss
