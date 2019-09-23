@@ -55,27 +55,9 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Delay 15
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Update Statistics bettrans14]    Script Date: 9/23/2019 1:19:49 PM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Update Statistics bettrans14', 
-		@step_id=3, 
-		@cmdexec_success_code=0, 
-		@on_success_action=3, 
-		@on_success_step_id=0, 
-		@on_fail_action=2, 
-		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
-		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'UPDATE STATISTICS dbo.bettrans14
-GO
-
-WAITFOR DELAY ''00:00:30.000''', 
-		@database_name=N'bodb02', 
-		@flags=0
-IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 /****** Object:  Step [RptProgressiveGamesContribution]    Script Date: 9/23/2019 1:19:49 PM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'RptProgressiveGamesContribution', 
-		@step_id=4, 
+		@step_id=3, 
 		@cmdexec_success_code=0, 
 		@on_success_action=3, 
 		@on_success_step_id=0, 
@@ -90,7 +72,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'RptProgr
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 /****** Object:  Step [CS_SumWinloss/CS_SumCancelled]    Script Date: 9/23/2019 1:19:49 PM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'CS_SumWinloss/CS_SumCancelled', 
-		@step_id=5, 
+		@step_id=4, 
 		@cmdexec_success_code=0, 
 		@on_success_action=1, 
 		@on_success_step_id=0, 
