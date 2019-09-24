@@ -108,6 +108,8 @@ BEGIN
 			,b.IsLive
 			,b.CancelType
 
+		DROP TABLE #__refno
+
 		-- Sum data
 		CREATE TABLE #tmpSumCancelled
 		(

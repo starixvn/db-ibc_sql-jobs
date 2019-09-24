@@ -189,6 +189,8 @@ BEGIN
 			,CASE WHEN b.bettype = 2799 THEN 1 ELSE s.eventtype END
 			,b.IsLive
 
+		DROP TABLE #__refno
+
 		-- Sum data
 		CREATE TABLE #tmpSumWinloss
 		(
