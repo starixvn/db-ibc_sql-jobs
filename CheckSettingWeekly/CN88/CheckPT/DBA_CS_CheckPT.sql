@@ -144,6 +144,7 @@ BEGIN
 									 AND mcs.BetType = scs.bettype 
 									 AND mcs.IsLive = scs.IsLive
 			INNER JOIN #AgentPT cs ON cs.srecommend = scs.custid 
+									 AND cs.mrecommend = mcs.custid
 									 AND cs.SportType = scs.Sporttype 
 									 AND cs.BetType = scs.bettype 
 									 AND cs.IsLive = scs.IsLive
@@ -167,6 +168,7 @@ BEGIN
 									 AND mcs.BetType = scs.bettype 
 									 AND mcs.IsLive = scs.IsLive
 			INNER JOIN #AgentPT cs ON cs.srecommend = scs.custid 
+									 AND cs.mrecommend = mcs.custid	
 									 AND cs.SportType = scs.Sporttype 
 									 AND cs.BetType = scs.bettype 
 									 AND cs.IsLive = scs.IsLive
