@@ -53,6 +53,7 @@ Revisions:
 	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 	- 20190903@Amanda: Add betfrom Deep Link(t) [RedmineID: #119010]
 	- 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
+	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */  
@@ -61,7 +62,9 @@ BEGIN
     
 	DELETE FROM dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate  	
 
-	--Member Level  
+	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
+	
+	--Member Level
 	INSERT INTO dbo.rptLicWinloss2(  
 	  [winlostdate]  
 	  ,[username]  
@@ -152,10 +155,17 @@ BEGIN
 	-- 1706: bidme tip, 4300 - PP Promotion Prize
 	,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300) THEN bettype ELSE 0 END bettype
 	--114: half win, 115: half lose
-	,CASE 
-		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 114 
-		WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 115
-		ELSE bettrans.statusID END AS statusID
+	,CASE
+		WHEN bettrans.winlostdate >= @HWHLCutDate AND bettrans.statusID IN(112,113) AND bettrans.modds IN (-0.25, 0.25)
+				---- Sportsbook
+				AND (bettrans.bettype < 999 OR bettrans.bettype BETWEEN 1301 AND 1399 OR bettrans.bettype BETWEEN 9001 AND 9399)
+				AND bettrans.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
+				AND bettrans.bettype NOT BETWEEN 81 AND 120
+		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
+		WHEN bettrans.winlostdate < @HWHLCutDate AND bettrans.statusID IN (112,113) AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
+		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
+		ELSE bettrans.statusID
+		END AS statusID
 	,CASE 
 		WHEN BA.transid IS NULL THEN 0
 		WHEN BA.transid IS NOT NULL THEN 1 END AS isBA
@@ -210,10 +220,17 @@ GROUP BY
 		WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 		ELSE 0 END
 	,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300) THEN bettype ELSE 0 END
-	,CASE 
-		WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 114 
-		WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 115
-		ELSE bettrans.statusID END
+	,CASE
+		WHEN bettrans.winlostdate >= @HWHLCutDate AND bettrans.statusID IN(112,113) AND bettrans.modds IN (-0.25, 0.25)
+				---- Sportsbook
+				AND (bettrans.bettype < 999 OR bettrans.bettype BETWEEN 1301 AND 1399 OR bettrans.bettype BETWEEN 9001 AND 9399)
+				AND bettrans.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
+				AND bettrans.bettype NOT BETWEEN 81 AND 120
+		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
+		WHEN bettrans.winlostdate < @HWHLCutDate AND bettrans.statusID IN (112,113) AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
+		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
+		ELSE bettrans.statusID 
+		END
 	,CASE 
 		WHEN BA.transid IS NULL THEN 0
 		WHEN BA.transid IS NOT NULL THEN 1 END
@@ -222,10 +239,10 @@ GROUP BY
 	,CASE    
 		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t') THEN bettrans.betfrom ELSE '' END
 
---Agent Level (sum on member)
-INSERT INTO dbo.rptLicWinloss2
-        (
-        [winlostdate]
+	--Agent Level (sum on member)
+	INSERT INTO dbo.rptLicWinloss2
+		 (
+		 [winlostdate]
 		,[username]
 		,[username2]
 		,[custid]
@@ -234,7 +251,7 @@ INSERT INTO dbo.rptLicWinloss2
 		,[mrecommend]
 		,[srecommend]
 		,[turnover]
-        ,[winlost]
+		,[winlost]
 		,[BetEffective]
 		,[awinlost]
 		,[mwinlost]
@@ -255,9 +272,9 @@ INSERT INTO dbo.rptLicWinloss2
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
-        )
-    SELECT
-        @winlostdate
+		)
+	SELECT
+		@winlostdate
 		,c.username
 		,c.username2
 		,c.custid
@@ -265,54 +282,54 @@ INSERT INTO dbo.rptLicWinloss2
 		,b.recommend
 		,b.mrecommend
 		,b.srecommend
-        ,SUM(turnover)
-        ,SUM(winlost)
+		,SUM(turnover)
+		,SUM(winlost)
 		,SUM(BetEffective)
-        ,SUM(awinlost)
-        ,SUM(mwinlost)
-        ,SUM(swinlost)
-        ,SUM(playercomm)
-        ,SUM(comm)
-        ,SUM(acomm)
-        ,SUM(scomm)
-        ,SUM(winlostvirtual)
-        ,SUM(commvirtual)
-        ,SUM(BetCount)
-        ,b.currency
-        ,b.sporttype
-        ,b.bettype
-        ,b.statusID
+		,SUM(awinlost)
+		,SUM(mwinlost)
+		,SUM(swinlost)
+		,SUM(playercomm)
+		,SUM(comm)
+		,SUM(acomm)
+		,SUM(scomm)
+		,SUM(winlostvirtual)
+		,SUM(commvirtual)
+		,SUM(BetCount)
+		,b.currency
+		,b.sporttype
+		,b.bettype
+		,b.statusID
 		,b.isBA
 		,b.isMobile
 		,b.betfrom
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
-    FROM
-        dbo.rptLicWinloss2 b (nolock)
-        INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid
-    WHERE
-        b.winlostdate = @winlostdate
-        and b.roleid = 1
-        and c.roleid = 2
-    GROUP BY
-        c.username
+	FROM
+		dbo.rptLicWinloss2 b (nolock)
+		INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid
+	WHERE
+		b.winlostdate = @winlostdate
+		and b.roleid = 1
+		and c.roleid = 2
+	GROUP BY
+		c.username
 		,c.username2
 		,c.custid
 		,b.recommend
 		,b.mrecommend
 		,b.srecommend
-        ,b.currency
-        ,b.sporttype
-        ,b.bettype
-        ,b.statusID
+		,b.currency
+		,b.sporttype
+		,b.bettype
+		,b.statusID
 		,b.isBA
 		,b.isMobile
 		,b.betfrom
 
---Master Level (sum on member)
-INSERT INTO dbo.rptLicWinloss2
-        (
-        [winlostdate]
+	--Master Level (sum on member)
+	INSERT INTO dbo.rptLicWinloss2
+		(
+		[winlostdate]
 		,[username]
 		,[username2]
 		,[custid]
@@ -321,7 +338,7 @@ INSERT INTO dbo.rptLicWinloss2
 		,[mrecommend]
 		,[srecommend]
 		,[turnover]
-        ,[winlost]
+		,[winlost]
 		,[BetEffective]
 		,[awinlost]
 		,[mwinlost]
@@ -342,63 +359,63 @@ INSERT INTO dbo.rptLicWinloss2
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]		
-        )
-SELECT
-    @winlostdate
-	,c.username
-	,c.username2
-	,c.custid
-	,3 AS roleid
-	,0
-	,b.mrecommend
-	,b.srecommend
-    ,SUM(turnover)
-    ,SUM(winlost)
-	,SUM(BetEffective)
-    ,SUM(awinlost)
-    ,SUM(mwinlost)
-    ,SUM(swinlost)
-    ,SUM(playercomm)
-    ,SUM(comm)
-    ,SUM(acomm)
-    ,SUM(scomm)
-    ,SUM(winlostvirtual)
-    ,SUM(commvirtual)
-    ,SUM(BetCount)
-    ,b.currency
-    ,b.sporttype
-    ,b.bettype
-    ,b.statusID
-	,b.isBA
-	,b.isMobile
-	,b.betfrom
-	,SUM(BuyBackAmt)
-	,SUM(BABuyBackAmt)		
-FROM
-    dbo.rptLicWinloss2 b (NOLOCK)
-    INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.mrecommend = c.custid
-WHERE
-    b.winlostdate = @winlostdate
-    AND b.roleid = 1
-    AND c.roleid = 3
-GROUP BY
-    c.username
-	,c.username2
-	,c.custid
-	,b.mrecommend
-	,b.srecommend
-    ,b.currency
-    ,b.sporttype
-    ,b.bettype
-    ,b.statusID
-	,b.isBA
-	,b.isMobile
-	,b.betfrom
+		)
+	SELECT
+		@winlostdate
+		,c.username
+		,c.username2
+		,c.custid
+		,3 AS roleid
+		,0
+		,b.mrecommend
+		,b.srecommend
+		,SUM(turnover)
+		,SUM(winlost)
+		,SUM(BetEffective)
+		,SUM(awinlost)
+		,SUM(mwinlost)
+		,SUM(swinlost)
+		,SUM(playercomm)
+		,SUM(comm)
+		,SUM(acomm)
+		,SUM(scomm)
+		,SUM(winlostvirtual)
+		,SUM(commvirtual)
+		,SUM(BetCount)
+		,b.currency
+		,b.sporttype
+		,b.bettype
+		,b.statusID
+		,b.isBA
+		,b.isMobile
+		,b.betfrom
+		,SUM(BuyBackAmt)
+		,SUM(BABuyBackAmt)		
+	FROM
+		dbo.rptLicWinloss2 b (NOLOCK)
+		INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.mrecommend = c.custid
+	WHERE
+		b.winlostdate = @winlostdate
+		AND b.roleid = 1
+		AND c.roleid = 3
+	GROUP BY
+		c.username
+		,c.username2
+		,c.custid
+		,b.mrecommend
+		,b.srecommend
+		,b.currency
+		,b.sporttype
+		,b.bettype
+		,b.statusID
+		,b.isBA
+		,b.isMobile
+		,b.betfrom
 
---Super Level (Sum on member)
-INSERT INTO dbo.rptLicWinloss2
-        (
-        [winlostdate]
+	--Super Level (Sum on member)
+	INSERT INTO dbo.rptLicWinloss2
+		(
+		[winlostdate]
 		,[username]
 		,[username2]
 		,[custid]
@@ -407,7 +424,7 @@ INSERT INTO dbo.rptLicWinloss2
 		,[mrecommend]
 		,[srecommend]
 		,[turnover]
-        ,[winlost]
+		,[winlost]
 		,[BetEffective]
 		,[awinlost]
 		,[mwinlost]
@@ -428,56 +445,56 @@ INSERT INTO dbo.rptLicWinloss2
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]		
-        )
-SELECT
-	@winlostdate
-	,c.username
-	,c.username2
-	,c.custid
-	,4 AS roleid
-	,0
-	,0
-	,b.srecommend
-	,SUM(turnover)
-	,SUM(winlost)
-	,SUM(BetEffective)
-	,SUM(awinlost)
-	,SUM(mwinlost)
-	,SUM(swinlost)
-	,SUM(playercomm)
-	,SUM(comm)
-	,SUM(acomm)
-	,SUM(scomm)
-	,SUM(winlostvirtual)
-	,SUM(commvirtual)
-	,SUM(BetCount)
-	,b.currency
-	,b.sporttype
-	,b.bettype
-	,b.statusID
-	,b.isBA
-	,b.isMobile
-	,b.betfrom
-	,SUM(BuyBackAmt)
-	,SUM(BABuyBackAmt)	
-FROM
-    dbo.rptLicWinloss2 b (nolock)
-    INNER join bodb02.dbo.customer c (nolock) ON b.srecommend = c.custid
-WHERE
-    b.winlostdate = @winlostdate
-    and b.roleid = 1
-    and c.roleid = 4
-GROUP BY
-    c.username
-	,c.username2
-	,c.custid
-	,b.srecommend
-    ,b.currency
-    ,b.sporttype
-    ,b.bettype
-    ,b.statusID
-	,b.isBA
-	,b.isMobile
-	,b.betfrom
+		)
+	SELECT
+		@winlostdate
+		,c.username
+		,c.username2
+		,c.custid
+		,4 AS roleid
+		,0
+		,0
+		,b.srecommend
+		,SUM(turnover)
+		,SUM(winlost)
+		,SUM(BetEffective)
+		,SUM(awinlost)
+		,SUM(mwinlost)
+		,SUM(swinlost)
+		,SUM(playercomm)
+		,SUM(comm)
+		,SUM(acomm)
+		,SUM(scomm)
+		,SUM(winlostvirtual)
+		,SUM(commvirtual)
+		,SUM(BetCount)
+		,b.currency
+		,b.sporttype
+		,b.bettype
+		,b.statusID
+		,b.isBA
+		,b.isMobile
+		,b.betfrom
+		,SUM(BuyBackAmt)
+		,SUM(BABuyBackAmt)	
+	FROM
+		dbo.rptLicWinloss2 b (nolock)
+		INNER join bodb02.dbo.customer c (nolock) ON b.srecommend = c.custid
+	WHERE
+		b.winlostdate = @winlostdate
+		and b.roleid = 1
+		and c.roleid = 4
+	GROUP BY
+		c.username
+		,c.username2
+		,c.custid
+		,b.srecommend
+		,b.currency
+		,b.sporttype
+		,b.bettype
+		,b.statusID
+		,b.isBA
+		,b.isMobile
+		,b.betfrom
 END
 GO

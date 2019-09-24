@@ -36,7 +36,8 @@ AS
 	- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 	- 20190903@Amanda: Add betfrom Deep Link(t) [RedmineID: #119010]
-	- 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
+	- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
+	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -45,7 +46,9 @@ BEGIN
     
 	DELETE FROM dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate 
 
-	--Member Level  
+	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
+
+	--Member Level
 	INSERT INTO dbo.rptLicWinloss2(  
 	  [winlostdate]  
 	  ,[username]  
@@ -136,10 +139,16 @@ BEGIN
 	  -- 1706: bidme tip, 4300 - PP Promotion Prize
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706, 4300) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
-	 ,CASE   
-	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 114   
-	  WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 115  
-	  ELSE bettrans.statusID END AS statusID  
+	 ,CASE
+		WHEN bettrans.winlostdate >= @HWHLCutDate AND bettrans.statusID IN(112,113) AND bettrans.modds IN (-0.25, 0.25)
+				---- Sportsbook
+				AND (bettrans.bettype < 999 OR bettrans.bettype BETWEEN 1301 AND 1399 OR bettrans.bettype BETWEEN 9001 AND 9399)
+				AND bettrans.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
+				AND bettrans.bettype NOT BETWEEN 81 AND 120
+		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
+		WHEN bettrans.winlostdate < @HWHLCutDate AND bettrans.statusID IN (112,113) AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
+		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END  
+		ELSE bettrans.statusID END AS statusID  
 	 ,CASE   
 	  WHEN BA.transid IS NULL THEN 0  
 	  WHEN BA.transid IS NOT NULL THEN 1 END AS isBA  
@@ -194,10 +203,16 @@ BEGIN
 		WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 	  ELSE 0 END  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300) THEN bettype ELSE 0 END  
-	 ,CASE   
-	  WHEN bettrans.statusID = 112 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 114   
-	  WHEN bettrans.statusID = 113 AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 115  
-	  ELSE bettrans.statusID END  
+	 ,CASE
+		WHEN bettrans.winlostdate >= @HWHLCutDate AND bettrans.statusID IN(112,113) AND bettrans.modds IN (-0.25, 0.25)
+				---- Sportsbook
+				AND (bettrans.bettype < 999 OR bettrans.bettype BETWEEN 1301 AND 1399 OR bettrans.bettype BETWEEN 9001 AND 9399)
+				AND bettrans.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
+				AND bettrans.bettype NOT BETWEEN 81 AND 120
+		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
+		WHEN bettrans.winlostdate < @HWHLCutDate AND bettrans.statusID IN (112,113) AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
+		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END  
+		ELSE bettrans.statusID END
 	 ,CASE   
 	  WHEN BA.transid IS NULL THEN 0  
 	  WHEN BA.transid IS NOT NULL THEN 1 END  

@@ -17,7 +17,8 @@ AS
 		  - 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
 		  - 20180814@Joseph: Remove Racing [RedmineID: #99378]
 		  - 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
-		  - 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
+		  - 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
+		  - 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 */ 
 BEGIN 
 SET NOCOUNT ON;
@@ -32,6 +33,7 @@ BEGIN
 	WHERE winlostdate = @Date
 END;
 
+DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
 
 SELECT DISTINCT b.transid, s.sporttype
 INTO #__cte_parlayinfo 
@@ -45,7 +47,6 @@ WHERE b.bettype = 2799
 	AND b.winlostdate = @date
 	AND b.statusID IN (111, 112, 113)
 	AND b.matchid = 2799		
-	
 
 SELECT a.CustID
 	,a.currency
@@ -60,13 +61,17 @@ SELECT a.CustID
 	,a.Odds
 	,a.oddsid
 	,a.oddstype
-	,CASE 
-		WHEN a.statusID = 112
+	,CASE
+		WHEN a.winlostdate >= @HWHLCutDate AND a.statusID IN(112,113) AND a.modds IN (-0.25, 0.25)
+				---- Sportsbook
+				AND (a.bettype < 999 OR a.bettype BETWEEN 1301 AND 1399 OR a.bettype BETWEEN 9001 AND 9399)
+				AND a.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
+				AND a.bettype NOT BETWEEN 81 AND 120
+		THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
+		WHEN a.winlostdate < @HWHLCutDate AND a.statusID IN (112,113)
 			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
-			AND ABS(modds) = 0.25 THEN 114
-		WHEN a.statusID = 113
-			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
-			AND ABS(modds) = 0.25 THEN 115
+			AND ABS(modds) = 0.25
+		THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
 		ELSE a.statusID
 		END AS statusID
 	,a.winlostdate
@@ -77,7 +82,7 @@ SELECT a.CustID
 		END AS isBA
 --,sum(awinlost) awinlost  
 --,sum(comm) comm  
-INTO #__cte_bettrans  
+INTO #__cte_bettrans
 FROM bodb02.dbo.bettrans a WITH (NOLOCK)
 	INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC
 	ON a.recommend = lc.custid AND a.currency = lc.currency
@@ -97,13 +102,17 @@ GROUP BY a.matchid
 	,a.Odds
 	,a.oddsid
 	,a.oddstype
-	,CASE 
-		WHEN a.statusID = 112
+	,CASE
+		WHEN a.winlostdate >= @HWHLCutDate AND a.statusID IN(112,113) AND a.modds IN (-0.25, 0.25)
+				---- Sportsbook
+				AND (a.bettype < 999 OR a.bettype BETWEEN 1301 AND 1399 OR a.bettype BETWEEN 9001 AND 9399)
+				AND a.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
+				AND a.bettype NOT BETWEEN 81 AND 120
+		THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
+		WHEN a.winlostdate < @HWHLCutDate AND a.statusID IN (112,113)
 			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
-			AND ABS(modds) = 0.25 THEN 114
-		WHEN a.statusID = 113
-			AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
-			AND ABS(modds) = 0.25 THEN 115
+			AND ABS(modds) = 0.25
+		THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
 		ELSE a.statusID
 		END
 	,a.winlostdate
@@ -111,7 +120,6 @@ GROUP BY a.matchid
 		WHEN BA.transid IS NULL THEN 0
 		WHEN BA.transid IS NOT NULL THEN 1
 		END
-
 
 SELECT o.Orid
 	,r.SportType
@@ -121,7 +129,6 @@ FROM bodb02.dbo.VSOutright o WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK)
 	ON r.EventID = o.EventID
 WHERE EventDate = @Date
-
 
 INSERT INTO dbo.rptCustomerTurnover
 SELECT a.CustID
@@ -223,6 +230,5 @@ GROUP BY a.CustID
 		END
 	,winlostdate
 	,a.isba
- 
  END
  GO

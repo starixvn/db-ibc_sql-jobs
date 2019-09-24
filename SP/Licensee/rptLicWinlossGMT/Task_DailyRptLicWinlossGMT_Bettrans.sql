@@ -17,7 +17,8 @@ AS
 	- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
 	- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]
 	- 20190903@Amanda: Add platform Deep Link(t) [RedmineID: #119010]
-	- 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
+	- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
+	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 	
 	EXEC Task_DailyRptLicWinlossGMT_Bettrans '2017-11-30'
 */  
@@ -29,6 +30,7 @@ BEGIN
 		SET @ToDate = @FromDate
 	END
 
+	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
 	DECLARE @TimeZones TABLE (RecordID TINYINT IDENTITY(1, 1), TimeZone SMALLINT)
 
 	IF @TimeZone IS NULL
@@ -60,8 +62,8 @@ BEGIN
 			WHERE RptDate = @RptDate 
 				AND TimeZone = @ProcessingTimeZone
 
-			--Member Level  
-			INSERT INTO dbo.rptLicWinlossGMT(  
+		--Member Level  
+		INSERT INTO dbo.rptLicWinlossGMT(  
 				TimeZone
 				,RptDate
 				,RptDateGMT
@@ -126,9 +128,11 @@ BEGIN
 				,COUNT(b.transid) BetCount  
 				,b.currency  
 				--114: half win, 115: half lose  
-				,CASE   
-					WHEN b.statusID = 112 AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 114   
-					WHEN b.statusID = 113 AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 115  
+				,CASE
+					WHEN b.winlostdate >= @HWHLCutDate AND b.bettype IN (112,113) AND b.modds IN (-0.25,0.25) AND b.bettype NOT IN (29,38)
+					THEN CASE WHEN b.bettype = 112 THEN 114 ELSE 115 END
+					WHEN b.winlostdate < @HWHLCutDate AND b.statusID IN (112,113) AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
+					THEN CASE WHEN b.bettype = 112 THEN 114 ELSE 115 END 
 					ELSE b.statusID END AS statusID  
 				,CASE   
 					WHEN BA.transid IS NULL THEN 0  
@@ -173,9 +177,11 @@ BEGIN
 				,b.currency  
 				,b.StatusId
 				--114: half win, 115: half lose  
-				,CASE   
-					WHEN b.statusID = 112 AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 114   
-					WHEN b.statusID = 113 AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25 THEN 115  
+				,CASE
+					WHEN b.winlostdate >= @HWHLCutDate AND b.bettype IN (112,113) AND b.modds IN (-0.25,0.25) AND b.bettype NOT IN (29,38)
+					THEN CASE WHEN b.bettype = 112 THEN 114 ELSE 115 END
+					WHEN b.winlostdate < @HWHLCutDate AND b.statusID IN (112,113) AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
+					THEN CASE WHEN b.bettype = 112 THEN 114 ELSE 115 END 
 					ELSE b.statusID END  
 				,CASE   
 					WHEN BA.transid IS NULL THEN 0  
@@ -183,7 +189,8 @@ BEGIN
 				,CASE   
 					WHEN b.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END  
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t') THEN b.betfrom ELSE '' END 
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t') THEN b.betfrom ELSE '' END
+
 
 			--Agent Level (sum on member)  
 			INSERT INTO dbo.rptLicWinlossGMT (  
