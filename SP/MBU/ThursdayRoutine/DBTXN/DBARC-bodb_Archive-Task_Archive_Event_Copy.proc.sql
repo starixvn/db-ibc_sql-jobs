@@ -13,6 +13,7 @@ AS
 
 	Revisions:
 		- 20190318@Helen:	Initialize - archive event timeout issue - [Redmine: #110447]
+		- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader] table - [Redmine: #117014]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -441,6 +442,26 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 
 SELECT	MarketSelectionId, MarketId, SelectionType, Result, ResultStatusId, MatchId
 FROM	bodb02.dbo.SMP_MarketSelection14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 21:  Dot_Admin_Assignment_Trader_bk -----------------------------
+	-- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader] table
+	ELSE IF	@TableName = N'Dot_Admin_Assignment_Trader_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.Dot_Admin_Assignment_Trader_bk
+	(	ID, matchid, bettype, liveindicator, Detail_X, Detail_Y, Detail_Z, Type, TraderID, SuspenderID, UpdatedTime, UpdatedUser)
+SELECT	ID, matchid, bettype, liveindicator, Detail_X, Detail_Y, Detail_Z, Type, TraderID, SuspenderID, UpdatedTime, UpdatedUser
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	ID, matchid, bettype, liveindicator, Detail_X, Detail_Y, Detail_Z, Type, TraderID, SuspenderID, UpdatedTime, UpdatedUser
+FROM	bodb02.dbo.Dot_Admin_Assignment_Trader AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
 
 		EXECUTE	sys.sp_executesql @Query;
