@@ -1,4 +1,4 @@
-/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested=”0”></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
 	@winlostdate DATETIME
@@ -6,21 +6,23 @@ ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
 	,@GenForDataWarehouse BIT = 0 
 AS
 /*   
-Created: 20140911@Victor
-Task: Summary AG Casino data and insert into rptDepWinlost_AGCasino
-DB: DBACC/bodb02
-Original:
-Revisions:
-	- 20141017@Victor: remove RAISEERROR statement to avoid affection to rptDepWinlost Summary job
-	- 20141121@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
-	- 20151005@Don: Add filter by status
-	- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
-	- 20170407@Sophia:: Add rule auto regen data : [Redmine: #72914]
-							1st -> 5th : Can Edit data of Previous month  and current Month
-							6th -> end of the month : Edit data of current month only
-	- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
-Param's Explanation:
-	- @winlostdate: The date need to summary
+	Created: 20140911@Victor
+	Task: Summary AG Casino data and insert into rptDepWinlost_AGCasino
+	DB: DBACC/bodb02
+
+	Revisions:
+		- 20141017@Victor: remove RAISEERROR statement to avoid affection to rptDepWinlost Summary job
+		- 20141121@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
+		- 20151005@Don: Add filter by status
+		- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
+		- 20170407@Sophia:: Add rule auto regen data : [Redmine: #72914]
+								1st -> 5th : Can Edit data of Previous month  and current Month
+								6th -> end of the month : Edit data of current month only
+		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
+	Param's Explanation:
+		- @winlostdate: The date need to summary
+		- @IsManual: task run manual or auto
+		- @GenForDataWarehouse: Flag to generate for DataWarehouse
 */  
 SET NOCOUNT ON
 BEGIN TRY
