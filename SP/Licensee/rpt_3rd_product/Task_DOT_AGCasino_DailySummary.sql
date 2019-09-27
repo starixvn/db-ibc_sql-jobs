@@ -41,9 +41,6 @@ BEGIN TRY
 			,CAST(NULL AS INT) [BetCount]
 			,CAST(NULL AS INT) [DrawBetCount]
 			,CAST(NULL AS BIT) [IsVIPGame]
-			,CAST(NULL AS MONEY) [Transfer]
-			,CAST(NULL AS MONEY) [TransferIn]
-			,CAST(NULL AS MONEY) [TransferOut]	
 	END
 
 	DECLARE @BackupDay DATE
@@ -96,10 +93,7 @@ BEGIN TRY
 								,[Playercomm] MONEY
 								,[BetCount] INT
 								,[DrawBetCount] INT
-								,[IsVIPGame] BIT
-								,[Transfer] MONEY
-								,[TransferIn] MONEY
-								,[TransferOut] MONEY)
+								,[IsVIPGame] BIT)
 
 	WHILE EXISTS (SELECT TOP 1 1 FROM @WLDateTab WHERE ID = @i)
 	BEGIN
@@ -172,10 +166,9 @@ BEGIN TRY
 			ELSE
 			BEGIN
 				INSERT INTO #TicketDataForDataWarehouse([Winlostdate],[Custid],[Sporttype],[Currency],[Turnover],[DrawTO],[Winlost],[Playercomm]
-														,[BetCount],[DrawBetCount],[IsVIPGame],[Transfer],[TransferIn],[TransferOut])
+														,[BetCount],[DrawBetCount],[IsVIPGame])
 				SELECT @winlostdate [Winlostdate], custid [Custid], sporttype [Sporttype], currency [Currency], turnover [Turnover], drawTO [DrawTO], 
-					winlost [Winlost], playercomm [Playercomm], BetCount [BetCount], drawBetCount [DrawBetCount], IsVIPGame [IsVIPGame],
-					0 [Transfer],0 [TransferIn],0 [TransferOut]
+					winlost [Winlost], playercomm [Playercomm], BetCount [BetCount], drawBetCount [DrawBetCount], IsVIPGame [IsVIPGame]
 				FROM #TicketData
 			END
 			
@@ -187,7 +180,7 @@ BEGIN TRY
 	IF @GenForDataWarehouse = 1
 	BEGIN
 		SELECT [Winlostdate],[Custid],[Sporttype],[Currency],[Turnover],[DrawTO],[Winlost],[Playercomm]
-														,[BetCount],[DrawBetCount],[IsVIPGame],[Transfer],[TransferIn],[TransferOut]
+														,[BetCount],[DrawBetCount],[IsVIPGame]
 		FROM #TicketDataForDataWarehouse
 	END
 
