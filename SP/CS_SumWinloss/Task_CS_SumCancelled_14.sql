@@ -96,10 +96,10 @@ BEGIN
 					,CASE WHEN b.bettype = 29 THEN CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.liveindicator END AS IsLive
 					,CASE WHEN b.ExtraInfo LIKE '%p1%' AND t.c = 1 THEN 2 ELSE 1 END AS CancelType
 					,b.stake
-				FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+				FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 					OUTER APPLY (
 						SELECT TOP 1 bm.matchid
-						FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
+						FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 						WHERE b.refno = bm.refno AND b.bettype = 2799
 					) AS s
 					OUTER APPLY (SELECT CAST(('<xml>' + ISNULL(b.ExtraInfo, '') + '</xml>') AS XML).value('data(/xml/p1/@ab)[1]','TINYINT')) AS t(c)
@@ -168,12 +168,12 @@ BEGIN
 		FROM #tmpBettrans b
 			CROSS APPLY (
 				SELECT m.sporttype
-				FROM bodb02.dbo.match m WITH (NOLOCK)
+				FROM bodb02.dbo.match14 m WITH (NOLOCK)
 				WHERE b.matchid = m.matchid AND b.eventtype = 1 -- included Betradar VS Parlay
 
 				UNION ALL
 				SELECT l.sporttype
-				FROM bodb02.dbo.outright o WITH (NOLOCK)
+				FROM bodb02.dbo.outright14 o WITH (NOLOCK)
 					INNER JOIN bodb02.dbo.League l WITH (NOLOCK) ON o.leagueid = l.leagueid
 				WHERE b.matchid = o.orid AND b.eventtype = 2
 
