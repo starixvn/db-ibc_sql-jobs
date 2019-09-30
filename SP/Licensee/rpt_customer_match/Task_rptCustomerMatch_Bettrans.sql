@@ -12,7 +12,8 @@ AS
 		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
-		- 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
+		- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
+		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 	 
 	 Parameter's Explanation:     
 */
@@ -29,6 +30,8 @@ BEGIN
 	WHERE winlostdate = @Date
 END
 
+DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
+
 ;WITH cte_bettrans
 AS (
 	SELECT a.CustID
@@ -40,13 +43,17 @@ AS (
 		,sum(a.winlost - a.actual_stake) winlost
 		,a.Odds
 		,a.oddstype
-		,CASE 
-			WHEN a.statusID = 112
+		,CASE
+			WHEN a.winlostdate >= @HWHLCutDate AND a.statusID IN(112,113) AND a.modds IN (-0.25, 0.25)
+				---- Sportsbook
+				AND (a.bettype < 999 OR a.bettype BETWEEN 1301 AND 1399 OR a.bettype BETWEEN 9001 AND 9399)
+				AND a.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
+				AND a.bettype NOT BETWEEN 81 AND 120
+			THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
+			WHEN a.winlostdate < @HWHLCutDate AND a.statusID IN (112, 113)
 				AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
-				AND ABS(modds) = 0.25 THEN 114
-			WHEN a.statusID = 113
-				AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
-				AND ABS(modds) = 0.25 THEN 115
+				AND ABS(modds) = 0.25
+			THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
 			ELSE a.statusID
 			END AS statusID
 		,a.winlostdate
@@ -76,13 +83,17 @@ AS (
 		,a.bettype
 		,a.Odds
 		,a.oddstype
-		,CASE 
-			WHEN a.statusID = 112
+		,CASE
+			WHEN a.winlostdate >= @HWHLCutDate AND a.statusID IN(112,113) AND a.modds IN (-0.25, 0.25)
+				---- Sportsbook
+				AND (a.bettype < 999 OR a.bettype BETWEEN 1301 AND 1399 OR a.bettype BETWEEN 9001 AND 9399)
+				AND a.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
+				AND a.bettype NOT BETWEEN 81 AND 120
+			THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
+			WHEN a.winlostdate < @HWHLCutDate AND a.statusID IN (112, 113)
 				AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
-				AND ABS(modds) = 0.25 THEN 114
-			WHEN a.statusID = 113
-				AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
-				AND ABS(modds) = 0.25 THEN 115
+				AND ABS(modds) = 0.25
+			THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
 			ELSE a.statusID
 			END
 		,a.winlostdate

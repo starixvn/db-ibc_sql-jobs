@@ -36,7 +36,8 @@ Revisions:
 	-20181226@bruce: Implement E-sport 2 [Redmine: #105723]
 	-20190306@Parsons: Implement BetBuilder [Redmine: #108995]
 	-20190819@Parsons: Provide House Turnover In NG WL Report [Redmine: #117674]
-	- 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
+	- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
+	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'
@@ -119,7 +120,9 @@ BEGIN
 	BEGIN
 		SET @HasCBProduct = 0
 	END
-		
+	
+	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
+	
 	WHILE (@count>=0)
 	BEGIN
 		SELECT @tmpDate=DATEADD(DAY,@count,@thedaybefore)
@@ -170,7 +173,18 @@ BEGIN
 	            b.winlost,b.awinlost,b.mwinlost,b.swinlost,
 	            b.acomm, b.scomm, b.playercomm, b.comm,
 	            b.matchid,
-	            CASE WHEN (b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) AND ABS(b.modds) = 0.25 AND [status] IN('WON', 'LOSE')) OR (b.bettype IN (33,43) AND [status] <> 'refund' AND b.liveawayscore=0) THEN 'HALF ' ELSE '' END + b.status AS [status],
+	            CASE
+					WHEN b.bettype IN (33,43) AND [status] <> 'refund' AND b.liveawayscore=0 THEN 'HALF '
+					WHEN b.winlostdate >= @HWHLCutDate 
+						---- Sportsbook
+						AND (b.bettype < 999 OR b.bettype BETWEEN 1301 AND 1399 OR b.bettype BETWEEN 9001 AND 9399) 
+						AND b.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
+						AND b.bettype NOT BETWEEN 81 AND 120                        
+						AND ABS(b.modds) = 0.25 AND [status] IN('WON', 'LOSE')
+						THEN 'HALF '
+					WHEN b.winlostdate < @HWHLCutDate AND b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) AND ABS(b.modds) = 0.25 AND [status] IN('WON', 'LOSE') THEN 'HALF '
+					ELSE '' 
+				END + b.status AS [status],
                 b.srecommend, 
                 b.currency, 
                 b.recommend,b.mrecommend,
@@ -288,7 +302,18 @@ BEGIN
 	            b.winlost,b.awinlost,b.mwinlost,b.swinlost,
 	            b.acomm, b.scomm, b.playercomm, b.comm,
 	            b.matchid,
-	            CASE WHEN (b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) AND ABS(b.modds) = 0.25 AND [status] IN('WON', 'LOSE')) OR (b.bettype IN (33,43) AND [status] <> 'refund' AND b.liveawayscore=0) THEN 'HALF ' ELSE '' END + b.status AS [status],
+	            CASE
+					WHEN b.bettype IN (33,43) AND [status] <> 'refund' AND b.liveawayscore=0 THEN 'HALF '
+					WHEN b.winlostdate >= @HWHLCutDate 
+						---- Sportsbook
+						AND (b.bettype < 999 OR b.bettype BETWEEN 1301 AND 1399 OR b.bettype BETWEEN 9001 AND 9399) 
+						AND b.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
+						AND b.bettype NOT BETWEEN 81 AND 120                        
+						AND ABS(b.modds) = 0.25 AND [status] IN('WON', 'LOSE')
+						THEN 'HALF '
+					WHEN b.winlostdate < @HWHLCutDate AND b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) AND ABS(b.modds) = 0.25 AND [status] IN('WON', 'LOSE') THEN 'HALF '
+					ELSE ''
+				END + b.status AS [status],
                 b.srecommend, 
                 b.currency, 
                 b.recommend,b.mrecommend,
