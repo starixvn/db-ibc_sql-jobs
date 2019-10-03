@@ -323,3 +323,4 @@ BEGIN CATCH
 	RETURN
 END CATCH
 GO
+GRANT EXECUTE ON [dbo].[Task_DOT_Exchange_DailySummary] TO [dwrs2] AS [dbo]
