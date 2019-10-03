@@ -27,15 +27,21 @@ BEGIN
 				SELECT val FROM bodb02.dbo.strSplit(@CustIds, ',') f WHERE c.custid = f.val
 			) AS tmp
 
-		-- Member + SMA
+		-- Member + SMA + Headline
 		CREATE TABLE #CustInfo (custid INT, roleid TINYINT)
 		INSERT INTO #CustInfo (custid, roleid)
 		SELECT c.custid, c.roleid
 		FROM bodb02.dbo.Customer c WITH (NOLOCK)
 			INNER JOIN #tmpSuper s ON c.srecommend = s.srecommend
+		UNION ALL
+		SELECT DISTINCT c.UplineId, 0
+		FROM bodb02.dbo.CustSuper c WITH (NOLOCK)
+			CROSS APPLY (
+				SELECT srecommend FROM #tmpSuper t WHERE c.custid = t.srecommend
+			) AS tmp
 
 		CREATE CLUSTERED INDEX IX_roleId ON #CustInfo (roleid, custid)
-		
+
 		DROP TABLE #tmpSuper
 	END
 	/* ===== End Get Customer Info ===== */
@@ -164,7 +170,7 @@ BEGIN
 
 		DROP TABLE #__bets
 
-		-- transfer ticket
+		-- transfer tickets
 		INSERT INTO #tmpData
 		(
 			custid
@@ -227,9 +233,10 @@ BEGIN
 			INTO #__tmpOpeningBalance
 			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 				CROSS APPLY (
-					SELECT c.CustId FROM #CustInfo c WHERE b.custid = c.CustId AND c.roleid = 1
+					SELECT c.CustId FROM #CustInfo c WHERE b.custid = c.CustId
 				) AS tmp
 			WHERE b.matchid = 0
+				AND b.bettype >= 19999
 				AND b.winlostdate < @WinlostDate
 			GROUP BY
 				b.matchid -- group by on index matchid, custid
@@ -243,7 +250,7 @@ BEGIN
 				custid
 				,OpeningBalance
 			)
-			-- member + transfer of SMA
+			-- member + transfer of SMA, Headline
 			SELECT
 				custid
 				,SUM(winlost - actual_stake + playercomm)
@@ -359,6 +366,8 @@ BEGIN
 	BEGIN
 		DECLARE @RowCount INT
 
+		DECLARE @CustChangeBalance TABLE (CustId INT, Diff_ClosingBalance MONEY)
+
 		;WITH CTE_rptStatement AS
 		(
 			SELECT
@@ -433,7 +442,21 @@ BEGIN
 			WHEN NOT MATCHED BY SOURCE
 				AND SOURCE.winlostdate = @WinlostDate
 				AND EXISTS (SELECT 1 FROM #CustInfo c WHERE SOURCE.CustId = c.CustId)
-				THEN DELETE;
+				THEN DELETE
+			OUTPUT
+				ISNULL(DELETED.CustId, INSERTED.CustId)
+				,ISNULL(INSERTED.ClosingBalance, 0) - ISNULL(DELETED.ClosingBalance, 0)
+			INTO @CustChangeBalance (CustId, Diff_ClosingBalance);
+
+			---- Update Balance for days after @winlostdate
+			UPDATE r WITH (ROWLOCK)
+			SET r.OpeningBalance = r.OpeningBalance + b.Diff_ClosingBalance
+				,r.ClosingBalance = r.ClosingBalance + b.Diff_ClosingBalance
+			FROM dbo.rptStatement r
+				CROSS APPLY (
+					SELECT cb.Diff_ClosingBalance FROM @CustChangeBalance cb WHERE r.CustId = cb.CustId
+				) AS b
+			WHERE r.winlostdate > @WinlostDate
 		END
 	END
 	/* ===== End Compare and Correct Data ===== */

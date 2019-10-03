@@ -10,7 +10,7 @@ AS
 	Task: rptStatement - Check and Correct OpeningTotalBalance on bettrans14 range
 
 	Revisions:
-		- 20190909@Percy: Initialize SP [RedmineID: #109293]
+		- 20190909@Percy: Initialize SP [RedmineID: #115377]
 */
 
 BEGIN
@@ -19,20 +19,25 @@ BEGIN
 	/* ===== Get Customer Info ===== */
 	BEGIN
 		-- Super
-		CREATE TABLE #tmpSuper (srecommend INT)
-		INSERT INTO #tmpSuper (srecommend)
-		SELECT DISTINCT c.srecommend
+		CREATE TABLE #tmpSuper (UplineId INT, srecommend INT)
+		INSERT INTO #tmpSuper (UplineId, srecommend)
+		SELECT DISTINCT u.UplineId, c.srecommend
 		FROM bodb02.dbo.Customer c WITH (NOLOCK)
 			CROSS APPLY (
 				SELECT val FROM bodb02.dbo.strSplit(@CustIds, ',') f WHERE c.custid = f.val
 			) AS tmp
+			CROSS APPLY (
+				SELECT TOP (1) cs.UplineId FROM bodb02.dbo.CustSuper cs WITH (NOLOCK) WHERE c.srecommend = cs.custid
+			) AS u
 
-		-- Member + SMA
-		CREATE TABLE #CustInfo (custid INT, roleid TINYINT, recommend INT, mrecommend INT, srecommend INT)
-		INSERT INTO #CustInfo (custid, roleid, recommend, mrecommend, srecommend)
-		SELECT c.custid, c.roleid, c.recommend, c.mrecommend, c.srecommend
+		-- Member + SMA + Headline
+		CREATE TABLE #CustInfo (custid INT, roleid TINYINT, recommend INT, mrecommend INT, srecommend INT, UplineId INT)
+		INSERT INTO #CustInfo (custid, roleid, recommend, mrecommend, srecommend, UplineId)
+		SELECT c.custid, c.roleid, c.recommend, c.mrecommend, c.srecommend, s.UplineId
 		FROM bodb02.dbo.Customer c WITH (NOLOCK)
 			INNER JOIN #tmpSuper s ON c.srecommend = s.srecommend
+		UNION ALL
+		SELECT DISTINCT UplineId, 0, 0, 0, 0, UplineId FROM #tmpSuper
 
 		DROP TABLE #tmpSuper
 	END
@@ -57,13 +62,14 @@ BEGIN
 		,recommend	INT
 		,mrecommend	INT
 		,srecommend	INT
+		,UplineId	INT
 		,OpeningTotalBalance DECIMAL(37,4) -- over money type
 	)
 
-	INSERT INTO #SourceOpeningTotalBalance (WinlostDate, CustId, RoleId, recommend, mrecommend, srecommend, OpeningTotalBalance)
-	SELECT r.WinlostDate, r.CustId, c.RoleId, c.recommend, c.mrecommend, c.srecommend, r.OpeningBalance AS OpeningTotalBalance
+	INSERT INTO #SourceOpeningTotalBalance (WinlostDate, CustId, RoleId, recommend, mrecommend, srecommend, UplineId, OpeningTotalBalance)
+	SELECT r.WinlostDate, r.CustId, c.RoleId, c.recommend, c.mrecommend, c.srecommend, c.UplineId, r.OpeningBalance AS OpeningTotalBalance
 	FROM dbo.rptStatement r WITH (NOLOCK)
-		CROSS APPLY (SELECT c.RoleId, c.recommend, c.mrecommend, c.srecommend FROM #CustInfo c WHERE r.CustId = c.CustId) AS c
+		CROSS APPLY (SELECT c.RoleId, c.recommend, c.mrecommend, c.srecommend, c.UplineId FROM #CustInfo c WHERE r.CustId = c.CustId) AS c
 	WHERE r.WinlostDate = @WinlostDate
 
 	-- Every saturday, all customers data will be recored
@@ -73,10 +79,10 @@ BEGIN
 		BEGIN
 			SELECT @tmpWinlostDate = DATEADD(DAY, 1, @WinlostDate)
 
-			INSERT INTO #SourceOpeningTotalBalance (WinlostDate, CustId, RoleId, recommend, mrecommend, srecommend, OpeningTotalBalance)
-			SELECT r.WinlostDate, r.CustId, c.RoleId, c.recommend, c.mrecommend, c.srecommend, r.OpeningBalance AS OpeningTotalBalance
+			INSERT INTO #SourceOpeningTotalBalance (WinlostDate, CustId, RoleId, recommend, mrecommend, srecommend, UplineId, OpeningTotalBalance)
+			SELECT r.WinlostDate, r.CustId, c.RoleId, c.recommend, c.mrecommend, c.srecommend, c.UplineId, r.OpeningBalance AS OpeningTotalBalance
 			FROM dbo.rptStatement r WITH (NOLOCK)
-				CROSS APPLY (SELECT c.RoleId, c.recommend, c.mrecommend, c.srecommend FROM #CustInfo c WHERE r.CustId = c.CustId) AS c
+				CROSS APPLY (SELECT c.RoleId, c.recommend, c.mrecommend, c.srecommend, c.UplineId FROM #CustInfo c WHERE r.CustId = c.CustId) AS c
 			WHERE r.WinlostDate = @tmpWinlostDate
 				AND NOT EXISTS (SELECT 1 FROM #SourceOpeningTotalBalance s WHERE s.CustId = r.CustId)
 		END
@@ -87,10 +93,10 @@ BEGIN
 
 			WHILE @tmpWinlostDate >= @Last_Saturday
 			BEGIN
-				INSERT INTO #SourceOpeningTotalBalance (WinlostDate, CustId, RoleId, recommend, mrecommend, srecommend, OpeningTotalBalance)
-				SELECT r.WinlostDate, r.CustId, c.RoleId, c.recommend, c.mrecommend, c.srecommend, r.ClosingBalance AS OpeningTotalBalance
+				INSERT INTO #SourceOpeningTotalBalance (WinlostDate, CustId, RoleId, recommend, mrecommend, srecommend, UplineId, OpeningTotalBalance)
+				SELECT r.WinlostDate, r.CustId, c.RoleId, c.recommend, c.mrecommend, c.srecommend, c.UplineId, r.ClosingBalance AS OpeningTotalBalance
 				FROM dbo.rptStatement r WITH (NOLOCK)
-					CROSS APPLY (SELECT c.RoleId, c.recommend, c.mrecommend, c.srecommend FROM #CustInfo c WHERE r.CustId = c.CustId) AS c
+					CROSS APPLY (SELECT c.RoleId, c.recommend, c.mrecommend, c.srecommend, c.UplineId FROM #CustInfo c WHERE r.CustId = c.CustId) AS c
 				WHERE r.WinlostDate = @tmpWinlostDate
 					AND NOT EXISTS (SELECT 1 FROM #SourceOpeningTotalBalance s WHERE s.CustId = r.CustId)
 
@@ -100,6 +106,7 @@ BEGIN
 	END
 
 	-- update OpeningTotalBalance
+	CREATE INDEX ix_UplineId	ON #SourceOpeningTotalBalance (UplineId)
 	CREATE INDEX ix_srecommend	ON #SourceOpeningTotalBalance (srecommend)
 	CREATE INDEX ix_mrecommend	ON #SourceOpeningTotalBalance (mrecommend)
 	CREATE INDEX ix_recommend	ON #SourceOpeningTotalBalance (recommend)
@@ -109,13 +116,19 @@ BEGIN
 	SET s.OpeningTotalBalance = t.OpeningTotalBalance
 	FROM #SourceOpeningTotalBalance s
 		CROSS APPLY (
-			SELECT SUM(su.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance su WHERE s.CustId = su.srecommend AND s.RoleId = 4
+			SELECT SUM(up.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance up
+			WHERE s.CustId = up.UplineId AND s.RoleId = 0 HAVING COUNT (1) > 0
 			UNION ALL
-			SELECT SUM(ma.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance ma WHERE s.CustId = ma.mrecommend AND s.RoleId = 3
+			SELECT SUM(su.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance su
+			WHERE s.CustId = su.srecommend AND s.RoleId = 4 HAVING COUNT (1) > 0
 			UNION ALL
-			SELECT SUM(ag.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance ag WHERE s.CustId = ag.recommend AND s.RoleId = 2
+			SELECT SUM(ma.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance ma
+			WHERE s.CustId = ma.mrecommend AND s.RoleId = 3 HAVING COUNT (1) > 0
+			UNION ALL
+			SELECT SUM(ag.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance ag
+			WHERE s.CustId = ag.recommend AND s.RoleId = 2 HAVING COUNT (1) > 0
 		) AS t
-	WHERE s.RoleId IN (2,3,4)
+	WHERE s.RoleId IN (2,3,4,0)
 
 	-- Check data with target
 	CREATE TABLE #__CheckData (CustId INT, OpeningTotalBalance DECIMAL(37,4))
@@ -123,7 +136,7 @@ BEGIN
 	SELECT s.CustId, s.OpeningTotalBalance
 	FROM #SourceOpeningTotalBalance s
 		INNER JOIN dbo.rptStatement r WITH (NOLOCK) ON s.CustId = r.CustId
-	WHERE r.WinlostDate = @WinlostDate AND r.OpeningTotalBalance <> s.OpeningTotalBalance
+	WHERE r.WinlostDate = @WinlostDate AND ISNULL(r.OpeningTotalBalance, 0) <> ISNULL(s.OpeningTotalBalance, 0)
 
 	IF @@ROWCOUNT <> 0
 	BEGIN

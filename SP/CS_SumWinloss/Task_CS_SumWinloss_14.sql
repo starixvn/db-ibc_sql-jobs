@@ -26,6 +26,7 @@ BEGIN
 			CROSS APPLY (
 				SELECT val FROM bodb02.dbo.strSplit(@CustIds, ',') f WHERE c.custid = f.val
 			) AS tmp
+		WHERE EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper cs WITH (NOLOCK) WHERE c.srecommend = cs.custid)
 
 		-- Member + SMA
 		CREATE TABLE #CustInfo (custid INT, roleid TINYINT)
