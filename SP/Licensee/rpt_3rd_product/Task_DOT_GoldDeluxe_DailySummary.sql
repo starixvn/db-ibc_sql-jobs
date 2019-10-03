@@ -185,4 +185,5 @@ BEGIN CATCH
 	PRINT 'Error occured in Gold Deluxe summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
+GO
 GRANT EXECUTE ON [dbo].[Task_DOT_GoldDeluxe_DailySummary] TO [dwrs2] AS [dbo]
