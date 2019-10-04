@@ -15,6 +15,7 @@ AS
 
 	Revisions:
 		- 20190801@Percy: Initialize SP [RedmineID: #109293]
+		- 20191002@Bobby: Implement headline - Statement [Redmine: #119289]
 */
 
 BEGIN
@@ -101,6 +102,21 @@ BEGIN
 			SELECT SUM(ag.OpeningTotalBalance) AS OpeningTotalBalance FROM #SourceOpeningTotalBalance ag WHERE s.CustId = ag.recommend AND s.RoleId = 2
 		) AS t
 	WHERE s.RoleId IN (2,3,4)
+
+	-- UPDATE for Headline
+	;
+	WITH CTE_HealineBalance AS (
+		SELECT cs.UplineId, SUM(bal.OpeningTotalBalance) AS OpeningTotalBalance
+		FROM dbo.CustSuper cs WITH(NOLOCK)
+		INNER JOIN #SourceOpeningTotalBalance bal ON cs.custid = bal.custid AND bal.RoleId = 4  --> is super downline
+		WHERE cs.UplineId > 0
+		GROUP BY cs.UplineId
+	)
+	UPDATE s
+	SET s.OpeningTotalBalance += d.OpeningTotalBalance
+	FROM #SourceOpeningTotalBalance s
+	INNER JOIN CTE_HealineBalance d 
+	ON s.custid = d.UplineId
 
 	-- Check data with target
 	CREATE TABLE #__CheckData (CustId INT, OpeningTotalBalance DECIMAL(37,4))

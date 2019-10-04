@@ -11,6 +11,7 @@ AS
 	DB: DBRPT.bodb_Report
 	Revisions:
 		- 20190507@Sophia: Initial SP [redmine: #109293] 
+		- 20190912@Bobby: Implement headline - Statement [Redmine: #119289]
  */
 
 BEGIN
@@ -56,6 +57,7 @@ BEGIN
 		recommend		INT, 
 		mrecommend		INT,
 		srecommend		INT,	
+		Winlost0  		MONEY,
 		Winlost1  		MONEY,
 		Winlost2 		MONEY,
 		Winlost3 		MONEY,
@@ -121,14 +123,14 @@ BEGIN
 		------------Calc OpeningTotalBalance----------
 		IF @IsCheckDataOnly = 0 			 
 		BEGIN 
-			--- Member
+			--- Member & Headline
 			INSERT INTO #tmpRptTotalBalance_Active (CustID, OpeningBalance, OpeningTotalBalance)
 			SELECT	s.CustID, s.OpeningBalance,	s.OpeningBalance
 			FROM 	dbo.rptTotalBalance_Active s WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) 
 					ON c.CustID = s.CustID
 			WHERE   s.WinlostDate = @WinlostDate
-					AND c.RoleID = 1
+					AND c.RoleID IN (0,1)
 					
 			--- Agent	
 			SELECT	c.recommend, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
@@ -187,11 +189,29 @@ BEGIN
 				LEFT JOIN #__Super d
 					ON s.CustID = d.srecommend
 			WHERE   s.WinlostDate = @WinlostDate
+
+			DROP TABLE #__Super
+
+			-- UPDATE Headline with super(s) downline
+			SELECT	cs.UplineID, SUM (ISNULL(s.OpeningTotalBalance,0)) as DownlineCash
+			INTO #__Headline
+			FROM 	#tmpRptTotalBalance_Active s WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.CustSuper cs WITH (NOLOCK) 
+				ON s.custid = cs.custid 
+			WHERE cs.uplineID > 0
+			GROUP BY cs.UplineID
+
+			UPDATE s
+			SET s.OpeningTotalBalance += d.DownlineCash
+			FROM #tmpRptTotalBalance_Active s
+			INNER JOIN #__Headline d ON s.custid =hl.UplineID
+
+			DROP TABLE #__Headline
 			
 			----- Update rptTotalBalance_Active.OpeningTotalBalance
 			UPDATE	s
-			SET		s.OpeningTotalBalance = b.OpeningTotalBalance
-			FROM	dbo.rptTotalBalance_Active s
+			SET	s.OpeningTotalBalance = b.OpeningTotalBalance
+			FROM dbo.rptTotalBalance_Active s
 			INNER JOIN #tmpRptTotalBalance_Active b 
 				ON s.CustID = b.CustID
 			WHERE  s.WinlostDate = @WinlostDate		
@@ -203,20 +223,26 @@ BEGIN
 	BEGIN 
 		INSERT INTO #OpenningBalanceBettrans
 		SELECT	@winlostdate AS winlostdate,
-				CASE custid
-					WHEN recommend THEN 2
-					WHEN mrecommend THEN 3
-					WHEN srecommend THEN 4
-					ELSE 1 END roleid, 
-				custid, recommend, mrecommend, srecommend,
-				SUM(CASE WHEN custid NOT IN (recommend, mrecommend, srecommend) THEN winlost-actual_stake + playercomm ELSE 0 END) Winlost1,
-				SUM(CASE WHEN custid = recommend THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) Winlost2,
-				SUM(CASE WHEN custid = mrecommend THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) Winlost3,
-				SUM(CASE WHEN custid = srecommend THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) Winlost4 
-		FROM	bodb02.dbo.bettrans with (nolock)
-		WHERE	winlostdate = @TheDayBefore
-				AND ruben = 1
-		GROUP BY custid, recommend, mrecommend, srecommend	
+				ci.roleid, 
+				b.custid, b.recommend, b.mrecommend, b.srecommend,
+				SUM(CASE WHEN ci.roleid = 0 THEN winlost-actual_stake ELSE 0 END) Winlost0,
+				SUM(CASE WHEN ci.roleid = 1 THEN winlost-actual_stake + playercomm ELSE 0 END) Winlost1,
+				SUM(CASE WHEN ci.roleid = 2 THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) Winlost2,
+				SUM(CASE WHEN ci.roleid = 3 THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) Winlost3,
+				SUM(CASE WHEN ci.roleid = 4 THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) Winlost4
+		FROM	bodb02.dbo.bettrans b with (nolock)
+		CROSS APPLY (
+			SELECT CASE 
+					WHEN custid = recommend THEN 2
+					WHEN custid = mrecommend THEN 3
+					WHEN custid = srecommend THEN 4
+					WHEN (recommend = 0 AND mrecommend = 0 AND srecommend = 0) THEN 0 -- headline SMA's ID is zerolize
+					ELSE 1 --member
+				END AS roleid
+		) AS ci
+		WHERE	b.winlostdate = @TheDayBefore
+				AND b.ruben = 1
+		GROUP BY b.custid, b.recommend, b.mrecommend, b.srecommend,ci.roleid
 		
 
 		INSERT INTO #FinalRptTotalBalance_Active (CustID, WinlostDate, OpeningBalance, OpeningTotalBalance)
@@ -234,6 +260,7 @@ BEGIN
 									WHEN 2 THEN Winlost2   ---- Transfer of Agent
 									WHEN 3 THEN Winlost3   ---- Transfer of Master
 									WHEN 4 THEN Winlost4   ---- Transfer of Super
+									WHEN 0 THEN Winlost0   ---- Transfer of Headline
 									END
 							) AS Winlost
 					, SUM(CASE RoleID 
@@ -241,6 +268,7 @@ BEGIN
 									WHEN 2 THEN Winlost2   ---- Transfer of Agent
 									WHEN 3 THEN Winlost3   ---- Transfer of Master
 									WHEN 4 THEN Winlost4   ---- Transfer of Super
+									WHEN 0 THEN Winlost0   ---- Transfer of Headline
 									END) as TotalBL					
 			FROM 	#OpenningBalanceBettrans
 			GROUP BY CustID	   --- All levels
@@ -264,6 +292,22 @@ BEGIN
 			GROUP BY srecommend  -- super gets on bet tickets & transfer of master, agent, member
 		)	A			
 		GROUP BY CustID 	
+
+
+		-- Headline - Super's balance
+		;
+		WITH CTE_HealineBalance AS (
+			SELECT cs.UplineId, SUM(bal.OpeningTotalBalance) AS OpeningTotalBalance
+			FROM dbo.CustSuper cs WITH(NOLOCK)
+			INNER JOIN #FinalRptTotalBalance_Active bal ON cs.custid = bal.custid  --> is super downline
+			WHERE cs.UplineId > 0
+			GROUP BY cs.UplineId
+		)
+		UPDATE s
+		SET s.OpeningTotalBalance += d.OpeningTotalBalance
+		FROM #FinalRptTotalBalance_Active s
+		INNER JOIN CTE_HealineBalance d 
+		ON s.custid = d.UplineId
 
 		---------------- Correct Opening Total Balance --------------------
 		IF EXISTS (
