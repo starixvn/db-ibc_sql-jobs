@@ -2,7 +2,7 @@
 USE [bodb02]
 GO
 
-ALTER PROCEDURE [dbo].[Task_ResetWinning_CS_ExtraPT]
+CREATE PROCEDURE [dbo].[Task_CS_HeadlineBalance14]
 	@WinlostDate SMALLDATETIME, 
 	@Mode     TINYINT = 0,
 	@ErrCode  INT = 0 OUTPUT,
@@ -10,12 +10,11 @@ ALTER PROCEDURE [dbo].[Task_ResetWinning_CS_ExtraPT]
 AS
 /*
 	Creator: 20190826@Sophia 
-	Remark: Daily Auto add transfer ticket for CN88 Headline balance (like reset winning Extra PT for CN88) 
+	Remark: Daily Auto add transfer ticket for CN88 Headline balance - bettrans14 range (like reset winning Extra PT for CN88) 
 	DB: DBTXN-bodb02
 
 	Revisions:
-		- 20190826@Sophia: initial SP [Redmine: #117863]
-	 
+		- 20190826@Sophia: initial SP [Redmine: #117863]	 
 
 	Param's explain:
 		@mode:  0 _ view report
@@ -44,6 +43,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT ProductID, Bettype, SubProduct FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', @isTest)
 
+	
 	DECLARE @ExtraPTProducts AS TABLE (ProductID INT)	
 	INSERT INTO @ExtraPTProducts (ProductID) 
 	SELECT DISTINCT ProductID FROM DBCUST.CUSTDB.dbo.Acc_GroupExtraPTSetting WITH(NOLOCK) 	
@@ -143,13 +143,13 @@ BEGIN
 					-- Jackpot
 					WHEN b.bettype IN (2198, 2398, 2998) THEN
 						CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
-					WHEN b.bettype IN (2199, 2399, 2999) THEN 0
+					WHEN b.bettype IN (2199, 2399, 2999) THEN 0bodb02..
 					ELSE
 						CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake + b.scomm / (1 - b.tpositiontaking) END
 					END
 				) AS RealWinlostForExtraPT				
 				
-		FROM dbo.bettrans b WITH (NOLOCK)			
+		FROM dbo.bettrans14 b WITH (NOLOCK)			
 		INNER JOIN @SportBettype s ON s.BetType = b.bettype
 		LEFT JOIN dbo.Match m WITH (NOLOCK) ON m.MatchId = b.MatchId  AND m.Sporttype = 44		
 		WHERE   b.Winlostdate = @Winlostdate
@@ -191,26 +191,7 @@ BEGIN
 					AND w.Winlostdate BETWEEN s.FromDate AND s.ToDate	
 			INNER JOIN DBCUST.CUSTDB.dbo.CustSuper cs WITH (NOLOCK) 
 					ON cs.CustId = w.srecommend AND cs.UplineID IS NOT NULL
-			GROUP BY w.Winlostdate, w.ProductId, w.ProductName, cs.UplineID
-			
-		 
-			--- extraComm	
-			UNION ALL 
-			SELECT	w.Winlostdate, w.ProductId, w.ProductName, 
-					cs.UplineID,
-					SUM(w.CommForExtraPT * ISNULL(s.ExtraCommRate,0)) as ExtraPTWinlost,
-					SUM(w.RealCommForExtraPT * ISNULL(s.ExtraCommRate,0)) as RealExtraPTWinlost   --- ExtraComm if any
-			FROM	#wl w
-			INNER JOIN DBCUST.CUSTDB.dbo.Acc_GroupExtraCommRateSetting s WITH (NOLOCK)
-					ON w.srecommend = s.SuperId
-					AND w.ProductId = s.ProductId
-					AND w.SubProduct = s.SubProduct
-					AND w.Sporttype = s.Sporttype 
-					AND w.Winlostdate BETWEEN s.FromDate AND s.ToDate
-			INNER JOIN DBCUST.CUSTDB.dbo.CustSuper cs WITH (NOLOCK) 
-					ON cs.CustId = w.srecommend AND cs.UplineID IS NOT NULL
-			GROUP BY w.Winlostdate, w.ProductId, w.ProductName,
-					 cs.UplineID		
+			GROUP BY w.Winlostdate, w.ProductId, w.ProductName, cs.UplineID	 
 	
 		) w
 	GROUP BY w.Winlostdate, w.ProductId, w.ProductName, w.UplineID	
@@ -270,8 +251,13 @@ BEGIN
                 @custid       INT,               
                 @transDesc    NVARCHAR(1000)= 'ExtraPT',		
 				@Creator  INT = 5838421,
-				@IP       VARCHAR(20) = '', 
-				@LogData  NVARCHAR(200) = ''			
+				@IP       VARCHAR(20) = '',
+				@LogData  NVARCHAR(200) = ''		
+
+		Declare @RefNum bigint = 0, @bettype int, @Curr int, @CurrName nvarchar(10),
+				@actualrate float, @Recommend int, @MRecommend int, @SRecommend int,
+				@username nvarchar(50), @creditamt money, @debitamt money, @roleID tinyint		
+				
 
 		SELECT @maxseq = MAX(r.seq)
         FROM   #reset r
@@ -294,16 +280,70 @@ BEGIN
 			
 			IF NOT EXISTS (SELECT 1 FROM dbo.Bettrans WITH (NOLOCK) WHERE CustID = @CustID AND WinlostDate = @WinlostDate AND Bettype = 21007)
 			BEGIN 
-				EXEC DBTXN.bodb02.dbo.Task_ResetWinning_Non3rdParty_Add
-					@winlostdate = @winlostdate,
-					@custid = @custid,
-					@amount = @RealExtraPTWinlost,
-					@transdesc = @TransDesc,
-					@creator = @creator,
-					@ip = @ip,
-					@isHeadline = 1,    --- reset extraPT for CN88 (headline balance)
-					@ErrCode = @ErrCode OUTPUT,
-					@ErrMsg = @ErrMsg OUTPUT
+
+				IF @RealExtraPTWinlost > 0 --Deposit
+				BEGIN
+					SELECT @creditamt = abs(@RealExtraPTWinlost)
+						,@debitamt = 0
+						,@bettype = 21007
+				END
+				ELSE --Withdraw
+				BEGIN
+					SELECT @creditamt = 0
+						,@debitamt = abs(@RealExtraPTWinlost)
+						,@bettype = 21007
+				END
+
+
+				SELECT @Curr = c.Currency
+					,@actualrate = eo.actualrate
+					,@currName = e.currency
+					,@username = c.username
+					,@Recommend = c.Recommend
+					,@MRecommend = c.MRecommend
+					,@SRecommend = c.SRecommend
+					,@roleID = roleid
+				FROM CustDB.dbo.custInfo c WITH (NOLOCK)
+					INNER JOIN CustDB.dbo.ExchangeDailyOanda eo WITH (NOLOCK)
+						ON c.currency = eo.exchangeid and eo.exchangeDate = @winlostdate
+					INNER JOIN CustDB.dbo.Exchange e WITH (NOLOCK)
+						ON c.currency = e.exchangeid
+				WHERE c.CustID = @custid
+
+
+				----Insert transaction
+				EXEC Acc_SelRefNo
+					@refNo = @RefNum OUTPUT
+
+				SELECT @RefNum = @RefNum + 100000000000
+
+				BEGIN TRY
+					INSERT INTO bettrans
+					(
+						custid, username, refno, transdate, matchid,
+						bettype, transdesc, winlost, actual_stake, winlostdate,
+						creator, recommend, mrecommend, srecommend, currency,
+						currencyName, actualrate, ruben, status, ip, statusID
+					)
+					VALUES
+					(
+						@CustID, @username, @RefNum, current_timestamp, 0,
+						@bettype, @transDesc, @creditamt, @debitamt, @winlostdate,
+						@creator, @Recommend, @MRecommend, @SRecommend, @curr,
+						@currName, @actualrate, 1, 'Completed', @ip, 131
+					)
+				END TRY
+				
+				BEGIN CATCH 
+					IF @@ERROR <> 0
+					BEGIN
+						SELECT @ErrCode = 1,
+							   @ErrMsg = 'Can not insert transaction of '+ CONVERT (VARCHAR(20),@CustID)+ ' ! Please try again later.'			
+
+						RETURN
+					END						
+				END CATCH						 
+				 
 			END
 			ELSE 			
 			BEGIN 
@@ -316,8 +356,7 @@ BEGIN
 			END				
 
 			IF (@ErrCode <> 0) BREAK
-			          
-
+											
 			--- write log 
 			BEGIN TRY
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Transfer
@@ -336,8 +375,7 @@ BEGIN
 					@IP = @IP, 
 					@Doing = @LogData						
 			END CATCH
-
-					
+         
 
             SET @seq = @seq + 1
 
