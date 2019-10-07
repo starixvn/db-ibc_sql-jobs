@@ -1,8 +1,8 @@
-/*<info serverAlias="DBTXN-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
 
-CREATE PROCEDURE [dbo].[Task_CS_HeadlineBalance14]
+ALTER PROCEDURE [dbo].[Task_CS_HeadlineBalance14]
 	@WinlostDate SMALLDATETIME, 
 	@Mode     TINYINT = 0,
 	@ErrCode  INT = 0 OUTPUT,
@@ -143,11 +143,11 @@ BEGIN
 					-- Jackpot
 					WHEN b.bettype IN (2198, 2398, 2998) THEN
 						CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
-					WHEN b.bettype IN (2199, 2399, 2999) THEN 0bodb02..
+					WHEN b.bettype IN (2199, 2399, 2999) THEN 0
 					ELSE
 						CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake + b.scomm / (1 - b.tpositiontaking) END
 					END
-				) AS RealWinlostForExtraPT				
+				) AS RealWinlostForExtraPT					
 				
 		FROM dbo.bettrans14 b WITH (NOLOCK)			
 		INNER JOIN @SportBettype s ON s.BetType = b.bettype

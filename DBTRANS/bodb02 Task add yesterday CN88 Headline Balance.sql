@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02 : Task add yesterday CN88 Headline Balance]    Script Date: 10/3/2019 11:01:51 AM ******/
+/****** Object:  Job [bodb02 : Task add yesterday CN88 Headline Balance]    Script Date: 10/7/2019 5:24:20 PM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 10/3/2019 11:01:51 AM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 10/7/2019 5:24:20 PM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -25,7 +25,7 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Task add yesterday 
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Add yesterday Headline Balance]    Script Date: 10/3/2019 11:01:51 AM ******/
+/****** Object:  Step [Add yesterday Headline Balance]    Script Date: 10/7/2019 5:24:21 PM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Add yesterday Headline Balance', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
@@ -36,13 +36,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Add yest
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'DECLARE @WinlostDate SMALLDATETIME 
-SET @WinlostDate = CONVERT(VARCHAR(12), GETDATE() - 1, 112) 
-
-
-EXEC dbo.Task_ResetWinning_CS_ExtraPT 
-	@WinlostDate = @WinlostDate,
-	@Mode = 1', 
+		@command=N'EXEC dbo.Task_CS_HeadlineBalance_Job', 
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
