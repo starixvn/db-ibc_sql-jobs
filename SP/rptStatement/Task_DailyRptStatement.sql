@@ -38,7 +38,7 @@ BEGIN
 		,TransCount			INT		DEFAULT 0
 		,VoidCount			INT		DEFAULT 0
 		,GrandPrize			MONEY	NULL
-		,OpeningTotalBalance MONEY	NULL
+		,OpeningTotalBalance DECIMAL(37,4)	NULL
 	)
 
 	-- GET the current BU day

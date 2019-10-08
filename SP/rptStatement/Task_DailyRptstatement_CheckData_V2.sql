@@ -34,7 +34,7 @@ BEGIN
 		,TransCount			INT		DEFAULT 0
 		,VoidCount			INT		DEFAULT 0
 		,GrandPrize			MONEY	NULL
-		,OpeningTotalBalance MONEY	NULL
+		,OpeningTotalBalance DECIMAL(37,4)	NULL
 	)
 
 	-- GET the current BU day
@@ -64,7 +64,7 @@ BEGIN
 			,SUM(bet.stake*b.mpositiontaking) AS mnet_stake
 			,SUM(bet.stake*b.spositiontaking) AS snet_stake
 		FROM
-			bodb02.dbo.bettrans14 b WITH(READPAST)
+			bodb02.dbo.bettrans14 b WITH(NOLOCK)
 		OUTER APPLY (
 			SELECT 
 				CASE 
@@ -270,7 +270,7 @@ BEGIN
 		,Comm				MONEY	NULL
 		,ClosingBalance		MONEY	NULL
 		,GrandPrize			MONEY	NULL
-		,OpeningTotalBalance MONEY	NULL
+		,OpeningTotalBalance DECIMAL(37,4)	NULL
 	)
 
 	INSERT INTO #rptStatementCompare(
@@ -329,9 +329,9 @@ BEGIN
 		--1. CHECK missed CUST
 		SELECT tmp.custid
 			,1 AS ErrorCode
-			,NULL
-			,NULL
-			,NULL
+			,NULL AS SubError
+			,NULL AS beforeAmt
+			,NULL AS afterAmt
 		FROM #rptStatementCompare tmp
 		LEFT JOIN dbo.rptStatement rpt WITH(READPAST) ON tmp.custid = rpt.custid
 		WHERE rpt.winlostdate = @_Winlostdate
@@ -423,13 +423,31 @@ BEGIN
 		UNION ALL
 		SELECT tmp.custid
 			,6 AS ErrorCode
-			,NULL AS SubError
-			,rpt.Openingbalance AS beforeAmt
-			,tmp.Openingbalance AS afterAmt
+			,diff.SubError
+			,diff.beforeAmt
+			,diff.afterAmt
 		FROM #rptStatementCompare tmp
 		INNER JOIN dbo.rptStatement rpt WITH(READPAST) ON tmp.custid = rpt.custid
+		CROSS APPLY (
+			--Openingbalance
+			SELECT rpt.Openingbalance AS beforeAmt
+				, tmp.Openingbalance AS afterAmt
+				, 61 AS SubError
+			WHERE tmp.Openingbalance <> rpt.Openingbalance
+
+			--OpeningTotalBalance
+			UNION ALL
+			SELECT rpt.OpeningTotalBalance AS beforeAmt
+				, tmp.OpeningTotalBalance AS afterAmt
+				, 62 AS SubError
+			WHERE tmp.OpeningTotalBalance <> rpt.OpeningTotalBalance
+			
+		) AS diff
 		WHERE rpt.winlostdate = @_Winlostdate
-			AND tmp.Openingbalance <> rpt.Openingbalance
+			AND (
+				tmp.Openingbalance <> rpt.Openingbalance
+				OR tmp.OpeningTotalBalance <> rpt.OpeningTotalBalance
+			)
 	) AS tmp
 
 	IF @isCheckDataOnly = 1
@@ -449,6 +467,8 @@ BEGIN
 				WHEN err.SubError = 22 THEN ' - NetTurnover' 
 				WHEN err.SubError = 23 THEN ' - Winlost' 
 				WHEN err.SubError = 24 THEN ' - Comm' 
+				WHEN err.SubError = 61 THEN ' - OpeningBalance' 
+				WHEN err.SubError = 62 THEN ' - OpeningTotalBalance' 
 				ELSE ' - Unknown'
 				END
 			AS Reason
@@ -473,6 +493,7 @@ BEGIN
 				,tmp.Comm
 				,tmp.ClosingBalance
 				,tmp.GrandPrize
+				,tmp.OpeningTotalBalance
 			FROM #rptStatementCompare tmp
 			WHERE EXISTS(SELECT 1 FROM #custComparision err WHERE tmp.custid = err.custid)
 		)
@@ -490,7 +511,7 @@ BEGIN
 				,Comm = SRC.Comm
 				,ClosingBalance = SRC.ClosingBalance
 				,GrandPrize = SRC.GrandPrize
-				--,OpeningTotalBalance = SRC.OpeningTotalBalance
+				,OpeningTotalBalance = SRC.OpeningTotalBalance
 
 		WHEN NOT MATCHED BY TARGET THEN
 			INSERT (
@@ -505,10 +526,10 @@ BEGIN
 				,Comm
 				,ClosingBalance
 				,GrandPrize
-				--,OpeningTotalBalance
+				,OpeningTotalBalance
 			)
 			VALUES (
-				@_Winlostdate
+				SRC.Winlostdate
 				,SRC.Custid
 				,SRC.OpeningBalance
 				,SRC.VoidAmt
@@ -519,18 +540,13 @@ BEGIN
 				,SRC.Comm
 				,SRC.ClosingBalance
 				,SRC.GrandPrize
-				--,SRC.OpeningTotalBalance
+				,SRC.OpeningTotalBalance
 			) 
 				
 		--WHEN NOT MATCHED BY SOURCE AND TGR.Winlostdate = @_Winlostdate THEN
 		--	DELETE
 		;
 	END
-
-	------------OpeningTotalBalance------------
-	EXEC dbo.Task_DailyRptStatement_OpeningTotalBalance_CheckData
-		@WinlostDate		= @WinlostDate
-		,@isCheckDataOnly	= @isCheckDataOnly
 
 	DROP TABLE #rptStatementCompare
 END

@@ -1,7 +1,4 @@
 /*<info serverAlias="DBRPT-bodb_Report" executers="" isFunction="0" isNested="1"></info>*/
-USE bodb_Report
-GO
-
 ALTER PROCEDURE [dbo].[Task_DailyRptStatement_OpeningTotalBalance_CheckData]
 	@WinlostDate		DATE
 	,@isCheckDataOnly	BIT = 0
@@ -107,7 +104,7 @@ BEGIN
 	;
 	WITH CTE_HealineBalance AS (
 		SELECT cs.UplineId, SUM(bal.OpeningTotalBalance) AS OpeningTotalBalance
-		FROM dbo.CustSuper cs WITH(NOLOCK)
+		FROM bodb02.dbo.CustSuper cs WITH(NOLOCK)
 		INNER JOIN #SourceOpeningTotalBalance bal ON cs.custid = bal.custid AND bal.RoleId = 4  --> is super downline
 		WHERE cs.UplineId > 0
 		GROUP BY cs.UplineId
@@ -117,6 +114,7 @@ BEGIN
 	FROM #SourceOpeningTotalBalance s
 	INNER JOIN CTE_HealineBalance d 
 	ON s.custid = d.UplineId
+	-- END Headline
 
 	-- Check data with target
 	CREATE TABLE #__CheckData (CustId INT, OpeningTotalBalance DECIMAL(37,4))
