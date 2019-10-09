@@ -1,11 +1,11 @@
-/*<info serverAlias="DBTP-bodb_CustHistory" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBHIS-bodb_CustHistory" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DeleteHistoryLogData]
 AS
 /*
 	Created: 
 	Task: delete old data in history tables
-	DB: DBTP/bodb_CustHistory
+	DB: DBHIS/bodb_CustHistory
 	
 	Revisions:
 		- 20130523@Lukas: add more tables that need to delete old data
