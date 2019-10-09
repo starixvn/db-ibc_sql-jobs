@@ -1,26 +1,47 @@
-/*<info serverAlias="DBACC-bodb02," executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
 	@winlostdate DATETIME
-	,@IsManual BIT = 0 
+	,@IsManual BIT = 0
+	,@GenForDataWarehouse BIT = 0 
 AS
 /*   
-Created: 20140911@Victor
-Task: Summary AG Casino data and insert into rptDepWinlost_AGCasino
-DB: DBACC/bodb02
-Original:
-Revisions:
-	- 20141017@Victor: remove RAISEERROR statement to avoid affection to rptDepWinlost Summary job
-	- 20141121@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
-	- 20151005@Don: Add filter by status
-	- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
-	- 20170407@Sophia:: Add rule auto regen data : [Redmine: #72914]
-							1st -> 5th : Can Edit data of Previous month  and current Month
-							6th -> end of the month : Edit data of current month only
-Param's Explanation:
-	- @winlostdate: The date need to summary
+	Created: 20140911@Victor
+	Task: Summary AG Casino data and insert into rptDepWinlost_AGCasino
+	DB: DBACC/bodb02
+
+	Revisions:
+		- 20141017@Victor: remove RAISEERROR statement to avoid affection to rptDepWinlost Summary job
+		- 20141121@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
+		- 20151005@Don: Add filter by status
+		- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
+		- 20170407@Sophia:: Add rule auto regen data : [Redmine: #72914]
+								1st -> 5th : Can Edit data of Previous month  and current Month
+								6th -> end of the month : Edit data of current month only
+		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
+	Param's Explanation:
+		- @winlostdate: The date need to summary
+		- @IsManual: task run manual or auto
+		- @GenForDataWarehouse: Flag to generate for DataWarehouse
 */  
 SET NOCOUNT ON
 BEGIN TRY
+
+	--Used as metadata for SSIS in DataWarahouse
+	IF 1 = 2
+	BEGIN
+		SELECT CAST(NULL AS DATE) [Winlostdate]
+			,CAST(NULL AS INT) [Custid]
+			,CAST(NULL AS INT) [Sporttype]
+			,CAST(NULL AS INT) [Currency]
+			,CAST(NULL AS MONEY) [Turnover]
+			,CAST(NULL AS MONEY) [DrawTO]
+			,CAST(NULL AS MONEY) [Winlost]
+			,CAST(NULL AS MONEY) [Playercomm]
+			,CAST(NULL AS INT) [BetCount]
+			,CAST(NULL AS INT) [DrawBetCount]
+			,CAST(NULL AS BIT) [IsVIPGame]
+	END
 
 	DECLARE @BackupDay DATE
 	SELECT @BackupDay = ISNULL(MIN(Winlostdate),'') FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino
@@ -61,6 +82,19 @@ BEGIN TRY
 								playercomm		MONEY,
 								betCount		INT,
 								drawBetCount	INT)
+	CREATE TABLE #TicketDataForDataWarehouse (	
+								[Winlostdate] DATE
+								,[Custid] INT
+								,[Sporttype] INT
+								,[Currency] INT
+								,[Turnover] MONEY
+								,[DrawTO] MONEY
+								,[Winlost] MONEY
+								,[Playercomm] MONEY
+								,[BetCount] INT
+								,[DrawBetCount] INT
+								,[IsVIPGame] BIT)
+
 	WHILE EXISTS (SELECT TOP 1 1 FROM @WLDateTab WHERE ID = @i)
 	BEGIN
 		
@@ -110,26 +144,47 @@ BEGIN TRY
 				GROUP BY b.CustID, b.currency, isVIPGame
 			END
 			
-			--Insert data to rptDepWinlost_AGCasino
-			DELETE FROM bodb_report.dbo.rptDepWinlost_AGCasino WITH (ROWLOCK) WHERE Winlostdate = @winlostdate
+			-- Check flag when insert to sum table	  
+			IF @GenForDataWarehouse = 0
+			BEGIN
+				--Insert data to rptDepWinlost_AGCasino
+				DELETE FROM bodb_report.dbo.rptDepWinlost_AGCasino WITH (ROWLOCK) WHERE Winlostdate = @winlostdate
 
-			INSERT INTO bodb_report.dbo.rptDepWinlost_AGCasino (winlostdate, custid, sporttype, currency, turnover, drawTO, 
-																winlost, playercomm, BetCount, drawBetCount, IsVIPGame)
-			SELECT @winlostdate, custid, sporttype, currency, turnover, drawTO, 
-				winlost, playercomm, BetCount, drawBetCount, IsVIPGame
-			FROM #TicketData					
+				INSERT INTO bodb_report.dbo.rptDepWinlost_AGCasino (winlostdate, custid, sporttype, currency, turnover, drawTO, 
+																	winlost, playercomm, BetCount, drawBetCount, IsVIPGame)
+				SELECT @winlostdate, custid, sporttype, currency, turnover, drawTO, 
+					winlost, playercomm, BetCount, drawBetCount, IsVIPGame
+				FROM #TicketData					
 		
-			SET @SqlStr = 'UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
-			SET isSummarized = 1
-			WHERE Winlostdate = ''' + CONVERT(VARCHAR(20),@winlostdate,112) + ''' AND isSummarized = 0
-				AND ProductID = 10;'
+				SET @SqlStr = 'UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
+				SET isSummarized = 1
+				WHERE Winlostdate = ''' + CONVERT(VARCHAR(20),@winlostdate,112) + ''' AND isSummarized = 0
+					AND ProductID = 10;'
 				
-			EXEC(@SqlStr) AT [DBPTCS]
+				EXEC(@SqlStr) AT [DBPTCS]
+			END
+			ELSE
+			BEGIN
+				INSERT INTO #TicketDataForDataWarehouse([Winlostdate],[Custid],[Sporttype],[Currency],[Turnover],[DrawTO],[Winlost],[Playercomm]
+														,[BetCount],[DrawBetCount],[IsVIPGame])
+				SELECT @winlostdate [Winlostdate], custid [Custid], sporttype [Sporttype], currency [Currency], turnover [Turnover], drawTO [DrawTO], 
+					winlost [Winlost], playercomm [Playercomm], BetCount [BetCount], drawBetCount [DrawBetCount], IsVIPGame [IsVIPGame]
+				FROM #TicketData
+			END
 			
 		END
 		SELECT @i = @i + 1	
 	END
 
+		-- Output Data For DataWarehouse	  
+	IF @GenForDataWarehouse = 1
+	BEGIN
+		SELECT [Winlostdate],[Custid],[Sporttype],[Currency],[Turnover],[DrawTO],[Winlost],[Playercomm]
+														,[BetCount],[DrawBetCount],[IsVIPGame]
+		FROM #TicketDataForDataWarehouse
+	END
+
+	DROP TABLE #TicketDataForDataWarehouse
 	DROP TABLE #TicketData
 END TRY
 BEGIN CATCH
@@ -138,3 +193,5 @@ BEGIN CATCH
 	PRINT 'Error occured in AGCasino summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
+GO
+GRANT EXECUTE ON [dbo].[Task_DOT_AGCasino_DailySummary] TO [dwrs2] AS [dbo]

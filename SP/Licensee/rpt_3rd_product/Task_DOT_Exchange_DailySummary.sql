@@ -1,7 +1,8 @@
 /*<info serverAlias="DBLIC-bodb_3rdproduct" executers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DOT_Exchange_DailySummary]
 	@winlostdate	DATETIME	
-	,@IsManual		BIT = 0 
+	,@IsManual		BIT = 0
+	,@GenForDataWarehouse BIT = 0 
 AS
 /*   
 	Created: 20171220@Harper
@@ -14,6 +15,7 @@ AS
 		- 20181212@Bruce: New Games Sicbo & Bidme - Add bettype [#102624]
 		- 20190625@Percy: Temporary adding DBLIC on OAS_ChargeInfo and related functions [RedmineID: #103658]
 		- 20190724@Percy: Remove DBLIC on OAS_ChargeInfo and related functions [RedmineID: #103658]
+		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
 	
 	Param's Explanation:
 		- @winlostdate: The date need to summary
@@ -23,7 +25,27 @@ AS
 */  
 SET NOCOUNT ON
 
-BEGIN TRY	
+BEGIN TRY
+
+	--Used as metadata for SSIS in DataWarahouse
+	IF 1 = 2
+	BEGIN
+		SELECT CAST(NULL AS DATE) [Winlostdate]
+			,CAST(NULL AS INT) [Custid]
+			,CAST(NULL AS INT) [Currency]
+			,CAST(NULL AS INT) [ProductId]
+			,CAST(NULL AS MONEY) [Turnover]
+			,CAST(NULL AS MONEY) [Winlost]
+			,CAST(NULL AS MONEY) [WinLostA]
+			,CAST(NULL AS MONEY) [DrawTO]
+			,CAST(NULL AS INT) [DrawBetCount]
+			,CAST(NULL AS INT) [BetCount]
+			,CAST(NULL AS MONEY) [CommissionP]
+			,CAST(NULL AS MONEY) [CommissionA]
+			,CAST(NULL AS MONEY) [ValidBetAmount]
+			,CAST(NULL AS SMALLINT) [Bettype]
+	END
+	
 	DECLARE @ProductId INT, @PartyList VARCHAR(4000), @i SMALLINT = 1, @WLDate DATE
 
 	SELECT @ProductId = ProductId 
@@ -128,6 +150,23 @@ BEGIN TRY
 								Back			MONEY,
 								EventTypeName   Nvarchar(50),
 								EventType 		SMALLINT
+							)
+	
+	CREATE TABLE #TicketDataForDataWarehouse (
+								[Winlostdate] DATE
+								,[Custid] INT
+								,[Currency] INT
+								,[ProductId] INT
+								,[Turnover] MONEY
+								,[Winlost] MONEY
+								,[WinLostA] MONEY
+								,[DrawTO] MONEY
+								,[DrawBetCount] INT
+								,[BetCount] INT
+								,[CommissionP] MONEY
+								,[CommissionA] MONEY
+								,[ValidBetAmount] MONEY	
+								,[Bettype] SMALLINT
 							)	
 
 	WHILE EXISTS (SELECT TOP 1 1 FROM @WLDateList WHERE ID = @i)
@@ -187,68 +226,92 @@ BEGIN TRY
 			WHERE ISNULL(Turnover,0) = 0 AND ISNULL(Winlost,0) = 0 AND ISNULL(WinLostA,0) = 0 AND ISNULL(CommissionP,0) = 0 AND ISNULL(CommissionA,0) = 0 
 				  AND ISNULL(BetCount,0) = 0 AND ISNULL(DrawBetCount,0) = 0 AND ISNULL(DrawTO,0) = 0 AND ISNULL(ValidBetAmount,0) = 0		  
 				  AND ISNULL(eventType,-1) = -1 AND ISNULL(EventTypeName, 'Invalid') = 'Invalid'
-				  
 			
-			-- Insert data to rptDepWinlost_ThirdParty
-			DELETE FROM bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty WITH (ROWLOCK) 
-			WHERE Winlostdate = @WLDate AND ProductId = @ProductId
+			-- Check flag when insert to sum table	  
+			IF @GenForDataWarehouse = 0
+			BEGIN
+				-- Insert data to rptDepWinlost_ThirdParty
+				DELETE FROM bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty WITH (ROWLOCK) 
+				WHERE Winlostdate = @WLDate AND ProductId = @ProductId
 
-			INSERT INTO bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, ProductId,
-														 turnover, Winlost, WinLostA, drawTO, drawBetCount, BetCount, 
-														 CommissionP, CommissionA, ValidBetAmount, bettype)
-			SELECT @WLDate, custid, CurrencyID, @ProductId
-					, SUM(ISNULL(turnover, 0)), SUM(ISNULL(Winlost, 0)), SUM(ISNULL(WinLostA, 0))
-					, SUM(ISNULL(DrawTO, 0)), SUM(ISNULL(DrawBetCount, 0)), SUM(ISNULL(BetCount, 0))
-					, SUM(ISNULL(CommissionP, 0)), SUM(ISNULL(CommissionA, 0)), SUM(ISNULL(ValidBetAmount, 0))		
-					, -1-- bettype
-			FROM #TicketData					
-			GROUP BY Custid, CurrencyID
+				INSERT INTO bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty (winlostdate, custid, currency, ProductId,
+															 turnover, Winlost, WinLostA, drawTO, drawBetCount, BetCount, 
+															 CommissionP, CommissionA, ValidBetAmount, bettype)
+				SELECT @WLDate, custid, CurrencyID, @ProductId
+						, SUM(ISNULL(turnover, 0)), SUM(ISNULL(Winlost, 0)), SUM(ISNULL(WinLostA, 0))
+						, SUM(ISNULL(DrawTO, 0)), SUM(ISNULL(DrawBetCount, 0)), SUM(ISNULL(BetCount, 0))
+						, SUM(ISNULL(CommissionP, 0)), SUM(ISNULL(CommissionA, 0)), SUM(ISNULL(ValidBetAmount, 0))		
+						, -1-- bettype
+				FROM #TicketData					
+				GROUP BY Custid, CurrencyID
 			
 			
-			-- Insert data to rptDepWinlost_ThirdParty_Performance
-			DELETE FROM bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty_Performance WITH (ROWLOCK) 
-			WHERE Winlostdate = @WLDate AND ProductId = @ProductId
+				-- Insert data to rptDepWinlost_ThirdParty_Performance
+				DELETE FROM bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty_Performance WITH (ROWLOCK) 
+				WHERE Winlostdate = @WLDate AND ProductId = @ProductId
 
-			INSERT INTO bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty_Performance (winlostdate, custid, SiteID, currency, ProductId,
-														 turnover, Winlost, WinLostA, drawTO, drawBetCount, BetCount, 
-														 CommissionP, CommissionA, ValidBetAmount, SportType)
-			SELECT @WLDate, custid, SiteID, CurrencyID, @ProductId
-					, SUM(ISNULL(turnover, 0)), SUM(ISNULL(Winlost, 0)), SUM(ISNULL(WinLostA, 0))
-					, SUM(ISNULL(DrawTO, 0)), SUM(ISNULL(DrawBetCount, 0)), SUM(ISNULL(BetCount, 0))
-					, SUM(ISNULL(CommissionP, 0)), SUM(ISNULL(CommissionA, 0)), SUM(ISNULL(ValidBetAmount, 0))		
-					, ISNULL(EventType,-1)
-			FROM #TicketData					
-			GROUP BY Custid, SiteID, CurrencyID, EventType
+				INSERT INTO bodb_LicenseeReport.dbo.rptDepWinlost_ThirdParty_Performance (winlostdate, custid, SiteID, currency, ProductId,
+															 turnover, Winlost, WinLostA, drawTO, drawBetCount, BetCount, 
+															 CommissionP, CommissionA, ValidBetAmount, SportType)
+				SELECT @WLDate, custid, SiteID, CurrencyID, @ProductId
+						, SUM(ISNULL(turnover, 0)), SUM(ISNULL(Winlost, 0)), SUM(ISNULL(WinLostA, 0))
+						, SUM(ISNULL(DrawTO, 0)), SUM(ISNULL(DrawBetCount, 0)), SUM(ISNULL(BetCount, 0))
+						, SUM(ISNULL(CommissionP, 0)), SUM(ISNULL(CommissionA, 0)), SUM(ISNULL(ValidBetAmount, 0))		
+						, ISNULL(EventType,-1)
+				FROM #TicketData					
+				GROUP BY Custid, SiteID, CurrencyID, EventType
 
-			--- Update info for summarize
-			UPDATE h
-			SET SumToThirdPartyDate = GETDATE()				
-			FROM dbo.Product3rd_SummarizedDateHistory h
-			WHERE h.WinlostDate = @WLDate
-				AND EXISTS (	
-								SELECT 1 
-								FROM @ResettledDateList d 
-								WHERE h.ID = d.ID
-							)
+				--- Update info for summarize
+				UPDATE h
+				SET SumToThirdPartyDate = GETDATE()				
+				FROM dbo.Product3rd_SummarizedDateHistory h
+				WHERE h.WinlostDate = @WLDate
+					AND EXISTS (	
+									SELECT 1 
+									FROM @ResettledDateList d 
+									WHERE h.ID = d.ID
+								)
 						
-			---- Update Sports_ThirdParty
+				---- Update Sports_ThirdParty
 								
-			INSERT INTO bodb_LicenseeReport.dbo.Sports_ThirdParty (SportType, SportName, ProductId)
-			SELECT DISTINCT EventType, EventTypeName, @ProductId as ProductId
-			FROM #TicketData T
-			WHERE NOT EXISTS (SELECT SportType FROM bodb_LicenseeReport.dbo.Sports_ThirdParty s WITH (NOLOCK) WHERE s.ProductID = 31 AND s.SportType = T.EventType)
+				INSERT INTO bodb_LicenseeReport.dbo.Sports_ThirdParty (SportType, SportName, ProductId)
+				SELECT DISTINCT EventType, EventTypeName, @ProductId as ProductId
+				FROM #TicketData T
+				WHERE NOT EXISTS (SELECT SportType FROM bodb_LicenseeReport.dbo.Sports_ThirdParty s WITH (NOLOCK) WHERE s.ProductID = 31 AND s.SportType = T.EventType)
 			
-			UPDATE s
-			SET s.SportName = t.EventTypeName
-			FROM bodb_LicenseeReport.dbo.Sports_ThirdParty s 
-				INNER JOIN #TicketData t ON s.SportType = T.EventType 
-			WHERE s.ProductID = @ProductId
-				AND s.SportName <> t.EventTypeName 
+				UPDATE s
+				SET s.SportName = t.EventTypeName
+				FROM bodb_LicenseeReport.dbo.Sports_ThirdParty s 
+					INNER JOIN #TicketData t ON s.SportType = T.EventType 
+				WHERE s.ProductID = @ProductId
+					AND s.SportName <> t.EventTypeName
+			END
+			ELSE
+			BEGIN
+				INSERT INTO #TicketDataForDataWarehouse ([Winlostdate],[Custid],[Currency],[ProductId],[Turnover],[Winlost],[WinLostA],[DrawTO]
+																,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount],[Bettype])
+				SELECT @WLDate [Winlostdate], custid [Custid], CurrencyID [Currency], @ProductId [ProductId]
+					, SUM(ISNULL(turnover, 0)) [Turnover], SUM(ISNULL(Winlost, 0)) [Winlost], SUM(ISNULL(WinLostA, 0)) [WinLostA]
+					, SUM(ISNULL(DrawTO, 0)) [DrawTO], SUM(ISNULL(DrawBetCount, 0)) [DrawBetCount], SUM(ISNULL(BetCount, 0)) [BetCount]
+					, SUM(ISNULL(CommissionP, 0)) [CommissionP], SUM(ISNULL(CommissionA, 0)) [CommissionA], SUM(ISNULL(ValidBetAmount, 0)) [ValidBetAmount]	
+					, -1 [Bettype]-- bettype
+				FROM #TicketData					
+				GROUP BY Custid, CurrencyID
+			END 
 		END 
 				
 		SELECT @i = @i + 1
 	END
+
+	-- Output Data For DataWarehouse	  
+	IF @GenForDataWarehouse = 1
+	BEGIN
+		SELECT [Winlostdate],[Custid],[Currency],[ProductId],[Turnover],[Winlost],[WinLostA],[DrawTO]
+							,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount],[Bettype]
+			FROM #TicketDataForDataWarehouse
+	END
 	
+	DROP TABLE #TicketDataForDataWarehouse
 	DROP TABLE #TicketData
 	DROP TABLE #DetailData
 	DROP TABLE #ChargeRate
@@ -260,3 +323,4 @@ BEGIN CATCH
 	RETURN
 END CATCH
 GO
+GRANT EXECUTE ON [dbo].[Task_DOT_Exchange_DailySummary] TO [dwrs2] AS [dbo]
