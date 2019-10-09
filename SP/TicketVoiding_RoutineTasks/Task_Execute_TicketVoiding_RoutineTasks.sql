@@ -37,13 +37,7 @@ BEGIN
 	END
 	IF @stepNo = 3
 	BEGIN
-		EXEC DBRPT.bodb_report.dbo.Task_rptStatement_14
-				@WinlostDate = @WinlostDate,
-				@CustIds = @CustIds
-	END
-	IF @stepNo = 4
-	BEGIN
-		EXEC bodb02.dbo.Task_ResetWinning_CS_ExtraPT14
+		EXEC bodb02.dbo.Task_CS_HeadlineBalance14
 			   @Winlostdate = @Winlostdate,
 			   @Mode = 1 ,
 			   @ErrCode = @errorCode OUTPUT,
@@ -52,6 +46,13 @@ BEGIN
 		BEGIN
 			RAISERROR(@errmsg,16,1)
 		END
+	END
+	IF @stepNo = 4
+	BEGIN
+		EXEC DBRPT.bodb_report.dbo.Task_rptStatement_14
+				@WinlostDate = @WinlostDate,
+				@CustIds = @CustIds
+		
 	END
 	IF @stepNo = 5
 	BEGIN
