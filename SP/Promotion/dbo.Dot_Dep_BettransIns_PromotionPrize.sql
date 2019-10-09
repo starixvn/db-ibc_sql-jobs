@@ -6,7 +6,6 @@ ALTER PROCEDURE dbo.Dot_Dep_BettransIns_PromotionPrize
 	, @Bettype		INT				= 17000
 	, @Betfrom		NVARCHAR(1)		= 'd'
 	, @TransDesc	NVARCHAR(1000)	= ''
-	, @Balance      MONEY			= NULL
 	, @Total		MONEY			= NULL
 	, @TransID2		BIGINT			= NULL
 	, @IP			NVARCHAR(15)	= ''
@@ -17,6 +16,8 @@ ALTER PROCEDURE dbo.Dot_Dep_BettransIns_PromotionPrize
 	------------------------------------------
 	, @TransID 		BIGINT			= 0 OUTPUT
 	, @TransDate	DATETIME		= NULL OUTPUT
+	, @RefNo 		BIGINT			= 0 OUTPUT
+	, @Balance      MONEY			= NULL OUTPUT
 	, @ErrCode 		INT				= 0 OUTPUT
 	, @ErrMsg 		NVARCHAR(200)	= '' OUTPUT
 AS
@@ -60,21 +61,24 @@ BEGIN
 		
 
 	--Check Account
-	SELECT @username = username
-		, @currency = ci.currency
+	SELECT @username	= ci.username
+		, @currency		= ci.currency
 		, @currencyName = e.currency
-		, @actualrate = e.actualrate
-		, @mrecommend = mrecommend
-		, @recommend = recommend
-		, @srecommend = srecommend
-		, @roleid = roleid
+		, @actualrate	= e.actualrate
+		, @mrecommend	= ci.mrecommend
+		, @recommend	= ci.recommend
+		, @srecommend	= cs.custid --> check is deposit member
+		, @roleid		= ci.roleid
 	FROM CustDB.dbo.custinfo AS ci WITH (NOLOCK)
 	INNER JOIN CustDB.dbo.exchange AS e WITH (NOLOCK)
 		ON ci.currency = e.exchangeid
+	LEFT JOIN CustDB.dbo.Dep_CustSuper cs WITH(NOLOCK) 
+		ON ci.srecommend = cs.custid
 	WHERE ci.custid = @custid
 
 	SELECT @TransDate	= CURRENT_TIMESTAMP
 		, @TransID		= 0
+		, @RefNo		= 100000000000
 		, @sporttype	= 246
 		, @oddsID		= 0
 		, @odds			= 0
@@ -93,7 +97,8 @@ BEGIN
 
 
 	IF (@username IS NULL 
-		OR ISNULL(@roleid,0) <> 1 -- NOT member account
+		OR ISNULL(@roleid,0) <> 1 
+		OR @srecommend IS NULL -- NOT member account
 	)
 	BEGIN
 		SELECT @ErrCode = 101
@@ -152,7 +157,7 @@ BEGIN
 			, 0 AS livehomescore
 			, 0 AS liveawayscore
 			, 0 AS liveindicator
-			, 100000000000 AS refno
+			, @RefNo AS refno
 			, 0 AS tpositiontaking
 			, 0 AS apositiontaking
 			, 0 AS mpositiontaking
@@ -239,6 +244,11 @@ BEGIN
 				
 			GOTO FINISH
 		END
+		
+		-- GET final total balance
+		EXEC [dbo].[Dot_BalanceMemberSel]
+			@custID		= @CustID
+			, @balance	= @Balance OUTPUT
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrMsg = 'Insert transaction failed.', @ErrCode = 108
