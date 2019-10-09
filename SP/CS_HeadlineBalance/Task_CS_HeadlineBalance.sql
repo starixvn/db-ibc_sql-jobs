@@ -30,7 +30,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
  
-	CREATE TABLE #Headline(SuperID INT, UplineID INT, Winlostdate SMALLDATETIME)		 
+	CREATE TABLE #Headline(SuperID INT, UplineID INT)		 
 	CREATE TABLE #Transfer (Custid INT, Reset MONEY, Winlostdate SMALLDATETIME )	
 	CREATE TABLE #Reset (seq INT IDENTITY (1,1), Winlostdate SMALLDATETIME, CustId INT, ExtraPTWinlost MONEY, Reset MONEY, Variance MONEY)
 
