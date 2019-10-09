@@ -1,4 +1,4 @@
-/*<info serverAlias="DBRPT-bodb_Report" executers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBRPT-bodb_Report" executers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptStatement_14]
 	@WinlostDate	DATE
 	,@CustIds		VARCHAR(MAX)

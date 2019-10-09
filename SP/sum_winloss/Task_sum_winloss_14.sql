@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02"></info>*/
+/*<info serverAlias="DBTXN-bodb02" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_sum_winloss_14]
 	@WinlostDate	SMALLDATETIME
 	,@CustIds		VARCHAR(MAX) = ''
