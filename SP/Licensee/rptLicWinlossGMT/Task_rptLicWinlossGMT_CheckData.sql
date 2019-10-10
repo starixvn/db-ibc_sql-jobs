@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptLicWinlossGMT_CheckData] 
 	@WinlostDate SMALLDATETIME
 AS
@@ -6,16 +6,18 @@ AS
  	Created: 20171130@Sophia
 	Task: Check sum for RptLicWinlossGMT vs bettrans14
 	DB: DBLIC.bodb_LicenseeReport
+	
 	Revisions:  
-	- 20171130@Sophia: initial data. Apply for Sportsbook first [redmine: #84932]
-	- 20180830@Amanda: support GMT +7 [redmine: #95878]
-	- 20181019@Amanda: Add new bet types for E-Sports 2.0 [RedmineID: #100721]
-	- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
-	- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
-	- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]
-	- 20190903@Amanda: Add betfrom Deep Link(t) [RedmineID: #119010]
-	- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
-	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
+		- 20171130@Sophia: initial data. Apply for Sportsbook first [redmine: #84932]
+		- 20180830@Amanda: support GMT +7 [redmine: #95878]
+		- 20181019@Amanda: Add new bet types for E-Sports 2.0 [RedmineID: #100721]
+		- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
+		- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
+		- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]
+		- 20190903@Amanda: Add betfrom Deep Link(t) [RedmineID: #119010]
+		- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
+		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
+		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_bk [RedmineID: #103656]
 	
 	EXEC Task_rptLicWinlossGMT_CheckData '2017-11-30'
 
@@ -141,7 +143,7 @@ BEGIN
 					ON m.MatchId = b.MatchId
 				INNER JOIN bodb02.dbo.Dep_CustSuper s WITH (NOLOCK) 
 					ON b.srecommend = s.CustId
-				LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) 
+				LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_bk BA WITH (NOLOCK) 
 					ON b.transid = BA.transid 	 
 			WHERE  b.Winlostdate = @WinlostDate   
 				AND b.statusID IN (101,111,112,113)  --REJECT, DRAW, WON, LOSE  

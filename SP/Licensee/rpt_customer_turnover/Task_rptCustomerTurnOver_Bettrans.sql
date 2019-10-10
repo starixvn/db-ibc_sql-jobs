@@ -1,24 +1,24 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans] 
 	@Date SMALLDATETIME
 AS
 /*   
-	 Created: 20150910@Sophia  
-	 DB: DBLIC.bodb_LicenseeReport  
-	 Task: Gen data from bettrans before Move bets
-	 Original: Task_rptCustomerTurnOver_Bettrans14
-	 Revisions:   
-		  - 20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
-		  - 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
-		  - 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
-		  - 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
-		  - 20180212@Harper: Remove LC from product list [Redmine: #85965]
-		  - 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
-		  - 20180814@Joseph: Remove Racing [RedmineID: #99378]
-		  - 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
-		  - 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
-		  - 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
+	Created: 20150910@Sophia  
+	DB: DBLIC.bodb_LicenseeReport  
+	Task: Gen data from bettrans before Move bets
+	 
+	Revisions:   
+		- 20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
+		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
+		- 20180212@Harper: Remove LC from product list [Redmine: #85965]
+		- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
+		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
+		- 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
+		- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
+		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
+		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_active [RedmineID: #103656]
 */ 
 BEGIN 
 SET NOCOUNT ON;
@@ -86,7 +86,7 @@ INTO #__cte_bettrans
 FROM bodb02.dbo.bettrans a WITH (NOLOCK)
 	INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC
 	ON a.recommend = lc.custid AND a.currency = lc.currency
-	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction AS BA
+	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction_active AS BA
 	ON a.transid = ba.transid
 	LEFT JOIN #__cte_parlayinfo p ON a.transid = p.transid
 WHERE a.winlostdate = @date

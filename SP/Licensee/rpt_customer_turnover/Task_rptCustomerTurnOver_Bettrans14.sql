@@ -1,22 +1,20 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans14] 
 	@Date SMALLDATETIME
 AS
 /*	
-	Created	: Florent Nguyen
+	Created: 20131125@Florent Nguyen
 	Task: Customer Performance Report
-	Date: 2013-11-25
 	DB: DBLIC.bodb_LicenseeReport
-	Original: 
+	
 	Revision:
-		-20140305@Florent: Change way to get BA tickets
-		-20140315@Florent: Offer Keno sport	
-		-20141130@Jim: change the way to retrieve currency value		
-		-20150714@Francis: Adjustment to serve to change KeenOcean's currency RMB to HK$
-		-20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
-		-20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
-		-20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+		- 20140305@Florent: Change way to get BA tickets
+		- 20140315@Florent: Offer Keno sport	
+		- 20141130@Jim: change the way to retrieve currency value		
+		- 20150714@Francis: Adjustment to serve to change KeenOcean's currency RMB to HK$
+		- 20151223@Jim: Add "Effective Betting Value" in Customer Turnover report [Redmine: #45736]
+		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
 		- 20180212@Harper: Remove LC from product list [Redmine: #85965]
 		- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
@@ -24,6 +22,7 @@ AS
 		- 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
 		- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
 		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
+		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_bk [RedmineID: #103656]
 
 	Parameter's Explanation:			
 */
@@ -90,7 +89,7 @@ AS (
 		--,sum(comm) comm
 	FROM bodb02.dbo.bettrans14 a WITH (NOLOCK)
 	INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC ON a.recommend = lc.custid AND a.currency = lc.currency
-	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction AS BA ON a.transid = ba.transid
+	LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction_bk AS BA ON a.transid = ba.transid
 	LEFT JOIN cte_parlayinfo p ON a.transid = p.transid
 	WHERE a.winlostdate = @date AND a.statusID IN (111, 112, 113)
 	GROUP BY a.matchid

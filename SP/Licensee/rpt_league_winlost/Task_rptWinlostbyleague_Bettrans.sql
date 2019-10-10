@@ -1,20 +1,19 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptWinlostbyleague_Bettrans]
 	@Date SMALLDATETIME
 AS
 /*   
-	 Created: 20150910@Sophia  
-	 DB: DBLIC.bodb_Report
-	 Task: Gen data from bettrans before Move bets
-	 Original: Task_rptWinlostbyleague_Bettrans14
-	 Revisions:   
-	 -20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
-	 - 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
-	 - 20180814@Joseph: Remove Racing [RedmineID: #99378]
-	 - 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
-	 - 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
-    
+	Created: 20150910@Sophia  
+	DB: DBLIC.bodb_Report
+	Task: Gen data from bettrans before Move bets
+	 
+	Revisions:   
+		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
+		- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
+		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
+		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_active [RedmineID: #103656]
 */ 
 BEGIN
 SET NOCOUNT ON;
@@ -68,7 +67,7 @@ AS (
 		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC
 		ON a.recommend = lc.custid
 			AND a.currency = lc.currency
-		LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK)
+		LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_active BA WITH (NOLOCK)
 		ON a.transid = ba.transid
 	WHERE a.winlostdate = @Date
 		AND a.statusID IN (111, 112, 113) -- win lost draw  

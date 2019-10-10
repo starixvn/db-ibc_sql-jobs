@@ -1,5 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans] 
 	@winlostdate DATETIME  
 AS  
@@ -38,6 +37,7 @@ AS
 	- 20190903@Amanda: Add betfrom Deep Link(t) [RedmineID: #119010]
 	- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
 	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
+	- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_active [RedmineID: #103656]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -162,7 +162,7 @@ BEGIN
 	 bodb02.dbo.bettrans bettrans WITH (NOLOCK)
 	 INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK) ON bettrans.srecommend = s.CustId
 	 INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
-	 LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) ON bettrans.transid = BA.transid 	 
+	 LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_active BA WITH (NOLOCK) ON bettrans.transid = BA.transid 	 
 	WHERE  
 	 bettrans.winlostdate = @winlostdate AND  
 	 bettrans.statusID IN (101,111,112,113) AND --REJECT, DRAW, WON, LOSE  
