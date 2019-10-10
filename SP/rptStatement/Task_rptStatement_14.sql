@@ -19,8 +19,8 @@ BEGIN
 	/* ===== Get Customer Info ===== */
 	BEGIN
 		-- Super
-		CREATE TABLE #tmpSuper (srecommend INT)
-		INSERT INTO #tmpSuper (srecommend)
+		DECLARE @Supers TABLE (srecommend INT)
+		INSERT INTO @Supers (srecommend)
 		SELECT DISTINCT c.srecommend
 		FROM bodb02.dbo.Customer c WITH (NOLOCK)
 			CROSS APPLY (
@@ -28,21 +28,17 @@ BEGIN
 			) AS tmp
 
 		-- Member + SMA + Headline
-		CREATE TABLE #CustInfo (custid INT, roleid TINYINT)
-		INSERT INTO #CustInfo (custid, roleid)
+		DECLARE @CustInfo TABLE (custid INT, roleid TINYINT)
+		INSERT INTO @CustInfo (custid, roleid)
 		SELECT c.custid, c.roleid
 		FROM bodb02.dbo.Customer c WITH (NOLOCK)
-			INNER JOIN #tmpSuper s ON c.srecommend = s.srecommend
+			INNER JOIN @Supers s ON c.srecommend = s.srecommend
 		UNION ALL
 		SELECT DISTINCT c.UplineId, 0
 		FROM bodb02.dbo.CustSuper c WITH (NOLOCK)
 			CROSS APPLY (
-				SELECT srecommend FROM #tmpSuper t WHERE c.custid = t.srecommend
+				SELECT srecommend FROM @Supers t WHERE c.custid = t.srecommend
 			) AS tmp
-
-		CREATE CLUSTERED INDEX IX_roleId ON #CustInfo (roleid, custid)
-
-		DROP TABLE #tmpSuper
 	END
 	/* ===== End Get Customer Info ===== */
 
@@ -86,17 +82,40 @@ BEGIN
 			,SUM(CASE WHEN b.statusID IN (111,112,113,103) AND b.bettype <> 500 THEN 1 ELSE 0 END) AS BetCount
 			,SUM(CASE WHEN b.statusID IN (101,102) AND b.bettype NOT IN (500,903,913,914) THEN 1 ELSE 0 END) AS VoidCount
 		INTO #__bets
-		FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
+		FROM @CustInfo c
 			CROSS APPLY (
-					SELECT c.CustId FROM #CustInfo c WHERE b.custid = c.CustId AND c.roleid = 1
-				) AS tmp
-		WHERE b.winlostdate = @WinlostDate
+				SELECT
+					b.custid
+					,b.recommend
+					,b.mrecommend
+					,b.srecommend
+					,b.statusID
+					,b.bettype
+					,b.stake
+					,b.actual_stake
+					,b.winlost
+					,b.awinlost
+					,b.mwinlost
+					,b.swinlost
+					,b.playercomm
+					,b.comm
+					,b.acomm
+					,b.scomm
+					,b.apositiontaking
+					,b.mpositiontaking
+					,b.spositiontaking
+					,b.winlostdate
+				FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
+				WHERE b.winlostdate = @WinlostDate AND b.custid = c.CustId
+			) AS b
+		WHERE c.roleid = 1
 		GROUP BY
 			b.winlostdate -- group by on index winlostdate, custid
 			,b.custid
 			,b.recommend
 			,b.mrecommend
 			,b.srecommend
+		OPTION (HASH GROUP)
 
 		INSERT INTO #tmpData
 		(
@@ -183,12 +202,11 @@ BEGIN
 			,SUM(1) AS BetCount
 		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 			CROSS APPLY (
-					SELECT c.CustId FROM #CustInfo c WHERE b.custid = c.CustId
+					SELECT c.CustId FROM @CustInfo c WHERE b.custid = c.CustId
 				) AS tmp
 		WHERE b.winlostdate = @WinlostDate
 			AND b.matchid = 0
 			AND b.bettype > 20000
-			AND b.bettype NOT IN (23001,23002,23101,23102,23201,23202)
 		GROUP BY
 			b.custid
 
@@ -205,7 +223,7 @@ BEGIN
 				,SUM(b.winlost - b.actual_stake) AS OpeningBalance
 			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 				CROSS APPLY (
-					SELECT c.CustId FROM #CustInfo c WHERE b.custid = c.CustId
+					SELECT c.CustId FROM @CustInfo c WHERE b.custid = c.CustId
 				) AS tmp
 			WHERE b.matchid = 0
 				AND b.bettype = 20000
@@ -233,7 +251,7 @@ BEGIN
 			INTO #__tmpOpeningBalance
 			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 				CROSS APPLY (
-					SELECT c.CustId FROM #CustInfo c WHERE b.custid = c.CustId
+					SELECT c.CustId FROM @CustInfo c WHERE b.custid = c.CustId
 				) AS tmp
 			WHERE b.matchid = 0
 				AND b.bettype >= 19999
@@ -264,7 +282,7 @@ BEGIN
 				recommend
 				,SUM(awinlost + comm - playercomm)
 			FROM #__tmpOpeningBalance
-			WHERE custid <> recommend
+			WHERE custid <> recommend AND recommend <> 0
 			GROUP BY
 				recommend
 
@@ -274,7 +292,7 @@ BEGIN
 				mrecommend
 				,SUM(mwinlost + acomm - comm)
 			FROM #__tmpOpeningBalance
-			WHERE custid <> mrecommend
+			WHERE custid <> mrecommend AND mrecommend <> 0
 			GROUP BY
 				mrecommend
 
@@ -284,7 +302,7 @@ BEGIN
 				srecommend
 				,SUM(swinlost + scomm - acomm)
 			FROM #__tmpOpeningBalance
-			WHERE custid <> srecommend
+			WHERE custid <> srecommend AND srecommend <> 0
 			GROUP BY
 				srecommend
 
@@ -302,7 +320,7 @@ BEGIN
 			,SUM(p.WinAmount) AS GrandPrize
 		FROM bodb02.dbo.PayoutTrans p WITH (NOLOCK)
 			CROSS APPLY (
-					SELECT c.CustId FROM #CustInfo c WHERE p.custid = c.CustId AND c.roleid = 1
+					SELECT c.CustId FROM @CustInfo c WHERE p.custid = c.CustId AND c.roleid = 1
 				) AS tmp
 		WHERE p.winlostdate = @Winlostdate
 			AND p.PayoutStatusId IN (4,5) -- 'Completed', 'Expired'
@@ -383,7 +401,7 @@ BEGIN
 				,ISNULL(r.GrandPrize, 0) AS GrandPrize
 			FROM dbo.rptStatement r WITH (NOLOCK)
 				CROSS APPLY (
-					SELECT c.CustId FROM #CustInfo c WHERE r.custid = c.CustId
+					SELECT c.CustId FROM @CustInfo c WHERE r.custid = c.CustId
 				) AS tmp
 			WHERE r.winlostdate = @WinlostDate
 		)
@@ -408,7 +426,7 @@ BEGIN
 			USING #rptStatement AS TARGET
 				ON		SOURCE.winlostdate = @WinlostDate
 					AND SOURCE.CustId = TARGET.CustId
-					AND EXISTS (SELECT 1 FROM #CustInfo c WHERE SOURCE.CustId = c.CustId)
+					AND EXISTS (SELECT 1 FROM @CustInfo c WHERE SOURCE.CustId = c.CustId)
 			WHEN MATCHED AND
 				(
 						ISNULL(SOURCE.OpeningBalance, 0)	<> ISNULL(TARGET.OpeningBalance, 0)
@@ -441,7 +459,7 @@ BEGIN
 				)
 			WHEN NOT MATCHED BY SOURCE
 				AND SOURCE.winlostdate = @WinlostDate
-				AND EXISTS (SELECT 1 FROM #CustInfo c WHERE SOURCE.CustId = c.CustId)
+				AND EXISTS (SELECT 1 FROM @CustInfo c WHERE SOURCE.CustId = c.CustId)
 				THEN DELETE
 			OUTPUT
 				ISNULL(DELETED.CustId, INSERTED.CustId)
@@ -461,7 +479,6 @@ BEGIN
 	END
 	/* ===== End Compare and Correct Data ===== */
 
-	DROP TABLE #CustInfo
 	DROP TABLE #rptStatement
 
 	-- OpeningTotalBalance
