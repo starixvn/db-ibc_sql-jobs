@@ -149,39 +149,35 @@ BEGIN
     IF (@mode = 0)
     BEGIN 
 	    ----- calculate reset 
-		SELECT  @Winlostdate as Winlostdate, h.UplineID,
+		SELECT  @Winlostdate as Winlostdate, ISNULL(e.UplineID, rs.Custid) as UplineID ,
 				ROUND(SUM(ISNULL(e.ExtraPTWinlost, 0)), 2) AS ExtraPTWinlost,
 				ROUND(SUM(ISNULL(rs.Reset, 0)), 2) AS Reset
-		FROM #Headline h		
-			LEFT JOIN (
-						SELECT Winlostdate, UplineID, SUM(ExtraPTWinlost) AS ExtraPTWinlost
-						FROM  #WLByProduct 
-						GROUP BY Winlostdate, UplineID
-						) e 
-				ON h.UplineID = e.UplineID
-			LEFT JOIN #Transfer rs 
-				ON h.UplineID = rs.Custid
-		GROUP BY h.UplineID  
+		FROM  (
+					SELECT Winlostdate, UplineID, SUM(ExtraPTWinlost) AS ExtraPTWinlost
+					FROM  #WLByProduct 
+					GROUP BY Winlostdate, UplineID
+				) e 
+			FULL JOIN #Transfer rs 
+				ON e.UplineID = rs.Custid
+		GROUP BY ISNULL(e.UplineID, rs.Custid) 
 		HAVING (ROUND(SUM(ISNULL(e.ExtraPTWinlost, 0)), 2) - ROUND(SUM(ISNULL(rs.Reset, 0)), 2) ) <> 0
 	END	
 	ELSE
     BEGIN 
 	    ----- calculate reset 
 		INSERT INTO #Reset (Winlostdate, CustId, ExtraPTWinlost, Reset,Variance)
-		SELECT  @Winlostdate, h.UplineID,
+		SELECT  @Winlostdate, ISNULL(e.UplineID, rs.Custid) as UplineID ,
 				ROUND(SUM(ISNULL(e.ExtraPTWinlost, 0)), 2) AS ExtraPTWinlost,
 				ROUND(SUM(ISNULL(rs.Reset, 0)), 2) AS Reset,
 				ROUND(SUM(ISNULL(e.ExtraPTWinlost, 0)), 2) - ROUND(SUM(ISNULL(rs.Reset, 0)), 2)  AS Variance
-		FROM #Headline h		
-			LEFT JOIN (
+		FROM (
 						SELECT Winlostdate, UplineID, SUM(ExtraPTWinlost) AS ExtraPTWinlost
 						FROM  #WLByProduct 
 						GROUP BY Winlostdate, UplineID
-						) e 
-				ON h.UplineID = e.UplineID
-			LEFT JOIN #Transfer rs 
-				ON h.UplineID = rs.Custid
-		GROUP BY h.Winlostdate, h.UplineID  
+			) e 			
+			FULL JOIN #Transfer rs 
+				ON e.UplineID = rs.Custid
+		GROUP BY ISNULL(e.UplineID, rs.Custid)  
 		HAVING (ROUND(SUM(ISNULL(e.ExtraPTWinlost, 0)), 2) - ROUND(SUM(ISNULL(rs.Reset, 0)), 2) ) <> 0
 		
 		
