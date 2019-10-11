@@ -2,11 +2,11 @@
 USE [bodb02]
 GO
 
-ALTER PROCEDURE [dbo].[Task_CS_HeadlineBalance14]
-	@WinlostDate SMALLDATETIME, 
-	@Mode     TINYINT = 0,
-	@ErrCode  INT = 0 OUTPUT,
-    @ErrMsg   VARCHAR(100) = '' OUTPUT
+ALTER PROCEDURE [dbo].[Task_CS_HeadlineBalance_CheckAndCorrect]
+	@WinlostDate 		SMALLDATETIME, 
+	@IsCheckDataOnly	BIT = 0,
+	@ErrCode  			INT = 0 OUTPUT,
+    @ErrMsg   			VARCHAR(100) = '' OUTPUT
 AS
 /*
 	Creator: 20190826@Sophia 
@@ -17,8 +17,8 @@ AS
 		- 20190826@Sophia: initial SP [Redmine: #117863]	 
 
 	Param's explain:
-		@mode:  0 _ view report
-	            1 _ reset balance
+		@IsCheckDataOnly:  1 _ view report
+						   0 _ reset balance
 	          
 	    @ErrCode: 0 _ Success
 	              1 _ Error
@@ -112,7 +112,7 @@ BEGIN
 				
 		FROM dbo.bettrans14 b WITH (NOLOCK)			
 		INNER JOIN @SportBettype s ON s.BetType = b.bettype
-		LEFT JOIN dbo.Match m WITH (NOLOCK) ON m.MatchId = b.MatchId  AND m.Sporttype = 44		
+		LEFT JOIN dbo.Match14 m WITH (NOLOCK) ON m.MatchId = b.MatchId  AND m.Sporttype = 44		
 		WHERE   b.Winlostdate = @Winlostdate
 			AND b.ruben = 1
 			AND b.statusid NOT IN (101, 102, 103, 121)					
@@ -148,7 +148,7 @@ BEGIN
 	
 	
 	----view report
-    IF (@mode = 0)
+    IF (@IsCheckDataOnly = 1)
     BEGIN 
 	    ----- calculate reset 
 		SELECT  @Winlostdate as Winlostdate,  ISNULL(e.UplineID, rs.Custid) as UplineID ,

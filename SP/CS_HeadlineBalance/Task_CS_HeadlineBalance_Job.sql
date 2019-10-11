@@ -33,7 +33,7 @@ BEGIN
 	WHILE @WinlostDate <= @Yesterday
 	BEGIN
 		BEGIN TRY
-			EXEC dbo.Task_CS_HeadlineBalance @WinlostDate = @WinlostDate, @Mode = 1
+			EXEC dbo.Task_CS_HeadlineBalance @WinlostDate = @WinlostDate, @IsCheckDataOnly = 0
 		END TRY
 		BEGIN CATCH
 			INSERT INTO @tblErrMsg (WinlostDate, ErrMsg)

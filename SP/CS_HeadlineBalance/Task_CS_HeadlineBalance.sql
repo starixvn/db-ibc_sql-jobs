@@ -4,7 +4,7 @@ GO
 
 ALTER PROCEDURE [dbo].[Task_CS_HeadlineBalance]
 	@WinlostDate SMALLDATETIME, 
-	@Mode     TINYINT = 0,
+	@IsCheckDataOnly	BIT = 0,
 	@ErrCode  INT = 0 OUTPUT,
     @ErrMsg   VARCHAR(100) = '' OUTPUT
 AS
@@ -18,8 +18,8 @@ AS
 	 
 
 	Param's explain:
-		@mode:  0 _ view report
-	            1 _ reset balance
+		@IsCheckDataOnly:  1 _ view report
+						   0 _ reset balance
 	          
 	    @ErrCode: 0 _ Success
 	              1 _ Error
@@ -146,7 +146,7 @@ BEGIN
 	
 	
 	----view report
-    IF (@mode = 0)
+    IF (@IsCheckDataOnly = 1)
     BEGIN 
 	    ----- calculate reset 
 		SELECT  @Winlostdate as Winlostdate, ISNULL(e.UplineID, rs.Custid) as UplineID ,
