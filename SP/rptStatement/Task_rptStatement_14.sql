@@ -482,8 +482,17 @@ BEGIN
 	DROP TABLE #rptStatement
 
 	-- OpeningTotalBalance
-	EXEC dbo.Task_rptStatement_OpeningTotalBalance_14
-		@WinlostDate	= @WinlostDate
-		,@CustIds		= @CustIds
+	DECLARE @MoveBetsDay SMALLDATETIME, @tmpWinlostDate DATE
+	SELECT  @MoveBetsDay = MAX(eventdate) FROM bodb02.dbo.match14 WITH (NOLOCK)
+	SELECT  @tmpWinlostDate = @WinlostDate
+
+	WHILE @tmpWinlostDate <= @MoveBetsDay
+	BEGIN
+		EXEC dbo.Task_rptStatement_OpeningTotalBalance_14
+			@WinlostDate	= @tmpWinlostDate
+			,@CustIds		= @CustIds
+
+		SELECT @tmpWinlostDate = DATEADD(DAY, 1, @tmpWinlostDate)
+	END
 END
 GO
