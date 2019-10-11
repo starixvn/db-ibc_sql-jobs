@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02 : Task add yesterday CN88 Headline Balance]    Script Date: 10/7/2019 5:24:20 PM ******/
+/****** Object:  Job [bodb02 : Task CN88 Headline Balance]    Script Date: 10/11/2019 10:12:48 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 10/7/2019 5:24:20 PM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 10/11/2019 10:12:48 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -14,7 +14,7 @@ IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 END
 
 DECLARE @jobId BINARY(16)
-EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Task add yesterday CN88 Headline Balance', 
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Task CN88 Headline Balance', 
 		@enabled=1, 
 		@notify_level_eventlog=0, 
 		@notify_level_email=0, 
@@ -25,8 +25,8 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Task add yesterday 
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Add yesterday Headline Balance]    Script Date: 10/7/2019 5:24:21 PM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Add yesterday Headline Balance', 
+/****** Object:  Step [Auto add Headline Balance]    Script Date: 10/11/2019 10:12:48 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Auto add Headline Balance', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
 		@on_success_action=1, 

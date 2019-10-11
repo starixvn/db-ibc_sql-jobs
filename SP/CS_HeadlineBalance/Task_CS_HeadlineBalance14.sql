@@ -115,8 +115,7 @@ BEGIN
 		LEFT JOIN dbo.Match m WITH (NOLOCK) ON m.MatchId = b.MatchId  AND m.Sporttype = 44		
 		WHERE   b.Winlostdate = @Winlostdate
 			AND b.ruben = 1
-			AND b.statusid NOT IN (101, 102, 103, 121)		
-			AND b.Currency <> 20 
+			AND b.statusid NOT IN (101, 102, 103, 121)					
 			AND EXISTS (SELECT 1 FROM dbo.CS_CustSuper cs WITH (NOLOCK) WHERE cs.CusTID = b.srecommend) 
 		GROUP BY b.Winlostdate,				
 				b.srecommend,	

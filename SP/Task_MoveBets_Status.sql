@@ -1,4 +1,4 @@
-/*<info serverAlias="DBEXT-bodb02,DBAGE-bodb02,DBACC-bodb02" executers="vnteam" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBEXT-bodb02,DBAGE-bodb02,DBACC-bodb02,DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 USE [bodb02]
 GO
 
@@ -9,10 +9,11 @@ AS
 /*
 	Created by 20180305@Percy
     Task: MB has done yet?
-    DB: DBEXT.bodb02, DBAGE.bodb02, DBACC.bodb02
+    DB: DBEXT.bodb02, DBAGE.bodb02, DBACC.bodb02, DBTXN.bodb02
 
 	Revisions:
 		- 20180305@Percy: Initialize SP [RedmineID: #83787]
+		- 20191011@Sophia: Add new server DBTXN-bodb02 [Redmind: #117863]
 	
 	Parameters Explanations:
 		@StatusID = NULL --> this day not have MB
@@ -26,8 +27,18 @@ BEGIN
 	SET @StatusID = 1
 
 	DECLARE @MoveBetSchedule TABLE (ScheduleId TINYINT, MoveBetsDay DATE)
-	INSERT INTO @MoveBetSchedule (ScheduleId, MoveBetsDay)
-	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+	
+	IF @@SERVERNAME= 'DBTRANS'
+	BEGIN 	
+		INSERT INTO @MoveBetSchedule (ScheduleId, MoveBetsDay)
+		EXEC bodb02.dbo.Task_MoveBetsDayByScheduleSel
+	END
+	ELSE
+	BEGIN 
+		INSERT INTO @MoveBetSchedule (ScheduleId, MoveBetsDay)
+		EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+	
+	END
 	
 	-- Not have MB
 	IF NOT EXISTS (SELECT 1 FROM @MoveBetSchedule)
