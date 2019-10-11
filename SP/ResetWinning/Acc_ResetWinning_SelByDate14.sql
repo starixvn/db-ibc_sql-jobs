@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBACC-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="1"></info>*/
+﻿/*<info serverAlias="DBACC-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
 
@@ -646,9 +646,61 @@ BEGIN
 
 				SELECT @ErrMsg = 'The process has been successful!'
 			END
+	
+			
+			--------Email 
+			IF @resetCount > 0
+			BEGIN
+				DECLARE @Subject VARCHAR(1000) = '', @body VARCHAR(MAX) = '', 
+						@ProductList VARCHAR(1000)  , @ProductVariance VARCHAR(1000)  
+						
+				SELECT @ProductList = COALESCE(@ProductList + ', ', '') + Product,
+					   @ProductVariance = COALESCE(@ProductVariance + ', ', '') + Product +' : '
+										+  CONVERT(VARCHAR(10),	ISNULL( (CASE WHEN r.currency <> 0   ---CN88
+																THEN
+																	CASE WHEN -(ISNULL(r.RealWinlostAfterExtraPT, 0)) - ISNULL(r.Realreset, 0) <> 0 THEN 1 ELSE 0 END
+																ELSE
+																	 CASE WHEN -(ISNULL(r.WinlostAfterExtraPT, 0)) - ISNULL(r.reset, 0) <> 0 THEN 1 ELSE 0 END
+																END),0) )
+				FROM  #Reset r
+				WHERE ISNULL( (CASE WHEN r.currency <> 0   ---CN88
+								THEN
+									CASE WHEN -(ISNULL(r.RealWinlostAfterExtraPT, 0)) - ISNULL(r.Realreset, 0) <> 0 THEN 1 ELSE 0 END
+								ELSE
+									 CASE WHEN -(ISNULL(r.WinlostAfterExtraPT, 0)) - ISNULL(r.reset, 0) <> 0 THEN 1 ELSE 0 END
+								END),0) <> 0 
+				 
+											 
+				
+				SELECT @Subject = 'Reset Winning report changed on ' + CONVERT(VARCHAR(20),@Winlostdate, 107)
+					
+				SELECT @body = 'Dear Ah Wan, </br> 
+								Kindly be informed that the Reset Winning report has been changed on '+ CONVERT(VARCHAR(20),@Winlostdate) + '</br>
+								Time of Reset Winning: '+ CONVERT(VARCHAR(20),Getdate(),109) +' (GMT-4) </br></br> 
 
+								Product: '+ @ProductList + ' </br> </br> 
+
+								Reason: void/recovered tickets </br> 
+								Variance: '+ @ProductVariance + '</br> 
+								Performed by IT </br></br>  
+
+								Best regards, </br> 
+								This is an auto-mail from ONEworks Report System. Please do not reply.'									 
+										
+									 
+					
+				EXEC msdb.dbo.sp_send_dbmail @recipients = 'sophia.nguyen@starixsoft.com'
+							, @copy_recipients = ''
+							, @blind_copy_recipients = ''
+							, @subject = @subject
+							, @body = @body
+							, @body_format = 'HTML' 
+							
+			END
+	
+			
 			DROP TABLE #reset	
-
+			
 		END 
 
 
