@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02 : Task CN88 Headline Balance]    Script Date: 10/11/2019 4:27:47 PM ******/
+/****** Object:  Job [bodb02 : Task CN88 Headline Balance]    Script Date: 10/14/2019 10:32:35 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 10/11/2019 4:27:47 PM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 10/14/2019 10:32:35 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -25,8 +25,8 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Task CN88 Headline 
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Auto add Headline Balance]    Script Date: 10/11/2019 4:27:48 PM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Auto add Headline Balance', 
+/****** Object:  Step [Add Headline Balance]    Script Date: 10/14/2019 10:32:35 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Add Headline Balance', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
 		@on_success_action=1, 
@@ -42,19 +42,19 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Auto add
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Occur every day at 6pm', 
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Occur every day at 1am and 4 am', 
 		@enabled=1, 
 		@freq_type=4, 
 		@freq_interval=1, 
-		@freq_subday_type=1, 
+		@freq_subday_type=8, 
 		@freq_subday_interval=4, 
 		@freq_relative_interval=0, 
 		@freq_recurrence_factor=0, 
-		@active_start_date=20190917, 
+		@active_start_date=20191014, 
 		@active_end_date=99991231, 
-		@active_start_time=180000, 
-		@active_end_time=235959, 
-		@schedule_uid=N'40bb1887-a0e2-41b2-a7ce-793687d679dd'
+		@active_start_time=10000, 
+		@active_end_time=170000, 
+		@schedule_uid=N'5d888aed-bd9a-41d9-b971-28b14c4ee8d2'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
