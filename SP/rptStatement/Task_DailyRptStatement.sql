@@ -236,7 +236,8 @@ BEGIN
 	;
 
 	--5. Headline - Openning total balance
-	;WITH CTE_HeadlineTotalBalance AS 
+	;
+	WITH CTE_HeadlineTotalBalance AS 
 	(
 		SELECT cs.UplineId, SUM(tmp.OpeningTotalBalance) AS OpeningTotalBalance
 		FROM bodb02.dbo.CustSuper cs WITH(NOLOCK)
