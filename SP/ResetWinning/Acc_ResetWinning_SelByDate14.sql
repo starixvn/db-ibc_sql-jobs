@@ -658,11 +658,15 @@ BEGIN
 					   @ProductVariance = COALESCE(@ProductVariance + ', ', '') + Product +' : '
 										+  CONVERT(VARCHAR(10),	ISNULL( (CASE WHEN r.currency <> 0   ---CN88
 																THEN
-																	CASE WHEN -(ISNULL(r.RealWinlostAfterExtraPT, 0)) - ISNULL(r.Realreset, 0) <> 0 THEN 1 ELSE 0 END
+																	-(ISNULL(r.RealWinlostAfterExtraPT, 0)) - ISNULL(r.Realreset, 0) 
 																ELSE
-																	 CASE WHEN -(ISNULL(r.WinlostAfterExtraPT, 0)) - ISNULL(r.reset, 0) <> 0 THEN 1 ELSE 0 END
+																	 -(ISNULL(r.WinlostAfterExtraPT, 0)) - ISNULL(r.reset, 0) 
 																END),0) )
+										+ ' '
+										+ CASE WHEN r.currency <> 0 THEN e.currency ELSE 'RM' END
 				FROM  #Reset r
+					LEFT JOIN dbo.exchange e WITH (NOLOCK) 
+						ON e.exchangeId = r.Currency
 				WHERE ISNULL( (CASE WHEN r.currency <> 0   ---CN88
 								THEN
 									CASE WHEN -(ISNULL(r.RealWinlostAfterExtraPT, 0)) - ISNULL(r.Realreset, 0) <> 0 THEN 1 ELSE 0 END
@@ -675,14 +679,14 @@ BEGIN
 				SELECT @Subject = 'Reset Winning report changed on ' + CONVERT(VARCHAR(20),@Winlostdate, 107)
 					
 				SELECT @body = 'Dear Ah Wan, </br> 
-								Kindly be informed that the Reset Winning report has been changed on '+ CONVERT(VARCHAR(20),@Winlostdate) + '</br>
+								Kindly be informed that the Reset Winning report has been changed on '+ CONVERT(VARCHAR(20),@Winlostdate, 107) + '</br>
 								Time of Reset Winning: '+ CONVERT(VARCHAR(20),Getdate(),109) +' (GMT-4) </br></br> 
 
 								Product: '+ @ProductList + ' </br> </br> 
 
 								Reason: void/recovered tickets </br> 
 								Variance: '+ @ProductVariance + '</br> 
-								Performed by IT </br></br>  
+								Performed by IT. </br></br>  
 
 								Best regards, </br> 
 								This is an auto-mail from ONEworks Report System. Please do not reply.'									 
