@@ -24,6 +24,7 @@ AS
 	EXEC GEN_rpt_NPHPromotion '20191001', '20191014'
 */
 BEGIN
+	DECLARE @DrawStatusId SMALLINT = 111, @WonStatusId SMALLINT = 112, @LoseStatusId SMALLINT = 113
 
 	DELETE FROM dbo.rpt_NPHPromotion
 	WHERE @fromDate <= RptDate  AND RptDate <= @toDate
@@ -34,26 +35,32 @@ BEGIN
 		RptDate3rd date,
 		SiteID int,
 		CurrencyID	int,
-		StatusId	smallint,
 		CouponCount int,
 		Redeemed bit,
 		Prize money,
 		BetCountOfNPH int,
+		BetCountOfNPH_NoDraw int,
 		BetCountOfPromoDay int,
-		TurnoverPromoDay money)
+		BetCountOfPromoDay_NoDraw int,
+		TurnoverPromoDay money,
+		TurnoverPromoDay_NoDraw money)
 
-	INSERT INTO #tmpData(PromoID, RptDate, RptDate3rd, SiteID, CurrencyID, Redeemed/*, StatusId*/, BetCountOfNPH, BetCountOfPromoDay, TurnoverPromoDay)
+	INSERT INTO #tmpData(PromoID, RptDate, RptDate3rd, SiteID, CurrencyID, Redeemed, BetCountOfNPH, BetCountOfNPH_NoDraw, BetCountOfPromoDay, BetCountOfPromoDay_NoDraw, TurnoverPromoDay, TurnoverPromoDay_NoDraw)
 	SELECT pc.PromoID,
 		   CAST(pc.CreateTime AS DATE),
 		   CAST(DATEADD(HOUR, 12, pc.CreateTime) AS DATE),
 		   ISNULL([site].SiteID, -1),
 		   CurrencyID,
 		   Redeemed,
-		   --statusID,
 		   SUM(CASE WHEN b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, b.transdate) AND DATEADD(HOUR, OffPeakEndTime, b.transdate)
 					THEN 1 ELSE 0 END) AS BetCountOfNPH,
+		   SUM(CASE WHEN (b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, b.transdate) AND DATEADD(HOUR, OffPeakEndTime, b.transdate))
+						AND statusID != @DrawStatusId
+					THEN 1 ELSE 0 END) AS BetCountOfNPH_NoDraw,
 		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) THEN 1 ELSE 0 END) AS BetCountOfPromoDay,
-		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) THEN b.stake ELSE 0 END ) AS TurnoverPromoDay
+		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN 1 ELSE 0 END) AS BetCountOfPromoDay_NoDraw,
+		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) THEN b.stake ELSE 0 END ) AS TurnoverPromoDay,
+		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN b.stake ELSE 0 END ) AS TurnoverPromoDay_NoDraw
 	FROM bodb02.dbo.NPHPromoCoupon pc WITH(NOLOCK)
 		INNER JOIN bodb02.dbo.NPHPromotion p WITH(NOLOCK) ON p.PromoID = pc.PromoID
 		LEFT JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid
@@ -62,14 +69,13 @@ BEGIN
 		LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
 	WHERE @fromDate <= pc.CreateTime AND pc.CreateTime <= @toDate
 		AND b.transdate BETWEEN p.StartDate AND p.EndDate
-		AND statusID IN (111, 112, 113) -- DRAW WON LOSE
+		AND statusID IN (@DrawStatusId, @WonStatusId, @LoseStatusId)
 	GROUP BY  pc.PromoID,
 			  CAST(pc.CreateTime AS DATE),
 			  CAST(DATEADD(HOUR, 12, pc.CreateTime) AS DATE),
 		      ISNULL([site].SiteID, -1),
 			  CurrencyID,
 			  Redeemed
-			  --,statusID
 	ORDER BY CAST(pc.CreateTime AS DATE)
 
 	;WITH cte_CouponSummary AS(
@@ -84,10 +90,26 @@ BEGIN
 	FROM #tmpData t
 	INNER JOIN cte_CouponSummary cte ON  t.PromoID = cte.PromoID AND t.RptDate = cte.CreateTime
 	
-	INSERT INTO dbo.rpt_NPHPromotion(RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed,CouponCount,Prize,BetCountOfNPH,BetCountOfPromoDay,TurnoverPromoDay)
-	SELECT RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed/*,StatusId*/,SUM(CouponCount),SUM(Prize),SUM(BetCountOfNPH),SUM(BetCountOfPromoDay),SUM(TurnoverPromoDay)
+	INSERT INTO dbo.rpt_NPHPromotion(RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed,
+									CouponCount,
+									Prize,
+									BetCountOfNPH,
+									BetCountOfNPH_NoDraw,
+									BetCountOfPromoDay,
+									BetCountOfPromoDay_NoDraw,
+									TurnoverPromoDay,
+									TurnoverPromoDay_NoDraw)
+	SELECT RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed,
+									SUM(CouponCount),
+									SUM(Prize),
+									SUM(BetCountOfNPH),
+									SUM(BetCountOfNPH_NoDraw),
+									SUM(BetCountOfPromoDay),
+									SUM(BetCountOfPromoDay_NoDraw),
+									SUM(TurnoverPromoDay),
+									SUM(TurnoverPromoDay_NoDraw)
 	FROM #tmpData
-	GROUP BY RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed/*,StatusId*/
+	GROUP BY RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed
 
 	DROP TABLE #tmpData
 END
