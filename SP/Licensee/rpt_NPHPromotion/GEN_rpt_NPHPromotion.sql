@@ -41,7 +41,7 @@ BEGIN
 		BetCountOfPromoDay int,
 		TurnoverPromoDay money)
 
-	INSERT INTO #tmpData(PromoID, RptDate, RptDate3rd, SiteID, CurrencyID, Redeemed, BetCountOfNPH/*, BetCountOfPromoDay, TurnoverPromoDay*/)
+	INSERT INTO #tmpData(PromoID, RptDate, RptDate3rd, SiteID, CurrencyID, Redeemed, BetCountOfNPH, BetCountOfPromoDay, TurnoverPromoDay)
 	SELECT pc.PromoID,
 		   CAST(pc.CreateTime AS DATE),
 		   CAST(DATEADD(HOUR, 12, pc.CreateTime) AS DATE),
@@ -49,15 +49,17 @@ BEGIN
 		   CurrencyID,
 		   Redeemed,
 		   SUM(CASE WHEN b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, b.transdate) AND DATEADD(HOUR, OffPeakEndTime, b.transdate)
-					  /*Date between StartDate AND EndDate, Time between OffPeakStartTime AND OffPeakEndTime */ THEN 1 ELSE 0 END)
+					THEN 1 ELSE 0 END) AS BetCountOfNPH,
+		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) THEN 1 ELSE 0 END) AS BetCountOfPromoDay,
+		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) THEN b.stake ELSE 0 END ) AS TurnoverPromoDay
 	FROM bodb02.dbo.NPHPromoCoupon pc WITH(NOLOCK)
 		INNER JOIN bodb02.dbo.NPHPromotion p WITH(NOLOCK) ON p.PromoID = pc.PromoID
 		LEFT JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON pc.CustID= c.custid
 		LEFT JOIN bodb02.dbo.[Site] s WITH (NOLOCK) ON c.[site] = s.[site]
-		LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID		
+		LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
 	WHERE @fromDate <= pc.CreateTime AND pc.CreateTime <= @toDate
-		--AND b.transdate BETWEEN p.StartDate AND p.EndDate	
+		AND b.transdate BETWEEN p.StartDate AND p.EndDate	
 	GROUP BY  pc.PromoID,
 			  CAST(pc.CreateTime AS DATE),
 			  CAST(DATEADD(HOUR, 12, pc.CreateTime) AS DATE),
@@ -66,7 +68,6 @@ BEGIN
 			  Redeemed
 	ORDER BY CAST(pc.CreateTime AS DATE)
 
-	-- Update value
 	;WITH cte_CouponSummary AS(
 		SELECT t.PromoID, CAST(pc.CreateTime AS DATE) AS CreateTime, COUNT(pc.CouponID) AS CouponCount, SUM(pc.Prize) AS Prize
 		FROM #tmpData t
@@ -74,11 +75,8 @@ BEGIN
 		GROUP BY t.PromoID, CAST(pc.CreateTime AS DATE)
 	) 
 	UPDATE t
-	SET t.BetCountOfNPH = 0,
-		t.BetCountOfPromoDay = 0,
-		t.TurnoverPromoDay = 0,
-		t.CouponCount = cte.CouponCount,
-		t.Prize = cte.Prize
+	SET  t.CouponCount = cte.CouponCount,
+		 t.Prize = cte.Prize
 	FROM #tmpData t
 	INNER JOIN cte_CouponSummary cte ON  t.PromoID = cte.PromoID AND t.RptDate = cte.CreateTime
 	
@@ -90,7 +88,3 @@ BEGIN
 	DROP TABLE #tmpData
 END
 GO
-
---SELECT CAST (getdate() as time), CAST('17:30:00.0000000' AS TIME), cast ('12:00' as time), DATEADD(HOUR, 16, '2019-10-14')
-
---SELECT CONVERT(varchar(15),CAST('17:30:00.0000000' AS TIME),100)
