@@ -64,6 +64,7 @@ BEGIN
 	FROM bodb02.dbo.NPHPromoCoupon pc WITH(NOLOCK)
 		INNER JOIN bodb02.dbo.NPHPromotion p WITH(NOLOCK) ON p.PromoID = pc.PromoID
 		LEFT JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid
+		INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON pc.CustID= c.custid
 		LEFT JOIN bodb02.dbo.[Site] s WITH (NOLOCK) ON c.[site] = s.[site]
 		LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
