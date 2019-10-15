@@ -56,7 +56,9 @@ BEGIN
 	
 	----Begin: Get Headline List ----
 	CREATE TABLE #tmpSuper (srecommend INT)
-	INSERT INTO #tmpSuper (srecommend)
+	CREATE TABLE #SuperList (srecommend INT)
+	
+	INSERT INTO #tmpSuper (srecommend)	
 	SELECT DISTINCT c.srecommend
 	FROM DBCUST.CUSTDB.dbo.Customer c WITH (NOLOCK)
 		CROSS APPLY (
@@ -64,15 +66,19 @@ BEGIN
 					) AS tmp
 	WHERE EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper cs WITH (NOLOCK) WHERE c.srecommend = cs.custid)
 	
-	
-	
+		
 	INSERT INTO #Headline (SuperId, UplineId) 
 	SELECT c.CustID AS SuperId, c.UplineId
 	FROM DBCUST.CUSTDB.dbo.CustSuper c WITH (NOLOCK) 
 		INNER JOIN #tmpSuper s 
 			ON s.Srecommend = c.CustID
 	WHERE UplineID IS NOT NULL	 
- 	
+	 	
+ 	INSERT INTO #SuperList (srecommend) 
+	SELECT c.CustID AS srecommend 
+	FROM DBCUST.CUSTDB.dbo.CustSuper c WITH (NOLOCK) 
+	WHERE EXISTS (SELECT CustID FROM #Headline h WHERE h.UplineId = c.UplineId)
+	
 	----End: Get Headline List ----
 	
 	
@@ -127,9 +133,8 @@ BEGIN
 		LEFT JOIN dbo.Match14 m WITH (NOLOCK) ON m.MatchId = b.MatchId  AND m.Sporttype = 44		
 		WHERE   b.Winlostdate = @Winlostdate
 			AND b.ruben = 1
-			AND b.statusid NOT IN (101, 102, 103, 121)					
-			--AND EXISTS (SELECT 1 FROM dbo.CS_CustSuper cs WITH (NOLOCK) WHERE cs.CusTID = b.srecommend) 
-			AND EXISTS (SELECT 1 FROM #tmpSuper ss WHERE ss.srecommend = b.Srsecommend)
+			AND b.statusid NOT IN (101, 102, 103, 121)					 
+			AND EXISTS (SELECT 1 FROM #SuperList ss WHERE ss.srecommend = b.srecommend)
 		GROUP BY b.Winlostdate,				
 				b.srecommend,	
 				b.Currency,
