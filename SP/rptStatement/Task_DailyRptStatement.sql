@@ -277,7 +277,7 @@ BEGIN
 				OR (ISNULL(tmp.GrandPrize, 0)) <> 0
 			)
 	)
-	MERGE INTO dbo.rptStatement_xpre AS TGR
+	MERGE INTO dbo.rptStatement_test AS TGR
 	USING CTE_rptStatement AS SRC
 	ON TGR.Winlostdate = SRC.Winlostdate AND TGR.Custid = SRC.Custid
 	WHEN MATCHED AND TGR.Winlostdate = @_Winlostdate THEN

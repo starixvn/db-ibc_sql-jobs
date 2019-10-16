@@ -346,7 +346,7 @@ BEGIN
 			,0 AS beforeAmt
 			,tmp.Custid AS afterAmt
 		FROM #rptStatementCompare tmp
-		LEFT JOIN dbo.rptStatement_xpre rpt WITH(READPAST) 
+		LEFT JOIN dbo.rptStatement_test rpt WITH(READPAST) 
 			ON tmp.custid = rpt.custid AND rpt.winlostdate = @_Winlostdate
 		WHERE rpt.custid IS NULL
 
@@ -357,7 +357,7 @@ BEGIN
 			,12 AS SubError
 			,rpt.custid AS beforeAmt
 			,0 AS afterAmt
-		FROM dbo.rptStatement_xpre rpt WITH(NOLOCK)
+		FROM dbo.rptStatement_test rpt WITH(NOLOCK)
 		LEFT JOIN #rptStatementCompare tmp 
 			ON tmp.custid = rpt.custid
 		WHERE rpt.winlostdate = @_Winlostdate
@@ -372,7 +372,7 @@ BEGIN
 			, diff.beforeAmt
 			, diff.afterAmt
 		FROM #rptStatementCompare tmp
-		INNER JOIN dbo.rptStatement_xpre rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		INNER JOIN dbo.rptStatement_test rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
 		CROSS APPLY (
 			--Turnover
 			SELECT rpt.turnover AS beforeAmt
@@ -417,7 +417,7 @@ BEGIN
 			,rpt.Voidamt AS beforeAmt
 			,tmp.Voidamt AS afterAmt
 		FROM #rptStatementCompare tmp
-		INNER JOIN dbo.rptStatement_xpre rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		INNER JOIN dbo.rptStatement_test rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
 		WHERE rpt.winlostdate = @_Winlostdate
 			AND tmp.Voidamt <> rpt.Voidamt
 		
@@ -429,7 +429,7 @@ BEGIN
 			,rpt.TransferAmt AS beforeAmt
 			,tmp.TransferAmt AS afterAmt
 		FROM #rptStatementCompare tmp
-		INNER JOIN dbo.rptStatement_xpre rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		INNER JOIN dbo.rptStatement_test rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
 		WHERE rpt.winlostdate = @_Winlostdate
 			AND tmp.TransferAmt <> rpt.TransferAmt
 
@@ -441,7 +441,7 @@ BEGIN
 			,rpt.GrandPrize AS beforeAmt
 			,tmp.GrandPrize AS afterAmt
 		FROM #rptStatementCompare tmp
-		INNER JOIN dbo.rptStatement_xpre rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		INNER JOIN dbo.rptStatement_test rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
 		WHERE rpt.winlostdate = @_Winlostdate
 			AND tmp.GrandPrize <> rpt.GrandPrize
 
@@ -453,7 +453,7 @@ BEGIN
 			,diff.beforeAmt
 			,diff.afterAmt
 		FROM #rptStatementCompare tmp
-		INNER JOIN dbo.rptStatement_xpre rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		INNER JOIN dbo.rptStatement_test rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
 		CROSS APPLY (
 			--Openingbalance
 			SELECT rpt.Openingbalance AS beforeAmt
@@ -521,7 +521,7 @@ BEGIN
 	ELSE 
 	BEGIN
 		-- Correct Data
-		MERGE INTO dbo.rptStatement_xpre AS TGR
+		MERGE INTO dbo.rptStatement_test AS TGR
 		USING #rptStatementCompare SRC
 		ON TGR.Winlostdate = SRC.Winlostdate AND TGR.Custid = SRC.Custid
 		WHEN MATCHED AND TGR.Winlostdate = @_Winlostdate THEN
