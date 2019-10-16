@@ -154,7 +154,7 @@ BEGIN
 				SUM(CASE WHEN c.roleID = 2 THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) Winlost2,
 				SUM(CASE WHEN c.roleID = 3 THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) Winlost3,
 				SUM(CASE WHEN c.roleID = 4 THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) Winlost4 
-			FROM	bodb02.dbo.bettrans WITH (READPAST)
+			FROM	bodb02.dbo.bettrans WITH (NOLOCK)
 			CROSS APPLY (
 				SELECT 
 					CASE custid

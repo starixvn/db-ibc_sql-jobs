@@ -69,7 +69,7 @@ BEGIN
 			,SUM(bet.stake*b.mpositiontaking) AS mnet_stake
 			,SUM(bet.stake*b.spositiontaking) AS snet_stake
 		FROM
-			bodb02.dbo.bettrans b WITH(READPAST)
+			bodb02.dbo.bettrans b WITH(NOLOCK)
 		OUTER APPLY (
 			SELECT 
 				CASE 
@@ -187,7 +187,7 @@ BEGIN
 			,SUM(CASE WHEN bet.roleid = 3 THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) Winlost3
 			,SUM(CASE WHEN bet.roleid = 4 THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) Winlost4
 		FROM
-			bodb02.dbo.bettrans b WITH(READPAST)
+			bodb02.dbo.bettrans b WITH(NOLOCK)
 		OUTER APPLY (
 			SELECT CASE 
 				WHEN b.custid = b.recommend THEN 2 -- agent

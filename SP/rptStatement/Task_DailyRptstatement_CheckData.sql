@@ -142,7 +142,7 @@ BEGIN
 		SELECT custid
 			,COUNT(1) AS TransCount
 			,SUM(winlost - actual_stake) AS TransferAmt
-		FROM bodb02.dbo.bettrans WITH (ROWLOCK)
+		FROM bodb02.dbo.bettrans WITH (NOLOCK)
 		WHERE matchid = 0
 			AND bettype > 20000
 			AND winlostdate = @_Winlostdate
@@ -203,7 +203,7 @@ BEGIN
 				,SUM(CASE WHEN bet.roleid = 3 THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) Winlost3
 				,SUM(CASE WHEN bet.roleid = 4 THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) Winlost4
 			FROM
-				bodb02.dbo.bettrans b WITH(READPAST)
+				bodb02.dbo.bettrans b WITH(NOLOCK)
 			OUTER APPLY (
 				SELECT CASE 
 					WHEN b.custid = b.recommend THEN 2 -- agent
@@ -346,7 +346,7 @@ BEGIN
 			,0 AS beforeAmt
 			,tmp.Custid AS afterAmt
 		FROM #rptStatementCompare tmp
-		LEFT JOIN dbo.rptStatement_test rpt WITH(READPAST) 
+		LEFT JOIN dbo.rptStatement_test rpt WITH(NOLOCK) 
 			ON tmp.custid = rpt.custid AND rpt.winlostdate = @_Winlostdate
 		WHERE rpt.custid IS NULL
 
