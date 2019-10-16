@@ -526,12 +526,12 @@ BEGIN
 				 WHERE b.bettype <> 20000	     
 				 GROUP BY b.product, b.currency
 			) 		
-			INSERT INTO #reset( product, Currency, Winlost, WinlostAfterExtraPT, reset, latestreset, RealWinlost, RealWinlostAfterExtraPT, RealReset, RealLatestReset)	
+			INSERT INTO #reset( product, Currency, Winlost, WinlostAfterExtraPT, reset, LatestReset, RealWinlost, RealWinlostAfterExtraPT, RealReset, RealLatestReset)	
 			SELECT dm.product, dm.Currency,
 				   ROUND(SUM(ISNULL(e.Winlost, 0)), 2) AS Winlost, 
 				   ROUND(SUM(ISNULL(e.Winlost, 0)), 2) - ROUND(SUM(ISNULL(e.ExtraPTWinlost, 0)), 2)  AS WinlostAfterExtraPT,
 				   ROUND(SUM(ISNULL(rs.reset, 0)), 2) AS reset, 
-				   - (ROUND(SUM(ISNULL(e.Winlost, 0)), 2) - ROUND(SUM(ISNULL(e.ExtraPTWinlost, 0)), 2)) - ROUND(SUM(ISNULL(rs.reset, 0)), 2) AS latestreset,
+				   - (ROUND(SUM(ISNULL(e.Winlost, 0)), 2) - ROUND(SUM(ISNULL(e.ExtraPTWinlost, 0)), 2)) - ROUND(SUM(ISNULL(rs.reset, 0)), 2) AS LatestReset,
 
 				   ROUND(SUM(ISNULL(e.RealWinlost, 0)), 2) AS RealWinlost, 
 				   ROUND(SUM(ISNULL(e.RealWinlost, 0)), 2) - ROUND(SUM(ISNULL(e.RealExtraPTWinlost, 0)), 2)  AS RealWinlostAfterExtraPT,
@@ -560,9 +560,9 @@ BEGIN
 			SELECT @maxseq = MAX(r.seq),              
 				   @resetCount =  ISNULL(SUM( CASE WHEN r.currency <> 0   ---CN88
 												THEN
-													CASE WHEN -(ISNULL(r.RealWinlostAfterExtraPT, 0)) - ISNULL(r.Realreset, 0) <> 0 THEN 1 ELSE 0 END
+													CASE WHEN RealLatestReset <> 0 THEN 1 ELSE 0 END
 												ELSE
-													 CASE WHEN -(ISNULL(r.WinlostAfterExtraPT, 0)) - ISNULL(r.reset, 0) <> 0 THEN 1 ELSE 0 END
+													 CASE WHEN LatestReset <> 0 THEN 1 ELSE 0 END
 												END),0)
 			FROM   #reset r	
 
@@ -668,11 +668,11 @@ BEGIN
 					LEFT JOIN dbo.exchange e WITH (NOLOCK) 
 						ON e.exchangeId = r.Currency
 				WHERE ISNULL( (CASE WHEN r.currency <> 0   ---CN88
-								THEN
-									CASE WHEN -(ISNULL(r.RealWinlostAfterExtraPT, 0)) - ISNULL(r.Realreset, 0) <> 0 THEN 1 ELSE 0 END
-								ELSE
-									 CASE WHEN -(ISNULL(r.WinlostAfterExtraPT, 0)) - ISNULL(r.reset, 0) <> 0 THEN 1 ELSE 0 END
-								END),0) <> 0 
+									THEN
+										-(ISNULL(r.RealWinlostAfterExtraPT, 0)) - ISNULL(r.Realreset, 0) 
+									ELSE
+										 -(ISNULL(r.WinlostAfterExtraPT, 0)) - ISNULL(r.reset, 0) 
+									END),0) <> 0
 				 
 											 
 				
