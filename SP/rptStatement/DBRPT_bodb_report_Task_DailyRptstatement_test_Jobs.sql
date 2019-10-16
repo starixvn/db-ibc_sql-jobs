@@ -150,3 +150,166 @@ QuitWithRollback:
     IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
 EndSave:
 GO
+
+
+/****** Object:  Job [bodb_Report: Daily Summary rptStatement Check and Correct Data - Test]    Script Date: 10/16/2019 3:23:40 PM ******/
+BEGIN TRANSACTION
+DECLARE @ReturnCode INT
+SELECT @ReturnCode = 0
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 10/16/2019 3:23:40 PM ******/
+IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
+BEGIN
+EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+END
+
+DECLARE @jobId BINARY(16)
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb_Report: Daily Summary rptStatement Check and Correct Data - Test', 
+		@enabled=1, 
+		@notify_level_eventlog=0, 
+		@notify_level_email=0, 
+		@notify_level_netsend=0, 
+		@notify_level_page=0, 
+		@delete_level=0, 
+		@description=N'No description available.', 
+		@category_name=N'[Uncategorized (Local)]', 
+		@owner_login_name=N'dbateam', @job_id = @jobId OUTPUT
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [Check status move bet process (Loop 100)]    Script Date: 10/16/2019 3:23:40 PM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check status move bet process (Loop 100)', 
+		@step_id=1, 
+		@cmdexec_success_code=0, 
+		@on_success_action=3, 
+		@on_success_step_id=0, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'SET NOCOUNT ON
+
+DECLARE @MoveBetsDay	SMALLDATETIME;
+
+DECLARE @BalaneUpDay	SMALLDATETIME;
+
+DECLARE @WinlostDate	SMALLDATETIME;
+
+DECLARE @Doing_MoveBetsDay NVARCHAR(300)
+DECLARE @Doing_BalaneUpDay NVARCHAR(300)
+
+DECLARE @Logid_MoveBetsDay BIGINT
+DECLARE @Logid_BalaneUpDay BIGINT
+
+DECLARE @iCountMax INT=100;
+
+DECLARE @iCount INT=0;
+
+WHILE (@iCount <=@iCountMax )
+BEGIN	
+	SELECT @MoveBetsDay = MAX(WinlostDate) FROM bodb02.dbo.bettrans14 bt WITH (NOLOCK)
+	SELECT @WinlostDate = MAX(WinlostDate) FROM bodb_report.dbo.rptStatement sta WITH(NOLOCK);
+	SELECT TOP 1 @BalaneUpDay = winlostdate	FROM bodb02.dbo.Bettrans WITH (NOLOCK) WHERE bettype = 20000 AND matchid = 0 AND custid = 3
+	
+	--Step 1 Check Status Move Bet	
+	SET @Doing_MoveBetsDay = N''call Task_DailySummary @winlostdate = '' + CONVERT(nvarchar(10), @winlostdate, 120) + '', @TestMode =%''
+
+	SELECT TOP 1 @Logid_MoveBetsDay = lo.Logid FROM bodb02.dbo.UserLog lo WITH(NOLOCK)
+	WHERE lo.UserID = 25520 AND lo.Doing LIKE @Doing_MoveBetsDay
+
+	SET @Doing_MoveBetsDay = N''Task_DailySummary : End (with Finish)%''
+
+	--Step 2 Check Status Balance Up
+	SET @Doing_BalaneUpDay = N''call Task_BalanceUp_background @fdate = '' + CONVERT(nvarchar(10), @BalaneUpDay, 120) + '', @step = %''
+
+	SELECT TOP 1 @Logid_BalaneUpDay = lo.Logid FROM bodb02.dbo.UserLog lo WITH(NOLOCK)
+	WHERE lo.UserID = 25520 AND lo.Doing LIKE @Doing_BalaneUpDay
+
+	SET @Doing_BalaneUpDay = N''Task_BalanceUp_background : Done%''
+
+	SET @iCount = @iCount + 1;
+	
+	IF NOT (@WinlostDate = @MoveBetsDay AND 			
+			EXISTS(SELECT TOP 1 1 FROM bodb02.dbo.UserLog lo WITH(NOLOCK)
+				WHERE lo.UserID = 25520 AND lo.Doing LIKE @Doing_MoveBetsDay AND lo.Logid > @Logid_MoveBetsDay
+				ORDER BY Logid DESC) AND 			
+			EXISTS(SELECT TOP 1 1 FROM bodb02.dbo.UserLog lo WITH(NOLOCK)
+				WHERE lo.UserID = 25520 AND lo.Doing LIKE @Doing_BalaneUpDay AND lo.Logid > @Logid_BalaneUpDay
+				ORDER BY Logid DESC)
+			)
+	BEGIN
+		IF @iCount > @iCountMax 
+		BEGIN
+			RAISERROR (''* Waiting move bet process *'', -- Message text
+						16, -- Severity.
+						1 -- State.
+						);
+		END
+		ELSE
+		BEGIN
+			PRINT @iCount;
+			WAITFOR DELAY ''00:05:00.000'';
+		END
+	END
+	ELSE
+	BEGIN
+		BREAK;
+	END
+END', 
+		@database_name=N'bodb_Report', 
+		@flags=0
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [delay 30 Minutes]    Script Date: 10/16/2019 3:23:40 PM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'delay 30 Minutes', 
+		@step_id=2, 
+		@cmdexec_success_code=0, 
+		@on_success_action=3, 
+		@on_success_step_id=0, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'WAITFOR DELAY ''00:30:00.000''', 
+		@database_name=N'master', 
+		@flags=0
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [Check data]    Script Date: 10/16/2019 3:23:40 PM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check data - Test', 
+		@step_id=3, 
+		@cmdexec_success_code=0, 
+		@on_success_action=1, 
+		@on_success_step_id=0, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'EXEC [dbo].[Task_DailyRptStatement_Checkdata_Job_xpre]', 
+		@database_name=N'bodb_Report', 
+		@flags=0
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'DBA TaskDaliyRptStatement Checkdata - Test', 
+		@enabled=1, 
+		@freq_type=4, 
+		@freq_interval=1, 
+		@freq_subday_type=1, 
+		@freq_subday_interval=1, 
+		@freq_relative_interval=0, 
+		@freq_recurrence_factor=0, 
+		@active_start_date=20150119, 
+		@active_end_date=99991231, 
+		@active_start_time=173000, 
+		@active_end_time=235959, 
+		@schedule_uid=N'b0c82dca-67cc-4e51-af85-a856e49e167e'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+COMMIT TRANSACTION
+GOTO EndSave
+QuitWithRollback:
+    IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
+EndSave:
+GO
