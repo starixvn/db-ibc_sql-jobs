@@ -206,8 +206,8 @@ BEGIN
 	,CTE_Balance AS (
 		SELECT
 			c.custid
-			,SUM(c.winlost) AS OpeningBalance
-			,SUM(c.totalWinlost) AS OpeningTotalBalance
+			,SUM(ISNULL(c.winlost,0)) AS OpeningBalance
+			,SUM(ISNULL(c.totalWinlost,0)) AS OpeningTotalBalance
 		FROM
 			cte_bettrans b
 		OUTER APPLY (
@@ -277,11 +277,11 @@ BEGIN
 				OR (ISNULL(tmp.GrandPrize, 0)) <> 0
 			)
 	)
-	MERGE INTO dbo.rptStatement AS TGR
+	MERGE INTO dbo.rptStatement_xpre AS TGR
 	USING CTE_rptStatement AS SRC
 	ON TGR.Winlostdate = SRC.Winlostdate AND TGR.Custid = SRC.Custid
-	WHEN MATCHED THEN
-		UPDATE 
+	WHEN MATCHED AND TGR.Winlostdate = @_Winlostdate THEN
+	UPDATE 
 		SET OpeningBalance = SRC.OpeningBalance
 			,VoidAmt = SRC.VoidAmt
 			,Turnover = SRC.Turnover
@@ -294,7 +294,7 @@ BEGIN
 			,OpeningTotalBalance = SRC.OpeningTotalBalance
 
 	WHEN NOT MATCHED BY TARGET THEN
-		INSERT (
+	INSERT (
 			Winlostdate
 			,Custid
 			,OpeningBalance

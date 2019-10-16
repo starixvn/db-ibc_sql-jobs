@@ -42,7 +42,7 @@ BEGIN
 	
 	IF @Winlostdate = DATEADD(DD, 1, @MovebetDay)    ---> first day on bettrans.OpeningBalance = last day on rptStatement.ClosingBalance
 	BEGIN 
-		--> GET full cust back to the last saturday
+		--> GET full cust back to the previous saturday
 		; 
 		WITH CTE_rptStatement AS
 		(
@@ -50,7 +50,7 @@ BEGIN
 			FROM (	
 				SELECT rpt.CustID, rpt.ClosingBalance AS winlost
 					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
-				FROM dbo.rptStatement rpt WITH (NOLOCK) 
+				FROM dbo.rptStatement_xpre rpt WITH (NOLOCK) 
 				WHERE  Winlostdate >= @Saturday
 			) AS rpt
 			WHERE rpt.Num = 1
@@ -59,8 +59,8 @@ BEGIN
 		INSERT INTO #tmpRptTotalBalance_Active (CustID, OpeningBalance, OpeningTotalBalance)
 		SELECT
 			c.custid
-			,SUM(c.winlost) AS OpeningBalance
-			,SUM(c.totalWinlost) AS OpeningTotalBalance
+			,SUM(ISNULL(c.winlost,0)) AS OpeningBalance
+			,SUM(ISNULL(c.totalWinlost,0)) AS OpeningTotalBalance
 		FROM
 			CTE_rptStatement AS b
 			INNER JOIN bodb02.dbo.custinfo ci WITH(NOLOCK) ON b.custid = ci.custid
@@ -93,28 +93,30 @@ BEGIN
 			GROUP BY cs.UplineID
 		) AS bal ON s.custid = bal.UplineID
 
-
 		---------------- Correct Opening Total Balance --------------------
 		IF EXISTS (
 			SELECT TOP 1 1
 			FROM #tmpRptTotalBalance_Active SOURCE
-				LEFT JOIN dbo.RptTotalBalance_Active TARGET WITH (NOLOCK) 
-					ON TARGET.Winlostdate = @WinlostDate 
-					AND TARGET.CustId = SOURCE.CustId 
-			WHERE
-				TARGET.CustId IS NULL				
+			FULL OUTER JOIN (
+				SELECT CustID, OpeningBalance, OpeningTotalBalance 
+				FROM dbo.RptTotalBalance_Active_xpre WITH (NOLOCK) 
+				WHERE Winlostdate = @WinlostDate
+			) AS TARGET	ON TARGET.CustId = SOURCE.CustId 
+			WHERE 
+				SOURCE.CustId IS NULL
+				OR TARGET.CustId IS NULL
 				OR TARGET.OpeningBalance 	  <> SOURCE.OpeningBalance				
-				OR TARGET.OpeningTotalBalance <> SOURCE.OpeningTotalBalance		
+				OR TARGET.OpeningTotalBalance <> SOURCE.OpeningTotalBalance
 		)
 		BEGIN
 			IF @IsCheckDataOnly = 1 --just check data
 			BEGIN
 				SELECT 'Wrong OpeningTotalBalance on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
 			END
-			ELSE -- correct data
+			ELSE 
 			BEGIN
-				--MERGE INTO RptTotalBalance_Active
-				MERGE dbo.RptTotalBalance_Active AS TARGET
+				-- correct data
+				MERGE dbo.RptTotalBalance_Active_xpre AS TARGET
 				USING #tmpRptTotalBalance_Active AS SOURCE
 						ON	TARGET.Winlostdate  = @WinlostDate
 						AND TARGET.CustId		= SOURCE.CustId
@@ -128,11 +130,11 @@ BEGIN
 					TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
 					
 				WHEN NOT MATCHED BY TARGET THEN
-				INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
-				VALUES (SOURCE.custid, @WinlostDate, SOURCE.openingbalance, SOURCE.openingtotalbalance) 
+					INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
+					VALUES (SOURCE.custid, @WinlostDate, SOURCE.openingbalance, SOURCE.openingtotalbalance) 
 				
-				--WHEN NOT MATCHED BY SOURCE AND TARGET.winlostdate = @Winlostdate THEN
-				--DELETE
+				WHEN NOT MATCHED BY SOURCE AND TARGET.winlostdate = @Winlostdate THEN
+					DELETE
 				;
 			END
 		END
@@ -172,7 +174,7 @@ BEGIN
 		( 	
 			--MERGE with the OpeningBalance of @TheDayBefore
 			SELECT  CustID, SUM(OpeningBalance) AS OpeningBalance, SUM(OpeningTotalBalance) as OpeningTotalBalance
-			FROM 	dbo.rptTotalBalance_Active WITH (NOLOCK)
+			FROM 	dbo.rptTotalBalance_Active_xpre WITH (NOLOCK)
 			WHERE 	WinlostDate = @TheDayBefore
 			GROUP BY CustID 
 			
@@ -180,8 +182,8 @@ BEGIN
 			UNION ALL
 			SELECT
 				c.custid
-				,SUM(c.winlost) AS OpeningBalance
-				,SUM(c.totalWinlost) AS OpeningTotalBalance
+				,SUM(ISNULL(c.winlost,0)) AS OpeningBalance
+				,SUM(ISNULL(c.totalWinlost, 0)) AS OpeningTotalBalance
 			FROM
 				CTE_OpenningBalanceBettrans b
 			OUTER APPLY (
@@ -200,7 +202,7 @@ BEGIN
 		) AS A			
 		GROUP BY A.CustID 	
 
-		-- Headline
+		---- Headline
 		UPDATE s
 		SET s.OpeningTotalBalance += bal.DownlineCash
 		FROM #tmpRptTotalBalance_Active s
@@ -217,25 +219,26 @@ BEGIN
 		IF EXISTS (
 			SELECT TOP 1 1
 			FROM #tmpRptTotalBalance_Active SOURCE
-				FULL OUTER JOIN dbo.RptTotalBalance_Active TARGET WITH (NOLOCK) 
-					ON TARGET.Winlostdate = @WinlostDate 
-					AND TARGET.CustId = SOURCE.CustId 
-					
-			WHERE
-					SOURCE.CustId IS NULL
-					OR TARGET.CustId IS NULL				
-					OR TARGET.OpeningBalance 	  <> SOURCE.OpeningBalance				
-					OR TARGET.OpeningTotalBalance <> SOURCE.OpeningTotalBalance		
+			FULL OUTER JOIN (
+				SELECT CustID, OpeningBalance, OpeningTotalBalance 
+				FROM dbo.RptTotalBalance_Active_xpre WITH (NOLOCK) 
+				WHERE Winlostdate = @WinlostDate
+			) AS TARGET	ON TARGET.CustId = SOURCE.CustId 
+			WHERE 
+				SOURCE.CustId IS NULL
+				OR TARGET.CustId IS NULL
+				OR TARGET.OpeningBalance 	  <> SOURCE.OpeningBalance				
+				OR TARGET.OpeningTotalBalance <> SOURCE.OpeningTotalBalance
 		)
 		BEGIN
 			IF @IsCheckDataOnly = 1 --just check data
 			BEGIN
 				SELECT 'Wrong OpeningTotalBalance on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
 			END
-			ELSE -- correct data
+			ELSE 
 			BEGIN
-				-- MERGE INTO RptTotalBalance_Active
-				MERGE dbo.RptTotalBalance_Active AS TARGET
+				-- correct data
+				MERGE dbo.RptTotalBalance_Active_xpre AS TARGET
 				USING #tmpRptTotalBalance_Active AS SOURCE
 						ON	TARGET.Winlostdate  = @WinlostDate
 						AND TARGET.CustId		= SOURCE.CustId

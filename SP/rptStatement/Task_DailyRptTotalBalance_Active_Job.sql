@@ -1,6 +1,4 @@
  /*<info serverAlias="DBRPT-bodb_Report" executers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_Report]
-GO
 ALTER PROCEDURE [dbo].[Task_DailyRptTotalBalance_Active_Job]
 /* 
 	Created by:20190507@Sophia 

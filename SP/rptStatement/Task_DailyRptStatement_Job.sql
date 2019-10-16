@@ -1,12 +1,4 @@
-USE [bodb_Report]
-GO
-/****** Object:  StoredProcedure [dbo].[Task_DailyRptStatement_Job]    Script Date: 08/06/2015 02:08:32 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DailyRptStatement_Job    Script Date: 1/6/2015 9:35:00 AM ******/
+/*<info serverAlias="DBRPT-bodb_Report" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailyRptStatement_Job]
 /* 
 	Created by:  Cody  
@@ -23,58 +15,6 @@ BEGIN
 
 	SET NOCOUNT ON
 
-	/*	
-	DECLARE @WeekDay TINYINT
-
-	SET @WeekDay = DATEPART(weekday, CURRENT_TIMESTAMP)
-
-	DECLARE @Todaym1 DATETIME
-		,@Todaym2 DATETIME
-		,@Todaym3 DATETIME
-		,@Todaym4 DATETIME
-
-	SET @Todaym1 = DATEADD(day, - 1, CONVERT(VARCHAR(10), CURRENT_TIMESTAMP, 120))
-	SET @Todaym2 = DATEADD(day, - 1, @Todaym1)
-	SET @Todaym3 = DATEADD(day, - 1, @Todaym2)
-	SET @Todaym4 = DATEADD(day, - 1, @Todaym3)
-
-	-- Server Time : Monday (2)  
-	-- Local Time  : Tuesday's morning  
-	IF @WeekDay = 2
-	BEGIN
-		EXEC dbo.Task_DailyRptStatement @Todaym4 -- Thursday  
-	END
-			-- Server Time : Tuesday (3)  
-			-- Local Time  : Wednesday's morning  
-	ELSE IF @WeekDay = 3
-	BEGIN
-		EXEC dbo.Task_DailyRptStatement @Todaym4 -- Friday  
-
-		EXEC dbo.Task_DailyRptStatement @Todaym3 -- Saturday  
-	END
-			-- Server Time : Wednesday (4)  
-			-- Local Time  : Thursday's morning  
-	ELSE IF @WeekDay = 4
-	BEGIN
-		EXEC dbo.Task_DailyRptStatement @Todaym3 -- Sunday  
-
-		EXEC dbo.Task_DailyRptStatement @Todaym2 -- Monday  
-	END
-			-- Server Time : Friday (6)  
-			-- Local Time  : Saturday's morning  
-	ELSE IF @WeekDay = 6
-	BEGIN
-		EXEC dbo.Task_DailyRptStatement @Todaym3 -- Tuesday  
-
-		EXEC dbo.Task_DailyRptStatement @Todaym2 -- Wednesday  
-			--EXEC dbo.Task_DailySummary @Todaym1 -- Thursday  
-	END
-	ELSE
-	BEGIN
-		RETURN - 1
-	END
-	*/
-	
 	DECLARE @Days AS TABLE (ScheduleId TINYINT, RunningDay DATETIME, IsFinish BIT DEFAULT (0))
 	INSERT INTO @Days (ScheduleId, RunningDay)
 	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel 
@@ -111,9 +51,8 @@ BEGIN
 
 
 END	
-
 GO
-GRANT VIEW DEFINITION ON [dbo].[Task_DailyRptStatement_Job] TO [vnteam] AS [dbo]
+
 
 
  
