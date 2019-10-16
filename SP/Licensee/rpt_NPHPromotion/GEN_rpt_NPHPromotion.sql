@@ -63,14 +63,14 @@ BEGIN
 		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN b.stake ELSE 0 END ) AS TurnoverPromoDay_NoDraw
 	FROM bodb02.dbo.NPHPromoCoupon pc WITH(NOLOCK)
 		INNER JOIN bodb02.dbo.NPHPromotion p WITH(NOLOCK) ON p.PromoID = pc.PromoID
-		LEFT JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid
-		INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
+		LEFT JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid 
+														AND b.transdate BETWEEN p.StartDate AND p.EndDate
+														AND statusID IN (@DrawStatusId, @WonStatusId, @LoseStatusId)
+		LEFT JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON pc.CustID= c.custid
 		LEFT JOIN bodb02.dbo.[Site] s WITH (NOLOCK) ON c.[site] = s.[site]
 		LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
-	WHERE @fromDate <= pc.CreateTime AND pc.CreateTime <= @toDate
-		AND b.transdate BETWEEN p.StartDate AND p.EndDate
-		AND statusID IN (@DrawStatusId, @WonStatusId, @LoseStatusId)
+	WHERE @fromDate <= CAST(pc.CreateTime AS DATE) AND CAST(pc.CreateTime AS DATE) <= @toDate
 	GROUP BY  pc.PromoID,
 			  CAST(pc.CreateTime AS DATE),
 			  CAST(DATEADD(HOUR, 12, pc.CreateTime) AS DATE),
@@ -89,7 +89,7 @@ BEGIN
 	SET  t.CouponCount = cte.CouponCount,
 		 t.Prize = cte.Prize
 	FROM #tmpData t
-	INNER JOIN cte_CouponSummary cte ON  t.PromoID = cte.PromoID AND t.RptDate = cte.CreateTime
+	INNER JOIN cte_CouponSummary cte ON t.PromoID = cte.PromoID AND t.RptDate = cte.CreateTime
 	
 	INSERT INTO dbo.rpt_NPHPromotion(RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed,
 									CouponCount,
