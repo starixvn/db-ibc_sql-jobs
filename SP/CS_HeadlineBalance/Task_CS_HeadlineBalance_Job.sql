@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
 
@@ -7,7 +7,7 @@ AS
 /*
 	Creator: 20190826@Sophia 
 	Remark: Daily Auto add transfer ticket for CN88 Headline balance (like reset winning Extra PT for CN88) 
-	DB: DBTXN-bodb02
+	DB: DBACC-bodb02
 
 	Revisions:
 		- 20190826@Sophia: initial SP [Redmine: #117863]

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 USE [bodb02]
 GO
 
@@ -11,7 +11,7 @@ AS
 /*
 	Creator: 20190826@Sophia 
 	Remark: Daily Auto add transfer ticket for CN88 Headline balance (like reset winning Extra PT for CN88) 
-	DB: DBTXN-bodb02
+	DB: DBACC-bodb02
 
 	Revisions:
 		- 20190826@Sophia: initial SP [Redmine: #117863]
@@ -46,7 +46,7 @@ BEGIN
 
 	DECLARE @ExtraPTProducts AS TABLE (ProductID INT)	
 	INSERT INTO @ExtraPTProducts (ProductID) 
-	SELECT DISTINCT ProductID FROM DBCUST.CUSTDB.dbo.Acc_GroupExtraPTSetting WITH(NOLOCK) 	
+	SELECT DISTINCT ProductID FROM dbo.Acc_GroupExtraPTSetting WITH(NOLOCK) 	
 	
 	
 	DELETE @SportBettype WHERE ProductId NOT IN (SELECT ProductID FROM @ExtraPTProducts)
@@ -58,7 +58,7 @@ BEGIN
 	
 	INSERT INTO #Headline (SuperId, UplineId) 
 	SELECT c.CustID AS SuperId, c.UplineId
-	FROM DBCUST.CUSTDB.dbo.CustSuper c WITH (NOLOCK) 
+	FROM dbo.CustSuper c WITH (NOLOCK) 
 	WHERE UplineID IS NOT NULL	 
  	
 	----End: Get Headline List ----
@@ -132,13 +132,13 @@ BEGIN
 					cs.UplineID,
 				   SUM(w.WinlostForExtraPT * ISNULL(s.ExtraPT,0)) as ExtraPTWinlost
 			FROM	#wl w
-			INNER JOIN DBCUST.CUSTDB.dbo.Acc_GroupExtraPTSetting s WITH(NOLOCK)
+			INNER JOIN dbo.Acc_GroupExtraPTSetting s WITH(NOLOCK)
 					ON w.srecommend = s.SuperId
 					AND w.ProductId = s.ProductId
 					AND w.SubProduct = s.SubProduct
 					AND w.Sporttype = s.Sporttype 
 					AND w.Winlostdate BETWEEN s.FromDate AND s.ToDate	
-			INNER JOIN DBCUST.CUSTDB.dbo.CustSuper cs WITH (NOLOCK) 
+			INNER JOIN dbo.CustSuper cs WITH (NOLOCK) 
 					ON cs.CustId = w.srecommend AND cs.UplineID IS NOT NULL
 			GROUP BY w.Winlostdate, w.ProductId, cs.UplineID
 		) w
@@ -184,19 +184,14 @@ BEGIN
 		---------------------
  
 		DECLARE 
-				@seq		  TINYINT = 1,
-				@maxseq		  TINYINT = 0,				
+				@seq		  	TINYINT = 1,
+				@maxseq		  	TINYINT = 0,				
 				@ExtraPTWinlost MONEY = 0, 
-                @custid       INT,               
-                @transDesc    NVARCHAR(1000)= 'ExtraPT',		
-				@Creator  INT = 5838421,
-				@IP       VARCHAR(20) = '', 
-				@LogData  NVARCHAR(200) = ''
-
-
-		Declare @RefNum bigint = 0, @bettype int, @Curr int, @CurrName nvarchar(10),
-				@actualrate float, @Recommend int, @MRecommend int, @SRecommend int,
-				@username nvarchar(50), @creditamt money, @debitamt money, @roleID tinyint		
+                @custid       	INT,               
+                @transDesc    	NVARCHAR(1000)= 'ExtraPT',		
+				@Creator  		INT = 10278938,   -- starixIT
+				@IP       		VARCHAR(20) = '',
+				@LogData  		NVARCHAR(200) = ''	
 				
 
 		SELECT @maxseq = MAX(r.seq)
@@ -216,82 +211,16 @@ BEGIN
             FROM #Reset
             WHERE seq = @seq 		
 			
-			IF NOT EXISTS (SELECT 1 FROM dbo.Bettrans WITH (NOLOCK) WHERE CustID = @CustID AND WinlostDate = @WinlostDate AND Bettype = 21007)
-			BEGIN 
-
-				IF @ExtraPTWinlost > 0 --Deposit
-				BEGIN
-					SELECT @creditamt = abs(@ExtraPTWinlost)
-						,@debitamt = 0
-						,@bettype = 21007
-				END
-				ELSE --Withdraw
-				BEGIN
-					SELECT @creditamt = 0
-						,@debitamt = abs(@ExtraPTWinlost)
-						,@bettype = 21007
-				END
-
-
-				SELECT @Curr = c.Currency
-					,@actualrate = eo.actualrate
-					,@currName = e.currency
-					,@username = c.username
-					,@Recommend = c.Recommend
-					,@MRecommend = c.MRecommend
-					,@SRecommend = c.SRecommend
-					,@roleID = roleid
-				FROM CustDB.dbo.custInfo c WITH (NOLOCK)
-					INNER JOIN CustDB.dbo.ExchangeDailyOanda eo WITH (NOLOCK)
-						ON c.currency = eo.exchangeid and eo.exchangeDate = @winlostdate
-					INNER JOIN CustDB.dbo.Exchange e WITH (NOLOCK)
-						ON c.currency = e.exchangeid
-				WHERE c.CustID = @custid
-
-
-				----Insert transaction
-				EXEC Acc_SelRefNo
-					@refNo = @RefNum OUTPUT
-
-				SELECT @RefNum = @RefNum + 100000000000
-
-				BEGIN TRY
-					INSERT INTO bettrans
-					(
-						custid, username, refno, transdate, matchid,
-						bettype, transdesc, winlost, actual_stake, winlostdate,
-						creator, recommend, mrecommend, srecommend, currency,
-						currencyName, actualrate, ruben, status, ip, statusID
-					)
-					VALUES
-					(
-						@CustID, @username, @RefNum, current_timestamp, 0,
-						@bettype, @transDesc, @creditamt, @debitamt, @winlostdate,
-						@creator, @Recommend, @MRecommend, @SRecommend, @curr,
-						@currName, @actualrate, 1, 'Completed', @ip, 131
-					)
-				END TRY
-				
-				BEGIN CATCH 
-					IF @@ERROR <> 0
-					BEGIN
-						SELECT @ErrCode = 1,
-							   @ErrMsg = 'Can not insert transaction of '+ CONVERT (VARCHAR(20),@CustID)+ ' ! Please try again later.'			
-
-						RETURN
-					END						
-				END CATCH								
-			 
-			END
-			ELSE 			
-			BEGIN 
-				UPDATE dbo.Bettrans WITH (ROWLOCK) 
-				SET Winlost = CASE WHEN @ExtraPTWinlost >= 0 THEN @ExtraPTWinlost ELSE 0 END,
-				    Actual_Stake = CASE WHEN @ExtraPTWinlost <= 0 THEN ABS(@ExtraPTWinlost) ELSE 0 END
-				WHERE CustID = @CustID
-					AND WinlostDate = @WinlostDate
-					AND Bettype = 21007	
-			END				
+			----- Insert transaction
+			EXEC DBTXN.bodb02.dbo.Task_CS_HeadlineBalance_Add  
+					@Winlostdate = @Winlostdate,
+	                @custid = @custid,
+	                @amount = @ExtraPTWinlost,
+	                @transdesc = @transDesc,
+	                @creator = @creator,
+	                @ip = @ip,
+	                @ErrCode = @ErrCode OUTPUT,
+                    @ErrMsg = @ErrMsg OUTPUT
 
 			IF (@ErrCode <> 0) BREAK
 			          

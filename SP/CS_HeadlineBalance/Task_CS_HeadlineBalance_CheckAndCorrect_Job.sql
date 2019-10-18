@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" executers=""  isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
 
@@ -7,7 +7,7 @@ AS
 /*
 	Creator: 20191011@Sophia 
 	Remark: Daily Check and correct CN88 Headline balance after Movebet
-	DB: DBTXN-bodb02
+	DB: DBACC-bodb02
 
 	Revisions:
 		- 20191011@Sophia: initial SP [Redmine: #117863]
