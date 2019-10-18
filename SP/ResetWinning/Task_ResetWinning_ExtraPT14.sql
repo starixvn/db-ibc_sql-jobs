@@ -229,7 +229,8 @@ BEGIN
                 @resetCount   TINYINT = 0,
                 @transDesc    NVARCHAR(1000)= '',
 				@seq		  TINYINT = 1,
-				@maxseq		  TINYINT
+				@maxseq		  TINYINT,
+				@LogData  		NVARCHAR(200) = ''	
                 
         SELECT @winlostdate = @fromdate
 
