@@ -108,5 +108,5 @@ BEGIN
 			AND WinlostDate = @WinlostDate
 			AND Bettype = 21007	
 	END			
-
+END
 GO

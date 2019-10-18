@@ -189,7 +189,8 @@ BEGIN
 				@seq		  	TINYINT = 1,
 				@maxseq		  	TINYINT = 0,				
 				@ExtraPTWinlost MONEY = 0, 
-                @custid       	INT,               
+                @custid       	INT,  
+				@Variance	    MONEY = 0, 
                 @transDesc    	NVARCHAR(1000)= 'ExtraPT',		
 				@Creator  		INT = 10278938,   -- starixIT
 				@IP       		VARCHAR(20) = '',
@@ -213,7 +214,8 @@ BEGIN
         BEGIN
         
             SELECT @CustId = CustId,
-				   @ExtraPTWinlost = ExtraPTWinlost
+				   @ExtraPTWinlost = ExtraPTWinlost,
+				   @Variance = Variance
             FROM #Reset
             WHERE seq = @seq 		
 			
