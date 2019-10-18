@@ -275,13 +275,37 @@ BEGIN
                     @ErrMsg = @ErrMsg OUTPUT
 
                 IF (@ErrCode <> 0) BREAK
-                                    
-				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Transfer
-					@UserID = @creator,
-					@FromCustID = 0,
-					@ToCustID = @custid,
-					@IP = @ip,
-					@Doing = @transDesc
+				
+				----Adjust statement
+				EXEC bodb_report.dbo.[Acc_StatementUpdateTransfer]
+					@custid = @custid
+					,@Amount = @variance
+					,@winlostdate = @winlostdate
+					,@ErrCode = @ErrCode OUTPUT
+					,@ErrMsg = @ErrMsg OUTPUT							
+
+				IF (@ErrCode <> 0) BREAK					                             
+
+				--- write log 
+				BEGIN TRY
+					EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Transfer
+						@UserID = @creator,
+						@FromCustID = 0,
+						@ToCustID = @custid,
+						@ip = @ip,
+						@Doing = @transDesc
+				END TRY	
+				BEGIN CATCH						
+					SELECT @LogData = @LogData + ' ErrMsg=' + error_message()
+					EXEC DBTXN.bodb_customerlog.dbo.WriteLog_UserLog_Transfer 
+						@UserID = @creator, 
+						@FromCustID = 0, 
+						@ToCustID = @CustID, 
+						@IP = @IP, 
+						@Doing = @LogData						
+				END CATCH
+					
+					
             END
 
             SET @seq = @seq + 1

@@ -296,6 +296,18 @@ BEGIN
 
 			IF (@ErrCode <> 0) BREAK
 											
+											
+			----Adjust statement
+			EXEC bodb_report.dbo.[Acc_StatementUpdateTransfer]
+				@custid = @custid
+				,@Amount = @ExtraPTWinlost
+				,@winlostdate = @winlostdate
+				,@ErrCode = @ErrCode OUTPUT
+				,@ErrMsg = @ErrMsg OUTPUT							
+
+			IF (@ErrCode <> 0) BREAK		
+				
+											
 			--- write log 
 			BEGIN TRY
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Transfer
