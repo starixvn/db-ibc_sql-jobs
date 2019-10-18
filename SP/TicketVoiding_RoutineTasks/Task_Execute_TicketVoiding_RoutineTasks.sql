@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_Execute_TicketVoiding_RoutineTasks]
+CREATE PROCEDURE [dbo].[Task_Execute_TicketVoiding_RoutineTasks]
 (
 	 @stepNo		TINYINT,
 	 @custIDs		VARCHAR(MAX) = '', 
@@ -37,15 +37,9 @@ BEGIN
 	END
 	IF @stepNo = 3
 	BEGIN
-		EXEC bodb02.dbo.Task_CS_HeadlineBalance14
+		EXEC DBACC.bodb02.dbo.Task_CS_HeadlineBalance14
 			   @Winlostdate = @Winlostdate,
-			   @Mode = 1 ,
-			   @ErrCode = @errorCode OUTPUT,
-			   @ErrMsg = @errmsg OUTPUT 
-		IF @errorCode NOT IN (0,2)
-		BEGIN
-			RAISERROR(@errmsg,16,1)
-		END
+			   @CustIds        = @CustIds
 	END
 	IF @stepNo = 4
 	BEGIN
@@ -58,15 +52,12 @@ BEGIN
 	BEGIN
 		EXEC DBACC.bodb02.dbo.Acc_ResetWinning_SelByDate14
 			   @Winlostdate = @Winlostdate,
-			   @Mode = 1,  
-			   @ErrCode = @errorCode OUTPUT,
-			   @ErrMsg = @errmsg OUTPUT 
-
-		IF @errorCode NOT IN (0,2)
-		BEGIN
-			RAISERROR(@errmsg,16,1)
-		END
-
+			   @Mode = 1 
+ 
+		EXEC DBACC.bodb02.dbo.Task_ResetWinning_ExtraPT14
+			  @FromDate= @WinlostDate,
+			  @ToDate = @WinlostDate,
+			  @Mode = 1
 	END
 	IF @stepNo = 6
 	BEGIN
@@ -123,4 +114,4 @@ BEGIN
 		EXECUTE DBTGRS.bodb_TGRS.dbo.Task_RegenerateTGRSData @FromDate = @winlostdate, @ToDate = @winlostdate, @Flagged = 0
 	END 
 END
-GO
+
