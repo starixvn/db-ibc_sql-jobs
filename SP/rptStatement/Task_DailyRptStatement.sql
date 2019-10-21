@@ -22,7 +22,9 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @CurrentBU_Date SMALLDATETIME
+		,@CurrentMB_Date	SMALLDATETIME
 		,@_Winlostdate		SMALLDATETIME
+		,@_Saturday			SMALLDATETIME
 
 	CREATE TABLE #rptStatementTable (
 		Custid				INT PRIMARY KEY
@@ -42,62 +44,86 @@ BEGIN
 	)
 
 	-- GET the current BU day
-	SELECT TOP 1 @CurrentBU_Date = winlostdate
-	FROM bodb02.dbo.bettrans WITH(NOLOCK) 
-	WHERE matchid = 0 AND bettype = 20000
+	SELECT TOP 1 @CurrentBU_Date = MIN(eventdate)
+		,@CurrentMB_Date = MAX(eventdate)
+	FROM bodb02.dbo.match14 WITH(NOLOCK) 
 
 	SELECT @_Winlostdate = @Winlostdate
+		,@_Saturday = DATEADD (DD, -DATEPART(DW, @CurrentMB_Date), @CurrentMB_Date)
 
 	-- 1. SUM BET/VOID/TRANSFER
 	-- TRANSFER: Headline, Member & SMA
 	-- BET/VOID: Member
-	;
-	WITH bettrans_temp AS (
-		SELECT b.custid,b.recommend,b.mrecommend,b.srecommend
-			,bet.transIndicator
-			,bet.roleID
-			,SUM(bet.stake) AS stake
-			,SUM(b.winlost-b.actual_stake) as winlost
-			,SUM(b.playercomm) AS playercomm
-			,SUM(b.comm) AS comm
-			,SUM(b.acomm) AS acomm
-			,SUM(b.scomm) AS scomm
-			,SUM(b.awinlost) AS awinlost
-			,SUM(b.mwinlost) AS mwinlost
-			,SUM(b.swinlost) AS swinlost
-			,SUM(bet.stake*b.apositiontaking) AS anet_stake
-			,SUM(bet.stake*b.mpositiontaking) AS mnet_stake
-			,SUM(bet.stake*b.spositiontaking) AS snet_stake
-		FROM
-			bodb02.dbo.bettrans b WITH(NOLOCK)
-		OUTER APPLY (
-			SELECT 
-				CASE 
-					WHEN b.statusID IN(103) THEN 0 -- Refund
-					ELSE ABS(b.stake)
-				END AS stake
-				,CASE 
-					WHEN b.bettype > 20000 AND b.bettype NOT IN (23001,23002,23101,23102,23201,23202) THEN POWER(2*1,1) --> transfer
-					WHEN b.bettype <= 19999 AND b.statusID IN (101,102) AND b.bettype NOT IN (903, 500, 913, 914) THEN POWER(2*1,2) --> void bet
-					WHEN b.bettype <= 19999 THEN POWER(2*1,3) --> normal bet
-					ELSE 0
-					END AS transIndicator
-				,CASE 
-					WHEN b.custid = b.recommend THEN 2 -- agent
-					WHEN b.custid = b.mrecommend THEN 3 -- master
-					WHEN b.custid = b.srecommend THEN 4 -- super
-					ELSE 1 --member & headline
-				END AS roleID
-				
-		) AS bet
-		WHERE
-			b.winlostdate = @_Winlostdate
-			AND b.statusID NOT IN (0,1) -- 'running','waiting'
-			AND bet.transIndicator > 0
-		GROUP BY b.winlostdate,b.custid,b.recommend,b.mrecommend,b.srecommend
-			,bet.transIndicator
-			,bet.roleID
+	CREATE TABLE #bettrans_temp (
+		custid INT 
+		,recommend INT,mrecommend INT,srecommend INT
+		,transIndicator INT
+		,roleID INT
+		,stake MONEY
+		,winlost MONEY
+		,playercomm MONEY
+		,comm MONEY
+		,acomm MONEY
+		,scomm MONEY
+		,awinlost MONEY
+		,mwinlost MONEY
+		,swinlost MONEY
+		,anet_stake MONEY
+		,mnet_stake MONEY
+		,snet_stake MONEY
 	)
+
+	CREATE CLUSTERED INDEX CIX_CustID_TransIndicator ON #bettrans_temp(custid,transIndicator)
+	;
+	INSERT INTO #bettrans_temp
+	SELECT b.custid
+		,b.recommend,b.mrecommend,b.srecommend
+		,bet.transIndicator
+		,bet.roleID
+		,SUM(bet.stake) AS stake
+		,SUM(bet.winlost) as winlost
+		,SUM(b.playercomm) AS playercomm
+		,SUM(b.comm) AS comm
+		,SUM(b.acomm) AS acomm
+		,SUM(b.scomm) AS scomm
+		,SUM(b.awinlost) AS awinlost
+		,SUM(b.mwinlost) AS mwinlost
+		,SUM(b.swinlost) AS swinlost
+		,SUM(bet.stake*b.apositiontaking) AS anet_stake
+		,SUM(bet.stake*b.mpositiontaking) AS mnet_stake
+		,SUM(bet.stake*b.spositiontaking) AS snet_stake
+	FROM
+		bodb02.dbo.bettrans b WITH(NOLOCK)
+	OUTER APPLY (
+		SELECT 
+			CASE 
+				WHEN b.statusID IN(103) THEN 0 -- Refund
+				ELSE ABS(b.stake)
+			END AS stake
+			,(winlost - actual_stake) AS winlost
+			,CASE 
+				WHEN b.matchid = 0 AND b.bettype > 20000 AND b.bettype NOT IN (23001,23002,23101,23102,23201,23202) THEN POWER(2*1,1) --> transfer
+				WHEN b.bettype <= 19999 AND b.statusID IN (101,102) AND b.bettype NOT IN (903, 500, 913, 914) THEN POWER(2*1,2) --> void bet
+				WHEN b.bettype <= 19999 THEN POWER(2*1,3) --> normal bet
+				ELSE 0
+				END AS transIndicator
+			,CASE 
+				WHEN b.custid = b.recommend THEN 2 -- agent
+				WHEN b.custid = b.mrecommend THEN 3 -- master
+				WHEN b.custid = b.srecommend THEN 4 -- super
+				ELSE 1 --member & headline
+			END AS roleID
+				
+	) AS bet
+	WHERE
+		b.winlostdate = @_Winlostdate
+		AND b.statusID NOT IN (0,1) -- 'running','waiting'
+		AND bet.transIndicator > 0
+	GROUP BY b.custid
+		,b.recommend,b.mrecommend,b.srecommend
+		,bet.transIndicator
+		,bet.roleID
+
 	INSERT INTO #rptStatementTable(
 		Custid
 		,BetCount
@@ -122,11 +148,11 @@ BEGIN
 		,SUM(c.IsOwner * bet.transferIndicator) AS TransCount
 		,SUM(c.IsOwner * b.winlost * bet.transferIndicator) AS TransferAmt
 	FROM
-		bettrans_temp b
+		#bettrans_temp b
 	OUTER APPLY (
-		SELECT (2 & transIndicator)/2 AS transferIndicator
-			,(4 & transIndicator)/4 AS voidIndicator
-			,(8 & transIndicator)/8 AS betIndicator
+		SELECT CAST(b.transIndicator & 2 AS BIT)/1 AS transferIndicator
+			,CAST(b.transIndicator & 4 AS BIT)/1 AS voidIndicator
+			,CAST(b.transIndicator & 8 AS BIT)/1 AS betIndicator
 			,POWER(2*1,b.roleID) AS ownerIndicator
 	) AS bet
 	OUTER APPLY (
@@ -136,19 +162,19 @@ BEGIN
 			, b.playercomm					AS comm
 			, bet.voidIndicator				AS voidIndicator
 			, 1								AS levelID
-			, ((bet.ownerIndicator & 2)/2)	AS IsOwner
+			, CAST(bet.ownerIndicator & 2 AS BIT)/1	AS IsOwner
 		UNION ALL
-		SELECT b.recommend, anet_stake, awinlost, comm - playercomm, 0, 2, ((bet.ownerIndicator & 4)/4)
+		SELECT b.recommend, anet_stake, awinlost, comm - playercomm, 0, 2, CAST(bet.ownerIndicator & 4 AS BIT)/1
 		UNION ALL
-		SELECT b.mrecommend, mnet_stake, mwinlost, acomm - comm, 0, 3, ((bet.ownerIndicator & 8)/8)
+		SELECT b.mrecommend, mnet_stake, mwinlost, acomm - comm, 0, 3, CAST(bet.ownerIndicator & 8 AS BIT)/1
 		UNION ALL
-		SELECT b.srecommend, snet_stake, swinlost, scomm -acomm, 0, 4, ((bet.ownerIndicator & 16)/16)
+		SELECT b.srecommend, snet_stake, swinlost, scomm -acomm, 0, 4, CAST(bet.ownerIndicator & 16 AS BIT)/1
 	) AS c
 	WHERE c.levelID >= b.roleID
 		AND c.custid > 0
 	GROUP BY
 		c.custid
-	
+
 	-- 2. SUM Grand Prize
 	;
 	WITH CTE_GrandPrize	AS (
@@ -178,50 +204,39 @@ BEGIN
 
 	-- 3. SUM OPENNING [balance & total balance]
 	;
-	WITH cte_bettrans AS (
-		SELECT
-			b.custid,b.recommend,b.mrecommend,b.srecommend
-			,bet.roleID
-			,SUM(CASE WHEN bet.roleid = 1 THEN winlost-actual_stake + playercomm ELSE 0 END) Winlost1
-			,SUM(CASE WHEN bet.roleid = 2 THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) Winlost2
-			,SUM(CASE WHEN bet.roleid = 3 THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) Winlost3
-			,SUM(CASE WHEN bet.roleid = 4 THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) Winlost4
-		FROM
-			bodb02.dbo.bettrans b WITH(NOLOCK)
-		OUTER APPLY (
-			SELECT CASE 
-				WHEN b.custid = b.recommend THEN 2 -- agent
-				WHEN b.custid = b.mrecommend THEN 3 -- master
-				WHEN b.custid = b.srecommend THEN 4 -- super
-				ELSE 1 --member & headline
-			END AS roleID
+	WITH CTE_Winlost (custid, winlost) AS
+	(
+		SELECT custid, ClosingBalance
+		FROM (
+			SELECT rpt.custid, rpt.ClosingBalance
+				, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
+			FROM dbo.rptStatement rpt WITH(NOLOCK)
+			WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
+		) AS tmp 
+		WHERE tmp.Num = 1
+	),
+	CTE_Balance (custid, OpeningBalance, OpeningTotalBalance) AS
+	(
+		SELECT bal.custid
+			, SUM(bal.winlost)
+			, SUM(bal.totalWinlost)
+		FROM CTE_Winlost wl
+		INNER JOIN bodb02.dbo.custinfo ci WITH(NOLOCK) ON wl.custid = ci.custid
+		CROSS APPLY (
+			SELECT POWER(2*1, ci.roleid) AS ownerIndicator
 		) AS bet
-		WHERE 
-			b.winlostdate >= @CurrentBU_Date 
-			AND b.winlostdate < @_Winlostdate
-			AND b.statusID NOT IN (0, 1)
-		GROUP BY b.custid,b.recommend,b.mrecommend,b.srecommend
-			,bet.roleID
-	)
-	,CTE_Balance AS (
-		SELECT
-			c.custid
-			,SUM(ISNULL(c.winlost,0)) AS OpeningBalance
-			,SUM(ISNULL(c.totalWinlost,0)) AS OpeningTotalBalance
-		FROM
-			cte_bettrans b
-		OUTER APPLY (
-			SELECT b.custid, winlost1 AS winlost, 1 AS levelID, winlost1 AS totalWinlost
-			UNION
-			SELECT b.recommend, winlost2, 2, winlost1 + winlost2
-			UNION
-			SELECT b.mrecommend, winlost3, 3, winlost1 + winlost2 + winlost3
-			UNION
-			SELECT b.srecommend, winlost4, 4, winlost1 + winlost2 + winlost3 + winlost4
-		) AS c
-		WHERE c.levelID >= b.roleID
-			AND c.custid > 0
-		GROUP BY c.custid
+		CROSS APPLY (
+			SELECT wl.custid, 1 AS levelID, winlost, winlost AS totalWinlost
+			UNION ALL
+			SELECT ci.recommend, 2, winlost * CAST(bet.ownerIndicator & 4 AS BIT)/1, winlost
+			UNION ALL
+			SELECT ci.mrecommend, 3, winlost * CAST(bet.ownerIndicator & 8 AS BIT)/1, winlost
+			UNION ALL
+			SELECT ci.srecommend, 4, winlost * CAST(bet.ownerIndicator & 16 AS BIT)/1, winlost
+		) AS bal
+		WHERE bal.levelID >= ci.roleID
+			AND bal.custid > 0
+		GROUP BY bal.custid
 	)
 	MERGE #rptStatementTable AS TGR
 	USING CTE_Balance AS SRC
@@ -327,6 +342,7 @@ BEGIN
 		DELETE
 	;
 
+	DROP TABLE #bettrans_temp
 	DROP TABLE #rptStatementTable
 END
 GO

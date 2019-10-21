@@ -7,7 +7,8 @@ ALTER PROCEDURE [dbo].[Task_DailyRptStatement_Job]
 	DB: DBRPT.bodb_report 
 
 	Revision:  
-		-20150806@Sophia: Control schedule by a new store procedure
+		- 20150806@Sophia: Control schedule by a new store procedure
+		- 20191017@Bobby: Ensure the schedule start from day by day in ascending [Redmine: #119289]
 
 */
 AS
@@ -15,44 +16,32 @@ BEGIN
 
 	SET NOCOUNT ON
 
-	DECLARE @Days AS TABLE (ScheduleId TINYINT, RunningDay DATETIME, IsFinish BIT DEFAULT (0))
+	DECLARE @Days AS TABLE (ScheduleId TINYINT, RunningDay DATE PRIMARY KEY, IsFinish BIT DEFAULT (0))
+
+	-- GET MB shedule in days
 	INSERT INTO @Days (ScheduleId, RunningDay)
 	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel 
 
-	DECLARE @RunningDay DATETIME , @ScheduleId TINYINT
-	
-	IF NOT EXISTS (SELECT TOP 1 1 FROM @Days)
+	IF @@ROWCOUNT = 0
 	BEGIN 
 		RETURN -1
 	END 
-	ELSE
+
+	DECLARE @RunningDay DATETIME , @ScheduleId TINYINT
+
+	WHILE EXISTS (SELECT TOP 1 1 FROM @Days WHERE IsFinish = 0)
 	BEGIN 
-		WHILE 1 = 1 
-		BEGIN 
-			IF EXISTS (SELECT TOP 1 1 FROM @Days WHERE IsFinish = 0)
-			BEGIN 
-				SELECT  TOP 1 @RunningDay = RunningDay, @ScheduleId = ScheduleId
-				FROM	@Days
-				WHERE	IsFinish = 0
-				ORDER BY ScheduleId 
+		SELECT  TOP 1 @RunningDay = RunningDay, @ScheduleId = ScheduleId
+		FROM	@Days
+		WHERE	IsFinish = 0
 
-				EXEC dbo.Task_DailyRptStatement @RunningDay 
+		EXEC dbo.Task_DailyRptStatement @RunningDay 
 		
-				UPDATE  @Days
-				SET		IsFinish = 1
-				WHERE	ScheduleId = @ScheduleId
+		UPDATE  @Days
+		SET		IsFinish = 1
+		WHERE	RunningDay = @RunningDay
 						
-			END
-			ELSE 
-				BREAK
-		END	
 	END
-
-
-
 END	
 GO
-
-
-
  

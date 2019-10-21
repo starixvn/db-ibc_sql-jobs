@@ -7,7 +7,7 @@ ALTER PROCEDURE [dbo].[Task_DailyRptTotalBalance_Active_Job]
 
 	Revisions:
 		- 20190507@Sophia: Initial data [redmine: #109293]
-
+		- 20191017@Bobby: Ensure the schedule start from day by day in ascending [Redmine: #119289]
 */
 AS
 BEGIN 
@@ -15,7 +15,7 @@ BEGIN
 	SET NOCOUNT ON 		
 	DECLARE @RunningDay SMALLDATETIME , @ScheduleId INT, @ToDay DATE, @MoveBetsDay DATE
 		
-	DECLARE @Days AS TABLE (ScheduleId INT IDENTITY (1,1), RunningDay DATE, IsFinish BIT DEFAULT (0))
+	DECLARE @Days AS TABLE (ScheduleId INT IDENTITY (1,1), RunningDay DATE PRIMARY KEY, IsFinish BIT DEFAULT (0))
 
 	DECLARE @Selbalanceupday AS TABLE (BalanceUpDay DATE, MoveBetsDay DATE)
 
@@ -33,36 +33,21 @@ BEGIN
 		SELECT @MoveBetsDay = DATEADD(DD, 1, @MoveBetsDay )
 	END 
 	
-	
-	IF NOT EXISTS (SELECT TOP 1 1 FROM @Days)
+	-- START processing
+	WHILE EXISTS (SELECT TOP 1 1 FROM @Days WHERE IsFinish = 0)
 	BEGIN 
-		RETURN -1
-	END 
-	ELSE
-	BEGIN 
-		WHILE 1 = 1 
-		BEGIN 
-			IF EXISTS (SELECT TOP 1 1 FROM @Days WHERE IsFinish = 0)
-			BEGIN 
-				SELECT  TOP 1 @RunningDay = RunningDay, @ScheduleId = ScheduleId
-				FROM	@Days
-				WHERE	IsFinish = 0
-				ORDER BY ScheduleId 
+		SELECT  TOP 1 @RunningDay = RunningDay, @ScheduleId = ScheduleId
+		FROM	@Days
+		WHERE	IsFinish = 0
 
-				EXEC dbo.Task_DailyRptTotalBalance_Active @RunningDay 
+		EXEC dbo.Task_DailyRptTotalBalance_Active @RunningDay 
 		
-				UPDATE  @Days
-				SET		IsFinish = 1
-				WHERE	ScheduleId = @ScheduleId
+		UPDATE  @Days
+		SET		IsFinish = 1
+		WHERE	RunningDay = @RunningDay
 						
-			END
-			ELSE 
-				BREAK
-		END	
 	END
-
 END	
-
 GO 
 
  

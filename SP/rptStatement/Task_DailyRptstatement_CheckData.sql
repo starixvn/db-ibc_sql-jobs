@@ -28,7 +28,9 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @CurrentBU_Date SMALLDATETIME
+		,@CurrentMB_Date	SMALLDATETIME
 		,@_Winlostdate		SMALLDATETIME
+		,@_Saturday			SMALLDATETIME
 
 	CREATE TABLE #rptStatementTable (
 		Custid				INT PRIMARY KEY
@@ -48,11 +50,13 @@ BEGIN
 	)
 
 	-- GET the current BU day
-	SELECT TOP 1 @CurrentBU_Date = winlostdate
-	FROM bodb02.dbo.bettrans WITH(NOLOCK) 
-	WHERE matchid = 0 AND bettype = 20000
+	-- GET the current BU day
+	SELECT @CurrentBU_Date	= MIN(eventdate)
+		,@CurrentMB_Date			= MAX(eventdate)
+	FROM bodb02.dbo.match14 WITH(NOLOCK) 
 
 	SELECT @_Winlostdate = @Winlostdate
+		,@_Saturday = DATEADD (DD, -DATEPART(DW, @CurrentMB_Date), @CurrentMB_Date)
 
 	-- 1. SUM BET/VOID/TRANSFER
 	-- TRANSFER: Headline, Member & SMA
@@ -194,60 +198,46 @@ BEGIN
 	-- 4. SUM OPENNING [balance & total balance]
 	-- PROCESS bettrans data
 	BEGIN
-		WITH cte_bettrans AS (
-			SELECT
-				b.custid,b.recommend,b.mrecommend,b.srecommend
-				,bet.roleID
-				,SUM(CASE WHEN bet.roleid = 1 THEN winlost-actual_stake + playercomm ELSE 0 END) Winlost1
-				,SUM(CASE WHEN bet.roleid = 2 THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) Winlost2
-				,SUM(CASE WHEN bet.roleid = 3 THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) Winlost3
-				,SUM(CASE WHEN bet.roleid = 4 THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) Winlost4
-			FROM
-				bodb02.dbo.bettrans b WITH(NOLOCK)
-			OUTER APPLY (
-				SELECT CASE 
-					WHEN b.custid = b.recommend THEN 2 -- agent
-					WHEN b.custid = b.mrecommend THEN 3 -- master
-					WHEN b.custid = b.srecommend THEN 4 -- super
-					ELSE 1 --member & headline
-				END AS roleID
-			) AS bet
-			WHERE 
-				1 = CASE 
-						WHEN b.winlostdate >= @CurrentBU_Date AND b.winlostdate < @_Winlostdate THEN 1
-						WHEN b.winlostdate = @CurrentBU_Date AND @_Winlostdate = @CurrentBU_Date AND b.bettype = 20000 THEN 1
-						ELSE 0
-					END
-				AND b.statusID NOT IN (0, 1)
-			GROUP BY b.custid,b.recommend,b.mrecommend,b.srecommend
-				,bet.roleID
-		),
-		CTE_SourceBalance AS 
+		;
+		WITH CTE_Winlost (custid, winlost) AS
 		(
-			SELECT
-				c.custid
-				,SUM(ISNULL(c.winlost,0)) AS OpeningBalance
-				,SUM(ISNULL(c.totalWinlost,0)) AS OpeningTotalBalance
-			FROM
-				cte_bettrans b
-			OUTER APPLY (
-				SELECT b.custid, winlost1 AS winlost, 1 AS levelID, winlost1 AS totalWinlost
-				UNION
-				SELECT b.recommend, winlost2, 2, winlost1 + winlost2
-				UNION
-				SELECT b.mrecommend, winlost3, 3, winlost1 + winlost2 + winlost3
-				UNION
-				SELECT b.srecommend, winlost4, 4, winlost1 + winlost2 + winlost3 + winlost4
-			) AS c
-			WHERE c.levelID >= b.roleID
-				AND c.custid > 0
-			GROUP BY c.custid
+			SELECT custid, ClosingBalance
+			FROM (
+				SELECT rpt.custid, rpt.ClosingBalance
+					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
+				FROM dbo.rptStatement rpt WITH(NOLOCK)
+				WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
+			) AS tmp 
+			WHERE tmp.Num = 1
+		),
+		CTE_Balance (custid, OpeningBalance, OpeningTotalBalance) AS
+		(
+			SELECT bal.custid
+				, SUM(bal.winlost)
+				, SUM(bal.totalWinlost)
+			FROM CTE_Winlost wl
+			INNER JOIN bodb02.dbo.custinfo ci WITH(NOLOCK) ON wl.custid = ci.custid
+			CROSS APPLY (
+				SELECT POWER(2*1, ci.roleid) AS ownerIndicator
+			) AS bet
+			CROSS APPLY (
+				SELECT wl.custid, 1 AS levelID, winlost, winlost AS totalWinlost
+				UNION ALL
+				SELECT ci.recommend, 2, winlost * CAST(bet.ownerIndicator & 4 AS BIT)/1, winlost
+				UNION ALL
+				SELECT ci.mrecommend, 3, winlost * CAST(bet.ownerIndicator & 8 AS BIT)/1, winlost
+				UNION ALL
+				SELECT ci.srecommend, 4, winlost * CAST(bet.ownerIndicator & 16 AS BIT)/1, winlost
+			) AS bal
+			WHERE bal.levelID >= ci.roleID
+				AND bal.custid > 0
+			GROUP BY bal.custid
 		)
 		MERGE #rptStatementTable AS TGR
-		USING CTE_SourceBalance AS SRC
+		USING CTE_Balance AS SRC
 		ON TGR.custid = SRC.custid
 		WHEN MATCHED THEN
-		UPDATE 
+			UPDATE 
 			SET OpeningBalance = SRC.OpeningBalance
 			,OpeningTotalBalance = SRC.OpeningTotalBalance
 		WHEN NOT MATCHED BY TARGET THEN
