@@ -205,7 +205,7 @@ BEGIN
 			FROM (
 				SELECT rpt.custid, rpt.ClosingBalance
 					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
-				FROM dbo.rptStatement rpt WITH(NOLOCK)
+				FROM dbo.rptStatement_test rpt WITH(NOLOCK)
 				WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
 			) AS tmp 
 			WHERE tmp.Num = 1
