@@ -21,7 +21,7 @@ BEGIN
 
 	DECLARE @MoveBetSchedule TABLE (RowId TINYINT IDENTITY(1,1), ScheduleId TINYINT, MoveBetsDay DATE)
 	INSERT INTO @MoveBetSchedule (ScheduleId, MoveBetsDay)
-	EXEC bodb02.dbo.Task_MoveBetsDayByScheduleSel
+	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
 	
 	DECLARE @tblErrMsg TABLE (WinlostDate SMALLDATETIME, ErrMsg VARCHAR(1000))
 
