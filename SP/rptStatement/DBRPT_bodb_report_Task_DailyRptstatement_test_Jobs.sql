@@ -151,12 +151,11 @@ QuitWithRollback:
 EndSave:
 GO
 
-
-/****** Object:  Job [bodb_Report: Daily Summary rptStatement Check and Correct Data - Test]    Script Date: 10/16/2019 3:23:40 PM ******/
+/****** Object:  Job [bodb_Report: Daily Summary rptStatement Check and Correct Data - Test]    Script Date: 10/21/2019 11:18:04 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 10/16/2019 3:23:40 PM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 10/21/2019 11:18:04 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -176,105 +175,37 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb_Report: Daily Summary r
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'dbateam', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Check status move bet process (Loop 100)]    Script Date: 10/16/2019 3:23:40 PM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check status move bet process (Loop 100)', 
+/****** Object:  Step [Check status move bet process]    Script Date: 10/21/2019 11:18:05 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check status move bet process', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
-		@on_success_action=3, 
-		@on_success_step_id=0, 
-		@on_fail_action=2, 
+		@on_success_action=4, 
+		@on_success_step_id=3, 
+		@on_fail_action=3, 
 		@on_fail_step_id=0, 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'SET NOCOUNT ON
-
-DECLARE @MoveBetsDay	SMALLDATETIME;
-
-DECLARE @BalaneUpDay	SMALLDATETIME;
-
-DECLARE @WinlostDate	SMALLDATETIME;
-
-DECLARE @Doing_MoveBetsDay NVARCHAR(300)
-DECLARE @Doing_BalaneUpDay NVARCHAR(300)
-
-DECLARE @Logid_MoveBetsDay BIGINT
-DECLARE @Logid_BalaneUpDay BIGINT
-
-DECLARE @iCountMax INT=100;
-
-DECLARE @iCount INT=0;
-
-WHILE (@iCount <=@iCountMax )
-BEGIN	
-	SELECT @MoveBetsDay = MAX(WinlostDate) FROM bodb02.dbo.bettrans14 bt WITH (NOLOCK)
-	SELECT @WinlostDate = MAX(WinlostDate) FROM bodb_report.dbo.rptStatement sta WITH(NOLOCK);
-	SELECT TOP 1 @BalaneUpDay = winlostdate	FROM bodb02.dbo.Bettrans WITH (NOLOCK) WHERE bettype = 20000 AND matchid = 0 AND custid = 3
-	
-	--Step 1 Check Status Move Bet	
-	SET @Doing_MoveBetsDay = N''call Task_DailySummary @winlostdate = '' + CONVERT(nvarchar(10), @winlostdate, 120) + '', @TestMode =%''
-
-	SELECT TOP 1 @Logid_MoveBetsDay = lo.Logid FROM bodb02.dbo.UserLog lo WITH(NOLOCK)
-	WHERE lo.UserID = 25520 AND lo.Doing LIKE @Doing_MoveBetsDay
-
-	SET @Doing_MoveBetsDay = N''Task_DailySummary : End (with Finish)%''
-
-	--Step 2 Check Status Balance Up
-	SET @Doing_BalaneUpDay = N''call Task_BalanceUp_background @fdate = '' + CONVERT(nvarchar(10), @BalaneUpDay, 120) + '', @step = %''
-
-	SELECT TOP 1 @Logid_BalaneUpDay = lo.Logid FROM bodb02.dbo.UserLog lo WITH(NOLOCK)
-	WHERE lo.UserID = 25520 AND lo.Doing LIKE @Doing_BalaneUpDay
-
-	SET @Doing_BalaneUpDay = N''Task_BalanceUp_background : Done%''
-
-	SET @iCount = @iCount + 1;
-	
-	IF NOT (@WinlostDate = @MoveBetsDay AND 			
-			EXISTS(SELECT TOP 1 1 FROM bodb02.dbo.UserLog lo WITH(NOLOCK)
-				WHERE lo.UserID = 25520 AND lo.Doing LIKE @Doing_MoveBetsDay AND lo.Logid > @Logid_MoveBetsDay
-				ORDER BY Logid DESC) AND 			
-			EXISTS(SELECT TOP 1 1 FROM bodb02.dbo.UserLog lo WITH(NOLOCK)
-				WHERE lo.UserID = 25520 AND lo.Doing LIKE @Doing_BalaneUpDay AND lo.Logid > @Logid_BalaneUpDay
-				ORDER BY Logid DESC)
-			)
-	BEGIN
-		IF @iCount > @iCountMax 
-		BEGIN
-			RAISERROR (''* Waiting move bet process *'', -- Message text
-						16, -- Severity.
-						1 -- State.
-						);
-		END
-		ELSE
-		BEGIN
-			PRINT @iCount;
-			WAITFOR DELAY ''00:05:00.000'';
-		END
-	END
-	ELSE
-	BEGIN
-		BREAK;
-	END
-END', 
-		@database_name=N'bodb_Report', 
+		@command=N'bodb02.dbo.Task_MoveBets_Status_Job', 
+		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [delay 30 Minutes]    Script Date: 10/16/2019 3:23:40 PM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'delay 30 Minutes', 
+/****** Object:  Step [delay 15 Minutes]    Script Date: 10/21/2019 11:18:05 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'delay 15 Minutes', 
 		@step_id=2, 
 		@cmdexec_success_code=0, 
-		@on_success_action=3, 
-		@on_success_step_id=0, 
+		@on_success_action=4, 
+		@on_success_step_id=1, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'WAITFOR DELAY ''00:30:00.000''', 
+		@command=N'WAITFOR DELAY ''00:15:00.000''', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Check data]    Script Date: 10/16/2019 3:23:40 PM ******/
+/****** Object:  Step [Check data - Test]    Script Date: 10/21/2019 11:18:05 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check data - Test', 
 		@step_id=3, 
 		@cmdexec_success_code=0, 
@@ -313,3 +244,4 @@ QuitWithRollback:
     IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
 EndSave:
 GO
+
