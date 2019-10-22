@@ -26,6 +26,7 @@ BEGIN
 	INTO #TempData
 	FROM bodb_licensee.dbo.LicenseeBATransaction_active ba WITH (ROWLOCK)
 		INNER JOIN dbo.bettrans b WITH (NOLOCK) ON b.transid = ba.transid
+	WHERE b.winlostdate IN (SELECT MoveBetsDay FROM @MoveBetSchedule)
 
 	IF @@ROWCOUNT = 0
 		RETURN
@@ -37,7 +38,6 @@ BEGIN
 	SELECT
 		TransID, transdate, custid, recommend, srecommend, winlostdate
 	FROM #TempData t
-		INNER JOIN @MoveBetSchedule m ON t.winlostdate = m.MoveBetsDay
 
 	DROP TABLE #TempData
 	
