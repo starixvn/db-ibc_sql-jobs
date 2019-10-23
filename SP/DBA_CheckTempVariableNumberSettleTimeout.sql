@@ -49,7 +49,7 @@ BEGIN
 	if exists (select 1 from @QueuedTVN)
 	BEGIN
 
-		SET @SubjectMessage ='Please check [TempVariableNumber] have event stay in queue more than 10 minutes.'
+		SET @SubjectMessage ='Please check [TempVariableNumber] have event stay in queue more than 5 minutes.'
 		
 		SET @TableHTML = @TableHTML + 
 				N'<br><table border="1">' +
@@ -76,7 +76,7 @@ BEGIN
 			@body_format = 'HTML',
 			@subject = @SubjectMessage
 
-		RAISERROR ('Failed: Please check [TempVariableNumber] have event stay in queue more than 10 minutes.', 16, 1)
+		RAISERROR ('Failed: Please check [TempVariableNumber] have event stay in queue more than 5 minutes.', 16, 1)
 		RETURN
 	END
 END
