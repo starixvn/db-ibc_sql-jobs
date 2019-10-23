@@ -13,6 +13,7 @@ AS
 		- 20170103@Vivi(DBTrans): re-write SP
 		- 20170109@Vivi(DBTrans): change check by TempVariableNumberHistory.CreatedDateTime (temp solution)
 		- 20190103@Vicky: Incorporate BetBuilder: add column KeyValue2 [Redmine:#106903]
+		- 20191023@Patrick: Reduce interval time for checking temp variable number to 5 mins [Redmine: #122590]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -42,7 +43,7 @@ BEGIN
 			 when keyid=4 then 'vsOutright.eventid & vsRaceinfo.eventid'
 			 when keyid=5 then 'match.matchid & smp_marketid.marketid'
 		else 'others' end as EventType		 
-	from CTE where createddatetime <= dateadd(mi,-10,getdate())
+	from CTE where createddatetime <= dateadd(mi,-5,getdate())
 
 	
 	if exists (select 1 from @QueuedTVN)
