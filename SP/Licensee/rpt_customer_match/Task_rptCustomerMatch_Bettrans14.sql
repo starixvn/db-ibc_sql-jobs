@@ -1,14 +1,12 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptCustomerMatch_Bettrans14] 
 	@Date SMALLDATETIME
 AS
 /*	
-	Created	: Florent Nguyen
-	Task: Customer Performance Report  
-	Date: 2013-11-25
+	Created: 20131125@Florent Nguyen
+	Task: Customer Performance Report
 	DB: DBLIC.bodb_LicenseeReport
-	Original:   
+	
 	Revision:
 		- 20141121@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
 		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
@@ -16,6 +14,8 @@ AS
 		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
 		- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
 		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
+		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_bk [RedmineID: #103656]
+	
 	Parameter's Explanation:			
 */
 BEGIN
@@ -65,7 +65,7 @@ AS (
 		,a.currency
 	FROM bodb02.dbo.bettrans14 a WITH (NOLOCK)
 		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) LC ON a.recommend = lc.custid AND a.currency = lc.currency
-		LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction BA WITH (NOLOCK) ON a.transid = ba.transid
+		LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction_bk BA WITH (NOLOCK) ON a.transid = ba.transid
 	WHERE a.winlostdate =@date 
 			AND a.statusID IN (111, 112, 113)
 	GROUP BY a.CustID		

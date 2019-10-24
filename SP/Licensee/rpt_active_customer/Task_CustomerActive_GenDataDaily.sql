@@ -1,19 +1,20 @@
-USE [bodb_LicenseeReport]
-GO
-
-ALTER PROCEDURE [dbo].[Task_CustomerActive_GenDataDaily] @TransDate DATE
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[Task_CustomerActive_GenDataDaily]
+	@TransDate DATE
 AS
 /*
-  Creator: 20150204@Patrick
-  Task: Generate data for Customer Active
-  DB: DBLIC/bodb_LicenseeReport
-  Revisions: 
-  - 20150326@Patrick: Missing tickets for SB
-  - 20150911@Jim: add MicroGaming RNG
-  - 20160106@Bobby: add OneRnG Casino
-  - 20170803@Patrick: remove maxdop option
+	Creator: 20150204@Patrick
+	Task: Generate data for Customer Active
+	DB: DBLIC/bodb_LicenseeReport
+	
+	Revisions: 
+		- 20150326@Patrick: Missing tickets for SB
+		- 20150911@Jim: add MicroGaming RNG
+		- 20160106@Bobby: add OneRnG Casino
+		- 20170803@Patrick: remove maxdop option
+		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_active [RedmineID: #103656]
   
-  Param's Explanation:
+	Param's Explanation:
 */
 BEGIN
 	SET NOCOUNT ON
@@ -74,7 +75,7 @@ BEGIN
 		ON a.recommend = c.custid
 		INNER JOIN #Bettype bt
 		ON a.bettype = bt.bettype
-		LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction ba WITH (NOLOCK)
+		LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_active ba WITH (NOLOCK)
 		ON a.transid = ba.transid
 		LEFT JOIN @MultiCurrencies l
 		ON a.recommend = l.recommend
@@ -161,8 +162,3 @@ BEGIN
 	DROP TABLE #DataTmp
 END
 GO
-
-GRANT VIEW DEFINITION ON [dbo].[Task_CustomerActive_GenDataDaily] TO [vnteam] AS [dbo]
-GO
-
-
