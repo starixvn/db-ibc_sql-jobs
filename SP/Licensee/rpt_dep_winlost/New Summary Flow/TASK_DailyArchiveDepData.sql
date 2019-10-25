@@ -1,5 +1,4 @@
-USE [bodb_Report]
-GO
+/*<info serverAlias="DBRPT-bodb_report" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[TASK_DailyArchiveDepData]
 AS
 	/*
@@ -8,6 +7,8 @@ AS
 		Task: Daily Archive data for Deposit summary system
 		DB: DBRPT.bodb_Report
 		Revisions:
+			- 20191025@Bobby: Add column promotion [RedmineID: #120333]
+
 		Input Params:	
 	*/
 BEGIN
@@ -49,10 +50,10 @@ BEGIN
 					INSERT INTO dbo.rptDepWinlost_bk (
 						winlostdate, custid, currency, OpeningBalance, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover, Outstanding, Winloss, 
 						ClosingBalance, recommend, mrecommend, srecommend, actualrate, Transfer3rd, DrawGame, Turnover_tdate, Turnover_BA, Comm_BA, 
-						AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade)
+						AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade,Promotion)
 					SELECT winlostdate, custid, currency, OpeningBalance, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover, Outstanding, Winloss, 
 							ClosingBalance, recommend, mrecommend, srecommend, actualrate, Transfer3rd, DrawGame, NULL, Turnover_BA, Comm_BA, 
-							AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade
+							AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade,Promotion
 					FROM dbo.rptDepWinlost WITH (NOLOCK)
 					WHERE winlostdate = @MinSumDate
 							
