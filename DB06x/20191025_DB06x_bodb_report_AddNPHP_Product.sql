@@ -34,7 +34,12 @@ AS
 		, ISNULL(Turnover, 0) Turnover
 		, ISNULL(t.Outstanding, 0) Outstanding
 		, ISNULL(t.Winloss, 0) Winloss
-		, (m.OpeningBalance + ISNULL(t.Deposit, 0) + ISNULL(t.Aff2MemTransfer, 0) - ISNULL(t.Withdrawal, 0) + ISNULL(t.Bonus, 0) + ISNULL(t.Adjustment, 0) - ISNULL(t.Outstanding, 0) + ISNULL(t.Winloss, 0) + ISNULL(t.playercomm, 0) + ISNULL(t.Transfer3rd, 0) + ISNULL(t.Transfer3rdOthers, 0) - ISNULL(t.Comm_BetTrade_Full, 0)) ClosingBalance
+		, (m.OpeningBalance 
+			+ ISNULL(t.Deposit, 0) 
+			+ ISNULL(t.Aff2MemTransfer, 0) - ISNULL(t.Withdrawal, 0) 
+			+ ISNULL(t.Bonus, 0) + ISNULL(t.Adjustment, 0) - ISNULL(t.Outstanding, 0) 
+			+ ISNULL(t.Winloss, 0) + ISNULL(t.playercomm, 0) + ISNULL(t.Transfer3rd, 0) + ISNULL(t.Transfer3rdOthers, 0) - ISNULL(t.Comm_BetTrade_Full, 0) 
+			+ ISNULL(t.Promotion, 0)) ClosingBalance
 		, m.recommend
 		, m.mrecommend
 		, m.srecommend

@@ -59,7 +59,7 @@ BEGIN
 				SELECT @Winlostdate, m.CustID
 						, (m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
 						   + ISNULL(t.Adjustment,0) - ISNULL(t.Outstanding,0) + ISNULL(t.Winloss,0) + ISNULL(t.playercomm,0) + ISNULL(t.Transfer3rd,0) 
-						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0)
+						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0) + ISNULL(t.Promotion, 0)
 						   + ISNULL(b.Bonus, 0) + ISNULL(b.Adjustment, 0))--compute @Winlostdate's OpeningBalance
 						, e.actualrate, m.srecommend, m.mrecommend, m.recommend, m.currency
 				FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
@@ -79,7 +79,7 @@ BEGIN
 				SELECT m.CustID
 					   , (m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
 						   + ISNULL(t.Adjustment,0) - ISNULL(t.Outstanding,0) + ISNULL(t.Winloss,0) + ISNULL(t.playercomm,0) + ISNULL(t.Transfer3rd,0) 
-						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0)
+						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0) + ISNULL(t.Promotion, 0)
 						   + ISNULL(b.Bonus, 0) + ISNULL(b.Adjustment, 0))--compute @Winlostdate's OpeningBalance
 					   , m.srecommend, m.mrecommend, m.recommend, m.currency
 				FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
@@ -93,6 +93,7 @@ BEGIN
 			FROM #rptDepWinlost_Main mt
 				 INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON mt.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate	
 			
+			;
 			MERGE bodb_Report.dbo.rptDepWinlost_Main AS TARGET
 			USING (SELECT CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency FROM #rptDepWinlost_Main)
 			   AS SOURCE (CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
