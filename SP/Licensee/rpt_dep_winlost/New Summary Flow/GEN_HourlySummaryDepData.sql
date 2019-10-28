@@ -10,9 +10,9 @@ AS
 		Task: Generate data for Deposit Data summary system for one winlostdate from bettrans	
 		DB: DBACC.bodb02
 		Revisions:
-		- 20180502@Joseph: Add <info> comment
-		
+			- 20180502@Joseph: Add <info> comment
 			- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
+			- 20191025@Bobby: Add column promotion [RedmineID: #120333]
 
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -174,7 +174,8 @@ BEGIN
 			(SELECT m.CustID
 					, m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
 						   + ISNULL(t.Adjustment,0) - ISNULL(t.Outstanding,0) + ISNULL(t.Winloss,0) + ISNULL(t.playercomm,0) + ISNULL(t.Transfer3rd,0) 
-						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0) + ISNULL(b.Bonus, 0) + ISNULL(b.Adjustment, 0)AS OpeningBalance
+						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0) + ISNULL(t.Promotion, 0)
+						   + ISNULL(b.Bonus, 0) + ISNULL(b.Adjustment, 0)AS OpeningBalance
 			 FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
 				  INNER JOIN bodb_Report.dbo.rptDepWinlost_Trans t WITH (NOLOCK) 
 				  ON t.CustID = m.CustID AND m.Winlostdate = @PreviousDay AND t.Winlostdate = @PreviousDay AND t.SportType = -1 AND t.PartnerID = -1
