@@ -56,6 +56,7 @@ AS
 		, ISNULL(t.AmountDueTo_BetTrade, 0) AmountDueTo_BetTrade
 		, ISNULL(b.Bonus, 0) BonusWallet
 		, ISNULL(b.Adjustment, 0) AdjBonusWallet
+		, ISNULL(t.Promotion,0) AS Promotion
 	FROM dbo.rptDepWinlost_Main m WITH (NOLOCK)
 	LEFT JOIN dbo.rptDepWinlost_Trans t WITH (NOLOCK)
 		ON m.CustID = t.CustID
