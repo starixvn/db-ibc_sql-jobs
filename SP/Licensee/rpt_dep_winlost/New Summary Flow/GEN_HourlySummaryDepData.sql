@@ -22,7 +22,7 @@ AS
 	*/
 BEGIN
 	SET NOCOUNT ON
-	IF @Winlostdate > CURRENT_TIMESTAMP OR NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype != 18000)
+	IF @Winlostdate > CURRENT_TIMESTAMP OR NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype <> 18000)
 		BEGIN
 			PRINT 'EXEC GEN_HourlySummaryDepData: There is no data in bettrans to summarize or input @Winlostdate is greater than current day ==> RETURN'
 			RETURN
@@ -121,7 +121,7 @@ BEGIN
 			SET m.OpeningBalance = mt.OpeningBalance
 			FROM bodb_Report.dbo.rptDepWinlost_Main m 
 				INNER JOIN #rptDepWinlost_Main mt ON m.CustID = mt.CustID AND m.Winlostdate = @Winlostdate 
-			WHERE m.OpeningBalance != mt.OpeningBalance
+			WHERE m.OpeningBalance <> mt.OpeningBalance
 			
 			--Force merge join query
 			DECLARE @n INT = 1, @rowcount INT = 0
@@ -202,19 +202,19 @@ BEGIN
 			
 		SELECT @NumberofCus = @NumberofCus + @@ROWCOUNT
 		
-		--4.Delete customers who have OpeningBalance ( != 0 ) for @Winlostdate but don't have OpeningBalance for the previous day
+		--4.Delete customers who have OpeningBalance ( <> 0 ) for @Winlostdate but don't have OpeningBalance for the previous day
 		--because if one customer who doesn't have OpeningBalnce for the previous day, his OpeningBalance for @Winlostdate (if he does the 1st deposit transaction) should be 0
 		TRUNCATE TABLE #rptDepWinlost_Main
 		INSERT INTO #rptDepWinlost_Main (CustID)
 		SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Main WITH (NOLOCK) 
-		WHERE Winlostdate = @Winlostdate AND OpeningBalance != 0
+		WHERE Winlostdate = @Winlostdate AND OpeningBalance <> 0
 			  AND CustID NOT IN (SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Main WITH (NOLOCK) WHERE Winlostdate = @PreviousDay)
 			  
 		IF EXISTS (SELECT TOP 1 1 FROM #rptDepWinlost_Main)
 		BEGIN
 		DELETE FROM bodb_Report.dbo.rptDepWinlost_Main WITH (ROWLOCK, UPDLOCK)
 		WHERE Winlostdate = @Winlostdate AND CustID IN (SELECT CustID FROM #rptDepWinlost_Main)
-			  AND OpeningBalance != 0
+			  AND OpeningBalance <> 0
 
 		SELECT @NumberofCus = @NumberofCus - @@ROWCOUNT
 		END

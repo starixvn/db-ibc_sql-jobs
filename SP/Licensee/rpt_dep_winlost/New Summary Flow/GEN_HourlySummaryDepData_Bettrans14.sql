@@ -10,8 +10,9 @@ AS
 		Task: Generate data for Deposit Data summary system for one winlostdate from bettrans14 		
 		DB: DBACC.bodb02
 		Revisions:
-		- 20180502@Joseph: Add <info> comment
+			- 20180502@Joseph: Add <info> comment
 			- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
+			- 20191025@Bobby: Add column promotion [RedmineID: #120333]
 
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized

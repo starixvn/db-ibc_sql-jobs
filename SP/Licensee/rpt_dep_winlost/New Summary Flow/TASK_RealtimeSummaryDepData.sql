@@ -57,7 +57,7 @@ BEGIN
 	IF @Winlostdate IS NULL
 		SELECT @Winlostdate = @CurrentDate
 		
-	IF NOT EXISTS(SELECT TOP 1 1 FROM dbo.bettrans WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype != 18000)
+	IF NOT EXISTS(SELECT TOP 1 1 FROM dbo.bettrans WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype <> 18000)
 	   OR @WinlostDate > @CurrentDate
 		BEGIN
 			PRINT 'EXEC TASK_RealtimeSummaryDepData: There is no data in bettrans to summarize or input @Winlostdate is greater than current day ==> RETURN'
