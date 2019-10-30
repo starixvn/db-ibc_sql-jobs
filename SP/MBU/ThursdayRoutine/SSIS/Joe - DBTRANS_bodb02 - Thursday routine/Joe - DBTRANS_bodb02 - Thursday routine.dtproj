@@ -87,11 +87,6 @@
       <FullPath>DBTRANS-Archive_bettrans_staging-DB06.dtsx</FullPath>
       <References />
     </DtsPackage>
-    <DtsPackage FormatVersion="-1">
-      <Name>DBTRANS-Archive_BetLucky3Result-DB06.dtsx</Name>
-      <FullPath>DBTRANS-Archive_BetLucky3Result-DB06.dtsx</FullPath>
-      <References />
-    </DtsPackage>
     <DtsPackage FormatVersion="3">
       <Name>Update-Statistics.dtsx</Name>
       <FullPath>Update-Statistics.dtsx</FullPath>
@@ -107,7 +102,7 @@
       <FullPath>DBTRANS-Archive_Transfer_Coll-DB06.dtsx</FullPath>
       <References />
     </DtsPackage>
-    <DtsPackage FormatVersion="0">
+    <DtsPackage FormatVersion="-1">
       <Name>DBTRANS-Archive_Transfer_Fi-DB06.dtsx</Name>
       <FullPath>DBTRANS-Archive_Transfer_Fi-DB06.dtsx</FullPath>
       <References />
