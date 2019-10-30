@@ -4,8 +4,13 @@
 	DB: DBCHECK-CheckResultDB
 */
 
-
 USE [CheckResultDB]
+GO
+
+ALTER TABLE Credit_Supers ADD WinLossLimit TINYINT NULL
+GO
+
+ALTER TABLE Credit_Supers ADD WinLossLimitDCS TINYINT NULL
 GO
 
 CREATE TABLE [dbo].[CheckWinLossLimitResult_Credit](
@@ -37,3 +42,10 @@ CREATE CLUSTERED INDEX [CIX_CheckWinLossLimitResult_Credit] ON [dbo].[CheckWinLo
 	[CustIdB] ASC
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [CheckResultData]
 GO
+
+CREATE NONCLUSTERED INDEX [IX_CheckWinLossLimitResult_Credit_CreatedDate] ON [dbo].[CheckWinLossLimitResult_Credit] 
+(
+	[CreatedDate] DESC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [CheckResultData]
+GO
+
