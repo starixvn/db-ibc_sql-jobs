@@ -34,6 +34,7 @@ AS
 		- 20190424@Billy:	Add column [SettlementTime] of [bettrans] - [Redmine: #112464]
 		- 20190828@Billy:	Add table [bettransInfo] & column [SecAcceptTime], [LiveBetAcceptTime] of [bettransm] - [Redmine: #119219]
 		- 20191104@Billy:	Add column [epositiontaking] of [bettrans], [bettransLC], [bettransRnG] - [Redmine: #123267]
+		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -233,21 +234,6 @@ BEGIN
 		from bettransG with (nolock)
 		where  
 			winlostdate=@__winlostdate
-
-		--copy ticket to [14] for lucky3
-		IF (SELECT COUNT(1) FROM dbo.sysobjects WHERE name IN ('BetLucky3Result', 'BetLucky3Result14')) = 2
-		BEGIN
-			INSERT INTO dbo.BetLucky3Result14(MatchId, TransId, CustId, Bettype, Currency, Hdp1, Odds
-				, StatusId, Hits, Prize, PrizeAmount, Winlost, aWinlost, mWinlost, sWinlost, PlayerComm
-				, Comm, aComm, sComm, aPositionTaking, mPositionTaking, sPositionTaking, PlayerDiscount
-				, Discount, aDiscount, sDiscount, TransDesc, WinlostDate)
-			SELECT MatchId, TransId, CustId, Bettype, Currency, Hdp1, Odds
-				, StatusId, Hits, Prize, PrizeAmount, Winlost, aWinlost, mWinlost, sWinlost, PlayerComm
-				, Comm, aComm, sComm, aPositionTaking, mPositionTaking, sPositionTaking, PlayerDiscount
-				, Discount, aDiscount, sDiscount, TransDesc, WinlostDate
-			FROM dbo.BetLucky3Result b WITH(NOLOCK)
-			WHERE WinlostDate = @__winlostdate
-		END
 	END
 END
 GO
