@@ -8,16 +8,16 @@ go
 */
 
 ALTER TABLE [dbo].[rptDepWinlost_Trans]
-ADD Promotion MONEY NULL DEFAULT(0)
+ADD Promotion MONEY NULL
 GO
 
 ALTER TABLE [dbo].[rptDepWinlost_bk]
-ADD Promotion MONEY NULL DEFAULT(0)
+ADD Promotion MONEY NULL
 
 
 GO
 ALTER TABLE [dbo].[rptDepwinlost_SUM]
-ADD Promotion MONEY NULL DEFAULT(0)
+ADD Promotion MONEY NULL
 
 GO
 
