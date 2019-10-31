@@ -46,7 +46,7 @@ WHERE vname = 'BA_transid'
   
 DECLARE @custid INT, @ondate DATETIME, @offdate DATETIME, @cnt INT
 
-IF @@SERVERNAME IN ('DB042', 'DB054')
+IF @@SERVERNAME IN ('DB042', 'DB054', 'SITDB042', 'DB232\SQLSERVER2008R2', 'DB233\SQLSERVER2008R2')
 BEGIN
 	StartLoop_042:
 		SELECT TOP 1 @custid = custid, @ondate = ondate, @offdate = offdate FROM @BAHistory_Done  
@@ -116,7 +116,7 @@ AND STATUS = 'running'
   
 DECLARE @custid_r INT, @ondate_r DATETIME, @cnt_r INT
 
-IF @@SERVERNAME IN ('DB042', 'DB054')
+IF @@SERVERNAME IN ('DB042', 'DB054', 'SITDB042', 'DB232\SQLSERVER2008R2', 'DB233\SQLSERVER2008R2')
 BEGIN
 	StartLoop_r_042:
 		SELECT TOP 1 @custid_r = custid, @ondate_r = ondate FROM @BAHistory_Running
