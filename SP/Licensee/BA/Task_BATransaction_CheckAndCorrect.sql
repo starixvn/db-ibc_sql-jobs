@@ -44,31 +44,63 @@ SELECT  @maxTransId = cast(isnull(vvalue,0) AS BIGINT)
 FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)   
 WHERE vname = 'BA_transid'
   
-DECLARE @custid INT, @ondate DATETIME, @offdate DATETIME, @cnt INT  
-StartLoop:  
-    SELECT TOP 1 @custid = custid, @ondate = ondate, @offdate = offdate FROM @BAHistory_Done  
+DECLARE @custid INT, @ondate DATETIME, @offdate DATETIME, @cnt INT
+
+IF @@SERVERNAME IN ('DB042', 'DB054', 'SITDB042', 'DB232\SQLSERVER2008R2', 'DB233\SQLSERVER2008R2')
+BEGIN
+	StartLoop_042:
+		SELECT TOP 1 @custid = custid, @ondate = ondate, @offdate = offdate FROM @BAHistory_Done  
          
-    SELECT @cnt = @@ROWCOUNT  
-    IF @cnt = 0 GOTO EndLoop  
+		SELECT @cnt = @@ROWCOUNT
+		IF @cnt = 0 GOTO EndLoop_042
   
-        INSERT INTO @BATransaction  
-        SELECT custid, transid, transdate  
-        FROM bettrans WITH (NOLOCK)  
-        WHERE custid = @custid  
-            AND transdate BETWEEN @ondate AND @offdate  
-            AND tpositiontaking = 0  
-            AND ( bettype < 31 
-					OR (bettype BETWEEN 121 AND 999) 
-					OR (bettype BETWEEN 1301 AND 1399) 
-					OR (bettype BETWEEN 9001 AND 9399)
-					OR bettype = 38 -- BetBuilder
-				)  
-			AND bettype NOT IN (901, 911)
+			INSERT INTO @BATransaction
+			SELECT custid, transid, transdate
+			FROM bettrans WITH (NOLOCK)
+			WHERE custid = @custid
+				AND transdate BETWEEN @ondate AND @offdate
+				AND tpositiontaking = 0
+				AND ( bettype < 31
+						OR (bettype BETWEEN 121 AND 999)
+						OR (bettype BETWEEN 1301 AND 1399)
+						OR (bettype BETWEEN 9001 AND 9399)
+						OR bettype = 38 -- BetBuilder
+					)
+				AND bettype NOT IN (901, 911)
+				AND statusID IN (0, 1)
                    
-    DELETE FROM @BAHistory_Done WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate
+		DELETE FROM @BAHistory_Done WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate
   
-    GOTO StartLoop  
-EndLoop:
+		GOTO StartLoop_042
+	EndLoop_042:
+END
+ELSE
+BEGIN
+	StartLoop:
+		SELECT TOP 1 @custid = custid, @ondate = ondate, @offdate = offdate FROM @BAHistory_Done  
+         
+		SELECT @cnt = @@ROWCOUNT
+		IF @cnt = 0 GOTO EndLoop
+  
+			INSERT INTO @BATransaction
+			SELECT custid, transid, transdate
+			FROM bettrans WITH (NOLOCK)
+			WHERE custid = @custid
+				AND transdate BETWEEN @ondate AND @offdate
+				AND tpositiontaking = 0
+				AND ( bettype < 31
+						OR (bettype BETWEEN 121 AND 999)
+						OR (bettype BETWEEN 1301 AND 1399)
+						OR (bettype BETWEEN 9001 AND 9399)
+						OR bettype = 38 -- BetBuilder
+					)
+				AND bettype NOT IN (901, 911)
+                   
+		DELETE FROM @BAHistory_Done WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate
+  
+		GOTO StartLoop
+	EndLoop:
+END
   
 --Query data with Running status  
 DECLARE @BAHistory_Running TABLE (custid INT, ondate DATETIME)  
@@ -82,31 +114,63 @@ WHERE LicenseeID IN (
 )  
 AND STATUS = 'running'  
   
-DECLARE @custid_r INT, @ondate_r DATETIME, @cnt_r INT  
-StartLoop_r:  
-    SELECT TOP 1 @custid_r = custid, @ondate_r = ondate FROM @BAHistory_Running  
+DECLARE @custid_r INT, @ondate_r DATETIME, @cnt_r INT
+
+IF @@SERVERNAME IN ('DB042', 'DB054', 'SITDB042', 'DB232\SQLSERVER2008R2', 'DB233\SQLSERVER2008R2')
+BEGIN
+	StartLoop_r_042:
+		SELECT TOP 1 @custid_r = custid, @ondate_r = ondate FROM @BAHistory_Running
          
-    SELECT @cnt_r = @@ROWCOUNT  
-    IF @cnt_r = 0 GOTO EndLoop_r  
+		SELECT @cnt_r = @@ROWCOUNT
+		IF @cnt_r = 0 GOTO EndLoop_r_042
   
-        INSERT INTO @BATransaction  
-        SELECT custid, transid, transdate  
-        FROM bettrans WITH (NOLOCK)  
-        WHERE custid = @custid_r  
-            AND transdate >= @ondate_r  
-            AND tpositiontaking =0  
-            AND ( bettype < 31 
-					OR (bettype BETWEEN 121 AND 999) 
-					OR (bettype BETWEEN 1301 AND 1399) 
-					OR (bettype BETWEEN 9001 AND 9399)
-					OR bettype = 38 -- BetBuilder
-				)  
-			AND bettype NOT IN (901, 911)
+			INSERT INTO @BATransaction
+			SELECT custid, transid, transdate
+			FROM bettrans WITH (NOLOCK)
+			WHERE custid = @custid_r
+				AND transdate >= @ondate_r
+				AND tpositiontaking = 0
+				AND ( bettype < 31
+						OR (bettype BETWEEN 121 AND 999)
+						OR (bettype BETWEEN 1301 AND 1399)
+						OR (bettype BETWEEN 9001 AND 9399)
+						OR bettype = 38 -- BetBuilder
+					)  
+				AND bettype NOT IN (901, 911)
+				AND statusID IN (0, 1)
          
-    DELETE FROM @BAHistory_Running WHERE custid = @custid_r AND ondate = @ondate_r  
+		DELETE FROM @BAHistory_Running WHERE custid = @custid_r AND ondate = @ondate_r  
   
-    GOTO StartLoop_r  
-EndLoop_r:  
+		GOTO StartLoop_r_042
+	EndLoop_r_042:
+END
+ELSE
+BEGIN
+	StartLoop_r:  
+		SELECT TOP 1 @custid_r = custid, @ondate_r = ondate FROM @BAHistory_Running  
+         
+		SELECT @cnt_r = @@ROWCOUNT  
+		IF @cnt_r = 0 GOTO EndLoop_r  
+  
+			INSERT INTO @BATransaction
+			SELECT custid, transid, transdate
+			FROM bettrans WITH (NOLOCK)
+			WHERE custid = @custid_r
+				AND transdate >= @ondate_r
+				AND tpositiontaking = 0
+				AND ( bettype < 31
+						OR (bettype BETWEEN 121 AND 999)
+						OR (bettype BETWEEN 1301 AND 1399)
+						OR (bettype BETWEEN 9001 AND 9399)
+						OR bettype = 38 -- BetBuilder
+					)  
+				AND bettype NOT IN (901, 911)
+         
+		DELETE FROM @BAHistory_Running WHERE custid = @custid_r AND ondate = @ondate_r  
+  
+		GOTO StartLoop_r  
+	EndLoop_r:
+END
 
 DELETE FROM @BATransaction WHERE transid > @maxTransId
   
@@ -139,15 +203,6 @@ BEGIN
 		FROM dbo.bettrans with(nolock)  
 		where transid in (select transid from @BATicket)
 
-		--Add more code to sync data to DB042 --> temporary solution
-		DECLARE @XmlData NVARCHAR(MAX)
-		SET @XmlData = (
-			SELECT TransId AS t, Transdate AS td, custid AS c, recommend AS r, srecommend AS s
-			FROM bodb_licensee.dbo.LicenseeBATransaction_active t
-			WHERE EXISTS (SELECT TOP 1 1 FROM @BATicket tt WHERE t.TransID = tt.TransID)
-			FOR XML RAW('r'), root
-		)
-		
 		SELECT @MaxOfFailedCount = CONVERT(INT, VValue)
 		FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)
 		WHERE VName = 'BA_MaxOfFailedCount'
