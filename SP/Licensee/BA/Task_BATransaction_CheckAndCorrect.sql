@@ -1,7 +1,4 @@
-﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02" executers="" isFunction="0" isNested="0"></info>*/
-USE [bodb02]
-GO  
-
+﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02,DB042-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_BATransaction_CheckAndCorrect]  
 AS  
 /*  
@@ -24,6 +21,7 @@ AS
 		- 20190226@Percy: Apply config setting to raiserror [RedmineID: #109415]
 		- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]
 		- 20190625@Percy: Change 'DB053' To 'DB052' for step switch to DB052 [Redmine: #103658]
+		- 20191010@Percy: Remove table LicenseeBATransaction [RedmineID: #103656]
 */  
 SET NOCOUNT ON   
    
@@ -114,7 +112,7 @@ DELETE FROM @BATransaction WHERE transid > @maxTransId
   
 IF (SELECT count(a.transid)   
 	FROM @BATransaction a  
-		LEFT JOIN bodb_licensee.dbo.licenseebatransaction b (nolock) ON a.transid = b.transid  
+		LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction_active b (nolock) ON a.transid = b.transid  
 	WHERE b.transid IS NULL) > 0  
 BEGIN  
 	DECLARE @BATicket TABLE (TransID BIGINT, Transdate DATETIME)  
@@ -122,7 +120,7 @@ BEGIN
 	INSERT INTO @BATicket(TransID, Transdate)  
 	SELECT a.transid,a.transdate 
 	FROM @BATransaction a  
-		LEFT JOIN bodb_licensee.dbo.licenseebatransaction b (nolock) ON a.transid = b.transid  
+		LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction_active b (nolock) ON a.transid = b.transid  
 	WHERE b.transid IS NULL  
    
 	DECLARE @tickets VARCHAR(7500)  
@@ -136,9 +134,6 @@ BEGIN
 
 	IF LEN(RTRIM(LTRIM(@tickets))) > 1  
 	BEGIN  
-		INSERT INTO bodb_licensee.dbo.licenseebatransaction (TransID,Transdate)  
-		SELECT transid,transdate FROM @BATicket  
-    
 		INSERT INTO bodb_licensee.dbo.licenseebatransaction_active (TransID,Transdate, custid, recommend, srecommend)  
 		SELECT transid, transdate, custid, recommend, srecommend  
 		FROM dbo.bettrans with(nolock)  
@@ -153,9 +148,6 @@ BEGIN
 			FOR XML RAW('r'), root
 		)
 		
-		IF @XmlData IS NOT NULL AND @@SERVERNAME = 'DB052' 
-			EXEC DB042.bodb_Licensee.dbo.Task_BATransaction_Copy_Ticket @XmlData = @XmlData
-  
 		SELECT @MaxOfFailedCount = CONVERT(INT, VValue)
 		FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)
 		WHERE VName = 'BA_MaxOfFailedCount'
