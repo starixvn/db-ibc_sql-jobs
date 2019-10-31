@@ -1,14 +1,11 @@
-/*<info serverAlias="DBLIC-bodb_Licensee" executers="" viewers="vnteam" isFunction="0"></info>*/
-USE [bodb_Licensee]
-GO
-
+/*<info serverAlias="DBLIC-bodb_Licensee,DBACC-bodb_Licensee,DB042-bodb_Licensee" executers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DetectBAMemberBreakRules]
 AS 
 /*
 Created: 20150512@Winnie
 Task : 
 Description: Get members break rules BA and send mail to related person.
-DB: DBLIC.bodb_licensee
+DB: DBLIC.bodb_licensee, DBACC.bodb_Licensee, DB042.bodb_Licensee"
 Original:
 
 Revisions:
