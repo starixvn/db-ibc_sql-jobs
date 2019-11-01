@@ -147,7 +147,7 @@ BEGIN
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 504, acs.sporttype, acs.bettype, acs.custid as custidA, cs.custid as custidB, acs.MaxWinLimit , cs.MaxWinLimit
 		FROM #AgentWinLossLimit acs
-			INNER JOIN #MemberWinLossLimit acs ON cs.recommend = acs.custid 
+			INNER JOIN #MemberWinLossLimit cs ON cs.recommend = acs.custid 
 												AND cs.sporttype = acs.sporttype 
 												AND cs.bettype = acs.bettype
 		WHERE acs.MaxWinLimit > 0 
