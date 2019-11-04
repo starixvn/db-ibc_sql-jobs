@@ -33,6 +33,7 @@ AS
 		- 20190213@Billy:	Add column [SecAcceptFlag] of [bettransm] - [Redmine: #108780]
 		- 20190424@Billy:	Add column [SettlementTime] of [bettrans] - [Redmine: #112464]
 		- 20190828@Billy:	Add table [bettransInfo] & column [SecAcceptTime], [LiveBetAcceptTime] of [bettransm] - [Redmine: #119219]
+		- 20191104@Billy:	Add column [epositiontaking] of [bettrans], [bettransLC], [bettransRnG] - [Redmine: #123267]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -57,6 +58,7 @@ DECLARE	@__tmpTransId AS TABLE (
 IF @@SERVERNAME NOT LIKE 'DB04%'
 BEGIN
 	-- Note: Exclude columns: [tstamp], [recommdate]
+	-- 20191104@Billy:	Add column [epositiontaking]
 	INSERT INTO	dbo.bettrans14
 		(	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost
 		,	playercomm, comm, acomm, apositiontaking, mpositiontaking, tpositiontaking, playerdiscount
@@ -65,7 +67,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime
+		,	RefCode, SettlementTime, epositiontaking
 		)
 	OUTPUT	Inserted.transid
 	INTO	@__tmpTransId (id)
@@ -76,7 +78,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime
+		,	RefCode, SettlementTime, epositiontaking
 	FROM	dbo.bettrans WITH (NOLOCK)
 	WHERE	recommend = @__recommend
 		AND	winlostdate = @__winlostdate
@@ -104,39 +106,40 @@ BEGIN
         productID, gameID, eventID, vendorID, GameId3rd, TranId3rd
 	from translog with (nolock)
 	where recommend = @__recommend AND winlostdate=@__winlostdate
-		
-	INSERT INTO BettransLC14 
-		(
-		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
-		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
-		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
-		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd, NetStake
-		)
-	SELECT 
-		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
-		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
-		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
-		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd, NetStake
-	FROM dbo.BettransLC WITH (NOLOCK)
-	WHERE recommend = @__recommend AND winlostdate=@__winlostdate
 
-	
-	INSERT INTO BettransRNG14
-		(
-		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
-		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
-		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
-		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd, Additional,SiteID, 
-		JackpotInfo, RefNo2, ContributionRate, BetStake, ContributionStake3rd	
+	-- 20191104@Billy:	Add column [epositiontaking]
+	INSERT INTO	dbo.bettransLC14
+		(	transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking
+		,	playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake
+		,	currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID
+		,	vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm
+		,	Transdate3rd, NetStake, epositiontaking
 		)
-	SELECT 
-		transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
-		playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
-		currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
-		vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd, Additional,SiteID, 
-		JackpotInfo, RefNo2, ContributionRate, BetStake, ContributionStake3rd
-	FROM dbo.BettransRNG WITH (NOLOCK)
-	WHERE recommend = @__recommend AND winlostdate=@__winlostdate
+	SELECT	transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking
+		,	playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake
+		,	currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID
+		,	vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm
+		,	Transdate3rd, NetStake, epositiontaking
+	FROM	dbo.bettransLC WITH (NOLOCK)
+	WHERE	recommend = @__recommend
+		AND	winlostdate = @__winlostdate;
+
+	-- 20191104@Billy: Add column [epositiontaking]
+	INSERT INTO dbo.bettransRnG14
+		(	transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking
+		,	playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake
+		,	currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID
+		,	vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd
+		,	Additional, SiteID, JackpotInfo, RefNo2, ContributionRate, BetStake, ContributionStake3rd, epositiontaking
+		)
+	SELECT	transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking
+		,	playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake
+		,	currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID
+		,	vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd
+		,	Additional, SiteID, JackpotInfo, RefNo2, ContributionRate, BetStake, ContributionStake3rd, epositiontaking
+	FROM	dbo.bettransRnG WITH (NOLOCK)
+	WHERE	recommend = @__recommend
+		AND	winlostdate=@__winlostdate;
 
 END
 
@@ -144,6 +147,7 @@ END
 IF @@SERVERNAME = 'DB04'
 BEGIN
 	-- Note: Exclude columns: [tstamp], [recommdate]
+	-- 20191104@Billy:	Add column [epositiontaking]
 	INSERT INTO	dbo.bettrans14
 		(	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost
 		,	playercomm, comm, acomm, apositiontaking, mpositiontaking, tpositiontaking, playerdiscount
@@ -152,7 +156,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime
+		,	RefCode, SettlementTime, epositiontaking
 		)
 	OUTPUT	Inserted.transid
 	INTO	@__tmpTransId (id)
@@ -163,7 +167,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime
+		,	RefCode, SettlementTime, epositiontaking
 	FROM	dbo.bettrans WITH (NOLOCK)
 	WHERE	recommend = @__recommend
 		AND	winlostdate = @__winlostdate
