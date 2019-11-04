@@ -10,7 +10,8 @@ AS
 
 	Revisions:
 		- 20190426@Billy:	Initial - [Redmine: #000000]
-		- 20190426@Billy:	Add column [SettlementTime] of [bettrans] - [Redmine: #122464]
+		- 20190426@Billy:	Add column [SettlementTime] of [bettrans] - [Redmine: #122464] 
+		- 20191104@Billy:	Add column [epositiontaking] of [bettrans] - [Redmine: #123267]
 
 	Developer's Notes:
 		- This SP belongs to bettrans14 set for Thursday Routine:
@@ -50,7 +51,7 @@ BEGIN;
 		,	b.transdesc, b.virtualrate, b.oddstype, b.statusID
 		,	b.currency2, b.transid, b.bettype, b.balance, b.transid2, b.SecAcceptFlag, b.comstatus
 		,	[CountryCode] = ip.countryShort
-		,	b.ExtraInfo, b.WalletType, b.BonusID, b.RefCode, b.SettlementTime
+		,	b.ExtraInfo, b.WalletType, b.BonusID, b.RefCode, b.SettlementTime, b.epositiontaking
 	FROM		dbo.bettrans14 AS b WITH (NOLOCK)
 	INNER JOIN	dbo.Task_bettrans14_IP2Country AS ip WITH (NOLOCK)
 			ON	b.transid = ip.transid
