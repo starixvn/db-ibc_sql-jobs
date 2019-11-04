@@ -15,6 +15,7 @@ AS
 		- 20171221@Billy:	Add Match3rd14 table - [Redmine: #88506]
 		- 20181204@Billy:	Add [oddsES14] & [ResultDetailES14] tables - [Redmine: #105816]
 		- 20190325@Billy:	Add [SMP_Market] & [SMP_MarketSelection] tables - [Redmine: #109926]
+		- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader] table - [Redmine: #117014]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -152,6 +153,14 @@ BEGIN
 				ON	tbl.MarketSelectionId = il.id;
 	END;
 
-END
+	-- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader]
+	IF	@DeletedTarget = 'Dot_Admin_Assignment_Trader'
+	BEGIN;
+		DELETE	tbl WITH (ROWLOCK)
+		FROM		dbo.Dot_Admin_Assignment_Trader AS tbl
+		INNER JOIN	@idList AS il
+				ON	tbl.ID = il.id;
+	END;
+END;
 GO
 /*<info serverAlias="DBPRO-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/

@@ -1,28 +1,32 @@
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
-CREATE PROCEDURE	[dbo].[Task_Archive_Event_Copy]
-						@winlostdate	DATETIME
-					,	@TableName		VARCHAR(100)	= ''
+CREATE PROCEDURE	dbo.Task_Archive_Event_Copy
+						@winlostdate		DATETIME
+					,	@TableName			NVARCHAR(128)	= ''
 AS
 /*
 	Created:	20190318@Helen
-	Task:		Archive event runner on DBARC - [Redimine: #110447]
-	Database:	DBARC.bodb_archive
+	Task:		Archive event runner on DBARC - [Redmine: #110447]
+	Database:	DBARC.bodb_Archive
 	Original:	DBPRO/bodb02/Task_Archive_Event
-	
+
 	Revisions:
-		- 20190318@Helen: Initialize - archive event timeout issue - [Redimine: #110447]
+		- 20190318@Helen:	Initialize - archive event timeout issue - [Redmine: #110447]
+		- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader] table - [Redmine: #117014]
 */
 BEGIN
 	SET NOCOUNT ON;
-	DECLARE @query NVARCHAR(MAX) = ''
+
+	DECLARE	@Query		NVARCHAR(MAX)
+		;
+
 	---------------Table 1: odds_bk --------------------
-	IF @TableName = 'odds_bk'
-	BEGIN
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.odds_bk
+	IF	@TableName = N'odds_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.odds_bk
 	(	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, odds1b, odds2b, odds1c, odds2c, odds1e, odds2e, odds1f, odds2f, odds1d, odds2d, odds1hka, odds2hka, odds1hkb, odds2hkb, odds1hkc
 	,	odds2hkc, odds1hke, odds2hke, odds1hkf, odds2hkf, odds1hkd, odds2hkd, oddsspreada, oddsspreadb, oddsspreadd, oddsspreade, oddsspreadf, oddsspreadc, autobookie, gapodds1, gapodds2, maxstake1
 	,	maxstake2, minstake1, minstake2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk, stakerange, newoffersetup, livehomescore, liveawayscore, creator, com1, comx, com2
@@ -30,15 +34,16 @@ INSERT INTO dbo.odds_bk
 	,	csmaxbet, com1total, comxtotal, com2total, bal00, bal10, bal11, bal01, bal20, bal21, bal22, bal12, bal02, bal30, bal31, bal32, bal33, bal23, bal13, bal03, bal40, bal41, bal42, bal43, bal44
 	,	bal34, bal24, bal14, bal04, bal50, bal05, maxbet, ht, autoreject, allowance, autosuspend, multiple, stakerange2, risk2, allowance2, site2, site3, site4, hometotal, awaytotal, sporttype
 	,	tstamp, Resourceid, ResultKey, cs99, bal99)
-SELECT oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, odds1b, odds2b, odds1c, odds2c, odds1e, odds2e, odds1f, odds2f, odds1d, odds2d, odds1hka, odds2hka, odds1hkb, odds2hkb, odds1hkc
+SELECT	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, odds1b, odds2b, odds1c, odds2c, odds1e, odds2e, odds1f, odds2f, odds1d, odds2d, odds1hka, odds2hka, odds1hkb, odds2hkb, odds1hkc
 	,	odds2hkc, odds1hke, odds2hke, odds1hkf, odds2hkf, odds1hkd, odds2hkd, oddsspreada, oddsspreadb, oddsspreadd, oddsspreade, oddsspreadf, oddsspreadc, autobookie, gapodds1, gapodds2, maxstake1
 	,	maxstake2, minstake1, minstake2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk, stakerange, newoffersetup, livehomescore, liveawayscore, creator, com1, comx, com2
 	,	cs00, cs01, cs10, cs11, cs02, cs12, cs22, cs21, cs20, cs30, cs31, cs32, cs33, cs23, cs13, cs03, cs43, cs42, cs41, cs40, cs44, cs14, cs24, cs04, cs34, cs50, cs05, comstatus, csstatus, commaxbet
 	,	csmaxbet, com1total, comxtotal, com2total, bal00, bal10, bal11, bal01, bal20, bal21, bal22, bal12, bal02, bal30, bal31, bal32, bal33, bal23, bal13, bal03, bal40, bal41, bal42, bal43, bal44
 	,	bal34, bal24, bal14, bal04, bal50, bal05, maxbet, ht, autoreject, allowance, autosuspend, multiple, stakerange2, risk2, allowance2, site2, site3, site4, hometotal, awaytotal, sporttype
-	,	tstamp, Resourceid, ResultKey, cs99, bal99 
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+	,	tstamp, Resourceid, ResultKey, cs99, bal99
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
 SELECT	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, odds1b, odds2b, odds1c, odds2c, odds1e, odds2e, odds1f, odds2f, odds1d, odds2d, odds1hka, odds2hka, odds1hkb, odds2hkb, odds1hkc
 	,	odds2hkc, odds1hke, odds2hke, odds1hkf, odds2hkf, odds1hkd, odds2hkd, oddsspreada, oddsspreadb, oddsspreadd, oddsspreade, oddsspreadf, oddsspreadc, autobookie, gapodds1, gapodds2, maxstake1
 	,	maxstake2, minstake1, minstake2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk, stakerange, newoffersetup, livehomescore, liveawayscore, creator, com1, comx, com2
@@ -47,346 +52,420 @@ SELECT	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, odds1b, odd
 	,	bal34, bal24, bal14, bal04, bal50, bal05, maxbet, ht, autoreject, allowance, autosuspend, multiple, stakerange2, risk2, allowance2, site2, site3, site4, hometotal, awaytotal, sporttype
 	,	tstamp, Resourceid, ResultKey, cs99, bal99
 FROM	bodb02.dbo.odds14 AS t1 WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
 
-		EXECUTE	sys.sp_executesql @query
-	END
-	
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
 	---------------Table 2: match_bk --------------------
-	ELSE IF @TableName = 'match_bk'
-	BEGIN
-		SELECT  @query = '' 	
-		SELECT	@query = @query + N'
-INSERT INTO dbo.match_bk(matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore,
-				finalhomescore, finalawayscore, creator, matchcode, kickofftime, closedtime, showtime,
-				hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, tstamp,
-				homeid2, awayid2, DisplayMode, LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral, GoalRecord, GlobalShowTime, ParentID, ShowTimeDT)
-				
-SELECT matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore,
-				finalhomescore, finalawayscore, creator, matchcode, kickofftime, closedtime, showtime,
-				hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, tstamp,
-				homeid2, awayid2, DisplayMode, LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral, GoalRecord, GlobalShowTime, ParentID, ShowTimeDT 
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT	matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore,
-				finalhomescore, finalawayscore, creator, matchcode, kickofftime, closedtime, showtime,
-				hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, tstamp,
-				homeid2, awayid2, DisplayMode, LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral, GoalRecord, GlobalShowTime, ParentID, ShowTimeDT
-FROM	bodb02.dbo.match14 AS t1  WITH (NOLOCK)
-WHERE t1.eventdate = @winlostdate;'')'
+	-- Need confirm: no sync column [AutoSetting]?
+	ELSE IF	@TableName = N'match_bk'
+	BEGIN;
+		SELECT	@Query = '';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.match_bk
+	(	matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore, finalhomescore, finalawayscore, creator, matchcode, kickofftime, closedtime, showtime
+	,	hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, tstamp, homeid2, awayid2, DisplayMode, LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral
+	,	GoalRecord, GlobalShowTime, ParentID, ShowTimeDT)
+SELECT	matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore, finalhomescore, finalawayscore, creator, matchcode, kickofftime, closedtime, showtime
+	,	hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, tstamp, homeid2, awayid2, DisplayMode, LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral
+	,	GoalRecord, GlobalShowTime, ParentID, ShowTimeDT
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-		EXECUTE	sys.sp_executesql @query
-		
-	END	
-	---------------Table 3: bingoBall_bk --------------------	
-	ELSE IF @TableName = 'bingoBall_bk'
-	BEGIN
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.bingoBall_bk([Matchid], [Seq], [Number], [UpdateTime])
-SELECT	[Matchid], [Seq], [Number], [UpdateTime]
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT		[Matchid], [Seq], [Number], [UpdateTime]
-FROM	bodb02.dbo.BingoBall14 AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
+SELECT	matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore, finalhomescore, finalawayscore, creator, matchcode, kickofftime, closedtime, showtime
+	,	hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, tstamp, homeid2, awayid2, DisplayMode, LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral
+	,	GoalRecord, GlobalShowTime, ParentID, ShowTimeDT
+FROM	bodb02.dbo.match14 AS t1 WITH (NOLOCK)
+WHERE	t1.eventdate = @winlostdate;'');';
 
-		EXECUTE	sys.sp_executesql @query
-		
-	END
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 3: bingoBall_bk --------------------
+	ELSE IF	@TableName = N'bingoBall_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.bingoBall_bk
+	(	Matchid, Seq, Number, UpdateTime)
+SELECT	Matchid, Seq, Number, UpdateTime
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	Matchid, Seq, Number, UpdateTime
+FROM	bodb02.dbo.BingoBall14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
 	---------------Table 4: outright_bk --------------------
-	ELSE IF @TableName = 'outright_bk'
-	BEGIN
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.outright_bk(orid, leagueid, teamid, eventdate, kickofftime, oddsstatus, odds, maxbet, gapodds, matchcode, groupmatch, status, creator, bal, risk, 
-			DisplayMode, PlaceOdds, Placing, IsFavor, IsSCR, ProgramID, 
-			FOddsStatus, SCRTime, LeaguePatternID, TeamPatternID, ProgramDate, IsDeadHeat, autosuspend, EventID, Year)
-				
-SELECT orid, leagueid, teamid, eventdate, kickofftime, oddsstatus, odds, maxbet, gapodds, matchcode, groupmatch, status, creator, bal, risk, 
-			DisplayMode, PlaceOdds, Placing, IsFavor, IsSCR, ProgramID, 
-			FOddsStatus, SCRTime, LeaguePatternID, TeamPatternID, ProgramDate, IsDeadHeat, autosuspend, EventID, Year
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT	orid, leagueid, teamid, eventdate, kickofftime, oddsstatus, odds, maxbet, gapodds, matchcode, groupmatch, status, creator, bal, risk, 
-			DisplayMode, PlaceOdds, Placing, IsFavor, IsSCR, ProgramID, 
-			FOddsStatus, SCRTime, LeaguePatternID, TeamPatternID, ProgramDate, IsDeadHeat, autosuspend, EventID, Year
-FROM	bodb02.dbo.outright14 AS t1  WITH (NOLOCK)
-WHERE t1.eventdate = @winlostdate;'')'
+	ELSE IF	@TableName = N'outright_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.outright_bk
+	(	orid, leagueid, teamid, eventdate, kickofftime, oddsstatus, odds, maxbet, gapodds, matchcode, groupmatch, status, creator, bal, risk, DisplayMode, PlaceOdds, Placing, IsFavor, IsSCR
+	,	ProgramID, FOddsStatus, SCRTime, LeaguePatternID, TeamPatternID, ProgramDate, IsDeadheat, autosuspend, EventID, Year)
+SELECT	orid, leagueid, teamid, eventdate, kickofftime, oddsstatus, odds, maxbet, gapodds, matchcode, groupmatch, status, creator, bal, risk, DisplayMode, PlaceOdds, Placing, IsFavor, IsSCR
+	,	ProgramID, FOddsStatus, SCRTime, LeaguePatternID, TeamPatternID, ProgramDate, IsDeadheat, autosuspend, EventID, Year
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-		EXECUTE	sys.sp_executesql @query
-		
-	END
+SELECT	orid, leagueid, teamid, eventdate, kickofftime, oddsstatus, odds, maxbet, gapodds, matchcode, groupmatch, status, creator, bal, risk, DisplayMode, PlaceOdds, Placing, IsFavor, IsSCR
+	,	ProgramID, FOddsStatus, SCRTime, LeaguePatternID, TeamPatternID, ProgramDate, IsDeadheat, autosuspend, EventID, Year
+FROM	bodb02.dbo.outright14 AS t1 WITH (NOLOCK)
+WHERE	t1.eventdate = @winlostdate;'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
 	---------------Table 5: VSOutright_bk --------------------
-	ELSE IF @TableName = 'VSOutright_bk'
-	BEGIN	
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.VSOutright_bk(Orid, EventID, RacerNum, IsFavor, EventDate, KickoffTime, RacerID, HumanID, WinOdds, PlaceOdds, 
-			Lane, MaxBet, Placing, Creator, EventStatus)
-SELECT Orid, EventID, RacerNum, IsFavor, EventDate, KickoffTime, RacerID, HumanID, WinOdds, PlaceOdds, 
-			Lane, MaxBet, Placing, Creator, EventStatus
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT	Orid, EventID, RacerNum, IsFavor, EventDate, KickoffTime, RacerID, HumanID, WinOdds, PlaceOdds, 
-			Lane, MaxBet, Placing, Creator, EventStatus
-FROM	bodb02.dbo.VSOutright14 AS t1  WITH (NOLOCK)
-WHERE t1.eventdate = @winlostdate;'')'
+	ELSE IF	@TableName = N'VSOutright_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.VSOutright_bk
+	(	Orid, EventID, RacerNum, IsFavor, EventDate, KickoffTime, RacerID, HumanID, WinOdds, PlaceOdds, Lane, MaxBet, Placing, Creator, EventStatus)
+SELECT	Orid, EventID, RacerNum, IsFavor, EventDate, KickoffTime, RacerID, HumanID, WinOdds, PlaceOdds, Lane, MaxBet, Placing, Creator, EventStatus
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-		EXECUTE	sys.sp_executesql @query
-		
-	END
+SELECT	Orid, EventID, RacerNum, IsFavor, EventDate, KickoffTime, RacerID, HumanID, WinOdds, PlaceOdds, Lane, MaxBet, Placing, Creator, EventStatus
+FROM	bodb02.dbo.VSOutright14 AS t1 WITH (NOLOCK)
+WHERE	t1.eventdate = @winlostdate;'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
 	---------------Table 6: match_remark -----------------------------
-	ELSE IF @TableName = 'match_remark'
-	BEGIN	
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.match_remark(matchid, calculate, multiple, calrefund, refund, calStatus, IsTotalBetDenied_1, IsTotalBetDenied_3, IsTotalBetDenied_7, IsTotalBetDenied_8, LiveTimer, HomeRedCard, AwayRedCard
-			,	LivePeriod, HedgeForecast, IsTotalBetDenied_20, IsTotalBetDenied_21, IsNeutral, StreamingID, IsInternal, IsHTCal, LiveDeleteChecker, HomeColor, AwayColor, ConfirmHT, ConfirmFT
-			,	PausePeriod, TimerSuspend, IsPending, isUndecided, StdDelBetCheck, HomeSubstitutes, AwaySubstitutes, StartTeam, HomePenalty, AwayPenalty, HomeYellowCard, AwayYellowCard, Tier, OfferLive,CommGroup)
+	-- Need confirm: No sync column [SettlementStatus]?
+	ELSE IF	@TableName = N'match_remark'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.match_remark
+	(	matchid, calculate, multiple, calrefund, refund, calStatus, IsTotalBetDenied_1, IsTotalBetDenied_3, IsTotalBetDenied_7, IsTotalBetDenied_8, LiveTimer, HomeRedCard, AwayRedCard
+	,	LivePeriod, HedgeForecast, IsTotalBetDenied_20, IsTotalBetDenied_21, IsNeutral, StreamingID, IsInternal, IsHTCal, LiveDeleteChecker, HomeColor, AwayColor, ConfirmHT, ConfirmFT
+	,	PausePeriod, TimerSuspend, IsPending, isUndecided, StdDelBetCheck, HomeSubstitutes, AwaySubstitutes, StartTeam, HomePenalty, AwayPenalty, HomeYellowCard, AwayYellowCard
+	,	Tier, OfferLive, CommGroup)
 SELECT	matchid, calculate, multiple, calrefund, refund, calStatus, IsTotalBetDenied_1, IsTotalBetDenied_3, IsTotalBetDenied_7, IsTotalBetDenied_8, LiveTimer, HomeRedCard, AwayRedCard
-			,	LivePeriod, HedgeForecast, IsTotalBetDenied_20, IsTotalBetDenied_21, IsNeutral, StreamingID, IsInternal, IsHTCal, LiveDeleteChecker, HomeColor, AwayColor, ConfirmHT, ConfirmFT
-			,	PausePeriod, TimerSuspend, IsPending, isUndecided, StdDelBetCheck, HomeSubstitutes, AwaySubstitutes, StartTeam, HomePenalty, AwayPenalty, HomeYellowCard, AwayYellowCard, Tier, OfferLive,CommGroup
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT		matchid, calculate, multiple, calrefund, refund, calStatus, IsTotalBetDenied_1, IsTotalBetDenied_3, IsTotalBetDenied_7, IsTotalBetDenied_8, LiveTimer, HomeRedCard, AwayRedCard
-			,	LivePeriod, HedgeForecast, IsTotalBetDenied_20, IsTotalBetDenied_21, IsNeutral, StreamingID, IsInternal, IsHTCal, LiveDeleteChecker, HomeColor, AwayColor, ConfirmHT, ConfirmFT
-			,	PausePeriod, TimerSuspend, IsPending, isUndecided, StdDelBetCheck, HomeSubstitutes, AwaySubstitutes, StartTeam, HomePenalty, AwayPenalty, HomeYellowCard, AwayYellowCard, Tier, OfferLive,CommGroup
-FROM	bodb02.dbo.match_remark AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
+	,	LivePeriod, HedgeForecast, IsTotalBetDenied_20, IsTotalBetDenied_21, IsNeutral, StreamingID, IsInternal, IsHTCal, LiveDeleteChecker, HomeColor, AwayColor, ConfirmHT, ConfirmFT
+	,	PausePeriod, TimerSuspend, IsPending, isUndecided, StdDelBetCheck, HomeSubstitutes, AwaySubstitutes, StartTeam, HomePenalty, AwayPenalty, HomeYellowCard, AwayYellowCard
+	,	Tier, OfferLive, CommGroup
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-		EXECUTE	sys.sp_executesql @query
-		
-	END
+SELECT	matchid, calculate, multiple, calrefund, refund, calStatus, IsTotalBetDenied_1, IsTotalBetDenied_3, IsTotalBetDenied_7, IsTotalBetDenied_8, LiveTimer, HomeRedCard, AwayRedCard
+	,	LivePeriod, HedgeForecast, IsTotalBetDenied_20, IsTotalBetDenied_21, IsNeutral, StreamingID, IsInternal, IsHTCal, LiveDeleteChecker, HomeColor, AwayColor, ConfirmHT, ConfirmFT
+	,	PausePeriod, TimerSuspend, IsPending, isUndecided, StdDelBetCheck, HomeSubstitutes, AwaySubstitutes, StartTeam, HomePenalty, AwayPenalty, HomeYellowCard, AwayYellowCard
+	,	Tier, OfferLive, CommGroup
+FROM	bodb02.dbo.match_remark AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
 	---------------Table 7: MatchMaxbet_bk -----------------------------
-	ELSE IF @TableName = 'MatchMaxbet_bk'
-	BEGIN	
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.MatchMaxbet_bk(MatchId, BetType, Maxbet, OperatorId, Spread)
+	ELSE IF	@TableName = N'MatchMaxbet_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.MatchMaxbet_bk
+	(	MatchId, BetType, Maxbet, OperatorId, Spread)
 SELECT	MatchId, BetType, Maxbet, OperatorId, Spread
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT	MatchId, BetType, Maxbet, OperatorId, Spread
-FROM	bodb02.dbo.matchMaxbet14 AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-		EXECUTE	sys.sp_executesql @query
-		
-	END
+SELECT	MatchId, BetType, Maxbet, OperatorId, Spread
+FROM	bodb02.dbo.matchMaxbet14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
 	---------------Table 8:  ResultDetail_bk -----------------------------
-	ELSE IF @TableName = 'ResultDetail_bk'
-	BEGIN
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.ResultDetail_bk(MatchId, ResourceId, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateDate, LastModifyDate, CreateBy, LastModifyBy, OtherInfo)
-SELECT	MatchId, ResourceId, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateDate, LastModifyDate, CreateBy, LastModifyBy, OtherInfo
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT		MatchId, ResourceId, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateDate, LastModifyDate, CreateBy, LastModifyBy, OtherInfo
-FROM	bodb02.dbo.ResultDetail14 AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
-
-		EXECUTE	sys.sp_executesql @query
-		
-	END	
-	---------------Table 9:  ResultDetail3rd_bk -----------------------------
-	ELSE IF @TableName = 'ResultDetail3rd_bk'
-	BEGIN	
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.ResultDetail3rd_bk(ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, ResourceId)
-SELECT	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, ResourceId
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT		ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, ResourceId
-FROM	bodb02.dbo.ResultDetail3rd14 AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
-
-		EXECUTE	sys.sp_executesql @query
-		
-	END
-	---------------Table 10:  EventInfo3rd_bk -----------------------------
-	ELSE IF @TableName = 'EventInfo3rd_bk'
-	BEGIN
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.EventInfo3rd_bk(EventInfo3rdId,ArenaID,FightNo,EventDate,HomeOwner,AwayOwner)
-SELECT	EventInfo3rdId,ArenaID,FightNo,EventDate,HomeOwner,AwayOwner
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT	EventInfo3rdId,ArenaID,FightNo,EventDate,HomeOwner,AwayOwner
-FROM	bodb02.dbo.EventInfo3rd14 AS t1  WITH (NOLOCK)
-WHERE t1.eventdate = @winlostdate;'')'
-
-		EXECUTE	sys.sp_executesql @query
-		
-	END
-	---------------Table 11:  AutoPayoutResult_bk -----------------------------
-	ELSE IF @TableName = 'AutoPayoutResult_bk'
-	BEGIN
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.AutoPayoutResult_bk(AutoPayoutResultId, MatchId, CalculationType, SourceId, HomeValue, AwayValue, StatusId, TryCount, CreatedDate, ModifiedDate)
-SELECT	AutoPayoutResultId, MatchId, CalculationType, SourceId, HomeValue, AwayValue, StatusId, TryCount, CreatedDate, ModifiedDate
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT AutoPayoutResultId, MatchId, CalculationType, SourceId, HomeValue, AwayValue, StatusId, TryCount, CreatedDate, ModifiedDate
-FROM	bodb02.dbo.AutoPayoutResult14 AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
-
-		EXECUTE	sys.sp_executesql @query
-		
-	END
-	---------------Table 12:  ProviderResultDetail_bk -----------------------------
-	ELSE IF @TableName = 'ProviderResultDetail_bk'
-	BEGIN
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.ProviderResultDetail_bk(ProviderResultDetailId, MatchId, SourceId, TypeId, HomeValue, AwayValue, CreatedDate, IsConfirmed)
-SELECT	ProviderResultDetailId, MatchId, SourceId, TypeId, HomeValue, AwayValue, CreatedDate, IsConfirmed
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT ProviderResultDetailId, MatchId, SourceId, TypeId, HomeValue, AwayValue, CreatedDate, IsConfirmed
-FROM	bodb02.dbo.ProviderResultDetail14 AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
-
-		EXECUTE	sys.sp_executesql @query
-		
-	END
-	---------------Table 13:  Odds3rd_bk -----------------------------
-	ELSE IF @TableName = 'Odds3rd_bk'
-	BEGIN
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.Odds3rd_bk(oddsid, matchid, odds3rdid, bettype, hdp1, hdp2, odds1a, odds2a, oddsstatus, changetime, creator, com1, comx, com2, cs00, cs01, cs10, cs11, cs02, cs12, cs22, cs21, cs20, cs30, cs31, cs32, cs33, cs23, cs13, cs03, cs99, sporttype, cs04, cs05, Resourceid)
-SELECT	oddsid, matchid, odds3rdid, bettype, hdp1, hdp2, odds1a, odds2a, oddsstatus, changetime, creator, com1, comx, com2, cs00, cs01, cs10, cs11, cs02, cs12, cs22, cs21, cs20, cs30, cs31, cs32, cs33, cs23, cs13, cs03, cs99, sporttype, cs04, cs05, Resourceid
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT oddsid, matchid, odds3rdid, bettype, hdp1, hdp2, odds1a, odds2a, oddsstatus, changetime, creator, com1, comx, com2, cs00, cs01, cs10, cs11, cs02, cs12, cs22, cs21, cs20, cs30, cs31, cs32, cs33, cs23, cs13, cs03, cs99, sporttype, cs04, cs05, Resourceid
-FROM	bodb02.dbo.Odds3rd14 AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
-
-		EXECUTE	sys.sp_executesql @query
-		
-	END
-	---------------Table 14:  Intg_OddsFeed_SettlementAction_bk -----------------------------
-	ELSE IF @TableName = 'Intg_OddsFeed_SettlementAction_bk'
-	BEGIN	
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.Intg_OddsFeed_SettlementAction_bk(ActionId, LeagueId, MatchId, ActionType, HTHomeScore, HTAwayScore, FTHomeScore, FTAwayScore, CreateTime, OtherInfo)
-SELECT	ActionId, LeagueId, MatchId, ActionType, HTHomeScore, HTAwayScore, FTHomeScore, FTAwayScore, CreateTime, OtherInfo
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT ActionId, LeagueId, MatchId, ActionType, HTHomeScore, HTAwayScore, FTHomeScore, FTAwayScore, CreateTime, OtherInfo
-FROM	bodb02.dbo.Intg_OddsFeed_SettlementAction AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
-
-		EXECUTE	sys.sp_executesql @query
-		
-	END
-	---------------Table 15:  Intg_OddsFeed_SettlementAction_Outright_bk -----------------------------
-	ELSE IF @TableName = 'Intg_OddsFeed_SettlementAction_Outright_bk'
-	BEGIN
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.Intg_OddsFeed_SettlementAction_Outright_bk(ActionId, ActionType, OrId, LeagueId, TeamId, Status, IsDeadheat, Deadheat, CreateTime)
-SELECT	ActionId, ActionType, OrId, LeagueId, TeamId, Status, IsDeadheat, Deadheat, CreateTime
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT ActionId, ActionType, OrId, LeagueId, TeamId, Status, IsDeadheat, Deadheat, CreateTime
-FROM	bodb02.dbo.Intg_OddsFeed_SettlementAction_Outright AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.outright14 AS t2 WITH (NOLOCK) WHERE t1.orid = t2.orid AND t2.eventdate = @winlostdate);'')'
-
-		EXECUTE	sys.sp_executesql @query
-		
-	END
-	---------------Table 16:  Match3rd_bk -----------------------------
-	ELSE IF @TableName = 'Match3rd_bk'
-	BEGIN
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.Match3rd_bk(Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, HasLive, EventStatus, VendorEventStatus, CreateTime, UpdateTime, VendorEventDate, GameResultDate)
-SELECT	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, HasLive, EventStatus, VendorEventStatus, CreateTime, UpdateTime, VendorEventDate, GameResultDate
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, HasLive, EventStatus, VendorEventStatus, CreateTime, UpdateTime, VendorEventDate, GameResultDate
-FROM	bodb02.dbo.Match3rd14 AS t1  WITH (NOLOCK)
-WHERE t1.eventdate = @winlostdate;'')'
-
-		EXECUTE	sys.sp_executesql @query
-		
-	END
-	---------------Table 17:  oddsES_bk -----------------------------
-	ELSE IF @TableName = 'oddsES_bk'
-	BEGIN
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.oddsES_bk(oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk, stakerange
-			,	newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category, IncreaseMaxbet
-			,	odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId)
-SELECT	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk, stakerange
-			,	newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category, IncreaseMaxbet
-			,	odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk, stakerange
-			,	newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category, IncreaseMaxbet
-			,	odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId
-FROM	bodb02.dbo.oddsES14 AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
-
-		EXECUTE	sys.sp_executesql @query
-		
-	END
-	---------------Table 18:  ResultDetailES_bk -----------------------------
-	ELSE IF @TableName = 'ResultDetailES_bk'
-	BEGIN	
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.ResultDetailES_bk(MatchID, ResourceID, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateBy, CreateDate, LastModifyBy, LastModifyDate, OtherInfo)
+	ELSE IF	@TableName = N'ResultDetail_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.ResultDetail_bk
+	(	MatchID, ResourceID, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateBy, CreateDate, LastModifyBy, LastModifyDate, OtherInfo)
 SELECT	MatchID, ResourceID, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateBy, CreateDate, LastModifyBy, LastModifyDate, OtherInfo
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT MatchID, ResourceID, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateBy, CreateDate, LastModifyBy, LastModifyDate, OtherInfo
-FROM	bodb02.dbo.ResultDetailES14 AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-		EXECUTE	sys.sp_executesql @query
-	END	
-	
+SELECT	MatchID, ResourceID, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateBy, CreateDate, LastModifyBy, LastModifyDate, OtherInfo
+FROM	bodb02.dbo.ResultDetail14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 9:  ResultDetail3rd_bk -----------------------------
+	ELSE IF	@TableName = N'ResultDetail3rd_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.ResultDetail3rd_bk
+	(	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, Resourceid)
+SELECT	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, Resourceid
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, Resourceid
+FROM	bodb02.dbo.ResultDetail3rd14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 10:  EventInfo3rd_bk -----------------------------
+	ELSE IF	@TableName = N'EventInfo3rd_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.EventInfo3rd_bk
+	(	EventInfo3rdID, ArenaID, FightNo, EventDate, HomeOwner, AwayOwner)
+SELECT	EventInfo3rdID, ArenaID, FightNo, EventDate, HomeOwner, AwayOwner
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	EventInfo3rdID, ArenaID, FightNo, EventDate, HomeOwner, AwayOwner
+FROM	bodb02.dbo.EventInfo3rd14 AS t1 WITH (NOLOCK)
+WHERE	t1.eventdate = @winlostdate;'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 11:  AutoPayoutResult_bk -----------------------------
+	ELSE IF	@TableName = N'AutoPayoutResult_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.AutoPayoutResult_bk
+	(	AutoPayoutResultId, MatchId, CalculationType, SourceId, HomeValue, AwayValue, StatusId, TryCount, CreatedDate, ModifiedDate)
+SELECT	AutoPayoutResultId, MatchId, CalculationType, SourceId, HomeValue, AwayValue, StatusId, TryCount, CreatedDate, ModifiedDate
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	AutoPayoutResultId, MatchId, CalculationType, SourceId, HomeValue, AwayValue, StatusId, TryCount, CreatedDate, ModifiedDate
+FROM	bodb02.dbo.AutoPayoutResult14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 12:  ProviderResultDetail_bk -----------------------------
+	ELSE IF	@TableName = N'ProviderResultDetail_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.ProviderResultDetail_bk
+	(	ProviderResultDetailId, MatchId, SourceId, TypeId, HomeValue, AwayValue, CreatedDate, IsConfirmed)
+SELECT	ProviderResultDetailId, MatchId, SourceId, TypeId, HomeValue, AwayValue, CreatedDate, IsConfirmed
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	ProviderResultDetailId, MatchId, SourceId, TypeId, HomeValue, AwayValue, CreatedDate, IsConfirmed
+FROM	bodb02.dbo.ProviderResultDetail14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 13:  Odds3rd_bk -----------------------------
+	ELSE IF	@TableName = N'Odds3rd_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.Odds3rd_bk
+	(	oddsid, matchid, odds3rdid, bettype, hdp1, hdp2, odds1a, odds2a, oddsstatus, changetime, creator, com1, comx, com2, cs00, cs01, cs10, cs11, cs02, cs12, cs22, cs21, cs20, cs30, cs31, cs32
+	,	cs33, cs23, cs13, cs03, cs99, sporttype, cs04, cs05, Resourceid)
+SELECT	oddsid, matchid, odds3rdid, bettype, hdp1, hdp2, odds1a, odds2a, oddsstatus, changetime, creator, com1, comx, com2, cs00, cs01, cs10, cs11, cs02, cs12, cs22, cs21, cs20, cs30, cs31, cs32
+	,	cs33, cs23, cs13, cs03, cs99, sporttype, cs04, cs05, Resourceid
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	oddsid, matchid, odds3rdid, bettype, hdp1, hdp2, odds1a, odds2a, oddsstatus, changetime, creator, com1, comx, com2, cs00, cs01, cs10, cs11, cs02, cs12, cs22, cs21, cs20, cs30, cs31, cs32
+	,	cs33, cs23, cs13, cs03, cs99, sporttype, cs04, cs05, Resourceid
+FROM	bodb02.dbo.Odds3rd14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 14:  Intg_OddsFeed_SettlementAction_bk -----------------------------
+	ELSE IF	@TableName = N'Intg_OddsFeed_SettlementAction_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.Intg_OddsFeed_SettlementAction_bk
+	(	ActionId, LeagueId, MatchId, ActionType, HTHomeScore, HTAwayScore, FTHomeScore, FTAwayScore, CreateTime, OtherInfo)
+SELECT	ActionId, LeagueId, MatchId, ActionType, HTHomeScore, HTAwayScore, FTHomeScore, FTAwayScore, CreateTime, OtherInfo
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	ActionId, LeagueId, MatchId, ActionType, HTHomeScore, HTAwayScore, FTHomeScore, FTAwayScore, CreateTime, OtherInfo
+FROM	bodb02.dbo.Intg_OddsFeed_SettlementAction AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 15:  Intg_OddsFeed_SettlementAction_Outright_bk -----------------------------
+	ELSE IF	@TableName = N'Intg_OddsFeed_SettlementAction_Outright_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.Intg_OddsFeed_SettlementAction_Outright_bk
+	(	ActionId, ActionType, OrId, LeagueId, TeamId, Status, IsDeadheat, Deadheat, CreateTime)
+SELECT	ActionId, ActionType, OrId, LeagueId, TeamId, Status, IsDeadheat, Deadheat, CreateTime
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	ActionId, ActionType, OrId, LeagueId, TeamId, Status, IsDeadheat, Deadheat, CreateTime
+FROM	bodb02.dbo.Intg_OddsFeed_SettlementAction_Outright AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.outright14 AS t2 WITH (NOLOCK) WHERE t1.orid = t2.orid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 16:  Match3rd_bk -----------------------------
+	ELSE IF	@TableName = N'Match3rd_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.Match3rd_bk
+	(	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, HasLive, EventStatus, VendorEventStatus, CreateTime, UpdateTime, VendorEventDate, GameResultDate)
+SELECT	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, HasLive, EventStatus, VendorEventStatus, CreateTime, UpdateTime, VendorEventDate, GameResultDate
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, HasLive, EventStatus, VendorEventStatus, CreateTime, UpdateTime, VendorEventDate, GameResultDate
+FROM	bodb02.dbo.Match3rd14 AS t1 WITH (NOLOCK)
+WHERE	t1.eventdate = @winlostdate;'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 17:  oddsES_bk -----------------------------
+	ELSE IF	@TableName = N'oddsES_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.oddsES_bk
+	(	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk
+	,	stakerange, newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category
+	,	IncreaseMaxbet, odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId)
+SELECT	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk
+	,	stakerange, newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category
+	,	IncreaseMaxbet, odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk
+	,	stakerange, newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category
+	,	IncreaseMaxbet, odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId
+FROM	bodb02.dbo.oddsES14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 18:  ResultDetailES_bk -----------------------------
+	ELSE IF	@TableName = N'ResultDetailES_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO dbo.ResultDetailES_bk
+	(	MatchID, ResourceID, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateBy, CreateDate, LastModifyBy, LastModifyDate, OtherInfo)
+SELECT	MatchID, ResourceID, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateBy, CreateDate, LastModifyBy, LastModifyDate, OtherInfo
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	MatchID, ResourceID, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateBy, CreateDate, LastModifyBy, LastModifyDate, OtherInfo
+FROM	bodb02.dbo.ResultDetailES14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
 	---------------Table 19:  SMP_Market_bk -----------------------------
-	ELSE IF @TableName = 'SMP_Market_bk'
-	BEGIN	
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.SMP_Market_bk(MarketId, MatchId, VendorId, Price, TradeStatus, Result, ResultStatusId, SelectionCounts, CreateTime, UpdateTime)
+	ELSE IF	@TableName = N'SMP_Market_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.SMP_Market_bk
+	(	MarketId, MatchId, VendorId, Price, TradeStatus, Result, ResultStatusId, SelectionCounts, CreateTime, UpdateTime)
 SELECT	MarketId, MatchId, VendorId, Price, TradeStatus, Result, ResultStatusId, SelectionCounts, CreateTime, UpdateTime
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT MarketId, MatchId, VendorId, Price, TradeStatus, Result, ResultStatusId, SelectionCounts, CreateTime, UpdateTime
-FROM	bodb02.dbo.SMP_Market14 AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-		EXECUTE	sys.sp_executesql @query
-	END	
-	
+SELECT	MarketId, MatchId, VendorId, Price, TradeStatus, Result, ResultStatusId, SelectionCounts, CreateTime, UpdateTime
+FROM	bodb02.dbo.SMP_Market14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
 	---------------Table 20:  SMP_MarketSelection_bk -----------------------------
-	ELSE IF @TableName = 'SMP_MarketSelection_bk'
-	BEGIN	
-		SELECT  @query = N''		
-		SELECT	@query = @query + N'
-INSERT INTO dbo.SMP_MarketSelection_bk(MarketSelectionId, MarketId, SelectionType, Result, ResultStatusId, MatchId)
+	ELSE IF	@TableName = N'SMP_MarketSelection_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.SMP_MarketSelection_bk
+	(	MarketSelectionId, MarketId, SelectionType, Result, ResultStatusId, MatchId)
 SELECT	MarketSelectionId, MarketId, SelectionType, Result, ResultStatusId, MatchId
-FROM OPENQUERY(DBPRO,''
-DECLARE	@winlostdate SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-SELECT MarketSelectionId, MarketId, SelectionType, Result, ResultStatusId, MatchId
-FROM	bodb02.dbo.SMP_MarketSelection14 AS t1  WITH (NOLOCK)
-WHERE EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'')'
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-		EXECUTE	sys.sp_executesql @query
-	END
+SELECT	MarketSelectionId, MarketId, SelectionType, Result, ResultStatusId, MatchId
+FROM	bodb02.dbo.SMP_MarketSelection14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
+
+	---------------Table 21:  Dot_Admin_Assignment_Trader_bk -----------------------------
+	-- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader] table
+	ELSE IF	@TableName = N'Dot_Admin_Assignment_Trader_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.Dot_Admin_Assignment_Trader_bk
+	(	ID, matchid, bettype, liveindicator, Detail_X, Detail_Y, Detail_Z, Type, TraderID, SuspenderID, UpdatedTime, UpdatedUser)
+SELECT	ID, matchid, bettype, liveindicator, Detail_X, Detail_Y, Detail_Z, Type, TraderID, SuspenderID, UpdatedTime, UpdatedUser
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	ID, matchid, bettype, liveindicator, Detail_X, Detail_Y, Detail_Z, Type, TraderID, SuspenderID, UpdatedTime, UpdatedUser
+FROM	bodb02.dbo.Dot_Admin_Assignment_Trader AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
 END
 GO
 /*<info serverAlias="DBARC-bodb_archive" executers="" viewers="" isFunction="0" isNested="1"></info>*/
