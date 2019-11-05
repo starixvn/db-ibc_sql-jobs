@@ -19,8 +19,8 @@ CREATE TABLE [dbo].[CheckWinLossLimitResult_Credit](
 	[BetType] [smallint] NULL,
 	[CustIdA] [int] NULL,
 	[CustIdB] [int] NULL,
-	[ValueA] [smallmoney] NULL,
-	[ValueB] [smallmoney] NULL,
+	[ValueA] [money] NULL,
+	[ValueB] [money] NULL,
 	[CreatedDate] [datetime] NULL,
 	[IsLive] [bit] NULL
 ) ON [CheckResultData]
