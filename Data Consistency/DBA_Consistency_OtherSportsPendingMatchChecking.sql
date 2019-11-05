@@ -30,13 +30,12 @@ BEGIN
 	SELECT matchid
 	FROM bodb02.dbo.Match m WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.league l WITH (NOLOCK) ON l.leagueid = m.LeagueID AND l.isTest = 0
-	WHERE (m.Sporttype= 180 OR m.sporttype BETWEEN 186 AND 199) and m.eventstatus <> 'Completed' AND m.eventdate = @yesterday
+	WHERE (m.Sporttype= 180 OR m.sporttype BETWEEN 186 AND 199) and m.eventstatus = 'running' AND m.eventdate = @yesterday
 	UNION ALL
-	SELECT DISTINCT r.EventID
-	FROM bodb02.dbo.VSOutright r WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.VSRaceInfo o WITH (NOLOCK) ON r.EventID = o.EventID
+	SELECT o.EventID
+	FROM bodb02.dbo.VSRaceInfo o WITH (NOLOCK) 
 		INNER JOIN bodb02.dbo.league l WITH (NOLOCK) ON l.leagueid = o.LeagueID AND l.isTest = 0
-	WHERE o.Sporttype IN (181,182,183,184,185) AND o.eventstatus <> 'Completed'	
+	WHERE o.Sporttype IN (181,182,183,184,185) AND o.eventstatus = 'running'	
 			AND o.EventTime>= @yesterday AND o.EventTime < @today
 	
 	SELECT TOP (100) @matchid = @matchid + ',' + CAST(@matchid AS VARCHAR(50))
@@ -46,7 +45,7 @@ BEGIN
 	BEGIN
 		SELECT	@matchid = SUBSTRING(@matchid, 2, LEN(@matchid) - 1)
 				,@ErrCode = 100
-				,@ErrMsg = 'Detect yesterday pending matches for Virtual Sports or Virtual Spors 2 not completed yet'
+				,@ErrMsg = 'Detect yesterday pending matches for Virtual Sports not completed yet'
 				,@SampleData = 'VSRaceInfo.EventID OR Match.matchid in (' + @matchid + ')'
 	END
 
