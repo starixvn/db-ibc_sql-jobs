@@ -164,26 +164,30 @@ BEGIN
 	BEGIN		
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 505, scs.sporttype, scs.bettype, scs.custid as custidA, 0 custidB, scs.MaxLossLimit , g.MinLossLimit
-		FROM #SuperWinLossLimit scs			
-			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON scs.productID = g.productID AND g.ExchangeId = @currency
+		FROM #SuperWinLossLimit scs	
+			INNER JOIN @SportBettype s ON scs.sporttype = s.sporttype AND scs.bettype = s.bettype	
+			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON s.productID = g.productID AND g.ExchangeId = @currency
 		WHERE scs.MaxLossLimit < g.MinLossLimit
 		
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 505, cs.sporttype, cs.bettype, cs.custid as custidA, 0 custidB, cs.MaxLossLimit , g.MinLossLimit
-		FROM #MasterWinLossLimit cs			
-			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON cs.productID = g.productID AND g.ExchangeId = @currency
+		FROM #MasterWinLossLimit cs	
+			INNER JOIN @SportBettype s ON cs.sporttype = s.sporttype AND cs.bettype = s.bettype	
+			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON s.productID = g.productID AND g.ExchangeId = @currency
 		WHERE cs.MaxLossLimit < g.MinLossLimit
 		
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 505, cs.sporttype, cs.bettype, cs.custid as custidA, 0 custidB, cs.MaxLossLimit , g.MinLossLimit
 		FROM #AgentWinLossLimit cs			
-			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON cs.productID = g.productID AND g.ExchangeId = @currency
+			INNER JOIN @SportBettype s ON cs.sporttype = s.sporttype AND cs.bettype = s.bettype	
+			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON s.productID = g.productID AND g.ExchangeId = @currency
 		WHERE cs.MaxLossLimit < g.MinLossLimit
 		
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 505, cs.sporttype, cs.bettype, cs.custid as custidA, 0 custidB, cs.MaxLossLimit , g.MinLossLimit
 		FROM #MemberWinLossLimit cs			
-			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON cs.productID = g.productID AND g.ExchangeId = @currency
+			INNER JOIN @SportBettype s ON cs.sporttype = s.sporttype AND cs.bettype = s.bettype	
+			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON s.productID = g.productID AND g.ExchangeId = @currency
 		WHERE cs.MaxLossLimit < g.MinLossLimit
 	END 
 
