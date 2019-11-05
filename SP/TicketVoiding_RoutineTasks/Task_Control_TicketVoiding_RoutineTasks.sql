@@ -30,7 +30,8 @@ BEGIN
 			@ExecuteType TINYINT,
 			@AffectedList VARCHAR(MAX),
 			@errmsg VARCHAR(1000) = '',
-			@result TINYINT = 0
+			@result TINYINT = 0,
+			@log VARCHAR(1000) = ''
 
 	IF @ExecutedType = 1
 	BEGIN
@@ -53,23 +54,22 @@ BEGIN
 				AND status = 0
 			IF @@ROWCOUNT > 0
 			BEGIN
-				SELECT @result = 2, @errmsg = '' --- default is successfully
+				SELECT @result = 2, @log = '', @errmsg = '' --- default is successfully
 				BEGIN TRY
-					EXECUTE Task_ReadyToGo_TicketVoiding_RoutineTasks @stepNo = @stepNo, @AffectedList = @AffectedList, @ExecuteType = @ExecuteType
+					EXECUTE Task_ReadyToGo_TicketVoiding_RoutineTasks @stepNo = @stepNo, @AffectedList = @AffectedList, @ExecuteType = @ExecuteType, @errmsg = @errmsg OUTPUT
 				END TRY
 				BEGIN CATCH
-					SELECT @errmsg = ERROR_MESSAGE(), @result = 3
+					SELECT @log = @errmsg + '--' + ERROR_MESSAGE(), @result = 3
 				END CATCH
 			END
 			--- set this stepno is done with success 
 			UPDATE TicketVoiding_RoutineTasks
 			SET Status = @result,
-				remark = @errmsg,
+				remark = @log,
 				Duration = DATEDIFF(SECOND,ExecutedDate,GETDATE())
 			WHERE RequestID = @RequestID AND StepNo = @stepNo
 				--AND status = 1 
-			-----lukas: temprarily stop to test & debug at local, will remove when it's done.
-			--break
+			
 		END
 	END
 	IF @ExecutedType = 2
@@ -103,19 +103,19 @@ BEGIN
 				AND status = 0
 			IF @@ROWCOUNT > 0
 			BEGIN
-				SELECT @result = 2, @errmsg = '' --- default is successfully
+				SELECT @result = 2,@log = '', @errmsg = '' --- default is successfully
 				BEGIN TRY
-					EXECUTE Task_ReadyToGo_TicketVoiding_RoutineTasks @stepNo = @stepNo, @ExecuteType = @ExecuteType
+					EXECUTE Task_ReadyToGo_TicketVoiding_RoutineTasks @stepNo = @stepNo, @ExecuteType = @ExecuteType, @errmsg = @errmsg OUTPUT
 				END TRY
 				BEGIN CATCH
-					SELECT @errmsg = ERROR_MESSAGE(), @result = 3
+					SELECT @log = @errmsg + '--' + ERROR_MESSAGE(), @result = 3
 				END CATCH
 			END
 
 			--- set this stepno is done with success 
 			UPDATE TicketVoiding_RoutineTasks
 			SET Status = @result,
-				remark = @errmsg,
+				remark = @log,
 				Duration = DATEDIFF(SECOND,ExecutedDate,GETDATE())
 			WHERE ExecuteType = 2 AND StepNo = @stepNo
 				AND CreatedDate < CONVERT(VARCHAR, GETDATE(), 23)

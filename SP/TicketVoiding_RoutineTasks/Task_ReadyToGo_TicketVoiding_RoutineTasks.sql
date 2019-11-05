@@ -3,7 +3,8 @@ ALTER PROCEDURE [dbo].[Task_ReadyToGo_TicketVoiding_RoutineTasks]
 (
 	 @stepNo		TINYINT, 
 	 @AffectedList	VARCHAR(MAX) = NULL,
-	 @ExecuteType	TINYINT 
+	 @ExecuteType	TINYINT,
+	 @errmsg		VARCHAR(1000) = '' OUTPUT 
 )
 AS
 /*
@@ -52,7 +53,7 @@ BEGIN
 		CROSS APPLY xmldata.nodes('root/r') AS t(c)
 	END 
 
-	IF @stepNo IN (1,2,3)  -- those kind of execution need both input @winlostdate & @custid
+	IF @stepNo IN (1,2,3,4)  -- those kind of execution need both input @winlostdate & @custid
 	BEGIN
 		WHILE EXISTS (SELECT 1 FROM @inputList WHERE isDone = 0)
 		BEGIN
@@ -79,7 +80,7 @@ BEGIN
 			WHERE isDone = 0
 			GROUP BY winlostdate 
 
-			EXECUTE Task_Execute_TicketVoiding_RoutineTasks @stepNo = @stepNo, @winlostdate = @winlostdate, @custIDs = @custIDs
+			EXECUTE Task_Execute_TicketVoiding_RoutineTasks @stepNo = @stepNo, @winlostdate = @winlostdate, @custIDs = @custIDs, @errmsg = @errmsg OUTPUT
 
 			UPDATE @inputList
 			SET isDone = 1
@@ -87,7 +88,7 @@ BEGIN
 
 		END
 	END
-	IF @stepNo IN (4,5,6,7,8)   -- those kind of execution only need input @winlostdate 
+	IF @stepNo IN (5,6,7,8)   -- those kind of execution only need input @winlostdate 
 	BEGIN
 		WHILE EXISTS (SELECT 1 FROM @inputList WHERE isDone = 0)
 		BEGIN
@@ -97,7 +98,7 @@ BEGIN
 			GROUP BY winlostdate 
 			ORDER BY winlostdate
 
-			EXECUTE Task_Execute_TicketVoiding_RoutineTasks @stepNo = @stepNo, @winlostdate = @winlostdate
+			EXECUTE Task_Execute_TicketVoiding_RoutineTasks @stepNo = @stepNo, @winlostdate = @winlostdate, @errmsg = @errmsg OUTPUT
 
 			UPDATE @inputList
 			SET isDone = 1
