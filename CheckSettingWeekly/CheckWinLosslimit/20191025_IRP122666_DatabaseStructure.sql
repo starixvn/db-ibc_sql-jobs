@@ -13,6 +13,13 @@ GO
 ALTER TABLE Credit_Supers ADD WinLossLimitDCS TINYINT NULL
 GO
 
+ALTER TABLE [dbo].[Credit_Supers] ADD  CONSTRAINT [DF_Credit_Supers_WinLossLimit]  DEFAULT ((0)) FOR [WinLossLimit]
+GO
+
+ALTER TABLE [dbo].[Credit_Supers] ADD  CONSTRAINT [DF_Credit_Supers_WinLossLimitDCS]  DEFAULT ((0)) FOR [WinLossLimitDCS]
+GO
+
+
 CREATE TABLE [dbo].[CheckWinLossLimitResult_Credit](
 	[RuleId] [smallint] NULL,
 	[SportType] [smallint] NULL,
