@@ -38,7 +38,7 @@ BEGIN
 	WHERE o.Sporttype IN (181,182,183,184,185) AND o.eventstatus = 'running'	
 			AND o.EventTime>= @yesterday AND o.EventTime < @today
 	
-	SELECT TOP (100) @matchid = @matchid + ',' + CAST(@matchid AS VARCHAR(50))
+	SELECT TOP (100) @matchid = @matchid + ',' + CAST(matchid AS VARCHAR(50))
 	FROM	@tblMatch
 	
 	IF @matchid <> ''
