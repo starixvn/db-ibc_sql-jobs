@@ -185,7 +185,7 @@ BEGIN
 		FROM #MemberWinLossLimit cs			
 			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON cs.productID = g.productID AND g.ExchangeId = @currency
 		WHERE cs.MaxLossLimit < g.MinLossLimit
-	END
+	END 
 
 	--Super's Maximum Loss < Master's Maximum Loss		
 	IF @ruleid IN (0,506)
