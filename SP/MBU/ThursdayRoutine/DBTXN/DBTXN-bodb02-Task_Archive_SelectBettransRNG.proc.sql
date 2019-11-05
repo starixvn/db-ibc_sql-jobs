@@ -10,7 +10,8 @@ AS
 
 	Revisions:
 		- 20160519@Joy:		remove NetStake /  Add  Additional    
-		- 20180405@Billy:	Add [JackpotInfo], [RefNo2], [ContributionRate], [BetStake], [ContributionStake3rd] columns - [Redmine: #93177]
+		- 20180405@Billy:	Add [JackpotInfo], [RefNo2], [ContributionRate], [BetStake], [ContributionStake3rd] columns - [Redmine: #93177] 
+		- 20191104@Billy:	Add column [epositiontaking] of [bettransRnG] - [Redmine: #123267]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -21,12 +22,12 @@ BEGIN;
 	FROM	dbo.Task_ArchiveDate WITH (NOLOCK);
 
 	-- to DB06.bodb_Archive.dbo.bettransRNG_BK
-	SELECT	b.transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking, 
-			playerdiscount, discount, adiscount, sdiscount, creator, b.winlostdate, betfrom, virtualrate, actualrate, actual_stake, 
-			currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID, 
-			vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd,
-			ip.countryShort countryCode ,Additional
-		,	b.JackpotInfo, b.RefNo2, b.ContributionRate, b.BetStake, b.ContributionStake3rd
+	SELECT	b.transid, b.custid, b.transdate, b.odds, b.stake, b.status, b.apositiontaking, b.mpositiontaking, b.tpositiontaking, b.spositiontaking
+		,	b.playerdiscount, b.discount, b.adiscount, b.sdiscount, b.creator, b.winlostdate, b.betfrom, b.virtualrate, b.actualrate, b.actual_stake
+		,	b.currency, b.CurrencyName, b.recommend, b.mrecommend, b.srecommend, b.ip, b.statusID, b.balance, b.Username, b.transdesc, b.productID, b.gameID
+		,	b.vendorID, b.GameId3rd, b.TranId3rd, b.RefNo, b.IsSum, b.winlost, b.awinlost, b.mwinlost, b.swinlost, b.playercomm, b.comm, b.acomm, b.scomm, b.Transdate3rd
+		,	[countryCode] = ip.countryShort
+		,	b.Additional, b.JackpotInfo, b.RefNo2, b.ContributionRate, b.BetStake, b.ContributionStake3rd, b.epositiontaking
 	FROM		dbo.bettransRnG14 AS b WITH (NOLOCK)
 	INNER JOIN	dbo.Task_bettransRNG14_IP2Country AS ip WITH (NOLOCK)
 			ON	b.transid = ip.transid
