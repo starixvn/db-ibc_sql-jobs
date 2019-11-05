@@ -1,6 +1,5 @@
 /*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
-USE CheckResultDB
-GO
+
 ALTER PROCEDURE [dbo].[DBA_CheckPositionTaking_Deposit_DCS]
 (
 	@srecommend	INT   
