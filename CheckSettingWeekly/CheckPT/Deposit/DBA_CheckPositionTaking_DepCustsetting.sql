@@ -20,6 +20,7 @@ AS
 		-20190604@Winnie: [Bobbet,A1game,ig128] Update SB PT to reflect new terms RedmineID:#113387
 		-20190708@Winnie: Rules PT RedmineID:#116469
 		-20190801@Winnie: [AE88] Adjust Term for Sportsbook RedmineID:#117629
+		-20191105@Winnie: starsoccer - Adjust SB PT. RedmineID:#123273
 	Param's Explanation:
 	
 */
@@ -151,7 +152,7 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)					
 			INNER JOIN #tmpDumMember c ON s.custid=c.custid		
 		WHERE 
-			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925,0.89) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925,0.89,0.885) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
 			AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))		
 	END
 
