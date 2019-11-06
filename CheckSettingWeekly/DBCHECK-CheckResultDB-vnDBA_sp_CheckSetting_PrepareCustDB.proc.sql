@@ -30,6 +30,7 @@ BEGIN;
 	EXECUTE	CheckCustDB.sys.sp_executesql @query = @GrantPermissionVNTeam;
 	EXECUTE	CheckCustDB.sys.sp_executesql @query = @GrantPermissionServiceBroker;
 
+EXECUTE	CheckCustDB.sys.sp_executesql @query = N'
 IF	INDEXPROPERTY(OBJECT_ID(''dbo.Dep_CustSetting3rd''), ''IX_Dep_CustSetting3rd_CheckPT'', ''IndexID'') IS NULL
 	CREATE NONCLUSTERED INDEX IX_Dep_CustSetting3rd_CheckPT ON Dep_CustSetting3rd (CustID,Sporttype,Bettype,IsLive) INCLUDE(spositiontaking,mpositiontaking,apositiontaking) WITH (ONLINE = OFF, DATA_COMPRESSION = PAGE);
 
