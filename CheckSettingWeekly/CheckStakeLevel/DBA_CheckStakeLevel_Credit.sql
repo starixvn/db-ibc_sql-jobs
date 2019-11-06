@@ -9,7 +9,7 @@ AS
 	Task: Check StakeLevel setting on CustGameType for credit customers
 	DB: DBCHECK.CheckResultDB
 	Revisions:
-
+		--20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -22,7 +22,7 @@ BEGIN
 	CREATE TABLE #MasterStakeLevel (CustID INT, SportType INT, GameTypeID INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,GameTypeID))
 	CREATE TABLE #AgentStakeLevel (CustID INT, SportType INT, GameTypeID INT, mrecommend INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,GameTypeID))
 	CREATE TABLE #MemberStakeLevel (CustID INT, SportType INT, GameTypeID INT, recommend INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,GameTypeID))
-	CREATE TABLE #GlobalStakeLevel (GameTypeID INT, StakeLevelList VARCHAR(100))
+	CREATE TABLE #GlobalStakeLevel (GameTypeID INT, StakeLevelList VARCHAR(1000))
 	
 	IF @SportType = 0
 	BEGIN
