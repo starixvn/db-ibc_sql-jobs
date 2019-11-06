@@ -39,6 +39,7 @@ AS
 		- 20190319@Patrick: DB06 migration [RedmineID: #110208]
 		- 20190701@Percy: Update directly flag of MBBU process [RedmineID: #115877]
 		- 20190828@Billy:	Add table [bettransInfo] - [Redmine: #119219]
+		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
  */
 BEGIN
 	--SET NOCOUNT ON
@@ -333,14 +334,8 @@ BEGIN
 	END
 
 	IF @parlay = 2
-	BEGIN	
-		
+	BEGIN
 		DELETE FROM bettransG WITH(ROWLOCK) WHERE winlostdate = @winlostdate
-
-		IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'BetLucky3Result')
-		BEGIN
-			DELETE FROM dbo.BetLucky3Result WITH(ROWLOCK) WHERE WinlostDate = @winlostdate
-		END
 	END
 END
 GO

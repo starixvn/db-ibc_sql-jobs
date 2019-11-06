@@ -8,10 +8,11 @@ AS
 /*
 	Created: 20180925@Patrick
 	Task: Check consistency data for archiving process
-	
+
 	Revisions:
 		- 20180926@Patrick:	Initial - [RedmineId: #101207]
-		- 20190806@Patrick: Add transfer_bk - [RedmineId: #118277]
+		- 20190806@Patrick: Add transfer_bk - [RedmineId: #118277] 
+		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -46,25 +47,19 @@ BEGIN
 	SELECT COUNT(1), 'bettransm' 
 	FROM dbo.bettransm14 WITH(NOLOCK)
 	WHERE winlostdate = @DateCheck
-	
+
 	--//SettlementNG2_Message
 	INSERT INTO @__tempCount(rowcnt, tableName)
 	SELECT COUNT(1), 'SettlementNG2_Message' 
 	FROM dbo.SettlementNG2_Message WITH(NOLOCK) 
 	WHERE eventdate = @DateCheck
-	
+
 	--//staging_NG2
 	INSERT INTO @__tempCount(rowcnt, tableName)
 	SELECT COUNT(1), 'bettrans_Staging' 
 	FROM dbo.bettrans_Staging b WITH(NOLOCK) 
 		INNER JOIN dbo.SettlementNG2_Message m WITH(NOLOCK) ON b.SeqId = m.SeqID
 	WHERE m.EventDate = @DateCheck
-	
-	--//LuckyResult3rd
-	INSERT INTO @__tempCount(rowcnt, tableName)
-	SELECT COUNT(1), 'BetLucky3Result' 
-	FROM dbo.BetLucky3Result14 WITH(NOLOCK) 
-	WHERE WinlostDate = @DateCheck
 
 	--//bettrans
 	INSERT INTO @__tempCount(rowcnt, tableName)
@@ -79,7 +74,7 @@ BEGIN
 	WHERE ruben = 1 AND matchid = 0 AND bettype > 20000  
 		AND winlostdate = @DateCheck AND custid <> 0
 		AND (winlost + actual_stake) <> 0
-	
+
 	--//
 	SELECT @OutputData = (
 		SELECT rowcnt AS r, tableName AS t

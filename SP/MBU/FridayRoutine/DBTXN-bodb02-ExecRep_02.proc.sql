@@ -25,6 +25,7 @@ AS
 		- 20181106@Sophia:	Add delete Transfer_Coll [Redmine: #98621]
 		- 20190704@Billy:	Add [MarkedTransaction] to Friday Routine - [Redmine: #115199]
 		- 20190828@Billy:	Add table [bettransInfo] to Friday Routine - [Redmine: #119219]
+		- 20191030@Billy:	Remove table [BetLucky3Result] from Friday Routine - [Redmine: #122987]
 */
 -- =======================
 -- Parameter check\control
@@ -282,21 +283,6 @@ BEGIN
 
 		IF	@deletedTarget = 'others' --- for deleting all other small tables
 		BEGIN
-			IF	OBJECT_ID('BetLucky3Result14') IS NOT NULL
-			BEGIN
-				SET @rc = 1
-				WHILE @rc > 0
-				BEGIN
-					BEGIN TRANSACTION
-					DELETE TOP (2500)
-					FROM dbo.BetLucky3Result14 WITH (ROWLOCK)
-					WHERE winlostdate = @winlostdate
-
-					SET @rc = @@ROWCOUNT
-					COMMIT TRANSACTION
-				END
-			END
-
 			IF	OBJECT_ID('bettranssum') IS NOT NULL
 			BEGIN
 				DELETE FROM bettranssum WHERE winlostdate = @winlostdate

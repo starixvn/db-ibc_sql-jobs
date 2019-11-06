@@ -11,7 +11,8 @@ AS
 
 	Revisions:
 		- 20180926@Patrick:	Initial - [RedmineId: #101207]
-		- 20190806@Patrick: Add transfer_bk - [RedmineId: #118277]
+		- 20190806@Patrick: Add transfer_bk - [RedmineId: #118277] 
+		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
 */
 BEGIN
 	SET NOCOUNT ON
