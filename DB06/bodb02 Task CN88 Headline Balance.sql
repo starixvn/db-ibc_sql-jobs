@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02 : Task CN88 Headline Balance]    Script Date: 10/14/2019 10:32:35 AM ******/
+/****** Object:  Job [bodb02 : Task CN88 Headline Balance - Test]    Script Date: 11/6/2019 5:00:38 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 10/14/2019 10:32:35 AM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 11/6/2019 5:00:38 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -25,7 +25,7 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Task CN88 Headline 
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Add Headline Balance]    Script Date: 10/14/2019 10:32:35 AM ******/
+/****** Object:  Step [Add Headline Balance]    Script Date: 11/6/2019 5:00:38 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Add Headline Balance', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
@@ -36,7 +36,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Add Head
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.Task_CS_HeadlineBalance_Job', 
+		@command=N'EXEC dbo.Task_CS_HeadlineBalance_Job_xpre', 
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -47,13 +47,13 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Occur eve
 		@freq_type=4, 
 		@freq_interval=1, 
 		@freq_subday_type=8, 
-		@freq_subday_interval=4, 
+		@freq_subday_interval=3, 
 		@freq_relative_interval=0, 
 		@freq_recurrence_factor=0, 
 		@active_start_date=20191014, 
 		@active_end_date=99991231, 
 		@active_start_time=10000, 
-		@active_end_time=170000, 
+		@active_end_time=50000, 
 		@schedule_uid=N'5d888aed-bd9a-41d9-b971-28b14c4ee8d2'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
@@ -63,6 +63,7 @@ GOTO EndSave
 QuitWithRollback:
     IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
 EndSave:
+
 GO
 
 
