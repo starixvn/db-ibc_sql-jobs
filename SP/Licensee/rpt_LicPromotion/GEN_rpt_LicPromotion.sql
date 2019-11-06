@@ -6,14 +6,14 @@ SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
 
-ALTER PROCEDURE [dbo].[GEN_rpt_NPHPromotion]
+ALTER PROCEDURE [dbo].[GEN_rpt_LicPromotion]
 	@fromDate DATE,
 	@toDate DATE
 AS
 
 /*
 	Created: 20191014@Parsons
-	Task: Generate data into rpt_NPHPromotion 
+	Task: Generate data into rpt_LicPromotion 
 	DB: DBLIC.bodb_LicenseeReport
 
 	Revisions:
@@ -21,12 +21,12 @@ AS
 
 	Param's Explanation:
 
-	EXEC GEN_rpt_NPHPromotion '20191001', '20191014'
+	EXEC GEN_rpt_LicPromotion '20191001', '20191014'
 */
 BEGIN
 	DECLARE @DrawStatusId SMALLINT = 111, @WonStatusId SMALLINT = 112, @LoseStatusId SMALLINT = 113
 
-	DELETE FROM dbo.rpt_NPHPromotion
+	DELETE FROM dbo.rpt_LicPromotion
 	WHERE @fromDate <= RptDate  AND RptDate <= @toDate
 
 	CREATE TABLE #tmpData(
@@ -91,15 +91,15 @@ BEGIN
 	FROM #tmpData t
 	INNER JOIN cte_CouponSummary cte ON t.PromoID = cte.PromoID AND t.RptDate = cte.CreateTime
 	
-	INSERT INTO dbo.rpt_NPHPromotion(RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed,
-									CouponCount,
-									Prize,
-									BetCountOfNPH,
-									BetCountOfNPH_NoDraw,
-									BetCountOfPromoDay,
-									BetCountOfPromoDay_NoDraw,
-									TurnoverPromoDay,
-									TurnoverPromoDay_NoDraw)
+	--INSERT INTO dbo.rpt_LicPromotion(RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed,
+	--								CouponCount,
+	--								Prize,
+	--								BetCountOfNPH,
+	--								BetCountOfNPH_NoDraw,
+	--								BetCountOfPromoDay,
+	--								BetCountOfPromoDay_NoDraw,
+	--								TurnoverPromoDay,
+	--								TurnoverPromoDay_NoDraw)
 	SELECT RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed,
 									SUM(CouponCount),
 									SUM(Prize),
