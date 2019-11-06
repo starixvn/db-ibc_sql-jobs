@@ -24,13 +24,15 @@ BEGIN
 			
 	SELECT @MoveBetsDay = MoveBetsDay,  @ToDay = GETDATE()	
 	FROM @Selbalanceupday
-		
-	WHILE @MoveBetsDay <= @ToDay
+	
+	-- SET start date from MB + 1 = 1st day in bettrans
+	SELECT @RunningDay = DATEADD(DD, 1, @MoveBetsDay)
+	WHILE @RunningDay <= @ToDay
 	BEGIN 
 		INSERT INTO @Days (RunningDay)
-		VALUES (@MoveBetsDay)
+		VALUES (@RunningDay)
 		
-		SELECT @MoveBetsDay = DATEADD(DD, 1, @MoveBetsDay )
+		SELECT @RunningDay = DATEADD(DD, 1, @RunningDay )
 	END 
 	
 	-- START processing
@@ -39,15 +41,18 @@ BEGIN
 		SELECT  TOP 1 @RunningDay = RunningDay, @ScheduleId = ScheduleId
 		FROM	@Days
 		WHERE	IsFinish = 0
+		ORDER BY ScheduleId
 
-		EXEC dbo.Task_DailyRptTotalBalance_Active @RunningDay 
+		EXEC dbo.Task_DailyRptTotalBalance_Active @Winlostdate = @RunningDay, @isCheckDataOnly = 0
 		
 		UPDATE  @Days
 		SET		IsFinish = 1
 		WHERE	RunningDay = @RunningDay
 						
 	END
+
+	-- CLEAN DATA processing
+	DELETE dbo.rptTotalBalance_Active WITH (ROWLOCK)
+	WHERE WinlostDate <= @MoveBetsDay
 END	
 GO 
-
- 

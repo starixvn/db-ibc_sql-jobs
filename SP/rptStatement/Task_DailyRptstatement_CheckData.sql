@@ -49,14 +49,17 @@ BEGIN
 		,OpeningTotalBalance DECIMAL(37,4)	NULL
 	)
 
-	-- GET the current BU day
-	-- GET the current BU day
+	-- GET the previous Saturday
 	SELECT @CurrentBU_Date	= MIN(eventdate)
-		,@CurrentMB_Date			= MAX(eventdate)
+		,@CurrentMB_Date	= MAX(eventdate)
 	FROM bodb02.dbo.match14 WITH(NOLOCK) 
 
 	SELECT @_Winlostdate = @Winlostdate
-		,@_Saturday = DATEADD (DD, -DATEPART(DW, @CurrentMB_Date), @CurrentMB_Date)
+		,@_Saturday = DATEADD (DD, -DATEPART(DW, @Winlostdate), @Winlostdate)
+
+	-- CHECK validation DATE
+	IF @_Winlostdate < @CurrentBU_Date
+		RETURN
 
 	-- 1. SUM BET/VOID/TRANSFER
 	-- TRANSFER: Headline, Member & SMA
@@ -205,7 +208,7 @@ BEGIN
 			FROM (
 				SELECT rpt.custid, rpt.ClosingBalance
 					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
-				FROM dbo.rptStatement_test rpt WITH(NOLOCK)
+				FROM dbo.rptStatement rpt WITH(NOLOCK)
 				WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
 			) AS tmp 
 			WHERE tmp.Num = 1
@@ -336,7 +339,7 @@ BEGIN
 			,0 AS beforeAmt
 			,tmp.Custid AS afterAmt
 		FROM #rptStatementCompare tmp
-		LEFT JOIN dbo.rptStatement_test rpt WITH(NOLOCK) 
+		LEFT JOIN dbo.rptStatement rpt WITH(NOLOCK) 
 			ON tmp.custid = rpt.custid AND rpt.winlostdate = @_Winlostdate
 		WHERE rpt.custid IS NULL
 
@@ -347,7 +350,7 @@ BEGIN
 			,12 AS SubError
 			,rpt.custid AS beforeAmt
 			,0 AS afterAmt
-		FROM dbo.rptStatement_test rpt WITH(NOLOCK)
+		FROM dbo.rptStatement rpt WITH(NOLOCK)
 		LEFT JOIN #rptStatementCompare tmp 
 			ON tmp.custid = rpt.custid
 		WHERE rpt.winlostdate = @_Winlostdate
@@ -362,7 +365,7 @@ BEGIN
 			, diff.beforeAmt
 			, diff.afterAmt
 		FROM #rptStatementCompare tmp
-		INNER JOIN dbo.rptStatement_test rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		INNER JOIN dbo.rptStatement rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
 		CROSS APPLY (
 			--Turnover
 			SELECT rpt.turnover AS beforeAmt
@@ -407,7 +410,7 @@ BEGIN
 			,rpt.Voidamt AS beforeAmt
 			,tmp.Voidamt AS afterAmt
 		FROM #rptStatementCompare tmp
-		INNER JOIN dbo.rptStatement_test rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		INNER JOIN dbo.rptStatement rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
 		WHERE rpt.winlostdate = @_Winlostdate
 			AND tmp.Voidamt <> rpt.Voidamt
 		
@@ -419,7 +422,7 @@ BEGIN
 			,rpt.TransferAmt AS beforeAmt
 			,tmp.TransferAmt AS afterAmt
 		FROM #rptStatementCompare tmp
-		INNER JOIN dbo.rptStatement_test rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		INNER JOIN dbo.rptStatement rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
 		WHERE rpt.winlostdate = @_Winlostdate
 			AND tmp.TransferAmt <> rpt.TransferAmt
 
@@ -431,7 +434,7 @@ BEGIN
 			,rpt.GrandPrize AS beforeAmt
 			,tmp.GrandPrize AS afterAmt
 		FROM #rptStatementCompare tmp
-		INNER JOIN dbo.rptStatement_test rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		INNER JOIN dbo.rptStatement rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
 		WHERE rpt.winlostdate = @_Winlostdate
 			AND tmp.GrandPrize <> rpt.GrandPrize
 
@@ -443,7 +446,7 @@ BEGIN
 			,diff.beforeAmt
 			,diff.afterAmt
 		FROM #rptStatementCompare tmp
-		INNER JOIN dbo.rptStatement_test rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		INNER JOIN dbo.rptStatement rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
 		CROSS APPLY (
 			--Openingbalance
 			SELECT rpt.Openingbalance AS beforeAmt
@@ -496,6 +499,7 @@ BEGIN
 				WHEN err.SubError = 24 THEN ' - Comm' 
 				WHEN err.SubError = 61 THEN ' - OpeningBalance' 
 				WHEN err.SubError = 62 THEN ' - OpeningTotalBalance' 
+				WHEN err.SubError = 0 THEN '' 
 				ELSE ' - Unknown'
 				END
 			AS Reason
@@ -511,7 +515,7 @@ BEGIN
 	ELSE 
 	BEGIN
 		-- Correct Data
-		MERGE INTO dbo.rptStatement_test AS TGR
+		MERGE INTO dbo.rptStatement AS TGR
 		USING #rptStatementCompare SRC
 		ON TGR.Winlostdate = SRC.Winlostdate AND TGR.Custid = SRC.Custid
 		WHEN MATCHED AND TGR.Winlostdate = @_Winlostdate THEN

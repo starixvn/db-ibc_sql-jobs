@@ -44,12 +44,16 @@ BEGIN
 	)
 
 	-- GET the current BU day
-	SELECT TOP 1 @CurrentBU_Date = MIN(eventdate)
-		,@CurrentMB_Date = MAX(eventdate)
+	SELECT @CurrentBU_Date		= MIN(eventdate)
+		,@CurrentMB_Date		= MAX(eventdate)
 	FROM bodb02.dbo.match14 WITH(NOLOCK) 
 
 	SELECT @_Winlostdate = @Winlostdate
-		,@_Saturday = DATEADD (DD, -DATEPART(DW, @CurrentMB_Date), @CurrentMB_Date)
+		,@_Saturday = DATEADD (DD, -DATEPART(DW, @Winlostdate), @Winlostdate)
+
+	-- CHECK validation DATE
+	IF @_Winlostdate <= @CurrentMB_Date
+		RETURN
 
 	-- 1. SUM BET/VOID/TRANSFER
 	-- TRANSFER: Headline, Member & SMA
@@ -210,7 +214,7 @@ BEGIN
 		FROM (
 			SELECT rpt.custid, rpt.ClosingBalance
 				, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
-			FROM dbo.rptStatement_test rpt WITH(NOLOCK)
+			FROM dbo.rptStatement rpt WITH(NOLOCK)
 			WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
 		) AS tmp 
 		WHERE tmp.Num = 1
@@ -292,7 +296,7 @@ BEGIN
 				OR (ISNULL(tmp.GrandPrize, 0)) <> 0
 			)
 	)
-	MERGE INTO dbo.rptStatement_test AS TGR
+	MERGE INTO dbo.rptStatement AS TGR
 	USING CTE_rptStatement AS SRC
 	ON TGR.Winlostdate = SRC.Winlostdate AND TGR.Custid = SRC.Custid
 	WHEN MATCHED AND TGR.Winlostdate = @_Winlostdate THEN

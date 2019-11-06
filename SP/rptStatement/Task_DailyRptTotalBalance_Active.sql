@@ -50,7 +50,7 @@ BEGIN
 			FROM (	
 				SELECT rpt.CustID, rpt.ClosingBalance AS winlost
 					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
-				FROM dbo.rptStatement_test rpt WITH (NOLOCK) 
+				FROM dbo.rptStatement rpt WITH (NOLOCK) 
 				WHERE  Winlostdate >= @Saturday
 			) AS rpt
 			WHERE rpt.Num = 1
@@ -99,7 +99,7 @@ BEGIN
 			FROM #tmpRptTotalBalance_Active SOURCE
 			FULL OUTER JOIN (
 				SELECT CustID, OpeningBalance, OpeningTotalBalance 
-				FROM dbo.RptTotalBalance_Active_test WITH (NOLOCK) 
+				FROM dbo.RptTotalBalance_Active WITH (NOLOCK) 
 				WHERE Winlostdate = @WinlostDate
 			) AS TARGET	ON TARGET.CustId = SOURCE.CustId 
 			WHERE 
@@ -116,7 +116,7 @@ BEGIN
 			ELSE 
 			BEGIN
 				-- correct data
-				MERGE dbo.RptTotalBalance_Active_test AS TARGET
+				MERGE dbo.RptTotalBalance_Active AS TARGET
 				USING #tmpRptTotalBalance_Active AS SOURCE
 						ON	TARGET.Winlostdate  = @WinlostDate
 						AND TARGET.CustId		= SOURCE.CustId
@@ -174,7 +174,7 @@ BEGIN
 		( 	
 			--MERGE with the OpeningBalance of @TheDayBefore
 			SELECT  CustID, SUM(OpeningBalance) AS OpeningBalance, SUM(OpeningTotalBalance) as OpeningTotalBalance
-			FROM 	dbo.rptTotalBalance_Active_test WITH (NOLOCK)
+			FROM 	dbo.RptTotalBalance_Active WITH (NOLOCK)
 			WHERE 	WinlostDate = @TheDayBefore
 			GROUP BY CustID 
 			
@@ -221,7 +221,7 @@ BEGIN
 			FROM #tmpRptTotalBalance_Active SOURCE
 			FULL OUTER JOIN (
 				SELECT CustID, OpeningBalance, OpeningTotalBalance 
-				FROM dbo.RptTotalBalance_Active_test WITH (NOLOCK) 
+				FROM dbo.RptTotalBalance_Active WITH (NOLOCK) 
 				WHERE Winlostdate = @WinlostDate
 			) AS TARGET	ON TARGET.CustId = SOURCE.CustId 
 			WHERE 
@@ -238,7 +238,7 @@ BEGIN
 			ELSE 
 			BEGIN
 				-- correct data
-				MERGE dbo.RptTotalBalance_Active_test AS TARGET
+				MERGE dbo.RptTotalBalance_Active AS TARGET
 				USING #tmpRptTotalBalance_Active AS SOURCE
 						ON	TARGET.Winlostdate  = @WinlostDate
 						AND TARGET.CustId		= SOURCE.CustId
