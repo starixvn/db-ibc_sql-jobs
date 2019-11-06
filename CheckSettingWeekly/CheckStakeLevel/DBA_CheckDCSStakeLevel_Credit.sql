@@ -10,6 +10,7 @@ AS
 	DB: DBCHECK.CheckResultDB
 	Revisions:
 		-20190801@Winnie: Change Check stake level RedmineID:#117919
+		-20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -19,7 +20,7 @@ BEGIN
 	CREATE TABLE #MasterStakeLevel (CustID INT, SportType INT, bettype INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,SportType,Bettype))
 	CREATE TABLE #AgentStakeLevel (CustID INT, SportType INT, bettype INT, mrecommend INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,SportType,Bettype))
 	CREATE TABLE #MemberStakeLevel (CustID INT, SportType INT, bettype INT, recommend INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,SportType,Bettype))
-	CREATE TABLE #GlobalStakeLevel (sporttype INT, bettype INT, StakeLevelList VARCHAR(100))
+	CREATE TABLE #GlobalStakeLevel (sporttype INT, bettype INT, StakeLevelList VARCHAR(1000))
 	CREATE TABLE #OfferedProductList(ProductID [tinyint],[SportType] [smallint] ,[BetType] [smallint], IsHidden BIT)
 	
 	DECLARE @SportBettypeFilter TABLE(SportType INT, Bettype INT)
