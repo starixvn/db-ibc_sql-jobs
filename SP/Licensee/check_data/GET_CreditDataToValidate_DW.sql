@@ -22,6 +22,7 @@ Revisions:
 	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT, LK3 into data validation email [RedmineID: #81708]
 	- 20181017@Bruce: include PP [#103332]
 	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
+	- 20191106@Amanda: Integrate NPHP [RedmineID: #120333]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -101,6 +102,10 @@ DECLARE -- SB
 	,@CCTurnover MONEY
 	,@CCCustomerWl MONEY
 	,@CCBetCount MONEY
+	----NPHP
+	,@NPHPTurnover MONEY
+	,@NPHPCustomerWl MONEY
+	,@NPHPBetCount MONEY
 
 DECLARE @tblSport AS TABLE (ProductPrefix VARCHAR (10),bettype INT)
 
@@ -108,7 +113,7 @@ INSERT INTO @tblSport (ProductPrefix,bettype)
 SELECT DISTINCT p.ProductPrefix,s.bettype
 FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-WHERE p.ProductPrefix IN ('SB','CB','GD','KN','LC','NG','RB','CS','VS','AB','NG2','FW','VS2','LT','LK3','PP','CC')
+WHERE p.ProductPrefix IN ('SB','CB','GD','KN','LC','NG','RB','CS','VS','AB','NG2','FW','VS2','LT','LK3','PP','CC','NPHP')
 	 
 	
 DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),StatusID INT, stake MONEY,WinLoss MONEY,BetCount INT)
@@ -327,6 +332,17 @@ WHERE  ProductPrefix = 'CC'
 SELECT @CCTurnover = ISNULL (@CCTurnover, 0),
 	   @CCCustomerWl = ISNULL (@CCCustomerWl, 0),
 	   @CCBetCount = ISNULL (@CCBetCount, 0)
+	   
+-- NPHP
+SELECT @NPHPTurnover = SUM(CASE WHEN @DrawFilter IN (2,3) AND StatusID = 111 THEN 0 ELSE stake END)
+       ,@NPHPCustomerWl = -SUM(WinLoss )
+	   ,@NPHPBetCount = SUM(BetCount)
+FROM @tblData
+WHERE  ProductPrefix = 'NPHP'
+
+SELECT @NPHPTurnover = ISNULL (@NPHPTurnover, 0),
+	   @NPHPCustomerWl = ISNULL (@NPHPCustomerWl, 0),
+	   @NPHPBetCount = ISNULL (@NPHPBetCount, 0)
 
 -- Result
 SELECT 1 AS Id, @SbTurnover  AS Sb
@@ -346,6 +362,7 @@ SELECT 1 AS Id, @SbTurnover  AS Sb
 			  , @LK3Turnover AS LK3
 			  , @PPTurnover  AS PP
 			  , @CCTurnover  AS CC
+			  , @NPHPTurnover  AS NPHP
 UNION	
 SELECT 2, @SbCustomerWl
 		, @RbCustomerWl
@@ -364,6 +381,7 @@ SELECT 2, @SbCustomerWl
 		, @LK3CustomerWl
 		, @PPCustomerWl
 		, @CCCustomerWl
+		, @NPHPCustomerWl
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -382,6 +400,7 @@ SELECT 3, @SbBetCount
 		, @LK3BetCount
 		, @PPBetCount
 		, @CCBetCount
+		, @NPHPBetCount
 
 END
 GO

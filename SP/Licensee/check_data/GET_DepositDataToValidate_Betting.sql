@@ -23,6 +23,7 @@ Revisions:
 	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
 	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
+	- 20191106@Amanda: Integrate NPHP [RedmineID: #120333]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -134,13 +135,17 @@ DECLARE --SB
 		,@CCTurnover MONEY
 		,@CCCustomerWl MONEY
 		,@CCBetCount MONEY
+		----NPHP
+		,@NPHPTurnover MONEY
+		,@NPHPCustomerWl MONEY
+		,@NPHPBetCount MONEY
 
 	DECLARE @tblBettype AS TABLE(ProductPrefix VARCHAR (10),Bettype INT)	   
 	INSERT INTO @tblBettype (ProductPrefix,Bettype)
 	SELECT DISTINCT ProductPrefix,bettype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC')	
+	WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC','NPHP')	
 	  
 	-- Data Source 
 	DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),Status INT, Turnover MONEY, Winloss MONEY,BetCount INT)	
@@ -510,6 +515,21 @@ DECLARE --SB
 	SELECT @CCTurnover 		= ISNULL(@CCTurnover,0)
 		   ,@CCCustomerWl	= ISNULL(@CCCustomerWl,0)
 		   ,@CCBetCount 	= ISNULL(@CCBetCount,0)	
+		   
+	----NPHP
+	 SELECT  @NPHPTurnover=SUM(CASE 
+						WHEN @DrawFilter IN (2,3) THEN 
+							CASE WHEN b.Status = 111 THEN 0 WHEN b.Status IN (114,115) THEN 0.5 ELSE 1 END
+						ELSE 1
+					END * b.Turnover)
+			,@NPHPCustomerWl=SUM(b.WinLoss)
+			,@NPHPBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
+	FROM @tblData b
+	WHERE ProductPrefix = 'NPHP'
+
+	SELECT @NPHPTurnover 		= ISNULL(@NPHPTurnover,0)
+		   ,@NPHPCustomerWl	= ISNULL(@NPHPCustomerWl,0)
+		   ,@NPHPBetCount 	= ISNULL(@NPHPBetCount,0)	
 -- Result
 
 SELECT 1 AS Id, @SbTurnover AS Sb
@@ -536,6 +556,7 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @LTTurnover  AS LT
 			  , @PPTurnover  AS PP
 			  , @CCTurnover  AS CC
+			  , @NPHPTurnover  AS NPHP
 UNION
 SELECT 2, @SbCustomerWl
 		, @RbCustomerWl
@@ -561,6 +582,7 @@ SELECT 2, @SbCustomerWl
 		, @LTCustomerWl
 		, @PPCustomerWl
 		, @CCCustomerWl
+		, @NPHPCustomerWl
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -586,6 +608,7 @@ SELECT 3, @SbBetCount
 		, @LTBetCount
 		, @PPBetCount
 		, @CCBetCount
+		, @NPHPBetCount
 
 SET NOCOUNT OFF
 END

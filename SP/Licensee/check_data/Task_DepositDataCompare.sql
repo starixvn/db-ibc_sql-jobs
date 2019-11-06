@@ -18,6 +18,7 @@ Revisions:
 	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
 	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 	- 20190715@Amanda: Integrate Card Club [RedmineID: #115449]
+	- 20191106@Amanda: Integrate NPHP [RedmineID: #120333]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -99,7 +100,8 @@ DECLARE @tblTmp AS TABLE (ID INT
 						   ,VS2 BIGINT
 						   ,LT BIGINT
 						   ,PP BIGINT
-						   ,CC BIGINT)
+						   ,CC BIGINT
+						   ,NPHP BIGINT)
 						   
 --exec 
 --rptLicWinloss2
@@ -127,7 +129,8 @@ INSERT INTO @tblTmp	(ID
 					,VS2
 					,LT
 					,PP
-					,CC)	
+					,CC
+					,NPHP)	
 EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date	
 				
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
@@ -195,7 +198,8 @@ INSERT INTO @tblTmp	(ID
 					,VS2
 					,LT
 					,PP
-					,CC)					   
+					,CC
+					,NPHP)					   
 EXEC dbo.GET_DepositDataToValidate_Betting @Date=@Date
 					
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
