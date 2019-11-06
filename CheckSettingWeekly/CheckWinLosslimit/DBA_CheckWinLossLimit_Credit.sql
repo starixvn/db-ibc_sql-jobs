@@ -235,13 +235,13 @@ BEGIN
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 509, mcs.sporttype, mcs.bettype, mcs.custid as custidA, acs.custid as custidB, mcs.IsAutoReset , acs.IsAutoReset
 		FROM #MasterWinLossLimit mcs
-			INNER JOIN #AgentWinLossLimit acs ON acs.sporttype = mcs.sporttype AND acs.bettype = mcs.bettype			
+			INNER JOIN #AgentWinLossLimit acs ON acs.mrecommend = mcs.custid AND acs.sporttype = mcs.sporttype AND acs.bettype = mcs.bettype			
 		WHERE  mcs.IsAutoReset = 0 AND acs.IsAutoReset = 1
 		
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 509, acs.sporttype, acs.bettype, acs.custid as custidA, cs.custid as custidB, acs.IsAutoReset , cs.IsAutoReset
 		FROM #AgentWinLossLimit acs
-			INNER JOIN #MemberWinLossLimit cs ON acs.sporttype = cs.sporttype AND acs.bettype = cs.bettype			
+			INNER JOIN #MemberWinLossLimit cs ON cs.recommend = acs.custid AND acs.sporttype = cs.sporttype AND acs.bettype = cs.bettype			
 		WHERE  acs.IsAutoReset = 0 AND cs.IsAutoReset = 1
 	END
 END	
