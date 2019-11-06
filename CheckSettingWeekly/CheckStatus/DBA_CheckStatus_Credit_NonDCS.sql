@@ -9,6 +9,7 @@ AS
 	Revisions:
 		- 20180328@Billy:	Initial - [Redmine: #00000]
 		- 20190610@Johnson: add step check suspend status [redmine:#105587]
+		- 20191106@Winnie: 3rd party products - Remove InActive Products Phase 2  - [Redmine: #118699]
 	Developer's Notes:
 		- @Example:			NULL		- Explaination [DEFAULT]
 		
@@ -17,8 +18,8 @@ BEGIN
 	SET NOCOUNT ON;
 	
 	EXECUTE dbo.DBA_CheckStatus_Credit @sportType=255, @bettype = 1700, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableGoldDeluxe', @HiddenTable='CustInfo', @HiddenColumnName = 'HideGoldDeluxe',@SynTable='',@SynColumnName = '';
-	EXECUTE dbo.DBA_CheckStatus_Credit @sportType=203, @bettype = 2001, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableMicrogameLC', @HiddenTable='', @HiddenColumnName = '',@SynTable='',@SynColumnName = '';
-	EXECUTE dbo.DBA_CheckStatus_Credit @sportType=205, @bettype = 2008, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableMicrogameRNG', @HiddenTable='', @HiddenColumnName = '',@SynTable='',@SynColumnName = '';
+
+	
 	EXECUTE dbo.DBA_CheckStatus_Credit @sportType=204, @bettype = 18001, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableColossusBet', @HiddenTable='CustInfo', @HiddenColumnName = 'HideColossusBet',@SynTable='',@SynColumnName = '';
 	EXECUTE dbo.DBA_CheckStatus_Credit @sportType=251, @bettype = 71, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableCasino', @HiddenTable='', @HiddenColumnName = '',@SynTable='CustInfo',@SynColumnName = 'SyncCasino';
 
