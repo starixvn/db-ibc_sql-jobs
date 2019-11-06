@@ -49,7 +49,6 @@ BEGIN
 	FROM bodb02.dbo.Match m WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.league l WITH (NOLOCK) ON l.leagueid = m.LeagueID AND l.isTest = 0
 	WHERE (m.Sporttype IN (161,164,180) OR m.sporttype BETWEEN 186 AND 199) 
-			--and m.eventstatus = 'Completed' 
 			AND m.kickofftime < @date_compare
 			AND m.eventdate = @date
 	UNION ALL
@@ -57,7 +56,6 @@ BEGIN
 	FROM bodb02.dbo.VSRaceInfo o WITH (NOLOCK) 
 		INNER JOIN bodb02.dbo.league l WITH (NOLOCK) ON l.leagueid = o.LeagueID AND l.isTest = 0
 	WHERE o.Sporttype IN (181,182,183,184,185) 
-			--AND o.eventstatus = 'Completed'	
 			AND o.EventTime < @date_compare
 			AND o.EventTime >= @date AND o.EventTime < DATEADD(d, 1, @date)
 
