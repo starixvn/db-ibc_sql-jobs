@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20180926@Patrick:	Initial - [RedmineId: #101207]
 		- 20190621@Billy:	Add checking for [SMP_Market] & [SMP_MarkerSelection] - [Redmine: #111421]
+		- 20191106@Billy:	Add checking for [Dot_Admin_Assignment_Trader] - [Redmine: #123262]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -124,6 +125,12 @@ BEGIN;
 	INSERT INTO	@__tempCount(rowcnt, tableName)
 	SELECT	COUNT(1), 'SMP_MarketSelection'
 	FROM	dbo.SMP_MarketSelection_bk AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match_bk AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
+
+	--//Dot_Admin_Assignment_Trader
+	INSERT INTO	@__tempCount(rowcnt, tableName)
+	SELECT	COUNT(1), 'Dot_Admin_Assignment_Trader'
+	FROM	dbo.Dot_Admin_Assignment_Trader_bk AS tbl WITH (NOLOCK)
 	WHERE	EXISTS (SELECT 1 FROM dbo.match_bk AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
 
 	--//
