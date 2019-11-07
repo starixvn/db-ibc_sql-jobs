@@ -28,15 +28,6 @@ BEGIN
 	EXECUTE dbo.DBA_CheckStatus_Deposit @sportType=202, @bettype = 1501, @DisableTable = '', @DisableColumnName = '', @HiddenTable='CustInfo', @HiddenColumnName = 'HideKeno',@SynTable='',@SynColumnName = '';
 
 	EXECUTE dbo.DBA_CheckStatus_Keno_Deposit @Sporttype = 202,@Bettype = 1, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Deposit @Sporttype = 202,@Bettype = 3, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Deposit @Sporttype = 202,@Bettype = 4, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Deposit @Sporttype = 202,@Bettype = 5, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Deposit @Sporttype = 202,@Bettype = 8, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Deposit @Sporttype = 202,@Bettype = 11, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Deposit @Sporttype = 202,@Bettype = 13, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Deposit @Sporttype = 202,@Bettype = 14, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Deposit @Sporttype = 202,@Bettype = 15, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Deposit @Sporttype = 202,@Bettype = 16, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
 
 END;
 GO
