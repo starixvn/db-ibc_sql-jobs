@@ -40,6 +40,14 @@ BEGIN
 		OpeningTotalBalance DECIMAL(20,4)
 	)
 	
+	CREATE TABLE #OpenningBalanceBettrans (
+		custid INT PRIMARY KEY
+		, winlost MONEY
+		, awinlost MONEY
+		, mwinlost MONEY
+		, swinlost MONEY
+	)
+
 	IF @Winlostdate = DATEADD(DD, 1, @MovebetDay)    ---> first day on bettrans.OpeningBalance = last day on rptStatement.ClosingBalance
 	BEGIN 
 		--> GET full cust back to the previous saturday
@@ -65,7 +73,7 @@ BEGIN
 			CTE_rptStatement AS b
 			INNER JOIN bodb02.dbo.custinfo ci WITH(NOLOCK) ON b.custid = ci.custid
 		CROSS APPLY (
-			SELECT POWER(2*1, ci.roleid) AS ownerIndicator
+			SELECT POWER(2*1, CASE WHEN ci.roleid = 0 THEN 1 ELSE ci.roleid END) AS ownerIndicator
 		) AS bet
 		OUTER APPLY (
 			SELECT b.custid, b.winlost AS winlost, 1 AS levelID, b.winlost AS totalWinlost
@@ -146,61 +154,58 @@ BEGIN
 	ELSE IF @Winlostdate > DATEADD(DD, 1, @MovebetDay) --- Get data winlost on bettrans and calculate
 	BEGIN 
 		--RE_CAL WL of @TheDayBefore
-		WITH CTE_OpenningBalanceBettrans AS
-		(
-			SELECT	 
-				custid, recommend, mrecommend, srecommend,c.roleID,
-				SUM(CASE WHEN c.roleID = 1 THEN winlost-actual_stake + playercomm ELSE 0 END) Winlost1,
-				SUM(CASE WHEN c.roleID = 2 THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) Winlost2,
-				SUM(CASE WHEN c.roleID = 3 THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) Winlost3,
-				SUM(CASE WHEN c.roleID = 4 THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) Winlost4 
-			FROM	bodb02.dbo.bettrans WITH (NOLOCK)
-			CROSS APPLY (
-				SELECT 
-					CASE custid
-						WHEN recommend THEN 2
-						WHEN mrecommend THEN 3
-						WHEN srecommend THEN 4
-						ELSE 1 -- Member & Headline
-					END AS roleid
-			) AS c
-			WHERE	winlostdate = @TheDayBefore
-					AND statusID NOT IN (0, 1)
-			GROUP BY custid, recommend, mrecommend, srecommend, c.roleID
-		)
+		INSERT INTO #OpenningBalanceBettrans
+		SELECT	 
+			custid
+			,SUM(winlost-actual_stake+playercomm) AS winlost
+			,SUM(awinlost+comm-playercomm) AS awinlost
+			,SUM(mwinlost+acomm-comm) AS mwinlost
+			,SUM(swinlost+scomm-acomm) AS swinlost
+		FROM bodb02.dbo.bettrans WITH (READPAST)
+		WHERE	winlostdate = @TheDayBefore
+				AND statusID NOT IN (0, 1)
+		GROUP BY custid
+		
+		--INIT with the OpeningBalance of @TheDayBefore
 		INSERT INTO #tmpRptTotalBalance_Active (CustID, OpeningBalance, OpeningTotalBalance)
-		SELECT CustID, SUM(OpeningBalance) AS OpeningBalance, SUM(OpeningTotalBalance) AS OpeningTotalBalance
-		FROM 
-		( 	
-			--MERGE with the OpeningBalance of @TheDayBefore
-			SELECT  CustID, SUM(OpeningBalance) AS OpeningBalance, SUM(OpeningTotalBalance) as OpeningTotalBalance
-			FROM 	dbo.RptTotalBalance_Active WITH (NOLOCK)
-			WHERE 	WinlostDate = @TheDayBefore
-			GROUP BY CustID 
-			
-			--MERGE with totalWinlost of the @TheDayBefore
-			UNION ALL
+		SELECT  CustID, OpeningBalance, OpeningTotalBalance
+		FROM 	dbo.rptTotalBalance_Active WITH (NOLOCK)
+		WHERE 	WinlostDate = @TheDayBefore
+
+		;--MERGE with the winlost of @TheDayBefore
+		MERGE #tmpRptTotalBalance_Active AS TGR
+		USING (
 			SELECT
 				c.custid
 				,SUM(ISNULL(c.winlost,0)) AS OpeningBalance
 				,SUM(ISNULL(c.totalWinlost, 0)) AS OpeningTotalBalance
 			FROM
-				CTE_OpenningBalanceBettrans b
+				#OpenningBalanceBettrans b
+			INNER JOIN bodb02.dbo.custInfo ci with(nolock) on b.custid = ci.custid
+			CROSS APPLY (
+				SELECT POWER(2*1, CASE WHEN ci.roleid = 0 THEN 1 ELSE ci.roleid END) AS ownerIndicator
+			)AS bet
 			OUTER APPLY (
-				SELECT b.custid, winlost1 AS winlost, 1 AS levelID, winlost1 AS totalWinlost
+				SELECT b.custid, (ownerIndicator & 2)/2 * winlost AS winlost, 1 AS levelID, winlost AS totalWinlost
 				UNION
-				SELECT b.recommend, winlost2, 2, winlost1 + winlost2
+				SELECT ci.recommend, (ownerIndicator & 4)/4 * winlost + awinlost, 2, winlost + awinlost
 				UNION
-				SELECT b.mrecommend, winlost3, 3, winlost1 + winlost2 + winlost3
+				SELECT ci.mrecommend, (ownerIndicator & 8)/8 * winlost + mwinlost, 3, winlost + awinlost + mwinlost
 				UNION
-				SELECT b.srecommend, winlost4, 4, winlost1 + winlost2 + winlost3 + winlost4
+				SELECT ci.srecommend, (ownerIndicator & 16)/16 * winlost + swinlost, 4, winlost + awinlost + mwinlost + swinlost
 			) AS c
-			WHERE c.levelID >= b.roleID
+			WHERE c.levelID >= ci.roleID
 				AND c.custid > 0
 			GROUP BY c.custid
-			
-		) AS A			
-		GROUP BY A.CustID 	
+		) AS SRC ON TGR.custid = SRC.custid
+		WHEN MATCHED THEN 
+		UPDATE
+			SET TGR.OpeningBalance += SRC.OpeningBalance
+			, TGR.OpeningTotalBalance += SRC.OpeningTotalBalance
+		WHEN NOT MATCHED BY TARGET THEN
+		INSERT (custid, OpeningBalance, OpeningTotalBalance)
+		VALUES(SRC.custid, SRC.OpeningBalance, SRC.OpeningTotalBalance)
+		;	
 
 		---- Headline
 		UPDATE s
@@ -265,7 +270,8 @@ BEGIN
 			SELECT 'There is nothing changes on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
 		END	
 	END
-	 
+	
+	DROP TABLE #OpenningBalanceBettrans
 	DROP TABLE #tmpRptTotalBalance_Active
 	
 END 
