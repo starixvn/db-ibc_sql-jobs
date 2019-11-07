@@ -19,7 +19,7 @@ Revisions:
 	- 20191106@Winnie: 3rd party products - Remove InActive Products Phase 2  - [Redmine: #118699]
 Param's Explanation: 
 	@RuleId = 0 : 'all' 
-	IF @sporttype IN (162, 255) (Live Casino, GoldDeluxe) THEN @RuleId IN (1, 5, 6, 7, 8, 9, 10, 17, 18, 19, 20, 23, 24, 28, 30, 31 )
+	IF @sporttype IN (255) (GoldDeluxe) THEN @RuleId IN (1, 5, 6, 7, 8, 9, 10, 17, 18, 19, 20, 23, 24, 28, 30, 31 )
 	IF @sporttype = 202 (Keno) THEN @RuleId IN (1, 5, 6, 7, 8, 9, 10, 17, 18, 19, 20, 23, 24, 28, 31, 32 )
 */
 BEGIN 
@@ -187,7 +187,7 @@ BEGIN
 		CROSS APPLY (SELECT sporttype, bettype FROM #DataSample) ds
 	WHERE NOT EXISTS (SELECT 1 FROM #SuperPT WHERE CustID = cs.CustID AND sporttype = ds.sporttype AND bettype = ds.bettype)
 
-	IF @sporttype IN (162, 202, 255) OR @sporttype = 0 
+	IF @sporttype IN (202, 255) OR @sporttype = 0 
 	BEGIN 
 	---- 1. S1 < 0 OR M1 < 0 OR A1 < 0
 
@@ -365,7 +365,7 @@ BEGIN
 
 		----30. S4 > 0.93
 			-->Live Casino, GoldDeluxe: Do not check Rule 2 Check rule 30 		
-		IF @sporttype IN (0, 162, 255)
+		IF @sporttype IN (0, 255)
 		BEGIN 
 			IF @RuleId IN (0,30)
 			BEGIN
