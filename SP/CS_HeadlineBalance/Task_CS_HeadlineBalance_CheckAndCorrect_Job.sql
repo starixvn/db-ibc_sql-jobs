@@ -26,8 +26,12 @@ BEGIN
 	DECLARE @tblErrMsg TABLE (WinlostDate SMALLDATETIME, ErrMsg VARCHAR(1000))
 
 	DECLARE @RowId TINYINT, @WinlostDate SMALLDATETIME
+	DECLARE @CutDate SMALLDATETIME = '2019-11-06'
+	
+	DELETE @MoveBetSchedule WHERE MoveBetsDay < @CutDate 
+	
 	SELECT  @RowId = 1, @WinlostDate = MoveBetsDay FROM @MoveBetSchedule WHERE RowId = 1
-
+	 
 	WHILE @WinlostDate IS NOT NULL
 	BEGIN
 		BEGIN TRY

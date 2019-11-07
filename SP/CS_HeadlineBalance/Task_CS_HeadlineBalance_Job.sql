@@ -26,10 +26,17 @@ BEGIN
 	EXEC bodb02.dbo.Age_SelBalanceUpDay
 	
 	DECLARE @WinlostDate SMALLDATETIME, @Yesterday SMALLDATETIME
+	DECLARE @CutDate SMALLDATETIME = '2019-11-06'
+	
 	SELECT  @WinlostDate = DATEADD(DAY, 1, MoveBetsDay), 
 			@Yesterday = DATEADD(DAY, -1, CONVERT(SMALLDATETIME, GETDATE())) 
 	FROM @MBBU
-
+	
+	IF @WinlostDate < @CutDate
+	BEGIN 
+		SELECT @WinlostDate = @CutDate
+	END	
+	
 	WHILE @WinlostDate <= @Yesterday
 	BEGIN
 		BEGIN TRY
