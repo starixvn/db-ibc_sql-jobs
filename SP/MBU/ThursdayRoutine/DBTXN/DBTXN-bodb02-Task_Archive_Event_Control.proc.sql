@@ -2,7 +2,7 @@ SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
 CREATE PROCEDURE	dbo.Task_Archive_Event_Control
-						@DebugMode			TINYINT			= 0
+						@DebugMode			TINYINT			= 1
 AS
 /*
 	Creator:	20190318@Helen
@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20190318@Helen:	Initialize - archive event timeout issue - [Redmine: #110447]
 		- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader] table - [Redmine: #117014]
+		- 20191107@Billy:	Fix wrong default @DebugMode - [Redmine: #123521]
 */
 BEGIN;
 	SET NOCOUNT ON;
