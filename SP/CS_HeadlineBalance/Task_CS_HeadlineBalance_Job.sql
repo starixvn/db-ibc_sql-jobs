@@ -11,6 +11,7 @@ AS
 
 	Revisions:
 		- 20190826@Sophia: initial SP [Redmine: #117863]
+		- 20191106@Sophia: Check server name 
  
 
 	 
@@ -18,6 +19,8 @@ AS
 BEGIN
  
 	SET NOCOUNT ON
+	
+	IF @@SERVERNAME NOT IN ('DB061', 'DB234', 'DB232') RETURN
 
 	DECLARE @tblErrMsg TABLE (WinlostDate SMALLDATETIME, ErrMsg VARCHAR(1000))
 

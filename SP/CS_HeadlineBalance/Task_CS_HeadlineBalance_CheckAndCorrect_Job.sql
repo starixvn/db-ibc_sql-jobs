@@ -11,7 +11,7 @@ AS
 
 	Revisions:
 		- 20191011@Sophia: initial SP [Redmine: #117863]
- 
+		- 20191106@Sophia: Check server name 
 
 	 
 */
@@ -19,6 +19,8 @@ AS
 BEGIN 
 	SET NOCOUNT ON
 
+	IF @@SERVERNAME NOT IN ('DB061', 'DB234', 'DB232') RETURN
+	
 	DECLARE @MoveBetSchedule TABLE (RowId TINYINT IDENTITY(1,1), ScheduleId TINYINT, MoveBetsDay DATE)
 	INSERT INTO @MoveBetSchedule (ScheduleId, MoveBetsDay)
 	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
