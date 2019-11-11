@@ -8,7 +8,8 @@ GO
 
 ALTER PROCEDURE [dbo].[GEN_rpt_LicPromotion]
 	@fromDate DATE,
-	@toDate DATE
+	@toDate DATE,
+	@timeZone INT = 8
 AS
 
 /*
@@ -29,89 +30,107 @@ BEGIN
 	DELETE FROM dbo.rpt_LicPromotion
 	WHERE @fromDate <= RptDate  AND RptDate <= @toDate
 
-	CREATE TABLE #tmpData(
+	CREATE TABLE #rptPromotion(
+		PromoID	int,
+		StartDate date,
+		EndDate date,
+		OffPeakStartTime tinyint,
+		OffPeakEndTime tinyint,
+		CustID int,
+		CurrencyID	int,
+		CouponDate date,
+		CouponTimeZone int,
+		CouponDateGMT date,
+		CouponCount int,
+		RedemptionCount int,
+		RedemptionPrize money)
+
+	--  dump fake data
+	INSERT INTO #rptPromotion
+	VALUES(1, '2019-10-07', '2019-10-07', 14, 16, 925144, 20, '2019-10-07', 8, '2019-10-08', 2, 2, 100),
+	      (1, '2019-10-07', '2019-10-07', 14, 16, 925144, 20, '2019-10-07', 8, '2019-10-08', 1, 0, 0)
+
+	CREATE TABLE #bettransData(
 		PromoID	int,
 		RptDate date,
-		RptDate3rd date,
-		SiteID int,
+		RptDateGMT date,
+		TimeZone int,
+		CustId int,
 		CurrencyID	int,
-		CouponCount int,
-		Redeemed bit,
-		Prize money,
-		BetCountOfNPH int,
-		BetCountOfNPH_NoDraw int,
-		BetCountOfPromoDay int,
-		BetCountOfPromoDay_NoDraw int,
-		TurnoverPromoDay money,
-		TurnoverPromoDay_NoDraw money)
+		ProductId int,
+		BetCountOfPromoTime int,
+		BetCountOfPromoTime_NoDraw int,
+		BetCount int,
+		BetCount_NoDraw int,
+		Turnover money,
+		Turnover_NoDraw money)
 
-	INSERT INTO #tmpData(PromoID, RptDate, RptDate3rd, SiteID, CurrencyID, Redeemed, BetCountOfNPH, BetCountOfNPH_NoDraw, BetCountOfPromoDay, BetCountOfPromoDay_NoDraw, TurnoverPromoDay, TurnoverPromoDay_NoDraw)
+	INSERT INTO #bettransData(PromoID, 
+								RptDate, 
+								RptDateGMT,
+								TimeZone, 
+								CustId, 
+								CurrencyID,
+								ProductId,
+								BetCountOfPromoTime, 
+								BetCountOfPromoTime_NoDraw, 
+								BetCount, 
+								BetCount_NoDraw,
+								Turnover,
+								Turnover_NoDraw)
 	SELECT pc.PromoID,
-		   CAST(pc.CreateTime AS DATE),
-		   CAST(DATEADD(HOUR, 12, pc.CreateTime) AS DATE),
-		   ISNULL([site].SiteID, -1),
+		   CAST(b.transdate AS DATE) RptDate,
+		   CAST(DATEADD(HOUR, @timeZone + 4, b.transdate) AS DATE) RptDateGMT,
+		   @timeZone,
+		   pc.CustID,
 		   CurrencyID,
-		   Redeemed,
+		   CASE WHEN bt.Bettype = 17000 THEN 37 ELSE 0 END AS ProductId,
 		   SUM(CASE WHEN b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, b.transdate) AND DATEADD(HOUR, OffPeakEndTime, b.transdate)
-					THEN 1 ELSE 0 END) AS BetCountOfNPH,
+					THEN 1 ELSE 0 END) AS BetCountOfPromoTime,
 		   SUM(CASE WHEN (b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, b.transdate) AND DATEADD(HOUR, OffPeakEndTime, b.transdate))
 						AND statusID != @DrawStatusId
-					THEN 1 ELSE 0 END) AS BetCountOfNPH_NoDraw,
-		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) THEN 1 ELSE 0 END) AS BetCountOfPromoDay,
-		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN 1 ELSE 0 END) AS BetCountOfPromoDay_NoDraw,
-		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) THEN b.stake ELSE 0 END ) AS TurnoverPromoDay,
-		   SUM(CASE WHEN CAST(pc.CreateTime AS DATE) = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN b.stake ELSE 0 END ) AS TurnoverPromoDay_NoDraw
-	FROM bodb02.dbo.NPHPromoCoupon pc WITH(NOLOCK)
-		INNER JOIN bodb02.dbo.NPHPromotion p WITH(NOLOCK) ON p.PromoID = pc.PromoID
-		LEFT JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid 
-														AND b.transdate BETWEEN p.StartDate AND p.EndDate
+					THEN 1 ELSE 0 END) AS BetCountOfPromoTime_NoDraw,
+		   SUM(CASE WHEN CAST(pc.CouponDate AS DATE) = CAST(b.transdate AS DATE) THEN 1 ELSE 0 END) AS BetCount,
+		   SUM(CASE WHEN CAST(pc.CouponDate AS DATE) = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN 1 ELSE 0 END) AS BetCount_NoDraw,
+		   SUM(CASE WHEN CAST(pc.CouponDate AS DATE) = CAST(b.transdate AS DATE) THEN b.stake ELSE 0 END ) AS TurnoverPromoDay,
+		   SUM(CASE WHEN CAST(pc.CouponDate AS DATE) = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN b.stake ELSE 0 END ) AS TurnoverPromoDay_NoDraw
+	FROM #rptPromotion pc WITH(NOLOCK)
+		 INNER JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid 
+														AND b.transdate BETWEEN pc.StartDate AND pc.EndDate
 														AND statusID IN (@DrawStatusId, @WonStatusId, @LoseStatusId)
-		LEFT JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
+		 INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
+	WHERE @fromDate <= CAST(b.transdate AS DATE) AND CAST(b.transdate AS DATE) <= @toDate
+	GROUP BY  pc.PromoID,
+		   CAST(b.transdate AS DATE),
+		   CAST(DATEADD(HOUR, @timeZone + 4, b.transdate) AS DATE),
+		   pc.CustID,
+		   CurrencyID,
+		   CASE WHEN bt.Bettype = 17000 THEN 37 ELSE 0 END
+
+	INSERT INTO rpt_LicPromotion(PromoID,RptDate,TimeZone,RptDateGMT,SiteID,CurrencyID,ProductID,CouponCount,RedemptionCount,RedemptionPrize,BetCountOfPromoTime,BetCountOfPromoTime_NoDraw,BetCount,BetCount_NoDraw,Turnover,Turnover_NoDraw)
+	SELECT b.PromoID, b.RptDate, b.TimeZone, b.RptDateGMT, ISNULL([site].SiteID, -1), b.CurrencyID, b.ProductId,
+									SUM(ISNULL(CouponCount, 0)),
+									SUM(ISNULL(RedemptionCount, 0)),
+									SUM(ISNULL(RedemptionPrize, 0)),
+									SUM(BetCountOfPromoTime),
+									SUM(BetCountOfPromoTime_NoDraw),
+									SUM(BetCount),
+									SUM(BetCount_NoDraw),
+									SUM(Turnover),
+									SUM(Turnover_NoDraw)
+	FROM #bettransData b
+		LEFT JOIN #rptPromotion pc ON b.PromoID = pc.PromoID AND  
+										b.CustId = pc.CustID AND 
+										b.CurrencyID = pc.CurrencyID AND
+										b.TimeZone = pc.CouponTimeZone AND
+										b.RptDate = pc.CouponDate AND
+										b.RptDateGMT = pc.CouponDateGMT
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON pc.CustID= c.custid
 		LEFT JOIN bodb02.dbo.[Site] s WITH (NOLOCK) ON c.[site] = s.[site]
 		LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
-	WHERE @fromDate <= CAST(pc.CreateTime AS DATE) AND CAST(pc.CreateTime AS DATE) <= @toDate
-	GROUP BY  pc.PromoID,
-			  CAST(pc.CreateTime AS DATE),
-			  CAST(DATEADD(HOUR, 12, pc.CreateTime) AS DATE),
-		      ISNULL([site].SiteID, -1),
-			  CurrencyID,
-			  Redeemed
-	ORDER BY CAST(pc.CreateTime AS DATE)
+	GROUP BY b.PromoID, b.RptDate, b.RptDateGMT, ISNULL([site].SiteID, -1), b.CurrencyID, b.TimeZone, b.ProductId
 
-	;WITH cte_CouponSummary AS(
-		SELECT t.PromoID, CAST(pc.CreateTime AS DATE) AS CreateTime, COUNT(pc.CouponID) AS CouponCount, SUM(pc.Prize) AS Prize
-		FROM #tmpData t
-		INNER JOIN bodb02.dbo.NPHPromoCoupon pc WITH(NOLOCK) ON t.PromoID = pc.PromoID AND t.RptDate = CAST(pc.CreateTime AS DATE) 
-		GROUP BY t.PromoID, CAST(pc.CreateTime AS DATE)
-	) 
-	UPDATE t
-	SET  t.CouponCount = cte.CouponCount,
-		 t.Prize = cte.Prize
-	FROM #tmpData t
-	INNER JOIN cte_CouponSummary cte ON t.PromoID = cte.PromoID AND t.RptDate = cte.CreateTime
-	
-	--INSERT INTO dbo.rpt_LicPromotion(RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed,
-	--								CouponCount,
-	--								Prize,
-	--								BetCountOfNPH,
-	--								BetCountOfNPH_NoDraw,
-	--								BetCountOfPromoDay,
-	--								BetCountOfPromoDay_NoDraw,
-	--								TurnoverPromoDay,
-	--								TurnoverPromoDay_NoDraw)
-	SELECT RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed,
-									SUM(CouponCount),
-									SUM(Prize),
-									SUM(BetCountOfNPH),
-									SUM(BetCountOfNPH_NoDraw),
-									SUM(BetCountOfPromoDay),
-									SUM(BetCountOfPromoDay_NoDraw),
-									SUM(TurnoverPromoDay),
-									SUM(TurnoverPromoDay_NoDraw)
-	FROM #tmpData
-	GROUP BY RptDate,RptDate3rd,SiteID,CurrencyID,Redeemed
-
-	DROP TABLE #tmpData
+	DROP TABLE #rptPromotion
+	DROP TABLE #bettransData
 END
 GO
