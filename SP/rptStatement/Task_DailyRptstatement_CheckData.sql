@@ -49,13 +49,24 @@ BEGIN
 		,OpeningTotalBalance DECIMAL(37,4)	NULL
 	)
 
-	-- GET the previous Saturday
-	SELECT @CurrentBU_Date	= MIN(eventdate)
-		,@CurrentMB_Date	= MAX(eventdate)
-	FROM bodb02.dbo.match14 WITH(NOLOCK) 
+	
+	CREATE TABLE #rptOpenningBalanceTable (
+		Custid				INT PRIMARY KEY
+		,winlost			MONEY
+	)
 
+	DECLARE @BalanceUpDays AS TABLE (BalanceUpDay DATE, MoveBetDay DATE)
+	
+	-- GET BU & MB Dates
+	INSERT INTO @BalanceUpDays (BalanceUpDay, MoveBetDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+
+	SELECT @CurrentBU_Date	= BalanceUpDay
+		,@CurrentMB_Date	= MoveBetDay
+	FROM @BalanceUpDays
+
+	-- GET the previous Saturday
 	SELECT @_Winlostdate = @Winlostdate
-		,@_Saturday = DATEADD (DD, -DATEPART(DW, @Winlostdate), @Winlostdate)
 
 	-- CHECK validation DATE
 	IF @_Winlostdate < @CurrentBU_Date
@@ -199,11 +210,43 @@ BEGIN
 	;
 
 	-- 4. SUM OPENNING [balance & total balance]
-	-- PROCESS bettrans data
 	BEGIN
-		;
-		WITH CTE_Winlost (custid, winlost) AS
-		(
+		-- The BU date & next Saturday in rptStatement
+		IF (@_Winlostdate = @CurrentBU_Date)
+		BEGIN
+			SELECT @_Saturday = DATEADD(DD, 1, @CurrentBU_Date)
+
+			INSERT #rptOpenningBalanceTable (custid, winlost)
+			SELECT custid, ClosingBalance
+			FROM (
+				SELECT rpt.custid
+					, CASE 
+						WHEN rpt.winlostdate = @_Saturday THEN rpt.OpenningBalance 
+						ELSE rpt.ClosingBalance END AS ClosingBalance
+					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
+				FROM dbo.rptStatement rpt WITH(NOLOCK)
+				WHERE rpt.winlostdate >= @CurrentBU_Date AND rpt.winlostdate <= @_Saturday
+						
+			) AS tmp 
+			WHERE tmp.Num = 1
+			
+		END
+		-- The Saturday in rptStatement
+		ELSE IF (@_Winlostdate = DATEADD(DD, 1, @CurrentBU_Date))
+		BEGIN
+			SELECT @_Saturday = @_Winlostdate
+
+			INSERT #rptOpenningBalanceTable (custid, winlost)
+			SELECT rpt.custid, rpt.ClosingBalance
+			FROM dbo.rptStatement rpt WITH(NOLOCK)
+			WHERE rpt.winlostdate = @_Saturday
+		END
+		-- The last Saturday in rptStatement
+		ELSE
+		BEGIN
+			SELECT @_Saturday = DATEADD (DD, -DATEPART(DW, @_Winlostdate), @_Winlostdate)
+
+			INSERT #rptOpenningBalanceTable (custid, winlost)
 			SELECT custid, ClosingBalance
 			FROM (
 				SELECT rpt.custid, rpt.ClosingBalance
@@ -212,16 +255,17 @@ BEGIN
 				WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
 			) AS tmp 
 			WHERE tmp.Num = 1
-		),
-		CTE_Balance (custid, OpeningBalance, OpeningTotalBalance) AS
+		END
+
+		;WITH CTE_Balance (custid, OpeningBalance, OpeningTotalBalance) AS
 		(
 			SELECT bal.custid
 				, SUM(bal.winlost)
 				, SUM(bal.totalWinlost)
-			FROM CTE_Winlost wl
+			FROM #rptOpenningBalanceTable wl
 			INNER JOIN bodb02.dbo.custinfo ci WITH(NOLOCK) ON wl.custid = ci.custid
 			CROSS APPLY (
-				SELECT POWER(2*1, ci.roleid) AS ownerIndicator
+				SELECT POWER(2*1, CASE WHEN ci.roleid = 0 THEN 1 ELSE ci.roleid END) AS ownerIndicator
 			) AS bet
 			CROSS APPLY (
 				SELECT wl.custid, 1 AS levelID, winlost, winlost AS totalWinlost
