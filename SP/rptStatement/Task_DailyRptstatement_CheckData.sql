@@ -213,43 +213,30 @@ BEGIN
 	-- 4. SUM OPENNING [balance & total balance]
 	BEGIN
 		-- The BU date & next Saturday in rptStatement
-		IF (@_Winlostdate = @CurrentBU_Date)
-		BEGIN
-			SELECT @_Saturday = DATEADD(DD, 1, @CurrentBU_Date)
-
+		SELECT @_Saturday = DATEADD (DD, 7-DATEPART(DW, @CurrentBU_Date), @CurrentBU_Date)
+		
+		IF (@_Winlostdate BETWEEN @CurrentBU_Date AND @_Saturday)	
+		BEGIN			
 			INSERT #rptOpenningBalanceTable (custid, winlost)
 			SELECT custid, winlost
 			FROM (
 				SELECT rpt.custid
 					, rpt.OpeningBalance AS winlost
-					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate ASC) as Num
+					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate ASC) AS Num
 				FROM dbo.rptStatement rpt WITH(NOLOCK)
-				WHERE rpt.winlostdate >= @CurrentBU_Date AND rpt.winlostdate <= @_Saturday
+				WHERE rpt.winlostdate >= @_Winlostdate AND rpt.winlostdate <= @_Saturday
 						
 			) AS tmp 
 			WHERE tmp.Num = 1
-			
-		END
-		-- The Saturday in rptStatement
-		ELSE IF (@_Winlostdate = DATEADD(DD, 1, @CurrentBU_Date))
-		BEGIN
-			SELECT @_Saturday = @_Winlostdate
-
-			INSERT #rptOpenningBalanceTable (custid, winlost)
-			SELECT rpt.custid, rpt.OpeningBalance AS winlost
-			FROM dbo.rptStatement rpt WITH(NOLOCK)
-			WHERE rpt.winlostdate = @_Saturday
 		END
 		-- The last Saturday in rptStatement
 		ELSE
 		BEGIN
-			SELECT @_Saturday = DATEADD (DD, -DATEPART(DW, @_Winlostdate), @_Winlostdate)
-
 			INSERT #rptOpenningBalanceTable (custid, winlost)
 			SELECT custid, winlost
 			FROM (
 				SELECT rpt.custid, rpt.ClosingBalance AS winlost
-					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
+					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) AS Num
 				FROM dbo.rptStatement rpt WITH(NOLOCK)
 				WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
 			) AS tmp 
@@ -610,6 +597,7 @@ BEGIN
 		;
 	END
 
+	DROP TABLE #rptOpenningBalanceTable
 	DROP TABLE #rptStatementTable
 	DROP TABLE #custComparision
 	DROP TABLE #rptStatementCompare
