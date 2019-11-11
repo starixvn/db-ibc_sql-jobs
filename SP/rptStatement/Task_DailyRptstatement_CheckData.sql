@@ -22,6 +22,7 @@ AS
 		- 20190128@Sophia: Fix correct data at Void Block code [RedmineID: #107365]
 		- 20190801@Percy: Check OpeningTotalBalance for Credit Collection [RedmineID: #109293]
 		- 20190912@Bobby: Implement headline - Statement [Redmine: #119289]
+		- 20191111@Bobby: Correct BU rule - Statement [Redmine: #119289]
 */
 BEGIN
 
@@ -217,13 +218,11 @@ BEGIN
 			SELECT @_Saturday = DATEADD(DD, 1, @CurrentBU_Date)
 
 			INSERT #rptOpenningBalanceTable (custid, winlost)
-			SELECT custid, ClosingBalance
+			SELECT custid, winlost
 			FROM (
 				SELECT rpt.custid
-					, CASE 
-						WHEN rpt.winlostdate = @_Saturday THEN rpt.OpenningBalance 
-						ELSE rpt.ClosingBalance END AS ClosingBalance
-					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
+					, rpt.OpeningBalance AS winlost
+					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate ASC) as Num
 				FROM dbo.rptStatement rpt WITH(NOLOCK)
 				WHERE rpt.winlostdate >= @CurrentBU_Date AND rpt.winlostdate <= @_Saturday
 						
@@ -237,7 +236,7 @@ BEGIN
 			SELECT @_Saturday = @_Winlostdate
 
 			INSERT #rptOpenningBalanceTable (custid, winlost)
-			SELECT rpt.custid, rpt.ClosingBalance
+			SELECT rpt.custid, rpt.OpeningBalance AS winlost
 			FROM dbo.rptStatement rpt WITH(NOLOCK)
 			WHERE rpt.winlostdate = @_Saturday
 		END
@@ -247,9 +246,9 @@ BEGIN
 			SELECT @_Saturday = DATEADD (DD, -DATEPART(DW, @_Winlostdate), @_Winlostdate)
 
 			INSERT #rptOpenningBalanceTable (custid, winlost)
-			SELECT custid, ClosingBalance
+			SELECT custid, winlost
 			FROM (
-				SELECT rpt.custid, rpt.ClosingBalance
+				SELECT rpt.custid, rpt.ClosingBalance AS winlost
 					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
 				FROM dbo.rptStatement rpt WITH(NOLOCK)
 				WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
