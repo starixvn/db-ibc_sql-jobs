@@ -1,10 +1,7 @@
 /*<info serverAlias="DBRPT-bodb_Report" executers="" isFunction="0" isNested="0"></info>*/
-USE bodb_Report
-GO
-
 ALTER PROCEDURE [dbo].[Task_DailyRptStatement_CheckData]
-	@winlostdate		DATE
-	,@isCheckDataOnly	BIT
+	@WinlostDate		DATE
+	,@isCheckDataOnly	BIT = 1
 AS
 
 /*  
@@ -24,769 +21,554 @@ AS
 		- 20170323@Percy: Apply Cash Out [RedmineID: #72164]
 		- 20190128@Sophia: Fix correct data at Void Block code [RedmineID: #107365]
 		- 20190801@Percy: Check OpeningTotalBalance for Credit Collection [RedmineID: #109293]
+		- 20190912@Bobby: Implement headline - Statement [Redmine: #119289]
 */
-
 BEGIN
+
 	SET NOCOUNT ON
 
-	DECLARE @CurrentBU_Date DATETIME
-	DECLARE @CurrentMO_Date DATETIME
+	DECLARE @CurrentBU_Date SMALLDATETIME
+		,@CurrentMB_Date	SMALLDATETIME
+		,@_Winlostdate		SMALLDATETIME
+		,@_Saturday			SMALLDATETIME
 
-	DECLARE @MBBUDate TABLE (BalanceUpDay DATETIME, MoveBetsDay DATETIME)
-	INSERT INTO @MBBUDate (BalanceUpDay, MoveBetsDay)
-	EXEC bodb02.dbo.Age_SelBalanceUpDay
-
-	SELECT @CurrentBU_Date = BalanceUpDay, @CurrentMO_Date = MoveBetsDay FROM @MBBUDate
-
-	IF @winlostdate NOT BETWEEN @CurrentBU_Date AND @CurrentMO_Date
-	BEGIN
-		SELECT 999 ErrorCode
-			,'Parameter Winlostdate invalid!!!!' ErrorMsg
-		RETURN
-	END 
-
-	IF OBJECT_ID('tempdb..#tmpCustMiss') IS NOT NULL 
-	BEGIN
-		DROP TABLE #tmpCustMiss
-	END
-
-	CREATE TABLE #tmpCustMiss (
-		Custid INT
-		,Amount MONEY NULL
-		,ErrCode INT --1: Not Exists | 2: Sum WL-TO  | 10: Transfer | 20: Opening Balance | 30: Void/ Cancelled Bet
-		)
-
-	CREATE CLUSTERED INDEX ErrCode ON #tmpCustMiss (ErrCode )
-
-	IF OBJECT_ID('tempdb..#tmpOpeningBalance') IS NOT NULL
-	BEGIN
-		DROP TABLE #tmpOpeningBalance
-	END
-
-	CREATE TABLE #tmpOpeningBalance (
-		Custid INT
-		,OpeningBalance MONEY
-		)
-		
-	IF OBJECT_ID('tempdb..#tmpStatement') IS NOT NULL
-	BEGIN
-		DROP TABLE #tmpStatement
-	END
-
-	CREATE TABLE #tmpStatement (
-			Custid				INT
-			,OpeningBalance		MONEY	NULL
-			,Turnover			MONEY	NULL
-			,netTurnover		MONEY	NULL
-			,TransferAmt		MONEY	NULL
-			,VoidAmt			MONEY	NULL
-			,Winlost			MONEY	NULL
-			,Comm				MONEY	NULL
-			,ClosingBalance		MONEY	NULL
-			,GrandPrize			MONEY	NULL
-			,ErrCode			INT
-		)
-
-	--STEP 01. Check Data sum_winloss and [rptStatement]
-		
-	IF OBJECT_ID('tempdb..#tmpSumWL') IS NOT NULL
-	BEGIN
-		DROP TABLE #tmpSumWL
-	END
-
-	CREATE TABLE #tmpSumWL (
-		Custid				INT
+	CREATE TABLE #rptStatementTable (
+		Custid				INT PRIMARY KEY
+		,OpeningBalance		MONEY	NULL
+		,VoidAmt			MONEY	NULL
 		,Turnover			MONEY	NULL
 		,netTurnover		MONEY	NULL
+		,TransferAmt		MONEY	NULL
 		,Winlost			MONEY	NULL
 		,Comm				MONEY	NULL
+		,ClosingBalance		MONEY	NULL
+		,BetCount			INT		DEFAULT 0
+		,TransCount			INT		DEFAULT 0
+		,VoidCount			INT		DEFAULT 0
+		,GrandPrize			MONEY	NULL
+		,OpeningTotalBalance DECIMAL(37,4)	NULL
 	)
 
-	-- 1: get sum data from Bettrans into rptStatement
-	-- Member
-	INSERT INTO #tmpSumWL(
+	-- GET the previous Saturday
+	SELECT @CurrentBU_Date	= MIN(eventdate)
+		,@CurrentMB_Date	= MAX(eventdate)
+	FROM bodb02.dbo.match14 WITH(NOLOCK) 
+
+	SELECT @_Winlostdate = @Winlostdate
+		,@_Saturday = DATEADD (DD, -DATEPART(DW, @Winlostdate), @Winlostdate)
+
+	-- CHECK validation DATE
+	IF @_Winlostdate < @CurrentBU_Date
+		RETURN
+
+	-- 1. SUM BET/VOID/TRANSFER
+	-- TRANSFER: Headline, Member & SMA
+	-- BET/VOID: Member
+	;
+	WITH bettrans_temp AS (
+		SELECT b.custid,b.recommend,b.mrecommend,b.srecommend
+			,bet.transIndicator
+			,SUM(bet.stake) AS stake
+			,SUM(b.winlost-b.actual_stake) as winlost
+			,SUM(b.playercomm) AS playercomm
+			,SUM(b.comm) AS comm
+			,SUM(b.acomm) AS acomm
+			,SUM(b.scomm) AS scomm
+			,SUM(b.awinlost) AS awinlost
+			,SUM(b.mwinlost) AS mwinlost
+			,SUM(b.swinlost) AS swinlost
+			,SUM(bet.stake*b.apositiontaking) AS anet_stake
+			,SUM(bet.stake*b.mpositiontaking) AS mnet_stake
+			,SUM(bet.stake*b.spositiontaking) AS snet_stake
+		FROM
+			bodb02.dbo.bettrans14 b WITH(NOLOCK)
+		OUTER APPLY (
+			SELECT 
+				CASE 
+					WHEN b.statusID IN(103) THEN 0 -- Refund
+					ELSE ABS(b.stake)
+				END AS stake
+				,CASE 
+					WHEN b.statusID IN (101,102) AND b.bettype NOT IN (903, 500, 913, 914) THEN POWER(2*1,2) --> void bet
+					WHEN b.statusID NOT IN (101,102) THEN POWER(2*1,3) --> normal bet
+					ELSE 0
+					END AS transIndicator
+				
+		) AS bet
+		WHERE
+			b.winlostdate = @_Winlostdate
+			AND bet.transIndicator > 0
+		GROUP BY b.winlostdate,b.custid,b.recommend,b.mrecommend,b.srecommend
+			,bet.transIndicator
+	)
+	INSERT INTO #rptStatementTable(
 		Custid
+		,BetCount
 		,Turnover
 		,netTurnover
 		,Winlost
 		,Comm
+		,VoidCount
+		,VoidAmt
 	)
 	SELECT
-		custid
-		,SUM(CASE WHEN statusID NOT IN(103) 
-			  THEN CASE WHEN liveawayscore = 0 AND bettype IN(33,43) THEN ABS(stake)/2 ELSE ABS(stake) END 
-			  ELSE 0 END) AS Turnover
-		,0 AS netTurnover
-		,SUM(winlost - actual_stake) AS winlost
-		,SUM(playercomm) AS comm
+		c.custid
+		,SUM(bet.betIndicator) AS BetCount
+		,SUM(b.stake * bet.betIndicator) AS Turnover
+		,SUM(c.net_stake * bet.betIndicator) AS netTurnover
+		,SUM(c.winlost * bet.betIndicator) AS winlost
+		,SUM(c.comm * bet.betIndicator) AS comm
+		,SUM(c.voidIndicator) AS VoidCount
+		,SUM(b.stake * c.voidIndicator) AS VoidAmt
 	FROM
-		bodb02.dbo.Bettrans14 bt WITH(NOLOCK)	
-	WHERE
-		winlostdate = @Winlostdate
-		AND statusID NOT IN (0,1,102,101) -- 'running','waiting','VOID','REJECT'
-		AND bettype <= 19999
-		AND ruben = 1
+		bettrans_temp b
+	OUTER APPLY (
+		SELECT (4 & transIndicator)/4 AS voidIndicator
+			,(8 & transIndicator)/8 AS betIndicator
+	) AS bet
+	OUTER APPLY (
+		SELECT b.custid						AS custid
+			, 0								AS net_stake
+			, b.winlost						AS winlost
+			, b.playercomm					AS comm
+			, bet.voidIndicator				AS voidIndicator
+		UNION ALL
+		SELECT b.recommend, anet_stake, awinlost, comm - playercomm, 0
+		UNION ALL
+		SELECT b.mrecommend, mnet_stake, mwinlost, acomm - comm, 0
+		UNION ALL
+		SELECT b.srecommend, snet_stake, swinlost, scomm -acomm, 0
+	) AS c
 	GROUP BY
-		custid
-		
-	-- Agent
-	INSERT INTO #tmpSumWL(
-		Custid
-		,Turnover
-		,netTurnover
-		,Winlost
-		,Comm
-	)
-	SELECT
-		cu.recommend
-		,SUM(CASE WHEN bt.statusID NOT IN(103) 
-			  THEN CASE WHEN bt.liveawayscore = 0 AND bt.bettype IN(33,43) THEN ABS(bt.stake)/2 ELSE ABS(bt.stake) END
-			  ELSE 0 END) AS Turnover
-		,SUM(CASE WHEN bt.statusID NOT IN(103) 
-			  THEN CASE WHEN bt.liveawayscore = 0 AND bt.bettype IN(33,43) THEN ABS(bt.stake*bt.apositiontaking)/2 ELSE ABS(bt.stake*bt.apositiontaking) END 
-			  ELSE 0 END) AS netTurnover
-		,SUM(bt.awinlost) AS winlost
-		,SUM(bt.comm - bt.playercomm) AS comm
-	FROM
-		bodb02.dbo.Bettrans14 bt WITH(NOLOCK)
-		INNER JOIN bodb02.dbo.CustInfo cu WITH(NOLOCK)	ON bt.CustID = cu.CustID
-	WHERE
-		bt.winlostdate = @Winlostdate
-		AND bt.statusID NOT IN (0,1,102,101) -- 'running','waiting','VOID','REJECT'
-		AND bt.bettype <= 19999
-		AND bt.ruben = 1
-	GROUP BY
-		cu.recommend
-
-	-- Master
-	INSERT INTO #tmpSumWL(
-		Custid
-		,Turnover
-		,netTurnover
-		,Winlost
-		,Comm
-	)
-	SELECT
-		cu.mrecommend
-		,SUM(CASE WHEN bt.statusID NOT IN(103) 
-			  THEN CASE WHEN bt.liveawayscore = 0 AND bt.bettype IN(33,43) THEN ABS(bt.stake)/2 ELSE ABS(bt.stake) END 
-			  ELSE 0 END) AS Turnover
-		,SUM(CASE WHEN bt.statusID NOT IN(103) 
-			  THEN CASE WHEN bt.liveawayscore = 0 AND bt.bettype IN(33,43) THEN ABS(bt.stake*bt.mpositiontaking)/2 ELSE ABS(bt.stake*bt.mpositiontaking) END 
-			  ELSE 0 END) AS netTurnover
-		,SUM(bt.mwinlost) AS winlost
-		,SUM(bt.acomm - bt.comm) AS comm			
-	FROM
-		bodb02.dbo.Bettrans14 bt WITH(NOLOCK)
-		INNER JOIN bodb02.dbo.CustInfo cu WITH(NOLOCK)	ON bt.CustID = cu.CustID
-	WHERE
-		bt.winlostdate = @Winlostdate
-		AND bt.statusID NOT IN (0,1,102,101) -- 'running','waiting','VOID','REJECT'
-		AND bt.bettype <= 19999
-		AND bt.ruben = 1
-	GROUP BY
-		cu.mrecommend
-
-	-- Super
-	INSERT INTO #tmpSumWL(
-		Custid
-		,Turnover
-		,netTurnover
-		,Winlost
-		,Comm
-	)
-	SELECT
-		cu.srecommend
-		,SUM(CASE WHEN bt.statusID NOT IN(103) 
-			  THEN CASE WHEN bt.liveawayscore = 0 AND bt.bettype IN(33,43) THEN ABS(bt.stake)/2 ELSE ABS(bt.stake) END
-			  ELSE 0 END) AS Turnover
-		,SUM(CASE WHEN bt.statusID NOT IN(103) 
-			  THEN CASE WHEN bt.liveawayscore = 0 AND bt.bettype IN(33,43) THEN ABS(bt.stake*bt.spositiontaking)/2 ELSE ABS(bt.stake*bt.spositiontaking) END 
-			  ELSE 0 END) AS netTurnover
-		,SUM(bt.swinlost) AS winlost
-		,SUM(bt.scomm - bt.acomm) AS comm
-	FROM
-		bodb02.dbo.Bettrans14 bt WITH(NOLOCK)
-		INNER JOIN bodb02.dbo.CustInfo cu WITH(NOLOCK)	ON bt.CustID = cu.CustID
-	WHERE
-		bt.winlostdate = @Winlostdate
-		AND bt.statusID NOT IN (0,1,102,101) -- 'running','waiting','VOID','REJECT'
-		AND bt.bettype <= 19999
-		AND bt.ruben = 1
-	GROUP BY
-		cu.srecommend
-
-	INSERT INTO #tmpCustMiss (
-		Custid
-		,ErrCode
-		)
-	SELECT su.Custid
-		,1 ErrCode
-	FROM #tmpSumWL su
-		LEFT JOIN [dbo].[rptStatement] rpt WITH (NOLOCK) ON @Winlostdate= rpt.[winlostdate]
-		AND su.custid = rpt.custid
-	WHERE rpt.Custid IS NULL 
-	GROUP BY su.Custid
-	 
-	INSERT INTO #tmpCustMiss (
-		Custid
-		,ErrCode
-		)
-	SELECT su.Custid
-		,2 ErrCode
-	FROM #tmpSumWL su
-		LEFT JOIN [dbo].[rptStatement] rpt WITH (NOLOCK) ON @Winlostdate = rpt.[winlostdate]
-		AND su.custid = rpt.custid	
-		LEFT JOIN #tmpCustMiss tmpCust ON su.custid = tmpCust.custid
-		AND tmpCust.ErrCode = 1
-	WHERE tmpCust.CustID IS NULL
-		AND (
-			ABS(ISNULL(rpt.[Turnover], 0) - ISNULL(su.[Turnover], 0)) > 0
-			OR ABS(ISNULL(rpt.NetTurnover, 0) - ISNULL(su.NetTurnover, 0)) > 0
-			OR ABS(ISNULL(rpt.Winlost, 0) - ISNULL(su.Winlost, 0)) > 0
-			OR ABS(ISNULL(rpt.comm, 0) - ISNULL(su.comm, 0)) > 0
-			OR rpt.Custid IS NULL
-			)
-
-	--STEP 02. Check TransferAmt Data rptStatement and [sum_winloss] 
-	INSERT INTO #tmpCustMiss (
-		Custid
-		,Amount
-		,ErrCode
-		)
-	SELECT tmpTr.Custid
-		,tmpTr.TransferAmt Amount
-		,10 ErrCode
-	FROM (
-		SELECT @winlostdate winlostdate
-			,custid
+		c.custid
+	
+	-- 2. TRANSFER
+	;
+	WITH CTE_Transfer AS
+	(
+		SELECT custid
+			,COUNT(1) AS TransCount
 			,SUM(winlost - actual_stake) AS TransferAmt
-		FROM bodb02.dbo.bettrans WITH (ROWLOCK)
+		FROM bodb02.dbo.bettrans WITH (NOLOCK)
 		WHERE matchid = 0
 			AND bettype > 20000
-			AND bettype NOT IN (23001, 23002, 23101, 23102, 23201, 23202)
-			AND winlostdate = @winlostdate
+			AND winlostdate = @_Winlostdate
 		GROUP BY custid
-		) tmpTr
-		LEFT JOIN [dbo].[rptStatement] rpt WITH (NOLOCK) 
-			ON tmpTr.[winlostdate] = rpt.[winlostdate]
-				AND tmpTr.custid = rpt.custid
-	WHERE  (
-			ABS(ISNULL(rpt.TransferAmt, 0) - ISNULL(tmpTr.TransferAmt, 0)) > 0
-			OR rpt.TransferAmt IS NULL
-			)
+	)
+	MERGE #rptStatementTable AS TGR
+	USING CTE_Transfer AS SRC
+	ON TGR.custid = SRC.custid
+	WHEN MATCHED THEN
+		UPDATE 
+		SET TransCount = SRC.TransCount
+			,TransferAmt = SRC.TransferAmt
+	WHEN NOT MATCHED BY TARGET THEN
+		INSERT (custid, TransCount, TransferAmt)
+		VALUES (
+			SRC.custid
+			, SRC.TransCount
+			, SRC.TransferAmt
+		)
+	;
 
-	--STEP 03. Check Opening Balance
-	IF (@Winlostdate = @CurrentBU_Date)
+	-- 3. SUM Grand Prize
+	;
+	WITH CTE_GrandPrize	AS (
+		SELECT custid
+			,SUM(WinAmount) AS GrandPrize
+		FROM
+			DBACC.bodb02.dbo.PayoutTrans WITH(NOLOCK) 
+		WHERE
+			winlostdate = @_Winlostdate			
+			AND PayoutStatusId IN (4, 5)  ----- 'Completed', 'Expired'
+
+		GROUP BY custid
+	)
+	MERGE #rptStatementTable AS TGR
+	USING CTE_GrandPrize AS SRC
+	ON TGR.custid = SRC.custid
+	WHEN MATCHED THEN
+		UPDATE 
+		SET GrandPrize = SRC.GrandPrize
+	WHEN NOT MATCHED BY TARGET THEN
+		INSERT (custid, GrandPrize)
+		VALUES (
+			SRC.custid
+			, SRC.GrandPrize
+		)
+	;
+
+	-- 4. SUM OPENNING [balance & total balance]
+	-- PROCESS bettrans data
 	BEGIN
-		INSERT INTO #tmpOpeningBalance (
-			Custid
-			,OpeningBalance
-			)
-		SELECT bt.custid
-			,SUM(winlost - actual_stake) AS OpeningBalance
-		FROM bodb02.dbo.bettrans bt WITH (ROWLOCK)
-		WHERE winlostdate = @CurrentBU_Date
-			AND bettype = 20000
-		GROUP BY bt.custid
-	END
-	ELSE -- winlostdate > CurrentBU_Date
-	BEGIN
-		-- Opening Balance for Member
-		INSERT INTO #tmpOpeningBalance (
-			Custid
-			,OpeningBalance
-			)
-		SELECT bt.custid
-			,SUM(winlost - actual_stake + playercomm) AS OpeningBalance
-		FROM bodb02.dbo.bettrans bt WITH (ROWLOCK)
-		WHERE ruben = 1
-			AND bt.winlostdate >= @CurrentBU_Date
-			AND bt.winlostdate < @Winlostdate
-			AND bt.custid <> bt.recommend
-			AND bt.custid <> bt.mrecommend
-			AND bt.custid <> bt.srecommend
-		GROUP BY bt.custid
-
-		-- Opening Balance for Agent
-		INSERT INTO #tmpOpeningBalance (
-			Custid
-			,OpeningBalance
-			)
-		SELECT bt.recommend
-			,SUM(CASE 
-					WHEN bt.custid = recommend THEN winlost - actual_stake
-					ELSE awinlost + comm - playercomm
-					END) AS OpeningBalance
-		FROM bodb02.dbo.bettrans bt WITH (ROWLOCK)
-		WHERE ruben = 1
-			AND bt.winlostdate >= @CurrentBU_Date
-			AND bt.winlostdate < @Winlostdate
-		GROUP BY bt.recommend
-
-		-- Opening Balance for Master
-		INSERT INTO #tmpOpeningBalance (
-			Custid
-			,OpeningBalance
-			)
-		SELECT bt.mrecommend
-			,SUM(CASE 
-					WHEN bt.custid = mrecommend THEN winlost - actual_stake
-					ELSE mwinlost + acomm - comm
-					END) AS OpeningBalance
-		FROM bodb02.dbo.bettrans bt WITH (ROWLOCK)
-		WHERE ruben = 1
-			AND bt.winlostdate >= @CurrentBU_Date
-			AND bt.winlostdate < @Winlostdate
-		GROUP BY bt.mrecommend
-
-		-- Opening Balance for Super
-		INSERT INTO #tmpOpeningBalance (
-			Custid
-			,OpeningBalance
-			)
-		SELECT bt.srecommend
-			,SUM(CASE 
-					WHEN bt.custid = srecommend THEN winlost - actual_stake
-					ELSE swinlost + scomm - acomm
-					END) AS OpeningBalance
-		FROM bodb02.dbo.bettrans bt WITH (ROWLOCK)
-		WHERE ruben = 1
-			AND bt.winlostdate >= @CurrentBU_Date
-			AND bt.winlostdate < @Winlostdate
-		GROUP BY bt.srecommend
-	END
-
-	CREATE CLUSTERED INDEX CustId ON #tmpOpeningBalance (CustId)	
-	------------------------------------------------------------
-
-	INSERT INTO #tmpCustMiss (
-		Custid
-		,Amount
-		,ErrCode
-		)
-	SELECT DISTINCT tmpCust.Custid
-		,ISNULL(tmpOP.OpeningBalance,0) OpeningBalance
-		,3 ErrCode
-	FROM #tmpCustMiss tmpCust
-		LEFT JOIN  #tmpOpeningBalance tmpOP
-		ON tmpOP.Custid = tmpCust.Custid 
-	WHERE tmpCust.ErrCode <> 3
-
-
-	INSERT INTO #tmpCustMiss (
-		Custid
-		,Amount
-		,ErrCode
-		)
-	SELECT  tmp.Custid
-		,tmp.OpeningBalance
-		,20 ErrCode
-	FROM #tmpOpeningBalance tmp
-		LEFT JOIN [dbo].[rptStatement] rpt WITH (NOLOCK) ON tmp.custid = rpt.custid
-		AND rpt.[winlostdate] = @winlostdate
-		LEFT JOIN #tmpCustMiss tmpO ON tmpO.Custid = tmp.Custid AND tmpO.ErrCode = 3
-	WHERE ABS(ISNULL(tmp.OpeningBalance, 0) - ISNULL(rpt.OpeningBalance, 0)) > 0
-		AND tmpO.Custid IS NULL
-
-	INSERT INTO #tmpCustMiss (
-		Custid
-		,Amount
-		,ErrCode
-		)
-	SELECT  rpt.Custid
-		,ISNULL(tmp.OpeningBalance,0) OpeningBalance
-		,20 ErrCode
-	FROM [dbo].[rptStatement] rpt WITH (NOLOCK)
-		LEFT JOIN #tmpOpeningBalance tmp ON tmp.custid = rpt.custid	
-		LEFT JOIN #tmpCustMiss tmpO ON tmpO.Custid = rpt.Custid AND tmpO.ErrCode = 3
-	WHERE rpt.[winlostdate] = @winlostdate
-		AND ABS(ISNULL(tmp.OpeningBalance, 0) - ISNULL(rpt.OpeningBalance, 0)) > 0
-		AND tmpO.Custid IS NULL
-
-	IF OBJECT_ID('tempdb..#tmpOpeningBalance') IS NOT NULL
-	BEGIN
-		DROP TABLE #tmpOpeningBalance
-	END 
-
-	--STEP 04: Void/ Cancelled Bet - get data from Bettrans14
-	INSERT INTO #tmpCustMiss (
-		Custid
-		,Amount
-		,ErrCode
-		)
-	SELECT ISNULL(tmpVoid.Custid, rpt.custID ) as Custid
-			,ISNULL(tmpVoid.VoidAmt, 0) Amount
-			,30 ErrCode
-	FROM 
+		;
+		WITH CTE_Winlost (custid, winlost) AS
 		(
-		SELECT 
-			bt.custid custid,  @winlostdate AS Winlostdate
-			,SUM(CASE WHEN bt.liveawayscore = 0 AND bt.bettype IN(33,43) THEN ABS(bt.stake)/2 ELSE ABS(bt.stake) END) AS VoidAmt
-		FROM 
-			bodb02.dbo.Bettrans14  bt WITH(NOLOCK)
-			--INNER JOIN bodb02.dbo.match14 match (nolock)
-			--	ON bt.matchid = match.matchid				
-		WHERE 
-			bt.bettype <= 19000
-			AND bt.bettype NOT IN (500, 903, 913, 914)
-			AND bt.winlostdate = @winlostdate
-			AND bt.statusID in (101, 102) -- 'VOID','REJECT'
-		GROUP BY custid 
-		) tmpVoid 
-	FULL JOIN  (Select @winlostdate as winlostdate,  Custid, VoidAmt 
-				From [dbo].[rptStatement] rpt WITH (NOLOCK) 
-				WHERE rpt.winlostdate = @winlostdate
-				) rpt 
-		ON rpt.Custid = tmpVoid.Custid
-	WHERE ABS(ISNULL(tmpVoid.VoidAmt, 0) - ISNULL(rpt.VoidAmt, 0)) > 0
+			SELECT custid, ClosingBalance
+			FROM (
+				SELECT rpt.custid, rpt.ClosingBalance
+					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
+				FROM dbo.rptStatement rpt WITH(NOLOCK)
+				WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
+			) AS tmp 
+			WHERE tmp.Num = 1
+		),
+		CTE_Balance (custid, OpeningBalance, OpeningTotalBalance) AS
+		(
+			SELECT bal.custid
+				, SUM(bal.winlost)
+				, SUM(bal.totalWinlost)
+			FROM CTE_Winlost wl
+			INNER JOIN bodb02.dbo.custinfo ci WITH(NOLOCK) ON wl.custid = ci.custid
+			CROSS APPLY (
+				SELECT POWER(2*1, ci.roleid) AS ownerIndicator
+			) AS bet
+			CROSS APPLY (
+				SELECT wl.custid, 1 AS levelID, winlost, winlost AS totalWinlost
+				UNION ALL
+				SELECT ci.recommend, 2, winlost * CAST(bet.ownerIndicator & 4 AS BIT)/1, winlost
+				UNION ALL
+				SELECT ci.mrecommend, 3, winlost * CAST(bet.ownerIndicator & 8 AS BIT)/1, winlost
+				UNION ALL
+				SELECT ci.srecommend, 4, winlost * CAST(bet.ownerIndicator & 16 AS BIT)/1, winlost
+			) AS bal
+			WHERE bal.levelID >= ci.roleID
+				AND bal.custid > 0
+			GROUP BY bal.custid
+		)
+		MERGE #rptStatementTable AS TGR
+		USING CTE_Balance AS SRC
+		ON TGR.custid = SRC.custid
+		WHEN MATCHED THEN
+			UPDATE 
+			SET OpeningBalance = SRC.OpeningBalance
+			,OpeningTotalBalance = SRC.OpeningTotalBalance
+		WHEN NOT MATCHED BY TARGET THEN
+			INSERT (custid, OpeningBalance, OpeningTotalBalance)
+			VALUES (SRC.custid, SRC.OpeningBalance, SRC.OpeningTotalBalance)
+		;
+	END
+
+	--5. Headline - Openning total balance
+	;WITH CTE_HeadlineTotalBalance AS 
+	(
+		SELECT cs.UplineId, SUM(tmp.OpeningTotalBalance) AS OpeningTotalBalance
+		FROM bodb02.dbo.CustSuper cs WITH(NOLOCK)
+		INNER JOIN #rptStatementTable tmp ON cs.custid = tmp.Custid
+		WHERE cs.UplineId > 0
+		GROUP BY cs.UplineId
+	)
+	UPDATE tmp
+	SET OpeningTotalBalance += bal.OpeningTotalBalance
+	FROM #rptStatementTable tmp
+	INNER JOIN CTE_HeadlineTotalBalance bal ON tmp.Custid = bal.UplineId
 	
+	-- 6. INSERT into #rptStatementCompare
+	CREATE TABLE #rptStatementCompare (
+		Custid				INT PRIMARY KEY
+		,Winlostdate		SMALLDATETIME
+		,OpeningBalance		MONEY	NULL
+		,VoidAmt			MONEY	NULL
+		,Turnover			MONEY	NULL
+		,netTurnover		MONEY	NULL
+		,TransferAmt		MONEY	NULL
+		,Winlost			MONEY	NULL
+		,Comm				MONEY	NULL
+		,ClosingBalance		MONEY	NULL
+		,GrandPrize			MONEY	NULL
+		,OpeningTotalBalance DECIMAL(37,4)	NULL
+	)
+
+	INSERT INTO #rptStatementCompare(
+		Winlostdate
+		, Custid
+		, Openingbalance
+		, Turnover
+		, NetTurnover
+		, Winlost
+		, Comm
+		, Voidamt
+		, TransferAmt
+		, GrandPrize
+		, ClosingBalance
+		, OpeningTotalBalance
+	)
+	SELECT 
+		@_Winlostdate AS Winlostdate
+		,tmp.Custid
+		,(ISNULL(tmp.Openingbalance, 0)) AS [OpeningBalance]
+		,(CASE WHEN tmp.BetCount > 0 THEN tmp.Turnover ELSE NULL END) AS [Turnover]
+		,(CASE WHEN tmp.BetCount > 0 THEN tmp.NetTurnover ELSE NULL END) AS [NetTurnover]
+		,(CASE WHEN tmp.BetCount > 0 THEN tmp.Winlost ELSE NULL END) AS [Winlost]
+		,(CASE WHEN tmp.BetCount > 0 THEN tmp.Comm ELSE NULL END) AS [Comm]
+		,(CASE WHEN tmp.VoidCount > 0 THEN tmp.Voidamt ELSE NULL END) AS [VoidAmt]
+		,(CASE WHEN tmp.TransCount > 0 THEN tmp.TransferAmt ELSE NULL END) AS [TransferAmt]
+		,(tmp.GrandPrize) AS GrandPrize
+		,(ISNULL(tmp.Openingbalance, 0) + ISNULL(tmp.[Winlost], 0) + ISNULL(tmp.[Comm], 0) + ISNULL(tmp.[TransferAmt], 0)) AS ClosingBalance
+		,(ISNULL(OpeningTotalBalance,0)) AS OpeningTotalBalance
+	
+	FROM 
+		#rptStatementTable tmp
+	WHERE 
+		DATEPART(DW,@_Winlostdate) = 7
+		OR
+		(ISNULL(tmp.VoidCount, 0)) <> 0
+		OR (ISNULL(tmp.BetCount, 0)) <> 0
+		OR (ISNULL(tmp.TransCount, 0)) <> 0
+		OR (ISNULL(tmp.GrandPrize, 0)) <> 0
+	
+	
+	--7. COMPARE & COLLECT ERROR--------------------------------------
+	CREATE TABLE #custComparision (
+		custid			INT
+		, ErrorCode		INT
+		, SubError		INT DEFAULT(0)
+		, beforeAmt		DECIMAL(20,4) DEFAULT(0)
+		, afterAmt		DECIMAL(20,4) DEFAULT(0)
+	)
+
+	CREATE CLUSTERED INDEX CIC_CustID ON #custComparision(custid)
+
+	INSERT INTO #custComparision(custid, ErrorCode, SubError, beforeAmt, afterAmt)
+	SELECT custid, ErrorCode, SubError, beforeAmt, afterAmt
+	FROM (
+		--1. CHECK missed CUST
+		SELECT tmp.custid
+			,10 AS ErrorCode
+			,11 AS SubError
+			,0 AS beforeAmt
+			,tmp.Custid AS afterAmt
+		FROM #rptStatementCompare tmp
+		LEFT JOIN dbo.rptStatement rpt WITH(NOLOCK) 
+			ON tmp.custid = rpt.custid AND rpt.winlostdate = @_Winlostdate
+		WHERE rpt.custid IS NULL
+
+		--1.2 CHECK removed CUST
+		UNION ALL
+		SELECT rpt.custid
+			,10 AS ErrorCode
+			,12 AS SubError
+			,rpt.custid AS beforeAmt
+			,0 AS afterAmt
+		FROM dbo.rptStatement rpt WITH(NOLOCK)
+		LEFT JOIN #rptStatementCompare tmp 
+			ON tmp.custid = rpt.custid
+		WHERE rpt.winlostdate = @_Winlostdate
+			AND tmp.custid IS NULL
+
 		
+		--2. CHECK wrong BET
+		UNION ALL
+		SELECT tmp.custid
+			, 20 AS ErrorCode
+			, diff.SubError
+			, diff.beforeAmt
+			, diff.afterAmt
+		FROM #rptStatementCompare tmp
+		INNER JOIN dbo.rptStatement rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		CROSS APPLY (
+			--Turnover
+			SELECT rpt.turnover AS beforeAmt
+				, tmp.turnover AS afterAmt
+				, 21 AS SubError
+			WHERE tmp.turnover <> rpt.turnover
 
-	--STEP 05: Grand Prize
-	INSERT INTO #tmpCustMiss (
-		Custid
-		,Amount
-		,ErrCode
-		)
-	SELECT tmpGrandPrize.Custid
-		,tmpGrandPrize.GrandPrize AS Amount
-		,40 ErrCode
-	FROM 
-		(
-			--SELECT 
-			--	bt.custid custid
-			--	,SUM(bm.winlost - bm.stake) AS GrandPrize
-			--FROM 
-			--	bodb02.dbo.Bettrans14 bt WITH(NOLOCK)
-			--	INNER JOIN bodb02.dbo.bettransM14 bm (nolock)
-			--		ON bt.RefNo = bm.RefNo				
-			--WHERE 
-			--	bt.bettype = 18000
-			--	AND bt.winlostdate = @winlostdate
-			--	AND bt.statusID in (101, 102) -- 'VOID','REJECT'
-			--	AND bm.statuswinlost <> 0
-			--GROUP BY bt.custid
+			--NetTurnover
+			UNION ALL
+			SELECT rpt.NetTurnover AS beforeAmt
+				, tmp.NetTurnover AS afterAmt
+				, 22 AS SubError
+			WHERE tmp.NetTurnover <> rpt.NetTurnover
 
-			--UNION ALL
+			--winlost
+			UNION ALL
+			SELECT rpt.winlost AS beforeAmt
+				, tmp.winlost AS afterAmt
+				, 23 AS SubError
+			WHERE tmp.winlost <> rpt.winlost
 
-			SELECT  custid
-					,SUM(WinAmount) AS GrandPrize
-			FROM	DBACC.bodb02.dbo.PayoutTrans WITH(NOLOCK) 
-			WHERE	winlostdate = @Winlostdate	
-					AND PayoutStatusId IN (4, 5)  ----- 'Completed', 'Expired'			
-			GROUP BY custid
+			--Comm
+			UNION ALL
+			SELECT rpt.Comm AS beforeAmt
+				, tmp.Comm AS afterAmt
+				, 24 AS SubError
+			WHERE tmp.Comm <> rpt.Comm
+		) AS diff
+		WHERE rpt.winlostdate = @_Winlostdate
+			AND (
+				tmp.turnover <> rpt.turnover
+				OR tmp.NetTurnover <> rpt.NetTurnover
+				OR tmp.winlost <> rpt.winlost
+				OR tmp.Comm <> rpt.Comm
+			)
 
-		) tmpGrandPrize 
-	LEFT JOIN [dbo].[rptStatement] rpt WITH (NOLOCK) 	
-		ON rpt.Custid = tmpGrandPrize.Custid
-			AND rpt.winlostdate = @winlostdate
-	WHERE ABS(ISNULL(tmpGrandPrize.GrandPrize, 0) - ISNULL(rpt.GrandPrize, 0)) > 0
+		--3. CHECK wrong VOID
+		UNION ALL
+		SELECT tmp.custid
+			,30 AS ErrorCode
+			,0 AS SubError
+			,rpt.Voidamt AS beforeAmt
+			,tmp.Voidamt AS afterAmt
+		FROM #rptStatementCompare tmp
+		INNER JOIN dbo.rptStatement rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		WHERE rpt.winlostdate = @_Winlostdate
+			AND tmp.Voidamt <> rpt.Voidamt
+		
+		--4. CHECK wrong TRANSFER
+		UNION ALL
+		SELECT tmp.custid
+			,40 AS ErrorCode
+			,0 AS SubError
+			,rpt.TransferAmt AS beforeAmt
+			,tmp.TransferAmt AS afterAmt
+		FROM #rptStatementCompare tmp
+		INNER JOIN dbo.rptStatement rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		WHERE rpt.winlostdate = @_Winlostdate
+			AND tmp.TransferAmt <> rpt.TransferAmt
 
+		--5. CHECK wrong GRAND_PRIZE
+		UNION ALL
+		SELECT tmp.custid
+			,50 AS ErrorCode
+			,0 AS SubError
+			,rpt.GrandPrize AS beforeAmt
+			,tmp.GrandPrize AS afterAmt
+		FROM #rptStatementCompare tmp
+		INNER JOIN dbo.rptStatement rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		WHERE rpt.winlostdate = @_Winlostdate
+			AND tmp.GrandPrize <> rpt.GrandPrize
 
+		--6. CHECK wrong OPENING_BALANCE
+		UNION ALL
+		SELECT tmp.custid
+			,60 AS ErrorCode
+			,diff.SubError
+			,diff.beforeAmt
+			,diff.afterAmt
+		FROM #rptStatementCompare tmp
+		INNER JOIN dbo.rptStatement rpt WITH(NOLOCK) ON tmp.custid = rpt.custid
+		CROSS APPLY (
+			--Openingbalance
+			SELECT rpt.Openingbalance AS beforeAmt
+				, tmp.Openingbalance AS afterAmt
+				, 61 AS SubError
+			WHERE tmp.Openingbalance <> rpt.Openingbalance
 
+			--OpeningTotalBalance
+			UNION ALL
+			SELECT rpt.OpeningTotalBalance AS beforeAmt
+				, tmp.OpeningTotalBalance AS afterAmt
+				, 62 AS SubError
+			WHERE tmp.OpeningTotalBalance <> rpt.OpeningTotalBalance
+			
+		) AS diff
+		WHERE rpt.winlostdate = @_Winlostdate
+			AND (
+				tmp.Openingbalance <> rpt.Openingbalance
+				OR tmp.OpeningTotalBalance <> rpt.OpeningTotalBalance
+			)
+	) AS tmp
+	--------------------END COMPARE & COLLECT ERROR--------------------------------------
 
-	/*Insert data into tmpStatement temp table*/
-	
-	INSERT INTO #tmpStatement (
-		Custid
-		,OpeningBalance
-		,Turnover
-		,netTurnover
-		,TransferAmt
-		,Winlost
-		,Comm
-		,ClosingBalance
-		,ErrCode
-	)
-	SELECT 	tmp.Custid	
-		,ISNULL(tmpO.Amount,0) OpeningBalance
-		,tblsum.Turnover
-		,tblsum.netTurnover
-		,NULL TransferAmt
-		,tblsum.Winlost
-		,tblsum.Comm
-		,NULL ClosingBalance 
-		,1 ErrCode
-	FROM #tmpCustMiss tmp
-	INNER JOIN #tmpSumWL tblsum ON tblsum.custid = tmp.custid
-	LEFT JOIN #tmpCustMiss tmpO 
-		ON tmpO.custid = tmp.custid AND tmpO.ErrCode = 3
-	WHERE tmp.ErrCode IN  (1, 2 ) 
-
-	IF OBJECT_ID('tempdb..#tmpSumWL') IS NOT NULL
-	BEGIN
-		DROP TABLE #tmpSumWL
-	END	
-
-	INSERT INTO #tmpStatement (
-		Custid
-		,TransferAmt
-		,ErrCode
-	)
-	SELECT 	tmp.Custid	
-		,Amount
-		,10 ErrCode
-	FROM #tmpCustMiss tmp
-	WHERE tmp.ErrCode IN  (10)
-
-	INSERT INTO #tmpStatement (
-		Custid
-		,OpeningBalance
-		,ErrCode
-	)
-	SELECT 	tmp.Custid	
-		,Amount
-		,20 ErrCode
-	FROM #tmpCustMiss tmp
-	WHERE tmp.ErrCode IN  (20 )
-
-	INSERT INTO #tmpStatement (
-		Custid
-		,VoidAmt
-		,ErrCode
-	)
-	SELECT 	tmp.Custid	
-		,Amount
-		,30 ErrCode
-	FROM #tmpCustMiss tmp
-	WHERE tmp.ErrCode IN  (30 )
-
-	INSERT INTO #tmpStatement (
-		Custid
-		,GrandPrize
-		,ErrCode
-	)
-	SELECT 	tmp.Custid	
-		,Amount
-		,40 ErrCode
-	FROM #tmpCustMiss tmp
-	WHERE tmp.ErrCode IN  (40)
-
-
-	IF OBJECT_ID('tempdb..#tmpCustMiss') IS NOT NULL 
-	BEGIN
-		DROP TABLE #tmpCustMiss
-	END
-	 
-	CREATE CLUSTERED INDEX ErrCode ON #tmpStatement (ErrCode)
-	CREATE NONCLUSTERED INDEX CustId ON #tmpStatement (CustId)
-	
-	--Show up data 
+	--8. CHECK OR CORRECT rptStatement
 	IF @isCheckDataOnly = 1
 	BEGIN
-		IF EXISTS(SELECT TOP 1 1FROM #tmpStatement tmpSta
-					WHERE tmpSta.ErrCode  IN (1,40))
-		BEGIN
-			SELECT 
-				'Wrong W/L-TO-Grand Prize' Reason
+		----------ERROR SUMMARY--------------
+		SELECT err.ErrorCode
+			, COUNT(1) NumOfItem
+		FROM #custComparision err
+		GROUP BY err.ErrorCode
+
+		----------ERROR DETAIL--------------
+		SELECT 
+			CASE 
+				WHEN err.ErrorCode = 10 THEN 'Wrong Cust' 
+				WHEN err.ErrorCode = 20 THEN 'Wrong BET' 
+				WHEN err.ErrorCode = 30 THEN 'Wrong Void/Reject/Refund' 
+				WHEN err.ErrorCode = 40 THEN 'Wrong Transfer' 
+				WHEN err.ErrorCode = 50 THEN 'Wrong Grand Prize' 
+				WHEN err.ErrorCode = 60 THEN 'Wrong Balance' 
+				ELSE 'Unknown' 
+			END 
+			+ CASE 
+				WHEN err.SubError = 11 THEN ' - Missed' 
+				WHEN err.SubError = 12 THEN ' - Removed' 
+				WHEN err.SubError = 21 THEN ' - Turnover' 
+				WHEN err.SubError = 22 THEN ' - NetTurnover' 
+				WHEN err.SubError = 23 THEN ' - Winlost' 
+				WHEN err.SubError = 24 THEN ' - Comm' 
+				WHEN err.SubError = 61 THEN ' - OpeningBalance' 
+				WHEN err.SubError = 62 THEN ' - OpeningTotalBalance' 
+				WHEN err.SubError = 0 THEN '' 
+				ELSE ' - Unknown'
+				END
+			AS Reason
+			, err.custid
+			, err.beforeAmt
+			, err.afterAmt
+			, ci.roleid
+		FROM #custComparision err
+		LEFT JOIN bodb02.dbo.custInfo ci (nolock) on err.Custid = ci.custid
+		ORDER BY err.ErrorCode
+			, err.SubError
+	END
+	ELSE 
+	BEGIN
+		-- Correct Data
+		MERGE INTO dbo.rptStatement AS TGR
+		USING #rptStatementCompare SRC
+		ON TGR.Winlostdate = SRC.Winlostdate AND TGR.Custid = SRC.Custid
+		WHEN MATCHED AND TGR.Winlostdate = @_Winlostdate THEN
+		UPDATE 
+			SET OpeningBalance = SRC.OpeningBalance
+				,VoidAmt = SRC.VoidAmt
+				,Turnover = SRC.Turnover
+				,NetTurnover = SRC.NetTurnover
+				,TransferAmt = SRC.TransferAmt
+				,Winlost = SRC.Winlost
+				,Comm = SRC.Comm
+				,ClosingBalance = SRC.ClosingBalance
+				,GrandPrize = SRC.GrandPrize
+				,OpeningTotalBalance = SRC.OpeningTotalBalance
+
+		WHEN NOT MATCHED BY TARGET THEN
+		INSERT (
+				Winlostdate
 				,Custid
 				,OpeningBalance
+				,VoidAmt
 				,Turnover
-				,netTurnover
+				,NetTurnover
+				,TransferAmt
 				,Winlost
 				,Comm
-				,TransferAmt
 				,ClosingBalance
-				,GrandPrize 
-			FROM #tmpStatement tmpSta
-			WHERE tmpSta.ErrCode IN (1,40)
-		END 
-			
-		IF EXISTS(SELECT TOP 1 1FROM #tmpStatement tmpSta
-					WHERE tmpSta.ErrCode = 10)
-		BEGIN
-			SELECT 
-				'Wrong Transfer' Reason
-				,tmpSta.Custid
-				,tmpSta.TransferAmt TransferAmt_after
-				,rpt.TransferAmt	TransferAmt_before
-			FROM #tmpStatement tmpSta
-				LEFT JOIN [dbo].[rptStatement] rpt WITH(NOLOCK)
-				ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID
-			WHERE tmpSta.ErrCode = 10
-		END 
-			
-		IF EXISTS(SELECT TOP 1 1FROM #tmpStatement tmpSta
-				INNER JOIN [dbo].[rptStatement] rpt WITH(NOLOCK)
-					ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID AND tmpSta.ErrCode = 20
-					)
-		BEGIN	
-			SELECT 
-				'Wrong Opening Balance' Reason
-				,tmpSta.Custid
-				,tmpSta.OpeningBalance	OpeningBalance_After
-				,rpt.OpeningBalance	OpeningBalance_before
-			FROM #tmpStatement tmpSta
-				INNER JOIN [dbo].[rptStatement] rpt WITH(NOLOCK)
-				ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID AND tmpSta.ErrCode = 20
-		END 	
-			
-		IF EXISTS(SELECT TOP 1 1FROM #tmpStatement tmpSta
-					WHERE tmpSta.ErrCode = 30)
-		BEGIN	
-			SELECT 
-				'Wrong Void/Delete/Cancel' Reason
-				,tmpSta.Custid
-				,tmpSta.VoidAmt VoidAmt_after
-				,rpt.VoidAmt	VoidAmt_before
-			FROM #tmpStatement tmpSta
-				LEFT JOIN [dbo].[rptStatement] rpt WITH(NOLOCK)
-				ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID
-			WHERE tmpSta.ErrCode = 30
-		END
-		
-	END
-
-	--Correct data 
-	IF @isCheckDataOnly = 0
-	BEGIN
-		UPDATE rpt
-		SET rpt.OpeningBalance = tmpSta.OpeningBalance 
-			,rpt.Turnover = tmpSta.Turnover 
-			,rpt.netTurnover = tmpSta.netTurnover 
-			,rpt.Winlost = tmpSta.Winlost 
-			,rpt.Comm = tmpSta.Comm 
-			,rpt.ClosingBalance = ISNULL(tmpSta.OpeningBalance,0) +ISNULL(rpt.TransferAmt,0) +ISNULL(tmpSta.Winlost,0) +ISNULL(tmpSta.Comm,0)
-		FROM [dbo].[rptStatement] rpt WITH(ROWLOCK,UPDLOCK)
-		INNER JOIN   #tmpStatement tmpSta
-			ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID AND tmpSta.ErrCode = 1
-
-		INSERT INTO [dbo].[rptStatement] (
-			WinlostDate
-			,Custid
-			,OpeningBalance
-			,Turnover
-			,netTurnover
-			,Winlost
-			,Comm
-			,ClosingBalance
-		)
-		SELECT 
-			@WinlostDate WinlostDate
-			,tmpSta.Custid
-			,ISNULL(tmpSta.OpeningBalance,0) OpeningBalance
-			,tmpSta.Turnover
-			,tmpSta.netTurnover
-			,tmpSta.Winlost
-			,tmpSta.Comm
-			,ISNULL(tmpSta.OpeningBalance,0) +ISNULL(tmpSta.Winlost,0) +ISNULL(tmpSta.Comm,0) AS ClosingBalance
-		FROM   #tmpStatement tmpSta	
-			LEFT JOIN [dbo].[rptStatement] rpt WITH(ROWLOCK,UPDLOCK)	
-			ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID
-		WHERE rpt.CustID IS NULL AND tmpSta.ErrCode = 1
-		 
-		UPDATE rpt
-		SET rpt.TransferAmt = tmpSta.TransferAmt  
-			,rpt.ClosingBalance = ISNULL(rpt.OpeningBalance,0)  +ISNULL(tmpSta.TransferAmt,0) +ISNULL(rpt.Winlost,0) +ISNULL(rpt.Comm,0)
-		FROM [dbo].[rptStatement] rpt WITH(ROWLOCK,UPDLOCK)
-		INNER JOIN   #tmpStatement tmpSta
-			ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID AND tmpSta.ErrCode = 10
-
-		INSERT INTO [dbo].[rptStatement] (
-			WinlostDate
-			,OpeningBalance
-			,Custid
-			,TransferAmt
-			,ClosingBalance
-		)
-		SELECT 
-			@WinlostDate WinlostDate
-			,0 OpeningBalance
-			,tmpSta.Custid
-			,tmpSta.TransferAmt
-			,tmpSta.TransferAmt AS ClosingBalance
-		FROM   #tmpStatement tmpSta	
-			LEFT JOIN [dbo].[rptStatement] rpt WITH(ROWLOCK,UPDLOCK)	
-			ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID
-		WHERE rpt.CustID IS NULL AND tmpSta.ErrCode = 10	
-
-		UPDATE rpt
-		SET rpt.ClosingBalance =  ISNULL(tmpSta.OpeningBalance,0)  +ISNULL(rpt.TransferAmt,0) +ISNULL(rpt.Winlost,0) +ISNULL(rpt.Comm,0)
-			,rpt.OpeningBalance = tmpSta.OpeningBalance  
-		FROM [dbo].[rptStatement] rpt WITH(ROWLOCK,UPDLOCK)
-		INNER JOIN   #tmpStatement tmpSta
-			ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID AND tmpSta.ErrCode = 20
-
-		IF	DATEPART(DW,@WinlostDate)=7
-		BEGIN
-			INSERT INTO [dbo].[rptStatement] (
-				WinlostDate
-				,OpeningBalance
-				,Custid
-				,ClosingBalance
+				,GrandPrize
+				,OpeningTotalBalance
 			)
-			SELECT 
-				@WinlostDate WinlostDate
-				,tmpSta.OpeningBalance
-				,tmpSta.Custid
-				,tmpSta.OpeningBalance AS ClosingBalance
-			FROM   #tmpStatement tmpSta	
-				LEFT JOIN [dbo].[rptStatement] rpt
-				ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID
-			WHERE rpt.CustID IS NULL 
-				AND tmpSta.ErrCode = 20
-		END
-		
+		VALUES (
+				SRC.Winlostdate
+				,SRC.Custid
+				,SRC.OpeningBalance
+				,SRC.VoidAmt
+				,SRC.Turnover
+				,SRC.NetTurnover
+				,SRC.TransferAmt
+				,SRC.Winlost
+				,SRC.Comm
+				,SRC.ClosingBalance
+				,SRC.GrandPrize
+				,SRC.OpeningTotalBalance
+			) 
 				
-		UPDATE rpt
-		SET rpt.VoidAmt = tmpSta.VoidAmt  
-		FROM [dbo].[rptStatement] rpt WITH(ROWLOCK,UPDLOCK)
-		INNER JOIN   #tmpStatement tmpSta
-			ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID AND tmpSta.ErrCode = 30
-
-
-		INSERT INTO [dbo].[rptStatement] (
-			WinlostDate
-			,OpeningBalance
-			,Custid
-			,ClosingBalance
-		)
-		SELECT 
-			@WinlostDate WinlostDate
-			,tmpSta.OpeningBalance
-			,tmpSta.Custid
-			,tmpSta.OpeningBalance AS ClosingBalance
-		FROM   #tmpStatement tmpSta	
-			LEFT JOIN [dbo].[rptStatement] rpt
-			ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID
-		WHERE rpt.CustID IS NULL 
-			AND tmpSta.ErrCode = 20
-			AND tmpSta.Custid IN (SELECT Custid FROM #tmpStatement tmpSta WHERE tmpSta.ErrCode = 30)
-	
-	
-		---------
-		UPDATE rpt
-		SET rpt.GrandPrize = tmpSta.GrandPrize  
-		FROM [dbo].[rptStatement] rpt WITH(ROWLOCK,UPDLOCK)
-		INNER JOIN   #tmpStatement tmpSta
-			ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID AND tmpSta.ErrCode = 40
-
-			
-		INSERT INTO [dbo].[rptStatement] (
-			WinlostDate
-			,Custid
-			,GrandPrize
-		)
-		SELECT 
-			@WinlostDate WinlostDate
-			,tmpSta.Custid
-			,tmpSta.GrandPrize AS GrandPrize
-		FROM   #tmpStatement tmpSta	
-			LEFT JOIN [dbo].[rptStatement] rpt
-			ON rpt.WinlostDate = @WinlostDate AND rpt.CustID = tmpSta.CustID
-		WHERE rpt.CustID IS NULL 
-			  AND tmpSta.ErrCode = 40
+		WHEN NOT MATCHED BY SOURCE 
+				AND TGR.Winlostdate = @_Winlostdate AND DATEPART(DW,@_Winlostdate) <> 7 THEN
+			DELETE
+		;
 	END
 
-	IF OBJECT_ID('tempdb..#tmpStatement') IS NOT NULL
-	BEGIN
-		DROP TABLE #tmpStatement
-	END
-
-	------------OpeningTotalBalance------------
-	EXEC dbo.Task_DailyRptStatement_OpeningTotalBalance_CheckData
-		@WinlostDate		= @WinlostDate
-		,@isCheckDataOnly	= @isCheckDataOnly
+	DROP TABLE #rptStatementTable
+	DROP TABLE #custComparision
+	DROP TABLE #rptStatementCompare
 END
 GO
