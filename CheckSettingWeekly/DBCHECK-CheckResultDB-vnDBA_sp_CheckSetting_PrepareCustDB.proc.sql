@@ -1,7 +1,6 @@
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
-CREATE PROCEDURE	dbo.vnDBA_sp_CheckSetting_PrepareCustDB
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
+CREATE PROCEDURE	[dbo].[vnDBA_sp_CheckSetting_PrepareCustDB]
 AS
 /*
 	Creator:	20180718@Billy
@@ -11,7 +10,7 @@ AS
 	Revisions:
 		- 20180718@Billy:	Initial - [Redmine: #000000]
 		- 20190405@Billy:	Add index for Dep_CustSettingxx - [Redmine: #110651]
-		
+		- 20191106@Winnie: 3rd party products - Remove InActive Products Phase 2  - [Redmine: #118699]
 	Developer's Notes:
 		- @Example:			NULL		- Explaination [DEFAULT]
 		
@@ -31,15 +30,16 @@ BEGIN;
 	EXECUTE	CheckCustDB.sys.sp_executesql @query = @GrantPermissionServiceBroker;
 
 	EXECUTE	CheckCustDB.sys.sp_executesql @query = N'
-IF	INDEXPROPERTY(OBJECT_ID(''dbo.Custinfo''), ''IX_test'', ''IndexID'') IS NULL
-	CREATE NONCLUSTERED INDEX IX_test ON dbo.custInfo (roleid ASC, srecommend ASC, Enabled ASC, currency ASC) INCLUDE (custid, mrecommend, recommend, SyncLiveCasino, HideVirtualSports) ON DATA;
+
+IF INDEXPROPERTY(OBJECT_ID(''dbo.Custinfo''), ''IX_test'', ''IndexID'') IS NULL
+	CREATE NONCLUSTERED INDEX IX_test ON dbo.custInfo (roleid ASC, srecommend ASC, Enabled ASC, currency ASC) ON DATA;
 
 IF	INDEXPROPERTY(OBJECT_ID(''dbo.Dep_CustSetting3rd''), ''IX_Dep_CustSetting3rd_CheckPT'', ''IndexID'') IS NULL
+AND	EXISTS (SELECT 1 FROM CheckResultDB.dbo.vNDBA_CheckSetting_RunningScripts WITH (NOLOCK) WHERE ScriptName = ''PT Deposit'' AND Threads > 0)
 	CREATE NONCLUSTERED INDEX IX_Dep_CustSetting3rd_CheckPT ON Dep_CustSetting3rd (CustID,Sporttype,Bettype,IsLive) INCLUDE(spositiontaking,mpositiontaking,apositiontaking) WITH (ONLINE = OFF, DATA_COMPRESSION = PAGE);
 
 IF	INDEXPROPERTY(OBJECT_ID(''dbo.Dep_CustSetting''), ''IX_Dep_CustSetting_CheckPT'', ''IndexID'') IS NULL
+AND	EXISTS (SELECT 1 FROM CheckResultDB.dbo.vNDBA_CheckSetting_RunningScripts WITH (NOLOCK) WHERE ScriptName = ''PT Deposit'' AND Threads > 0)
 	CREATE NONCLUSTERED INDEX IX_Dep_CustSetting_CheckPT ON Dep_CustSetting (CustID,Sporttype,Bettype,IsLive) INCLUDE(spositiontaking,mpositiontaking,apositiontaking) WITH (ONLINE = OFF, DATA_COMPRESSION = PAGE);
 '
 END;
-GO
-/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/

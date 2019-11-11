@@ -16,17 +16,18 @@ Revisions:
 	- 20170508@Elodie: Count PT Setting rows
 	- 20180807@Elodie: Apply f_GetSportNotOffer function
 	- 20190610@Johnson: add rule 36,37 for dummy super [redmine: #114675]
+	- 20191106@Winnie: 3rd party products - Remove InActive Products Phase 2  - [Redmine: #118699]
 Param's Explanation: 
 	@RuleId = 0 : 'all' 
-	IF @sporttype IN (162, 255) (Live Casino, GoldDeluxe) THEN @RuleId IN (1, 5, 6, 7, 8, 9, 10, 17, 18, 19, 20, 23, 24, 28, 30, 31 )
+	IF @sporttype IN (255) (GoldDeluxe) THEN @RuleId IN (1, 5, 6, 7, 8, 9, 10, 17, 18, 19, 20, 23, 24, 28, 30, 31 )
 	IF @sporttype = 202 (Keno) THEN @RuleId IN (1, 5, 6, 7, 8, 9, 10, 17, 18, 19, 20, 23, 24, 28, 31, 32 )
 */
 BEGIN 
 	SET NOCOUNT ON
-	CREATE TABLE #MemberPT (CustID INT, recommend INT, mrecommend INT, srecommend INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, SyncLiveCasino BIT)
-	CREATE TABLE #AgentPT (CustID INT, mrecommend INT, srecommend INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY, SyncLiveCasino BIT)
-	CREATE TABLE #MasterPT (CustID INT, srecommend INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY, SyncLiveCasino BIT)
-	CREATE TABLE #SuperPT (CustID INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY, SyncLiveCasino BIT)
+	CREATE TABLE #MemberPT (CustID INT, recommend INT, mrecommend INT, srecommend INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY)
+	CREATE TABLE #AgentPT (CustID INT, mrecommend INT, srecommend INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY)
+	CREATE TABLE #MasterPT (CustID INT, srecommend INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY)
+	CREATE TABLE #SuperPT (CustID INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY)
 	CREATE TABLE #DirectMaster (CustID INT)
 	
 	DECLARE @RowCount TINYINT,
@@ -53,8 +54,8 @@ BEGIN
 	SELECT @RowCount = COUNT(1)
 	FROM #DataSample
 	-- Starting DATA PREPARATION
-	INSERT INTO #MemberPT (CustID, recommend, mrecommend, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, SyncLiveCasino)
-	SELECT ci.CustID, recommend, mrecommend, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, SyncLiveCasino
+	INSERT INTO #MemberPT (CustID, recommend, mrecommend, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking)
+	SELECT ci.CustID, recommend, mrecommend, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking
 	FROM CheckCustDB.dbo.CustInfo ci
 		INNER JOIN CheckCustDB.dbo.CustSettingGame cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 	WHERE ci.srecommend = @srecommend  
@@ -64,8 +65,8 @@ BEGIN
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
 			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 	
-	INSERT INTO #AgentPT (CustID, mrecommend, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino)
-	SELECT ci.CustID, mrecommend, srecommend, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino
+	INSERT INTO #AgentPT (CustID, mrecommend, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking)
+	SELECT ci.CustID, mrecommend, srecommend, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking
 	FROM CheckCustDB.dbo.CustInfo ci
 		INNER JOIN CheckCustDB.dbo.CustSettingGame cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.custoverrideGame co WITH (NOLOCK) ON ci.CustID = co.CustID AND co.sporttype = cs.sporttype AND co.bettype = cs.bettype
@@ -76,8 +77,8 @@ BEGIN
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
 			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 
-	INSERT INTO #MasterPT (CustID, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino)
-	SELECT ci.CustID, srecommend, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino
+	INSERT INTO #MasterPT (CustID, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking)
+	SELECT ci.CustID, srecommend, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking
 	FROM CheckCustDB.dbo.CustInfo ci
 		INNER JOIN CheckCustDB.dbo.CustSettingGame cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.custoverrideGame co WITH (NOLOCK) ON ci.CustID = co.CustID AND co.sporttype = cs.sporttype AND co.bettype = cs.bettype
@@ -88,8 +89,8 @@ BEGIN
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
 			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 
-	INSERT INTO #SuperPT (CustID, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino)
-	SELECT ci.CustID, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking, SyncLiveCasino
+	INSERT INTO #SuperPT (CustID, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking)
+	SELECT ci.CustID, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking
 	FROM CheckCustDB.dbo.CustInfo ci
 		INNER JOIN CheckCustDB.dbo.CustSettingGame cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.custoverrideGame co WITH (NOLOCK) ON ci.CustID = co.CustID AND co.sporttype = cs.sporttype AND co.bettype = cs.bettype
@@ -186,7 +187,7 @@ BEGIN
 		CROSS APPLY (SELECT sporttype, bettype FROM #DataSample) ds
 	WHERE NOT EXISTS (SELECT 1 FROM #SuperPT WHERE CustID = cs.CustID AND sporttype = ds.sporttype AND bettype = ds.bettype)
 
-	IF @sporttype IN (162, 202, 255) OR @sporttype = 0 
+	IF @sporttype IN (202, 255) OR @sporttype = 0 
 	BEGIN 
 	---- 1. S1 < 0 OR M1 < 0 OR A1 < 0
 
@@ -202,8 +203,7 @@ BEGIN
 					0, 
 					0
 			FROM	#MemberPT cs
-			WHERE	CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND (cs.spositiontaking < 0 OR cs.mpositiontaking < 0 OR cs.apositiontaking < 0)		
+			WHERE	(cs.spositiontaking < 0 OR cs.mpositiontaking < 0 OR cs.apositiontaking < 0)		
 		END
 		
 		----5. S4 < N4  
@@ -212,8 +212,7 @@ BEGIN
 			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)
 			SELECT	5 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId, cs.spositiontaking, cs.minpositiontaking, 0
 			FROM	#SuperPT cs
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND CASE WHEN @Sporttype <> 0 THEN cs.Sporttype ELSE @SportType END = @SportType
+			WHERE CASE WHEN @Sporttype <> 0 THEN cs.Sporttype ELSE @SportType END = @SportType
 				AND cs.spositiontaking < cs.minpositiontaking
 		END
 
@@ -224,8 +223,7 @@ BEGIN
 			SELECT	6 as RuleId, cs.BetType, cs.SportType, scs.CustId, cs.CustId, scs.spositiontaking , cs.autopositiontaking, 0
 			FROM	#SuperPT scs			
 				INNER JOIN	#MasterPT cs ON	cs.srecommend = scs.CustId AND cs.bettype = scs.bettype AND cs.sporttype = scs.sporttype
-			WHERE	CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND scs.spositiontaking < cs.autopositiontaking
+			WHERE	scs.spositiontaking < cs.autopositiontaking
 		END
 
 		----7. S4 < US1 
@@ -235,8 +233,7 @@ BEGIN
 			SELECT	7 as RuleId, cs.BetType, cs.SportType, scs.CustId, cs.CustId, scs.spositiontaking, cs.autopositiontaking, 0
 			FROM	#SuperPT scs			
 			INNER JOIN	#MemberPT cs ON	cs.srecommend = scs.CustId AND cs.bettype = scs.bettype AND cs.sporttype = scs.sporttype
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND scs.spositiontaking < cs.autopositiontaking			
+			WHERE scs.spositiontaking < cs.autopositiontaking			
 		END
 	
 		----8. S4 < S3 + M3 
@@ -246,8 +243,7 @@ BEGIN
 			SELECT	8 as RuleId, cs.BetType, cs.SportType, scs.CustId, cs.CustId, scs.spositiontaking, cs.spositiontaking + cs.mpositiontaking, 0
 			FROM	#SuperPT scs			
 				INNER JOIN	#MasterPT cs ON	cs.srecommend = scs.CustId AND cs.bettype = scs.bettype AND cs.sporttype = scs.sporttype
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND scs.spositiontaking < cs.spositiontaking + cs.mpositiontaking		
+			WHERE scs.spositiontaking < cs.spositiontaking + cs.mpositiontaking		
 		END
 
 		----9. S4 < S1 + M1 + A1 
@@ -257,8 +253,7 @@ BEGIN
 			SELECT	9 as RuleId, cs.BetType, cs.SportType, scs.CustId, cs.CustId, scs.spositiontaking, cs.spositiontaking + cs.mpositiontaking + cs.apositiontaking, 0
 			FROM	#SuperPT scs			
 				INNER JOIN	#MemberPT cs ON	cs.srecommend = scs.CustId AND cs.bettype = scs.bettype AND cs.sporttype = scs.sporttype
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND scs.spositiontaking < cs.spositiontaking + cs.mpositiontaking + cs.apositiontaking			
+			WHERE scs.spositiontaking < cs.spositiontaking + cs.mpositiontaking + cs.apositiontaking			
 		END
 
 		----10. N4 > S1 + M1 + A1 
@@ -268,8 +263,7 @@ BEGIN
 			SELECT	10 as RuleId, cs.BetType, cs.SportType, scs.CustId, cs.CustId, scs.minpositiontaking, cs.spositiontaking + cs.mpositiontaking + cs.apositiontaking, 0
 			FROM	#SuperPT scs			
 				INNER JOIN	#MemberPT cs ON	cs.srecommend = scs.CustId AND cs.bettype = scs.bettype AND cs.sporttype = scs.sporttype
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND scs.minpositiontaking > cs.spositiontaking + cs.mpositiontaking + cs.apositiontaking			
+			WHERE scs.minpositiontaking > cs.spositiontaking + cs.mpositiontaking + cs.apositiontaking			
 		END
 		-----------------------------------------------------------------------
   
@@ -279,8 +273,7 @@ BEGIN
 			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)
 			SELECT	17 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId, cs.mpositiontaking, cs.minpositiontaking, 0
 			FROM #MasterPT cs
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND cs.mpositiontaking < cs.minpositiontaking			
+			WHERE  cs.mpositiontaking < cs.minpositiontaking			
 		END
 
 		--------------------------------------------------------------------------------------------
@@ -291,8 +284,7 @@ BEGIN
 			SELECT	18 as RuleId, cs.BetType, cs.SportType, mcs.CustId, cs.CustId, mcs.mpositiontaking, cs.mpositiontaking + cs.apositiontaking, 0
 			FROM	#MasterPT mcs		
 			INNER JOIN	#AgentPT cs ON	cs.mrecommend = mcs.CustId AND cs.bettype = mcs.bettype AND cs.sporttype = mcs.sporttype
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND mcs.mpositiontaking < cs.mpositiontaking + cs.apositiontaking		
+			WHERE mcs.mpositiontaking < cs.mpositiontaking + cs.apositiontaking		
 		END
 	
 		----19. M3 < M1 + A1 
@@ -302,8 +294,7 @@ BEGIN
 			SELECT	19 as RuleId, cs.BetType, cs.SportType, mcs.CustId, cs.CustId, mcs.mpositiontaking, cs.mpositiontaking + cs.apositiontaking, 0
 			FROM	#MasterPT mcs		
 				INNER JOIN	#MemberPT cs ON	cs.mrecommend = mcs.CustId AND cs.bettype = mcs.bettype AND cs.sporttype = mcs.sporttype
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND mcs.mpositiontaking < cs.mpositiontaking + cs.apositiontaking
+			WHERE  mcs.mpositiontaking < cs.mpositiontaking + cs.apositiontaking
 		END
    
 		----20. N3 > M1 + A1 
@@ -313,8 +304,7 @@ BEGIN
 			SELECT	20 as RuleId, cs.BetType, cs.SportType, mcs.CustId, cs.CustId, mcs.minpositiontaking, cs.mpositiontaking + cs.apositiontaking, 0
 			FROM	#MasterPT mcs		
 				INNER JOIN	#MemberPT cs ON	cs.mrecommend = mcs.CustId AND cs.bettype = mcs.bettype AND cs.sporttype = mcs.sporttype
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND mcs.minpositiontaking > cs.mpositiontaking + cs.apositiontaking
+			WHERE  mcs.minpositiontaking > cs.mpositiontaking + cs.apositiontaking
 		END  
  
  		----23. A2 < N2
@@ -323,8 +313,7 @@ BEGIN
 			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)
 			SELECT	23 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId, cs.apositiontaking, cs.minpositiontaking, 0
 			FROM	#AgentPT cs	
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND cs.apositiontaking < cs.minpositiontaking			
+			WHERE  cs.apositiontaking < cs.minpositiontaking			
 		END 
 	  
 		----24. N2 > A1
@@ -334,8 +323,7 @@ BEGIN
 			SELECT	24 as RuleId, cs.BetType, cs.SportType, acs.CustId, cs.CustId, acs.minpositiontaking, cs.apositiontaking, 0 
 			FROM	#AgentPT acs		
 			INNER JOIN	#MemberPT cs ON	cs.recommend = acs.CustId AND cs.bettype = acs.bettype AND cs.sporttype = acs.sporttype
-			WHERE   CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND acs.minpositiontaking > cs.apositiontaking 			
+			WHERE    acs.minpositiontaking > cs.apositiontaking 			
 		END
  		---------------------------------------------------
 		----Note: Do not check rule 25, 26, 27 at CustSettingGame table
@@ -365,8 +353,7 @@ BEGIN
 			FROM #MemberPT cs 		
 			INNER JOIN	#MasterPT mcs ON	cs.mrecommend = mcs.CustId AND cs.bettype = mcs.bettype AND cs.sporttype = mcs.sporttype			
 			INNER JOIN	#SuperPT scs ON	cs.srecommend = scs.CustId AND cs.bettype = scs.bettype AND cs.sporttype = scs.sporttype		
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND (cs.isautopositiontaking=1 OR mcs.isautopositiontaking=1)
+			WHERE (cs.isautopositiontaking=1 OR mcs.isautopositiontaking=1)
 				AND cs.spositiontaking < CASE	WHEN scs.spositiontaking - cs.mpositiontaking - cs.apositiontaking > (CASE WHEN cs.isautopositiontaking = 1 THEN cs.autopositiontaking	ELSE mcs.autopositiontaking END)			
 												THEN (	CASE	WHEN cs.isautopositiontaking = 1 
 																THEN cs.autopositiontaking 
@@ -378,14 +365,14 @@ BEGIN
 
 		----30. S4 > 0.93
 			-->Live Casino, GoldDeluxe: Do not check Rule 2 Check rule 30 		
-		IF @sporttype IN (0, 162, 255)
+		IF @sporttype IN (0, 255)
 		BEGIN 
 			IF @RuleId IN (0,30)
 			BEGIN
 				INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)
 				SELECT	30 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId, cs.spositiontaking, 0.93, 0
 				FROM #SuperPT cs
-				WHERE ((cs.SportType = 162 AND cs.SyncLiveCasino = 1) OR cs.Sporttype = 255)					
+				WHERE ( cs.Sporttype = 255)					
 					AND cs.spositiontaking > 0.93			
 			END
 		END
@@ -418,8 +405,7 @@ BEGIN
 			FROM #MemberPT cs 		
 				INNER JOIN	#AgentPT acs ON	cs.recommend = acs.CustId AND cs.bettype = acs.bettype AND cs.sporttype = acs.sporttype
 				INNER JOIN	#MasterPT mcs ON cs.mrecommend = mcs.CustId AND cs.bettype = mcs.bettype AND cs.sporttype = mcs.sporttype							
-			WHERE CASE WHEN cs.Sporttype = 162 THEN cs.SyncLiveCasino ELSE 1 END = 1
-				AND ( acs.isautompositiontaking = 1	OR cs.isautompositiontaking = 1 )
+			WHERE  ( acs.isautompositiontaking = 1	OR cs.isautompositiontaking = 1 )
 				AND cs.mpositiontaking <	CASE  WHEN mcs.mpositiontaking - cs.apositiontaking > (CASE WHEN cs.isautompositiontaking = 1 THEN cs.autompositiontaking ELSE acs.autompositiontaking END) 
 													THEN (CASE WHEN cs.isautompositiontaking = 1 
 															THEN cs.autompositiontaking
