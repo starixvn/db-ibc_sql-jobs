@@ -31,6 +31,9 @@ BEGIN;
 
 	EXECUTE	CheckCustDB.sys.sp_executesql @query = N'
 
+IF INDEXPROPERTY(OBJECT_ID(''dbo.Custinfo''), ''IX_test'', ''IndexID'') IS NULL
+	CREATE NONCLUSTERED INDEX IX_test ON dbo.custInfo (roleid ASC, srecommend ASC, Enabled ASC, currency ASC) ON DATA;
+
 IF	INDEXPROPERTY(OBJECT_ID(''dbo.Dep_CustSetting3rd''), ''IX_Dep_CustSetting3rd_CheckPT'', ''IndexID'') IS NULL
 AND	EXISTS (SELECT 1 FROM CheckResultDB.dbo.vNDBA_CheckSetting_RunningScripts WITH (NOLOCK) WHERE ScriptName = ''PT Deposit'' AND Threads > 0)
 	CREATE NONCLUSTERED INDEX IX_Dep_CustSetting3rd_CheckPT ON Dep_CustSetting3rd (CustID,Sporttype,Bettype,IsLive) INCLUDE(spositiontaking,mpositiontaking,apositiontaking) WITH (ONLINE = OFF, DATA_COMPRESSION = PAGE);
