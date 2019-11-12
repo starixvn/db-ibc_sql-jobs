@@ -6,7 +6,7 @@ AS
 /*
 	Created by: 20191111@Bobby
     Task: BU has done yet?
-    DB: DBACC.bodb02
+    DB: DBEXT-bodb02,DBAGE-bodb02,DBACC-bodb02
 
 	Revisions:
 		- 20191111@Bobby: Initialize SP [RedmineID: #83787]
@@ -18,28 +18,51 @@ AS
 */
 
 BEGIN
-	SET @StatusID = 1
+	DECLARE @OldBUDate			SMALLDATETIME
+		, @NewBUDate			SMALLDATETIME
+		, @MinArchiveDate		SMALLDATETIME
+		, @MaxArchiveDate		SMALLDATETIME
+	
+	DECLARE @IsArchivingBetName	VARCHAR(50)
+		, @IsArchivingBetValue	INT
+		, @StartMovingName		VARCHAR(50)
+		, @EndMovingName		VARCHAR(50)
+		, @StartMovingTime		DATETIME
+		, @EndMovingTime		DATETIME
+		, @CheckTime			DATETIME
+	
+	-- the list of archiving date
+	SELECT @MaxArchiveDate		= MAX(winlostdate)
+		,@MinArchiveDate		= MIN(winlostdate)
+	FROM DBTXN.bodb02.dbo.Task_ArchiveDate WITH(NOLOCK)
 
-	-- MB is running
-	IF EXISTS (
-		SELECT TOP 1 1 FROM dbo.SystemSettings WITH(NOLOCK)
-		WHERE VName = 'isArchivingBet_Local' AND VValue <> '0'
-	)
-	BEGIN
-		SET @StatusID = 1
+	-- the newest BU date
+	SELECT @OldBUDate			= MIN(winlostdate)
+		, @NewBUDate			= MAX(winlostdate)
+	FROM dbo.bettrans WITH(NOLOCK)
+	WHERE matchid = 0 AND bettype = 20000
+	
+	SELECT @StatusID			= 1
+		, @IsArchivingBetName	= 'isArchivingBet_Local'
+		, @StartMovingName		= 'StartMoving_Local'
+		, @EndMovingName		= 'EndMoving_Local'
+		, @CheckTime			= GETDATE()
+	
+	SELECT @IsArchivingBetValue	=  CASE 
+								WHEN VName = @IsArchivingBetName THEN CAST(VValue AS INT) ELSE @IsArchivingBetValue END
+		, @StartMovingTime		= CASE 
+								WHEN VName = @StartMovingName THEN CAST(VValue AS DATETIME) ELSE @StartMovingTime END
+		, @EndMovingTime		= CASE 
+								WHEN VName = @EndMovingName THEN CAST(VValue AS DATETIME) ELSE @EndMovingTime END
+	FROM dbo.SystemSettings WITH (NOLOCK)
+	WHERE VName IN (@StartMovingName, @EndMovingName, @IsArchivingBetName)
 
-		RETURN
-	END
+	SELECT @StatusID			= CASE 
+								WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @NewBUDate THEN 1 -- BU is in progress
+								WHEN @IsArchivingBetValue = 0 AND @NewBUDate <= @MinArchiveDate THEN 0 -- BU has not started YET
+								WHEN @IsArchivingBetValue = 0 AND @CheckTime >= @StartMovingTime AND @StartMovingTime <= @EndMovingTime THEN 0 -- BU has completed
 
-	-- MB has completed
-	IF EXISTS (
-		SELECT TOP 1 1 FROM dbo.SystemSettings WITH(NOLOCK)
-		WHERE VName = 'isArchivingBet_Local' AND VValue = '0'
-	)
-	BEGIN
-		SET @StatusID = 0
-
-		RETURN
-	END
+								ELSE 99 -- BU unknown
+							END 
 END
 GO
