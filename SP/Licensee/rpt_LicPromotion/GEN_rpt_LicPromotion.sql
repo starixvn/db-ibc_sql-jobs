@@ -85,15 +85,14 @@ BEGIN
 		   pc.CustID,
 		   CurrencyID,
 		   @NonPeakHourPromoId,
-		   SUM(CASE WHEN b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, CAST(pc.StartDate AS DATETIME)) AND DATEADD(HOUR, OffPeakEndTime, CAST(pc.EndDate AS DATETIME))
+		   SUM(CASE WHEN DATEPART(HOUR, b.transdate) BETWEEN OffPeakStartTime AND OffPeakEndTime
 					THEN 1 ELSE 0 END) AS BetCountOfPromoTime,
-		   SUM(CASE WHEN (b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, CAST(pc.StartDate AS DATETIME)) AND DATEADD(HOUR, OffPeakEndTime, CAST(pc.EndDate AS DATETIME)))
-						AND statusID != @DrawStatusId
+		   SUM(CASE WHEN DATEPART(HOUR, b.transdate) BETWEEN OffPeakStartTime AND OffPeakEndTime AND statusID != @DrawStatusId
 					THEN 1 ELSE 0 END) AS BetCountOfPromoTime_NoDraw,
-		   SUM(CASE WHEN CAST(pc.CouponDate AS DATE) = CAST(b.transdate AS DATE) THEN 1 ELSE 0 END) AS BetCount,
-		   SUM(CASE WHEN CAST(pc.CouponDate AS DATE) = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN 1 ELSE 0 END) AS BetCount_NoDraw,
-		   SUM(CASE WHEN CAST(pc.CouponDate AS DATE) = CAST(b.transdate AS DATE) THEN b.stake ELSE 0 END ) AS TurnoverPromoDay,
-		   SUM(CASE WHEN CAST(pc.CouponDate AS DATE) = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN b.stake ELSE 0 END ) AS TurnoverPromoDay_NoDraw
+		   SUM(CASE WHEN pc.CouponDate = CAST(b.transdate AS DATE) THEN 1 ELSE 0 END) AS BetCount,
+		   SUM(CASE WHEN pc.CouponDate = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN 1 ELSE 0 END) AS BetCount_NoDraw,
+		   SUM(CASE WHEN pc.CouponDate = CAST(b.transdate AS DATE) THEN b.stake ELSE 0 END ) AS TurnoverPromoDay,
+		   SUM(CASE WHEN pc.CouponDate = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN b.stake ELSE 0 END ) AS TurnoverPromoDay_NoDraw
 	FROM #rptPromotion pc WITH(NOLOCK)
 		 INNER JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid 
 														AND CAST(b.transdate AS DATE) BETWEEN pc.StartDate AND pc.EndDate
