@@ -26,6 +26,7 @@ AS
 */
 BEGIN
 	DECLARE @DrawStatusId SMALLINT = 111, @WonStatusId SMALLINT = 112, @LoseStatusId SMALLINT = 113
+	DECLARE @NonPeakHourPromoId INT = 37
 
 	DELETE FROM dbo.rpt_LicPromotion
 	WHERE @fromDate <= RptDate  AND RptDate <= @toDate
@@ -47,9 +48,8 @@ BEGIN
 
 	--  dump fake data
 	INSERT INTO #rptPromotion
-	VALUES(1, '2019-10-07', '2019-10-07', 14, 16, 925144, 20, '2019-10-07', 8, '2019-10-08', 2, 2, 100),
-	      (1, '2019-10-07', '2019-10-07', 14, 16, 925144, 20, '2019-10-07', 8, '2019-10-08', 1, 0, 0)
-
+	VALUES(1234, '2019-10-30', '2019-10-30', 11, 16, 925144, 20, '2019-10-30', 8, '2019-10-30', 1, 1, 500)
+	
 	CREATE TABLE #bettransData(
 		PromoID	int,
 		RptDate date,
@@ -84,10 +84,10 @@ BEGIN
 		   @timeZone,
 		   pc.CustID,
 		   CurrencyID,
-		   CASE WHEN bt.Bettype = 17000 THEN 37 ELSE 0 END AS ProductId,
-		   SUM(CASE WHEN b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, b.transdate) AND DATEADD(HOUR, OffPeakEndTime, b.transdate)
+		   @NonPeakHourPromoId,
+		   SUM(CASE WHEN b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, CAST(pc.StartDate AS DATETIME)) AND DATEADD(HOUR, OffPeakEndTime, CAST(pc.EndDate AS DATETIME))
 					THEN 1 ELSE 0 END) AS BetCountOfPromoTime,
-		   SUM(CASE WHEN (b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, b.transdate) AND DATEADD(HOUR, OffPeakEndTime, b.transdate))
+		   SUM(CASE WHEN (b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, CAST(pc.StartDate AS DATETIME)) AND DATEADD(HOUR, OffPeakEndTime, CAST(pc.EndDate AS DATETIME)))
 						AND statusID != @DrawStatusId
 					THEN 1 ELSE 0 END) AS BetCountOfPromoTime_NoDraw,
 		   SUM(CASE WHEN CAST(pc.CouponDate AS DATE) = CAST(b.transdate AS DATE) THEN 1 ELSE 0 END) AS BetCount,
@@ -96,16 +96,15 @@ BEGIN
 		   SUM(CASE WHEN CAST(pc.CouponDate AS DATE) = CAST(b.transdate AS DATE) AND statusID != @DrawStatusId THEN b.stake ELSE 0 END ) AS TurnoverPromoDay_NoDraw
 	FROM #rptPromotion pc WITH(NOLOCK)
 		 INNER JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid 
-														AND b.transdate BETWEEN pc.StartDate AND pc.EndDate
-														AND statusID IN (@DrawStatusId, @WonStatusId, @LoseStatusId)
+														AND CAST(b.transdate AS DATE) BETWEEN pc.StartDate AND pc.EndDate
+														AND b.statusID IN (@DrawStatusId, @WonStatusId, @LoseStatusId)
 		 INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
 	WHERE @fromDate <= CAST(b.transdate AS DATE) AND CAST(b.transdate AS DATE) <= @toDate
 	GROUP BY  pc.PromoID,
 		   CAST(b.transdate AS DATE),
 		   CAST(DATEADD(HOUR, @timeZone + 4, b.transdate) AS DATE),
 		   pc.CustID,
-		   CurrencyID,
-		   CASE WHEN bt.Bettype = 17000 THEN 37 ELSE 0 END
+		   CurrencyID
 
 	INSERT INTO rpt_LicPromotion(PromoID,RptDate,TimeZone,RptDateGMT,SiteID,CurrencyID,ProductID,CouponCount,RedemptionCount,RedemptionPrize,BetCountOfPromoTime,BetCountOfPromoTime_NoDraw,BetCount,BetCount_NoDraw,Turnover,Turnover_NoDraw)
 	SELECT b.PromoID, b.RptDate, b.TimeZone, b.RptDateGMT, ISNULL([site].SiteID, -1), b.CurrencyID, b.ProductId,
