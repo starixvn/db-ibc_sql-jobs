@@ -83,7 +83,7 @@ BEGIN
 		   CAST(DATEADD(HOUR, @timeZone + 4, b.transdate) AS DATE) RptDateGMT,
 		   @timeZone,
 		   pc.CustID,
-		   CurrencyID,
+		   b.currency AS CurrencyID,
 		   @NonPeakHourPromoId,
 		   SUM(CASE WHEN DATEPART(HOUR, b.transdate) BETWEEN OffPeakStartTime AND OffPeakEndTime
 					THEN 1 ELSE 0 END) AS BetCountOfPromoTime,
@@ -103,7 +103,7 @@ BEGIN
 		   CAST(b.transdate AS DATE),
 		   CAST(DATEADD(HOUR, @timeZone + 4, b.transdate) AS DATE),
 		   pc.CustID,
-		   CurrencyID
+		   b.currency
 
 	INSERT INTO rpt_LicPromotion(PromoID,RptDate,TimeZone,RptDateGMT,SiteID,CurrencyID,ProductID,CouponCount,RedemptionCount,RedemptionPrize,BetCountOfPromoTime,BetCountOfPromoTime_NoDraw,BetCount,BetCount_NoDraw,Turnover,Turnover_NoDraw)
 	SELECT b.PromoID, b.RptDate, b.TimeZone, b.RptDateGMT, ISNULL([site].SiteID, -1), b.CurrencyID, b.ProductId,
