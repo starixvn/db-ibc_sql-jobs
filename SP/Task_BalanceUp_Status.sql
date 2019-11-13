@@ -62,15 +62,21 @@ BEGIN
 	FROM dbo.SystemSettings WITH (NOLOCK)
 	WHERE VName IN (@StartMovingName, @EndMovingName, @IsArchivingBetName)
 
+	--- SET BU status
 	SELECT @StatusID			= CASE 
-								WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @BUDate THEN 1 -- BU is in progress
-								WHEN @IsArchivingBetValue = 0 
-									AND @diffDayWithBUDate > 10 
-									AND @CheckWeekday = @WeekdayRunBU 
-									AND @NextBUDate <> @BUDate THEN 2 -- Is BU day BUT has not started YET
-								WHEN @IsArchivingBetValue = 0 AND @CheckTime >= @StartMovingTime AND @StartMovingTime <= @EndMovingTime THEN 0 -- BU has completed
-
-								ELSE 99 -- BU unknown - DELAY
-							END 
+									WHEN @CheckWeekday <> @WeekdayRunBU THEN 0 -- NOT BU day
+									WHEN @CheckWeekday = @WeekdayRunBU THEN -- is BU Day
+										CASE 
+											WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @BUDate THEN 1 -- BU is running
+											WHEN @IsArchivingBetValue = 0 AND @diffDayWithBUDate > 10 AND @NextBUDate <> @BUDate THEN 2 -- BU has not started YET
+											WHEN @IsArchivingBetValue = 0 
+													AND @diffDayWithBUDate < 10
+													AND @OldBUDate = @BUDate
+													AND @CheckTime >= @StartMovingTime AND @StartMovingTime <= @EndMovingTime 
+												THEN 0 -- BU has completed
+											ELSE 99 -- BU unknown - DELAY
+										END
+									ELSE 99 -- BU unknown - DELAY
+								END 
 END
 GO
