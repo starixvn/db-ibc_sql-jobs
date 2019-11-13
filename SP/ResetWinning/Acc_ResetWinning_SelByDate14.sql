@@ -693,7 +693,7 @@ BEGIN
 										
 									 
 					
-				EXEC msdb.dbo.sp_send_dbmail @recipients = 'sophia.nguyen@starixsoft.com'
+				EXEC msdb.dbo.sp_send_dbmail @recipients = 'sophia.nguyen@starixsoft.com;qa@starixsoft.com '
 							, @copy_recipients = ''
 							, @blind_copy_recipients = ''
 							, @subject = @subject
