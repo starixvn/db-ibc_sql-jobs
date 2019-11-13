@@ -14,15 +14,20 @@ AS
 	Parameters Explanations:
 		@StatusID = 0 --> BU has commpleted
 		@StatusID = 1 --> BU has not commpleted yet (is running)
+		@StatusID = 2 --> BU has not START yet
+		@StatusID = 99 --> BU Unknown Status
 
 */
 
 BEGIN
-	DECLARE @OldBUDate			SMALLDATETIME
-		, @NewBUDate			SMALLDATETIME
-		, @MinArchiveDate		SMALLDATETIME
-		, @MaxArchiveDate		SMALLDATETIME
-	
+	DECLARE @BUDate				DATE
+		, @OldBUDate			DATE
+		, @NextBUDate			DATE
+		, @CheckDate			DATE
+		, @CheckWeekday			TINYINT
+		, @WeekdayRunBU			TINYINT
+		, @diffDayWithBUDate	INT
+
 	DECLARE @IsArchivingBetName	VARCHAR(50)
 		, @IsArchivingBetValue	INT
 		, @StartMovingName		VARCHAR(50)
@@ -30,15 +35,10 @@ BEGIN
 		, @StartMovingTime		DATETIME
 		, @EndMovingTime		DATETIME
 		, @CheckTime			DATETIME
-	
-	-- the list of archiving date
-	SELECT @MaxArchiveDate		= MAX(winlostdate)
-		,@MinArchiveDate		= MIN(winlostdate)
-	FROM DBTXN.bodb02.dbo.Task_ArchiveDate WITH(NOLOCK)
-
-	-- the newest BU date
-	SELECT @OldBUDate			= MIN(winlostdate)
-		, @NewBUDate			= MAX(winlostdate)
+		
+	-- the BU date - 6-Friday
+	SELECT @BUDate				= MAX(winlostdate)
+		,@OldBUDate				= MIN(winlostdate)
 	FROM dbo.bettrans WITH(NOLOCK)
 	WHERE matchid = 0 AND bettype = 20000
 	
@@ -47,6 +47,11 @@ BEGIN
 		, @StartMovingName		= 'StartMoving_Local'
 		, @EndMovingName		= 'EndMoving_Local'
 		, @CheckTime			= GETDATE()
+		, @CheckDate			= CAST(@CheckTime AS DATE)
+		, @NextBUDate			= DATEADD(DD, 7, @OldBUDate)
+		, @CheckWeekday			= DATEPART(WEEKDAY, @CheckDate)
+		, @WeekdayRunBU			= DATEPART(WEEKDAY, @BUDate) - 1 -- current is 5-Thurday
+		, @diffDayWithBUDate	= DATEDIFF(DD, @BUDate, @CheckDate)
 	
 	SELECT @IsArchivingBetValue	=  CASE 
 								WHEN VName = @IsArchivingBetName THEN CAST(VValue AS INT) ELSE @IsArchivingBetValue END
@@ -58,11 +63,14 @@ BEGIN
 	WHERE VName IN (@StartMovingName, @EndMovingName, @IsArchivingBetName)
 
 	SELECT @StatusID			= CASE 
-								WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @NewBUDate THEN 1 -- BU is in progress
-								WHEN @IsArchivingBetValue = 0 AND @NewBUDate <= @MinArchiveDate THEN 0 -- BU has not started YET
+								WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @BUDate THEN 1 -- BU is in progress
+								WHEN @IsArchivingBetValue = 0 
+									AND @diffDayWithBUDate > 10 
+									AND @CheckWeekday = @WeekdayRunBU 
+									AND @NextBUDate <> @BUDate THEN 2 -- Is BU day BUT has not started YET
 								WHEN @IsArchivingBetValue = 0 AND @CheckTime >= @StartMovingTime AND @StartMovingTime <= @EndMovingTime THEN 0 -- BU has completed
 
-								ELSE 99 -- BU unknown
+								ELSE 99 -- BU unknown - DELAY
 							END 
 END
 GO
