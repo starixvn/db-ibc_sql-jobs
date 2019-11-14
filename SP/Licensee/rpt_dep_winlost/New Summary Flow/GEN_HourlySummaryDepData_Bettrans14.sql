@@ -10,8 +10,9 @@ AS
 		Task: Generate data for Deposit Data summary system for one winlostdate from bettrans14 		
 		DB: DBACC.bodb02
 		Revisions:
-		- 20180502@Joseph: Add <info> comment
+			- 20180502@Joseph: Add <info> comment
 			- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
+			- 20191025@Bobby: Add column promotion [RedmineID: #120333]
 
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -21,7 +22,7 @@ AS
 	*/
 BEGIN
 	SET NOCOUNT ON
-	IF @Winlostdate > CURRENT_TIMESTAMP OR NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans14 WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype != 18000)
+	IF @Winlostdate > CURRENT_TIMESTAMP OR NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans14 WITH (NOLOCK) WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype <> 18000)
 		BEGIN
 			PRINT 'EXEC GEN_HourlySummaryDepData_Bettrans14: There is no data in bettrans14 to summarize or input @Winlostdate is greater than current day ==> RETURN'
 			RETURN
@@ -67,7 +68,7 @@ BEGIN
 					SELECT @Winlostdate, m.CustID
 							, (m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
 							   + ISNULL(t.Adjustment,0) - ISNULL(t.Outstanding,0) + ISNULL(t.Winloss,0) + ISNULL(t.playercomm,0) + ISNULL(t.Transfer3rd,0) 
-						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0)
+						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0) + ISNULL(t.Promotion,0)
 						   + ISNULL(b.Bonus, 0) + ISNULL(b.Adjustment, 0))--compute @Winlostdate's OpeningBalance
 						, e.actualrate, m.srecommend, m.mrecommend, m.recommend, m.currency
 					FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
@@ -87,7 +88,7 @@ BEGIN
 					SELECT m.CustID
 						   , (m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
 							   + ISNULL(t.Adjustment,0) - ISNULL(t.Outstanding,0) + ISNULL(t.Winloss,0) + ISNULL(t.playercomm,0) + ISNULL(t.Transfer3rd,0) 
-						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0)
+						   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0) + ISNULL(t.Promotion,0)
 						   + ISNULL(b.Bonus, 0) + ISNULL(b.Adjustment, 0))--compute @Winlostdate's OpeningBalance
 					   , m.srecommend, m.mrecommend, m.recommend, m.currency
 					FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
@@ -128,7 +129,7 @@ BEGIN
 				SET m.OpeningBalance = mt.OpeningBalance
 				FROM bodb_Report.dbo.rptDepWinlost_Main m 
 					INNER JOIN #rptDepWinlost_Main mt ON m.CustID = mt.CustID AND m.Winlostdate = @Winlostdate 
-				WHERE m.OpeningBalance != mt.OpeningBalance
+				WHERE m.OpeningBalance <> mt.OpeningBalance
 				
 				--Force merge join query
 				DECLARE @n INT = 1, @rowcount INT = 0
@@ -179,9 +180,11 @@ BEGIN
 			FROM #rptDepWinlost_Main mt
 				INNER JOIN 
 				(SELECT m.CustID
-						, m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
+						, (m.OpeningBalance + ISNULL(t.Deposit,0) + ISNULL(t.Aff2MemTransfer,0) - ISNULL(t.Withdrawal,0) + ISNULL(t.Bonus,0) 
 							   + ISNULL(t.Adjustment,0) - ISNULL(t.Outstanding,0) + ISNULL(t.Winloss,0) + ISNULL(t.playercomm,0) + ISNULL(t.Transfer3rd,0) 
-							   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0) + ISNULL(b.Bonus, 0) + ISNULL(b.Adjustment, 0) AS OpeningBalance
+							   + ISNULL(t.Transfer3rdOthers,0) - ISNULL(t.Comm_BetTrade_Full,0)  + ISNULL(t.Promotion,0)
+							   + ISNULL(b.Bonus, 0) + ISNULL(b.Adjustment, 0)
+						) AS OpeningBalance
 				 FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK) 
 					  INNER JOIN bodb_Report.dbo.rptDepWinlost_Trans t WITH (NOLOCK) 
 				  ON t.CustID = m.CustID AND m.Winlostdate = @PreviousDay AND t.Winlostdate = @PreviousDay AND t.SportType = -1 AND t.PartnerID = -1
@@ -208,19 +211,19 @@ BEGIN
 				
 			SELECT @NumberofCus = @NumberofCus + @@ROWCOUNT
 			
-			--4.Delete customers who have OpeningBalance ( != 0 ) for @Winlostdate but don't have OpeningBalance for the previous day
+			--4.Delete customers who have OpeningBalance ( <> 0 ) for @Winlostdate but don't have OpeningBalance for the previous day
 			--because if one customer who doesn't have OpeningBalnce for the previous day, his OpeningBalance for @Winlostdate (if he does the 1st deposit transaction) should be 0
 			TRUNCATE TABLE #rptDepWinlost_Main
 			INSERT INTO #rptDepWinlost_Main (CustID)
 			SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Main WITH (NOLOCK) 
-			WHERE Winlostdate = @Winlostdate AND OpeningBalance != 0
+			WHERE Winlostdate = @Winlostdate AND OpeningBalance <> 0
 				  AND CustID NOT IN (SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Main WITH (NOLOCK) WHERE Winlostdate = @PreviousDay)
 				  
 			IF EXISTS (SELECT TOP 1 1 FROM #rptDepWinlost_Main)
 			BEGIN
 			DELETE FROM bodb_Report.dbo.rptDepWinlost_Main WITH (ROWLOCK, UPDLOCK)
 			WHERE Winlostdate = @Winlostdate AND CustID IN (SELECT CustID FROM #rptDepWinlost_Main)
-				  AND OpeningBalance != 0
+				  AND OpeningBalance <> 0
 
 			SELECT @NumberofCus = @NumberofCus - @@ROWCOUNT
 			END
