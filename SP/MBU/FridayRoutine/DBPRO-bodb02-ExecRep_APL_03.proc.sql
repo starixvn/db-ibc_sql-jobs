@@ -16,6 +16,7 @@ AS
 		- 20181204@Billy:	Add [oddsES14] & [ResultDetailES14] tables - [Redmine: #105816]
 		- 20190325@Billy:	Add [SMP_Market] & [SMP_MarketSelection] tables - [Redmine: #109926]
 		- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader] table - [Redmine: #117014]
+		- 20190911@Billy:	Add [oddsOS14] & [ResultDetailOS14] tables - [Redmine: #119257]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -160,6 +161,24 @@ BEGIN
 		FROM		dbo.Dot_Admin_Assignment_Trader AS tbl
 		INNER JOIN	@idList AS il
 				ON	tbl.ID = il.id;
+	END;
+
+	--20190911@Billy:	Add oddsOS14
+	IF	@DeletedTarget = 'oddsOS14'
+	BEGIN;
+		DELETE	tbl WITH (ROWLOCK)
+		FROM		dbo.oddsOS14 AS tbl
+		INNER JOIN	@idList AS il
+				ON	tbl.oddsid = il.id;
+	END;
+
+	--20190911@Billy:	Add ResultDetailOS14
+	IF	@DeletedTarget = 'ResultDetailOS14'
+	BEGIN;
+		DELETE	tbl WITH (ROWLOCK)
+		FROM		dbo.ResultDetailOS14 AS tbl
+		INNER JOIN	@idList AS il
+				ON	tbl.MatchID = il.id;
 	END;
 END;
 GO
