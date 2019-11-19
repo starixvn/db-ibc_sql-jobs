@@ -47,9 +47,16 @@ BEGIN
 		RedemptionPrize money)
 
 	--  dump fake data
-	INSERT INTO #rptPromotion
-	VALUES(1234, '2019-10-30', '2019-10-30', 11, 16, 925144, 20, '2019-10-30', 8, '2019-10-30', 1, 1, 500)
-	
+	DECLARE @count int, @tmpDate date
+	SELECT @count = DATEDIFF(DAY,@fromDate,@toDate)
+	WHILE (@count >= 0)
+	BEGIN
+		SELECT @tmpDate=DATEADD(DAY,@count,@fromDate)
+		INSERT INTO #rptPromotion(PromoID,StartDate,EndDate,OffPeakStartTime,OffPeakEndTime,CustID,CurrencyID,CouponDate,CouponTimeZone,CouponDateGMT,CouponCount,RedemptionCount,RedemptionPrize)
+		EXEC ('CALL Promotion.Intg_LA_GetPromoSummary('''+@tmpDate+''');') at DBPROMO
+
+		SELECT @count = @count - 1
+	END
 	CREATE TABLE #bettransData(
 		PromoID	int,
 		RptDate date,
