@@ -2,7 +2,7 @@ SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
 CREATE PROCEDURE [dbo].[ExecRep_APL_01]
-	@Winlostdate Datetime
+	@Winlostdate DATETIME
 AS
 /*
 	Created by:	Sophia
@@ -22,6 +22,7 @@ AS
 		- 20171221@Billy:	Add Match3rd table - [Redmine: #88506]
 		- 20181204@Billy:	Add [oddsES] & [ResultDetailES] tables - [Redmine: #105816]
 		- 20190325@Billy:	Add [SMP_Market] & [SMP_MarketSelection] tables - [Redmine: #109926]
+		- 20190828@Billy:	Add [oddsOS] & [ResultDetailOS] tables - [Redmine: #119257]
 */ 
 BEGIN
 
@@ -144,9 +145,28 @@ BEGIN
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;
 
+	--	Delete oddsOS
+		-- 20190828@Billy --
+	IF	OBJECT_ID('dbo.oddsOS', 'U') IS NOT NULL
+	BEGIN;
+		DELETE	tbl WITH (ROWLOCK)
+		FROM	dbo.oddsOS AS tbl
+		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
+	END;
+
+	--	Delete ResultDetailOS
+		-- 20190828@Billy --
+	IF	OBJECT_ID('dbo.ResultDetailOS', 'U') IS NOT NULL
+	BEGIN;
+		DELETE	tbl WITH (ROWLOCK)
+		FROM	dbo.ResultDetailOS AS tbl
+		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
+	END;
+
 	-- delete match	
-	delete from match 
-	where eventdate=@winlostdate
+	DELETE	tbl WITH (ROWLOCK)
+	FROM	dbo.match AS tbl
+	WHERE	eventdate = @Winlostdate;
 
 	-- delete outright
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'outright' AND type = 'U')

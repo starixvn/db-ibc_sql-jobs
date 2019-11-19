@@ -44,6 +44,7 @@ AS
 		-- 20190325@Billy:	Add [SMP_Market] & [SMP_MarketSelection] tables - [Redmine: #109926]
 		-- 20190402@Billy:	Add [ShowTimeDT] of [match] - [Redmine: #109926]
 		-- 20190717@Sylvia: Add match14 [ChildMatchType] column
+		-- 20190827@Billy:	Add [oddsOS] & [ResultDetailOS] tables - [Redmine: #119257]
 */
 
 BEGIN
@@ -363,6 +364,32 @@ SET NOCOUNT ON
 	FROM	dbo.SMP_MarketSelection AS sms WITH (NOLOCK)
 	WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE m.matchid = sms.MatchId AND m.eventdate = @winlostdate);
 
+	-- 20190827@Billy -- New table [oddsOS]
+	INSERT INTO	dbo.oddsOS14
+		(	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus
+		,	liveindicator, changetime, risk, stakerange, newoffersetup, com1, comx, com2, cs00, cs01, cs10, cs11, cs02, cs12, cs22, cs21, cs20, cs30, cs31, cs32
+		,	cs33, cs23, cs13, cs03, cs43, cs42, cs41, cs40, cs44, cs14, cs24, cs04, cs34, cs50, cs05, cs51, cs52, cs53, cs54, cs15, cs25, cs35, cs45, cs09, cs90
+		,	cs99, comstatus, csstatus, commaxbet, com1total, comxtotal, com2total, bal00, bal10, bal11, bal01, bal20, bal21, bal22, bal12, bal02, bal30, bal31
+		,	bal32, bal33, bal23, bal13, bal03, bal40, bal41, bal42, bal43, bal44, bal34, bal24, bal14, bal04, bal50, bal05, bal51, bal52, bal53, bal54, bal15
+		,	bal25, bal35, bal45, bal09, bal90, bal99, maxbet, autoreject, autosuspend, multiple, stakerange2, risk2, isHedge, sporttype, HasBeenLinked, Resourceid
+		,	maxPayout, EnableVirtualRate, Category, Sort, odds1aH, odds2aH, IsCopyDeadball, IsStatusIndep, ParentOddsId, TraderId
+		)
+	SELECT	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus
+		,	liveindicator, changetime, risk, stakerange, newoffersetup, com1, comx, com2, cs00, cs01, cs10, cs11, cs02, cs12, cs22, cs21, cs20, cs30, cs31, cs32
+		,	cs33, cs23, cs13, cs03, cs43, cs42, cs41, cs40, cs44, cs14, cs24, cs04, cs34, cs50, cs05, cs51, cs52, cs53, cs54, cs15, cs25, cs35, cs45, cs09, cs90
+		,	cs99, comstatus, csstatus, commaxbet, com1total, comxtotal, com2total, bal00, bal10, bal11, bal01, bal20, bal21, bal22, bal12, bal02, bal30, bal31
+		,	bal32, bal33, bal23, bal13, bal03, bal40, bal41, bal42, bal43, bal44, bal34, bal24, bal14, bal04, bal50, bal05, bal51, bal52, bal53, bal54, bal15
+		,	bal25, bal35, bal45, bal09, bal90, bal99, maxbet, autoreject, autosuspend, multiple, stakerange2, risk2, isHedge, sporttype, HasBeenLinked, Resourceid
+		,	maxPayout, EnableVirtualRate, Category, Sort, odds1aH, odds2aH, IsCopyDeadball, IsStatusIndep, ParentOddsId, TraderId
+	FROM	dbo.oddsOS AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE m.matchid = tbl.MatchId AND m.eventdate = @winlostdate);
+
+	-- 20190827@Billy -- New table [ResultDetailOS]
+	INSERT INTO	dbo.ResultDetailOS14
+		(	MatchID, ResourceID, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateBy, CreateDate, LastModifyBy, LastModifyDate, OtherInfo)
+	SELECT	MatchID, ResourceID, HomeValue, AwayValue, ResultStatusID, SettlementStatusID, CreateBy, CreateDate, LastModifyBy, LastModifyDate, OtherInfo
+	FROM	dbo.ResultDetailOS AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE m.matchid = tbl.MatchId AND m.eventdate = @winlostdate);
 
 	drop table #__tempData
 	drop table #__IdsList
