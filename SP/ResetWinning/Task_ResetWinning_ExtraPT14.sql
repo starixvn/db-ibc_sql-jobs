@@ -1,7 +1,4 @@
 /*<info serverAlias="DBACC-bodb02" executers="bodbAdminNet" isFunction="0" isNested="1"></info>*/
-USE [bodb02]
-GO
-
 ALTER PROCEDURE [dbo].[Task_ResetWinning_ExtraPT14]
 	@fromdate SMALLDATETIME,
 	@todate   SMALLDATETIME,
@@ -262,7 +259,7 @@ BEGIN
             BEGIN
                 SELECT @transDesc = 'DWL-' + CAST(@fromdate as varchar(30))
                                            + CAST(@custid as varchar(50)) + ':'
-                                           + CAST(@variance as varchar(100))
+                                           + CAST(@variance as varchar(1000))
 
                EXEC DBTXN.bodb02.dbo.Task_ResetWinning_Non3rdParty_Add
                     @winlostdate = @winlostdate,

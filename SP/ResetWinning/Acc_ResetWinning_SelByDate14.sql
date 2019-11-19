@@ -1,7 +1,4 @@
-﻿/*<info serverAlias="DBACC-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="1"></info>*/
-USE [bodb02]
-GO
-
+﻿/*<info serverAlias="DBACC-bodb02" executers="bodbAdminNet" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_ResetWinning_SelByDate14]
 	@Winlostdate	SMALLDATETIME,	
 	@TotalBalance	MONEY = 0 OUTPUT, 
@@ -596,7 +593,7 @@ BEGIN
 					SELECT @transDesc = 'DWL-' + CAST(@Product as varchar(250))
 										 + '# ' + CAST(@Winlostdate as varchar(30))
 											   + CAST(@custid as varchar(50)) + ':'
-											   + CAST(@variance as varchar(100))
+											   + CAST(@variance as varchar(1000))
 					
 					--- Add ticket reset winning
 					EXEC DBTXN.bodb02.dbo.Task_ResetWinning_Non3rdParty_Add
@@ -693,7 +690,7 @@ BEGIN
 										
 									 
 					
-				EXEC msdb.dbo.sp_send_dbmail @recipients = 'sophia.nguyen@starixsoft.com;qa@starixsoft.com '
+				EXEC msdb.dbo.sp_send_dbmail @recipients = 'percy.nguyen@starixsoft.com;felix.nguyen@starixsoft.com'
 							, @copy_recipients = ''
 							, @blind_copy_recipients = ''
 							, @subject = @subject
