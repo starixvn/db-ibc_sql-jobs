@@ -14,6 +14,7 @@ AS
 		- 20180926@Patrick:	Initial - [Redmine: #101207]
 		- 20190621@Billy:	Add checking for [SMP_Market] & [SMP_MarkerSelection] - [Redmine: #111421]
 		- 20191106@Billy:	Add checking for [Dot_Admin_Assignment_Trader] - [Redmine: #123262]
+		- 20191119@Billy:	Add checking for [oddsOS] & [ResultDetailOS] - [Redmine: #119257]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -131,6 +132,18 @@ BEGIN;
 	INSERT INTO	@__tempCount(rowcnt, tableName)
 	SELECT	COUNT(1), 'Dot_Admin_Assignment_Trader'
 	FROM	dbo.Dot_Admin_Assignment_Trader AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match14 AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
+
+	--//oddsOS
+	INSERT INTO	@__tempCount(rowcnt, tableName)
+	SELECT	COUNT(1), 'oddsOS'
+	FROM	dbo.oddsOS14 AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match14 AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
+
+	--//ResultDetailOS
+	INSERT INTO	@__tempCount(rowcnt, tableName)
+	SELECT	COUNT(1), 'ResultDetailOS'
+	FROM	dbo.ResultDetailOS14 AS tbl WITH (NOLOCK)
 	WHERE	EXISTS (SELECT 1 FROM dbo.match14 AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
 
 	--//
