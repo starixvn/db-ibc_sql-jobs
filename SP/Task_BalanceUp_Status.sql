@@ -64,7 +64,11 @@ BEGIN
 
 	--- SET BU status
 	SELECT @StatusID			= CASE 
-									WHEN @CheckWeekday <> @WeekdayRunBU THEN 0 -- NOT BU day
+									WHEN @CheckWeekday <> @WeekdayRunBU THEN  -- NOT BU day
+										CASE 
+											WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @BUDate THEN 1 -- BU is running after @WeekdayRunBU
+											ELSE 0 
+										END
 									WHEN @CheckWeekday = @WeekdayRunBU THEN -- is BU Day
 										CASE 
 											WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @BUDate THEN 1 -- BU is running
