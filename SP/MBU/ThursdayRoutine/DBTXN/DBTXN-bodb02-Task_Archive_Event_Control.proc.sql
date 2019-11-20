@@ -13,6 +13,7 @@ AS
 		- 20190318@Helen:	Initialize - archive event timeout issue - [Redmine: #110447]
 		- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader] table - [Redmine: #117014]
 		- 20191107@Billy:	Fix wrong default @DebugMode - [Redmine: #123521]
+		- 20190827@Billy:	Add [oddsOS] & [ResultDetailOS] tables - [Redmine: #119257]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -74,6 +75,8 @@ BEGIN;
 		,	('SMP_Market_bk')
 		,	('SMP_MarketSelection_bk')
 		,	('Dot_Admin_Assignment_Trader_bk')
+		,	('oddsOS_bk')
+		,	('ResultDetailOS_bk')
 		;
 
 

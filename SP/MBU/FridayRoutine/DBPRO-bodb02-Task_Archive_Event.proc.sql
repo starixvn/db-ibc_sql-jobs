@@ -42,7 +42,8 @@ AS
 		- 20190325@Billy:	Add [SMP_Market] & [SMP_MarketSelection] tables - [Redmine: #109926]
 		- 20190925@Billy:	Remove @Action = 'copy' - Using Task_Archive_Event_Control for copying instead
 							Add [Dot_Admin_Assignment_Trader] table - [Redmine: #117014]
- */
+		- 20190911@Billy:	Add [oddsES] & [ResultDetailES] tables - [Redmine: #119257]
+*/
 BEGIN
 	SET NOCOUNT ON;
 
@@ -240,6 +241,33 @@ BEGIN
 		-- Call subtask for looping & deleting data on [Dot_Admin_Assignment_Trader]
 			-- 20190925@Billy -- New table [Dot_Admin_Assignment_Trader]
 		EXECUTE	dbo.Task_Archive_Event @winlostdate = @winlostdate, @Action = 'subtask', @DeletedTarget = 'Dot_Admin_Assignment_Trader';
+
+
+		---### Delete data for oddsOS14
+			-- 20190911@Billy -- New table oddsOS14
+		TRUNCATE TABLE	#DeletedList;
+		INSERT INTO	#DeletedList (id, IsDone)
+		SELECT	tbl.oddsid, 0
+		FROM	dbo.oddsOS14 AS tbl WITH (NOLOCK)
+		WHERE	EXISTS (SELECT 1 FROM dbo.match14 AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @winlostdate);
+
+		-- Call subtask for looping & deleting data on oddsOS14
+			-- 20190911@Billy -- New table oddsOS14
+		EXECUTE	dbo.Task_Archive_Event @winlostdate = @winlostdate, @Action = 'subtask', @DeletedTarget = 'oddsOS14';
+
+
+		---### Delete data for ResultDetailOS14
+			-- 20190911@Billy -- New table ResultDetailOS14
+		TRUNCATE TABLE	#DeletedList;
+		INSERT INTO	#DeletedList (id, IsDone)
+		SELECT	DISTINCT
+				tbl.MatchID, 0
+		FROM	dbo.ResultDetailOS14 AS tbl WITH (NOLOCK)
+		WHERE	EXISTS (SELECT 1 FROM dbo.match14 AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @winlostdate);
+
+		-- Call subtask for looping & deleting data on ResultDetailOS14
+			-- 20190911@Billy -- New table ResultDetailOS14
+		EXECUTE	dbo.Task_Archive_Event @winlostdate = @winlostdate, @Action = 'subtask', @DeletedTarget = 'ResultDetailOS14';
 
 
 		---### delete data for match14
