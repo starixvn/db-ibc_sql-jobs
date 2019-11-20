@@ -593,7 +593,7 @@ BEGIN
 					SELECT @transDesc = 'DWL-' + CAST(@Product as varchar(250))
 										 + '# ' + CAST(@Winlostdate as varchar(30))
 											   + CAST(@custid as varchar(50)) + ':'
-											   + CAST(@variance as varchar(1000))
+											   + CAST(@variance as varchar(100))
 					
 					--- Add ticket reset winning
 					EXEC DBTXN.bodb02.dbo.Task_ResetWinning_Non3rdParty_Add
@@ -653,7 +653,7 @@ BEGIN
 						
 				SELECT @ProductList = COALESCE(@ProductList + ', ', '') + Product,
 					   @ProductVariance = COALESCE(@ProductVariance + ', ', '') + Product +' : '
-										+  CONVERT(VARCHAR(10),	ISNULL( (CASE WHEN r.currency <> 0   ---CN88
+										+  CONVERT(VARCHAR(100),	ISNULL( (CASE WHEN r.currency <> 0   ---CN88
 																THEN
 																	-(ISNULL(r.RealWinlostAfterExtraPT, 0)) - ISNULL(r.Realreset, 0) 
 																ELSE
@@ -690,7 +690,7 @@ BEGIN
 										
 									 
 					
-				EXEC msdb.dbo.sp_send_dbmail @recipients = 'percy.nguyen@starixsoft.com;felix.nguyen@starixsoft.com'
+				EXEC msdb.dbo.sp_send_dbmail @recipients = 'percy.nguyen@starixsoft.com;felix.nguyen@starixsoft.com;lukas.luu@starixsoft.com'
 							, @copy_recipients = ''
 							, @blind_copy_recipients = ''
 							, @subject = @subject

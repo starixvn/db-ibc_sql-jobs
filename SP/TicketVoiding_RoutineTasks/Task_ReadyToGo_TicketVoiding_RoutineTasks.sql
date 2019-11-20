@@ -20,13 +20,13 @@ BEGIN
 	-- parse @affectedList to get list of winlostdate or custid
 	-- in case of group execution combine the affected list & remove duplicate value
 	-- loop for each custid/winlostdate
-	IF @AffectedList IS NOT NULL --- most of case run instantly tasks
-	BEGIN
-		DECLARE @XmlData XML,
-				@winlostdate DATETIME,
-				@custID INT,
-				@custIDs VARCHAR(MAX) = ''
+	DECLARE @XmlData XML,
+			@winlostdate DATETIME,
+			@custID INT,
+			@custIDs VARCHAR(MAX) = ''
 
+	IF @AffectedList IS NOT NULL --- most of case run instantly tasks
+	BEGIN 
 		SET @XmlData  = @AffectedList
 
 		INSERT INTO @inputList(custid,winlostdate,isDone)
@@ -43,7 +43,7 @@ BEGIN
 			SELECT *
 				,cast(affectedList AS XML) AS xmldata
 			FROM TicketVoiding_RoutineTasks WITH(NOLOCK)
-			WHERE stepno = @stepNo
+			WHERE stepno = @stepNo AND status = 1 
 			)
 		INSERT INTO @inputList(custid,winlostdate,isDone)
 		SELECT t.c.value('@c', 'INT') AS CustId
@@ -57,19 +57,6 @@ BEGIN
 	BEGIN
 		WHILE EXISTS (SELECT 1 FROM @inputList WHERE isDone = 0)
 		BEGIN
-			/***
-			--- run each pair of custid & winlostdate
-			SELECT TOP 1 @winlostdate = winlostdate, @custID = custid
-			FROM @inputList
-			WHERE isDone = 0
-
-			EXECUTE Task_Execute_TicketVoiding_RoutineTasks @stepNo = @stepNo, @winlostdate = @winlostdate, @custIDs = @custID
-
-			UPDATE @inputList
-			SET isDone = 1
-			WHERE winlostdate = @winlostdate AND custid = @custID
-			****/
-
 			--- run by winlostdate & list of custid
 			SELECT TOP(1) @winlostdate=winlostdate, 
 						  @custIDs=STUFF( ( SELECT ',' + CAST(custid AS VARCHAR(20))

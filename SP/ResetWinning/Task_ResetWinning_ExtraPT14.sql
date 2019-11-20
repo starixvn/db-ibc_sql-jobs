@@ -259,7 +259,7 @@ BEGIN
             BEGIN
                 SELECT @transDesc = 'DWL-' + CAST(@fromdate as varchar(30))
                                            + CAST(@custid as varchar(50)) + ':'
-                                           + CAST(@variance as varchar(1000))
+                                           + CAST(@variance as varchar(100))
 
                EXEC DBTXN.bodb02.dbo.Task_ResetWinning_Non3rdParty_Add
                     @winlostdate = @winlostdate,
