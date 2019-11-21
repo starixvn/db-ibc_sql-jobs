@@ -90,7 +90,12 @@ BEGIN
 				SET @__caseId = 1
 
 			DECLARE @__message NVARCHAR(2000)
-			SET @__message = CAST(@__affectedRows AS VARCHAR(30))+' account(s) has (have) been found & corrected. Please check e-mail for more details!' + char(10) + char(13)
+			IF @__affectedRows = 1
+				SET @__message = CAST(@__affectedRows AS VARCHAR(30))+' account has'
+			ELSE
+				SET @__message = CAST(@__affectedRows AS VARCHAR(30))+' accounts have'
+
+			SET @__message = @__message + ' been found & corrected. Please check e-mail for more details!' + char(10) + char(13)
 			SET @__message = @__message + '========================'
 
 			EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = @@SERVERNAME, @Jobid = NULL, @JobName = @__jobName, @Message = @__message, @CaseId = @__caseId
