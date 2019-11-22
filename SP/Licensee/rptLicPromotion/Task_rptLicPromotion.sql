@@ -25,7 +25,7 @@ AS
 	EXEC Task_rptLicPromotion '20191001', '20191014'
 */
 BEGIN
-	DECLARE @DrawStatusId SMALLINT = 111, @WonStatusId SMALLINT = 112, @LoseStatusId SMALLINT = 113
+	DECLARE @DrawStatusId SMALLINT = 111
 	DECLARE @NonPeakHourPromoId INT = 37
 
 	DELETE FROM dbo.rptLicPromotion
@@ -102,7 +102,6 @@ BEGIN
 	FROM #rptPromotion pc WITH(NOLOCK)
 		 INNER JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid 
 														AND CAST(b.transdate AS DATE) BETWEEN pc.StartDate AND pc.EndDate
-														AND b.statusID IN (@DrawStatusId, @WonStatusId, @LoseStatusId)
 		 INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
 	WHERE @fromDate <= CAST(b.transdate AS DATE) AND CAST(b.transdate AS DATE) <= @toDate
 	GROUP BY  pc.PromoID,
