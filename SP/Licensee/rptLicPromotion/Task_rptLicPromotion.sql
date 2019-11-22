@@ -6,7 +6,7 @@ SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
 
-ALTER PROCEDURE [dbo].[GEN_rpt_LicPromotion]
+ALTER PROCEDURE [dbo].[Task_rptLicPromotion]
 	@fromDate DATE,
 	@toDate DATE,
 	@timeZone INT = 8
@@ -14,7 +14,7 @@ AS
 
 /*
 	Created: 20191014@Parsons
-	Task: Generate data into rpt_LicPromotion 
+	Task: Generate data into rptLicPromotion 
 	DB: DBLIC.bodb_LicenseeReport
 
 	Revisions:
@@ -22,13 +22,13 @@ AS
 
 	Param's Explanation:
 
-	EXEC GEN_rpt_LicPromotion '20191001', '20191014'
+	EXEC Task_rptLicPromotion '20191001', '20191014'
 */
 BEGIN
 	DECLARE @DrawStatusId SMALLINT = 111, @WonStatusId SMALLINT = 112, @LoseStatusId SMALLINT = 113
 	DECLARE @NonPeakHourPromoId INT = 37
 
-	DELETE FROM dbo.rpt_LicPromotion
+	DELETE FROM dbo.rptLicPromotion
 	WHERE @fromDate <= RptDate  AND RptDate <= @toDate
 
 	CREATE TABLE #rptPromotion(
@@ -46,7 +46,6 @@ BEGIN
 		RedemptionCount int,
 		RedemptionPrize money)
 
-	--  dump fake data
 	DECLARE @count int, @tmpDate date
 	SELECT @count = DATEDIFF(DAY,@fromDate,@toDate)
 	WHILE (@count >= 0)
@@ -112,7 +111,7 @@ BEGIN
 		   pc.CustID,
 		   b.currency
 
-	INSERT INTO rpt_LicPromotion(PromoID,RptDate,TimeZone,RptDateGMT,SiteID,CurrencyID,ProductID,CouponCount,RedemptionCount,RedemptionPrize,BetCountOfPromoTime,BetCountOfPromoTime_NoDraw,BetCount,BetCount_NoDraw,Turnover,Turnover_NoDraw)
+	INSERT INTO rptLicPromotion(PromoID,RptDate,TimeZone,RptDateGMT,SiteID,CurrencyID,ProductID,CouponCount,RedemptionCount,RedemptionPrize,BetCountOfPromoTime,BetCountOfPromoTime_NoDraw,BetCount,BetCount_NoDraw,Turnover,Turnover_NoDraw)
 	SELECT b.PromoID, b.RptDate, b.TimeZone, b.RptDateGMT, ISNULL([site].SiteID, -1), b.CurrencyID, b.ProductId,
 									SUM(ISNULL(CouponCount, 0)),
 									SUM(ISNULL(RedemptionCount, 0)),
