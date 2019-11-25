@@ -95,15 +95,15 @@ BEGIN
 					THEN 1 ELSE 0 END) AS BetCountOfPromoTime,
 		   SUM(CASE WHEN DATEPART(HOUR, b.transdate) BETWEEN OffPeakStartTime AND OffPeakEndTime AND statusID <> @DrawStatusId
 					THEN 1 ELSE 0 END) AS BetCountOfPromoTime_NoDraw,
-		   SUM(CASE WHEN pc.CouponDate = CAST(b.transdate AS DATE) THEN 1 ELSE 0 END) AS BetCount,
-		   SUM(CASE WHEN pc.CouponDate = CAST(b.transdate AS DATE) AND statusID <> @DrawStatusId THEN 1 ELSE 0 END) AS BetCount_NoDraw,
-		   SUM(CASE WHEN pc.CouponDate = CAST(b.transdate AS DATE) THEN b.stake ELSE 0 END ) AS TurnoverPromoDay,
-		   SUM(CASE WHEN pc.CouponDate = CAST(b.transdate AS DATE) AND statusID <> @DrawStatusId THEN b.stake ELSE 0 END ) AS TurnoverPromoDay_NoDraw
+		   SUM(CASE WHEN DATEDIFF(DAY, pc.CouponDate, b.transdate) = 0 THEN 1 ELSE 0 END) AS BetCount,
+		   SUM(CASE WHEN DATEDIFF(DAY, pc.CouponDate, b.transdate) = 0 AND statusID <> @DrawStatusId THEN 1 ELSE 0 END) AS BetCount_NoDraw,
+		   SUM(CASE WHEN DATEDIFF(DAY, pc.CouponDate, b.transdate) = 0 THEN b.stake ELSE 0 END ) AS TurnoverPromoDay,
+		   SUM(CASE WHEN DATEDIFF(DAY, pc.CouponDate, b.transdate) = 0 AND statusID <> @DrawStatusId THEN b.stake ELSE 0 END ) AS TurnoverPromoDay_NoDraw
 	FROM #rptPromotion pc WITH(NOLOCK)
 		 INNER JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid 
 														AND CAST(b.transdate AS DATE) BETWEEN pc.StartDate AND pc.EndDate
 		 INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
-	WHERE @fromDate <= CAST(b.transdate AS DATE) AND CAST(b.transdate AS DATE) <= @toDate
+	WHERE @fromDate <= b.transdate AND b.transdate < DATEADD(Day,1,@toDate) 
 	GROUP BY  pc.PromoID,
 		   CAST(b.transdate AS DATE),
 		   CAST(DATEADD(HOUR, @timeZone + 4, b.transdate) AS DATE),
@@ -129,8 +129,8 @@ BEGIN
 										b.RptDate = pc.CouponDate AND
 										b.RptDateGMT = pc.CouponDateGMT
 		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON pc.CustID= c.custid
-		LEFT JOIN bodb02.dbo.[Site] s WITH (NOLOCK) ON c.[site] = s.[site]
-		LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
+		LEFT JOIN bodb02.dbo.Dep_CustSuper cs WITH(NOLOCK) ON c.srecommend = cs.custid
+		LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON cs.site = site.SiteName
 	GROUP BY b.PromoID, b.RptDate, b.RptDateGMT, ISNULL([site].SiteID, -1), b.CurrencyID, b.TimeZone, b.ProductId
 
 	DROP TABLE #rptPromotion
