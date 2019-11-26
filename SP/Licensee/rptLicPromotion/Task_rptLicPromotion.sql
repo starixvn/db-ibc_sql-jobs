@@ -103,7 +103,8 @@ BEGIN
 		 INNER JOIN bodb02.dbo.bettrans b WITH(NOLOCK) ON pc.CustID = b.custid 
 														AND CAST(b.transdate AS DATE) BETWEEN pc.StartDate AND pc.EndDate
 		 INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
-	WHERE @fromDate <= b.transdate AND b.transdate < DATEADD(Day,1,@toDate) 
+	WHERE @fromDate <= b.transdate AND b.transdate < DATEADD(Day,1,@toDate)
+		  AND CurrencyID <> 20 
 	GROUP BY  pc.PromoID,
 		   CAST(b.transdate AS DATE),
 		   CAST(DATEADD(HOUR, @timeZone + 4, b.transdate) AS DATE),
