@@ -129,7 +129,7 @@ BEGIN
 										b.TimeZone = pc.CouponTimeZone AND
 										b.RptDate = pc.CouponDate AND
 										b.RptDateGMT = pc.CouponDateGMT
-		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON pc.CustID= c.custid
+		LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.CustID= c.custid
 		LEFT JOIN bodb02.dbo.Dep_CustSuper cs WITH(NOLOCK) ON c.srecommend = cs.custid
 		LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON cs.site = site.SiteName
 	GROUP BY b.PromoID, b.RptDate, b.RptDateGMT, ISNULL([site].SiteID, -1), b.CurrencyID, b.TimeZone, b.ProductId
