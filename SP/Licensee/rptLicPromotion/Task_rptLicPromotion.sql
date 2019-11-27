@@ -39,7 +39,7 @@ BEGIN
 		OffPeakEndTime tinyint,
 		CustID int,
 		CurrencyID	int,
-		CouponDate date,
+		CouponDate datetime,
 		CouponTimeZone int,
 		CouponDateGMT date,
 		CouponCount int,
