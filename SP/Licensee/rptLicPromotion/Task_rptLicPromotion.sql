@@ -91,9 +91,9 @@ BEGIN
 		   pc.CustID,
 		   b.currency AS CurrencyID,
 		   @NonPeakHourPromoId,
-		   SUM(CASE WHEN DATEPART(HOUR, b.transdate) BETWEEN OffPeakStartTime AND OffPeakEndTime
+		   SUM(CASE WHEN b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, pc.CouponDate) AND DATEADD(HOUR, OffPeakEndTime, pc.CouponDate) 
 					THEN 1 ELSE 0 END) AS BetCountOfPromoTime,
-		   SUM(CASE WHEN DATEPART(HOUR, b.transdate) BETWEEN OffPeakStartTime AND OffPeakEndTime AND statusID <> @DrawStatusId
+		   SUM(CASE WHEN b.transdate BETWEEN DATEADD(HOUR, OffPeakStartTime, pc.CouponDate) AND DATEADD(HOUR, OffPeakEndTime, pc.CouponDate) AND statusID <> @DrawStatusId
 					THEN 1 ELSE 0 END) AS BetCountOfPromoTime_NoDraw,
 		   SUM(CASE WHEN DATEDIFF(DAY, pc.CouponDate, b.transdate) = 0 THEN 1 ELSE 0 END) AS BetCount,
 		   SUM(CASE WHEN DATEDIFF(DAY, pc.CouponDate, b.transdate) = 0 AND statusID <> @DrawStatusId THEN 1 ELSE 0 END) AS BetCount_NoDraw,
