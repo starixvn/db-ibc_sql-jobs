@@ -26,7 +26,7 @@ AS
 		- 20190704@Billy:	Add [MarkedTransaction] to Friday Routine - [Redmine: #115199]
 		- 20190828@Billy:	Add table [bettransInfo] to Friday Routine - [Redmine: #119219]
 		- 20191030@Billy:	Remove table [BetLucky3Result] from Friday Routine - [Redmine: #122987]
-		- 20191126@Patrick: Ignore remove data on DB054/DB055 - [Redmine: #124104]
+		- 20191126@Patrick: Add more conndition remove data on DB054/DB055 - [Redmine: #124104]
 */
 -- =======================
 -- Parameter check\control

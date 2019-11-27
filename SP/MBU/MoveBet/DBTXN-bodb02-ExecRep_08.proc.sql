@@ -57,7 +57,7 @@ DECLARE	@__tmpTransId AS TABLE (
 			id		BIGINT		PRIMARY KEY CLUSTERED
 		);
 
-IF @@SERVERNAME NOT LIKE 'DB04%' AND @@SERVERNAME IN ('DB054', 'DB055')
+IF @@SERVERNAME NOT LIKE 'DB04%' AND @@SERVERNAME NOT IN ('DB054', 'DB055')
 BEGIN
 	-- Note: Exclude columns: [tstamp], [recommdate]
 	-- 20191104@Billy:	Add column [epositiontaking]
@@ -185,7 +185,7 @@ BEGIN
 END
 
 
-IF @@SERVERNAME NOT LIKE 'DB04_' AND @@SERVERNAME IN ('DB054', 'DB055')
+IF @@SERVERNAME NOT LIKE 'DB04%' AND @@SERVERNAME NOT IN ('DB054', 'DB055')
 BEGIN
 
 	IF @parlay = 1
@@ -217,8 +217,7 @@ BEGIN
 			,	statusID, transdesc, SecAcceptFlag, SecAcceptTime, LiveBetAcceptTime
 		FROM	dbo.bettransm AS b WITH (NOLOCK)
 		WHERE	winlostdate = @__winlostdate;
-
-
+		
 		insert into bettransG14
 			(transid, custid, transdate, oddsid, odds, stake, status, winlost, 
 			betteam, creator, refno, winlostdate, betfrom, checktime, apositiontaking, 
