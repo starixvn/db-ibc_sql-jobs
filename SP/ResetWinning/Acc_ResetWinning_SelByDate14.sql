@@ -649,7 +649,8 @@ BEGIN
 			IF @resetCount > 0
 			BEGIN
 				DECLARE @Subject VARCHAR(1000) = '', @body VARCHAR(MAX) = '', 
-						@ProductList VARCHAR(1000)  , @ProductVariance VARCHAR(1000)  
+						@ProductList VARCHAR(1000)  , @ProductVariance VARCHAR(1000),
+						@recipients VARCHAR(MAX), @copy_recipients VARCHAR(MAX), @blind_copy_recipients VARCHAR(MAX)
 						
 				SELECT @ProductList = COALESCE(@ProductList + ', ', '') + Product,
 					   @ProductVariance = COALESCE(@ProductVariance + ', ', '') + Product +' : '
@@ -688,15 +689,22 @@ BEGIN
 								Best regards, </br> 
 								This is an auto-mail from ONEworks Report System. Please do not reply.'									 
 										
-									 
+				IF @Istest = 0 AND @@SERVERNAME = 'DB061'
+					SELECT	@recipients = 'kudanaga@enpine.com'
+							,@copy_recipients = 'jetyee88@enpine.com;kwongyong@enpine.com;seanlau@enpine.com;byronchia@enpine.com;foo.mv@enpine.com;eric.lu@onelab.tw;tp@enpine.com;it@starixsoft.com;jackyting@enpine.com;vh@enpine.com'
+							,@blind_copy_recipients = 'automail@enpine.com'
+				ELSE
+					SELECT  @recipients = 'sophia.nguyen@starixsoft.com'
+							,@copy_recipients = ''
+							,@blind_copy_recipients = ''
 					
-				EXEC msdb.dbo.sp_send_dbmail @recipients = 'percy.nguyen@starixsoft.com;felix.nguyen@starixsoft.com;lukas.luu@starixsoft.com'
-							, @copy_recipients = ''
-							, @blind_copy_recipients = ''
-							, @subject = @subject
-							, @body = @body
-							, @body_format = 'HTML' 
-							
+				EXEC msdb.dbo.sp_send_dbmail
+					@recipients = @recipients
+					, @copy_recipients = @copy_recipients
+					, @blind_copy_recipients = @blind_copy_recipients
+					, @subject = @subject
+					, @body = @body
+					, @body_format = 'HTML' 
 			END
 	
 			
