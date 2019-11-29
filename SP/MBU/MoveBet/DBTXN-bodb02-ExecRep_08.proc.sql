@@ -35,6 +35,7 @@ AS
 		- 20190828@Billy:	Add table [bettransInfo] & column [SecAcceptTime], [LiveBetAcceptTime] of [bettransm] - [Redmine: #119219]
 		- 20191104@Billy:	Add column [epositiontaking] of [bettrans], [bettransLC], [bettransRnG] - [Redmine: #123267]
 		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
+		- 20191126@Patrick: Ignore copy data to [14] on DB054/DB055 - [Redmine: #124104]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -56,7 +57,7 @@ DECLARE	@__tmpTransId AS TABLE (
 			id		BIGINT		PRIMARY KEY CLUSTERED
 		);
 
-IF @@SERVERNAME NOT LIKE 'DB04%'
+IF @@SERVERNAME NOT LIKE 'DB04%' AND @@SERVERNAME NOT IN ('DB054', 'DB055')
 BEGIN
 	-- Note: Exclude columns: [tstamp], [recommdate]
 	-- 20191104@Billy:	Add column [epositiontaking]
@@ -184,7 +185,7 @@ BEGIN
 END
 
 
-IF @@SERVERNAME NOT LIKE 'DB04_'
+IF @@SERVERNAME NOT LIKE 'DB04_' AND @@SERVERNAME NOT IN ('DB054', 'DB055')
 BEGIN
 
 	IF @parlay = 1
@@ -216,8 +217,7 @@ BEGIN
 			,	statusID, transdesc, SecAcceptFlag, SecAcceptTime, LiveBetAcceptTime
 		FROM	dbo.bettransm AS b WITH (NOLOCK)
 		WHERE	winlostdate = @__winlostdate;
-
-
+		
 		insert into bettransG14
 			(transid, custid, transdate, oddsid, odds, stake, status, winlost, 
 			betteam, creator, refno, winlostdate, betfrom, checktime, apositiontaking, 

@@ -40,6 +40,7 @@ AS
 		- 20190701@Percy: Update directly flag of MBBU process [RedmineID: #115877]
 		- 20190828@Billy:	Add table [bettransInfo] - [Redmine: #119219]
 		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
+		- 20191126@Patrick: Ignore remove data on DB054/DB055 - [Redmine: #124104]
  */
 BEGIN
 	--SET NOCOUNT ON
@@ -194,7 +195,7 @@ BEGIN
 		RETURN
 	END
 
-	IF @@SERVERNAME LIKE 'DB04%'
+	IF @@SERVERNAME LIKE 'DB04%' OR @@SERVERNAME IN ('DB054', 'DB055')
 	BEGIN
 		PRINT 'nothing'
 	END

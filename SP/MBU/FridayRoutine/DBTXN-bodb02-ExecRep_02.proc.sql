@@ -26,6 +26,7 @@ AS
 		- 20190704@Billy:	Add [MarkedTransaction] to Friday Routine - [Redmine: #115199]
 		- 20190828@Billy:	Add table [bettransInfo] to Friday Routine - [Redmine: #119219]
 		- 20191030@Billy:	Remove table [BetLucky3Result] from Friday Routine - [Redmine: #122987]
+		- 20191126@Patrick: Add more conndition remove data on DB054/DB055 - [Redmine: #124104]
 */
 -- =======================
 -- Parameter check\control
@@ -108,7 +109,7 @@ BEGIN
 		IF	@deletedTarget = 'bettransm14' --- delete bettransm14
 		BEGIN
 			CREATE TABLE #btm (rn int PRIMARY KEY IDENTITY(1,1), transid BIGINT)
-			IF @@SERVERNAME LIKE 'DB04%'
+			IF @@SERVERNAME LIKE 'DB04%' OR @@SERVERNAME IN ('DB054', 'DB055')
 			BEGIN
 
 				CREATE TABLE #m (matchid int PRIMARY KEY)
