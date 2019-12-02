@@ -84,7 +84,7 @@ BEGIN
 					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SP') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR') -- Remove Exchange (BX) due to separate wallet only
 		WHERE (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList)) 
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
