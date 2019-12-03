@@ -10,8 +10,8 @@ AS
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20170508@Paul: Check awinlost, comm - [Redmine: #76206]
 	- 20170703@Paul: Check more columns - [Redmine: #79262]
-	- 20190306@Amande: Implement PP Promotion Prize [RedmineID: #109471]
-	- 20191122@Amande: Implement PP Tournament Prize [RedmineID: #123804]
+	- 20190306@Amanda: Implement PP Promotion Prize [RedmineID: #109471]
+	- 20191122@Amanda: Implement PP Tournament Prize [RedmineID: #123804]
 */
 BEGIN
 	SET NOCOUNT ON
