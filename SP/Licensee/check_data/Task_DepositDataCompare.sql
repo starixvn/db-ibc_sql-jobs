@@ -19,6 +19,7 @@ Revisions:
 	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 	- 20190715@Amanda: Integrate Card Club [RedmineID: #115449]
 	- 20191106@Amanda: Integrate NPHP [RedmineID: #120333]
+	- 20191204@Amanda: Change name of NPH Promotion to Saba Promotion [Redmine: #124612]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -101,7 +102,7 @@ DECLARE @tblTmp AS TABLE (ID INT
 						   ,LT BIGINT
 						   ,PP BIGINT
 						   ,CC BIGINT
-						   ,NPHP BIGINT)
+						   ,SPR BIGINT)
 						   
 --exec 
 --rptLicWinloss2
@@ -130,7 +131,7 @@ INSERT INTO @tblTmp	(ID
 					,LT
 					,PP
 					,CC
-					,NPHP)	
+					,SPR)	
 EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date	
 				
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
@@ -199,7 +200,7 @@ INSERT INTO @tblTmp	(ID
 					,LT
 					,PP
 					,CC
-					,NPHP)					   
+					,SPR)					   
 EXEC dbo.GET_DepositDataToValidate_Betting @Date=@Date
 					
 INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
