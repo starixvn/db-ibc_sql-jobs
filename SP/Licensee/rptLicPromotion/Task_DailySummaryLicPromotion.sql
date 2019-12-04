@@ -3,7 +3,6 @@ ALTER PROCEDURE [dbo].[Task_DailySummaryLicPromotion]
 	@Winlostdate	DATE,
 	@timeZone		INT = 8
 AS
-
 /*
 	Created: 20191203@Bobby
 	Task: Summarize Promotion data into rptLicPromotion 
@@ -15,7 +14,7 @@ AS
 	Param's Explanation:
 
 	Sample execution:
-		- EXEC [dbo].[Task_DailySummaryLicPromotion] '20191126', '20191126'
+		- EXEC [dbo].[Task_DailySummaryLicPromotion] '20191119'
 */
 BEGIN
 	DECLARE @SPR_ProductID	INT = 37
@@ -49,8 +48,6 @@ BEGIN
 	IF NOT EXISTS(SELECT 1 FROM @rptPromotion)
 		RETURN
 
-	--SELECT * from @rptPromotion
-
 	-- SET start & end transaction date
 	SELECT @startTransdate	= @Winlostdate
 		, @endTransdate		= DATEADD(DD, 1, CAST(@Winlostdate AS DATETIME))
@@ -70,6 +67,7 @@ BEGIN
 			, StartDate, EndDate
 			, OffPeakStartTime, OffPeakEndTime
 		FROM @rptPromotion rpt
+		WHERE ISNULL(CouponCount, 0) > 0 -- Valid Promo Program
 	),
 	-- COLLECT Promo Coupons
 	CTE_PromoCoupon AS (
@@ -96,12 +94,12 @@ BEGIN
 			lic.SiteID
 			,lic.CurrencyID
 			,promo.ProductID
-			,promo.PromoDate
+			,bet.PromoDate
 			,bet.TimeZone
 			,bet.RptDateGMT
 			-------------------Measures-------------
-			,SUM(bet.IsPromoBet) AS BetCountOfPromoTime
-			,SUM(bet.IsPromoBet * bet.IsWonLoseBet) AS BetCountOfPromoTime_WonLose
+			,SUM(ISNULL(promoTime.IsPromoBet,0)) AS BetCountOfPromoTime
+			,SUM(ISNULL(promoTime.IsPromoBet,0) * bet.IsWonLoseBet) AS BetCountOfPromoTime_WonLose
 			,COUNT(1) AS BetCount
 			,SUM(bet.IsWonLoseBet) AS BetCount_WonLose
 			,SUM(b.stake) AS Turnover
@@ -111,21 +109,29 @@ BEGIN
 			INNER JOIN #tempLicSuper lic ON b.srecommend = lic.custid
 			INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
 			CROSS APPLY (
-				SELECT TOP(1) ProductID, StartDate, EndDate
-					, OffPeakStartTime AS NonPeakStartHour -- after hh:00
-					,(OffPeakEndTime - 1) AS NonPeakEndHour -- before hh:00
-					,CAST(b.transdate AS DATE) AS PromoDate
-				FROM CTE_PromoProgram program
-				WHERE b.transdate >= program.StartDate 
-					AND b.transdate <= DATEADD(DD, 1, program.EndDate)
-			) AS promo -- peak out the Promo Program
-			CROSS APPLY (
 				SELECT 
-					CASE WHEN DATEPART(HOUR, b.transdate) BETWEEN promo.NonPeakStartHour AND promo.NonPeakEndHour THEN 1 ELSE 0 END AS IsPromoBet
-					, CASE WHEN b.statusID IN (112, 113) THEN 1 ELSE 0 END IsWonLoseBet
+					CASE WHEN b.statusID IN (112, 113) THEN 1 ELSE 0 END IsWonLoseBet
 					, CAST(DATEADD(HOUR, @timeZone + 4, b.transdate) AS DATE) AS RptDateGMT
 					, @timeZone AS TimeZone
+					, DATEPART(HOUR, b.transdate) AS TransHour
+					, CAST(b.transdate AS DATE) AS PromoDate
 			) AS bet
+			-- peak out the Promo Program -- require
+			CROSS APPLY (
+				SELECT TOP(1) ProductID
+				FROM CTE_PromoProgram program
+				WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
+			) AS promo 
+			-- peak out the Promo Time - optional
+			OUTER APPLY (
+				SELECT TOP(1) 1 AS IsPromoBet
+				FROM CTE_PromoProgram program
+				WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
+					AND (
+						bet.TransHour >= program.OffPeakStartTime	-- after hh:00
+						AND bet.TransHour < program.OffPeakEndTime	-- before hh:00
+					)
+			) AS promoTime 
 		WHERE 
 			b.transdate >= @startTransdate AND b.transdate < @endTransdate
 
@@ -133,7 +139,7 @@ BEGIN
 			lic.SiteID
 			,lic.CurrencyID
 			,promo.ProductID
-			,promo.PromoDate
+			,bet.PromoDate
 			,bet.TimeZone
 			,bet.RptDateGMT
 	),
@@ -156,7 +162,7 @@ BEGIN
 			AND bet.PromoDate	= coupon.CouponDate
 			AND bet.RptDateGMT	= coupon.CouponDateGMT
 	)
-	-- INSERT/UPDATE/DELETE from SOURCE
+	---- INSERT/UPDATE/DELETE from SOURCE
 	MERGE dbo.rptLicPromotion		AS tgr --TARGET
 	USING source_rptLicPromotion	AS src --SOURCE
 	ON tgr.RptDate		= src.PromoDate
@@ -203,7 +209,6 @@ BEGIN
 	WHEN NOT MATCHED BY SOURCE AND tgr.RptDate = @Winlostdate THEN
 		DELETE
 	;
-	
 	
 	--- CLEANUP
 	DROP TABLE #tempLicSuper

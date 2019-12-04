@@ -1,10 +1,9 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailySummaryLicPromotion_CheckData]
 	@Winlostdate		DATE,
 	@TimeZone			INT = 8,
-	@IsCheckDataOnly	BIT = 0
+	@IsCheckDataOnly	BIT = 1
 AS
-
 /*
 	Created: 20191203@Bobby
 	Task: Check and Correct Promotion data into rptLicPromotion 
@@ -56,7 +55,7 @@ BEGIN
 		RedemptionPrize money)
 
 	CREATE TABLE #rptLicPromotionBet (
-		[RptDate] [date] NOT NULL,
+		[PromoDate] [date] NOT NULL,
 		[TimeZone] [smallint] NOT NULL,
 		[RptDateGMT] [date] NOT NULL,
 		[SiteID] [int] NOT NULL,
@@ -71,7 +70,7 @@ BEGIN
 	)
 
 	CREATE TABLE #source_RptLicPromotion (
-		[RptDate] [date] NOT NULL,
+		[PromoDate] [date] NOT NULL,
 		[TimeZone] [smallint] NOT NULL,
 		[RptDateGMT] [date] NOT NULL,
 		[SiteID] [int] NOT NULL,
@@ -114,15 +113,16 @@ BEGIN
 	WHERE cs.currency <> 20
 
 	-- COLLECT Promo Programs
-	SELECT DISTINCT PromoID, @NonPeakHourPromoId AS ProductID
+	SELECT DISTINCT @NonPeakHourPromoId AS ProductID
 		, StartDate, EndDate
 		, OffPeakStartTime, OffPeakEndTime
 	INTO #promoProgram
 	FROM @rptPromotion rpt
+	WHERE ISNULL(CouponCount,0) > 0
 
 	-- COLLECT Promo Time Tickets - Bettrans
 	INSERT INTO #rptLicPromotionBet(
-		SiteID,CurrencyID,PromoID,ProductID,RptDate,TimeZone,RptDateGMT
+		SiteID,CurrencyID,ProductID,PromoDate,TimeZone,RptDateGMT
 		,BetCountOfPromoTime,BetCountOfPromoTime_WonLose,BetCount,BetCount_WonLose,Turnover,Turnover_WonLose
 	)
 	SELECT
@@ -130,12 +130,12 @@ BEGIN
 		lic.SiteID
 		,lic.CurrencyID
 		,promo.ProductID
-		,bet.RptDate
+		,bet.PromoDate
 		,bet.TimeZone
 		,bet.RptDateGMT
 		-------------------Measures-------------
-		,SUM(bet.IsPromoBet) AS BetCountOfPromoTime
-		,SUM(bet.IsPromoBet * bet.IsWonLoseBet) AS BetCountOfPromoTime_WonLose
+		,SUM(ISNULL(promoTime.IsPromoBet,0)) AS BetCountOfPromoTime
+		,SUM(ISNULL(promoTime.IsPromoBet,0) * bet.IsWonLoseBet) AS BetCountOfPromoTime_WonLose
 		,COUNT(1) AS BetCount
 		,SUM(bet.IsWonLoseBet) AS BetCount_WonLose
 		,SUM(b.stake) AS Turnover
@@ -145,19 +145,29 @@ BEGIN
 		INNER JOIN #tempLicSuper lic ON b.srecommend = lic.custid
 		INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
 		CROSS APPLY (
-			SELECT PromoID, ProductID, StartDate, EndDate, OffPeakStartTime, OffPeakEndTime
-			FROM #promoProgram program
-			WHERE b.transdate >= program.StartDate 
-				AND b.transdate <= DATEADD(DD, 1, program.EndDate)
-		) AS promo -- peak out the Promo Program
-		CROSS APPLY (
 			SELECT 
-				CASE WHEN DATEPART(HOUR, b.transdate) BETWEEN promo.OffPeakStartTime AND promo.OffPeakEndTime THEN 1 ELSE 0 END AS IsPromoBet
-				, CASE WHEN b.statusID IN (112, 113) THEN 1 ELSE 0 END IsWonLoseBet
-				, CAST(b.transdate AS DATE) RptDate
+				CASE WHEN b.statusID IN (112, 113) THEN 1 ELSE 0 END IsWonLoseBet
 				, CAST(DATEADD(HOUR, @timeZone + 4, b.transdate) AS DATE) AS RptDateGMT
 				, @timeZone AS TimeZone
+				, DATEPART(HOUR, b.transdate) AS TransHour
+				, CAST(b.transdate AS DATE) AS PromoDate
 		) AS bet
+		-- peak out the Promo Program -- require
+		CROSS APPLY (
+			SELECT TOP(1) ProductID
+			FROM #promoProgram program
+			WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
+		) AS promo 
+		-- peak out the Promo Time - optional
+		OUTER APPLY (
+			SELECT TOP(1) 1 AS IsPromoBet
+			FROM #promoProgram program
+			WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
+				AND (
+					bet.TransHour >= program.OffPeakStartTime	-- after hh:00
+					AND bet.TransHour < program.OffPeakEndTime	-- before hh:00
+				)
+		) AS promoTime 
 	WHERE 
 		b.transdate >= @startTransdate AND b.transdate < @endTransdate
 
@@ -165,27 +175,26 @@ BEGIN
 		lic.SiteID
 		,lic.CurrencyID
 		,promo.ProductID
-		,bet.RptDate
+		,bet.PromoDate
 		,bet.TimeZone
 		,bet.RptDateGMT
 	
 	-- COLLECT Promo Time Tickets - Bettrans14
 	INSERT INTO #rptLicPromotionBet(
-		SiteID,CurrencyID,PromoID,ProductID,RptDate,TimeZone,RptDateGMT
+		SiteID,CurrencyID,ProductID,PromoDate,TimeZone,RptDateGMT
 		,BetCountOfPromoTime,BetCountOfPromoTime_WonLose,BetCount,BetCount_WonLose,Turnover,Turnover_WonLose
 	)
 	SELECT
 		-------------------Dimensions-------------
 		lic.SiteID
 		,lic.CurrencyID
-		,promo.PromoID
 		,promo.ProductID
-		,bet.RptDate
+		,bet.PromoDate
 		,bet.TimeZone
 		,bet.RptDateGMT
 		-------------------Measures-------------
-		,SUM(bet.IsPromoBet) AS BetCountOfPromoTime
-		,SUM(bet.IsPromoBet * bet.IsWonLoseBet) AS BetCountOfPromoTime_WonLose
+		,SUM(ISNULL(promoTime.IsPromoBet,0)) AS BetCountOfPromoTime
+		,SUM(ISNULL(promoTime.IsPromoBet,0) * bet.IsWonLoseBet) AS BetCountOfPromoTime_WonLose
 		,COUNT(1) AS BetCount
 		,SUM(bet.IsWonLoseBet) AS BetCount_WonLose
 		,SUM(b.stake) AS Turnover
@@ -195,28 +204,37 @@ BEGIN
 		INNER JOIN #tempLicSuper lic ON b.srecommend = lic.custid
 		INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
 		CROSS APPLY (
-			SELECT PromoID, ProductID, StartDate, EndDate, OffPeakStartTime, OffPeakEndTime
-			FROM #promoProgram program
-			WHERE b.transdate >= program.StartDate 
-				AND b.transdate <= DATEADD(DD, 1, program.EndDate)
-		) AS promo -- peak out the Promo Program
-		CROSS APPLY (
 			SELECT 
-				CASE WHEN DATEPART(HOUR, b.transdate) BETWEEN promo.OffPeakStartTime AND promo.OffPeakEndTime THEN 1 ELSE 0 END AS IsPromoBet
-				, CASE WHEN b.statusID IN (112, 113) THEN 1 ELSE 0 END IsWonLoseBet
-				, CAST(b.transdate AS DATE) RptDate
+				CASE WHEN b.statusID IN (112, 113) THEN 1 ELSE 0 END IsWonLoseBet
 				, CAST(DATEADD(HOUR, @timeZone + 4, b.transdate) AS DATE) AS RptDateGMT
 				, @timeZone AS TimeZone
+				, DATEPART(HOUR, b.transdate) AS TransHour
+				, CAST(b.transdate AS DATE) AS PromoDate
 		) AS bet
+		-- peak out the Promo Program -- require
+		CROSS APPLY (
+			SELECT TOP(1) ProductID
+			FROM #promoProgram program
+			WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
+		) AS promo 
+		-- peak out the Promo Time - optional
+		OUTER APPLY (
+			SELECT TOP(1) 1 AS IsPromoBet
+			FROM #promoProgram program
+			WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
+				AND (
+					bet.TransHour >= program.OffPeakStartTime	-- after hh:00
+					AND bet.TransHour < program.OffPeakEndTime	-- before hh:00
+				)
+		) AS promoTime 
 	WHERE 
 		b.transdate >= @startTransdate AND b.transdate < @endTransdate
 
 	GROUP BY 
 		lic.SiteID
 		,lic.CurrencyID
-		,promo.PromoID
 		,promo.ProductID
-		,bet.RptDate
+		,bet.PromoDate
 		,bet.TimeZone
 		,bet.RptDateGMT
 
@@ -225,9 +243,8 @@ BEGIN
 		SELECT 
 			bet.SiteID
 			,bet.CurrencyID
-			,bet.PromoID
 			,bet.ProductID
-			,bet.RptDate
+			,bet.PromoDate
 			,bet.TimeZone
 			,bet.RptDateGMT
 			,SUM(bet.BetCount) AS BetCount
@@ -237,13 +254,12 @@ BEGIN
 			,SUM(bet.Turnover) AS Turnover
 			,SUM(bet.Turnover_WonLose) AS Turnover_WonLose
 
-		FROM #rptLicPromotion bet
+		FROM #rptLicPromotionBet bet
 		GROUP BY 
 			bet.SiteID
 			,bet.CurrencyID
-			,bet.PromoID
 			,bet.ProductID
-			,bet.RptDate
+			,bet.PromoDate
 			,bet.TimeZone
 			,bet.RptDateGMT
 	),
@@ -251,7 +267,6 @@ BEGIN
 	CTE_PromoCoupon AS (
 		SELECT [site].SiteID
 			,rpt.CurrencyID
-			,rpt.PromoID
 			,rpt.CouponDate
 			,rpt.CouponDateGMT
 			,SUM(CouponCount) AS CouponCount
@@ -261,33 +276,33 @@ BEGIN
 		INNER JOIN bodb02.dbo.CustInfo ci WITH(NOLOCK) ON rpt.CustID = ci.custid
 		INNER JOIN bodb02.dbo.Dep_CustSuper cs WITH(NOLOCK) ON cs.CustId = ci.srecommend
 		INNER JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON cs.site = site.SiteName
-		GROUP BY cs.site
-			,rpt.PromoID
+		GROUP BY [site].SiteID
+			,rpt.CurrencyID
 			,rpt.CouponDate
 			,rpt.CouponDateGMT
 			,rpt.CurrencyID
 	)
 	-- Promo Coupons vs Tickets Mapping
-	--,source_rptLicPromotion AS (
-	INSERT INTO #source_rptLicPromotion
-		SELECT bet.SiteID, bet.CurrencyID, bet.RptDate, bet.TimeZone, bet.RptDateGMT, bet.PromoID, bet.RptDate,bet.ProductId
-			,bet.BetCount
-			,bet.BetCount_WonLose
-			,bet.BetCountOfPromoTime
-			,bet.BetCountOfPromoTime_WonLose
-			,bet.Turnover
-			,bet.Turnover_WonLose
-			,ISNULL(coupon.CouponCount, 0) AS CouponCount
-			,ISNULL(coupon.RedemptionCount, 0) AS RedemptionCount
-			,ISNULL(coupon.RedemptionPrize, 0) AS RedemptionPrize
-		FROM CTE_PromoBet bet
-		LEFT JOIN CTE_PromoCoupon AS coupon 
-			ON bet.SiteID		= coupon.SiteID
-			AND bet.currencyID	= coupon.CurrencyID
-			AND bet.PromoID		= coupon.PromoID
-			AND bet.RptDate		= coupon.CouponDate
-			AND bet.RptDateGMT	= coupon.CouponDateGMT
-	--)
+	INSERT INTO #source_rptLicPromotion(SiteID,CurrencyID,PromoDate,TimeZone,RptDateGMT,ProductId
+		,BetCount,BetCount_WonLose,BetCountOfPromoTime,BetCountOfPromoTime_WonLose,Turnover,Turnover_WonLose
+		,CouponCount,RedemptionCount,RedemptionPrize)
+	SELECT bet.SiteID, bet.CurrencyID, bet.PromoDate, bet.TimeZone, bet.RptDateGMT, bet.ProductId
+		,bet.BetCount
+		,bet.BetCount_WonLose
+		,bet.BetCountOfPromoTime
+		,bet.BetCountOfPromoTime_WonLose
+		,bet.Turnover
+		,bet.Turnover_WonLose
+		,ISNULL(coupon.CouponCount, 0) AS CouponCount
+		,ISNULL(coupon.RedemptionCount, 0) AS RedemptionCount
+		,ISNULL(coupon.RedemptionPrize, 0) AS RedemptionPrize
+	FROM CTE_PromoBet bet
+	LEFT JOIN CTE_PromoCoupon AS coupon 
+		ON bet.SiteID		= coupon.SiteID
+		AND bet.currencyID	= coupon.CurrencyID
+		AND bet.PromoDate	= coupon.CouponDate
+		AND bet.RptDateGMT	= coupon.CouponDateGMT
+
 	IF EXISTS(
 		SELECT 1
 		FROM #source_rptLicPromotion AS src
@@ -296,16 +311,15 @@ BEGIN
 			FROM dbo.rptLicPromotion WITH(NOLOCK)
 			WHERE RptDate = @Winlostdate
 		) AS tgr
-		ON tgr.RptDate			= src.RptDate
+		ON tgr.RptDate			= src.PromoDate
 			AND tgr.RptDateGMT	= src.RptDateGMT
 			AND tgr.SiteID		= src.SiteID
 			AND tgr.CurrencyID	= src.CurrencyID
 			AND tgr.TimeZone	= src.TimeZone
 			AND tgr.ProductId	= src.ProductId
-			AND tgr.PromoID		= src.PromoID
 		WHERE 
 			tgr.RptDate IS NULL
-			OR src.RptDate IS NULL
+			OR src.PromoDate IS NULL
 			OR (
 				tgr.BetCount				<> src.BetCount
 				OR tgr.BetCount_WonLose		<> src.BetCount_WonLose
@@ -323,62 +337,64 @@ BEGIN
 		BEGIN
 			--TODO: SHOW DIFF Promotion Data
 			SELECT 'Wrong Promotion data on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
-			RETURN
 		END
-
-		-- @IsCheckDataOnly = 0
-		-- INSERT/UPDATE/DELETE from SOURCE
-		MERGE dbo.rptLicPromotion		AS tgr --TARGET
-		USING #source_rptLicPromotion	AS src --SOURCE
-		ON tgr.PromoID			= src.PromoID
-			AND tgr.RptDate		= src.RptDate
-			AND tgr.RptDateGMT	= src.RptDateGMT
-			AND tgr.SiteID		= src.SiteID
-			AND tgr.CurrencyID	= src.CurrencyID
-			AND tgr.TimeZone	= src.TimeZone
-			AND tgr.ProductId	= src.ProductId
-		WHEN MATCHED THEN
-		UPDATE
-			SET BetCount			= src.BetCount
-			,BetCount_WonLose		= src.BetCount_WonLose
-			,BetCountOfPromoTime	= src.BetCountOfPromoTime
-			,BetCountOfPromoTime_WonLose	= src.BetCountOfPromoTime_WonLose
-			,Turnover				= src.Turnover
-			,Turnover_WonLose		= src.Turnover_WonLose
-			,CouponCount			= ISNULL(src.CouponCount,0)
-			,RedemptionCount		= ISNULL(src.RedemptionCount,0)
-			,RedemptionPrize		= ISNULL(src.RedemptionPrize,0)
-		WHEN NOT MATCHED BY TARGET THEN
-			INSERT (PromoID,RptDate,TimeZone,RptDateGMT,SiteID,CurrencyID,ProductID
-				,BetCount
-				,BetCount_WonLose
-				,BetCountOfPromoTime
-				,BetCountOfPromoTime_WonLose
-				,Turnover
-				,Turnover_WonLose
-				,CouponCount
-				,RedemptionCount
-				,RedemptionPrize
-			)
-			VALUES(
-				src.PromoID,src.RptDate,src.TimeZone,src.RptDateGMT,src.SiteID,src.CurrencyID,src.ProductID
-				,src.BetCount
-				,src.BetCount_WonLose
-				,src.BetCountOfPromoTime
-				,src.BetCountOfPromoTime_WonLose
-				,src.Turnover
-				,src.Turnover_WonLose
-				,src.CouponCount
-				,src.RedemptionCount
-				,src.RedemptionPrize
-			)
-		WHEN NOT MATCHED BY SOURCE AND tgr.RptDate = @Winlostdate THEN
-			DELETE
-		;
+		ELSE
+		BEGIN
+			-- @IsCheckDataOnly = 0
+			-- INSERT/UPDATE/DELETE from SOURCE
+			MERGE dbo.rptLicPromotion		AS tgr --TARGET
+			USING #source_rptLicPromotion	AS src --SOURCE
+			ON tgr.RptDate		= src.PromoDate
+				AND tgr.RptDateGMT	= src.RptDateGMT
+				AND tgr.SiteID		= src.SiteID
+				AND tgr.CurrencyID	= src.CurrencyID
+				AND tgr.TimeZone	= src.TimeZone
+				AND tgr.ProductId	= src.ProductId
+			WHEN MATCHED THEN
+			UPDATE
+				SET BetCount			= src.BetCount
+				,BetCount_WonLose		= src.BetCount_WonLose
+				,BetCountOfPromoTime	= src.BetCountOfPromoTime
+				,BetCountOfPromoTime_WonLose	= src.BetCountOfPromoTime_WonLose
+				,Turnover				= src.Turnover
+				,Turnover_WonLose		= src.Turnover_WonLose
+				,CouponCount			= ISNULL(src.CouponCount,0)
+				,RedemptionCount		= ISNULL(src.RedemptionCount,0)
+				,RedemptionPrize		= ISNULL(src.RedemptionPrize,0)
+			WHEN NOT MATCHED BY TARGET THEN
+				INSERT (RptDate,TimeZone,RptDateGMT,SiteID,CurrencyID,ProductID
+					,BetCount
+					,BetCount_WonLose
+					,BetCountOfPromoTime
+					,BetCountOfPromoTime_WonLose
+					,Turnover
+					,Turnover_WonLose
+					,CouponCount
+					,RedemptionCount
+					,RedemptionPrize
+				)
+				VALUES(
+					src.PromoDate,src.TimeZone,src.RptDateGMT,src.SiteID,src.CurrencyID,src.ProductID
+					,src.BetCount
+					,src.BetCount_WonLose
+					,src.BetCountOfPromoTime
+					,src.BetCountOfPromoTime_WonLose
+					,src.Turnover
+					,src.Turnover_WonLose
+					,src.CouponCount
+					,src.RedemptionCount
+					,src.RedemptionPrize
+				)
+			WHEN NOT MATCHED BY SOURCE AND tgr.RptDate = @Winlostdate THEN
+				DELETE
+			;
+		END
 	END
 	
 	--- CLEANUP
+	DROP TABLE #promoProgram
 	DROP TABLE #tempLicSuper
+	DROP TABLE #rptLicPromotionBet
 	DROP TABLE #source_rptLicPromotion
 END
 GO
