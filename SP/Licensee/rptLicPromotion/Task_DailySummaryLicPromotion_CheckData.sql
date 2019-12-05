@@ -169,7 +169,11 @@ BEGIN
 				)
 		) AS promoTime 
 	WHERE 
-		b.transdate >= @startTransdate AND b.transdate < @endTransdate
+		b.winlostdate >= @winlostdate
+		AND (
+			b.transdate >= @startTransdate 
+			AND b.transdate < @endTransdate
+		)
 
 	GROUP BY 
 		lic.SiteID
@@ -228,7 +232,11 @@ BEGIN
 				)
 		) AS promoTime 
 	WHERE 
-		b.transdate >= @startTransdate AND b.transdate < @endTransdate
+		b.winlostdate >= @winlostdate
+		AND (
+			b.transdate >= @startTransdate 
+			AND b.transdate < @endTransdate
+		)
 
 	GROUP BY 
 		lic.SiteID
