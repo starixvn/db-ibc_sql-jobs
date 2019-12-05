@@ -39,6 +39,7 @@ AS
 	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 	- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_active [RedmineID: #103656]
 	- 20191022@Amanda: Integrate NPH Promotion [RedmineID: #120333]
+	- 20191122@Amanda: Integrate PP Tournament Prize [RedmineID: #123804]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -97,7 +98,7 @@ BEGIN
 	  ) AS TurnOver  
 	 ,SUM(winlost-actual_stake)  winlost  
 	 ,CASE WHEN bettrans.statusID IN (112,113)   
-		THEN SUM(CASE WHEN bettrans.bettype = 4300 THEN 0 ELSE ABS(winlost-actual_stake) END) -- exclude Promotion Prize from BetEffective
+		THEN SUM(CASE WHEN bettrans.bettype IN (4300,4299) THEN 0 ELSE ABS(winlost-actual_stake) END) -- exclude Promotion Prize from BetEffective
 		ELSE 0  
 		END BetEffective   
 	 ,SUM(awinlost) awinlost  
@@ -139,7 +140,7 @@ BEGIN
 		WHEN bettype = 17000 THEN 246 -- NPHP
 	  ELSE 0 END sporttype
 	  -- 1706: bidme tip, 4300 - PP Promotion Prize
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000) THEN bettype ELSE 0 END bettype  
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,4299) THEN bettype ELSE 0 END bettype  
 	 --114: half win, 115: half lose  
 	 ,CASE
 		WHEN bettrans.winlostdate >= @HWHLCutDate AND bettrans.statusID IN(112,113) AND bettrans.modds IN (-0.25, 0.25)
@@ -205,7 +206,7 @@ BEGIN
 		WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 		WHEN bettype = 17000 THEN 246 -- NPHP
 	  ELSE 0 END  
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000) THEN bettype ELSE 0 END  
+	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,4299) THEN bettype ELSE 0 END  
 	 ,CASE
 		WHEN bettrans.winlostdate >= @HWHLCutDate AND bettrans.statusID IN(112,113) AND bettrans.modds IN (-0.25, 0.25)
 				---- Sportsbook

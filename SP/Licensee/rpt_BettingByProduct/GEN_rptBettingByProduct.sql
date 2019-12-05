@@ -1,10 +1,4 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE bodb_LicenseeReport
-GO
-
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
 
 ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct] (
 	@date DATE,
@@ -58,6 +52,7 @@ AS
 		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 		- 20190819@Parsons: Provide House Turnover In NG WL Report [Redmine: #117674]
+		- 20191122@Amanda: Integrate PP Tournament Prize [#123804]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 
@@ -124,8 +119,7 @@ BEGIN
 			,bt.ProductID
 			,CASE 
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype = 1499 
-						OR b.Bettype = 4300 -- Promotion Prize Win
+						OR b.Bettype IN (1499, 4300, 4299) -- PP Prize (4300,4299)
 					THEN b.[Bettype]
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1 END [Bettype]
@@ -154,8 +148,7 @@ BEGIN
 				, bt.ProductID
 				,CASE 
 					WHEN bt.ProductID IN (1,13,15,25) 
-							OR b.Bettype = 1499 
-							OR b.Bettype = 4300 -- Promotion Prize Win
+							OR b.Bettype IN (1499, 4300, 4299) -- PP Prize (4300,4299)
 						THEN b.[Bettype]
 					WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 					ELSE -1 END

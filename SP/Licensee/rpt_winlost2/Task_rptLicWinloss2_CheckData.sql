@@ -10,7 +10,8 @@ AS
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20170508@Paul: Check awinlost, comm - [Redmine: #76206]
 	- 20170703@Paul: Check more columns - [Redmine: #79262]
-	- 20190306@Amande: Implement PP Promotion Prize [RedmineID: #109471]
+	- 20190306@Amanda: Implement PP Promotion Prize [RedmineID: #109471]
+	- 20191122@Amanda: Implement PP Tournament Prize [RedmineID: #123804]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -25,7 +26,7 @@ BEGIN
 		, @S_BetCount = COUNT(b.TransId) --BetCount
 		, @S_AWinlost = SUM(awinlost)
 		, @S_Comm = SUM(comm)
-		, @S_BetEffective = SUM(CASE WHEN b.statusID IN (112,113) AND b.bettype <> 4300 -- exclude Promotion Prize from BetEffective
+		, @S_BetEffective = SUM(CASE WHEN b.statusID IN (112,113) AND b.bettype NOT IN (4300, 4299) -- exclude PP Prize from BetEffective
 									THEN ABS(winlost-actual_stake)
 									ELSE 0  
 								END)

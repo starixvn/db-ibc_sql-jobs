@@ -29,6 +29,7 @@ AS
 		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 		- 20190718@Amanda: Add rebate bonus ticket [RedmineID: #115445]
 		- 20191025@Bobby: Add column promotion [RedmineID: #120333]
+		- 20191122@Amanda: Sum PP Prize to promotion column [RedmineID: #123804]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -196,20 +197,20 @@ BEGIN
 					WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 					WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 					WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-					WHEN b.bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
-					WHEN b.bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
+					WHEN b.bettype BETWEEN 4101 AND 4298 THEN 248 -- PP
+					WHEN b.bettype BETWEEN 4299 AND 4300 THEN -248 -- PP Prize
 					WHEN b.bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 					WHEN b.bettype IN(17000) THEN 246 -- NPHP
 				ELSE 0 END,--SportType
 				SUM(CASE WHEN b.statusID NOT IN(101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 				SUM(CASE WHEN b.ruben=0 THEN b.actual_stake ELSE 0 END),--Outstanding
-				SUM(CASE WHEN b.ruben=1 AND b.bettype NOT IN (17000) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss				
+				SUM(CASE WHEN b.ruben=1 AND b.bettype NOT IN (17000,4300,4299) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss				
 				SUM(CASE WHEN b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame		
 				SUM(CASE WHEN b.ruben=1 THEN b.playercomm ELSE 0 END),--Playercomm
 				SUM(CASE WHEN b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.awinlost ELSE 0 END),--Comm_BetTrade
 				SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 				SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
-				SUM(CASE WHEN b.bettype IN (17000) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
+				SUM(CASE WHEN b.bettype IN (17000,4300,4299) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
 			FROM bettrans14 b WITH (NOLOCK) 
 				INNER JOIN #DepCustID d on b.custid = d.CustID
 			/*
@@ -251,8 +252,8 @@ BEGIN
 					WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 					WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 					WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-					WHEN b.bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
-					WHEN b.bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
+					WHEN b.bettype BETWEEN 4101 AND 4298 THEN 248 -- PP
+					WHEN b.bettype BETWEEN 4299 AND 4300 THEN -248 -- PP Prize
 					WHEN b.bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 					WHEN b.bettype IN(17000) THEN 246 -- NPHP
 				ELSE 0 END--SportType
@@ -269,7 +270,7 @@ BEGIN
 			SUM(Adjustment),--Adjustment  
 			SUM(Turnover),--Turnover
 			SUM(Outstanding),--Outstanding 
-			SUM(CASE WHEN bettype NOT IN(246) THEN Winloss ELSE 0 END),--Winloss      
+			SUM(CASE WHEN bettype NOT IN(246,-248) THEN Winloss ELSE 0 END),--Winloss      
 			SUM(Transfer3rd),--Transfer3rd   
 			SUM(DrawGame),--DrawGame  
 			SUM(Playercomm),--Playercomm 
@@ -395,7 +396,7 @@ BEGIN
 		--For rptDepWinlostByProduct
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, Turnover, DrawGame, Winloss, playercomm, BetCount, Outstanding)
 		SELECT @Winlostdate, CustID, Bettype, -1, TurnOver, DrawGame
-			, CASE WHEN Bettype=246 THEN Promotion ELSE Winloss END AS Winloss
+			, CASE WHEN Bettype IN (246,-248) THEN Promotion ELSE Winloss END AS Winloss
 			, playercomm, BetCount, OutStanding
 		FROM #rptDepWinlostDetails
 		WHERE Bettype < 19999 --Only get SportType of bet ticket
