@@ -17,6 +17,10 @@ AS
 	Param's Explanation:
 		- @PromoDate: DATE - Is the promotion date that needs to generate summary data
 			+ It should be the yesterday
+		- @TimeZone: INT - The GMT value that will be converted to
+		- @IsCheckDataOnly: BIT - [0|1]
+			+ 0: GEN and update/insert/delete data
+			+ 1: GEN and show data
 
 	Sample execution:
 		- EXEC [dbo].[Task_DailySummaryLicPromotion] '20191119'
@@ -265,6 +269,7 @@ BEGIN
 		FROM @promoProgram program
 		WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
 		ORDER BY IsPromoBet DESC
+			,PromoID ASC
 	) AS promo
 	WHERE 
 		b.winlostdate >= @_PromoDate AND b.winlostdate <= @today -- COVER cross day between transdate vs winlostdate

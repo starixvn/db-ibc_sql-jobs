@@ -2,8 +2,8 @@
 ALTER PROCEDURE [dbo].[Task_DailySummaryLicPromotion_CheckData]
 	@TimeZone			INT = 8,
 	@IsCheckDataOnly	BIT = 1,
-	@Error				INT = 0, --OUTPUT,
-	@Message			VARCHAR(200) = '' --OUTPUT
+	@Error				INT = 0 OUTPUT,
+	@Message			VARCHAR(200) = '' OUTPUT
 AS
 /*
 	Created: 20191203@Bobby
@@ -14,11 +14,13 @@ AS
 		- 20191203@Bobby: Initialize [Redmine: #119538]
 
 	Param's Explanation:
-		- @PromoDate: DATE - Is the promotion date that needs to generate summary data
-			+ It should be the yesterday
+		- @TimeZone: INT - The GMT value that will be converted to
+		- @IsCheckDataOnly: BIT - [0|1]
+			+ 0: Check and correct data 
+			+ 1: Check and show data
 
 	Sample execution:
-		- EXEC [dbo].[Task_DailySummaryLicPromotion] '20191119'
+		- EXEC [dbo].[Task_DailySummaryLicPromotion_CheckData]
 */
 BEGIN
 	DECLARE @SPR_ProductID	INT = 37
@@ -192,9 +194,8 @@ BEGIN
 		,bet.RptDateGMT
 		-------------------Measures-------------
 		,SUM(bet.IsWonLoseBet) AS BetCount_WonLose
-		,SUM(b.stake * bet.IsWonLoseBet) AS Turnover_WonLose
 		,SUM(promo.IsPromoBet * bet.IsWonLoseBet) AS BetCountOfPromoTime_WonLose
-	
+		,SUM(ABS(b.stake) * bet.IsWonLoseBet) AS Turnover_WonLose
 	FROM bodb02.dbo.bettrans b WITH(NOLOCK) 
 	INNER JOIN #tempLicSuper lic ON b.srecommend = lic.custid
 	INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
@@ -217,6 +218,7 @@ BEGIN
 		FROM @promoProgram program
 		WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
 		ORDER BY IsPromoBet DESC
+			,PromoID ASC
 	) AS promo
 	WHERE 
 		b.winlostdate > @MovebetDate AND b.winlostdate <= @today -- COVER cross day between transdate vs winlostdate
@@ -234,19 +236,37 @@ BEGIN
 		,bet.TimeZone
 		,bet.RptDateGMT
 	
-	--SELECT distinct PromoDate FROM #rptLicPromoBet
-
-	--SELECT DISTINCT bet.PromoDate, bet.RptDateGMT FROM #rptLicPromoBet bet
 	--- CHECK & CORRECT upto BU date
 	IF EXISTS(SELECT 1 FROM #rptLicPromoBet bet WHERE PromoDate <= @MovebetDate)
 	BEGIN
-		
-		WITH CTE_ChangedSuper AS
-		(
-			SELECT DISTINCT CustID, PromoDate
-			FROM #rptLicPromoBet
-		),
-		CTE_PromoBet14 AS (
+		DECLARE @SuperIds TABLE (custID INT PRIMARY KEY, statusId BIT)
+		DECLARE @batchSuper TABLE (custID INT PRIMARY KEY)
+		DECLARE @promoDays TABLE (promodate SMALLDATETIME PRIMARY KEY)
+
+		INSERT INTO @SuperIds
+		SELECT DISTINCT CustID, 0 FROM #rptLicPromoBet
+
+		INSERT INTO @promoDays
+		SELECT DISTINCT PromoDate FROM #rptLicPromoBet
+
+		WHILE EXISTS(SELECT 1 FROM @SuperIds WHERE statusId = 0)
+		BEGIN
+			-- RESET batch Super
+			DELETE @batchSuper
+
+			-- NEW batch Super
+			UPDATE top(10) s
+			SET statusId = 1
+			OUTPUT deleted.custID
+			INTO @batchSuper(custID)
+			FROM @SuperIds s
+			WHERE statusId = 0
+
+			-- PROCESS data per batch
+			INSERT INTO #rptLicPromoBet(
+				CustID,ProductID,PromoID,PromoDate,TimeZone,RptDateGMT
+				,BetCount_WonLose,BetCountOfPromoTime_WonLose,Turnover_WonLose
+			)
 			SELECT 
 				b.srecommend AS custId
 				,promo.ProductID
@@ -254,18 +274,19 @@ BEGIN
 				,bet.PromoDate
 				,bet.TimeZone
 				,bet.RptDateGMT
+				--------------------
 				,SUM(bet.IsWonLoseBet) AS BetCount_WonLose
-				,SUM(b.stake) AS Turnover_WonLose 
 				,SUM(promo.IsPromoBet * bet.IsWonLoseBet) AS BetCountOfPromoTime_WonLose
+				,SUM(b.stake) AS Turnover_WonLose 
 			FROM bodb02.dbo.bettrans14 b WITH(NOLOCK)
-			INNER JOIN CTE_ChangedSuper cs ON b.srecommend = cs.CustID AND b.winlostdate = cs.PromoDate
+			INNER JOIN @batchSuper cs ON b.srecommend = cs.CustID
 			INNER JOIN bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB') bt ON b.Bettype = bt.Bettype
 			CROSS APPLY (
 				SELECT 1 AS IsWonLoseBet 
 					, CAST(DATEADD(HOUR, @timeZone + 4, b.transdate) AS DATE) AS RptDateGMT
 					, @timeZone AS TimeZone
 					, DATEPART(HOUR, b.transdate) AS TransHour
-					, b.winlostdate AS PromoDate
+					, CAST(b.transdate AS DATE) AS PromoDate
 			) AS bet
 			-- peak out the Promo Time
 			CROSS APPLY (
@@ -279,9 +300,10 @@ BEGIN
 				FROM @promoProgram program
 				WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
 				ORDER BY IsPromoBet DESC
+					,PromoID ASC
 			) AS promo
-			WHERE b.statusID IN (112,113)
-				--AND EXISTS(SELECT 1 FROM #rptLicPromoBet tmp WHERE b.srecommend = tmp.CustID AND b.winlostdate = tmp.PromoDate)
+			WHERE EXISTS(SELECT 1 FROM @promoDays d WHERE b.winlostdate = d.promodate AND DATEDIFF(DD,b.transdate,promodate) = 0) 
+				AND b.statusID IN (112,113)
 				
 			GROUP BY 
 				b.srecommend
@@ -290,9 +312,14 @@ BEGIN
 				,bet.PromoDate
 				,bet.TimeZone
 				,bet.RptDateGMT
-		)
 
-		INSERT INTO #source_rptLicPromotion_Correct
+		END
+
+		--- Merge bettrans & bettrans14
+		INSERT INTO #source_rptLicPromotion_Correct(
+			PromoDate,[SiteID],CurrencyID,[ProductID],TimeZone,RptDateGMT
+			,BetCount_WonLose,BetCountOfPromoTime_WonLose,Turnover_WonLose
+		)
 		SELECT bet.PromoDate
 			,[site].[SiteID]
 			,lic.CurrencyID
@@ -302,17 +329,7 @@ BEGIN
 			,SUM(bet.BetCount_WonLose)
 			,SUM(bet.BetCountOfPromoTime_WonLose)
 			,SUM(bet.Turnover_WonLose)
-		FROM ( 
-			
-			SELECT CustID,ProductID,PromoID,PromoDate,TimeZone,RptDateGMT
-				,BetCount_WonLose,BetCountOfPromoTime_WonLose,Turnover_WonLose
-			FROM #rptLicPromoBet bet
-
-			UNION ALL
-			SELECT CustID,ProductID,PromoID,PromoDate,TimeZone,RptDateGMT
-				,BetCount_WonLose,BetCountOfPromoTime_WonLose,Turnover_WonLose
-			FROM CTE_PromoBet14
-		) AS bet
+		FROM #rptLicPromoBet bet
 		INNER JOIN #tempLicSuper lic ON bet.CustID = lic.CustID
 		INNER JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON lic.SiteName = site.SiteName
 		GROUP BY
@@ -329,7 +346,7 @@ BEGIN
 			FROM #source_rptLicPromotion_Correct
 
 			--------------------------------------
-			SELECT TOP(10) * 
+			SELECT TOP(1000) * 
 			FROM #source_rptLicPromotion_Correct
 		END
 		ELSE
