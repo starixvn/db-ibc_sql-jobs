@@ -183,6 +183,14 @@ BEGIN
 			RAISERROR(@errmsg,16,1)
 		END CATCH
 
+		BEGIN TRY
+			EXEC DBLIC.bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14 @PromoDate = @winlostdate, @IsCheckDataOnly = 0
+		END TRY
+		BEGIN CATCH
+			SET @errmsg = 'step 6.94' + '--' + ERROR_MESSAGE()			
+			RAISERROR(@errmsg,16,1)
+		END CATCH
+
 	END
 	IF @stepNo = 7
 	BEGIN

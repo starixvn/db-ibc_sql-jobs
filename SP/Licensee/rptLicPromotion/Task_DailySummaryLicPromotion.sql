@@ -97,7 +97,6 @@ BEGIN
 	CREATE TABLE #rptLicPromoBet (
 		[CustID] [int] NOT NULL,
 		[ProductID] [int] NOT NULL,
-		[PromoID] [int] NOT NULL,
 		[PromoDate] [date] NOT NULL,
 		[TimeZone] [smallint] NOT NULL,
 		[RptDateGMT] [date] NOT NULL,
@@ -106,7 +105,8 @@ BEGIN
 		[Turnover] [money] NULL,
 		[Turnover_WonLose] [money] NULL,
 		[BetCountOfPromoTime] [int] NULL,
-		[BetCountOfPromoTime_WonLose] [int] NULL
+		[BetCountOfPromoTime_WonLose] [int] NULL,
+		[PromoInfo] [varchar](100) NULL
 	)
 	CREATE CLUSTERED INDEX CIX_rptLicPromotionBet ON #rptLicPromoBet(CustID)
 
@@ -177,7 +177,7 @@ BEGIN
 									FROM Promotion.NPHPromotion p
 									INNER JOIN Promotion.NPHPromoCurrSetting cs ON cs.PromoID = p.PromoId
 									LEFT JOIN Promotion.NPHPromoCoupon pc ON cs.PromoID = p.PromoId AND cs.CurrencyID = pc.CurrencyID
-									WHERE p.StartDate >= '''''+ CAST(@RemoteDate AS VARCHAR(10)) +''''' OR '''''+ CAST(@RemoteDate AS VARCHAR(10)) +''''' BETWEEN p.StartDate AND p.EndDate
+									WHERE '''''+ CAST(@_PromoDate AS VARCHAR(10)) +''''' BETWEEN p.StartDate AND p.EndDate
 									GROUP BY p.PromoId,p.StartDate,p.EndDate,p.OffPeakStartTime,p.OffPeakEndTime,cs.CurrencyID;''
 							)'
 		--SELECT @RemoteSQL
@@ -227,14 +227,13 @@ BEGIN
 
 	-- COLLECT BET Tickets vs PromoTime
 	INSERT INTO #rptLicPromoBet(
-		CustID,ProductID,PromoID,PromoDate,TimeZone,RptDateGMT
+		CustID,ProductID,PromoDate,TimeZone,RptDateGMT
 		,BetCountOfPromoTime,BetCountOfPromoTime_WonLose,BetCount,BetCount_WonLose,Turnover,Turnover_WonLose
 	)
 	SELECT
 		-------------------Dimensions-------------
 		b.srecommend
 		,promo.ProductID
-		,promo.PromoID
 		,bet.PromoDate
 		,bet.TimeZone
 		,bet.RptDateGMT
@@ -259,7 +258,7 @@ BEGIN
 	) AS bet
 	-- peak out the Promo Time
 	CROSS APPLY (
-		SELECT TOP(1) program.ProductID, program.PromoID
+		SELECT TOP(1) program.ProductID
 			,CASE 
 				WHEN (
 						bet.TransHour >= program.OffPeakStartTime	-- after hh:00
@@ -269,22 +268,23 @@ BEGIN
 		FROM @promoProgram program
 		WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
 		ORDER BY IsPromoBet DESC
-			,PromoID ASC
 	) AS promo
 	WHERE 
-		b.winlostdate >= @_PromoDate AND b.winlostdate <= @today -- COVER cross day between transdate vs winlostdate
-		AND (
-			b.transdate >= @startTransdate 
-			AND b.transdate < @endTransdate
-		)
+		b.winlostdate >= @_PromoDate -- COVER cross day between transdate vs winlostdate
+		--AND (
+		--	b.transdate >= @startTransdate 
+		--	AND b.transdate < @endTransdate
+		--)
 
 	GROUP BY 
 		b.srecommend
 		,promo.ProductID
-		,promo.PromoID
 		,bet.PromoDate
 		,bet.TimeZone
 		,bet.RptDateGMT
+
+	DELETE FROM #rptLicPromoBet
+	WHERE PromoDate <> @_PromoDate
 
 	;WITH
 	-- COLLECT Promo Coupons

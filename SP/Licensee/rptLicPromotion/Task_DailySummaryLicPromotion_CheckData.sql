@@ -1,7 +1,8 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailySummaryLicPromotion_CheckData]
+	@PromoDate			DATE = NULL,
 	@TimeZone			INT = 8,
-	@IsCheckDataOnly	BIT = 1,
+	@IsCheckDataOnly	BIT = 0,
 	@Error				INT = 0 OUTPUT,
 	@Message			VARCHAR(200) = '' OUTPUT
 AS
@@ -75,14 +76,14 @@ BEGIN
 	CREATE TABLE #rptLicPromoBet (
 		[CustID] [int] NOT NULL,
 		[ProductID] [int] NOT NULL,
-		[PromoID] [int] NOT NULL,
 		[PromoDate] [date] NOT NULL,
 		[TimeZone] [smallint] NOT NULL,
 		[RptDateGMT] [date] NOT NULL,
 		--------------------------------
 		[BetCount_WonLose] [int] NULL,
 		[Turnover_WonLose] [money] NULL,
-		[BetCountOfPromoTime_WonLose] [int] NULL
+		[BetCountOfPromoTime_WonLose] [int] NULL,
+		[PromoInfo] [varchar](100) NULL
 	)
 	CREATE CLUSTERED INDEX CIX_rptLicPromotionBet ON #rptLicPromoBet(CustID)
 
@@ -97,16 +98,15 @@ BEGIN
 		-----------------------------
 		[BetCount_WonLose] [int] NULL,
 		[BetCountOfPromoTime_WonLose] [int] NULL,
-		[Turnover_WonLose] [money] NULL,
-		CONSTRAINT PK_source_rptLicPromotion_Correct PRIMARY KEY CLUSTERED 
-		(
-			[PromoDate] ASC
-			, [SiteID] ASC
-			, [CurrencyID] ASC
-			, [ProductID] ASC
-			, [TimeZone] ASC
-			, [RptDateGMT] ASC
-		)
+		[Turnover_WonLose] [money] NULL
+	)
+	CREATE UNIQUE CLUSTERED INDEX CIX_source_rptLicPromotion_Correct ON #source_rptLicPromotion_Correct(
+		[PromoDate] ASC
+		, [SiteID] ASC
+		, [CurrencyID] ASC
+		, [ProductID] ASC
+		, [TimeZone] ASC
+		, [RptDateGMT] ASC
 	)
 
 	-- GET BU & MB Dates
@@ -122,9 +122,16 @@ BEGIN
 		, @Message			= '' 
 		, @today			= GETDATE() 
 		, @yesterday		= DATEADD(DD, -1, CAST(@today AS DATETIME))
-		, @startTransdate	= @BalanceupDate
+		, @_PromoDate		= ISNULL(@PromoDate, @BalanceupDate)
+		, @startTransdate	= @_PromoDate
 		, @endTransdate		= DATEADD(DD, 1, CAST(@MovebetDate AS DATETIME))
 
+
+	IF (@_PromoDate NOT BETWEEN @BalanceupDate AND @MovebetDate)
+	BEGIN
+		SELECT @Message = 'Invalid promo date ' + CAST(@_PromoDate AS VARCHAR(10))
+		GOTO CLEANUP
+	END
 
 	-- REMOTE-QUERY: Promo Summary via MySQL
 	BEGIN TRY
@@ -138,7 +145,7 @@ BEGIN
 									FROM Promotion.NPHPromotion p
 									INNER JOIN Promotion.NPHPromoCurrSetting cs ON cs.PromoID = p.PromoId
 									LEFT JOIN Promotion.NPHPromoCoupon pc ON cs.PromoID = p.PromoId AND cs.CurrencyID = pc.CurrencyID
-									WHERE p.StartDate >= '''''+ CAST(@RemoteDate AS VARCHAR(10)) +''''' OR '''''+ CAST(@RemoteDate AS VARCHAR(10)) +''''' BETWEEN p.StartDate AND p.EndDate
+									WHERE '''''+ CAST(@_PromoDate AS VARCHAR(10)) +''''' >= p.StartDate AND '''''+ CAST(@MovebetDate AS VARCHAR(10)) +''''' <= p.EndDate
 									GROUP BY p.PromoId,p.StartDate,p.EndDate,p.OffPeakStartTime,p.OffPeakEndTime,cs.CurrencyID;''
 							)'
 		--SELECT @RemoteSQL
@@ -181,14 +188,13 @@ BEGIN
 
 	-- COLLECT BET Tickets vs PromoTime
 	INSERT INTO #rptLicPromoBet(
-		CustID,ProductID,PromoID,PromoDate,TimeZone,RptDateGMT
+		CustID,ProductID,PromoDate,TimeZone,RptDateGMT
 		,BetCount_WonLose,BetCountOfPromoTime_WonLose,Turnover_WonLose
 	)
 	SELECT
 		-------------------Dimensions-------------
 		b.srecommend AS CustID
 		,promo.ProductID
-		,promo.PromoID
 		,bet.PromoDate
 		,bet.TimeZone
 		,bet.RptDateGMT
@@ -208,7 +214,7 @@ BEGIN
 	) AS bet
 	-- peak out the Promo Time
 	CROSS APPLY (
-		SELECT TOP(1) program.ProductID, program.PromoID
+		SELECT TOP(1) program.ProductID
 			,CASE 
 				WHEN (
 						bet.TransHour >= program.OffPeakStartTime	-- after hh:00
@@ -218,24 +224,25 @@ BEGIN
 		FROM @promoProgram program
 		WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
 		ORDER BY IsPromoBet DESC
-			,PromoID ASC
 	) AS promo
 	WHERE 
 		b.winlostdate > @MovebetDate AND b.winlostdate <= @today -- COVER cross day between transdate vs winlostdate
 		AND b.statusID IN (112, 113)
-		AND (
-			b.transdate >= @startTransdate 
-			AND b.transdate < @endTransdate
-		)
+		--AND (
+		--	b.transdate >= @startTransdate 
+		--	AND b.transdate < @endTransdate
+		--)
 
 	GROUP BY 
 		b.srecommend
 		,promo.ProductID
-		,promo.PromoID
 		,bet.PromoDate
 		,bet.TimeZone
 		,bet.RptDateGMT
 	
+	DELETE FROM #rptLicPromoBet
+	WHERE PromoDate NOT BETWEEN @_PromoDate AND @MovebetDate
+
 	--- CHECK & CORRECT upto BU date
 	IF EXISTS(SELECT 1 FROM #rptLicPromoBet bet WHERE PromoDate <= @MovebetDate)
 	BEGIN
@@ -264,13 +271,12 @@ BEGIN
 
 			-- PROCESS data per batch
 			INSERT INTO #rptLicPromoBet(
-				CustID,ProductID,PromoID,PromoDate,TimeZone,RptDateGMT
+				CustID,ProductID,PromoDate,TimeZone,RptDateGMT
 				,BetCount_WonLose,BetCountOfPromoTime_WonLose,Turnover_WonLose
 			)
 			SELECT 
 				b.srecommend AS custId
 				,promo.ProductID
-				,promo.PromoID
 				,bet.PromoDate
 				,bet.TimeZone
 				,bet.RptDateGMT
@@ -290,7 +296,7 @@ BEGIN
 			) AS bet
 			-- peak out the Promo Time
 			CROSS APPLY (
-				SELECT TOP(1) program.ProductID, program.PromoID
+				SELECT TOP(1) program.ProductID
 					,CASE 
 						WHEN (
 								bet.TransHour >= program.OffPeakStartTime	-- after hh:00
@@ -300,7 +306,6 @@ BEGIN
 				FROM @promoProgram program
 				WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
 				ORDER BY IsPromoBet DESC
-					,PromoID ASC
 			) AS promo
 			WHERE EXISTS(SELECT 1 FROM @promoDays d WHERE b.winlostdate = d.promodate AND DATEDIFF(DD,b.transdate,promodate) = 0) 
 				AND b.statusID IN (112,113)
@@ -308,7 +313,6 @@ BEGIN
 			GROUP BY 
 				b.srecommend
 				,promo.ProductID
-				,promo.PromoID
 				,bet.PromoDate
 				,bet.TimeZone
 				,bet.RptDateGMT
