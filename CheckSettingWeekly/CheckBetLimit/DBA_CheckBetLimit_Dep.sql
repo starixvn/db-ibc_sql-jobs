@@ -1232,6 +1232,7 @@ BEGIN
 				AND cs.minbet< 0 
 			OPTION (OPTIMIZE FOR (@srecommend = 10580722))
 		END
+		ELSE
 		BEGIN
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 			SELECT 318,cs.sporttype,cs.bettype,cs.CustID,NULL,Minbet,NULL,GETDATE(),1
@@ -1393,7 +1394,7 @@ BEGIN
 		IF @count > 200000
 		BEGIN
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-			SELECT 322,cs.sporttype,cs.bettype,cs.CustID,NULL,minbet,maxbet,GETDATE(),1
+			SELECT 326,cs.sporttype,cs.bettype,cs.CustID,NULL,minbet,maxbet,GETDATE(),1
 			FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
 				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid 				
 			WHERE ci.srecommend = @srecommend
@@ -1405,7 +1406,7 @@ BEGIN
 		ELSE
 		BEGIN
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-			SELECT 322,cs.sporttype,cs.bettype,cs.CustID,NULL,minbet,maxbet,GETDATE(),1
+			SELECT 326,cs.sporttype,cs.bettype,cs.CustID,NULL,minbet,maxbet,GETDATE(),1
 			FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
 				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid 				
 			WHERE ci.srecommend = @srecommend
@@ -1768,7 +1769,7 @@ BEGIN
 			IF @count > 200000
 			BEGIN
 				INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-				SELECT 320,202,1501,cs.CustID,NULL,minbet,maxbet,GETDATE(),1
+				SELECT 326,202,1501,cs.CustID,NULL,minbet,maxbet,GETDATE(),1
 				FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
 					INNER JOIN CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) ON cs.custid = ci.custid 				
 				WHERE ci.srecommend = @srecommend
@@ -1780,7 +1781,7 @@ BEGIN
 			ELSE
 			BEGIN
 				INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-				SELECT 320,202,1501,cs.CustID,NULL,minbet,maxbet,GETDATE(),1
+				SELECT 326,202,1501,cs.CustID,NULL,minbet,maxbet,GETDATE(),1
 				FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
 					INNER JOIN CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) ON cs.custid = ci.custid 				
 				WHERE ci.srecommend = @srecommend
@@ -1810,7 +1811,7 @@ BEGIN
 			IF @count > 200000
 			BEGIN
 				INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-				SELECT 320,202,1501,cs.CustID,NULL,maxbet,MaxPerGameType,GETDATE(),1
+				SELECT 327,202,1501,cs.CustID,NULL,maxbet,MaxPerGameType,GETDATE(),1
 				FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
 					INNER JOIN CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) ON cs.custid = ci.custid 				
 				WHERE ci.srecommend = @srecommend
@@ -1822,7 +1823,7 @@ BEGIN
 			ELSE
 			BEGIN
 				INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
-				SELECT 320,202,1501,cs.CustID,NULL,maxbet,MaxPerGameType,GETDATE(),1
+				SELECT 327,202,1501,cs.CustID,NULL,maxbet,MaxPerGameType,GETDATE(),1
 				FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
 					INNER JOIN CheckCustDB.dbo.CustGameType cs WITH(NOLOCK) ON cs.custid = ci.custid 				
 				WHERE ci.srecommend = @srecommend
