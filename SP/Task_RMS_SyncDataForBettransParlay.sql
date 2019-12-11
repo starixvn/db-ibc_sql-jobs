@@ -21,8 +21,6 @@ AS
 
 SET NOCOUNT ON
 SET DEADLOCK_PRIORITY LOW	
-DECLARE @ExtraPTCutDate SMALLDATETIME
-SELECT  @ExtraPTCutDate = CONVERT(SMALLDATETIME, VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'ExtraPTCutDate'
 declare @tstamp_min binary(8), @tstamp_max binary(8), @max_transid bigint
 
 DECLARE @bitmap VARCHAR(21) = ''
@@ -34,41 +32,6 @@ WHERE VName = 'rmBettransSync'
 
 SELECT @tstamp_max = isnull(max(tstamp),@tstamp_min)  from bodb02.dbo.bettrans with(nolock)
 
-CREATE TABLE #ExtraPT_Sel
-(ProductID  INT, 
- Sporttype  INT, 
- SubProduct VARCHAR(100), 
- SuperID    INT, 
- FromDate   DATETIME, 
- ToDate     DATETIME, 
- ExtraPT    DECIMAL(9, 8)
-);
-INSERT INTO #ExtraPT_Sel
-(ProductID, 
- Sporttype, 
- SubProduct, 
- SuperID, 
- FromDate, 
- ToDate, 
- ExtraPT
-)
-       SELECT ProductID, 
-              SportType, 
-              SubProduct, 
-              SuperId, 
-              FromDate, 
-              ToDate, 
-              SUM(ExtraPT) AS ExtraPT
-       FROM bodb02.dbo.Acc_GroupExtraPTSetting a WITH(NOLOCK)
-       WHERE a.ProductID = 1
-             AND a.Sporttype = 0
-             AND a.SubProduct = ''
-       GROUP BY ProductID, 
-                SportType, 
-                SubProduct, 
-                SuperId, 
-                FromDate, 
-                ToDate;
 
 IF @tstamp_min = 0x0000000000000001 -- 1: renew all data
 BEGIN
@@ -87,11 +50,8 @@ BEGIN
 			liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
 			recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, sdiscount, 
 			scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
-			SecAcceptFlag, transid2, hdp2,
-			CASE WHEN transdate < @ExtraPTCutDate THEN ISNULL(a.ExtraPT,0) ELSE ISNULL(b.epositiontaking,0) END
+			SecAcceptFlag, transid2, hdp2, ISNULL(b.epositiontaking,0)
 	FROM bodb02.dbo.bettrans b with (NOLOCK)
-	LEFT JOIN #ExtraPT_Sel AS a ON srecommend = a.SuperId AND winlostdate BETWEEN a.FromDate AND a.Todate
-
 	WHERE (matchid = 29 OR bettype = 38)
 			 
 	-- Single Match Parlay
@@ -171,11 +131,9 @@ BEGIN
 			liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
 			recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, sdiscount, 
 			scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
-			SecAcceptFlag, transid2,
-			CASE WHEN transdate < @ExtraPTCutDate THEN ISNULL(a.ExtraPT,0) ELSE ISNULL(b.epositiontaking,0) END AS epositiontaking
+			SecAcceptFlag, transid2, ISNULL(b.epositiontaking,0) AS epositiontaking
 	INTO #temp			
-	FROM bodb02.dbo.bettrans b with (NOLOCK)
-	LEFT JOIN #ExtraPT_Sel AS a ON srecommend = a.SuperId AND winlostdate BETWEEN a.FromDate AND a.Todate 
+	FROM bodb02.dbo.bettrans b with (NOLOCK)	
 	WHERE tstamp between @tstamp_min and @tstamp_max
 		AND ( matchid = 29 OR bettype = 38)
 		
