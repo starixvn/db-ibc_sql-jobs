@@ -56,7 +56,7 @@ BEGIN
 
 		RAISERROR(@ErrorMsg, 16, 1)
 
-		RETURN;
+		RETURN
 	END
 
 	DECLARE @FromDate SMALLDATETIME, @ToDate SMALLDATETIME
@@ -92,282 +92,43 @@ BEGIN
 	  
 	-- bettrans --
 	TRUNCATE TABLE dbo.bettrans
+
+	DECLARE @WinlostDate SMALLDATETIME
+	SELECT  @WinlostDate = @ToDate
+
+	DECLARE @MaxTryCount TINYINT = 3, @NumberTryCount TINYINT = 0, @IsErr BIT = 1
 	
-	DECLARE @__matchIds TABLE (matchid INT)
-    
-	CREATE TABLE #BetTradeCust (custid int PRIMARY KEY)
-	CREATE TABLE #CashoutCust (CustId INT PRIMARY KEY)
-
-	INSERT INTO #BetTradeCust(CustId)
-	SELECT CustId FROM bodb02.dbo.f_GetBetTradeCustList('ALL')
-
-	INSERT INTO #CashoutCust(CustId)
-	SELECT CustId FROM bodb02.dbo.f_GetCashoutCustList('ALL', 14) -- 14: VendorID of Cashout
-    
-	DECLARE @BettypeProductMapping TABLE (Bettype INT, ProductID INT)
-	INSERT INTO @BettypeProductMapping (Bettype, ProductID)
-	SELECT Bettype, ProductId FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @ProductCodes)
-
-	DECLARE @HasCBProduct BIT = 1
-	IF(@ProductCodes <> '' AND NOT EXISTS (SELECT TOP 1 1 FROM @BettypeProductMapping WHERE ProductID = 15))
+	WHILE @WinlostDate >= @FromDate
 	BEGIN
-		SET @HasCBProduct = 0
-	END
+		SET @NumberTryCount = 0
+		SET @IsErr = 1
 
-	DECLARE @CBTicket TABLE (transid BIGINT, CashInAmount MONEY, CashOutAmount MONEY, WinPrizeAmount MONEY, transdesc VARCHAR(500))
-	
-	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
-
-	DECLARE @MoveBetsDay SMALLDATETIME
-	SELECT  @MoveBetsDay = MAX(eventdate) FROM bodb02.dbo.match14 WITH (NOLOCK)
-
-	DECLARE @tmpDate SMALLDATETIME
-	SELECT  @tmpDate = @ToDate
-	
-	WHILE @tmpDate >= @FromDate
-	BEGIN
-		DELETE @__matchIds
-
-		IF @tmpDate > @MoveBetsDay
+		WHILE @NumberTryCount < @MaxTryCount
 		BEGIN
-			IF @HasCBProduct = 1
-			BEGIN
-				INSERT INTO @CBTicket (transid, CashInAmount, CashOutAmount, WinPrizeAmount, transdesc)
-				SELECT	b.transid
-						,bm.CashInAmount
-						,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN bm.CashOutAmount ELSE 0 END AS CashOutAmount
-						,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN bm.WinPrizeAmount ELSE 0 END AS WinPrizeAmount
-						,CONVERT(VARCHAR(500), bm.transdesc)
-				FROM bodb02.dbo.bettrans b WITH (NOLOCK) 
-					CROSS APPLY (
-						SELECT
-							SUM(CASE WHEN bm.bettype = 18002 THEN bm.oddsspread ELSE 0 END) AS CashInAmount
-							,SUM(CASE WHEN bm.bettype = 18002 THEN bm.winlost - bm.stake ELSE 0 END) AS CashOutAmount
-							,SUM(CASE WHEN bm.bettype IN (18004, 18005, 18006) THEN bm.winlost - bm.stake ELSE 0 END) AS WinPrizeAmount
-							,SUM(CONVERT(MONEY, bm.transdesc)) AS transdesc
-						FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-						WHERE b.refno = bm.refno
-							AND bm.bettype BETWEEN 18000 AND 18006
-					) bm
-				WHERE b.bettype = 18000
-					AND b.winlostdate = @tmpDate
-			END
+			BEGIN TRY
+				EXEC dbo.Task_PrepareStaging_Bettrans @WinlostDate = @WinlostDate, @ErrorMsg = @ErrorMsg OUTPUT, @ProductCodes = @ProductCodes
 
-		    INSERT INTO @__matchIds (matchid)
-            SELECT matchid FROM bodb02.dbo.bettrans (NOLOCK) WHERE winlostdate = @tmpDate AND bettype < 19001 GROUP BY matchid
+				SET @IsErr = 0
+				BREAK
+			END TRY
+			BEGIN CATCH
+				IF ERROR_NUMBER() = 2627  -- Violates Primary Key
+				BEGIN
+					SET @NumberTryCount = @NumberTryCount + 1
+					SET @IsErr = 1
+				END
+				ELSE
+				BEGIN
+					SET @ErrorMsg = 'Task_PrepareStaging failed on ' + CONVERT(VARCHAR(10), @WinlostDate, 120) + ERROR_MESSAGE()
 
-			IF @ProductCodes = ''
-			BEGIN
-				INSERT INTO dbo.bettrans
-				(
-					transid,winlostdate,liveindicator,bettype,custid,stake,actual_stake,winlost,awinlost,mwinlost,swinlost
-					,acomm,scomm,playercomm,comm,matchid,status,statusid,srecommend,currency,recommend,mrecommend,transdate
-					,virtualrate,discount,tpositiontaking,customercategory,isBA,refno,oddsspread,ExtraInfo,betdaqid,TicketType
-					,CashOutAmount
-				)
-				SELECT 
-					b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost
-					,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid
-					,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-								THEN CASE	WHEN b.winlostdate >= @HWHLCutDate
-												THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399)
-																AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
-											ELSE CASE WHEN b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) THEN 'HALF ' ELSE '' END END
-							ELSE '' END + b.status AS status
-					,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-								THEN CASE	WHEN b.winlostdate >= @HWHLCutDate
-												THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399)
-																AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END
-											ELSE CASE WHEN b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END END
-							ELSE b.statusID END AS statusid
-					,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
-					,b.virtualrate,b.discount,b.tpositiontaking
-					,CASE	WHEN b.recommend = 52466 THEN 27 -- 8RM
-							WHEN b.recommend = 5707545 THEN 28 -- BARM
-							WHEN b.bettype = 901 THEN CASE WHEN b.transid2 = 0 THEN 1001 ELSE 1002 END -- bettrade
-							WHEN b.bettype = 911 THEN CASE WHEN b.transid2 = 0 THEN 1003 ELSE 1004 END -- cashout
-							ELSE -1 END AS customercategory
-					,CASE	WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1 ELSE 0 END AS isBA
-					,b.refno,b.oddsspread
-					,CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) ELSE b.ExtraInfo END -- poker games: gem & insurance
-					,b.betdaqid,ISNULL(b.currency2, 0) AS TicketType
-					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
-				FROM @__matchIds m
-					CROSS APPLY (
-						SELECT	b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,b.stake,b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost
-								,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid,b.status,b.statusid,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
-								,b.virtualrate,b.discount,b.tpositiontaking,b.refno,b.oddsspread,b.ExtraInfo,b.betdaqid,b.modds,b.transid2,b.currency2
-						FROM bodb02.dbo.bettrans b (NOLOCK)
-						WHERE b.matchid = m.matchid
-							AND b.bettype < 19001
-							AND b.winlostdate = @tmpDate
-							AND b.custid > 0
-							AND b.recommend > 0
-							AND b.statusid NOT IN (0, 101, 102, 121) -- exclude waiting, reject, void ticket (statusID = 1)
-					) b
-			END
-			ELSE
-			BEGIN
-				INSERT INTO dbo.bettrans
-				(
-					transid,winlostdate,liveindicator,bettype,custid,stake,actual_stake,winlost,awinlost,mwinlost,swinlost
-					,acomm,scomm,playercomm,comm,matchid,status,statusid,srecommend,currency,recommend,mrecommend,transdate
-					,virtualrate,discount,tpositiontaking,customercategory,isBA,refno,oddsspread,ExtraInfo,betdaqid,TicketType
-					,CashOutAmount
-				)
-				SELECT 
-					b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost
-					,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid
-					,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-								THEN CASE	WHEN b.winlostdate >= @HWHLCutDate
-												THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399)
-																AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
-											ELSE CASE WHEN b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) THEN 'HALF ' ELSE '' END END
-							ELSE '' END + b.status AS status
-					,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-								THEN CASE	WHEN b.winlostdate >= @HWHLCutDate
-												THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399)
-																AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END
-											ELSE CASE WHEN b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END END
-							ELSE b.statusID END AS statusid
-					,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
-					,b.virtualrate,b.discount,b.tpositiontaking
-					,CASE	WHEN b.recommend = 52466 THEN 27 -- 8RM
-							WHEN b.recommend = 5707545 THEN 28 -- BARM
-							WHEN b.bettype = 901 THEN CASE WHEN b.transid2 = 0 THEN 1001 ELSE 1002 END -- bettrade
-							WHEN b.bettype = 911 THEN CASE WHEN b.transid2 = 0 THEN 1003 ELSE 1004 END -- cashout
-							ELSE -1 END AS customercategory
-					,CASE	WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1 ELSE 0 END AS isBA
-					,b.refno,b.oddsspread
-					,CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) ELSE b.ExtraInfo END -- poker games: gem & insurance
-					,b.betdaqid,ISNULL(b.currency2, 0) AS TicketType
-					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
-				FROM @__matchIds m
-					CROSS APPLY (
-						SELECT	b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,b.stake,b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost
-								,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid,b.status,b.statusid,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
-								,b.virtualrate,b.discount,b.tpositiontaking,b.refno,b.oddsspread,b.ExtraInfo,b.betdaqid,b.modds,b.transid2,b.currency2
-						FROM bodb02.dbo.bettrans b (NOLOCK)
-							INNER JOIN @BettypeProductMapping bm ON b.bettype = bm.bettype
-						WHERE b.matchid = m.matchid
-							AND b.bettype < 19001
-							AND b.winlostdate = @tmpDate
-							AND b.custid > 0
-							AND b.recommend > 0
-							AND b.statusid NOT IN (0, 101, 102, 121) -- exclude waiting, reject, void ticket (statusID = 1)
-					) b
-			END
+					RAISERROR(@ErrorMsg, 16, 1)
 
-			UPDATE b
-			SET b.ExtraInfo			= cb.transdesc
-				,b.CashOutAmount	= cb.CashOutAmount
-				,b.CashInAmount		= cb.CashInAmount
-				,b.WinPrizeAmount	= cb.WinPrizeAmount
-			FROM dbo.bettrans b
-				INNER JOIN @CBTicket cb ON b.transid = cb.transid AND b.bettype = 18000
-        END
-		ELSE
-        BEGIN
-			IF @HasCBProduct = 1
-			BEGIN
-				INSERT INTO @CBTicket (transid, CashInAmount, CashOutAmount, WinPrizeAmount, transdesc)
-				SELECT	b.transid
-						,bm.CashInAmount
-						,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN bm.CashOutAmount ELSE 0 END AS CashOutAmount
-						,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN bm.WinPrizeAmount ELSE 0 END AS WinPrizeAmount
-						,CONVERT(VARCHAR(500), bm.transdesc)
-				FROM bodb02.dbo.bettrans14 b WITH (NOLOCK) 
-					CROSS APPLY (
-						SELECT
-							SUM(CASE WHEN bm.bettype = 18002 THEN bm.oddsspread ELSE 0 END) AS CashInAmount
-							,SUM(CASE WHEN bm.bettype = 18002 THEN bm.winlost - bm.stake ELSE 0 END) AS CashOutAmount
-							,SUM(CASE WHEN bm.bettype IN (18004, 18005, 18006) THEN bm.winlost - bm.stake ELSE 0 END) AS WinPrizeAmount
-							,SUM(CONVERT(MONEY, bm.transdesc)) AS transdesc
-						FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
-						WHERE b.refno = bm.refno
-							AND bm.bettype BETWEEN 18000 AND 18006
-					) bm
-				WHERE b.bettype = 18000
-					AND b.winlostdate = @tmpDate
-			END
+					RETURN
+				END
+			END CATCH
+		END
 
-			INSERT INTO dbo.bettrans
-			(
-				transid,winlostdate,liveindicator,bettype,custid,stake,actual_stake,winlost,awinlost,mwinlost,swinlost
-				,acomm,scomm,playercomm,comm,matchid,status,statusid,srecommend,currency,recommend,mrecommend,transdate
-				,virtualrate,discount,tpositiontaking,customercategory,isBA,refno,oddsspread,ExtraInfo,betdaqid,TicketType
-				,CashOutAmount,CashInAmount,WinPrizeAmount
-			)
-			SELECT 
-			    b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost
-				,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid
-				,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-							THEN CASE	WHEN b.winlostdate >= @HWHLCutDate
-											THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399)
-															AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
-										ELSE CASE WHEN b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) THEN 'HALF ' ELSE '' END END
-						ELSE '' END + b.status AS status
-				,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-							THEN CASE	WHEN b.winlostdate >= @HWHLCutDate
-											THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399)
-															AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END
-										ELSE CASE WHEN b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END END
-						ELSE b.statusID END AS statusid
-				,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
-				,b.virtualrate,b.discount,b.tpositiontaking
-				,CASE	WHEN b.recommend = 52466 THEN 27 -- 8RM
-						WHEN b.recommend = 5707545 THEN 28 -- BARM
-						WHEN b.bettype = 901 THEN CASE WHEN b.transid2 = 0 THEN 1001 ELSE 1002 END -- bettrade
-						WHEN b.bettype = 911 THEN CASE WHEN b.transid2 = 0 THEN 1003 ELSE 1004 END -- cashout
-						ELSE -1 END AS customercategory
-				,CASE	WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1 ELSE 0 END AS isBA
-				,b.refno,b.oddsspread
-				,CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) WHEN b.bettype = 18000 THEN c.transdesc ELSE b.ExtraInfo END -- poker games: gem & insurance
-				,b.betdaqid,ISNULL(b.currency2, 0) AS TicketType
-				,CASE WHEN b.bettype = 911 THEN b.actual_stake ELSE c.CashOutAmount END AS CashOutAmount
-				,c.CashInAmount,c.WinPrizeAmount
-			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
-				LEFT JOIN @CBTicket c ON b.transid = c.transid AND b.bettype = 18000
-			WHERE b.statusid NOT IN (101, 102, 121)
-				AND b.winlostdate = @tmpDate
-				AND b.custid > 0
-				AND (@ProductCodes = '' OR b.bettype IN (SELECT Bettype FROM @BettypeProductMapping))
-        END
-
-		SELECT @tmpDate = DATEADD(DAY, -1, @tmpDate)
+		SELECT @WinlostDate = DATEADD(DAY, -1, @WinlostDate)
 	END
-	
-	-- update BA ticket
-	UPDATE b
-	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (912, 913, 914) THEN 1 ELSE 0 END
-		,customercategory = CASE WHEN isBA = 0 THEN 1003 ELSE 1004 END -- Cashout
-	FROM dbo.bettrans b
-		INNER JOIN #CashoutCust ctc ON b.CustId = ctc.CustId
-			
-	UPDATE b
-	SET isBA = CASE WHEN isBA = 1 AND b.bettype NOT IN (902, 903, 904) THEN 1 ELSE 0 END
-		,customercategory = CASE WHEN isBA = 0 THEN 1001 ELSE 1002 END -- bettrade
-	FROM dbo.bettrans b
-		INNER JOIN #BetTradeCust btc ON b.CustId = btc.CustId
-
-    CREATE TABLE #BATransids (transID bigint)
-
-    SELECT @ToDate = current_timestamp
-
-    INSERT #BATransids(transid)
-    SELECT b.transid
-    FROM dbo.bettrans b (NOLOCK)
-	    INNER JOIN bodb_Licensee.dbo.LicenseeBAHistory h (NOLOCK) ON b.custid = h.custid AND (transdate BETWEEN OnDate AND ISNULL(OffDate, @ToDate))
-    WHERE b.bettype < 31 OR (b.bettype BETWEEN 121 AND 999) OR (b.bettype BETWEEN 1301 AND 1399) OR (b.bettype BETWEEN 9001 AND 9399) OR b.bettype = 38
-	    AND tpositiontaking = 0
-		AND b.bettype NOT IN (901, 902, 903, 904, 911, 912, 913, 914)
-
-    UPDATE dbo.bettrans
-    SET IsBA = 1
-    WHERE transid IN (SELECT transid FROM #BATransids)
-
-	DROP TABLE #BATransids
-	DROP TABLE #BetTradeCust
-	DROP TABLE #CashoutCust
 END
 GO
