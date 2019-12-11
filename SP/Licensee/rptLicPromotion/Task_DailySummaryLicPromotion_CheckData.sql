@@ -228,10 +228,6 @@ BEGIN
 	WHERE 
 		b.winlostdate > @MovebetDate AND b.winlostdate <= @today -- COVER cross day between transdate vs winlostdate
 		AND b.statusID IN (112, 113)
-		--AND (
-		--	b.transdate >= @startTransdate 
-		--	AND b.transdate < @endTransdate
-		--)
 
 	GROUP BY 
 		b.srecommend
@@ -240,9 +236,6 @@ BEGIN
 		,bet.TimeZone
 		,bet.RptDateGMT
 	
-	DELETE FROM #rptLicPromoBet
-	WHERE PromoDate NOT BETWEEN @_PromoDate AND @MovebetDate
-
 	--- CHECK & CORRECT upto BU date
 	IF EXISTS(SELECT 1 FROM #rptLicPromoBet bet WHERE PromoDate <= @MovebetDate)
 	BEGIN
@@ -252,9 +245,11 @@ BEGIN
 
 		INSERT INTO @SuperIds
 		SELECT DISTINCT CustID, 0 FROM #rptLicPromoBet
+		WHERE PromoDate <= @MovebetDate
 
 		INSERT INTO @promoDays
 		SELECT DISTINCT PromoDate FROM #rptLicPromoBet
+		WHERE PromoDate <= @MovebetDate
 
 		WHILE EXISTS(SELECT 1 FROM @SuperIds WHERE statusId = 0)
 		BEGIN
@@ -307,7 +302,7 @@ BEGIN
 				WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
 				ORDER BY IsPromoBet DESC
 			) AS promo
-			WHERE EXISTS(SELECT 1 FROM @promoDays d WHERE b.winlostdate = d.promodate AND DATEDIFF(DD,b.transdate,promodate) = 0) 
+			WHERE EXISTS(SELECT 1 FROM @promoDays d WHERE b.winlostdate >= d.promodate) 
 				AND b.statusID IN (112,113)
 				
 			GROUP BY 
@@ -318,6 +313,10 @@ BEGIN
 				,bet.RptDateGMT
 
 		END
+
+		-- REMOVE unexpected PromoDate
+		DELETE FROM #rptLicPromoBet
+		WHERE PromoDate NOT BETWEEN @_PromoDate AND @MovebetDate
 
 		--- Merge bettrans & bettrans14
 		INSERT INTO #source_rptLicPromotion_Correct(

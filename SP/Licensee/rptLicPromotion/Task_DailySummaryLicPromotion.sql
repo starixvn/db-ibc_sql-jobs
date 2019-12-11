@@ -271,10 +271,6 @@ BEGIN
 	) AS promo
 	WHERE 
 		b.winlostdate >= @_PromoDate -- COVER cross day between transdate vs winlostdate
-		--AND (
-		--	b.transdate >= @startTransdate 
-		--	AND b.transdate < @endTransdate
-		--)
 
 	GROUP BY 
 		b.srecommend
@@ -283,6 +279,7 @@ BEGIN
 		,bet.TimeZone
 		,bet.RptDateGMT
 
+	-- REMOVE unexpected PromoDate
 	DELETE FROM #rptLicPromoBet
 	WHERE PromoDate <> @_PromoDate
 

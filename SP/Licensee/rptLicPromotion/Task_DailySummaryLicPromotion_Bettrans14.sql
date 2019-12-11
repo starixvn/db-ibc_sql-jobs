@@ -236,6 +236,7 @@ BEGIN
 		,bet.TimeZone
 		,bet.RptDateGMT
 	
+	-- REMOVE unexpected PromoDate
 	DELETE FROM #rptLicPromoBet
 	WHERE PromoDate NOT BETWEEN @BalanceUpDate AND @_PromoDate
 
@@ -318,6 +319,7 @@ BEGIN
 
 		END
 
+		-- REMOVE unexpected PromoDate
 		DELETE #rptLicPromoBet
 		WHERE PromoDate NOT BETWEEN @BalanceUpDate AND @_PromoDate
 

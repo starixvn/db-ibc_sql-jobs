@@ -14,6 +14,8 @@ AS
 
 	Revisions:
 		- 20190906@Lukas: Initialize SP [RedmineID: #115377]
+		- 20191210@Bobby: Integrate Saba Promotion  [RedmineID: #115377]
+			+ Added step 6.94: DBLIC.bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14
 */
 BEGIN
 	DECLARE @errorCode INT,
