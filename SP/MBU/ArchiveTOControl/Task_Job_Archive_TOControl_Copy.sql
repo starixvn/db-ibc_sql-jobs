@@ -8,6 +8,9 @@ CREATE PROCEDURE dbo.Task_Job_Archive_TOControl_Copy
 	Created: 20191128@Helen
 	Task: TO Control Archive - https://nexdev.net/issues/124447
 	DB: DBARC/bodb_Archive
+	
+	Revisions:
+		- 20191126@Helen: Archive TO Control - copy [Redimine:98467]
 */
 AS
 BEGIN

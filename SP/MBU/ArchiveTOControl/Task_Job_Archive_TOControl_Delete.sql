@@ -8,6 +8,9 @@ CREATE PROCEDURE dbo.Task_Job_Archive_TOControl_Delete
 	Created: 20191128@Helen
 	Task: TO Control Archive - https://nexdev.net/issues/124447
 	DB: DBTXN/bodb02
+	
+	Revisions:
+		- 20191126@Helen: Archive TO Control - delete [Redimine:98467]
 */
 AS
 BEGIN
