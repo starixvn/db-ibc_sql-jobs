@@ -16,11 +16,13 @@ AS
   - 20160926@Winnie: fix issue conflict refno with racing RedmineID: #64286
   - 20190214@Jacob: Add Bet Builder RedmineID: #108694
   - 20191128@Johnson: remove rmTransaction [redmine:#124442]
+  - 20191211@Jacob: Extra PT - Add new structure to support extra pt column on bettrans table #124194
 */  
 
 SET NOCOUNT ON
 SET DEADLOCK_PRIORITY LOW	
-
+DECLARE @ExtraPTCutDate SMALLDATETIME
+SELECT  @ExtraPTCutDate = CONVERT(SMALLDATETIME, VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'ExtraPTCutDate'
 declare @tstamp_min binary(8), @tstamp_max binary(8), @max_transid bigint
 
 DECLARE @bitmap VARCHAR(21) = ''
@@ -32,8 +34,45 @@ WHERE VName = 'rmBettransSync'
 
 SELECT @tstamp_max = isnull(max(tstamp),@tstamp_min)  from bodb02.dbo.bettrans with(nolock)
 
+CREATE TABLE #ExtraPT_Sel
+(ProductID  INT, 
+ Sporttype  INT, 
+ SubProduct VARCHAR(100), 
+ SuperID    INT, 
+ FromDate   DATETIME, 
+ ToDate     DATETIME, 
+ ExtraPT    DECIMAL(9, 8)
+);
+INSERT INTO #ExtraPT_Sel
+(ProductID, 
+ Sporttype, 
+ SubProduct, 
+ SuperID, 
+ FromDate, 
+ ToDate, 
+ ExtraPT
+)
+       SELECT ProductID, 
+              SportType, 
+              SubProduct, 
+              SuperId, 
+              FromDate, 
+              ToDate, 
+              SUM(ExtraPT) AS ExtraPT
+       FROM bodb02.dbo.Acc_GroupExtraPTSetting a WITH(NOLOCK)
+       WHERE a.ProductID = 1
+             AND a.Sporttype = 0
+             AND a.SubProduct = ''
+       GROUP BY ProductID, 
+                SportType, 
+                SubProduct, 
+                SuperId, 
+                FromDate, 
+                ToDate;
+
 IF @tstamp_min = 0x0000000000000001 -- 1: renew all data
 BEGIN
+	
 	TRUNCATE TABLE dbo.rmBettrans
 	
 	INSERT INTO dbo.rmBettrans (transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost, playercomm, comm, acomm, 
@@ -41,15 +80,18 @@ BEGIN
 		liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
 		recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, sdiscount, 
 		scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
-		SecAcceptFlag, transid2, combo
+		SecAcceptFlag, transid2, combo,epositiontaking
 	)
 	SELECT transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost, playercomm, comm, acomm, 
 			apositiontaking, mpositiontaking, tpositiontaking, playerdiscount, discount, adiscount, livehomescore, liveawayscore, 
 			liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
 			recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, sdiscount, 
 			scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
-			SecAcceptFlag, transid2, hdp2
-	FROM bodb02.dbo.bettrans with (NOLOCK)
+			SecAcceptFlag, transid2, hdp2,
+			CASE WHEN transdate < @ExtraPTCutDate THEN ISNULL(a.ExtraPT,0) ELSE ISNULL(b.epositiontaking,0) END
+	FROM bodb02.dbo.bettrans b with (NOLOCK)
+	LEFT JOIN #ExtraPT_Sel AS a ON srecommend = a.SuperId AND winlostdate BETWEEN a.FromDate AND a.Todate
+
 	WHERE (matchid = 29 OR bettype = 38)
 			 
 	-- Single Match Parlay
@@ -129,9 +171,11 @@ BEGIN
 			liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
 			recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, sdiscount, 
 			scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
-			SecAcceptFlag, transid2
+			SecAcceptFlag, transid2,
+			CASE WHEN transdate < @ExtraPTCutDate THEN ISNULL(a.ExtraPT,0) ELSE ISNULL(b.epositiontaking,0) END AS epositiontaking
 	INTO #temp			
-	FROM bodb02.dbo.bettrans with (NOLOCK)
+	FROM bodb02.dbo.bettrans b with (NOLOCK)
+	LEFT JOIN #ExtraPT_Sel AS a ON srecommend = a.SuperId AND winlostdate BETWEEN a.FromDate AND a.Todate 
 	WHERE tstamp between @tstamp_min and @tstamp_max
 		AND ( matchid = 29 OR bettype = 38)
 		
@@ -210,13 +254,14 @@ BEGIN
 				,SecAcceptFlag = s.SecAcceptFlag
 				,transid2 = s.transid2
 				,combo = s.hdp2
+				,epositiontaking = s.epositiontaking
 		WHEN NOT MATCHED THEN 
 		INSERT (transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost, playercomm, comm, acomm, 
 			apositiontaking, mpositiontaking, tpositiontaking, playerdiscount, discount, adiscount, livehomescore, liveawayscore, 
 			liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, 
 			recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc, sdiscount, 
 			scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype, statusID, currency2, balance, 
-			SecAcceptFlag, transid2, combo
+			SecAcceptFlag, transid2, combo,epositiontaking
 			)
 		VALUES (
 			transid, s.custid, s.transdate, s.oddsid, s.hdp1, s.hdp2, s.odds, s.stake, s.status, s.winlost, s.awinlost, s.mwinlost, s.playercomm, 
@@ -224,7 +269,7 @@ BEGIN
 			s.liveawayscore, s.liveindicator, s.betteam, s.creator, s.refno, s.comstatus, s.winlostdate, s.betfrom, s.betcheck, s.checktime, 
 			s.oddsspread, s.actualrate, s.matchid, s.recommend, s.mrecommend, s.ruben, s.betid, s.statuswinlost, s.modds, s.bettype, s.betdaqid, 
 			s.actual_stake, s.currency, s.ip, s.transdesc, s.sdiscount, s.scomm, s.spositiontaking, s.swinlost, s.srecommend, s.Username, 
-			s.CurrencyName, s.virtualrate, s.oddstype, s.statusID, s.currency2, s.balance, s.SecAcceptFlag, s.transid2, s.hdp2
+			s.CurrencyName, s.virtualrate, s.oddstype, s.statusID, s.currency2, s.balance, s.SecAcceptFlag, s.transid2, s.hdp2,s.epositiontaking
 			)
 	;--end MERGE	
 
