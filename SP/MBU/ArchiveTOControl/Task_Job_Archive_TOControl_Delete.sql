@@ -26,7 +26,7 @@ BEGIN
 
 	INSERT INTO #archiveDate (winlostdate)
 	SELECT winlostdate 
-	FROM DBTXN.bodb02.dbo.Task_ArchiveDate WITH (NOLOCK)
+	FROM dbo.Task_ArchiveDate WITH (NOLOCK)
 	ORDER BY winlostdate
 	
 	SELECT  @query = N''		
