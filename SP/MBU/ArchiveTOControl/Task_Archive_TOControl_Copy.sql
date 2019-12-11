@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_Archive_TOControl_Copy]
+CREATE PROCEDURE [dbo].[Task_Archive_TOControl_Copy]
 (
-	@matchIDs	NVARCHAR(MAX) = ''
+	@winlostdate DATETIME
 )
 AS				
 /*
@@ -17,11 +17,11 @@ BEGIN
 	
 	DECLARE @MatchidList_copy AS TABLE (Matchid INT)
 	INSERT INTO @MatchidList_copy (Matchid)
-	SELECT val
-	FROM dbo.f_StringSplit(@matchIDs, ',')
-	OPTION (MAXRECURSION 0)
+	SELECT matchid
+	FROM DBAGE.bodb02.dbo.match14 WITH (NOLOCK)
+	WHERE winlostdate = @winlostdate
 
-	SELECT	ts.CustID, ts.matchid, ts.MaxTurnOver, ts.TotalTurnOver, ts.IsNotified, ts.HouseTurnover, ts.PercentLevel, ts.IsGroupHeadLine
+	SELECT	ts.CustID, ts.matchid, ts.MaxTurnOver, ts.TotalTurnOver, ts.IsNotified, ts.HouseTurnover, ts.PercentLevel, ts.IsGroupHeadLine, @winlostdate AS winlostdate
 	FROM dbo.TOControl_Setting ts WITH (NOLOCK)
 		INNER JOIN @MatchidList_copy m ON ts.matchid = m.Matchid
 	

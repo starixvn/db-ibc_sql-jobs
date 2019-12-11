@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[Task_Archive_TOControl_Delete]
 (
-	@matchIDs	NVARCHAR(MAX) = ''
+	@winlostdate DATETIME
 )
 AS					
 /*
@@ -18,13 +18,12 @@ BEGIN
 	DECLARE @MatchidList_delete AS TABLE (Matchid INT)
 
 	INSERT INTO @MatchidList_delete (Matchid)
-	SELECT val
-	FROM dbo.f_StringSplit(@matchIDs, ',')
-	OPTION (MAXRECURSION 0)
+	SELECT matchid
+	FROM DBAGE.bodb02.dbo.match14 WITH (NOLOCK)
+	WHERE winlostdate = @winlostdate
 	
 	WHILE (1=1)
 	BEGIN
-	
 		DELETE TOP (2000) t
 		FROM dbo.TOControl_Setting t WITH (ROWLOCK)
 			INNER JOIN @MatchidList_delete m ON t.matchid = m.Matchid
