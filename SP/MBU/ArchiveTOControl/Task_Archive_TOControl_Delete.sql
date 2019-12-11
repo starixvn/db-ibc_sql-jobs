@@ -20,7 +20,7 @@ BEGIN
 	INSERT INTO @MatchidList_delete (Matchid)
 	SELECT matchid
 	FROM DBAGE.bodb02.dbo.match14 WITH (NOLOCK)
-	WHERE winlostdate = @winlostdate
+	WHERE eventdate = @winlostdate
 	
 	WHILE (1=1)
 	BEGIN
