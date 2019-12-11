@@ -33,6 +33,7 @@ BEGIN
 		,@yesterday			DATE
 		,@BalanceUpDate		DATE
 		,@MovebetDate		DATE
+		,@CutoffDate		DATE
 		,@_PromoDate		DATE
 	
 	DECLARE @BalanceUpDays AS TABLE (BalanceUpDay DATE, MoveBetDay DATE)
@@ -150,6 +151,7 @@ BEGIN
 		, @today			= GETDATE() 
 		, @yesterday		= DATEADD(DD, -1, CAST(@today AS DATETIME))
 		, @PromoDate		= ISNULL(@PromoDate, @yesterday) 
+		, @CutoffDate		= '20191213'
 		
 	-- CORRECT: PromoDate - Start & End Program transdate
 	SELECT @_PromoDate		= CASE 
@@ -162,6 +164,13 @@ BEGIN
 	IF (@_PromoDate <= @MovebetDate)
 	BEGIN
 		SELECT @Message = 'Invalid promo date ' + CAST(@_PromoDate AS VARCHAR(10)) + ' is lower than MB day ' + CAST(@MovebetDate AS VARCHAR(10))
+		GOTO CLEANUP
+	END
+
+	-- CHECK CUT-OFF DAY
+	IF (@_PromoDate < @CutoffDate)
+	BEGIN
+		SELECT @Message = 'Invalid promo date ' + CAST(@_PromoDate AS VARCHAR(10)) + ' is lower than cut-off day ' + CAST(@CutoffDate AS VARCHAR(10))
 		GOTO CLEANUP
 	END
 

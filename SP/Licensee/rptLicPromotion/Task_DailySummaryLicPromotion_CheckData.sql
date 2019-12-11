@@ -31,6 +31,7 @@ BEGIN
 		,@yesterday			DATE
 		,@BalanceUpDate		DATE
 		,@MovebetDate		DATE
+		,@CutoffDate		DATE
 		,@_PromoDate		DATE
 	
 	DECLARE @BalanceUpDays AS TABLE (BalanceUpDay DATE, MoveBetDay DATE)
@@ -125,11 +126,20 @@ BEGIN
 		, @_PromoDate		= ISNULL(@PromoDate, @BalanceupDate)
 		, @startTransdate	= @_PromoDate
 		, @endTransdate		= DATEADD(DD, 1, CAST(@MovebetDate AS DATETIME))
+		, @CutoffDate		= '20191213'
 
 
 	IF (@_PromoDate NOT BETWEEN @BalanceupDate AND @MovebetDate)
 	BEGIN
 		SELECT @Message = 'Invalid promo date ' + CAST(@_PromoDate AS VARCHAR(10))
+		GOTO CLEANUP
+	END
+
+	-- CHECK CUT-OFF DAY
+	IF (@_PromoDate < @CutoffDate 
+		OR @CutoffDate > @MovebetDate)
+	BEGIN
+		SELECT @Message = 'Invalid promo date ' + CAST(@_PromoDate AS VARCHAR(10)) + ' is lower than cut-off day ' + CAST(@CutoffDate AS VARCHAR(10))
 		GOTO CLEANUP
 	END
 
@@ -236,6 +246,10 @@ BEGIN
 		,bet.TimeZone
 		,bet.RptDateGMT
 	
+	-- REMOVE unexpected PromoDate
+	DELETE FROM #rptLicPromoBet
+	WHERE PromoDate NOT BETWEEN @_PromoDate AND @MovebetDate
+
 	--- CHECK & CORRECT upto BU date
 	IF EXISTS(SELECT 1 FROM #rptLicPromoBet bet WHERE PromoDate <= @MovebetDate)
 	BEGIN
@@ -302,7 +316,7 @@ BEGIN
 				WHERE bet.PromoDate BETWEEN program.StartDate AND program.EndDate
 				ORDER BY IsPromoBet DESC
 			) AS promo
-			WHERE EXISTS(SELECT 1 FROM @promoDays d WHERE b.winlostdate >= d.promodate) 
+			WHERE EXISTS(SELECT 1 FROM @promoDays d WHERE b.winlostdate >= d.promodate) -- COVER cross date between transdate and winlostdate
 				AND b.statusID IN (112,113)
 				
 			GROUP BY 
@@ -311,12 +325,12 @@ BEGIN
 				,bet.PromoDate
 				,bet.TimeZone
 				,bet.RptDateGMT
-
 		END
 
 		-- REMOVE unexpected PromoDate
-		DELETE FROM #rptLicPromoBet
-		WHERE PromoDate NOT BETWEEN @_PromoDate AND @MovebetDate
+		DELETE b
+		FROM #rptLicPromoBet b
+		WHERE NOT EXISTS(SELECT 1 FROM @promoDays t WHERE b.PromoDate = t.promodate)
 
 		--- Merge bettrans & bettrans14
 		INSERT INTO #source_rptLicPromotion_Correct(

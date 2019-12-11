@@ -12,9 +12,9 @@ SELECT @ReturnCode = 0
 
 /****** Object:  Step [Generate RptPromotion - Summany]    Script Date: 12/4/2019 1:07:25 PM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_name=@job_name, @step_name=N'Generate RptPromotion - Summany', 
-		@step_id=8, 
+		@step_id=9, 
 		@cmdexec_success_code=0, 
-		@on_success_action=3, 
+		@on_success_action=1, 
 		@on_success_step_id=0, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
@@ -26,5 +26,12 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_name=@job_name, @step_name=N'Gen
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 
-SELECT @ReturnCode AS [@ReturnCode]
+SELECT @ReturnCode AS [@ReturnCode-Add]
+
+EXEC @ReturnCode = msdb.dbo.sp_update_jobstep @job_name=@job_name,
+		@step_id=8, 
+		@on_success_action=3, 
+		@on_fail_action=2
+
+SELECT @ReturnCode AS [@ReturnCode-Update]
 GO
