@@ -42,6 +42,7 @@ AS
 	- 20191122@Amanda: Integrate PP Tournament Prize [RedmineID: #123804]
 	- 20191219@Amanda: Add betfrom v [RedmineID: #125553]
 	- 20191226@Vickie: Add platform 0 [RedmineID: #125824]
+	- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -139,6 +140,7 @@ BEGIN
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 		WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
+		WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 		WHEN bettype = 17000 THEN 246 -- NPHP
 	  ELSE 0 END sporttype
 	  -- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -206,6 +208,7 @@ BEGIN
 		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 		WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
+		WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 		WHEN bettype = 17000 THEN 246 -- NPHP
 	  ELSE 0 END  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,4299) THEN bettype ELSE 0 END  

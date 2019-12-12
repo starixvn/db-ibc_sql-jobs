@@ -30,6 +30,7 @@ AS
 		- 20190718@Amanda: Add rebate bonus ticket [RedmineID: #115445]
 		- 20191025@Bobby: Add column promotion [RedmineID: #120333]
 		- 20191122@Amanda: Sum PP Prize to promotion column [RedmineID: #123804]
+		- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 
 		Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -426,6 +427,7 @@ BEGIN
 					WHEN bettype BETWEEN 4101 AND 4298 THEN 248 -- PP
 					WHEN bettype BETWEEN 4299 AND 4300 THEN -248 -- PP Prize
 					WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
+					WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 					WHEN bettype IN(17000) THEN 246 -- NPHP
 				ELSE 0 END,--SportType
 				SUM(TurnOver),--Turnover  
@@ -470,6 +472,7 @@ BEGIN
 					WHEN bettype BETWEEN 4101 AND 4298 THEN 248 -- PP
 					WHEN bettype BETWEEN 4299 AND 4300 THEN -248 -- PP Prize
 					WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
+					WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 					WHEN bettype IN(17000) THEN 246 -- NPHP
 				ELSE 0 END
 

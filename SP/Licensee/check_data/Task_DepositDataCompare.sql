@@ -20,6 +20,7 @@ Revisions:
 	- 20190715@Amanda: Integrate Card Club [RedmineID: #115449]
 	- 20191106@Amanda: Integrate NPHP [RedmineID: #120333]
 	- 20191204@Amanda: Change name of NPH Promotion to Saba Promotion [Redmine: #124612]
+	- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -102,6 +103,7 @@ DECLARE @tblTmp AS TABLE (ID INT
 						   ,LT BIGINT
 						   ,PP BIGINT
 						   ,CC BIGINT
+						   ,SG BIGINT
 						   ,SPR BIGINT)
 						   
 --exec 
@@ -131,6 +133,7 @@ INSERT INTO @tblTmp	(ID
 					,LT
 					,PP
 					,CC
+					,SG
 					,SPR)	
 EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date	
 				
@@ -200,6 +203,7 @@ INSERT INTO @tblTmp	(ID
 					,LT
 					,PP
 					,CC
+					,SG
 					,SPR)					   
 EXEC dbo.GET_DepositDataToValidate_Betting @Date=@Date
 					

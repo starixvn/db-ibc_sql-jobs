@@ -23,6 +23,7 @@ Revisions:
 	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 	- 20191106@Amanda: Integrate NPHP [RedmineID: #120333]
 	- 20191204@Amanda: Change name of NPH Promotion to Saba Promotion [Redmine: #124612]
+	- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -133,6 +134,10 @@ BEGIN
 		   ,@CCTurnover MONEY
 		   ,@CCCustomerWl MONEY
 		   ,@CCBetCount MONEY
+		   ----SG
+		   ,@SGTurnover MONEY
+		   ,@SGCustomerWl MONEY
+		   ,@SGBetCount MONEY
 		   ----SPR
 		   ,@SPRTurnover MONEY
 		   ,@SPRCustomerWl MONEY
@@ -143,7 +148,7 @@ BEGIN
 	SELECT DISTINCT ProductPrefix, Sporttype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR')	
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SG', 'SPR')	
 
 	INSERT INTO  @tblSporttype
 	SELECT 'SB', 0
@@ -525,6 +530,21 @@ BEGIN
 	SELECT @CCTurnover 		= ISNULL(@CCTurnover,0)
 		   ,@CCCustomerWl	= ISNULL(@CCCustomerWl,0)
 		   ,@CCBetCount 	= ISNULL(@CCBetCount,0)
+
+	----SG
+	SELECT  @SGTurnover=SUM(CASE 
+						WHEN @DrawFilter IN (2,3) THEN 
+							CASE WHEN b.StatusID = 111 THEN 0 WHEN b.StatusID IN (114,115) THEN 0.5 ELSE 1 END
+						ELSE 1
+					END * b.Turnover)
+			,@SGCustomerWl=SUM(b.winlost)
+			,@SGBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END) 
+	FROM @tblData b
+	WHERE ProductPrefix = 'SG'
+
+	SELECT @SGTurnover 		= ISNULL(@SGTurnover,0)
+		   ,@SGCustomerWl	= ISNULL(@SGCustomerWl,0)
+		   ,@SGBetCount 	= ISNULL(@SGBetCount,0)
 		   
 	----SPR
 	SELECT  @SPRTurnover=SUM(CASE 
@@ -568,6 +588,7 @@ BEGIN
 				  , @LTTurnover  AS LT
 				  , @PPTurnover  AS PP
 				  , @CCTurnover  AS CC
+				  , @SGTurnover  AS SG
 				  , @SPRTurnover  AS SPR
 			  
 	UNION
@@ -595,6 +616,7 @@ BEGIN
 			, @LTCustomerWl
 			, @PPCustomerWl
 			, @CCCustomerWl
+			, @SGCustomerWl
 			, @SPRCustomerWl
 	UNION
 	SELECT 3, @SbBetCount
@@ -621,6 +643,7 @@ BEGIN
 			, @LTBetCount
 			, @PPBetCount
 			, @CCBetCount
+			, @SGBetCount
 			, @SPRBetCount
 
 	SET NOCOUNT OFF
