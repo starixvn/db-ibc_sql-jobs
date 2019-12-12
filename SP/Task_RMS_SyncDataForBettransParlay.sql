@@ -15,6 +15,7 @@ AS
   - 20160720@Winnie: fix bug Executed as user: DB054\SQL. Conversion failed when converting the nvarchar value 'a' to data type int. [SQLSTATE 22018] (Error 245).  The step failed.
   - 20160926@Winnie: fix issue conflict refno with racing RedmineID: #64286
   - 20190214@Jacob: Add Bet Builder RedmineID: #108694
+  - 20191128@Johnson: remove rmTransaction [redmine:#124442]
 */  
 
 SET NOCOUNT ON
@@ -227,7 +228,7 @@ BEGIN
 			)
 	;--end MERGE	
 
-	; -- END OF MERGE rmTransaction	
+	; -- END OF MERGE rmBettrans	
 	-- Single Match Parlay
 	UPDATE b WITH(ROWLOCK, UPDLOCK)
 	SET TotalBet = 1, odds2 = t.odds, transid2 = 1, liveawayscore = 1
@@ -288,13 +289,7 @@ BEGIN
 		SET b.odds2 = t.Odds2
 		FROM rmBettrans b	
 			INNER JOIN tmp t ON b.transid = t.transid		
-	END	
-			
-	MERGE	dbo.rmTransaction as dt
-	USING	#temp s on dt.transid = s.transid	
-	WHEN NOT MATCHED THEN 
-	INSERT(transid, refno, custid, combo)
-	VALUES(s.transid,s.refno,s.custid,s.hdp2);
+	END		
 END
 
 	UPDATE dbo.rmSettings with(rowlock, updlock)
