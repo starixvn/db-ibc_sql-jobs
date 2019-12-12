@@ -32,7 +32,6 @@ BEGIN
 		,@yesterday			DATE
 		,@BalanceUpDate		DATE
 		,@MovebetDate		DATE
-		,@CutoffDate		DATE
 		,@_PromoDate		DATE
 	
 	DECLARE @BalanceUpDays AS TABLE (BalanceUpDay DATE, MoveBetDay DATE)
@@ -127,19 +126,10 @@ BEGIN
 		, @_PromoDate		= ISNULL(@PromoDate, @today)
 		, @startTransdate	= @BalanceupDate
 		, @endTransdate		= DATEADD(DD, 1, CAST(@MovebetDate AS DATETIME))
-		, @CutoffDate		= '20191213'
 	
 	IF (@_PromoDate NOT BETWEEN @BalanceupDate AND @MovebetDate)
 	BEGIN
 		SELECT @Message = 'Invalid promo date ' + CAST(@_PromoDate AS VARCHAR(10))
-		GOTO CLEANUP
-	END
-
-	-- CHECK CUT-OFF DAY
-	IF (@_PromoDate < @CutoffDate 
-		OR @CutoffDate > @MovebetDate)
-	BEGIN
-		SELECT @Message = 'Invalid promo date ' + CAST(@_PromoDate AS VARCHAR(10)) + ' is lower than cut-off day ' + CAST(@CutoffDate AS VARCHAR(10))
 		GOTO CLEANUP
 	END
 
@@ -193,8 +183,8 @@ BEGIN
 		,cs.currency
 		,cs.custid
 	FROM bodb02.dbo.Dep_CustSuper cs WITH(NOLOCK)
-	INNER JOIN @tempLicCurrency cur ON cs.currency = cur.CurrencyID
-	--WHERE cs.currency <> 20
+	--INNER JOIN @tempLicCurrency cur ON cs.currency = cur.CurrencyID
+	WHERE cs.currency <> 20
 
 	-- COLLECT BET Tickets vs PromoTime
 	INSERT INTO #rptLicPromoBet(

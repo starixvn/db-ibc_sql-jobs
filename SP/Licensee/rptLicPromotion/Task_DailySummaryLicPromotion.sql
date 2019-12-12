@@ -231,7 +231,7 @@ BEGIN
 		,cs.currency
 		,cs.custid
 	FROM bodb02.dbo.Dep_CustSuper cs WITH(NOLOCK)
-	INNER JOIN @tempLicCurrency cur ON cs.currency = cur.CurrencyID
+	--INNER JOIN @tempLicCurrency cur ON cs.currency = cur.CurrencyID
 	WHERE cs.currency <> 20
 
 	-- COLLECT BET Tickets vs PromoTime
