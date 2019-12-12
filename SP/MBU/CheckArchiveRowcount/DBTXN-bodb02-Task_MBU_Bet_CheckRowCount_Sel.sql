@@ -70,7 +70,7 @@ BEGIN
 	--//transfer
 	INSERT INTO @__tempCount(rowcnt, tableName)
 	SELECT COUNT(1), 'transfer'
-	FROM dbo.bettrans WITH(NOLOCK)
+	FROM dbo.bettrans WITH(NOLOCK, INDEX=CIX_matchid_bettype)
 	WHERE ruben = 1 AND matchid = 0 AND bettype > 20000  
 		AND winlostdate = @DateCheck AND custid <> 0
 		AND (winlost + actual_stake) <> 0
