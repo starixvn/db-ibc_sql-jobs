@@ -44,10 +44,10 @@ BEGIN
 					SELECT TOP(5) * FROM sb.FailedMessageMonitoring WITH(NOLOCK) ORDER BY CreatedDate DESC 
 				*/
 			'
-	IF @@SERVERNAME IN ('DBCUST','SITDBCUST')
+	IF @@SERVERNAME IN ('DB215','DB231')
 	BEGIN
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients=N'dbaadmin@starixsoft.com',
+			@recipients=N'elodie.ho@starixsoft.com',
 			@body=@body,
 			@sensitivity ='Personal',
 			@importance ='High',
@@ -58,7 +58,7 @@ BEGIN
 	ELSE
 	BEGIN
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients=N'elodie.ho@starixsoft.com',
+			@recipients=N'pontus@starixsoft.com',
 			@body=@body,
 			@sensitivity ='Personal',
 			@importance ='High',
