@@ -10,7 +10,6 @@ AS
 	
 	Para's explaination
 	Revision:
-		- 20170824@Winnie: Add [CustomerLog_MsgProcess_UserLog_LogOut] [Redmine: 65806]
 		- 20190530@Paul: Add [CustomerLog_MsgProcess_CS_UserLog_Login] [Redmine: #113198]
 */
 BEGIN
@@ -93,16 +92,16 @@ BEGIN
 		EXEC [sb].[CustomerLog_MsgProcess_eaUserLog_Login] @XmlMessage = @xml_externalNap
 														 , @IsExistingTarget = @IsExistingTarget
 	END
-	ELSE IF @message_type_name = 'MessageType_CustomerLog_rmUserLog_LogOut'
-	BEGIN
-		SET @xml_RMS = (SELECT message_body AS 'node()'
-						FROM @Messages					
-						FOR XML PATH (''), ROOT)
+	--ELSE IF @message_type_name = 'MessageType_CustomerLog_rmUserLog_Login'
+	--BEGIN
+	--	SET @xml_RMS = (SELECT message_body AS 'node()'
+	--					FROM @Messages					
+	--					FOR XML PATH (''), ROOT)
 					
-		--Debug: PRINT 'rmUserLog_Login'  + CONVERT(VARCHAR(MAX),@xml_RMS)
-		EXEC [sb].[CustomerLog_MsgProcess_UserLog_LogOut] @XmlMessage = @xml_RMS
-														 , @IsExistingTarget = @IsExistingTarget
-	END	
+	--	--Debug: PRINT 'rmUserLog_Login'  + CONVERT(VARCHAR(MAX),@xml_RMS)
+	--	EXEC [sb].[CustomerLog_MsgProcess_rmUserLog_Login] @XmlMessage = @xml_RMS
+	--													 , @IsExistingTarget = @IsExistingTarget
+	--END
 	ELSE IF @message_type_name = 'MessageType_CustomerLog_CS_UserLog_Login'
 	BEGIN
 		SET @xml_Alpha = (SELECT message_body AS 'node()'
@@ -112,5 +111,5 @@ BEGIN
 		--Debug: PRINT 'CS_UserLog_Login' + CONVERT(VARCHAR(MAX),@xml_Alpha)
 		EXEC [sb].[CustomerLog_MsgProcess_CS_UserLog_Login] @XmlMessage = @xml_Alpha
 													   , @IsExistingTarget = @IsExistingTarget
-	END		
+	END				
 END

@@ -45,11 +45,11 @@ BEGIN
 				*/
 			'
 	EXEC msdb.dbo.sp_send_dbmail
-		@recipients=N'patrick.pham@starixsoft.com',
+		@recipients=N'dbaadmin@starixsoft.com',
 		@body=@body,
 		@sensitivity ='Personal',
 		@importance ='High',
-		@copy_recipients ='lukas.luu@starixsoft.com',
+		--@copy_recipients ='lukas.luu@starixsoft.com',
 		@subject =@subject,
 		@profile_name =@profile_name;
 END		
