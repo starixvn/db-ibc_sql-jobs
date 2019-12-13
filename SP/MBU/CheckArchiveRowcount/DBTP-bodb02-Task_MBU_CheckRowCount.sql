@@ -93,6 +93,22 @@ BEGIN;
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
 		END;
 
+		--TO in active
+		SET	@OutputData = NULL;
+		EXECUTE	DBCUST.CustDB.dbo.Task_MBU_TO_CheckRowCount_Sel
+					@DateCheck	= @winlostdate
+				,	@OutputData	= @OutputData	OUTPUT
+				;
+
+		IF	@OutputData IS NOT NULL
+		BEGIN;
+			SET	@xmlData = CAST(@OutputData AS XML);
+			INSERT INTO	#__activeResult (winlostdate, tableName, activeRowCount)
+			SELECT	@winlostdate, r.value('./@t','varchar(128)'), r.value('./@r','int')
+			FROM @xmlData.nodes('//r') AS RECORDS(r)
+			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+		END;
+
 		--//event in archive
 		SET	@OutputData = NULL;
 		EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_Event_BK_CheckRowCount_Sel
@@ -112,6 +128,22 @@ BEGIN;
 		--//Bet in archive
 		SET	@OutputData = NULL;
 		EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_Bet_BK_CheckRowCount_Sel
+					@DateCheck	= @winlostdate
+				,	@OutputData	= @OutputData	OUTPUT
+				;
+
+		IF	@OutputData IS NOT NULL
+		BEGIN;
+			SET @xmlData = CAST(@OutputData AS XML);
+			INSERT #__archiveResult(winlostdate, tableName, archiveRowCount)
+			SELECT @winlostdate, r.value('./@t','varchar(128)'), r.value('./@r','int')
+			FROM @xmlData.nodes('//r') AS RECORDS(r)
+			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+		END;
+
+		--//TO in archive
+		SET	@OutputData = NULL;
+		EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_TO_BK_CheckRowCount_Sel
 					@DateCheck	= @winlostdate
 				,	@OutputData	= @OutputData	OUTPUT
 				;
