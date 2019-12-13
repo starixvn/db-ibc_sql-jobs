@@ -44,12 +44,26 @@ BEGIN
 					SELECT TOP(5) * FROM sb.FailedMessageMonitoring WITH(NOLOCK) ORDER BY CreatedDate DESC 
 				*/
 			'
-	EXEC msdb.dbo.sp_send_dbmail
-		@recipients=N'dbaadmin@starixsoft.com',
-		@body=@body,
-		@sensitivity ='Personal',
-		@importance ='High',
-		--@copy_recipients ='lukas.luu@starixsoft.com',
-		@subject =@subject,
-		@profile_name =@profile_name;
+	IF @@SERVERNAME IN ('DBCUST','SITDBCUST')
+	BEGIN
+		EXEC msdb.dbo.sp_send_dbmail
+			@recipients=N'dbaadmin@starixsoft.com',
+			@body=@body,
+			@sensitivity ='Personal',
+			@importance ='High',
+			--@copy_recipients ='lukas.luu@starixsoft.com',
+			@subject =@subject,
+			@profile_name =@profile_name;
+	END
+	ELSE
+	BEGIN
+		EXEC msdb.dbo.sp_send_dbmail
+			@recipients=N'elodie.ho@starixsoft.com',
+			@body=@body,
+			@sensitivity ='Personal',
+			@importance ='High',
+			--@copy_recipients ='lukas.luu@starixsoft.com',
+			@subject =@subject,
+			@profile_name =@profile_name;
+	END
 END		
