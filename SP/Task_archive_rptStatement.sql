@@ -42,11 +42,11 @@ BEGIN;
 
 	IF @DateName = 'Thursday' -- Copy data
 	BEGIN
-		IF @BalanceUpDay = @MinArchiveDate -- Old BU Date, BU is running
+		IF @BalanceUpDay = @MinArchiveDate -- Old BUDate, BU is running
 		BEGIN
-			SELECT @BalanceUpDay = DATEADD(DAY, 7, @BalanceUpDay)
+			SELECT @BalanceUpDay = DATEADD(DAY, 7, @BalanceUpDay) -- Set new BUDate
 		END
-		ELSE IF @BalanceUpDay = DATEADD(DAY, 7, @MinArchiveDate) -- New BU Date, BU is completed
+		ELSE IF @BalanceUpDay = DATEADD(DAY, 7, @MinArchiveDate) -- New BUDate, BU is completed
 		BEGIN
 			DECLARE @custid INT
 			SELECT  TOP 1 @custid = custid FROM dbo.rptStatement WITH (NOLOCK) WHERE winlostdate = @MinArchiveDate
@@ -66,7 +66,7 @@ BEGIN;
 		SELECT	@count = -7
 		WHILE	@count < 0
 		BEGIN
-			SELECT	@TempDate = DATEADD(DAY, @Count, @BalanceUpDay);
+			SELECT	@TempDate = DATEADD(DAY, @Count, @BalanceUpDay) -- copy data from New BUDate - 7 to New BUDate - 1
 			EXECUTE	dbo.Task_archive_rptStatement_Insert @TempDate;
 			SELECT	@count = @count + 1;
 		END
@@ -91,7 +91,7 @@ BEGIN;
 			CROSS APPLY	(
 				SELECT	TOP(1) r.CustId, r.WinlostDate
 				FROM	dbo.rptStatement AS r WITH (NOLOCK)
-				WHERE	r.WinlostDate = DATEADD(DAY, tmp.rn - 1, @MinArchiveDate)
+				WHERE	r.WinlostDate = DATEADD(DAY, tmp.rn - 1, @MinArchiveDate) -- Check data from Old BUDate to Old BUDate + 6 (= New BUDate - 1)
 			) AS r
 
 		IF NOT EXISTS (
@@ -108,7 +108,7 @@ BEGIN;
 		SELECT	@count = -7
 		WHILE	@count < 0
 		BEGIN
-			SELECT	@TempDate = DATEADD(DAY, @Count, @BalanceUpDay)
+			SELECT	@TempDate = DATEADD(DAY, @Count, @BalanceUpDay) -- delete data from New BUDate - 7 to New BUDate - 1
 			EXECUTE	dbo.Task_archive_rptStatement_Delete @TempDate;
 			SELECT	@count = @count + 1;
 		END
