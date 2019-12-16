@@ -21,6 +21,7 @@ AS
 		-20190722@Winnie: Remove site Asiabet rule 71 RedmineID:#117350
 		-20190801@Winnie: [AE88] Adjust Term for Sportsbook RedmineID:#117629
 		-20191105@Winnie: starsoccer - Adjust SB PT. RedmineID:#123273
+		-20191216@Winnie: [Wanbo,9wickets,9Wsports] Update PT sportbook. RedmineID:#125434
 	Param's Explanation:
 	
 */
@@ -466,7 +467,7 @@ BEGIN
 			SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
 			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member d WITH(NOLOCK)
 				INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
-			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT NOT IN(85,88,91,92.5,89,88.5)
+			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT NOT IN(85,88,91,92.5,89,88.5,50)
 				AND d.AgentID NOT IN(SELECT CustID FROM #Trade)		
 		END
 	END
