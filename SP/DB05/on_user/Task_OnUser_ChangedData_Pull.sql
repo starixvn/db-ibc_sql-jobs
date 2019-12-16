@@ -10,6 +10,7 @@ AS
 	created: 20191126@Lukas
 	Task: manually sync data of on_user tables in AA mode project
 	DB: DBONUSER.on_user
+	Original: 
 
 	Revisions:
 */
