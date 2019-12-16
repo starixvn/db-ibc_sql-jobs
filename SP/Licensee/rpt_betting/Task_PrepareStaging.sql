@@ -114,6 +114,8 @@ BEGIN
 			BEGIN CATCH
 				IF ERROR_NUMBER() = 2627  -- Violates Primary Key
 				BEGIN
+					DELETE dbo.bettrans WHERE winlostdate = @WinlostDate
+					
 					SET @NumberTryCount = @NumberTryCount + 1
 					SET @IsErr = 1
 				END
