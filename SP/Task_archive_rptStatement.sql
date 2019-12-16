@@ -9,6 +9,7 @@ AS
 	Revisions:
 		- 20180829@Billy:	Initial - [Redmine: #99955]
 		- 20191210@Percy:	Change condition check BU finish yet [RedmineID: #125272]
+		- 20191216@Percy:	Fix issue delete data on Friday [RedmineID: #125476]
 		
 	Developer's Notes:
 		- @Example:			NULL		- Explaination [DEFAULT]
@@ -90,7 +91,7 @@ BEGIN;
 			CROSS APPLY	(
 				SELECT	TOP(1) r.CustId, r.WinlostDate
 				FROM	dbo.rptStatement AS r WITH (NOLOCK)
-				WHERE	r.WinlostDate = DATEADD(DAY, tmp.rn - 1, @BalanceUpDay)
+				WHERE	r.WinlostDate = DATEADD(DAY, tmp.rn - 1, @MinArchiveDate)
 			) AS r
 
 		IF NOT EXISTS (
