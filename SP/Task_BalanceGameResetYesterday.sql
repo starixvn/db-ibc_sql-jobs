@@ -58,7 +58,7 @@ BEGIN
 		LEFT JOIN #WeeklyResetCustomer t ON bal.CustId = t.CustId
 	WHERE winlostdate <= @Yesterday AND bettype = @bettype
 		 AND t.CustId IS NULL
-	OPTION (MAXDOP 4)
+	OPTION (MAXDOP 4,RECOMPILE)
 		
 	IF @@ROWCOUNT < 50000
 		BREAK
@@ -73,7 +73,7 @@ BEGIN
 		LEFT JOIN #WeeklyResetCustomer t ON bal.CustId = t.CustId
 	WHERE winlostdate <= @Yesterday AND bettype = @bettype
 		 AND t.CustId IS NULL
-	OPTION (MAXDOP 4)
+	OPTION (MAXDOP 4,RECOMPILE)
 		
 	IF @@ROWCOUNT < 50000
 		BREAK
@@ -132,8 +132,4 @@ BEGIN
 	END
 END	
 DROP TABLE #WeeklyResetCustomer
-
-GRANT VIEW DEFINITION ON [dbo].[Task_BalanceGameResetYesterday] TO [vnteam] AS [dbo]
-GO
-
 
