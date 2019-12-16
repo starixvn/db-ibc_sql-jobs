@@ -1,3 +1,4 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_BalanceGameResetYesterday] 
 	@sporttype SMALLINT = -1
 	, @bettype SMALLINT = 1101
@@ -15,6 +16,7 @@ AS
 			- 20160201@Elodie: Apply new rule for auto reset of OneRNG 
 			- 20160204@Elodie: Add WinLossLimit setting type for DCS [Redmine: #49606]
 			- 20160718@Elodie: Reset data from yesterday backward [Redmine: #60993]
+			- 20191216@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 
 		Parameters Explanation:	
 */
@@ -23,10 +25,7 @@ CREATE TABLE #WeeklyResetCustomer(custid INT, srecommend INT)
 
 IF @bettype = 1101 --LiveCS
 BEGIN
-	INSERT INTO #WeeklyResetCustomer(custid, srecommend)
-	SELECT custid, srecommend
-	FROM CustDB.dbo.custinfo WITH (NOLOCK)
-	WHERE roleid = 1 AND MaxWinLiveCasino > 0 AND isAutoResetLiveCasino = 0
+	RETURN
 END
 ELSE IF @bettype IN (1701,2101) --GoldDeluxe & OneRNG
 BEGIN
@@ -132,4 +131,3 @@ BEGIN
 	END
 END	
 DROP TABLE #WeeklyResetCustomer
-
