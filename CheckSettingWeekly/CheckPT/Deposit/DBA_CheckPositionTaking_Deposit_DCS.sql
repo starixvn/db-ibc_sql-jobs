@@ -21,7 +21,7 @@ AS
 		-20190722@Winnie: Remove site Asiabet rule 71 RedmineID:#117350
 		-20190801@Winnie: [AE88] Adjust Term for Sportsbook RedmineID:#117629
 		-20191105@Winnie: starsoccer - Adjust SB PT. RedmineID:#123273
-		-20191216@Winnie: [Wanbo,9wickets,9Wsports] Update PT sportbook. RedmineID:#123273
+		-20191216@Winnie: [Wanbo,9wickets,9Wsports] Update PT sportbook. RedmineID:#125434
 	Param's Explanation:
 	
 */
