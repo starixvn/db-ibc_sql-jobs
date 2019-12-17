@@ -176,23 +176,9 @@ BEGIN
 
 	-- REMOTE-QUERY: Promo Summary via MySQL
 	BEGIN TRY
-		DECLARE @RemoteSQL VARCHAR(1000), @RemoteDate DATE
-
-		SET @RemoteDate = CAST(@startTransdate AS DATE)
-		-- GET: Promo setting
-		SELECT @RemoteSQL = '\
-			SELECT PromoId,StartDate,EndDate,OffPeakStartTime,OffPeakEndTime,CurrencyID,CouponCount
-			FROM OPENQUERY(DBPROMO,''SELECT p.PromoId,p.StartDate,p.EndDate,p.OffPeakStartTime,p.OffPeakEndTime,cs.CurrencyID,COUNT(1) AS CouponCount
-									FROM Promotion.NPHPromotion p
-									INNER JOIN Promotion.NPHPromoCurrSetting cs ON cs.PromoID = p.PromoId
-									LEFT JOIN Promotion.NPHPromoCoupon pc ON cs.PromoID = p.PromoId AND cs.CurrencyID = pc.CurrencyID
-									WHERE '''''+ CAST(@_PromoDate AS VARCHAR(10)) +''''' BETWEEN p.StartDate AND p.EndDate
-									GROUP BY p.PromoId,p.StartDate,p.EndDate,p.OffPeakStartTime,p.OffPeakEndTime,cs.CurrencyID;''
-							)'
-		--SELECT @RemoteSQL
-
+		--Promotion Setting
 		INSERT INTO @promoSetting(PromoId,StartDate,EndDate,OffPeakStartTime,OffPeakEndTime,CurrencyID,CouponCount)
-		EXEC (@RemoteSQL)
+		EXEC ('CALL Promotion.Intg_LA_GetPromoSettingByDate(''' + @_PromoDate + ''');') at DBPROMO
 
 		INSERT INTO @promoProgram(ProductID, PromoId, StartDate,EndDate,OffPeakStartTime,OffPeakEndTime)
 		SELECT DISTINCT @SPR_ProductID AS ProductID
