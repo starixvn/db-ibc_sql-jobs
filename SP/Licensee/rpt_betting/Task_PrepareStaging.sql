@@ -1,4 +1,4 @@
-/*<info serverAlias="DB053-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DB053_ONLY-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_PrepareStaging]
     @DateFrom		SMALLDATETIME = NULL
     ,@DateTo		SMALLDATETIME = NULL
@@ -64,7 +64,7 @@ BEGIN
 	IF @DateFrom IS NOT NULL AND @DateTo IS NOT NULL
 		SELECT @ToDate = CONVERT(VARCHAR(10), @DateTo, 120), @FromDate = CONVERT(VARCHAR(10), @DateFrom, 120)
 	ELSE
-		SELECT @ToDate = CONVERT(VARCHAR(10), DATEADD(DAY, -1, GETDATE()), 120), @FromDate = DATEADD(DAY, -3, @ToDate)
+		SELECT @ToDate = CONVERT(VARCHAR(10), DATEADD(DAY, -1, GETDATE()), 120), @FromDate = DATEADD(DAY, -2, @ToDate)
 
 	-- outright --
 	TRUNCATE TABLE dbo.outright

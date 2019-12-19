@@ -1,4 +1,4 @@
-/*<info serverAlias="DB053-bodb_LicenseeReport" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DB053_ONLY-bodb_LicenseeReport" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_PrepareStaging_Bettrans]
     @WinlostDate	SMALLDATETIME
 	,@ErrorMsg		VARCHAR(MAX) = '' OUTPUT

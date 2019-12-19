@@ -1,4 +1,4 @@
-/*<info serverAlias="DB053-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DB053_ONLY-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[GEN_rptBetting]
 	@date			SMALLDATETIME,
 	@date2			SMALLDATETIME = NULL,
