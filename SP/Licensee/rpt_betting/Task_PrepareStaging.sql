@@ -118,6 +118,7 @@ BEGIN
 					
 					SET @NumberTryCount = @NumberTryCount + 1
 					SET @IsErr = 1
+					SET @ErrorMsg = ERROR_MESSAGE()
 				END
 				ELSE
 				BEGIN
@@ -128,6 +129,13 @@ BEGIN
 					RETURN
 				END
 			END CATCH
+		END
+
+		IF @IsErr = 1
+		BEGIN
+			SET @ErrorMsg = 'Task_PrepareStaging failed on ' + CONVERT(VARCHAR(10), @WinlostDate, 120) + @ErrorMsg
+
+			RAISERROR(@ErrorMsg, 16, 1)
 		END
 
 		SELECT @WinlostDate = DATEADD(DAY, -1, @WinlostDate)

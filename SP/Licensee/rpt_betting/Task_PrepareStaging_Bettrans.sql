@@ -68,13 +68,11 @@ BEGIN
 		GROUP BY matchid
 		ORDER BY cnt ASC
 
-		DECLARE @__rowIndex INT = 0, @__tempCount INT, @__rowCount INT
+		DECLARE @__rowIndex INT = 1, @__tempCount INT, @__rowCount INT
 		WHILE EXISTS (SELECT TOP 1 1 FROM @__matchIds WHERE rowId = @__rowIndex)
 		BEGIN
 			DELETE FROM @__matchIdsByBatch
 			SET @__tempCount = 0
-			
-			SET @__rowIndex = @__rowIndex + 1
 
 			AddMoreMatch:
 			INSERT INTO @__matchIdsByBatch(matchid, cnt)
@@ -84,6 +82,8 @@ BEGIN
 			SET @__rowCount = @@ROWCOUNT
 			
 			SELECT @__tempCount = SUM(cnt) FROM @__matchIdsByBatch
+
+			SET @__rowIndex = @__rowIndex + 1
 			
 			IF @__tempCount < @batchCount AND @__rowCount > 0
 				GOTO AddMoreMatch
