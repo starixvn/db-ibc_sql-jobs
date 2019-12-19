@@ -134,21 +134,21 @@ BEGIN
 		   ,@CCTurnover MONEY
 		   ,@CCCustomerWl MONEY
 		   ,@CCBetCount MONEY
-		   ----SG
-		   ,@SGTurnover MONEY
-		   ,@SGCustomerWl MONEY
-		   ,@SGBetCount MONEY
 		   ----SPR
 		   ,@SPRTurnover MONEY
 		   ,@SPRCustomerWl MONEY
 		   ,@SPRBetCount MONEY
+		   ----SG
+		   ,@SGTurnover MONEY
+		   ,@SGCustomerWl MONEY
+		   ,@SGBetCount MONEY
 	         
 	DECLARE @tblSporttype AS TABLE(ProductPrefix VARCHAR (10),Sporttype INT)	   
 	INSERT INTO @tblSporttype (ProductPrefix, Sporttype)
 	SELECT DISTINCT ProductPrefix, Sporttype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SG', 'SPR')	
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG')	
 
 	INSERT INTO  @tblSporttype
 	SELECT 'SB', 0
@@ -530,21 +530,6 @@ BEGIN
 	SELECT @CCTurnover 		= ISNULL(@CCTurnover,0)
 		   ,@CCCustomerWl	= ISNULL(@CCCustomerWl,0)
 		   ,@CCBetCount 	= ISNULL(@CCBetCount,0)
-
-	----SG
-	SELECT  @SGTurnover=SUM(CASE 
-						WHEN @DrawFilter IN (2,3) THEN 
-							CASE WHEN b.StatusID = 111 THEN 0 WHEN b.StatusID IN (114,115) THEN 0.5 ELSE 1 END
-						ELSE 1
-					END * b.Turnover)
-			,@SGCustomerWl=SUM(b.winlost)
-			,@SGBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END) 
-	FROM @tblData b
-	WHERE ProductPrefix = 'SG'
-
-	SELECT @SGTurnover 		= ISNULL(@SGTurnover,0)
-		   ,@SGCustomerWl	= ISNULL(@SGCustomerWl,0)
-		   ,@SGBetCount 	= ISNULL(@SGBetCount,0)
 		   
 	----SPR
 	SELECT  @SPRTurnover=SUM(CASE 
@@ -561,7 +546,20 @@ BEGIN
 		   ,@SPRCustomerWl	= ISNULL(@SPRCustomerWl,0)
 		   ,@SPRBetCount 	= ISNULL(@SPRBetCount,0)
 
+	----SG
+	SELECT  @SGTurnover=SUM(CASE 
+						WHEN @DrawFilter IN (2,3) THEN 
+							CASE WHEN b.StatusID = 111 THEN 0 WHEN b.StatusID IN (114,115) THEN 0.5 ELSE 1 END
+						ELSE 1
+					END * b.Turnover)
+			,@SGCustomerWl=SUM(b.winlost)
+			,@SGBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END) 
+	FROM @tblData b
+	WHERE ProductPrefix = 'SG'
 
+	SELECT @SGTurnover 		= ISNULL(@SGTurnover,0)
+		   ,@SGCustomerWl	= ISNULL(@SGCustomerWl,0)
+		   ,@SGBetCount 	= ISNULL(@SGBetCount,0)
 	-- Result
 
 	SELECT 1 AS Id, @SbTurnover AS Sb
@@ -588,8 +586,8 @@ BEGIN
 				  , @LTTurnover  AS LT
 				  , @PPTurnover  AS PP
 				  , @CCTurnover  AS CC
-				  , @SGTurnover  AS SG
 				  , @SPRTurnover  AS SPR
+				  , @SGTurnover  AS SG
 			  
 	UNION
 	SELECT 2, @SbCustomerWl
@@ -616,8 +614,8 @@ BEGIN
 			, @LTCustomerWl
 			, @PPCustomerWl
 			, @CCCustomerWl
-			, @SGCustomerWl
 			, @SPRCustomerWl
+			, @SGCustomerWl
 	UNION
 	SELECT 3, @SbBetCount
 			, @RbBetCount
@@ -643,8 +641,8 @@ BEGIN
 			, @LTBetCount
 			, @PPBetCount
 			, @CCBetCount
-			, @SGBetCount
 			, @SPRBetCount
+			, @SGBetCount
 
 	SET NOCOUNT OFF
 END

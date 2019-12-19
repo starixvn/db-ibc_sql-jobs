@@ -25,6 +25,7 @@ Revisions:
 	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 	- 20191106@Amanda: Integrate NPHP [RedmineID: #120333]
 	- 20191204@Amanda: Change name of NPH Promotion to Saba Promotion [Redmine: #124612]
+	- 20191218@Amanda: Integrate Spadegaming [RedmineID: #124103]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -140,13 +141,17 @@ DECLARE --SB
 		,@SPRTurnover MONEY
 		,@SPRCustomerWl MONEY
 		,@SPRBetCount MONEY
+		----SG
+		,@SGTurnover MONEY
+		,@SGCustomerWl MONEY
+		,@SGBetCount MONEY
 
 	DECLARE @tblBettype AS TABLE(ProductPrefix VARCHAR (10),Bettype INT)	   
 	INSERT INTO @tblBettype (ProductPrefix,Bettype)
 	SELECT DISTINCT ProductPrefix,bettype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC','SPR')	
+	WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC','SPR','SG')	
 	  
 	-- Data Source 
 	DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),Status INT, Turnover MONEY, Winloss MONEY,BetCount INT)	
@@ -530,7 +535,22 @@ DECLARE --SB
 
 	SELECT @SPRTurnover 		= ISNULL(@SPRTurnover,0)
 		   ,@SPRCustomerWl	= ISNULL(@SPRCustomerWl,0)
-		   ,@SPRBetCount 	= ISNULL(@SPRBetCount,0)	
+		   ,@SPRBetCount 	= ISNULL(@SPRBetCount,0)
+		   
+	----SG
+	SELECT  @SGTurnover=SUM(CASE 
+						WHEN @DrawFilter IN (2,3) THEN 
+							CASE WHEN b.Status = 111 THEN 0 WHEN b.Status IN (114,115) THEN 0.5 ELSE 1 END
+						ELSE 1
+					END * b.Turnover)
+			,@SGCustomerWl=SUM(b.WinLoss)
+			,@SGBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
+	FROM @tblData b
+	WHERE ProductPrefix = 'SG'
+
+	SELECT @SGTurnover 		= ISNULL(@SGTurnover,0)
+		   ,@SGCustomerWl	= ISNULL(@SGCustomerWl,0)
+		   ,@SGBetCount 	= ISNULL(@SGBetCount,0)
 -- Result
 
 SELECT 1 AS Id, @SbTurnover AS Sb
@@ -558,6 +578,7 @@ SELECT 1 AS Id, @SbTurnover AS Sb
 			  , @PPTurnover  AS PP
 			  , @CCTurnover  AS CC
 			  , @SPRTurnover  AS SPR
+			  , @SGTurnover  AS SG
 UNION
 SELECT 2, @SbCustomerWl
 		, @RbCustomerWl
@@ -584,6 +605,7 @@ SELECT 2, @SbCustomerWl
 		, @PPCustomerWl
 		, @CCCustomerWl
 		, @SPRCustomerWl
+		, @SGCustomerWl
 UNION
 SELECT 3, @SbBetCount
 		, @RbBetCount
@@ -610,6 +632,7 @@ SELECT 3, @SbBetCount
 		, @PPBetCount
 		, @CCBetCount
 		, @SPRBetCount
+		, @SGBetCount
 
 SET NOCOUNT OFF
 END
