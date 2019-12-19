@@ -14,6 +14,8 @@ AS
 
 	Revisions:
 		- 20190906@Lukas: Initialize SP [RedmineID: #115377]
+		- 20191210@Bobby: Integrate Saba Promotion  [RedmineID: #115377]
+			+ Added step 6.94: DBLIC.bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14
 */
 BEGIN
 	DECLARE @errorCode INT,
@@ -180,6 +182,14 @@ BEGIN
 		END TRY
 		BEGIN CATCH
 			SET @errmsg = 'step 6.93' + '--' + ERROR_MESSAGE()			
+			RAISERROR(@errmsg,16,1)
+		END CATCH
+
+		BEGIN TRY
+			EXEC DBLIC.bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14 @PromoDate = @winlostdate, @IsCheckDataOnly = 0
+		END TRY
+		BEGIN CATCH
+			SET @errmsg = 'step 6.94' + '--' + ERROR_MESSAGE()			
 			RAISERROR(@errmsg,16,1)
 		END CATCH
 
