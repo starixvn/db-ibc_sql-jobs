@@ -43,8 +43,8 @@ BEGIN
 			INSERT INTO @CBTicket (transid, CashInAmount, CashOutAmount, WinPrizeAmount, transdesc)
 			SELECT	b.transid
 					,bm.CashInAmount
-					,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN bm.CashOutAmount ELSE 0 END AS CashOutAmount
-					,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN bm.WinPrizeAmount ELSE 0 END AS WinPrizeAmount
+					,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN 0 ELSE bm.CashOutAmount END AS CashOutAmount
+					,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN 0 ELSE bm.WinPrizeAmount END AS WinPrizeAmount
 					,CONVERT(VARCHAR(500), bm.transdesc)
 			FROM bodb02.dbo.bettrans b WITH (NOLOCK) 
 				CROSS APPLY (
@@ -199,8 +199,8 @@ BEGIN
 			INSERT INTO @CBTicket (transid, CashInAmount, CashOutAmount, WinPrizeAmount, transdesc)
 			SELECT	b.transid
 					,bm.CashInAmount
-					,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN bm.CashOutAmount ELSE 0 END AS CashOutAmount
-					,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN bm.WinPrizeAmount ELSE 0 END AS WinPrizeAmount
+					,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN 0 ELSE bm.CashOutAmount END AS CashOutAmount
+					,CASE WHEN b.statusID = 112 AND b.winlost - b.actual_stake < 0 THEN 0 ELSE bm.WinPrizeAmount END AS WinPrizeAmount
 					,CONVERT(VARCHAR(500), bm.transdesc)
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK) 
 				CROSS APPLY (
