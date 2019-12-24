@@ -1,4 +1,4 @@
-/*<info serverAlias="DBAGE-bodb_PlaytechCS" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_PlaytechCS" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_ReIndex]
 AS
 /*
