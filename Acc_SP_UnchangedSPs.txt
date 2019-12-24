@@ -1,2 +1,0 @@
-SP\CS_HeadlineBalance\Task_CS_HeadlineBalance14.sql
-SP\CS_HeadlineBalance\Task_CS_HeadlineBalance_Add.sql

@@ -40,6 +40,7 @@ AS
 	- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_active [RedmineID: #103656]
 	- 20191022@Amanda: Integrate NPH Promotion [RedmineID: #120333]
 	- 20191122@Amanda: Integrate PP Tournament Prize [RedmineID: #123804]
+	- 20191219@Amanda: Add betfrom v [RedmineID: #125553]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */  
@@ -158,7 +159,7 @@ BEGIN
 	 ,CASE   
 	  WHEN bettrans.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END AS isMobile   
 	 ,CASE      
-	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t') THEN bettrans.betfrom ELSE '' END AS betfrom   
+	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v') THEN bettrans.betfrom ELSE '' END AS betfrom   
 	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt	 
 	FROM  
@@ -223,7 +224,7 @@ BEGIN
 	 ,CASE   
 	  WHEN bettrans.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END  
 	 ,CASE      
-	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t') THEN bettrans.betfrom ELSE '' END
+	  WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v') THEN bettrans.betfrom ELSE '' END
 	 OPTION (MAXDOP 8)
 
 	--Agent Level (sum on member)  
