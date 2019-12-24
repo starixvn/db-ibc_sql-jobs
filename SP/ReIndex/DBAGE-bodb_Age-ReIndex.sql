@@ -2,6 +2,10 @@
 ALTER PROCEDURE [dbo].[DBA_ReIndex]
 AS
 /*
+	Created:
+	Task: REORGANIZE
+
+	Revisions:
 	-- Joe : reorganize all index with fragment > 30%
 	-- 20140428@Lukas: join sys.schemas to avoid hardcode [dbo] schemas
 	-- 20170220@Patrick: retry it when deadlock case
