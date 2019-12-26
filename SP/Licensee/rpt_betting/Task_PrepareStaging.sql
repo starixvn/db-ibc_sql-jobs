@@ -1,4 +1,4 @@
-/*<info serverAlias="DB053_ONLY-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_PrepareStaging]
     @DateFrom		SMALLDATETIME = NULL
     ,@DateTo		SMALLDATETIME = NULL
