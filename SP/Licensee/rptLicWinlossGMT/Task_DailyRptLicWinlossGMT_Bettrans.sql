@@ -20,6 +20,7 @@ AS
 	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 	- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_active [RedmineID: #103656]
 	- 20191219@Amanda: Add betfrom v [RedmineID: #125553]
+	- 20191226@Vickie: Add platform 0 [RedmineID: #125824]
 	
 	EXEC Task_DailyRptLicWinlossGMT_Bettrans '2017-11-30'
 */  
@@ -141,7 +142,7 @@ BEGIN
 				,CASE   
 					WHEN b.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END AS isMobile   
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v') THEN b.betfrom ELSE '' END AS betfrom   		
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0') THEN b.betfrom ELSE '' END AS betfrom   		
 			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 				LEFT JOIN bodb02.dbo.Match m WITH (NOLOCK)
 					ON m.MatchId = b.MatchId
@@ -190,7 +191,7 @@ BEGIN
 				,CASE   
 					WHEN b.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END  
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v') THEN b.betfrom ELSE '' END
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0') THEN b.betfrom ELSE '' END
 
 
 			--Agent Level (sum on member)  
