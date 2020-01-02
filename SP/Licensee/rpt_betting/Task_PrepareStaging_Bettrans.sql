@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20191205@Percy: Split code from Task_PrepareStaging and Enhance performance [RedmineID: #125028]
+		- 20200102@Percy: Wrong update BA tickets [RedmineID: #126419]
 */
 
 BEGIN
@@ -325,7 +326,7 @@ BEGIN
     SELECT b.transid
     FROM dbo.bettrans b (NOLOCK)
 	    INNER JOIN bodb_Licensee.dbo.LicenseeBAHistory h (NOLOCK) ON b.custid = h.custid AND (transdate BETWEEN OnDate AND ISNULL(OffDate, @CurrentDate))
-    WHERE b.bettype < 31 OR (b.bettype BETWEEN 121 AND 999) OR (b.bettype BETWEEN 1301 AND 1399) OR (b.bettype BETWEEN 9001 AND 9399) OR b.bettype = 38
+    WHERE (b.bettype < 31 OR (b.bettype BETWEEN 121 AND 999) OR (b.bettype BETWEEN 1301 AND 1399) OR (b.bettype BETWEEN 9001 AND 9399) OR b.bettype = 38)
 	    AND tpositiontaking = 0
 		AND b.bettype NOT IN (901, 902, 903, 904, 911, 912, 913, 914)
 
