@@ -22,7 +22,8 @@ AS
 		- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
 		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 		- 20191219@Amanda: Add betfrom v [RedmineID: #125553]
-	
+		- 20191226@Vickie: Add platform 0 [RedmineID: #125824]
+
 	EXEC Task_DailyRptLicWinlossGMT_BettransBK '2017-11-01'
 */  
 BEGIN
@@ -143,7 +144,7 @@ BEGIN
 				,CASE   
 					WHEN b.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END AS isMobile   
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v') THEN b.betfrom ELSE '' END AS betfrom   		
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0') THEN b.betfrom ELSE '' END AS betfrom   		
 			FROM bodb_Archive.dbo.bettrans_bk b WITH (NOLOCK)
 				LEFT JOIN bodb_Archive.dbo.Match_bk m WITH (NOLOCK)
 					ON m.MatchId = b.MatchId
@@ -192,7 +193,7 @@ BEGIN
 				,CASE   
 					WHEN b.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END  
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v') THEN b.betfrom ELSE '' END
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0') THEN b.betfrom ELSE '' END
 
 			--Agent Level (sum on member)  
 			INSERT INTO dbo.rptLicWinlossGMTTmp (  
