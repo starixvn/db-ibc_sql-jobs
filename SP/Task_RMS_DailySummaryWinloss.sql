@@ -249,9 +249,9 @@ SET NOCOUNT ON
 				WHEN bettype=38 THEN 4
 				ELSE 0 END AS ParlayType
 		,SUM(scomm)
-		,SUM(scomm * ISNULL(b.epositiontaking, 0) / (1 - tpositiontaking))
-		,SUM(stake * ISNULL(b.epositiontaking, 0))
-		,SUM(-(winlost-stake)*ISNULL(b.epositiontaking, 0))				
+		,SUM(scomm * CAST(ISNULL(b.epositiontaking, 0) AS DECIMAL(9,8)) / (1 - tpositiontaking))
+		,SUM(stake * CAST(ISNULL(b.epositiontaking, 0) AS DECIMAL(9,8)))
+		,SUM(-(winlost-stake)*CAST(ISNULL(b.epositiontaking, 0) AS DECIMAL(9,8)))				
 	FROM #tmpbettrans b														
 	GROUP BY winlostdate, b.custid, transid2, statusid, username, currency, actualrate,
 				CASE WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam)
