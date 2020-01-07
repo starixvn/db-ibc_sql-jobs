@@ -138,15 +138,15 @@ BEGIN
 	END
 	ELSE IF @tableName = 'CS_UserLog_Login'
 	BEGIN
-		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_Login(LogID, UserID, RoleID, SubAccID, ServerID, IP, LogDate, ActionID, Doing, DomainName, BrowserName, Platform, CountryCode, Duration, username2)
-		SELECT LogID, UserID, RoleID, SubAccID, ServerID, IP, LogDate, ActionID, Doing, DomainName, BrowserName, Platform, CountryCode, Duration, username2
+		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_Login(LogID, UserID, RoleID, SubAccID, ServerID, IP, LogDate, ActionID, Doing, DomainName, BrowserName, Platform, CountryCode, Duration, username2,CreatedDate)
+		SELECT LogID, UserID, RoleID, SubAccID, ServerID, IP, LogDate, ActionID, Doing, DomainName, BrowserName, Platform, CountryCode, Duration, username2,CreatedDate
 		FROM dbo.CS_UserLog_Login l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.userid = deleted.custid)
 	END	
 	ELSE IF @tableName = 'CS_UserLog_Credit'
 	BEGIN
-		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_Credit(LogID, UserID, CustID, SubAccID, LogDate, OldValue, NewValue, IP, Doing, ActionID, ActualRate)
-		SELECT LogID, UserID, CustID, SubAccID, LogDate, OldValue, NewValue, IP, Doing, ActionID, ActualRate
+		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_Credit(LogID, UserID, CustID, SubAccID, LogDate, OldValue, NewValue, IP, Doing, ActionID, ActualRate,CreatedDate)
+		SELECT LogID, UserID, CustID, SubAccID, LogDate, OldValue, NewValue, IP, Doing, ActionID, ActualRate,CreatedDate
 		FROM dbo.CS_UserLog_Credit l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.CustID = deleted.custid)
 	END	

@@ -83,7 +83,8 @@ BEGIN
 				IP,
 				Doing,
 				ActionID,
-				ActualRate
+				ActualRate,
+				CreatedDate
 			)  
 			SELECT	UserID,
 					CustID,
@@ -94,7 +95,8 @@ BEGIN
 					IP,
 					Doing,
 					ActionID,
-					ActualRate
+					ActualRate,
+					GETDATE()
 			FROM @tmpLog
 		END TRY
 		BEGIN CATCH
