@@ -12,6 +12,7 @@ AS
 	
 	Revision:
 		- 20181114@Johnson: create sp [redmine: #105319]
+		- 20190530@Paul: Add [CustomerLog_MsgProcess_CS_UserLog_Credit] [Redmine: #113198]
 */
 BEGIN
 	DECLARE @log xml 
@@ -96,5 +97,16 @@ BEGIN
 														@MsgType = @message_type_name,
 														@IsExistingTarget= @IsExistingTarget
 	END	
+
+	IF @message_type_name = 'MessageType_CustomerLog_CS_UserLog_Credit'
+	BEGIN
+		SET @log = (SELECT message_body AS 'node()'
+				  FROM @Messages					
+				   FOR XML PATH (''), ROOT)
+			
+		EXEC [sb].[CustomerLog_MsgProcess_CS_UserLog_Credit] @log = @log,
+														@MsgType = @message_type_name,
+														@IsExistingTarget= @IsExistingTarget
+	END
 END
 GO

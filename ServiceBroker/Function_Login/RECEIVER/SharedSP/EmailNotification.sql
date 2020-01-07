@@ -1,9 +1,11 @@
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROC sb.EmailNotification
 (
 	@QueueName VARCHAR (200) = 'Queue_DBLOG'
 	, @message_body VARCHAR(MAX)
 	, @error_message VARCHAR(MAX)
-	, @funtionName VARCHAR(200) = 'Login'
+	, @functionName VARCHAR(200) = 'Login'
 )
 AS
 /*
@@ -12,6 +14,9 @@ AS
 	Task: Apply Service Broker for Writing Log - [Redmine: 65806]
 	DB: DBLOG/bodb_CustomerLog; DBLOG_BK (DB054)/bodb_CustomerLog
 	
+	Revision:
+		- 20161027@Helen: Apply Service Broker for Writing Log [Redmine: #65806]
+		- 20190530@Paul: Correct param name [Redmine: #113198]
 */
 BEGIN
 
@@ -31,7 +36,7 @@ BEGIN
 	SET @subject = 'CRITICAL: ' + @@SERVERNAME + ' - Service broker problem notification'
 
 	SET @body = 'Hi There,
-				Funtion Name: ' + @funtionName + '
+				Funtion Name: ' + @functionName + '
 				Queue status: ' + @qstatus + '
 				ERROR: ' + @error_message + ' 
 				
@@ -39,12 +44,26 @@ BEGIN
 					SELECT TOP(5) * FROM sb.FailedMessageMonitoring WITH(NOLOCK) ORDER BY CreatedDate DESC 
 				*/
 			'
-	EXEC msdb.dbo.sp_send_dbmail
-		@recipients=N'lukas.luu@nexcel.vn',
-		@body=@body,
-		@sensitivity ='Personal',
-		@importance ='High',
-		@copy_recipients ='lukas.luu@starixsoft.com',
-		@subject =@subject,
-		@profile_name =@profile_name;
+	IF @@SERVERNAME IN ('DB215','DB231')
+	BEGIN
+		EXEC msdb.dbo.sp_send_dbmail
+			@recipients=N'elodie.ho@starixsoft.com',
+			@body=@body,
+			@sensitivity ='Personal',
+			@importance ='High',
+			--@copy_recipients ='lukas.luu@starixsoft.com',
+			@subject =@subject,
+			@profile_name =@profile_name;
+	END
+	ELSE
+	BEGIN
+		EXEC msdb.dbo.sp_send_dbmail
+			@recipients=N'pontus@starixsoft.com',
+			@body=@body,
+			@sensitivity ='Personal',
+			@importance ='High',
+			--@copy_recipients ='lukas.luu@starixsoft.com',
+			@subject =@subject,
+			@profile_name =@profile_name;
+	END
 END		
