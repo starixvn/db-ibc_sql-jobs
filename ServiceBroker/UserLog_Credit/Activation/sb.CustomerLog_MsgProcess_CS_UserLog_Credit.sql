@@ -12,6 +12,7 @@ ALTER PROCEDURE [sb].[CustomerLog_MsgProcess_CS_UserLog_Credit]
 
 	Revision:
 		- 20190530@Paul: Initial SP [Redmine: #113198]
+		- 20200107@Elodie: Add CreateDate column [Redmine: #113198]
 */
 AS
 BEGIN
