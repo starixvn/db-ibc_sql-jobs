@@ -1,4 +1,5 @@
-ALTER PROCEDURE [dbo].[Task_CheckWinlostdate_Consistency] @ErrMessage VARCHAR(512) = '' OUTPUT
+/*<info serverAlias="DBTP-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+CREATE PROCEDURE [dbo].[Task_CheckWinlostdate_Consistency] @ErrMessage VARCHAR(512) = '' OUTPUT
 AS
 /*
 	Created: 20150216@Lukas
@@ -6,106 +7,129 @@ AS
 	DB: DBTP/bodb02
 	Revision:
 		- 20160624@Patrick: Move SP to DBTP & Rearrange code [Redmine: #59643]
+		- 20170417@Patrick: Due to OPS team perform change winlostdate at beginning a day as result data inconsistency between maninDB and replicatedDB
+			so, we will skip the first the schedule for the job.
+		- 20170809@Patrick: Exclude bettype 2799 for BetradarVS
+		- 20200110@Patrick: Add more rule check winlostdate and eventdate is missmatch [Redmine: #126759]
 		
 */
 BEGIN
 	SET NOCOUNT ON
-
-	DECLARE @winlostdate SMALLDATETIME, @rowcount INT
-	SELECT @winlostdate = DATEADD(DAY, - 1, CONVERT(VARCHAR(20), GETDATE(), 112)), @rowcount = 0, @ErrMessage = ''
-	DECLARE @NOTbettype TABLE (bettype SMALLINT)
-
-	INSERT INTO @NOTbettype
-	SELECT 10 --- outright
-		--UNION ALL
-		--SELECT 18000 -- Colossus Bet
-
-	-- CHECK ON DB054
-	SELECT DISTINCT 'DB054' svr, matchid
-	FROM DB054.bodb02.dbo.bettrans WITH (NOLOCK)
-	WHERE winlostdate >= @winlostdate
-		AND matchid > 1000 -- (exclude 29, 255)
-		AND bettype NOT IN (
-			SELECT bettype
-			FROM @NOTbettype
-			)
-	GROUP BY matchid
-	HAVING MIN(winlostdate) <> MAX(winlostdate)
-	OPTION (MAXDOP 4)
-
-	SET @rowcount = @rowcount + @@ROWCOUNT
-
-	---- check on DB05
-	SELECT DISTINCT 'DB05' svr, matchid
-	FROM DB05.bodb02.dbo.bettrans WITH (NOLOCK)
-	WHERE winlostdate >= @winlostdate
-		AND matchid > 1000 -- (exclude 29, 255)
-		AND bettype NOT IN (
-			SELECT bettype
-			FROM @NOTbettype
-			)
-	GROUP BY matchid
-	HAVING MIN(winlostdate) <> MAX(winlostdate)
-
-	SET @rowcount = @rowcount + @@ROWCOUNT
-
-	-- check on DB052
-	SELECT DISTINCT 'DB052' svr, matchid
-	FROM DB052.bodb02.dbo.bettrans WITH (NOLOCK)
-	WHERE winlostdate >= @winlostdate
-		AND matchid > 1000 -- (exclude 29, 255)
-		AND bettype NOT IN (
-			SELECT bettype
-			FROM @NOTbettype
-			)
-	GROUP BY matchid
-	HAVING MIN(winlostdate) <> MAX(winlostdate)
-
-	SET @rowcount = @rowcount + @@ROWCOUNT
-
-	-- check on DB053
-	SELECT DISTINCT 'DB053' svr, matchid
-	FROM DB053.bodb02.dbo.bettrans WITH (NOLOCK)
-	WHERE winlostdate >= @winlostdate
-		AND matchid > 1000 -- (exclude 29, 255)
-		AND bettype NOT IN (
-			SELECT bettype
-			FROM @NOTbettype
-			)
-	GROUP BY matchid
-	HAVING MIN(winlostdate) <> MAX(winlostdate)
-
-	SET @rowcount = @rowcount + @@ROWCOUNT
-
-	-- check on DB06
-	SELECT DISTINCT 'DB06' svr, matchid
-	FROM DB06.bodb02.dbo.bettrans WITH (NOLOCK)
-	WHERE winlostdate >= @winlostdate
-		AND matchid > 1000 -- (exclude 29, 255)
-		AND bettype NOT IN (
-			SELECT bettype
-			FROM @NOTbettype
-			)
-	GROUP BY matchid
-	HAVING MIN(winlostdate) <> MAX(winlostdate)
-
-	SET @rowcount = @rowcount + @@ROWCOUNT
-
-	-- check on DBTP
-	--select distinct 'DBTP' svr, matchid 
-	--from DBTP.bodb02.dbo.bettrans with(nolock)
-	--where winlostdate >= @winlostdate
-	--	and matchid > 1000 -- (exclude 29, 255)
-	--	and bettype not in (SELECT bettype FROM @NOTbettype)	
-	--group by matchid 
-	--having MIN(winlostdate) <> MAX(winlostdate)
-	--set @rowcount = @rowcount + @@ROWCOUNT
 	
-	IF @rowcount <> 0
-	BEGIN
-		SET @ErrMessage = 'Got tickets have wrong winlostdate.'
+	DECLARE @winlostdate SMALLDATETIME,
+			@rowcount INT,
+			@__ignoreBettypeList VARCHAR(2000),
+			@__sqlCmd NVARCHAR(MAX) = '',
+			@__query NVARCHAR(MAX) = ''
+			
+	SELECT  @winlostdate = DATEADD(DAY,-1,CONVERT(VARCHAR(20),GETDATE(),112)),
+			@rowcount = 0
 
-		--raiserror(N'got tickets have wrong winlostdate.',16,1)
-		RETURN
-	END
+	SET @__ignoreBettypeList = '10,1231,1232,1233,1237,1238,31,32,33,2799'
+
+	SET @__query = N''
+	SET @__query = N'select @@ServerName svr, matchid 
+	from bodb02.dbo.bettrans with(nolock)
+	where winlostdate >= @winlostdate
+		and matchid > 1000
+		and bettype not in ('+ @__ignoreBettypeList +')	
+	group by matchid 
+	having MIN(winlostdate) <> MAX(winlostdate)'
+
+	--//DBTP
+	SET @__sqlCmd = N''
+	SET @__sqlCmd = N'EXECUTE bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
+	SET @rowcount = @rowcount + @@ROWCOUNT
+	IF @rowcount > 0
+		GOTO EndFlow
+
+	--//DB06
+	SET @__sqlCmd = N''
+	SET @__sqlCmd = N'EXECUTE DBACC.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
+	SET @rowcount = @rowcount + @@ROWCOUNT
+	IF @rowcount > 0
+		GOTO EndFlow
+	
+	--//DB05
+	SET @__sqlCmd = N''
+	SET @__sqlCmd = N'EXECUTE DB05.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
+	SET @rowcount = @rowcount + @@ROWCOUNT
+	IF @rowcount > 0
+		GOTO EndFlow
+	
+	--//DB052
+	SET @__sqlCmd = N''
+	SET @__sqlCmd = N'EXECUTE DBEXT.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
+	SET @rowcount = @rowcount + @@ROWCOUNT
+	IF @rowcount > 0
+		GOTO EndFlow
+	
+	--//DB053
+	SET @__sqlCmd = N''
+	SET @__sqlCmd = N'EXECUTE DBAGE.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
+	SET @rowcount = @rowcount + @@ROWCOUNT
+	IF @rowcount > 0
+		GOTO EndFlow
+	
+	--//check winlostdate and eventdate is diff
+	SET @__query = N''
+	SET @__query = N'select @@ServerName svr, b.matchid 
+	from bodb02.dbo.bettrans b with(nolock)
+	inner join bodb02.dbo.match m with(nolock) on b.matchid = m.matchid
+	where b.winlostdate >= @winlostdate
+		and b.matchid > 1000
+		and b.bettype not in ('+ @__ignoreBettypeList +')	
+	group by b.matchid 
+	having MIN(m.eventdate) <> MAX(b.winlostdate)'
+
+	--//DBTP
+	SET @__sqlCmd = N''
+	SET @__sqlCmd = N'EXECUTE bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
+	SET @rowcount = @rowcount + @@ROWCOUNT
+	IF @rowcount > 0
+		GOTO EndFlow
+
+	--//DB06
+	SET @__sqlCmd = N''
+	SET @__sqlCmd = N'EXECUTE DBACC.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
+	SET @rowcount = @rowcount + @@ROWCOUNT
+	IF @rowcount > 0
+		GOTO EndFlow
+	
+	--//DB05
+	SET @__sqlCmd = N''
+	SET @__sqlCmd = N'EXECUTE DB05.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
+	SET @rowcount = @rowcount + @@ROWCOUNT
+	IF @rowcount > 0
+		GOTO EndFlow
+	
+	--//DB052
+	SET @__sqlCmd = N''
+	SET @__sqlCmd = N'EXECUTE DBEXT.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
+	SET @rowcount = @rowcount + @@ROWCOUNT
+	IF @rowcount > 0
+		GOTO EndFlow
+	
+	--//DB053
+	SET @__sqlCmd = N''
+	SET @__sqlCmd = N'EXECUTE DBAGE.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
+	SET @rowcount = @rowcount + @@ROWCOUNT
+	IF @rowcount > 0
+		GOTO EndFlow
+
+	EndFlow:
+	IF @rowcount > 0
+		RAISERROR(N'got tickets have wrong winlostdate.', 16, 1)
+
 END
+GO
