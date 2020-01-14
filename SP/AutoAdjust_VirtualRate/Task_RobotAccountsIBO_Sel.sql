@@ -1,4 +1,4 @@
-/*<info serverAlias="DBONUSER-ON-USER" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBONUSER-ON_USER" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_RobotAccountsIBO_Sel]		
 AS
 /*
