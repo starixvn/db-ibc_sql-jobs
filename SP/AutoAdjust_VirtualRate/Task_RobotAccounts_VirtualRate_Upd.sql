@@ -12,8 +12,13 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @CustIDs VARCHAR(MAX)	
-	CREATE TABLE #tblCust (CustID INT PRIMARY KEY,isBA BIT DEFAULT 0, isFinished BIT DEFAULT 0)
+	DECLARE @startRun datetime  
+	DECLARE @endRun datetime  
+	DECLARE @duration int 
+		
+	CREATE TABLE #tblCust (CustID INT PRIMARY KEY,isBA BIT DEFAULT 0, isFinished BIT DEFAULT 0, isLog BIT DEFAULT 0)
+	
+	SET @startRun = GETDATE() 
 	
 	INSERT INTO #tblCust(custid)
 	EXEC DBONUSER.ON_USER.dbo.Task_RobotAccountsIBO_Sel
@@ -108,5 +113,46 @@ BEGIN
 		WAITFOR DELAY '0:0:0.28'
 		
 	END	
+	
+	--LOGGING
+	DECLARE @LogSPData VARCHAR(MAX) = ''
+	
+	SELECT @LogSPData =
+		(
+			SELECT SportType
+				,BetType
+				,IsLive
+				,VirtualMultiplier
+			FROM @tblVirtualrate
+			ORDER BY sporttype,isLive DESC,bettype
+			FOR XML  RAW('s')
+		)
+	
+	SELECT @LogSPData = '<R>' + @LogSPData + '</R>'
+	
+	SET @endRun = GETDATE()  
+	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun) 
+	
+	DECLARE @custid INT  
+	  
+	WHILE(1=1)
+	BEGIN
+		UPDATE TOP (1) t
+		SET @custid = custid,
+			isLog = 1	
+		FROM #tblCust t
+		WHERE isLog = 0
+			AND isBA = 0
+		
+		IF @@ROWCOUNT = 0
+			BREAK;
+		
+		EXEC Acc_WriteLog_UserLog_RunSP_Wrapper
+			@UserID = 862400,--Starix2
+			@CustID = @CustID,
+			@ActionID = 810,
+			@TrackingValue = @LogSPData,
+			@duration = @duration	
+	END
 END
 GO
