@@ -48,7 +48,7 @@ BEGIN
 		IF @IsDebug = 1
 			RAISERROR (@msg, 0, 1,@start, @winlostdate_tmp) WITH NOWAIT
 		-- Result
-		INSERT INTO dbo.TOControl_Setting_bk (CustID, matchid, MaxTurnOver, TotalTurnOver, IsNotified, HouseTurnover, PercentLevel, IsGroupHeadLine,winlostdate)
+		INSERT INTO dbo.TOControl_Setting_bk (CustID, matchid, MaxTurnOver, TotalTurnOver, IsNotified, HouseTurnover, PercentLevel, IsGroupHeadLine,winlostdate, ProfileID)
 		EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX), @winlostdate datetime', @query, @winlostdate
 			
 		SET @start = @start + 1
