@@ -15,6 +15,7 @@ AS
 		- 20190809@Winnie:	Fix Rule 326 - [Redmine: #118471]
 		- 20190916@Winnie:	Remove check MuayThai - [Redmine: #120271]
 		- 20191122@Johnson: revise sp [redmine:#123732]
+		- 20200116@Johnson: remove AG [redmine:#127252]
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (317->328)  
@@ -962,6 +963,8 @@ BEGIN
 		
 	END
 	
+	--20200116@Johnson: remove rule 328 from checking
+	/*
 	IF @RuleId IN (0,328)  
 	BEGIN
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
@@ -1005,6 +1008,7 @@ BEGIN
 				AND cs.sporttype = 161
 		END		
 	END
+	*/
 	
 	TRUNCATE TABLE #Dep_CustSetting_Super
 	TRUNCATE TABLE #Dep_CustSetting_Master
@@ -1015,6 +1019,8 @@ BEGIN
 
 	---------------------------------------------------------------------------------
 	--BEGIN Dep_CustSettingGame
+	--20200116@Johnson: remove AG checking
+	/*
 	INSERT INTO #Dep_CustSetting_Super(custid,SporttypeID ,BettypeID)
 	SELECT cs.custid,cs.sporttype,cs.bettype
 	FROM CheckCustDB.dbo.Dep_CustSettingGame cs WITH(NOLOCK) 			
@@ -1103,7 +1109,7 @@ BEGIN
 	TRUNCATE TABLE #Dep_CustSetting_Master
 	TRUNCATE TABLE #Dep_CustSetting_Agent
 	TRUNCATE TABLE #tmpCust
-	
+	*/
 	--End Dep_CustSettingGame
 	---------------------------------------------------------------------------------
 		
