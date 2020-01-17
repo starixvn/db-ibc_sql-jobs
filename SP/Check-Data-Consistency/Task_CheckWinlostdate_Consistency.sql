@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTP-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_CheckWinlostdate_Consistency] @ErrMessage VARCHAR(512) = '' OUTPUT
+ALTER PROCEDURE [dbo].[Task_CheckWinlostdate_Consistency] @ErrMessage VARCHAR(512) = '' OUTPUT
 AS
 /*
 	Created: 20150216@Lukas
@@ -11,6 +11,7 @@ AS
 			so, we will skip the first the schedule for the job.
 		- 20170809@Patrick: Exclude bettype 2799 for BetradarVS
 		- 20200110@Patrick: Add more rule check winlostdate and eventdate is missmatch [Redmine: #126759]
+		- 20200117@Patrick: Print result to easy checking [Redmine: #126759]
 		
 */
 BEGIN
@@ -28,7 +29,7 @@ BEGIN
 	SET @__ignoreBettypeList = '10,1231,1232,1233,1237,1238,31,32,33,2799'
 
 	SET @__query = N''
-	SET @__query = N'select @@ServerName svr, matchid 
+	SET @__query = N'select @@ServerName svr, matchid, ''multiple winlostdate on bettrans'' as caseName 
 	from bodb02.dbo.bettrans with(nolock)
 	where winlostdate >= @winlostdate
 		and matchid > 1000
@@ -36,9 +37,12 @@ BEGIN
 	group by matchid 
 	having MIN(winlostdate) <> MAX(winlostdate)'
 
+	DECLARE @__result TABLE(serverName varchar(200), matchid int, caseName varchar(2000))
+
 	--//DBTP
 	SET @__sqlCmd = N''
 	SET @__sqlCmd = N'EXECUTE bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	INSERT INTO @__result
 	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
 	SET @rowcount = @rowcount + @@ROWCOUNT
 	IF @rowcount > 0
@@ -47,6 +51,7 @@ BEGIN
 	--//DB06
 	SET @__sqlCmd = N''
 	SET @__sqlCmd = N'EXECUTE DBACC.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	INSERT INTO @__result
 	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
 	SET @rowcount = @rowcount + @@ROWCOUNT
 	IF @rowcount > 0
@@ -55,6 +60,7 @@ BEGIN
 	--//DB05
 	SET @__sqlCmd = N''
 	SET @__sqlCmd = N'EXECUTE DB05.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	INSERT INTO @__result
 	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
 	SET @rowcount = @rowcount + @@ROWCOUNT
 	IF @rowcount > 0
@@ -63,6 +69,7 @@ BEGIN
 	--//DB052
 	SET @__sqlCmd = N''
 	SET @__sqlCmd = N'EXECUTE DBEXT.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	INSERT INTO @__result
 	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
 	SET @rowcount = @rowcount + @@ROWCOUNT
 	IF @rowcount > 0
@@ -71,6 +78,7 @@ BEGIN
 	--//DB053
 	SET @__sqlCmd = N''
 	SET @__sqlCmd = N'EXECUTE DBAGE.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	INSERT INTO @__result
 	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
 	SET @rowcount = @rowcount + @@ROWCOUNT
 	IF @rowcount > 0
@@ -78,7 +86,7 @@ BEGIN
 	
 	--//check winlostdate and eventdate is diff
 	SET @__query = N''
-	SET @__query = N'select @@ServerName svr, b.matchid 
+	SET @__query = N'select @@ServerName svr, b.matchid, ''multiple winlostdate on bettrans & match'' as caseName 
 	from bodb02.dbo.bettrans b with(nolock)
 	inner join bodb02.dbo.match m with(nolock) on b.matchid = m.matchid
 	where b.winlostdate >= @winlostdate
@@ -90,6 +98,7 @@ BEGIN
 	--//DBTP
 	SET @__sqlCmd = N''
 	SET @__sqlCmd = N'EXECUTE bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	INSERT INTO @__result
 	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
 	SET @rowcount = @rowcount + @@ROWCOUNT
 	IF @rowcount > 0
@@ -98,6 +107,7 @@ BEGIN
 	--//DB06
 	SET @__sqlCmd = N''
 	SET @__sqlCmd = N'EXECUTE DBACC.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	INSERT INTO @__result
 	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
 	SET @rowcount = @rowcount + @@ROWCOUNT
 	IF @rowcount > 0
@@ -106,6 +116,7 @@ BEGIN
 	--//DB05
 	SET @__sqlCmd = N''
 	SET @__sqlCmd = N'EXECUTE DB05.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	INSERT INTO @__result
 	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
 	SET @rowcount = @rowcount + @@ROWCOUNT
 	IF @rowcount > 0
@@ -114,6 +125,7 @@ BEGIN
 	--//DB052
 	SET @__sqlCmd = N''
 	SET @__sqlCmd = N'EXECUTE DBEXT.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	INSERT INTO @__result
 	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
 	SET @rowcount = @rowcount + @@ROWCOUNT
 	IF @rowcount > 0
@@ -122,6 +134,7 @@ BEGIN
 	--//DB053
 	SET @__sqlCmd = N''
 	SET @__sqlCmd = N'EXECUTE DBAGE.bodb02.dbo.sp_executesql @__query, N''@winlostdate smalldatetime'', @winlostdate'
+	INSERT INTO @__result
 	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @winlostdate smalldatetime', @__query, @winlostdate
 	SET @rowcount = @rowcount + @@ROWCOUNT
 	IF @rowcount > 0
@@ -129,7 +142,13 @@ BEGIN
 
 	EndFlow:
 	IF @rowcount > 0
+	BEGIN
+		DECLARE @__xmlOut XML
+		SET @__xmlOut = (SELECT TOP 100 serverName AS s, matchid AS m, caseName AS c FROM @__result AS r FOR XML AUTO)
+		PRINT(CAST(@__xmlOut AS VARCHAR(MAX)))
 		RAISERROR(N'got tickets have wrong winlostdate.', 16, 1)
+	END
 
 END
+
 GO
