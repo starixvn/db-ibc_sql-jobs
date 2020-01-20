@@ -1,5 +1,6 @@
 /*<info serverAlias="DBTP-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_CheckWinlostdate_Consistency] @ErrMessage VARCHAR(512) = '' OUTPUT
+	, @DebugMode BIT = 0
 AS
 /*
 	Created: 20150216@Lukas
@@ -11,7 +12,7 @@ AS
 			so, we will skip the first the schedule for the job.
 		- 20170809@Patrick: Exclude bettype 2799 for BetradarVS
 		- 20200110@Patrick: Add more rule check winlostdate and eventdate is missmatch [Redmine: #126759]
-		- 20200117@Patrick: Print result to easy checking [Redmine: #126759]
+		- 20200117@Patrick: Print result to easy checking & retry [Redmine: #126759]
 		
 */
 BEGIN
@@ -21,9 +22,11 @@ BEGIN
 			@rowcount INT,
 			@__ignoreBettypeList VARCHAR(2000),
 			@__sqlCmd NVARCHAR(MAX) = '',
-			@__query NVARCHAR(MAX) = ''
-			
-	SELECT  @winlostdate = DATEADD(DAY,-1,CONVERT(VARCHAR(20),GETDATE(),112)),
+			@__query NVARCHAR(MAX) = '',
+			@__tryCount INT = 1
+	
+	Retry:		
+	SELECT  @winlostdate = DATEADD(DAY, -1, CONVERT(VARCHAR(20), GETDATE(), 112)),
 			@rowcount = 0
 
 	SET @__ignoreBettypeList = '10,1231,1232,1233,1237,1238,31,32,33,2799'
@@ -143,10 +146,23 @@ BEGIN
 	EndFlow:
 	IF @rowcount > 0
 	BEGIN
-		DECLARE @__xmlOut XML
+		IF @__tryCount <= 3
+		BEGIN
+			DELETE FROM @__result
+			SET @__tryCount = @__tryCount + 1
+			WAITFOR DELAY '00:00:20:000'
+			GOTO Retry
+		END
+
+		IF @DebugMode = 1
+		BEGIN
+			SELECT serverName AS s, matchid AS m, caseName AS c FROM @__result AS r FOR XML AUTO
+		END
+
+		DECLARE @__xmlOut VARCHAR(MAX)
 		SET @__xmlOut = (SELECT TOP 100 serverName AS s, matchid AS m, caseName AS c FROM @__result AS r FOR XML AUTO)
-		PRINT(CAST(@__xmlOut AS VARCHAR(MAX)))
-		RAISERROR(N'got tickets have wrong winlostdate.', 16, 1)
+		SET @__xmlOut = 'got tickets have wrong winlostdate. ==> output: ' +  @__xmlOut
+		RAISERROR(@__xmlOut, 16, 1)
 	END
 
 END
