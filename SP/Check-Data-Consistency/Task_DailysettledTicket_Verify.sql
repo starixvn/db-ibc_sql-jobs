@@ -1,4 +1,4 @@
-
+/*<info serverAlias="DBTP-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailysettledTicket_Verify] @mode TINYINT = 1
 	, @ErrMessage VARCHAR(512) = '' OUTPUT
 AS
@@ -13,6 +13,7 @@ AS
 	- 20161223@Patrick: Add more rule to check discount value for bettrans/translog/bettransRnG/bettransLC
 	- 201701124@Patrick: Remove block code check running ticket for patlay because parlay movement task will handle it
 	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+	- 2020203@Patrick: Add more rule check running parlay tickets [RedmineId: #127651]
  */
 BEGIN
 	SET NOCOUNT ON
@@ -88,6 +89,17 @@ BEGIN
 
 		RAISERROR ('FAILED: Have single running tickets', 16, 1)
 
+		RETURN
+	END
+
+	--===================== Check running ticket at bettransm ================
+	IF EXISTS (
+		SELECT TOP 1 1 FROM dbo.bettransm bm WITH(NOLOCK)
+			INNER JOIN dbo.match m WITH(NOLOCK) ON bm.matchid = m.matchid
+		WHERE m.eventdate <= @winlostdate AND bm.statusID < 1
+	)
+	BEGIN
+		RAISERROR ('FAILED: bettransm have running tickets (not calculated yet).', 16, 1)
 		RETURN
 	END
 	
@@ -208,8 +220,4 @@ BEGIN
 	END
 			-- ====================  
 END
-
-
-
-
-
+GO

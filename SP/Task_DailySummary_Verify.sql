@@ -20,6 +20,7 @@ AS
 		- 20171010@Percy: Apply Bullfighting [RedmineID: #84690]
 		- 20180918@Patrick: Add more rule check if a custid belong to more than an upline [RedmineID: #101549]
 		- 20190305@Patrick: Remove statement check rowcount for check running/waiting ticket at translog statement [RedmineID: #109805]
+		- 2020203@Patrick: Add more rule check running parlay tickets [RedmineId: #127651]
 */
 
 SET NOCOUNT ON
@@ -67,7 +68,6 @@ BEGIN
 	RETURN
 END
 
-
 -- ==================== Check running ticket at bettrans =================
 IF EXISTS (
 	SELECT transid FROM bettrans with (nolock)
@@ -108,6 +108,18 @@ BEGIN
 	RAISERROR ('FAILED: Have running tickets', 16, 1)
 	RETURN
 END
+
+--===================== Check running ticket at bettransm ================
+IF EXISTS (
+	SELECT TOP 1 1 FROM dbo.bettransm bm WITH(NOLOCK)
+		INNER JOIN dbo.match m WITH(NOLOCK) ON bm.matchid = m.matchid
+	WHERE m.eventdate <= @winlostdate AND bm.statusID < 1
+)
+BEGIN
+	RAISERROR ('FAILED: bettransm have running tickets (not calculated yet).', 16, 1)
+	RETURN
+END
+
 -- ====================
 IF EXISTS (
 	SELECT transid FROM bettrans with (nolock)
