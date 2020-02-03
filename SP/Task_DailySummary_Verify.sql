@@ -113,7 +113,9 @@ END
 IF EXISTS (
 	SELECT TOP 1 1 FROM dbo.bettransm bm WITH(NOLOCK)
 		INNER JOIN dbo.match m WITH(NOLOCK) ON bm.matchid = m.matchid
+		INNER JOIN dbo.bettrans b WITH(NOLOCK) ON bm.refno = b.refno
 	WHERE m.eventdate <= @winlostdate AND bm.statusID < 1
+		AND b.currency <> 20
 )
 BEGIN
 	RAISERROR ('FAILED: bettransm have running tickets (not calculated yet).', 16, 1)
