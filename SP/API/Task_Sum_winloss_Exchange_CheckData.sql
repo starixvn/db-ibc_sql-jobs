@@ -1,7 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdProduct" executers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_3rdProduct]
-GO
-
+/*<info serverAlias="DBLIC-bodb_3rdProduct" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Sum_winloss_Exchange_CheckData]
 	@FromDate	SMALLDATETIME = NULL -- not null for manually
 	,@ToDate	SMALLDATETIME = NULL -- not null for manually
@@ -14,6 +11,7 @@ AS
 
 	Revisions:
 		- 20190401@Percy: Initialize SP [RedmineID: #110692]
+		- 20200204@Percy: Remove unused mail + DB054 - Phase 1 [RedmineID: #127823]
 */
 
 BEGIN
@@ -25,10 +23,10 @@ BEGIN
 	DECLARE @recipients VARCHAR(1000), @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX) = ''
 	SELECT  @Subject = 'SQL Server Job System: ''bodb_3rdProduct: Check Exchange data monthly'' on ' + @@SERVERNAME
 
-	IF @@SERVERNAME IN ('DB052', 'DB053', 'DB054')
-		SELECT @recipients = 'percy.nguyen@starixsoft.com;alex.nguyen@starixsoft.com;ann.nguyen@starixsoft.com;pontus@starixsoft.com'
+	IF @@SERVERNAME IN ('DB052', 'DB053')
+		SELECT @recipients = 'percy.nguyen@starixsoft.com;ann.nguyen@starixsoft.com;pontus@starixsoft.com'
 	ELSE
-		SELECT @recipients = 'percy.nguyen@starixsoft.com;walter.tran@starixsoft.com'
+		SELECT @recipients = 'percy.nguyen@starixsoft.com'
 
 	IF @FromDate IS NULL OR @ToDate IS NULL -- for job
 	BEGIN
