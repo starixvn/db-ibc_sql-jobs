@@ -488,7 +488,7 @@ BEGIN
 			WHERE ci.srecommend=@srecommend AND ci.roleid=1 
 				AND (m.SuperPT<>a.SuperPT OR m.MasterPT<>a.MasterPT OR m.AgentPT<>a.AgentPT)
 				AND p.IsApplyBA=0 AND ps.SettingType=1
-				AND t.custid NOT IN (SELECT custid FROM #tblCustClosed)
+				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
 	END
 	IF @RuleId IN(0,69)
