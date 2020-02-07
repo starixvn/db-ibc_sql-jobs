@@ -3,8 +3,9 @@ USE [bodb_Consistency]
 GO
 
 ALTER PROCEDURE [dbo].[DBA_Consistency_ExtraPTChecking]	
-	@RuleID 		TINYINT 		= 26, 
-	@ErrCode		INT				= 0		OUTPUT
+	@RuleID 		TINYINT 		= 0
+	,@WinlostDate	SMALLDATIME 	= NULL
+	,@ErrCode		INT				= 0		OUTPUT
 	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT  
 AS
 /*
@@ -31,6 +32,8 @@ BEGIN
 
 	DECLARE @transId VARCHAR(MAX) = '', @Winlostdate SMALLDATETIME 
 	SELECT @ErrMsg  = ''
+	
+	IF @WinlostDate IS NULL
 	SELECT @Winlostdate = CONVERT (DATE, GETDATE())  
 	
 	
@@ -44,7 +47,7 @@ BEGIN
  
 	---------------------------------Select data -------------------------
 	----I. Check Wrong Epositiontaking vs ExtraPT
-	IF @RuleID = 26 
+	IF @RuleID = 26 OR @RuleID = 0
 	BEGIN 
 			--- I.I: Wrong Epositiontaking vs ExtraPT
 			------I.I.a. Bettrans
@@ -261,7 +264,7 @@ BEGIN
 	END 
 		
 	----II. Check tpositiontaking  + epositiontaking < 100% (for all tickets)
-	IF @RuleID = 27 
+	IF @RuleID = 27  OR @RuleID = 0
 	BEGIN 	
 			----II.I. Check tpositiontaking  + epositiontaking < 100% (for all tickets)
 			------II.I.a. Bettrans
@@ -346,7 +349,7 @@ BEGIN
 	
 	
 	----III. Check Extra PT = 0 for CN88 with username of headline has prefix 'XP%' (for CN88 site)
-	IF @RuleID = 28 
+	IF @RuleID = 28  OR @RuleID = 0
 	BEGIN 	
 		----III.I. Epositiontaking has value under headline XP% 
 			------III.I.a. Bettrans			
