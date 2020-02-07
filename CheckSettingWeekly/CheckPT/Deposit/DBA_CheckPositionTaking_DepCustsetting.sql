@@ -21,6 +21,7 @@ AS
 		-20190801@Winnie: [AE88] Adjust Term for Sportsbook RedmineID:#117629
 		-20191105@Winnie: starsoccer - Adjust SB PT. RedmineID:#123273
 		-20191216@Winnie: [Wanbo,9wickets,9Wsports] Update PT sportbook. RedmineID:#125434
+		-20200206@Johnson: exclude closed customers[redmine:#127831]
 	Param's Explanation:
 	
 */
@@ -28,13 +29,22 @@ SET NOCOUNT ON
 BEGIN
 	IF @srecommend IN(1752415,932209,1574083,179457)--'AB88SuperRM' , '12BETSuperSD$',MS88SuperBND,'ITSA'
 	RETURN
-
+	
+	IF (SELECT ISNULL(closed,0) FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) WHERE custid = @srecommend) = 1
+	RETURN
+	
 	DECLARE @site VARCHAR(20)
 
 	CREATE TABLE #tmpDumMember (CustID INT , username VARCHAR(30),RoleID INT,PRIMARY KEY(CustID,RoleID))
 	CREATE TABLE #Trade (CustID INT PRIMARY KEY)
 	CREATE TABLE #Dummy (CustID INT PRIMARY KEY)
-
+	CREATE TABLE #tblCustClosed (custid INT, roleid TINYINT)
+	
+	INSERT INTO #tblCustClosed (custid,roleid)
+	SELECT custid,roleid
+	FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) 
+	WHERE srecommend = @srecommend AND closed = 1
+	
 	INSERT INTO #tmpDumMember(custid, username,RoleID)
 	SELECT c.CustID, fc.username,c.RoleID
 	FROM CheckCustDB.dbo.custInfo c WITH(NOLOCK) 
@@ -87,7 +97,8 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid	
 		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
-
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =3)
+			
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 44,s.sporttype,s.bettype,@srecommend,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
 		FROM #tmpS s 
@@ -104,12 +115,14 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)	
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid		
 		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
-		
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =3)
+			
 		INSERT INTO #tmpA45 (CustID,Sporttype , Bettype , Islive , PT,mrecommend)
 		SELECT c.custid, s.sporttype,s.bettype,s.islive,s.apositiontaking,c.mrecommend
 		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid	
 		WHERE c.srecommend=@srecommend AND c.roleid=2
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =2)
 
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 45,s.sporttype,s.bettype,s.CustID,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
@@ -131,6 +144,7 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)	
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid		
 		WHERE c.srecommend=@srecommend AND c.roleid=2 AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =2)
 		
 		INSERT INTO #tmpA1 (CustID,Sporttype , Bettype , Islive , PT,recommend)
 		SELECT c.custid, s.sporttype,s.bettype,s.islive,s.apositiontaking,c.recommend
@@ -138,7 +152,8 @@ BEGIN
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid							
 		WHERE c.srecommend=@srecommend AND 	c.roleid=1 AND c.custid NOT IN(SELECT custid FROM #Trade)
 			AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))
-
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
+			
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 46,s.sporttype,s.bettype,s.CustID,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
 		FROM #tmpA1 s 
@@ -154,6 +169,7 @@ BEGIN
 		WHERE 
 			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925,0.89,0.885,0.5) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
 			AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))		
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
 	END
 
 	IF @RuleId IN (0,53)
@@ -165,6 +181,7 @@ BEGIN
 			INNER JOIN CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK) ON c.custid=BA.CustId
 		WHERE 
 			c.roleid=1 AND s.spositiontaking+s.mpositiontaking+s.apositiontaking <> 0
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
 	END
 
 END
