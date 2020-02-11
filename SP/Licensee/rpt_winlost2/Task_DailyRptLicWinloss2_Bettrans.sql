@@ -1,8 +1,10 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans] 
-	@winlostdate DATETIME  
-AS  
-/*  
+
+ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans]
+	@winlostdate DATETIME
+AS
+
+/*
 	Created: 20150911@Patrick
 	Task: daily summary for Licensee  from bettrans
 	DB: DBLIC.bodb_LicenseeReport
@@ -45,10 +47,11 @@ AS
 	- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
-*/  
+*/
+
 BEGIN
 	SET NOCOUNT ON
-    
+
 	DELETE FROM dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate 
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date

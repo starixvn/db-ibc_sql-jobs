@@ -1,147 +1,146 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE bodb_LicenseeReport
-GO
+
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_LicenseeWL] 
-    @Date smalldatetime 
-	,@DrawFilter tinyint = 1
+	@Date		SMALLDATETIME,
+	@DrawFilter	TINYINT			= 1
 AS
+
 /*
-Created: 20111209@Don
-Task : Get deposit data from table db052.bodb_Licensee.dbo.rptLicWinloss2
+	Created: 20111209@Don
+	Task : Get deposit data from table db052.bodb_Licensee.dbo.rptLicWinloss2
+	DB: bodb_LicenseeReport
+	Original:
 
-DB: bodb_LicenseeReport
-Original:
+	Revisions:
+		- 20140310@daniel: exclude currency C & H
+		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		- 20160608@Jim: Separate Bettrade (#57353) 	
+		- 20160616@Jim: Changes to data integrity automail (#59249)	
+		- 20160906@Jim: Correct value of SB & BA [Redmine #63571]
+		- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT, LK3 into data validation email [RedmineID: #81708]
+		- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
+		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
+		- 20191106@Amanda: Integrate NPHP [RedmineID: #120333]
+		- 20191204@Amanda: Change name of NPH Promotion to Saba Promotion [Redmine: #124612]
+		- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 
-Revisions:	
-	- 20140310@daniel: exclude currency C & H
-	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
-	- 20160608@Jim: Separate Bettrade (#57353) 	
-	- 20160616@Jim: Changes to data integrity automail (#59249)	
-	- 20160906@Jim: Correct value of SB & BA [Redmine #63571]
-	- 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT, LK3 into data validation email [RedmineID: #81708]
-	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
-	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
-	- 20191106@Amanda: Integrate NPHP [RedmineID: #120333]
-	- 20191204@Amanda: Change name of NPH Promotion to Saba Promotion [Redmine: #124612]
-	- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
+	Param's Explanation:
+		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
 
-Param's Explanation:
-    @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
+	Examples:
 
-Examples:
-
-DECLARE @DateChecking SMALLDATETIME
-SELECT @DateChecking =DATEADD(day, -10, GETDATE())
-exec [GET_DepositDataToValidate_LicenseeWL] @Date=@DateChecking,@DrawFilter=1
+	DECLARE @DateChecking SMALLDATETIME
+	SELECT @DateChecking =DATEADD(day, -10, GETDATE())
+	exec [GET_DepositDataToValidate_LicenseeWL] @Date=@DateChecking,@DrawFilter=1
 */
-BEGIN
 
+BEGIN
 	SET NOCOUNT ON
 
 	DECLARE --SB
-			@SbTurnover MONEY
-		   ,@SbCustomerWl MONEY
-		   ,@SbBetCount MONEY
-		   --RB
-		   ,@RbTurnover MONEY
-		   ,@RbCustomerWl MONEY
-		   ,@RbBetCount MONEY
-		   --NG
-		   ,@NgTurnover MONEY
-		   ,@NgCustomerWl MONEY
-		   ,@NgBetCount MONEY
-		   -- BA
-		   ,@BaTurnover MONEY
-		   ,@BaCustomerWl MONEY
-		   ,@BaBetCount MONEY
-		   --LC
-		   ,@LcTurnover MONEY
-		   ,@LcCustomerWl MONEY
-		   ,@LcBetCount MONEY
-			--BT
-		   ,@BTTurnover MONEY
-		   ,@BTCustomerWl MONEY
-		   ,@BTBetCount MONEY
-		   --AG
-		   ,@AGTurnover MONEY
-		   ,@AGCustomerWl MONEY
-		   ,@AGBetCount MONEY
-		   --GD
-		   ,@GDTurnover MONEY
-		   ,@GDCustomerWl MONEY
-		   ,@GDBetCount MONEY
-		   --KN
-		   ,@KNTurnover MONEY
-		   ,@KNCustomerWl MONEY
-		   ,@KNBetCount MONEY
-		   --VG: Macau
-		   ,@VGTurnover MONEY
-		   ,@VGCustomerWl MONEY
-		   ,@VGBetCount MONEY
-		   --VB: Macau Games
-		   ,@VBTurnover MONEY
-		   ,@VBCustomerWl MONEY
-		   ,@VBBetCount MONEY
-		   --MGCLC:Microgaming - Live Casino
-		   ,@MGCLCTurnover MONEY
-		   ,@MGCLCCustomerWl MONEY
-		   ,@MGCLCBetCount MONEY
-		   --MGCRNG:Microgaming - RNG Casino
-		   ,@MGCRNGTurnover MONEY
-		   ,@MGCRNGCustomerWl MONEY
-		   ,@MGCRNGBetCount MONEY
-		   ----CS
-		   ,@CsTurnover MONEY
-		   ,@CsCustomerWl MONEY
-		   ,@CsBetCount MONEY
-			----VS
-		   ,@VsTurnover MONEY
-		   ,@VsCustomerWl MONEY
-		   ,@VsBetCount MONEY
-			----CB
-		   ,@CBTurnover MONEY
-		   ,@CBCustomerWl MONEY
-		   ,@CBBetCount MONEY
-			----AB
-		   ,@ABTurnover MONEY
-		   ,@ABCustomerWl MONEY
-		   ,@ABBetCount MONEY
-			----NG2
-		   ,@NG2Turnover MONEY
-		   ,@NG2CustomerWl MONEY
-		   ,@NG2BetCount MONEY
-			----FW
-		   ,@FWTurnover MONEY
-		   ,@FWCustomerWl MONEY
-		   ,@FWBetCount MONEY
-			----CO
-		   ,@COTurnover MONEY
-		   ,@COCustomerWl MONEY
-		   ,@COBetCount MONEY
-			----VS2
-		   ,@VS2Turnover MONEY
-		   ,@VS2CustomerWl MONEY
-		   ,@VS2BetCount MONEY
-			----LT
-		   ,@LTTurnover MONEY
-		   ,@LTCustomerWl MONEY
-		   ,@LTBetCount MONEY
-		   ----PP
-		   ,@PPTurnover MONEY
-		   ,@PPCustomerWl MONEY
-		   ,@PPBetCount MONEY
-		   ----CC
-		   ,@CCTurnover MONEY
-		   ,@CCCustomerWl MONEY
-		   ,@CCBetCount MONEY
-		   ----SPR
-		   ,@SPRTurnover MONEY
-		   ,@SPRCustomerWl MONEY
-		   ,@SPRBetCount MONEY
-		   ----SG
-		   ,@SGTurnover MONEY
-		   ,@SGCustomerWl MONEY
-		   ,@SGBetCount MONEY
+		@SbTurnover MONEY
+		,@SbCustomerWl MONEY
+		,@SbBetCount MONEY
+		--RB
+		,@RbTurnover MONEY
+		,@RbCustomerWl MONEY
+		,@RbBetCount MONEY
+		--NG
+		,@NgTurnover MONEY
+		,@NgCustomerWl MONEY
+		,@NgBetCount MONEY
+		-- BA
+		,@BaTurnover MONEY
+		,@BaCustomerWl MONEY
+		,@BaBetCount MONEY
+		--LC
+		,@LcTurnover MONEY
+		,@LcCustomerWl MONEY
+		,@LcBetCount MONEY
+		--BT
+		,@BTTurnover MONEY
+		,@BTCustomerWl MONEY
+		,@BTBetCount MONEY
+		--AG
+		,@AGTurnover MONEY
+		,@AGCustomerWl MONEY
+		,@AGBetCount MONEY
+		--GD
+		,@GDTurnover MONEY
+		,@GDCustomerWl MONEY
+		,@GDBetCount MONEY
+		--KN
+		,@KNTurnover MONEY
+		,@KNCustomerWl MONEY
+		,@KNBetCount MONEY
+		--VG: Macau
+		,@VGTurnover MONEY
+		,@VGCustomerWl MONEY
+		,@VGBetCount MONEY
+		--VB: Macau Games
+		,@VBTurnover MONEY
+		,@VBCustomerWl MONEY
+		,@VBBetCount MONEY
+		--MGCLC:Microgaming - Live Casino
+		,@MGCLCTurnover MONEY
+		,@MGCLCCustomerWl MONEY
+		,@MGCLCBetCount MONEY
+		--MGCRNG:Microgaming - RNG Casino
+		,@MGCRNGTurnover MONEY
+		,@MGCRNGCustomerWl MONEY
+		,@MGCRNGBetCount MONEY
+		----CS
+		,@CsTurnover MONEY
+		,@CsCustomerWl MONEY
+		,@CsBetCount MONEY
+		----VS
+		,@VsTurnover MONEY
+		,@VsCustomerWl MONEY
+		,@VsBetCount MONEY
+		----CB
+		,@CBTurnover MONEY
+		,@CBCustomerWl MONEY
+		,@CBBetCount MONEY
+		----AB
+		,@ABTurnover MONEY
+		,@ABCustomerWl MONEY
+		,@ABBetCount MONEY
+		----NG2
+		,@NG2Turnover MONEY
+		,@NG2CustomerWl MONEY
+		,@NG2BetCount MONEY
+		----FW
+		,@FWTurnover MONEY
+		,@FWCustomerWl MONEY
+		,@FWBetCount MONEY
+		----CO
+		,@COTurnover MONEY
+		,@COCustomerWl MONEY
+		,@COBetCount MONEY
+		----VS2
+		,@VS2Turnover MONEY
+		,@VS2CustomerWl MONEY
+		,@VS2BetCount MONEY
+		----LT
+		,@LTTurnover MONEY
+		,@LTCustomerWl MONEY
+		,@LTBetCount MONEY
+		----PP
+		,@PPTurnover MONEY
+		,@PPCustomerWl MONEY
+		,@PPBetCount MONEY
+		----CC
+		,@CCTurnover MONEY
+		,@CCCustomerWl MONEY
+		,@CCBetCount MONEY
+		----SPR
+		,@SPRTurnover MONEY
+		,@SPRCustomerWl MONEY
+		,@SPRBetCount MONEY
+		----SG
+		,@SGTurnover MONEY
+		,@SGCustomerWl MONEY
+		,@SGBetCount MONEY
 	         
 	DECLARE @tblSporttype AS TABLE(ProductPrefix VARCHAR (10),Sporttype INT)	   
 	INSERT INTO @tblSporttype (ProductPrefix, Sporttype)

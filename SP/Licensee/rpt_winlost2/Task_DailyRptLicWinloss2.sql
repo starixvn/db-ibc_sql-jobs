@@ -1,70 +1,73 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
 	@winlostdate DATETIME
 AS
-/*
-Created by:[Henry]
-Date: 2011-09-20
-Task: daily summary for Licensee
-DB: DBLIC.bodb_LicenseeReport
-Revisions:
-	- 20111208@Jim: Change bettype condition (bettype<=19000=>bettype<999)
-	- 20120116@Henry: Add column IsMobile and Sum the bets that from mobile
-	- 20120803@Henry: fix the commission formula
-	- 20120814@Henry: sum Livecasino, games, virtual sport
-	- 20120816@Henry: include betfrom "l" for smartphone
-	- 20120109@Henry: sum wap & smartphone betfrom
-	- 20130903@Jim: support Virtual Horse Racing
-	- 20131014@Jim: support Virtual Tennis
-	- 20131128@Jim: revert code to Group by All Virtual Sport into sporttypeID=180
-	- 20140310@Jim: offer KENO 
-	- 20140820@Jim: support to add more value bet BetEffective (RedmineID : #20518)
-	- 20150618@Patrick: #36263: Fix super balance issue for: AGC, GD & VG
-    - 20150630@Jim: add MicroGaming 
-	- 20150702@Patrick: Support BetTrade
-	- 20150824@Patrick: Not category BA's bettrade ticket
-	- 20150909@Patrick: Changes the way generate data from bettrans instead bettrans14
-	- 20151113@Jim: separate Microgaming into 2 products
-	- 20151231@Patrick: Add more field buybackamt & BABuyBackAmt
-	- 20160105@Bobby: #49196 - Implement OneRnG product
-	- 20160301@Victor: Redefine betfrom value [Redmine: #50939]
-	- 20160415@Victor: Support Voidbridge product [Redmine: #55057]
-	- 20160721@Jim: Add product Allbet [Redmine: #59624]
-	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
-	- 20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
-	- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
-	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
-	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]	
-	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
-	- 20170802@Sophia: Add new betfrom [redmine: #80687]
-	- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
-	- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
-	- 20171225@Sophia: Integrate Exchange Products [Redmine: #86640]
-	- 20180212@Harper: Remove LC from product list [Redmine: #85965]
-	- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
-	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
-	- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
-	- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
-	- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
-	- 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
-	- 20190306@Amande: Implement PP Promotion Prize [RedmineID: #109471]
-	- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
-	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
-	- 20190903@Amanda: Add betfrom Deep Link(t) [RedmineID: #119010]
-	- 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
-	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
-	- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_bk [RedmineID: #103656]
-	- 20191022@Amanda: Integrate NPH Promotion [RedmineID: #120333]
-	- 20191122@Amanda: Integrate PP Tournament Prize [RedmineID: #123804]
-	- 20191219@Amanda: Add betfrom v [RedmineID: #125553]
-	- 20191226@Vickie: Add platform 0 [RedmineID: #125824]
-	- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 
-	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
-*/  
+/*
+	Created by:[Henry]
+	Date: 2011-09-20
+	Task: daily summary for Licensee
+	DB: DBLIC.bodb_LicenseeReport
+	Revisions:
+		- 20111208@Jim: Change bettype condition (bettype<=19000=>bettype<999)
+		- 20120116@Henry: Add column IsMobile and Sum the bets that from mobile
+		- 20120803@Henry: fix the commission formula
+		- 20120814@Henry: sum Livecasino, games, virtual sport
+		- 20120816@Henry: include betfrom "l" for smartphone
+		- 20120109@Henry: sum wap & smartphone betfrom
+		- 20130903@Jim: support Virtual Horse Racing
+		- 20131014@Jim: support Virtual Tennis
+		- 20131128@Jim: revert code to Group by All Virtual Sport into sporttypeID=180
+		- 20140310@Jim: offer KENO 
+		- 20140820@Jim: support to add more value bet BetEffective (RedmineID : #20518)
+		- 20150618@Patrick: #36263: Fix super balance issue for: AGC, GD & VG
+		- 20150630@Jim: add MicroGaming 
+		- 20150702@Patrick: Support BetTrade
+		- 20150824@Patrick: Not category BA's bettrade ticket
+		- 20150909@Patrick: Changes the way generate data from bettrans instead bettrans14
+		- 20151113@Jim: separate Microgaming into 2 products
+		- 20151231@Patrick: Add more field buybackamt & BABuyBackAmt
+		- 20160105@Bobby: #49196 - Implement OneRnG product
+		- 20160301@Victor: Redefine betfrom value [Redmine: #50939]
+		- 20160415@Victor: Support Voidbridge product [Redmine: #55057]
+		- 20160721@Jim: Add product Allbet [Redmine: #59624]
+		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
+		- 20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
+		- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
+		- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
+		- 20170322@Paul: Implement Cash Out [RedmineID :#71727]	
+		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+		- 20170802@Sophia: Add new betfrom [redmine: #80687]
+		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
+		- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
+		- 20171225@Sophia: Integrate Exchange Products [Redmine: #86640]
+		- 20180212@Harper: Remove LC from product list [Redmine: #85965]
+		- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
+		- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
+		- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
+		- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
+		- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
+		- 20181204@Bruce: Implement Happy 5 [RedmineID: #105723]
+		- 20190306@Amande: Implement PP Promotion Prize [RedmineID: #109471]
+		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
+		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
+		- 20190903@Amanda: Add betfrom Deep Link(t) [RedmineID: #119010]
+		- 20190910@Amanda: Add bet types which support Half Won/ Half Lose [RedmineID: #118300]
+		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
+		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_bk [RedmineID: #103656]
+		- 20191022@Amanda: Integrate NPH Promotion [RedmineID: #120333]
+		- 20191122@Amanda: Integrate PP Tournament Prize [RedmineID: #123804]
+		- 20191219@Amanda: Add betfrom v [RedmineID: #125553]
+		- 20191226@Vickie: Add platform 0 [RedmineID: #125824]
+		- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
+
+		EXEC Task_DailyRptLicWinloss2 '2017-04-07'
+*/
+
 BEGIN
 	SET NOCOUNT ON
-    
+
 	DELETE FROM dbo.rptLicWinloss2 WITH (rowlock) WHERE winlostdate = @winlostdate  	
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date

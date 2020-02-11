@@ -1,42 +1,45 @@
 /*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
-	@Winlostdate DATE,
-	@isSuccessful BIT = 0 OUTPUT
-AS
-	/*
-		Created By: Francis
-		Created Date: 20160815
-		Task: Summarize data for table rptDepWinlost_Trans for the input @Winlostdate from bettrans14 		
-		DB: DBACC.bodb02
-		Revisions:
-		- 20160924@Francis: Enhance performance when querying data from bettrans14
-		- 20161004@Francis: Add Error Message to Log when issue happens
-		- 20161013@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
-		- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
-		- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
-		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
-		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
-		- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
-		- 20171225@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
-		- 20180212@Harper: Remove LC from product list [Redmine: #85965]
-		- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
-		- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
-		- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
-		- 20180814@Joseph: Remove Racing [RedmineID: #99378]
-		- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
-		- 20181210@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
-		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
-		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
-		- 20190718@Amanda: Add rebate bonus ticket [RedmineID: #115445]
-		- 20191025@Bobby: Add column promotion [RedmineID: #120333]
-		- 20191122@Amanda: Sum PP Prize to promotion column [RedmineID: #123804]
-		- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 
-		Input Params:
-		- @Winlostdate: The input Winlostdate to be summarized	
-		- @isSuccessful: -1: Data of the whole day have been summarized completely
-						 -0: Data of the whole day have not been summarized completely
-	*/
+ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
+	@Winlostdate	DATE,
+	@isSuccessful	BIT = 0 OUTPUT
+AS
+
+/*
+	Created By: Francis
+	Created Date: 20160815
+	Task: Summarize data for table rptDepWinlost_Trans for the input @Winlostdate from bettrans14 		
+	DB: DBACC.bodb02
+	Revisions:
+	- 20160924@Francis: Enhance performance when querying data from bettrans14
+	- 20161004@Francis: Add Error Message to Log when issue happens
+	- 20161013@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
+	- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
+	- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
+	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+	- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
+	- 20170814@Harper: One RNG - Offer New Tablet Games [RedmineID: #78424]
+	- 20171225@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
+	- 20180212@Harper: Remove LC from product list [Redmine: #85965]
+	- 20180409@Joseph: Implement new sports for VS2: BasketBall - Virual Soccer World Cup [Redmine: #90881]
+	- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
+	- 20180418@Joseph: Integrate new product PP [Redmine: #92318]
+	- 20180814@Joseph: Remove Racing [RedmineID: #99378]
+	- 20181031@Percy: Remove linked-server DBLIC [RedmineID: #103660]
+	- 20181210@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
+	- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
+	- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
+	- 20190718@Amanda: Add rebate bonus ticket [RedmineID: #115445]
+	- 20191025@Bobby: Add column promotion [RedmineID: #120333]
+	- 20191122@Amanda: Sum PP Prize to promotion column [RedmineID: #123804]
+	- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
+
+	Input Params:
+	- @Winlostdate: The input Winlostdate to be summarized	
+	- @isSuccessful: -1: Data of the whole day have been summarized completely
+						-0: Data of the whole day have not been summarized completely
+*/
+
 BEGIN
 	SET NOCOUNT ON
 	--1.Set low deadlock priority
@@ -67,8 +70,8 @@ BEGIN
 	
 	--2.Insert Log
 	INSERT INTO bodb_Report.dbo.rptDepWinlost_Log(Logdate, LogHour, LogType, StartTime)
-		SELECT @CurrentDate, @CurrentHour, 4, CURRENT_TIMESTAMP AS StartTime
-		
+	SELECT @CurrentDate, @CurrentHour, 4, CURRENT_TIMESTAMP AS StartTime
+
 	SELECT @LogID = @@IDENTITY
 	
 	DECLARE @CasinoPartner TABLE (PartnerId INT, TransferId INT, CancelTransferId INT)
@@ -161,15 +164,13 @@ BEGIN
 			  GROUP BY b.custid, p.PartnerId, b.bettype) t
 		WHERE #rptDepWinlostDetails.CustID = t.custid AND #rptDepWinlostDetails.Bettype = t.bettype
 		
-		
 		/*--Force seek predicate on custid for bettrans14 part
 		DECLARE @n INT = 2147483647
 		*/
-		
 		INSERT INTO #rptDepWinlostDetails (CustID, BetType, TurnOver, OutStanding, Winloss, DrawGame, playercomm, Comm_BetTrade, WLBoughtTicket_BetTrade, BetCount, Promotion)
 			SELECT
 				b.custid,
-				CASE				
+				CASE
 					WHEN b.bettype BETWEEN 81 AND 120 THEN 161--Number Game 
 					WHEN b.bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: Happy 5
 					WHEN b.bettype IN (71,72,23002) THEN 251--Casino
