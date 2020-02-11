@@ -242,13 +242,13 @@ BEGIN
 		SELECT 318,s.sporttypeID,s.bettypeID,s.CustID,NULL,Minbet,NULL,GETDATE(),1
 		FROM #Dep_CustSetting_Master s
 		WHERE s.minbet<0 
-			AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 3)
+			AND custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 3)
 		
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 318,s.sporttypeID,s.bettypeID,s.CustID,NULL,Minbet,NULL,GETDATE(),1
 		FROM #Dep_CustSetting_Agent s
 		WHERE s.minbet<0 
-			AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
+			AND custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 		
 		IF @count > 200000
 		BEGIN
@@ -377,7 +377,8 @@ BEGIN
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 322,s.sporttypeID,s.bettypeID,s.CustID,NULL,MaxPerMatch,NULL,GETDATE(),1
 		FROM #Dep_CustSetting_Agent s
-		WHERE s.MaxPerMatch<0 
+		WHERE s.MaxPerMatch<0 	
+			AND s.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 		
 		IF @count > 200000
 		BEGIN
