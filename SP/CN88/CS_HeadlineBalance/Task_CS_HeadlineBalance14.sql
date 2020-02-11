@@ -1,12 +1,9 @@
-/*<info serverAlias="DBACC-bodb02" executers="" isFunction="0" isNested="1"></info>*/
-USE [bodb02]
-GO
-
-ALTER PROCEDURE [dbo].[Task_CS_HeadlineBalance_CheckAndCorrect]
-	@WinlostDate 		SMALLDATETIME, 
-	@IsCheckDataOnly	BIT = 0,
-	@ErrCode  			INT = 0 OUTPUT,
-    @ErrMsg   			VARCHAR(100) = '' OUTPUT
+/*<info serverAlias="DBACC-bodb02" executers="" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[Task_CS_HeadlineBalance14]
+	@WinlostDate 	SMALLDATETIME
+	,@CustIds		VARCHAR(MAX)
+	,@ErrCode  		INT = 0 OUTPUT
+    ,@ErrMsg   		VARCHAR(100) = '' OUTPUT
 AS
 /*
 	Creator: 20190826@Sophia 
@@ -14,7 +11,8 @@ AS
 	DB: DBACC-bodb02
 
 	Revisions:
-		- 20190826@Sophia: initial SP [Redmine: #117863]	 
+		- 20190826@Sophia: initial SP [Redmine: #117863]
+		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
 
 	Param's explain:
 		@IsCheckDataOnly:  1 _ view report
@@ -29,7 +27,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
  
-	CREATE TABLE #Headline(SuperID INT, UplineID INT )		 
+	CREATE TABLE #Headline(UplineID INT )		 
 	CREATE TABLE #Transfer (Custid INT, Reset MONEY,  Winlostdate SMALLDATETIME )	
 	CREATE TABLE #Reset (seq INT IDENTITY (1,1), Winlostdate SMALLDATETIME, CustId INT, ExtraPTWinlost MONEY, Reset MONEY, Variance MONEY)
 
@@ -55,12 +53,34 @@ BEGIN
 		 
 	
 	----Begin: Get Headline List ----
+	CREATE TABLE #tmpSuper (srecommend INT)
+	CREATE TABLE #SuperList (srecommend INT)
 	
-	INSERT INTO #Headline (SuperId, UplineId) 
-	SELECT c.CustID AS SuperId, c.UplineId
-	FROM dbo.CustSuper c WITH (NOLOCK) 
-	WHERE UplineID IS NOT NULL	 
- 	
+	INSERT INTO #tmpSuper (srecommend)	
+	SELECT DISTINCT c.srecommend
+	FROM dbo.Customer c WITH (NOLOCK)
+		CROSS APPLY (
+						SELECT val FROM bodb02.dbo.strSplit(@CustIds, ',') f WHERE c.custid = f.val
+					) AS tmp
+	WHERE EXISTS (SELECT 1 FROM bodb02.dbo.CS_CustSuper cs WITH (NOLOCK) WHERE c.srecommend = cs.custid)
+	
+		
+	INSERT INTO #Headline (UplineId) 
+	SELECT DISTINCT e.UplineId
+	FROM #tmpSuper cs WITH (NOLOCK)
+		CROSS APPLY (
+			SELECT TOP 1 ag.UplineId
+			FROM dbo.Acc_GroupExtraPTSetting ag WITH (NOLOCK)
+			WHERE cs.srecommend = ag.SuperId
+				AND @WinlostDate BETWEEN ag.FromDate AND ag.ToDate
+		) e
+	 	
+ 	INSERT INTO #SuperList (srecommend) 
+	SELECT DISTINCT SuperId
+	FROM dbo.Acc_GroupExtraPTSetting ag WITH (NOLOCK)
+	WHERE EXISTS (SELECT 1 FROM #Headline h WHERE h.UplineId = ag.UplineId)
+		AND @WinlostDate BETWEEN ag.FromDate AND ag.ToDate
+	
 	----End: Get Headline List ----
 	
 	
@@ -115,8 +135,8 @@ BEGIN
 		LEFT JOIN dbo.Match14 m WITH (NOLOCK) ON m.MatchId = b.MatchId  AND m.Sporttype = 44		
 		WHERE   b.Winlostdate = @Winlostdate
 			AND b.ruben = 1
-			AND b.statusid NOT IN (101, 102, 103, 121)					
-			AND EXISTS (SELECT 1 FROM dbo.CS_CustSuper cs WITH (NOLOCK) WHERE cs.CusTID = b.srecommend) 
+			AND b.statusid NOT IN (101, 102, 103, 121)					 
+			AND EXISTS (SELECT 1 FROM #SuperList ss WHERE ss.srecommend = b.srecommend)
 		GROUP BY b.Winlostdate,				
 				b.srecommend,	
 				b.Currency,
@@ -130,7 +150,7 @@ BEGIN
 	FROM (		
 			--- extraPT
 			SELECT  w.Winlostdate, w.ProductId, 			
-					cs.UplineID,
+					s.UplineID,
 				   SUM(w.WinlostForExtraPT * ISNULL(s.ExtraPT,0)) as ExtraPTWinlost 
 			FROM	#wl w
 			INNER JOIN dbo.Acc_GroupExtraPTSetting s WITH(NOLOCK)
@@ -139,32 +159,12 @@ BEGIN
 					AND w.SubProduct = s.SubProduct
 					AND w.Sporttype = s.Sporttype 
 					AND w.Winlostdate BETWEEN s.FromDate AND s.ToDate	
-			INNER JOIN dbo.CustSuper cs WITH (NOLOCK) 
-					ON cs.CustId = w.srecommend AND cs.UplineID IS NOT NULL
-			GROUP BY w.Winlostdate, w.ProductId,  cs.UplineID	 
+			GROUP BY w.Winlostdate, w.ProductId,  s.UplineID	 
 	
 		) w
 	GROUP BY w.Winlostdate, w.ProductId, w.UplineID	
-	
-	
-	----view report
-    IF (@IsCheckDataOnly = 1)
-    BEGIN 
-	    ----- calculate reset 
-		SELECT  @Winlostdate as Winlostdate,  ISNULL(e.UplineID, rs.Custid) as UplineID ,
-				ROUND(SUM(ISNULL(e.ExtraPTWinlost, 0)), 2) AS ExtraPTWinlost, 
-				ROUND(SUM(ISNULL(rs.Reset, 0)), 2) AS Reset 
-		FROM  (
-				SELECT Winlostdate, UplineID, SUM(ExtraPTWinlost) AS ExtraPTWinlost 
-				FROM  #WLByProduct 
-				GROUP BY Winlostdate, UplineID
-				) e 
-			FULL JOIN #Transfer rs 
-				ON e.UplineID = rs.Custid
-		GROUP BY ISNULL(e.UplineID, rs.Custid)
-		HAVING (ROUND(SUM(ISNULL(e.ExtraPTWinlost, 0)), 2) - ROUND(SUM(ISNULL(rs.Reset, 0)), 2) ) <> 0
-	END	
-	ELSE
+		
+	 
     BEGIN 
 	    ----- calculate reset 
 		INSERT INTO #Reset (Winlostdate, CustId, ExtraPTWinlost, Reset, Variance)
@@ -186,15 +186,15 @@ BEGIN
 		---------------------
  
 		DECLARE 
-				@seq		  	TINYINT = 1,
-				@maxseq		  	TINYINT = 0,				
+				@seq		  TINYINT = 1,
+				@maxseq		  TINYINT = 0,				
 				@ExtraPTWinlost MONEY = 0, 
-                @custid       	INT,  
-				@Variance	    MONEY = 0, 
-                @transDesc    	NVARCHAR(1000)= 'ExtraPT',		
-				@Creator  		INT = 10278938,   -- starixIT
-				@IP       		VARCHAR(20) = '',
-				@LogData  		NVARCHAR(200) = ''		
+                @custid       INT,  
+				@Variance	    MONEY = 0, 				
+                @transDesc    NVARCHAR(1000)= 'ExtraPT',		
+				@Creator  INT = 10278938,   -- starixIT 
+				@IP       VARCHAR(20) = '',
+				@LogData  NVARCHAR(200) = ''		
 
 		Declare @RefNum bigint = 0, @bettype int, @Curr int, @CurrName nvarchar(10),
 				@actualrate float, @Recommend int, @MRecommend int, @SRecommend int,
@@ -228,10 +228,11 @@ BEGIN
 	                @creator = @creator,
 	                @ip = @ip,
 	                @ErrCode = @ErrCode OUTPUT,
-                    @ErrMsg = @ErrMsg OUTPUT
+                    @ErrMsg = @ErrMsg OUTPUT		
 
 			IF (@ErrCode <> 0) BREAK
-			
+											
+											
 			----Adjust statement
 			EXEC bodb_report.dbo.[Acc_StatementUpdateTransfer]
 				@custid = @custid
@@ -240,7 +241,8 @@ BEGIN
 				,@ErrCode = @ErrCode OUTPUT
 				,@ErrMsg = @ErrMsg OUTPUT							
 
-			IF (@ErrCode <> 0) BREAK			
+			IF (@ErrCode <> 0) BREAK		
+				
 											
 			--- write log 
 			BEGIN TRY

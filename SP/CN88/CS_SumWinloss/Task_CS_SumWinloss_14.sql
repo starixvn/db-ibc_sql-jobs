@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSUM-bodb_Summary" executers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBSUM-bodb_Summary" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_CS_SumWinloss_14]
 	@WinlostDate	SMALLDATETIME
 	,@CustIds		VARCHAR(MAX)
@@ -11,6 +11,8 @@ AS
 	
 	Revisions:
 		- 20190909@Percy: Initialize SP [RedmineID: #115377]
+		- 20191210@Percy: Apply new column epositiontaking instead of extra PT [RedmineID: #125158]
+		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
 */
 
 BEGIN
@@ -46,6 +48,7 @@ BEGIN
 			,mrecommend			INT
 			,recommend			INT
 			,custid				INT
+			,UplineId			INT
 			,matchid			INT
 			,ProductID			INT
 			,bettype			INT
@@ -81,6 +84,7 @@ BEGIN
 			,mrecommend
 			,recommend
 			,custid
+			,UplineId
 			,matchid
 			,ProductID
 			,bettype
@@ -114,6 +118,7 @@ BEGIN
 			,b.mrecommend
 			,b.recommend
 			,b.custid
+			,e.UplineId
 			,b.matchid
 			,s.ProductID
 			,b.bettype
@@ -124,7 +129,7 @@ BEGIN
 			,SUM(ABS(b.winlost - b.actual_stake)) AS ValidStake
 			,SUM(b.winlost - b.actual_stake) AS MemberWinloss
 			,SUM(b.playercomm) AS MemberComm
-			,SUM((b.winlost - b.actual_stake)  + (ABS(b.winlost - b.actual_stake) * b.discount)) AS Agent
+			,SUM((b.winlost - b.actual_stake) + (ABS(b.winlost - b.actual_stake) * b.discount)) AS Agent
 			,SUM(b.awinlost) AS AgentWinloss
 			,SUM(b.comm - b.playercomm) AS AgentComm
 			,SUM(ABS(b.winlost - b.actual_stake) * (1 - b.apositiontaking)) AS AgentStock
@@ -134,14 +139,14 @@ BEGIN
 			,SUM(b.acomm - b.comm) AS MasterComm
 			,SUM(ABS(b.winlost - b.actual_stake) * (1 - b.apositiontaking - b.mpositiontaking)) AS MasterStock
 			,SUM((b.winlost - b.actual_stake) * (1 - b.apositiontaking - b.mpositiontaking)
-				+  ABS(b.winlost - b.actual_stake) * (1 - b.apositiontaking - b.mpositiontaking) * b.sdiscount ) AS Super
+				+ ABS(b.winlost - b.actual_stake) * (1 - b.apositiontaking - b.mpositiontaking) * b.sdiscount ) AS Super
 			,SUM(b.swinlost) AS SuperWinloss
 			,SUM(b.scomm - b.acomm) AS SuperComm
 			,SUM(ABS(b.winlost - b.actual_stake) * (1 - b.tpositiontaking)) AS SuperStock
-			,-SUM((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * ISNULL(e.ExtraPT, 0)) AS HeadlineWinloss
-			,-SUM((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * ISNULL(e.ExtraPT, 0)) AS HeadlineComm
-			,SUM(ABS(b.winlost - b.actual_stake) * (1 - b.tpositiontaking - ISNULL(e.ExtraPT, 0))) AS HeadlineStock
-			,SUM(b.stake * (1 - b.tpositiontaking - ISNULL(e.ExtraPT, 0))) AS HouseTurnover
+			,-SUM((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END) * ISNULL(CONVERT(DECIMAL(9,8), b.epositiontaking), 0)) AS HeadlineWinloss
+			,-SUM((CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm / (1 - b.tpositiontaking) END) * ISNULL(CONVERT(DECIMAL(9,8), b.epositiontaking), 0)) AS HeadlineComm
+			,SUM(ABS(b.winlost - b.actual_stake) * (1 - b.tpositiontaking - ISNULL(CONVERT(DECIMAL(9,8), b.epositiontaking), 0))) AS HeadlineStock
+			,SUM(b.stake * (1 - b.tpositiontaking - ISNULL(CONVERT(DECIMAL(9,8), b.epositiontaking), 0))) AS HouseTurnover
 		FROM #tmpSuper c
 			CROSS APPLY (
 				SELECT
@@ -169,6 +174,7 @@ BEGIN
 					,b.apositiontaking
 					,b.mpositiontaking
 					,b.tpositiontaking
+					,b.epositiontaking
 				FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 					OUTER APPLY (
 						SELECT TOP 1 bm.matchid
@@ -182,9 +188,13 @@ BEGIN
 				SELECT TOP 1 sbm.ProductID, sbm.eventtype FROM bodb02.dbo.CS_SportBettypeMatrix sbm WITH (NOLOCK)
 				WHERE b.bettype = sbm.bettype
 			) AS s
-			OUTER APPLY (
-				SELECT TOP 1 a.ExtraPT FROM bodb02.dbo.Acc_GroupExtraPTSetting a WITH (NOLOCK)
-				WHERE b.srecommend = a.superid AND s.ProductId = a.ProductId AND a.Sporttype = 0 AND a.SubProduct = ''
+			CROSS APPLY (
+				SELECT TOP 1 a.UplineId
+				FROM bodb02.dbo.Acc_GroupExtraPTSetting a WITH (NOLOCK)
+				WHERE b.srecommend = a.SuperId
+					AND s.ProductId = 1
+					AND a.Sporttype = 0
+					AND a.SubProduct = ''
 					AND @WinlostDate BETWEEN a.FromDate AND a.ToDate
 			) AS e
 		WHERE b.winlostdate = @WinlostDate
@@ -193,6 +203,7 @@ BEGIN
 			,b.mrecommend
 			,b.recommend
 			,b.custid
+			,e.UplineId
 			,b.matchid
 			,s.ProductID
 			,b.bettype
@@ -299,7 +310,7 @@ BEGIN
 			,SUM(b.HeadlineWinloss)	AS HeadlineWinloss
 			,SUM(b.HeadlineComm)	AS HeadlineComm
 			,SUM(b.HeadlineStock)	AS HeadlineStock
-			,cs.UplineId
+			,b.UplineId
 			,SUM(b.HouseTurnover)	AS HouseTurnover
 		FROM #tmpBettrans b
 			CROSS APPLY (
@@ -322,7 +333,6 @@ BEGIN
 				SELECT CASE WHEN b.matchid = 29 THEN 0 ELSE b.matchid END AS sporttype -- SB Parlay: sporttype = 0
 				WHERE b.matchid <> 2799 AND b.eventtype = 0
 			) AS m
-			CROSS APPLY (SELECT TOP 1 c.UplineId FROM bodb02.dbo.CustSuper c WITH (NOLOCK) WHERE b.srecommend = c.custid) AS cs
 		GROUP BY
 			b.srecommend
 			,b.mrecommend
@@ -332,7 +342,7 @@ BEGIN
 			,m.Sporttype
 			,b.bettype
 			,b.IsLive
-			,cs.UplineId
+			,b.UplineId
 
 		DROP TABLE #tmpBettrans
 		DROP TABLE #tmpSuper
