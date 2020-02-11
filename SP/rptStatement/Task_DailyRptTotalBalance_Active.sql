@@ -1,7 +1,7 @@
-/*<info serverAlias="DBRPT-bodb_Report" executers="" viewers="" isFunction="0" isNested="0"></info>*/ 
+/*<info serverAlias="DBRPT-bodb_Report" isFunction="0" isNested="0"></info>*/ 
 ALTER PROCEDURE [dbo].[Task_DailyRptTotalBalance_Active]
-	@Winlostdate DATE
-	,@isCheckDataOnly BIT = 0
+	@Winlostdate		DATE
+	,@isCheckDataOnly	BIT = 0
 AS
 /*
 	Created by:20190507@Sophia
@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20190507@Sophia: Initial SP [redmine: #109293] 
 		- 20190912@Bobby: Implement headline - Statement [Redmine: #119289]
+		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
  */
 
 BEGIN
@@ -89,17 +90,22 @@ BEGIN
 		GROUP BY c.custid
 
 		-- Headline
-		UPDATE s
-		SET s.OpeningTotalBalance += bal.DownlineCash
-		FROM #tmpRptTotalBalance_Active s
-		INNER JOIN (
-			SELECT	cs.UplineID, SUM(s.OpeningTotalBalance) AS DownlineCash
-			FROM #tmpRptTotalBalance_Active s
-			INNER JOIN bodb02.dbo.CustSuper cs WITH (NOLOCK) 
-				ON s.custid = cs.custid 
-			WHERE cs.uplineID > 0
-			GROUP BY cs.UplineID
-		) AS bal ON s.custid = bal.UplineID
+		;WITH CTE_HeadlineTotalBalance AS 
+		(
+			SELECT e.UplineId, SUM(ISNULL(tmp.OpeningTotalBalance, 0)) AS OpeningTotalBalance
+			FROM #tmpRptTotalBalance_Active tmp
+				CROSS APPLY (
+					SELECT TOP (1) ag.UplineId
+					FROM bodb02.dbo.Acc_GroupExtraPTSetting ag WITH (NOLOCK)
+					WHERE tmp.Custid = ag.SuperId
+						AND @Winlostdate BETWEEN ag.FromDate AND ag.ToDate
+				) e
+			GROUP BY e.UplineId
+		)
+		UPDATE tmp
+		SET tmp.OpeningTotalBalance = ISNULL(tmp.OpeningBalance, 0) + ISNULL(bal.OpeningTotalBalance, 0)
+		FROM #tmpRptTotalBalance_Active tmp
+		INNER JOIN CTE_HeadlineTotalBalance bal ON tmp.Custid = bal.UplineId
 
 		---------------- Correct Opening Total Balance --------------------
 		IF EXISTS (
@@ -200,25 +206,30 @@ BEGIN
 		) AS SRC ON TGR.custid = SRC.custid
 		WHEN MATCHED THEN 
 		UPDATE
-			SET TGR.OpeningBalance += SRC.OpeningBalance
-			, TGR.OpeningTotalBalance += SRC.OpeningTotalBalance
+			SET TGR.OpeningBalance = ISNULL(TGR.OpeningBalance, 0) + ISNULL(SRC.OpeningBalance, 0)
+				,TGR.OpeningTotalBalance = ISNULL(TGR.OpeningTotalBalance, 0) + ISNULL(SRC.OpeningTotalBalance, 0)
 		WHEN NOT MATCHED BY TARGET THEN
 		INSERT (custid, OpeningBalance, OpeningTotalBalance)
 		VALUES(SRC.custid, SRC.OpeningBalance, SRC.OpeningTotalBalance)
 		;	
 
-		---- Headline
-		UPDATE s
-		SET s.OpeningTotalBalance += bal.DownlineCash
-		FROM #tmpRptTotalBalance_Active s
-		INNER JOIN (
-			SELECT	cs.UplineID, SUM(s.OpeningTotalBalance) AS DownlineCash
-			FROM #tmpRptTotalBalance_Active s
-			INNER JOIN bodb02.dbo.CustSuper cs WITH (NOLOCK) 
-				ON s.custid = cs.custid 
-			WHERE cs.uplineID > 0
-			GROUP BY cs.UplineID
-		) AS bal ON s.custid = bal.UplineID
+		-- Headline
+		;WITH CTE_HeadlineTotalBalance AS 
+		(
+			SELECT e.UplineId, SUM(ISNULL(tmp.OpeningTotalBalance, 0)) AS OpeningTotalBalance
+			FROM #tmpRptTotalBalance_Active tmp
+				CROSS APPLY (
+					SELECT TOP (1) ag.UplineId
+					FROM bodb02.dbo.Acc_GroupExtraPTSetting ag WITH (NOLOCK)
+					WHERE tmp.Custid = ag.SuperId
+						AND @Winlostdate BETWEEN ag.FromDate AND ag.ToDate
+				) e
+			GROUP BY e.UplineId
+		)
+		UPDATE tmp
+		SET tmp.OpeningTotalBalance = ISNULL(tmp.OpeningBalance, 0) + ISNULL(bal.OpeningTotalBalance, 0)
+		FROM #tmpRptTotalBalance_Active tmp
+		INNER JOIN CTE_HeadlineTotalBalance bal ON tmp.Custid = bal.UplineId
 
 		---------------- Correct Opening Total Balance --------------------
 		IF EXISTS (

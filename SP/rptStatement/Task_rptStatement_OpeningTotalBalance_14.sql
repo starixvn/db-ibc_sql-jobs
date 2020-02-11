@@ -1,4 +1,4 @@
-/*<info serverAlias="DBRPT-bodb_Report" executers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBRPT-bodb_Report" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptStatement_OpeningTotalBalance_14]
 	@WinlostDate	DATE
 	,@CustIds		VARCHAR(MAX)
@@ -11,6 +11,7 @@ AS
 
 	Revisions:
 		- 20190909@Percy: Initialize SP [RedmineID: #115377]
+		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
 */
 
 BEGIN
@@ -27,7 +28,10 @@ BEGIN
 				SELECT val FROM bodb02.dbo.strSplit(@CustIds, ',') f WHERE c.custid = f.val
 			) AS tmp
 			CROSS APPLY (
-				SELECT TOP (1) cs.UplineId FROM bodb02.dbo.CustSuper cs WITH (NOLOCK) WHERE c.srecommend = cs.custid
+				SELECT TOP (1) ag.UplineId
+				FROM bodb02.dbo.Acc_GroupExtraPTSetting ag WITH (NOLOCK)
+				WHERE c.srecommend = ag.SuperId
+					AND @WinlostDate BETWEEN ag.FromDate AND ag.ToDate
 			) AS u
 
 		-- Member + SMA + Headline

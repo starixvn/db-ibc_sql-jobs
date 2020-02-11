@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSUM-bodb_Summary" executers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBSUM-bodb_Summary" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_CS_SumCancelled_14]
 	@WinlostDate SMALLDATETIME
 	,@CustIds		VARCHAR(MAX)
@@ -11,6 +11,8 @@ AS
 	
 	Revisions:
 		- 20190809@Percy: Initialize SP [RedmineID: #116925]
+		- 20191210@Percy: Add HouseTurnover [RedmineID: #125186]
+		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
 */
 
 BEGIN
@@ -42,18 +44,20 @@ BEGIN
 		-- bettrans
 		CREATE TABLE #tmpBettrans
 		(
-			srecommend	INT
-			,mrecommend	INT
-			,recommend	INT
-			,custid		INT
-			,matchid	INT
-			,ProductID	INT
-			,bettype	INT
-			,eventtype	TINYINT
-			,IsLive		BIT
-			,CancelType	TINYINT
-			,Wagers		INT
-			,Stake		MONEY
+			srecommend		INT
+			,mrecommend		INT
+			,recommend		INT
+			,custid			INT
+			,UplineId	INT
+			,matchid		INT
+			,ProductID		INT
+			,bettype		INT
+			,eventtype		TINYINT
+			,IsLive			BIT
+			,CancelType		TINYINT
+			,Wagers			INT
+			,Stake			MONEY
+			,HouseTurnover	MONEY
 		)
 
 		INSERT INTO #tmpBettrans
@@ -62,6 +66,7 @@ BEGIN
 			,mrecommend
 			,recommend
 			,custid
+			,UplineId
 			,matchid
 			,ProductID
 			,bettype
@@ -70,12 +75,14 @@ BEGIN
 			,CancelType
 			,Wagers
 			,Stake
+			,HouseTurnover
 		)
 		SELECT
 			b.srecommend
 			,b.mrecommend
 			,b.recommend
 			,b.custid
+			,e.UplineId
 			,b.matchid
 			,s.ProductID
 			,b.bettype
@@ -84,6 +91,7 @@ BEGIN
 			,b.CancelType
 			,COUNT(1) AS Wagers
 			,SUM(b.stake) AS Stake
+			,SUM(b.stake * (1 - b.tpositiontaking - ISNULL(CONVERT(DECIMAL(9,8), b.epositiontaking), 0))) AS HouseTurnover
 		FROM #tmpSuper c
 			CROSS APPLY (
 				SELECT
@@ -97,6 +105,8 @@ BEGIN
 					,CASE WHEN b.bettype = 29 THEN CASE WHEN b.livehomescore = 1 THEN 1 ELSE 0 END ELSE b.liveindicator END AS IsLive
 					,CASE WHEN b.ExtraInfo LIKE '%p1%' AND t.c = 1 THEN 2 ELSE 1 END AS CancelType
 					,b.stake
+					,b.tpositiontaking
+					,b.epositiontaking
 				FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 					OUTER APPLY (
 						SELECT TOP 1 bm.matchid
@@ -108,12 +118,22 @@ BEGIN
 					AND b.statusID IN (101, 102, 103)
 			) AS b
 			CROSS APPLY (SELECT TOP 1 sbm.ProductID, sbm.eventtype FROM bodb02.dbo.CS_SportBettypeMatrix sbm WITH (NOLOCK) WHERE b.bettype = sbm.bettype) AS s
+			CROSS APPLY (
+				SELECT TOP 1 a.UplineId
+				FROM bodb02.dbo.Acc_GroupExtraPTSetting a WITH (NOLOCK)
+				WHERE b.srecommend = a.SuperId
+					AND a.ProductId = 1
+					AND a.Sporttype = 0
+					AND a.SubProduct = ''
+					AND @WinlostDate BETWEEN a.FromDate AND a.ToDate
+			) AS e
 		WHERE b.winlostdate = @WinlostDate
 		GROUP BY
 			b.srecommend
 			,b.mrecommend
 			,b.recommend
 			,b.custid
+			,e.UplineId
 			,b.matchid
 			,s.ProductID
 			,b.bettype
@@ -124,18 +144,19 @@ BEGIN
 		-- Sum data
 		CREATE TABLE #tmpSumCancelled
 		(
-			srecommend	INT
-			,mrecommend	INT
-			,recommend	INT
-			,custid		INT
-			,ProductId	SMALLINT
-			,Sporttype	SMALLINT
-			,Bettype	SMALLINT
-			,IsLive		BIT
-			,CancelType	TINYINT
-			,Wagers		INT
-			,Stake		MONEY
-			,HeadlineId	INT
+			srecommend		INT
+			,mrecommend		INT
+			,recommend		INT
+			,custid			INT
+			,ProductId		SMALLINT
+			,Sporttype		SMALLINT
+			,Bettype		SMALLINT
+			,IsLive			BIT
+			,CancelType		TINYINT
+			,Wagers			INT
+			,Stake			MONEY
+			,HouseTurnover	MONEY
+			,HeadlineId		INT
 		)
 
 		INSERT INTO #tmpSumCancelled
@@ -151,6 +172,7 @@ BEGIN
 			,CancelType
 			,Wagers
 			,Stake
+			,HouseTurnover
 			,HeadlineId
 		)
 		SELECT
@@ -163,9 +185,10 @@ BEGIN
 			,b.bettype
 			,b.IsLive
 			,b.CancelType
-			,SUM(b.Wagers)	AS Wagers
-			,SUM(b.Stake)	AS Stake
-			,cs.UplineId
+			,SUM(b.Wagers)			AS Wagers
+			,SUM(b.Stake)			AS Stake
+			,SUM(b.HouseTurnover)	AS HouseTurnover
+			,b.UplineId
 		FROM #tmpBettrans b
 			CROSS APPLY (
 				SELECT m.sporttype
@@ -187,7 +210,6 @@ BEGIN
 				SELECT CASE WHEN b.matchid = 29 THEN 0 ELSE b.matchid END AS sporttype -- SB Parlay: sporttype = 0
 				WHERE b.matchid <> 2799 AND b.eventtype = 0
 			) AS m
-			CROSS APPLY (SELECT TOP 1 c.UplineId FROM bodb02.dbo.CustSuper c WITH (NOLOCK) WHERE b.srecommend = c.custid) AS cs
 		GROUP BY
 			b.srecommend
 			,b.mrecommend
@@ -198,7 +220,7 @@ BEGIN
 			,b.bettype
 			,b.IsLive
 			,b.CancelType
-			,cs.UplineId
+			,b.UplineId
 
 		DROP TABLE #tmpBettrans
 		DROP TABLE #tmpSuper
@@ -218,6 +240,7 @@ BEGIN
 			,CancelType
 			,Wagers
 			,Stake
+			,HouseTurnover
 			,HeadlineId
 		)
 		SELECT
@@ -227,8 +250,9 @@ BEGIN
 			,Bettype
 			,IsLive
 			,CancelType
-			,SUM(Wagers) AS Wagers
-			,SUM(Stake) AS Stake
+			,SUM(Wagers)		AS Wagers
+			,SUM(Stake)			AS Stake
+			,SUM(HouseTurnover)	AS HouseTurnover
 			,HeadlineId
 		FROM #tmpSumCancelled
 		GROUP BY
@@ -248,8 +272,9 @@ BEGIN
 			,Bettype
 			,IsLive
 			,CancelType
-			,SUM(Wagers) AS Wagers
-			,SUM(Stake) AS Stake
+			,SUM(Wagers)		AS Wagers
+			,SUM(Stake)			AS Stake
+			,SUM(HouseTurnover)	AS HouseTurnover
 			,HeadlineId
 		FROM #tmpSumCancelled
 		GROUP BY
@@ -269,8 +294,9 @@ BEGIN
 			,Bettype
 			,IsLive
 			,CancelType
-			,SUM(Wagers) AS Wagers
-			,SUM(Stake) AS Stake
+			,SUM(Wagers)		AS Wagers
+			,SUM(Stake)			AS Stake
+			,SUM(HouseTurnover)	AS HouseTurnover
 			,HeadlineId
 		FROM #tmpSumCancelled
 		GROUP BY
@@ -295,6 +321,7 @@ BEGIN
 		WHEN MATCHED THEN UPDATE
 			SET TARGET.Wagers			= SOURCE.Wagers,
 				TARGET.Stake			= SOURCE.Stake,
+				TARGET.HouseTurnover	= SOURCE.HouseTurnover,
 				TARGET.HeadlineId		= SOURCE.HeadlineId
 		WHEN NOT MATCHED BY TARGET THEN INSERT
 			(
@@ -307,6 +334,7 @@ BEGIN
 				,CancelType
 				,Wagers
 				,Stake
+				,HouseTurnover
 				,HeadlineId
 			)
 			VALUES
@@ -320,6 +348,7 @@ BEGIN
 				,SOURCE.CancelType
 				,SOURCE.Wagers
 				,SOURCE.Stake
+				,SOURCE.HouseTurnover
 				,SOURCE.HeadlineId
 			)
 		WHEN NOT MATCHED BY SOURCE

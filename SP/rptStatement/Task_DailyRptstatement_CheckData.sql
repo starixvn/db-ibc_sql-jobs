@@ -1,4 +1,4 @@
-/*<info serverAlias="DBRPT-bodb_Report" executers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBRPT-bodb_Report" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailyRptStatement_CheckData]
 	@WinlostDate		DATE
 	,@isCheckDataOnly	BIT = 1
@@ -23,6 +23,7 @@ AS
 		- 20190801@Percy: Check OpeningTotalBalance for Credit Collection [RedmineID: #109293]
 		- 20190912@Bobby: Implement headline - Statement [Redmine: #119289]
 		- 20191111@Bobby: Correct BU rule - Statement [Redmine: #119289]
+		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
 */
 BEGIN
 
@@ -282,14 +283,18 @@ BEGIN
 	--5. Headline - Openning total balance
 	;WITH CTE_HeadlineTotalBalance AS 
 	(
-		SELECT cs.UplineId, SUM(tmp.OpeningTotalBalance) AS OpeningTotalBalance
-		FROM bodb02.dbo.CustSuper cs WITH(NOLOCK)
-		INNER JOIN #rptStatementTable tmp ON cs.custid = tmp.Custid
-		WHERE cs.UplineId > 0
-		GROUP BY cs.UplineId
+		SELECT e.UplineId, SUM(ISNULL(tmp.OpeningTotalBalance, 0)) AS OpeningTotalBalance
+		FROM #rptStatementTable tmp
+			CROSS APPLY (
+				SELECT TOP (1) ag.UplineId
+				FROM bodb02.dbo.Acc_GroupExtraPTSetting ag WITH (NOLOCK)
+				WHERE tmp.Custid = ag.SuperId
+					AND @Winlostdate BETWEEN ag.FromDate AND ag.ToDate
+			) e
+		GROUP BY e.UplineId
 	)
 	UPDATE tmp
-	SET OpeningTotalBalance += bal.OpeningTotalBalance
+	SET tmp.OpeningTotalBalance = ISNULL(tmp.OpeningTotalBalance, 0) + ISNULL(bal.OpeningTotalBalance, 0)
 	FROM #rptStatementTable tmp
 	INNER JOIN CTE_HeadlineTotalBalance bal ON tmp.Custid = bal.UplineId
 	

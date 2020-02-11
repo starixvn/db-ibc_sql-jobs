@@ -16,6 +16,7 @@ Revisions:
 	- 20170323@Percy: Apply Cash Out [RedmineID: #72164]
 	- 20190507@Sophia: Add new column OpeningTotalBalance for Credit Collection report use [Redmine: #109293]
 	- 20190912@Bobby: Implement headline - Statement [Redmine: #119289]
+	- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
  */
 BEGIN
 
@@ -258,14 +259,18 @@ BEGIN
 	;
 	WITH CTE_HeadlineTotalBalance AS 
 	(
-		SELECT cs.UplineId, SUM(tmp.OpeningTotalBalance) AS OpeningTotalBalance
-		FROM bodb02.dbo.CustSuper cs WITH(NOLOCK)
-		INNER JOIN #rptStatementTable tmp ON cs.custid = tmp.Custid
-		WHERE cs.UplineId > 0
-		GROUP BY cs.UplineId
+		SELECT e.UplineId, SUM(ISNULL(tmp.OpeningTotalBalance, 0)) AS OpeningTotalBalance
+		FROM #rptStatementTable tmp
+			CROSS APPLY (
+				SELECT TOP (1) ag.UplineId
+				FROM bodb02.dbo.Acc_GroupExtraPTSetting ag WITH (NOLOCK)
+				WHERE tmp.Custid = ag.SuperId
+					AND @Winlostdate BETWEEN ag.FromDate AND ag.ToDate
+			) e
+		GROUP BY e.UplineId
 	)
 	UPDATE tmp
-	SET OpeningTotalBalance += bal.OpeningTotalBalance
+	SET tmp.OpeningTotalBalance = ISNULL(tmp.OpeningTotalBalance, 0) + ISNULL(bal.OpeningTotalBalance, 0)
 	FROM #rptStatementTable tmp
 	INNER JOIN CTE_HeadlineTotalBalance bal ON tmp.Custid = bal.UplineId
 	
