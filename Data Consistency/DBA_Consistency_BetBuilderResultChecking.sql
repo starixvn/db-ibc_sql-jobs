@@ -12,6 +12,7 @@ AS
 
 	Revisions: 
 		- 20190514@Kathy: Check BetBuilder result [Redmine:#106903]
+		- 20200211@Helen: Change Notification Rule 19, 20, 22 for Bet Builder [Redmine:#128265]
 	
 	Param's Expanation:
 */
@@ -20,16 +21,30 @@ BEGIN
 
 	DECLARE @Results VARCHAR(MAX)
 			,@ProductName	VARCHAR(50)	
+	
+	DECLARE @temp_market AS TABLE (Matchid INT, MarketID VARCHAR(20))
+	DECLARE @temp_match AS TABLE (Matchid INT)
 		
 	SET @Results = ''
 	SET @ProductName = 'BetBuilder'
 
+	INSERT INTO @temp_match (Matchid)
+	SELECT DISTINCT MatchId
+	FROM dbo.SMP_Market WITH (NOLOCK)
+		
+	INSERT INTO @temp_market (Matchid,MarketID)
+	SELECT DISTINCT m.Matchid,b.betcheck AS MarketID
+	FROM @temp_match m
+		INNER JOIN dbo.bettrans b WITH (NOLOCK) ON m.Matchid = b.matchid
+	WHERE b.bettype = 38
+	
 	IF @Rule = 'SelectionResult'
 	BEGIN
 		SELECT TOP 100 @Results = @Results + 'MatchId: ' + CAST(t.MatchId AS VARCHAR) + ', ' + 'SelectionType: ' + CAST(t.SelectionType AS VARCHAR) + '; '
 		FROM (
 			SELECT	ms.MatchId, ms.SelectionType, ms.Result
 			FROM	bodb02.dbo.SMP_MarketSelection ms WITH(NOLOCK)
+				INNER JOIN @temp_market mk ON mk.Matchid = ms.MatchId AND mk.MarketId = ms.MarketId
 			WHERE	ms.Result IS NOT NULL
 			GROUP BY ms.MatchId, ms.SelectionType, ms.Result
 		) t
@@ -48,6 +63,7 @@ BEGIN
 	BEGIN
 		SELECT	TOP 100 @Results = @Results + 'MatchId: ' + CAST(m.MatchId AS VARCHAR) + ', ' + 'MarketId: ' + CAST(m.MarketId AS VARCHAR) + '; '
 		FROM	bodb02.dbo.SMP_Market m WITH(NOLOCK)
+			INNER JOIN @temp_market mk ON mk.Matchid = m.MatchId AND mk.MarketId = m.MarketId
 			CROSS APPLY (
 				SELECT TOP 1 CASE 
 							WHEN ms.Result IS NULL THEN 1
@@ -76,6 +92,7 @@ BEGIN
 	BEGIN
 		SELECT	TOP 100 @Results = @Results + 'MatchId: ' + CAST(m.MatchId AS VARCHAR) + ', ' + 'MarketId: ' + CAST(m.MarketId AS VARCHAR) + '; '
 		FROM	bodb02.dbo.SMP_Market m WITH(NOLOCK)
+			INNER JOIN @temp_market mk ON mk.Matchid = m.MatchId AND mk.MarketId = m.MarketId
 			CROSS APPLY (
 				SELECT TOP 1 ms.MarketSelectionId
 				FROM	bodb02.dbo.SMP_MarketSelection ms WITH(NOLOCK)
