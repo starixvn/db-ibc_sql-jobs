@@ -44,7 +44,7 @@ BEGIN
 		FROM (
 			SELECT	ms.MatchId, ms.SelectionType, ms.Result
 			FROM	bodb02.dbo.SMP_MarketSelection ms WITH(NOLOCK)
-				INNER JOIN @temp_market mk ON mk.Matchid = ms.MatchId AND ms.MarketId = ms.MarketId
+				INNER JOIN @temp_market mk ON mk.Matchid = ms.MatchId AND mk.MarketId = ms.MarketId
 			WHERE	ms.Result IS NOT NULL
 			GROUP BY ms.MatchId, ms.SelectionType, ms.Result
 		) t
