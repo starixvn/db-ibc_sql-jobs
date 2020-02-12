@@ -13,6 +13,7 @@ AS
 	Revisions: 
 		- 20190514@Kathy: Check BetBuilder result [Redmine:#106903]
 		- 20200211@Helen: Change Notification Rule 19, 20, 22 for Bet Builder [Redmine:#128265]
+		- 20200211@Helen: Hot fix - missing bodb02 when checking SMP.Market [Redmine:#128265]
 	
 	Param's Expanation:
 */
@@ -30,12 +31,12 @@ BEGIN
 
 	INSERT INTO @temp_match (Matchid)
 	SELECT DISTINCT MatchId
-	FROM dbo.SMP_Market WITH (NOLOCK)
+	FROM bodb02.dbo.SMP_Market WITH (NOLOCK)
 		
 	INSERT INTO @temp_market (Matchid,MarketID)
 	SELECT DISTINCT m.Matchid,b.betcheck AS MarketID
 	FROM @temp_match m
-		INNER JOIN dbo.bettrans b WITH (NOLOCK) ON m.Matchid = b.matchid
+		INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON m.Matchid = b.matchid
 	WHERE b.bettype = 38
 	
 	IF @Rule = 'SelectionResult'
