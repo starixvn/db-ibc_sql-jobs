@@ -54,6 +54,7 @@ AS
 		- 20190819@Parsons: Provide House Turnover In NG WL Report [Redmine: #117674]
 		- 20191122@Amanda: Integrate PP Tournament Prize [#123804]
 		- 20191125@Parsons: Integrate NPH Promotion [RedmineID: #119538]
+		- 20191218@Amanda: Integrate Spadegaming [#124103]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 
@@ -84,7 +85,7 @@ BEGIN
 					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG') -- Remove Exchange (BX) due to separate wallet only
 		WHERE (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList)) 
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
