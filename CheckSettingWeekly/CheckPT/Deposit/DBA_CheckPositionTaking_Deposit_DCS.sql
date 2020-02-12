@@ -22,6 +22,7 @@ AS
 		-20190801@Winnie: [AE88] Adjust Term for Sportsbook RedmineID:#117629
 		-20191105@Winnie: starsoccer - Adjust SB PT. RedmineID:#123273
 		-20191216@Winnie: [Wanbo,9wickets,9Wsports] Update PT sportbook. RedmineID:#125434
+		-20200206@Johnson: add new PT config for VS (rule 71) and exclude closed customers[redmine:#127831]
 	Param's Explanation:
 	
 */
@@ -29,11 +30,20 @@ SET NOCOUNT ON
 BEGIN
 	IF @srecommend IN(1752415,932209,1574083,179457)--'AB88SuperRM' , '12BETSuperSD$',MS88SuperBND,'ITSA'
 	RETURN
-
+	
+	IF (SELECT ISNULL(closed,0) FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) WHERE custid = @srecommend) = 1
+	RETURN
+	
 	DECLARE @site VARCHAR(20),@currency INT,@IsAthena BIT=0
 
 	CREATE TABLE #tmpProfile(Sporttype INT,Bettype INT,IsLive BIT)
-
+	CREATE TABLE #tblCustClosed (custid INT, roleid TINYINT)
+	
+	INSERT INTO #tblCustClosed (custid,roleid)
+	SELECT custid,roleid
+	FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) 
+	WHERE srecommend = @srecommend AND closed = 1
+	
 	INSERT INTO #tmpProfile(Sporttype ,Bettype ,IsLive )
 	SELECT Sporttype ,Bettype ,IsLive
 	FROM CheckCustDB.dbo.Dep_ProductSetting ps WITH(NOLOCK)
@@ -103,7 +113,8 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustPTSetting_Agent s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid	
 		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
-
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 3)
+			
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 44,s.sporttype,s.bettype,@srecommend,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
 		FROM #tmpS s 
@@ -120,12 +131,14 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustPTSetting_Agent s WITH(NOLOCK)	
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid		
 		WHERE c.srecommend=@srecommend AND c.roleid=3 AND c.custid NOT IN(SELECT custid FROM #Dummy)
-		
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 3) 
+			
 		INSERT INTO #tmpA45 (CustID,Sporttype , Bettype , Islive , PT,mrecommend)
 		SELECT c.custid, s.sporttype,s.bettype,IsLive,s.AgentPT,c.mrecommend
 		FROM CheckCustDB.dbo.Dep_CustPTSetting_Agent s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid	
 		WHERE c.srecommend=@srecommend AND c.roleid=2
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 45,s.sporttype,s.bettype,s.CustID,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
@@ -145,6 +158,7 @@ BEGIN
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid		
 		WHERE c.srecommend=@srecommend AND c.roleid=2 AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 			AND s.SportType<>43
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 
 		INSERT INTO #tmpA1 (CustID,Sporttype , Bettype , Islive , PT,recommend)
 		SELECT c.custid, s.sporttype,s.bettype,IsLive,s.AgentPT,c.recommend
@@ -153,6 +167,7 @@ BEGIN
 			INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID
 		WHERE c.srecommend=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0 AND c.custid NOT IN(SELECT custid FROM #Trade)
 			AND s.SportType<>43
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
 
 		INSERT INTO #tmpA1 (CustID,Sporttype , Bettype , Islive , PT,recommend)
 		SELECT c.custid, s.sporttype,s.bettype,IsLive,s.AgentPT,c.recommend
@@ -160,6 +175,7 @@ BEGIN
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid	
 		WHERE c.srecommend=@srecommend AND c.roleid=2 AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 			AND s.SportType<>43
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 46,s.sporttype,s.bettype,s.CustID,m.CustID,s.PT ,m.PT,GETDATE(),s.islive 
@@ -175,16 +191,19 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustPTSetting_Member s WITH(NOLOCK)							
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid
 			INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 			
-		WHERE s.custid=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0 AND  (s.sporttype BETWEEN 180 AND 186  OR s.sporttype BETWEEN 190 AND 199) AND (s.AgentPT NOT IN(85,88) OR s.SuperPT<>0 OR s.MasterPT<>0)
+		WHERE s.custid=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0 AND  (s.sporttype BETWEEN 180 AND 186  OR s.sporttype BETWEEN 190 AND 199) AND (s.AgentPT NOT IN(85,88,90) OR s.SuperPT<>0 OR s.MasterPT<>0)
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 			AND c.custid NOT IN(SELECT custid FROM #Trade)	
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
 
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
 		FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid			
-		WHERE c.srecommend=@srecommend AND c.roleid=2 AND  (s.sporttype BETWEEN 180 AND 186 OR s.sporttype BETWEEN 190 AND 199) AND (s.AgentPT NOT IN(85,88) OR s.SuperPT<>0 OR s.MasterPT<>0)
+		WHERE c.srecommend=@srecommend AND c.roleid=2 AND  (s.sporttype BETWEEN 180 AND 186 OR s.sporttype BETWEEN 190 AND 199) AND (s.AgentPT NOT IN(85,88,90) OR s.SuperPT<>0 OR s.MasterPT<>0)
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
+			
 		-- Allbet
 		IF(@IsAthena=1)
 		BEGIN
@@ -195,14 +214,16 @@ BEGIN
 				INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 				
 			WHERE s.custid=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0 AND s.sporttype =211 AND (s.AgentPT <> 85	OR s.SuperPT<>0 OR s.MasterPT<>0)
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
-				AND c.custid NOT IN(SELECT custid FROM #Trade)					
+				AND c.custid NOT IN(SELECT custid FROM #Trade)
+				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)		
 
 			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 			SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
 			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK)		
 				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.AgentID=c.custid	
 			WHERE c.srecommend=@srecommend AND c.roleid=2 AND s.sporttype =211 AND (s.AgentPT <> 85 OR s.SuperPT<>0 OR s.MasterPT<>0)
-				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)				
+				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
+				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)		
 		END
 		ELSE
 		BEGIN
@@ -214,6 +235,7 @@ BEGIN
 			WHERE s.custid=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0 AND s.sporttype =211 AND (s.AgentPT <> 92	OR s.SuperPT<>0 OR s.MasterPT<>0)
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 				AND c.custid NOT IN(SELECT custid FROM #Trade)	
+				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
 
 			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 			SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
@@ -221,6 +243,7 @@ BEGIN
 				INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid	
 			WHERE c.srecommend=@srecommend AND c.roleid=2 AND s.sporttype =211 AND (s.AgentPT <> 92 OR s.SuperPT<>0 OR s.MasterPT<>0)
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
+				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 		END 
 		-- Macau Games
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
@@ -231,6 +254,7 @@ BEGIN
 		WHERE s.custid=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0 AND s.sporttype =212 AND (s.AgentPT <> 93	OR s.SuperPT<>0 OR s.MasterPT<>0)
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 			AND c.custid NOT IN(SELECT custid FROM #Trade)	
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
 
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
@@ -238,6 +262,7 @@ BEGIN
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid	
 		WHERE c.srecommend=@srecommend AND c.roleid=2 AND s.sporttype =212 AND (s.AgentPT <> 93 OR s.SuperPT<>0 OR s.MasterPT<>0)
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 
 		-- Pragmatic Play, FIshing world
 		IF(@IsAthena=0)
@@ -249,14 +274,16 @@ BEGIN
 				INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 					
 			WHERE s.custid=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0 AND s.sporttype IN(219,248) AND (s.AgentPT <> 92	OR s.SuperPT<>0 OR s.MasterPT<>0)
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
-				AND c.custid NOT IN(SELECT custid FROM #Trade)					
+				AND c.custid NOT IN(SELECT custid FROM #Trade)	
+				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)				
 
 			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 			SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
 			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK)		
 				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.AgentID=c.custid								
 			WHERE c.srecommend=@srecommend AND c.roleid=2 AND s.sporttype  IN(219,248) AND (s.AgentPT <> 92 OR s.SuperPT<>0 OR s.MasterPT<>0)
-				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)				
+				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)	
+				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)		
 		END
 		ELSE
 		BEGIN
@@ -268,6 +295,7 @@ BEGIN
 			WHERE s.custid=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0 AND s.sporttype  IN(219,248) AND (s.AgentPT <> 90	OR s.SuperPT<>0 OR s.MasterPT<>0)
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 				AND c.custid NOT IN(SELECT custid FROM #Trade)	
+				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
 
 			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 			SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
@@ -275,6 +303,7 @@ BEGIN
 				INNER JOIN CheckCustDB.dbo.Customer c WITH(NOLOCK) ON s.AgentID=c.custid	
 			WHERE c.srecommend=@srecommend AND c.roleid=2 AND s.sporttype IN(219,248) AND (s.AgentPT <> 90 OR s.SuperPT<>0 OR s.MasterPT<>0)
 				AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)	
+				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 		END
 		-- Lottery
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
@@ -285,6 +314,7 @@ BEGIN
 		WHERE s.custid=@srecommend AND c.roleid=1  AND d.IsGroupedPT=0 AND s.sporttype =220 AND (s.AgentPT NOT IN(90,94) OR s.SuperPT<>0 OR s.MasterPT<>0)
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 			AND c.custid NOT IN(SELECT custid FROM #Trade)	
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
 
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
 		SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
@@ -292,6 +322,7 @@ BEGIN
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid			
 		WHERE c.srecommend=@srecommend AND c.roleid=2 AND s.sporttype =220 AND (s.AgentPT NOT IN(90,94) OR s.SuperPT<>0 OR s.MasterPT<>0)
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 		
 	END
 		
@@ -303,7 +334,8 @@ BEGIN
 			CROSS APPLY #tmpProfile t
 			LEFT JOIN CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK) ON c.custid=s.AgentID AND t.Sporttype=s.SportType AND t.Bettype=s.BetType AND t.IsLive=s.IsLive			
 		WHERE c.srecommend=@srecommend AND c.mrecommend NOT IN(SELECT custid FROM #Dummy)
-			AND c.roleid=2 AND s.AgentID IS NULL	
+			AND c.roleid=2 AND s.AgentID IS NULL
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)			
 	END
 	IF @RuleId IN (0,55)
 	BEGIN	
@@ -315,6 +347,7 @@ BEGIN
 		WHERE c.srecommend=@srecommend 
 				AND c.mrecommend NOT IN(SELECT custid FROM #Dummy)		
 				AND c.roleid IN(2,3,4) AND s.CustID IS NULL	
+				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid > 1)
 	END
 	IF @RuleId IN (0,56)
 	BEGIN	
@@ -327,7 +360,8 @@ BEGIN
 			WHERE c.srecommend=@srecommend 
 					AND c.custid NOT IN(SELECT custid FROM #Trade)		
 					AND c.mrecommend NOT IN(SELECT custid FROM #Dummy)	
-					AND c.roleid =1 AND s.CustID IS NULL	
+					AND c.roleid =1 AND s.CustID IS NULL
+					AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)		
 		END
 	END
 	
@@ -341,6 +375,7 @@ BEGIN
 				INNER JOIN CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK) ON d.custid=BA.CustId
 				INNER  JOIN #tmpDumMember t ON BA.CustId=t.CustID					
 			WHERE t.roleid=1 AND d.IsGroupedPT<>1 
+				AND t.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)		
 		END
 	END
 	IF @RuleId IN(0,61)
@@ -356,6 +391,7 @@ BEGIN
 				INNER JOIN CheckCustDB.dbo.Dep_ProductSetting ps WITH(NOLOCK) ON p.ProductSettingID=ps.ProductSettingID
 			WHERE c.srecommend=@srecommend AND (s.SuperPT<>0 OR s.MasterPT<>0 OR s.AgentPT <> 0)		
 				AND p.IsApplyBA=1 AND ps.SettingType=1
+				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed)		
 		END
 	END
 	IF @RuleId IN(0,62)
@@ -367,6 +403,7 @@ BEGIN
 			FROM CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK)
 				INNER  JOIN #tmpDumMember t ON d.CustId=t.CustID	
 			WHERE t.roleid=1 AND d.IsGroupedPT<>0 AND NOT EXISTS(SELECT TOP 1 1 FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK) WHERE d.CustID=BA.CustId)
+				AND t.custid NOT IN (SELECT custid FROM #tblCustClosed)	
 		END
 	END
 	IF @RuleId IN(0,63)
@@ -378,6 +415,7 @@ BEGIN
 			FROM CheckCustDB.dbo.Dep_CustPTSetting_Member d WITH(NOLOCK)
 				INNER  JOIN #tmpDumMember t ON d.CustId=t.CustID	
 			WHERE t.roleid=1 AND NOT EXISTS(SELECT TOP 1 1 FROM #tmpProfile t WITH(NOLOCK) WHERE t.Sporttype=d.SportType AND t.Bettype=d.BetType AND t.IsLive=d.IsLive)
+				AND t.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
 	END
 	IF @RuleId IN(0,64)
@@ -391,6 +429,7 @@ BEGIN
 				INNER JOIN CheckCustDB.dbo.Dep_CustPTSetting_Agent a WITH(NOLOCK) ON a.CustID=ci.recommend	AND m.SportType=a.SportType AND m.BetType=a.BetType AND m.IsLive=a.IsLive					
 			WHERE ci.srecommend=@srecommend AND ci.roleid=1 AND NOT EXISTS(SELECT TOP 1 1 FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK) WHERE m.CustID=BA.CustId)
 				AND (m.SuperPT<>a.SuperPT OR m.MasterPT<>a.MasterPT OR m.AgentPT<>a.AgentPT)
+				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
 	END
 	IF @RuleId IN(0,65)
@@ -403,6 +442,7 @@ BEGIN
 				INNER JOIN CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK) ON d.custid=BA.CustId
 				INNER  JOIN #tmpDumMember t ON BA.CustId=t.CustID					
 			WHERE t.roleid=1 AND d.IsGroupedPT<>0
+				AND t.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
 	END
 	IF @RuleId IN(0,66)
@@ -414,6 +454,7 @@ BEGIN
 			FROM CheckCustDB.dbo.Dep_CustPTSetting_Member d WITH(NOLOCK)
 				INNER  JOIN #tmpDumMember t ON d.CustId=t.CustID	
 			WHERE t.roleid=1 AND NOT EXISTS(SELECT TOP 1 1 FROM #tmpProfile t WITH(NOLOCK) WHERE t.Sporttype=d.SportType AND t.Bettype=d.BetType AND t.IsLive=d.IsLive)
+				AND t.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
 	END
 	IF @RuleId IN(0,67)
@@ -429,6 +470,7 @@ BEGIN
 				INNER JOIN CheckCustDB.dbo.Dep_ProductSetting ps WITH(NOLOCK) ON p.ProductSettingID=ps.ProductSettingID
 			WHERE t.RoleID=1 AND( s.SuperPT<>0 OR s.MasterPT<>0 OR s.AgentPT <> 0	)	
 				AND p.IsApplyBA=1	AND ps.SettingType=1
+				AND t.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
 	END
 	IF @RuleId IN(0,68)
@@ -446,6 +488,7 @@ BEGIN
 			WHERE ci.srecommend=@srecommend AND ci.roleid=1 
 				AND (m.SuperPT<>a.SuperPT OR m.MasterPT<>a.MasterPT OR m.AgentPT<>a.AgentPT)
 				AND p.IsApplyBA=0 AND ps.SettingType=1
+				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
 	END
 	IF @RuleId IN(0,69)
@@ -457,6 +500,7 @@ BEGIN
 			FROM CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK)
 				INNER  JOIN #tmpDumMember t ON d.CustId=t.CustID	
 			WHERE t.roleid=1 AND d.IsGroupedPT<>1 AND NOT EXISTS(SELECT TOP 1 1 FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK) WHERE d.CustID=BA.CustId)
+				AND t.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
 	END
 	IF @RuleId IN(0,70)
@@ -469,6 +513,7 @@ BEGIN
 				INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
 			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT NOT IN(85,88,91,92.5,89,88.5,50)
 				AND d.AgentID NOT IN(SELECT CustID FROM #Trade)		
+				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
 	END
 	IF @RuleId IN (0,57)
@@ -477,7 +522,8 @@ BEGIN
 		SELECT 57,1,911,c.custid,NULL,s.HousePT,NULL,GETDATE(),NULL
 		FROM CheckCustDB.dbo.CustInfo c WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.TradeComm s WITH(NOLOCK) ON c.custid=s.AgentID 	
-		WHERE c.srecommend=@srecommend AND s.HousePT<>1				
+		WHERE c.srecommend=@srecommend AND s.HousePT<>1
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed)
 	END
 
 	IF @RuleId IN (0,59)
@@ -490,7 +536,8 @@ BEGIN
 		WHERE c.srecommend=@srecommend AND s.ProductId=25 AND s.IsEnabled=1
 			AND c.custid NOT IN(SELECT custid FROM #Trade)		
 			AND c.recommend NOT IN(SELECT AgentID FROM CheckCustDB.dbo.TradeComm WITH(NOLOCK) )		
-			AND c.mrecommend NOT IN(SELECT custid FROM #Dummy)							
+			AND c.mrecommend NOT IN(SELECT custid FROM #Dummy)
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed)		
 	END
 END
 	
