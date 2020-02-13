@@ -12,6 +12,7 @@ AS
 		- 20190809@Percy: Initialize SP [RedmineID: #116925]
 		- 20191210@Percy: Apply new column epositiontaking instead of extra PT [RedmineID: #125158]
 		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
+		- 20200212@Percy: Fix wrong get setting from ExtraPT table [RedmineID: #128431]
 */
 
 BEGIN
@@ -180,7 +181,7 @@ BEGIN
 				SELECT TOP 1 a.UplineId
 				FROM bodb02.dbo.Acc_GroupExtraPTSetting a WITH (NOLOCK)
 				WHERE b.srecommend = a.SuperId
-					AND s.ProductId = 1
+					AND a.ProductId = 1
 					AND a.Sporttype = 0
 					AND a.SubProduct = ''
 					AND @WinlostDate BETWEEN a.FromDate AND a.ToDate
