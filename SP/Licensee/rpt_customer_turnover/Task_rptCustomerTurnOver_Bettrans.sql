@@ -22,6 +22,7 @@ AS
 		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_active [RedmineID: #103656]
 		- 20191220@Amanda: Integrate Spadegaming [RedmineID: #124103]
+		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 */
 
 BEGIN 
@@ -162,6 +163,7 @@ BEGIN
 				END -- Betradar VS: Virtual Basketball
 			WHEN a.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 			WHEN a.bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
+			WHEN a.bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 			ELSE isNULL(b.sporttype, 0)
 			END sporttype
 		,a.Currency
@@ -220,6 +222,7 @@ BEGIN
 				END -- Betradar VS: Virtual Basketball
 			WHEN a.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
 			WHEN a.bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
+			WHEN a.bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 			ELSE isNULL(b.sporttype, 0)
 			END
 		,a.Currency

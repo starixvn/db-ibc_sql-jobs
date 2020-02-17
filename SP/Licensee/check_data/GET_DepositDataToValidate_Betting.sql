@@ -25,6 +25,7 @@ AS
 		- 20191106@Amanda: Integrate NPHP [RedmineID: #120333]
 		- 20191204@Amanda: Change name of NPH Promotion to Saba Promotion [Redmine: #124612]
 		- 20191218@Amanda: Integrate Spadegaming [RedmineID: #124103]
+		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -41,65 +42,65 @@ BEGIN
 
 	DECLARE --SB
 			@SbTurnover MONEY
-		   ,@SbCustomerWl MONEY
-		   ,@SbBetCount MONEY
-		   --RB
-		   ,@RbTurnover MONEY
-		   ,@RbCustomerWl MONEY
-		   ,@RbBetCount MONEY
-		   --NG
-		   ,@NgTurnover MONEY
-		   ,@NgCustomerWl MONEY
-		   ,@NgBetCount MONEY
-		   -- BA
-		   ,@BaTurnover MONEY
-		   ,@BaCustomerWl MONEY
-		   ,@BaBetCount MONEY
-		   --LC
-		   ,@LcTurnover MONEY
-		   ,@LcCustomerWl MONEY
-		   ,@LcBetCount MONEY
+			,@SbCustomerWl MONEY
+			,@SbBetCount MONEY
+			--RB
+			,@RbTurnover MONEY
+			,@RbCustomerWl MONEY
+			,@RbBetCount MONEY
+			--NG
+			,@NgTurnover MONEY
+			,@NgCustomerWl MONEY
+			,@NgBetCount MONEY
+			-- BA
+			,@BaTurnover MONEY
+			,@BaCustomerWl MONEY
+			,@BaBetCount MONEY
+			--LC
+			,@LcTurnover MONEY
+			,@LcCustomerWl MONEY
+			,@LcBetCount MONEY
 			--BT
-		   ,@BTTurnover MONEY
-		   ,@BTCustomerWl MONEY
-		   ,@BTBetCount MONEY
-		   --AG
-		   ,@AGTurnover MONEY
-		   ,@AGCustomerWl MONEY
-		   ,@AGBetCount MONEY
-		   --GD
-		   ,@GDTurnover MONEY
-		   ,@GDCustomerWl MONEY
-		   ,@GDBetCount MONEY
-		   --KN
-		   ,@KNTurnover MONEY
-		   ,@KNCustomerWl MONEY
-		   ,@KNBetCount MONEY
-		   --VG: Macau
-		   ,@VGTurnover MONEY
-		   ,@VGCustomerWl MONEY
-		   ,@VGBetCount MONEY
-		   --VB: Macau Games
-		   ,@VBTurnover MONEY
-		   ,@VBCustomerWl MONEY
-		   ,@VBBetCount MONEY
-		   --MGCLC:Microgaming - Live Casino
-		   ,@MGCLCTurnover MONEY
-		   ,@MGCLCCustomerWl MONEY
-		   ,@MGCLCBetCount MONEY
-		   --MGCRNG:Microgaming - RNG Casino
-		   ,@MGCRNGTurnover MONEY
-		   ,@MGCRNGCustomerWl MONEY
-		   ,@MGCRNGBetCount MONEY
-		   ----CS
-		   ,@CsTurnover MONEY
-		   ,@CsCustomerWl MONEY
-		   ,@CsBetCount MONEY
+			,@BTTurnover MONEY
+			,@BTCustomerWl MONEY
+			,@BTBetCount MONEY
+			--AG
+			,@AGTurnover MONEY
+			,@AGCustomerWl MONEY
+			,@AGBetCount MONEY
+			--GD
+			,@GDTurnover MONEY
+			,@GDCustomerWl MONEY
+			,@GDBetCount MONEY
+			--KN
+			,@KNTurnover MONEY
+			,@KNCustomerWl MONEY
+			,@KNBetCount MONEY
+			--VG: Macau
+			,@VGTurnover MONEY
+			,@VGCustomerWl MONEY
+			,@VGBetCount MONEY
+			--VB: Macau Games
+			,@VBTurnover MONEY
+			,@VBCustomerWl MONEY
+			,@VBBetCount MONEY
+			--MGCLC:Microgaming - Live Casino
+			,@MGCLCTurnover MONEY
+			,@MGCLCCustomerWl MONEY
+			,@MGCLCBetCount MONEY
+			--MGCRNG:Microgaming - RNG Casino
+			,@MGCRNGTurnover MONEY
+			,@MGCRNGCustomerWl MONEY
+			,@MGCRNGBetCount MONEY
+			----CS
+			,@CsTurnover MONEY
+			,@CsCustomerWl MONEY
+			,@CsBetCount MONEY
 			----VS
-		   ,@VsTurnover MONEY
-		   ,@VsCustomerWl MONEY
-		   ,@VsBetCount MONEY	   	
-		   ----CB
+			,@VsTurnover MONEY
+			,@VsCustomerWl MONEY
+			,@VsBetCount MONEY	   	
+		   	----CB
 			,@CBTurnover MONEY
 			,@CBCustomerWl MONEY
 			,@CBBetCount MONEY
@@ -143,13 +144,17 @@ BEGIN
 			,@SGTurnover MONEY
 			,@SGCustomerWl MONEY
 			,@SGBetCount MONEY
+			----VRG
+			,@VRGTurnover MONEY
+			,@VRGCustomerWl MONEY
+			,@VRGBetCount MONEY
 
 		DECLARE @tblBettype AS TABLE(ProductPrefix VARCHAR (10),Bettype INT)	   
 		INSERT INTO @tblBettype (ProductPrefix,Bettype)
 		SELECT DISTINCT ProductPrefix,bettype
 		FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC','SPR','SG')	
+		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC','SPR','SG','VRG')	
 	  
 		-- Data Source 
 		DECLARE @tblData AS TABLE (ProductPrefix VARCHAR (10),Status INT, Turnover MONEY, Winloss MONEY,BetCount INT)	
@@ -531,7 +536,7 @@ BEGIN
 		FROM @tblData b
 		WHERE ProductPrefix = 'SPR'
 
-		SELECT @SPRTurnover 		= ISNULL(@SPRTurnover,0)
+		SELECT @SPRTurnover 	= ISNULL(@SPRTurnover,0)
 			   ,@SPRCustomerWl	= ISNULL(@SPRCustomerWl,0)
 			   ,@SPRBetCount 	= ISNULL(@SPRBetCount,0)
 		   
@@ -549,6 +554,21 @@ BEGIN
 		SELECT @SGTurnover 		= ISNULL(@SGTurnover,0)
 			   ,@SGCustomerWl	= ISNULL(@SGCustomerWl,0)
 			   ,@SGBetCount 	= ISNULL(@SGBetCount,0)
+
+		----VRG
+		SELECT  @VRGTurnover=SUM(CASE 
+							WHEN @DrawFilter IN (2,3) THEN 
+								CASE WHEN b.Status = 111 THEN 0 WHEN b.Status IN (114,115) THEN 0.5 ELSE 1 END
+							ELSE 1
+						END * b.Turnover)
+				,@VRGCustomerWl=SUM(b.WinLoss)
+				,@VRGBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
+		FROM @tblData b
+		WHERE ProductPrefix = 'VRG'
+
+		SELECT @VRGTurnover 	= ISNULL(@VRGTurnover,0)
+			   ,@VRGCustomerWl	= ISNULL(@VRGCustomerWl,0)
+			   ,@VRGBetCount 	= ISNULL(@VRGBetCount,0)
 	-- Result
 
 	SELECT 1 AS Id, @SbTurnover AS Sb
@@ -577,6 +597,7 @@ BEGIN
 				  , @CCTurnover  AS CC
 				  , @SPRTurnover  AS SPR
 				  , @SGTurnover  AS SG
+				  , @VRGTurnover  AS VRG
 	UNION
 	SELECT 2, @SbCustomerWl
 			, @RbCustomerWl
@@ -604,6 +625,7 @@ BEGIN
 			, @CCCustomerWl
 			, @SPRCustomerWl
 			, @SGCustomerWl
+			, @VRGCustomerWl
 	UNION
 	SELECT 3, @SbBetCount
 			, @RbBetCount
@@ -631,6 +653,7 @@ BEGIN
 			, @CCBetCount
 			, @SPRBetCount
 			, @SGBetCount
+			, @VRGBetCount
 
 	SET NOCOUNT OFF
 END
