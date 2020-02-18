@@ -76,6 +76,7 @@ Revisions:
 	- 20190701@Percy: Add Card Club [RedmineID: #115611]
 	- 20190826@Percy: Remove inactive products [RedmineID: #118699]
 	- 20191029@Percy: Add Spadegaming [RedmineID: #122353]
+	- 20200211@Lukas: update actualrate on tickets when sync winlostdate vs eventdate
  */
 
 SET NOCOUNT ON
@@ -119,9 +120,11 @@ WHERE b.winlostdate <> o.eventdate
 IF EXISTS (SELECT * FROM @transTable)
 BEGIN
 	UPDATE b
-	SET winlostdate = t.winlostdate
+	SET b.winlostdate = t.winlostdate,
+		b.actualrate = ISNULL(ex.actualrate,b.actualrate)
 	FROM dbo.bettrans b with (rowlock)
 		INNER JOIN @transTable t ON b.transid = t.transid
+		INNER JOIN CustDB.dbo.ExchangeDailyOanda ex WITH(NOLOCK) ON b.currency = ex.exchangeid and ex.exchangeDate = t.winlostdate 
 	
 	SET @Doing = 'DONE : update winlostdate -vs- eventdate'
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
