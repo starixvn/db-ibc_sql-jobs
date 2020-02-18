@@ -75,6 +75,7 @@ Revisions:
 	- 20190131@Patrick: Delete bettransm batch by batch at replicated servers to reduce lock escalation [RedmineID: #108581]
 	- 20190701@Percy: Add Card Club [RedmineID: #115611]
 	- 20190826@Percy: Remove inactive products [RedmineID: #118699]
+	- 20191029@Percy: Add Spadegaming [RedmineID: #122353]
  */
 
 SET NOCOUNT ON
@@ -626,6 +627,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
+			WHEN Bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype, 
 		0 AS netTurnover,
@@ -679,6 +681,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
+			WHEN Bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -722,6 +725,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
+			WHEN Bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*apositiontaking)) AS netTurnover,
@@ -777,6 +781,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
+			WHEN Bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -820,6 +825,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
+			WHEN Bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*mpositiontaking)) AS netTurnover,
@@ -875,6 +881,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
+			WHEN Bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -918,6 +925,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
+			WHEN Bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*spositiontaking)) AS netTurnover,
@@ -973,6 +981,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN Bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN Bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
+			WHEN Bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
