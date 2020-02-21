@@ -46,7 +46,7 @@ BEGIN
 						,	IsLive
 						,	VirtualMultiplier
 					)
-	SELECT	sporttype,bettype,islive,CASE WHEN sporttype = 2 THEN 1 ELSE 1 END 
+	SELECT	sporttype,bettype,islive, 1 
 	from ProfileVirtualSetting 		
 	WHERE sporttype NOT IN (1,43)
 
