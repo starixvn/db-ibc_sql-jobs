@@ -8,6 +8,7 @@ AS
 	
 	Revisions:
 		- 20200114@Johnson: initial sp [redmine:#126998]
+		- 20200221@Johnson: adjust VR setting = 0 for Basketball [Redmine:#128966]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -45,7 +46,7 @@ BEGIN
 						,	IsLive
 						,	VirtualMultiplier
 					)
-	SELECT	sporttype,bettype,islive,CASE WHEN sporttype = 2 THEN 3 ELSE 1 END 
+	SELECT	sporttype,bettype,islive,CASE WHEN sporttype = 2 THEN 1 ELSE 1 END 
 	from ProfileVirtualSetting 		
 	WHERE sporttype NOT IN (1,43)
 
