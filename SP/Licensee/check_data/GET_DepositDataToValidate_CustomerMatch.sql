@@ -22,6 +22,7 @@ Revisions:
 	- 20181218@Joseph: Add new bet types for E-Sports 2.0 [RedmineID: #106592]
 	- 20181219@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
 	- 20190307@Parsons: Implement BetBuilder [Redmine: #108995]
+	- 20200225@Malcolm : change bettype for racing [Redmine : #129158]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -89,7 +90,7 @@ SELECT @RbTurnover = SUM(CASE WHEN b.statusID IN (114, 115) THEN 0.5
 						ELSE b.BetCount 
 					 END)
 FROM  #DATA b
-WHERE b.bettype >= 31 AND b.bettype <= 43
+WHERE b.bettype IN (31,32,33,41,42,43)
     AND b.statusID IN (111, 112, 113, 114, 115)
 
 SELECT @RbTurnover = ISNULL (@RbTurnover, 0),
