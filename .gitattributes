@@ -1,3 +1,0 @@
-*.sql text eol=crlf encoding=utf-8
-*.txt text eol=crlf encoding=utf-8
-*.md text eol=crlf encoding=utf-8
