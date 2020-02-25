@@ -4,7 +4,7 @@ GO
 
 ALTER PROCEDURE [dbo].[DBA_Consistency_ExtraPTChecking]	
 	@RuleID 		TINYINT 		= 0
-	,@WinlostDate	SMALLDATIME 	= NULL
+	,@WinlostDate	SMALLDATETIME 	= NULL
 	,@ErrCode		INT				= 0		OUTPUT
 	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT  
 AS
@@ -30,7 +30,7 @@ AS
 BEGIN 
 
 
-	DECLARE @transId VARCHAR(MAX) = '', @Winlostdate SMALLDATETIME 
+	DECLARE @transId VARCHAR(MAX) = '' 
 	SELECT @ErrMsg  = ''
 	
 	IF @WinlostDate IS NULL
