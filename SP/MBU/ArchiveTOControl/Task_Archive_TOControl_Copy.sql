@@ -11,6 +11,7 @@ AS
 	
 	Revisions:
 		- 20191126@Helen: Archive TO Control - copy [Redimine:98467]
+		- 20200122@Max: Support Separate setting and notification into Live/Non-Live major and minor bettypes [Redmine: #126841]
  */
 BEGIN
 	SET NOCOUNT ON
