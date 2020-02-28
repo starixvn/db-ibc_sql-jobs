@@ -21,6 +21,7 @@ AS
 	- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_bk [RedmineID: #103656]
 	- 20191219@Amanda: Add betfrom v [RedmineID: #125553]
 	- 20191226@Vickie: Add platform 0 [RedmineID: #125824]
+	- 20200228@Vickie: Integrate 3 new betfrom [Redmine: #129253]
 	
 	EXEC Task_DailyRptLicWinlossGMT_Bettrans14 '2017-11-30'
 */  
@@ -140,9 +141,9 @@ BEGIN
 					WHEN BA.transid IS NULL THEN 0  
 					WHEN BA.transid IS NOT NULL THEN 1 END AS isBA  
 				,CASE   
-					WHEN b.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END AS isMobile   
+					WHEN b.betfrom IN ('s','m','l','r','o','c','2') THEN 1 ELSE 0 END AS isMobile   
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0') THEN b.betfrom ELSE '' END AS betfrom   		
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN b.betfrom ELSE '' END AS betfrom   		
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 				LEFT JOIN bodb02.dbo.Match14 m WITH (NOLOCK)
 					ON m.MatchId = b.MatchId
@@ -189,9 +190,9 @@ BEGIN
 					WHEN BA.transid IS NULL THEN 0  
 					WHEN BA.transid IS NOT NULL THEN 1 END  
 				,CASE   
-					WHEN b.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END  
+					WHEN b.betfrom IN ('s','m','l','r','o','c','2') THEN 1 ELSE 0 END  
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0') THEN b.betfrom ELSE '' END
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN b.betfrom ELSE '' END
 
 			--Agent Level (sum on member)  
 			INSERT INTO dbo.rptLicWinlossGMT (  
