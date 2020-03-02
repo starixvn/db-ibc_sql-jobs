@@ -9,6 +9,7 @@ AS
 	
 	Revisions:
 		- 20200114@Johnson: initial sp [redmine:#126998]
+		- 20200302@Johnson: get site IBO from Dep_CustSuper [redmine:#129509]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -18,9 +19,10 @@ BEGIN
 	SELECT @today = GETDATE()
 	SELECT @fromdate = DATEADD(DAY,-1,@today)
 	
-	SELECT custid
-	FROM dbo.RobotUsers WITH(NOLOCK)
-	WHERE RobotDate >= @fromdate AND RobotDate < @today
-		AND site = 'IBO'		
+	SELECT r.custid
+	FROM dbo.RobotUsers r WITH(NOLOCK)
+		INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON r.custid = c.custid
+		INNER JOIN bodb02.dbo.Dep_CustSuper d WITH (NOLOCK) on d.custid = c.srecommend and d.site = 'IBO'
+	WHERE RobotDate >= @fromdate AND RobotDate < @today		
 END
 GO
