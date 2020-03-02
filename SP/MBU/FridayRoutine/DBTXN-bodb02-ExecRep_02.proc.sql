@@ -283,22 +283,27 @@ BEGIN
 		END;
 		-- END -- Delete Marked Transaction --
 
+		IF @deletedTarget = 'Intg_GameRoundBetStake'
+		BEGIN
+		IF	OBJECT_ID('Intg_GameRoundBetStake') IS NOT NULL
+			BEGIN
+				SELECT	@rowcount = 0;
+				DELETE TOP(2500) 
+				FROM dbo.Intg_GameRoundBetStake WITH(ROWLOCK) 
+				WHERE CreateDate >= @winlostdate AND CreateDate < DATEADD(DAY, 1, @winlostdate)
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+			END
+			RETURN
+		END
+
 		IF	@deletedTarget = 'others' --- for deleting all other small tables
 		BEGIN
 			IF	OBJECT_ID('bettranssum') IS NOT NULL
 			BEGIN
 				DELETE FROM bettranssum WHERE winlostdate = @winlostdate
 			END
-
-			IF	OBJECT_ID('bettranssum') IS NOT NULL
-			BEGIN
-				SELECT	@rowcount = 0;
-				DELETE TOP(2500) FROM dbo.Intg_GameRoundBetStake WITH(ROWLOCK) WHERE CreateDate = DATEADD(DAY, -1, @winlostdate)
-
-				SELECT	@rowcount = @@ROWCOUNT;
-
-			END
-
 			RETURN
 		END --- end of deleting others tables
 	END
