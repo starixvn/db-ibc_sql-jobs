@@ -158,8 +158,7 @@ BEGIN
 				@Mode = @Mode,
 				@RowInBatch = @RowInBatch,
 				@ErrorCode = @ErrorCode OUTPUT
-	END	
-	ELSE
+	END		
 	ELSE IF @tableName = 'UserLog_RunSP_MultiTarget'
 	BEGIN
 		EXEC dbo.Task_Archive_CustomerLog_UserLog_RunSP_MultiTarget
@@ -178,6 +177,7 @@ BEGIN
 				@RowInBatch = @RowInBatch,
 				@ErrorCode = @ErrorCode OUTPUT
 	END	
+	ELSE
 	BEGIN
 		PRINT @tableName
 		RAISERROR('^^^Does not support^^^', 16, 1)
