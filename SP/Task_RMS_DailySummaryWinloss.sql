@@ -23,12 +23,13 @@ AS
 			- 20160922@Winnie: fix ticket bettype 29 old format & confict refno with racing  RedmineID: #64286
 			- 20180927@Jacob: Apply Extra PT and Super Comm to Report.  RedmineID: #100951 		
 			- 20190214@Jacob: Add Bet Builder RedmineID: #108694
+			- 20191211@Jacob: Extra PT - Add new structure to support extra pt column on bettrans table #124194
 		Parameter's Explanation:
 
 		EXEC [Task_RMS_DailySummaryWinloss] @winlostdate = '20180915'
 	*/
 SET NOCOUNT ON
-	
+		
 	IF NOT EXISTS (SELECT top 1 1 FROM bodb02.dbo.bettrans14 WITH(NOLOCK) WHERE ((bettype = 29 AND matchid = 29)  OR bettype = 38) AND winlostdate = @winlostdate)
 	BEGIN
 		SELECT	 @ErrMsg= 'WARNING:Data is not moved to bettrans14.'
@@ -42,14 +43,7 @@ SET NOCOUNT ON
 				,@ErrCode = 102
 		RETURN
 	END
-	CREATE TABLE #ExtraPT_Sel( ProductID  INT,
-                    Sporttype  INT,
-                    SubProduct VARCHAR(100),
-                    SuperID    INT,
-				FromDate DATETIME,
-				ToDate DATETIME,
-                    ExtraPT    DECIMAL(9, 8));
-
+	
 	CREATE TABLE  #TemprmSumWinloss(
 	[winlostdate] [smalldatetime] NOT NULL,
 	[custid] [int] NOT NULL,
@@ -94,7 +88,8 @@ SET NOCOUNT ON
 	modds   SMALLMONEY NULL,
 	betteam NVARCHAR(10) NULL,
 	refno BIGINT NOT NULL,
-	matchId INT NULL
+	matchId INT NULL,
+	epositiontaking SMALLMONEY
 	)
 	CREATE NONCLUSTERED INDEX [IX_refno] ON [dbo].#tmpbettrans 
 	(
@@ -135,7 +130,8 @@ SET NOCOUNT ON
 	modds,
 	betteam,
 	refno,
-	matchId
+	matchId,
+	epositiontaking
 	)
 	SELECT
 	Transid ,
@@ -158,7 +154,8 @@ SET NOCOUNT ON
 	modds,
 	betteam,
 	refno,
-	matchId
+	matchId,
+	epositiontaking
 	FROM
 	bodb02.dbo.bettrans14 b WITH(NOLOCK) 
 	WHERE	b.winlostdate = @winlostdate
@@ -202,79 +199,69 @@ SET NOCOUNT ON
 	UPDATE #tmpbettrans SET transid2 = 1
 	WHERE bettype = 38
 	
-    INSERT INTO #ExtraPT_Sel
-			 ( ProductID, Sporttype, SubProduct, SuperID, FromDate, ToDate, ExtraPT)
-    SELECT ProductID, SportType, SubProduct, SuperId, FromDate, ToDate, SUM(ExtraPT) AS ExtraPT
-    FROM bodb02.dbo.Acc_GroupExtraPTSetting a WITH ( NOLOCK )
-    WHERE a.ProductID = 1
-	   AND a.Sporttype = 0
-	   AND a.SubProduct = ''
-    GROUP BY ProductID, SportType, SubProduct, SuperId, FromDate, ToDate;
-    		
+	
 	IF @@ERROR > 0
-		BEGIN			
-			SELECT	 @ErrMsg = 'FAILED:Process summary data failed for :' + CAST(@winlostdate AS VARCHAR(10))
-					,@ErrCode = 201
-			RETURN
-		END		
+	BEGIN			
+		SELECT	 @ErrMsg = 'FAILED:Process summary data failed for :' + CAST(@winlostdate AS VARCHAR(10))
+				,@ErrCode = 201
+		RETURN
+	END		
 		
-		INSERT INTO #TemprmSumWinloss (winlostdate
-				,custid
-				,sporttype
-				,statusid
-				,combo
-				,username
-				,currency
-				,stake
-				,winlost
-				,company_stake
-				,company_winlost
-				,actualrate
-				,odds
-				,betcount
-				,recommend
-				,ParlayType
-				,scomm
-				,extra_comm
-				,extra_stake
-				,extra_winlost
-				)
-		SELECT	 winlostdate
-				,b.custid
-				,transid2
-				,statusid
-				,CASE WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam)
-					ELSE hdp2 END AS combo
-				,username
-				,currency
-				,SUM(stake)
-				,SUM(winlost)
-				,SUM(stake*(1-tpositiontaking))
-				,SUM(-(winlost-stake)*(1-tpositiontaking))
-				,actualrate
-				,SUM(modds)
-				,count(1)
-				,recommend 
-				,CASE WHEN bettype=29 AND betteam='1' THEN 2
-					  WHEN bettype=29 AND betteam <> '1' THEN 3
-					  WHEN bettype=38 THEN 4
-					  ELSE 0 END AS ParlayType
-				,SUM(scomm)
-				,SUM(scomm * ISNULL(a.ExtraPT, 0) / (1 - tpositiontaking))
-				,SUM(stake * ISNULL(a.ExtraPT, 0))
-				,SUM(-(winlost-stake)*ISNULL(a.ExtraPT, 0))				
-		FROM #tmpbettrans b	
-		LEFT JOIN #ExtraPT_Sel AS a ON srecommend = a.SuperId AND winlostdate BETWEEN a.FromDate AND a.Todate
-																		
-		GROUP BY winlostdate, b.custid, transid2, statusid, username, currency, actualrate,
-					CASE WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam)
-					ELSE hdp2 END, 
-				recommend,
-				CASE WHEN bettype=29 AND betteam='1' THEN 2
-					WHEN bettype=29 AND betteam <> '1' THEN 3
-					WHEN bettype=38 THEN 4
-					ELSE 0 END
-				
+	INSERT INTO #TemprmSumWinloss (winlostdate
+		,custid
+		,sporttype
+		,statusid
+		,combo
+		,username
+		,currency
+		,stake
+		,winlost
+		,company_stake
+		,company_winlost
+		,actualrate
+		,odds
+		,betcount
+		,recommend
+		,ParlayType
+		,scomm
+		,extra_comm
+		,extra_stake
+		,extra_winlost
+		)
+	SELECT	 winlostdate
+		,b.custid
+		,transid2
+		,statusid
+		,CASE WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam)
+			ELSE hdp2 END AS combo
+		,username
+		,currency
+		,SUM(stake)
+		,SUM(winlost)
+		,SUM(stake*(1-tpositiontaking))
+		,SUM(-(winlost-stake)*(1-tpositiontaking))
+		,actualrate
+		,SUM(modds)
+		,count(1)
+		,recommend 
+		,CASE WHEN bettype=29 AND betteam='1' THEN 2
+				WHEN bettype=29 AND betteam <> '1' THEN 3
+				WHEN bettype=38 THEN 4
+				ELSE 0 END AS ParlayType
+		,SUM(scomm)
+		,SUM(scomm * CAST(ISNULL(b.epositiontaking, 0) AS DECIMAL(9,8)) / (1 - tpositiontaking))
+		,SUM(stake * CAST(ISNULL(b.epositiontaking, 0) AS DECIMAL(9,8)))
+		,SUM(-(winlost-stake)*CAST(ISNULL(b.epositiontaking, 0) AS DECIMAL(9,8)))				
+	FROM #tmpbettrans b														
+	GROUP BY winlostdate, b.custid, transid2, statusid, username, currency, actualrate,
+				CASE WHEN bettype=29 AND betcheck IS NULL THEN LEN(betteam)
+				ELSE hdp2 END, 
+			recommend,
+			CASE WHEN bettype=29 AND betteam='1' THEN 2
+				WHEN bettype=29 AND betteam <> '1' THEN 3
+				WHEN bettype=38 THEN 4
+				ELSE 0 END
+		
 		IF @@ERROR > 0
 		BEGIN			
 			SELECT	 @ErrMsg = 'FAILED:Process summary data failed for :' + CAST(@winlostdate AS VARCHAR(10))
@@ -337,7 +324,6 @@ SET NOCOUNT ON
 		drop table #tmpbettrans
 		drop table #TemprmSumWinloss
 		drop table #tmpbettransm
-		DROP TABLE #ExtraPT_Sel
 
 GO
 
