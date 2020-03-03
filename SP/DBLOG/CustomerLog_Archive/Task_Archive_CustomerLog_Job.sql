@@ -160,6 +160,24 @@ BEGIN
 				@ErrorCode = @ErrorCode OUTPUT
 	END	
 	ELSE
+	ELSE IF @tableName = 'UserLog_RunSP_MultiTarget'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_UserLog_RunSP_MultiTarget
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END	
+	ELSE IF @tableName = 'UserLog_RunSP_LogTarget'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_UserLog_RunSP_LogTarget
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END	
 	BEGIN
 		PRINT @tableName
 		RAISERROR('^^^Does not support^^^', 16, 1)

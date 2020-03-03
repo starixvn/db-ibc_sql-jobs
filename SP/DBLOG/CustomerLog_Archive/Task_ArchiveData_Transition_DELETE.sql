@@ -151,4 +151,18 @@ BEGIN
 		FROM dbo.CS_UserLog_Credit l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.CustID = deleted.custid)
 	END	
+	IF @tableName = 'UserLog_RunSP_LogTarget'
+	BEGIN
+		INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_RunSP_LogTarget(LogID, LogDate, CustID)
+		SELECT l.LogID, l.LogDate, l.CustID
+		FROM dbo.UserLog_RunSP_LogTarget l WITH(NOLOCK)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.CustID = l.CustID)
+	END
+	IF @tableName = 'UserLog_RunSP_MultiTarget'
+	BEGIN
+		INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_RunSP_MultiTarget(LogID, UserID, LogDate, ActionID, TrackingValue, Duration, TrackingValue2, MainLogID)
+		SELECT LogID, UserID, LogDate, ActionID, TrackingValue, Duration, TrackingValue2, MainLogID
+		FROM dbo.UserLog_RunSP_MultiTarget l WITH(NOLOCK)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate)
+	END
 END
