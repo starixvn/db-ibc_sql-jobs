@@ -11,6 +11,7 @@ AS
 		- 20190227@Patrick: Initalize [RedmineId: #110208] 	
 		- 20190620@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 		- 20200107@Elodie: Add CreateDate column for CN88's log [Redmine: #113198]
+		- 20200303@Elodie: Apply new structure for MBC's log [Redmine: #127446]
 */
 BEGIN
 	SET NOCOUNT ON
