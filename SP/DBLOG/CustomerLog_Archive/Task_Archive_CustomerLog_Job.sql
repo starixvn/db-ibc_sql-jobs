@@ -12,6 +12,7 @@ AS
 		- 20190227@Patrick: Initalize [RedmineId: #110208] 	
 		- 20190617@Patrick: Add waitfor delay to reduce writelog waittype [RedmineId: #115227]
 		- 20190620@Elodie: Apply new structure for CN88's log [Redmine: #113198]
+		- 20200303@Elodie: Apply new structure for MBC's log [Redmine: #127446]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -153,6 +154,24 @@ BEGIN
 	ELSE IF @tableName = 'CS_UserLog_RunSP_LogTarget'
 	BEGIN
 		EXEC dbo.Task_Archive_CustomerLog_CS_UserLog_RunSP_LogTarget
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END		
+	ELSE IF @tableName = 'UserLog_RunSP_MultiTarget'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_UserLog_RunSP_MultiTarget
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END	
+	ELSE IF @tableName = 'UserLog_RunSP_LogTarget'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_UserLog_RunSP_LogTarget
 				@FromDateTime = @__dateTimeFrom,
 				@ToDateTime = @__dateTimeTo,
 				@Mode = @Mode,
