@@ -19,12 +19,12 @@ EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 219, @bettype = 1011 -- Fis
 --Reset yesterday balance for DCS Products
 DECLARE @SportType SMALLINT , @Bettype SMALLINT
 
-SELECT b.SportType,b.BetType,CAST(0 AS BIT) AS IsProcessed
+SELECT DISTINCT b.SportType,b.BetType,CAST(0 AS BIT) AS IsProcessed
 INTO #SportBettypeDCS
-FROM DBCUST.CUSTDB.dbo.WinLimit_ProductOffer a WITH(NOLOCK) 
+FROM dbo.WinLimit_ProductOffer a WITH(NOLOCK) 
 	INNER JOIN  DBCUST.CUSTDB.dbo.ProductSettingDetail b WITH(NOLOCK) 
-		ON a.ProductID = b.ProductID AND b.SettingType = 6 
-		AND a.bettypeid = b.bettype
+		ON b.SettingType IN (6,12) AND b.SettingStatus <> 2
+		AND a.BetType = b.bettype
 WHERE a.isActive_SMA = 1
 
 WHILE 1 = 1
