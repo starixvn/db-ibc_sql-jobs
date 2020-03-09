@@ -20,7 +20,7 @@ AS
 		- 20160412@Sophia: Add related tables: BettransRNG, BettransLC, Translog (will apply on bettransm later)
  		- 20171020@Lukas: clone from Bet_ExecRep_04
 		- 20181106@Sophia: Add table Transfer_Coll [Redmine: #98621]
-		- 20200309@Malcolm : Add table bttransG [Redmine : #128057]
+		- 20200309@Malcolm : Add table bettransG [Redmine : #128057]
 
  	Param's Explanation: 
  		@Winlostdate: the date that new rates are updated		
