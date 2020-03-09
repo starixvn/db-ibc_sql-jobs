@@ -181,7 +181,7 @@ BEGIN
 		INSERT INTO #bettransG(transid, actualrate, virtialrate)
 		SELECT b.transid, e.actualrate, e.actualrate * (b.virtualrate / b.actualrate) AS virtualrate
 		FROM  dbo.bettransG b WITH(NOLOCK)
-		    INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON c.custid = b.custid
+		    INNER JOIN CustDB.dbo.CustInfo c WITH (NOLOCK) ON c.custid = b.custid
 			INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)  ON e.exchangeid = c.currency	
 		WHERE b.winlostdate >= @Winlostdate AND b.actualrate <> e.actualrate
 
