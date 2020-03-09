@@ -7,7 +7,7 @@ AS
 		DB: DBTRANS.BODB02
 		
 		Revisions:
-			- 20200309@Eden: Initial Version []
+			- 20200309@Eden: Initial Version [#122743]
 
 		Parameters Explanation:	
 */
