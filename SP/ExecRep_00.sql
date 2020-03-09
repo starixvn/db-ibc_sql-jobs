@@ -41,6 +41,7 @@ BEGIN
 	CREATE TABLE #bettransRnG (transid BIGINT, actualrate float, virtualrate float)
 	CREATE TABLE #bettransLC (transid BIGINT, actualrate float, virtualrate float)
 	CREATE TABLE #Transfer_Coll (transid BIGINT, actualrate float)
+	CREATE TABLE #bettransG (transid BIGINT, actualrate float, virtialrate float)
 	
 	IF @@SERVERNAME = 'DBTRANS'
 	BEGIN
@@ -172,7 +173,17 @@ BEGIN
 				,CustDB.dbo.exchange e WITH (NOLOCK)
 			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
 		END
-				
+		
+		-- update for bettransG table 
+		PRINT '12.------------------------------------'
+
+		INSERT INTO #bettransG(transid, actualrate, virtialrate)
+		SELECT b.transid, e.actualrate, e.actualrate * (b.virtualrate / b.actualrate) AS virtualrate
+		FROM  dbo.bettransg b WITH(NOLOCK)
+		    INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON c.custid = b.custid
+			INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)  ON e.exchangeid = c.currency	
+		WHERE b.winlostdate >= @Winlostdate AND b.actualrate <> e.actualrate
+
 		PRINT 'END: Reminder of UPDATE Exchange Rate Oanda: EXEC CustDB.dbo.DBA_ExchangeDailyOandaUpd_Actualrate @ExchangeDate=''xxx'''
 	END
 	
@@ -311,6 +322,17 @@ BEGIN
 				,bodb02.dbo.exchange e WITH (NOLOCK)
 			WHERE b.currency = e.exchangeid AND b.actualrate <> e.actualrate AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
 		END
+
+		-- update for bettransG table 
+		PRINT '12--------------------------------------'
+
+		INSERT INTO #bettransG(transid, actualrate, virtialrate)
+		SELECT b.transid, e.actualrate, e.actualrate * (b.virtualrate / b.actualrate) AS virtualrate
+		FROM dbo.bettransg b WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
+			INNER JOIN bodb02.dbo.exchange e WITH (NOLOCK) ON e.exchangeid = c.currency
+		WHERE b.winlostdate >= @winlostdate
+			  AND b.actualrate <> e.actualrate
 		PRINT 'END: Reminder of UPDATE Exchange Rate Oanda: EXEC CustDB.dbo.DBA_ExchangeDailyOandaUpd_Actualrate @ExchangeDate=''xxx'''
 	end 
 	
@@ -409,5 +431,22 @@ BEGIN
 				
 		end
 	END 
+
+	SET @rowcount = 1
+	
+	WHILE @rowcount <> 0
+	BEGIN
+		DELETE FROM @table
+		
+		DELETE TOP(2000) 
+		FROM #bettransG
+		OUTPUT deleted.transid, deleted.actualrate, deleted.virtialrate INTO @table
+	
+		SET @rowcount = @@ROWCOUNT
+		UPDATE b WITH (ROWLOCK,UPDLOCK)
+		SET b.actualrate = t.actualrate, b.virtualrate = t.virtualrate
+		FROM @table t 
+			INNER JOIN dbo.bettransg b ON t.transid = b.transid 	
+	END
 END
 
