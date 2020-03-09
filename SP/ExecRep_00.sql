@@ -20,6 +20,7 @@ AS
 		- 20160412@Sophia: Add related tables: BettransRNG, BettransLC, Translog (will apply on bettransm later)
  		- 20171020@Lukas: clone from Bet_ExecRep_04
 		- 20181106@Sophia: Add table Transfer_Coll [Redmine: #98621]
+		- 20200309@Malcolm : Add table bttransG [Redmine : #128057]
 
  	Param's Explanation: 
  		@Winlostdate: the date that new rates are updated		
@@ -179,7 +180,7 @@ BEGIN
 
 		INSERT INTO #bettransG(transid, actualrate, virtialrate)
 		SELECT b.transid, e.actualrate, e.actualrate * (b.virtualrate / b.actualrate) AS virtualrate
-		FROM  dbo.bettransg b WITH(NOLOCK)
+		FROM  dbo.bettransG b WITH(NOLOCK)
 		    INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON c.custid = b.custid
 			INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)  ON e.exchangeid = c.currency	
 		WHERE b.winlostdate >= @Winlostdate AND b.actualrate <> e.actualrate
@@ -328,7 +329,7 @@ BEGIN
 
 		INSERT INTO #bettransG(transid, actualrate, virtialrate)
 		SELECT b.transid, e.actualrate, e.actualrate * (b.virtualrate / b.actualrate) AS virtualrate
-		FROM dbo.bettransg b WITH (NOLOCK)
+		FROM dbo.bettransG b WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
 			INNER JOIN bodb02.dbo.exchange e WITH (NOLOCK) ON e.exchangeid = c.currency
 		WHERE b.winlostdate >= @winlostdate
@@ -446,7 +447,7 @@ BEGIN
 		UPDATE b WITH (ROWLOCK,UPDLOCK)
 		SET b.actualrate = t.actualrate, b.virtualrate = t.virtualrate
 		FROM @table t 
-			INNER JOIN dbo.bettransg b ON t.transid = b.transid 	
+			INNER JOIN dbo.bettransG b ON t.transid = b.transid 	
 	END
 END
 
