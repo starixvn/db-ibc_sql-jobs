@@ -27,6 +27,7 @@ AS
 		- 20190828@Billy:	Add table [bettransInfo] to Friday Routine - [Redmine: #119219]
 		- 20191030@Billy:	Remove table [BetLucky3Result] from Friday Routine - [Redmine: #122987]
 		- 20191126@Patrick: Add more conndition remove data on DB054/DB055 - [Redmine: #124104]
+		- 20200227@Patrick: Implement remove data of Intg_GameRoundBetStake after BU day - 1 [Redmine: #126981]
 */
 -- =======================
 -- Parameter check\control
@@ -282,13 +283,27 @@ BEGIN
 		END;
 		-- END -- Delete Marked Transaction --
 
+		IF @deletedTarget = 'Intg_GameRoundBetStake'
+		BEGIN
+		IF	OBJECT_ID('Intg_GameRoundBetStake') IS NOT NULL
+			BEGIN
+				SELECT	@rowcount = 0;
+				DELETE TOP(2500) 
+				FROM dbo.Intg_GameRoundBetStake WITH(ROWLOCK) 
+				WHERE CreateDate >= @winlostdate AND CreateDate < DATEADD(DAY, 1, @winlostdate)
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+			END
+			RETURN
+		END
+
 		IF	@deletedTarget = 'others' --- for deleting all other small tables
 		BEGIN
 			IF	OBJECT_ID('bettranssum') IS NOT NULL
 			BEGIN
 				DELETE FROM bettranssum WHERE winlostdate = @winlostdate
 			END
-
 			RETURN
 		END --- end of deleting others tables
 	END
