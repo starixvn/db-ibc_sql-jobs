@@ -14,7 +14,6 @@ AS
 --Reset yesterday balance for Non-DCS Products
 EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 255, @bettype = 1701 -- Gold Deluxe
 EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 208, @bettype = 2101 -- RNG Casino
-EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 219, @bettype = 1011 -- Fishing World
 
 --Reset yesterday balance for DCS Products
 DECLARE @SportType SMALLINT , @Bettype SMALLINT
