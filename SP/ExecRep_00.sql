@@ -60,10 +60,6 @@ BEGIN
 		PRINT '2.----------------'
 
 		-- update for SB's tickets (without virtualrate)
-		 
-			--UPDATE TOP (5000) b
-			--SET actualrate = e.actualrate
-			--	,virtualrate = e.actualrate
 				
 		insert into #tmp(transid, actualrate, virtualrate)
 		select transid, e.actualrate, e.actualrate 
@@ -73,10 +69,6 @@ BEGIN
  
 
 		PRINT '3.----------------'
-		 
-			--UPDATE TOP (5000) b
-			--SET actualrate = e.actualrate
-			--	,virtualrate = e.actualrate
 		insert into #tmp(transid, actualrate, virtualrate)
 		select transid, e.actualrate, e.actualrate 
 		FROM dbo.bettrans b WITH(nolock) 
@@ -88,8 +80,6 @@ BEGIN
 
 		-- OPENTOTE tickets
 
-			--UPDATE TOP (5000) b
-			--SET actualrate = e.actualrate
 			
 		insert into #tmp(transid, actualrate, virtualrate)
 		select transid, e.actualrate, b.virtualrate
@@ -100,9 +90,7 @@ BEGIN
 
 		PRINT '5.----------------'
 		-- transfer tickets
-		 
-			--UPDATE TOP (5000) b
-			--SET actualrate = e.actualrate
+
 		insert into #tmp(transid, actualrate, virtualrate)
 		select transid, e.actualrate, b.virtualrate
 		FROM dbo.bettrans b WITH(nolock) 
@@ -111,10 +99,6 @@ BEGIN
  
 		-- update for TransLog table (using virtualrate)
 		PRINT '6.----------------' 
-			--UPDATE TOP (5000) b
-			--SET @virtualmultiplier = b.virtualrate/b.actualrate 
-			--	,actualrate = e.actualrate
-			--	,virtualrate = e.actualrate * @virtualmultiplier
 				
 		insert into #translog(translogid, actualrate, virtualrate)
 		select translogid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
@@ -131,10 +115,6 @@ BEGIN
 		-- update for BettransRNG table (using virtualrate)
 		PRINT '8.----------------'
 
-			--UPDATE TOP (5000) b
-			--SET @virtualmultiplier = b.virtualrate/b.actualrate 
-			--	,actualrate = e.actualrate
-			--	,virtualrate = e.actualrate * @virtualmultiplier
 		insert into #bettransRnG(transid, actualrate, virtualrate)
 		select transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
 		FROM dbo.BettransRNG b WITH(nolock) 				
@@ -148,11 +128,7 @@ BEGIN
 
 		-- update for BettransLC table (using virtualrate)
 		PRINT '10.----------------'
- 
-			--UPDATE TOP (5000) b
-			--SET @virtualmultiplier = b.virtualrate/b.actualrate 
-			--	,actualrate = e.actualrate
-			--	,virtualrate = e.actualrate * @virtualmultiplier
+
 		insert into #bettransLC(transid, actualrate, virtualrate)
 		select transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
 		FROM dbo.BettransLC b WITH(nolock) 				
@@ -210,9 +186,6 @@ BEGIN
 
 		-- update for SB's tickets (without virtualrate)
 		 
-			--UPDATE TOP (5000) b
-			--SET actualrate = e.actualrate
-			--	,virtualrate = e.actualrate
 				
 		insert into #tmp(transid, actualrate, virtualrate)
 		select transid, e.actualrate, e.actualrate 
@@ -223,9 +196,6 @@ BEGIN
 
 		PRINT '3.----------------'
 		 
-			--UPDATE TOP (5000) b
-			--SET actualrate = e.actualrate
-			--	,virtualrate = e.actualrate
 		insert into #tmp(transid, actualrate, virtualrate)
 		select transid, e.actualrate, e.actualrate 
 		FROM dbo.bettrans b WITH(nolock) 
@@ -237,8 +207,6 @@ BEGIN
 
 		-- OPENTOTE tickets
 
-			--UPDATE TOP (5000) b
-			--SET actualrate = e.actualrate
 			
 		insert into #tmp(transid, actualrate, virtualrate)
 		select transid, e.actualrate, b.virtualrate
@@ -260,10 +228,7 @@ BEGIN
  
 		-- update for TransLog table (using virtualrate)
 		PRINT '6.----------------' 
-			--UPDATE TOP (5000) b
-			--SET @virtualmultiplier = b.virtualrate/b.actualrate 
-			--	,actualrate = e.actualrate
-			--	,virtualrate = e.actualrate * @virtualmultiplier
+
 				
 		insert into #translog(translogid, actualrate, virtualrate)
 		select translogid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
@@ -280,10 +245,6 @@ BEGIN
 		-- update for BettransRNG table (using virtualrate)
 		PRINT '8.----------------'
 
-			--UPDATE TOP (5000) b
-			--SET @virtualmultiplier = b.virtualrate/b.actualrate 
-			--	,actualrate = e.actualrate
-			--	,virtualrate = e.actualrate * @virtualmultiplier
 		insert into #bettransRnG(transid, actualrate, virtualrate)
 		select transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
 		FROM dbo.BettransRNG b WITH(nolock) 			
@@ -298,10 +259,6 @@ BEGIN
 		-- update for BettransLC table (using virtualrate)
 		PRINT '10.----------------'
  
-			--UPDATE TOP (5000) b
-			--SET @virtualmultiplier = b.virtualrate/b.actualrate 
-			--	,actualrate = e.actualrate
-			--	,virtualrate = e.actualrate * @virtualmultiplier
 		insert into #BettransLC(transid, actualrate, virtualrate)
 		select transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate
 		FROM dbo.BettransLC b WITH(nolock) 				
