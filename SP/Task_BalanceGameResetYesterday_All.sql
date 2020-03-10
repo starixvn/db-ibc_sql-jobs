@@ -28,7 +28,7 @@ WHERE a.isActive_SMA = 1
 
 WHILE 1 = 1
 BEGIN
-	UPDATE #SportBettypeDCS
+	UPDATE TOP (1) #SportBettypeDCS
 	SET @Bettype = @Bettype
 		,@SportType = SportType
 		,IsProcessed = 1
