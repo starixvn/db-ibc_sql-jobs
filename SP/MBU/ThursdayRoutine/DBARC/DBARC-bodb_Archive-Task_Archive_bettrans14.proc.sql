@@ -10,8 +10,9 @@ AS
 
 	Revisions:
 		- 20190426@Billy:	Initial - [Redmine: #000000]
-		- 20190426@Billy:	Add column [SettlementTime] of [bettrans] - [Redmine: #122464] 
+		- 20190426@Billy:	Add column [SettlementTime] of [bettrans] - [Redmine: #122464]
 		- 20191104@Billy:	Add column [epositiontaking] of [bettrans] - [Redmine: #123267]
+		- 20200311@Billy:	Add column [ReasonID] of [bettrans] - [Redmine: #130202]
 
 	Developer's Notes:
 		- @Example:			NULL		- Explaination [DEFAULT]
@@ -28,7 +29,7 @@ BEGIN;
 		,	refno, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, recommend, mrecommend, srecommend
 		,	ruben, betid, statuswinlost, modds, betdaqid, tstamp, currency, ip, transdesc, virtualrate, oddstype, statusID
 		,	currency2, transid, bettype, balance, transid2, SecAcceptFlag, comstatus, CountryCode, ExtraInfo, WalletType
-		,	BonusID, RefCode, SettlementTime, epositiontaking
+		,	BonusID, RefCode, SettlementTime, epositiontaking, ReasonID
 		)
 	SELECT	custid, transdate, oddsid, hdp1, hdp2, odds, stake, actual_stake, status, winlost, awinlost, mwinlost, swinlost
 		,	playercomm, comm, acomm, scomm, apositiontaking, mpositiontaking, spositiontaking, tpositiontaking
@@ -36,8 +37,8 @@ BEGIN;
 		,	refno, winlostdate, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, recommend, mrecommend, srecommend
 		,	ruben, betid, statuswinlost, modds, betdaqid, tstamp, currency, ip, transdesc, virtualrate, oddstype, statusID
 		,	currency2, transid, bettype, balance, transid2, SecAcceptFlag, comstatus, CountryCode, ExtraInfo, WalletType
-		,	BonusID, RefCode, SettlementTime, epositiontaking
-	FROM	OPENQUERY(DBTXN, '
+		,	BonusID, RefCode, SettlementTime, epositiontaking, ReasonID
+	FROM	OPENQUERY(DBTXN, '\
 EXECUTE	bodb02.dbo.Task_Archive_SelectBettrans14;
 ');
 
