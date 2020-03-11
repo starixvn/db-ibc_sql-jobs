@@ -35,7 +35,9 @@ AS
 		- 20190828@Billy:	Add table [bettransInfo] & column [SecAcceptTime], [LiveBetAcceptTime] of [bettransm] - [Redmine: #119219]
 		- 20191104@Billy:	Add column [epositiontaking] of [bettrans], [bettransLC], [bettransRnG] - [Redmine: #123267]
 		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
-		- 20191126@Patrick: Ignore copy data to [14] on DB054/DB055 - [Redmine: #124104]
+		- 20191126@Patrick:	Ignore copy data to [14] on DB054/DB055 - [Redmine: #124104]
+		- 20200311@Billy:	Add column [ReasonID] of [bettrans] - [Redmine: #130202]
+							Add [epositiontaking], [actual_stake] of [bettransG] - [Redmine: #130201]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -61,6 +63,7 @@ IF @@SERVERNAME NOT LIKE 'DB04%' AND @@SERVERNAME NOT IN ('DB054', 'DB055')
 BEGIN
 	-- Note: Exclude columns: [tstamp], [recommdate]
 	-- 20191104@Billy:	Add column [epositiontaking]
+	-- 20200311@Billy:	Add column [ReasonID]
 	INSERT INTO	dbo.bettrans14
 		(	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, awinlost, mwinlost
 		,	playercomm, comm, acomm, apositiontaking, mpositiontaking, tpositiontaking, playerdiscount
@@ -69,7 +72,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime, epositiontaking
+		,	RefCode, SettlementTime, epositiontaking, ReasonID
 		)
 	OUTPUT	Inserted.transid
 	INTO	@__tmpTransId (id)
@@ -80,7 +83,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime, epositiontaking
+		,	RefCode, SettlementTime, epositiontaking, ReasonID
 	FROM	dbo.bettrans WITH (NOLOCK)
 	WHERE	recommend = @__recommend
 		AND	winlostdate = @__winlostdate
@@ -217,23 +220,22 @@ BEGIN
 			,	statusID, transdesc, SecAcceptFlag, SecAcceptTime, LiveBetAcceptTime
 		FROM	dbo.bettransm AS b WITH (NOLOCK)
 		WHERE	winlostdate = @__winlostdate;
-		
-		insert into bettransG14
-			(transid, custid, transdate, oddsid, odds, stake, status, winlost, 
-			betteam, creator, refno, winlostdate, betfrom, checktime, apositiontaking, 
-			mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount, discount, 
-			adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, 
-			statuswinlost, ruben, bettype, spositiontaking, swinlost, sdiscount, scomm, statusID, 
-			virtualrate, SiteID, transdesc, BetID3rd)
-		select transid, custid, transdate, oddsid, odds, stake, status, winlost, 
-			betteam, creator, refno, winlostdate, betfrom, checktime, apositiontaking, 
-			mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount, discount, 
-			adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, 
-			statuswinlost, ruben, bettype, spositiontaking, swinlost, sdiscount, scomm, statusID, 
-			virtualrate, SiteID, transdesc, BetID3rd
-		from bettransG with (nolock)
-		where  
-			winlostdate=@__winlostdate
+
+		-- 20200311@Billy: Add [epositiontaking], [actual_stake] of [bettransG]
+		INSERT INTO	dbo.bettransG14
+			(	transid, custid, transdate, oddsid, odds, stake, status, winlost, betteam, creator, refno, winlostdate
+			,	betfrom, checktime, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount
+			,	discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, statuswinlost, ruben, bettype
+			,	spositiontaking, swinlost, sdiscount, scomm, statusID, virtualrate, SiteID, transdesc, BetID3rd
+			,	epositiontaking, actual_stake
+			)
+		SELECT	transid, custid, transdate, oddsid, odds, stake, status, winlost, betteam, creator, refno, winlostdate
+			,	betfrom, checktime, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount
+			,	discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, statuswinlost, ruben, bettype
+			,	spositiontaking, swinlost, sdiscount, scomm, statusID, virtualrate, SiteID, transdesc, BetID3rd
+			,	epositiontaking, actual_stake
+		FROM	dbo.bettransG AS b WITH (NOLOCK)
+		WHERE	winlostdate = @__winlostdate;
 	END
 END
 GO
