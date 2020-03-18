@@ -21,6 +21,7 @@ AS
 		- 20191106@Amanda: Integrate NPHP [RedmineID: #120333]
 		- 20191204@Amanda: Change name of NPH Promotion to Saba Promotion [Redmine: #124612]
 		- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
+		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -103,7 +104,8 @@ BEGIN
 							   ,PP BIGINT
 							   ,CC BIGINT
 							   ,SPR BIGINT
-							   ,SG BIGINT)
+							   ,SG BIGINT
+							   ,VRG BIGINT)
 						   
 	--exec 
 	--rptLicWinloss2
@@ -133,7 +135,8 @@ BEGIN
 						,PP
 						,CC
 						,SPR
-						,SG)	
+						,SG
+						,VRG)	
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date	
 				
 	INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
@@ -201,7 +204,8 @@ BEGIN
 						,PP
 						,CC
 						,SPR
-						,SG)					   
+						,SG
+						,VRG)					   
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date=@Date
 					
 	INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
