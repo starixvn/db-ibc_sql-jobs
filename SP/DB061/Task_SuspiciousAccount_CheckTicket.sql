@@ -45,7 +45,7 @@ BEGIN
 	SELECT * FROM #NotifyList
 
 	UPDATE s
-	SET s.VValue = CAST(@MaxID AS VARCHAR(10))
+	SET s.VValue = CAST(@MaxID AS VARCHAR(50))
 	FROM dbo.SystemSettings s WITH (ROWLOCK) 
 	WHERE VName = 'SuspiciousCust_MaxId'
 	
