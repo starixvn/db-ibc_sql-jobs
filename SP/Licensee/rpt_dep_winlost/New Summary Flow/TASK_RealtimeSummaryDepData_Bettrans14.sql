@@ -35,6 +35,7 @@ AS
 	- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 	- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 	- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
+	- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 
 	Input Params:
 	- @Winlostdate: The input Winlostdate to be summarized	
@@ -207,6 +208,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 					WHEN b.bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 					WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
+					WHEN b.bettype BETWEEN 5001 AND 5099 THEN 233 -- I4D
 					WHEN b.bettype IN(17000) THEN 246 -- NPHP
 				ELSE 0 END,--SportType
 				SUM(CASE WHEN b.statusID NOT IN(101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
@@ -265,6 +267,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 					WHEN b.bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 					WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
+					WHEN b.bettype BETWEEN 5001 AND 5099 THEN 233 -- I4D
 					WHEN b.bettype IN(17000) THEN 246 -- NPHP
 				ELSE 0 END--SportType
 			OPTION (RECOMPILE, MAXDOP 8)

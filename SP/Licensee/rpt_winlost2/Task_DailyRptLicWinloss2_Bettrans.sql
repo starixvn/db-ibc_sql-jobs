@@ -48,6 +48,7 @@ AS
 	- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 	- 20200228@Vickie: Integrate 3 new betfrom [Redmine: #129253]
 	- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
+	- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -149,6 +150,7 @@ BEGIN
 		WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 		WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 		WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
+		WHEN bettype BETWEEN 5001 AND 5099 THEN 233 -- I4D
 		WHEN bettype = 17000 THEN 246 -- NPHP
 	  ELSE 0 END sporttype
 	  -- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -219,6 +221,7 @@ BEGIN
 		WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 		WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 		WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
+		WHEN bettype BETWEEN 5001 AND 5099 THEN 233 -- I4D
 		WHEN bettype = 17000 THEN 246 -- NPHP
 	  ELSE 0 END  
 	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,4299) THEN bettype ELSE 0 END  

@@ -59,6 +59,7 @@ AS
 		- 20200326@Parsons: Integrate Sexy Gaming [RedmineID: #130948]
 		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 		- 20200415@Parsons: Integrate BBIN-Live-Casino [RedmineID: #132237]
+		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 
@@ -89,7 +90,7 @@ BEGIN
 					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D') -- Remove Exchange (BX) due to separate wallet only
 		WHERE (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList)) 
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)

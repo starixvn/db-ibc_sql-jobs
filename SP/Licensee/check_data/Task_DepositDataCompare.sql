@@ -23,6 +23,7 @@ AS
 		- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
+		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 		
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -107,7 +108,8 @@ BEGIN
 							   ,SPR BIGINT
 							   ,SG BIGINT
 							   ,VRG BIGINT
-							   ,TG BIGINT)
+							   ,TG BIGINT
+							   ,I4D BIGINT)
 						   
 	--exec 
 	--rptLicWinloss2
@@ -139,7 +141,8 @@ BEGIN
 						,SPR
 						,SG
 						,VRG
-						,TG)	
+						,TG	
+						,I4D)	
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date	
 				
 	INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
@@ -209,7 +212,8 @@ BEGIN
 						,SPR
 						,SG
 						,VRG
-						,TG)					   
+						,TG				   
+						,I4D)					   
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date=@Date
 					
 	INSERT INTO #TempData(ID,Sportbook,Racing,NumberGame,BA,LC)
