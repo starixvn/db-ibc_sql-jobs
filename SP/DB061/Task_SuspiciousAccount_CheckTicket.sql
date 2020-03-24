@@ -52,4 +52,5 @@ BEGIN
 	DROP TABLE #TicketList
 	DROP TABLE #NotifyList
 END
+
 GO
