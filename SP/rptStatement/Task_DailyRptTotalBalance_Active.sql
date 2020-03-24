@@ -11,6 +11,7 @@ AS
 		- 20190507@Sophia: Initial SP [redmine: #109293] 
 		- 20190912@Bobby: Implement headline - Statement [Redmine: #119289]
 		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
+		- 20200310@Bobby: Remove readpast hint and improve index seek [RedmineID: #130122]
  */
 
 BEGIN
@@ -161,16 +162,38 @@ BEGIN
 	BEGIN 
 		--RE_CAL WL of @TheDayBefore
 		INSERT INTO #OpenningBalanceBettrans
-		SELECT	 
-			custid
-			,SUM(winlost-actual_stake+playercomm) AS winlost
-			,SUM(awinlost+comm-playercomm) AS awinlost
-			,SUM(mwinlost+acomm-comm) AS mwinlost
-			,SUM(swinlost+scomm-acomm) AS swinlost
-		FROM bodb02.dbo.bettrans WITH (READPAST)
-		WHERE	winlostdate = @TheDayBefore
+		SELECT custid
+			, SUM(winlost) AS winlost
+			, SUM(awinlost) AS awinlost
+			, SUM(mwinlost) AS mwinlost
+			, SUM(swinlost) AS swinlost
+		FROM (
+			SELECT custid
+				, SUM(winlost - actual_stake + playercomm) AS winlost
+				, SUM(awinlost + comm - playercomm) AS awinlost
+				, SUM(mwinlost + acomm - comm) AS mwinlost
+				, SUM(swinlost + scomm - acomm) AS swinlost
+			FROM bodb02.dbo.bettrans WITH (NOLOCK)
+			WHERE winlostdate = @TheDayBefore
+				AND bettype < 19999 --> bet tickets
+				AND ruben = 1
 				AND statusID NOT IN (0, 1)
-		GROUP BY custid
+			GROUP BY custid
+	
+			UNION ALL
+			SELECT custid
+				, SUM(winlost - actual_stake) AS winlost
+				, 0 AS awinlost
+				, 0 AS mwinlost
+				, 0 AS swinlost
+			FROM bodb02.dbo.bettrans WITH (NOLOCK)
+			WHERE winlostdate = @TheDayBefore
+				AND bettype > 19999 --> transfer tickets
+				AND ruben = 1
+				AND statusID NOT IN (0, 1)
+			GROUP BY custid
+		) AS rpt
+		GROUP BY rpt.custid
 		
 		--INIT with the OpeningBalance of @TheDayBefore
 		INSERT INTO #tmpRptTotalBalance_Active (CustID, OpeningBalance, OpeningTotalBalance)
