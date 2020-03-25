@@ -29,7 +29,7 @@ WHERE a.isActive_SMA = 1
 WHILE 1 = 1
 BEGIN
 	UPDATE TOP (1) #SportBettypeDCS
-	SET @Bettype = @Bettype
+	SET @Bettype = Bettype
 		,@SportType = SportType
 		,IsProcessed = 1
 	WHERE IsProcessed = 0
