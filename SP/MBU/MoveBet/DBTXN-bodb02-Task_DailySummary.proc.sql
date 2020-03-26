@@ -78,8 +78,10 @@ Revisions:
 	- 20191029@Percy: Add Spadegaming [RedmineID: #122353]
 	- 20191224@Percy: Add Virtual Games [RedmineID: #124906]
 	- 20200211@Lukas: update actualrate on tickets when sync winlostdate vs eventdate
-	- 20200326@Sophia: Add Saba.Club [RedmineID: #130781]
 	- 20200309@Sophia: integrate SA Gaming [RedmineID: #128057]
+	- 20200326@Sophia: Add Saba.Club [RedmineID: #130781]	
+	- 20200326@Sophia: Add SexyGame [RedmineID: #130670]
+	- 20200326@Sophia: Add Indo 4D [RedmineID: #130236]
 	
 */
 
@@ -638,6 +640,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN Bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN Bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
+			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype, 
 		0 AS netTurnover,
@@ -695,6 +699,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN Bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN Bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
+			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -742,6 +748,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN Bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN Bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
+			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*apositiontaking)) AS netTurnover,
@@ -801,6 +809,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN Bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN Bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
+			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -848,6 +858,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN Bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN Bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
+			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*mpositiontaking)) AS netTurnover,
@@ -907,6 +919,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN Bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN Bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
+			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -954,6 +968,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN Bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN Bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
+			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*spositiontaking)) AS netTurnover,
@@ -1013,6 +1029,8 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN Bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN Bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
+			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
