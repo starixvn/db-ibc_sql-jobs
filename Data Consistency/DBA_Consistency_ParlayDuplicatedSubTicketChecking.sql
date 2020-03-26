@@ -18,26 +18,31 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @TransIds VARCHAR(MAX) = ''
+	CREATE TABLE #Duplicated_SubTicket_Transid (refno BIGINT)
 	
-	SELECT TOP 100 b.transid
-	INTO #Duplicated_SubTicket_Transid
-	FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-		INNER HASH JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON bm.refno = b.refno
-	WHERE b.matchid = 29
-		AND b.statusID NOT IN (101,102)
-	GROUP BY b.transid, b.refno, bm.matchid
-	HAVING COUNT(1) > 1
+	INSERT INTO #Duplicated_SubTicket_Transid (refno)
+	SELECT DISTINCT refno
+	FROM bodb02.dbo.bettransm WITH (NOLOCK)
+	GROUP BY refno,matchid
+	HAVING COUNT(matchid) > 1
 
 	IF EXISTS (SELECT TOP 1 1 FROM #Duplicated_SubTicket_Transid)
 	BEGIN
-		SELECT @TransIds = @TransIds + ',' + CAST(transid AS VARCHAR)
-		FROM #Duplicated_SubTicket_Transid b WITH (NOLOCK)
+		SELECT TOP (100) @TransIds = @TransIds + ',' + CAST(transId AS VARCHAR)
+		FROM #Duplicated_SubTicket_Transid t
+			INNER LOOP JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON t.refno = b.refno
+		WHERE b.matchid = 29
+			AND b.statusID NOT IN (101,102)
 		
-		SELECT	@TransIds = SUBSTRING(@TransIds, 2, LEN(@TransIds) - 1)
-				,@ErrCode = 100
-				,@ErrMsg = 'Duplicated Sub Ticket in the same Match !!! ' 
-				,@SampleData = 'bettrans' + '.transid in (' + @TransIds + ')'
-				
+		IF @TransIds <> ''
+		BEGIN
+			SELECT	@TransIds = SUBSTRING(@TransIds, 2, LEN(@TransIds) - 1)
+					,@ErrCode = 100
+					,@ErrMsg = 'Duplicated Sub Ticket in the same Match !!! ' 
+					,@SampleData = 'bettrans' + '.transid in (' + @TransIds + ')'
+		END				
 	END
+
+	DROP TABLE #Duplicated_SubTicket_Transid
 END
 GO
