@@ -32,15 +32,15 @@ BEGIN
 		FROM #Duplicated_SubTicket_Transid t
 			INNER LOOP JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON t.refno = b.refno
 		WHERE b.matchid = 29
-			AND b.statusID NOT IN (101,102)
-		
-		IF @TransIds <> ''
-		BEGIN
-			SELECT	@TransIds = SUBSTRING(@TransIds, 2, LEN(@TransIds) - 1)
-					,@ErrCode = 100
-					,@ErrMsg = 'Duplicated Sub Ticket in the same Match !!! ' 
-					,@SampleData = 'bettrans' + '.transid in (' + @TransIds + ')'
-		END				
+			AND b.statusID NOT IN (101,102)				
+	END
+
+	IF @TransIds <> ''
+	BEGIN
+		SELECT	@TransIds = SUBSTRING(@TransIds, 2, LEN(@TransIds) - 1)
+				,@ErrCode = 100
+				,@ErrMsg = 'Duplicated Sub Ticket in the same Match !!! ' 
+				,@SampleData = 'bettrans' + '.transid in (' + @TransIds + ')'
 	END
 
 	DROP TABLE #Duplicated_SubTicket_Transid
