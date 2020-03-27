@@ -62,6 +62,7 @@ AS
 		- 20191226@Vickie: Add platform 0 [RedmineID: #125824]
 		- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
+		- 20200228@Vickie: Integrate 3 new betffrom [Redmine: #129253]
 
 		EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -182,9 +183,9 @@ BEGIN
 		WHEN BA.transid IS NULL THEN 0
 		WHEN BA.transid IS NOT NULL THEN 1 END AS isBA
 	,CASE 
-		WHEN bettrans.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END AS isMobile	
+		WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2') THEN 1 ELSE 0 END AS isMobile	
 	,CASE    
-		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0') THEN bettrans.betfrom ELSE '' END AS betfrom
+		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN bettrans.betfrom ELSE '' END AS betfrom
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
 	,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
 FROM
@@ -250,9 +251,9 @@ GROUP BY
 		WHEN BA.transid IS NULL THEN 0
 		WHEN BA.transid IS NOT NULL THEN 1 END
 	,CASE 
-		WHEN bettrans.betfrom IN ('s','m','l','r','o','c') THEN 1 ELSE 0 END
+		WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2') THEN 1 ELSE 0 END
 	,CASE    
-		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0') THEN bettrans.betfrom ELSE '' END
+		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN bettrans.betfrom ELSE '' END
 
 	--Agent Level (sum on member)
 	INSERT INTO dbo.rptLicWinloss2
