@@ -23,7 +23,7 @@ BEGIN
 	INSERT INTO #Duplicated_SubTicket_Transid (refno)
 	SELECT DISTINCT refno
 	FROM bodb02.dbo.bettransm WITH (NOLOCK)
-	WHERE bettype NOT BETWEEN 18000 AND 18009
+	WHERE matchid <> 204
 	GROUP BY refno,matchid
 	HAVING COUNT(matchid) > 1
 
