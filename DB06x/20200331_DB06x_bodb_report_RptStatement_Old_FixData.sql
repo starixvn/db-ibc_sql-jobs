@@ -38,6 +38,14 @@ SET NOCOUNT ON;
 
 SELECT @cutoff_date = '2020-02-14';
 
+
+-- INIT cust to correct data
+INSERT INTO #custTemp
+SELECT Custid
+FROM (
+	VALUES(39372113),(7213887)
+) AS c (custid)
+
 INSERT INTO @runningDays (winlostdate)
 SELECT DISTINCT winlostdate
 FROM dbo.rptStatement_Old WITH (NOLOCK)
@@ -52,8 +60,6 @@ WHILE EXISTS (
 		WHERE dayIdx = @dayIdx
 		)
 BEGIN
-	DELETE #custTemp
-
 	SELECT @winlostdate = winlostdate
 	FROM @runningDays
 	WHERE dayIdx = @dayIdx
@@ -61,10 +67,7 @@ BEGIN
 	PRINT 'running -> (' + convert(VARCHAR(20), @winlostdate, 120) + ')';
 
 	BEGIN TRY
-		INSERT INTO #custTemp
-		SELECT Custid
-		FROM dbo.rptStatement_Old WITH (NOLOCK)
-		WHERE WinlostDate = @winlostdate
+		
 
 		INSERT INTO #custChanged (
 			custid
