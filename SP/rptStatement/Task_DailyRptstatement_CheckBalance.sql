@@ -12,6 +12,7 @@ AS
 BEGIN
 
 	SET NOCOUNT ON;
+	DECLARE @cutoff_day DATE
 
 	DECLARE @runningDays TABLE (
 		winlostdate DATE
@@ -39,9 +40,13 @@ BEGIN
 		,winlostdate DATE
 		)
 
+	SELECT @cutoff_day = MIN(winlostdate) --> it's BU day
+	FROM bodb02.dbo.bettrans14 WITH(NOLOCK)
+
 	INSERT INTO @runningDays (winlostdate)
 	SELECT DISTINCT winlostdate
 	FROM dbo.rptStatement WITH (NOLOCK)
+	WHERE winlostdate >= @cutoff_day
 	ORDER BY WinlostDate ASC
 
 	DECLARE @dayIdx INT = 1
@@ -135,7 +140,7 @@ BEGIN
 								This is an auto-mail from the Internal System. Please do not reply.';
 
 		EXECUTE	msdb.dbo.sp_send_dbmail
-					@recipients				= 'sophia.nguyen@starixsoft.com;bobby.nguyen@starixsoft.com;patrick.pham@starixsoft.com'
+					@recipients				= 'sophia.nguyen@starixsoft.com;bobby.nguyen@starixsoft.com;dbaadmin@starixsoft.com'
 				,	@copy_recipients		= ''
 				,	@blind_copy_recipients	= ''
 				,	@subject				= @subject
