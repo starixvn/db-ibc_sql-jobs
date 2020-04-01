@@ -139,8 +139,14 @@ BEGIN
 								+ 'Best regards, </br> 
 								This is an auto-mail from the Internal System. Please do not reply.';
 
+		DECLARE @recipients NVARCHAR(500)
+			,@server_name SYSNAME
+			
+		SELECT @server_name = @@SERVERNAME
+			, @recipients	= CASE WHEN @server_name IN ('DB232', 'DB234') THEN 'sophia.nguyen@starixsoft.com;bobby.nguyen@starixsoft.com' ELSE 'dbaadmin@starixsoft.com' END
+
 		EXECUTE	msdb.dbo.sp_send_dbmail
-					@recipients				= 'sophia.nguyen@starixsoft.com;bobby.nguyen@starixsoft.com;dbaadmin@starixsoft.com'
+					@recipients				= @recipients
 				,	@copy_recipients		= ''
 				,	@blind_copy_recipients	= ''
 				,	@subject				= @subject
