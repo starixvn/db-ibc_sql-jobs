@@ -9,6 +9,7 @@ AS
 	
 	Revisions:
 		- 20191022@Percy: Initialize SP [RedmineID: #103656]
+		- 20200401@Percy: Check exists TransID on LicenseeBATransaction_bk [RedmineID: #131643]
 */
 
 BEGIN
@@ -30,6 +31,17 @@ BEGIN
 
 	IF @@ROWCOUNT = 0
 		RETURN
+
+	IF EXISTS (
+		SELECT 1
+		FROM bodb_licensee.dbo.LicenseeBATransaction_bk b WITH (NOLOCK)
+			INNER JOIN #TempData t ON b.TransID = t.TransID
+	)
+	BEGIN
+		DELETE b WITH (ROWLOCK, UPDLOCK)
+		FROM bodb_licensee.dbo.LicenseeBATransaction_bk b
+			INNER JOIN #TempData t ON b.TransID = t.TransID
+	END
 
 	INSERT INTO	bodb_licensee.dbo.LicenseeBATransaction_bk
 	(
