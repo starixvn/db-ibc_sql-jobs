@@ -47,10 +47,11 @@ FROM (
 ) AS c (custid)
 
 INSERT INTO @runningDays (winlostdate)
-SELECT DISTINCT winlostdate
-FROM dbo.rptStatement_Old WITH (NOLOCK)
-WHERE WinlostDate >= @cutoff_date
-ORDER BY WinlostDate ASC
+SELECT DISTINCT rpt.winlostdate
+FROM dbo.rptStatement_Old rpt WITH (NOLOCK)
+INNER JOIN #custTemp ci ON ci.custid = rpt.custid
+WHERE rpt.WinlostDate >= @cutoff_date
+ORDER BY rpt.WinlostDate ASC
 
 DECLARE @dayIdx INT = 1
 
