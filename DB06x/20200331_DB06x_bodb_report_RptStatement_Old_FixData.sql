@@ -54,6 +54,7 @@ WHERE rpt.WinlostDate >= @cutoff_date
 ORDER BY rpt.WinlostDate ASC
 
 DECLARE @dayIdx INT = 1
+	, @diff_total_balance MONEY = 0
 
 WHILE EXISTS (
 		SELECT 1
@@ -114,10 +115,12 @@ BEGIN
 		PRINT 'diff cust -> (' + convert(VARCHAR(10), @@rowcount) + ')';
 
 		-- UPDATE OPENING
+		SET @diff_total_balance = 0
 		UPDATE tgr
-		SET tgr.OpeningBalance = src.closingbalance
+		SET @diff_total_balance = ISNULL(src.closingbalance,0) - ISNULL(tgr.OpeningBalance,0)
+			,tgr.OpeningBalance = src.closingbalance
 			,tgr.ClosingBalance = (ISNULL(src.closingbalance, 0) + ISNULL(tgr.[Winlost], 0) + ISNULL(tgr.[Comm], 0) + ISNULL(tgr.[TransferAmt], 0))
-			,tgr.OpeningTotalBalance = ISNULL(tgr.OpeningTotalBalance, 0) + ISNULL(src.closingbalance, 0)
+			,tgr.OpeningTotalBalance = ISNULL(tgr.OpeningTotalBalance, 0) + ISNULL(@diff_total_balance, 0)
 		OUTPUT inserted.Custid
 			,inserted.WinlostDate
 		INTO #custOutput
