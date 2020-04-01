@@ -11,7 +11,7 @@ declare @job_name	sysname
 	,@update_step_id	int
 	,@step_name		sysname
 
-SELECT @job_name = 'bodb_Report: Daily Summary rptStatement Check and Correct Data'
+SELECT @job_name = 'bodb02: Check and Correct Data - After MBU'
 	, @add_step_id = 4
 	, @update_step_id = 3
 	, @step_name = 'Check balance consistency'
