@@ -21,6 +21,7 @@ Revisions:
 		- 20190520@Parsons: Implement BetBuilder [Redmine: #108995]
 		- 20190808@Parsons: Provide House Turnover In NG WL Report [Redmine: #117674]
 		- 20190918@Parsons: Update house turnover's formula [Redmine: #120119]
+		- 20200403@Parsons: Indo 4D Integration [RedmineID: #130910]
 		
 Param's Explanation:
 
@@ -138,6 +139,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 1401 AND 1499 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0)) -- poker games: gem & insurance
 				WHEN b.bettype = 18000 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0)) -- Extra Amount For CB Free Play Ticket
 				WHEN b.bettype BETWEEN 81 AND 120 OR b.bettype BETWEEN 8101 AND 8120 THEN b.stake * (1 - b.tpositiontaking) -- House Turnover In NG WL
+				WHEN b.bettype BETWEEN 5001 AND 5099 THEN b.actual_stake -- Net Turnover In Indo 4D
 				ELSE 0 END) ExtraAmount,
 			CASE WHEN b.bettype=1004 THEN b.tpositiontaking ELSE 0 END tpositiontaking-- bullfighting
 		FROM
