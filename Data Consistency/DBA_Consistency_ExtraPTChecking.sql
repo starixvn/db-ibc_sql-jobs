@@ -6,7 +6,8 @@ ALTER PROCEDURE [dbo].[DBA_Consistency_ExtraPTChecking]
 	@RuleID 		TINYINT 		= 0
 	,@WinlostDate	SMALLDATETIME 	= NULL
 	,@ErrCode		INT				= 0		OUTPUT
-	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT  
+	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT
+	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
 AS
 /*
 	Created: 20200120@Sophia
@@ -31,7 +32,7 @@ BEGIN
 
 
 	DECLARE @transId VARCHAR(MAX) = '' 
-	SELECT @ErrMsg  = ''
+	SELECT @SampleData  = '', @ErrMsg = ''
 	
 	IF @WinlostDate IS NULL
 	SELECT @Winlostdate = CONVERT (DATE, GETDATE())  
@@ -82,8 +83,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 101					
-						,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
+						,@ErrCode = 101	
+						,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with bettrans.TransId'	+ Char(10) + Char(13)			
+						,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
 			END	
 
 			------I.I.b. translog 
@@ -115,7 +117,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 102
-						,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
+						,@ErrMsg =  @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with translog.translogid'	+ Char(10) + Char(13)		
+						,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
 			END
 			
 			------I.I.c. bettransRNG 
@@ -146,7 +149,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 103
-						,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with BettransRNG.transID' + Char(10) + Char(13)	
+						,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
 			END
 			
 			
@@ -179,7 +183,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 104
-						,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with BettransLC.transID' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
 			END
 			
 			--- I.II: Epositiontaking IS NULL	
@@ -200,7 +205,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 105
-						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with bettrans.TransId' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking IS NULL with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
 			END
 					
 		
@@ -220,7 +226,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 106
-						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with translog.translogid' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking IS NULL with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
 			END
 
 			------I.II.c. BettransRNG
@@ -239,7 +246,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 107
-						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with BettransRNG.transID' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking IS NULL with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
 			END
 
 			------I.II.c. BettransLC	
@@ -258,7 +266,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 108
-						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with BettransLC.transID' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking IS NULL with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
 			END
 			
 	END 
@@ -284,7 +293,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 109
-						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with bettrans.TransId' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
 			END				
 			
 			------II.I.b. translog
@@ -303,7 +313,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 110
-						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with translog.translogid' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
 			END
 
 			
@@ -323,7 +334,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 111
-						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with BettransRNG.transID' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
 			END								
 			
 			------II.I.d. BettransLC			
@@ -342,7 +354,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 112
-						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with BettransLC.transID' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
 			END		
 			
 	END 
@@ -370,7 +383,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 114
-						,@ErrMsg = @ErrMsg + 'Epositiontaking has value under headline XP% with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking has value under headline XP% with bettrans.TransId' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking has value under headline XP% with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
 			END					
 			
 			------III.I.b. translog
@@ -390,7 +404,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 115
-						,@ErrMsg = @ErrMsg + 'Epositiontaking has value under headline XP% with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking has value under headline XP% with translog.translogid' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking has value under headline XP% with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
 			END
 	
 			
@@ -411,7 +426,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 116
-						,@ErrMsg = @ErrMsg + 'Epositiontaking has value under headline XP% with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking has value under headline XP% with BettransRNG.transID' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking has value under headline XP% with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
 			END
 				  
 			
@@ -432,7 +448,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 117
-						,@ErrMsg = @ErrMsg + 'Epositiontaking has value under headline XP% with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Epositiontaking has value under headline XP% with BettransLC.transID' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking has value under headline XP% with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
 			END
 				  
 			
@@ -455,7 +472,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 118
-						,@ErrMsg = @ErrMsg + 'TPositiontaking <> 92% under headline XP% with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'TPositiontaking <> 92% under headline XP% with bettrans.TransId' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'TPositiontaking <> 92% under headline XP% with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
 			END
 			
 			------III.II.b. translog
@@ -475,7 +493,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 119
-						,@ErrMsg = @ErrMsg + 'TPositiontaking <> 92% under headline XP% with translog.translogid in (' + @transId + ')'
+						,@ErrMsg = @ErrMsg + 'TPositiontaking <> 92% under headline XP% with translog.translogid' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'TPositiontaking <> 92% under headline XP% with translog.translogid in (' + @transId + ')'
 			END
 			
 			------III.II.c. BettransRNG
@@ -495,7 +514,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 120
-						,@ErrMsg = @ErrMsg + 'TPositiontaking <> 92% under headline XP% with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'TPositiontaking <> 92% under headline XP% with BettransRNG.transID' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'TPositiontaking <> 92% under headline XP% with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
 			END
 			
 			------III.II.d. BettransLC
@@ -515,7 +535,8 @@ BEGIN
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 121
-						,@ErrMsg = @ErrMsg + 'TPositiontaking <> 92% under headline XP% with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'TPositiontaking <> 92% under headline XP% with BettransLC.transID' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'TPositiontaking <> 92% under headline XP% with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
 			END
 	END 
 	
