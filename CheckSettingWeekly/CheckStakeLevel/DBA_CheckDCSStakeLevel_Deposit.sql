@@ -11,7 +11,8 @@ AS
 	Revisions:
 		- 20190130@Winnie:	Remove ClearBal Acc - [Redmine: #73556]
 		- 20190801@Winnie: Change Check stake level RedmineID:#117919
-		-20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
+		- 20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
+		- 20200409@Tiara: Increase datatype size of StakeLevelList on #GlobalStakeLevel [redmine #132051]
 	Parameter's Explanations:
 */
 BEGIN 

@@ -17,6 +17,7 @@ AS
 		- 20191122@Johnson: revise sp [redmine:#123732]
 		- 20200116@Johnson: remove AG [redmine:#127252]
 		- 20200206@Johnson: exclude closed customers[redmine:#127831]
+		- 20200409@Tiara: Change data source from Customer to Custinfo [redmine #132051]
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (317->328)  
