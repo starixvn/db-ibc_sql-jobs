@@ -17,6 +17,7 @@ AS
 		- 20191122@Johnson: revise sp [redmine:#123732]
 		- 20200116@Johnson: remove AG [redmine:#127252]
 		- 20200206@Johnson: exclude closed customers[redmine:#127831]
+		- 20200409@Tiara: Change data source from Customer to Custinfo [redmine #132051]
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (317->328)  
@@ -39,7 +40,7 @@ BEGIN
 	DECLARE @DisableKeno BIT,
 			@count INT
 	
-	CREATE TABLE #tblCustClosed (custid INT, roleid TINYINT)
+	CREATE TABLE #tblCustClosed (custid INT PRIMARY KEY, roleid TINYINT)
 	
 	INSERT INTO #tblCustClosed (custid,roleid)
 	SELECT custid,roleid
@@ -54,7 +55,7 @@ BEGIN
 	SELECT @DisableKeno=IsDisabled FROM CheckCustDB.dbo.CustgameType WITH(NOLOCK) WHERE custid=@srecommend AND GameTypeID=1	
 
 	INSERT INTO #Dummy(CustID)
-	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=3 AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%'
+	SELECT CustID FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=3 AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%'
 																												OR username LIKE 'AB88'+'CAS%' )
 
 	INSERT INTO #Agent(CustID)
@@ -63,7 +64,7 @@ BEGIN
 	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE mrecommend IN(SELECT custid FROM #Dummy) AND roleID=2
 
 	INSERT INTO #Trade(CustID)
-	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=1 AND (username LIKE '%Bettrade%' OR username LIKE '%CashOut%' OR username LIKE '%ClearBal%')
+	SELECT CustID FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=1 AND (username LIKE '%Bettrade%' OR username LIKE '%CashOut%' OR username LIKE '%ClearBal%')
 	UNION
 	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE recommend IN(SELECT custid FROM #Agent) AND roleID=1
 	UNION

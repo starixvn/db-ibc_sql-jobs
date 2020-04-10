@@ -11,7 +11,8 @@ AS
 	Revisions:
 		- 20190130@Winnie:	Remove ClearBal Acc - [Redmine: #73556]
 		- 20190801@Winnie: Change Check stake level RedmineID:#117919
-		-20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
+		- 20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
+		- 20200409@Tiara: Increase datatype size of StakeLevelList on #GlobalStakeLevel [redmine #132051]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -21,7 +22,7 @@ BEGIN
 	CREATE TABLE #MasterStakeLevel (CustID INT, SportType INT, bettype INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,SportType , bettype))
 	CREATE TABLE #AgentStakeLevel (CustID INT, SportType INT, bettype INT, mrecommend INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,SportType , bettype))
 	CREATE TABLE #MemberStakeLevel (CustID INT, SportType INT, bettype INT, recommend INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,SportType , bettype))
-	CREATE TABLE #GlobalStakeLevel (sporttype INT, bettype INT, StakeLevelList VARCHAR(1000))
+	CREATE TABLE #GlobalStakeLevel (sporttype INT, bettype INT, StakeLevelList VARCHAR(5000))
 	CREATE TABLE #OfferedProductList(ProductID TINYINT, ProductSettingID INT,SportType SMALLINT ,BetType SMALLINT)	
 	DECLARE @SportBettypeFilter TABLE(SportType INT, Bettype INT)
 	DECLARE @currency INT, @rowcount INT
