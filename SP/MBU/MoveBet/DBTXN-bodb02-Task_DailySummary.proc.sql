@@ -646,7 +646,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
 			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games	
-			WHEN Bettype BETWEEN 3301 AND 3399 THEN 241 -- BBIN			
+			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN			
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype, 
 		0 AS netTurnover,
@@ -707,7 +707,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
 			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
-			WHEN Bettype BETWEEN 3301 AND 3399 THEN 241 -- BBIN
+			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -758,7 +758,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
 			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
-			WHEN Bettype BETWEEN 3301 AND 3399 THEN 241 -- BBIN
+			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*apositiontaking)) AS netTurnover,
@@ -821,7 +821,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
 			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
-			WHEN Bettype BETWEEN 3301 AND 3399 THEN 241 -- BBIN
+			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -872,7 +872,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
 			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
-			WHEN Bettype BETWEEN 3301 AND 3399 THEN 241 -- BBIN
+			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*mpositiontaking)) AS netTurnover,
@@ -935,7 +935,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
 			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
-			WHEN Bettype BETWEEN 3301 AND 3399 THEN 241 -- BBIN
+			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -986,7 +986,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
 			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
-			WHEN Bettype BETWEEN 3301 AND 3399 THEN 241 -- BBIN
+			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*spositiontaking)) AS netTurnover,
@@ -1049,7 +1049,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
 			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
-			WHEN Bettype BETWEEN 3301 AND 3399 THEN 241 -- BBIN
+			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
