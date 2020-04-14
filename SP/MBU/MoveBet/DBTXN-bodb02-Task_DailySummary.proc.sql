@@ -83,7 +83,8 @@ Revisions:
 	- 20200326@Sophia: Add SexyGame [RedmineID: #130670]
 	- 20200326@Sophia: Add Indo 4D [RedmineID: #130236]
 	- 20200408@Sophia: Add Table Games [RedmineId: #129438]
-	- 20200410@Sophia: Add BBIN [RedmineId: #131358]	
+	- 20200410@Sophia: Add BBIN [RedmineId: #131358]
+	- 20200410@Sophia: Add BBIN, Sexy Gaming, SA Gaming for TurnoverNoDraw[RedmineId: #131358]	
 
 	
 */
@@ -664,7 +665,11 @@ INSERT INTO dbo.sum_winloss_tmp
 								AND Bettype NOT BETWEEN 81 AND 120
 						)
 						THEN 0
-					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
+					WHEN   Bettype BETWEEN 2401 AND 2499   -- Allbet
+						OR Bettype BETWEEN 3001 AND 3099   -- SA Gaming
+						OR Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
+						OR Bettype BETWEEN 3300 AND 3399   -- BBIN	
+						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
 	FROM
@@ -776,7 +781,11 @@ INSERT INTO dbo.sum_winloss_tmp
 								AND Bettype NOT BETWEEN 81 AND 120
 						)
 						THEN 0
-					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
+					WHEN   Bettype BETWEEN 2401 AND 2499   -- Allbet
+						OR Bettype BETWEEN 3001 AND 3099   -- SA Gaming
+						OR Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
+						OR Bettype BETWEEN 3300 AND 3399   -- BBIN	
+						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
 	FROM
@@ -890,7 +899,11 @@ INSERT INTO dbo.sum_winloss_tmp
 								AND Bettype NOT BETWEEN 81 AND 120
 						)
 						THEN 0
-					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
+					WHEN   Bettype BETWEEN 2401 AND 2499   -- Allbet
+						OR Bettype BETWEEN 3001 AND 3099   -- SA Gaming
+						OR Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
+						OR Bettype BETWEEN 3300 AND 3399   -- BBIN	
+						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
 	FROM
@@ -1004,7 +1017,11 @@ INSERT INTO dbo.sum_winloss_tmp
 								AND Bettype NOT BETWEEN 81 AND 120
 						)
 						THEN 0
-					WHEN bettype BETWEEN 2401 AND 2499 THEN oddsspread -- Allbet
+					WHEN   Bettype BETWEEN 2401 AND 2499   -- Allbet
+						OR Bettype BETWEEN 3001 AND 3099   -- SA Gaming
+						OR Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
+						OR Bettype BETWEEN 3300 AND 3399   -- BBIN	
+						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
 	FROM
