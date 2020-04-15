@@ -34,6 +34,7 @@ AS
 	- 20191122@Amanda: Sum PP Prize to promotion column [RedmineID: #123804]
 	- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 	- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
+	- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 
 	Input Params:
 	- @Winlostdate: The input Winlostdate to be summarized
@@ -433,6 +434,7 @@ BEGIN
 					WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 					WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 					WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
+					WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 					WHEN bettype IN(17000) THEN 246 -- NPHP
 				ELSE 0 END,--SportType
 				SUM(TurnOver),--Turnover  
@@ -479,6 +481,7 @@ BEGIN
 					WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 					WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 					WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
+					WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 					WHEN bettype IN(17000) THEN 246 -- NPHP
 				ELSE 0 END
 

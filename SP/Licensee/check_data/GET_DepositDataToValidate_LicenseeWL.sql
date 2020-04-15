@@ -24,6 +24,7 @@ AS
 		- 20191204@Amanda: Change name of NPH Promotion to Saba Promotion [Redmine: #124612]
 		- 20191212@Vickie: Integrate SpadeGaming [RedmineID: #124103]
 		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
+		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -146,13 +147,17 @@ BEGIN
 		,@VRGTurnover MONEY
 		,@VRGCustomerWl MONEY
 		,@VRGBetCount MONEY
+		----TG
+		,@TGTurnover MONEY
+		,@TGCustomerWl MONEY
+		,@TGBetCount MONEY
 	         
 	DECLARE @tblSporttype AS TABLE(ProductPrefix VARCHAR (10),Sporttype INT)	   
 	INSERT INTO @tblSporttype (ProductPrefix, Sporttype)
 	SELECT DISTINCT ProductPrefix, Sporttype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG')	
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG')	
 
 	INSERT INTO  @tblSporttype
 	SELECT 'SB', 0
@@ -579,6 +584,21 @@ BEGIN
 	SELECT @VRGTurnover 	= ISNULL(@VRGTurnover,0)
 		   ,@VRGCustomerWl	= ISNULL(@VRGCustomerWl,0)
 		   ,@VRGBetCount 	= ISNULL(@VRGBetCount,0)
+
+	----TG
+	SELECT  @TGTurnover=SUM(CASE 
+						WHEN @DrawFilter IN (2,3) THEN 
+							CASE WHEN b.StatusID = 111 THEN 0 WHEN b.StatusID IN (114,115) THEN 0.5 ELSE 1 END
+						ELSE 1
+					END * b.Turnover)
+			,@TGCustomerWl=SUM(b.winlost)
+			,@TGBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END) 
+	FROM @tblData b
+	WHERE ProductPrefix = 'TG'
+
+	SELECT @TGTurnover 		= ISNULL(@TGTurnover,0)
+		   ,@TGCustomerWl	= ISNULL(@TGCustomerWl,0)
+		   ,@TGBetCount 	= ISNULL(@TGBetCount,0)
 	-- Result
 
 	SELECT 1 AS Id, @SbTurnover AS Sb
@@ -608,6 +628,7 @@ BEGIN
 				  , @SPRTurnover  AS SPR
 				  , @SGTurnover  AS SG
 				  , @VRGTurnover AS VRG
+				  , @TGTurnover AS TG
 			  
 	UNION
 	SELECT 2, @SbCustomerWl
@@ -637,6 +658,7 @@ BEGIN
 			, @SPRCustomerWl
 			, @SGCustomerWl
 			, @VRGCustomerWl
+			, @TGCustomerWl
 	UNION
 	SELECT 3, @SbBetCount
 			, @RbBetCount
@@ -665,6 +687,7 @@ BEGIN
 			, @SPRBetCount
 			, @SGBetCount
 			, @VRGBetCount
+			, @TGBetCount
 
 	SET NOCOUNT OFF
 END
