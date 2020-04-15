@@ -23,6 +23,7 @@ AS
 		-20191105@Winnie: starsoccer - Adjust SB PT. RedmineID:#123273
 		-20191216@Winnie: [Wanbo,9wickets,9Wsports] Update PT sportbook. RedmineID:#125434
 		-20200206@Johnson: add new PT config for VS (rule 71) and exclude closed customers[redmine:#127831]
+		-20200410@Elodie: Add new PT value for lottery [RedmineID:#131218]
 	Param's Explanation:
 	
 */
@@ -311,7 +312,7 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustPTSetting_Member s WITH(NOLOCK)			
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid		
 			INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 			
-		WHERE s.custid=@srecommend AND c.roleid=1  AND d.IsGroupedPT=0 AND s.sporttype =220 AND (s.AgentPT NOT IN(90,94) OR s.SuperPT<>0 OR s.MasterPT<>0)
+		WHERE s.custid=@srecommend AND c.roleid=1  AND d.IsGroupedPT=0 AND s.sporttype =220 AND (s.AgentPT NOT IN(90,94,95) OR s.SuperPT<>0 OR s.MasterPT<>0)
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 			AND c.custid NOT IN(SELECT custid FROM #Trade)	
 			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
@@ -320,7 +321,7 @@ BEGIN
 		SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
 		FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid			
-		WHERE c.srecommend=@srecommend AND c.roleid=2 AND s.sporttype =220 AND (s.AgentPT NOT IN(90,94) OR s.SuperPT<>0 OR s.MasterPT<>0)
+		WHERE c.srecommend=@srecommend AND c.roleid=2 AND s.sporttype =220 AND (s.AgentPT NOT IN(90,94,95) OR s.SuperPT<>0 OR s.MasterPT<>0)
 			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
 			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 		
