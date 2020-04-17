@@ -1,6 +1,8 @@
 /*<info serverAlias="DBTXN-bodb02" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE dbo.Task_Dep_AdjustData3rdProduct @WinlostDate SMALLDATETIME
-	, @DayForAdjustment VARCHAR(125) = '1,2,3,4,5,6,7'
+ALTER PROCEDURE [dbo].[Task_Dep_AdjustData3rdProduct]
+	@WinlostDate		SMALLDATETIME
+	,@ProductIds		VARCHAR(MAX)
+	,@DayForAdjustment	VARCHAR(125) = '1,2,3,4,5,6,7'
 AS
 /*
 	Created by: 20150601@Patrick
@@ -13,6 +15,7 @@ AS
 		- 20171213@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
 		- 20181003@Percy: Integrate GoldDeluxe Tip [RedmineID: #70177]
 		- 20200108@Percy: Support billing terms by product & currency instead of product only [RedmineID: #120005]
+		- 20200407@Percy: Add @ProductIds to support input product list [RedmineID: #131885]
 		
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
@@ -21,10 +24,18 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	--@WinlostDate > CurrentDate
+
 	IF @WinlostDate > GETDATE()
 	BEGIN
-		--PRINT('Can''t process data.')
+		RETURN
+	END
+
+	DECLARE @Today DATE
+	SELECT  @Today = DATEADD(DAY, 1, @WinlostDate)
+
+	--Only run on that date @DayForAdjustment
+	IF CHARINDEX(CAST(DATEPART(DAY, @Today) AS VARCHAR), @DayForAdjustment, 0) <= 0 --DATEPART(DD, @Today) NOT IN (1,2,3,4,5,6,7)
+	BEGIN
 		RETURN
 	END
 
@@ -36,32 +47,21 @@ BEGIN
 	CREATE TABLE #ChargeRateByCurrency (ChargeId INT, CurrencyId INT, Rate MONEY)
 
 	DECLARE @LicenseeTable TABLE (RowId INT IDENTITY(1,1), LicenseeId INT, LicenseeName VARCHAR(50), CurrencyId TINYINT)
-	DECLARE @BalanceUpTable TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME) 
+	DECLARE @BalanceUpTable TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	DECLARE @Party TABLE (PartyId INT)
 	
 	DECLARE @RowId INT, @LicenseeName VARCHAR(50), @CurrencyId TINYINT, @ProductId TINYINT
-		, @Today DATE, @SqlQueryForDummny VARCHAR(8000), @SqlQueryFor3rd VARCHAR(8000), @CustDummyId INT
-		, @SqlQueryChargeRate VARCHAR(8000), @PartyList VARCHAR(4000)
-		, @RefNo BIGINT, @SqlQuery VARCHAR(8000), @ExchangeRate FLOAT, @ProductIds VARCHAR(512)
+		, @SqlQueryForDummny VARCHAR(8000), @SqlQueryFor3rd VARCHAR(8000), @CustDummyId INT
+		, @SqlQueryChargeRate VARCHAR(8000), @PartyList VARCHAR(4000), @ProductCodeList VARCHAR(1000)
+		, @RefNo BIGINT, @SqlQuery VARCHAR(8000), @ExchangeRate FLOAT
 		, @LicenseeId INT, @BettypeIds VARCHAR(512), @FirstDateOfLastMonth SMALLDATETIME, @LastDateOfLastMonth SMALLDATETIME
 		, @AdjustmentIndicator VARCHAR(125), @BettingIndicator VARCHAR(125), @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
 	
-	SELECT @RowId = 1, @Today = DATEADD(DD, 1, @WinlostDate)
+	SELECT @RowId = 1
 	SELECT @FirstDateOfLastMonth = DATEADD(MONTH, DATEDIFF(MONTH, 0, @Today) -1, 0) --First day of last month
 		, @LastDateOfLastMonth = DATEADD(MONTH, DATEDIFF(MONTH, -1, @Today) -1, -1) --Last day of last month
 		, @BettingIndicator = ' Betting - '
 		, @AdjustmentIndicator = ' Adjustment - Date: '
-
-	--Only run on that date @DayForAdjustment
-	IF CHARINDEX(CAST(DATEPART(DD, @Today) AS VARCHAR), @DayForAdjustment, 0) <= 0 --DATEPART(DD, @Today) NOT IN (1,2,3,4,5,6,7)
-	BEGIN
-		--PRINT('Can not adjust data on that day.')
-		DROP TABLE #LicenseeProductTable
-		DROP TABLE #3rdData
-		DROP TABLE #3rdDummnyData
-		DROP TABLE #ChargeRate
-		DROP TABLE #ChargeRateByCurrency
-		RETURN
-	END
 
 	--check @WinlostDate less than @MoveBetDay
 	INSERT INTO @BalanceUpTable(BalanceUpDay, MoveBetsDay)
@@ -77,7 +77,7 @@ BEGIN
 			FROM bodb_licensee.dbo.LicenseeCust c WITH(NOLOCK)
 				INNER JOIN bodb_licensee.dbo.Licensees l WITH(NOLOCK) ON c.LicenseeId = l.LicenseeId
 				INNER JOIN bodb_licensee.dbo.LicenseeProduct3rd p WITH(NOLOCK) ON c.LicenseeId = p.LicenseeId
-			WHERE p.ProductId IN (10,11,12,31)
+			WHERE p.ProductId IN (' + @ProductIds + ')
 			GROUP BY l.LicenseeId, l.LicenseeName, c.Currency, p.ProductId
 			'')'
 	
@@ -101,20 +101,36 @@ BEGIN
 	GROUP BY LicenseeId, LicenseeName, CurrencyId
 
 	--get party list
-	SELECT @PartyList = COALESCE(@PartyList + ',' + CAST(FromParty AS VARCHAR), CAST(FromParty AS VARCHAR))
-	FROM (
-		SELECT DISTINCT FromParty
-		FROM DBLIC.bodb_licensee.dbo.OAS_ChargeInfo WITH(NOLOCK)
-		WHERE ProductId IN (10,11,12,31)
-		GROUP BY FromParty
-	)tmp
+	SET @SqlQuery = ''
+	SELECT @SqlQuery = 'SELECT FromParty
+			FROM OPENQUERY(DBLIC, ''SELECT DISTINCT FromParty
+									FROM bodb_licensee.dbo.OAS_ChargeInfo WITH (NOLOCK)
+									WHERE ProductId IN (' + @ProductIds + ')
+									'')'
+	
+	INSERT INTO @Party(PartyId)
+	EXEC (@SqlQuery)
+
+	SELECT @PartyList = COALESCE(@PartyList + ',' + CAST(PartyId AS VARCHAR), CAST(PartyId AS VARCHAR))
+	FROM @Party
 
 	--get charge rate
+	SET @ProductCodeList = NULL
+
+	IF CHARINDEX('10', @ProductIds, 0) > 0 --AG Casino
+		SELECT @ProductCodeList = COALESCE(@ProductCodeList + ',AGC', 'AGC')
+
+	IF CHARINDEX('11', @ProductIds, 0) > 0 --Gold Deluxe
+		SELECT @ProductCodeList = COALESCE(@ProductCodeList + ',GD', 'GD')
+
+	IF CHARINDEX('31', @ProductIds, 0) > 0 --Exchange
+		SELECT @ProductCodeList = COALESCE(@ProductCodeList + ',BX', 'BX')
+
 	SET @SqlQueryChargeRate = ''
 	SELECT @SqlQueryChargeRate = 'SELECT ChargeId, PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, Fromdate, Todate
 			FROM OPENQUERY(DBLIC, ''SELECT ChargeId, PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_ChargeInfo(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @FirstDateOfLastMonth, 112) + '''''
-												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
+												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''' + @ProductCodeList + ''''', ''''OA'''', 1)
 			WHERE DI_Rate > 0 AND ChargeType IN (1,12) '')'
 	
 	INSERT INTO #ChargeRate(ChargeId, PartyId, LicenseeId, ProductId, ChargeType, Rate, FromDate, ToDate)
@@ -125,7 +141,7 @@ BEGIN
 	SELECT @SqlQueryChargeRate = 'SELECT ChargeId, PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, Fromdate, Todate
 			FROM OPENQUERY(DBLIC, ''SELECT ChargeId, PartyId, LicenseeId, ProductId, ChargeType, DI_Rate, FromDate, ToDate
 			FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime(''''' + @PartyList + ''''', ''''' + CONVERT(VARCHAR(10), @FirstDateOfLastMonth, 112) + '''''
-												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''AGC,GD,VG,BX'''', ''''OA'''', 1)
+												 , ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''', ''''' + @ProductCodeList + ''''', ''''OA'''', 1)
 			WHERE DI_Rate > 0 AND ChargeType IN (1,12) '')'
 	
 	INSERT INTO #ChargeRate(ChargeId, PartyId, LicenseeId, ProductId, ChargeType, Rate, FromDate, ToDate)
@@ -184,24 +200,14 @@ BEGIN
 		IF ISNULL(@CustDummyId, 0) = 0 OR ISNULL(@ProductIds, '') = ''
 			CONTINUE
 		
-		IF CHARINDEX('10', @ProductIds, 0) > 0
-		BEGIN
-			SET @BettypeIds = '1800,'
-		END	
-		IF CHARINDEX('11', @ProductIds, 0) > 0
-		BEGIN
-			SET @BettypeIds = @BettypeIds + '1700,1706,'
-		END	
-		IF CHARINDEX('12', @ProductIds, 0) > 0
-		BEGIN
-			SET @BettypeIds = @BettypeIds + '1900,'
-		END	
-		IF CHARINDEX('31', @ProductIds, 0) > 0
-		BEGIN
-			SET @BettypeIds = @BettypeIds + '8000,'
-		END	
-		
-		SELECT @BettypeIds = SUBSTRING(@BettypeIds, 1, LEN(@BettypeIds) - 1)
+		IF CHARINDEX('10', @ProductIds, 0) > 0 --AG Casino
+			SELECT @BettypeIds = COALESCE(@BettypeIds + ',1800', '1800')
+
+		IF CHARINDEX('11', @ProductIds, 0) > 0 --Gold Deluxe
+			SELECT @BettypeIds = COALESCE(@BettypeIds + ',1700,1706', '1700,1706')
+
+		IF CHARINDEX('31', @ProductIds, 0) > 0 --Exchange
+			SELECT @BettypeIds = COALESCE(@BettypeIds + ',8000', '8000')
 
 		--print('get data from bk, 14 & bettrans to data adjustment')
 		-- get data from bk
@@ -305,25 +311,6 @@ BEGIN
 			EXEC (@SqlQueryFor3rd)
 		END
 
-		IF CHARINDEX('12', @ProductIds, 0) > 0 --Vegas games
-		BEGIN
-			--print ('Vegas games')
-			SELECT @SqlQueryFor3rd = ''
-			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 1900 AS Bettype, Stake, Actual_stake, Winlost
-				FROM OPENQUERY(DBLIC, ''SELECT WinlostDate, b.Currency, SUM(ABS(StakeAmount)) AS Stake, SUM(ABS(StakeAmount)) AS Actual_stake, SUM(ABS(WinAmount)) AS Winlost
-				FROM bodb_3rdProduct.dbo.BetTrans_VoidBridge b WITH (NOLOCK) 
-					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON b.recommend = f.custid AND b.currency = f.currency 
-				WHERE 1 = 1'
-					+ ' AND WinlostDate BETWEEN ''''' + CONVERT(VARCHAR(10), @FirstDateOfLastMonth, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''''
-					+ ' AND b.Currency = ' + CAST(@CurrencyId AS VARCHAR)
-					+ ' AND Status IN (''''WIN'''',''''LOSE'''')'
-				+ ' GROUP BY WinlostDate, b.Currency'
-				+ ''' )'
-
-			INSERT INTO #3rdData(WinlostDate, CurrencyId, Bettype, Stake, Actual_stake, Winlost)
-			EXEC (@SqlQueryFor3rd)
-		END
-		
 		IF CHARINDEX('31', @ProductIds, 0) > 0 --Exchange
 		BEGIN
 			--print ('Exchange')
@@ -417,7 +404,6 @@ BEGIN
 		UPDATE tmp
 		SET TransDesc = CASE WHEN tmp.Bettype = 1800 THEN 'AGC' 
 							 WHEN tmp.Bettype IN (1700, 1706) THEN 'GD' 
-							 WHEN tmp.Bettype = 1900 THEN 'VG' 
 							 WHEN tmp.Bettype = 8000 THEN 'BX' END + @AdjustmentIndicator + CONVERT(VARCHAR(10), WinlostDate, 120) + ' - Ex.Rate: ' + CAST(tmp.ActualRate AS VARCHAR)
 			, awinlost = -(Winlost - Actual_stake) * (1 - ISNULL(rc.Rate, r.Rate))
 			, apositiontaking = 1 - ISNULL(rc.Rate, r.Rate)
@@ -440,7 +426,6 @@ BEGIN
 				SELECT FromDate, ToDate, Rate
 					, CASE WHEN ProductId = 10 THEN 1800
 						WHEN ProductId = 11 THEN CASE WHEN ChargeType = 1 THEN 1700 WHEN ChargeType = 12 THEN 1706 END
-						WHEN ProductId = 12 THEN 1900 
 						WHEN ProductId = 31 THEN 8000 END Bettype
 				FROM #ChargeRate WHERE LicenseeId = @LicenseeId
 			) r ON tmp.WinlostDate BETWEEN r.FromDate AND r.ToDate AND r.Bettype = tmp.Bettype
