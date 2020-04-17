@@ -13,6 +13,7 @@ AS
 		- 20170809@Patrick: Exclude bettype 2799 for BetradarVS
 		- 20200110@Patrick: Add more rule check winlostdate and eventdate is missmatch [Redmine: #126759]
 		- 20200117@Patrick: Print result to easy checking & retry [Redmine: #126759]
+		- 20200417@Patrick: Add more rule check winlostdate for outright tickets [Redmine: #132745]
 		
 */
 BEGIN
@@ -165,6 +166,31 @@ BEGIN
 		RAISERROR(@__xmlOut, 16, 1)
 	END
 
+	--//check moving outright ticket
+	DECLARE @__movebetDay SMALLDATETIME
+	SELECT @__movebetDay = MAX(eventdate) FROM dbo.match14 WITH(NOLOCK)
+	SET @__query = N''
+	SET @__query = N'select top(100) @@ServerName svr, b.matchid, ''outright tickets have winlostdate smaller than or equal movebet day'' as caseName 
+	from bodb02.dbo.bettrans b with(nolock)
+	where b.winlostdate <= @__movebetDay
+		and b.matchid > 1000
+		and b.bettype in (10)
+		and b.statusId < 1'
+
+	--//DBTP
+	SET @__sqlCmd = N''
+	SET @__sqlCmd = N'EXECUTE bodb02.dbo.sp_executesql @__query, N''@__movebetDay smalldatetime'', @__movebetDay'
+	INSERT INTO @__result
+	EXECUTE	sys.sp_executesql @__sqlCmd, N'@__query NVARCHAR(MAX), @__movebetDay smalldatetime', @__query, @__movebetDay
+	SET @rowcount = @rowcount + @@ROWCOUNT
+
+	IF @rowcount > 0
+	BEGIN
+		DECLARE @__xmlOut2 VARCHAR(MAX)
+		SET @__xmlOut2 = (SELECT TOP 100 serverName AS s, matchid AS m, caseName AS c FROM @__result AS r FOR XML AUTO)
+		SET @__xmlOut2 = 'outright tickets have winlostdate smaller than or equal movebet day. ==> output: ' +  @__xmlOut
+		RAISERROR(@__xmlOut2, 16, 1)
+	END
 END
 
 GO
