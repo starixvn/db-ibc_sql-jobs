@@ -37,6 +37,7 @@ AS
 		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
+		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 
 	Input Params:
 	- @Winlostdate: The input Winlostdate to be summarized	
@@ -210,6 +211,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 				WHEN b.bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+				WHEN b.bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
 				WHEN b.bettype IN(17000) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN(101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
@@ -270,6 +272,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 				WHEN b.bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+				WHEN b.bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
 				WHEN b.bettype IN(17000) THEN 246 -- NPHP
 			ELSE 0 END--SportType
 		OPTION (RECOMPILE, MAXDOP 8)

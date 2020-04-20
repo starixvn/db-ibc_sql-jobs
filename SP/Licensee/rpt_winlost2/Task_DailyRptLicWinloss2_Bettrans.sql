@@ -50,6 +50,7 @@ AS
 		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
+		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -154,6 +155,7 @@ BEGIN
 		WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 		WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 		WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+		WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
 		WHEN bettype = 17000 THEN 246 -- NPHP
 	ELSE 0 END sporttype
 	-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -226,6 +228,7 @@ BEGIN
 		WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 		WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 		WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+		WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
 		WHEN bettype = 17000 THEN 246 -- NPHP
 		ELSE 0 END
 		,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,4299) THEN bettype ELSE 0 END
