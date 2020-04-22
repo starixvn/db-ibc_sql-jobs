@@ -1,20 +1,17 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_PlaytechCS]
-GO
-
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Product3rd_ImportQueue_Process]
 AS
 
 /*
-	Created by Percy
-	Date: 2017-12-18
+	Created: 20171218@Percy
 	DB: DBPTCS.bodb_PlaytechCS
-	Task: Import raw data
+	Task: Import raw data from Product3rd_ImportQueue
 
 	Revisions:
 		- 20171218@Percy: Initalize SP [RedmineID: #88325]
 		- 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST - remove linked server DBLIC [redmine: #99855]
 		- 20181003@Percy: Using colum JobType to apply Tip [RedmineID: #70177]
+		- 20200417@Percy: Integrate Novacash's products [RedmineID: #129873]
 */
 
 BEGIN
@@ -71,6 +68,18 @@ BEGIN
 		END
 	END
 
+	-- Novacash's products
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC bodb_3rdProduct.dbo.Task_Product3rd_ImportQueue_Novacash @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (ProductId, ErrCode, ErrMsg)
+			VALUES (0, @ErrCode, @ErrMsg)
+		END
+	END
+
 	DECLARE @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX) 
 
 	-- In case having error
@@ -82,10 +91,10 @@ BEGIN
 						+ '<table border="1"> '
 						+ '<tr><th>No.</th><th>Product</th><th>Error Message</th></tr>'
 						+ CAST(( SELECT    td = ROW_NUMBER() OVER(ORDER BY (SELECT NULL)), '',
-													td = p.ProductName, '',
+													td = CASE WHEN e.ProductId = 0 THEN 'Novacash' ELSE p.ProductName END, '',
 													td = e.ErrMsg, ''
 										FROM @ErrTable e
-											INNER JOIN bodb_licensee.dbo.Product3rd p WITH (NOLOCK) ON e.ProductId = p.ProductID
+											LEFT JOIN bodb_licensee.dbo.Product3rd p WITH (NOLOCK) ON e.ProductId = p.ProductID
 										FOR XML PATH('tr'), TYPE 
 									) AS NVARCHAR(MAX) ) + N'</table>'
 			
