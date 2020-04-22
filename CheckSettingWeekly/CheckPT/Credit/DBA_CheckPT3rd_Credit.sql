@@ -1091,7 +1091,7 @@ BEGIN
 			SELECT DISTINCT 72,bettype,sporttype,CustID,CustID,NULL,NULL,1
 			FROM #SuperPT 
 			WHERE slivepositiontaking = 0 AND mlivepositiontaking = 0 AND alivepositiontaking = 0 
-				AND sporttype = 161 AND bettype IN (85,86,87,89,90))
+				AND sporttype = 161 AND bettype IN (85,86,87,89,90)
 	END	 
 END 
 
