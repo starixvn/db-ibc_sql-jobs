@@ -54,6 +54,8 @@ BEGIN
 		,OriginalState	VARCHAR(10)
 		,TicketKey		BIGINT
 		,CreateTime		DATETIME
+		,IBCCustId		INT
+		,DataType		TINYINT DEFAULT ((1)) -- 0: update, 1: insert
 		,PRIMARY KEY (TpId, TransId, GameType)
 	)
 
@@ -124,12 +126,20 @@ BEGIN
 				FROM @XmlData.nodes('transaction/trans') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
-				-- Insert into raw table
-				IF EXISTS (
-					SELECT 1
-					FROM #tmpTpBetRecord t
-						INNER JOIN dbo.TpBetRecord b WITH (NOLOCK) ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
-				)
+				-- Update IBCCustId
+				UPDATE t
+				SET t.IBCCustId = c.custid
+				FROM #tmpTpBetRecord t
+					INNER JOIN dbo.ServerInfo s WITH (NOLOCK) ON s.SiteId = t.SiteId
+					INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.username2 = s.LicenseeName + '$' + t.UserName
+
+				-- Update DataType for update
+				UPDATE t
+				SET t.DataType = 0 -- update
+				FROM #tmpTpBetRecord t
+					INNER JOIN dbo.TpBetRecord b WITH (NOLOCK) ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
+				
+				IF @@ROWCOUNT <> 0
 				BEGIN
 					UPDATE b WITH (ROWLOCK)
 					SET b.CustId			= t.CustId
@@ -146,13 +156,13 @@ BEGIN
 						,b.OriginalState	= t.OriginalState
 						,b.TicketKey		= t.TicketKey
 						,b.CreateTime		= t.CreateTime
-						,b.IBCCustId		= c.CustId
+						,b.IBCCustId		= t.IBCCustId
 						,b.WinlostDate		= CONVERT(DATE, t.SettledTime)
 					FROM dbo.TpBetRecord b
 						INNER JOIN #tmpTpBetRecord t ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
-						LEFT JOIN dbo.ServerInfo s WITH (NOLOCK) ON s.SiteId = b.SiteId
-						LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.username2 = s.LicenseeName + '$' + b.UserName
 					WHERE
+						t.DataType = 0
+						AND
 						(
 							ISNULL(b.CustId, '')			<> ISNULL(t.CustId, '')
 							OR ISNULL(b.UserName, '')		<> ISNULL(t.UserName, '')
@@ -171,12 +181,8 @@ BEGIN
 						)
 				END
 
-				IF EXISTS (
-					SELECT 1
-					FROM #tmpTpBetRecord t
-						LEFT JOIN dbo.TpBetRecord b WITH (NOLOCK) ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
-					WHERE b.TpId IS NULL
-				)
+				-- insert
+				IF EXISTS (SELECT 1 FROM #tmpTpBetRecord WHERE DataType = 1)
 				BEGIN
 					INSERT INTO dbo.TpBetRecord
 					(
@@ -201,30 +207,27 @@ BEGIN
 						,WinlostDate
 					)
 					SELECT
-						t.TpId
-						,t.TransId
-						,t.GameType
-						,t.CustId
-						,t.UserName
-						,t.CurrencyId
-						,t.SiteId
-						,t.TpUserName
-						,t.TransTime
-						,t.SettledTime
-						,t.Stake
-						,t.WinlostAmount
-						,t.SettlementType
-						,t.TicketStatus
-						,t.OriginalState
-						,t.TicketKey
-						,t.CreateTime
-						,c.CustId
-						,CONVERT(DATE, t.SettledTime)
-					FROM #tmpTpBetRecord t
-						LEFT JOIN dbo.TpBetRecord b WITH (NOLOCK) ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
-						LEFT JOIN dbo.ServerInfo s WITH (NOLOCK) ON s.SiteId = b.SiteId
-						LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.username2 = s.LicenseeName + '$' + b.UserName
-					WHERE b.TpId IS NULL
+						TpId
+						,TransId
+						,GameType
+						,CustId
+						,UserName
+						,CurrencyId
+						,SiteId
+						,TpUserName
+						,TransTime
+						,SettledTime
+						,Stake
+						,WinlostAmount
+						,SettlementType
+						,TicketStatus
+						,OriginalState
+						,TicketKey
+						,CreateTime
+						,IBCCustId
+						,CONVERT(DATE, SettledTime)
+					FROM #tmpTpBetRecord
+					WHERE DataType = 1
 				END
 
 				-- if parse xml and insert/update data successfully --> break out of while
