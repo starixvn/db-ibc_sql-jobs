@@ -1,14 +1,15 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 
-ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct] (
+ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct]
 	@date DATE,
 	@date2 DATE = NULL,
 	@DataSource VARCHAR(20) = 'All',
 	@SeparatedProductID TINYINT = 0,
 	@ProductCodes VARCHAR(1000) = ''
-	)
 AS
-/*  Created: 20150710@Victor
+
+/*
+	Created: 20150710@Victor
     Task : Generate data for rpt_BettingByProduct
     DB: DBLIC/bodb_LicenseeReport  
     Param's Explanation:   
@@ -59,43 +60,62 @@ AS
 		- 20200326@Parsons: Integrate Sexy Gaming [RedmineID: #130948]
 		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 		- 20200415@Parsons: Integrate BBIN-Live-Casino [RedmineID: #132237]
+		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
-
 */
 
 BEGIN  
+	SET NOCOUNT ON
+
 	CREATE TABLE #BettypeProductMapping (Bettype INT, ProductID INT)
 	CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
 
 	DECLARE @ProductIdList AS TABLE(ProductId INT)
+
 	INSERT INTO @ProductIdList(ProductId)
-	SELECT ProductID FROM bodb_Licensee.dbo.LA_f_Products3rd(@ProductCodes)
+	SELECT ProductID
+	FROM bodb_Licensee.dbo.LA_f_Products3rd(@ProductCodes)
 
 	-- Collect data of 3rd party products
-	CREATE TABLE #tmpData (rptDate DATE, CustID INT, ProductID INT, CurrencyId INT, Winlost MONEY, Turnover MONEY, BetCount INT, PlayerComm MONEY, AgentComm MONEY, ValidBetAmount MONEY, GrossWL MONEY, Bettype SMALLINT)
+	CREATE TABLE #tmpData (
+		rptDate DATE,
+		CustID INT,
+		ProductID INT,
+		CurrencyId INT,
+		Winlost MONEY,
+		Turnover MONEY,
+		BetCount INT,
+		PlayerComm MONEY,
+		AgentComm MONEY,
+		ValidBetAmount MONEY,
+		GrossWL MONEY,
+		Bettype SMALLINT)
 
-	IF @date2 IS NULL SET @date2 = @date
+	IF @date2 IS NULL
+		SET @date2 = @Date
+
 	SET @date2 = DATEADD(day,1,@date2)
 
 	IF @DataSource IN ('ALL', 'Rpt_Betting')
 	BEGIN 		
-
 		DELETE p 
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
 			  AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange
-			  AND (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList)) 	 
+			AND (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList))
 					
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN') -- Remove Exchange (BX) due to separate wallet only
-		WHERE (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList)) 
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D') -- Remove Exchange (BX) due to separate wallet only
+		WHERE @ProductCodes = ''
+			OR ProductID IN (SELECT ProductID FROM @ProductIdList)
 
 		INSERT INTO #BettypeProductMappingBA (Bettype, ProductID)
 		SELECT Bettype, ProductId 
 		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'BA')
-		WHERE (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList)) 
+		WHERE @ProductCodes = ''
+			OR ProductID IN (SELECT ProductID FROM @ProductIdList)
 
 		-- Import data from rpt_Betting / rpt_Betting_BA
 		INSERT INTO [dbo].[rpt_BettingByProduct]
@@ -128,7 +148,8 @@ BEGIN
 						OR b.Bettype IN (1499, 4300, 4299) -- PP Prize (4300,4299)
 					THEN b.[Bettype]
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
-				ELSE -1 END [Bettype]
+				ELSE -1
+			END [Bettype]
 			,[CurrencyId]
 			,Status [StatusId]
 			,ISNULL([CustomerCategory],-1)
@@ -146,7 +167,7 @@ BEGIN
 			,TicketType
 		FROM dbo.rpt_Betting b WITH (NOLOCK)
 			INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
-		WHERE rptDate >= @date AND rptDate < @date2
+		WHERE b.rptDate >= @date AND b.rptDate < @date2
 			AND b.Status IN (111,112,113,114,115,101,102,103)
 			AND [CurrencyID] <> 20
 		GROUP BY [rptDate]
@@ -157,7 +178,8 @@ BEGIN
 							OR b.Bettype IN (1499, 4300, 4299) -- PP Prize (4300,4299)
 						THEN b.[Bettype]
 					WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
-					ELSE -1 END
+					ELSE -1
+				END
 				,[CurrencyId]
 				,Status
 				,ISNULL([CustomerCategory],-1)
@@ -185,7 +207,7 @@ BEGIN
 			,TicketType 
 		FROM dbo.rpt_Betting_BA b WITH (NOLOCK)
 			INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype
-		WHERE rptDate >= @date AND rptDate < @date2
+		WHERE b.rptDate >= @date AND b.rptDate < @date2
 			AND b.Status IN (111,112,113,114,115,101,102,103)
 			AND [CurrencyID] <> 20
 		GROUP BY [rptDate]
@@ -203,7 +225,9 @@ BEGIN
 	BEGIN 	
 		-- Exchange product (separate wallet)
 		DECLARE @HasExchangeProduct BIT = 1
-		IF(@ProductCodes <> '' AND NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 31))
+
+		IF @ProductCodes <> ''
+			AND NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 31)
 		BEGIN
 			SET @HasExchangeProduct = 0
 		END
@@ -216,7 +240,9 @@ BEGIN
 			INSERT INTO @ResettledDateList ( ID, SettledDate )
 			SELECT h.ID, h.WinlostDate
 			FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory h WITH (NOLOCK)
-			WHERE h.ProductID = 31 AND h.SumToThirdPartyDate IS NOT NULL AND h.SumToBettingProductDate IS NULL
+			WHERE h.ProductID = 31
+				AND h.SumToThirdPartyDate IS NOT NULL
+				AND h.SumToBettingProductDate IS NULL
 
 			;WITH WLDate AS (	SELECT @date AS [Date]
 								UNION ALL
@@ -253,7 +279,6 @@ BEGIN
 			FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory h WITH (ROWLOCK)
 			WHERE EXISTS (SELECT 1 FROM @WLDateList d WHERE h.WinlostDate = d.Winlostdate)
 				AND EXISTS (SELECT 1 FROM @ResettledDateList r WHERE h.ID = r.ID)
-
 		END
 		-- End Exchange product
 
@@ -267,7 +292,9 @@ BEGIN
 
 		-- GD, VG (separate wallet)
 		DECLARE @HasGDProduct BIT = 1
-		IF(@ProductCodes <> '' AND NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 11))
+
+		IF @ProductCodes <> ''
+			AND NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 11)
 		BEGIN
 			SET @HasGDProduct = 0
 		END
@@ -284,7 +311,9 @@ BEGIN
 		
 		-- AGCS (separate wallet)
 		DECLARE @HasAGCProduct BIT = 1
-		IF(@ProductCodes <> '' AND NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 10))
+
+		IF @ProductCodes <> ''
+			AND NOT EXISTS(SELECT TOP 1 1 FROM @ProductIdList WHERE ProductID = 10)
 		BEGIN
 			SET @HasAGCProduct = 0
 		END
@@ -353,7 +382,7 @@ BEGIN
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.Custid = td.CustID AND c.roleid = 1
 			LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON c.recommend = ag.custid AND ag.roleid = 2
 			LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON ag.site=ibcsite.site
-			LEFT JOIN bodb_licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
+			LEFT JOIN bodb_licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.SiteID = site.IbcSiteID
 		GROUP BY rptDate
 			, ISNULL(site.SiteID,-1)
 			, ISNULL(td.Bettype, -1)

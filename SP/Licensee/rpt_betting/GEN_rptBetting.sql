@@ -33,6 +33,7 @@ AS
 		20190808@Parsons: Provide House Turnover In NG WL Report [Redmine: #117674]
 		20190918@Parsons: Update house turnover's formula [Redmine: #120119]
 		20191209@Percy: Enhance performance [RedmineID: #125028]
+		20200403@Parsons: Indo 4D Integration [RedmineID: #130910]
 
 	Param's Explanation:
 
@@ -102,6 +103,7 @@ BEGIN
 				,SUM(CASE
 						WHEN b.bettype = 18000 OR b.bettype BETWEEN 1401 AND 1499 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0))
 						WHEN b.bettype BETWEEN 81 AND 120 OR b.bettype BETWEEN 8101 AND 8120 THEN b.stake * (1 - b.tpositiontaking) -- House Turnover In NG WL
+						WHEN b.bettype BETWEEN 5001 AND 5099 THEN b.actual_stake -- Net Turnover In Indo 4D
 						ELSE 0 END)				AS ExtraAmount
 			FROM dbo.bettrans b WITH (NOLOCK)
 				LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
@@ -175,6 +177,7 @@ BEGIN
 				,SUM(CASE
 						WHEN b.bettype = 18000 OR b.bettype BETWEEN 1401 AND 1499 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0))
 						WHEN b.bettype BETWEEN 81 AND 120 OR b.bettype BETWEEN 8101 AND 8120 THEN b.stake * (1 - b.tpositiontaking) -- House Turnover In NG WL
+						WHEN b.bettype BETWEEN 5001 AND 5099 THEN b.actual_stake -- Net Turnover In Indo 4D
 						ELSE 0 END)				AS ExtraAmount
 			FROM dbo.bettrans b WITH (NOLOCK)
 				LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
