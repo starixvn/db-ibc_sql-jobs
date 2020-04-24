@@ -38,7 +38,7 @@ BEGIN
 	CREATE TABLE #tmpTpBetRecord
 	(
 		TpId			INT
-		,TransId		VARCHAR(20)
+		,TransId		VARCHAR(50)
 		,GameType		INT
 		,CustId			VARCHAR(45)
 		,UserName		VARCHAR(30)
@@ -107,7 +107,7 @@ BEGIN
 				)
 				SELECT
 					t.c.value('@TpId', 'INT')
-					,t.c.value('@TransId', 'VARCHAR(20)')
+					,t.c.value('@TransId', 'VARCHAR(50)')
 					,t.c.value('@GameType', 'INT')
 					,t.c.value('@CustId', 'VARCHAR(45)')
 					,t.c.value('@UserName', 'VARCHAR(30)')
@@ -131,7 +131,7 @@ BEGIN
 				SET t.IBCCustId = c.custid
 				FROM #tmpTpBetRecord t
 					INNER JOIN dbo.ServerInfo s WITH (NOLOCK) ON s.SiteId = t.SiteId
-					INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.username2 = s.LicenseeName + '$' + t.UserName
+					INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.username2 = s.LicenseeName + '$' + t.TpUserName
 
 				-- Update DataType for update
 				UPDATE t
