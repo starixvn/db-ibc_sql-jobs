@@ -17,6 +17,8 @@ Revisions:
 	- 20180807@Elodie: Apply f_GetSportNotOffer function
 	- 20190610@Johnson: add rule 36,37 for dummy super [redmine: #114675]
 	- 20191106@Winnie: 3rd party products - Remove InActive Products Phase 2  - [Redmine: #118699]
+	- 20200422@Elodie: Apply rule 72 S4 = M4 = A4 = 0 [Redmine: #132604]
+
 Param's Explanation: 
 	@RuleId = 0 : 'all' 
 	IF @sporttype IN (255) (GoldDeluxe) THEN @RuleId IN (1, 5, 6, 7, 8, 9, 10, 17, 18, 19, 20, 23, 24, 28, 30, 31 )
@@ -431,33 +433,43 @@ BEGIN
 			END
 		END
 	
-	IF @isDummySuper = 1
-	BEGIN
-		---- 36. dummy super has s3<> 0
-		IF @RuleId IN (0,36)
-		BEGIN 	
-			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
-			SELECT	36 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId,
-					spositiontaking,
-					0, 
-					0
-			FROM #MasterPT cs
-			WHERE spositiontaking<>0 
-				AND custid IN (SELECT custid FROM #DirectMaster)			
-		END
+		IF @isDummySuper = 1
+		BEGIN
+			---- 36. dummy super has s3<> 0
+			IF @RuleId IN (0,36)
+			BEGIN 	
+				INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
+				SELECT	36 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId,
+						spositiontaking,
+						0, 
+						0
+				FROM #MasterPT cs
+				WHERE spositiontaking<>0 
+					AND custid IN (SELECT custid FROM #DirectMaster)			
+			END
 		
-		--37. dummy super has s1 <> 0
-		IF @RuleId IN (0,37)
-		BEGIN 	
-			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
-			SELECT	37 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId,
-					spositiontaking,
-					0, 
-					0
-			FROM #MemberPT cs
-			WHERE spositiontaking<>0 
-				AND mrecommend IN (SELECT custid FROM #DirectMaster)			
-		END
-	END	
-END
+			--37. dummy super has s1 <> 0
+			IF @RuleId IN (0,37)
+			BEGIN 	
+				INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
+				SELECT	37 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId,
+						spositiontaking,
+						0, 
+						0
+				FROM #MemberPT cs
+				WHERE spositiontaking<>0 
+					AND mrecommend IN (SELECT custid FROM #DirectMaster)			
+			END
+		END	
+
+		---- 72. S4 = M4 = A4 = 0
+		IF @RuleId IN (0,72)  
+		BEGIN   
+				----PRINT '72. S4 = M4 = A4 = 0'
+				INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)  
+				SELECT DISTINCT 72,bettype,sporttype,CustID,CustID,NULL,NULL,0
+				FROM #SuperPT 
+				WHERE spositiontaking = 0 AND mpositiontaking = 0 AND apositiontaking = 0	   
+		END	
+	END 
 END

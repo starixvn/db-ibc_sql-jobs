@@ -19,7 +19,8 @@ Revisions:
 	- 20170508@Elodie: Count PT Setting rows
 	- 20180807@Elodie: Apply f_GetSportNotOffer function
 	- 20190610@Johnson: add rule 36,37 for dummy super [redmine: #114675]
-	
+	- 20200422@Elodie: Apply rule 72 S4 = M4 = A4 = 0 [Redmine: #132604]
+
 Param's Explanation: 
 	@RuleId = 0 : 'all'
 	@RuleId IN (1->29)
@@ -1074,6 +1075,24 @@ BEGIN
 				AND mrecommend IN (SELECT custid FROM #DirectMaster)
 		END
 	END	
+
+	---- 72. S4 = M4 = A4 = 0
+	IF @RuleId IN (0,72)  
+	BEGIN   
+			----PRINT '72. S4 = M4 = A4 = 0'
+			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)  
+			SELECT DISTINCT 72,bettype,sporttype,CustID,CustID,NULL,NULL,0
+			FROM #SuperPT 
+			WHERE spositiontaking = 0 AND mpositiontaking = 0 AND apositiontaking = 0	   
+			AND sporttype = 161 AND bettype IN (81,83,86,88)
+
+			----PRINT '72. S4 = M4 = A4 = 0'
+			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)  
+			SELECT DISTINCT 72,bettype,sporttype,CustID,CustID,NULL,NULL,1
+			FROM #SuperPT 
+			WHERE slivepositiontaking = 0 AND mlivepositiontaking = 0 AND alivepositiontaking = 0 
+				AND sporttype = 161 AND bettype IN (85,86,87,89,90)
+	END	 
 END 
 
 
