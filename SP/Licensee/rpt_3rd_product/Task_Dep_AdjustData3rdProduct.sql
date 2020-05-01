@@ -424,7 +424,7 @@ BEGIN
 						END
 		FROM @FinalData tmp
 			INNER JOIN (
-				SELECT FromDate, ToDate, Rate
+				SELECT FromDate, ToDate, Rate, ChargeId
 					, CASE WHEN ProductId = 10 THEN 1800
 						WHEN ProductId = 11 THEN CASE WHEN ChargeType = 1 THEN 1700 WHEN ChargeType = 12 THEN 1706 END
 						WHEN ProductId = 31 THEN 8000 END Bettype
@@ -580,5 +580,7 @@ BEGIN
 	DROP TABLE #3rdData
 	DROP TABLE #3rdDummnyData
 	DROP TABLE #ChargeRate
+	DROP TABLE #LicenseeProductTable
+	DROP TABLE #ChargeRateByCurrency
 END
 GO
