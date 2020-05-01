@@ -187,7 +187,7 @@ BEGIN
 		FROM @LicenseeTable WHERE RowId = @RowId
 		
 		SELECT @RowId = @RowId + 1, @RefNo = 0
-			, @ProductIds = NULL, @CustDummyId = NULL, @BettypeIds = '0'
+			, @ProductIds = NULL, @CustDummyId = NULL, @BettypeIds = NULL
 			
 		--get product list by @licensee & @currency
 		SELECT @ProductIds = COALESCE(@ProductIds + ',' + CAST(ProductId AS VARCHAR), CAST(ProductId AS VARCHAR))
