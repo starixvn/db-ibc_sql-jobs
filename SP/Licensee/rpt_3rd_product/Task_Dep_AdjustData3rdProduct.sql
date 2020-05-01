@@ -580,7 +580,6 @@ BEGIN
 	DROP TABLE #3rdData
 	DROP TABLE #3rdDummnyData
 	DROP TABLE #ChargeRate
-	DROP TABLE #LicenseeProductTable
 	DROP TABLE #ChargeRateByCurrency
 END
 GO
