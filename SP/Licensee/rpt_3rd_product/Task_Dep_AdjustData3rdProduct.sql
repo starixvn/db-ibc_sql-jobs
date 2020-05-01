@@ -16,6 +16,7 @@ AS
 		- 20181003@Percy: Integrate GoldDeluxe Tip [RedmineID: #70177]
 		- 20200108@Percy: Support billing terms by product & currency instead of product only [RedmineID: #120005]
 		- 20200407@Percy: Add @ProductIds to support input product list [RedmineID: #131885]
+		- 20200501@Sophia: Fix bug @bettypeIds [Redmine: #131885]
 		
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
@@ -186,7 +187,7 @@ BEGIN
 		FROM @LicenseeTable WHERE RowId = @RowId
 		
 		SELECT @RowId = @RowId + 1, @RefNo = 0
-			, @ProductIds = NULL, @CustDummyId = NULL, @BettypeIds = ''
+			, @ProductIds = NULL, @CustDummyId = NULL, @BettypeIds = NULL
 			
 		--get product list by @licensee & @currency
 		SELECT @ProductIds = COALESCE(@ProductIds + ',' + CAST(ProductId AS VARCHAR), CAST(ProductId AS VARCHAR))
