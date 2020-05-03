@@ -19,7 +19,7 @@ AS
 		- 20160727@Jim:  LRF - Commercial terms changed for Bet Trade [Redmine: #61342]
 		- 20160913@Jim : LRF - Implement Colossus Bets [Redmine: #63785]
 		- 20161115@Jim: LRF - Integrate new product Fishing World [RedmineID : #66737]
-		- 20170322@Paul: Implement Cash Out [RedmineID :#71727]	
+		- 20170322@Paul: Implement Cash Out [RedmineID :#71727]
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 		- 20170802@Sophia: Add new betfrom [redmine: #80687]
 		- 20170619@Harper: LRF - Integrate Lottery [RedmineID: #79997]
@@ -62,8 +62,8 @@ BEGIN
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
 
-	--Member Level
-	INSERT INTO dbo.rptLicWinloss2(
+	-- Member Level
+	INSERT INTO dbo.rptLicWinloss2 (
 		[winlostdate]
 		,[username]
 		,[username2]
@@ -104,91 +104,109 @@ BEGIN
 		,customer.recommend
 		,customer.mrecommend
 		,customer.srecommend
-	 ,SUM(
-	CASE WHEN bettrans.liveawayscore = 0 AND bettrans.bettype IN(33,43) 
-		THEN ABS(bettrans.stake/2) ELSE ABS(bettrans.stake) 
-		END
-	) AS TurnOver
-	 ,SUM(winlost-actual_stake)  winlost
-	 ,CASE WHEN bettrans.statusID IN (112,113) 
-		THEN SUM(CASE WHEN bettrans.bettype IN (4300,4299) THEN 0 ELSE ABS(winlost-actual_stake) END) -- exclude Promotion Prize from BetEffective
-		ELSE 0
-		END BetEffective 
-	 ,SUM(awinlost) awinlost
-	 ,SUM(mwinlost) mwinlost
-	 ,SUM(ISNULL(swinlost,0)) swinlost
-	 ,SUM(playercomm) playercomm
-	 ,SUM(comm) comm
-	 ,SUM(acomm) acomm
-	 ,SUM(ISNULL(scomm,0)) scomm
-	 ,SUM((winlost - actual_stake)*virtualrate) AS WinlostVirtual
-	 ,SUM ((comm)*virtualrate) AS CommVirtual
-	 ,COUNT(bettrans.transid) BetCount
-	 ,bettrans.currency
-	 ,CASE
-		WHEN bettype IN (71,72) THEN 251 --casino
-		WHEN bettype = 1000 THEN 253 --games
-		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game 
-		WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
-		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
-		WHEN bettype BETWEEN 51 AND 69 THEN 201
-		WHEN bettype IN (31,32,33,41,42,43) THEN 151
-		WHEN bettype BETWEEN 1501  AND 1599 THEN 202 -- Keno
-		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
-		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-		WHEN bettype = 1900 THEN 249 -- VG
-		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
-		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-		WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
-		WHEN bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
-		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
-		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
-		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
-		WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
-		WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
-		WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
-		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
-		WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
-		WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
-		WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
-		WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
-		WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
-		WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
-		WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
-		WHEN bettype = 17000 THEN 246 -- NPHP
-	ELSE 0 END sporttype
-	-- 1706: bidme tip, 4300 - PP Promotion Prize
-	 ,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,4299) THEN bettype ELSE 0 END bettype
-	 --114: half win, 115: half lose
-	 ,CASE
-		WHEN bettrans.winlostdate >= @HWHLCutDate AND bettrans.statusID IN(112,113) AND bettrans.modds IN (-0.25, 0.25)
-				---- Sportsbook
-				AND (bettrans.bettype < 999 OR bettrans.bettype BETWEEN 1301 AND 1399 OR bettrans.bettype BETWEEN 9001 AND 9399)
+		,SUM(CASE
+				WHEN bettrans.liveawayscore = 0 AND bettrans.bettype IN (33, 43) THEN ABS(bettrans.stake/2)
+				ELSE ABS(bettrans.stake) 
+			END) AS TurnOver
+		,SUM(winlost - actual_stake) AS winlost
+		,CASE
+			WHEN bettrans.statusID IN (112, 113) THEN SUM(CASE
+															WHEN bettrans.bettype IN (4300, 4299) THEN 0
+															ELSE ABS(winlost - actual_stake)
+														END) -- exclude Promotion Prize from BetEffective
+			ELSE 0
+		END AS BetEffective
+		,SUM(awinlost) awinlost
+		,SUM(mwinlost) mwinlost
+		,SUM(ISNULL(swinlost,0)) swinlost
+		,SUM(playercomm) playercomm
+		,SUM(comm) comm
+		,SUM(acomm) acomm
+		,SUM(ISNULL(scomm,0)) scomm
+		,SUM((winlost - actual_stake) * virtualrate) AS WinlostVirtual
+		,SUM(comm*virtualrate) AS CommVirtual
+		,COUNT(bettrans.transid) BetCount
+		,bettrans.currency
+		,CASE
+			WHEN bettype IN (71,72) THEN 251 --casino
+			WHEN bettype = 1000 THEN 253 --games
+			WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game 
+			WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
+			WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
+			WHEN bettype BETWEEN 51 AND 69 THEN 201
+			WHEN bettype IN (31,32,33,41,42,43) THEN 151
+			WHEN bettype BETWEEN 1501  AND 1599 THEN 202 -- Keno
+			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
+			WHEN bettype = 1900 THEN 249 -- VG
+			WHEN bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
+			WHEN bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
+			WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
+			WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
+			WHEN bettype BETWEEN 1011 AND 1020 THEN 219
+			WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
+			WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
+			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+			WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
+			WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
+			WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
+			WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
+			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
+			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
+			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
+			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
+			WHEN bettype = 17000 THEN 246 -- NPHP
+			ELSE 0
+		END AS sporttype
+		-- 1706: bidme tip, 4300 - PP Promotion Prize
+		,CASE
+			WHEN bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 4299) THEN bettype
+			ELSE 0
+		END bettype
+		 --114: half win, 115: half lose
+		,CASE
+			WHEN bettrans.winlostdate >= @HWHLCutDate
+				AND bettrans.statusID IN (112, 113)
+				AND bettrans.modds IN (-0.25, 0.25)
+				AND (bettrans.bettype < 999
+					OR bettrans.bettype BETWEEN 1301 AND 1399
+					OR bettrans.bettype BETWEEN 9001 AND 9399)	-- Sportsbook
 				AND bettrans.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout
 				AND bettrans.bettype NOT BETWEEN 81 AND 120
-		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
-		WHEN bettrans.winlostdate < @HWHLCutDate AND bettrans.statusID IN (112,113) AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
-		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
-		ELSE bettrans.statusID END AS statusID
-	 ,CASE 
-	WHEN BA.transid IS NULL THEN 0
-	WHEN BA.transid IS NOT NULL THEN 1 END AS isBA
-	 ,CASE 
-	WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2') THEN 1 ELSE 0 END AS isMobile 
-	 ,CASE
-	WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN bettrans.betfrom ELSE '' END AS betfrom 
-	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
-	 ,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt	 
+				THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
+			WHEN bettrans.winlostdate < @HWHLCutDate
+				AND bettrans.statusID IN (112, 113)
+				AND bettrans.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
+				AND ABS(modds) = 0.25
+				THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
+			ELSE bettrans.statusID
+		END AS statusID
+		,CASE
+			WHEN BA.transid IS NULL THEN 0
+			WHEN BA.transid IS NOT NULL THEN 1
+		END AS isBA
+		,CASE
+			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2') THEN 1
+			ELSE 0
+		END AS isMobile 
+		,CASE
+			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN bettrans.betfrom
+			ELSE ''
+		END AS betfrom 
+		,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
+		,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
 	FROM
 		bodb02.dbo.bettrans bettrans WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK) ON bettrans.srecommend = s.CustId
-		INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid=customer.custid
-		LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_active BA WITH (NOLOCK) ON bettrans.transid = BA.transid 	 
+		INNER JOIN bodb02.dbo.Dep_CustSuper AS s WITH (NOLOCK) ON bettrans.srecommend = s.CustId
+		INNER JOIN bodb02.dbo.customer WITH (NOLOCK) ON bettrans.custid = customer.custid
+		LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_active AS BA WITH (NOLOCK) ON bettrans.transid = BA.transid
 	WHERE
-		bettrans.winlostdate = @winlostdate AND
-		bettrans.statusID IN (101,111,112,113) AND --REJECT, DRAW, WON, LOSE
-		bettrans.bettype <= 19999
+		bettrans.winlostdate = @WinLostDate
+		AND bettrans.statusID IN (101, 111, 112, 113)	-- REJECT, DRAW, WON, LOSE
+		AND bettrans.bettype <= 19999
 	GROUP BY
 		customer.custid
 		,customer.recommend
@@ -199,57 +217,73 @@ BEGIN
 		,bettrans.currency
 		,bettrans.statusID
 		,CASE
-		WHEN bettype IN (71,72) THEN 251 --casino
-		WHEN bettype = 1000 THEN 253 --games
-		WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game 
-		WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
-		WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
-		WHEN bettype BETWEEN 51 AND 69 THEN 201
-		WHEN bettype IN (31,32,33,41,42,43) THEN 151
-		WHEN bettype BETWEEN 1501 AND 1599 THEN 202
-		WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
-		WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-		WHEN bettype = 1900 THEN 249 -- VG
-		WHEN bettype BETWEEN 2101 AND 2199 THEN 208
-		WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-		WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210		
-		WHEN bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
-		WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
-		WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
-		WHEN bettype BETWEEN 1011 AND 1020 THEN 219
-		WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
-		WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
-		WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
-		WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-		WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
-		WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
-		WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
-		WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
-		WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
-		WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
-		WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
-		WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
-		WHEN bettype = 17000 THEN 246 -- NPHP
-		ELSE 0 END
-		,CASE WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,4299) THEN bettype ELSE 0 END
+			WHEN bettype IN (71, 72) THEN 251 --casino
+			WHEN bettype = 1000 THEN 253 --games
+			WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game
+			WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
+			WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
+			WHEN bettype BETWEEN 51 AND 69 THEN 201
+			WHEN bettype IN (31,32,33,41,42,43) THEN 151
+			WHEN bettype BETWEEN 1501 AND 1599 THEN 202
+			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
+			WHEN bettype = 1900 THEN 249 -- VG
+			WHEN bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
+			WHEN bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
+			WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
+			WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
+			WHEN bettype BETWEEN 1011 AND 1020 THEN 219
+			WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
+			WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
+			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+			WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
+			WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
+			WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
+			WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
+			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
+			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
+			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
+			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
+			WHEN bettype = 17000 THEN 246 -- NPHP
+			ELSE 0
+		END
 		,CASE
-		WHEN bettrans.winlostdate >= @HWHLCutDate AND bettrans.statusID IN(112,113) AND bettrans.modds IN (-0.25, 0.25)
-				---- Sportsbook
-				AND (bettrans.bettype < 999 OR bettrans.bettype BETWEEN 1301 AND 1399 OR bettrans.bettype BETWEEN 9001 AND 9399)
-				AND bettrans.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout
+			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,4299) THEN bettype
+			ELSE 0
+		END
+		,CASE
+			WHEN bettrans.winlostdate >= @HWHLCutDate
+				AND bettrans.statusID IN(112,113)
+				AND bettrans.modds IN (-0.25, 0.25)
+				AND (bettrans.bettype < 999						-- Sportsbook
+					OR bettrans.bettype BETWEEN 1301 AND 1399
+					OR bettrans.bettype BETWEEN 9001 AND 9399)
+				AND bettrans.bettype NOT IN (29, 38, 911, 912, 913, 914 )  --- Parlay, betbuilder, Cashout
 				AND bettrans.bettype NOT BETWEEN 81 AND 120
-		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
-		WHEN bettrans.winlostdate < @HWHLCutDate AND bettrans.statusID IN (112,113) AND bettrans.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
-		THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
-		ELSE bettrans.statusID END
-		,CASE 
-		WHEN BA.transid IS NULL THEN 0
-		WHEN BA.transid IS NOT NULL THEN 1 END
-		,CASE 
-		WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2') THEN 1 ELSE 0 END
+				THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
+			WHEN bettrans.winlostdate < @HWHLCutDate
+				AND bettrans.statusID IN (112,113)
+				AND bettrans.bettype IN (1,3,7,8,17,18,124,125,482,483,484,485)
+				AND ABS(modds) = 0.25
+				THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
+			ELSE bettrans.statusID
+		END
 		,CASE
-		WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN bettrans.betfrom ELSE '' END
-	 OPTION (MAXDOP 8)
+			WHEN BA.transid IS NULL THEN 0
+			WHEN BA.transid IS NOT NULL THEN 1
+		END
+		,CASE
+			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2') THEN 1
+			ELSE 0
+		END
+		,CASE
+			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN bettrans.betfrom
+			ELSE ''
+		END
+	OPTION (MAXDOP 8)
 
 	--Agent Level (sum on member)
 	INSERT INTO dbo.rptLicWinloss2 (
@@ -285,7 +319,7 @@ BEGIN
 		,[BABuyBackAmt]
 	)
 	SELECT
-		@winlostdate
+		@WinLostDate
 		,c.username
 		,c.username2
 		,c.custid
@@ -316,10 +350,10 @@ BEGIN
 		,SUM(BuyBackAmt) 
 		,SUM(BABuyBackAmt)
 	FROM
-		dbo.rptLicWinloss2 b (NOLOCK)
-		INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.recommend = c.custid
+		dbo.rptLicWinloss2 AS b WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.recommend = c.custid
 	WHERE
-		b.winlostdate = @winlostdate
+		b.winlostdate = @WinLostDate
 		AND b.roleid = 1
 		AND c.roleid = 2
 	GROUP BY
@@ -370,7 +404,7 @@ BEGIN
 		,[BuyBackAmt] 
 		,[BABuyBackAmt])
 	SELECT
-		@winlostdate
+		@WinLostDate
 		,c.username
 		,c.username2
 		,c.custid
@@ -401,10 +435,10 @@ BEGIN
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt) 
 	FROM
-		dbo.rptLicWinloss2 b (NOLOCK)
-		INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.mrecommend = c.custid
+		dbo.rptLicWinloss2 AS b WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.mrecommend = c.custid
 	WHERE
-		b.winlostdate = @winlostdate
+		b.winlostdate = @WinLostDate
 		AND b.roleid = 1
 		AND c.roleid = 3
 	GROUP BY
@@ -454,7 +488,7 @@ BEGIN
 		,[BuyBackAmt]
 		,[BABuyBackAmt])
 	SELECT
-		@winlostdate
+		@WinLostDate
 		,c.username
 		,c.username2
 		,c.custid
@@ -485,10 +519,10 @@ BEGIN
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
 	FROM
-		dbo.rptLicWinloss2 b (NOLOCK)
-		INNER JOIN bodb02.dbo.customer c (NOLOCK) ON b.srecommend = c.custid
+		dbo.rptLicWinloss2 AS b WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.srecommend = c.custid
 	WHERE
-		b.winlostdate = @winlostdate
+		b.winlostdate = @WinLostDate
 		AND b.roleid = 1
 		AND c.roleid = 4
 	GROUP BY
