@@ -15,6 +15,7 @@ AS
 		- 20190318@Helen:	Initialize - archive event timeout issue - [Redmine: #110447]
 		- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader] table - [Redmine: #117014]
 		- 20190827@Billy:	Add [oddsOS] & [ResultDetailOS] tables - [Redmine: #119257]
+		- 20200504@Patrick: Add more field for oddsES/oddsES14/oddsES_bk - [Redmine: #133538]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -374,11 +375,24 @@ WHERE	t1.eventdate = @winlostdate;'');';
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.oddsES_bk
 	(	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk
-	,	stakerange, newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category
-	,	IncreaseMaxbet, odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId)
+		, stakerange, newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category
+		, IncreaseMaxbet, odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId
+		, [cs00], [cs01], [cs10],[cs11], [cs02], [cs12], [cs22], [cs21], [cs20], [cs30], [cs31], [cs32], [cs33], [cs23]
+		, [cs13], [cs03], [cs43], [cs42], [cs41], [cs40], [cs44], [cs14], [cs24], [cs04], [cs34],[cs50], [cs05], [cs51]
+		, [cs52], [cs53], [cs54], [cs15], [cs25], [cs35], [cs45], [cs09], [cs90], [cs99], [bal00], [bal10], [bal11], [bal01]
+		, [bal20], [bal21], [bal22], [bal12], [bal02], [bal30], [bal31], [bal32], [bal33], [bal23], [bal13], [bal03], [bal40]
+		, [bal41], [bal42], [bal43], [bal44], [bal34], [bal24], [bal14], [bal04], [bal50], [bal05], [bal51], [bal52], [bal53]
+		, [bal54], [bal15], [bal25], [bal35], [bal45], [bal09], [bal90], [bal99]
+	)
 SELECT	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk
-	,	stakerange, newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category
-	,	IncreaseMaxbet, odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId
+	, stakerange, newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category
+	, IncreaseMaxbet, odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId
+	, [cs00], [cs01], [cs10],[cs11], [cs02], [cs12], [cs22], [cs21], [cs20], [cs30], [cs31], [cs32], [cs33], [cs23]
+	, [cs13], [cs03], [cs43], [cs42], [cs41], [cs40], [cs44], [cs14], [cs24], [cs04], [cs34],[cs50], [cs05], [cs51]
+	, [cs52], [cs53], [cs54], [cs15], [cs25], [cs35], [cs45], [cs09], [cs90], [cs99], [bal00], [bal10], [bal11], [bal01]
+	, [bal20], [bal21], [bal22], [bal12], [bal02], [bal30], [bal31], [bal32], [bal33], [bal23], [bal13], [bal03], [bal40]
+	, [bal41], [bal42], [bal43], [bal44], [bal34], [bal24], [bal14], [bal04], [bal50], [bal05], [bal51], [bal52], [bal53]
+	, [bal54], [bal15], [bal25], [bal35], [bal45], [bal09], [bal90], [bal99]
 FROM	OPENQUERY(DBPRO, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
