@@ -38,7 +38,7 @@ BEGIN
 	CREATE TABLE #tmpTpBetRecord
 	(
 		TpId			INT
-		,TransId		VARCHAR(20)
+		,TransId		VARCHAR(50)
 		,GameType		INT
 		,CustId			VARCHAR(45)
 		,UserName		VARCHAR(30)
@@ -106,23 +106,23 @@ BEGIN
 					,CreateTime
 				)
 				SELECT
-					t.c.value('@TpId', 'INT')
-					,t.c.value('@TransId', 'VARCHAR(20)')
-					,t.c.value('@GameType', 'INT')
-					,t.c.value('@CustId', 'VARCHAR(45)')
-					,t.c.value('@UserName', 'VARCHAR(30)')
-					,t.c.value('@CurrencyId', 'INT')
-					,t.c.value('@SiteId', 'INT')
-					,t.c.value('@TpUserName', 'VARCHAR(50)')
-					,t.c.value('@TransTime', 'DATETIME')
-					,t.c.value('@SettledTime', 'DATETIME')
-					,t.c.value('@Stake', 'DECIMAL(18,2)')
-					,t.c.value('@WinlostAmount', 'DECIMAL(18,2)')
-					,t.c.value('@SettlementType', 'TINYINT')
-					,t.c.value('@TicketStatus', 'TINYINT')
-					,t.c.value('@OriginalState', 'VARCHAR(10)')
-					,t.c.value('@TicketKey', 'BIGINT')
-					,t.c.value('@CreateTime', 'DATETIME')
+					t.c.value('@tpid', 'INT')
+					,t.c.value('@transid', 'VARCHAR(50)')
+					,t.c.value('@gametype', 'INT')
+					,t.c.value('@custid', 'VARCHAR(45)')
+					,t.c.value('@username', 'VARCHAR(30)')
+					,t.c.value('@currencyid', 'INT')
+					,t.c.value('@siteid', 'INT')
+					,t.c.value('@tpusername', 'VARCHAR(50)')
+					,t.c.value('@transtime', 'DATETIME')
+					,t.c.value('@settledtime', 'DATETIME')
+					,t.c.value('@stake', 'DECIMAL(18,2)')
+					,t.c.value('@winlostamount', 'DECIMAL(18,2)')
+					,t.c.value('@settlementtype', 'TINYINT')
+					,t.c.value('@ticketstatus', 'TINYINT')
+					,t.c.value('@originalstate', 'VARCHAR(10)')
+					,t.c.value('@ticketkey', 'BIGINT')
+					,t.c.value('@createtime', 'DATETIME')
 				FROM @XmlData.nodes('transaction/trans') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
@@ -131,7 +131,7 @@ BEGIN
 				SET t.IBCCustId = c.custid
 				FROM #tmpTpBetRecord t
 					INNER JOIN dbo.ServerInfo s WITH (NOLOCK) ON s.SiteId = t.SiteId
-					INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.username2 = s.LicenseeName + '$' + t.UserName
+					INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.username2 = s.LicenseeName + '$' + t.TpUserName
 
 				-- Update DataType for update
 				UPDATE t
