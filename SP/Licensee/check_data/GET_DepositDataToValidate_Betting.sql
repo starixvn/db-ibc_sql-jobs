@@ -27,6 +27,7 @@ AS
 		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
+		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 
 	Param's Explanation:
 		@DrawFilter
@@ -159,6 +160,10 @@ BEGIN
 		,@I4DTurnover MONEY
 		,@I4DCustomerWl MONEY
 		,@I4DBetCount MONEY
+		----SXG
+		,@SXGTurnover MONEY
+		,@SXGCustomerWl MONEY
+		,@SXGBetCount MONEY
 
 	DECLARE @tblBettype AS TABLE(ProductPrefix VARCHAR (10),Bettype INT)
 
@@ -170,7 +175,7 @@ BEGIN
 		s.BetType
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC','SPR','SG','VRG','TG','I4D')	
+		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG')
 
 	-- Data Source 
 	DECLARE @tblData AS TABLE (
@@ -636,6 +641,25 @@ BEGIN
 	FROM @tblData
 	WHERE ProductPrefix = 'I4D'
 
+	----SXG
+	SELECT
+		@SXGTurnover = SUM(CASE
+						WHEN @DrawFilter IN (2, 3) THEN 
+							CASE
+								WHEN Status = 111 THEN 0
+								WHEN Status IN (114, 115) THEN 0.5
+								ELSE 1
+							END
+						ELSE 1
+					END * Turnover),
+		@SXGCustomerWl = SUM(WinLoss),
+		@SXGBetCount = SUM(CASE
+								WHEN @DrawFilter = 2 AND Status = 111 THEN 0
+								ELSE BetCount
+							END)
+	FROM @tblData b
+	WHERE ProductPrefix = 'SXG'
+
 	-- Result
 
 	SELECT
@@ -669,6 +693,7 @@ BEGIN
 		, @VRGTurnover AS VRG
 		, @TGTurnover  AS TG
 		, ISNULL(@I4DTurnover, 0) AS I4D
+		, ISNULL(@SXGTurnover, 0) AS SXG
 	UNION
 	SELECT
 		2
@@ -701,6 +726,7 @@ BEGIN
 		, @VRGCustomerWl
 		, @TGCustomerWl
 		, ISNULL(@I4DCustomerWl, 0)
+		, ISNULL(@SXGCustomerWl, 0)
 	UNION
 	SELECT
 		3
@@ -733,6 +759,7 @@ BEGIN
 		, @VRGBetCount
 		, @TGBetCount
 		, ISNULL(@I4DBetCount, 0)
+		, ISNULL(@SXGBetCount, 0)
 
 	SET NOCOUNT OFF
 END

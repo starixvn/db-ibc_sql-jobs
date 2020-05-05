@@ -26,6 +26,7 @@ AS
 		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
+		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -156,6 +157,10 @@ BEGIN
 		,@I4DTurnover MONEY
 		,@I4DCustomerWl MONEY
 		,@I4DBetCount MONEY
+		----SXG
+		,@SXGTurnover MONEY
+		,@SXGCustomerWl MONEY
+		,@SXGBetCount MONEY
 
 	DECLARE @tblSporttype AS TABLE(ProductPrefix VARCHAR(10), Sporttype SMALLINT)
 
@@ -167,7 +172,7 @@ BEGIN
 		s.SportType
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D')	
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG')
 
 	INSERT INTO @tblSporttype
 	SELECT 'SB', 0
@@ -638,6 +643,22 @@ BEGIN
 	FROM @tblData
 	WHERE ProductPrefix = 'I4D'
 
+	----SXG
+	SELECT
+		@SXGTurnover=SUM(CASE 
+							WHEN @DrawFilter IN (2,3) THEN 	
+								CASE
+									WHEN b.StatusID = 111 THEN 0
+									WHEN b.StatusID IN (114,115) THEN 0.5
+									ELSE 1
+								END
+							ELSE 1
+						END * b.Turnover)
+		,@SXGCustomerWl=SUM(b.winlost)
+		,@SXGBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
+	FROM @tblData b
+	WHERE ProductPrefix = 'SXG'
+
 	-- Result
 	SELECT
 		1 AS id
@@ -653,7 +674,7 @@ BEGIN
 		, @KNTurnover AS KN
 		, @VGTurnover AS VG
 		, @VBTurnover AS VB 
-		, @MGCLCTurnover AS MGCLC 
+		, @MGCLCTurnover AS MGCLC
 		, @MGCRNGTurnover AS MGCRNG
 		, @VsTurnover AS VS
 		, @CBTurnover AS CB
@@ -670,6 +691,7 @@ BEGIN
 		, @VRGTurnover AS VRG
 		, @TGTurnover AS TG
 		, ISNULL(@I4DTurnover,0) AS I4D
+		, ISNULL(@SXGTurnover,0) AS SXG
 	UNION
 	SELECT
 		2
@@ -681,7 +703,7 @@ BEGIN
 		, @BTCustomerWl
 		, @LcCustomerWl
 		, @AGCustomerWl
-		, @GDCustomerWl 
+		, @GDCustomerWl
 		, @KNCustomerWl
 		, @VGCustomerWl
 		, @VBCustomerWl
@@ -702,6 +724,7 @@ BEGIN
 		, @VRGCustomerWl
 		, @TGCustomerWl
 		, ISNULL(@I4DCustomerWl,0)
+		, ISNULL(@SXGCustomerWl,0)
 	UNION
 	SELECT
 		3
@@ -734,7 +757,7 @@ BEGIN
 		, @VRGBetCount
 		, @TGBetCount
 		, ISNULL(@I4DBetCount,0)
-
+		, ISNULL(@SXGBetCount,0)
 	SET NOCOUNT OFF
 END
 GO

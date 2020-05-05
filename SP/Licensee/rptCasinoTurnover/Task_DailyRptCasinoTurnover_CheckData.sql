@@ -7,6 +7,7 @@ AS
 	DB: DBLIC.bodb_LicenseeReport
 	Revisions:
 	- 20181129@Joseph: Create [Redmine: #95178]
+	- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -40,7 +41,7 @@ SELECT @S_Winlost = SUM(ISNULL(winlost,0))
 			INNER JOIN bodb02.dbo.SportBettypeMatrix matrix WITH(NOLOCK) ON b.gameid = matrix.bettype
 		WHERE b.winlostdate = @WinlostDate
 			AND b.statusID IN (111,112,113) -- DRAW, WON, LOSE
-			AND matrix.ProductID IN (21) -- All bet
+			AND matrix.ProductID IN (21,45) -- All bet
 	) t
 	OPTION (RECOMPILE)
 

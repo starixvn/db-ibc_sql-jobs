@@ -24,6 +24,7 @@ AS
 		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
+		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 		
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -110,7 +111,8 @@ BEGIN
 		,SG BIGINT
 		,VRG BIGINT
 		,TG BIGINT
-		,I4D BIGINT)
+		,I4D BIGINT
+		,SXG BIGINT)
 
 	--exec 
 	--rptLicWinloss2
@@ -144,7 +146,8 @@ BEGIN
 		,SG
 		,VRG
 		,TG	
-		,I4D)
+		,I4D
+		,SXG)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date
 
 	INSERT INTO #TempData (
@@ -295,7 +298,8 @@ BEGIN
 		,SG
 		,VRG
 		,TG
-		,I4D)
+		,I4D
+		,SXG)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (

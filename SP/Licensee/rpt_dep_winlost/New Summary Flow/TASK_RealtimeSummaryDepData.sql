@@ -36,6 +36,7 @@ AS
 		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
+		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 
 	Input Params:
 	- @Winlostdate: The input Winlostdate to be summarized
@@ -439,6 +440,7 @@ BEGIN
 				WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
+				WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 				WHEN bettype IN(17000) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
@@ -487,6 +489,7 @@ BEGIN
 				WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
+				WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 				WHEN bettype IN(17000) THEN 246 -- NPHP
 			ELSE 0 END
 

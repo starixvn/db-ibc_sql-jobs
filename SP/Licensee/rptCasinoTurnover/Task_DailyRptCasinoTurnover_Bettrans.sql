@@ -9,6 +9,7 @@ Task: daily summary for casino turnover
 DB: DBLIC.bodb_LicenseeReport
 Revisions:
 	- 20181129@Joseph: Create [Redmine: #95178]
+	- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 */  
 BEGIN
 	SET NOCOUNT ON
@@ -76,7 +77,7 @@ BEGIN
 		WHERE
 			bettrans.winlostdate = @winlostdate AND
 			bettrans.statusID IN (111,112,113) AND -- DRAW, WON, LOSE
-			matrix.ProductID IN (21) -- AllBet
+			matrix.ProductID IN (21,45) -- AllBet
 		GROUP BY
 			bettrans.custid
 			,bettrans.recommend
