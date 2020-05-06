@@ -193,7 +193,7 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustPTSetting_Member s WITH(NOLOCK)							
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid
 			INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 
-			INNER JOIN CheckCustDB.dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena			
+			INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena			
 		WHERE s.custid=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0   
 			AND (CHARINDEX(',' + CONVERT(varchar,s.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
 					OR s.SuperPT<>0 OR s.MasterPT<>0
@@ -206,7 +206,7 @@ BEGIN
 		SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
 		FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid
-			INNER JOIN CheckCustDB.dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena			
+			INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena			
 		WHERE c.srecommend=@srecommend AND c.roleid=2 
 			AND (CHARINDEX(',' + CONVERT(varchar,s.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
 					OR s.SuperPT<>0 OR s.MasterPT<>0
