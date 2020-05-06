@@ -77,7 +77,7 @@ BEGIN
 		WHERE
 			bettrans.winlostdate = @winlostdate AND
 			bettrans.statusID IN (111,112,113) AND -- DRAW, WON, LOSE
-			matrix.ProductID IN (21,45) -- AllBet
+			matrix.ProductID IN (21,45) -- AllBet, Sexy Gaming
 		GROUP BY
 			bettrans.custid
 			,bettrans.recommend
