@@ -36,32 +36,10 @@ BEGIN
 	
 	--product has offered stakelevel
 	INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden)
-	SELECT * 
-	FROM (
-		SELECT ps.ProductID,ps.SportType,ps.BetType
-		,CASE WHEN ps.ProductID <> 22 AND ps.SportType <> 248 THEN 
-					(SELECT IsHidden 
-					FROM CheckCustDB.dbo.ProductSettingDetail ps2 
-					WHERE ps2.ProductID = ps.ProductID 
-						and ps2.SportType = ps.SportType 
-						and ps2.BetType = ps.BetType
-						and ps2.SettingType in (4,11,13) 
-						and ps2.SettingStatus = 0 )
-				ELSE (
-					SELECT IsHidden --PP will follow VB
-					FROM CheckCustDB.dbo.ProductSettingDetail ps2 
-					WHERE ps2.ProductID = 22
-						and ps2.SportType = 212					
-						and ps2.SettingType in (4,11,13) 
-						and ps2.SettingStatus = 0
-				)		
-			END isHidden
-		FROM CheckCustDB.dbo.ProductSettingDetail ps 
-		WHERE SettingType in (7,8)
-			AND sportType NOT IN (SELECT sportType FROM dbo.f_GetSportNotOffer(NULL))
-			AND sportType = CASE WHEN @sportType = 0 THEN sportType ELSE @sportType END
-	)t 
-	WHERE isHidden IS NOT NULL
+	SELECT ps.RealProductId, ps.SportType, ps.BetType, ps.IsHidden
+	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH (NOLOCK)
+		CROSS JOIN CheckCustDB.dbo.Site s WITH (NOLOCK)
+	WHERE ps.SettingType IN (4,11,13) AND ps.SettingStatus = 0	
 			
 	UPDATE op
 	SET op.IsHidden = stt.IsHidden
@@ -76,9 +54,11 @@ BEGIN
 	WHERE (stt.Currency = @Currency OR stt.Currency = 0 ) AND stt.SiteID = @SiteID
 
 	INSERT INTO @sportBettypeFilter (sportType,bettype)
-	SELECT sportType,bettype
-	FROM #OfferedProductList op	
-	WHERE op.IsHidden = 0      
+	SELECT ps.SportType
+			,ps.BetType
+	FROM CheckCustDB.[dbo].[ProductSettingDetail] ps WITH(NOLOCK)
+		INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
+	WHERE op.IsHidden = 0 AND ps.SettingType IN (7,8,17) 
 	
 	SELECT @Rowcount = count(1)
 	FROM @SportBettypeFilter
