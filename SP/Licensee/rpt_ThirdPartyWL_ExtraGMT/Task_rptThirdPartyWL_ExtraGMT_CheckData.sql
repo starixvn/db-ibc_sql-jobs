@@ -14,6 +14,7 @@ AS
 		- 20181210@bruce: check Pragmatic data [#105723]
 		- 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
+	    - 20200508@Parsons: Integrate Sexy Gaming for deposit licensees [RedmineID: #132665]
 */
 
 BEGIN
@@ -85,6 +86,7 @@ BEGIN
 			AND (b.gameID BETWEEN 1011 AND 1020 -- FW
 				 OR b.gameID BETWEEN 4101 AND 4300 -- PP
 				 OR b.gameID BETWEEN 1901 AND 1999 -- CC
+				 OR b.gameID BETWEEN 4301 AND 4600 -- SG
 				 )
 		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
 			b.currency, b.statusID	
@@ -111,7 +113,10 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
 		WHERE b.winlostdate = @WinlostDate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND b.gameID BETWEEN 2401 AND 2499
+			AND (
+					b.gameID BETWEEN 2401 AND 2499 -- AllBet
+				OR  b.gameID BETWEEN 3101 AND 3199 -- SXG
+				)
 		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
 			b.currency, b.statusID	
 	);
