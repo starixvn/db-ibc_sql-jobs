@@ -22,6 +22,7 @@ Revisions:
 	- 20181219@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
 	- 20190307@Parsons: Implement BetBuilder [Redmine: #108995]
 	- 20200225@Malcolm : change bettype for racing [Redmine : #129158]
+	- 20200508@Vickie: Add new bet types for E-Sports 2.0 [RedmineID: #132548]
 
 Param's Explanation:
     @DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -68,7 +69,7 @@ FROM  #DATA B
 WHERE ((b.bettype < 31) 
 		OR (b.bettype >= 121 AND b.bettype < 1000) 
 		OR (b.bettype >= 1301 AND b.bettype <= 1399)
-		OR (b.bettype BETWEEN 9001 AND 9086) -- Esport2
+		OR (b.bettype BETWEEN 9001 AND 9399) -- Esport2
 		OR (b.bettype = 38) -- BetBuilder
 		)
     AND b.statusID IN (111, 112, 113, 114, 115)

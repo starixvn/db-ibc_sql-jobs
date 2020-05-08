@@ -22,6 +22,7 @@ AS
 	- 20191219@Amanda: Add betfrom v [RedmineID: #125553]
 	- 20191226@Vickie: Add platform 0 [RedmineID: #125824]
 	- 20200228@Vickie: Integrate 3 new betfrom [Redmine: #129253]
+	- 20200508@Vickie: Add new bet types for E-Sports 2.0 [RedmineID: #132548]
 	
 	EXEC Task_DailyRptLicWinlossGMT_Bettrans14 '2017-11-30'
 */  
@@ -162,7 +163,7 @@ BEGIN
 							b.bettype < 31
 							OR b.bettype BETWEEN 121 AND 999
 							OR b.Bettype BETWEEN 1301 and 1399 --new tennis's bettypes
-							OR b.Bettype BETWEEN 9001 and 9086 -- E-Sports 2.0
+							OR b.Bettype BETWEEN 9001 and 9399 -- E-Sports 2.0
 							OR b.bettype = 38 -- BetBuilder
 						)
 					AND (b.bettype < 901 OR b.bettype > 904)
