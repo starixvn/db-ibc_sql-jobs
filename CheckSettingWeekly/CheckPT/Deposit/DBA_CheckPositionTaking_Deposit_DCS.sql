@@ -400,7 +400,9 @@ BEGIN
 			SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
 			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member d WITH(NOLOCK)
 				INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
-			WHERE ci.srecommend=@srecommend AND d.SportType=43 AND d.AgentPT NOT IN(85,88,91,92.5,89,88.5,50,90,93)
+				INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON d.sporttype = cf.sporttype AND cf.RuleID = 70 AND cf.IsAthena = @IsAthena
+			WHERE ci.srecommend=@srecommend
+				AND CHARINDEX(',' + CONVERT(varchar,d.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
 				AND d.AgentID NOT IN(SELECT CustID FROM #Trade)		
 				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
