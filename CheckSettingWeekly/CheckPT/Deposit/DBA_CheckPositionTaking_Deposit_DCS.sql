@@ -194,7 +194,7 @@ BEGIN
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid
 			INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 
 			INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena			
-		WHERE s.custid=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0   
+		WHERE c.srecommend=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0   
 			AND (CHARINDEX(',' + CONVERT(varchar,s.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
 					OR s.SuperPT<>0 OR s.MasterPT<>0
 				)
