@@ -209,7 +209,7 @@ BEGIN
 		FROM #MemberStakeLevel cs1		
 			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t	
 		WHERE cs1.StakeLevelList <> ''
-			  AND SportType = 255 --GD
+			  AND cs1.GameTypeID IN (1701,1702) --GD
 		GROUP BY cs1.sportType,cs1.GameTypeID,cs1.custid
 		HAVING COUNT(1) > 5
 	END
