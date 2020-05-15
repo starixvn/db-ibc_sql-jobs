@@ -11,6 +11,7 @@ AS
 	Revisions:
 		-20190801@Winnie: Change Check stake level RedmineID:#117919
 		-20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
+		-20200514@Eden: Modify rule to check multi stake level at member level [redmine:#134156]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -225,13 +226,30 @@ BEGIN
 	BEGIN
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 305 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,cs2.custid as custidB, cs1.StakeLevelList as StakeLevelListA, cs2.StakeLevelList as StakeLevelListB
-		FROM #MemberStakeLevel cs1			
+		FROM #MemberStakeLevel cs1	
+			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t		
 			INNER JOIN #AgentStakeLevel cs2 ON cs1.bettype = cs2.bettype
 											AND cs1.sporttype = cs2.sportType
 											AND cs1.recommend = cs2.custid	
-		WHERE CHARINDEX(cs1.StakeLevelList,cs2.StakeLevelList,0) = 0
+		WHERE CHARINDEX(t.val,cs2.StakeLevelList,0) = 0
 			AND cs1.StakeLevelList <> ''
 	END	
+
+	--Exceed max number of member stake level	
+	IF @ruleid IN (0, 306)
+	BEGIN
+		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
+		SELECT 306 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,0 as custidB, MAX(cs1.StakeLevelList) as StakeLevelListA, '' as ValueB
+		FROM #MemberStakeLevel cs1		
+			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t	
+			INNER JOIN CheckCustDB.dbo.ProductSettingDetail ps WITH(NOLOCK) 
+			ON ps.sportType = cs1.SportType 
+				AND ps.bettype = cs1.bettype
+				AND ps.SettingType = 17 -- multi stake level
+		WHERE cs1.StakeLevelList <> ''
+		GROUP BY cs1.sportType,cs1.bettype,cs1.custid
+		HAVING COUNT(1) > MAX(ps.MaxChoice)
+	END
 END
 GO
 	
