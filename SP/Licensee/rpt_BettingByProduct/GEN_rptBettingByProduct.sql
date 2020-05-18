@@ -62,7 +62,7 @@ AS
 		- 20200415@Parsons: Integrate BBIN-Live-Casino [RedmineID: #132237]
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 		- 20200422@Parsons: Integrate-IBCBET-Live-Casino [RedmineID: #131165]
-		- 20200428@Vickie: Integrate Saba Club [RedmineID: #132702]
+		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
