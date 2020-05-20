@@ -14,6 +14,7 @@ AS
 		- 20200110@Patrick: Add more rule check winlostdate and eventdate is missmatch [Redmine: #126759]
 		- 20200117@Patrick: Print result to easy checking & retry [Redmine: #126759]
 		- 20200417@Patrick: Add more rule check winlostdate for outright tickets [Redmine: #132745]
+		- 20200520@Patrick: Fix issue build message for check outright rule [Redmine: #134481]
 		
 */
 BEGIN
@@ -187,8 +188,8 @@ BEGIN
 	IF @rowcount > 0
 	BEGIN
 		DECLARE @__xmlOut2 VARCHAR(MAX)
-		SET @__xmlOut2 = (SELECT TOP 100 serverName AS s, matchid AS m, caseName AS c FROM @__result AS r FOR XML AUTO)
-		SET @__xmlOut2 = 'outright tickets have winlostdate smaller than or equal movebet day. ==> output: ' +  @__xmlOut
+		SET @__xmlOut2 = (SELECT DISTINCT TOP 100 serverName AS s, matchid AS m, caseName AS c FROM @__result AS r FOR XML AUTO)
+		SET @__xmlOut2 = 'outright tickets have winlostdate smaller than or equal movebet day. ==> output: ' +  @__xmlOut2
 		RAISERROR(@__xmlOut2, 16, 1)
 	END
 END
