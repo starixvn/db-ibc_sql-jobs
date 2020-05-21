@@ -1,18 +1,18 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct]
-	@date DATE,
-	@date2 DATE = NULL,
-	@DataSource VARCHAR(20) = 'All',
-	@SeparatedProductID TINYINT = 0,
-	@ProductCodes VARCHAR(1000) = ''
+	@date				DATE,
+	@date2				DATE			= NULL,
+	@DataSource			VARCHAR(20)		= 'All',
+	@SeparatedProductID	TINYINT			= 0,
+	@ProductCodes		VARCHAR(1000)	= ''
 AS
 
 /*
 	Created: 20150710@Victor
-    Task : Generate data for rpt_BettingByProduct
-    DB: DBLIC/bodb_LicenseeReport  
-    Param's Explanation:   
+	Task: Generate data for rpt_BettingByProduct
+	DB: DBLIC/bodb_LicenseeReport
+	Param's Explanation:
 		@DataSource = 'Rpt_Betting'
 					= 'SeparatedProduct'
 					= 'All'
@@ -62,11 +62,12 @@ AS
 		- 20200415@Parsons: Integrate BBIN-Live-Casino [RedmineID: #132237]
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 		- 20200422@Parsons: Integrate-IBCBET-Live-Casino [RedmineID: #131165]
+		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
 
-BEGIN  
+BEGIN
 	SET NOCOUNT ON
 
 	CREATE TABLE #BettypeProductMapping (Bettype INT, ProductID INT)
@@ -80,35 +81,35 @@ BEGIN
 
 	-- Collect data of 3rd party products
 	CREATE TABLE #tmpData (
-		rptDate DATE,
-		CustID INT,
-		ProductID INT,
-		CurrencyId INT,
-		Winlost MONEY,
-		Turnover MONEY,
-		BetCount INT,
-		PlayerComm MONEY,
-		AgentComm MONEY,
-		ValidBetAmount MONEY,
-		GrossWL MONEY,
-		Bettype SMALLINT)
+		rptDate			DATE,
+		CustID			INT,
+		ProductID		INT,
+		CurrencyId		INT,
+		Winlost			MONEY,
+		Turnover		MONEY,
+		BetCount		INT,
+		PlayerComm		MONEY,
+		AgentComm		MONEY,
+		ValidBetAmount	MONEY,
+		GrossWL			MONEY,
+		Bettype			SMALLINT)
 
 	IF @date2 IS NULL
 		SET @date2 = @Date
 
-	SET @date2 = DATEADD(day,1,@date2)
+	SET @date2 = DATEADD(DAY, 1, @date2)
 
 	IF @DataSource IN ('ALL', 'Rpt_Betting')
-	BEGIN 		
-		DELETE p 
+	BEGIN
+		DELETE p
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
-			  AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange
+			AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange
 			AND (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList))
-					
+
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC') -- Remove Exchange (BX) due to separate wallet only
 		WHERE @ProductCodes = ''
 			OR ProductID IN (SELECT ProductID FROM @ProductIdList)
 
@@ -120,110 +121,109 @@ BEGIN
 
 		-- Import data from rpt_Betting / rpt_Betting_BA
 		INSERT INTO [dbo].[rpt_BettingByProduct]
-				([rptDate]
-				,[SiteID]
-				,[ProductID]
-				,[Bettype]
-				,[CurrencyId]
-				,[StatusId]
-				,[CustomerCategory]
-				,[GrossWL]
-				,[MemberWL]
-				,[Turnover]
-				,[BetCount]
-				,[CommissionA]
-				,[CommissionP]
-				,[BuyBackAmount]
-				,[WinPrizeAmount]
-				,[CashOutAmount]
-				,[ValidBetAmount]
-				,[ExtraAmount]
-				,[TicketType]
-				)
-		SELECT
-			[rptDate]
+			([rptDate]
 			,[SiteID]
+			,[ProductID]
+			,[Bettype]
+			,[CurrencyId]
+			,[StatusId]
+			,[CustomerCategory]
+			,[GrossWL]
+			,[MemberWL]
+			,[Turnover]
+			,[BetCount]
+			,[CommissionA]
+			,[CommissionP]
+			,[BuyBackAmount]
+			,[WinPrizeAmount]
+			,[CashOutAmount]
+			,[ValidBetAmount]
+			,[ExtraAmount]
+			,[TicketType]
+			)
+		SELECT
+			b.rptDate
+			,b.SiteID
 			,bt.ProductID
-			,CASE 
+			,CASE
 				WHEN bt.ProductID IN (1,13,15,25) 
 						OR b.Bettype IN (1499, 4300, 4299) -- PP Prize (4300,4299)
-					THEN b.[Bettype]
+					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1
-			END [Bettype]
-			,[CurrencyId]
-			,Status [StatusId]
+			END AS Bettype
+			,b.CurrencyID
+			,b.Status AS StatusId
 			,ISNULL([CustomerCategory],-1)
-			,SUM(ISNULL(WinLossA,0)) [GrossWL]
-			,SUM(ISNULL(WinLoss,0)) [MemberWL]
-			,SUM(ISNULL([Turnover],0)) [Turnover]
-			,SUM(ISNULL([BetCount],0)) [BetCount]
-			,SUM(ISNULL([CommissionA],0)) [CommissionA]
-			,SUM(ISNULL([CommissionP],0)) [CommissionP]
-			,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
-			,SUM(ISNULL([WinPrizeAmount],0)) [WinPrizeAmount]
-			,SUM(ISNULL([CashOutAmount],0)) [CashOutAmount]
-			,SUM(ISNULL([oddsspread],0)) 	[ValidBetAmount]
-			,SUM(ISNULL([ExtraAmount],0)) [ExtraAmount]
+			,SUM(ISNULL(b.WinLossA, 0)) [GrossWL]
+			,SUM(ISNULL(b.WinLoss, 0)) [MemberWL]
+			,SUM(ISNULL([Turnover], 0)) [Turnover]
+			,SUM(ISNULL([BetCount], 0)) [BetCount]
+			,SUM(ISNULL([CommissionA], 0)) [CommissionA]
+			,SUM(ISNULL([CommissionP], 0)) [CommissionP]
+			,SUM(ISNULL([BuyBackAmount], 0)) [BuyBackAmount]
+			,SUM(ISNULL([WinPrizeAmount], 0)) [WinPrizeAmount]
+			,SUM(ISNULL([CashOutAmount], 0)) [CashOutAmount]
+			,SUM(ISNULL([oddsspread], 0)) [ValidBetAmount]
+			,SUM(ISNULL([ExtraAmount], 0)) [ExtraAmount]
 			,TicketType
 		FROM dbo.rpt_Betting b WITH (NOLOCK)
 			INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
 		WHERE b.rptDate >= @date AND b.rptDate < @date2
 			AND b.Status IN (111,112,113,114,115,101,102,103)
-			AND [CurrencyID] <> 20
-		GROUP BY [rptDate]
-				,[SiteID]
-				, bt.ProductID
-				,CASE 
-					WHEN bt.ProductID IN (1,13,15,25) 
-							OR b.Bettype IN (1499, 4300, 4299) -- PP Prize (4300,4299)
-						THEN b.[Bettype]
-					WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
-					ELSE -1
-				END
-				,[CurrencyId]
-				,Status
-				,ISNULL([CustomerCategory],-1)
-				,TicketType
+			AND b.CurrencyID <> 20
+		GROUP BY b.rptDate
+			,b.SiteID
+			,bt.ProductID
+			,CASE 
+				WHEN bt.ProductID IN (1,13,15,25) 
+						OR b.Bettype IN (1499, 4300, 4299) -- PP Prize (4300,4299)
+					THEN b.Bettype
+				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
+				ELSE -1
+			END
+			,b.CurrencyID
+			,b.Status
+			,ISNULL(b.CustomerCategory,-1)
+			,b.TicketType
 		UNION ALL
 		SELECT
-			[rptDate]
-			,[SiteID]
+			b.rptDate
+			,b.SiteID
 			, bt.ProductID
-			,CASE WHEN bt.ProductID IN (1,13) THEN b.[Bettype] ELSE -1 END [Bettype]
-			,[CurrencyId]
-			,Status [StatusId]
-			,ISNULL([CustomerCategory],-1)
-			,SUM(ISNULL(WinLossA,0)) [GrossWL]
-			,SUM(ISNULL(WinLoss,0)) [MemberWL]
-			,SUM(ISNULL([Turnover],0)) [Turnover]
-			,SUM(ISNULL([BetCount],0)) [BetCount]
-			,SUM(ISNULL([CommissionA],0)) [CommissionA]
-			,SUM(ISNULL([CommissionP],0)) [CommissionP]
-			,SUM(ISNULL([BuyBackAmount],0)) [BuyBackAmount]
-			,0 [WinPrizeAmount]
-			,0 [CashOutAmount]
-			,0 [ValidBetAmount]	
-			,SUM(ISNULL([ExtraAmount],0)) [ExtraAmount]
-			,TicketType 
+			,CASE WHEN bt.ProductID IN (1,13) THEN b.Bettype ELSE -1 END Bettype
+			,b.CurrencyID
+			,b.Status AS StatusId
+			,ISNULL(b.CustomerCategory, -1)
+			,SUM(ISNULL(b.WinLossA, 0)) AS GrossWL
+			,SUM(ISNULL(b.WinLoss, 0)) AS MemberWL
+			,SUM(ISNULL(b.Turnover, 0)) AS Turnover
+			,SUM(ISNULL(b.BetCount, 0)) AS BetCount
+			,SUM(ISNULL(b.CommissionA, 0)) AS CommissionA
+			,SUM(ISNULL(b.CommissionP, 0)) AS CommissionP
+			,SUM(ISNULL(b.BuyBackAmount, 0)) AS BuyBackAmount
+			,0 WinPrizeAmount
+			,0 CashOutAmount
+			,0 ValidBetAmount
+			,SUM(ISNULL(b.ExtraAmount,0)) ExtraAmount
+			,b.TicketType
 		FROM dbo.rpt_Betting_BA b WITH (NOLOCK)
 			INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype
 		WHERE b.rptDate >= @date AND b.rptDate < @date2
 			AND b.Status IN (111,112,113,114,115,101,102,103)
-			AND [CurrencyID] <> 20
-		GROUP BY [rptDate]
-				,[SiteID]
-				, bt.ProductID
-				,CASE WHEN bt.ProductID IN (1,13) THEN b.[Bettype] ELSE -1 END 
-				,[CurrencyId]
-				,Status
-				,ISNULL([CustomerCategory],-1)
-				,TicketType
-	
+			AND b.CurrencyID <> 20
+		GROUP BY b.rptDate
+			,b.SiteID
+			,bt.ProductID
+			,CASE WHEN bt.ProductID IN (1,13) THEN b.Bettype ELSE -1 END 
+			,b.CurrencyID
+			,b.Status
+			,ISNULL(b.CustomerCategory, -1)
+			,b.TicketType
 	END
 	
 	IF @DataSource IN ('All', 'SeparatedProduct')
-	BEGIN 	
+	BEGIN
 		-- Exchange product (separate wallet)
 		DECLARE @HasExchangeProduct BIT = 1
 
@@ -236,44 +236,63 @@ BEGIN
 		IF @SeparatedProductID IN (0, 31) AND @HasExchangeProduct = 1
 		BEGIN
 			DECLARE @ResettledDateList AS TABLE (ID BIGINT, SettledDate DATE)
-			DECLARE @WLDateList AS TABLE (ID SMALLINT IDENTITY (1,1), Winlostdate DATE)			
+			DECLARE @WLDateList AS TABLE (ID SMALLINT IDENTITY (1,1), Winlostdate DATE)
 
-			INSERT INTO @ResettledDateList ( ID, SettledDate )
-			SELECT h.ID, h.WinlostDate
-			FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory h WITH (NOLOCK)
-			WHERE h.ProductID = 31
-				AND h.SumToThirdPartyDate IS NOT NULL
-				AND h.SumToBettingProductDate IS NULL
+			INSERT INTO @ResettledDateList (ID, SettledDate)
+			SELECT ID, WinlostDate
+			FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory WITH (NOLOCK)
+			WHERE ProductID = 31
+				AND SumToThirdPartyDate IS NOT NULL
+				AND SumToBettingProductDate IS NULL
 
 			;WITH WLDate AS (	SELECT @date AS [Date]
 								UNION ALL
 								SELECT DATEADD(DAY, 1, [Date])
 								FROM WLDate
-								WHERE DATEADD(DAY, 1, [Date]) < @date2 )	
+								WHERE DATEADD(DAY, 1, [Date]) < @date2 )
 			INSERT INTO @WLDateList	(Winlostdate)
 			SELECT [Date] AS Winlostdate
 			FROM WLDate OPTION (MAXRECURSION 0)
-			
+
 			INSERT INTO @WLDateList ( Winlostdate )
 			SELECT DISTINCT r.SettledDate
 			FROM @ResettledDateList r
 			WHERE NOT EXISTS (SELECT 1 FROM @WLDateList d WHERE r.SettledDate = d.Winlostdate)
-			
+
 			-- Delete data for exchange product
-			DELETE p 
+			DELETE p
 			FROM dbo.rpt_BettingByProduct p
 			WHERE (p.ProductID = 31 AND p.SiteID <= 1000) 
 				AND EXISTS (SELECT 1 FROM @WLDateList WHERE Winlostdate = p.rptDate)
 		
-			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, GrossWL, Turnover, BetCount, PlayerComm, AgentComm, ValidBetAmount)
-			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, WinlostA, Turnover, BetCount
-				, CommissionP AS PlayerComm
-				, CommissionA AS AgentComm
-				, ValidBetAmount
-			FROM dbo.rptDepWinlost_ThirdParty p WITH (NOLOCK)
+			INSERT INTO #tmpData (
+				rptDate,
+				CustID,
+				ProductID,
+				CurrencyId,
+				Winlost,
+				GrossWL,
+				Turnover,
+				BetCount,
+				PlayerComm,
+				AgentComm,
+				ValidBetAmount)
+			SELECT
+				p.Winlostdate,
+				p.Custid,
+				p.ProductId,
+				p.Currency,
+				p.Winlost,
+				p.WinLostA,
+				p.Turnover,
+				p.BetCount,
+				p.CommissionP AS PlayerComm,
+				p.CommissionA AS AgentComm,
+				p.ValidBetAmount
+			FROM dbo.rptDepWinlost_ThirdParty AS p WITH (NOLOCK)
 			WHERE p.ProductId = 31 
 				AND EXISTS (SELECT 1 FROM @WLDateList l WHERE p.Winlostdate = l.Winlostdate)
-				AND [Currency] <> 20
+				AND p.Currency <> 20
 			
 			UPDATE h
 			SET h.SumToBettingProductDate = GETDATE()
@@ -287,9 +306,9 @@ BEGIN
 		DELETE p 
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
-			  AND (p.ProductID IN (10,11) AND p.SiteID <= 1000) 
-			  AND ( p.ProductID = @SeparatedProductID OR @SeparatedProductID = 0)
-			  AND (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList))
+			AND (p.ProductID IN (10, 11) AND p.SiteID <= 1000) 
+			AND ( p.ProductID = @SeparatedProductID OR @SeparatedProductID = 0)
+			AND (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList))
 
 		-- GD, VG (separate wallet)
 		DECLARE @HasGDProduct BIT = 1
@@ -302,12 +321,30 @@ BEGIN
 
 		IF @SeparatedProductID IN (0, 11) AND @HasGDProduct = 1
 		BEGIN 
-			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm, Bettype)
-			SELECT Winlostdate, Custid, ProductId, Currency, Winlost, Turnover, BetCount, 0 AS PlayerComm, Bettype
+			INSERT INTO #tmpData (
+				rptDate,
+				CustID,
+				ProductID,
+				CurrencyId,
+				Winlost,
+				Turnover,
+				BetCount,
+				PlayerComm,
+				Bettype)
+			SELECT
+				Winlostdate,
+				Custid,
+				ProductId,
+				Currency,
+				Winlost,
+				Turnover,
+				BetCount,
+				0 AS PlayerComm,
+				Bettype
 			FROM dbo.rptDepWinlost_ThirdParty WITH (NOLOCK)
 			WHERE Winlostdate >= @date AND Winlostdate < @date2
 				AND ProductId = 11
-				AND [Currency] <> 20
+				AND Currency <> 20
 		END
 		
 		-- AGCS (separate wallet)
@@ -320,9 +357,25 @@ BEGIN
 		END
 
 		IF @SeparatedProductID IN (0, 10) AND @HasAGCProduct = 1
-		BEGIN 
-			INSERT INTO #tmpData (rptDate, CustID, ProductID, CurrencyId, Winlost, Turnover, BetCount, PlayerComm)
-			SELECT Winlostdate, Custid, 10 AS ProductId, Currency, SUM(Winlost), SUM(Turnover), SUM(BetCount), SUM(PlayerComm)
+		BEGIN
+			INSERT INTO #tmpData (
+				rptDate,
+				CustID,
+				ProductID,
+				CurrencyId,
+				Winlost,
+				Turnover,
+				BetCount,
+				PlayerComm)
+			SELECT
+				Winlostdate,
+				Custid,
+				10 AS ProductId,
+				Currency,
+				SUM(Winlost),
+				SUM(Turnover),
+				SUM(BetCount),
+				SUM(PlayerComm)
 			FROM DBRPT.bodb_report.dbo.rptDepWinlost_AGCasino WITH (NOLOCK)
 			WHERE Winlostdate >= @date AND Winlostdate < @date2
 				AND [Currency] <> 20
@@ -339,24 +392,24 @@ BEGIN
 		*/
 
 		INSERT INTO [dbo].[rpt_BettingByProduct]
-				([rptDate]
-				,[SiteID]
-				,[ProductID]
-				,[Bettype]
-				,[CurrencyId]
-				,[StatusId]
-				,[CustomerCategory]
-				,[GrossWL]
-				,[MemberWL]
-				,[Turnover]
-				,[BetCount]
-				,[CommissionA]
-				,[CommissionP]
-				,[BuyBackAmount]
-				,[WinPrizeAmount]
-				,[CashOutAmount]
-				,[ExtraAmount]
-				,[TicketType])
+			([rptDate]
+			,[SiteID]
+			,[ProductID]
+			,[Bettype]
+			,[CurrencyId]
+			,[StatusId]
+			,[CustomerCategory]
+			,[GrossWL]
+			,[MemberWL]
+			,[Turnover]
+			,[BetCount]
+			,[CommissionA]
+			,[CommissionP]
+			,[BuyBackAmount]
+			,[WinPrizeAmount]
+			,[CashOutAmount]
+			,[ExtraAmount]
+			,[TicketType])
 		SELECT td.rptDate
 			, ISNULL(site.SiteID,-1) AS SiteId
 			, td.productId
@@ -377,13 +430,13 @@ BEGIN
 			, 0 AS BuyBackAmount
 			, 0 [WinPrizeAmount]
 			, 0 [CashOutAmount]
-			, 0 AS [ExtraAmount]				
+			, 0 AS [ExtraAmount]
 			, 0 AS [TicketType]
 		FROM #tmpData td WITH (NOLOCK)
-			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.Custid = td.CustID AND c.roleid = 1
-			LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON c.recommend = ag.custid AND ag.roleid = 2
-			LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON ag.site=ibcsite.site
-			LEFT JOIN bodb_licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.SiteID = site.IbcSiteID
+			LEFT JOIN bodb02.dbo.Customer AS c WITH (NOLOCK) ON c.Custid = td.CustID AND c.roleid = 1
+			LEFT JOIN bodb02.dbo.customer AS ag WITH (NOLOCK) ON c.recommend = ag.custid AND ag.roleid = 2
+			LEFT JOIN bodb02.dbo.Site AS ibcsite WITH (NOLOCK) ON ag.site = ibcsite.site
+			LEFT JOIN bodb_licensee.dbo.view_site_list AS [site] WITH (NOLOCK) ON ibcsite.SiteID = site.IbcSiteID
 		GROUP BY rptDate
 			, ISNULL(site.SiteID,-1)
 			, ISNULL(td.Bettype, -1)
@@ -395,7 +448,7 @@ BEGIN
 				ELSE 111
 			  END
 	END
-	
+
 	DROP TABLE #tmpData
 	DROP TABLE #BettypeProductMapping
 	DROP TABLE #BettypeProductMappingBA

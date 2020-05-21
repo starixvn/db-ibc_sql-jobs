@@ -1,6 +1,6 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 
-ALTER PROCEDURE [dbo].[Task_DepositDataCompare] 
+ALTER PROCEDURE [dbo].[Task_DepositDataCompare]
 	@Date		SMALLDATETIME	= NULL,
 	@DrawFilter	TINYINT			= 1
 AS
@@ -9,7 +9,6 @@ AS
 	Created: 20140312@Florent
 	Task : Compare data from 5 tables sum
 	DB: DBLIC.bodb_LicenseeReport
-	Original:
 
 	Revisions:
 		- 20140429@Florent: fix bug and change message error
@@ -24,6 +23,8 @@ AS
 		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
+		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
+		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 		
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -43,7 +44,7 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE
-		@flag bit=0
+		@flag BIT = 0
 		,@NumberTemp_SB BIGINT
 		,@PivotNumb_SB BIGINT
 		,@NumberTemp_RB BIGINT
@@ -54,15 +55,15 @@ BEGIN
 		,@PivotNumb_BA BIGINT
 		,@NumberTemp_CS BIGINT
 		,@PivotNumb_CS BIGINT
-		,@id INT=1
-		,@mesg NVARCHAR (MAX)=''
+		,@id INT = 1
+		,@mesg NVARCHAR(MAX) = ''
 
 		--Number of table must compare
-		,@table_num INT =0
-		,@output NVARCHAR(4000)=''
+		,@table_num INT = 0
+		,@output NVARCHAR(4000) = ''
 
-	CREATE TABLE #TempData 
-		(ID INT
+	CREATE TABLE #TempData (
+		ID INT
 		,Sportbook BIGINT
 		,Racing BIGINT
 		,NumberGame BIGINT
@@ -71,7 +72,7 @@ BEGIN
 		)
 
 	CREATE TABLE #Data1 
-		(Typeid iNT
+		(Typeid INT
 		,ID INT
 		,Sportbook BIGINT
 		,Racing BIGINT
@@ -110,26 +111,28 @@ BEGIN
 		,SG BIGINT
 		,VRG BIGINT
 		,TG BIGINT
-		,I4D BIGINT)
+		,I4D BIGINT
+		,SXG BIGINT
+		,SBC BIGINT)
 
 	--exec 
 	--rptLicWinloss2
 	INSERT INTO @tblTmp	(
 		ID
-		,Sportbook  
-		,Racing  
-		,NumberGame  
-		,BA  
-		,CS  
-		,BT  
-		,LC  
-		,AG  
-		,GD  
-		,KN  
-		,VG  
-		,VB  
-		,MGCLC  
-		,MGCRNG  
+		,Sportbook
+		,Racing
+		,NumberGame
+		,BA
+		,CS
+		,BT
+		,LC
+		,AG
+		,GD
+		,KN
+		,VG
+		,VB
+		,MGCLC
+		,MGCRNG
 		,VS
 		,CB
 		,AB
@@ -144,8 +147,10 @@ BEGIN
 		,SG
 		,VRG
 		,TG	
-		,I4D)
-	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date=@Date
+		,I4D
+		,SXG
+		,SBC)
+	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
 		ID,
@@ -182,7 +187,7 @@ BEGIN
 	----
 
 	-- rptCustomerTurnover
-	INSERT INTO #TempData(
+	INSERT INTO #TempData (
 		ID,
 		Sportbook,
 		Racing,
@@ -191,7 +196,7 @@ BEGIN
 		LC)
 	EXEC dbo.GET_DepositDataToValidate_CustomerTurnover @Date = @Date
 
-	INSERT INTO #Data1(
+	INSERT INTO #Data1 (
 		Typeid,
 		ID,
 		Sportbook,
@@ -233,7 +238,7 @@ BEGIN
 
 	DELETE #TempData
 
-	SET @id =@id + 1
+	SET @id = @id + 1
 
 	-- rptWinlossByLeague
 	INSERT INTO #TempData (
@@ -265,22 +270,22 @@ BEGIN
 	--rpt_Betting
 	DELETE @tblTmp
  
-	INSERT INTO @tblTmp	(
+	INSERT INTO @tblTmp (
 		ID
-		,Sportbook  
-		,Racing  
-		,NumberGame  
-		,BA  
-		,CS  
-		,BT  
-		,LC  
-		,AG  
-		,GD  
-		,KN  
-		,VG  
-		,VB  
-		,MGCLC  
-		,MGCRNG  
+		,Sportbook
+		,Racing
+		,NumberGame
+		,BA
+		,CS
+		,BT
+		,LC
+		,AG
+		,GD
+		,KN
+		,VG
+		,VB
+		,MGCLC
+		,MGCRNG
 		,VS
 		,CB
 		,AB
@@ -295,7 +300,9 @@ BEGIN
 		,SG
 		,VRG
 		,TG
-		,I4D)
+		,I4D
+		,SXG
+		,SBC)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (
@@ -344,7 +351,7 @@ BEGIN
 
 		WHILE @typeid <= @table_num	--1.rptLicWinlost2 2.CustomerTurnover 3. CustomerMatch 4.WinlostByLeague
 		BEGIN
-			DECLARE @mesg2 NVARCHAR(1000)=''
+			DECLARE @mesg2 NVARCHAR(1000) = ''
 
 			IF @typeid = 1 --get pivot number ner
 			BEGIN

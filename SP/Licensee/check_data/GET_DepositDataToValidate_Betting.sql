@@ -27,6 +27,8 @@ AS
 		- 20200108@Vickie: Integrate Virtual Games [RedmineID: #124911]
 		- 20200407@Vickie: Integrate Table Games [RedmineID: #131447]
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
+		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
+		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 
 	Param's Explanation:
 		@DrawFilter
@@ -159,8 +161,16 @@ BEGIN
 		,@I4DTurnover MONEY
 		,@I4DCustomerWl MONEY
 		,@I4DBetCount MONEY
+		----SXG
+		,@SXGTurnover MONEY
+		,@SXGCustomerWl MONEY
+		,@SXGBetCount MONEY
+		----SBC
+		,@SBCTurnover MONEY
+		,@SBCCustomerWl MONEY
+		,@SBCBetCount MONEY
 
-	DECLARE @tblBettype AS TABLE(ProductPrefix VARCHAR (10),Bettype INT)
+	DECLARE @tblBettype TABLE (ProductPrefix VARCHAR(10), Bettype INT)
 
 	INSERT INTO @tblBettype (
 		ProductPrefix,
@@ -170,7 +180,7 @@ BEGIN
 		s.BetType
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC','SPR','SG','VRG','TG','I4D')	
+		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC')
 
 	-- Data Source 
 	DECLARE @tblData AS TABLE (
@@ -188,17 +198,17 @@ BEGIN
 		BetCount)
 	SELECT
 		CASE
-			WHEN b.bettype IN (901, 902, 903, 904) THEN 'BT' 
-			WHEN b.bettype IN (911, 912, 913, 914) THEN 'CO' 
+			WHEN b.bettype IN (901, 902, 903, 904) THEN 'BT'
+			WHEN b.bettype IN (911, 912, 913, 914) THEN 'CO'
 			ELSE t.ProductPrefix
 		END ProductPrefix,
 		b.Status,
-		SUM(b.Turnover) Turnover,
-		SUM(b.WinLoss) WinLoss,
-		SUM(b.BetCount) Betcount
-	FROM dbo.rpt_Betting b WITH (NOLOCK)
-		INNER JOIN bodb_Licensee.dbo.Licensees lic WITH (NOLOCK) ON b.SiteID = lic.LicenseeID AND IsDeposit = CONVERT(BIT, 1)
-		INNER JOIN @tblBettype t ON b.bettype = t.bettype 
+		SUM(b.Turnover) AS Turnover,
+		SUM(b.WinLoss) AS WinLoss,
+		SUM(b.BetCount) AS Betcount
+	FROM dbo.rpt_Betting AS b WITH (NOLOCK)
+		INNER JOIN bodb_Licensee.dbo.Licensees AS lic WITH (NOLOCK) ON b.SiteID = lic.LicenseeID AND IsDeposit = CONVERT(BIT, 1)
+		INNER JOIN @tblBettype AS t ON b.bettype = t.bettype 
 	WHERE b.rptDate = @Date
 		AND b.Status IN (111, 112, 113, 114, 115)
 		AND b.currencyID NOT IN (20, 27, 28)
@@ -208,7 +218,7 @@ BEGIN
 			WHEN b.bettype IN (911, 912, 913, 914) THEN 'CO'
 			ELSE t.ProductPrefix
 		END,
-		Status
+		b.Status
 
 	---SB
 	SELECT @SbTurnover = SUM(CASE 
@@ -237,8 +247,8 @@ BEGIN
 	WHERE ProductPrefix = 'BT'
 
 	SELECT @BTTurnover = ISNULL (@BTTurnover, 0),
-			@BTCustomerWl = ISNULL (@BTCustomerWl, 0),
-			@BTBetCount = ISNULL (@BTBetCount, 0)
+		@BTCustomerWl = ISNULL (@BTCustomerWl, 0),
+		@BTBetCount = ISNULL (@BTBetCount, 0)
 
 	-- Racing
 	SELECT @RbTurnover = SUM(CASE WHEN b.Status IN (114, 115) THEN 0.5 ELSE 1 END * b.Turnover) 
@@ -344,8 +354,8 @@ BEGIN
 	WHERE ProductPrefix = 'VG'
 
 	SELECT @VGTurnover = ISNULL(@VGTurnover,0)
-	,@VGCustomerWl = ISNULL(@VGCustomerWl,0)
-	,@VGBetCount = ISNULL(@VGBetCount,0)
+		,@VGCustomerWl = ISNULL(@VGCustomerWl,0)
+		,@VGBetCount = ISNULL(@VGBetCount,0)
 
 	--VB: Macau Games
 	SELECT @VBTurnover = SUM(CASE 
@@ -419,8 +429,8 @@ BEGIN
 	WHERE ProductPrefix = 'VS'
 
 	SELECT @VsTurnover = ISNULL(@VsTurnover,0)
-			,@VsCustomerWl = ISNULL(@VsCustomerWl,0)
-			,@VsBetCount = ISNULL(@VsBetCount,0)
+		,@VsCustomerWl = ISNULL(@VsCustomerWl,0)
+		,@VsBetCount = ISNULL(@VsBetCount,0)
 
 	-- CB
 	SELECT @CBTurnover = SUM(CASE 
@@ -434,17 +444,17 @@ BEGIN
 	WHERE ProductPrefix = 'CB'
 
 	SELECT @CBTurnover = ISNULL(@CBTurnover,0)
-			,@CBCustomerWl = ISNULL(@CBCustomerWl,0)
-			,@CBBetCount = ISNULL(@CBBetCount,0)
+		,@CBCustomerWl = ISNULL(@CBCustomerWl,0)
+		,@CBBetCount = ISNULL(@CBBetCount,0)
 	
 	----AB
-		SELECT @ABTurnover = SUM(CASE 
-									WHEN @DrawFilter IN (2, 3) THEN 
-									CASE WHEN b.Status = 111 THEN 0 WHEN b.Status IN (114, 115) THEN 0.5 ELSE 1 END
-								ELSE 1
-								END * b.Turnover)
-			,@ABCustomerWl = SUM(b.WinLoss)
-			,@ABBetCount = SUM(CASE WHEN @DrawFilter = 2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
+	SELECT @ABTurnover = SUM(CASE 
+								WHEN @DrawFilter IN (2, 3) THEN 
+								CASE WHEN b.Status = 111 THEN 0 WHEN b.Status IN (114, 115) THEN 0.5 ELSE 1 END
+							ELSE 1
+							END * b.Turnover)
+		,@ABCustomerWl = SUM(b.WinLoss)
+		,@ABBetCount = SUM(CASE WHEN @DrawFilter = 2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
 	FROM @tblData b
 	WHERE ProductPrefix = 'AB'
 
@@ -603,19 +613,19 @@ BEGIN
 		,@VRGBetCount = ISNULL(@VRGBetCount,0)
 
 	----TG
-	SELECT  @TGTurnover=SUM(CASE 
-						WHEN @DrawFilter IN (2,3) THEN 
-							CASE WHEN b.Status = 111 THEN 0 WHEN b.Status IN (114,115) THEN 0.5 ELSE 1 END
+	SELECT @TGTurnover = SUM(CASE 
+						WHEN @DrawFilter IN (2, 3) THEN 
+							CASE WHEN b.Status = 111 THEN 0 WHEN b.Status IN (114, 115) THEN 0.5 ELSE 1 END
 						ELSE 1
 					END * b.Turnover)
-			,@TGCustomerWl=SUM(b.WinLoss)
-			,@TGBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
+		,@TGCustomerWl = SUM(b.WinLoss)
+		,@TGBetCount = SUM(CASE WHEN @DrawFilter = 2 AND b.Status = 111 THEN 0 ELSE b.BetCount END) 
 	FROM @tblData b
 	WHERE ProductPrefix = 'TG'
 
-	SELECT @TGTurnover 		= ISNULL(@TGTurnover,0)
-		   ,@TGCustomerWl	= ISNULL(@TGCustomerWl,0)
-		   ,@TGBetCount 	= ISNULL(@TGBetCount,0)
+	SELECT @TGTurnover = ISNULL(@TGTurnover,0)
+		,@TGCustomerWl = ISNULL(@TGCustomerWl,0)
+		,@TGBetCount = ISNULL(@TGBetCount,0)
 
 	-- I4D
 	SELECT
@@ -636,6 +646,43 @@ BEGIN
 	FROM @tblData
 	WHERE ProductPrefix = 'I4D'
 
+	----SXG
+	SELECT
+		@SXGTurnover = SUM(CASE
+						WHEN @DrawFilter IN (2, 3) THEN 
+							CASE
+								WHEN Status = 111 THEN 0
+								WHEN Status IN (114, 115) THEN 0.5
+								ELSE 1
+							END
+						ELSE 1
+					END * Turnover),
+		@SXGCustomerWl = SUM(WinLoss),
+		@SXGBetCount = SUM(CASE
+								WHEN @DrawFilter = 2 AND Status = 111 THEN 0
+								ELSE BetCount
+							END)
+	FROM @tblData b
+	WHERE ProductPrefix = 'SXG'
+
+	-- SBC
+	SELECT
+		@SBCTurnover = SUM(CASE
+						WHEN @DrawFilter IN (2, 3) THEN 
+							CASE
+								WHEN Status = 111 THEN 0
+								WHEN Status IN (114, 115) THEN 0.5
+								ELSE 1
+							END
+						ELSE 1
+					END * Turnover),
+		@SBCCustomerWl = SUM(WinLoss),
+		@SBCBetCount = SUM(CASE
+								WHEN @DrawFilter = 2 AND Status = 111 THEN 0
+								ELSE BetCount
+							END)
+	FROM @tblData
+	WHERE ProductPrefix = 'SBC'
 	-- Result
 
 	SELECT
@@ -647,7 +694,7 @@ BEGIN
 		, @CsTurnover AS Cs
 		, @BTTurnover AS BT
 		, @LcTurnover AS LC
-		, @AGTurnover as AG
+		, @AGTurnover AS AG
 		, @GDTurnover AS GD
 		, @KNTurnover AS KN
 		, @VGTurnover AS VG
@@ -669,6 +716,8 @@ BEGIN
 		, @VRGTurnover AS VRG
 		, @TGTurnover  AS TG
 		, ISNULL(@I4DTurnover, 0) AS I4D
+		, ISNULL(@SXGTurnover, 0) AS SXG
+		, ISNULL(@SBCTurnover, 0) AS SBC
 	UNION
 	SELECT
 		2
@@ -701,6 +750,8 @@ BEGIN
 		, @VRGCustomerWl
 		, @TGCustomerWl
 		, ISNULL(@I4DCustomerWl, 0)
+		, ISNULL(@SXGCustomerWl, 0)
+		, ISNULL(@SBCCustomerWl, 0)
 	UNION
 	SELECT
 		3
@@ -733,6 +784,8 @@ BEGIN
 		, @VRGBetCount
 		, @TGBetCount
 		, ISNULL(@I4DBetCount, 0)
+		, ISNULL(@SXGBetCount, 0)
+		, ISNULL(@SBCBetCount, 0)
 
 	SET NOCOUNT OFF
 END
