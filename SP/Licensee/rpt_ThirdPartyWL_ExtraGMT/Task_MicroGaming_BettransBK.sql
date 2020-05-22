@@ -36,7 +36,7 @@ BEGIN
 	DECLARE @Sitelist AS TABLE (IbcSiteID INT, SiteID INT)	
 	INSERT INTO @Sitelist (IbcSiteID, SiteID)
 	SELECT IbcSiteID, SiteID
-	FROM OPENQUERY(DBLIC, 'SELECT IbcSiteID, SiteID FROM bodb_Licensee.dbo.view_site_list')	
+	FROM DBLIC.bodb_Licensee.dbo.view_site_list WITH (NOLOCK)	
 	
 	WHILE @WinlostDate <= @ToDate
 	BEGIN
