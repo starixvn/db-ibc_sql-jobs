@@ -22,6 +22,7 @@ AS
 	- 20150617@Daniel: Separating custDB to new server DBCUST [Redmine:#36216]		
 	- 20150701@Kathy: Correct condition to break WHILE loop [Redmine:#36216]
 	- 20160810@Lukas: Add finished time for each SMA customer		
+	- 20200525@Sophia: Prioritize clear active account first [Redmine: #134653]
 */
 BEGIN
 
@@ -40,11 +41,15 @@ BEGIN
 		IF (dbo.f_IsContinueClearBalance() = 0) BREAK -- control from outside
 
 		SELECT TOP 1
-		  @CustID = custid,
-		  @TransferType = TransferType		
-		  ,@OLD_lasttransfer = LastTransfer  
-		FROM DBCUST.custdb.dbo.Acc_ClearBalanceList WITH(NOLOCK)
-		WHERE [status] = 'waiting'
+		  @CustID = a.custid,
+		  @TransferType = a.TransferType		
+		  ,@OLD_lasttransfer = a.LastTransfer  
+		FROM DBCUST.custdb.dbo.Acc_ClearBalanceList a WITH(NOLOCK)
+		INNER JOIN DBCUST.custdb.dbo.Custinfo c WITH(NOLOCK)
+			ON c.CustID = a.CustID
+		WHERE a.[status] = 'waiting'
+		ORDER BY c.Reject, c.Closed
+		
 
 		--IF(@CustID IS NULL) BREAK -- no more to transfer
 		IF @@rowcount = 0 BREAK -- no more to transfer
