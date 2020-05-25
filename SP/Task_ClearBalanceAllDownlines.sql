@@ -1,12 +1,4 @@
-USE [bodb02]
-GO
-/****** Object:  StoredProcedure [dbo].[Task_ClearBalanceAllDownlines]    Script Date: 08/10/2016 14:14:52 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
- 
-
+/*<info serverAlias="DBTXN-bodb02" executers="bodbAdminNet" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_ClearBalanceAllDownlines]
 (
 	@isConfirmed BIT
