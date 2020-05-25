@@ -22,8 +22,8 @@ BEGIN
 	BEGIN
 		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
-		DECLARE @MBSchedule TABLE (winlostdate SMALLDATETIME)
-		INSERT INTO @MBSchedule (winlostdate)
+		DECLARE @MBSchedule TABLE (Id TINYINT, winlostdate SMALLDATETIME)
+		INSERT INTO @MBSchedule (Id, winlostdate)
 		EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
 
 		SELECT @FromDate = MIN(winlostdate), @ToDate = MAX(winlostdate) FROM @MBSchedule
