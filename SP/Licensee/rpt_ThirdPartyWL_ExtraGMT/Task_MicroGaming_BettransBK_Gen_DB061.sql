@@ -109,24 +109,6 @@ BEGIN
 
 		WAITFOR DELAY '00:00:00.280'
 	
-	END		
-	
-	--GEN DATA TO DBLIC
-	SET	@WinlostDate = @FromDate
-	
-	WHILE (@Winlostdate <= @Todate)
-	BEGIN
-		IF EXISTS (SELECT TOP 1 1 FROM dbo.rpt_ThirdPartyWL_ExtraGMT WITH (NOLOCK) WHERE RptDate = @Winlostdate)
-		BEGIN
-			DELETE DBLIC.bodb_LicenseeReport.dbo.rpt_ThirdPartyWL_ExtraGMT WITH (ROWLOCK, UPDLOCK) WHERE RptDate = @Winlostdate
-		END
-		
-		INSERT INTO DBLIC.bodb_LicenseeReport.dbo.rpt_ThirdPartyWL_ExtraGMT (RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
-			SELECT RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount
-			FROM dbo.rpt_ThirdPartyWL_ExtraGMT
-			WHERE rptDate = @WinlostDate
-		--reset params		
-		SET @WinlostDate = DATEADD(D, 1, @WinlostDate)
-	END
+	END	
 END
 GO
