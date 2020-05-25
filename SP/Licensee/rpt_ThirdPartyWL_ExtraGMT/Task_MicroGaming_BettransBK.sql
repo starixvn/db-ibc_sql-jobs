@@ -19,6 +19,8 @@ AS
 	- 20200508@Parsons: Integrate Sexy Gaming for deposit licensees [RedmineID: #132665]
 
 	Param's Explanation:	
+	
+	Remark: Should use for adhoc purpose only.	
 */
 BEGIN
 	SET NOCOUNT ON
