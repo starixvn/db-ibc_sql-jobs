@@ -96,8 +96,8 @@ BEGIN
 				,CASE
 					WHEN b.bettype = 29 AND betteam = N'1' THEN 2
 					WHEN b.bettype = 29 AND betteam <> N'1' THEN 3
-					WHEN b.bettype = 38 THEN 3
-					WHEN b.bettype = 376 THEN 4
+					WHEN b.bettype = 38 THEN 4
+					WHEN b.bettype = 376 THEN 5
 					ELSE 0 END AS ParlayType
 				,SUM(b.scomm) AS scomm
 				,SUM(b.scomm * CONVERT(DECIMAL(9,8), b.epositiontaking) / (1 - b.tpositiontaking)) AS Extra_comm
@@ -129,8 +129,8 @@ BEGIN
 				,CASE
 					WHEN b.bettype = 29 AND betteam = N'1' THEN 2
 					WHEN b.bettype = 29 AND betteam <> N'1' THEN 3
-					WHEN b.bettype = 38 THEN 3
-					WHEN b.bettype = 376 THEN 4
+					WHEN b.bettype = 38 THEN 4
+					WHEN b.bettype = 376 THEN 5
 					ELSE 0 END
 		END
 
