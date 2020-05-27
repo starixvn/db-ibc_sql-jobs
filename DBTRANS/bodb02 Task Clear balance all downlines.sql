@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02: Task Clear balance all downlines]    Script Date: 01/25/2015 23:08:28 ******/
+/****** Object:  Job [bodb02: Task Clear balance all downlines]    Script Date: 5/22/2020 4:54:46 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 01/25/2015 23:08:28 ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 5/22/2020 4:54:46 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -24,9 +24,9 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02: Task Clear balance a
 		@description=N'No description available.', 
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'sa', 
-		@notify_email_operator_name=N'vnDBA', @job_id = @jobId OUTPUT
+		@notify_email_operator_name=N'DBAAdmin', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [call sp]    Script Date: 01/25/2015 23:08:28 ******/
+/****** Object:  Step [call sp]    Script Date: 5/22/2020 4:54:46 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'call sp', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
@@ -54,9 +54,9 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'S1',
 		@freq_recurrence_factor=0, 
 		@active_start_date=20140911, 
 		@active_end_date=99991231, 
-		@active_start_time=20000, 
+		@active_start_time=10000, 
 		@active_end_time=235959, 
-		@schedule_uid=N'1ab1db30-5f27-434b-94a0-d5356c2aa42d'
+		@schedule_uid=N'44ef798d-36c5-47c7-89f0-84ebf157912e'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -65,7 +65,6 @@ GOTO EndSave
 QuitWithRollback:
     IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
 EndSave:
-
 GO
 
 
