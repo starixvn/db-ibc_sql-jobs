@@ -86,6 +86,7 @@ Revisions:
 	- 20200410@Sophia: Add BBIN [RedmineId: #131358]
 	- 20200410@Sophia: Add BBIN, Sexy Gaming, SA Gaming for TurnoverNoDraw[RedmineId: #131358]	
 	- 20200422@Sophia: Add IBCBet Live Casino [RedmineId: #130693]
+	- 20200528@Sophia: Add RNG War [Redmine: #132013]
 
 	
 */
@@ -648,8 +649,9 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
 			WHEN Bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games	
-			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN		
+			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN			
 			WHEN Bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino		
+			WHEN Bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War				
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype, 
 		0 AS netTurnover,
@@ -672,6 +674,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						OR Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
 						OR Bettype BETWEEN 3300 AND 3399   -- BBIN	
 						OR Bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
+						OR Bettype BETWEEN 5500 AND 5599   -- RNG War	 
 						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
@@ -717,6 +720,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			WHEN Bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
+			WHEN Bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -769,6 +773,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			WHEN Bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
+			WHEN Bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*apositiontaking)) AS netTurnover,
@@ -791,6 +796,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						OR Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
 						OR Bettype BETWEEN 3300 AND 3399   -- BBIN	
 						OR Bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
+						OR Bettype BETWEEN 5500 AND 5599   -- RNG War	
 						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
@@ -838,6 +844,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			WHEN Bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
+			WHEN Bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -890,6 +897,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			WHEN Bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
+			WHEN Bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*mpositiontaking)) AS netTurnover,
@@ -912,6 +920,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						OR Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
 						OR Bettype BETWEEN 3300 AND 3399   -- BBIN	
 						OR Bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
+						OR Bettype BETWEEN 5500 AND 5599   -- RNG War	
 						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
@@ -959,6 +968,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			WHEN Bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
+			WHEN Bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
@@ -1011,6 +1021,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			WHEN Bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
+			WHEN Bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 			ELSE 0 END sporttype,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END bettype,
 		sum(ABS(stake*spositiontaking)) AS netTurnover,
@@ -1033,6 +1044,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						OR Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
 						OR Bettype BETWEEN 3300 AND 3399   -- BBIN
 						OR Bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino						
+						OR Bettype BETWEEN 5500 AND 5599   -- RNG War	
 						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
@@ -1080,6 +1092,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN Bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 			WHEN Bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
 			WHEN Bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
+			WHEN Bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 			ELSE 0 END,
 		CASE WHEN bettype IN (71,72) THEN bettype ELSE 0 END
 
