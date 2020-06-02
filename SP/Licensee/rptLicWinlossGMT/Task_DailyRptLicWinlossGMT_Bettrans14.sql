@@ -1,35 +1,39 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
+
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinlossGMT_Bettrans14]
-	@FromDate SMALLDATETIME,
-	@ToDate	SMALLDATETIME = NULL,
-	@TimeZone SMALLINT = NULL
-AS  
-/*  
+	@FromDate	SMALLDATETIME,
+	@ToDate		SMALLDATETIME	= NULL,
+	@TimeZone	SMALLINT		= NULL
+AS
+
+/*
 	Created: 20171130@Sophia
 	Task: Daily summary for RptLicWinlossGMT from bettrans14
 	DB: DBLIC.bodb_LicenseeReport
-	Revisions:  
-	- 20171130@Sophia: initial data. Apply for Sportsbook first [redmine: #84932]
-	- 20180806@Amanda: support GMT +7 [redmine: #95878]
-	- 20181019@Amanda: Add new bet types for E-Sports 2.0 [RedmineID: #100721]
-	- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
-	- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
-	- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]
-	- 20190903@Amanda: Add betfrom Deep Link(t) [RedmineID: #119010]
-	- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
-	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
-	- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_bk [RedmineID: #103656]
-	- 20191219@Amanda: Add betfrom v [RedmineID: #125553]
-	- 20191226@Vickie: Add platform 0 [RedmineID: #125824]
-	- 20200228@Vickie: Integrate 3 new betfrom [Redmine: #129253]
-	- 20200508@Vickie: Add new bet types for E-Sports 2.0 [RedmineID: #132548]
-	
+
+	Revisions:
+		- 20171130@Sophia: initial data. Apply for Sportsbook first [redmine: #84932]
+		- 20180806@Amanda: support GMT +7 [redmine: #95878]
+		- 20181019@Amanda: Add new bet types for E-Sports 2.0 [RedmineID: #100721]
+		- 20181113@Joseph: New betfrom Mobile App (o) [RedmineID: #104587]
+		- 20181211@Joseph: New betfrom Mobile China View (c) [RedmineID: #106088]
+		- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]
+		- 20190903@Amanda: Add betfrom Deep Link(t) [RedmineID: #119010]
+		- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
+		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
+		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_bk [RedmineID: #103656]
+		- 20191219@Amanda: Add betfrom v [RedmineID: #125553]
+		- 20191226@Vickie: Add platform 0 [RedmineID: #125824]
+		- 20200228@Vickie: Integrate 3 new betfrom [Redmine: #129253]
+		- 20200508@Vickie: Add new bet types for E-Sports 2.0 [RedmineID: #132548]
+
 	EXEC Task_DailyRptLicWinlossGMT_Bettrans14 '2017-11-30'
-*/  
+*/
+
 BEGIN
 	SET NOCOUNT ON
 
-    IF @ToDate IS NULL
+	IF @ToDate IS NULL
 	BEGIN
 		SET @ToDate = @FromDate
 	END
@@ -40,12 +44,12 @@ BEGIN
 	IF @TimeZone IS NULL
 	BEGIN
 		INSERT INTO @TimeZones(TimeZone)
-		VALUES(8),(7)
+		VALUES (8),(7)
 	END
 	ELSE
 	BEGIN
 		INSERT INTO @TimeZones(TimeZone)
-		VALUES(@TimeZone)
+		VALUES (@TimeZone)
 	END
 
 	DECLARE @RecordID TINYINT = 1,
@@ -66,8 +70,8 @@ BEGIN
 			WHERE RptDate = @RptDate
 				AND TimeZone = @ProcessingTimeZone
 
-			--Member Level  
-			INSERT INTO dbo.rptLicWinlossGMT(  
+			-- Member Level
+			INSERT INTO dbo.rptLicWinlossGMT(
 				TimeZone
 				,RptDate
 				,RptDateGMT
@@ -101,8 +105,8 @@ BEGIN
 				,Betfrom
 			  )  
 			SELECT 
-				@ProcessingTimeZone AS TimeZone	
-				,b.winlostdate    
+				@ProcessingTimeZone AS TimeZone
+				,b.winlostdate
 				,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate))) AS RptDateGMT
 				,c.username  
 				,c.username2  
@@ -114,89 +118,88 @@ BEGIN
 				,0 AS Bettype
 				,0 AS Sporttype
 				,0 AS ProductId
-				,SUM(ABS(b.stake)) AS TurnOver  
-				,SUM(winlost-actual_stake) winlost  		
+				,SUM(ABS(b.stake)) AS TurnOver
+				,SUM(winlost-actual_stake) winlost
 				,SUM(awinlost) awinlost  
 				,SUM(mwinlost) mwinlost  
-				,SUM(ISNULL(swinlost,0)) swinlost  
-				,CASE WHEN b.statusID IN (112,113)   
-					THEN SUM(ABS(winlost-actual_stake))   
+				,SUM(ISNULL(swinlost,0)) swinlost
+				,CASE WHEN b.statusID IN (112,113)
+					THEN SUM(ABS(winlost-actual_stake))
 					ELSE 0  
-					END BetEffective   
-				,SUM(playercomm) playercomm  
+					END BetEffective
+				,SUM(playercomm) playercomm
 				,SUM(comm) comm  
 				,SUM(acomm) acomm  
-				,SUM(ISNULL(scomm,0)) scomm  
-				,SUM((winlost - actual_stake)*virtualrate) AS WinlostVirtual  
-				,SUM((comm)*virtualrate) AS CommVirtual  
-				,COUNT(b.transid) BetCount  
+				,SUM(ISNULL(scomm,0)) scomm
+				,SUM((winlost - actual_stake)*virtualrate) AS WinlostVirtual
+				,SUM((comm)*virtualrate) AS CommVirtual
+				,COUNT(b.transid) BetCount
 				,b.currency  
-				--114: half win, 115: half lose  
+				--114: half win, 115: half lose
 				,CASE
 					WHEN b.winlostdate >= @HWHLCutDate AND b.statusID IN(112,113) AND b.modds IN (-0.25, 0.25) AND b.bettype NOT IN (29,38)
 					THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
 					WHEN  b.winlostdate < @HWHLCutDate AND b.statusID IN(112,113) AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
 					THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END  
-					ELSE b.statusID END AS statusID  
+					ELSE b.statusID END AS statusID
 				,CASE   
-					WHEN BA.transid IS NULL THEN 0  
+					WHEN BA.transid IS NULL THEN 0
 					WHEN BA.transid IS NOT NULL THEN 1 END AS isBA  
-				,CASE   
-					WHEN b.betfrom IN ('s','m','l','r','o','c','2') THEN 1 ELSE 0 END AS isMobile   
-				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN b.betfrom ELSE '' END AS betfrom   		
+				,CASE
+					WHEN b.betfrom IN ('s','m','l','r','o','c','2') THEN 1 ELSE 0 END AS isMobile
+				,CASE
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN b.betfrom ELSE '' END AS betfrom
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 				LEFT JOIN bodb02.dbo.Match14 m WITH (NOLOCK)
 					ON m.MatchId = b.MatchId
-				INNER JOIN bodb02.dbo.Dep_CustSuper s WITH (NOLOCK) 
+				INNER JOIN bodb02.dbo.Dep_CustSuper s WITH (NOLOCK)
 					ON b.srecommend = s.CustId
-				INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) 
+				INNER JOIN bodb02.dbo.customer c WITH (NOLOCK)
 					ON b.custid = c.custid
 				LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_bk BA WITH (NOLOCK) 
-					ON b.transid = BA.transid 	 
-			WHERE  
-					 b.Winlostdate = @RptDate   
-					AND b.statusID IN (101,111,112,113)  --REJECT, DRAW, WON, LOSE  
-					AND b.bettype <= 19999   
-					AND c.roleid = 1 	 
-					AND (
-							b.bettype < 31
-							OR b.bettype BETWEEN 121 AND 999
-							OR b.Bettype BETWEEN 1301 and 1399 --new tennis's bettypes
-							OR b.Bettype BETWEEN 9001 and 9399 -- E-Sports 2.0
-							OR b.bettype = 38 -- BetBuilder
-						)
-					AND (b.bettype < 901 OR b.bettype > 904)
-					AND (b.bettype < 911 OR b.bettype > 914) 		 			 
-			 
+					ON b.transid = BA.transid
+			WHERE
+				b.Winlostdate = @RptDate
+				AND b.statusID IN (101,111,112,113)  --REJECT, DRAW, WON, LOSE  
+				AND b.bettype <= 19999
+				AND c.roleid = 1
+				AND (
+						b.bettype < 31
+						OR b.bettype BETWEEN 121 AND 999
+						OR b.Bettype BETWEEN 1301 AND 1399 --new tennis's bettypes
+						OR b.Bettype BETWEEN 9001 AND 9399 -- E-Sports 2.0
+						OR b.bettype = 38 -- BetBuilder
+					)
+				AND (b.bettype < 901 OR b.bettype > 904)
+				AND (b.bettype < 911 OR b.bettype > 914)
 			GROUP BY 
 				b.winlostdate
 				,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate)))
-				,c.username  
-				,c.username2  
-				,c.custid 
-				,c.recommend  
-				,c.mrecommend  
-				,c.srecommend 
-				,b.currency  
+				,c.username
+				,c.username2
+				,c.custid
+				,c.recommend
+				,c.mrecommend
+				,c.srecommend
+				,b.currency
 				,b.StatusId
-				--114: half win, 115: half lose  
+				--114: half win, 115: half lose
 				,CASE
 					WHEN b.winlostdate >= @HWHLCutDate AND b.statusID IN(112,113) AND b.modds IN (-0.25, 0.25) AND b.bettype NOT IN (29,38)
 					THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
 					WHEN  b.winlostdate < @HWHLCutDate AND b.statusID IN(112,113) AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
 					THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END  
 					ELSE b.statusID END 
-				,CASE   
-					WHEN BA.transid IS NULL THEN 0  
-					WHEN BA.transid IS NOT NULL THEN 1 END  
-				,CASE   
+				,CASE
+					WHEN BA.transid IS NULL THEN 0
+					WHEN BA.transid IS NOT NULL THEN 1 END
+				,CASE
 					WHEN b.betfrom IN ('s','m','l','r','o','c','2') THEN 1 ELSE 0 END  
-				,CASE      
+				,CASE
 					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN b.betfrom ELSE '' END
 
-			--Agent Level (sum on member)  
-			INSERT INTO dbo.rptLicWinlossGMT (  
+			--Agent Level (sum on member)
+			INSERT INTO dbo.rptLicWinlossGMT (
 				TimeZone
 				,RptDate
 				,RptDateGMT
@@ -219,7 +222,7 @@ BEGIN
 				,playercomm
 				,Comm
 				,AComm
-				,SComm		
+				,SComm
 				,WinlostVirtual
 				,CommVirtual
 				,BetCount
@@ -228,8 +231,8 @@ BEGIN
 				,IsBA
 				,IsMobile
 				,Betfrom
-			)  
-			SELECT  
+			)
+			SELECT
 				b.TimeZone
 				,b.RptDate
 				,b.RptDateGMT
@@ -252,7 +255,7 @@ BEGIN
 				,SUM(b.playercomm)
 				,SUM(b.Comm)
 				,SUM(b.AComm)
-				,SUM(b.SComm)	
+				,SUM(b.SComm)
 				,SUM(b.WinlostVirtual)
 				,SUM(b.CommVirtual)
 				,SUM(b.BetCount)
@@ -262,12 +265,12 @@ BEGIN
 				,b.IsMobile
 				,b.Betfrom
 			FROM  
-				dbo.rptLicWinlossGMT b WITH (NOLOCK)  
-				INNER JOIN bodb02.dbo.customer c (nolock) ON b.recommend = c.custid  
-			WHERE b.RptDate = @RptDate  
+				dbo.rptLicWinlossGMT b WITH (NOLOCK)
+				INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.recommend = c.custid  
+			WHERE b.RptDate = @RptDate
 				AND b.TimeZone = @ProcessingTimeZone
-				AND b.roleid = 1  
-				AND c.roleid = 2 
+				AND b.roleid = 1
+				AND c.roleid = 2
 			GROUP BY
 				b.TimeZone
 				,b.RptDate
@@ -292,6 +295,5 @@ BEGIN
 
 		SET @RecordID = @RecordID + 1
 	END
- 
 END
 GO
