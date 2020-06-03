@@ -1,12 +1,10 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_LicenseeReport]
-GO
-
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" sFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 	@FromDate SMALLDATETIME = NULL
 	, @ToDate SMALLDATETIME = NULL
 	, @Step TINYINT = 0
 	, @AllowCorrect BIT = 0
+AS
 
 /* 
 	Created by: 20170525@Sophia
@@ -26,11 +24,12 @@ ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 		- 20180423@Percy: Remove logic check MB (job handle), update statistics bettrans14 [RedmineID: #94129]
 		- 20181109@bruce: clear code keno winloss [#103958]
 		- 20190627@Percy: Remove paul.tran@starixsoft.com from mail recipient [RedmineID: #115768]
+		- 20200601@Percy: Add table rpt_CustomerWL_ExtraGMT [RedmineID: #134867]
 
 	EXEC Task_rptBetting_CheckData_Job @FromDate = '2018-04-01', @ToDate = '2018-04-10', @Step = 0,  @AllowCorrect = 1
     
 */  
-AS 
+
 BEGIN 	
 	SET NOCOUNT ON   
 
@@ -85,12 +84,12 @@ BEGIN
 
 	DECLARE @Subject VARCHAR(1000) = '', @ErrorMessage VARCHAR(MAX) = '', 
 			@ErrorMsgStaging VARCHAR(500) = '',
-			@GenExtraGMT TINYINT = 0,
+			@GenExtraGMT TINYINT = 0, @GenCustomerExtraGMT TINYINT = 0,
 			@GenRptBetting TINYINT = 0, @GenRptBettingBA TINYINT = 0, 
 			@GenRptLicCashout TINYINT = 0, @GenRptBettingBySport TINYINT = 0,
 			@GenAGC TINYINT = 0, @Gen3rdParty TINYINT = 0, @SeparatedProductID TINYINT,
 			@BalanceUpDay SMALLDATETIME,
-			@ExtraGMTBetTypes VARCHAR(MAX),
+			@ExtraGMTBetTypes VARCHAR(MAX), @ExtraCustomerGMTBetTypes VARCHAR(MAX),
 			@BettingBetTypes VARCHAR(MAX), @BettingBABetTypes VARCHAR(MAX),
 			@3rdProducts VARCHAR(MAX), @IsParLay VARCHAR(20)
 
@@ -119,6 +118,8 @@ BEGIN
 
 			EXEC dbo.Task_rptBettingBySport_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptBettingBySport OUTPUT, @IsParLay = @IsParLay OUTPUT
 
+			EXEC dbo.Task_rpt_CustomerWL_ExtraGMT_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenCustomerExtraGMT OUTPUT, @BetTypes = @ExtraCustomerGMTBetTypes OUTPUT
+
 			-----1.2 Correct data
 			IF @AllowCorrect = 1
 			BEGIN 
@@ -130,6 +131,11 @@ BEGIN
 				IF @GenRptBettingBySport <> 0
 				BEGIN
 					EXEC dbo.GEN_rptBettingBySport14 @Date = @WinlostDate
+				END
+
+				IF @GenCustomerExtraGMT <> 0
+				BEGIN
+					EXEC dbo.Task_rpt_CustomerWL_ExtraGMT @winlostdate = @WinlostDate
 				END
 			END
 
@@ -151,6 +157,16 @@ BEGIN
 							WHEN 1 THEN ''
 							WHEN 2 THEN '(UUS only) '
 						END + 'Has data mismatch between rpt_BettingBySport table and source with kind of ticket is: (' + @IsParLay + ' ticket)'
+			END
+
+			IF @GenCustomerExtraGMT <> 0
+			BEGIN
+				INSERT INTO @ErrMsgTab (Date, ErrMsg)
+				SELECT	@WinlostDate,
+						CASE @GenCustomerExtraGMT
+							WHEN 1 THEN ''
+							WHEN 2 THEN '(UUS only) '
+						END + 'Has data mismatch between rpt_CustomerWL_ExtraGMT table and source with bettypes (' + @ExtraCustomerGMTBetTypes + ')'
 			END
 		END 
 		
