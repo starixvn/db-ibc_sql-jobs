@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20200520@Percy: Initialize SP [RedmineID: #133254]
+		- 20200604@Percy: Add new columns TpUserName, TpSystemUserName [RedmineID: #135372]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -37,19 +38,23 @@ BEGIN
 
 	CREATE TABLE #tmpCustomer
 	(
-		CustId			INT NOT NULL
-		,SiteId			INT NOT NULL
-		,UserName		VARCHAR(30)
-		,CurrencyId		INT
-		,UserLang		VARCHAR(4)
-		,ActStatus		TINYINT
-		,AgentId		INT
-		,AllAgentId		NVARCHAR(MAX)
-		,UserLevel		TINYINT
-		,RegTime		DATETIME
-		,IsTest			TINYINT
-		,Status			TINYINT
-		,DataType		TINYINT -- 0: update, 1: insert
+		CustId				INT NOT NULL
+		,SiteId				INT NOT NULL
+		,UserName			VARCHAR(30)
+		,SiteName			VARCHAR(50)
+		,LicenseeName		VARCHAR(50)
+		,CurrencyId			INT
+		,UserLang			VARCHAR(4)
+		,ActStatus			TINYINT
+		,AgentId			INT
+		,AllAgentId			NVARCHAR(MAX)
+		,UserLevel			TINYINT
+		,RegTime			DATETIME
+		,IsTest				TINYINT
+		,Status				TINYINT
+		,TpUserName			VARCHAR(50)
+		,TpSystemUserName	VARCHAR(50)
+		,DataType			TINYINT -- 0: update, 1: insert
 		,PRIMARY KEY (CustId)
 	)
 
@@ -110,6 +115,20 @@ BEGIN
 				FROM @XmlData.nodes('root/row') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
+				-- Update SiteName, LicenseeName
+				UPDATE t
+				SET t.SiteName = s.SiteName
+					,t.LicenseeName = s.LicenseeName
+				FROM #tmpCustomer t
+					INNER JOIN dbo.ServerInfo s WITH (NOLOCK) ON t.SiteId = s.SiteId
+				
+				-- Update TpUserName, TpSystemUserName
+				UPDATE t
+				SET	t.TpUserName = t.SiteName  + '_' + CONVERT(VARCHAR(20), t.custid)
+					,t.TpSystemUserName = c.username
+				FROM #tmpCustomer t
+					INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.LicenseeName + '$' + t.SiteName + '_' + CONVERT(VARCHAR(20), t.custid) = c.username2 
+				
 				-- Update DataType
 				UPDATE t
 				SET t.DataType = CASE
@@ -129,6 +148,8 @@ BEGIN
 					OR ISNULL(t.RegTime, '') <> ISNULL(b.RegTime, '')
 					OR ISNULL(t.IsTest, 0) <> ISNULL(b.IsTest, 0)
 					OR ISNULL(t.Status, 0) <> ISNULL(b.Status, 0)
+					OR ISNULL(t.TpUserName, '') <> ISNULL(b.TpUserName, '')
+					OR ISNULL(t.TpSystemUserName, '') <> ISNULL(b.TpSystemUserName, '')
 				
 				IF @@ROWCOUNT <> 0
 				BEGIN
@@ -147,6 +168,8 @@ BEGIN
 							,b.RegTime = t.RegTime
 							,b.IsTest = t.IsTest
 							,b.Status = t.Status
+							,b.TpUserName = t.TpUserName
+							,b.TpSystemUserName = t.TpSystemUserName
 						FROM dbo.Customer b
 							INNER JOIN #tmpCustomer t ON b.CustId = t.CustId
 						WHERE t.DataType = 0
@@ -169,6 +192,8 @@ BEGIN
 							,RegTime
 							,IsTest
 							,Status
+							,TpUserName
+							,TpSystemUserName
 						)
 						SELECT
 							CustId
@@ -183,6 +208,8 @@ BEGIN
 							,RegTime
 							,IsTest
 							,Status
+							,TpUserName
+							,TpSystemUserName
 						FROM #tmpCustomer
 						WHERE DataType = 1
 					END
