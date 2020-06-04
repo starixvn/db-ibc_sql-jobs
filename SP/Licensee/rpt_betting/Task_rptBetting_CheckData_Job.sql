@@ -25,6 +25,7 @@ AS
 		- 20181109@bruce: clear code keno winloss [#103958]
 		- 20190627@Percy: Remove paul.tran@starixsoft.com from mail recipient [RedmineID: #115768]
 		- 20200601@Percy: Add table rpt_CustomerWL_ExtraGMT [RedmineID: #134867]
+		- 20200603@Sophia: Auto regen full last month for separate wallet [redmine: #135309]
 
 	EXEC Task_rptBetting_CheckData_Job @FromDate = '2018-04-01', @ToDate = '2018-04-10', @Step = 0,  @AllowCorrect = 1
     
@@ -33,31 +34,52 @@ AS
 BEGIN 	
 	SET NOCOUNT ON   
 
-	DECLARE @MoveBetSchedule TABLE(RowId TINYINT IDENTITY(1,1), ScheduleId TINYINT, MoveBetDay DATE)
+	DECLARE @MoveBetSchedule TABLE(ScheduleId TINYINT, MoveBetDay DATE)
+	DECLARE @WinlostDateList TABLE(RowId TINYINT IDENTITY(1,1), WinlostDate DATE)
 
 	DECLARE @RowId TINYINT, @WinlostDate SMALLDATETIME, 
-			@VValue TINYINT, 
-			@Tomorrow DATETIME, @Today DATETIME
+			@VValue TINYINT			
 	
-	SELECT @RowId = 1, @Tomorrow = DATEADD(dd, 1, CAST(GETDATE() AS DATE)), @Today = CAST(GETDATE() AS DATE)
-
+	SELECT @RowId = 1	
+	
+	DECLARE @Day TINYINT, @FirstDate DATE, @LastDate DATE, @MoveBetDays DATE, @isBT14 BIT = 0, @isFullLastMonth BIT = 0
+	SELECT @Day = DAY(GETDATE())
+	
+	INSERT INTO @MoveBetSchedule (ScheduleId, MoveBetDay)
+	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+	
+	
+	IF @Day <= 4 --- 1st -> 4th of the month
+	BEGIN 
+		SELECT @isFullLastMonth = 1
+			, @FirstDate = DATEADD(mm, DATEDIFF(mm, 0, GETDATE()) - 1, 0)  ----- FirstDayOfPreviousMonth 
+			, @LastDate = DATEADD(DAY, -(DAY(GETDATE())), GETDATE())   ----- LastDayOfPreviousMonth 
+		
+		SELECT @MoveBetDays = MAX(MoveBetDay) FROM @MoveBetSchedule
+		
+		SELECT @FromDate = @FirstDate 
+			, @ToDate = CASE WHEN @MoveBetDays > @LastDate THEN @MoveBetDays ELSE @LastDate END 
+			   
+	END
+	
 	IF @FromDate IS NULL AND @ToDate IS NULL
 	BEGIN 
-		INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
-		EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+		INSERT INTO @WinlostDateList(WinlostDate)
+		SELECT MoveBetDay FROM @MoveBetSchedule
+		
 	END 
 	ELSE
 	BEGIN 
 		WHILE @FromDate <= @ToDate
 		BEGIN 
-			INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
-			VALUES (0, @FromDate)
+			INSERT INTO @WinlostDateList( WinlostDate)
+			VALUES (@FromDate)
 			
 			SELECT @FromDate = @FromDate + 1
 		END
 	END 
 
-	IF NOT EXISTS (SELECT TOP 1 1 FROM @MoveBetSchedule)
+	IF NOT EXISTS (SELECT TOP 1 1 FROM @WinlostDateList)
 	BEGIN
 		RETURN  ---  move bet does not run
 	END
@@ -102,16 +124,19 @@ BEGIN
 	DELETE dbo.DataCheckingLog
 	WHERE WinlostDate < @BalanceUpDay
 
-	WHILE EXISTS (SELECT 1 FROM @MoveBetSchedule WHERE RowId = @RowId)
+	WHILE EXISTS (SELECT 1 FROM @WinlostDateList WHERE RowId = @RowId)
 	BEGIN
-		SELECT @WinlostDate = MoveBetDay FROM @MoveBetSchedule WHERE RowId = @RowId
+	    
+		SELECT @WinlostDate = WinlostDate FROM @WinlostDateList WHERE RowId = @RowId
 		SELECT @RowId = @RowId + 1
 
-		IF NOT EXISTS (SELECT TOP 1 1 FROM bodb02.dbo.bettrans14 WITH(NOLOCK) WHERE WinlostDate = @WinlostDate)
-			CONTINUE --does not exist data in bettrans 14
+		SELECT @isBT14 = 0 
+		
+		IF EXISTS (SELECT TOP 1 1 FROM bodb02.dbo.bettrans14 WITH(NOLOCK) WHERE WinlostDate = @WinlostDate)
+			SELECT @isBT14 = 1  -- exist data in bettrans 14
 					
 		--- Check and correct rpt_ThirdPartyWL_ExtraGMT tables
-		IF @Step IN (0,1)
+		IF (@Step IN (0,1) AND @isBT14 = 1)
 		BEGIN 			
 			------1.1 Check data mismatch
 			EXEC dbo.Task_rptThirdPartyWL_ExtraGMT_CheckData @WinlostDate = @WinlostDate, @HasDataMismatch = @GenExtraGMT OUTPUT, @BetTypes = @ExtraGMTBetTypes OUTPUT
@@ -171,7 +196,7 @@ BEGIN
 		END 
 		
 		----Check and correct rpt_betting, rpt_betting_BA, rptLicCashoutSummary, rpt_BettingBySport table (using Staging bettrans)
-		IF @Step IN (0,2)
+		IF (@Step IN (0,2) AND @isBT14 = 1)
 		BEGIN 		 
 			-----2.1. Staging bettrans table
 			EXEC dbo.Task_PrepareStaging @datefrom = @WinlostDate, @dateto = @WinlostDate , @ErrorMsg = @ErrorMsgStaging OUTPUT	
@@ -253,7 +278,7 @@ BEGIN
 		END 
 		
 		----3. Check and correct 3rdProduct table - AGC and GD Separate Wallet (not use staging bettrans) and Exchange (separate wallet)
-		IF @Step IN (0,3)
+		IF ( @Step IN (0,3) AND (@isBT14 = 1 OR @isFullLastMonth = 1))
 		BEGIN 		  
 			-----3.1 Check data mismatch  
 			EXEC dbo.Task_rptDepWinlost_AGCasino_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenAGC OUTPUT   ---- AGC
