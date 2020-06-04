@@ -18,13 +18,36 @@ BEGIN
 	DECLARE @winlostdate SMALLDATETIME, @ErrCode INT, @ErrMsg NVARCHAR(4000)
 	DECLARE @tblErrMsg TABLE (TableName VARCHAR(300), ErrMsg VARCHAR(4000))
 
-	-- rmSum_Winloss
+	DECLARE @MBSchedule TABLE (Id TINYINT, winlostdate SMALLDATETIME)
+	INSERT INTO @MBSchedule (Id, winlostdate)
+	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+
+	-- rmBettrans_Old
 	BEGIN
 		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
-		DECLARE @MBSchedule TABLE (Id TINYINT, winlostdate SMALLDATETIME)
-		INSERT INTO @MBSchedule (Id, winlostdate)
-		EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+		SELECT @FromDate = MIN(winlostdate), @ToDate = MAX(winlostdate) FROM @MBSchedule
+	
+		SELECT @winlostdate = @FromDate
+		WHILE  @winlostdate <= @ToDate
+		BEGIN
+			EXEC dbo.Task_RMS_CopyData_rmBettrans @winlostdate = @winlostdate, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+			IF @ErrCode > 0
+			BEGIN
+				INSERT INTO @tblErrMsg (TableName, ErrMsg)
+				SELECT 'rmBettrans_Old', 'From winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''' + ' - ' + ISNULL(@ErrMsg , '')
+
+				BREAK
+			END
+
+			SELECT @winlostdate = DATEADD(DAY, 1, @winlostdate)
+		END
+	END
+
+	-- rmSum_Winloss
+	BEGIN
+		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
 		SELECT @FromDate = MIN(winlostdate), @ToDate = MAX(winlostdate) FROM @MBSchedule
 	

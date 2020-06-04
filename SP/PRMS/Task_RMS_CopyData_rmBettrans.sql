@@ -17,11 +17,19 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	IF NOT EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE winlostdate = @winlostdate)
+	CREATE TABLE #TransId (transid BIGINT PRIMARY KEY)
+	INSERT INTO #TransId (transid)
+	SELECT transid FROM dbo.rmBettrans WITH (NOLOCK) WHERE winlostdate = @winlostdate
+
+	IF @@ROWCOUNT = 0
 		RETURN
 
 	IF EXISTS (SELECT 1 FROM dbo.rmBettrans_Old WITH (NOLOCK) WHERE winlostdate = @winlostdate)
 		DELETE dbo.rmBettrans_Old WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
+
+	DELETE o WITH (ROWLOCK, UPDLOCK)
+	FROM dbo.rmBettrans_Old o
+		INNER JOIN #TransId t ON o.transid = t.transid
 
 	BEGIN TRY
 		INSERT INTO dbo.rmBettrans_Old
@@ -40,8 +48,8 @@ BEGIN
 			,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 			,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
 			,balance,SecAcceptFlag,transid2,combo,odds2,TotalBet,epositiontaking
-		FROM dbo.rmBettrans WITH (NOLOCK)
-		WHERE winlostdate = @winlostdate
+		FROM dbo.rmBettrans r WITH (NOLOCK)
+		WHERE EXISTS (SELECT 1 FROM #TransId t WHERE r.transid = t.transid)
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = 101, @ErrMsg = ERROR_MESSAGE()
