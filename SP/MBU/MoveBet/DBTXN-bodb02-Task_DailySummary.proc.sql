@@ -676,8 +676,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						OR Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
 						OR Bettype BETWEEN 3300 AND 3399   -- BBIN	
 						OR Bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
-						OR Bettype BETWEEN 5601 AND 5699   -- ION
-						OR Bettype BETWEEN 5500 AND 5599   -- RNG War	 
+						OR Bettype BETWEEN 5601 AND 5699   -- ION 	 
 						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
@@ -801,8 +800,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						OR Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
 						OR Bettype BETWEEN 3300 AND 3399   -- BBIN	
 						OR Bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
-						OR Bettype BETWEEN 5601 AND 5699   -- ION
-						OR Bettype BETWEEN 5500 AND 5599   -- RNG War	
+						OR Bettype BETWEEN 5601 AND 5699   -- ION 
 						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
@@ -928,8 +926,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						OR Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
 						OR Bettype BETWEEN 3300 AND 3399   -- BBIN	
 						OR Bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
-						OR Bettype BETWEEN 5601 AND 5699   -- ION
-						OR Bettype BETWEEN 5500 AND 5599   -- RNG War	
+						OR Bettype BETWEEN 5601 AND 5699   -- ION 
 						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
@@ -1056,7 +1053,7 @@ INSERT INTO dbo.sum_winloss_tmp
 						OR Bettype BETWEEN 3300 AND 3399   -- BBIN
 						OR Bettype BETWEEN 5601 AND 5699   -- ION
 						OR Bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino						
-						OR Bettype BETWEEN 5500 AND 5599   -- RNG War	
+						OR Bettype BETWEEN 5601 AND 5699   -- ION 	
 						THEN oddsspread
 					ELSE ABS(stake) 
 				END) AS TurnoverNoDraw
