@@ -4,6 +4,7 @@ ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 	, @ToDate SMALLDATETIME = NULL
 	, @Step TINYINT = 0
 	, @AllowCorrect BIT = 0
+	, @IsManual BIT = 0
 AS
 
 /* 
@@ -49,7 +50,7 @@ BEGIN
 	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
 	
 	
-	IF @Day <= 4 --- 1st -> 4th of the month
+	IF @IsManual = 0 AND @Day <= 4 ----- 1st -> 4th beginning of the month, will generate data of last month
 	BEGIN 
 		SELECT @isFullLastMonth = 1
 			, @FirstDate = DATEADD(mm, DATEDIFF(mm, 0, GETDATE()) - 1, 0)  ----- FirstDayOfPreviousMonth 
@@ -75,7 +76,7 @@ BEGIN
 			INSERT INTO @WinlostDateList( WinlostDate)
 			VALUES (@FromDate)
 			
-			SELECT @FromDate = @FromDate + 1
+			SELECT @FromDate = DATEADD(DD, 1, @FromDate)
 		END
 	END 
 
