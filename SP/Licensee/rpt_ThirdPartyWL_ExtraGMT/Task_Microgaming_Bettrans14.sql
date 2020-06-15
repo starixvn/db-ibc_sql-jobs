@@ -19,6 +19,7 @@ AS
 	 - 20190321@Joseph: Remove Microgaming LC + RNG [RedmineID: #107704]
 	 - 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 	 - 20200508@Parsons: Integrate Sexy Gaming for deposit licensees [RedmineID: #132665]
+	 - 20200615@Parsons: SA gaming report (GMT+8) [#134452]
 	 Param's Explanation:
 */
 
@@ -95,6 +96,7 @@ BEGIN
 			AND (
 					b.gameID BETWEEN 2401 AND 2499 -- AllBet
 				OR  b.gameID BETWEEN 3101 AND 3199 -- SXG
+				OR  b.gameID BETWEEN 3001 AND 3099 -- SAG
 				)
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID
 			, b.currency, b.statusID	
