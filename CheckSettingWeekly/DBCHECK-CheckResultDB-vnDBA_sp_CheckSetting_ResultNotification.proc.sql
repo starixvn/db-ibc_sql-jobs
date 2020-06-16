@@ -789,9 +789,9 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 	WHERE	IsDeposit = 0
 		AND	IsCN88 = 0;
 
-	UPDATE	StarixDB.dbo.vnDBA_Restore_CheckCustDB_History
-	SET		BetLimitResult = @countBetLimitCredit + @countBetLimitDeposit + @countBetLimitCN88
-	WHERE	LogDate = @LogDate;
+	--UPDATE	StarixDB.dbo.vnDBA_Restore_CheckCustDB_History
+	--SET		BetLimitResult = @countBetLimitCredit + @countBetLimitDeposit + @countBetLimitCN88
+	--WHERE	LogDate = @LogDate;
 
 	IF	@countWinLimit <= @rowLimited
 	BEGIN
@@ -1785,13 +1785,13 @@ Check Setting Result:' + ISNULL(N'
 									THEN 1 ELSE 2 END
 			;
 
-		--EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage
-		--			@ServerName	= @@SERVERNAME
-		--		,	@JobId		= NULL
-		--		,	@JobName	= @subject
-		--		,	@Message	= @html
-		--		,	@CaseId		= @case
-		--		;
+		EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage
+					@ServerName	= @@SERVERNAME
+				,	@JobId		= NULL
+				,	@JobName	= @subject
+				,	@Message	= @html
+				,	@CaseId		= @case
+				;
 	END;
 
 	DROP TABLE	#CheckResultPT
