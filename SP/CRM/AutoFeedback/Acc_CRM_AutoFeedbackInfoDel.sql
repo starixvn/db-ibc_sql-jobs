@@ -9,6 +9,7 @@ AS
 
 	Revisions:
 		- 20200520@Johnson: Initial sp [redmine:#134220]
+		- 20200615@Johnson: check missing feedback [redmine:#135719]
 	Param's Explanation:		
 */
 BEGIN
@@ -43,4 +44,8 @@ BEGIN
 			INNER JOIN @tmp t ON c.MessageID = t.MessageID
 								AND c.CustID = t.CustID
 	END
+	
+	DELETE crmMessageImport WITH(UPDLOCK,ROWLOCK)
+	WHERE CreatedDate < @fromdate
+	
 END	
