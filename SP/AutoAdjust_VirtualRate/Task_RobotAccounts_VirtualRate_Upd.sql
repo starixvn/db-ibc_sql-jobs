@@ -148,7 +148,7 @@ BEGIN
 			, @SportType = 2
 			, @VirtualMultiplier = @VirtualMultiplier
 			, @UserID  = 862400--Starix2
-			, @IP  = '0.0.0.0'
+			, @IP  = ''
 			, @ErrCode = 0 
 			, @ErrMsg = '' 
 		
