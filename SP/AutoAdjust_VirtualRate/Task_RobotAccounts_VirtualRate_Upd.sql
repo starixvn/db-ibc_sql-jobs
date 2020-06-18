@@ -151,6 +151,7 @@ BEGIN
 			, @IP  = ''
 			, @ErrCode = 0 
 			, @ErrMsg = '' 
+			, @IsManualUpdate = 1
 		
 		WAITFOR DELAY '0:0:0.002'
 		
