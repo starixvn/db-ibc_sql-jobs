@@ -1,4 +1,4 @@
-/*<info serverAlias="DBRPT-bodb_Report" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBRPT-bodb_Report" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailyRptStatement_CheckData]
 	@WinlostDate		DATE
 	,@isCheckDataOnly	BIT = 1
@@ -24,6 +24,7 @@ AS
 		- 20190912@Bobby: Implement headline - Statement [Redmine: #119289]
 		- 20191111@Bobby: Correct BU rule - Statement [Redmine: #119289]
 		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
+		- 20200619@Percy: Correct OpeningBalance on winlostdate = saturday [RedmineID: #134251]
 */
 BEGIN
 
@@ -216,17 +217,16 @@ BEGIN
 		-- The BU date & next Saturday in rptStatement
 		SELECT @_Saturday = DATEADD (DD, 7-DATEPART(DW, @CurrentBU_Date), @CurrentBU_Date)
 		
-		IF (@_Winlostdate BETWEEN @CurrentBU_Date AND @_Saturday)	
+		IF @_Winlostdate BETWEEN @CurrentBU_Date AND @_Saturday -- Friday & Saturday
 		BEGIN			
 			INSERT #rptOpenningBalanceTable (custid, winlost)
 			SELECT custid, winlost
 			FROM (
 				SELECT rpt.custid
-					, rpt.OpeningBalance AS winlost
+					, CASE WHEN rpt.winlostdate < @_Winlostdate THEN rpt.ClosingBalance ELSE rpt.OpeningBalance END AS winlost
 					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate ASC) AS Num
 				FROM dbo.rptStatement rpt WITH(NOLOCK)
-				WHERE rpt.winlostdate >= @_Winlostdate AND rpt.winlostdate <= @_Saturday
-						
+				WHERE rpt.winlostdate >= @CurrentBU_Date AND rpt.winlostdate <= @_Saturday
 			) AS tmp 
 			WHERE tmp.Num = 1
 		END
