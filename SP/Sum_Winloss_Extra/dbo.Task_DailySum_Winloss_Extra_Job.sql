@@ -50,7 +50,7 @@ BEGIN
 		WHILE @Retry <= @MaxRetry
 		BEGIN
 			BEGIN TRY
-				EXEC dbo.Task_DailySum_Winloss_Extra @winlostdate = @WinlostDate
+				EXEC dbo.Task_DailySum_Winloss_Extra @winlostdate = @WinlostDate, @ProductIds = '46'
 				SET @HasError = 0
 				BREAK
 			END TRY
