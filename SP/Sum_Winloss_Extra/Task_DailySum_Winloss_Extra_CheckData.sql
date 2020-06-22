@@ -107,13 +107,13 @@ BEGIN
 		)
 		SELECT
 			@WinlostDate, 
-			c.custid,
+			custid,
 			b.ProductId,
 			CASE WHEN bt.bettype IN (71, 72) THEN bt.bettype ELSE  0 END Bettype,
 			1,
-		    c.recommend,
-		    c.mrecommend,
-			c.srecommend,
+		    recommend,
+		    mrecommend,
+			srecommend,
 			COUNT(1) BetCount,
 			SUM(ABS(bt.stake)) TurnOver,
 			0 AS NetTurnOver,
@@ -144,7 +144,7 @@ BEGIN
 			SUM(awinlost) AgWinLoss,
 			SUM(mwinlost) MAgWinLoss,
 			SUM(ISNULL(swinlost,0)) SAgWinLoss,
-			SUM(winlost * epositiontaking) - SUM(actual_stake * epositiontaking) ExtraWinloss,
+			SUM((winlost - actual_stake) * epositiontaking) ExtraWinloss,
 			SUM(playercomm)  PlayerComm,
 			SUM(comm) - SUM(playercomm) AgComm,
 			SUM(acomm) - SUM(comm) MAgComm,
@@ -153,11 +153,10 @@ BEGIN
 			SUM(CASE WHEN apositiontaking = 1 THEN 0 ELSE ISNULL(comm/(1-apositiontaking),0) END) GrossComm			
 		FROM bodb02.dbo.bettrans14 bt WITH(NOLOCK)
 			INNER JOIN @Bettype b ON bt.bettype = b.TypeId
-			INNER JOIN bodb02.dbo.Customer c WITH(NOLOCK) ON c.custid = bt.custid
 		WHERE bt.winlostdate = @WinlostDate 
 			AND bt.statusID NOT IN (0,1,102,101,103)
 			AND bt.bettype < 19000
-		GROUP BY c.custid, c.recommend, c.mrecommend, c.srecommend, b.ProductId,
+		GROUP BY custid, recommend, mrecommend, srecommend, b.ProductId,
 				CASE WHEN bettype IN (71, 72) THEN bettype ELSE 0 END
 	END
 	-- for agent, roleid = 2
