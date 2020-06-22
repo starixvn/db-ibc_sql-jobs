@@ -51,6 +51,7 @@ AS
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
+		- 20200622@Hogan: Integrate 3 new betfrom 4, 5, 6 [Redmine: #136107]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -189,11 +190,11 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END AS isBA
 		,CASE
-			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2') THEN 1
+			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2','5') THEN 1
 			ELSE 0
 		END AS isMobile 
 		,CASE
-			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN bettrans.betfrom
+			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6') THEN bettrans.betfrom
 			ELSE ''
 		END AS betfrom 
 		,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
@@ -276,11 +277,11 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END
 		,CASE
-			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2') THEN 1
+			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2','5') THEN 1
 			ELSE 0
 		END
 		,CASE
-			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3') THEN bettrans.betfrom
+			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6') THEN bettrans.betfrom
 			ELSE ''
 		END
 	OPTION (MAXDOP 8)
