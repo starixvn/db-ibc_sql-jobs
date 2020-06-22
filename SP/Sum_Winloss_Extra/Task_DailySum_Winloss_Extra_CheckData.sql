@@ -209,6 +209,7 @@ BEGIN
 			MRecommend,
 			SRecommend,
 			SUM(BetCount),
+			SUM(Turnover),
 			SUM(NetTurnoverSMA),
 			SUM(TunroverNoDraw),
 			SUM(WinLoss),
