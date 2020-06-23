@@ -4,8 +4,8 @@ GO
 
 CREATE PROCEDURE [dbo].[Task_DailySum_Winloss_Extra_CheckData]
 	@WinlostDate		SMALLDATETIME,
-	@IsCheckDataOnly	BIT = 0,
-	@ProductIds         VARCHAR(200) = '46'
+	@ProductIds         VARCHAR(MAX),
+	@IsCheckDataOnly	BIT = 0
 AS
 
 /*
@@ -22,7 +22,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 		
-	DECLARE @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME
+	DECLARE @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME	
 		
 	SELECT @MoveBetsDay = MAX(eventdate)
 	FROM bodb02.dbo.match14 WITH(NOLOCK)
@@ -41,12 +41,12 @@ BEGIN
 
 	INSERT INTO @Bettype
 	(
-		ProductId,
-		TypeId
+		TypeId,
+		ProductId
 	)
-	SELECT DISTINCT ProductID, BetType
+	SELECT DISTINCT BetType, ProductID
 	FROM bodb02.dbo.SportBettypeMatrix m WITH(NOLOCK)
-	WHERE ',' + @ProductIds + ',' LIKE '%,' + CONVERT(VARCHAR(10),m.ProductID) + ',%'
+	WHERE ',' + @ProductIds + ',' LIKE '%,' + CONVERT(VARCHAR(10), m.ProductId) + ',%'
 
 
 	/* Get data source */
@@ -63,7 +63,9 @@ BEGIN
 		BetCount			INT,
 		Turnover			MONEY,
 		NetTurnover         MONEY,
-		NetTurnoverSMA		MONEY,
+		NetTurnoverAg		MONEY,
+		NetTurnoverMAg		MONEY,
+		NetTurnoverSAg		MONEY,
 		TunroverNoDraw		MONEY,
 		WinLoss				MONEY,
 		AgWinLoss			MONEY,
@@ -76,9 +78,9 @@ BEGIN
 		SAgComm				MONEY,
 		ExtraComm			MONEY,
 		GrossComm			MONEY,
-		GrossCommAgent		MONEY,
-		GrossCommMaster		MONEY,
-		GrossCommSuper		MONEY
+		GrossCommAg			MONEY,
+		GrossCommMAg		MONEY,
+		GrossCommSAg		MONEY
 	)
 
 	-- for member , roleid = 1
@@ -96,7 +98,9 @@ BEGIN
 			BetCount,
 			Turnover,
 			NetTurnover,
-			NetTurnoverSMA,
+			NetTurnoverAg,
+			NetTurnoverMAg,
+			NetTurnoverSAg,
 			TunroverNoDraw,
 			WinLoss,
 			AgWinLoss,		
@@ -109,60 +113,40 @@ BEGIN
 			SAgComm,
 			ExtraComm,
 			GrossComm,
-			GrossCommAgent,
-			GrossCommMaster,
-			GrossCommSuper
+			GrossCommAg,
+			GrossCommMAg,
+			GrossCommSAg
 		)
 		SELECT
-			@WinlostDate, 
-			custid,
-			b.ProductId,
-			CASE WHEN bt.bettype IN (71, 72) THEN bt.bettype ELSE  0 END Bettype,
-			1,
-		    recommend,
-		    mrecommend,
-			srecommend,
-			COUNT(1) BetCount,
-			SUM(ABS(bt.stake)) TurnOver,
+			@WinlostDate AS WinlostDate, 
+			custid AS CustId,
+			b.ProductId AS ProductId,
+			CASE WHEN bt.bettype IN (71, 72) THEN bt.bettype ELSE  0 END AS Bettype,
+			1 AS RoleId,
+		    recommend AS recommend,
+		    mrecommend AS mrecommend,
+			srecommend AS srecommend,
+			COUNT(1) AS BetCount,
+			SUM(ABS(bt.stake)) AS TurnOver,
 			0 AS NetTurnOver,
-			SUM(ABS(stake * spositiontaking))  NetTurnOverSMA,
-			SUM( CASE	WHEN bt.StatusID IN (112,113) AND bt.MOdds IN (-0.25, 0.25) 
-							---- Sportsbook
-							AND (bt.Bettype < 999 OR bt.bettype BETWEEN 1301 AND 1399 OR bt.bettype BETWEEN 9001 AND 9399)
-							AND bt.Bettype NOT IN (71,72)
-							AND bt.Bettype NOT BETWEEN 81 AND 120			
-							THEN ABS(stake)/2
-						WHEN bt.StatusID = 111  
-							AND (
-								---- Sportsbook
-									(bt.Bettype < 999 OR bt.bettype BETWEEN 1301 AND 1399 OR bt.bettype BETWEEN 9001 AND 9399)
-									AND bt.Bettype NOT IN (71,72)
-									AND bt.Bettype NOT BETWEEN 81 AND 120
-							)
-							THEN 0
-						WHEN   bt.Bettype BETWEEN 2401 AND 2499   -- Allbet
-							OR bt.Bettype BETWEEN 3001 AND 3099   -- SA Gaming
-							OR bt.Bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
-							OR bt.Bettype BETWEEN 3300 AND 3399   -- BBIN	
-							OR bt.Bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
-							OR bt.Bettype BETWEEN 5601 AND 5699   -- ION 	 
-							THEN bt.oddsspread
-						ELSE ABS(bt.stake) 
-					END) AS TurnoverNoDrawm,
-			SUM(winlost-actual_stake)  Winlost,
-			SUM(awinlost) AgWinLoss,
-			SUM(mwinlost) MAgWinLoss,
-			SUM(ISNULL(swinlost,0)) SAgWinLoss,
-			SUM((winlost - actual_stake) * epositiontaking) ExtraWinloss,
-			SUM(playercomm)  PlayerComm,
-			SUM(comm) - SUM(playercomm) AgComm,
-			SUM(acomm) - SUM(comm) MAgComm,
-			SUM(scomm) - SUM(acomm) SAgComm,
-			-SUM(scomm) ExtraComm,
+			SUM(ABS(stake * apositiontaking)) AS NetTurnOverAg,
+			sum(ABS(stake * mpositiontaking)) AS NetTurnOverMAg,
+			SUM(ABS(stake * spositiontaking)) AS NetTurnOverSAg,
+			SUM(oddsspread) AS TurnoverNoDrawm,
+			SUM(winlost-actual_stake)  AS Winlost,
+			SUM(awinlost) AS AgWinLoss,
+			SUM(mwinlost) AS MAgWinLoss,
+			SUM(swinlost) AS AgWinLoss,
+			SUM((winlost - actual_stake) * epositiontaking) AS ExtraWinloss,
+			SUM(playercomm) AS PlayerComm,
+			SUM(comm) - SUM(playercomm) AS AgComm,
+			SUM(acomm) - SUM(comm) AS MAgComm,
+			SUM(scomm) - SUM(acomm) AS SAgComm,
+			-SUM(scomm) AS ExtraComm,
 			SUM(CASE WHEN apositiontaking = 1 THEN 0 ELSE ISNULL(comm/(1-apositiontaking),0) END) GrossComm,	
-			SUM(CASE WHEN apositiontaking+mpositiontaking = 1 THEN 0 ELSE ISNULL(acomm/(1-apositiontaking-mpositiontaking), 0) END) GrossCommAgent,
-			SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) GrossCommMaster,
-			SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) GrossCommSuper
+			SUM(CASE WHEN (apositiontaking+mpositiontaking) = 1 THEN 0 ELSE acomm/(1-apositiontaking-mpositiontaking) END) AS GrossCommAg,
+			SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) AS GrossCommMAg,
+			SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) AS GrossCommSAg
 		FROM bodb02.dbo.bettrans14 bt WITH(NOLOCK)
 			INNER JOIN @Bettype b ON bt.bettype = b.TypeId
 		WHERE bt.winlostdate = @WinlostDate 
@@ -210,7 +194,7 @@ BEGIN
 			SRecommend,
 			SUM(BetCount),
 			SUM(Turnover),
-			SUM(NetTurnoverSMA),
+			SUM(NetTurnoverAg),
 			SUM(TunroverNoDraw),
 			SUM(WinLoss),
 			SUM(AgWinLoss),		
@@ -222,7 +206,7 @@ BEGIN
 			SUM(MAgComm),
 			SUM(SAgComm),
 			SUM(ExtraComm),
-			SUM(GrossCommAgent)
+			SUM(GrossCommAg)
 		FROM #Sum_Winloss_Extra_Source
 		WHERE RoleID = 1
 		GROUP BY WinlostDate, Recommend, MRecommend, SRecommend,ProductId, Bettype
@@ -267,7 +251,7 @@ BEGIN
 			SRecommend,
 			SUM(BetCount),
 			SUM(Turnover),
-			SUM(NetTurnoverSMA),
+			SUM(NetTurnoverMAg),
 			SUM(TunroverNoDraw),
 			SUM(WinLoss),
 			SUM(AgWinLoss),		
@@ -279,7 +263,7 @@ BEGIN
 			SUM(MAgComm),
 			SUM(SAgComm),
 			SUM(ExtraComm),
-			SUM(GrossCommMaster)
+			SUM(GrossCommMAg)
 		FROM #Sum_Winloss_Extra_Source
 		WHERE RoleID = 1
 		GROUP BY WinlostDate, MRecommend, SRecommend,ProductId, Bettype
@@ -323,7 +307,7 @@ BEGIN
 			SRecommend,
 			SUM(BetCount),
 			SUM(Turnover),
-			SUM(NetTurnoverSMA),
+			SUM(NetTurnoverSAg),
 			SUM(TunroverNoDraw),
 			SUM(WinLoss),
 			SUM(AgWinLoss),		
@@ -335,7 +319,7 @@ BEGIN
 			SUM(MAgComm),
 			SUM(SAgComm),
 			SUM(ExtraComm),
-			SUM(GrossCommSuper)
+			SUM(GrossCommSAg)
 		FROM #Sum_Winloss_Extra_Source
 	    WHERE RoleID = 1
 		GROUP BY WinlostDate, SRecommend,ProductId, Bettype
