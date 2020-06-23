@@ -16,6 +16,7 @@ AS
 		- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader] table - [Redmine: #117014]
 		- 20190827@Billy:	Add [oddsOS] & [ResultDetailOS] tables - [Redmine: #119257]
 		- 20200504@Patrick: Add more field for oddsES/oddsES14/oddsES_bk - [Redmine: #133538]
+		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -126,6 +127,23 @@ WHERE	t1.eventdate = @winlostdate;'');';
 		EXECUTE	sys.sp_executesql @Query;
 	END;
 
+	---------------Table 5A: VSRaceInfo_bk --------------------
+	ELSE IF	@TableName = N'VSRaceInfo_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.VSRaceInfo_bk
+	(	[EventID], [EventTime], [LeagueID], [PayOut], [EachWay], [CourseName], [TrackType], [Distance], [Racers], [ForeCastPayout], [TriCastPayout], [CreateDate], [Calculate], [SportType], [ChangeTime], [EventStatus], [BetStatus])
+SELECT	[EventID], [EventTime], [LeagueID], [PayOut], [EachWay], [CourseName], [TrackType], [Distance], [Racers], [ForeCastPayout], [TriCastPayout], [CreateDate], [Calculate], [SportType], [ChangeTime], [EventStatus], [BetStatus]
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	[EventID], [EventTime], [LeagueID], [PayOut], [EachWay], [CourseName], [TrackType], [Distance], [Racers], [ForeCastPayout], [TriCastPayout], [CreateDate], [Calculate], [SportType], [ChangeTime], [EventStatus], [BetStatus]
+FROM	bodb02.dbo.VSRaceInfo14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT TOP 1 1 FROM bodb02.dbo.VSOutright14 o WITH(NOLOCK) WHERE t1.eventId = o.eventId AND o.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
 
 	---------------Table 5: VSOutright_bk --------------------
 	ELSE IF	@TableName = N'VSOutright_bk'
