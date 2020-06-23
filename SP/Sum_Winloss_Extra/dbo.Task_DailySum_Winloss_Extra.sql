@@ -29,11 +29,11 @@ BEGIN
 
 	CREATE TABLE #Sum_Winloss_Extra 
 	(
-		WinlostDate			DATETIME,
+		WinlostDate			SMALLDATETIME,
 		CustId				INT,
 		ProductId			SMALLINT,
 		Bettype				SMALLINT,
-		RoleID				INT,
+		RoleID				TINYINT ,
 		Recommend			INT,
 		MRecommend			INT,
 		SRecommend			INT,
@@ -43,7 +43,7 @@ BEGIN
 		NetTurnoverAg		MONEY,
 		NetTurnoverMAg		MONEY,
 		NetTurnoverSAg		MONEY,
-		TunroverNoDraw		MONEY,
+		TurnoverNoDraw		MONEY,
 		WinLoss				MONEY,
 		AgWinLoss			MONEY,
 		MAgWinLoss			MONEY,
@@ -77,7 +77,7 @@ BEGIN
 			NetTurnoverAg,
 			NetTurnoverMAg,
 			NetTurnoverSAg,
-			TunroverNoDraw,
+			TurnoverNoDraw,
 			WinLoss,
 			AgWinLoss,		
 			MAgWinLoss,
@@ -97,7 +97,7 @@ BEGIN
 			@WinlostDate AS WinlostDate, 
 			custid	AS CustId,
 			b.ProductId	AS ProductId,
-			CASE WHEN bt.bettype IN (71, 72) THEN bt.bettype ELSE  0 END AS Bettype,
+			0 AS Bettype,
 			1 AS RoleId,
 		    recommend AS recommend,
 		    mrecommend AS mrecommend,
@@ -108,7 +108,7 @@ BEGIN
 			SUM(ABS(stake * apositiontaking)) AS NetTurnoverAg,
 			sum(ABS(stake * mpositiontaking)) AS NetTurnoverMAg,
 			SUM(ABS(stake * spositiontaking)) AS NetTurnoverSAg,
-			SUM(CASE WHEN b.ProductId = 46 THEN bt.oddsspread ELSE ABS(stake) END) AS TurnoverNoDrawn,
+			SUM(CASE WHEN b.ProductId = 46 THEN bt.oddsspread ELSE ABS(stake) END) AS TurnoverNoDraw,
 			SUM(winlost-actual_stake) AS Winlost,
 			SUM(awinlost) AS AgWinLoss,
 			SUM(mwinlost) AS MAgWinLoss,
@@ -126,10 +126,8 @@ BEGIN
 		FROM bodb02.dbo.bettrans bt WITH(NOLOCK)
 			INNER JOIN #Bettype b ON bt.bettype = b.TypeId
 		WHERE bt.winlostdate = @WinlostDate 
-			AND bt.statusID NOT IN (0,1,102,101,103)
-			AND bt.bettype < 19000
-		GROUP BY custid, recommend, mrecommend, srecommend, b.ProductId,
-				CASE WHEN bettype IN (71, 72) THEN bettype ELSE 0 END
+			AND bt.statusID NOT IN (102,101,103)
+		GROUP BY custid, recommend, mrecommend, srecommend, b.ProductId
 	END
 	-- for agent, roleid = 2
 	BEGIN
@@ -146,7 +144,7 @@ BEGIN
 			BetCount,
 			Turnover,
 			NetTurnover,
-			TunroverNoDraw,
+			TurnoverNoDraw,
 			WinLoss,
 			AgWinLoss,		
 			MAgWinLoss,
@@ -171,7 +169,7 @@ BEGIN
 			SUM(BetCount),
 			SUM(Turnover),
 			SUM(NetTurnoverAg),
-			SUM(TunroverNoDraw),
+			SUM(TurnoverNoDraw),
 			SUM(WinLoss),
 			SUM(AgWinLoss),		
 			SUM(MAgWinLoss),
@@ -203,7 +201,7 @@ BEGIN
 			BetCount,
 			Turnover,
 			NetTurnover,
-			TunroverNoDraw,
+			TurnoverNoDraw,
 			WinLoss,
 			AgWinLoss,		
 			MAgWinLoss,
@@ -228,7 +226,7 @@ BEGIN
 			SUM(BetCount),
 			SUM(Turnover),
 			SUM(NetTurnoverMAg),
-			SUM(TunroverNoDraw),
+			SUM(TurnoverNoDraw),
 			SUM(WinLoss),
 			SUM(AgWinLoss),		
 			SUM(MAgWinLoss),
@@ -259,7 +257,7 @@ BEGIN
 			BetCount,
 			Turnover,
 			NetTurnover,
-			TunroverNoDraw,
+			TurnoverNoDraw,
 			WinLoss,
 			AgWinLoss,		
 			MAgWinLoss,
@@ -284,7 +282,7 @@ BEGIN
 			SUM(BetCount),
 			SUM(Turnover),
 			SUM(NetTurnoverSAg),
-			SUM(TunroverNoDraw),
+			SUM(TurnoverNoDraw),
 			SUM(WinLoss),
 			SUM(AgWinLoss),		
 			SUM(MAgWinLoss),
@@ -319,7 +317,7 @@ BEGIN
 				TARGET.Betcount			= SOURCE.Betcount,
 				TARGET.Turnover			= SOURCE.Turnover,
 				TARGET.NetTurnover		= SOURCE.NetTurnover,
-				TARGET.TunroverNoDraw	= SOURCE.TunroverNoDraw,
+				TARGET.TurnoverNoDraw	= SOURCE.TurnoverNoDraw,
 				TARGET.WinLoss			= SOURCE.WinLoss,
 				TARGET.AgWinLoss		= SOURCE.AgWinLoss,
 				TARGET.MAgWinLoss		= SOURCE.MAgWinLoss,
@@ -345,7 +343,7 @@ BEGIN
 					BetCount,
 					Turnover,
 					NetTurnover,
-					TunroverNoDraw,
+					TurnoverNoDraw,
 					WinLoss,
 					AgWinLoss,	
 					MAgWinLoss,
@@ -371,7 +369,7 @@ BEGIN
 					SOURCE.BetCount,
 					SOURCE.Turnover,
 					SOURCE.NetTurnover,
-					SOURCE.TunroverNoDraw,
+					SOURCE.TurnoverNoDraw,
 					SOURCE.WinLoss,
 					SOURCE.AgWinLoss,	
 					SOURCE.MAgWinLoss,

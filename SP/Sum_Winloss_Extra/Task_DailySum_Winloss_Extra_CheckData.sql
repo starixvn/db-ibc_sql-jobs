@@ -52,11 +52,11 @@ BEGIN
 	/* Get data source */
 	CREATE TABLE #Sum_Winloss_Extra_Source
 	(
-		WinlostDate			DATETIME,
+		WinlostDate			SMALLDATETIME,
 		CustId				INT,
 		ProductId			SMALLINT,
 		Bettype				SMALLINT,
-		RoleID				INT,
+		RoleID				TINYINT,
 		Recommend			INT,
 		MRecommend			INT,
 		SRecommend			INT,
@@ -121,7 +121,7 @@ BEGIN
 			@WinlostDate AS WinlostDate, 
 			custid AS CustId,
 			b.ProductId AS ProductId,
-			CASE WHEN bt.bettype IN (71, 72) THEN bt.bettype ELSE  0 END AS Bettype,
+			0 AS Bettype,
 			1 AS RoleId,
 		    recommend AS recommend,
 		    mrecommend AS mrecommend,
@@ -150,10 +150,8 @@ BEGIN
 		FROM bodb02.dbo.bettrans14 bt WITH(NOLOCK)
 			INNER JOIN @Bettype b ON bt.bettype = b.TypeId
 		WHERE bt.winlostdate = @WinlostDate 
-			AND bt.statusID NOT IN (0,1,102,101,103)
-			AND bt.bettype < 19000
-		GROUP BY custid, recommend, mrecommend, srecommend, b.ProductId,
-				CASE WHEN bettype IN (71, 72) THEN bettype ELSE 0 END
+			AND bt.statusID NOT IN (102,101,103)
+		GROUP BY custid, recommend, mrecommend, srecommend, b.ProductId
 	END
 	-- for agent, roleid = 2
 	BEGIN
@@ -393,7 +391,7 @@ BEGIN
 			BetCount,
 			Turnover,
 			NetTurnover,
-			TunroverNoDraw,
+			TurnoverNoDraw,
 			WinLoss,
 			AgWinLoss,		
 			MAgWinLoss,
@@ -463,7 +461,7 @@ BEGIN
 					TARGET.Betcount			= SOURCE.Betcount,
 					TARGET.Turnover			= SOURCE.Turnover,
 					TARGET.NetTurnover		= SOURCE.NetTurnover,
-					TARGET.TunroverNoDraw	= SOURCE.TunroverNoDraw,
+					TARGET.TurnoverNoDraw	= SOURCE.TunroverNoDraw,
 					TARGET.WinLoss			= SOURCE.WinLoss,
 					TARGET.AgWinLoss		= SOURCE.AgWinLoss,
 					TARGET.MAgWinLoss		= SOURCE.MAgWinLoss,
@@ -490,7 +488,7 @@ BEGIN
 					BetCount,
 					Turnover,
 					NetTurnover,
-					TunroverNoDraw,
+					TurnoverNoDraw,
 					WinLoss,
 					AgWinLoss,
 					MAgWinLoss,
