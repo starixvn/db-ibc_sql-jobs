@@ -108,7 +108,7 @@ BEGIN
 			SUM(ABS(stake * apositiontaking)) AS NetTurnoverAg,
 			sum(ABS(stake * mpositiontaking)) AS NetTurnoverMAg,
 			SUM(ABS(stake * spositiontaking)) AS NetTurnoverSAg,
-			SUM(CASE WHEN b.ProductId = 46 THEN bt.oddsspread ELSE 0 END) AS TurnoverNoDrawn,
+			SUM(CASE WHEN b.ProductId = 46 THEN bt.oddsspread ELSE ABS(stake) END) AS TurnoverNoDrawn,
 			SUM(winlost-actual_stake) AS Winlost,
 			SUM(awinlost) AS AgWinLoss,
 			SUM(mwinlost) AS MAgWinLoss,
