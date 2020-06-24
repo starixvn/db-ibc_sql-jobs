@@ -23,6 +23,7 @@ AS
 		- 20181204@Billy:	Add [oddsES] & [ResultDetailES] tables - [Redmine: #105816]
 		- 20190325@Billy:	Add [SMP_Market] & [SMP_MarketSelection] tables - [Redmine: #109926]
 		- 20190828@Billy:	Add [oddsOS] & [ResultDetailOS] tables - [Redmine: #119257]
+		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 */ 
 BEGIN
 
@@ -175,6 +176,17 @@ BEGIN
 		where eventdate = @winlostdate AND oddsstatus = 'Completed'
 	END
 
+	--VSRaceInfo ==> due to does not release code completely
+	--IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'VSRaceInfo' AND type = 'U')
+	--BEGIN
+	--	delete r with(rowlock)
+	--	from dbo.VSRaceInfo r
+	--	where exists (
+	--		select top 1 1
+	--		from dbo.VSOutright o with(nolock)
+	--		where r.eventId = o.eventId AND eventdate = @winlostdate AND EventStatus = 'Completed'
+	--	)
+	--END
 		
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'VSOutright' AND type = 'U')
 	BEGIN

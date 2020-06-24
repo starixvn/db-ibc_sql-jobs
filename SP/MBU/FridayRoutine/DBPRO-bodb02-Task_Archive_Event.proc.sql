@@ -43,6 +43,7 @@ AS
 		- 20190925@Billy:	Remove @Action = 'copy' - Using Task_Archive_Event_Control for copying instead
 							Add [Dot_Admin_Assignment_Trader] table - [Redmine: #117014]
 		- 20190911@Billy:	Add [oddsES] & [ResultDetailES] tables - [Redmine: #119257]
+		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -142,6 +143,16 @@ BEGIN
 
 		-- call subtask for looping & deleting data on outright14
 		EXEC [dbo].[Task_Archive_Event] @winlostdate = @winlostdate ,@Action = 'subtask', @DeletedTarget = 'outright14'
+
+		---### delete data for VSRaceInfo14
+		TRUNCATE TABLE #DeletedList
+		INSERT INTO #DeletedList (id,IsDone)
+		SELECT EventID,0 
+		FROM dbo.VSRaceInfo14 r WITH(NOLOCK) 
+		WHERE EXISTS (SELECT TOP 1 1 FROM dbo.VSOutright14 o WITH(NOLOCK) WHERE r.EventID = o.EventID AND o.eventdate = @winlostdate)
+
+		-- call subtask for looping & deleting data on VSOutright14
+		EXEC [dbo].[Task_Archive_Event] @winlostdate = @winlostdate ,@Action = 'subtask', @DeletedTarget = 'VSRaceInfo14'
 
 		---### delete data for VSOutright14
 		TRUNCATE TABLE #DeletedList

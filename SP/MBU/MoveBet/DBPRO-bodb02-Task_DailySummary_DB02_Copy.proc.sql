@@ -46,6 +46,7 @@ AS
 		-- 20190717@Sylvia: Add match14 [ChildMatchType] column
 		-- 20190827@Billy:	Add [oddsOS] & [ResultDetailOS] tables - [Redmine: #119257]
 		-- 20200504@Patrick: Add more field for oddsES/oddsES14/oddsES_bk - [Redmine: #133538]
+		-- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 */
 
 BEGIN
@@ -173,6 +174,38 @@ SET NOCOUNT ON
 		EventID, Year
 	from outright
 	where eventdate = @winlostdate AND oddsstatus = 'Completed'
+
+	waitfor delay '00:00:01'
+
+	--VSRaceInfo
+	truncate table #__IdsList
+	select @rowId = 0
+	insert into #__IdsList(Id)
+	select r.EventId
+	from dbo.VSRaceInfo r with(nolock)
+	where exists (
+		select top 1 1
+		from dbo.VSOutright o with(nolock)
+		where o.eventdate = @winlostdate and o.EventStatus = 'Completed' and r.EventId = o.EventId
+	)
+	while 1 = 1
+	begin
+		truncate table #__tempData
+
+		insert into #__tempData(id)
+		select id from #__IdsList where rowId > @rowId and rowId <= @rowId + @rowInBatch
+		if @@rowcount = 0
+			break
+
+		set @rowId = @rowId + @rowInBatch
+
+		insert into dbo.VSRaceInfo14([EventID], [EventTime], [LeagueID], [PayOut], [EachWay], [CourseName], [TrackType], [Distance], [Racers], [ForeCastPayout], [TriCastPayout], [CreateDate], [Calculate], [SportType], [ChangeTime], [EventStatus], [BetStatus])
+		select [EventID], [EventTime], [LeagueID], [PayOut], [EachWay], [CourseName], [TrackType], [Distance], [Racers], [ForeCastPayout], [TriCastPayout], [CreateDate], [Calculate], [SportType], [ChangeTime], [EventStatus], [BetStatus]
+		from dbo.VSRaceInfo with(nolock)
+		where EventId in (select id from #__tempData)
+
+		waitfor delay '00:00:01'
+	end
 
 	waitfor delay '00:00:01'
 

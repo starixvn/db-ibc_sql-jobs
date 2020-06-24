@@ -17,6 +17,7 @@ AS
 		- 20190325@Billy:	Add [SMP_Market] & [SMP_MarketSelection] tables - [Redmine: #109926]
 		- 20190925@Billy:	Add [Dot_Admin_Assignment_Trader] table - [Redmine: #117014]
 		- 20190911@Billy:	Add [oddsOS14] & [ResultDetailOS14] tables - [Redmine: #119257]
+		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -88,6 +89,12 @@ BEGIN
 	IF @DeletedTarget = 'outright14'
 	BEGIN
 		DELETE FROM dbo.outright14 WHERE Orid IN (SELECT id FROM @idList)	
+		RETURN
+	END
+
+	IF @DeletedTarget = 'VSRaceInfo14'
+	BEGIN
+		DELETE FROM dbo.VSRaceInfo14 WHERE EventID IN (SELECT id FROM @idList)	
 		RETURN
 	END
 
