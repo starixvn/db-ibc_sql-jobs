@@ -15,6 +15,7 @@ AS
 		- 20180808@Kathy: Check status rules for poker game [Redmine:#98064]
 		- 20181219@Vicky: Happy 5- Check Data Consistency [Redmine:#106481]
 		- 20190715@Kathy: check status ticket for BetBuilder [Redmine:#116529]
+		- 20200624@Max: Update Rule for Saba.Club, Modify Rule check Discount [Redmine: #136362]
 	
 	Param's Expanation:
 */
@@ -43,6 +44,16 @@ BEGIN
 				AND b.winlostdate = @yesterday			
 				AND b.statusID = 0
 				AND b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
+	END
+	ELSE IF @ProductId = 200 --Saba.Club
+	BEGIN
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+		WHERE	b.bettype < 20000
+				AND b.winlostdate = @yesterday
+				AND b.statusID = 0
+				AND b.matchid = @ProductId
+				AND b.bettype NOT IN (1622) --Exclude Keno Pro Viet
 	END
 	ELSE
 	BEGIN
