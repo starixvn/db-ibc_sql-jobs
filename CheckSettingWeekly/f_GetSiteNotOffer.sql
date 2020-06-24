@@ -10,6 +10,7 @@ AS
 	Original:
 
 	Revisions:
+		- 20200624@Elodie: Exclude inactive site [Redmine:#136023]
 	Param's Explanation:
 */
 RETURN
