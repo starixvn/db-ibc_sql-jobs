@@ -137,7 +137,7 @@ BEGIN
 			SUM(awinlost) AS AgWinLoss,
 			SUM(mwinlost) AS MAgWinLoss,
 			SUM(swinlost) AS AgWinLoss,
-			SUM((winlost - actual_stake) * epositiontaking) AS ExtraWinloss,
+			-SUM((winlost - actual_stake) * epositiontaking) AS ExtraWinloss,
 			SUM(playercomm) AS PlayerComm,
 			SUM(comm) - SUM(playercomm) AS AgComm,
 			SUM(acomm) - SUM(comm) AS MAgComm,
