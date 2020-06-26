@@ -25,7 +25,7 @@ BEGIN
 	)
 	SELECT DISTINCT BetType, ProductID
 	FROM bodb02.dbo.SportBettypeMatrix m WITH(NOLOCK)
-	WHERE ',' + @ProductIds + ','  LIKE '%,' + CONVERT(VARCHAR(10),m.ProductID) + ',% '
+	WHERE ',' + @ProductIds + ','  LIKE '%,' + CONVERT(VARCHAR(10),m.ProductID) + ',%'
 
 	CREATE TABLE #Sum_Winloss_Extra 
 	(
