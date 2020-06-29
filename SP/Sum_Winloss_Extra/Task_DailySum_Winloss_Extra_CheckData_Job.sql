@@ -19,16 +19,15 @@ AS
 BEGIN
 	SET NOCOUNT ON
 		
-	DECLARE @winlostdate SMALLDATETIME, @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME
+	DECLARE @winlostdate SMALLDATETIME,@MoveBetsDay smalldatetime
+	
+	DECLARE @MoveBetAndBalanceUp TABLE( MoveBetsDay SMALLDATETIME, BalanceUpDay SMALLDATETIME)
+
+	INSERT INTO @MoveBetAndBalanceUp (BalanceUpDay, MoveBetsDay)
+	EXEC Age_SelBalanceUpDay
 		
-	SELECT @MoveBetsDay = MAX(eventdate)
-	FROM bodb02.dbo.match14 WITH(NOLOCK)
-		
-	SELECT TOP 1 @BalanceUpDay = winlostdate
-	FROM bodb02.dbo.bettrans WITH (NOLOCK)
-	WHERE matchid = 0 AND bettype = 20000
-		
-	SELECT @winlostdate = @BalanceUpDay
+	SELECT @winlostdate = BalanceUpDay, @MoveBetsDay = MoveBetsDay
+	FROM @MoveBetAndBalanceUp
 		
 	WHILE(@winlostdate <= @MoveBetsDay)
 	BEGIN
