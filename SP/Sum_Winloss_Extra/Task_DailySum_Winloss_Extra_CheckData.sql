@@ -25,7 +25,7 @@ BEGIN
 	DECLARE @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME
 		
 	INSERT INTO @MoveBetAndBalanceUp (BalanceUpDay, MoveBetsDay)
-	EXEC DBAGE.bodb02.dbo.Age_SelBalanceUpDay
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
 		
 	IF @winlostdate NOT BETWEEN @BalanceUpDay AND @MoveBetsDay
 	BEGIN
