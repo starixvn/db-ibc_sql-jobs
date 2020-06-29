@@ -19,12 +19,12 @@ AS
 BEGIN
 	SET NOCOUNT ON
 		
-	DECLARE @winlostdate SMALLDATETIME,@MoveBetsDay smalldatetime
+	DECLARE @winlostdate SMALLDATETIME,@MoveBetsDay SMALLDATETIME
 	
 	DECLARE @MoveBetAndBalanceUp TABLE( MoveBetsDay SMALLDATETIME, BalanceUpDay SMALLDATETIME)
 
 	INSERT INTO @MoveBetAndBalanceUp (BalanceUpDay, MoveBetsDay)
-	EXEC Age_SelBalanceUpDay
+	EXEC DBAGE.bodb02.dbo.Age_SelBalanceUpDay
 		
 	SELECT @winlostdate = BalanceUpDay, @MoveBetsDay = MoveBetsDay
 	FROM @MoveBetAndBalanceUp
