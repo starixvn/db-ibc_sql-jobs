@@ -24,6 +24,8 @@ BEGIN
 		
 	DECLARE @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME
 		
+	DECLARE @MoveBetAndBalanceUp TABLE( MoveBetsDay SMALLDATETIME, BalanceUpDay SMALLDATETIME)
+
 	INSERT INTO @MoveBetAndBalanceUp (BalanceUpDay, MoveBetsDay)
 	EXEC bodb02.dbo.Age_SelBalanceUpDay
 		
