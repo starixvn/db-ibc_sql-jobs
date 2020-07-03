@@ -22,6 +22,7 @@ AS
 		-20191105@Winnie: starsoccer - Adjust SB PT. RedmineID:#123273
 		-20191216@Winnie: [Wanbo,9wickets,9Wsports] Update PT sportbook. RedmineID:#125434
 		-20200206@Johnson: exclude closed customers[redmine:#127831]
+		-20200505@Eden: Add new PT - Deposit known values for SB [RedmineID:#132253]
 	Param's Explanation:
 	
 */
@@ -167,7 +168,7 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)					
 			INNER JOIN #tmpDumMember c ON s.custid=c.custid		
 		WHERE 
-			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925,0.89,0.885,0.5) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925,0.89,0.885,0.5,0.9,0.93) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
 			AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))		
 			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
 	END

@@ -26,6 +26,13 @@ AS
 		- 20190405@Billy:	Integrate check PT Deposit - [Redmine: #111499]
 		- 20190524@Billy:	Change Letstalk linked server - [Redmine: #113125]
 		- 20190924@Billy:	Support show CN88 result - [Redmine: #120719]
+		- 20200619@Daniel:	Support show Winloss Limit result - [Redmine: #120719]
+
+
+	Test command:
+	EXECUTE dbo.vnDBA_sp_CheckSetting_ResultNotification_xtest
+	@to = 'daniel.truong@starixsoft.com'
+
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -45,6 +52,7 @@ BEGIN;
 		,	@countBetLimitCN88		INT
 		,	@countStakeLevelCredit	INT
 		,	@countStakeLevelDeposit	INT
+		,	@countWinLimit			INT
 		,	@rowLimited				INT
 		,	@logDate				DATETIME
 		,	@fullBackup				NVARCHAR(500)
@@ -192,6 +200,35 @@ BEGIN;
 					,	BetType			SMALLINT
 					,	Total			INT
 					,	IsDeposit		BIT
+					);
+
+	CREATE TABLE	#CheckResultWinLimit (
+						RuleName		VARCHAR(100)
+					,	RuleId			SMALLINT
+					,	SportName		VARCHAR(500)
+					,	SportType		SMALLINT
+					,	BetType			SMALLINT
+					,	CustId_A		INT
+					,	Username_A		NVARCHAR(50)
+					,	CustId_B		INT
+					,	Value_A			SMALLMONEY
+					,	Value_B			SMALLMONEY
+					,	CreatedDate		DATETIME
+					,	IsDCS			BIT
+					,	IsDeposit		BIT
+					,	IsCN88			BIT
+					);
+
+	CREATE TABLE	#CheckResultWinLimitAgg (
+						RuleName		VARCHAR(100)
+					,	RuleId			SMALLINT
+					,	SportName		VARCHAR(500)
+					,	SportType		SMALLINT
+					,	BetType			SMALLINT
+					,	Total			INT
+					,	IsDCS			BIT
+					,	IsDeposit		BIT
+					,	IsCN88			BIT
 					);
 
 	DECLARE	@Sports AS TABLE (
@@ -382,6 +419,21 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 			AND ic.RuleId = CASE WHEN ic.RuleId = 0 THEN ic.RuleId ELSE r.ruleid END
 			AND	ic.sporttype = CASE WHEN ic.sporttype = 0 THEN ic.sporttype ELSE r.sporttype END;
 
+
+	DELETE	r WITH (TABLOCK)
+	FROM		dbo.CheckWinLossLimitResult_Credit AS r
+	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+			ON	r.CustIdA = cus.CustId
+	INNER JOIN	dbo.IgnoredCust ic WITH (NOLOCK)
+			ON	ic.custid = CASE	WHEN ic.Allline = 0 THEN cus.CustId 
+									ELSE CASE	WHEN ic.RoleID = 4 THEN cus.srecommend 
+												WHEN ic.RoleID = 3 THEN cus.mrecommend
+												WHEN ic.RoleID = 2 THEN cus.recommend
+												ELSE cus.CustId
+											END
+							END
+			AND ic.RuleId = CASE WHEN ic.RuleId = 0 THEN ic.RuleId ELSE r.ruleid END
+			AND	ic.sporttype = CASE WHEN ic.sporttype = 0 THEN ic.sporttype ELSE r.sporttype END;
 
 	--	BEGIN STEP :
 	--		Get PT result
@@ -720,6 +772,42 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 
 
 	--	BEGIN STEP :
+	--		Get winloss limit result
+	----------------------------------------------------------------------------------------------------
+
+	INSERT INTO	#CheckResultWinLimitAgg (RuleName, RuleId, SportName, SportType, BetType, IsDCS, IsDeposit, IsCN88, Total)
+	SELECT	ISNULL(rc.RuleName, 'N/A'), r.RuleId, ISNULL(s.SportName, 'N/A'), r.SportType, r.BetType, 0, 0, 0, COUNT(1)
+	FROM		dbo.CheckWinLossLimitResult_Credit AS r WITH (NOLOCK)
+	LEFT JOIN	dbo.Rule_Credit AS rc WITH (NOLOCK)
+			ON	r.RuleId = rc.RuleID
+	LEFT JOIN	@Sports AS s
+			ON	r.SportType = s.SportType
+	GROUP BY rc.RuleName, r.RuleId, s.SportName, r.SportType, r.BetType
+	
+	SELECT	@countWinLimit = ISNULL(SUM(Total), 0)
+	FROM	#CheckResultWinLimitAgg WITH (NOLOCK)
+	WHERE	IsDeposit = 0
+		AND	IsCN88 = 0;
+
+	--UPDATE	StarixDB.dbo.vnDBA_Restore_CheckCustDB_History
+	--SET		BetLimitResult = @countBetLimitCredit + @countBetLimitDeposit + @countBetLimitCN88
+	--WHERE	LogDate = @LogDate;
+
+	IF	@countWinLimit <= @rowLimited
+	BEGIN
+		INSERT INTO	#CheckResultWinLimit (RuleName, RuleId, SportName, SportType, BetType, CustId_A, Username_A, CustId_B, Value_A, Value_B, CreatedDate, IsDCS, IsDeposit, IsCN88)
+		SELECT	ISNULL(rc.RuleName, 'N/A'), r.RuleId, ISNULL(s.SportName, 'N/A'), r.SportType, r.BetType, r.CustIdA, ci.username, r.CustIdB, r.ValueA, r.ValueB, r.CreatedDate, 0, 0, 0
+		FROM		dbo.CheckWinLossLimitResult_Credit AS r WITH (NOLOCK)
+		LEFT JOIN	CheckCustDB.dbo.custInfo AS ci WITH (NOLOCK)
+				ON	r.CustIdA = ci.custid
+		LEFT JOIN	dbo.Rule_Credit AS rc WITH (NOLOCK)
+				ON	r.RuleId = rc.RuleID
+		LEFT JOIN	@Sports AS s
+				ON	r.SportType = s.SportType
+	END;
+
+
+	--	BEGIN STEP :
 	--		Send email -- Mode: 1
 	----------------------------------------------------------------------------------------------------
 
@@ -731,7 +819,7 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 										OR	@to LIKE '%billy.bui@starixsoft.com%'
 										OR	@to LIKE '%pontus@starixsoft.com%'
 										THEN ''
-									ELSE 'billy.bui@starixsoft.com;'
+									ELSE 'daniel.truong@starixsoft.com;'
 							  END
 							+ ISNULL(@to, '')
 			;
@@ -775,6 +863,12 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 							,	[div/h2/br]		= N''
 							,	[div/h2]		= N'Credit'
 							,	[div/h3]		= CASE @countStakeLevelCredit WHEN 0 THEN N'Success' ELSE CAST(@countStakeLevelCredit AS NVARCHAR) END
+							,	NULL
+							,	[div/@style]	= N'background-color:' + CASE @countWinLimit WHEN 0 THEN N'blue;' ELSE N'red;' END + s.style
+							,	[div/h2]		= N'Winloss Limit'
+							,	[div/h2/br]		= N''
+							,	[div/h2]		= N'Credit'
+							,	[div/h3]		= CASE @countWinLimit WHEN 0 THEN N'Success' ELSE CAST(@countWinLimit AS NVARCHAR) END
 						FROM	(
 							SELECT	[style]			= N'color:white;text-align:center;width:20%;display:table-cell;'
 						) s
@@ -1496,6 +1590,138 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 						,	TYPE
 					)
 
+
+				-- Winloss Limit Result --
+				,	[br]		= CASE WHEN @countWinLimit = 0 THEN '' ELSE NULL END
+				,	(	SELECT	[@style]		= N'margin-left:3%'
+							,	[node()]		= 'Check Winloss Limit Result'
+						FROM	(
+							SELECT	TOP(1) x = 1
+							FROM	#CheckResultWinLimitAgg
+						) tbl
+						FOR XML PATH ('h3')
+						,	TYPE
+					)
+				,	(	SELECT	[@border]		= 1
+							,	[@cellpadding]	= 5
+							,	[@width]		= N'95%'
+							,	[@style]		= N'margin:0 auto;white-space:nowrap;'
+							,	(	SELECT	[th]		= N'No.'
+										,	NULL
+										,	[th]		= N'Rule'
+										,	NULL
+										,	[th]		= N'ID'
+										,	NULL
+										,	[th]		= N'SportName'
+										,	NULL
+										,	[th]		= N'SportType'
+										,	NULL
+										,	[th]		= N'BetType'
+										,	NULL
+										,	[th]		= N'IsDCS'
+										,	NULL
+										,	[th]		= N'Total'
+										,	NULL
+										,	[th]		= N''
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+							,	NULL
+							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, IsDeposit, IsDCS, SportType, BetType)
+										,	NULL
+										,	[td]		= RuleName
+										,	NULL
+										,	[td]		= RuleID
+										,	NULL
+										,	[td]		= SportName
+										,	NULL
+										,	[td]		= ISNULL(CAST(SportType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= ISNULL(CAST(BetType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= IsDCS
+										,	NULL
+										,	[td]		= Total
+										,	NULL
+										,	[td]		= CASE IsCN88 WHEN 0 THEN CASE IsDeposit WHEN 1 THEN 'Deposit' ELSE 'Credit' END ELSE 'CN88' END
+									FROM	#CheckResultWinLimitAgg
+									ORDER BY RuleId, IsDeposit, IsDCS, SportType, BetType
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+						WHERE	@countWinLimit > @rowLimited
+						FOR XML PATH ('table')
+						,	TYPE
+					)
+				,	(	SELECT	[@border]		= 1
+							,	[@cellpadding]	= 5
+							,	[@width]		= N'95%'
+							,	[@style]		= N'margin:0 auto;white-space:nowrap;'
+							,	(	SELECT	[th]		= N'No.'
+										,	NULL
+										,	[th]		= N'Rule'
+										,	NULL
+										,	[th]		= N'ID'
+										,	NULL
+										,	[th]		= N'SportName'
+										,	NULL
+										,	[th]		= N'SportType'
+										,	NULL
+										,	[th]		= N'BetType'
+										,	NULL
+										,	[th]		= N'CustId A'
+										,	NULL
+										,	[th]		= N'Username A'
+										,	NULL
+										,	[th]		= N'CustId B'
+										,	NULL
+										,	[th]		= N'Value A'
+										,	NULL
+										,	[th]		= N'Value B'
+										,	NULL
+										,	[th]		= N'IsDCS'
+										,	NULL
+										,	[th]		= N''
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+							,	NULL
+							,	(	SELECT	[td]		= ROW_NUMBER() OVER(ORDER BY RuleId, IsDeposit, IsDCS, CustId_A, SportType, BetType)
+										,	NULL
+										,	[td]		= RuleName
+										,	NULL
+										,	[td]		= RuleID
+										,	NULL
+										,	[td]		= SportName
+										,	NULL
+										,	[td]		= ISNULL(CAST(SportType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= ISNULL(CAST(BetType AS NVARCHAR), N'')
+										,	NULL
+										,	[td]		= CustId_A
+										,	NULL
+										,	[td]		= Username_A
+										,	NULL
+										,	[td]		= CustId_B
+										,	NULL
+										,	[td]		= Value_A
+										,	NULL
+										,	[td]		= Value_B
+										,	NULL
+										,	[td]		= IsDCS
+										,	NULL
+										,	[td]		= CASE IsCN88 WHEN 0 THEN CASE IsDeposit WHEN 1 THEN 'Deposit' ELSE 'Credit' END ELSE 'CN88' END
+									FROM	#CheckResultWinLimit
+									ORDER BY RuleId, IsDeposit, IsDCS, CustId_A, SportType, BetType
+									FOR XML PATH ('tr')
+									,	TYPE
+								)
+						WHERE	@countWinLimit <= @rowLimited
+							AND	@countWinLimit > 0
+						FOR XML PATH ('table')
+						,	TYPE
+					)
+
 			FOR XML PATH ('body')
 			,	ROOT ('html')
 		);
@@ -1543,7 +1769,10 @@ Check Setting Result:' + ISNULL(N'
 
 - Stake Level:' + NULLIF(ISNULL(N'
     Cre - ' + CAST(NULLIF(@countStakeLevelCredit, 0) AS NVARCHAR), N'') + ISNULL(N'
-    Dep - ' + CAST(NULLIF(@countStakeLevelDeposit, 0) AS NVARCHAR), N''), N''), N'');
+    Dep - ' + CAST(NULLIF(@countStakeLevelDeposit, 0) AS NVARCHAR), N''), N''), N'') + ISNULL(N'
+
+- Winloss Limit:' + NULLIF(ISNULL(N'
+    Cre - ' + CAST(NULLIF(@countWinLimit, 0) AS NVARCHAR), N''), N''), N'');
 
 		SELECT	@subject	= N'vnDBA : Automation Check CustDB'
 			,	@case		= CASE	WHEN @countPTCredit + @countPTDeposit + @countPTCN88
@@ -1551,6 +1780,7 @@ Check Setting Result:' + ISNULL(N'
 									   + @countCommCredit + @countCommDeposit + @countCommCN88
 									   + @countBetLimitCredit + @countBetLimitDeposit + @countBetLimitCN88
 									   + @countStakeLevelCredit + @countStakeLevelDeposit
+									   + @countWinLimit
 									   = 0
 									THEN 1 ELSE 2 END
 			;
@@ -1570,7 +1800,8 @@ Check Setting Result:' + ISNULL(N'
 			,	#CheckResultStatusAgg
 			,	#CheckResultComm
 			,	#CheckResultCommAgg
+			,	#CheckResultWinLimit
+			,	#CheckResultWinLimitAgg
 			;
 END;
-GO
 /*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/

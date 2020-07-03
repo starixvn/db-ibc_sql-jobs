@@ -15,6 +15,7 @@ AS
 		- 20190621@Billy:	Add checking for [SMP_Market] & [SMP_MarkerSelection] - [Redmine: #111421]
 		- 20191106@Billy:	Add checking for [Dot_Admin_Assignment_Trader] - [Redmine: #123262]
 		- 20191119@Billy:	Add checking for [oddsOS] & [ResultDetailOS] - [Redmine: #119257]
+		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -37,6 +38,12 @@ BEGIN;
 	SELECT	COUNT(1), 'outright'
 	FROM	dbo.outright14 AS tbl WITH (NOLOCK)
 	WHERE	tbl.eventdate = @DateCheck;
+
+	--//VSRaceInfo
+	INSERT INTO	@__tempCount(rowcnt, tableName)
+	SELECT	COUNT(1), 'VSRaceInfo'
+	FROM	dbo.VSRaceInfo14 AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT TOP 1 1 FROM dbo.VSOutright14 o WITH(NOLOCK) WHERE tbl.EventID = o.EventId AND o.eventdate = @DateCheck);
 
 	--//VSOutright
 	INSERT INTO	@__tempCount(rowcnt, tableName)

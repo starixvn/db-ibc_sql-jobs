@@ -1,26 +1,23 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_PlaytechCS]
-GO
-
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Product3rd_ImportQueue]
 	@XmlData		NVARCHAR(MAX),
-	@StartDate		DATETIME,
-	@EndDate		DATETIME,
-	@JobType		TINYINT,
-	@ProductId		INT,
+	@StartDate		DATETIME = NULL,
+	@EndDate		DATETIME = NULL,
+	@JobType		TINYINT = 0,
+	@ProductId		INT = 0,
 	@IsForceUpdate	BIT = 0,
 	@ErrCode		INT = 0 OUTPUT,
 	@ErrMsg			NVARCHAR(500) = '' OUTPUT
 AS
 
 /*
-	Created by Percy
-	Date: 2017-11-17
+	Created: 20171117@Percy
 	DB: DBPTCS.bodb_PlaytechCS
-	Task:
+	Task: Insert XML Data into Product3rd_ImportQueue
 
 	Revisions:
 		- 20171117@Percy: Initialize SP [RedmineID: #86477]
+		- 20200417@Percy: Add default param's value [RedmineID: #129873]
 */
 
 BEGIN

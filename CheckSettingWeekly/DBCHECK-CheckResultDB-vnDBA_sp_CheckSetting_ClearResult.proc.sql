@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20180816@Billy:	Initial - [Redmine: #99249]
 		- 20190923@Billy:	Add CN88 result tables - [Redmine: #120719]
+		- 20200619@Daniel:	Add Winloss Limit result - [Redmine: #120719]
 		
 	Developer's Notes:
 		- @Example:			NULL		- Explaination [DEFAULT]
@@ -47,6 +48,10 @@ BEGIN;
 	TRUNCATE TABLE	dbo.CS_CheckBetLimitResult;
 	TRUNCATE TABLE	dbo.CS_CheckCommResult;
 	TRUNCATE TABLE	dbo.CS_CheckPTResult;
+
+	-- Winloss Limit --
+	TRUNCATE TABLE dbo.CheckWinLossLimitResult_Credit
+
 END;
 GO
 /*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/

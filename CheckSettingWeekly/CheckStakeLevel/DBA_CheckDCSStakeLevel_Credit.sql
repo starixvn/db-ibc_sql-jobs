@@ -11,6 +11,7 @@ AS
 	Revisions:
 		-20190801@Winnie: Change Check stake level RedmineID:#117919
 		-20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
+		-20200514@Eden: Modify rule to check multi stake level at member level [redmine:#134156]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -36,32 +37,10 @@ BEGIN
 	
 	--product has offered stakelevel
 	INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden)
-	SELECT * 
-	FROM (
-		SELECT ps.ProductID,ps.SportType,ps.BetType
-		,CASE WHEN ps.ProductID <> 22 AND ps.SportType <> 248 THEN 
-					(SELECT IsHidden 
-					FROM CheckCustDB.dbo.ProductSettingDetail ps2 
-					WHERE ps2.ProductID = ps.ProductID 
-						and ps2.SportType = ps.SportType 
-						and ps2.BetType = ps.BetType
-						and ps2.SettingType in (4,11,13) 
-						and ps2.SettingStatus = 0 )
-				ELSE (
-					SELECT IsHidden --PP will follow VB
-					FROM CheckCustDB.dbo.ProductSettingDetail ps2 
-					WHERE ps2.ProductID = 22
-						and ps2.SportType = 212					
-						and ps2.SettingType in (4,11,13) 
-						and ps2.SettingStatus = 0
-				)		
-			END isHidden
-		FROM CheckCustDB.dbo.ProductSettingDetail ps 
-		WHERE SettingType in (7,8)
-			AND sportType NOT IN (SELECT sportType FROM dbo.f_GetSportNotOffer(NULL))
-			AND sportType = CASE WHEN @sportType = 0 THEN sportType ELSE @sportType END
-	)t 
-	WHERE isHidden IS NOT NULL
+	SELECT ps.RealProductId, ps.SportType, ps.BetType, ps.IsHidden
+	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH (NOLOCK)
+		CROSS JOIN CheckCustDB.dbo.Site s WITH (NOLOCK)
+	WHERE ps.SettingType IN (4,11,13) AND ps.SettingStatus = 0	
 			
 	UPDATE op
 	SET op.IsHidden = stt.IsHidden
@@ -76,9 +55,11 @@ BEGIN
 	WHERE (stt.Currency = @Currency OR stt.Currency = 0 ) AND stt.SiteID = @SiteID
 
 	INSERT INTO @sportBettypeFilter (sportType,bettype)
-	SELECT sportType,bettype
-	FROM #OfferedProductList op	
-	WHERE op.IsHidden = 0      
+	SELECT ps.SportType
+			,ps.BetType
+	FROM CheckCustDB.[dbo].[ProductSettingDetail] ps WITH(NOLOCK)
+		INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
+	WHERE op.IsHidden = 0 AND ps.SettingType IN (7,8,17) 
 	
 	SELECT @Rowcount = count(1)
 	FROM @SportBettypeFilter
@@ -245,13 +226,30 @@ BEGIN
 	BEGIN
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 305 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,cs2.custid as custidB, cs1.StakeLevelList as StakeLevelListA, cs2.StakeLevelList as StakeLevelListB
-		FROM #MemberStakeLevel cs1			
+		FROM #MemberStakeLevel cs1	
+			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t		
 			INNER JOIN #AgentStakeLevel cs2 ON cs1.bettype = cs2.bettype
 											AND cs1.sporttype = cs2.sportType
 											AND cs1.recommend = cs2.custid	
-		WHERE CHARINDEX(cs1.StakeLevelList,cs2.StakeLevelList,0) = 0
+		WHERE CHARINDEX(t.val,cs2.StakeLevelList,0) = 0
 			AND cs1.StakeLevelList <> ''
 	END	
+
+	--Exceed max number of member stake level	
+	IF @ruleid IN (0, 306)
+	BEGIN
+		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
+		SELECT 306 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,0 as custidB, MAX(cs1.StakeLevelList) as StakeLevelListA, '' as ValueB
+		FROM #MemberStakeLevel cs1		
+			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t	
+			INNER JOIN CheckCustDB.dbo.ProductSettingDetail ps WITH(NOLOCK) 
+			ON ps.sportType = cs1.SportType 
+				AND ps.bettype = cs1.bettype
+				AND ps.SettingType = 17 -- multi stake level
+		WHERE cs1.StakeLevelList <> ''
+		GROUP BY cs1.sportType,cs1.bettype,cs1.custid
+		HAVING COUNT(1) > MAX(ps.MaxChoice)
+	END
 END
 GO
 	

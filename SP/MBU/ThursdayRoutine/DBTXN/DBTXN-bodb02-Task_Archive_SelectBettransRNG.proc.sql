@@ -12,14 +12,17 @@ AS
 		- 20160519@Joy:		remove NetStake /  Add  Additional    
 		- 20180405@Billy:	Add [JackpotInfo], [RefNo2], [ContributionRate], [BetStake], [ContributionStake3rd] columns - [Redmine: #93177] 
 		- 20191104@Billy:	Add column [epositiontaking] of [bettransRnG] - [Redmine: #123267]
+		- 20200612@Patrick: Avoid sort to reduce log file growth [Redmine: #135806]
+		- 20200618@Patrick: Fix issue multiple result set [Redmine: #135806]
 */
 BEGIN;
 	SET NOCOUNT ON;
 
-	DECLARE	@max_winlostdate	SMALLDATETIME;
+	DECLARE @__tempVar TABLE(winlostdate SMALLDATETIME)
 
-	SELECT	@max_winlostdate = MAX(winlostdate)
-	FROM	dbo.Task_ArchiveDate WITH (NOLOCK);
+	INSERT INTO @__tempVar(winlostdate)
+	SELECT winlostdate 
+	FROM dbo.Task_ArchiveDate WITH (NOLOCK) ORDER BY winlostdate
 
 	-- to DB06.bodb_Archive.dbo.bettransRNG_BK
 	SELECT	b.transid, b.custid, b.transdate, b.odds, b.stake, b.status, b.apositiontaking, b.mpositiontaking, b.tpositiontaking, b.spositiontaking
@@ -31,7 +34,9 @@ BEGIN;
 	FROM		dbo.bettransRnG14 AS b WITH (NOLOCK)
 	INNER JOIN	dbo.Task_bettransRNG14_IP2Country AS ip WITH (NOLOCK)
 			ON	b.transid = ip.transid
-	WHERE	b.winlostdate <= @max_winlostdate;
+	CROSS APPLY @__tempVar t
+	WHERE b.winlostdate = t.winlostdate
+		AND ip.winlostdate = t.winlostdate
 END;
 GO
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
