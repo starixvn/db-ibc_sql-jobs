@@ -15,6 +15,7 @@ AS
 		- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
 		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_bk [RedmineID: #103656]
+		- 20200622@Sol: Archive VSRaceInfo - changed to use VSRaceInfo14 [RedmineID: #135963]
 	
 	Parameter's Explanation:			
 */
@@ -100,7 +101,7 @@ AS (
 		,r.SportType
 		,r.LeagueID
 	FROM bodb02.dbo.VSOutright14 o WITH (NOLOCK)
-	INNER JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK) ON r.EventID = o.EventID
+	INNER JOIN bodb02.dbo.VSRaceInfo14 r WITH (NOLOCK) ON r.EventID = o.EventID
 	WHERE EventDate =@Date
 	)
 INSERT INTO dbo.rptCustomerMatch (

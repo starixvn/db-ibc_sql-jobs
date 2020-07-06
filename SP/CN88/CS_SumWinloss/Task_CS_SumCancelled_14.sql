@@ -13,6 +13,7 @@ AS
 		- 20190809@Percy: Initialize SP [RedmineID: #116925]
 		- 20191210@Percy: Add HouseTurnover [RedmineID: #125186]
 		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
+		- 20200622@Sol: Archive VSRaceInfo - changed to use VSRaceInfo14 [RedmineID: #135963]
 */
 
 BEGIN
@@ -203,7 +204,7 @@ BEGIN
 
 				UNION ALL
 				SELECT r.sporttype
-				FROM bodb02.dbo.VSRaceInfo r WITH (NOLOCK)
+				FROM bodb02.dbo.VSRaceInfo14 r WITH (NOLOCK)
 				WHERE b.matchid = r.EventID AND b.eventtype = 3
 
 				UNION ALL
