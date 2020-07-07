@@ -1,70 +1,84 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_DailyRptCasinoTurnover_CheckData] @WinlostDate SMALLDATETIME
+
+ALTER PROCEDURE [dbo].[Task_DailyRptCasinoTurnover_CheckData]
+	@WinLostDate SMALLDATETIME
 AS
+
 /*
 	Created: 20181129@Joseph
-	Task : Check & correct data for rptCustomerTurnover
+	Task: Check & correct data for rptCustomerTurnover
 	DB: DBLIC.bodb_LicenseeReport
+
 	Revisions:
-	- 20181129@Joseph: Create [Redmine: #95178]
-	- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
+		- 20181129@Joseph: Create [Redmine: #95178]
+		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
+		- 20200707@Kos: Fix NetStake [RedmineID: #137111]
 */
+
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @S_Winlost MONEY, @T_Winlost MONEY, @S_Turnover MONEY, @T_Turnover MONEY, @S_BetCount INT, @T_BetCount INT,
-			@S_ValidBetAmount MONEY, @T_ValidBetAmount MONEY
-	
-SELECT @S_Winlost = SUM(ISNULL(winlost,0))
-		, @S_Turnover = SUM(ISNULL(turnover,0))
-		, @S_BetCount = COUNT(ISNULL(betcount,0))
-		, @S_ValidBetAmount = SUM(ISNULL(validbetamount,0))
+
+	DECLARE
+		@S_Winlost			MONEY,
+		@T_Winlost			MONEY,
+		@S_Turnover			MONEY,
+		@T_Turnover			MONEY,
+		@S_BetCount			INT,
+		@T_BetCount			INT,
+		@S_ValidBetAmount	MONEY,
+		@T_ValidBetAmount	MONEY
+
+	SELECT @S_Winlost = SUM(ISNULL(Winlost, 0))
+		, @S_Turnover = SUM(ISNULL(Turnover, 0))
+		, @S_BetCount = SUM(ISNULL(BetCount, 0))
+		, @S_ValidBetAmount = SUM(ISNULL(ValidBetAmount, 0))
 	FROM (
-		-- RNG and Macau Games
-		SELECT SUM(b.winlost - b.actual_stake) as winlost
-		, SUM(b.stake) as turnover
-		, COUNT(b.TransId) as betcount
-		, SUM(b.stake) as validbetamount
-		FROM bodb02.dbo.bettransRng14 b WITH(NOLOCK)
-			INNER JOIN bodb02.dbo.SportBettypeMatrix matrix WITH(NOLOCK) ON b.gameid = matrix.bettype
-		WHERE b.winlostdate = @WinlostDate
-			AND b.statusID IN (111,112,113) -- DRAW, WON, LOSE
-			AND matrix.ProductID IN (6, 22) -- RNG Casino, Macau Games
+		-- RNG Casino, Macau Games
+		SELECT SUM(b.winlost - b.actual_stake) AS Winlost
+			, SUM(b.stake) AS Turnover
+			, COUNT(b.transid) AS BetCount
+			, SUM(b.stake) AS ValidBetAmount
+		FROM bodb02.dbo.bettransRnG14 AS b WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.SportBettypeMatrix AS s WITH (NOLOCK) ON b.gameID = s.BetType
+		WHERE b.winlostdate = @WinLostDate
+			AND b.statusID IN (111, 112, 113)
+			AND s.ProductID IN (6, 22)
 
 		UNION ALL
 
-		-- AllBet
-		SELECT SUM(b.winlost - b.actual_stake) as winlost
-			, SUM(b.stake) as turnover
-			, COUNT(b.TransId) as betcount
-			, SUM(b.stake) as validbetamount
-		FROM bodb02.dbo.bettransLC14 b WITH(NOLOCK)
-			INNER JOIN bodb02.dbo.SportBettypeMatrix matrix WITH(NOLOCK) ON b.gameid = matrix.bettype
-		WHERE b.winlostdate = @WinlostDate
-			AND b.statusID IN (111,112,113) -- DRAW, WON, LOSE
-			AND matrix.ProductID IN (21,45) -- All bet, Sexy Gaming
+		-- Allbet, Sexy Gaming
+		SELECT SUM(b.winlost - b.actual_stake) AS Winlost
+			, SUM(b.stake) AS Turnover
+			, COUNT(b.transid) AS BetCount
+			, SUM(b.netstake) AS ValidBetAmount
+		FROM bodb02.dbo.bettransLC14 AS b WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.SportBettypeMatrix AS s WITH (NOLOCK) ON b.gameID = s.BetType
+		WHERE b.winlostdate = @WinLostDate
+			AND b.statusID IN (111, 112, 113)
+			AND s.ProductID IN (21, 45)
 	) t
 	OPTION (RECOMPILE)
 
-	SELECT @T_Winlost = SUM(winlost)
-		, @T_Turnover = SUM(turnover)
+	SELECT @T_Winlost = SUM(Winlost)
+		, @T_Turnover = SUM(Turnover)
 		, @T_BetCount = SUM(BetCount)
 		, @T_ValidBetAmount = SUM(ValidBetAmount)
-	FROM dbo.rptCasinoTurnover b WITH(NOLOCK)
-	WHERE b.winlostdate = @WinlostDate
-		AND b.statusID IN (111,112,113) -- DRAW, WON, LOSE
-		AND b.ProductID IN (6, 22, 21) -- RNG Casino, Macau Games, All Bet
+	FROM dbo.rptCasinoTurnover WITH (NOLOCK)
+	WHERE WinlostDate = @WinLostDate
+		AND StatusId IN (111, 112, 113)
+		AND ProductId IN (6, 22, 21, 45)	-- RNG Casino, Macau Games, All Bet, Sexy Gaming
 
 	-- compare 
 	IF ISNULL(@S_Winlost, 0) <> ISNULL(@T_Winlost, 0)
 		OR ISNULL(@S_Turnover, 0) <> ISNULL(@T_Turnover, 0)
 		OR ISNULL(@S_BetCount, 0) <> ISNULL(@T_BetCount, 0)
 		OR ISNULL(@S_ValidBetAmount, 0) <> ISNULL(@T_ValidBetAmount, 0)
-		
 	BEGIN
-		PRINT 'Re-generate data for rptCasinoTurnover on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' date.'
-				EXEC dbo.Task_DailyRptCasinoTurnover_Bettrans14 @winlostdate = @WinlostDate
+		PRINT 'Re-generate data for rptCasinoTurnover on ' + CONVERT(VARCHAR(10), @WinLostDate, 112) + ' date.'
+
+		EXEC dbo.Task_DailyRptCasinoTurnover_Bettrans14 @WinLostDate = @WinLostDate
+
 		RETURN
 	END
-
 END
 GO
