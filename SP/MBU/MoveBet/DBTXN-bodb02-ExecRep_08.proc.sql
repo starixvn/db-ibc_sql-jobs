@@ -149,7 +149,7 @@ BEGIN
 
 END
 
-
+/*
 IF @@SERVERNAME = 'DB04'
 BEGIN
 	-- Note: Exclude columns: [tstamp], [recommdate]
@@ -187,6 +187,8 @@ BEGIN
 	INNER JOIN	@__tmpTransId AS tmp
 			ON	bi.transid = tmp.id;
 END
+
+*/
 
 
 IF @@SERVERNAME NOT LIKE 'DB04_' AND @@SERVERNAME NOT IN ('DB054', 'DB055')
