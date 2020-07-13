@@ -117,37 +117,47 @@ BEGIN
 		WHERE isMatched = 1
 
 		-- PRINT message without matching records
-		IF EXISTS (SELECT 1	FROM @tempC WHERE IsMatched = 0)
+		IF @display = 1
+			OR EXISTS (SELECT 1	FROM @tempC WHERE IsMatched = 0)
 		BEGIN
-			SELECT custid, Balance, NewBalance, N'No matching BALANCE between bettrans and balance tables.' AS Remark
+			SELECT custid, Balance, NewBalance
+				, CASE WHEN IsMatched = 0 THEN N'No matching BALANCE between bettrans and balance tables.' ELSE N'OK' END AS Remark
 			FROM @tempC
-			WHERE IsMatched = 0
+			WHERE 1 = CASE 
+						WHEN @display = 1 THEN 1
+						WHEN IsMatched = 0 THEN 1
+					ELSE 0 END 
 		END
+		
 	END
 
-	;WITH
-	-- prepare data to get lastest balance
-		ListBAL AS (
-			SELECT B.custid, NewBalance, RN = ROW_NUMBER() OVER (PARTITION BY B.custid ORDER BY RowID DESC) 
-			FROM dbo.BalanceRecord B WITH (NOLOCK)
-				INNER JOIN #c C ON B.custid = C.custid
-		)
-	-- prepare data to get lastest balance
-		,CurrentBAL AS (SELECT * FROM ListBAL WHERE RN = 1)
+	-- CHECK for update mode
+	IF @display = 0
+	BEGIN
+		;WITH
+		-- prepare data to get lastest balance
+			ListBAL AS (
+				SELECT B.custid, NewBalance, RN = ROW_NUMBER() OVER (PARTITION BY B.custid ORDER BY RowID DESC) 
+				FROM dbo.BalanceRecord B WITH (NOLOCK)
+					INNER JOIN #c C ON B.custid = C.custid
+			)
+		-- prepare data to get lastest balance
+			,CurrentBAL AS (SELECT * FROM ListBAL WHERE RN = 1)
 
-	-- remove Row which already have Correct Running balance (Balnace same as calculated)
-	DELETE C
-	FROM #c C 
-		INNER JOIN CurrentBAL CB ON C.custid = CB.custid AND C.Balance = CB.NewBalance
+		-- remove Row which already have Correct Running balance (Balnace same as calculated)
+		DELETE C
+		FROM #c C 
+			INNER JOIN CurrentBAL CB ON C.custid = CB.custid AND C.Balance = CB.NewBalance
 
-	-- sert Balance Re-Init
-	INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
-	SELECT
-		BAL.custid, 0, 0, 0, 0, 0, 0, BAL.Balance,
-		CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
-	FROM
-		#c BAL
-		INNER JOIN dbo.custinfo c WITH (ROWLOCK) ON BAL.custid = c.custid AND c.roleid = 1
+		-- sert Balance Re-Init
+		INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
+		SELECT
+			BAL.custid, 0, 0, 0, 0, 0, 0, BAL.Balance,
+			CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
+		FROM
+			#c BAL
+			INNER JOIN dbo.custinfo c WITH (ROWLOCK) ON BAL.custid = c.custid AND c.roleid = 1
+	END
 
 	DROP TABLE #c
 END
