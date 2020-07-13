@@ -38,6 +38,7 @@ AS
 		- 20191126@Patrick:	Ignore copy data to [14] on DB054/DB055 - [Redmine: #124104]
 		- 20200311@Billy:	Add column [ReasonID] of [bettrans] - [Redmine: #130202]
 							Add [epositiontaking], [actual_stake] of [bettransG] - [Redmine: #130201]
+		- 20200710@Brice:	Add column [sort] of [bettrans] - [Redmine: #137129]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -72,7 +73,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime, epositiontaking, ReasonID
+		,	RefCode, SettlementTime, epositiontaking, ReasonID, sort
 		)
 	OUTPUT	Inserted.transid
 	INTO	@__tmpTransId (id)
@@ -83,7 +84,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime, epositiontaking, ReasonID
+		,	RefCode, SettlementTime, epositiontaking, ReasonID, sort
 	FROM	dbo.bettrans WITH (NOLOCK)
 	WHERE	recommend = @__recommend
 		AND	winlostdate = @__winlostdate
@@ -148,7 +149,7 @@ BEGIN
 
 END
 
-
+/*
 IF @@SERVERNAME = 'DB04'
 BEGIN
 	-- Note: Exclude columns: [tstamp], [recommdate]
@@ -161,7 +162,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime, epositiontaking
+		,	RefCode, SettlementTime, epositiontaking, ReasonID, sort
 		)
 	OUTPUT	Inserted.transid
 	INTO	@__tmpTransId (id)
@@ -172,7 +173,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime, epositiontaking
+		,	RefCode, SettlementTime, epositiontaking, ReasonID, sort
 	FROM	dbo.bettrans WITH (NOLOCK)
 	WHERE	recommend = @__recommend
 		AND	winlostdate = @__winlostdate
@@ -186,6 +187,8 @@ BEGIN
 	INNER JOIN	@__tmpTransId AS tmp
 			ON	bi.transid = tmp.id;
 END
+
+*/
 
 
 IF @@SERVERNAME NOT LIKE 'DB04_' AND @@SERVERNAME NOT IN ('DB054', 'DB055')
