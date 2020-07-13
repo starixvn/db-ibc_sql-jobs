@@ -101,7 +101,13 @@ BEGIN
 			LEFT JOIN LC ON B.custid = LC.custid
 		)
 		INSERT INTO #c (custid, Balance)
-		SELECT custid, Balance FROM S
+		SELECT custid, S.Balance FROM S
+		CROSS APPLY (
+			SELECT TOP 1 Balance 
+			FROM DBTRANS.bodb02.dbo.v_BalanceTable b with(nolock)
+			WHERE custid = S.custid
+		) AS bal
+		WHERE S.Balance = bal.Balance
 	END
 
 	;WITH
