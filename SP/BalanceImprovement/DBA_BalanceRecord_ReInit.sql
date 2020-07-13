@@ -58,9 +58,10 @@ BEGIN
 	ELSE
 	BEGIN
 		DECLARE @recommend INT;
+		DECLARE @tempC TABLE(custid INT, Balance MONEY, NewBalance MONEY, IsMatched BIT);
 
 		SELECT @recommend = recommend
-		FROM dbo.vw_Customer WITH (NOLOCK)
+		FROM dbo.Customer WITH (NOLOCK)
 		WHERE custid = @custid;
 
 		;WITH B AS (
@@ -100,14 +101,28 @@ BEGIN
 			LEFT JOIN RNG ON B.custid = RNG.custid
 			LEFT JOIN LC ON B.custid = LC.custid
 		)
-		INSERT INTO #c (custid, Balance)
-		SELECT custid, S.Balance FROM S
-		CROSS APPLY (
+		INSERT INTO @tempC (custid, Balance, NewBalance, IsMatched)
+		SELECT custid, bal.Balance ,S.Balance 
+			, CASE WHEN S.Balance = bal.Balance THEN 1 ELSE 0 END AS IsMatched
+		FROM S
+		OUTER APPLY (
 			SELECT TOP 1 Balance 
 			FROM DBTRANS.bodb02.dbo.v_BalanceTable b with(nolock)
 			WHERE custid = S.custid
 		) AS bal
-		WHERE S.Balance = bal.Balance
+
+		INSERT INTO #c (custid, Balance)
+		SELECT custid, Balance 
+		FROM @tempC
+		WHERE isMatched = 1
+
+		-- PRINT message without matching records
+		IF EXISTS (SELECT 1	FROM @tempC WHERE IsMatched = 0)
+		BEGIN
+			SELECT custid, Balance, NewBalance, N'No matching BALANCE between bettrans and balance tables.' AS Remark
+			FROM @tempC
+			WHERE IsMatched = 0
+		END
 	END
 
 	;WITH
