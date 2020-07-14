@@ -16,6 +16,7 @@ AS
 		- 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 	    - 20200508@Parsons: Integrate Sexy Gaming for deposit licensees [RedmineID: #132665]
 	    - 20200615@Parsons: SA gaming report (GMT+8) [#134452]
+		- 20200714@Parsons: Implement PP Jackpot [RedmineID: #137306]
 */
 
 BEGIN
@@ -36,6 +37,7 @@ BEGIN
 		Winloss					MONEY,
 		AComm					MONEY,
 		PComm					MONEY,
+		AWinloss				MONEY,
 		ProgressiveContribution	MONEY,
 		ProgressivePayout		MONEY,
 		ValidBetAmount			MONEY
@@ -53,6 +55,7 @@ BEGIN
 		Winloss					MONEY,
 		AComm					MONEY,
 		PComm					MONEY,
+		AWinloss				MONEY,
 		ProgressiveContribution	MONEY,
 		ProgressivePayout		MONEY,
 		ValidBetAmount			MONEY
@@ -61,7 +64,7 @@ BEGIN
 	DECLARE @S_Count INT, @T_Count INT,
 			@i INT;
 
-	INSERT INTO #Source(TableName, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
+	INSERT INTO #Source(TableName, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, AWinloss, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
 	(
 		SELECT	'bettransRnG14',
 				CAST(b.Transdate3rd AS DATE)	AS RptDate3rd,
@@ -74,7 +77,8 @@ BEGIN
 				ISNULL(SUM(winlost - actual_stake), 0) AS Winloss,
 				ISNULL(SUM(b.comm), 0) AS AComm,
 				ISNULL(SUM(b.playercomm), 0) AS PComm,
-				0 AS ProgressiveContribution,
+				ISNULL(SUM(b.awinlost), 0) AS AWinloss,
+				ISNULL(SUM(CASE WHEN b.gameID = 4297 THEN ContributionStake3rd ELSE 0 END), 0) AS ProgressiveContribution, -- Full Contribution(PP-4297)
 				ISNULL(SUM(ISNULL(p.WinAmount,0)), 0) AS ProgressivePayout,
 				0 AS ValidBetAmount
 		FROM bodb02.dbo.bettransRnG14 b WITH (NOLOCK)
@@ -105,6 +109,7 @@ BEGIN
 				ISNULL(SUM(winlost - actual_stake), 0) AS Winloss,
 				ISNULL(SUM(b.comm), 0) AS AComm,
 				ISNULL(SUM(b.playercomm), 0) AS PComm,
+				ISNULL(SUM(b.awinlost), 0) AS AWinloss,
 				0 AS ProgressiveContribution,
 				0 AS ProgressivePayout,
 				ISNULL(SUM(ISNULL(b.NetStake, 0)), 0) AS ValidBetAmount
@@ -125,7 +130,7 @@ BEGIN
 
 	SET @S_Count = @@ROWCOUNT;
 	
-	INSERT INTO #Target(RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
+	INSERT INTO #Target(RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, AWinloss, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
 	SELECT	RptDate3rd,
 			SiteId,
 			BetTypeId,
@@ -136,6 +141,7 @@ BEGIN
 			ISNULL(SUM(Winloss), 0),
 			ISNULL(SUM(AComm), 0),
 			ISNULL(SUM(PComm), 0),
+			ISNULL(SUM(AWinloss), 0),
 			ISNULL(SUM(ProgressiveContribution), 0),
 			ISNULL(SUM(ProgressivePayout), 0),
 			ISNULL(SUM(ValidBetAmount), 0)
@@ -155,7 +161,7 @@ BEGIN
 	INSERT INTO #Log(TableName, IsSource, BetTypeId, CurrencyId, Turnover, Winloss, BetCount, ExtraInfo)
 	SELECT	TableName, 1, BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss), SUM(BetCount),
 			(
-				SELECT	SUM(AComm) AS AComm, SUM(PComm) AS PComm, SUM(ProgressiveContribution) AS ProgContrib,
+				SELECT	SUM(AComm) AS AComm, SUM(PComm) AS PComm, SUM(AWinloss) AS AWinloss, SUM(ProgressiveContribution) AS ProgContrib,
 						SUM(ProgressivePayout) AS ProgPayout, SUM(ValidBetAmount) AS ValidBetAmt
 				FROM #Source s1
 				WHERE s1.TableName = s.TableName
@@ -169,7 +175,7 @@ BEGIN
 		FROM #Target t
 		WHERE s.RptDate3rd = t.RptDate3rd AND s.SiteId = t.SiteId AND s.BetTypeId = t.BetTypeId AND s.CurrencyId = t.CurrencyId
 			AND s.StatusId = t.StatusId AND s.BetCount = t.BetCount AND s.Turnover = t.Turnover AND s.Winloss = t.Winloss
-			AND s.AComm = t.AComm AND s.PComm = t.PComm AND s.ProgressiveContribution = t.ProgressiveContribution
+			AND s.AComm = t.AComm AND s.PComm = t.PComm AND s.AWinloss = t.AWinloss AND s.ProgressiveContribution = t.ProgressiveContribution
 			AND s.ProgressivePayout = t.ProgressivePayout AND s.ValidBetAmount = t.ValidBetAmount)
 	GROUP BY TableName, BetTypeId, CurrencyId
 			
@@ -177,7 +183,7 @@ BEGIN
 	
 	SELECT 'rpt_ThirdPartyWL_ExtraGMT', 0, BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss), SUM(BetCount),
 			(
-				SELECT	SUM(AComm) AS AComm, SUM(PComm) AS PComm, SUM(ProgressiveContribution) AS ProgContrib,
+				SELECT	SUM(AComm) AS AComm, SUM(PComm) AS PComm, SUM(AWinloss) AS AWinloss, SUM(ProgressiveContribution) AS ProgContrib,
 						SUM(ProgressivePayout) AS ProgPayout, SUM(ValidBetAmount) AS ValidBetAmt
 				FROM #Target t1
 				WHERE t1.BetTypeId = t.BetTypeId
@@ -190,7 +196,7 @@ BEGIN
 		FROM #Source s
 		WHERE s.RptDate3rd = t.RptDate3rd AND s.SiteId = t.SiteId AND s.BetTypeId = t.BetTypeId AND s.CurrencyId = t.CurrencyId
 			AND s.StatusId = t.StatusId AND s.BetCount = t.BetCount AND s.Turnover = t.Turnover AND s.Winloss = t.Winloss
-			AND s.AComm = t.AComm AND s.PComm = t.PComm AND s.ProgressiveContribution = t.ProgressiveContribution
+			AND s.AComm = t.AComm AND s.PComm = t.PComm AND s.AWinloss = t.AWinloss AND s.ProgressiveContribution = t.ProgressiveContribution
 			AND s.ProgressivePayout = t.ProgressivePayout AND s.ValidBetAmount = t.ValidBetAmount)
 	GROUP BY BetTypeId, CurrencyId;
 
