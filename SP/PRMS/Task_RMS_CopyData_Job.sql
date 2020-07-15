@@ -9,10 +9,21 @@ AS
 
 	Revisions:
 		- 20200512@Percy: Initialize SP [RedmineID: #130275]
+		- 20200601@Percy: Add Setting rmCopyData [RedmineID: #135326]
 */
 
 BEGIN
 	SET NOCOUNT ON
+
+	DECLARE @CurrentTime TIME = CONVERT(TIME, GETDATE())
+	IF @CurrentTime < '05:30' -- 05:30:00 AM
+		RETURN
+	
+	DECLARE @LastRunJob DATE
+	SELECT  @LastRunJob = VValue FROM dbo.rmSettings WITH (NOLOCK) WHERE VName = 'rmCopyData'
+
+	IF @LastRunJob = CONVERT(DATE, GETDATE()) -- already run today
+		RETURN
 
 	DECLARE @FromDate SMALLDATETIME, @ToDate SMALLDATETIME
 	DECLARE @winlostdate SMALLDATETIME, @ErrCode INT, @ErrMsg VARCHAR(4000)
@@ -79,6 +90,12 @@ BEGIN
 
 		RAISERROR (@ErrMsg, 16, 1)
 		RETURN
+	END
+	ELSE
+	BEGIN
+		UPDATE dbo.rmSettings WITH (UPDLOCK)
+		SET VValue = CONVERT(VARCHAR(10), GETDATE(), 120)
+		WHERE VName = 'rmCopyData'
 	END
 END
 GO
