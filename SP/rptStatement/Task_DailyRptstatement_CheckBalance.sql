@@ -8,6 +8,7 @@ AS
 
 	Revisions:
 		- 20191111@Bobby: Initial [Redmine: #131490]
+		- 20200619@Percy: Add server name in mail's subject [RedmineID: #134251]
 */
 BEGIN
 
@@ -119,7 +120,7 @@ BEGIN
 		DECLARE	@subject	NVARCHAR(MAX)
 		,	@bodymsg		NVARCHAR(MAX)
 
-		SELECT	@subject	= N'Job - Daily RptStatement - Check Balance error(s) found.';
+		SELECT	@subject	= N'Job - Daily RptStatement - Check Balance error(s) found ' + @@SERVERNAME;
 		
 		SELECT	@bodymsg	= N'\
 								Dear All,</br>
