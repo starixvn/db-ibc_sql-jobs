@@ -52,6 +52,7 @@ AS
 		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 		- 20200622@Hogan: Integrate 3 new betfrom 4, 5, 6 [Redmine: #136107]
+		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -149,7 +150,7 @@ BEGIN
 			WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 			WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
 			WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
-			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 			WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 			WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
@@ -238,7 +239,7 @@ BEGIN
 			WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 			WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
 			WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
-			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 			WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 			WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
 			WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
