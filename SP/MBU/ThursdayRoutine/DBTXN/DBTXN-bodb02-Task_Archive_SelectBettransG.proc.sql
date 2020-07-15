@@ -12,6 +12,7 @@ AS
 		- 20150720@Sophia:	Add column TransDesc
 		- 20180320@Billy:	Add missing column SiteID - [Redmine: #92283]
 		- 20200311@Billy:	Add [epositiontaking], [actual_stake] of [bettransG] - [Redmine: #130201]
+		- 20200714@Brice:	Add column [netstake] of [bettransG] - [Redmine: #137591]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -26,7 +27,7 @@ BEGIN
 	SELECT	transid, custid, transdate, oddsid, odds, stake, status, winlost, betteam, creator, refno, winlostdate, betfrom
 		,	checktime, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount, discount, adiscount
 		,	playercomm, comm, acomm, actualrate, matchid, matchdate, statuswinlost, ruben, bettype, spositiontaking, swinlost
-		,	sdiscount, scomm, statusID, virtualrate, SiteID, transdesc, BetID3rd, epositiontaking, actual_stake
+		,	sdiscount, scomm, statusID, virtualrate, SiteID, transdesc, BetID3rd, epositiontaking, actual_stake, netstake
 	FROM	dbo.bettransG14 WITH (NOLOCK)
 	WHERE	winlostdate <= @max_winlostdate;
 END;

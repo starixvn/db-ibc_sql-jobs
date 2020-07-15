@@ -39,6 +39,7 @@ AS
 		- 20200311@Billy:	Add column [ReasonID] of [bettrans] - [Redmine: #130202]
 							Add [epositiontaking], [actual_stake] of [bettransG] - [Redmine: #130201]
 		- 20200710@Brice:	Add column [sort] of [bettrans] - [Redmine: #137129]
+		- 20200714@Brice:	Add column [netstake] of [bettransG] - [Redmine: #137591]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -230,13 +231,13 @@ BEGIN
 			,	betfrom, checktime, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount
 			,	discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, statuswinlost, ruben, bettype
 			,	spositiontaking, swinlost, sdiscount, scomm, statusID, virtualrate, SiteID, transdesc, BetID3rd
-			,	epositiontaking, actual_stake
+			,	epositiontaking, actual_stake, netstake
 			)
 		SELECT	transid, custid, transdate, oddsid, odds, stake, status, winlost, betteam, creator, refno, winlostdate
 			,	betfrom, checktime, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount
 			,	discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, statuswinlost, ruben, bettype
 			,	spositiontaking, swinlost, sdiscount, scomm, statusID, virtualrate, SiteID, transdesc, BetID3rd
-			,	epositiontaking, actual_stake
+			,	epositiontaking, actual_stake, netstake
 		FROM	dbo.bettransG AS b WITH (NOLOCK)
 		WHERE	winlostdate = @__winlostdate;
 	END
