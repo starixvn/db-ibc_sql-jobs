@@ -17,7 +17,8 @@ AS
 	Revisions:
 		- 20191014@Sophia: initial SP [redmine :#115377]
 		- 20200407@Percy: Using new column bettrans.epositiontaking instead of Acc_GroupExtraPTSetting.ExtraPT [RedmineID: #131696]
-
+		- 2020714@Sophia: Add PP Jackpot[Redmine: #137270]
+		
 	Param's explain:
 		@mode:  0 _ view report
 	            1 _ reset balance
@@ -86,9 +87,9 @@ BEGIN
 			SUM((
 				CASE
 					-- Jackpot
-					WHEN b.bettype IN (2198, 2398, 2998) THEN
+					WHEN b.bettype IN (2198, 2398, 2998, 4297) THEN
 						CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
-					WHEN b.bettype IN (2199, 2399, 2999) THEN 0
+					WHEN b.bettype IN (2199, 2399, 2999, 4298) THEN 0
 					ELSE
 						CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake + b.scomm / (1 - b.tpositiontaking) END
 					END) * b.actualrate * b.epositiontaking) AS Winlost
