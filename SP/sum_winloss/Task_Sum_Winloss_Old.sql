@@ -219,7 +219,7 @@ BEGIN
 					,b.bettype
 					,b.modds
 					,b.statusID
-				FROM bodb_archive.dbo.bettrans_BK b WITH (NOLOCK)
+				FROM bodb_archive.dbo.bettrans_BK b WITH (NOLOCK, index = IX_custid)
 				WHERE b.winlostdate = @WinlostDate
 					AND c.custid = b.custid
 					AND b.statusID IN (111,112,113)
