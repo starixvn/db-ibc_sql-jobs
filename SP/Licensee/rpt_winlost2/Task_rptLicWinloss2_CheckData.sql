@@ -38,7 +38,7 @@ BEGIN
 		, @S_SComm = SUM(ISNULL(scomm,0))
 		, @S_BuyBackAmt = SUM(CASE
 								WHEN b.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake
-								WHEN bettrans.bettype = 4297 THEN oddsspread
+								WHEN b.bettype = 4297 THEN oddsspread
 								ELSE 0 END)
 		, @S_BABuyBackAmt = SUM(CASE WHEN b.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END)
 	FROM bodb02.dbo.bettrans14 b WITH(NOLOCK)
