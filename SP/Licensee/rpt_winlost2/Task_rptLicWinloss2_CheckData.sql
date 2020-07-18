@@ -12,6 +12,7 @@ AS
 	- 20170703@Paul: Check more columns - [Redmine: #79262]
 	- 20190306@Amanda: Implement PP Promotion Prize [RedmineID: #109471]
 	- 20191122@Amanda: Implement PP Tournament Prize [RedmineID: #123804]
+	- 20200714@Hogan: Add 7 games for Jackpot and 2 bettype for Contribution (4297) and Jackpot Prize (4298) [RedmineID: #137290]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -26,7 +27,7 @@ BEGIN
 		, @S_BetCount = COUNT(b.TransId) --BetCount
 		, @S_AWinlost = SUM(awinlost)
 		, @S_Comm = SUM(comm)
-		, @S_BetEffective = SUM(CASE WHEN b.statusID IN (112,113) AND b.bettype NOT IN (4300, 4299) -- exclude PP Prize from BetEffective
+		, @S_BetEffective = SUM(CASE WHEN b.statusID IN (112,113) AND b.bettype NOT IN (4300, 4299, 4298, 4297) -- exclude PP Prize from BetEffective
 									THEN ABS(winlost-actual_stake)
 									ELSE 0  
 								END)
@@ -35,7 +36,10 @@ BEGIN
 		, @S_PlayerComm = SUM(playercomm)
 		, @S_AComm = SUM(acomm)
 		, @S_SComm = SUM(ISNULL(scomm,0))
-		, @S_BuyBackAmt = SUM(CASE WHEN b.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END)
+		, @S_BuyBackAmt = SUM(CASE
+								WHEN b.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake
+								WHEN bettrans.bettype = 4297 THEN oddsspread
+								ELSE 0 END)
 		, @S_BABuyBackAmt = SUM(CASE WHEN b.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END)
 	FROM bodb02.dbo.bettrans14 b WITH(NOLOCK)
 		INNER JOIN bodb02.dbo.customer c WITH (NOLOCK) ON b.custid = c.custid

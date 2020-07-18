@@ -40,6 +40,7 @@ AS
 		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625]
+		- 20200721@Hogan: Add 7 games for Jackpot and 2 bettype for Contribution (4297) and Jackpot Prize (4298) [RedmineID: #137290]
 
 	Input Params:
 	- @Winlostdate: The input Winlostdate to be summarized	
@@ -277,13 +278,13 @@ BEGIN
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
-			SUM(CASE WHEN b.ruben = 1 AND b.bettype NOT IN (17000,4300,4299) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss
+			SUM(CASE WHEN b.ruben = 1 AND b.bettype NOT IN (17000,4300,4299,4298,4297) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss
 			SUM(CASE WHEN b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame
 			SUM(CASE WHEN b.ruben = 1 THEN b.playercomm ELSE 0 END),--Playercomm
 			SUM(CASE WHEN b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.awinlost ELSE 0 END),--Comm_BetTrade
 			SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 			SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
-			SUM(CASE WHEN b.bettype IN (17000,4300,4299) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
+			SUM(CASE WHEN b.bettype IN (17000,4300,4299,4298,4297) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
 		FROM dbo.bettrans14 b WITH (NOLOCK) 
 			INNER JOIN #DepCustID d on b.custid = d.CustID
 		/*
