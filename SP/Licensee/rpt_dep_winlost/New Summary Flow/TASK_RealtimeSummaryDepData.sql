@@ -1,8 +1,8 @@
 /*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
-	@Winlostdate	SMALLDATETIME	= NULL,
-	@isSuccessful	BIT				= 0 OUTPUT
+	@WinLostDate	SMALLDATETIME	= NULL,
+	@IsSuccessful	BIT				= 0 OUTPUT
 AS
 
 /*
@@ -38,11 +38,12 @@ AS
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
+		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625]
 
 	Input Params:
 	- @Winlostdate: The input Winlostdate to be summarized
 	- @isSuccessful: -1: Data of the whole day have been summarized completely
-						-0: Data of the whole day have not been summarized completely
+					-0: Data of the whole day have not been summarized completely
 */
 
 BEGIN
@@ -67,7 +68,7 @@ BEGIN
 	IF @Winlostdate IS NULL
 		SELECT @Winlostdate = @CurrentDate
 
-	IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans WITH (NOLOCK)
+	IF NOT EXISTS (SELECT TOP(1) 1 FROM dbo.bettrans WITH (NOLOCK)
 					WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype <> 18000)
 		OR @WinlostDate > @CurrentDate
 	BEGIN
@@ -566,7 +567,7 @@ BEGIN
 				WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 				WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				WHEN bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
-				WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+				WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 				WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				WHEN bettype BETWEEN 4101 AND 4298 THEN 248 -- PP
 				WHEN bettype BETWEEN 4299 AND 4300 THEN -248 -- PP Prize
@@ -617,7 +618,7 @@ BEGIN
 				WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 				WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				WHEN bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
-				WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+				WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 				WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				WHEN bettype BETWEEN 4101 AND 4298 THEN 248 -- PP
 				WHEN bettype BETWEEN 4299 AND 4300 THEN -248 -- PP Prize
@@ -638,7 +639,7 @@ BEGIN
 			AS SOURCE (CustID, SportType, TurnOver, OutStanding, BetCount)
 			ON (TARGET.CustID = SOURCE.CustID AND TARGET.SportType = SOURCE.SportType)
 		WHEN MATCHED THEN 
-			 UPDATE SET TARGET.TurnOver = TARGET.TurnOver + SOURCE.TurnOver,
+			UPDATE SET TARGET.TurnOver = TARGET.TurnOver + SOURCE.TurnOver,
 						TARGET.Outstanding = TARGET.Outstanding + SOURCE.Outstanding,
 						TARGET.BetCount = TARGET.BetCount + SOURCE.BetCount
 		WHEN NOT MATCHED THEN

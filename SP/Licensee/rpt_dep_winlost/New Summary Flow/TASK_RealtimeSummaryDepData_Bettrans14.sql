@@ -1,7 +1,7 @@
 /*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
-	@Winlostdate	DATE,
+	@WinLostDate	DATE,
 	@isSuccessful	BIT = 0 OUTPUT
 AS
 
@@ -39,6 +39,7 @@ AS
 		- 20200416@Vickie: Add new product Indo 4D [RedmineID: #130859]
 		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
+		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625]
 
 	Input Params:
 	- @Winlostdate: The input Winlostdate to be summarized	
@@ -194,7 +195,7 @@ BEGIN
 		GROUP BY CustID
 
 		--Update Transfer3rdOthers attributes
-		UPDATE #rptDepWinlostDetails 
+		UPDATE #rptDepWinlostDetails
 		SET PartnerID = t.PartnerId,
 			Transfer3rdOthers = t.Transfer3rdOthers,
 			Transfer3rdOthers_In = t.Transfer3rdOthers_In,
@@ -261,7 +262,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
 				WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
-				WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+				WHEN b.bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 				WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				WHEN b.bettype BETWEEN 4101 AND 4298 THEN 248 -- PP
 				WHEN b.bettype BETWEEN 4299 AND 4300 THEN -248 -- PP Prize
@@ -323,7 +324,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
 				WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
-				WHEN b.bettype BETWEEN 1021 AND 1049 THEN 220 -- Lottery
+				WHEN b.bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 				WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
 				WHEN b.bettype BETWEEN 4101 AND 4298 THEN 248 -- PP
 				WHEN b.bettype BETWEEN 4299 AND 4300 THEN -248 -- PP Prize
