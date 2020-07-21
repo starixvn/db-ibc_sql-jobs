@@ -1,1 +1,0 @@
-SP\sum_winloss\Task_sum_winloss_14.sql
