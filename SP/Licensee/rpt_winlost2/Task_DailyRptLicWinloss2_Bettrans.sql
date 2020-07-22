@@ -53,6 +53,7 @@ AS
 		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 		- 20200622@Hogan: Integrate 3 new betfrom 4, 5, 6 [Redmine: #136107]
 		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625]
+		- 20200721@Hogan: Add 7 games for Jackpot and 2 bettype for Contribution (4297) and Jackpot Prize (4298) [RedmineID: #137290]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -113,7 +114,7 @@ BEGIN
 		,SUM(winlost - actual_stake) AS winlost
 		,CASE
 			WHEN bettrans.statusID IN (112, 113) THEN SUM(CASE
-															WHEN bettrans.bettype IN (4300, 4299) THEN 0
+															WHEN bettrans.bettype IN (4300, 4299, 4298, 4297) THEN 0
 															ELSE ABS(winlost - actual_stake)
 														END) -- exclude Promotion Prize from BetEffective
 			ELSE 0
@@ -165,7 +166,7 @@ BEGIN
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 4299) THEN bettype
+			WHEN bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 4299, 4298, 4297) THEN bettype
 			ELSE 0
 		END bettype
 		 --114: half win, 115: half lose
@@ -198,7 +199,10 @@ BEGIN
 			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6') THEN bettrans.betfrom
 			ELSE ''
 		END AS betfrom 
-		,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake ELSE 0 END) AS BuyBackAmt
+		,SUM(CASE 
+				WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake
+				WHEN bettrans.bettype = 4297 THEN oddsspread
+				ELSE 0 END) AS BuyBackAmt
 		,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
 	FROM
 		bodb02.dbo.bettrans bettrans WITH (NOLOCK)
@@ -253,7 +257,7 @@ BEGIN
 			ELSE 0
 		END
 		,CASE
-			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,4299) THEN bettype
+			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,4299,4298,4297) THEN bettype
 			ELSE 0
 		END
 		,CASE
