@@ -23,6 +23,7 @@ AS
 		- 20200401@Max: Data Consistency for New Product - [Redmine: #131857]
 		- 20200602@Max: Data Consistency for BBIN, Update for Indo 4D - [Redmine: #135239]
 		- 20200624@Max: Update Rule for Saba.Club, Modify Rule check Discount [Redmine: #136362]
+		- 20200722@Max: Update Rule for Saba.Club - Exclude bettype 1631 from Rule '3min', Add new Rule for bettype 1631 - [Redmine: #138117]
 		
 		Param's Expanation:
 */
@@ -442,13 +443,33 @@ BEGIN
 			WHERE b.productID = @ProductId
 				AND b.statusID IN (0,1)
 				AND b.transdate < DATEADD(MINUTE, -3, GETDATE())
-				AND b.gameID NOT IN (1622) --Exclude Keno Pro Viet
+				AND b.gameID NOT IN (1622, 1631) --Exclude Keno Pro Viet, Bola Kangtas
 							 
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 100
 						,@ErrMsg = 'Tickets bet after 3 minutes still running on product ' + CAST(@ProductId AS VARCHAR)
+						,@SampleData = 'bettransRNG.TransId in (' + @transId + ')'
+
+				RETURN
+			END
+		END
+		IF @Rule = '25h' -- Check only for game 1631-Bola Kangtas
+		BEGIN
+			
+			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(b.transid AS VARCHAR)
+			FROM	bodb02.dbo.bettransRnG b WITH (NOLOCK)
+			WHERE b.productID = @ProductId
+				AND b.statusID IN (0,1)
+				AND b.transdate < DATEADD(HOUR, -25, GETDATE())
+				AND b.gameID IN (1631) --Bola Kangtas
+							 
+			IF @transId <> ''
+			BEGIN
+				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+						,@ErrCode = 100
+						,@ErrMsg = 'Tickets 1631-Bola Kangtas bet after 25 hours still running on product ' + CAST(@ProductId AS VARCHAR)
 						,@SampleData = 'bettransRNG.TransId in (' + @transId + ')'
 
 				RETURN
