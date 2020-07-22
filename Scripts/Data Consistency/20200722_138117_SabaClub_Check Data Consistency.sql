@@ -23,7 +23,7 @@ VALUES (@ruleId_s31, N'EXEC dbo.DBA_Consistency_SpecificRulesChecking @ProductId
 SET @taskId_s31 = SCOPE_IDENTITY()
 
 --------- SCHEDULE ---------------
-EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Running ticket with transdate 25 hours > current time'
+EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Running ticket with transdate + 25 hours > current time'
  ,@TaskId = @taskId_s31
  ,@IsEnable  = 1
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
