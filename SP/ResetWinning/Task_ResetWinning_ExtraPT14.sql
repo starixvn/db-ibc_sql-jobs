@@ -107,6 +107,7 @@ BEGIN
 			FROM dbo.Acc_GroupExtraPTSetting s WITH (NOLOCK)
 			WHERE s.SuperId = w.srecommend
 				AND w.winlostdate BETWEEN s.FromDate AND s.ToDate
+				AND s.GroupID NOT IN (4, 5, 6) --- ACCTHAI2,ACCTHAI56,ACCTHAI99
 		) s
 	GROUP BY s.GroupId, w.winlostdate
 
