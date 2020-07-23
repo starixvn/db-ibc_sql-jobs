@@ -20,6 +20,7 @@ AS
 	 - 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
 	 - 20200508@Parsons: Integrate Sexy Gaming for deposit licensees [RedmineID: #132665]
 	 - 20200615@Parsons: SA gaming report (GMT+8) [#134452]
+	 - 20200714@Parsons: Implement PP Jackpot [RedmineID: #137306]
 	 Param's Explanation:
 */
 
@@ -41,7 +42,7 @@ BEGIN
 			DELETE dbo.rpt_ThirdPartyWL_ExtraGMT WITH (ROWLOCK, UPDLOCK) WHERE RptDate = @Winlostdate
 		END
 
-		INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
+		INSERT INTO dbo.rpt_ThirdPartyWL_ExtraGMT(RptDate, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, AWinloss, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
 		(SELECT CAST(b.winlostdate AS DATE)	AS Rptdate
 			, CAST(b.Transdate3rd AS DATE)	AS RptDate3rd
 			, ISNULL(site.SiteID, -1) AS siteid
@@ -53,7 +54,8 @@ BEGIN
 			, SUM(winlost - actual_stake) AS Winloss		
 			, SUM(b.comm) AS AComm
 			, SUM(b.playercomm) AS PComm
-			, 0 AS ProgressiveContribution
+			, SUM(b.awinlost) AS AWinloss
+			, SUM(CASE WHEN b.gameID = 4297 THEN ContributionStake3rd ELSE 0 END) AS ProgressiveContribution -- Full Contribution(PP-4297)
 			, SUM(ISNULL(p.WinAmount,0)) AS ProgressivePayout
 			, 0 AS ValidBetAmount
 		FROM bodb02.dbo.bettransRnG14 b WITH (NOLOCK)
@@ -84,6 +86,7 @@ BEGIN
 			, SUM(winlost - actual_stake) AS Winloss		
 			, SUM(b.comm) AS AComm
 			, SUM(b.playercomm) AS PComm
+			, SUM(b.awinlost) AS AWinloss
 			, 0 AS ProgressiveContribution
 			, 0 AS ProgressivePayout
 			, SUM(ISNULL(b.NetStake, 0)) AS ValidBetAmount

@@ -64,6 +64,7 @@ AS
 		- 20200422@Parsons: Integrate-IBCBET-Live-Casino [RedmineID: #131165]
 		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 		- 20200610@Parsons: Integrate RNG WAR and ION [RedmineID: #134452]
+		- 20200714@Parsons: Implement PP Jackpot [RedmineID: #137306]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -148,7 +149,7 @@ BEGIN
 			,bt.ProductID
 			,CASE
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299) -- PP Prize (4300,4299)
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1
@@ -178,7 +179,7 @@ BEGIN
 			,bt.ProductID
 			,CASE 
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299) -- PP Prize (4300,4299)
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1
