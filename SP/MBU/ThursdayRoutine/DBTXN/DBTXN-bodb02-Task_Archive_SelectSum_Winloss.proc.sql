@@ -10,6 +10,7 @@ AS
 
 	Revisions:
 		- 20160225@Sophia: Add column TunroverNoDraw [Redmine: #51427]
+		- 20200723@Patrick: Add more fields (ExtraWinloss, ExtraComm) [Redmine: #138198]
 */
 
 SET NOCOUNT ON
@@ -26,7 +27,7 @@ FROM dbo.Task_ArchiveDate
 SELECT
  [winlostdate],[username],[custid],[roleid],[recommend],[mrecommend],[srecommend],
  [turnover],[winlost],[awinlost],[mwinlost],[swinlost],[playercomm],[comm],[acomm],[scomm],
- [BetCount],[grosscomm],[sporttype],[bettype],[netTurnOver],[TunroverNoDraw]
+ [BetCount],[grosscomm],[sporttype],[bettype],[netTurnOver],[TunroverNoDraw], [ExtraWinloss], [ExtraComm]
 FROM dbo.sum_winloss  WITH(NOLOCK)
 WHERE winlostdate
 BETWEEN @min_winlostdate AND @max_winlostdate
