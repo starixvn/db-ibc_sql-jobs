@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 /*
 	Created: 20200722@Max
 	Task: Saba.club - Check Data Consistency - [Redmine:#138117]
