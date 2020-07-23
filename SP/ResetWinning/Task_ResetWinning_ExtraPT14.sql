@@ -16,6 +16,7 @@ AS
 
 	Revisions:
 		- 20191014@Sophia: initial SP [redmine :#115377]
+		- 20190826@Sophia: CN88 Headline balance - Exclude reset winning for CN88 group [Redmine: #117863]
 		- 20200407@Percy: Using new column bettrans.epositiontaking instead of Acc_GroupExtraPTSetting.ExtraPT [RedmineID: #131696]
 		- 2020714@Sophia: Add PP Jackpot[Redmine: #137270]
 		
@@ -68,6 +69,7 @@ BEGIN
 		SELECT DISTINCT e.CustID, e.GroupID, e.GroupName, d.WLDate
 		FROM bodb_ACC.dbo.Acc_DWLList_ExtraPT_xtest e WITH (NOLOCK)
 		CROSS JOIN @Date d
+		WHERE e.IsDisabled = 0
 	END
 	ELSE
 	BEGIN
@@ -75,6 +77,7 @@ BEGIN
 		SELECT DISTINCT e.CustID, e.GroupID, e.GroupName, d.WLDate
 		FROM bodb_ACC.dbo.Acc_DWLList_ExtraPT e WITH (NOLOCK)
 		CROSS JOIN @Date d
+		WHERE e.IsDisabled = 0
 	END
 
 
