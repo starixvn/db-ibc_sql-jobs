@@ -5,8 +5,8 @@ ALTER PROCEDURE [dbo].[Task_ResetWinning_ExtraPT14]
 	@mode     TINYINT = 0,
 	@creator  INT = 5838421,
 	@ip       VARCHAR(20) = '',
-	@ErrCode  INT = 0 output,
-    @ErrMsg   VARCHAR(100) = '' output
+	@ErrCode  INT = 0 OUTPUT,
+    @ErrMsg   VARCHAR(100) = '' OUTPUT
 AS
 /*
 	Creator: Sophia
@@ -16,8 +16,10 @@ AS
 
 	Revisions:
 		- 20191014@Sophia: initial SP [redmine :#115377]
-		 
-
+		- 20190826@Sophia: CN88 Headline balance - Exclude reset winning for CN88 group [Redmine: #117863]
+		- 20200407@Percy: Using new column bettrans.epositiontaking instead of Acc_GroupExtraPTSetting.ExtraPT [RedmineID: #131696]
+		- 2020714@Sophia: Add PP Jackpot[Redmine: #137270]
+		
 	Param's explain:
 		@mode:  0 _ view report
 	            1 _ reset balance
@@ -31,7 +33,7 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @dummy TABLE (CustID INT, GroupID TINYINT, GroupName VARCHAR(50), Winlostdate SMALLDATETIME)
-	CREATE TABLE #winning (ProductID TINYINT, Sporttype INT, SubProduct VARCHAR(500), Winlost MONEY, NewWinlost MONEY, Winlostdate SMALLDATETIME, GroupId TINYINT)
+	CREATE TABLE #winning (GroupId TINYINT, Winlostdate SMALLDATETIME, Winlost MONEY)
 	DECLARE @reset TABLE (CustID INT, Winlost MONEY, [Reset] MONEY, Variance MONEY, Winlostdate SMALLDATETIME, GroupID TINYINT, GroupName VARCHAR(50))
 	DECLARE @LastReset TABLE (CustID INT, [Reset] MONEY, Winlostdate SMALLDATETIME, GroupID TINYINT)
 
@@ -64,96 +66,58 @@ BEGIN
 	IF  (@SQL like '%_xtest%')
 	BEGIN
 		INSERT INTO @dummy (CustID, GroupID, GroupName, Winlostdate)	
-		SELECT  DISTINCT e.CustID, e.GroupID, e.GroupName, d.WLDate
+		SELECT DISTINCT e.CustID, e.GroupID, e.GroupName, d.WLDate
 		FROM bodb_ACC.dbo.Acc_DWLList_ExtraPT_xtest e WITH (NOLOCK)
 		CROSS JOIN @Date d
+		WHERE e.IsDisabled = 0
 	END
 	ELSE
 	BEGIN
 		INSERT INTO @dummy (CustID, GroupID, GroupName, Winlostdate)	
-		SELECT  DISTINCT e.CustID, e.GroupID, e.GroupName, d.WLDate
+		SELECT DISTINCT e.CustID, e.GroupID, e.GroupName, d.WLDate
 		FROM bodb_ACC.dbo.Acc_DWLList_ExtraPT e WITH (NOLOCK)
 		CROSS JOIN @Date d
+		WHERE e.IsDisabled = 0
 	END
 
 
 	/* winlost */
 	
 	-- General data --
-	
-	----Non sportsbook
-	;WITH wl AS (
-			SELECT b.srecommend , s.ProductID, 0 AS Sporttype, '' AS SubProduct,
-				SUM((winlost - actual_stake) * actualrate) AS Winlost,
-				SUM((
-					CASE
-						-- Jackpot
-						WHEN b.bettype IN (2198, 2398, 2998) THEN
-							CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
-						WHEN b.bettype IN (2199, 2399, 2999) THEN 0
-						ELSE
-							CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake + b.scomm / (1 - b.tpositiontaking) END
-						END) * b.actualrate) AS NewWinlost,
-				b.winlostdate
-			FROM bettrans14 b WITH(READPAST)
-			INNER JOIN  @SportBettype s
-				ON s.BetType = b.bettype
-			WHERE b.winlostdate BETWEEN @fromdate AND @todate
-				AND s.ProductID <> 1 
-				AND b.ruben = 1
-				AND b.statusid NOT IN (101, 102, 103, 121)
-				AND b.bettype < 19001
-			GROUP BY b.winlostdate, b.srecommend, s.ProductID
-			)
-	INSERT INTO #winning (ProductID, Sporttype, SubProduct, Winlost, NewWinlost, Winlostdate, GroupId)
-	SELECT w.ProductID, w.Sporttype, w.SubProduct, SUM(w.Winlost * s.ExtraPT) as ExtraPTwinlost, SUM(w.NewWinlost * s.ExtraPT) as NewExtraPTwinlost , w.Winlostdate, s.GroupId
+	;WITH wl AS
+	(
+		SELECT b.srecommend, b.winlostdate,
+			SUM((
+				CASE
+					-- Jackpot
+					WHEN b.bettype IN (2198, 2398, 2998, 4297) THEN
+						CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
+					WHEN b.bettype IN (2199, 2399, 2999, 4298) THEN 0
+					ELSE
+						CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake + b.scomm / (1 - b.tpositiontaking) END
+					END) * b.actualrate * b.epositiontaking) AS Winlost
+		FROM dbo.bettrans14 b WITH (READPAST)
+			INNER JOIN @SportBettype s ON s.BetType = b.bettype
+		WHERE b.winlostdate BETWEEN @fromdate AND @todate
+			AND b.statusid NOT IN (101, 102, 103, 121)
+		GROUP BY b.srecommend, b.winlostdate
+	)
+	INSERT INTO #winning (GroupId, Winlostdate, Winlost)
+	SELECT s.GroupId, w.winlostdate, SUM(w.Winlost)
 	FROM wl w
-	INNER JOIN dbo.Acc_GroupExtraPTSetting s WITH (NOLOCK)
-			ON w.srecommend = s.SuperId
-			AND w.ProductId = s.ProductId
-			AND w.SubProduct = s.SubProduct
-			AND w.Sporttype = s.Sporttype 
-			AND w.winlostdate BETWEEN s.FromDate AND s.ToDate	
-	GROUP BY w.ProductID, w.Sporttype, w.SubProduct, w.Winlostdate, s.GroupId
-
-	-- SportBook  	
-	;WITH wl AS (
-			SELECT	b.srecommend, 1 AS ProductID, 
-					CASE WHEN ISNULL(m.matchid, 0) <> 0 THEN m.Sporttype ELSE 0 END AS Sporttype, 
-					CASE WHEN s.SubProduct IN ('MG-SuperLive', 'BT-Sold','BT-Bought','BT-Comm','BT-Winloss','Bet Builder') THEN s.SubProduct ELSE '' END AS SubProduct,
-					SUM((winlost - actual_stake) * actualrate) AS Winlost,
-					SUM((CASE WHEN tpositiontaking = 1 THEN winlost - actual_stake ELSE winlost - actual_stake + scomm / (1 - tpositiontaking) END) * actualrate) AS NewWinlost,
-					b.winlostdate
-			FROM bettrans14 b WITH(READPAST)
-			INNER JOIN  @SportBettype s
-				ON s.BetType = b.bettype
-			LEFT JOIN bodb02.dbo.match m WITH(NOLOCK)
-				ON m.matchid = b.matchid AND m.eventdate = b.winlostdate AND m.sporttype = 44 -- MuayThai
-			WHERE  b.winlostdate BETWEEN @fromdate AND @todate
-				AND b.ruben = 1
-				AND b.statusid NOT IN (101, 102, 103, 121)
-				AND b.bettype < 19001
-				AND s.productID = 1 
-			GROUP BY b.winlostdate, b.srecommend,
-					CASE WHEN ISNULL(m.matchid, 0) <> 0	THEN m.Sporttype ELSE 0 END, 
-					CASE WHEN s.SubProduct IN ('MG-SuperLive', 'BT-Sold','BT-Bought','BT-Comm','BT-Winloss','Bet Builder') THEN s.SubProduct ELSE '' END
-			)
-	INSERT INTO #winning (ProductID, Sporttype, SubProduct, Winlost, NewWinlost, Winlostdate, GroupID)
-	SELECT w.ProductID, w.Sporttype, w.SubProduct, SUM(w.Winlost * s.ExtraPT), SUM(w.NewWinlost * s.ExtraPT), w.Winlostdate, s.GroupId
-	FROM wl w
-	INNER JOIN dbo.Acc_GroupExtraPTSetting s WITH (NOLOCK)
-			ON w.srecommend = s.SuperId
-			AND w.ProductId = s.ProductId
-			AND w.SubProduct = s.SubProduct
-			AND w.Sporttype = s.Sporttype 
-			AND w.winlostdate BETWEEN s.FromDate AND s.ToDate	
-	GROUP BY w.ProductID, w.Sporttype, w.SubProduct, w.Winlostdate, s.GroupId
+		CROSS APPLY (
+			SELECT TOP 1 s.GroupId
+			FROM dbo.Acc_GroupExtraPTSetting s WITH (NOLOCK)
+			WHERE s.SuperId = w.srecommend
+				AND w.winlostdate BETWEEN s.FromDate AND s.ToDate
+				AND s.GroupID NOT IN (4, 5, 6) --- ACCTHAI2,ACCTHAI56,ACCTHAI99
+		) s
+	GROUP BY s.GroupId, w.winlostdate
 
 	---Last reset
-
 	INSERT INTO @LastReset (CustID, [Reset], Winlostdate, GroupID)
 	SELECT b.custid, ROUND(SUM(ISNULL(b.winlost, 0) - ISNULL(b.actual_stake, 0)), 2) AS [Reset], b.winlostdate, d.GroupID
-	FROM bettrans b WITH(READPAST)
+	FROM bettrans b WITH (READPAST)
 	INNER JOIN (SELECT DISTINCT CustID, GroupID FROM @dummy) d
 		ON b.custid = d.CustID
 	WHERE b.bettype IN (21001, 21002)
@@ -162,71 +126,50 @@ BEGIN
 
 	IF @mode = 0 -- view
 	BEGIN
-		
-		;WITH WL AS ( 	
-			SELECT  GroupID,
-					SUM(Winlost) AS Winlost,
-					SUM(NewWinlost) AS NewWinlost,
-					Winlostdate
-			FROM #winning 
-			GROUP BY GroupID, Winlostdate
-		)
-		SELECT DM.GroupId, DM.GroupName, ROUND(ISNULL( W.NewWinlost,0 ), 2) AS Winlost, ROUND(ISNULL(W.[Reset],0), 2) AS [Reset], DM.Winlostdate
-		FROM @dummy AS DM
+		SELECT dm.GroupId, dm.GroupName, ROUND(ISNULL(w.Winlost,0 ), 2) AS Winlost, ROUND(ISNULL(w.[Reset],0), 2) AS [Reset], dm.Winlostdate
+		FROM @dummy dm
 		LEFT JOIN (
 			SELECT  ISNULL(w.GroupId, rs.GroupID) AS GroupID,
 					ROUND(SUM(ISNULL(w.Winlost, 0)), 2) AS Winlost,
-					ROUND(SUM(ISNULL(w.NewWinlost, 0)), 2) AS NewWinlost,
 					ROUND(SUM(ISNULL(rs.[Reset], 0)), 2) AS [Reset],
 					ISNULL(w.Winlostdate, rs.Winlostdate) AS Winlostdate
-			FROM WL w
+			FROM #winning w
 			FULL OUTER JOIN @LastReset rs
 				ON w.GroupId = rs.GroupID AND w.Winlostdate = rs.Winlostdate
 			GROUP BY ISNULL(w.GroupId, rs.GroupID), ISNULL(w.Winlostdate, rs.Winlostdate)
-		) AS W
-			ON DM.GroupID = W.GroupID AND DM.Winlostdate = W.Winlostdate
-		ORDER BY DM.Winlostdate DESC, DM.GroupID ASC		
-
+		) AS w
+			ON dm.GroupID = w.GroupID AND dm.Winlostdate = w.Winlostdate
+		ORDER BY dm.Winlostdate DESC, dm.GroupID ASC		
 	END
 	ELSE IF @mode = 1 -- reset
 	BEGIN
-		;WITH WL AS ( 	
-			SELECT  GroupID,
-					SUM(Winlost) AS Winlost,
-					SUM(NewWinlost) AS NewWinlost,
-					Winlostdate
-			FROM #winning 
-			GROUP BY GroupID, Winlostdate
-		)
 		INSERT INTO @reset (CustID, Winlost, [Reset], Variance, Winlostdate, GroupID, GroupName)
-		SELECT DM.CustID,
-				ROUND(ISNULL(W.NewWinlost, 0), 2) AS Winlost,
-				ROUND(ISNULL(W.[Reset],0), 2) AS [Reset], ROUND(ISNULL(W.NewVariance, 0), 2) as Variance,
-			DM.Winlostdate, DM.GroupID, DM.GroupName
-		FROM @dummy DM
+		SELECT	dm.CustID,
+				ROUND(ISNULL(W.Winlost, 0), 2) AS Winlost,
+				ROUND(ISNULL(W.[Reset],0), 2) AS [Reset],
+				ROUND(ISNULL(W.Variance, 0), 2) as Variance,
+				dm.Winlostdate, dm.GroupID, dm.GroupName
+		FROM @dummy dm
 		LEFT JOIN (
 			SELECT  ROUND(SUM(ISNULL(w.Winlost, 0)), 2) AS Winlost,
-					ROUND(SUM(ISNULL(w.NewWinlost, 0)), 2) AS NewWinlost,
 					ROUND(SUM(ISNULL(rs.[Reset], 0)), 2) AS [Reset],
 					ROUND(SUM(-ISNULL(w.Winlost, 0)), 2) - ROUND(SUM(ISNULL(rs.[Reset], 0)), 2) AS Variance,
-					ROUND(SUM(-ISNULL(w.NewWinlost, 0)), 2) - ROUND(SUM(ISNULL(rs.[Reset], 0)), 2) AS NewVariance,
 					ISNULL(w.Winlostdate, rs.winlostdate) AS Winlostdate,
 					ISNULL(w.GroupId, rs.GroupID) AS GroupID
-			FROM WL w
+			FROM #winning w
 			FULL OUTER JOIN @LastReset rs
 				ON w.GroupId = rs.GroupID AND w.Winlostdate = rs.Winlostdate
 			GROUP BY ISNULL(w.GroupId, rs.GroupID), ISNULL(w.Winlostdate, rs.Winlostdate)
 		) AS W
-		ON DM.GroupID = W.GroupID AND DM.Winlostdate = W.Winlostdate
+			ON dm.GroupID = w.GroupID AND dm.Winlostdate = w.Winlostdate
 
- 
-		DECLARE @variance     MONEY = 0,
-                @winlostdate  SMALLDATETIME,
-                @custid       INT,
-                @resetCount   TINYINT = 0,
-                @transDesc    NVARCHAR(1000)= '',
-				@seq		  TINYINT = 1,
-				@maxseq		  TINYINT,
+		DECLARE @variance		MONEY = 0,
+                @winlostdate	SMALLDATETIME,
+                @custid			INT,
+                @resetCount		TINYINT = 0,
+                @transDesc		NVARCHAR(1000)= '',
+				@seq			TINYINT = 1,
+				@maxseq			TINYINT,
 				@LogData  		NVARCHAR(200) = ''	
                 
         SELECT @winlostdate = @fromdate
@@ -302,8 +245,6 @@ BEGIN
 						@IP = @IP, 
 						@Doing = @LogData						
 				END CATCH
-					
-					
             END
 
             SET @seq = @seq + 1
