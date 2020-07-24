@@ -38,7 +38,6 @@ BEGIN
 		[bettype] [smallint] NULL,
 		[netTurnover] [money] NULL,
 		[TurnoverNoDraw] [money] NULL,
-		[TunroverNoDraw] [money] NULL,
 		[ExtraWinloss] [money] NULL,
 		[ExtraComm] [money] NULL
 		--,CONSTRAINT CIX_Sum_Winloss_tmp PRIMARY	KEY CLUSTERED (custid, recommend, mrecommend, srecommend)
@@ -81,7 +80,7 @@ BEGIN
 	INSERT INTO #__sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
 	)
 	SELECT
 		@winlostdate
@@ -253,7 +252,7 @@ BEGIN
 	INSERT INTO #__sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
 	)
 	SELECT
 		@winlostdate
@@ -424,7 +423,7 @@ BEGIN
 	INSERT INTO #__sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
 	)
 	SELECT
 		@winlostdate
@@ -594,7 +593,7 @@ BEGIN
 	INSERT INTO #__sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
 	)
 	SELECT
 		@winlostdate
@@ -768,7 +767,7 @@ BEGIN
 		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
 	)
 	SELECT winlostdate, swt.roleid, swt.custid, swt.recommend, swt.mrecommend, swt.srecommend, ci.username, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
 	FROM #__sum_winloss_tmp swt
 		INNER JOIN CustInfo ci
 			ON swt.custid = ci.custid

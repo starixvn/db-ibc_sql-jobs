@@ -88,7 +88,7 @@ Revisions:
 	- 20200422@Sophia: Add IBCBet Live Casino [RedmineId: #130693]
 	- 20200527@Sophia: Add ION [Redmine: #132325]
 	- 20200528@Sophia: Add RNG War [Redmine: #132013]
-	- 20200713@Sophia: Expand Betype range of Lottery [Redmine: #137542]
+	- 20200713@Sophia: Expand Bettype range of Lottery [Redmine: #137542]
 	- 20200708@Sol: Generate data for sum_winloss table - Redmine: [#136320]
 	
 */
