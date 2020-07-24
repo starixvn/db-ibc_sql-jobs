@@ -88,6 +88,7 @@ Revisions:
 	- 20200422@Sophia: Add IBCBet Live Casino [RedmineId: #130693]
 	- 20200527@Sophia: Add ION [Redmine: #132325]
 	- 20200528@Sophia: Add RNG War [Redmine: #132013]
+	- 20200713@Sophia: Expand Betype range of Lottery [Redmine: #137542]
 
 	
 */
@@ -119,7 +120,7 @@ WHERE b.winlostdate <> m.eventdate
 	AND b.bettype NOT IN (1231,1232,1233,1237,1238) -- exclude vsoutright
 	AND b.bettype <> 10 -- exclude outright 
 	AND b.bettype NOT BETWEEN 1501 AND 1599  --- exclude keno
-	AND b.bettype NOT BETWEEN 1021 AND 1049  --- exclude lottery
+	AND b.bettype NOT BETWEEN 1021 AND 1099  --- exclude lottery
 	
 --UPDATE b SET winlostdate = o.eventdate
 INSERT INTO @transTable
@@ -628,7 +629,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sport
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
+			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -698,7 +699,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
+			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -752,7 +753,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
+			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -824,7 +825,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
+			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -878,7 +879,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
+			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -950,7 +951,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
+			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -1004,7 +1005,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
+			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
@@ -1077,7 +1078,7 @@ INSERT INTO dbo.sum_winloss_tmp
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71,72) THEN 251
 			WHEN bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1021 AND 1049 THEN 220 -- Keno Lottery
+			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Keno Lottery
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
 			WHEN Bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
 			WHEN Bettype = 1900 THEN 249 --- Vegas Games 
