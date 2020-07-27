@@ -15,34 +15,6 @@ BEGIN
 
 	SET NOCOUNT ON
 
-	---- temp table to store data from bettrans
-	CREATE TABLE #__sum_winloss_tmp(
-		[winlostdate] [datetime] NULL,
-		[custid] [int] NOT NULL,
-		[roleid] [int] NULL,
-		[recommend] [int] NOT NULL,
-		[mrecommend] [int] NOT NULL,
-		[srecommend] [int] NOT NULL,
-		[turnover] [money] NULL,
-		[winlost] [money] NULL,
-		[awinlost] [money] NULL,
-		[mwinlost] [money] NULL,
-		[swinlost] [money] NULL,
-		[playercomm] [money] NULL,
-		[comm] [money] NULL,
-		[acomm] [money] NULL,
-		[scomm] [money] NULL,
-		[BetCount] [int] NULL,
-		[grosscomm] [money] NULL,
-		[sporttype] [smallint] NOT NULL,
-		[bettype] [smallint] NULL,
-		[netTurnover] [money] NULL,
-		[TurnoverNoDraw] [money] NULL,
-		[ExtraWinloss] [money] NULL,
-		[ExtraComm] [money] NULL
-		--,CONSTRAINT CIX_Sum_Winloss_tmp PRIMARY	KEY CLUSTERED (custid, recommend, mrecommend, srecommend)
-	)
-
 	---- get extra PT from table setting
 	CREATE TABLE #__SuperExtraPT(productId INT, bettypePT INT, SuperId INT, ExtraPT MONEY)
 	
@@ -60,14 +32,14 @@ BEGIN
 	FROM rs b 
 		CROSS APPLY 
 		(
-			SELECT
+			SELECT DISTINCT
 				tbl.ProductID
 			FROM f_SportBettypeMatrix_Sel(0, 0, b.bettype, 2, '', '', 0) tbl
 			WHERE b.bettype = tbl.bettype
 		) tbl
 		OUTER APPLY 
 		(
-			SELECT expt2.SuperId, expt2.ExtraPT
+			SELECT DISTINCT expt2.SuperId, expt2.ExtraPT
 			FROM CustDB.dbo.Acc_GroupExtraPT2Setting expt2 WITH (NOLOCK)
 			WHERE @winlostdate BETWEEN expt2.FromDate AND expt2.ToDate
 					AND tbl.ProductID = expt2.ProductID
@@ -77,10 +49,10 @@ BEGIN
 		) t
 
 	---- Member
-	INSERT INTO #__sum_winloss_tmp
+	INSERT INTO sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
 	)
 	SELECT
 		@winlostdate
@@ -249,10 +221,10 @@ BEGIN
 			 END
 
 	---- Agent
-	INSERT INTO #__sum_winloss_tmp
+	INSERT INTO sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
 	)
 	SELECT
 		@winlostdate
@@ -420,10 +392,10 @@ BEGIN
 			 END
 
 	---- Master
-	INSERT INTO #__sum_winloss_tmp
+	INSERT INTO sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
 	)
 	SELECT
 		@winlostdate
@@ -590,10 +562,10 @@ BEGIN
 			 END
 
 	---- Super
-	INSERT INTO #__sum_winloss_tmp
+	INSERT INTO sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
 	)
 	SELECT
 		@winlostdate
@@ -760,19 +732,15 @@ BEGIN
 				 ELSE 0
 			 END
 
-	-- insert into main tble
-	INSERT INTO dbo.sum_winloss_tmp
-	(
-		winlostdate, roleid, custid, recommend, mrecommend, srecommend, username, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
-	)
-	SELECT winlostdate, swt.roleid, swt.custid, swt.recommend, swt.mrecommend, swt.srecommend, ci.username, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
-	FROM #__sum_winloss_tmp swt
-		INNER JOIN CustInfo ci
-			ON swt.custid = ci.custid
+	-- update username for main table
+	-- temp table for only one day, no need to update by batch
+	UPDATE s
+		SET s.username = c.username
+	FROM sum_winloss_tmp s WITH(ROWLOCK)
+		INNER JOIN CustDB.dbo.Customer c WITH(NOLOCK)
+			ON s.custid = c.custid
+	WHERE s.winlostdate = @winlostdate
 	
-	DROP TABLE #__sum_winloss_tmp
 	DROP TABLE #__SuperExtraPT
 
 END
