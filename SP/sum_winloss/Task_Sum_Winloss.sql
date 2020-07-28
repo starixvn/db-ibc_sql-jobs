@@ -163,9 +163,8 @@ BEGIN
 						CASE 
 							WHEN bettrans.tpositiontaking = 1 THEN 0 
 							ELSE bettrans.scomm / (1 - bettrans.tpositiontaking)
-						END
+						END * CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(bettrans.epositiontaking, 0) END
 				END
-				* CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(bettrans.epositiontaking, 0) END
 			) AS ExtraComm
 	FROM dbo.bettrans14 bettrans WITH (NOLOCK)
 			INNER JOIN #__SuperExtraPT tbl 
@@ -335,9 +334,8 @@ BEGIN
 						CASE 
 							WHEN bettrans.tpositiontaking = 1 THEN 0 
 							ELSE bettrans.scomm / (1 - bettrans.tpositiontaking)
-						END
+						END * CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(bettrans.epositiontaking, 0) END
 				END
-				* CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(bettrans.epositiontaking, 0) END
 			) AS ExtraComm
 	FROM dbo.bettrans14 bettrans WITH (NOLOCK)
 			INNER JOIN #__SuperExtraPT tbl 
@@ -506,9 +504,8 @@ BEGIN
 						CASE 
 							WHEN bettrans.tpositiontaking = 1 THEN 0 
 							ELSE bettrans.scomm / (1 - bettrans.tpositiontaking)
-						END
+						END * CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(bettrans.epositiontaking, 0) END
 				END
-				* CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(bettrans.epositiontaking, 0) END
 			) AS ExtraComm
 	FROM dbo.bettrans14 bettrans WITH (NOLOCK)
 			INNER JOIN #__SuperExtraPT tbl 
@@ -677,9 +674,8 @@ BEGIN
 						CASE 
 							WHEN bettrans.tpositiontaking = 1 THEN 0 
 							ELSE bettrans.scomm / (1 - bettrans.tpositiontaking)
-						END
+						END * CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(bettrans.epositiontaking, 0) END
 				END
-				* CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(bettrans.epositiontaking, 0) END
 			) AS ExtraComm
 	FROM dbo.bettrans14 bettrans WITH (NOLOCK)
 			INNER JOIN #__SuperExtraPT tbl 

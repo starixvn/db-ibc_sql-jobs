@@ -242,9 +242,8 @@ BEGIN
 							CASE 
 								WHEN b.tpositiontaking = 1 THEN 0 
 								ELSE b.scomm / (1 - b.tpositiontaking)
-							END
+							END * CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(b.epositiontaking, 0) END 
 					END
-					* CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(b.epositiontaking, 0) END 
 					AS ExtraComm
 				FROM dbo.bettrans14 b WITH (NOLOCK)
 					INNER JOIN #__SuperExtraPT tbl 
