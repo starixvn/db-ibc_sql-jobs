@@ -8,7 +8,8 @@ AS
 	Task: Import data from API_Queue
 
 	Revisions:
-		- 20200520@Percy: Initalize SP [RedmineID: #133254]
+		- 20200520@Percy: Initialize SP [RedmineID: #133254]
+		- 20200716@Percy: Add 2 tables: TpTransferInfo & DepositInfo [RedmineID: #137395]
 */
 
 BEGIN
@@ -66,12 +67,36 @@ BEGIN
 		END
 	END
 
+	-- TpTransferInfo
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_TpTransferInfo @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('TpTransferInfo', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- DepositInfo
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_DepositInfo @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('DepositInfo', @ErrCode, @ErrMsg)
+		END
+	END
+
 	DECLARE @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX), @recipients VARCHAR(MAX)
 
 	-- In case having error
 	IF EXISTS (SELECT 1 FROM @ErrTable)
 	BEGIN
-		IF @@SERVERNAME IN ('', '')
+		IF @@SERVERNAME IN ('DB052', 'DB053')
 			SELECT @recipients = 'percy.nguyen@starixsoft.com;sophia.nguyen@starixsoft.com;pontus@starixsoft.com'
 		ELSE
 			SELECT @recipients = 'percy.nguyen@starixsoft.com'
