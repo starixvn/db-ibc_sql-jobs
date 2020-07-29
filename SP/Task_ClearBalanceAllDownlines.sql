@@ -27,6 +27,19 @@ BEGIN
 	CREATE TABLE #Cust (ID INT IDENTITY (1,1), Custid INT, Status VARCHAR(20) ,TransferType TINYINT, LastTransfer DATETIME, IsTransferring BIT)
 
 	SET @today = CURRENT_TIMESTAMP
+	
+	
+	---- CHECK UM TRANSFER FUNCTION
+
+		EXEC [dbo].[XXXX]  
+			,@ErrMsg = @ErrMsg OUTPUT 
+			,@ErrCode = @ErrCode OUTPUT
+			 
+		IF @ErrCode <> 0  -- Function Transfer is under UM 
+		BEGIN
+			RAISERROR(@ErrCode,16,1)				 
+		END		
+			
 
 	-- prepare for running
 		EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList @mode = 0
@@ -59,11 +72,8 @@ BEGIN
 
 	WHILE (1 = 1)
 	BEGIN
-		IF (dbo.f_IsContinueClearBalance() = 0) BREAK -- control from outside (old Code)
-		
-		---SOPHIA: check UM transfer 		
-		---	
-		
+		IF (dbo.f_IsContinueClearBalance() = 0) BREAK -- control from outside (old Code)		
+
 		SELECT TOP 1
 		  @ID = ID,
 		  @CustID = a.custid,
@@ -75,7 +85,7 @@ BEGIN
 		ORDER BY a.ID			
 
 		--IF(@CustID IS NULL) BREAK -- no more to transfer
-		IF @@rowcount = 0 BREAK -- no more to transfer
+		IF @@ROWCOUNT = 0 BREAK -- no more to transfer
 		
 		EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
 		  @custid = @custid,
