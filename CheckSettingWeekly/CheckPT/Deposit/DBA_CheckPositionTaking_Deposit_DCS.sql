@@ -25,6 +25,7 @@ AS
 		-20200206@Johnson: add new PT config for VS (rule 71) and exclude closed customers[redmine:#127831]
 		-20200410@Elodie: Add new PT value for lottery [RedmineID:#131218]
 		-20200505@Eden: Add new PT - Deposit known values for Card Club, SpadeGaming, Virtual Games, SA Gaming, Indo 4D, Table Game [RedmineID:#132253]
+		-20200728@Eden: Add new PT - Deposit known values for PP Jackpot [RedmineID:#138389]
 	Param's Explanation:
 	
 */
@@ -193,7 +194,7 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustPTSetting_Member s WITH(NOLOCK)							
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid
 			INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 
-			INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena			
+			INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena AND cf.BetType IN (s.BetType,0)		
 		WHERE c.srecommend=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0   
 			AND (CHARINDEX(',' + CONVERT(varchar,s.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
 					OR s.SuperPT<>0 OR s.MasterPT<>0
@@ -206,7 +207,7 @@ BEGIN
 		SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
 		FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK)		
 			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid
-			INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena			
+			INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena AND cf.BetType IN (s.BetType,0)			
 		WHERE c.srecommend=@srecommend AND c.roleid=2 
 			AND (CHARINDEX(',' + CONVERT(varchar,s.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
 					OR s.SuperPT<>0 OR s.MasterPT<>0
@@ -400,7 +401,7 @@ BEGIN
 			SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
 			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member d WITH(NOLOCK)
 				INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
-				INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON d.sporttype = cf.sporttype AND cf.RuleID = 70 AND cf.IsAthena = @IsAthena
+				INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON d.sporttype = cf.sporttype AND cf.RuleID = 70 AND cf.IsAthena = @IsAthena AND cf.BetType IN (d.BetType,0)
 			WHERE ci.srecommend=@srecommend
 				AND CHARINDEX(',' + CONVERT(varchar,d.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
 				AND d.AgentID NOT IN(SELECT CustID FROM #Trade)		
