@@ -15,7 +15,8 @@ AS
 	- 20150701@Kathy: Correct condition to break WHILE loop [Redmine:#36216]
 	- 20160810@Lukas: Add finished time for each SMA customer		
 	- 20200525@Sophia: Prioritize clear active account first [Redmine: #134653]
-	- 20200724@Sophia: prevent duplicated transfer [Redmine: #137141]
+	- 20200730@Sophia: prevent duplicated transfer [Redmine: #137141]
+	- 20200730@Sophia: Check UM Transfer Function [Redmine: #136992]
 */
 BEGIN
 
@@ -28,19 +29,6 @@ BEGIN
 
 	SET @today = CURRENT_TIMESTAMP
 	
-	
-	---- CHECK UM TRANSFER FUNCTION
-
-		EXEC [dbo].[XXXX]  
-			,@ErrMsg = @ErrMsg OUTPUT 
-			,@ErrCode = @ErrCode OUTPUT
-			 
-		IF @ErrCode <> 0  -- Function Transfer is under UM 
-		BEGIN
-			RAISERROR(@ErrCode,16,1)				 
-		END		
-			
-
 	-- prepare for running
 		EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList @mode = 0
 
@@ -53,7 +41,8 @@ BEGIN
 		WHERE a.[Status] = 'waiting'
 		ORDER BY c.Reject, c.Closed
 		
-		----------------------------
+		------------------------------------------------------------------------
+		--- top 20 custID which will be locked at other transfer function
 		SET @t = 20 --- top 20 custID which will be locked at other transfer function
 		
 		SELECT TOP (@t) @CustIdList = COALESCE(@CustIdList + ',', '') +  convert(varchar(12),Custid)  
@@ -64,11 +53,11 @@ BEGIN
 		EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList @mode = 2, @CustIdList = @CustIdList, @IsTransferring = 1
 		
 		UPDATE 	#Cust 
-		SET  	IsTransferring = @IsTransferring
+		SET  	IsTransferring = 1
 		WHERE 	Custid IN (Select Val from [f_SplitString](@CustIDList, ',')) 
 
-		WAITFOR DELAY '00:00:02' 
-		----------------------------
+		WAITFOR DELAY '00:00:05' 
+		-----------------------------------------------------------------------------------
 
 	WHILE (1 = 1)
 	BEGIN
@@ -126,6 +115,7 @@ BEGIN
 		BEGIN
 			EXEC Acc_BettransInsTransferAllMembers @AgentName =@Username
 				,@UserID = 862400 -- starix2
+				,@IsJob = 1
 				,@ErrMsg = @ErrMsg OUTPUT 
 				,@ErrCode = @ErrCode OUTPUT
 			
@@ -169,6 +159,7 @@ BEGIN
 		BEGIN
 			EXEC [dbo].[Acc_ClearBalanceAllDownlines] @AgentName =@Username
 				,@UserID = 862400 -- starix2
+				,@IsJob = 1
 				,@ErrMsg = @ErrMsg OUTPUT 
 				,@ErrCode = @ErrCode OUTPUT
 				

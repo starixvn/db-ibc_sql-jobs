@@ -1,4 +1,4 @@
-/*<info serverAlias="DCUST-CustDB" executers="bodbAdminNet" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_UpdClearBalanceList]
 (
 	@mode TINYINT = 1,
