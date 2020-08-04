@@ -27,6 +27,7 @@ AS
 		- 20190524@Billy:	Change Letstalk linked server - [Redmine: #113125]
 		- 20190924@Billy:	Support show CN88 result - [Redmine: #120719]
 		- 20200619@Daniel:	Support show Winloss Limit result - [Redmine: #120719]
+		- 20200804@Daniel:	Exclude ignored cust from bet limit result based on destination CustB - [Redmine: #138389]
 
 
 	Test command:
@@ -388,6 +389,38 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 							END
 			AND ic.RuleId = CASE WHEN ic.RuleId = 0 THEN ic.RuleId ELSE r.ruleid END
 			AND	ic.sporttype = CASE WHEN ic.sporttype = 0 THEN ic.sporttype ELSE r.sporttype END;
+
+
+	DELETE	r WITH (TABLOCK)
+	FROM		dbo.CheckBetLimitResult AS r
+	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+			ON	r.CustIdB = cus.CustId
+	INNER JOIN	dbo.IgnoredCust ic WITH (NOLOCK)
+			ON	ic.custid = CASE	WHEN ic.Allline = 0 THEN cus.CustId 
+									ELSE CASE	WHEN ic.RoleID = 4 THEN cus.srecommend 
+												WHEN ic.RoleID = 3 THEN cus.mrecommend
+												WHEN ic.RoleID = 2 THEN cus.recommend
+												ELSE cus.CustId
+											END
+							END
+			AND ic.RuleId = CASE WHEN ic.RuleId = 0 THEN ic.RuleId ELSE r.ruleid END
+			AND	ic.sporttype = CASE WHEN ic.sporttype = 0 THEN ic.sporttype ELSE r.sporttype END;
+
+	DELETE	r WITH (TABLOCK)
+	FROM		dbo.CheckBetLimitResult_DCS AS r
+	INNER JOIN	CheckCustDB.dbo.custInfo AS cus WITH (NOLOCK)
+			ON	r.CustIdB = cus.CustId
+	INNER JOIN	dbo.IgnoredCust ic WITH (NOLOCK)
+			ON	ic.custid = CASE	WHEN ic.Allline = 0 THEN cus.CustId 
+									ELSE CASE	WHEN ic.RoleID = 4 THEN cus.srecommend 
+												WHEN ic.RoleID = 3 THEN cus.mrecommend
+												WHEN ic.RoleID = 2 THEN cus.recommend
+												ELSE cus.CustId
+											END
+							END
+			AND ic.RuleId = CASE WHEN ic.RuleId = 0 THEN ic.RuleId ELSE r.ruleid END
+			AND	ic.sporttype = CASE WHEN ic.sporttype = 0 THEN ic.sporttype ELSE r.sporttype END;
+
 
 	DELETE	r WITH (TABLOCK)
 	FROM		dbo.CheckResultStakeLevel_Credit AS r
