@@ -41,10 +41,11 @@ AS
 		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625]
 		- 20200721@Hogan: Add 7 games for Jackpot and 2 bettype for Contribution (4297) and Jackpot Prize (4298) [RedmineID: #137290]
+		- 20200803@Kos: Support Saba Loyalty [RedmineID: #138493]
 
 	Input Params:
-	- @Winlostdate: The input Winlostdate to be summarized	
-	- @isSuccessful: -1: Data of the whole day have been summarized completely
+		- @Winlostdate: The input Winlostdate to be summarized	
+		- @isSuccessful: -1: Data of the whole day have been summarized completely
 						-0: Data of the whole day have not been summarized completely
 */
 
@@ -274,17 +275,17 @@ BEGIN
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 				WHEN b.bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 				WHEN b.bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
-				WHEN b.bettype IN(17000) THEN 246 -- NPHP
+				WHEN b.bettype IN (17000, 17003) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
-			SUM(CASE WHEN b.ruben = 1 AND b.bettype NOT IN (17000,4300,4299,4298,4297) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss
+			SUM(CASE WHEN b.ruben = 1 AND b.bettype NOT IN (17000,17003,4300,4299,4298,4297) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss
 			SUM(CASE WHEN b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame
 			SUM(CASE WHEN b.ruben = 1 THEN b.playercomm ELSE 0 END),--Playercomm
 			SUM(CASE WHEN b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.awinlost ELSE 0 END),--Comm_BetTrade
 			SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 			SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
-			SUM(CASE WHEN b.bettype IN (17000,4300,4299,4298,4297) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
+			SUM(CASE WHEN b.bettype IN (17000,17003,4300,4299,4298,4297) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
 		FROM dbo.bettrans14 b WITH (NOLOCK) 
 			INNER JOIN #DepCustID d on b.custid = d.CustID
 		/*
@@ -336,7 +337,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 				WHEN b.bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 				WHEN b.bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
-				WHEN b.bettype IN(17000) THEN 246 -- NPHP
+				WHEN b.bettype IN (17000,17003) THEN 246 -- NPHP
 				ELSE 0
 			END--SportType
 		OPTION (RECOMPILE, MAXDOP 8)
