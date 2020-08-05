@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20191126@Helen: Archive TO Control - copy [Redimine:98467]
 		- 20200122@Max: Support Separate setting and notification into Live/Non-Live major and minor bettypes [Redmine: #126841]
+		- 20200714@Max: SMA TO Control - Add block increasing TO Limit feature to specific SMAs - [Redmine: #136254]
  */
 BEGIN
 	SET NOCOUNT ON
@@ -22,7 +23,9 @@ BEGIN
 	FROM DBAGE.bodb02.dbo.match14 WITH (NOLOCK)
 	WHERE eventdate = @winlostdate
 
-	SELECT	ts.CustID, ts.matchid, ts.MaxTurnOver, ts.TotalTurnOver, ts.IsNotified, ts.HouseTurnover, ts.PercentLevel, ts.IsGroupHeadLine, @winlostdate AS winlostdate, ts.ProfileID
+	SELECT	ts.CustID, ts.matchid, ts.MaxTurnOver, ts.TotalTurnOver, ts.IsNotified, ts.HouseTurnover, ts.PercentLevel, ts.IsGroupHeadLine
+		, @winlostdate AS winlostdate
+		, ts.ProfileID, ts.IsGlobalLockTOLimit, ts.IsEventLockTOLimit
 	FROM dbo.TOControl_Setting ts WITH (NOLOCK)
 		INNER JOIN @MatchidList_copy m ON ts.matchid = m.Matchid
 	

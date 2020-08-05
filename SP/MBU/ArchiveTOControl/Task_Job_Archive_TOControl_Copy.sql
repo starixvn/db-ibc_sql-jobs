@@ -12,6 +12,7 @@ CREATE PROCEDURE dbo.Task_Job_Archive_TOControl_Copy
 	Revisions:
 		- 20191126@Helen: Archive TO Control - copy [Redimine:98467]
 		- 20200122@Max: Support Separate setting and notification into Live/Non-Live major and minor bettypes [Redmine: #126841]
+		- 20200714@Max: SMA TO Control - Add block increasing TO Limit feature to specific SMAs - [Redmine: #136254]
 */
 AS
 BEGIN
@@ -49,7 +50,7 @@ BEGIN
 		IF @IsDebug = 1
 			RAISERROR (@msg, 0, 1,@start, @winlostdate_tmp) WITH NOWAIT
 		-- Result
-		INSERT INTO dbo.TOControl_Setting_bk (CustID, matchid, MaxTurnOver, TotalTurnOver, IsNotified, HouseTurnover, PercentLevel, IsGroupHeadLine,winlostdate, ProfileID)
+		INSERT INTO dbo.TOControl_Setting_bk (CustID, matchid, MaxTurnOver, TotalTurnOver, IsNotified, HouseTurnover, PercentLevel, IsGroupHeadLine,winlostdate, ProfileID, IsGlobalLockTOLimit, IsEventLockTOLimit)
 		EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX), @winlostdate datetime', @query, @winlostdate
 			
 		SET @start = @start + 1
