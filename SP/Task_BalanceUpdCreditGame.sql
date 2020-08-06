@@ -1,31 +1,26 @@
-USE [bodb02]
-GO
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
 
-/****** Object:  StoredProcedure [dbo].[Task_BalanceUpdCreditGame]    Script Date: 01/26/2015 03:31:25 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-/****** Object:  Stored Procedure dbo.Task_BalanceUpdCreditGame    Script Date: 10/23/2012 2:02:15 PM ******/
-CREATE PROCEDURE [dbo].[Task_BalanceUpdCreditGame]
+ALTER PROCEDURE [dbo].[Task_BalanceUpdCreditGame]
 AS
 /*
-		Created: Dan	
-		Date: 20121008
-		Task: accumulate balance for credit
-		DB: DBTRANS.BODB02
+	Created: Dan	
+	Date: 20121008
+	Task: accumulate balance for credit
+	DB: DBTXN.BODB02
 		
-		Revisions:
-			
-		Parameters Explanation:	
+	Revisions:
+		- 20150710@Patrick: Support Gold Deluxe
+		- 20151028@Patrick: Support Company Winlimit
+		- 20161011@Helen: CWL - Phase 3 [Redmine:61220]
+        - 20180207@Vicky: Do not count ticket Progressive Jackpot (2199, 2399, 2999) into SMA Win Limit. [Redmine: #89952]
+        - 20200806@Elodie: Do not count ticket PP Jackpot Prize (4298) into SMA Win Limit. [Redmine: #138481]
+	Parameters Explanation:	
 */
 	
 SET NOCOUNT ON
 Declare @rn bigint, @rnx bigint
 SELECT @rn = MIN(rn), @rnx = MAX(rn)
-FROM dbo.BalancePendingCreditGame with (nolock)
+FROM dbo.BalancePendingCreditGame WITH (NOLOCK)
 
 IF @rn IS NULL
 BEGIN
@@ -37,15 +32,28 @@ END
 SET @rn = CASE WHEN @rnx - @rn > 100 THEN @rn + 100 ELSE @rnx END
 
 -- collect balance value.
-CREATE TABLE #Balance (custid int, winlostdate smalldatetime, balance money)
-INSERT INTO #Balance
-SELECT custid, winlostdate, SUM(balance)
-FROM dbo.BalancePendingCreditGame --with (rowlock)
+CREATE TABLE #Balance (custid int, winlostdate smalldatetime, bettype smallint, balance money)
+INSERT INTO #Balance(custid, winlostdate, bettype, balance)
+SELECT custid, winlostdate, bettype, SUM(balance)
+FROM dbo.BalancePendingCreditGame WITH (NOLOCK)
 WHERE rn <= @rn
-GROUP BY custid, winlostdate
+    AND GameTypeid NOT IN (2199,2399,2999,4298) --do not count ticket Progressive Jackpot, PP Jackpot Prize into SMA Win Limit
+GROUP BY custid, winlostdate, bettype
+
+CREATE TABLE #Balance_CWL (custid int, winlostdate smalldatetime,bettypeID smallint, GameTypeid smallint, balance money)
+INSERT INTO #Balance_CWL(custid, winlostdate,bettypeID, GameTypeid, balance)
+SELECT custid, winlostdate, bettype, isnull(GameTypeid,bettype) AS GameTypeid, SUM(balance)
+FROM dbo.BalancePendingCreditGame WITH (NOLOCK)
+WHERE rn <= @rn
+GROUP BY custid, winlostdate,bettype, isnull(GameTypeid,bettype)
 
 DECLARE @today SMALLDATETIME
 SET @today = convert(nvarchar(10), current_timestamp,120)
+
+CREATE TABLE #ProductSetting(Bettype SMALLINT, IsCompany BIT, IsSMA BIT)
+INSERT INTO #ProductSetting(Bettype, IsCompany, IsSMA)
+SELECT BetType, IsActive_Company, IsActive_SMA
+FROM dbo.f_Winlimit_GetProductSetting()
 
 -- perform update
 Declare @Retry int, @Success bit
@@ -58,17 +66,35 @@ BEGIN TRY
 	SET @Success = 1
 	BEGIN TRANSACTION
 	
+	--for SMA Winlimit
+	
 	UPDATE bal
 	SET Balance = bal.Balance + B.balance
 	FROM dbo.BalanceCreditGame bal 	--WITH (rowlock, updlock)
-		INNER JOIN #Balance B ON bal.custid = B.custid AND bal.winlostdate = B.winlostdate
+		INNER JOIN #Balance b ON bal.custid = b.custid AND bal.winlostdate = b.winlostdate AND bal.bettype = b.bettype
+	WHERE b.bettype IN (SELECT BetType FROM #ProductSetting WHERE IsSMA = 1)
 		
 	-- insert balance for today if not exist in balance table
-	INSERT INTO dbo.BalanceCreditGame(custid, winlostdate, balance )
-	select b.custid, b.winlostdate, b.balance
-	from #Balance B 
-		LEFT JOIN dbo.BalanceCreditGame bal ON bal.custid = B.custid AND bal.winlostdate = B.winlostdate
-	WHERE bal.Winlostdate is null and b.winlostdate = @today
+	INSERT INTO dbo.BalanceCreditGame(custid, winlostdate, bettype, balance)
+	SELECT b.custid, b.winlostdate, b.bettype, b.balance
+	FROM #Balance b
+		LEFT JOIN dbo.BalanceCreditGame bal ON bal.custid = b.custid AND bal.winlostdate = b.winlostdate AND bal.bettype = b.bettype
+	WHERE bal.Winlostdate IS NULL AND b.winlostdate = @today
+		AND b.bettype IN (SELECT BetType FROM #ProductSetting WHERE IsSMA = 1)
+	
+	--for Company Winlimit
+	UPDATE bal
+	SET Winlost = bal.Winlost + B.balance
+	FROM dbo.Winlimit_CreditGame bal
+		INNER JOIN #Balance_CWL b ON bal.custid = b.custid AND bal.winlostdate = b.winlostdate AND bal.bettype = b.GameTypeID
+	WHERE b.bettypeID IN (SELECT BetType FROM #ProductSetting WHERE IsCompany = 1)
+	
+	INSERT INTO dbo.Winlimit_CreditGame(custid, winlostdate, bettype, Winlost)
+	SELECT b.custid, b.winlostdate, b.GameTypeID, b.balance
+	FROM #Balance_CWL b
+		LEFT JOIN dbo.Winlimit_CreditGame bal ON bal.custid = b.custid AND bal.winlostdate = b.winlostdate AND bal.bettype = b.GameTypeID
+	WHERE bal.Winlostdate IS NULL AND b.winlostdate = @today
+		AND b.bettypeID IN (SELECT BetType FROM #ProductSetting WHERE IsCompany = 1)
 		
 	COMMIT TRANSACTION
 END TRY
@@ -81,12 +107,9 @@ END CATCH
 IF @Success = 0 AND @Retry < 3 GOTO TryAgain
 
 -- remove data which already updated.
+
 IF @Success = 1
 	DELETE FROM dbo.BalancePendingCreditGame
 	WHERE rn <= @rn
-GO
 
-GRANT VIEW DEFINITION ON [dbo].[Task_BalanceUpdCreditGame] TO [vnteam] AS [dbo]
-GO
-
-
+DROP TABLE #ProductSetting
