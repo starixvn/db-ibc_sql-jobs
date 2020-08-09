@@ -16,18 +16,19 @@ AS
 		- 20180420@Percy: Change stake to actual_stake for Contribution formula [RedmineID: #94025]
 		- 20180529@Percy: Change Contribution formula [RedmineID: #96053]
 		- 20180607@Percy: Change Contribution data type [RedmineID: #96053]
+		- 20200809@Sophia: Add PP Jackpot contribution [Redmine: #138483]
  
 	Param's Explanation:
 */
 
 BEGIN 
 	SET NOCOUNT ON 
+		
+	DECLARE @Bettype TABLE (ProductId INT, bettype INT, ContributionBettype INT)
 
-	DECLARE @Bettype TABLE (ProductID INT, ContributionBettype INT)
-
-	INSERT INTO @Bettype (ProductID, ContributionBettype)
-	SELECT ProductID, ContributionBettype
-	FROM bodb02.dbo.f_ProgressiveGamesContribution_Bettype_Sel('All')
+	INSERT INTO @Bettype (ProductId, bettype, ContributionBettype)
+	SELECT ProductId, BetType, ContributionBettype FROM dbo.f_ProgressiveGamesContribution_Bettype_Sel('All')
+	
 
 	/* Get data source */
 	CREATE TABLE #rptProgressiveGamesContribution
@@ -50,6 +51,7 @@ BEGIN
 
 	-- Member - RoleId = 1
 	BEGIN
+		---- RNG Casino 
 		INSERT INTO #rptProgressiveGamesContribution
 		(
 			WinlostDate,
@@ -67,7 +69,6 @@ BEGIN
 			ContributionM,
 			ContributionS
 		)
-
 		SELECT
 			b.WinlostDate,
 			b.CustId,
@@ -84,9 +85,9 @@ BEGIN
 			SUM(ISNULL(b.mwinlost, 0)) AS ContributionM,
 			SUM(ISNULL(b.swinlost, 0)) AS ContributionS
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK)
-			INNER JOIN @Bettype g ON b.Bettype = g.ContributionBettype
+			INNER JOIN @Bettype g ON b.Bettype = g.ContributionBettype AND g.ProductID = 6
 		WHERE b.WinlostDate = @WinlostDate
-			AND b.StatusID NOT IN (0,1,102,101,103)		 
+			AND b.StatusID IN (111,112,113)		 
 		GROUP BY
 			b.WinlostDate,
 			b.CustId,
@@ -95,6 +96,54 @@ BEGIN
 			b.SRecommend,
 			g.ProductId,
 			b.Bettype
+			
+		-----PP Jackpot 
+		INSERT INTO #rptProgressiveGamesContribution
+		(
+			WinlostDate,
+			CustId,
+			RoleId,
+			Recommend,
+			MRecommend,
+			SRecommend,
+			ProductId,
+			GameId,
+			Betcount,
+			Turnover,
+			Contribution,
+			ContributionA,
+			ContributionM,
+			ContributionS
+		)
+		SELECT
+			bc.WinlostDate,
+			bc.CustId,
+			1 AS RoleId,
+			bc.Recommend,
+			bc.MRecommend,
+			bc.SRecommend,
+			sc.ProductId,
+			bb.Bettype,
+			COUNT(bc.TransID) AS Betcount,
+			SUM(ISNULL(bc.BetStake, 0)),
+			SUM(ISNULL(bc.ContributionStake3rd, 0)),
+			SUM(ISNULL(bc.awinlost, 0)) AS ContributionA,
+			SUM(ISNULL(bc.mwinlost, 0)) AS ContributionM,
+			SUM(ISNULL(bc.swinlost, 0)) AS ContributionS
+		FROM dbo.bettransRNG bc WITH (NOLOCK)
+			INNER JOIN dbo.bettransRNG bb WITH (NOLOCK) ON bc.RefNo2 = bb.TransId
+			INNER JOIN @Bettype sc ON bc.GameId = sc.ContributionBettype AND sc.ProductID = 32
+			INNER JOIN @Bettype sb ON bb.GameId = sb.bettype AND sb.ProductID = 32 
+		WHERE bc.WinlostDate = @WinlostDate
+			AND bc.StatusID IN (111,112,113)
+		GROUP BY
+			bc.WinlostDate,
+			bc.CustId,
+			bc.Recommend,
+			bc.MRecommend,
+			bc.SRecommend,
+			sc.ProductId,
+			bb.Bettype				
 	END
 
 	-- Agent - RoleId = 2
