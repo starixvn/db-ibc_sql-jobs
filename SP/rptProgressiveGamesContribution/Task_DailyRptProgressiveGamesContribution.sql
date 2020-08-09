@@ -27,7 +27,7 @@ BEGIN
 	DECLARE @Bettype TABLE (ProductId INT, bettype INT, ContributionBettype INT)
 
 	INSERT INTO @Bettype (ProductId, bettype, ContributionBettype)
-	SELECT ProductId, BetType, ContributionBettype FROM dbo.f_ProgressiveGamesContribution_Bettype_Sel('All')
+	SELECT ProductId, BetType, ContributionBettype FROM bodb02.dbo.f_ProgressiveGamesContribution_Bettype_Sel('All')
 	
 
 	/* Get data source */
@@ -123,15 +123,15 @@ BEGIN
 			bc.MRecommend,
 			bc.SRecommend,
 			sc.ProductId,
-			bb.Bettype,
+			bb.GameId,
 			COUNT(bc.TransID) AS Betcount,
 			SUM(ISNULL(bc.BetStake, 0)),
 			SUM(ISNULL(bc.ContributionStake3rd, 0)),
 			SUM(ISNULL(bc.awinlost, 0)) AS ContributionA,
 			SUM(ISNULL(bc.mwinlost, 0)) AS ContributionM,
 			SUM(ISNULL(bc.swinlost, 0)) AS ContributionS
-		FROM dbo.bettransRNG bc WITH (NOLOCK)
-			INNER JOIN dbo.bettransRNG bb WITH (NOLOCK) ON bc.RefNo2 = bb.TransId
+		FROM bodb02.dbo.bettransRNG bc WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.bettransRNG bb WITH (NOLOCK) ON bc.RefNo2 = bb.TransId
 			INNER JOIN @Bettype sc ON bc.GameId = sc.ContributionBettype AND sc.ProductID = 32
 			INNER JOIN @Bettype sb ON bb.GameId = sb.bettype AND sb.ProductID = 32 
 		WHERE bc.WinlostDate = @WinlostDate
@@ -143,7 +143,7 @@ BEGIN
 			bc.MRecommend,
 			bc.SRecommend,
 			sc.ProductId,
-			bb.Bettype				
+			bb.GameId				
 	END
 
 	-- Agent - RoleId = 2
