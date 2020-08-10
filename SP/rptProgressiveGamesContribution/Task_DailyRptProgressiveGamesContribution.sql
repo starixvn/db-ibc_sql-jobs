@@ -132,7 +132,7 @@ BEGIN
 			SUM(ISNULL(bc.swinlost, 0)) AS ContributionS
 		FROM bodb02.dbo.bettransRNG bc WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.bettransRNG bb WITH (NOLOCK) ON bc.RefNo2 = bb.TransId
-			CROSS APPLY (SELECT sc.ProductID FROM  @SportBettypeMatrix sc WHERE bb.GameId = sc.bettype AND sc.ProductID = 32 ) sc
+			CROSS APPLY (SELECT sc.ProductID FROM  @SportBettypeMatrix sc WHERE bc.GameId = sc.ContributionBettype AND sc.ProductID = 32 ) sc
 			CROSS APPLY (SELECT sb.ProductID FROM  @SportBettypeMatrix sb WHERE bb.GameId = sb.bettype AND sb.ProductID = 32 ) sb
 		WHERE bc.WinlostDate = @WinlostDate
 			AND bc.StatusID IN (111,112,113)
