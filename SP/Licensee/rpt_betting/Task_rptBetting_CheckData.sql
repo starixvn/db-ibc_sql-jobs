@@ -17,6 +17,7 @@ AS
 		- 20190808@Parsons: Provide House Turnover In NG WL Report [Redmine: #117674]
 		- 20190918@Parsons: Update house turnover's formula [Redmine: #120119]
 		- 20200403@Parsons: Indo 4D Integration [RedmineID: #130910]
+		- 20200804@Sol: Include vsraceinfo14 [RedmineID: #135963]
 
 	Param's Explanation:
 
@@ -105,7 +106,7 @@ BEGIN
 				WHEN b.Bettype = 9 THEN -9 
 				WHEN b.bettype = 2799 THEN -2799
 				WHEN b.bettype = 10 OR (b.Bettype <> 38 AND b.Bettype > 30 AND b.Bettype < 50) THEN ISNULL(o.leagueid,-1)
-				WHEN b.bettype IN (1231, 1232, 1233, 1237, 1238) THEN RaceInfo.LeagueID
+				WHEN b.bettype IN (1231, 1232, 1233, 1237, 1238) THEN ISNULL(RaceInfo.LeagueID, RaceInfo14.LeagueID)
 				ELSE ISNULL(m.leagueid, -1) 
 			END AS leagueid,
 			b.currency,
@@ -145,7 +146,8 @@ BEGIN
 			LEFT JOIN bodb_Licensee.dbo.view_site_list [site] (NOLOCK) ON ibcsite.SiteID = site.IbcSiteID
 			LEFT JOIN dbo.match m (NOLOCK) ON b.matchid = m.matchid
 			LEFT JOIN dbo.outright o (NOLOCK) ON b.matchid = o.matchid
-			LEFT JOIN DBRPT.bodb02.dbo.VSRaceInfo RaceInfo WITH (NOLOCK) ON b.matchid = RaceInfo.EventID AND b.bettype IN(1231, 1232, 1233, 1237, 1238)
+			LEFT JOIN bodb02.dbo.VSRaceInfo RaceInfo WITH (NOLOCK) ON b.matchid = RaceInfo.EventID AND b.bettype IN(1231, 1232, 1233, 1237, 1238)
+			LEFT JOIN bodb02.dbo.VSRaceInfo14 RaceInfo14 WITH (NOLOCK) ON b.matchid = RaceInfo14.EventID AND b.bettype IN(1231, 1232, 1233, 1237, 1238)
 		WHERE b.isBA = 0 AND b.winlostdate = @WinlostDate
 		GROUP BY
 			ISNULL(site.SiteID,-1),
@@ -154,7 +156,7 @@ BEGIN
 				WHEN b.Bettype = 9 THEN -9 
 				WHEN b.bettype = 2799 THEN -2799
 				WHEN b.bettype = 10 OR (b.Bettype <> 38 AND b.Bettype > 30 AND b.Bettype < 50) THEN ISNULL(o.leagueid, -1)
-				WHEN b.bettype IN(1231, 1232, 1233, 1237, 1238) THEN RaceInfo.LeagueID
+				WHEN b.bettype IN(1231, 1232, 1233, 1237, 1238) THEN ISNULL(RaceInfo.LeagueID, RaceInfo14.LeagueID)
 				ELSE ISNULL(m.leagueid,-1) 
 			END,
 			b.currency,

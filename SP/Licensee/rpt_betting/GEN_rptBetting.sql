@@ -34,6 +34,7 @@ AS
 		20190918@Parsons: Update house turnover's formula [Redmine: #120119]
 		20191209@Percy: Enhance performance [RedmineID: #125028]
 		20200403@Parsons: Indo 4D Integration [RedmineID: #130910]
+		20200804@Sol: Include vsraceinfo14 [RedmineID: #135963]
 
 	Param's Explanation:
 
@@ -73,7 +74,7 @@ BEGIN
 					WHEN b.bettype = 9		THEN -9
 					WHEN b.bettype = 2799	THEN -2799
 					WHEN b.bettype = 10		THEN ISNULL(o.leagueid, -1)
-					WHEN b.bettype IN (1231,1232,1233,1237,1238) THEN r.leagueid
+					WHEN b.bettype IN (1231,1232,1233,1237,1238) THEN ISNULL(r.leagueid, r14.leagueid)
 					ELSE ISNULL(m.leagueid, -1) END AS leagueid
 				,b.currency					AS [CurrencyID]
 				,b.statusid					AS [Status]
@@ -111,6 +112,7 @@ BEGIN
 				LEFT JOIN dbo.match m WITH (NOLOCK) ON b.matchid = m.matchid
 				LEFT JOIN dbo.outright o WITH (NOLOCK) ON b.matchid = o.matchid
 				LEFT JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK) ON b.matchid = r.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
+				LEFT JOIN bodb02.dbo.VSRaceInfo14 r14 WITH (NOLOCK) ON b.matchid = r14.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
 			WHERE b.winlostdate = @tmpDate
 				AND isBA = 0
 			GROUP BY
@@ -121,7 +123,7 @@ BEGIN
 					WHEN b.bettype = 9		THEN -9
 					WHEN b.bettype = 2799	THEN -2799
 					WHEN b.bettype = 10		THEN ISNULL(o.leagueid, -1)
-					WHEN b.bettype IN (1231,1232,1233,1237,1238) THEN r.leagueid
+					WHEN b.bettype IN (1231,1232,1233,1237,1238) THEN ISNULL(r.leagueid, r14.leagueid)
 					ELSE ISNULL(m.leagueid, -1) END
 				,b.currency
 				,b.statusid
@@ -147,7 +149,7 @@ BEGIN
 					WHEN b.bettype = 9		THEN -9
 					WHEN b.bettype = 2799	THEN -2799
 					WHEN b.bettype = 10		THEN ISNULL(o.leagueid, -1)
-					WHEN b.bettype IN (1231,1232,1233,1237,1238) THEN r.leagueid
+					WHEN b.bettype IN (1231,1232,1233,1237,1238) THEN ISNULL(r.leagueid, r14.leagueid)
 					ELSE ISNULL(m.leagueid, -1) END AS leagueid
 				,b.currency					AS [CurrencyID]
 				,b.statusid					AS [Status]
@@ -185,6 +187,7 @@ BEGIN
 				LEFT JOIN dbo.match m WITH (NOLOCK) ON b.matchid = m.matchid
 				LEFT JOIN dbo.outright o WITH (NOLOCK) ON b.matchid = o.matchid
 				LEFT JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK) ON b.matchid = r.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
+				LEFT JOIN bodb02.dbo.VSRaceInfo14 r14 WITH (NOLOCK) ON b.matchid = r14.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
 			WHERE b.winlostdate = @tmpDate
 				AND isBA = 0
 				AND bettype IN (SELECT bettype FROM @BettypeProductMapping)
@@ -196,7 +199,7 @@ BEGIN
 					WHEN b.bettype = 9		THEN -9
 					WHEN b.bettype = 2799	THEN -2799
 					WHEN b.bettype = 10		THEN ISNULL(o.leagueid, -1)
-					WHEN b.bettype IN (1231,1232,1233,1237,1238) THEN r.leagueid
+					WHEN b.bettype IN (1231,1232,1233,1237,1238) THEN ISNULL(r.leagueid, r14.leagueid)
 					ELSE ISNULL(m.leagueid, -1) END
 				,b.currency
 				,b.statusid
