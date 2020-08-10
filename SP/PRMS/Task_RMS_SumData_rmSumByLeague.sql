@@ -67,10 +67,11 @@ BEGIN
 		FROM dbo.rmBettrans r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
-		WHERE winlostdate = @winlostdate
-			AND bettype = 29
-			AND liveawayscore IN (1, 3) -- soccer
-			AND statusID IN (111, 112, 113, 101, 102)
+		WHERE r.winlostdate = @winlostdate
+			AND r.bettype = 29
+			AND r.currency <> 20
+			AND r.liveawayscore IN (1, 3) -- soccer
+			AND r.statusID IN (111, 112, 113, 101, 102)
 	END
 	ELSE
 	BEGIN
@@ -79,10 +80,11 @@ BEGIN
 		FROM dbo.rmBettrans_Old r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
-		WHERE winlostdate = @winlostdate
-			AND bettype = 29
-			AND liveawayscore IN (1, 3) -- soccer
-			AND statusID IN (111, 112, 113, 101, 102)
+		WHERE r.winlostdate = @winlostdate
+			AND r.bettype = 29
+			AND r.currency <> 20
+			AND r.liveawayscore IN (1, 3) -- soccer
+			AND r.statusID IN (111, 112, 113, 101, 102)
 
 		IF @winlostdate <= DATEADD(DAY, 7, @BalanceUpDay)
 		BEGIN
@@ -93,6 +95,7 @@ BEGIN
 													INNER JOIN bodb_Archive.dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 												WHERE b.winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''''
 													AND b.bettype = 29
+													AND b.currency <> 20
 													AND b.liveawayscore IN (1, 3) -- soccer
 													AND b.statusID IN (111, 112, 113, 101, 102)
 													AND m.sporttype = 1'')'
