@@ -122,7 +122,7 @@ BEGIN
 			bc.Recommend,
 			bc.MRecommend,
 			bc.SRecommend,
-			sc.ProductId,
+			32 as ProductId,
 			bb.GameId,
 			COUNT(bc.TransID) AS Betcount,
 			SUM(ISNULL(bc.BetStake, 0)),
@@ -132,17 +132,17 @@ BEGIN
 			SUM(ISNULL(bc.swinlost, 0)) AS ContributionS
 		FROM bodb02.dbo.bettransRNG bc WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.bettransRNG bb WITH (NOLOCK) ON bc.RefNo2 = bb.TransId
-			CROSS APPLY (SELECT sc.ProductID FROM  @SportBettypeMatrix sc WHERE bc.GameId = sc.ContributionBettype AND sc.ProductID = 32 ) sc
-			CROSS APPLY (SELECT sb.ProductID FROM  @SportBettypeMatrix sb WHERE bb.GameId = sb.bettype AND sb.ProductID = 32 ) sb
 		WHERE bc.WinlostDate = @WinlostDate
 			AND bc.StatusID IN (111,112,113)
+			AND EXISTS(SELECT sc.ProductID FROM @SportBettypeMatrix sc WHERE bc.GameId = sc.ContributionBettype AND sc.ProductID = 32 )
+			AND EXISTS(SELECT sb.ProductID FROM @SportBettypeMatrix sb WHERE bb.GameId = sb.bettype AND sb.ProductID = 32 )
+		
 		GROUP BY
 			bc.WinlostDate,
 			bc.CustId,
 			bc.Recommend,
 			bc.MRecommend,
-			bc.SRecommend,
-			sc.ProductId,
+			bc.SRecommend,			
 			bb.GameId				
 	END
 
