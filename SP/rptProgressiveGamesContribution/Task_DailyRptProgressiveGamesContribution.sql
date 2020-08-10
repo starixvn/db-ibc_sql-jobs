@@ -24,9 +24,9 @@ AS
 BEGIN 
 	SET NOCOUNT ON 
 		
-	DECLARE @Bettype TABLE (ProductId INT, bettype INT, ContributionBettype INT)
+	DECLARE @SportBettypeMatrix TABLE (ProductId INT, bettype INT, ContributionBettype INT)
 
-	INSERT INTO @Bettype (ProductId, bettype, ContributionBettype)
+	INSERT INTO @SportBettypeMatrix (ProductId, bettype, ContributionBettype)
 	SELECT ProductId, BetType, ContributionBettype FROM bodb02.dbo.f_ProgressiveGamesContribution_Bettype_Sel('All')
 	
 
@@ -85,7 +85,7 @@ BEGIN
 			SUM(ISNULL(b.mwinlost, 0)) AS ContributionM,
 			SUM(ISNULL(b.swinlost, 0)) AS ContributionS
 		FROM bodb02.dbo.Bettrans b WITH (NOLOCK)
-			INNER JOIN @Bettype g ON b.Bettype = g.ContributionBettype AND g.ProductID = 6
+			INNER JOIN @SportBettypeMatrix g ON b.Bettype = g.ContributionBettype AND g.ProductID = 6
 		WHERE b.WinlostDate = @WinlostDate
 			AND b.StatusID IN (111,112,113)		 
 		GROUP BY
@@ -132,8 +132,8 @@ BEGIN
 			SUM(ISNULL(bc.swinlost, 0)) AS ContributionS
 		FROM bodb02.dbo.bettransRNG bc WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.bettransRNG bb WITH (NOLOCK) ON bc.RefNo2 = bb.TransId
-			INNER JOIN @Bettype sc ON bc.GameId = sc.ContributionBettype AND sc.ProductID = 32
-			INNER JOIN @Bettype sb ON bb.GameId = sb.bettype AND sb.ProductID = 32 
+			CROSS APPLY (SELECT sc.ProductID FROM  @SportBettypeMatrix sc WHERE bb.GameId = sc.bettype AND sc.ProductID = 32 ) sc
+			CROSS APPLY (SELECT sb.ProductID FROM  @SportBettypeMatrix sb WHERE bb.GameId = sb.bettype AND sb.ProductID = 32 ) sb
 		WHERE bc.WinlostDate = @WinlostDate
 			AND bc.StatusID IN (111,112,113)
 		GROUP BY
