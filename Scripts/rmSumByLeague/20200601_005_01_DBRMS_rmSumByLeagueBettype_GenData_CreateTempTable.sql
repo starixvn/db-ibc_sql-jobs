@@ -1,7 +1,4 @@
 /*<info serverAlias="DBARC-bodb_Archive"></info>*/
-USE bodb_Archive
-GO
-
 /*
 	Created: 20200601@Percy
 	DB: DBARC-bodb_Archive
@@ -9,6 +6,9 @@ GO
 
 	Create temp table
 */
+
+USE bodb_Archive
+GO
 
 CREATE TABLE dbo.rmSumByBettype_xtest
 (
