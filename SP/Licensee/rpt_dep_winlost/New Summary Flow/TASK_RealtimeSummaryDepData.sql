@@ -40,11 +40,12 @@ AS
 		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625]
 		- 20200721@Hogan: Add 7 games for Jackpot and 2 bettype for Contribution (4297) and Jackpot Prize (4298) [RedmineID: #137290]
+		- 20200803@Kos: Support Saba Loyalty [RedmineID: #138493]
 
 	Input Params:
-	- @Winlostdate: The input Winlostdate to be summarized
-	- @isSuccessful: -1: Data of the whole day have been summarized completely
-					-0: Data of the whole day have not been summarized completely
+		- @Winlostdate: The input Winlostdate to be summarized
+		- @isSuccessful: -1: Data of the whole day have been summarized completely
+						-0: Data of the whole day have not been summarized completely
 */
 
 BEGIN
@@ -228,7 +229,7 @@ BEGIN
 				SUM(CASE WHEN b.bettype IN (21001, 21002, 21003, 21004, 21005, 22005, 22203) THEN b.winlost-b.actual_stake ELSE 0 END),--Adjustment  
 				SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 				SUM(CASE WHEN (bettype < 19999 OR bettype = 23002) AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
-				SUM(CASE WHEN b.bettype < 19999 AND b.ruben = 1 AND b.bettype NOT IN (17000, 4300, 4299, 4298, 4297) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss      
+				SUM(CASE WHEN b.bettype < 19999 AND b.ruben = 1 AND b.bettype NOT IN (17000, 17003, 4300, 4299, 4298, 4297) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss      
 				SUM(CASE WHEN b.bettype IN (22006, 22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd
 				SUM(CASE WHEN b.bettype < 19999 AND b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame
 				SUM(CASE WHEN b.bettype < 19999 AND b.ruben = 1 THEN b.playercomm ELSE 0 END),--playercomm
@@ -238,7 +239,7 @@ BEGIN
 				SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
 				SUM(CASE WHEN b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
 				SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END), -- AdjBonusWallet
-				SUM(CASE WHEN b.bettype IN (17000, 4300, 4299, 4298, 4297) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
+				SUM(CASE WHEN b.bettype IN (17000, 17003, 4300, 4299, 4298, 4297) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
 			FROM dbo.bettrans b WITH (NOLOCK)
 				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
 				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
@@ -315,7 +316,7 @@ BEGIN
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (21001, 21002, 21003, 21004, 21005, 22005, 22203) THEN b.winlost-b.actual_stake ELSE 0 END),--Adjustment  
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 				SUM(CASE WHEN (bettype < 19999 OR bettype = 23002) AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding 
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.ruben = 1 AND b.bettype NOT IN (17000,4300,4299,4298,4297) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss      
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.ruben = 1 AND b.bettype NOT IN (17000,17003, 4300,4299,4298,4297) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss      
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22006, 22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd   
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame  
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.ruben = 1 THEN b.playercomm ELSE 0 END),--playercomm  	
@@ -325,7 +326,7 @@ BEGIN
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END), -- AdjBonusWallet
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN(17000,4300,4299,4298,4297) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN(17000,17003, 4300,4299,4298,4297) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
 			FROM dbo.bettrans b WITH (NOLOCK)
 				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
 				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
@@ -579,11 +580,11 @@ BEGIN
 				WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 				WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 				WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
-				WHEN bettype IN(17000) THEN 246 -- NPHP
+				WHEN bettype IN (17000, 17003) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
-			SUM(CASE WHEN bettype IN(17000,4299,4300,4298,4297) THEN Promotion ELSE Winloss END),--Winloss      
+			SUM(CASE WHEN bettype IN(17000,17003,4299,4300,4298,4297) THEN Promotion ELSE Winloss END),--Winloss
 			SUM(playercomm),--Playercomm
 			SUM(BetCount),--BetCount
 			SUM(OutStanding)--Outstanding 
@@ -630,7 +631,7 @@ BEGIN
 				WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 				WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 				WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
-				WHEN bettype IN(17000) THEN 246 -- NPHP
+				WHEN bettype IN (17000, 17003) THEN 246 -- NPHP
 				ELSE 0
 			END
 

@@ -54,6 +54,7 @@ AS
 		- 20200622@Hogan: Integrate 3 new betfrom 4, 5, 6 [Redmine: #136107]
 		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625]
 		- 20200721@Hogan: Add 7 games for Jackpot and 2 bettype for Contribution (4297) and Jackpot Prize (4298) [RedmineID: #137290]
+		- 20200803@Kos: Support Saba Loyalty [RedmineID: #138493]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -161,12 +162,12 @@ BEGIN
 			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
-			WHEN bettype = 17000 THEN 246 -- NPHP
+			WHEN bettype IN (17000, 17003) THEN 246 -- NPHP
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 4299, 4298, 4297) THEN bettype
+			WHEN bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 4299, 4298, 4297) THEN bettype
 			ELSE 0
 		END bettype
 		 --114: half win, 115: half lose
@@ -253,11 +254,11 @@ BEGIN
 			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
-			WHEN bettype = 17000 THEN 246 -- NPHP
+			WHEN bettype IN (17000, 17003) THEN 246 -- NPHP
 			ELSE 0
 		END
 		,CASE
-			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,4299,4298,4297) THEN bettype
+			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,17003,4299,4298,4297) THEN bettype
 			ELSE 0
 		END
 		,CASE
