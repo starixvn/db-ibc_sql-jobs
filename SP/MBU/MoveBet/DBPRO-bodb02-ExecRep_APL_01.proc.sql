@@ -25,6 +25,7 @@ AS
 		- 20190828@Billy:	Add [oddsOS] & [ResultDetailOS] tables - [Redmine: #119257]
 		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 		- 20200803@Patrick: Add remove data on VSRaceInfo part [Redmine: #135963]
+		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
 */ 
 BEGIN
 
@@ -164,7 +165,14 @@ BEGIN
 		FROM	dbo.ResultDetailOS AS tbl
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;
-
+	-----20200729@Brice:	Delete ProviderExternalResultDetailES-----
+	IF	OBJECT_ID('dbo.ProviderExternalResultDetailES', 'U') IS NOT NULL
+	BEGIN;
+		DELETE	tbl WITH (ROWLOCK)
+		FROM	dbo.ProviderExternalResultDetailES AS tbl
+		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
+	END;	
+	----/20200729@Brice:	Delete ProviderExternalResultDetailES-----
 	-- delete match	
 	DELETE	tbl WITH (ROWLOCK)
 	FROM	dbo.match AS tbl
