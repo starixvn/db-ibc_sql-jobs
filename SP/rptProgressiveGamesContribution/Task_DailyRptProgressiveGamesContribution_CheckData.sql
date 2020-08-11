@@ -116,7 +116,7 @@ BEGIN
 			
 			
 		-----PP Jackpot 
-		INSERT INTO #rptProgressiveGamesContribution
+		INSERT INTO #rptProgressiveGamesContribution_Source
 		(
 			WinlostDate,
 			CustId,
