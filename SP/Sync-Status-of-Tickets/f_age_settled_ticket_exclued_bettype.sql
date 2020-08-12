@@ -11,6 +11,11 @@ AS
 		- 20180924@Sophia: add more bettype of Macau Games by remove hardcode bettype and use SportBettypeMatrix [Redmind: #100793]
 		- 20191127@Patrick: Setup sync status ticket on DB052 -> DB054 - [Redmine: #124482]
 		- 20200811@Sophia: Add PG Sooft and old products [Redmine: #137767]
+	
+	Note: Products which we do settlement ProductId IN (5,27,1,3,23,26) 
+		 ----(SB, Number Game/ Happy 5, Virtual Sports, VS2, Luky3, NG2) 
+ 
+	
 */
 
 RETURN (
