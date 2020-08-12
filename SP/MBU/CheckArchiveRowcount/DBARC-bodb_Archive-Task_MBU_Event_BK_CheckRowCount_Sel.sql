@@ -38,7 +38,7 @@ BEGIN;
 	INSERT INTO	@__tempCount(rowcnt, tableName)
 	SELECT	COUNT(1), 'ProviderExternalResultDetailES'
 	FROM	dbo.ProviderExternalResultDetailES_bk AS tbl WITH (NOLOCK)
-	WHERE	EXISTS (SELECT 1 FROM dbo.match14 AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
+	WHERE	EXISTS (SELECT 1 FROM dbo.match_bk AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
 
 	--//outright
 	INSERT INTO	@__tempCount(rowcnt, tableName)
