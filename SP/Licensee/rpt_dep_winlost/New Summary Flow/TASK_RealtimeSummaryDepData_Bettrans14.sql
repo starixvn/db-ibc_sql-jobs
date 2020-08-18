@@ -45,6 +45,7 @@ AS
 		- 20200918@Hogan: Integrate Joker [RedmineID: #141408]
 		- 20201013@Hogan: Integrate SA Gaming [RedmineID: #128493]
 		- 20201020@Hogan: Integrate Arcadia Gaming Bonus [RedmineID: #143648]
+		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -281,6 +282,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
 				WHEN b.bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 				WHEN b.bettype = 3007 THEN -244 -- SAG Tip ticket
+				WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 				WHEN (b.bettype BETWEEN 3001 AND 3099 AND b.bettype <> 3007) THEN 244 -- SAG
 				WHEN b.bettype IN (17000, 17003) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
@@ -347,6 +349,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
 				WHEN b.bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 				WHEN b.bettype = 3007 THEN -244 -- SAG Tip ticket
+				WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 				WHEN (b.bettype BETWEEN 3001 AND 3099 AND b.bettype <> 3007) THEN 244 -- SAG
 				WHEN b.bettype IN (17000,17003) THEN 246 -- NPHP
 				ELSE 0
