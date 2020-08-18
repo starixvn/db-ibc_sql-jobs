@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20200716@Percy: Initialize SP [RedmineID: #137395]
+		- 20200818@Percy: Add new columns: Flag, Operator, UpdateTime [RedmineID: #137395]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -58,6 +59,9 @@ BEGIN
 		,PostScript		VARCHAR(45)
 		,Comment		VARCHAR(500)
 		,Status			TINYINT
+		,Flag			INT
+		,Operator		VARCHAR(30)
+		,UpdateTime		DATETIME
 		,DataType		TINYINT -- 0: update, 1: insert
 		,PRIMARY KEY (DepositId)
 	)
@@ -111,6 +115,9 @@ BEGIN
 					,PostScript
 					,Comment
 					,Status
+					,Flag
+					,Operator
+					,UpdateTime
 				)
 				SELECT
 					t.c.value('@depositid', 'INT')
@@ -134,6 +141,9 @@ BEGIN
 					,t.c.value('@postscript', 'VARCHAR(45)')
 					,t.c.value('@comment', 'VARCHAR(500)')
 					,t.c.value('@status', 'TINYINT')
+					,t.c.value('@flag', 'int')
+					,t.c.value('@operator', 'VARCHAR(30)')
+					,NULLIF(t.c.value('@updatetime', 'DATETIME'), '')
 				FROM @XmlData.nodes('root/row') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
@@ -145,26 +155,29 @@ BEGIN
 				FROM #tmpDepositInfo t
 					LEFT JOIN dbo.DepositInfo b WITH (NOLOCK) ON t.DepositId = b.DepositId
 				WHERE b.DepositId IS NULL
-					OR ISNULL(t.TransId, 0) <> ISNULL(b.TransId,0)
-					OR ISNULL(t.DepositType, 0) <> ISNULL(b.DepositType,0)
-					OR ISNULL(t.CustId, 0) <> ISNULL(b.CustId,0)
-					OR ISNULL(t.UserName, 0) <> ISNULL(b.UserName,0)
-					OR ISNULL(t.CurrencyId, 0) <> ISNULL(b.CurrencyId,0)
-					OR ISNULL(t.SiteId, 0) <> ISNULL(b.SiteId,0)
-					OR ISNULL(t.DepositInfo, 0) <> ISNULL(b.DepositInfo,0)
-					OR ISNULL(t.Amount, 0) <> ISNULL(b.Amount,0)
-					OR ISNULL(t.ActualDeposit, 0) <> ISNULL(b.ActualDeposit,0)
-					OR ISNULL(t.CreateTime, 0) <> ISNULL(b.CreateTime,0)
-					OR ISNULL(t.TPCreateTime, 0) <> ISNULL(b.TPCreateTime,0)
-					OR ISNULL(t.CallbackTime, 0) <> ISNULL(b.CallbackTime,0)
-					OR ISNULL(t.FirstDeposit, 0) <> ISNULL(b.FirstDeposit,0)
-					OR ISNULL(t.ThirdId, 0) <> ISNULL(b.ThirdId,0)
-					OR ISNULL(t.RefId, 0) <> ISNULL(b.RefId,0)
-					OR ISNULL(t.DepositTime, 0) <> ISNULL(b.DepositTime,0)
-					OR ISNULL(t.Memo, 0) <> ISNULL(b.Memo,0)
-					OR ISNULL(t.PostScript, 0) <> ISNULL(b.PostScript,0)
-					OR ISNULL(t.Comment, 0) <> ISNULL(b.Comment,0)
-					OR ISNULL(t.Status, 0) <> ISNULL(b.Status,0)
+					OR ISNULL(t.TransId, '') <> ISNULL(b.TransId, '')
+					OR ISNULL(t.DepositType, 0) <> ISNULL(b.DepositType, 0)
+					OR ISNULL(t.CustId, 0) <> ISNULL(b.CustId, 0)
+					OR ISNULL(t.UserName, '') <> ISNULL(b.UserName, '')
+					OR ISNULL(t.CurrencyId, 0) <> ISNULL(b.CurrencyId, 0)
+					OR ISNULL(t.SiteId, 0) <> ISNULL(b.SiteId, 0)
+					OR ISNULL(t.DepositInfo, '') <> ISNULL(b.DepositInfo, '')
+					OR ISNULL(t.Amount, 0) <> ISNULL(b.Amount, 0)
+					OR ISNULL(t.ActualDeposit, 0) <> ISNULL(b.ActualDeposit, 0)
+					OR ISNULL(t.CreateTime, '') <> ISNULL(b.CreateTime, '')
+					OR ISNULL(t.TPCreateTime, '') <> ISNULL(b.TPCreateTime, '')
+					OR ISNULL(t.CallbackTime, '') <> ISNULL(b.CallbackTime, '')
+					OR ISNULL(t.FirstDeposit, '') <> ISNULL(b.FirstDeposit, '')
+					OR ISNULL(t.ThirdId, '') <> ISNULL(b.ThirdId, '')
+					OR ISNULL(t.RefId, '') <> ISNULL(b.RefId, '')
+					OR ISNULL(t.DepositTime, '') <> ISNULL(b.DepositTime, '')
+					OR ISNULL(t.Memo, '') <> ISNULL(b.Memo, '')
+					OR ISNULL(t.PostScript, '') <> ISNULL(b.PostScript, '')
+					OR ISNULL(t.Comment, '') <> ISNULL(b.Comment, '')
+					OR ISNULL(t.Status, 0) <> ISNULL(b.Status, 0)
+					OR ISNULL(t.Flag, 0) <> ISNULL(b.Flag, 0)
+					OR ISNULL(t.Operator, '') <> ISNULL(b.Operator, '')
+					OR ISNULL(t.UpdateTime, '') <> ISNULL(b.UpdateTime, '')
 				
 				IF @@ROWCOUNT <> 0
 				BEGIN
@@ -193,6 +206,9 @@ BEGIN
 							,b.PostScript = t.PostScript
 							,b.Comment = t.Comment
 							,b.Status = t.Status
+							,b.Flag = t.Flag
+							,b.Operator = t.Operator
+							,b.UpdateTime = t.UpdateTime
 						FROM dbo.DepositInfo b
 							INNER JOIN #tmpDepositInfo t ON b.DepositId = t.DepositId
 						WHERE t.DataType = 0
@@ -224,6 +240,9 @@ BEGIN
 							,PostScript
 							,Comment
 							,Status
+							,Flag
+							,Operator
+							,UpdateTime
 						)
 						SELECT
 							DepositId
@@ -247,6 +266,9 @@ BEGIN
 							,PostScript
 							,Comment
 							,Status
+							,Flag
+							,Operator
+							,UpdateTime
 						FROM #tmpDepositInfo
 						WHERE DataType = 1
 					END
