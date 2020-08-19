@@ -236,7 +236,7 @@ BEGIN
 	IF @ruleid IN (0,307)
 	BEGIN
 		--super
-		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
+		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 307 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,0 as custidB, MAX(cs1.StakeLevelList) as StakeLevelListA, '' as ValueB
 		FROM #SuperStakeLevel cs1		
 			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t	
@@ -245,7 +245,7 @@ BEGIN
 		HAVING COUNT(1) > 1
 		
 		--Master
-		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
+		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 307 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,0 as custidB, MAX(cs1.StakeLevelList) as StakeLevelListA, '' as ValueB
 		FROM #MasterStakeLevel cs1		
 			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t	
@@ -254,7 +254,7 @@ BEGIN
 		HAVING COUNT(1) > 1
 		
 		--Agent
-		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
+		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 307 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,0 as custidB, MAX(cs1.StakeLevelList) as StakeLevelListA, '' as ValueB
 		FROM #AgentStakeLevel cs1		
 			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t	
@@ -263,7 +263,7 @@ BEGIN
 		HAVING COUNT(1) > 1
 		
 		--member
-		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
+		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 307 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,0 as custidB, MAX(cs1.StakeLevelList) as StakeLevelListA, '' as ValueB
 		FROM #MemberStakeLevel cs1		
 			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t	
