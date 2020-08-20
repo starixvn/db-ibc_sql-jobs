@@ -13,6 +13,7 @@ AS
 		- 20190801@Winnie: Change Check stake level RedmineID:#117919
 		- 20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
 		- 20200409@Tiara: Increase datatype size of StakeLevelList on #GlobalStakeLevel [redmine #132051]
+		- 20200818@Johnson: check duplicate stakelevel [redmine:#139677]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -230,6 +231,46 @@ BEGIN
 		WHERE CHARINDEX(cs1.StakeLevelList,cs2.StakeLevelList,0) = 0
 			AND cs1.StakeLevelList <> ''
 	END	
+	
+	--Check duplicate stakelevel 
+	IF @ruleid IN (0,307)
+	BEGIN
+		--super
+		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
+		SELECT DISTINCT 307 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,0 as custidB, MAX(cs1.StakeLevelList) as StakeLevelListA, '' as ValueB
+		FROM #SuperStakeLevel cs1		
+			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t	
+		WHERE cs1.StakeLevelList <> ''			 
+		GROUP BY cs1.sportType,cs1.bettype,t.val,cs1.custid
+		HAVING COUNT(1) > 1
+		
+		--Master
+		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
+		SELECT DISTINCT 307 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,0 as custidB, MAX(cs1.StakeLevelList) as StakeLevelListA, '' as ValueB
+		FROM #MasterStakeLevel cs1		
+			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t	
+		WHERE cs1.StakeLevelList <> ''			  
+		GROUP BY cs1.sportType,cs1.bettype,t.val,cs1.custid
+		HAVING COUNT(1) > 1
+		
+		--Agent
+		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
+		SELECT DISTINCT 307 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,0 as custidB, MAX(cs1.StakeLevelList) as StakeLevelListA, '' as ValueB
+		FROM #AgentStakeLevel cs1		
+			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t	
+		WHERE cs1.StakeLevelList <> ''			
+		GROUP BY cs1.sportType,cs1.bettype,t.val,cs1.custid
+		HAVING COUNT(1) > 1
+		
+		--member
+		INSERT INTO CheckResultStakeLevel_Deposit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
+		SELECT DISTINCT 307 as RuleId,cs1.sportType,cs1.bettype,cs1.custid custidA,0 as custidB, MAX(cs1.StakeLevelList) as StakeLevelListA, '' as ValueB
+		FROM #MemberStakeLevel cs1		
+			CROSS APPLY CheckCustDB.dbo.strSplit(cs1.StakeLevelList,',') t	
+		WHERE cs1.StakeLevelList <> ''			  
+		GROUP BY cs1.sportType,cs1.bettype,t.val,cs1.custid
+		HAVING COUNT(1) > 1
+	END
 END
 GO
 	
