@@ -28,7 +28,7 @@ AS
 		- 20190924@Billy:	Support show CN88 result - [Redmine: #120719]
 		- 20200619@Daniel:	Support show Winloss Limit result - [Redmine: #120719]
 		- 20200804@Daniel:	Exclude ignored cust from bet limit result based on destination CustB - [Redmine: #138389]
-
+		- 20200821@Daniel:	Fix stake level list incompartible data type Value A,B in #CheckResultStakeLevel
 
 	Test command:
 	EXECUTE dbo.vnDBA_sp_CheckSetting_ResultNotification_xtest
@@ -187,8 +187,8 @@ BEGIN;
 					,	CustId_A		INT
 					,	Username_A		NVARCHAR(50)
 					,	CustId_B		INT
-					,	Value_A			SMALLMONEY
-					,	Value_B			SMALLMONEY
+					,	Value_A			VARCHAR(100)
+					,	Value_B			VARCHAR(100)
 					,	CreatedDate		DATETIME
 					,	IsDeposit		BIT
 					);
