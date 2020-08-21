@@ -16,6 +16,7 @@ AS
 		- 20200527@Sophia: Add ION [Redmine: #132325]
 		- 20200528@Sophia: Add RNG War [Redmine: #132013]
 		- 20200708@Sol: Generate data for sum_winloss table - Redmine: [#136320]
+		- 20200820@Sol: enhence performance when statistics are not updated yet - Redmine: [#136320]
 */
 
 BEGIN
