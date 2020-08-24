@@ -60,6 +60,7 @@ BEGIN
 
 	---- get extra PT from table setting
 	CREATE TABLE #__SuperExtraPT(productId INT, bettypePT INT, SuperId INT, ExtraPT MONEY)
+	CREATE CLUSTERED INDEX CIX_#__SuperExtraPT ON #__SuperExtraPT(SuperId, bettypePT)
 	
 	;WITH rs AS 
 	(
@@ -199,8 +200,8 @@ BEGIN
 					WHEN bt.ProductId = 1 AND b.statusID = 111 THEN 0 -- SportsBook
 					WHEN bt.ProductID IN (21, 39, 45, 46, 47, 52)  THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, ION
 					ELSE ABS(b.stake) END) AS TurnoverNoDraw
-			,-1 * SUM(b.ExtraWinloss) AS ExtraWinloss
-			,-1 * SUM(b.ExtraComm) AS ExtraComm
+			,-1 * SUM(ISNULL(b.ExtraWinloss, 0)) AS ExtraWinloss
+			,-1 * SUM(ISNULL(b.ExtraComm, 0)) AS ExtraComm
 		FROM #tmpCust c
 			CROSS APPLY (
 				SELECT
@@ -655,8 +656,8 @@ BEGIN
 				,bettype
 				,netTurnover
 				,TunroverNoDraw -- TurnoverNoDraw
-				,ExtraWinloss
-				,ExtraComm
+				,ISNULL(ExtraWinloss, 0) AS ExtraWinloss
+				,ISNULL(ExtraComm, 0) AS ExtraComm
 			FROM dbo.sum_winloss s WITH (NOLOCK)
 			WHERE s.winlostdate = @WinlostDate
 				AND EXISTS (SELECT 1 FROM #tmpSuper ts WHERE s.srecommend = ts.srecommend)

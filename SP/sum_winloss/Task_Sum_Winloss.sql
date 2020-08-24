@@ -18,7 +18,8 @@ BEGIN
 
 	---- get extra PT from table setting
 	CREATE TABLE #__SuperExtraPT(productId INT, bettypePT INT, SuperId INT, ExtraPT MONEY)
-	
+	CREATE CLUSTERED INDEX CIX_#__SuperExtraPT ON #__SuperExtraPT(SuperId, bettypePT)
+
 	;WITH rs AS 
 	(
 		SELECT DISTINCT b.bettype , b.srecommend
