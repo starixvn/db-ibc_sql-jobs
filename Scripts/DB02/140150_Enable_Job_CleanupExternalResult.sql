@@ -8,7 +8,7 @@
     Revisions:            
 		- 20200824@Louisa: Enable Job Cleanup External Result [Redmine:#140150]
 		
-*/
+*/ 
 
 USE [msdb]
 GO
