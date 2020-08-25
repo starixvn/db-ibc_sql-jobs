@@ -90,6 +90,7 @@ Revisions:
 	- 20200528@Sophia: Add RNG War [Redmine: #132013]
 	- 20200713@Sophia: Expand Bettype range of Lottery [Redmine: #137542]
 	- 20200708@Sol: Generate data for sum_winloss table - Redmine: [#136320]
+	- 20200820@Sol: enhence performance when statistics are not updated yet - Redmine: [#136320]
 	
 */
 

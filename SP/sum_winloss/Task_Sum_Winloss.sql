@@ -9,6 +9,7 @@ AS
 	DB: DBTXN/BODB02
 	Revisions:
 		- 20200708@Sol: Generate data for sum_winloss table - Redmine: [#136320]
+		- 20200820@Sol: enhence performance when statistics are not updated yet - Redmine: [#136320]
 	
 */
 BEGIN
@@ -17,7 +18,8 @@ BEGIN
 
 	---- get extra PT from table setting
 	CREATE TABLE #__SuperExtraPT(productId INT, bettypePT INT, SuperId INT, ExtraPT MONEY)
-	
+	CREATE CLUSTERED INDEX CIX_#__SuperExtraPT ON #__SuperExtraPT(SuperId, bettypePT)
+
 	;WITH rs AS 
 	(
 		SELECT DISTINCT b.bettype , b.srecommend
@@ -218,6 +220,7 @@ BEGIN
 				 WHEN bettype IN (71, 72) THEN bettype
 				 ELSE 0
 			 END
+	OPTION (optimize for (@winlostdate UNKNOWN))
 
 	---- Agent
 	INSERT INTO sum_winloss_tmp
@@ -388,6 +391,7 @@ BEGIN
 				 WHEN bettype IN (71, 72) THEN bettype
 				 ELSE 0
 			 END
+	OPTION (optimize for (@winlostdate UNKNOWN))
 
 	---- Master
 	INSERT INTO sum_winloss_tmp
@@ -557,6 +561,7 @@ BEGIN
 				 WHEN bettype IN (71, 72) THEN bettype
 				 ELSE 0
 			 END
+	OPTION (optimize for (@winlostdate UNKNOWN))
 
 	---- Super
 	INSERT INTO sum_winloss_tmp
@@ -727,6 +732,7 @@ BEGIN
 				 WHEN bettype IN (71, 72) THEN bettype
 				 ELSE 0
 			 END
+	OPTION (optimize for (@winlostdate UNKNOWN))
 
 	-- update username for main table
 	-- temp table for only one day, no need to update by batch
