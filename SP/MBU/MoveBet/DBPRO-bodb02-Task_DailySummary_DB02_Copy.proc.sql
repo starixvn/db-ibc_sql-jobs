@@ -48,6 +48,7 @@ AS
 		-- 20200504@Patrick: Add more field for oddsES/oddsES14/oddsES_bk - [Redmine: #133538]
 		-- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 		-- 20200729@Brice:		Add table ProviderExternalResultDetailES [Redmine: #138380]
+		-- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 */
 
 BEGIN
@@ -149,6 +150,32 @@ SET NOCOUNT ON
 		waitfor delay '00:00:01'
 	end
 ------------------/20200729@Brice:		Add table ProviderExternalResultDetailES [Redmine: #138380]-----------------------------------------------------------------------------
+-------------------20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]-----------------------------------------------------------------------------
+	truncate table #__IdsList
+	select @rowId = 0
+	insert into #__IdsList(Id)
+	select p.ProviderExternalId
+	from dbo.ProviderExternalResultDetailOS p with(nolock)
+	where matchid in (select matchid from #__matchIdList)
+	while 1 = 1
+	begin
+		truncate table #__tempData
+
+		insert into #__tempData(id)
+		select id from #__IdsList where rowId > @rowId and rowId <= @rowId + @rowInBatch
+		if @@rowcount = 0
+			break
+
+		set @rowId = @rowId + @rowInBatch
+
+		insert into dbo.ProviderExternalResultDetailOS14([ProviderExternalId],[MatchId3rd],[MatchId],[SourceId],[ResourceId],[HomeValue],[AwayValue],[OtherInfo],[CreateDate],[CreateBy],[LastModifyDate],[LastModifyBy])
+		select [ProviderExternalId],[MatchId3rd],[MatchId],[SourceId],[ResourceId],[HomeValue],[AwayValue],[OtherInfo],[CreateDate],[CreateBy],[LastModifyDate],[LastModifyBy]
+		from dbo.ProviderExternalResultDetailOS with(nolock)
+		where ProviderExternalId in (select id from #__tempData)
+
+		waitfor delay '00:00:01'
+	end
+------------------/20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]-----------------------------------------------------------------------------
 	SELECT	@rowId = 0;
 	WHILE	1 = 1
 	BEGIN

@@ -18,6 +18,7 @@ AS
 		- 20200504@Patrick: Add more field for oddsES/oddsES14/oddsES_bk - [Redmine: #133538]
 		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
+		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -579,6 +580,25 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 
 SELECT	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy
 FROM	bodb02.dbo.ProviderExternalResultDetailES14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+	
+	
+	---------------Table 25:  ProviderExternalResultDetailOS_bk -----------------------------
+	ELSE IF	@TableName = N'ProviderExternalResultDetailOS_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.ProviderExternalResultDetailOS_bk
+	(	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy)
+SELECT	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy
+FROM	bodb02.dbo.ProviderExternalResultDetailOS14 AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
 
 		EXECUTE	sys.sp_executesql @Query;

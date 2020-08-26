@@ -16,6 +16,7 @@ AS
 		- 20190827@Billy:	Add [oddsOS] & [ResultDetailOS] tables - [Redmine: #119257]
 		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
+		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -81,6 +82,7 @@ BEGIN;
 		,	('ResultDetailOS_bk')
 		,	('VSRaceInfo_bk')
 		,	('ProviderExternalResultDetailES_bk')
+		,	('ProviderExternalResultDetailOS_bk')
 		;
 
 
