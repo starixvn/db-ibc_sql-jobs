@@ -17,6 +17,7 @@ AS
 		- 20190827@Billy:	Add [oddsOS] & [ResultDetailOS] tables - [Redmine: #119257]
 		- 20200504@Patrick: Add more field for oddsES/oddsES14/oddsES_bk - [Redmine: #133538]
 		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
+		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -563,6 +564,27 @@ WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matc
 
 		EXECUTE	sys.sp_executesql @Query;
 	END;
+
+
+	---------------Table 24:  ProviderExternalResultDetailES_bk -----------------------------
+	ELSE IF	@TableName = N'ProviderExternalResultDetailES_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.ProviderExternalResultDetailES_bk
+	(	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy)
+SELECT	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy
+FROM	bodb02.dbo.ProviderExternalResultDetailES14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+
 END
+
 GO
 /*<info serverAlias="DBARC-bodb_archive" executers="" viewers="" isFunction="0" isNested="1"></info>*/

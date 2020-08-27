@@ -16,6 +16,7 @@ AS
 		- 20191106@Billy:	Add checking for [Dot_Admin_Assignment_Trader] - [Redmine: #123262]
 		- 20191119@Billy:	Add checking for [oddsOS] & [ResultDetailOS] - [Redmine: #119257]
 		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
+		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -32,6 +33,12 @@ BEGIN;
 	SELECT	COUNT(1), 'Match3rd'
 	FROM	dbo.Match3rd_bk AS tbl WITH (NOLOCK)
 	WHERE	tbl.eventdate = @DateCheck;
+	
+	--//ProviderExternalResultDetailES
+	INSERT INTO	@__tempCount(rowcnt, tableName)
+	SELECT	COUNT(1), 'ProviderExternalResultDetailES'
+	FROM	dbo.ProviderExternalResultDetailES_bk AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match_bk AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
 
 	--//outright
 	INSERT INTO	@__tempCount(rowcnt, tableName)
