@@ -15,6 +15,7 @@ AS
 	
 	Revisions:
 		- 20200619@Malcolm: Initialize SPs [RedmineID: #135593]
+		- 20200831@Sophia: Exclude CustID = 0 [Redmine: #140745]
  
 	Param's Explanation:
 */
@@ -404,6 +405,10 @@ BEGIN
 		FROM dbo.sum_winloss_extra WITH (NOLOCK)
 		WHERE WinlostDate = @WinlostDate
 	END
+	
+	---Exclude CustID = 0 which is obsoleted
+	DELETE #Sum_Winloss_Extra_Target WHERE CustId = 0 
+	
 
 	/* Compare data */
 	CREATE NONCLUSTERED INDEX IX_CustID ON #Sum_Winloss_Extra_Source (CustId, ProductId, bettype)
