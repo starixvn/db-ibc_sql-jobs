@@ -11,6 +11,7 @@ AS
 	
 	Revisions:
 		- 20200618@Malcolm: Initialize SP [RedmineID: #135593]
+		- 20200831@Sophia: Exclude CustID = 0 [Redmine: #140745]
  
 	Param's Explanation:
 */
@@ -300,6 +301,8 @@ BEGIN
 	END
 
 	/**/
+	---Exclude CustID = 0 which is obsoleted
+	DELETE #Sum_Winloss_Extra WHERE CustId = 0 
 
 	BEGIN
 		MERGE dbo.Sum_Winloss_Extra AS TARGET
