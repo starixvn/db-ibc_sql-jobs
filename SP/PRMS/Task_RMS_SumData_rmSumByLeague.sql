@@ -69,9 +69,9 @@ BEGIN
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
 		WHERE r.winlostdate = @winlostdate
 			AND r.bettype = 29
-			AND r.currency <> 20
 			AND r.liveawayscore IN (1, 3) -- soccer
 			AND r.statusID IN (111, 112, 113, 101, 102)
+			AND r.currency <> 20
 	END
 	ELSE
 	BEGIN
@@ -82,9 +82,9 @@ BEGIN
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
 		WHERE r.winlostdate = @winlostdate
 			AND r.bettype = 29
-			AND r.currency <> 20
 			AND r.liveawayscore IN (1, 3) -- soccer
 			AND r.statusID IN (111, 112, 113, 101, 102)
+			AND r.currency <> 20
 
 		IF @winlostdate <= DATEADD(DAY, 7, @BalanceUpDay)
 		BEGIN
@@ -98,6 +98,7 @@ BEGIN
 													AND b.currency <> 20
 													AND b.liveawayscore IN (1, 3) -- soccer
 													AND b.statusID IN (111, 112, 113, 101, 102)
+													AND b.currency <> 20
 													AND m.sporttype = 1'')'
 			INSERT INTO #bettransmbk
 			EXEC (@SQL)
