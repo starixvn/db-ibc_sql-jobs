@@ -3,11 +3,11 @@ USE bodb_Archive
 GO
 
 /*
-	Created: 20200810@Percy
+	Created: 20200831@Percy
 	DB: DBARC-bodb_Archive
 	Task: Gen data for new tables rmSumByLeague, rmSumByBettype
 
-	Date range: 2020-05-01 --> 2020-07-26 -- all data in bk range
+	Date range: 2020-08-01 --> 2020-08-20 -- data in bk range
 */
 
 CREATE TABLE #bettrans (winlostdate SMALLDATETIME, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
@@ -17,34 +17,11 @@ SELECT winlostdate, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDepos
 FROM dbo.bettrans_bk r WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
 	INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
-WHERE r.winlostdate BETWEEN '2020-05-01' AND '2020-05-31'
+WHERE r.winlostdate BETWEEN '2020-08-01' AND '2020-08-20'
 	AND r.bettype = 29
 	AND r.currency <> 20
 	AND r.liveawayscore IN (1, 3) -- soccer
 	AND r.statusID IN (111, 112, 113, 101, 102)
-
-INSERT INTO #bettrans (winlostdate, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
-SELECT winlostdate, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDeposit, statusID, stake, (winlost-actual_stake)*actualrate, playercomm*actualrate,(-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
-FROM dbo.bettrans_bk r WITH (NOLOCK)
-	INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
-	INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
-WHERE r.winlostdate BETWEEN '2020-06-01' AND '2020-06-30'
-	AND r.bettype = 29
-	AND r.currency <> 20
-	AND r.liveawayscore IN (1, 3) -- soccer
-	AND r.statusID IN (111, 112, 113, 101, 102)
-
-INSERT INTO #bettrans (winlostdate, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
-SELECT winlostdate, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDeposit, statusID, stake, (winlost-actual_stake)*actualrate, playercomm*actualrate,(-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
-FROM dbo.bettrans_bk r WITH (NOLOCK)
-	INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
-	INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
-WHERE r.winlostdate BETWEEN '2020-07-01' AND '2020-07-30'
-	AND r.bettype = 29
-	AND r.currency <> 20
-	AND r.liveawayscore IN (1, 3) -- soccer
-	AND r.statusID IN (111, 112, 113, 101, 102)
-
 -- SELECT COUNT(1) FROM #bettrans
 
 -- run by batch
@@ -139,7 +116,7 @@ BEGIN
 			,t.bettype
 			,b.ParlayType
 			,b.IsDeposit
-			,LeagueIds			= ''
+			,0
 			,BetCount			= SUM(1)
 			,WonCount			= SUM(CASE WHEN t.statusID = 112 THEN 1 ELSE 0 END)
 			,LoseCount			= SUM(CASE WHEN t.statusID = 113 THEN 1 ELSE 0 END)
@@ -169,27 +146,42 @@ BEGIN
 			,b.ParlayType
 			,b.IsDeposit
 
-		-- Update leagueIds
-		INSERT INTO @bettype
-		SELECT b.winlostdate, bm.bettype, b.ParlayType, bm.leagueid
+		INSERT INTO dbo.rmSumByBettype_xtest
+		SELECT
+			b.winlostdate
+			,t.bettype
+			,b.ParlayType
+			,b.IsDeposit
+			,t.LeagueId
+			,BetCount			= SUM(1)
+			,WonCount			= SUM(CASE WHEN t.statusID = 112 THEN 1 ELSE 0 END)
+			,LoseCount			= SUM(CASE WHEN t.statusID = 113 THEN 1 ELSE 0 END)
+			,DrawCount			= SUM(CASE WHEN t.statusID = 111 THEN 1 ELSE 0 END)
+			,MainBetCount		= SUM(CASE WHEN t.rn = 1 THEN 1 ELSE 0 END)
+			,MainWonCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 112 THEN 1 ELSE 0 END)
+			,MainLoseCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 113 THEN 1 ELSE 0 END)
+			,MainDrawCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 111 THEN 1 ELSE 0 END)
+			,MainStake			= SUM(CASE WHEN t.rn = 1 THEN b.stake ELSE 0 END)
+			,MainTurnover		= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (111, 112, 113) THEN b.stake ELSE 0 END)
+			,MainTurnoverNoDraw	= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (112, 113) THEN b.stake ELSE 0 END)
+			,MainMemberWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END)
+			,MainMemberComm		= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
+			,MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.HouseWinloss ELSE 0 END)
 		FROM @bettransByBatch b
 			CROSS APPLY (
-				SELECT bm.leagueid, bm.bettype
-				FROM @bettransmByBatch bm
-				WHERE b.refno = bm.refno
-			) bm
-		GROUP BY b.winlostdate, bm.bettype, b.ParlayType, bm.leagueid
-		
-		;WITH CTE_Bettype AS
-		(
-			SELECT b.winlostdate, b.bettype, b.ParlayType, LeagueIds = STUFF((SELECT ',' + CONVERT(VARCHAR(20), b1.leagueId) FROM @bettype b1 WHERE b1.bettype = b.bettype AND b1.ParlayType = b.ParlayType AND b1.winlostdate = b.winlostdate FOR XML PATH('')), 1, 1, '')
-			FROM @bettype b
-			GROUP BY b.winlostdate, b.bettype, b.ParlayType
-		)
-		UPDATE r
-		SET r.LeagueIds = b.LeagueIds
-		FROM dbo.rmSumByBettype_xtest r
-			INNER JOIN CTE_Bettype b ON r.bettype = b.bettype AND r.ParlayType = b.ParlayType AND r.winlostdate = b.winlostdate
+				SELECT bettype, leagueid, statusID, ROW_NUMBER() OVER(PARTITION BY bettype, leagueid ORDER BY (SELECT NULL)) AS rn
+				FROM (
+					SELECT bm.bettype, bm.leagueid, bm.statusID
+					FROM @bettransmByBatch bm
+					WHERE b.refno = bm.refno
+				) bm
+			) t
+		GROUP BY
+			b.winlostdate
+			,t.bettype
+			,b.ParlayType
+			,b.IsDeposit
+			,t.leagueid
 	END
 
 	IF @isBreak = 1
