@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20200708@Sol: Generate data for sum_winloss table - Redmine: [#136320]
 		- 20200820@Sol: enhence performance when statistics are not updated yet - Redmine: [#136320]
+		- 20200830@Sophia: Add PG Soft [redmine: #137767]
 	
 */
 BEGIN
@@ -110,7 +111,8 @@ BEGIN
 			WHEN bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN	
 			WHEN bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino		
 			WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION					
-			WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War				
+			WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War		
+			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -214,6 +216,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
 				 WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 				 WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
+				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 				 ELSE 0
 			 END
 			,CASE
@@ -283,6 +286,7 @@ BEGIN
 			WHEN bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
 			WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 			WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
+			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -385,6 +389,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
 				 WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 				 WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
+				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 				 ELSE 0
 			 END
 			,CASE
@@ -454,6 +459,7 @@ BEGIN
 			WHEN bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
 			WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 			WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
+			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -555,6 +561,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
 				 WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 				 WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
+				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 				 ELSE 0
 			 END
 			,CASE
@@ -624,6 +631,7 @@ BEGIN
 			WHEN bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
 			WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 			WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
+			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -726,6 +734,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino
 				 WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 				 WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
+				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 				 ELSE 0
 			 END
 			,CASE
