@@ -3,7 +3,7 @@ USE bodb_Archive
 GO
 
 /*
-	Created: 20200601@Percy
+	Created: 20200810@Percy
 	DB: DBARC-bodb_Archive
 	Task: Gen data for new tables rmSumByLeague, rmSumByBettype
 

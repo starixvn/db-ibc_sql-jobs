@@ -3,11 +3,11 @@ USE bodb_Archive
 GO
 
 /*
-	Created: 20200601@Percy
+	Created: 20200831@Percy
 	DB: DBARC-bodb_Archive
 	Task: Gen data for new tables rmSumByLeague, rmSumByBettype
 
-	Date range: 2020-06-01 --> 2020-06-04 (Current BU Date - 1)
+	Date range: 2020-08-01 --> 2020-08-20 -- data in bk range
 */
 
 CREATE TABLE #bettrans (winlostdate SMALLDATETIME, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
@@ -15,74 +15,14 @@ CREATE TABLE #bettrans (winlostdate SMALLDATETIME, refno BIGINT, ParlayType TINY
 INSERT INTO #bettrans (winlostdate, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
 SELECT winlostdate, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDeposit, statusID, stake, (winlost-actual_stake)*actualrate, playercomm*actualrate,(-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
 FROM dbo.bettrans_bk r WITH (NOLOCK)
-	INNER JOIN bodb02.dbo.vw_Customer c WITH (NOLOCK) ON r.recommend = c.custid
+	INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
 	INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
-WHERE winlostdate BETWEEN '2020-06-01' AND '2020-06-04'
-	AND bettype = 29
-	AND liveawayscore IN (1, 3) -- soccer
-	AND statusID IN (111, 112, 113, 101, 102)
-
-CREATE TABLE #bettransm14 (refno BIGINT, bettype SMALLINT, statusID TINYINT, leagueid INT)
-INSERT INTO #bettransm14 (refno, bettype, statusID, leagueid)
-SELECT b.refno, bm.bettype, bm.statusID, m.leagueid
-FROM dbo.bettrans_bk b WITH (NOLOCK)
-	INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
-	INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
-WHERE b.winlostdate BETWEEN '2020-06-01' AND '2020-06-04'
-	AND b.bettype = 29
-	AND b.liveawayscore IN (1, 3) -- soccer
-	AND b.statusID IN (111, 112, 113, 101, 102)
-	AND m.sporttype = 1
-
+WHERE r.winlostdate BETWEEN '2020-08-01' AND '2020-08-20'
+	AND r.bettype = 29
+	AND r.currency <> 20
+	AND r.liveawayscore IN (1, 3) -- soccer
+	AND r.statusID IN (111, 112, 113, 101, 102)
 -- SELECT COUNT(1) FROM #bettrans
-
-CREATE TABLE #rmSumByBettype
-(
-	winlostdate			SMALLDATETIME
-	,bettype			SMALLINT
-	,ParlayType			TINYINT
-	,IsDeposit			BIT
-	,leagueIds			VARCHAR(MAX)
-	,BetCount			INT
-	,WonCount			INT
-	,LoseCount			INT
-	,DrawCount			INT
-	,MainBetCount		INT
-	,MainWonCount		INT
-	,MainLoseCount		INT
-	,MainDrawCount		INT
-	,MainStake			MONEY
-	,MainTurnover		MONEY
-	,MainTurnoverNoDraw	MONEY
-	,MainMemberWinloss	MONEY
-	,MainMemberComm		MONEY
-	,MainHouseWinloss	MONEY
-)
-CREATE CLUSTERED INDEX CIX_rmSumByBettype ON #rmSumByBettype (winlostdate, bettype, ParlayType)
-
-CREATE TABLE #rmSumByLeague
-(
-	winlostdate			SMALLDATETIME
-	,leagueId			INT
-	,ParlayType			TINYINT
-	,IsDeposit			BIT
-	,BetCount			INT
-	,WonCount			INT
-	,LoseCount			INT
-	,DrawCount			INT
-	,MainBetCount		INT
-	,MainWonCount		INT
-	,MainLoseCount		INT
-	,MainDrawCount		INT
-	,MainStake			MONEY
-	,MainTurnover		MONEY
-	,MainTurnoverNoDraw	MONEY
-	,MainMemberWinloss	MONEY
-	,MainMemberComm		MONEY
-	,MainHouseWinloss	MONEY
-)
-CREATE CLUSTERED INDEX CIX_rmSumByLeague ON #rmSumByLeague (winlostdate, leagueId, ParlayType)
-
 
 -- run by batch
 DECLARE @bettransByBatch TABLE (winlostdate SMALLDATETIME, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
@@ -132,7 +72,7 @@ BEGIN
 
 	-- sum by league
 	BEGIN
-		INSERT INTO #rmSumByLeague
+		INSERT INTO dbo.rmSumByLeague_xtest
 		SELECT
 			b.winlostdate
 			,t.leagueid
@@ -149,8 +89,8 @@ BEGIN
 			,MainStake			= SUM(CASE WHEN t.rn = 1 THEN b.stake ELSE 0 END)
 			,MainTurnover		= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (111, 112, 113) THEN b.stake ELSE 0 END)
 			,MainTurnoverNoDraw	= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (112, 113) THEN b.stake ELSE 0 END)
-			,MainMemberWinloss		= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END)
-			,MainMemberComm			= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
+			,MainMemberWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END)
+			,MainMemberComm		= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
 			,MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.HouseWinloss ELSE 0 END)
 		FROM @bettransByBatch b
 			CROSS APPLY (
@@ -158,11 +98,6 @@ BEGIN
 				FROM (
 					SELECT bm.leagueid, bm.statusID
 					FROM @bettransmByBatch bm
-					WHERE b.refno = bm.refno 
-
-					UNION ALL
-					SELECT bm.leagueid, bm.statusID
-					FROM #bettransm14 bm
 					WHERE b.refno = bm.refno
 				) bm
 			) t
@@ -175,13 +110,13 @@ BEGIN
 
 	-- sum by bettype
 	BEGIN
-		INSERT INTO #rmSumByBettype
+		INSERT INTO dbo.rmSumByBettype_xtest
 		SELECT
 			b.winlostdate
 			,t.bettype
 			,b.ParlayType
 			,b.IsDeposit
-			,LeagueIds			= ''
+			,0
 			,BetCount			= SUM(1)
 			,WonCount			= SUM(CASE WHEN t.statusID = 112 THEN 1 ELSE 0 END)
 			,LoseCount			= SUM(CASE WHEN t.statusID = 113 THEN 1 ELSE 0 END)
@@ -193,8 +128,8 @@ BEGIN
 			,MainStake			= SUM(CASE WHEN t.rn = 1 THEN b.stake ELSE 0 END)
 			,MainTurnover		= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (111, 112, 113) THEN b.stake ELSE 0 END)
 			,MainTurnoverNoDraw	= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (112, 113) THEN b.stake ELSE 0 END)
-			,MainMemberWinloss		= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END)
-			,MainMemberComm			= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
+			,MainMemberWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END)
+			,MainMemberComm		= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
 			,MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.HouseWinloss ELSE 0 END)
 		FROM @bettransByBatch b
 			CROSS APPLY (
@@ -202,11 +137,6 @@ BEGIN
 				FROM (
 					SELECT bm.bettype, bm.statusID
 					FROM @bettransmByBatch bm
-					WHERE b.refno = bm.refno
-
-					UNION ALL
-					SELECT bm.bettype, bm.statusID
-					FROM #bettransm14 bm
 					WHERE b.refno = bm.refno
 				) bm
 			) t
@@ -216,32 +146,42 @@ BEGIN
 			,b.ParlayType
 			,b.IsDeposit
 
-		-- Update leagueIds
-		INSERT INTO @bettype
-		SELECT b.winlostdate, bm.bettype, b.ParlayType, bm.leagueid
+		INSERT INTO dbo.rmSumByBettype_xtest
+		SELECT
+			b.winlostdate
+			,t.bettype
+			,b.ParlayType
+			,b.IsDeposit
+			,t.LeagueId
+			,BetCount			= SUM(1)
+			,WonCount			= SUM(CASE WHEN t.statusID = 112 THEN 1 ELSE 0 END)
+			,LoseCount			= SUM(CASE WHEN t.statusID = 113 THEN 1 ELSE 0 END)
+			,DrawCount			= SUM(CASE WHEN t.statusID = 111 THEN 1 ELSE 0 END)
+			,MainBetCount		= SUM(CASE WHEN t.rn = 1 THEN 1 ELSE 0 END)
+			,MainWonCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 112 THEN 1 ELSE 0 END)
+			,MainLoseCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 113 THEN 1 ELSE 0 END)
+			,MainDrawCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 111 THEN 1 ELSE 0 END)
+			,MainStake			= SUM(CASE WHEN t.rn = 1 THEN b.stake ELSE 0 END)
+			,MainTurnover		= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (111, 112, 113) THEN b.stake ELSE 0 END)
+			,MainTurnoverNoDraw	= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (112, 113) THEN b.stake ELSE 0 END)
+			,MainMemberWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END)
+			,MainMemberComm		= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
+			,MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.HouseWinloss ELSE 0 END)
 		FROM @bettransByBatch b
 			CROSS APPLY (
-				SELECT bm.leagueid, bm.bettype
-				FROM @bettransmByBatch bm
-				WHERE b.refno = bm.refno
-
-				UNION ALL
-				SELECT bm.leagueid, bm.bettype
-				FROM #bettransm14 bm
-				WHERE b.refno = bm.refno
-			) bm
-		GROUP BY b.winlostdate, bm.bettype, b.ParlayType, bm.leagueid
-		
-		;WITH CTE_Bettype AS
-		(
-			SELECT b.winlostdate, b.bettype, b.ParlayType, LeagueIds = STUFF((SELECT ',' + CONVERT(VARCHAR(20), b1.leagueId) FROM @bettype b1 WHERE b1.bettype = b.bettype AND b1.ParlayType = b.ParlayType AND b1.winlostdate = b.winlostdate FOR XML PATH('')), 1, 1, '')
-			FROM @bettype b
-			GROUP BY b.winlostdate, b.bettype, b.ParlayType
-		)
-		UPDATE r
-		SET r.LeagueIds = b.LeagueIds
-		FROM #rmSumByBettype r
-			INNER JOIN CTE_Bettype b ON r.bettype = b.bettype AND r.ParlayType = b.ParlayType AND r.winlostdate = b.winlostdate
+				SELECT bettype, leagueid, statusID, ROW_NUMBER() OVER(PARTITION BY bettype, leagueid ORDER BY (SELECT NULL)) AS rn
+				FROM (
+					SELECT bm.bettype, bm.leagueid, bm.statusID
+					FROM @bettransmByBatch bm
+					WHERE b.refno = bm.refno
+				) bm
+			) t
+		GROUP BY
+			b.winlostdate
+			,t.bettype
+			,b.ParlayType
+			,b.IsDeposit
+			,t.leagueid
 	END
 
 	IF @isBreak = 1
@@ -249,17 +189,3 @@ BEGIN
 END
 
 DROP TABLE #bettrans
-DROP TABLE #bettransm14
-
-INSERT INTO dbo.rmSumByBettype_xtest (winlostdate,bettype,ParlayType,IsDeposit,leagueIds,BetCount,WonCount,DrawCount,LoseCount,MainBetCount,MainWonCount,MainLoseCount,MainDrawCount,MainStake,MainTurnover,MainTurnoverNoDraw,MainMemberWinloss,MainMemberComm,MainHouseWinloss)
-SELECT winlostdate,bettype,ParlayType,IsDeposit,leagueIds,SUM(BetCount),SUM(WonCount),SUM(DrawCount),SUM(LoseCount),SUM(MainBetCount),SUM(MainWonCount),SUM(MainLoseCount),SUM(MainDrawCount),SUM(MainStake),SUM(MainTurnover),SUM(MainTurnoverNoDraw),SUM(MainMemberWinloss),SUM(MainMemberComm),SUM(MainHouseWinloss)
-FROM #rmSumByBettype
-GROUP BY winlostdate, bettype,ParlayType,IsDeposit,leagueIds
-
-INSERT INTO dbo.rmSumByLeague_xtest (winlostdate,leagueId,ParlayType,IsDeposit,BetCount,WonCount,DrawCount,LoseCount,MainBetCount,MainWonCount,MainLoseCount,MainDrawCount,MainStake,MainTurnover,MainTurnoverNoDraw,MainMemberWinloss,MainMemberComm,MainHouseWinloss)
-SELECT winlostdate,leagueId,ParlayType,IsDeposit,SUM(BetCount),SUM(WonCount),SUM(DrawCount),SUM(LoseCount),SUM(MainBetCount),SUM(MainWonCount),SUM(MainLoseCount),SUM(MainDrawCount),SUM(MainStake),SUM(MainTurnover),SUM(MainTurnoverNoDraw),SUM(MainMemberWinloss),SUM(MainMemberComm),SUM(MainHouseWinloss)
-FROM #rmSumByLeague
-GROUP BY winlostdate, leagueId,ParlayType,IsDeposit
-
-DROP TABLE #rmSumByBettype
-DROP TABLE #rmSumByLeague

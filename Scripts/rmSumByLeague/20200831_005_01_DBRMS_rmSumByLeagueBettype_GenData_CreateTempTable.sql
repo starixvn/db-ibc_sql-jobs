@@ -1,14 +1,14 @@
 /*<info serverAlias="DBARC-bodb_Archive"></info>*/
-USE bodb_Archive
-GO
-
 /*
-	Created: 20200601@Percy
+	Created: 20200831@Percy
 	DB: DBARC-bodb_Archive
 	Task: Gen data for new tables rmSumByLeague, rmSumByBettype
 
 	Create temp table
 */
+
+USE bodb_Archive
+GO
 
 CREATE TABLE dbo.rmSumByBettype_xtest
 (
@@ -16,7 +16,7 @@ CREATE TABLE dbo.rmSumByBettype_xtest
 	,bettype			SMALLINT
 	,ParlayType			TINYINT
 	,IsDeposit			BIT
-	,leagueIds			VARCHAR(MAX)
+	,leagueId			INT
 	,BetCount			INT
 	,WonCount			INT
 	,LoseCount			INT
