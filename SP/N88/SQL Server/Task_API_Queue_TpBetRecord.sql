@@ -119,7 +119,7 @@ BEGIN
 					,t.c.value('@transtime', 'DATETIME')
 					,t.c.value('@settledtime', 'DATETIME')
 					,t.c.value('@stake', 'DECIMAL(18,2)')
-					,t.c.value('@validbet', 'DECIMAL(18,2)')
+					,CAST(NULLIF(t.c.value('@validbet', 'varchar(30)'), '') AS DECIMAL(18,2))
 					,t.c.value('@winlostamount', 'DECIMAL(18,2)')
 					,t.c.value('@settlementtype', 'TINYINT')
 					,t.c.value('@ticketstatus', 'TINYINT')

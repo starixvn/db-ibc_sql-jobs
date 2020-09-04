@@ -10,7 +10,7 @@ AS
 	Revisions:
 		- 20200520@Percy: Initialize SP [RedmineID: #133254]
 		- 20200716@Percy: Add 2 tables: TpTransferInfo & DepositInfo [RedmineID: #137395]
-		- 20200818@Percy: Add 2 tables: CustRegInfo & BonusInfo [RedmineID: #137395]
+		- 20200818@Percy: Add 3 tables: CustRegInfo, BonusInfo & WithdrawalInfo [RedmineID: #137395]
 */
 
 BEGIN
@@ -101,6 +101,18 @@ BEGIN
 		BEGIN
 			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
 			VALUES ('DepositInfo', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- WithdrawalInfo
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_WithdrawalInfo @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('WithdrawalInfo', @ErrCode, @ErrMsg)
 		END
 	END
 
