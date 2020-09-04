@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20200520@Percy: Initialize SP [RedmineID: #133254]
+		- 20200818@Percy: Add column ValidBet [RedmineID: #137395]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -48,6 +49,7 @@ BEGIN
 		,TransTime		DATETIME
 		,SettledTime	DATETIME
 		,Stake			DECIMAL(18,2)
+		,ValidBet		DECIMAL(18,2)
 		,WinlostAmount	DECIMAL(18,2)
 		,SettlementType	TINYINT
 		,TicketStatus	TINYINT
@@ -97,6 +99,7 @@ BEGIN
 					,TransTime
 					,SettledTime
 					,Stake
+					,ValidBet
 					,WinlostAmount
 					,SettlementType
 					,TicketStatus
@@ -116,6 +119,7 @@ BEGIN
 					,t.c.value('@transtime', 'DATETIME')
 					,t.c.value('@settledtime', 'DATETIME')
 					,t.c.value('@stake', 'DECIMAL(18,2)')
+					,t.c.value('@validbet', 'DECIMAL(18,2)')
 					,t.c.value('@winlostamount', 'DECIMAL(18,2)')
 					,t.c.value('@settlementtype', 'TINYINT')
 					,t.c.value('@ticketstatus', 'TINYINT')
@@ -142,6 +146,7 @@ BEGIN
 						,b.TransTime		= t.TransTime
 						,b.SettledTime		= t.SettledTime
 						,b.Stake			= t.Stake
+						,b.ValidBet			= t.ValidBet
 						,b.WinlostAmount	= t.WinlostAmount
 						,b.SettlementType	= t.SettlementType
 						,b.TicketStatus		= t.TicketStatus
@@ -163,6 +168,7 @@ BEGIN
 							OR ISNULL(b.TransTime, '')		<> ISNULL(t.TransTime, '')
 							OR ISNULL(b.SettledTime, '')	<> ISNULL(t.SettledTime, '')
 							OR ISNULL(b.Stake, 0)			<> ISNULL(t.Stake, 0)
+							OR ISNULL(b.ValidBet, 0)		<> ISNULL(t.ValidBet, 0)
 							OR ISNULL(b.WinlostAmount, 0)	<> ISNULL(t.WinlostAmount, 0)
 							OR ISNULL(b.SettlementType, 0)	<> ISNULL(t.SettlementType, 0)
 							OR ISNULL(b.TicketStatus, 0)	<> ISNULL(t.TicketStatus, 0)
@@ -188,6 +194,7 @@ BEGIN
 						,TransTime
 						,SettledTime
 						,Stake
+						,ValidBet
 						,WinlostAmount
 						,SettlementType
 						,TicketStatus
@@ -208,6 +215,7 @@ BEGIN
 						,TransTime
 						,SettledTime
 						,Stake
+						,ValidBet
 						,WinlostAmount
 						,SettlementType
 						,TicketStatus

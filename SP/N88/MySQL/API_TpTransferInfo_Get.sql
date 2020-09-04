@@ -1,10 +1,10 @@
 USE Siebog;
 
-DROP PROCEDURE IF EXISTS `N88_Get_TpTransferInfo`;
+DROP PROCEDURE IF EXISTS `API_TpTransferInfo_Get`;
 
 DELIMITER //
 
-CREATE DEFINER=`aff_user`@`%` PROCEDURE `N88_Get_TpTransferInfo`(
+CREATE DEFINER=`aff_user`@`%` PROCEDURE `API_TpTransferInfo_Get`(
   IN Id INT,
   IN batchCount INT
   /*
@@ -27,4 +27,4 @@ END
 //
 DELIMITER ;
 
-GRANT EXECUTE ON PROCEDURE `N88_Get_TpTransferInfo` TO 'affiliate_api'@'%';
+GRANT EXECUTE ON PROCEDURE `API_TpTransferInfo_Get` TO 'affiliate_api'@'%';
