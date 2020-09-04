@@ -13,6 +13,7 @@ AS
 		-20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
 		-20200514@Eden: Modify rule to check multi stake level at member level [redmine:#134156]
 		- 20200818@Johnson: check duplicate stakelevel [redmine:#139677]
+		-20200904@Elodie: Modify rule to check unlimited choice stake level at member level [RedmineID:#134156]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -246,6 +247,7 @@ BEGIN
 			INNER JOIN CheckCustDB.dbo.ProductSettingDetail ps WITH(NOLOCK) 
 			ON ps.sportType = cs1.SportType 
 				AND ps.bettype = cs1.bettype
+				AND ps.MaxChoice > 0
 				AND ps.SettingType = 17 -- multi stake level
 		WHERE cs1.StakeLevelList <> ''
 		GROUP BY cs1.sportType,cs1.bettype,cs1.custid
