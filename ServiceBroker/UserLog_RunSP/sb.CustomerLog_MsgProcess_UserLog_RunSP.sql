@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLOG-bodb_CustomerLog,DBCUST-bodb_CustomerLog" executers="bodbLicenseeNet,bodbAdminNet,Dot_Member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="bodbLicenseeNet,bodbAdminNet,Dot_Member" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [sb].[CustomerLog_MsgProcess_UserLog_RunSP]
 	@MsgType VARCHAR(200)='',	
 	@log xml = NULL,
