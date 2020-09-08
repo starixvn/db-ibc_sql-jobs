@@ -24,7 +24,8 @@ AS
 		- 20200602@Max: Data Consistency for BBIN, Update for Indo 4D - [Redmine: #135239]
 		- 20200624@Max: Update Rule for Saba.Club, Modify Rule check Discount [Redmine: #136362]
 		- 20200722@Max: Update Rule for Saba.Club - Exclude bettype 1631 from Rule '3min', Add new Rule for bettype 1631 - [Redmine: #138117]
-		
+		- 20200908@July:  Saba.Club Free Bets - Check Data Consistency - [Redmine:#140425]
+
 		Param's Expanation:
 */
 BEGIN
@@ -432,8 +433,8 @@ BEGIN
 		END
 	END
 
-	--Rule #30 for Saba.club
-	IF @ProductId = 200
+	--Rule #30 for Saba.club Free Bets, Saba.club
+	IF @ProductId  IN (150, 200)
 	BEGIN
 		IF @Rule = '3min'
 		BEGIN
@@ -477,8 +478,8 @@ BEGIN
 		END
 	END
 
-	--Rule #3, #16 for Virtual Games, Table Games, Saba.club
-	IF @ProductId IN (245, 222, 200)
+	--Rule #3, #16 for Virtual Games, Table Games, Saba.club, Saba.club Free Bets
+	IF @ProductId IN (245, 222, 200, 150)
 	BEGIN
 		IF @Rule = 'translog'
 		BEGIN
