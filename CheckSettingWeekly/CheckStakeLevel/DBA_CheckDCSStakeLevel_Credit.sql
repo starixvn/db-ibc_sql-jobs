@@ -14,6 +14,7 @@ AS
 		-20200514@Eden: Modify rule to check multi stake level at member level [redmine:#134156]
 		- 20200818@Johnson: check duplicate stakelevel [redmine:#139677]
 		-20200904@Elodie: Modify rule to check unlimited choice stake level at member level [RedmineID:#134156]
+		-20200909@Winfred: check Non offered stakelevel [redmine:#141236]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -62,6 +63,17 @@ BEGIN
 	FROM CheckCustDB.[dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 		INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
 	WHERE op.IsHidden = 0 AND ps.SettingType IN (7,8,17) 
+	
+	-- non offer stakelevel on site and currency
+	DELETE sb		
+	FROM @sportBettypeFilter sb
+		INNER JOIN CheckCustDB.[dbo].[SportNonOfferedSiteCurrency] stt WITH(NOLOCK) ON sb.SportType = stt.SportType AND sb.Bettype = stt.Bettype
+	WHERE stt.Currency = @Currency AND (stt.SiteID = @SiteID OR stt.SiteID = 0)	
+	
+	DELETE sb		
+	FROM @sportBettypeFilter sb
+		INNER JOIN CheckCustDB.[dbo].[SportNonOfferedSiteCurrency] stt WITH(NOLOCK) ON sb.SportType = stt.SportType AND sb.Bettype = stt.Bettype
+	WHERE (stt.Currency = @Currency OR stt.Currency = 0 ) AND stt.SiteID = @SiteID
 	
 	SELECT @Rowcount = count(1)
 	FROM @SportBettypeFilter
