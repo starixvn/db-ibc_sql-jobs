@@ -11,6 +11,7 @@ AS
 		- 20200708@Sol: Generate data for sum_winloss table - Redmine: [#136320]
 		- 20200820@Sol: enhence performance when statistics are not updated yet - Redmine: [#136320]
 		- 20200830@Sophia: Add PG Soft [redmine: #137767]
+		- 20200909@Malcolm : Report Enhancement for Jackpot Product [RedmineID : #139575]
 	
 */
 BEGIN
@@ -116,7 +117,7 @@ BEGIN
 			ELSE 0
 		END sporttype
 	   ,CASE
-			WHEN bettype IN (71, 72) THEN bettype
+			WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
 			ELSE 0
 		END bettype
 	   ,0 AS netTurnover
@@ -220,7 +221,7 @@ BEGIN
 				 ELSE 0
 			 END
 			,CASE
-				 WHEN bettype IN (71, 72) THEN bettype
+				WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
 				 ELSE 0
 			 END
 	OPTION (optimize for (@winlostdate UNKNOWN))
@@ -290,7 +291,7 @@ BEGIN
 			ELSE 0
 		END sporttype
 	   ,CASE
-			WHEN bettype IN (71, 72) THEN bettype
+			WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
 			ELSE 0
 		END bettype
 	   ,SUM(ABS(stake * apositiontaking)) AS netTurnover
@@ -393,7 +394,7 @@ BEGIN
 				 ELSE 0
 			 END
 			,CASE
-				 WHEN bettype IN (71, 72) THEN bettype
+				  WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
 				 ELSE 0
 			 END
 	OPTION (optimize for (@winlostdate UNKNOWN))
@@ -463,7 +464,7 @@ BEGIN
 			ELSE 0
 		END sporttype
 	   ,CASE
-			WHEN bettype IN (71, 72) THEN bettype
+			WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
 			ELSE 0
 		END bettype
 	   ,SUM(ABS(stake * mpositiontaking)) AS netTurnover
@@ -565,7 +566,7 @@ BEGIN
 				 ELSE 0
 			 END
 			,CASE
-				 WHEN bettype IN (71, 72) THEN bettype
+				 WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
 				 ELSE 0
 			 END
 	OPTION (optimize for (@winlostdate UNKNOWN))
@@ -635,7 +636,7 @@ BEGIN
 			ELSE 0
 		END sporttype
 	   ,CASE
-			WHEN bettype IN (71, 72) THEN bettype
+			WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
 			ELSE 0
 		END bettype
 	   ,SUM(ABS(stake * spositiontaking)) AS netTurnover
@@ -738,7 +739,7 @@ BEGIN
 				 ELSE 0
 			 END
 			,CASE
-				 WHEN bettype IN (71, 72) THEN bettype
+				WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
 				 ELSE 0
 			 END
 	OPTION (optimize for (@winlostdate UNKNOWN))
