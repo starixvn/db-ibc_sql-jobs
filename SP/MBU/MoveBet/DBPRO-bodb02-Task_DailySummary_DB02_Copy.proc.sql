@@ -49,6 +49,7 @@ AS
 		-- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 		-- 20200729@Brice:		Add table ProviderExternalResultDetailES [Redmine: #138380]
 		-- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
+		-- 20200909@Brice:		Add column color for table bingoBall [Redmine: #128414]
 */
 
 BEGIN
@@ -207,9 +208,9 @@ SET NOCOUNT ON
 	END;
 
 	INSERT INTO bingoBall14
-		([Matchid], [Seq], [Number], [UpdateTime])
+		([Matchid], [Seq], [Number], [UpdateTime], [Color])
 	SELECT
-		[Matchid], [Seq], [Number], [UpdateTime]
+		[Matchid], [Seq], [Number], [UpdateTime], [Color]
 	FROM BingoBall
 	WHERE MatchID in (SELECT MatchID from Match where eventdate = @winlostdate)
 
