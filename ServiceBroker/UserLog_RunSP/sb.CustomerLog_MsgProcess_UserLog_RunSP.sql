@@ -81,8 +81,8 @@ BEGIN
 			
 					IF @@ROWCOUNT = 0 BREAK
 					
-					INSERT INTO dbo.UserLog_RunSP (UserID, CustID, SPName, Doing, ActionID, TrackingValue, TrackingValue2, Duration,LogDate)
-					SELECT UserID, CustID, NULL, NULL, ActionID, TrackingValue, TrackingValue2, Duration,LogDate
+					INSERT INTO dbo.UserLog_RunSP (UserID, CustID, SPName, Doing, ActionID, TrackingValue, TrackingValue2, Duration,LogDate,CreatedDate)
+					SELECT UserID, CustID, NULL, NULL, ActionID, TrackingValue, TrackingValue2, Duration,LogDate,GETDATE()
 					FROM @tmpLog_batch
 					
 					WAITFOR DELAY '00:00:0.100'
