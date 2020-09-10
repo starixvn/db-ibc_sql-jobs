@@ -2,6 +2,7 @@
 ALTER PROCEDURE [dbo].[Task_Sum_Winloss_Old]
 	@WinlostDate	SMALLDATETIME
 	,@CustIds		VARCHAR(MAX) = ''
+	,@ProductIds    VARCHAR(MAX) = ''
 AS
 
 /*
@@ -11,14 +12,17 @@ AS
 
 	Revisions:
 		- 20200717@Sophia: Initial SP [Redmine: #137604]
+		- 20200910@Malcolm: Generate Data [Redmine: #137604]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
 	-- Get Bet Types
-	DECLARE @ProductIds VARCHAR(MAX)
-	SELECT  @ProductIds = COALESCE(@ProductIds + ',', '') + CONVERT(VARCHAR(10), ProductId) FROM dbo.Products WITH (NOLOCK)
+	IF ISNULL(@ProductIds,'') = ''
+	BEGIN
+		SELECT  @ProductIds = COALESCE(@ProductIds + ',', '') + CONVERT(VARCHAR(10), ProductId) FROM dbo.Products WITH (NOLOCK)
+	END
 
 	CREATE TABLE #Bettypes (ProductId INT, SportTypeRef SMALLINT, BettypeRef SMALLINT, Bettype SMALLINT)
 
@@ -65,7 +69,7 @@ BEGIN
 				) d(ProductID, SportType, BetType)
 				WHERE ',' + @ProductIds + ',' LIKE '%,' + CAST(ProductID as varchar(3)) + ',%'
 		) f
-	CROSS APPLY (
+		CROSS APPLY (
 			SELECT DISTINCT s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
 			WHERE f.ProductID = s.ProductID
 				AND (f.ProductID <> 6 OR f.SportType = s.SportType)
@@ -93,6 +97,42 @@ BEGIN
 		WHERE c.roleid = 1
 	END
 	-- End Get Customer Info
+
+	---- get extra PT from table setting
+	CREATE TABLE #__SuperExtraPT(productId INT, bettypePT INT, SuperId INT, ExtraPT MONEY)
+	CREATE CLUSTERED INDEX CIX_#__SuperExtraPT ON #__SuperExtraPT(SuperId, bettypePT)
+	
+	;WITH rs AS 
+	(
+		SELECT DISTINCT b.bettype , b.srecommend
+		FROM bettrans14 b WITH(NOLOCK) 
+			INNER JOIN #tmpSuper s
+				ON s.srecommend = b.srecommend
+		WHERE 
+			b.winlostdate = @winlostdate
+			AND b.statusID IN (111,112,113)
+			AND b.bettype <= 19000
+	)
+	INSERT INTO #__SuperExtraPT (productId, bettypePT, SuperId, ExtraPT)
+	SELECT tbl.ProductID, b.bettype , b.srecommend , T.ExtraPT
+	FROM rs b 
+		CROSS APPLY 
+		(
+			SELECT
+				tbl.ProductID
+			FROM f_SportBettypeMatrix_Sel(0, 0, b.bettype, 2, '', '', 0) tbl
+			WHERE b.bettype = tbl.bettype
+		) tbl
+		OUTER APPLY 
+		(
+			SELECT expt2.SuperId, expt2.ExtraPT
+			FROM dbo.Acc_GroupExtraPT2Setting expt2 WITH (NOLOCK)
+			WHERE @winlostdate BETWEEN expt2.FromDate AND expt2.ToDate
+					AND tbl.ProductID = expt2.ProductID
+					AND b.srecommend = expt2.SuperId 
+					AND ISNULL(expt2.SubProduct,'') = ''
+					AND expt2.Sporttype = 0
+		) t
 
 	-- Get Data From bettrans14
 	BEGIN
@@ -126,6 +166,8 @@ BEGIN
 			,master_netTurnover	MONEY
 			,super_netTurnover	MONEY
 			,TurnoverNoDraw		MONEY
+			,ExtraWinloss		MONEY NULL
+			,ExtraComm			MONEY NULL
 		)
 		INSERT INTO #tmpBettrans
 		(
@@ -157,6 +199,8 @@ BEGIN
 			,master_netTurnover
 			,super_netTurnover
 			,TurnoverNoDraw
+			,ExtraWinloss
+			,ExtraComm
 		)
 		SELECT
 			b.winlostdate
@@ -196,6 +240,8 @@ BEGIN
 					WHEN bt.ProductId = 1 AND b.statusID = 111 THEN 0 -- SportsBook
 					WHEN bt.ProductID IN (21, 39, 45, 46, 47, 52)  THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, ION
 					ELSE ABS(b.stake) END) AS TurnoverNoDraw
+			,-1 * SUM(ISNULL(b.ExtraWinloss, 0)) AS ExtraWinloss
+			,-1 * SUM(ISNULL(b.ExtraComm, 0)) AS ExtraComm
 		FROM #tmpCust c
 			CROSS APPLY (
 				SELECT
@@ -219,7 +265,32 @@ BEGIN
 					,b.bettype
 					,b.modds
 					,b.statusID
-				FROM bodb_archive.dbo.bettrans_BK b WITH (NOLOCK, index = IX_custid)
+					,CASE
+						-- Jackpot
+						WHEN b.bettype IN (2198, 2398, 2998, 4297) THEN
+							CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
+						WHEN b.bettype IN (2199, 2399, 2999, 4298) THEN 0
+						ELSE CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END
+					END
+					* CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT
+							ELSE ISNULL(b.epositiontaking, 0)
+						END 
+					AS ExtraWinloss,
+					CASE 
+						/*IBCBet Live Casino*/
+						WHEN b.bettype BETWEEN 3201 AND 3299 THEN b.scomm
+						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298) THEN 0
+						ELSE 
+							CASE 
+								WHEN b.tpositiontaking = 1 THEN 0 
+								ELSE b.scomm / (1 - b.tpositiontaking)
+							END * CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(b.epositiontaking, 0) END 
+					END
+					AS ExtraComm
+				FROM bodb_Archive.dbo.bettrans_bk b WITH (NOLOCK)
+					INNER JOIN #__SuperExtraPT tbl 
+						ON b.srecommend = tbl.SuperId
+							AND b.bettype = tbl.bettypePT
 				WHERE b.winlostdate = @WinlostDate
 					AND c.custid = b.custid
 					AND b.statusID IN (111,112,113)
@@ -235,7 +306,7 @@ BEGIN
 			,bt.sporttypeRef
 			,bt.bettypeRef
 	END
-	-- End Get Data From bettrans14
+	-- End Get Data From bettrans_bk
 
 	DROP TABLE #tmpCust
 	DROP TABLE #Bettypes
@@ -266,6 +337,8 @@ BEGIN
 			,bettype			SMALLINT
 			,netTurnover		MONEY
 			,TurnoverNoDraw		MONEY
+			,ExtraWinloss		MONEY NULL
+			,ExtraComm			MONEY NULL
 		)
 
 		-- Member
@@ -293,6 +366,8 @@ BEGIN
 			,bettype
 			,netTurnover
 			,TurnoverNoDraw
+			,ExtraWinloss
+			,ExtraComm
 		)
 		SELECT
 			winlostdate
@@ -317,6 +392,8 @@ BEGIN
 			,bettype
 			,member_netTurnover
 			,TurnoverNoDraw
+			,ExtraWinloss
+			,ExtraComm
 		FROM #tmpBettrans
 
 		-- Agent
@@ -342,6 +419,8 @@ BEGIN
 				,bettype
 				,SUM(agent_netTurnover) AS netTurnover
 				,SUM(TurnoverNoDraw) AS TurnoverNoDraw
+				,SUM(ExtraWinloss) AS ExtraWinloss
+				,SUM(ExtraComm) AS ExtraComm
 			FROM #tmpBettrans
 			GROUP BY
 				winlostdate
@@ -375,6 +454,8 @@ BEGIN
 			,bettype
 			,netTurnover
 			,TurnoverNoDraw
+			,ExtraWinloss
+			,ExtraComm
 		)
 		SELECT
 			winlostdate
@@ -399,6 +480,8 @@ BEGIN
 			,bettype
 			,netTurnover
 			,TurnoverNoDraw
+			,ExtraWinloss
+			,ExtraComm
 		FROM CTE_Agent a
 			CROSS APPLY (
 				SELECT username FROM dbo.Customer c WITH (NOLOCK) WHERE a.recommend = c.custid
@@ -426,6 +509,8 @@ BEGIN
 				,bettype
 				,SUM(master_netTurnover) AS netTurnover
 				,SUM(TurnoverNoDraw) AS TurnoverNoDraw
+				,SUM(ExtraWinloss) AS ExtraWinloss
+				,SUM(ExtraComm) AS ExtraComm
 			FROM #tmpBettrans
 			GROUP BY
 				winlostdate
@@ -458,6 +543,8 @@ BEGIN
 			,bettype
 			,netTurnover
 			,TurnoverNoDraw
+			,ExtraWinloss
+			,ExtraComm
 		)
 		SELECT
 			winlostdate
@@ -482,6 +569,8 @@ BEGIN
 			,bettype
 			,netTurnover
 			,TurnoverNoDraw
+			,ExtraWinloss
+			,ExtraComm
 		FROM CTE_Master m
 			CROSS APPLY (
 				SELECT username FROM dbo.Customer c WITH (NOLOCK) WHERE m.mrecommend = c.custid
@@ -508,6 +597,8 @@ BEGIN
 				,bettype
 				,SUM(super_netTurnover) AS netTurnover
 				,SUM(TurnoverNoDraw) AS TurnoverNoDraw
+				,SUM(ExtraWinloss) AS ExtraWinloss
+				,SUM(ExtraComm) AS ExtraComm
 			FROM #tmpBettrans
 			GROUP BY
 				winlostdate
@@ -539,6 +630,8 @@ BEGIN
 			,bettype
 			,netTurnover
 			,TurnoverNoDraw
+			,ExtraWinloss
+			,ExtraComm
 		)
 		SELECT
 			winlostdate
@@ -563,6 +656,8 @@ BEGIN
 			,bettype
 			,netTurnover
 			,TurnoverNoDraw
+			,ExtraWinloss
+			,ExtraComm
 		FROM CTE_Super s
 			CROSS APPLY (
 				SELECT username FROM dbo.Customer c WITH (NOLOCK) WHERE s.srecommend = c.custid
@@ -601,6 +696,8 @@ BEGIN
 				,bettype
 				,netTurnover
 				,TunroverNoDraw -- TurnoverNoDraw
+				,ISNULL(ExtraWinloss, 0) AS ExtraWinloss
+				,ISNULL(ExtraComm, 0) AS ExtraComm
 			FROM bodb_Archive.dbo.sum_winloss_old_tmp s WITH (NOLOCK)
 			WHERE s.winlostdate = @WinlostDate
 				AND EXISTS (SELECT 1 FROM #tmpSuper ts WHERE s.srecommend = ts.srecommend)
@@ -632,6 +729,8 @@ BEGIN
 			OR tmp.grosscomm			<> s.grosscomm
 			OR tmp.netTurnover			<> s.netTurnover
 			OR tmp.TurnoverNoDraw		<> s.TunroverNoDraw -- TurnoverNoDraw
+			OR tmp.ExtraWinloss			<> s.ExtraWinloss
+			OR tmp.ExtraComm			<> s.ExtraComm
 	END
 	-- End Compare data with target
 
@@ -663,6 +762,8 @@ BEGIN
 				,TARGET.grosscomm		= SOURCE.grosscomm
 				,TARGET.netTurnover		= SOURCE.netTurnover
 				,TARGET.TunroverNoDraw	= SOURCE.TurnoverNoDraw -- TurnoverNoDraw
+				,TARGET.ExtraWinloss	= SOURCE.ExtraWinloss
+				,TARGET.ExtraComm		= SOURCE.ExtraComm
 		WHEN NOT MATCHED BY TARGET THEN INSERT
 			(
 				winlostdate
@@ -687,6 +788,8 @@ BEGIN
 				,bettype
 				,netTurnover
 				,TunroverNoDraw -- TurnoverNoDraw
+				,ExtraWinloss
+				,ExtraComm
 			)
 			VALUES
 			(
@@ -712,6 +815,8 @@ BEGIN
 				,SOURCE.bettype
 				,SOURCE.netTurnover
 				,SOURCE.TurnoverNoDraw
+				,SOURCE.ExtraWinloss
+				,SOURCE.ExtraComm
 			)
 		WHEN NOT MATCHED BY SOURCE
 			AND TARGET.winlostdate = @winlostdate
@@ -722,5 +827,6 @@ BEGIN
 
 	DROP TABLE #tmpSuper
 	DROP TABLE #tmpSum_winloss
+
 END
 GO
