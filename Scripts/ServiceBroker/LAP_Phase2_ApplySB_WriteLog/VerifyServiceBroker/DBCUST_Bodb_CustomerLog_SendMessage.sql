@@ -8,7 +8,29 @@
 	
 */
 --- send message to verify service broker set up
------------------ 1.1 Contract_CustomerLog_UserLog_RunSP ----------------------
+----------------- Step 1- Send sample message ----------------------
+DECLARE @log xml, @SB_Error BIT = 0
+SELECT @log = (SELECT 0 as '@UserID',
+					2612 '@ActionID',
+					'' AS '@TrackingValue',						
+					'' AS '@TrackingValue2',
+					GETDATE() AS '@LogDate',
+					 0 AS '@Duration'
+				FOR XML PATH('Row')	
+			)
+EXEC bodb_CustomerLog.sb.CustomerLog_SendMessage @xml = @log, 
+												@MessageType='MessageType_CustomerLog_UserLog_RunSP', 
+												@functionName = 'UserLog_Others',
+												@SB_Error = @SB_Error out
+
+SELECT @SB_Error
+
+----------------- Step 1- heck data in dblog/bodb_CustomerLog ----------------------
+
+SELECT TOP (1) * from dblog.bodb_CustomerLog.dbo.UserLog_RunSP WITH (NOLOCK)
+WHERE ActionID = 2612 and userid = 0
+
+/*
 DECLARE @SBDialog uniqueidentifier
 DECLARE @Message NVARCHAR(128)
 
@@ -32,4 +54,4 @@ END
 ELSE
 	PRINT 'No conversation'
 GO
-
+*/
