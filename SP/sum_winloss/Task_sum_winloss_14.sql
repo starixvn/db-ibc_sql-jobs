@@ -2,6 +2,7 @@
 ALTER PROCEDURE [dbo].[Task_sum_winloss_14]
 	@WinlostDate	SMALLDATETIME
 	,@CustIds		VARCHAR(MAX) = ''
+	,@ProductIds    VARCHAR(MAX) = ''
 AS
 
 /*
@@ -23,7 +24,6 @@ BEGIN
 	SET NOCOUNT ON
 
 	-- Get Bet Types
-	DECLARE @ProductIds VARCHAR(MAX)
 	SELECT  @ProductIds = COALESCE(@ProductIds + ',', '') + CONVERT(VARCHAR(10), ProductId) FROM dbo.Products WITH (NOLOCK)
 
 	CREATE TABLE #Bettypes (ProductId INT, SportTypeRef SMALLINT, BettypeRef SMALLINT, Bettype SMALLINT)
