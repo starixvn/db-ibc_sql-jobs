@@ -12,7 +12,7 @@ AS
 
 	Revisions:
 		- 20200717@Sophia: Initial SP [Redmine: #137604]
-		- 20200910@Malcolm: Generate Data [Redmine: #137604]
+		- 20200910@Malcolm: Add @ProductIds (delete all data of sum_winloss_old_tmp before using this parameter) [Redmine: #139575]
 */
 
 BEGIN
@@ -54,6 +54,8 @@ BEGIN
 						(27, 190, 0), --Betradar Virtual Sports
 						(28, 220, 0), -- Keno
 						(32, 248, 0), -- Pragmatic
+						(32, 248, 4297), -- Pragmatic
+						(32, 248, 4298), -- Pragmatic
 						(34, 165, 0), -- Card Club
 						(36, 247, 0), -- Spadegaming
 						(38, 245, 0), -- Virtual Games
@@ -73,6 +75,7 @@ BEGIN
 			SELECT DISTINCT s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
 			WHERE f.ProductID = s.ProductID
 				AND (f.ProductID <> 6 OR f.SportType = s.SportType)
+				AND (f.BetType NOT IN (4297, 4298) AND s.BetType NOT IN (4297, 4298) OR f.BetType = s.BetType)
 		) AS s
 
 	-- End Get Bet Types
@@ -105,7 +108,7 @@ BEGIN
 	;WITH rs AS 
 	(
 		SELECT DISTINCT b.bettype , b.srecommend
-		FROM bettrans14 b WITH(NOLOCK) 
+		FROM bodb_Archive.dbo.bettrans_bk b WITH(NOLOCK) 
 			INNER JOIN #tmpSuper s
 				ON s.srecommend = b.srecommend
 		WHERE 
@@ -827,6 +830,7 @@ BEGIN
 
 	DROP TABLE #tmpSuper
 	DROP TABLE #tmpSum_winloss
+	DROP TABLE #__SuperExtraPT
 
 END
 GO
