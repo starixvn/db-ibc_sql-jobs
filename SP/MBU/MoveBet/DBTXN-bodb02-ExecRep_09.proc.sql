@@ -41,7 +41,7 @@ AS
 		- 20190828@Billy:	Add table [bettransInfo] - [Redmine: #119219]
 		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
 		- 20191126@Patrick: Ignore remove data on DB054/DB055 - [Redmine: #124104]
-		- 20201609@Brice:	Change serverName DB06 to DB06C2\DB06 [Redmine: #140355]
+		- 20200916@Brice:	Change serverName DB06 to DB06C2\DB06 [Redmine: #140355]
 
 
 
