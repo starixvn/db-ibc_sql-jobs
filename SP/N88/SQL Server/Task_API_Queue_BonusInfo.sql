@@ -109,7 +109,7 @@ BEGIN
 					,t.c.value('@username', 'VARCHAR(30)')
 					,t.c.value('@currencyid', 'TINYINT')
 					,t.c.value('@siteid', 'INT')
-					,t.c.value('@lockamount', 'DECIMAL(18, 2)')
+					,t.c.value('@lockedamount', 'DECIMAL(18, 2)')
 					,t.c.value('@bonusamount', 'DECIMAL(18, 2)')
 					,NULLIF(t.c.value('@expirytime', 'DATETIME'), '')
 					,t.c.value('@bonusinfo', 'NVARCHAR(MAX)')
