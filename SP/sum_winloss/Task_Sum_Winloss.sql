@@ -12,6 +12,7 @@ AS
 		- 20200820@Sol: enhence performance when statistics are not updated yet - Redmine: [#136320]
 		- 20200830@Sophia: Add PG Soft [redmine: #137767]
 		- 20200909@Malcolm : Report Enhancement for Jackpot Product [RedmineID : #139575]
+		- 20200918@Malcolm: Add Joker [redmine: #131609]
 	
 */
 BEGIN
@@ -114,6 +115,7 @@ BEGIN
 			WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION					
 			WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War		
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
+			WHEN bettype BETWEEN 6401 AND 6700 THEN 234-- Joker
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -218,6 +220,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 				 WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
+				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234-- Joker
 				 ELSE 0
 			 END
 			,CASE
@@ -288,6 +291,7 @@ BEGIN
 			WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 			WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
+			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -391,6 +395,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 				 WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
+				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 				 ELSE 0
 			 END
 			,CASE
@@ -461,6 +466,7 @@ BEGIN
 			WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 			WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
+			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -563,6 +569,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 				 WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
+				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 				 ELSE 0
 			 END
 			,CASE
@@ -633,6 +640,7 @@ BEGIN
 			WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 			WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
+			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -736,6 +744,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5601 AND 5699 THEN 225 -- ION
 				 WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
+				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 				 ELSE 0
 			 END
 			,CASE
