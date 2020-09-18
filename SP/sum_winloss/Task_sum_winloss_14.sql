@@ -17,6 +17,7 @@ AS
 		- 20200528@Sophia: Add RNG War [Redmine: #132013]
 		- 20200708@Sol: Generate data for sum_winloss table - Redmine: [#136320]
 		- 20200820@Sol: enhence performance when statistics are not updated yet - Redmine: [#136320]
+		- 20200910@Malcolm: Report Enhancement for Jackpot Product [RedmineID : #139575]
 */
 
 BEGIN
@@ -34,6 +35,7 @@ BEGIN
 			SELECT DISTINCT s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
 			WHERE f.ProductID = s.ProductID
 				AND (f.ProductID <> 6 OR f.SportType = s.SportType)
+				AND (f.BetType NOT IN (4297, 4298) AND s.BetType NOT IN (4297, 4298) OR f.BetType = s.BetType)
 		) AS s
 	-- End Get Bet Types
 
