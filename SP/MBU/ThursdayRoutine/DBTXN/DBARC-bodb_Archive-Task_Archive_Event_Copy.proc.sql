@@ -19,6 +19,7 @@ AS
 		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
+		- 20200909@Brice:		Add column color for table bingoBall [Redmine: #128414]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -95,12 +96,12 @@ WHERE	t1.eventdate = @winlostdate;'');';
 		SELECT	@Query = N'';
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.bingoBall_bk
-	(	Matchid, Seq, Number, UpdateTime)
-SELECT	Matchid, Seq, Number, UpdateTime
+	(	Matchid, Seq, Number, UpdateTime,Color)
+SELECT	Matchid, Seq, Number, UpdateTime,Color
 FROM	OPENQUERY(DBPRO, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-SELECT	Matchid, Seq, Number, UpdateTime
+SELECT	Matchid, Seq, Number, UpdateTime,Color
 FROM	bodb02.dbo.BingoBall14 AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
 
