@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20180329@Percy: Initialize SP [RedmineID: #92391]
 		- 20180516@Percy: Remove time value on WinlostDateList field [RedmineID: #95238]
+		- 20200916@Patrick: Move customer log from db052 to db054 [RedmineID: #140783]
 */
 
 BEGIN
@@ -137,7 +138,7 @@ BEGIN
 		INSERT INTO dbo.DBALog_MBU_Process_History (WinlostDateList, StartTime, EndTime, ServerName, IsMoving, MovingType, LogDate)
 		VALUES (@WinlostDateList, @StartTime, @EndTime, @ServerName, @IsMoving, @MovingType, @LogDate)
 
-		-- DB054
+		-- DB054/DB055
 		SELECT
 			@StartTime = CASE WHEN VName = 'StartMoving_Local' THEN
 							CASE WHEN ISDATE(VValue) = 1 THEN CONVERT(DATETIME, VValue) ELSE GETDATE() END
@@ -147,7 +148,7 @@ BEGIN
 						ELSE @EndTime END,
 			@ServerName = 'DB054',
 			@IsMoving = CASE WHEN VName = @flag THEN CONVERT(TINYINT, VValue) ELSE @IsMoving END
-		FROM DB054.bodb02.dbo.SystemSettings WITH (NOLOCK)
+		FROM bodb02.dbo.SystemSettings WITH (NOLOCK)
 		WHERE VName IN ('StartMoving_Local','EndMoving_Local',@flag)
 
 		INSERT INTO dbo.DBALog_MBU_Process_History (WinlostDateList, StartTime, EndTime, ServerName, IsMoving, MovingType, LogDate)
