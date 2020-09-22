@@ -221,7 +221,7 @@ BEGIN
 		
 			SELECT 	@CustID = CustID
 			FROM 	#Cust 
-			WHERE 	CustID = @ID + @t
+			WHERE 	ID = @ID + @t
 		
 			EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
 				@mode = 1,
