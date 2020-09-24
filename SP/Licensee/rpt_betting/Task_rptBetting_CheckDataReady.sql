@@ -12,6 +12,7 @@ AS
 		- 20190416@Patrick: Add notification to skype and lestalk [Redmind: #111921]
 		- 20190524@Billy:	Change Letstalk linked server - [Redmine: #113125]
 		- 20190910@Percy:	Replace FactCustWinloss to FactSitewinloss (get smaller data) + Split code to enhance performance [RedmineID: #119761]
+		- 20200924@Percy:	Increase max different winloss from 100k to 200k [RedmineID: #142269]
 */
 
 BEGIN 
@@ -78,7 +79,7 @@ BEGIN
 					SELECT l.RptDate, ABS(ISNULL(l.Winloss,0)) - ABS(ISNULL(d.Winloss,0)) AS Winloss
 					FROM #Lic l 
 						FULL JOIN #DW d ON d.rptDate = l.RptDate
-					WHERE ABS(ISNULL(l.Winloss,0)) - ABS(ISNULL(d.Winloss,0)) > 100000
+					WHERE ABS(ISNULL(l.Winloss,0)) - ABS(ISNULL(d.Winloss,0)) > 200000
 				   ) 
 		
 		BEGIN
