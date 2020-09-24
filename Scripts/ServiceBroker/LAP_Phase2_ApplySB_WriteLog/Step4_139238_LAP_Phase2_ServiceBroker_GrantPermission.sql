@@ -10,3 +10,8 @@
 USE bodb_CustomerLog
 GO
 GRANT EXEC ON sb.CustomerLog_SendMessage TO [bodbLicenseeNet]
+GRANT EXEC ON sb.CustomerLog_SendMessage TO [bodbAdminNet]
+GRANT EXEC ON sb.CustomerLog_SendMessage TO [bodbDownlineNet]
+GRANT EXEC ON sb.CustomerLog_SendMessage TO [bodbExtAccNet]
+GRANT EXEC ON sb.CustomerLog_SendMessage TO [Dot_Member]
+
