@@ -40,6 +40,7 @@ AS
 							Add [epositiontaking], [actual_stake] of [bettransG] - [Redmine: #130201]
 		- 20200710@Brice:	Add column [sort] of [bettrans] - [Redmine: #137129]
 		- 20200714@Brice:	Add column [netstake] of [bettransG] - [Redmine: #137591]
+		- 20200923@Brice:	Add column [reasonIDm] of [bettransM] - [Redmine: #141650]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -214,14 +215,14 @@ BEGIN
 			,	checktime, oddsspread, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost
 			,	playerdiscount, discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate
 			,	finalodds, isfinish, statuswinlost, ruben, bettype, spositiontaking, swinlost, sdiscount, scomm
-			,	statusID, transdesc, SecAcceptFlag, SecAcceptTime, LiveBetAcceptTime
+			,	statusID, transdesc, SecAcceptFlag, SecAcceptTime, LiveBetAcceptTime,reasonIDm
 			)
 		SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, [status], winlost, livehomescore
 			,	liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck
 			,	checktime, oddsspread, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost
 			,	playerdiscount, discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate
 			,	finalodds, isfinish, statuswinlost, ruben, bettype, spositiontaking, swinlost, sdiscount, scomm
-			,	statusID, transdesc, SecAcceptFlag, SecAcceptTime, LiveBetAcceptTime
+			,	statusID, transdesc, SecAcceptFlag, SecAcceptTime, LiveBetAcceptTime,reasonIDm
 		FROM	dbo.bettransm AS b WITH (NOLOCK)
 		WHERE	winlostdate = @__winlostdate;
 

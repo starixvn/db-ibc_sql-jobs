@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20190213@Billy:	Initial - [Redmine: #000000]
 		- 20190213@Billy:	Add column [SecAcceptFlag] of [bettransm] - [Redmine: #108780]
+		- 20200923@Brice:	Add column [reasonIDm] of [bettransM] - [Redmine: #141650]
 
 	Developer's Notes:
 		- @Example:			NULL		- Explaination [DEFAULT]
@@ -37,7 +38,7 @@ BEGIN;
 		,	playerdiscount, discount, adiscount, sdiscount, playercomm, comm, acomm, scomm
 		,	liveawayscore, livehomescore, liveindicator, matchdate, isfinish
 		,	oddsspread, refno, ruben, statusID, statuswinlost, winlost
-		,	actualrate, checktime, creator, winlostdate, recommdate, transdesc, SecAcceptFlag
+		,	actualrate, checktime, creator, winlostdate, recommdate, transdesc, SecAcceptFlag, reasonIDm
 	FROM	dbo.bettransm14 WITH (NOLOCK)
 	WHERE	winlostdate <= @max_winlostdate;
 END;
