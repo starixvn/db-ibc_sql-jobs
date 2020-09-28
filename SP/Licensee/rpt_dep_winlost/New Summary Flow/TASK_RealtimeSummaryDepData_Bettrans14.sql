@@ -42,6 +42,7 @@ AS
 		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625]
 		- 20200721@Hogan: Add 7 games for Jackpot and 2 bettype for Contribution (4297) and Jackpot Prize (4298) [RedmineID: #137290]
 		- 20200803@Kos: Support Saba Loyalty [RedmineID: #138493]
+		- 20200918@Hogan: Integrate Joker [RedmineID: #141408]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -275,6 +276,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 				WHEN b.bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 				WHEN b.bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
+				WHEN b.bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 				WHEN b.bettype IN (17000, 17003) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
@@ -337,6 +339,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 				WHEN b.bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 				WHEN b.bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
+				WHEN b.bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 				WHEN b.bettype IN (17000,17003) THEN 246 -- NPHP
 				ELSE 0
 			END--SportType
