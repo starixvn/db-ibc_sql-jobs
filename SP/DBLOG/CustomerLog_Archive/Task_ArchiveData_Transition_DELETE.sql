@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="" viewers="" isFunction="0"></info>*/
 ALTER TRIGGER [dbo].[Task_ArchiveData_Transition_DELETE]
    ON  [dbo].[Task_ArchiveData_Transition]
    AFTER DELETE
@@ -12,6 +13,8 @@ AS
 		- 20190620@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 		- 20200107@Elodie: Add CreateDate column for CN88's log [Redmine: #113198]
 		- 20200303@Elodie: Apply new structure for MBC's log [Redmine: #127446]
+		- 20201002@Helen: Apply new structure for userlog_runsp log [Redmine: #139238]
+		
 */
 BEGIN
 	SET NOCOUNT ON
@@ -25,18 +28,22 @@ BEGIN
 		IF @custid IS NULL
 		BEGIN
 			INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_RunSP([logid], [userid], [spname], [doing]
-				, [logdate], [custid], [ActionID], [TrackingValue], [Duration], [TrackingValue2])
+				, [logdate], [custid], [ActionID], [TrackingValue], [Duration], [TrackingValue2]
+				, [CreatedDate])
 			SELECT [logid], [userid], [spname], [doing], [logdate], [custid], [ActionID], [TrackingValue]
 				, [Duration], [TrackingValue2]
+				, [CreatedDate]
 			FROM dbo.UserLog_RunSP l WITH(NOLOCK)
 			WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.custid IS NULL)
 		END
 		ELSE
 		BEGIN
 			INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_RunSP([logid], [userid], [spname], [doing]
-				, [logdate], [custid], [ActionID], [TrackingValue], [Duration], [TrackingValue2])
+				, [logdate], [custid], [ActionID], [TrackingValue], [Duration], [TrackingValue2]
+				,[CreatedDate])
 			SELECT [logid], [userid], [spname], [doing], [logdate], [custid], [ActionID], [TrackingValue]
 				, [Duration], [TrackingValue2]
+				, [CreatedDate]
 			FROM dbo.UserLog_RunSP l WITH(NOLOCK)
 			WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.custid = deleted.custid)
 		END
