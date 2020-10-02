@@ -1,5 +1,4 @@
 /*<info serverAlias="DBLOG-bodb_CustomerLog" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-
 ALTER PROCEDURE [sb].[QueueOthersDBLOG_ProcessData]
 AS
 /*
@@ -13,6 +12,7 @@ AS
 	Revision:
 		- 20181114@Johnson: create sp [redmine: #105319]
 		- 20190530@Paul: Add [CustomerLog_MsgProcess_CS_UserLog_Credit] [Redmine: #113198]
+		- 20200814@Helen: LAP - Offer commission to 3rd party products - Phase 2 - [Redmine: #139238]   
 */
 BEGIN
 	DECLARE @log xml 
@@ -108,5 +108,17 @@ BEGIN
 														@MsgType = @message_type_name,
 														@IsExistingTarget= @IsExistingTarget
 	END
+	
+	IF @message_type_name = 'MessageType_CustomerLog_UserLog_RunSP'
+	BEGIN
+		SET @log = (SELECT message_body AS 'node()'
+				   FROM @Messages					
+				   FOR XML PATH (''), ROOT ('Root'))
+		
+		EXEC [sb].[CustomerLog_MsgProcess_UserLog_RunSP] @log = @log, 
+														@MsgType = @message_type_name,
+														@IsExistingTarget= @IsExistingTarget
+	END
+	
 END
 GO
