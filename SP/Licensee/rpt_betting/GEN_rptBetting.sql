@@ -35,6 +35,7 @@ AS
 		20191209@Percy: Enhance performance [RedmineID: #125028]
 		20200403@Parsons: Indo 4D Integration [RedmineID: #130910]
 		20200804@Sol: Include vsraceinfo14 [RedmineID: #135963]
+		20201005@Parsons: Saba.club - Offer Freebet tickets [RedmineID: #141423]
 
 	Param's Explanation:
 
@@ -64,7 +65,7 @@ BEGIN
 			(
 				rptDate,SiteID,Bettype,LeagueID,CurrencyID,Status,IsLive,BetCount,MemberCount,Turnover,WinLoss,WinLossA,WinLossM,WinLossS
 				,CommissionP,CommissionA,CommissionM,CommissionS,WinLossVirtual,CommissionSVirtual,CustomerCategory,BuyBackAmount
-				,WinPrizeAmount,CashOutAmount,oddsspread,TicketType,ExtraAmount
+				,WinPrizeAmount,CashOutAmount,oddsspread,TicketType,Sporttype,ExtraAmount
 			)
 			SELECT
 				b.winlostdate				AS rptDate
@@ -101,6 +102,7 @@ BEGIN
 				,SUM(ISNULL(CashOutAmount,0))	AS CashOutAmount
 				,SUM(ISNULL(oddsspread,0))		AS oddsspread
 				,b.TicketType
+				,CASE WHEN m.matchid IN (150, 200) THEN m.matchid ELSE 0 END Sporttype
 				,SUM(CASE
 						WHEN b.bettype = 18000 OR b.bettype BETWEEN 1401 AND 1499 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0))
 						WHEN b.bettype BETWEEN 81 AND 120 OR b.bettype BETWEEN 8101 AND 8120 THEN b.stake * (1 - b.tpositiontaking) -- House Turnover In NG WL
@@ -130,6 +132,7 @@ BEGIN
 				,ISNULL(b.liveindicator, 0)
 				,b.customercategory
 				,b.TicketType
+				,CASE WHEN m.matchid IN (150, 200) THEN m.matchid ELSE 0 END
 		END
 		ELSE
 		BEGIN
@@ -139,7 +142,7 @@ BEGIN
 			(
 				rptDate,SiteID,Bettype,LeagueID,CurrencyID,Status,IsLive,BetCount,MemberCount,Turnover,WinLoss,WinLossA,WinLossM,WinLossS
 				,CommissionP,CommissionA,CommissionM,CommissionS,WinLossVirtual,CommissionSVirtual,CustomerCategory,BuyBackAmount
-				,WinPrizeAmount,CashOutAmount,oddsspread,TicketType,ExtraAmount
+				,WinPrizeAmount,CashOutAmount,oddsspread,TicketType,Sporttype,ExtraAmount
 			)
 			SELECT
 				b.winlostdate				AS rptDate
@@ -176,6 +179,7 @@ BEGIN
 				,SUM(ISNULL(CashOutAmount,0))	AS CashOutAmount
 				,SUM(ISNULL(oddsspread,0))		AS oddsspread
 				,b.TicketType
+				,CASE WHEN m.matchid IN (150, 200) THEN m.matchid ELSE 0 END Sporttype
 				,SUM(CASE
 						WHEN b.bettype = 18000 OR b.bettype BETWEEN 1401 AND 1499 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0))
 						WHEN b.bettype BETWEEN 81 AND 120 OR b.bettype BETWEEN 8101 AND 8120 THEN b.stake * (1 - b.tpositiontaking) -- House Turnover In NG WL
@@ -206,6 +210,7 @@ BEGIN
 				,ISNULL(b.liveindicator, 0)
 				,b.customercategory
 				,b.TicketType
+				,CASE WHEN m.matchid IN (150, 200) THEN m.matchid ELSE 0 END
 		END
 
 		SELECT @tmpDate = DATEADD(DAY, 1, @tmpDate)

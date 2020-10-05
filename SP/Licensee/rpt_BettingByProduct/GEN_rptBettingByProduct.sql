@@ -67,6 +67,7 @@ AS
 		- 20200714@Parsons: Implement PP Jackpot [RedmineID: #137306]
 		- 20200909@Parsons: Implement PG Soft [RedmineID: #138983]
 		- 20200921@Parsons: Implement Joker Games [RedmineID: #141421]
+		- 20201005@Parsons: Saba.club - Offer Freebet tickets [RedmineID: #141423]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -144,6 +145,7 @@ BEGIN
 			,[ValidBetAmount]
 			,[ExtraAmount]
 			,[TicketType]
+			,[Sporttype]
 			)
 		SELECT
 			b.rptDate
@@ -171,6 +173,7 @@ BEGIN
 			,SUM(ISNULL([oddsspread], 0)) [ValidBetAmount]
 			,SUM(ISNULL([ExtraAmount], 0)) [ExtraAmount]
 			,TicketType
+			,Sporttype
 		FROM dbo.rpt_Betting b WITH (NOLOCK)
 			INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
 		WHERE b.rptDate >= @date AND b.rptDate < @date2
@@ -190,6 +193,7 @@ BEGIN
 			,b.Status
 			,ISNULL(b.CustomerCategory,-1)
 			,b.TicketType
+			,b.Sporttype
 		UNION ALL
 		SELECT
 			b.rptDate
@@ -211,6 +215,7 @@ BEGIN
 			,0 ValidBetAmount
 			,SUM(ISNULL(b.ExtraAmount,0)) ExtraAmount
 			,b.TicketType
+			,0 AS Sporttype
 		FROM dbo.rpt_Betting_BA b WITH (NOLOCK)
 			INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype
 		WHERE b.rptDate >= @date AND b.rptDate < @date2
@@ -413,7 +418,8 @@ BEGIN
 			,[WinPrizeAmount]
 			,[CashOutAmount]
 			,[ExtraAmount]
-			,[TicketType])
+			,[TicketType]
+			,[Sporttype])
 		SELECT td.rptDate
 			, ISNULL(site.SiteID,-1) AS SiteId
 			, td.productId
@@ -436,6 +442,7 @@ BEGIN
 			, 0 [CashOutAmount]
 			, 0 AS [ExtraAmount]
 			, 0 AS [TicketType]
+			, 0 AS [Sporttype]
 		FROM #tmpData td WITH (NOLOCK)
 			LEFT JOIN bodb02.dbo.Customer AS c WITH (NOLOCK) ON c.Custid = td.CustID AND c.roleid = 1
 			LEFT JOIN bodb02.dbo.customer AS ag WITH (NOLOCK) ON c.recommend = ag.custid AND ag.roleid = 2
