@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20200717@Sophia: Initial SP [Redmine: #137604]
 		- 20200910@Malcolm: Add @ProductIds (delete all data of sum_winloss_old_tmp before using this parameter) [Redmine: #139575]
+		- 20200918@Malcolm: Add Joker [redmine: #131609]
 */
 
 BEGIN
@@ -67,7 +68,8 @@ BEGIN
 						(47, 241, 0), -- BBIN
 						(46, 242, 0), -- IBCBet Live Casino
 						(50, 224, 0),  -- RNG War
-						(52, 225, 0)  -- ION
+						(52, 225, 0),  -- ION
+						(56, 234, 0)  -- Joker
 				) d(ProductID, SportType, BetType)
 				WHERE ',' + @ProductIds + ',' LIKE '%,' + CAST(ProductID as varchar(3)) + ',%'
 		) f
