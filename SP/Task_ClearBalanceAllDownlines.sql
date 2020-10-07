@@ -222,16 +222,19 @@ BEGIN
 			SELECT 	@CustID = CustID
 			FROM 	#Cust 
 			WHERE 	ID = @ID + @t
-		
-			EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
-				@mode = 1,
-				@custid = @custid,  --- 21
-				@IsTransferring = 1
-				
-			UPDATE  #Cust
-			SET 	IsTransferring = 1
-			WHERE   Custid = @CustID
+			
+			IF @@ROWCOUNT <> 0
+			BEGIN 		
+				EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
+					@mode = 1,
+					@custid = @custid,  --- 21
+					@Status = 'waiting',
+					@IsTransferring = 1
 					
+				UPDATE  #Cust
+				SET 	IsTransferring = 1
+				WHERE   Custid = @CustID
+			END		
 		
 	END
 END
