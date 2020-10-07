@@ -444,7 +444,7 @@ BEGIN
 			WHERE b.productID = @ProductId
 				AND b.statusID IN (0,1)
 				AND b.transdate < DATEADD(MINUTE, -3, GETDATE())
-				AND b.gameID NOT IN (1622, 1631, 1364) --Exclude Keno Pro Viet, Bola Kangtas, Blackjack
+				AND b.gameID NOT IN (1622, 1631, 1634) --Exclude Keno Pro Viet, Bola Kangtas, Blackjack
 							 
 			IF @transId <> ''
 			BEGIN

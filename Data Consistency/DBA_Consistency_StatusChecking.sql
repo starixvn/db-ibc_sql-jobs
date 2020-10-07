@@ -55,7 +55,7 @@ BEGIN
 				AND b.winlostdate = @yesterday
 				AND b.statusID = 0
 				AND b.matchid = @ProductId
-				AND b.bettype NOT IN (1622, 1631, 1364) --Exclude Keno Pro Viet, Bola Kangtas, Blackjack 
+				AND b.bettype NOT IN (1622, 1631, 1634) --Exclude Keno Pro Viet, Bola Kangtas, Blackjack 
 	END
 	ELSE
 	BEGIN
