@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 /*
-	Created: 20200908@July
-	Task: Saba.Club Free Bets - Check Data Consistency - [Redmine:#140425]
+	Created: 20201007@July
+	Task: Saba.club - Data Integrity/Consistency Detection for Free Bets and Blackjack - [Redmine:#140425]
 	DB: DBCONSISTENCY-bodb_Consistency
 
 */
@@ -25,7 +25,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Valid IP'
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2020-09-08' 
+ ,@ActiveStartDate = '2020-10-07' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -50,7 +50,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check all yesterday tickets must b
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2020-09-08' 
+ ,@ActiveStartDate = '2020-10-07' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '01:30'
  ,@ActiveEndTime = NULL
@@ -75,7 +75,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Wrong discount or comm value'
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2020-09-08' 
+ ,@ActiveStartDate = '2020-10-07' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -100,7 +100,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Running ticket with transdate + 3 
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2020-09-08' 
+ ,@ActiveStartDate = '2020-10-07' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -125,7 +125,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Running ticket with transdate + 25
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2020-09-08' 
+ ,@ActiveStartDate = '2020-10-07' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL

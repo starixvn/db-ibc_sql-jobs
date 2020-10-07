@@ -24,7 +24,7 @@ AS
 		- 20200602@Max: Data Consistency for BBIN, Update for Indo 4D - [Redmine: #135239]
 		- 20200624@Max: Update Rule for Saba.Club, Modify Rule check Discount [Redmine: #136362]
 		- 20200722@Max: Update Rule for Saba.Club - Exclude bettype 1631 from Rule '3min', Add new Rule for bettype 1631 - [Redmine: #138117]
-		- 20200908@July:  Saba.Club Free Bets - Check Data Consistency - [Redmine:#140425]
+		- 20201007@July:  Saba.club - Data Integrity/Consistency Detection for Free Bets and Blackjack - [Redmine:#140425]
 
 		Param's Expanation:
 */
@@ -444,7 +444,7 @@ BEGIN
 			WHERE b.productID = @ProductId
 				AND b.statusID IN (0,1)
 				AND b.transdate < DATEADD(MINUTE, -3, GETDATE())
-				AND b.gameID NOT IN (1622, 1631) --Exclude Keno Pro Viet, Bola Kangtas
+				AND b.gameID NOT IN (1622, 1631, 1364) --Exclude Keno Pro Viet, Bola Kangtas, Blackjack
 							 
 			IF @transId <> ''
 			BEGIN
