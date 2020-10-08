@@ -41,6 +41,7 @@ AS
 		- 20200710@Brice:	Add column [sort] of [bettrans] - [Redmine: #137129]
 		- 20200714@Brice:	Add column [netstake] of [bettransG] - [Redmine: #137591]
 		- 20200923@Brice:	Add column [reasonIDm] of [bettransM] - [Redmine: #141650]
+		- 20201008@Brice:	Add column [OriginalOdds] of [bettransInfo] - [Redmine: #140906]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -94,8 +95,8 @@ BEGIN
 
 	-- 20190828@Billy: Add [bettransInfo]
 	INSERT INTO	dbo.BettransInfo14
-		(	transid, SecAcceptTime, LiveBetAcceptTime)
-	SELECT	transid, SecAcceptTime, LiveBetAcceptTime
+		(	transid, SecAcceptTime, LiveBetAcceptTime,OriginalOdds)
+	SELECT	transid, SecAcceptTime, LiveBetAcceptTime,OriginalOdds
 	FROM		dbo.BettransInfo AS bi WITH (NOLOCK)
 	INNER JOIN	@__tmpTransId AS tmp
 			ON	bi.transid = tmp.id;
