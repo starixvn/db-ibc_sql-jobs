@@ -24,7 +24,8 @@ AS
 		- 20200602@Max: Data Consistency for BBIN, Update for Indo 4D - [Redmine: #135239]
 		- 20200624@Max: Update Rule for Saba.Club, Modify Rule check Discount [Redmine: #136362]
 		- 20200722@Max: Update Rule for Saba.Club - Exclude bettype 1631 from Rule '3min', Add new Rule for bettype 1631 - [Redmine: #138117]
-		
+		- 20201007@July:  Saba.club - Data Integrity/Consistency Detection for Free Bets and Blackjack - [Redmine:#140425]
+
 		Param's Expanation:
 */
 BEGIN
@@ -65,11 +66,11 @@ BEGIN
 		,winlostdate		SMALLDATETIME
 		,currency			TINYINT
 		,refno				BIGINT
-		,sdiscount				DECIMAL
-		,adiscount				DECIMAL
-		,discount				DECIMAL
-		,playerdiscount			DECIMAL
-		,actual_stake			MONEY
+		,sdiscount			DECIMAL(9,5)
+		,adiscount			DECIMAL(9,5)
+		,discount			DECIMAL(9,5)
+		,playerdiscount		DECIMAL(9,5)
+		,actual_stake		MONEY
 	)
 
 	CREATE TABLE #tmpBettransG (		
@@ -432,8 +433,8 @@ BEGIN
 		END
 	END
 
-	--Rule #30 for Saba.club
-	IF @ProductId = 200
+	--Rule #30 for Saba.club Free Bets, Saba.club
+	IF @ProductId  IN (150, 200)
 	BEGIN
 		IF @Rule = '3min'
 		BEGIN
@@ -443,7 +444,7 @@ BEGIN
 			WHERE b.productID = @ProductId
 				AND b.statusID IN (0,1)
 				AND b.transdate < DATEADD(MINUTE, -3, GETDATE())
-				AND b.gameID NOT IN (1622, 1631) --Exclude Keno Pro Viet, Bola Kangtas
+				AND b.gameID NOT IN (1622, 1631, 1634) --Exclude Keno Pro Viet, Bola Kangtas, Blackjack
 							 
 			IF @transId <> ''
 			BEGIN
@@ -477,8 +478,8 @@ BEGIN
 		END
 	END
 
-	--Rule #3, #16 for Virtual Games, Table Games, Saba.club
-	IF @ProductId IN (245, 222, 200)
+	--Rule #3, #16 for Virtual Games, Table Games, Saba.club, Saba.club Free Bets
+	IF @ProductId IN (245, 222, 200, 150)
 	BEGIN
 		IF @Rule = 'translog'
 		BEGIN

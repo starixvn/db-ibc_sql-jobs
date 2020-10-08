@@ -17,6 +17,7 @@ AS
 		- 20190715@Kathy: check status ticket for BetBuilder [Redmine:#116529]
 		- 20200624@Max: Update Rule for Saba.Club, Modify Rule check Discount [Redmine: #136362]
 		- 20200722@Max: Update Rule for Saba.Club - Exclude bettype 1631 - [Redmine: #138117]
+		- 20201007@July:  Saba.club - Data Integrity/Consistency Detection for Free Bets and Blackjack - [Redmine:#140425]
 	
 	Param's Expanation:
 */
@@ -46,7 +47,7 @@ BEGIN
 				AND b.statusID = 0
 				AND b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
 	END
-	ELSE IF @ProductId = 200 --Saba.Club
+	ELSE IF @ProductId  IN (150,200) -- 150:Saba.club Free Bets - 200:Saba.Club
 	BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
@@ -54,7 +55,7 @@ BEGIN
 				AND b.winlostdate = @yesterday
 				AND b.statusID = 0
 				AND b.matchid = @ProductId
-				AND b.bettype NOT IN (1622, 1631) --Exclude Keno Pro Viet, Bola Kangtas
+				AND b.bettype NOT IN (1622, 1631, 1634) --Exclude Keno Pro Viet, Bola Kangtas, Blackjack 
 	END
 	ELSE
 	BEGIN
