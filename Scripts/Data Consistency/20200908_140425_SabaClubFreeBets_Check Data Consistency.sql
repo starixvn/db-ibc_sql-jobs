@@ -8,7 +8,7 @@
 USE bodb_Consistency
 GO
 
-DECLARE	@taskId_g4 INT,@taskId_g5 INT,@taskId_s33 INT,@taskId_s37 INT,@taskId_s39 INT
+DECLARE	@taskId_g4 INT,@taskId_g5 INT,@taskId_s33 INT,@taskId_s31 INT,@taskId_s34 INT
 
 DECLARE @ErrCode INT, @ErrMsg VARCHAR(100)
 
@@ -87,14 +87,14 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Wrong discount or comm value'
 
 SELECT 'Wrong discount or comm value' AS RuleChecking, @ErrCode, @ErrMsg
 
--- (*) 37: Running ticket with transdate + 3 minutes > current time
+-- (*) 31: Running ticket with transdate + 3 minutes > current time
 INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (37, N'EXEC dbo.DBA_Consistency_SpecificRulesChecking @ProductId = 150, @Rule = ''3min'',@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
-SET @taskId_s37 = SCOPE_IDENTITY()
+VALUES (31, N'EXEC dbo.DBA_Consistency_SpecificRulesChecking @ProductId = 150, @Rule = ''3min'',@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+SET @taskId_s31 = SCOPE_IDENTITY()
 
 --------- SCHEDULE ---------------
 EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Running ticket with transdate + 3 minutes > current time'
- ,@TaskId = @taskId_s37
+ ,@TaskId = @taskId_s31
  ,@IsEnable  = 1
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
  ,@FrequenceInterval = 1 -- every xx days
@@ -112,14 +112,14 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Running ticket with transdate + 3 
 
 SELECT 'Running ticket with transdate + 3 minutes > current time' AS RuleChecking, @ErrCode, @ErrMsg
 
--- (*) 39: Running ticket with transdate + 25 hours > current time
+-- (*) 34: Running ticket with transdate + 25 hours > current time
 INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (39, N'EXEC dbo.DBA_Consistency_SpecificRulesChecking @ProductId = 150, @Rule = ''25h'',@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
-SET @taskId_s39 = SCOPE_IDENTITY()
+VALUES (34, N'EXEC dbo.DBA_Consistency_SpecificRulesChecking @ProductId = 150, @Rule = ''25h'',@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+SET @taskId_s34 = SCOPE_IDENTITY()
 
 --------- SCHEDULE ---------------
 EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Running ticket with transdate + 25 hours > current time'
- ,@TaskId = @taskId_s39
+ ,@TaskId = @taskId_s34
  ,@IsEnable  = 1
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
  ,@FrequenceInterval = 1 -- every xx days
