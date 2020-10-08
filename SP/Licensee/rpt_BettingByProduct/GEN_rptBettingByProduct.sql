@@ -68,6 +68,7 @@ AS
 		- 20200909@Parsons: Implement PG Soft [RedmineID: #138983]
 		- 20200921@Parsons: Implement Joker Games [RedmineID: #141421]
 		- 20201009@Parsons: Integrate SA Gaming [#143272]
+		- 20201008@Parsons: Integrate WM Live Casino [#141357]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -114,7 +115,7 @@ BEGIN
 
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG,WM') -- Remove Exchange (BX) due to separate wallet only
 		WHERE @ProductCodes = ''
 			OR ProductID IN (SELECT ProductID FROM @ProductIdList)
 
