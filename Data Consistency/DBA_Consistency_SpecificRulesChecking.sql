@@ -66,11 +66,11 @@ BEGIN
 		,winlostdate		SMALLDATETIME
 		,currency			TINYINT
 		,refno				BIGINT
-		,sdiscount				DECIMAL
-		,adiscount				DECIMAL
-		,discount				DECIMAL
-		,playerdiscount			DECIMAL
-		,actual_stake			MONEY
+		,sdiscount			DECIMAL(9,5)
+		,adiscount			DECIMAL(9,5)
+		,discount			DECIMAL(9,5)
+		,playerdiscount		DECIMAL(9,5)
+		,actual_stake		MONEY
 	)
 
 	CREATE TABLE #tmpBettransG (		
