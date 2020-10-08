@@ -17,6 +17,7 @@ AS
 	- 20200525@Sophia: Prioritize clear active account first [Redmine: #134653]
 	- 20200730@Sophia: prevent duplicated transfer [Redmine: #137141]
 	- 20200730@Sophia: Check UM Transfer Function [Redmine: #136992]
+	- 20201007@Sophia: Hot fix - account keep waiting [Redmine: #143099]
 */
 BEGIN
 
@@ -104,134 +105,136 @@ BEGIN
 			UPDATE  #Cust
 			SET 	Status = 'failed',
 					IsTransferring = 0
-			WHERE   Custid = @CustID
+			WHERE   Custid = @CustID			
 			
-			CONTINUE
 		END
-		
-		SELECT @ErrCode = 0, @ErrMsg = ''
-		
-		IF @TransferType = 1-- Clear All balance of members
+		ELSE
 		BEGIN
-			EXEC Acc_BettransInsTransferAllMembers @AgentName =@Username
-				,@UserID = 862400 -- starix2
-				,@IsJob = 1
-				,@ErrMsg = @ErrMsg OUTPUT 
-				,@ErrCode = @ErrCode OUTPUT
-			
-			SET @finishedtime = GETDATE()
-			
-			IF @ErrCode <> 0
-			BEGIN
-				SET @msg = LEFT(@ErrMsg, 1000)						
-				EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
-				    @custid = @custid,
-				    @Status = 'failed',
-				    @LastTransfer = @finishedtime,
-				    @msg = @msg, -- just in case more than 1000 characters	
-					@IsTransferring = 0
-					
-				UPDATE  #Cust
-				SET 	Status = 'failed',
-						LastTransfer = @finishedtime,
-						IsTransferring = 0
-				WHERE   Custid = @CustID
-				
-				CONTINUE
-			END
-			ELSE  --- successful
-			BEGIN				
-				EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 				   
-				    @custid = @custid,
-				    @Status = 'completed',
-				    @LastTransfer = @finishedtime,
-					@IsTransferring = 0					
-					
-				UPDATE  #Cust
-				SET 	Status = 'completed',
-						LastTransfer = @finishedtime,
-						IsTransferring = 0
-				WHERE   Custid = @CustID
-			END	
-				
-		END
-		ELSE IF @TransferType = 2
-		BEGIN
-			EXEC [dbo].[Acc_ClearBalanceAllDownlines] @AgentName =@Username
-				,@UserID = 862400 -- starix2
-				,@IsJob = 1
-				,@ErrMsg = @ErrMsg OUTPUT 
-				,@ErrCode = @ErrCode OUTPUT
-				
-			SET @finishedtime = GETDATE()
-			IF @ErrCode = 1 -- server is busy, rollback lasttransfer value, wait 5 seconds and continue
-			BEGIN
-			
-				EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
-				    @custid = @custid,
-				    @Status = 'waiting',
-				    @LastTransfer = @OLD_lasttransfer		
-					
-				UPDATE  #Cust
-				SET 	Status = 'waiting',
-						LastTransfer = @OLD_lasttransfer						
-				WHERE   Custid = @CustID
-				
-				WAITFOR DELAY '00:00:05'
-				CONTINUE
-			END
-			ELSE IF @ErrCode <> 0
-			BEGIN
-				SET @msg = LEFT(@ErrMsg, 1000)				
-				
-				EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
-				    @custid = @custid,
-				    @Status = 'failed',
-				    @LastTransfer = @finishedtime,
-				    @msg = @msg, -- just in case more than 1000 characters
-					@IsTransferring = 0
-
-				UPDATE  #Cust
-				SET 	Status = 'failed',
-						LastTransfer = @finishedtime,
-						IsTransferring = 0
-				WHERE   Custid = @CustID
-				    						
-				CONTINUE
-			END
-			ELSE  --- successful
-			BEGIN				 
-				
-				EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
-				    @custid = @custid,
-				    @Status = 'completed',
-				    @LastTransfer = @finishedtime,
-					@IsTransferring = 0
-
-				UPDATE  #Cust
-				SET 	Status = 'completed',
-						LastTransfer = @finishedtime,
-						IsTransferring = 0
-				WHERE   Custid = @CustID
-				    
-			END
-		END
 		
-		------ Mark flag IsTransferring = 1 fo the next CustID
+			SELECT @ErrCode = 0, @ErrMsg = ''
+			
+			IF @TransferType = 1-- Clear All balance of members
+			BEGIN
+				EXEC Acc_BettransInsTransferAllMembers @AgentName =@Username
+					,@UserID = 862400 -- starix2
+					,@IsJob = 1
+					,@ErrMsg = @ErrMsg OUTPUT 
+					,@ErrCode = @ErrCode OUTPUT
+				
+				SET @finishedtime = GETDATE()
+				
+				IF @ErrCode <> 0
+				BEGIN
+					SET @msg = LEFT(@ErrMsg, 1000)						
+					EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
+						@custid = @custid,
+						@Status = 'failed',
+						@LastTransfer = @finishedtime,
+						@msg = @msg, -- just in case more than 1000 characters	
+						@IsTransferring = 0
+						
+					UPDATE  #Cust
+					SET 	Status = 'failed',
+							LastTransfer = @finishedtime,
+							IsTransferring = 0
+					WHERE   Custid = @CustID				
+					
+				END
+				ELSE  --- successful
+				BEGIN				
+					EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 				   
+						@custid = @custid,
+						@Status = 'completed',
+						@LastTransfer = @finishedtime,
+						@IsTransferring = 0					
+						
+					UPDATE  #Cust
+					SET 	Status = 'completed',
+							LastTransfer = @finishedtime,
+							IsTransferring = 0
+					WHERE   Custid = @CustID
+				END	
+					
+			END
+			ELSE IF @TransferType = 2
+			BEGIN
+				EXEC [dbo].[Acc_ClearBalanceAllDownlines] @AgentName =@Username
+					,@UserID = 862400 -- starix2
+					,@IsJob = 1
+					,@ErrMsg = @ErrMsg OUTPUT 
+					,@ErrCode = @ErrCode OUTPUT
+					
+				SET @finishedtime = GETDATE()
+				IF @ErrCode = 1 -- server is busy, rollback lasttransfer value, wait 5 seconds and continue
+				BEGIN
+				
+					EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
+						@custid = @custid,
+						@Status = 'waiting',
+						@LastTransfer = @OLD_lasttransfer		
+						
+					UPDATE  #Cust
+					SET 	Status = 'waiting',
+							LastTransfer = @OLD_lasttransfer						
+					WHERE   Custid = @CustID
+					
+					WAITFOR DELAY '00:00:05'
+					CONTINUE
+				END
+				ELSE IF @ErrCode <> 0
+				BEGIN
+					SET @msg = LEFT(@ErrMsg, 1000)				
+					
+					EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
+						@custid = @custid,
+						@Status = 'failed',
+						@LastTransfer = @finishedtime,
+						@msg = @msg, -- just in case more than 1000 characters
+						@IsTransferring = 0
+
+					UPDATE  #Cust
+					SET 	Status = 'failed',
+							LastTransfer = @finishedtime,
+							IsTransferring = 0
+					WHERE   Custid = @CustID				    						
+					
+				END
+				ELSE  --- successful
+				BEGIN				 
+					
+					EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
+						@custid = @custid,
+						@Status = 'completed',
+						@LastTransfer = @finishedtime,
+						@IsTransferring = 0
+
+					UPDATE  #Cust
+					SET 	Status = 'completed',
+							LastTransfer = @finishedtime,
+							IsTransferring = 0
+					WHERE   Custid = @CustID
+						
+				END
+			END
+		END
+		------ Mark flag IsTransferring = 1 for the next CustID
 		
 			SELECT 	@CustID = CustID
 			FROM 	#Cust 
 			WHERE 	ID = @ID + @t
-		
-			EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
-				@mode = 1,
-				@custid = @custid,  --- 21
-				@IsTransferring = 1
-				
-			UPDATE  #Cust
-			SET 	IsTransferring = 1
-			WHERE   Custid = @CustID
+			
+			IF @@ROWCOUNT <> 0
+			BEGIN 		
+				EXEC DBCUST.custDB.dbo.Task_UpdClearBalanceList 
+					@mode = 1,
+					@custid = @custid,  --- 21
+					@Status = 'waiting',
+					@IsTransferring = 1
 					
+				UPDATE  #Cust
+				SET 	IsTransferring = 1
+				WHERE   Custid = @CustID
+			END		
 		
 	END
 END
