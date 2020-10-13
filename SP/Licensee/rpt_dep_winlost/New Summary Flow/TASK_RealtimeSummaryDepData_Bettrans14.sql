@@ -46,6 +46,7 @@ AS
 		- 20201013@Hogan: Integrate SA Gaming [RedmineID: #128493]
 		- 20201020@Hogan: Integrate Arcadia Gaming Bonus [RedmineID: #143648]
 		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
+		- 20201022@Louis: Licensee Spread Setting [RedmineID: #142532]	
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -191,6 +192,7 @@ BEGIN
 		WHERE b.winlostdate = @Winlostdate
 			AND b.matchid = 0
 			AND c.roleid = 1
+			AND b.bettype <> 999 --Licensee Spread Setting
 		GROUP BY b.custid, b.bettype
 		OPTION (RECOMPILE, MAXDOP 8)
 
@@ -306,6 +308,7 @@ BEGIN
 		*/	
 		WHERE b.winlostdate = @Winlostdate
 			AND b.bettype < 19999
+			AND b.bettype <> 999
 		GROUP BY
 			b.custid,
 			CASE

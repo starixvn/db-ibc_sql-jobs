@@ -27,6 +27,7 @@ AS
 		- 20200228@Vickie: Integrate 3 new betfrom [Redmine: #129253]
 		- 20200508@Vickie: Add new bet types for E-Sports 2.0 [RedmineID: #132548]
 		- 20200622@Hogan: Integrate 3 new betfrom 4, 5, 6 [Redmine: #136107]
+		- 20201001@Louis: Licensee Spread Setting [RedmineID: #142532]	
 	
 	EXEC Task_DailyRptLicWinlossGMT_Bettrans '2017-11-30'
 */
@@ -115,8 +116,11 @@ BEGIN
 				,1
 				,c.recommend
 				,c.mrecommend
-				,c.srecommend 
-				,0 AS Bettype
+				,c.srecommend
+				,CASE 
+					WHEN b.betType = 999 THEN b.betType			--Licensee Spread Setting
+					ELSE 0 
+				END BetType
 				,0 AS Sporttype
 				,0 AS ProductId
 				,SUM(ABS(b.stake)) AS TurnOver
@@ -197,7 +201,11 @@ BEGIN
 				,CASE
 					WHEN b.betfrom IN ('s','m','l','r','o','c','2','5') THEN 1 ELSE 0 END  
 				,CASE
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6') THEN b.betfrom ELSE '' END
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6') THEN b.betfrom ELSE '' END,
+				CASE 
+					WHEN b.betType = 999 THEN b.betType			--Licensee Spread Setting
+					ELSE 0 
+				END 
 
 			-- Agent Level (sum on member)
 			INSERT INTO dbo.rptLicWinlossGMT (

@@ -28,10 +28,16 @@ AS
 		- 20190311@Parsons: Implement BetBuilder [Redmine: #108995]
 		- 20190625@Percy: Change 'DB053' To 'DB052' for step switch to DB052 [Redmine: #103658]
 		- 20191010@Percy: Remove table LicenseeBATransaction [RedmineID: #103656]
+		- 20201001@Louis: Licensee Spread Setting [RedmineID: #142532]	
 */  
 BEGIN
 	SET NOCOUNT ON   
   
+	DECLARE @ExcludedBetType TABLE (ProductId TINYINT, BetType INT)
+	-- Insert Excluded BetType
+	INSERT INTO @ExcludedBetType (ProductId, BetType)
+	SELECT ProductId, BetType FROM Lrf_f_SelExcludedBetType()
+
 	DECLARE @temptrans AS TABLE (transid BIGINT, transdate DATETIME, custid INT, recommend INT, srecommend INT)  
     
 	DECLARE @smallID BIGINT, @maxtransID BIGINT, @currentDate DATETIME    
@@ -56,6 +62,7 @@ BEGIN
 		AND tpositiontaking = 0
 		AND (bettype < 901 OR bettype > 904)
 		AND (bettype < 911 OR bettype > 914)
+		AND NOT EXISTS (SELECT 1 FROM @ExcludedBetType e WHERE e.ProductId = 0 AND e.BetType = betType)  --Exclude: Licensee Spread Setting
   
 	IF @@ROWCOUNT <> 0
 	BEGIN  
