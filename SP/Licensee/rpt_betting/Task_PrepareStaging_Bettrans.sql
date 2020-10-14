@@ -121,9 +121,9 @@ BEGIN
 					,b.refno,b.oddsspread
 					,CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) ELSE b.ExtraInfo END -- poker games: gem & insurance
 					,b.betdaqid
-					,CASE WHEN m.matchid = 150 THEN 2
-						  WHEN m.matchid = 200 THEN 0 
-						  ELSE ISNULL(b.currency2, 0) 
+					,CASE WHEN m.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+						  WHEN m.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+						  ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 					 END AS TicketType
 					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
 				FROM @__matchIdsByBatch m
@@ -169,9 +169,9 @@ BEGIN
 					,b.refno,b.oddsspread
 					,CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) ELSE b.ExtraInfo END -- poker games: gem & insurance
 					,b.betdaqid
-					,CASE WHEN m.matchid = 150 THEN 2
-						  WHEN m.matchid = 200 THEN 0 
-						  ELSE ISNULL(b.currency2, 0) 
+					,CASE WHEN m.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+						  WHEN m.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+						  ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 					 END AS TicketType
 					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
 				FROM @__matchIdsByBatch m
@@ -256,9 +256,9 @@ BEGIN
 				,b.refno,b.oddsspread
 				,CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) WHEN b.bettype = 18000 THEN c.transdesc ELSE b.ExtraInfo END -- poker games: gem & insurance
 				,b.betdaqid
-				,CASE WHEN b.matchid = 150 THEN 2
-					  WHEN b.matchid = 200 THEN 0 
-					  ELSE ISNULL(b.currency2, 0) 
+				,CASE WHEN b.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+					  WHEN b.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+					  ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 				 END AS TicketType
 				,CASE WHEN b.bettype = 911 THEN b.actual_stake ELSE c.CashOutAmount END AS CashOutAmount
 				,c.CashInAmount,c.WinPrizeAmount
@@ -297,9 +297,9 @@ BEGIN
 				,b.refno,b.oddsspread
 				,CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) WHEN b.bettype = 18000 THEN c.transdesc ELSE b.ExtraInfo END -- poker games: gem & insurance
 				,b.betdaqid
-				,CASE WHEN b.matchid = 150 THEN 2
-					  WHEN b.matchid = 200 THEN 0 
-					  ELSE ISNULL(b.currency2, 0) 
+				,CASE WHEN b.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+					  WHEN b.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+					  ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 				 END AS TicketType
 				,CASE WHEN b.bettype = 911 THEN b.actual_stake ELSE c.CashOutAmount END AS CashOutAmount
 				,c.CashInAmount,c.WinPrizeAmount
