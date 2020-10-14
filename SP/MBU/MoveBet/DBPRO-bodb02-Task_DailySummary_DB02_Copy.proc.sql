@@ -50,6 +50,7 @@ AS
 		-- 20200729@Brice:		Add table ProviderExternalResultDetailES [Redmine: #138380]
 		-- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		-- 20200909@Brice:		Add column color for table bingoBall [Redmine: #128414]
+		-- 20201009@Brice:		Add columns GapOddsCap1,GapOddsCap2 for table odds [Redmine: #143211]
 */
 
 BEGIN
@@ -98,7 +99,7 @@ SET NOCOUNT ON
 			 [bal02], [bal30], [bal31], [bal32], [bal33], [bal23], [bal13], [bal03], 
 			 [bal40], [bal41], [bal42], [bal43], [bal44], [bal34], [bal24], [bal14],
 			 [bal04], [bal50], [bal05], [maxbet], [multiple], [allowance], [risk2], 
-			 [stakerange2], [allowance2], [hometotal], [awaytotal], sporttype, Resourceid, ResultKey,
+			 [stakerange2], [allowance2], [hometotal], [awaytotal], sporttype, Resourceid, ResultKey,GapOddsCap1,GapOddsCap2,
 			 [cs99],[bal99])
 		select
 			[oddsid], [matchid], [bettype], [switch], [hdp1], [hdp2],
@@ -118,7 +119,7 @@ SET NOCOUNT ON
 			[bal02], [bal30], [bal31], [bal32], [bal33], [bal23], [bal13], [bal03], 
 			[bal40], [bal41], [bal42], [bal43], [bal44], [bal34], [bal24], [bal14],
 			[bal04], [bal50], [bal05], [maxbet], [multiple], [allowance], [risk2], 
-			[stakerange2], [allowance2], [hometotal], [awaytotal], sporttype, Resourceid, ResultKey,
+			[stakerange2], [allowance2], [hometotal], [awaytotal], sporttype, Resourceid, ResultKey,GapOddsCap1,GapOddsCap2,
 			[cs99],[bal99]
 		from odds o with(nolock)
 		where o.oddsid in (select id from #__tempData)
