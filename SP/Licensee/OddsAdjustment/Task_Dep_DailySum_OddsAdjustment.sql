@@ -83,7 +83,7 @@ BEGIN
 	   ,999 AS bettype
 	   ,0 hdp1
 	   ,0 hdp2
-	   ,'h' betteam
+	   ,NULL betteam
 	   ,0 betid -- ask?
 	   ,0 odds
 	   ,0 stake
@@ -116,7 +116,7 @@ BEGIN
 	   ,t.CurrencyName CurrencyName
 	   ,1 oddstype --ask , -- decimal odd only -> ask
 	   ,111 statusID -- gdoc = 0 -> ask
-	   ,NULL comstatus -- null or 0 ---ask
+	   ,0 comstatus -- null or 0 ---ask
 	   ,0 oddsspread
 	   ,-1 betdaqid 
 	   ,0 liveindicator
@@ -125,18 +125,18 @@ BEGIN
 	   ,0 SecAcceptFlag
 	   ,GETDATE() checktime  -- ask 
 	   ,t.ActualRate --ask 'value in table exchange' actualrate -- ask about this bc the job runs for yesterday
-	   ,8 AS creator -- ask
+	   ,t.MemberId AS creator -- ask
 	   ,'d' betfrom -- ask d:deposit
-	   ,NULL betcheck -- ask
+	   ,'' betcheck -- ask
 	   ,1 ruben
 	   ,NULL statuswinlost --ask
 	   ,0 modds
 	   ,'' ip -- ask '' or ...
-	   ,NULL transdesc -- ask 
+	   ,'Odds Spread Adjustment' transdesc -- ask 
 	   ,t.ActualRate virtualrate -- -- ask about this bc the job runs for yesterday 
 	   ,NULL currency2
-	   ,NULL balance 
-	   ,NULL transid2 
+	   ,0 balance 
+	   ,0 transid2 
 	   ,NULL RecommDate
 	   ,SUM(b.awinlost) AS AdjAgentNetAmount
 	   ,SUM(f.oriAgentWinlost) AS OriAgentNetAmount
