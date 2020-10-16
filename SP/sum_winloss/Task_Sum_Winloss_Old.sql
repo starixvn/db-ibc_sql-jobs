@@ -14,6 +14,7 @@ AS
 		- 20200717@Sophia: Initial SP [Redmine: #137604]
 		- 20200910@Malcolm: Add @ProductIds (delete all data of sum_winloss_old_tmp before using this parameter) [Redmine: #139575]
 		- 20200918@Malcolm: Add Joker [redmine: #131609]
+		- 20200915@Malcolm: Add WM Live Casino [redmine: #131584]
 */
 
 BEGIN
@@ -69,7 +70,8 @@ BEGIN
 						(46, 242, 0), -- IBCBet Live Casino
 						(50, 224, 0),  -- RNG War
 						(52, 225, 0),  -- ION
-						(56, 234, 0)  -- Joker
+						(56, 234, 0),  -- Joker
+						(51, 233, 0)  -- WM
 				) d(ProductID, SportType, BetType)
 				WHERE ',' + @ProductIds + ',' LIKE '%,' + CAST(ProductID as varchar(3)) + ',%'
 		) f
@@ -243,7 +245,7 @@ BEGIN
 			,SUM(CASE
 					WHEN bt.ProductId = 1 AND b.statusID IN (112, 113) AND b.modds IN (-0.25, 0.25) THEN ABS(b.stake) / 2 -- SportsBook
 					WHEN bt.ProductId = 1 AND b.statusID = 111 THEN 0 -- SportsBook
-					WHEN bt.ProductID IN (21, 39, 45, 46, 47, 52)  THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, ION
+					WHEN bt.ProductID IN (21, 39, 45, 46, 47, 51, 52)  THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, WM,ION
 					ELSE ABS(b.stake) END) AS TurnoverNoDraw
 			,-1 * SUM(ISNULL(b.ExtraWinloss, 0)) AS ExtraWinloss
 			,-1 * SUM(ISNULL(b.ExtraComm, 0)) AS ExtraComm
