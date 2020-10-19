@@ -16,6 +16,7 @@ AS
 		- 20190906@Lukas: Initialize SP [RedmineID: #115377]
 		- 20191210@Bobby: Integrate Saba Promotion  [RedmineID: #115377]
 			+ Added step 6.94: DBLIC.bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14
+		- 20201019@Sol: LAP - Licensee Spread Setting - Added new step 1.2 - Calculate original licensee winlost - [RedmineID: #142532]
 */
 BEGIN
 	DECLARE @errorCode INT,
@@ -26,9 +27,15 @@ BEGIN
 	--select @winlostdate, @custIDs
 	IF @stepNo = 1
 	BEGIN
+		SET @errmsg = 'step 1.1'
 		EXEC bodb02.dbo.Task_sum_winloss_14
 				@WinlostDate = @WinlostDate,
 				@CustIds = @CustIds 
+
+		SET @errmsg = 'step 1.2'
+		EXEC bodb02.dbo.Task_Dep_DailySum_OddsAdjustment_14
+				@WinlostDate = @winlostdate,
+				@CustIds = @custIDs
 	END
 	IF @stepNo = 2
 	BEGIN
