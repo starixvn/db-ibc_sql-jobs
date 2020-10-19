@@ -74,6 +74,12 @@ BEGIN
 
 	SELECT * FROM @tblDummyMember
 
+	IF NOT EXISTS (SELECT TOP 1 1 FROM @tblDummyMember)
+	BEGIN
+		--- do nothing
+		RETURN
+	END
+
 	--- generate new trans for summary data
 	SELECT
 		--new tranid for member dummy
