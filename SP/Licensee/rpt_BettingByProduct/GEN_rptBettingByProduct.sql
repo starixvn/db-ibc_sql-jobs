@@ -69,6 +69,7 @@ AS
 		- 20200921@Parsons: Implement Joker Games [RedmineID: #141421]
 		- 20201009@Parsons: Integrate SA Gaming [#143272]
 		- 20201021@Parsons: Integrate WM Live Casino [#141357]
+		- 20201019@Parsons: Arcadia Gaming - Add Bonus feature [RedmineID: #143597]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -153,7 +154,7 @@ BEGIN
 			,bt.ProductID
 			,CASE
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298), SAG_Tips
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298), SAG_Tips, CC-Bonus(1906)
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1
@@ -183,7 +184,7 @@ BEGIN
 			,bt.ProductID
 			,CASE 
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298), SAG_Tips
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298), SAG_Tips, CC-Bonus(1906)
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1
