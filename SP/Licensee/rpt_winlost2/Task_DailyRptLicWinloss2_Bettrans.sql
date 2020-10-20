@@ -56,6 +56,7 @@ AS
 		- 20200721@Hogan: Add 7 games for Jackpot and 2 bettype for Contribution (4297) and Jackpot Prize (4298) [RedmineID: #137290]
 		- 20200803@Kos: Support Saba Loyalty [RedmineID: #138493]
 		- 20200918@Hogan: Integrate Joker [RedmineID: #141408]
+		- 20201013@Hogan: Integrate SA Gaming [RedmineID: #128493]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -116,9 +117,9 @@ BEGIN
 		,SUM(winlost - actual_stake) AS winlost
 		,CASE
 			WHEN bettrans.statusID IN (112, 113) THEN SUM(CASE
-															WHEN bettrans.bettype IN (4300, 4299, 4298, 4297) THEN 0
+															WHEN bettrans.bettype IN (4300, 4299, 4298, 4297, 3007) THEN 0
 															ELSE ABS(winlost - actual_stake)
-														END) -- exclude Promotion Prize from BetEffective
+														END) -- exclude Promotion Prize, Tip ticket from BetEffective
 			ELSE 0
 		END AS BetEffective
 		,SUM(awinlost) awinlost
@@ -164,12 +165,13 @@ BEGIN
 			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
+			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
 			WHEN bettype IN (17000, 17003) THEN 246 -- NPHP
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 4299, 4298, 4297) THEN bettype
+			WHEN bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 4299, 4298, 4297, 3007) THEN bettype
 			ELSE 0
 		END bettype
 		 --114: half win, 115: half lose
@@ -257,11 +259,12 @@ BEGIN
 			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
 			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
+			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
 			WHEN bettype IN (17000, 17003) THEN 246 -- NPHP
 			ELSE 0
 		END
 		,CASE
-			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,17003,4299,4298,4297) THEN bettype
+			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,17003,4299,4298,4297,3007) THEN bettype
 			ELSE 0
 		END
 		,CASE
