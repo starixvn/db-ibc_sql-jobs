@@ -17,6 +17,7 @@ AS
 	    - 20200508@Parsons: Integrate Sexy Gaming for deposit licensees [RedmineID: #132665]
 	    - 20200615@Parsons: SA gaming report (GMT+8) [#134452]
 		- 20200714@Parsons: Implement PP Jackpot [RedmineID: #137306]
+		- 20201021@Parsons: Integrate WM Live Casino [#141357]
 */
 
 BEGIN
@@ -123,6 +124,7 @@ BEGIN
 					b.gameID BETWEEN 2401 AND 2499 -- AllBet
 				OR  b.gameID BETWEEN 3101 AND 3199 -- SXG
 				OR  b.gameID BETWEEN 3001 AND 3099 -- SAG
+				OR  b.gameID BETWEEN 3401 AND 3499 -- WM
 				)
 		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
 			b.currency, b.statusID	

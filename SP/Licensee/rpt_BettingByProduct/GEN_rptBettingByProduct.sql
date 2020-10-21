@@ -68,7 +68,7 @@ AS
 		- 20200909@Parsons: Implement PG Soft [RedmineID: #138983]
 		- 20200921@Parsons: Implement Joker Games [RedmineID: #141421]
 		- 20201009@Parsons: Integrate SA Gaming [#143272]
-		- 20201008@Parsons: Integrate WM Live Casino [#141357]
+		- 20201021@Parsons: Integrate WM Live Casino [#141357]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
