@@ -228,8 +228,11 @@ BEGIN
 						WHEN b.recommend THEN 2
 						ELSE 1 END -- include member & headline
 	FROM #rptOpenningBalanceTable t
-		INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON t.custid = b.custid
-	WHERE b.winlostdate = @CurrentBU_Date AND b.bettype = 20000;
+		CROSS APPLY (
+				SELECT TOP 1 b.custid, b.recommend, b.mrecommend, b.srecommend
+				FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+				WHERE t.custid = b.custid
+			) b;
 
 	WITH CTE_Balance (custid, OpeningBalance, OpeningTotalBalance) AS
 	(
