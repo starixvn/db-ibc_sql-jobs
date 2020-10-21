@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20191205@Percy: Split code from Task_PrepareStaging and Enhance performance [RedmineID: #125028]
 		- 20200102@Percy: Wrong update BA tickets [RedmineID: #126419]
+		- 20201005@Parsons: Saba.club - Offer Free Bets tickets [RedmineID: #141423]
 */
 
 BEGIN
@@ -119,7 +120,11 @@ BEGIN
 					,CASE	WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1 ELSE 0 END AS isBA
 					,b.refno,b.oddsspread
 					,CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) ELSE b.ExtraInfo END -- poker games: gem & insurance
-					,b.betdaqid,ISNULL(b.currency2, 0) AS TicketType
+					,b.betdaqid
+					,CASE WHEN m.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+						  WHEN m.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+						  ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
+					 END AS TicketType
 					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
 				FROM @__matchIdsByBatch m
 					CROSS APPLY (
@@ -163,7 +168,11 @@ BEGIN
 					,CASE	WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1 ELSE 0 END AS isBA
 					,b.refno,b.oddsspread
 					,CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) ELSE b.ExtraInfo END -- poker games: gem & insurance
-					,b.betdaqid,ISNULL(b.currency2, 0) AS TicketType
+					,b.betdaqid
+					,CASE WHEN m.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+						  WHEN m.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+						  ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
+					 END AS TicketType
 					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
 				FROM @__matchIdsByBatch m
 					CROSS APPLY (
@@ -246,7 +255,11 @@ BEGIN
 				,CASE	WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1 ELSE 0 END AS isBA
 				,b.refno,b.oddsspread
 				,CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) WHEN b.bettype = 18000 THEN c.transdesc ELSE b.ExtraInfo END -- poker games: gem & insurance
-				,b.betdaqid,ISNULL(b.currency2, 0) AS TicketType
+				,b.betdaqid
+				,CASE WHEN b.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+					  WHEN b.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+					  ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
+				 END AS TicketType
 				,CASE WHEN b.bettype = 911 THEN b.actual_stake ELSE c.CashOutAmount END AS CashOutAmount
 				,c.CashInAmount,c.WinPrizeAmount
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
@@ -283,7 +296,11 @@ BEGIN
 				,CASE	WHEN b.transid2 = 1 AND b.bettype NOT IN (901, 911) AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1 ELSE 0 END AS isBA
 				,b.refno,b.oddsspread
 				,CASE WHEN b.bettype BETWEEN 1401 AND 1499 THEN CAST(b.transid2 AS VARCHAR(50)) WHEN b.bettype = 18000 THEN c.transdesc ELSE b.ExtraInfo END -- poker games: gem & insurance
-				,b.betdaqid,ISNULL(b.currency2, 0) AS TicketType
+				,b.betdaqid
+				,CASE WHEN b.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+					  WHEN b.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+					  ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
+				 END AS TicketType
 				,CASE WHEN b.bettype = 911 THEN b.actual_stake ELSE c.CashOutAmount END AS CashOutAmount
 				,c.CashInAmount,c.WinPrizeAmount
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)

@@ -67,6 +67,7 @@ AS
 		- 20200714@Parsons: Implement PP Jackpot [RedmineID: #137306]
 		- 20200909@Parsons: Implement PG Soft [RedmineID: #138983]
 		- 20200921@Parsons: Implement Joker Games [RedmineID: #141421]
+		- 20201009@Parsons: Integrate SA Gaming [#143272]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -113,7 +114,7 @@ BEGIN
 
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG') -- Remove Exchange (BX) due to separate wallet only
 		WHERE @ProductCodes = ''
 			OR ProductID IN (SELECT ProductID FROM @ProductIdList)
 
@@ -151,7 +152,7 @@ BEGIN
 			,bt.ProductID
 			,CASE
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298), SAG_Tips
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1
@@ -181,7 +182,7 @@ BEGIN
 			,bt.ProductID
 			,CASE 
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298), SAG_Tips
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1
