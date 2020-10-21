@@ -215,8 +215,8 @@ BEGIN
 		
 		IF @_Winlostdate BETWEEN @CurrentBU_Date AND @_Saturday -- Friday & Saturday
 		BEGIN			
-			INSERT #rptOpenningBalanceTable (custid, balance)
-			SELECT custid, balance
+			INSERT INTO #rptOpenningBalanceTable (custid, roleid, recommend, mrecommend, srecommend, balance)
+			SELECT tmp.custid, CASE WHEN c.roleid = 0 THEN 1 ELSE c.roleid END AS roleid, c.recommend, c.mrecommend, c.srecommend, tmp.balance
 			FROM (
 				SELECT rpt.custid
 					, CASE WHEN rpt.winlostdate < @_Winlostdate THEN rpt.ClosingBalance ELSE rpt.OpeningBalance END AS balance
@@ -224,35 +224,37 @@ BEGIN
 				FROM dbo.rptStatement rpt WITH(NOLOCK)
 				WHERE rpt.winlostdate >= @CurrentBU_Date AND rpt.winlostdate <= @_Saturday
 			) AS tmp 
+				LEFT JOIN bodb02.dbo.custInfo c WITH (NOLOCK) ON tmp.custid = c.custid
 			WHERE tmp.Num = 1
 		END
 		-- The last Saturday in rptStatement
 		ELSE
 		BEGIN
-			INSERT #rptOpenningBalanceTable (custid, balance)
-			SELECT custid, balance
+			INSERT INTO #rptOpenningBalanceTable (custid, roleid, recommend, mrecommend, srecommend, balance)
+			SELECT tmp.custid, CASE WHEN c.roleid = 0 THEN 1 ELSE c.roleid END AS roleid, c.recommend, c.mrecommend, c.srecommend, tmp.balance
 			FROM (
 				SELECT rpt.custid, rpt.ClosingBalance AS balance
 					, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) AS Num
 				FROM dbo.rptStatement rpt WITH(NOLOCK)
 				WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
-			) AS tmp 
+			) AS tmp
+				LEFT JOIN bodb02.dbo.custInfo c WITH (NOLOCK) ON tmp.custid = c.custid
 			WHERE tmp.Num = 1
 		END
 
-		UPDATE t
-		SET t.recommend = b.recommend, t.mrecommend = b.mrecommend, t.srecommend = b.srecommend
+		IF EXISTS (SELECT 1 FROM #rptOpenningBalanceTable WHERE recommend IS NULL)
+			UPDATE t
+			SET t.recommend = b.recommend, t.mrecommend = b.mrecommend, t.srecommend = b.srecommend
 			,t.roleid = CASE b.custid
 							WHEN b.srecommend THEN 4
 							WHEN b.mrecommend THEN 3
 							WHEN b.recommend THEN 2
 							ELSE 1 END -- include member & headline
-		FROM #rptOpenningBalanceTable t
-			CROSS APPLY (
-				SELECT TOP 1 b.custid, b.recommend, b.mrecommend, b.srecommend
-				FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-				WHERE t.custid = b.custid
-			) b;
+			FROM #rptOpenningBalanceTable t
+				INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON t.custid = b.custid
+			WHERE t.recommend IS NULL
+				AND b.bettype = 20000
+				AND b.winlostdate = @CurrentBU_Date;
 
 		;WITH CTE_Balance (custid, OpeningBalance, OpeningTotalBalance) AS
 		(

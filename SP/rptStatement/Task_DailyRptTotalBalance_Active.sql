@@ -58,29 +58,30 @@ BEGIN
 	IF @Winlostdate = DATEADD(DD, 1, @MovebetDay)    ---> first day on bettrans.OpeningBalance = last day on rptStatement.ClosingBalance
 	BEGIN 
 		--> GET full cust back to the previous saturday
-		INSERT INTO #rptOpenningBalanceTable (custid, winlost)
-		SELECT CustID, winlost
+		INSERT INTO #rptOpenningBalanceTable (custid, roleid, recommend, mrecommend, srecommend, winlost)
+		SELECT rpt.custid, CASE WHEN c.roleid = 0 THEN 1 ELSE c.roleid END AS roleid, c.recommend, c.mrecommend, c.srecommend, rpt.winlost
 		FROM (	
 			SELECT rpt.CustID, rpt.ClosingBalance AS winlost
 				, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
 			FROM dbo.rptStatement rpt WITH (NOLOCK) 
 			WHERE  Winlostdate >= @Saturday
 		) AS rpt
+			LEFT JOIN bodb02.dbo.custInfo c WITH (NOLOCK) ON rpt.custid = c.custid
 		WHERE rpt.Num = 1;
 
-		UPDATE t
-		SET t.recommend = b.recommend, t.mrecommend = b.mrecommend, t.srecommend = b.srecommend
+		IF EXISTS (SELECT 1 FROM #rptOpenningBalanceTable WHERE recommend IS NULL)
+			UPDATE t
+			SET t.recommend = b.recommend, t.mrecommend = b.mrecommend, t.srecommend = b.srecommend
 			,t.roleid = CASE b.custid
 							WHEN b.srecommend THEN 4
 							WHEN b.mrecommend THEN 3
 							WHEN b.recommend THEN 2
 							ELSE 1 END -- include member & headline
-		FROM #rptOpenningBalanceTable t
-			CROSS APPLY (
-				SELECT TOP 1 b.custid, b.recommend, b.mrecommend, b.srecommend
-				FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-				WHERE t.custid = b.custid
-			) b;
+			FROM #rptOpenningBalanceTable t
+				INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON t.custid = b.custid
+			WHERE t.recommend IS NULL
+				AND b.bettype = 20000
+				AND b.winlostdate = @BalanceUpDay;
 
 		INSERT INTO #tmpRptTotalBalance_Active (CustID, OpeningBalance, OpeningTotalBalance)
 		SELECT bal.custid
