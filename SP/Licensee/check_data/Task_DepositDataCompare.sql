@@ -26,6 +26,7 @@ AS
 		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 		- 20200918@Hogan: Integrate Joker [RedmineID: #141408]
+		- 20201013@Hogan: Integrate SA Gaming [RedmineID: #128493]
 		
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -114,8 +115,9 @@ BEGIN
 		,TG BIGINT
 		,I4D BIGINT
 		,SXG BIGINT
+		,SBC BIGINT
 		,JK BIGINT
-		,SBC BIGINT)
+		,SAG BIGINT)
 
 	--exec 
 	--rptLicWinloss2
@@ -148,11 +150,12 @@ BEGIN
 		,SPR
 		,SG
 		,VRG
-		,TG	
+		,TG
 		,I4D
 		,SXG
+		,SBC
 		,JK
-		,SBC)
+		,SAG)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
@@ -305,8 +308,9 @@ BEGIN
 		,TG
 		,I4D
 		,SXG
+		,SBC
 		,JK
-		,SBC)
+		,SAG)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (

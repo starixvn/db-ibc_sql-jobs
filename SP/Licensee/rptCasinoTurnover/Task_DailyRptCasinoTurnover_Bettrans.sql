@@ -10,6 +10,7 @@ DB: DBLIC.bodb_LicenseeReport
 Revisions:
 	- 20181129@Joseph: Create [Redmine: #95178]
 	- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
+	- 20200615@Hogan: Integrate SA Gaming [RedmineID: #128493]
 */  
 BEGIN
 	SET NOCOUNT ON
@@ -58,7 +59,7 @@ BEGIN
 		
 		UNION ALL
 
-		-- All Bet
+		-- All Bet, Sexy Gaming, SA Gaming
 		SELECT @winlostdate  
 		,bettrans.custid  
 		,bettrans.recommend
@@ -77,7 +78,8 @@ BEGIN
 		WHERE
 			bettrans.winlostdate = @winlostdate AND
 			bettrans.statusID IN (111,112,113) AND -- DRAW, WON, LOSE
-			matrix.ProductID IN (21,45) -- AllBet, Sexy Gaming
+			matrix.ProductID IN (21,45,39) AND -- AllBet, Sexy Gaming, SA Gaming
+			matrix.bettype <> 3007 -- SAG Tip ticket
 		GROUP BY
 			bettrans.custid
 			,bettrans.recommend

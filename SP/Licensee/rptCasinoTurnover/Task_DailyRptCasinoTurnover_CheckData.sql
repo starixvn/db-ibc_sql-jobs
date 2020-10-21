@@ -13,6 +13,7 @@ AS
 		- 20181129@Joseph: Create [Redmine: #95178]
 		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
 		- 20200707@Kos: Fix NetStake [RedmineID: #137111]
+		- 20200728@Hogan: Integrate SA Gaming [RedmineID: #128493]
 */
 
 BEGIN
@@ -46,7 +47,7 @@ BEGIN
 
 		UNION ALL
 
-		-- Allbet, Sexy Gaming
+		-- AllBet, Sexy Gaming, SA Gaming
 		SELECT SUM(b.winlost - b.actual_stake) AS Winlost
 			, SUM(b.stake) AS Turnover
 			, COUNT(b.transid) AS BetCount
@@ -55,7 +56,8 @@ BEGIN
 			INNER JOIN bodb02.dbo.SportBettypeMatrix AS s WITH (NOLOCK) ON b.gameID = s.BetType
 		WHERE b.winlostdate = @WinLostDate
 			AND b.statusID IN (111, 112, 113)
-			AND s.ProductID IN (21, 45)
+			AND s.ProductID IN (21,45,39) -- All bet, Sexy Gaming, SA Gaming
+			AND s.bettype <> 3007 -- SAG Tip ticket
 	) t
 	OPTION (RECOMPILE)
 
@@ -66,7 +68,7 @@ BEGIN
 	FROM dbo.rptCasinoTurnover WITH (NOLOCK)
 	WHERE WinlostDate = @WinLostDate
 		AND StatusId IN (111, 112, 113)
-		AND ProductId IN (6, 22, 21, 45)	-- RNG Casino, Macau Games, All Bet, Sexy Gaming
+		AND ProductID IN (6, 22, 21, 45, 39) -- RNG Casino, Macau Games, All Bet, SA Gaming
 
 	-- compare 
 	IF ISNULL(@S_Winlost, 0) <> ISNULL(@T_Winlost, 0)

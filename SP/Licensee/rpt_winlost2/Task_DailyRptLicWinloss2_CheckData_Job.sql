@@ -18,6 +18,7 @@ AS
 		- 20180423@Percy: [RedmineID: #94129]
 			. Remove logic check MB (job handle)
 			. Add @tablename param to break step of job: process insert sum step by step
+		- 20201020@Hogan: Add step Check & correct data to rptCasinoTurnover [RedmineID: #128493]
 */
 
 BEGIN
@@ -86,6 +87,10 @@ BEGIN
 		ELSE IF @TableName = 'rptLicWinlossGMT'
 		BEGIN
 			EXEC dbo.Task_rptLicWinlossGMT_CheckData @winlostdate = @WinlostDate
+		END
+		ELSE IF @TableName = 'rptCasinoTurnover'
+		BEGIN
+			EXEC dbo.Task_DailyRptCasinoTurnover_CheckData @winlostdate = @WinlostDate
 		END
 	END
 END

@@ -13,6 +13,7 @@ AS
 	- 20190306@Amanda: Implement PP Promotion Prize [RedmineID: #109471]
 	- 20191122@Amanda: Implement PP Tournament Prize [RedmineID: #123804]
 	- 20200714@Hogan: Add 7 games for Jackpot and 2 bettype for Contribution (4297) and Jackpot Prize (4298) [RedmineID: #137290]
+	- 20200728@Hogan: Integrate SA Gaming [RedmineID: #128493]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -27,7 +28,7 @@ BEGIN
 		, @S_BetCount = COUNT(b.TransId) --BetCount
 		, @S_AWinlost = SUM(awinlost)
 		, @S_Comm = SUM(comm)
-		, @S_BetEffective = SUM(CASE WHEN b.statusID IN (112,113) AND b.bettype NOT IN (4300, 4299, 4298, 4297) -- exclude PP Prize from BetEffective
+		, @S_BetEffective = SUM(CASE WHEN b.statusID IN (112,113) AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007) -- exclude PP Prize from BetEffective
 									THEN ABS(winlost-actual_stake)
 									ELSE 0  
 								END)
