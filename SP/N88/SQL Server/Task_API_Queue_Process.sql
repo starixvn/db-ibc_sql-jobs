@@ -11,6 +11,8 @@ AS
 		- 20200520@Percy: Initialize SP [RedmineID: #133254]
 		- 20200716@Percy: Add 2 tables: TpTransferInfo & DepositInfo [RedmineID: #137395]
 		- 20200818@Percy: Add 3 tables: CustRegInfo, BonusInfo & WithdrawalInfo [RedmineID: #137395]
+		- 20201021@Percy: Add table: AdjustmentInfo [RedmineID: #143879]
+		
 */
 
 BEGIN
@@ -128,15 +130,27 @@ BEGIN
 		END
 	END
 
+	-- AdjustmentInfo
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_AdjustmentInfo @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('AdjustmentInfo', @ErrCode, @ErrMsg)
+		END
+	END
+
 	DECLARE @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX), @recipients VARCHAR(MAX)
 
 	-- In case having error
 	IF EXISTS (SELECT 1 FROM @ErrTable)
 	BEGIN
 		IF @@SERVERNAME IN ('DB052', 'DB053')
-			SELECT @recipients = 'percy.nguyen@starixsoft.com;sophia.nguyen@starixsoft.com;pontus@starixsoft.com'
+			SELECT @recipients = 'percy.nguyen@starixvn.com;sophia.nguyen@starixvn.com;pontus@starixvn.com'
 		ELSE
-			SELECT @recipients = 'percy.nguyen@starixsoft.com'
+			SELECT @recipients = 'percy.nguyen@starixvn.com'
 
 		SELECT @Subject = 'SQL Server Job System: ''Import data from API_Queue'' failed on ' + @@SERVERNAME
 
