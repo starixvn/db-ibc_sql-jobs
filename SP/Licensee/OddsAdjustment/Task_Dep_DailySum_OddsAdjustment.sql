@@ -95,7 +95,7 @@ BEGIN
 	   ,0 stake
 	   ,'DRAW' status
 	   ,0 winlost
-	   ,SUM(f.oriAgentWinlost) - SUM(b.awinlost) awinlost
+	   ,-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm) - SUM(tblTemp.AdjCompanyWL) awinlost
 	   ,0 mwinlost
 	   ,0 playercomm
 	   ,0 comm
@@ -144,9 +144,9 @@ BEGIN
 	   ,0 balance 
 	   ,0 transid2 
 	   ,NULL RecommDate
-	   ,SUM(b.awinlost) AS AdjAgentNetAmount
-	   ,SUM(f.oriAgentWinlost) AS OriAgentNetAmount
-	   ,SUM(f.oriAgentWinlost) - SUM(b.awinlost) AS DeductedOddSpreadCost
+	   ,SUM(tblTemp.AdjCompanyWL) AS AdjAmount
+	   ,-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm) AS OriAmount
+	   ,-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm) - SUM(tblTemp.AdjCompanyWL) AS DeductedOddSpreadCost
 
 	INTO #__tmpTransInsertUpdate
 	FROM 
@@ -157,7 +157,14 @@ BEGIN
 			ON t.SuperId = b.srecommend
 		LEFT JOIN f_Set_OddsTypeBettypes() fdec -- check for decimal odds only
 			ON b.bettype = fdec.BetType
-		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, b.awinlost, b.statuswinlost, fdec.OddsType) f
+		CROSS APPLY
+		(
+			VALUES (-1*(b.swinlost + b.awinlost + b.mwinlost + b.scomm + (b.winlost - b.actual_stake)))
+		) AS tblTemp(AdjCompanyWL)
+		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, (b.winlost - b.actual_stake), b.statuswinlost, fdec.OddsType) fMember
+		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, b.awinlost, b.statuswinlost, fdec.OddsType) fAgent
+		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, b.mwinlost, b.statuswinlost, fdec.OddsType) fMaster
+		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, b.swinlost, b.statuswinlost, fdec.OddsType) fSuper
 	WHERE
 		b.winlostdate = @WinlostDate
 		AND bi.OriginalOdds IS NOT NULL
