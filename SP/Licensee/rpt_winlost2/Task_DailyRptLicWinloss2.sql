@@ -73,6 +73,7 @@ AS
 		- 20200803@Kos: Support Saba Loyalty [RedmineID: #138493]
 		- 20200918@Hogan: Integrate Joker [RedmineID: #141408]
 		- 20201013@Hogan: Integrate SA Gaming [RedmineID: #128493]
+		- 20201020@Hogan: Integrate Arcadia Gaming Bonus [RedmineID: #143648]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -133,7 +134,7 @@ BEGIN
 		,SUM(winlost - actual_stake) winlost
 		,CASE
 			WHEN bettrans.statusID IN (112,113) THEN SUM(CASE
-															WHEN bettrans.bettype IN (4300, 4299, 4298, 4297, 3007) THEN 0
+															WHEN bettrans.bettype IN (4300, 4299, 4298, 4297, 3007, 1906) THEN 0
 															ELSE ABS(winlost - actual_stake)
 														END)  -- exclude PP Prize, SAG Tip ticket from BetEffective
 			ELSE 0
@@ -187,7 +188,7 @@ BEGIN
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,17003,4299,4298,4297,3007) THEN bettype
+			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,17003,4299,4298,4297,3007,1906) THEN bettype
 			ELSE 0
 		END bettype
 		--114: half win, 115: half lose
@@ -280,7 +281,7 @@ BEGIN
 			ELSE 0
 		END
 		,CASE
-			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000, 17003,4299,4298,4297,3007) THEN bettype
+			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000, 17003,4299,4298,4297,3007,1906) THEN bettype
 			ELSE 0
 		END
 		,CASE
