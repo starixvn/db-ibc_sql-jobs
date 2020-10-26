@@ -1,4 +1,4 @@
-/*<info serverAlias="DBAGE-bodb_CustomerLog" executers="" viewers="" isNested="0"></info>*/
+/*<info serverAlias="DBAGE-bodb02" executers="" viewers="" isNested="0"></info>*/
 CREATE proc [dbo].[Task_DBA_Monitor_ServiceBroker] @IsDebug bit = 0
 /* 
 	Created:20170418@Patrick
