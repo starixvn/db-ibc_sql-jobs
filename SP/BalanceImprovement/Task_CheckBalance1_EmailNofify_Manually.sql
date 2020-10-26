@@ -11,6 +11,7 @@ AS
 
 	Revision: 
 		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
+		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 
 */
 
@@ -50,16 +51,15 @@ IF @body IS NULL RETURN
 DECLARE @subject VARCHAR(200)
 SET @subject = 'Balance Correction - Manually - (New Balance Tables) - Top 1000 members @' + @@Servername		
 EXEC msdb.dbo.sp_send_dbmail
-@recipients=N'pontus@starixsoft.com;', 
+@recipients=N'pontus@starixvn.com;', 
 													--20150820 add TWDBA
 													--20151225 add jackal
 													--20160823 add allen.wu & brian.yan
---@recipients=N'daniel.truong@starixsoft.com',
+--@recipients=N'daniel.truong@starixvn.com',
 @body=@body,
 @body_format = 'HTML',
 @sensitivity = 'Personal',
 @importance = 'Normal',				
-@copy_recipients = 'jamie.dao@starixsoft.com',
 @subject = @subject,
 @profile_name = @profile_name
 GO

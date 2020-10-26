@@ -15,6 +15,7 @@ AS
 		- 20171011@Patrick: Move code check setting for FW
 		- 20180516@Paul: Add code for PP [Redmine:#95284]
 		- 20180518@Kathy: Add code for Bullfighting [Redmine:#95199]
+		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 		
 */
 BEGIN
@@ -356,11 +357,6 @@ BEGIN
 									FOR XML PATH('tr'), TYPE 
 								) AS NVARCHAR(MAX) ) + N'</table>'
 
-		--IF @Mode = 'UAT'--for testing purpose
-		--BEGIN
-		--	SELECT @Recipients = 'patrick.pham@starixsoft.com', @Copy_recipients = CASE WHEN ISNULL(@Copy_recipients, '') <> '' THEN 'francis.le@starixsoft.com' 
-		--																			ELSE @Copy_recipients END
-		--END
 		IF @IsDebug = 0
 		BEGIN
 			EXEC msdb.dbo.sp_send_dbmail @recipients = @Recipients

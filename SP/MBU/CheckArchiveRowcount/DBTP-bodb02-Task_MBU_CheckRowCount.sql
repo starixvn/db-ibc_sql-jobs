@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20180926@Patrick:	Initial - [Redmine: #101207]
 		- 20190621@Billy:	New way to generate html - [Redmine: #111421]
+		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -237,7 +238,7 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 
 	EXECUTE	msdb.dbo.sp_send_dbmail
 				@profile_name			= DEFAULT
-			,	@recipients				= 'pontus@starixsoft.com'
+			,	@recipients				= 'pontus@starixvn.com'
 			,	@copy_recipients		= ''
 			,	@blind_copy_recipients	= ''
 			,	@subject				= @subject
