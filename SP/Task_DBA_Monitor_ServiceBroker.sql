@@ -8,7 +8,7 @@ CREATE proc [dbo].[Task_DBA_Monitor_ServiceBroker] @IsDebug bit = 0
 		- check conversation enpoint has been closed or error
 		- check queue disable or not
     DB: DB054/DB053.bodb02
-	Revsions:
+	Revsion:
 		20171204@Patrick: Ingore check state in ('CD', 'ER', 'DI', 'DO') for settlement service ('//Service/Calculation_receive', '//Service/Calculation_send')
 		- 20190524@Billy:	Change Letstalk linked server - [Redmine: #113125]
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
