@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20190401@Percy: Initialize SP [RedmineID: #110692]
 		- 20200204@Percy: Remove unused mail + DB054 - Phase 1 [RedmineID: #127823]
+		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 */
 
 BEGIN
@@ -24,9 +25,9 @@ BEGIN
 	SELECT  @Subject = 'SQL Server Job System: ''bodb_3rdProduct: Check Exchange data monthly'' on ' + @@SERVERNAME
 
 	IF @@SERVERNAME IN ('DB052', 'DB053')
-		SELECT @recipients = 'percy.nguyen@starixsoft.com;ann.nguyen@starixsoft.com;pontus@starixsoft.com'
+		SELECT @recipients = 'percy.nguyen@starixvn.com;ann.nguyen@starixvn.com;pontus@starixvn.com'
 	ELSE
-		SELECT @recipients = 'percy.nguyen@starixsoft.com'
+		SELECT @recipients = 'dba_local@starixvn.com'
 
 	IF @FromDate IS NULL OR @ToDate IS NULL -- for job
 	BEGIN

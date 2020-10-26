@@ -14,6 +14,7 @@ AS
 		- 20170516@Harper:  Show detail for real customer and check translog table [RedmineID: #76208]
 		- 20170725@Sophia: Exclude Cashout WL when compare Openning Balance [RedmineID: #79346]
 		- 20190624@Percy: Check missing import data in the last 15 mins + Remove UUS currency [RedmineID: #115411]
+		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -231,7 +232,7 @@ BEGIN
 										FOR XML PATH('tr'), TYPE 
 									) AS NVARCHAR(MAX) ) + N'</table>'
 		
-		EXEC msdb.dbo.sp_send_dbmail @recipients = 'dbaadmin@starixsoft.com'
+		EXEC msdb.dbo.sp_send_dbmail @recipients = 'dbaadmin@starixvn.com'
 					, @subject = @subject
 					, @body = @ErrorMessage
 					, @body_format = 'HTML'
