@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-bodb_CustomerLog" executers="" viewers="" isNested="0"></info>*/
+/*<info serverAlias="DBAGE-bodb_CustomerLog" executers="" viewers="" isNested="0"></info>*/
 CREATE proc [dbo].[Task_DBA_Monitor_ServiceBroker] @IsDebug bit = 0
 /* 
 	Created:20170418@Patrick
@@ -7,7 +7,7 @@ CREATE proc [dbo].[Task_DBA_Monitor_ServiceBroker] @IsDebug bit = 0
 		- check conversation has been cleanup
 		- check conversation enpoint has been closed or error
 		- check queue disable or not
-    DB: DB054/DB053.bodb02
+    DB: DBAGE.bodb02
 	Revision:
 		- 20171204@Patrick: Ingore check state in ('CD', 'ER', 'DI', 'DO') for settlement service ('//Service/Calculation_receive', '//Service/Calculation_send') - [Redmine: #000000]
 		- 20190524@Billy:	Change Letstalk linked server - [Redmine: #113125]
