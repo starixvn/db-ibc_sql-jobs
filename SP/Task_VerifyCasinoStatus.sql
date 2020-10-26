@@ -1,14 +1,4 @@
-USE [CheckResultDB]
-GO
-
-/****** Object:  StoredProcedure [dbo].[Task_VerifyCasinoStatus]    Script Date: 01/20/2015 23:54:50 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="vnteam" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Task_VerifyCasinoStatus]
     @custid VARCHAR(20) = '%'
   , @level  TINYINT     = 0
@@ -23,6 +13,7 @@ AS
 	Revision:
 
         - 20140904@Logan:   Initial version.
+		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
         
     Param Explanation:
 
@@ -391,8 +382,7 @@ BEGIN
 						
             EXEC msdb.dbo.sp_send_dbmail
                 @profile_name= @profile_name
-              , @recipients='lukas.luu@starixsoft.com'
-              , @copy_recipients='amy.vu@starixsoft.com;susan.le@starixsoft.com'
+              , @recipients='pontus@starixvn.com'
               , @subject='Mismatch Casino Status Between IBC and CasinoDB'
               , @body=@Statement
               
@@ -438,17 +428,6 @@ BEGIN
     DROP TABLE #SyncCustomerList
     DROP TABLE #CustomerList
 END
-
-
-
-
-
-GO
-
-GRANT EXECUTE ON [dbo].[Task_VerifyCasinoStatus] TO [vnteam] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[Task_VerifyCasinoStatus] TO [vnteam] AS [dbo]
 GO
 
 

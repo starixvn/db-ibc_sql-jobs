@@ -1,5 +1,5 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[DBA_CheckTempVariableNumberSettleTimeout]
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
+CREATE PROCEDURE [dbo].[DBA_CheckTempVariableNumberSettleTimeout]
 AS
 /*
 	Created by:20190306@Vicky
@@ -14,6 +14,7 @@ AS
 		- 20170109@Vivi(DBTrans): change check by TempVariableNumberHistory.CreatedDateTime (temp solution)
 		- 20190103@Vicky: Incorporate BetBuilder: add column KeyValue2 [Redmine:#106903]
 		- 20191023@Patrick: Reduce interval time for checking temp variable number to 5 mins [Redmine: #122590]
+		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -21,7 +22,7 @@ BEGIN
 	declare @SubjectMessage varchar(300)='', @SendTo varchar(400), @TableHTML varchar(max)=''
 	declare @QueuedTVN TABLE (KeyID int, KeyValue money, KeyValue2 VARCHAR(20), CreatedDateTime datetime, eventtype varchar(100))
 
-	SET @SendTo = 'dbatw@onelab.tw;dbaadmin@starixsoft.com;'
+	SET @SendTo = 'dbatw@onelab.tw;dbaadmin@starixvn.com;'
 	--SET @SendTo = 'vivi.kao@onelab.tw;'
 
 	

@@ -1,7 +1,7 @@
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
-CREATE PROCEDURE	dbo.Task_MBU_CheckRowCount
+ALTER PROCEDURE	[dbo].[Task_MBU_CheckRowCount]
 AS
 /*
 	Created: 20180925@Patrick
@@ -10,6 +10,8 @@ AS
 	Revisions:
 		- 20180926@Patrick:	Initial - [Redmine: #101207]
 		- 20190621@Billy:	New way to generate html - [Redmine: #111421]
+		- 20191212@Patrick: Add more table TOControl_Setting [Redmine: #124447]
+		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -169,6 +171,10 @@ BEGIN;
 	BEGIN;
 		SET	@hasDiff = 1;
 	END;
+	ELSE
+	BEGIN;
+		SET	@hasDiff = 0;
+	END;
 
 	-- Build html
 	SELECT	@subject	= N'Archving process check count - KBT@' + @@SERVERNAME
@@ -202,7 +208,7 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 									,	NULL, [th]	= N'Active RowCount'
 									,	NULL, [th]	= N'Archive RowCount'
 									,	NULL, [th]	= N'Delta'
-								WHERE	@hasDiff = 1
+								WHERE	@hasDiff IS NOT NULL
 								FOR XML PATH ('tr')
 								,	TYPE
 								)
@@ -216,7 +222,6 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 								FULL OUTER JOIN	#__archiveResult AS archive WITH (NOLOCK)
 											ON	active.tableName = archive.tableName
 											AND	active.winlostdate = archive.winlostdate
-								WHERE	ISNULL(active.activeRowCount, 0) <> ISNULL(archive.archiveRowCount, 0)
 								ORDER BY	CASE WHEN ISNULL(active.activeRowCount, 0) <> ISNULL(archive.archiveRowCount, 0) THEN 0 ELSE 1 END
 										,	ISNULL(active.winlostdate, archive.winlostdate)
 										,	ISNULL(active.tableName, archive.tableName)
@@ -237,7 +242,7 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 
 	EXECUTE	msdb.dbo.sp_send_dbmail
 				@profile_name			= DEFAULT
-			,	@recipients				= 'pontus@starixsoft.com'
+			,	@recipients				= 'pontus@starixvn.com'
 			,	@copy_recipients		= ''
 			,	@blind_copy_recipients	= ''
 			,	@subject				= @subject
