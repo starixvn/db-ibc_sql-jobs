@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb_Consistency" executers="" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="vnteam" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Task_VerifyCasinoStatus]
     @custid VARCHAR(20) = '%'
   , @level  TINYINT     = 0
