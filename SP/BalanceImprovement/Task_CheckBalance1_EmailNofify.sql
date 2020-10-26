@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_CheckBalance1_EmailNofify]
+CREATE PROCEDURE [dbo].[Task_CheckBalance1_EmailNofify]
 AS
 /*
 	Task: Email admins to notify about affected customers that have balance fixed
@@ -11,6 +11,7 @@ AS
 	- 20180403@Cooper(DBTrans):Replace alter email to luna.ho@onelab.tw from brian.yang@onelab.tw
 	- 20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
 	- 20191121@Patrick: Adding code to send message via skype/letstalk [RedmineID: #124080]
+	- 20200702@Vivi: change email recipients
 	- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 */
 BEGIN
@@ -49,7 +50,7 @@ BEGIN
 		RETURN
 
 	DECLARE @mailList NVARCHAR(1024)
-	SET @mailList = N'dbaadmin@starixvn.com;dbatw@onelab.tw;allen.wu@onelab.tw;luna.ho@onelab.tw;'
+	SET @mailList = N'dbaadmin@starixvn.com;dbatw@onelab.tw;eric.fu@onelab.tw;luna.ho@onelab.tw;fanny.chen@onelab.tw;yolanda.wu@onelab.tw;aaron.wang@onelab.tw;sobi.chen@onelab.tw;'
 
 	IF @@SERVERNAME <> 'DBTRANS'
 	BEGIN
