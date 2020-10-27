@@ -17,6 +17,7 @@ Revisions:
 	- 20190507@Sophia: Add new column OpeningTotalBalance for Credit Collection report use [Redmine: #109293]
 	- 20190912@Bobby: Implement headline - Statement [Redmine: #119289]
 	- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
+	- 20201008@Percy: Get SMA from bettrans instead of custinfo table [RedmineID: #142953]
  */
 BEGIN
 
@@ -208,38 +209,51 @@ BEGIN
 	;
 
 	-- 3. SUM OPENNING [balance & total balance]
-	;
-	WITH CTE_Winlost (custid, winlost) AS
-	(
-		SELECT custid, ClosingBalance
-		FROM (
-			SELECT rpt.custid, rpt.ClosingBalance
-				, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
-			FROM dbo.rptStatement rpt WITH(NOLOCK)
-			WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
-		) AS tmp 
-		WHERE tmp.Num = 1
-	),
-	CTE_Balance (custid, OpeningBalance, OpeningTotalBalance) AS
+	CREATE TABLE #rptOpenningBalanceTable (custid INT, roleid TINYINT, recommend INT, mrecommend INT, srecommend INT, balance MONEY)
+	INSERT INTO #rptOpenningBalanceTable (custid, roleid, recommend, mrecommend, srecommend, balance)
+	SELECT tmp.custid, CASE WHEN c.roleid = 0 THEN 1 ELSE c.roleid END AS roleid, c.recommend, c.mrecommend, c.srecommend, tmp.ClosingBalance
+	FROM (
+		SELECT rpt.custid, rpt.ClosingBalance
+			, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
+		FROM dbo.rptStatement rpt WITH(NOLOCK)
+		WHERE rpt.winlostdate >= @_Saturday AND  rpt.winlostdate < @_Winlostdate
+	) AS tmp
+		LEFT JOIN bodb02.dbo.custInfo c WITH (NOLOCK) ON tmp.custid = c.custid
+	WHERE tmp.Num = 1;
+
+	IF EXISTS (SELECT 1 FROM #rptOpenningBalanceTable WHERE recommend IS NULL)
+		UPDATE t
+		SET t.recommend = b.recommend, t.mrecommend = b.mrecommend, t.srecommend = b.srecommend
+		,t.roleid = CASE b.custid
+						WHEN b.srecommend THEN 4
+						WHEN b.mrecommend THEN 3
+						WHEN b.recommend THEN 2
+						ELSE 1 END -- include member & headline
+		FROM #rptOpenningBalanceTable t
+			INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON t.custid = b.custid
+		WHERE t.recommend IS NULL
+			AND b.bettype = 20000
+			AND b.winlostdate = @CurrentBU_Date;
+
+	WITH CTE_Balance (custid, OpeningBalance, OpeningTotalBalance) AS
 	(
 		SELECT bal.custid
-			, SUM(bal.winlost)
-			, SUM(bal.totalWinlost)
-		FROM CTE_Winlost wl
-		INNER JOIN bodb02.dbo.custinfo ci WITH(NOLOCK) ON wl.custid = ci.custid
-		CROSS APPLY (
-			SELECT POWER(2*1, ci.roleid) AS ownerIndicator
-		) AS bet
-		CROSS APPLY (
-			SELECT wl.custid, 1 AS levelID, winlost, winlost AS totalWinlost
-			UNION ALL
-			SELECT ci.recommend, 2, winlost * CAST(bet.ownerIndicator & 4 AS BIT)/1, winlost
-			UNION ALL
-			SELECT ci.mrecommend, 3, winlost * CAST(bet.ownerIndicator & 8 AS BIT)/1, winlost
-			UNION ALL
-			SELECT ci.srecommend, 4, winlost * CAST(bet.ownerIndicator & 16 AS BIT)/1, winlost
-		) AS bal
-		WHERE bal.levelID >= ci.roleID
+			, SUM(bal.balance)
+			, SUM(bal.totalbalance)
+		FROM #rptOpenningBalanceTable b
+			CROSS APPLY (
+				SELECT POWER(2*1, b.roleid) AS ownerIndicator
+			) AS bet
+			CROSS APPLY (
+				SELECT b.custid, 1 AS levelId, b.balance, b.balance AS totalbalance
+				UNION ALL
+				SELECT b.recommend, 2, b.balance * CAST(bet.ownerIndicator & 4 AS BIT)/1, b.balance
+				UNION ALL
+				SELECT b.mrecommend, 3, b.balance * CAST(bet.ownerIndicator & 8 AS BIT)/1, b.balance
+				UNION ALL
+				SELECT b.srecommend, 4, b.balance * CAST(bet.ownerIndicator & 16 AS BIT)/1, b.balance
+			) AS bal
+		WHERE bal.levelID >= b.roleid
 			AND bal.custid > 0
 		GROUP BY bal.custid
 	)
@@ -254,6 +268,8 @@ BEGIN
 		INSERT (custid, OpeningBalance, OpeningTotalBalance)
 		VALUES (SRC.custid, SRC.OpeningBalance, SRC.OpeningTotalBalance)
 	;
+
+	DROP TABLE #rptOpenningBalanceTable
 
 	--5. Headline - Openning total balance
 	;
