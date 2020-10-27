@@ -32,8 +32,8 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Discount value'
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- --,@Emails ='dba_local@starixsoft.com'
- ,@Emails = 'dbaadmin@starixsoft.com'
+ --,@Emails ='dba_local@starixvn.com'
+ ,@Emails = 'dbaadmin@starixvn.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
 
@@ -57,8 +57,8 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check PT value'
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- --,@Emails ='dba_local@starixsoft.com'
- ,@Emails = 'dbaadmin@starixsoft.com'
+ --,@Emails ='dba_local@starixvn.com'
+ ,@Emails = 'dbaadmin@starixvn.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
 
@@ -82,8 +82,8 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Stake >0 for dedicated betty
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- --,@Emails ='dba_local@starixsoft.com'
- ,@Emails = 'dbaadmin@starixsoft.com'
+ --,@Emails ='dba_local@starixvn.com'
+ ,@Emails = 'dbaadmin@starixvn.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
 
@@ -107,8 +107,8 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Valid IP'
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- --,@Emails ='dba_local@starixsoft.com'
- ,@Emails = 'dbaadmin@starixsoft.com'
+ --,@Emails ='dba_local@starixvn.com'
+ ,@Emails = 'dbaadmin@starixvn.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
 
@@ -132,8 +132,8 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check all yesterday tickets must b
  ,@ActiveStartTime  = '01:30'
  ,@ActiveEndTime = NULL
  ,@NotifyLevelEmail = 2
- --,@Emails ='dba_local@starixsoft.com'
- ,@Emails = 'dbaadmin@starixsoft.com'
+ --,@Emails ='dba_local@starixvn.com'
+ ,@Emails = 'dbaadmin@starixvn.com'
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
 
