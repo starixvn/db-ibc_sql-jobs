@@ -1,19 +1,18 @@
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
-CREATE PROCEDURE [dbo].[Task_DailySummary_IP2Country]
+ALTER PROCEDURE [dbo].[Task_DailySummary_IP2Country]
 	@winlostdate smalldatetime,
 	@target varchar(20) = 'all'
 AS
-/*
- 	Creator:	@
- 	Task:		Description - [Redmine: #00000]
- 	Database:	DBTXN.bodb02
 
- 	Revisions:
- 		- 00000000@Creator:	Initial - [Redmine: #00000]
+/*
+	Create By: Unknow
+	Task: Archive bet data for IP country
+	DB: DBTXN/bodb02
+	Revisions:
 		- 20190523@Patrick: Convert NULL IP value to empty [RedmineId: #113997]
- */
+	
+	Para's explaination
+*/
+
 CREATE TABLE #tmp1 (transid bigint PRIMARY KEY, winlostdate smalldatetime, IP varchar(15))
 CREATE TABLE #tmp2 (IP varchar(15) PRIMARY KEY, IPKey tinyint default 0, IPLong bigint default 0, countryShort varchar(2) default NULL)
 CREATE INDEX IX_cs ON #tmp2 (countryShort)
@@ -52,12 +51,12 @@ BEGIN
 
 	UPDATE #tmp2
 	SET countryShort = ip.countryShort
-	FROM IPDB.dbo.IPTable ip with (nolock)
+	FROM IPDB.dbo.IPTable_Mini ip with (nolock)
 	INNER JOIN #tmp2
-		ON #tmp2.IPKey = ip.ipKeyFrom
+		ON #tmp2.IPKey = ip.ipKey
 		AND #tmp2.IPLong BETWEEN ip.ipFROM AND ip.ipTO
 	WHERE
-		ip.ipKeyFrom = @ipKey
+		ip.ipKey = @ipKey
 		AND #tmp2.IPKey = @ipKey
 		AND #tmp2.countryShort IS NULL
 
@@ -117,12 +116,12 @@ BEGIN
 
 	UPDATE #tmp2
 	SET countryShort = ip.countryShort
-	FROM IPDB.dbo.IPTable ip with (nolock)
+	FROM IPDB.dbo.IPTable_Mini ip with (nolock)
 	INNER JOIN #tmp2
-		ON #tmp2.IPKey = ip.ipKeyFrom
+		ON #tmp2.IPKey = ip.ipKey
 		AND #tmp2.IPLong BETWEEN ip.ipFROM AND ip.ipTO
 	WHERE
-		ip.ipKeyFrom = @ipKey
+		ip.ipKey = @ipKey
 		AND #tmp2.IPKey = @ipKey
 		AND #tmp2.countryShort IS NULL
 
@@ -181,12 +180,12 @@ BEGIN
 
 	UPDATE #tmp2
 	SET countryShort = ip.countryShort
-	FROM IPDB.dbo.IPTable ip with (nolock)
+	FROM IPDB.dbo.IPTable_Mini ip with (nolock)
 	INNER JOIN #tmp2
-		ON #tmp2.IPKey = ip.ipKeyFrom
+		ON #tmp2.IPKey = ip.ipKey
 		AND #tmp2.IPLong BETWEEN ip.ipFROM AND ip.ipTO
 	WHERE
-		ip.ipKeyFrom = @ipKey
+		ip.ipKey = @ipKey
 		AND #tmp2.IPKey = @ipKey
 		AND #tmp2.countryShort IS NULL
 
