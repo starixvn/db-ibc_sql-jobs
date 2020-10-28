@@ -110,7 +110,7 @@ BEGIN
 	   ,0 stake
 	   ,'DRAW' status
 	   ,0 winlost
-	   ,-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm) - SUM(tblTemp.AdjCompanyWL) awinlost
+	   ,-1*((-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm)) - SUM(tblTemp.AdjCompanyWL)) awinlost
 	   ,0 mwinlost
 	   ,0 playercomm
 	   ,0 comm
@@ -161,7 +161,7 @@ BEGIN
 	   ,NULL RecommDate
 	   ,SUM(tblTemp.AdjCompanyWL) AS AdjAmount
 	   ,-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm) AS OriAmount
-	   ,-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm) - SUM(tblTemp.AdjCompanyWL) AS DeductedOddSpreadCost
+	   ,-1*((-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm)) - SUM(tblTemp.AdjCompanyWL)) AS DeductedOddSpreadCost
 
 	INTO #__tmpTransInsertUpdate
 	FROM 
@@ -203,29 +203,6 @@ BEGIN
 		b.winlostdate = @WinlostDate
 		AND b.matchid = 999
 		AND b.bettype = 999
-
-	--- insert new trans 
-	INSERT INTO dbo.bettrans14
-	(
-		custid, transdate, oddsid, hdp1, hdp2, odds, stake, Status, winlost, awinlost, mwinlost, playercomm, comm, acomm, apositiontaking, mpositiontaking
-		, tpositiontaking, playerdiscount, discount, adiscount, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate
-		, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid
-		, actual_stake, currency, ip, transdesc, sdiscount, scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype
-		, statusID, currency2, balance, SecAcceptFlag, transid2, RecommDate
-	)
-	SELECT custid, transdate, oddsid, hdp1, hdp2, odds, stake, Status, winlost, awinlost, mwinlost, playercomm, comm, acomm, apositiontaking, mpositiontaking
-		, tpositiontaking, playerdiscount, discount, adiscount, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate
-		, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid
-		, actual_stake, currency, ip, transdesc, sdiscount, scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype
-		, statusID, currency2, balance, SecAcceptFlag, transid2, RecommDate
-	FROM #__tmpTransInsertUpdate t
-	WHERE 
-		NOT EXISTS 
-		(
-			SELECT TOP 1 1 
-			FROM #__tblSumOddsAdjustment soa 
-			WHERE soa.SuperId = t.srecommend AND soa.MemberId = t.custid
-		)
 
 	----- update existing ones
 	UPDATE b WITH(ROWLOCK)

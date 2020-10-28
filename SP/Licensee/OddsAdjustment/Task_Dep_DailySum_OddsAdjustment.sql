@@ -95,7 +95,7 @@ BEGIN
 	   ,0 stake
 	   ,'DRAW' status
 	   ,0 winlost
-	   ,-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm) - SUM(tblTemp.AdjCompanyWL) awinlost
+	   ,-1*((-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm)) - SUM(tblTemp.AdjCompanyWL)) awinlost
 	   ,0 mwinlost
 	   ,0 playercomm
 	   ,0 comm
@@ -146,7 +146,7 @@ BEGIN
 	   ,NULL RecommDate
 	   ,SUM(tblTemp.AdjCompanyWL) AS AdjAmount
 	   ,-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm) AS OriAmount
-	   ,-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm) - SUM(tblTemp.AdjCompanyWL) AS DeductedOddSpreadCost
+	   ,-1*((-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm)) - SUM(tblTemp.AdjCompanyWL))AS DeductedOddSpreadCost
 
 	INTO #__tmpTransInsertUpdate
 	FROM 
