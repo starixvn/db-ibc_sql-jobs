@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb02" executers="" viewers="" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Task_ResetWinning_Check] @ErrorMessage VARCHAR(200) = '' OUTPUT	
 AS
 /*
