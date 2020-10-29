@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb02" executers="" viewers="" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Task_ResetWinning_Check] @ErrorMessage VARCHAR(200) = '' OUTPUT	
 AS
 /*
@@ -11,6 +11,7 @@ AS
 		- 20190514@Harris: adjust the discrepancy, ignore if others < 5RM or each products < 1RM
 		- 20190819@Patrick: Move to DB061 [RedmineId: #118845]
 		- 20190826@Harris: Add more column for new Reset Winning SP [Feature #117809]
+		- 20190918@Percy: Remove Racing [RedmineID: #118699]
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 */
 BEGIN
@@ -78,7 +79,7 @@ BEGIN
  	SELECT TOP 1 @winlostdate = winlostdate 
     FROM #tmp 
     --WHERE winlostAfterExtraPT + [reset] <> 0 AND winlostdate <> @todate
-	WHERE ABS(winlostAfterExtraPT + [reset]) > 1 AND product <> 'Racing (Due to Partners)' -- 20170324@Harris: Exclude Racing (due to partner) discrepancy and discrepancy less than 0.05
+	WHERE ABS(winlostAfterExtraPT + [reset]) > 1
 
     IF @@ROWCOUNT > 0 
     BEGIN
@@ -151,5 +152,3 @@ BEGIN
 	DROP TABLE #tmpExtra
 END
 GO
-
-
