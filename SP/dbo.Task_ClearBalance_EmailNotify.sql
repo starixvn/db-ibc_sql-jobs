@@ -12,7 +12,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @isTest BIT = 0, @Subject VARCHAR(1000), @Recipients VARCHAR(MAX),  @Msg NVARCHAR(MAX), @style NVARCHAR(300) = ''
+	DECLARE @isTest BIT = 0, @Subject VARCHAR(1000), @Recipients VARCHAR(MAX),  @Msg NVARCHAR(MAX), @style NVARCHAR(300) = '', @Length int = 0
 
 	CREATE TABLE #Tmp (Username VARCHAR(30), Status varchar(20))
 
@@ -27,6 +27,9 @@ BEGIN
 	BEGIN
 		RETURN
 	END
+
+	SELECT @Length = MAX(LEN(Username))
+	FROM #Tmp
 
 	SELECT @style = 'border:1px solid black;border-collapse:collapse;'
 
@@ -46,7 +49,7 @@ BEGIN
 	SELECT @Msg = N'Dear all, </br>
 				    The Automate Transfer All job reports the following incomletely transferred SMA on ' + CONVERT(VARCHAR(10), GETDATE(), 101) + '</br>' 					
 					+ '<table style = "'+ @style +'">'
-				    + '<tr><td style = "'+ @style +' text-align:center;min-width:85px" bgcolor= #C5D9F1>Username</td>
+				    + '<tr><td style = "'+ @style +' text-align:center;min-width:'+ CONVERT (VARCHAR(20), @Length * 8)+'px" bgcolor= #C5D9F1>Username</td>
 							<td style = "'+ @style +' text-align:center;min-width:80px" bgcolor= #C5D9F1>Status</td>
 					   </tr>'
 					+  ISNULL(CAST((SELECT @style		AS 'td/@style',
