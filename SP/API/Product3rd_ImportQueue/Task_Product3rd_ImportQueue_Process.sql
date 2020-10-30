@@ -12,6 +12,7 @@ AS
 		- 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST - remove linked server DBLIC [redmine: #99855]
 		- 20181003@Percy: Using colum JobType to apply Tip [RedmineID: #70177]
 		- 20200417@Percy: Integrate Novacash's products [RedmineID: #129873]
+		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 */
 
 BEGIN
@@ -99,7 +100,7 @@ BEGIN
 									) AS NVARCHAR(MAX) ) + N'</table>'
 			
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients		= 'jamie.dao@starixsoft.com;percy.nguyen@starixsoft.com;pontus@starixsoft.com',
+			@recipients		= 'jamie.dao@starixvn.com;percy.nguyen@starixvn.com;pontus@starixvn.com',
 			@subject		= @subject,
 			@body			= @Msg,
 			@body_format	= 'HTML'

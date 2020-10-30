@@ -9,6 +9,7 @@ AS
 	Revisions:
 		- 20191111@Bobby: Initial [Redmine: #131490]
 		- 20200619@Percy: Add server name in mail's subject [RedmineID: #134251]
+		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 */
 BEGIN
 
@@ -144,7 +145,7 @@ BEGIN
 			,@server_name SYSNAME
 			
 		SELECT @server_name = @@SERVERNAME
-			, @recipients	= CASE WHEN @server_name IN ('DB232', 'DB234') THEN 'sophia.nguyen@starixsoft.com;bobby.nguyen@starixsoft.com' ELSE 'dbaadmin@starixsoft.com' END
+			, @recipients	= CASE WHEN @server_name IN ('DB232', 'DB234') THEN 'dba_local@starixvn.com' ELSE 'dbaadmin@starixvn.com' END
 
 		EXECUTE	msdb.dbo.sp_send_dbmail
 					@recipients				= @recipients
