@@ -25,6 +25,7 @@ AS
 		- 20200624@Max: Update Rule for Saba.Club, Modify Rule check Discount [Redmine: #136362]
 		- 20200722@Max: Update Rule for Saba.Club - Exclude bettype 1631 from Rule '3min', Add new Rule for bettype 1631 - [Redmine: #138117]
 		- 20201007@July:  Saba.club - Data Integrity/Consistency Detection for Free Bets and Blackjack - [Redmine:#140425]
+		- 20201030@July: Check Data Consistency - All products - exclude checking commission/discount of licensee tickets for rule 16 - [Redmine:#144533]
 
 		Param's Expanation:
 */
@@ -505,14 +506,15 @@ BEGIN
 			
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM	#tmpBettrans
-			WHERE	(ISNULL(playerdiscount, 0) <> 0
-							OR ISNULL(discount, 0) <> 0
-							OR ISNULL(adiscount, 0) <> 0
-							OR ISNULL(sdiscount, 0) <> 0
-							OR ISNULL(playercomm, 0) <> 0
-							OR ISNULL(comm, 0) <> 0
-							OR ISNULL(acomm, 0) <> 0
-							OR ISNULL(scomm, 0) <> 0)
+			WHERE	srecommend NOT IN (SELECT custId FROM bodb02.dbo.Dep_CustSuper WITH (NOLOCK)) --only check for credit site
+					AND (ISNULL(playerdiscount, 0) <> 0
+						OR ISNULL(discount, 0) <> 0
+						OR ISNULL(adiscount, 0) <> 0
+						OR ISNULL(sdiscount, 0) <> 0
+						OR ISNULL(playercomm, 0) <> 0
+						OR ISNULL(comm, 0) <> 0
+						OR ISNULL(acomm, 0) <> 0
+						OR ISNULL(scomm, 0) <> 0)
 			
 			IF @transId <> ''
 			BEGIN
