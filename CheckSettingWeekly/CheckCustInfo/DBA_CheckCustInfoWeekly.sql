@@ -1,6 +1,5 @@
-USE [CheckResultDB]
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
 GO
-
 
 ALTER PROCEDURE [dbo].[DBA_CheckCustInfoWeekly]
 	 @srecommend INT 
@@ -11,6 +10,7 @@ Created: 20180613@Winnie
 Task: Weekly check Custinfo setting for customers 
 DB: DBCHECK.CheckResultDB
 Revisions:
+			- 20201104@Tina: Store Sitename at Member level [Redmine: #143077]
 Param's Explanation: 
 
 */
@@ -200,6 +200,12 @@ SET NOCOUNT ON
 	FROM CheckCustDB.dbo.customer mem WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON mem.srecommend=ci.custid
 	WHERE mem.roleid=1 AND mem.srecommend=@srecommend AND mem.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate AND mem.currency<>ci.Currency 
+	--check site of member difference with site of Agent - member.site <> agent.site
+	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
+	SELECT 426,mem.Custid,GETDATE()
+	FROM CheckCustDB.dbo.customer mem WITH(NOLOCK)
+		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON mem.recommend=ci.custid
+	WHERE mem.roleid=1 AND mem.srecommend=@srecommend AND mem.[site] <> ci.[site]
 
 	INSERT INTO #DirectMaster (CustID,srecommend)
 	SELECT ci.custid,ci.srecommend
