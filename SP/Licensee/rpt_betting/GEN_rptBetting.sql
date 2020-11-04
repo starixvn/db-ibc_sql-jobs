@@ -35,6 +35,7 @@ AS
 		20191209@Percy: Enhance performance [RedmineID: #125028]
 		20200403@Parsons: Indo 4D Integration [RedmineID: #130910]
 		20200804@Sol: Include vsraceinfo14 [RedmineID: #135963]
+		20201029@Parsons: Add ExtraPT in Number Game Win Loss Report [RedmineID: #142969]
 
 	Param's Explanation:
 
@@ -62,8 +63,8 @@ BEGIN
 
 			INSERT INTO dbo.rpt_Betting
 			(
-				rptDate,SiteID,Bettype,LeagueID,CurrencyID,Status,IsLive,BetCount,MemberCount,Turnover,WinLoss,WinLossA,WinLossM,WinLossS
-				,CommissionP,CommissionA,CommissionM,CommissionS,WinLossVirtual,CommissionSVirtual,CustomerCategory,BuyBackAmount
+				rptDate,SiteID,Bettype,LeagueID,CurrencyID,Status,IsLive,BetCount,MemberCount,Turnover,WinLoss,WinLossA,WinLossM,WinLossS,WinLossE
+				,CommissionP,CommissionA,CommissionM,CommissionS,CommissionE,WinLossVirtual,CommissionSVirtual,CustomerCategory,BuyBackAmount
 				,WinPrizeAmount,CashOutAmount,oddsspread,TicketType,ExtraAmount
 			)
 			SELECT
@@ -86,10 +87,27 @@ BEGIN
 				,SUM(awinlost)				AS winlossA
 				,SUM(mwinlost)				AS winlossM
 				,SUM(swinlost)				AS winlossS
+				,SUM(-
+					CASE
+						-- Jackpot
+						WHEN b.bettype IN (2198, 2398, 2998, 4297) THEN
+							CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
+						WHEN b.bettype IN (2199, 2399, 2999, 4298) THEN 0
+						ELSE CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END
+					END * ISNULL(b.epositiontaking, 0)) AS WinLossE
 				,SUM(playercomm)			AS commissionP
 				,SUM(comm)					AS commissionA
 				,SUM(acomm)					AS commissionM
 				,SUM(scomm)					AS commissionS
+				,SUM(-
+					CASE 
+						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298) THEN 0
+						ELSE 
+							CASE 
+								WHEN b.tpositiontaking = 1 THEN 0 
+								ELSE b.scomm / (1 - b.tpositiontaking)
+							END
+					END * ISNULL(b.epositiontaking, 0))	AS CommissionE
 				,SUM((winlost-actual_stake)*virtualrate) AS WinLossVirtual
 				,SUM(scomm*virtualrate)		AS CommissionSVirtual
 				,b.customercategory
@@ -137,8 +155,8 @@ BEGIN
 
 			INSERT INTO dbo.rpt_Betting
 			(
-				rptDate,SiteID,Bettype,LeagueID,CurrencyID,Status,IsLive,BetCount,MemberCount,Turnover,WinLoss,WinLossA,WinLossM,WinLossS
-				,CommissionP,CommissionA,CommissionM,CommissionS,WinLossVirtual,CommissionSVirtual,CustomerCategory,BuyBackAmount
+				rptDate,SiteID,Bettype,LeagueID,CurrencyID,Status,IsLive,BetCount,MemberCount,Turnover,WinLoss,WinLossA,WinLossM,WinLossS,WinLossE
+				,CommissionP,CommissionA,CommissionM,CommissionS,CommissionE,WinLossVirtual,CommissionSVirtual,CustomerCategory,BuyBackAmount
 				,WinPrizeAmount,CashOutAmount,oddsspread,TicketType,ExtraAmount
 			)
 			SELECT
@@ -161,10 +179,27 @@ BEGIN
 				,SUM(awinlost)				AS winlossA
 				,SUM(mwinlost)				AS winlossM
 				,SUM(swinlost)				AS winlossS
+				,SUM(-
+					CASE
+						-- Jackpot
+						WHEN b.bettype IN (2198, 2398, 2998, 4297) THEN
+							CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
+						WHEN b.bettype IN (2199, 2399, 2999, 4298) THEN 0
+						ELSE CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END
+					END * ISNULL(b.epositiontaking, 0))	AS WinLossE
 				,SUM(playercomm)			AS commissionP
 				,SUM(comm)					AS commissionA
 				,SUM(acomm)					AS commissionM
 				,SUM(scomm)					AS commissionS
+				,SUM(-
+					CASE 
+						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298) THEN 0
+						ELSE 
+							CASE 
+								WHEN b.tpositiontaking = 1 THEN 0 
+								ELSE b.scomm / (1 - b.tpositiontaking)
+							END
+					END * ISNULL(b.epositiontaking, 0))	 AS CommissionE
 				,SUM((winlost-actual_stake)*virtualrate) AS WinLossVirtual
 				,SUM(scomm*virtualrate)		AS CommissionSVirtual
 				,b.customercategory

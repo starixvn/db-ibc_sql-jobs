@@ -14,6 +14,7 @@ AS
 		- 20191205@Percy: Split code from Task_PrepareStaging and Enhance performance [RedmineID: #125028]
 		- 20200102@Percy: Wrong update BA tickets [RedmineID: #126419]
 		- 20201005@Parsons: Saba.club - Offer Free Bets tickets [RedmineID: #141423]
+		- 20201029@Parsons: Add ExtraPT in Number Game Win Loss Report [RedmineID: #142969]
 */
 
 BEGIN
@@ -94,13 +95,13 @@ BEGIN
 			BEGIN
 				INSERT INTO dbo.bettrans
 				(
-					transid,winlostdate,liveindicator,bettype,custid,stake,actual_stake,winlost,awinlost,mwinlost,swinlost
+					transid,winlostdate,liveindicator,bettype,custid,stake,actual_stake,winlost,awinlost,mwinlost,swinlost,BetID,epositiontaking
 					,acomm,scomm,playercomm,comm,matchid,status,statusid,srecommend,currency,recommend,mrecommend,transdate
 					,virtualrate,discount,tpositiontaking,customercategory,isBA,refno,oddsspread,ExtraInfo,betdaqid,TicketType
 					,CashOutAmount
 				)
 				SELECT 
-					b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost
+					b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 					,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid
 					,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
 								THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399)
@@ -128,7 +129,7 @@ BEGIN
 					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
 				FROM @__matchIdsByBatch m
 					CROSS APPLY (
-						SELECT	b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,b.stake,b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost
+						SELECT	b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,b.stake,b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 								,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid,b.status,b.statusid,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
 								,b.virtualrate,b.discount,b.tpositiontaking,b.refno,b.oddsspread,b.ExtraInfo,b.betdaqid,b.modds,b.transid2,b.currency2
 						FROM bodb02.dbo.bettrans b (NOLOCK)
@@ -144,13 +145,13 @@ BEGIN
 			BEGIN
 				INSERT INTO dbo.bettrans
 				(
-					transid,winlostdate,liveindicator,bettype,custid,stake,actual_stake,winlost,awinlost,mwinlost,swinlost
+					transid,winlostdate,liveindicator,bettype,custid,stake,actual_stake,winlost,awinlost,mwinlost,swinlost,BetID,epositiontaking
 					,acomm,scomm,playercomm,comm,matchid,status,statusid,srecommend,currency,recommend,mrecommend,transdate
 					,virtualrate,discount,tpositiontaking,customercategory,isBA,refno,oddsspread,ExtraInfo,betdaqid,TicketType
 					,CashOutAmount
 				)
 				SELECT 
-					b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost
+					b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 					,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid
 					,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
 							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
@@ -176,7 +177,7 @@ BEGIN
 					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
 				FROM @__matchIdsByBatch m
 					CROSS APPLY (
-						SELECT	b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,b.stake,b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost
+						SELECT	b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,b.stake,b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 								,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid,b.status,b.statusid,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
 								,b.virtualrate,b.discount,b.tpositiontaking,b.refno,b.oddsspread,b.ExtraInfo,b.betdaqid,b.modds,b.transid2,b.currency2
 						FROM bodb02.dbo.bettrans b (NOLOCK)
@@ -231,13 +232,13 @@ BEGIN
 		BEGIN
 			INSERT INTO dbo.bettrans
 			(
-				transid,winlostdate,liveindicator,bettype,custid,stake,actual_stake,winlost,awinlost,mwinlost,swinlost
+				transid,winlostdate,liveindicator,bettype,custid,stake,actual_stake,winlost,awinlost,mwinlost,swinlost,BetID,epositiontaking
 				,acomm,scomm,playercomm,comm,matchid,status,statusid,srecommend,currency,recommend,mrecommend,transdate
 				,virtualrate,discount,tpositiontaking,customercategory,isBA,refno,oddsspread,ExtraInfo,betdaqid,TicketType
 				,CashOutAmount,CashInAmount,WinPrizeAmount
 			)
 			SELECT 
-				b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost
+				b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 				,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid
 				,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
 							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
@@ -272,13 +273,13 @@ BEGIN
 		BEGIN
 			INSERT INTO dbo.bettrans
 			(
-				transid,winlostdate,liveindicator,bettype,custid,stake,actual_stake,winlost,awinlost,mwinlost,swinlost
+				transid,winlostdate,liveindicator,bettype,custid,stake,actual_stake,winlost,awinlost,mwinlost,swinlost,BetID,epositiontaking
 				,acomm,scomm,playercomm,comm,matchid,status,statusid,srecommend,currency,recommend,mrecommend,transdate
 				,virtualrate,discount,tpositiontaking,customercategory,isBA,refno,oddsspread,ExtraInfo,betdaqid,TicketType
 				,CashOutAmount,CashInAmount,WinPrizeAmount
 			)
 			SELECT 
-				b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost
+				b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 				,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid
 				,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
 							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
