@@ -13,6 +13,7 @@ AS
 		- 20180926@Patrick:	Initial - [RedmineId: #101207]
 		- 20190806@Patrick: Add transfer_bk - [RedmineId: #118277] 
 		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
+		- 20200728@Brice:	Add 13 tables - [Redmine: #111093]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -75,6 +76,94 @@ BEGIN
 		AND winlostdate = @DateCheck AND custid <> 0
 		AND (winlost + actual_stake) <> 0
 
+	---------------------------------20200728@Brice:	Add 13 tables - [Redmine: #111093]--------------------------------------
+	--//TicketVoiding_VoidedTransaction
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'TicketVoiding_VoidedTransaction'
+	FROM dbo.TicketVoiding_VoidedTransaction AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
+						WHERE tbl.transid = t2.transid AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 AND t2.winlostdate = @DateCheck)
+			OR EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType AND t3.bettype != 29
+						WHERE tbl.transid = t2.refno AND t3.ProductID =1 AND t2.statusID=102 AND t2.winlostdate = @DateCheck)
+			OR EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.bettransm14 t4 WITH (NOLOCK) on t2.refno=t4.refno
+					WHERE tbl.transid = t2.transid AND t2.bettype in (29,2799) AND tbl.MatchId!=0 AND tbl.MatchId=t4.MatchId AND t4.statusID=102 AND t2.winlostdate = @DateCheck);
+	--//TicketVoiding_Reason
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'TicketVoiding_Reason'
+	FROM dbo.TicketVoiding_Reason AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.TicketVoiding_VoidingHistory AS t2 WITH (NOLOCK) CROSS JOIN dbo.TicketVoiding_RequestDetail AS t3 WITH (NOLOCK) CROSS JOIN dbo.match14 t4 WITH(NOLOCK) WHERE tbl.ReasonId=t2.ReasonId and t2.RequestId = t3.RequestId AND t3.matchid = t4.matchid AND t4.eventdate = @DateCheck);
+	
+	--//TicketVoiding_VoidingHistory
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'TicketVoiding_VoidingHistory'
+	FROM dbo.TicketVoiding_VoidingHistory AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.TicketVoiding_RequestDetail AS t3 WITH (NOLOCK) CROSS JOIN dbo.match14 t4 WITH(NOLOCK) WHERE tbl.RequestId = t3.RequestId AND t3.matchid = t4.matchid AND t4.eventdate = @DateCheck);
+	
+	--//TicketVoiding_Queue
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'TicketVoiding_Queue'
+	FROM dbo.TicketVoiding_Queue AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.TicketVoiding_RequestDetail AS t3 WITH (NOLOCK) CROSS JOIN dbo.match14 t4 WITH(NOLOCK) WHERE tbl.RequestId = t3.RequestId AND t3.matchid = t4.matchid AND t4.eventdate = @DateCheck);
+	
+	--//TicketVoiding_OperatorInfo
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'TicketVoiding_OperatorInfo'
+	FROM dbo.TicketVoiding_OperatorInfo AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.TicketVoiding_RequestDetail AS t3 WITH (NOLOCK) CROSS JOIN dbo.match14 t4 WITH(NOLOCK) WHERE tbl.RequestId = t3.RequestId AND t3.matchid = t4.matchid AND t4.eventdate = @DateCheck);
+	
+	--//TicketVoiding_Request
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'TicketVoiding_Request'
+	FROM dbo.TicketVoiding_Request AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.TicketVoiding_RequestDetail AS t3 WITH (NOLOCK) CROSS JOIN dbo.match14 t4 WITH(NOLOCK) WHERE tbl.RequestId = t3.RequestId AND t3.matchid = t4.matchid AND t4.eventdate = @DateCheck);
+	
+	--//TicketVoiding_AutoUnmarkSetting
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'TicketVoiding_AutoUnmarkSetting'
+	FROM dbo.TicketVoiding_AutoUnmarkSetting AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match14 t4 WITH(NOLOCK) WHERE tbl.matchid = t4.matchid AND t4.eventdate = @DateCheck);
+	
+	--//TicketVoiding_AutoVoidRequest_Queue
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'TicketVoiding_AutoVoidRequest_Queue'
+	FROM dbo.TicketVoiding_AutoVoidRequest_Queue AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match14 t4 WITH(NOLOCK) WHERE tbl.matchid = t4.matchid AND t4.eventdate = @DateCheck);
+	
+	--//zzzbettrans
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'zzzbettrans'
+	FROM dbo.zzzbettrans AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
+					WHERE tbl.transid = t2.transid AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 AND t2.winlostdate = @DateCheck)
+		OR EXISTS (SELECT 1 FROM dbo.bettransm14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
+					WHERE tbl.transid = t2.transid AND t3.ProductID IN (1,27) AND t2.statusID=102 AND t2.winlostdate = @DateCheck);	
+	
+	--//zzzbettransM
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'zzzbettransM'
+	FROM dbo.zzzbettransM AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.bettransm14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
+					WHERE tbl.transid = t2.transid AND t3.ProductID IN (1,27) AND t2.statusID=102 AND t2.winlostdate = @DateCheck);
+	
+	--//TicketVoiding_RequestDetail
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'TicketVoiding_RequestDetail'
+	FROM dbo.TicketVoiding_RequestDetail AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match14 t4 WITH(NOLOCK) WHERE tbl.matchid = t4.matchid AND t4.eventdate = @DateCheck);
+	
+	--//TicketVoiding_RequestDetailTicket_Single
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'TicketVoiding_RequestDetailTicket_Single'
+	FROM dbo.TicketVoiding_RequestDetailTicket_Single AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.TicketVoiding_RequestDetail AS t3 WITH (NOLOCK) CROSS JOIN dbo.match14 t4 WITH(NOLOCK) WHERE tbl.RequestId = t3.RequestId AND t3.matchid = t4.matchid AND t4.eventdate = @DateCheck);
+	
+	--//TicketVoiding_RequestDetailTicket_SubParlay
+	INSERT INTO @__tempCount(rowcnt, tableName)
+	select COUNT(1), 'TicketVoiding_RequestDetailTicket_SubParlay'
+	FROM dbo.TicketVoiding_RequestDetailTicket_SubParlay AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.TicketVoiding_RequestDetail AS t3 WITH (NOLOCK) CROSS JOIN dbo.match14 t4 WITH(NOLOCK) WHERE tbl.RequestId = t3.RequestId AND t3.matchid = t4.matchid AND t4.eventdate = @DateCheck);
+	
+	---------------------------------/20200728@Brice:	Add 11 tables - [Redmine: #111093]--------------------------------------
 	--//
 	SELECT @OutputData = (
 		SELECT rowcnt AS r, tableName AS t
