@@ -205,7 +205,7 @@ SET NOCOUNT ON
 	SELECT 426,mem.Custid,GETDATE()
 	FROM CheckCustDB.dbo.customer mem WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON mem.recommend=ci.custid
-	WHERE mem.roleid=1 AND mem.srecommend=@srecommend AND mem.[site] <> ci.[site]
+	WHERE mem.roleid=1 AND mem.srecommend=@srecommend AND (mem.[site] <> ci.[site] OR mem.[site] IS NULL)
 
 	INSERT INTO #DirectMaster (CustID,srecommend)
 	SELECT ci.custid,ci.srecommend
