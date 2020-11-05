@@ -17,6 +17,8 @@ AS
 	Revision:
 		- 20161027@Helen: Apply Service Broker for Writing Log [Redmine: #65806]
 		- 20190530@Paul: Correct param name [Redmine: #113198]
+		- 20201012@Louisa : Update new email domain starixvn.com [Redmine:#143284]
+
 */
 BEGIN
 
@@ -47,22 +49,22 @@ BEGIN
 	IF @@SERVERNAME IN ('DB215','DB231')
 	BEGIN
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients=N'elodie.ho@starixsoft.com',
+			@recipients=N'elodie.ho@starixvn.com',
 			@body=@body,
 			@sensitivity ='Personal',
 			@importance ='High',
-			--@copy_recipients ='lukas.luu@starixsoft.com',
+			--@copy_recipients ='lukas.luu@starixvn.com',
 			@subject =@subject,
 			@profile_name =@profile_name;
 	END
 	ELSE
 	BEGIN
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients=N'pontus@starixsoft.com',
+			@recipients=N'pontus@starixvn.com',
 			@body=@body,
 			@sensitivity ='Personal',
 			@importance ='High',
-			--@copy_recipients ='lukas.luu@starixsoft.com',
+			--@copy_recipients ='lukas.luu@starixvn.com',
 			@subject =@subject,
 			@profile_name =@profile_name;
 	END
