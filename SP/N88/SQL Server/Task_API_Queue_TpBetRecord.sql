@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20200520@Percy: Initialize SP [RedmineID: #133254]
 		- 20200818@Percy: Add column ValidBet [RedmineID: #137395]
+		- 20201105@Percy: Remove duplicate data from API [RedmineID: #144888]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -57,7 +58,7 @@ BEGIN
 		,TicketKey		BIGINT
 		,CreateTime		DATETIME
 		,DataType		TINYINT DEFAULT ((1)) -- 0: update, 1: insert
-		,PRIMARY KEY (TpId, TransId, GameType)
+		--,PRIMARY KEY (TpId, TransId, GameType)
 	)
 
 	WHILE
@@ -128,6 +129,15 @@ BEGIN
 					,t.c.value('@createtime', 'DATETIME')
 				FROM @XmlData.nodes('transaction/trans') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
+
+				-- Remove duplicate data
+				DELETE t
+				FROM (
+					SELECT TpId, TransId, GameType
+						,ROW_NUMBER() OVER(PARTITION BY TpId, TransId, GameType ORDER BY SettledTime DESC) AS RN
+					FROM #tmpTpBetRecord
+				) t
+				WHERE RN > 1
 
 				-- Update DataType for update
 				UPDATE t
