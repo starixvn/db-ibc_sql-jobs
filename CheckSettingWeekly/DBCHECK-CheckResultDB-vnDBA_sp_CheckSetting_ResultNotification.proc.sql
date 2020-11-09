@@ -1842,3 +1842,4 @@ Check Setting Result:' + ISNULL(N'
 			,	#CheckResultWinLimitAgg
 			;
 END;
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
