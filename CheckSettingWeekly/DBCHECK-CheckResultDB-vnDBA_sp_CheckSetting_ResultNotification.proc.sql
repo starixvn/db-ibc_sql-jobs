@@ -1,7 +1,11 @@
-SET ANSI_NULLS ON;
-SET	QUOTED_IDENTIFIER ON;
+USE [checkResultDB]
 GO
-CREATE PROCEDURE	dbo.vnDBA_sp_CheckSetting_ResultNotification
+/****** Object:  StoredProcedure [dbo].[vnDBA_sp_CheckSetting_ResultNotification]    Script Date: 11/6/2020 2:30:47 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE	[dbo].[vnDBA_sp_CheckSetting_ResultNotification]
 					@to					VARCHAR(MAX)	= 'pontus@starixvn.com'
 				,	@cc					VARCHAR(MAX)	= ''
 				,	@bcc				VARCHAR(MAX)	= ''
@@ -30,6 +34,7 @@ AS
 		- 20200804@Daniel:	Exclude ignored cust from bet limit result based on destination CustB - [Redmine: #138389]
 		- 20200821@Daniel:	Fix stake level list incompartible data type Value A,B in #CheckResultStakeLevel
 		- 20201106@Brice:	change starixsoft to starixvn - [Redmine: #143607]
+
 	Test command:
 	EXECUTE dbo.vnDBA_sp_CheckSetting_ResultNotification_xtest
 	@to = 'daniel.truong@starixvn.com'
@@ -240,7 +245,7 @@ BEGIN;
 
 	INSERT INTO	@Sports (SportType, SportName)
 	SELECT	SportType, SportName
-	FROM	OPENQUERY(DB02KBT, '
+	FROM	OPENQUERY(KBTDB02, '
 SELECT	SportType, SportName
 FROM	bodb02.dbo.Sports WITH (NOLOCK);
 ');
@@ -1818,7 +1823,7 @@ Check Setting Result:' + ISNULL(N'
 									THEN 1 ELSE 2 END
 			;
 
-		EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage
+		EXECUTE	NotificationDB.dbo.DBA_Letstalk_NewJobMessage
 					@ServerName	= @@SERVERNAME
 				,	@JobId		= NULL
 				,	@JobName	= @subject
@@ -1837,4 +1842,3 @@ Check Setting Result:' + ISNULL(N'
 			,	#CheckResultWinLimitAgg
 			;
 END;
-/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
