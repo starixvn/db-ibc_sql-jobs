@@ -1,7 +1,4 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
-USE bodb_LicenseeReport
-GO
-
 ALTER PROCEDURE [dbo].[Task_rptDepWinlost_ThirdParty_CheckData]
 	@WinlostDate		SMALLDATETIME,
 	@HasDataMismatch	TINYINT OUTPUT, --0: No mismatch; 1: Has real currencies; 2: UUS only
@@ -19,6 +16,7 @@ AS
 		- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
 		- 20190625@Percy: Temporary adding DBLIC on OAS_ChargeInfo and related functions [RedmineID: #103658]
 		- 20190724@Percy: Remove adding DBLIC on OAS_ChargeInfo and related functions [RedmineID: #103658]
+		- 20200818@Percy: Change EventType's data type from smallint to int [RedmineID: #138524]
 
 	DECLARE @HasDataMismatch	TINYINT, @ProductID VARCHAR(MAX)
 	EXEC Task_rptDepWinlost_ThirdParty_CheckData @WinlostDate = '2018-04-09', @HasDataMismatch = @HasDataMismatch OUTPUT, @ProductIDs = @ProductID OUTPUT
@@ -45,7 +43,7 @@ BEGIN
 		CommissionP		MONEY,
 		CommissionA		MONEY,
 		ValidBetAmount	MONEY,
-		EventType		SMALLINT,
+		EventType		INT,
 		Bettype			SMALLINT
 	)
 
@@ -63,7 +61,7 @@ BEGIN
 		CommissionP		MONEY,
 		CommissionA		MONEY,
 		ValidBetAmount	MONEY,
-		EventType		SMALLINT,
+		EventType		INT,
 		Bettype			SMALLINT
 	)
 
@@ -84,7 +82,7 @@ BEGIN
 		ValidBetAmount	MONEY,
 		CommissionP		MONEY,
 		CommissionA		MONEY,
-		EventType		SMALLINT
+		EventType		INT
 	)
 							
 	CREATE TABLE #DetailData 
@@ -97,7 +95,7 @@ BEGIN
 		BetCount		INT,
 		Lay				MONEY,
 		Back			MONEY,
-		EventType		SMALLINT
+		EventType		INT
 	)
 
 	CREATE TABLE #ChargeRate 
@@ -355,7 +353,7 @@ BEGIN
 	TRUNCATE TABLE #Source
 	TRUNCATE TABLE #Target
 	
-	CREATE TABLE #LogPerformance(TableName VARCHAR(100), IsSource BIT, CurrencyId INT, BetTypeId INT, EventType SMALLINT, Turnover MONEY, Winloss MONEY, BetCount INT, ExtraInfo VARCHAR(MAX));
+	CREATE TABLE #LogPerformance(TableName VARCHAR(100), IsSource BIT, CurrencyId INT, BetTypeId INT, EventType INT, Turnover MONEY, Winloss MONEY, BetCount INT, ExtraInfo VARCHAR(MAX));
 	
 	-- For Exchange Performance
 	INSERT INTO #Source

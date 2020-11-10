@@ -1,7 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdProduct" executers="" viewers="" isFunction="0" isNested="1"></info>*/
-USE [bodb_3rdProduct]
-GO
-
+/*<info serverAlias="DBLIC-bodb_3rdProduct" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_Product3rd_ImportQueue_ProcessData]
 	@QueueIDInput	BIGINT = 0,
 	@ProductID		INT,
@@ -19,6 +16,7 @@ AS
 		- 20171117@Percy: Initialize SP [RedmineID: #86477]
 		- 20180507@Percy: Update condition of resettledDate for case re-import manually [RedmineID: #94555]
 		- 20190401@Percy: Update JobType correctly [RedmineID: #110692]
+		- 20200818@Percy: Integrate Fancy Bet [RedmineID: #138524]
 
 	Param's Explanation:
 		@QueueID: manually import
@@ -45,7 +43,7 @@ BEGIN
 	(
 		site			TINYINT NULL,
 		currencyType	TINYINT NULL,
-		eventType		SMALLINT NULL,
+		eventType		INT NULL,
 		eventTypeName	VARCHAR(50) NULL,
 		eventName		VARCHAR(500) NULL,
 		eventID			INT NULL,
@@ -67,11 +65,14 @@ BEGIN
 		profitLoss		MONEY NULL,
 		dateMatched		DATETIME NULL,
 		betstatus		VARCHAR(15) NULL,
+		categoryType	SMALLINT NULL,
+		fancyBetRuns	MONEY NULL,
 		-- for BettransM_Exchange
 		betTaken		DATETIME NULL,
 		txStake			MONEY NULL,
 		txOddsMatched	SMALLMONEY NULL,
 		actualOdds		SMALLMONEY NULL,
+		txFancyBetRuns	MONEY NULL,
 		-- for checking existing custid
 		custId			VARCHAR(16) NULL,
 		-- for group betId
@@ -435,17 +436,20 @@ BEGIN
 							profitLoss,
 							dateMatched,
 							betstatus,
+							categoryType,
+							fancyBetRuns,
 							betTaken,
 							txStake,
 							txOddsMatched,
 							actualOdds,
+							txFancyBetRuns,
 							custid,
 							groupRow
 						)
 						SELECT
 							t.c.value('@site', 'TINYINT') AS site,
 							t.c.value('@currencyType', 'TINYINT') AS currencyType,
-							t.c.value('@eventType', 'SMALLINT') AS eventType,
+							t.c.value('@eventType', 'INT') AS eventType,
 							t.c.value('@eventTypeName', 'VARCHAR(50)') AS eventTypeName,
 							t.c.value('@eventName', 'VARCHAR(500)') AS eventName,
 							t.c.value('@eventId', 'INT') AS eventId,
@@ -467,11 +471,14 @@ BEGIN
 							t.c.value('@profitLoss', 'MONEY') AS profitLoss,
 							NULLIF(t.c.value('@dateMatched', 'DATETIME'), '') AS dateMatched,
 							t.c.value('@betstatus', 'VARCHAR(15)') AS betstatus,
+							t.c.value('@categoryType', 'SMALLINT') AS categoryType,
+							t.c.value('@fancyBetRuns', 'MONEY') AS fancyBetRuns,
 							-- for detail
 							t1.c1.value('@betTaken', 'DATETIME') AS betTaken,
 							t1.c1.value('@txStake', 'MONEY') AS txStake,
 							t1.c1.value('@txOddsMatched', 'SMALLMONEY') AS txOddsMatched,
 							t1.c1.value('@actualOdds', 'SMALLMONEY') AS actualOdds,
+							t1.c1.value('@txFancyBetRuns', 'MONEY') AS txFancyBetRuns,
 							REPLACE(REPLACE(REPLACE(t.c.value('@userId', 'VARCHAR(16)'), 'poc', ''), 'sit', ''), 'uat', '') AS custID,
 							-- group by t.c
 							DENSE_RANK() OVER(ORDER BY t.c) AS groupRow
@@ -514,7 +521,7 @@ BEGIN
 									site,currencyType,eventType,eventTypeName,eventName,eventID,marketName,marketID,
 									selectionName,selectionID,matchType,betID,betPlaced,ip,matchOddsReq,
 									unMatchAmount,reduction,userId,extension1,
-									matchStake,matchAvgOdds,profitLoss,dateMatched,betstatus
+									matchStake,matchAvgOdds,profitLoss,dateMatched,betstatus,categoryType,fancyBetRuns
 								FROM
 								(
 									SELECT *, ROW_NUMBER() OVER(PARTITION BY groupRow ORDER BY (SELECT NULL)) AS rownum
@@ -528,7 +535,7 @@ BEGIN
 								site,currencyType,eventType,eventTypeName,eventName,eventID,marketName,marketID,
 								selectionName,selectionID,matchType,betID,betPlaced,ip,matchOddsReq,
 								unMatchAmount,reduction,userId,extension1,
-								matchStake,matchAvgOdds,profitLoss,dateMatched,betstatus
+								matchStake,matchAvgOdds,profitLoss,dateMatched,betstatus,categoryType,fancyBetRuns
 							)
 							ON s.betId = src.betId
 						WHEN MATCHED THEN
@@ -557,6 +564,8 @@ BEGIN
 								s.profitLoss = src.profitLoss,
 								s.dateMatched = src.dateMatched,
 								s.betstatus = src.betstatus,
+								s.categoryType = src.categoryType,
+								s.fancyBetRuns = src.fancyBetRuns,
 								s.APIEndDate = CASE WHEN @JobType = 2 THEN @endDate ELSE NULL END
 						WHEN NOT MATCHED THEN
 							INSERT
@@ -564,14 +573,14 @@ BEGIN
 								site,currencyType,eventType,eventTypeName,eventName,eventID,marketName,marketID,
 								selectionName,selectionID,matchType,betID,betPlaced,ip,matchOddsReq,
 								unMatchAmount,reduction,userId,extension1,
-								matchStake,matchAvgOdds,profitLoss,dateMatched,betstatus,APIEndDate
+								matchStake,matchAvgOdds,profitLoss,dateMatched,betstatus,categoryType,fancyBetRuns,APIEndDate
 							)
 							VALUES
 							(
 								src.site,src.currencyType,src.eventType,src.eventTypeName,src.eventName,src.eventID,src.marketName,src.marketID,
 								src.selectionName,src.selectionID,src.matchType,src.betID,src.betPlaced,src.ip,src.matchOddsReq,
 								src.unMatchAmount,src.reduction,src.userId,src.extension1,
-								src.matchStake,src.matchAvgOdds,src.profitLoss,src.dateMatched,src.betstatus,CASE WHEN @JobType = 2 THEN @endDate ELSE NULL END
+								src.matchStake,src.matchAvgOdds,src.profitLoss,src.dateMatched,src.betstatus,categoryType,fancyBetRuns,CASE WHEN @JobType = 2 THEN @endDate ELSE NULL END
 							)
 						OUTPUT INSERTED.betID INTO @updated_betId (betId);
 
@@ -586,9 +595,9 @@ BEGIN
 						
 						INSERT INTO dbo.BettransM_Exchange
 						(
-							betId,betTaken,txStake,txOddsMatched,actualOdds
+							betId,betTaken,txStake,txOddsMatched,actualOdds,txFancyBetRuns
 						)
-						SELECT betId,betTaken,txStake,txOddsMatched,actualOdds
+						SELECT betId,betTaken,txStake,txOddsMatched,actualOdds,txFancyBetRuns
 						FROM #tmpBettrans_Exchange tmp
 						WHERE EXISTS (SELECT 1 FROM @updated_betId b WHERE tmp.betID = b.betId)
 
@@ -679,28 +688,6 @@ BEGIN
 			IF ISNULL(@winlostdatelist, '') <> ''
 				EXEC dbo.Product3rd_SummarizedDateHistory_Ins @winlostdatelist = @winlostdatelist
 		END
-		
-		-- Case wrong data -- 
-		/*
-		/* SIT: ignore case, send mail */
-		DECLARE @Subject VARCHAR(1000) = '', @Message VARCHAR(MAX) = ''
-
-		IF 1 IN (@isInvalidUserId, @isDuplicatedBetId)
-		BEGIN
-			SELECT @Subject = 'SQL Server Job System: ''Import data of Exchange API'' had wrong data on ' + @@SERVERNAME
-			
-			SELECT @Message = 'QueueID = ' + CONVERT(VARCHAR(20), @QueueID)
-								+ CASE WHEN @isInvalidUserId = 1 THEN ' - Wrong format userId' ELSE '' END
-								+ CASE WHEN @isDuplicatedBetId = 1 THEN ' - Duplicated betId' ELSE '' END
-			
-			EXEC msdb.dbo.sp_send_dbmail
-				@recipients		= 'jamie.dao@starixsoft.com;percy.nguyen@starixsoft.com',
-				@subject		= @subject,
-				@body			= @Message,
-				@body_format	= 'HTML'
-		END
-		-- End case wrong data
-		*/
 
 		IF @QueueIDInput <> 0
 			BREAK
@@ -715,4 +702,3 @@ BEGIN
 	DROP TABLE #tmpSum_winloss_Exchange_Detail
 END
 GO
-

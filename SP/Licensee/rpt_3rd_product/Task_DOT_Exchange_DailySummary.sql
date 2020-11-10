@@ -16,6 +16,7 @@ AS
 		- 20190625@Percy: Temporary adding DBLIC on OAS_ChargeInfo and related functions [RedmineID: #103658]
 		- 20190724@Percy: Remove DBLIC on OAS_ChargeInfo and related functions [RedmineID: #103658]
 		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
+		- 20200818@Percy: Change EventType's data type from smallint to int [RedmineID: #138524]
 	
 	Param's Explanation:
 		- @winlostdate: The date need to summary
@@ -136,7 +137,7 @@ BEGIN TRY
 								CommissionP		MONEY,
 								CommissionA		MONEY,
 								EventTypeName   Nvarchar(50), 
-								EventType 		SMALLINT
+								EventType 		INT
 							)
 							
 	CREATE TABLE #DetailData (	
@@ -149,7 +150,7 @@ BEGIN TRY
 								Lay				MONEY,
 								Back			MONEY,
 								EventTypeName   Nvarchar(50),
-								EventType 		SMALLINT
+								EventType 		INT
 							)
 	
 	CREATE TABLE #TicketDataForDataWarehouse (
@@ -323,4 +324,3 @@ BEGIN CATCH
 	RETURN
 END CATCH
 GO
-GRANT EXECUTE ON [dbo].[Task_DOT_Exchange_DailySummary] TO [dwrs2] AS [dbo]
