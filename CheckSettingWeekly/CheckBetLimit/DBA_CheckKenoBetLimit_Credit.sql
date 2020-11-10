@@ -1,4 +1,4 @@
-
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -12,7 +12,7 @@ Created: 20180808@Johnson
 Task: weekly check Keno bet limit setting for credit/deposit customers - [Redmine:73556]
 DB: DB054.CheckResultDB
 Revisions:
-	
+	- 09112020@Winfred : Modify Check GameType for Keno - [Redmine:145003]
 Param's Explanation: 
 
 CustGameType
@@ -33,26 +33,13 @@ BEGIN
 		INSERT INTO @GameType (SportType,GameTypeID)
 		SELECT SportType, GameTypeID
 		FROM CheckCustDB.dbo.GameType WITH(NOLOCK)
-		WHERE GameTypeID NOT IN (2,7,9)-- exclude not offered games
-			AND sportType = 202
+		WHERE sportType = 202 AND IsDisabled = 0 AND GameTypeID BETWEEN 1 AND 99
 	END TRY
 	BEGIN CATCH
-		DECLARE @tmpID TABLE(ID INT IDENTITY(1,1),custID INT)
-		DECLARE	@GameTypeID_max INT
-				
-		INSERT INTO @tmpID(custID)
-		SELECT TOP(100) custid--keno only has 100 games from 1 to 100
-		FROM CheckCustDB.dbo.custInfo WITH(NOLOCK)
-		
-		SELECT @GameTypeID_max = max(GameTypeID)
-		FROM CheckCustDB.dbo.CustGameType CPS (NOLOCK)
-		WHERE GameTypeID < 100--keno
-		
 		INSERT INTO @GameType (SportType,GameTypeID)
-		SELECT 202 as sportType, ID as GameTypeID
-		FROM @tmpID
-		WHERE ID <= @GameTypeID_max
-			AND ID NOT IN (2,7,9)-- exclude not offered games
+		SELECT 202 as sportType, GameTypeID as GameTypeID 
+		FROM DBACC.bodb02.dbo.GameType WITH(NOLOCK)	
+		WHERE IsDisabled = 0 AND GameTypeID BETWEEN 1 AND 99
 	END CATCH
 	
 	INSERT INTO #CGT_Super (custID,SportType,GameTypeID,minbet,maxbet,MaxPerGameType)

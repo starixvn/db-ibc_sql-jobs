@@ -18,7 +18,8 @@ Revisions:
 	- 20190610@Johnson: add rule 36,37 for dummy super [redmine: #114675]
 	- 20191106@Winnie: 3rd party products - Remove InActive Products Phase 2  - [Redmine: #118699]
 	- 20200422@Elodie: Apply rule 72 S4 = M4 = A4 = 0 [Redmine: #132604]
-
+	- 09112020@Winfred : Modify Check GameType for Keno - [Redmine:145003]
+	
 Param's Explanation: 
 	@RuleId = 0 : 'all' 
 	IF @sporttype IN (255) (GoldDeluxe) THEN @RuleId IN (1, 5, 6, 7, 8, 9, 10, 17, 18, 19, 20, 23, 24, 28, 30, 31 )
@@ -31,6 +32,21 @@ BEGIN
 	CREATE TABLE #MasterPT (CustID INT, srecommend INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY)
 	CREATE TABLE #SuperPT (CustID INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY)
 	CREATE TABLE #DirectMaster (CustID INT)
+	
+	DECLARE @GameTypeKeno TABLE(SportType INT, GameTypeID SMALLINT, BetType SMALLINT)
+	
+	BEGIN TRY
+		INSERT INTO @GameTypeKeno (SportType,GameTypeID,BetType)
+		SELECT SportType, GameTypeID,IBCBetTypeID
+		FROM CheckCustDB.dbo.GameType WITH(NOLOCK)
+		WHERE sportType = 202 AND IsDisabled = 0 AND GameTypeID BETWEEN 1 AND 99
+	END TRY
+	BEGIN CATCH
+		INSERT INTO @GameTypeKeno (SportType,GameTypeID,BetType)
+		SELECT 202 as sportType, GameTypeID as GameTypeID ,IBCBetTypeID
+		FROM DBACC.bodb02.dbo.GameType WITH(NOLOCK)	
+		WHERE IsDisabled = 0 AND GameTypeID BETWEEN 1 AND 99
+	END CATCH
 	
 	DECLARE @RowCount TINYINT,
 		@isDummySuper BIT = 0
@@ -428,6 +444,7 @@ BEGIN
 			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)
 				SELECT	32 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId, cs.spositiontaking, 0.85, 0
 				FROM	#SuperPT cs
+				INNER JOIN @GameTypeKeno kn on cs.sporttype = kn.SportType AND cs.bettype = kn.BetType
 				WHERE	cs.SportType = 202					
 					AND cs.spositiontaking > 0.85
 			END
