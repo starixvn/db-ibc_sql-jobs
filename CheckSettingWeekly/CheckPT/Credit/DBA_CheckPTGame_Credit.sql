@@ -44,7 +44,7 @@ BEGIN
 	BEGIN CATCH
 		INSERT INTO @GameTypeKeno (SportType,GameTypeID,BetType)
 		SELECT 202 as sportType, GameTypeID as GameTypeID ,IBCBetTypeID
-		FROM DBACC.bodb02.dbo.GameType WITH(NOLOCK)	
+		FROM KBTDB061.bodb02.dbo.GameType WITH(NOLOCK)	
 		WHERE IsDisabled = 0 AND GameTypeID BETWEEN 1 AND 99
 	END CATCH
 	
