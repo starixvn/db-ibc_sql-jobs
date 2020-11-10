@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20200716@Percy: Initialize SP [RedmineID: #137395]
 		- 20200818@Percy: Add new columns: Flag, Operator, UpdateTime [RedmineID: #137395]
+		- 20201109@Percy: Update FirstDeposit info [RedmineID: #145020]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -35,6 +36,10 @@ BEGIN
 			,@XmlData	XML
 			,@LogDesc	VARCHAR(2000) = NULL
 			,@numOftry	TINYINT
+
+	DECLARE @N88_TimeZone	INT
+			,@N8B_TimeZone	INT
+			,@N8G_TimeZone	INT
 
 	CREATE TABLE #tmpDepositInfo
 	(
@@ -66,6 +71,18 @@ BEGIN
 		,PRIMARY KEY (DepositId)
 	)
 
+	CREATE TABLE #tmpFirstDeposit
+	(
+		CustId		INT
+		,SiteId		INT
+		,CreateTime	DATETIME
+		,Amount		DECIMAL(18,4)
+	)
+
+	SELECT @N88_TimeZone = SValue FROM Affiliate_N88.dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
+	SELECT @N8B_TimeZone = SValue FROM Affiliate_N8B.dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
+	SELECT @N8G_TimeZone = SValue FROM Affiliate_N8G.dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
+
 	WHILE
 	(
 		@QueueIDInput <> 0
@@ -89,6 +106,7 @@ BEGIN
 		BEGIN
 			-- Reset temp data
 			TRUNCATE TABLE #tmpDepositInfo
+			TRUNCATE TABLE #tmpFirstDeposit
 
 			BEGIN TRY
 				-- Parse XML Data
@@ -271,6 +289,58 @@ BEGIN
 							,UpdateTime
 						FROM #tmpDepositInfo
 						WHERE DataType = 1
+					END
+
+					-- Update FirstDeposit info
+					IF EXISTS (SELECT 1 FROM #tmpDepositInfo WHERE FirstDeposit = 1 AND Status = 3)
+					BEGIN
+						INSERT INTO #tmpFirstDeposit (CustId, SiteId, CreateTime, Amount)
+						SELECT CustId, SiteId, CreateTime, Amount
+						FROM (
+							SELECT CustId, SiteId, CreateTime, Amount
+								,ROW_NUMBER() OVER(PARTITION BY CustId ORDER BY CreateTime) AS RN
+							FROM #tmpDepositInfo
+							 WHERE FirstDeposit = 1
+								AND Status = 3
+						) t
+						WHERE RN = 1
+
+						UPDATE c WITH (ROWLOCK)
+						SET c.FirstDepositDate = t.CreateTime
+							,c.FirstDepositAmount = t.Amount
+						FROM dbo.Customer c
+							INNER JOIN #tmpFirstDeposit t ON c.CustId = t.CustId
+
+						-- Update for affiliate
+						IF EXISTS (SELECT 1 FROM #tmpFirstDeposit WHERE SiteId = 1)
+						BEGIN
+							UPDATE mi WITH (ROWLOCK)
+							SET mi.FirstDepositDate = DATEADD(HOUR, @N88_TimeZone, t.CreateTime)
+								,mi.FirstDepositAmount = t.Amount
+							FROM Affiliate_N88.dbo.MemberInfo mi
+								INNER JOIN #tmpFirstDeposit t ON mi.CustId = t.CustId
+							WHERE t.SiteId = 1
+						END
+
+						IF EXISTS (SELECT 1 FROM #tmpFirstDeposit WHERE SiteId = 2)
+						BEGIN
+							UPDATE mi WITH (ROWLOCK)
+							SET mi.FirstDepositDate = DATEADD(HOUR, @N8G_TimeZone, t.CreateTime)
+								,mi.FirstDepositAmount = t.Amount
+							FROM Affiliate_N8G.dbo.MemberInfo mi
+								INNER JOIN #tmpFirstDeposit t ON mi.CustId = t.CustId
+							WHERE t.SiteId = 2
+						END
+
+						IF EXISTS (SELECT 1 FROM #tmpFirstDeposit WHERE SiteId = 3)
+						BEGIN
+							UPDATE mi WITH (ROWLOCK)
+							SET mi.FirstDepositDate = DATEADD(HOUR, @N8B_TimeZone, t.CreateTime)
+								,mi.FirstDepositAmount = t.Amount
+							FROM Affiliate_N8B.dbo.MemberInfo mi
+								INNER JOIN #tmpFirstDeposit t ON mi.CustId = t.CustId
+							WHERE t.SiteId = 3
+						END
 					END
 				END
 
