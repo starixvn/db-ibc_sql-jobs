@@ -18,6 +18,7 @@ AS
 		- 20200708@Sol: Generate data for sum_winloss table - Redmine: [#136320]
 		- 20200820@Sol: enhence performance when statistics are not updated yet - Redmine: [#136320]
 		- 20200910@Malcolm: Report Enhancement for Jackpot Product [RedmineID : #139575]
+		- 20200915@Malcolm: Add WM Live Casino [redmine: #131584]
 */
 
 BEGIN
@@ -200,7 +201,7 @@ BEGIN
 			,SUM(CASE
 					WHEN bt.ProductId = 1 AND b.statusID IN (112, 113) AND b.modds IN (-0.25, 0.25) THEN ABS(b.stake) / 2 -- SportsBook
 					WHEN bt.ProductId = 1 AND b.statusID = 111 THEN 0 -- SportsBook
-					WHEN bt.ProductID IN (21, 39, 45, 46, 47, 52)  THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, ION
+					WHEN bt.ProductID IN (21, 39, 45, 46, 47, 51 ,52)  THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, WM, ION
 					ELSE ABS(b.stake) END) AS TurnoverNoDraw
 			,-1 * SUM(ISNULL(b.ExtraWinloss, 0)) AS ExtraWinloss
 			,-1 * SUM(ISNULL(b.ExtraComm, 0)) AS ExtraComm
