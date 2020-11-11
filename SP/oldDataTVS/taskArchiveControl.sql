@@ -118,17 +118,20 @@ BEGIN;
 			WAITFOR DELAY '00:00:00.100';
 
 			SET	@StartTable = @StartTable + 1;
+			
+			drop table DBTXN.##match_bk
+			drop table DBTXN.##bettrans_bk
+			drop table DBTXN.##bettransM_bk
+			drop table DBTXN.##bettrans_bk2
+			drop table DBTXN.##bettrans_bk3
 		END;
+		
+		drop table DBTXN.##SportBettypeMatrix
 
-		drop table DBTXN.##match_bk
-		drop table DBTXN.##bettrans_bk
-		drop table DBTXN.##bettransM_bk
-		drop table DBTXN.##bettrans_bk2
-		drop table DBTXN.##bettrans_bk3
 		SET	@StartDate = @StartDate + 1;
 	END;
 	
-	drop table DBTXN.##SportBettypeMatrix
+
 END
 GO
 /*<info serverAlias="DBARC-bodb_archive" executers="" viewers="" isFunction="0" isNested="1"></info>*/
