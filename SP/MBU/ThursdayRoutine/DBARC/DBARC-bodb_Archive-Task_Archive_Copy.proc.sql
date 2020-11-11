@@ -25,12 +25,12 @@ BEGIN
 		SELECT	@Query = N'';
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.TicketVoiding_RequestDetail_bk
-	(  Id, RequestId, MatchId, LeagueId, HomeId, AwayId, KickOffTime, LiveAwayScore, TransIds, RequestType)
-SELECT Id, RequestId, MatchId, LeagueId, HomeId, AwayId, KickOffTime, LiveAwayScore, TransIds, RequestType
+	(AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime)
+SELECT AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-SELECT	Id, RequestId, MatchId, LeagueId, HomeId, AwayId, KickOffTime, LiveHomeScore, LiveAwayScore, IssueDetail, TransIds, RequestType
+SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime
 FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
 
