@@ -67,12 +67,7 @@ BEGIN
 	FROM 
 		rs
 		LEFT JOIN CustDB.dbo.customer c WITH (NOLOCK)
-			ON c.srecommend = rs.custid
-	WHERE 
-		c.roleid = 1
-		AND c.username = rs.UserName
-
-	SELECT * FROM @tblDummyMember
+			ON c.username = rs.UserName
 
 	IF NOT EXISTS (SELECT TOP 1 1 FROM @tblDummyMember)
 	BEGIN
@@ -161,14 +156,14 @@ BEGIN
 		(
 			VALUES (-1*(b.swinlost + b.awinlost + b.mwinlost + b.scomm + (b.winlost - b.actual_stake)))
 		) AS tblTemp(AdjCompanyWL)
-		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, (b.winlost - b.actual_stake), b.statuswinlost, fdec.OddsType) fMember
-		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, b.awinlost, b.statuswinlost, fdec.OddsType) fAgent
-		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, b.mwinlost, b.statuswinlost, fdec.OddsType) fMaster
-		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, b.swinlost, b.statuswinlost, fdec.OddsType) fSuper
+		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, 0, (b.winlost - b.actual_stake), b.actual_stake, b.statusID, b.statuswinlost, b.apositiontaking, b.mpositiontaking, b.spositiontaking, 1, fdec.OddsType) fMember
+		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, -1 * fMember.oriWL, b.awinlost, b.actual_stake, b.statusID, b.statuswinlost, b.apositiontaking, b.mpositiontaking, b.spositiontaking, 2, fdec.OddsType) fAgent
+		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, -1 * fMember.oriWL, b.mwinlost, b.actual_stake, b.statusID, b.statuswinlost, b.apositiontaking, b.mpositiontaking, b.spositiontaking, 3, fdec.OddsType) fMaster
+		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, -1 * fMember.oriWL, b.swinlost, b.actual_stake, b.statusID, b.statuswinlost, b.apositiontaking, b.mpositiontaking, b.spositiontaking, 4, fdec.OddsType) fSuper
 	WHERE
 		b.winlostdate = @WinlostDate
 		AND bi.OriginalOdds IS NOT NULL
-		AND b.statusid IN (112, 113) -- win/losed
+		AND b.statusID IN (101, 102, 103, 111, 112, 113) -- reject, void, refund, draw, won, lose
 	
 	GROUP BY b.winlostdate
 			,t.UserName
