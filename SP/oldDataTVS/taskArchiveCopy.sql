@@ -284,4 +284,4 @@ WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.TicketVoiding_RequestDetail AS t2 WITH (N
 END
 GO
 
-    
+/*<info serverAlias="DBARC-bodb_archive" executers="" viewers="" isFunction="0" isNested="1"></info>*/
