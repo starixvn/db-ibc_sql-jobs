@@ -67,7 +67,8 @@ BEGIN
 	INTO #DataSample
 	FROM CheckCustDB.dbo.custsettinggame cs WITH (NOLOCK)
 	WHERE custid = 73104
-		AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
+		AND ((cs.SportType <> 202 AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')))  
+		OR   (cs.SportType = 202 AND EXISTS (SELECT 1 FROM @GameTypeKeno WHERE BetType = cs.Bettype)) )
 
 	SELECT @RowCount = COUNT(1)
 	FROM #DataSample
@@ -81,7 +82,8 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
+			AND ((cs.SportType <> 202 AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')))  
+			OR   (cs.SportType = 202 AND EXISTS (SELECT 1 FROM @GameTypeKeno WHERE BetType = cs.Bettype)) )
 	
 	INSERT INTO #AgentPT (CustID, mrecommend, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking)
 	SELECT ci.CustID, mrecommend, srecommend, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking
@@ -93,7 +95,8 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
+			AND ((cs.SportType <> 202 AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')))  
+			OR	(cs.SportType = 202 AND EXISTS (SELECT 1 FROM @GameTypeKeno WHERE BetType = cs.Bettype)) )
 
 	INSERT INTO #MasterPT (CustID, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking)
 	SELECT ci.CustID, srecommend, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking
@@ -105,7 +108,7 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
+			AND ((cs.SportType <> 202 AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')))  OR (cs.SportType = 202 AND EXISTS (SELECT 1 FROM @GameTypeKeno WHERE BetType = cs.Bettype)) )
 
 	INSERT INTO #SuperPT (CustID, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking)
 	SELECT ci.CustID, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking
@@ -116,7 +119,7 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 	
-			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
+			AND ((cs.SportType <> 202 AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')))  OR (cs.SportType = 202 AND EXISTS (SELECT 1 FROM @GameTypeKeno WHERE BetType = cs.Bettype)) )
 		
 	SELECT CustID, COUNT(1) cnt
 	INTO #MemberMissSetting
@@ -444,7 +447,6 @@ BEGIN
 			INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)
 				SELECT	32 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId, cs.spositiontaking, 0.85, 0
 				FROM	#SuperPT cs
-				INNER JOIN @GameTypeKeno kn on cs.sporttype = kn.SportType AND cs.bettype = kn.BetType
 				WHERE	cs.SportType = 202					
 					AND cs.spositiontaking > 0.85
 			END
