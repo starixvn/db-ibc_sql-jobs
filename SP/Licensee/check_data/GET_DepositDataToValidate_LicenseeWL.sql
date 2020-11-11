@@ -29,6 +29,7 @@ AS
 		- 20200423@Vickie: Integrate Saba Club [RedmineID: #132702]
 		- 20200918@Hogan: Integrate Joker [RedmineID: #141408]
 		- 20201013@Hogan: Integrate SA Gaming [RedmineID: #128493]
+		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
 
 	Param's Explanation:
 		@DrawFilter
@@ -177,6 +178,10 @@ BEGIN
 		,@SAGTurnover MONEY
 		,@SAGCustomerWl MONEY
 		,@SAGBetCount MONEY
+		----PGS
+		,@PGSTurnover MONEY
+		,@PGSCustomerWl MONEY
+		,@PGSBetCount MONEY
 
 	DECLARE @tblSporttype AS TABLE (ProductPrefix VARCHAR(10), Sporttype SMALLINT)
 
@@ -188,7 +193,8 @@ BEGIN
 		s.SportType
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG')
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 
+		'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS')
 
 	INSERT INTO @tblSporttype
 	SELECT 'SB', 0
@@ -723,6 +729,22 @@ BEGIN
 	FROM @tblData b
 	WHERE ProductPrefix = 'SAG'
 
+	----PGS
+	SELECT
+		@PGSTurnover=SUM(CASE 
+							WHEN @DrawFilter IN (2,3) THEN 	
+								CASE
+									WHEN b.StatusID = 111 THEN 0
+									WHEN b.StatusID IN (114,115) THEN 0.5
+									ELSE 1
+								END
+							ELSE 1
+						END * b.Turnover)
+		,@PGSCustomerWl=SUM(b.winlost)
+		,@PGSBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
+	FROM @tblData b
+	WHERE ProductPrefix = 'PGS'
+
 	-- Result
 	SELECT
 		1 AS id
@@ -759,6 +781,7 @@ BEGIN
 		, ISNULL(@SBCTurnover,0) AS SBC
 		, ISNULL(@JKTurnover,0) AS JK
 		, ISNULL(@SAGTurnover,0) AS SAG
+		, ISNULL(@PGSTurnover,0) AS PGS
 	UNION
 	SELECT
 		2
@@ -795,6 +818,7 @@ BEGIN
 		, ISNULL(@SBCCustomerWl,0)
 		, ISNULL(@JKCustomerWl,0)
 		, ISNULL(@SAGCustomerWl,0)
+		, ISNULL(@PGSCustomerWl,0)
 	UNION
 	SELECT
 		3
@@ -831,6 +855,7 @@ BEGIN
 		, ISNULL(@SBCBetCount,0)
 		, ISNULL(@JKBetCount,0)
 		, ISNULL(@SAGBetCount,0)
+		, ISNULL(@PGSBetCount,0)
 
 	SET NOCOUNT OFF
 END
