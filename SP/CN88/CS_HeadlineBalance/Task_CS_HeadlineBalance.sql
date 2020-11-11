@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20190826@Sophia: initial SP [Redmine: #117863]
 		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
+		- 20201111@Malcolm: Using new column bettrans.epositiontaking instead of Acc_GroupExtraPTSetting.ExtraPT [RedmineID: #145074]
 
 	Param's explain:
 		@IsCheckDataOnly:  1 _ view report
@@ -109,7 +110,7 @@ BEGIN
 			s.ProductId,
 			CASE WHEN s.SubProduct IN ('MG-SuperLive','Bet Builder') THEN s.SubProduct ELSE '' END AS SubProduct,						
 			- SUM(
-					CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake + b.scomm / (1 - b.tpositiontaking) END				
+					(CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake + b.scomm / (1 - b.tpositiontaking) END) * ISNULL(CONVERT(DECIMAL(9,8), b.epositiontaking), 0)			
 				) AS WinlostForExtraPT				
 		FROM dbo.bettrans b WITH (NOLOCK)			
 		INNER JOIN @SportBettype s ON s.BetType = b.bettype
@@ -132,7 +133,7 @@ BEGIN
 			--- extraPT
 			SELECT  w.Winlostdate, w.ProductId, 			
 					s.UplineID,
-				   SUM(w.WinlostForExtraPT * ISNULL(s.ExtraPT,0)) as ExtraPTWinlost
+				   SUM(w.WinlostForExtraPT) as ExtraPTWinlost
 			FROM	#wl w
 			INNER JOIN dbo.Acc_GroupExtraPTSetting s WITH(NOLOCK)
 					ON w.srecommend = s.SuperId
