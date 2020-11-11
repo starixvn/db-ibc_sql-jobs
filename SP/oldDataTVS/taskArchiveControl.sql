@@ -63,7 +63,7 @@ BEGIN;
 
 
 	SELECT	@StartDate	= 0
-	SELECT	@EndDate	= select datediff(day,@datebegin,@dateend)
+	SELECT	@EndDate	= datediff(day,@datebegin,@dateend)
 
 	create table ##SportBettypeMatrix(bettype smallint, ProductID tinyint)
 	insert into ##SportBettypeMatrix(bettype,ProductID) select bettype,ProductID from DBTXN.bodb02.dbo.SportBettypeMatrix WITH (NOLOCK) where ProductID IN (1,3,5,25,27,37)
@@ -75,16 +75,16 @@ BEGIN;
 		create table DBTXN.##match_bk(matchid int primary key)
 		insert into DBTXN.##match_bk(matchid) select matchid from match_bk WITH (NOLOCK) where eventdate=@WinlostDate
 
-		create table DBTXN.##bettrans_bk(transid bigint primary )
+		create table DBTXN.##bettrans_bk(transid bigint primary key)
 		insert into DBTXN.##bettrans_bk(transid) select b.transid from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and b.winlostdate = @winlostdate
 		
-		create table DBTXN.##bettransM_bk(transid bigint primary )
+		create table DBTXN.##bettransM_bk(transid bigint primary key)
 		insert into DBTXN.##bettransM_bk(transid) select b.transid from bettransM b WITH (NOLOCK) where b.statusID=102 and b.winlostdate = @winlostdate
 
-		create table DBTXN.##bettrans_bk2(transid bigint primary )
+		create table DBTXN.##bettrans_bk2(transid bigint primary key)
 		insert into DBTXN.##bettrans_bk2(transid) select b.refno from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and s.bettype not in (29,9) and s.ProductID =1 and b.winlostdate = @winlostdate
 		
-		create table DBTXN.##bettrans_bk3(transid bigint primary )
+		create table DBTXN.##bettrans_bk3(transid bigint primary key)
 		insert into DBTXN.##bettrans_bk3(transid) select b.transid from bettrans_bk b WITH (NOLOCK) join bettransm bm WITH (NOLOCK) on b.refno=bm.refno
 													where b.bettype in (29,9,2799) AND b.MatchId!=0 AND b.MatchId=bm.MatchId AND bm.statusID=102 AND b.winlostdate = @winlostdate
 
