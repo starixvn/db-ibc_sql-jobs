@@ -18,7 +18,8 @@ Revisions:
 	- 20190610@Johnson: add rule 36,37 for dummy super [redmine: #114675]
 	- 20191106@Winnie: 3rd party products - Remove InActive Products Phase 2  - [Redmine: #118699]
 	- 20200422@Elodie: Apply rule 72 S4 = M4 = A4 = 0 [Redmine: #132604]
-
+	- 09112020@Winfred : Modify Check GameType for Keno - [Redmine:145003]
+	
 Param's Explanation: 
 	@RuleId = 0 : 'all' 
 	IF @sporttype IN (255) (GoldDeluxe) THEN @RuleId IN (1, 5, 6, 7, 8, 9, 10, 17, 18, 19, 20, 23, 24, 28, 30, 31 )
@@ -31,6 +32,21 @@ BEGIN
 	CREATE TABLE #MasterPT (CustID INT, srecommend INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY)
 	CREATE TABLE #SuperPT (CustID INT, sporttype SMALLINT, bettype SMALLINT, spositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, apositiontaking SMALLMONEY, isautompositiontaking BIT, autompositiontaking SMALLMONEY, isautopositiontaking BIT, autopositiontaking SMALLMONEY, Minpositiontaking SMALLMONEY)
 	CREATE TABLE #DirectMaster (CustID INT)
+	
+	DECLARE @GameTypeKeno TABLE(SportType INT, GameTypeID SMALLINT, BetType SMALLINT)
+	
+	BEGIN TRY
+		INSERT INTO @GameTypeKeno (SportType,GameTypeID,BetType)
+		SELECT SportType, GameTypeID,IBCBetTypeID
+		FROM CheckCustDB.dbo.GameType WITH(NOLOCK)
+		WHERE sportType = 202 AND IsDisabled = 0 AND GameTypeID BETWEEN 1 AND 99
+	END TRY
+	BEGIN CATCH
+		INSERT INTO @GameTypeKeno (SportType,GameTypeID,BetType)
+		SELECT 202 as sportType, GameTypeID as GameTypeID ,IBCBetTypeID
+		FROM KBTDB061.bodb02.dbo.GameType WITH(NOLOCK)	
+		WHERE IsDisabled = 0 AND GameTypeID BETWEEN 1 AND 99
+	END CATCH
 	
 	DECLARE @RowCount TINYINT,
 		@isDummySuper BIT = 0
@@ -51,7 +67,8 @@ BEGIN
 	INTO #DataSample
 	FROM CheckCustDB.dbo.custsettinggame cs WITH (NOLOCK)
 	WHERE custid = 73104
-		AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
+		AND ((cs.SportType <> 202 AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')))  
+		OR   (cs.SportType = 202 AND EXISTS (SELECT 1 FROM @GameTypeKeno WHERE BetType = cs.Bettype)) )
 
 	SELECT @RowCount = COUNT(1)
 	FROM #DataSample
@@ -65,7 +82,8 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
+			AND ((cs.SportType <> 202 AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')))  
+			OR   (cs.SportType = 202 AND EXISTS (SELECT 1 FROM @GameTypeKeno WHERE BetType = cs.Bettype)) )
 	
 	INSERT INTO #AgentPT (CustID, mrecommend, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking)
 	SELECT ci.CustID, mrecommend, srecommend, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking
@@ -77,7 +95,8 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
+			AND ((cs.SportType <> 202 AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')))  
+			OR	(cs.SportType = 202 AND EXISTS (SELECT 1 FROM @GameTypeKeno WHERE BetType = cs.Bettype)) )
 
 	INSERT INTO #MasterPT (CustID, srecommend, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking)
 	SELECT ci.CustID, srecommend, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking
@@ -89,7 +108,7 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
+			AND ((cs.SportType <> 202 AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')))  OR (cs.SportType = 202 AND EXISTS (SELECT 1 FROM @GameTypeKeno WHERE BetType = cs.Bettype)) )
 
 	INSERT INTO #SuperPT (CustID, sporttype, bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking)
 	SELECT ci.CustID, cs.sporttype, cs.bettype, spositiontaking, mpositiontaking, apositiontaking, isautompositiontaking, autompositiontaking, isautopositiontaking, autopositiontaking, Minpositiontaking
@@ -100,7 +119,7 @@ BEGIN
 			AND ci.Enabled = 1
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 	
-			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
+			AND ((cs.SportType <> 202 AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')))  OR (cs.SportType = 202 AND EXISTS (SELECT 1 FROM @GameTypeKeno WHERE BetType = cs.Bettype)) )
 		
 	SELECT CustID, COUNT(1) cnt
 	INTO #MemberMissSetting
