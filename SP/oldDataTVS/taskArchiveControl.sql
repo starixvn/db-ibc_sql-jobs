@@ -3,8 +3,8 @@
 SET ANSI_NULLS ON;
 GO
 CREATE PROCEDURE	dbo.Task_Archive_Control_oldData
-						@DebugMode			TINYINT			= 1
-						@datebegin			SMALLDATETIME   ='2017-01-01'
+						@DebugMode			TINYINT			= 1,
+						@datebegin			SMALLDATETIME   ='2017-01-01',
 						@dateend			SMALLDATETIME	='xxx'
 AS
 /*
