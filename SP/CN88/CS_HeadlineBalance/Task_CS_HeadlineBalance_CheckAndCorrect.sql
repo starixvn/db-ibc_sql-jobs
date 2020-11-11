@@ -110,7 +110,7 @@ BEGIN
 			s.ProductId,			 
 			CASE WHEN s.SubProduct IN ('MG-SuperLive', 'Bet Builder') THEN s.SubProduct ELSE '' END AS SubProduct,		
 			-SUM(
-					CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake + b.scomm / (1 - b.tpositiontaking) END
+					(CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake + b.scomm / (1 - b.tpositiontaking) END) * ISNULL(b.epositiontaking, 0)
 				) AS WinlostForExtraPT					
 				
 		FROM dbo.bettrans14 b WITH (NOLOCK)			
@@ -134,7 +134,7 @@ BEGIN
 			--- extraPT
 			SELECT  w.Winlostdate, w.ProductId, 			
 					s.UplineID,
-				   SUM(w.WinlostForExtraPT * ISNULL(s.ExtraPT,0)) as ExtraPTWinlost 
+				   SUM(w.WinlostForExtraPT) as ExtraPTWinlost 
 			FROM	#wl w
 			INNER JOIN dbo.Acc_GroupExtraPTSetting s WITH(NOLOCK)
 					ON w.srecommend = s.SuperId
