@@ -67,27 +67,39 @@ BEGIN;
 
 	create table ##SportBettypeMatrix(bettype smallint, ProductID tinyint)
 	insert into ##SportBettypeMatrix(bettype,ProductID) select bettype,ProductID from DBTXN.bodb02.dbo.SportBettypeMatrix WITH (NOLOCK) where ProductID IN (1,3,5,25,27,37)
+	
+	create table ##match_bk(matchid int)
+	create table ##bettrans_bk(transid bigint)
+	create table ##bettransM_bk(transid bigint)
+	create table ##bettrans_bk2(transid bigint)
+	create table ##bettrans_bk3(transid bigint)
 
 	WHILE	@StartDate <= @EndDate
 	BEGIN;
 		SELECT	@WinlostDate = DATEADD(day,@StartDate,@datebegin)
 
-		create table DBTXN.##match_bk(matchid int primary key)
-		insert into DBTXN.##match_bk(matchid) select matchid from match_bk WITH (NOLOCK) where eventdate=@WinlostDate
+		
+		insert into ##match_bk(matchid) select matchid from match_bk WITH (NOLOCK) where eventdate=@WinlostDate
 
-		create table DBTXN.##bettrans_bk(transid bigint primary key)
+		
 		insert into DBTXN.##bettrans_bk(transid) select b.transid from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and b.winlostdate = @winlostdate
 		
-		create table DBTXN.##bettransM_bk(transid bigint primary key)
-		insert into DBTXN.##bettransM_bk(transid) select b.transid from bettransM b WITH (NOLOCK) where b.statusID=102 and b.winlostdate = @winlostdate
-
-		create table DBTXN.##bettrans_bk2(transid bigint primary key)
-		insert into DBTXN.##bettrans_bk2(transid) select b.refno from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and s.bettype not in (29,9) and s.ProductID =1 and b.winlostdate = @winlostdate
 		
-		create table DBTXN.##bettrans_bk3(transid bigint primary key)
-		insert into DBTXN.##bettrans_bk3(transid) select b.transid from bettrans_bk b WITH (NOLOCK) join bettransm bm WITH (NOLOCK) on b.refno=bm.refno
+		insert into ##bettransM_bk(transid) select b.transid from bettransM b WITH (NOLOCK) where b.statusID=102 and b.winlostdate = @winlostdate
+
+		
+		insert into ##bettrans_bk2(transid) select b.refno from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and s.bettype not in (29,9) and s.ProductID =1 and b.winlostdate = @winlostdate
+		
+		
+		insert into ##bettrans_bk3(transid) select b.transid from bettrans_bk b WITH (NOLOCK) join bettransm bm WITH (NOLOCK) on b.refno=bm.refno
 													where b.bettype in (29,9,2799) AND b.MatchId!=0 AND b.MatchId=bm.MatchId AND bm.statusID=102 AND b.winlostdate = @winlostdate
 
+		insert openquery(dbtxn,'select matchid from ##match_bk') select * from ##match_bk
+		insert openquery(dbtxn,'select transid from ##bettransM_bk') select * from ##bettransM_bk
+		insert openquery(dbtxn,'select transid from ##bettrans_bk') select * from ##bettrans_bk
+		insert openquery(dbtxn,'select transid from ##bettrans_bk2') select * from ##bettrans_bk2
+		insert openquery(dbtxn,'select transid from ##bettrans_bk3') select * from ##bettrans_bk3
+		
 		SELECT	@StartTable	= MIN(rid)
 			,	@EndTable	= MAX(rid)
 		FROM	@ArchiveTable;
@@ -118,20 +130,24 @@ BEGIN;
 			WAITFOR DELAY '00:00:00.100';
 
 			SET	@StartTable = @StartTable + 1;
-			
-			drop table DBTXN.##match_bk
-			drop table DBTXN.##bettrans_bk
-			drop table DBTXN.##bettransM_bk
-			drop table DBTXN.##bettrans_bk2
-			drop table DBTXN.##bettrans_bk3
 		END;
-		
-		drop table DBTXN.##SportBettypeMatrix
 
+		truncate table ##match_bk
+		truncate table ##bettrans_bk
+		truncate table ##bettransM_bk
+		truncate table ##bettrans_bk2
+		truncate table ##bettrans_bk3
+		
+		delete openquery(dbtxn,'select matchid from ##match_bk')
+		delete openquery(dbtxn,'select transid from ##bettransM_bk')
+		delete openquery(dbtxn,'select transid from ##bettrans_bk')
+		delete openquery(dbtxn,'select transid from ##bettrans_bk2')
+		delete openquery(dbtxn,'select transid from ##bettrans_bk3')
+		
 		SET	@StartDate = @StartDate + 1;
 	END;
 	
-
+	truncate table ##SportBettypeMatrix
 END
 GO
 /*<info serverAlias="DBARC-bodb_archive" executers="" viewers="" isFunction="0" isNested="1"></info>*/
