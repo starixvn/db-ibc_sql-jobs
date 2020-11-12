@@ -1,9 +1,6 @@
 /*<info serverAlias="DBAFF12BET-Affiliate_12BET" executers="" isFunction="0" isNested="0"></info>*/
-USE [Affiliate_12BET]
-GO
-
 ALTER PROCEDURE [dbo].[Task_Aff_Settings_Archive]
-	@MonthDate		SMALLDATETIME
+	@MonthDate SMALLDATETIME
 AS
 
 /*
@@ -13,6 +10,7 @@ AS
 
 	Revisions:
 		- 20180601@Percy: Initialize SP [RedmineID: #87923]
+		- 20201112@Percy: Add Setting for Exchange WL & Comm [RedmineID: #145297]
 */
 
 BEGIN
@@ -71,17 +69,19 @@ BEGIN
 			FROM dbo.DeductionSetting ds WITH (NOLOCK)
 
 			INSERT INTO dbo.DeductionSettingHistory (GroupID,MonthDate,DeductionID,DeductedPercentage,ProductId,GroupProductId)
-			SELECT GroupID,@NextMonthDate,DeductionID,DeductedPercentage,ProductId,GroupProductId
+			SELECT GroupID,@NextMonthDate,DeductionID,NextDeductedPercentage,ProductId,NextGroupProductId
 			FROM dbo.DeductionSetting ds WITH (NOLOCK)
 
 			-- Apply next value
 			BEGIN
 				UPDATE dbo.DeductionSetting WITH(ROWLOCK, UPDLOCK)
 				SET DeductedPercentage = NextDeductedPercentage, GroupProductId = NextGroupProductId
-				WHERE DeductionID IN (10, 11, 12)
+				WHERE DeductedPercentage <> NextDeductedPercentage
+					OR GroupProductId <> NextGroupProductId
 
 				UPDATE dbo.CommGroup WITH (ROWLOCK, UPDLOCK)
 				SET QMTurnover = NextQMTurnover
+				WHERE QMTurnover <> NextQMTurnover
 			END
 		END
 	END
