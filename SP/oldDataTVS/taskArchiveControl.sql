@@ -79,19 +79,19 @@ BEGIN;
 		SELECT	@WinlostDate = DATEADD(day,@StartDate,@datebegin)
 
 		
-		insert into ##match_bk(matchid) select matchid from match_bk WITH (NOLOCK) where eventdate=@WinlostDate
+		insert into ##match_bk(matchid) select distinct matchid from match_bk WITH (NOLOCK) where eventdate=@WinlostDate
 
 		
-		insert into DBTXN.##bettrans_bk(transid) select b.transid from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and b.winlostdate = @winlostdate
+		insert into DBTXN.##bettrans_bk(transid) select distinct b.transid from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and b.winlostdate = @winlostdate
 		
 		
-		insert into ##bettransM_bk(transid) select b.transid from bettransM b WITH (NOLOCK) where b.statusID=102 and b.winlostdate = @winlostdate
+		insert into ##bettransM_bk(transid) select distinct b.transid from bettransM b WITH (NOLOCK) where b.statusID=102 and b.winlostdate = @winlostdate
 
 		
-		insert into ##bettrans_bk2(transid) select b.refno from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and s.bettype not in (29,9) and s.ProductID =1 and b.winlostdate = @winlostdate
+		insert into ##bettrans_bk2(transid) select distinct b.refno from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and s.bettype not in (29,9) and s.ProductID =1 and b.winlostdate = @winlostdate
 		
 		
-		insert into ##bettrans_bk3(transid) select b.transid from bettrans_bk b WITH (NOLOCK) join bettransm bm WITH (NOLOCK) on b.refno=bm.refno
+		insert into ##bettrans_bk3(transid) select distinct b.transid from bettrans_bk b WITH (NOLOCK) join bettransm bm WITH (NOLOCK) on b.refno=bm.refno
 													where b.bettype in (29,9,2799) AND b.MatchId!=0 AND b.MatchId=bm.MatchId AND bm.statusID=102 AND b.winlostdate = @winlostdate
 
 		insert openquery(dbtxn,'select matchid from ##match_bk') select * from ##match_bk
