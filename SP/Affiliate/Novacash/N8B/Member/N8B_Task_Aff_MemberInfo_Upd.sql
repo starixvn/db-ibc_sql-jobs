@@ -41,8 +41,8 @@ BEGIN
 			,m.Status = c.Status
 			,m.FirstDepositDate = c.FirstDepositDate
 			,m.FirstDepositAmount = c.FirstDepositAmount
-		FROM dbo.MemberInfo m WITH (NOLOCK)
-			INNER JOIN #Customer c WITH (NOLOCK) ON m.CustId = c.CustId
+		FROM dbo.MemberInfo m
+			INNER JOIN #Customer c ON m.CustId = c.CustId
 
 		SELECT @LastUpdatedTime = MAX(UpdatedTime) FROM #Customer
 
