@@ -25,7 +25,7 @@ BEGIN
 
 	--- temp table 
 	DECLARE @tblSiteSupported TABLE(SiteName VARCHAR(50))
-	DECLARE @tblDummyMember TABLE(SiteId VARCHAR(20), UserName NVARCHAR(50), MemberId INT, SuperId INT, MasterId INT, AgentId INT, CurrencyId INT, CurrencyName NVARCHAR(50), ActualRate FLOAT)
+	DECLARE @tblDummyMember TABLE(SiteId VARCHAR(20), UserName NVARCHAR(50), MemberId INT, SuperId INT, MasterId INT, AgentId INT, CurrencyId INT, CurrencyName NVARCHAR(50), ActualRate FLOAT, IsSum BIT)
 	DECLARE @tmpSuper TABLE (srecommend INT)
 
 	CREATE TABLE #__tblSumOddsAdjustment (TransactionId BIGINT, MemberId INT, SuperId INT)
@@ -68,21 +68,22 @@ BEGIN
 			INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)
 				ON e.ExchangeId = dcs.currency
 	)
-	INSERT INTO @tblDummyMember(SiteId, UserName, memberid, SuperId, MasterId, AgentId, CurrencyId, CurrencyName, ActualRate)	
+	INSERT INTO @tblDummyMember(SiteId, UserName, memberid, SuperId, MasterId, AgentId, CurrencyId, CurrencyName, ActualRate, IsSum)	
 	SELECT
 		rs.site
-		,c.username
+		,rs.UserName
 		,c.custid AS memberId
-		,c.srecommend AS superId
+		,rs.custid AS superId
 		,c.mrecommend AS masterid
 		,c.recommend AS agentid
 		,rs.CurrencyId
 		,rs.CurrencyName
 		,rs.actualrate
+        ,CASE WHEN c.username IS NULL THEN 0 ELSE 1 END IsSum
 	FROM 
 		rs
 		LEFT JOIN CustDB.dbo.customer c WITH (NOLOCK)
-			ON c.username = rs.UserName
+			ON c.username = rs.UserName AND rs.custid = c.srecommend
 
 	IF NOT EXISTS (SELECT TOP 1 1 FROM @tblDummyMember)
 	BEGIN
@@ -93,8 +94,9 @@ BEGIN
 	--- generate new trans for summary data
 	SELECT
 		--new tranid for member dummy
-		t.memberid AS custid
-	   ,GETDATE() transdate
+		--t.memberid AS custid
+	   
+       GETDATE() transdate
 	   ,0 oddsid
 	   ,999 AS bettype
 	   ,0 hdp1
@@ -119,8 +121,8 @@ BEGIN
 	   ,100000000000 refno
 	   ,@winlostdate winlostdate
 	   ,999 matchid
-	   ,t.AgentId recommend
-	   ,t.MasterId mrecommend
+	   --,t.AgentId recommend
+	   --,t.MasterId mrecommend
 	   ,0 actual_stake
 	   ,t.CurrencyId currency
 	   ,0 sdiscount -- ask
@@ -128,7 +130,7 @@ BEGIN
 	   ,0 spositiontaking
 	   ,0 swinlost
 	   ,t.SuperId srecommend
-	   ,t.UserName Username
+	   --,t.UserName Username
 	   ,t.CurrencyName CurrencyName
 	   ,1 oddstype --ask , -- decimal odd only -> ask
 	   ,111 statusID -- gdoc = 0 -> ask
@@ -140,8 +142,8 @@ BEGIN
 	   ,0 liveawayscore
 	   ,0 SecAcceptFlag
 	   ,GETDATE() checktime  -- ask 
-	   ,t.ActualRate --ask 'value in table exchange' actualrate -- ask about this bc the job runs for yesterday
-	   ,t.MemberId AS creator -- ask
+	   --,t.ActualRate --ask 'value in table exchange' actualrate -- ask about this bc the job runs for yesterday
+	   --,t.MemberId AS creator -- ask
 	   ,'d' betfrom -- ask d:deposit
 	   ,'' betcheck -- ask
 	   ,1 ruben
@@ -149,7 +151,7 @@ BEGIN
 	   ,0 modds
 	   ,'' ip -- ask '' or ...
 	   ,'Odds Spread Adjustment' transdesc -- ask 
-	   ,t.ActualRate virtualrate -- -- ask about this bc the job runs for yesterday 
+	   --,t.ActualRate virtualrate -- -- ask about this bc the job runs for yesterday 
 	   ,NULL currency2
 	   ,0 balance 
 	   ,0 transid2 
@@ -164,7 +166,7 @@ BEGIN
 		INNER JOIN BettransInfo14 bi WITH (NOLOCK)
 			ON b.transid = bi.transid
 		INNER JOIN @tblDummyMember t
-			ON t.SuperId = b.srecommend
+			ON t.SuperId = b.srecommend AND t.IsSum = 1
 		LEFT JOIN f_Set_OddsTypeBettypes() fdec -- check for decimal odds only
 			ON b.bettype = fdec.BetType
 		CROSS APPLY
@@ -181,14 +183,35 @@ BEGIN
 		AND b.statusID IN (101, 102, 103, 111, 112, 113) -- reject, void, refund, draw, won, lose
 	
 	GROUP BY b.winlostdate
-			,t.UserName
-			,t.MemberId
 			,t.SuperId
-			,t.MasterId
-			,t.AgentId
 			,t.CurrencyId
 			,t.CurrencyName
-			,t.ActualRate
+
+	---### add more info to new dummy transaction 
+	ALTER TABLE #__tmpTransInsertUpdate 
+		ADD 
+			Username NVARCHAR(50),
+			Custid INT,
+			Recommend INT,
+			mrecommend INT,
+			ActualRate FLOAT,
+			VirtualRate FLOAT,
+			Creator INT
+
+	-- update info to temp table
+	UPDATE t
+		SET Username = td.UserName,
+			Custid = td.MemberId,
+			Recommend = td.AgentId,
+			mrecommend = td.MasterId,
+			ActualRate = td.ActualRate,
+			VirtualRate = td.ActualRate,
+			Creator = td.MemberId
+	FROM #__tmpTransInsertUpdate t
+		INNER JOIN @tblDummyMember td
+			ON t.srecommend = td.SuperId AND td.IsSum = 1
+
+	--- end
 
 	---- get existing odds adjustment trans
 	INSERT INTO #__tblSumOddsAdjustment(TransactionId, MemberId, SuperId)
@@ -209,26 +232,49 @@ BEGIN
 			ON b.srecommend = t.srecommend AND b.custid = t.custid
 
 	--- get licensees that support odds adjustment but do not have dummy member account and send email notification
-	IF EXISTS (SELECT TOP 1 1 FROM @tblDummyMember d WHERE d.MemberId IS NULL)
+	IF EXISTS (SELECT TOP 1 1 FROM @tblDummyMember d WHERE d.IsSum = 0)
 	BEGIN
 
 		SELECT @Subject = 'Missing dummy account notification'
 			, @bodymsg = ''
-			, @recipients = CASE WHEN @@SERVERNAME = 'DB206' THEN 'sol.le@starixvn.com;' ELSE 'sol.le@starixvn.com;' END
+			, @recipients = CASE WHEN @@SERVERNAME = 'DB206' THEN 'sol.le@starixvn.com;harmony.huynh@starixvn.com' ELSE 'it@starixvn.com;ben.nguyen@starixvn.com' END
 
+		SELECT lc.CustID, Currency INTO #__tblRealLicensee
+		FROM DBCUST.bodb_licensee.dbo.LicenseeCust lc WITH(NOLOCK)
+
+		;WITH rs AS
+		(
+			SELECT td.SiteId, td.SuperId, c.recommend, c.username, c.currency , td.CurrencyName
+			FROM @tblDummyMember td
+				INNER JOIN CustDB.dbo.Customer c WITH(NOLOCK)
+					ON td.SiteId = c.site AND td.CurrencyId = c.currency AND td.SuperId = c.srecommend
+			WHERE td.IsSum = 0
+				AND c.roleid = 2
+				AND c.username LIKE '%' + td.CurrencyName + '01'
+				AND EXISTS (SELECT TOP 1 1 FROM	#__tblRealLicensee t WHERE t.CustID = c.recommend AND t.Currency = td.CurrencyId)
+		)
 		SELECT
 			@bodymsg = N'\
 					Dear All,</br></br>
 					Missing dummy account for licensees.</br>
 					Please take a look at the table below:</br></br> '
 			+ '<table border="1"> '
-			+ '<tr><th>Licensee</th>'
+			+ '<tr>'
+			+ '<th>Licensee Name</th>'
+			+ '<th>Currency</th>'
+			+ '<th>Agent Username</th>'
+			+ '<th>Dummy Username</th>'
 			+ '</tr>'
 			+ CAST((SELECT
-					td = d.SiteId
+					td = rs.SiteId
 				   ,''
-				FROM @tblDummyMember d 
-				WHERE d.MemberId IS NULL
+				   ,td = rs.CurrencyName
+				   ,''
+				   ,td = rs.username
+				   ,''
+				   ,td = rs.username + 'OddsAdj'
+				   ,''
+				FROM rs
 				FOR XML PATH ('tr'), TYPE)
 			AS NVARCHAR(MAX)) + N'</table></br>'
 
@@ -245,8 +291,9 @@ BEGIN
 
 	END
 
-	DROP TABLE #__tmpTransInsertUpdate
-	DROP TABLE #__tblSumOddsAdjustment
+	IF OBJECT_ID('tempdb..#__tblSumOddsAdjustment') IS NOT NULL DROP TABLE #__tblSumOddsAdjustment
+	IF OBJECT_ID('tempdb..#__tmpTransInsertUpdate') IS NOT NULL DROP TABLE #__tmpTransInsertUpdate
+	IF OBJECT_ID('tempdb..#__tblRealLicensee') IS NOT NULL DROP TABLE #__tblRealLicensee
 
 END
 GO
