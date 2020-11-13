@@ -79,10 +79,6 @@ BEGIN
 		,Amount		DECIMAL(18,4)
 	)
 
-	SELECT @N88_TimeZone = SValue FROM Affiliate_N88.dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
-	SELECT @N8B_TimeZone = SValue FROM Affiliate_N8B.dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
-	SELECT @N8G_TimeZone = SValue FROM Affiliate_N8G.dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
-
 	WHILE
 	(
 		@QueueIDInput <> 0
