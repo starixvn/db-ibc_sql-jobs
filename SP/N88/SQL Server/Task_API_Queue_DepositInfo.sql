@@ -310,37 +310,6 @@ BEGIN
 							,c.FirstDepositAmount = t.Amount
 						FROM dbo.Customer c
 							INNER JOIN #tmpFirstDeposit t ON c.CustId = t.CustId
-
-						-- Update for affiliate
-						IF EXISTS (SELECT 1 FROM #tmpFirstDeposit WHERE SiteId = 1)
-						BEGIN
-							UPDATE mi WITH (ROWLOCK)
-							SET mi.FirstDepositDate = DATEADD(HOUR, @N88_TimeZone, t.CreateTime)
-								,mi.FirstDepositAmount = t.Amount
-							FROM Affiliate_N88.dbo.MemberInfo mi
-								INNER JOIN #tmpFirstDeposit t ON mi.CustId = t.CustId
-							WHERE t.SiteId = 1
-						END
-
-						IF EXISTS (SELECT 1 FROM #tmpFirstDeposit WHERE SiteId = 2)
-						BEGIN
-							UPDATE mi WITH (ROWLOCK)
-							SET mi.FirstDepositDate = DATEADD(HOUR, @N8G_TimeZone, t.CreateTime)
-								,mi.FirstDepositAmount = t.Amount
-							FROM Affiliate_N8G.dbo.MemberInfo mi
-								INNER JOIN #tmpFirstDeposit t ON mi.CustId = t.CustId
-							WHERE t.SiteId = 2
-						END
-
-						IF EXISTS (SELECT 1 FROM #tmpFirstDeposit WHERE SiteId = 3)
-						BEGIN
-							UPDATE mi WITH (ROWLOCK)
-							SET mi.FirstDepositDate = DATEADD(HOUR, @N8B_TimeZone, t.CreateTime)
-								,mi.FirstDepositAmount = t.Amount
-							FROM Affiliate_N8B.dbo.MemberInfo mi
-								INNER JOIN #tmpFirstDeposit t ON mi.CustId = t.CustId
-							WHERE t.SiteId = 3
-						END
 					END
 				END
 
