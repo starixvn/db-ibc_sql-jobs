@@ -1,9 +1,7 @@
-
-
 /*
 Created: 20180613@Winnie
 Task: check CustInfo setting for credit customers 
-DB: DB054.CheckResultDB
+DB: DBCHECK/CheckResultDB
 Revisions:
 
 */
