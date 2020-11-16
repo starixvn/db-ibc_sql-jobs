@@ -24,15 +24,7 @@ BEGIN
 	ALTER TABLE [dbo].[CheckCustInfoResult] ADD  CONSTRAINT [DF_CheckRecommendRule_CreatedDate]  DEFAULT (getdate()) FOR [CreatedDate]
 END
 GO
-
-IF NOT EXISTS(SELECT 1 FROM sys.columns 
-          WHERE Name = N'RuleName'
-          AND Object_ID = Object_ID(N'[dbo].[Rule_Credit]'))
-BEGIN
-    ALTER TABLE Rule_Credit ALTER COLUMN RuleName VARCHAR(200) NULL; 
-END
  
-GO
 
 
 
