@@ -17,8 +17,8 @@ Param's Explanation:
 SET NOCOUNT ON 
 	
 
-	--DECLARE @CurrentDate	DATETIME
-	--SELECT	@CurrentDate=	GETDATE() 
+	DECLARE @CurrentDate	DATETIME
+	SELECT	@CurrentDate=	GETDATE() 
 	--CREATE TABLE #DirectMaster	(CustID INT PRIMARY KEY,srecommend INT)
 	--CREATE TABLE #DirectAgent	(CustID INT PRIMARY KEY,mrecommend INT,srecommend INT)
 	--CREATE TABLE #DirectMember	(CustID INT PRIMARY KEY,recommend INT,mrecommend INT,srecommend INT)
@@ -290,6 +290,7 @@ SET NOCOUNT ON
 	FROM CheckCustDB.dbo.customer mem WITH (NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH (NOLOCK) ON mem.recommend=ci.custid
 	WHERE mem.roleid=1 AND mem.srecommend=@srecommend AND (mem.[site] <> ci.[site] OR mem.[site] IS NULL)
+		AND mem.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	--DROP TABLE #Dummy
 	--DROP TABLE #DirectAgent
