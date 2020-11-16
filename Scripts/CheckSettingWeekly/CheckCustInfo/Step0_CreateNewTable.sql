@@ -4,7 +4,7 @@
 	DB: DBCHECK/CheckResultDB
 
 	Revisions:
-		- 20201116@Tina: check exists before create new table, deploy for feature store site at member level [Redmind: #144323]
+		- 20201116@Tina: check exists before create new table, deploy for feature store site at member level [RedmineID: #144323]
 */
 
 USE [CheckResultDB]
