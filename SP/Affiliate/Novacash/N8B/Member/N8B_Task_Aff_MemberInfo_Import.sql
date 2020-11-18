@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
+		- 20201117@Percy: Rescan member from last 2 hours [RedmineID: #145506]
 */
 
 BEGIN
@@ -196,7 +197,7 @@ BEGIN
 
 	DECLARE @MemberInfoLastImportedTime DATETIME
 	SELECT  @MemberInfoLastImportedTime = CASE WHEN @MaxRegisteredDate > @MaxCreatedDate THEN @MaxRegisteredDate ELSE @MaxCreatedDate END
-	SELECT  @MemberInfoLastImportedTime = DATEADD(HOUR, 1, @MemberInfoLastImportedTime)
+	SELECT  @MemberInfoLastImportedTime = DATEADD(HOUR, -2, @MemberInfoLastImportedTime)
 
 	IF @MemberInfoLastImportedTime IS NOT NULL
 		UPDATE dbo.SystemSettings WITH (ROWLOCK)
