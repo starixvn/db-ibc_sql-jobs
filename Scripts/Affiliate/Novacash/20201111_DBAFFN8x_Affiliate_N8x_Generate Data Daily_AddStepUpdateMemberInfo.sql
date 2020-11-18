@@ -24,6 +24,7 @@ exec dbo.sp_add_jobstep
 	,@os_run_priority = 0
 	,@subsystem=N'TSQL'
 	,@command = 'EXEC dbo.Task_Aff_ImportData_Job'
+	,@database_name = N'Affiliate_N88'
 go
 
 exec dbo.sp_add_jobstep
@@ -40,6 +41,7 @@ exec dbo.sp_add_jobstep
 	,@os_run_priority = 0
 	,@subsystem=N'TSQL'
 	,@command = 'EXEC dbo.Task_Aff_ClearLogin'
+	,@database_name = N'Affiliate_N88'
 go
 
 exec dbo.sp_update_jobstep
@@ -47,6 +49,7 @@ exec dbo.sp_update_jobstep
 	,@step_id = 1
 	,@step_name = 'Import Exchange Oanda'
 	,@command = 'EXEC dbo.Task_ExchangeOanda_Import'
+	,@database_name = N'Affiliate_N88'
 go
 
 exec dbo.sp_update_jobstep
@@ -55,6 +58,7 @@ exec dbo.sp_update_jobstep
 	,@step_name = 'Updated Member Info'
 	,@on_success_action = 3
 	,@command = 'EXEC dbo.Task_Aff_MemberInfo_Upd'
+	,@database_name = N'Affiliate_N88'
 go
 
 -- N8B
@@ -72,6 +76,7 @@ exec dbo.sp_add_jobstep
 	,@os_run_priority = 0
 	,@subsystem=N'TSQL'
 	,@command = 'EXEC dbo.Task_Aff_ImportData_Job'
+	,@database_name = N'Affiliate_N8B'
 go
 
 exec dbo.sp_add_jobstep
@@ -88,6 +93,7 @@ exec dbo.sp_add_jobstep
 	,@os_run_priority = 0
 	,@subsystem=N'TSQL'
 	,@command = 'EXEC dbo.Task_Aff_ClearLogin'
+	,@database_name = N'Affiliate_N8B'
 go
 
 exec dbo.sp_update_jobstep
@@ -95,6 +101,7 @@ exec dbo.sp_update_jobstep
 	,@step_id = 1
 	,@step_name = 'Import Exchange Oanda'
 	,@command = 'EXEC dbo.Task_ExchangeOanda_Import'
+	,@database_name = N'Affiliate_N8B'
 go
 
 exec dbo.sp_update_jobstep
@@ -103,6 +110,7 @@ exec dbo.sp_update_jobstep
 	,@step_name = 'Updated Member Info'
 	,@on_success_action = 3
 	,@command = 'EXEC dbo.Task_Aff_MemberInfo_Upd'
+	,@database_name = N'Affiliate_N8B'
 go
 
 -- N8G
@@ -120,6 +128,7 @@ exec dbo.sp_add_jobstep
 	,@os_run_priority = 0
 	,@subsystem=N'TSQL'
 	,@command = 'EXEC dbo.Task_Aff_ImportData_Job'
+	,@database_name = N'Affiliate_N8G'
 go
 
 exec dbo.sp_add_jobstep
@@ -136,6 +145,7 @@ exec dbo.sp_add_jobstep
 	,@os_run_priority = 0
 	,@subsystem=N'TSQL'
 	,@command = 'EXEC dbo.Task_Aff_ClearLogin'
+	,@database_name = N'Affiliate_N8G'
 go
 
 exec dbo.sp_update_jobstep
@@ -143,6 +153,7 @@ exec dbo.sp_update_jobstep
 	,@step_id = 1
 	,@step_name = 'Import Exchange Oanda'
 	,@command = 'EXEC dbo.Task_ExchangeOanda_Import'
+	,@database_name = N'Affiliate_N8G'
 go
 
 exec dbo.sp_update_jobstep
@@ -151,4 +162,5 @@ exec dbo.sp_update_jobstep
 	,@step_name = 'Updated Member Info'
 	,@on_success_action = 3
 	,@command = 'EXEC dbo.Task_Aff_MemberInfo_Upd'
+	,@database_name = N'Affiliate_N8G'
 go
