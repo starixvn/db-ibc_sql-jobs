@@ -285,12 +285,21 @@ SET NOCOUNT ON
 	--FROM CheckCustDB.dbo.customer c WITH(NOLOCK) 
 	--	INNER JOIN #tempUsername t ON c.username2=t.username2
 
+	--Rule site at member level <> upline or site is null
 	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
 	SELECT 426 RuleID, mem.Custid [CustID], GETDATE() CreatedDate
 	FROM CheckCustDB.dbo.customer mem WITH (NOLOCK)
 		INNER JOIN CheckCustDB.dbo.customer ci WITH (NOLOCK) ON mem.recommend=ci.custid
 	WHERE mem.roleid=1 AND mem.srecommend=@srecommend AND (mem.[site] <> ci.[site] OR mem.[site] IS NULL)
 		AND mem.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
+
+	--Rule site at Agent level in table CustAgent <> table Customer or CustAgent.site is null
+	INSERT INTO CheckCustInfoResult (RuleID,[CustID],CreatedDate)
+	SELECT 427 RuleID, CA.Custid [CustID], GETDATE() CreatedDate
+	FROM CheckCustDB.dbo.custagent CA WITH (NOLOCK)
+		INNER JOIN CheckCustDB.dbo.customer ci WITH (NOLOCK) ON ca.custid=ci.custid
+	WHERE ci.roleid=2 AND ci.srecommend=@srecommend AND (CA.[site] <> ci.[site] OR CA.[site] IS NULL)
+		AND ci.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate
 
 	--DROP TABLE #Dummy
 	--DROP TABLE #DirectAgent
