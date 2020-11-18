@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20200520@Johnson: Initial sp [redmine:#134220]
 		- 20200615@Johnson: check missing feedback [redmine:#135719]
+		- 20201103@Johnson: add auto fb for company winlimit [redmine:#142194]
 	Param's Explanation:		
 */
 BEGIN
@@ -19,6 +20,7 @@ BEGIN
 	
 	SELECT @fromdate = CAST(DATEADD(MONTH,-1,getdate()) as DATE)
 	
+	--Auto FB for voiding tickets
 	CREATE TABLE #tblMsg (MessageID INT, CustID INT, isDeleted BIT DEFAULT 0)
 	DECLARE @tmp TABLE (MessageID INT, CustID INT)
 	
@@ -48,4 +50,14 @@ BEGIN
 	DELETE crmMessageImport WITH(UPDLOCK,ROWLOCK)
 	WHERE CreatedDate < @fromdate
 	
+	--Auto fb for CWL
+	WHILE(1=1)
+	BEGIN
+		DELETE TOP(5000) c
+		FROM crmWinLimitFeedbackInfo c WITH(UPDLOCK,ROWLOCK)
+		WHERE CreatedDate < @fromdate
+		
+		IF @@ROWCOUNT = 0
+			BREAK;		
+	END
 END	
