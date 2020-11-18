@@ -44,8 +44,8 @@ RETURN
 					WHEN (tbl.OriOdds < 0 AND tbl.AdjOdds > 0) THEN
 						CASE WHEN @roleId = 1 THEN
 								CASE
-									WHEN @statusWinlost = 2 THEN @actualStake -- won
-									WHEN @statusWinlost = 1 THEN @actualStake * 0.5-- half won
+									WHEN @statusWinlost = 2 THEN @adjWinlost / tbl.AdjOdds -- won
+									WHEN @statusWinlost = 1 THEN @adjWinlost / tbl.AdjOdds -- half won
 									WHEN @statusWinlost = 4 THEN -1 * (@adjWinlost * tbl.OriOdds) -- lose
 									WHEN @statusWinlost = 3 THEN -1 * (@adjWinlost * tbl.OriOdds) -- half lose
 									ELSE 0
@@ -57,10 +57,10 @@ RETURN
 					WHEN (tbl.OriOdds > 0 AND tbl.AdjOdds < 0) THEN
 						CASE WHEN @roleId = 1 THEN
 								CASE
-									WHEN @statusWinlost = 2 THEN @actualStake -- won
-									WHEN @statusWinlost = 1 THEN @actualStake * 0.5-- half won
-									WHEN @statusWinlost = 4 THEN -1 * (@adjWinlost / tbl.AdjOdds) -- lose
-									WHEN @statusWinlost = 3 THEN -1 * (@adjWinlost / tbl.AdjOdds) -- half lose
+									WHEN @statusWinlost = 2 THEN -1 * ((@actualStake * tbl.OriOdds) / tbl.AdjOdds) -- won
+									WHEN @statusWinlost = 1 THEN -1 * ((@actualStake * tbl.OriOdds) / tbl.AdjOdds) * 0.5-- half won
+									WHEN @statusWinlost = 4 THEN (@actualStake / tbl.AdjOdds) -- lose
+									WHEN @statusWinlost = 3 THEN (@actualStake / tbl.AdjOdds) * 0.5-- half lose
 									ELSE 0
 								END
 							WHEN @roleId = 2 THEN @oriWinlost * @aPositionTaking
