@@ -93,12 +93,6 @@ BEGIN;
 		
 		insert into ##bettrans_bk3(transid) select distinct b.transid from bettrans_bk b WITH (NOLOCK) join bettransm bm WITH (NOLOCK) on b.refno=bm.refno
 													where b.bettype in (29,9,2799) AND b.MatchId!=0 AND b.MatchId=bm.MatchId AND bm.statusID=102 AND b.winlostdate = @winlostdate
-
-		insert openquery(dbtxn,'select matchid from ##match_bk') select * from ##match_bk
-		insert openquery(dbtxn,'select transid from ##bettransM_bk') select * from ##bettransM_bk
-		insert openquery(dbtxn,'select transid from ##bettrans_bk') select * from ##bettrans_bk
-		insert openquery(dbtxn,'select transid from ##bettrans_bk2') select * from ##bettrans_bk2
-		insert openquery(dbtxn,'select transid from ##bettrans_bk3') select * from ##bettrans_bk3
 		
 		SELECT	@StartTable	= MIN(rid)
 			,	@EndTable	= MAX(rid)
@@ -138,16 +132,9 @@ BEGIN;
 		truncate table ##bettrans_bk2
 		truncate table ##bettrans_bk3
 		
-		delete openquery(dbtxn,'select matchid from ##match_bk')
-		delete openquery(dbtxn,'select transid from ##bettransM_bk')
-		delete openquery(dbtxn,'select transid from ##bettrans_bk')
-		delete openquery(dbtxn,'select transid from ##bettrans_bk2')
-		delete openquery(dbtxn,'select transid from ##bettrans_bk3')
-		
 		SET	@StartDate = @StartDate + 1;
 	END;
-	
-	truncate table ##SportBettypeMatrix
+
 END
 GO
 /*<info serverAlias="DBARC-bodb_archive" executers="" viewers="" isFunction="0" isNested="1"></info>*/
