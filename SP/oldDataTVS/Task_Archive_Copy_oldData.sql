@@ -65,7 +65,7 @@ BEGIN
 			(	QueueId, RequestId, MatchId, [Action], StatusId, UserId, Starttime, Exectime, Duration, IP, ErrMsg, sporttype)
 
 		SELECT	QueueId, RequestId, MatchId, [Action], StatusId, UserId, Starttime, Exectime, Duration, IP, ErrMsg, sporttype
-		FROM	bodb02.dbo.TicketVoiding_AutoVoidRequest_Queue AS t1 WITH (NOLOCK)
+		FROM	bodb02.dbo.TicketVoiding_AutoVoidRequest_Queue_test AS t1 WITH (NOLOCK)
 		WHERE	EXISTS (SELECT 1 FROM ##match_bk AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid);
 
 	END;
@@ -77,7 +77,7 @@ BEGIN
 			(	ID, Matchid, Bettype, IsConfirm, CreatedDate, UserId, MarkedBy, betid)
 
 		SELECT	ID, Matchid, Bettype, IsConfirm, CreatedDate, UserId, MarkedBy, betid
-		FROM	bodb02.dbo.TicketVoiding_AutoUnmarkSetting AS t1 WITH (NOLOCK)
+		FROM	bodb02.dbo.TicketVoiding_AutoUnmarkSetting_test AS t1 WITH (NOLOCK)
 		WHERE	EXISTS (SELECT 1 FROM ##match_bk AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid);
 	END;
 
@@ -112,7 +112,7 @@ BEGIN
 		INSERT INTO	dbo.TicketVoiding_Queue_bk
 			(	QueueId, RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers)
 		SELECT	QueueId, RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers
-		FROM	bodb02.dbo.TicketVoiding_Queue AS t1 WITH (NOLOCK)
+		FROM	bodb02.dbo.TicketVoiding_Queue_test AS t1 WITH (NOLOCK)
 		WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.TicketVoiding_RequestDetail AS t2 WITH (NOLOCK) CROSS JOIN ##match_bk t3 WITH(NOLOCK) WHERE t1.RequestId = t2.RequestId AND t2.matchid = t3.matchid);
 
 	END;
