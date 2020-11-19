@@ -114,11 +114,13 @@ BEGIN
 			begin transaction;
 				with cte(transid)
 				as
+				(
 				select cast(val as bigint) as transid from dbo.strSplit(convert(varchar(8000),@tmp1),',') as s1
 				union
 				select cast(val as bigint) as transid from dbo.strSplit(convert(varchar(8000),@tmp2),',') as s2
 				union
 				select cast(val as bigint) as transid from dbo.strSplit(convert(varchar(8000),@tmp3),',') as s3
+				)
 				delete tbl
 				from dbo.bettransm14 as tbl with (rowlock)
 				inner join cte on tbl.transid=cte.transid;
