@@ -200,7 +200,6 @@ SET NOCOUNT ON
 	--FROM CheckCustDB.dbo.customer mem WITH(NOLOCK)
 	--	INNER JOIN CheckCustDB.dbo.customer ci WITH(NOLOCK) ON mem.srecommend=ci.custid
 	--WHERE mem.roleid=1 AND mem.srecommend=@srecommend AND mem.creatdate BETWEEN @CurrentDate-4 AND @CurrentDate AND mem.currency<>ci.Currency 
-	--check site of member difference with site of Agent - member.site <> agent.site
 
 	--INSERT INTO #DirectMaster (CustID,srecommend)
 	--SELECT ci.custid,ci.srecommend
