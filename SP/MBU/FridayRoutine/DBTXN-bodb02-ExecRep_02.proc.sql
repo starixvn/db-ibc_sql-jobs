@@ -28,6 +28,7 @@ AS
 		- 20191030@Billy:	Remove table [BetLucky3Result] from Friday Routine - [Redmine: #122987]
 		- 20191126@Patrick: Add more conndition remove data on DB054/DB055 - [Redmine: #124104]
 		- 20200227@Patrick: Implement remove data of Intg_GameRoundBetStake after BU day - 1 [Redmine: #126981]
+		- 20201119@Brice: Enhance MBU process related to removing data on bettransm14 [Redmine: #143763]
 */
 -- =======================
 -- Parameter check\control
