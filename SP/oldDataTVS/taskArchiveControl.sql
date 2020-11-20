@@ -66,7 +66,7 @@ BEGIN;
 	SELECT	@EndDate	= datediff(day,@datebegin,@dateend)
 
 	create table ##SportBettypeMatrix(bettype smallint, ProductID tinyint)
-	insert into ##SportBettypeMatrix(bettype,ProductID) select bettype,ProductID from DBTXN.bodb02.dbo.SportBettypeMatrix WITH (NOLOCK) where ProductID IN (1,3,5,25,27,37)
+	insert into ##SportBettypeMatrix(bettype,ProductID) select bettype,ProductID from bodb02.dbo.SportBettypeMatrix WITH (NOLOCK) where ProductID IN (1,3,5,25,27,37)
 	
 	create table ##match_bk(matchid int)
 	create table ##bettrans_bk(transid bigint)
@@ -82,7 +82,7 @@ BEGIN;
 		insert into ##match_bk(matchid) select distinct matchid from match_bk WITH (NOLOCK) where eventdate=@WinlostDate
 
 		
-		insert into DBTXN.##bettrans_bk(transid) select distinct b.transid from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and b.winlostdate = @winlostdate
+		insert into ##bettrans_bk(transid) select distinct b.transid from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and b.winlostdate = @winlostdate
 		
 		
 		insert into ##bettransM_bk(transid) select distinct b.transid from bettransM b WITH (NOLOCK) where b.statusID=102 and b.winlostdate = @winlostdate
