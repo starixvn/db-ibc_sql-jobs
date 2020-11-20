@@ -25,8 +25,12 @@ BEGIN
 	IF	@TableName = N'TicketVoiding_RequestDetail_bk'
 	BEGIN;
 		INSERT INTO	dbo.TicketVoiding_RequestDetail_bk
-			(  Id, RequestId, MatchId, LeagueId, HomeId, AwayId, KickOffTime, LiveAwayScore, TransIds, RequestType)
-		SELECT	Id, RequestId, MatchId, LeagueId, HomeId, AwayId, KickOffTime, LiveHomeScore, LiveAwayScore, IssueDetail, TransIds, RequestType
+			(  [Id],[RequestId],[MatchId],[LeagueId],[HomeId],[AwayId],[KickOffTime],[LiveHomeScore],[LiveAwayScore],[IssueDetail],[TransIds],[RequestType],[FilterFromTransTime]
+,[FilterToTransTime],[FilterFromBetId],[FilterToBetId],[IsFilterByTransTime],[SingleCount],[MainParlayCount],[MinSingleTransId],[MaxSingleTransId],[MinMainParlayTransId]
+,[MaxMainParlayTransId],[VoidFromTime],[VoidToTime],[IsCheckedHomeTeam],[IsCheckedAwayTeam],[FilterBy])
+		SELECT	[Id],[RequestId],[MatchId],[LeagueId],[HomeId],[AwayId],[KickOffTime],[LiveHomeScore],[LiveAwayScore],[IssueDetail],[TransIds],[RequestType],[FilterFromTransTime]
+,[FilterToTransTime],[FilterFromBetId],[FilterToBetId],[IsFilterByTransTime],[SingleCount],[MainParlayCount],[MinSingleTransId],[MaxSingleTransId],[MinMainParlayTransId]
+,[MaxMainParlayTransId],[VoidFromTime],[VoidToTime],[IsCheckedHomeTeam],[IsCheckedAwayTeam],[FilterBy]
 		FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 		WHERE	EXISTS (SELECT 1 FROM ##match_bk AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid);
 
