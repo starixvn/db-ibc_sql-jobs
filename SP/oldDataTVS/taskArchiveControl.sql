@@ -136,6 +136,17 @@ BEGIN;
 		SET	@StartDate = @StartDate + 1;
 	END;
 
+	INSERT INTO	dbo.TicketVoiding_Reason_bk
+			(	ReasonId, ReasonEnglish, ReasonChineseSimplified)
+		VALUES (6015,'Soccer - Abnormal bet','足球 - 非正常投注'),(6016,'Soccer - Danger Accept In Red Card','足球 - 有红牌的危险时段中误被接受')
+		
+	INSERT INTO	dbo.TicketVoiding_VoidedTransaction_bk
+			(	TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID)
+		select TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID
+		FROM	dbtrans.bodb02.dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK) where createdDate <'2020-01-01'
+		except
+		select TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID
+		FROM	bodb02.dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK) where createdDate <'2020-01-01'		
 END
 GO
 /*<info serverAlias="DBARC-bodb_archive" executers="" viewers="" isFunction="0" isNested="1"></info>*/
