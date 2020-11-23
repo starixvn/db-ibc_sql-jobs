@@ -174,7 +174,7 @@ BEGIN
 			(	TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID)
 		SELECT	TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID
 		FROM	bodb02.dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
-		WHERE	EXISTS (SELECT 1 FROM ##bettrans_bk3 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid);
+		WHERE	EXISTS (SELECT 1 FROM ##bettrans_bk3 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t1.MatchId=t2.MatchId);
 	END;
 
 	

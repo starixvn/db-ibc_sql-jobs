@@ -73,7 +73,7 @@ BEGIN;
 	create table ##bettrans_bk(transid bigint)
 	create table ##bettransM_bk(transid bigint)
 	create table ##bettrans_bk2(transid bigint)
-	create table ##bettrans_bk3(transid bigint)
+	create table ##bettrans_bk3(transid bigint,matchid int)
 
 	WHILE	@StartDate <= @EndDate
 	BEGIN;
@@ -82,19 +82,20 @@ BEGIN;
 		
 		insert into ##match_bk(matchid) select distinct matchid from match_bk WITH (NOLOCK) where eventdate=@WinlostDate
 
+		if @WinlostDate > '2019-01-01'
+		begin
 		
-		insert into ##bettrans_bk(transid) select distinct b.transid from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and b.winlostdate = @winlostdate
-		
-		
-		insert into ##bettransM_bk(transid) select distinct b.transid from bettransM b WITH (NOLOCK) where b.statusID=102 and b.winlostdate = @winlostdate
+			insert into ##bettrans_bk(transid) select distinct b.transid from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and b.winlostdate = @winlostdate
+			
+			
+			insert into ##bettransM_bk(transid) select distinct b.transid from bettransM b WITH (NOLOCK) where b.statusID=102 and b.winlostdate = @winlostdate
 
-		
-		insert into ##bettrans_bk2(transid) select distinct b.refno from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and s.bettype not in (29,9) and s.ProductID =1 and b.winlostdate = @winlostdate
-		
-		
-		insert into ##bettrans_bk3(transid) select distinct b.transid from bettrans_bk b WITH (NOLOCK) join bettransm bm WITH (NOLOCK) on b.refno=bm.refno
-													where b.bettype in (29,9,2799) AND b.MatchId!=0 AND b.MatchId=bm.MatchId AND bm.statusID=102 AND b.winlostdate = @winlostdate
-		
+			
+			insert into ##bettrans_bk2(transid) select distinct b.refno from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and s.bettype not in (29,9) and s.ProductID =1 and b.winlostdate = @winlostdate
+			
+			
+			insert into ##bettrans_bk3(transid,matchid) select distinct b.transid from from mondb.dbo.brice_bettrans_bk b WITH (NOLOCK) where b.winlostdate = @winlostdate
+		end;
 		SELECT	@StartTable	= MIN(rid)
 			,	@EndTable	= MAX(rid)
 		FROM	@ArchiveTable;
@@ -102,29 +103,32 @@ BEGIN;
 		WHILE	@StartTable <= @EndTable
 		BEGIN;
 			SELECT @TableName = tablename FROM @ArchiveTable WHERE rid = @StartTable 
+			
+			if not(@tablename in ('zzzbettransM_bk','zzzbettrans_bk','TicketVoiding_VoidedTransaction_bk') and @WinlostDate <= '2019-01-01')
+			begin
+				IF	@DebugMode & 1 > 0
+				-- Execution --
+				BEGIN;
+					EXECUTE	dbo.Task_Archive_Copy_oldData
+								@winlostdate	= @WinlostDate
+							,	@TableName		= @TableName
+							;
+				END;
 
-			IF	@DebugMode & 1 > 0
-			-- Execution --
-			BEGIN;
-				EXECUTE	dbo.Task_Archive_Copy_oldData
-							@winlostdate	= @WinlostDate
-						,	@TableName		= @TableName
-						;
-			END;
+				IF	@DebugMode & 2 > 0
+				-- Print Message --
+				BEGIN;
+					SELECT	@width_TableName = MAX(LEN(tablename))
+						,	@str_WinlostDate = CONVERT(NVARCHAR(25), @WinlostDate, 120)
+					FROM	@ArchiveTable;
 
-			IF	@DebugMode & 2 > 0
-			-- Print Message --
-			BEGIN;
-				SELECT	@width_TableName = MAX(LEN(tablename))
-					,	@str_WinlostDate = CONVERT(NVARCHAR(25), @WinlostDate, 120)
-				FROM	@ArchiveTable;
+					RAISERROR(N'[%s] - Table [%-*s]', 0, 0, @str_WinlostDate, @width_TableName, @TableName) WITH NOWAIT;
+				END;
 
-				RAISERROR(N'[%s] - Table [%-*s]', 0, 0, @str_WinlostDate, @width_TableName, @TableName) WITH NOWAIT;
-			END;
+				WAITFOR DELAY '00:00:00.100';
 
-			WAITFOR DELAY '00:00:00.100';
-
-			SET	@StartTable = @StartTable + 1;
+				SET	@StartTable = @StartTable + 1;
+			end;
 		END;
 
 		truncate table ##match_bk
