@@ -59,7 +59,7 @@ BEGIN;
 	insert into ##SportBettypeMatrix(bettype,ProductID) select bettype,ProductID from bodb02.dbo.SportBettypeMatrix WITH (NOLOCK) where ProductID IN (1,3,5,25,27,37)
 
 	create table ##bettrans_bk(transid bigint)
-	create table ##bettransM_bk(transid bigint)
+	create table ##bettransM_bk(transid bigint, matchid int)
 
 	WHILE	@StartDate <= @EndDate
 	BEGIN;
@@ -69,7 +69,7 @@ BEGIN;
 		insert into ##bettrans_bk(transid) select distinct b.transid from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and b.winlostdate = @winlostdate
 		
 		
-		insert into ##bettransM_bk(transid) select distinct b.transid from bettransM b WITH (NOLOCK) where b.statusID=102 and b.winlostdate = @winlostdate
+		insert into ##bettransM_bk(transid,matchid) select distinct b.transid,b.matchid from bettransM b WITH (NOLOCK) where b.statusID=102 and b.winlostdate = @winlostdate
 
 		
 

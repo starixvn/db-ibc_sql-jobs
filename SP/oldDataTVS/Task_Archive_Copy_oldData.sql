@@ -45,7 +45,7 @@ BEGIN
 			(transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId)
 		SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
 		FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
-		WHERE	EXISTS (SELECT 1 FROM ##bettransm_bk AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid);
+		WHERE	EXISTS (SELECT 1 FROM ##bettransm_bk AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid and t1.matchid=t2.matchid);
 	END;
 
 
@@ -57,7 +57,7 @@ BEGIN
 		SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
 		FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
 		WHERE	EXISTS (SELECT 1 FROM ##bettrans_bk AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid)
-				OR EXISTS (SELECT 1 FROM ##bettransm_bk AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid);
+				OR EXISTS (SELECT 1 FROM ##bettransm_bk AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid and t1.matchid=t2.matchid);
 
 	END;
 
