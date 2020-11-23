@@ -94,7 +94,7 @@ BEGIN;
 			insert into ##bettrans_bk2(transid) select distinct b.refno from bettrans_bk b WITH (NOLOCK) join ##SportBettypeMatrix s on b.bettype=s.bettype where b.statusID=102 and s.bettype not in (29,9) and s.ProductID =1 and b.winlostdate = @winlostdate
 			
 			
-			insert into ##bettrans_bk3(transid,matchid) select distinct b.transid from from mondb.dbo.brice_bettrans_bk b WITH (NOLOCK) where b.winlostdate = @winlostdate
+			insert into ##bettrans_bk3(transid,matchid) select distinct b.transid,b.matchid from mondb.dbo.brice_bettrans_bk b WITH (NOLOCK) where b.winlostdate = @winlostdate
 		end;
 		SELECT	@StartTable	= MIN(rid)
 			,	@EndTable	= MAX(rid)
