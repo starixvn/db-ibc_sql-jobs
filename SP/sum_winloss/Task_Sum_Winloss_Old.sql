@@ -16,6 +16,7 @@ AS
 		- 20200918@Malcolm: Add Joker [redmine: #131609]
 		- 20200915@Malcolm: Add WM Live Casino [redmine: #131584]
 		- 20201201@Malcolm : Add Gold Diamond Gaming [Redmine : #144110]
+		- 20201124@Malcolm: Use  function (f_SumWinloss_ConditionSel) to get information [redmine: #131375]
 */
 
 BEGIN
@@ -28,6 +29,7 @@ BEGIN
 	END
 
 	CREATE TABLE #Bettypes (ProductId INT, SportTypeRef SMALLINT, BettypeRef SMALLINT, Bettype SMALLINT)
+	
 	
 	INSERT INTO #Bettypes (ProductId, SportTypeRef, BettypeRef, Bettype)
 	SELECT f.ProductID, f.SportType AS SportTypeRef, f.BetType AS BettypeRef, s.BetType	
