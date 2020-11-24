@@ -29,6 +29,17 @@ BEGIN
 	DECLARE @tmpSuper TABLE (srecommend INT)
 
 	CREATE TABLE #__tblSumOddsAdjustment (TransactionId BIGINT, MemberId INT, SuperId INT)
+	CREATE TABLE #__tmpTransInsertUpdate 
+	(
+		CustId INT, transdate DATETIME, oddsid INT, hdp1 SMALLMONEY, hdp2 SMALLMONEY, odds SMALLMONEY, stake MONEY, Status NVARCHAR(10), winlost MONEY,
+		awinlost MONEY, mwinlost MONEY, playercomm MONEY, comm MONEY, acomm MONEY, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, tpositiontaking SMALLMONEY,
+		playerdiscount DECIMAL(9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), livehomescore SMALLINT, liveawayscore SMALLINT, liveindicator BIT, betteam NVARCHAR(10),
+		creator INT, refno BIGINT, comstatus NVARCHAR(20), winlostdate SMALLDATETIME, betfrom NVARCHAR(1), betcheck NVARCHAR(50), checktime DATETIME, oddsspread MONEY,
+		actualrate FLOAT, matchid INT, recommend INT, mrecommend INT, ruben TINYINT, betid BIGINT, statuswinlost TINYINT, modds SMALLMONEY, bettype SMALLINT,
+		betdaqid BIGINT, actual_stake MONEY, currency TINYINT, ip NVARCHAR(15), transdesc NVARCHAR(1000), sdiscount DECIMAL(9,8), scomm MONEY, spositiontaking SMALLMONEY,
+		swinlost MONEY, srecommend INT, Username NVARCHAR(50), CurrencyName NVARCHAR(50), virtualrate FLOAT, oddstype TINYINT, statusID TINYINT, currency2 TINYINT,
+		balance MONEY, SecAcceptFlag BIT, transid2 BIGINT, RecommDate DATETIME
+	)
 
 	--- get all licensees that support odds adjustment
 	INSERT INTO @tblSiteSupported(SiteName)
@@ -92,6 +103,13 @@ BEGIN
 	END
 
 	--- generate new trans for summary data
+	INSERT INTO #__tmpTransInsertUpdate
+	(
+		transdate,oddsid,bettype,hdp1,hdp2,betteam,betid ,odds,stake,status,winlost,awinlost,mwinlost,playercomm,comm,acomm,apositiontaking,mpositiontaking,tpositiontaking
+		,playerdiscount,discount,adiscount,refno,winlostdate,matchid, actual_stake,currency,sdiscount,scomm,spositiontaking,swinlost,srecommend,CurrencyName,oddstype 
+		,statusID ,comstatus,oddsspread,betdaqid ,liveindicator,livehomescore,liveawayscore,SecAcceptFlag,checktime,betfrom,betcheck,ruben,statuswinlost, modds,ip
+		,transdesc,currency2,balance ,transid2 ,RecommDate
+	)
 	SELECT
 		--new tranid for member dummy
 		--t.memberid AS custid
@@ -156,11 +174,7 @@ BEGIN
 	   ,0 balance 
 	   ,0 transid2 
 	   ,NULL RecommDate
-	   ,SUM(tblTemp.AdjCompanyWL) AS AdjAmount
-	   ,-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm) AS OriAmount
-	   ,-1*((-1*SUM(fMember.oriWL + fAgent.oriWL + fMaster.oriWL + fSuper.oriWL + b.scomm)) - SUM(tblTemp.AdjCompanyWL)) AS DeductedOddSpreadCost
 
-	INTO #__tmpTransInsertUpdate
 	FROM 
 		bettrans14 b WITH (NOLOCK)
 		INNER JOIN BettransInfo14 bi WITH (NOLOCK)
@@ -186,17 +200,6 @@ BEGIN
 			,t.SuperId
 			,t.CurrencyId
 			,t.CurrencyName
-
-	---### add more info to new dummy transaction 
-	ALTER TABLE #__tmpTransInsertUpdate 
-		ADD 
-			Username NVARCHAR(50),
-			Custid INT,
-			Recommend INT,
-			mrecommend INT,
-			ActualRate FLOAT,
-			VirtualRate FLOAT,
-			Creator INT
 
 	-- update info to temp table
 	UPDATE t

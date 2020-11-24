@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_Dep_DailySum_OddsAdjustment_Job]
+ALTER PROCEDURE [dbo].[Task_Dep_DailySum_OddsAdjustment_Job]
 AS
 /*
 	Created: 20201012@Sol
@@ -17,7 +17,7 @@ BEGIN
 
 	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
 	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
-	EXEC bodb02.dbo.Age_SelBalanceUpDay
+	EXEC DBEXT.bodb02.dbo.Age_SelBalanceUpDay
 	
 	DECLARE @WinlostDate SMALLDATETIME, @Yesterday SMALLDATETIME
 	SELECT  @WinlostDate = DATEADD(DAY, 1, MoveBetsDay), @Yesterday = DATEADD(DAY, -1, CONVERT(SMALLDATETIME, GETDATE())) FROM @MBBU
