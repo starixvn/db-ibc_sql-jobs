@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
+GO
 /*
 Created: 20180613@Winnie
 Task: check CustInfo setting for credit customers 

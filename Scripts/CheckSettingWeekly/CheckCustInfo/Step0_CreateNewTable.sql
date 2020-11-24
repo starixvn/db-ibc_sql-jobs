@@ -1,3 +1,5 @@
+/*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
+GO
 /*
 	Created: 20180615@Winnie
 	Task: Improve DB Productivity - Redmine: https://nexdev.net/issues/73556
