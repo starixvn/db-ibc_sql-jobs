@@ -28,14 +28,15 @@ BEGIN
 	IF @stepNo = 1
 	BEGIN
 		SET @errmsg = 'step 1.1'
-		EXEC bodb02.dbo.Task_sum_winloss_14
-				@WinlostDate = @WinlostDate,
-				@CustIds = @CustIds 
-
-		SET @errmsg = 'step 1.2'
 		EXEC bodb02.dbo.Task_Dep_DailySum_OddsAdjustment_14
 				@WinlostDate = @winlostdate,
 				@CustIds = @custIDs
+
+		SET @errmsg = 'step 1.2'
+		EXEC bodb02.dbo.Task_sum_winloss_14
+				@WinlostDate = @WinlostDate,
+				@CustIds = @CustIds 
+		
 	END
 	IF @stepNo = 2
 	BEGIN

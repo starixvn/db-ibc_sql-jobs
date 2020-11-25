@@ -248,7 +248,7 @@ BEGIN
 
 		SELECT @Subject = 'Missing dummy account notification'
 			, @bodymsg = ''
-			, @recipients = CASE WHEN @@SERVERNAME = 'DB206' THEN 'sol.le@starixvn.com;harmony.huynh@starixvn.com' ELSE 'it@starixvn.com;ben.nguyen@starixvn.com' END
+			, @recipients = CASE WHEN @@SERVERNAME = 'DB206' OR @@SERVERNAME = 'SITDBTRANS' THEN 'sol.le@starixvn.com;harmony.huynh@starixvn.com' ELSE 'it@starixvn.com;ben.nguyen@starixvn.com' END
 
 		SELECT lc.CustID, Currency INTO #__tblRealLicensee
 		FROM DBCUST.bodb_licensee.dbo.LicenseeCust lc WITH(NOLOCK)
