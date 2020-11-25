@@ -15,7 +15,7 @@ AS
 	Revisions:
 		- 20200720@Brice:	Initialize - 13 tables [Redmine: #111093]
 		
-	call sp: exec Task_Archive_Control_oldData_zzz @datebegin='2017-01-01', @dateend='2018-12-31';
+	call sp: exec Task_Archive_Control_oldData_zzz @datebegin='2017-01-01', @dateend='2018-12-31',@DebugMode = 2;
 */
 BEGIN;
 	SET NOCOUNT ON;

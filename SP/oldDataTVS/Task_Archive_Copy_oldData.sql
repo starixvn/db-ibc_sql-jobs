@@ -155,7 +155,7 @@ BEGIN
 			(	TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID)
 		SELECT	TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID
 		FROM	bodb02.dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
-		WHERE	EXISTS (SELECT 1 FROM ##bettrans_bk AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid)
+		WHERE	EXISTS (SELECT 1 FROM ##bettrans_bk AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid and t1.matchid=0)
 				OR EXISTS (SELECT 1 FROM ##bettrans_bk2 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid);
 		
 		--process for ticket sub parlay (sportbook and virtual sport)
