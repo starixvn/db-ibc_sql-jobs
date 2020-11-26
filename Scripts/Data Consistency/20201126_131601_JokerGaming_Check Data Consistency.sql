@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 /*
 	Created: 20201126@July
-	Task: Check Data Consistency -[Joker Gaming]
+	Task: Check Data Consistency -[Joker Gaming] - [Redmine: #131601]
 	DB: DBCONSISTENCY-bodb_Consistency
 
 */
