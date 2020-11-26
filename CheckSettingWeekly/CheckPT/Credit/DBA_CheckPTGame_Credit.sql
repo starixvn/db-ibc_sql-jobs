@@ -35,18 +35,10 @@ BEGIN
 	
 	DECLARE @GameTypeKeno TABLE(SportType INT, GameTypeID SMALLINT, BetType SMALLINT)
 	
-	BEGIN TRY
-		INSERT INTO @GameTypeKeno (SportType,GameTypeID,BetType)
-		SELECT SportType, GameTypeID,IBCBetTypeID
-		FROM CheckCustDB.dbo.GameType WITH(NOLOCK)
-		WHERE sportType = 202 AND IsDisabled = 0 AND GameTypeID BETWEEN 1 AND 99
-	END TRY
-	BEGIN CATCH
-		INSERT INTO @GameTypeKeno (SportType,GameTypeID,BetType)
-		SELECT 202 as sportType, GameTypeID as GameTypeID ,IBCBetTypeID
-		FROM KBTDB061.bodb02.dbo.GameType WITH(NOLOCK)	
-		WHERE IsDisabled = 0 AND GameTypeID BETWEEN 1 AND 99
-	END CATCH
+	INSERT INTO @GameTypeKeno (SportType,GameTypeID,BetType)
+	SELECT SportType, GameTypeID,IBCBetTypeID
+	FROM CheckCustDB.dbo.GameType WITH(NOLOCK)
+	WHERE sportType = 202 AND IsDisabled = 0 AND GameTypeID BETWEEN 1 AND 99
 	
 	DECLARE @RowCount TINYINT,
 		@isDummySuper BIT = 0
