@@ -20,6 +20,7 @@ AS
 		- 20191128@Johnson: remove rmTransaction [redmine:#124442]
 		- 20191211@Jacob: Extra PT - Add new structure to support extra pt column on bettrans table #124194
 		- 20200510@Percy: Add Penalty Shootout Combo [RedmineID: #133961]
+		- 20201126@Danny: Separate Data of Virtual Soccer & Virtual Basketball [RedmineID: #145926]
 */
 
 BEGIN
@@ -67,20 +68,33 @@ BEGIN
 			FROM dbo.rmBettrans b
 				CROSS APPLY (
 					SELECT CASE
-								WHEN COUNT(DISTINCT sporttype) = 1 THEN MIN(sporttype)
-								WHEN MIN(sporttype) = 1 THEN -3
-								ELSE -1 END AS sporttype
+								-------------------------------
+								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) NOT IN (1,2) THEN MIN(sporttype)
+								------------------------------- 
+								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) = 0 THEN -3 
+								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) > 0 THEN -4
+								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) < 0 THEN  1
+								------------------------------
+								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) = 0 THEN -1
+								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) > 0 THEN -5
+								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) < 0 THEN  2
+
+								------------------------------
+								WHEN COUNT(DISTINCT sporttype) <> 1 AND MIN(sporttype) = 1 THEN -3
+								ELSE -1 END AS sporttype 
 					FROM
 					(
-						SELECT m.sporttype
+						SELECT m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE 0 END Saba
 						FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
 							INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
+							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
 						WHERE bm.refno = b.refno
 
 						UNION ALL
 						SELECT m.sporttype
 						FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 							INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
+							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
 						WHERE bm.refno = b.refno
 					) s
 				) s
