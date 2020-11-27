@@ -41,7 +41,7 @@ SELECT 'Check Discount value' AS RuleChecking, @ErrCode, @ErrMsg
 ---------------------------------------------------------------------
 -- (*) G2: Check PT value
 INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (2, N'EXEC dbo.DBA_Consistency_PTChecking @ProductId = 234,@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+VALUES (2, N'EXEC dbo.DBA_Consistency_PTChecking @ProductId = 234,@tablename = ''bettransRNG'',@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
 SET @taskId_g2 = SCOPE_IDENTITY()
 
 --------- SCHEDULE ---------------
@@ -66,7 +66,7 @@ SELECT 'Check PT value' AS RuleChecking, @ErrCode, @ErrMsg
 ---------------------------------------------------------------------
 -- (*) G3: Check Stake >0 for dedicated bettypes
 INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (2, N'EXEC dbo.DBA_Consistency_StakeChecking @ProductId = 234,@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+VALUES (3, N'EXEC dbo.DBA_Consistency_StakeChecking @ProductId = 234,@tablename = ''bettransRNG'',@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
 SET @taskId_g3 = SCOPE_IDENTITY()
 
 --------- SCHEDULE ---------------
@@ -84,7 +84,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Stake >0 for dedicated betty
  ,@NotifyLevelEmail = 2
  --,@Emails ='dba_local@starixvn.com'
  ,@Emails = 'dbaadmin@starixvn.com'
- --,@ErrCode  = @ErrCode OUTPUT
+ ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
 
 SELECT 'Check Stake >0 for dedicated bettypes' AS RuleChecking, @ErrCode, @ErrMsg
