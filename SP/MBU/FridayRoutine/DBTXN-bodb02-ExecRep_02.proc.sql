@@ -109,33 +109,31 @@ BEGIN
 		END --- end of deleting bettrans14
 
 		IF @deletedTarget = 'bettransm14' --deleting bettransm14
-		BEGIN
-			select @rowcount=0;
-			begin transaction;
-				with cte(transid)
-				as
-				(
-				select cast(val as bigint) as transid from dbo.strSplit(convert(varchar(8000),@tmp1),',') as s1
-				union
-				select cast(val as bigint) as transid from dbo.strSplit(convert(varchar(8000),@tmp2),',') as s2
-				union
-				select cast(val as bigint) as transid from dbo.strSplit(convert(varchar(8000),@tmp3),',') as s3
-				)
-				delete tbl
-				from dbo.bettransm14 as tbl with (rowlock)
-				inner join cte on tbl.transid=cte.transid;
-				
-				set @rowcount = @@rowcount;
-				
-				if @rowcount=0
-				begin
-					delete tbl
-					from bettransm14 as tbl with(rowlock)
-					where winlostdate=@winlostdate
-				end
-			commit transaction;
-			return;
-		END --end of deleting bettransM14
+            BEGIN
+                SELECT @rowcount = 0;
+                BEGIN TRANSACTION;
+                WITH cte(transid)
+                     AS (SELECT CAST(val AS BIGINT) AS transid
+                         FROM dbo.strSplit(CONVERT(VARCHAR(8000), @tmp1), ',') AS s1
+                         UNION
+                         SELECT CAST(val AS BIGINT) AS transid
+                         FROM dbo.strSplit(CONVERT(VARCHAR(8000), @tmp2), ',') AS s2
+                         UNION
+                         SELECT CAST(val AS BIGINT) AS transid
+                         FROM dbo.strSplit(CONVERT(VARCHAR(8000), @tmp3), ',') AS s3)
+                     DELETE tbl
+                     FROM dbo.bettransm14 AS tbl WITH(ROWLOCK)
+                          INNER JOIN cte ON tbl.transid = cte.transid;
+                SET @rowcount = @@rowcount;
+                IF @rowcount = 0
+                    BEGIN
+                        DELETE tbl
+                        FROM bettransm14 AS tbl WITH(ROWLOCK)
+                        WHERE winlostdate = @winlostdate;
+                    END;
+                COMMIT TRANSACTION;
+                RETURN;
+            END; --end of deleting bettransM14
 
 		IF	@deletedTarget = 'sum_winloss' --- delete sum_winloss
 		BEGIN;
