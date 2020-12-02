@@ -35,38 +35,43 @@ BEGIN;
 	WAITFOR DELAY @WaitFor;
 END;
 
--- 143763 Brice edited job--
-DECLARE	@__tmpTransId AS TABLE (
-				id int IDENTITY(1,1) PRIMARY KEY,
-				transid		BIGINT
-			);
-declare @t1 sql_variant, @t2 sql_variant, @t3 sql_variant;
-create table #bettransm14_ExecRep_02(transId bigint);
-insert into #bettransm14_ExecRep_02(transId) select transId from bettransm14 with(nolock) where winlostdate=@wldate;
+-- 143763 Patrick edited job--
+DECLARE	@__tmpTransId TABLE (transid BIGINT);
+CREATE TABLE #__transIdsM (rowId INT IDENTITY(1,1) PRIMARY KEY, transid BIGINT);
 
-SELECT @rowcount = 1;
-WHILE @rowcount <> 0
+DECLARE @rc INT
+INSERT INTO #__transIdsM(transId) 
+SELECT transId FROM dbo.bettransm14 WITH(NOLOCK) WHERE winlostdate = @wldate;
+SET @rc = @@ROWCOUNT
+
+DECLARE @transIds VARCHAR(MAX), @rowId INT
+SET @transIds = ''''
+
+SELECT @rowcount = 1, @rowId = 1;
+WHILE @rc > 0
 BEGIN
-	DELETE	@__tmpTransId
-	
-	DELETE	TOP(1500) tmpTable
-	OUTPUT	Deleted.transid
-	INTO	@__tmpTransId (transid)
-	FROM	#bettransm14_ExecRep_02 tmpTable;
-	
-	set @t1= cast((select (cast(transid as varchar(20)) + '','') from @__tmpTransId where id between 0 and 500 FOR XML PATH('''')) as varchar(8000));
-	set @t2= cast((select (cast(transid as varchar(20)) + '','') from @__tmpTransId where id between 501 and 1000 FOR XML PATH('''')) as varchar(8000));
-	set @t3= cast((select (cast(transid as varchar(20)) + '','') from @__tmpTransId where id between 1000 and 1500 FOR XML PATH('''')) as varchar(8000));
-	
-	EXECUTE dbo.ExecRep_02_brice @tmp1=@t1, @tmp2=@t1, @tmp3=@t1, @winlostdate = @wldate, @Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @rowcount = @rowcount OUTPUT;
+	DELETE @__tmpTransId
+	SET @transIds = NULL
 
-	-- Dynamic Delay Time --
-	SELECT	@WaitFor = dbo.f_BU_GetDelayTime(''FriRoutine'');
+	INSERT INTO @__tmpTransId(transid)
+	SELECT transid
+	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 1000
+	SET @rc = @@ROWCOUNT
+	
+	SELECT @transIds = COALESCE(@transIds + ''^'' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
+	FROM @__tmpTransId
+	
+	EXECUTE dbo.ExecRep_02 @Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
+
+	SET @rowId = @rowId + 1000
+	SELECT @WaitFor = dbo.f_BU_GetDelayTime(''FriRoutine'');
 	WAITFOR DELAY @WaitFor;
 END
+--remove all data on that day if any replicated servers have diff rows for dbtrans
+EXECUTE dbo.ExecRep_02 @winlostdate = @wldate, @Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @rowcount = @rowcount OUTPUT;
 
-drop table #bettransm14_ExecRep_02
--- /143763 Brice edited job--
+DROP TABLE #__transIdsM
+-- /143763 Patrick edited job--
 SELECT @rowcount = 1;
 WHILE @rowcount <> 0
 BEGIN;
