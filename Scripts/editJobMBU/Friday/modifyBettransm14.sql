@@ -55,15 +55,15 @@ BEGIN
 
 	INSERT INTO @__tmpTransId(transid)
 	SELECT transid
-	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 1000
+	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 3000
 	SET @rc = @@ROWCOUNT
 	
 	SELECT @transIds = COALESCE(@transIds + ''^'' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
 	FROM @__tmpTransId
 	
-	EXECUTE dbo.ExecRep_02 @Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
+	EXECUTE dbo.ExecRep_02 @winlostdate = @wldate,@Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
 
-	SET @rowId = @rowId + 1000
+	SET @rowId = @rowId + 3000
 	SELECT @WaitFor = dbo.f_BU_GetDelayTime(''FriRoutine'');
 	WAITFOR DELAY @WaitFor;
 END
@@ -210,15 +210,15 @@ BEGIN
 
 	INSERT INTO @__tmpTransId(transid)
 	SELECT transid
-	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 1000
+	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 3000
 	SET @rc = @@ROWCOUNT
 	
 	SELECT @transIds = COALESCE(@transIds + ''^'' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
 	FROM @__tmpTransId
 	
-	EXECUTE dbo.ExecRep_02 @Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
+	EXECUTE dbo.ExecRep_02 @winlostdate = @wldate,@Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
 
-	SET @rowId = @rowId + 1000
+	SET @rowId = @rowId + 3000
 	SELECT @WaitFor = dbo.f_BU_GetDelayTime(''FriRoutine'');
 	WAITFOR DELAY @WaitFor;
 END
@@ -365,15 +365,15 @@ BEGIN
 
 	INSERT INTO @__tmpTransId(transid)
 	SELECT transid
-	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 1000
+	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 3000
 	SET @rc = @@ROWCOUNT
 	
 	SELECT @transIds = COALESCE(@transIds + ''^'' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
 	FROM @__tmpTransId
 	
-	EXECUTE dbo.ExecRep_02 @Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
+	EXECUTE dbo.ExecRep_02 @winlostdate = @wldate,@Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
 
-	SET @rowId = @rowId + 1000
+	SET @rowId = @rowId + 3000
 	SELECT @WaitFor = dbo.f_BU_GetDelayTime(''FriRoutine'');
 	WAITFOR DELAY @WaitFor;
 END
@@ -520,15 +520,15 @@ BEGIN
 
 	INSERT INTO @__tmpTransId(transid)
 	SELECT transid
-	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 1000
+	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 3000
 	SET @rc = @@ROWCOUNT
 	
 	SELECT @transIds = COALESCE(@transIds + ''^'' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
 	FROM @__tmpTransId
 	
-	EXECUTE dbo.ExecRep_02 @Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
+	EXECUTE dbo.ExecRep_02 @winlostdate = @wldate,@Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
 
-	SET @rowId = @rowId + 1000
+	SET @rowId = @rowId + 3000
 	SELECT @WaitFor = dbo.f_BU_GetDelayTime(''FriRoutine'');
 	WAITFOR DELAY @WaitFor;
 END
@@ -675,15 +675,15 @@ BEGIN
 
 	INSERT INTO @__tmpTransId(transid)
 	SELECT transid
-	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 1000
+	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 3000
 	SET @rc = @@ROWCOUNT
 	
 	SELECT @transIds = COALESCE(@transIds + ''^'' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
 	FROM @__tmpTransId
 	
-	EXECUTE dbo.ExecRep_02 @Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
+	EXECUTE dbo.ExecRep_02 @winlostdate = @wldate,@Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
 
-	SET @rowId = @rowId + 1000
+	SET @rowId = @rowId + 3000
 	SELECT @WaitFor = dbo.f_BU_GetDelayTime(''FriRoutine'');
 	WAITFOR DELAY @WaitFor;
 END
@@ -830,15 +830,15 @@ BEGIN
 
 	INSERT INTO @__tmpTransId(transid)
 	SELECT transid
-	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 1000
+	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 3000
 	SET @rc = @@ROWCOUNT
 	
 	SELECT @transIds = COALESCE(@transIds + ''^'' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
 	FROM @__tmpTransId
 	
-	EXECUTE dbo.ExecRep_02 @Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
+	EXECUTE dbo.ExecRep_02 @winlostdate = @wldate,@Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
 
-	SET @rowId = @rowId + 1000
+	SET @rowId = @rowId + 3000
 	SELECT @WaitFor = dbo.f_BU_GetDelayTime(''FriRoutine'');
 	WAITFOR DELAY @WaitFor;
 END
@@ -985,15 +985,15 @@ BEGIN
 
 	INSERT INTO @__tmpTransId(transid)
 	SELECT transid
-	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 1000
+	FROM #__transIdsM WITH (NOLOCK) WHERE rowId >= @rowId AND rowId < @rowId + 3000
 	SET @rc = @@ROWCOUNT
 	
 	SELECT @transIds = COALESCE(@transIds + ''^'' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
 	FROM @__tmpTransId
 	
-	EXECUTE dbo.ExecRep_02 @Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
+	EXECUTE dbo.ExecRep_02 @winlostdate = @wldate,@Command = ''ALL_DB'', @deletedTarget = ''bettransm14'', @transIds = @transIds, @rowcount = @rowcount OUTPUT;
 
-	SET @rowId = @rowId + 1000
+	SET @rowId = @rowId + 3000
 	SELECT @WaitFor = dbo.f_BU_GetDelayTime(''FriRoutine'');
 	WAITFOR DELAY @WaitFor;
 END
