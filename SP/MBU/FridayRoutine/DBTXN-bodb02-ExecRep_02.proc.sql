@@ -109,31 +109,31 @@ BEGIN
 		END --- end of deleting bettrans14
 
 		IF @deletedTarget = 'bettransm14' --deleting bettransm14
-            BEGIN
-                SELECT @rowcount = 0;
-                BEGIN TRANSACTION;
-                WITH cte(transid)
-                     AS (SELECT CAST(val AS BIGINT) AS transid
-                         FROM dbo.strSplit(CONVERT(VARCHAR(8000), @tmp1), ',') AS s1
-                         UNION
-                         SELECT CAST(val AS BIGINT) AS transid
-                         FROM dbo.strSplit(CONVERT(VARCHAR(8000), @tmp2), ',') AS s2
-                         UNION
-                         SELECT CAST(val AS BIGINT) AS transid
-                         FROM dbo.strSplit(CONVERT(VARCHAR(8000), @tmp3), ',') AS s3)
-                     DELETE tbl
-                     FROM dbo.bettransm14 AS tbl WITH(ROWLOCK)
-                          INNER JOIN cte ON tbl.transid = cte.transid;
-                SET @rowcount = @@rowcount;
-                IF @rowcount = 0
-                    BEGIN
-                        DELETE tbl
-                        FROM bettransm14 AS tbl WITH(ROWLOCK)
-                        WHERE winlostdate = @winlostdate;
-                    END;
-                COMMIT TRANSACTION;
-                RETURN;
-            END; --end of deleting bettransM14
+        BEGIN
+			IF @transIds IS NOT NULL 
+			BEGIN
+				DELETE FROM @__tmpTransId
+				SELECT @rowcount = 0;
+
+				DECLARE @xmlData XML
+				SET @xmlData = CONVERT(XML, REPLACE('<root><r t="' + @transIds + '"/></root>', '^', '"/><r t="'))
+
+				INSERT INTO @__tmpTransId (id)
+				SELECT T.C.value('./@t', 'BIGINT') AS transid
+				FROM @xmlData.nodes('//r') AS T(C)
+				OPTION (OPTIMIZE FOR (@xmlData = NULL))
+
+				DELETE FROM dbo.bettransm14 WITH(ROWLOCK)
+				WHERE transid IN (SELECT t.id FROM @__tmpTransId t)
+			END
+			ELSE
+			BEGIN
+				DELETE FROM dbo.bettransm14 WITH(ROWLOCK)
+				WHERE winlostdate = @winlostdate
+			END
+			
+			RETURN;
+        END; --end of deleting bettransM14
 
 		IF	@deletedTarget = 'sum_winloss' --- delete sum_winloss
 		BEGIN;
