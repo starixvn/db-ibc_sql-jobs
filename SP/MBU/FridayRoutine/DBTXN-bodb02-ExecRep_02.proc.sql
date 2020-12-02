@@ -8,6 +8,7 @@ CREATE PROCEDURE [dbo].[ExecRep_02]
 	@winlostdate datetime = NULL,
 	@Command varchar(20) = NULL,
 	@deletedTarget varchar(50) = NULL,
+	@transIds VARCHAR(MAX) = NULL,
 	@rowcount INT = 0 OUTPUT
 AS
 /*
