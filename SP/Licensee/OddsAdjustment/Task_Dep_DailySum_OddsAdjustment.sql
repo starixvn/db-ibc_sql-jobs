@@ -45,7 +45,7 @@ BEGIN
 		DBPRO.bodb02.dbo.LicSiteSetting ss WITH(NOLOCK)
 		INNER JOIN DBCUST.SiteConfig.dbo.LicVendorProfile vp WITH(NOLOCK)
 			ON ss.SiteId = vp.SiteId
-	WHERE ss.ApplyDeductedSpread = 1
+	WHERE ss.ApplySpreadAdjustment = 1
 
 	--- get dummies member acc 
 	;WITH rs AS
