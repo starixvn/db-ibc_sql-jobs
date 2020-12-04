@@ -104,20 +104,6 @@ BEGIN
 		INSERT INTO bodb_licensee.dbo.LicenseeBATransaction_active (TransID, Transdate, custid, recommend, srecommend)
 		SELECT TransId, TransDate, CustId, Recommend, SRecommend
 		FROM @temptrans
-
-		--Add more code to sync data to DB042 --> temporary solution
-		DECLARE @XmlData NVARCHAR(MAX)
-
-		SET @XmlData = (
-			SELECT
-				TransId AS t,
-				Transdate AS td,
-				custid AS c,
-				recommend AS r,
-				srecommend AS s
-			FROM @temptrans
-			FOR XML RAW('r'), root
-		)
 	END
 
 	UPDATE bodb_licensee.dbo.LICSettings WITH(ROWLOCK, UPDLOCK)
