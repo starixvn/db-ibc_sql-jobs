@@ -22,6 +22,13 @@ BEGIN
 	DECLARE	@Subject NVARCHAR(1000)
 			, @bodymsg NVARCHAR(MAX)
 			, @recipients VARCHAR(1000)
+			, @WLDate SMALLDATETIME
+
+	SET @WLDate = @WinlostDate
+
+	-- check test version
+	DECLARE @isTest BIT = 0  
+	SELECT @isTest = dbo.f_CheckSPVersion(@@PROCID);
 
 	--- temp table 
 	DECLARE @tblSiteSupported TABLE(SiteName VARCHAR(50))
@@ -59,6 +66,7 @@ BEGIN
 			SELECT val FROM bodb02.dbo.f_SplitString(@CustIds, ',') f WHERE c.custid = f.val
 		) AS tmp
 	WHERE c.roleid = 1
+	OPTION (MAXRECURSION 0)
 
 	--- get dummies member acc 
 	;WITH rs AS
@@ -94,13 +102,35 @@ BEGIN
 	FROM 
 		rs
 		LEFT JOIN CustDB.dbo.customer c WITH (NOLOCK)
-			ON c.username = rs.UserName AND rs.custid = c.srecommend
+			ON c.username = rs.UserName AND rs.custid = c.srecommend AND c.roleid = 1
 
 	IF NOT EXISTS (SELECT TOP 1 1 FROM @tblDummyMember)
 	BEGIN
 		--- do nothing
 		RETURN
 	END
+
+	-- get list agent to use index in bettrans
+	CREATE TABLE #__tblLicenseeAgent(AgentId INT)
+
+	INSERT INTO #__tblLicenseeAgent (AgentId)
+	SELECT lc.custid 
+	FROM @tblSiteSupported t 
+		INNER JOIN DBCUST.bodb_licensee.dbo.licensees l WITH(NOLOCK)
+			ON l.licenseeName = t.SiteName
+		INNER JOIN DBCUST.bodb_licensee.dbo.LicenseeCust lc WITH(NOLOCK)
+			ON l.licenseeid = lc.licenseeid
+	
+	CREATE TABLE #__tblRealAgent(SuperId INT, MasterId INT, AgentId INT, CurrencyId INT, CurrencyName NVARCHAR(50))
+
+	INSERT INTO #__tblRealAgent(SuperId , MasterId , AgentId , CurrencyId , CurrencyName )
+	SELECT t.SuperId, t.MasterId, c.recommend, t.CurrencyId, t.CurrencyName 
+	FROM @tblDummyMember t
+		INNER JOIN CUSTDB.dbo.Customer c WITH(NOLOCK)
+			ON t.SuperId = c.srecommend AND c.roleid = 2
+	WHERE 
+		t.IsSum = 1 
+		AND EXISTS (SELECT TOP 1 1 FROM #__tblLicenseeAgent t WHERE t.AgentID = c.recommend)
 
 	--- generate new trans for summary data
 	INSERT INTO #__tmpTransInsertUpdate
@@ -137,7 +167,7 @@ BEGIN
 	   ,0 discount
 	   ,0 adiscount
 	   ,100000000000 refno
-	   ,@winlostdate winlostdate
+	   ,@WLDate winlostdate
 	   ,999 matchid
 	   --,t.AgentId recommend
 	   --,t.MasterId mrecommend
@@ -179,8 +209,8 @@ BEGIN
 		bettrans14 b WITH (NOLOCK)
 		INNER JOIN BettransInfo14 bi WITH (NOLOCK)
 			ON b.transid = bi.transid
-		INNER JOIN @tblDummyMember t
-			ON t.SuperId = b.srecommend AND t.IsSum = 1
+		INNER JOIN #__tblRealAgent t
+			ON t.AgentId = b.recommend
 		LEFT JOIN f_Set_OddsTypeBettypes() fdec -- check for decimal odds only
 			ON b.bettype = fdec.BetType
 		CROSS APPLY
@@ -192,7 +222,7 @@ BEGIN
 		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, -1 * fMember.oriWL, b.mwinlost, b.actual_stake, b.statusID, b.statuswinlost, b.apositiontaking, b.mpositiontaking, b.spositiontaking, 3, fdec.OddsType) fMaster
 		CROSS APPLY dbo.f_Set_CalOriginalLicenseeWL(bi.OriginalOdds, b.odds, -1 * fMember.oriWL, b.swinlost, b.actual_stake, b.statusID, b.statuswinlost, b.apositiontaking, b.mpositiontaking, b.spositiontaking, 4, fdec.OddsType) fSuper
 	WHERE
-		b.winlostdate = @WinlostDate
+		b.winlostdate = @WLDate
 		AND bi.OriginalOdds IS NOT NULL
 		AND b.statusID IN (101, 102, 103, 111, 112, 113) -- reject, void, refund, draw, won, lose
 	
@@ -221,17 +251,17 @@ BEGIN
 	SELECT b.transid, b.custid, b.srecommend
 	FROM bettrans14 b WITH(NOLOCK)
 	WHERE 
-		b.winlostdate = @WinlostDate
+		b.winlostdate = @WLDate
 		AND b.matchid = 999
 		AND b.bettype = 999
 
 	----- update existing ones
 	UPDATE b WITH(ROWLOCK)
-		SET b.awinlost = ISNULL(t.awinlost, 0)
+		SET b.awinlost = t.awinlost
 	FROM bettrans14 b
 		INNER JOIN #__tblSumOddsAdjustment soa
 			ON b.transid = soa.TransactionId
-		LEFT JOIN #__tmpTransInsertUpdate t
+		INNER JOIN #__tmpTransInsertUpdate t
 			ON b.srecommend = t.srecommend AND b.custid = t.custid
 
 	--- get licensees that support odds adjustment but do not have dummy member account and send email notification
@@ -240,7 +270,7 @@ BEGIN
 
 		SELECT @Subject = 'Missing dummy account notification'
 			, @bodymsg = ''
-			, @recipients = CASE WHEN @@SERVERNAME = 'DB206' OR @@SERVERNAME = 'SITDBTRANS' THEN 'sol.le@starixvn.com;harmony.huynh@starixvn.com' ELSE 'it@starixvn.com;ben.nguyen@starixvn.com' END
+			, @recipients = CASE WHEN @isTest = 0 AND @@SERVERNAME = 'DBTRANS' THEN 'it@starixvn.com;ben.nguyen@starixvn.com' ELSE 'dba_local@starixvn.com' END
 
 		SELECT lc.CustID, Currency INTO #__tblRealLicensee
 		FROM DBCUST.bodb_licensee.dbo.LicenseeCust lc WITH(NOLOCK)
@@ -297,6 +327,8 @@ BEGIN
 	IF OBJECT_ID('tempdb..#__tblSumOddsAdjustment') IS NOT NULL DROP TABLE #__tblSumOddsAdjustment
 	IF OBJECT_ID('tempdb..#__tmpTransInsertUpdate') IS NOT NULL DROP TABLE #__tmpTransInsertUpdate
 	IF OBJECT_ID('tempdb..#__tblRealLicensee') IS NOT NULL DROP TABLE #__tblRealLicensee
+	IF OBJECT_ID('tempdb..#__tblLicenseeAgent') IS NOT NULL DROP TABLE #__tblLicenseeAgent
+	IF OBJECT_ID('tempdb..#__tblRealAgent') IS NOT NULL DROP TABLE #__tblRealAgent
 
 END
 GO
