@@ -75,13 +75,14 @@ AS
 		- 20201013@Hogan: Integrate SA Gaming [RedmineID: #128493]
 		- 20201020@Hogan: Integrate Arcadia Gaming Bonus [RedmineID: #143648]
 		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
+		- 20201022@Louis: Licensee Spread Setting [RedmineID: #142532]	
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
 
 BEGIN
 	SET NOCOUNT ON
-
+	
 	DELETE FROM dbo.rptLicWinloss2 WITH (ROWLOCK) WHERE winlostdate = @WinLostDate
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
@@ -190,7 +191,7 @@ BEGIN
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,17003,4299,4298,4297,3007,1906) THEN bettype
+			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,17003,4299,4298,4297,3007,1906, 999) THEN bettype
 			ELSE 0
 		END bettype
 		--114: half win, 115: half lose
@@ -284,7 +285,7 @@ BEGIN
 			ELSE 0
 		END
 		,CASE
-			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000, 17003,4299,4298,4297,3007,1906) THEN bettype
+			WHEN bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000, 17003,4299,4298,4297,3007,1906, 999) THEN bettype
 			ELSE 0
 		END
 		,CASE
