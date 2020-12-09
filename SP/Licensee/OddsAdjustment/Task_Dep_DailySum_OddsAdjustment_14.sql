@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20201005@Sol: Initialize SP - [RedmineID: #142532]
+		- 20201209@Sol: exclude test agent from email list- [RedmineID: #142532]
 */
 BEGIN
 	
@@ -285,6 +286,7 @@ BEGIN
 				AND c.roleid = 2
 				AND c.username LIKE '%' + td.CurrencyName + '01'
 				AND EXISTS (SELECT TOP 1 1 FROM	#__tblRealLicensee t WHERE t.CustID = c.recommend AND t.Currency = td.CurrencyId)
+				AND td.SiteId NOT IN ('Athena000', 'Spondemo', 'SampleSite')
 		)
 		SELECT
 			@bodymsg = N'\
