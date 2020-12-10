@@ -16,6 +16,7 @@ AS
 		- 20200915@Malcolm: Add WM Live Casino [redmine: #131584]
 		- 20201201@Malcolm : Add Gold Diamond Gaming [Redmine : #144110]
 		- 20201124@Malcolm: Add Virtual Sports 3 [redmine: #131375]
+		- 20201210@Malcolm: Add Big Gaming And Happy 5 Linked Games [RedminedId : #146542]
 	
 */
 BEGIN
@@ -85,7 +86,8 @@ BEGIN
 		END) grosscomm
 	   ,CASE
 			WHEN bettype BETWEEN 81 AND 120 OR
-				bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
+				bettype BETWEEN 8101 AND 8120 OR
+				bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sport
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sport
 			WHEN bettype IN (71, 72) THEN 251
@@ -122,6 +124,7 @@ BEGIN
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
+			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -155,6 +158,7 @@ BEGIN
 				OR bettype BETWEEN 5601 AND 5699   -- ION 	 
 				OR bettype BETWEEN 3401 AND 3499   -- WM
 				OR bettype BETWEEN 5701 AND 5799   -- GDG
+				OR bettype BETWEEN 3501 AND 3599   -- BG
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -195,7 +199,8 @@ BEGIN
 			,bettrans.srecommend
 			,CASE
 				 WHEN bettype BETWEEN 81 AND 120 OR
-					 bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
+					 bettype BETWEEN 8101 AND 8120 OR
+					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
@@ -232,6 +237,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
+				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 ELSE 0
 			 END
 			,CASE
@@ -269,7 +275,8 @@ BEGIN
 		END) grosscomm
 	   ,CASE
 			WHEN bettype BETWEEN 81 AND 120 OR
-				bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
+				bettype BETWEEN 8101 AND 8120 OR
+				bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71, 72) THEN 251
@@ -306,6 +313,7 @@ BEGIN
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
+			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -339,6 +347,7 @@ BEGIN
 				OR bettype BETWEEN 5601 AND 5699   -- ION 
 				OR bettype BETWEEN 3401 AND 3499   -- WM 
 				OR bettype BETWEEN 5701 AND 5799   -- GDG
+				OR bettype BETWEEN 3501 AND 3599   -- BG
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -378,7 +387,8 @@ BEGIN
 			,bettrans.srecommend
 			,CASE
 				 WHEN bettype BETWEEN 81 AND 120 OR
-					 bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
+					 bettype BETWEEN 8101 AND 8120 OR
+					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
@@ -415,6 +425,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
+				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 ELSE 0
 			 END
 			,CASE
@@ -452,7 +463,8 @@ BEGIN
 		END) grosscomm
 	   ,CASE
 			WHEN bettype BETWEEN 81 AND 120 OR
-				bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
+				bettype BETWEEN 8101 AND 8120 OR
+			    bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71, 72) THEN 251
@@ -489,6 +501,7 @@ BEGIN
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
+			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -522,6 +535,7 @@ BEGIN
 				OR bettype BETWEEN 5601 AND 5699   -- ION 
 				OR bettype BETWEEN 3401 AND 3499   -- WM
 				OR bettype BETWEEN 5701 AND 5799   -- GDG
+				OR bettype BETWEEN 3501 AND 3599   -- BG
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -560,7 +574,8 @@ BEGIN
 			,bettrans.srecommend
 			,CASE
 				 WHEN bettype BETWEEN 81 AND 120 OR
-					 bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
+					 bettype BETWEEN 8101 AND 8120 OR
+					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
@@ -597,6 +612,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
+				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 ELSE 0
 			 END
 			,CASE
@@ -634,7 +650,8 @@ BEGIN
 		END) grosscomm
 	   ,CASE
 			WHEN bettype BETWEEN 81 AND 120 OR
-				bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
+				bettype BETWEEN 8101 AND 8120 OR
+				bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71, 72) THEN 251
@@ -671,6 +688,7 @@ BEGIN
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
+			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -705,6 +723,7 @@ BEGIN
 				OR bettype BETWEEN 5601 AND 5699   -- ION 	
 				OR bettype BETWEEN 3401 AND 3499   -- WM 
 				OR bettype BETWEEN 5701 AND 5799   -- GDG
+				OR bettype BETWEEN 3501 AND 3599   -- BG
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -743,7 +762,8 @@ BEGIN
 	GROUP BY bettrans.srecommend
 			,CASE
 				 WHEN bettype BETWEEN 81 AND 120 OR
-					 bettype BETWEEN 8101 AND 8120 THEN 161 -- Number Game 
+					 bettype BETWEEN 8101 AND 8120 OR
+					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
@@ -780,6 +800,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
+				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 ELSE 0
 			 END
 			,CASE
