@@ -273,7 +273,7 @@ BEGIN
 			ON b.srecommend = t.srecommend AND b.custid = t.custid
 
 	--- get licensees that support odds adjustment but do not have dummy member account and send email notification
-	IF EXISTS (SELECT TOP 1 1 FROM @tblDummyMember d WHERE d.IsSum = 0)
+	IF EXISTS (SELECT TOP 1 1 FROM @tblDummyMember d WHERE d.IsSum = 0 AND d.SiteId NOT IN ('Athena000', 'Spondemo', 'SampleSite'))
 	BEGIN
 
 		SELECT @Subject = 'Missing dummy account notification'
