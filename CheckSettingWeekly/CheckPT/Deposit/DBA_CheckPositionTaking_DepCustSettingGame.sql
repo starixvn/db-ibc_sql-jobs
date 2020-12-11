@@ -18,8 +18,6 @@ AS
 		-20190128@Winnie: Update PT RedmineID:#108062
 		-20190708@Winnie: Rules PT RedmineID:#116469
 		-20200206@Johnson: add new PT config for Keno (rule 50) and exclude closed customers[redmine:#127831]
-		-20201211@Winfred: Remove OddAdj Acc[redmine:#140011]
-		
 	Param's Explanation:
 	
 */
@@ -73,7 +71,7 @@ BEGIN
 	INSERT INTO #Trade(CustID)
 	SELECT d.custid
 	FROM #tmpDumMember d
-	WHERE (username LIKE '%Bettrade%' OR username LIKE '%CashOut%' OR username LIKE '%TransferUUS%' OR username LIKE '%ClearBal%' OR username LIKE '%01OddsAdj%')
+	WHERE (username LIKE '%Bettrade%' OR username LIKE '%CashOut%' OR username LIKE '%TransferUUS%' OR username LIKE '%ClearBal%')
 	AND d.RoleID=1
 	UNION
 	SELECT c.CustID

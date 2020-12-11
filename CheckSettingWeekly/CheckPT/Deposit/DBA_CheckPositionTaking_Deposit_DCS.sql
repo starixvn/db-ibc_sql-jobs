@@ -26,8 +26,6 @@ AS
 		-20200410@Elodie: Add new PT value for lottery [RedmineID:#131218]
 		-20200505@Eden: Add new PT - Deposit known values for Card Club, SpadeGaming, Virtual Games, SA Gaming, Indo 4D, Table Game [RedmineID:#132253]
 		-20200728@Eden: Add new PT - Deposit known values for PP Jackpot [RedmineID:#138389]
-		-20201211@Winfred: Remove OddAdj Acc[redmine:#140011]
-		
 	Param's Explanation:
 	
 */
@@ -92,7 +90,7 @@ BEGIN
 	INSERT INTO #Trade(CustID)
 	SELECT d.custid
 	FROM #tmpDumMember d
-	WHERE (username LIKE '%Bettrade%' OR username LIKE '%CashOut%' OR username LIKE '%TransferUUS%' OR username LIKE '%ClearBal%' OR username LIKE '%01OddsAdj%')
+	WHERE (username LIKE '%Bettrade%' OR username LIKE '%CashOut%' OR username LIKE '%TransferUUS%' OR username LIKE '%ClearBal%')
 	AND d.RoleID =1
 	UNION
 	SELECT c.CustID
