@@ -18,6 +18,8 @@ AS
 		- 20200116@Johnson: remove AG [redmine:#127252]
 		- 20200206@Johnson: exclude closed customers[redmine:#127831]
 		- 20200409@Tiara: Change data source from Customer to Custinfo [redmine #132051]
+		- 20201211@Winfred: Remove OddAdj Acc[redmine:#140011]
+		
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (317->328)  
@@ -64,7 +66,7 @@ BEGIN
 	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE mrecommend IN(SELECT custid FROM #Dummy) AND roleID=2
 
 	INSERT INTO #Trade(CustID)
-	SELECT CustID FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=1 AND (username LIKE '%Bettrade%' OR username LIKE '%CashOut%' OR username LIKE '%ClearBal%')
+	SELECT CustID FROM CheckCustDB.dbo.custInfo WITH(NOLOCK) WHERE srecommend=@srecommend AND roleid=1 AND (username LIKE '%Bettrade%' OR username LIKE '%CashOut%' OR username LIKE '%ClearBal%' OR username LIKE '%01OddsAdj%')
 	UNION
 	SELECT CustID FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE recommend IN(SELECT custid FROM #Agent) AND roleID=1
 	UNION

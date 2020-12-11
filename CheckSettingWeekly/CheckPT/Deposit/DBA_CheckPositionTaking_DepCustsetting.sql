@@ -24,6 +24,8 @@ AS
 		-20200206@Johnson: exclude closed customers[redmine:#127831]
 		-20200505@Eden: Add new PT - Deposit known values for SB [RedmineID:#132253]
 		-20201203@Eden: update PT for Winbox from 0.88 to 0.9065 [RedmineID:#146557]
+		-20201211@Winfred: Remove OddAdj Acc[redmine:#140011]
+		
 	Param's Explanation:
 	
 */
@@ -70,7 +72,7 @@ BEGIN
 	INSERT INTO #Trade(CustID)
 	SELECT d.custid
 	FROM #tmpDumMember d
-	WHERE (username LIKE '%Bettrade%' OR username LIKE '%CashOut%' OR username LIKE '%TransferUUS%' OR username LIKE '%ClearBal%')
+	WHERE (username LIKE '%Bettrade%' OR username LIKE '%CashOut%' OR username LIKE '%TransferUUS%' OR username LIKE '%ClearBal%' OR username LIKE '%01OddsAdj%')
 	AND d.RoleID=1
 	UNION
 	SELECT c.CustID
