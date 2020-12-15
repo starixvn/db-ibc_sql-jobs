@@ -76,6 +76,7 @@ AS
 		- 20201020@Hogan: Integrate Arcadia Gaming Bonus [RedmineID: #143648]
 		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
 		- 20201022@Louis: Licensee Spread Setting [RedmineID: #142532]	
+		- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -136,7 +137,8 @@ BEGIN
 		,SUM(winlost - actual_stake) winlost
 		,CASE
 			WHEN bettrans.statusID IN (112,113) THEN SUM(CASE
-															WHEN bettrans.bettype IN (4300, 4299, 4298, 4297, 3007, 1906) THEN 0
+															WHEN (bettrans.bettype IN (4300, 4299, 4298, 4297, 3007, 1906)
+																OR (bettrans.bettype BETWEEN 1611 AND 1699 AND bettrans.matchid = 150)) THEN 0
 															ELSE ABS(winlost - actual_stake)
 														END)  -- exclude PP Prize, SAG Tip ticket from BetEffective
 			ELSE 0
@@ -182,7 +184,8 @@ BEGIN
 			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
-			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
+			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid <> 150) THEN 200 -- SBC
+			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid = 150) THEN 150 -- SBC FreeBets
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
@@ -277,7 +280,8 @@ BEGIN
 			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
-			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- SBC
+			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid <> 150) THEN 200 -- SBC
+			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid = 150) THEN 150 -- SBC FreeBets
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
