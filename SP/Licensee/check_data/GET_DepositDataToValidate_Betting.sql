@@ -36,6 +36,7 @@ AS
 		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
 		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
+		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 
 	Param's Explanation:
 		@DrawFilter
@@ -204,6 +205,10 @@ BEGIN
 		,@WMTurnover MONEY
 		,@WMCustomerWl MONEY
 		,@WMBetCount MONEY
+		----BGG
+		,@BGGTurnover MONEY
+		,@BGGCustomerWl MONEY
+		,@BGGBetCount MONEY
 
 	DECLARE @tblBettype TABLE (ProductPrefix VARCHAR(10), Bettype INT)
 
@@ -216,7 +221,7 @@ BEGIN
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 
-			'FW', 'CO', 'VS2', 'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB', 'WM')
+			'FW', 'CO', 'VS2', 'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB', 'WM', 'BGG')
 
 	-- Data Source 
 	DECLARE @tblData AS TABLE (
@@ -852,6 +857,25 @@ BEGIN
 							END)
 	FROM @tblData
 	WHERE ProductPrefix = 'WM'
+	
+	-- BGG
+	SELECT
+		@BGGTurnover = SUM(CASE
+						WHEN @DrawFilter IN (2, 3) THEN 
+							CASE
+								WHEN Status = 111 THEN 0
+								WHEN Status IN (114, 115) THEN 0.5
+								ELSE 1
+							END
+						ELSE 1
+					END * Turnover),
+		@BGGCustomerWl = SUM(WinLoss),
+		@BGGBetCount = SUM(CASE
+								WHEN @DrawFilter = 2 AND Status = 111 THEN 0
+								ELSE BetCount
+							END)
+	FROM @tblData
+	WHERE ProductPrefix = 'BGG'
 
 	-- Result
 	SELECT
@@ -894,6 +918,7 @@ BEGIN
 		, ISNULL(@SLTTurnover, 0) AS SLT
 		, ISNULL(@HBTurnover, 0) AS HB
 		, ISNULL(@WMTurnover, 0) AS WM
+		, ISNULL(@BGGTurnover, 0) AS BGG
 	UNION
 	SELECT
 		2
@@ -935,6 +960,7 @@ BEGIN
 		, ISNULL(@SLTCustomerWl, 0)
 		, ISNULL(@HBCustomerWl, 0)
 		, ISNULL(@WMCustomerWl, 0)
+		, ISNULL(@BGGCustomerWl, 0)
 	UNION
 	SELECT
 		3
@@ -976,6 +1002,7 @@ BEGIN
 		, ISNULL(@SLTBetCount, 0)
 		, ISNULL(@HBBetCount, 0)
 		, ISNULL(@WMBetCount, 0)
+		, ISNULL(@BGGBetCount, 0)
 
 	SET NOCOUNT OFF
 END

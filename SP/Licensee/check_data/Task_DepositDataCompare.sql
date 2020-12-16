@@ -32,6 +32,7 @@ AS
 		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
 		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
+		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 		
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -127,7 +128,8 @@ BEGIN
 		,GDG BIGINT
 		,SLT BIGINT
 		,HB BIGINT
-		,WM BIGINT)
+		,WM BIGINT
+		,BGG BIGINT)
 
 	--exec 
 	--rptLicWinloss2
@@ -170,7 +172,8 @@ BEGIN
 		,GDG
 		,SLT
 		,HB
-		,WM)
+		,WM
+		,BGG)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
@@ -330,7 +333,8 @@ BEGIN
 		,GDG
 		,SLT
 		,HB
-		,WM)
+		,WM
+		,BGG)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (

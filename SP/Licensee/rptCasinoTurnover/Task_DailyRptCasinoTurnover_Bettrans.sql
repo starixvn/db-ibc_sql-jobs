@@ -19,6 +19,7 @@ AS
 		- 20210322@Hogan: Integrate AE Casino Lucky Draw [RedmineID: #151984]
 		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
+		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 */
 
 BEGIN
@@ -35,7 +36,7 @@ BEGIN
 		ProductId,
 		BetType
 	FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
-	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51)
+	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51, 57)
 
 	INSERT INTO dbo.rptCasinoTurnover(  
 		[WinlostDate]
@@ -91,7 +92,7 @@ BEGIN
 
 		UNION ALL
 
-		-- AllBet, Sexy Gaming, SA Gaming, GDG, WM Live Casino
+		-- AllBet, Sexy Gaming, SA Gaming, GDG, WM Live Casino, Big Gaming
 		SELECT
 			@winlostdate
 			,bettrans.custid
@@ -115,7 +116,7 @@ BEGIN
 		WHERE
 			bettrans.winlostdate = @winlostdate AND
 			bettrans.statusID IN (111, 112, 113) AND -- DRAW, WON, LOSE
-			matrix.ProductID IN (21, 45, 39, 59, 51) -- AllBet, Sexy Gaming, SA Gaming, GDG, WM Live Casino
+			matrix.ProductID IN (21, 45, 39, 59, 51, 57) -- AllBet, Sexy Gaming, SA Gaming, GDG, WM Live Casino
 		GROUP BY
 			bettrans.custid
 			,bettrans.recommend

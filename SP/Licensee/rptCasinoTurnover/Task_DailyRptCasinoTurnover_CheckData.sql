@@ -19,6 +19,7 @@ AS
 		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
 		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
+		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 */
 
 BEGIN
@@ -33,7 +34,7 @@ BEGIN
 		ProductId,
 		BetType
 	FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
-	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51)
+	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51, 57)
 
 	DECLARE
 		@S_Winlost			MONEY,
@@ -72,7 +73,7 @@ BEGIN
 			INNER JOIN @SportBetTypeMatrix AS s ON b.gameID = s.BetType
 		WHERE b.winlostdate = @WinLostDate
 			AND b.statusID IN (111, 112, 113)
-			AND s.ProductID IN (21, 45, 39, 59, 51) -- All bet, Sexy Gaming, SA Gaming, GDG, WM Live Casino
+			AND s.ProductID IN (21, 45, 39, 59, 51, 57) -- All bet, Sexy Gaming, SA Gaming, GDG, WM Live Casino, Big Gaming
 	) t
 	OPTION (RECOMPILE)
 
@@ -83,7 +84,7 @@ BEGIN
 	FROM dbo.rptCasinoTurnover WITH (NOLOCK)
 	WHERE WinlostDate = @WinLostDate
 		AND StatusId IN (111, 112, 113)
-		AND ProductID IN (6, 22, 21, 45, 39, 55, 32, 42, 59, 61, 51) -- RNG Casino, Macau Games, All Bet, SA Gaming, PG Soft, PP, Saba.club, Habanero, WM Live Casino
+		AND ProductID IN (6, 22, 21, 45, 39, 55, 32, 42, 59, 61, 51, 57) -- RNG Casino, Macau Games, All Bet, SA Gaming, PG Soft, PP, Saba.club, Habanero, WM Live Casino, Big Gaming
 
 	-- compare 
 	IF ISNULL(@S_Winlost, 0) <> ISNULL(@T_Winlost, 0)
