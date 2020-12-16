@@ -317,7 +317,7 @@ BEGIN
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 												, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion)
 			SELECT b.custid, 
-				b.bettype,
+				CASE WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150 ELSE b.bettype END,
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 22001 THEN b.winlost-b.actual_stake ELSE 0 END), --Deposit  
 				-SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22002, 22003) THEN b.winlost-b.actual_stake ELSE 0 END),--Withdrawal  
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 21006 THEN b.winlost-b.actual_stake ELSE 0 END), --Aff2MemTransfer  
@@ -344,7 +344,8 @@ BEGIN
 				AND b.matchid >= 0
 				AND c.roleid = 1
 				AND b.betType <> 999 --Licensee Spread Setting
-			GROUP BY b.custid, b.bettype
+			GROUP BY b.custid,
+				CASE WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150 ELSE b.bettype END
 			OPTION (RECOMPILE, MAXDOP 8)
 
 			INSERT INTO #rptDepWinlostOutstanding (
