@@ -15,6 +15,7 @@ AS
 		- 20200910@Malcolm: Add @ProductIds (delete all data of sum_winloss_old_tmp before using this parameter) [Redmine: #139575]
 		- 20200918@Malcolm: Add Joker [redmine: #131609]
 		- 20200915@Malcolm: Add WM Live Casino [redmine: #131584]
+		- 20201201@Malcolm : Add Gold Diamond Gaming [Redmine : #144110]
 */
 
 BEGIN
@@ -27,54 +28,10 @@ BEGIN
 	END
 
 	CREATE TABLE #Bettypes (ProductId INT, SportTypeRef SMALLINT, BettypeRef SMALLINT, Bettype SMALLINT)
-
-	--INSERT INTO #Bettypes (ProductId, SportTypeRef, BettypeRef, Bettype)
-	--SELECT f.ProductID, f.SportType AS SportTypeRef, f.BetType AS BettypeRef, s.BetType
-	--FROM dbo.f_SumWinloss_ConditionSel(@ProductIds) f
-	--	CROSS APPLY (
-	--		SELECT DISTINCT s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
-	--		WHERE f.ProductID = s.ProductID
-	--			AND (f.ProductID <> 6 OR f.SportType = s.SportType)
-	--	) AS s
 	
 	INSERT INTO #Bettypes (ProductId, SportTypeRef, BettypeRef, Bettype)
 	SELECT f.ProductID, f.SportType AS SportTypeRef, f.BetType AS BettypeRef, s.BetType	
-	FROM (
-			SELECT ProductID, SportType, BetType
-			FROM (
-				VALUES	(1, 0, 0), --Sportsbook
-						(6, 251, 71), (6, 208, 0), (6, 209, 0), (6, 210, 0), --RNG Casino
-						(3, 161, 0), --Number Game
-						(5, 180, 0), --Virtual Sports
-						(8, 202, 0), --Keno
-						(12, 255, 0), --Gold Deluxe
-						(15, 204, 0), --Colossus Bets
-						(21, 211, 0), --Allbet
-						(22, 212, 0), --Macau Games
-						(23, 213, 0), --NG2
-						(24, 219, 0), --Fishing World
-						(27, 190, 0), --Betradar Virtual Sports
-						(28, 220, 0), -- Keno
-						(32, 248, 0), -- Pragmatic
-						(32, 248, 4297), -- Pragmatic
-						(32, 248, 4298), -- Pragmatic
-						(34, 165, 0), -- Card Club
-						(36, 247, 0), -- Spadegaming
-						(38, 245, 0), -- Virtual Games
-						(39, 244, 0), -- SA Gaming
-						(42, 200, 0), -- Saba.club
-						(43, 223, 0), -- Indo 4D	
-						(45, 243, 0), -- Sexy Gaming
-						(40, 222, 0), -- Table Games	
-						(47, 241, 0), -- BBIN
-						(46, 242, 0), -- IBCBet Live Casino
-						(50, 224, 0),  -- RNG War
-						(52, 225, 0),  -- ION
-						(56, 234, 0),  -- Joker
-						(51, 233, 0)  -- WM
-				) d(ProductID, SportType, BetType)
-				WHERE ',' + @ProductIds + ',' LIKE '%,' + CAST(ProductID as varchar(3)) + ',%'
-		) f
+	FROM dbo.f_SumWinloss_ConditionSel(@ProductIds) f
 		CROSS APPLY (
 			SELECT DISTINCT s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
 			WHERE f.ProductID = s.ProductID
@@ -245,7 +202,7 @@ BEGIN
 			,SUM(CASE
 					WHEN bt.ProductId = 1 AND b.statusID IN (112, 113) AND b.modds IN (-0.25, 0.25) THEN ABS(b.stake) / 2 -- SportsBook
 					WHEN bt.ProductId = 1 AND b.statusID = 111 THEN 0 -- SportsBook
-					WHEN bt.ProductID IN (21, 39, 45, 46, 47, 51, 52)  THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, WM,ION
+					WHEN bt.ProductID IN (21, 39, 45, 46, 47, 51, 52, 59)  THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, WM, ION, GDG
 					ELSE ABS(b.stake) END) AS TurnoverNoDraw
 			,-1 * SUM(ISNULL(b.ExtraWinloss, 0)) AS ExtraWinloss
 			,-1 * SUM(ISNULL(b.ExtraComm, 0)) AS ExtraComm

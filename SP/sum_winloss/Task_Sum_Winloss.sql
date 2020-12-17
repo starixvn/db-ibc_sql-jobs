@@ -14,6 +14,7 @@ AS
 		- 20200909@Malcolm : Report Enhancement for Jackpot Product [RedmineID : #139575]
 		- 20200918@Malcolm: Add Joker [redmine: #131609]
 		- 20200915@Malcolm: Add WM Live Casino [redmine: #131584]
+		- 20201201@Malcolm : Add Gold Diamond Gaming [Redmine : #144110]
 	
 */
 BEGIN
@@ -118,6 +119,7 @@ BEGIN
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234-- Joker
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -150,6 +152,7 @@ BEGIN
 				OR bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
 				OR bettype BETWEEN 5601 AND 5699   -- ION 	 
 				OR bettype BETWEEN 3401 AND 3499   -- WM
+				OR bettype BETWEEN 5701 AND 5799   -- GDG
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -224,7 +227,8 @@ BEGIN
 				 WHEN bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War	
 				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234-- Joker
-				  WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 ELSE 0
 			 END
 			,CASE
@@ -297,6 +301,7 @@ BEGIN
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -329,6 +334,7 @@ BEGIN
 				OR bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
 				OR bettype BETWEEN 5601 AND 5699   -- ION 
 				OR bettype BETWEEN 3401 AND 3499   -- WM 
+				OR bettype BETWEEN 5701 AND 5799   -- GDG
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -403,6 +409,7 @@ BEGIN
 				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 ELSE 0
 			 END
 			,CASE
@@ -475,6 +482,7 @@ BEGIN
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -507,6 +515,7 @@ BEGIN
 				OR bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
 				OR bettype BETWEEN 5601 AND 5699   -- ION 
 				OR bettype BETWEEN 3401 AND 3499   -- WM
+				OR bettype BETWEEN 5701 AND 5799   -- GDG
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -580,6 +589,7 @@ BEGIN
 				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 ELSE 0
 			 END
 			,CASE
@@ -652,6 +662,7 @@ BEGIN
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -685,6 +696,7 @@ BEGIN
 				OR bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino						
 				OR bettype BETWEEN 5601 AND 5699   -- ION 	
 				OR bettype BETWEEN 3401 AND 3499   -- WM 
+				OR bettype BETWEEN 5701 AND 5799   -- GDG
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -758,6 +770,7 @@ BEGIN
 				 WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
 				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 ELSE 0
 			 END
 			,CASE
