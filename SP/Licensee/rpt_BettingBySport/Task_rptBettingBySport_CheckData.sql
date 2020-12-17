@@ -13,7 +13,6 @@ AS
 	Revisions:
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
 		- 20171114@Harper: Fix Date Range when get detail ticket
-		- 20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
 		- 20201217@Percy: Enhance performance: code get data from bettransm bk range [RedmineID: #147351]
 
 	DECLARE @HasDataMismatch TINYINT, @IsParlay VARCHAR(20)
@@ -273,7 +272,6 @@ BEGIN
 				AND ( b.bettype < 31
 						OR b.bettype BETWEEN 121 AND 999
 						OR b.bettype BETWEEN 1301 AND 1399 --new tennis's bettypes
-						OR b.bettype BETWEEN 9001 AND 9399
 					) 
 				AND b.statusID IN (111, 112, 113)
 				AND b.winlostdate = @WinlostDate 
