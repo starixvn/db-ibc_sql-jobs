@@ -1,4 +1,4 @@
-/*<info serverAlias="DBAFFN8B-Affiliate_N8B" executers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBAFFN8B-Affiliate_N8B" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_Aff_ImportData]
 	@WinlostDate SMALLDATETIME
 AS
@@ -10,19 +10,50 @@ AS
 
 	Revisions:
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
+		- 20201216@Percy: Auto add Platform Fee's setting [RedmineID: #146661]
 */
 
 BEGIN 
 	SET NOCOUNT ON
 
+	DECLARE @MonthDate DATETIME
+	SELECT  @MonthDate = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
+
+	DECLARE @TimeZone SMALLINT
+	SELECT  @TimeZone = CONVERT(SMALLINT, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
+
 	-- Update product list
 	BEGIN
+		DECLARE @Products TABLE (ProductId INT, RefProductId INT)
+		
 		BEGIN TRY
 			INSERT INTO dbo.Products (ProductId,ProductName,ProductPrefix,IsIBC,Enabled,IsTest,ReleasedDate,RefProductId,DataSource)
+			OUTPUT INSERTED.ProductId INTO @Products (ProductId)
 			SELECT g.Type, g.TypeName, '', 0, 1, 0, CONVERT(DATE, GETDATE()), g.Type, 'TpBetRecord'
 			FROM bodb_N88.dbo.TpGameType g WITH (NOLOCK)
 				LEFT JOIN dbo.Products p WITH (NOLOCK) ON g.Type = p.RefProductId
 			WHERE p.RefProductId IS NULL
+
+			IF EXISTS (SELECT 1 FROM @Products)
+			BEGIN
+				INSERT INTO dbo.DeductionSetting (GroupId, DeductionId, ProductId, GroupProductId, DeductedPercentage, DeductedAmount, IsDeductedPercent)
+				SELECT s.GroupId, s.DeductionId, p.ProductId, s.GroupProductId, s.DeductedPercentage, s.DeductedAmount, s.IsDeductedPercent
+				FROM (
+					SELECT GroupId, DeductionId, GroupProductId, DeductedPercentage, DeductedAmount, IsDeductedPercent
+						,ROW_NUMBER() OVER(PARTITION BY GroupId ORDER BY GroupProductId) AS RN
+					FROM dbo.DeductionSetting WITH (NOLOCK)
+					WHERE DeductionId = 10
+				) s
+					CROSS JOIN @Products p
+					LEFT JOIN dbo.DeductionSetting ds WITH (NOLOCK) ON s.GroupId = ds.GroupId AND s.DeductionId = ds.DeductionId AND p.ProductId = ds.ProductId
+				WHERE s.RN = 1 AND ds.GroupId IS NULL
+
+				INSERT INTO dbo.DeductionSettingHistory (GroupId, MonthDate, DeductionId, ProductId, GroupProductId, DeductedPercentage, DeductedAmount, IsDeductedPercent)
+				SELECT ds.GroupId, @MonthDate, ds.DeductionId, ds.ProductId, ds.GroupProductId, ds.DeductedPercentage, ds.DeductedAmount, ds.IsDeductedPercent
+				FROM dbo.DeductionSetting ds WITH (NOLOCK)
+					LEFT JOIN dbo.DeductionSettingHistory dsh WITH (NOLOCK) ON ds.GroupId = dsh.GroupId AND ds.DeductionId = dsh.DeductionId AND ds.ProductId = dsh.ProductId AND dsh.MonthDate = @MonthDate
+				WHERE dsh.GroupId IS NULL
+			END
 		END TRY
 		BEGIN CATCH
 			PRINT 'Invalid import new product!'
@@ -31,12 +62,8 @@ BEGIN
 
 	-- Get data
 	BEGIN
-		DECLARE @TimeZone SMALLINT
-		SELECT  @TimeZone = CONVERT(SMALLINT, SValue)
-		FROM dbo.SystemSettings WITH (NOLOCK)
-		WHERE SName = 'TimeZone'
+		DELETE @Products
 
-		DECLARE @Products TABLE (ProductId INT, RefProductId INT)
 		INSERT INTO @Products (ProductId, RefProductId)
 		SELECT ProductId, RefProductId
 		FROM dbo.Products p WITH (NOLOCK)
