@@ -1,7 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_LicenseeReport]
-GO
-
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptBettingBySport_CheckData]
 	@WinlostDate		SMALLDATETIME,
 	@HasDataMismatch	TINYINT OUTPUT, --0: No mismatch; 1: Has real currencies; 2: UUS only
@@ -17,6 +14,7 @@ AS
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
 		- 20171114@Harper: Fix Date Range when get detail ticket
 		- 20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
+		- 20201217@Percy: Enhance performance: code get data from bettransm bk range [RedmineID: #147351]
 
 	DECLARE @HasDataMismatch TINYINT, @IsParlay VARCHAR(20)
 	EXEC Task_rptBettingBySport_CheckData @WinlostDate = '2017-09-29', @HasDataMismatch = @HasDataMismatch OUTPUT, @IsParlay = @IsParlay OUTPUT
@@ -86,8 +84,6 @@ BEGIN
 
 	DECLARE @ShareRate MONEY = 0.03
 
-	CREATE TABLE #tmpMuayThai (refno BIGINT, NoOfMuayThai INT, IsBettran BIT)	
-	CREATE TABLE #tmpSubParlay (refno BIGINT, NoOfSubParlay SMALLMONEY)
 	CREATE TABLE #tmpbettrans (transid BIGINT, refno BIGINT, winlostdate SMALLDATETIME, recommend INT, ProductID INT, SportType INT
 							, currency TINYINT, statusid TINYINT, NoOfSubParlay SMALLMONEY, NoOfMuayThai INT, swinlost MONEY
 							, mwinlost MONEY, awinlost MONEY, winlost MONEY, actual_stake MONEY, stake MONEY, scomm MONEY
@@ -136,109 +132,73 @@ BEGIN
 	WHERE b.bettype IN (9, 29) AND b.matchid IN (9, 29) AND b.statusID IN (111, 112, 113) -- win, lose, raw
 		AND b.winlostdate = @WinlostDate
 
-	CREATE CLUSTERED INDEX [IX_refno] ON #tmpbettrans ([refno] ASC)	
-		
-	-- bettransm14
-	INSERT INTO #tmpMuayThai ( refno, NoOfMuayThai )
-	SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai
-	FROM #tmpbettrans b
-		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno		
-	WHERE bm.oddsspread = 44 AND bm.statusID NOT IN (101, 102, 103) -- reject, void, refund			
-	GROUP BY bm.refno
+	CREATE CLUSTERED INDEX [IX_refno] ON #tmpbettrans ([refno] ASC)
+
+	-- Calculate sub data
+	CREATE TABLE #tmpSubData (refno BIGINT, NoOfMuayThai INT, NoOfSubParlay INT, IsBettran BIT)
+	DECLARE @SQL VARCHAR(MAX)
 
 	-- bettransm
-	INSERT INTO #tmpMuayThai ( refno, NoOfMuayThai, IsBettran )
-	SELECT bm.refno, COUNT (bm.transid) AS NoOfMuayThai, 1
-	FROM #tmpbettrans b 
-		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON bm.refno = b.refno		
-	WHERE bm.oddsspread = 44 AND bm.statusID NOT IN (101, 102, 103)		
+	INSERT INTO #tmpSubData (refno, NoOfMuayThai, NoOfSubParlay, IsBettran)
+	SELECT bm.refno
+		,COUNT(CASE WHEN bm.oddsspread = 44 THEN 1 END) AS NoOfMuayThai
+		,COUNT(1) AS NoOfSubParlay
+		,1
+	FROM #tmpbettrans b
+		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON bm.refno = b.refno
+	WHERE bm.statusID NOT IN (101, 102, 103)
 	GROUP BY bm.refno
 	
-	-- Handle data for bettransM_BK		
-	CREATE TABLE #tmpBK (refno BIGINT, transID BIGINT, matchID INT, oddsspread MONEY)
-	CREATE TABLE #MatchBK (MatchID INT PRIMARY KEY)
-	CREATE TABLE #bettransmBK (refno BIGINT PRIMARY KEY)
-
-	INSERT INTO #bettransmBK ( refno )
-	SELECT DISTINCT b.refno
+	-- bettransm14
+	INSERT INTO #tmpSubData (refno, NoOfMuayThai, NoOfSubParlay)
+	SELECT bm.refno
+		,COUNT(CASE WHEN bm.oddsspread = 44 THEN 1 END) AS NoOfMuayThai
+		,COUNT(1) AS NoOfSubParlay
 	FROM #tmpbettrans b
-		LEFT JOIN #tmpMuayThai t ON b.refno = t.refno	
-	WHERE ISNULL(t.IsBettran, 0) = 0	
+		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON bm.refno = b.refno
+	WHERE bm.statusID NOT IN (101, 102, 103)
+	GROUP BY bm.refno
 
-	IF EXISTS ( SELECT 1 FROM #bettransmBK b)
-	BEGIN	
-		INSERT INTO #MatchBK ( MatchID )	
-		SELECT m.matchid
-		FROM DBARC.bodb_Archive.dbo.match_bk m WITH (NOLOCK)
-		WHERE m.sporttype = 44 
-			AND m.eventdate >= DATEADD(DAY, -14, @WinlostDate)
-
-		IF EXISTS (SELECT 1 FROM #MatchBK)
-		BEGIN					
-			INSERT INTO #tmpBK ( refno, transID, matchID, oddsspread )		
-			SELECT bm.refno, bm.transid, bm.matchid, bm.oddsspread
-			FROM DBARC.bodb_Archive.dbo.bettransm bm WITH (NOLOCK)
-				INNER JOIN #bettransmBK b ON bm.refno = b.refno
-			WHERE bm.winlostdate >= DATEADD(DAY, -14, @WinlostDate) 				
-				AND bm.statusID NOT IN (101, 102, 103)
-
-			CREATE CLUSTERED INDEX [IX_refnoBK] ON #tmpBK ([refno])
-
-			INSERT INTO #tmpMuayThai( refno, NoOfMuayThai)
-			SELECT bk.refno, COUNT(bk.transID)
-			FROM #tmpBK bk
-			WHERE bk.oddsspread = 44
-			GROUP BY bk.refno			
-
-			INSERT INTO #tmpSubParlay ( refno, NoOfSubParlay )		
-			SELECT bm.refno, COUNT(bm.transid) AS NoOfSubParlay
-			FROM #tmpBK bm
-			WHERE EXISTS (SELECT 1 FROM #tmpMuayThai muay WHERE bm.refno = muay.refno)				
-			GROUP BY bm.refno	
-				
-		END
-		DROP TABLE #tmpBK
-		DROP TABLE #MatchBK
-		DROP TABLE #bettransmBK
-	END	
-
-	IF EXISTS (SELECT 1 FROM #tmpMuayThai)
-	BEGIN
-		INSERT INTO #tmpSubParlay( refno, NoOfSubParlay )	
-		SELECT bm.refno, COUNT(bm.transid)
-		FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-		WHERE bm.statusID NOT IN (101, 102, 103)
-			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)			
-		GROUP BY bm.refno
-
-		INSERT INTO #tmpSubParlay( refno, NoOfSubParlay )	
-		SELECT bm.refno, COUNT(bm.transid)
-		FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
-		WHERE bm.statusID NOT IN (101, 102, 103)
-			AND EXISTS (SELECT 1 FROM #tmpMuayThai t WHERE bm.refno = t.refno)			
-		GROUP BY bm.refno
-	
-		DELETE b
+	-- bettransm bk
+	IF EXISTS (
+		SELECT 1
 		FROM #tmpbettrans b
-		WHERE NOT EXISTS (SELECT 1 FROM #tmpMuayThai muay WHERE b.refno = muay.refno)
-
-		UPDATE b
-		SET b.NoOfMuayThai = muay.NoOfMuayThai,
-			b.NoOfSubParlay = sub.NoOfSubParlay
-		FROM #tmpbettrans b
-			INNER JOIN ( SELECT refno, SUM (NoOfMuayThai) AS NoOfMuayThai
-							FROM #tmpMuayThai
-							GROUP BY refno
-					) muay ON b.refno = muay.refno	
-			INNER JOIN ( SELECT refno, SUM (NoOfSubParlay) AS NoOfSubParlay
-							FROM #tmpSubParlay
-							GROUP BY refno
-					) sub ON b.refno = sub.refno
-	END
-	ELSE
+			LEFT JOIN #tmpSubData m ON b.refno = m.refno
+		WHERE ISNULL(m.IsBettran, 0) = 0
+	)
 	BEGIN
-		DELETE #tmpbettrans
+		SELECT @SQL = '
+			SELECT refno, NoOfMuayThai, NoOfSubParlay
+			FROM OPENQUERY (DBARC, ''	SELECT bm.refno
+											,COUNT(CASE WHEN bm.oddsspread = 44 THEN 1 END) AS NoOfMuayThai
+											,COUNT(1) AS NoOfSubParlay
+										FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
+											INNER JOIN bodb_Archive.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
+										WHERE b.winlostdate = ''''' + CONVERT(VARCHAR(10), @WinlostDate, 120) + ''''' AND b.bettype IN (9, 29) AND b.matchid IN (9, 29) AND b.statusID IN (111, 112, 113)
+											AND bm.statusID NOT IN (101, 102, 103)
+										GROUP BY bm.refno
+										HAVING COUNT(CASE WHEN bm.oddsspread = 44 THEN 1 END) > 0'')'
+
+		INSERT INTO #tmpSubData (refno, NoOfMuayThai, NoOfSubParlay)
+		EXEC (@SQL)
 	END
+
+	DELETE #tmpSubData WHERE NoOfMuayThai = 0
+
+	DELETE b
+	FROM #tmpbettrans b
+		LEFT JOIN #tmpSubData s ON b.refno = s.refno
+	WHERE s.refno IS NULL
+
+	UPDATE b
+	SET b.NoOfMuayThai = ISNULL(s.NoOfMuayThai, 0)
+		,b.NoOfSubParlay = ISNULL(s.NoOfSubParlay, 0)
+	FROM #tmpbettrans b
+		CROSS APPLY (
+			SELECT SUM(NoOfMuayThai) AS NoOfMuayThai, SUM(NoOfSubParlay) AS NoOfSubParlay
+			FROM #tmpSubData s
+			WHERE b.refno = s.refno
+		) s
 
 	INSERT INTO #Source(SiteID, CurrencyId, StatusId, LicenseeWL, AdjustedLicenseeWL, CustomerWL, AdjustedCustomerWL,
 						Turnover, BetCount, CommissionS, AdjustedCommissionS, CommShare, AdjustedCommShare, CustomerCategory, IsParlay)
@@ -322,10 +282,10 @@ BEGIN
 		LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site = ibcsite.site
 		LEFT JOIN bodb_Licensee.dbo.view_site_list siteT WITH (NOLOCK) ON ibcsite.siteid = siteT.IbcSiteID
 	GROUP BY ISNULL(siteT.SiteID,-1), b.currency, b.statusid, b.customercategory, ibcsite.isDeposit
-			, b.IsParlay
-	DROP TABLE #tmpbettrans
-	DROP TABLE #tmpMuayThai
-	DROP TABLE #tmpSubParlay
+			, b.IsParlay;
+	
+	DROP TABLE #tmpbettrans;
+	DROP TABLE #tmpSubData;
 
 	SET @S_Count = @@ROWCOUNT;
 
