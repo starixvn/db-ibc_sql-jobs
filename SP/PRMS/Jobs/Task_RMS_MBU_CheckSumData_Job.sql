@@ -1,5 +1,5 @@
 /*<info serverAlias="DBRMS-bodb_RMS" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_RMS_MBU_CheckSumData_Job]
+CREATE PROCEDURE [dbo].[Task_RMS_MBU_CheckSumData_Job]
 AS
 
 /*

@@ -1,5 +1,5 @@
 /*<info serverAlias="DBRMS-bodb_RMS" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE [dbo].[Task_RMS_MBU_SumData_rmSumWinloss]
+CREATE PROCEDURE [dbo].[Task_RMS_MBU_SumData_rmSumWinloss]
 	@winlostdate	SMALLDATETIME
 	,@ErrCode		INT = 0 OUTPUT
 	,@ErrMsg		VARCHAR(4000) = '' OUTPUT
