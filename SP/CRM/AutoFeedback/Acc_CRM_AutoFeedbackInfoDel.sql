@@ -11,6 +11,7 @@ AS
 		- 20200520@Johnson: Initial sp [redmine:#134220]
 		- 20200615@Johnson: check missing feedback [redmine:#135719]
 		- 20201103@Johnson: add auto fb for company winlimit [redmine:#142194]
+		- 20201217@Johnson: add auto fb for TO Control [redmine:#145274]
 	Param's Explanation:		
 */
 BEGIN
@@ -45,6 +46,8 @@ BEGIN
 		FROM crmAutoFeedbackInfo c WITH(UPDLOCK,ROWLOCK)
 			INNER JOIN @tmp t ON c.MessageID = t.MessageID
 								AND c.CustID = t.CustID
+					
+		DELETE @tmp					
 	END
 	
 	DELETE crmMessageImport WITH(UPDLOCK,ROWLOCK)
@@ -60,4 +63,39 @@ BEGIN
 		IF @@ROWCOUNT = 0
 			BREAK;		
 	END
+	
+	--Auto fb for TOControl 
+	CREATE TABLE #tblTOControlLog (LogID INT PRIMARY KEY, isDeleted BIT DEFAULT 0)
+	DECLARE @tmpTOControlLog TABLE(LogID INT PRIMARY KEY)
+	
+	INSERT INTO #tblTOControlLog (LogID)
+	SELECT LogID
+	FROM crmTOControlFeedbackInfo WITH(NOLOCK)
+	WHERE CreatedDate < @fromdate
+	
+	WHILE(1=1)
+	BEGIN
+		UPDATE TOP (5000) t
+		SET isDeleted = 1
+		OUTPUT DELETED.LogID
+		INTO @tmpTOControlLog(LogID)
+		FROM #tblTOControlLog t
+		WHERE isDeleted = 0
+		
+		IF @@ROWCOUNT = 0
+			BREAK;
+			
+		DELETE c
+		FROM crmTOControlFeedbackInfo c WITH(UPDLOCK,ROWLOCK)
+			INNER JOIN @tmpTOControlLog t ON c.LogID = t.LogID
+		
+		DELETE c
+		FROM crmTOControlOutstandingInfo c WITH(UPDLOCK,ROWLOCK)
+			INNER JOIN @tmpTOControlLog t ON c.LogID = t.LogID		
+		
+		DELETE @tmpTOControlLog
+	END
+	
+	DROP TABLE #tblMsg
+	DROP TABLE #tblTOControlLog
 END	
