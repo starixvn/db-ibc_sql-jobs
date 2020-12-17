@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
 		- 20201117@Percy: Rescan member from last 2 hours [RedmineID: #145506]
+		- 20201118@Percy: Get AffId from AffCode [RedmineID: #143852]
 */
 
 BEGIN
@@ -20,64 +21,46 @@ BEGIN
 
 	SELECT @ErrCode = 0, @ErrMsg = ''
 
-	DECLARE @SiteName VARCHAR(30), @BrandName VARCHAR(30)
-	SELECT  @SiteName = dbo.Aff_f_GetSetting('SiteName'), @BrandName = dbo.Aff_f_GetSetting('BrandName')
-
-	CREATE TABLE #Customer
-	(
-		CustId				INT
-		,UserName			VARCHAR(30)
-		,CurrencyId			INT
-		,ActStatus			TINYINT
-		,AffId				INT
-		,RegTime			DATETIME
-		,FirstDepositDate	DATETIME
-		,Status				TINYINT
-		,IsTest				BIT
-	)
+	DECLARE @SiteName VARCHAR(30), @BrandName VARCHAR(30), @TimeZone INT
+	SELECT  @SiteName = dbo.Aff_f_GetSetting('SiteName'), @BrandName = dbo.Aff_f_GetSetting('BrandName'), @TimeZone = dbo.Aff_f_GetSetting('TimeZone')
 
 	CREATE TABLE #MemberInfo
 	(
-		CustId			INT
-		,UserName		VARCHAR(30)
-		,FirstName		VARCHAR(50)
-		,LastName		VARCHAR(50)
-		,Email			VARCHAR(50)
-		,Currency		INT
-		,ActStatus		TINYINT
-		,Status			TINYINT
-		,RegisteredDate	DATETIME
-		,AffId			INT
-		,IBCCustId		INT
-		,IBCUserName	VARCHAR(30)
-		,CreatedDate	DATETIME
-		,recommend		INT
+		CustId		INT
+		,UserName	VARCHAR(30)
+		,CurrencyId	INT
+		,ActStatus	TINYINT
+		,AffId		INT
+		,AffCode	VARCHAR(20)
+		,RegTime	DATETIME
+		,Status		TINYINT
+		,IsTest		BIT
+		,IsValid	BIT DEFAULT(0)
 	)
-	CREATE CLUSTERED INDEX CIX_CustId ON #MemberInfo (CustId)
 
 	BEGIN TRY
-		INSERT INTO #Customer
+		INSERT INTO #MemberInfo
 		(
 			CustId
 			,UserName
 			,CurrencyId
 			,ActStatus
 			,AffId
+			,AffCode
 			,RegTime
-			,FirstDepositDate
 			,Status
 			,IsTest
 		)
 		SELECT
-			CustId				= t.c.value('@custid', 'INT')
-			,UserName			= t.c.value('@username', 'VARCHAR(30)')
-			,CurrencyId			= t.c.value('@currencyid', 'INT')
-			,ActStatus			= t.c.value('@actstatus', 'TINYINT')
-			,AffId				= t.c.value('@affid', 'INT')
-			,RegTime			= NULLIF(t.c.value('@regtime', 'DATETIME'), '')
-			,FirstDepositDate	= NULLIF(t.c.value('@firstdepositdate', 'DATETIME'), '')
-			,Status				= t.c.value('@status', 'TINYINT')
-			,IsTest				= t.c.value('@istest', 'BIT')
+			CustId		= t.c.value('@custid', 'INT')
+			,UserName	= t.c.value('@username', 'VARCHAR(30)')
+			,CurrencyId	= t.c.value('@currencyid', 'INT')
+			,ActStatus	= t.c.value('@actstatus', 'TINYINT')
+			,AffId		= t.c.value('@affid', 'INT')
+			,AffCode	= t.c.value('@affcode', 'VARCHAR(20)')
+			,RegTime	= DATEADD(HOUR, @TimeZone, NULLIF(t.c.value('@regtime', 'DATETIME'), ''))
+			,Status		= t.c.value('@status', 'TINYINT')
+			,IsTest		= t.c.value('@istest', 'BIT')
 		FROM @XmlData.nodes('root/row') AS t(c)
 		OPTION (OPTIMIZE FOR (@XmlData = NULL))
 	END TRY
@@ -86,45 +69,27 @@ BEGIN
 		RETURN
 	END CATCH
 
-	CREATE CLUSTERED INDEX CIX_CustId ON #Customer (CustId)
+	CREATE CLUSTERED INDEX CIX_CustId ON #MemberInfo (CustId)
 
 	BEGIN
-		INSERT INTO #MemberInfo
-		(
-			CustId
-			,UserName
-			,FirstName
-			,LastName
-			,Email
-			,Currency
-			,ActStatus
-			,Status
-			,RegisteredDate
-			,AffId
-			,IBCCustId
-			,IBCUserName
-			,CreatedDate
-			,recommend
-		)
-		SELECT
-			c.CustId
-			,c.UserName
-			,cu.FirstName
-			,cu.LastName
-			,cu.Email
-			,CASE WHEN c.IsTest = 1 THEN 20 ELSE c.CurrencyId END AS Currency
-			,c.ActStatus
-			,c.Status
-			,c.RegTime			AS RegisteredDate
-			,c.AffId
-			,cu.CustId			AS IBCCustId
-			,cu.username		AS IBCUserName
-			,c.FirstDepositDate	AS CreatedDate
-			,cu.recommend
-		FROM #Customer c
-			LEFT JOIN bodb02.dbo.Customer cu WITH (NOLOCK) ON @SiteName + '$' + @BrandName + '_' + CONVERT(VARCHAR(20), c.CustId) = cu.username2
+		UPDATE m
+		SET m.AffId = ai.AffId, m.IsValid = 1
+		FROM #MemberInfo m
+			INNER JOIN dbo.AffiliateCode ac WITH (NOLOCK) ON ac.AffCode = m.AffCode
+			INNER JOIN dbo.AffInfo ai WITH (NOLOCK) ON ai.AffId = ac.AffId
+		WHERE m.RegTime >= ai.ApprovedDate
 
-		DROP TABLE #Customer
+		IF EXISTS (SELECT 1 FROM #MemberInfo WHERE AffId IS NOT NULL AND IsValid = 0)
+			UPDATE m
+			SET m.IsValid = 1
+			FROM #MemberInfo m
+				INNER JOIN dbo.AffInfo ai WITH (NOLOCK) ON ai.AffId = m.AffId
+			WHERE m.RegTime >= ai.ApprovedDate
+				AND m.IsValid = 0
+
+		DELETE #MemberInfo WHERE IsValid = 0
+
+		UPDATE #MemberInfo SET CurrencyId = 20 WHERE IsTest = 1
 	END
 
 	-- Insert/update data
@@ -138,18 +103,11 @@ BEGIN
 			UPDATE mi WITH (ROWLOCK)
 			SET mi.CustId			= m.CustId
 				,mi.UserName		= m.UserName
-				,mi.FirstName		= m.FirstName
-				,mi.LastName		= m.LastName
-				,mi.Email			= m.Email
-				,mi.Currency		= m.Currency
+				,mi.Currency		= m.CurrencyId
 				,mi.ActStatus		= m.ActStatus
 				,mi.Status			= m.Status
-				,mi.RegisteredDate	= m.RegisteredDate
+				,mi.RegisteredDate	= m.RegTime
 				,mi.AffId			= m.AffId
-				,mi.IBCCustId		= m.IBCCustId
-				,mi.IBCUserName		= m.IBCUserName
-				,mi.CreatedDate		= m.CreatedDate
-				,mi.recommend		= m.recommend
 			FROM dbo.MemberInfo mi
 				INNER JOIN #MemberInfo m ON mi.CustId = m.CustId
 		END
@@ -158,46 +116,29 @@ BEGIN
 		(
 			CustId
 			,UserName
-			,FirstName
-			,LastName
-			,Email
 			,Currency
 			,ActStatus
 			,Status
 			,RegisteredDate
 			,AffId
-			,IBCCustId
-			,IBCUserName
-			,CreatedDate
-			,recommend
 			,IsRemoved
 		)
 		SELECT
 			CustId
 			,UserName
-			,FirstName
-			,LastName
-			,Email
-			,Currency
+			,CurrencyId
 			,ActStatus
 			,Status
-			,RegisteredDate
+			,RegTime
 			,AffId
-			,IBCCustId
-			,IBCUserName
-			,CreatedDate
-			,recommend
 			,0 AS IsRemoved
 		FROM #MemberInfo m
 		WHERE NOT EXISTS (SELECT 1 FROM dbo.MemberInfo mi WITH (NOLOCK) WHERE m.CustId = mi.CustId)
 	END
 
-	DECLARE @MaxRegisteredDate DATETIME, @MaxCreatedDate DATETIME
-	SELECT	@MaxRegisteredDate = MAX(RegisteredDate), @MaxCreatedDate = MAX(CreatedDate) FROM #MemberInfo
-
 	DECLARE @MemberInfoLastImportedTime DATETIME
-	SELECT  @MemberInfoLastImportedTime = CASE WHEN @MaxRegisteredDate > @MaxCreatedDate THEN @MaxRegisteredDate ELSE @MaxCreatedDate END
-	SELECT  @MemberInfoLastImportedTime = DATEADD(HOUR, -2, @MemberInfoLastImportedTime)
+	SELECT  @MemberInfoLastImportedTime = MAX(RegTime) FROM #MemberInfo
+	SELECT  @MemberInfoLastImportedTime = DATEADD(HOUR, -@TimeZone-2, @MemberInfoLastImportedTime)
 
 	IF @MemberInfoLastImportedTime IS NOT NULL
 		UPDATE dbo.SystemSettings WITH (ROWLOCK)
