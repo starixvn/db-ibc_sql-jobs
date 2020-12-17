@@ -15,6 +15,7 @@ AS
 	- 20200714@Hogan: Add 7 games for Jackpot and 2 bettype for Contribution (4297) and Jackpot Prize (4298) [RedmineID: #137290]
 	- 20200728@Hogan: Integrate SA Gaming [RedmineID: #128493]
 	- 20201020@Hogan: Integrate Arcadia Gaming Bonus [RedmineID: #143648]
+	- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -29,7 +30,7 @@ BEGIN
 		, @S_BetCount = COUNT(b.TransId) --BetCount
 		, @S_AWinlost = SUM(awinlost)
 		, @S_Comm = SUM(comm)
-		, @S_BetEffective = SUM(CASE WHEN b.statusID IN (112,113) AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906) -- exclude PP Prize from BetEffective
+		, @S_BetEffective = SUM(CASE WHEN b.statusID IN (112,113) AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906) AND (b.bettype NOT BETWEEN 1611 AND 1699 OR b.matchid <> 150)) -- exclude PP Prize from BetEffective
 									THEN ABS(winlost-actual_stake)
 									ELSE 0  
 								END)
