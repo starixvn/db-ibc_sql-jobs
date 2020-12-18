@@ -14,6 +14,8 @@ AS
 		- 20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
 		- 20200409@Tiara: Increase datatype size of StakeLevelList on #GlobalStakeLevel [redmine #132051]
 		- 20200818@Johnson: check duplicate stakelevel [redmine:#139677]
+		- 20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
+		
 	Parameter's Explanations:
 */
 BEGIN 
@@ -173,6 +175,7 @@ BEGIN
 			AND ci.username NOT LIKE '%cashout%'
 			AND ci.username NOT LIKE '%BetTrade%'
 			AND ci.username NOT LIKE '%ClearBal%'
+			AND ci.username NOT LIKE '%OddsAdj%'
 			AND NOT EXISTS (SELECT 1 FROM #MemberStakeLevel cs2 
 						WHERE ci.custid = cs2.custid
 							AND t.bettype = cs2.bettype
