@@ -42,6 +42,7 @@ AS
 		- 20200714@Brice:	Add column [netstake] of [bettransG] - [Redmine: #137591]
 		- 20200923@Brice:	Add column [reasonIDm] of [bettransM] - [Redmine: #141650]
 		- 20201008@Brice:	Add column [OriginalOdds] of [bettransInfo] - [Redmine: #140906]
+		- 20201221@Brice:	Add column [siteID] of [bettransLC] - [Redmine: #147084]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -122,13 +123,13 @@ BEGIN
 		,	playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake
 		,	currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID
 		,	vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm
-		,	Transdate3rd, NetStake, epositiontaking
+		,	Transdate3rd, NetStake, epositiontaking,siteID
 		)
 	SELECT	transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking
 		,	playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake
 		,	currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID
 		,	vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm
-		,	Transdate3rd, NetStake, epositiontaking
+		,	Transdate3rd, NetStake, epositiontaking,siteID
 	FROM	dbo.bettransLC WITH (NOLOCK)
 	WHERE	recommend = @__recommend
 		AND	winlostdate = @__winlostdate;

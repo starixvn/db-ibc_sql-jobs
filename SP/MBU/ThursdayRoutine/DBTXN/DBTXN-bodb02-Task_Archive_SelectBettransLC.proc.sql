@@ -13,6 +13,7 @@ AS
 		- 20191104@Billy:	Add column [epositiontaking] of [bettransLC] - [Redmine: #123267]
 		- 20200612@Patrick: Avoid sort to reduce log file growth [Redmine: #135806]
 		- 20200618@Patrick: Fix issue multiple result set [Redmine: #135806]
+		- 20201221@Brice:	Add column [siteID] of [bettransLC] - [Redmine: #147084]
 */
 BEGIN 
 	SET NOCOUNT ON
@@ -30,7 +31,7 @@ BEGIN
 		,	b.vendorID, b.GameId3rd, b.TranId3rd, b.RefNo, b.IsSum, b.winlost, b.awinlost, b.mwinlost, b.swinlost, b.playercomm, b.comm, b.acomm, b.scomm
 		,	b.Transdate3rd, b.NetStake
 		,	[countryCode] = p.CountryShort
-		,	b.epositiontaking
+		,	b.epositiontaking, b.siteID
 	FROM		dbo.bettransLC14 AS b WITH (NOLOCK)
 	INNER JOIN	dbo.Task_bettransLC14_IP2Country AS p WITH (NOLOCK)
 			ON	b.transid = p.transid
