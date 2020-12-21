@@ -56,19 +56,16 @@ BEGIN
 				AND b.statusID IN (111, 112, 113)
 
 			-- bettransm bk
-			DECLARE @sql NVARCHAR(MAX)
-			SELECT  @sql = 'SELECT refno, sporttype, Saba, odds, stake, matchid
-							FROM OPENQUERY(DBARC, ''SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, bm.matchid
-													FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
-														INNER JOIN bodb_Archive.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
-														INNER JOIN bodb_Archive.dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
-														INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-													WHERE b.winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''''
-														AND b.bettype = 29
-														AND b.statusID IN (111, 112, 113)'')'
+
+			DECLARE @__query NVARCHAR(MAX), @__sqlCmd NVARCHAR(MAX)
+			SELECT  @__query = N''		
+			SELECT	@__query = @__query + N'EXEC Task_RMS_MBU_ARC_rmBettrans_Old_Sel @winlostdate'
+			SELECT	@__sqlCmd = N'EXECUTE DBARC.bodb_archive.dbo.sp_executesql @query, N''@winlostdate SMALLDATETIME'', @winlostdate'
 
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			EXEC (@sql)
+			EXECUTE	sys.sp_executesql @__sqlCmd, N'@query NVARCHAR(MAX), @winlostdate SMALLDATETIME', @__query, @winlostdate
+
+		
 		END
 
 		-- Gen data
