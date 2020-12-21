@@ -8,6 +8,7 @@ CREATE PROCEDURE [dbo].[ExecRep_02]
 	@winlostdate datetime = NULL,
 	@Command varchar(20) = NULL,
 	@deletedTarget varchar(50) = NULL,
+	@transIds VARCHAR(MAX) = NULL,
 	@rowcount INT = 0 OUTPUT
 AS
 /*
@@ -28,6 +29,7 @@ AS
 		- 20191030@Billy:	Remove table [BetLucky3Result] from Friday Routine - [Redmine: #122987]
 		- 20191126@Patrick: Add more conndition remove data on DB054/DB055 - [Redmine: #124104]
 		- 20200227@Patrick: Implement remove data of Intg_GameRoundBetStake after BU day - 1 [Redmine: #126981]
+		- 20201119@Brice: Enhance MBU process related to removing data on bettransm14 [Redmine: #143763]
 */
 -- =======================
 -- Parameter check\control
@@ -107,55 +109,32 @@ BEGIN
 			RETURN
 		END --- end of deleting bettrans14
 
-		IF	@deletedTarget = 'bettransm14' --- delete bettransm14
-		BEGIN
-			CREATE TABLE #btm (rn int PRIMARY KEY IDENTITY(1,1), transid BIGINT)
-			IF @@SERVERNAME LIKE 'DB04%' OR @@SERVERNAME IN ('DB054', 'DB055')
+		IF @deletedTarget = 'bettransm14' --deleting bettransm14
+        BEGIN
+			IF @transIds IS NOT NULL 
 			BEGIN
+				DELETE FROM @__tmpTransId
+				SELECT @rowcount = 0;
 
-				CREATE TABLE #m (matchid int PRIMARY KEY)
-				INSERT INTO #m
-				SELECT DISTINCT matchid FROM bettransm14
+				DECLARE @xmlData XML
+				SET @xmlData = CONVERT(XML, REPLACE('<root><r t="' + @transIds + '"/></root>', '^', '"/><r t="'))
 
-				DELETE FROM #m WHERE matchid in (SELECT matchid FROM dbo.match)
-				DELETE FROM #m WHERE matchid in (SELECT matchid FROM dbo.match14)
+				INSERT INTO @__tmpTransId (id)
+				SELECT T.C.value('./@t', 'BIGINT') AS transid
+				FROM @xmlData.nodes('//r') AS T(C)
+				OPTION (OPTIMIZE FOR (@xmlData = NULL))
 
-				INSERT INTO #btm (transid)
-				SELECT transid
-				FROM bettransm14 B with (ROWLOCK)
-				INNER JOIN #m M ON B.matchid = M.matchid
-
+				DELETE FROM dbo.bettransm14 WITH(ROWLOCK)
+				WHERE transid IN (SELECT t.id FROM @__tmpTransId t)
 			END
 			ELSE
 			BEGIN
-				INSERT INTO #btm (transid)
-				SELECT transid
-				FROM bettransm14 with (ROWLOCK)
+				DELETE FROM dbo.bettransm14 WITH(ROWLOCK)
 				WHERE winlostdate = @winlostdate
 			END
-
-
-			SET @rn  = 1
-			SET @rn2 = 2500
-			SET @rc  = 1
-			WHILE @rc > 0
-			BEGIN
-				BEGIN TRANSACTION
-					DELETE B
-					FROM #btm T
-						INNER LOOP JOIN dbo.bettransm14 B ON B.transid = T.transid
-					WHERE
-						T.rn BETWEEN @rn AND @rn2
-
-					SET @rc = @@ROWCOUNT
-				COMMIT TRANSACTION
-
-				SET @rn  = @rn  + 2500
-				SET @rn2 = @rn2 + 2500
-			END
-			DROP TABLE #btm
-			RETURN
-		END  --- end of deleting bettransm14
+			
+			RETURN;
+        END; --end of deleting bettransM14
 
 		IF	@deletedTarget = 'sum_winloss' --- delete sum_winloss
 		BEGIN;
