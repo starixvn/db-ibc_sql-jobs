@@ -1,4 +1,4 @@
-/*<info serverAlias="DBARC-bodb_Archive" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBARC-bodb_Archive" isFunction="0" isNested="1"></info>*/
 CREATE PROCEDURE Task_RMS_MBU_ARC_rmBettrans_Old_Sel @winlostdate SMALLDATETIME
 AS
 /*
