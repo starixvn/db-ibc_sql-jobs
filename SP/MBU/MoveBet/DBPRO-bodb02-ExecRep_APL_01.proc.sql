@@ -27,6 +27,7 @@ AS
 		- 20200803@Patrick: Add remove data on VSRaceInfo part [Redmine: #135963]
 		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
+		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 */ 
 BEGIN
 
@@ -183,6 +184,15 @@ BEGIN
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;	
 	----/20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]-----
+
+	-----20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]-----
+	IF	OBJECT_ID('dbo.ProviderExternalResultDetail', 'U') IS NOT NULL
+	BEGIN;
+		DELETE	tbl WITH (ROWLOCK)
+		FROM	dbo.ProviderExternalResultDetail AS tbl
+		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
+	END;	
+	----/20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]-----
 	
 	-- delete match	
 	DELETE	tbl WITH (ROWLOCK)
