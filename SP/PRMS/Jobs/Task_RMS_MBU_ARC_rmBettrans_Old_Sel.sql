@@ -1,9 +1,10 @@
-/*<info serverAlias="DBARC-	bodb_Archive"  isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBARC-bodb_Archive" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE Task_RMS_MBU_ARC_rmBettrans_Old_Sel @winlostdate SMALLDATETIME
 AS
 /*
 	Created:
 	DB: DBRMS-bodb_Archive
+	Task: RMS - Check Sum data Rm bettrans_Old
 
 	Revisions:   
 		- 20201221@danny: create SP  [RedmineID: #145926]
