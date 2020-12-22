@@ -15,6 +15,7 @@ AS
 		- 20200918@Malcolm: Add Joker [redmine: #131609]
 		- 20200915@Malcolm: Add WM Live Casino [redmine: #131584]
 		- 20201201@Malcolm : Add Gold Diamond Gaming [Redmine : #144110]
+		- 20201124@Malcolm: Add Virtual Sports 3 [redmine: #131375]
 	
 */
 BEGIN
@@ -120,6 +121,7 @@ BEGIN
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234-- Joker
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -229,6 +231,7 @@ BEGIN
 				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234-- Joker
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 ELSE 0
 			 END
 			,CASE
@@ -302,6 +305,7 @@ BEGIN
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -410,6 +414,7 @@ BEGIN
 				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 ELSE 0
 			 END
 			,CASE
@@ -483,6 +488,7 @@ BEGIN
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -590,6 +596,7 @@ BEGIN
 				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 ELSE 0
 			 END
 			,CASE
@@ -663,6 +670,7 @@ BEGIN
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -771,6 +779,7 @@ BEGIN
 				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- Joker
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 ELSE 0
 			 END
 			,CASE
