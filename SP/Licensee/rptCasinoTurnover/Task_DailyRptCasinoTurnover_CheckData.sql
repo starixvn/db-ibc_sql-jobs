@@ -15,10 +15,22 @@ AS
 		- 20200707@Kos: Fix NetStake [RedmineID: #137111]
 		- 20200728@Hogan: Integrate SA Gaming [RedmineID: #128493]
 		- 20201201@Mark: Casino Turnover Report - Support Saba.club, PP and PG Soft products [RedmineID: #146135]
+		- 20201223@Kos: Fix duplicate Saba.club data [RedmineID: #146135]
 */
 
 BEGIN
 	SET NOCOUNT ON
+
+	DECLARE @SportBetTypeMatrix TABLE (
+		ProductId	TINYINT,
+		BetType		SMALLINT )
+
+	INSERT INTO @SportBetTypeMatrix
+	SELECT DISTINCT
+		ProductId,
+		BetType
+	FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
+	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39)
 
 	DECLARE
 		@S_Winlost			MONEY,
@@ -41,7 +53,7 @@ BEGIN
 			, COUNT(b.transid) AS BetCount
 			, SUM(b.stake) AS ValidBetAmount
 		FROM bodb02.dbo.bettransRnG14 AS b WITH (NOLOCK)
-			INNER JOIN bodb02.dbo.SportBettypeMatrix AS s WITH (NOLOCK) ON b.gameID = s.BetType
+			INNER JOIN @SportBetTypeMatrix AS s ON b.gameID = s.BetType
 		WHERE b.winlostdate = @WinLostDate
 			AND b.statusID IN (111, 112, 113)
 			AND s.ProductID IN (6, 22, 55, 32, 42) -- RNG Casino, Macau Games, PG Soft, PP, Saba.club
@@ -54,7 +66,7 @@ BEGIN
 			, COUNT(b.transid) AS BetCount
 			, SUM(b.netstake) AS ValidBetAmount
 		FROM bodb02.dbo.bettransLC14 AS b WITH (NOLOCK)
-			INNER JOIN bodb02.dbo.SportBettypeMatrix AS s WITH (NOLOCK) ON b.gameID = s.BetType
+			INNER JOIN @SportBetTypeMatrix AS s ON b.gameID = s.BetType
 		WHERE b.winlostdate = @WinLostDate
 			AND b.statusID IN (111, 112, 113)
 			AND s.ProductID IN (21, 45, 39) -- All bet, Sexy Gaming, SA Gaming
