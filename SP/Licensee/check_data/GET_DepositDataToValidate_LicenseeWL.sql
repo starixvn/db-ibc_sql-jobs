@@ -30,6 +30,7 @@ AS
 		- 20200918@Hogan: Integrate Joker [RedmineID: #141408]
 		- 20201013@Hogan: Integrate SA Gaming [RedmineID: #128493]
 		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
+		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
 
 	Param's Explanation:
 		@DrawFilter
@@ -182,6 +183,10 @@ BEGIN
 		,@PGSTurnover MONEY
 		,@PGSCustomerWl MONEY
 		,@PGSBetCount MONEY
+		----GDG
+		,@GDGTurnover MONEY
+		,@GDGCustomerWl MONEY
+		,@GDGBetCount MONEY
 
 	DECLARE @tblSporttype AS TABLE (ProductPrefix VARCHAR(10), Sporttype SMALLINT)
 
@@ -194,7 +199,7 @@ BEGIN
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 
-		'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS')
+		'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS', 'GDG')
 
 	INSERT INTO @tblSporttype
 	SELECT 'SB', 0
@@ -745,6 +750,22 @@ BEGIN
 	FROM @tblData b
 	WHERE ProductPrefix = 'PGS'
 
+	----GDG
+	SELECT
+		@GDGTurnover=SUM(CASE 
+							WHEN @DrawFilter IN (2,3) THEN 	
+								CASE
+									WHEN b.StatusID = 111 THEN 0
+									WHEN b.StatusID IN (114,115) THEN 0.5
+									ELSE 1
+								END
+							ELSE 1
+						END * b.Turnover)
+		,@GDGCustomerWl=SUM(b.winlost)
+		,@GDGBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
+	FROM @tblData b
+	WHERE ProductPrefix = 'GDG'
+
 	-- Result
 	SELECT
 		1 AS id
@@ -782,6 +803,7 @@ BEGIN
 		, ISNULL(@JKTurnover,0) AS JK
 		, ISNULL(@SAGTurnover,0) AS SAG
 		, ISNULL(@PGSTurnover,0) AS PGS
+		, ISNULL(@GDGTurnover,0) AS GDG
 	UNION
 	SELECT
 		2
@@ -819,6 +841,7 @@ BEGIN
 		, ISNULL(@JKCustomerWl,0)
 		, ISNULL(@SAGCustomerWl,0)
 		, ISNULL(@PGSCustomerWl,0)
+		, ISNULL(@GDGCustomerWl,0)
 	UNION
 	SELECT
 		3
@@ -856,6 +879,7 @@ BEGIN
 		, ISNULL(@JKBetCount,0)
 		, ISNULL(@SAGBetCount,0)
 		, ISNULL(@PGSBetCount,0)
+		, ISNULL(@GDGBetCount,0)
 
 	SET NOCOUNT OFF
 END

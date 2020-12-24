@@ -49,6 +49,7 @@ AS
 		- 20201022@Louis: Licensee Spread Setting [RedmineID: #142532]	
 		- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369] 
 		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
+		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -290,6 +291,7 @@ BEGIN
 				WHEN b.bettype = 3007 THEN -244 -- SAG Tip ticket
 				WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 				WHEN (b.bettype BETWEEN 3001 AND 3099 AND b.bettype <> 3007) THEN 244 -- SAG
+				WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				WHEN b.bettype IN (17000, 17003) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
@@ -361,6 +363,7 @@ BEGIN
 				WHEN b.bettype = 3007 THEN -244 -- SAG Tip ticket
 				WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 				WHEN (b.bettype BETWEEN 3001 AND 3099 AND b.bettype <> 3007) THEN 244 -- SAG
+				WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				WHEN b.bettype IN (17000,17003) THEN 246 -- NPHP
 				ELSE 0
 			END--SportType

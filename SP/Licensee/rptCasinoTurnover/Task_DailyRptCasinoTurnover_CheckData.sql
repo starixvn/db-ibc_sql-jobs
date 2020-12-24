@@ -16,6 +16,7 @@ AS
 		- 20200728@Hogan: Integrate SA Gaming [RedmineID: #128493]
 		- 20201201@Mark: Casino Turnover Report - Support Saba.club, PP and PG Soft products [RedmineID: #146135]
 		- 20201223@Kos: Fix duplicate Saba.club data [RedmineID: #146135]
+		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
 */
 
 BEGIN
@@ -30,7 +31,7 @@ BEGIN
 		ProductId,
 		BetType
 	FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
-	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39)
+	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59)
 
 	DECLARE
 		@S_Winlost			MONEY,
@@ -60,7 +61,7 @@ BEGIN
 
 		UNION ALL
 
-		-- AllBet, Sexy Gaming, SA Gaming
+		-- AllBet, Sexy Gaming, SA Gaming, GDG
 		SELECT SUM(b.winlost - b.actual_stake) AS Winlost
 			, SUM(b.stake) AS Turnover
 			, COUNT(b.transid) AS BetCount
@@ -69,7 +70,7 @@ BEGIN
 			INNER JOIN @SportBetTypeMatrix AS s ON b.gameID = s.BetType
 		WHERE b.winlostdate = @WinLostDate
 			AND b.statusID IN (111, 112, 113)
-			AND s.ProductID IN (21, 45, 39) -- All bet, Sexy Gaming, SA Gaming
+			AND s.ProductID IN (21, 45, 39, 59) -- All bet, Sexy Gaming, SA Gaming, GDG
 	) t
 	OPTION (RECOMPILE)
 
@@ -80,7 +81,7 @@ BEGIN
 	FROM dbo.rptCasinoTurnover WITH (NOLOCK)
 	WHERE WinlostDate = @WinLostDate
 		AND StatusId IN (111, 112, 113)
-		AND ProductID IN (6, 22, 21, 45, 39, 55, 32, 42) -- RNG Casino, Macau Games, All Bet, SA Gaming, PG Soft, PP, Saba.club
+		AND ProductID IN (6, 22, 21, 45, 39, 55, 32, 42, 59) -- RNG Casino, Macau Games, All Bet, SA Gaming, PG Soft, PP, Saba.club
 
 	-- compare 
 	IF ISNULL(@S_Winlost, 0) <> ISNULL(@T_Winlost, 0)
