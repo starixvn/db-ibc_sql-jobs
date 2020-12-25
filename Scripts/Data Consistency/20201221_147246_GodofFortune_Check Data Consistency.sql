@@ -30,7 +30,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets of God of Fortune'
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
- ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
+ ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
  ,@ActiveStartDate = '2020-12-17' 
  ,@ActiveEndDate = '2021-02-01'
  ,@ActiveStartTime  = '00:00'
