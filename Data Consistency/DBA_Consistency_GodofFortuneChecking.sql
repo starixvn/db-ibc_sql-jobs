@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[DBA_Consistency_GodofFortuneChecking]
+CREATE PROCEDURE [dbo].[DBA_Consistency_GodofFortuneChecking]
 	@ProductId		INT		
 	,@ErrCode		INT			 = 0	OUTPUT
 	,@ErrMsg		VARCHAR(MAX) = ''	OUTPUT 
