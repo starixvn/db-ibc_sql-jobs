@@ -37,7 +37,7 @@ BEGIN
 	BEGIN
 		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 				,@ErrCode = 100
-				,@ErrMsg = 'Wrong God of Furtune value on product ' + CAST(@ProductId AS VARCHAR)
+				,@ErrMsg = 'Wrong God of Fortune actual_stake on product ' + CAST(@ProductId AS VARCHAR)
 				,@SampleData = 'bettrans.TransId = ' + @transId
 	END
 
