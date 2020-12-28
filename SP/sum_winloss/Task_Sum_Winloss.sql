@@ -17,6 +17,7 @@ AS
 		- 20201201@Malcolm : Add Gold Diamond Gaming [Redmine : #144110]
 		- 20201124@Malcolm: Add Virtual Sports 3 [redmine: #131375]
 		- 20201210@Malcolm: Add Big Gaming And Happy 5 Linked Games [RedminedId : #146542]
+		- 20201228@Malcolm: Add MaxGame [redmine: #147572]
 	
 */
 BEGIN
@@ -125,6 +126,7 @@ BEGIN
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
+			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -238,6 +240,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
+				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 ELSE 0
 			 END
 			,CASE
@@ -314,6 +317,7 @@ BEGIN
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
+			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -426,6 +430,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
+				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 ELSE 0
 			 END
 			,CASE
@@ -502,6 +507,7 @@ BEGIN
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
+			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -613,6 +619,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
+				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 ELSE 0
 			 END
 			,CASE
@@ -689,6 +696,7 @@ BEGIN
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
+			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -801,6 +809,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
+				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 ELSE 0
 			 END
 			,CASE
