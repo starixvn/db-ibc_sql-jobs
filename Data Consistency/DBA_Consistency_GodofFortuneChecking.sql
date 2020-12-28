@@ -30,7 +30,7 @@ BEGIN
 		WHERE b.matchid = 29 and b.bettype = 29
 		AND b.oddsspread = 1
 		AND b.actual_stake = b.stake
-		AND b.winlostdate = @Today
+		AND b.winlostdate >= @Today
 	END
 
 	IF @transId <> ''
