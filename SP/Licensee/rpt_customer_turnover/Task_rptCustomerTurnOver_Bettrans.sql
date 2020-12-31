@@ -22,7 +22,8 @@ AS
 		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_active [RedmineID: #103656]
 		- 20191220@Amanda: Integrate Spadegaming [RedmineID: #124103]
-		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625]
+		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625] 
+		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
 */
 
 BEGIN 
@@ -145,6 +146,7 @@ BEGIN
 			WHEN a.bettype = 1000 THEN 253	--games
 			WHEN a.bettype BETWEEN 81 AND 120 THEN 161 --Number Game
 			WHEN a.bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: HP5
+			WHEN a.bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
 			WHEN a.bettype BETWEEN 1201 AND 1299
 				THEN CASE
 						WHEN result.sporttype IS NOT NULL THEN result.sporttype
@@ -205,6 +207,7 @@ BEGIN
 			WHEN a.bettype = 1000 THEN 253 --games
 			WHEN a.bettype BETWEEN 81 AND 120 THEN 161 --Number Game
 			WHEN a.bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: HP5
+			WHEN a.bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
 			WHEN a.bettype BETWEEN 1201
 					AND 1299 THEN CASE 
 					WHEN result.sporttype IS NOT NULL THEN result.sporttype

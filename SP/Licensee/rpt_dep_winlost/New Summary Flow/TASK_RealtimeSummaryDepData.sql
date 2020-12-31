@@ -46,7 +46,8 @@ AS
 		- 20201020@Hogan: Integrate Arcadia Gaming Bonus [RedmineID: #143648]
 		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
 		- 20201022@Louis: Licensee Spread Setting [RedmineID: #142532]	
-		- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369]
+		- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369] 
+		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -557,6 +558,7 @@ BEGIN
 			CASE
 				WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game 
 				WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: Happy 5
+				WHEN bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
 				WHEN bettype IN (71,72,23002) THEN 251--Casino
 				WHEN bettype = 1000 THEN 253--games
 				WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
@@ -614,6 +616,7 @@ BEGIN
 			CASE
 				WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game 
 				WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: Happy 5
+				WHEN bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
 				WHEN bettype IN (71,72,23002) THEN 251--Casino
 				WHEN bettype = 1000 THEN 253--games
 				WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport

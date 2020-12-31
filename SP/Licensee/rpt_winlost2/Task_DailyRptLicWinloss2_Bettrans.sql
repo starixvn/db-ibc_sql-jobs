@@ -61,7 +61,8 @@ AS
 		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
 		- 20201022@Louis: Licensee Spread Setting [RedmineID: #142532]	
 		- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369]
-		- 20201217@Hogan: Add bettype of Saba.club Free Bets [RedmineID: #142369]
+		- 20201217@Hogan: Add bettype of Saba.club Free Bets [RedmineID: #142369] 
+		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -144,6 +145,7 @@ BEGIN
 			WHEN bettype = 1000 THEN 253 --games
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game 
 			WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
+			WHEN bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
 			WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151
@@ -241,6 +243,7 @@ BEGIN
 			WHEN bettype = 1000 THEN 253 --games
 			WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game
 			WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
+			WHEN bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
 			WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
 			WHEN bettype BETWEEN 51 AND 69 THEN 201
 			WHEN bettype IN (31,32,33,41,42,43) THEN 151
