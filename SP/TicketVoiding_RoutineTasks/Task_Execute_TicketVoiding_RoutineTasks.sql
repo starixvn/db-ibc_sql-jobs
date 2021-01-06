@@ -17,6 +17,7 @@ AS
 		- 20191210@Bobby: Integrate Saba Promotion  [RedmineID: #115377]
 			+ Added step 6.94: DBLIC.bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14
 		- 20201019@Sol: LAP - Licensee Spread Setting - Added new step 1.2 - Calculate original licensee winlost - [RedmineID: #142532]
+		- 20200106@Sol: Recover/Void - add missing sub-steps to step 6 - [RedmineID: #148325]
 */
 BEGIN
 	DECLARE @errorCode INT,
@@ -106,6 +107,12 @@ BEGIN
 				@WinlostDate	 = @WinlostDate,
 				@HasDataMismatch = @errorCode OUTPUT,
 				@BetTypes		 = @BetTypes OUTPUT
+
+			IF @errorCode <> 0
+			BEGIN 
+				EXEC DBLIC.bodb_LicenseeReport.dbo.GEN_rptBetting @date = @WinlostDate, @date2 = @WinlostDate
+			END
+
 		END TRY
 		BEGIN CATCH
 			SET @errmsg = 'step 6.3' + '--' + ERROR_MESSAGE()			
@@ -137,6 +144,12 @@ BEGIN
 				@WinlostDate = @WinlostDate,
 				@HasDataMismatch = @errorCode OUTPUT,
 				@IsParlay = @result OUTPUT
+
+			IF @errorCode <> 0
+			BEGIN
+				EXEC DBLIC.bodb_LicenseeReport.dbo.GEN_rptBettingBySport14 @Date = @WinlostDate
+			END
+
 		END TRY
 		BEGIN CATCH
 			SET @errmsg = 'step 6.6' + '--' + ERROR_MESSAGE()			
