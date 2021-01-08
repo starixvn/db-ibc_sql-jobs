@@ -75,6 +75,7 @@ AS
 		- 20201203@Parsons: Integrate Gold Diamond Gaming [#145340]
 		- 20210104@Parsons: Integrate Big Gaming [#145342]
 		- 20210104@Parsons: Integrate MaxGame [#147375]
+		- 20210113@Parsons: Saba.club Integrate Slot Game [#147977]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -159,7 +160,13 @@ BEGIN
 			,bt.ProductID
 			,CASE
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298), SAG_Tips, CC-Bonus(1906), SB-Adjusted Odds(999)
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699) 
+						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
+						   , SAG_Tips (3007)
+						   , CC-Bonus(1906)
+						   , SB-Adjusted Odds(999)
+						   , Saba.club Contribution(1698), Saba.club Jackpot Prize(1699)
+						*/
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1
@@ -189,7 +196,13 @@ BEGIN
 			,bt.ProductID
 			,CASE 
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999) -- PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298), SAG_Tips, CC-Bonus(1906), SB-Adjusted Odds(999)
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699) 
+						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
+						   , SAG_Tips (3007)
+						   , CC-Bonus(1906)
+						   , SB-Adjusted Odds(999)
+						   , Saba.club Contribution(1698), Saba.club Jackpot Prize(1699)
+						*/
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1
