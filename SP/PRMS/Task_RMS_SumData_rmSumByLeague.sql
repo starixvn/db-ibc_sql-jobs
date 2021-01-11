@@ -93,7 +93,7 @@ BEGIN
 			DECLARE @__query NVARCHAR(MAX), @__sqlCmd NVARCHAR(MAX), @isByBettype BIT = 0
 			SELECT  @__query = N''		
 			SELECT	@__query = @__query + N'EXEC Task_RMS_ARC_rmBettrans_Old_byLeagueOrBettype_Sel @winlostdate, @isByBettype'
-			SELECT	@__sqlCmd = N'EXECUTE DBARC.bodb_archive.dbo.sp_executesql @query, N''@winlostdate SMALLDATETIME, @isByBettype BIT '', @winlostdate, @isByBettype'
+			SELECT	@__sqlCmd = N'EXECUTE DBARC.bodb_archive.dbo.sp_executesql @query, N''@winlostdate SMALLDATETIME, @isByBettype BIT'', @winlostdate, @isByBettype'
 
 			INSERT INTO #bettransmbk (refno, statusID, leagueid)
 			EXECUTE	sys.sp_executesql @__sqlCmd, N'@query NVARCHAR(MAX), @winlostdate SMALLDATETIME, @isByBettype BIT', @__query, @winlostdate, @isByBettype
