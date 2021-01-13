@@ -73,6 +73,8 @@ AS
 		- 20201026@Parsons: Change request of Odds Spread [RedmineID: #142345]
 		- 20201130@Parsons: Integrate Leap Gaming Virtual Sports [#145339]
 		- 20201203@Parsons: Integrate Gold Diamond Gaming [#145340]
+		- 20210104@Parsons: Integrate Big Gaming [#145342]
+		- 20210104@Parsons: Integrate MaxGame [#147375]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -119,7 +121,7 @@ BEGIN
 
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG,WM,VS3,GDG') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG,WM,VS3,GDG,BGG,MXG') -- Remove Exchange (BX) due to separate wallet only
 		WHERE @ProductCodes = ''
 			OR ProductID IN (SELECT ProductID FROM @ProductIdList)
 
