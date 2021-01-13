@@ -118,8 +118,8 @@ BEGIN
 			SET @isBreak = 1
 
 		DELETE bm
-			OUTPUT DELETED.refno, DELETED.statusID, DELETED.leagueid
-			INTO @bettransmbkByBatch (refno, statusID, leagueid)
+			OUTPUT DELETED.refno, DELETED.bettype, DELETED.statusID, DELETED.leagueid
+			INTO @bettransmbkByBatch (refno, bettype, statusID, leagueid)
 		FROM #bettransmbk bm
 			INNER JOIN @bettransByBatch b ON bm.refno = b.refno
 
