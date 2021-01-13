@@ -12,6 +12,8 @@ AS
 		- 20210111@Danny: Initialize SP for Enhancing performance (get data from bettrans_bk) [RedmineID: #123157]
 */
 
+SET NOCOUNT ON
+
 DECLARE @__winlostdate SMALLDATETIME
 SET @__winlostdate = @winlostdate
 
