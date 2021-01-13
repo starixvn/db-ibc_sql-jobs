@@ -62,7 +62,7 @@ BEGIN
 	DECLARE @bettransmbkByBatch TABLE (refno BIGINT, bettype SMALLINT, statusID TINYINT, leagueid INT)
 	DECLARE @SQL VARCHAR(MAX)
 	
-	DECLARE @bettype TABLE (bettype SMALLINT, ParlayType TINYINT, leagueid INT)
+	--DECLARE @bettype TABLE (bettype SMALLINT, ParlayType TINYINT, leagueid INT)
 
 	IF @winlostdate > @MoveBetsDay
 	BEGIN
@@ -106,7 +106,7 @@ BEGIN
 	WHILE 1 = 1
 	BEGIN
 		DELETE @bettransByBatch
-		DELETE @bettype
+		--DELETE @bettype
 		DELETE @bettransmbkByBatch
 		SET @isBreak = 0
 
@@ -116,6 +116,12 @@ BEGIN
 
 		IF @@ROWCOUNT < @batch
 			SET @isBreak = 1
+
+		DELETE bm
+			OUTPUT DELETED.refno, DELETED.statusID, DELETED.leagueid
+			INTO @bettransmbkByBatch (refno, statusID, leagueid)
+		FROM #bettransmbk bm
+			INNER JOIN @bettransByBatch b ON bm.refno = b.refno
 
 		INSERT INTO #rmSumByBettype
 		SELECT
