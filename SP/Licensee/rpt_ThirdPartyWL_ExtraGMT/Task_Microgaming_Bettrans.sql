@@ -23,6 +23,7 @@ AS
 	    - 20200615@Parsons: SA gaming report (GMT+8) [#134452]
 		- 20200714@Parsons: Implement PP Jackpot [RedmineID: #137306]
 		- 20201021@Parsons: Integrate WM Live Casino [#141357]
+		- 20210113@Parsons: Provide timezone filter for Joker Games Win Loss Report [#148617]
 	 Param's Explanation:
 */
 
@@ -69,6 +70,7 @@ BEGIN
 				OR b.gameID BETWEEN 4101 AND 4300 -- PP
 				OR b.gameID BETWEEN 1901 AND 1999 -- CC
 				OR b.gameID BETWEEN 4301 AND 4600 -- SG
+				OR b.gameID BETWEEN 6401 AND 6700 -- JK
 			)
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID
 			, b.currency, b.statusID
