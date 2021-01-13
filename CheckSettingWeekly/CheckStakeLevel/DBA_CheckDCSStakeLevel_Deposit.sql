@@ -15,6 +15,7 @@ AS
 		- 20200409@Tiara: Increase datatype size of StakeLevelList on #GlobalStakeLevel [redmine #132051]
 		- 20200818@Johnson: check duplicate stakelevel [redmine:#139677]
 		- 20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
+		- 20210111@Winfred: fix check member missing stake level when agent disable[redmine:#148413]
 		
 	Parameter's Explanations:
 */
@@ -164,18 +165,20 @@ BEGIN
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) 
 			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
+			INNER JOIN #AgentStakeLevel ag on ci.recommend = ag.CustID AND ag.SportType = t.sporttype AND ag.bettype = t.bettype
 		WHERE ci.srecommend = @srecommend
 			AND roleid = 1
 			AND Enabled = 1
-			AND mrecommend NOT IN (SELECT custid 
+			AND ci.mrecommend NOT IN (SELECT custid 
 									FROM CheckCustDB.dbo.custinfo WITH(NOLOCK)
 									WHERE srecommend=@srecommend 
 										AND username like '%Acc%' AND roleid=3)
-			AND Currency NOT IN (20,72,27,28) 
+			AND ci.Currency NOT IN (20,72,27,28) 
 			AND ci.username NOT LIKE '%cashout%'
 			AND ci.username NOT LIKE '%BetTrade%'
 			AND ci.username NOT LIKE '%ClearBal%'
 			AND ci.username NOT LIKE '%OddsAdj%'
+			AND ag.StakeLevelList <> ''		
 			AND NOT EXISTS (SELECT 1 FROM #MemberStakeLevel cs2 
 						WHERE ci.custid = cs2.custid
 							AND t.bettype = cs2.bettype
