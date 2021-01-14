@@ -32,7 +32,7 @@ IF @isByBettype = 0
 BEGIN
 	SELECT b.refno, bm.statusID, m.leagueid
 	FROM #__refnoList b WITH (NOLOCK)
-		INNER JOIN dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
+		INNER JOIN dbo.bettransm bm WITH (NOLOCK, INDEX = IX_bettransm, FORCESEEK) ON b.refno = bm.refno
 		INNER JOIN dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE bm.winlostdate >= DATEADD(DAY, -21, @__winlostdate)
 	AND m.sporttype = 1
@@ -41,7 +41,7 @@ ELSE
 BEGIN
 	SELECT b.refno, bm.bettype, bm.statusID, m.leagueid
 	FROM #__refnoList b WITH (NOLOCK)
-		INNER JOIN dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
+		INNER JOIN dbo.bettransm bm WITH (NOLOCK, INDEX = IX_bettransm, FORCESEEK) ON b.refno = bm.refno
 		INNER JOIN dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE bm.winlostdate >= DATEADD(DAY, -21, @__winlostdate)
 	AND m.sporttype = 1
