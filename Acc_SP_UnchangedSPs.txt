@@ -1,1 +1,3 @@
-CheckSettingWeekly\CheckStatus\DBA_CheckStatus_Deposit_NonDCS.sql
+SP\MBU\MoveBet\DBTXN-bodb02-Task_DailySummary.proc.sql
+
+
