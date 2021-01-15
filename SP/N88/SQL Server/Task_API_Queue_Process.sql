@@ -12,6 +12,7 @@ AS
 		- 20200716@Percy: Add 2 tables: TpTransferInfo & DepositInfo [RedmineID: #137395]
 		- 20200818@Percy: Add 3 tables: CustRegInfo, BonusInfo & WithdrawalInfo [RedmineID: #137395]
 		- 20201021@Percy: Add table: AdjustmentInfo [RedmineID: #143879]
+		- 20210112@Percy: Add 4 tables: RebateMLog, CustBonusRollover, Promotion & PromotionSpecific [RedmineID: #146759]
 		
 */
 
@@ -139,6 +140,54 @@ BEGIN
 		BEGIN
 			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
 			VALUES ('AdjustmentInfo', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- RebateMLog
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_RebateMLog @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('RebateMLog', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- CustBonusRollover
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_CustBonusRollover @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('CustBonusRollover', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- Promotion
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_Promotion @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('Promotion', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- PromotionSpecific
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_PromotionSpecific @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('PromotionSpecific', @ErrCode, @ErrMsg)
 		END
 	END
 
