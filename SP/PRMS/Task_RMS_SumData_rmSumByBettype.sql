@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20200601@Percy: Initialize SP [RedmineID: #135326]
+		- 20210111@Danny: Enhance performance (get data from bettrans_bk) [RedmineID: #123157]
 */
 
 BEGIN
@@ -61,7 +62,7 @@ BEGIN
 	DECLARE @bettransmbkByBatch TABLE (refno BIGINT, bettype SMALLINT, statusID TINYINT, leagueid INT)
 	DECLARE @SQL VARCHAR(MAX)
 	
-	DECLARE @bettype TABLE (bettype SMALLINT, ParlayType TINYINT, leagueid INT)
+	--DECLARE @bettype TABLE (bettype SMALLINT, ParlayType TINYINT, leagueid INT)
 
 	IF @winlostdate > @MoveBetsDay
 	BEGIN
@@ -91,27 +92,21 @@ BEGIN
 
 		IF @winlostdate <= DATEADD(DAY, 7, @BalanceUpDay)
 		BEGIN
-			SET @SQL = 'SELECT refno, bettype, statusID, leagueid
-						FROM OPENQUERY(DBARC, ''SELECT b.refno, bm.bettype, bm.statusID, m.leagueid
-												FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
-													INNER JOIN bodb_Archive.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
-													INNER JOIN bodb_Archive.dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
-												WHERE b.winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''''
-													AND b.bettype = 29
-													AND b.currency <> 20
-													AND b.liveawayscore IN (1, 3) -- soccer
-													AND b.statusID IN (111, 112, 113, 101, 102)
-													AND b.currency <> 20
-													AND m.sporttype = 1'')'
-			INSERT INTO #bettransmbk
-			EXEC (@SQL)
+			
+			DECLARE @__query NVARCHAR(MAX), @__sqlCmd NVARCHAR(MAX), @isByBettype BIT = 1
+			SELECT  @__query = N''		
+			SELECT	@__query = @__query + N'EXEC Task_RMS_ARC_rmBettrans_Old_byLeagueOrBettype_Sel @winlostdate, @isByBettype'
+			SELECT	@__sqlCmd = N'EXECUTE DBARC.bodb_archive.dbo.sp_executesql @query, N''@winlostdate SMALLDATETIME, @isByBettype BIT'', @winlostdate, @isByBettype'
+
+			INSERT INTO #bettransmbk (refno, bettype, statusID, leagueid)
+			EXECUTE	sys.sp_executesql @__sqlCmd, N'@query NVARCHAR(MAX), @winlostdate SMALLDATETIME, @isByBettype BIT', @__query, @winlostdate, @isByBettype
 		END
 	END
 
 	WHILE 1 = 1
 	BEGIN
 		DELETE @bettransByBatch
-		DELETE @bettype
+		--DELETE @bettype
 		DELETE @bettransmbkByBatch
 		SET @isBreak = 0
 
@@ -121,6 +116,12 @@ BEGIN
 
 		IF @@ROWCOUNT < @batch
 			SET @isBreak = 1
+
+		DELETE bm
+			OUTPUT DELETED.refno, DELETED.bettype, DELETED.statusID, DELETED.leagueid
+			INTO @bettransmbkByBatch (refno, bettype, statusID, leagueid)
+		FROM #bettransmbk bm
+			INNER JOIN @bettransByBatch b ON bm.refno = b.refno
 
 		INSERT INTO #rmSumByBettype
 		SELECT
