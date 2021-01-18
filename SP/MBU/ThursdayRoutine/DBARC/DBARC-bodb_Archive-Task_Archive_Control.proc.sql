@@ -11,6 +11,7 @@ AS
 
 	Revisions:
 		- 20200720@Brice:	Initialize - 13 tables [Redmine: #111093]
+		- 20201210@Max: TVS - New issue type Abnormal Accounts [Redmine: #143666]
 
 */
 BEGIN;
@@ -19,7 +20,7 @@ BEGIN;
 	DECLARE	@ArchiveDate TABLE (
 				rid			INT				IDENTITY(1,1)
 			,	winlostdate	SMALLDATETIME
-			,	PRIMARY KEY CLUSTERED (rid)
+			,	PRIMARY KEY CLUSTERED (rid)                            
 			);
 
 	DECLARE	@ArchiveTable TABLE (
@@ -53,10 +54,6 @@ BEGIN;
 	INSERT INTO	@ArchiveTable
 			(tablename)
 	VALUES	('TicketVoiding_RequestDetail_bk')
-		,	('zzzbettransM_bk')
-		,	('zzzbettrans_bk')
-		,	('TicketVoiding_AutoVoidRequest_Queue_bk')
-		,	('TicketVoiding_AutoUnmarkSetting_bk')
 		,	('TicketVoiding_Request_bk')
 		,	('TicketVoiding_OperatorInfo_bk')
 		,	('TicketVoiding_Queue_bk')
@@ -65,6 +62,10 @@ BEGIN;
 		,	('TicketVoiding_VoidedTransaction_bk')
 		,	('TicketVoiding_RequestDetailTicket_Single_bk')
 		,	('TicketVoiding_RequestDetailTicket_SubParlay_bk')
+		,	('zzzbettransM_bk')
+		,	('zzzbettrans_bk')
+		,	('TicketVoiding_AutoVoidRequest_Queue_bk')
+		,	('TicketVoiding_AutoUnmarkSetting_bk')	
 		;
 
 
