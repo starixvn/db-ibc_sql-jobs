@@ -30,10 +30,11 @@ BEGIN
 		END
 	END
 
-	DECLARE @QueueID	BIGINT = NULL
-			,@XmlData	XML
-			,@LogDesc	VARCHAR(2000) = NULL
-			,@numOftry	TINYINT
+	DECLARE @QueueID			BIGINT = NULL
+			,@XmlData			XML
+			,@LogDesc			VARCHAR(2000) = NULL
+			,@numOftry			TINYINT
+			,@DefaultDateTime	DATETIME = '1970-01-01'
 
 	CREATE TABLE #tmpPromotion
 	(
@@ -59,6 +60,7 @@ BEGIN
 		,PeriodDay		TINYINT
 		,SpecialCode	VARCHAR(20)
 		,IsSpecial		BIT
+		,InCreateTime	VARCHAR(100) -- for check valid datetime
 		,DataType		TINYINT -- 0: update, 1: insert
 		,PRIMARY KEY (BonusCode, SiteId)
 	)
@@ -103,7 +105,7 @@ BEGIN
 					,EndDate
 					,ExpiryDays
 					,Sort
-					,CreateTime
+					,InCreateTime
 					,Status
 					,LastUpdateTime
 					,LastUpdateUser
@@ -127,7 +129,7 @@ BEGIN
 					,NULLIF(t.c.value('@enddate', 'DATETIME'), '')
 					,t.c.value('@expirydays', 'TINYINT')
 					,t.c.value('@sort', 'SMALLINT')
-					,NULLIF(t.c.value('@createtime', 'DATETIME'), '')
+					,t.c.value('@createtime', 'VARCHAR(100)')
 					,t.c.value('@status', 'TINYINT')
 					,NULLIF(t.c.value('@lastupdatetime', 'DATETIME'), '')
 					,t.c.value('@lastupdateuser', 'VARCHAR(50)')
@@ -139,6 +141,9 @@ BEGIN
 					,t.c.value('@isspecial', 'BIT')
 				FROM @XmlData.nodes('root/row') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
+
+				UPDATE #tmpPromotion
+				SET CreateTime = CASE WHEN ISDATE(InCreateTime) = 1 THEN InCreateTime ELSE @DefaultDateTime END
 
 				-- Update DataType
 				UPDATE t

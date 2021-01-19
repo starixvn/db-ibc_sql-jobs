@@ -44,7 +44,7 @@ BEGIN
 		,SiteId				INT
 		,Rollover			DECIMAL
 		,Turnover			DECIMAL
-		,Status				TINYINT
+		,Status				SMALLINT
 		,CreateTime			DATETIME
 		,UpdateTime			DATETIME
 		,DataType			TINYINT -- 0: update, 1: insert
@@ -98,7 +98,7 @@ BEGIN
 					,t.c.value('@siteid', 'INT')
 					,t.c.value('@rollover', 'DECIMAL')
 					,t.c.value('@turnover', 'DECIMAL')
-					,t.c.value('@status', 'TINYINT')
+					,t.c.value('@status', 'SMALLINT')
 					,NULLIF(t.c.value('@createtime', 'DATETIME'), '')
 					,NULLIF(t.c.value('@updatetime', 'DATETIME'), '')
 				FROM @XmlData.nodes('root/row') t(c)
