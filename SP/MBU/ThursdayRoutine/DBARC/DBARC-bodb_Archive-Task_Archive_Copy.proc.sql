@@ -57,7 +57,7 @@ FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @winlostdate)
 	AND t1.VoidingHistoryId IS NULL
 UNION ALL
-SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
+SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, t1.VoidingHistoryId
 FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
 	OUTER APPLY (
 				SELECT TOP 1 VoidingHistoryId
@@ -91,7 +91,7 @@ WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) join bodb0
 		OR EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @winlostdate)
 		AND t1.VoidingHistoryId IS NULL
 UNION ALL
-SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
+SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, t1.VoidingHistoryId
 FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
 	OUTER APPLY (
 				SELECT TOP 1 VoidingHistoryId
@@ -154,7 +154,7 @@ SELECT	RequestId, Sporttype, SubIssueTypeId, ActionId, Provider, Source, Decided
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-SELECT	RequestId, Sporttype, SubIssueTypeId, ActionId, Provider, Source, DecidedBy, MistakenBy, Remark, CheckedBy, UserId, CreatedDate, LastModifiedBy, LastModifiedDate, IssueTypeId, IsTest
+SELECT	t1.RequestId, Sporttype, SubIssueTypeId, ActionId, Provider, Source, DecidedBy, MistakenBy, Remark, CheckedBy, UserId, CreatedDate, LastModifiedBy, LastModifiedDate, IssueTypeId, IsTest
 FROM	bodb02.dbo.TicketVoiding_Request AS t1 WITH (NOLOCK)
 	OUTER APPLY (
 				SELECT TOP 1 RequestId
@@ -179,7 +179,7 @@ SELECT	RequestId, OperatorId, OperatorTypeId, Id
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-SELECT	RequestId, OperatorId, OperatorTypeId, Id
+SELECT	t1.RequestId, OperatorId, OperatorTypeId, Id
 FROM	bodb02.dbo.TicketVoiding_OperatorInfo AS t1 WITH (NOLOCK)
 	OUTER APLLY (
 				SELECT TOP 1 RequestId
@@ -203,7 +203,7 @@ SELECT	QueueId, RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-SELECT	QueueId, RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers
+SELECT	QueueId, t1.RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers
 FROM	bodb02.dbo.TicketVoiding_Queue AS t1 WITH (NOLOCK)
 	OUTER APLLY (
 				SELECT TOP 1 RequestId
@@ -228,7 +228,7 @@ SELECT	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, Creat
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-SELECT	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds
+SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds
 FROM	bodb02.dbo.TicketVoiding_VoidingHistory AS t1 WITH (NOLOCK)
 	OUTER APLLY (
 				SELECT TOP 1 RequestId
@@ -313,7 +313,7 @@ SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
+SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_Single AS t1 WITH (NOLOCK)
 	OUTER APLLY (
 				SELECT TOP 1 RequestId
@@ -338,7 +338,7 @@ SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
+SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_SubParlay AS t1 WITH (NOLOCK)
 	OUTER APLLY (
 				SELECT TOP 1 RequestId
