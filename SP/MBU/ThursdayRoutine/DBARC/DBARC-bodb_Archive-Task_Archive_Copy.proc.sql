@@ -181,7 +181,7 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 
 SELECT	t1.RequestId, OperatorId, OperatorTypeId, Id
 FROM	bodb02.dbo.TicketVoiding_OperatorInfo AS t1 WITH (NOLOCK)
-	OUTER APLLY (
+	OUTER APPLY (
 				SELECT TOP 1 RequestId
 				FROM bodb02.dbo.TicketVoiding_Request WITH (NOLOCK)
 				WHERE RequestId = t1.RequestId
@@ -205,7 +205,7 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 
 SELECT	QueueId, t1.RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers
 FROM	bodb02.dbo.TicketVoiding_Queue AS t1 WITH (NOLOCK)
-	OUTER APLLY (
+	OUTER APPLY (
 				SELECT TOP 1 RequestId
 				FROM bodb02.dbo.TicketVoiding_Request WITH (NOLOCK)
 				WHERE RequestId = t1.RequestId
@@ -230,7 +230,7 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 
 SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds
 FROM	bodb02.dbo.TicketVoiding_VoidingHistory AS t1 WITH (NOLOCK)
-	OUTER APLLY (
+	OUTER APPLY (
 				SELECT TOP 1 RequestId
 				FROM bodb02.dbo.TicketVoiding_Request WITH (NOLOCK)
 				WHERE RequestId = t1.RequestId
@@ -315,7 +315,7 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 
 SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_Single AS t1 WITH (NOLOCK)
-	OUTER APLLY (
+	OUTER APPLY (
 				SELECT TOP 1 RequestId
 				FROM bodb02.dbo.TicketVoiding_Request WITH (NOLOCK)
 				WHERE RequestId = t1.RequestId
@@ -340,7 +340,7 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 
 SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_SubParlay AS t1 WITH (NOLOCK)
-	OUTER APLLY (
+	OUTER APPLY (
 				SELECT TOP 1 RequestId
 				FROM bodb02.dbo.TicketVoiding_Request WITH (NOLOCK)
 				WHERE RequestId = t1.RequestId
