@@ -21,6 +21,7 @@ AS
 		- 20191206@Percy: Integrate new products: 12Topaz, LB Keno, GPI lottery, VR Lottery [RedmineID: #117197]
 		- 20200707@Percy: Integrate new product: KY Gaming [RedmineID: #131437]
 		- 20200827@Percy: Re-Integrate 12Topaz due to API's change [RedmineID: #139043]
+		- 20201216@Percy: Integrate new product: BTi [RedmineID: #144456]
 */
 
 BEGIN
@@ -698,6 +699,44 @@ BEGIN
 			END CATCH
 
 			DROP TABLE #KYGaming
+		END
+		-- BTi
+		ELSE IF @ProductId = 25
+		BEGIN
+			CREATE TABLE #BTi (BetID BIGINT, UserName VARCHAR(50), TotalStake MONEY, ValidStake MONEY, PL MONEY, BetStatus VARCHAR(30), BetSettledDate DATETIME)
+
+			BEGIN TRY
+				INSERT INTO #BTi (BetID, UserName, TotalStake, ValidStake, PL, BetStatus, BetSettledDate)
+				SELECT	t.c.value('(BetID/text())[1]', 'BIGINT')			AS BetID,
+						t.c.value('(UserName/text())[1]', 'VARCHAR(50)')	AS UserName,
+						t.c.value('(TotalStake/text())[1]', 'MONEY')		AS TotalStake,
+						t.c.value('(ValidStake/text())[1]', 'MONEY')		AS ValidStake,
+						t.c.value('(PL/text())[1]', 'MONEY')				AS PL,
+						t.c.value('(BetStatus/text())[1]', 'VARCHAR(30)')	AS BetStatus,
+						t.c.value('(BetSettledDate/text())[1]', 'DATETIME')	AS BetSettledDate
+				FROM @XmlData.nodes('root/Bets') AS t(c)
+				OPTION (OPTIMIZE FOR (@XmlData = NULL))
+
+				DELETE bt WITH (ROWLOCK, UPDLOCK)
+				FROM dbo.bettrans_BTi bt
+				WHERE EXISTS (SELECT 1 FROM #BTi k WHERE bt.BetID = k.BetID)
+				
+				INSERT INTO dbo.bettrans_BTi (BetID, UserName, TotalStake, ValidStake, PL, BetStatus, BetSettledDate, IBCCustId, WinlostDate)
+				SELECT k.BetID, k.UserName, k.TotalStake, k.ValidStake, k.PL, k.BetStatus, k.BetSettledDate, m.IBCCustId, CONVERT(DATE, k.BetSettledDate) AS WinlostDate
+				FROM #BTi k
+					INNER JOIN dbo.MemberInfo m WITH (NOLOCK) ON '12BET$' + k.UserName = m.Username
+
+				SELECT @WinlostDate = MIN(CONVERT(DATE, BetSettledDate)) FROM #BTi
+
+				SELECT @IsErr = 0
+			END TRY
+			BEGIN CATCH
+				UPDATE dbo.APIProduct_ImportQueue WITH (ROWLOCK, UPDLOCK)
+				SET FinishedTime = NULL, WinlostDate = NULL, LogDesc = 'Failed. Error Message = ' + ERROR_MESSAGE()
+				WHERE QueueId = @QueueId
+			END CATCH
+
+			DROP TABLE #BTi
 		END
 
 		IF @IsErr = 1
