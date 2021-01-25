@@ -1,7 +1,7 @@
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
-CREATE PROCEDURE	dbo.Task_Archive_SelectBettransRNG
+ALTER PROCEDURE	dbo.Task_Archive_SelectBettransRNG @winlostdate SMALLDATETIME
 AS
 /*
 	Creator:	20151013@Sophia
@@ -14,15 +14,15 @@ AS
 		- 20191104@Billy:	Add column [epositiontaking] of [bettransRnG] - [Redmine: #123267]
 		- 20200612@Patrick: Avoid sort to reduce log file growth [Redmine: #135806]
 		- 20200618@Patrick: Fix issue multiple result set [Redmine: #135806]
+		- 20210121@Patrick: Split copy data of bettransRnG14 day by day [Redmine: #149198]
 */
 BEGIN;
 	SET NOCOUNT ON;
 
-	DECLARE @__tempVar TABLE(winlostdate SMALLDATETIME)
-
-	INSERT INTO @__tempVar(winlostdate)
-	SELECT winlostdate 
-	FROM dbo.Task_ArchiveDate WITH (NOLOCK) ORDER BY winlostdate
+	DECLARE @__minTransId BIGINT, @__maxTransId BIGINT
+	SELECT @__minTransId = MIN(TransId), @__maxTransId = MAX(TransId)
+	FROM dbo.bettransRnG14 AS b WITH (NOLOCK)
+	WHERE winlostdate = @winlostdate
 
 	-- to DB06.bodb_Archive.dbo.bettransRNG_BK
 	SELECT	b.transid, b.custid, b.transdate, b.odds, b.stake, b.status, b.apositiontaking, b.mpositiontaking, b.tpositiontaking, b.spositiontaking
@@ -34,9 +34,8 @@ BEGIN;
 	FROM		dbo.bettransRnG14 AS b WITH (NOLOCK)
 	INNER JOIN	dbo.Task_bettransRNG14_IP2Country AS ip WITH (NOLOCK)
 			ON	b.transid = ip.transid
-	CROSS APPLY @__tempVar t
-	WHERE b.winlostdate = t.winlostdate
-		AND ip.winlostdate = t.winlostdate
+	WHERE ip.winlostdate = @winlostdate
+		AND ip.transid BETWEEN @__minTransId AND @__maxTransId
 END;
 GO
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
