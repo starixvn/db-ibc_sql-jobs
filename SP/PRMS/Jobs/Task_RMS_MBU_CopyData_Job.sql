@@ -33,7 +33,7 @@ BEGIN
 	BEGIN
 		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
-		SELECT  @FromDate = MIN(winlostdate) FROM dbo.rmBettrans_uat WITH (NOLOCK)
+		SELECT  @FromDate = MIN(winlostdate) FROM dbo.rmBettrans WITH (NOLOCK)
 		SELECT  @ToDate = DATEADD(DAY, -1, CONVERT(DATE, GETDATE()))
 
 		SELECT @winlostdate = @FromDate
@@ -60,7 +60,7 @@ BEGIN
 		SELECT  @FromDate = MIN(winlostdate), @ToDate = MAX(winlostdate) FROM DBTXN.bodb02.dbo.Task_ArchiveDate WITH (NOLOCK)
 
 		DECLARE @maxSumDate DATETIME
-		SELECT	@maxSumDate = MAX(winlostdate) FROM bodb_RMS.dbo.rmSumWinloss_Old_uat WITH (NOLOCK)
+		SELECT	@maxSumDate = MAX(winlostdate) FROM bodb_RMS.dbo.rmSumWinloss_Old WITH (NOLOCK)
 		SELECT  @maxSumDate = DATEADD(DAY, 1, @maxSumDate)
 
 		SELECT @winlostdate = @FromDate

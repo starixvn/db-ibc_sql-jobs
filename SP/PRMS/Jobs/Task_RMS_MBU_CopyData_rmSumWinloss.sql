@@ -18,14 +18,14 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	IF NOT EXISTS (SELECT 1 FROM dbo.rmSumWinloss_UAT WITH (NOLOCK) WHERE winlostdate = @winlostdate)
+	IF NOT EXISTS (SELECT 1 FROM dbo.rmSumWinloss WITH (NOLOCK) WHERE winlostdate = @winlostdate)
 		RETURN
 
-	IF EXISTS (SELECT 1 FROM dbo.rmSumWinloss_Old_UAT WITH (NOLOCK) WHERE winlostdate = @winlostdate)
-		DELETE dbo.rmSumWinloss_Old_Uat WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
+	IF EXISTS (SELECT 1 FROM dbo.rmSumWinloss_Old WITH (NOLOCK) WHERE winlostdate = @winlostdate)
+		DELETE dbo.rmSumWinloss_Old WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
 
 	BEGIN TRY
-		INSERT INTO dbo.rmSumWinloss_Old_uat
+		INSERT INTO dbo.rmSumWinloss_Old
 		(
 			winlostdate,custid,sporttype,statusid,combo,username,currency,stake,winlost,company_stake,company_winlost
 			,actualrate,odds,betcount,recommend,parlaytype,scomm,Extra_comm,Extra_stake,Extra_winlost,
@@ -36,7 +36,7 @@ BEGIN
 			winlostdate,custid,sporttype,statusid,combo,username,currency,stake,winlost,company_stake,company_winlost
 			,actualrate,odds,betcount,recommend,parlaytype,scomm,Extra_comm,Extra_stake,Extra_winlost,
 			mrecommend,srecommend,awinlost,mwinlost,swinlost,actual_stake,playercomm,comm,acomm
-		FROM dbo.rmSumWinloss_uat WITH (NOLOCK)
+		FROM dbo.rmSumWinloss WITH (NOLOCK)
 		WHERE winlostdate = @winlostdate
 	END TRY
 	BEGIN CATCH

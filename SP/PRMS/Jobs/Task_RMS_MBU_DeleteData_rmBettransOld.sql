@@ -19,8 +19,8 @@ BEGIN
 	SET NOCOUNT ON
 
 	BEGIN TRY
-		IF EXISTS (SELECT 1 FROM dbo.rmBettrans_Old_uat WITH (NOLOCK) WHERE winlostdate = @winlostdate)
-			DELETE dbo.rmBettrans_Old_uat WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
+		IF EXISTS (SELECT 1 FROM dbo.rmBettrans_Old WITH (NOLOCK) WHERE winlostdate = @winlostdate)
+			DELETE dbo.rmBettrans_Old WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = 101, @ErrMsg = ERROR_MESSAGE()

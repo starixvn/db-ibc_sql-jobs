@@ -244,7 +244,7 @@ BEGIN
 			DROP TABLE #tmp2
 		END
 
-		;MERGE dbo.rmBettrans_old_uat AS t
+		;MERGE dbo.rmBettrans_old AS t
 		USING #rmBettrans AS s ON t.transid = s.transid
 		WHEN MATCHED THEN UPDATE
 			SET custid = s.custid

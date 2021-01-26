@@ -22,58 +22,58 @@ BEGIN
 	
 	-- Run every 30s
 	-- rmSumByLeague/rmSumByBettype
-	--BEGIN
-	--	SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
+	BEGIN
+		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
-	--	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
-	--	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
-	--	EXEC bodb02.dbo.Age_SelBalanceUpDay
+		DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+		INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+		EXEC bodb02.dbo.Age_SelBalanceUpDay
 
-	--	DECLARE @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
-	--	SELECT  @BalanceUpDay = BalanceUpDay, @MoveBetsDay = MoveBetsDay FROM @MBBU
+		DECLARE @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
+		SELECT  @BalanceUpDay = BalanceUpDay, @MoveBetsDay = MoveBetsDay FROM @MBBU
 
-	--	-- rmSumByLeague
-	--	SELECT  @FromDate = @BalanceUpDay, @ToDate = CONVERT(DATE, GETDATE())
+		-- rmSumByLeague
+		SELECT  @FromDate = @BalanceUpDay, @ToDate = CONVERT(DATE, GETDATE())
 
-	--	SELECT @winlostdate = @FromDate
-	--	WHILE  @winlostdate <= @ToDate
-	--	BEGIN
-	--		SELECT @ErrCode = 0, @ErrMsg = ''
+		SELECT @winlostdate = @FromDate
+		WHILE  @winlostdate <= @ToDate
+		BEGIN
+			SELECT @ErrCode = 0, @ErrMsg = ''
 
-	--		EXEC dbo.Task_RMS_SumData_rmSumByLeague @winlostdate = @winlostdate, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+			EXEC dbo.Task_RMS_SumData_rmSumByLeague @winlostdate = @winlostdate, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 			
-	--		IF @ErrCode > 0
-	--		BEGIN
-	--			INSERT INTO @tblErrMsg (TableName, ErrMsg)
-	--			SELECT 'rmSumByLeague', 'From winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''' + ' - ' + ISNULL(@ErrMsg , '')
+			IF @ErrCode > 0
+			BEGIN
+				INSERT INTO @tblErrMsg (TableName, ErrMsg)
+				SELECT 'rmSumByLeague', 'From winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''' + ' - ' + ISNULL(@ErrMsg , '')
 
-	--			BREAK
-	--		END
+				BREAK
+			END
 
-	--		SELECT @winlostdate = DATEADD(DAY, 1, @winlostdate)
-	--	END
+			SELECT @winlostdate = DATEADD(DAY, 1, @winlostdate)
+		END
 
-	--	-- rmSumByBettype
-	--	SELECT  @FromDate = @BalanceUpDay, @ToDate = CONVERT(DATE, GETDATE())
+		-- rmSumByBettype
+		SELECT  @FromDate = @BalanceUpDay, @ToDate = CONVERT(DATE, GETDATE())
 
-	--	SELECT @winlostdate = @FromDate
-	--	WHILE  @winlostdate <= @ToDate
-	--	BEGIN
-	--		SELECT @ErrCode = 0, @ErrMsg = ''
+		SELECT @winlostdate = @FromDate
+		WHILE  @winlostdate <= @ToDate
+		BEGIN
+			SELECT @ErrCode = 0, @ErrMsg = ''
 
-	--		EXEC dbo.Task_RMS_SumData_rmSumByBettype @winlostdate = @winlostdate, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+			EXEC dbo.Task_RMS_SumData_rmSumByBettype @winlostdate = @winlostdate, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 			
-	--		IF @ErrCode > 0
-	--		BEGIN
-	--			INSERT INTO @tblErrMsg (TableName, ErrMsg)
-	--			SELECT 'rmSumByBettype', 'From winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''' + ' - ' + ISNULL(@ErrMsg , '')
+			IF @ErrCode > 0
+			BEGIN
+				INSERT INTO @tblErrMsg (TableName, ErrMsg)
+				SELECT 'rmSumByBettype', 'From winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''' + ' - ' + ISNULL(@ErrMsg , '')
 
-	--			BREAK
-	--		END
+				BREAK
+			END
 
-	--		SELECT @winlostdate = DATEADD(DAY, 1, @winlostdate)
-	--	END
-	--END
+			SELECT @winlostdate = DATEADD(DAY, 1, @winlostdate)
+		END
+	END
 
 	-- Run daily
 	DECLARE @CurrentTime TIME = CONVERT(TIME, GETDATE())

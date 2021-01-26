@@ -20,20 +20,20 @@ BEGIN
 
 	CREATE TABLE #TransId (transid BIGINT PRIMARY KEY)
 	INSERT INTO #TransId (transid)
-	SELECT transid FROM dbo.rmBettrans_uat WITH (NOLOCK) WHERE winlostdate = @winlostdate
+	SELECT transid FROM dbo.rmBettrans WITH (NOLOCK) WHERE winlostdate = @winlostdate
 
 	IF @@ROWCOUNT = 0
 		RETURN
 
-	IF EXISTS (SELECT 1 FROM dbo.rmBettrans_Old_uat WITH (NOLOCK) WHERE winlostdate = @winlostdate)
-		DELETE dbo.rmBettrans_Old_uat WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
+	IF EXISTS (SELECT 1 FROM dbo.rmBettrans_Old WITH (NOLOCK) WHERE winlostdate = @winlostdate)
+		DELETE dbo.rmBettrans_Old WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
 
 	DELETE o WITH (ROWLOCK, UPDLOCK)
-	FROM dbo.rmBettrans_Old_uat o
+	FROM dbo.rmBettrans_Old o
 		INNER JOIN #TransId t ON o.transid = t.transid
 
 	BEGIN TRY
-		INSERT INTO dbo.rmBettrans_Old_uat
+		INSERT INTO dbo.rmBettrans_Old
 		(
 			transid,custid,transdate,oddsid,hdp1,hdp2,odds,stake,status,winlost,awinlost,mwinlost,playercomm,comm,acomm
 			,apositiontaking,mpositiontaking,tpositiontaking,playerdiscount,discount,adiscount,livehomescore,liveawayscore
@@ -49,7 +49,7 @@ BEGIN
 			,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 			,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
 			,balance,SecAcceptFlag,transid2,combo,odds2,TotalBet,epositiontaking
-		FROM dbo.rmBettrans_uat r WITH (NOLOCK)
+		FROM dbo.rmBettrans r WITH (NOLOCK)
 		WHERE EXISTS (SELECT 1 FROM #TransId t WHERE r.transid = t.transid)
 	END TRY
 	BEGIN CATCH

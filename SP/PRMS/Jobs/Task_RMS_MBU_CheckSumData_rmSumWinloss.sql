@@ -103,7 +103,7 @@ BEGIN
 			SUM(playercomm) as playercomm,
 			SUM(comm) as comm,
 			SUM(acomm) as acomm
-		FROM dbo.rmBettrans_old_uat b WITH (NOLOCK)
+		FROM dbo.rmBettrans_old b WITH (NOLOCK)
 		WHERE b.winlostdate = @winlostdate
 			AND b.statusID IN (111, 112, 113)
 		GROUP BY
@@ -125,7 +125,7 @@ BEGIN
 			b.mrecommend,
 			b.srecommend;
 
-		MERGE dbo.rmSumWinloss_uat AS TARGET
+		MERGE dbo.rmSumWinloss AS TARGET
 			USING #rmSumWinloss AS SOURCE
 				ON		TARGET.WinlostDate	= SOURCE.WinlostDate
 					AND TARGET.CustId		= SOURCE.CustId

@@ -38,9 +38,9 @@ BEGIN
 
 	IF @min_tstamp = 0x0000000000000001 -- renew all data
 	BEGIN
-		TRUNCATE TABLE dbo.rmBettrans_uat
+		TRUNCATE TABLE dbo.rmBettrans
 
-		INSERT INTO dbo.rmBettrans_uat
+		INSERT INTO dbo.rmBettrans
 		(
 			transid,custid,transdate,oddsid,hdp1,hdp2,odds,stake,status,winlost,awinlost,mwinlost,playercomm,comm,acomm
 			,apositiontaking,mpositiontaking,tpositiontaking,playerdiscount,discount,adiscount,livehomescore,liveawayscore
@@ -60,12 +60,12 @@ BEGIN
 		WHERE bettype IN (29, 38, 376)
 
 		-- Update some columns for bettype = 29
-		IF EXISTS (SELECT 1 FROM dbo.rmBettrans_uat WITH (NOLOCK) WHERE bettype = 29)
+		IF EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE bettype = 29)
 		BEGIN
 			-- transid2 (sporttype)
 			UPDATE b WITH (ROWLOCK)
 			SET b.transid2 = s.sporttype
-			FROM dbo.rmBettrans_uat b
+			FROM dbo.rmBettrans b
 			CROSS APPLY (
 					SELECT CASE
 								-------------------------------
@@ -103,7 +103,7 @@ BEGIN
 			-- TotalBet
 			UPDATE b WITH (ROWLOCK)
 			SET b.TotalBet = t.TotalBet
-			FROM dbo.rmBettrans_uat b
+			FROM dbo.rmBettrans b
 				CROSS APPLY (
 					SELECT SUM(rcs.cnt) AS TotalBet
 					FROM bodb02.dbo.RefCombinationSet rcs WITH (NOLOCK)
@@ -119,7 +119,7 @@ BEGIN
 			INSERT INTO #tmp (transid, stake, N, bitmapR, odds, SetStake, RN)
 			SELECT b.transid, b.stake, b.hdp2, b.betteam, bm.odds, bm.stake AS SetStake
 				,ROW_NUMBER() OVER(PARTITION BY b.transid ORDER BY bm.matchid) AS RN
-			FROM dbo.rmBettrans_uat b WITH (NOLOCK)
+			FROM dbo.rmBettrans b WITH (NOLOCK)
 				CROSS APPLY (
 					SELECT bm.odds, bm.stake, bm.matchid
 					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
@@ -151,7 +151,7 @@ BEGIN
 			)
 			UPDATE b WITH (ROWLOCK)
 			SET b.odds2 = o.odds2
-			FROM dbo.rmBettrans_uat b
+			FROM dbo.rmBettrans b
 				INNER JOIN CTE_odds o ON b.transid = o.transid
 			WHERE b.bettype = 29
 		END
@@ -350,7 +350,7 @@ BEGIN
 			DROP TABLE #tmp2
 		END
 
-		;MERGE dbo.rmBettrans_uat AS t
+		;MERGE dbo.rmBettrans AS t
 		USING #rmBettrans AS s ON t.transid = s.transid
 		WHEN MATCHED THEN UPDATE
 			SET custid = s.custid

@@ -27,7 +27,7 @@ BEGIN
 	BEGIN
 		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
-		SELECT  @FromDate = MIN(winlostdate) FROM dbo.rmBettrans_uat WITH (NOLOCK)
+		SELECT  @FromDate = MIN(winlostdate) FROM dbo.rmBettrans WITH (NOLOCK)
 		SELECT  @ToDate = MoveBetsDay FROM @MBBU
 
 		SELECT @winlostdate = @FromDate
@@ -47,35 +47,35 @@ BEGIN
 		END
 	END
 
-	---- rmBettrans_Old
-	--BEGIN
-	--	SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
+	-- rmBettrans_Old
+	BEGIN
+		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
-	--	SELECT  @FromDate = MIN(winlostdate) FROM dbo.rmBettrans_Old WITH (NOLOCK)
-	--	SELECT  @ToDate = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()) - 3, 0)) -- Keep data in 3 months (from 1st)
+		SELECT  @FromDate = MIN(winlostdate) FROM dbo.rmBettrans_Old WITH (NOLOCK)
+		SELECT  @ToDate = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()) - 3, 0)) -- Keep data in 3 months (from 1st)
 
-	--	SELECT @winlostdate = @FromDate
-	--	WHILE  @winlostdate <= @ToDate
-	--	BEGIN
-	--		EXEC dbo.Task_RMS_MBU_DeleteData_rmBettransOld @winlostdate = @winlostdate, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+		SELECT @winlostdate = @FromDate
+		WHILE  @winlostdate <= @ToDate
+		BEGIN
+			EXEC dbo.Task_RMS_MBU_DeleteData_rmBettransOld @winlostdate = @winlostdate, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
-	--		IF @ErrCode > 0
-	--		BEGIN
-	--			INSERT INTO @tblErrMsg (TableName, ErrMsg)
-	--			SELECT 'rmBettrans_Old', 'From winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''' + ' - ' + ISNULL(@ErrMsg , '')
+			IF @ErrCode > 0
+			BEGIN
+				INSERT INTO @tblErrMsg (TableName, ErrMsg)
+				SELECT 'rmBettrans_Old', 'From winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''' + ' - ' + ISNULL(@ErrMsg , '')
 
-	--			BREAK
-	--		END
+				BREAK
+			END
 
-	--		SELECT @winlostdate = DATEADD(DAY, 1, @winlostdate)
-	--	END
-	--END
+			SELECT @winlostdate = DATEADD(DAY, 1, @winlostdate)
+		END
+	END
 
 	-- rmSumWinloss
 	BEGIN
 		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
-		SELECT  @FromDate = MIN(winlostdate) FROM dbo.rmSumWinloss_uat WITH (NOLOCK)
+		SELECT  @FromDate = MIN(winlostdate) FROM dbo.rmSumWinloss WITH (NOLOCK)
 		SELECT  @ToDate = DATEADD(DAY, -1, BalanceUpDay) FROM @MBBU
 
 		SELECT @winlostdate = @FromDate

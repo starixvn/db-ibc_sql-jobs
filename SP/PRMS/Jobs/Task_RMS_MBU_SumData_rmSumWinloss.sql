@@ -18,7 +18,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	IF NOT EXISTS (SELECT 1 FROM dbo.rmBettrans_uat WITH (NOLOCK) WHERE winlostdate = @winlostdate)
+	IF NOT EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE winlostdate = @winlostdate)
 		RETURN
 
 	-- Gen data
@@ -98,7 +98,7 @@ BEGIN
 			SUM(playercomm) as playercomm,
 			SUM(comm) as comm,
 			SUM(acomm) as acomm
-		FROM dbo.rmBettrans_uat b WITH (NOLOCK)
+		FROM dbo.rmBettrans b WITH (NOLOCK)
 		WHERE b.winlostdate = @winlostdate
 			AND b.statusID IN (111, 112, 113)
 		GROUP BY
@@ -121,7 +121,7 @@ BEGIN
 			b.srecommend;
 
 		-------------------------
-		MERGE dbo.rmSumWinloss_uat AS TARGET
+		MERGE dbo.rmSumWinloss AS TARGET
 			USING #rmSumWinloss AS SOURCE
 				ON		TARGET.WinlostDate	= SOURCE.WinlostDate
 					AND TARGET.CustId		= SOURCE.CustId
