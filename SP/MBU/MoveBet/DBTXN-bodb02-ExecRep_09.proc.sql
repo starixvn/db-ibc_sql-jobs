@@ -41,6 +41,12 @@ AS
 		- 20190828@Billy:	Add table [bettransInfo] - [Redmine: #119219]
 		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
 		- 20191126@Patrick: Ignore remove data on DB054/DB055 - [Redmine: #124104]
+		- 20200916@Brice:	Change serverName DB06 to DB06C2\DB06 [Redmine: #140355]
+
+
+
+
+
  */
 BEGIN
 	--SET NOCOUNT ON
@@ -206,7 +212,7 @@ BEGIN
 		--//for bettrans
 		IF @tableName = 'bettrans'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06C2\DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
 			BEGIN;
 				DELETE	@__tmpTransId;
 
@@ -253,7 +259,7 @@ BEGIN
 		--//for translog
 		IF @tableName = 'translog'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06C2\DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
 			BEGIN
 				DELETE TOP (2000) FROM translog WITH(ROWLOCK)
 				WHERE recommend = @recommend AND winlostdate = @winlostdate
@@ -274,7 +280,7 @@ BEGIN
 		--//for bettransLC
 		IF @tableName = 'bettransLC'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06C2\DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
 			BEGIN	
 				DELETE TOP (2000) FROM bettransLC WITH(ROWLOCK)
 				WHERE recommend = @recommend AND winlostdate = @winlostdate  
@@ -295,7 +301,7 @@ BEGIN
 		--//for bettransRNG
 		IF @tableName = 'bettransRNG'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
+			IF @@SERVERNAME IN ('DBTRANS', 'DB06C2\DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
 			BEGIN
 				DELETE TOP (2000) FROM bettransRNG WITH(ROWLOCK)
 				WHERE recommend = @recommend AND winlostdate = @winlostdate 
