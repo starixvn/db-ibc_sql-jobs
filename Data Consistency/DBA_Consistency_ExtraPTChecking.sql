@@ -3,8 +3,7 @@ USE [bodb_Consistency]
 GO
 
 ALTER PROCEDURE [dbo].[DBA_Consistency_ExtraPTChecking]	
-	@RuleID 		TINYINT 		= 0
-	,@WinlostDate	SMALLDATETIME 	= NULL
+	 @Duration 		VARCHAR(50) 	
 	,@ErrCode		INT				= 0		OUTPUT
 	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT
 	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
@@ -16,23 +15,27 @@ AS
 
 	Revisions: 
 		- 20200110@Sophia: initial SP [Redmine: #122071]
-		- 20200120@Sophia: Add rule 92% [Redmine: #127042]
+		- 20210120@Danny: Add rule to check consistency of extraPT [Redmine: #125883]
 	
 	Param's Expanation:
-		@RuleID = 26   . Wrong Epositiontaking vs ExtraPT
-					   . Epositiontaking IS NULL
-					   
-				= 27   . Epositiontaking + Tpositiontaking > 1
 				
 */
+SET NOCOUNT ON
 BEGIN 
-
-
+	
 	DECLARE @transId VARCHAR(MAX) = '' 
 	SELECT @SampleData  = '', @ErrMsg = ''
+	DECLARE @WinlostDate SMALLDATETIME
 	
-	IF @WinlostDate IS NULL
-	SELECT @Winlostdate = CONVERT (DATE, GETDATE())  
+	IF @Duration = 'hour'
+	BEGIN
+		SELECT @Winlostdate = CONVERT (DATE, GETDATE())  
+	END
+
+	IF @Duration = 'lastday'
+	BEGIN
+		SELECT @Winlostdate = CONVERT (DATE, DATEADD(DAY, -1,GETDATE()))  
+	END
 	
 	
 	CREATE TABLE  #SportBettype (ProductID INT, Bettype INT,SubProduct VARCHAR(500), RefTable SMALLINT)
@@ -45,7 +48,6 @@ BEGIN
  
 	---------------------------------Select data -------------------------
 	----I. Check Wrong Epositiontaking vs ExtraPT
-	IF @RuleID = 26 OR @RuleID = 0
 	BEGIN 
 			--- I.I: Wrong Epositiontaking vs ExtraPT
 			------I.I.a. Bettrans
@@ -270,7 +272,6 @@ BEGIN
 	END 
 		
 	----II. Check tpositiontaking  + epositiontaking < 100% (for all tickets)
-	IF @RuleID = 27  OR @RuleID = 0
 	BEGIN 	
 			----II.I. Check tpositiontaking  + epositiontaking < 100% (for all tickets)
 			------II.I.a. Bettrans
@@ -356,11 +357,8 @@ BEGIN
 			END		
 			
 	END 
-	
-	
 	DROP TABLE #SportBettype 
 	DROP TABLE #T
 	
-	 
 END 
 GO 
