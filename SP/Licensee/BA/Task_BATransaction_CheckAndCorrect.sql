@@ -23,6 +23,7 @@ AS
 		- 20190625@Percy: Change 'DB053' To 'DB052' for step switch to DB052 [Redmine: #103658]
 		- 20191010@Percy: Remove table LicenseeBATransaction [RedmineID: #103656]
 		- 20200207@Percy: Add DB055 (change DB042 to DB055) [RedmineID: #127169]
+		- 20210126@Sol: change db instance name (change DB054 to DB054C2\DB054) - [RedmineID: #149273]
 */  
 SET NOCOUNT ON   
    
@@ -47,7 +48,7 @@ WHERE vname = 'BA_transid'
   
 DECLARE @custid INT, @ondate DATETIME, @offdate DATETIME, @cnt INT
 
-IF @@SERVERNAME IN ('DB042', 'DB055', 'DB054', 'SITDB042', 'DB232\SQLSERVER2008R2', 'DB233\SQLSERVER2008R2')
+IF @@SERVERNAME IN ('DB042', 'DB055', 'DB054C2\DB054', 'SITDB042', 'DB232\SQLSERVER2008R2', 'DB233\SQLSERVER2008R2')
 BEGIN
 	StartLoop_042:
 		SELECT TOP 1 @custid = custid, @ondate = ondate, @offdate = offdate FROM @BAHistory_Done  
@@ -117,7 +118,7 @@ AND STATUS = 'running'
   
 DECLARE @custid_r INT, @ondate_r DATETIME, @cnt_r INT
 
-IF @@SERVERNAME IN ('DB042', 'DB055', 'DB054', 'SITDB042', 'DB232\SQLSERVER2008R2', 'DB233\SQLSERVER2008R2')
+IF @@SERVERNAME IN ('DB042', 'DB055', 'DB054C2\DB054', 'SITDB042', 'DB232\SQLSERVER2008R2', 'DB233\SQLSERVER2008R2')
 BEGIN
 	StartLoop_r_042:
 		SELECT TOP 1 @custid_r = custid, @ondate_r = ondate FROM @BAHistory_Running
