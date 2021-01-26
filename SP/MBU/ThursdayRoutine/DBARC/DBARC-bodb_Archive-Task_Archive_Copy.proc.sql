@@ -77,8 +77,14 @@ FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 			SELECT max(b.winlostdate) as winlostdate
 			FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
-				INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON b.transid = s.TransId
-			WHERE s.matchid = t1.matchid
+				INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
+              WHERE s.RequestId = t1.RequestId
+			
+			UNION ALL
+			SELECT max(b.winlostdate) as winlostdate
+			FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
+				INNER JOIN bodb02.dbo.bettrans14 b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
+              WHERE s.RequestId = t1.RequestId
 		)t
 WHERE t1.MatchId IN (9,29,2799)
 	AND t.winlostdate = @winlostdate
@@ -128,14 +134,20 @@ FROM	bodb02.dbo.TicketVoiding_Request AS t1 WITH (NOLOCK)
 				WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSRaceInfo14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.EventID AND t2.EventTime = @winlostdate)
 
 				UNION ALL
-				SELECT t1.RequestId, t1.Id
+				SELECT DISTINCT t1.RequestId, t1.Id
 				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 					CROSS APPLY (
-							SELECT max(b.winlostdate) as winlostdate
-							FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
-								INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON b.transid = s.TransId
-							WHERE s.matchid = t1.matchid
-						)t
+						SELECT max(b.winlostdate) as winlostdate
+						FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
+							INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
+							WHERE s.RequestId = t1.RequestId
+			
+						UNION ALL
+						SELECT max(b.winlostdate) as winlostdate
+						FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
+							INNER JOIN bodb02.dbo.bettrans14 b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
+							WHERE s.RequestId = t1.RequestId
+					)t
 				WHERE t1.MatchId IN (9,29,2799)
 					AND t.winlostdate = @winlostdate
 			)t
