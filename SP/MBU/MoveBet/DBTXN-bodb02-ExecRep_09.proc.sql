@@ -42,6 +42,7 @@ AS
 		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
 		- 20191126@Patrick: Ignore remove data on DB054/DB055 - [Redmine: #124104]
 		- 20200916@Brice:	Change serverName DB06 to DB06C2\DB06 [Redmine: #140355]
+		- 20210126@Patrick: Migrate DB Server DB054 to cluster [Redmine: #149273]
 
 
 
@@ -201,7 +202,7 @@ BEGIN
 		RETURN
 	END
 
-	IF @@SERVERNAME LIKE 'DB04%' OR @@SERVERNAME IN ('DB054', 'DB055')
+	IF @@SERVERNAME LIKE 'DB04%' OR @@SERVERNAME IN ('DB054', 'DB054C2\DB054', 'DB055')
 	BEGIN
 		PRINT 'nothing'
 	END

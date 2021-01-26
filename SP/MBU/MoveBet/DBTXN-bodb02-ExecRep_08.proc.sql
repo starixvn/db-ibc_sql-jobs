@@ -43,6 +43,7 @@ AS
 		- 20200923@Brice:	Add column [reasonIDm] of [bettransM] - [Redmine: #141650]
 		- 20201008@Brice:	Add column [OriginalOdds] of [bettransInfo] - [Redmine: #140906]
 		- 20201221@Brice:	Add column [siteID] of [bettransLC] - [Redmine: #147084]
+		- 20210126@Patrick: Migrate DB Server DB054 to cluster [Redmine: #149273]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -64,7 +65,7 @@ DECLARE	@__tmpTransId AS TABLE (
 			id		BIGINT		PRIMARY KEY CLUSTERED
 		);
 
-IF @@SERVERNAME NOT LIKE 'DB04%' AND @@SERVERNAME NOT IN ('DB054', 'DB055')
+IF @@SERVERNAME NOT LIKE 'DB04%' AND @@SERVERNAME NOT IN ('DB054', 'DB054C2\DB054', 'DB055')
 BEGIN
 	-- Note: Exclude columns: [tstamp], [recommdate]
 	-- 20191104@Billy:	Add column [epositiontaking]
@@ -195,7 +196,7 @@ END
 */
 
 
-IF @@SERVERNAME NOT LIKE 'DB04_' AND @@SERVERNAME NOT IN ('DB054', 'DB055')
+IF @@SERVERNAME NOT LIKE 'DB04_' AND @@SERVERNAME NOT IN ('DB054', 'DB054C2\DB054', 'DB055')
 BEGIN
 
 	IF @parlay = 1

@@ -7,6 +7,7 @@ AS
 	Task: Correct winlostdate for parlay main tickets 
 	Revisions: 
 		-20191127@Patrick: Setup sync status ticket on DB052 -> DB054 - [Redmine: #124482]
+		-20210126@Patrick: Migrate DB Server DB054 to cluster [Redmine: #149273]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -28,7 +29,7 @@ BEGIN
 	SET @sqlCommandText = 'exec bodb02.dbo.Task_Parlay_Correct_Tickets_settled_Sel @LastDateTime = ''' + CONVERT(VARCHAR(50), @LastDateTime, 121) + ''''
 	print @sqlCommandText
 
-	IF @@SERVERNAME IN ('DB054')
+	IF @@SERVERNAME IN ('DB054', 'DB054C2\DB054')
 	BEGIN
 		INSERT INTO #__ParlayTickets(winlostdate, transId, LastDateTimeOutput)
 		EXEC (@sqlCommandText) AT DBEXT
