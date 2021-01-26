@@ -64,6 +64,16 @@ WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.outright14 AS t2 WITH (NOLOCK) WHERE t1.m
 UNION ALL
 SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime
 FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSOutright14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.orid AND t2.eventdate = @winlostdate)
+
+UNION ALL
+SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime
+FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSRaceInfo14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.EventID AND t2.EventTime = @winlostdate)
+
+UNION ALL
+SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime
+FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 			SELECT max(b.winlostdate) as winlostdate
 			FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
@@ -110,6 +120,16 @@ FROM	bodb02.dbo.TicketVoiding_Request AS t1 WITH (NOLOCK)
 				UNION ALL
 				SELECT t1.RequestId, t1.Id
 				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+				WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSOutright14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.orid AND t2.eventdate = @winlostdate)
+
+				UNION ALL
+				SELECT t1.RequestId, t1.Id
+				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+				WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSRaceInfo14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.EventID AND t2.EventTime = @winlostdate)
+
+				UNION ALL
+				SELECT t1.RequestId, t1.Id
+				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 					CROSS APPLY (
 							SELECT max(b.winlostdate) as winlostdate
 							FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
@@ -119,6 +139,7 @@ FROM	bodb02.dbo.TicketVoiding_Request AS t1 WITH (NOLOCK)
 				WHERE t1.MatchId IN (9,29,2799)
 					AND t.winlostdate = @winlostdate
 			)t
+			GROUP BY t.RequestId
 		)arc
 			CROSS APPLY (
 						SELECT COUNT(Id) AS RequestDetail_ActCount
