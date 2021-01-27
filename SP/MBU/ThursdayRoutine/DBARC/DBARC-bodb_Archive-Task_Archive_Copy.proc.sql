@@ -355,6 +355,30 @@ OPTION (maxrecursion 0)
 	;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
+
+		---------------Table 10:  TicketVoiding_Reason_bk -----------------------------
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.TicketVoiding_Reason_bk
+	(	ReasonId, ReasonEnglish, ReasonChineseSimplified)
+SELECT	ReasonId, ReasonEnglish, ReasonChineseSimplified
+FROM	OPENQUERY(DBTXN, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + @RequestIds + ''''';
+
+SELECT	ReasonId, ReasonEnglish, ReasonChineseSimplified
+FROM	bodb02.dbo.TicketVoiding_Reason AS t1 WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.ReasonId = t1.ReasonId
+		CROSS APPLY (
+					SELECT	val AS RequestId
+					FROM	dbo.f_SplitString(@RequestIds, '','')
+					WHERE val = v.RequestId
+			) r
+	WHERE	r.RequestId IS NOT NULL
+	OPTION (maxrecursion 0)
+	;'');';
+
+		EXECUTE	sys.sp_executesql @Query;
 		
 		END
 	END;
@@ -392,26 +416,6 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 SELECT	ID, Matchid, Bettype, IsConfirm, CreatedDate, UserId, MarkedBy, betid
 FROM	bodb02.dbo.TicketVoiding_AutoUnmarkSetting AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
-
-		EXECUTE	sys.sp_executesql @Query;
-	END;
-
-
-	---------------Table 10:  TicketVoiding_Reason_bk -----------------------------
-	ELSE IF	@TableName = N'TicketVoiding_Reason_bk'
-	BEGIN;
-		SELECT	@Query = N'';
-		SELECT	@Query = @Query + N'\
-INSERT INTO	dbo.TicketVoiding_Reason_bk
-	(	ReasonId, ReasonEnglish, ReasonChineseSimplified)
-SELECT	ReasonId, ReasonEnglish, ReasonChineseSimplified
-FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-
-SELECT	ReasonId, ReasonEnglish, ReasonChineseSimplified
-FROM	bodb02.dbo.TicketVoiding_Reason AS t1 WITH (NOLOCK)
-WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.TicketVoiding_VoidingHistory AS t2 WITH (NOLOCK) CROSS JOIN bodb02.dbo.TicketVoiding_RequestDetail AS t3 WITH (NOLOCK) CROSS JOIN bodb02.dbo.match14 t4 WITH(NOLOCK) WHERE t1.ReasonId=t2.ReasonId and t2.RequestId = t3.RequestId AND t3.matchid = t4.matchid AND t4.eventdate = @winlostdate)
-	;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
 	END;
