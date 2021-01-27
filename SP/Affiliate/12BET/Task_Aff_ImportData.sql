@@ -14,6 +14,7 @@ AS
 		- 20190116@Percy: Add transfer: ProductId = -1 [RedmineID: #107623]
 		- 20180117@Percy: Check product by releasedDate [RedmineID: #106503]
 		- 20191127@Percy: Enhance performance [RedmineID: #118992]
+		- 20210127@Percy: Fix conflict ProductId = -3 with Playtech CS [RedmineID: #149476]
 */
 
 BEGIN 
@@ -150,9 +151,12 @@ BEGIN
 		;WITH CTE_rptMemberDaily AS
 		(
 			SELECT AffId,IBCCustId,ProductId,Deposit,Withdrawal,Bonus,Adjustment,Turnover,Winloss,Currency,ExRate,AffExRate
-			FROM dbo.rptMemberDaily WITH (NOLOCK)
-			WHERE winlostdate = @WinlostDate
-				AND ProductId IN (SELECT ProductId FROM #_bettype)
+			FROM dbo.rptMemberDaily r WITH (NOLOCK)
+			WHERE r.winlostdate = @WinlostDate
+				AND (
+					r.ProductId = -1
+					OR r.ProductId IN (SELECT bt.ProductId FROM #_bettype bt WHERE bt.ProductId > 0)
+				)
 		)
 		SELECT
 			CASE	WHEN t.IBCCustId IS NULL THEN -1 -- delete
