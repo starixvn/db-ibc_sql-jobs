@@ -93,6 +93,7 @@ BEGIN;
 				EXECUTE	dbo.Task_Archive_Copy
 							@winlostdate	= @WinlostDate
 						,	@TableName		= @TableName
+						,	@EndDate		= @EndDate
 						;
 			END;
 

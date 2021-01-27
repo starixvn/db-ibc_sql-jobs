@@ -1,9 +1,10 @@
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
-CREATE PROCEDURE	dbo.Task_Archive_Copy
+ALTER PROCEDURE	dbo.Task_Archive_Copy
 						@winlostdate		DATETIME
 					,	@TableName			NVARCHAR(128)	= ''
+					,	@EndDate			DATETIME
 AS
 /*
 	Created:	20200720@Brice
@@ -105,36 +106,52 @@ INSERT INTO	#tmpRequest
 SELECT	RequestId, Sporttype, SubIssueTypeId, ActionId, Provider, Source, DecidedBy, MistakenBy, Remark, CheckedBy, UserId, CreatedDate, LastModifiedBy, LastModifiedDate, IssueTypeId, IsTest
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+DECLARE	@EndDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @EndDate, 121) + ''''';
 
 SELECT	t1.RequestId, Sporttype, SubIssueTypeId, ActionId, Provider, Source, DecidedBy, MistakenBy, Remark, CheckedBy, UserId, CreatedDate, LastModifiedBy, LastModifiedDate, IssueTypeId, IsTest
 FROM	bodb02.dbo.TicketVoiding_Request AS t1 WITH (NOLOCK)
 	CROSS APPLY (
-		SELECT arc.RequestId
-		FROM (
-			SELECT t.RequestId, COUNT(t.Id) AS RequestDetail_ArcCount
+			SELECT t.RequestId, Max(t.eventdate) AS Max_EventDate
 			FROM (
-				SELECT t1.RequestId, t1.Id
+				SELECT t1.RequestId, t2.eventdate AS eventdate
 				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+					INNER JOIN  bodb02.dbo.match14 AS t2 WITH (NOLOCK) ON t1.matchid = t2.matchid AND t2.eventdate = @winlostdate
 				WHERE	t1.MatchId NOT IN (9,29,2799)
-					AND EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate)	
-
 				UNION ALL
-				SELECT t1.RequestId, t1.Id
+				SELECT t1.RequestId, t2.eventdate AS eventdate
 				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
-				WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.outright14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.orid AND t2.eventdate = @winlostdate)
+					INNER JOIN  bodb02.dbo.match AS t2 WITH (NOLOCK) ON t1.matchid = t2.matchid AND t2.eventdate = @winlostdate
+				WHERE	t1.MatchId NOT IN (9,29,2799)
 
 				UNION ALL
-				SELECT t1.RequestId, t1.Id
+				SELECT t1.RequestId, t2.eventdate
 				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
-				WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSOutright14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.orid AND t2.eventdate = @winlostdate)
-
+					INNER JOIN bodb02.dbo.outright14 AS t2 WITH (NOLOCK) ON t1.matchid = t2.orid AND t2.eventdate = @winlostdate
 				UNION ALL
-				SELECT t1.RequestId, t1.Id
+				SELECT t1.RequestId, t2.eventdate
 				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
-				WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSRaceInfo14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.EventID AND t2.EventTime = @winlostdate)
+					INNER JOIN bodb02.dbo.outright AS t2 WITH (NOLOCK) ON t1.matchid = t2.orid AND t2.eventdate = @winlostdate
 
 				UNION ALL
-				SELECT DISTINCT t1.RequestId, t1.Id
+				SELECT t1.RequestId, t2.EventDate
+				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+					INNER JOIN bodb02.dbo.VSOutright14 AS t2 WITH (NOLOCK) ON t1.matchid = t2.orid AND t2.eventdate = @winlostdate
+				UNION ALL
+				SELECT t1.RequestId, t2.EventDate
+				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+					INNER JOIN bodb02.dbo.VSOutright AS t2 WITH (NOLOCK) ON t1.matchid = t2.orid AND t2.eventdate = @winlostdate
+
+				UNION ALL
+				SELECT t1.RequestId, t2.EventTime
+				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+					INNER JOIN bodb02.dbo.VSRaceInfo14 AS t2 WITH (NOLOCK) ON t1.matchid = t2.EventID AND t2.EventTime = @winlostdate
+					UNION ALL
+				SELECT t1.RequestId, t2.EventTime
+				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+					INNER JOIN bodb02.dbo.VSRaceInfo AS t2 WITH (NOLOCK) ON t1.matchid = t2.EventID AND t2.EventTime = @winlostdate
+
+				UNION ALL
+				SELECT t1.RequestId, t.winlostdate
 				FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 					CROSS APPLY (
 						SELECT max(b.winlostdate) as winlostdate
@@ -151,16 +168,11 @@ FROM	bodb02.dbo.TicketVoiding_Request AS t1 WITH (NOLOCK)
 				WHERE t1.MatchId IN (9,29,2799)
 					AND t.winlostdate = @winlostdate
 			)t
-			GROUP BY t.RequestId
-		)arc
-			CROSS APPLY (
-						SELECT COUNT(Id) AS RequestDetail_ActCount
-						FROM	bodb02.dbo.TicketVoiding_RequestDetail WITH (NOLOCK)
-						WHERE RequestId = arc.RequestId
-				)actual
-		WHERE arc.RequestDetail_ArcCount = actual.RequestDetail_ActCount
-			AND arc.RequestId = t1.RequestId
+			
+		WHERE  t.RequestId = t1.RequestId
+		GROUP BY t.RequestId
 	)tmp
+	WHERE tmp.Max_EventDate <= @EndDate
 ;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
@@ -194,7 +206,7 @@ FROM	bodb02.dbo.TicketVoiding_Request AS t1 WITH (NOLOCK)
 	oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
 	FROM	OPENQUERY(DBTXN, ''\
 	DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-	DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + @RequestIds + ''''';
+	DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
 
 	SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
 	FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
@@ -224,7 +236,7 @@ INSERT INTO	dbo.zzzbettrans_bk
 SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + @RequestIds + ''''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
 
 SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
 FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
@@ -255,8 +267,7 @@ INSERT INTO	dbo.TicketVoiding_OperatorInfo_bk
 	(	 RequestId, OperatorId, OperatorTypeId, Id)
 SELECT	RequestId, OperatorId, OperatorTypeId, Id
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + @RequestIds + ''''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
 
 SELECT	t1.RequestId, OperatorId, OperatorTypeId, Id
 FROM	bodb02.dbo.TicketVoiding_OperatorInfo AS t1 WITH (NOLOCK)
@@ -276,8 +287,7 @@ INSERT INTO	dbo.TicketVoiding_Queue_bk
 	(	QueueId, RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers)
 SELECT	QueueId, RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + @RequestIds + ''''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
 
 SELECT	QueueId, t1.RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers
 FROM	bodb02.dbo.TicketVoiding_Queue AS t1 WITH (NOLOCK)
@@ -298,8 +308,7 @@ INSERT INTO	dbo.TicketVoiding_VoidingHistory_bk
 	(	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds)
 SELECT	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + @RequestIds + ''''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
 
 SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds
 FROM	bodb02.dbo.TicketVoiding_VoidingHistory AS t1 WITH (NOLOCK)
@@ -319,8 +328,7 @@ INSERT INTO	dbo.TicketVoiding_RequestDetailTicket_Single_bk
 	(	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId)
 SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + @RequestIds + ''''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
 
 SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_Single AS t1 WITH (NOLOCK)
@@ -341,8 +349,7 @@ INSERT INTO	dbo.TicketVoiding_RequestDetailTicket_SubParlay_bk
 	(	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId)
 SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + @RequestIds + ''''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
 
 SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_SubParlay AS t1 WITH (NOLOCK)
@@ -363,8 +370,7 @@ INSERT INTO	dbo.TicketVoiding_Reason_bk
 	(	ReasonId, ReasonEnglish, ReasonChineseSimplified)
 SELECT	ReasonId, ReasonEnglish, ReasonChineseSimplified
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + @RequestIds + ''''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
 
 SELECT	ReasonId, ReasonEnglish, ReasonChineseSimplified
 FROM	bodb02.dbo.TicketVoiding_Reason AS t1 WITH (NOLOCK)
