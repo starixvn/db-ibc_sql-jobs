@@ -79,6 +79,7 @@ AS
 		- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369]
 		- 20201217@Hogan: Add bettype of Saba.club Free Bets [RedmineID: #142369] 
 		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
+		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -192,6 +193,7 @@ BEGIN
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
+			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype IN (17000, 17003) THEN 246 -- NPHP
 			ELSE 0
 		END AS sporttype
@@ -290,6 +292,7 @@ BEGIN
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
+			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype IN (17000, 17003) THEN 246 -- NPHP
 			ELSE 0
 		END

@@ -14,6 +14,7 @@ AS
 		- 20200615@Hogan: Integrate SA Gaming [RedmineID: #128493]
 		- 20201201@Mark: Casino Turnover Report - Support Saba.club, PP and PG Soft products [RedmineID: #146135]
 		- 20201223@Kos: Fix duplicate Saba.club data [RedmineID: #146135]
+		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
 */
 
 BEGIN
@@ -30,7 +31,7 @@ BEGIN
 		ProductId,
 		BetType
 	FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
-	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39)
+	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59)
 
 	INSERT INTO dbo.rptCasinoTurnover(  
 		[WinlostDate]
@@ -110,7 +111,7 @@ BEGIN
 		WHERE
 			bettrans.winlostdate = @winlostdate AND
 			bettrans.statusID IN (111, 112, 113) AND -- DRAW, WON, LOSE
-			matrix.ProductID IN (21, 45, 39) -- AllBet, Sexy Gaming, SA Gaming
+			matrix.ProductID IN (21, 45, 39, 59) -- AllBet, Sexy Gaming, SA Gaming, GDG
 		GROUP BY
 			bettrans.custid
 			,bettrans.recommend
