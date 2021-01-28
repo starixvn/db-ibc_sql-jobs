@@ -25,6 +25,7 @@ AS
 		- 20200228@Vickie: Integrate 3 new betfrom [Redmine: #129253]
 		- 20200508@Vickie: Add new bet types for E-Sports 2.0 [RedmineID: #132548]
 		- 20200622@Hogan: Integrate 3 new betfrom 4, 5, 6 [Redmine: #136107]
+		- 20210120@Mark: Integrate new betfrom 7 [Redmine: #149108]
 
 	EXEC Task_rptLicWinlossGMT_CheckData '2017-11-30'
 */
@@ -148,7 +149,7 @@ BEGIN
 			,CASE
 				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5') THEN 1 ELSE 0 END AS isMobile   
 			,CASE
-				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6') THEN b.betfrom ELSE '' END AS betfrom   		
+				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7') THEN b.betfrom ELSE '' END AS betfrom   		
 		FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 			LEFT JOIN bodb02.dbo.Match14 m WITH (NOLOCK)
 				ON m.MatchId = b.MatchId
@@ -187,7 +188,7 @@ BEGIN
 			,CASE
 				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5') THEN 1 ELSE 0 END  
 			,CASE
-				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z', 'o','c','t','v','0','1','2','3','4','5','6') THEN b.betfrom ELSE '' END;
+				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z', 'o','c','t','v','0','1','2','3','4','5','6','7') THEN b.betfrom ELSE '' END;
 
 		SET @S_Count = @S_Count + @@ROWCOUNT;
 
