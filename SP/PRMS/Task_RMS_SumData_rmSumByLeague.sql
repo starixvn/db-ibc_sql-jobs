@@ -31,6 +31,24 @@ BEGIN
 	IF @winlostdate < @BalanceUpDay
 		RETURN
 
+	CREATE TABLE #BettransmByLeague
+	(
+		transid				BIGINT 
+		,leagueId			INT
+		,statusID			TINYINT
+		,stake				MONEY
+		,winloss			MONEY
+		,playercomm			MONEY
+		,HouseWinloss		MONEY
+		,ParlayType			TINYINT
+		,IsDeposit			BIT
+		,BetCount			INT
+		,WonCount			INT
+		,LoseCount			INT
+		,DrawCount			INT
+	)
+	
+
 	CREATE TABLE #rmSumByLeague
 	(
 		leagueId			INT
@@ -53,18 +71,20 @@ BEGIN
 	)
 	CREATE CLUSTERED INDEX CIX_rmSumByLeague ON #rmSumByLeague (leagueId, ParlayType)
 
-	DECLARE @bettrans TABLE (refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
-	DECLARE @bettransByBatch TABLE (refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
-	DECLARE @batch INT = 300000, @isBreak BIT
+	DECLARE @bettrans TABLE (transid BIGINT, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
+	--DECLARE @bettransByBatch TABLE (refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
+	--DECLARE @batch INT = 300000, @isBreak BIT
 
 	CREATE TABLE #bettransmbk (refno BIGINT, statusID TINYINT, leagueid INT)
-	DECLARE @bettransmByBatch TABLE (refno BIGINT, statusID TINYINT, leagueid INT)
+	
+
+	--DECLARE @bettransmByBatch TABLE (refno BIGINT, statusID TINYINT, leagueid INT)
 	DECLARE @SQL VARCHAR(MAX)
 
 	IF @winlostdate > @MoveBetsDay
 	BEGIN
-		INSERT INTO @bettrans (refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
-		SELECT refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDeposit, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
+		INSERT INTO @bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
+		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDeposit, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
 		FROM dbo.rmBettrans r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
@@ -76,8 +96,8 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		INSERT INTO @bettrans (refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
-		SELECT refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDeposit, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
+		INSERT INTO @bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
+		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDeposit, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
 		FROM dbo.rmBettrans_Old r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
@@ -98,94 +118,133 @@ BEGIN
 			INSERT INTO #bettransmbk (refno, statusID, leagueid)
 			EXECUTE	sys.sp_executesql @__sqlCmd, N'@query NVARCHAR(MAX), @winlostdate SMALLDATETIME, @isByBettype BIT', @__query, @winlostdate, @isByBettype
 			
+			-- Create index
+			CREATE CLUSTERED INDEX idx_#bettransmbk_refno ON #bettransmbk(refno)
+
+
+			INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount  )
+			SELECT
+				b.transid, 
+				bm.leagueid, 
+				b.statusID, 
+				MAX(b.stake), 
+				MAX(b.winloss),
+				MAX(b.playercomm), 
+				MAX(b.HouseWinloss), 
+				b.ParlayType, 
+				b.IsDeposit, 
+				SUM(1), 
+				SUM(CASE WHEN bm.statusID = 112 THEN 1 ELSE 0 END),
+				SUM(CASE WHEN bm.statusID = 113 THEN 1 ELSE 0 END),
+				SUM(CASE WHEN bm.statusID = 111 THEN 1 ELSE 0 END)
+			FROM @bettrans b
+				INNER JOIN #bettransmbk bm WITH (NOLOCK) ON b.refno = bm.refno
+			GROUP BY  b.transid, bm.leagueid, b.ParlayType, b.IsDeposit, b.statusID
+
 		END
 	END
 
-	WHILE 1 = 1
-	BEGIN
-		DELETE @bettransByBatch
-		DELETE @bettransmByBatch
-		SET @isBreak = 0
+	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount )
+	SELECT
+		b.transid, 
+		m.leagueid, 
+		b.statusID, 
+		MAX(b.stake), 
+		MAX(b.winloss),
+		MAX(b.playercomm), 
+		MAX(b.HouseWinloss), 
+		b.ParlayType, 
+		b.IsDeposit, 
+		SUM(1), 
+		SUM(CASE WHEN bm.statusID = 112 THEN 1 ELSE 0 END),
+		SUM(CASE WHEN bm.statusID = 113 THEN 1 ELSE 0 END),
+		SUM(CASE WHEN bm.statusID = 111 THEN 1 ELSE 0 END)
+	FROM @bettrans b
+		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
+		INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
+	WHERE  m.sporttype = 1
+	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
-		DELETE TOP (@batch) FROM @bettrans
-			OUTPUT DELETED.refno, DELETED.ParlayType, DELETED.IsDeposit, DELETED.statusID, DELETED.stake, DELETED.winloss, DELETED.playercomm, DELETED.HouseWinloss
-			INTO @bettransByBatch (refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
 
-		IF @@ROWCOUNT < @batch
-			SET @isBreak = 1
+	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount  )
+	SELECT
+		b.transid, 
+		m.leagueid, 
+		b.statusID, 
+		MAX(b.stake), 
+		MAX(b.winloss),
+		MAX(b.playercomm), 
+		MAX(b.HouseWinloss), 
+		b.ParlayType, 
+		b.IsDeposit, 
+		SUM(1), 
+		SUM(CASE WHEN bm.statusID = 112 THEN 1 ELSE 0 END),
+		SUM(CASE WHEN bm.statusID = 113 THEN 1 ELSE 0 END),
+		SUM(CASE WHEN bm.statusID = 111 THEN 1 ELSE 0 END)
+	FROM @bettrans b
+		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
+		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
+	WHERE m.sporttype = 1
+	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
-		DELETE bm
-			OUTPUT DELETED.refno, DELETED.statusID, DELETED.leagueid
-			INTO @bettransmByBatch (refno, statusID, leagueid)
-		FROM #bettransmbk bm
-			INNER JOIN @bettransByBatch b ON bm.refno = b.refno
+	CREATE NONCLUSTERED INDEX idx_#BettransmByLeague ON #BettransmByLeague(leagueid, ParlayType, IsDeposit) INCLUDE (BetCount,WonCount, DrawCount,LoseCount )
 
-		INSERT INTO #rmSumByLeague
-		SELECT
-			t.leagueid
-			,b.ParlayType
-			,b.IsDeposit
-			,BetCount			= SUM(1)
-			,WonCount			= SUM(CASE WHEN t.statusID = 112 THEN 1 ELSE 0 END)
-			,LoseCount			= SUM(CASE WHEN t.statusID = 113 THEN 1 ELSE 0 END)
-			,DrawCount			= SUM(CASE WHEN t.statusID = 111 THEN 1 ELSE 0 END)
-			,MainBetCount		= SUM(CASE WHEN t.rn = 1 THEN 1 ELSE 0 END)
-			,MainWonCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 112 THEN 1 ELSE 0 END)
-			,MainLoseCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 113 THEN 1 ELSE 0 END)
-			,MainDrawCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 111 THEN 1 ELSE 0 END)
-			,MainStake			= SUM(CASE WHEN t.rn = 1 THEN b.stake ELSE 0 END)
-			,MainTurnover		= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (111, 112, 113) THEN b.stake ELSE 0 END)
-			,MainTurnoverNoDraw	= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (112, 113) THEN b.stake ELSE 0 END)
-			,MainWinloss		= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END)
-			,MainComm			= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
-			,MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.HouseWinloss ELSE 0 END)
-		FROM @bettransByBatch b
-			CROSS APPLY (
-				SELECT leagueid, statusID, ROW_NUMBER() OVER(PARTITION BY leagueid ORDER BY (SELECT NULL)) AS rn
-				FROM (
-					SELECT
-						m.leagueid, bm.statusID
-					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
-					WHERE b.refno = bm.refno
-						AND m.sporttype = 1
 
-					UNION ALL
-					SELECT m.leagueid, bm.statusID
-					FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
-						INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
-					WHERE b.refno = bm.refno
-						AND m.sporttype = 1
-
-					UNION ALL
-					SELECT bm.leagueid, bm.statusID
-					FROM @bettransmByBatch bm
-					WHERE b.refno = bm.refno
-				) bm
-			) t
-		GROUP BY
-			t.leagueid
-			,b.ParlayType
-			,b.IsDeposit
-
-		IF @isBreak = 1
-			BREAK
-	END
 
 	BEGIN TRY
-		DELETE dbo.rmSumByLeague WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @WLDate
+	DELETE dbo.rmSumByLeague WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @WLDate
 
-		INSERT INTO dbo.rmSumByLeague (winlostdate,leagueId,ParlayType,IsDeposit,BetCount,WonCount,DrawCount,LoseCount,MainBetCount,MainWonCount,MainLoseCount,MainDrawCount,MainStake,MainTurnover,MainTurnoverNoDraw,MainMemberWinloss,MainMemberComm,MainHouseWinloss)
-		SELECT @WLDate,leagueId,ParlayType,IsDeposit,SUM(BetCount),SUM(WonCount),SUM(DrawCount),SUM(LoseCount),SUM(MainBetCount),SUM(MainWonCount),SUM(MainLoseCount),SUM(MainDrawCount),SUM(MainStake),SUM(MainTurnover),SUM(MainTurnoverNoDraw),SUM(MainMemberWinloss),SUM(MainMemberComm),SUM(MainHouseWinloss)
-		FROM #rmSumByLeague
-		GROUP BY leagueId,ParlayType,IsDeposit
+	INSERT INTO dbo.rmSumByLeague (winlostdate,leagueId,ParlayType,IsDeposit,BetCount,WonCount,DrawCount,LoseCount,MainBetCount,MainWonCount,MainLoseCount,MainDrawCount,MainStake,MainTurnover,MainTurnoverNoDraw,MainMemberWinloss,MainMemberComm,MainHouseWinloss)
+		SELECT	@WLDate winlostdate
+			,b.leagueid
+			,b.ParlayType
+			,b.IsDeposit
+			,BetCount			= SUM(b.BetCount)
+			,WonCount			= SUM(WonCount)
+			,DrawCount			= SUM(DrawCount)
+			,LoseCount			= SUM(LoseCount)
+			,MainBetCount		= COUNT(1)
+			,MainWonCount		= SUM(CASE WHEN b.statusID = 112 THEN 1 ELSE 0 END)
+			,MainLoseCount		= SUM(CASE WHEN b.statusID = 113 THEN 1 ELSE 0 END)
+			,MainDrawCount		= SUM(CASE WHEN b.statusID = 111 THEN 1 ELSE 0 END)
+			,MainStake			= SUM(stake)
+			,MainTurnover		= SUM(CASE WHEN b.statusID IN (111, 112, 113) THEN b.stake ELSE 0 END)
+			,MainTurnoverNoDraw	= SUM(CASE WHEN b.statusID IN (112, 113) THEN b.stake ELSE 0 END)
+			,MainWinloss		= SUM(b.winloss)
+			,MainComm			= SUM(b.playercomm)
+			,MainHouseWinloss	= SUM(b.HouseWinloss)
+		FROM 
+		(
+			SELECT	b.leagueid
+					,b.ParlayType
+					,b.IsDeposit
+					,b.transid
+					,b.statusID
+					,BetCount			= SUM(BetCount)
+					,WonCount			= SUM(WonCount)
+					,DrawCount			= SUM(DrawCount)
+					,LoseCount			= SUM(LoseCount)
+					,stake = MAX(b.stake)
+					,winloss = MAX(b.winloss)
+					,playercomm = MAX(b.playercomm)
+					,HouseWinloss = MAX(b.HouseWinloss) 
+				
+			FROM #BettransmByLeague b
+			GROUP BY b.transid, b.leagueid, b.ParlayType, b.IsDeposit, b.statusID
+		) b
+		GROUP BY
+			b.leagueid, b.ParlayType, b.IsDeposit
+
+		
+		
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = ERROR_NUMBER(), @ErrMsg = ERROR_MESSAGE()
 		--RETURN
 	END CATCH
 
+	
+	DROP TABLE #BettransmByLeague
 	DROP TABLE #bettransmbk
 	DROP TABLE #rmSumByLeague
 END
-GO
