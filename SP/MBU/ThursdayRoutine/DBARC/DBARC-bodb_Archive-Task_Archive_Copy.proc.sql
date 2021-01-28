@@ -42,6 +42,8 @@ BEGIN
 		[isFinish] [bit]
 	)
 
+	select @StartDate,@EndDate
+
 	---------------Table 1: TicketVoiding_RequestDetail_bk --------------------
 	IF	@TableName = N'TicketVoiding_RequestDetail_bk'
 	BEGIN;
@@ -95,6 +97,8 @@ WHERE t1.MatchId IN (9,29,2799)
 
 		EXECUTE	sys.sp_executesql @Query;
 	END;
+
+
 
 
 	---------------Table 2: TicketVoiding_Request_bk -----------------------------
@@ -205,14 +209,14 @@ INSERT INTO	dbo.zzzbettransM_bk
 SELECT transid, custid, transdate, 
 oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
 SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, t1.VoidingHistoryId
 FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
 	CROSS APPLY (
 				SELECT	val AS RequestId
-				FROM	dbo.f_SplitString(@RequestIds, '','')
+				FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
 				WHERE val = v.RequestId
 		) r
 WHERE	t1.VoidingHistoryId IS NOT NULL
@@ -228,14 +232,14 @@ INSERT INTO	dbo.zzzbettrans_bk
 	(	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId)
 SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
 SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, t1.VoidingHistoryId
 FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
 		CROSS APPLY (
 					SELECT	val AS RequestId
-					FROM	dbo.f_SplitString(@RequestIds, '','')
+					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
 					WHERE val = v.RequestId
 			) r
 	WHERE	t1.VoidingHistoryId IS NOT NULL
@@ -252,13 +256,13 @@ INSERT INTO	dbo.TicketVoiding_OperatorInfo_bk
 	(	 RequestId, OperatorId, OperatorTypeId, Id)
 SELECT	RequestId, OperatorId, OperatorTypeId, Id
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
 SELECT	t1.RequestId, OperatorId, OperatorTypeId, Id
 FROM	bodb02.dbo.TicketVoiding_OperatorInfo AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 					SELECT	val AS RequestId
-					FROM	dbo.f_SplitString(@RequestIds, '','')
+					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
 					WHERE val = t1.RequestId
 			) r
 OPTION (maxrecursion 0)
@@ -272,13 +276,13 @@ INSERT INTO	dbo.TicketVoiding_Queue_bk
 	(	QueueId, RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers)
 SELECT	QueueId, RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
 SELECT	QueueId, t1.RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers
 FROM	bodb02.dbo.TicketVoiding_Queue AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 					SELECT	val AS RequestId
-					FROM	dbo.f_SplitString(@RequestIds, '','')
+					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
 					WHERE val = t1.RequestId
 			) r
 OPTION (maxrecursion 0)
@@ -293,13 +297,13 @@ INSERT INTO	dbo.TicketVoiding_VoidingHistory_bk
 	(	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds)
 SELECT	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
 SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds
 FROM	bodb02.dbo.TicketVoiding_VoidingHistory AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 					SELECT	val AS RequestId
-					FROM	dbo.f_SplitString(@RequestIds, '','')
+					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
 					WHERE val = t1.RequestId
 			) r
 OPTION (maxrecursion 0)
@@ -313,13 +317,13 @@ INSERT INTO	dbo.TicketVoiding_RequestDetailTicket_Single_bk
 	(	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId)
 SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
 SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_Single AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 					SELECT	val AS RequestId
-					FROM	dbo.f_SplitString(@RequestIds, '','')
+					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
 					WHERE val = t1.RequestId
 			) r
 OPTION (maxrecursion 0)
@@ -334,13 +338,13 @@ INSERT INTO	dbo.TicketVoiding_RequestDetailTicket_SubParlay_bk
 	(	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId)
 SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
 SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_SubParlay AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 					SELECT	val AS RequestId
-					FROM	dbo.f_SplitString(@RequestIds, '','')
+					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
 					WHERE val = t1.RequestId
 			) r
 OPTION (maxrecursion 0)
@@ -355,14 +359,14 @@ INSERT INTO	dbo.TicketVoiding_Reason_bk
 	(	ReasonId, ReasonEnglish, ReasonChineseSimplified)
 SELECT	ReasonId, ReasonEnglish, ReasonChineseSimplified
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''' + CONVERT(NVARCHAR(MAX),@RequestIds) + ''';
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
-SELECT	ReasonId, ReasonEnglish, ReasonChineseSimplified
+SELECT	t1.ReasonId, ReasonEnglish, ReasonChineseSimplified
 FROM	bodb02.dbo.TicketVoiding_Reason AS t1 WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.ReasonId = t1.ReasonId
 		CROSS APPLY (
 					SELECT	val AS RequestId
-					FROM	dbo.f_SplitString(@RequestIds, '','')
+					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
 					WHERE val = v.RequestId
 			) r
 	WHERE	r.RequestId IS NOT NULL
@@ -409,10 +413,11 @@ DECLARE	@EndDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @EndDate, 121) + 
 
 SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
 FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
-WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) join bodb02.dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
+WHERE	t1.VoidingHistoryId IS NULL	
+AND (EXISTS (SELECT 1 FROM bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) join bodb02.dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
 					WHERE t1.transid = t2.transid AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 AND t2.winlostdate BETWEEN @StartDate AND @EndDate)
-		OR EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate BETWEEN @StartDate AND @EndDate)
-		AND t1.VoidingHistoryId IS NULL;'');';
+		OR EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate BETWEEN @StartDate AND @EndDate))
+;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
 	END

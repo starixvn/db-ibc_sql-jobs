@@ -1,7 +1,7 @@
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
-CREATE PROCEDURE	dbo.Task_Archive_Control
+ALTER PROCEDURE	dbo.Task_Archive_Control
 						@DebugMode			TINYINT			= 1
 AS
 /*
@@ -18,9 +18,7 @@ BEGIN;
 	SET NOCOUNT ON;
 
 	DECLARE	@ArchiveDate TABLE (
-				rid			INT				IDENTITY(1,1)
-			,	winlostdate	SMALLDATETIME
-			,	PRIMARY KEY CLUSTERED (rid)                            
+				winlostdate	SMALLDATETIME                            
 			);
 
 	DECLARE	@ArchiveTable TABLE (
@@ -33,8 +31,8 @@ BEGIN;
 		,	@TableName			NVARCHAR(128)
 		;
 
-	DECLARE	@StartDate			INT
-		,	@EndDate			INT
+	DECLARE	@StartDate			SMALLDATETIME
+		,	@EndDate			SMALLDATETIME
 
 		,	@StartTable			INT
 		,	@EndTable			INT
@@ -63,8 +61,8 @@ BEGIN;
 		;
 
 
-	SELECT	@StartDate	= MIN(rid)
-		,	@EndDate	= MAX(rid)
+	SELECT	@StartDate	= MIN(winlostdate)
+		,	@EndDate	= MAX(winlostdate)
 	FROM	@ArchiveDate;
 
 	SELECT	@StartTable	= MIN(rid)
@@ -79,7 +77,7 @@ BEGIN;
 		-- Execution --
 		BEGIN;
 			EXECUTE	dbo.Task_Archive_Copy
-						@StartDate	= @StartDate
+						@StartDate		= @StartDate
 					,	@EndDate		= @EndDate
 					,	@TableName		= @TableName
 					;
