@@ -51,7 +51,7 @@ BEGIN
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.TicketVoiding_RequestDetail_bk
 	(AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime,Usernames,ProductIds,TicketStatusIds,FromWinlostDate,ToWinlostDate)
-SELECT AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime,Usernames,ProductIds,TicketStatusIds,FromWinlostDate,ToWinlostDate)
+SELECT AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime,Usernames,ProductIds,TicketStatusIds,FromWinlostDate,ToWinlostDate
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
 DECLARE	@EndDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @EndDate, 121) + ''''';
@@ -295,11 +295,11 @@ OPTION (maxrecursion 0)
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.TicketVoiding_VoidingHistory_bk
 	(	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,VoidData)
-SELECT	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,VoidData
+SELECT	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,CONVERT(xml,VoidData)
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
-SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,VoidData
+SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,CONVERT(NVARCHAR(MAX),VoidData) AS VoidData
 FROM	bodb02.dbo.TicketVoiding_VoidingHistory AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 					SELECT	val AS RequestId
