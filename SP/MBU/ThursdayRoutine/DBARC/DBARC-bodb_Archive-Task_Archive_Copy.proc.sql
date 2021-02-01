@@ -50,34 +50,34 @@ BEGIN
 		SELECT	@Query = N'';
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.TicketVoiding_RequestDetail_bk
-	(AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime)
-SELECT AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime
+	(AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime,Usernames,ProductIds,TicketStatusIds,FromWinlostDate,ToWinlostDate)
+SELECT AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime,Usernames,ProductIds,TicketStatusIds,FromWinlostDate,ToWinlostDate)
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
 DECLARE	@EndDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @EndDate, 121) + ''''';
 
-SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime
+SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime,Usernames,ProductIds,TicketStatusIds,FromWinlostDate,ToWinlostDate
 FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 WHERE	t1.MatchId NOT IN (9,29,2799)
 	AND EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate)	
 
 UNION ALL
-SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime
+SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime,Usernames,ProductIds,TicketStatusIds,FromWinlostDate,ToWinlostDate
 FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.outright14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.orid AND t2.eventdate BETWEEN @StartDate AND @EndDate)
 
 UNION ALL
-SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime
+SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime,Usernames,ProductIds,TicketStatusIds,FromWinlostDate,ToWinlostDate
 FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSOutright14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.orid AND t2.eventdate BETWEEN @StartDate AND @EndDate)
 
 UNION ALL
-SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime
+SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime,Usernames,ProductIds,TicketStatusIds,FromWinlostDate,ToWinlostDate
 FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSRaceInfo14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.EventID AND t2.EventTime BETWEEN @StartDate AND @EndDate)
 
 UNION ALL
-SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime
+SELECT	AwayId,FilterBy,FilterFromBetId,FilterFromTransTime,FilterToBetId,FilterToTransTime,HomeId,Id,IsCheckedAwayTeam,IsCheckedHomeTeam,IsFilterByTransTime,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,MaxMainParlayTransId,MaxSingleTransId,MinMainParlayTransId,MinSingleTransId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime,Usernames,ProductIds,TicketStatusIds,FromWinlostDate,ToWinlostDate
 FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 			SELECT max(b.winlostdate) as winlostdate
@@ -294,12 +294,12 @@ OPTION (maxrecursion 0)
 		SELECT	@Query = N'';
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.TicketVoiding_VoidingHistory_bk
-	(	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds)
-SELECT	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds
+	(	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,VoidData)
+SELECT	VoidingHistoryId, RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,VoidData
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
-SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds
+SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,VoidData
 FROM	bodb02.dbo.TicketVoiding_VoidingHistory AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 					SELECT	val AS RequestId
@@ -314,12 +314,12 @@ OPTION (maxrecursion 0)
 		SELECT	@Query = N'';
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.TicketVoiding_RequestDetailTicket_Single_bk
-	(	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId)
-SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
+	(	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId)
+SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
-SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
+SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_Single AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 					SELECT	val AS RequestId
@@ -335,12 +335,12 @@ OPTION (maxrecursion 0)
 		SELECT	@Query = N'';
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.TicketVoiding_RequestDetailTicket_SubParlay_bk
-	(	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId)
-SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
+	(	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId,MainTransId)
+SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId,MainTransId
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
 
-SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId
+SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId,MainTransId
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_SubParlay AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 					SELECT	val AS RequestId
