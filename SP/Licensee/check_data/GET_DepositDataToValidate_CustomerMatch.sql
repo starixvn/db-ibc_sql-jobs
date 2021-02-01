@@ -17,8 +17,9 @@ AS
 		- 20181218@Joseph: Add new bet types for E-Sports 2.0 [RedmineID: #106592]
 		- 20181219@Joseph: Integrate Happy 5 for NumberGame [RedmineID: #103698]
 		- 20190307@Parsons: Implement BetBuilder [Redmine: #108995]
-	- 20200225@Malcolm : change bettype for racing [Redmine : #129158]
-		- 20200508@Vickie: Add new bet types for E-Sports 2.0 [RedmineID: #132548]
+		- 20200225@Malcolm : change bettype for racing [Redmine : #129158]
+		- 20200508@Vickie: Add new bet types for E-Sports 2.0 [RedmineID: #132548] 
+		- 20210201@Louis: DB052 - Edit SP monitor Job Daily CHECKSUM DepositData to count new bettypes of Linked Games [RedmineID: #149772]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -104,7 +105,10 @@ BEGIN
 							ELSE b.BetCount 
 						 END) 
 	FROM #DATA b
-	WHERE (b.bettype BETWEEN 81 AND 120 OR b.bettype BETWEEN 8101 AND 8120)
+	WHERE 
+		(b.bettype BETWEEN 81 AND 120 
+		OR b.bettype BETWEEN 8101 AND 8120
+		OR b.bettype BETWEEN 3601 AND 3610)
 		AND b.statusID IN (111,112,113,114,115)
 
 	SELECT @NgTurnover = ISNULL (@NgTurnover, 0),
