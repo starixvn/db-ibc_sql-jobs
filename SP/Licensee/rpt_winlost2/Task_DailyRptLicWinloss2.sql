@@ -80,6 +80,7 @@ AS
 		- 20201217@Hogan: Add bettype of Saba.club Free Bets [RedmineID: #142369] 
 		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
 		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
+		- 20210120@Mark: Integrate new betfrom 7 [Redmine: #149108]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -230,7 +231,7 @@ BEGIN
 			ELSE 0
 		END AS isMobile
 		,CASE
-			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6') THEN bettrans.betfrom
+			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7') THEN bettrans.betfrom
 			ELSE ''
 		END AS betfrom
 		,SUM(CASE 
@@ -327,7 +328,7 @@ BEGIN
 			ELSE 0
 		END
 		,CASE
-			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6') THEN bettrans.betfrom
+			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7') THEN bettrans.betfrom
 			ELSE ''
 		END
 
