@@ -15,6 +15,7 @@ AS
 		- 20201201@Mark: Casino Turnover Report - Support Saba.club, PP and PG Soft products [RedmineID: #146135]
 		- 20201223@Kos: Fix duplicate Saba.club data [RedmineID: #146135]
 		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
+		- 20210119@Hogan: Integrate Four Guardians [RedmineID: #148100]
 */
 
 BEGIN
@@ -60,7 +61,7 @@ BEGIN
 			,CASE
 				WHEN (bettrans.productId = 150 AND matrix.ProductID = 42) -- Saba.club Free Bets
 					THEN 1
-				WHEN matrix.bettype IN (4300, 4299, 4298, 4297)
+				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699)
 					THEN 1
 				ELSE 0 END AS TicketType
 		FROM
@@ -81,7 +82,7 @@ BEGIN
 			,CASE
 				WHEN (bettrans.productId = 150 AND matrix.ProductID = 42) -- Saba.club Free Bets
 					THEN 1
-				WHEN matrix.bettype IN (4300, 4299, 4298, 4297)
+				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699)
 					THEN 1
 				ELSE 0 END
 

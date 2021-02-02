@@ -63,8 +63,9 @@ AS
 		- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369]
 		- 20201217@Hogan: Add bettype of Saba.club Free Bets [RedmineID: #142369] 
 		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
-		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
+		- 20201231@Hogan: Integrate GDG [RedmineID: #147267]
 		- 20210120@Mark: Integrate new betfrom 7 [Redmine: #149108]
+		- 20210202@Hogan: Integrate Four Guardians [RedmineID: #148100]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -125,8 +126,8 @@ BEGIN
 		,SUM(winlost - actual_stake) AS winlost
 		,CASE
 			WHEN bettrans.statusID IN (112, 113) THEN SUM(CASE
-															WHEN (bettrans.bettype IN (4300, 4299, 4298, 4297, 3007, 1906)
-																OR (bettrans.bettype BETWEEN 1611 AND 1699 AND bettrans.matchid = 150)) THEN 0
+															WHEN (bettrans.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699)
+																OR (bettrans.bettype BETWEEN 1611 AND 1697 AND bettrans.matchid = 150)) THEN 0
 															ELSE ABS(winlost - actual_stake)
 														END) -- exclude Promotion Prize, Tip ticket from BetEffective
 			ELSE 0
@@ -184,8 +185,8 @@ BEGIN
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 4299, 4298, 4297, 3007, 1906, 999)
-				OR (bettype BETWEEN 1611 AND 1699 AND matchid = 150)) THEN bettype
+			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699)
+				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)) THEN bettype
 			ELSE 0
 		END bettype
 		 --114: half win, 115: half lose
@@ -220,7 +221,7 @@ BEGIN
 		END AS betfrom 
 		,SUM(CASE 
 				WHEN bettrans.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake
-				WHEN bettrans.bettype = 4297 THEN oddsspread
+				WHEN bettrans.bettype IN (4297, 1698) THEN oddsspread
 				ELSE 0 END) AS BuyBackAmt
 		,SUM(CASE WHEN bettrans.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END) AS BABuyBackAmt
 	FROM
@@ -282,8 +283,8 @@ BEGIN
 			ELSE 0
 		END
 		,CASE
-			WHEN (bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,17003,4299,4298,4297,3007,1906, 999)
-				OR (bettype BETWEEN 1611 AND 1699 AND matchid = 150)) THEN bettype
+			WHEN (bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,17003,4299,4298,4297,3007,1906, 999, 1698, 1699)
+				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)) THEN bettype
 			ELSE 0
 		END
 		,CASE

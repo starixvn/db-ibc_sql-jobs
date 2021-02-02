@@ -49,7 +49,8 @@ AS
 		- 20201022@Louis: Licensee Spread Setting [RedmineID: #142532]	
 		- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369] 
 		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
-		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
+		- 20201231@Hogan: Integrate GDG [RedmineID: #147267]
+		- 20210119@Hogan: Integrate Four Guardians [RedmineID: #148100]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -285,8 +286,9 @@ BEGIN
 				WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 				WHEN b.bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
-				WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid <> 150) THEN 200 -- SBC
+				WHEN (b.bettype BETWEEN 1611 AND 1697 AND b.matchid <> 150) THEN 200 -- SBC
 				WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150 -- SBC FreeBets
+				WHEN (b.bettype BETWEEN 1698 AND 1699 AND b.matchid <> 150) THEN -200 -- SBC Prize
 				WHEN b.bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 				WHEN b.bettype = 3007 THEN -244 -- SAG Tip ticket
 				WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
@@ -296,14 +298,14 @@ BEGIN
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
-			SUM(CASE WHEN b.ruben = 1 AND b.bettype NOT IN (17000,17003,4300,4299,4298,4297,3007,1906)
-				AND (b.bettype NOT BETWEEN 1611 AND 1699 OR b.matchid <> 150) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss
+			SUM(CASE WHEN b.ruben = 1 AND b.bettype NOT IN (17000,17003,4300,4299,4298,4297,3007,1906,1698,1699)
+				AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss
 			SUM(CASE WHEN b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame
 			SUM(CASE WHEN b.ruben = 1 THEN b.playercomm ELSE 0 END),--Playercomm
 			SUM(CASE WHEN b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.awinlost ELSE 0 END),--Comm_BetTrade
 			SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 			SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
-			SUM(CASE WHEN (b.bettype IN (17000,17003,4300,4299,4298,4297,3007,1906) OR (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150)) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
+			SUM(CASE WHEN (b.bettype IN (17000,17003,4300,4299,4298,4297,3007,1906,1698,1699) OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
 		FROM dbo.bettrans14 b WITH (NOLOCK) 
 			INNER JOIN #DepCustID d on b.custid = d.CustID
 		/*
@@ -357,8 +359,9 @@ BEGIN
 				WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
 				WHEN b.bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
-				WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid <> 150) THEN 200 -- SBC
+				WHEN (b.bettype BETWEEN 1611 AND 1697 AND b.matchid <> 150) THEN 200 -- SBC
 				WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150 -- SBC FreeBets
+				WHEN (b.bettype BETWEEN 1698 AND 1699 AND b.matchid <> 150) THEN -200 -- SBC Prize
 				WHEN b.bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 				WHEN b.bettype = 3007 THEN -244 -- SAG Tip ticket
 				WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
@@ -398,7 +401,7 @@ BEGIN
 			SUM(Adjustment),--Adjustment  
 			SUM(Turnover),--Turnover
 			SUM(Outstanding),--Outstanding 
-			SUM(CASE WHEN bettype NOT IN(246,-248,-244,-165,-150) THEN Winloss ELSE 0 END),--Winloss  
+			SUM(CASE WHEN bettype NOT IN(246,-248,-244,-165,-150,-200) THEN Winloss ELSE 0 END),--Winloss  
 			SUM(Transfer3rd),--Transfer3rd
 			SUM(DrawGame),--DrawGame
 			SUM(Playercomm),--Playercomm
@@ -575,7 +578,7 @@ BEGIN
 			-1,
 			TurnOver,
 			DrawGame,
-			CASE WHEN Bettype IN (246,-248,-244,-165,-150) THEN Promotion ELSE Winloss END AS Winloss,
+			CASE WHEN Bettype IN (246,-248,-244,-165,-150,-200) THEN Promotion ELSE Winloss END AS Winloss,
 			playercomm,
 			BetCount,
 			OutStanding
