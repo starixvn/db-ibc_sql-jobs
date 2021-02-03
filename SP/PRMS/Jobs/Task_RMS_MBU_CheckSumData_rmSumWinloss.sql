@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20200512@Percy: Initialize SP [RedmineID: #130275]
 		- 20201214@Danny: Separate Data of Virtual Soccer & Virtual Basketball [RedmineID: #145926]
+		- 20200203@Danny: Prepare Separate Data GOF for deposit [RedmineID: #149966]
 */
 
 BEGIN
