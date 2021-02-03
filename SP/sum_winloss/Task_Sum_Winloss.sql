@@ -128,7 +128,7 @@ BEGIN
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
-			WHEN bettype BETWEEN 17000 AND 17004 THEN 246 -- Saba promotion
+			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -243,7 +243,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
-				 WHEN bettype BETWEEN 17000 AND 17004 THEN 246 -- Saba promotion
+				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 				 ELSE 0
 			 END
 			,CASE
@@ -321,7 +321,7 @@ BEGIN
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
-			WHEN bettype BETWEEN 17000 AND 17004 THEN 246 -- Saba promotion
+			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -435,7 +435,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
-				 WHEN bettype BETWEEN 17000 AND 17004 THEN 246 -- Saba promotion 
+				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion 
 				 ELSE 0
 			 END
 			,CASE
@@ -513,7 +513,7 @@ BEGIN
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
-			WHEN bettype BETWEEN 17000 AND 17004 THEN 246 -- Saba promotion
+			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -626,7 +626,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
-				 WHEN bettype BETWEEN 17000 AND 17004 THEN 246 -- Saba promotion
+				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 				 ELSE 0
 			 END
 			,CASE
@@ -704,7 +704,7 @@ BEGIN
 			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
-			WHEN bettype BETWEEN 17000 AND 17004 THEN 246 -- Saba promotion
+			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -818,7 +818,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
-				 WHEN bettype BETWEEN 17000 AND 17004 THEN 246 -- Saba promotion
+				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 				 ELSE 0
 			 END
 			,CASE
