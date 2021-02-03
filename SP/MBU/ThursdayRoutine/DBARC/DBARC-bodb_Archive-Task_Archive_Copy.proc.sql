@@ -42,8 +42,6 @@ BEGIN
 		[isFinish] [bit]
 	)
 
-	select @StartDate,@EndDate
-
 	---------------Table 1: TicketVoiding_RequestDetail_bk --------------------
 	IF	@TableName = N'TicketVoiding_RequestDetail_bk'
 	BEGIN;
