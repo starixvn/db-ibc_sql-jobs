@@ -82,6 +82,7 @@ AS
 		- 20201231@Hogan: Integrate GDG [RedmineID: #147267]
 		- 20210120@Mark: Integrate new betfrom 7 [Redmine: #149108]
 		- 20210202@Hogan: Integrate Four Guardians [RedmineID: #148100]
+		- 20210203@Louis: Saba Red Envelope [RedmineID: #149923]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -196,12 +197,12 @@ BEGIN
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
-			WHEN bettype IN (17000, 17003) THEN 246 -- NPHP
+			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699)
+			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 17004, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699)
 				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)) THEN bettype
 			ELSE 0
 		END bettype
@@ -295,11 +296,11 @@ BEGIN
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
-			WHEN bettype IN (17000, 17003) THEN 246 -- NPHP
+			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			ELSE 0
 		END
 		,CASE
-			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699)
+			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 17004, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699)
 				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)) THEN bettype
 			ELSE 0
 		END
