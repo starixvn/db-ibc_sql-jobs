@@ -98,7 +98,7 @@ BEGIN
 		, @actualrate	= e.actualrate
 		, @mrecommend	= ci.mrecommend
 		, @recommend	= ci.recommend
-		, @srecommend	= ci.custid 
+		, @srecommend	= ci.srecommend 
 		, @roleid		= ci.roleid
 	FROM CustDB.dbo.custinfo AS ci WITH (NOLOCK)
 	INNER JOIN CustDB.dbo.exchange AS e WITH (NOLOCK)
@@ -130,7 +130,7 @@ BEGIN
 	)
 	BEGIN
 		SELECT @ErrCode = 101
-			,@ErrMsg		= N'Invalid member account with @CustID=' + CAST(@CustID AS VARCHAR(10))
+			,@ErrMsg		= N'Invalid member account with @CustID=' + CAST(ISNULL(@CustID,0) AS VARCHAR(10))
 
 		GOTO FINISH
 	END
