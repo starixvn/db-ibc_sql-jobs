@@ -16,6 +16,7 @@ AS
 	- 20200728@Hogan: Integrate SA Gaming [RedmineID: #128493]
 	- 20201020@Hogan: Integrate Arcadia Gaming Bonus [RedmineID: #143648]
 	- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369]
+	- 20210119@Hogan: Integrate Four Guardians [RedmineID: #148100]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -30,7 +31,7 @@ BEGIN
 		, @S_BetCount = COUNT(b.TransId) --BetCount
 		, @S_AWinlost = SUM(awinlost)
 		, @S_Comm = SUM(comm)
-		, @S_BetEffective = SUM(CASE WHEN b.statusID IN (112,113) AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906) AND (b.bettype NOT BETWEEN 1611 AND 1699 OR b.matchid <> 150)) -- exclude PP Prize from BetEffective
+		, @S_BetEffective = SUM(CASE WHEN b.statusID IN (112,113) AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699) AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)) -- exclude PP Prize from BetEffective
 									THEN ABS(winlost-actual_stake)
 									ELSE 0  
 								END)
@@ -41,7 +42,7 @@ BEGIN
 		, @S_SComm = SUM(ISNULL(scomm,0))
 		, @S_BuyBackAmt = SUM(CASE
 								WHEN b.bettype IN (902, 912) AND transid2 = 0 THEN actual_stake
-								WHEN b.bettype = 4297 THEN oddsspread
+								WHEN b.bettype IN (4297, 1698) THEN oddsspread
 								ELSE 0 END)
 		, @S_BABuyBackAmt = SUM(CASE WHEN b.bettype IN (902, 912) AND transid2 = 1 THEN actual_stake ELSE 0 END)
 	FROM bodb02.dbo.bettrans14 b WITH(NOLOCK)
