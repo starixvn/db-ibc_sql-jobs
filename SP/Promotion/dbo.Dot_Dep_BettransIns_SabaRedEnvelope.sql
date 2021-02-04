@@ -20,6 +20,7 @@ CREATE PROCEDURE dbo.Dot_Dep_BettransIns_SabaRedEnvelope
 	, @Balance      MONEY			= NULL OUTPUT
 	, @ErrCode 		INT				= 0 OUTPUT
 	, @ErrMsg 		NVARCHAR(200)	= '' OUTPUT
+	, @LogInfo		NVARCHAR(MAX)	= '' OUTPUT
 AS
 /*
 	Created: 20210202@Sophia
@@ -37,6 +38,7 @@ AS
 				, @Balance      MONEY	 
 				, @ErrCode 		INT		 
 				, @ErrMsg 		NVARCHAR(200) 
+				, @LogInfo		NVARCHAR(MAX)
 
 			EXEC Dot_Dep_BettransIns_SabaRedEnvelope
 				@CustID			= 738486
@@ -58,8 +60,9 @@ AS
 				, @Balance      = @Balance OUTPUT
 				, @ErrCode 		= @ErrCode OUTPUT
 				, @ErrMsg 		= @ErrMsg OUTPUT
+				, @LogInfo		= @LogInfo OUTPUT
 			  
-			  SELECT  @TransID AS TransID, @TransDate AS TransDate, @RefNo AS RefNo, @Balance AS Balance, @ErrCode AS ErrCode, @ErrMsg AS ErrMsg
+			  SELECT  @TransID AS TransID, @TransDate AS TransDate, @RefNo AS RefNo, @Balance AS Balance, @ErrCode AS ErrCode, @ErrMsg AS ErrMsg, @LogInfo AS LogInfo
 */
 BEGIN
 	SET NOCOUNT ON
@@ -81,8 +84,7 @@ BEGIN
 		, @winlost			MONEY
 
 
-	DECLARE @startTime		DATETIME
-		, @logInfo			NVARCHAR(MAX)
+	DECLARE @startTime		DATETIME		
 		, @insertData		NVARCHAR(4000)
 		, @result			VARCHAR(50)
 		, @doneinsert		DATETIME
@@ -322,8 +324,6 @@ BEGIN
 		-- IF write log error: not RETURN error code
 	END CATCH
 
-	-- RETURN loginfo to write log
-	SELECT @logInfo AS LogInfo
-
+ 
 END
 GO
