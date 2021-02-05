@@ -154,20 +154,21 @@ FROM	bodb02.dbo.TicketVoiding_Request AS t1 WITH (NOLOCK)
 					WHERE rd.matchid = t2.EventID AND rd.RequestId = t1.RequestId
 
 					UNION ALL
-					SELECT bt.winlostdate
+					SELECT MAX(bt.winlostdate) AS eventdate
 					FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
 						CROSS APPLY (
-								SELECT  max(b.winlostdate) as winlostdate
+								SELECT  b.winlostdate as winlostdate
 								FROM	bodb02.dbo.bettrans b WITH (NOLOCK) 
 								WHERE b.transid = s.TransId AND s.MatchId IN (9,29,2799) AND s.RequestId = t1.RequestId AND s.MatchId = rd.MatchId
 			
 								UNION ALL
-								SELECT max(b.winlostdate) as winlostdate
+								SELECT b.winlostdate as winlostdate
 								FROM bodb02.dbo.bettrans14 b WITH (NOLOCK) 
 								WHERE b.transid = s.TransId AND s.MatchId IN (9,29,2799) AND s.RequestId = t1.RequestId AND s.MatchId = rd.MatchId
 						)bt
 				)m
-			)t	
+			WHERE  rd.RequestId = t1.RequestId
+		)t	
 WHERE  t.Max_EventDate BETWEEN @StartDate AND @EndDate
 ;'');';
 
