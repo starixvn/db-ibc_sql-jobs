@@ -30,6 +30,7 @@ AS
   20200330@Gary: #131466  Skip move bet on 20200330 (Tuesday morning)
   20200624@Gary: #136338  Move bet 2 days on 20200624 (Thursday morning)
   20201116@Gary: #145497  Move bet 1 days on 20201116 (Tuesday morning)
+  20210205@Danny: Change logic get MB date [Redmine: #150053]
  
 */  
 
@@ -157,10 +158,98 @@ IF CAST(@today as date) between '20180709' and '20180718'-- one week after EC
 
  
 
- SELECT ScheduleId, CASE WHEN IsManual = 0 THEN RunningDay ELSE ManualDay END AS MoveBetsDay  
- FROM @Schedule   
- WHERE WeekDay = @WeekDay  
- ORDER BY ScheduleId  
+ --SELECT ScheduleId, CASE WHEN IsManual = 0 THEN RunningDay ELSE ManualDay END AS MoveBetsDay  
+ --FROM @Schedule   
+ --WHERE WeekDay = @WeekDay  
+ --ORDER BY ScheduleId  
+
+ 
+BEGIN
+	 CREATE TABLE #DefaultMovebetConfig
+	 (
+		_weekDay SmallInt, 
+		Isbackday1 BIT,  
+		Isbackday2 BIT,
+		Isbackday3 BIT,
+		Isbackday4 BIT,
+		Isbackday5 BIT,
+		Isbackday6 BIT,
+		Isbackday7 BIT,   
+	)
+
+	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (1, 0, 0, 0,0,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (2, 0, 0, 1,1,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (3, 0, 0, 1,0,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (4, 0, 0, 1,0,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (5, 0, 0, 0,0,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (6, 0, 0, 1,1,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (7, 0, 0, 1,0,0,0,0)
+
+
+	IF EXISTS (SELECT (1) FROM  dbo.Acc_ManualMovebetConfig WITH(NOLOCK) WHERE MBDate = @Today) -- Have a manual
+	BEGIN
+		SELECT ROW_NUMBER() OVER(ORDER BY MBDate DESC) AS ScheduleId, 
+				CASE WHEN  MBDate = 'Isbackday1' THEN DATEADD(day, - 1, CONVERT(VARCHAR(10), @Today, 120))  
+							WHEN  MBDate = 'Isbackday2' THEN DATEADD(day, - 2, CONVERT(VARCHAR(10), @Today, 120))
+							WHEN  MBDate = 'Isbackday3' THEN DATEADD(day, - 3, CONVERT(VARCHAR(10), @Today, 120))
+							WHEN  MBDate = 'Isbackday4' THEN DATEADD(day, - 4, CONVERT(VARCHAR(10), @Today, 120))
+							WHEN  MBDate = 'Isbackday5' THEN DATEADD(day, - 5, CONVERT(VARCHAR(10), @Today, 120))
+							WHEN  MBDate = 'Isbackday6' THEN DATEADD(day, - 6, CONVERT(VARCHAR(10), @Today, 120))
+							WHEN  MBDate = 'Isbackday7' THEN DATEADD(day, - 7, CONVERT(VARCHAR(10), @Today, 120))
+							ELSE NULL END  MoveBetsDay
+		FROM   
+			( 
+				select	TOP(1)
+						Isbackday1,
+						Isbackday2, 
+						Isbackday3,
+						Isbackday4,
+						Isbackday5,
+						Isbackday6,
+						Isbackday7 
+				from	dbo.Acc_ManualMovebetConfig WITH(NOLOCK)
+				where MBDate = @Today
+			) p  
+			UNPIVOT  
+			(
+				Value_ FOR MBDate IN   (Isbackday1,Isbackday2, Isbackday3,Isbackday4,Isbackday5,Isbackday6,Isbackday7)  
+			) AS unpvt
+		where Value_ = 1;
+
+	END
+	ELSE
+	BEGIN
+		SELECT ROW_NUMBER() OVER(ORDER BY MBDate DESC) AS ScheduleId, 
+				CASE WHEN  MBDate = 'Isbackday1' THEN DATEADD(day, - 1, CONVERT(VARCHAR(10), @Today, 120))  
+							WHEN  MBDate = 'Isbackday2' THEN DATEADD(day, - 2, CONVERT(VARCHAR(10), @Today, 120))
+							WHEN  MBDate = 'Isbackday3' THEN DATEADD(day, - 3, CONVERT(VARCHAR(10), @Today, 120))
+							WHEN  MBDate = 'Isbackday4' THEN DATEADD(day, - 4, CONVERT(VARCHAR(10), @Today, 120))
+							WHEN  MBDate = 'Isbackday5' THEN DATEADD(day, - 5, CONVERT(VARCHAR(10), @Today, 120))
+							WHEN  MBDate = 'Isbackday6' THEN DATEADD(day, - 6, CONVERT(VARCHAR(10), @Today, 120))
+							WHEN  MBDate = 'Isbackday7' THEN DATEADD(day, - 7, CONVERT(VARCHAR(10), @Today, 120))
+							ELSE NULL END  MoveBetsDay
+		FROM   
+			( 
+				select	_weekDay, 
+						Isbackday1,
+						Isbackday2, 
+						Isbackday3,
+						Isbackday4,
+						Isbackday5,
+						Isbackday6,
+						Isbackday7 
+				from	#DefaultMovebetConfig 
+				where _weekDay = @WeekDay  
+			) p  
+			UNPIVOT  
+			(
+				Value_ FOR MBDate IN   (Isbackday1,Isbackday2, Isbackday3,Isbackday4,Isbackday5,Isbackday6,Isbackday7)  
+			) AS unpvt
+		where Value_ = 1;
+	END
+
+	DROP TABLE #DefaultMovebetConfig
+END
 
 
       
