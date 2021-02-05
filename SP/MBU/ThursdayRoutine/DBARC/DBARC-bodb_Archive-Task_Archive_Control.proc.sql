@@ -18,8 +18,11 @@ BEGIN;
 	SET NOCOUNT ON;
 
 	DECLARE	@ArchiveDate TABLE (
-				winlostdate	SMALLDATETIME                            
+				rid			INT				IDENTITY(1,1)
+			,	winlostdate	SMALLDATETIME
+			,	PRIMARY KEY CLUSTERED (rid)
 			);
+
 
 	DECLARE	@ArchiveTable TABLE (
 				rid			INT				IDENTITY(1,1)
@@ -36,6 +39,10 @@ BEGIN;
 
 		,	@StartTable			INT
 		,	@EndTable			INT
+
+		,	@FromDate			INT
+		,	@ToDate				INT
+
 		;
 
 	DECLARE @str_WinlostDate	NVARCHAR(100)
@@ -55,7 +62,6 @@ BEGIN;
 		,	('TicketVoiding_Request_bk')
 		,	('zzzbettransM_bk')
 		,	('zzzbettrans_bk')
-		,	('TicketVoiding_VoidedTransaction_bk')
 		,	('TicketVoiding_AutoVoidRequest_Queue_bk')
 		,	('TicketVoiding_AutoUnmarkSetting_bk')	
 		;
@@ -63,6 +69,9 @@ BEGIN;
 
 	SELECT	@StartDate	= MIN(winlostdate)
 		,	@EndDate	= MAX(winlostdate)
+		,	@FromDate	= MIN(rid)
+		,	@ToDate		= MAX(rid)
+
 	FROM	@ArchiveDate;
 
 	SELECT	@StartTable	= MIN(rid)
@@ -97,6 +106,37 @@ BEGIN;
 
 		SET	@StartTable = @StartTable + 1;
 	END;
+
+	WHILE	@FromDate <= @ToDate
+	BEGIN;
+		SELECT	@WinlostDate = winlostdate
+		FROM	@ArchiveDate
+		WHERE	rid = @FromDate;
+
+		IF	@DebugMode & 1 > 0
+		-- Execution --
+		BEGIN;
+			EXECUTE	dbo.Task_Archive_Copy
+						@StartDate		= @WinlostDate
+					,	@TableName		= 'TicketVoiding_VoidedTransaction_bk'
+					;
+		END;
+
+		IF	@DebugMode & 2 > 0
+		-- Print Message --
+		BEGIN;
+			SELECT	@width_TableName = MAX(LEN(tablename))
+				,	@str_WinlostDate = CONVERT(NVARCHAR(25), @WinlostDate, 120)
+			FROM	@ArchiveTable;
+
+			RAISERROR(N'[%s] - Table [%-*s]', 0, 0, @str_WinlostDate, @width_TableName, @TableName) WITH NOWAIT;
+		END;
+
+		WAITFOR DELAY '00:00:00.100';
+
+		SET	@FromDate = @FromDate + 1;
+	END;
+
 END
 GO
 /*<info serverAlias="DBARC-bodb_Archive" executers="" viewers="" isFunction="0" isNested="0"></info>*/
