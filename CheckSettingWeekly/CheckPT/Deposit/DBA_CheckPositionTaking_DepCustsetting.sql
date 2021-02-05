@@ -26,6 +26,7 @@ AS
 		-20201203@Eden: update PT for Winbox from 0.88 to 0.9065 [RedmineID:#146557]
 		-20201217@Eden: update PT for HOT99 from 0.88 to 0.898 [RedmineID:#147270]
 		-20201211@Winfred: Remove OddAdj Acc [redmine:#142952]
+		-20210205@Eden: add new PT 0.935 [RedmineID:#149918]
 		
 	Param's Explanation:
 	
@@ -172,7 +173,7 @@ BEGIN
 		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)					
 			INNER JOIN #tmpDumMember c ON s.custid=c.custid		
 		WHERE 
-			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925,0.89,0.885,0.5,0.9,0.93,0.9065,0.898) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925,0.89,0.885,0.5,0.9,0.93,0.9065,0.898,0.935) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
 			AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))		
 			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
 	END
