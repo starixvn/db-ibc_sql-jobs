@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20200720@Brice:	Initialize - 13 tables [Redmine: #111093]
 		- 20201210@Max: TVS - New issue type Abnormal Accounts [Redmine: #143666]
+		- 20200209@Helen: TVS - New issue type Abnormal Accounts - archive zzzbettrans  [Redmine: #143666]
 
 */
 BEGIN;
@@ -25,6 +26,12 @@ BEGIN;
 
 
 	DECLARE	@ArchiveTable TABLE (
+				rid			INT				IDENTITY(1,1)
+			,	tablename	NVARCHAR(128)
+			,	PRIMARY KEY CLUSTERED (rid)
+			);
+
+	DECLARE	@ArchiveTable_oneDay TABLE (
 				rid			INT				IDENTITY(1,1)
 			,	tablename	NVARCHAR(128)
 			,	PRIMARY KEY CLUSTERED (rid)
@@ -61,12 +68,17 @@ BEGIN;
 	VALUES	('TicketVoiding_RequestDetail_bk')
 		,	('TicketVoiding_Request_bk')
 		,	('zzzbettransM_bk')
-		,	('zzzbettrans_bk')
 		,	('TicketVoiding_AutoVoidRequest_Queue_bk')
 		,	('TicketVoiding_AutoUnmarkSetting_bk')	
 		;
 
-
+	INSERT INTO	@ArchiveTable_oneDay
+			(tablename)
+	VALUES	('zzzbettransM_bk')
+		,	('zzzbettrans_bk')
+		,	('TicketVoiding_VoidedTransaction_bk')
+		;
+		
 	SELECT	@StartDate	= MIN(winlostdate)
 		,	@EndDate	= MAX(winlostdate)
 		,	@FromDate	= MIN(rid)
@@ -107,36 +119,50 @@ BEGIN;
 		SET	@StartTable = @StartTable + 1;
 	END;
 
-	WHILE	@FromDate <= @ToDate
+	SELECT	@StartDate	= MIN(rid)
+		,	@EndDate	= MAX(rid)
+	FROM	@ArchiveDate;
+
+	WHILE	@StartDate <= @EndDate
 	BEGIN;
 		SELECT	@WinlostDate = winlostdate
 		FROM	@ArchiveDate
-		WHERE	rid = @FromDate;
+		WHERE	rid = @StartDate;
 
-		IF	@DebugMode & 1 > 0
-		-- Execution --
+		SELECT	@StartTable	= MIN(rid)
+			,	@EndTable	= MAX(rid)
+		FROM	@ArchiveTable_oneDay;
+
+		WHILE	@StartTable <= @EndTable
 		BEGIN;
-			EXECUTE	dbo.Task_Archive_Copy
-						@StartDate		= @WinlostDate
-					,	@TableName		= 'TicketVoiding_VoidedTransaction_bk'
-					;
+			SELECT @TableName = tablename FROM @ArchiveTable_oneDay WHERE rid = @StartTable 
+
+			IF	@DebugMode & 1 > 0
+			-- Execution --
+			BEGIN;
+				EXECUTE	dbo.Task_Archive_Copy
+							@StartDate	= @WinlostDate
+						,	@TableName	= @TableName
+						;
+			END;
+
+			IF	@DebugMode & 2 > 0
+			-- Print Message --
+			BEGIN;
+				SELECT	@width_TableName = MAX(LEN(tablename))
+					,	@str_WinlostDate = CONVERT(NVARCHAR(25), @WinlostDate, 120)
+				FROM	@ArchiveTable_oneDay;
+
+				RAISERROR(N'[%s] - Table [%-*s]', 0, 0, @str_WinlostDate, @width_TableName, @TableName) WITH NOWAIT;
+			END;
+
+			WAITFOR DELAY '00:00:00.100';
+
+			SET	@StartTable = @StartTable + 1;
 		END;
 
-		IF	@DebugMode & 2 > 0
-		-- Print Message --
-		BEGIN;
-			SELECT	@width_TableName = MAX(LEN(tablename))
-				,	@str_WinlostDate = CONVERT(NVARCHAR(25), @WinlostDate, 120)
-			FROM	@ArchiveTable;
-
-			RAISERROR(N'[%s] - Table [%-*s]', 0, 0, @str_WinlostDate, @width_TableName, @TableName) WITH NOWAIT;
-		END;
-
-		WAITFOR DELAY '00:00:00.100';
-
-		SET	@FromDate = @FromDate + 1;
+		SET	@StartDate = @StartDate + 1;
 	END;
-
 END
 GO
 /*<info serverAlias="DBARC-bodb_Archive" executers="" viewers="" isFunction="0" isNested="0"></info>*/

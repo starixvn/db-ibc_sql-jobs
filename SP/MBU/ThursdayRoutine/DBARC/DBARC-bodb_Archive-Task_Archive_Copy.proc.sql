@@ -16,6 +16,7 @@ AS
 		- 20200720@Brice:	Initialize [Redmine: #111093]
 		- 20201125@Brice:	hotfix duplicate key [Redmine: #111093]
 		- 20201210@Max: TVS - New issue type Abnormal Accounts [Redmine: #143666]
+		- 20200209@Helen: TVS - New issue type Abnormal Accounts - archive zzzbettrans  [Redmine: #143666]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -95,9 +96,6 @@ WHERE t1.MatchId IN (9,29,2799)
 
 		EXECUTE	sys.sp_executesql @Query;
 	END;
-
-
-
 
 	---------------Table 2: TicketVoiding_Request_bk -----------------------------
 	-- Need confirm: No sync column [SettlementStatus]?
@@ -371,50 +369,7 @@ FROM	bodb02.dbo.TicketVoiding_Reason AS t1 WITH (NOLOCK)
 		END
 	END;
 
-	---------------Table 3: zzzbettransM_bk --------------------
-	ELSE IF	@TableName = N'zzzbettransM_bk'
-	BEGIN;
-			SELECT	@Query = '';
-			SELECT	@Query = @Query + N'\
-INSERT INTO	dbo.zzzbettransM_bk
-	(transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId)
-SELECT transid, custid, transdate, 
-oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
-FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
-DECLARE	@EndDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @EndDate, 121) + ''''';
-
-SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
-FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
-WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate BETWEEN @StartDate AND @EndDate)
-	AND t1.VoidingHistoryId IS NULL;'');';
-
-			EXECUTE	sys.sp_executesql @Query;
-	END
-
-	---------------Table 4: zzzbettrans_bk --------------------
-	ELSE IF	@TableName = N'zzzbettrans_bk'
-	BEGIN;
-		SELECT	@Query = N'';
-		SELECT	@Query = @Query + N'\
-INSERT INTO	dbo.zzzbettrans_bk
-	(	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId)
-SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
-FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
-DECLARE	@EndDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @EndDate, 121) + ''''';
-
-SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
-FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
-WHERE	t1.VoidingHistoryId IS NULL	
-AND (EXISTS (SELECT 1 FROM bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) join bodb02.dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
-					WHERE t1.transid = t2.transid AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 AND t2.winlostdate BETWEEN @StartDate AND @EndDate)
-		OR EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate BETWEEN @StartDate AND @EndDate))
-;'');';
-
-		EXECUTE	sys.sp_executesql @Query;
-	END
-
+		
 	---------------Table 5: TicketVoiding_AutoVoidRequest_Queue_bk --------------------
 	ELSE IF	@TableName = N'TicketVoiding_AutoVoidRequest_Queue_bk'
 	BEGIN;
@@ -494,6 +449,49 @@ WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) join bodb0
 					
 		EXECUTE	sys.sp_executesql @Query;
 	END;
+	
+	---------------Table 4: zzzbettrans_bk --------------------
+	ELSE IF	@TableName = N'zzzbettrans_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.zzzbettrans_bk
+	(	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId)
+SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
+FROM	OPENQUERY(DBTXN, ''\
+DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
+DECLARE	@EndDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @EndDate, 121) + ''''';
+
+SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
+FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
+WHERE	t1.VoidingHistoryId IS NULL	
+AND (EXISTS (SELECT 1 FROM bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) join bodb02.dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
+					WHERE t1.transid = t2.transid AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 AND t2.winlostdate = @StartDate)
+		OR EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @StartDate))
+;'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END
+	---------------Table 3: zzzbettransM_bk --------------------
+	ELSE IF	@TableName = N'zzzbettransM_bk'
+	BEGIN;
+			SELECT	@Query = '';
+			SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.zzzbettransM_bk
+	(transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId)
+SELECT transid, custid, transdate, 
+oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
+FROM	OPENQUERY(DBTXN, ''\
+DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
+DECLARE	@EndDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @EndDate, 121) + ''''';
+
+SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, VoidingHistoryId
+FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @StartDate)
+	AND t1.VoidingHistoryId IS NULL;'');';
+
+			EXECUTE	sys.sp_executesql @Query;
+	END
 
 END
 GO
