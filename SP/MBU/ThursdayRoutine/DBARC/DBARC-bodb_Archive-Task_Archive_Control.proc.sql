@@ -67,7 +67,6 @@ BEGIN;
 			(tablename)
 	VALUES	('TicketVoiding_RequestDetail_bk')
 		,	('TicketVoiding_Request_bk')
-		,	('zzzbettransM_bk')
 		,	('TicketVoiding_AutoVoidRequest_Queue_bk')
 		,	('TicketVoiding_AutoUnmarkSetting_bk')	
 		;
