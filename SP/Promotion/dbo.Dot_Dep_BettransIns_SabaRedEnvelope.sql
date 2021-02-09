@@ -20,7 +20,7 @@ CREATE PROCEDURE dbo.Dot_Dep_BettransIns_SabaRedEnvelope
 	, @Balance      MONEY			= NULL OUTPUT
 	, @ErrCode 		INT				= 0 OUTPUT
 	, @ErrMsg 		NVARCHAR(200)	= '' OUTPUT
-	, @LogInfo		NVARCHAR(MAX)	= '' OUTPUT
+	, @LogInfo		VARCHAR(300)	= '' OUTPUT
 AS
 /*
 	Created: 20210202@Sophia
@@ -38,7 +38,7 @@ AS
 				, @Balance      MONEY	 
 				, @ErrCode 		INT		 
 				, @ErrMsg 		NVARCHAR(200) 
-				, @LogInfo		NVARCHAR(MAX)
+				, @LogInfo		VARCHAR(300)
 
 			EXEC Dot_Dep_BettransIns_SabaRedEnvelope
 				@CustID			= 738486
@@ -85,7 +85,6 @@ BEGIN
 
 
 	DECLARE @startTime		DATETIME		
-		, @insertData		NVARCHAR(4000)
 		, @result			VARCHAR(50)
 		, @doneinsert		DATETIME
 		, @BetTime			DATETIME
@@ -121,7 +120,6 @@ BEGIN
 
 	SELECT @startTime	= CURRENT_TIMESTAMP
 		, @result		= ''
-		, @insertData	= ''
 		, @spname		= OBJECT_NAME(@@PROCID)
         , @hostname		= HOST_NAME()
 		, @logInfo		= ''
@@ -147,6 +145,12 @@ BEGIN
 	END
 
 	BEGIN TRY
+	
+		-- GET balance before
+		EXEC [dbo].[Dot_BalanceMemberSel]
+			@custID		= @CustID
+			, @balance	= @Balance OUTPUT			
+			
 		;
 		WITH CTE_tempPromotionPrize AS 
 		(
@@ -250,11 +254,6 @@ BEGIN
 		-- insert into bettrans
 		SELECT @TransID = SCOPE_IDENTITY(), @doneinsert = CURRENT_TIMESTAMP
 
-		SET @insertData= N' oddsid:' +  cast(isnull(@oddsid,0) as varchar(10)) 
-                            + N' bettype:' +  cast(isnull( @bettype,0) as varchar(10)) 
-                            + N' stake:' + CONVERT(varchar(50),isnull(@stake,0)) 
-                            + N' transid:' +cast(isnull(@TransID,0) as varchar(20)) +';'
-
 		-- update account balance
 		EXEC dbo.Dot_BalanceCreditUpd @CustID = @CustID
 			, @balance	= @Amount
@@ -290,35 +289,23 @@ BEGIN
 	FINISH:
 	------------------
 
-	SELECT @logInfo = ISNULL(@result, '')
-            + N' ' + (select dbo.f_GetBetfromType(@betfrom))
-            + N' betting custid:' + cast(isnull( @custid,0) as varchar(10))
-            + N' insert bet' +  ISNULL(@insertData,'')
-            + N' ip:' + cast(isnull(@IP,'x') as varchar(16)) 
-            + N' NBC:' + CAST(IsNull(@balance - @actual_stake,0) as varchar(50)) 
-            + N' NBT:' + CAST(isnull(@total,-1) as varchar(50)) 
-            + N' (' + CAST(IsNull(DATEDIFF(millisecond, @StartTime, @doneinsert),0) as varchar(50)) + ':' + CAST(IsNull(DATEDIFF(millisecond, @StartTime, CURRENT_TIMESTAMP),0) as varchar(50)) + ' ms) ' + @site
-            + N' creatorid:' + cast(isnull(@creator,0) as varchar(10))
-            + N' (call ' + ISNULL(@spname, '--') + ' via ' + ISNULL(@hostname, '--') + ')'
-            + N' transid2:' +cast(isnull(@transid2,0) as varchar(20))
-            + N' BetTime:' +convert(varchar(23), isnull(@BetTime,CURRENT_TIMESTAMP), 121)
+	SELECT @logInfo = ISNULL(@result, '')	
+				+ 'Insert Red Envelope Amount CustID = ' + CAST(@CustID AS VARCHAR(20)) 
+				+ ', bettype:' +  cast(isnull( @bettype,0) as varchar(10)) 
+				+ ', Amount:' + CONVERT(varchar(50),isnull(@Amount,0)) 
+				+ ', transid:' +cast(isnull(@TransID,0) as varchar(20)) +';'	
+				+ ', creatorid:' + cast(isnull(@creator,0) as varchar(10))
+				+ ', (' + CAST(IsNull(DATEDIFF(millisecond, @StartTime, @doneinsert),0) as varchar(50)) + ':' + CAST(IsNull(DATEDIFF(millisecond, @StartTime, CURRENT_TIMESTAMP),0) as varchar(50)) + ' ms) '
 	
 	IF (@ErrCode <> 0)
 	BEGIN
 		SELECT @logInfo += N' . Error: ' + CAST(@ErrCode AS VARCHAR(10)) + '. ErrMessage: ' + @ErrMsg
 	END
 
-	-----------------Write Log Promotion Prize----------------------
-	BEGIN TRY
-		DECLARE @LogData VARCHAR(300)
-
-		SELECT @LogData = 
-				'Insert Red Envelope Amount CustID = ' + CAST(@CustID AS VARCHAR(20)) 
-				+ ', Bettype = ' + CAST(@Bettype AS VARCHAR(10)) 
-				+ ', ExtraInfo = ' + @ExtraInfo
-				+ ', Amount = ' + CAST(@Amount AS VARCHAR(20))
+	-----------------Write Log Red Envelope ----------------------
+	BEGIN TRY	
 	
-		EXEC dbo.WriteLog_UserLog @UserID = @CustID, @Doing = @LogData
+		EXEC dbo.WriteLog_UserLog @UserID = @CustID, @Doing = @LogInfo
 	END TRY
 	BEGIN CATCH
 		-- IF write log error: not RETURN error code
