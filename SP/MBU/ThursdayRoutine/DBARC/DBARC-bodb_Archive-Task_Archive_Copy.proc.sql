@@ -17,6 +17,7 @@ AS
 		- 20201125@Brice:	hotfix duplicate key [Redmine: #111093]
 		- 20201210@Max: TVS - New issue type Abnormal Accounts [Redmine: #143666]
 		- 20200209@Helen: TVS - New issue type Abnormal Accounts - archive zzzbettrans  [Redmine: #143666]
+		- 20200211@Helen: TVS - New issue type Abnormal Accounts - hotfix  [Redmine: #143666]
 */
 BEGIN
 	SET NOCOUNT ON;
