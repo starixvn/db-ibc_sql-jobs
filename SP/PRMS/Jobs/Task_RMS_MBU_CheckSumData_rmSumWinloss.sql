@@ -14,6 +14,7 @@ AS
 		- 20200512@Percy: Initialize SP [RedmineID: #130275]
 		- 20201214@Danny: Separate Data of Virtual Soccer & Virtual Basketball [RedmineID: #145926]
 		- 20200203@Danny: Prepare Separate Data GOF for deposit [RedmineID: #149966]
+		- 20200203@Danny: Separate Data GOF for deposit [RedmineID: #149966]
 */
 
 BEGIN
@@ -86,7 +87,7 @@ BEGIN
 			,COUNT(1) AS betcount
 			,b.recommend
 			,CASE
-				--WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
 				WHEN b.bettype = 38 THEN 4
@@ -119,7 +120,7 @@ BEGIN
 			,b.actualrate
 			,b.recommend
 			,CASE
-				--WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
 				WHEN b.bettype = 38 THEN 4
