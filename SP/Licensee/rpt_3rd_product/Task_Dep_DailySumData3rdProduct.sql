@@ -15,6 +15,7 @@ AS
 		- 20181003@Percy: Integrate GoldDeluxe Tip [RedmineID: #70177]
 		- 20200108@Percy: Support billing terms by product & currency instead of product only [RedmineID: #120005]
 		- 20200407@Percy: Add @ProductIds to support input product list [RedmineID: #131885]
+		- 20210219@Percy: Change code get MBBU date [RedmineID: #150327]
 
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
@@ -48,7 +49,7 @@ BEGIN
 	
 	--check @WinlostDate less than @MoveBetDay
 	INSERT INTO @BalanceUpTable(BalanceUpDay, MoveBetsDay)
-	EXEC dbo.Age_SelBalanceUpDay
+	EXEC DBEXT.bodb02.dbo.Lrf_SelBalanceUpDay
 	
 	SELECT @MoveBetsDay = MoveBetsDay
 	FROM @BalanceUpTable
