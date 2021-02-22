@@ -14,6 +14,7 @@ AS
 		- 20200520@Percy: Initialize SP [RedmineID: #133254]
 		- 20200818@Percy: Add column ValidBet [RedmineID: #137395]
 		- 20201105@Percy: Remove duplicate data from API [RedmineID: #144888]
+		- 20210125@Percy: Add column BonusId [RedmineID: #149268]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -57,6 +58,7 @@ BEGIN
 		,OriginalState	VARCHAR(10)
 		,TicketKey		BIGINT
 		,CreateTime		DATETIME
+		,BonusId		INT
 		,DataType		TINYINT DEFAULT ((1)) -- 0: update, 1: insert
 		--,PRIMARY KEY (TpId, TransId, GameType)
 	)
@@ -107,6 +109,7 @@ BEGIN
 					,OriginalState
 					,TicketKey
 					,CreateTime
+					,BonusId
 				)
 				SELECT
 					t.c.value('@tpid', 'INT')
@@ -127,6 +130,7 @@ BEGIN
 					,t.c.value('@originalstate', 'VARCHAR(10)')
 					,t.c.value('@ticketkey', 'BIGINT')
 					,t.c.value('@createtime', 'DATETIME')
+					,t.c.value('@bonusid', 'INT')
 				FROM @XmlData.nodes('transaction/trans') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
@@ -163,6 +167,7 @@ BEGIN
 						,b.OriginalState	= t.OriginalState
 						,b.TicketKey		= t.TicketKey
 						,b.CreateTime		= t.CreateTime
+						,b.BonusId			= t.BonusId
 						,b.WinlostDate		= CONVERT(DATE, t.SettledTime)
 					FROM dbo.TpBetRecord b
 						INNER JOIN #tmpTpBetRecord t ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
@@ -185,6 +190,7 @@ BEGIN
 							OR ISNULL(b.OriginalState, '')	<> ISNULL(t.OriginalState, '')
 							OR ISNULL(b.TicketKey, 0)		<> ISNULL(t.TicketKey, 0)
 							OR ISNULL(b.CreateTime, '')		<> ISNULL(t.CreateTime, '')
+							OR ISNULL(b.BonusId, 0)			<> ISNULL(t.BonusId, 0)
 						)
 				END
 
@@ -211,6 +217,7 @@ BEGIN
 						,OriginalState
 						,TicketKey
 						,CreateTime
+						,BonusId
 						,WinlostDate
 					)
 					SELECT
@@ -232,6 +239,7 @@ BEGIN
 						,OriginalState
 						,TicketKey
 						,CreateTime
+						,BonusId
 						,CONVERT(DATE, SettledTime)
 					FROM #tmpTpBetRecord
 					WHERE DataType = 1
