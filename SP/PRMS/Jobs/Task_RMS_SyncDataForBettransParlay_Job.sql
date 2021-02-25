@@ -21,6 +21,7 @@ AS
 		- 20191211@Jacob: Extra PT - Add new structure to support extra pt column on bettrans table #124194
 		- 20200510@Percy: Add Penalty Shootout Combo [RedmineID: #133961]
 		- 20201214@Danny: Separate Data of Virtual Soccer & Virtual Basketball [RedmineID: #145926]
+		- 20210225@Danny: Incorporate BetBuilder - Basketball on PRMS [RedmineID: #150652]
 */
 
 BEGIN
@@ -59,8 +60,9 @@ BEGIN
 		FROM bodb02.dbo.bettrans WITH (NOLOCK)
 		WHERE bettype IN (29, 38, 376)
 
-		-- Update some columns for bettype = 29
-		IF EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE bettype = 29)
+
+		-- Update some columns for bettype IN  (29,38)
+		IF EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE bettype IN (29,38))
 		BEGIN
 			-- transid2 (sporttype)
 			UPDATE b WITH (ROWLOCK)
@@ -98,7 +100,7 @@ BEGIN
 						WHERE bm.refno = b.refno
 					) s
 				) s
-			WHERE b.bettype = 29
+			WHERE b.bettype IN  (29,38)
 
 			-- TotalBet
 			UPDATE b WITH (ROWLOCK)
@@ -249,8 +251,8 @@ BEGIN
 		WHERE tstamp BETWEEN @min_tstamp AND @max_tstamp
 			AND bettype IN (29, 38, 376)
 
-		-- Update some columns for bettype = 29
-		IF EXISTS (SELECT 1 FROM #rmBettrans WHERE bettype = 29)
+		-- Update some columns for bettype IN  (29,38)
+		IF EXISTS (SELECT 1 FROM #rmBettrans WHERE bettype IN  (29,38))
 		BEGIN
 			CREATE NONCLUSTERED INDEX IX_bettype ON #rmBettrans (bettype, hdp2)
 
@@ -290,7 +292,7 @@ BEGIN
 						WHERE bm.refno = b.refno
 					) s
 				) s
-			WHERE b.bettype = 29
+			WHERE b.bettype IN  (29,38)
 
 			-- TotalBet
 			UPDATE b
