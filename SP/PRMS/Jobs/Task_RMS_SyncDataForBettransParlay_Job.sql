@@ -68,7 +68,7 @@ BEGIN
 			UPDATE b WITH (ROWLOCK)
 			SET b.transid2 = m.sporttype
 			FROM dbo.rmBettrans b
-			INNER JOIN bodb02.dbo.match m ON b.matchid = m.matchid
+			INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON b.matchid = m.matchid
 			WHERE b.bettype =38
 		END
 
@@ -268,10 +268,10 @@ BEGIN
 		IF EXISTS (SELECT 1 FROM #rmBettrans WHERE bettype = 38)
 		BEGIN
 			-- transid2 (sporttype)
-			UPDATE b WITH (ROWLOCK)
+			UPDATE b
 			SET b.transid2 = m.sporttype
 			FROM #rmBettrans b
-			INNER JOIN bodb02.dbo.match m ON b.matchid = m.matchid
+			INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON b.matchid = m.matchid
 			WHERE b.bettype =38
 		END
 
