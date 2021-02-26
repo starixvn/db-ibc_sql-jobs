@@ -182,17 +182,17 @@ BEGIN
 	CREATE TABLE #MBDetail (ScheduleId INT identity, MoveBetsDay SMALLDATETIME)
 
 
-	IF EXISTS (SELECT (1) FROM  dbo.Acc_ManualMovebetConfig WITH(NOLOCK) WHERE MBDate = @Today) -- Have a manual
+	IF EXISTS (SELECT (1) FROM  dbo.Acc_ManualMovebetConfig WITH(NOLOCK) WHERE MBDate = @Today) -- Have a manual config
 	BEGIN
 		---------------
 		TRUNCATE TABLE #MBDetail
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday7 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday6 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday5 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -4, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday4 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -3, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday3 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -2, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday2 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -1, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday1 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday7 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday6 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday5 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -4, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday4 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -3, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday3 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -2, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday2 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -1, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday1 = 1 AND MBDate = @Today
 	
 		SELECT ScheduleId, MoveBetsDay FROM #MBDetail ORDER BY ScheduleId
 
