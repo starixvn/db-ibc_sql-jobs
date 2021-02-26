@@ -185,6 +185,7 @@ BEGIN
 	IF EXISTS (SELECT (1) FROM  dbo.Acc_ManualMovebetConfig WITH(NOLOCK) WHERE MBDate = @Today) -- Have a manual
 	BEGIN
 		---------------
+		TRUNCATE TABLE #MBDetail
 		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday7 = 1 AND MBDate = @Today
 		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday6 = 1 AND MBDate = @Today
 		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday5 = 1 AND MBDate = @Today
@@ -198,6 +199,7 @@ BEGIN
 	END
 	ELSE
 	BEGIN
+		TRUNCATE TABLE #MBDetail
 		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, @Today) FROM #DefaultMovebetConfig where  Isbackday7 = 1 AND _weekDay = @WeekDay
 		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, @Today) FROM #DefaultMovebetConfig where  Isbackday6 = 1 AND _weekDay = @WeekDay
 		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, @Today) FROM #DefaultMovebetConfig where  Isbackday5 = 1 AND _weekDay = @WeekDay
