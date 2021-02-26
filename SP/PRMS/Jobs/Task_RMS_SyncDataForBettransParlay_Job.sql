@@ -21,6 +21,7 @@ AS
 		- 20191211@Jacob: Extra PT - Add new structure to support extra pt column on bettrans table #124194
 		- 20200510@Percy: Add Penalty Shootout Combo [RedmineID: #133961]
 		- 20201214@Danny: Separate Data of Virtual Soccer & Virtual Basketball [RedmineID: #145926]
+		- 20210225@Danny: Incorporate BetBuilder - Basketball on PRMS [RedmineID: #150652]
 */
 
 BEGIN
@@ -58,6 +59,19 @@ BEGIN
 			,balance,SecAcceptFlag,epositiontaking,1,hdp2,odds,1
 		FROM bodb02.dbo.bettrans WITH (NOLOCK)
 		WHERE bettype IN (29, 38, 376)
+
+	
+		-- Update some columns for bettype = 38
+		IF EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE bettype = 38)
+		BEGIN
+			-- transid2 (sporttype)
+			UPDATE b WITH (ROWLOCK)
+			SET b.transid2 = m.sporttype
+			FROM dbo.rmBettrans b
+			INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON b.matchid = m.matchid
+			WHERE b.bettype =38
+		END
+
 
 		-- Update some columns for bettype = 29
 		IF EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE bettype = 29)
@@ -248,6 +262,18 @@ BEGIN
 		FROM bodb02.dbo.bettrans WITH (NOLOCK)
 		WHERE tstamp BETWEEN @min_tstamp AND @max_tstamp
 			AND bettype IN (29, 38, 376)
+
+			
+		-- Update some columns for bettype = 38
+		IF EXISTS (SELECT 1 FROM #rmBettrans WHERE bettype = 38)
+		BEGIN
+			-- transid2 (sporttype)
+			UPDATE b
+			SET b.transid2 = m.sporttype
+			FROM #rmBettrans b
+			INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON b.matchid = m.matchid
+			WHERE b.bettype =38
+		END
 
 		-- Update some columns for bettype = 29
 		IF EXISTS (SELECT 1 FROM #rmBettrans WHERE bettype = 29)
