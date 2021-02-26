@@ -176,78 +176,40 @@ BEGIN
 		Isbackday6 BIT,
 		Isbackday7 BIT,   
 	)
+	INSERT INTO #DefaultMovebetConfig (_weekDay,Isbackday1,Isbackday2,Isbackday3,Isbackday4,Isbackday5,Isbackday6,Isbackday7 )
+	EXEC dbo.Acc_Manual_MoveBet_Sel @IsDefault = 1
 
-	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (1, 0, 0, 0,0,0,0,0)
-	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (2, 0, 0, 1,1,0,0,0)
-	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (3, 0, 0, 1,0,0,0,0)
-	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (4, 0, 0, 1,0,0,0,0)
-	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (5, 0, 0, 0,0,0,0,0)
-	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (6, 0, 0, 1,1,0,0,0)
-	Insert into #DefaultMovebetConfig(_weekDay,Isbackday1, Isbackday2, Isbackday3,Isbackday4, Isbackday5,Isbackday6,Isbackday7)  VALUES (7, 0, 0, 1,0,0,0,0)
+	CREATE TABLE #MBDetail (ScheduleId INT identity, MoveBetsDay SMALLDATETIME)
 
 
 	IF EXISTS (SELECT (1) FROM  dbo.Acc_ManualMovebetConfig WITH(NOLOCK) WHERE MBDate = @Today) -- Have a manual
 	BEGIN
-		SELECT ROW_NUMBER() OVER(ORDER BY MBDate DESC) AS ScheduleId, 
-				CASE WHEN  MBDate = 'Isbackday1' THEN DATEADD(day, - 1, CONVERT(VARCHAR(10), @Today, 120))  
-							WHEN  MBDate = 'Isbackday2' THEN DATEADD(day, - 2, CONVERT(VARCHAR(10), @Today, 120))
-							WHEN  MBDate = 'Isbackday3' THEN DATEADD(day, - 3, CONVERT(VARCHAR(10), @Today, 120))
-							WHEN  MBDate = 'Isbackday4' THEN DATEADD(day, - 4, CONVERT(VARCHAR(10), @Today, 120))
-							WHEN  MBDate = 'Isbackday5' THEN DATEADD(day, - 5, CONVERT(VARCHAR(10), @Today, 120))
-							WHEN  MBDate = 'Isbackday6' THEN DATEADD(day, - 6, CONVERT(VARCHAR(10), @Today, 120))
-							WHEN  MBDate = 'Isbackday7' THEN DATEADD(day, - 7, CONVERT(VARCHAR(10), @Today, 120))
-							ELSE NULL END  MoveBetsDay
-		FROM   
-			( 
-				select	TOP(1)
-						Isbackday1,
-						Isbackday2, 
-						Isbackday3,
-						Isbackday4,
-						Isbackday5,
-						Isbackday6,
-						Isbackday7 
-				from	dbo.Acc_ManualMovebetConfig WITH(NOLOCK)
-				where MBDate = @Today
-			) p  
-			UNPIVOT  
-			(
-				Value_ FOR MBDate IN   (Isbackday1,Isbackday2, Isbackday3,Isbackday4,Isbackday5,Isbackday6,Isbackday7)  
-			) AS unpvt
-		where Value_ = 1;
+		---------------
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday7 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday6 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday5 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -4, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday4 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -3, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday3 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -2, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday2 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -1, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) where  Isbackday1 = 1 AND MBDate = @Today
+	
+		SELECT ScheduleId, MoveBetsDay FROM #MBDetail ORDER BY ScheduleId
 
 	END
 	ELSE
 	BEGIN
-		SELECT ROW_NUMBER() OVER(ORDER BY MBDate DESC) AS ScheduleId, 
-				CASE WHEN  MBDate = 'Isbackday1' THEN DATEADD(day, - 1, CONVERT(VARCHAR(10), @Today, 120))  
-							WHEN  MBDate = 'Isbackday2' THEN DATEADD(day, - 2, CONVERT(VARCHAR(10), @Today, 120))
-							WHEN  MBDate = 'Isbackday3' THEN DATEADD(day, - 3, CONVERT(VARCHAR(10), @Today, 120))
-							WHEN  MBDate = 'Isbackday4' THEN DATEADD(day, - 4, CONVERT(VARCHAR(10), @Today, 120))
-							WHEN  MBDate = 'Isbackday5' THEN DATEADD(day, - 5, CONVERT(VARCHAR(10), @Today, 120))
-							WHEN  MBDate = 'Isbackday6' THEN DATEADD(day, - 6, CONVERT(VARCHAR(10), @Today, 120))
-							WHEN  MBDate = 'Isbackday7' THEN DATEADD(day, - 7, CONVERT(VARCHAR(10), @Today, 120))
-							ELSE NULL END  MoveBetsDay
-		FROM   
-			( 
-				select	_weekDay, 
-						Isbackday1,
-						Isbackday2, 
-						Isbackday3,
-						Isbackday4,
-						Isbackday5,
-						Isbackday6,
-						Isbackday7 
-				from	#DefaultMovebetConfig 
-				where _weekDay = @WeekDay  
-			) p  
-			UNPIVOT  
-			(
-				Value_ FOR MBDate IN   (Isbackday1,Isbackday2, Isbackday3,Isbackday4,Isbackday5,Isbackday6,Isbackday7)  
-			) AS unpvt
-		where Value_ = 1;
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, @Today) FROM #DefaultMovebetConfig where  Isbackday7 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, @Today) FROM #DefaultMovebetConfig where  Isbackday6 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, @Today) FROM #DefaultMovebetConfig where  Isbackday5 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -4, @Today) FROM #DefaultMovebetConfig where  Isbackday4 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -3, @Today) FROM #DefaultMovebetConfig where  Isbackday3 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -2, @Today) FROM #DefaultMovebetConfig where  Isbackday2 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -1, @Today) FROM #DefaultMovebetConfig where  Isbackday1 = 1 AND _weekDay = @WeekDay
+	
+		SELECT ScheduleId, MoveBetsDay FROM #MBDetail ORDER BY ScheduleId
 	END
 
+	DROP TABLE #MBDetail
 	DROP TABLE #DefaultMovebetConfig
 END
 
