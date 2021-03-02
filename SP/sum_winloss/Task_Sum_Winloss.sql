@@ -19,6 +19,7 @@ AS
 		- 20201210@Malcolm: Add Big Gaming And Happy 5 Linked Games [RedminedId : #146542]
 		- 20201228@Malcolm: Add MaxGame [redmine: #147572]
 		- 20210203@Malcolm: Add Saba Promotion [redmine: #149952]
+		- 20210302@Malcolm: Add Sports Lottery [redmine: #147362]
 	
 */
 BEGIN
@@ -129,6 +130,7 @@ BEGIN
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
+			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -244,6 +246,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
+				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 				 ELSE 0
 			 END
 			,CASE
@@ -322,6 +325,7 @@ BEGIN
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
+			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -436,6 +440,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion 
+				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 				 ELSE 0
 			 END
 			,CASE
@@ -514,6 +519,7 @@ BEGIN
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
+			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -627,6 +633,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
+				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 				 ELSE 0
 			 END
 			,CASE
@@ -705,6 +712,7 @@ BEGIN
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
+			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -819,6 +827,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
+				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 				 ELSE 0
 			 END
 			,CASE
