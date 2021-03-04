@@ -15,6 +15,7 @@ AS
 		- 20200818@Percy: Add column ValidBet [RedmineID: #137395]
 		- 20201105@Percy: Remove duplicate data from API [RedmineID: #144888]
 		- 20210125@Percy: Add column BonusId [RedmineID: #149268]
+		- 20210301@Percy: Add column Revenue [RedmineID: #150398]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -53,6 +54,7 @@ BEGIN
 		,Stake			DECIMAL(18,2)
 		,ValidBet		DECIMAL(18,2)
 		,WinlostAmount	DECIMAL(18,2)
+		,Revenue		DECIMAL(20,4)
 		,SettlementType	TINYINT
 		,TicketStatus	TINYINT
 		,OriginalState	VARCHAR(10)
@@ -104,6 +106,7 @@ BEGIN
 					,Stake
 					,ValidBet
 					,WinlostAmount
+					,Revenue
 					,SettlementType
 					,TicketStatus
 					,OriginalState
@@ -125,6 +128,7 @@ BEGIN
 					,t.c.value('@stake', 'DECIMAL(18,2)')
 					,CAST(NULLIF(t.c.value('@validbet', 'varchar(30)'), '') AS DECIMAL(18,2))
 					,t.c.value('@winlostamount', 'DECIMAL(18,2)')
+					,CAST(NULLIF(t.c.value('@revenue', 'varchar(30)'), '') AS DECIMAL(20,4))
 					,t.c.value('@settlementtype', 'TINYINT')
 					,t.c.value('@ticketstatus', 'TINYINT')
 					,t.c.value('@originalstate', 'VARCHAR(10)')
@@ -162,6 +166,7 @@ BEGIN
 						,b.Stake			= t.Stake
 						,b.ValidBet			= t.ValidBet
 						,b.WinlostAmount	= t.WinlostAmount
+						,b.Revenue			= t.Revenue
 						,b.SettlementType	= t.SettlementType
 						,b.TicketStatus		= t.TicketStatus
 						,b.OriginalState	= t.OriginalState
@@ -185,6 +190,7 @@ BEGIN
 							OR ISNULL(b.Stake, 0)			<> ISNULL(t.Stake, 0)
 							OR ISNULL(b.ValidBet, 0)		<> ISNULL(t.ValidBet, 0)
 							OR ISNULL(b.WinlostAmount, 0)	<> ISNULL(t.WinlostAmount, 0)
+							OR ISNULL(b.Revenue, 0)			<> ISNULL(t.Revenue, 0)
 							OR ISNULL(b.SettlementType, 0)	<> ISNULL(t.SettlementType, 0)
 							OR ISNULL(b.TicketStatus, 0)	<> ISNULL(t.TicketStatus, 0)
 							OR ISNULL(b.OriginalState, '')	<> ISNULL(t.OriginalState, '')
@@ -212,6 +218,7 @@ BEGIN
 						,Stake
 						,ValidBet
 						,WinlostAmount
+						,Revenue
 						,SettlementType
 						,TicketStatus
 						,OriginalState
@@ -234,6 +241,7 @@ BEGIN
 						,Stake
 						,ValidBet
 						,WinlostAmount
+						,Revenue
 						,SettlementType
 						,TicketStatus
 						,OriginalState
