@@ -1,8 +1,10 @@
-﻿DROP PROCEDURE IF EXISTS `N88_Get_ServerInfo`;
+USE Siebog;
+
+DROP PROCEDURE IF EXISTS `N88_Get_ServerInfo`;
 
 DELIMITER //
 
-CREATE DEFINER=`aff_user`@`%` PROCEDURE `N88_Get_ServerInfo`(
+CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `N88_Get_ServerInfo`(
   /*
     Created: 20200520@Percy
     DB: Slave DB/Siebog

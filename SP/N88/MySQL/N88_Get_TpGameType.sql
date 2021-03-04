@@ -1,8 +1,10 @@
-﻿DROP PROCEDURE IF EXISTS `N88_Get_TpGameType`;
+USE Siebog;
+
+DROP PROCEDURE IF EXISTS `N88_Get_TpGameType`;
 
 DELIMITER //
 
-CREATE DEFINER=`aff_user`@`%` PROCEDURE `N88_Get_TpGameType`(
+CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `N88_Get_TpGameType`(
   /*
     Created: 20200520@Percy
     DB: Slave DB/Siebog
