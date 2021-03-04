@@ -1,8 +1,10 @@
-﻿DROP PROCEDURE IF EXISTS `N88_Get_Customer`;
+USE Siebog;
+
+DROP PROCEDURE IF EXISTS `N88_Get_Customer`;
 
 DELIMITER //
 
-CREATE DEFINER=`aff_user`@`%` PROCEDURE `N88_Get_Customer`(
+CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `N88_Get_Customer`(
   IN fromDate DATETIME
   /*
     Created: 20200520@Percy

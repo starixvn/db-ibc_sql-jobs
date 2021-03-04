@@ -4,7 +4,7 @@ DROP PROCEDURE IF EXISTS `API_DepositInfo_Get`;
 
 DELIMITER //
 
-CREATE DEFINER=`aff_user`@`%` PROCEDURE `API_DepositInfo_Get`(
+CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `API_DepositInfo_Get`(
   IN Id INT,
   IN batchCount INT
   /*

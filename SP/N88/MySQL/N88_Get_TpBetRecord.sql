@@ -1,8 +1,10 @@
-﻿DROP PROCEDURE IF EXISTS `N88_Get_TpBetRecord`;
+USE Siebog;
+
+DROP PROCEDURE IF EXISTS `N88_Get_TpBetRecord`;
 
 DELIMITER //
 
-CREATE DEFINER=`aff_user`@`%` PROCEDURE `N88_Get_TpBetRecord`(
+CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `N88_Get_TpBetRecord`(
   IN fromDate DATETIME,
   IN toDate DATETIME
   /*

@@ -20,7 +20,7 @@ BEGIN
 
 	-- Get data
 	BEGIN
-		CREATE TABLE #__N88_SumWinloss
+		CREATE TABLE #__TpBetRecord
 		(
 			CustId			INT
 			,UserName		VARCHAR(50)
@@ -33,12 +33,12 @@ BEGIN
 			,TurnOver		MONEY
 			,ValidBet		MONEY
 			,Winloss		MONEY
+			,Revenue		MONEY
 			,BetCount		INT
 			,StatusId		TINYINT
-			,DataType		TINYINT
 		)
 
-		INSERT INTO #__N88_SumWinloss (CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, BetCount, StatusId)
+		INSERT INTO #__TpBetRecord (CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, BetCount, StatusId)
 		SELECT
 			t.CustId, t.UserName, 0 AS IsTest, t.CurrencyId, t.SiteId, t.GameType
 			,DATEADD(HOUR, DATEPART(HOUR, t.TransTime), CONVERT(VARCHAR(10), t.TransTime, 120)) -- date & hour
@@ -46,6 +46,7 @@ BEGIN
 			,SUM(t.Stake / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS TurnOver
 			,SUM(ISNULL(t.ValidBet, t.Stake) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ValidBet
 			,SUM(t.WinlostAmount / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS Winloss
+			,SUM(ISNULL(t.Revenue, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS Winloss
 			,COUNT(1) AS BetCount
 			,t.TicketStatus
 		FROM dbo.TpBetRecord t WITH (NOLOCK)
@@ -59,24 +60,56 @@ BEGIN
 
 		UPDATE t
 		SET t.IsTest = c.IsTest
-		FROM #__N88_SumWinloss t
+		FROM #__TpBetRecord t
 			INNER JOIN dbo.Customer c WITH (NOLOCK) ON t.CustId = c.CustId
 		WHERE c.IsTest = 1
 	END
 
 	-- Gen data into N88_RptWinloss
 	BEGIN
-		WITH CTE_N88_SumWinloss AS
+		CREATE TABLE #__N88_SumWinloss
 		(
-			SELECT CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, BetCount, StatusId
+			CustId			INT
+			,UserName		VARCHAR(50)
+			,IsTest			BIT
+			,Currency		INT
+			,SiteId			INT
+			,GameType		INT
+			,TransTime		DATETIME
+			,SettledTime	DATETIME
+			,TurnOver		MONEY
+			,ValidBet		MONEY
+			,Winloss		MONEY
+			,Revenue		MONEY
+			,BetCount		INT
+			,StatusId		TINYINT
+			,DataType		SMALLINT
+		)
+		;WITH CTE_N88_SumWinloss AS
+		(
+			SELECT CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, BetCount, StatusId
 			FROM dbo.N88_SumWinloss WITH (NOLOCK)
 			WHERE SettledTime >= @FDate AND SettledTime < @TDate
 		)
-		UPDATE t
-		SET t.DataType = CASE	WHEN t.SettledTime IS NULL THEN -1 -- delete
+		INSERT INTO #__N88_SumWinloss (CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, BetCount, StatusId, DataType)
+		SELECT ISNULL(t.CustId, c.CustId)
+			, ISNULL(t.UserName, c.UserName)
+			, ISNULL(t.IsTest, c.IsTest)
+			, ISNULL(t.Currency, c.Currency)
+			, ISNULL(t.SiteId, c.SiteId)
+			, ISNULL(t.GameType, c.GameType)
+			, ISNULL(t.TransTime, c.TransTime)
+			, ISNULL(t.SettledTime, c.SettledTime)
+			, ISNULL(t.TurnOver, c.TurnOver)
+			, ISNULL(t.ValidBet, c.ValidBet)
+			, ISNULL(t.Winloss, c.Winloss)
+			, ISNULL(t.Revenue, c.Revenue)
+			, ISNULL(t.BetCount, c.BetCount)
+			, ISNULL(t.StatusId, c.StatusId)
+			, DataType = CASE	WHEN t.SettledTime IS NULL THEN -1 -- delete
 								WHEN c.SettledTime IS NULL THEN 1 -- insert
 								ELSE 0 END -- update
-		FROM #__N88_SumWinloss t
+		FROM #__TpBetRecord t
 			FULL OUTER JOIN CTE_N88_SumWinloss c
 				ON		t.SettledTime	= c.SettledTime
 					AND t.SiteId		= c.SiteId
@@ -85,13 +118,13 @@ BEGIN
 					AND t.Currency		= c.Currency
 					AND t.GameType		= c.GameType
 					AND t.TransTime		= c.TransTime
-					AND t.SettledTime	= c.SettledTime
 					AND t.StatusId		= c.StatusId
 		WHERE t.SettledTime IS NULL
 			OR c.SettledTime IS NULL
 			OR ISNULL(t.TurnOver, 0)	<> ISNULL(c.TurnOver, 0)
 			OR ISNULL(t.ValidBet, 0)	<> ISNULL(c.ValidBet, 0)
 			OR ISNULL(t.Winloss, 0)		<> ISNULL(c.Winloss, 0)
+			OR ISNULL(t.Revenue, 0)		<> ISNULL(c.Revenue, 0)
 			OR ISNULL(t.BetCount, 0)	<> ISNULL(c.BetCount, 0)
 
 		-- Delete
@@ -106,7 +139,6 @@ BEGIN
 						AND s.Currency		= t.Currency
 						AND s.GameType		= t.GameType
 						AND s.TransTime		= t.TransTime
-						AND s.SettledTime	= t.SettledTime
 						AND s.StatusId		= t.StatusId
 			WHERE t.DataType = -1
 
@@ -116,6 +148,7 @@ BEGIN
 			SET s.TurnOver		= t.TurnOver
 				,s.ValidBet		= t.ValidBet
 				,s.Winloss		= t.Winloss
+				,s.Revenue		= t.Revenue
 				,s.BetCount		= t.BetCount
 			FROM dbo.N88_SumWinloss s
 				INNER JOIN #__N88_SumWinloss t
@@ -126,18 +159,18 @@ BEGIN
 						AND s.Currency		= t.Currency
 						AND s.GameType		= t.GameType
 						AND s.TransTime		= t.TransTime
-						AND s.SettledTime	= t.SettledTime
 						AND s.StatusId		= t.StatusId
 			WHERE t.DataType = 0
 
 		-- Insert
 		IF EXISTS (SELECT 1 FROM #__N88_SumWinloss WHERE DataType = 1)
-			INSERT INTO dbo.N88_SumWinloss (CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, BetCount, StatusId)
-			SELECT CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, BetCount, StatusId
+			INSERT INTO dbo.N88_SumWinloss (CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, BetCount, StatusId)
+			SELECT CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, BetCount, StatusId
 			FROM #__N88_SumWinloss
 			WHERE DataType = 1
 	END
 
 	DROP TABLE #__N88_SumWinloss
+	DROP TABLE #__TpBetRecord
 END
 GO
