@@ -11,6 +11,7 @@ AS
 
 	Revisions:
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
+		- 20210301@Percy: Do not calculate commission when affiliate is closed [RedmineID: #149213]
 */
 
 BEGIN
@@ -121,7 +122,7 @@ BEGIN
 	DELETE tc
 	FROM #TempCommission tc
 		INNER JOIN dbo.AffInfo ai WITH (NOLOCK) ON tc.AffId = ai.AffId
-	WHERE ai.Status <> 'Approved' AND ai.IsClosed = 0
+	WHERE ai.Status <> 'Approved' OR ai.IsClosed = 1
 
 		-- Import data
 	IF @IsForceUpdate = 1
@@ -238,18 +239,13 @@ BEGIN
 	WHERE ProductId = 0
 
 	-- Update Commission Date
-	DECLARE @LaunchDate SMALLDATETIME
+	DECLARE @LaunchDate SMALLDATETIME, @LastCommDate SMALLDATETIME
+	SELECT  @LaunchDate		= CONVERT(SMALLDATETIME, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'LaunchDate'
+	SELECT  @LastCommDate	= CONVERT(SMALLDATETIME, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'AFF_CommissionDate'
 
-	IF @IsForceUpdate = 0
-	BEGIN
-		SELECT @LaunchDate = CONVERT(SMALLDATETIME, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'LaunchDate'
-
-		IF @LastDayOfMonth >= DATEADD(DAY, -1, @LaunchDate)
-		BEGIN
-			UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
-			SET SValue = CONVERT(VARCHAR(10), @LastDayOfMonth, 120)
-			WHERE SName = 'AFF_CommissionDate'
-		END
-	END
+	IF @LastDayOfMonth >= DATEADD(DAY, -1, @LaunchDate) AND @LastDayOfMonth > @LastCommDate
+		UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+		SET SValue = CONVERT(VARCHAR(10), @LastDayOfMonth, 120)
+		WHERE SName = 'AFF_CommissionDate'
 END
 GO
