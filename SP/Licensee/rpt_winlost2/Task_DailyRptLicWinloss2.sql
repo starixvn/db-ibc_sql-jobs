@@ -83,6 +83,7 @@ AS
 		- 20210120@Mark: Integrate new betfrom 7 [Redmine: #149108]
 		- 20210202@Hogan: Integrate Four Guardians [RedmineID: #148100]
 		- 20210203@Louis: Saba Red Envelope [RedmineID: #149923]
+		- 20210305@Mark: Integrate new betfrom _, @, %(Mobile Euro) [Redmine: #151019]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -229,11 +230,11 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END AS isBA
 		,CASE
-			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2','5') THEN 1
+			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%') THEN 1
 			ELSE 0
 		END AS isMobile
 		,CASE
-			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7') THEN bettrans.betfrom
+			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%') THEN bettrans.betfrom
 			ELSE ''
 		END AS betfrom
 		,SUM(CASE 
@@ -326,11 +327,11 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END
 		,CASE
-			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2','5') THEN 1
+			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%') THEN 1
 			ELSE 0
 		END
 		,CASE
-			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7') THEN bettrans.betfrom
+			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%') THEN bettrans.betfrom
 			ELSE ''
 		END
 

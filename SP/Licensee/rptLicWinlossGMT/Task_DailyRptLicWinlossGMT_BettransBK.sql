@@ -28,6 +28,7 @@ AS
 		- 20200622@Hogan: Integrate 3 new betfrom 4, 5, 6 [Redmine: #136107]
 		- 20201001@Louis: Licensee Spread Setting [RedmineID: #142532]	
 		- 20210120@Mark: Integrate new betfrom 7 [Redmine: #149108]
+		- 20210305@Mark: Integrate new betfrom _, @, %(Mobile Euro) [Redmine: #151019]
 
 	EXEC Task_DailyRptLicWinlossGMT_BettransBK '2017-11-01'
 */  
@@ -150,9 +151,9 @@ BEGIN
 					WHEN BA.transid IS NULL THEN 0  
 					WHEN BA.transid IS NOT NULL THEN 1 END AS isBA  
 				,CASE   
-					WHEN b.betfrom IN ('s','m','l','r','o','c','2','5') THEN 1 ELSE 0 END AS isMobile   
+					WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%') THEN 1 ELSE 0 END AS isMobile   
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7') THEN b.betfrom ELSE '' END AS betfrom   		
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%') THEN b.betfrom ELSE '' END AS betfrom   		
 			FROM bodb_Archive.dbo.bettrans_bk b WITH (NOLOCK)
 				LEFT JOIN bodb_Archive.dbo.Match_bk m WITH (NOLOCK)
 					ON m.MatchId = b.MatchId
@@ -199,9 +200,9 @@ BEGIN
 					WHEN BA.transid IS NULL THEN 0  
 					WHEN BA.transid IS NOT NULL THEN 1 END  
 				,CASE   
-					WHEN b.betfrom IN ('s','m','l','r','o','c','2','5') THEN 1 ELSE 0 END  
+					WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%') THEN 1 ELSE 0 END  
 				,CASE      
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7') THEN b.betfrom ELSE '' END,
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%') THEN b.betfrom ELSE '' END,
 				CASE 
 					WHEN b.betType = 999 THEN b.betType			--Licensee Spread Setting
 					ELSE 0 
