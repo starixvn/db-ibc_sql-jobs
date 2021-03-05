@@ -13,6 +13,7 @@ AS
 		- 20200506@Sol: Remove IsTest column in N88_RptWinloss [RedmineID: #135372]
 		- 20200710@Sol: Support multiple timezone in N88_RptWinloss [RedmineID: #137064]
 		- 20200818@Percy: Add column ValidBet [RedmineID: #137395]
+		- 20210305@Percy: Separate merge statement to prevent scan table [RedmineID: #150398]
 */
 
 BEGIN
@@ -20,8 +21,7 @@ BEGIN
 
 	-- Get data
 	BEGIN
-
-		CREATE TABLE #tmpN88_RptWinloss
+		CREATE TABLE #tmpData
 		(
 			WinlostDate		DATE NOT NULL,
 			CustId			INT NOT NULL,
@@ -66,7 +66,7 @@ BEGIN
 				AND CAST(DATEADD(hh, -4, SettledTime) as date) = @WinlostDate
 		)
 
-		INSERT INTO #tmpN88_RptWinloss 
+		INSERT INTO #tmpData 
 		(
 			TransDate, TransDateGMT, WinlostDate, WinlostDateGMT, CustId, UserName, GameType, 
 			Currency, TurnOver, ValidBet, Winloss, BetCount, LicenseeID, TimeZone, StatusID
@@ -79,50 +79,136 @@ BEGIN
 	END
 
 	-- Gen data into N88_RptWinloss
-	MERGE dbo.N88_RptWinloss AS TARGET
-	USING #tmpN88_RptWinloss AS SOURCE
-	ON 
-			TARGET.TransDate = SOURCE.TransDate
-		AND TARGET.TransDateGMT = SOURCE.TransDateGMT
-		AND TARGET.WinlostDate = SOURCE.WinlostDate
-		AND TARGET.WinlostDateGMT = SOURCE.WinlostDateGMT
-		AND TARGET.CustId = SOURCE.CustId
-		AND TARGET.GameType = SOURCE.GameType
-		AND TARGET.LicenseeID = SOURCE.LicenseeID
-		AND TARGET.StatusID = SOURCE.StatusID
-		AND TARGET.TimeZone	= SOURCE.TimeZone
-	WHEN MATCHED THEN 
-		UPDATE 
-			SET
-				TARGET.Currency			= SOURCE.Currency
-				,TARGET.TurnOver		= SOURCE.TurnOver
-				,TARGET.ValidBet		= SOURCE.ValidBet
-				,TARGET.Winloss			= SOURCE.Winloss
-				,TARGET.BetCount		= SOURCE.BetCount
-				,TARGET.UserName		= SOURCE.UserName
-	WHEN NOT MATCHED BY TARGET THEN 
-		INSERT (TransDate, TransDateGMT, WinlostDate, WinlostDateGMT, CustId, UserName, GameType, Currency, TurnOver, ValidBet, Winloss, BetCount, LicenseeID, TimeZone, StatusID)
-		VALUES 
-		(
-			SOURCE.TransDate,
-			SOURCE.TransDateGMT,
-			SOURCE.WinlostDate,
-			SOURCE.WinlostDateGMT,
-			SOURCE.CustId,
-			SOURCE.UserName,
-			SOURCE.GameType,
-			SOURCE.Currency,
-			SOURCE.TurnOver,
-			SOURCE.ValidBet,
-			SOURCE.Winloss,
-			SOURCE.BetCount,
-			SOURCE.LicenseeID,
-			SOURCE.TimeZone,
-			SOURCE.StatusID
-		)
-	WHEN NOT MATCHED BY SOURCE AND TARGET.WinlostDate = @Winlostdate THEN
-		DELETE;
+	CREATE TABLE #tmpN88_RptWinloss
+	(
+		WinlostDate		DATE NOT NULL,
+		CustId			INT NOT NULL,
+		GameType		INT NOT NULL,
+		Currency		INT NOT NULL,
+		TurnOver		MONEY NULL,
+		ValidBet		MONEY NULL,
+		Winloss			MONEY NULL,
+		BetCount		INT NULL,
+		LicenseeID		INT NOT NULL,
+		StatusID		TINYINT NOT NULL,
+		UserName		VARCHAR(30) NOT NULL,
+		WinlostDateGMT	DATE NOT NULL,
+		TimeZone		SMALLINT NOT NULL,
+		TransDate		DATE NOT NULL,
+		TransDateGMT	DATE NOT NULL,
+		DataType		SMALLINT
+	)
 
+	;WITH CTE_Source AS
+	(
+		SELECT WinlostDate,CustId,GameType,Currency,TurnOver,Winloss,BetCount,LicenseeID,StatusID,UserName,WinlostDateGMT,TimeZone,TransDate,TransDateGMT,ValidBet
+		FROM dbo.N88_RptWinloss WITH (NOLOCK)
+		WHERE WinlostDate = @WinlostDate
+	)
+	INSERT INTO #tmpN88_RptWinloss
+	(
+		WinlostDate
+		,CustId
+		,GameType
+		,Currency
+		,TurnOver
+		,Winloss
+		,BetCount
+		,LicenseeID
+		,StatusID
+		,UserName
+		,WinlostDateGMT
+		,TimeZone
+		,TransDate
+		,TransDateGMT
+		,ValidBet
+		,DataType
+	)
+	SELECT
+		ISNULL(d.WinlostDate, s.WinlostDate)
+		,ISNULL(d.CustId, s.CustId)
+		,ISNULL(d.GameType, s.GameType)
+		,ISNULL(d.Currency, s.Currency)
+		,ISNULL(d.TurnOver, s.TurnOver)
+		,ISNULL(d.Winloss, s.Winloss)
+		,ISNULL(d.BetCount, s.BetCount)
+		,ISNULL(d.LicenseeID, s.LicenseeID)
+		,ISNULL(d.StatusID, s.StatusID)
+		,ISNULL(d.UserName, s.UserName)
+		,ISNULL(d.WinlostDateGMT, s.WinlostDateGMT)
+		,ISNULL(d.TimeZone, s.TimeZone)
+		,ISNULL(d.TransDate, s.TransDate)
+		,ISNULL(d.TransDateGMT, s.TransDateGMT)
+		,ISNULL(d.ValidBet, s.ValidBet)
+		,CASE
+			WHEN d.WinlostDate IS NULL THEN -1 -- delete
+			WHEN s.WinlostDate IS NULL THEN 1 -- insert
+			ELSE 0 END -- update
+	FROM #tmpData d
+		FULL OUTER JOIN CTE_Source s
+			ON		d.TransDate			= s.TransDate
+				AND d.TransDateGMT		= s.TransDateGMT
+				AND d.WinlostDate		= s.WinlostDate
+				AND d.WinlostDateGMT	= s.WinlostDateGMT
+				AND d.CustId			= s.CustId
+				AND d.GameType			= s.GameType
+				AND d.LicenseeID		= s.LicenseeID
+				AND d.StatusID			= s.StatusID
+				AND d.TimeZone			= s.TimeZone
+	WHERE d.WinlostDate IS NULL
+		OR s.WinlostDate IS NULL
+		OR ISNULL(d.Currency, 0)	<> ISNULL(s.Currency, 0)
+		OR ISNULL(d.TurnOver, 0)	<> ISNULL(s.TurnOver, 0)
+		OR ISNULL(d.ValidBet, 0)	<> ISNULL(s.ValidBet, 0)
+		OR ISNULL(d.Winloss, 0)		<> ISNULL(s.Winloss, 0)
+		OR ISNULL(d.BetCount, 0)	<> ISNULL(s.BetCount, 0)
+		OR ISNULL(d.UserName, '')	<> ISNULL(s.UserName, '')
+
+	-- Delete
+	IF EXISTS (SELECT 1 FROM #tmpN88_RptWinloss WHERE DataType = -1)
+		DELETE r WITH (ROWLOCK, UPDLOCK)
+		FROM dbo.N88_RptWinloss r
+			INNER JOIN #tmpN88_RptWinloss t
+				ON		r.TransDate			= t.TransDate
+					AND r.TransDateGMT		= t.TransDateGMT
+					AND r.WinlostDate		= t.WinlostDate
+					AND r.WinlostDateGMT	= t.WinlostDateGMT
+					AND r.CustId			= t.CustId
+					AND r.GameType			= t.GameType
+					AND r.LicenseeID		= t.LicenseeID
+					AND r.StatusID			= t.StatusID
+					AND r.TimeZone			= t.TimeZone
+		WHERE t.DataType = -1
+
+	-- Update
+	IF EXISTS (SELECT 1 FROM #tmpN88_RptWinloss WHERE DataType = 0)
+		UPDATE r WITH (ROWLOCK)
+		SET r.Currency	= t.Currency
+			,r.TurnOver	= t.TurnOver
+			,r.ValidBet	= t.ValidBet
+			,r.Winloss	= t.Winloss
+			,r.BetCount	= t.BetCount
+			,r.UserName	= t.UserName
+		FROM dbo.N88_RptWinloss r
+			INNER JOIN #tmpN88_RptWinloss t
+				ON		r.TransDate			= t.TransDate
+					AND r.TransDateGMT		= t.TransDateGMT
+					AND r.WinlostDate		= t.WinlostDate
+					AND r.WinlostDateGMT	= t.WinlostDateGMT
+					AND r.CustId			= t.CustId
+					AND r.GameType			= t.GameType
+					AND r.LicenseeID		= t.LicenseeID
+					AND r.StatusID			= t.StatusID
+					AND r.TimeZone			= t.TimeZone
+		WHERE t.DataType = 0
+
+	-- Insert
+	IF EXISTS (SELECT 1 FROM #tmpN88_RptWinloss WHERE DataType = 1)
+		INSERT INTO dbo.N88_RptWinloss (WinlostDate, CustId, GameType, Currency, TurnOver, Winloss, BetCount, LicenseeID, StatusID, UserName, WinlostDateGMT, TimeZone, TransDate, TransDateGMT, ValidBet)
+		SELECT WinlostDate, CustId, GameType, Currency, TurnOver, Winloss, BetCount, LicenseeID, StatusID, UserName, WinlostDateGMT, TimeZone, TransDate, TransDateGMT, ValidBet
+		FROM #tmpN88_RptWinloss
+		WHERE DataType = 1
+	
 	DROP TABLE #tmpN88_RptWinloss
 END
 GO
