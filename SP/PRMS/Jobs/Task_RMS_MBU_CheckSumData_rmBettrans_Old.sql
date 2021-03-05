@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 220201204@Danny: Initialize SP [RedmineID: #145926]
+		- 220203205@Danny: Incorporate BetBuilder - Basketball  [RedmineID: #150652]
 		
 */
 
@@ -160,7 +161,17 @@ BEGIN
 		WHERE winlostdate = @winlostdate
 				AND bettype IN (29, 38, 376)
 				AND statusID IN (111, 112, 113)
-
+		
+		-- Update some columns for bettype = 38
+		IF EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE bettype = 38)
+		BEGIN
+			-- transid2 (sporttype)
+			UPDATE b 
+			SET b.transid2 = m.sporttype
+			FROM  #rmBettrans b
+			INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON b.matchid = m.matchid
+			WHERE b.bettype =38
+		END
 
 		-- Update some columns for bettype = 29
 		IF EXISTS (SELECT 1 FROM #rmBettrans WHERE bettype = 29)
