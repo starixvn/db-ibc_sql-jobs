@@ -20,7 +20,7 @@ AS
 		- 20201228@Malcolm: Add MaxGame [redmine: #147572]
 		- 20210203@Malcolm: Add Saba Promotion [redmine: #149952]
 		- 20210302@Malcolm: Add Sports Lottery [redmine: #147362]
-		- 20210305@Malcolm: Add Cricket [redmine: #148454]
+		- 20210305@Malcolm: Add Cricket AIO[redmine: #148454]
 	
 */
 BEGIN
@@ -144,18 +144,18 @@ BEGIN
 				modds IN (-0.25, 0.25)
 				---- Sportsbook
 				AND (bettype < 999 OR
-				bettype BETWEEN 1301 AND 1399 OR
-				bettype BETWEEN 9001 AND 9399 OR
-				bettype BETWEEN 9400 AND 9699) AND
+				bettype BETWEEN 1301 AND 1399 OR--Sporting Solution
+				bettype BETWEEN 9001 AND 9399 OR--E-Sports
+				bettype BETWEEN 9400 AND 9699) AND --Cricket AIO
 				bettype NOT IN (71, 72) AND
 				bettype NOT BETWEEN 81 AND 120 THEN ABS(stake) / 2
 			WHEN statusID = 111 AND
 				(
 				---- Sportsbook
 				(bettype < 999 OR
-				bettype BETWEEN 1301 AND 1399 OR
-				bettype BETWEEN 9001 AND 9399 OR
-				bettype BETWEEN 9400 AND 9699) AND
+				bettype BETWEEN 1301 AND 1399 OR--Sporting Solution
+				bettype BETWEEN 9001 AND 9399 OR--E-Sports
+				bettype BETWEEN 9400 AND 9699) AND--Cricket AIO
 				bettype NOT IN (71, 72) AND
 				bettype NOT BETWEEN 81 AND 120
 				) THEN 0
@@ -341,18 +341,18 @@ BEGIN
 				modds IN (-0.25, 0.25)
 				---- Sportsbook
 				AND (bettype < 999 OR
-				bettype BETWEEN 1301 AND 1399 OR
-				bettype BETWEEN 9001 AND 9399 OR
-				bettype BETWEEN 9400 AND 9699) AND
+				bettype BETWEEN 1301 AND 1399 OR--Sporting Solution
+				bettype BETWEEN 9001 AND 9399 OR--E-Sports
+				bettype BETWEEN 9400 AND 9699) AND--Cricket AIO
 				bettype NOT IN (71, 72) AND
 				bettype NOT BETWEEN 81 AND 120 THEN ABS(stake) / 2
 			WHEN statusID = 111 AND
 				(
 				---- Sportsbook
 				(bettype < 999 OR
-				bettype BETWEEN 1301 AND 1399 OR
-				bettype BETWEEN 9001 AND 9399 OR
-				bettype BETWEEN 9400 AND 9699) AND
+				bettype BETWEEN 1301 AND 1399 OR--Sporting Solution
+				bettype BETWEEN 9001 AND 9399 OR--E-Sports
+				bettype BETWEEN 9400 AND 9699) AND--Cricket AIO
 				bettype NOT IN (71, 72) AND
 				bettype NOT BETWEEN 81 AND 120
 				) THEN 0
@@ -537,18 +537,18 @@ BEGIN
 				modds IN (-0.25, 0.25)
 				---- Sportsbook
 				AND (bettype < 999 OR
-				bettype BETWEEN 1301 AND 1399 OR
-				bettype BETWEEN 9001 AND 9399 OR
-				bettype BETWEEN 9400 AND 9699) AND
+				bettype BETWEEN 1301 AND 1399 OR--Sporting Solution
+				bettype BETWEEN 9001 AND 9399 OR--E-Sports
+				bettype BETWEEN 9400 AND 9699) AND --Cricket AIO
 				bettype NOT IN (71, 72) AND
 				bettype NOT BETWEEN 81 AND 120 THEN ABS(stake) / 2
 			WHEN statusID = 111 AND
 				(
 				---- Sportsbook
 				(bettype < 999 OR
-				bettype BETWEEN 1301 AND 1399 OR
-				bettype BETWEEN 9001 AND 9399 OR
-				bettype BETWEEN 9400 AND 9699) AND
+				bettype BETWEEN 1301 AND 1399 OR--Sporting Solution
+				bettype BETWEEN 9001 AND 9399 OR--E-Sports
+				bettype BETWEEN 9400 AND 9699) AND --Cricket AIO
 				bettype NOT IN (71, 72) AND
 				bettype NOT BETWEEN 81 AND 120
 				) THEN 0
@@ -732,18 +732,18 @@ BEGIN
 				modds IN (-0.25, 0.25)
 				---- Sportsbook
 				AND (bettype < 999 OR
-				bettype BETWEEN 1301 AND 1399 OR
-				bettype BETWEEN 9001 AND 9399 OR
-				bettype BETWEEN 9400 AND 9699) AND
+				bettype BETWEEN 1301 AND 1399 OR--Sporting Solution
+				bettype BETWEEN 9001 AND 9399 OR --E-Sports
+				bettype BETWEEN 9400 AND 9699) AND --Cricket AIO
 				bettype NOT IN (71, 72) AND
 				bettype NOT BETWEEN 81 AND 120 THEN ABS(stake) / 2
 			WHEN statusID = 111 AND
 				(
 				---- Sportsbook
 				(bettype < 999 OR
-				bettype BETWEEN 1301 AND 1399 OR
-				bettype BETWEEN 9001 AND 9399 OR
-				bettype BETWEEN 9400 AND 9699) AND
+				bettype BETWEEN 1301 AND 1399 OR--Sporting Solution
+				bettype BETWEEN 9001 AND 9399 OR --E-Sports
+				bettype BETWEEN 9400 AND 9699) AND --Cricket AIO
 				bettype NOT IN (71, 72) AND
 				bettype NOT BETWEEN 81 AND 120
 				) THEN 0
