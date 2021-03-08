@@ -10,7 +10,7 @@ GO
 
 DECLARE @WinlostDate SMALLDATETIME, @ErrMsg VARCHAR(50)
 
-SELECT  @WinlostDate = '2020-01-20'
+SELECT  @WinlostDate = '2021-01-31'
 
 WHILE @WinlostDate <= '2021-03-01'
 BEGIN
