@@ -34,7 +34,9 @@ BEGIN
 		,	@TableName			NVARCHAR(128)
 		;
 
-	DECLARE	@Query	NVARCHAR(MAX), @RequestIds NVARCHAR(MAX)
+	DECLARE	@Query	NVARCHAR(MAX)
+		,@MaxId		BIGINT = 2138537 --MAX ID of TicketVoiding_VoidedTransaction in 2020 - PRO
+		,@MaxKeyId	BIGINT = 1008734020 --MAX KeyId of zzzbettrans in 2020 - PRO
 
 	SELECT	@StartTable	= MIN(rid)
 			,	@EndTable	= MAX(rid)
@@ -53,9 +55,11 @@ BEGIN
 			INSERT INTO	#DeletedList (id, IsDone)
 			SELECT id,0
 			FROM	OPENQUERY(DBARC, ''\
+			DECLARE	@MaxId	BIGINT = ''''' + CONVERT(NVARCHAR(MAX), @MaxId) + ''''';
 
 			SELECT	id
-			FROM	bodb_Archive.dbo.TicketVoiding_VoidedTransaction_bk AS t1 WITH (NOLOCK)	
+			FROM	bodb_Archive.dbo.TicketVoiding_VoidedTransaction_bk AS t1 WITH (NOLOCK)
+			WHERE t1.Id > @MaxId
 			;'');';
 
 			EXECUTE	sys.sp_executesql @Query;
@@ -173,9 +177,11 @@ BEGIN
 			INSERT INTO	#DeletedList (id, IsDone)
 			SELECT keyid,0
 			FROM	OPENQUERY(DBARC, ''\
+			DECLARE	@MaxKeyId	BIGINT = ''''' + CONVERT(NVARCHAR(MAX), @MaxKeyId) + ''''';
 
 			SELECT	keyid
-			FROM	bodb_Archive.dbo.zzzbettrans_bk AS t1 WITH (NOLOCK)	
+			FROM	bodb_Archive.dbo.zzzbettrans_bk AS t1 WITH (NOLOCK)
+			WHERE t1.KeyId > @MaxKeyId
 			;'');';
 
 			EXECUTE	sys.sp_executesql @Query;
@@ -261,7 +267,7 @@ BEGIN
 			
 				set @ids_VARIANT = cast(@ids as SQL_VARIANT)
 			
-				EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = @TableName, @tmp1 = @ids_VARIANT
+				EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = @TableName, @tmp1 = @ids_VARIANT, @winlostdate = ''
 			END
 			DROP TABLE #output
 		END
