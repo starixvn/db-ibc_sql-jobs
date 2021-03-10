@@ -19,6 +19,7 @@ AS
 		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
 		- 20200826@Brice:	Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
+		- 20210310@Brice:		Add table AutoRefundResult [Redmine: #149770]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -53,7 +54,13 @@ BEGIN;
 	SELECT	COUNT(1), 'ProviderExternalResultDetail'
 	FROM	dbo.ProviderExternalResultDetail14 AS tbl WITH (NOLOCK)
 	WHERE	EXISTS (SELECT 1 FROM dbo.match14 AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
+
 	
+	--//AutoRefundResult
+	INSERT INTO	@__tempCount(rowcnt, tableName)
+	SELECT	COUNT(1), 'AutoRefundResult'
+	FROM	dbo.AutoRefundResult AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match14 AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
 	--//outright
 	INSERT INTO	@__tempCount(rowcnt, tableName)
 	SELECT	COUNT(1), 'outright'

@@ -13,6 +13,7 @@ AS
 		- 20110516@Henry:	change bettype to new range
 		- 20150514@Viet:	adding lock type
 		- 20190827@Billy:	Fix duplicated transfer cause by unhandled transfer ticket - [Redmine: #119258]
+		- 20210210@Brice:	add column balance [Redmine: #119258]
 */
 BEGIN;
 	DECLARE	@BU_Date		DATETIME -- Next BalanceUp Date
@@ -38,6 +39,7 @@ BEGIN;
 		,	[currency]		= currency
 		,	[refno]			= refno
 		,	[creator]		= creator
+		,	[balance]		= balance
 	FROM	dbo.bettrans WITH(NOLOCK)
 	WHERE	ruben = 1
 		AND	matchid = 0
