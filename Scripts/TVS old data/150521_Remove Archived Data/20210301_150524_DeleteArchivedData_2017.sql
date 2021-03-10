@@ -70,7 +70,7 @@ BEGIN
 			SELECT @ids = COALESCE(@ids + ',' + CAST(id AS VARCHAR(50)), CAST(id AS VARCHAR(50)))
 			FROM #output  
 			
-			set @ids_VARIANT = cast(@ids as SQL_VARIANT)
+			SELECT @ids_VARIANT = CAST(@ids as SQL_VARIANT)
 			
 			EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = @TableName, @tmp1 = @ids_VARIANT, @winlostdate = ''
 		END

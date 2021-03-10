@@ -5,11 +5,11 @@
 	Database:	DBTXN-bodb02
 */
 BEGIN
-	--Step 2:
+	--Part 1 - Step 2:
 	DECLARE @StartDate	DATETIME	= '2017-01-01'
 		, @EndDate		DATETIME	= '2019-01-01'
 	
-	--Step 3:
+	--Part 2 - Step 1:
 	--DECLARE @StartDate	DATETIME	= '2019-01-01'
 	--	, @EndDate		DATETIME	= '2021-01-01'
 	
