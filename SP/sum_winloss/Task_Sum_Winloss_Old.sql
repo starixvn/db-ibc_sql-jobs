@@ -18,6 +18,7 @@ AS
 		- 20201201@Malcolm : Add Gold Diamond Gaming [Redmine : #144110]
 		- 20201124@Malcolm: Use  function (f_SumWinloss_ConditionSel) to get information [redmine: #131375]
 		- 20201210@Malcolm: Add Big Gaming [RedmineId : #142459]
+		- 20210310@Malcolm: Add Pragmatic Live Casino [RedmineId : #133717]
 */
 
 BEGIN
@@ -205,7 +206,7 @@ BEGIN
 			,SUM(CASE
 					WHEN bt.ProductId = 1 AND b.statusID IN (112, 113) AND b.modds IN (-0.25, 0.25) THEN ABS(b.stake) / 2 -- SportsBook
 					WHEN bt.ProductId = 1 AND b.statusID = 111 THEN 0 -- SportsBook
-					WHEN bt.ProductID IN (21, 39, 45, 46, 47, 51, 52, 57, 59)  THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, WM, ION, BG, GDG
+					WHEN bt.ProductID IN (21, 39, 45, 46, 47, 51, 52, 57, 59, 65)  THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, WM, ION, BG, GDG, PPL
 					ELSE ABS(b.stake) END) AS TurnoverNoDraw
 			,-1 * SUM(ISNULL(b.ExtraWinloss, 0)) AS ExtraWinloss
 			,-1 * SUM(ISNULL(b.ExtraComm, 0)) AS ExtraComm

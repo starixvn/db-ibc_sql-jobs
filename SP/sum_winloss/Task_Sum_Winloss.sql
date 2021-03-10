@@ -21,6 +21,7 @@ AS
 		- 20210203@Malcolm: Add Saba Promotion [redmine: #149952]
 		- 20210302@Malcolm: Add Sports Lottery [redmine: #147362]
 		- 20210305@Malcolm: Add Cricket AIO[redmine: #148454]
+		- 20210310@Malcolm: Add Pragmatic Live Casino [RedmineId : #133717]
 	
 */
 BEGIN
@@ -132,6 +133,7 @@ BEGIN
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
+			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -168,6 +170,7 @@ BEGIN
 				OR bettype BETWEEN 3401 AND 3499   -- WM
 				OR bettype BETWEEN 5701 AND 5799   -- GDG
 				OR bettype BETWEEN 3501 AND 3599   -- BG
+				OR bettype BETWEEN 3701 AND 3799   -- PP Live Casino
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -250,6 +253,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
+				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 				 ELSE 0
 			 END
 			,CASE
@@ -329,6 +333,7 @@ BEGIN
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
+			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -365,6 +370,7 @@ BEGIN
 				OR bettype BETWEEN 3401 AND 3499   -- WM 
 				OR bettype BETWEEN 5701 AND 5799   -- GDG
 				OR bettype BETWEEN 3501 AND 3599   -- BG
+				OR bettype BETWEEN 3701 AND 3799   -- PP Live Casino
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -446,6 +452,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion 
 				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
+				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 				 ELSE 0
 			 END
 			,CASE
@@ -525,6 +532,7 @@ BEGIN
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
+			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -561,6 +569,7 @@ BEGIN
 				OR bettype BETWEEN 3401 AND 3499   -- WM
 				OR bettype BETWEEN 5701 AND 5799   -- GDG
 				OR bettype BETWEEN 3501 AND 3599   -- BG
+				OR bettype BETWEEN 3701 AND 3799   -- PP Live Casino
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -641,6 +650,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
+				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 				 ELSE 0
 			 END
 			,CASE
@@ -720,6 +730,7 @@ BEGIN
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
+			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -757,6 +768,7 @@ BEGIN
 				OR bettype BETWEEN 3401 AND 3499   -- WM 
 				OR bettype BETWEEN 5701 AND 5799   -- GDG
 				OR bettype BETWEEN 3501 AND 3599   -- BG
+				OR bettype BETWEEN 3701 AND 3799   -- PP Live Casino
 			THEN oddsspread
 			ELSE ABS(stake)
 		END) AS TurnoverNoDraw,
@@ -837,6 +849,7 @@ BEGIN
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
+				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 				 ELSE 0
 			 END
 			,CASE
