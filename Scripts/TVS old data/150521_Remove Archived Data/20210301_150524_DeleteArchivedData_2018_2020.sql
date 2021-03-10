@@ -5,6 +5,13 @@
 	Database:	DBTXN-bodb02
 */
 BEGIN
+	--Step 2:
+	DECLARE @StartDate	DATETIME	= '2017-01-01'
+		, @EndDate		DATETIME	= '2019-01-01'
+	
+	--Step 3:
+	--DECLARE @StartDate	DATETIME	= '2019-01-01'
+	--	, @EndDate		DATETIME	= '2021-01-01'
 	
 	--('TicketVoiding_VoidedTransaction')
 	--('zzzbettrans')
@@ -13,8 +20,6 @@ BEGIN
 
 	CREATE TABLE #DeletedList (id INT PRIMARY KEY CLUSTERED,IsDone BIT)	
 	DECLARE	@Query		NVARCHAR(MAX)
-	DECLARE @StartDate	DATETIME	= '2017-01-01'
-		, @EndDate		DATETIME	= '2021-01-01'
 
 	TRUNCATE TABLE #DeletedList 
 
@@ -95,7 +100,7 @@ BEGIN
 			SELECT @ids = COALESCE(@ids + ',' + CAST(id AS VARCHAR(50)), CAST(id AS VARCHAR(50)))
 			FROM #output  
 			
-			set @ids_VARIANT = cast(@ids as SQL_VARIANT)
+			SELECT @ids_VARIANT = CAST(@ids as SQL_VARIANT)
 			
 			EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = @TableName, @tmp1 = @ids_VARIANT, @winlostdate = ''
 		END
