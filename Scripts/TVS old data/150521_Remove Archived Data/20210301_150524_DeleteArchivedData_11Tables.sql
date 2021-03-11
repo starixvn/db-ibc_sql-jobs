@@ -14,15 +14,13 @@ BEGIN
 			,	PRIMARY KEY CLUSTERED (rid)
 			);
 	INSERT INTO	@ArchiveTable (tablename)
-	VALUES	('TicketVoiding_VoidedTransaction')
-		,	('TicketVoiding_Reason')
+	VALUES	('TicketVoiding_Reason')
 		,	('TicketVoiding_VoidingHistory')
 		,	('TicketVoiding_Queue')
 		,	('TicketVoiding_OperatorInfo')
 		,	('TicketVoiding_Request')
 		,	('TicketVoiding_AutoUnmarkSetting')
 		,	('TicketVoiding_AutoVoidRequest_Queue')
-		,	('zzzbettrans')
 		,	('zzzbettransM')
 		,	('TicketVoiding_RequestDetail')
 		,	('TicketVoiding_RequestDetailTicket_Single')
@@ -35,8 +33,6 @@ BEGIN
 		;
 
 	DECLARE	@Query	NVARCHAR(MAX)
-		,@MaxId		BIGINT = 2138537 --MAX ID of TicketVoiding_VoidedTransaction in 2020 - PRO
-		,@MaxKeyId	BIGINT = 1008734020 --MAX KeyId of zzzbettrans in 2020 - PRO
 
 	SELECT	@StartTable	= MIN(rid)
 			,	@EndTable	= MAX(rid)
@@ -48,24 +44,7 @@ BEGIN
 
 		SELECT @TableName = tablename FROM @ArchiveTable WHERE rid = @StartTable 
 		
-		IF @TableName = 'TicketVoiding_VoidedTransaction'
-		BEGIN
-			SELECT	@Query = N'';
-			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT id,0
-			FROM	OPENQUERY(DBARC, ''\
-			DECLARE	@MaxId	BIGINT = ''''' + CONVERT(NVARCHAR(MAX), @MaxId) + ''''';
-
-			SELECT	id
-			FROM	bodb_Archive.dbo.TicketVoiding_VoidedTransaction_bk AS t1 WITH (NOLOCK)
-			WHERE t1.Id > @MaxId
-			;'');';
-
-			EXECUTE	sys.sp_executesql @Query;
-		END
-
-		ELSE IF @TableName = 'TicketVoiding_Reason'
+		IF @TableName = 'TicketVoiding_Reason'
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
@@ -165,23 +144,6 @@ BEGIN
 
 			SELECT	QueueId
 			FROM	bodb_Archive.dbo.TicketVoiding_AutoVoidRequest_Queue_bk AS t1 WITH (NOLOCK)	
-			;'');';
-
-			EXECUTE	sys.sp_executesql @Query;
-		END
-
-		ELSE IF @TableName = 'zzzbettrans'
-		BEGIN
-			SELECT	@Query = N'';
-			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT keyid,0
-			FROM	OPENQUERY(DBARC, ''\
-			DECLARE	@MaxKeyId	BIGINT = ''''' + CONVERT(NVARCHAR(MAX), @MaxKeyId) + ''''';
-
-			SELECT	keyid
-			FROM	bodb_Archive.dbo.zzzbettrans_bk AS t1 WITH (NOLOCK)
-			WHERE t1.KeyId > @MaxKeyId
 			;'');';
 
 			EXECUTE	sys.sp_executesql @Query;
