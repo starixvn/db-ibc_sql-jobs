@@ -24,8 +24,8 @@ BEGIN
 		DECLARE	@EndDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @EndDate, 121) + ''''';
 
 		SELECT	id
-		FROM	bodb02.dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
-		WHERE t1.transdate >= @StartDate AND t1.transdate < @EndDate
+		FROM	bodb_Archive.dbo.TicketVoiding_VoidedTransaction_bk AS t1 WITH (NOLOCK)
+		WHERE t1.CreatedDate >= @StartDate AND t1.CreatedDate < @EndDate
 		;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
