@@ -446,6 +446,7 @@ BEGIN
 			WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate);
 			
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_AutoUnmarkSetting'
+			RETURN
 		END
 
 		ELSE IF @DeletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
