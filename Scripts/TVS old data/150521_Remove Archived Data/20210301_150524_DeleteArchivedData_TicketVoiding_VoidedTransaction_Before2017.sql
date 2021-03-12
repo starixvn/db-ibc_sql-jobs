@@ -5,25 +5,18 @@
 	Database:	DBTXN-bodb02
 */
 BEGIN
-	
-	--('TicketVoiding_VoidedTransaction')
-	--('zzzbettrans')
-	DECLARE	@TableName	NVARCHAR(128)
-	SELECT @TableName = 'TicketVoiding_VoidedTransaction'
 
-	CREATE TABLE #DeletedList (id INT PRIMARY KEY CLUSTERED,IsDone BIT)	
+	CREATE TABLE #DeletedList (id INT PRIMARY KEY CLUSTERED)	
 	DECLARE	@Query	NVARCHAR(MAX)
 	DECLARE @StartDate	DATETIME	= '2017-01-01'
 
 	TRUNCATE TABLE #DeletedList 
 
-		
-	IF @TableName = 'TicketVoiding_VoidedTransaction'
 	BEGIN
 		SELECT	@Query = N'';
 		SELECT	@Query = @Query + N'\
-		INSERT INTO	#DeletedList (id, IsDone)
-		SELECT id,0
+		INSERT INTO	#DeletedList (id)
+		SELECT id
 		FROM	OPENQUERY(DBARC, ''\
 		DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
 
@@ -35,25 +28,8 @@ BEGIN
 		EXECUTE	sys.sp_executesql @Query;
 	END
 
-	ELSE IF @TableName = 'zzzbettrans'
 	BEGIN
-		SELECT	@Query = N'';
-		SELECT	@Query = @Query + N'\
-		INSERT INTO	#DeletedList (id, IsDone)
-		SELECT keyid,0
-		FROM	OPENQUERY(DBARC, ''\
-		DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
-
-		SELECT	t1.keyid
-		FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
-		WHERE t1.transdate < @StartDate	
-		;'');';
-
-		EXECUTE	sys.sp_executesql @Query;
-	END
-
-	BEGIN
-		DECLARE @ids VARCHAR(8000), @rowcount INT = 0, @topk INT = 500, @ids_VARIANT sql_variant
+		DECLARE @ids VARCHAR(MAX), @rowcount INT = 0, @topk INT = 500
 		CREATE TABLE #output (id INT)	
 
 		SET @rowcount = 1
@@ -70,9 +46,7 @@ BEGIN
 			SELECT @ids = COALESCE(@ids + ',' + CAST(id AS VARCHAR(50)), CAST(id AS VARCHAR(50)))
 			FROM #output  
 			
-			SELECT @ids_VARIANT = CAST(@ids as SQL_VARIANT)
-			
-			EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = @TableName, @tmp1 = @ids_VARIANT, @winlostdate = ''
+			EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = 'TicketVoiding_VoidedTransaction', @transIds = @ids, @winlostdate = ''
 		END
 		DROP TABLE #output
 	END

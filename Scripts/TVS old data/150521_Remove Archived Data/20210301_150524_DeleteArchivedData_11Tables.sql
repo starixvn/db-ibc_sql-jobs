@@ -6,7 +6,7 @@
 */
 BEGIN
 
-	CREATE TABLE #DeletedList (id INT PRIMARY KEY CLUSTERED,IsDone BIT)
+	CREATE TABLE #DeletedList (id INT PRIMARY KEY CLUSTERED)
 
 	DECLARE	@ArchiveTable TABLE (
 				rid			INT				IDENTITY(1,1)
@@ -48,8 +48,8 @@ BEGIN
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT ReasonId,0
+			INSERT INTO	#DeletedList (id)
+			SELECT ReasonId
 			FROM	OPENQUERY(DBARC, ''\
 
 			SELECT	ReasonId
@@ -63,8 +63,8 @@ BEGIN
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT VoidingHistoryId,0
+			INSERT INTO	#DeletedList (id)
+			SELECT VoidingHistoryId
 			FROM	OPENQUERY(DBARC, ''\
 
 			SELECT	VoidingHistoryId
@@ -78,8 +78,8 @@ BEGIN
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT QueueId,0
+			INSERT INTO	#DeletedList (id)
+			SELECT QueueId
 			FROM	OPENQUERY(DBARC, ''\
 
 			SELECT	QueueId
@@ -93,8 +93,8 @@ BEGIN
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT Id,0
+			INSERT INTO	#DeletedList (id)
+			SELECT Id
 			FROM	OPENQUERY(DBARC, ''\
 
 			SELECT	Id
@@ -108,8 +108,8 @@ BEGIN
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT RequestId,0
+			INSERT INTO	#DeletedList (id)
+			SELECT RequestId
 			FROM	OPENQUERY(DBARC, ''\
 
 			SELECT	RequestId
@@ -123,8 +123,8 @@ BEGIN
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT ID,0
+			INSERT INTO	#DeletedList (id)
+			SELECT ID
 			FROM	OPENQUERY(DBARC, ''\
 
 			SELECT	ID
@@ -138,8 +138,8 @@ BEGIN
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT QueueId,0
+			INSERT INTO	#DeletedList (id)
+			SELECT QueueId
 			FROM	OPENQUERY(DBARC, ''\
 
 			SELECT	QueueId
@@ -153,8 +153,8 @@ BEGIN
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT keyid,0
+			INSERT INTO	#DeletedList (id)
+			SELECT keyid
 			FROM	OPENQUERY(DBARC, ''\
 
 			SELECT	keyid
@@ -168,8 +168,8 @@ BEGIN
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT Id,0
+			INSERT INTO	#DeletedList (id)
+			SELECT Id
 			FROM	OPENQUERY(DBARC, ''\
 
 			SELECT	Id
@@ -183,8 +183,8 @@ BEGIN
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT Id,0
+			INSERT INTO	#DeletedList (id)
+			SELECT Id
 			FROM	OPENQUERY(DBARC, ''\
 
 			SELECT	Id
@@ -198,8 +198,8 @@ BEGIN
 		BEGIN
 			SELECT	@Query = N'';
 			SELECT	@Query = @Query + N'\
-			INSERT INTO	#DeletedList (id, IsDone)
-			SELECT Id,0
+			INSERT INTO	#DeletedList (id)
+			SELECT Id
 			FROM	OPENQUERY(DBARC, ''\
 
 			SELECT	Id
@@ -210,7 +210,7 @@ BEGIN
 		END
 
 		BEGIN
-			DECLARE @ids VARCHAR(8000), @rowcount INT = 0, @topk INT = 500, @ids_VARIANT sql_variant
+			DECLARE @ids VARCHAR(MAX), @rowcount INT = 0, @topk INT = 500
 			CREATE TABLE #output (id INT)	
 
 			SET @rowcount = 1
@@ -227,9 +227,7 @@ BEGIN
 				SELECT @ids = COALESCE(@ids + ',' + CAST(id AS VARCHAR(50)), CAST(id AS VARCHAR(50)))
 				FROM #output  
 			
-				SELECT @ids_VARIANT = CAST(@ids as SQL_VARIANT)
-			
-				EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = @TableName, @tmp1 = @ids_VARIANT, @winlostdate = ''
+				EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = @TableName, @transIds = @ids, @winlostdate = ''
 			END
 			DROP TABLE #output
 		END

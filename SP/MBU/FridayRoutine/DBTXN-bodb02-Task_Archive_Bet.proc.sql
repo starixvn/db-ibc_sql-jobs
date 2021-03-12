@@ -463,7 +463,7 @@ BEGIN
 	END
 	ELSE IF @Action = 'subtask'
 	BEGIN
-		DECLARE @ids VARCHAR(8000), @rowcount INT = 0, @topk INT = 300, @ids_VARIANT sql_variant
+		DECLARE @ids VARCHAR(MAX), @rowcount INT = 0, @topk INT = 300
 		CREATE TABLE #output (id INT)	
 
 		SET @rowcount = 1
@@ -481,10 +481,8 @@ BEGIN
 
 			SELECT @ids = COALESCE(@ids + ',' + CAST(id AS VARCHAR(50)), CAST(id AS VARCHAR(50)))
 			FROM #output  
-			
-			SELECT @ids_VARIANT = CAST(@ids as SQL_VARIANT)
 
-			EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = @DeletedTarget, @tmp1 = @ids_VARIANT, @winlostdate = ''
+			EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = @DeletedTarget, @transIds = @ids, @winlostdate = ''
 		END
 		DROP TABLE #output
 	END
