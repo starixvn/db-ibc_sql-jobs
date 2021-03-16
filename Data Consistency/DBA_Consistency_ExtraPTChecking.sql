@@ -4,6 +4,7 @@ GO
 
 ALTER PROCEDURE [dbo].[DBA_Consistency_ExtraPTChecking]	
 	 @Duration 		VARCHAR(50) 	
+	,@CheckMode		TINYINT
 	,@ErrCode		INT				= 0		OUTPUT
 	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT
 	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
@@ -18,6 +19,11 @@ AS
 		- 20210120@Danny: Add rule to check consistency of extraPT [Redmine: #125883]
 	
 	Param's Expanation:
+		@Duration = 'hour', 'lastday'
+		@CheckMode  1: Wrong Epositiontaking vs ExtraPT
+					2: Epositiontaking IS NULL
+					3: Epostiontaking + Tpositiontaking > 1
+			
 				
 */
 SET NOCOUNT ON
@@ -47,6 +53,7 @@ BEGIN
  	CREATE TABLE #T (epositiontaking smallmoney , ExtraPT [decimal](9, 8), transID BIGINT, Reftable Smallint, RuleID Smallint)
  
 	---------------------------------Select data -------------------------
+	IF @CheckMode = 1 
 	----I. Check Wrong Epositiontaking vs ExtraPT
 	BEGIN 
 			--- I.I: Wrong Epositiontaking vs ExtraPT
@@ -74,18 +81,18 @@ BEGIN
 				AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)		
 
 		  
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 0 AND RuleID = 1 	
+			--SELECT @transId = ''
+			--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			--FROM   #T 
+			--WHERE  Reftable = 0 AND RuleID = 1 	
 			
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 101	
-						,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with bettrans.TransId'	+ Char(10) + Char(13)			
-						,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
-			END	
+			--IF @transId <> ''
+			--BEGIN
+			--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+			--			,@ErrCode = 101	
+			--			,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with bettrans.TransId'	+ Char(10) + Char(13)			
+			--			,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
+			--END	
 
 			------I.I.b. translog 
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)		
@@ -107,18 +114,18 @@ BEGIN
 					WHERE  b.winlostdate = @Winlostdate	 
 						AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
 						
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 3 AND RuleID = 1
+			--SELECT @transId = ''
+			--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			--FROM   #T 
+			--WHERE  Reftable = 3 AND RuleID = 1
 			
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 102
-						,@ErrMsg =  @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with translog.translogid'	+ Char(10) + Char(13)		
-						,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
-			END
+			--IF @transId <> ''
+			--BEGIN
+			--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+			--			,@ErrCode = 102
+			--			,@ErrMsg =  @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with translog.translogid'	+ Char(10) + Char(13)		
+			--			,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
+			--END
 			
 			------I.I.c. bettransRNG 
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)
@@ -139,18 +146,18 @@ BEGIN
 					AND s.ProductID <> 1  					
 					AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
 			
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 1 AND RuleID = 1	
+			--SELECT @transId = ''
+			--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			--FROM   #T 
+			--WHERE  Reftable = 1 AND RuleID = 1	
 			
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 103
-						,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with BettransRNG.transID' + Char(10) + Char(13)	
-						,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
-			END
+			--IF @transId <> ''
+			--BEGIN
+			--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+			--			,@ErrCode = 103
+			--			,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with BettransRNG.transID' + Char(10) + Char(13)	
+			--			,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
+			--END
 			
 			
 			------I.I.d.  bettransLC			
@@ -173,104 +180,143 @@ BEGIN
 					AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)
 							 	
 	
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 2 AND RuleID = 1
+			--SELECT @transId = ''
+			--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			--FROM   #T 
+			--WHERE  Reftable = 2 AND RuleID = 1
 			
+			--IF @transId <> ''
+			--BEGIN
+			--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+			--			,@ErrCode = 104
+			--			,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with BettransLC.transID' + Char(10) + Char(13)
+			--			,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
+			--END
+
+			SELECT @transId = ''
+			SELECT  @transId = @transId + ',' + CAST(MAX(transId) AS VARCHAR) + ' in ' + CASE WHEN Reftable = 0 THEN ' bettrans' 
+																							  WHEN Reftable = 1 THEN ' bettransLC'
+																							  WHEN Reftable = 2 THEN ' bettransRNG'
+																							  WHEN Reftable = 3 THEN ' translog' END
+			FROM   #T 
+			--WHERE  Reftable = 2 AND RuleID = 1
+			GROUP BY Reftable
+
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 						,@ErrCode = 104
-						,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT with BettransLC.transID' + Char(10) + Char(13)
-						,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
-			END
-			
-			--- I.II: Epositiontaking IS NULL	
-			------I.II.a. Bettrans
-			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)						
-			SELECT  TOP (10) epositiontaking, epositiontaking as ExtraPT, TransID, 0 as RefTable, 2 as RuleID  
-			FROM 	bodb02.dbo.bettrans b WITH (NOLOCK)
-			WHERE 	b.Epositiontaking IS NULL		
-					AND b.winlostdate = @Winlostdate			
-					AND b.bettype < 19001
-					
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 0 AND RuleID = 2	
-			
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 105
-						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with bettrans.TransId' + Char(10) + Char(13)
-						,@SampleData = @SampleData + 'Epositiontaking IS NULL with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
-			END
-					
-		
-			------I.II.b. translog
-			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)			
-			SELECT TOP (10) epositiontaking, epositiontaking as ExtraPT, translogid, 3 as RefTable, 2 as RuleID  
-			FROM bodb02.dbo.translog b WITh (NOLOCK) 
-			WHERE b.Epositiontaking IS NULL
-				  AND b.WinlostDate = @Winlostdate			
-				  
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 3 AND RuleID = 2	
-			
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 106
-						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with translog.translogid' + Char(10) + Char(13)
-						,@SampleData = @SampleData + 'Epositiontaking IS NULL with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
+						,@ErrMsg = @ErrMsg + 'Wrong Epositiontaking vs ExtraPT' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Wrong Epositiontaking vs ExtraPT with transID ' + @transId + '. '+ Char(10) + Char(13)
 			END
 
-			------I.II.c. BettransRNG
-			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)			
-			SELECT TOP (10) epositiontaking, epositiontaking as ExtraPT, TransID, 1 as RefTable, 2 as RuleID  
-			FROM  bodb02.dbo.BettransRNG b WITH(NOLOCK)
-			WHERE b.Epositiontaking IS NULL
-				  AND b.winlostdate = @Winlostdate	
-				  
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 1 AND RuleID = 2 	
-			
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 107
-						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with BettransRNG.transID' + Char(10) + Char(13)
-						,@SampleData = @SampleData + 'Epositiontaking IS NULL with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
-			END
-
-			------I.II.c. BettransLC	
-			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)			
-			SELECT TOP (10) epositiontaking, epositiontaking as ExtraPT, TransID, 2 as RefTable, 2 as RuleID  
-			FROM   bodb02.dbo.BettransLC b WITH(NOLOCK)
-			WHERE  b.Epositiontaking IS NULL
-					AND b.winlostdate = @Winlostdate
+	END
+	IF @CheckMode = 2	
+	BEGIN
+		--- I.II: Epositiontaking IS NULL	
+		------I.II.a. Bettrans
+		INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)						
+		SELECT  TOP (10) epositiontaking, epositiontaking as ExtraPT, TransID, 0 as RefTable, 2 as RuleID  
+		FROM 	bodb02.dbo.bettrans b WITH (NOLOCK)
+		WHERE 	b.Epositiontaking IS NULL		
+				AND b.winlostdate = @Winlostdate			
+				AND b.bettype < 19001
 					
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 2 AND RuleID = 2  	
+		--SELECT @transId = ''
+		--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		--FROM   #T 
+		--WHERE  Reftable = 0 AND RuleID = 2	
 			
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 108
-						,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with BettransLC.transID' + Char(10) + Char(13)
-						,@SampleData = @SampleData + 'Epositiontaking IS NULL with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
-			END
-			
-	END 
+		--IF @transId <> ''
+		--BEGIN
+		--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+		--			,@ErrCode = 105
+		--			,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with bettrans.TransId' + Char(10) + Char(13)
+		--			,@SampleData = @SampleData + 'Epositiontaking IS NULL with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
+		--END
+					
 		
+		------I.II.b. translog
+		INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)			
+		SELECT TOP (10) epositiontaking, epositiontaking as ExtraPT, translogid, 3 as RefTable, 2 as RuleID  
+		FROM bodb02.dbo.translog b WITh (NOLOCK) 
+		WHERE b.Epositiontaking IS NULL
+				AND b.WinlostDate = @Winlostdate			
+				  
+		--SELECT @transId = ''
+		--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		--FROM   #T 
+		--WHERE  Reftable = 3 AND RuleID = 2	
+			
+		--IF @transId <> ''
+		--BEGIN
+		--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+		--			,@ErrCode = 106
+		--			,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with translog.translogid' + Char(10) + Char(13)
+		--			,@SampleData = @SampleData + 'Epositiontaking IS NULL with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
+		--END
+
+		------I.II.c. BettransRNG
+		INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)			
+		SELECT TOP (10) epositiontaking, epositiontaking as ExtraPT, TransID, 1 as RefTable, 2 as RuleID  
+		FROM  bodb02.dbo.BettransRNG b WITH(NOLOCK)
+		WHERE b.Epositiontaking IS NULL
+				AND b.winlostdate = @Winlostdate	
+				  
+		--SELECT @transId = ''
+		--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		--FROM   #T 
+		--WHERE  Reftable = 1 AND RuleID = 2 	
+			
+		--IF @transId <> ''
+		--BEGIN
+		--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+		--			,@ErrCode = 107
+		--			,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with BettransRNG.transID' + Char(10) + Char(13)
+		--			,@SampleData = @SampleData + 'Epositiontaking IS NULL with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
+		--END
+
+		------I.II.c. BettransLC	
+		INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)			
+		SELECT TOP (10) epositiontaking, epositiontaking as ExtraPT, TransID, 2 as RefTable, 2 as RuleID  
+		FROM   bodb02.dbo.BettransLC b WITH(NOLOCK)
+		WHERE  b.Epositiontaking IS NULL
+				AND b.winlostdate = @Winlostdate
+					
+		--SELECT @transId = ''
+		--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		--FROM   #T 
+		--WHERE  Reftable = 2 AND RuleID = 2  	
+			
+		--IF @transId <> ''
+		--BEGIN
+		--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+		--			,@ErrCode = 108
+		--			,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL with BettransLC.transID' + Char(10) + Char(13)
+		--			,@SampleData = @SampleData + 'Epositiontaking IS NULL with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
+		--END
+
+		SELECT @transId = ''
+		SELECT  @transId = @transId + ',' + CAST(MAX(transId) AS VARCHAR) + ' in ' + CASE WHEN Reftable = 0 THEN ' bettrans' 
+																							WHEN Reftable = 1 THEN ' bettransLC'
+																							WHEN Reftable = 2 THEN ' bettransRNG'
+																							WHEN Reftable = 3 THEN ' translog' END
+		FROM   #T 
+		--WHERE  Reftable = 2 AND RuleID = 1
+		GROUP BY Reftable
+
+		IF @transId <> ''
+		BEGIN
+			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+					,@ErrCode = 104
+					,@ErrMsg = @ErrMsg + 'Epositiontaking IS NULL' + Char(10) + Char(13)
+					,@SampleData = @SampleData + 'Epositiontaking IS NULL with transID ' + @transId + '. '+ Char(10) + Char(13)
+		END
+
+	END
+			
+	
+	IF @CheckMode = 3
 	----II. Check tpositiontaking  + epositiontaking < 100% (for all tickets)
 	BEGIN 	
 			----II.I. Check tpositiontaking  + epositiontaking < 100% (for all tickets)
@@ -282,18 +328,18 @@ BEGIN
 					AND b.winlostdate = @Winlostdate			
 					AND b.bettype < 19001
 			
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 0 AND RuleID = 3	
+			--SELECT @transId = ''
+			--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			--FROM   #T 
+			--WHERE  Reftable = 0 AND RuleID = 3	
 			
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 109
-						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with bettrans.TransId' + Char(10) + Char(13)
-						,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
-			END				
+			--IF @transId <> ''
+			--BEGIN
+			--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+			--			,@ErrCode = 109
+			--			,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with bettrans.TransId' + Char(10) + Char(13)
+			--			,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with bettrans.TransId in (' + @transId + ') ' + Char(10) + Char(13)
+			--END				
 			
 			------II.I.b. translog
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)						
@@ -302,18 +348,18 @@ BEGIN
 			WHERE 	b.Epositiontaking + tpositiontaking > 1		
 					AND b.winlostdate = @Winlostdate
 
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 3 AND RuleID = 3	
+			--SELECT @transId = ''
+			--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			--FROM   #T 
+			--WHERE  Reftable = 3 AND RuleID = 3	
 			
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 110
-						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with translog.translogid' + Char(10) + Char(13)
-						,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
-			END
+			--IF @transId <> ''
+			--BEGIN
+			--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+			--			,@ErrCode = 110
+			--			,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with translog.translogid' + Char(10) + Char(13)
+			--			,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with translog.translogid in (' + @transId + ') ' + Char(10) + Char(13)
+			--END
 
 			
 			------II.I.c. BettransRNG
@@ -323,18 +369,18 @@ BEGIN
 			WHERE 	b.Epositiontaking + tpositiontaking > 1		
 					AND b.winlostdate = @Winlostdate
 					
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 1 AND RuleID = 3	
+			--SELECT @transId = ''
+			--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			--FROM   #T 
+			--WHERE  Reftable = 1 AND RuleID = 3	
 			
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 111
-						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with BettransRNG.transID' + Char(10) + Char(13)
-						,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
-			END								
+			--IF @transId <> ''
+			--BEGIN
+			--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+			--			,@ErrCode = 111
+			--			,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with BettransRNG.transID' + Char(10) + Char(13)
+			--			,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with BettransRNG.transID in (' + @transId + ')'+ Char(10) + Char(13)
+			--END								
 			
 			------II.I.d. BettransLC			
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)							
@@ -343,19 +389,35 @@ BEGIN
 			WHERE 	b.Epositiontaking + tpositiontaking > 1		
 					AND b.winlostdate = @Winlostdate
 					
-			SELECT @transId = ''
-			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM   #T 
-			WHERE  Reftable = 2 AND RuleID = 3	
+			--SELECT @transId = ''
+			--SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			--FROM   #T 
+			--WHERE  Reftable = 2 AND RuleID = 3	
 			
+			--IF @transId <> ''
+			--BEGIN
+			--	SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+			--			,@ErrCode = 112
+			--			,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with BettransLC.transID' + Char(10) + Char(13)
+			--			,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
+			--END
+			
+			SELECT @transId = ''
+			SELECT  @transId = @transId + ',' + CAST(MAX(transId) AS VARCHAR) + ' in ' + CASE WHEN Reftable = 0 THEN ' bettrans' 
+																								WHEN Reftable = 1 THEN ' bettransLC'
+																								WHEN Reftable = 2 THEN ' bettransRNG'
+																								WHEN Reftable = 3 THEN ' translog' END
+			FROM   #T 
+			--WHERE  Reftable = 2 AND RuleID = 1
+			GROUP BY Reftable
+
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 112
-						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1 with BettransLC.transID' + Char(10) + Char(13)
-						,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with BettransLC.transID in (' + @transId + ')'+ Char(10) + Char(13)
-			END		
-			
+						,@ErrCode = 104
+						,@ErrMsg = @ErrMsg + 'Epositiontaking + Tpositiontaking > 1' + Char(10) + Char(13)
+						,@SampleData = @SampleData + 'Epositiontaking + Tpositiontaking > 1 with transID ' + @transId + '. '+ Char(10) + Char(13)
+			END
 	END 
 	DROP TABLE #SportBettype 
 	DROP TABLE #T
