@@ -155,7 +155,7 @@ BEGIN
 			FROM   #T 
 			WHERE  Reftable = 1 
 
-			SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransLC,' END
+			SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransRNG,' END
 			IF @transId <> ''  BEGIN SET @message = @message + @transId  END
 
 
@@ -164,7 +164,7 @@ BEGIN
 			FROM   #T 
 			WHERE  Reftable = 2 
 
-			SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransRNG,' END
+			SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransLC,' END
 			IF @transId <> ''  BEGIN SET @message = @message + @transId END
 
 			SELECT @transId = ''
@@ -235,7 +235,7 @@ BEGIN
 		FROM   #T 
 		WHERE  Reftable = 1 
 
-		SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransLC,' END
+		SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransRNG,' END
 		IF @transId <> ''  BEGIN SET @message = @message + @transId  END
 
 
@@ -244,7 +244,7 @@ BEGIN
 		FROM   #T 
 		WHERE  Reftable = 2 
 
-		SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransRNG,' END
+		SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransLC,' END
 		IF @transId <> ''  BEGIN SET @message = @message + @transId END
 
 		SELECT @transId = ''
@@ -316,7 +316,7 @@ BEGIN
 		FROM   #T 
 		WHERE  Reftable = 1 
 
-		SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransLC,' END
+		SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransRNG,' END
 		IF @transId <> ''  BEGIN SET @message = @message + @transId  END
 
 
@@ -325,7 +325,7 @@ BEGIN
 		FROM   #T 
 		WHERE  Reftable = 2 
 
-		SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransRNG,' END
+		SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransLC,' END
 		IF @transId <> ''  BEGIN SET @message = @message + @transId END
 
 		SELECT @transId = ''
