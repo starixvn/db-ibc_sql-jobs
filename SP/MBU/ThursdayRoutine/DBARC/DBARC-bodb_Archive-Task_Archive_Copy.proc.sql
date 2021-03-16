@@ -499,7 +499,7 @@ DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121
 
 SELECT	TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID
 FROM	bodb02.dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
-WHERE 	EXISTS (SELECT 1 FROM bodb02.dbo.match AS t2 WITH (NOLOCK) WHERE t1.MatchId != 0 AND  t1.matchid = t2.matchid AND t2.eventdate = @StartDate)
+WHERE 	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.MatchId != 0 AND  t1.matchid = t2.matchid AND t2.eventdate = @StartDate)
 	;'');';
 					
 		EXECUTE	sys.sp_executesql @Query;

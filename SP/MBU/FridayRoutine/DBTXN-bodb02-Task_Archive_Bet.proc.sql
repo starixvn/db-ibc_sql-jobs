@@ -197,7 +197,7 @@ BEGIN
 			INSERT INTO #DeletedList (id,IsDone)
 			SELECT id,0 
 			FROM dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
-			WHERE 	EXISTS (SELECT 1 FROM bodb02.dbo.match AS t2 WITH (NOLOCK) WHERE t1.MatchId != 0 AND  t1.matchid = t2.matchid AND t2.eventdate = @StartDate);
+			WHERE 	EXISTS (SELECT 1 FROM dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.MatchId != 0 AND  t1.matchid = t2.matchid AND t2.eventdate = @StartDate);
 			
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_VoidedTransaction'
 			RETURN
