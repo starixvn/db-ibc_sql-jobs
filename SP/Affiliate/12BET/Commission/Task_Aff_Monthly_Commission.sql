@@ -15,6 +15,7 @@ AS
 		- 20190808@Percy: Add Exchange [RedmineID: #106504]
 		- 20191127@Percy: Deduct bonus amount from commission amount [RedmineID: #118992]
 		- 20210301@Percy: Do not calculate commission when affiliate is closed [RedmineID: #149213]
+		- 20210317@Percy: Update affiliate status history [RedmineID: #149213]
 */
 
 BEGIN
@@ -67,6 +68,14 @@ BEGIN
 	END
 
 	-- Process data
+	IF @IsForceUpdate = 0
+		UPDATE agh WITH (ROWLOCK)
+		SET agh.IsClosed = ai.IsClosed
+		FROM dbo.AffGroupHistory agh
+			INNER JOIN dbo.AffInfo ai WITH (NOLOCK) ON agh.AffId = ai.AffId
+		WHERE ai.IsClosed = 1
+			AND agh.MonthDate = @LastDayOfMonth
+
 		-- Get Data
 	BEGIN
 		CREATE TABLE #TempCommission

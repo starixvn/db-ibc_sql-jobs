@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
 		- 20210301@Percy: Do not calculate commission when affiliate is closed [RedmineID: #149213]
+		- 20210317@Percy: Change commission formula [RedmineID: #151391]
 */
 
 BEGIN
@@ -74,9 +75,7 @@ BEGIN
 			-- Calculation
 			GrossWinloss		MONEY,
 			NetWinloss			MONEY,
-			ActivePlayer		INT,
 			QualifiedMember		INT,
-			QMTurnover			MONEY,
 			CommissionRate		FLOAT,
 			Commission			MONEY,
 			SubAffCommission	MONEY
@@ -101,9 +100,7 @@ BEGIN
 			WithdrawalFee,
 			GrossWinloss,
 			NetWinloss,
-			ActivePlayer,
 			QualifiedMember,
-			QMTurnOver,
 			CommissionRate,
 			Commission,
 			SubAffCommission
@@ -175,8 +172,8 @@ BEGIN
 		Winloss,
 		GrossWinloss,
 		NetWinloss,
-		QMTurnover,
-		ActivePlayer,
+		0 AS QMTurnover,
+		QualifiedMember AS ActivePlayer,
 		QualifiedMember,
 		CommissionRate
 	FROM #TempCommission
