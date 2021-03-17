@@ -1,4 +1,4 @@
-/*<info serverAlias="DBAFFN88-Affiliate_N88" executers="bodbAdminNet" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBAFFN88-Affiliate_N88,DBAFFN8B-Affiliate_N8B,DBAFFN8G-Affiliate_N8G" executers="bodbAdminNet" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Aff_MemberInfo_Import]
 	@XmlData	XML
 	,@ErrCode	INT = 0 OUTPUT
@@ -7,7 +7,7 @@ AS
 
 /*
 	Created: 20200220@Percy
-	DB: DBAFFN88-Affiliate_N88
+	DB: DBAFFN88-Affiliate_N88,DBAFFN8B-Affiliate_N8B,DBAFFN8G-Affiliate_N8G
 	Task: Job (web call) - Import member info
 
 	Revisions:

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBAFFN8G-Affiliate_N8G" executers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBAFFN88-Affiliate_N88,DBAFFN8B-Affiliate_N8B,DBAFFN8G-Affiliate_N8G" executers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Aff_Monthly_Commission]  
 	@MonthDate		SMALLDATETIME,
 	@IsForceUpdate	BIT = 0
@@ -6,7 +6,7 @@ AS
 
 /*
 	Created: 20200220@Percy
-	DB: DBAFFN8G-Affiliate_N8G
+	DB: DBAFFN88-Affiliate_N88,DBAFFN8B-Affiliate_N8B,DBAFFN8G-Affiliate_N8G
 	Task: Job - Calculate commission monthly
 
 	Revisions:

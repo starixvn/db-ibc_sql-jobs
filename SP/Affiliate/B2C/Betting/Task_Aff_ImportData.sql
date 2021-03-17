@@ -1,11 +1,11 @@
-/*<info serverAlias="DBAFFN8B-Affiliate_N8B" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBAFFN88-Affiliate_N88,DBAFFN8B-Affiliate_N8B,DBAFFN8G-Affiliate_N8G" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_Aff_ImportData]
 	@WinlostDate SMALLDATETIME
 AS
 
 /*
 	Created: 20200220@Percy
-	DB: DBAFFN8B-Affiliate_N8B
+	DB: DBAFFN88-Affiliate_N88,DBAFFN8B-Affiliate_N8B,DBAFFN8G-Affiliate_N8G
 	Task: Job - Import data
 
 	Revisions:

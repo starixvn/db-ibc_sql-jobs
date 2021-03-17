@@ -1,10 +1,10 @@
-/*<info serverAlias="DBAFFN8G-Affiliate_N8G" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBAFFN88-Affiliate_N88,DBAFFN8B-Affiliate_N8B,DBAFFN8G-Affiliate_N8G" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Aff_MemberInfo_Upd]
 AS
 
 /*
 	Created: 20201111@Percy
-	DB: DBAFFN8G-Affiliate_N8G
+	DB: DBAFFN88-Affiliate_N88,DBAFFN8B-Affiliate_N8B,DBAFFN8G-Affiliate_N8G
 	Task: Job - Update member info
 
 	Revisions:
