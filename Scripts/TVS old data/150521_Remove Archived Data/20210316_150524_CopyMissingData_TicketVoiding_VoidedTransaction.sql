@@ -1,13 +1,13 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBARC-bodb_Archive" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 /*
 	Created:	20210316@Max
 	Task:		[TVS] Remove archived data - Copy missing data [Redmine: #150524]
-	Database:	DBTXN-bodb02
+	Database:	DBARC-bodb_Archive
 */
 BEGIN
 
-	DECLARE @StartDate	DATETIME	= '2020-11-01'
-		, @EndDate		DATETIME	= '2021-03-05'
+	DECLARE @StartDate	DATETIME	= '2021-03-05'
+		, @EndDate		DATETIME	= '2021-03-12'
 	
 	CREATE TABLE #MissingList (
 		TransId			BIGINT, 
@@ -29,7 +29,7 @@ BEGIN
 		SELECT	@Query = @Query + N'\
 		INSERT INTO	#MissingList (	TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID)
 		SELECT TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID
-		FROM	OPENQUERY(DBARC, ''\
+		FROM	OPENQUERY(DBTXN, ''\
 		DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
 		DECLARE	@EndDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @EndDate, 121) + ''''';
 
@@ -41,8 +41,6 @@ BEGIN
 
 		EXECUTE	sys.sp_executesql @Query;
 	END
-	
-	SELECT COUNT(1) FROM #MissingList --62 rows
 
 	INSERT INTO	dbo.TicketVoiding_VoidedTransaction_bk (TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID)
 	SELECT TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID
