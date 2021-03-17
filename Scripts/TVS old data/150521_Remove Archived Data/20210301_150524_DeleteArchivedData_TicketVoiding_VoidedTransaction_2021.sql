@@ -5,8 +5,7 @@
 	Database:	DBTXN-bodb02
 */
 BEGIN
-
-	DECLARE @ids VARCHAR(MAX), @rowcount INT = 0, @topk INT = 500
+	DECLARE @ids VARCHAR(MAX), @rowcount INT = 0, @topk INT = 1000
 	CREATE TABLE #output (id INT)	
 
 	SET @rowcount = 1
@@ -17,16 +16,15 @@ BEGIN
 
 		DELETE TOP(@topk) t
 		OUTPUT deleted.id INTO #output(id)
-		FROM dbo.zzzbettrans_Archived t
+		FROM dbo.TicketVoiding_VoidedTransaction_Archived t
 		SET @rowcount = @@ROWCOUNT
 
 		SELECT @ids = COALESCE(@ids + ',' + CAST(id AS VARCHAR(50)), CAST(id AS VARCHAR(50)))
 		FROM #output  
 			
-		EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = 'zzzbettrans', @transIds = @ids, @winlostdate = ''
+		EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = 'TicketVoiding_VoidedTransaction', @transIds = @ids, @winlostdate = ''
 	END
 	DROP TABLE #output
-
 END
 GO
 

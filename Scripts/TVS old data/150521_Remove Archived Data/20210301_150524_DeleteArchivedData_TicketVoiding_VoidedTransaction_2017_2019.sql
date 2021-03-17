@@ -32,7 +32,7 @@ BEGIN
 	END
 
 	BEGIN
-		DECLARE @ids VARCHAR(MAX), @rowcount INT = 0, @topk INT = 500
+		DECLARE @ids VARCHAR(MAX), @rowcount INT = 0, @topk INT = 1000
 		CREATE TABLE #output (id INT)	
 
 		SET @rowcount = 1
@@ -50,6 +50,8 @@ BEGIN
 			FROM #output  
 			
 			EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = 'TicketVoiding_VoidedTransaction', @transIds = @ids, @winlostdate = ''
+
+			WAITFOR DELAY '00:00:00.180';
 		END
 		DROP TABLE #output
 	END
