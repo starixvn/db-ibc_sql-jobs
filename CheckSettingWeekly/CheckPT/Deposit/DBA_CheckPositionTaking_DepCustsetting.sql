@@ -28,7 +28,7 @@ AS
 		-20201211@Winfred: Remove OddAdj Acc [redmine:#142952]
 		-20210205@Eden: add new PT 0.935 [RedmineID:#149918]
 		-20210223@Winfred: add new PT 0.892 [RedmineID:#150449]
-		-20210318@Winfred: add new PT 0.895 and 0.805 [RedmineID:#150449]
+		-20210318@Winfred: add new PT 0.895 and 0.805 [RedmineID:#151673]
 		
 	Param's Explanation:
 	
