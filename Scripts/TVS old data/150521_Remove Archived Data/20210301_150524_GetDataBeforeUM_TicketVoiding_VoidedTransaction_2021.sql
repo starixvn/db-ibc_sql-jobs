@@ -21,7 +21,7 @@ BEGIN
 
 		SELECT	id
 		FROM	bodb_Archive.dbo.TicketVoiding_VoidedTransaction_bk AS t1 WITH (NOLOCK)
-		WHERE t1.Id > @MaxId
+		WHERE t1.Id > @MaxId AND t1.Id <= 2513850
 		;'');';
 
 		EXECUTE	sys.sp_executesql @Query;

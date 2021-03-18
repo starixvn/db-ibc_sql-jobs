@@ -21,7 +21,7 @@ BEGIN
 
 		SELECT	keyid
 		FROM	bodb_Archive.dbo.zzzbettrans_bk AS t1 WITH (NOLOCK)
-		WHERE t1.KeyId > @MaxKeyId
+		WHERE t1.KeyId > @MaxKeyId AND t1.keyId <=1009237921
 		;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
