@@ -69,6 +69,7 @@ AS
 		- 20210203@Louis: Saba Red Envelope [RedmineID: #149923]
 		- 20210305@Mark: Integrate new betfrom _, @, %(Mobile Euro) [Redmine: #151019]
 		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
+		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -200,7 +201,8 @@ BEGIN
 				AND bettrans.modds IN (-0.25, 0.25)
 				AND (bettrans.bettype < 999
 					OR bettrans.bettype BETWEEN 1301 AND 1399
-					OR bettrans.bettype BETWEEN 9001 AND 9399)	-- Sportsbook
+					OR bettrans.bettype BETWEEN 9001 AND 9399
+					OR bettrans.bettype BETWEEN 9400 AND 9699)	-- Sportsbook
 				AND bettrans.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout
 				AND bettrans.bettype NOT BETWEEN 81 AND 120
 				THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END
@@ -298,7 +300,8 @@ BEGIN
 				AND bettrans.modds IN (-0.25, 0.25)
 				AND (bettrans.bettype < 999						-- Sportsbook
 					OR bettrans.bettype BETWEEN 1301 AND 1399
-					OR bettrans.bettype BETWEEN 9001 AND 9399)
+					OR bettrans.bettype BETWEEN 9001 AND 9399
+					OR bettrans.bettype BETWEEN 9400 AND 9699)
 				AND bettrans.bettype NOT IN (29, 38, 911, 912, 913, 914 )  --- Parlay, betbuilder, Cashout
 				AND bettrans.bettype NOT BETWEEN 81 AND 120
 				THEN CASE WHEN bettrans.statusID = 112 THEN 114 ELSE 115 END

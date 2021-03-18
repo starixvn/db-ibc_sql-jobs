@@ -29,6 +29,7 @@ AS
 		- 20201001@Louis: Licensee Spread Setting [RedmineID: #142532]	
 		- 20210120@Mark: Integrate new betfrom 7 [Redmine: #149108]
 		- 20210305@Mark: Integrate new betfrom _, @, %(Mobile Euro) [Redmine: #151019]
+		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 
 	EXEC Task_DailyRptLicWinlossGMT_BettransBK '2017-11-01'
 */  
@@ -173,6 +174,7 @@ BEGIN
 							OR b.bettype BETWEEN 121 AND 999
 							OR b.Bettype BETWEEN 1301 and 1399 --new tennis's bettypes
 							OR b.Bettype BETWEEN 9001 and 9399 -- E-Sports 2.0
+							OR b.Bettype BETWEEN 9400 AND 9699 -- Cricket AIO
 							OR b.Bettype = 38 -- BetBuilder
 						)
 					AND (b.bettype < 901 OR b.bettype > 904)

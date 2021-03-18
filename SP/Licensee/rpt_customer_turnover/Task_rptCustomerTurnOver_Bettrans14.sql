@@ -29,6 +29,7 @@ AS
 		- 20200622@Sol: Archive VSRaceInfo - changed to use VSRaceInfo14 [RedmineID: #135963]
 		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625] 
 		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
+		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 */
 
 BEGIN
@@ -77,7 +78,8 @@ BEGIN
 					AND a.modds IN (-0.25, 0.25)
 					AND (a.bettype < 999
 						OR a.bettype BETWEEN 1301 AND 1399
-						OR a.bettype BETWEEN 9001 AND 9399)		-- Sportsbook
+						OR a.bettype BETWEEN 9001 AND 9399
+						OR a.bettype BETWEEN 9400 AND 9699)		-- Sportsbook
 					AND a.bettype NOT IN (29,38,911,912,913,914 )	-- Parlay, betbuilder, Cashout
 					AND a.bettype NOT BETWEEN 81 AND 120
 					THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
@@ -118,7 +120,8 @@ BEGIN
 					AND a.modds IN (-0.25, 0.25)
 					AND (a.bettype < 999
 						OR a.bettype BETWEEN 1301 AND 1399
-						OR a.bettype BETWEEN 9001 AND 9399)		-- Sportsbook
+						OR a.bettype BETWEEN 9001 AND 9399
+						OR a.bettype BETWEEN 9400 AND 9699)		-- Sportsbook
 					AND a.bettype NOT IN (29,38,911,912,913,914 )	-- Parlay, betbuilder, Cashout
 					AND a.bettype NOT BETWEEN 81 AND 120
 				THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END

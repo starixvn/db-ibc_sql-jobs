@@ -17,6 +17,7 @@ AS
 		- 20190307@Parsons: Implement BetBuilder [Redmine: #108995]
 		- 20200508@Vickie: Add new bet types for E-Sports 2.0 [RedmineID: #132548]
 		- 20210201@Louis: DB052 - Edit SP monitor Job Daily CHECKSUM DepositData to count new bettypes of Linked Games [RedmineID: #149772]
+		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -67,6 +68,7 @@ BEGIN
 			OR (b.bettype >= 121 AND b.bettype < 1000)
 			OR (b.bettype >= 1301 AND b.bettype <= 1399)
 			OR (b.bettype BETWEEN 9001 AND 9399) -- Esport2
+			OR (b.Bettype BETWEEN 9400 AND 9699) -- Cricket AIO
 			OR (b.bettype = 38) -- BetBuilder
 			)
 		AND b.statusID IN (111, 112, 113, 114, 115)
