@@ -57,13 +57,7 @@ BEGIN;
 
 	INSERT INTO	@ArchiveTable_oneDay
 			(tablename)
-	VALUES	('betParlayDetail')
-		,	('betParlayResult')
-		,	('Task_bettrans14_IP2Country')
-		,	('Task_bettransRNG14_IP2Country')
-		,	('Task_bettransLC14_IP2Country')
-		,	('MarkedTransaction')
-		,	('zzzbettrans')
+	VALUES	('zzzbettrans')
 		,	('zzzbettransM')
 		,	('TicketVoiding_VoidedTransaction')
 		;
