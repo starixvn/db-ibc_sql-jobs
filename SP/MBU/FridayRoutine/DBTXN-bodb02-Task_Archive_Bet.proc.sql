@@ -129,7 +129,7 @@ BEGIN
 
 			RETURN;
 		END;
-		
+
 		ELSE IF	@DeletedTarget = 'MarkedTransaction'
 		BEGIN;
 			DECLARE	@transList AS TABLE (
@@ -181,312 +181,312 @@ BEGIN
 		
 		
 		/*-----TVS------*/
-		--ELSE IF @DeletedTarget = 'TicketVoiding_VoidedTransaction'
-		--BEGIN
-		--	TRUNCATE TABLE #DeletedList
+		ELSE IF @DeletedTarget = 'TicketVoiding_VoidedTransaction'
+		BEGIN
+			TRUNCATE TABLE #DeletedList
 			
-		--	--process for ticket single and main parlay and metrix gaming
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT id,0 
-		--	FROM dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
-		--	WHERE	EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
-		--						WHERE t1.transid = t2.transid AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 and t1.matchid=0 AND t2.winlostdate = @StartDate)
-		--			OR EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType AND t3.bettype != 29
-		--						WHERE t1.transid = t2.refno AND t3.ProductID =1 AND t2.statusID=102 AND t2.winlostdate = @StartDate);
+			--process for ticket single and main parlay and metrix gaming
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT id,0 
+			FROM dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
+			WHERE	EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
+								WHERE t1.transid = t2.transid AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 and t1.matchid=0 AND t2.winlostdate = @StartDate)
+					OR EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType AND t3.bettype != 29
+								WHERE t1.transid = t2.refno AND t3.ProductID =1 AND t2.statusID=102 AND t2.winlostdate = @StartDate);
 			
-		--	--process for ticket sub parlay (sportbook and virtual sport)
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT id,0 
-		--	FROM dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
-		--	WHERE 	EXISTS (SELECT 1 FROM dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.MatchId != 0 AND  t1.matchid = t2.matchid AND t2.eventdate = @StartDate);
+			--process for ticket sub parlay (sportbook and virtual sport)
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT id,0 
+			FROM dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
+			WHERE 	EXISTS (SELECT 1 FROM dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.MatchId != 0 AND  t1.matchid = t2.matchid AND t2.eventdate = @StartDate);
 			
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_VoidedTransaction'
-		--	RETURN
-		--END
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_VoidedTransaction'
+			RETURN
+		END
 
-		--ELSE IF @DeletedTarget = 'zzzbettrans'
-		--BEGIN			
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT keyid,0 
-		--	FROM dbo.zzzbettrans AS t1 WITH (NOLOCK)
-		--		WHERE	t1.VoidingHistoryId IS NULL
-		--			AND (EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
-		--						WHERE t1.transid = t2.transid AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 AND t2.winlostdate = @StartDate)
-		--			OR EXISTS (SELECT 1 FROM dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid  AND t2.statusID=102 AND t1.matchid=t2.matchid AND t2.winlostdate = @StartDate));		
+		ELSE IF @DeletedTarget = 'zzzbettrans'
+		BEGIN			
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT keyid,0 
+			FROM dbo.zzzbettrans AS t1 WITH (NOLOCK)
+				WHERE	t1.VoidingHistoryId IS NULL
+					AND (EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
+								WHERE t1.transid = t2.transid AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 AND t2.winlostdate = @StartDate)
+					OR EXISTS (SELECT 1 FROM dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid  AND t2.statusID=102 AND t1.matchid=t2.matchid AND t2.winlostdate = @StartDate));		
 			
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettrans'	
-		--	RETURN
-		--END
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettrans'	
+			RETURN
+		END
 
-		--ELSE IF @DeletedTarget = 'zzzbettransM'
-		--BEGIN			
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT keyid,0 FROM dbo.zzzbettransM AS t1 WITH (NOLOCK)
-		--		WHERE	EXISTS (SELECT 1 FROM dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 AND t1.matchid=t2.matchid AND t2.winlostdate = @StartDate)
-		--			AND t1.VoidingHistoryId IS NULL;
+		ELSE IF @DeletedTarget = 'zzzbettransM'
+		BEGIN			
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT keyid,0 FROM dbo.zzzbettransM AS t1 WITH (NOLOCK)
+				WHERE	EXISTS (SELECT 1 FROM dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 AND t1.matchid=t2.matchid AND t2.winlostdate = @StartDate)
+					AND t1.VoidingHistoryId IS NULL;
 			
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettransM'	
-		--	RETURN
-		--END
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettransM'	
+			RETURN
+		END
 
-		--ELSE IF @DeletedTarget = 'TicketVoiding_RequestDetail'
-		--BEGIN			
-		--	TRUNCATE TABLE #DeletedList
-		--	-------Match-----------
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT id,0 
-		--	FROM dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
-		--	WHERE t1.MatchId NOT IN (9,29,2799)
-		--		AND EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate);
+		ELSE IF @DeletedTarget = 'TicketVoiding_RequestDetail'
+		BEGIN			
+			TRUNCATE TABLE #DeletedList
+			-------Match-----------
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT id,0 
+			FROM dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+			WHERE t1.MatchId NOT IN (9,29,2799)
+				AND EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate);
 				
-		--	---------- outright -----------
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT id,0 
-		--	FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
-		--	WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.outright14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.orid AND t2.eventdate BETWEEN @StartDate AND @EndDate)
+			---------- outright -----------
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT id,0 
+			FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+			WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.outright14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.orid AND t2.eventdate BETWEEN @StartDate AND @EndDate)
 
-		--	---------------------------VSOutright------------------
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT id,0 
-		--	FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
-		--	WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSOutright14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.orid AND t2.eventdate BETWEEN @StartDate AND @EndDate)
+			---------------------------VSOutright------------------
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT id,0 
+			FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+			WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSOutright14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.orid AND t2.eventdate BETWEEN @StartDate AND @EndDate)
 
-		--	--------------- VSRaceInfo ------------------
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT id,0 
-		--	FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
-		--	WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSRaceInfo14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.EventID AND t2.EventTime BETWEEN @StartDate AND @EndDate)
+			--------------- VSRaceInfo ------------------
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT id,0 
+			FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+			WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.VSRaceInfo14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.EventID AND t2.EventTime BETWEEN @StartDate AND @EndDate)
 
 			
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_RequestDetail'
-		--	RETURN
-		--END
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_RequestDetail'
+			RETURN
+		END
 
-		--ELSE IF @DeletedTarget = 'TicketVoiding_Request'
-		--BEGIN
-		--	CREATE TABLE #tmpRequest(RequestId INT)
+		ELSE IF @DeletedTarget = 'TicketVoiding_Request'
+		BEGIN
+			CREATE TABLE #tmpRequest(RequestId INT)
 
-		--	INSERT INTO #tmpRequest (RequestId)
-		--	SELECT RequestId
-		--	FROM dbo.TicketVoiding_Request AS t1 WITH (NOLOCK)
-		--		CROSS APPLY (
-		--			SELECT MAX(m.eventdate) AS Max_EventDate
-		--			FROM	bodb02.dbo.TicketVoiding_RequestDetail AS rd WITH (NOLOCK)
-		--				CROSS APPLY (
-		--					SELECT t2.eventdate AS eventdate
-		--					FROM	bodb02.dbo.match14 AS t2 WITH (NOLOCK)
-		--					WHERE	rd.MatchId NOT IN (9,29,2799) AND rd.MatchId = t2.matchid AND rd.RequestId = t1.RequestId
-		--					UNION ALL
-		--					SELECT t2.eventdate AS eventdate
-		--					FROM	 bodb02.dbo.match AS t2 WITH (NOLOCK)
-		--					WHERE	rd.MatchId NOT IN (9,29,2799) AND rd.MatchId = t2.matchid AND rd.RequestId = t1.RequestId
+			INSERT INTO #tmpRequest (RequestId)
+			SELECT RequestId
+			FROM dbo.TicketVoiding_Request AS t1 WITH (NOLOCK)
+				CROSS APPLY (
+					SELECT MAX(m.eventdate) AS Max_EventDate
+					FROM	bodb02.dbo.TicketVoiding_RequestDetail AS rd WITH (NOLOCK)
+						CROSS APPLY (
+							SELECT t2.eventdate AS eventdate
+							FROM	bodb02.dbo.match14 AS t2 WITH (NOLOCK)
+							WHERE	rd.MatchId NOT IN (9,29,2799) AND rd.MatchId = t2.matchid AND rd.RequestId = t1.RequestId
+							UNION ALL
+							SELECT t2.eventdate AS eventdate
+							FROM	 bodb02.dbo.match AS t2 WITH (NOLOCK)
+							WHERE	rd.MatchId NOT IN (9,29,2799) AND rd.MatchId = t2.matchid AND rd.RequestId = t1.RequestId
 
-		--					UNION ALL
-		--					SELECT t2.eventdate
-		--					FROM	bodb02.dbo.outright14 AS t2 WITH (NOLOCK) 
-		--					WHERE rd.matchid = t2.orid AND rd.RequestId = t1.RequestId
-		--					UNION ALL
-		--					SELECT t2.eventdate
-		--					FROM	bodb02.dbo.outright AS t2 WITH (NOLOCK) 
-		--					WHERE rd.matchid = t2.orid AND rd.RequestId = t1.RequestId
+							UNION ALL
+							SELECT t2.eventdate
+							FROM	bodb02.dbo.outright14 AS t2 WITH (NOLOCK) 
+							WHERE rd.matchid = t2.orid AND rd.RequestId = t1.RequestId
+							UNION ALL
+							SELECT t2.eventdate
+							FROM	bodb02.dbo.outright AS t2 WITH (NOLOCK) 
+							WHERE rd.matchid = t2.orid AND rd.RequestId = t1.RequestId
 
-		--					UNION ALL
-		--					SELECT t2.EventDate
-		--					FROM	bodb02.dbo.VSOutright14 AS t2 WITH (NOLOCK) 
-		--					WHERE rd.matchid = t2.orid AND rd.RequestId = t1.RequestId
-		--					UNION ALL
-		--					SELECT t2.EventDate
-		--					FROM	bodb02.dbo.VSOutright AS t2 WITH (NOLOCK) 
-		--					WHERE rd.matchid = t2.orid AND rd.RequestId = t1.RequestId
+							UNION ALL
+							SELECT t2.EventDate
+							FROM	bodb02.dbo.VSOutright14 AS t2 WITH (NOLOCK) 
+							WHERE rd.matchid = t2.orid AND rd.RequestId = t1.RequestId
+							UNION ALL
+							SELECT t2.EventDate
+							FROM	bodb02.dbo.VSOutright AS t2 WITH (NOLOCK) 
+							WHERE rd.matchid = t2.orid AND rd.RequestId = t1.RequestId
 
-		--					UNION ALL
-		--					SELECT t2.EventTime
-		--					FROM	bodb02.dbo.VSRaceInfo14 AS t2 WITH (NOLOCK) 
-		--					WHERE rd.matchid = t2.EventID AND rd.RequestId = t1.RequestId
-		--					UNION ALL
-		--					SELECT t2.EventTime
-		--					FROM	bodb02.dbo.VSRaceInfo AS t2 WITH (NOLOCK) 
-		--					WHERE rd.matchid = t2.EventID AND rd.RequestId = t1.RequestId
+							UNION ALL
+							SELECT t2.EventTime
+							FROM	bodb02.dbo.VSRaceInfo14 AS t2 WITH (NOLOCK) 
+							WHERE rd.matchid = t2.EventID AND rd.RequestId = t1.RequestId
+							UNION ALL
+							SELECT t2.EventTime
+							FROM	bodb02.dbo.VSRaceInfo AS t2 WITH (NOLOCK) 
+							WHERE rd.matchid = t2.EventID AND rd.RequestId = t1.RequestId
 
-		--					UNION ALL
-		--					SELECT MAX(bt.winlostdate) AS eventdate
-		--					FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
-		--						CROSS APPLY (
-		--								SELECT  b.winlostdate as winlostdate
-		--								FROM	bodb02.dbo.bettrans b WITH (NOLOCK) 
-		--								WHERE b.transid = s.TransId AND s.MatchId IN (9,29,2799) AND s.RequestId = t1.RequestId AND s.MatchId = rd.MatchId
+							UNION ALL
+							SELECT MAX(bt.winlostdate) AS eventdate
+							FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
+								CROSS APPLY (
+										SELECT  b.winlostdate as winlostdate
+										FROM	bodb02.dbo.bettrans b WITH (NOLOCK) 
+										WHERE b.transid = s.TransId AND s.MatchId IN (9,29,2799) AND s.RequestId = t1.RequestId AND s.MatchId = rd.MatchId
 			
-		--								UNION ALL
-		--								SELECT b.winlostdate as winlostdate
-		--								FROM bodb02.dbo.bettrans14 b WITH (NOLOCK) 
-		--								WHERE b.transid = s.TransId AND s.MatchId IN (9,29,2799) AND s.RequestId = t1.RequestId AND s.MatchId = rd.MatchId
-		--						)bt
-		--				)m
-		--			WHERE  rd.RequestId = t1.RequestId
-		--		)t	
-		--	WHERE  t.Max_EventDate BETWEEN @StartDate AND @EndDate;
+										UNION ALL
+										SELECT b.winlostdate as winlostdate
+										FROM bodb02.dbo.bettrans14 b WITH (NOLOCK) 
+										WHERE b.transid = s.TransId AND s.MatchId IN (9,29,2799) AND s.RequestId = t1.RequestId AND s.MatchId = rd.MatchId
+								)bt
+						)m
+					WHERE  rd.RequestId = t1.RequestId
+				)t	
+			WHERE  t.Max_EventDate BETWEEN @StartDate AND @EndDate;
 			
-		--	-----TicketVoiding_Request----
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT RequestId, 0 
-		--	FROM #tmpRequest
+			-----TicketVoiding_Request----
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT RequestId, 0 
+			FROM #tmpRequest
 			
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_Request'
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_Request'
 
-		--	-------Parlay for TicketVoiding_RequestDetail----------
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT id,0 
-		--	FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
-		--		CROSS APPLY (
-		--				SELECT max(b.winlostdate) as winlostdate
-		--				FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
-		--					INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
-		--					WHERE s.RequestId = t1.RequestId
+			-------Parlay for TicketVoiding_RequestDetail----------
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT id,0 
+			FROM	bodb02.dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
+				CROSS APPLY (
+						SELECT max(b.winlostdate) as winlostdate
+						FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
+							INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
+							WHERE s.RequestId = t1.RequestId
 			
-		--				UNION ALL
-		--				SELECT max(b.winlostdate) as winlostdate
-		--				FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
-		--					INNER JOIN bodb02.dbo.bettrans14 b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
-		--					WHERE s.RequestId = t1.RequestId
-		--		)t
-		--	WHERE t1.MatchId IN (9,29,2799)
-		--		AND t.winlostdate BETWEEN @StartDate AND @EndDate
+						UNION ALL
+						SELECT max(b.winlostdate) as winlostdate
+						FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
+							INNER JOIN bodb02.dbo.bettrans14 b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
+							WHERE s.RequestId = t1.RequestId
+				)t
+			WHERE t1.MatchId IN (9,29,2799)
+				AND t.winlostdate BETWEEN @StartDate AND @EndDate
 
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_RequestDetail'
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_RequestDetail'
 
-		--	-----zzzbettransm----
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT t1.keyid, 0 
-		--	FROM dbo.zzzbettransm t1 WITH (NOLOCK)
-		--		INNER JOIN dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
-		--		INNER JOIN #tmpRequest r ON r.RequestId = v.RequestId
-		--	WHERE t1.VoidingHistoryId IS NOT NULL
+			-----zzzbettransm----
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT t1.keyid, 0 
+			FROM dbo.zzzbettransm t1 WITH (NOLOCK)
+				INNER JOIN dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
+				INNER JOIN #tmpRequest r ON r.RequestId = v.RequestId
+			WHERE t1.VoidingHistoryId IS NOT NULL
 
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettransm'
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettransm'
 
-		--	-----zzzbettrans----
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT t1.keyid, 0 
-		--	FROM dbo.zzzbettrans t1 WITH (NOLOCK)
-		--		INNER JOIN dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
-		--		INNER JOIN #tmpRequest r ON r.RequestId = v.RequestId
-		--	WHERE t1.VoidingHistoryId IS NOT NULL
+			-----zzzbettrans----
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT t1.keyid, 0 
+			FROM dbo.zzzbettrans t1 WITH (NOLOCK)
+				INNER JOIN dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
+				INNER JOIN #tmpRequest r ON r.RequestId = v.RequestId
+			WHERE t1.VoidingHistoryId IS NOT NULL
 
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettrans'
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettrans'
 
-		--	-----TicketVoiding_OperatorInfo----
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT t1.Id, 0 
-		--	FROM dbo.TicketVoiding_OperatorInfo t1 WITH (NOLOCK)
-		--		INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
+			-----TicketVoiding_OperatorInfo----
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT t1.Id, 0 
+			FROM dbo.TicketVoiding_OperatorInfo t1 WITH (NOLOCK)
+				INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
 
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_OperatorInfo'
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_OperatorInfo'
 
-		--	-----TicketVoiding_Queue----
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT t1.QueueId, 0 
-		--	FROM dbo.TicketVoiding_Queue t1 WITH (NOLOCK)
-		--		INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
+			-----TicketVoiding_Queue----
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT t1.QueueId, 0 
+			FROM dbo.TicketVoiding_Queue t1 WITH (NOLOCK)
+				INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
 
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_Queue'
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_Queue'
 
-		--	-----TicketVoiding_Reason----
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT t1.ReasonId, 0 
-		--	FROM dbo.TicketVoiding_Reason t1 WITH (NOLOCK)
-		--		INNER JOIN dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.ReasonId = t1.ReasonId
-		--		INNER JOIN #tmpRequest r ON r.RequestId = v.RequestId
+			-----TicketVoiding_Reason----
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT t1.ReasonId, 0 
+			FROM dbo.TicketVoiding_Reason t1 WITH (NOLOCK)
+				INNER JOIN dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.ReasonId = t1.ReasonId
+				INNER JOIN #tmpRequest r ON r.RequestId = v.RequestId
 
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_Reason'
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_Reason'
 
-		--	-----TicketVoiding_VoidingHistory----
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT t1.VoidingHistoryId, 0 
-		--	FROM dbo.TicketVoiding_VoidingHistory t1 WITH (NOLOCK)
-		--		INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
+			-----TicketVoiding_VoidingHistory----
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT t1.VoidingHistoryId, 0 
+			FROM dbo.TicketVoiding_VoidingHistory t1 WITH (NOLOCK)
+				INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
 
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_VoidingHistory'
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_VoidingHistory'
 
-		--	-----TicketVoiding_RequestDetailTicket_Single----
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT t1.Id, 0 
-		--	FROM dbo.TicketVoiding_RequestDetailTicket_Single t1 WITH (NOLOCK)
-		--		INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
+			-----TicketVoiding_RequestDetailTicket_Single----
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT t1.Id, 0 
+			FROM dbo.TicketVoiding_RequestDetailTicket_Single t1 WITH (NOLOCK)
+				INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
 
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_RequestDetailTicket_Single'
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_RequestDetailTicket_Single'
 
-		--	-----TicketVoiding_RequestDetailTicket_SubParlay----
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT t1.Id, 0 
-		--	FROM dbo.TicketVoiding_RequestDetailTicket_SubParlay t1 WITH (NOLOCK)
-		--		INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
+			-----TicketVoiding_RequestDetailTicket_SubParlay----
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT t1.Id, 0 
+			FROM dbo.TicketVoiding_RequestDetailTicket_SubParlay t1 WITH (NOLOCK)
+				INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
 
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_RequestDetailTicket_SubParlay'
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_RequestDetailTicket_SubParlay'
 
-		--	RETURN
-		--END
+			RETURN
+		END
 
-		--ELSE IF @DeletedTarget = 'TicketVoiding_AutoUnmarkSetting'
-		--BEGIN			
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT id,0 
-		--	FROM dbo.TicketVoiding_AutoUnmarkSetting AS t1 WITH (NOLOCK)
-		--	WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate);
+		ELSE IF @DeletedTarget = 'TicketVoiding_AutoUnmarkSetting'
+		BEGIN			
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT id,0 
+			FROM dbo.TicketVoiding_AutoUnmarkSetting AS t1 WITH (NOLOCK)
+			WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate);
 			
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_AutoUnmarkSetting'
-		--	RETURN
-		--END
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_AutoUnmarkSetting'
+			RETURN
+		END
 
-		--ELSE IF @DeletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
-		--BEGIN			
-		--	TRUNCATE TABLE #DeletedList
-		--	INSERT INTO #DeletedList (id,IsDone)
-		--	SELECT QueueId,0 
-		--	FROM dbo.TicketVoiding_AutoVoidRequest_Queue AS t1 WITH (NOLOCK)
-		--	WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate);
+		ELSE IF @DeletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
+		BEGIN			
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT QueueId,0 
+			FROM dbo.TicketVoiding_AutoVoidRequest_Queue AS t1 WITH (NOLOCK)
+			WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate);
 			
-		--	EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
-		--	RETURN
-		--END
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
+			RETURN
+		END
 		/*--------------*/
 	END
-	--ELSE IF @Action = 'subtask'
-	--BEGIN
-	--	DECLARE @ids VARCHAR(MAX), @rowcount INT = 0, @topk INT = 300
-	--	CREATE TABLE #output (id INT)	
+	ELSE IF @Action = 'subtask'
+	BEGIN
+		DECLARE @ids VARCHAR(MAX), @rowcount INT = 0, @topk INT = 300
+		CREATE TABLE #output (id INT)	
 
-	--	SET @rowcount = 1
-	--	WHILE @rowcount <> 0
-	--	BEGIN
-	--		TRUNCATE TABLE #output
-	--		SET @ids = NULL
+		SET @rowcount = 1
+		WHILE @rowcount <> 0
+		BEGIN
+			TRUNCATE TABLE #output
+			SET @ids = NULL
 
-	--		DELETE TOP(@topk) t
-	--		OUTPUT deleted.id INTO #output(id)
-	--		FROM #DeletedList t
+			DELETE TOP(@topk) t
+			OUTPUT deleted.id INTO #output(id)
+			FROM #DeletedList t
 			
-	--		SET @rowcount = ISNULL(@@ROWCOUNT,0)
-	--		IF @rowcount = 0  BREAK;
+			SET @rowcount = ISNULL(@@ROWCOUNT,0)
+			IF @rowcount = 0  BREAK;
 
-	--		SELECT @ids = COALESCE(@ids + ',' + CAST(id AS VARCHAR(50)), CAST(id AS VARCHAR(50)))
-	--		FROM #output  
+			SELECT @ids = COALESCE(@ids + ',' + CAST(id AS VARCHAR(50)), CAST(id AS VARCHAR(50)))
+			FROM #output  
 
-	--		EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = @DeletedTarget, @transIds = @ids, @winlostdate = ''
-	--	END
-	--	DROP TABLE #output
-	--END
+			EXEC [dbo].[ExecRep_02] @Command = 'ALL_DB', @DeletedTarget = @DeletedTarget, @transIds = @ids, @winlostdate = ''
+		END
+		DROP TABLE #output
+	END
 END
 GO
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
