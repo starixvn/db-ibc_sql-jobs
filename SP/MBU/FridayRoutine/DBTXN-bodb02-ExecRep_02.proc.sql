@@ -30,6 +30,7 @@ AS
 		- 20191126@Patrick: Add more conndition remove data on DB054/DB055 - [Redmine: #124104]
 		- 20200227@Patrick: Implement remove data of Intg_GameRoundBetStake after BU day - 1 [Redmine: #126981]
 		- 20201119@Brice: Enhance MBU process related to removing data on bettransm14 [Redmine: #143763]
+		- 20210225@Max: [TVS] Remove archived data [Redmine: #150524]
 */
 -- =======================
 -- Parameter check\control
@@ -43,6 +44,9 @@ BEGIN
 				id		BIGINT		PRIMARY KEY CLUSTERED
 			);
 
+	DECLARE @xml XML
+	DECLARE @MarkedTrans TABLE (TransId BIGINT, MatchId INT)
+	
 	IF @Command IS NULL OR @winlostdate IS NULL
 	BEGIN
 		PRINT 'Invalid input parameters'
@@ -248,12 +252,18 @@ BEGIN
 			BEGIN;
 				SELECT	@rowcount = 0;
 
+				SET @xml = CONVERT(XML, @TransIds)
+				INSERT INTO @MarkedTrans(TransID, MatchId)
+				SELECT	T.C.value('./@transid', 'bigint')
+						,T.C.value('./@matchid', 'int')
+				FROM	@xml.nodes('/root/r') AS T(C)
+				OPTION (OPTIMIZE FOR (@xml = NULL ))
+
 				BEGIN TRANSACTION;
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.MarkedTransaction AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (CONVERT(VARCHAR(4000), @tmp1), ',') AS s
-						ON	tbl.TransId = CONVERT(BIGINT, s.val);
+				INNER JOIN	@MarkedTrans m ON m.TransId = tbl.TransId AND m.MatchId = tbl.MatchId
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -285,6 +295,268 @@ BEGIN
 			END
 			RETURN
 		END --- end of deleting others tables
+
+		/*------TVS--------*/
+		IF	@deletedTarget = 'TicketVoiding_VoidedTransaction'
+		BEGIN
+			IF	OBJECT_ID('TicketVoiding_VoidedTransaction') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.TicketVoiding_VoidedTransaction AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END		
+
+		IF	@deletedTarget = 'TicketVoiding_Reason'
+		BEGIN
+			IF	OBJECT_ID('TicketVoiding_Reason') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.TicketVoiding_Reason AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.ReasonId = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END	
+
+		IF	@deletedTarget = 'TicketVoiding_VoidingHistory'
+		BEGIN
+			IF	OBJECT_ID('TicketVoiding_VoidingHistory') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.TicketVoiding_VoidingHistory AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.VoidingHistoryId = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END	
+		
+		IF	@deletedTarget = 'TicketVoiding_Queue'
+		BEGIN
+			IF	OBJECT_ID('TicketVoiding_Queue') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.TicketVoiding_Queue AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.QueueId = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END		
+
+		IF	@deletedTarget = 'TicketVoiding_OperatorInfo'
+		BEGIN
+			IF	OBJECT_ID('TicketVoiding_OperatorInfo') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.TicketVoiding_OperatorInfo AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END	
+		
+		IF	@deletedTarget = 'TicketVoiding_Request'
+		BEGIN
+			IF	OBJECT_ID('TicketVoiding_Request') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.TicketVoiding_Request AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.RequestId = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END	
+
+		IF	@deletedTarget = 'TicketVoiding_AutoUnmarkSetting'
+		BEGIN
+			IF	OBJECT_ID('TicketVoiding_AutoUnmarkSetting') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.TicketVoiding_AutoUnmarkSetting AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END	
+		
+		IF	@deletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
+		BEGIN
+			IF	OBJECT_ID('TicketVoiding_AutoVoidRequest_Queue') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.TicketVoiding_AutoVoidRequest_Queue AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.QueueId = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END		
+
+		IF	@deletedTarget = 'zzzbettrans'
+		BEGIN
+			IF	OBJECT_ID('zzzbettrans') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.zzzbettrans AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.keyid = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END	
+		
+		IF	@deletedTarget = 'zzzbettransM'
+		BEGIN
+			IF	OBJECT_ID('zzzbettransM') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.zzzbettransM AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.keyid = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END	
+		
+		IF	@deletedTarget = 'TicketVoiding_RequestDetail'
+		BEGIN
+			IF	OBJECT_ID('TicketVoiding_RequestDetail') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.TicketVoiding_RequestDetail AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END	
+
+		IF	@deletedTarget = 'TicketVoiding_RequestDetailTicket_Single'
+		BEGIN
+			IF	OBJECT_ID('TicketVoiding_RequestDetailTicket_Single') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.TicketVoiding_RequestDetailTicket_Single AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END
+		
+		IF	@deletedTarget = 'TicketVoiding_RequestDetailTicket_SubParlay'
+		BEGIN
+			IF	OBJECT_ID('TicketVoiding_RequestDetailTicket_SubParlay') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.TicketVoiding_RequestDetailTicket_SubParlay AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END
+		/*-----------------*/
 	END
 	ELSE-- Below is UN-ACCEPTED CASE
 	BEGIN
