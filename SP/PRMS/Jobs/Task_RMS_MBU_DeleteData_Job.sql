@@ -95,6 +95,32 @@ BEGIN
 		END
 	END
 
+
+	-- rmBettransm_bk, rmMatch_bk
+	BEGIN
+		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
+
+		SELECT  @FromDate = MIN(winlostdate) FROM dbo.rmBettrans_Old WITH (NOLOCK)
+		SELECT  @ToDate = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()) - 3, 0)) -- Keep data in 3 months (from 1st)
+
+		SELECT @winlostdate = @FromDate
+		WHILE  @winlostdate <= @ToDate
+		BEGIN
+			EXEC dbo.Task_RMS_MBU_DeleteData_rmBettransOld @winlostdate = @winlostdate, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+			IF @ErrCode > 0
+			BEGIN
+				INSERT INTO @tblErrMsg (TableName, ErrMsg)
+				SELECT 'rmBettrans_Old', 'From winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''' + ' - ' + ISNULL(@ErrMsg , '')
+
+				BREAK
+			END
+
+			SELECT @winlostdate = DATEADD(DAY, 1, @winlostdate)
+		END
+	END
+
+
 	IF EXISTS (SELECT 1 FROM @tblErrMsg)
 	BEGIN
 		SELECT @ErrMsg = NULL

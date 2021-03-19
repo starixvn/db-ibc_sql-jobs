@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20200512@Percy: Initialize SP [RedmineID: #130275]
 		- 20200601@Percy: Add Setting rmCopyData [RedmineID: #135326]
+		- 20210319@Danny: Add function to copy data of bettransm_bk, match_bk [RedmineID: #151319]
 */
 
 BEGIN
@@ -28,6 +29,31 @@ BEGIN
 	DECLARE @FromDate SMALLDATETIME, @ToDate SMALLDATETIME
 	DECLARE @winlostdate SMALLDATETIME, @ErrCode INT, @ErrMsg VARCHAR(4000)
 	DECLARE @tblErrMsg TABLE (TableName VARCHAR(300), ErrMsg VARCHAR(4000))
+
+
+	-- bettransm_bk, match_bk --> rmBettransm_bk, rmMatch_bk
+	BEGIN
+		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
+
+		SELECT  @FromDate = MAX(winlostdate) FROM dbo.rmBettransm_bk WITH (NOLOCK)
+		SELECT  @ToDate = DATEADD(DAY, -1, CONVERT(DATE, GETDATE()))
+
+		SELECT @winlostdate = @FromDate
+		WHILE  @winlostdate <= @ToDate
+		BEGIN
+			EXEC dbo.Task_RMS_MBU_CopyData_rmBettransm_bk @winlostdate = @winlostdate, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+			IF @ErrCode > 0
+			BEGIN
+				INSERT INTO @tblErrMsg (TableName, ErrMsg)
+				SELECT 'rmBettransm_bk', 'From winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''' + ' - ' + ISNULL(@ErrMsg , '')
+
+				BREAK
+			END
+
+			SELECT @winlostdate = DATEADD(DAY, 1, @winlostdate)
+		END
+	END
 
 	-- rmBettrans --> rmBettrans_Old
 	BEGIN
