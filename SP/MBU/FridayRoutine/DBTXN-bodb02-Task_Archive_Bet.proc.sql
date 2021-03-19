@@ -3,6 +3,7 @@ SET	ANSI_NULLS ON;
 GO
 ALTER PROCEDURE [dbo].[Task_Archive_Bet]
 (
+	@winlostdate DATETIME = NULL,
 	@StartDate DATETIME =  NULL,
 	@EndDate DATETIME = NULL,
 	@DeletedTarget VARCHAR(100) = '',
@@ -34,7 +35,7 @@ BEGIN
 			SELECT IDENTITY(INT,1,1) id, refno, count(1) AS cnt, 5000/count(1) AS batch_size
 			INTO #tmp
 			FROM betparlaydetail WITH(NOLOCK)
-			WHERE winlostdate <= DATEADD(DAY, - 14, @StartDate)
+			WHERE winlostdate <= DATEADD(DAY, - 14, @winlostdate)
 			GROUP BY refno 
 			ORDER BY cnt DESC 
 
@@ -60,7 +61,7 @@ BEGIN
 				WHERE id >= @i 
 				ORDER BY id ASC 
 
-				EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @StartDate, @parlay = 29, @tableName = 'betParlayDetail', @refnos = @refnos
+				EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 29, @tableName = 'betParlayDetail', @refnos = @refnos
 				SET @i = @i + @topn
 			END 
 			DROP TABLE #tmp 
@@ -69,7 +70,7 @@ BEGIN
 		ELSE IF @DeletedTarget = 'betParlayResult'
 		BEGIN
 			-- call execRep SP
-			EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @StartDate, @parlay = 29, @tableName = 'betParlayResult'
+			EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 29, @tableName = 'betParlayResult'
 		END
 
 		ELSE IF	@DeletedTarget = 'Task_bettrans14_IP2Country'
@@ -78,7 +79,7 @@ BEGIN
 			BEGIN;
 				DELETE	TOP(10000)
 				FROM	dbo.Task_bettrans14_IP2Country WITH (ROWLOCK) 
-				WHERE	winlostdate <= @StartDate;
+				WHERE	winlostdate <= @winlostdate;
 
 				IF	@@ROWCOUNT = 0
 					BREAK;
@@ -97,7 +98,7 @@ BEGIN
 			BEGIN;
 				DELETE	TOP(10000)
 				FROM	dbo.Task_bettransRNG14_IP2Country WITH (ROWLOCK) 
-				WHERE	winlostdate <= @StartDate;
+				WHERE	winlostdate <= @winlostdate;
 
 				IF	@@ROWCOUNT = 0
 					BREAK;
@@ -116,7 +117,7 @@ BEGIN
 			BEGIN;
 				DELETE	TOP(10000)
 				FROM	dbo.Task_bettransLC14_IP2Country WITH (ROWLOCK) 
-				WHERE	winlostdate <= @StartDate;
+				WHERE	winlostdate <= @winlostdate;
 
 				IF	@@ROWCOUNT = 0
 					BREAK;
@@ -148,7 +149,7 @@ BEGIN
 			FROM		dbo.MarkedTransaction AS tbl WITH (NOLOCK)
 			INNER JOIN	dbo.match14 AS m14 WITH (NOLOCK)
 					ON	tbl.MatchId = m14.matchid
-			WHERE	m14.eventdate <= @StartDate;
+			WHERE	m14.eventdate <= @winlostdate;
 
 			WHILE	0 = 0
 			BEGIN;
@@ -167,7 +168,7 @@ BEGIN
 								FOR XML PATH('r'), ROOT('root')
 							)
 
-				EXECUTE	dbo.ExecRep_02 @winlostdate = @StartDate, @Command = 'ALL_DB', @DeletedTarget = 'MarkedTransaction', @transIds = @transDelStr;
+				EXECUTE	dbo.ExecRep_02 @winlostdate = @winlostdate, @Command = 'ALL_DB', @DeletedTarget = 'MarkedTransaction', @transIds = @transDelStr;
 
 				-- Dynamic Delay Time --
 				SELECT	@WaitFor = dbo.f_BU_GetDelayTime('FriRoutine');
