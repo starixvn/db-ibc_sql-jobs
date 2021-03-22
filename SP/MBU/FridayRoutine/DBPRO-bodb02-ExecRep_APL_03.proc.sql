@@ -20,6 +20,7 @@ AS
 		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
+		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -103,6 +104,12 @@ BEGIN
 	IF @DeletedTarget = 'ProviderExternalResultDetailOS14'
 	BEGIN
 		DELETE FROM dbo.ProviderExternalResultDetailOS14 WHERE ProviderExternalId IN (SELECT id FROM @idList)	
+		RETURN
+	END
+	
+	IF @DeletedTarget = 'ProviderExternalResultDetail14'
+	BEGIN
+		DELETE FROM dbo.ProviderExternalResultDetail14 WHERE ProviderExternalId IN (SELECT id FROM @idList)	
 		RETURN
 	END
 	

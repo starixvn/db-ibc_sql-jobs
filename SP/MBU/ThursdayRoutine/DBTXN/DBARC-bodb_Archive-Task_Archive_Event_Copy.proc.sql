@@ -21,6 +21,7 @@ AS
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		- 20200909@Brice:		Add column color for table bingoBall [Redmine: #128414]
 		- 20201009@Brice:		Add columns GapOddsCap1,GapOddsCap2 for table odds [Redmine: #143211]
+		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -601,6 +602,24 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 
 SELECT	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy
 FROM	bodb02.dbo.ProviderExternalResultDetailOS14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;
+	
+	---------------Table 26:  ProviderExternalResultDetail_bk -----------------------------
+	ELSE IF	@TableName = N'ProviderExternalResultDetail_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.ProviderExternalResultDetail_bk
+	(	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy)
+SELECT	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy
+FROM	bodb02.dbo.ProviderExternalResultDetail14 AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
 
 		EXECUTE	sys.sp_executesql @Query;

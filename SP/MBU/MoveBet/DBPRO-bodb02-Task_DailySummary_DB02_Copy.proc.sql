@@ -51,6 +51,7 @@ AS
 		-- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		-- 20200909@Brice:		Add column color for table bingoBall [Redmine: #128414]
 		-- 20201009@Brice:		Add columns GapOddsCap1,GapOddsCap2 for table odds [Redmine: #143211]
+		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 */
 
 BEGIN
@@ -178,6 +179,34 @@ SET NOCOUNT ON
 		waitfor delay '00:00:01'
 	end
 ------------------/20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]-----------------------------------------------------------------------------
+
+-------------------20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]-----------------------------------------------------------------------------
+	truncate table #__IdsList
+	select @rowId = 0
+	insert into #__IdsList(Id)
+	select p.ProviderExternalId
+	from dbo.ProviderExternalResultDetail p with(nolock)
+	where matchid in (select matchid from #__matchIdList)
+	while 1 = 1
+	begin
+		truncate table #__tempData
+
+		insert into #__tempData(id)
+		select id from #__IdsList where rowId > @rowId and rowId <= @rowId + @rowInBatch
+		if @@rowcount = 0
+			break
+
+		set @rowId = @rowId + @rowInBatch
+
+		insert into dbo.ProviderExternalResultDetail14([ProviderExternalId],[MatchId3rd],[MatchId],[SourceId],[ResourceId],[HomeValue],[AwayValue],[OtherInfo],[CreateDate],[CreateBy],[LastModifyDate],[LastModifyBy])
+		select [ProviderExternalId],[MatchId3rd],[MatchId],[SourceId],[ResourceId],[HomeValue],[AwayValue],[OtherInfo],[CreateDate],[CreateBy],[LastModifyDate],[LastModifyBy]
+		from dbo.ProviderExternalResultDetail with(nolock)
+		where ProviderExternalId in (select id from #__tempData)
+
+		waitfor delay '00:00:01'
+	end
+------------------/20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]-----------------------------------------------------------------------------
+
 	SELECT	@rowId = 0;
 	WHILE	1 = 1
 	BEGIN

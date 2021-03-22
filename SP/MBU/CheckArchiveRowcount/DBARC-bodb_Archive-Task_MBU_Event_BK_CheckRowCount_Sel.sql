@@ -18,6 +18,7 @@ AS
 		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
+		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -47,6 +48,12 @@ BEGIN;
 	FROM	dbo.ProviderExternalResultDetailOS_bk AS tbl WITH (NOLOCK)
 	WHERE	EXISTS (SELECT 1 FROM dbo.match_bk AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
 
+	--//ProviderExternalResultDetail
+	INSERT INTO	@__tempCount(rowcnt, tableName)
+	SELECT	COUNT(1), 'ProviderExternalResultDetail'
+	FROM	dbo.ProviderExternalResultDetail_bk AS tbl WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match_bk AS m WITH (NOLOCK) WHERE m.eventdate = @DateCheck AND tbl.matchid = m.matchid);
+	
 	--//outright
 	INSERT INTO	@__tempCount(rowcnt, tableName)
 	SELECT	COUNT(1), 'outright'

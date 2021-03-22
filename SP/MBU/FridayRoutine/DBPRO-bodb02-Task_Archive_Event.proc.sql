@@ -46,6 +46,7 @@ AS
 		- 20200622@Patrick: Add more table VSRaceInfo [Redmine: #135963]
 		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
+		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -91,6 +92,14 @@ BEGIN
 		-- call subtask for looping & deleting data on ProviderExternalResultDetailOS14
 		EXEC [dbo].[Task_Archive_Event] @winlostdate = @winlostdate ,@Action = 'subtask', @DeletedTarget = 'ProviderExternalResultDetailOS14'
 		
+
+---### delete data for ProviderExternalResultDetail14
+		INSERT INTO #DeletedList (id,IsDone)
+		SELECT ProviderExternalId,0 
+		FROM dbo.ProviderExternalResultDetail14  WHERE matchid IN (SELECT matchid FROM dbo.match14 WHERE eventdate = @winlostdate)
+
+		-- call subtask for looping & deleting data on ProviderExternalResultDetail14
+		EXEC [dbo].[Task_Archive_Event] @winlostdate = @winlostdate ,@Action = 'subtask', @DeletedTarget = 'ProviderExternalResultDetail14'
 		
 		---### delete data for BingoBall14
 		TRUNCATE TABLE #DeletedList
