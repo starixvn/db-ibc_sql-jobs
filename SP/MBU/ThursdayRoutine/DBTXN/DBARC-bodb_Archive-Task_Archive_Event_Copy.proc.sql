@@ -22,6 +22,7 @@ AS
 		- 20200909@Brice:		Add column color for table bingoBall [Redmine: #128414]
 		- 20201009@Brice:		Add columns GapOddsCap1,GapOddsCap2 for table odds [Redmine: #143211]
 		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
+		- 20210310@Brice:		Add table AutoRefundResult_bk [Redmine: #149770]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -75,16 +76,16 @@ WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matc
 INSERT INTO	dbo.match_bk
 	(	matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore, finalhomescore, finalawayscore, creator, matchcode, kickofftime, closedtime, showtime
 	,	hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, tstamp, homeid2, awayid2, DisplayMode, LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral
-	,	GoalRecord, GlobalShowTime, ParentID, ShowTimeDT)
+	,	GoalRecord, GlobalShowTime, ParentID, ShowTimeDT,ChildMatchType)
 SELECT	matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore, finalhomescore, finalawayscore, creator, matchcode, kickofftime, closedtime, showtime
 	,	hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, tstamp, homeid2, awayid2, DisplayMode, LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral
-	,	GoalRecord, GlobalShowTime, ParentID, ShowTimeDT
+	,	GoalRecord, GlobalShowTime, ParentID, ShowTimeDT,ChildMatchType
 FROM	OPENQUERY(DBPRO, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
 SELECT	matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore, finalhomescore, finalawayscore, creator, matchcode, kickofftime, closedtime, showtime
 	,	hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, tstamp, homeid2, awayid2, DisplayMode, LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral
-	,	GoalRecord, GlobalShowTime, ParentID, ShowTimeDT
+	,	GoalRecord, GlobalShowTime, ParentID, ShowTimeDT,ChildMatchType
 FROM	bodb02.dbo.match14 AS t1 WITH (NOLOCK)
 WHERE	t1.eventdate = @winlostdate;'');';
 
@@ -620,6 +621,23 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 
 SELECT	ProviderExternalId,MatchId3rd,MatchId,SourceId,ResourceId,HomeValue,AwayValue,OtherInfo,CreateDate,CreateBy,LastModifyDate,LastModifyBy
 FROM	bodb02.dbo.ProviderExternalResultDetail14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+
+		EXECUTE	sys.sp_executesql @Query;
+	END;	
+	---------------Table 26:  AutoRefundResult_bk -----------------------------
+	ELSE IF	@TableName = N'AutoRefundResult_bk'
+	BEGIN;
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.AutoRefundResult_bk
+	(AutoRefundResultId,MatchId,SourceId,TypeId,StatusId,TryCount,CreateDate,ModifiedDate,Remark)
+SELECT	AutoRefundResultId,MatchId,SourceId,TypeId,StatusId,TryCount,CreateDate,ModifiedDate,Remark		
+FROM	OPENQUERY(DBPRO, ''\
+DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
+
+SELECT	AutoRefundResultId,MatchId,SourceId,TypeId,StatusId,TryCount,CreateDate,ModifiedDate,Remark
+FROM	bodb02.dbo.AutoRefundResult AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
 
 		EXECUTE	sys.sp_executesql @Query;

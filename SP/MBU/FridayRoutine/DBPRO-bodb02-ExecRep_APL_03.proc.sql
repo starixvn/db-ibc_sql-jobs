@@ -21,6 +21,7 @@ AS
 		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
+		- 20210310@Brice:		Add table AutoRefundResult_bk [Redmine: #149770]
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -112,6 +113,13 @@ BEGIN
 		DELETE FROM dbo.ProviderExternalResultDetail14 WHERE ProviderExternalId IN (SELECT id FROM @idList)	
 		RETURN
 	END
+
+	IF @DeletedTarget = 'AutoRefundResult'
+	BEGIN
+		DELETE FROM dbo.AutoRefundResult WHERE AutoRefundResultId IN (SELECT id FROM @idList)	
+		RETURN
+	END
+	
 	
 	IF @DeletedTarget = 'VSRaceInfo14'
 	BEGIN
