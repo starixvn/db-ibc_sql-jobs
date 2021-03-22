@@ -35,7 +35,8 @@ BEGIN
 				statusID,
 				refno,
 				winlostdate,
-				matchid 
+				matchid,
+				matchdate
 			)
 			SELECT 
 				transid,
@@ -44,7 +45,8 @@ BEGIN
 				statusID,
 				refno,
 				winlostdate,
-				matchid 
+				matchid,
+				matchdate
 			FROM DBARC.bodb_archive.dbo.bettransm r WITH (NOLOCK)
 			WHERE r.winlostdate = @winlostdate
 
@@ -56,7 +58,9 @@ BEGIN
 				eventdate,
 				ParentID,
 				ChildMatchType,
-				sporttype
+				sporttype,
+				GlobalShowTime,
+				eventstatus
 			)
 			SELECT 
 				matchid,
@@ -64,7 +68,9 @@ BEGIN
 				eventdate,
 				ParentID,
 				ChildMatchType,
-				sporttype
+				sporttype,
+				GlobalShowTime,
+				eventstatus
 			FROM DBARC.bodb_archive.dbo.match_bk r WITH (NOLOCK)
 			WHERE r.eventdate = @winlostdate 
 
