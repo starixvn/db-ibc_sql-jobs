@@ -631,12 +631,12 @@ WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matc
 		SELECT	@Query = N'';
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.AutoRefundResult_bk
-	(AutoRefundResultId,MatchId,SourceId,TypeId,StatusId,TryCount,CreateDate)
-SELECT	AutoRefundResultId,MatchId,SourceId,TypeId,StatusId,TryCount,CreateDate		
+	(AutoRefundResultId,MatchId,SourceId,TypeId,StatusId,TryCount,CreateDate,ModifiedDate,Remark)
+SELECT	AutoRefundResultId,MatchId,SourceId,TypeId,StatusId,TryCount,CreateDate,ModifiedDate,Remark		
 FROM	OPENQUERY(DBPRO, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-SELECT	AutoRefundResultId,MatchId,SourceId,TypeId,StatusId,TryCount,CreateDate
+SELECT	AutoRefundResultId,MatchId,SourceId,TypeId,StatusId,TryCount,CreateDate,ModifiedDate,Remark
 FROM	bodb02.dbo.AutoRefundResult AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
 
