@@ -36,7 +36,7 @@ BEGIN
 
 			-- bettransm
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, bm.matchid
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END  matchid
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 				INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
@@ -47,7 +47,7 @@ BEGIN
 
 			-- bettransm14
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, bm.matchid
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake,  CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END  matchid
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 				INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
@@ -65,8 +65,6 @@ BEGIN
 
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
 			EXECUTE	sys.sp_executesql @__sqlCmd, N'@query NVARCHAR(MAX), @winlostdate SMALLDATETIME', @__query, @winlostdate
-
-		
 		END
 
 		-- Gen data

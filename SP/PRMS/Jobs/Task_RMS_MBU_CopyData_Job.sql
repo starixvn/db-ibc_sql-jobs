@@ -35,8 +35,13 @@ BEGIN
 	BEGIN
 		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
+		DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+		INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+		EXEC bodb02.dbo.Age_SelBalanceUpDay
+
 		SELECT  @FromDate = MAX(winlostdate) FROM dbo.rmBettransm_bk WITH (NOLOCK)
-		SELECT  @ToDate = DATEADD(DAY, -1, CONVERT(DATE, GETDATE()))
+		SELECT  @ToDate = DATEADD(DAY, -1, BalanceUpDay)
+		FROM @MBBU
 
 		SELECT @winlostdate = @FromDate
 		WHILE  @winlostdate <= @ToDate

@@ -1,5 +1,5 @@
 /*<info serverAlias="DBRMS-bodb_RMS" isFunction="0" isNested="1"></info>*/
-CREATE PROCEDURE [dbo].[Task_RMS_MBU_CopyData_rmBettransm_bk]
+ALTER PROCEDURE [dbo].[Task_RMS_MBU_CopyData_rmBettransm_bk]
 	@winlostdate SMALLDATETIME
 	,@ErrCode		INT = 0 OUTPUT
 	,@ErrMsg		VARCHAR(4000) = '' OUTPUT
@@ -17,52 +17,66 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	IF @@ROWCOUNT = 0
+	IF EXISTS (SELECT 1 FROM DBARC.bodb_archive.dbo.bettransm r WITH (NOLOCK) WHERE r.winlostdate = @winlostdate)
+	BEGIN
+
+		IF EXISTS (SELECT 1 FROM dbo.rmBettransm_bk WITH (NOLOCK) WHERE winlostdate = @winlostdate)
+		BEGIN
+			DELETE dbo.rmBettransm_bk WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @winlostdate
+			DELETE dbo.rmMatch_bk WITH (ROWLOCK, UPDLOCK) WHERE eventdate = @winlostdate
+		END
+
+		BEGIN TRY
+			INSERT INTO dbo.rmBettransm_bk
+			(
+				transid,
+				odds,
+				stake,
+				statusID,
+				refno,
+				winlostdate,
+				matchid 
+			)
+			SELECT 
+				transid,
+				odds,
+				stake,
+				statusID,
+				refno,
+				winlostdate,
+				matchid 
+			FROM DBARC.bodb_archive.dbo.bettransm r WITH (NOLOCK)
+			WHERE r.winlostdate = @winlostdate
+
+
+			INSERT INTO dbo.rmMatch_bk
+			(
+				matchid,
+				leagueid,
+				eventdate,
+				ParentID,
+				ChildMatchType,
+				sporttype
+			)
+			SELECT 
+				matchid,
+				leagueid,
+				eventdate,
+				ParentID,
+				ChildMatchType,
+				sporttype
+			FROM DBARC.bodb_archive.dbo.match_bk r WITH (NOLOCK)
+			WHERE r.eventdate = @winlostdate 
+
+		END TRY
+		BEGIN CATCH
+			SELECT @ErrCode = 101, @ErrMsg = ERROR_MESSAGE()
+			RETURN
+		END CATCH
+	END
+	ELSE
+	BEGIN
 		RETURN
-	BEGIN TRY
-		INSERT INTO dbo.rmBettransm_bk
-		(
-			transid,
-			odds,
-			stake,
-			statusID,
-			refno,
-			winlostdate,
-			matchid 
-		)
-		SELECT 
-			transid,
-			odds,
-			stake,
-			statusID,
-			refno,
-			winlostdate,
-			matchid 
-		FROM DBARC.bodb_archive.dbo.bettransm r WITH (NOLOCK, INDEX = IX_winlostdate)
-		WHERE r.winlostdate = @winlostdate
-
-
-		INSERT INTO dbo.rmMatch_bk
-		(
-			matchid,
-			leagueid,
-			eventdate,
-			ParentID,
-			ChildMatchType
-		)
-		SELECT 
-			matchid,
-			leagueid,
-			eventdate,
-			ParentID,
-			ChildMatchType
-		FROM DBARC.bodb_archive.dbo.match_bk r WITH (NOLOCK, INDEX = IX_eventdate)
-		WHERE r.eventdate = @winlostdate 
-
-	END TRY
-	BEGIN CATCH
-		SELECT @ErrCode = 101, @ErrMsg = ERROR_MESSAGE()
-		RETURN
-	END CATCH
+	END
 END
 GO

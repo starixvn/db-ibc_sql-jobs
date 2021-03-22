@@ -1,5 +1,5 @@
 /*<info serverAlias="DBARC-bodb_Archive" isFunction="0" isNested="1"></info>*/
-CREATE PROCEDURE Task_RMS_MBU_ARC_rmBettrans_Old_Sel @winlostdate SMALLDATETIME
+ALTER PROCEDURE Task_RMS_MBU_ARC_rmBettrans_Old_Sel @winlostdate SMALLDATETIME
 AS
 /*
 	Created:
@@ -23,7 +23,7 @@ WHERE b.winlostdate = @__winlostdate
 
 SELECT bm.refno, m.sporttype
 	, CASE WHEN l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba
-	, bm.odds, bm.stake, bm.matchid
+	, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END matchid
 FROM #__refnoList b WITH (NOLOCK)
 	INNER JOIN dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 	INNER JOIN dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
