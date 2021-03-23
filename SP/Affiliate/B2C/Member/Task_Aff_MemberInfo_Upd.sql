@@ -9,13 +9,14 @@ AS
 
 	Revisions:
 		- 20201111@Percy: Initialize SP [RedmineID: #145020]
+		- 20210323@Percy: Convert timezone [RedmineID: #151391]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @SiteId INT, @SiteName VARCHAR(30), @LastUpdatedTime DATETIME
-	SELECT  @SiteName = dbo.Aff_f_GetSetting('SiteName'), @LastUpdatedTime = dbo.Aff_f_GetSetting('MemberInfoLastUpdatedTime')
+	DECLARE @SiteId INT, @SiteName VARCHAR(30), @LastUpdatedTime DATETIME, @TimeZone INT
+	SELECT  @SiteName = dbo.Aff_f_GetSetting('SiteName'), @LastUpdatedTime = dbo.Aff_f_GetSetting('MemberInfoLastUpdatedTime'), @TimeZone = dbo.Aff_f_GetSetting('TimeZone')
 	SELECT  @SiteId = SiteId FROM bodb_N88.dbo.ServerInfo WITH (NOLOCK) WHERE LicenseeName = @SiteName
 
 	CREATE TABLE #Customer
@@ -39,7 +40,7 @@ BEGIN
 		UPDATE m WITH (ROWLOCK)
 		SET m.ActStatus = c.ActStatus
 			,m.Status = c.Status
-			,m.FirstDepositDate = c.FirstDepositDate
+			,m.FirstDepositDate = DATEADD(HOUR, @TimeZone, c.FirstDepositDate)
 			,m.FirstDepositAmount = c.FirstDepositAmount
 		FROM dbo.MemberInfo m
 			INNER JOIN #Customer c ON m.CustId = c.CustId

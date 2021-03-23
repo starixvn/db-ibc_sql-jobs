@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20200520@Percy: Initialize SP [RedmineID: #133254]
 		- 20200604@Percy: Add new columns TpUserName, TpSystemUserName [RedmineID: #135372]
+		- 20210323@Percy: Update UpdatedTime for case update data [RedmineID: #151391]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -20,6 +21,8 @@ AS
 
 BEGIN
 	SET NOCOUNT ON
+
+	DECLARE @CurrentDate DATETIME = CONVERT(DATE, GETDATE())
 
 	IF @QueueIDInput <> 0
 	BEGIN
@@ -170,6 +173,7 @@ BEGIN
 							,b.Status = t.Status
 							,b.TpUserName = t.TpUserName
 							,b.TpSystemUserName = t.TpSystemUserName
+							,b.UpdatedTime = @CurrentDate
 						FROM dbo.Customer b
 							INNER JOIN #tmpCustomer t ON b.CustId = t.CustId
 						WHERE t.DataType = 0
