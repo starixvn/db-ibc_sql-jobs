@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTRANS-bodb02"></info>*/
+/*<info serverAlias="DBTXN-bodb02"></info>*/
 USE [bodb02]
 GO
 /****** Object:  StoredProcedure [dbo].[Task_MoveBetsDayByScheduleSel]    Script Date: 11/16/2020 10:26:54 PM ******/
