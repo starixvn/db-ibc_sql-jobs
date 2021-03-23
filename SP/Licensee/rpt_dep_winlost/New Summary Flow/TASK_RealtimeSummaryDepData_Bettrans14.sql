@@ -52,6 +52,7 @@ AS
 		- 20201231@Hogan: Integrate GDG [RedmineID: #147267]
 		- 20210119@Hogan: Integrate Four Guardians [RedmineID: #148100]
 		- 20210203@Louis: Saba Red Envelope [RedmineID: #149923]
+		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -295,6 +296,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 				WHEN (b.bettype BETWEEN 3001 AND 3099 AND b.bettype <> 3007) THEN 244 -- SAG
 				WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 				WHEN b.bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
@@ -368,6 +370,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 				WHEN (b.bettype BETWEEN 3001 AND 3099 AND b.bettype <> 3007) THEN 244 -- SAG
 				WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 				WHEN b.bettype IN (17000,17003, 17004) THEN 246 -- NPHP
 				ELSE 0
 			END--SportType

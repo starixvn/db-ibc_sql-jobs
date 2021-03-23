@@ -84,6 +84,7 @@ AS
 		- 20210202@Hogan: Integrate Four Guardians [RedmineID: #148100]
 		- 20210203@Louis: Saba Red Envelope [RedmineID: #149923]
 		- 20210305@Mark: Integrate new betfrom _, @, %(Mobile Euro) [Redmine: #151019]
+		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -198,6 +199,7 @@ BEGIN
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			ELSE 0
 		END AS sporttype
@@ -297,6 +299,7 @@ BEGIN
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			ELSE 0
 		END

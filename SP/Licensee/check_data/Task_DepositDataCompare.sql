@@ -29,6 +29,7 @@ AS
 		- 20201013@Hogan: Integrate SA Gaming [RedmineID: #128493]
 		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
 		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
+		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
 		
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -121,7 +122,8 @@ BEGIN
 		,JK BIGINT
 		,SAG BIGINT
 		,PGS BIGINT
-		,GDG BIGINT)
+		,GDG BIGINT
+		,SLT BIGINT)
 
 	--exec 
 	--rptLicWinloss2
@@ -161,7 +163,8 @@ BEGIN
 		,JK
 		,SAG
 		,PGS
-		,GDG)
+		,GDG
+		,SLT)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
@@ -318,7 +321,8 @@ BEGIN
 		,JK
 		,SAG
 		,PGS
-		,GDG)
+		,GDG
+		,SLT)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (
