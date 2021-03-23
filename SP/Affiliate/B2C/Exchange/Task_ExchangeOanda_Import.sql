@@ -9,6 +9,7 @@ AS
 
 	Revisions:
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
+		- 20210317@Percy: Keep Exchange data last day of month [RedmineID: #151391]
 */
 
 BEGIN
@@ -20,66 +21,40 @@ BEGIN
 	IF DATEDIFF(HOUR, @LastImportedTime, GETDATE()) < 6
 		RETURN
 
-	DECLARE @CurrentDate SMALLDATETIME, @Yesterday SMALLDATETIME
-	SELECT  @CurrentDate	= CONVERT(DATE, GETDATE())
-	SELECT  @Yesterday		= DATEADD(DAY, -1, @CurrentDate)
-
-	DECLARE @tblExchange TABLE (ExchangeDate SMALLDATETIME, ExchangeId INT, Code VARCHAR(5), ActualRate FLOAT, VND FLOAT, EUR FLOAT, USD FLOAT, CNY FLOAT, MYR FLOAT, THB FLOAT, IDR FLOAT, MultipliedBy INT)
+	DECLARE @CurrentDate SMALLDATETIME = CONVERT(DATE, GETDATE())
+	DECLARE @CurrentMonth SMALLDATETIME = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @CurrentDate) + 1, 0))
+	DECLARE @FromMonth SMALLDATETIME
 	
-	-- Exchange: keep yesterday data
-	BEGIN
-		DELETE @tblExchange
+	IF DAY(@LastImportedTime) < 5
+		SELECT @FromMonth = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @LastImportedTime), 0))
+	ELSE
+		SELECT @FromMonth = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @LastImportedTime) + 1, 0))
+	
+	DECLARE @tblExchange TABLE (ExchangeDate SMALLDATETIME, ExchangeId INT, Code VARCHAR(5), ActualRate FLOAT, VND FLOAT, EUR FLOAT, USD FLOAT, CNY FLOAT, MYR FLOAT, THB FLOAT, IDR FLOAT)
+	;WITH CTE_MonthDate AS
+	(
+		SELECT @FromMonth AS MonthDate
+		UNION ALL
+		SELECT DATEADD(DAY, -1, DATEADD(MONTH, 1, DATEADD(DAY, 1, MonthDate)))
+		FROM CTE_MonthDate
+		WHERE MonthDate < @CurrentMonth
+	)
+	INSERT INTO @tblExchange (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
+	SELECT e.ExchangeDate, e.ExchangeId, e.Code, e.ActualRate, e.VND, e.EUR, e.USD, e.CNY, e.MYR, e.THB, e.IDR
+	FROM bodb02.dbo.ExchangeDailyOanda e WITH (NOLOCK)
+		INNER JOIN CTE_MonthDate m ON e.ExchangeDate = m.MonthDate
 
-		INSERT INTO @tblExchange (ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR, MultipliedBy)
-		SELECT o.ExchangeId, o.Code, o.ActualRate, o.VND, o.EUR, o.USD, o.CNY, o.MYR, o.THB, o.IDR, e.MultipliedBy
-		FROM bodb02.dbo.ExchangeDailyOanda o WITH (NOLOCK)
-			INNER JOIN bodb02.dbo.Exchange e WITH (NOLOCK) ON o.ExchangeId = e.ExchangeId
-		WHERE o.ExchangeDate = @Yesterday
+	IF NOT EXISTS (SELECT 1 FROM @tblExchange WHERE ExchangeDate = @CurrentMonth)
+		INSERT INTO @tblExchange (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
+		SELECT @CurrentMonth, e.ExchangeId, e.Code, e.ActualRate, e.VND, e.EUR, e.USD, e.CNY, e.MYR, e.THB, e.IDR
+		FROM bodb02.dbo.ExchangeDailyOanda e WITH (NOLOCK)
+		WHERE e.ExchangeDate = @CurrentDate
 
-		MERGE dbo.Exchange AS t
-		USING @tblExchange AS s
-			ON t.ExchangeId = s.ExchangeId
-		WHEN MATCHED THEN UPDATE
-			SET  t.Code			= s.Code
-				,t.ActualRate	= s.ActualRate
-				,t.VND			= s.VND
-				,t.EUR			= s.EUR
-				,t.USD			= s.USD
-				,t.CNY			= s.CNY
-				,t.MYR			= s.MYR
-				,t.THB			= s.THB
-				,t.IDR			= s.IDR
-				,t.MultipliedBy	= s.MultipliedBy
-		WHEN NOT MATCHED BY TARGET THEN INSERT
-			(ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR, MultipliedBy)
-			VALUES
-			(ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR, MultipliedBy)
-		WHEN NOT MATCHED BY SOURCE THEN DELETE;
-	END
+	DELETE dbo.ExchangeOanda WITH (ROWLOCK, UPDLOCK)
+	WHERE ExchangeDate >= @FromMonth
 
-	-- ExchangeOanda
-	BEGIN
-		-- Today & Tomorrow data
-		DELETE dbo.ExchangeOanda WITH (ROWLOCK, UPDLOCK) WHERE ExchangeDate >= @CurrentDate
-
-		INSERT INTO dbo.ExchangeOanda (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
-		SELECT o.ExchangeDate, o.ExchangeId, o.Code, o.ActualRate, o.VND, o.EUR, o.USD, o.CNY, o.MYR, o.THB, o.IDR
-		FROM bodb02.dbo.ExchangeDailyOanda o WITH (NOLOCK)
-			LEFT JOIN dbo.Exchange e WITH (NOLOCK) ON o.ExchangeId = e.ExchangeId
-		WHERE o.ExchangeDate >= @CurrentDate
-			AND (
-				e.ExchangeId IS NULL
-				OR ISNULL(o.Code, '')		<> ISNULL(e.Code, '')
-				OR ISNULL(o.ActualRate, 0)	<> ISNULL(e.ActualRate, 0)
-				OR ISNULL(o.VND, 0)			<> ISNULL(e.VND, 0)
-				OR ISNULL(o.EUR, 0)			<> ISNULL(e.EUR, 0)
-				OR ISNULL(o.USD, 0)			<> ISNULL(e.USD, 0)
-				OR ISNULL(o.CNY, 0)			<> ISNULL(e.CNY, 0)
-				OR ISNULL(o.MYR, 0)			<> ISNULL(e.MYR, 0)
-				OR ISNULL(o.THB, 0)			<> ISNULL(e.THB, 0)
-				OR ISNULL(o.IDR, 0)			<> ISNULL(e.IDR, 0)
-			)
-	END
+	INSERT INTO dbo.ExchangeOanda (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
+	SELECT ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR FROM @tblExchange
 
 	-- Update SystemSettings
 	UPDATE dbo.SystemSettings WITH (ROWLOCK)
