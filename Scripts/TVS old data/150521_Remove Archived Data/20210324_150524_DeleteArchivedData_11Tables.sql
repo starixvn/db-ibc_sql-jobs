@@ -1,6 +1,6 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 /*
-	Created:	20210301@Max
+	Created:	20210324@Max
 	Task:		[TVS] Remove archived data [Redmine: #150524]
 	Database:	DBTXN-bodb02
 */
