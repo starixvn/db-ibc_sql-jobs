@@ -18,6 +18,7 @@ AS
 		- 20201210@Max: TVS - New issue type Abnormal Accounts [Redmine: #143666]
 		- 20200209@Helen: TVS - New issue type Abnormal Accounts - archive zzzbettrans  [Redmine: #143666]
 		- 20200211@Helen: TVS - New issue type Abnormal Accounts - hotfix  [Redmine: #143666]
+		- 20210304@Max: [TVS] Remove archived data [Redmine: #150524]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -498,8 +499,7 @@ DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121
 
 SELECT	TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID
 FROM	bodb02.dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
-WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) join bodb02.dbo.bettransm14 t4 WITH (NOLOCK) on t2.refno=t4.refno
-					WHERE t1.transid = t2.transid AND t2.bettype in (29,2799) AND t1.MatchId!=0 AND t1.MatchId=t4.MatchId AND t4.statusID=102 AND t2.winlostdate = @StartDate)
+WHERE 	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.MatchId != 0 AND  t1.matchid = t2.matchid AND t2.eventdate = @StartDate)
 	;'');';
 					
 		EXECUTE	sys.sp_executesql @Query;
