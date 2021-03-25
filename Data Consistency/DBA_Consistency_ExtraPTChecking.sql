@@ -79,7 +79,8 @@ BEGIN
 					AND CASE WHEN ISNULL(m.matchid, 0) <> 0 THEN m.Sporttype ELSE 0 END = pt.Sporttype 
 			WHERE  b.winlostdate = @Winlostdate			
 				AND b.bettype < 19001		
-				AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)		
+				AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
+				AND b.custid <> 0
 
 
 			------I.I.b. translog 
@@ -101,6 +102,7 @@ BEGIN
 							AND pt.Sporttype = 0
 					WHERE  b.winlostdate = @Winlostdate	 
 						AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
+						AND b.custid <> 0
 						
 			
 			------I.I.c. bettransRNG 
@@ -121,6 +123,7 @@ BEGIN
 			WHERE	b.winlostdate = @Winlostdate
 					AND s.ProductID <> 1  					
 					AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
+					AND b.custid <> 0
 			
 			------I.I.d.  bettransLC			
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)
@@ -140,6 +143,7 @@ BEGIN
 			WHERE	b.winlostdate = @Winlostdate
 					AND s.ProductID <> 1  					
 					AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)
+					AND b.custid <> 0
 							 	
 			SELECT @transId = ''
 			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
