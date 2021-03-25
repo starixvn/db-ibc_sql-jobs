@@ -25,7 +25,7 @@ BEGIN
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
 
-	IF @ProductId = 170 -- PP Live Casino
+	IF @ProductId IN (170, 243) -- PP Live Casino, SexyGaming
 	BEGIN
 		SET @tablename = 'bettransLC'
 
@@ -36,7 +36,7 @@ BEGIN
 			  AND DATEDIFF(MINUTE,b.transdate,@Today) > 15 
 	END
 
-	IF @ProductId = 238-- Habanero
+	IF @ProductId IN (238, 247)-- Habanero, SpadeGaming
 	BEGIN
 		SET @tablename = 'bettransRNG'
 

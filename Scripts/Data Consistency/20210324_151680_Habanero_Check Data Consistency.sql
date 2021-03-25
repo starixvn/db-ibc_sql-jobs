@@ -13,7 +13,7 @@ DECLARE	@taskId_g1 INT, @taskId_g2 INT, @taskId_g3 INT, @taskId_g4 INT, @taskId_
 
 DECLARE @ErrCode INT, @ErrMsg VARCHAR(100)
 
---===Sports Lottery===--
+--===Habanero===--
 -- (*) G1: Check Discount value
 INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
 VALUES (1, N'EXEC dbo.DBA_Consistency_DiscountChecking @ProductId = 238,@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
