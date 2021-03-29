@@ -10,11 +10,7 @@ USE bodb_Consistency
 GO
 
 DECLARE	@taskId_g1 INT, @taskId_g2 INT, @taskId_g3 INT, @taskId_g4 INT, @taskId_g5 INT,
-		@ruleId_g12 INT, 
-		@taskId_Ph1 INT, @taskId_Pd1 INT, --PP Live Casino
-		@taskId_Sh2 INT, @taskId_Sd2 INT, --SexyGaming
-		@taskId_Hh3 INT, @taskId_Hd3 INT, --Habanero
-		@taskId_Sh4 INT, @taskId_Sd4 INT  --SpadeGaming
+		@ruleId_g12 INT, @taskId_gh12 INT, @taskId_gd12 INT
 
 DECLARE @ErrCode INT, @ErrMsg VARCHAR(100)
 
@@ -32,7 +28,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Discount value'
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24' 
+ ,@ActiveStartDate = '2021-03-29' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -57,7 +53,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check PT value'
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24' 
+ ,@ActiveStartDate = '2021-03-29' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -82,7 +78,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Stake >0 for dedicated betty
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24' 
+ ,@ActiveStartDate = '2021-03-29' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -107,7 +103,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Valid IP'
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24'
+ ,@ActiveStartDate = '2021-03-29'
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -132,7 +128,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check all yesterday tickets must b
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24'
+ ,@ActiveStartDate = '2021-03-29'
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '01:30'
  ,@ActiveEndTime = NULL
@@ -153,18 +149,18 @@ VALUES (N'Check tickets in bettransRNG/BettransLC are sum to bettrans', N'Alert 
 SET @ruleId_g12 = SCOPE_IDENTITY()
 --Hour
 INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (@ruleId_g12, N'EXEC dbo.DBA_Consistency_TicketSettledSumChecking @ProductId = 170, @Duration = ''hour'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
-SET @taskId_Ph1 = SCOPE_IDENTITY()
+VALUES (@ruleId_g12, N'EXEC dbo.DBA_Consistency_TicketSettledSumChecking @Duration = ''hour'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+SET @taskId_gh12 = SCOPE_IDENTITY()
 
 --------- SCHEDULE ---------------
 EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets in bettransRNG/BettransLC are sum to bettrans - hourly'
- ,@TaskId = @taskId_Ph1
+ ,@TaskId = @taskId_gh12
  ,@IsEnable  = 1
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24'
+ ,@ActiveStartDate = '2021-03-29'
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -178,18 +174,18 @@ SELECT 'Check tickets in bettransRNG/BettransLC are sum to bettrans - hourly' AS
 
 --Daily
 INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (@ruleId_g12, N'EXEC dbo.DBA_Consistency_TicketSettledSumChecking @ProductId = 170, @Duration = ''lastday'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
-SET @taskId_Pd1 = SCOPE_IDENTITY()
+VALUES (@ruleId_g12, N'EXEC dbo.DBA_Consistency_TicketSettledSumChecking @Duration = ''lastday'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+SET @taskId_gd12 = SCOPE_IDENTITY()
 
 --------- SCHEDULE ---------------
 EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets in bettransRNG/BettransLC are sum to bettrans - daily'
- ,@TaskId = @taskId_Pd1
+ ,@TaskId = @taskId_gd12
  ,@IsEnable  = 1
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24'
+ ,@ActiveStartDate = '2021-03-29'
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '01:30'
  ,@ActiveEndTime = NULL
@@ -200,159 +196,3 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets in bettransRNG/Bettr
  ,@ErrMsg = @ErrMsg OUTPUT
 
 SELECT 'Check tickets in bettransRNG/BettransLC are sum to bettrans - daily' AS RuleChecking, @ErrCode, @ErrMsg
-
---(*) SexyGaming
-
-INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (@ruleId_g12, N'EXEC dbo.DBA_Consistency_TicketSettledSumChecking @ProductId = 243, @Duration = ''hour'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
-SET @taskId_Sh2 = SCOPE_IDENTITY()
-
---------- SCHEDULE ---------------
-EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets in bettransRNG/BettransLC are sum to bettrans - hourly'
- ,@TaskId = @taskId_Sh2
- ,@IsEnable  = 1
- ,@FrequenceType = 4 -- daily = 4, weekly = 8
- ,@FrequenceInterval = 1 -- every xx days
- ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
- ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24'
- ,@ActiveEndDate = NULL
- ,@ActiveStartTime  = '00:00'
- ,@ActiveEndTime = NULL
- ,@NotifyLevelEmail = 2
- --,@Emails ='dba_local@starixvn.com'
- ,@Emails = 'dbaadmin@starixvn.com'
- ,@ErrCode  = @ErrCode OUTPUT
- ,@ErrMsg = @ErrMsg OUTPUT
-
-SELECT 'Check tickets in bettransRNG/BettransLC are sum to bettrans - hourly' AS RuleChecking, @ErrCode, @ErrMsg
-
---Daily
-INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (@ruleId_g12, N'EXEC dbo.DBA_Consistency_TicketSettledSumChecking @ProductId = 243, @Duration = ''lastday'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
-SET @taskId_Sd2 = SCOPE_IDENTITY()
-
---------- SCHEDULE ---------------
-EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets in bettransRNG/BettransLC are sum to bettrans - daily'
- ,@TaskId = @taskId_Sd2
- ,@IsEnable  = 1
- ,@FrequenceType = 4 -- daily = 4, weekly = 8
- ,@FrequenceInterval = 1 -- every xx days
- ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
- ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24'
- ,@ActiveEndDate = NULL
- ,@ActiveStartTime  = '01:30'
- ,@ActiveEndTime = NULL
- ,@NotifyLevelEmail = 2
- --,@Emails ='dba_local@starixvn.com'
- ,@Emails = 'dbaadmin@starixvn.com'
- ,@ErrCode  = @ErrCode OUTPUT
- ,@ErrMsg = @ErrMsg OUTPUT
-
-SELECT 'Check tickets in bettransRNG/BettransLC are sum to bettrans - daily' AS RuleChecking, @ErrCode, @ErrMsg
-
---(*) Habanero
---Hour
-INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (@ruleId_g12, N'EXEC dbo.DBA_Consistency_TicketSettledSumChecking @ProductId = 238, @Duration = ''hour'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
-SET @taskId_Hh3 = SCOPE_IDENTITY()
-
---------- SCHEDULE ---------------
-EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets in bettransRNG/BettransLC are sum to bettrans - hourly'
- ,@TaskId = @taskId_Hh3
- ,@IsEnable  = 1
- ,@FrequenceType = 4 -- daily = 4, weekly = 8
- ,@FrequenceInterval = 1 -- every xx days
- ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
- ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24'
- ,@ActiveEndDate = NULL
- ,@ActiveStartTime  = '00:00'
- ,@ActiveEndTime = NULL
- ,@NotifyLevelEmail = 2
- --,@Emails ='dba_local@starixvn.com'
- ,@Emails = 'dbaadmin@starixvn.com'
- ,@ErrCode  = @ErrCode OUTPUT
- ,@ErrMsg = @ErrMsg OUTPUT
-
-SELECT 'Check tickets in bettransRNG/BettransLC are sum to bettrans - hourly' AS RuleChecking, @ErrCode, @ErrMsg
-
---Daily
-INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (@ruleId_g12, N'EXEC dbo.DBA_Consistency_TicketSettledSumChecking @ProductId = 238, @Duration = ''lastday'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
-SET @taskId_Hd3 = SCOPE_IDENTITY()
-
---------- SCHEDULE ---------------
-EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets in bettransRNG/BettransLC are sum to bettrans - daily'
- ,@TaskId = @taskId_Hd3
- ,@IsEnable  = 1
- ,@FrequenceType = 4 -- daily = 4, weekly = 8
- ,@FrequenceInterval = 1 -- every xx days
- ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
- ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24'
- ,@ActiveEndDate = NULL
- ,@ActiveStartTime  = '01:30'
- ,@ActiveEndTime = NULL
- ,@NotifyLevelEmail = 2
- --,@Emails ='dba_local@starixvn.com'
- ,@Emails = 'dbaadmin@starixvn.com'
- ,@ErrCode  = @ErrCode OUTPUT
- ,@ErrMsg = @ErrMsg OUTPUT
-
-SELECT 'Check tickets in bettransRNG/BettransLC are sum to bettrans - daily' AS RuleChecking, @ErrCode, @ErrMsg
-
---(*) SpadeGaming
---Hour
-INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (@ruleId_g12, N'EXEC dbo.DBA_Consistency_TicketSettledSumChecking @ProductId = 247, @Duration = ''hour'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
-SET @taskId_Sh4 = SCOPE_IDENTITY()
-
---------- SCHEDULE ---------------
-EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets in bettransRNG/BettransLC are sum to bettrans - hourly'
- ,@TaskId = @taskId_Sh4
- ,@IsEnable  = 1
- ,@FrequenceType = 4 -- daily = 4, weekly = 8
- ,@FrequenceInterval = 1 -- every xx days
- ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
- ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24'
- ,@ActiveEndDate = NULL
- ,@ActiveStartTime  = '00:00'
- ,@ActiveEndTime = NULL
- ,@NotifyLevelEmail = 2
- --,@Emails ='dba_local@starixvn.com'
- ,@Emails = 'dbaadmin@starixvn.com'
- ,@ErrCode  = @ErrCode OUTPUT
- ,@ErrMsg = @ErrMsg OUTPUT
-
-SELECT 'Check tickets in bettransRNG/BettransLC are sum to bettrans - hourly' AS RuleChecking, @ErrCode, @ErrMsg
-
---Daily
-INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (@ruleId_g12, N'EXEC dbo.DBA_Consistency_TicketSettledSumChecking @ProductId = 247, @Duration = ''lastday'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
-SET @taskId_Sd4 = SCOPE_IDENTITY()
-
---------- SCHEDULE ---------------
-EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets in bettransRNG/BettransLC are sum to bettrans - daily'
- ,@TaskId = @taskId_Sd4
- ,@IsEnable  = 1
- ,@FrequenceType = 4 -- daily = 4, weekly = 8
- ,@FrequenceInterval = 1 -- every xx days
- ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
- ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-24'
- ,@ActiveEndDate = NULL
- ,@ActiveStartTime  = '01:30'
- ,@ActiveEndTime = NULL
- ,@NotifyLevelEmail = 2
- --,@Emails ='dba_local@starixvn.com'
- ,@Emails = 'dbaadmin@starixvn.com'
- ,@ErrCode  = @ErrCode OUTPUT
- ,@ErrMsg = @ErrMsg OUTPUT
-
-SELECT 'Check tickets in bettransRNG/BettransLC are sum to bettrans - daily' AS RuleChecking, @ErrCode, @ErrMsg
-
-
-

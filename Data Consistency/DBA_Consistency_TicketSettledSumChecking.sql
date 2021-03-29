@@ -1,7 +1,6 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_TicketSettledSumChecking]
-	@ProductId		INT
-	,@Duration 		VARCHAR(50) 
+	@Duration 		VARCHAR(50) 
 	,@ErrCode		INT			 = 0	OUTPUT
 	,@ErrMsg		VARCHAR(MAX) = ''	OUTPUT 
 	,@SampleData	VARCHAR(MAX) = ''	OUTPUT
@@ -18,41 +17,49 @@ AS
 		@Duration = 'hour', 'lastday'
 */
 BEGIN
-	DECLARE @transId	VARCHAR(MAX)
-			,@Today		DATETIME 
-			,@tablename	VARCHAR(50)	 = NULL
+	DECLARE @transId		VARCHAR(MAX)
+			,@Today			DATETIME 
+			,@tablename		VARCHAR(50)	 = NULL
+			,@WinlostDate	SMALLDATETIME
+			,@message VARCHAR(MAX) = '' 
 
 	SET @transId = ''
-	SET @Today = CAST(GETDATE() AS DATE)
+	SET @Today = CAST(GETDATE() AS DATETIME)
 
-	IF @ProductId IN (170, 243) -- PP Live Casino, SexyGaming
+	IF @Duration = 'hour'
 	BEGIN
-		SET @tablename = 'bettransLC'
-
-		SELECT TOP (100) @transId = @transId + ',' + CAST(b.transId AS VARCHAR)
-		FROM bodb02.dbo.bettransLC b WITH(NOLOCK)
-		WHERE ProductID = @ProductId
-			  AND b.IsSum = 1 
-			  AND DATEDIFF(MINUTE,b.transdate,@Today) > 15 
+		SELECT @Winlostdate = CONVERT (DATE, GETDATE())  
 	END
 
-	IF @ProductId IN (238, 247)-- Habanero, SpadeGaming
+	IF @Duration = 'lastday'
 	BEGIN
-		SET @tablename = 'bettransRNG'
-
-		SELECT TOP (100) @transId = @transId + ',' + CAST(b.transId AS VARCHAR)
-		FROM bodb02.dbo.bettransRNG b WITH(NOLOCK)
-		WHERE ProductID = @ProductId
-			  AND b.IsSum = 1 
-			  AND DATEDIFF(MINUTE,b.transdate, @Today) > 15
+		SELECT @Winlostdate = CONVERT (DATE, DATEADD(DAY, -1,GETDATE()))  
 	END
 
-	IF @transId <> ''
+	SELECT TOP (100) @transId = @transId + ',' + CAST(b.transId AS VARCHAR)
+	FROM bodb02.dbo.bettransLC b WITH(NOLOCK)
+	WHERE b.IsSum = 0
+		  AND DATEDIFF(MINUTE,b.transdate,@Today) > 15
+		  AND b.winlostdate = @WinlostDate
+		  AND b.statusID IN (111,112,113) --Draw,won,lose
+
+	SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransLC,' END
+
+	SELECT TOP (100) @transId = @transId + ',' + CAST(b.transId AS VARCHAR)
+	FROM bodb02.dbo.bettransRNG b WITH(NOLOCK)
+	WHERE b.IsSum = 0
+		  AND DATEDIFF(MINUTE,b.transdate, @Today) > 15
+		  AND b.winlostdate = @WinlostDate
+		  AND b.statusID IN (111,112,113) --Draw,won,lose
+	
+	SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransRNG,' END
+
+	IF @message <> ''
 	BEGIN
 		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 				,@ErrCode = 100
-				,@ErrMsg = 'Wrong check tickets in bettransRNG/BettransLC are sum to bettrans on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = @tablename + '.TransId in (' + @transId + ')'
+				,@ErrMsg = @ErrMsg + 'Settled ticket in bettransRNG/BettransLC are not yet summed to bettrans' + Char(10) + Char(13)
+				,@SampleData = @SampleData+ 'Settled ticket in bettransRNG/BettransLC are not yet summed to bettrans' + @message + '. '+ Char(10) + Char(13)
 	END
 
 END
