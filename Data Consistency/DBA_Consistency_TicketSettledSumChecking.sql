@@ -17,9 +17,8 @@ AS
 		@Duration = 'hour', 'lastday'
 */
 BEGIN
-	DECLARE @transId		VARCHAR(MAX)
+	DECLARE @transId		VARCHAR(MAX) =''
 			,@Today			DATETIME 
-			,@tablename		VARCHAR(50)	 = NULL
 			,@WinlostDate	SMALLDATETIME
 			,@message VARCHAR(MAX) = '' 
 
@@ -46,6 +45,7 @@ BEGIN
 	SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransLC,' END
 	IF @transId <> '' BEGIN  SET @message = @message + @transId END
 
+	SET @transId = ''
 	SELECT TOP (100) @transId = @transId + ',' + CAST(b.transId AS VARCHAR)
 	FROM bodb02.dbo.bettransRNG b WITH(NOLOCK)
 	WHERE b.IsSum = 0
