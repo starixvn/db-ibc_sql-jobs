@@ -44,6 +44,7 @@ BEGIN
 		  AND b.statusID IN (111,112,113) --Draw,won,lose
 
 	SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransLC,' END
+	IF @transId <> '' BEGIN  SET @message = @message + @transId END
 
 	SELECT TOP (100) @transId = @transId + ',' + CAST(b.transId AS VARCHAR)
 	FROM bodb02.dbo.bettransRNG b WITH(NOLOCK)
@@ -53,6 +54,7 @@ BEGIN
 		  AND b.statusID IN (111,112,113) --Draw,won,lose
 	
 	SELECT @transId = CASE WHEN @transId <> '' THEN '(' + SUBSTRING(@transId, 2, LEN(@transId) - 1) + ') in bettransRNG,' END
+	IF @transId <> '' BEGIN  SET @message = @message + @transId END
 
 	IF @message <> ''
 	BEGIN
