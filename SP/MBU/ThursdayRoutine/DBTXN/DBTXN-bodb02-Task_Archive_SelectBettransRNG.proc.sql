@@ -15,6 +15,7 @@ AS
 		- 20200612@Patrick: Avoid sort to reduce log file growth [Redmine: #135806]
 		- 20200618@Patrick: Fix issue multiple result set [Redmine: #135806]
 		- 20210121@Patrick: Split copy data of bettransRnG14 day by day [Redmine: #149198]
+		- 20210330@Patrick: Add more SiteId [Redmine: #152430]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -30,7 +31,7 @@ BEGIN;
 		,	b.currency, b.CurrencyName, b.recommend, b.mrecommend, b.srecommend, b.ip, b.statusID, b.balance, b.Username, b.transdesc, b.productID, b.gameID
 		,	b.vendorID, b.GameId3rd, b.TranId3rd, b.RefNo, b.IsSum, b.winlost, b.awinlost, b.mwinlost, b.swinlost, b.playercomm, b.comm, b.acomm, b.scomm, b.Transdate3rd
 		,	[countryCode] = ip.countryShort
-		,	b.Additional, b.JackpotInfo, b.RefNo2, b.ContributionRate, b.BetStake, b.ContributionStake3rd, b.epositiontaking
+		,	b.Additional, b.JackpotInfo, b.RefNo2, b.ContributionRate, b.BetStake, b.ContributionStake3rd, b.epositiontaking, b.SiteId
 	FROM		dbo.bettransRnG14 AS b WITH (NOLOCK)
 	INNER JOIN	dbo.Task_bettransRNG14_IP2Country AS ip WITH (NOLOCK)
 			ON	b.transid = ip.transid
