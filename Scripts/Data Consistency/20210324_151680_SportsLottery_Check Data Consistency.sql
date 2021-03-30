@@ -142,7 +142,7 @@ SELECT 'Check all yesterday tickets must be settled' AS RuleChecking, @ErrCode, 
 ---------------------------------------------------------------------------------
 -- (*) S32: Settled tickets in translog but not having in bettrans
 INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (5, N'EXEC dbo.DBA_Consistency_StatusChecking @ProductId = 169, @Rule = ''translog'',@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+VALUES (32, N'EXEC dbo.DBA_Consistency_SpecificRulesChecking @ProductId = 169, @Rule = ''translog'',@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
 SET @taskId_s32 = SCOPE_IDENTITY()
 
 --------- SCHEDULE ---------------
@@ -167,7 +167,7 @@ SELECT 'Settled tickets in translog but not having in bettrans' AS RuleChecking,
 ---------------------------------------------------------------------------------
 -- (*) S33: Wrong discount or comm value
 INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (5, N'EXEC dbo.DBA_Consistency_StatusChecking @ProductId = 169,@Rule = ''no_discount_comm'',@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+VALUES (33, N'EXEC dbo.DBA_Consistency_SpecificRulesChecking @ProductId = 169,@Rule = ''no_discount_comm'',@ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
 SET @taskId_s33 = SCOPE_IDENTITY()
 
 --------- SCHEDULE ---------------
