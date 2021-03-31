@@ -28,7 +28,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Discount value'
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-29' 
+ ,@ActiveStartDate = '2021-03-30' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -53,7 +53,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check PT value'
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-29' 
+ ,@ActiveStartDate = '2021-03-30' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -78,7 +78,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Stake >0 for dedicated betty
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-29' 
+ ,@ActiveStartDate = '2021-03-30' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -103,7 +103,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check Valid IP'
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-29'
+ ,@ActiveStartDate = '2021-03-30'
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -128,7 +128,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check all yesterday tickets must b
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-29'
+ ,@ActiveStartDate = '2021-03-30'
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '01:30'
  ,@ActiveEndTime = NULL
@@ -141,9 +141,8 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check all yesterday tickets must b
 SELECT 'Check all yesterday tickets must be settled' AS RuleChecking, @ErrCode, @ErrMsg
 
 
---(*)====================================================================================(*)--
 -- (*) G12: Check tickets in bettransRNG/BettransLC are sum to bettrans
---(*) PP Live Casino
+-- (*) PP Live Casino
 INSERT [dbo].[DBA_Rules] ([Name], [Description], [SeverityLevel]) 
 VALUES (N'Check tickets in bettransRNG/BettransLC are sum to bettrans', N'Alert if ticket in bettransRNG/bettransLC with transdate - current date > 15 minutes and IsSum = 1', N'High')
 SET @ruleId_g12 = SCOPE_IDENTITY()
@@ -160,7 +159,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets in bettransRNG/Bettr
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 8 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-29'
+ ,@ActiveStartDate = '2021-03-30'
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:00'
  ,@ActiveEndTime = NULL
@@ -185,7 +184,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check tickets in bettransRNG/Bettr
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
  ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
- ,@ActiveStartDate = '2021-03-29'
+ ,@ActiveStartDate = '2021-03-30'
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '01:30'
  ,@ActiveEndTime = NULL

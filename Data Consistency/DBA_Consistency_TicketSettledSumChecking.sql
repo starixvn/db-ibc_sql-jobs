@@ -20,7 +20,9 @@ BEGIN
 	DECLARE @transId		VARCHAR(MAX) =''
 			,@Today			DATETIME 
 			,@WinlostDate	SMALLDATETIME
-			,@message VARCHAR(MAX) = '' 
+			,@message		VARCHAR(MAX) = '' 
+			
+	SELECT @SampleData  = '', @ErrMsg = ''
 
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATETIME)
@@ -60,8 +62,9 @@ BEGIN
 	BEGIN
 		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 				,@ErrCode = 100
-				,@ErrMsg = @ErrMsg + 'Settled ticket in bettransRNG/BettransLC are not yet summed to bettrans' + Char(10) + Char(13)
-				,@SampleData = @SampleData+ 'Settled ticket in bettransRNG/BettransLC are not yet summed to bettrans' + @message + '. '+ Char(10) + Char(13)
+				,@ErrMsg = @ErrMsg + 'Settled ticket in bettransRNG/BettransLC are not yet summed to bettrans ' + Char(10) + Char(13)
+				,@SampleData = @SampleData+ 'Settled ticket in bettransRNG/BettransLC are not yet summed to bettrans ' + @message + '. '+ Char(10) + Char(13)
 	END
-
 END
+
+GO
