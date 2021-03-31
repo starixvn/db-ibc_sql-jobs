@@ -32,6 +32,7 @@ AS
 		- 20191010@Percy: Remove table LicenseeBATransaction [RedmineID: #103656]
 		- 20201001@Louis: Licensee Spread Setting [RedmineID: #142532]
 		- 20210302@Hogan: Hard code Licensee Spread Setting [RedmineID: #148100]
+		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 */
 
 BEGIN
@@ -65,6 +66,7 @@ BEGIN
 				OR (bettype BETWEEN 121 AND 999)
 				OR (bettype BETWEEN 1301 AND 1399)
 				OR (bettype BETWEEN 9001 AND 9399)
+				OR (bettype BETWEEN 9400 AND 9699)
 				OR (bettype = 38) -- BetBuilder
 			)
 		AND statusID <> 121 --DONE

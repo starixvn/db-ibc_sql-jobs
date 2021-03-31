@@ -16,6 +16,7 @@ AS
 		- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_bk [RedmineID: #103656]
 		- 20200622@Sol: Archive VSRaceInfo - changed to use VSRaceInfo14 [RedmineID: #135963]
+		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 	
 	Parameter's Explanation:			
 */
@@ -45,7 +46,7 @@ AS (
 		,CASE
 			WHEN a.winlostdate >= @HWHLCutDate AND a.statusID IN(112,113) AND a.modds IN (-0.25, 0.25)
 				---- Sportsbook
-				AND (a.bettype < 999 OR a.bettype BETWEEN 1301 AND 1399 OR a.bettype BETWEEN 9001 AND 9399)
+				AND (a.bettype < 999 OR a.bettype BETWEEN 1301 AND 1399 OR a.bettype BETWEEN 9001 AND 9399 OR a.bettype BETWEEN 9400 AND 9699)
 				AND a.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
 				AND a.bettype NOT BETWEEN 81 AND 120
 			THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
@@ -79,7 +80,7 @@ AS (
 		,CASE
 			WHEN a.winlostdate >= @HWHLCutDate AND a.statusID IN(112,113) AND a.modds IN (-0.25, 0.25)
 				---- Sportsbook
-				AND (a.bettype < 999 OR a.bettype BETWEEN 1301 AND 1399 OR a.bettype BETWEEN 9001 AND 9399)
+				AND (a.bettype < 999 OR a.bettype BETWEEN 1301 AND 1399 OR a.bettype BETWEEN 9001 AND 9399 OR a.bettype BETWEEN 9400 AND 9699)
 				AND a.bettype NOT IN (29,38,911,912,913,914 )  --- Parlay, betbuilder, Cashout        
 				AND a.bettype NOT BETWEEN 81 AND 120
 			THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END

@@ -24,6 +24,7 @@ AS
 		- 20191010@Percy: Remove table LicenseeBATransaction [RedmineID: #103656]
 		- 20200207@Percy: Add DB055 (change DB042 to DB055) [RedmineID: #127169]
 		- 20210126@Sol: change db instance name (change DB054 to DB054C2\DB054) - [RedmineID: #149273]
+		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 */  
 SET NOCOUNT ON   
    
@@ -66,6 +67,7 @@ BEGIN
 						OR (bettype BETWEEN 121 AND 999)
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
+						OR (bettype BETWEEN 9400 AND 9699)
 						OR bettype = 38 -- BetBuilder
 					)
 				AND bettype NOT IN (901, 911)
@@ -94,6 +96,7 @@ BEGIN
 						OR (bettype BETWEEN 121 AND 999)
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
+						OR (bettype BETWEEN 9400 AND 9699)
 						OR bettype = 38 -- BetBuilder
 					)
 				AND bettype NOT IN (901, 911)
@@ -136,6 +139,7 @@ BEGIN
 						OR (bettype BETWEEN 121 AND 999)
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
+						OR (bettype BETWEEN 9400 AND 9699)
 						OR bettype = 38 -- BetBuilder
 					)  
 				AND bettype NOT IN (901, 911)
@@ -164,6 +168,7 @@ BEGIN
 						OR (bettype BETWEEN 121 AND 999)
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
+						OR (bettype BETWEEN 9400 AND 9699)
 						OR bettype = 38 -- BetBuilder
 					)  
 				AND bettype NOT IN (901, 911)

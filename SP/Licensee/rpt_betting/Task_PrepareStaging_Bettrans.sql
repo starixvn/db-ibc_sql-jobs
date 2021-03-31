@@ -15,6 +15,7 @@ AS
 		- 20200102@Percy: Wrong update BA tickets [RedmineID: #126419]
 		- 20201005@Parsons: Saba.club - Offer Free Bets tickets [RedmineID: #141423]
 		- 20201029@Parsons: Add ExtraPT in Number Game Win Loss Report [RedmineID: #142969]
+		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 */
 
 BEGIN
@@ -104,11 +105,11 @@ BEGIN
 					b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 					,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid
 					,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-								THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399)
+								THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399 OR b.bettype BETWEEN 9400 AND 9699)
 																AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
 							ELSE '' END + b.status AS status
 					,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-								THEN CASE	WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399)
+								THEN CASE	WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399 OR b.bettype BETWEEN 9400 AND 9699)
 																AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END
 							ELSE b.statusID END AS statusid
 					,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
@@ -154,10 +155,10 @@ BEGIN
 					b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 					,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid
 					,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
+							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399 OR b.bettype BETWEEN 9400 AND 9699) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
 						ELSE '' END + b.status AS status
 					,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END
+							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399 OR b.bettype BETWEEN 9400 AND 9699) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END
 						ELSE b.statusID END AS statusid
 					,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
 					,b.virtualrate,b.discount,b.tpositiontaking
@@ -241,10 +242,10 @@ BEGIN
 				b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 				,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid
 				,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
+							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399 OR b.bettype BETWEEN 9400 AND 9699) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
 						ELSE '' END + b.status AS status
 				,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END
+							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399 OR b.bettype BETWEEN 9400 AND 9699) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END
 						ELSE b.statusID END AS statusid
 				,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
 				,b.virtualrate,b.discount,b.tpositiontaking
@@ -282,10 +283,10 @@ BEGIN
 				b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,ABS(b.stake),b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 				,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid
 				,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
+							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399 OR b.bettype BETWEEN 9400 AND 9699) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN 'HALF ' ELSE '' END
 						ELSE '' END + b.status AS status
 				,CASE	WHEN b.modds IN (-0.25, 0.25) AND b.statusID IN (112, 113) -- won/lose
-							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END
+							THEN CASE WHEN (b.bettype < 31 OR b.bettype BETWEEN 121 AND 999 OR b.bettype BETWEEN 9001 AND 9399 OR b.bettype BETWEEN 9400 AND 9699) AND b.bettype NOT IN (29, 911, 912, 913, 914) THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END ELSE b.statusID END
 						ELSE b.statusID END AS statusid
 				,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
 				,b.virtualrate,b.discount,b.tpositiontaking
@@ -344,7 +345,7 @@ BEGIN
     SELECT b.transid
     FROM dbo.bettrans b (NOLOCK)
 	    INNER JOIN bodb_Licensee.dbo.LicenseeBAHistory h (NOLOCK) ON b.custid = h.custid AND (transdate BETWEEN OnDate AND ISNULL(OffDate, @CurrentDate))
-    WHERE (b.bettype < 31 OR (b.bettype BETWEEN 121 AND 999) OR (b.bettype BETWEEN 1301 AND 1399) OR (b.bettype BETWEEN 9001 AND 9399) OR b.bettype = 38)
+    WHERE (b.bettype < 31 OR (b.bettype BETWEEN 121 AND 999) OR (b.bettype BETWEEN 1301 AND 1399) OR (b.bettype BETWEEN 9001 AND 9399) OR (b.bettype BETWEEN 9400 AND 9699) OR b.bettype = 38)
 	    AND tpositiontaking = 0
 		AND b.bettype NOT IN (901, 902, 903, 904, 911, 912, 913, 914)
 

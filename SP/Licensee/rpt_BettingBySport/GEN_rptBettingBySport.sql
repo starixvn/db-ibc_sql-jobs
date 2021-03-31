@@ -17,6 +17,7 @@ AS
 	- 20171114@Harper: Fix Date Range when get detail ticket 
 	- 20180703@Sophia: Check @Date <= Movebetday will return because this day don't have data on Bettrans [Redmine: #97567]
 	- 20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
+	- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 
 	EXEC GEN_rptBettingBySport '2017-10-28'
 */ 
@@ -185,6 +186,7 @@ BEGIN
 			OR b.bettype BETWEEN 121 AND 999
 			OR b.bettype BETWEEN 1301 AND 1399 --new tennis's bettypes
 			OR b.bettype BETWEEN 9001 AND 9399
+			OR b.bettype BETWEEN 9400 AND 9699 -- Cricket AIO
 		) 
 		AND b.statusID IN (111, 112, 113)
 		AND b.winlostdate = @Date
