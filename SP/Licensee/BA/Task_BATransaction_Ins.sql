@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02,DB042-bodb02" executers="" isFunction="0" isNested="0"></info>*/
+﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02,DBBOF-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_BATransaction_Ins]
 AS
@@ -7,8 +7,8 @@ AS
 	Created by:[Henry]
 	Date: 2011-06-20
 	Task: Insert BA Bets
-	DB: DBEXT.bodb02, DBACC.bodb02
-	
+	DB: DBEXT.bodb02, DBACC.bodb02, DBBOF.bodb02
+
 	Revisions:
 		- 20110824@Henry: Change the range of the bettype (not between 31 and 120)
 		- 20110909@Viet: revise SP
@@ -32,6 +32,7 @@ AS
 		- 20191010@Percy: Remove table LicenseeBATransaction [RedmineID: #103656]
 		- 20201001@Louis: Licensee Spread Setting [RedmineID: #142532]
 		- 20210302@Hogan: Hard code Licensee Spread Setting [RedmineID: #148100]
+		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 */
 
 BEGIN
@@ -65,6 +66,7 @@ BEGIN
 				OR (bettype BETWEEN 121 AND 999)
 				OR (bettype BETWEEN 1301 AND 1399)
 				OR (bettype BETWEEN 9001 AND 9399)
+				OR (bettype BETWEEN 9400 AND 9699)
 				OR (bettype = 38) -- BetBuilder
 			)
 		AND statusID <> 121 --DONE

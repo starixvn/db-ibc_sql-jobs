@@ -1,1 +1,3 @@
-SP\Licensee\BA\Task_BATransaction_Ins.sql
+SP\Licensee\rpt_betting\GEN_rptBetting.sql
+SP\Licensee\rpt_betting\Task_PrepareStaging.sql
+SP\Licensee\rpt_BettingByProduct\GEN_rptBettingByProduct.sql

@@ -27,6 +27,7 @@ AS
 		- 20200622@Hogan: Integrate 3 new betfrom 4, 5, 6 [Redmine: #136107]
 		- 20210120@Mark: Integrate new betfrom 7 [Redmine: #149108]
 		- 20210305@Mark: Integrate new betfrom _, @, %(Mobile Euro) [Redmine: #151019]
+		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 
 	EXEC Task_rptLicWinlossGMT_CheckData '2017-11-30'
 */
@@ -166,6 +167,7 @@ BEGIN
 					OR b.bettype BETWEEN 121 AND 999
 					OR b.Bettype BETWEEN 1301 AND 1399 --new tennis's bettypes
 					OR b.Bettype BETWEEN 9001 AND 9399 -- E-Sports 2.0
+					OR b.Bettype BETWEEN 9400 AND 9699 -- Cricket AIO
 					OR b.Bettype = 38 -- BetBuilder
 				)
 			AND (b.bettype < 901 OR b.bettype > 904)
