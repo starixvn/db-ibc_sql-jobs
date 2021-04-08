@@ -102,7 +102,7 @@ BEGIN
 		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
 		SELECT  @FromDate = MIN(winlostdate) FROM dbo.rmBettransm_bk WITH (NOLOCK)
-		SELECT  @ToDate = DATEADD(DAY, -11, BalanceUpDay) FROM @MBBU -- Keep data in 10 days (from previous BU date)
+		SELECT  @ToDate = DATEADD(DAY, -30, BalanceUpDay) FROM @MBBU -- Keep data in 30 days (from previous BU date)
 
 		SELECT @winlostdate = @FromDate
 		WHILE  @winlostdate <= @ToDate
