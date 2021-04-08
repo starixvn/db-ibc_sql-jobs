@@ -23,6 +23,7 @@ AS
 		- 20210305@Malcolm: Add Cricket AIO[redmine: #148454]
 		- 20210310@Malcolm: Add Pragmatic Live Casino [RedmineId : #133717]
 		- 20210301@Malcolm: Add Habanero [RedmineId : #145457]
+		- 20210408@Malcolm: Change bettype range of AE Casino(Sexy gaming) [RedmineId : #151334]
 	
 */
 BEGIN
@@ -118,7 +119,7 @@ BEGIN
 			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
-			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- AE Casino
 			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games	
 			WHEN bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN	
@@ -165,7 +166,7 @@ BEGIN
 				) THEN 0
 			WHEN bettype BETWEEN 2401 AND 2499   -- Allbet
 				OR bettype BETWEEN 3001 AND 3099   -- SA Gaming
-				OR bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
+				OR bettype BETWEEN 3101 AND 3150   -- AE Casino
 				OR bettype BETWEEN 3300 AND 3399   -- BBIN	
 				OR bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
 				OR bettype BETWEEN 5601 AND 5699   -- ION 	 
@@ -239,7 +240,7 @@ BEGIN
 				 WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 				 WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 				 WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
-				 WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+				 WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- AE Casino
 				 WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 				 WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 				 WHEN bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
@@ -320,7 +321,7 @@ BEGIN
 			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
-			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- AE Casino
 			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 			WHEN bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
@@ -367,7 +368,7 @@ BEGIN
 				) THEN 0
 			WHEN bettype BETWEEN 2401 AND 2499   -- Allbet
 				OR bettype BETWEEN 3001 AND 3099   -- SA Gaming
-				OR bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
+				OR bettype BETWEEN 3101 AND 3150   -- AE Casino
 				OR bettype BETWEEN 3300 AND 3399   -- BBIN	
 				OR bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
 				OR bettype BETWEEN 5601 AND 5699   -- ION 
@@ -440,7 +441,7 @@ BEGIN
 				 WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 				 WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 				 WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
-				 WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+				 WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- AE Casino
 				 WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 				 WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 				 WHEN bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
@@ -521,7 +522,7 @@ BEGIN
 			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
-			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- AE Casino
 			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 			WHEN bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
@@ -568,7 +569,7 @@ BEGIN
 				) THEN 0
 			WHEN bettype BETWEEN 2401 AND 2499   -- Allbet
 				OR bettype BETWEEN 3001 AND 3099   -- SA Gaming
-				OR bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
+				OR bettype BETWEEN 3101 AND 3150   -- AE Casino
 				OR bettype BETWEEN 3300 AND 3399   -- BBIN	
 				OR bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
 				OR bettype BETWEEN 5601 AND 5699   -- ION 
@@ -640,7 +641,7 @@ BEGIN
 				 WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 				 WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 				 WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
-				 WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+				 WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- AE Casino
 				 WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 				 WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 				 WHEN bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
@@ -721,7 +722,7 @@ BEGIN
 			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 			WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
-			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+			WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- AE Casino
 			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 			WHEN bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
@@ -768,7 +769,7 @@ BEGIN
 				) THEN 0
 			WHEN bettype BETWEEN 2401 AND 2499   -- Allbet
 				OR bettype BETWEEN 3001 AND 3099   -- SA Gaming
-				OR bettype BETWEEN 3101 AND 3199   -- Sexy Gaming
+				OR bettype BETWEEN 3101 AND 3150   -- AE Casino
 				OR bettype BETWEEN 3300 AND 3399   -- BBIN
 				OR bettype BETWEEN 5601 AND 5699   -- ION
 				OR bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino						
@@ -841,7 +842,7 @@ BEGIN
 				 WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
 				 WHEN bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
 				 WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
-				 WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- Sexy Gaming
+				 WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- AE Casino
 				 WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
 				 WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games
 				 WHEN bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN
