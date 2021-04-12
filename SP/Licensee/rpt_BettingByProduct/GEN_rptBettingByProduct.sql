@@ -80,6 +80,7 @@ AS
 		- 20210308@Parsons: Integrate Sports Lottery Product [#150866]
 		- 20210412@Sophia: Integrate PP Live Casino [Redmine: #150971]
 		- 20210419@Danny: Integrate Creative Gaming [Redmine: #146019]
+		- 20210412@Sophia : Integrate AE Casino Lucky Draw [Redmine: #152141]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -164,12 +165,13 @@ BEGIN
 			,bt.ProductID
 			,CASE
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699) 
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699, 3150) 
 						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
 						   , SAG_Tips (3007)
 						   , CC-Bonus(1906)
 						   , SB-Adjusted Odds(999)
 						   , Saba.club Contribution(1698), Saba.club Jackpot Prize(1699)
+						   , AE Casino Lucky Draw (3150)
 						*/
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
@@ -200,12 +202,13 @@ BEGIN
 			,bt.ProductID
 			,CASE 
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699) 
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699, 3150) 
 						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
 						   , SAG_Tips (3007)
 						   , CC-Bonus(1906)
 						   , SB-Adjusted Odds(999)
 						   , Saba.club Contribution(1698), Saba.club Jackpot Prize(1699)
+						   , AE Casino Lucky Draw (3150)
 						*/
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
