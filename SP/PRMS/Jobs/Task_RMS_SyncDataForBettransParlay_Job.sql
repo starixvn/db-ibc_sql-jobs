@@ -115,7 +115,7 @@ BEGIN
 				INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN DATEADD(DAY, -14, @BalanceUpDay) AND @BalanceUpDay
+			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN DATEADD(DAY, -20, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
 
 
 			-- transid2 (sporttype)
@@ -332,7 +332,7 @@ BEGIN
 				INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN DATEADD(DAY, -14, @BalanceUpDay) AND @BalanceUpDay
+			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN DATEADD(DAY, -20, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
 
 
 			-- transid2 (sporttype)
