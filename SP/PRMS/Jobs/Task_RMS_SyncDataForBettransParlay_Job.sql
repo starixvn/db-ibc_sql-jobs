@@ -125,24 +125,20 @@ BEGIN
 			CROSS APPLY (
 					SELECT CASE
 								-------------------------------
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) NOT IN (1,2) THEN MIN(sporttype)
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) NOT IN (1,2) THEN MIN(st.sporttype)
 								------------------------------- 
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) = 0 THEN -3 
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) > 0 THEN -4
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) < 0 THEN  1
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) = 0 THEN -3 
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) > 0 THEN -4
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) < 0 THEN  1
 								------------------------------
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) = 0 THEN -1
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) > 0 THEN -5
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) < 0 THEN  2
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) = 0 THEN -1
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) > 0 THEN -5
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) < 0 THEN  2
 								------------------------------
-								WHEN COUNT(DISTINCT sporttype) <> 1 AND MIN(sporttype) = 1 THEN -3
+								WHEN COUNT(DISTINCT st.sporttype) <> 1 AND MIN(st.sporttype) = 1 THEN -3
 								ELSE -1 END AS sporttype 
-					FROM
-					(
-						SELECT st.sporttype, st.Saba
-						FROM #sporttype st
-						WHERE st.refno = b.refno
-					) s
+					FROM #sporttype st
+					WHERE st.refno = b.refno
 				) s
 			WHERE b.bettype = 29
 
@@ -342,24 +338,20 @@ BEGIN
 			CROSS APPLY (
 					SELECT CASE
 								-------------------------------
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) NOT IN (1,2) THEN MIN(sporttype)
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) NOT IN (1,2) THEN MIN(st.sporttype)
 								------------------------------- 
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) = 0 THEN -3 
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) > 0 THEN -4
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) < 0 THEN  1
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) = 0 THEN -3 
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) > 0 THEN -4
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) < 0 THEN  1
 								------------------------------
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) = 0 THEN -1
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) > 0 THEN -5
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) < 0 THEN  2
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) = 0 THEN -1
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) > 0 THEN -5
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) < 0 THEN  2
 								------------------------------
-								WHEN COUNT(DISTINCT sporttype) <> 1 AND MIN(sporttype) = 1 THEN -3
+								WHEN COUNT(DISTINCT st.sporttype) <> 1 AND MIN(st.sporttype) = 1 THEN -3
 								ELSE -1 END AS sporttype 
-					FROM
-					(
-						SELECT st.sporttype, st.Saba
-						FROM #sporttype st
-						WHERE st.refno = b.refno
-					) s
+					FROM #sporttype st
+					WHERE st.refno = b.refno
 				) s
 			WHERE b.bettype = 29
 
