@@ -27,6 +27,12 @@ BEGIN
 		END
 
 		BEGIN TRY
+			DECLARE @SQL NVARCHAR(MAX)
+			SELECT @SQL = 'SELECT transid,odds,stake,statusID,refno,winlostdate,matchid,matchdate
+							FROM OPENQUERY(DBARC, ''SELECT  transid,odds,stake,statusID,refno,winlostdate,matchid,matchdate
+													FROM bodb_archive.dbo.bettransm r WITH (NOLOCK)
+													WHERE r.winlostdate = ''''' +CONVERT(VARCHAR(50),@winlostdate,120)+ ''''''')'
+
 			INSERT INTO dbo.rmBettransm_bk
 			(
 				transid,
@@ -38,18 +44,14 @@ BEGIN
 				matchid,
 				matchdate
 			)
-			SELECT 
-				transid,
-				odds,
-				stake,
-				statusID,
-				refno,
-				winlostdate,
-				matchid,
-				matchdate
-			FROM DBARC.bodb_archive.dbo.bettransm r WITH (NOLOCK)
-			WHERE r.winlostdate = @winlostdate
+			EXEC (@SQL)
 
+
+			DECLARE @SQL1 NVARCHAR(MAX)
+			SELECT @SQL1 = 'SELECT matchid,leagueid,eventdate,ParentID,ChildMatchType,sporttype,GlobalShowTime,eventstatus
+							FROM OPENQUERY(DBARC, ''SELECT  matchid,leagueid,eventdate,ParentID,ChildMatchType,sporttype,GlobalShowTime,eventstatus
+													FROM bodb_archive.dbo.match_bk r WITH (NOLOCK)
+													WHERE r.eventdate = ''''' +CONVERT(VARCHAR(50),@winlostdate,120)+ ''''''')'
 
 			INSERT INTO dbo.rmMatch_bk
 			(
@@ -62,17 +64,8 @@ BEGIN
 				GlobalShowTime,
 				eventstatus
 			)
-			SELECT 
-				matchid,
-				leagueid,
-				eventdate,
-				ParentID,
-				ChildMatchType,
-				sporttype,
-				GlobalShowTime,
-				eventstatus
-			FROM DBARC.bodb_archive.dbo.match_bk r WITH (NOLOCK)
-			WHERE r.eventdate = @winlostdate 
+			 EXEC (@SQL1)
+		
 
 		END TRY
 		BEGIN CATCH
