@@ -106,7 +106,7 @@ BEGIN
 				INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN @MoveBetsDay AND @BalanceUpDay
+			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay 
 
 			-- bettrans_bk
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
@@ -319,7 +319,7 @@ BEGIN
 				INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN @MoveBetsDay AND @BalanceUpDay
+			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay 
 
 			-- bettrans_bk
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
