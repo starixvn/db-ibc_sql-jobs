@@ -19,6 +19,8 @@ BEGIN
 	SELECT  @SiteName = dbo.Aff_f_GetSetting('SiteName'), @LastUpdatedTime = dbo.Aff_f_GetSetting('MemberInfoLastUpdatedTime'), @TimeZone = dbo.Aff_f_GetSetting('TimeZone')
 	SELECT  @SiteId = SiteId FROM bodb_N88.dbo.ServerInfo WITH (NOLOCK) WHERE LicenseeName = @SiteName
 
+	SELECT @LastUpdatedTime = ISNULL(CONVERT(DATE, DATEADD(DAY, -7, @LastUpdatedTime)), '2021-01-01')
+
 	CREATE TABLE #Customer
 	(
 		CustId				INT
