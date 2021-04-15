@@ -70,6 +70,7 @@ AS
 		- 20210305@Mark: Integrate new betfrom _, @, %(Mobile Euro) [Redmine: #151019]
 		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
+		- 20210322@Hogan: Integrate AE Casino Lucky Draw [RedmineID: #151984]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -130,7 +131,7 @@ BEGIN
 		,SUM(winlost - actual_stake) AS winlost
 		,CASE
 			WHEN bettrans.statusID IN (112, 113) THEN SUM(CASE
-															WHEN (bettrans.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699)
+															WHEN (bettrans.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150)
 																OR (bettrans.bettype BETWEEN 1611 AND 1697 AND bettrans.matchid = 150)) THEN 0
 															ELSE ABS(winlost - actual_stake)
 														END) -- exclude Promotion Prize, Tip ticket from BetEffective
@@ -177,7 +178,7 @@ BEGIN
 			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
-			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+			WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- SXG
 			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid <> 150) THEN 200 -- SBC
 			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid = 150) THEN 150 -- SBC FreeBets
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
@@ -190,7 +191,7 @@ BEGIN
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 17004, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699)
+			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 17004, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150)
 				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)) THEN bettype
 			ELSE 0
 		END bettype
@@ -278,7 +279,7 @@ BEGIN
 			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
-			WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+			WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- SXG
 			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid <> 150) THEN 200 -- SBC
 			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid = 150) THEN 150 -- SBC FreeBets
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
@@ -290,7 +291,7 @@ BEGIN
 			ELSE 0
 		END
 		,CASE
-			WHEN (bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,17003, 17004, 4299,4298,4297,3007,1906, 999, 1698, 1699)
+			WHEN (bettype IN (71,72,1000,901,902,903,904,911,912,913,914,1706,4300,17000,17003, 17004, 4299,4298,4297,3007,1906, 999, 1698, 1699, 3150)
 				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)) THEN bettype
 			ELSE 0
 		END

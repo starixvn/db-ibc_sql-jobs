@@ -52,6 +52,7 @@ AS
 		- 20210119@Hogan: Integrate Four Guardians [RedmineID: #148100]
 		- 20210203@Louis: Saba Red Envelope [RedmineID: #149923]
 		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
+		- 20210322@Hogan: Integrate AE Casino Lucky Draw [RedmineID: #151984]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -597,7 +598,8 @@ BEGIN
 				WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
-				WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+				WHEN bettype BETWEEN 3101 AND 3149 THEN 243 -- AE Casino
+				WHEN bettype = 3150 THEN -243 -- AE Casino Lucky Draw
 				WHEN bettype BETWEEN 1611 AND 1697 THEN 200 -- SBC
 				WHEN bettype = -150 THEN 150 -- SBC Free Bets
 				WHEN bettype BETWEEN 1698 AND 1699 THEN -200 -- SBC Prize
@@ -658,7 +660,8 @@ BEGIN
 				WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
-				WHEN bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+				WHEN bettype BETWEEN 3101 AND 3149 THEN 243 -- AE Casino
+				WHEN bettype = 3150 THEN -243 -- AE Casino Lucky Draw
 				WHEN bettype BETWEEN 1611 AND 1697 THEN 200 -- SBC
 				WHEN bettype = -150 THEN 150 -- SBC Free Bets
 				WHEN bettype BETWEEN 1698 AND 1699 THEN -200 -- SBC Prize

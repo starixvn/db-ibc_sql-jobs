@@ -53,6 +53,7 @@ AS
 		- 20210119@Hogan: Integrate Four Guardians [RedmineID: #148100]
 		- 20210203@Louis: Saba Red Envelope [RedmineID: #149923]
 		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
+		- 20210322@Hogan: Integrate AE Casino Lucky Draw [RedmineID: #151984]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -287,7 +288,8 @@ BEGIN
 				WHEN b.bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
-				WHEN b.bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+				WHEN b.bettype BETWEEN 3101 AND 3149 THEN 243 -- AE Casino
+				WHEN b.bettype = 3150 THEN -243 -- AE Casino Lucky Draw
 				WHEN (b.bettype BETWEEN 1611 AND 1697 AND b.matchid <> 150) THEN 200 -- SBC
 				WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150 -- SBC FreeBets
 				WHEN (b.bettype BETWEEN 1698 AND 1699 AND b.matchid <> 150) THEN -200 -- SBC Prize
@@ -361,7 +363,8 @@ BEGIN
 				WHEN b.bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
-				WHEN b.bettype BETWEEN 3101 AND 3199 THEN 243 -- SXG
+				WHEN b.bettype BETWEEN 3101 AND 3149 THEN 243 -- AE Casino
+				WHEN b.bettype = 3150 THEN -243 -- AE Casino Lucky Draw
 				WHEN (b.bettype BETWEEN 1611 AND 1697 AND b.matchid <> 150) THEN 200 -- SBC
 				WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150 -- SBC FreeBets
 				WHEN (b.bettype BETWEEN 1698 AND 1699 AND b.matchid <> 150) THEN -200 -- SBC Prize
@@ -405,7 +408,7 @@ BEGIN
 			SUM(Adjustment),--Adjustment  
 			SUM(Turnover),--Turnover
 			SUM(Outstanding),--Outstanding 
-			SUM(CASE WHEN bettype NOT IN(246,-248,-244,-165,-150,-200) THEN Winloss ELSE 0 END),--Winloss  
+			SUM(CASE WHEN bettype NOT IN(246,-248,-244,-165,-150,-200,-243) THEN Winloss ELSE 0 END),--Winloss  
 			SUM(Transfer3rd),--Transfer3rd
 			SUM(DrawGame),--DrawGame
 			SUM(Playercomm),--Playercomm
@@ -582,7 +585,7 @@ BEGIN
 			-1,
 			TurnOver,
 			DrawGame,
-			CASE WHEN Bettype IN (246,-248,-244,-165,-150,-200) THEN Promotion ELSE Winloss END AS Winloss,
+			CASE WHEN Bettype IN (246,-248,-244,-165,-150,-200,-243) THEN Promotion ELSE Winloss END AS Winloss,
 			playercomm,
 			BetCount,
 			OutStanding

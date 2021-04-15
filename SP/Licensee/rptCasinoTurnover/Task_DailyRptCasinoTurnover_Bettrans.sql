@@ -16,6 +16,7 @@ AS
 		- 20201223@Kos: Fix duplicate Saba.club data [RedmineID: #146135]
 		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
 		- 20210119@Hogan: Integrate Four Guardians [RedmineID: #148100]
+		- 20210322@Hogan: Integrate AE Casino Lucky Draw [RedmineID: #151984]
 */
 
 BEGIN
@@ -61,7 +62,7 @@ BEGIN
 			,CASE
 				WHEN (bettrans.productId = 150 AND matrix.ProductID = 42) -- Saba.club Free Bets
 					THEN 1
-				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699)
+				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150)
 					THEN 1
 				ELSE 0 END AS TicketType
 		FROM
@@ -82,7 +83,7 @@ BEGIN
 			,CASE
 				WHEN (bettrans.productId = 150 AND matrix.ProductID = 42) -- Saba.club Free Bets
 					THEN 1
-				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699)
+				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150)
 					THEN 1
 				ELSE 0 END
 
