@@ -1,5 +1,5 @@
 /*<info serverAlias="DBRMS-bodb_RMS" executers="bodbRMSNet" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_RMS_SyncDataForBettransParlay_Job]	
+ALTER PROCEDURE [dbo].[Task_RMS_SyncDataForBettransParlay_Job]	
 AS
 
 /*
@@ -22,6 +22,7 @@ AS
 		- 20200510@Percy: Add Penalty Shootout Combo [RedmineID: #133961]
 		- 20201214@Danny: Separate Data of Virtual Soccer & Virtual Basketball [RedmineID: #145926]
 		- 20210225@Danny: Incorporate BetBuilder - Basketball on PRMS [RedmineID: #150652]
+		- 20210319@Danny: Incorporate Cricket AIO into PRMS [RedmineID: #151319]
 */
 
 BEGIN
@@ -36,6 +37,18 @@ BEGIN
 
 	SELECT  @max_tstamp = MAX(tstamp) FROM bodb02.dbo.bettrans WITH (NOLOCK)
 	SELECT  @max_tstamp = ISNULL(@max_tstamp, @min_tstamp)
+
+	DECLARE @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME, @ErrCode INT, @ErrMsg VARCHAR(4000)
+	DECLARE @tblErrMsg TABLE (TableName VARCHAR(300), ErrMsg VARCHAR(4000))
+
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+
+	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDay = BalanceUpDay FROM @MBBU
+
+	CREATE TABLE #sporttype (refno BIGINT, sporttype INT, Saba INT ,odds smallmoney, stake money, matchid INT)
+	CREATE CLUSTERED INDEX CIX_refno ON #sporttype (refno)
 
 	IF @min_tstamp = 0x0000000000000001 -- renew all data
 	BEGIN
@@ -76,6 +89,35 @@ BEGIN
 		-- Update some columns for bettype = 29
 		IF EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE bettype = 29)
 		BEGIN
+
+			-- bettransm
+			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			FROM dbo.rmBettrans b WITH (NOLOCK)
+				INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
+				INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
+				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
+			WHERE b.bettype = 29  AND (bm.winlostdate > @MoveBetsDay or bm.winlostdate IS NULL)
+			
+			-- bettransm14
+			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			FROM dbo.rmBettrans b WITH (NOLOCK)
+				INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
+				INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
+				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
+			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay 
+
+			-- bettrans_bk
+			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			FROM dbo.rmBettrans b WITH (NOLOCK)
+				INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
+				INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
+				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
+			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN DATEADD(DAY, -20, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
+
+
 			-- transid2 (sporttype)
 			UPDATE b WITH (ROWLOCK)
 			SET b.transid2 = s.sporttype
@@ -83,34 +125,20 @@ BEGIN
 			CROSS APPLY (
 					SELECT CASE
 								-------------------------------
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) NOT IN (1,2) THEN MIN(sporttype)
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) NOT IN (1,2) THEN MIN(st.sporttype)
 								------------------------------- 
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) = 0 THEN -3 
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) > 0 THEN -4
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) < 0 THEN  1
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) = 0 THEN -3 
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) > 0 THEN -4
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) < 0 THEN  1
 								------------------------------
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) = 0 THEN -1
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) > 0 THEN -5
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) < 0 THEN  2
-
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) = 0 THEN -1
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) > 0 THEN -5
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) < 0 THEN  2
 								------------------------------
-								WHEN COUNT(DISTINCT sporttype) <> 1 AND MIN(sporttype) = 1 THEN -3
+								WHEN COUNT(DISTINCT st.sporttype) <> 1 AND MIN(st.sporttype) = 1 THEN -3
 								ELSE -1 END AS sporttype 
-					FROM
-					(
-						SELECT m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba
-						FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-							INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
-							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-						WHERE bm.refno = b.refno
-
-						UNION ALL
-						SELECT m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba
-						FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
-							INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
-							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-						WHERE bm.refno = b.refno
-					) s
+					FROM #sporttype st
+					WHERE st.refno = b.refno
 				) s
 			WHERE b.bettype = 29
 
@@ -136,12 +164,7 @@ BEGIN
 			FROM dbo.rmBettrans b WITH (NOLOCK)
 				CROSS APPLY (
 					SELECT bm.odds, bm.stake, bm.matchid
-					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-					WHERE bm.refno = b.refno
-					
-					UNION ALL
-					SELECT bm.odds, bm.stake, bm.matchid
-					FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
+					FROM #sporttype bm WITH (NOLOCK)
 					WHERE bm.refno = b.refno
 				) bm
 			WHERE b.bettype = 29
@@ -280,6 +303,34 @@ BEGIN
 		BEGIN
 			CREATE NONCLUSTERED INDEX IX_bettype ON #rmBettrans (bettype, hdp2)
 
+			-- bettransm
+			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			FROM #rmBettrans b 
+				INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
+				INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
+				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
+			WHERE b.bettype = 29  AND (bm.winlostdate > @MoveBetsDay or bm.winlostdate IS NULL)
+			
+			-- bettransm14
+			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			FROM #rmBettrans b 
+				INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
+				INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
+				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
+			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay 
+
+			-- bettrans_bk
+			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			FROM #rmBettrans b 
+				INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
+				INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
+				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
+			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN DATEADD(DAY, -20, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
+
+
 			-- transid2 (sporttype)
 			UPDATE b
 			SET b.transid2 = s.sporttype
@@ -287,34 +338,20 @@ BEGIN
 			CROSS APPLY (
 					SELECT CASE
 								-------------------------------
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) NOT IN (1,2) THEN MIN(sporttype)
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) NOT IN (1,2) THEN MIN(st.sporttype)
 								------------------------------- 
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) = 0 THEN -3 
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) > 0 THEN -4
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 1 AND SUM(DISTINCT Saba) < 0 THEN  1
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) = 0 THEN -3 
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) > 0 THEN -4
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) < 0 THEN  1
 								------------------------------
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) = 0 THEN -1
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) > 0 THEN -5
-								WHEN COUNT(DISTINCT sporttype) = 1 AND MIN(sporttype) = 2 AND SUM(DISTINCT Saba) < 0 THEN  2
-
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) = 0 THEN -1
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) > 0 THEN -5
+								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) < 0 THEN  2
 								------------------------------
-								WHEN COUNT(DISTINCT sporttype) <> 1 AND MIN(sporttype) = 1 THEN -3
+								WHEN COUNT(DISTINCT st.sporttype) <> 1 AND MIN(st.sporttype) = 1 THEN -3
 								ELSE -1 END AS sporttype 
-					FROM
-					(
-						SELECT m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba
-						FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-							INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
-							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-						WHERE bm.refno = b.refno
-
-						UNION ALL
-						SELECT m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba
-						FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
-							INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
-							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-						WHERE bm.refno = b.refno
-					) s
+					FROM #sporttype st
+					WHERE st.refno = b.refno
 				) s
 			WHERE b.bettype = 29
 
@@ -340,12 +377,7 @@ BEGIN
 			FROM #rmBettrans b
 				CROSS APPLY (
 					SELECT bm.odds, bm.stake, bm.matchid
-					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-					WHERE bm.refno = b.refno
-					
-					UNION ALL
-					SELECT bm.odds, bm.stake, bm.matchid
-					FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
+					FROM #sporttype bm WITH (NOLOCK)
 					WHERE bm.refno = b.refno
 				) bm
 			WHERE b.bettype = 29
@@ -465,6 +497,8 @@ BEGIN
 
 		DROP TABLE #rmBettrans
 	END
+
+	DROP TABLE #sporttype
 
 	UPDATE dbo.rmSettings WITH (ROWLOCK)
 	SET VValue = CONVERT(VARCHAR(200), CONVERT(BIGINT, @max_tstamp))
