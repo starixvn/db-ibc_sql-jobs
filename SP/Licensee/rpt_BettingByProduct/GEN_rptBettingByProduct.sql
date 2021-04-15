@@ -78,6 +78,7 @@ AS
 		- 20210113@Parsons: Saba.club Integrate Slot Game [#147977]
 		- 20210308@Parsons: Integrate Habanero  Product [#150636]
 		- 20210308@Parsons: Integrate Sports Lottery Product [#150866]
+		- 20210412@Sophia: Integrate PP Live Casino [Redmine: #150971]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -124,7 +125,7 @@ BEGIN
 
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG,WM,VS3,GDG,BGG,MXG,HB,SLT') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG,WM,VS3,GDG,BGG,MXG,HB,SLT,PPL') -- Remove Exchange (BX) due to separate wallet only
 		WHERE @ProductCodes = ''
 			OR ProductID IN (SELECT ProductID FROM @ProductIdList)
 
