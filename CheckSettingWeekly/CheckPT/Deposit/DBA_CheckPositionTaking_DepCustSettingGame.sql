@@ -19,6 +19,7 @@ AS
 		-20190708@Winnie: Rules PT RedmineID:#116469
 		-20200206@Johnson: add new PT config for Keno (rule 50) and exclude closed customers[redmine:#127831]
 		-20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
+		-20210416@Winfred: Add new PT config for Keno (rule 50) for credit licensee Saba789 [RedmineID:#153187]
 		
 	Param's Explanation:
 	
@@ -177,7 +178,7 @@ BEGIN
 			FROM CheckCustDB.dbo.CustSettingGame s WITH(NOLOCK)							
 				INNER JOIN #tmpDumMember c ON s.custid=c.custid	
 			WHERE
-				c.roleid=1 AND (s.bettype BETWEEN 1501 AND 1524) AND (s.apositiontaking NOT IN(0.9,0.94,0.95)	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+				c.roleid=1 AND (s.bettype BETWEEN 1501 AND 1524) AND (s.apositiontaking NOT IN(0.9,0.94,0.95,0.805)	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
 				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
 	END
 
