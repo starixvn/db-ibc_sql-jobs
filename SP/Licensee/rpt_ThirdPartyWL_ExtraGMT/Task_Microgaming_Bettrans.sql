@@ -25,6 +25,8 @@ AS
 		- 20201021@Parsons: Integrate WM Live Casino [#141357]
 		- 20210113@Parsons: Provide timezone filter for Joker Games Win Loss Report [#148617]
 		- 20210412@Sophia: Integrate PP Live Casino [Redmine: #150971]
+		- 20210419@Danny: Integrate Creative Gaming [Redmine: #146019]
+
 	 Param's Explanation:
 */
 
@@ -105,6 +107,7 @@ BEGIN
 				OR  b.gameID BETWEEN 3001 AND 3099 -- SAG
 				OR  b.gameID BETWEEN 3401 AND 3499 -- WM
 				OR  b.gameID BETWEEN 3701 AND 3799 -- PPL
+				OR  b.gameID BETWEEN 7301 AND 7600 -- CG
 				) 
 		GROUP BY CAST(b.winlostdate AS DATE), CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID
 			, b.currency, b.statusID		
