@@ -30,9 +30,22 @@ AS
 		-20210223@Winfred: add new PT 0.892 [RedmineID:#150449]
 		-20210318@Winfred: add new PT 0.895 and 0.805 [RedmineID:#151673]
 		-20210329@Winfred: add new PT 0.915 and 0.92 and 0.95 [RedmineID:#152407]
+		-20210416@Winfred: remove the check PT rule for Sportsbook [RedmineID:#153633]
 		
 	Param's Explanation:
 	
+	Noted :	remove the check PT for Sportsbook
+	IF @RuleId IN(0,48)
+	BEGIN				
+		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+		SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
+		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)					
+			INNER JOIN #tmpDumMember c ON s.custid=c.custid		
+		WHERE 
+			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925,0.89,0.885,0.5,0.9,0.93,0.9065,0.898,0.935,0.892,0.895,0.805,0.915,0.92,0.95) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+			AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))		
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
+	END
 */
 SET NOCOUNT ON
 BEGIN
@@ -169,18 +182,7 @@ BEGIN
 			INNER JOIN #tmpA2 m ON s.Sporttype=m.Sporttype AND s.Bettype=m.Bettype AND s.Islive=m.Islive AND m.CustID=s.recommend
 		WHERE s.PT<>m.PT
 	END
-	IF @RuleId IN(0,48)
-	BEGIN				
-		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-		SELECT 48,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),s.islive 
-		FROM CheckCustDB.dbo.Dep_CustSetting s WITH(NOLOCK)					
-			INNER JOIN #tmpDumMember c ON s.custid=c.custid		
-		WHERE 
-			c.roleid=1 AND (s.sporttype<=99 OR s.sporttype=154) AND (s.apositiontaking NOT IN(0.85,0.88,0.91,0.925,0.89,0.885,0.5,0.9,0.93,0.9065,0.898,0.935,0.892,0.895,0.805,0.915,0.92,0.95) OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
-			AND c.custid NOT IN(SELECT custid FROM CheckCustDB.dbo.Dep_CustBAActive BA WITH(NOLOCK))		
-			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
-	END
-
+	
 	IF @RuleId IN (0,53)
 	BEGIN	
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])

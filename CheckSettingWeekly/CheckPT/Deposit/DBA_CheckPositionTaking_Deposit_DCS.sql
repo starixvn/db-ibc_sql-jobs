@@ -27,9 +27,27 @@ AS
 		-20200505@Eden: Add new PT - Deposit known values for Card Club, SpadeGaming, Virtual Games, SA Gaming, Indo 4D, Table Game [RedmineID:#132253]
 		-20200728@Eden: Add new PT - Deposit known values for PP Jackpot [RedmineID:#138389]
 		-20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
+		-20210416@Winfred: remove the check PT rule for Sportsbook [RedmineID:#153633]
 		
 	Param's Explanation:
 	
+	
+	Noted :	remove the check PT for Sportsbook
+	IF @RuleId IN(0,70)
+	BEGIN		
+		IF ((@site='Asiabet88' AND @currency NOT IN(3,6)) OR @site<>'Asiabet88')
+		BEGIN
+			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+			SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
+			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member d WITH(NOLOCK)
+				INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
+				INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON d.sporttype = cf.sporttype AND cf.RuleID = 70 AND cf.IsAthena = @IsAthena AND cf.BetType IN (d.BetType,0)
+			WHERE ci.srecommend=@srecommend
+				AND CHARINDEX(',' + CONVERT(varchar,d.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
+				AND d.AgentID NOT IN(SELECT CustID FROM #Trade)		
+				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed)
+		END
+	END
 */
 SET NOCOUNT ON
 BEGIN
@@ -395,21 +413,7 @@ BEGIN
 				AND t.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
 	END
-	IF @RuleId IN(0,70)
-	BEGIN		
-		IF ((@site='Asiabet88' AND @currency NOT IN(3,6)) OR @site<>'Asiabet88')
-		BEGIN
-			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-			SELECT 70,d.SportType,d.BetType,d.AgentID,NULL, d.AgentPT ,NULL,GETDATE(),d.IsLive
-			FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member d WITH(NOLOCK)
-				INNER  JOIN  CheckCustDB.dbo.custInfo ci WITH(NOLOCK) ON d.AgentID=ci.custid
-				INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON d.sporttype = cf.sporttype AND cf.RuleID = 70 AND cf.IsAthena = @IsAthena AND cf.BetType IN (d.BetType,0)
-			WHERE ci.srecommend=@srecommend
-				AND CHARINDEX(',' + CONVERT(varchar,d.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
-				AND d.AgentID NOT IN(SELECT CustID FROM #Trade)		
-				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed)
-		END
-	END
+	
 	IF @RuleId IN (0,57)
 	BEGIN		
 		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
