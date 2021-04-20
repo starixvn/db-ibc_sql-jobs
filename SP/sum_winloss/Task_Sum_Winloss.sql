@@ -22,6 +22,7 @@ AS
 		- 20210302@Malcolm: Add Sports Lottery [redmine: #147362]
 		- 20210305@Malcolm: Add Cricket AIO[redmine: #148454]
 		- 20210310@Malcolm: Add Pragmatic Live Casino [RedmineId : #133717]
+		- 20210301@Malcolm: Add Habanero [RedmineId : #145457]
 	
 */
 BEGIN
@@ -134,6 +135,7 @@ BEGIN
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
+			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -254,6 +256,7 @@ BEGIN
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
+				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 ELSE 0
 			 END
 			,CASE
@@ -334,6 +337,7 @@ BEGIN
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
+			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -453,6 +457,7 @@ BEGIN
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion 
 				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
+				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 ELSE 0
 			 END
 			,CASE
@@ -533,6 +538,7 @@ BEGIN
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
+			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -651,6 +657,7 @@ BEGIN
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
+				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 ELSE 0
 			 END
 			,CASE
@@ -731,6 +738,7 @@ BEGIN
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
+			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -850,6 +858,7 @@ BEGIN
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 				 WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
 				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
+				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 ELSE 0
 			 END
 			,CASE
