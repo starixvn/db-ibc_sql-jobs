@@ -19,6 +19,7 @@ Revisions:
 	- 20191106@Winnie: 3rd party products - Remove InActive Products Phase 2  - [Redmine: #118699]
 	- 20200422@Elodie: Apply rule 72 S4 = M4 = A4 = 0 [Redmine: #132604]
 	- 09112020@Winfred : Modify Check GameType for Keno - [Redmine:145003]
+	- 20210419@Winfred: Remove check Gold Deluxe [redmine:#153659]
 	
 Param's Explanation: 
 	@RuleId = 0 : 'all' 
@@ -200,7 +201,7 @@ BEGIN
 		CROSS APPLY (SELECT sporttype, bettype FROM #DataSample) ds
 	WHERE NOT EXISTS (SELECT 1 FROM #SuperPT WHERE CustID = cs.CustID AND sporttype = ds.sporttype AND bettype = ds.bettype)
 
-	IF @sporttype IN (202, 255) OR @sporttype = 0 
+	IF @sporttype IN (202) OR @sporttype = 0 
 	BEGIN 
 	---- 1. S1 < 0 OR M1 < 0 OR A1 < 0
 
@@ -376,20 +377,7 @@ BEGIN
 										 END 		 
 			END 
 
-		----30. S4 > 0.93
-			-->Live Casino, GoldDeluxe: Do not check Rule 2 Check rule 30 		
-		IF @sporttype IN (0, 255)
-		BEGIN 
-			IF @RuleId IN (0,30)
-			BEGIN
-				INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)
-				SELECT	30 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId, cs.spositiontaking, 0.93, 0
-				FROM #SuperPT cs
-				WHERE ( cs.Sporttype = 255)					
-					AND cs.spositiontaking > 0.93			
-			END
-		END
-
+	
 		---- 31. MIN (M3-A1,(IM1?UM1,UM2)) > M1
 			---> Check Rule 31 instead of Rule 29 because it does not have M4, A4  [29. MIN (M4-A1, M3-A1,(IM1?UM1,UM2)) > M1]		 
 		IF @RuleId IN (0,31)
