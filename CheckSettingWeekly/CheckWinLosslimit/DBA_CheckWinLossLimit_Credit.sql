@@ -10,6 +10,7 @@ AS
 	DB: DBCHECK.CheckResultDB
 	Revisions:
 		-20191025@Johnson: initial sp [redmine:#122666]
+		- 20210419@Winfred: Remove check Gold Deluxe [redmine:#153659]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -27,8 +28,7 @@ BEGIN
 	
 	INSERT INTO @SportBettype (productID,sporttype,bettype,LossLimit)
 	SELECT *
-	FROM (SELECT 6 productID, 208 sporttype,2101  bettype, 1 LossLimit
-		UNION SELECT 12,255,1701, 0) t
+	FROM (SELECT 6 productID, 208 sporttype,2101  bettype, 1 LossLimit) t
 	WHERE sporttype <> @sporttype
 		
 	INSERT INTO #SuperWinLossLimit (custid, sporttype, bettype, MaxWinLimit, MaxLossLimit, IsAutoReset)

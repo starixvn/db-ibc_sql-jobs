@@ -12,7 +12,9 @@ AS
 		--20191106@Johnson: fix datatype of GlobalStakeLevel [redmine:#123435]
 		--20200514@Eden: Modify rule to check multi stake level at member level [redmine:#134156]
 		- 20200817@Johnson: check duplicate stakelevel [redmine:#139677]
+		--20210419@Winfred: Remove check Gold Deluxe [redmine:#153659]
 	Parameter's Explanations:
+	
 */
 BEGIN 
 	SET NOCOUNT ON
@@ -28,17 +30,19 @@ BEGIN
 	
 	IF @SportType = 0
 	BEGIN
-		INSERT INTO @GameType (SportType,GameTypeID)
-		SELECT 255,1701--GD
-		UNION SELECT 255,1702
+		--INSERT INTO @GameType (SportType,GameTypeID)
+		--SELECT 255,1701--GD
+		--UNION SELECT 255,1702
+		RETURN 
 	END
 	ELSE 
 	BEGIN
 		IF @sportType = 255
 		BEGIN
-			INSERT INTO @GameType (SportType, GameTypeID)
-			SELECT 255,1701--GD
-			UNION SELECT 255,1702
+			--INSERT INTO @GameType (SportType, GameTypeID)
+			--SELECT 255,1701--GD
+			--UNION SELECT 255,1702
+			RETURN
 		END	
 	END
 	
