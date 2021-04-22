@@ -17,6 +17,7 @@ AS
 		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
 		- 20210119@Hogan: Integrate Four Guardians [RedmineID: #148100]
 		- 20210322@Hogan: Integrate AE Casino Lucky Draw [RedmineID: #151984]
+		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 */
 
 BEGIN
@@ -33,7 +34,7 @@ BEGIN
 		ProductId,
 		BetType
 	FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
-	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59)
+	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61)
 
 	INSERT INTO dbo.rptCasinoTurnover(  
 		[WinlostDate]
@@ -73,7 +74,7 @@ BEGIN
 		WHERE
 			bettrans.winlostdate = @winlostdate AND
 			bettrans.statusID IN (111, 112, 113) AND -- DRAW, WON, LOSE
-			matrix.ProductID IN (6, 22, 55, 32, 42) -- RNG Casino, Macau Games, PG Soft, PP, Saba.club
+			matrix.ProductID IN (6, 22, 55, 32, 42, 61) -- RNG Casino, Macau Games, PG Soft, PP, Saba.club
 		GROUP BY
 			bettrans.custid
 			,bettrans.recommend

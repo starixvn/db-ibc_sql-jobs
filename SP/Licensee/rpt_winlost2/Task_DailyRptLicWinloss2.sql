@@ -88,6 +88,7 @@ AS
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 		- 20210322@Hogan: Integrate AE Casino Lucky Draw [RedmineID: #151984]
 		- 20210412@Mark: Support Add New Betfrom 8 9 [RedmineID: #152158]
+		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -203,6 +204,7 @@ BEGIN
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
+			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			ELSE 0
 		END AS sporttype
@@ -304,6 +306,7 @@ BEGIN
 			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
+			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			ELSE 0
 		END

@@ -34,6 +34,7 @@ AS
 		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
 		- 20201224@Hogan: Integrate GDG [RedmineID: #147267]
 		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
+		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 
 	Param's Explanation:
 		@DrawFilter
@@ -194,6 +195,10 @@ BEGIN
 		,@SLTTurnover MONEY
 		,@SLTCustomerWl MONEY
 		,@SLTBetCount MONEY
+		----HB
+		,@HBTurnover MONEY
+		,@HBCustomerWl MONEY
+		,@HBBetCount MONEY
 
 	DECLARE @tblBettype TABLE (ProductPrefix VARCHAR(10), Bettype INT)
 
@@ -206,7 +211,7 @@ BEGIN
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 
-			'FW', 'CO', 'VS2', 'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT')
+			'FW', 'CO', 'VS2', 'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB')
 
 	-- Data Source 
 	DECLARE @tblData AS TABLE (
@@ -805,6 +810,25 @@ BEGIN
 	FROM @tblData
 	WHERE ProductPrefix = 'SLT'
 	
+		-- Habanero 
+	SELECT
+		@HBTurnover = SUM(CASE
+						WHEN @DrawFilter IN (2, 3) THEN 
+							CASE
+								WHEN Status = 111 THEN 0
+								WHEN Status IN (114, 115) THEN 0.5
+								ELSE 1
+							END
+						ELSE 1
+					END * Turnover),
+		@HBCustomerWl = SUM(WinLoss),
+		@HBBetCount = SUM(CASE
+								WHEN @DrawFilter = 2 AND Status = 111 THEN 0
+								ELSE BetCount
+							END)
+	FROM @tblData
+	WHERE ProductPrefix = 'HB'
+	
 	-- Result
 	SELECT
 		1 AS Id,
@@ -844,6 +868,7 @@ BEGIN
 		, ISNULL(@PGSTurnover, 0) AS PGS
 		, ISNULL(@GDGTurnover, 0) AS GDG
 		, ISNULL(@SLTTurnover, 0) AS SLT
+		, ISNULL(@HBTurnover, 0) AS HB
 	UNION
 	SELECT
 		2
@@ -883,6 +908,7 @@ BEGIN
 		, ISNULL(@PGSCustomerWl, 0)
 		, ISNULL(@GDGCustomerWl, 0)
 		, ISNULL(@SLTCustomerWl, 0)
+		, ISNULL(@HBCustomerWl, 0)
 	UNION
 	SELECT
 		3
@@ -922,6 +948,7 @@ BEGIN
 		, ISNULL(@PGSBetCount, 0)
 		, ISNULL(@GDGBetCount, 0)
 		, ISNULL(@SLTBetCount, 0)
+		, ISNULL(@HBBetCount, 0)
 
 	SET NOCOUNT OFF
 END
