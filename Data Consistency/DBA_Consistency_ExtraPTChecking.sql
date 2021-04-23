@@ -17,6 +17,7 @@ AS
 	Revisions: 
 		- 20200110@Sophia: initial SP [Redmine: #122071]
 		- 20210120@Danny: Add rule to check consistency of extraPT [Redmine: #125883]
+		- 20210423@Danny: exclude ticket Void/Reject/Refund [Redmine: #153907]
 	
 	Param's Expanation:
 		@Duration = 'hour', 'lastday'
@@ -81,7 +82,7 @@ BEGIN
 				AND b.bettype < 19001		
 				AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
 				AND b.custid <> 0
-
+				AND b.statusID NOT IN (101, 102, 103)
 
 			------I.I.b. translog 
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)		
@@ -103,6 +104,7 @@ BEGIN
 					WHERE  b.winlostdate = @Winlostdate	 
 						AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
 						AND b.custid <> 0
+						AND b.statusID NOT IN (101, 102, 103)
 						
 			
 			------I.I.c. bettransRNG 
@@ -124,6 +126,7 @@ BEGIN
 					AND s.ProductID <> 1  					
 					AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
 					AND b.custid <> 0
+					AND b.statusID NOT IN (101, 102, 103)
 			
 			------I.I.d.  bettransLC			
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)
@@ -144,6 +147,7 @@ BEGIN
 					AND s.ProductID <> 1  					
 					AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)
 					AND b.custid <> 0
+					AND b.statusID NOT IN (101, 102, 103)
 							 	
 			SELECT @transId = ''
 			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
