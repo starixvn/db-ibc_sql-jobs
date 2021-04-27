@@ -25,6 +25,7 @@ AS
 		- 20210301@Malcolm: Add Habanero [RedmineId : #145457]		
 		- 20210408@Malcolm: Change bettype range of AE Casino(Sexy gaming) [RedmineId : #151334]
 		- 20210406@Malcolm: Add Creative Gaming [redmine: #146017]
+		- 20210427@Malcolm: Add VGaming [RedmineId : #153938]
 
 	
 */
@@ -140,6 +141,7 @@ BEGIN
 			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
+			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -262,6 +264,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
+				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
 				 ELSE 0
 			 END
 			,CASE
@@ -344,6 +347,7 @@ BEGIN
 			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
+			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -465,6 +469,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
+				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
 				 ELSE 0
 			 END
 			,CASE
@@ -547,6 +552,7 @@ BEGIN
 			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
+			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -667,6 +673,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
+				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
 				 ELSE 0
 			 END
 			,CASE
@@ -749,6 +756,7 @@ BEGIN
 			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
+			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -870,6 +878,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
+				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
 				 ELSE 0
 			 END
 			,CASE
