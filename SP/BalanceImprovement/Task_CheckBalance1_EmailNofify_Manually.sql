@@ -12,6 +12,7 @@ AS
 	Revision: 
 		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
+		- 20210426@Sol: Alpha/NAP - Migrate from DBACC to DBCust - [Redmine: #154041]
 
 */
 
@@ -37,7 +38,7 @@ SELECT @sql = N'SELECT TOP 1000 c.username, c.custid, DiffBalance, LogDate, IsFi
 FROM dbo.Task_Cust_BalanceProblem1_Manually c with (nolock)
 	INNER JOIN custDB.dbo.Customer cust with (nolock) on c.custid = cust.custid 
 	LEFT JOIN Task_Cust_CheckBalance_Exception ce with (nolock) on c.custid = ce.custid
-	LEFT JOIN DBACC.bodb_ACC.dbo.Acc_DWLList dw with (nolock) on c.custid = dw.custid
+	LEFT JOIN DBCUST.CustDB.dbo.Acc_DWLList dw with (nolock) on c.custid = dw.custid
 WHERE ce.custid IS NULL AND dw.custid is null
 	AND LogDate > ''' + CONVERT(varchar(20),@lastrun,13) + '''
 ORDER BY Diffbalance DESC'

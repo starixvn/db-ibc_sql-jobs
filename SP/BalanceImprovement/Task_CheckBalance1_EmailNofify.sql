@@ -13,6 +13,7 @@ AS
 	- 20191121@Patrick: Adding code to send message via skype/letstalk [RedmineID: #124080]
 	- 20200702@Vivi: change email recipients
 	- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
+	- 20210426@Sol: Alpha/NAP - Migrate from DBACC to DBCust - [Redmine: #154041]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -39,7 +40,7 @@ BEGIN
 	FROM Task_Cust_BalanceProblem1 c with (nolock)
 		INNER JOIN custDB.dbo.Customer cust with (nolock) on c.custid = cust.custid 
 		LEFT JOIN Task_Cust_CheckBalance_Exception ce with (nolock) on c.custid = ce.custid
-		LEFT JOIN DBACC.bodb_ACC.dbo.Acc_DWLList dw with (nolock) on c.custid = dw.custid
+		LEFT JOIN DBCUST.CustDB.dbo.Acc_DWLList dw with (nolock) on c.custid = dw.custid
 	WHERE ce.custid IS NULL AND dw.custid is null AND cust.currency <> 20
 		AND LogDate > ''' + CONVERT(varchar(20),@lastrun,13) + '''
 	ORDER BY Diffbalance DESC'
@@ -76,7 +77,7 @@ BEGIN
 		FROM Task_Cust_BalanceProblem1 c with (nolock)
 			INNER JOIN custDB.dbo.Customer cust with (nolock) on c.custid = cust.custid 
 			LEFT JOIN Task_Cust_CheckBalance_Exception ce with (nolock) on c.custid = ce.custid
-			LEFT JOIN DBACC.bodb_ACC.dbo.Acc_DWLList dw with (nolock) on c.custid = dw.custid
+			LEFT JOIN DBCUST.CustDB.dbo.Acc_DWLList dw with (nolock) on c.custid = dw.custid
 		WHERE ce.custid IS NULL AND dw.custid is null AND cust.currency <> 20
 			AND LogDate > CONVERT(VARCHAR(20), @lastrun, 13)
 
