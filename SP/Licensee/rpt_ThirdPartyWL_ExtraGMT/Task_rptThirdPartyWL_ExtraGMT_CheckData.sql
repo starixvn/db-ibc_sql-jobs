@@ -97,6 +97,7 @@ BEGIN
 				 OR b.gameID BETWEEN 1901 AND 1999 -- CC
 				 OR b.gameID BETWEEN 4301 AND 4600 -- SG
 				 OR b.gameID BETWEEN 6401 AND 6700 -- JK
+				 OR b.gameID BETWEEN 7301 AND 7600 -- CG
 				 )
 		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
 			b.currency, b.statusID	
@@ -129,8 +130,7 @@ BEGIN
 				OR  b.gameID BETWEEN 3101 AND 3199 -- SXG
 				OR  b.gameID BETWEEN 3001 AND 3099 -- SAG
 				OR  b.gameID BETWEEN 3401 AND 3499 -- WM
-				OR  b.gameID BETWEEN 3701 AND 3799 -- PPL
-				OR  b.gameID BETWEEN 7301 AND 7600 -- CG
+				OR  b.gameID BETWEEN 3701 AND 3799 -- PPL	
 				)
 		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
 			b.currency, b.statusID	
