@@ -54,6 +54,7 @@ AS
 		- 20210203@Louis: Saba Red Envelope [RedmineID: #149923]
 		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
 		- 20210322@Hogan: Integrate AE Casino Lucky Draw [RedmineID: #151984]
+		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized	
@@ -299,6 +300,7 @@ BEGIN
 				WHEN (b.bettype BETWEEN 3001 AND 3099 AND b.bettype <> 3007) THEN 244 -- SAG
 				WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
+				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 				WHEN b.bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
@@ -374,6 +376,7 @@ BEGIN
 				WHEN (b.bettype BETWEEN 3001 AND 3099 AND b.bettype <> 3007) THEN 244 -- SAG
 				WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
+				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 				WHEN b.bettype IN (17000,17003, 17004) THEN 246 -- NPHP
 				ELSE 0
 			END--SportType
