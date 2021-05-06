@@ -71,6 +71,7 @@ AS
 		- 20210305@Hogan: Integrate Sport Lottery [RedmineID: #150872]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 		- 20210322@Hogan: Integrate AE Casino Lucky Draw [RedmineID: #151984]
+		- 20210412@Mark: Support Add New Betfrom 8 9 [RedmineID: #152158]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -219,11 +220,11 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END AS isBA
 		,CASE
-			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%') THEN 1
+			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8') THEN 1
 			ELSE 0
 		END AS isMobile 
 		,CASE
-			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%') THEN bettrans.betfrom
+			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9') THEN bettrans.betfrom
 			ELSE ''
 		END AS betfrom 
 		,SUM(CASE 
@@ -318,11 +319,11 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END
 		,CASE
-			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%') THEN 1
+			WHEN bettrans.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8') THEN 1
 			ELSE 0
 		END
 		,CASE
-			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%') THEN bettrans.betfrom
+			WHEN bettrans.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9') THEN bettrans.betfrom
 			ELSE ''
 		END
 	OPTION (MAXDOP 8)
