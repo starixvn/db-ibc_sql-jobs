@@ -24,62 +24,10 @@ AS
 			+ Set current datetime value to checktime field when insert ticket 19999
 			+ When processing a line then insert itself and upline's to [List]
 		- 20180329@Percy: Add Bet_ExecRep_09 [RedmineID: #92391]
+		- 202010316@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
  */
 BEGIN 
 	CHECKPOINT
-
-	--DBCC DROPCLEANBUFFERS
-	--EXEC sp_updatestats
-	--DBCC FREEPROCCACHE
-
-	/* ---- Old Code 
-	DECLARE @WeekDay TINYINT
-
-	SET @WeekDay = DATEPART(weekday, CURRENT_TIMESTAMP)
-
-	DECLARE @Todaym1 DATETIME
-		,@Todaym2 DATETIME
-		,@Todaym3 DATETIME
-		,@Todaym4 DATETIME
-
-	SET @Todaym1 = DATEADD(day, - 1, CONVERT(VARCHAR(10), CURRENT_TIMESTAMP, 120))
-	SET @Todaym2 = DATEADD(day, - 1, @Todaym1)
-	SET @Todaym3 = DATEADD(day, - 1, @Todaym2)
-	SET @Todaym4 = DATEADD(day, - 1, @Todaym3)
-
-	-- Server Time : Monday (2)  
-	-- Local Time  : Tuesday's morning  
-	IF @WeekDay = 2  
-	BEGIN  
-		EXEC dbo.Task_DailySummary @Todaym4 -- Thursday  
-	END  
-	-- Server Time : Tuesday (3)  
-	-- Local Time  : Wednesday's morning  
-	ELSE IF @WeekDay = 3  
-	BEGIN  
-		EXEC dbo.Task_DailySummary @Todaym4 -- Friday  
-		EXEC dbo.Task_DailySummary @Todaym3 -- Saturday  
-	END  
-	-- Server Time : Wednesday (4)  
-	-- Local Time  : Thursday's morning  
-	ELSE IF @WeekDay = 4  
-	BEGIN  
-		EXEC dbo.Task_DailySummary @Todaym3 -- Sunday  
-		EXEC dbo.Task_DailySummary @Todaym2 -- Monday  
-	END  
-	-- Server Time : Friday (6)  
-	-- Local Time  : Saturday's morning  
-	ELSE IF @WeekDay = 6  
-	BEGIN  
-		EXEC dbo.Task_DailySummary @Todaym3 -- Tuesday  
-		EXEC dbo.Task_DailySummary @Todaym2 -- Wednesday  
-		--EXEC dbo.Task_DailySummary @Todaym1 -- Thursday  
-	END
-	ELSE
-	BEGIN
-		RETURN - 1
-	END
-	*/
 	
 	DECLARE @Days AS TABLE (ScheduleId TINYINT, RunningDay DATETIME, IsFinish BIT DEFAULT (0))
 	INSERT INTO @Days (ScheduleId, RunningDay)
@@ -171,6 +119,13 @@ BEGIN
 				IF @@ERROR <> 0
 				BEGIN
 					RAISERROR('** DailySummary JOB Failed @ step = 8 **', 16, 1)
+					RETURN
+				END
+
+				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 8
+				IF @@ERROR <> 0
+				BEGIN
+					RAISERROR('** DailySummary JOB Failed @ step = 9 **', 16, 1)
 					RETURN
 				END
 		
