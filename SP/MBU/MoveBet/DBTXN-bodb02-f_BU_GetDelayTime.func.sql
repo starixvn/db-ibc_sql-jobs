@@ -21,13 +21,16 @@ BEGIN
 						WHEN @KeyId = 'Key3' THEN '00:00:01:000'
 						WHEN @KeyId = 'Key4' THEN '00:00:01:000'
 						WHEN @KeyId = 'Key5' THEN '00:00:01:000'
-						WHEN @KeyId = 'Key6' THEN '00:00:00:020'
+						WHEN @KeyId = 'Key6' THEN '00:00:00:020' --for pub SP ExcepRep in MB
 						WHEN @KeyId = 'Key7' THEN '00:00:00:030'
 						WHEN @KeyId = 'Key8' THEN '00:00:00:100'
 						WHEN @KeyId = 'Key9' THEN '00:00:00:120'
 						WHEN @KeyId = 'Key10' THEN '00:00:00:010'
+						WHEN @KeyId = 'Key11' THEN '00:00:00:800' --for pub bet in MB
 						WHEN @KeyId = 'IP2Country' THEN '00:00:00.030'
 						WHEN @KeyId = 'FriRoutine' THEN '00:00:00.180'
+						WHEN @KeyId = 'BeforeMB' THEN '00:05:00:000'
+						WHEN @KeyId = 'AfterUpdMBD' THEN '00:05:00:000'
 						ELSE '00:00:00:280' END)
 END
 GO

@@ -1,7 +1,7 @@
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
-CREATE PROCEDURE	[dbo].[Task_DailySummary_Job]
+ALTER PROCEDURE	[dbo].[Task_DailySummary_Job]
 AS
 /*
 	** NOTE:
@@ -118,7 +118,61 @@ BEGIN
 				WHERE	IsFinish = 0
 				ORDER BY ScheduleId 
 
-				EXEC dbo.Task_DailySummary @RunningDay 
+				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 1
+				IF @@ERROR <> 0
+				BEGIN
+					RAISERROR('** DailySummary JOB Failed @ step = 1 **', 16, 1)
+					RETURN
+				END
+
+				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 2
+				IF @@ERROR <> 0
+				BEGIN
+					RAISERROR('** DailySummary JOB Failed @ step = 2 **', 16, 1)
+					RETURN
+				END
+
+				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 3
+				IF @@ERROR <> 0
+				BEGIN
+					RAISERROR('** DailySummary JOB Failed @ step = 3 **', 16, 1)
+					RETURN
+				END
+
+				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 4
+				IF @@ERROR <> 0
+				BEGIN
+					RAISERROR('** DailySummary JOB Failed @ step = 4 **', 16, 1)
+					RETURN
+				END
+
+				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 5
+				IF @@ERROR <> 0
+				BEGIN
+					RAISERROR('** DailySummary JOB Failed @ step = 5 **', 16, 1)
+					RETURN
+				END
+
+				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 6
+				IF @@ERROR <> 0
+				BEGIN
+					RAISERROR('** DailySummary JOB Failed @ step = 6 **', 16, 1)
+					RETURN
+				END
+
+				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 7
+				IF @@ERROR <> 0
+				BEGIN
+					RAISERROR('** DailySummary JOB Failed @ step = 7 **', 16, 1)
+					RETURN
+				END
+
+				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 8
+				IF @@ERROR <> 0
+				BEGIN
+					RAISERROR('** DailySummary JOB Failed @ step = 8 **', 16, 1)
+					RETURN
+				END
 		
 				UPDATE  @Days
 				SET		IsFinish = 1
