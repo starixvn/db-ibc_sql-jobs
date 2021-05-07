@@ -26,17 +26,6 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	--IF @RuleId =1
-	--	SELECT @ErrCode = 100
-	--		,@ErrMsg = 'Licensee ABC, DEF: 1st date of bet ticket is different from LA launch date info'
-	--		,@SampleData = '123456(ABC), 123457(DEF)'
-	--ELSE
-	--	SELECT @ErrCode = 100
-	--		,@ErrMsg = 'Licensee ABC, DEF: 1st date of bet ticket is different from LA product charge rate'
-	--		,@SampleData = '654321(ABC), 754321(DEF)'
-
-	--RETURN
-
 	-- Date range to check: MoveBetsDay + 1 to Yesterday
 	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
 	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
@@ -50,7 +39,7 @@ BEGIN
 	-- Get Product - Bettype
 	CREATE TABLE #SportBettypeMatrix (ProductId INT, Product3rdId INT, Bettype SMALLINT)
 	INSERT INTO #SportBettypeMatrix (ProductId, Bettype)
-	SELECT DISTINCT ProductID, Bettype FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
+	SELECT DISTINCT ProductId, Bettype FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK) WHERE ProductId <> 37
 
 	UPDATE s
 	SET s.Product3rdId = CASE WHEN s.ProductId = 1 THEN 0 ELSE p3rd.ProductId END
@@ -59,30 +48,50 @@ BEGIN
 		LEFT JOIN bodb_Licensee.dbo.Product3rd p3rd WITH (NOLOCK) ON p.ProductPrefix = p3rd.ProductPrefix
 
 	-- Get data on bettrans
+	DECLARE @tblWinlostDate TABLE (winlostdate SMALLDATETIME)
+	;WITH CTE_winlostdate AS (
+		SELECT @MoveBetsDay AS winlostdate
+		UNION ALL
+		SELECT DATEADD(DAY, 1, winlostdate)
+		FROM CTE_winlostdate
+		WHERE winlostdate < @CurrentDate
+	)
+	INSERT INTO @tblWinlostDate (winlostdate)
+	SELECT winlostdate FROM CTE_winlostdate
+	OPTION (MAXRECURSION 0)
+
+	DELETE @tblWinlostDate WHERE winlostdate <= @MoveBetsDay OR winlostdate >= @CurrentDate
+
 	CREATE TABLE #bettrans (LicenseeName VARCHAR(50), Product3rdId INT, TransId BIGINT, WinlostDate SMALLDATETIME)
 	INSERT INTO #bettrans (LicenseeName, Product3rdId, TransId, WinlostDate)
-	SELECT site, Product3rdId, transid, winlostdate
+	SELECT DISTINCT site, Product3rdId, transid, winlostdate
 	FROM (
-		SELECT s.site, sb.Product3rdId, b.transid, b.winlostdate
-			,ROW_NUMBER() OVER(PARTITION BY s.site, sb.Product3rdId, b.winlostdate ORDER BY b.winlostdate) AS RN
-		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-			INNER JOIN bodb02.dbo.Dep_CustSuper s WITH (NOLOCK) ON b.srecommend = s.CustId
-			INNER JOIN #SportBettypeMatrix sb ON b.bettype = sb.Bettype
-		WHERE s.site <>'Saba789'
-			AND b.winlostdate > @MoveBetsDay
-			AND b.winlostdate < @CurrentDate
-			AND b.statusID IN (111, 112, 113)
+		SELECT recommend, Product3rdId, transid, t.winlostdate
+		FROM @tblWinlostDate t
+			CROSS APPLY (
+				SELECT b.recommend, sb.Product3rdId, b.transid
+					,ROW_NUMBER() OVER(PARTITION BY b.recommend, sb.Product3rdId, b.winlostdate ORDER BY b.winlostdate) AS RN
+				FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+					INNER JOIN #SportBettypeMatrix sb ON b.bettype = sb.Bettype
+				WHERE b.winlostdate = t.winlostdate
+					AND b.statusID IN (111, 112, 113)
+					AND b.currency <> 20
+			) b
+		WHERE RN = 1
 	) b
-	WHERE RN = 1
+		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid
 
 	-- Get charge rate setting
-	CREATE TABLE #Licensees (PartyId INT, LicenseeId INT, LicenseeName VARCHAR(50), LaunchDate SMALLDATETIME)
-	INSERT INTO #Licensees (PartyId, LicenseeId, LicenseeName)
-	SELECT p.PartyId, l.LicenseeId, ISNULL(l.LicenseeName, p.PartyName)
+	CREATE TABLE #Licensees (PartyId INT, LicenseeId INT, IsDeposit BIT, LicenseeName VARCHAR(50), LaunchDate SMALLDATETIME)
+	INSERT INTO #Licensees (PartyId, LicenseeId, IsDeposit, LicenseeName)
+	SELECT p.PartyId, CASE WHEN pd.IsDeposit = 0 THEN lb.LabelId ELSE l.LicenseeId END, pd.IsDeposit, p.PartyName
 	FROM bodb_Licensee.dbo.OAS_Party p WITH (NOLOCK)
-		LEFT JOIN bodb_Licensee.dbo.Licensees l WITH (NOLOCK) ON p.OldRefId = l.LicenseeId
+		INNER JOIN bodb_Licensee.dbo.OAS_PartyDetail pd WITH (NOLOCK) ON p.PartyId = pd.PartyId
+		LEFT JOIN bodb_Licensee.dbo.Licensees l WITH (NOLOCK) ON p.OldRefId = l.LicenseeId AND pd.IsDeposit = 1
+		LEFT JOIN bodb_Licensee.dbo.Labels lb WITH (NOLOCK) ON p.OldRefId = lb.LicenseeId AND pd.IsDeposit = 0
 	WHERE p.PartyType IN (1, 5) -- licensees (official, non-official)
 
+	-- Deposit
 	UPDATE l
 	SET l.LaunchDate = ci.LaunchDate
 	FROM #Licensees l
@@ -92,6 +101,19 @@ BEGIN
 			WHERE ToParty IN (1, 9, 11, 98)
 			GROUP BY FromParty
 		) ci ON l.PartyId = ci.PartyId
+	WHERE l.IsDeposit = 1
+
+	-- Credit
+	UPDATE #Licensees
+	SET LaunchDate = (SELECT MIN(FromDate) AS LaunchDate
+			FROM bodb_Licensee.dbo.OAS_ChargeInfo WITH (NOLOCK)
+			WHERE FromParty IN (25, 30) OR ToParty IN (25, 30))
+	WHERE IsDeposit = 0
+
+	UPDATE l
+	SET l.LicenseeName = s.SiteName
+	FROM #Licensees l
+		INNER JOIN bodb_Licensee.dbo.view_site_list s WITH (NOLOCK) ON l.LicenseeId = s.SiteId
 
 	CREATE TABLE #ChargeRate (PartyId INT, Product3rdId INT, FromDate SMALLDATETIME, ToDate SMALLDATETIME)
 	INSERT INTO #ChargeRate (PartyId, Product3rdId, FromDate, ToDate)
