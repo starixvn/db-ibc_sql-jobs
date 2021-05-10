@@ -12,6 +12,7 @@ AS
 		- 20200615@Johnson: check missing feedback [redmine:#135719]
 		- 20201103@Johnson: add auto fb for company winlimit [redmine:#142194]
 		- 20201217@Johnson: add auto fb for TO Control [redmine:#145274]
+		- 20210510@Johnson: add auto fb for Problem account [redmine:#153119]
 	Param's Explanation:		
 */
 BEGIN
@@ -58,6 +59,17 @@ BEGIN
 	BEGIN
 		DELETE TOP(5000) c
 		FROM crmWinLimitFeedbackInfo c WITH(UPDLOCK,ROWLOCK)
+		WHERE CreatedDate < @fromdate
+		
+		IF @@ROWCOUNT = 0
+			BREAK;		
+	END
+	
+	--Auto fb for Problem account
+	WHILE(1=1)
+	BEGIN
+		DELETE TOP(5000) c
+		FROM crmProblemAccountFeedbackInfo c WITH(UPDLOCK,ROWLOCK)
 		WHERE CreatedDate < @fromdate
 		
 		IF @@ROWCOUNT = 0
