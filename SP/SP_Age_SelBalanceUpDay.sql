@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBOF-bodb02,DBBAH-bodb02,DBTP-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
+﻿/*<info serverAlias="DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBOF-bodb02,DBBAH-bodb02,DBTP-bodb02" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE  [dbo].[Age_SelBalanceUpDay]	
 AS	
 /*
@@ -31,14 +31,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Age_SelBalanceUpDay] TO [bodbAdminNet]
-GO
-GRANT EXECUTE ON [dbo].[Age_SelBalanceUpDay] TO [bodbExtAccNet]
-GO
-GRANT EXECUTE ON [dbo].[Age_SelBalanceUpDay] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Age_SelBalanceUpDay] TO [bodbDownlineNetView]
-GO
-GRANT EXECUTE ON [dbo].[Age_SelBalanceUpDay] TO [vnteam]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Age_SelBalanceUpDay] TO [vnteam]
