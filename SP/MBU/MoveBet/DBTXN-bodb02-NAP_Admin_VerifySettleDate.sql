@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="dot_admin,bodbAdminNet" viewers="" isFunction="0" isNested="1"></info>*/
 CREATE PROCEDURE dbo.NAP_Admin_VerifySettleDate
 	@Winlostdate SMALLDATETIME,
 	@IsAllow BIT = 0 OUTPUT,

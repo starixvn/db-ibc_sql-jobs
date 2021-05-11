@@ -102,6 +102,7 @@ DECLARE @Doing NVARCHAR(300) = ''
 	, @__index INT = 0
 	, @__recommend INT
 	, @__delayTimeValue VARCHAR(20) = '00:00:00:020'
+	, @__rowAffected INT = 0
 
 SET @Doing = 'Task_DailySummary : MoveBet step ' + CAST(@step AS VARCHAR(20)) + ' start, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
@@ -420,17 +421,6 @@ BEGIN
 		INNER JOIN CustDB.dbo.custinfo c WITH (NOLOCK) ON s.custid = c.custid AND c.roleid = 1
 	WHERE winlostdate = @winlostdate
 
-	--TODO: need to check again
-	-- move match/odds/outright into [14] table
-	UPDATE O
-	SET eventdate = @winlostdate, changeTime = GETDATE()
-	FROM DBPRO.bodb02.dbo.Outright O WITH (UPDLOCK, ROWLOCK)
-	WHERE orid IN (
-		SELECT DISTINCT matchid 
-		FROM dbo.bettrans WITH (NOLOCK) 
-		WHERE bettype = 10 AND winlostdate = @winlostdate AND statusID <> 0
-	)
-	
 	EXEC dbo.Task_BalanceCheck @winlostdate, 1
 
 	RETURN
@@ -478,9 +468,9 @@ BEGIN
 	SET @Doing = 'Task_DailySummary : MoveBet step 4.20 start copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121) + ', total recommend: ' + CAST(@@ROWCOUNT AS varchar(10))
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	SELECT @__index = 1, @__recommend = NULL
+	SELECT @__index = 1, @__recommend = NULL, @__rowAffected = 0
 	WHILE EXISTS (
-		SELECT TOP 1 1 FROM dbo.Task_Movebet_RecommendList WHERE RowId = @__index
+		SELECT TOP 1 1 FROM dbo.Task_Movebet_RecommendList WHERE RowId >= @__index
 	)
 	BEGIN
 		
@@ -488,6 +478,12 @@ BEGIN
 		SET @__recommend = Recommend
 			, StatusId = 1 -- copying done
 		FROM dbo.Task_Movebet_RecommendList ls WHERE RowId = @__index
+
+		SET @__rowAffected = @@ROWCOUNT
+		SET @__index += 1
+
+		IF @__rowAffected = 0
+			CONTINUE
 
 		BEGIN TRANSACTION
 			--copy ticket from [active] to [14] for bettrans | bettransInfo | translog | bettransLC | bettransRnG
@@ -697,10 +693,10 @@ BEGIN
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 2
 
 	DECLARE @__rowDeleted INT
-	SELECT @__index = 1, @__recommend = NULL, @__rowDeleted = 1
+	SELECT @__index = 1, @__recommend = NULL, @__rowDeleted = 1, @__rowAffected = 0
 	WHILE EXISTS (
 		SELECT TOP 1 1 
-		FROM dbo.Task_Movebet_RecommendList WHERE RowId = @__index
+		FROM dbo.Task_Movebet_RecommendList WHERE RowId >= @__index
 	)
 	BEGIN
 		
@@ -708,6 +704,12 @@ BEGIN
 		SET @__recommend = Recommend
 			, StatusId = 3 -- deleting bet ticket done
 		FROM dbo.Task_Movebet_RecommendList ls WHERE RowId = @__index
+		
+		SET @__rowAffected = @@ROWCOUNT
+		SET @__index += 1
+
+		IF @__rowAffected = 0
+			CONTINUE
 
 		--remove bet ticket on bettransLC by @recommend
 		SET @__rowDeleted = 1	
@@ -767,8 +769,7 @@ BEGIN
 			SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key6')
 			WAITFOR DELAY @__delayTimeValue
 		END
-
-		SET @__index += 1
+		
 	END
 
 	

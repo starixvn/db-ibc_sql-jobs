@@ -274,7 +274,7 @@ BEGIN
 				FROM dbo.bettrans WITH (ROWLOCK)
 				OUTPUT deleted.transid
 				INTO @__tmpTransId (id)
-				WHERE custid = @custid
+				WHERE recommend = @recommend
 					AND	winlostdate = @winlostdate
 					AND	bettype < 19999;
 
