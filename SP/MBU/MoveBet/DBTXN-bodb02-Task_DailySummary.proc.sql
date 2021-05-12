@@ -428,7 +428,7 @@ END
 
 IF @step = 4 --copy event | bet data to [14]
 BEGIN
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - start turn on Movebet_DoneCopy_Local | Movebet_DoneSum19999_Local | Movebet_DoneSumWinloss_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - start turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	--**turn on flag for starting copy to [14]
@@ -439,7 +439,7 @@ BEGIN
 	--pub bet14
 	EXEC dbo.Bet_ExecRep14_01 @Mode = 1, @TableName = 'SystemSettings'
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - end turn on Movebet_DoneCopy_Local | Movebet_DoneSum19999_Local | Movebet_DoneSumWinloss_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - end turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 	
 	-- viet ----
@@ -504,13 +504,13 @@ BEGIN
 	SET @Doing = 'Task_DailySummary : MoveBet step 4.20 - end copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 - start turn off Movebet_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 - start turn off MB_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	--==turn off flag Movebet_DoneCopy_Local
+	--==turn off flag MB_DoneCopy_Local
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @parlay = 8, @tableName = 'SystemSettings'
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 - end turn off Movebet_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 - end turn off MB_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	RETURN
@@ -552,13 +552,13 @@ BEGIN
 	END
 	
 	
-	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - start turn off Movebet_DoneSumWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - start turn off MB_SWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	--==turn off flag Movebet_DoneSumWinloss_Local
+	--==turn off flag MB_SWinloss_Local
 	EXEC dbo.Bet_ExecRep14_01 @Mode = 2, @tableName = 'SystemSettings'
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - done turn off Movebet_DoneSumWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - done turn off MB_SWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	RETURN
@@ -621,13 +621,13 @@ BEGIN
 
 	SET DEADLOCK_PRIORITY NORMAL
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - start turn off Movebet_DoneSum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - start turn off MB_Sum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	--==turn off flag Movebet_DoneSum19999_Local
+	--==turn off flag MB_SWinloss_Local
 	EXEC dbo.Bet_ExecRep_09 @Mode = 8
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - done turn off Movebet_DoneSum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - done turn off MB_Sum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	RETURN
@@ -638,7 +638,7 @@ BEGIN
 	DECLARE @__start DATETIME
 	SET @__start = GETDATE()
 	WHILE EXISTS (
-		SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'Movebet_ReadyUpdMBDate' AND VValue <> '0'
+		SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'MB_ReadyUpdMBDate' AND VValue <> '0'
 	)
 	BEGIN
 		WAITFOR DELAY '00:00:30:000' --waitfor MB done...

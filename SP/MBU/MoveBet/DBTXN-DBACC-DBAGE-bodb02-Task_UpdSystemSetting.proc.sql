@@ -13,11 +13,11 @@ AS
 	Revisions: 
 		- 20150617@Daniel: Created for separating custDB to new server DBCUST [Redmine:#36216]  
 		- 20160909@Patrick: Duplicated to DBTXN
-		- 20210331@Patrick: Adding special logic for Movebet_ReadyUpdMBDate [Redmine:#149927] 
+		- 20210331@Patrick: Adding special logic for MB_ReadyUpdMBDate [Redmine:#149927] 
 */
 BEGIN
 	SET NOCOUNT ON
-	IF @VName = 'Movebet_ReadyUpdMBDate'
+	IF @VName = 'MB_ReadyUpdMBDate'
 	BEGIN
 		UPDATE s WITH(ROWLOCK, UPDLOCK)
 		SET VValue = CAST((CAST(VValue AS INT) + CAST(@VValue AS INT)) AS VARCHAR(10))

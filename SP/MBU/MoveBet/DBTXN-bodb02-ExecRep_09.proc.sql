@@ -116,19 +116,19 @@ BEGIN
 			ELSE IF @parlay = 7 -- start copying data to [14] and switch movebet day
 			BEGIN
 				--==check if does not exist then insert
-				IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'Movebet_DoneCopy_Local')
+				IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'MB_DoneCopy_Local')
 				BEGIN
 					INSERT INTO dbo.SystemSettings(VName, VValue)
-					VALUES('Movebet_DoneCopy_Local', '0')
+					VALUES('MB_DoneCopy_Local', '0')
 				END
 
 				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
 				SET VValue = '1'
-				WHERE VName = 'Movebet_DoneCopy_Local'
+				WHERE VName = 'MB_DoneCopy_Local'
 
 				IF @@SERVERNAME IN ('DB06C2\DB06', 'DB061', 'DB055', 'DB054C2\DB054', 'DB052', 'DB053')
 				BEGIN
-					EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'Movebet_ReadyUpdMBDate', @VValue = '1'
+					EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '1'
 				END
 				
 			END
@@ -136,11 +136,11 @@ BEGIN
 			BEGIN
 				UPDATE dbo.SystemSettings WITH (ROWLOCK)
 				SET VValue = '0'
-				WHERE VName = 'Movebet_DoneCopy_Local'
+				WHERE VName = 'MB_DoneCopy_Local'
 
 				IF @@SERVERNAME IN ('DB06C2\DB06', 'DB061', 'DB055', 'DB054C2\DB054', 'DB052', 'DB053')
 				BEGIN
-					EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'Movebet_ReadyUpdMBDate', @VValue = '-1'
+					EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '-1'
 				END
 				
 			END

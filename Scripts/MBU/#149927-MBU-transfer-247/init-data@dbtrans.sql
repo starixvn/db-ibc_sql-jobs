@@ -3,9 +3,9 @@
 use bodb02
 go
 
---==Movebet_ReadyUpdMBDate
+--==MB_ReadyUpdMBDate
 if not exists (
-	select top 1 1 from dbo.SystemSettings where VName = 'Movebet_ReadyUpdMBDate'
+	select top 1 1 from dbo.SystemSettings where VName = 'MB_ReadyUpdMBDate'
 )
-insert into dbo.SystemSettings(VName, VValue) values('Movebet_ReadyUpdMBDate', '0')
+insert into dbo.SystemSettings(VName, VValue) values('MB_ReadyUpdMBDate', '0')
 

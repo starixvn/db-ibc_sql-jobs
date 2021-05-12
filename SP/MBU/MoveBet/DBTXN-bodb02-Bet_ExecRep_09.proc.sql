@@ -64,19 +64,19 @@ BEGIN
 		ELSE IF @mode = 7 --turn on flag for inserting sum 19999
 		BEGIN
 			--==check if does not exist then insert
-			IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'Movebet_DoneSum19999_Local')
+			IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'MB_Sum19999_Local')
 			BEGIN
 				INSERT INTO dbo.SystemSettings(VName, VValue)
-				VALUES('Movebet_DoneSum19999_Local', '0')
+				VALUES('MB_Sum19999_Local', '0')
 			END
 
 			UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
 			SET VValue = '1'
-			WHERE VName = 'Movebet_DoneSum19999_Local'
+			WHERE VName = 'MB_Sum19999_Local'
 
 			IF @@SERVERNAME IN ('DB06C2\DB06', 'DB061', 'DB055', 'DB054C2\DB054', 'DB052', 'DB053')
 			BEGIN
-				EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'Movebet_ReadyUpdMBDate', @VValue = '1'
+				EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '1'
 			END
 				
 		END
@@ -84,11 +84,11 @@ BEGIN
 		BEGIN
 			UPDATE dbo.SystemSettings WITH (ROWLOCK)
 			SET VValue = '0'
-			WHERE VName = 'Movebet_DoneSum19999_Local'
+			WHERE VName = 'MB_Sum19999_Local'
 
 			IF @@SERVERNAME IN ('DB06C2\DB06', 'DB061', 'DB055', 'DB054C2\DB054', 'DB052', 'DB053')
 			BEGIN
-				EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'Movebet_ReadyUpdMBDate', @VValue = '-1'
+				EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '-1'
 			END
 				
 		END

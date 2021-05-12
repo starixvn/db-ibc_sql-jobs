@@ -15,20 +15,20 @@ if not exists (
 )
 insert into dbo.SystemSettings(VName, VValue) values('MovebetDate', '2021-05-01')
 
---//Movebet_DoneCopy_Local
+--//MB_DoneCopy_Local
 if not exists (
-	select top 1 1 from dbo.SystemSettings where VName = 'Movebet_DoneCopy_Local'
+	select top 1 1 from dbo.SystemSettings where VName = 'MB_DoneCopy_Local'
 )
-insert into dbo.SystemSettings(VName, VValue) values('Movebet_DoneCopy_Local', '0')
+insert into dbo.SystemSettings(VName, VValue) values('MB_DoneCopy_Local', '0')
 
---//Movebet_DoneSumWinloss_Local
+--//MB_SWinloss_Local
 if not exists (
-	select top 1 1 from dbo.SystemSettings where VName = 'Movebet_DoneSumWinloss_Local'
+	select top 1 1 from dbo.SystemSettings where VName = 'MB_SWinloss_Local'
 )
-insert into dbo.SystemSettings(VName, VValue) values('Movebet_DoneSumWinloss_Local', '0')
+insert into dbo.SystemSettings(VName, VValue) values('MB_SWinloss_Local', '0')
 
---//Movebet_DoneSum19999_Local
+--//MB_Sum19999_Local
 if not exists (
-	select top 1 1 from dbo.SystemSettings where VName = 'Movebet_DoneSum19999_Local'
+	select top 1 1 from dbo.SystemSettings where VName = 'MB_Sum19999_Local'
 )
-insert into dbo.SystemSettings(VName, VValue) values('Movebet_DoneSum19999_Local', '0')
+insert into dbo.SystemSettings(VName, VValue) values('MB_Sum19999_Local', '0')
