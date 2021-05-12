@@ -13,7 +13,7 @@ AS
 
 BEGIN
 	SET NOCOUNT ON;
-	IF @TableName = 'SystemSettings' AND OBJECT_NAME('SystemSettings') IS NOT NULL
+	IF @TableName = 'SystemSettings' AND OBJECT_ID('SystemSettings') IS NOT NULL
 	BEGIN
 		IF @Mode = 1
 		BEGIN

@@ -122,7 +122,7 @@ BEGIN
 					RETURN
 				END
 
-				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 8
+				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 9
 				IF @@ERROR <> 0
 				BEGIN
 					RAISERROR('** DailySummary JOB Failed @ step = 9 **', 16, 1)

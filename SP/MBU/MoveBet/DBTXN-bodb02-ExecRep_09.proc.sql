@@ -140,7 +140,7 @@ BEGIN
 
 				IF @@SERVERNAME IN ('DB06C2\DB06', 'DB061', 'DB055', 'DB054C2\DB054', 'DB052', 'DB053')
 				BEGIN
-					EXEC DBTRANS.bodb02.dbo.Task_UpdSystemSetting @VName = 'Movebet_ReadyUpdMBDate', @VValue = '-1'
+					EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'Movebet_ReadyUpdMBDate', @VValue = '-1'
 				END
 				
 			END

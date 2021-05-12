@@ -109,18 +109,18 @@ EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 IF @step = 1--update ticket (if any) which winlostdate is not synced with eventdate 
 BEGIN
-	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 start updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - start updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	--**update being movebet date flag ==> the purpose of this step that is not allow for settle ticket which have winlostdate smaller than being move bet date
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 9, @tableName = 'SystemSettings'
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 end updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - end updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	--//
 	SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('BeforeMB')
-	WAITFOR DELAY @__delayTimeValue
+	WAITFOR DELAY @__delayTimeValue --waitfor all settle running commands can be done to start MB
 
 	-- update ticket (if any) which winlostdate is not synced with eventdate 
 	DECLARE @transTable TABLE (transid BIGINT PRIMARY KEY, winlostdate SMALLDATETIME)
@@ -428,7 +428,7 @@ END
 
 IF @step = 4 --copy event | bet data to [14]
 BEGIN
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 start turn on Movebet_DoneCopy_Local | Movebet_DoneSum19999_Local | Movebet_DoneSumWinloss_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - start turn on Movebet_DoneCopy_Local | Movebet_DoneSum19999_Local | Movebet_DoneSumWinloss_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	--**turn on flag for starting copy to [14]
@@ -439,7 +439,7 @@ BEGIN
 	--pub bet14
 	EXEC dbo.Bet_ExecRep14_01 @Mode = 1, @TableName = 'SystemSettings'
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 end turn on Movebet_DoneCopy_Local | Movebet_DoneSum19999_Local | Movebet_DoneSumWinloss_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - end turn on Movebet_DoneCopy_Local | Movebet_DoneSum19999_Local | Movebet_DoneSumWinloss_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 	
 	-- viet ----
@@ -465,7 +465,7 @@ BEGIN
 	SELECT DISTINCT recommend, 0 AS SattusId 
 	FROM dbo.translog WITH(NOLOCK) WHERE winlostdate = @winlostdate
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.20 start copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121) + ', total recommend: ' + CAST(@@ROWCOUNT AS varchar(10))
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.20 - start copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121) + ', total recommend: ' + CAST(@@ROWCOUNT AS varchar(10))
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	SELECT @__index = 1, @__recommend = NULL, @__rowAffected = 0
@@ -492,27 +492,25 @@ BEGIN
 
 		COMMIT TRANSACTION
 		
-		SET @__index += 1
-
 		--waitfor delay on each batch.
 		IF @__index % 1000 = 0
 		BEGIN
 			SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key6')
-			WAITFOR DELAY @__delayTimeValue
+			WAITFOR DELAY @__delayTimeValue --waitfor copying...
 		END
 		
 	END
 	
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.20 end copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.20 - end copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 start turn off Movebet_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 - start turn off Movebet_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	--==turn off flag Movebet_DoneCopy_Local
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @parlay = 8, @tableName = 'SystemSettings'
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 end turn off Movebet_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 - end turn off Movebet_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	RETURN
@@ -550,17 +548,17 @@ BEGIN
 		IF @@ROWCOUNT = 0 SET @loop = 'n'
 			COMMIT TRANSACTION
 
-		WAITFOR DELAY '000:00:01.4'
+		WAITFOR DELAY '000:00:01.4' --waitfor inserting sum_winloss...
 	END
 	
 	
-	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 start turn off Movebet_DoneSumWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - start turn off Movebet_DoneSumWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	--==turn off flag Movebet_DoneSumWinloss_Local
 	EXEC dbo.Bet_ExecRep14_01 @Mode = 2, @tableName = 'SystemSettings'
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 done turn off Movebet_DoneSumWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - done turn off Movebet_DoneSumWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	RETURN
@@ -617,19 +615,19 @@ BEGIN
 		
 		--waitfor delay on each batch.
 		SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key11')
-		WAITFOR DELAY @__delayTimeValue
+		WAITFOR DELAY @__delayTimeValue --waitfor inserting sum 19999...
 		
 	END
 
 	SET DEADLOCK_PRIORITY NORMAL
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 start turn off Movebet_DoneSum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - start turn off Movebet_DoneSum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	--==turn off flag Movebet_DoneSum19999_Local
 	EXEC dbo.Bet_ExecRep_09 @Mode = 8
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 done turn off Movebet_DoneSum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - done turn off Movebet_DoneSum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	RETURN
@@ -643,7 +641,7 @@ BEGIN
 		SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'Movebet_ReadyUpdMBDate' AND VValue <> '0'
 	)
 	BEGIN
-		WAITFOR DELAY '00:00:30:000'
+		WAITFOR DELAY '00:00:30:000' --waitfor MB done...
 		IF DATEDIFF(MINUTE, @__start, GETDATE()) > 30
 		BEGIN
 			--send out message for DBA to check...
@@ -668,7 +666,7 @@ BEGIN
 
 	--//
 	SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('AfterUpdMBD')
-	WAITFOR DELAY @__delayTimeValue
+	WAITFOR DELAY @__delayTimeValue --waitfor go to delete step...
 
 	RETURN
 END
@@ -767,7 +765,7 @@ BEGIN
 		IF @__index % 1000 = 0
 		BEGIN
 			SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key6')
-			WAITFOR DELAY @__delayTimeValue
+			WAITFOR DELAY @__delayTimeValue --waitfor deleting...
 		END
 		
 	END
@@ -775,7 +773,7 @@ BEGIN
 	
 	SET DEADLOCK_PRIORITY NORMAL
 	--==write log
-	SET @Doing = 'Task_DailySummary : MoveBet step 6.00 done, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 8 done, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	RETURN
@@ -798,8 +796,6 @@ BEGIN
 
 	SET @Doing = 'Task_DailySummary : End (with Finish)'
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
-
-	WAITFOR DELAY '00:02:00' --- add this wait to make sure the delete event part run completely before start next day
 
 	PRINT CONVERT(VARCHAR(10), @winlostdate, 120)
 	
