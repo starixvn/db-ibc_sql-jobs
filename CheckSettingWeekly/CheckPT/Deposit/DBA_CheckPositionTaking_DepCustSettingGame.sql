@@ -21,6 +21,7 @@ AS
 		-20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
 		-20210416@Winfred: Add new PT config for Keno (rule 50) for credit licensee Saba789 [RedmineID:#153187]
 		-20210416@Winfred: Add new PT config for Keno (rule 50) for credit licensee 9w [RedmineID:#153633]
+		-20210511@Winfred: Add new PT config for Keno (rule 50) AND NG (rule 48) new value PT 0.94 / 0.97 [RedmineID:#154498]
 		
 	Param's Explanation:
 	
@@ -179,7 +180,7 @@ BEGIN
 			FROM CheckCustDB.dbo.CustSettingGame s WITH(NOLOCK)							
 				INNER JOIN #tmpDumMember c ON s.custid=c.custid	
 			WHERE
-				c.roleid=1 AND (s.bettype BETWEEN 1501 AND 1524) AND (s.apositiontaking NOT IN(0.9,0.94,0.95,0.805,0.5)	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+				c.roleid=1 AND (s.bettype BETWEEN 1501 AND 1524) AND (s.apositiontaking NOT IN(0.9,0.94,0.95,0.805,0.5,0.97)	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
 				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
 	END
 
