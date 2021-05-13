@@ -26,6 +26,7 @@ AS
 		- 20200722@Max: Update Rule for Saba.Club - Exclude bettype 1631 from Rule '3min', Add new Rule for bettype 1631 - [Redmine: #138117]
 		- 20201007@July:  Saba.club - Data Integrity/Consistency Detection for Free Bets and Blackjack - [Redmine:#140425]
 		- 20201030@July: Check Data Consistency - All products - exclude checking commission/discount of licensee tickets for rule 16 - [Redmine:#144533]
+		- 20210510@July: Check Data Consistency - VGaming & Creative Gaming - [Redmine:#154502]
 
 		Param's Expanation:
 */
@@ -434,8 +435,8 @@ BEGIN
 		END
 	END
 
-	--Rule #30 for Saba.club Free Bets, Saba.club
-	IF @ProductId  IN (150, 200)
+	--Rule #30 for Saba.club Free Bets, Saba.club, VGaming, VGaming Free Bets
+	IF @ProductId  IN (150, 200, 171, 173)
 	BEGIN
 		IF @Rule = '3min'
 		BEGIN
@@ -479,8 +480,8 @@ BEGIN
 		END
 	END
 
-	--Rule #3, #16 for Virtual Games, Table Games, Saba.club, Saba.club Free Bets
-	IF @ProductId IN (245, 222, 200, 150)
+	--Rule #3, #16 for Virtual Games, Table Games, Saba.club, Saba.club Free Bets, VGaming, VGaming Free Bets
+	IF @ProductId IN (245, 222, 200, 150, 171, 173)
 	BEGIN
 		IF @Rule = 'translog'
 		BEGIN
