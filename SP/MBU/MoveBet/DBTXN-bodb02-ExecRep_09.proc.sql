@@ -126,7 +126,10 @@ BEGIN
 				SET VValue = '1'
 				WHERE VName = 'MB_DoneCopy_Local'
 
-				IF @@SERVERNAME IN ('DB06C2\DB06', 'DB061', 'DB055', 'DB054C2\DB054', 'DB052', 'DB053')
+				DECLARE @__allowOn BIT = 0
+				EXEC dbo.ExecRep_10 @FunctionName = 'WaitforMBCompleted', @Allow = @__allowOn OUTPUT
+
+				IF @__allowOn = 1
 				BEGIN
 					EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '1'
 				END
@@ -138,7 +141,10 @@ BEGIN
 				SET VValue = '0'
 				WHERE VName = 'MB_DoneCopy_Local'
 
-				IF @@SERVERNAME IN ('DB06C2\DB06', 'DB061', 'DB055', 'DB054C2\DB054', 'DB052', 'DB053')
+				DECLARE @__allowOff BIT = 0
+				EXEC dbo.ExecRep_10 @FunctionName = 'WaitforMBCompleted', @ServerName = @@SERVERNAME, @Allow = @__allowOff OUTPUT
+
+				IF @__allowOff = 1
 				BEGIN
 					EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '-1'
 				END

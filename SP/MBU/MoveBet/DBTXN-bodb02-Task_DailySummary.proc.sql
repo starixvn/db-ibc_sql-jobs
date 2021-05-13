@@ -633,7 +633,7 @@ BEGIN
 	RETURN
 END
 
-IF @step = 7 --wait for replicated servers perform done and update movebetdate flag
+IF @step = 7 --wait for replicated servers perform done and then go to update movebetdate flag
 BEGIN
 	DECLARE @__start DATETIME
 	SET @__start = GETDATE()
@@ -769,13 +769,9 @@ BEGIN
 		END
 		
 	END
-
 	
 	SET DEADLOCK_PRIORITY NORMAL
-	--==write log
-	SET @Doing = 'Task_DailySummary : MoveBet step 8 done, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
-
+	
 	RETURN
 END
 
@@ -787,6 +783,15 @@ BEGIN
 	-- viet ----
 	EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
 	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 9.30 - start off BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	--reset being move bet date
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 9, @tableName = 'SystemSettings'
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - end off BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
  
 	-- =====================
 	EXEC Task_BalanceCheck @winlostdate, 3
