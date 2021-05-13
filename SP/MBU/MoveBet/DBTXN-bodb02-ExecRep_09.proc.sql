@@ -142,7 +142,7 @@ BEGIN
 				WHERE VName = 'MB_DoneCopy_Local'
 
 				DECLARE @__allowOff BIT = 0
-				EXEC dbo.ExecRep_10 @FunctionName = 'WaitforMBCompleted', @ServerName = @@SERVERNAME, @Allow = @__allowOff OUTPUT
+				EXEC dbo.ExecRep_10 @FunctionName = 'WaitforMBCompleted', @Allow = @__allowOff OUTPUT
 
 				IF @__allowOff = 1
 				BEGIN
