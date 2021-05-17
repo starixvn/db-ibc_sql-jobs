@@ -81,6 +81,7 @@ AS
 		- 20210412@Sophia: Integrate PP Live Casino [Redmine: #150971]
 		- 20210419@Danny: Integrate Creative Gaming [Redmine: #146019]
 		- 20210412@Sophia : Integrate AE Casino Lucky Draw [Redmine: #152141]
+		- 20210517@Danny: Integrate VGaming [Redmine: #154080]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -127,7 +128,7 @@ BEGIN
 
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG,WM,VS3,GDG,BGG,MXG,HB,SLT,PPL,CG') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG,WM,VS3,GDG,BGG,MXG,HB,SLT,PPL,CG,VGA') -- Remove Exchange (BX) due to separate wallet only
 		WHERE @ProductCodes = ''
 			OR ProductID IN (SELECT ProductID FROM @ProductIdList)
 
