@@ -18,6 +18,7 @@ AS
 		20171002@Patrick: Update code for Bonus project
 		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
 		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
+		202010514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 
 	Param use:
 
@@ -62,7 +63,26 @@ BEGIN
 		--
 		-- Get/Compare Balance
 		--
-		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	FROM dbo.bettrans with (rowlock) WHERE custid = @custid
+		DECLARE @__movebetdate SMALLDATETIME
+		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
+
+		__tryagain:
+
+		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	
+		FROM dbo.bettrans with (rowlock) 
+		WHERE custid = @custid
+			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+				 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
+				 ELSE 1 END
+
+		DECLARE @__movebetdateF SMALLDATETIME
+		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdateF OUTPUT
+
+		IF @__movebetdate <> @__movebetdateF
+		BEGIN
+			SET @__movebetdate = @__movebetdateF
+			GOTO __tryagain
+		END
 		
 		SELECT @FromAdjustmentTransfer = SUM(Amount)
 		FROM dbo.BonusAdjustmentTransfer WITH(NOLOCK)

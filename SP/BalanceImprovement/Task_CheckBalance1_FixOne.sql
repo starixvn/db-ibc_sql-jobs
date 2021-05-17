@@ -1,10 +1,4 @@
-USE [bodb02]
-GO
-/****** Object:  StoredProcedure [dbo].[Task_CheckBalance1_FixOne]    Script Date: 12/08/2015 02:33:20 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_CheckBalance1_FixOne]
 	@custid int,
 	@DiffBalance money OUTPUT,
@@ -17,9 +11,11 @@ AS
 	Location: DBTXN.bodb02
 
 	Revision:
-	   20150907@Daniel: Clone from Task_CheckBalance_FixOne & apply new set of bal tables
+		20150907@Daniel: Clone from Task_CheckBalance_FixOne & apply new set of bal tables
 		20151210@Daniel: calc balance from table bettransRNG & bettransLC 
-	   
+		20171002@Patrick: Update code for Bonus project
+		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
+		202010514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 
 	Param use:
 
@@ -32,7 +28,6 @@ AS
 SET NOCOUNT ON
 SET @result = -1
 
-
 --Check member has tickets bet on matches that are being calculated
 IF EXISTS(SELECT 1 FROM bettrans WITH (NOLOCK) WHERE custid = @custid AND matchid IN(SELECT KeyValue FROM TempVariableNumber WHERE KeyID = 1))
 BEGIN
@@ -42,7 +37,8 @@ END
 ELSE
 BEGIN
 	Declare @FromBettrans money, 
-			@FromTransLog money, @FromBettransRNG money, @FromBettransLC money
+			@FromTransLog money, @FromBettransRNG money, @FromBettransLC money,
+			@FromAdjustmentTransfer money
 
 	--
 	-- Skip if Pending Found
@@ -63,8 +59,31 @@ BEGIN
 		--
 		-- Get/Compare Balance
 		--
-		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	FROM dbo.bettrans with (rowlock) WHERE custid = @custid
-		SELECT @FromTransLog = SUM(actual_stake)	FROM dbo.translog with (rowlock) WHERE custid = @custid and statusID = 0
+		DECLARE @__movebetdate SMALLDATETIME
+		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
+
+		__tryagain:
+		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	
+		FROM dbo.bettrans with (rowlock) 
+		WHERE custid = @custid
+			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+				 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
+				 ELSE 1 END
+
+		DECLARE @__movebetdateF SMALLDATETIME
+		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdateF OUTPUT
+
+		IF @__movebetdate <> @__movebetdateF
+		BEGIN
+			SET @__movebetdate = @__movebetdateF
+			GOTO __tryagain
+		END
+
+		SELECT @FromAdjustmentTransfer = SUM(Amount)
+		FROM dbo.BonusAdjustmentTransfer WITH(NOLOCK)
+		WHERE isTransferred = 0 AND custid = @custid
+
+		SELECT @FromTransLog = SUM(actual_stake)	FROM dbo.translog with (rowlock) WHERE custid = @custid and statusID IN (0,1)
 
 		SELECT @FromBettransRNG = SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) 
 		FROM dbo.bettransRNG WITH(NOLOCK)
@@ -75,7 +94,7 @@ BEGIN
 		WHERE IsSum = 0 AND custid = @custid
 				
 		SELECT 
-			@DiffBalance = IsNull(@FromBettrans, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) 
+			@DiffBalance = IsNull(@FromBettrans, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) + IsNull(@FromAdjustmentTransfer, 0)
 			- (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance)
 		FROM 
 			dbo.BalCreditTransfer cd1 WITH (ROWLOCK)

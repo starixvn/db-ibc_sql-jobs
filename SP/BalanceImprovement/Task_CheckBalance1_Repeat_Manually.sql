@@ -15,6 +15,7 @@ AS
 		20170929@Patrick: Update code for Bonus project
 		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
 		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
+		202010514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 	   
 	Note: Does not correct data, only dectect different between bettrans and Balance table
 
@@ -28,19 +29,27 @@ AS
 */
 SET NOCOUNT ON
 
+DECLARE @__movebetdate SMALLDATETIME
+EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
+
+__tryagain:
+IF OBJECT_ID('tempdb.dbo.#QuestionLists') IS NOT NULL
+	DROP TABLE #QuestionLists
+
 ;WITH
 cb AS (
 	SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance
 	FROM dbo.bettrans b with (nolock)
-		--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON b.custid = c.custid AND c.roleid = 1
 		INNER JOIN dbo.Task_Cust_CheckBalanceVerify1_Manually q ON b.custid = q.custid
+	WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+				 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
+				 ELSE 1 END
 	GROUP BY b.custid
 ),
 q2 AS (
 	-- translog
 	SELECT tl.custid, SUM(actual_stake) AS Outstanding
 	FROM dbo.translog tl with (nolock)
-		--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON tl.custid = c.custid AND c.roleid = 1 and
 	WHERE tl.statusID IN (0,1) --summary running tickets only
 	GROUP BY tl.custid
 ),
@@ -78,6 +87,16 @@ FROM cb
 	LEFT OUTER JOIN q3 ON cb.custid = q3.custid
 	LEFT OUTER JOIN q4 ON cb.custid = q4.custid
 	LEFT OUTER JOIN t ON cb.custid = t.CustID
+
+--//get MovebetDate again if it was changed
+DECLARE @__movebetdateF SMALLDATETIME
+EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdateF OUTPUT
+IF @__movebetdate <> @__movebetdateF
+BEGIN
+	SET @__movebetdate = @__movebetdateF
+	GOTO __tryagain
+END
+
 UPDATE cb
 SET roundVerified = 
 		CASE q.Balance-q.Outstanding+BalRNG+BalLC+adjustWinlostAmt-q.FromBalanceTable
@@ -136,5 +155,3 @@ BEGIN
 	END
 END
 GO
-
-

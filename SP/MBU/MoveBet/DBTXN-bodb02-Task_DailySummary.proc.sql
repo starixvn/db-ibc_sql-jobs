@@ -493,7 +493,7 @@ BEGIN
 		COMMIT TRANSACTION
 		
 		--waitfor delay on each batch.
-		IF @__index % 1000 = 0
+		IF @__index % 10 = 0
 		BEGIN
 			SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key6')
 			WAITFOR DELAY @__delayTimeValue --waitfor copying...
@@ -762,7 +762,7 @@ BEGIN
 		END
 
 		--waitfor delay on each batch.
-		IF @__index % 1000 = 0
+		IF @__index % 10 = 0
 		BEGIN
 			SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key6')
 			WAITFOR DELAY @__delayTimeValue --waitfor deleting...
