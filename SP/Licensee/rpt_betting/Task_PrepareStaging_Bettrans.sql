@@ -356,7 +356,7 @@ BEGIN
 				,b.betdaqid
 				,CASE
 					WHEN b.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
-					WHEN m.matchid = 173 THEN 2 -- 173: VG Free Bet
+					WHEN b.matchid = 173 THEN 2 -- 173: VG Free Bet
 					WHEN b.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
 					ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 				END AS TicketType
@@ -433,7 +433,7 @@ BEGIN
 				,b.betdaqid
 				,CASE
 					WHEN b.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
-					WHEN m.matchid = 173 THEN 2 -- 173: VG Free Bet
+					WHEN b.matchid = 173 THEN 2 -- 173: VG Free Bet
 					WHEN b.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
 					ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 				END AS TicketType
