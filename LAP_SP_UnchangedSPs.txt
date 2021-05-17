@@ -1,1 +1,1 @@
-\SP\Licensee\rpt_betting\Task_PrepareStaging.sql
+SP\Licensee\rpt_betting\Task_PrepareStaging.sql
