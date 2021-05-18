@@ -1,6 +1,4 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
-USE [bodb02]
-GO
 ALTER PROCEDURE [dbo].[Task_CheckBalance1_Bonus_CheckAll]
 AS
 /*
@@ -11,6 +9,7 @@ AS
 		- 20180326@Patrick: Changes bettype from 22026, 22027 to 22200, 22201
 		- 20190827@Patrick: Exclude all members below 8RM account for bet restricion [RedmineID: #117727]
 			+ Fix issue duplicated custid from Acc_DWLList
+		- 20210426@Sol: Alpha/NAP - Migrate from DBACC to DBCust - [Redmine: #154041]
 		
 	Param use:
 	Logic & Process:
@@ -27,12 +26,12 @@ SET @RD = 0
 -- automatic update exception list list
 INSERT INTO Task_Cust_CheckBalance_Exception
 SELECT custid, 'DWLList'
-FROM DBACC.bodb_ACC.dbo.Acc_DWLList dw with (nolock)
+FROM DBCUST.CustDB.dbo.Acc_DWLList dw with (nolock)
 WHERE custid NOT IN (SELECT custid FROM dbo.Task_Cust_CheckBalance_Exception ce with (nolock))
 GROUP BY custid
 UNION ALL
 SELECT custid, 'DWLList_ExtraPT'
-FROM DBACC.bodb_ACC.dbo.Acc_DWLList_ExtraPT dwe with (nolock)
+FROM DBCUST.CustDB.dbo.Acc_DWLList_ExtraPT dwe with (nolock)
 WHERE custid NOT IN (SELECT custid FROM dbo.Task_Cust_CheckBalance_Exception ce with (nolock))
 GROUP BY custid
 UNION ALL
