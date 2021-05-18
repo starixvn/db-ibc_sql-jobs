@@ -71,9 +71,11 @@ BEGIN
 			GOTO __tryagain
 		END
 
+		SET @__movebetdate = @__movebetdateF
 		SELECT @FromSumWinloss = SUM(Amount)
 		FROM dbo.Bonus_sum_winloss WITH(NOLOCK)
 		WHERE CustId = @custid AND BonusId = @bonusId
+			AND winlostdate <= @__movebetdate
 				
 		SELECT @DiffBalance = (ISNULL(@FromBettrans, 0) + ISNULL(@FromSumWinloss, 0)) - (c1.Amount - d1.Amount)
 		FROM dbo.BonusWalletCredit c1 WITH (ROWLOCK)

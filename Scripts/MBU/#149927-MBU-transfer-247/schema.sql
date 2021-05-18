@@ -11,8 +11,7 @@ add username varchar(50) null
 CREATE TABLE Task_Movebet_RecommendList(
 	RowId INT IDENTITY(1,1),
 	Recommend INT NOT NULL,
-	StatusId TINYINT DEFAULT(0)
+	StatusId TINYINT CONSTRAINT DF_Task_Movebet_RecommendList_StatusId DEFAULT(0)
 )
 
 CREATE CLUSTERED INDEX CIX_Task_Movebet_RecommendList ON Task_Movebet_RecommendList(RowId) ON [Others_table] 
-

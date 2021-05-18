@@ -41,6 +41,7 @@ cb AS (
 	SELECT b.CustId, b.BonusId, SUM(Amount) AS winlostAmt, 0 AS RowVersion
 	FROM dbo.Bonus_sum_winloss b WITH(NOLOCK)
 		INNER JOIN dbo.Task_Cust_CheckBalanceVerify1_Bonus q ON b.custid = q.custid AND b.BonusID = q.BonusID
+	WHERE winlostdate <= @__movebetdate
 	GROUP BY b.CustId, b.BonusId
 )
 SELECT cb.*

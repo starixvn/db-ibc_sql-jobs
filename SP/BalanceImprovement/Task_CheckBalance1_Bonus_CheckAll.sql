@@ -71,6 +71,7 @@ BEGIN
 	), __bonus_sum_winloss_cte AS (
 		SELECT CustId, BonusId, SUM(Amount) AS winlostAmt
 		FROM dbo.Bonus_sum_winloss WITH(NOLOCK)
+		WHERE winlostdate <= @__movebetdate
 		GROUP BY CustId, BonusId
 	)
 
@@ -132,6 +133,7 @@ BEGIN
 		SELECT b.CustId, b.BonusId, SUM(Amount) AS winlostAmt, 0 AS RowVersion
 		FROM dbo.Bonus_sum_winloss b WITH(NOLOCK)
 			INNER JOIN #QuestionLists q ON b.custid = q.custid AND b.BonusID = q.BonusID
+		WHERE winlostdate <= @__movebetdate
 		GROUP BY b.CustId, b.BonusId
 	)
 
