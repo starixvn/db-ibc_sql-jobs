@@ -12,7 +12,7 @@ AS
 	Location: DBTXN.bodb02
 	Revision:
 		- 20180326@Patrick: Changes bettype from 22026, 22027 to 22200, 22201
-		- 202010514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
+		- 20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		
 	Param use:
 

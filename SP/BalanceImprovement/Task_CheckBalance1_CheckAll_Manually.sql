@@ -18,7 +18,7 @@ AS
 		20190827@Patrick: Exclude all members below 8RM account for bet restricion [RedmineID: #117727]
 			+ Fix issue duplicated custid from Acc_DWLList
 		- 20210426@Sol: Alpha/NAP - Migrate from DBACC to DBCust - [Redmine: #154041]
-		202010514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
+		20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		
 	Param use:
 

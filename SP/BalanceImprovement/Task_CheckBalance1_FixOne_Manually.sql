@@ -18,7 +18,7 @@ AS
 		20171002@Patrick: Update code for Bonus project
 		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
 		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
-		202010514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
+		20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 
 	Param use:
 
