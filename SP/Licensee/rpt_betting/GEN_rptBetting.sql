@@ -37,6 +37,9 @@ AS
 		20200804@Sol: Include vsraceinfo14 [RedmineID: #135963]
 		20201029@Parsons: Add ExtraPT in Number Game Win Loss Report [RedmineID: #142969]
 		20210113@Parsons: Saba.club Integrate Slot Game [#147977]
+		20210412@Sophia: Change Range of AE Casino [Redmine :#152141]
+		20210514@Danny: Integrate Vgaming [#154080] 
+
 
 	Param's Explanation:
 
@@ -91,9 +94,9 @@ BEGIN
 				,SUM(-
 					CASE
 						-- Jackpot
-						WHEN b.bettype IN (2198, 2398, 2998, 4297, 1698) THEN
+						WHEN b.bettype IN (2198, 2398, 2998, 4297, 1698, 3898) THEN
 							CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
-						WHEN b.bettype IN (2199, 2399, 2999, 4298, 1699) THEN 0
+						WHEN b.bettype IN (2199, 2399, 2999, 4298, 1699, 3899) THEN 0
 						ELSE CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END
 					END * ISNULL(b.epositiontaking, 0)) AS WinLossE
 				,SUM(playercomm)			AS commissionP
@@ -102,7 +105,7 @@ BEGIN
 				,SUM(scomm)					AS commissionS
 				,SUM(-
 					CASE 
-						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298, 1698, 1699) THEN 0
+						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298, 1698, 1699, 3898, 3899) THEN 0
 						ELSE 
 							CASE 
 								WHEN b.tpositiontaking = 1 THEN 0 
@@ -183,9 +186,9 @@ BEGIN
 				,SUM(-
 					CASE
 						-- Jackpot
-						WHEN b.bettype IN (2198, 2398, 2998, 4297, 1698) THEN
+						WHEN b.bettype IN (2198, 2398, 2998, 4297, 1698, 3898) THEN
 							CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
-						WHEN b.bettype IN (2199, 2399, 2999, 4298, 1699) THEN 0
+						WHEN b.bettype IN (2199, 2399, 2999, 4298, 1699, 3899) THEN 0
 						ELSE CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END
 					END * ISNULL(b.epositiontaking, 0))	AS WinLossE
 				,SUM(playercomm)			AS commissionP
@@ -194,7 +197,7 @@ BEGIN
 				,SUM(scomm)					AS commissionS
 				,SUM(-
 					CASE 
-						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298, 1698, 1699) THEN 0
+						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298, 1698, 1699, 3898, 3899) THEN 0
 						ELSE 
 							CASE 
 								WHEN b.tpositiontaking = 1 THEN 0 

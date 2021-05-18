@@ -25,6 +25,7 @@ AS
 	 - 20210113@Parsons: Provide timezone filter for Joker Games Win Loss Report [#148617]
 	 - 20210412@Sophia: Integrate PP Live Casino [Redmine: #150971]
 	 - 20210419@Danny: Integrate Creative Gaming [Redmine: #146019]
+	 - 20210412@Sophia: Change Range of AE Casino [Redmine :#152141]
 	 Param's Explanation:
 */
 
@@ -104,7 +105,7 @@ BEGIN
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
 			AND (
 					b.gameID BETWEEN 2401 AND 2499 -- AllBet
-				OR  b.gameID BETWEEN 3101 AND 3199 -- SXG
+				OR  b.gameID BETWEEN 3101 AND 3150 -- SXG
 				OR  b.gameID BETWEEN 3001 AND 3099 -- SAG
 				OR  b.gameID BETWEEN 3401 AND 3499 -- WM
 				OR  b.gameID BETWEEN 3701 AND 3799 -- PPL

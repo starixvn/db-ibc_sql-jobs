@@ -17,6 +17,8 @@ AS
 		- 20201005@Parsons: Saba.club - Offer Free Bets tickets [RedmineID: #141423]
 		- 20201029@Parsons: Add ExtraPT in Number Game Win Loss Report [RedmineID: #142969]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
+		- 20210514@Danny: Integrate Vgaming [#154080] 
+
 */
 
 BEGIN
@@ -157,6 +159,7 @@ BEGIN
 					,b.betdaqid
 					,CASE
 						WHEN m.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+						WHEN m.matchid = 173 THEN 2 -- 173: VG Free Bet
 						WHEN m.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
 						ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 					END AS TicketType
@@ -235,6 +238,7 @@ BEGIN
 					,b.betdaqid
 					,CASE
 						WHEN m.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+						WHEN m.matchid = 173 THEN 2 -- 173: VG Free Bet
 						WHEN m.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
 						ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 					 END AS TicketType
@@ -352,6 +356,7 @@ BEGIN
 				,b.betdaqid
 				,CASE
 					WHEN b.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+					WHEN b.matchid = 173 THEN 2 -- 173: VG Free Bet
 					WHEN b.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
 					ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 				END AS TicketType
@@ -428,6 +433,7 @@ BEGIN
 				,b.betdaqid
 				,CASE
 					WHEN b.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
+					WHEN b.matchid = 173 THEN 2 -- 173: VG Free Bet
 					WHEN b.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
 					ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 				END AS TicketType

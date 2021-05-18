@@ -80,6 +80,8 @@ AS
 		- 20210308@Parsons: Integrate Sports Lottery Product [#150866]
 		- 20210412@Sophia: Integrate PP Live Casino [Redmine: #150971]
 		- 20210419@Danny: Integrate Creative Gaming [Redmine: #146019]
+		- 20210412@Sophia : Integrate AE Casino Lucky Draw [Redmine: #152141]
+		- 20210517@Danny: Integrate VGaming [Redmine: #154080]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -126,7 +128,7 @@ BEGIN
 
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG,WM,VS3,GDG,BGG,MXG,HB,SLT,PPL,CG') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG,WM,VS3,GDG,BGG,MXG,HB,SLT,PPL,CG,VGA') -- Remove Exchange (BX) due to separate wallet only
 		WHERE @ProductCodes = ''
 			OR ProductID IN (SELECT ProductID FROM @ProductIdList)
 
@@ -164,12 +166,13 @@ BEGIN
 			,bt.ProductID
 			,CASE
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699) 
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699, 3150) 
 						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
 						   , SAG_Tips (3007)
 						   , CC-Bonus(1906)
 						   , SB-Adjusted Odds(999)
 						   , Saba.club Contribution(1698), Saba.club Jackpot Prize(1699)
+						   , AE Casino Lucky Draw (3150)
 						*/
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
@@ -200,12 +203,13 @@ BEGIN
 			,bt.ProductID
 			,CASE 
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699) 
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699, 3150) 
 						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
 						   , SAG_Tips (3007)
 						   , CC-Bonus(1906)
 						   , SB-Adjusted Odds(999)
 						   , Saba.club Contribution(1698), Saba.club Jackpot Prize(1699)
+						   , AE Casino Lucky Draw (3150)
 						*/
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
