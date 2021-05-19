@@ -10,6 +10,7 @@ AS
 		- 20191111@Bobby: Initial [Redmine: #131490]
 		- 20200619@Percy: Add server name in mail's subject [RedmineID: #134251]
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
+		- 20210518@Danny :  Enhance performance [RedmineId : #154536]
 */
 BEGIN
 
@@ -42,14 +43,26 @@ BEGIN
 		,winlostdate DATE
 		)
 
-	SELECT @cutoff_day = MIN(winlostdate) --> it's BU day
-	FROM bodb02.dbo.bettrans14 WITH(NOLOCK)
+	
+	DECLARE @MBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBU (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
 
-	INSERT INTO @runningDays (winlostdate)
-	SELECT DISTINCT winlostdate
-	FROM dbo.rptStatement WITH (NOLOCK)
-	WHERE winlostdate >= @cutoff_day
-	ORDER BY WinlostDate ASC
+	DECLARE @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
+	
+	SELECT @BalanceUpDay = BalanceUpDay, @MoveBetsDay = MoveBetsDay FROM @MBU
+
+	;WITH CTE_Winlostdate (winlostdate ) AS
+	(
+		SELECT @BalanceUpDay AS winlostdate
+		UNION ALL
+		SELECT DATEADD(DAY, 1, winlostdate)
+		FROM CTE_Winlostdate
+		WHERE winlostdate <= @MoveBetsDay
+	)
+	INSERT INTO @runningDays(winlostdate)
+	select winlostdate from CTE_Winlostdate ORDER BY winlostdate ASC
+	OPTION (MAXRECURSION 0)
 
 	DECLARE @dayIdx INT = 1
 		,@winlostdate DATE
@@ -60,7 +73,7 @@ BEGIN
 			WHERE dayIdx = @dayIdx
 			)
 	BEGIN
-		DELETE #custTemp
+		TRUNCATE TABLE #custTemp
 
 		SELECT @winlostdate = winlostdate
 		FROM @runningDays
