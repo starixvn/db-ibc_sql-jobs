@@ -44,6 +44,7 @@ AS
 		- 20201008@Brice:	Add column [OriginalOdds] of [bettransInfo] - [Redmine: #140906]
 		- 20201221@Brice:	Add column [siteID] of [bettransLC] - [Redmine: #147084]
 		- 20210126@Patrick: Migrate DB Server DB054 to cluster [Redmine: #149273]
+		- 20210519@Patrick: Support SIT environment [Redmine: #149927]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -65,8 +66,11 @@ DECLARE	@__tmpTransId AS TABLE (
 			id		BIGINT		PRIMARY KEY CLUSTERED
 		);
 
-IF @@SERVERNAME NOT LIKE 'DB04%' AND @@SERVERNAME NOT IN ('DB054', 'DB054C2\DB054', 'DB055')
+IF @@SERVERNAME NOT LIKE 'DB04%' 
+	AND @@SERVERNAME NOT IN ('DB054', 'DB054C2\DB054', 'DB055', 'SITDB055') 
+	AND @@SERVERNAME NOT LIKE 'SITDB04%'
 BEGIN
+	
 	-- Note: Exclude columns: [tstamp], [recommdate]
 	-- 20191104@Billy:	Add column [epositiontaking]
 	-- 20200311@Billy:	Add column [ReasonID]
