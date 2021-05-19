@@ -23,6 +23,12 @@ BEGIN
 	FROM dbo.SystemSettings
 	WHERE VName = 'BeingMovebetDate'
 
+	IF @BeingMovebetDate IS NULL
+	BEGIN
+		SET @IsAllow = 1
+		RETURN
+	END
+
 	IF @winlostdate > @BeingMovebetDate
 		SET @IsAllow = 1
 	ELSE
