@@ -26,6 +26,8 @@ AS
 		- 20210408@Malcolm: Change bettype range of AE Casino(Sexy gaming) [RedmineId : #151334]
 		- 20210406@Malcolm: Add Creative Gaming [redmine: #146017]
 		- 20210427@Malcolm: Add VGaming [RedmineId : #153938]
+		- 20210518@Malcolm: Add AdvantPlay Mini [redmine: #155131]
+		- 20210512@Malcolm: Add AdvantPlay Product [redmine: #154256]
 
 	
 */
@@ -142,6 +144,8 @@ BEGIN
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
 			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
+			WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
+			WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -265,6 +269,8 @@ BEGIN
 				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
 				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
+				 WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
+				 WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product
 				 ELSE 0
 			 END
 			,CASE
@@ -347,7 +353,9 @@ BEGIN
 			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
-			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
+			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming
+			WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
+			WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -469,7 +477,9 @@ BEGIN
 				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
-				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
+				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming
+				 WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
+				 WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product				 
 				 ELSE 0
 			 END
 			,CASE
@@ -552,7 +562,9 @@ BEGIN
 			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
-			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
+			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming
+			WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
+			WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product			
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -673,7 +685,9 @@ BEGIN
 				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
-				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
+				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming
+				 WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
+			     WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product				 
 				 ELSE 0
 			 END
 			,CASE
@@ -756,7 +770,9 @@ BEGIN
 			WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
-			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
+			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming
+			WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
+			WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product			
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -878,7 +894,9 @@ BEGIN
 				 WHEN bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
 				 WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
 				 WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
-				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
+				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming
+				 WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
+				 WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product				 
 				 ELSE 0
 			 END
 			,CASE
