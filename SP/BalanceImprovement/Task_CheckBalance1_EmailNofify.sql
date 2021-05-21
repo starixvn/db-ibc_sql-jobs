@@ -14,6 +14,7 @@ AS
 	- 20200702@Vivi: change email recipients
 	- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 	- 20210426@Sol: Alpha/NAP - Migrate from DBACC to DBCust - [Redmine: #154041]
+	- 20210521@Sol: Alpha/NAP - synced list email from prod to git-master - [Redmine: #154041]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -51,7 +52,7 @@ BEGIN
 		RETURN
 
 	DECLARE @mailList NVARCHAR(1024)
-	SET @mailList = N'dbaadmin@starixvn.com;dbatw@onelab.tw;eric.fu@onelab.tw;luna.ho@onelab.tw;fanny.chen@onelab.tw;yolanda.wu@onelab.tw;aaron.wang@onelab.tw;sobi.chen@onelab.tw;'
+	SET @mailList = N'dbaadmin@starixvn.com;dbatw@onelab.tw;eric.fu@onelab.tw;fanny.chen@onelab.tw;yolanda.wu@onelab.tw;sobi.chen@onelab.tw;'
 
 	IF @@SERVERNAME <> 'DBTRANS'
 	BEGIN
