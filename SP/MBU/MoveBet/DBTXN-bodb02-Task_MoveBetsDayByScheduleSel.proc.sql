@@ -168,15 +168,15 @@ BEGIN
 	 CREATE TABLE #DefaultMovebetConfig
 	 (
 		_weekDay SmallInt, 
-		Isbackday1 BIT,  
-		Isbackday2 BIT,
-		Isbackday3 BIT,
-		Isbackday4 BIT,
-		Isbackday5 BIT,
-		Isbackday6 BIT,
-		Isbackday7 BIT,   
+		IsBackDay1 BIT,  
+		IsBackDay2 BIT,
+		IsBackDay3 BIT,
+		IsBackDay4 BIT,
+		IsBackDay5 BIT,
+		IsBackDay6 BIT,
+		IsBackDay7 BIT,   
 	)
-	INSERT INTO #DefaultMovebetConfig (_weekDay,Isbackday1,Isbackday2,Isbackday3,Isbackday4,Isbackday5,Isbackday6,Isbackday7 )
+	INSERT INTO #DefaultMovebetConfig (_weekDay,IsBackDay1,IsBackDay2,IsBackDay3,IsBackDay4,IsBackDay5,IsBackDay6,IsBackDay7 )
 	EXEC dbo.Acc_Manual_MoveBet_Sel @IsDefault = 1
 
 	CREATE TABLE #MBDetail (ScheduleId INT identity, MoveBetsDay SMALLDATETIME)
@@ -186,13 +186,13 @@ BEGIN
 	BEGIN
 		---------------
 		TRUNCATE TABLE #MBDetail
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday7 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday6 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday5 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -4, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday4 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -3, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday3 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -2, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday2 = 1 AND MBDate = @Today
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -1, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  Isbackday1 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay7 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay6 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay5 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -4, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay4 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -3, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay3 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -2, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay2 = 1 AND MBDate = @Today
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -1, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay1 = 1 AND MBDate = @Today
 	
 		SELECT ScheduleId, MoveBetsDay FROM #MBDetail ORDER BY ScheduleId
 
@@ -200,13 +200,13 @@ BEGIN
 	ELSE
 	BEGIN
 		TRUNCATE TABLE #MBDetail
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, @Today) FROM #DefaultMovebetConfig where  Isbackday7 = 1 AND _weekDay = @WeekDay
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, @Today) FROM #DefaultMovebetConfig where  Isbackday6 = 1 AND _weekDay = @WeekDay
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, @Today) FROM #DefaultMovebetConfig where  Isbackday5 = 1 AND _weekDay = @WeekDay
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -4, @Today) FROM #DefaultMovebetConfig where  Isbackday4 = 1 AND _weekDay = @WeekDay
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -3, @Today) FROM #DefaultMovebetConfig where  Isbackday3 = 1 AND _weekDay = @WeekDay
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -2, @Today) FROM #DefaultMovebetConfig where  Isbackday2 = 1 AND _weekDay = @WeekDay
-		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -1, @Today) FROM #DefaultMovebetConfig where  Isbackday1 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, @Today) FROM #DefaultMovebetConfig where  IsBackDay7 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, @Today) FROM #DefaultMovebetConfig where  IsBackDay6 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, @Today) FROM #DefaultMovebetConfig where  IsBackDay5 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -4, @Today) FROM #DefaultMovebetConfig where  IsBackDay4 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -3, @Today) FROM #DefaultMovebetConfig where  IsBackDay3 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -2, @Today) FROM #DefaultMovebetConfig where  IsBackDay2 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -1, @Today) FROM #DefaultMovebetConfig where  IsBackDay1 = 1 AND _weekDay = @WeekDay
 	
 		SELECT ScheduleId, MoveBetsDay FROM #MBDetail ORDER BY ScheduleId
 	END
