@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[DBA_Consistency_CheckWinlosDate]
+CREATE PROCEDURE [dbo].[DBA_Consistency_CheckWinlost3rd]
 	@ProductId		INT		
 	,@ErrCode		INT				= 0		OUTPUT
 	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
@@ -11,7 +11,7 @@ AS
 	DB: DBCONSISTENCY-bodb_Consistency
 
 	Revisions: 
-		- 20210524@July: Check winlostdate to current date [Redmine:#98064]
+		- 20210524@July: Saba.club - Check winlost - Check Data Consistency - [Redmine:#155714]
 	
 	Param's Expanation:
 */
@@ -47,7 +47,7 @@ BEGIN
 
 	END
 	
-	IF @transId_112 <> '' OR @transId_112 <> ''
+	IF @transId_112 <> '' OR @transId_113 <> ''
 	BEGIN
 		IF @transId_112 <> ''
 			SET @transId_112= SUBSTRING(@transId_112, 2, LEN(@transId_112) - 1)

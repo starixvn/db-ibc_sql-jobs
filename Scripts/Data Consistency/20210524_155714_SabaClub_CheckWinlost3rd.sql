@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 /*
 	Created: 20210524@July
-	Task: Saba.club - Check Data Consistency - [Redmine:#138117]
+	Task: Saba.club - Check winlost - Check Data Consistency - [Redmine:#155714]
 	DB: DBCONSISTENCY-bodb_Consistency
 
 */
@@ -19,7 +19,7 @@ VALUES (N'Checking data of swinlost, mwinlost, swinlost in settled ticket', N'Ch
 SET @ruleId_s34 = SCOPE_IDENTITY()
 
 INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (@ruleId_s34, N'EXEC dbo.DBA_Consistency_CheckWinlosDate @ProductId = 200, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+VALUES (@ruleId_s34, N'EXEC dbo.DBA_Consistency_CheckWinlost3rd @ProductId = 200, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
 
 SET @taskId_s34 = SCOPE_IDENTITY()
 
