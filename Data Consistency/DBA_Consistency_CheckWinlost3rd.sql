@@ -31,19 +31,10 @@ BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM bodb02.dbo.bettransRNG WITH(NOLOCK) 
 		WHERE
-			((aWinLost <> (winlost - actual_stake) * -apositiontaking) or (mWinLost <> (winlost - actual_stake) * -mpositiontaking) or (sWinLost <> (winlost - actual_stake) * -spositiontaking)) 
-			AND statusid = 112
-			AND productid = @ProductId
-			AND winlostdate = @Today
-
-		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-		FROM bodb02.dbo.bettransRNG WITH(NOLOCK) 
-		WHERE
 			((aWinLost <> -(winlost-actual_stake) * apositiontaking) or (mWinLost <> -(winlost-actual_stake) * mpositiontaking) or (sWinLost <> -(winlost-actual_stake) * spositiontaking)) 
-			AND statusid = 113
+			AND statusid IN (112, 113)
 			AND productid = @ProductId
 			AND winlostdate = @Today
-
 	END
 	
 	IF @transId <> ''
