@@ -18,6 +18,7 @@ AS
 		- 20200110@Sophia: initial SP [Redmine: #122071]
 		- 20210120@Danny: Add rule to check consistency of extraPT [Redmine: #125883]
 		- 20210423@Danny: exclude ticket Void/Reject/Refund [Redmine: #153907]
+		- 20210518@Danny: Exclude Jackpot ticket [Redmine: #153924]
 	
 	Param's Expanation:
 		@Duration = 'hour', 'lastday'
@@ -58,6 +59,12 @@ BEGIN
 	IF @CheckMode = 1 
 	----I. Check Wrong Epositiontaking vs ExtraPT
 	BEGIN 
+			DECLARE @ExcludeBettype TABLE (Bettype SMALLINT, Reftable TINYINT)
+			INSERT INTO @ExcludeBettype (Bettype, Reftable)
+			SELECT DISTINCT Bettype, Reftable
+			FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+			WHERE BetType IN (2199, 2399, 2999, 4298, 17004, 3150)
+
 			--- I.I: Wrong Epositiontaking vs ExtraPT
 			------I.I.a. Bettrans
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)				
@@ -79,10 +86,10 @@ BEGIN
 					AND CASE WHEN s.SubProduct IN ('MG-SuperLive', 'BT-Sold','BT-Bought','BT-Comm','BT-Winloss','Bet Builder') THEN s.SubProduct ELSE '' END = pt.SubProduct
 					AND CASE WHEN ISNULL(m.matchid, 0) <> 0 THEN m.Sporttype ELSE 0 END = pt.Sporttype 
 			WHERE  b.winlostdate = @Winlostdate			
-				AND b.bettype < 19001		
+				AND b.bettype < 19001 AND b.bettype NOT IN (SELECT u.bettype FROM @ExcludeBettype u WHERE u.Reftable = 0)	 	
 				AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
 				AND b.custid <> 0
-				AND b.statusID NOT IN (101, 102, 103)
+				AND b.statusID NOT IN (101, 102, 103) 
 
 			------I.I.b. translog 
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)		
@@ -101,10 +108,12 @@ BEGIN
 							AND s.ProductId = pt.ProductId
 							AND s.SubProduct = pt.SubProduct
 							AND pt.Sporttype = 0
-					WHERE  b.winlostdate = @Winlostdate	 
+					WHERE  b.statusID = 0
+						AND b.winlostdate = @Winlostdate	 
 						AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
 						AND b.custid <> 0
 						AND b.statusID NOT IN (101, 102, 103)
+						AND b.gameID NOT IN (SELECT u.bettype FROM @ExcludeBettype u WHERE u.Reftable = 3)	
 						
 			
 			------I.I.c. bettransRNG 
@@ -127,6 +136,7 @@ BEGIN
 					AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
 					AND b.custid <> 0
 					AND b.statusID NOT IN (101, 102, 103)
+					AND b.gameID NOT IN (SELECT u.bettype FROM @ExcludeBettype u WHERE u.Reftable = 3)	
 			
 			------I.I.d.  bettransLC			
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)
@@ -148,6 +158,7 @@ BEGIN
 					AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)
 					AND b.custid <> 0
 					AND b.statusID NOT IN (101, 102, 103)
+					AND b.gameID NOT IN (SELECT u.bettype FROM @ExcludeBettype u WHERE u.Reftable = 3)	
 							 	
 			SELECT @transId = ''
 			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
