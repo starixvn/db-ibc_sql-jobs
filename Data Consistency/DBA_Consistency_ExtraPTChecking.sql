@@ -136,7 +136,7 @@ BEGIN
 					AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
 					AND b.custid <> 0
 					AND b.statusID NOT IN (101, 102, 103)
-					AND b.gameID NOT IN (SELECT u.bettype FROM @ExcludeBettype u WHERE u.Reftable = 3)	
+					AND b.gameID NOT IN (SELECT u.bettype FROM @ExcludeBettype u WHERE u.Reftable = 1)	
 			
 			------I.I.d.  bettransLC			
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)
@@ -158,7 +158,7 @@ BEGIN
 					AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)
 					AND b.custid <> 0
 					AND b.statusID NOT IN (101, 102, 103)
-					AND b.gameID NOT IN (SELECT u.bettype FROM @ExcludeBettype u WHERE u.Reftable = 3)	
+					AND b.gameID NOT IN (SELECT u.bettype FROM @ExcludeBettype u WHERE u.Reftable = 2)	
 							 	
 			SELECT @transId = ''
 			SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
