@@ -55,6 +55,7 @@ AS
 		- 20210322@Hogan: Integrate AE Casino Lucky Draw [RedmineID: #151984]
 		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
+		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -614,6 +615,7 @@ BEGIN
 				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 				WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
+				WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
@@ -678,6 +680,7 @@ BEGIN
 				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 				WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
+				WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG			
 				ELSE 0
 			END
 

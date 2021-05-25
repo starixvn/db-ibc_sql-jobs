@@ -92,6 +92,7 @@ AS
 		- 20210507@Mark: Support new betfrom and multiple selection on Platform filter [Redmine: #153102]
 		- 20210510@Kos: Split data of God Of Fortune in rptLicWinloss2 [RedmineID: #152908]
 		- 20210511@Hogan: Integrate WM Live Casino [RedmineID: #140944]
+		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -210,6 +211,7 @@ BEGIN
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
+			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -322,6 +324,7 @@ BEGIN
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
+			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			ELSE 0
 		END
 		,CASE
