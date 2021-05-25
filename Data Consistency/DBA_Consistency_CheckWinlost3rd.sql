@@ -21,8 +21,6 @@ BEGIN
 	DECLARE @transId VARCHAR(MAX)
 			,@Today DATETIME 
 
-	DECLARE @tmpMatchIds TABLE (MatchId INT)
-	
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
 
