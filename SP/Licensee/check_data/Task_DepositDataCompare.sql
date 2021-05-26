@@ -33,7 +33,8 @@ AS
 		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
-		
+		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
+
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
 
@@ -42,7 +43,7 @@ AS
 		2 rptCustomerTurnover
 		3 rptCustomerMatch
 		4 rptWinlossbyLeague
-	ID : 
+	ID :
 		1 Turnover
 		2 Customer Winlost
 		3 Betcount
@@ -79,7 +80,7 @@ BEGIN
 		,LC BIGINT
 		)
 
-	CREATE TABLE #Data1 
+	CREATE TABLE #Data1
 		(Typeid INT
 		,ID INT
 		,Sportbook BIGINT
@@ -129,9 +130,10 @@ BEGIN
 		,SLT BIGINT
 		,HB BIGINT
 		,WM BIGINT
-		,BGG BIGINT)
+		,BGG BIGINT
+		,VGA BIGINT)
 
-	--exec 
+	--exec
 	--rptLicWinloss2
 	INSERT INTO @tblTmp	(
 		ID
@@ -173,7 +175,8 @@ BEGIN
 		,SLT
 		,HB
 		,WM
-		,BGG)
+		,BGG
+		,VGA)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
@@ -191,7 +194,7 @@ BEGIN
 		BA,
 		LC
 	FROM @tblTmp
- 
+
 	INSERT INTO #Data1 (
 		Typeid,
 		ID,
@@ -293,7 +296,7 @@ BEGIN
 
 	--rpt_Betting
 	DELETE @tblTmp
- 
+
 	INSERT INTO @tblTmp (
 		ID
 		,Sportbook
@@ -334,7 +337,8 @@ BEGIN
 		,SLT
 		,HB
 		,WM
-		,BGG)
+		,BGG
+		,VGA)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (
@@ -352,7 +356,7 @@ BEGIN
 		BA,
 		LC
 	FROM @tblTmp
- 
+
 	INSERT INTO #Data1 (
 		Typeid,
 		ID,
@@ -408,7 +412,7 @@ BEGIN
 				FROM #Data1
 				WHERE Typeid = @typeid AND ID = @id
 
-				SET @mesg2 = '' 
+				SET @mesg2 = ''
 
 				IF @PivotNumb_SB <> @NumberTemp_SB	-- check SB
 				BEGIN
@@ -417,7 +421,7 @@ BEGIN
 					BEGIN
 						SET @flag = 1
 						SELECT @mesg2 = @mesg2 + CONVERT(NVARCHAR, @typeid, 102)
-					END 
+					END
 				END
 
 				IF @PivotNumb_RB <> @NumberTemp_RB	--check RB
@@ -485,16 +489,16 @@ BEGIN
 			SET @output = @output + 'Table rpt_Betting, Date: '+CONVERT(NVARCHAR,@Date,102) + ' ; '
 
 		RAISERROR (@output, 16, 1);
-	END 
+	END
 	/*-- Test Email
 	IF (@flag=0)
 		BEGIN
 			SET @output='Don Test'
-			RAISERROR (@output,16,1); 
+			RAISERROR (@output,16,1);
 		END*/
 
 	DROP TABLE #Data1
-	DROP TABLE #TempData 
+	DROP TABLE #TempData
 
 	SET NOCOUNT OFF
 END

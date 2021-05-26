@@ -19,10 +19,10 @@ AS
 		- 20130903@Jim: support Virtual Horse Racing
 		- 20131014@Jim: support Virtual Tennis
 		- 20131128@Jim: revert code to Group by All Virtual Sport into sporttypeID=180
-		- 20140310@Jim: offer KENO 
+		- 20140310@Jim: offer KENO
 		- 20140820@Jim: support to add more value bet BetEffective (RedmineID : #20518)
 		- 20150618@Patrick: #36263: Fix super balance issue for: AGC, GD & VG
-		- 20150630@Jim: add MicroGaming 
+		- 20150630@Jim: add MicroGaming
 		- 20150702@Patrick: Support BetTrade
 		- 20150824@Patrick: Not category BA's bettrade ticket
 		- 20150909@Patrick: Changes the way generate data from bettrans instead bettrans14
@@ -77,7 +77,7 @@ AS
 		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
 		- 20201022@Louis: Licensee Spread Setting [RedmineID: #142532]
 		- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369]
-		- 20201217@Hogan: Add bettype of Saba.club Free Bets [RedmineID: #142369] 
+		- 20201217@Hogan: Add bettype of Saba.club Free Bets [RedmineID: #142369]
 		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
 		- 20201231@Hogan: Integrate GDG [RedmineID: #147267]
 		- 20210120@Mark: Integrate new betfrom 7 [Redmine: #149108]
@@ -93,17 +93,18 @@ AS
 		- 20210510@Kos: Split data of God Of Fortune in rptLicWinloss2 [RedmineID: #152908]
 		- 20210511@Hogan: Integrate WM Live Casino [RedmineID: #140944]
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
+		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
 
 BEGIN
 	SET NOCOUNT ON
-	
+
 	DELETE FROM dbo.rptLicWinloss2 WITH (ROWLOCK) WHERE winlostdate = @WinLostDate
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
-	
+
 	--Member Level
 	INSERT INTO dbo.rptLicWinloss2 (
 		[winlostdate]
@@ -135,7 +136,7 @@ BEGIN
 		,[isMobile]
 		,[betfrom]
 		,[BuyBackAmt]
-		,[BABuyBackAmt] 
+		,[BABuyBackAmt]
 		)
 	SELECT
 		@WinLostDate
@@ -153,8 +154,9 @@ BEGIN
 		,SUM(winlost - actual_stake) winlost
 		,CASE
 			WHEN b.statusID IN (112,113) THEN SUM(CASE
-															WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150)
-																OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)) THEN 0
+															WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150, 3898, 3899)
+																OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
+																OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)) THEN 0
 															ELSE ABS(winlost - actual_stake)
 														END)  -- exclude PP Prize, SAG Tip ticket from BetEffective
 			ELSE 0
@@ -162,7 +164,7 @@ BEGIN
 		,SUM(awinlost) awinlost
 		,SUM(mwinlost) mwinlost
 		,SUM(ISNULL(swinlost,0)) swinlost
-		,SUM(playercomm) playercomm  
+		,SUM(playercomm) playercomm
 		,SUM(comm) comm
 		,SUM(acomm) acomm
 		,SUM(ISNULL(scomm,0)) scomm
@@ -182,7 +184,7 @@ BEGIN
 			WHEN bettype BETWEEN 1501  AND 1599 THEN 202 -- Keno
 			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
 			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-			WHEN bettype = 1900 THEN 249 -- VG  
+			WHEN bettype = 1900 THEN 249 -- VG
 			WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
@@ -210,14 +212,17 @@ BEGIN
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+			WHEN (bettype BETWEEN 3801 AND 3899 AND matchid <> 173) THEN 171 -- VGA
+			WHEN (bettype BETWEEN 3801 AND 3899 AND matchid = 173) THEN 173 -- VGA FreeBets
 			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 17004, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150)
-				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)) THEN bettype
+			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 17004, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899)
+				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)
+				OR (bettype BETWEEN 3801 AND 3899 AND matchid = 173)) THEN bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END bettype
@@ -286,7 +291,7 @@ BEGIN
 		,CASE
 			WHEN bettype IN (71,72) THEN 251 --casino
 			WHEN bettype = 1000 THEN 253 --games
-			WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game 
+			WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game
 			WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
 			WHEN bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
 			WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
@@ -299,7 +304,7 @@ BEGIN
 			WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
-			WHEN bettype BETWEEN 4001 AND 4100 THEN 212 -- VB 
+			WHEN bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
 			WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 			WHEN bettype BETWEEN 18000 AND 18006 THEN 204
 			WHEN bettype BETWEEN 1011  AND 1020 THEN 219
@@ -323,13 +328,16 @@ BEGIN
 			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+			WHEN (bettype BETWEEN 3801 AND 3899 AND matchid <> 173) THEN 171 -- VGA
+			WHEN (bettype BETWEEN 3801 AND 3899 AND matchid = 173) THEN 173 -- VGA FreeBets
 			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			ELSE 0
 		END
 		,CASE
-			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 17004, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150)
-				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)) THEN bettype
+			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 17000, 17003, 17004, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899)
+				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)
+				OR (bettype BETWEEN 3801 AND 3899 AND matchid = 173)) THEN bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END
@@ -349,7 +357,7 @@ BEGIN
 				AND b.bettype IN (1,3,7,8,17,18,124,125,482,483,484,485)
 				AND ABS(modds) = 0.25
 				THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
-			ELSE b.statusID 
+			ELSE b.statusID
 		END
 		,CASE
 			WHEN BA.transid IS NULL THEN 0

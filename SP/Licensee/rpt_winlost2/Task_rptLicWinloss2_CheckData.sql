@@ -17,6 +17,8 @@ AS
 	- 20201020@Hogan: Integrate Arcadia Gaming Bonus [RedmineID: #143648]
 	- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369]
 	- 20210119@Hogan: Integrate Four Guardians [RedmineID: #148100]
+	- 20210518@Hogan: Integrate Vgaming [RedmineID: #151583]
+
 */
 BEGIN
 	SET NOCOUNT ON
@@ -25,15 +27,19 @@ BEGIN
 			@S_MWinlost MONEY, @T_MWinlost MONEY, @S_SWinlost MONEY, @T_SWinlost MONEY, @S_PlayerComm MONEY, @T_PlayerComm MONEY,
 			@S_AComm MONEY, @T_AComm MONEY, @S_SComm MONEY, @T_SComm MONEY, @S_BuyBackAmt MONEY, @T_BuyBackAmt MONEY,
 			@S_BABuyBackAmt MONEY, @T_BABuyBackAmt MONEY
-	
+
 	SELECT @S_Winlost = SUM(b.winlost - b.actual_stake)
 		, @S_Turnover = SUM(CASE WHEN b.liveawayscore = 0 AND b.bettype IN(33,43) THEN ABS(b.stake/2) ELSE ABS(b.stake) END) --TurnOver
 		, @S_BetCount = COUNT(b.TransId) --BetCount
 		, @S_AWinlost = SUM(awinlost)
 		, @S_Comm = SUM(comm)
-		, @S_BetEffective = SUM(CASE WHEN b.statusID IN (112,113) AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699) AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)) -- exclude PP Prize from BetEffective
+		, @S_BetEffective = SUM(CASE
+									WHEN b.statusID IN (112,113)
+										AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+										AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
+										AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)) -- exclude PP Prize from BetEffective
 									THEN ABS(winlost-actual_stake)
-									ELSE 0  
+									ELSE 0
 								END)
 		, @S_MWinlost = SUM(mwinlost)
 		, @S_SWinlost = SUM(ISNULL(swinlost,0))
