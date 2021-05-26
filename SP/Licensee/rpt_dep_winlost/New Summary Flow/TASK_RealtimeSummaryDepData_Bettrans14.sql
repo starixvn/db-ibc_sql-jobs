@@ -307,7 +307,7 @@ BEGIN
 				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 				WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				WHEN (bettype BETWEEN 3801 AND 3897 AND b.matchid <> 173) THEN 171 -- VGA
-				WHEN (bettype BETWEEN 3801 AND 3897 AND b.matchid = 173) THEN -173 -- VGA FreeBets
+				WHEN (bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173 -- VGA FreeBets
 				WHEN (bettype BETWEEN 3898 AND 3899 AND b.matchid <> 173) THEN -171 -- VGA Prize
 				WHEN b.bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
@@ -397,7 +397,7 @@ BEGIN
 				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 				WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				WHEN (bettype BETWEEN 3801 AND 3897 AND b.matchid <> 173) THEN 171 -- VGA
-				WHEN (bettype BETWEEN 3801 AND 3897 AND b.matchid = 173) THEN -173 -- VGA FreeBets
+				WHEN (bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173 -- VGA FreeBets
 				WHEN (bettype BETWEEN 3898 AND 3899 AND b.matchid <> 173) THEN -171 -- VGA Prize
 				WHEN b.bettype IN (17000,17003, 17004) THEN 246 -- NPHP
 				ELSE 0
