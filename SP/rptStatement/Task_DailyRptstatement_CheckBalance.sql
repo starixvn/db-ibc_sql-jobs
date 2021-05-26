@@ -45,7 +45,7 @@ BEGIN
 		winlostdate SMALLDATETIME
 	)
 	INSERT INTO #temp (custid, randid, openingbalance, closingbalance, winlostdate)
-	SELECT custid, ROW_NUMBER()  OVER (PARTITION BY custid ORDER BY winlostdate asc) randid, openingbalance, closingbalance, winlostdate
+	SELECT custid, ROW_NUMBER()  OVER (PARTITION BY custid ORDER BY winlostdate asc) randid, ISNULL(openingbalance,0) openingbalance, ISNULL(closingbalance,0) closingbalance, winlostdate
 	FROM dbo.rptStatement WITH (NOLOCK)
 	WHERE winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay
 
