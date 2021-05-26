@@ -11,6 +11,7 @@ AS
 		- 20200619@Percy: Add server name in mail's subject [RedmineID: #134251]
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 		- 20210518@Danny :  Enhance performance [RedmineId : #154536]
+	EXEC Task_DailyRptStatement_CheckBalance_danny
 */
 BEGIN
 
@@ -22,7 +23,6 @@ BEGIN
 		,dayIdx INT identity(1, 1)
 		);
 
-	CREATE TABLE #custTemp (custid INT PRIMARY KEY);
 
 	CREATE TABLE #custChanged (
 		custid INT
@@ -37,96 +37,35 @@ BEGIN
 			,openingdate
 			)
 		);
-
-	--CREATE TABLE #custOutput (
-	--	custid INT
-	--	,winlostdate DATE
-	--	)
-
 	
 	DECLARE @MBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
 	INSERT INTO @MBU (BalanceUpDay, MoveBetsDay)
 	EXEC bodb02.dbo.Age_SelBalanceUpDay
 
 	DECLARE @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
-	
 	SELECT @BalanceUpDay = BalanceUpDay, @MoveBetsDay = MoveBetsDay FROM @MBU
 
-	;WITH CTE_Winlostdate (winlostdate ) AS
-	(
-		SELECT @BalanceUpDay AS winlostdate
-		UNION ALL
-		SELECT DATEADD(DAY, 1, winlostdate)
-		FROM CTE_Winlostdate
-		WHERE winlostdate <= @MoveBetsDay
+	CREATE TABLE #temp(
+		custid int,
+		randid tinyint,
+		openingbalance money,
+		closingbalance money,
+		winlostdate SMALLDATETIME
 	)
-	INSERT INTO @runningDays(winlostdate)
-	select winlostdate from CTE_Winlostdate ORDER BY winlostdate ASC
-	OPTION (MAXRECURSION 0)
+	INSERT INTO #temp (custid, randid, openingbalance, closingbalance, winlostdate)
+	SELECT custid, rank()  OVER (PARTITION BY custid ORDER BY winlostdate asc) randid, openingbalance, closingbalance, winlostdate
+	FROM dbo.rptStatement WITH (NOLOCK)
+	WHERE winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay
 
-	DECLARE @dayIdx INT = 1
-		,@winlostdate DATE
+	CREATE CLUSTERED INDEX CIX_#tempCustidRandid  ON #temp(custid, randid);   
 
-	WHILE EXISTS (
-			SELECT 1
-			FROM @runningDays
-			WHERE dayIdx = @dayIdx
-			)
-	BEGIN
-		TRUNCATE TABLE #custTemp
 
-		SELECT @winlostdate = winlostdate
-		FROM @runningDays
-		WHERE dayIdx = @dayIdx
+	INSERT INTO #custChanged (custid,closingdate,closingbalance,openingdate,openingbalance,is_updated)
+	SELECT t1.custid, t1.winlostdate as closingdate, t1.closingbalance, t2.winlostdate as openingdate, t2.openingbalance, 0
+	FROM #temp t1 
+	INNER JOIN #temp t2 ON t1.custid = t2.custid AND t1.randid = t2.randid - 1
+	WHERE t1.closingbalance <> t2.openingbalance
 
-		INSERT INTO #custTemp
-		SELECT Custid
-		FROM dbo.rptStatement WITH (NOLOCK)
-		WHERE WinlostDate = @winlostdate
-
-		INSERT INTO #custChanged (
-			custid
-			,closingdate
-			,closingbalance
-			,openingdate
-			,openingbalance
-			,is_updated
-			)
-		SELECT cl.Custid
-			,cl.WinlostDate AS closingdate
-			,cl.closingbalance
-			,op.WinlostDate AS openingdate
-			,op.OpeningBalance
-			,0 AS is_updated
-		FROM (
-			SELECT cl.custid
-				,isnull(closingbalance, 0) AS closingbalance
-				,WinlostDate
-			FROM dbo.rptStatement cl WITH (NOLOCK)
-			INNER JOIN #custTemp ci ON ci.custid = cl.Custid
-			WHERE cl.WinlostDate = @winlostdate
-			) AS cl
-		INNER JOIN (
-			SELECT Custid
-				,OpeningBalance
-				,WinlostDate
-			FROM (
-				SELECT op.Custid
-					,isnull(OpeningBalance, 0) AS OpeningBalance
-					,WinlostDate
-					,ROW_NUMBER() OVER (
-						PARTITION BY op.custid ORDER BY op.winlostdate ASC
-						) AS custIdx
-				FROM dbo.rptStatement op WITH (NOLOCK)
-				INNER JOIN #custTemp ci ON ci.custid = op.Custid
-				WHERE op.WinlostDate > @winlostdate
-				) AS op
-			WHERE custIdx = 1
-			) AS op ON op.Custid = cl.Custid
-		WHERE op.OpeningBalance <> cl.ClosingBalance
-
-		SET @dayIdx += 1;
-	END
 
 	--IF EXISTS (SELECT 1 FROM #custChanged)
 	--BEGIN
@@ -171,7 +110,8 @@ BEGIN
 	--END
 
 	--DROP TABLE #custOutput
-	DROP TABLE #custTemp
+	--DROP TABLE #custTemp
+	DROP TABLE #temp
 	DROP TABLE #custChanged
 END
 GO
