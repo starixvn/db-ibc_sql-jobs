@@ -20,6 +20,7 @@ AS
 		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
+		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
 */
 
 BEGIN
@@ -34,7 +35,7 @@ BEGIN
 		ProductId,
 		BetType
 	FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
-	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51, 57)
+	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51, 57, 66)
 
 	DECLARE
 		@S_Winlost			MONEY,
@@ -51,7 +52,7 @@ BEGIN
 		, @S_BetCount = SUM(ISNULL(BetCount, 0))
 		, @S_ValidBetAmount = SUM(ISNULL(ValidBetAmount, 0))
 	FROM (
-		-- RNG Casino, Macau Games, PG Soft, PP, Saba.club, Habanero
+		-- RNG Casino, Macau Games, PG Soft, PP, Saba.club, Habanero, Vgaming
 		SELECT SUM(b.winlost - b.actual_stake) AS Winlost
 			, SUM(b.stake) AS Turnover
 			, COUNT(b.transid) AS BetCount
@@ -60,7 +61,7 @@ BEGIN
 			INNER JOIN @SportBetTypeMatrix AS s ON b.gameID = s.BetType
 		WHERE b.winlostdate = @WinLostDate
 			AND b.statusID IN (111, 112, 113)
-			AND s.ProductID IN (6, 22, 55, 32, 42, 61) -- RNG Casino, Macau Games, PG Soft, PP, Saba.club, Habanero
+			AND s.ProductID IN (6, 22, 55, 32, 42, 61, 66) -- RNG Casino, Macau Games, PG Soft, PP, Saba.club, Habanero, Vgaming
 
 		UNION ALL
 
@@ -84,9 +85,9 @@ BEGIN
 	FROM dbo.rptCasinoTurnover WITH (NOLOCK)
 	WHERE WinlostDate = @WinLostDate
 		AND StatusId IN (111, 112, 113)
-		AND ProductID IN (6, 22, 21, 45, 39, 55, 32, 42, 59, 61, 51, 57) -- RNG Casino, Macau Games, All Bet, SA Gaming, PG Soft, PP, Saba.club, Habanero, WM Live Casino, Big Gaming
+		AND ProductID IN (6, 22, 21, 45, 39, 55, 32, 42, 59, 61, 51, 57, 66) -- RNG Casino, Macau Games, All Bet, SA Gaming, PG Soft, PP, Saba.club, Habanero, WM Live Casino, Big Gaming, Vgaming
 
-	-- compare 
+	-- compare
 	IF ISNULL(@S_Winlost, 0) <> ISNULL(@T_Winlost, 0)
 		OR ISNULL(@S_Turnover, 0) <> ISNULL(@T_Turnover, 0)
 		OR ISNULL(@S_BetCount, 0) <> ISNULL(@T_BetCount, 0)

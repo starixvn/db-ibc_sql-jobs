@@ -20,6 +20,7 @@ AS
 		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
+		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
 */
 
 BEGIN
@@ -36,7 +37,7 @@ BEGIN
 		ProductId,
 		BetType
 	FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
-	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51, 57)
+	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51, 57, 66)
 
 	INSERT INTO dbo.rptCasinoTurnover(
 		[WinlostDate]
@@ -61,11 +62,13 @@ BEGIN
 			,COUNT(bettrans.transid) AS BetCount
 			,SUM(bettrans.stake) AS Turnover
 			,SUM(bettrans.winlost-bettrans.actual_stake) AS winlost
-			,SUM(bettrans.stake) AS ValidBetAmount 
+			,SUM(bettrans.stake) AS ValidBetAmount
 			,CASE
 				WHEN (bettrans.productId = 150 AND matrix.ProductID = 42) -- Saba.club Free Bets
 					THEN 1
-				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150)
+				WHEN (bettrans.productId = 173 AND matrix.ProductID = 66) -- Vgaming Free Bets
+					THEN 1
+				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150, 3898, 3899)
 					THEN 1
 				ELSE 0 END AS TicketType
  		FROM
@@ -76,7 +79,7 @@ BEGIN
 		WHERE
 			bettrans.winlostdate = @winlostdate AND
 			bettrans.statusID IN (111, 112, 113) AND -- DRAW, WON, LOSE
-			matrix.ProductID IN (6, 22, 55, 32, 42, 61) -- RNG Casino, Macau Games, PG Soft, PP, Saba.club
+			matrix.ProductID IN (6, 22, 55, 32, 42, 61, 66) -- RNG Casino, Macau Games, PG Soft, PP, Saba.club
 		GROUP BY
 			bettrans.custid
 			,bettrans.recommend
@@ -86,10 +89,12 @@ BEGIN
 			,CASE
 				WHEN (bettrans.productId = 150 AND matrix.ProductID = 42) -- Saba.club Free Bets
 					THEN 1
-				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150)
+				WHEN (bettrans.productId = 173 AND matrix.ProductID = 66) -- Vgaming Free Bets
+					THEN 1
+				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150, 3898, 3899)
 					THEN 1
 				ELSE 0 END
-		
+
 		UNION ALL
 
 		-- AllBet, Sexy Gaming, SA Gaming, GDG, WM Live Casino, Big Gaming
@@ -98,11 +103,11 @@ BEGIN
 			,bettrans.recommend
 			,p3rd.ProductID
 			,bettrans.statusID
-			,bettrans.currency 
+			,bettrans.currency
 			,COUNT(bettrans.transid) AS BetCount
 			,SUM(bettrans.stake) AS Turnover
 			,SUM(bettrans.winlost-bettrans.actual_stake) AS winlost
-			,SUM(ISNULL(bettrans.netstake, 0)) AS ValidBetAmount 
+			,SUM(ISNULL(bettrans.netstake, 0)) AS ValidBetAmount
 			,CASE
 				WHEN matrix.bettype IN (3007)
 					THEN 1

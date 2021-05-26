@@ -45,8 +45,8 @@ AS
 		- 20201013@Hogan: Integrate SA Gaming [RedmineID: #128493]
 		- 20201020@Hogan: Integrate Arcadia Gaming Bonus [RedmineID: #143648]
 		- 20201021@Louis: Integrate PG Soft [RedmineID: #139182]
-		- 20201022@Louis: Licensee Spread Setting [RedmineID: #142532]	
-		- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369] 
+		- 20201022@Louis: Licensee Spread Setting [RedmineID: #142532]
+		- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369]
 		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
 		- 20201231@Hogan: Integrate GDG [RedmineID: #147267]
 		- 20210119@Hogan: Integrate Four Guardians [RedmineID: #148100]
@@ -56,6 +56,7 @@ AS
 		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
+		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -81,7 +82,7 @@ BEGIN
 
 	SELECT @CurrentDate = CONVERT(DATE, CURRENT_TIMESTAMP, 112)
 	SELECT @CurrentHour = DATEPART(HOUR, CURRENT_TIMESTAMP)
-	
+
 	IF @Winlostdate IS NULL
 		SELECT @Winlostdate = @CurrentDate
 
@@ -143,7 +144,7 @@ BEGIN
 		Promotion MONEY DEFAULT(0)
 		UNIQUE CLUSTERED (CustID, PartnerID, Bettype)
 		)
-	
+
 	CREATE TABLE #rptDepWinlost (
 		CustID INT,
 		Deposit MONEY DEFAULT(0),
@@ -235,17 +236,25 @@ BEGIN
 
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 				, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion)
-			SELECT b.custid, 
-				CASE WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150 ELSE b.bettype END,
+			SELECT b.custid,
+				CASE
+					WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150
+					WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173
+					ELSE b.bettype
+				END,
 				SUM(CASE WHEN b.bettype = 22001 THEN b.winlost-b.actual_stake ELSE 0 END), --Deposit
 				-SUM(CASE WHEN b.bettype IN (22002, 22003) THEN b.winlost-b.actual_stake ELSE 0 END),--Withdrawal
 				SUM(CASE WHEN b.bettype = 21006 THEN b.winlost-b.actual_stake ELSE 0 END), --Aff2MemTransfer
 				SUM(CASE WHEN b.bettype IN (22004, 22202) THEN b.winlost-b.actual_stake ELSE 0 END),--Bonus
-				SUM(CASE WHEN b.bettype IN (21001, 21002, 21003, 21004, 21005, 22005, 22203) THEN b.winlost-b.actual_stake ELSE 0 END),--Adjustment  
+				SUM(CASE WHEN b.bettype IN (21001, 21002, 21003, 21004, 21005, 22005, 22203) THEN b.winlost-b.actual_stake ELSE 0 END),--Adjustment
 				SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 				SUM(CASE WHEN (bettype < 19999 OR bettype = 23002) AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
-				SUM(CASE WHEN b.bettype < 19999 AND b.ruben = 1 AND (b.bettype NOT IN (17000, 17003, 17004, 4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699)
-					AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss      
+				SUM(CASE
+						WHEN b.bettype < 19999 AND b.ruben = 1 AND (b.bettype NOT IN (17000, 17003, 17004, 4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
+							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)) THEN b.winlost-b.actual_stake
+						ELSE 0
+					END),--Winloss
 				SUM(CASE WHEN b.bettype IN (22006, 22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd
 				SUM(CASE WHEN b.bettype < 19999 AND b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame
 				SUM(CASE WHEN b.bettype < 19999 AND b.ruben = 1 THEN b.playercomm ELSE 0 END),--playercomm
@@ -255,7 +264,12 @@ BEGIN
 				SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
 				SUM(CASE WHEN b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
 				SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END), -- AdjBonusWallet
-				SUM(CASE WHEN (b.bettype IN (17000, 17003, 17004, 4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699) OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
+				SUM(CASE
+						WHEN (b.bettype IN (17000, 17003, 17004, 4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
+							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)) THEN b.winlost-b.actual_stake
+						ELSE 0
+					END) -- Promotion
 			FROM dbo.bettrans b WITH (NOLOCK)
 				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
 				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
@@ -264,7 +278,11 @@ BEGIN
 				AND c.roleid = 1
 				AND b.betType <> 999 --Licensee Spread Setting
 			GROUP BY b.custid,
-				CASE WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150 ELSE b.bettype END
+				CASE
+					WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150
+					WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173
+					ELSE b.bettype
+				END
 			OPTION (RECOMPILE, MAXDOP 8)
 
 			INSERT INTO #rptDepWinlostOutstanding (
@@ -283,8 +301,8 @@ BEGIN
 				SELECT tl.custid
 					, tl.productID AS SportType
 					,SUM(CASE WHEN tl.statusID IN (0,1) THEN tl.stake ELSE 0 END) AS TurnOver
-					,SUM(CASE WHEN tl.statusID IN (0,1) THEN tl.actual_stake ELSE 0 END) AS OutStanding 
-					,SUM(CASE WHEN tl.statusID IN (0,1) THEN 1 ELSE 0 END) AS BetCount 
+					,SUM(CASE WHEN tl.statusID IN (0,1) THEN tl.actual_stake ELSE 0 END) AS OutStanding
+					,SUM(CASE WHEN tl.statusID IN (0,1) THEN 1 ELSE 0 END) AS BetCount
 				FROM dbo.translog tl WITH (ROWLOCK)
 					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend
 				WHERE tl.winlostdate = @Winlostdate
@@ -325,27 +343,40 @@ BEGIN
 
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 												, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion)
-			SELECT b.custid, 
-				CASE WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150 ELSE b.bettype END,
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 22001 THEN b.winlost-b.actual_stake ELSE 0 END), --Deposit  
-				-SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22002, 22003) THEN b.winlost-b.actual_stake ELSE 0 END),--Withdrawal  
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 21006 THEN b.winlost-b.actual_stake ELSE 0 END), --Aff2MemTransfer  
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22004, 22202) THEN b.winlost-b.actual_stake ELSE 0 END),--Bonus  
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (21001, 21002, 21003, 21004, 21005, 22005, 22203) THEN b.winlost-b.actual_stake ELSE 0 END),--Adjustment  
+			SELECT b.custid,
+				CASE
+					WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150
+					WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173
+					ELSE b.bettype
+				END,
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 22001 THEN b.winlost-b.actual_stake ELSE 0 END), --Deposit
+				-SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22002, 22003) THEN b.winlost-b.actual_stake ELSE 0 END),--Withdrawal
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 21006 THEN b.winlost-b.actual_stake ELSE 0 END), --Aff2MemTransfer
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22004, 22202) THEN b.winlost-b.actual_stake ELSE 0 END),--Bonus
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (21001, 21002, 21003, 21004, 21005, 22005, 22203) THEN b.winlost-b.actual_stake ELSE 0 END),--Adjustment
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
-				SUM(CASE WHEN (bettype < 19999 OR bettype = 23002) AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding 
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.ruben = 1 AND (b.bettype NOT IN (17000,17003, 17004, 4300,4299,4298,4297,3007, 1906, 1698, 1699)
-					AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)) THEN b.winlost-b.actual_stake ELSE 0 END),--Winloss      
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22006, 22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd   
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame  
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.ruben = 1 THEN b.playercomm ELSE 0 END),--playercomm  	
+				SUM(CASE WHEN (bettype < 19999 OR bettype = 23002) AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
+				SUM(CASE
+						WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.ruben = 1 AND (b.bettype NOT IN (17000, 17003, 17004, 4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
+							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)) THEN b.winlost-b.actual_stake
+						ELSE 0
+					END),--Winloss
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22006, 22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.ruben = 1 THEN b.playercomm ELSE 0 END),--playercomm
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.awinlost ELSE 0 END),--Comm_BetTrade
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--Comm_BetTrade_Full
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END), -- AdjBonusWallet
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND (b.bettype IN(17000,17003, 17004, 4300,4299,4298,4297,3007,1906,1698,1699) OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)) THEN b.winlost-b.actual_stake ELSE 0 END) -- Promotion
+				SUM(CASE
+						WHEN b.winlostdate = @Winlostdate AND (b.bettype IN (17000, 17003, 17004, 4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
+							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)) THEN b.winlost-b.actual_stake
+						ELSE 0
+					END) -- Promotion
 			FROM dbo.bettrans b WITH (NOLOCK)
 				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
 				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
@@ -354,7 +385,11 @@ BEGIN
 				AND c.roleid = 1
 				AND b.betType <> 999 --Licensee Spread Setting
 			GROUP BY b.custid,
-				CASE WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150 ELSE b.bettype END
+				CASE
+					WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150
+					WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173
+					ELSE b.bettype
+				END
 			OPTION (RECOMPILE, MAXDOP 8)
 
 			INSERT INTO #rptDepWinlostOutstanding (
@@ -373,7 +408,7 @@ BEGIN
 				SELECT tl.custid
 					, tl.productID AS SportType
 					,SUM(CASE WHEN tl.winlostdate = @Winlostdate AND tl.statusID IN (0,1) THEN tl.stake ELSE 0 END) AS TurnOver
-					,SUM(CASE WHEN tl.statusID IN (0,1) THEN tl.actual_stake ELSE 0 END) AS OutStanding 
+					,SUM(CASE WHEN tl.statusID IN (0,1) THEN tl.actual_stake ELSE 0 END) AS OutStanding
 					,SUM(CASE WHEN tl.winlostdate = @Winlostdate AND tl.statusID IN (0,1) THEN 1 ELSE 0 END) AS BetCount
 				FROM dbo.translog tl WITH (ROWLOCK)
 					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend
@@ -403,9 +438,9 @@ BEGIN
 			GROUP BY t.custid, t.SportType
 			OPTION(RECOMPILE, OPTIMIZE FOR (@i = 1))
 		END
-		
+
 		--Update Transfer3rdOthers attributes
-		UPDATE #rptDepWinlostDetails 
+		UPDATE #rptDepWinlostDetails
 		SET PartnerID = t.PartnerId,
 			Transfer3rdOthers = t.Transfer3rdOthers,
 			Transfer3rdOthers_In = t.Transfer3rdOthers_In,
@@ -414,7 +449,7 @@ BEGIN
 			SELECT
 				b.custid,
 				p.PartnerId,
-				b.bettype, 
+				b.bettype,
 				SUM(b.winlost-b.actual_stake) AS Transfer3rdOthers,
 				SUM(CASE WHEN (winlost-actual_stake) < 0 THEN -(winlost-actual_stake) ELSE 0 END) AS Transfer3rdOthers_In,
 				SUM(CASE WHEN (winlost-actual_stake) > 0 THEN -(winlost-actual_stake) ELSE 0 END) AS Transfer3rdOthers_Out
@@ -426,7 +461,7 @@ BEGIN
 				p.PartnerId,
 				b.bettype) AS t
 		WHERE #rptDepWinlostDetails.CustID = t.custid AND #rptDepWinlostDetails.Bettype = t.bettype
-		
+
 		/*--PREPARE DATA FOR rptDepWinlost--*/
 		INSERT INTO #rptDepWinlost (
 			CustID,
@@ -452,14 +487,14 @@ BEGIN
 			SUM(Deposit), --Deposit
 			SUM(Withdrawal),--Withdrawal
 			SUM(Aff2MemTransfer), --Aff2MemTransfer
-			SUM(Bonus),--Bonus  
+			SUM(Bonus),--Bonus
 			SUM(Adjustment),--Adjustment
 			SUM(Turnover),--Turnover
 			SUM(Outstanding),--Outstanding
 			SUM(Winloss),--Winloss
 			SUM(Transfer3rd),--Transfer3rd
-			SUM(DrawGame),--DrawGame  
-			SUM(Playercomm),--Playercomm 
+			SUM(DrawGame),--DrawGame
+			SUM(Playercomm),--Playercomm
 			SUM(Transfer3rdOthers),--Transfer3rdOthers
 			SUM(Comm_BetTrade),--Comm_BetTrade
 			SUM(Comm_BetTrade_Full),--Comm_BetTrade_Full
@@ -470,7 +505,7 @@ BEGIN
 		FROM #rptDepWinlostDetails
 		WHERE Bettype NOT IN (913, 914)
 		GROUP BY CustID
-		
+
 		--Update BA attributes
 		UPDATE #rptDepWinlost
 		SET Turnover_BA = ISNULL(t.turnover_ba,0),
@@ -495,7 +530,7 @@ BEGIN
 		WHERE #rptDepWinlost.CustID = t.CustID
 
 		--Update BetTrade attribute
-		UPDATE #rptDepWinlost 
+		UPDATE #rptDepWinlost
 		SET AmountDueTo_BetTrade = ISNULL(t.WLBeticket, 0) + WLBoughtTicket_BetTrade - Comm_BetTrade
 		FROM (
 			SELECT b.custid,
@@ -508,7 +543,7 @@ BEGIN
 				AND b.statusID NOT IN (101, 102, 103)
 			GROUP BY b.custid) t
 		WHERE #rptDepWinlost.custid = t.custid
-		
+
 		--Delete redundant data
 		DELETE FROM #rptDepWinlost
 		WHERE Deposit = 0
@@ -518,7 +553,7 @@ BEGIN
 			AND Adjustment = 0
 			AND TurnOver = 0
 			AND OutStanding = 0
-			AND Winloss = 0 
+			AND Winloss = 0
 			AND Transfer3rd = 0
 			AND DrawGame = 0
 			AND Turnover_BA = 0
@@ -531,7 +566,7 @@ BEGIN
 			AND BonusWallet = 0
 			AND AdjBonusWallet = 0
 			AND Promotion = 0
- 
+
 		DELETE FROM #rptDepWinlostOutstanding
 		WHERE TurnOver = 0
 			AND OutStanding = 0
@@ -542,7 +577,7 @@ BEGIN
 		USING (SELECT CustID, SUM(TurnOver), SUM(OutStanding) FROM #rptDepWinlostOutstanding GROUP BY CustID)
 			AS SOURCE (CustID, TurnOver, OutStanding)
 			ON (TARGET.CustID = SOURCE.CustID)
-		WHEN MATCHED THEN 
+		WHEN MATCHED THEN
 			UPDATE SET TARGET.TurnOver = TARGET.TurnOver + SOURCE.TurnOver,
 						TARGET.Outstanding = TARGET.Outstanding + SOURCE.Outstanding
 		WHEN NOT MATCHED THEN
@@ -550,7 +585,7 @@ BEGIN
 			VALUES (SOURCE.CustID, SOURCE.TurnOver, SOURCE.OutStanding);
 		--End update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
 		/*--END PREPARE DATA FOR rptDepWinlost--*/
-		
+
 		/*--PREPARE DATA FOR rptDepWinlostByProduct--*/
 		INSERT INTO #rptDepWinlostByProduct (
 			CustID,
@@ -564,7 +599,7 @@ BEGIN
 		SELECT
 			CustID,
 			CASE
-				WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game 
+				WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game
 				WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: Happy 5
 				WHEN bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
 				WHEN bettype IN (71,72,23002) THEN 251--Casino
@@ -614,22 +649,25 @@ BEGIN
 				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 				WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+				WHEN bettype BETWEEN 3801 AND 3897 THEN 171 -- VGA
+				WHEN bettype = -173 THEN 173 -- VGA Free Bets
+				WHEN bettype BETWEEN 3898 AND 3899 THEN -171 -- VGA Prize
 				WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 				WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
-			SUM(CASE WHEN bettype IN(17000,17003, 17004, 4299,4300,4298,4297,3007,1906,-150,1698,1699) THEN Promotion ELSE Winloss END),--Winloss
+			SUM(CASE WHEN bettype IN (17000, 17003, 17004, 4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173) THEN Promotion ELSE Winloss END),--Winloss
 			SUM(playercomm),--Playercomm
 			SUM(BetCount),--BetCount
-			SUM(OutStanding)--Outstanding 
+			SUM(OutStanding)--Outstanding
 		FROM #rptDepWinlostDetails
 		WHERE Bettype < 19999
 			AND PartnerID = -1
 		GROUP BY
 			CustID,
 			CASE
-				WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game 
+				WHEN bettype BETWEEN 81 AND 120 THEN 161--Number Game
 				WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: Happy 5
 				WHEN bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
 				WHEN bettype IN (71,72,23002) THEN 251--Casino
@@ -679,6 +717,9 @@ BEGIN
 				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 				WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+				WHEN bettype BETWEEN 3801 AND 3897 THEN 171 -- VGA
+				WHEN bettype = -173 THEN 173 -- VGA Free Bets
+				WHEN bettype BETWEEN 3898 AND 3899 THEN -171 -- VGA Prize
 				WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 				WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG			
 				ELSE 0
@@ -689,7 +730,7 @@ BEGIN
 		USING (SELECT CustID, SportType, TurnOver, OutStanding, BetCount FROM #rptDepWinlostOutstanding)
 			AS SOURCE (CustID, SportType, TurnOver, OutStanding, BetCount)
 			ON (TARGET.CustID = SOURCE.CustID AND TARGET.SportType = SOURCE.SportType)
-		WHEN MATCHED THEN 
+		WHEN MATCHED THEN
 			UPDATE SET TARGET.TurnOver = TARGET.TurnOver + SOURCE.TurnOver,
 						TARGET.Outstanding = TARGET.Outstanding + SOURCE.Outstanding,
 						TARGET.BetCount = TARGET.BetCount + SOURCE.BetCount
@@ -698,7 +739,7 @@ BEGIN
 			VALUES (SOURCE.CustID, SOURCE.SportType, SOURCE.TurnOver, SOURCE.OutStanding, SOURCE.BetCount);
 		--End update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
 		/*--END PREPARE DATA FOR rptDepWinlostByProduct--*/
-		
+
 		/*--PREPARE DATA FOR rptDepWinlostTransfer3rdOthers--*/
 		DECLARE @RefNoList AS TABLE (RefNo BIGINT)
 		DECLARE @TransferData AS TABLE (CustId INT, PartnerID INT, TransferIn MONEY, TransferOut MONEY)
@@ -742,7 +783,7 @@ BEGIN
 			, SUM(t.Transfer3rdOthers_In - ISNULL(d.TransferIn, 0))--TransferIn
 			, SUM(t.Transfer3rdOthers_Out - ISNULL(d.TransferOut, 0))--TransferOut
 		FROM #rptDepWinlostDetails t
-			INNER JOIN dbo.customer c WITH (NOLOCK) ON t.custid = c.custid  
+			INNER JOIN dbo.customer c WITH (NOLOCK) ON t.custid = c.custid
 			INNER JOIN dbo.customer agent WITH (NOLOCK) ON c.recommend = agent.custid
 			LEFT JOIN @TransferData d ON t.custid = d.CustId AND t.PartnerId = d.PartnerId
 		WHERE t.PartnerId > -1
@@ -795,7 +836,7 @@ BEGIN
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, TransferAmount, TransferIn, TransferOut)
 		SELECT @Winlostdate, CustID, -1, PartnerID, TransferAmount, TransferIn, TransferOut
 		FROM #rptDepWinlostTransfer3rdOthers
-		
+
 		--For rptDepWinlost_BonusWallet
 		INSERT INTO bodb_Report.dbo.rptDepWinlost_BonusWallet(Winlostdate, CustID, BonusType, Bonus, Adjustment)
 		SELECT @Winlostdate, CustID, BonusType, Bonus, Adjustment
@@ -818,7 +859,7 @@ BEGIN
 			@ErrMsg = LEFT(ERROR_MESSAGE(),1000)
 		SELECT @LogDesc = @LogDesc + '; Type: realtime' + '; ErrMsg: ' + @ErrMsg
 
-		UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK) 
+		UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK, UPDLOCK)
 		SET
 			EndTime = CURRENT_TIMESTAMP,
 			LogDesc = @LogDesc,
@@ -828,7 +869,7 @@ BEGIN
 		PRINT 'EXEC TASK_RealtimeSummaryDepData, Winlostdate = ' + CONVERT(VARCHAR(20), @Winlostdate, 120) + ', ErrMsg: ' + ERROR_MESSAGE()
 	END CATCH
 
-	DROP TABLE #rptDepWinlostDetails 
+	DROP TABLE #rptDepWinlostDetails
 	DROP TABLE #rptDepWinlost
 	DROP TABLE #rptDepWinlostByProduct
 	DROP TABLE #rptDepWinlostTransfer3rdOthers
