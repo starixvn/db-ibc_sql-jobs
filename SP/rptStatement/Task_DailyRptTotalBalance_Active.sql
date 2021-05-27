@@ -13,6 +13,7 @@ AS
 		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
 		- 20200310@Bobby: Remove readpast hint and improve index seek [RedmineID: #130122]
 		- 20201008@Percy: Get SMA from bettrans instead of custinfo table [RedmineID: #142953]
+		- 20210527@Danny: Enhance merge statement [RedmineID: #154536]
  */
 
 BEGIN
@@ -54,6 +55,9 @@ BEGIN
 		, mwinlost MONEY
 		, swinlost MONEY
 	)
+
+	CREATE TABLE #data_merge (ModifiedType TINYINT, CustId INT, OpeningTotalBalance MONEY, OpeningBalance MONEY)
+	CREATE CLUSTERED INDEX cix_ModifiedType ON #data_merge(ModifiedType)
 
 	IF @Winlostdate = DATEADD(DD, 1, @MovebetDay)    ---> first day on bettrans.OpeningBalance = last day on rptStatement.ClosingBalance
 	BEGIN 
@@ -144,27 +148,62 @@ BEGIN
 			END
 			ELSE 
 			BEGIN
-				-- correct data
-				MERGE dbo.RptTotalBalance_Active AS TARGET
-				USING #tmpRptTotalBalance_Active AS SOURCE
-						ON	TARGET.Winlostdate  = @WinlostDate
-						AND TARGET.CustId		= SOURCE.CustId
-						 
-				WHEN MATCHED AND (
-					TARGET.OpeningBalance <> SOURCE.OpeningBalance
-					OR TARGET.OpeningTotalBalance <> SOURCE.OpeningTotalBalance) 
-					AND TARGET.Winlostdate  = @WinlostDate THEN
-				UPDATE SET
-					TARGET.OpeningBalance = SOURCE.OpeningBalance,		
-					TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
-					
-				WHEN NOT MATCHED BY TARGET THEN
-					INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
-					VALUES (SOURCE.custid, @WinlostDate, SOURCE.openingbalance, SOURCE.openingtotalbalance) 
+					-- Enhance here
+				-- Getdata for merge
+				TRUNCATE TABLE #data_merge
+
+				;WITH CTE AS 
+				(
+					SELECT CustId, OpeningBalance, OpeningTotalBalance
+					FROM dbo.RptTotalBalance_Active WITH (NOLOCK)
+					WHERE winlostdate = @WinlostDate 
+				)
+				INSERT INTO #data_merge(ModifiedType, CustId, OpeningBalance, OpeningTotalBalance)
+				SELECT CASE	WHEN t.CustId IS NULL THEN 1 -- delete
+							WHEN u.CustId IS NULL THEN 2 -- insert
+							WHEN t.OpeningTotalBalance <> u.OpeningTotalBalance OR t.OpeningBalance <> u.OpeningBalance THEN 3 -- update
+							END AS ModifiedType,
+						ISNULL(t.CustId, u.CustId) AS CustId,
+						t.OpeningBalance,
+						t.OpeningTotalBalance
 				
-				WHEN NOT MATCHED BY SOURCE AND TARGET.winlostdate = @Winlostdate THEN
-					DELETE
-				;
+				FROM #tmpRptTotalBalance_Active t
+				FULL OUTER JOIN  CTE u ON t.CustId = u.CustID
+				WHERE t.CustId IS NULL 
+					OR u.CustId IS NULL
+					OR (
+							t.CustId IS NOT NULL 
+							AND  u.CustId IS NOT NULL
+							AND (t.OpeningTotalBalance <> u.OpeningTotalBalance OR t.OpeningBalance <> u.OpeningBalance)
+						)
+
+				-- correct data
+				IF EXISTS (SELECT 1 FROM #data_merge WHERE ModifiedType = 3)
+				BEGIN
+					UPDATE r
+					SET r.OpeningBalance = d.OpeningBalance,
+						r.OpeningTotalBalance = d.OpeningTotalBalance
+					FROM dbo.RptTotalBalance_Active r WITH (ROWLOCK)
+					INNER JOIN #data_merge d ON r.CustID = d.CustId
+					WHERE r.WinlostDate = @WinlostDate AND  d.ModifiedType = 3
+				END
+
+				IF EXISTS (SELECT 1 FROM #data_merge WHERE ModifiedType = 2)
+				BEGIN
+					INSERT INTO dbo.RptTotalBalance_Active(WinlostDate, OpeningTotalBalance, OpeningBalance)
+					SELECT @WinlostDate , d.OpeningTotalBalance, d.OpeningBalance
+					FROM #data_merge d
+					WHERE d.ModifiedType = 2
+				END
+
+				IF EXISTS (SELECT 1 FROM #data_merge WHERE ModifiedType = 1)
+				BEGIN
+					DELETE r WITH (ROWLOCK, UPDLOCK)
+					FROM dbo.RptTotalBalance_Active r
+						INNER JOIN #data_merge d ON d.CustID = r.CustID
+					WHERE r.WinlostDate = @WinlostDate
+						AND d.ModifiedType = 1
+				END
 			END
 		END
 		ELSE
@@ -304,27 +343,62 @@ BEGIN
 			END
 			ELSE 
 			BEGIN
-				-- correct data
-				MERGE dbo.RptTotalBalance_Active AS TARGET
-				USING #tmpRptTotalBalance_Active AS SOURCE
-						ON	TARGET.Winlostdate  = @WinlostDate
-						AND TARGET.CustId		= SOURCE.CustId
-						 
-				WHEN MATCHED AND (
-					TARGET.OpeningBalance <> SOURCE.OpeningBalance
-					OR TARGET.OpeningTotalBalance <> SOURCE.OpeningTotalBalance) 
-					AND TARGET.Winlostdate  = @WinlostDate THEN
-				UPDATE SET
-					TARGET.OpeningBalance = SOURCE.OpeningBalance,		
-					TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
-					
-				WHEN NOT MATCHED BY TARGET THEN
-				INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
-				VALUES (SOURCE.custid, @WinlostDate, SOURCE.openingbalance, SOURCE.openingtotalbalance) 
+					-- Enhance here
+				-- Getdata for merge
+				TRUNCATE TABLE #data_merge
+
+				;WITH CTE AS 
+				(
+					SELECT CustId, OpeningBalance, OpeningTotalBalance
+					FROM dbo.RptTotalBalance_Active WITH (NOLOCK)
+					WHERE winlostdate = @WinlostDate 
+				)
+				INSERT INTO #data_merge(ModifiedType, CustId, OpeningBalance, OpeningTotalBalance)
+				SELECT CASE	WHEN t.CustId IS NULL THEN 1 -- delete
+							WHEN u.CustId IS NULL THEN 2 -- insert
+							WHEN t.OpeningTotalBalance <> u.OpeningTotalBalance OR t.OpeningBalance <> u.OpeningBalance THEN 3 -- update
+							END AS ModifiedType,
+						ISNULL(t.CustId, u.CustId) AS CustId,
+						t.OpeningBalance,
+						t.OpeningTotalBalance
 				
-				WHEN NOT MATCHED BY SOURCE AND TARGET.winlostdate = @Winlostdate THEN
-				DELETE
-				;
+				FROM #tmpRptTotalBalance_Active t
+				FULL OUTER JOIN  CTE u ON t.CustId = u.CustID
+				WHERE t.CustId IS NULL 
+					OR u.CustId IS NULL
+					OR (
+							t.CustId IS NOT NULL 
+							AND  u.CustId IS NOT NULL
+							AND (t.OpeningTotalBalance <> u.OpeningTotalBalance OR t.OpeningBalance <> u.OpeningBalance)
+						)
+
+				-- correct data
+				IF EXISTS (SELECT 1 FROM #data_merge WHERE ModifiedType = 3)
+				BEGIN
+					UPDATE r
+					SET r.OpeningBalance = d.OpeningBalance,
+						r.OpeningTotalBalance = d.OpeningTotalBalance
+					FROM dbo.RptTotalBalance_Active r WITH (ROWLOCK)
+					INNER JOIN #data_merge d ON r.CustID = d.CustId
+					WHERE r.WinlostDate = @WinlostDate AND  d.ModifiedType = 3
+				END
+
+				IF EXISTS (SELECT 1 FROM #data_merge WHERE ModifiedType = 2)
+				BEGIN
+					INSERT INTO dbo.RptTotalBalance_Active(WinlostDate, OpeningTotalBalance, OpeningBalance)
+					SELECT @WinlostDate , d.OpeningTotalBalance, d.OpeningBalance
+					FROM #data_merge d
+					WHERE d.ModifiedType = 2
+				END
+
+				IF EXISTS (SELECT 1 FROM #data_merge WHERE ModifiedType = 1)
+				BEGIN
+					DELETE r WITH (ROWLOCK, UPDLOCK)
+					FROM dbo.RptTotalBalance_Active r
+						INNER JOIN #data_merge d ON d.CustID = r.CustID
+					WHERE r.WinlostDate = @WinlostDate
+						AND d.ModifiedType = 1
+				END
 			END
 		END
 		ELSE
@@ -332,7 +406,7 @@ BEGIN
 			SELECT 'There is nothing changes on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
 		END	
 	END
-	
+	DROP TABLE #data_merge
 	DROP TABLE #rptOpenningBalanceTable
 	DROP TABLE #tmpRptTotalBalance_Active
 END
