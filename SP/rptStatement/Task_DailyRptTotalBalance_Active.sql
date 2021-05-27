@@ -56,9 +56,6 @@ BEGIN
 		, swinlost MONEY
 	)
 
-	CREATE TABLE #data_merge (ModifiedType TINYINT, CustId INT, OpeningTotalBalance MONEY, OpeningBalance MONEY)
-	CREATE CLUSTERED INDEX cix_ModifiedType ON #data_merge(ModifiedType)
-
 	IF @Winlostdate = DATEADD(DD, 1, @MovebetDay)    ---> first day on bettrans.OpeningBalance = last day on rptStatement.ClosingBalance
 	BEGIN 
 		--> GET full cust back to the previous saturday
@@ -165,9 +162,6 @@ BEGIN
 				WHEN NOT MATCHED BY TARGET THEN
 					INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
 					VALUES (SOURCE.custid, @WinlostDate, SOURCE.openingbalance, SOURCE.openingtotalbalance) 
-				
-				--WHEN NOT MATCHED BY SOURCE AND TARGET.winlostdate = @Winlostdate THEN
-				--	DELETE
 				;
 
 				DELETE t
@@ -330,9 +324,6 @@ BEGIN
 				WHEN NOT MATCHED BY TARGET THEN
 					INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
 					VALUES (SOURCE.custid, @WinlostDate, SOURCE.openingbalance, SOURCE.openingtotalbalance) 
-				
-				--WHEN NOT MATCHED BY SOURCE AND TARGET.winlostdate = @Winlostdate THEN
-				--	DELETE
 				;
 
 				DELETE t
@@ -346,7 +337,6 @@ BEGIN
 			SELECT 'There is nothing changes on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
 		END	
 	END
-	DROP TABLE #data_merge
 	DROP TABLE #rptOpenningBalanceTable
 	DROP TABLE #tmpRptTotalBalance_Active
 END
