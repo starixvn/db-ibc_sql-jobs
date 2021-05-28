@@ -18,6 +18,7 @@ AS
 		- 20200624@Max: Update Rule for Saba.Club, Modify Rule check Discount [Redmine: #136362]
 		- 20200722@Max: Update Rule for Saba.Club - Exclude bettype 1631 - [Redmine: #138117]
 		- 20201007@July:  Saba.club - Data Integrity/Consistency Detection for Free Bets and Blackjack - [Redmine:#140425]
+		- 20210527@July: Check Data Consistency - Exclue bettype BlackJack for VGaming - [Redmine:#155762]
 	
 	Param's Expanation:
 */
@@ -56,6 +57,15 @@ BEGIN
 				AND b.statusID = 0
 				AND b.matchid = @ProductId
 				AND b.bettype NOT IN (1622, 1631, 1634) --Exclude Keno Pro Viet, Bola Kangtas, Blackjack 
+	END
+	ELSE IF @ProductId  IN (171,173) -- 171: VGaming - 173: VGaming FreeBets
+	BEGIN
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+		WHERE	 b.winlostdate = @yesterday
+				AND b.statusID = 0
+				AND b.matchid = @ProductId
+				AND b.bettype NOT IN (3820) --Exclude Blackjack 
 	END
 	ELSE
 	BEGIN
