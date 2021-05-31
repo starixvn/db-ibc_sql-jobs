@@ -47,7 +47,7 @@ BEGIN
 			INSERT @tblCheckCashOut (transid, bettype, OriginalBetType, statusId, winlostdate)
 			SELECT b.transid, b.bettype, sub911.OriginalBetType, b.statusId, sub911.winlostdate
 			FROM @tblCheckCashOut sub911
-			CROSS APPLY (SELECT b.*
+			CROSS APPLY (SELECT b.transid, b.bettype, b.statusID
 								  FROM bodb02.dbo.bettrans b WITH(NOLOCK)
 								  WHERE	sub911.transid = b.refno
 									AND sub911.matchid = b.matchid
@@ -86,7 +86,7 @@ BEGIN
 			INSERT @tblCheckCashOut (transid, bettype, OriginalBetType, statusId, winlostdate)
 			SELECT b.transid, b.bettype, sub911.OriginalBetType, b.statusId, sub911.winlostdate
 			FROM @tblCheckCashOut sub911
-			CROSS APPLY (SELECT b.*
+			CROSS APPLY (SELECT b.transid, b.bettype, b.statusID
 									FROM bodb02.dbo.bettrans b WITH(NOLOCK)
 									WHERE	sub911.transid = b.refno
 									AND sub911.matchid = b.matchid
