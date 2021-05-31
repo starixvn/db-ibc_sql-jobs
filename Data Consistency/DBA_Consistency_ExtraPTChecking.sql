@@ -19,6 +19,7 @@ AS
 		- 20210120@Danny: Add rule to check consistency of extraPT [Redmine: #125883]
 		- 20210423@Danny: exclude ticket Void/Reject/Refund [Redmine: #153907]
 		- 20210518@Danny: Exclude Jackpot ticket [Redmine: #153924]
+		- 20210531@Danny: Exclude orphan ticket from job check Epositiontaking IS NULL [Redmine: #156063]
 	
 	Param's Expanation:
 		@Duration = 'hour', 'lastday'
@@ -213,6 +214,7 @@ BEGIN
 		WHERE 	b.Epositiontaking IS NULL		
 				AND b.winlostdate = @Winlostdate			
 				AND b.bettype < 19001
+				AND b.custid > 0
 				
 		
 		------I.II.b. translog
@@ -221,7 +223,7 @@ BEGIN
 		FROM bodb02.dbo.translog b WITh (NOLOCK) 
 		WHERE b.Epositiontaking IS NULL
 				AND b.WinlostDate = @Winlostdate			
-				  
+				AND b.custid > 0  
 
 		------I.II.c. BettransRNG
 		INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)			
@@ -229,7 +231,7 @@ BEGIN
 		FROM  bodb02.dbo.BettransRNG b WITH(NOLOCK)
 		WHERE b.Epositiontaking IS NULL
 				AND b.winlostdate = @Winlostdate	
-				  
+				AND b.custid > 0 
 
 
 		------I.II.c. BettransLC	
@@ -238,7 +240,7 @@ BEGIN
 		FROM   bodb02.dbo.BettransLC b WITH(NOLOCK)
 		WHERE  b.Epositiontaking IS NULL
 				AND b.winlostdate = @Winlostdate
-					
+				AND b.custid > 0	
 
 		SELECT @transId = ''
 		SELECT TOP (10) @transId = @transId + ',' + CAST(transId AS VARCHAR)
