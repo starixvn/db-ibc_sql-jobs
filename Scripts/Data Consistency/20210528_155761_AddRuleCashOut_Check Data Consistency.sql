@@ -30,7 +30,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check if main bet ticket is Voided
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
- ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
+ ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
  ,@ActiveStartDate = '2021-05-28' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:15'
@@ -56,7 +56,7 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Check if Cashout ticket 911 is Voi
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
  ,@FrequenceInterval = 1 -- every xx days
  ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
- ,@FrequenceSubDayInterval = 1 -- specified time: 0; <> 0: every FrequenceSubDayType
+ ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
  ,@ActiveStartDate = '2021-05-28' 
  ,@ActiveEndDate = NULL
  ,@ActiveStartTime  = '00:15'

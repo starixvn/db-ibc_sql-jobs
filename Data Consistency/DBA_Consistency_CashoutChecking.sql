@@ -18,10 +18,10 @@ AS
 */
 BEGIN
 	DECLARE @transId VARCHAR(MAX)
-			,@Today DATETIME 
+			,@yesterday DATETIME 
 
 	SET @transId = ''
-	SET @Today = CAST(GETDATE() AS DATE)
+	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
 
 	DECLARE @tblCheckCashOut TABLE (matchid INT, transid BIGINT, bettype SMALLINT , OriginalBetType SMALLINT, statusId TINYINT, winlostdate SMALLDATETIME)
 
@@ -42,7 +42,7 @@ BEGIN
 					AND main.statusID IN (101,102) --Rejected, Void
 					AND main.betdaqid = 0
 					AND CHARINDEX ('p25',main.extrainfo)> 0
-					AND main.winlostdate = @Today
+					AND main.winlostdate = @yesterday
 
 			INSERT @tblCheckCashOut (transid, bettype, OriginalBetType, statusId, winlostdate)
 			SELECT b.transid, b.bettype, sub911.OriginalBetType, b.statusId, sub911.winlostdate
@@ -54,7 +54,7 @@ BEGIN
 									AND b.bettype IN (sub911.OriginalBetType, 912, 913) -- Dummy Cashout BetTicket, 912, 913
 									AND b.statusID NOT IN (101,102)
 						)b
-			WHERE sub911.winlostdate = @Today
+			WHERE sub911.winlostdate = @yesterday
 
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM @tblCheckCashOut
@@ -81,7 +81,7 @@ BEGIN
 							AND main.matchid = sub.matchid
 			WHERE	 sub.bettype = 911 -- SOLD tickets
 					AND sub.statusID = 102 --Voided
-					AND main.winlostdate = @Today
+					AND main.winlostdate = @yesterday
 
 			INSERT @tblCheckCashOut (transid, bettype, OriginalBetType, statusId, winlostdate)
 			SELECT b.transid, b.bettype, sub911.OriginalBetType, b.statusId, sub911.winlostdate
@@ -93,7 +93,7 @@ BEGIN
 									AND b.bettype IN (sub911.OriginalBetType, 912, 913) -- Dummy Cashout BetTicket, 912, 913
 									AND b.statusID NOT IN (102) 
 						)b
-			WHERE sub911.winlostdate = @Today
+			WHERE sub911.winlostdate = @yesterday
 
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM @tblCheckCashOut
