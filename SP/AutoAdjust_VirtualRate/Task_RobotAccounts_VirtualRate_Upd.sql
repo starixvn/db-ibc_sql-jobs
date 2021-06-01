@@ -10,6 +10,7 @@ AS
 		- 20200114@Johnson: initial sp [redmine:#126998]
 		- 20200221@Johnson: adjust VR setting = 0 for Basketball [Redmine:#128966]
 		- 20200617@Eden: Virtual Rate for Basketball [Redmine: #134978] 
+		- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -23,7 +24,7 @@ BEGIN
 	SET @startRun = GETDATE() 
 	
 	INSERT INTO #tblCust(custid)
-	EXEC DBONUSER.ON_USER.dbo.Task_RobotAccountsIBO_Sel
+	EXEC dbo.Task_RobotAccountsIBO_Sel_Wrapper
 			
 	UPDATE t
 	SET isBA = 1
