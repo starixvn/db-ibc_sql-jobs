@@ -167,14 +167,14 @@ IF CAST(@today as date) between '20180709' and '20180718'-- one week after EC
 BEGIN
 	 CREATE TABLE #DefaultMovebetConfig
 	 (
-		_weekDay SmallInt, 
+		_weekDay SMALLINT, 
 		IsBackDay1 BIT,  
 		IsBackDay2 BIT,
 		IsBackDay3 BIT,
 		IsBackDay4 BIT,
 		IsBackDay5 BIT,
 		IsBackDay6 BIT,
-		IsBackDay7 BIT,   
+		IsBackDay7 BIT  
 	)
 	--- Get default schedule
 	Insert into #DefaultMovebetConfig(_weekDay,IsBackDay1, IsBackDay2, IsBackDay3,IsBackDay4, IsBackDay5,IsBackDay6,IsBackDay7)  VALUES (1, 0, 0, 0,0,0,0,0)
