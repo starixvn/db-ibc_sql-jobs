@@ -20,6 +20,7 @@ AS
 		- 20200707@Percy: Integrate new product: KY Gaming [RedmineID: #131437]
 		- 20200827@Percy: Re-Integrate 12Topaz due to API's change [RedmineID: #139043]
 		- 20201216@Percy: Integrate new product: BTi [RedmineID: #144456]
+		- 20210602@Percy: Change formula of 12Topaz & BTi [RedmineID: #156324]
 */
 
 BEGIN
@@ -294,7 +295,7 @@ BEGIN
 			mi.IBCCustId,
 			mi.currency,
 			SUM(t.wager/CASE WHEN mi.Currency IN (15,22,33,34,51) THEN 1000.0 ELSE 1.0 END) AS Turnover, -- IDR, VND amount divide by 1000
-			SUM(t.revenue/CASE WHEN mi.Currency IN (15,22,33,34,51) THEN 1000.0 ELSE 1.0 END) AS Winloss -- IDR, VND amount divide by 1000
+			SUM((t.payout - t.wager) /CASE WHEN mi.Currency IN (15,22,33,34,51) THEN 1000.0 ELSE 1.0 END) AS Winloss -- IDR, VND amount divide by 1000
 		FROM dbo.bettrans_Topaz2 t WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON t.IBCCustId = mi.IBCCustId
 		WHERE t.WinlostDate = @WinlostDate
@@ -364,7 +365,7 @@ BEGIN
 				WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
 					AND mi.IBCCustId = mr.IBCCustId
 			)
-			AND b.BetStatus IN ('Won', 'Lost', 'Half won', 'Half lost', 'Draw')
+			AND b.BetStatus IN ('Won', 'Lost', 'Half won', 'Half lost', 'Draw', 'Cashout')
 		GROUP BY
 			mi.AffId,
 			mi.IBCCustId,
