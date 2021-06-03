@@ -140,7 +140,7 @@ BEGIN
 
 		DELETE p
 		FROM dbo.rpt_BettingByProduct p
-		WHERE p.rptDate >= @date AND p.rptDate < @date2
+		WHERE p.rptDate >= @fromDate AND p.rptDate < @toDate
 			AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange
 			AND (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList))
 
