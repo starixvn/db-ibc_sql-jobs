@@ -1,13 +1,13 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[ExecRep_11] 
-		@MBDate			SMALLDATETIME,
-		@IsBackDay1		BIT,
-		@IsBackDay2		BIT,
-		@IsBackDay3		BIT,
-		@IsBackDay4		BIT,
-		@IsBackDay5		BIT,
-		@IsBackDay6		BIT,
-		@IsBackDay7		BIT 
+		@MBDate			SMALLDATETIME = NULL,
+		@IsBackDay1		BIT = 0,
+		@IsBackDay2		BIT = 0,
+		@IsBackDay3		BIT = 0,
+		@IsBackDay4		BIT = 0,
+		@IsBackDay5		BIT = 0,
+		@IsBackDay6		BIT = 0 ,
+		@IsBackDay7		BIT = 0
 AS
 /*
  	Creator: 20210323@Patrick
