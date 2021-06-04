@@ -23,6 +23,7 @@ AS
 		- 20201214@Danny: Separate Data of Virtual Soccer & Virtual Basketball [RedmineID: #145926]
 		- 20210225@Danny: Incorporate BetBuilder - Basketball on PRMS [RedmineID: #150652]
 		- 20210319@Danny: Incorporate Cricket AIO into PRMS [RedmineID: #151319]
+		- 20210604@Danny: Add New League Group for Saba Sports [RedmineID: #156453]
 */
 
 BEGIN
@@ -92,7 +93,7 @@ BEGIN
 
 			-- bettransm
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
 			FROM dbo.rmBettrans b WITH (NOLOCK)
 				INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
@@ -101,7 +102,7 @@ BEGIN
 			
 			-- bettransm14
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
 			FROM dbo.rmBettrans b WITH (NOLOCK)
 				INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
@@ -110,7 +111,7 @@ BEGIN
 
 			-- bettrans_bk
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
 			FROM dbo.rmBettrans b WITH (NOLOCK)
 				INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
@@ -305,7 +306,7 @@ BEGIN
 
 			-- bettransm
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
 			FROM #rmBettrans b 
 				INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
@@ -314,7 +315,7 @@ BEGIN
 			
 			-- bettransm14
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
 			FROM #rmBettrans b 
 				INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
@@ -323,7 +324,7 @@ BEGIN
 
 			-- bettrans_bk
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
+			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
 			FROM #rmBettrans b 
 				INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
