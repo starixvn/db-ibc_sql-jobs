@@ -20,9 +20,8 @@ AS
 
 BEGIN
 	SET NOCOUNT ON;
-	IF  OBJECT_ID(N'dbo.Acc_ManualMovebetConfig', N'U') IS NOT NULL
+	IF  (@@SERVERNAME IN ('SITDBTRANS', 'DBTRANS', 'DB230', 'DB206') AND OBJECT_ID(N'dbo.Acc_ManualMovebetConfig', N'U') IS NOT NULL)
 	BEGIN
-
 		IF EXISTS (SELECT 1 FROM dbo.Acc_ManualMovebetConfig WITH(NOLOCK) WHERE MBDate = @MBDate)
 		BEGIN
 			UPDATE  t
