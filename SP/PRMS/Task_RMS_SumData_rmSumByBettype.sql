@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20200601@Percy: Initialize SP [RedmineID: #135326]
 		- 20210111@Danny: Enhance performance (get data from bettrans_bk) [RedmineID: #123157]
+		- 20210607@Danny: Move 'Saba789' to Credit Site  [RedmineID: #153874]
 */
 
 BEGIN
@@ -90,17 +91,18 @@ BEGIN
 			AND r.statusID IN (111, 112, 113, 101, 102)
 			AND r.currency <> 20
 
-		IF @winlostdate <= DATEADD(DAY, 7, @BalanceUpDay)
-		BEGIN
-			
-			DECLARE @__query NVARCHAR(MAX), @__sqlCmd NVARCHAR(MAX), @isByBettype BIT = 1
-			SELECT  @__query = N''		
-			SELECT	@__query = @__query + N'EXEC Task_RMS_ARC_rmBettrans_Old_byLeagueOrBettype_Sel @winlostdate, @isByBettype'
-			SELECT	@__sqlCmd = N'EXECUTE DBARC.bodb_archive.dbo.sp_executesql @query, N''@winlostdate SMALLDATETIME, @isByBettype BIT'', @winlostdate, @isByBettype'
+	END
 
-			INSERT INTO #bettransmbk (refno, bettype, statusID, leagueid)
-			EXECUTE	sys.sp_executesql @__sqlCmd, N'@query NVARCHAR(MAX), @winlostdate SMALLDATETIME, @isByBettype BIT', @__query, @winlostdate, @isByBettype
-		END
+	-- get data from backup range
+	BEGIN
+			
+		DECLARE @__query NVARCHAR(MAX), @__sqlCmd NVARCHAR(MAX), @isByBettype BIT = 1
+		SELECT  @__query = N''		
+		SELECT	@__query = @__query + N'EXEC Task_RMS_ARC_rmBettrans_Old_byLeagueOrBettype_Sel @winlostdate, @isByBettype'
+		SELECT	@__sqlCmd = N'EXECUTE DBARC.bodb_archive.dbo.sp_executesql @query, N''@winlostdate SMALLDATETIME, @isByBettype BIT'', @winlostdate, @isByBettype'
+
+		INSERT INTO #bettransmbk (refno, bettype, statusID, leagueid)
+		EXECUTE	sys.sp_executesql @__sqlCmd, N'@query NVARCHAR(MAX), @winlostdate SMALLDATETIME, @isByBettype BIT', @__query, @winlostdate, @isByBettype
 	END
 
 	WHILE 1 = 1
