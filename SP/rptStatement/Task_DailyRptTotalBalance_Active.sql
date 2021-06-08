@@ -13,6 +13,7 @@ AS
 		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
 		- 20200310@Bobby: Remove readpast hint and improve index seek [RedmineID: #130122]
 		- 20201008@Percy: Get SMA from bettrans instead of custinfo table [RedmineID: #142953]
+		- 20210527@Danny: Enhance merge statement [RedmineID: #154536]
  */
 
 BEGIN
@@ -161,10 +162,12 @@ BEGIN
 				WHEN NOT MATCHED BY TARGET THEN
 					INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
 					VALUES (SOURCE.custid, @WinlostDate, SOURCE.openingbalance, SOURCE.openingtotalbalance) 
-				
-				WHEN NOT MATCHED BY SOURCE AND TARGET.winlostdate = @Winlostdate THEN
-					DELETE
 				;
+
+				DELETE t
+				FROM dbo.RptTotalBalance_Active t  WITH(ROWLOCK, UPDLOCK)
+				where t.Winlostdate = @WinlostDate
+				AND NOT EXISTS (select 1 from #tmpRptTotalBalance_Active u where u.custid=t.custid )
 			END
 		END
 		ELSE
@@ -319,12 +322,14 @@ BEGIN
 					TARGET.OpeningTotalBalance = SOURCE.OpeningTotalBalance	
 					
 				WHEN NOT MATCHED BY TARGET THEN
-				INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
-				VALUES (SOURCE.custid, @WinlostDate, SOURCE.openingbalance, SOURCE.openingtotalbalance) 
-				
-				WHEN NOT MATCHED BY SOURCE AND TARGET.winlostdate = @Winlostdate THEN
-				DELETE
+					INSERT (custid, winlostdate, openingbalance, Openingtotalbalance)
+					VALUES (SOURCE.custid, @WinlostDate, SOURCE.openingbalance, SOURCE.openingtotalbalance) 
 				;
+
+				DELETE t
+				FROM dbo.RptTotalBalance_Active t  WITH(ROWLOCK, UPDLOCK)
+				where t.Winlostdate = @WinlostDate
+				AND NOT EXISTS (select 1 from #tmpRptTotalBalance_Active u where u.custid=t.custid )
 			END
 		END
 		ELSE
@@ -332,7 +337,6 @@ BEGIN
 			SELECT 'There is nothing changes on ' + CONVERT(VARCHAR(10), @WinlostDate, 112)
 		END	
 	END
-	
 	DROP TABLE #rptOpenningBalanceTable
 	DROP TABLE #tmpRptTotalBalance_Active
 END
