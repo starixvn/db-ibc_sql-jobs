@@ -5,7 +5,8 @@ ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct]
 	@date2				DATE			= NULL,
 	@DataSource			VARCHAR(20)		= 'All',
 	@SeparatedProductID	TINYINT			= 0,
-	@ProductCodes		VARCHAR(1000)	= ''
+	@ProductCodes		VARCHAR(1000)	= '',
+	@IsManual			BIT				= 0
 AS
 
 /*
@@ -84,6 +85,7 @@ AS
 		- 20210517@Danny: Integrate VGaming [Redmine: #154080]
 		- 20210518@Danny: Integrate AdvantPlay mini [Redmine: #155208]
 		- 20210518@Danny: Integrate AdvantPlay [Redmine: #154787]
+		- 20210422@Danny: Enhance step to Generate rpt_BettingByProduct with Rpt_Betting datasource [Redmine: #153805]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -122,9 +124,23 @@ BEGIN
 
 	IF @DataSource IN ('ALL', 'Rpt_Betting')
 	BEGIN
+		DECLARE @fromDate DATE, @toDate DATE
+
+		SELECT @fromDate = min(winlostdate) FROM bodb02.dbo.bettrans14 (NOLOCK) 
+		SET @toDate =  @date2 
+
+		IF @date BETWEEN @fromDate AND  DATEADD(DAY, -3, @toDate) AND @IsManual = 0
+		BEGIN
+			SELECT @fromDate = DATEADD(DAY, -3, @toDate) --yesterday - 2
+		END
+		ELSE
+		BEGIN
+			SELECT  @fromDate = @date
+		END
+
 		DELETE p
 		FROM dbo.rpt_BettingByProduct p
-		WHERE p.rptDate >= @date AND p.rptDate < @date2
+		WHERE p.rptDate >= @fromDate AND p.rptDate < @toDate
 			AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange
 			AND (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList))
 
@@ -197,7 +213,7 @@ BEGIN
 			,TicketType
 		FROM dbo.rpt_Betting b WITH (NOLOCK)
 			INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
-		WHERE b.rptDate >= @date AND b.rptDate < @date2
+		WHERE b.rptDate >= @fromDate AND b.rptDate < @toDate
 			AND b.Status IN (111,112,113,114,115,101,102,103)
 			AND b.CurrencyID <> 20
 		GROUP BY b.rptDate
@@ -244,7 +260,7 @@ BEGIN
 			,b.TicketType
 		FROM dbo.rpt_Betting_BA b WITH (NOLOCK)
 			INNER JOIN #BettypeProductMappingBA bt ON b.Bettype = bt.Bettype
-		WHERE b.rptDate >= @date AND b.rptDate < @date2
+		WHERE b.rptDate >= @fromDate AND b.rptDate < @toDate
 			AND b.Status IN (111,112,113,114,115,101,102,103)
 			AND b.CurrencyID <> 20
 		GROUP BY b.rptDate
