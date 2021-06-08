@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTRANS-bodb02"></info>*/
+/*<info serverAlias="DBTXN-bodb02"></info>*/
 USE [bodb02]
 GO
 /****** Object:  StoredProcedure [dbo].[Task_MoveBetsDayByScheduleSel]    Script Date: 11/16/2020 10:26:54 PM ******/
@@ -30,137 +30,77 @@ AS
   20200330@Gary: #131466  Skip move bet on 20200330 (Tuesday morning)
   20200624@Gary: #136338  Move bet 2 days on 20200624 (Thursday morning)
   20201116@Gary: #145497  Move bet 1 days on 20201116 (Tuesday morning)
+  20210205@Danny: Change logic get MB date [Redmine: #150053]
  
 */  
 
 BEGIN   
  SET NOCOUNT ON    
-    
 
  DECLARE @Today DATETIME  
-   ,@Todaym1 DATETIME  
-   ,@Todaym2 DATETIME  
-   ,@Todaym3 DATETIME  
-   ,@Todaym4 DATETIME  
    ,@WeekDay TINYINT  
- --IF ISNULL(@today,'') = ''  
- SET @Today = CURRENT_TIMESTAMP  
 
-   
- --select  cast (@today as DATE)  
+ SET @Today = CURRENT_TIMESTAMP  
  SET @WeekDay = DATEPART(WEEKDAY, @Today)
 
-  
- SET @Todaym1 = DATEADD(day, - 1, CONVERT(VARCHAR(10), @Today, 120))  
- SET @Todaym2 = DATEADD(day, - 1, @Todaym1)  
- SET @Todaym3 = DATEADD(day, - 1, @Todaym2)  
- SET @Todaym4 = DATEADD(day, - 1, @Todaym3)  
-   
-  
- DECLARE @Schedule AS TABLE (ScheduleId TINYINT, WeekDay TINYINT, RunningDay DATETIME, ManualDay DATETIME, IsManual BIT)  
- INSERT INTO @Schedule (ScheduleId, WeekDay, RunningDay, ManualDay, IsManual)    
- VALUES   (1, 2, @Todaym4, NULL , 0 ) --- Thursday  
-   , (2, 2, @Todaym3, NULL , 0 ) --- Friday   
-   , (3, 3, @Todaym3, NULL , 0 ) --- Saturday  
-   , (4, 4, @Todaym3, NULL , 0 ) --- Sunday  
-   , (5, 6, @Todaym4, NULL , 0 ) --- Monday  
-   , (6, 6, @Todaym3, NULL , 0 ) --- Tuesday  
-   , (7, 7, @Todaym3, NULL , 0 ) --- Wednesday  
-   
+BEGIN
+	 CREATE TABLE #DefaultMovebetConfig
+	 (
+		_weekDay SMALLINT, 
+		IsBackDay1 BIT,  
+		IsBackDay2 BIT,
+		IsBackDay3 BIT,
+		IsBackDay4 BIT,
+		IsBackDay5 BIT,
+		IsBackDay6 BIT,
+		IsBackDay7 BIT  
+	)
+	--- Get default schedule
+	Insert into #DefaultMovebetConfig(_weekDay,IsBackDay1, IsBackDay2, IsBackDay3,IsBackDay4, IsBackDay5,IsBackDay6,IsBackDay7)  VALUES (1, 0, 0, 0,0,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,IsBackDay1, IsBackDay2, IsBackDay3,IsBackDay4, IsBackDay5,IsBackDay6,IsBackDay7)  VALUES (2, 0, 0, 1,1,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,IsBackDay1, IsBackDay2, IsBackDay3,IsBackDay4, IsBackDay5,IsBackDay6,IsBackDay7)  VALUES (3, 0, 0, 1,0,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,IsBackDay1, IsBackDay2, IsBackDay3,IsBackDay4, IsBackDay5,IsBackDay6,IsBackDay7)  VALUES (4, 0, 0, 1,0,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,IsBackDay1, IsBackDay2, IsBackDay3,IsBackDay4, IsBackDay5,IsBackDay6,IsBackDay7)  VALUES (5, 0, 0, 0,0,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,IsBackDay1, IsBackDay2, IsBackDay3,IsBackDay4, IsBackDay5,IsBackDay6,IsBackDay7)  VALUES (6, 0, 0, 1,1,0,0,0)
+	Insert into #DefaultMovebetConfig(_weekDay,IsBackDay1, IsBackDay2, IsBackDay3,IsBackDay4, IsBackDay5,IsBackDay6,IsBackDay7)  VALUES (7, 0, 0, 1,0,0,0,0)
+	--- End 
 
- --- Update schedule manually  
- -- 20160614@Harris: #59313 change move bet in period 15-19Jun    
- --  20160815@Harris: #62474 Modify for Aug 10 / Hold move bet as CSD requested  
- -- 20180617@Harris: #97040  Modify for WC2018
- -- 20180626@Harris: #97040  Modify for WC2018 v3
+	CREATE TABLE #MBDetail (ScheduleId INT identity, MoveBetsDay SMALLDATETIME)
 
-/*
- IF CAST (@today as DATE) = '20180626' -- Wednesday morning // weekday = 3  
- BEGIN  
-  UPDATE @Schedule
-  SET WeekDay = 3, ManualDay = '20180624', IsManual = 1
-  WHERE ScheduleId = 2
- END  
-*/
+	DECLARE @CurrentDate SMALLDATETIME = CONVERT(VARCHAR(10), GETDATE(), 120)
 
-      
- -- 20160615@Harris: #59317 Modify for EC schedule  
- -- 20160815@Harris: Comment below code for later big events  
-  -- 20180617@Harris: #97040  Modify for WC2018
-  -- 20180626@Harris: #97040  Modify for WC2018 v3
-  -- 20180709@Harris: #97040  Modify for WC2018 v4
+	IF EXISTS (SELECT (1) FROM  dbo.Acc_ManualMovebetConfig WITH(NOLOCK) WHERE MBDate = @CurrentDate) -- Have a manual config
+	BEGIN
+		---------------
+		TRUNCATE TABLE #MBDetail
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay7 = 1 AND MBDate = @CurrentDate
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay6 = 1 AND MBDate = @CurrentDate
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay5 = 1 AND MBDate = @CurrentDate
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -4, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay4 = 1 AND MBDate = @CurrentDate
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -3, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay3 = 1 AND MBDate = @CurrentDate
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -2, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay2 = 1 AND MBDate = @CurrentDate
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -1, MBDate) FROM dbo.Acc_ManualMovebetConfig WITH(ROWLOCK) where  IsBackDay1 = 1 AND MBDate = @CurrentDate
+	
+		SELECT ScheduleId, MoveBetsDay FROM #MBDetail ORDER BY ScheduleId
 
-IF CAST(@today as date) between '20180709' and '20180718'-- one week after EC  
-  BEGIN  
-   DELETE @Schedule  
-     
-   INSERT INTO @Schedule (ScheduleId, WeekDay, RunningDay, ManualDay, IsManual)    
-   VALUES   (1, 1, @Todaym2, NULL , 0 ) --- Friday  
-     , (2, 2, @Todaym2, NULL , 0 ) --- Saturday   
-     , (3, 3, @Todaym2, NULL , 0 ) --- Sunday  
-     , (4, 4, @Todaym2, NULL , 0 ) --- Monday  
-     , (5, 6, @Todaym3, NULL , 0 ) --- Tuesday  
-     , (6, 6, @Todaym2, NULL , 0 ) --- Wednesday  
-     , (7, 7, @Todaym2, NULL , 0 ) --- Thursday  
-        
-  END  
+	END
+	ELSE
+	BEGIN
+		TRUNCATE TABLE #MBDetail
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -7, @CurrentDate) FROM #DefaultMovebetConfig where  IsBackDay7 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -6, @CurrentDate) FROM #DefaultMovebetConfig where  IsBackDay6 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -5, @CurrentDate) FROM #DefaultMovebetConfig where  IsBackDay5 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -4, @CurrentDate) FROM #DefaultMovebetConfig where  IsBackDay4 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -3, @CurrentDate) FROM #DefaultMovebetConfig where  IsBackDay3 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -2, @CurrentDate) FROM #DefaultMovebetConfig where  IsBackDay2 = 1 AND _weekDay = @WeekDay
+		INSERT INTO #MBDetail (MoveBetsDay) SELECT  DATEADD(day, -1, @CurrentDate) FROM #DefaultMovebetConfig where  IsBackDay1 = 1 AND _weekDay = @WeekDay
+	
+		SELECT ScheduleId, MoveBetsDay FROM #MBDetail ORDER BY ScheduleId
+	END
 
- 
-  IF CAST (@today as DATE) = '20200330' -- Tuesday morning // weekday = 2  -- skip move bet 
- BEGIN  
-  UPDATE @Schedule
-  SET WeekDay = 0
-  WHERE ScheduleId in (1,2)
- END  
- 
- IF CAST (@today as DATE) = '20200331' -- Wednesday morning // weekday = 3  -- Move bet Thu, Fri (26,27)
- BEGIN  
-  UPDATE @Schedule
-  SET WeekDay = 3, ManualDay = '20200326', IsManual = 1
-  WHERE ScheduleId = 1
-
-  UPDATE @Schedule
-  SET WeekDay = 3, ManualDay = '20200327', IsManual = 1
-  WHERE ScheduleId = 2
-
-  UPDATE @Schedule
-  SET WeekDay = 0
-  WHERE ScheduleId = 3
- END   
-
- 
- IF CAST (@today as DATE) = '20200401' -- Thursday morning // weekday = 4  -- Move bet Sat, Sun (28, 29)
- BEGIN  
-  UPDATE @Schedule
-  SET WeekDay = 4, ManualDay = '20200328', IsManual = 1
-  WHERE ScheduleId = 3
- END   
-
- IF CAST (@today as DATE) = '20200624' -- Thursday morning // weekday = 4  -- Move bet Sat, Sun (20Jun, 21Jun)
- BEGIN  
-  UPDATE @Schedule
-  SET WeekDay = 4, ManualDay = '20200620', IsManual = 1
-  WHERE ScheduleId = 3
- END  
-
-  IF CAST (@today as DATE) = '20201116' -- Tuesday morning // weekday = 2  -- Move bet Thu (12Nov)
- BEGIN  
-   delete @Schedule where WeekDay=2 and RunningDay='2020-11-13 00:00:00.000'
- END  
-
-  IF CAST (@today as DATE) = '20201117' -- Wednesday morning // weekday = 3  -- Move bet Fri, Sat (13Nov, 14Nov)
- BEGIN  
-  UPDATE @Schedule
-  SET WeekDay = 3, ManualDay = '20201113', IsManual = 1
-  WHERE ScheduleId = 2
- END  
-
- 
-
- SELECT ScheduleId, CASE WHEN IsManual = 0 THEN RunningDay ELSE ManualDay END AS MoveBetsDay  
- FROM @Schedule   
- WHERE WeekDay = @WeekDay  
- ORDER BY ScheduleId  
+	DROP TABLE #MBDetail
+	DROP TABLE #DefaultMovebetConfig
+END
 
 
       
