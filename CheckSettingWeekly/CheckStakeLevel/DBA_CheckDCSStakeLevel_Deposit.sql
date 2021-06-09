@@ -16,7 +16,7 @@ AS
 		- 20200818@Johnson: check duplicate stakelevel [redmine:#139677]
 		- 20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
 		- 20210111@Winfred: fix check member missing stake level when agent disable[redmine:#148413]
-		
+		- 20210609@Winfred: exclude Excluded dummy line[redmine:#156460]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -27,7 +27,8 @@ BEGIN
 	CREATE TABLE #AgentStakeLevel (CustID INT, SportType INT, bettype INT, mrecommend INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,SportType , bettype))
 	CREATE TABLE #MemberStakeLevel (CustID INT, SportType INT, bettype INT, recommend INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,SportType , bettype))
 	CREATE TABLE #GlobalStakeLevel (sporttype INT, bettype INT, StakeLevelList VARCHAR(5000))
-	CREATE TABLE #OfferedProductList(ProductID TINYINT, ProductSettingID INT,SportType SMALLINT ,BetType SMALLINT)	
+	CREATE TABLE #OfferedProductList(ProductID TINYINT, ProductSettingID INT,SportType SMALLINT ,BetType SMALLINT)
+		
 	DECLARE @SportBettypeFilter TABLE(SportType INT, Bettype INT)
 	DECLARE @currency INT, @rowcount INT
 		
@@ -55,6 +56,8 @@ BEGIN
 	
 	IF @Rowcount = 0
 		RETURN
+	
+	
 		
 	INSERT INTO #GlobalStakeLevel(sporttype,bettype,StakeLevelList)		
 	SELECT t.sportType,s1.GameTypeID,  STUFF((SELECT ',' + cast(StakeLevelID as VARCHAR(10)) 
@@ -105,7 +108,7 @@ BEGIN
 	WHERE ci.srecommend = @srecommend
 		AND roleid = 1
 		AND Currency NOT IN (20,72,27,28)
-		AND Enabled = 1
+		AND Enabled = 1		
 	--END PREPARATION DATA
 	
 	--check missing setting
@@ -135,7 +138,7 @@ BEGIN
 			AND mrecommend NOT IN (SELECT custid 
 									FROM CheckCustDB.dbo.custinfo WITH(NOLOCK)
 									WHERE srecommend=@srecommend 
-										AND username like '%Acc%' AND roleid=3)
+										AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%' OR username LIKE 'AB88'+'CAS%' ) AND roleid=3)
 			AND Currency NOT IN (20,72,27,28) 
 			AND NOT EXISTS (SELECT 1 FROM #MasterStakeLevel cs2 
 						WHERE ci.custid = cs2.custid
@@ -153,7 +156,7 @@ BEGIN
 			AND mrecommend NOT IN (SELECT custid 
 									FROM CheckCustDB.dbo.custinfo WITH(NOLOCK)
 									WHERE srecommend=@srecommend 
-										AND username like '%Acc%' AND roleid=3)
+										AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%' OR username LIKE 'AB88'+'CAS%' ) AND roleid=3)
 			AND Currency NOT IN (20,72,27,28) 
 			AND NOT EXISTS (SELECT 1 FROM #AgentStakeLevel cs2 
 						WHERE ci.custid = cs2.custid
@@ -172,7 +175,7 @@ BEGIN
 			AND ci.mrecommend NOT IN (SELECT custid 
 									FROM CheckCustDB.dbo.custinfo WITH(NOLOCK)
 									WHERE srecommend=@srecommend 
-										AND username like '%Acc%' AND roleid=3)
+										AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%' OR username LIKE 'AB88'+'CAS%' ) AND roleid=3)
 			AND ci.Currency NOT IN (20,72,27,28) 
 			AND ci.username NOT LIKE '%cashout%'
 			AND ci.username NOT LIKE '%BetTrade%'
