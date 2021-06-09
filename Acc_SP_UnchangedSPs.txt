@@ -1,6 +1,1 @@
-SP\Affiliate\12BET\Task_Aff_ImportData_API_Job.sql
-SP\Affiliate\12BET\Task_APIProduct_ImportQueue_Process_Job.sql
-
-
-
-
+SP\MBU\MoveBet\DBTXN-bodb02-Task_DailySummary.proc.sql
