@@ -17,16 +17,39 @@ SET NOCOUNT ON
 DECLARE @__winlostdate SMALLDATETIME
 SET @__winlostdate = @winlostdate
 
+DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+EXEC bodb02.dbo.Age_SelBalanceUpDay
+
+DECLARE @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
+SELECT  @BalanceUpDay = BalanceUpDay, @MoveBetsDay = MoveBetsDay FROM @MBBU
+
 CREATE TABLE #__refnoList (refNo BIGINT)
-INSERT INTO #__refnoList(refNo)
-SELECT refNo
-FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
-WHERE b.winlostdate = @__winlostdate
-	AND b.bettype = 29
-	AND b.currency <> 20
-	AND b.liveawayscore IN (1, 3) -- soccer
-	AND b.statusID IN (111, 112, 113, 101, 102)
-	AND b.currency <> 20
+
+IF @__winlostdate > @MoveBetsDay 
+BEGIN
+	INSERT INTO #__refnoList(refNo)
+	SELECT refNo
+	FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+	WHERE b.winlostdate = @__winlostdate
+		AND b.bettype = 29
+		AND b.currency <> 20
+		AND b.liveawayscore IN (1, 3) -- soccer
+		AND b.statusID IN (111, 112, 113, 101, 102)
+		AND b.currency <> 20
+END
+ELSE
+BEGIN
+	INSERT INTO #__refnoList(refNo)
+	SELECT refNo
+	FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
+	WHERE b.winlostdate = @__winlostdate
+		AND b.bettype = 29
+		AND b.currency <> 20
+		AND b.liveawayscore IN (1, 3) -- soccer
+		AND b.statusID IN (111, 112, 113, 101, 102)
+		AND b.currency <> 20
+END
 
 IF @isByBettype = 0 
 BEGIN

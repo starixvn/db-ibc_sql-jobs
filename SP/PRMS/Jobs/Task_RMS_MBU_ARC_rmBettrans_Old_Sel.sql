@@ -8,6 +8,8 @@ AS
 
 	Revisions:   
 		- 20201221@danny: create SP  [RedmineID: #145926]
+		- 20210604@Danny: Add New League Group for Saba Sports [RedmineID: #156453]
+		
 */
 
 DECLARE @__winlostdate SMALLDATETIME
@@ -22,7 +24,7 @@ WHERE b.winlostdate = @__winlostdate
 	AND b.statusID IN (111, 112, 113)
 
 SELECT bm.refno, m.sporttype
-	, CASE WHEN l.LeagueGroupID IN (42, 74) THEN 1 ELSE -1 END Saba
+	, CASE WHEN l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba
 	, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END matchid
 FROM #__refnoList b WITH (NOLOCK)
 	INNER JOIN dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno

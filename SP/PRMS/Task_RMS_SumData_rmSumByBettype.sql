@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20200601@Percy: Initialize SP [RedmineID: #135326]
 		- 20210111@Danny: Enhance performance (get data from bettrans_bk) [RedmineID: #123157]
+		- 20210607@Danny: Move 'Saba789' to Credit Site  [RedmineID: #153874]
 */
 
 BEGIN
@@ -67,7 +68,7 @@ BEGIN
 	IF @winlostdate > @MoveBetsDay
 	BEGIN
 		INSERT INTO @bettrans (refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
-		SELECT refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDeposit, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
+		SELECT refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
 		FROM dbo.rmBettrans r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
@@ -80,7 +81,7 @@ BEGIN
 	ELSE
 	BEGIN
 		INSERT INTO @bettrans (refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
-		SELECT refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDeposit, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
+		SELECT refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
 		FROM dbo.rmBettrans_Old r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
@@ -90,17 +91,18 @@ BEGIN
 			AND r.statusID IN (111, 112, 113, 101, 102)
 			AND r.currency <> 20
 
-		IF @winlostdate <= DATEADD(DAY, 7, @BalanceUpDay)
-		BEGIN
-			
-			DECLARE @__query NVARCHAR(MAX), @__sqlCmd NVARCHAR(MAX), @isByBettype BIT = 1
-			SELECT  @__query = N''		
-			SELECT	@__query = @__query + N'EXEC Task_RMS_ARC_rmBettrans_Old_byLeagueOrBettype_Sel @winlostdate, @isByBettype'
-			SELECT	@__sqlCmd = N'EXECUTE DBARC.bodb_archive.dbo.sp_executesql @query, N''@winlostdate SMALLDATETIME, @isByBettype BIT'', @winlostdate, @isByBettype'
+	END
 
-			INSERT INTO #bettransmbk (refno, bettype, statusID, leagueid)
-			EXECUTE	sys.sp_executesql @__sqlCmd, N'@query NVARCHAR(MAX), @winlostdate SMALLDATETIME, @isByBettype BIT', @__query, @winlostdate, @isByBettype
-		END
+	-- get data from backup range
+	BEGIN
+			
+		DECLARE @__query NVARCHAR(MAX), @__sqlCmd NVARCHAR(MAX), @isByBettype BIT = 1
+		SELECT  @__query = N''		
+		SELECT	@__query = @__query + N'EXEC Task_RMS_ARC_rmBettrans_Old_byLeagueOrBettype_Sel @winlostdate, @isByBettype'
+		SELECT	@__sqlCmd = N'EXECUTE DBARC.bodb_archive.dbo.sp_executesql @query, N''@winlostdate SMALLDATETIME, @isByBettype BIT'', @winlostdate, @isByBettype'
+
+		INSERT INTO #bettransmbk (refno, bettype, statusID, leagueid)
+		EXECUTE	sys.sp_executesql @__sqlCmd, N'@query NVARCHAR(MAX), @winlostdate SMALLDATETIME, @isByBettype BIT', @__query, @winlostdate, @isByBettype
 	END
 
 	WHILE 1 = 1

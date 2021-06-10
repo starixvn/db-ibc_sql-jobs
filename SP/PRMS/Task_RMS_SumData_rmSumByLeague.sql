@@ -13,6 +13,8 @@ AS
 	Revisions:
 		- 20200601@Percy: Initialize SP [RedmineID: #130275]
 		- 20210111@Danny: Enhance performance (get data from bettrans_bk) [RedmineID: #123157]
+		- 20210607@Danny: Move 'Saba789' to Credit Site  [RedmineID: #153874]
+
 */
 
 BEGIN
@@ -48,7 +50,6 @@ BEGIN
 		,DrawCount			INT
 	)
 	
-
 	CREATE TABLE #rmSumByLeague
 	(
 		leagueId			INT
@@ -72,19 +73,15 @@ BEGIN
 	CREATE CLUSTERED INDEX CIX_rmSumByLeague ON #rmSumByLeague (leagueId, ParlayType)
 
 	DECLARE @bettrans TABLE (transid BIGINT, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
-	--DECLARE @bettransByBatch TABLE (refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
-	--DECLARE @batch INT = 300000, @isBreak BIT
 
 	CREATE TABLE #bettransmbk (refno BIGINT, statusID TINYINT, leagueid INT)
 	
-
-	--DECLARE @bettransmByBatch TABLE (refno BIGINT, statusID TINYINT, leagueid INT)
 	DECLARE @SQL VARCHAR(MAX)
 
 	IF @winlostdate > @MoveBetsDay
 	BEGIN
 		INSERT INTO @bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
-		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDeposit, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
+		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
 		FROM dbo.rmBettrans r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
@@ -97,7 +94,7 @@ BEGIN
 	ELSE
 	BEGIN
 		INSERT INTO @bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
-		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, s.isDeposit, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
+		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate
 		FROM dbo.rmBettrans_Old r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
@@ -106,26 +103,12 @@ BEGIN
 			AND r.liveawayscore IN (1, 3) -- soccer
 			AND r.statusID IN (111, 112, 113, 101, 102)
 			AND r.currency <> 20
+	END
 
-		IF @winlostdate <= DATEADD(DAY, 7, @BalanceUpDay)
-		BEGIN
-
-			DECLARE @__query NVARCHAR(MAX), @__sqlCmd NVARCHAR(MAX), @isByBettype BIT = 0
-			SELECT  @__query = N''		
-			SELECT	@__query = @__query + N'EXEC Task_RMS_ARC_rmBettrans_Old_byLeagueOrBettype_Sel @winlostdate, @isByBettype'
-			SELECT	@__sqlCmd = N'EXECUTE DBARC.bodb_archive.dbo.sp_executesql @query, N''@winlostdate SMALLDATETIME, @isByBettype BIT'', @winlostdate, @isByBettype'
-
-			INSERT INTO #bettransmbk (refno, statusID, leagueid)
-			EXECUTE	sys.sp_executesql @__sqlCmd, N'@query NVARCHAR(MAX), @winlostdate SMALLDATETIME, @isByBettype BIT', @__query, @winlostdate, @isByBettype
-			
-			-- Create index
-			CREATE CLUSTERED INDEX idx_#bettransmbk_refno ON #bettransmbk(refno)
-
-
-			INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount  )
+	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount  )
 			SELECT
 				b.transid, 
-				bm.leagueid, 
+				m.leagueid, 
 				b.statusID, 
 				MAX(b.stake), 
 				MAX(b.winloss),
@@ -137,12 +120,11 @@ BEGIN
 				SUM(CASE WHEN bm.statusID = 112 THEN 1 ELSE 0 END),
 				SUM(CASE WHEN bm.statusID = 113 THEN 1 ELSE 0 END),
 				SUM(CASE WHEN bm.statusID = 111 THEN 1 ELSE 0 END)
-			FROM @bettrans b
-				INNER JOIN #bettransmbk bm WITH (NOLOCK) ON b.refno = bm.refno
-			GROUP BY  b.transid, bm.leagueid, b.ParlayType, b.IsDeposit, b.statusID
-
-		END
-	END
+	FROM @bettrans b
+		INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
+		INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
+	WHERE  m.sporttype = 1 AND bm.winlostdate BETWEEN DATEADD(DAY, -21, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
+	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
 	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount )
 	SELECT
@@ -162,7 +144,7 @@ BEGIN
 	FROM @bettrans b
 		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
-	WHERE  m.sporttype = 1
+	WHERE  m.sporttype = 1 AND (bm.winlostdate > @MoveBetsDay OR bm.winlostdate IS NULL)
 	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
 
@@ -184,11 +166,10 @@ BEGIN
 	FROM @bettrans b
 		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
-	WHERE m.sporttype = 1
+	WHERE m.sporttype = 1  AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay
 	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
-	CREATE NONCLUSTERED INDEX idx_#BettransmByLeague ON #BettransmByLeague(leagueid, ParlayType, IsDeposit) INCLUDE (BetCount,WonCount, DrawCount,LoseCount )
-
+	CREATE NONCLUSTERED INDEX idx_#BettransmByLeague ON #BettransmByLeague(leagueid, ParlayType, IsDeposit) INCLUDE (BetCount,WonCount, DrawCount,LoseCount)
 
 
 	BEGIN TRY
@@ -235,8 +216,6 @@ BEGIN
 		GROUP BY
 			b.leagueid, b.ParlayType, b.IsDeposit
 
-		
-		
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = ERROR_NUMBER(), @ErrMsg = ERROR_MESSAGE()
