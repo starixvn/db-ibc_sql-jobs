@@ -1,28 +1,38 @@
-/*<info serverAlias="DBRPT-bodb_Report" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBRPT-bodb_Report" isFunction="0" isNested="0"></info>*/
 USE [bodb_Report]
 GO
+
 ALTER PROCEDURE [dbo].[TASK_HourlySummaryDepData]
 	@isDailyArc bit = 0,
 	@isSuccessful BIT = 0 OUTPUT
 AS
-	/*
-		Created By: Francis
-		Created Date: 20160815
-		Task: Hourly Summary for Depopsit Data summary system every each 1 or 2 hours
-		DB: DBRPT.bodb_Report
-		Revisions:
+
+/*
+	Created By: Francis
+	Created Date: 20160815
+	Task: Hourly Summary for Depopsit Data summary system every each 1 or 2 hours
+	DB: DBRPT.bodb_Report
+	
+	Revisions:
 		- 20161004@Francis: Check movebet schedule to regen data for bettrans14
-		Input Params:	
-		- @isDailyArc: -0: Called for data re-summary of hourly summary task (data will be re-summarize from the minimum day of early day and manually summarized day til today)
-				       -1: Called for data re-summary of daily archive task (data will be re-summarize from the latest day in bettrans14 til today)
-		- @isSuccessful: -0: Data of all days have not been summarized completely
-						 -1: Data of all days have been summarized completely
+		- 20210518@Percy: Change code to get MoveBetsDay [RedmineID: #154866]
+
+	Input Params:	
+		- @isDailyArc:	-0: Called for data re-summary of hourly summary task (data will be re-summarize from the minimum day of early day and manually summarized day til today)
+						-1: Called for data re-summary of daily archive task (data will be re-summarize from the latest day in bettrans14 til today)
+		- @isSuccessful:	-0: Data of all days have not been summarized completely
+							-1: Data of all days have been summarized completely
 						 		  
-	*/
+*/
+
 BEGIN
 	SET NOCOUNT ON
 	
 	SET @isSuccessful = 0
+
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
 	
 	DECLARE @CurrentDate DATE,
 			@CurrentHour TINYINT,
@@ -36,18 +46,12 @@ BEGIN
 			@NumberofCus INT= 0,
 			@TempDay DATE = NULL,
 			@TotalSuccessfulDay TINYINT = 0,
-			@MoveBetDay SMALLDATETIME,
+			@MoveBetsDay SMALLDATETIME,
 			@BalanceUpDay SMALLDATETIME
 			
 	SELECT @CurrentDate = CONVERT(DATE,CURRENT_TIMESTAMP,112)
 	SELECT @CurrentHour = DATEPART(HOUR,CURRENT_TIMESTAMP)
-	
-	SELECT @MoveBetDay = MAX(eventdate)
-	FROM bodb02.dbo.match14 WITH(NOLOCK)
-	
-	SELECT TOP 1 @BalanceUpDay = winlostdate
-	FROM bodb02.dbo.bettrans WITH(NOLOCK)
-	WHERE bettype = 20000 and matchid = 0 and custid = 3
+	SELECT @BalanceUpDay = BalanceUpDay, @MoveBetsDay = MoveBetsDay FROM @MBBU
 	
 	--Check if is there any day need to be manually resummarized
 	IF EXISTS (SELECT TOP 1 1 FROM dbo.rptDepWinlost_Manual WITH (NOLOCK) WHERE IsSummarized = 0)
@@ -62,8 +66,8 @@ BEGIN
 	
 	
 	--Re-summarize from 2 days before MoveBetDay for BetTrade Comm ClosingBalance case
-	IF @isDailyArc = 1 AND DATEADD(DAY,-2,@MoveBetDay) < @MinDate
-		SELECT @MinDate = DATEADD(DAY, -2, @MoveBetDay)
+	IF @isDailyArc = 1 AND DATEADD(DAY,-2, @MoveBetsDay) < @MinDate
+		SELECT @MinDate = DATEADD(DAY, -2, @MoveBetsDay)
 	IF @isManual = 1 AND @MinManualDate < @MinDate
 		SELECT @MinDate = @MinManualDate
 		
@@ -94,7 +98,7 @@ BEGIN
 	WHILE @TempDay <= @MaxDate
 	BEGIN
 		--5.Summarize data 
-		IF @TempDay > @MoveBetDay
+		IF @TempDay > @MoveBetsDay
 		EXEC bodb02.dbo.GEN_HourlySummaryDepData @Winlostdate = @TempDay, @NumberofCus = @NumberofCus OUTPUT
 												 , @isSuccessful = @isSuccessful OUTPUT
 		ELSE

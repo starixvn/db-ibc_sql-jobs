@@ -1,1 +1,4 @@
-SP\Licensee\rpt_BettingByProduct\GEN_rptBettingByProduct.sql
+SP\Licensee\rpt_betting\Task_PrepareStaging.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\GEN_HourlySummaryDepData.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\TASK_DailyArchiveDepData.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\TASK_DepSumData_Job.sql

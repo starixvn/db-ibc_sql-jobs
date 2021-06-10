@@ -1,4 +1,6 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" isFunction="0" isNested="1"></info>*/
+USE bodb_LicenseeReport
+GO
 
 ALTER PROCEDURE [dbo].[Task_PrepareStaging_Bettrans]
 	@WinLostDate	SMALLDATETIME
@@ -17,18 +19,21 @@ AS
 		- 20201005@Parsons: Saba.club - Offer Free Bets tickets [RedmineID: #141423]
 		- 20201029@Parsons: Add ExtraPT in Number Game Win Loss Report [RedmineID: #142969]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
-		- 20210514@Danny: Integrate Vgaming [#154080] 
+		- 20210514@Danny: Integrate Vgaming [#154080]
+		- 20210518@Percy: Change code to get MoveBetsDay [RedmineID: #154866]
 		- 20210707@Danny: Vgaming - Free bets and Jackpot prize integration [Redmine: #156185]
 
 */
 
 BEGIN
 	SET NOCOUNT ON
-
+	
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+	
 	DECLARE @MoveBetsDay SMALLDATETIME
-
-	SELECT @MoveBetsDay = MAX(eventdate)
-	FROM bodb02.dbo.match14 WITH (NOLOCK)
+	SELECT  @MoveBetsDay = MoveBetsDay FROM @MBBU
 
 	DECLARE @__matchIds TABLE (rowId INT IDENTITY(1,1), matchid INT, cnt INT, UNIQUE CLUSTERED (rowId))
 	DECLARE @__matchIdsByBatch TABLE (matchid INT, cnt INT)
