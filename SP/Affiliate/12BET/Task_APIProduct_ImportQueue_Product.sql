@@ -326,7 +326,7 @@ BEGIN
 			mi.IBCCustId,
 			mi.currency,
 			SUM(k.CellScore) AS Turnover,
-			SUM(k.Profit) AS Winloss
+			SUM(CASE WHEN k.Profit < 0 THEN k.Profit ELSE k.Profit - k.CellScore END) AS Winloss
 		FROM dbo.bettrans_KYGaming k WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON k.IBCCustId = mi.IBCCustId
 		WHERE k.WinlostDate = @WinlostDate
@@ -355,7 +355,7 @@ BEGIN
 			mi.AffId,
 			mi.IBCCustId,
 			mi.currency,
-			SUM(b.TotalStake) AS Turnover,
+			SUM(b.ValidStake) AS Turnover,
 			SUM(b.PL) AS Winloss
 		FROM dbo.bettrans_BTi b WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
