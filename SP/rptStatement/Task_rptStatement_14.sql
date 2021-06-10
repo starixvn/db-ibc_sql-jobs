@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20190909@Percy: Initialize SP [RedmineID: #115377]
 		- 20210802@Sophia: Fix count VoidCount Instead of Betcount only [Redmine: #159511]
+		- 20210505@Sol: NAP - Alpha - Allow more time for transfer - [Redmine: #149927]
 */
 
 BEGIN
@@ -484,8 +485,16 @@ BEGIN
 
 	-- OpeningTotalBalance
 	DECLARE @MoveBetsDay SMALLDATETIME, @tmpWinlostDate DATE
-	SELECT  @MoveBetsDay = MAX(eventdate) FROM bodb02.dbo.match14 WITH (NOLOCK)
 	SELECT  @tmpWinlostDate = @WinlostDate
+
+	-- get move bet date
+	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+
+	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+	
+	-- GET the current MB date
+	SELECT @MoveBetsDay = MoveBetsDay FROM @tblMoveBetBalanceUp
 
 	WHILE @tmpWinlostDate <= @MoveBetsDay
 	BEGIN
