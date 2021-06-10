@@ -13,6 +13,7 @@ AS
 		- 20200818@Percy: Add 3 tables: CustRegInfo, BonusInfo & WithdrawalInfo [RedmineID: #137395]
 		- 20201021@Percy: Add table: AdjustmentInfo [RedmineID: #143879]
 		- 20210112@Percy: Add 4 tables: RebateMLog, CustBonusRollover, Promotion & PromotionSpecific [RedmineID: #146759]
+		- 20210524@Percy: Add table: CustClosingBalance [RedmineID: #155334]
 		
 */
 
@@ -188,6 +189,18 @@ BEGIN
 		BEGIN
 			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
 			VALUES ('PromotionSpecific', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- CustClosingBalance
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_CustClosingBalance @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('CustClosingBalance', @ErrCode, @ErrMsg)
 		END
 	END
 

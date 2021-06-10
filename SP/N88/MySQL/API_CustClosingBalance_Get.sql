@@ -5,8 +5,9 @@ DROP PROCEDURE IF EXISTS `API_CustClosingBalance_Get`;
 DELIMITER //
 
 CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `API_CustClosingBalance_Get`(
-  IN Time INT,
-  IN batchCount INT
+  IN lastGetTime DATETIME,
+  IN pageIndex INT,
+  IN pageSize INT
   /*
     Created: 20210525@Percy
     DB: Slave DB/Siebog
@@ -18,15 +19,18 @@ CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `API_CustClosingBalance_Get`(
   */
 )
 BEGIN
-	SET batchCount = IF(batchCount > 2000, 2000, batchCount);
-    
-	SELECT 
-		* 
+	DECLARE _offSet INT;
+	
+    SET pageSize = IF(pageSize > 2000, 2000, pageSize);
+    SET _offSet = pageIndex * pageSize;
+	
+    SELECT 
+		*
 	FROM
 		CustClosingBalance
 	WHERE
-		CustClosingBalance.Time >= Time
-	LIMIT batchCount;
+		CustClosingBalance.Time >= lastGetTime
+	LIMIT _offSet, pageSize;
 END
 
 //
