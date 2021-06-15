@@ -12,6 +12,7 @@ AS
 
 	Revisions: 
 		- 20210524@July: Saba.club - Check winlost - Check Data Consistency - [Redmine:#155714]
+		- 20210614@July: Saba.club - Missing wrong winlost of yesterday ticket - Check Data Consistency - [Redmine:#156865]
 	
 	Param's Expanation:
 */
@@ -19,10 +20,12 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @transId VARCHAR(MAX)
-			,@Today DATETIME 
+			,@Today DATETIME
+			,@yesterday DATETIME 
 
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
+	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
 
 	IF @ProductId = 200 -- Saba.Club
 	BEGIN
@@ -32,7 +35,7 @@ BEGIN
 			((aWinLost <> -(winlost-actual_stake) * apositiontaking) or (mWinLost <> -(winlost-actual_stake) * mpositiontaking) or (sWinLost <> -(winlost-actual_stake) * spositiontaking)) 
 			AND statusid IN (112, 113)
 			AND productid = @ProductId
-			AND winlostdate = @Today
+			AND (winlostdate = @Today OR winlostdate = @yesterday) 
 	END
 	
 	IF @transId <> ''
