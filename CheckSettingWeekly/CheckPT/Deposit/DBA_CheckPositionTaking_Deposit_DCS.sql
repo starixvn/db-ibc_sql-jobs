@@ -28,6 +28,7 @@ AS
 		-20200728@Eden: Add new PT - Deposit known values for PP Jackpot [RedmineID:#138389]
 		-20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
 		-20210416@Winfred: remove the check PT rule for Sportsbook [RedmineID:#153633]
+		-20210614@Winfred: remove check PT value rule all product [RedmineID:#156790]
 		
 	Param's Explanation:
 	
@@ -47,6 +48,36 @@ AS
 				AND d.AgentID NOT IN(SELECT CustID FROM #Trade)		
 				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed)
 		END
+	END
+	Noted :	remove the check PT for all product
+	IF @RuleId IN (0,71)
+	BEGIN	
+
+		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+		SELECT 71,s.sporttype,s.bettype,s.custid,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
+		FROM CheckCustDB.dbo.Dep_CustPTSetting_Member s WITH(NOLOCK)							
+			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid
+			INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 
+			INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena AND cf.BetType IN (s.BetType,0)		
+		WHERE c.srecommend=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0   
+			AND (CHARINDEX(',' + CONVERT(varchar,s.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
+					OR s.SuperPT<>0 OR s.MasterPT<>0
+				)
+			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
+			AND c.custid NOT IN(SELECT custid FROM #Trade)	
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
+
+		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+		SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
+		FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK)		
+			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid
+			INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena AND cf.BetType IN (s.BetType,0)			
+		WHERE c.srecommend=@srecommend AND c.roleid=2 
+			AND (CHARINDEX(',' + CONVERT(varchar,s.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
+					OR s.SuperPT<>0 OR s.MasterPT<>0
+				)
+			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
+			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 	END
 */
 SET NOCOUNT ON
@@ -205,35 +236,6 @@ BEGIN
 		FROM #tmpA1 s 
 			INNER JOIN #tmpA2 m ON s.Sporttype=m.Sporttype AND s.Bettype=m.Bettype AND s.Islive=m.Islive AND m.CustID=s.recommend
 		WHERE s.PT<>m.PT
-	END
-	IF @RuleId IN (0,71)
-	BEGIN	
-
-		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-		SELECT 71,s.sporttype,s.bettype,s.custid,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
-		FROM CheckCustDB.dbo.Dep_CustPTSetting_Member s WITH(NOLOCK)							
-			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.custid=c.custid
-			INNER JOIN CheckCustDB.dbo.Dep_CustSettingMode d WITH(NOLOCK) ON c.custid=d.CustID 
-			INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena AND cf.BetType IN (s.BetType,0)		
-		WHERE c.srecommend=@srecommend AND c.roleid=1 AND d.IsGroupedPT=0   
-			AND (CHARINDEX(',' + CONVERT(varchar,s.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
-					OR s.SuperPT<>0 OR s.MasterPT<>0
-				)
-			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
-			AND c.custid NOT IN(SELECT custid FROM #Trade)	
-			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
-
-		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-		SELECT 71,s.sporttype,s.bettype,s.AgentID,NULL,s.AgentPT,NULL,GETDATE(),s.islive 
-		FROM CheckCustDB.dbo.Dep_CustPTGroupSetting_Member s WITH(NOLOCK)		
-			INNER JOIN CheckCustDB.dbo.CustInfo c WITH(NOLOCK) ON s.AgentID=c.custid
-			INNER JOIN dbo.Dep_PTConfig cf WITH(NOLOCK) ON s.sporttype = cf.sporttype AND cf.RuleID = 71 AND cf.IsAthena = @IsAthena AND cf.BetType IN (s.BetType,0)			
-		WHERE c.srecommend=@srecommend AND c.roleid=2 
-			AND (CHARINDEX(',' + CONVERT(varchar,s.AgentPT) + ',' ,',' + cf.PTValue + ',' ) = 0  
-					OR s.SuperPT<>0 OR s.MasterPT<>0
-				)
-			AND c.mrecommend NOT IN (SELECT custid FROM #Dummy)
-			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 	END
 		
 	IF @RuleId IN (0,54)

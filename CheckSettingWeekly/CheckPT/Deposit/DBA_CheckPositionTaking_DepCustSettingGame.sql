@@ -22,9 +22,20 @@ AS
 		-20210416@Winfred: Add new PT config for Keno (rule 50) for credit licensee Saba789 [RedmineID:#153187]
 		-20210416@Winfred: Add new PT config for Keno (rule 50) for credit licensee 9w [RedmineID:#153633]
 		-20210511@Winfred: Add new PT config for Keno (rule 50) AND NG (rule 48) new value PT 0.94 / 0.97 [RedmineID:#154498]
+		-20210614@Winfred: remove check PT value rule all product [RedmineID:#156790]
 		
 	Param's Explanation:
-	
+	Noted :	remove the check PT for all product
+	IF @RuleId IN (0,50)  
+	BEGIN
+		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+			SELECT 50,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),0
+			FROM CheckCustDB.dbo.CustSettingGame s WITH(NOLOCK)							
+				INNER JOIN #tmpDumMember c ON s.custid=c.custid	
+			WHERE
+				c.roleid=1 AND (s.bettype BETWEEN 1501 AND 1524) AND (s.apositiontaking NOT IN(0.9,0.94,0.95,0.805,0.5,0.97)	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
+				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
+	END
 */
 SET NOCOUNT ON
 BEGIN
@@ -173,16 +184,5 @@ BEGIN
 		WHERE s.PT<>m.PT
 	END
 	
-	IF @RuleId IN (0,50)  
-	BEGIN
-		INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
-			SELECT 50,s.sporttype,s.bettype,s.custid,NULL,s.apositiontaking,NULL,GETDATE(),0
-			FROM CheckCustDB.dbo.CustSettingGame s WITH(NOLOCK)							
-				INNER JOIN #tmpDumMember c ON s.custid=c.custid	
-			WHERE
-				c.roleid=1 AND (s.bettype BETWEEN 1501 AND 1524) AND (s.apositiontaking NOT IN(0.9,0.94,0.95,0.805,0.5,0.97)	OR s.mpositiontaking<>0 OR s.spositiontaking<>0)
-				AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
-	END
-
 END
 	
