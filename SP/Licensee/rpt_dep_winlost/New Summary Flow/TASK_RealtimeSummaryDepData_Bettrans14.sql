@@ -57,8 +57,9 @@ AS
 		- 20210416@Hogan: Integrate Habanero RNG Games [RedmineID: #150843]
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
-		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
+		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]		
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
+		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -310,15 +311,18 @@ BEGIN
 				WHEN (bettype BETWEEN 3801 AND 3897 AND b.matchid <> 173) THEN 171 -- VGA
 				WHEN (bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173 -- VGA FreeBets
 				WHEN (bettype BETWEEN 3898 AND 3899 AND b.matchid <> 173) THEN -171 -- VGA Prize
+				WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
-				WHEN b.bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 			SUM(CASE
-					WHEN b.ruben = 1 AND b.bettype NOT IN (17000, 17003, 17004, 4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
-						AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150
-						AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)) THEN b.winlost-b.actual_stake
+					WHEN b.ruben = 1 AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+						AND (	(b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
+								AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
+								AND (b.bettype NOT BETWEEN 17000 AND 17030)
+							) 
+					THEN b.winlost-b.actual_stake
 					ELSE 0
 				END),--Winloss
 			SUM(CASE WHEN b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame
@@ -327,9 +331,12 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 			SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
 			SUM(CASE
-					WHEN (b.bettype IN (17000, 17003, 17004, 4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+					WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
 						OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
-						OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)) THEN b.winlost-b.actual_stake
+						OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
+						OR (b.bettype BETWEEN 17000 AND 17030)
+						) 
+					THEN b.winlost-b.actual_stake
 					ELSE 0
 				END) -- Promotion
 		FROM dbo.bettrans14 b WITH (NOLOCK)
@@ -401,8 +408,8 @@ BEGIN
 				WHEN (bettype BETWEEN 3801 AND 3897 AND b.matchid <> 173) THEN 171 -- VGA
 				WHEN (bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173 -- VGA FreeBets
 				WHEN (bettype BETWEEN 3898 AND 3899 AND b.matchid <> 173) THEN -171 -- VGA Prize
+				WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
-				WHEN b.bettype IN (17000,17003, 17004) THEN 246 -- NPHP
 				ELSE 0
 			END--SportType
 		OPTION (RECOMPILE, MAXDOP 8)
