@@ -124,21 +124,21 @@ BEGIN
 		FROM dbo.UserLog_ExternalAPI l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.CustID IS NULL AND deleted.CustId IS NULL)
 	END	
-	IF @tableName = 'CS_UserLog_RunSP'
+	ELSE IF @tableName = 'CS_UserLog_RunSP'
 	BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_RunSP(LogID, UserID, LogDate, CustID, SubAccID, ActionID, TrackingValue, Duration, TrackingValue2)
 		SELECT LogID, UserID, LogDate, CustID, SubAccID, ActionID, TrackingValue, Duration, TrackingValue2
 		FROM dbo.CS_UserLog_RunSP l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.custid = deleted.custid)
 	END
-	IF @tableName = 'CS_UserLog_RunSP_LogTarget'
+	ELSE IF @tableName = 'CS_UserLog_RunSP_LogTarget'
 	BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_RunSP_LogTarget(LogID, LogDate, CustID)
 		SELECT l.LogID, l.LogDate, l.CustID
 		FROM dbo.CS_UserLog_RunSP_LogTarget l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.CustID = l.CustID)
 	END
-	IF @tableName = 'CS_UserLog_RunSP_MultiTarget'
+	ELSE IF @tableName = 'CS_UserLog_RunSP_MultiTarget'
 	BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.CS_UserLog_RunSP_MultiTarget(LogID, UserID, LogDate, ActionID, TrackingValue, Duration, TrackingValue2, MainLogID)
 		SELECT LogID, UserID, LogDate, ActionID, TrackingValue, Duration, TrackingValue2, MainLogID
@@ -159,18 +159,25 @@ BEGIN
 		FROM dbo.CS_UserLog_Credit l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate AND l.CustID = deleted.custid)
 	END	
-	IF @tableName = 'UserLog_RunSP_LogTarget'
+	ELSE IF @tableName = 'UserLog_RunSP_LogTarget'
 	BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_RunSP_LogTarget(LogID, LogDate, CustID)
 		SELECT l.LogID, l.LogDate, l.CustID
 		FROM dbo.UserLog_RunSP_LogTarget l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.CustID = l.CustID)
 	END
-	IF @tableName = 'UserLog_RunSP_MultiTarget'
+	ELSE IF @tableName = 'UserLog_RunSP_MultiTarget'
 	BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.UserLog_RunSP_MultiTarget(LogID, UserID, LogDate, ActionID, TrackingValue, Duration, TrackingValue2, MainLogID)
 		SELECT LogID, UserID, LogDate, ActionID, TrackingValue, Duration, TrackingValue2, MainLogID
 		FROM dbo.UserLog_RunSP_MultiTarget l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate)
+	END
+	ELSE IF @tableName = 'VRCustLog'
+	BEGIN
+		INSERT INTO bodb_CustomerLog_Archive.dbo.VRCustLog(LogId, SportType, CustID, ActionID, TrackingValue1, TrackingValue2, UserID, LogTime, Duration, IP)
+		SELECT LogId, SportType, CustID, ActionID, TrackingValue1, TrackingValue2, UserID, LogTime, Duration, IP
+		FROM dbo.VRCustLog l WITH(NOLOCK)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogTime = l.LogTime AND l.custid = deleted.custid)
 	END
 END
