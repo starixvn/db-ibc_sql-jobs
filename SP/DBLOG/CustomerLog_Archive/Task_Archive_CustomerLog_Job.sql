@@ -6,13 +6,14 @@ AS
 /*
 	Created: 20190227@Patrick
 	Task : Implement archiving data for customer log
-	DB: DBLog.bodb_CustomerLog
+	DB: DBLog/bodb_CustomerLog
 
 	Revisions: 
 		- 20190227@Patrick: Initalize [RedmineId: #110208] 	
 		- 20190617@Patrick: Add waitfor delay to reduce writelog waittype [RedmineId: #115227]
 		- 20190620@Elodie: Apply new structure for CN88's log [Redmine: #113198]
 		- 20200303@Elodie: Apply new structure for MBC's log [Redmine: #127446]
+		- 20210623@Elodie: Apply VRCustLog table [Redmine: #157434]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -178,6 +179,15 @@ BEGIN
 				@RowInBatch = @RowInBatch,
 				@ErrorCode = @ErrorCode OUTPUT
 	END	
+	ELSE IF @tableName = 'VRCustLog'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_VRCustLog
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END
 	ELSE
 	BEGIN
 		PRINT @tableName
