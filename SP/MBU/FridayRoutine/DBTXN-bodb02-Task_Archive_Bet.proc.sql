@@ -177,8 +177,6 @@ BEGIN
 
 			RETURN;
 		END;
-
-		
 		
 		/*-----TVS------*/
 		ELSE IF @DeletedTarget = 'TicketVoiding_VoidedTransaction'
@@ -187,13 +185,18 @@ BEGIN
 			
 			--process for ticket single and main parlay and metrix gaming
 			INSERT INTO #DeletedList (id,IsDone)
-			SELECT id,0 
-			FROM dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
-			WHERE	EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
-								WHERE t1.transid = t2.transid AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 and t1.matchid=0 AND t2.winlostdate = @StartDate)
-					OR EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType AND t3.bettype != 29
-								WHERE t1.transid = t2.refno AND t3.ProductID =1 AND t2.statusID=102 AND t2.winlostdate = @StartDate);
-			
+			SELECT	t1.id,0 
+			FROM	dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
+				INNER JOIN dbo.bettrans14 AS t2 WITH (NOLOCK) ON t2.transid = t1.TransId and t2.winlostdate = @StartDate
+			WHERE	EXISTS (SELECT 1 from dbo.SportBettypeMatrix t3 WITH (NOLOCK) WHERE t2.bettype=t3.BetType
+								 AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 and t1.matchid=0 )
+			UNION ALL
+			SELECT	t1.id,0
+			FROM	dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
+				INNER JOIN dbo.bettrans14 AS t2 WITH (NOLOCK) ON t2.refno = t1.TransId and t2.winlostdate = @StartDate 
+			WHERE	EXISTS (SELECT 1 FROM dbo.SportBettypeMatrix t3 WITH (NOLOCK) WHERE t2.bettype=t3.BetType AND t3.bettype != 29
+								AND t3.ProductID =1 AND t2.statusID=102)
+					
 			--process for ticket sub parlay (sportbook and virtual sport)
 			INSERT INTO #DeletedList (id,IsDone)
 			SELECT id,0 
@@ -208,13 +211,18 @@ BEGIN
 		BEGIN			
 			TRUNCATE TABLE #DeletedList
 			INSERT INTO #DeletedList (id,IsDone)
-			SELECT keyid,0 
-			FROM dbo.zzzbettrans AS t1 WITH (NOLOCK)
-				WHERE	t1.VoidingHistoryId IS NULL
-					AND (EXISTS (SELECT 1 FROM dbo.bettrans14 AS t2 WITH (NOLOCK) join dbo.SportBettypeMatrix t3 WITH (NOLOCK) ON t2.bettype=t3.BetType
-								WHERE t1.transid = t2.transid AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 AND t2.winlostdate = @StartDate)
-					OR EXISTS (SELECT 1 FROM dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid  AND t2.statusID=102 AND t1.matchid=t2.matchid AND t2.winlostdate = @StartDate));		
-			
+			SELECT	t1.keyid,0
+			FROM	dbo.zzzbettrans AS t1 WITH (NOLOCK)
+				INNER JOIN dbo.bettrans14 AS t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.winlostdate = @StartDate
+			WHERE	t1.VoidingHistoryId IS NULL	
+				AND EXISTS (SELECT 1 FROM dbo.SportBettypeMatrix t3 WITH (NOLOCK) WHERE t2.bettype=t3.BetType
+									AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 )
+			UNION ALL
+			SELECT	t1.keyid,0
+			FROM	dbo.zzzbettrans AS t1 WITH (NOLOCK)
+				INNER JOIN dbo.bettransm14 t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @StartDate
+			WHERE	t1.VoidingHistoryId IS NULL	
+
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettrans'	
 			RETURN
 		END
