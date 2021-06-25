@@ -57,7 +57,6 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-		
 			--reset identity purpose
 			TRUNCATE TABLE Task_ArchiveData_Transition
 
@@ -65,32 +64,6 @@ BEGIN
 			SELECT logid, logtime, custid, 'VRCustLog' AS TableName
 			FROM dbo.VRCustLog WITH(NOLOCK)
 			WHERE logtime >= @__dateFrom AND logtime < @__dateTo
-				AND custid IS NOT NULL
-
-			SET @rowId = 1
-			WHILE 1 = 1
-			BEGIN
-		
-				DELETE
-				FROM dbo.Task_ArchiveData_Transition WITH(ROWLOCK)
-				WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
-			
-				IF @@ROWCOUNT = 0
-					BREAK
-
-				SET @rowId = @rowId + @RowInBatch
-				WAITFOR DELAY @delayTimeValue
-			END
-
-			--for case custid is null
-			--reset identity purpose
-			TRUNCATE TABLE Task_ArchiveData_Transition
-
-			INSERT INTO dbo.Task_ArchiveData_Transition(LogId, Logdate, custid, TableName)
-			SELECT logid, logtime, custid, 'VRCustLog' AS TableName
-			FROM dbo.VRCustLog WITH(NOLOCK)
-			WHERE logtime >= @__dateFrom AND logtime < @__dateTo
-				AND custid IS NULL
 
 			SET @rowId = 1
 			WHILE 1 = 1
@@ -115,7 +88,7 @@ BEGIN
 		INSERT INTO #__logIds(logid, logdate)
 		SELECT logid, logtime
 		FROM dbo.VRCustLog WITH(NOLOCK)
-		WHERE logtime >= @__dateFrom AND logtime < @__dateTo AND custid IS NULL
+		WHERE logtime >= @__dateFrom AND logtime < @__dateTo
 
 		DECLARE @__tmpId TABLE(logId BIGINT, logdate DATETIME, custid INT)
 		SET @rowId = 1
@@ -136,35 +109,6 @@ BEGIN
 			DELETE l
 			FROM dbo.VRCustLog l WITH(ROWLOCK)
 			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logtime = t.logdate AND l.custid IS NULL)
-
-			WAITFOR DELAY @delayTimeValue
-
-		END
-
-		--for case custid is not null
-		TRUNCATE TABLE #__logIds
-		INSERT INTO #__logIds(logid, logdate, custid)
-		SELECT logid, logtime, custid
-		FROM dbo.VRCustLog WITH(NOLOCK)
-		WHERE logtime >= @__dateFrom AND logtime < @__dateTo AND custid IS NOT NULL
-
-		SET @rowId = 1
-		WHILE 1 = 1
-		BEGIN
-			DELETE FROM @__tmpId
-
-			DELETE 
-			FROM #__logIds OUTPUT deleted.logid, deleted.logdate, deleted.custid INTO @__tmpId(logId, logdate, custid)
-			WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
-			
-			IF @@ROWCOUNT = 0
-				BREAK
-
-			SET @rowId = @rowId + @RowInBatch
-
-			DELETE l
-			FROM dbo.VRCustLog l WITH(ROWLOCK)
-			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logtime = t.logdate AND l.custid = t.custid)
 
 			WAITFOR DELAY @delayTimeValue
 
