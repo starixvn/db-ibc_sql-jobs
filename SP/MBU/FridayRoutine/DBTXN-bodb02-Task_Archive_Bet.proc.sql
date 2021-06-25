@@ -19,6 +19,7 @@ AS
 		- 20190704@Billy:	Add [MarkedTransaction] to Friday Routine - [Redmine: #115199]
 		- 20200728@Brice:	Add parameter @Action, Add 13 tables - [Redmine: #111093]
 		- 20210225@Max: [TVS] Remove archived data [Redmine: #150524]
+		- 20210625@Helen: [TVS] Perfomance tuning for archived process [Redmine: #157539]
 */
 BEGIN
 	SET NOCOUNT ON;
