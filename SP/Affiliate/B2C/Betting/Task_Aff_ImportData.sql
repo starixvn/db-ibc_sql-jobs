@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
 		- 20201216@Percy: Auto add Platform Fee's setting [RedmineID: #146661]
+		- 20210628@Percy: Get Rebate amount [RedmineID: #157591]
 */
 
 BEGIN 
@@ -123,7 +124,7 @@ BEGIN
 			,p.ProductId
 			,e.Rate
 
-		-- Deposit, Withdrawal, Bonus
+		-- Deposit, Withdrawal, Bonus, Rebate
 		INSERT INTO #rptMemberDaily
 		(
 			CustId
@@ -133,6 +134,7 @@ BEGIN
 			,Deposit
 			,Withdrawal
 			,Bonus
+			,Rebate
 			,AffExRate
 		)
 		SELECT
@@ -143,6 +145,7 @@ BEGIN
 			,SUM(Deposit)
 			,SUM(Withdrawal)
 			,SUM(Bonus)
+			,SUM(Rebate)
 			,Rate
 		FROM
 		(
@@ -153,6 +156,7 @@ BEGIN
 				,SUM(d.Amount * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END) AS Deposit
 				,0 AS Withdrawal
 				,0 AS Bonus
+				,0 AS Rebate
 				,e.Rate
 			FROM bodb_N88.dbo.DepositInfo d WITH (NOLOCK)
 				INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON d.CustId = mi.CustId
@@ -174,6 +178,7 @@ BEGIN
 				,0 AS Deposit
 				,SUM(d.Amount * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END) AS Withdrawal
 				,0 AS Bonus
+				,0 AS Rebate
 				,e.Rate
 			FROM bodb_N88.dbo.WithdrawalInfo d WITH (NOLOCK)
 				INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON d.CustId = mi.CustId
@@ -195,8 +200,30 @@ BEGIN
 				,0 AS Deposit
 				,0 AS Withdrawal
 				,SUM(d.BonusAmount * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END) AS Bonus
+				,0 AS Rebate
 				,e.Rate
 			FROM bodb_N88.dbo.BonusInfo d WITH (NOLOCK)
+				INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON d.CustId = mi.CustId
+				CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, mi.currency, 0) e
+			WHERE d.WinlostDate BETWEEN DATEADD(DAY, -1, @WinlostDate) AND DATEADD(DAY, 1, @WinlostDate)
+				AND CONVERT(DATE, DATEADD(HOUR, @TimeZone, d.CreateTime)) = @WinlostDate
+			GROUP BY
+				mi.CustId
+				,mi.Currency
+				,mi.AffId
+				,e.Rate
+
+			UNION ALL
+			SELECT
+				mi.CustId
+				,mi.Currency
+				,mi.AffId
+				,0 AS Deposit
+				,0 AS Withdrawal
+				,0 AS Bonus
+				,SUM(d.RedeemAmount * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END) AS Rebate
+				,e.Rate
+			FROM bodb_N88.dbo.RebateMLog d WITH (NOLOCK)
 				INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON d.CustId = mi.CustId
 				CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, mi.currency, 0) e
 			WHERE d.WinlostDate BETWEEN DATEADD(DAY, -1, @WinlostDate) AND DATEADD(DAY, 1, @WinlostDate)
