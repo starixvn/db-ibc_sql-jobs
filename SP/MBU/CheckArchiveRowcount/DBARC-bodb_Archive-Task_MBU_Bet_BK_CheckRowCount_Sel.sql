@@ -1,11 +1,5 @@
-USE [bodb_archive]
-GO
-/****** Object:  StoredProcedure [dbo].[Task_MBU_Bet_BK_CheckRowCount_Sel]    Script Date: 11/16/2020 12:25:34 AM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-create PROCEDURE [dbo].[Task_MBU_Bet_BK_CheckRowCount_Sel]
+/*<info serverAlias="DBARC-bodb_Archive" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+CREATE PROCEDURE [dbo].[Task_MBU_Bet_BK_CheckRowCount_Sel]
 	@DateCheck SMALLDATETIME,
 	@OutputData VARCHAR(4000) = '' OUTPUT
 AS
@@ -18,6 +12,7 @@ AS
 		- 20190806@Patrick: Add transfer_bk - [RedmineId: #118277] 
 		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
 		- 20200728@Brice:	Add 13 tables - [Redmine: #111093]
+		- 20210628@Helen:	Move checking for TVS tables to another SP Task_MBU_TVS_BK_CheckRowCount_Sel [RedmineId: #157539]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -80,9 +75,10 @@ BEGIN
 	SELECT COUNT(1), 'transfer'
 	FROM dbo.transfer_bk WITH(NOLOCK)
 	WHERE winlostdate = @__winlostdate
+	
+	/*
 	---------------------------------20200728@Brice:	Add 13 tables - [Redmine: #111093]--------------------------------------
 	DECLARE @tbl01 TABLE(refno BIGINT)
-
 	INSERT INTO @tbl01(refno)
 	SELECT refno
 	FROM dbo.bettrans_bk AS t2 WITH (NOLOCK)
@@ -172,6 +168,7 @@ BEGIN
 	FROM dbo.TicketVoiding_RequestDetailTicket_SubParlay_bk AS tbl WITH (NOLOCK)
 	WHERE	EXISTS (SELECT 1 FROM dbo.TicketVoiding_RequestDetail_bk AS t3 WITH (NOLOCK) CROSS JOIN dbo.match_bk t4 WITH(NOLOCK) WHERE tbl.RequestId = t3.RequestId AND t3.matchid = t4.matchid AND t4.eventdate = @__winlostdate);
 	---------------------------------/20200728@Brice:	Add 11 tables - [Redmine: #111093]--------------------------------------
+	*/
 	--//
 	SELECT @OutputData = (
 		SELECT rowcnt AS r, tableName AS t
@@ -182,4 +179,3 @@ BEGIN
 END
 
 GO
-/*<info serverAlias="DBARC-bodb_Archive" executers="" viewers="" isFunction="0" isNested="0"></info>*/
