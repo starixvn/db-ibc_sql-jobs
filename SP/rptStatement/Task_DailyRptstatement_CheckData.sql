@@ -26,6 +26,7 @@ AS
 		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
 		- 20200619@Percy: Correct OpeningBalance on winlostdate = saturday [RedmineID: #134251]
 		- 20201008@Percy: Get SMA from bettrans instead of custinfo table [RedmineID: #142953]
+		- 20210625@Percy: Enhance code to reduce high used tempdb [RedmineID: #154536]
 */
 BEGIN
 
@@ -256,30 +257,35 @@ BEGIN
 				AND b.bettype = 20000
 				AND b.winlostdate = @CurrentBU_Date;
 
-		;WITH CTE_Balance (custid, OpeningBalance, OpeningTotalBalance) AS
-		(
-			SELECT bal.custid
-				, SUM(bal.balance)
-				, SUM(bal.totalbalance)
+		CREATE TABLE #temp (CustId INT, Balance MONEY, TotalBalance MONEY)
+
+		INSERT INTO #temp (CustId, Balance, TotalBalance)
+		SELECT bal.custid, bal.balance, bal.totalbalance
 			FROM #rptOpenningBalanceTable b
 				CROSS APPLY (
-					SELECT POWER(2*1, b.roleid) AS ownerIndicator
-				) AS bet
-				CROSS APPLY (
-					SELECT b.custid, 1 AS levelID, b.balance, b.balance AS totalbalance
-					UNION ALL
-					SELECT b.recommend, 2, b.balance * CAST(bet.ownerIndicator & 4 AS BIT)/1, b.balance
-					UNION ALL
-					SELECT b.mrecommend, 3, b.balance * CAST(bet.ownerIndicator & 8 AS BIT)/1, b.balance
-					UNION ALL
-					SELECT b.srecommend, 4, b.balance * CAST(bet.ownerIndicator & 16 AS BIT)/1, b.balance
-				) AS bal
-			WHERE bal.levelID >= b.roleid
-				AND bal.custid > 0
-			GROUP BY bal.custid
-		)
-		MERGE #rptStatementTable AS TGR
-		USING CTE_Balance AS SRC
+				SELECT b.custid, b.balance, convert(MONEY, 0) AS totalbalance
+				UNION ALL
+				SELECT b.custid, 0, b.balance WHERE roleid = 1
+				UNION ALL
+				SELECT b.recommend, 0, b.balance WHERE roleid <= 2
+				UNION ALL
+				SELECT b.mrecommend, 0, b.balance WHERE roleid <= 3
+				UNION ALL
+				SELECT b.srecommend, 0, b.balance WHERE roleid <= 4
+			) AS bal
+		
+		CREATE CLUSTERED INDEX CIX_temp ON #temp (CustId)
+
+		CREATE TABLE #temp2 (CustId INT, OpeningBalance MONEY, OpeningTotalBalance MONEY)
+		CREATE CLUSTERED INDEX CIX_temp2 ON #temp2 (CustId)
+
+		INSERT INTO #temp2 (CustId, OpeningBalance, OpeningTotalBalance)
+		SELECT CustId, SUM(Balance), SUM(TotalBalance)
+		FROM #temp
+		GROUP BY CustId
+		
+		;MERGE #rptStatementTable AS TGR
+		USING #temp2 AS SRC
 		ON TGR.custid = SRC.custid
 		WHEN MATCHED THEN
 			UPDATE 
@@ -289,6 +295,9 @@ BEGIN
 			INSERT (custid, OpeningBalance, OpeningTotalBalance)
 			VALUES (SRC.custid, SRC.OpeningBalance, SRC.OpeningTotalBalance)
 		;
+
+		DROP TABLE #temp
+		DROP TABLE #temp2
 	END
 
 	--5. Headline - Openning total balance
