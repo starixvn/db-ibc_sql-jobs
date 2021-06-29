@@ -17,6 +17,7 @@ AS
 	Revisions:
 		- 20210419@Percy: Initialize SP [RedmineID: #153195]
 		- 20210531@Percy: Add rule 3: Check differrent PT Setting between NAP and LA [RedmineID: #153195]
+		- 20210629@Percy: Enhance code get data from bettrans [RedmineID: #153195]
 	
 	Param's Explanation:
 		@RuleId
@@ -51,40 +52,43 @@ BEGIN
 		LEFT JOIN bodb_Licensee.dbo.Product3rd p3rd WITH (NOLOCK) ON p.ProductPrefix = p3rd.ProductPrefix
 
 	-- Get data on bettrans
-	DECLARE @tblWinlostDate TABLE (winlostdate SMALLDATETIME)
-	;WITH CTE_winlostdate AS (
-		SELECT @MoveBetsDay AS winlostdate
-		UNION ALL
-		SELECT DATEADD(DAY, 1, winlostdate)
-		FROM CTE_winlostdate
-		WHERE winlostdate < @CurrentDate
-	)
-	INSERT INTO @tblWinlostDate (winlostdate)
-	SELECT winlostdate FROM CTE_winlostdate
-	OPTION (MAXRECURSION 0)
-
-	DELETE @tblWinlostDate WHERE winlostdate <= @MoveBetsDay OR winlostdate >= @CurrentDate
-
 	CREATE TABLE #bettrans (LicenseeName VARCHAR(50), Currency INT, Product3rdId INT, TransId BIGINT, WinlostDate SMALLDATETIME, HousePT FLOAT)
 	CREATE CLUSTERED INDEX CIX_bettrans ON #bettrans (Product3rdId, LicenseeName, Currency)
+
+	CREATE TABLE #tmp_bettrans (recommend INT, bettype INT, winlostdate SMALLDATETIME, transid BIGINT, apositiontaking FLOAT)
+
+	DECLARE @WinlostDate SMALLDATETIME = @MoveBetsDay
+	WHILE @WinlostDate < @CurrentDate
+	BEGIN
+		INSERT INTO #tmp_bettrans (recommend, bettype, winlostdate, transid, apositiontaking)
+		SELECT recommend, bettype, @WinlostDate, transid, apositiontaking
+		FROM (
+			SELECT b.recommend, b.bettype, b.transid, b.apositiontaking
+				,ROW_NUMBER() OVER(PARTITION BY b.recommend, b.bettype ORDER BY b.transid) AS RN
+			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+			WHERE b.winlostdate = @WinlostDate
+				AND b.statusId IN (111, 112, 113)
+				AND b.currency <> 20
+		) a
+		WHERE RN = 1
+
+		WAITFOR DELAY '00:00:00.010'
+
+		SELECT @WinlostDate = DATEADD(DAY, 1, @WinlostDate)
+	END
+
+	CREATE CLUSTERED INDEX CIX_tmp_bettrans ON #tmp_bettrans (recommend, bettype, winlostdate)
 
 	INSERT INTO #bettrans (LicenseeName, Currency, Product3rdId, TransId, WinlostDate, HousePT)
 	SELECT DISTINCT c.site, c.currency, b.Product3rdId, b.transid, b.winlostdate, CASE WHEN b.Product3rdId = 6 THEN 1.0 - b.apositiontaking ELSE 0 END
 	FROM (
-		SELECT b.recommend, b.Product3rdId, b.transid, t.winlostdate, b.apositiontaking
-		FROM @tblWinlostDate t
-			CROSS APPLY (
-				SELECT b.recommend, sb.Product3rdId, b.transid, b.apositiontaking
-					,ROW_NUMBER() OVER(PARTITION BY b.recommend, sb.Product3rdId, b.winlostdate ORDER BY b.transid) AS RN
-				FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-					INNER JOIN #SportBettypeMatrix sb ON b.bettype = sb.Bettype
-				WHERE b.winlostdate = t.winlostdate
-					AND b.statusID IN (111, 112, 113)
-					AND b.currency <> 20
-			) b
-		WHERE b.RN = 1
+		SELECT b.recommend, sb.Product3rdId, b.transid, b.winlostdate, b.apositiontaking
+			,ROW_NUMBER() OVER(PARTITION BY b.recommend, sb.Product3rdId, b.winlostdate ORDER BY b.transid) AS RN
+		FROM #tmp_bettrans b
+			INNER JOIN #SportBettypeMatrix sb ON b.bettype = sb.Bettype
 	) b
 		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid
+	WHERE b.RN = 1
 
 	-- Keep latest date for RNG Casino
 	DELETE t
@@ -416,5 +420,6 @@ BEGIN
 	DROP TABLE #Member
 	DROP TABLE #PT
 	DROP TABLE #SportBettypeMatrix
+	DROP TABLE #tmp_bettrans
 END
 GO
