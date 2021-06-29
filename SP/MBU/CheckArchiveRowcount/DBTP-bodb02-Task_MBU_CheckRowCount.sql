@@ -11,6 +11,7 @@ AS
 		- 20190621@Billy:	New way to generate html - [Redmine: #111421]
 		- 20191212@Patrick: Add more table TOControl_Setting [Redmine: #124447]
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
+		- 20210628@Helen:	Move checking for TVS tables to another SP Task_MBU_TVS_BK_CheckRowCount_Sel [RedmineId: #157539]
 */
 BEGIN;
 	SET NOCOUNT ON;
