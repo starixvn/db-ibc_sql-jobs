@@ -57,6 +57,9 @@ BEGIN
 			, @sourceRowCount = @sourceRowCount OUTPUT, @dateFrom = @dateFrom, @dateTo = @dateTo
 
 		SET @sqlCmdTemp = REPLACE(@sqlCmdT, '{{TableName}}', @tableName)
+		
+		IF @tableName = 'VRCustLog'
+			SET @sqlCmdTemp = REPLACE(@sqlCmdTemp, 'logdate', 'logtime')
 		--PRINT @sqlCmdTemp
 		EXEC sp_executesql @sqlCmdTemp
 			, N'@targetRowCount INT OUTPUT, @dateFrom DATETIME, @dateTo DATETIME'
