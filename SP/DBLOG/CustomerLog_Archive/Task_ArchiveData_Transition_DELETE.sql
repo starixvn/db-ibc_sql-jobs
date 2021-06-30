@@ -14,7 +14,7 @@ AS
 		- 20200107@Elodie: Add CreateDate column for CN88's log [Redmine: #113198]
 		- 20200303@Elodie: Apply new structure for MBC's log [Redmine: #127446]
 		- 20201002@Helen: Apply new structure for userlog_runsp log [Redmine: #139238]
-		
+		- 20210623@Elodie: Apply VRCustLog table [Redmine: #157434]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -178,6 +178,6 @@ BEGIN
 		INSERT INTO bodb_CustomerLog_Archive.dbo.VRCustLog(LogId, SportType, CustID, ActionID, TrackingValue1, TrackingValue2, UserID, LogTime, Duration, IP)
 		SELECT LogId, SportType, CustID, ActionID, TrackingValue1, TrackingValue2, UserID, LogTime, Duration, IP
 		FROM dbo.VRCustLog l WITH(NOLOCK)
-		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogTime = l.LogTime AND l.custid = deleted.custid)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.LogTime AND l.custid = deleted.custid)
 	END
 END
