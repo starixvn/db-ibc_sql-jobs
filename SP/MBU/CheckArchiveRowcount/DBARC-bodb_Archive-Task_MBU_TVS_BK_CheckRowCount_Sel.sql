@@ -22,7 +22,7 @@ BEGIN
 	DECLARE @__tempCount TABLE (rowcnt INT, tableName VARCHAR(128), ArchiveDate SMALLDATETIME)
 	DECLARE @StartDate_tmp	SMALLDATETIME	= @StartDate
 			,@EndDate_tmp	SMALLDATETIME = @EndDate 
-	
+	CREATE TABLE #tmpRequest (RequestID INT)
 	-------------------Part 1: for table only based on checking by range from startdate to enddate ------------------------
 	--//1 - TicketVoiding_RequestDetail
 	INSERT INTO @__tempCount(rowcnt, tableName)
@@ -63,8 +63,8 @@ BEGIN
 	
 			) AS temp
 	--//2 - TicketVoiding_Request
+	INSERT INTO #tmpRequest (RequestID)
 	SELECT	RequestId
-	INTO #tmpRequest
 	FROM	dbo.TicketVoiding_Request_bk AS t1 WITH (NOLOCK)
 			CROSS APPLY (
 					SELECT MAX(m.eventdate) AS Max_EventDate
@@ -287,6 +287,8 @@ BEGIN
 		GROUP BY tableName,ArchiveDate
 		FOR XML RAW ('r')
 	)
+	DROP TABLE #tmpRequest
+	
 END
 
 GO
