@@ -338,39 +338,18 @@ BEGIN
 		WHERE b.currency = 20 AND winlostdate = @winlostdate 
 			AND bettype <= 19000 AND statusID IN (0, 1)
 
-		UPDATE b
-		SET winlost=actual_stake,ruben=1,statuswinlost=6, status = 'Void', statusid = 102
-			, awinlost = 0, mwinlost = 0, swinlost = 0, playercomm = 0, comm  = 0, acomm = 0
-			, scomm = 0, transdesc = '[AutoVoid]' + transdesc
-		OUTPUT deleted.custid INTO @custs
-		FROM #__AutoVoid_TransList t
-			INNER JOIN dbo.bettrans b WITH (ROWLOCK, UPDLOCK) ON t.TransId = b.transid
-		OPTION (FORCE ORDER) --hint for case bad plan
-		
-		----call SP correct balance for Table Balance set
-		--DECLARE @__custId INT 
-		--WHILE 1 = 1
-		--BEGIN
+		DECLARE @__transIdsUUS VARCHAR(MAX), @ErrMsgAutoVoid VARCHAR(200)
+		SELECT @__transIdsUUS = COALESCE(@transIds + ',' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
+		FROM #__AutoVoid_TransList
 
-		--	SELECT TOP (1) @__custId = custid FROM @custs
-		--	IF @@ROWCOUNT = 0
-		--		BREAK
+		EXEC dbo.NAP_SpecialDelete_VoidBetId_UUS @TransIds = @__transIdsUUS
+			, @ErrMsg = @ErrMsgAutoVoid OUTPUT
 
-		--	DECLARE @DiffBalance money, @result INT, @IsUUS BIT
-		--	EXEC dbo.Task_CheckBalance1_FixOne
-		--		@custid = @__custId,
-		--		@DiffBalance = @DiffBalance OUTPUT,
-		--		@result = @result OUTPUT,
-		--		@IsUUS = @IsUUS OUTPUT
+		IF ISNULL(@ErrMsgAutoVoid, '') <> ''
+		BEGIN
+			PRINT @ErrMsgAutoVoid
+		END
 
-		--	INSERT INTO dbo.Task_Cust_BalanceProblem1 (UserName, custid, DiffBalance, IsFixed, Remark)
-		--	SELECT username, @__custId, @DiffBalance, 1, 'JustFix'
-		--	FROM CustDB.dbo.custInfo with (nolock)
-		--	WHERE custid = @__custId
-
-		--	DELETE FROM @custs WHERE custid = @__custId
-			
-		--END
 		DROP TABLE #__AutoVoid_TransList
 
 	END
@@ -445,7 +424,7 @@ BEGIN
 	-- viet ----
 	EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
 
-	--TODO: double check and remove it if needed
+	--
 	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
 
 	--copy event to [14]
