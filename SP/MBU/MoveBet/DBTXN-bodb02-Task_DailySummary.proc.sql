@@ -339,7 +339,7 @@ BEGIN
 			AND bettype <= 19000 AND statusID IN (0, 1)
 
 		DECLARE @__transIdsUUS VARCHAR(MAX), @ErrMsgAutoVoid VARCHAR(200)
-		SELECT @__transIdsUUS = COALESCE(@transIds + ',' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
+		SELECT @__transIdsUUS = COALESCE(@__transIdsUUS + ',' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
 		FROM #__AutoVoid_TransList
 
 		EXEC dbo.NAP_SpecialDelete_VoidBetId_UUS @TransIds = @__transIdsUUS
