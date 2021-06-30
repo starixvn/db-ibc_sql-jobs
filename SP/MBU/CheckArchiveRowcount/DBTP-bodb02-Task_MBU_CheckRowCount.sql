@@ -250,7 +250,7 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 								,	TYPE
 								)
 							,	(
-								SELECT	NULL, [td]	= CAST(ISNULL(active.winlostdate, archive.winlostdate) AS DATE)
+								SELECT	NULL, [td]	= ISNULL(CAST(ISNULL(active.winlostdate, archive.winlostdate) AS DATE),'')
 									,	NULL, [td]	= ISNULL(active.tableName, archive.tableName)
 									,	NULL, [td]	= ISNULL(active.activeRowCount, 0)
 									,	NULL, [td]	= ISNULL(archive.archiveRowCount, 0)
