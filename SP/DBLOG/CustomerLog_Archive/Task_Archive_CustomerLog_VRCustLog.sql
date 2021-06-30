@@ -85,8 +85,8 @@ BEGIN
 	BEGIN
 		CREATE TABLE #__logIds (rowId INT IDENTITY(1,1) PRIMARY KEY, logid BIGINT, logdate DATETIME, custid INT)
 		
-		INSERT INTO #__logIds(logid, logdate)
-		SELECT logid, logtime
+		INSERT INTO #__logIds(logid, logdate, custid)
+		SELECT logid, logtime, custid
 		FROM dbo.VRCustLog WITH(NOLOCK)
 		WHERE logtime >= @__dateFrom AND logtime < @__dateTo
 
@@ -98,7 +98,7 @@ BEGIN
 			DELETE FROM @__tmpId
 
 			DELETE 
-			FROM #__logIds OUTPUT deleted.logid, deleted.logdate INTO @__tmpId(logId, logdate)
+			FROM #__logIds OUTPUT deleted.logid, deleted.logdate, deleted.custid INTO @__tmpId(logId, logdate, custid)
 			WHERE rowId >= @rowId AND rowId < @rowId + @RowInBatch
 			
 			IF @@ROWCOUNT = 0
@@ -108,7 +108,7 @@ BEGIN
 
 			DELETE l
 			FROM dbo.VRCustLog l WITH(ROWLOCK)
-			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logtime = t.logdate AND l.custid IS NULL)
+			WHERE EXISTS (SELECT TOP 1 1 FROM @__tmpId t WHERE l.logid = t.logId AND l.logtime = t.logdate AND l.custid = t.custid)
 
 			WAITFOR DELAY @delayTimeValue
 
