@@ -1,5 +1,4 @@
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
+/*<info serverAlias="DBTP-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 GO
 ALTER PROCEDURE	[dbo].[Task_MBU_CheckRowCount]
 AS
@@ -12,6 +11,7 @@ AS
 		- 20190621@Billy:	New way to generate html - [Redmine: #111421]
 		- 20191212@Patrick: Add more table TOControl_Setting [Redmine: #124447]
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
+		- 20210628@Helen:	Move checking for TVS tables to another SP Task_MBU_TVS_BK_CheckRowCount_Sel [RedmineId: #157539]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -21,6 +21,8 @@ BEGIN;
 		,	@OutputData		VARCHAR(4000)
 		,	@xmlData		XML
 		,	@hasDiff		BIT
+		,	@StartDate		SMALLDATETIME
+		,	@EndDate		SMALLDATETIME 
 		;
 
 	DECLARE	@email_body		NVARCHAR(MAX)
@@ -44,13 +46,32 @@ BEGIN;
 					,	tableName		VARCHAR(128)
 					,	archiveRowCount	INT
 					);
+	
+	
+	CREATE TABLE	#__activeResult_TVS_tmp (
+						winlostdate		SMALLDATETIME
+					,	tableName		VARCHAR(128)
+					,	activeRowCount	INT
+					);
 
+	CREATE TABLE	#__archiveResult_TVS_tmp (
+						winlostdate		SMALLDATETIME
+					,	tableName		VARCHAR(128)
+					,	archiveRowCount	INT
+					);
+							
 	INSERT INTO	#__archiveDate (winlostdate)
 	SELECT	TOP(10)
 			winlostdate
 	FROM	DBTXN.bodb02.dbo.Task_ArchiveDate WITH (NOLOCK)
 	ORDER BY winlostdate;
-
+	
+	SELECT @StartDate = MIN(winlostdate), @EndDate = MAX(winlostdate)
+	FROM #__archiveDate
+	
+	DECLARE @StartDate_tmp	SMALLDATETIME	= @StartDate
+			,@EndDate_tmp	SMALLDATETIME = @EndDate 
+	
 	SET	@rowIndex = 1;
 	WHILE	EXISTS (SELECT TOP(1) 1 FROM #__archiveDate WHERE rid = @rowIndex)
 	BEGIN;
@@ -159,12 +180,141 @@ BEGIN;
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
 		END;
 	END;
+	----------- Get Result for TVS --------
+	DECLARE	@ArchiveTable TABLE (
+				rid			INT				IDENTITY(1,1)
+			,	tablename	NVARCHAR(128)
+			,	PRIMARY KEY CLUSTERED (rid)
+			)
+
+	DECLARE	@ArchiveTable_oneDay TABLE (
+				rid			INT				IDENTITY(1,1)
+			,	tablename	NVARCHAR(128)
+			,	PRIMARY KEY CLUSTERED (rid)
+			)
+		
+	DECLARE @start_rid INT, @End_rid INT, @TableName VARCHAR(50)
+	INSERT INTO	@ArchiveTable
+			(tablename)
+	VALUES	('TicketVoiding_RequestDetail')
+		,	('TicketVoiding_Request')
+		,	('TicketVoiding_AutoVoidRequest_Queue')
+		,	('TicketVoiding_AutoUnmarkSetting')	
+
+	INSERT INTO	@ArchiveTable_oneDay
+			(tablename)
+	VALUES	('zzzbettransM')
+		,	('zzzbettrans')
+		,	('TicketVoiding_VoidedTransaction')
+		
+	SET @start_rid = 1
+	SET @End_rid = (SELECT MAX(rid) FROM @ArchiveTable)
+	-------------------------// TVS Table in active data in DBTRANS & DBARC -------------------------------------
+	----- first: check one by one table name in the @ArchiveTable
+	WHILE @start_rid <= @End_rid
+	BEGIN
+		SELECT @TableName = (SELECT tablename FROM @ArchiveTable WHERE rid = @start_rid)
+		----------- active --------
+		SET	@OutputData = NULL;
+		EXECUTE	DBTXN.bodb02.dbo.Task_MBU_TVS_CheckRowCount_Sel	
+				@StartDate	= @StartDate
+				, @EndDate = @EndDate
+				, @tableName = @TableName
+				, @OutputData = @OutputData	OUTPUT
+
+		IF	@OutputData IS NOT NULL
+		BEGIN;
+			SET	@xmlData = CAST(@OutputData AS XML);
+			INSERT INTO	#__activeResult_TVS_tmp (winlostdate, tableName, activeRowCount)
+			SELECT	r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
+			FROM @xmlData.nodes('//r') AS RECORDS(r)
+			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+		END
+		
+		----------- archive --------
+		SET	@OutputData = NULL;
+		EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
+				@StartDate	= @StartDate
+				, @EndDate = @EndDate
+				, @TableName = @TableName
+				,@OutputData	= @OutputData	OUTPUT
+
+		IF	@OutputData IS NOT NULL
+		BEGIN;
+			SET @xmlData = CAST(@OutputData AS XML);
+			INSERT #__archiveResult_TVS_tmp(winlostdate, tableName, archiveRowCount)
+			SELECT r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
+			FROM @xmlData.nodes('//r') AS RECORDS(r)
+			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+		END
+		
+		SET @start_rid = @start_rid + 1
+		
+	END
+	----- second: check one by one table name in the @ArchiveTable_oneDay
+	SET @start_rid = 1
+	SET @End_rid = (SELECT MAX(rid) FROM @ArchiveTable_oneDay)
+	WHILE @start_rid <= @End_rid
+	BEGIN
+		SELECT @TableName = (SELECT tablename FROM @ArchiveTable_oneDay WHERE rid = @start_rid)
+		SET @StartDate_tmp = @StartDate
+		
+		WHILE (@StartDate_tmp <= @EndDate_tmp)
+		BEGIN
+			------------------------active -----------------
+			SET	@OutputData = NULL;
+			EXECUTE	DBTXN.bodb02.dbo.Task_MBU_TVS_CheckRowCount_Sel	
+					@StartDate	= @StartDate_tmp
+					, @tableName = @tableName
+					, @OutputData = @OutputData	OUTPUT
+
+			IF	@OutputData IS NOT NULL
+			BEGIN
+				SET	@xmlData = CAST(@OutputData AS XML);
+				INSERT INTO	#__activeResult_TVS_tmp (winlostdate, tableName, activeRowCount)
+				SELECT	r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
+				FROM @xmlData.nodes('//r') AS RECORDS(r)
+				OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+			END
+			------------------------archive -----------------
+			SET	@OutputData = NULL;
+			EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
+					@StartDate	= @StartDate_tmp
+					, @TableName = @TableName
+					,	@OutputData	= @OutputData	OUTPUT
+
+			IF	@OutputData IS NOT NULL
+			BEGIN;
+				SET @xmlData = CAST(@OutputData AS XML);
+				INSERT #__archiveResult_TVS_tmp(winlostdate, tableName, archiveRowCount)
+				SELECT r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
+				FROM @xmlData.nodes('//r') AS RECORDS(r)
+				OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+			END
+			
+			SET @StartDate_tmp = DATEADD(DD, 1, @StartDate_tmp)
+			
+		END	
+		SET @start_rid = @start_rid + 1
+		
+	END
+	--------------INSERT Result for TVS Table -------------------------
+	INSERT INTO #__activeResult (winlostdate,tableName,activeRowCount)
+	SELECT winlostdate, tableName, SUM(activeRowCount) 
+	FROM #__activeResult_TVS_tmp
+	GROUP BY tableName,winlostdate
 	
+	INSERT INTO #__archiveResult (winlostdate,tableName,archiveRowCount)
+	SELECT winlostdate, tableName, SUM(archiveRowCount) 
+	FROM #__archiveResult_TVS_tmp
+	GROUP BY tableName,winlostdate
+	
+			
 	IF	EXISTS (
 		SELECT TOP(1) 1
 		FROM			#__activeResult t
 		FULL OUTER JOIN	#__archiveResult tt
-					ON	t.winlostdate = tt.winlostdate
+					ON	ISNULL(t.winlostdate,'') = ISNULL(tt.winlostdate,'')
 					AND	t.tableName = tt.tableName
 		WHERE	ISNULL(t.activeRowCount, 0) <> ISNULL(tt.archiveRowCount, 0)
 	)
@@ -176,6 +326,9 @@ BEGIN;
 		SET	@hasDiff = 0;
 	END;
 
+	DECLARE @ArchiveRange_TVS VARCHAR(50)
+	SET @ArchiveRange_TVS = CONVERT(VARCHAR(12),@startdate, 23) + ' -> ' + CONVERT(VARCHAR(12),@EndDate,23)
+	
 	-- Build html
 	SELECT	@subject	= N'Archving process check count - KBT@' + @@SERVERNAME
 		,	@email_body = (
@@ -213,7 +366,7 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 								,	TYPE
 								)
 							,	(
-								SELECT	NULL, [td]	= CAST(ISNULL(active.winlostdate, archive.winlostdate) AS DATE)
+								SELECT	NULL, [td]	= ISNULL(CONVERT(VARCHAR(50),CAST(ISNULL(active.winlostdate, archive.winlostdate) AS DATE), 120), @ArchiveRange_TVS)
 									,	NULL, [td]	= ISNULL(active.tableName, archive.tableName)
 									,	NULL, [td]	= ISNULL(active.activeRowCount, 0)
 									,	NULL, [td]	= ISNULL(archive.archiveRowCount, 0)
@@ -221,7 +374,7 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 								FROM			#__activeResult AS active WITH (NOLOCK)
 								FULL OUTER JOIN	#__archiveResult AS archive WITH (NOLOCK)
 											ON	active.tableName = archive.tableName
-											AND	active.winlostdate = archive.winlostdate
+											AND	ISNULL(active.winlostdate,'') = ISNULL(archive.winlostdate,'')
 								ORDER BY	CASE WHEN ISNULL(active.activeRowCount, 0) <> ISNULL(archive.archiveRowCount, 0) THEN 0 ELSE 1 END
 										,	ISNULL(active.winlostdate, archive.winlostdate)
 										,	ISNULL(active.tableName, archive.tableName)
@@ -252,4 +405,3 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 
 END;
 GO
-/*<info serverAlias="DBTP-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/

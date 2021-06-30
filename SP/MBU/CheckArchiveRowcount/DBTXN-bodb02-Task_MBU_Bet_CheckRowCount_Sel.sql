@@ -1,6 +1,4 @@
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[Task_MBU_Bet_CheckRowCount_Sel]
 	@DateCheck SMALLDATETIME,
 	@OutputData VARCHAR(4000) = '' OUTPUT
@@ -14,6 +12,7 @@ AS
 		- 20190806@Patrick: Add transfer_bk - [RedmineId: #118277] 
 		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
 		- 20200728@Brice:	Add 13 tables - [Redmine: #111093]
+		- 20210628@Helen:	Move checking for TVS tables to another SP Task_MBU_TVS_CheckRowCount_Sel [RedmineId: #157539]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -76,6 +75,7 @@ BEGIN
 		AND winlostdate = @DateCheck AND custid <> 0
 		AND (winlost + actual_stake) <> 0
 
+	/*
 	---------------------------------20200728@Brice:	Add 13 tables - [Redmine: #111093]--------------------------------------
 	--//TicketVoiding_VoidedTransaction
 	INSERT INTO @__tempCount(rowcnt, tableName)
@@ -163,6 +163,7 @@ BEGIN
 	FROM dbo.TicketVoiding_RequestDetailTicket_SubParlay AS tbl WITH (NOLOCK)
 	WHERE	EXISTS (SELECT 1 FROM dbo.TicketVoiding_RequestDetail AS t3 WITH (NOLOCK) CROSS JOIN dbo.match14 t4 WITH(NOLOCK) WHERE tbl.RequestId = t3.RequestId AND t3.matchid = t4.matchid AND t4.eventdate = @DateCheck);
 	
+	*/
 	---------------------------------/20200728@Brice:	Add 11 tables - [Redmine: #111093]--------------------------------------
 	--//
 	SELECT @OutputData = (
@@ -173,4 +174,3 @@ BEGIN
 
 END
 GO
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
