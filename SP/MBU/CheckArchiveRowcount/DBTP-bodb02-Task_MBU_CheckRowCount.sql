@@ -213,7 +213,7 @@ BEGIN;
 	----- first: check one by one table name in the @ArchiveTable
 	WHILE @start_rid <= @End_rid
 	BEGIN
-		SELECT @TableName = (SELECT tablename FROM @ArchiveTable WHERE rid = @StartDate)
+		SELECT @TableName = (SELECT tablename FROM @ArchiveTable WHERE rid = @start_rid)
 		-------------------------------------------------------------
 		SET	@OutputData = NULL;
 		EXECUTE	DBTXN.bodb02.dbo.Task_MBU_TVS_CheckRowCount_Sel	
@@ -239,7 +239,7 @@ BEGIN;
 	SET @End_rid = (SELECT MAX(rid) FROM @ArchiveTable_oneDay)
 	WHILE @start_rid <= @End_rid
 	BEGIN
-		SELECT @TableName = (SELECT tablename FROM @ArchiveTable_oneDay WHERE rid = @StartDate)
+		SELECT @TableName = (SELECT tablename FROM @ArchiveTable_oneDay WHERE rid = @start_rid)
 		WHILE (@StartDate_tmp <= @EndDate_tmp)
 		BEGIN
 			-------------------------------------------------------------
@@ -270,7 +270,7 @@ BEGIN;
 	
 	WHILE @start_rid <= @End_rid
 	BEGIN
-		SELECT @TableName = (SELECT tablename FROM @ArchiveTable WHERE rid = @StartDate)
+		SELECT @TableName = (SELECT tablename FROM @ArchiveTable WHERE rid = @start_rid)
 		-------------------------------------------------------------
 		SET	@OutputData = NULL;
 		EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
@@ -299,7 +299,7 @@ BEGIN;
 	SET @EndDate_tmp = @EndDate
 	WHILE @start_rid <= @End_rid
 	BEGIN
-		SELECT @TableName = (SELECT tablename FROM @ArchiveTable_oneDay WHERE rid = @StartDate)
+		SELECT @TableName = (SELECT tablename FROM @ArchiveTable_oneDay WHERE rid = @start_rid)
 		-------------------------------------------------------------
 		WHILE (@StartDate_tmp <= @EndDate_tmp)
 		BEGIN
