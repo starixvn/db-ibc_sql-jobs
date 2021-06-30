@@ -46,7 +46,20 @@ BEGIN;
 					,	tableName		VARCHAR(128)
 					,	archiveRowCount	INT
 					);
+	
+	
+	CREATE TABLE	#__activeResult_TVS_tmp (
+						winlostdate		SMALLDATETIME
+					,	tableName		VARCHAR(128)
+					,	activeRowCount	INT
+					);
 
+	CREATE TABLE	#__archiveResult_TVS_tmp (
+						winlostdate		SMALLDATETIME
+					,	tableName		VARCHAR(128)
+					,	archiveRowCount	INT
+					);
+							
 	INSERT INTO	#__archiveDate (winlostdate)
 	SELECT	TOP(10)
 			winlostdate
@@ -55,6 +68,9 @@ BEGIN;
 	
 	SELECT @StartDate = MIN(winlostdate), @EndDate = MAX(winlostdate)
 	FROM #__archiveDate
+	
+	DECLARE @StartDate_tmp	SMALLDATETIME	= @StartDate
+			,@EndDate_tmp	SMALLDATETIME = @EndDate 
 	
 	SET	@rowIndex = 1;
 	WHILE	EXISTS (SELECT TOP(1) 1 FROM #__archiveDate WHERE rid = @rowIndex)
@@ -165,37 +181,160 @@ BEGIN;
 		END;
 	END;
 	----------- Get Result for TVS --------
-	--// TVS Table in active
-	SET	@OutputData = NULL;
-	EXECUTE	DBTXN.bodb02.dbo.Task_MBU_TVS_CheckRowCount_Sel	
-			@StartDate	= @StartDate
-			, @EndDate = @EndDate
-			, @OutputData = @OutputData	OUTPUT
+	DECLARE	@ArchiveTable TABLE (
+				rid			INT				IDENTITY(1,1)
+			,	tablename	NVARCHAR(128)
+			,	PRIMARY KEY CLUSTERED (rid)
+			)
 
-	IF	@OutputData IS NOT NULL
-	BEGIN;
-		SET	@xmlData = CAST(@OutputData AS XML);
-		INSERT INTO	#__activeResult (winlostdate, tableName, activeRowCount)
-		SELECT	r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
-		FROM @xmlData.nodes('//r') AS RECORDS(r)
-		OPTION (OPTIMIZE FOR (@xmlData = NULL ));
-	END
+	DECLARE	@ArchiveTable_oneDay TABLE (
+				rid			INT				IDENTITY(1,1)
+			,	tablename	NVARCHAR(128)
+			,	PRIMARY KEY CLUSTERED (rid)
+			)
 		
-	--// TVS Table in archive
-	SET	@OutputData = NULL;
-	EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
+	DECLARE @start_rid INT, @End_rid INT, @TableName VARCHAR(50)
+	INSERT INTO	@ArchiveTable
+			(tablename)
+	VALUES	('TicketVoiding_RequestDetail')
+		,	('TicketVoiding_Request')
+		,	('TicketVoiding_AutoVoidRequest_Queue')
+		,	('TicketVoiding_AutoUnmarkSetting')	
+
+	INSERT INTO	@ArchiveTable_oneDay
+			(tablename)
+	VALUES	('zzzbettransM')
+		,	('zzzbettrans')
+		,	('TicketVoiding_VoidedTransaction')
+		
+	SET @start_rid = 1
+	SET @End_rid = (SELECT MAX(rid) FROM @ArchiveTable)
+	-------------------------// TVS Table in active data in DBTRANS -------------------------------------
+	----- first: check one by one table name in the @ArchiveTable
+	WHILE @start_rid <= @End_rid
+	BEGIN
+		SELECT @TableName = (SELECT tablename FROM @ArchiveTable WHERE rid = @StartDate)
+		-------------------------------------------------------------
+		SET	@OutputData = NULL;
+		EXECUTE	DBTXN.bodb02.dbo.Task_MBU_TVS_CheckRowCount_Sel	
 				@StartDate	= @StartDate
 				, @EndDate = @EndDate
-				,	@OutputData	= @OutputData	OUTPUT
+				, @tableName = @TableName
+				, @OutputData = @OutputData	OUTPUT
 
-	IF	@OutputData IS NOT NULL
-	BEGIN;
-		SET @xmlData = CAST(@OutputData AS XML);
-		INSERT #__archiveResult(winlostdate, tableName, archiveRowCount)
-		SELECT r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
-		FROM @xmlData.nodes('//r') AS RECORDS(r)
-		OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+		IF	@OutputData IS NOT NULL
+		BEGIN;
+			SET	@xmlData = CAST(@OutputData AS XML);
+			INSERT INTO	#__activeResult_TVS_tmp (winlostdate, tableName, activeRowCount)
+			SELECT	r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
+			FROM @xmlData.nodes('//r') AS RECORDS(r)
+			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+		END
+		
+		SET @start_rid = @start_rid + 1
+		
 	END
+	----- second: check one by one table name in the @ArchiveTable_oneDay
+	SET @start_rid = 1
+	SET @End_rid = (SELECT MAX(rid) FROM @ArchiveTable_oneDay)
+	WHILE @start_rid <= @End_rid
+	BEGIN
+		SELECT @TableName = (SELECT tablename FROM @ArchiveTable_oneDay WHERE rid = @StartDate)
+		WHILE (@StartDate_tmp <= @EndDate_tmp)
+		BEGIN
+			-------------------------------------------------------------
+			SET	@OutputData = NULL;
+			EXECUTE	DBTXN.bodb02.dbo.Task_MBU_TVS_CheckRowCount_Sel	
+					@StartDate	= @StartDate
+					, @tableName = @TableName
+					, @OutputData = @OutputData	OUTPUT
+
+			IF	@OutputData IS NOT NULL
+			BEGIN;
+				SET	@xmlData = CAST(@OutputData AS XML);
+				INSERT INTO	#__activeResult_TVS_tmp (winlostdate, tableName, activeRowCount)
+				SELECT	r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
+				FROM @xmlData.nodes('//r') AS RECORDS(r)
+				OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+			END
+			SET @StartDate_tmp = DATEADD(DD, 1, @StartDate_tmp)
+			
+		END	
+		SET @start_rid = @start_rid + 1
+		
+	END
+	-------------------------// TVS Table in archived data - DBARC -------------------------------------
+	----- first: check one by one table name in the @ArchiveTable
+	SET @start_rid = 1
+	SET @End_rid = (SELECT MAX(rid) FROM @ArchiveTable)
+	
+	WHILE @start_rid <= @End_rid
+	BEGIN
+		SELECT @TableName = (SELECT tablename FROM @ArchiveTable WHERE rid = @StartDate)
+		-------------------------------------------------------------
+		SET	@OutputData = NULL;
+		EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
+				@StartDate	= @StartDate
+				, @EndDate = @EndDate
+				, @TableName = @TableName
+				,@OutputData	= @OutputData	OUTPUT
+
+		IF	@OutputData IS NOT NULL
+		BEGIN;
+			SET @xmlData = CAST(@OutputData AS XML);
+			INSERT #__archiveResult_TVS_tmp(winlostdate, tableName, archiveRowCount)
+			SELECT r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
+			FROM @xmlData.nodes('//r') AS RECORDS(r)
+			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+		END
+		
+		SET @start_rid = @start_rid + 1
+		
+	END
+	----- second: check one by one table name in the @ArchiveTable_oneDay
+	SET @start_rid = 1
+	SET @End_rid = (SELECT MAX(rid) FROM @ArchiveTable_oneDay)
+	
+	SET @StartDate_tmp = @StartDate
+	SET @EndDate_tmp = @EndDate
+	WHILE @start_rid <= @End_rid
+	BEGIN
+		SELECT @TableName = (SELECT tablename FROM @ArchiveTable_oneDay WHERE rid = @StartDate)
+		-------------------------------------------------------------
+		WHILE (@StartDate_tmp <= @EndDate_tmp)
+		BEGIN
+			SET	@OutputData = NULL;
+			EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
+					@StartDate	= @StartDate
+					, @TableName = @TableName
+					,	@OutputData	= @OutputData	OUTPUT
+
+			IF	@OutputData IS NOT NULL
+			BEGIN;
+				SET @xmlData = CAST(@OutputData AS XML);
+				INSERT #__archiveResult_TVS_tmp(winlostdate, tableName, archiveRowCount)
+				SELECT r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
+				FROM @xmlData.nodes('//r') AS RECORDS(r)
+				OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+			END
+			
+			SET @StartDate_tmp = DATEADD(DD, 1, @StartDate_tmp)
+			
+		END
+		SET @start_rid = @start_rid + 1
+		
+	END
+	--------------INSERT Result for TVS Table -------------------------
+	INSERT INTO #__activeResult (winlostdate,tableName,activeRowCount)
+	SELECT winlostdate, tableName, SUM(activeRowCount) 
+	FROM #__activeResult_TVS_tmp
+	GROUP BY tableName,winlostdate
+	
+	INSERT INTO #__archiveResult (winlostdate,tableName,archiveRowCount)
+	SELECT winlostdate, tableName, SUM(archiveRowCount) 
+	FROM #__archiveResult_TVS_tmp
+	GROUP BY tableName,winlostdate
+	
 			
 	IF	EXISTS (
 		SELECT TOP(1) 1
