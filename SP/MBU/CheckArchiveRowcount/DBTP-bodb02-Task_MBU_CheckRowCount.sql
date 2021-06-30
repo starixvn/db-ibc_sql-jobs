@@ -257,12 +257,14 @@ BEGIN;
 	WHILE @start_rid <= @End_rid
 	BEGIN
 		SELECT @TableName = (SELECT tablename FROM @ArchiveTable_oneDay WHERE rid = @start_rid)
+		SET @StartDate_tmp = @StartDate
+		
 		WHILE (@StartDate_tmp <= @EndDate_tmp)
 		BEGIN
 			------------------------active -----------------
 			SET	@OutputData = NULL;
 			EXECUTE	DBTXN.bodb02.dbo.Task_MBU_TVS_CheckRowCount_Sel	
-					@StartDate	= @StartDate
+					@StartDate	= @StartDate_tmp
 					, @tableName = @tableName
 					, @OutputData = @OutputData	OUTPUT
 
@@ -277,7 +279,7 @@ BEGIN;
 			------------------------archive -----------------
 			SET	@OutputData = NULL;
 			EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
-					@StartDate	= @StartDate
+					@StartDate	= @StartDate_tmp
 					, @TableName = @TableName
 					,	@OutputData	= @OutputData	OUTPUT
 
