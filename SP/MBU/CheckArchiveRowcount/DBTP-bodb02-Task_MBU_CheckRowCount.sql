@@ -213,6 +213,9 @@ BEGIN;
 		SET	@hasDiff = 0;
 	END;
 
+	DECLARE @ArchiveRange_TVS VARCHAR(50)
+	SET @ArchiveRange_TVS = CONVERT(VARCHAR(12),@startdate, 23) + ' -> ' + CONVERT(VARCHAR(12),@EndDate,23)
+	
 	-- Build html
 	SELECT	@subject	= N'Archving process check count - KBT@' + @@SERVERNAME
 		,	@email_body = (
@@ -250,7 +253,7 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 								,	TYPE
 								)
 							,	(
-								SELECT	NULL, [td]	= ISNULL(CONVERT(VARCHAR(50),CAST(ISNULL(active.winlostdate, archive.winlostdate) AS DATE), 120), '')
+								SELECT	NULL, [td]	= ISNULL(CONVERT(VARCHAR(50),CAST(ISNULL(active.winlostdate, archive.winlostdate) AS DATE), 120), @ArchiveRange_TVS)
 									,	NULL, [td]	= ISNULL(active.tableName, archive.tableName)
 									,	NULL, [td]	= ISNULL(active.activeRowCount, 0)
 									,	NULL, [td]	= ISNULL(archive.archiveRowCount, 0)
