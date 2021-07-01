@@ -1,5 +1,5 @@
 /*<info serverAlias="DBARC-bodb_Archive" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_MBU_TVS_BK_CheckRowCount_Sel]
+ALTER PROCEDURE [dbo].[Task_MBU_TVS_BK_CheckRowCount_Sel]
 	@StartDate		SMALLDATETIME	= NULL
 	,@EndDate		SMALLDATETIME = NULL 
 	,@tablename		VARCHAR(50) = NULL
@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20210628@Helen:	Initial - [RedmineId: #157539]
+		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
 	
 	Notes:
 		- check by one day: TicketVoiding_VoidedTransaction
@@ -259,27 +260,27 @@ BEGIN
 			WHERE 	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.MatchId != 0 AND  t1.matchid = t2.matchid AND t2.eventdate = @StartDate)
 		) AS tmp
 	END
-	ELSE IF @tablename = 'zzzbettransM'
+	ELSE IF @tablename = 'zzzbettrans'
 	BEGIN	
 		-------------- PROCESS for tables that user void without TVS, use old function of special delete ---------------------
 		--5.1 zzzbettrans	
 		INSERT INTO @__tempCount(rowcnt, tableName)
-		SELECT SUM (tmp.cnt), 'zzzbettrans'
+		SELECT COUNT (1), 'zzzbettrans'
 		FROM (
-			SELECT	COUNT(1) AS cnt
+			SELECT	t1.keyid 
 			FROM	dbo.zzzbettrans_bk AS t1 WITH (NOLOCK)
 				INNER JOIN bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.winlostdate = @StartDate
 			WHERE	t1.VoidingHistoryId IS NULL	
 				AND EXISTS (SELECT 1 FROM bodb02.dbo.SportBettypeMatrix t3 WITH (NOLOCK) WHERE t2.bettype=t3.BetType
 									AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 )
-			UNION ALL
-			SELECT	COUNT(1)
+			UNION 
+			SELECT	t1.keyid
 			FROM	dbo.zzzbettrans_bk AS t1 WITH (NOLOCK)
 				INNER JOIN bodb02.dbo.bettransm14 t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @StartDate
 			WHERE	t1.VoidingHistoryId IS NULL	
 		) AS tmp
 	END
-	ELSE IF @tablename = 'zzzbettrans'	
+	ELSE IF @tablename = 'zzzbettransM'	
 	BEGIN
 		-- 5.2 zzzbettransM
 		INSERT INTO @__tempCount(rowcnt, tableName)

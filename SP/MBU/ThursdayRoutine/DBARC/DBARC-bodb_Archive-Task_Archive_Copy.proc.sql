@@ -21,6 +21,7 @@ AS
 		- 20210304@Max: [TVS] Remove archived data [Redmine: #150524]
 		- 20210604@Max: [TVS] Danger Accept Enhancement - Phase 9 [Redmine: #153216]
 		- 20210625@Helen: [TVS] Perfomance tuning for archived process [Redmine: #157539]
+		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -485,7 +486,7 @@ FROM	bodb02.dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) ON t2.transid = t1.TransId and t2.winlostdate = @StartDate
 WHERE	EXISTS (SELECT 1 from bodb02.dbo.SportBettypeMatrix t3 WITH (NOLOCK) where t2.bettype=t3.BetType
 					 AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 and t1.matchid=0 )
-UNION ALL
+UNION 
 
 SELECT	t1.TransId, t1.MessageId, t1.ReasonId,t1. MatchId, t1.CreatedDate, t1.Id, t1.IssueTypeID, t1.SubIssueTypeID, t1.CustID
 FROM	bodb02.dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
@@ -531,7 +532,7 @@ FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
 WHERE	t1.VoidingHistoryId IS NULL	
 	AND EXISTS (SELECT 1 FROM bodb02.dbo.SportBettypeMatrix t3 WITH (NOLOCK) WHERE t2.bettype=t3.BetType
 						AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 )
-UNION ALL
+UNION 
 SELECT	t1.transid, t1.custid, t1.transdate, t1.oddsid, t1.hdp1, t1.hdp2, t1.odds, t1.stake, t1.STATUS, t1.winlost, t1.livehomescore, t1.liveawayscore, t1.liveindicator, t1.betteam, t1.creator, t1.refno, t1.comstatus, t1.winlostdate, t1.betfrom, t1.betcheck, t1.checktime, t1.matchid, t1.bettype, t1.keyid, t1.VoidingHistoryId
 FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.bettransm14 t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @StartDate

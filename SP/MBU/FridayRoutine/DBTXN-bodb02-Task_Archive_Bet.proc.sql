@@ -20,6 +20,7 @@ AS
 		- 20200728@Brice:	Add parameter @Action, Add 13 tables - [Redmine: #111093]
 		- 20210225@Max: [TVS] Remove archived data [Redmine: #150524]
 		- 20210625@Helen: [TVS] Perfomance tuning for archived process [Redmine: #157539]
+		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -191,7 +192,7 @@ BEGIN
 				INNER JOIN dbo.bettrans14 AS t2 WITH (NOLOCK) ON t2.transid = t1.TransId and t2.winlostdate = @StartDate
 			WHERE	EXISTS (SELECT 1 from dbo.SportBettypeMatrix t3 WITH (NOLOCK) WHERE t2.bettype=t3.BetType
 								 AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 and t1.matchid=0 )
-			UNION ALL
+			UNION 
 			SELECT	t1.id,0
 			FROM	dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
 				INNER JOIN dbo.bettrans14 AS t2 WITH (NOLOCK) ON t2.refno = t1.TransId and t2.winlostdate = @StartDate 
@@ -218,7 +219,7 @@ BEGIN
 			WHERE	t1.VoidingHistoryId IS NULL	
 				AND EXISTS (SELECT 1 FROM dbo.SportBettypeMatrix t3 WITH (NOLOCK) WHERE t2.bettype=t3.BetType
 									AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 )
-			UNION ALL
+			UNION 
 			SELECT	t1.keyid,0
 			FROM	dbo.zzzbettrans AS t1 WITH (NOLOCK)
 				INNER JOIN dbo.bettransm14 t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @StartDate
