@@ -51,13 +51,13 @@ BEGIN
 				FROM	dbo.TicketVoiding_RequestDetail_bk AS t1 WITH (NOLOCK)
 					CROSS APPLY (
 							SELECT max(b.winlostdate) as winlostdate
-							FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
+							FROM DBTXN.bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
 								INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
 							  WHERE s.RequestId = t1.RequestId
 							
 							UNION ALL
 							SELECT max(b.winlostdate) as winlostdate
-							FROM bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
+							FROM DBTXN.bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
 								INNER JOIN bodb02.dbo.bettrans14 b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
 							  WHERE s.RequestId = t1.RequestId
 						)t
@@ -113,7 +113,7 @@ BEGIN
 
 								UNION ALL
 								SELECT MAX(bt.winlostdate) AS eventdate
-								FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
+								FROM	DBTXN.bodb02.dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
 									CROSS APPLY (
 											SELECT  b.winlostdate as winlostdate
 											FROM	bodb02.dbo.bettrans b WITH (NOLOCK) 
