@@ -79,6 +79,7 @@ AS
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
 		- 20210527@Hogan: Support Add 2 New Betfroms # $ [RedmineID: #155922]
+		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -201,6 +202,7 @@ BEGIN
 			WHEN (bettype BETWEEN 3801 AND 3899 AND matchid = 173) THEN 173 -- VGA FreeBets
 			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
+			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -317,6 +319,7 @@ BEGIN
 			WHEN (bettype BETWEEN 3801 AND 3899 AND matchid = 173) THEN 173 -- VGA FreeBets
 			WHEN bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
+			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 			ELSE 0
 		END
 		,CASE

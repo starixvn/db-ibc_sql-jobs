@@ -58,6 +58,7 @@ AS
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
+		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -309,6 +310,7 @@ BEGIN
 				WHEN (bettype BETWEEN 3801 AND 3897 AND b.matchid <> 173) THEN 171 -- VGA
 				WHEN (bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173 -- VGA FreeBets
 				WHEN (bettype BETWEEN 3898 AND 3899 AND b.matchid <> 173) THEN -171 -- VGA Prize
+				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN b.bettype IN (17000, 17003, 17004) THEN 246 -- NPHP
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
@@ -399,6 +401,7 @@ BEGIN
 				WHEN (bettype BETWEEN 3801 AND 3897 AND b.matchid <> 173) THEN 171 -- VGA
 				WHEN (bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173 -- VGA FreeBets
 				WHEN (bettype BETWEEN 3898 AND 3899 AND b.matchid <> 173) THEN -171 -- VGA Prize
+				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN b.bettype IN (17000,17003, 17004) THEN 246 -- NPHP
 				ELSE 0
 			END--SportType
