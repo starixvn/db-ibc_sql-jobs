@@ -64,6 +64,9 @@ BEGIN
 		[sporttype] [smallint] NOT NULL,
 		[bettype] [smallint] NULL,
 		[netTurnover] [money] NULL,
+		[anetTurnover] [money] NULL,
+		[mnetTurnover] [money] NULL,
+		[snetTurnover] [money] NULL,
 		[TurnoverNoDraw] [money] NULL,
 		[ExtraWinloss] [money] NULL,
 		[ExtraComm] [money] NULL,
@@ -105,7 +108,7 @@ BEGIN
 	INSERT INTO #sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, betcount, grosscomm, agrosscomm, mgrosscomm, sgrosscomm, Sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, betcount, grosscomm, agrosscomm, mgrosscomm, sgrosscomm, Sporttype, bettype, netTurnover, anetTurnover, mnetTurnover, snetTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
 	)
 	SELECT
 		@winlostdate
@@ -197,6 +200,9 @@ BEGIN
 			ELSE 0
 		END bettype
 	   ,0 AS netTurnover
+	   ,SUM(ABS(stake * apositiontaking)) AS anetTurnover
+	   ,SUM(ABS(stake * mpositiontaking)) AS mnetTurnover
+	   ,SUM(ABS(stake * spositiontaking)) AS snetTurnover
 	   ,SUM(CASE
 			WHEN statusID IN (112, 113) AND
 				modds IN (-0.25, 0.25)
@@ -360,7 +366,7 @@ BEGIN
 	   ,SUM(bettrans.agrosscomm) agrosscomm
 	   ,sporttype
 	   ,bettype
-	   ,SUM(netTurnover) AS netTurnover
+	   ,SUM(bettrans.anetTurnover) AS netTurnover
 	   ,SUM(TurnoverNoDraw) AS TurnoverNoDraw,
 		SUM(ExtraWinloss) AS ExtraWinloss,
 		SUM(ExtraComm) AS ExtraComm
@@ -398,7 +404,7 @@ BEGIN
 	   ,SUM(bettrans.mgrosscomm) mgrosscomm
 	   ,sporttype
 	   ,bettype
-	   ,SUM(netTurnover) AS netTurnover
+	   ,SUM(bettrans.mnetTurnover) AS netTurnover
 	   ,SUM(bettrans.TurnoverNoDraw) AS TurnoverNoDraw,
 		SUM(ExtraWinloss) AS ExtraWinloss,
 		SUM(ExtraComm) AS ExtraComm
@@ -435,7 +441,7 @@ BEGIN
 	   ,SUM(bettrans.sgrosscomm) sgrosscomm
 	   ,sporttype
 	   ,bettype
-	   ,SUM(netTurnover) AS netTurnover
+	   ,SUM(bettrans.snetTurnover) AS netTurnover
 	   ,SUM(bettrans.TurnoverNoDraw) AS TurnoverNoDraw,
 		SUM(ExtraWinloss) AS ExtraWinloss,
 		SUM(ExtraComm) AS ExtraComm
