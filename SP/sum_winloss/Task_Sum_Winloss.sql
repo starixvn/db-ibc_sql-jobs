@@ -71,7 +71,6 @@ BEGIN
 		[ExtraWinloss] [money] NULL,
 		[ExtraComm] [money] NULL,
 		username nvarchar(30)
-		,CONSTRAINT CIX_Sum_Winloss_tmp PRIMARY	KEY CLUSTERED (custid, recommend, mrecommend, srecommend)
 	)
 
 	;WITH rs AS 
