@@ -69,8 +69,7 @@ BEGIN
 		[snetTurnover] [money] NULL,
 		[TurnoverNoDraw] [money] NULL,
 		[ExtraWinloss] [money] NULL,
-		[ExtraComm] [money] NULL,
-		username nvarchar(30)
+		[ExtraComm] [money] NULL
 	)
 
 	;WITH rs AS 
