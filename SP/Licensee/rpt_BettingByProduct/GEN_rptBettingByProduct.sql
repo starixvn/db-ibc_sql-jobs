@@ -86,6 +86,7 @@ AS
 		- 20210518@Danny: Integrate AdvantPlay mini [Redmine: #155208]
 		- 20210518@Danny: Integrate AdvantPlay [Redmine: #154787]
 		- 20210422@Danny: Enhance step to Generate rpt_BettingByProduct with Rpt_Betting datasource [Redmine: #153805]
+		- 20210707@Danny: Vgaming - Free bets and Jackpot prize integration [Redmine: #156185]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -184,13 +185,14 @@ BEGIN
 			,bt.ProductID
 			,CASE
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699, 3150) 
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899) 
 						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
 						   , SAG_Tips (3007)
 						   , CC-Bonus(1906)
 						   , SB-Adjusted Odds(999)
 						   , Saba.club Contribution(1698), Saba.club Jackpot Prize(1699)
 						   , AE Casino Lucky Draw (3150)
+						   , Vgaming Contribution(3898), Vgaming Jackpot Prize(3899)
 						*/
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
@@ -221,13 +223,14 @@ BEGIN
 			,bt.ProductID
 			,CASE 
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999,1698,1699, 3150) 
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899) 
 						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
 						   , SAG_Tips (3007)
 						   , CC-Bonus(1906)
 						   , SB-Adjusted Odds(999)
 						   , Saba.club Contribution(1698), Saba.club Jackpot Prize(1699)
 						   , AE Casino Lucky Draw (3150)
+						   , Vgaming Contribution(3898), Vgaming Jackpot Prize(3899)
 						*/
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101

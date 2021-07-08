@@ -18,6 +18,7 @@ AS
 		- 20201029@Parsons: Add ExtraPT in Number Game Win Loss Report [RedmineID: #142969]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 		- 20210514@Danny: Integrate Vgaming [#154080] 
+		- 20210707@Danny: Vgaming - Free bets and Jackpot prize integration [Redmine: #156185]
 
 */
 
@@ -158,9 +159,8 @@ BEGIN
 					END -- poker games: gem & insurance
 					,b.betdaqid
 					,CASE
-						WHEN m.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
-						WHEN m.matchid = 173 THEN 2 -- 173: VG Free Bet
-						WHEN m.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+						WHEN m.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VG Free Bet
+						WHEN m.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VG Normal Bet
 						ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 					END AS TicketType
 					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
@@ -237,9 +237,8 @@ BEGIN
 					END -- poker games: gem & insurance
 					,b.betdaqid
 					,CASE
-						WHEN m.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
-						WHEN m.matchid = 173 THEN 2 -- 173: VG Free Bet
-						WHEN m.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+						WHEN m.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VG Free Bet
+						WHEN m.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VG Normal Bet
 						ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 					 END AS TicketType
 					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
@@ -355,9 +354,8 @@ BEGIN
 				END -- poker games: gem & insurance
 				,b.betdaqid
 				,CASE
-					WHEN b.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
-					WHEN b.matchid = 173 THEN 2 -- 173: VG Free Bet
-					WHEN b.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+					WHEN b.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VG Free Bet
+					WHEN b.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VG Normal Bet
 					ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 				END AS TicketType
 				,CASE
@@ -432,9 +430,8 @@ BEGIN
 				END -- poker games: gem & insurance
 				,b.betdaqid
 				,CASE
-					WHEN b.matchid = 150 THEN 2 -- 150: Saba.club Free Bet
-					WHEN b.matchid = 173 THEN 2 -- 173: VG Free Bet
-					WHEN b.matchid = 200 THEN 0 -- 200: Saba.club Normal Bet 
+					WHEN b.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VG Free Bet
+					WHEN b.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VG Normal Bet
 					ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 				END AS TicketType
 				,CASE
