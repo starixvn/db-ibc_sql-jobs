@@ -22,6 +22,7 @@ AS
 		- 20200707@Percy: Integrate new product: KY Gaming [RedmineID: #131437]
 		- 20200827@Percy: Re-Integrate 12Topaz due to API's change [RedmineID: #139043]
 		- 20201216@Percy: Integrate new product: BTi [RedmineID: #144456]
+		- 20210615@Malcolm: Integrate new product: IM Esports [RedmineID: #157048]
 */
 
 BEGIN
@@ -737,6 +738,51 @@ BEGIN
 			END CATCH
 
 			DROP TABLE #BTi
+		END
+
+		-- IM Esports
+		ELSE IF @ProductId = 31
+		BEGIN
+			CREATE TABLE #Sum_Winloss_IMEsports (PlayerId VARCHAR(50),Currency VARCHAR(10),BetCount INT, Turnover MONEY,ValidBet MONEY,WinLoss MONEY,IsHousePlayer SMALLINT,IBCCustId INT)
+
+			DECLARE @FromDate SMALLDATETIME, @ToDate SMALLDATETIME
+
+			SELECT @FromDate = t.c.value('(startDate/text())[1]', 'SMALLDATETIME'), @ToDate = t.c.value('(endDate/text())[1]', 'SMALLDATETIME')
+			FROM  @XmlData.nodes('root') AS t(c)
+
+			SELECT @WinlostDate = CONVERT(DATE, @FromDate)
+
+			BEGIN TRY
+				INSERT INTO #Sum_Winloss_IMEsports (PlayerId, Currency, BetCount, Turnover, ValidBet, WinLoss, IsHousePlayer, IBCCustId)
+				SELECT	t.c.value('(PlayerId/text())[1]', 'VARCHAR(50)')	AS PlayerId,
+						t.c.value('(Currency/text())[1]', 'VARCHAR(10)')	AS Currency,
+						t.c.value('(BetCount/text())[1]', 'INT')			AS BetCount,
+						t.c.value('(Turnover/text())[1]', 'MONEY')			AS Turnover,
+						t.c.value('(ValidBet/text())[1]', 'MONEY')			AS ValidBet,					
+						t.c.value('(WinLoss/text())[1]', 'MONEY')			AS WinLoss,
+						t.c.value('(IsHousePlayer/text())[1]', 'SMALLINT')	AS IsHousePlayer,
+						t.c.value('(IBCCustId/text())[1]', 'INT')			AS IBCCustId
+				FROM @XmlData.nodes('root/Result/Details') AS t(c)
+				OPTION (OPTIMIZE FOR (@XmlData = NULL))
+
+				DELETE bt WITH (ROWLOCK, UPDLOCK)
+				FROM dbo.Sum_Winloss_IMEsports bt	
+				WHERE EXISTS (SELECT 1 FROM #Sum_Winloss_IMEsports t WHERE t.PlayerId = bt.PlayerId AND bt.WinlostDate = @WinlostDate)
+				
+				INSERT INTO dbo.Sum_Winloss_IMEsports (PlayerId, Currency, BetCount, Turnover, ValidBet, WinLoss, IsHousePlayer, FromDate, ToDate, IBCCustId, WinlostDate)
+				SELECT k.PlayerId, k.Currency, k.BetCount, k.Turnover, k.ValidBet, k.WinLoss, k.IsHousePlayer, @FromDate, @ToDate, m.IBCCustId, @WinlostDate
+				FROM #Sum_Winloss_IMEsports k
+					INNER JOIN dbo.MemberInfo m WITH (NOLOCK) ON '12BET$' + k.PlayerId = m.Username
+
+				SELECT @IsErr = 0
+			END TRY
+			BEGIN CATCH
+				UPDATE dbo.APIProduct_ImportQueue WITH (ROWLOCK, UPDLOCK)
+				SET FinishedTime = NULL, WinlostDate = NULL, LogDesc = 'Failed. Error Message = ' + ERROR_MESSAGE()
+				WHERE QueueId = @QueueId
+			END CATCH
+
+			DROP TABLE #Sum_Winloss_IMEsports
 		END
 
 		IF @IsErr = 1

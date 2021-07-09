@@ -21,6 +21,7 @@ AS
 		- 20200827@Percy: Re-Integrate 12Topaz due to API's change [RedmineID: #139043]
 		- 20201216@Percy: Integrate new product: BTi [RedmineID: #144456]
 		- 20210602@Percy: Change formula of 12Topaz & BTi [RedmineID: #156324]
+		- 20210615@Malcolm: Integrate new product: IM Esports [RedmineID: #157048]
 */
 
 BEGIN
@@ -366,6 +367,36 @@ BEGIN
 					AND mi.IBCCustId = mr.IBCCustId
 			)
 			AND b.BetStatus IN ('Won', 'Lost', 'Half won', 'Half lost', 'Draw', 'Cashout')
+		GROUP BY
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency
+	END
+	--IM Esports
+	ELSE IF @ProductId = 31
+	BEGIN
+		INSERT INTO #tempData
+		(
+			AffId,
+			IBCCustId,
+			Currency,
+			Turnover,
+			Winloss
+		)
+		SELECT
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency,
+			SUM(b.ValidBet) AS Turnover,
+			SUM(b.WinLoss) AS Winloss
+		FROM dbo.Sum_Winloss_IMEsports b WITH (NOLOCK)
+			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
+		WHERE b.WinlostDate = @WinlostDate
+			AND NOT EXISTS (
+				SELECT 1 FROM dbo.MemberRemoval mr WITH (NOLOCK)
+				WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
+					AND mi.IBCCustId = mr.IBCCustId
+			)			
 		GROUP BY
 			mi.AffId,
 			mi.IBCCustId,

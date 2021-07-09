@@ -1,12 +1,5 @@
-SP\MBU\MoveBet\DBTXN-bodb02-Task_DailySummary.proc.sql
-SP\sum_winloss\Task_sum_winloss_14.sql
-SP\sum_winloss\Task_Sum_Winloss_Old.sql
-
-
-
-
-
-
+SP\Affiliate\12BET\Task_Aff_ImportData_API_Job.sql
+SP\Affiliate\12BET\Task_APIProduct_ImportQueue_Process_Job.sql
 
 
 
