@@ -35,6 +35,12 @@ BEGIN
 
 	SET NOCOUNT ON
 
+	DECLARE @cutoffDate SMALLDATETIME
+
+	SELECT @cutoffDate = CutoffDate
+	FROM dbo.f_GetCutoffDate() f
+	WHERE f.TypeName = 'NetTO'
+
 	---- get extra PT from table setting
 	CREATE TABLE #__SuperExtraPT(productId INT, bettypePT INT, SuperId INT, ExtraPT MONEY, IsUsingOddsSpread BIT)
 	CREATE CLUSTERED INDEX CIX_#__SuperExtraPT ON #__SuperExtraPT(SuperId, bettypePT)
@@ -221,7 +227,20 @@ BEGIN
 				bettype NOT IN (71, 72) AND
 				bettype NOT BETWEEN 81 AND 120
 				) THEN 0
-			WHEN tbl.isUsingOddsSpread = 1 THEN
+			WHEN bettrans.winlostdate < @cutoffDate AND 
+				(
+					bettype BETWEEN 2401 AND 2499   -- Allbet
+					OR bettype BETWEEN 3001 AND 3099   -- SA Gaming
+					OR bettype BETWEEN 3101 AND 3150   -- AE Casino
+					OR bettype BETWEEN 3300 AND 3399   -- BBIN	
+					OR bettype BETWEEN 3201 AND 3299   -- IBCBet Live Casino
+					OR bettype BETWEEN 5601 AND 5699   -- ION 	 
+					OR bettype BETWEEN 3401 AND 3499   -- WM
+					OR bettype BETWEEN 5701 AND 5799   -- GDG
+					OR bettype BETWEEN 3501 AND 3599   -- BG
+					OR bettype BETWEEN 3701 AND 3799   -- PP Live Casino
+				) THEN oddsspread
+			WHEN bettrans.winlostdate >= @cutoffDate AND tbl.isUsingOddsSpread = 1 THEN
 				CASE WHEN cont.ContributionBettype IS NULL THEN bettrans.oddsspread
 					ELSE 0
 				END

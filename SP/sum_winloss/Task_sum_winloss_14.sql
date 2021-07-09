@@ -33,6 +33,12 @@ BEGIN
 	DECLARE @ProductIds VARCHAR(MAX)
 	SELECT  @ProductIds = COALESCE(@ProductIds + ',', '') + CONVERT(VARCHAR(10), ProductId) FROM dbo.Products WITH (NOLOCK)
 
+	DECLARE @cutoffDate SMALLDATETIME
+
+	SELECT @cutoffDate = CutoffDate
+	FROM dbo.f_GetCutoffDate() f
+	WHERE f.TypeName = 'NetTO'
+
 	CREATE TABLE #Bettypes (ProductId INT, SportTypeRef SMALLINT, BettypeRef SMALLINT, Bettype SMALLINT, IsUsingOddsSpread BIT)
 	INSERT INTO #Bettypes (ProductId, SportTypeRef, BettypeRef, Bettype, IsUsingOddsSpread)
 	SELECT f.ProductID, f.SportType AS SportTypeRef, f.BetType AS BettypeRef, s.BetType,
@@ -210,7 +216,8 @@ BEGIN
 			,SUM(CASE
 					WHEN bt.ProductId = 1 AND b.statusID IN (112, 113) AND b.modds IN (-0.25, 0.25) THEN ABS(b.stake) / 2 -- SportsBook
 					WHEN bt.ProductId = 1 AND b.statusID = 111 THEN 0 -- SportsBook
-					WHEN bt.IsUsingOddsSpread = 1 
+					WHEN b.winlostdate < @cutoffDate AND bt.ProductId IN (21, 39, 45, 46, 47, 51 ,52, 57, 59, 65) THEN b.oddsspread
+					WHEN b.winlostdate >= @cutoffDate AND bt.IsUsingOddsSpread = 1 
 						THEN 
 							CASE WHEN cont.ContributionBettype IS NULL THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, WM, ION, GDG, bg, PPL
 								ELSE 0
