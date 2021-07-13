@@ -100,7 +100,7 @@ BEGIN
 	   ,CASE
 			WHEN bettype BETWEEN 81 AND 120 OR
 				bettype BETWEEN 8101 AND 8120 OR
-				bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+				bettype BETWEEN 3601 AND 3610 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sport
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sport
 			WHEN bettype IN (71, 72) THEN 251
@@ -225,7 +225,7 @@ BEGIN
 			,CASE
 				 WHEN bettype BETWEEN 81 AND 120 OR
 					 bettype BETWEEN 8101 AND 8120 OR
-					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+					 bettype BETWEEN 3601 AND 3610 THEN 161 -- Number Game 
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
@@ -310,7 +310,7 @@ BEGIN
 	   ,CASE
 			WHEN bettype BETWEEN 81 AND 120 OR
 				bettype BETWEEN 8101 AND 8120 OR
-				bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+				bettype BETWEEN 3601 AND 3610 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71, 72) THEN 251
@@ -434,7 +434,7 @@ BEGIN
 			,CASE
 				 WHEN bettype BETWEEN 81 AND 120 OR
 					 bettype BETWEEN 8101 AND 8120 OR
-					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+					 bettype BETWEEN 3601 AND 3610 THEN 161 -- Number Game 
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
@@ -519,7 +519,7 @@ BEGIN
 	   ,CASE
 			WHEN bettype BETWEEN 81 AND 120 OR
 				bettype BETWEEN 8101 AND 8120 OR
-			    bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+			    bettype BETWEEN 3601 AND 3610 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71, 72) THEN 251
@@ -642,7 +642,7 @@ BEGIN
 			,CASE
 				 WHEN bettype BETWEEN 81 AND 120 OR
 					 bettype BETWEEN 8101 AND 8120 OR
-					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+					 bettype BETWEEN 3601 AND 3610 THEN 161 -- Number Game 
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
@@ -727,7 +727,7 @@ BEGIN
 	   ,CASE
 			WHEN bettype BETWEEN 81 AND 120 OR
 				bettype BETWEEN 8101 AND 8120 OR
-				bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+				bettype BETWEEN 3601 AND 3610 THEN 161 -- Number Game 
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71, 72) THEN 251
@@ -851,7 +851,7 @@ BEGIN
 			,CASE
 				 WHEN bettype BETWEEN 81 AND 120 OR
 					 bettype BETWEEN 8101 AND 8120 OR
-					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+					 bettype BETWEEN 3601 AND 3610 THEN 161 -- Number Game 
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
