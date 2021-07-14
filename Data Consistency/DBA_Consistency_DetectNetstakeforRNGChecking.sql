@@ -22,12 +22,15 @@ BEGIN
 	SET @transId = ''
 	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
 
-	SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-	FROM	bodb02.dbo.bettransRNG b WITH (NOLOCK)
-	WHERE	b.BetStake <> 0 
-			AND b.statusID IN (101,102,103) --Reject/Void/Refund 
-			AND b.GameID NOT IN (2198, 2398, 2998, 4297, 1698)
-			AND b.winlostdate = @yesterday
+	IF @tablename = 'bettransRNG'
+	BEGIN
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	bodb02.dbo.bettransRNG b WITH (NOLOCK)
+		WHERE	b.BetStake <> 0 
+				AND b.statusID IN (101,102,103) --Reject/Void/Refund 
+				AND b.GameID NOT IN (2198, 2398, 2998, 4297, 1698, 3898)
+				AND b.winlostdate = @yesterday
+	END
 
 	IF @transId <> ''
 	BEGIN
