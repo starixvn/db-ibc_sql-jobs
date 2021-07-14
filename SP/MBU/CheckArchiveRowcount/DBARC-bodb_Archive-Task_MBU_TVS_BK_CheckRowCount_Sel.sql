@@ -13,7 +13,8 @@ AS
 	Revisions:
 		- 20210628@Helen:	Initial - [RedmineId: #157539]
 		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
-	
+		- 20210709@Helen: [TVS] Duplicate issue [Redmine: #157539]
+		
 	Notes:
 		- check by one day: TicketVoiding_VoidedTransaction
 		- check by range from startdate & enddate: others	
@@ -242,17 +243,19 @@ BEGIN
 		(	
 			--process for ticket single and main parlay and metrix gaming
 			SELECT	COUNT(1) AS cnt
-			FROM	dbo.TicketVoiding_VoidedTransaction_bk AS t1 WITH (NOLOCK)
-				INNER JOIN bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) ON t2.transid = t1.TransId and t2.winlostdate = @StartDate
-			WHERE	EXISTS (SELECT 1 from bodb02.dbo.SportBettypeMatrix t3 WITH (NOLOCK) where t2.bettype=t3.BetType
-								 AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 and t1.matchid=0 )
-			UNION ALL
-
-			SELECT	COUNT(1)
-			FROM	dbo.TicketVoiding_VoidedTransaction_bk AS t1 WITH (NOLOCK)
-				INNER JOIN bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) ON t2.refno = t1.TransId and t2.winlostdate = @StartDate 
-			WHERE	EXISTS (SELECT 1 from bodb02.dbo.SportBettypeMatrix t3 WITH (NOLOCK) WHERE t2.bettype=t3.BetType AND t3.bettype != 29 
-								AND t3.ProductID =1 AND t2.statusID=102)
+			FROM (SELECT t1.Id
+					FROM	dbo.TicketVoiding_VoidedTransaction_bk AS t1 WITH (NOLOCK)
+						INNER JOIN bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) ON t2.transid = t1.TransId and t2.winlostdate = @StartDate
+					WHERE	EXISTS (SELECT 1 from bodb02.dbo.SportBettypeMatrix t3 WITH (NOLOCK) where t2.bettype=t3.BetType
+										 AND t3.ProductID IN (1,3,5,25,27,37) AND t2.statusID=102 and t1.matchid=0 )
+					
+					UNION 
+					SELECT t1.Id
+					FROM	dbo.TicketVoiding_VoidedTransaction_bk AS t1 WITH (NOLOCK)
+						INNER JOIN bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) ON t2.refno = t1.TransId and t2.winlostdate = @StartDate 
+					WHERE	EXISTS (SELECT 1 from bodb02.dbo.SportBettypeMatrix t3 WITH (NOLOCK) WHERE t2.bettype=t3.BetType AND t3.bettype != 29 
+										AND t3.ProductID =1 AND t2.statusID=102)
+				) AS t
 			--process for ticket sub parlay (sportbook and virtual sport)
 			UNION All
 			SELECT	COUNT(1)
@@ -288,8 +291,6 @@ BEGIN
 		FROM	dbo.zzzbettransM_bk AS t1 WITH (NOLOCK)
 		WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @StartDate)
 			AND t1.VoidingHistoryId IS NULL
-		
-		SET @StartDate_tmp = DATEADD(DD, 1, @StartDate_tmp)
 		
 	END	
 	
