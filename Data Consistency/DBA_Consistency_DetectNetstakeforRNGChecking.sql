@@ -11,7 +11,7 @@ AS
 	DB: DBCONSISTENCY-bodb_Consistency
 
 	Revisions: 
-		- 20210712@July: Detect Netstake <> 0 for RNG products [Redmine:#158197]
+		- 20210712@July: Detect Netstake <> 0 for RNG products [Redmine:#158179]
 	
 	Param's Expanation:
 */
