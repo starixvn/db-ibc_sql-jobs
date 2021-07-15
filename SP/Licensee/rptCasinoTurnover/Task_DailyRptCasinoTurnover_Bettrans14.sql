@@ -21,6 +21,7 @@ AS
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
+		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 */
 
 BEGIN
@@ -37,7 +38,7 @@ BEGIN
 		ProductId,
 		BetType
 	FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
-	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51, 57, 66)
+	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51, 57, 66, 62)
 
 	INSERT INTO dbo.rptCasinoTurnover(
 		[WinlostDate]
@@ -79,7 +80,7 @@ BEGIN
 		WHERE
 			bettrans.winlostdate = @winlostdate AND
 			bettrans.statusID IN (111, 112, 113) AND -- DRAW, WON, LOSE
-			matrix.ProductID IN (6, 22, 55, 32, 42, 61, 66) -- RNG Casino, Macau Games, PG Soft, PP, Saba.club
+			matrix.ProductID IN (6, 22, 55, 32, 42, 61, 66, 62) -- RNG Casino, Macau Games, PG Soft, PP, Saba.club, Vgaming, Creative Gaming
 		GROUP BY
 			bettrans.custid
 			,bettrans.recommend

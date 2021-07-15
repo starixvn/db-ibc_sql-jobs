@@ -34,6 +34,7 @@ AS
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
+		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -131,7 +132,8 @@ BEGIN
 		,HB BIGINT
 		,WM BIGINT
 		,BGG BIGINT
-		,VGA BIGINT)
+		,VGA BIGINT
+		,CG BIGINT)
 
 	--exec
 	--rptLicWinloss2
@@ -176,7 +178,8 @@ BEGIN
 		,HB
 		,WM
 		,BGG
-		,VGA)
+		,VGA
+		,CG)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
@@ -338,7 +341,8 @@ BEGIN
 		,HB
 		,WM
 		,BGG
-		,VGA)
+		,VGA
+		,CG)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (

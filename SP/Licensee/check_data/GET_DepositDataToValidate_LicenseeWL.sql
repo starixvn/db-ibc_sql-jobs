@@ -36,6 +36,7 @@ AS
 		- 20210428@Hogan: Integrate WM Live Casino [RedmineID: #140944]
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
+		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 
 	Param's Explanation:
 		@DrawFilter
@@ -212,6 +213,10 @@ BEGIN
 		,@VGATurnover MONEY
 		,@VGACustomerWl MONEY
 		,@VGABetCount MONEY
+		----CG
+		,@CGTurnover MONEY
+		,@CGCustomerWl MONEY
+		,@CGBetCount MONEY
 
 	DECLARE @tblSporttype AS TABLE (ProductPrefix VARCHAR(10), Sporttype SMALLINT)
 
@@ -224,7 +229,7 @@ BEGIN
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB',
-		'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB', 'WM', 'BGG', 'VGA')
+		'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG')
 
 	INSERT INTO @tblSporttype
 	SELECT 'SB', 0
@@ -870,6 +875,22 @@ BEGIN
 		,@VGABetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
 	FROM @tblData b
 	WHERE ProductPrefix = 'VGA'
+
+	----CG
+	SELECT
+		@CGTurnover=SUM(CASE
+							WHEN @DrawFilter IN (2,3) THEN
+								CASE
+									WHEN b.StatusID = 111 THEN 0
+									WHEN b.StatusID IN (114,115) THEN 0.5
+									ELSE 1
+								END
+							ELSE 1
+						END * b.Turnover)
+		,@CGCustomerWl=SUM(b.winlost)
+		,@CGBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
+	FROM @tblData b
+	WHERE ProductPrefix = 'CG'
 	
 	-- Result
 	SELECT
@@ -914,6 +935,7 @@ BEGIN
 		, ISNULL(@WMTurnover,0) AS WM
 		, ISNULL(@BGGTurnover,0) AS BGG
 		, ISNULL(@VGATurnover,0) AS VGA
+		, ISNULL(@CGTurnover,0) AS CG
 	UNION
 	SELECT
 		2
@@ -957,6 +979,7 @@ BEGIN
 		, ISNULL(@WMCustomerWl,0)
 		, ISNULL(@BGGCustomerWl,0)
 		, ISNULL(@VGACustomerWl,0)
+		, ISNULL(@CGCustomerWl,0)
 	UNION
 	SELECT
 		3
@@ -1000,6 +1023,7 @@ BEGIN
 		, ISNULL(@WMBetCount,0)
 		, ISNULL(@BGGBetCount,0)
 		, ISNULL(@VGABetCount,0)
+		, ISNULL(@CGBetCount,0)
 
 	SET NOCOUNT OFF
 END
