@@ -394,7 +394,6 @@ BEGIN
 			,bettrans.srecommend
 			,bettrans.sporttype
 			,bettrans.bettype
-	OPTION (optimize for (@winlostdate UNKNOWN))
 
 	---- Master
 	INSERT INTO sum_winloss_tmp
@@ -431,7 +430,6 @@ BEGIN
 			,bettrans.srecommend
 			,bettrans.sporttype
 			,bettrans.bettype
-	OPTION (optimize for (@winlostdate UNKNOWN))
 
 	---- Super
 	INSERT INTO sum_winloss_tmp
@@ -467,7 +465,6 @@ BEGIN
 	GROUP BY bettrans.srecommend
 			,bettrans.sporttype
 			,bettrans.bettype
-	OPTION (optimize for (@winlostdate UNKNOWN))
 
 	-- update username for main table
 	-- temp table for only one day, no need to update by batch
