@@ -19,6 +19,7 @@ AS
 		- 20201124@Malcolm: Use  function (f_SumWinloss_ConditionSel) to get information [redmine: #131375]
 		- 20201210@Malcolm: Add Big Gaming [RedmineId : #142459]
 		- 20210310@Malcolm: Add Pragmatic Live Casino [RedmineId : #133717]
+		- 20210609@Malcolm: Add AE Sexy - [Redmine: #156239]	
 */
 
 BEGIN
@@ -40,7 +41,7 @@ BEGIN
 			SELECT DISTINCT s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
 			WHERE f.ProductID = s.ProductID
 				AND (f.ProductID <> 6 OR f.SportType = s.SportType)
-				AND (f.BetType NOT IN (4297, 4298) AND s.BetType NOT IN (4297, 4298) OR f.BetType = s.BetType)
+				AND (f.BetType NOT IN (3150, 4297, 4298) AND s.BetType NOT IN (3150, 4297, 4298) OR f.BetType = s.BetType)
 		) AS s
 
 	-- End Get Bet Types

@@ -28,6 +28,7 @@ AS
 		- 20210427@Malcolm: Add VGaming [RedmineId : #153938]
 		- 20210518@Malcolm: Add AdvantPlay Mini [redmine: #155131]
 		- 20210512@Malcolm: Add AdvantPlay Product [redmine: #154256]
+		- 20210609@Malcolm: Add AE Sexy and change bettype range of Happy 5 Linked Games- [Redmine: #156239]	
 
 	
 */
@@ -97,9 +98,9 @@ BEGIN
 			ELSE ISNULL(comm / (1 - apositiontaking), 0)
 		END) grosscomm
 	   ,CASE
-			WHEN bettype BETWEEN 81 AND 120 OR
-				bettype BETWEEN 8101 AND 8120 OR
-				bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+			WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
+				bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
+				bettype BETWEEN 3601 AND 3610 THEN 161 -- Happy 5 Linked Games
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sport
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sport
 			WHEN bettype IN (71, 72) THEN 251
@@ -149,7 +150,7 @@ BEGIN
 			ELSE 0
 		END sporttype
 	   ,CASE
-			WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
+			WHEN bettype IN (71, 72, 3150, 4297, 4298) THEN bettype
 			ELSE 0
 		END bettype
 	   ,0 AS netTurnover
@@ -222,9 +223,9 @@ BEGIN
 			,bettrans.mrecommend
 			,bettrans.srecommend
 			,CASE
-				 WHEN bettype BETWEEN 81 AND 120 OR
-					 bettype BETWEEN 8101 AND 8120 OR
-					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+				 WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
+					 bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
+					 bettype BETWEEN 3601 AND 3610 THEN 161 -- Happy 5 Linked Games
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
@@ -274,7 +275,7 @@ BEGIN
 				 ELSE 0
 			 END
 			,CASE
-				WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
+				WHEN bettype IN (71, 72, 3150, 4297, 4298) THEN bettype
 				 ELSE 0
 			 END
 	OPTION (optimize for (@winlostdate UNKNOWN))
@@ -307,9 +308,9 @@ BEGIN
 			ELSE ISNULL(acomm / (1 - apositiontaking - mpositiontaking), 0)
 		END) grosscomm
 	   ,CASE
-			WHEN bettype BETWEEN 81 AND 120 OR
-				bettype BETWEEN 8101 AND 8120 OR
-				bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+			WHEN bettype BETWEEN 81 AND 120 OR -- Number Game
+				bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
+				bettype BETWEEN 3601 AND 3610 THEN 161 -- Happy 5 Linked Games
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71, 72) THEN 251
@@ -359,7 +360,7 @@ BEGIN
 			ELSE 0
 		END sporttype
 	   ,CASE
-			WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
+			WHEN bettype IN (71, 72, 3150, 4297, 4298) THEN bettype
 			ELSE 0
 		END bettype
 	   ,SUM(ABS(stake * apositiontaking)) AS netTurnover
@@ -431,9 +432,9 @@ BEGIN
 			,bettrans.mrecommend
 			,bettrans.srecommend
 			,CASE
-				 WHEN bettype BETWEEN 81 AND 120 OR
-					 bettype BETWEEN 8101 AND 8120 OR
-					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+				 WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
+					 bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
+					 bettype BETWEEN 3601 AND 3610 THEN 161 -- Happy 5 Linked Games
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
@@ -483,7 +484,7 @@ BEGIN
 				 ELSE 0
 			 END
 			,CASE
-				  WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
+				  WHEN bettype IN (71, 72, 3150, 4297, 4298) THEN bettype
 				 ELSE 0
 			 END
 	OPTION (optimize for (@winlostdate UNKNOWN))
@@ -516,9 +517,9 @@ BEGIN
 			ELSE scomm / (1 - tpositiontaking)
 		END) grosscomm
 	   ,CASE
-			WHEN bettype BETWEEN 81 AND 120 OR
-				bettype BETWEEN 8101 AND 8120 OR
-			    bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+			WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
+				bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
+			    bettype BETWEEN 3601 AND 3610 THEN 161 -- Happy 5 Linked Games
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71, 72) THEN 251
@@ -568,7 +569,7 @@ BEGIN
 			ELSE 0
 		END sporttype
 	   ,CASE
-			WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
+			WHEN bettype IN (71, 72, 3150, 4297, 4298) THEN bettype
 			ELSE 0
 		END bettype
 	   ,SUM(ABS(stake * mpositiontaking)) AS netTurnover
@@ -639,9 +640,9 @@ BEGIN
 	GROUP BY bettrans.mrecommend
 			,bettrans.srecommend
 			,CASE
-				 WHEN bettype BETWEEN 81 AND 120 OR
-					 bettype BETWEEN 8101 AND 8120 OR
-					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+				 WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
+					 bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
+					 bettype BETWEEN 3601 AND 3610 THEN 161 -- Happy 5 Linked Games
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
@@ -691,7 +692,7 @@ BEGIN
 				 ELSE 0
 			 END
 			,CASE
-				 WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
+				 WHEN bettype IN (71, 72, 3150, 4297, 4298) THEN bettype
 				 ELSE 0
 			 END
 	OPTION (optimize for (@winlostdate UNKNOWN))
@@ -723,10 +724,10 @@ BEGIN
 			WHEN tpositiontaking = 1 THEN 0
 			ELSE scomm / (1 - tpositiontaking)
 		END) grosscomm
-	   ,CASE
-			WHEN bettype BETWEEN 81 AND 120 OR
-				bettype BETWEEN 8101 AND 8120 OR
-				bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+	   ,CASE 
+			WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
+				bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
+				bettype BETWEEN 3601 AND 3610 THEN 161 -- Happy 5 Linked Games
 			WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 			WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 			WHEN bettype IN (71, 72) THEN 251
@@ -776,7 +777,7 @@ BEGIN
 			ELSE 0
 		END sporttype
 	   ,CASE
-			WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
+			WHEN bettype IN (71, 72, 3150, 4297, 4298) THEN bettype
 			ELSE 0
 		END bettype
 	   ,SUM(ABS(stake * spositiontaking)) AS netTurnover
@@ -848,9 +849,9 @@ BEGIN
 
 	GROUP BY bettrans.srecommend
 			,CASE
-				 WHEN bettype BETWEEN 81 AND 120 OR
-					 bettype BETWEEN 8101 AND 8120 OR
-					 bettype BETWEEN 3601 AND 3603 THEN 161 -- Number Game 
+				 WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
+					 bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
+					 bettype BETWEEN 3601 AND 3610 THEN 161 -- Happy 5 Linked Games
 				 WHEN bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sports
 				 WHEN bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sports
 				 WHEN bettype IN (71, 72) THEN 251
@@ -900,7 +901,7 @@ BEGIN
 				 ELSE 0
 			 END
 			,CASE
-				WHEN bettype IN (71, 72, 4297, 4298) THEN bettype
+				WHEN bettype IN (71, 72, 3150, 4297, 4298) THEN bettype
 				 ELSE 0
 			 END
 	OPTION (optimize for (@winlostdate UNKNOWN))
