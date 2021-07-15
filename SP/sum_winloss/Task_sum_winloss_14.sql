@@ -36,7 +36,7 @@ BEGIN
 	DECLARE @cutoffDate SMALLDATETIME
 
 	SELECT @cutoffDate = CutoffDate
-	FROM dbo.f_GetCutoffDate() f
+	FROM dbo.f_GetCutOffDate() f
 	WHERE f.TypeName = 'NetTO'
 
 	CREATE TABLE #Bettypes (ProductId INT, SportTypeRef SMALLINT, BettypeRef SMALLINT, Bettype SMALLINT, IsUsingOddsSpread BIT)
