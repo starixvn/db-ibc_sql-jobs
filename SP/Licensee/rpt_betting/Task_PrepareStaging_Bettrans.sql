@@ -159,8 +159,8 @@ BEGIN
 					END -- poker games: gem & insurance
 					,b.betdaqid
 					,CASE
-						WHEN m.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VG Free Bet
-						WHEN m.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VG Normal Bet
+						WHEN m.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VGA Free Bet
+						WHEN m.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VGA Normal Bet
 						ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 					END AS TicketType
 					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
@@ -237,8 +237,8 @@ BEGIN
 					END -- poker games: gem & insurance
 					,b.betdaqid
 					,CASE
-						WHEN m.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VG Free Bet
-						WHEN m.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VG Normal Bet
+						WHEN m.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VGA Free Bet
+						WHEN m.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VGA Normal Bet
 						ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 					 END AS TicketType
 					,CASE WHEN b.bettype = 911 THEN b.actual_stake END AS CashOutAmount
@@ -354,8 +354,8 @@ BEGIN
 				END -- poker games: gem & insurance
 				,b.betdaqid
 				,CASE
-					WHEN b.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VG Free Bet
-					WHEN b.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VG Normal Bet
+					WHEN b.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VGA Free Bet
+					WHEN b.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VGA Normal Bet
 					ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 				END AS TicketType
 				,CASE
@@ -430,8 +430,8 @@ BEGIN
 				END -- poker games: gem & insurance
 				,b.betdaqid
 				,CASE
-					WHEN b.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VG Free Bet
-					WHEN b.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VG Normal Bet
+					WHEN b.matchid IN (150, 173) THEN 2 -- 150: Saba.club Free Bet, 173: VGA Free Bet
+					WHEN b.matchid IN (200, 171) THEN 0 -- 200: Saba.club Normal Bet, 171  VGA Normal Bet
 					ELSE ISNULL(b.currency2, 0) -- currency2 = 1 -> CB Free Play, = 0 -> Normal
 				END AS TicketType
 				,CASE
