@@ -10,6 +10,7 @@ AS
 
 	Revisions:
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
+		- 20210714@Percy: Add table StraightSettingHistory [RedmineID: #157958]
 */
 
 BEGIN
@@ -24,11 +25,13 @@ BEGIN
 		EXISTS (SELECT 1 FROM dbo.TierSettingHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
 		OR EXISTS (SELECT 1 FROM dbo.AffGroupHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
 		OR EXISTS (SELECT 1 FROM dbo.DeductionSettingHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
+		OR EXISTS (SELECT 1 FROM dbo.StraightSettingHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
 	)
 	BEGIN
 		DELETE dbo.TierSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
 		DELETE dbo.AffGroupHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
 		DELETE dbo.DeductionSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
+		DELETE dbo.StraightSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
 	END
 
 	-- Archive settings
@@ -58,6 +61,14 @@ BEGIN
 		INSERT INTO dbo.DeductionSettingHistory (GroupId,MonthDate,DeductionId,ProductId,GroupProductId,DeductedPercentage,DeductedAmount,IsDeductedPercent)
 		SELECT GroupId,@NextMonthDate,DeductionId,ProductId,GroupProductId,DeductedPercentage,DeductedAmount,IsDeductedPercent
 		FROM dbo.DeductionSetting ds WITH (NOLOCK)
+
+		INSERT INTO dbo.StraightSettingHistory (GroupId,MonthDate,ProductId,GroupProductId,DeductedPercentage,Commission)
+		SELECT GroupId,@MonthDate,ProductId,GroupProductId,DeductedPercentage,Commission
+		FROM dbo.StraightSetting ss WITH (NOLOCK)
+
+		INSERT INTO dbo.StraightSettingHistory (GroupId,MonthDate,ProductId,GroupProductId,DeductedPercentage,Commission)
+		SELECT GroupId,@NextMonthDate,ProductId,GroupProductId,DeductedPercentage,Commission
+		FROM dbo.StraightSetting ss WITH (NOLOCK)
 	END
 END
 GO

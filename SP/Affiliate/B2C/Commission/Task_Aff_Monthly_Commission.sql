@@ -13,6 +13,7 @@ AS
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
 		- 20210301@Percy: Do not calculate commission when affiliate is closed [RedmineID: #149213]
 		- 20210317@Percy: Change commission formula [RedmineID: #151391]
+		- 20210714@Percy: Calculate P2P Fee [RedmineID: #157958]
 */
 
 BEGIN
@@ -34,6 +35,7 @@ BEGIN
 	-- Check settings are archived
 	IF NOT EXISTS (SELECT 1 FROM dbo.TierSettingHistory WITH (NOLOCK) WHERE MonthDate = @LastDayOfMonth)
 		OR NOT EXISTS (SELECT 1 FROM dbo.DeductionSettingHistory WITH (NOLOCK) WHERE MonthDate = @LastDayOfMonth)
+		OR NOT EXISTS (SELECT 1 FROM dbo.StraightSettingHistory WITH (NOLOCK) WHERE MonthDate = @LastDayOfMonth)
 		OR NOT EXISTS (SELECT 1 FROM dbo.AffGroupHistory WITH (NOLOCK) WHERE MonthDate = @LastDayOfMonth)
 	BEGIN
 		SELECT 'Settings of this month are not archived yet!'
@@ -67,7 +69,9 @@ BEGIN
 			Rebate				MONEY,
 			Turnover			MONEY,
 			Winloss				MONEY,
+			Revenue				MONEY,
 			-- Fees
+			P2PFee				MONEY,
 			PlatFormFee			MONEY,
 			OperationalFee		MONEY,
 			DepositFee			MONEY,
@@ -75,9 +79,10 @@ BEGIN
 			-- Calculation
 			GrossWinloss		MONEY,
 			NetWinloss			MONEY,
-			QualifiedMember		INT,
+			ActivePlayer		INT,
 			CommissionRate		FLOAT,
 			Commission			MONEY,
+			StraightCommission	MONEY,
 			SubAffCommission	MONEY
 		)
 
@@ -94,15 +99,18 @@ BEGIN
 			Rebate,
 			Turnover,
 			Winloss,
+			Revenue,
+			P2PFee,
 			PlatFormFee,
 			OperationalFee,
 			DepositFee,
 			WithdrawalFee,
 			GrossWinloss,
 			NetWinloss,
-			QualifiedMember,
+			ActivePlayer,
 			CommissionRate,
 			Commission,
+			StraightCommission,
 			SubAffCommission
 		)
 		EXEC dbo.Aff_Commission_UnCalc
@@ -121,17 +129,17 @@ BEGIN
 		INNER JOIN dbo.AffInfo ai WITH (NOLOCK) ON tc.AffId = ai.AffId
 	WHERE ai.Status <> 'Approved' OR ai.IsClosed = 1
 
-		-- Import data
+	-- Import data
 	IF @IsForceUpdate = 1
 	BEGIN
 		DELETE dbo.rptAffCommission WITH (ROWLOCK, UPDLOCK)
 		WHERE MonthDate = @LastDayOfMonth
 
-		DELETE dbo.rptAffDeduction WITH (ROWLOCK, UPDLOCK)
+		DELETE dbo.rptAffMonthly WITH (ROWLOCK, UPDLOCK)
 		WHERE MonthDate = @LastDayOfMonth
 
 		DELETE dbo.AffTrans WITH (ROWLOCK, UPDLOCK)
-		WHERE TransDate = @LastDayOfMonth
+		WHERE TransDate = @LastDayOfMonth AND TransType IN (201, 204, 205) -- Commission Type
 	END
 
 	DECLARE @AffCurrency INT, @AffRate FLOAT
@@ -148,14 +156,17 @@ BEGIN
 		Withdrawal,
 		Bonus,
 		Rebate,
-		Adjustment,
 		Turnover,
 		Winloss,
+		Revenue,
 		GrossWinloss,
 		NetWinloss,
-		QMTurnover,
 		ActivePlayer,
-		QualifiedMember,
+		P2PFee,
+		PlatFormFee,
+		OperationalFee,
+		DepositFee,
+		WithdrawalFee,
 		CommissionRate
 	)
 	SELECT
@@ -167,45 +178,45 @@ BEGIN
 		Withdrawal,
 		Bonus,
 		Rebate,
-		0 AS Adjustment,
 		Turnover,
 		Winloss,
+		Revenue,
 		GrossWinloss,
 		NetWinloss,
-		0 AS QMTurnover,
-		QualifiedMember AS ActivePlayer,
-		QualifiedMember,
+		ActivePlayer,
+		P2PFee,
+		PlatFormFee,
+		OperationalFee,
+		DepositFee,
+		WithdrawalFee,
 		CommissionRate
 	FROM #TempCommission
+	WHERE ProductId = 0
 
-	INSERT INTO dbo.rptAffDeduction
+	INSERT INTO dbo.rptAffMonthly
 	(
 		MonthDate,
 		AffId,
 		GroupId,
 		ProductId,
-		GroupProductId,
-		DeductionId,
-		Amount
+		Turnover,
+		Winloss,
+		Revenue
 	)
 	SELECT
-		tc.MonthDate,
-		tc.AffId,
-		tc.GroupId,
-		tc.ProductId,
-		dsh.GroupProductId,
-		dsh.DeductionId,
-		CASE dsh.DeductionId	WHEN 10 THEN tc.PlatFormFee
-								WHEN 11 THEN tc.OperationalFee
-								WHEN 13 THEN tc.DepositFee
-								WHEN 14 THEN tc.WithdrawalFee
-								END AS Amount
-	FROM #TempCommission tc
-		INNER JOIN dbo.DeductionSettingHistory dsh WITH (NOLOCK) ON tc.MonthDate = dsh.MonthDate AND tc.GroupId = dsh.GroupId AND tc.ProductId = dsh.ProductId
+		MonthDate,
+		AffId,
+		GroupId,
+		ProductId,
+		Turnover,
+		Winloss,
+		Revenue
+	FROM #TempCommission
+	WHERE ProductId > 0
 
 	INSERT INTO dbo.AffTrans
 	(
-		AffID,
+		AffId,
 		TransDate,
 		CompletedDate,
 		Amount,
@@ -217,7 +228,7 @@ BEGIN
 		AffRate
 	)
 	SELECT
-		c.AffID,
+		c.AffId,
 		c.MonthDate AS TransDate,
 		GETDATE() AS CompletedDate,
 		t.Amount,
@@ -232,8 +243,10 @@ BEGIN
 			SELECT 201 AS TransType, Commission AS Amount
 			UNION ALL
 			SELECT 204, SubAffCommission
+			UNION ALL
+			SELECT 205, StraightCommission
 		) t
-	WHERE ProductId = 0
+	WHERE c.ProductId = 0
 
 	-- Update Commission Date
 	DECLARE @LaunchDate SMALLDATETIME, @LastCommDate SMALLDATETIME

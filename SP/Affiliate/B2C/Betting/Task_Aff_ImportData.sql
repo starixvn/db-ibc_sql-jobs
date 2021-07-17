@@ -12,6 +12,7 @@ AS
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
 		- 20201216@Percy: Auto add Platform Fee's setting [RedmineID: #146661]
 		- 20210628@Percy: Get Rebate amount [RedmineID: #157591]
+		- 20210714@Percy: Get Revenue amount [RedmineID: #157958]
 */
 
 BEGIN 
@@ -25,17 +26,26 @@ BEGIN
 
 	-- Update product list
 	BEGIN
-		DECLARE @Products TABLE (ProductId INT, RefProductId INT)
+		DECLARE @Products TABLE (ProductId INT, RefProductId INT, IsP2P BIT)
 		
 		BEGIN TRY
 			INSERT INTO dbo.Products (ProductId,ProductName,ProductPrefix,IsIBC,Enabled,IsTest,ReleasedDate,RefProductId,DataSource)
-			OUTPUT INSERTED.ProductId INTO @Products (ProductId)
 			SELECT g.Type, g.TypeName, '', 0, 1, 0, CONVERT(DATE, GETDATE()), g.Type, 'TpBetRecord'
 			FROM bodb_N88.dbo.TpGameType g WITH (NOLOCK)
 				LEFT JOIN dbo.Products p WITH (NOLOCK) ON g.Type = p.RefProductId
 			WHERE p.RefProductId IS NULL
 
-			IF EXISTS (SELECT 1 FROM @Products)
+			INSERT INTO @Products (ProductId, IsP2P)
+			SELECT p.ProductId, p.IsP2P
+			FROM dbo.Products p WITH (NOLOCK)
+				CROSS JOIN (SELECT GroupId FROM dbo.CommGroup WITH (NOLOCK) WHERE IsDeleted = 0) g
+				LEFT JOIN (
+					SELECT DISTINCT GroupId, ProductId FROM dbo.DeductionSetting WITH (NOLOCK) WHERE ProductId > 0
+					UNION ALL SELECT DISTINCT GroupId, ProductId FROM dbo.StraightSetting WITH (NOLOCK) WHERE ProductId > 0
+			) s ON g.GroupId = s.GroupId AND p.ProductId = s.ProductId
+			WHERE s.GroupId IS NULL
+
+			IF EXISTS (SELECT 1 FROM @Products WHERE IsP2P = 0)
 			BEGIN
 				INSERT INTO dbo.DeductionSetting (GroupId, DeductionId, ProductId, GroupProductId, DeductedPercentage, DeductedAmount, IsDeductedPercent)
 				SELECT s.GroupId, s.DeductionId, p.ProductId, s.GroupProductId, s.DeductedPercentage, s.DeductedAmount, s.IsDeductedPercent
@@ -45,7 +55,7 @@ BEGIN
 					FROM dbo.DeductionSetting WITH (NOLOCK)
 					WHERE DeductionId = 10
 				) s
-					CROSS JOIN @Products p
+					CROSS JOIN (SELECT ProductId FROM @Products WHERE IsP2P = 0) p
 					LEFT JOIN dbo.DeductionSetting ds WITH (NOLOCK) ON s.GroupId = ds.GroupId AND s.DeductionId = ds.DeductionId AND p.ProductId = ds.ProductId
 				WHERE s.RN = 1 AND ds.GroupId IS NULL
 
@@ -54,6 +64,26 @@ BEGIN
 				FROM dbo.DeductionSetting ds WITH (NOLOCK)
 					LEFT JOIN dbo.DeductionSettingHistory dsh WITH (NOLOCK) ON ds.GroupId = dsh.GroupId AND ds.DeductionId = dsh.DeductionId AND ds.ProductId = dsh.ProductId AND dsh.MonthDate = @MonthDate
 				WHERE dsh.GroupId IS NULL
+			END
+			
+			IF EXISTS (SELECT 1 FROM @Products WHERE IsP2P = 1)
+			BEGIN
+				INSERT INTO dbo.StraightSetting (GroupId, ProductId, GroupProductId, DeductedPercentage, Commission)
+				SELECT s.GroupId, p.ProductId, s.GroupProductId, s.DeductedPercentage, s.Commission
+				FROM (
+					SELECT GroupId, GroupProductId, DeductedPercentage, Commission
+						,ROW_NUMBER() OVER(PARTITION BY GroupId ORDER BY GroupProductId) AS RN
+					FROM dbo.StraightSetting WITH (NOLOCK)
+				) s
+					CROSS JOIN (SELECT ProductId FROM @Products WHERE IsP2P = 1) p
+					LEFT JOIN dbo.StraightSetting ss WITH (NOLOCK) ON s.GroupId = ss.GroupId AND p.ProductId = ss.ProductId
+				WHERE s.RN = 1 AND ss.GroupId IS NULL
+
+				INSERT INTO dbo.StraightSettingHistory (GroupId, MonthDate, ProductId, GroupProductId, DeductedPercentage, Commission)
+				SELECT ss.GroupId, @MonthDate, ss.ProductId, ss.GroupProductId, ss.DeductedPercentage, ss.Commission
+				FROM dbo.StraightSetting ss WITH (NOLOCK)
+					LEFT JOIN dbo.StraightSettingHistory ssh WITH (NOLOCK) ON ss.GroupId = ssh.GroupId AND ss.ProductId = ssh.ProductId AND ssh.MonthDate = @MonthDate
+				WHERE ssh.GroupId IS NULL
 			END
 		END TRY
 		BEGIN CATCH
@@ -65,13 +95,14 @@ BEGIN
 	BEGIN
 		DELETE @Products
 
+		-- WinLoss data
 		INSERT INTO @Products (ProductId, RefProductId)
 		SELECT ProductId, RefProductId
 		FROM dbo.Products p WITH (NOLOCK)
 		WHERE IsIBC = 0
 			AND DataSource = 'TpBetRecord'
 
-		-- Deposit & Withdrawal
+		-- Others (Deposit, Withdrawal, Bonus, Rebate, ...)
 		INSERT INTO @Products (ProductId, RefProductId)
 		VALUES (-1, -1)
 
@@ -88,6 +119,7 @@ BEGIN
 			,Adjustment		MONEY DEFAULT (0)
 			,Turnover		MONEY DEFAULT (0)
 			,Winloss		MONEY DEFAULT (0)
+			,Revenue		MONEY DEFAULT (0)
 			,AffExRate		FLOAT
 		)
 
@@ -100,6 +132,7 @@ BEGIN
 			,ProductId
 			,Turnover
 			,Winloss
+			,Revenue
 			,AffExRate
 		)
 		SELECT
@@ -109,6 +142,7 @@ BEGIN
 			,p.ProductId
 			,SUM(b.Stake * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)			AS Turnover
 			,SUM(b.WinlostAmount * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)	AS Winloss
+			,SUM(b.Revenue * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)			AS Revenue
 			,e.Rate
 		FROM bodb_N88.dbo.TpBetRecord b WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.CustId = mi.CustId
@@ -255,25 +289,26 @@ BEGIN
 			,Rebate			MONEY
 			,Turnover		MONEY
 			,Winloss		MONEY
+			,Revenue		MONEY
 			,Deposit		MONEY
 			,Withdrawal		MONEY
 			,Adjustment		MONEY
 		)
 		;WITH CTE_rptMemberDaily AS
 		(
-			SELECT AffId,CustId,ProductId,Deposit,Withdrawal,Bonus,Rebate,Adjustment,Turnover,Winloss,Currency,AffExRate
+			SELECT AffId,CustId,ProductId,Deposit,Withdrawal,Bonus,Rebate,Adjustment,Turnover,Winloss,Revenue,Currency,AffExRate
 			FROM dbo.rptMemberDaily WITH (NOLOCK)
 			WHERE winlostdate = @WinlostDate
 				AND ProductId IN (SELECT ProductId FROM @Products)
 		)
-		INSERT INTO #_CheckData (ModifiedType, CustId, ProductId, AffId, Currency, AffExRate, Bonus, Rebate, Turnover, Winloss, Deposit, Withdrawal, Adjustment)
+		INSERT INTO #_CheckData (ModifiedType, CustId, ProductId, AffId, Currency, AffExRate, Bonus, Rebate, Turnover, Winloss, Revenue, Deposit, Withdrawal, Adjustment)
 		SELECT
 			CASE	WHEN t.CustId IS NULL THEN -1 -- delete
 					WHEN r.CustId IS NULL THEN 1 -- insert
 					ELSE 0 END AS ModifiedType -- update
 			,ISNULL(t.CustId, r.CustId) AS CustId
 			,ISNULL(t.ProductId, r.ProductId) AS ProductId
-			,t.AffId, t.Currency, t.AffExRate, t.Bonus, t.Rebate, t.Turnover, t.Winloss
+			,t.AffId, t.Currency, t.AffExRate, t.Bonus, t.Rebate, t.Turnover, t.Winloss, t.Revenue
 			,t.Deposit, t.Withdrawal, t.Adjustment
 		FROM #rptMemberDaily t
 			FULL OUTER JOIN CTE_rptMemberDaily r ON t.CustId = r.CustId AND t.ProductId = r.ProductId
@@ -294,9 +329,9 @@ BEGIN
 		BEGIN
 			DELETE #_CheckData
 			OUTPUT @WinlostDate,DELETED.AffId,DELETED.CustId,DELETED.ProductId
-					,DELETED.Deposit,DELETED.Withdrawal,DELETED.Bonus,DELETED.Rebate,DELETED.Adjustment,DELETED.Turnover,DELETED.Winloss
+					,DELETED.Deposit,DELETED.Withdrawal,DELETED.Bonus,DELETED.Rebate,DELETED.Adjustment,DELETED.Turnover,DELETED.Winloss,DELETED.Revenue
 					,DELETED.Currency,DELETED.AffExRate
-			INTO dbo.rptMemberDaily(WinlostDate,AffId,CustId,ProductId,Deposit,Withdrawal,Bonus,Rebate,Adjustment,Turnover,Winloss,Currency,AffExRate)
+			INTO dbo.rptMemberDaily(WinlostDate,AffId,CustId,ProductId,Deposit,Withdrawal,Bonus,Rebate,Adjustment,Turnover,Winloss,Revenue,Currency,AffExRate)
 			WHERE ModifiedType = 1
 		END
 
@@ -312,6 +347,7 @@ BEGIN
 				,r.Adjustment = d.Adjustment
 				,r.Turnover = d.Turnover
 				,r.Winloss = d.Winloss
+				,r.Revenue = d.Revenue
 				,r.Currency = d.Currency
 				,r.AffExRate = d.AffExRate
 			FROM dbo.rptMemberDaily r
@@ -323,6 +359,7 @@ BEGIN
 					OR ISNULL(r.Rebate, 0)		<> ISNULL(d.Rebate, 0)
 					OR ISNULL(r.Turnover, 0)	<> ISNULL(d.Turnover, 0)
 					OR ISNULL(r.Winloss, 0)		<> ISNULL(d.Winloss, 0)
+					OR ISNULL(r.Revenue, 0)		<> ISNULL(d.Revenue, 0)
 					OR ISNULL(r.Deposit, 0)		<> ISNULL(d.Deposit, 0)
 					OR ISNULL(r.Withdrawal, 0)	<> ISNULL(d.Withdrawal, 0)
 					OR ISNULL(r.Adjustment, 0)	<> ISNULL(d.Adjustment, 0)
