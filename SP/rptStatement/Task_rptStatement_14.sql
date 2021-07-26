@@ -18,17 +18,6 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @MoveBetsDay SMALLDATETIME, @tmpWinlostDate DATE
-
-	-- get move bet date
-	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
-
-	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
-	EXEC bodb02.dbo.Age_SelBalanceUpDay
-	
-	-- GET the current MB date
-	SELECT @MoveBetsDay = MoveBetsDay FROM @tblMoveBetBalanceUp
-
 	/* ===== Get Customer Info ===== */
 	BEGIN
 		-- Super
@@ -269,10 +258,6 @@ BEGIN
 			WHERE b.matchid = 0
 				AND b.bettype >= 19999
 				AND b.winlostdate < @WinlostDate
-				AND 1 = CASE 
-							WHEN b.bettype = 19999 and b.winlostdate > @moveBetsDay THEN 0 --> get data from ticket detail
-							WHEN b.bettype < 19999 and b.winlostdate <= @moveBetsDay THEN 0 --> get data from sum record
-						ELSE 1 END
 			GROUP BY
 				b.matchid -- group by on index matchid, custid
 				,b.custid
@@ -499,7 +484,17 @@ BEGIN
 	DROP TABLE #rptStatement
 
 	-- OpeningTotalBalance
+	DECLARE @MoveBetsDay SMALLDATETIME, @tmpWinlostDate DATE
 	SELECT  @tmpWinlostDate = @WinlostDate
+
+	-- get move bet date
+	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+
+	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+	
+	-- GET the current MB date
+	SELECT @MoveBetsDay = MoveBetsDay FROM @tblMoveBetBalanceUp
 
 	WHILE @tmpWinlostDate <= @MoveBetsDay
 	BEGIN
