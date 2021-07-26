@@ -23,6 +23,7 @@ AS
 		- 20200827@Percy: Re-Integrate 12Topaz due to API's change [RedmineID: #139043]
 		- 20201216@Percy: Integrate new product: BTi [RedmineID: #144456]
 		- 20210615@Malcolm: Integrate new product: IM Esports [RedmineID: #157048]
+		- 20210726@Malcolm: Change key from BetId to purchaseId [RedmineID: #159061]
 */
 
 BEGIN
@@ -704,11 +705,12 @@ BEGIN
 		-- BTi
 		ELSE IF @ProductId = 25
 		BEGIN
-			CREATE TABLE #BTi (BetID BIGINT, UserName VARCHAR(50), TotalStake MONEY, ValidStake MONEY, PL MONEY, BetStatus VARCHAR(30), BetSettledDate DATETIME)
+			CREATE TABLE #BTi (PurchaseID BIGINT, BetID BIGINT, UserName VARCHAR(50), TotalStake MONEY, ValidStake MONEY, PL MONEY, BetStatus VARCHAR(30), BetSettledDate DATETIME)
 
 			BEGIN TRY
-				INSERT INTO #BTi (BetID, UserName, TotalStake, ValidStake, PL, BetStatus, BetSettledDate)
-				SELECT	t.c.value('(BetID/text())[1]', 'BIGINT')			AS BetID,
+				INSERT INTO #BTi (PurchaseID, BetID, UserName, TotalStake, ValidStake, PL, BetStatus, BetSettledDate)
+				SELECT	t.c.value('(PurchaseID/text())[1]', 'BIGINT')		AS PurchaseID,
+						t.c.value('(BetID/text())[1]', 'BIGINT')			AS BetID,
 						t.c.value('(UserName/text())[1]', 'VARCHAR(50)')	AS UserName,
 						t.c.value('(TotalStake/text())[1]', 'MONEY')		AS TotalStake,
 						t.c.value('(ValidStake/text())[1]', 'MONEY')		AS ValidStake,
@@ -718,16 +720,34 @@ BEGIN
 				FROM @XmlData.nodes('root/Bets') AS t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
-				DELETE bt WITH (ROWLOCK, UPDLOCK)
-				FROM dbo.bettrans_BTi bt
-				WHERE EXISTS (SELECT 1 FROM #BTi k WHERE bt.BetID = k.BetID)
-				
-				INSERT INTO dbo.bettrans_BTi (BetID, UserName, TotalStake, ValidStake, PL, BetStatus, BetSettledDate, IBCCustId, WinlostDate)
-				SELECT k.BetID, k.UserName, k.TotalStake, k.ValidStake, k.PL, k.BetStatus, k.BetSettledDate, m.IBCCustId, CONVERT(DATE, k.BetSettledDate) AS WinlostDate
-				FROM #BTi k
-					INNER JOIN dbo.MemberInfo m WITH (NOLOCK) ON '12BET$' + k.UserName = m.Username
-
 				SELECT @WinlostDate = MIN(CONVERT(DATE, BetSettledDate)) FROM #BTi
+
+				IF @WinlostDate < '2021-07-01'
+				BEGIN
+					DELETE #BTi WHERE BetID IS NULL
+
+					DELETE bt WITH (ROWLOCK, UPDLOCK)
+					FROM dbo.bettrans_BTi bt
+					WHERE EXISTS (SELECT 1 FROM #BTi k WHERE bt.BetID = k.BetID)
+
+					INSERT INTO dbo.bettrans_BTi (BetID, UserName, TotalStake, ValidStake, PL, BetStatus, BetSettledDate, IBCCustId, WinlostDate)
+					SELECT k.BetID, k.UserName, k.TotalStake, k.ValidStake, k.PL, k.BetStatus, k.BetSettledDate, m.IBCCustId, CONVERT(DATE, k.BetSettledDate) AS WinlostDate
+					FROM #BTi k
+						INNER JOIN dbo.MemberInfo m WITH (NOLOCK) ON '12BET$' + k.UserName = m.Username
+				END
+				ELSE 
+				BEGIN
+					DELETE #BTi WHERE PurchaseID IS NULL
+
+					DELETE bt WITH (ROWLOCK, UPDLOCK)
+					FROM dbo.bettrans_BTi2 bt
+					WHERE EXISTS (SELECT 1 FROM #BTi k WHERE bt.PurchaseId = k.PurchaseId)
+
+					INSERT INTO dbo.bettrans_BTi2 (PurchaseId, UserName, TotalStake, ValidStake, PL, BetStatus, BetSettledDate, IBCCustId, WinlostDate)
+					SELECT k.PurchaseId, k.UserName, k.TotalStake, k.ValidStake, k.PL, k.BetStatus, k.BetSettledDate, m.IBCCustId, CONVERT(DATE, k.BetSettledDate) AS WinlostDate
+					FROM #BTi k
+						INNER JOIN dbo.MemberInfo m WITH (NOLOCK) ON '12BET$' + k.UserName = m.Username
+				END		
 
 				SELECT @IsErr = 0
 			END TRY
