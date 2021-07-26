@@ -537,7 +537,7 @@ BEGIN
 	--==turn off flag MB_SWinloss_Local
 	EXEC dbo.Bet_ExecRep14_01 @Mode = 2, @tableName = 'SystemSettings'
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - done turn off MB_SWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - end turn off MB_SWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	RETURN
@@ -769,7 +769,7 @@ BEGIN
 	--reset being move bet date
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 9, @tableName = 'SystemSettings'
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - end off BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 9.30 - end off BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
  
 	-- =====================
