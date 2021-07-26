@@ -22,6 +22,7 @@ AS
 		- 20201216@Percy: Integrate new product: BTi [RedmineID: #144456]
 		- 20210602@Percy: Change formula of 12Topaz & BTi [RedmineID: #156324]
 		- 20210615@Malcolm: Integrate new product: IM Esports [RedmineID: #157048]
+		- 20210726@Malcolm: Adjust formula of KY Gaming [RedmineID: #159061]
 */
 
 BEGIN
@@ -327,7 +328,7 @@ BEGIN
 			mi.IBCCustId,
 			mi.currency,
 			SUM(k.CellScore) AS Turnover,
-			SUM(CASE WHEN k.Profit < 0 THEN k.Profit ELSE k.Profit - k.CellScore END) AS Winloss
+			SUM(k.Profit) AS Winloss
 		FROM dbo.bettrans_KYGaming k WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON k.IBCCustId = mi.IBCCustId
 		WHERE k.WinlostDate = @WinlostDate
