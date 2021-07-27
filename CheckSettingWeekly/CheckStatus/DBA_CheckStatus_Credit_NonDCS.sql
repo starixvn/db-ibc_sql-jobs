@@ -11,6 +11,7 @@ AS
 		- 20190610@Johnson: add step check suspend status [redmine:#105587]
 		- 20191106@Winnie: 3rd party products - Remove InActive Products Phase 2  - [Redmine: #118699]
 		- 20210419@Winfred: Remove check Gold Deluxe [redmine:#153659]
+		- 20210727@Tina: remove check suspend status [RedmineID: #148600]
 	Developer's Notes:
 		- @Example:			NULL		- Explaination [DEFAULT]
 		
@@ -35,6 +36,5 @@ BEGIN
 
 	EXECUTE dbo.DBA_CheckStatus_Credit @sportType=202, @bettype = 1501, @DisableTable = '', @DisableColumnName = '', @HiddenTable='CustInfo', @HiddenColumnName = 'HideKeno',@SynTable='',@SynColumnName = '';
 	
-	EXECUTE dbo.DBA_CheckSuspendInfoStatus_Credit
 END;
 GO
