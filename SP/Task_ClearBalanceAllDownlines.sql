@@ -18,6 +18,7 @@ AS
 	- 20200730@Sophia: prevent duplicated transfer [Redmine: #137141]
 	- 20200730@Sophia: Check UM Transfer Function [Redmine: #136992]
 	- 20201007@Sophia: Hot fix - account keep waiting [Redmine: #143099]
+	- 20210729@Sol: Hot fix - change table which is used in order by - [Redmine: #159245]
 */
 BEGIN
 
@@ -37,10 +38,10 @@ BEGIN
 		INSERT INTO #Cust (Custid, Status, TransferType, LastTransfer, IsTransferring)
 		SELECT a.custid, a.Status, a.TransferType, a.LastTransfer, a.IsTransferring 
 		FROM DBCUST.custdb.dbo.Acc_ClearBalanceList a WITH(NOLOCK)
-		INNER JOIN DBCUST.custdb.dbo.Custinfo c WITH(NOLOCK)
-			ON c.CustID = a.CustID
+			INNER JOIN DBCUST.custdb.dbo.CustProductStatus c WITH(NOLOCK)
+				ON c.CustID = a.CustID
 		WHERE a.[Status] = 'waiting'
-		ORDER BY c.Reject, c.Closed
+		ORDER BY c.SuspendInfo, c.CloseInfo
 		
 		------------------------------------------------------------------------
 		--- top 20 custID which will be locked at other transfer function
