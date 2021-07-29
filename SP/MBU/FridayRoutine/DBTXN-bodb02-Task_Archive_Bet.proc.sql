@@ -21,6 +21,7 @@ AS
 		- 20210225@Max: [TVS] Remove archived data [Redmine: #150524]
 		- 20210625@Helen: [TVS] Perfomance tuning for archived process [Redmine: #157539]
 		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
+		- 20210727@Patrick: Update Job to Support Parlay Range up to 3 Weeks [Redmine: #156498]
 */
 BEGIN
 	SET NOCOUNT ON;
