@@ -7,7 +7,7 @@ AS
 /*
 	Creator:	20190318@Helen
 	Task:		Archive event controller - [Redmine: #110447]
-	Database:	DBTXN.bodb02
+	Database:	DBARC.bodb_Archive
 
 	Revisions:
 		- 20190318@Helen:	Initialize - archive event timeout issue - [Redmine: #110447]
@@ -19,6 +19,7 @@ AS
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 		- 20210310@Brice:		Add table AutoRefundResult_bk [Redmine: #149770]
+		- 20210729@Patrick: Move this sp from DBTrans to DB06x to support update Job to Support Parlay Range up to 3 Weeks [Redmine: #156498]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -50,11 +51,10 @@ BEGIN;
 		,	@width_TableName	INT
 		;
 
-
 	INSERT INTO	@ArchiveDate
 		(	winlostdate)
 	SELECT	winlostdate
-	FROM	dbo.Task_ArchiveDate WITH (NOLOCK)
+	FROM	DBTXN.bodb02.dbo.Task_ArchiveDate WITH (NOLOCK)
 	ORDER BY winlostdate;
 
 	INSERT INTO	@ArchiveTable
@@ -111,7 +111,7 @@ BEGIN;
 			IF	@DebugMode & 1 > 0
 			-- Execution --
 			BEGIN;
-				EXECUTE	DBARC.bodb_Archive.dbo.Task_Archive_Event_Copy
+				EXECUTE	dbo.Task_Archive_Event_Copy
 							@winlostdate	= @WinlostDate
 						,	@TableName		= @TableName
 						;
@@ -136,4 +136,4 @@ BEGIN;
 	END;
 END
 GO
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBARC-bodb_Archive" executers="" viewers="" isFunction="0" isNested="0"></info>*/
