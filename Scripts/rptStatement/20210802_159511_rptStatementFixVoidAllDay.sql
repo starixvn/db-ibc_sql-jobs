@@ -9,6 +9,6 @@
 USE bodb_report
 GO
  
- EXEC[Task_rptStatement_14
+ EXEC Task_rptStatement_14
 	@WinlostDate = '20210728'
 	,@CustIds	 ='53819807,53819834'
