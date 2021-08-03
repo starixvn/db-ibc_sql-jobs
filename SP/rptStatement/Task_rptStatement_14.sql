@@ -11,6 +11,7 @@ AS
 
 	Revisions:
 		- 20190909@Percy: Initialize SP [RedmineID: #115377]
+		- 20210802@Sophia: Fix count VoidCount Instead of Betcount only [Redmine: #159511]
 */
 
 BEGIN
@@ -374,7 +375,7 @@ BEGIN
 			custid
 		HAVING
 			DATEPART(WEEKDAY, @WinlostDate) = 7
-			OR SUM(ISNULL(BetCount, 0) + ISNULL(BetCount, 0)) > 0
+			OR SUM(ISNULL(BetCount, 0) + ISNULL(VoidCount, 0)) > 0
 
 		DROP TABLE #tmpData
 	END
