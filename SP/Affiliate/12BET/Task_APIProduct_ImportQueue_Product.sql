@@ -345,7 +345,7 @@ BEGIN
 	-- BTi
 	ELSE IF @ProductId = 25
 	BEGIN
-		IF @WinlostDate < '2021-08-01'
+		IF @WinlostDate < '2021-07-01'
 		BEGIN
 			INSERT INTO #tempData
 			(

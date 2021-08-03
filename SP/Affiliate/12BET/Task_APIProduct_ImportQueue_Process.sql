@@ -722,7 +722,7 @@ BEGIN
 
 				SELECT @WinlostDate = MIN(CONVERT(DATE, BetSettledDate)) FROM #BTi
 
-				IF @WinlostDate < '2021-08-01'
+				IF @WinlostDate < '2021-07-01'
 				BEGIN
 					DELETE #BTi WHERE BetID IS NULL
 
