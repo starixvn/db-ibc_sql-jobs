@@ -12,6 +12,7 @@ AS
 		- 20191212@Patrick: Add more table TOControl_Setting [Redmine: #124447]
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 		- 20210628@Helen:	Move checking for TVS tables to another SP Task_MBU_TVS_BK_CheckRowCount_Sel [RedmineId: #157539]
+		- 20210801@Patrick:	Update Job to Support Parlay Range up to 3 Weeks [Redmine: #156498]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -44,9 +45,10 @@ BEGIN;
 	CREATE TABLE	#__archiveResult (
 						winlostdate		SMALLDATETIME
 					,	tableName		VARCHAR(128)
-					,	archiveRowCount	INT
+					,	archiveRowCount		INT
+					,	archiveHARowCount	INT
 					);
-	
+
 	
 	CREATE TABLE	#__activeResult_TVS_tmp (
 						winlostdate		SMALLDATETIME
@@ -57,9 +59,17 @@ BEGIN;
 	CREATE TABLE	#__archiveResult_TVS_tmp (
 						winlostdate		SMALLDATETIME
 					,	tableName		VARCHAR(128)
-					,	archiveRowCount	INT
+					,	archiveRowCount		INT
+					,	archiveHARowCount	INT
 					);
-							
+
+	CREATE TABLE	#__archiveHAResult_TVS_tmp (
+						winlostdate		SMALLDATETIME
+					,	tableName		VARCHAR(128)
+					,	archiveRowCount		INT
+					);
+
+
 	INSERT INTO	#__archiveDate (winlostdate)
 	SELECT	TOP(10)
 			winlostdate
@@ -132,7 +142,7 @@ BEGIN;
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
 		END;
 
-		--//event in archive
+		--//event in archive @db061
 		SET	@OutputData = NULL;
 		EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_Event_BK_CheckRowCount_Sel
 					@DateCheck = @winlostdate
@@ -148,7 +158,30 @@ BEGIN;
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
 		END;
 
-		--//Bet in archive
+		--//event in archive @db06
+		SET	@OutputData = NULL;
+		EXECUTE	DB06.bodb_Archive.dbo.Task_MBU_Event_BK_CheckRowCount_Sel
+					@DateCheck = @winlostdate
+				,	@OutputData = @OutputData	OUTPUT
+				;
+
+		IF	@OutputData IS NOT NULL
+		BEGIN;
+			SET	@xmlData = CAST(@OutputData AS XML);
+			;WITH __archiveHAResult AS (
+				SELECT	@winlostdate AS winlostdate
+					, r.value('./@t','varchar(128)') AS tableName
+					, r.value('./@r','int') AS archiveHARowCount
+				FROM	@xmlData.nodes('//r') AS RECORDS(r)
+				
+			)
+			UPDATE r SET r.archiveHARowCount = t.archiveHARowCount
+			FROM #__archiveResult r
+				INNER jOIN __archiveHAResult t on r.tableName = t.tableName AND r.winlostdate = t.winlostdate
+			OPTION (OPTIMIZE FOR (@xmlData = NULL ))
+		END;
+
+		--//Bet in archive @db061
 		SET	@OutputData = NULL;
 		EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_Bet_BK_CheckRowCount_Sel
 					@DateCheck	= @winlostdate
@@ -164,7 +197,30 @@ BEGIN;
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
 		END;
 
-		--//TO in archive
+		--//Bet in archive @db06
+		SET	@OutputData = NULL;
+		EXECUTE	DB06.bodb_Archive.dbo.Task_MBU_Bet_BK_CheckRowCount_Sel
+					@DateCheck	= @winlostdate
+				,	@OutputData	= @OutputData	OUTPUT
+				;
+
+		IF	@OutputData IS NOT NULL
+		BEGIN;
+			SET	@xmlData = CAST(@OutputData AS XML);
+			;WITH __archiveHAResult AS (
+				SELECT	@winlostdate AS winlostdate
+					, r.value('./@t','varchar(128)') AS tableName
+					, r.value('./@r','int') AS archiveHARowCount
+				FROM	@xmlData.nodes('//r') AS RECORDS(r)
+				
+			)
+			UPDATE r SET r.archiveHARowCount = t.archiveHARowCount
+			FROM #__archiveResult r
+				INNER jOIN __archiveHAResult t on r.tableName = t.tableName AND r.winlostdate = t.winlostdate
+			OPTION (OPTIMIZE FOR (@xmlData = NULL ))
+		END;
+
+		--//TO in archive @db061
 		SET	@OutputData = NULL;
 		EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_TO_BK_CheckRowCount_Sel
 					@DateCheck	= @winlostdate
@@ -179,7 +235,31 @@ BEGIN;
 			FROM @xmlData.nodes('//r') AS RECORDS(r)
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
 		END;
+
+		--//TO in archive @db06
+		SET	@OutputData = NULL;
+		EXECUTE	DB06.bodb_Archive.dbo.Task_MBU_TO_BK_CheckRowCount_Sel
+					@DateCheck	= @winlostdate
+				,	@OutputData	= @OutputData	OUTPUT
+				;
+
+		IF	@OutputData IS NOT NULL
+		BEGIN;
+			SET	@xmlData = CAST(@OutputData AS XML);
+			;WITH __archiveHAResult AS (
+				SELECT	@winlostdate AS winlostdate
+					, r.value('./@t','varchar(128)') AS tableName
+					, r.value('./@r','int') AS archiveHARowCount
+				FROM	@xmlData.nodes('//r') AS RECORDS(r)
+				
+			)
+			UPDATE r SET r.archiveHARowCount = t.archiveHARowCount
+			FROM #__archiveResult r
+				INNER jOIN __archiveHAResult t on r.tableName = t.tableName AND r.winlostdate = t.winlostdate
+			OPTION (OPTIMIZE FOR (@xmlData = NULL ))
+		END;
 	END;
+
 	----------- Get Result for TVS --------
 	DECLARE	@ArchiveTable TABLE (
 				rid			INT				IDENTITY(1,1)
@@ -231,7 +311,7 @@ BEGIN;
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
 		END
 		
-		----------- archive --------
+		----------- archive @db061--------
 		SET	@OutputData = NULL;
 		EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
 				@StartDate	= @StartDate
@@ -248,6 +328,23 @@ BEGIN;
 			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
 		END
 		
+		----------- archive @db06--------
+		SET	@OutputData = NULL;
+		EXECUTE	DB06.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
+				@StartDate	= @StartDate
+				, @EndDate = @EndDate
+				, @TableName = @TableName
+				,@OutputData	= @OutputData	OUTPUT
+
+		IF	@OutputData IS NOT NULL
+		BEGIN;
+			SET @xmlData = CAST(@OutputData AS XML);
+			INSERT #__archiveHAResult_TVS_tmp(winlostdate, tableName, archiveRowCount)
+			SELECT r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
+			FROM @xmlData.nodes('//r') AS RECORDS(r)
+			OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+		END
+
 		SET @start_rid = @start_rid + 1
 		
 	END
@@ -276,7 +373,8 @@ BEGIN;
 				FROM @xmlData.nodes('//r') AS RECORDS(r)
 				OPTION (OPTIMIZE FOR (@xmlData = NULL ));
 			END
-			------------------------archive -----------------
+
+			------------------------archive @db061 -----------------
 			SET	@OutputData = NULL;
 			EXECUTE	DBARC.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
 					@StartDate	= @StartDate_tmp
@@ -287,6 +385,22 @@ BEGIN;
 			BEGIN;
 				SET @xmlData = CAST(@OutputData AS XML);
 				INSERT #__archiveResult_TVS_tmp(winlostdate, tableName, archiveRowCount)
+				SELECT r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
+				FROM @xmlData.nodes('//r') AS RECORDS(r)
+				OPTION (OPTIMIZE FOR (@xmlData = NULL ));
+			END
+
+			------------------------archive @db06 -----------------
+			SET	@OutputData = NULL;
+			EXECUTE	DB06.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
+					@StartDate	= @StartDate_tmp
+					, @TableName = @TableName
+					,	@OutputData	= @OutputData	OUTPUT
+
+			IF	@OutputData IS NOT NULL
+			BEGIN;
+				SET @xmlData = CAST(@OutputData AS XML);
+				INSERT #__archiveHAResult_TVS_tmp(winlostdate, tableName, archiveRowCount)
 				SELECT r.value('./@ADate','SMALLDATETIME'), r.value('./@t','varchar(128)'), r.value('./@r','int')
 				FROM @xmlData.nodes('//r') AS RECORDS(r)
 				OPTION (OPTIMIZE FOR (@xmlData = NULL ));
@@ -308,6 +422,15 @@ BEGIN;
 	SELECT winlostdate, tableName, SUM(archiveRowCount) 
 	FROM #__archiveResult_TVS_tmp
 	GROUP BY tableName,winlostdate
+
+	; WITH __archiveHAResult_TVS_tmp AS (
+		SELECT winlostdate, tableName, SUM(archiveRowCount) archiveRowCount
+		FROM #__archiveHAResult_TVS_tmp
+		GROUP BY tableName, winlostdate
+	)
+	UPDATE r SET r.archiveHARowCount = t.archiveRowCount
+	FROM #__archiveResult r 
+	INNER JOIN __archiveHAResult_TVS_tmp t ON r.tableName = t.tableName AND ISNULL(r.winlostdate, '') = ISNULL(t.winlostdate, '')
 	
 			
 	IF	EXISTS (
@@ -317,6 +440,7 @@ BEGIN;
 					ON	ISNULL(t.winlostdate,'') = ISNULL(tt.winlostdate,'')
 					AND	t.tableName = tt.tableName
 		WHERE	ISNULL(t.activeRowCount, 0) <> ISNULL(tt.archiveRowCount, 0)
+			OR ISNULL(t.activeRowCount, 0) <> ISNULL(tt.archiveHARowCount, 0)
 	)
 	BEGIN;
 		SET	@hasDiff = 1;
@@ -361,6 +485,8 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 									,	NULL, [th]	= N'Active RowCount'
 									,	NULL, [th]	= N'Archive RowCount'
 									,	NULL, [th]	= N'Delta'
+									,	NULL, [th]	= N'Archive HA RowCount'
+									,	NULL, [th]	= N'Delta HA'
 								WHERE	@hasDiff IS NOT NULL
 								FOR XML PATH ('tr')
 								,	TYPE
@@ -371,11 +497,14 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 									,	NULL, [td]	= ISNULL(active.activeRowCount, 0)
 									,	NULL, [td]	= ISNULL(archive.archiveRowCount, 0)
 									,	NULL, [td]	= ISNULL(active.activeRowCount, 0) - ISNULL(archive.archiveRowCount, 0)
+									,	NULL, [td]	= ISNULL(archive.archiveHARowCount, 0)
+									,	NULL, [td]	= ISNULL(active.activeRowCount, 0) - ISNULL(archive.archiveHARowCount, 0)
 								FROM			#__activeResult AS active WITH (NOLOCK)
 								FULL OUTER JOIN	#__archiveResult AS archive WITH (NOLOCK)
 											ON	active.tableName = archive.tableName
 											AND	ISNULL(active.winlostdate,'') = ISNULL(archive.winlostdate,'')
-								ORDER BY	CASE WHEN ISNULL(active.activeRowCount, 0) <> ISNULL(archive.archiveRowCount, 0) THEN 0 ELSE 1 END
+								ORDER BY	CASE WHEN ISNULL(active.activeRowCount, 0) <> ISNULL(archive.archiveRowCount, 0) THEN 0 
+												 WHEN ISNULL(active.activeRowCount, 0) <> ISNULL(archive.archiveHARowCount, 0) THEN 0 ELSE 1 END
 										,	ISNULL(active.winlostdate, archive.winlostdate)
 										,	ISNULL(active.tableName, archive.tableName)
 								FOR XML PATH ('tr')
@@ -391,7 +520,6 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 				FOR XML PATH ('body')
 				,	ROOT ('html')
 			);
-
 
 	EXECUTE	msdb.dbo.sp_send_dbmail
 				@profile_name			= DEFAULT

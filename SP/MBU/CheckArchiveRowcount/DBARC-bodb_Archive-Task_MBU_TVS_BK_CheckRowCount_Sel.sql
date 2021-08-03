@@ -1,5 +1,5 @@
 /*<info serverAlias="DBARC-bodb_Archive" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_MBU_TVS_BK_CheckRowCount_Sel]
+CREATE PROCEDURE [dbo].[Task_MBU_TVS_BK_CheckRowCount_Sel]
 	@StartDate		SMALLDATETIME	= NULL
 	,@EndDate		SMALLDATETIME = NULL 
 	,@tablename		VARCHAR(50) = NULL

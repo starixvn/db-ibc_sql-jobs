@@ -1,6 +1,6 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 GO
-ALTER PROCEDURE [dbo].[Task_MBU_TVS_CheckRowCount_Sel]
+CREATE PROCEDURE [dbo].[Task_MBU_TVS_CheckRowCount_Sel]
 	@StartDate		SMALLDATETIME	= NULL
 	,@EndDate		SMALLDATETIME = NULL 
 	,@tablename		VARCHAR(50) = NULL
