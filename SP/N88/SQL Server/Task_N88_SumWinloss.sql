@@ -10,6 +10,7 @@ AS
 
 	Revisions:
 		- 20210218@Percy: Initialize SP [RedmineID: #150398]
+		- 20210715@Percy: Add columns ProgressiveBet, ProgressiveWin [RedmineID: #158438]
 */
 
 BEGIN
@@ -34,11 +35,13 @@ BEGIN
 			,ValidBet		MONEY
 			,Winloss		MONEY
 			,Revenue		MONEY
+			,ProgressiveBet	MONEY
+			,ProgressiveWin	MONEY
 			,BetCount		INT
 			,StatusId		TINYINT
 		)
 
-		INSERT INTO #__TpBetRecord (CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, BetCount, StatusId)
+		INSERT INTO #__TpBetRecord (CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, ProgressiveBet, ProgressiveWin, BetCount, StatusId)
 		SELECT
 			t.CustId, t.UserName, 0 AS IsTest, t.CurrencyId, t.SiteId, t.GameType
 			,DATEADD(HOUR, DATEPART(HOUR, t.TransTime), CONVERT(VARCHAR(10), t.TransTime, 120)) -- date & hour
@@ -46,7 +49,9 @@ BEGIN
 			,SUM(t.Stake / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS TurnOver
 			,SUM(ISNULL(t.ValidBet, t.Stake) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ValidBet
 			,SUM(t.WinlostAmount / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS Winloss
-			,SUM(ISNULL(t.Revenue, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS Winloss
+			,SUM(ISNULL(t.Revenue, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS Revenue
+			,SUM(ISNULL(t.ProgressiveBet, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ProgressiveBet
+			,SUM(ISNULL(t.ProgressiveWin, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ProgressiveWin
 			,COUNT(1) AS BetCount
 			,t.TicketStatus
 		FROM dbo.TpBetRecord t WITH (NOLOCK)
@@ -81,17 +86,19 @@ BEGIN
 			,ValidBet		MONEY
 			,Winloss		MONEY
 			,Revenue		MONEY
+			,ProgressiveBet	MONEY
+			,ProgressiveWin	MONEY
 			,BetCount		INT
 			,StatusId		TINYINT
 			,DataType		SMALLINT
 		)
 		;WITH CTE_N88_SumWinloss AS
 		(
-			SELECT CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, BetCount, StatusId
+			SELECT CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, ProgressiveBet, ProgressiveWin, BetCount, StatusId
 			FROM dbo.N88_SumWinloss WITH (NOLOCK)
 			WHERE SettledTime >= @FDate AND SettledTime < @TDate
 		)
-		INSERT INTO #__N88_SumWinloss (CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, BetCount, StatusId, DataType)
+		INSERT INTO #__N88_SumWinloss (CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, ProgressiveBet, ProgressiveWin, BetCount, StatusId, DataType)
 		SELECT ISNULL(t.CustId, c.CustId)
 			, ISNULL(t.UserName, c.UserName)
 			, ISNULL(t.IsTest, c.IsTest)
@@ -104,6 +111,8 @@ BEGIN
 			, ISNULL(t.ValidBet, c.ValidBet)
 			, ISNULL(t.Winloss, c.Winloss)
 			, ISNULL(t.Revenue, c.Revenue)
+			, ISNULL(t.ProgressiveBet, c.ProgressiveBet)
+			, ISNULL(t.ProgressiveWin, c.ProgressiveWin)
 			, ISNULL(t.BetCount, c.BetCount)
 			, ISNULL(t.StatusId, c.StatusId)
 			, DataType = CASE	WHEN t.SettledTime IS NULL THEN -1 -- delete
@@ -121,11 +130,13 @@ BEGIN
 					AND t.StatusId		= c.StatusId
 		WHERE t.SettledTime IS NULL
 			OR c.SettledTime IS NULL
-			OR ISNULL(t.TurnOver, 0)	<> ISNULL(c.TurnOver, 0)
-			OR ISNULL(t.ValidBet, 0)	<> ISNULL(c.ValidBet, 0)
-			OR ISNULL(t.Winloss, 0)		<> ISNULL(c.Winloss, 0)
-			OR ISNULL(t.Revenue, 0)		<> ISNULL(c.Revenue, 0)
-			OR ISNULL(t.BetCount, 0)	<> ISNULL(c.BetCount, 0)
+			OR ISNULL(t.TurnOver, 0)		<> ISNULL(c.TurnOver, 0)
+			OR ISNULL(t.ValidBet, 0)		<> ISNULL(c.ValidBet, 0)
+			OR ISNULL(t.Winloss, 0)			<> ISNULL(c.Winloss, 0)
+			OR ISNULL(t.Revenue, 0)			<> ISNULL(c.Revenue, 0)
+			OR ISNULL(t.ProgressiveBet, 0)	<> ISNULL(c.ProgressiveBet, 0)
+			OR ISNULL(t.ProgressiveWin, 0)	<> ISNULL(c.ProgressiveWin, 0)
+			OR ISNULL(t.BetCount, 0)		<> ISNULL(c.BetCount, 0)
 
 		-- Delete
 		IF EXISTS (SELECT 1 FROM #__N88_SumWinloss WHERE DataType = -1)
@@ -145,11 +156,13 @@ BEGIN
 		-- Update
 		IF EXISTS (SELECT 1 FROM #__N88_SumWinloss WHERE DataType = 0)
 			UPDATE s WITH (ROWLOCK)
-			SET s.TurnOver		= t.TurnOver
-				,s.ValidBet		= t.ValidBet
-				,s.Winloss		= t.Winloss
-				,s.Revenue		= t.Revenue
-				,s.BetCount		= t.BetCount
+			SET s.TurnOver			= t.TurnOver
+				,s.ValidBet			= t.ValidBet
+				,s.Winloss			= t.Winloss
+				,s.Revenue			= t.Revenue
+				,s.ProgressiveBet	= t.ProgressiveBet
+				,s.ProgressiveWin	= t.ProgressiveWin
+				,s.BetCount			= t.BetCount
 			FROM dbo.N88_SumWinloss s
 				INNER JOIN #__N88_SumWinloss t
 					ON		s.SettledTime	= t.SettledTime
@@ -164,8 +177,8 @@ BEGIN
 
 		-- Insert
 		IF EXISTS (SELECT 1 FROM #__N88_SumWinloss WHERE DataType = 1)
-			INSERT INTO dbo.N88_SumWinloss (CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, BetCount, StatusId)
-			SELECT CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, BetCount, StatusId
+			INSERT INTO dbo.N88_SumWinloss (CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, ProgressiveBet, ProgressiveWin, BetCount, StatusId)
+			SELECT CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, TurnOver, ValidBet, Winloss, Revenue, ProgressiveBet, ProgressiveWin, BetCount, StatusId
 			FROM #__N88_SumWinloss
 			WHERE DataType = 1
 	END

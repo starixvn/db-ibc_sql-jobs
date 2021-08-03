@@ -1,4 +1,7 @@
 /*<info serverAlias="DBN88-bodb_N88" isFunction="0" isNested="1"></info>*/
+USE bodb_N88
+GO
+
 ALTER PROCEDURE [dbo].[Task_API_Queue_TpBetRecord]
 	@QueueIDInput	BIGINT = 0
 	,@ErrCode		INT = 0 OUTPUT
@@ -16,6 +19,7 @@ AS
 		- 20201105@Percy: Remove duplicate data from API [RedmineID: #144888]
 		- 20210125@Percy: Add column BonusId [RedmineID: #149268]
 		- 20210301@Percy: Add column Revenue [RedmineID: #150398]
+		- 20210715@Percy: Add columns ProgressiveBet, ProgressiveWin [RedmineID: #158438]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -55,6 +59,8 @@ BEGIN
 		,ValidBet		DECIMAL(18,2)
 		,WinlostAmount	DECIMAL(18,2)
 		,Revenue		DECIMAL(20,4)
+		,ProgressiveBet	DECIMAL(20,4)
+		,ProgressiveWin	DECIMAL(20,4)
 		,SettlementType	TINYINT
 		,TicketStatus	TINYINT
 		,OriginalState	VARCHAR(10)
@@ -107,6 +113,8 @@ BEGIN
 					,ValidBet
 					,WinlostAmount
 					,Revenue
+					,ProgressiveBet
+					,ProgressiveWin
 					,SettlementType
 					,TicketStatus
 					,OriginalState
@@ -129,6 +137,8 @@ BEGIN
 					,CAST(NULLIF(t.c.value('@validbet', 'varchar(30)'), '') AS DECIMAL(18,2))
 					,t.c.value('@winlostamount', 'DECIMAL(18,2)')
 					,CAST(NULLIF(t.c.value('@revenue', 'varchar(30)'), '') AS DECIMAL(20,4))
+					,CAST(NULLIF(t.c.value('@progressivebet', 'varchar(30)'), '') AS DECIMAL(20,4))
+					,CAST(NULLIF(t.c.value('@progressivewin', 'varchar(30)'), '') AS DECIMAL(20,4))
 					,t.c.value('@settlementtype', 'TINYINT')
 					,t.c.value('@ticketstatus', 'TINYINT')
 					,t.c.value('@originalstate', 'VARCHAR(10)')
@@ -167,6 +177,8 @@ BEGIN
 						,b.ValidBet			= t.ValidBet
 						,b.WinlostAmount	= t.WinlostAmount
 						,b.Revenue			= t.Revenue
+						,b.ProgressiveBet	= t.ProgressiveBet
+						,b.ProgressiveWin	= t.ProgressiveWin
 						,b.SettlementType	= t.SettlementType
 						,b.TicketStatus		= t.TicketStatus
 						,b.OriginalState	= t.OriginalState
@@ -180,7 +192,7 @@ BEGIN
 						t.DataType = 0
 						AND
 						(
-							ISNULL(b.CustId, '')			<> ISNULL(t.CustId, '')
+							ISNULL(b.CustId, 0)				<> ISNULL(t.CustId, 0)
 							OR ISNULL(b.UserName, '')		<> ISNULL(t.UserName, '')
 							OR ISNULL(b.CurrencyId, 0)		<> ISNULL(t.CurrencyId, 0)
 							OR ISNULL(b.SiteId, 0)			<> ISNULL(t.SiteId, 0)
@@ -191,6 +203,8 @@ BEGIN
 							OR ISNULL(b.ValidBet, 0)		<> ISNULL(t.ValidBet, 0)
 							OR ISNULL(b.WinlostAmount, 0)	<> ISNULL(t.WinlostAmount, 0)
 							OR ISNULL(b.Revenue, 0)			<> ISNULL(t.Revenue, 0)
+							OR ISNULL(b.ProgressiveBet, 0)	<> ISNULL(t.ProgressiveBet, 0)
+							OR ISNULL(b.ProgressiveWin, 0)	<> ISNULL(t.ProgressiveWin, 0)
 							OR ISNULL(b.SettlementType, 0)	<> ISNULL(t.SettlementType, 0)
 							OR ISNULL(b.TicketStatus, 0)	<> ISNULL(t.TicketStatus, 0)
 							OR ISNULL(b.OriginalState, '')	<> ISNULL(t.OriginalState, '')
@@ -219,6 +233,8 @@ BEGIN
 						,ValidBet
 						,WinlostAmount
 						,Revenue
+						,ProgressiveBet
+						,ProgressiveWin
 						,SettlementType
 						,TicketStatus
 						,OriginalState
@@ -242,6 +258,8 @@ BEGIN
 						,ValidBet
 						,WinlostAmount
 						,Revenue
+						,ProgressiveBet
+						,ProgressiveWin
 						,SettlementType
 						,TicketStatus
 						,OriginalState
