@@ -4,11 +4,11 @@
 IF NOT EXISTS (
 	SELECT TOP 1 1 
 	FROM dbo.SystemSettings WITH (NOLOCK) 
-	WHERE VName = 'Task_Archive_Flag_VName'
+	WHERE VName = 'Task_Arc_Flag_Name'
 )
 BEGIN
 	INSERT INTO dbo.SystemSettings(VName, VValue)
-	VALUES('Task_Archive_Flag_VName', 'Task_Archive_Flag_61')
+	VALUES('Task_Arc_Flag_Name', 'Task_Archive_Flag_61')
 END
 ELSE
 BEGIN
@@ -20,11 +20,11 @@ GO
 IF NOT EXISTS (
 	SELECT TOP 1 1 
 	FROM dbo.SystemSettings WITH (NOLOCK) 
-	WHERE VName = 'Task_Archive_Flag_VName'
+	WHERE VName = 'Task_Arc_Flag_Name'
 )
 BEGIN
 	INSERT INTO dbo.SystemSettings(VName, VValue)
-	VALUES('Task_Archive_Flag_VName', 'Task_Archive_Flag_06')
+	VALUES('Task_Arc_Flag_Name', 'Task_Archive_Flag_06')
 END
 ELSE
 BEGIN

@@ -7,7 +7,7 @@ SET NOCOUNT ON
 WHILE (SELECT VValue FROM DBTXN.bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = ''Task_Archive_State'') <> ''Done''
 BEGIN
 	DECLARE @__VName VARCHAR(50)
-	SELECT @__VName = VValue FROM bodb02.dbo.SystemSettings WITH(NOLOCK) WHERE VName = ''Task_Archive_Flag_VName''
+	SELECT @__VName = VValue FROM bodb02.dbo.SystemSettings WITH(NOLOCK) WHERE VName = ''Task_Arc_Flag_Name''
 	EXEC DBTXN.bodb02.dbo.Task_Archive_SetState @State = ''Done'', @VName = @__VName
 
 	-- delay 10 seconds before next check
