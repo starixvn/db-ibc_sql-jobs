@@ -21,6 +21,7 @@ AS
 		- 20210225@Max: [TVS] Remove archived data [Redmine: #150524]
 		- 20210625@Helen: [TVS] Perfomance tuning for archived process [Redmine: #157539]
 		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
+		- 20210727@Patrick: Update Job to Support Parlay Range up to 3 Weeks [Redmine: #156498]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -29,22 +30,48 @@ BEGIN
 
 	IF @Action = 'delete'
 	BEGIN
-		CREATE TABLE #DeletedList (id INT PRIMARY KEY CLUSTERED,IsDone BIT)
+		CREATE TABLE #DeletedList (id INT PRIMARY KEY CLUSTERED, IsDone BIT)
 
 		IF @DeletedTarget = 'betParlayDetail'
 		BEGIN
 
-			SELECT IDENTITY(INT,1,1) id, refno, count(1) AS cnt, 5000/count(1) AS batch_size
+			CREATE TABLE #__refno_parlaydetail (refno BIGINT, cnt INT)
+			INSERT INTO #__refno_parlaydetail(refno, cnt)
+			SELECT b.refno, COUNT(1) cnt
+			FROM dbo.betparlaydetail b WITH(NOLOCK)
+			WHERE winlostdate <= DATEADD(DAY, -14, @winlostdate)
+			GROUP BY b.refno
+
+			CREATE CLUSTERED INDEX cix_#__refno_parlaydetail ON #__refno_parlaydetail(refno)
+
+			--remove refno which is still staying in bettrans
+			;WITH __refno_bettrans AS (
+				SELECT b.refno
+				FROM dbo.bettrans b WITH(NOLOCK)
+				WHERE matchid = 29
+			)
+			DELETE t 
+			FROM #__refno_parlaydetail t
+			WHERE EXISTS (SELECT TOP 1 1 FROM __refno_bettrans tt WHERE t.refno = tt.refno)
+			
+			--remove refno which is still staying in bettrans14
+			;WITH __refno_bettrans14 AS (
+				SELECT b.refno
+				FROM dbo.bettrans14 b WITH(NOLOCK)
+				WHERE matchid = 29 AND b.winlostdate > @winlostdate
+			)
+			DELETE t 
+			FROM #__refno_parlaydetail t
+			WHERE EXISTS (SELECT TOP 1 1 FROM __refno_bettrans14 tt WHERE t.refno = tt.refno)
+
+			SELECT IDENTITY(INT,1,1) id, b.refno, SUM(cnt) cnt, 5000/SUM(cnt) AS batch_size
 			INTO #tmp
-			FROM betparlaydetail WITH(NOLOCK)
-			WHERE winlostdate <= DATEADD(DAY, - 14, @winlostdate)
-			GROUP BY refno 
-			ORDER BY cnt DESC 
+			FROM #__refno_parlaydetail b
+			GROUP BY b.refno 
+			ORDER BY cnt DESC
 
 			CREATE CLUSTERED INDEX CIX_id_TMP ON #tmp(id)
-		
-			DECLARE @rc INT,@i INT, @topn INT,@refnos VARCHAR(MAX) = ''
-
+			DECLARE @rc INT,@i INT, @topn INT, @refnos VARCHAR(MAX) = ''
 			SELECT @rc = MAX(id) FROM #tmp  
 
 			SET @i = 1
@@ -66,7 +93,8 @@ BEGIN
 				EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 29, @tableName = 'betParlayDetail', @refnos = @refnos
 				SET @i = @i + @topn
 			END 
-			DROP TABLE #tmp 
+			DROP TABLE #tmp
+			DROP TABLE #__refno_parlaydetail
 			RETURN
 		END 
 		ELSE IF @DeletedTarget = 'betParlayResult'
