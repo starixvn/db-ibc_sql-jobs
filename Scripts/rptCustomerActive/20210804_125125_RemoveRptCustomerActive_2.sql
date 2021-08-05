@@ -5,8 +5,12 @@
 	RedmineID: Remove RptCustomerActive [redmine:125125]
  
 */
- DROP PROCEDURE Task_CustomerActive_GenDataFromBettransBK
- 
- DROP PROCEDURE Task_CustomerActive_GenDataFromBettransBK_UAT4 
- 
- DROP TABLE rptCustomerActiveTmp 
+
+USE  bodb_Report
+GO 
+
+DROP PROCEDURE Task_CustomerActive_GenDataFromBettransBK
+
+DROP PROCEDURE Task_CustomerActive_GenDataFromBettransBK_UAT4 
+
+DROP TABLE rptCustomerActiveTmp 

@@ -8,8 +8,15 @@
  
 
 
-DROP PROCEDURE Task_CustomerActive_GenDataDaily
+USE bodb02
+GO
+ 
 
-DROP FUNCTION f_LicenseeMultiCurrencyConfigSel
+DROP PROC Lrf_Rpt_ActiveMember
+DROP PROC Lrf_Rpt_ActiveMember_xtest
+DROP PROC Lrf_Rpt_ActiveMember_xpre
+
+USE bodb_LicenseeReport
+GO
 
 DROP TABLE rptCustomerActive
