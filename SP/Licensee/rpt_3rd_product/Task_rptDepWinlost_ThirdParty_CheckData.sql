@@ -17,6 +17,7 @@ AS
 		- 20190625@Percy: Temporary adding DBLIC on OAS_ChargeInfo and related functions [RedmineID: #103658]
 		- 20190724@Percy: Remove adding DBLIC on OAS_ChargeInfo and related functions [RedmineID: #103658]
 		- 20200818@Percy: Change EventType's data type from smallint to int [RedmineID: #138524]
+		- 20210805@Sophia: Fix false alarm [Redmine: #159700]
 
 	DECLARE @HasDataMismatch	TINYINT, @ProductID VARCHAR(MAX)
 	EXEC Task_rptDepWinlost_ThirdParty_CheckData @WinlostDate = '2018-04-09', @HasDataMismatch = @HasDataMismatch OUTPUT, @ProductIDs = @ProductID OUTPUT
@@ -286,7 +287,7 @@ BEGIN
 			WHERE s.custid = t.custid AND s.currency = t.currency AND s.ProductID = t.ProductID AND s.turnover = t.turnover AND s.winlost = t.winlost
 				AND s.drawTO = t.drawTO AND s.drawBetCount = t.drawBetCount AND s.betCount = t.betCount AND ISNULL(t.WinlostA, 0) = ISNULL(s.WinlostA, 0)
 				AND ISNULL(t.CommissionP, 0) = ISNULL(s.CommissionP, 0) AND ISNULL(t.CommissionA, 0) = ISNULL(s.CommissionA, 0) AND ISNULL(t.ValidBetAmount, 0) = ISNULL(s.ValidBetAmount, 0)
-				AND t.Bettype = s.Bettype
+				 
 			)
 		GROUP BY TableName, ProductID, currency
 		
@@ -308,7 +309,7 @@ BEGIN
 			WHERE s.custid = t.custid AND s.currency = t.currency AND s.ProductID = t.ProductID AND s.turnover = t.turnover AND s.winlost = t.winlost
 				AND s.drawTO = t.drawTO AND s.drawBetCount = t.drawBetCount AND s.betCount = t.betCount AND ISNULL(s.WinlostA, 0) = ISNULL(t.WinlostA, 0) 
 				AND ISNULL(s.CommissionP, 0) = ISNULL(t.CommissionP, 0) AND ISNULL(s.CommissionA, 0) = ISNULL(t.CommissionA, 0) AND ISNULL(s.ValidBetAmount, 0) = ISNULL(t.ValidBetAmount, 0)
-				AND s.Bettype=t.Bettype
+				 
 			)
 		GROUP BY ProductID, currency
 
@@ -443,7 +444,7 @@ BEGIN
 		
 		UNION ALL
 		
-		SELECT 'rptDepWinlost_ThirdParty', 0, Currency, ProductID, EventType, SUM(ISNULL(turnover, 0)), SUM(ISNULL(winlost, 0)), SUM(ISNULL(betCount, 0)),
+		SELECT 'rptDepWinlost_ThirdParty_Performance', 0, Currency, ProductID, EventType, SUM(ISNULL(turnover, 0)), SUM(ISNULL(winlost, 0)), SUM(ISNULL(betCount, 0)),
 				(
 					SELECT SUM(ISNULL(drawTO, 0)) AS drawTO, SUM(ISNULL(drawBetCount, 0)) AS drawBetCnt, SUM(ISNULL(WinlostA, 0)) AS WinlostA	
 						, SUM(ISNULL(CommissionP, 0)) AS CommissionP, SUM(ISNULL(CommissionA, 0)) AS CommissionA, SUM(ISNULL(ValidBetAmount, 0)) AS ValidBetAmount

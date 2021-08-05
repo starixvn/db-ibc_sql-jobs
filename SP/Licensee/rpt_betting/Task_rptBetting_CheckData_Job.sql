@@ -26,7 +26,8 @@ AS
 		- 20190627@Percy: Remove paul.tran@starixsoft.com from mail recipient [RedmineID: #115768]
 		- 20200601@Percy: Add table rpt_CustomerWL_ExtraGMT [RedmineID: #134867]
 		- 20200603@Sophia: Auto regen full last month for separate wallet [redmine: #135309]
-		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
+		- 20201012@Malcolm: Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
+		- 20210805@Sophia: Add more email dbaadmin@starixvn.com [Redmine: #159700]
 
 	EXEC Task_rptBetting_CheckData_Job @FromDate = '2018-04-01', @ToDate = '2018-04-10', @Step = 0,  @AllowCorrect = 1
     
@@ -463,7 +464,7 @@ BEGIN
 										FOR XML PATH('tr'), TYPE 
 									) AS NVARCHAR(MAX) ) + N'</table>'
 			
-		EXEC msdb.dbo.sp_send_dbmail @recipients = 'Sophia.nguyen@starixvn.com;Patrick.pham@starixvn.com'
+		EXEC msdb.dbo.sp_send_dbmail @recipients = 'Sophia.nguyen@starixvn.com;Patrick.pham@starixvn.com;dbaadmin@starixvn.com;Candy.le@starixvn.com'
 					, @subject = @subject
 					, @body = @ErrorMessage
 					, @body_format = 'HTML'
