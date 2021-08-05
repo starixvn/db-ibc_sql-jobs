@@ -20,6 +20,7 @@ AS
 		- 20201210@Malcolm: Add Big Gaming [RedmineId : #142459]
 		- 20210310@Malcolm: Add Pragmatic Live Casino [RedmineId : #133717]
 		- 20210609@Malcolm: Add AE Sexy - [Redmine: #156239]	
+		- 20210617@Sol: changed how to calc net turn over - [RedmineId : #156653]
 */
 
 BEGIN
@@ -31,14 +32,23 @@ BEGIN
 		SELECT  @ProductIds = COALESCE(@ProductIds + ',', '') + CONVERT(VARCHAR(10), ProductId) FROM dbo.Products WITH (NOLOCK)
 	END
 
-	CREATE TABLE #Bettypes (ProductId INT, SportTypeRef SMALLINT, BettypeRef SMALLINT, Bettype SMALLINT)
+	CREATE TABLE #Bettypes (ProductId INT, SportTypeRef SMALLINT, BettypeRef SMALLINT, Bettype SMALLINT, IsUsingOddsSpread BIT)
 	
-	
-	INSERT INTO #Bettypes (ProductId, SportTypeRef, BettypeRef, Bettype)
-	SELECT f.ProductID, f.SportType AS SportTypeRef, f.BetType AS BettypeRef, s.BetType	
+	DECLARE @cutoffDate SMALLDATETIME
+
+	SELECT @cutoffDate = CutoffDate
+	FROM dbo.f_GetCutOffDate() f
+	WHERE f.TypeName = 'NetTO'
+
+	INSERT INTO #Bettypes (ProductId, SportTypeRef, BettypeRef, Bettype, IsUsingOddsSpread)
+	SELECT f.ProductID, f.SportType AS SportTypeRef, f.BetType AS BettypeRef, s.BetType,	
+			CASE 
+				WHEN s.RefTable IN (1, 2) OR f.ProductID = 47 THEN 1 
+				ELSE 0 
+			END AS IsUsingOddsSpread
 	FROM dbo.f_SumWinloss_ConditionSel(@ProductIds) f
 		CROSS APPLY (
-			SELECT DISTINCT s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
+			SELECT DISTINCT s.RefTable, s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
 			WHERE f.ProductID = s.ProductID
 				AND (f.ProductID <> 6 OR f.SportType = s.SportType)
 				AND (f.BetType NOT IN (3150, 4297, 4298) AND s.BetType NOT IN (3150, 4297, 4298) OR f.BetType = s.BetType)
@@ -207,7 +217,12 @@ BEGIN
 			,SUM(CASE
 					WHEN bt.ProductId = 1 AND b.statusID IN (112, 113) AND b.modds IN (-0.25, 0.25) THEN ABS(b.stake) / 2 -- SportsBook
 					WHEN bt.ProductId = 1 AND b.statusID = 111 THEN 0 -- SportsBook
-					WHEN bt.ProductID IN (21, 39, 45, 46, 47, 51, 52, 57, 59, 65)  THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, WM, ION, BG, GDG, PPL
+					WHEN b.winlostdate < @cutoffDate AND bt.ProductID IN (21, 39, 45, 46, 47, 51, 52, 57, 59, 65) THEN b.oddsspread
+					WHEN b.winlostdate >= @cutoffDate AND bt.IsUsingOddsSpread = 1 
+						THEN 
+							CASE WHEN cont.ContributionBettype IS NULL THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, WM, ION, GDG, bg, PPL
+								ELSE 0
+							END
 					ELSE ABS(b.stake) END) AS TurnoverNoDraw
 			,-1 * SUM(ISNULL(b.ExtraWinloss, 0)) AS ExtraWinloss
 			,-1 * SUM(ISNULL(b.ExtraComm, 0)) AS ExtraComm
@@ -265,6 +280,13 @@ BEGIN
 					AND b.statusID IN (111,112,113)
 			) AS b
 			INNER JOIN #Bettypes bt ON b.bettype = bt.bettype
+			OUTER APPLY 
+			(
+				SELECT f.Bettype AS ContributionBettype
+				FROM dbo.f_BettypePrizeGroup() f
+				WHERE f.BettypeGroup = 'Contribution'
+					AND f.Bettype = b.bettype
+			) cont
 		GROUP BY
 			b.winlostdate
 			,c.username
