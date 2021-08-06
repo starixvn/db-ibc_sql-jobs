@@ -13,6 +13,7 @@ AS
 		- 20201216@Percy: Auto add Platform Fee's setting [RedmineID: #146661]
 		- 20210628@Percy: Get Rebate amount [RedmineID: #157591]
 		- 20210714@Percy: Get Revenue amount [RedmineID: #157958]
+		- 20210805@Percy: Include free spin into P2P Products [RedmineID: #157958]
 */
 
 BEGIN 
@@ -96,15 +97,15 @@ BEGIN
 		DELETE @Products
 
 		-- WinLoss data
-		INSERT INTO @Products (ProductId, RefProductId)
-		SELECT ProductId, RefProductId
+		INSERT INTO @Products (ProductId, RefProductId, IsP2P)
+		SELECT ProductId, RefProductId, IsP2P
 		FROM dbo.Products p WITH (NOLOCK)
 		WHERE IsIBC = 0
 			AND DataSource = 'TpBetRecord'
 
 		-- Others (Deposit, Withdrawal, Bonus, Rebate, ...)
-		INSERT INTO @Products (ProductId, RefProductId)
-		VALUES (-1, -1)
+		INSERT INTO @Products (ProductId, RefProductId, IsP2P)
+		VALUES (-1, -1, 0)
 
 		CREATE TABLE #rptMemberDaily
 		(
@@ -149,7 +150,11 @@ BEGIN
 			INNER JOIN @Products p ON b.GameType = p.RefProductId
 			CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, mi.currency, 0) e
 		WHERE b.WinlostDate BETWEEN DATEADD(DAY, -1, @WinlostDate) AND DATEADD(DAY, 1, @WinlostDate)
-			AND b.TicketStatus IN (1, 2, 4) -- Won/Lose/Draw
+			AND b.TicketStatus IN (1, 2, 4, 6) -- Won/Lose/Draw/Free Spin
+			AND (
+				p.IsP2P = 1
+				OR (p.IsP2P = 0 AND b.TicketStatus <> 6)
+			)
 			AND CONVERT(DATE, DATEADD(HOUR, @TimeZone, b.SettledTime)) = @WinlostDate
 		GROUP BY
 			mi.CustId
