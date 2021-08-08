@@ -112,7 +112,7 @@ BEGIN
 	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - start updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	--**update being movebet date flag ==> the purpose of this step that is not allow for settle ticket which have winlostdate smaller than being move bet date
+	--**update being movebet date flag ==> the purpose of this step is that does not allow for settle tickets which has winlostdate smaller than beingMovebet date
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 9, @tableName = 'SystemSettings'
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - end updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)

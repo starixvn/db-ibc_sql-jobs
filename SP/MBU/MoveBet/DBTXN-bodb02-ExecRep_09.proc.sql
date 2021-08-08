@@ -274,29 +274,24 @@ BEGIN
 		--//for bettrans
 		IF @tableName = 'bettrans'
 		BEGIN
-			WHILE 1 = 1
-			BEGIN
-				DELETE	@__tmpTransId;
+			DELETE	@__tmpTransId;
 
-				DELETE TOP (2000)
-				FROM dbo.bettrans WITH (ROWLOCK)
-				OUTPUT deleted.transid
-				INTO @__tmpTransId (id)
-				WHERE recommend = @recommend
-					AND	winlostdate = @winlostdate
-					AND	bettype < 19999;
+			DELETE TOP (2000)
+			FROM dbo.bettrans WITH (ROWLOCK)
+			OUTPUT deleted.transid
+			INTO @__tmpTransId (id)
+			WHERE recommend = @recommend
+				AND	winlostdate = @winlostdate
+				AND	bettype < 19999;
 
-				SET @RowDeleted = @@ROWCOUNT;
+			SET @RowDeleted = @@ROWCOUNT;
 
-				-- 20190828@Billy: Add [bettransInfo] table
-				DELETE	tbl
-				FROM @__tmpTransId AS tmp
-				INNER JOIN dbo.BettransInfo AS tbl WITH (ROWLOCK)
-						ON	tmp.id = tbl.transid;
+			-- 20190828@Billy: Add [bettransInfo] table
+			DELETE	tbl
+			FROM @__tmpTransId AS tmp
+			INNER JOIN dbo.BettransInfo AS tbl WITH (ROWLOCK)
+					ON	tmp.id = tbl.transid;
 
-				IF @rowDeleted < 2000
-					BREAK;
-			END
 			RETURN
 		END
 		
