@@ -14,6 +14,7 @@ AS
 		- 20200601@Percy: Initialize SP [RedmineID: #135326]
 		- 20210111@Danny: Enhance performance (get data from bettrans_bk) [RedmineID: #123157]
 		- 20210607@Danny: Move 'Saba789' to Credit Site  [RedmineID: #153874]
+		- 20210809@Danny: Add column bettype,betteam into rmBettransm_bk [RedmineID: #159304]
 */
 
 BEGIN
@@ -93,39 +94,8 @@ BEGIN
 
 	END
 
-	-- get data from backup range
 	BEGIN
-			
-		DECLARE @__query NVARCHAR(MAX), @__sqlCmd NVARCHAR(MAX), @isByBettype BIT = 1
-		SELECT  @__query = N''		
-		SELECT	@__query = @__query + N'EXEC Task_RMS_ARC_rmBettrans_Old_byLeagueOrBettype_Sel @winlostdate, @isByBettype'
-		SELECT	@__sqlCmd = N'EXECUTE DBARC.bodb_archive.dbo.sp_executesql @query, N''@winlostdate SMALLDATETIME, @isByBettype BIT'', @winlostdate, @isByBettype'
-
-		INSERT INTO #bettransmbk (refno, bettype, statusID, leagueid)
-		EXECUTE	sys.sp_executesql @__sqlCmd, N'@query NVARCHAR(MAX), @winlostdate SMALLDATETIME, @isByBettype BIT', @__query, @winlostdate, @isByBettype
-	END
-
-	WHILE 1 = 1
-	BEGIN
-		DELETE @bettransByBatch
-		--DELETE @bettype
-		DELETE @bettransmbkByBatch
-		SET @isBreak = 0
-
-		DELETE TOP (@batch) FROM @bettrans
-			OUTPUT DELETED.refno, DELETED.ParlayType, DELETED.IsDeposit, DELETED.statusID, DELETED.stake, DELETED.winloss, DELETED.playercomm, DELETED.HouseWinloss
-			INTO @bettransByBatch (refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
-
-		IF @@ROWCOUNT < @batch
-			SET @isBreak = 1
-
-		DELETE bm
-			OUTPUT DELETED.refno, DELETED.bettype, DELETED.statusID, DELETED.leagueid
-			INTO @bettransmbkByBatch (refno, bettype, statusID, leagueid)
-		FROM #bettransmbk bm
-			INNER JOIN @bettransByBatch b ON bm.refno = b.refno
-
-		INSERT INTO #rmSumByBettype
+		INSERT INTO #rmSumByBettype (bettype, ParlayType, IsDeposit, LeagueId, BetCount, WonCount, LoseCount, DrawCount, MainBetCount, MainWonCount, MainLoseCount, MainDrawCount, MainStake, MainTurnover, MainTurnoverNoDraw, MainMemberWinloss, MainMemberComm, MainHouseWinloss)
 		SELECT
 			t.bettype
 			,b.ParlayType
@@ -145,7 +115,7 @@ BEGIN
 			,MainWinloss		= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END)
 			,MainComm			= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
 			,MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.HouseWinloss ELSE 0 END)
-		FROM @bettransByBatch b
+		FROM @bettrans b
 			CROSS APPLY (
 				SELECT bettype, LeagueId, statusID, ROW_NUMBER() OVER(PARTITION BY bettype, LeagueId ORDER BY (SELECT NULL)) AS rn
 				FROM (
@@ -153,19 +123,22 @@ BEGIN
 					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
-						AND m.sporttype = 1
+						AND m.sporttype = 1 AND bm.winlostdate > @MoveBetsDay
 
 					UNION ALL
 					SELECT bm.bettype, m.leagueid, bm.statusID
 					FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
-						AND m.sporttype = 1
+						AND m.sporttype = 1 AND bm.winlostdate BETWEEN @BalanceUpDay AND  @MoveBetsDay
 
 					UNION ALL
-					SELECT bm.bettype, bm.leagueid, bm.statusID
-					FROM @bettransmbkByBatch bm
+					SELECT bm.bettype, m.leagueid, bm.statusID
+					FROM dbo.rmBettransm_bk bm WITH (NOLOCK)
+						INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
+						AND m.sporttype = 1 AND bm.winlostdate < @BalanceUpDay
+
 				) bm
 			) t
 		GROUP BY
@@ -175,7 +148,7 @@ BEGIN
 			,t.LeagueId
 
 		-- Total
-		INSERT INTO #rmSumByBettype
+		INSERT INTO #rmSumByBettype (bettype, ParlayType, IsDeposit, LeagueId, BetCount, WonCount, LoseCount, DrawCount, MainBetCount, MainWonCount, MainLoseCount, MainDrawCount, MainStake, MainTurnover, MainTurnoverNoDraw, MainMemberWinloss, MainMemberComm, MainHouseWinloss)
 		SELECT
 			t.bettype
 			,b.ParlayType
@@ -195,7 +168,7 @@ BEGIN
 			,MainWinloss		= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END)
 			,MainComm			= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
 			,MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.HouseWinloss ELSE 0 END)
-		FROM @bettransByBatch b
+		FROM @bettrans b
 			CROSS APPLY (
 				SELECT bettype, statusID, ROW_NUMBER() OVER(PARTITION BY bettype ORDER BY (SELECT NULL)) AS rn
 				FROM (
@@ -203,28 +176,27 @@ BEGIN
 					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
-						AND m.sporttype = 1
+						AND m.sporttype = 1 AND bm.winlostdate > @MoveBetsDay
 
 					UNION ALL
 					SELECT bm.bettype, bm.statusID
 					FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
-						AND m.sporttype = 1
+						AND m.sporttype = 1 AND bm.winlostdate BETWEEN @BalanceUpDay AND  @MoveBetsDay
 
 					UNION ALL
 					SELECT bm.bettype, bm.statusID
-					FROM @bettransmbkByBatch bm
+					FROM dbo.rmBettransm_bk bm WITH (NOLOCK)
+						INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
+						AND m.sporttype = 1  AND bm.winlostdate < @BalanceUpDay
 				) bm
 			) t
 		GROUP BY
 			t.bettype
 			,b.ParlayType
 			,b.IsDeposit
-
-		IF @isBreak = 1
-			BREAK
 	END
 
 	BEGIN TRY
