@@ -27,7 +27,7 @@ BEGIN
 
 	-- Update product list
 	BEGIN
-		DECLARE @Products TABLE (ProductId INT, RefProductId INT, IsP2P BIT)
+		DECLARE @Products TABLE (ProductId INT, RefProductId INT, GroupId INT, IsP2P BIT)
 		
 		BEGIN TRY
 			INSERT INTO dbo.Products (ProductId,ProductName,ProductPrefix,IsIBC,Enabled,IsTest,ReleasedDate,RefProductId,DataSource)
@@ -36,8 +36,8 @@ BEGIN
 				LEFT JOIN dbo.Products p WITH (NOLOCK) ON g.Type = p.RefProductId
 			WHERE p.RefProductId IS NULL
 
-			INSERT INTO @Products (ProductId, IsP2P)
-			SELECT p.ProductId, p.IsP2P
+			INSERT INTO @Products (ProductId, GroupId, IsP2P)
+			SELECT p.ProductId, g.GroupId, p.IsP2P
 			FROM dbo.Products p WITH (NOLOCK)
 				CROSS JOIN (SELECT GroupId FROM dbo.CommGroup WITH (NOLOCK) WHERE IsDeleted = 0) g
 				LEFT JOIN (
@@ -56,7 +56,7 @@ BEGIN
 					FROM dbo.DeductionSetting WITH (NOLOCK)
 					WHERE DeductionId = 10
 				) s
-					CROSS JOIN (SELECT ProductId FROM @Products WHERE IsP2P = 0) p
+					INNER JOIN @Products p ON s.GroupId = p.GroupId AND p.IsP2P = 0
 					LEFT JOIN dbo.DeductionSetting ds WITH (NOLOCK) ON s.GroupId = ds.GroupId AND s.DeductionId = ds.DeductionId AND p.ProductId = ds.ProductId
 				WHERE s.RN = 1 AND ds.GroupId IS NULL
 
@@ -76,7 +76,7 @@ BEGIN
 						,ROW_NUMBER() OVER(PARTITION BY GroupId ORDER BY GroupProductId) AS RN
 					FROM dbo.StraightSetting WITH (NOLOCK)
 				) s
-					CROSS JOIN (SELECT ProductId FROM @Products WHERE IsP2P = 1) p
+					INNER JOIN @Products p ON s.GroupId = p.GroupId AND p.IsP2P = 1
 					LEFT JOIN dbo.StraightSetting ss WITH (NOLOCK) ON s.GroupId = ss.GroupId AND p.ProductId = ss.ProductId
 				WHERE s.RN = 1 AND ss.GroupId IS NULL
 
