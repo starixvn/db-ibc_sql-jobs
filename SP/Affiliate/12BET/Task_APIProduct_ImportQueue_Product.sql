@@ -22,6 +22,7 @@ AS
 		- 20201216@Percy: Integrate new product: BTi [RedmineID: #144456]
 		- 20210602@Percy: Change formula of 12Topaz & BTi [RedmineID: #156324]
 		- 20210615@Malcolm: Integrate new product: IM Esports [RedmineID: #157048]
+		- 20210726@Malcolm: Adjust formula of KY Gaming and get data from bettrans_BTi2[RedmineID: #159061]
 */
 
 BEGIN
@@ -327,7 +328,7 @@ BEGIN
 			mi.IBCCustId,
 			mi.currency,
 			SUM(k.CellScore) AS Turnover,
-			SUM(CASE WHEN k.Profit < 0 THEN k.Profit ELSE k.Profit - k.CellScore END) AS Winloss
+			SUM(k.Profit) AS Winloss
 		FROM dbo.bettrans_KYGaming k WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON k.IBCCustId = mi.IBCCustId
 		WHERE k.WinlostDate = @WinlostDate
@@ -344,33 +345,66 @@ BEGIN
 	-- BTi
 	ELSE IF @ProductId = 25
 	BEGIN
-		INSERT INTO #tempData
-		(
-			AffId,
-			IBCCustId,
-			Currency,
-			Turnover,
-			Winloss
-		)
-		SELECT
-			mi.AffId,
-			mi.IBCCustId,
-			mi.currency,
-			SUM(b.ValidStake) AS Turnover,
-			SUM(b.PL) AS Winloss
-		FROM dbo.bettrans_BTi b WITH (NOLOCK)
-			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
-		WHERE b.WinlostDate = @WinlostDate
-			AND NOT EXISTS (
-				SELECT 1 FROM dbo.MemberRemoval mr WITH (NOLOCK)
-				WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
-					AND mi.IBCCustId = mr.IBCCustId
+		IF @WinlostDate < '2021-08-01'
+		BEGIN
+			INSERT INTO #tempData
+			(
+				AffId,
+				IBCCustId,
+				Currency,
+				Turnover,
+				Winloss
 			)
-			AND b.BetStatus IN ('Won', 'Lost', 'Half won', 'Half lost', 'Draw', 'Cashout')
-		GROUP BY
-			mi.AffId,
-			mi.IBCCustId,
-			mi.currency
+			SELECT
+				mi.AffId,
+				mi.IBCCustId,
+				mi.currency,
+				SUM(b.ValidStake) AS Turnover,
+				SUM(b.PL) AS Winloss
+			FROM dbo.bettrans_BTi b WITH (NOLOCK)
+				INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
+			WHERE b.WinlostDate = @WinlostDate 
+				AND NOT EXISTS (
+					SELECT 1 FROM dbo.MemberRemoval mr WITH (NOLOCK)
+					WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
+						AND mi.IBCCustId = mr.IBCCustId
+				)
+				AND b.BetStatus IN ('Won', 'Lost', 'Half won', 'Half lost', 'Draw', 'Cashout')
+			GROUP BY
+				mi.AffId,
+				mi.IBCCustId,
+				mi.currency
+		END
+		ELSE 
+		BEGIN
+			INSERT INTO #tempData
+			(
+				AffId,
+				IBCCustId,
+				Currency,
+				Turnover,
+				Winloss
+			)
+			SELECT
+				mi.AffId,
+				mi.IBCCustId,
+				mi.currency,
+				SUM(b.ValidStake) AS Turnover,
+				SUM(b.PL) AS Winloss
+			FROM dbo.bettrans_BTi2 b WITH (NOLOCK)
+				INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
+			WHERE b.WinlostDate = @WinlostDate 
+				AND NOT EXISTS (
+					SELECT 1 FROM dbo.MemberRemoval mr WITH (NOLOCK)
+					WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
+						AND mi.IBCCustId = mr.IBCCustId
+				)
+				AND b.BetStatus IN ('Won', 'Lost', 'Half won', 'Half lost', 'Draw', 'Cashout')
+			GROUP BY
+				mi.AffId,
+				mi.IBCCustId,
+				mi.currency
+		END
 	END
 	--IM Esports
 	ELSE IF @ProductId = 31
