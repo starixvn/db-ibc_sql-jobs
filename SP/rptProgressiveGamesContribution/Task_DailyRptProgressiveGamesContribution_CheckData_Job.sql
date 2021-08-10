@@ -12,6 +12,7 @@ AS
 	
 	Revisions:
 		- 20180222@Percy: Initialize SP [RedmineID: #83787]
+		- 20210505@Sol: NAP - Alpha - Allow more time for transfer - [Redmine: #149927]
  
 	Param's Explanation:
 */
@@ -21,12 +22,13 @@ BEGIN
 		
 	DECLARE @winlostdate SMALLDATETIME, @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME
 		
-	SELECT @MoveBetsDay = MAX(eventdate)
-	FROM bodb02.dbo.match14 WITH(NOLOCK)
-		
-	SELECT TOP 1 @BalanceUpDay = winlostdate
-	FROM bodb02.dbo.bettrans WITH (NOLOCK)
-	WHERE matchid = 0 AND bettype = 20000
+	-- get move bet date
+	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+
+	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+
+	SELECT @BalanceUpDay = BalanceUpDay, @MoveBetsDay = MoveBetsDay FROM @tblMoveBetBalanceUp
 		
 	SELECT @winlostdate = @BalanceUpDay
 		
