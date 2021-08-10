@@ -30,6 +30,7 @@ AS
 		- 20210512@Malcolm: Add AdvantPlay Product [redmine: #154256]
 		- 20210609@Malcolm: Add AE Sexy and change bettype range of Happy 5 Linked Games- [Redmine: #156239]
 		- 20210617@Sol: changed how to calc net turn over - [RedmineId : #156653]
+		- 20210810@Evan: Add Bitcoin product - [Redmine: #159036]	
 	
 */
 BEGIN
@@ -198,6 +199,7 @@ BEGIN
 			WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
 			WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
 			WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product
+			WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin Product
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -339,6 +341,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
 				 WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
 				 WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product
+				 WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin Product
 				 ELSE 0
 			 END
 			,CASE
