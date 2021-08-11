@@ -23,6 +23,7 @@ AS
 		- 20201009@Brice:		Add columns GapOddsCap1,GapOddsCap2 for table odds [Redmine: #143211]
 		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 		- 20210310@Brice:		Add table AutoRefundResult_bk [Redmine: #149770]
+		- 20210122@Brice:		change 6 columns of [Match3rd] - [Redmine: #159842]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -379,12 +380,12 @@ WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.outright14 AS t2 WITH (NOLOCK) WHERE t1.o
 		SELECT	@Query = N'';
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.Match3rd_bk
-	(	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, HasLive, EventStatus, VendorEventStatus, CreateTime, UpdateTime, VendorEventDate, GameResultDate)
-SELECT	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, HasLive, EventStatus, VendorEventStatus, CreateTime, UpdateTime, VendorEventDate, GameResultDate
+	(	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, EventStatus, CreateTime, UpdateTime, StartTime, MarketEndTime, EndTime, BetStatus)
+SELECT	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, EventStatus, CreateTime, UpdateTime, StartTime, MarketEndTime, EndTime, BetStatus
 FROM	OPENQUERY(DBPRO, ''\
 DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate, 121) + ''''';
 
-SELECT	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, HasLive, EventStatus, VendorEventStatus, CreateTime, UpdateTime, VendorEventDate, GameResultDate
+SELECT	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, EventStatus, CreateTime, UpdateTime, StartTime, MarketEndTime, EndTime, BetStatus
 FROM	bodb02.dbo.Match3rd14 AS t1 WITH (NOLOCK)
 WHERE	t1.eventdate = @winlostdate;'');';
 
