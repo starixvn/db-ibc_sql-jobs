@@ -1,4 +1,7 @@
- /*<info serverAlias="DBRPT-bodb_report" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBRPT-bodb_report" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+USE bodb_report
+GO
+
 ALTER PROCEDURE [dbo].[GEN_rptTradeCustWinlost]	
 AS
 /*
@@ -9,21 +12,24 @@ AS
     Revisions:  
 		- 20170726@Sophia: Add new SP [RedmineID: #79346]
 		- 20170815@Sophia: Regen data BETWEEN MoveBetDays - 3 AND <= MoveBetDays  [Redmine :#81411]
+		- 20210518@Percy: Change code to get MoveBetsDay [RedmineID: #154866]
 
 	Explanation:   
 
 */
 BEGIN 
-SET NOCOUNT ON 
+	SET NOCOUNT ON
 
-	DECLARE @DateFrom SMALLDATETIME, @DateTo SMALLDATETIME, @MoveBetsDay SMALLDATETIME
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
 	
-	SELECT  @MoveBetsDay = MAX(eventdate) 
-	FROM bodb02.dbo.match14 WITH(NOLOCK)
-			
-	SELECT @DateFrom = DATEADD (DD, -3,  @MoveBetsDay) 
-	SELECT @DateTo = @MoveBetsDay 
- 
+	DECLARE @MoveBetsDay SMALLDATETIME
+	SELECT  @MoveBetsDay = MoveBetsDay FROM @MBBU
+
+	DECLARE @DateFrom SMALLDATETIME, @DateTo SMALLDATETIME
+	SELECT  @DateFrom = DATEADD (DD, -3,  @MoveBetsDay) 
+	SELECT  @DateTo = @MoveBetsDay 
 
 	----Gen data for move bet days
 	DELETE dbo.rptTradeCustWinlost WITH (ROWLOCK, UPDLOCK) WHERE Winlostdate BETWEEN @DateFrom AND @DateTo

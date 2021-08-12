@@ -13,6 +13,7 @@ AS
 			- 20180502@Joseph: Add <info> comment
 			- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
 			- 20191025@Bobby: Add column promotion [RedmineID: #120333]
+			- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
 
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -27,14 +28,17 @@ BEGIN
 			PRINT 'EXEC GEN_HourlySummaryDepData_Bettrans14: There is no data in bettrans14 to summarize or input @Winlostdate is greater than current day ==> RETURN'
 			RETURN
 		END
+
 	DECLARE @i TINYINT = 1
 	DECLARE @PreviousDay DATE = DATEADD(DAY,-1,@WinlostDate)
 	SET @isSuccessful = 0
+
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
 	
-	DECLARE @BalanceUpDay SMALLDATETIME
-	SELECT @BalanceUpDay = winlostdate
-	FROM Bettrans WITH(NOLOCK)
-	WHERE bettype = 20000 and matchid = 0 and custid = 3
+	DECLARE @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
+	SELECT  @BalanceUpDay = BalanceUpDay, @MoveBetsDay = MoveBetsDay FROM @MBBU
 	
 	CREATE TABLE #rptDepWinlost_Main (CustID INT, OpeningBalance MONEY DEFAULT (0), actualrate FLOAT DEFAULT (0), srecommend INT, mrecommend INT, recommend INT, currency INT
 											  UNIQUE CLUSTERED (CustID))
@@ -250,6 +254,10 @@ BEGIN
 				WHERE b.winlostdate <= @Winlostdate
 					  AND b.matchid >= 0
 					  AND c.roleid = 1
+					  AND 1 = CASE
+							WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
+							WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
+							ELSE 1 END
 				GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, 
 						CASE 
 							WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13

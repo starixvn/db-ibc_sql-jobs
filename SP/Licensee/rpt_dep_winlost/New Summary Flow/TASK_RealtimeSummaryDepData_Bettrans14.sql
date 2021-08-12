@@ -1,4 +1,6 @@
-/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" isFunction="0" isNested="0"></info>*/
+USE bodb02
+GO
 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
 	@WinLostDate	DATE,
@@ -59,6 +61,7 @@ AS
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]		
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
+		- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
 
 	Input Params:
@@ -74,23 +77,25 @@ BEGIN
 
 	SET DEADLOCK_PRIORITY LOW
 
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+
 	DECLARE @CurrentDate DATE,
 			@CurrentHour TINYINT,
 			@LogDesc VARCHAR(8000) = 'Date generated: ',
 			@LogID BIGINT,
 			@NumberofCus INT= 0,
-			@MoveBetDay SMALLDATETIME,
+			@MoveBetsDay SMALLDATETIME,
 			@ErrMsg VARCHAR(1000) = ''
 
 	SELECT @CurrentDate = CONVERT(DATE, CURRENT_TIMESTAMP, 112)
 	SELECT @CurrentHour = DATEPART(HOUR, CURRENT_TIMESTAMP)
-
-	SELECT @MoveBetDay = MAX(eventdate)
-	FROM dbo.match14 WITH (NOLOCK)
+	SELECT @MoveBetsDay = MoveBetsDay FROM @MBBU
 
 	IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans14 WITH (NOLOCK)
 					WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype <> 18000)
-		OR @WinlostDate > @MoveBetDay
+		OR @WinlostDate > @MoveBetsDay
 	BEGIN
 		PRINT 'EXEC TASK_RealtimeSummaryDepData_Bettrans14: There is no data in bettrans14 to summarize or input @Winlostdate is greater than MoveBet day ==> RETURN'
 		RETURN
@@ -206,6 +211,10 @@ BEGIN
 			AND b.matchid = 0
 			AND c.roleid = 1
 			AND b.bettype <> 999 --Licensee Spread Setting
+			AND 1 = CASE
+						WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
+						WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
+						ELSE 1 END
 		GROUP BY b.custid, b.bettype
 		OPTION (RECOMPILE, MAXDOP 8)
 

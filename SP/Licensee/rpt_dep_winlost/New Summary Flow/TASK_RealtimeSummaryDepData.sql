@@ -1,4 +1,6 @@
-/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" isFunction="0" isNested="1"></info>*/
+USE bodb02
+GO
 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
 	@WinLostDate	SMALLDATETIME	= NULL,
@@ -58,6 +60,7 @@ AS
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
+		- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
 
 	Input Params:
@@ -74,19 +77,26 @@ BEGIN
 	--1.Set low deadlock priority
 	SET DEADLOCK_PRIORITY LOW
 
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+
 	DECLARE @CurrentDate DATE,
 			@CurrentHour TINYINT,
 			@LogDesc VARCHAR(8000) = 'Date generated: ',
 			@LogID BIGINT,
 			@NumberofCus INT = 0,
 			@ErrMsg VARCHAR(1000) = '',
-			@i INT = 2147483647
+			@i INT = 2147483647,
+			@MoveBetsDay SMALLDATETIME
 
 	SELECT @CurrentDate = CONVERT(DATE, CURRENT_TIMESTAMP, 112)
 	SELECT @CurrentHour = DATEPART(HOUR, CURRENT_TIMESTAMP)
 
 	IF @Winlostdate IS NULL
 		SELECT @Winlostdate = @CurrentDate
+
+	SELECT @MoveBetsDay = MoveBetsDay FROM @MBBU
 
 	IF NOT EXISTS (SELECT TOP(1) 1 FROM dbo.bettrans WITH (NOLOCK)
 					WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype <> 18000)
@@ -284,6 +294,10 @@ BEGIN
 				AND b.matchid >= 0
 				AND c.roleid = 1
 				AND b.betType <> 999 --Licensee Spread Setting
+				AND 1 = CASE
+						WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
+						WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
+						ELSE 1 END
 			GROUP BY b.custid,
 				CASE
 					WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150
@@ -397,6 +411,10 @@ BEGIN
 				AND b.matchid >= 0
 				AND c.roleid = 1
 				AND b.betType <> 999 --Licensee Spread Setting
+				AND 1 = CASE
+						WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
+						WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
+						ELSE 1 END
 			GROUP BY b.custid,
 				CASE
 					WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150

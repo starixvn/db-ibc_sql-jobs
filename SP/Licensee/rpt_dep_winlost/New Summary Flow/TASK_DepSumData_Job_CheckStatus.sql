@@ -15,6 +15,7 @@ AS
 		- 20170725@Sophia: Exclude Cashout WL when compare Openning Balance [RedmineID: #79346]
 		- 20190624@Percy: Check missing import data in the last 15 mins + Remove UUS currency [RedmineID: #115411]
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
+		- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -30,6 +31,13 @@ BEGIN
 			@Subject VARCHAR(500) = '',
 			@ErrMsg VARCHAR(MAX) = '',
 			@ErrorMessage VARCHAR(MAX)
+
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+	
+	DECLARE @MoveBetsDay SMALLDATETIME
+	SELECT  @MoveBetsDay = MoveBetsDay FROM @MBBU
 
 	DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), JobType VARCHAR(50), ErrMsg VARCHAR(MAX))
 	
@@ -154,6 +162,10 @@ BEGIN
 							FROM bodb02.dbo.bettrans b WITH(NOLOCK) 					
 							WHERE b.winlostdate < @Yesterday
 								AND b.custid = DepWL.CustID
+								AND 1 = CASE
+											WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
+											WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
+											ELSE 1 END
 							GROUP BY  b.CustID 
 							) B
 					LEFT JOIN (
