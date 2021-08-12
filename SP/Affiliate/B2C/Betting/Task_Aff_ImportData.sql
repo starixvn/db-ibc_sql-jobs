@@ -13,6 +13,7 @@ AS
 		- 20201216@Percy: Auto add Platform Fee's setting [RedmineID: #146661]
 		- 20210628@Percy: Get Rebate amount [RedmineID: #157591]
 		- 20210714@Percy: Get Revenue amount [RedmineID: #157958]
+		- 20210805@Percy: Include free spin into P2P Products [RedmineID: #157958]
 */
 
 BEGIN 
@@ -26,7 +27,7 @@ BEGIN
 
 	-- Update product list
 	BEGIN
-		DECLARE @Products TABLE (ProductId INT, RefProductId INT, IsP2P BIT)
+		DECLARE @Products TABLE (ProductId INT, RefProductId INT, GroupId INT, IsP2P BIT)
 		
 		BEGIN TRY
 			INSERT INTO dbo.Products (ProductId,ProductName,ProductPrefix,IsIBC,Enabled,IsTest,ReleasedDate,RefProductId,DataSource)
@@ -35,8 +36,8 @@ BEGIN
 				LEFT JOIN dbo.Products p WITH (NOLOCK) ON g.Type = p.RefProductId
 			WHERE p.RefProductId IS NULL
 
-			INSERT INTO @Products (ProductId, IsP2P)
-			SELECT p.ProductId, p.IsP2P
+			INSERT INTO @Products (ProductId, GroupId, IsP2P)
+			SELECT p.ProductId, g.GroupId, p.IsP2P
 			FROM dbo.Products p WITH (NOLOCK)
 				CROSS JOIN (SELECT GroupId FROM dbo.CommGroup WITH (NOLOCK) WHERE IsDeleted = 0) g
 				LEFT JOIN (
@@ -55,7 +56,7 @@ BEGIN
 					FROM dbo.DeductionSetting WITH (NOLOCK)
 					WHERE DeductionId = 10
 				) s
-					CROSS JOIN (SELECT ProductId FROM @Products WHERE IsP2P = 0) p
+					INNER JOIN @Products p ON s.GroupId = p.GroupId AND p.IsP2P = 0
 					LEFT JOIN dbo.DeductionSetting ds WITH (NOLOCK) ON s.GroupId = ds.GroupId AND s.DeductionId = ds.DeductionId AND p.ProductId = ds.ProductId
 				WHERE s.RN = 1 AND ds.GroupId IS NULL
 
@@ -75,7 +76,7 @@ BEGIN
 						,ROW_NUMBER() OVER(PARTITION BY GroupId ORDER BY GroupProductId) AS RN
 					FROM dbo.StraightSetting WITH (NOLOCK)
 				) s
-					CROSS JOIN (SELECT ProductId FROM @Products WHERE IsP2P = 1) p
+					INNER JOIN @Products p ON s.GroupId = p.GroupId AND p.IsP2P = 1
 					LEFT JOIN dbo.StraightSetting ss WITH (NOLOCK) ON s.GroupId = ss.GroupId AND p.ProductId = ss.ProductId
 				WHERE s.RN = 1 AND ss.GroupId IS NULL
 
@@ -96,15 +97,15 @@ BEGIN
 		DELETE @Products
 
 		-- WinLoss data
-		INSERT INTO @Products (ProductId, RefProductId)
-		SELECT ProductId, RefProductId
+		INSERT INTO @Products (ProductId, RefProductId, IsP2P)
+		SELECT ProductId, RefProductId, IsP2P
 		FROM dbo.Products p WITH (NOLOCK)
 		WHERE IsIBC = 0
 			AND DataSource = 'TpBetRecord'
 
 		-- Others (Deposit, Withdrawal, Bonus, Rebate, ...)
-		INSERT INTO @Products (ProductId, RefProductId)
-		VALUES (-1, -1)
+		INSERT INTO @Products (ProductId, RefProductId, IsP2P)
+		VALUES (-1, -1, 0)
 
 		CREATE TABLE #rptMemberDaily
 		(
@@ -149,7 +150,11 @@ BEGIN
 			INNER JOIN @Products p ON b.GameType = p.RefProductId
 			CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, mi.currency, 0) e
 		WHERE b.WinlostDate BETWEEN DATEADD(DAY, -1, @WinlostDate) AND DATEADD(DAY, 1, @WinlostDate)
-			AND b.TicketStatus IN (1, 2, 4) -- Won/Lose/Draw
+			AND b.TicketStatus IN (1, 2, 4, 6) -- Won/Lose/Draw/Free Spin
+			AND (
+				p.IsP2P = 1
+				OR (p.IsP2P = 0 AND b.TicketStatus <> 6)
+			)
 			AND CONVERT(DATE, DATEADD(HOUR, @TimeZone, b.SettledTime)) = @WinlostDate
 		GROUP BY
 			mi.CustId
