@@ -18,6 +18,7 @@ AS
 		- 20180529@Percy: Change Contribution formula [RedmineID: #96053]
 		- 20180607@Percy: Change Contribution data type [RedmineID: #96053]
 		- 20200809@Sophia: Add PP Jackpot contribution [Redmine: #138483]
+		- 20210505@Sol: NAP - Alpha - Allow more time for transfer - [Redmine: #149927]
 		
   
 	Param's Explanation:
@@ -28,12 +29,13 @@ BEGIN
 		
 	DECLARE @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME
 		
-	SELECT @MoveBetsDay = MAX(eventdate)
-	FROM bodb02.dbo.match14 WITH(NOLOCK)
-		
-	SELECT TOP 1 @BalanceUpDay = winlostdate
-	FROM bodb02.dbo.bettrans WITH (NOLOCK)
-	WHERE matchid = 0 AND bettype = 20000
+	-- get move bet date
+	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+
+	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+
+	SELECT @BalanceUpDay = BalanceUpDay, @MoveBetsDay = MoveBetsDay FROM @tblMoveBetBalanceUp
 		
 	IF @winlostdate NOT BETWEEN @BalanceUpDay AND @MoveBetsDay
 	BEGIN

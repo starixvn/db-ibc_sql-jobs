@@ -19,6 +19,7 @@ Revisions:
 	- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
 	- 20201008@Percy: Get SMA from bettrans instead of custinfo table [RedmineID: #142953]
 	- 20210625@Percy: Enhance code to reduce high used tempdb [RedmineID: #154536]
+	- 20210505@Sol: NAP - Alpha - Allow more time for transfer - [Redmine: #149927]
  */
 BEGIN
 
@@ -46,11 +47,15 @@ BEGIN
 		,OpeningTotalBalance DECIMAL(37,4)	NULL
 	)
 
-	-- GET the current BU day
-	SELECT @CurrentBU_Date		= MIN(eventdate)
-		,@CurrentMB_Date		= MAX(eventdate)
-	FROM bodb02.dbo.match14 WITH(NOLOCK) 
+	-- get move bet date
+	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
 
+	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+	
+	-- GET the current BU day
+	SELECT @CurrentBU_Date = BalanceUpDay, @CurrentMB_Date = MoveBetsDay FROM @tblMoveBetBalanceUp
+	
 	SELECT @_Winlostdate = @Winlostdate
 		,@_Saturday = DATEADD (DD, -DATEPART(DW, @Winlostdate), @Winlostdate)
 
@@ -126,6 +131,10 @@ BEGIN
 		b.winlostdate = @_Winlostdate
 		AND b.statusID NOT IN (0,1) -- 'running','waiting'
 		AND bet.transIndicator > 0
+		AND 1 = CASE 
+					WHEN bettype = 19999 and winlostdate > @CurrentMB_Date THEN 0 --> get data from ticket detail
+					WHEN bettype < 19999 and winlostdate <= @CurrentMB_Date THEN 0 --> get data from sum record
+				ELSE 1 END
 	GROUP BY b.custid
 		,b.recommend,b.mrecommend,b.srecommend
 		,bet.transIndicator

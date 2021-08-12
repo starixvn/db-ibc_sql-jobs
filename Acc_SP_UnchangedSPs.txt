@@ -1,1 +1,10 @@
-SP\MBU\MoveBet\DBTXN-bodb02-Task_DailySummary.proc.sql
+SP\Task_ClearBalanceAllDownlines.sql
+SP\rptStatement\Task_DailyRptStatement_Job.sql
+
+
+
+
+
+
+
+
