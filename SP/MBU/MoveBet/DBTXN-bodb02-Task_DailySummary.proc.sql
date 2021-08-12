@@ -1,7 +1,7 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailySummary]
-	@winlostdate datetime,
-	@TestMode tinyint = 0
+	@winlostdate SMALLDATETIME,
+	@step TINYINT = 0
 AS
 
 -- Run on TransDB
@@ -91,243 +91,245 @@ Revisions:
 	- 20200713@Sophia: Expand Bettype range of Lottery [Redmine: #137542]
 	- 20200708@Sol: Generate data for sum_winloss table - Redmine: [#136320]
 	- 20200820@Sol: enhence performance when statistics are not updated yet - Redmine: [#136320]
+	- 202010316@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 	
 */
 
 SET NOCOUNT ON
 
-Declare @Doing nvarchar(300)
-SET @Doing = 'call Task_DailySummary @winlostdate = ' + CONVERT(nvarchar(10), @winlostdate, 120) + ', @TestMode = ' + CAST(@TestMode as nvarchar(2))
-EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
 
--- update ticket (if any) which winlostdate is not synced with eventdate 
-DECLARE @transTable TABLE (transid bigint primary key, winlostdate datetime)
+DECLARE @Doing NVARCHAR(300) = ''
+	, @__index INT = 0
+	, @__recommend INT
+	, @__delayTimeValue VARCHAR(20) = '00:00:00:020'
+	, @__rowAffected INT = 0
 
---UPDATE b SET winlostdate = o.eventdate
-INSERT INTO @transTable
-SELECT b.transid, o.eventdate
-FROM dbo.bettrans b with (nolock)
-	INNER JOIN dbo.outright o witH(nolock) ON b.matchid = o.orid
-WHERE b.winlostdate <> o.eventdate 
-	--and b.bettype NOT BETWEEN 1501 AND 1599 --no need to move keno bettype because orid <> keno.eventid
-	AND b.bettype = 10
-	
---UPDATE b SET winlostdate = m.eventdate
-INSERT INTO @transTable
-SELECT b.transid, m.eventdate
-FROM dbo.bettrans b with (nolock)
-	INNER JOIN dbo.match m witH(nolock) ON b.matchid = m.matchid
-WHERE b.winlostdate <> m.eventdate
-	AND b.bettype NOT IN (1231,1232,1233,1237,1238) -- exclude vsoutright
-	AND b.bettype <> 10 -- exclude outright 
-	AND b.bettype NOT BETWEEN 1501 AND 1599  --- exclude keno
-	AND b.bettype NOT BETWEEN 1021 AND 1099  --- exclude lottery
-	
---UPDATE b SET winlostdate = o.eventdate
-INSERT INTO @transTable
-SELECT b.transid, o.EventDate
-FROM dbo.bettrans b with (nolock)
-	INNER JOIN dbo.VSOutright o witH(nolocK) ON b.matchid = o.EventID AND b.oddsid = o.Orid
-WHERE b.winlostdate <> o.eventdate
-	--and b.bettype NOT BETWEEN 1501 AND 1599 --no need to move keno bettype because orid <> keno.eventid
-	and b.bettype IN (1231,1232,1233,1237,1238)
-	
-IF EXISTS (SELECT * FROM @transTable)
+SET @Doing = 'Task_DailySummary : MoveBet step ' + CAST(@step AS VARCHAR(20)) + ' start, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+IF @step = 1--update ticket (if any) which winlostdate is not synced with eventdate 
 BEGIN
-	UPDATE b
-	SET b.winlostdate = t.winlostdate,
-		b.actualrate = ISNULL(ex.actualrate,b.actualrate)
-	FROM dbo.bettrans b with (rowlock)
-		INNER JOIN @transTable t ON b.transid = t.transid
-		INNER JOIN CustDB.dbo.ExchangeDailyOanda ex WITH(NOLOCK) ON b.currency = ex.exchangeid and ex.exchangeDate = t.winlostdate 
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - start updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	--**update being movebet date flag ==> the purpose of this step is that does not allow for settle tickets which has winlostdate smaller than beingMovebet date
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 9, @tableName = 'SystemSettings'
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - end updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	--//
+	SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('BeforeMB')
+	WAITFOR DELAY @__delayTimeValue --waitfor all settle running commands can be done to start MB
+
+	-- update ticket (if any) which winlostdate is not synced with eventdate 
+	DECLARE @transTable TABLE (transid BIGINT PRIMARY KEY, winlostdate SMALLDATETIME)
+
+	--==sync winlostdate for outright
+	INSERT INTO @transTable
+	SELECT b.transid, o.eventdate
+	FROM dbo.bettrans b WITH (NOLOCK)
+		INNER JOIN dbo.outright o WITH(NOLOCK) ON b.matchid = o.orid
+	WHERE b.winlostdate <> o.eventdate 
+		AND b.bettype = 10
 	
-	SET @Doing = 'DONE : update winlostdate -vs- eventdate'
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+	--==sync winlostdate for match
+	INSERT INTO @transTable
+	SELECT b.transid, m.eventdate
+	FROM dbo.bettrans b WITH (NOLOCK)
+		INNER JOIN dbo.match m WITH(NOLOCK) ON b.matchid = m.matchid
+	WHERE b.winlostdate <> m.eventdate
+		AND b.bettype NOT IN (1231,1232,1233,1237,1238) -- exclude vsoutright
+		AND b.bettype <> 10 -- exclude outright 
+		AND b.bettype NOT BETWEEN 1501 AND 1599  --- exclude keno
+		AND b.bettype NOT BETWEEN 1021 AND 1099  --- exclude lottery
+	
+	--==sync winlostdate for VSOutright
+	INSERT INTO @transTable
+	SELECT b.transid, o.EventDate
+	FROM dbo.bettrans b WITH(NOLOCK)
+		INNER JOIN dbo.VSOutright o WITH(NOLOCK) ON b.matchid = o.EventID AND b.oddsid = o.Orid
+	WHERE b.winlostdate <> o.eventdate
+		AND b.bettype IN (1231,1232,1233,1237,1238)
+	
+	IF EXISTS (SELECT TOP 1 1 FROM @transTable)
+	BEGIN
+		UPDATE b WITH(ROWLOCK, UPDLOCK)
+		SET b.winlostdate = t.winlostdate,
+			b.actualrate = ISNULL(ex.actualrate, b.actualrate)
+		FROM dbo.bettrans b
+			INNER JOIN @transTable t ON b.transid = t.transid
+			INNER JOIN CustDB.dbo.ExchangeDailyOanda ex WITH(NOLOCK) ON b.currency = ex.exchangeid AND ex.exchangeDate = t.winlostdate 
+	
+		SET @Doing = 'DONE : update winlostdate -vs- eventdate'
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+	END
+
+	RETURN
 END
 
-
-DECLARE @transid bigint
--- ====================
--- DATA VERIFICATION
--- ====================
-IF EXISTS (
-	SELECT transid FROM bettrans with (nolock)
-	WHERE	--[status] = 'running' 
-			statusID = 0
+IF @step = 2 -- check qualify data && void UUS tickets
+BEGIN
+	DECLARE @transid BIGINT
+	-- ====================
+	-- DATA VERIFICATION
+	-- ====================
+	IF EXISTS (
+		SELECT transid FROM dbo.bettrans WITH (NOLOCK)
+		WHERE statusID = 0
 			AND custid <> 0
 			AND bettype <=19000 AND bettype <> 10 AND winlostdate <= @winlostdate
 			AND currency <> 20
-)
-BEGIN
-	SELECT DISTINCT matchid, bettype, 'EXEC DBA_MatchName ' + CAST(matchid as nvarchar(20)) cmd FROM bettrans (nolock)
-	WHERE	winlostdate <= @winlostdate 
-			--AND [status] = 'running'
-			AND statusID = 0 
-			AND bettype <=19000 and bettype NOT IN (9, 10, 29, 2799)
-			AND currency <> 20
+	)
+	BEGIN
+		SELECT DISTINCT matchid, bettype, 'EXEC DBA_MatchName ' + CAST(matchid AS NVARCHAR(20)) cmd FROM bettrans (nolock)
+		WHERE	winlostdate <= @winlostdate 
+				AND statusID = 0 
+				AND bettype <= 19000 AND bettype NOT IN (9, 10, 29, 2799)
+				AND currency <> 20
 
-	SELECT DISTINCT 'EXEC DBA_matchname ' + CAST(bm.matchid as varchar(10)) matchid, m.eventdate, bm.matchid, ',' [Comma]
-	FROM dbo.bettrans b (nolock)
-		INNER JOIN dbo.bettransm bm (nolock) ON b.refno = bm.refno
-		INNER JOIN dbo.match m (nolock) ON bm.matchid = m.matchid
-	WHERE	b.winlostdate <= @winlostdate 
-			--AND b.[status] = 'running' AND bm.[status] = 'running'
-			AND b.statusID = 0 AND bm.statusID = 0 
-			AND b.bettype in (9,29,2799)
-			--AND b.matchid = 0
-			AND b.matchID in (9,29,2799)
-			AND b.currency <> 20
-	ORDER BY m.eventdate
+		SELECT DISTINCT 'EXEC DBA_matchname ' + CAST(bm.matchid AS VARCHAR(10)) matchid, m.eventdate, bm.matchid, ',' [Comma]
+		FROM dbo.bettrans b WITH(NOLOCK)
+			INNER JOIN dbo.bettransm bm WITH(NOLOCK) ON b.refno = bm.refno
+			INNER JOIN dbo.match m WITH(NOLOCK) ON bm.matchid = m.matchid
+		WHERE	b.winlostdate <= @winlostdate 
+				AND b.statusID = 0 AND bm.statusID = 0 
+				AND b.bettype IN (9,29,2799)
+				AND b.matchID IN (9,29,2799)
+				AND b.currency <> 20
+		ORDER BY m.eventdate
+
+		IF @@ROWCOUNT > 0
+		BEGIN
+			PRINT '--'
+			PRINT '--SELECT * FROM bettrans WITH(NOLOCK) WHERE status = ''running'' AND matchid IN (9,29,2799) AND bettype IN (9,29,2799) AND winlostdate <= ''' + CONVERT(VARCHAR(10), @winlostdate, 120) + ''''
+			PRINT '--UPDATE dbo.bettrans SET winlostdate = ''' + CONVERT(VARCHAR(10), DATEADD(DAY, 1, @winlostdate), 120) + ''' WHERE transid IN ( xxxxx )'
+			PRINT '--'
+		END
+
+		RAISERROR ('FAILED: Have running tickets', 16, 1)
+		RETURN
+	END
+
+	-- ========================================
+	-- DATA VERIFICATION - Translog
+	-- ========================================
+	IF EXISTS (
+		SELECT TOP 1 1 FROM translog WITH (NOLOCK)
+		WHERE	statusID IN (0, 1)
+				AND winlostdate <= @winlostdate
+				AND currency <> 20
+	)
+	BEGIN
+		RAISERROR ('FAILED: translog have running/waiting tickets', 16, 1)
+		RETURN
+	END
+	-- ====================
+
+	-- ============================================
+	-- DATA VERIFICATION - bettransRNG & bettransLC
+	-- ============================================
+	IF EXISTS (
+		SELECT TOP 1 1 FROM dbo.bettransRNG WITH (NOLOCK)
+		WHERE	(statusID = 0 OR isSum = 0)
+				AND winlostdate <= @winlostdate
+				AND currency <> 20
+	)
+	BEGIN
+		RAISERROR ('FAILED: bettransRNG have running tickets or not summed to bettrans yet', 16, 1)
+		RETURN
+	END
+
+	IF EXISTS (
+		SELECT TOP 1 1 FROM dbo.bettransLC WITH (NOLOCK)
+		WHERE	(statusID = 0 OR isSum = 0)
+				AND winlostdate <= @winlostdate
+				AND currency <> 20
+	)
+	BEGIN
+		RAISERROR ('FAILED: bettransLC have running tickets or not summed to bettrans yet', 16, 1)
+		RETURN
+	END
+	-- ============================================
+
+	IF EXISTS (
+		SELECT transid FROM dbo.bettrans WITH (NOLOCK)
+		WHERE srecommend <= 100 
+			AND (scomm <> acomm OR swinlost <> 0)
+			AND bettype <=19000 AND winlostdate = @winlostdate
+	)
+	BEGIN
+		RAISERROR ('FAILED: Incorrect Company SuperAgent setting', 16, 1)
+		RETURN
+	END
+	-- ====================
+
+	IF EXISTS (
+		SELECT transid FROM bettrans WITH (NOLOCK)
+		WHERE (scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL
+				OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL)
+			AND bettype <=19000 AND winlostdate = @winlostdate
+	)
+	BEGIN
+		RAISERROR ('FAILED: Null Commission/WinLost', 16, 1)
+		RETURN
+	END
+	-- ====================
+
+	IF EXISTS (
+		SELECT currency
+		FROM dbo.bettrans WITH(NOLOCK)
+		WHERE bettype <= 19000 AND winlostdate = @winlostdate
+			AND NOT (bettype = 10 AND statusID = 0) -- exclude running outright
+		GROUP BY currency
+		HAVING COUNT(DISTINCT actualrate) > 1
+	)
+	BEGIN
+		RAISERROR ('FAILED: Multiple Exchange Rate', 16, 1)
+		RETURN
+	END
+	-- ====================
+
+	-- =====================
+	-- OUTRIGHT WINLOST MOVE
+	-- =====================
+
+	SELECT TOP 1 @transid = transid 
+	FROM dbo.bettrans WITH (NOLOCK)
+	WHERE	bettype = 10 
+			AND statusID = 0 
+			AND winlostdate = @winlostdate
 
 	IF @@ROWCOUNT > 0
 	BEGIN
-		PRINT '--'
-		PRINT '--SELECT * FROM bettrans (nolock) WHERE status = ''running'' AND matchid IN (9,29,2799) AND bettype IN (9,29,2799) AND winlostdate <= ''' + CONVERT(varchar(10), @winlostdate, 120) + ''''
-		PRINT '--UPDATE dbo.bettrans SET winlostdate = ''' + CONVERT(varchar(10), DATEADD(day,1,@winlostdate), 120) + ''' WHERE transid IN ( xxxxx )'
-		PRINT '--'
+		DECLARE @outright TABLE (orid INT)
+
+		INSERT INTO @outright 
+		SELECT DISTINCT matchid 
+		FROM dbo.bettrans WITH (NOLOCK)
+		WHERE bettype = 10 
+			AND statusID = 0 
+			AND winlostdate <= @winlostdate
+
+		UPDATE O
+		SET eventdate = DATEADD(DAY, 1, @winlostdate), changeTime = GETDATE()
+		FROM DBPRO.bodb02.dbo.outright O WITH (UPDLOCK, ROWLOCK)
+		WHERE orid IN (SELECT orid FROM @outright)
+
+		UPDATE bettrans WITH (UPDLOCK, ROWLOCK) 
+		SET winlostdate = DATEADD(DAY, 1, @winlostdate)
+		WHERE bettype = 10 AND matchid IN (SELECT orid FROM @outright)
 	END
 
-	RAISERROR ('FAILED: Have running tickets', 16, 1)
-	RETURN
-END
--- ========================================
--- DATA VERIFICATION - Translog
--- ========================================
-IF EXISTS (
-	SELECT translogid FROM translog with (nolock)
-	WHERE	statusID IN (0, 1) --[status] IN ('running' , 'waiting')
-			AND winlostdate <= @winlostdate
-			AND currency <> 20
-)
-BEGIN
-	RAISERROR ('FAILED: translog have running/waiting tickets', 16, 1)
-	RETURN
-END
--- ====================
-
--- ============================================
--- DATA VERIFICATION - bettransRNG & bettransLC
--- ============================================
-IF EXISTS (
-	SELECT 1 FROM bettransRNG with (nolock)
-	WHERE	(statusID = 0 OR isSum = 0)
-			AND winlostdate <= @winlostdate
-			AND currency <> 20
-)
-BEGIN
-	RAISERROR ('FAILED: bettransRNG have running tickets or not summed to bettrans yet', 16, 1)
-	RETURN
-END
-
-IF EXISTS (
-	SELECT 1 FROM bettransLC with (nolock)
-	WHERE	(statusID = 0 OR isSum = 0)
-			AND winlostdate <= @winlostdate
-			AND currency <> 20
-)
-BEGIN
-	RAISERROR ('FAILED: bettransLC have running tickets or not summed to bettrans yet', 16, 1)
-	RETURN
-END
--- ============================================
-
-IF EXISTS (
-	SELECT transid FROM bettrans with (nolock)
-	WHERE srecommend <= 100 AND (scomm <> acomm OR swinlost <> 0)
-	AND bettype <=19000 AND winlostdate = @winlostdate
-)
-BEGIN
-	RAISERROR ('FAILED: Incorrect Company SuperAgent setting', 16, 1)
-	RETURN
-END
--- ====================
-IF EXISTS (
-	SELECT transid FROM bettrans with (nolock)
-	WHERE (scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL
-	OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL)
-	AND bettype <=19000 AND winlostdate = @winlostdate
-)
-BEGIN
-	RAISERROR ('FAILED: Null Commission/WinLost', 16, 1)
-	RETURN
-END
--- ====================
-IF EXISTS (
-	SELECT currency
-	FROM bettrans (nolock)
-	WHERE bettype <=19000 AND winlostdate = @winlostdate
-	AND NOT (bettype = 10 and statusID = 0) -- exclude running outright
-	GROUP BY currency
-	HAVING COUNT(DISTINCT actualrate) > 1
-)
-BEGIN
-	RAISERROR ('FAILED: Multiple Exchange Rate', 16, 1)
-	RETURN
-END
--- ====================
-
-IF @TestMode = 1
-BEGIN
-	PRINT 'DATA OK'
-
-	IF EXISTS (SELECT 1 FROM bettrans with (nolock)
-		WHERE bettype = 10 
-			--AND [status] = 'running'
-			AND statusID = 0 
-			AND winlostdate = @winlostdate)
-		PRINT 'Some Outright need to moved : Run with parameter = 2'
-
-	IF EXISTS (SELECT 1 FROM bettrans with (nolock)
-		WHERE currency = 20
-			AND winlostdate = @winlostdate
-			AND bettype <=19000
-			AND statusID = 0)
-		PRINT 'Some TEST Ticket need to Refund : Run with parameter = 2'
-
-	SET @Doing = 'Task_DailySummary : End Test'
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
-
-	RETURN
-END
- 
--- =====================
--- OUTRIGHT WINLOST MOVE
--- =====================
-
-SELECT	TOP 1 @transid = transid FROM bettrans with (nolock)
-WHERE	bettype = 10 
-		--AND [status] = 'running'
-		AND statusID = 0 
-		AND winlostdate = @winlostdate
-
-IF @@ROWCOUNT > 0
-BEGIN
-	Declare @outright TABLE (orid int)
-	INSERT INTO @outright SELECT distinct matchid FROM bettrans with (nolock)
-	WHERE	bettype = 10 
-			--AND [status] = 'running' 
-			AND statusID = 0 
-			AND winlostdate <= @winlostdate
-
-	UPDATE O
-	SET eventdate = DATEADD(day, 1, @winlostdate), changeTime = GETDATE()
-	FROM DBPRO.bodb02.dbo.outright O WITH (UPDLOCK, ROWLOCK)
-	WHERE orid IN (SELECT orid FROM @outright)
-
-	UPDATE bettrans WITH (UPDLOCK, ROWLOCK) SET winlostdate = DATEADD(day, 1, @winlostdate)
-	WHERE bettype = 10 AND matchid IN (SELECT orid FROM @outright)
-END
-
--- =====================
--- AUTO VOID TEST TICKET
--- =====================
+	-- =====================
+	-- AUTO VOID TEST TICKET
+	-- =====================
 	IF EXISTS (
-		SELECT 1 FROM dbo.bettrans with (nolock)
-		where currency = 20 AND winlostdate = @winlostdate AND bettype <=19000
-		AND statusID = 0
+		SELECT TOP 1 1 FROM dbo.bettrans WITH (NOLOCK)
+		WHERE currency = 20 AND winlostdate = @winlostdate AND bettype <= 19000 AND statusID = 0
 	)
 	BEGIN
-		Declare @custs TABLE (custid int)
+		DECLARE @custs TABLE (custid INT)
 		
 		CREATE TABLE #__AutoVoid_TransList(TransId BIGINT PRIMARY KEY)
 		INSERT INTO #__AutoVoid_TransList(TransId)
@@ -336,331 +338,451 @@ END
 		WHERE b.currency = 20 AND winlostdate = @winlostdate 
 			AND bettype <= 19000 AND statusID IN (0, 1)
 
-		UPDATE b
-		SET winlost=actual_stake,ruben=1,statuswinlost=6, status = 'Void', statusid = 102
-			, awinlost = 0, mwinlost = 0, swinlost = 0, playercomm = 0, comm  = 0, acomm = 0
-			, scomm = 0, transdesc = '[AutoVoid]' + transdesc
-		OUTPUT deleted.custid INTO @custs
-		FROM #__AutoVoid_TransList t
-			INNER JOIN dbo.bettrans b WITH (ROWLOCK, UPDLOCK) ON t.TransId = b.transid
-		OPTION (FORCE ORDER) --hint for case bad plan
-		
-		INSERT INTO dbo.Task_Cust_CheckBalanceVerify (custid)
-		SELECT DISTINCT custid
-		FROM @custs
-		
-		EXEC dbo.[Task_CheckBalance] @step = 33, @Action = 'JustFix'
+		DECLARE @__transIdsUUS VARCHAR(MAX), @ErrMsgAutoVoid VARCHAR(200)
+		SELECT @__transIdsUUS = COALESCE(@__transIdsUUS + ',' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
+		FROM #__AutoVoid_TransList
+
+		EXEC dbo.NAP_SpecialDelete_VoidBetId_UUS @TransIds = @__transIdsUUS
+			, @ErrMsg = @ErrMsgAutoVoid OUTPUT
+
+		IF ISNULL(@ErrMsgAutoVoid, '') <> ''
+		BEGIN
+			PRINT @ErrMsgAutoVoid
+		END
 
 		DROP TABLE #__AutoVoid_TransList
 
 	END
 
-IF @TestMode <> 0 -- @TestMode = 2
-BEGIN
-	SET @Doing = 'Task_DailySummary : End Test (with Outright update)'
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
-
-
-	PRINT 'DATA OK && Outright Update : done'
 	RETURN
 END
 
--- =====================
--- Daily Summary Process
--- =====================
--- Re-Summary WinLost Report : Added on 2007-03-16 (Joe)
-EXEC DBACC.bodb02.dbo.Task_rptWinLost_UpdateTable @winlostdate
-WAITFOR DELAY '000:00:30'
--- Clear deleted/cancel record (custid = 0)
-DELETE FROM bettrans WHERE winlostdate=@winlostdate AND custid = 0
-
-DELETE FROM bettranssum WHERE winlostdate=@winlostdate
-
--- Get Exchange Rate
-DECLARE @Exchange TABLE (currency tinyint, actualrate float, CurrencyName nvarchar(50))
-INSERT INTO @Exchange (currency, actualrate)
-SELECT DISTINCT currency, actualrate
-FROM dbo.bettrans with (nolock)
-WHERE winlostdate = @winlostdate AND bettype <=19000
-
-UPDATE @Exchange
-SET CurrencyName = e.currency
-FROM @Exchange ex, CustDB.dbo.exchange e with (nolock)
-WHERE ex.currency = e.exchangeid
-
--- Generate SUM record
-INSERT INTO dbo.bettranssum
-	(custid, currency, recommend, mrecommend, srecommend,
-	winlostdate, stake, actual_stake,
-	winlost, awinlost, mwinlost, swinlost,
-	playercomm, comm, acomm, scomm)
-SELECT
-	custid, currency, recommend, mrecommend, srecommend,
-	winlostdate, sum(stake) stake, sum(actual_stake) actual_stake,
-	sum(winlost) winlost, sum(awinlost) awinlost, sum(mwinlost) mwinlost, sum(swinlost) swinlost,
-	sum(playercomm) playercomm, sum(comm) comm, sum(acomm) acomm, sum(scomm) scomm
-FROM
-	bettrans with (paglock)
-WHERE
-	winlostdate=@winlostdate and
-	bettype <=19000 and 
-	--[status] NOT IN ('VOID', 'REJECT')
-	statusID NOT IN (101,102)
-GROUP BY
-	custid, currency, recommend, mrecommend, srecommend, winlostdate
-
-
--- move match/odds/outright into [14] table
-	UPDATE O
-	SET eventdate = @winlostdate, changeTime = GETDATE()
-	FROM DBPRO.bodb02.dbo.Outright O WITH (UPDLOCK, ROWLOCK)
-	WHERE orid IN 
-		(SELECT distinct matchid 
-		FROM bettrans with (nolock) 
-		WHERE bettype = 10 AND winlostdate = @winlostdate AND statusID <> 0 --AND status <> 'running'
-		)
-		 
-EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Copy @winlostdate
-
-EXEC dbo.Task_BalanceCheck @winlostdate, 1
-
--- viet ----
-EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
-EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
-
-
--- =====================
-SET @Doing = 'Task_DailySummary : MoveBet start.1'
-EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
-
-SET NOCOUNT ON
-SET DEADLOCK_PRIORITY HIGH
--- =====================
---//create a sum record for Bonus
-EXEC dbo.Task_Bonus_DailySummary @WinlostDate = @WinlostDate
-
--- Copy bettransm/bettransg -> bettransm14/bettransg14 for whole day of @winlostdate
-EXEC dbo.ExecRep_08 @recommend =  0, @winlostdate = @winlostdate, @parlay = 1
-
-EXEC dbo.Task_DailySummary_Delete_Bet @winlostdate = @winlostdate, @tableName = 'bettransm'
-
--- Delete bettransG for whole day of @winlostdate
-EXEC dbo.ExecRep_09 @recommend =  0, @winlostdate = @winlostdate, @parlay = 2
-
-SET @Doing = 'Task_DailySummary : MoveBet start.2'
-EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
-
---//remove all data in processing list
-DELETE FROM dbo.ProcessingCustList WITH(ROWLOCK)
-
-DECLARE @RowDeleted INT SET @rowDeleted = 1
-DECLARE @rec_cnt int SET @rec_cnt = 0
-DECLARE @recommend_List TABLE (recommend int PRIMARY KEY)
-INSERT INTO @recommend_List
-SELECT DISTINCT recommend FROM bettrans (nolock) WHERE winlostdate = @winlostdate AND bettype < 19999
-UNION 
-SELECT DISTINCT recommend FROM translog (nolock) WHERE winlostdate = @winlostdate
-
-DECLARE @recommend int
-DECLARE CS_recommend
-	CURSOR FOR
-	SELECT recommend FROM @recommend_List
-
-OPEN CS_recommend
-FETCH NEXT FROM CS_recommend INTO @recommend
-
-WHILE @@FETCH_STATUS = 0
+IF @step = 3 -- generate sum tickets
 BEGIN
+	-- Clear deleted/cancel record (custid = 0)
+	DELETE FROM bettrans WHERE winlostdate = @winlostdate AND custid = 0
+
+	DELETE FROM bettranssum WHERE winlostdate = @winlostdate
+
+	-- Get Exchange Rate
+	DECLARE @Exchange TABLE (currency TINYINT, actualrate FLOAT, CurrencyName NVARCHAR(50))
+	INSERT INTO @Exchange (currency, actualrate)
+	SELECT DISTINCT currency, actualrate
+	FROM dbo.bettrans WITH (NOLOCK)
+	WHERE winlostdate = @winlostdate AND bettype <= 19000
+
+	UPDATE @Exchange
+	SET CurrencyName = e.currency
+	FROM @Exchange ex, CustDB.dbo.exchange e WITH (NOLOCK)
+	WHERE ex.currency = e.exchangeid
+
+	-- Generate SUM record
+	INSERT INTO dbo.bettranssum
+		(custid, currency, recommend, mrecommend, srecommend,
+		winlostdate, stake, actual_stake,
+		winlost, awinlost, mwinlost, swinlost,
+		playercomm, comm, acomm, scomm)
+	SELECT 
+		custid, currency, recommend, mrecommend, srecommend,
+		winlostdate, SUM(stake) stake, SUM(actual_stake) actual_stake,
+		SUM(winlost) winlost, SUM(awinlost) awinlost, SUM(mwinlost) mwinlost, SUM(swinlost) swinlost,
+		SUM(playercomm) playercomm, SUM(comm) comm, SUM(acomm) acomm, SUM(scomm) scomm
+	FROM dbo.bettrans WITH (PAGLOCK)
+	WHERE winlostdate = @winlostdate AND bettype <= 19000 AND statusID NOT IN (101,102)
+	GROUP BY custid, currency, recommend, mrecommend, srecommend, winlostdate
+
+	UPDATE s
+	SET actualrate = e.actualrate
+		, username = c.username
+		, currencyname = e.CurrencyName
+	FROM dbo.bettranssum s
+		INNER JOIN @Exchange e ON s.currency = e.currency
+		INNER JOIN CustDB.dbo.custinfo c WITH (NOLOCK) ON s.custid = c.custid AND c.roleid = 1
+	WHERE winlostdate = @winlostdate
+
+	EXEC dbo.Task_BalanceCheck @winlostdate, 1
+
+	RETURN
+END
+
+IF @step = 4 --copy event | bet data to [14]
+BEGIN
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - start turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	--**turn on flag for starting copy to [14]
+	--pub SP ExcepRep
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @parlay = 7, @tableName = 'SystemSettings'
+	--pub bet
+	EXEC dbo.Bet_ExecRep_09	@mode = 7
+	--pub bet14
+	EXEC dbo.Bet_ExecRep14_01 @Mode = 1, @TableName = 'SystemSettings'
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - end turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 	
-	DECLARE @strRecommend VARCHAR(50), @delayTimeValue VARCHAR(20)
-	SELECT @strRecommend = CAST(@recommend AS VARCHAR(50)), @delayTimeValue = '00:00:00:020'
-	
-	--insert processing list
-	EXEC dbo.Task_Core_ProcessingCustListIns @CustIds = @strRecommend
+	-- viet ----
+	EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
 
-	SELECT @delayTimeValue = dbo.f_BU_GetDelayTime('Key6')
-	WAITFOR DELAY @delayTimeValue
+	--
+	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
 
-	BEGIN TRANSACTION
-		EXEC dbo.ExecRep_08 @recommend, @winlostdate /* copy ticket from [active] to [14] for bettrans */
-	COMMIT TRANSACTION
+	--copy event to [14]
+	EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Copy @winlostdate
 
-	--//bettransLC
-	--//for first round
-	BEGIN TRANSACTION
-		EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettransLC', @firstRound = 1
-	COMMIT TRANSACTION
+	-- Copy bettransm/bettransg -> bettransm14/bettransg14 for whole day of @winlostdate
+	EXEC dbo.ExecRep_08 @recommend = 0, @winlostdate = @winlostdate, @parlay = 1
 
-	--//delete data on DBTrans
-	SET @RowDeleted = 1	WHILE @RowDeleted > 0
+	--reset before start
+	TRUNCATE TABLE dbo.Task_Movebet_RecommendList
+
+	--get list of recommend.
+	INSERT INTO dbo.Task_Movebet_RecommendList(Recommend, StatusId)
+	SELECT DISTINCT recommend, 0 AS SattusId 
+	FROM dbo.bettrans WITH(NOLOCK) WHERE winlostdate = @winlostdate AND bettype < 19999
+	UNION 
+	SELECT DISTINCT recommend, 0 AS SattusId 
+	FROM dbo.translog WITH(NOLOCK) WHERE winlostdate = @winlostdate
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.20 - start copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121) + ', total recommend: ' + CAST(@@ROWCOUNT AS varchar(10))
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	SELECT @__index = 1, @__recommend = NULL, @__rowAffected = 0
+	WHILE EXISTS (
+		SELECT TOP 1 1 FROM dbo.Task_Movebet_RecommendList WHERE RowId >= @__index
+	)
 	BEGIN
-		BEGIN TRANSACTION
-			EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettransLC', @RowDeleted = @RowDeleted OUTPUT
-		COMMIT TRANSACTION
-	END
-	
-	--//bettransRNG
-	--//for first round
-	BEGIN TRANSACTION
-		EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettransRNG', @firstRound = 1
-	COMMIT TRANSACTION
-
-	--//delete data on DBTrans
-	SET @RowDeleted = 1	WHILE @RowDeleted > 0
-	BEGIN
-		BEGIN TRANSACTION
-			EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettransRNG', @RowDeleted = @RowDeleted OUTPUT
-		COMMIT TRANSACTION
-	END
-
-	--//translog
-	--//for first round
-	BEGIN TRANSACTION
-		EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'translog', @firstRound = 1
-	COMMIT TRANSACTION
-
-	--//delete data on DBTrans
-	SET @RowDeleted = 1	WHILE @RowDeleted > 0
-	BEGIN
-		BEGIN TRANSACTION
-			EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'translog', @RowDeleted = @RowDeleted OUTPUT
-		COMMIT TRANSACTION
-	END
-
-	--//bettrans
-	--//for first round
-	BEGIN TRANSACTION
-		EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettrans', @firstRound = 1
-	COMMIT TRANSACTION
-
-	--//delete data on DBTrans
-	SET @RowDeleted = 1	WHILE @RowDeleted > 0
-	BEGIN
-		BEGIN TRANSACTION
-			EXEC dbo.ExecRep_09 @recommend = @recommend, @winlostdate = @winlostdate, @parlay = 0, @tableName = 'bettrans', @RowDeleted = @RowDeleted OUTPUT
-		COMMIT TRANSACTION
-	END
-
-	BEGIN TRANSACTION
-		insert into bettrans
-			(ruben, [status], statusID, matchid, bettype, refno, creator, transdate,
-			custid, currency, recommend, mrecommend, srecommend,
-			winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
-			actual_stake, playercomm, comm, acomm, scomm, 
-			apositiontaking, mpositiontaking, spositiontaking, tpositiontaking,
-			actualrate, virtualrate, Username, CurrencyName, comstatus, checktime)
-		select
-			1, 'SUM', 142, 0, 19999, refno, 8, winlostdate, --99
-			b.custid, b.currency, b.recommend, b.mrecommend, b.srecommend,
-			winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
-			actual_stake, playercomm, comm, acomm, scomm,
-			0, 0, 0, 0,
-			e.actualrate, e.actualrate, c.username, e.CurrencyName, '0', getdate()
-		from 
-			bettranssum b with (nolock)
-			INNER JOIN @Exchange e ON b.currency = e.currency
-			INNER JOIN CustDB.dbo.custinfo c with (nolock) ON b.custid = c.custid AND c.roleid = 1
-		where
-			winlostdate=@winlostdate
-			AND b.recommend = @recommend
-
-	COMMIT TRANSACTION
-
-/*
-	SET @rec_cnt = @rec_cnt + 1
-	IF @rec_cnt = 10
-	BEGIN
-		SET @rec_cnt = 0
 		
-		SET @Doing = 'Task_DailySummary : MoveBet ' + CAST(@recommend as varchar(20))
-		--EXEC dbo.WriteLog_UserLog @UserID = 25521, @Doing = @Doing 
+		UPDATE TOP(1) ls 
+		SET @__recommend = Recommend
+			, StatusId = 1 -- copying done
+		FROM dbo.Task_Movebet_RecommendList ls WHERE RowId = @__index
+
+		SET @__rowAffected = @@ROWCOUNT
+		SET @__index += 1
+
+		IF @__rowAffected = 0
+			CONTINUE
+
+		BEGIN TRANSACTION
+			--copy ticket from [active] to [14] for bettrans | bettransInfo | translog | bettransLC | bettransRnG
+			EXEC dbo.ExecRep_08 @recommend = @__recommend
+				, @winlostdate = @winlostdate
+
+		COMMIT TRANSACTION
+		
+		--waitfor delay on each batch.
+		IF @__index % 10 = 0
+		BEGIN
+			SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key6')
+			WAITFOR DELAY @__delayTimeValue --waitfor copying...
+		END
+		
 	END
-*/
-	--delete processing list
-	EXEC dbo.Task_Core_ProcessingCustListDel @CustIds = @strRecommend
-
-	--WAITFOR DELAY '00:00:00:020'
-	FETCH NEXT FROM CS_recommend INTO @recommend
-END
-
-CLOSE CS_recommend
-DEALLOCATE CS_recommend
-
---//remove all data in processing list
-DELETE FROM dbo.ProcessingCustList WITH(ROWLOCK)
-
--- =====================
-SET DEADLOCK_PRIORITY NORMAL
-SET NOCOUNT OFF
-
-SET @Doing = 'Task_DailySummary : MoveBet done'
-EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing 
-
--- viet ----
-EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
-EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
- 
--- =====================
-EXEC Task_BalanceCheck @winlostdate, 3
--- =====================
-
--- =====================
-
--- Moved to new sp [Task_Sum_Winloss]
--- Insert data of SMA, member to sum_winloss_tmp
-EXEC dbo.Task_Sum_Winloss @winlostdate
-
-
--- =====================
-SET @Doing = 'Task_DailySummary : SumWinlost start insert'
-EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
-
-Declare @loop varchar(1)
-
-SET NOCOUNT ON
-SET @loop = 'y'
-WHILE @loop = 'y'
-BEGIN
-		BEGIN TRANSACTION
-	DELETE TOP(2800) FROM dbo.sum_winloss
-	WHERE winlostdate = @winlostdate
-
-	IF @@ROWCOUNT = 0 SET @loop = 'n'
-		COMMIT TRANSACTION
-
-
-	WAITFOR DELAY '000:00:01.4'
-END
-
-SET @loop = 'y'
-WHILE @loop = 'y'
-BEGIN
-		BEGIN TRANSACTION
-	DELETE TOP(6000) FROM dbo.sum_winloss_tmp
-	WHERE winlostdate = @winlostdate
 	
-	IF @@ROWCOUNT = 0 SET @loop = 'n'
-		COMMIT TRANSACTION
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.20 - end copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	WAITFOR DELAY '000:00:01.4'
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 - start turn off MB_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	--==turn off flag MB_DoneCopy_Local
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @parlay = 8, @tableName = 'SystemSettings'
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 - end turn off MB_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	RETURN
+
 END
 
-SET NOCOUNT OFF
+IF @step = 5 --insert data for sum_winloss
+BEGIN
+	--//create a sum record for Bonus
+	EXEC dbo.Task_Bonus_DailySummary @WinlostDate = @WinlostDate
+	-- Insert data of SMA, member to sum_winloss_tmp
+	EXEC dbo.Task_Sum_Winloss @winlostdate
 
--- =====================
-Delete Match_Log where matchID IN (Select matchID From Match WITH (NOLOCK) Where eventdate=@winlostdate)
+	DECLARE @loop VARCHAR(1)
+	SET @loop = 'y'
+	WHILE @loop = 'y'
+	BEGIN
+		BEGIN TRANSACTION
+		DELETE TOP(2800) FROM dbo.sum_winloss
+		WHERE winlostdate = @winlostdate
 
-Delete from outright_log
-where orid in (select orid from outright where eventdate = @winlostdate AND oddsstatus = 'Completed')
+		IF @@ROWCOUNT = 0 SET @loop = 'n'
+			COMMIT TRANSACTION
 
--- =====================
-EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Delete @winlostdate
+		WAITFOR DELAY '000:00:01.4'
+	END
 
-SET @Doing = 'Task_DailySummary : End (with Finish)'
-EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+	SET @loop = 'y'
+	WHILE @loop = 'y'
+	BEGIN
+		BEGIN TRANSACTION
+		DELETE TOP(6000) FROM dbo.sum_winloss_tmp
+		WHERE winlostdate = @winlostdate
+	
+		IF @@ROWCOUNT = 0 SET @loop = 'n'
+			COMMIT TRANSACTION
 
-WAITFOR DELAY '00:02:00' --- add this wait to make sure the delete event part run completely before start next day
+		WAITFOR DELAY '000:00:01.4' --waitfor inserting sum_winloss...
+	END
+	
+	
+	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - start turn off MB_SWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-PRINT CONVERT(varchar(10), @winlostdate, 120)
+	--==turn off flag MB_SWinloss_Local
+	EXEC dbo.Bet_ExecRep14_01 @Mode = 2, @tableName = 'SystemSettings'
 
+	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - end turn off MB_SWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	RETURN
+END
+
+IF @step = 6 --==insert sum ticket 19999
+BEGIN
+	SET DEADLOCK_PRIORITY HIGH
+
+	CREATE TABLE #__temp (recommend INT, custid INT PRIMARY KEY (recommend, custid))
+
+	INSERT #__temp (recommend, custid)
+	SELECT recommend, custid
+	FROM dbo.bettranssum b
+	WHERE winlostdate = @winlostdate
+	GROUP BY recommend, custid
+	ORDER BY recommend, custid
+
+	DECLARE @__runningCust TABLE(recommend INT, custid INT PRIMARY KEY (recommend, custid))
+	WHILE 1 = 1
+	BEGIN
+		
+		DELETE FROM @__runningCust
+
+		DELETE TOP(1000) FROM #__temp
+		OUTPUT deleted.recommend, deleted.custid INTO @__runningCust(recommend, custid)
+
+		IF @@ROWCOUNT = 0
+			BREAK
+
+		BEGIN TRANSACTION
+		
+			INSERT INTO dbo.bettrans
+				(ruben, [status], statusID, matchid, bettype, refno, creator, transdate,
+				custid, currency, recommend, mrecommend, srecommend,
+				winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
+				actual_stake, playercomm, comm, acomm, scomm, 
+				apositiontaking, mpositiontaking, spositiontaking, tpositiontaking,
+				actualrate, virtualrate, Username, CurrencyName, comstatus, checktime)
+			SELECT 1, 'SUM', 142, 0, 19999, refno, 8, winlostdate, --99
+				b.custid, b.currency, b.recommend, b.mrecommend, b.srecommend,
+				winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
+				actual_stake, playercomm, comm, acomm, scomm,
+				0, 0, 0, 0,
+				actualrate, actualrate, username, CurrencyName, '0', getdate()
+			FROM dbo.bettranssum b
+			WHERE EXISTS (
+					SELECT TOP 1 1 
+					FROM @__runningCust t 
+					WHERE t.recommend = b.recommend AND t.custid = b.custid AND b.winlostdate = @winlostdate
+				)
+
+		COMMIT TRANSACTION
+		
+		--waitfor delay on each batch.
+		SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key11')
+		WAITFOR DELAY @__delayTimeValue --waitfor inserting sum 19999...
+		
+	END
+
+	SET DEADLOCK_PRIORITY NORMAL
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - start turn off MB_Sum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	--==turn off flag MB_SWinloss_Local
+	EXEC dbo.Bet_ExecRep_09 @Mode = 8
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - done turn off MB_Sum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	RETURN
+END
+
+IF @step = 7 --wait for replicated servers perform done and then go to update movebetdate flag
+BEGIN
+	DECLARE @__start DATETIME
+	SET @__start = GETDATE()
+	WHILE EXISTS (
+		SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'MB_ReadyUpdMBDate' AND VValue <> '0'
+	)
+	BEGIN
+		WAITFOR DELAY '00:00:30:000' --waitfor MB done...
+		IF DATEDIFF(MINUTE, @__start, GETDATE()) > 30
+		BEGIN
+			--send out message for DBA to check...
+			PRINT 'hey guys, please check...'
+			EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = N'PONTUS', 
+				@JobId = NULL, @JobName = N'Custom Message', 
+				@Message = 'Urgently!!! Movebet - hey guys, Movebet run long time at step 7. Please check!!!', @CaseId = 1;
+
+			EXECUTE msdb.dbo.sp_send_dbmail @profile_name	= DEFAULT
+			   , @recipients			 = 'pontus@starixvn.com' --will replace email address later
+			   , @copy_recipients		 = ''
+			   , @blind_copy_recipients	 = ''
+			   , @subject				 = 'Urgently!!! Movebet - Notification'
+			   , @body					 = 'Please call DBA to check since Movebet run long time at step 7.'
+			   , @body_format			 = 'HTML';
+
+		END
+	END
+
+	--update Movebetdate flag
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 10, @tableName = 'SystemSettings'
+
+	--//
+	SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('AfterUpdMBD')
+	WAITFOR DELAY @__delayTimeValue --waitfor go to delete step...
+
+	RETURN
+END
+
+IF @step = 8 -- remove bet tickets
+BEGIN
+	DELETE dbo.Match_Log 
+	WHERE matchID IN (SELECT matchID FROM dbo.match WITH (NOLOCK) WHERE eventdate = @winlostdate)
+
+	DELETE FROM dbo.outright_log
+	WHERE orid IN (SELECT orid FROM dbo.outright WHERE eventdate = @winlostdate AND oddsstatus = 'Completed')
+
+	--remove event
+	EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Delete @winlostdate
+
+	SET DEADLOCK_PRIORITY HIGH
+
+	--remove ticket on bettransM for whole day of winlostdate
+	EXEC dbo.Task_DailySummary_Delete_Bet @winlostdate = @winlostdate, @tableName = 'bettransm'
+
+	-- Delete bettransG for whole day of @winlostdate
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 2
+
+	DECLARE @__rowDeleted INT
+	SELECT @__index = 1, @__recommend = NULL, @__rowDeleted = 1, @__rowAffected = 0
+	WHILE EXISTS (
+		SELECT TOP 1 1 
+		FROM dbo.Task_Movebet_RecommendList WHERE RowId >= @__index
+	)
+	BEGIN
+		
+		UPDATE TOP(1) ls 
+		SET @__recommend = Recommend
+			, StatusId = 3 -- deleting bet ticket done
+		FROM dbo.Task_Movebet_RecommendList ls WHERE RowId = @__index
+		
+		SET @__rowAffected = @@ROWCOUNT
+		SET @__index += 1
+
+		IF @__rowAffected = 0
+			CONTINUE
+
+		--remove bet ticket on bettransLC by @recommend
+		SET @__rowDeleted = 1	
+		WHILE @__rowDeleted > 0
+		BEGIN
+			BEGIN TRANSACTION
+				EXEC dbo.ExecRep_09 @recommend = @__recommend
+					, @winlostdate = @winlostdate
+					, @parlay = 0
+					, @tableName = 'bettransLC'
+					, @RowDeleted = @__rowDeleted OUTPUT
+			COMMIT TRANSACTION
+		END
+
+		--remove bet ticket on bettransRNG by @recommend
+		SET @__rowDeleted = 1	
+		WHILE @__rowDeleted > 0
+		BEGIN
+			BEGIN TRANSACTION
+				EXEC dbo.ExecRep_09 @recommend = @__recommend
+					, @winlostdate = @winlostdate
+					, @parlay = 0
+					, @tableName = 'bettransRNG'
+					, @RowDeleted = @__rowDeleted OUTPUT
+			COMMIT TRANSACTION
+		END
+
+		--remove bet ticket on translog by @recommend
+		SET @__rowDeleted = 1	
+		WHILE @__rowDeleted > 0
+		BEGIN
+			BEGIN TRANSACTION
+				EXEC dbo.ExecRep_09 @recommend = @__recommend
+					, @winlostdate = @winlostdate
+					, @parlay = 0
+					, @tableName = 'translog'
+					, @RowDeleted = @__rowDeleted OUTPUT
+			COMMIT TRANSACTION
+		END
+
+		--remove bet ticket on bettrans by @recommend
+		SET @__rowDeleted = 1	
+		WHILE @__rowDeleted > 0
+		BEGIN
+			BEGIN TRANSACTION
+				EXEC dbo.ExecRep_09 @recommend = @__recommend
+					, @winlostdate = @winlostdate
+					, @parlay = 0
+					, @tableName = 'bettrans'
+					, @RowDeleted = @__rowDeleted OUTPUT
+			COMMIT TRANSACTION
+		END
+
+		--waitfor delay on each batch.
+		IF @__index % 10 = 0
+		BEGIN
+			SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key6')
+			WAITFOR DELAY @__delayTimeValue --waitfor deleting...
+		END
+		
+	END
+	
+	SET DEADLOCK_PRIORITY NORMAL
+	
+	RETURN
+END
+
+IF @step = 9 -- movebet done
+BEGIN
+	SET @Doing = 'Task_DailySummary : MoveBet done'
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	-- viet ----
+	EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
+	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 9.30 - start off BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	--reset being move bet date
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 9, @tableName = 'SystemSettings'
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 9.30 - end off BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+ 
+	-- =====================
+	EXEC Task_BalanceCheck @winlostdate, 3
+	-- =====================
+
+	--//can add more check here...
+
+	SET @Doing = 'Task_DailySummary : End (with Finish)'
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	PRINT CONVERT(VARCHAR(10), @winlostdate, 120)
+	
+	RETURN
+END
 GO

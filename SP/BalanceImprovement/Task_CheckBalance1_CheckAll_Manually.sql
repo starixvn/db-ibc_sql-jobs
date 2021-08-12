@@ -18,6 +18,7 @@ AS
 		20190827@Patrick: Exclude all members below 8RM account for bet restricion [RedmineID: #117727]
 			+ Fix issue duplicated custid from Acc_DWLList
 		- 20210426@Sol: Alpha/NAP - Migrate from DBACC to DBCust - [Redmine: #154041]
+		20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		
 	Param use:
 
@@ -65,7 +66,6 @@ BEGIN
 		-- translog
 		SELECT tl.custid, SUM(actual_stake) AS Outstanding
 		FROM dbo.translog tl with (nolock)
-			--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON tl.custid = c.custid AND c.roleid = 1 and
 		WHERE tl.statusID IN (0,1) --summary running tickets only
 		GROUP BY tl.custid
 	),
@@ -96,11 +96,20 @@ BEGIN
 
 	CREATE CLUSTERED INDEX CIX_t ON #tmpCal (custid)
 
+	DECLARE @__movebetdate SMALLDATETIME
+	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
+
+	__tryagain:
+	IF OBJECT_ID('tempdb.dbo.#QuestionLists') IS NOT NULL
+		DROP TABLE #QuestionLists
+
 	;WITH
 	cb AS (
 		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance, 0 as RowVersion
 		FROM dbo.bettrans b with (nolock)
-			--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON b.custid = c.custid AND c.roleid = 1
+		WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+				 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
+				 ELSE 1 END
 		GROUP BY b.custid
 	)
 	SELECT cb.*, ISNULL(qq.Outstanding,0) Outstanding, ISNULL(qq.BalRNG, 0) BalRNG, ISNULL(qq.BalLC, 0) BalLC, 
@@ -124,18 +133,16 @@ BEGIN
 
 	SET @RC = @@ROWCOUNT
 	SET @msg = CAST(@RC as varchar(50))
-	-- remove test currency
-	/*
-	IF @RC > 0
-	BEGIN
-		DELETE #QuestionLists
-			FROM CustDB.dbo.custInfo ci with (nolock)
-			INNER JOIN #QuestionLists ON #QuestionLists.custid = ci.custid
-			WHERE ci.currency = 20
-			
-		SET @RD = @@ROWCOUNT
-	END*/
 	
+	--//get MovebetDate again if it was changed
+	DECLARE @__movebetdateF SMALLDATETIME
+	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdateF OUTPUT
+	IF @__movebetdate <> @__movebetdateF
+	BEGIN
+		SET @__movebetdate = @__movebetdateF
+		GOTO __tryagain
+	END
+
 	-- remove settlement involvement
 	IF  EXISTS (SELECT 1 FROM #QuestionLists)
 		AND
@@ -153,20 +160,22 @@ BEGIN
 		SET @RD = @RD + @@ROWCOUNT
 	END
 
+	SET @__movebetdate = @__movebetdateF
 	-- check one more time (with less accounts)
 	;WITH
 	cb AS (
 		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance, 0 as RowVersion
 		FROM dbo.bettrans b with (nolock)
-			--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON b.custid = c.custid AND c.roleid = 1
 			INNER JOIN #QuestionLists q ON b.custid = q.custid
+		WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+				 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
+				 ELSE 1 END
 		GROUP BY b.custid
 	),
 	q2 AS (
 		-- translog
 		SELECT tl.custid, SUM(actual_stake) AS Outstanding
 		FROM dbo.translog tl with (nolock)
-			--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON tl.custid = c.custid AND c.roleid = 1 and
 		WHERE tl.statusID IN (0,1) --summary running tickets only
 		GROUP BY tl.custid
 	),

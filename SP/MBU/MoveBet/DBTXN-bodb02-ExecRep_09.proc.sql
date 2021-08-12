@@ -1,7 +1,7 @@
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
-CREATE PROCEDURE	dbo.ExecRep_09
+ALTER PROCEDURE dbo.ExecRep_09
 	@recommend int,
 	@winlostdate smalldatetime,
 	@parlay tinyint = 0,
@@ -43,10 +43,7 @@ AS
 		- 20191126@Patrick: Ignore remove data on DB054/DB055 - [Redmine: #124104]
 		- 20200916@Brice:	Change serverName DB06 to DB06C2\DB06 [Redmine: #140355]
 		- 20210126@Patrick: Migrate DB Server DB054 to cluster [Redmine: #149273]
-
-
-
-
+		- 202010316@Patrick: Revise Movebet flow to support transfer 247 Redmine: [#149927]
 
  */
 BEGIN
@@ -115,6 +112,68 @@ BEGIN
 					SET VValue = CONVERT(VARCHAR(200), GETDATE(), 121)
 					WHERE VName = 'EndMoving_Local'
 				END
+			END
+			ELSE IF @parlay = 7 -- start copying data to [14] and switch movebet day
+			BEGIN
+				--==check if does not exist then insert
+				IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'MB_DoneCopy_Local')
+				BEGIN
+					INSERT INTO dbo.SystemSettings(VName, VValue)
+					VALUES('MB_DoneCopy_Local', '0')
+				END
+
+				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+				SET VValue = '1'
+				WHERE VName = 'MB_DoneCopy_Local'
+
+				DECLARE @__allowOn BIT = 0
+				EXEC dbo.ExecRep_10 @FunctionName = 'WaitforMBCompleted', @Allow = @__allowOn OUTPUT
+
+				IF @__allowOn = 1
+				BEGIN
+					EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '1'
+				END
+				
+			END
+			ELSE IF @parlay = 8 -- end copying data to [14]
+			BEGIN
+				UPDATE dbo.SystemSettings WITH (ROWLOCK)
+				SET VValue = '0'
+				WHERE VName = 'MB_DoneCopy_Local'
+
+				DECLARE @__allowOff BIT = 0
+				EXEC dbo.ExecRep_10 @FunctionName = 'WaitforMBCompleted', @Allow = @__allowOff OUTPUT
+
+				IF @__allowOff = 1
+				BEGIN
+					EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '-1'
+				END
+				
+			END
+			ELSE IF @parlay = 9 --prepare movebet day
+			BEGIN
+				--==check if does not exist then insert
+				IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'BeingMovebetDate')
+				BEGIN
+					--first time
+					INSERT INTO dbo.SystemSettings(VName, VValue)
+					VALUES('BeingMovebetDate', CONVERT(VARCHAR(10), @winlostdate, 121))
+				END
+
+				--==being move bet
+				UPDATE dbo.SystemSettings WITH (ROWLOCK)
+				SET VValue = CONVERT(VARCHAR(10), @winlostdate, 121)
+				WHERE VName = 'BeingMovebetDate'
+				
+			END
+			ELSE IF @parlay = 10 --update new movebet day
+			BEGIN
+				
+				--==update @winlostdate to new movebet day
+				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+				SET VValue = CONVERT(VARCHAR(10), @winlostdate, 121)
+				WHERE VName = 'MovebetDate'
+				
 			END
 		END
 		RETURN
@@ -202,7 +261,9 @@ BEGIN
 		RETURN
 	END
 
-	IF @@SERVERNAME LIKE 'DB04%' OR @@SERVERNAME IN ('DB054', 'DB054C2\DB054', 'DB055')
+	IF @@SERVERNAME LIKE 'DB04%' 
+		OR @@SERVERNAME IN ('DB054', 'DB054C2\DB054', 'DB055', 'SITDB055')
+		OR @@SERVERNAME LIKE 'SITDB04%'
 	BEGIN
 		PRINT 'nothing'
 	END
@@ -213,46 +274,23 @@ BEGIN
 		--//for bettrans
 		IF @tableName = 'bettrans'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06C2\DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
-			BEGIN;
-				DELETE	@__tmpTransId;
+			DELETE	@__tmpTransId;
 
-				DELETE	TOP (2000)
-				FROM	dbo.bettrans WITH (ROWLOCK)
-				OUTPUT	Deleted.transid
-				INTO	@__tmpTransId (id)
-				WHERE	recommend = @recommend
-					AND	winlostdate = @winlostdate
-					AND	bettype < 19999;
+			DELETE TOP (2000)
+			FROM dbo.bettrans WITH (ROWLOCK)
+			OUTPUT deleted.transid
+			INTO @__tmpTransId (id)
+			WHERE recommend = @recommend
+				AND	winlostdate = @winlostdate
+				AND	bettype < 19999;
 
-				SET @RowDeleted = @@ROWCOUNT;
+			SET @RowDeleted = @@ROWCOUNT;
 
-				-- 20190828@Billy: Add [bettransInfo] table
-				DELETE	tbl
-				FROM		@__tmpTransId AS tmp
-				INNER JOIN	dbo.BettransInfo AS tbl WITH (ROWLOCK)
-						ON	tmp.id = tbl.transid;
-			END
-			ELSE IF @firstRound = 1 --for all replicated servers, will delete by recommend
-			BEGIN;
-				DELETE	@__tmpTransId;
-
-				DELETE
-				FROM	dbo.bettrans WITH (ROWLOCK)
-				OUTPUT	Deleted.transid
-				INTO	@__tmpTransId (id)
-				WHERE	recommend = @recommend
-					AND	winlostdate = @winlostdate
-					AND	bettype < 19999;
-
-				SET @RowDeleted = @@ROWCOUNT;
-
-				-- 20190828@Billy: Add [bettransInfo] table
-				DELETE	tbl
-				FROM		@__tmpTransId AS tmp
-				INNER JOIN	dbo.BettransInfo AS tbl WITH (ROWLOCK)
-						ON	tmp.id = tbl.transid;
-			END
+			-- 20190828@Billy: Add [bettransInfo] table
+			DELETE	tbl
+			FROM @__tmpTransId AS tmp
+			INNER JOIN dbo.BettransInfo AS tbl WITH (ROWLOCK)
+					ON	tmp.id = tbl.transid;
 
 			RETURN
 		END
@@ -260,20 +298,10 @@ BEGIN
 		--//for translog
 		IF @tableName = 'translog'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06C2\DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
-			BEGIN
-				DELETE TOP (2000) FROM translog WITH(ROWLOCK)
-				WHERE recommend = @recommend AND winlostdate = @winlostdate
+			DELETE TOP (2000) FROM dbo.translog WITH(ROWLOCK)
+			WHERE recommend = @recommend AND winlostdate = @winlostdate
 
-				SET @RowDeleted = @@ROWCOUNT
-			END
-			ELSE IF @firstRound = 1 --for all replicated servers, will delete by recommend
-			BEGIN
-				DELETE FROM translog WITH(ROWLOCK)
-				WHERE recommend = @recommend AND winlostdate = @winlostdate
-
-				SET @RowDeleted = @@ROWCOUNT
-			END
+			SET @RowDeleted = @@ROWCOUNT
 
 			RETURN
 		END
@@ -281,20 +309,10 @@ BEGIN
 		--//for bettransLC
 		IF @tableName = 'bettransLC'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06C2\DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
-			BEGIN	
-				DELETE TOP (2000) FROM bettransLC WITH(ROWLOCK)
-				WHERE recommend = @recommend AND winlostdate = @winlostdate  
+			DELETE TOP (2000) FROM dbo.bettransLC WITH(ROWLOCK)
+			WHERE recommend = @recommend AND winlostdate = @winlostdate  
 
-				SET @RowDeleted = @@ROWCOUNT
-			END
-			ELSE IF @firstRound = 1 --for all replicated servers, will delete by recommend
-			BEGIN
-				DELETE FROM bettransLC WITH(ROWLOCK)
-				WHERE recommend = @recommend AND winlostdate = @winlostdate  
-
-				SET @RowDeleted = @@ROWCOUNT
-			END
+			SET @RowDeleted = @@ROWCOUNT
 
 			RETURN
 		END
@@ -302,20 +320,10 @@ BEGIN
 		--//for bettransRNG
 		IF @tableName = 'bettransRNG'
 		BEGIN
-			IF @@SERVERNAME IN ('DBTRANS', 'DB06C2\DB06', 'DBLICAPI', 'DBLicApi02', 'DB061', 'DB062')
-			BEGIN
-				DELETE TOP (2000) FROM bettransRNG WITH(ROWLOCK)
-				WHERE recommend = @recommend AND winlostdate = @winlostdate 
+			DELETE TOP (2000) FROM dbo.bettransRNG WITH(ROWLOCK)
+			WHERE recommend = @recommend AND winlostdate = @winlostdate 
 
-				SET @RowDeleted = @@ROWCOUNT
-			END
-			ELSE IF @firstRound = 1 --for all replicated servers, will delete by recommend
-			BEGIN
-				DELETE FROM bettransRNG WITH(ROWLOCK)
-				WHERE recommend = @recommend AND winlostdate = @winlostdate 
-
-				SET @RowDeleted = @@ROWCOUNT
-			END
+			SET @RowDeleted = @@ROWCOUNT
 
 			RETURN
 		END

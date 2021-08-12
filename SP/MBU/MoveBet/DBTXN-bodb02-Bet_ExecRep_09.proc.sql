@@ -61,6 +61,44 @@ BEGIN
 				WHERE VName = 'EndMoving_Local'
 			END
 		END
+		ELSE IF @mode = 7 --turn on flag for inserting sum 19999
+		BEGIN
+			--==check if does not exist then insert
+			IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'MB_Sum19999_Local')
+			BEGIN
+				INSERT INTO dbo.SystemSettings(VName, VValue)
+				VALUES('MB_Sum19999_Local', '0')
+			END
+
+			UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+			SET VValue = '1'
+			WHERE VName = 'MB_Sum19999_Local'
+
+			DECLARE @__allowOn BIT = 0
+			EXEC dbo.ExecRep_10 @FunctionName = 'WaitforMBCompleted', @Allow = @__allowOn OUTPUT
+
+			IF @__allowOn = 1
+			BEGIN
+				EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '1'
+			END
+				
+		END
+		ELSE IF @mode = 8 --turn off flag for inserting sum 19999
+		BEGIN
+			UPDATE dbo.SystemSettings WITH (ROWLOCK)
+			SET VValue = '0'
+			WHERE VName = 'MB_Sum19999_Local'
+
+			DECLARE @__allowOff BIT = 0
+			EXEC dbo.ExecRep_10 @FunctionName = 'WaitforMBCompleted', @Allow = @__allowOff OUTPUT
+
+			IF @__allowOff = 1
+			BEGIN
+				EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '-1'
+			END
+				
+		END
+		RETURN
 	END
 END
 GO
