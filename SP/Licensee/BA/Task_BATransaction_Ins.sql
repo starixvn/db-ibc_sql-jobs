@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02,DBBOF-bodb02" executers="" isFunction="0" isNested="0"></info>*/
+﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02,DBBOF-bodb02,DBBAL-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_BATransaction_Ins]
 AS
@@ -33,6 +33,8 @@ AS
 		- 20201001@Louis: Licensee Spread Setting [RedmineID: #142532]
 		- 20210302@Hogan: Hard code Licensee Spread Setting [RedmineID: #148100]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
+		- 20210816@Sophia: Test DBBAL [Redmine: #154300]
+
 */
 
 BEGIN
