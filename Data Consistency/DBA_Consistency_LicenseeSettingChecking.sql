@@ -18,6 +18,7 @@ AS
 		- 20210419@Percy: Initialize SP [RedmineID: #153195]
 		- 20210531@Percy: Add rule 3: Check differrent PT Setting between NAP and LA [RedmineID: #153195]
 		- 20210629@Percy: Enhance code get data from bettrans [RedmineID: #153195]
+		- 20210812@Percy: Exclude Oddsspread Adjustment Dummy Account [RedmineID: #153195]
 	
 	Param's Explanation:
 		@RuleId
@@ -56,26 +57,17 @@ BEGIN
 	CREATE CLUSTERED INDEX CIX_bettrans ON #bettrans (Product3rdId, LicenseeName, Currency)
 
 	CREATE TABLE #tmp_bettrans (recommend INT, bettype INT, winlostdate SMALLDATETIME, transid BIGINT, apositiontaking FLOAT)
-
-	DECLARE @WinlostDate SMALLDATETIME = @MoveBetsDay
-	WHILE @WinlostDate < @CurrentDate
-	BEGIN
-		INSERT INTO #tmp_bettrans (recommend, bettype, winlostdate, transid, apositiontaking)
-		SELECT recommend, bettype, @WinlostDate, transid, apositiontaking
-		FROM (
-			SELECT b.recommend, b.bettype, b.transid, b.apositiontaking
-				,ROW_NUMBER() OVER(PARTITION BY b.recommend, b.bettype ORDER BY b.transid) AS RN
-			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-			WHERE b.winlostdate = @WinlostDate
-				AND b.statusId IN (111, 112, 113)
-				AND b.currency <> 20
-		) a
-		WHERE RN = 1
-
-		WAITFOR DELAY '00:00:00.010'
-
-		SELECT @WinlostDate = DATEADD(DAY, 1, @WinlostDate)
-	END
+	INSERT INTO #tmp_bettrans (recommend, bettype, winlostdate, transid, apositiontaking)
+	SELECT recommend, bettype, winlostdate, transid, apositiontaking
+	FROM (
+		SELECT b.recommend, b.bettype, b.winlostdate, b.transid, b.apositiontaking
+			,ROW_NUMBER() OVER(PARTITION BY b.winlostdate, b.recommend, b.bettype ORDER BY b.transid) AS RN
+		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+		WHERE b.winlostdate > @MoveBetsDay AND b.winlostdate < @CurrentDate
+			AND b.statusId IN (111, 112, 113)
+			AND b.currency <> 20
+	) a
+	WHERE RN = 1
 
 	CREATE CLUSTERED INDEX CIX_tmp_bettrans ON #tmp_bettrans (recommend, bettype, winlostdate)
 
@@ -113,6 +105,7 @@ BEGIN
 				WHERE c.recommend = a.custid
 					AND c.username NOT LIKE '%ClearBal' -- balance customer
 					AND c.username NOT LIKE '%CashOut' -- CO customer
+					AND c.username NOT LIKE '%01OddsAdj' -- Oddsspread Adjustment customer
 					AND c.roleid = 1
 					AND c.Enabled = 1
 		) c
@@ -127,7 +120,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.Dep_CustSettingMode dcs WITH (NOLOCK) ON m.CustId = dcs.CustId
 	WHERE dcs.IsGroupedPT = 1
 
-	CREATE TABLE #PT (LicenseeName VARCHAR(50), Currency INT, Product3rdId INT, HousePT FLOAT, Rate FLOAT)
+	CREATE TABLE #PT (LicenseeName VARCHAR(50), Currency INT, Product3rdId INT, HousePT SMALLMONEY, Rate SMALLMONEY)
 	
 	-- SB
 	BEGIN
@@ -345,7 +338,12 @@ BEGIN
 			LEFT JOIN #Licensees l ON b.LicenseeName = l.LicenseeName
 			LEFT JOIN bodb_Licensee.dbo.OAS_Party p WITH (NOLOCK) ON l.PartyId = p.PartyId AND l.IsDeposit = 0
 			LEFT JOIN bodb_Licensee.dbo.Licensees ls WITH (NOLOCK) ON p.OldRefId = ls.LicenseeId
-			LEFT JOIN #ChargeRate c ON l.PartyId = c.PartyId AND b.Product3rdId = c.Product3rdId AND c.Currency = 0
+			LEFT JOIN (
+				SELECT PartyId, Product3rdId, MIN(FromDate) AS FromDate, MAX(ToDate) AS ToDate
+				FROM #ChargeRate
+				WHERE Currency = 0
+				GROUP BY PartyId, Product3rdId
+			) c ON l.PartyId = c.PartyId AND b.Product3rdId = c.Product3rdId
 		WHERE (l.LicenseeName IS NULL OR l.LaunchDate IS NULL OR l.LaunchDate > b.WinlostDate) -- Rule 1
 			OR (c.PartyId IS NULL OR b.WinlostDate NOT BETWEEN c.FromDate AND c.ToDate) -- Rule 2
 
