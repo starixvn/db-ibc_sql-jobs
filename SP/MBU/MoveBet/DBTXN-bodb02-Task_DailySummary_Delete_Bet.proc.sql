@@ -11,6 +11,7 @@ AS
 	DB: DBTXN/BODB02
 	Revisions:
 		- 20190131@Patrick: Deleting data in bettransm batch by batch [RedmineID: #108581]
+		- 20210816@Patrick: Use match14 instead of match table [RedmineID: #160198]
 
 */
 BEGIN
@@ -22,7 +23,7 @@ BEGIN
 		INSERT INTO #m (matchid)
 		SELECT DISTINCT m.matchid
 		FROM dbo.bettransm b WITH (NOLOCK)
-			INNER JOIN dbo.match m WITH (NOLOCK) ON b.matchid = m.matchid
+			INNER JOIN dbo.match14 m WITH (NOLOCK) ON b.matchid = m.matchid
 		WHERE winlostdate = @winlostdate
 
 		SELECT @rowId = 1, @delayTimeValueM = '00:00:00:010'
