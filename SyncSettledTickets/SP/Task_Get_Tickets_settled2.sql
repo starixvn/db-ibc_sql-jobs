@@ -8,12 +8,12 @@ AS
 	DB: DBAGE.bodb02
 	Revisions: 
 		-20191127@Patrick: Setup sync status ticket on DB052 -> DB054 - [Redmine: #124482]
+		-20210816@Helen: Apply Uncalculate Flow on DB054 for Both Single & Parlay Tickets [Redmine: #157381]
 */
 BEGIN
-	--RETURN
 	SET NOCOUNT ON
 
-	DECLARE @MaxRowId BIGINT, @LastRowId BIGINT, @TransIDs VARCHAR(MAX)
+	DECLARE @MaxRowId BIGINT, @LastRowId BIGINT
 	
 	SELECT @LastRowId = sValue
 	FROM dbo.Tickets_settled_setting WITH(NOLOCK)
@@ -21,40 +21,60 @@ BEGIN
 	
 	SELECT @MaxRowId = MAX(RowId)
 	FROM dbo.BetSettled_Transition WITH(NOLOCK)
-
-	SELECT @LastRowId = ISNULL(@LastRowId, 0), @MaxRowId = ISNULL(@MaxRowId, 0)
+	WHERE RowId > @LastRowId
+	
+	SET @LastRowId = ISNULL(@LastRowId, 0)
+	SET @MaxRowId = ISNULL(@MaxRowId, @LastRowId)
+		
 	IF (@LastRowId = @MaxRowId) RETURN -- no row
 
 	--wait for all trans can commit
 	WAITFOR DELAY '00:00:00:280'
 
-	DECLARE @RowIds TABLE (TransId BIGINT)
-
-	INSERT INTO @RowIds(TransId)
-	SELECT TransId
-	FROM dbo.BetSettled_Transition WITH(NOLOCK)
+	CREATE TABLE #RowIds (rowID BIGINT, TransId BIGINT,statusid TINYINT,winlostdate SMALLDATETIME)
+	
+	CREATE TABLE #RowIds_Dup_tmp  (RowID BIGINT , transid BIGINT PRIMARY KEY)
+	
+	INSERT INTO #RowIds(rowID,TransId,statusid,winlostdate)
+	SELECT b.RowId,b.TransId,b.statusid,b.winlostdate
+	FROM dbo.BetSettled_Transition b WITH(NOLOCK)
 	WHERE RowId > @LastRowId AND RowId <= @MaxRowId
+	
+	INSERT INTO #RowIds_Dup_tmp (RowID, transid)
+	SELECT MAX (rowID) AS RowID, TransId
+	FROM #RowIds
 	GROUP BY TransId
+	HAVING COUNT(1) > 1
+	
+	IF @@ROWCOUNT > 0
+	BEGIN
+		DELETE r
+		FROM #RowIds r 
+			INNER JOIN #RowIds_Dup_tmp t ON t.transid = r.transid
+		WHERE r.rowID < t.RowID
+		
+	END
 			
-	DECLARE @__TmpIds TABLE(TransId BIGINT)
+	DECLARE @__TmpIds TABLE(TransId BIGINT,statusid TINYINT,winlostdate SMALLDATETIME)
+	
 	DECLARE @MessageData NVARCHAR(MAX), @ErrorCode BIT = 0, @Retry INT = 0, @xml XML
 	WHILE 1 = 1
 	BEGIN
 		DELETE @__TmpIds
-		SELECT @TransIDs = NULL, @ErrorCode = 0, @Retry = 0, @xml = NULL
+		SELECT @ErrorCode = 0, @Retry = 0, @xml = NULL
 
-		DELETE TOP(@batchSize) @RowIds
-		OUTPUT DELETED.TransId INTO @__TmpIds
+		DELETE TOP(@batchSize) #RowIds
+		OUTPUT DELETED.TransId,DELETED.statusid,DELETED.winlostdate INTO @__TmpIds (TransId,statusid,winlostdate)
 
 		IF @@ROWCOUNT = 0
 			BREAK
-
-		SELECT @TransIDs = COALESCE(@TransIDs + ',' + CAST(TransId AS VARCHAR(50)), CAST(TransId AS VARCHAR(50)))
-		FROM @__TmpIds
-
-		SET @xml = N'<root><r>' + REPLACE(@TransIDs, ',', '</r><r>') + '</r></root>'
 		
+		SET @xml = (  SELECT transid AS '@t',statusID AS '@s', winlostdate AS '@w'
+				  FROM @__TmpIds 
+				  FOR XML PATH('r'), ROOT('root')
+				)
 		Retry:
+		
 		EXEC sb.Settled_Ticket_SendMessage @xml = @xml, @ContractName = 'Contract_Settled_Ticket', @SB_error = @ErrorCode OUTPUT
 		
 		IF @ErrorCode > 0
@@ -78,5 +98,9 @@ BEGIN
 		SET sValue = @MaxRowId
 		WHERE sKey = 'TransitionId'
 	END
+	
+	DROP TABLE #RowIds
+	DROP TABLE #RowIds_Dup_tmp
+	
 END
 GO
