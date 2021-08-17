@@ -1,4 +1,6 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
+USE [bodb_LicenseeReport]
+GO
 
 ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct]
 	@date				DATE,
@@ -88,6 +90,7 @@ AS
 		- 20210422@Danny: Enhance step to Generate rpt_BettingByProduct with Rpt_Betting datasource [Redmine: #153805]
 		- 20210707@Danny: Vgaming - Free bets and Jackpot prize integration [Redmine: #156185]
 		- 20210720@Sophia: Add Saba Promotion - 17005 - Promotion for Licensee [Redmine: #155388]
+		- 20210812@Percy: Get ProductCode from Product3rd [RedmineID: #159691]
 		- 20210827@Danny: Update SystemSetting after rptBettingbyProduct step done [redmine: #151993]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
@@ -147,9 +150,27 @@ BEGIN
 			AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange
 			AND (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList))
 
+		DECLARE @tmp_ProductCodes VARCHAR(MAX)
+		
+		SELECT @tmp_ProductCodes = COALESCE(@tmp_ProductCodes + ',', '') + ProductPrefix FROM bodb_Licensee.dbo.Product3rd WITH (NOLOCK)
+		WHERE ProductId NOT IN (1, 9, 12, 14, 16, 17, 23, 31)
+			/*
+				Inactive products: 1 = RB, 9 = PTCS, 12 = VG, 14 = MGCLC, 17 = MGCRNG
+				Setting products: 16 = HF
+				Separate products (only Separate): 31 = BX
+				Special products: 23 = NG2
+			*/
+			AND (
+				@ProductCodes = ''
+				OR ',' + @ProductCodes + ',' LIKE '%,' + ProductPrefix + ',%'
+			)
+
+		IF @ProductCodes = '' OR ',' + @ProductCodes + ',' LIKE '%,SB,%'
+			SELECT @tmp_ProductCodes = 'SB' + ISNULL(',' + @tmp_ProductCodes, '')
+
 		INSERT INTO #BettypeProductMapping (Bettype, ProductID)
 		SELECT Bettype, ProductId
-		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'SB,NG,VS,RB,LC,CS,KN,BG,AGC,BT,GD,CF,CB,VB,AB,FW,CO,VS2,LT,PP,BF,PG,CC,SPR,SG,VRG,SXG,TG,BBIN,I4D,IBCLC,SBC,ION,RNGW,PGS,JK,SAG,WM,VS3,GDG,BGG,MXG,HB,SLT,PPL,CG,VGA,AP,APM') -- Remove Exchange (BX) due to separate wallet only
+		FROM bodb_licensee.dbo.LA_f_BettypeProductMapping(0, @tmp_ProductCodes)
 		WHERE @ProductCodes = ''
 			OR ProductID IN (SELECT ProductID FROM @ProductIdList)
 
