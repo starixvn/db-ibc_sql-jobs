@@ -13,6 +13,7 @@ AS
 		- 20190826@Harris: Add more column for new Reset Winning SP [Feature #117809]
 		- 20190918@Percy: Remove Racing [RedmineID: #118699]
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
+		- 20210816@Sol: fix nested insert exec - [Redmine: #160212]
 */
 BEGIN
     SET NOCOUNT ON
@@ -43,8 +44,18 @@ BEGIN
 
     SELECT @todate = DATEADD (DAY, -1, CAST(GETDATE() AS DATE))
 
+	-- get move bet date
+	DECLARE @balanceUpDay SMALLDATETIME, @moveBetDay SMALLDATETIME
+	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+
+	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+
+	SELECT @balanceUpDay = BalanceUpDay, @moveBetDay = MoveBetsDay FROM @tblMoveBetBalanceUp
+	----
+
     INSERT #tmp
-    EXEC dbo.Task_ResetWinning_Non3rdParty @fromdate = @fromdate, @todate= @todate, @mode = 0
+    EXEC dbo.Task_ResetWinning_Non3rdParty @fromdate = @fromdate, @todate= @todate, @mode = 0, @MoveBetDay = @moveBetDay
 
 	-- Not reset yet
     SELECT TOP 1 @winlostdate = winlostdate 
@@ -61,7 +72,7 @@ BEGIN
 
     -- Check if forgot to reset the ExtraPT
 	INSERT #tmpExtra
-    EXEC dbo.Task_ResetWinning_ExtraPT @fromdate = @fromdate, @todate= @todate, @mode = 0 
+    EXEC dbo.Task_ResetWinning_ExtraPT @fromdate = @fromdate, @todate= @todate, @mode = 0, @MoveBetDay = @moveBetDay
 	
 	SELECT TOP 1 @winlostdate = winlostdate
 	FROM #tmpExtra
