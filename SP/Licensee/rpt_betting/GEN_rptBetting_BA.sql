@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
@@ -25,6 +25,7 @@ Revisions:
 	20171019@Harper: LA - Shutdown KPI Report [RedmineID: #83983]
 	20180316@Harper: LA - Colossus Bets Free Play Integration [RedmineID: #89768] 
 	20190508@Parsons: Implement BetBuilder [Redmine: #108995]
+	20210816@Sophia: add DBBAL [Redmine: #154300]
 
 Param's Explanation:
 

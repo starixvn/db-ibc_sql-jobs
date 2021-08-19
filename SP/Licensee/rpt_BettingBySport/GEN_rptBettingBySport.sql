@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[GEN_rptBettingBySport]
 	@Date SMALLDATETIME
@@ -17,6 +17,7 @@ AS
 	- 20180703@Sophia: Check @Date <= Movebetday will return because this day don't have data on Bettrans [Redmine: #97567]
 	- 20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
 	- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	EXEC GEN_rptBettingBySport '2017-10-28'
 */

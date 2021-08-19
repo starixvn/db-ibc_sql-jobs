@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[GEN_rptBettingBySport14]
 	@Date SMALLDATETIME
@@ -14,6 +14,7 @@ AS
 		- 20171114@Harper: Fix Date Range when get detail ticket
 		- 20180412@Percy: Expand Sportsbook bettype range - ESports [RedmineID: #100721]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	GEN_rptBettingBySport14 '2017-10-13'
 */

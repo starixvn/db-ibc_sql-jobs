@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" sFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" sFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData_Job]
 	@FromDate SMALLDATETIME = NULL
 	, @ToDate SMALLDATETIME = NULL
@@ -28,6 +28,7 @@ AS
 		- 20200603@Sophia: Auto regen full last month for separate wallet [redmine: #135309]
 		- 20201012@Malcolm: Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 		- 20210805@Sophia: Add more email dbaadmin@starixvn.com [Redmine: #159700]
+		- 20210816@Sophia: add DBBAL & Exclude GEN_rptBettingBySport14 at DBBAL [Redmine: #154300]
 
 	EXEC Task_rptBetting_CheckData_Job @FromDate = '2018-04-01', @ToDate = '2018-04-10', @Step = 0,  @AllowCorrect = 1
     
@@ -149,9 +150,12 @@ BEGIN
 		BEGIN 			
 			------1.1 Check data mismatch
 			EXEC dbo.Task_rptThirdPartyWL_ExtraGMT_CheckData @WinlostDate = @WinlostDate, @HasDataMismatch = @GenExtraGMT OUTPUT, @BetTypes = @ExtraGMTBetTypes OUTPUT
-
+			
+			IF @@SERVERNAME <> 'DBBAL'
+			BEGIN
 			EXEC dbo.Task_rptBettingBySport_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenRptBettingBySport OUTPUT, @IsParLay = @IsParLay OUTPUT
-
+			END
+			
 			EXEC dbo.Task_rpt_CustomerWL_ExtraGMT_CheckData @winlostdate = @WinlostDate, @HasDataMismatch = @GenCustomerExtraGMT OUTPUT, @BetTypes = @ExtraCustomerGMTBetTypes OUTPUT
 
 			-----1.2 Correct data
@@ -162,7 +166,7 @@ BEGIN
 					EXEC dbo.Task_Microgaming_Bettrans14 @Fromdate = @WinlostDate, @ToDate = @WinlostDate
 				END 
 
-				IF @GenRptBettingBySport <> 0
+				IF @GenRptBettingBySport <> 0 AND @@SERVERNAME <> 'DBBAL'
 				BEGIN
 					EXEC dbo.GEN_rptBettingBySport14 @Date = @WinlostDate
 				END

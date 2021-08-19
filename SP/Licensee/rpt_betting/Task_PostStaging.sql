@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" isFunction="0" isNested="1"></info>*/
 USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[Task_PostStaging]     
@@ -9,6 +10,8 @@ DB: DBLIC.bodb_LicenseeReport
 
 Revisions:
     -20170525@Paul: Check IsStagingBettrans flag before staging bettrans; insert sporttype, eventdate into staging match table [Redmine: #72914]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
+	
 Param's Explanation:
 
 */

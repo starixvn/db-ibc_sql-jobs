@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptBetting_CheckData]
 	@WinlostDate		DATETIME
@@ -18,6 +18,7 @@ AS
 		- 20190918@Parsons: Update house turnover's formula [Redmine: #120119]
 		- 20200403@Parsons: Indo 4D Integration [RedmineID: #130910]
 		- 20200804@Sol: Include vsraceinfo14 [RedmineID: #135963]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	Param's Explanation:
 

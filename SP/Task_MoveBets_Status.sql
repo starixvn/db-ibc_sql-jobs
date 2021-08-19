@@ -1,4 +1,4 @@
-/*<info serverAlias="DBEXT-bodb02,DBAGE-bodb02,DBACC-bodb02" executers="vnteam" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBEXT-bodb02,DBAGE-bodb02,DBACC-bodb02,DBBAL-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 USE [bodb02]
 GO
 
@@ -13,6 +13,7 @@ AS
 
 	Revisions:
 		- 20180305@Percy: Initialize SP [RedmineID: #83787]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 	
 	Parameters Explanations:
 		@StatusID = NULL --> this day not have MB

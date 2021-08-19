@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_licensee" selecters="bodbAdminNet" viewers="" isFunction="1" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_licensee,DBBAL-bodb_licensee" selecters="bodbAdminNet" viewers="" isFunction="1" isNested="0"></info>*/
 USE [bodb_licensee]
 GO
 
@@ -30,6 +30,7 @@ AS
 		- 20171227@Sophia: output column ChargeType [Redmine: #82408]
 		- 20180508@Harper: Change PayToSupplier term of Exchange product [RedmineID: #94281]
 		- 20181003@Percy: Add chargeType = 12 for GoldDeluxe Tip [RedmineID: #70177]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
     select * FROM dbo.LA_f_GetChargeInfoWithTrialTime ('14','2016-06-01','2016-06-30','GD','OA', 0)
 */

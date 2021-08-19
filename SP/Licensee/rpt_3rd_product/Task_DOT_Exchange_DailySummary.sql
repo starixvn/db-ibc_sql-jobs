@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdproduct" executers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_3rdproduct,DBBAL-bodb_3rdproduct" executers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DOT_Exchange_DailySummary]
 	@winlostdate	DATETIME	
 	,@IsManual		BIT = 0
@@ -17,7 +17,7 @@ AS
 		- 20190724@Percy: Remove DBLIC on OAS_ChargeInfo and related functions [RedmineID: #103658]
 		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
 		- 20200818@Percy: Change EventType's data type from smallint to int [RedmineID: #138524]
-	
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 	Param's Explanation:
 		- @winlostdate: The date need to summary
 		- @IsManual: task run manual or auto

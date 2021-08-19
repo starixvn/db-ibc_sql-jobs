@@ -1,4 +1,4 @@
-/*<info serverAlias="DBAGE-bodb02" executers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBAGE-bodb02,DBBAL-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
 
@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20190416@Percy: Initialize SP [RedmineID: #111937]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN

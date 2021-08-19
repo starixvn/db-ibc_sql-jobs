@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[Task_Microgaming_Bettrans14] 
@@ -26,6 +26,7 @@ AS
 	 - 20210412@Sophia: Integrate PP Live Casino [Redmine: #150971]
 	 - 20210419@Danny: Integrate Creative Gaming [Redmine: #146019]
 	 - 20210412@Sophia: Change Range of AE Casino [Redmine :#152141]
+	 - 20210816@Sophia: add DBBAL [Redmine: #154300]
 	 Param's Explanation:
 */
 

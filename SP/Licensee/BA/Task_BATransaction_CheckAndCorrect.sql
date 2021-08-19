@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02,DBBOF-bodb02" executers="" isFunction="0" isNested="0"></info>*/
+﻿/*<info serverAlias="DBEXT-bodb02,DBACC-bodb02,DBBOF-bodb02,DBBAL-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_BATransaction_CheckAndCorrect]
 AS
@@ -27,6 +27,7 @@ AS
 		- 20200207@Percy: Add DB055 (change DB042 to DB055) [RedmineID: #127169]
 		- 20210126@Sol: change db instance name (change DB054 to DB054C2\DB054) - [RedmineID: #149273]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN

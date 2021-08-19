@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20181003@Bruce: LA - Should not include refund ticket for Cash Out Tickets [Redmine: #102578]
 		- 20190510@Percy: Enhance Performance [RedmineID: #112596]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN
