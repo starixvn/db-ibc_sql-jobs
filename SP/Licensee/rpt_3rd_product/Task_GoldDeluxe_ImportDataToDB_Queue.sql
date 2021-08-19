@@ -1,4 +1,4 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" executers="" isFunction="0" isNested="1"></info>*/
 USE [bodb_PlaytechCS]
 GO
 
@@ -19,6 +19,7 @@ AS
 		- 20170214@Francis: Keep about 5000 finished rows in Queue
 		- 20171218@Percy: Add ErrCode, ErrMsg replace RAISERROR [RedmineID: #88325]
 		- 20181003@Percy: Using colum JobType to apply Tip [RedmineID: #70177]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	Param explanation:
 		. JobType:

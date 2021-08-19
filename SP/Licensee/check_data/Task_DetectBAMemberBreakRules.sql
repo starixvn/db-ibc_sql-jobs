@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_Licensee,DBACC-bodb_Licensee,DB042-bodb_Licensee" executers="" isFunction="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_Licensee,DBACC-bodb_Licensee,DB042-bodb_Licensee,DBBAL-bodb_Licensee" executers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DetectBAMemberBreakRules]
 AS 
 /*
@@ -11,6 +11,7 @@ Original:
 Revisions:
 	- 20160906@Sophia: Ignore Bettrade account because they do not BA or Non BA 
 	- 20180809@Sophia: HA - remove LicenseeCustInfo table [Redmine: #99464]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 Param explanation:
 
 */

@@ -11,7 +11,7 @@ AS
 	Task: Insert raw data of Novacash's products
 
 	Revisions:
-		- 20200417@Percy: Initialize SP [RedmineID: #129873]
+		- 20200417@Percy: Initialize SP [RedmineID: #129873		
 
 	Param's Explanation:
 		@QueueIDInput: manually import

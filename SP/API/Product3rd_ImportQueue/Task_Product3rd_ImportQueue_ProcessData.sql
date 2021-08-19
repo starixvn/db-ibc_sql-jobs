@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdProduct" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBLIC-bodb_3rdProduct,DBBAL-bodb_3rdProduct" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_Product3rd_ImportQueue_ProcessData]
 	@QueueIDInput	BIGINT = 0,
 	@ProductID		INT,
@@ -17,6 +17,7 @@ AS
 		- 20180507@Percy: Update condition of resettledDate for case re-import manually [RedmineID: #94555]
 		- 20190401@Percy: Update JobType correctly [RedmineID: #110692]
 		- 20200818@Percy: Integrate Fancy Bet [RedmineID: #138524]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	Param's Explanation:
 		@QueueID: manually import

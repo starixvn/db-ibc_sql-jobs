@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdProduct" executers="" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBLIC-bodb_3rdProduct,DBBAL-bodb_3rdProduct" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 USE [bodb_3rdProduct]
 GO
 
@@ -14,6 +14,7 @@ AS
 
 	Revisions:
 		- 20180105@Percy: Initialize SP [RedmineID: #87526]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN

@@ -33,7 +33,7 @@ AS
 		- 20201001@Louis: Licensee Spread Setting [RedmineID: #142532]
 		- 20210302@Hogan: Hard code Licensee Spread Setting [RedmineID: #148100]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
-		- 20210816@Sophia: Test DBBAL [Redmine: #154300]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 */
 
