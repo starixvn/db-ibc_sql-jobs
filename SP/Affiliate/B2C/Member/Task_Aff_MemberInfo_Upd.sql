@@ -46,9 +46,10 @@ BEGIN
 			,m.ActStatus = c.ActStatus
 			,m.Status = c.Status
 			,m.FirstDepositDate = DATEADD(HOUR, @TimeZone, c.FirstDepositDate)
-			,m.FirstDepositAmount = c.FirstDepositAmount
+			,m.FirstDepositAmount = c.FirstDepositAmount * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END
 		FROM dbo.MemberInfo m
 			INNER JOIN #Customer c ON m.CustId = c.CustId
+			INNER JOIN dbo.Exchange e WITH (NOLOCK) ON m.Currency = e.ExchangeId
 
 		SELECT @LastUpdatedTime = MAX(UpdatedTime) FROM #Customer
 
