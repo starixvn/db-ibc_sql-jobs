@@ -73,7 +73,7 @@ BEGIN
 			winlost,
 			BetCount,
 			drawBetCount
-	FROM DBACC.bodb_report.dbo.rptDepWinlost_AGCasino WITH(NOLOCK)
+	FROM DBPRT.bodb_report.dbo.rptDepWinlost_AGCasino WITH(NOLOCK)
 	WHERE winlostdate = @WinlostDate
 		AND sporttype = 250;
 
