@@ -64,7 +64,7 @@ BEGIN
 
 	SET @S_Count = @@ROWCOUNT;
 	
-	INSERT INTO #Target(custid, currency, isVipGame, turnover, drawTO, winlost, BetCount, drawBetCount)
+	 INSERT INTO #Target(custid, currency, isVipGame, turnover, drawTO, winlost, BetCount, drawBetCount)
 	SELECT	custid,
 			currency,
 			isVipGame,
@@ -73,9 +73,10 @@ BEGIN
 			winlost,
 			BetCount,
 			drawBetCount
-	FROM DBPRT.bodb_report.dbo.rptDepWinlost_AGCasino WITH(NOLOCK)
+	FROM DBRPT.bodb_report.dbo.rptDepWinlost_AGCasino WITH(NOLOCK)
 	WHERE winlostdate = @WinlostDate
 		AND sporttype = 250;
+ 
 
 	SET @T_Count = @@ROWCOUNT;
 
