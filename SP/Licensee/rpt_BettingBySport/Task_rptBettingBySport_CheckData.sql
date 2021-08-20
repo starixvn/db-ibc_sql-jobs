@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptBettingBySport_CheckData]
 	@WinlostDate		SMALLDATETIME,
 	@HasDataMismatch	TINYINT OUTPUT, --0: No mismatch; 1: Has real currencies; 2: UUS only
@@ -13,8 +13,7 @@ AS
 	Revisions:
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
 		- 20171114@Harper: Fix Date Range when get detail ticket
-		- 20201217@Percy: Enhance performance: code get data from bettransm bk range [RedmineID: #147351]
-		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20201217@Percy: Enhance performance: code get data from bettransm bk range [RedmineID: #147351] 
 
 	DECLARE @HasDataMismatch TINYINT, @IsParlay VARCHAR(20)
 	EXEC Task_rptBettingBySport_CheckData @WinlostDate = '2017-09-29', @HasDataMismatch = @HasDataMismatch OUTPUT, @IsParlay = @IsParlay OUTPUT
