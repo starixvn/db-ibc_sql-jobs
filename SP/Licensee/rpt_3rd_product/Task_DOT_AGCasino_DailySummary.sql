@@ -195,5 +195,4 @@ BEGIN CATCH
 	PRINT 'Error occured in AGCasino summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
-GO
-GRANT EXECUTE ON [dbo].[Task_DOT_AGCasino_DailySummary] TO [dwrs2] AS [dbo]
+GO 
