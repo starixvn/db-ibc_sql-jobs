@@ -24,12 +24,13 @@ AS
 		- 20201216@Percy: Integrate new product: BTi [RedmineID: #144456]
 		- 20210615@Malcolm: Integrate new product: IM Esports [RedmineID: #157048]
 		- 20210726@Malcolm: Change key from BetId to purchaseId [RedmineID: #159061]
+		- 20210810@Malcolm: get data for many days in the same queue[RedmineID: #159061]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @QueueId BIGINT, @XmlData XML, @WinlostDate SMALLDATETIME, @LastQueueId BIGINT
+	DECLARE @QueueId BIGINT, @XmlData XML, @WinlostDate SMALLDATETIME, @LastQueueId BIGINT, @MaxWinlostDate SMALLDATETIME
 
 	DECLARE @Exchange TABLE (ExchangeDate SMALLDATETIME, ExchangeId INT, Currency NVARCHAR(50), ExRate FLOAT, AffExRate FLOAT)
 	DECLARE @tmpWinlostDate TABLE (winlostdate SMALLDATETIME)
@@ -720,12 +721,10 @@ BEGIN
 				FROM @XmlData.nodes('root/Bets') AS t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
-				SELECT @WinlostDate = MIN(CONVERT(DATE, BetSettledDate)) FROM #BTi
+				SELECT @WinlostDate = MIN(CONVERT(DATE, BetSettledDate)), @MaxWinlostDate = MAX(CONVERT(DATE, BetSettledDate)) FROM #BTi
 
 				IF @WinlostDate < '2021-08-01'
 				BEGIN
-					DELETE #BTi WHERE BetID IS NULL
-
 					DELETE bt WITH (ROWLOCK, UPDLOCK)
 					FROM dbo.bettrans_BTi bt
 					WHERE EXISTS (SELECT 1 FROM #BTi k WHERE bt.BetID = k.BetID)
@@ -734,10 +733,14 @@ BEGIN
 					SELECT k.BetID, k.UserName, k.TotalStake, k.ValidStake, k.PL, k.BetStatus, k.BetSettledDate, m.IBCCustId, CONVERT(DATE, k.BetSettledDate) AS WinlostDate
 					FROM #BTi k
 						INNER JOIN dbo.MemberInfo m WITH (NOLOCK) ON '12BET$' + k.UserName = m.Username
+					WHERE k.BetSettledDate < '2021-08-01' AND k.BetID IS NOT NULL
+
+					DELETE #BTi WHERE BetSettledDate < '2021-08-01'
 				END
-				ELSE 
+
+				IF @MaxWinlostDate >= '2021-08-01' 
 				BEGIN
-					DELETE #BTi WHERE PurchaseID IS NULL
+					DELETE #BTi WHERE PurchaseID IS NULL 
 
 					DELETE bt WITH (ROWLOCK, UPDLOCK)
 					FROM dbo.bettrans_BTi2 bt
