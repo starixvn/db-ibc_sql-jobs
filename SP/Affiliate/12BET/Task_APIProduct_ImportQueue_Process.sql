@@ -25,6 +25,7 @@ AS
 		- 20210615@Malcolm: Integrate new product: IM Esports [RedmineID: #157048]
 		- 20210726@Malcolm: Change key from BetId to purchaseId [RedmineID: #159061]
 		- 20210810@Malcolm: get data for many days in the same queue[RedmineID: #159061]
+		- 20210823@Malcolm: Integrate new product: Skywind [RedmineID: #159566]
 */
 
 BEGIN
@@ -806,6 +807,44 @@ BEGIN
 			END CATCH
 
 			DROP TABLE #Sum_Winloss_IMEsports
+		END
+
+		-- Skywind
+		ELSE IF @ProductId = 32
+		BEGIN
+			CREATE TABLE #bettrans_Skywind (PlayerCode VARCHAR(32), Currency VARCHAR(3), Bet MONEY, Revenue MONEY, IBCCustId INT, ts SMALLDATETIME, WinlostDate SMALLDATETIME)
+
+			BEGIN TRY
+				INSERT INTO #bettrans_Skywind (PlayerCode, Currency, Bet, Revenue, ts, WinlostDate)
+				SELECT	t.c.value('(playerCode/text())[1]', 'VARCHAR(32)') AS PlayerCode,
+						t.c.value('(currency/text())[1]', 'VARCHAR(3)') AS Currency,
+						t.c.value('(bet/text())[1]', 'MONEY') AS Bet,
+						t.c.value('(revenue/text())[1]', 'MONEY') AS Revenue,
+						t.c.value('(ts/text())[1]', 'SMALLDATETIME') AS ts,			
+						CONVERT(DATE, t.c.value('(ts/text())[1]', 'SMALLDATETIME')) AS WinlostDate		
+				FROM @XmlData.nodes('root/Tickets') AS t(c)
+				OPTION (OPTIMIZE FOR (@XmlData = NULL))
+
+				DELETE bt WITH (ROWLOCK, UPDLOCK)
+				FROM dbo.bettrans_Skywind bt	
+				WHERE EXISTS (SELECT 1 FROM #bettrans_Skywind t WHERE t.PlayerCode = bt.PlayerCode AND bt.WinlostDate = t.WinlostDate)
+				
+				INSERT INTO dbo.bettrans_Skywind (PlayerCode, Currency, Bet, Revenue, ts, WinlostDate, IBCCustId)
+				SELECT k.PlayerCode, k.Currency, k.Bet, k.Revenue, k.ts, k.WinlostDate, m.IBCCustId
+				FROM #bettrans_Skywind k
+					INNER JOIN dbo.MemberInfo m WITH (NOLOCK) ON '12BET$' + k.PlayerCode = m.Username
+
+				SELECT @WinlostDate = MIN(WinlostDate) FROM #bettrans_Skywind
+
+				SELECT @IsErr = 0
+			END TRY
+			BEGIN CATCH
+				UPDATE dbo.APIProduct_ImportQueue WITH (ROWLOCK, UPDLOCK)
+				SET FinishedTime = NULL, WinlostDate = NULL, LogDesc = 'Failed. Error Message = ' + ERROR_MESSAGE()
+				WHERE QueueId = @QueueId
+			END CATCH
+
+			DROP TABLE #bettrans_Skywind
 		END
 
 		IF @IsErr = 1
