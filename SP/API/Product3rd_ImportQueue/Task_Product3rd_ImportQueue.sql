@@ -1,4 +1,4 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Product3rd_ImportQueue]
 	@XmlData		NVARCHAR(MAX),
 	@StartDate		DATETIME = NULL,
@@ -18,6 +18,7 @@ AS
 	Revisions:
 		- 20171117@Percy: Initialize SP [RedmineID: #86477]
 		- 20200417@Percy: Add default param's value [RedmineID: #129873]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN
