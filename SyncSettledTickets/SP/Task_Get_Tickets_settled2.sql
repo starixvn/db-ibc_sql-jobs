@@ -33,14 +33,14 @@ BEGIN
 
 	CREATE TABLE #RowIds (rowID BIGINT, TransId BIGINT,statusid TINYINT,winlostdate SMALLDATETIME)
 	
-	CREATE TABLE #RowIds_Dup_tmp  (RowID BIGINT , transid BIGINT PRIMARY KEY)
+	CREATE TABLE #TransID_Latest_Status (RowID BIGINT , transid BIGINT PRIMARY KEY)
 	
 	INSERT INTO #RowIds(rowID,TransId,statusid,winlostdate)
 	SELECT b.RowId,b.TransId,b.statusid,b.winlostdate
 	FROM dbo.BetSettled_Transition b WITH(NOLOCK)
 	WHERE RowId > @LastRowId AND RowId <= @MaxRowId
 	
-	INSERT INTO #RowIds_Dup_tmp (RowID, transid)
+	INSERT INTO #TransID_Latest_Status (RowID, transid)
 	SELECT MAX (rowID) AS RowID, TransId
 	FROM #RowIds
 	GROUP BY TransId
@@ -50,7 +50,7 @@ BEGIN
 	BEGIN
 		DELETE r
 		FROM #RowIds r 
-			INNER JOIN #RowIds_Dup_tmp t ON t.transid = r.transid
+			INNER JOIN #TransID_Latest_Status t ON t.transid = r.transid
 		WHERE r.rowID < t.RowID
 		
 	END
@@ -100,7 +100,7 @@ BEGIN
 	END
 	
 	DROP TABLE #RowIds
-	DROP TABLE #RowIds_Dup_tmp
+	DROP TABLE #TransID_Latest_Status
 	
 END
 GO
