@@ -1,3 +1,4 @@
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 USE [bodb_PlaytechCS]
 GO
 /****** Object:  StoredProcedure [dbo].[Task_AGCasino_ImportDataToDB]    Script Date: 11/28/2017 3:40:10 AM ******/
@@ -24,6 +25,7 @@ Revisions:
 	- 20141017@Victor: remove time convertion, input data have GMT -4 timezone already
 	- 20141218@Winnie: DBA- Modify sp to Fix the issue of missing AG Casino's data(Task #27842)
 	- 20161227@Francis: put cmd into a queue to run background to reduce server's loading [RedmineID: #68972]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 Param explanation:
 

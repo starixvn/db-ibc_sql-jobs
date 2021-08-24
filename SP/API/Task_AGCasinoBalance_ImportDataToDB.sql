@@ -1,4 +1,4 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" executers="bodbLicenseeNet" viewers="" isNested="0"></info>*/
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="bodbLicenseeNet" viewers="" isNested="0"></info>*/
 USE [bodb_PlaytechCS]
 GO
 ALTER PROCEDURE [dbo].[Task_AGCasinoBalance_ImportDataToDB]
@@ -16,7 +16,6 @@ Original:
 
 Revisions:
 	- 20181126@Patrick: Add optimize for option [Redmine: #105365]
-	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 Param explanation:
 
