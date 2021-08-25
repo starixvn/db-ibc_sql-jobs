@@ -20,6 +20,7 @@ AS
 		- 20210125@Percy: Add column BonusId [RedmineID: #149268]
 		- 20210301@Percy: Add column Revenue [RedmineID: #150398]
 		- 20210715@Percy: Add columns ProgressiveBet, ProgressiveWin [RedmineID: #158438]
+		- 20210824@Percy: Update TpUserName on Customer [RedmineID: #160657]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -71,6 +72,8 @@ BEGIN
 		--,PRIMARY KEY (TpId, TransId, GameType)
 	)
 
+	CREATE TABLE #tmpCustomer (CustId INT PRIMARY KEY, TpUserName VARCHAR(50))
+
 	WHILE
 	(
 		@QueueIDInput <> 0
@@ -94,6 +97,7 @@ BEGIN
 		BEGIN
 			-- Reset temp data
 			TRUNCATE TABLE #tmpTpBetRecord
+			TRUNCATE TABLE #tmpCustomer
 
 			BEGIN TRY
 				-- Parse XML Data
@@ -270,6 +274,20 @@ BEGIN
 					FROM #tmpTpBetRecord
 					WHERE DataType = 1
 				END
+
+				INSERT INTO #tmpCustomer (CustId, TpUserName)
+				SELECT CustId, TpUserName
+				FROM (
+					SELECT CustId, TpUserName, ROW_NUMBER() OVER(PARTITION BY CustId ORDER BY TpUserName) AS RN
+					FROM #tmpTpBetRecord
+				) t
+				WHERE RN = 1
+
+				-- Update TpUserName
+				UPDATE c WITH (ROWLOCK)
+				SET c.TpUserName = t.TpUserName
+				FROM dbo.Customer c
+					INNER JOIN #tmpCustomer t ON c.CustId = t.CustId
 
 				-- if parse xml and insert/update data successfully --> break out of while
 				BREAK

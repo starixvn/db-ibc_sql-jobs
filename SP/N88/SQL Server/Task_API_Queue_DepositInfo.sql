@@ -1,4 +1,7 @@
 /*<info serverAlias="DBN88-bodb_N88" isFunction="0" isNested="1"></info>*/
+USE bodb_N88
+GO
+
 ALTER PROCEDURE [dbo].[Task_API_Queue_DepositInfo]
 	@QueueIDInput	BIGINT = 0
 	,@ErrCode		INT = 0 OUTPUT
@@ -14,6 +17,7 @@ AS
 		- 20200716@Percy: Initialize SP [RedmineID: #137395]
 		- 20200818@Percy: Add new columns: Flag, Operator, UpdateTime [RedmineID: #137395]
 		- 20201109@Percy: Update FirstDeposit info [RedmineID: #145020]
+		- 20210824@Percy: Update UpdatedTime on Customer table [RedmineID: #160414]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -304,6 +308,7 @@ BEGIN
 						UPDATE c WITH (ROWLOCK)
 						SET c.FirstDepositDate = t.CreateTime
 							,c.FirstDepositAmount = t.Amount
+							,c.UpdatedTime = GETDATE()
 						FROM dbo.Customer c
 							INNER JOIN #tmpFirstDeposit t ON c.CustId = t.CustId
 					END

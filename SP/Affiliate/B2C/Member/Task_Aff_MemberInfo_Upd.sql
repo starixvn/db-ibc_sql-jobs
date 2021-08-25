@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20201111@Percy: Initialize SP [RedmineID: #145020]
 		- 20210323@Percy: Convert timezone [RedmineID: #151391]
+		- 20210819@Percy: Get System Name [RedmineID: #160414]
 */
 
 BEGIN
@@ -24,6 +25,7 @@ BEGIN
 	CREATE TABLE #Customer
 	(
 		CustId				INT
+		,IBCUsername		VARCHAR(50)
 		,ActStatus			TINYINT
 		,Status				TINYINT
 		,FirstDepositDate	DATETIME
@@ -31,8 +33,8 @@ BEGIN
 		,UpdatedTime		DATETIME
 	)
 
-	INSERT INTO #Customer (CustId, ActStatus, Status, FirstDepositDate, FirstDepositAmount, UpdatedTime)
-	SELECT CustId, ActStatus, Status, FirstDepositDate, FirstDepositAmount, UpdatedTime
+	INSERT INTO #Customer (CustId, IBCUsername, ActStatus, Status, FirstDepositDate, FirstDepositAmount, UpdatedTime)
+	SELECT CustId, TpSystemUserName, ActStatus, Status, FirstDepositDate, FirstDepositAmount, UpdatedTime
 	FROM bodb_N88.dbo.Customer WITH (NOLOCK)
 	WHERE SiteId = @SiteId
 		AND UpdatedTime >= @LastUpdatedTime
@@ -40,12 +42,14 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM #Customer)
 	BEGIN
 		UPDATE m WITH (ROWLOCK)
-		SET m.ActStatus = c.ActStatus
+		SET	m.IBCUserName = c.IBCUsername
+			,m.ActStatus = c.ActStatus
 			,m.Status = c.Status
 			,m.FirstDepositDate = DATEADD(HOUR, @TimeZone, c.FirstDepositDate)
-			,m.FirstDepositAmount = c.FirstDepositAmount
+			,m.FirstDepositAmount = c.FirstDepositAmount * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END
 		FROM dbo.MemberInfo m
 			INNER JOIN #Customer c ON m.CustId = c.CustId
+			INNER JOIN dbo.Exchange e WITH (NOLOCK) ON m.Currency = e.ExchangeId
 
 		SELECT @LastUpdatedTime = MAX(UpdatedTime) FROM #Customer
 

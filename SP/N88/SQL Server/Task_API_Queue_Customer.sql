@@ -1,4 +1,7 @@
 /*<info serverAlias="DBN88-bodb_N88" isFunction="0" isNested="1"></info>*/
+USE bodb_N88
+GO
+
 ALTER PROCEDURE [dbo].[Task_API_Queue_Customer]
 	@QueueIDInput	BIGINT = 0
 	,@ErrCode		INT = 0 OUTPUT
@@ -14,6 +17,7 @@ AS
 		- 20200520@Percy: Initialize SP [RedmineID: #133254]
 		- 20200604@Percy: Add new columns TpUserName, TpSystemUserName [RedmineID: #135372]
 		- 20210323@Percy: Update UpdatedTime for case update data [RedmineID: #151391]
+		- 20210824@Percy: Remove code get TpUserName (Get from TpBetRecord) [RedmineID: #160657]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -55,7 +59,6 @@ BEGIN
 		,RegTime			DATETIME
 		,IsTest				TINYINT
 		,Status				TINYINT
-		,TpUserName			VARCHAR(50)
 		,TpSystemUserName	VARCHAR(50)
 		,DataType			TINYINT -- 0: update, 1: insert
 		,PRIMARY KEY (CustId)
@@ -124,11 +127,10 @@ BEGIN
 					,t.LicenseeName = s.LicenseeName
 				FROM #tmpCustomer t
 					INNER JOIN dbo.ServerInfo s WITH (NOLOCK) ON t.SiteId = s.SiteId
-				
+
 				-- Update TpUserName, TpSystemUserName
 				UPDATE t
-				SET	t.TpUserName = t.SiteName  + '_' + CONVERT(VARCHAR(20), t.custid)
-					,t.TpSystemUserName = c.username
+				SET t.TpSystemUserName = c.username
 				FROM #tmpCustomer t
 					INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.LicenseeName + '$' + t.SiteName + '_' + CONVERT(VARCHAR(20), t.custid) = c.username2 
 				
@@ -151,7 +153,6 @@ BEGIN
 					OR ISNULL(t.RegTime, '') <> ISNULL(b.RegTime, '')
 					OR ISNULL(t.IsTest, 0) <> ISNULL(b.IsTest, 0)
 					OR ISNULL(t.Status, 0) <> ISNULL(b.Status, 0)
-					OR ISNULL(t.TpUserName, '') <> ISNULL(b.TpUserName, '')
 					OR ISNULL(t.TpSystemUserName, '') <> ISNULL(b.TpSystemUserName, '')
 				
 				IF @@ROWCOUNT <> 0
@@ -171,7 +172,6 @@ BEGIN
 							,b.RegTime = t.RegTime
 							,b.IsTest = t.IsTest
 							,b.Status = t.Status
-							,b.TpUserName = t.TpUserName
 							,b.TpSystemUserName = t.TpSystemUserName
 							,b.UpdatedTime = @CurrentDate
 						FROM dbo.Customer b
@@ -196,7 +196,6 @@ BEGIN
 							,RegTime
 							,IsTest
 							,Status
-							,TpUserName
 							,TpSystemUserName
 						)
 						SELECT
@@ -212,7 +211,6 @@ BEGIN
 							,RegTime
 							,IsTest
 							,Status
-							,TpUserName
 							,TpSystemUserName
 						FROM #tmpCustomer
 						WHERE DataType = 1
