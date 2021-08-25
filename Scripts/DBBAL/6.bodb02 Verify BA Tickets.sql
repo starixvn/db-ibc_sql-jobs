@@ -39,6 +39,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Call Job
 		@os_run_priority=0, @subsystem=N'TSQL', 
 		@command=N'
 --Run Jobs BA Tickets Checking
+
 EXEC [Task_BATransaction_CheckAndCorrect]', 
 		@database_name=N'bodb02', 
 		@flags=0
