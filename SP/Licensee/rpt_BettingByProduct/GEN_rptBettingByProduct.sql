@@ -88,6 +88,7 @@ AS
 		- 20210422@Danny: Enhance step to Generate rpt_BettingByProduct with Rpt_Betting datasource [Redmine: #153805]
 		- 20210707@Danny: Vgaming - Free bets and Jackpot prize integration [Redmine: #156185]
 		- 20210720@Sophia: Add Saba Promotion - 17005 - Promotion for Licensee [Redmine: #155388]
+		- 20210827@Danny: Update SystemSetting after rptBettingbyProduct step done [redmine: #151993]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -505,6 +506,17 @@ BEGIN
 				ELSE 111
 			  END
 	END
+
+	DECLARE @VValue VARCHAR(200)
+
+	SELECT @VValue = CAST(MAX(rptDate) AS VARCHAR(200))  
+	FROM [dbo].[rpt_BettingByProduct] WITH(NOLOCK)
+
+	UPDATE t 
+	SET  t.VValue = @VValue
+	FROM bodb02.dbo.SystemSettings t WITH(ROWLOCK,UPDLOCK)
+	WHERE  VName = 'MaxRptBettingByProduct'
+  
 
 	DROP TABLE #tmpData
 	DROP TABLE #BettypeProductMapping
