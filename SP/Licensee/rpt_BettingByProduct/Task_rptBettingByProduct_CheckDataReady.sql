@@ -14,8 +14,8 @@ AS
 BEGIN 
 	SET NOCOUNT ON 
 	
-	DECLARE @checkDate SMALLDATETIME, @IsDataYesterdayReady BIT = 0 
-	DECLARE @yesterday SMALLDATETIME = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
+	DECLARE @checkDate DATE, @IsDataYesterdayReady BIT = 0 
+	DECLARE @yesterday DATE = DATEADD(DAY,-1, CURRENT_TIMESTAMP) 
 
 	SELECT @checkDate = CAST(VValue AS DATE)
 	FROM  bodb02.dbo.SystemSettings  WITH (NOLOCK)
