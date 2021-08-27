@@ -509,7 +509,7 @@ BEGIN
 
 	DECLARE @VValue VARCHAR(200)
 
-	SELECT @VValue = CAST(MAX(rptDate) AS VARCHAR(200))  
+	SELECT @VValue = CONVERT (VARCHAR(200),MAX(rptDate),120)
 	FROM [dbo].[rpt_BettingByProduct] WITH(NOLOCK)
 
 	UPDATE t 
