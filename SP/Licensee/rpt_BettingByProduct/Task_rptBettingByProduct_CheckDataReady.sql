@@ -22,7 +22,7 @@ BEGIN
 	WHERE VName = 'MaxRptBettingByProduct'
  
 	---Has data at sum table and all steps of the Job are done
-	IF @checkDate = @yesterday
+	IF @checkDate >= @yesterday
 	BEGIN
 		SELECT @IsDataYesterdayReady = 1
 	END 
