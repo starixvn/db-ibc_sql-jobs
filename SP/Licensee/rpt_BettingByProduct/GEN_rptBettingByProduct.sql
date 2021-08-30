@@ -323,6 +323,7 @@ BEGIN
 			WHERE ProductID = 31
 				AND SumToThirdPartyDate IS NOT NULL
 				AND SumToBettingProductDate IS NULL
+				AND WinlostDate < @date2
 
 			;WITH WLDate AS (	SELECT @date AS [Date]
 								UNION ALL
