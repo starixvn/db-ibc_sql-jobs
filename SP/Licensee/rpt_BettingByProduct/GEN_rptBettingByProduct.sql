@@ -511,6 +511,7 @@ BEGIN
 
 	SELECT @VValue = CONVERT (VARCHAR(10),MAX(rptDate),120)
 	FROM [dbo].[rpt_BettingByProduct] WITH(NOLOCK)
+	WHERE ProductID NOT IN (10, 11, 15, 31)
 
 	UPDATE t 
 	SET  t.VValue = @VValue
