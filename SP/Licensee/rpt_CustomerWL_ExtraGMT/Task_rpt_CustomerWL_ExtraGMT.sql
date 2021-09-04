@@ -5,7 +5,7 @@ AS
 
 /*
 	Created: 20200601@Percy
-	DB: DBLIC-bodb_LicenseeReport
+	DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	Task: Gen data into rpt_CustomerWL_ExtraGMT
 
 	Revisions:

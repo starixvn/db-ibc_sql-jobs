@@ -5,7 +5,7 @@ AS
 Created: 20150512@Winnie
 Task : 
 Description: Get members break rules BA and send mail to related person.
-DB: DBLIC.bodb_licensee, DBACC.bodb_Licensee, DB042.bodb_Licensee"
+DB: DBLIC.bodb_licensee, DBACC.bodb_Licensee, DB042.bodb_Licensee, DBBAL-bodb_Licensee
 Original:
 
 Revisions:

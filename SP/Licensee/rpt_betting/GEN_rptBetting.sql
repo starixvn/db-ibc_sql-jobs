@@ -8,7 +8,7 @@ AS
 /*
 	Created: 20110517@Elly
 	Task: Generate data into rpt_Betting 
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 	Revisions:
 		20110708@Elly: Process data of Fee and Comm

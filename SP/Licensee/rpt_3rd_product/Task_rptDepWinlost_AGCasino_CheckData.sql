@@ -10,7 +10,7 @@ AS
 /*
 	Created: 20170530@Paul
 	Task : Check & correct data of rptDepWinlost_AGCasino
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	Original:
 	Revisions:
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]

@@ -13,7 +13,7 @@ AS
 /*
 	Created by Percy
 	Date: 2017-11-17
-	DB: DBPTCS.bodb_PlaytechCS
+	DB: DBPTCS.bodb_PlaytechCS, DBBAL-bodb_PlaytechCS
 	Task:
 
 	Revisions:

@@ -8,7 +8,7 @@ AS
 /*
 	Created: 20170530@Paul
 	Task: Check & correct data of rptDepWinlost_ThirdParty - GD
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	
 	Revisions:
 		- 20180406@Harper: Check & correct data of rptDepWinlost_ThirdParty - Exchange [RedmineID: #92485]

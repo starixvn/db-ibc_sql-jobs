@@ -11,7 +11,7 @@ AS
 
 /*
 	Created: 20190401@Percy
-	DB: DBPTCS.bodb_PlaytechCS
+	DB: DBPTCS.bodb_PlaytechCS, DBBAL-bodb_PlaytechCS
 	Task: Import xml data for checking data monthly
 
 	Revisions:

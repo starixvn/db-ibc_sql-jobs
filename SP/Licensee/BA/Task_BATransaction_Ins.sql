@@ -7,7 +7,7 @@ AS
 	Created by:[Henry]
 	Date: 2011-06-20
 	Task: Insert BA Bets
-	DB: DBEXT.bodb02, DBACC.bodb02, DBBOF.bodb02
+	DB: DBEXT.bodb02, DBACC.bodb02, DBBOF.bodb02, DBBAL-bodb02
 
 	Revisions:
 		- 20110824@Henry: Change the range of the bettype (not between 31 and 120)

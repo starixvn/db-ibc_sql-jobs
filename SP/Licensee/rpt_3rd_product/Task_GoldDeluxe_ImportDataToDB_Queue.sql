@@ -11,7 +11,7 @@ AS
 
 /*
 	Created: 20161227@Francis
-	DB: DBPTCS.bodb_PlaytechCS
+	DB: DBPTCS-bodb_PlaytechCS, DBBAL-bodb_PlaytechCS
 	Task: Gold Deluxe - Import raw data from API - Process queue
 
 	Revisions:

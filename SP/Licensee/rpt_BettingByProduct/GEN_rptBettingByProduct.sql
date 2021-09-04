@@ -14,7 +14,7 @@ AS
 /*
 	Created: 20150710@Victor
 	Task: Generate data for rpt_BettingByProduct
-	DB: DBLIC/bodb_LicenseeReport
+	DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	Param's Explanation:
 		@DataSource = 'Rpt_Betting'
 					= 'SeparatedProduct'

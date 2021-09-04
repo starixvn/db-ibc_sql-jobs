@@ -6,7 +6,7 @@ AS
 /*	
 	Create: 20150323@Patrick
 	Task: Daily summary for 3rd products
-	DB: DBLIC.bodb_3rdProduct
+	DB: DBLIC-bodb_3rdProduct, DBBAL-bodb_3rdProduct
 	Param's Explanation:
 		• @winlostdate: The date need to summary
 

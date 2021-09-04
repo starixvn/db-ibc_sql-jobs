@@ -9,7 +9,7 @@ AS
 /*
 Created:
 Task:
-DB: DBLIC.bodb_LicenseeReport
+DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 Revisions:
     -20120423@Jim: Add more information for BARM agent 

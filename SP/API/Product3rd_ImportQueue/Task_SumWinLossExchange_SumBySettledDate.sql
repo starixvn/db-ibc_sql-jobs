@@ -10,7 +10,7 @@ AS
 /*
 	Created by Percy
 	Date: 2017-11-17
-	DB: DBLIC.bodb_3rdProduct
+	DB: DBLIC.bodb_3rdProduct, DBBAL-bodb_3rdProduct
 	Task:
 
 	Revisions:

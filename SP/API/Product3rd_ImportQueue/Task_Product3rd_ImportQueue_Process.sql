@@ -4,7 +4,7 @@ AS
 
 /*
 	Created: 20171218@Percy
-	DB: DBPTCS.bodb_PlaytechCS
+	DB: DBPTCS.bodb_PlaytechCS, DBBAL-bodb_PlaytechCS
 	Task: Import raw data from Product3rd_ImportQueue
 
 	Revisions:

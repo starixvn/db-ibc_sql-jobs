@@ -7,7 +7,7 @@ AS
 /*
 	Created: 20150226@Francis
 	Task: Generate data for bodb_LicenseeReport.dbo.rpt_BettingBySport (for Muay Thai)
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 	Revisions:
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]

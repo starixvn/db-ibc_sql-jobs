@@ -8,7 +8,7 @@ AS
 /*
 	 Creator: 20150731@Florent
 	 Task: Generate data for MicroGaming Casino
-	 DB: DBLIC/bodb_LicenseeReport
+	 DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	 Revisions: 		
 		- 20150930@Florent: support Microgaming RNG
 		- 20151208@Jim: seperate MicroGame into 2 products (#45454)

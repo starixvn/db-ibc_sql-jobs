@@ -11,7 +11,7 @@ AS
 /*
 	Created: 20170419@Harper
 	Description: Daily summary data of Cashout [RedmineID: #71727]
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 	Revisions:
 		- 20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]

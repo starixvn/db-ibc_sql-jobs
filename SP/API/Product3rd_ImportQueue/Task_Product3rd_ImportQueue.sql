@@ -12,7 +12,7 @@ AS
 
 /*
 	Created: 20171117@Percy
-	DB: DBPTCS.bodb_PlaytechCS
+	DB: DBPTCS.bodb_PlaytechCS, DBBAL-bodb_PlaytechCS
 	Task: Insert XML Data into Product3rd_ImportQueue
 
 	Revisions:

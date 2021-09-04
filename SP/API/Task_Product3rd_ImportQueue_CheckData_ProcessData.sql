@@ -11,7 +11,7 @@ AS
 
 /*
 	Created: 20190401@Percy
-	DB: DBLIC.bodb_3rdProduct
+	DB: DBLIC.bodb_3rdProduct, DBBAL-bodb_3rdProduct
 	Task: Parse xml data for checking data monthly
 
 	Revisions:

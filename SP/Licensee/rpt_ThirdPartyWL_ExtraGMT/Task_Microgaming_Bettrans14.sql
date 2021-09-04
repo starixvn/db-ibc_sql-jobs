@@ -8,7 +8,7 @@ AS
 /*
 	 Creator: 20150731@Florent
 	 Task: Generate data for MicroGaming from bettrans14
-	 DB: DBLIC/bodb_LicenseeReport
+	 DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	 Revisions: 		
 	 - 20151208@Jim: separate MicroGame into 2 products (#45454)
 	 - 20160422@Francis: add Progressive Contribution and Progressive Payout for Microgaming RNG

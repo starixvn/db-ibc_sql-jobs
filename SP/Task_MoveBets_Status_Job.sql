@@ -8,7 +8,7 @@ AS
 /*
 	Created by 20180305@Percy
     Task: MB has done yet?
-    DB: DBEXT.bodb02, DBAGE.bodb02, DBACC.bodb02
+    DB: DBEXT.bodb02, DBAGE.bodb02, DBACC.bodb02, DBBAL-bodb02
 
 	Revisions:
 		- 20180305@Percy: Initialize SP [RedmineID: #83787]

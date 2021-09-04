@@ -9,7 +9,7 @@ AS
 /*
 	Created by Percy
 	Date: 2018-01-05
-	DB: DBLIC.bodb_3rdProduct
+	DB: DBLIC.bodb_3rdProduct, DBBAL-bodb_3rdProduct
 	Task: Insert winlostdate if it's not summarized
 
 	Revisions:

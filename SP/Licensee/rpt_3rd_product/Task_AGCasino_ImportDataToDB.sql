@@ -17,7 +17,7 @@ AS
 Created: 20140909@Victor
 Task : [Task_AGCasino_ImportDataToDB]
 Description: Pulling AG Casino bet tickets from API
-DB: DBPTCS.bodb_PlaytechCS
+DB: DBPTCS.bodb_PlaytechCS, DBBAL-bodb_PlaytechCS
 
 Original:
 

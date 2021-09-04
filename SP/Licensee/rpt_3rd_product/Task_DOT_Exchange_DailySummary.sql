@@ -7,7 +7,7 @@ AS
 /*   
 	Created: 20171220@Harper
 	Task: Summary Exchange data and insert into rptDepWinlost_ThirdParty
-	DB: DBLIC/bodb_3rdproduct
+	DB: DBLIC-bodb_3rdproduct, DBBAL-bodb_3rdproduct
 	
 	Revisions:	
 		- 20171220@Harper: Create new SP [RedmineID: #86640]

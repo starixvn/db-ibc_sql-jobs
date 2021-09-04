@@ -13,7 +13,7 @@ AS
 /*    
  Creator:20150807@Sophia  
  Task: Get Move bets day by Schedule   
- DB: DBTXN/bodb02  
+ DB: DBTXN-bodb02, DBBAL-bodb02
     
  Revisions:     
   20150925@Harris: skip move bet for Balance Issue  

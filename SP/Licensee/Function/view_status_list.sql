@@ -1,10 +1,10 @@
-﻿/*<info serverAlias="DBLIC-bodb_licensee,DBBAL-bodb_licensee" selecters="bodbAdminNet" viewers="" isFunction="1" isNested="0"></info>*/
+﻿/*<info serverAlias="DBLIC-bodb_licensee,DBBAL-bodb_licensee" selecters="bodbAdminNet" viewers="" isFunction="" isNested="0"></info>*/
 CREATE VIEW [dbo].[view_status_list]
 AS
 /*
     Created: 20110621@Don
     Task: Get list of status
-    DB: DB052.bodb_Licensee
+    DB: DBLIC.bodb_Licensee, DBBAL-bodb_licensee
 
     Revisions:
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]

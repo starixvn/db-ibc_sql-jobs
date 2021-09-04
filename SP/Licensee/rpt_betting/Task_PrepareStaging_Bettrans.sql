@@ -11,7 +11,7 @@ AS
 /*
 	Created: 20191205@Percy
 	Task: Gen data for bettrans staging
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 	Revisions:
 		- 20191205@Percy: Split code from Task_PrepareStaging and Enhance performance [RedmineID: #125028]

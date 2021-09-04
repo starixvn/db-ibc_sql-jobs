@@ -10,7 +10,7 @@ AS
 /*
 	Created: 20140313@Winnie
 	Task: Summary GoldDeluxe data and insert into rptDepWinlost_ThirdParty
-	DB: DBPTCS/bodb_PlaytechCS
+	DB: DBPTCS-bodb_PlaytechCS, DBBAL-bodb_PlaytechCS
 	Original:
 	Revisions:
 		- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]

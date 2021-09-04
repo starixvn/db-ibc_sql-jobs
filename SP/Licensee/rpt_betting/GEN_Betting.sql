@@ -7,7 +7,7 @@ AS
 /*
     Created: 20111021@Don
     Task: 
-    DB: DBLIC.bodb_LicenseeReport
+    DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
     Revisions:
 		20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]

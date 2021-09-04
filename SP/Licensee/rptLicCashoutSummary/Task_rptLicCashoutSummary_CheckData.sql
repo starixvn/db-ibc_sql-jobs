@@ -10,7 +10,7 @@ AS
 /*
 	Created: 20170523@Paul
 	Task: Check & correct data of rptLicCashoutSummary - Check Member level only
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	
 	Revisions:
 		- 20181003@Bruce: LA - Should not include refund ticket for Cash Out Tickets [Redmine: #102578]

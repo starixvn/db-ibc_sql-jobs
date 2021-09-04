@@ -6,7 +6,7 @@ AS
 /*
 Created: Viet @ 20121031
 Task: clean up staging data to save diskspace
-DB: DBLIC.bodb_LicenseeReport
+DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 Revisions:
     -20170525@Paul: Check IsStagingBettrans flag before staging bettrans; insert sporttype, eventdate into staging match table [Redmine: #72914]

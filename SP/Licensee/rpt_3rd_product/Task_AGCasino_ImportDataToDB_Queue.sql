@@ -12,7 +12,7 @@ AS
 	Created: 20161227@Francis
 	Task : [Task_AGCasino_ImportDataToDB]
 	Description: Pulling GD bet tickets from API
-	DB: DBPTCS.bodb_PlaytechCS
+	DB: DBPTCS.bodb_PlaytechCS, DBBAL-bodb_PlaytechCS
 
 	Revisions:
 		- 20161229@Francis: Improve the way to retrieve XmlData [RedmineID: #68972]

@@ -10,7 +10,7 @@ AS
 /*
 Created: 20170522@Sophia
 Task: Check sum rpt_Betting_BA vs Staging bettrans table (Exclude separate wallet 3rd Product : AGC and GD) [Redmine: #72914]
-DB: DBLIC.bodb_LicenseeReport
+DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 Revisions:
 	- 20210816@Sophia: add DBBAL [Redmine: #154300]

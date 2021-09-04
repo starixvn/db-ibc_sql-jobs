@@ -9,7 +9,7 @@ AS
 /* 
 	Created by: 20170525@Sophia
 	Task: Check & correct data after move bet for rptBetting group [Redmine: #72914]
-	DB: DBLIC.bodb_LicenseeReport  
+	DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport 
 	Param's Explanation: 
 		@FromDate , @ToDaate :  NULL then check MovebetDays by Schedule 
 		@Step = 1 : Check and correct rpt_ThirdPartyWL_ExtraGMT and rpt_BettingBySport

@@ -13,7 +13,7 @@ AS
 /*
 Created: 20110517@Daniel
 Task: Generate data into rpt_Betting 
-DB: DBLIC.bodb_LicenseeReport
+DB: DBLIC.bodb_LicenseeReport,DBBAL-bodb_LicenseeReport
 
 Revisions:
 	20110726@Daniel: Process data for BA

@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb_LicenseeReport: DW - Generate Daily]    Script Date: 8/19/2021 10:18:20 AM ******/
+/****** Object:  Job [bodb_LicenseeReport: DW - Generate Daily]    Script Date: 9/4/2021 3:29:16 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 8/19/2021 10:18:20 AM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 9/4/2021 3:29:16 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -26,7 +26,7 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'DBLIC_bodb_LicenseeReport: D
 		@owner_login_name=N'sa', 
 		@notify_email_operator_name=N'StarixDBA', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Check Readiness]    Script Date: 8/19/2021 10:18:20 AM ******/
+/****** Object:  Step [Check Readiness]    Script Date: 9/4/2021 3:29:16 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check Readiness', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
@@ -38,10 +38,10 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check Re
 		@retry_interval=10, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
 		@command=N'EXEC bodb_LicenseeReport.dbo.Task_PostStaging', 
-		@database_name=N'bodb_LicenseeReport', 
+		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Process staging data]    Script Date: 8/19/2021 10:18:20 AM ******/
+/****** Object:  Step [Process staging data]    Script Date: 9/4/2021 3:29:16 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Process staging data', 
 		@step_id=2, 
 		@cmdexec_success_code=0, 
@@ -56,7 +56,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Process 
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [GEN report 3rd Product]    Script Date: 8/19/2021 10:18:20 AM ******/
+/****** Object:  Step [GEN report 3rd Product]    Script Date: 9/4/2021 3:29:16 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'GEN report 3rd Product', 
 		@step_id=3, 
 		@cmdexec_success_code=0, 
@@ -73,7 +73,7 @@ EXEC dbo.Task_DOT_3rd_DailySummary @WinlostDate = @WinlossDate',
 		@database_name=N'bodb_3rdProduct', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Generate Betting]    Script Date: 8/19/2021 10:18:20 AM ******/
+/****** Object:  Step [Generate Betting]    Script Date: 9/4/2021 3:29:16 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Generate Betting', 
 		@step_id=4, 
 		@cmdexec_success_code=0, 
@@ -88,7 +88,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Generate
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Generate rpt_BettingByProduct @ bodb_licenseeReport]    Script Date: 8/19/2021 10:18:20 AM ******/
+/****** Object:  Step [Generate rpt_BettingByProduct @ bodb_licenseeReport]    Script Date: 9/4/2021 3:29:16 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Generate rpt_BettingByProduct @ bodb_licenseeReport', 
 		@step_id=5, 
 		@cmdexec_success_code=0, 
@@ -107,7 +107,7 @@ EXEC dbo.GEN_rptBettingByProduct @fromDate, @toDate',
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Gen data for Microgaming Casino Report @bodb_LicenseeReport]    Script Date: 8/19/2021 10:18:20 AM ******/
+/****** Object:  Step [Gen data for Microgaming Casino Report @bodb_LicenseeReport]    Script Date: 9/4/2021 3:29:16 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen data for Microgaming Casino Report @bodb_LicenseeReport', 
 		@step_id=6, 
 		@cmdexec_success_code=0, 
@@ -132,7 +132,7 @@ END',
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Generate rpt_BettingBySport @ bodb_LicenseeReport]    Script Date: 8/19/2021 10:18:20 AM ******/
+/****** Object:  Step [Generate rpt_BettingBySport @ bodb_LicenseeReport]    Script Date: 9/4/2021 3:29:16 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Generate rpt_BettingBySport @ bodb_LicenseeReport', 
 		@step_id=7, 
 		@cmdexec_success_code=0, 
@@ -149,7 +149,7 @@ EXEC dbo.GEN_rptBettingBySport @Date = @WinlossDate',
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [POST staging :)]    Script Date: 8/19/2021 10:18:20 AM ******/
+/****** Object:  Step [POST staging :)]    Script Date: 9/4/2021 3:29:16 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'POST staging :)', 
 		@step_id=8, 
 		@cmdexec_success_code=0, 
@@ -183,7 +183,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'End of bu
 		@freq_recurrence_factor=0, 
 		@active_start_date=20110623, 
 		@active_end_date=99991231, 
-		@active_start_time=30000, 
+		@active_start_time=11500, 
 		@active_end_time=235959, 
 		@schedule_uid=N'7e0fef12-a6ec-446a-84f4-a8505827bd6c'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback

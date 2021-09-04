@@ -8,7 +8,7 @@ AS
 /*
 	Created: 20190401@Percy
 	Task: Check 3rd data has imported
-	DB: DBLIC.bodb_3rdProduct
+	DB: DBLIC.bodb_3rdProduct, DBBAL-bodb_3rdProduct
 
 	Revisions:
 		- 20190401@Percy: Initialize SP [RedmineID: #110692]

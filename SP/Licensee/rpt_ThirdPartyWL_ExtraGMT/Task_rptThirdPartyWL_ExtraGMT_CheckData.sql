@@ -8,7 +8,7 @@ AS
 /*
 	Created: 20170523@Paul
 	Task : Check & correct data of rpt_ThirdPartyWL_ExtraGMT
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	Original:
 	Revisions:
 		- 20181210@bruce: check Pragmatic data [#105723]

@@ -6,7 +6,7 @@ AS
 
 /*
 	Created: 20190329@Percy
-	DB: DBLIC.bodb_3rdProduct
+	DB: DBLIC.bodb_3rdProduct, DBBAL-bodb_3rdProduct
 	Task: Check Exchange Data
 
 	Revisions:

@@ -7,7 +7,7 @@ AS
 	Created by:[Henry]
 	Date: 2011-06-20
 	Task: Check missing BA tickets
-	DB: DBEXT.bodb02, DBACC.bodb02, DBBOF.bodb02
+	DB: DBEXT.bodb02, DBACC.bodb02, DBBOF.bodb02, DBBAL-bodb02
 
 	Revisions:
 		- 20110824@Henry: Insert the missing tickets if happen

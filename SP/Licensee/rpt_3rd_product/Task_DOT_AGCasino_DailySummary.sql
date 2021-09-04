@@ -8,7 +8,7 @@ AS
 /*   
 	Created: 20140911@Victor
 	Task: Summary AG Casino data and insert into rptDepWinlost_AGCasino
-	DB: DBACC/bodb02
+	DB: DBACC-bodb02, DBBAL-bodb02
 
 	Revisions:
 		- 20141017@Victor: remove RAISEERROR statement to avoid affection to rptDepWinlost Summary job
