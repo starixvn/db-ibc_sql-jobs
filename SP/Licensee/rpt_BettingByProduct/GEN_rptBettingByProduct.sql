@@ -92,6 +92,7 @@ AS
 		- 20210720@Sophia: Add Saba Promotion - 17005 - Promotion for Licensee [Redmine: #155388]
 		- 20210812@Percy: Get ProductCode from Product3rd [RedmineID: #159691]
 		- 20210827@Danny: Update SystemSetting after rptBettingbyProduct step done [redmine: #151993]
+		- 20210901@Percy: Exclude BA Product from code get rpt_Betting source [RedmineID: #159691]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -153,12 +154,13 @@ BEGIN
 		DECLARE @tmp_ProductCodes VARCHAR(MAX)
 		
 		SELECT @tmp_ProductCodes = COALESCE(@tmp_ProductCodes + ',', '') + ProductPrefix FROM bodb_Licensee.dbo.Product3rd WITH (NOLOCK)
-		WHERE ProductId NOT IN (1, 9, 12, 14, 16, 17, 23, 31)
+		WHERE ProductId NOT IN (1, 3, 9, 12, 14, 16, 17, 23, 31)
 			/*
 				Inactive products: 1 = RB, 9 = PTCS, 12 = VG, 14 = MGCLC, 17 = MGCRNG
 				Setting products: 16 = HF
 				Separate products (only Separate): 31 = BX
 				Special products: 23 = NG2
+				rpt_Betting_BA: 3 = BA
 			*/
 			AND (
 				@ProductCodes = ''
