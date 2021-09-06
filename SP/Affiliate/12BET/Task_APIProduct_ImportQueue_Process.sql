@@ -822,7 +822,7 @@ BEGIN
 						t.c.value('(bet/text())[1]', 'MONEY') AS Bet,
 						t.c.value('(revenue/text())[1]', 'MONEY') AS Revenue,
 						t.c.value('(ts/text())[1]', 'SMALLDATETIME') AS ts,			
-						CONVERT(DATE, t.c.value('(ts/text())[1]', 'SMALLDATETIME')) AS WinlostDate		
+						CONVERT(DATE, DATEADD(HOUR, 8, t.c.value('(ts/text())[1]', 'SMALLDATETIME'))) AS WinlostDate --Convert Timezone from GMT + 0 to GMT + 8
 				FROM @XmlData.nodes('root/Tickets') AS t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
