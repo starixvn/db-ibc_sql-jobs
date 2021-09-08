@@ -1,4 +1,6 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
+USE bodb_LicenseeReport
+GO
 
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
 	@WinLostDate SMALLDATETIME
@@ -97,6 +99,7 @@ AS
 		- 20210527@Hogan: Support Add 2 New Betfroms # $ [RedmineID: #155922]		
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
+		- 20210727@Percy: Add column apositiontaking [RedmineID: #155593]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -140,6 +143,7 @@ BEGIN
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
+		,[apositiontaking]
 		)
 	SELECT
 		@WinLostDate
@@ -276,6 +280,7 @@ BEGIN
 					AND BA.transid IS NOT NULL THEN b.actual_stake
 				ELSE 0
 			END) AS BABuyBackAmt
+		,b.apositiontaking
 	FROM
 		bodb02.dbo.bettrans14 AS b WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.custid = c.custid
@@ -380,6 +385,7 @@ BEGIN
 			WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$') THEN b.betfrom
 			ELSE ''
 		END
+		,b.apositiontaking
 
 	-- Agent Level (sum on member)
 	INSERT INTO dbo.rptLicWinloss2 (
@@ -413,6 +419,7 @@ BEGIN
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
+		,[apositiontaking]
 		)
 	SELECT
 		@WinLostDate
@@ -445,6 +452,7 @@ BEGIN
 		,b.betfrom
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
+		,b.apositiontaking
 	FROM
 		dbo.rptLicWinloss2 AS b WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.recommend = c.custid
@@ -466,6 +474,7 @@ BEGIN
 		,b.isBA
 		,b.isMobile
 		,b.betfrom
+		,b.apositiontaking
 
 	-- Master Level (sum on member)
 	INSERT INTO dbo.rptLicWinloss2
@@ -500,6 +509,7 @@ BEGIN
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
+		,[apositiontaking]
 		)
 	SELECT
 		@winlostdate
@@ -532,6 +542,7 @@ BEGIN
 		,b.betfrom
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
+		,b.apositiontaking
 	FROM
 		dbo.rptLicWinloss2 AS b WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.mrecommend = c.custid
@@ -552,6 +563,7 @@ BEGIN
 		,b.isBA
 		,b.isMobile
 		,b.betfrom
+		,b.apositiontaking
 
 	-- Super Level (Sum on member)
 	INSERT INTO dbo.rptLicWinloss2 (
@@ -585,6 +597,7 @@ BEGIN
 		,[betfrom]
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
+		,[apositiontaking]
 		)
 	SELECT
 		@winlostdate
@@ -617,6 +630,7 @@ BEGIN
 		,b.betfrom
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
+		,b.apositiontaking
 	FROM
 		dbo.rptLicWinloss2 AS b WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.srecommend = c.custid
@@ -636,5 +650,6 @@ BEGIN
 		,b.isBA
 		,b.isMobile
 		,b.betfrom
+		,b.apositiontaking
 END
 GO
