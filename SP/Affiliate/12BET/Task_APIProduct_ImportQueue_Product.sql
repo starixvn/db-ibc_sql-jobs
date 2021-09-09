@@ -23,6 +23,7 @@ AS
 		- 20210602@Percy: Change formula of 12Topaz & BTi [RedmineID: #156324]
 		- 20210615@Malcolm: Integrate new product: IM Esports [RedmineID: #157048]
 		- 20210726@Malcolm: Adjust formula of KY Gaming and get data from bettrans_BTi2[RedmineID: #159061]
+		- 20210830@Malcolm: Adjust formula of BTi [RedmineID: #159061]
 */
 
 BEGIN
@@ -389,7 +390,7 @@ BEGIN
 				mi.AffId,
 				mi.IBCCustId,
 				mi.currency,
-				SUM(b.ValidStake) AS Turnover,
+				SUM(b.TotalStake) AS Turnover,
 				SUM(b.PL) AS Winloss
 			FROM dbo.bettrans_BTi2 b WITH (NOLOCK)
 				INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
@@ -399,7 +400,7 @@ BEGIN
 					WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
 						AND mi.IBCCustId = mr.IBCCustId
 				)
-				AND b.BetStatus IN ('Won', 'Lost', 'Half won', 'Half lost', 'Draw', 'Cashout')
+				AND b.BetStatus IN ('Won', 'Lost', 'Half won', 'Half lost', 'Draw')
 			GROUP BY
 				mi.AffId,
 				mi.IBCCustId,
