@@ -1,4 +1,4 @@
-/*<info serverAlias="DBAGE-bodb02" executers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBAGE-bodb02,DBBAL-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb02]
 GO
 
@@ -7,7 +7,7 @@ AS
 
 /*
 	Created: 20190416@Percy
-	DB: DBAGE.bodb02
+	DB: DBAGE.bodb02,DBBAL-bodb02
 	Task: Check data bettrans/bettrans14 is ready (MBBU)
 
 	Revisions:

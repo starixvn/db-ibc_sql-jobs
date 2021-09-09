@@ -21,7 +21,10 @@ TRUNCATE TABLE dbo.bettrans
 TRUNCATE TABLE dbo.match
 TRUNCATE TABLE dbo.outright
 
-DBCC SHRINKFILE (N'LicenseeReport_Staging_Data', 0, TRUNCATEONLY)
+IF @@SERVERNAME <> 'DBBAL'
+BEGIN 
+	DBCC SHRINKFILE (N'LicenseeReport_Staging_Data', 0, TRUNCATEONLY)
+END
 
 UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
 SET VValue = 0
