@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20210319@Danny: Initialize SP [RedmineID: #151319]
+		- 20210809@Danny: Add column bettype,betteam into rmBettransm_bk [RedmineID: #159304]
 */
 
 BEGIN
@@ -28,8 +29,8 @@ BEGIN
 
 		BEGIN TRY
 			DECLARE @SQL NVARCHAR(MAX)
-			SELECT @SQL = 'SELECT transid,odds,stake,statusID,refno,winlostdate,matchid,matchdate
-							FROM OPENQUERY(DBARC, ''SELECT  transid,odds,stake,statusID,refno,winlostdate,matchid,matchdate
+			SELECT @SQL = 'SELECT transid,odds,stake,statusID,refno,winlostdate,matchid,matchdate,bettype,betteam
+							FROM OPENQUERY(DBARC, ''SELECT  transid,odds,stake,statusID,refno,winlostdate,matchid,matchdate,bettype,betteam
 													FROM bodb_archive.dbo.bettransm r WITH (NOLOCK)
 													WHERE r.winlostdate = ''''' +CONVERT(VARCHAR(50),@winlostdate,120)+ ''''''')'
 
@@ -42,7 +43,9 @@ BEGIN
 				refno,
 				winlostdate,
 				matchid,
-				matchdate
+				matchdate,
+				bettype,
+				betteam
 			)
 			EXEC (@SQL)
 
