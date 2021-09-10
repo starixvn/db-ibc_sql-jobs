@@ -1,4 +1,7 @@
 /*<info serverAlias="DBN88-bodb_N88" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
+USE bodb_N88
+GO
+
 ALTER PROCEDURE [dbo].[Task_N88_RepullData]
 	@WinlostDate	DATE = NULL
 	,@DataSource	VARCHAR(200) = ''
@@ -14,6 +17,7 @@ AS
 
 	Revisions:
 		- 20200525@Percy: Initialize SP [RedmineID: #155230]
+		- 20210909@Percy: Re-pull data every 6 hours [RedmineID: #155230]
 */
 
 BEGIN
@@ -22,9 +26,13 @@ BEGIN
 	IF @WinlostDate IS NULL
 		SET @WinlostDate = GETDATE()
 
+	DECLARE @RepullDate DATETIME
+
 	IF @IsManually = 0
 	BEGIN
-		IF EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'RepullData_Date' AND SValue = CONVERT(VARCHAR(10), @WinlostDate, 120))
+		SELECT @RepullDate = CONVERT(DATETIME, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'RepullData_Date'
+
+		IF DATEDIFF(HOUR, @RepullDate, GETDATE()) < 6
 			RETURN
 	END
 
@@ -53,7 +61,7 @@ BEGIN
 	INSERT INTO @tblDataSource (DataSource, KeyValue)
 	SELECT 'RebateMLog', CONVERT(VARCHAR(50), MIN(Id)) FROM dbo.RebateMLog WITH (NOLOCK) WHERE WinlostDate >= @WinlostDate
 
-	DELETE @tblDataSource WHERE KeyValue IS NULL
+	DELETE @tblDataSource WHERE KeyValue IS NULL OR (@DataSource = '' OR DataSource = @DataSource)
 
 	;WITH CTE_Id AS (
 		SELECT DataSource, ROW_NUMBER() OVER(ORDER BY (SELECT NULL)) AS Id
@@ -75,7 +83,7 @@ BEGIN
 
 	IF @IsManually = 0
 		UPDATE dbo.SystemSettings WITH (ROWLOCK)
-		SET SValue = CONVERT(VARCHAR(10), GETDATE(), 120)
+		SET SValue = CONVERT(VARCHAR(20), GETDATE(), 120)
 		WHERE SName = 'RepullData_Date'
 END
 GO
