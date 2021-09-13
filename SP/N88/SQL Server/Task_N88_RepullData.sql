@@ -36,7 +36,10 @@ BEGIN
 			RETURN
 	END
 
-	SELECT @WinlostDate = DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate), 0) -- first day of month
+	IF DAY(@WinlostDate) BETWEEN 1 AND 7
+		SELECT @WinlostDate = DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) - 1, 0) -- first day of last month
+	ELSE
+		SELECT @WinlostDate = DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate), 0) -- first day of month
 
 	DECLARE @Id TINYINT, @KeyValue VARCHAR(50)
 	DECLARE @tblDataSource TABLE (Id TINYINT, DataSource VARCHAR(200), KeyValue VARCHAR(50))
@@ -61,7 +64,7 @@ BEGIN
 	INSERT INTO @tblDataSource (DataSource, KeyValue)
 	SELECT 'RebateMLog', CONVERT(VARCHAR(50), MIN(Id)) FROM dbo.RebateMLog WITH (NOLOCK) WHERE WinlostDate >= @WinlostDate
 
-	DELETE @tblDataSource WHERE KeyValue IS NULL OR (@DataSource = '' OR DataSource = @DataSource)
+	DELETE @tblDataSource WHERE KeyValue IS NULL OR DataSource <> @DataSource
 
 	;WITH CTE_Id AS (
 		SELECT DataSource, ROW_NUMBER() OVER(ORDER BY (SELECT NULL)) AS Id
