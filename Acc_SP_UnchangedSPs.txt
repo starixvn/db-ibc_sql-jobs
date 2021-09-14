@@ -1,10 +1,3 @@
-SP\Task_ClearBalanceAllDownlines.sql
-SP\rptStatement\Task_DailyRptStatement_Job.sql
-
-
-
-
-
-
-
-
+SP\MBU\MoveBet\DBTXN-bodb02-Task_DailySummary.proc.sql
+SP\sum_winloss\Task_sum_winloss_14.sql
+SP\sum_winloss\Task_Sum_Winloss_Old.sql
