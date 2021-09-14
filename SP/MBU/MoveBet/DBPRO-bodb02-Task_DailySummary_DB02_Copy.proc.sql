@@ -51,7 +51,8 @@ AS
 		-- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		-- 20200909@Brice:		Add column color for table bingoBall [Redmine: #128414]
 		-- 20201009@Brice:		Add columns GapOddsCap1,GapOddsCap2 for table odds [Redmine: #143211]
-		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
+		-- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
+		-- 20210122@Brice:		change 6 columns of [Match3rd] - [Redmine: #159842]
 */
 
 BEGIN
@@ -445,8 +446,8 @@ SET NOCOUNT ON
 	-- 20171220@Billy -- New table [Match3rd_bk]
 	-- 20180122@Billy -- Add column [GameResultDate]
 	INSERT INTO	dbo.Match3rd14
-		(	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, HasLive, EventStatus, VendorEventStatus, CreateTime, UpdateTime, VendorEventDate, GameResultDate)
-	SELECT	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, HasLive, EventStatus, VendorEventStatus, CreateTime, UpdateTime, VendorEventDate, GameResultDate
+		(	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, EventStatus, CreateTime, UpdateTime, StartTime, MarketEndTime, EndTime, BetStatus)
+	SELECT	Match3rdId, League3rdId, HomeId, AwayId, EventDate, SportType, VendorMatchId, MatchNo, EventStatus, CreateTime, UpdateTime, StartTime, MarketEndTime, EndTime, BetStatus
 	FROM	dbo.Match3rd WITH (NOLOCK)
 	WHERE	EventDate = @winlostdate;
 
