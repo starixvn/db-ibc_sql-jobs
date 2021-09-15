@@ -151,7 +151,4 @@ GROUP BY
 	b.statusid,
 	b.livehomescore,
 	b.isBA
-GO
-GRANT EXECUTE ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam] AS [dbo]
+GO 

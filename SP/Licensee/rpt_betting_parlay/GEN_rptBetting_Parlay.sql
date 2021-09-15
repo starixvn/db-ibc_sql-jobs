@@ -163,5 +163,4 @@ BEGIN
 		,b.livehomescore
 		,b.isBA
 END
-GO
-GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_Parlay] TO [vnteam] AS [dbo]
+GO 
