@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptBettingParlay_CheckData] @WinlostDate SMALLDATETIME
 AS
 /*
@@ -11,6 +11,7 @@ AS
 	- 20170522@Paul: Check awinlost, comm - [Redmine: #76206]
 	- 20170703@Paul: Check more columns - [Redmine: #79262]
 	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 BEGIN
 	SET NOCOUNT ON

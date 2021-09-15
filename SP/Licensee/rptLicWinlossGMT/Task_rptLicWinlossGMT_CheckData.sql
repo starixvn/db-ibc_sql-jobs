@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptLicWinlossGMT_CheckData] 
 	@WinlostDate SMALLDATETIME
@@ -31,6 +31,7 @@ AS
 		- 20210412@Mark: Support Add New Betfrom 8 9 [RedmineID: #152158]
 		- 20210507@Mark: Support new betfrom and multiple selection on Platform filter [Redmine: #153102]
 		- 20210527@Hogan: Support Add 2 New Betfroms # $ [RedmineID: #155922]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300] 
 
 	EXEC Task_rptLicWinlossGMT_CheckData '2017-11-30'
 */

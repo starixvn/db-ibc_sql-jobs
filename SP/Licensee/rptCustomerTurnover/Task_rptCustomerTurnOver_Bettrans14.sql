@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans14] 
 	@Date SMALLDATETIME
@@ -30,6 +30,7 @@ AS
 		- 20200715@Kos: Extend Lottery bettype range [RedmineID: #137625] 
 		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN

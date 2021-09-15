@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
@@ -14,6 +15,7 @@ AS
 	 - 20161101@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	 - 20161121@Sophia: Correct fomular CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
 	 - 20180305@Harper: Implement CB free play ticket [RedmineID: #90768]
+	 - 20210816@Sophia: add DBBAL [Redmine: #154300]
 
  EXEC GEN_rptBetting_ColossusBets14 '2018-02-01', '2018-03-08'
 */

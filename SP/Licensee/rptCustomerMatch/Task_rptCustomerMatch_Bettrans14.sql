@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptCustomerMatch_Bettrans14] 
 	@Date SMALLDATETIME
@@ -20,6 +20,7 @@ AS
 		- 20200622@Sol: Archive VSRaceInfo - changed to use VSRaceInfo14 [RedmineID: #135963]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 		- 20210608@Kos: Add new column LiveIndicator [RedmineID: #156599]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN

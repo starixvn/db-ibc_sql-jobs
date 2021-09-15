@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
 USE bodb_LicenseeReport
 GO
 
@@ -100,6 +100,7 @@ AS
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
 		- 20210727@Percy: Add column apositiontaking [RedmineID: #155593]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */

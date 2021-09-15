@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptWinlostbyleague_CheckData]
 	@WinLostDate SMALLDATETIME
@@ -14,6 +14,7 @@ AS
 		- 20170522@Paul: Check awinlost, comm [Redmine: #76206]
 		- 20170703@Paul: Check more columns [Redmine: #79262]
 		- 20210608@Kos: Support SB, NG, VS, CO only [RedmineID: #156599]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN 
