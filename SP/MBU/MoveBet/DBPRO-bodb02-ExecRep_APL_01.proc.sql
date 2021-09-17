@@ -28,6 +28,7 @@ AS
 		- 20200729@Brice:	Add table ProviderExternalResultDetailES [Redmine: #138380]
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
+		- 20210914@Patrick: Support bitcoin project: Odds3rd & ResultDetail3rd [Redmine: #159842]
 */ 
 BEGIN
 
@@ -85,11 +86,18 @@ BEGIN
 		where matchid in (select matchid from match WITH(NOLOCK) where eventdate=@winlostdate)
 	END
 
-	-- delete ResultDetail
+	-- delete ResultDetail@match
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'ResultDetail3rd' AND type = 'U')
 	BEGIN
 		DELETE FROM ResultDetail3rd WITH(ROWLOCK)
 		WHERE matchid in (SELECT matchid FROM match WITH(NOLOCK) WHERE eventdate = @winlostdate)
+
+		-- delete ResultDetail@match3rd
+		IF OBJECT_ID('dbo.Match3rd', 'U') IS NOT NULL
+		BEGIN
+			DELETE FROM ResultDetail3rd WITH(ROWLOCK)
+			WHERE matchid in (SELECT m3rd.Match3rdId FROM dbo.Match3rd m3rd WITH(NOLOCK) WHERE m3rd.eventdate = @winlostdate)
+		END
 	END
 	
 	-- delete AutoPayoutResult
@@ -106,12 +114,20 @@ BEGIN
 		WHERE matchid in (SELECT matchid FROM match WITH(NOLOCK) WHERE eventdate = @winlostdate)
 	END
 
-	-- Delete Odds3rd
+	-- Delete Odds3rd@match
 	IF	EXISTS (SELECT 1 FROM sys.objects WHERE name = 'Odds3rd' AND type = 'U')
 	BEGIN
 		DELETE
 		FROM	dbo.Odds3rd WITH (ROWLOCK)
 		WHERE	matchid IN (SELECT matchid FROM dbo.match WITH (NOLOCK) WHERE eventdate = @Winlostdate);
+
+		-- Delete Odds3rd@match3rd
+		IF OBJECT_ID('dbo.Match3rd', 'U') IS NOT NULL
+		BEGIN
+			DELETE
+			FROM	dbo.Odds3rd WITH (ROWLOCK)
+			WHERE	matchid IN (SELECT m3rd.Match3rdId FROM dbo.Match3rd m3rd WITH (NOLOCK) WHERE m3rd.eventdate = @Winlostdate);
+		END;
 	END;
 
 	--	Delete oddsES

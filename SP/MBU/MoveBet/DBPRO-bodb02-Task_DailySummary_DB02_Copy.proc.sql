@@ -53,6 +53,7 @@ AS
 		-- 20201009@Brice:		Add columns GapOddsCap1,GapOddsCap2 for table odds [Redmine: #143211]
 		-- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 		-- 20210122@Brice:		change 6 columns of [Match3rd] - [Redmine: #159842]
+		-- 20210914@Patrick: Support bitcoin project: Odds3rd & ResultDetail3rd [Redmine: #159842]
 */
 
 BEGIN
@@ -63,6 +64,12 @@ SET NOCOUNT ON
 	insert into #__matchIdList(matchid)
 	select matchid
 	from dbo.match where eventdate = @winlostdate
+
+	--get data from Match3rd
+	create table #__match3rdIdList (rowId int identity(1,1), match3rdId int)
+	insert into #__match3rdIdList(match3rdId)
+	select Match3rdId
+	from dbo.Match3rd where eventdate = @winlostdate
 	
 	create table #__IdsList (rowId int identity(1,1) primary key, Id int)
 	create table #__tempData (id int)
@@ -367,12 +374,19 @@ SET NOCOUNT ON
 		waitfor delay '00:00:01'
 	end
 
+	--ResultDetail3rd@match&match3rd
 	truncate table #__IdsList
 	select @rowId = 0
+
 	insert into #__IdsList(Id)
 	select ResultID
 	from dbo.ResultDetail3rd with(nolock)
 	where matchid in (select t.matchid from #__matchIdList t)
+	union
+	select ResultID
+	from dbo.ResultDetail3rd with(nolock)
+	where matchid in (select t.match3rdId from #__match3rdIdList t)
+
 	while 1 = 1
 	begin
 		truncate table #__tempData
@@ -417,10 +431,16 @@ SET NOCOUNT ON
 
 	truncate table #__IdsList
 	select @rowId = 0
+
 	insert into #__IdsList(Id)
 	select oddsid
 	from dbo.Odds3rd with(nolock)
 	where matchid in (select t.matchid from #__matchIdList t)
+	union
+	select oddsid
+	from dbo.Odds3rd with(nolock)
+	where matchid in (select t.match3rdId from #__match3rdIdList t)
+
 	while 1 = 1
 	begin
 		truncate table #__tempData
@@ -526,6 +546,7 @@ SET NOCOUNT ON
 	drop table #__tempData
 	drop table #__IdsList
 	drop table #__matchIdList
+	drop table #__match3rdIdList
 
 END
 GO

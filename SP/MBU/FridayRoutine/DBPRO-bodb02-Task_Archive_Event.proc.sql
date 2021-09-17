@@ -48,6 +48,7 @@ AS
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 		- 20210310@Brice:		Add table AutoRefundResult_bk [Redmine: #149770]
+		- 20210914@Patrick: Support bitcoin project: Odds3rd & ResultDetail3rd [Redmine: #159842]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -143,6 +144,9 @@ BEGIN
 		INSERT INTO #DeletedList (id,IsDone)
 		SELECT ResultID,0 
 		FROM dbo.ResultDetail3rd14 WITH(NOLOCK) WHERE matchid IN (SELECT matchid FROM dbo.match14 WITH(NOLOCK) WHERE eventdate = @winlostdate)
+		UNION
+		SELECT ResultID,0 
+		FROM dbo.ResultDetail3rd14 WITH(NOLOCK) WHERE matchid IN (SELECT m3rd.Match3rdId FROM dbo.Match3rd14 m3rd WITH(NOLOCK) WHERE m3rd.eventdate = @winlostdate)
 
 		-- call subtask for looping & deleting data on ResultDetail3rd14
 		EXEC [dbo].[Task_Archive_Event] @winlostdate = @winlostdate ,@Action = 'subtask', @DeletedTarget = 'ResultDetail3rd14'
@@ -170,6 +174,9 @@ BEGIN
 		INSERT INTO #DeletedList (id,IsDone)
 		SELECT oddsID,0 
 		FROM dbo.Odds3rd14 WITH(NOLOCK) WHERE matchid IN (SELECT matchid FROM dbo.match14 WITH(NOLOCK) WHERE eventdate = @winlostdate)
+		UNION
+		SELECT oddsID,0 
+		FROM dbo.Odds3rd14 WITH(NOLOCK) WHERE matchid IN (SELECT m3rd.Match3rdId FROM dbo.Match3rd14 m3rd WITH(NOLOCK) WHERE m3rd.eventdate = @winlostdate)
 
 		-- call subtask for looping & deleting data on Odds3rd14
 		EXEC [dbo].[Task_Archive_Event] @winlostdate = @winlostdate ,@Action = 'subtask', @DeletedTarget = 'Odds3rd14'

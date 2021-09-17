@@ -1,7 +1,7 @@
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
-CREATE PROCEDURE	dbo.Task_Archive_Event_Copy
+ALTER PROCEDURE	dbo.Task_Archive_Event_Copy
 						@winlostdate		DATETIME
 					,	@TableName			NVARCHAR(128)	= ''
 AS
@@ -24,6 +24,7 @@ AS
 		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 		- 20210310@Brice:		Add table AutoRefundResult_bk [Redmine: #149770]
 		- 20210122@Brice:		change 6 columns of [Match3rd] - [Redmine: #159842]
+		- 20210914@Patrick: Support bitcoin project: Odds3rd & ResultDetail3rd [Redmine: #159842]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -251,7 +252,12 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 
 SELECT	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, Resourceid
 FROM	bodb02.dbo.ResultDetail3rd14 AS t1 WITH (NOLOCK)
-WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate)
+UNION
+SELECT	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, Resourceid
+FROM	bodb02.dbo.ResultDetail3rd14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match3rd14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.match3rdid AND t2.eventdate = @winlostdate)
+;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
 	END;
@@ -330,7 +336,13 @@ DECLARE	@winlostdate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @winlostdate,
 SELECT	oddsid, matchid, odds3rdid, bettype, hdp1, hdp2, odds1a, odds2a, oddsstatus, changetime, creator, com1, comx, com2, cs00, cs01, cs10, cs11, cs02, cs12, cs22, cs21, cs20, cs30, cs31, cs32
 	,	cs33, cs23, cs13, cs03, cs99, sporttype, cs04, cs05, Resourceid
 FROM	bodb02.dbo.Odds3rd14 AS t1 WITH (NOLOCK)
-WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);'');';
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate)
+UNION
+SELECT	oddsid, matchid, odds3rdid, bettype, hdp1, hdp2, odds1a, odds2a, oddsstatus, changetime, creator, com1, comx, com2, cs00, cs01, cs10, cs11, cs02, cs12, cs22, cs21, cs20, cs30, cs31, cs32
+	,	cs33, cs23, cs13, cs03, cs99, sporttype, cs04, cs05, Resourceid
+FROM	bodb02.dbo.Odds3rd14 AS t1 WITH (NOLOCK)
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match3rd14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.match3rdid AND t2.eventdate = @winlostdate)
+;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
 	END;
