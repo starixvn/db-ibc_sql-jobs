@@ -69,7 +69,7 @@ SET NOCOUNT ON
 	create table #__match3rdIdList (rowId int identity(1,1), match3rdId int)
 	insert into #__match3rdIdList(match3rdId)
 	select Match3rdId
-	from dbo.Match3rd where eventdate = @winlostdate
+	from dbo.Match3rd with(nolock) where eventdate = @winlostdate
 	
 	create table #__IdsList (rowId int identity(1,1) primary key, Id int)
 	create table #__tempData (id int)
