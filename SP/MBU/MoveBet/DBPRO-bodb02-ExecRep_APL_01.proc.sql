@@ -165,7 +165,7 @@ BEGIN
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;
 
-	--	Delete ResultDetailES
+	--	Delete ResultDetailES : [MatchID, ResourceID] -> Helen
 		-- 20181204@Billy --
 	IF	OBJECT_ID('dbo.ResultDetailES', 'U') IS NOT NULL
 	BEGIN;
@@ -174,7 +174,7 @@ BEGIN
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;
 
-	-- Delete [SMP_Market]
+	-- Delete [SMP_Market]: [MatchId, MarketId, VendorId] -> Helen
 		-- 20190325@Billy --
 	IF	OBJECT_ID('dbo.SMP_Market', 'U') IS NOT NULL
 	BEGIN;
@@ -183,7 +183,7 @@ BEGIN
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;
 
-	-- Delete [SMP_MarketSelection]
+	-- Delete [SMP_MarketSelection]: MarketSelectionId -> July
 		-- 20190325@Billy --
 	IF	OBJECT_ID('dbo.SMP_MarketSelection', 'U') IS NOT NULL
 	BEGIN;
@@ -192,7 +192,7 @@ BEGIN
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;
 
-	--	Delete oddsOS
+	--	Delete oddsOS: oddsid -> July
 		-- 20190828@Billy --
 	IF	OBJECT_ID('dbo.oddsOS', 'U') IS NOT NULL
 	BEGIN;
@@ -201,7 +201,7 @@ BEGIN
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;
 
-	--	Delete ResultDetailOS
+	--	Delete ResultDetailOS: [MatchID, ResourceID] -> Helen
 		-- 20190828@Billy --
 	IF	OBJECT_ID('dbo.ResultDetailOS', 'U') IS NOT NULL
 	BEGIN;
@@ -209,6 +209,8 @@ BEGIN
 		FROM	dbo.ResultDetailOS AS tbl
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;
+
+	--	Delete ProviderExternalResultDetailES: ProviderExternalId -> July
 	-----20200729@Brice:	Delete ProviderExternalResultDetailES-----
 	IF	OBJECT_ID('dbo.ProviderExternalResultDetailES', 'U') IS NOT NULL
 	BEGIN;
@@ -218,6 +220,7 @@ BEGIN
 	END;	
 	----/20200729@Brice:	Delete ProviderExternalResultDetailES-----
 
+	--	Delete ProviderExternalResultDetailOS: ProviderExternalId -> July
 	-----20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]-----
 	IF	OBJECT_ID('dbo.ProviderExternalResultDetailOS', 'U') IS NOT NULL
 	BEGIN;
@@ -227,6 +230,7 @@ BEGIN
 	END;	
 	----/20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]-----
 
+	--	Delete ProviderExternalResultDetail: ProviderExternalId -> July
 	-----20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]-----
 	IF	OBJECT_ID('dbo.ProviderExternalResultDetail', 'U') IS NOT NULL
 	BEGIN;
@@ -236,19 +240,19 @@ BEGIN
 	END;	
 	----/20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]-----
 	
-	-- delete match	
+	-- delete match	: matchid ->July
 	DELETE	tbl WITH (ROWLOCK)
 	FROM	dbo.match AS tbl
 	WHERE	eventdate = @Winlostdate;
 
-	-- delete outright
+	-- delete outright: orid ->July
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'outright' AND type = 'U')
 	BEGIN
 		delete from outright
 		where eventdate = @winlostdate AND oddsstatus = 'Completed'
 	END
 
-	--VSRaceInfo
+	--VSRaceInfo: EventID ->July
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'VSRaceInfo' AND type = 'U')
 	BEGIN
 		delete r with(rowlock)
@@ -259,21 +263,22 @@ BEGIN
 			where r.eventId = o.eventId AND eventdate = @winlostdate AND EventStatus = 'Completed'
 		)
 	END
-		
+
+	--VSOutright: Orid ->July
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'VSOutright' AND type = 'U')
 	BEGIN
 		delete from VSOutright
 		where eventdate = @winlostdate AND EventStatus = 'Completed'
 	END
 
-	-- delete EventInfo3rd
+	-- delete EventInfo3rd: EventInfo3rdID ->July
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'EventInfo3rd' AND type = 'U')
 	BEGIN
 		DELETE dbo.EventInfo3rd
 		WHERE eventdate = @winlostdate  
 	END
 	
-	-- Delete Match3rd
+	-- Delete Match3rd: Match3rdId->July
 		-- 20171221@Billy --
 	IF	OBJECT_ID('dbo.Match3rd', 'U') IS NOT NULL
 	BEGIN;
