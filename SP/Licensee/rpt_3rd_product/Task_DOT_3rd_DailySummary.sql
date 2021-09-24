@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdProduct" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_3rdProduct,DBBAL-bodb_3rdProduct" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DOT_3rd_DailySummary]
 	@winlostdate datetime
 AS
@@ -6,7 +6,7 @@ AS
 /*	
 	Create: 20150323@Patrick
 	Task: Daily summary for 3rd products
-	DB: DBLIC.bodb_3rdProduct
+	DB: DBLIC.bodb_3rdProduct,DBBAL-bodb_3rdProduct
 	Param's Explanation:
 		• @winlostdate: The date need to summary
 
@@ -14,6 +14,7 @@ AS
 	- 20150327@Winnie Add GoldDeluxe_DailySummary
 	- 20180102@Harper: Add separate product Exchange_DailySummary [RedmineID: #86640]
 	- 20181129@Percy: Remove linked-server DBPTCS [RedmineID: #105520]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 BEGIN
 	SET NOCOUNT ON	

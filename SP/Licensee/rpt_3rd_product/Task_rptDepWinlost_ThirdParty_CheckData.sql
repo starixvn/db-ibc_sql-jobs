@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptDepWinlost_ThirdParty_CheckData]
 	@WinlostDate		SMALLDATETIME,
 	@HasDataMismatch	TINYINT OUTPUT, --0: No mismatch; 1: Has real currencies; 2: UUS only
@@ -8,7 +8,7 @@ AS
 /*
 	Created: 20170530@Paul
 	Task: Check & correct data of rptDepWinlost_ThirdParty - GD
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport,DBBAL-bodb_LicenseeReport
 	
 	Revisions:
 		- 20180406@Harper: Check & correct data of rptDepWinlost_ThirdParty - Exchange [RedmineID: #92485]
@@ -18,6 +18,7 @@ AS
 		- 20190724@Percy: Remove adding DBLIC on OAS_ChargeInfo and related functions [RedmineID: #103658]
 		- 20200818@Percy: Change EventType's data type from smallint to int [RedmineID: #138524]
 		- 20210805@Sophia: Fix false alarm [Redmine: #159700]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	DECLARE @HasDataMismatch	TINYINT, @ProductID VARCHAR(MAX)
 	EXEC Task_rptDepWinlost_ThirdParty_CheckData @WinlostDate = '2018-04-09', @HasDataMismatch = @HasDataMismatch OUTPUT, @ProductIDs = @ProductID OUTPUT

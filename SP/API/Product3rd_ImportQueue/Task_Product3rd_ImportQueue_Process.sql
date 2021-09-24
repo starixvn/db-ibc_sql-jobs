@@ -1,10 +1,10 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Product3rd_ImportQueue_Process]
 AS
 
 /*
 	Created: 20171218@Percy
-	DB: DBPTCS.bodb_PlaytechCS
+	DB: DBPTCS.bodb_PlaytechCS,DBBAL-bodb_PlaytechCS
 	Task: Import raw data from Product3rd_ImportQueue
 
 	Revisions:
@@ -13,6 +13,7 @@ AS
 		- 20181003@Percy: Using colum JobType to apply Tip [RedmineID: #70177]
 		- 20200417@Percy: Integrate Novacash's products [RedmineID: #129873]
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN
