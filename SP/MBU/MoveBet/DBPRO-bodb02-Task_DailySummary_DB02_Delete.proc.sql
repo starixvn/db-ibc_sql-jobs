@@ -112,7 +112,17 @@ BEGIN
 	SELECT o.matchid
 	FROM Dot_Admin_Assignment_Operator o WITH (NOLOCK)
 		INNER JOIN #Match_tmp m ON m.Matchid = o.matchid
-
+	
+	IF DATEPART(weekday, @winlostdate) = 2
+	BEGIN
+		INSERT INTO #DeletedList (id,IsDone)
+		SELECT matchid
+		FROM Dot_Admin_Assignment_Operator o
+			LEFT JOIN #DeletedList d ON o.matchid = d.id
+		WHERE MatchID NOT IN (SELECT MatchID FROM match WITH(NOLOCK)) 
+			AND d.id IS NULL
+	END
+			
 	SET @rowcount = 1
 	WHILE @rowcount <> 0
 	BEGIN
