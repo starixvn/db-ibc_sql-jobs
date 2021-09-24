@@ -1,8 +1,8 @@
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
+/*<info serverAlias="DBPRO-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 CREATE PROCEDURE [dbo].[ExecRep_APL_01]
-	@Winlostdate DATETIME
+	@winlostdate		DATETIME
+	, @DeletedTarget	VARCHAR(100)	= ''
+	, @ids				VARCHAR(MAX)	= ''
 AS
 /*
 	Created by:	Sophia
@@ -29,30 +29,56 @@ AS
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 		- 20210914@Patrick: Support bitcoin project: Odds3rd & ResultDetail3rd [Redmine: #159842]
+		- 20210924@July:  Deleting event cause the table to be blocked [RedmineId: #113997]
 */ 
 BEGIN
 
 	SET NOCOUNT ON 
 	IF @@SERVERNAME = 'DBCLS1\SDBPROD' RETURN --- ProdDB of Apollo
-		
-
+	
 	IF NOT EXISTS (SELECT 1 FROM sysobjects WHERE name = 'match' AND type = 'U') RETURN -- no match table, do nothing
+	IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = @DeletedTarget AND type = 'U') RETURN
 
-	-- delete odds			
+	DECLARE @idList TABLE(id INT)
+	DECLARE @xmlData XML
+	SET @xmlData = CONVERT(XML, REPLACE('<root><r t="' + @ids + '"/></root>', '^', '"/><r t="'))
+
+	INSERT INTO @idList (id)
+	SELECT T.C.value('./@t', 'INT') AS id
+	FROM @xmlData.nodes('//r') AS T(C)
+	OPTION (OPTIMIZE FOR (@xmlData = NULL))
+
+	IF @DeletedTarget = 'odds'
+	BEGIN
+		DELETE FROM dbo.odds WHERE oddsid IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'bingoball'
+	BEGIN
+		DELETE FROM dbo.bingoball WHERE matchid IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'Dot_Admin_Assignment_Operator'
+	BEGIN
+		DELETE FROM dbo.Dot_Admin_Assignment_Operator WHERE id IN (SELECT id FROM @idList)
+		RETURN
+	END
+	/*
+	-- delete odds : Helen -> Done 			
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'odds' AND type = 'U')
 	BEGIN
 		delete from odds
 		where matchid in (select matchid from match where eventdate=@winlostdate)
 	END
 
-	-- delete bingoball
+	-- delete bingoball: Helen -> Done
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'BingoBall' AND type = 'U')
 	BEGIN
 		delete from BingoBall
 		where MatchID in (SELECT MatchID from Match where eventdate = @winlostdate)
 	END
 
-	--delete Dot_Admin_Assignment_Operator
+	--delete Dot_Admin_Assignment_Operator: Helen -> Done
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'Dot_Admin_Assignment_Operator' AND type = 'U')
 	BEGIN
 		delete from Dot_Admin_Assignment_Operator 
@@ -71,15 +97,15 @@ BEGIN
 	--	delete from SS_GameState
 	--	where matchid in (select matchid from match where eventdate=@winlostdate)
 	--END
-
-	-- delete MatchMaxbet
+	
+	-- delete MatchMaxbet: Helen
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'MatchMaxbet' AND type = 'U')
 	BEGIN
 		delete from MatchMaxbet WITH(ROWLOCK)
 		where matchid in (select matchid from match WITH(NOLOCK) where eventdate=@winlostdate)
 	END
 
-	-- delete ResultDetail
+	-- delete ResultDetail: Helen
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'ResultDetail' AND type = 'U')
 	BEGIN
 		delete from ResultDetail WITH(ROWLOCK)
@@ -100,14 +126,14 @@ BEGIN
 		END
 	END
 	
-	-- delete AutoPayoutResult
+	-- delete AutoPayoutResult: AutoPayoutResultId -> July
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'AutoPayoutResult' AND type = 'U')
 	BEGIN
 		DELETE FROM AutoPayoutResult WITH(ROWLOCK)
 		WHERE matchid in (SELECT matchid FROM match WITH(NOLOCK) WHERE eventdate = @winlostdate)
 	END
 	
-	-- delete ProviderResultDetail
+	-- delete ProviderResultDetail: ProviderResultDetailId ->July
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'ProviderResultDetail' AND type = 'U')
 	BEGIN
 		DELETE FROM ProviderResultDetail WITH(ROWLOCK)
@@ -130,7 +156,7 @@ BEGIN
 		END;
 	END;
 
-	--	Delete oddsES
+	--	Delete oddsES : oddsid -> July
 		-- 20181204@Billy --
 	IF	OBJECT_ID('dbo.oddsES', 'U') IS NOT NULL
 	BEGIN;
@@ -254,6 +280,6 @@ BEGIN
 		DELETE	dbo.Match3rd
 		WHERE	EventDate = @Winlostdate;
 	END;
+	*/
 END
 GO
-/*<info serverAlias="DBPRO-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
