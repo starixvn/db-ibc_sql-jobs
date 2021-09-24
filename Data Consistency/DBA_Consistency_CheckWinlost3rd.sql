@@ -13,6 +13,7 @@ AS
 	Revisions: 
 		- 20210524@July: Saba.club - Check winlost - Check Data Consistency - [Redmine:#155714]
 		- 20210614@July: Saba.club - Missing wrong winlost of yesterday ticket - Check Data Consistency - [Redmine:#156865]
+		- 20210924@July: Apply for VGaming product - [Redmine:#161760]
 	
 	Param's Expanation:
 */
@@ -27,7 +28,7 @@ BEGIN
 	SET @Today = CAST(GETDATE() AS DATE)
 	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
 
-	IF @ProductId = 200 -- Saba.Club
+	IF @ProductId IN (171,200) -- Vgaming, Saba.Club
 	BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM bodb02.dbo.bettransRNG WITH(NOLOCK) 
