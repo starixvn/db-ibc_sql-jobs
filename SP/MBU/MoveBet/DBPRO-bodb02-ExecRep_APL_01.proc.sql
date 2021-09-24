@@ -29,7 +29,7 @@ AS
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 		- 20210914@Patrick: Support bitcoin project: Odds3rd & ResultDetail3rd [Redmine: #159842]
-		- 20210924@July:  Deleting event cause the table to be blocked [RedmineId: #113997]
+		- 20210924@July:  Deleting event cause the table to be blocked [RedmineId: #160468]
 */ 
 BEGIN
 
@@ -43,10 +43,13 @@ BEGIN
 	DECLARE @xmlData XML
 	SET @xmlData = CONVERT(XML, REPLACE('<root><r t="' + @ids + '"/></root>', '^', '"/><r t="'))
 
-	INSERT INTO @idList (id)
-	SELECT T.C.value('./@t', 'INT') AS id
-	FROM @xmlData.nodes('//r') AS T(C)
-	OPTION (OPTIMIZE FOR (@xmlData = NULL))
+	IF ISNULL(@ids,'') <> ''
+	BEGIN
+		INSERT INTO @idList (id)
+		SELECT T.C.value('./@t', 'INT') AS id
+		FROM @xmlData.nodes('//r') AS T(C)
+		OPTION (OPTIMIZE FOR (@xmlData = NULL))
+	END
 
 	IF @DeletedTarget = 'odds'
 	BEGIN
@@ -63,6 +66,102 @@ BEGIN
 		DELETE FROM dbo.Dot_Admin_Assignment_Operator WHERE id IN (SELECT id FROM @idList)
 		RETURN
 	END
+	IF @DeletedTarget = 'ResultDetail3rd'
+	BEGIN
+		DELETE FROM dbo.ResultDetail3rd WHERE ResultID IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'AutoPayoutResult'
+	BEGIN
+		DELETE FROM dbo.AutoPayoutResult WHERE AutoPayoutResultId IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'ProviderResultDetail'
+	BEGIN
+		DELETE FROM dbo.ProviderResultDetail WHERE ProviderResultDetailId IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'Odds3rd'
+	BEGIN
+		DELETE FROM dbo.Odds3rd WHERE oddsid IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'oddsES'
+	BEGIN
+		DELETE FROM dbo.oddsES WHERE oddsid IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'SMP_MarketSelection'
+	BEGIN
+		DELETE FROM dbo.SMP_MarketSelection WHERE MarketSelectionId IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'oddsOS'
+	BEGIN
+		DELETE FROM dbo.oddsOS WHERE oddsid IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'ProviderExternalResultDetailES'
+	BEGIN
+		DELETE FROM dbo.ProviderExternalResultDetailES WHERE ProviderExternalId IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'ProviderExternalResultDetailOS'
+	BEGIN
+		DELETE FROM dbo.ProviderExternalResultDetailOS WHERE ProviderExternalId IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'ProviderExternalResultDetail'
+	BEGIN
+		DELETE FROM dbo.ProviderExternalResultDetail WHERE ProviderExternalId IN (SELECT id FROM @idList)
+		RETURN
+	END
+
+	
+
+
+
+
+
+
+
+	IF @DeletedTarget = 'match'
+	BEGIN
+		DELETE FROM dbo.match WHERE matchid IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'outright'
+	BEGIN
+		DELETE FROM dbo.outright WHERE eventdate = @winlostdate AND oddsstatus = 'Completed'
+		RETURN
+	END
+	IF @DeletedTarget = 'VSRaceInfo'
+	BEGIN
+		DELETE r WITH(ROWLOCK)
+		FROM dbo.VSRaceInfo r
+		WHERE EXISTS (
+			SELECT TOP 1 1
+			FROM dbo.VSOutright o WITH(ROWLOCK)
+			WHERE r.eventId = o.eventId AND eventdate = @winlostdate AND EventStatus = 'Completed'
+		)
+		RETURN
+	END
+	IF @DeletedTarget = 'VSOutright'
+	BEGIN
+		DELETE FROM VSOutright WHERE eventdate = @winlostdate AND EventStatus = 'Completed'
+		RETURN
+	END
+	IF @DeletedTarget = 'EventInfo3rd'
+	BEGIN
+		DELETE dbo.EventInfo3rd WHERE eventdate = @winlostdate  
+		RETURN
+	END
+	IF @DeletedTarget = 'Match3rd'
+	BEGIN
+		DELETE	dbo.Match3rd WHERE EventDate = @Winlostdate
+		RETURN
+	END
+
 	/*
 	-- delete odds : Helen -> Done 			
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'odds' AND type = 'U')
@@ -126,14 +225,14 @@ BEGIN
 		END
 	END
 	
-	-- delete AutoPayoutResult: AutoPayoutResultId -> July
+	-- delete AutoPayoutResult: AutoPayoutResultId -> July -> Done 	
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'AutoPayoutResult' AND type = 'U')
 	BEGIN
 		DELETE FROM AutoPayoutResult WITH(ROWLOCK)
 		WHERE matchid in (SELECT matchid FROM match WITH(NOLOCK) WHERE eventdate = @winlostdate)
 	END
 	
-	-- delete ProviderResultDetail: ProviderResultDetailId ->July
+	-- delete ProviderResultDetail: ProviderResultDetailId ->July -> Done 	
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'ProviderResultDetail' AND type = 'U')
 	BEGIN
 		DELETE FROM ProviderResultDetail WITH(ROWLOCK)
@@ -156,7 +255,7 @@ BEGIN
 		END;
 	END;
 
-	--	Delete oddsES : oddsid -> July
+	--	Delete oddsES : oddsid -> July -> Done 	
 		-- 20181204@Billy --
 	IF	OBJECT_ID('dbo.oddsES', 'U') IS NOT NULL
 	BEGIN;
@@ -183,7 +282,7 @@ BEGIN
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;
 
-	-- Delete [SMP_MarketSelection]: MarketSelectionId -> July
+	-- Delete [SMP_MarketSelection]: MarketSelectionId -> July -> Done 	
 		-- 20190325@Billy --
 	IF	OBJECT_ID('dbo.SMP_MarketSelection', 'U') IS NOT NULL
 	BEGIN;
@@ -192,7 +291,7 @@ BEGIN
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;
 
-	--	Delete oddsOS: oddsid -> July
+	--	Delete oddsOS: oddsid -> July -> Done 	
 		-- 20190828@Billy --
 	IF	OBJECT_ID('dbo.oddsOS', 'U') IS NOT NULL
 	BEGIN;
@@ -210,7 +309,7 @@ BEGIN
 		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
 	END;
 
-	--	Delete ProviderExternalResultDetailES: ProviderExternalId -> July
+	--	Delete ProviderExternalResultDetailES: ProviderExternalId -> July -> Done 
 	-----20200729@Brice:	Delete ProviderExternalResultDetailES-----
 	IF	OBJECT_ID('dbo.ProviderExternalResultDetailES', 'U') IS NOT NULL
 	BEGIN;
@@ -220,7 +319,7 @@ BEGIN
 	END;	
 	----/20200729@Brice:	Delete ProviderExternalResultDetailES-----
 
-	--	Delete ProviderExternalResultDetailOS: ProviderExternalId -> July
+	--	Delete ProviderExternalResultDetailOS: ProviderExternalId -> July -> Done 
 	-----20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]-----
 	IF	OBJECT_ID('dbo.ProviderExternalResultDetailOS', 'U') IS NOT NULL
 	BEGIN;
@@ -230,7 +329,7 @@ BEGIN
 	END;	
 	----/20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]-----
 
-	--	Delete ProviderExternalResultDetail: ProviderExternalId -> July
+	--	Delete ProviderExternalResultDetail: ProviderExternalId -> July -> Done 
 	-----20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]-----
 	IF	OBJECT_ID('dbo.ProviderExternalResultDetail', 'U') IS NOT NULL
 	BEGIN;
@@ -240,19 +339,19 @@ BEGIN
 	END;	
 	----/20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]-----
 	
-	-- delete match	: matchid ->July
+	-- delete match	: matchid ->July -> Done 
 	DELETE	tbl WITH (ROWLOCK)
 	FROM	dbo.match AS tbl
 	WHERE	eventdate = @Winlostdate;
 
-	-- delete outright: orid ->July
+	-- delete outright: orid ->July -> Done 
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'outright' AND type = 'U')
 	BEGIN
 		delete from outright
 		where eventdate = @winlostdate AND oddsstatus = 'Completed'
 	END
 
-	--VSRaceInfo: EventID ->July
+	--VSRaceInfo: EventID ->July -> Done 
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'VSRaceInfo' AND type = 'U')
 	BEGIN
 		delete r with(rowlock)
@@ -264,21 +363,21 @@ BEGIN
 		)
 	END
 
-	--VSOutright: Orid ->July
+	--VSOutright: Orid ->July -> Done 
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'VSOutright' AND type = 'U')
 	BEGIN
 		delete from VSOutright
 		where eventdate = @winlostdate AND EventStatus = 'Completed'
 	END
 
-	-- delete EventInfo3rd: EventInfo3rdID ->July
+	-- delete EventInfo3rd: EventInfo3rdID ->July -> Done 
 	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'EventInfo3rd' AND type = 'U')
 	BEGIN
 		DELETE dbo.EventInfo3rd
 		WHERE eventdate = @winlostdate  
 	END
 	
-	-- Delete Match3rd: Match3rdId->July
+	-- Delete Match3rd: Match3rdId->July -> Done 
 		-- 20171221@Billy --
 	IF	OBJECT_ID('dbo.Match3rd', 'U') IS NOT NULL
 	BEGIN;
