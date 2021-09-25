@@ -1,4 +1,4 @@
-/*<info serverAlias="DBACC-bodb02,DBBAL-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
 	@winlostdate DATETIME
@@ -8,7 +8,7 @@ AS
 /*   
 	Created: 20140911@Victor
 	Task: Summary AG Casino data and insert into rptDepWinlost_AGCasino
-	DB: DBACC-bodb02, DBBAL-bodb02
+	DB: DBACC/bodb02
 
 	Revisions:
 		- 20141017@Victor: remove RAISEERROR statement to avoid affection to rptDepWinlost Summary job
@@ -19,7 +19,6 @@ AS
 								1st -> 5th : Can Edit data of Previous month  and current Month
 								6th -> end of the month : Edit data of current month only
 		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
-		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 	Param's Explanation:
 		- @winlostdate: The date need to summary
 		- @IsManual: task run manual or auto
@@ -127,7 +126,6 @@ BEGIN TRY
 				GROUP BY b.CustID, b.currency, isVIPGame
 			END
 			ELSE -- Get data in bettrans_AGCasino_bk table
-			IF @@SERVERNAME <> 'DBBAL' 
 			BEGIN
 				INSERT INTO #TicketData (custid, sporttype, currency, isVipGame, turnover, drawTO, winlost, playercomm, BetCount, drawBetCount)
 				SELECT b.CustID, 
@@ -195,4 +193,5 @@ BEGIN CATCH
 	PRINT 'Error occured in AGCasino summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
-GO 
+GO
+GRANT EXECUTE ON [dbo].[Task_DOT_AGCasino_DailySummary] TO [dwrs2] AS [dbo]

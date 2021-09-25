@@ -1,4 +1,4 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_PlaytechCS]
 GO
 
@@ -9,12 +9,11 @@ AS
 /*
 	Created by Percy
 	Date: 2017-11-17
-	DB: DBPTCS.bodb_PlaytechCS,DBBAL-bodb_PlaytechCS
+	DB: DBPTCS.bodb_PlaytechCS
 	Task:
 
 	Revisions:
 		- 20171117@Percy: Initialize SP [RedmineID: #86477]
-		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN

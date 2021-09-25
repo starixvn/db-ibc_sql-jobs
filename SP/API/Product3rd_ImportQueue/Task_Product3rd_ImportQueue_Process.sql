@@ -1,10 +1,10 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Product3rd_ImportQueue_Process]
 AS
 
 /*
 	Created: 20171218@Percy
-	DB: DBPTCS.bodb_PlaytechCS, DBBAL-bodb_PlaytechCS
+	DB: DBPTCS.bodb_PlaytechCS
 	Task: Import raw data from Product3rd_ImportQueue
 
 	Revisions:
@@ -12,8 +12,7 @@ AS
 		- 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST - remove linked server DBLIC [redmine: #99855]
 		- 20181003@Percy: Using colum JobType to apply Tip [RedmineID: #70177]
 		- 20200417@Percy: Integrate Novacash's products [RedmineID: #129873]
-		- 20201012@Malcolm: Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
-		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 */
 
 BEGIN
@@ -71,7 +70,6 @@ BEGIN
 	END
 
 	-- Novacash's products
-	IF @@SERVERNAME <> 'DBBAL'
 	BEGIN
 		SELECT @ErrCode = 0, @ErrMsg = ''
 		EXEC bodb_3rdProduct.dbo.Task_Product3rd_ImportQueue_Novacash @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
@@ -102,7 +100,7 @@ BEGIN
 									) AS NVARCHAR(MAX) ) + N'</table>'
 			
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients		= 'percy.nguyen@starixvn.com;sophia.nguyen@starixvn.com;pontus@starixvn.com',
+			@recipients		= 'jamie.dao@starixvn.com;percy.nguyen@starixvn.com;pontus@starixvn.com',
 			@subject		= @subject,
 			@body			= @Msg,
 			@body_format	= 'HTML'

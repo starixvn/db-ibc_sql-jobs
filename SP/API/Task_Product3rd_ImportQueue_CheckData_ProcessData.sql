@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdProduct,DBBAL-bodb_3rdProduct" executers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBLIC-bodb_3rdProduct" executers="" isFunction="0" isNested="1"></info>*/
 USE [bodb_3rdProduct]
 GO
 
@@ -11,12 +11,11 @@ AS
 
 /*
 	Created: 20190401@Percy
-	DB: DBLIC.bodb_3rdProduct, DBBAL-bodb_3rdProduct
+	DB: DBLIC.bodb_3rdProduct
 	Task: Parse xml data for checking data monthly
 
 	Revisions:
 		- 20190401@Percy: Initialize SP [RedmineID: #110692]
-		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	Param's Explanation:
 		@QueueID: manually import

@@ -1,5 +1,9 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 
 ALTER PROCEDURE [dbo].[Task_rptDepWinlost_AGCasino_CheckData]
@@ -10,10 +14,9 @@ AS
 /*
 	Created: 20170530@Paul
 	Task : Check & correct data of rptDepWinlost_AGCasino
-	DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport
 	Original:
 	Revisions:
-		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN
@@ -64,7 +67,7 @@ BEGIN
 
 	SET @S_Count = @@ROWCOUNT;
 	
-	 INSERT INTO #Target(custid, currency, isVipGame, turnover, drawTO, winlost, BetCount, drawBetCount)
+	INSERT INTO #Target(custid, currency, isVipGame, turnover, drawTO, winlost, BetCount, drawBetCount)
 	SELECT	custid,
 			currency,
 			isVipGame,
@@ -73,10 +76,9 @@ BEGIN
 			winlost,
 			BetCount,
 			drawBetCount
-	FROM DBRPT.bodb_report.dbo.rptDepWinlost_AGCasino WITH(NOLOCK)
+	FROM DBACC.bodb_report.dbo.rptDepWinlost_AGCasino WITH(NOLOCK)
 	WHERE winlostdate = @WinlostDate
 		AND sporttype = 250;
- 
 
 	SET @T_Count = @@ROWCOUNT;
 

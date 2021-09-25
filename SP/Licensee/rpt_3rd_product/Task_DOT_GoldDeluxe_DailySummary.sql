@@ -1,4 +1,4 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE bodb_PlaytechCS
 GO
 
@@ -10,7 +10,7 @@ AS
 /*
 	Created: 20140313@Winnie
 	Task: Summary GoldDeluxe data and insert into rptDepWinlost_ThirdParty
-	DB: DBPTCS-bodb_PlaytechCS, DBBAL-bodb_PlaytechCS
+	DB: DBPTCS/bodb_PlaytechCS
 	Original:
 	Revisions:
 		- 20170116@Francis: Automatically sum data to sum table from raw table when sum range is out of job's range [RedmineID: #68972]
@@ -19,7 +19,6 @@ AS
 									6th -> end of the month : Edit data of current month only
 		- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
 		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
-		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	Param's Explanation:
 		- @winlostdate: The date need to summary
@@ -186,4 +185,5 @@ BEGIN CATCH
 	PRINT 'Error occured in Gold Deluxe summary data process: ERR_CODE: '+ CAST(ERROR_NUMBER() AS VARCHAR(20)) + ', ERR_MSG: ' + ERROR_MESSAGE()
 	RETURN
 END CATCH
-GO 
+GO
+GRANT EXECUTE ON [dbo].[Task_DOT_GoldDeluxe_DailySummary] TO [dwrs2] AS [dbo]
