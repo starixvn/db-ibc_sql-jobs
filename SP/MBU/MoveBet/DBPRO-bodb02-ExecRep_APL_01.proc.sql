@@ -1,7 +1,6 @@
 /*<info serverAlias="DBPRO-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 CREATE PROCEDURE [dbo].[ExecRep_APL_01]
-	@winlostdate		DATETIME
-	, @DeletedTarget	VARCHAR(100)	= ''
+	  @DeletedTarget	VARCHAR(100)	= ''
 	, @ids				VARCHAR(MAX)	= ''
 AS
 /*
@@ -163,33 +162,27 @@ BEGIN
 	END
 	IF @DeletedTarget = 'outright'
 	BEGIN
-		DELETE FROM dbo.outright WHERE eventdate = @winlostdate AND oddsstatus = 'Completed'
+		DELETE FROM dbo.outright WHERE orid IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'VSRaceInfo'
 	BEGIN
-		DELETE r WITH(ROWLOCK)
-		FROM dbo.VSRaceInfo r
-		WHERE EXISTS (
-			SELECT TOP 1 1
-			FROM dbo.VSOutright o WITH(ROWLOCK)
-			WHERE r.eventId = o.eventId AND eventdate = @winlostdate AND EventStatus = 'Completed'
-		)
+		DELETE FROM dbo.VSRaceInfo WHERE EventID IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'VSOutright'
 	BEGIN
-		DELETE FROM VSOutright WHERE eventdate = @winlostdate AND EventStatus = 'Completed'
+		DELETE FROM VSOutright WHERE Orid IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'EventInfo3rd'
 	BEGIN
-		DELETE FROM dbo.EventInfo3rd WHERE eventdate = @winlostdate  
+		DELETE FROM dbo.EventInfo3rd WHERE EventInfo3rdID IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'Match3rd'
 	BEGIN
-		DELETE FROM dbo.Match3rd WHERE EventDate = @Winlostdate
+		DELETE FROM dbo.Match3rd WHERE Match3rdId IN (SELECT id FROM @idList)
 		RETURN
 	END
 
