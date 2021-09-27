@@ -28,6 +28,7 @@ AS
 		- 20201030@July: Check Data Consistency - All products - exclude checking commission/discount of licensee tickets for rule 16 - [Redmine:#144533]
 		- 20210510@July: Check Data Consistency - VGaming & Creative Gaming - [Redmine:#154502]
 		- 20210527@July: Check Data Consistency - Exclue bettype BlackJack for VGaming - [Redmine:#155762]
+		- 20210924@July: Vgaming - Exclue bettype Casino Hold'em Poker - [Redmine:#161760]
 
 		Param's Expanation:
 */
@@ -447,7 +448,7 @@ BEGIN
 			WHERE b.productID = @ProductId
 				AND b.statusID IN (0,1)
 				AND b.transdate < DATEADD(MINUTE, -3, GETDATE())
-				AND b.gameID NOT IN (1622, 1631, 1634, 3820) --Exclude Saba.club(1622-Keno Pro Viet, 1631-Bola Kangtas, 1634-Blackjack) + VGaming(3820-Blackjack)
+				AND b.gameID NOT IN (1622, 1631, 1634, 3820, 3836) --Exclude Saba.club(1622-Keno Pro Viet, 1631-Bola Kangtas, 1634-Blackjack) + VGaming(3820-Blackjack, 3836-Casino Hold'em Poker)
 							 
 			IF @transId <> ''
 			BEGIN
