@@ -39,15 +39,18 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM sysobjects WHERE name = 'match' AND type = 'U') RETURN -- no match table, do nothing
 	IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = @DeletedTarget AND type = 'U') RETURN
 
-	DECLARE @idList TABLE(id INT)
+	DECLARE @idList TABLE(id INT, id2 VARCHAR(20), id3 INT)
 	DECLARE @xmlData XML
-	SET @xmlData = CONVERT(XML, REPLACE('<root><r t="' + @ids + '"/></root>', '^', '"/><r t="'))
 
 	IF ISNULL(@ids,'') <> ''
 	BEGIN
-		INSERT INTO @idList (id)
-		SELECT T.C.value('./@t', 'INT') AS id
-		FROM @xmlData.nodes('//r') AS T(C)
+		SET @xmlData = CONVERT(XML, @ids)
+
+		INSERT INTO @idList (id, id2, id3)
+		SELECT T.C.value('./@c1', 'INT') AS id
+			  ,T.C.value('./@c2', 'VARCHAR(20)') AS id2
+			  ,T.C.value('./@c3', 'INT') AS id3
+		FROM @xmlData.nodes('/root/r') AS T(C)
 		OPTION (OPTIMIZE FOR (@xmlData = NULL))
 	END
 
@@ -58,12 +61,28 @@ BEGIN
 	END
 	IF @DeletedTarget = 'bingoball'
 	BEGIN
-		DELETE FROM dbo.bingoball WHERE matchid IN (SELECT id FROM @idList)
+		DELETE tbl WITH (ROWLOCK)
+		FROM dbo.bingoball AS tbl
+		WHERE EXISTS (SELECT 1 FROM @idList i WHERE tbl.Matchid = i.id AND tbl.Seq = i.id3)
 		RETURN
 	END
 	IF @DeletedTarget = 'Dot_Admin_Assignment_Operator'
 	BEGIN
 		DELETE FROM dbo.Dot_Admin_Assignment_Operator WHERE id IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'MatchMaxbet'
+	BEGIN
+		DELETE tbl WITH (ROWLOCK)
+		FROM dbo.MatchMaxbet AS tbl
+		WHERE EXISTS (SELECT 1 FROM @idList i WHERE tbl.Matchid = i.id AND tbl.BetType = i.id3)
+		RETURN
+	END
+	IF @DeletedTarget = 'ResultDetail'
+	BEGIN
+		DELETE tbl WITH (ROWLOCK)
+		FROM dbo.ResultDetail AS tbl
+		WHERE EXISTS (SELECT 1 FROM @idList i WHERE tbl.Matchid = i.id AND tbl.ResourceID = i.id2)
 		RETURN
 	END
 	IF @DeletedTarget = 'ResultDetail3rd'
@@ -91,6 +110,20 @@ BEGIN
 		DELETE FROM dbo.oddsES WHERE oddsid IN (SELECT id FROM @idList)
 		RETURN
 	END
+	IF @DeletedTarget = 'ResultDetailES'
+	BEGIN
+		DELETE tbl WITH (ROWLOCK)
+		FROM dbo.ResultDetailES AS tbl
+		WHERE EXISTS (SELECT 1 FROM @idList i WHERE tbl.Matchid = i.id AND tbl.ResourceID = i.id2)
+		RETURN
+	END
+	IF @DeletedTarget = 'SMP_Market'
+	BEGIN
+		DELETE tbl WITH (ROWLOCK)
+		FROM dbo.SMP_Market AS tbl
+		WHERE EXISTS (SELECT 1 FROM @idList i WHERE tbl.Matchid = i.id AND tbl.MarketId = i.id2 AND tbl.VendorId = i.id3)
+		RETURN
+	END
 	IF @DeletedTarget = 'SMP_MarketSelection'
 	BEGIN
 		DELETE FROM dbo.SMP_MarketSelection WHERE MarketSelectionId IN (SELECT id FROM @idList)
@@ -99,6 +132,13 @@ BEGIN
 	IF @DeletedTarget = 'oddsOS'
 	BEGIN
 		DELETE FROM dbo.oddsOS WHERE oddsid IN (SELECT id FROM @idList)
+		RETURN
+	END
+	IF @DeletedTarget = 'ResultDetailOS'
+	BEGIN
+		DELETE tbl WITH (ROWLOCK)
+		FROM dbo.ResultDetailOS AS tbl
+		WHERE EXISTS (SELECT 1 FROM @idList i WHERE tbl.Matchid = i.id AND tbl.ResourceID = i.id2)
 		RETURN
 	END
 	IF @DeletedTarget = 'ProviderExternalResultDetailES'
@@ -116,15 +156,6 @@ BEGIN
 		DELETE FROM dbo.ProviderExternalResultDetail WHERE ProviderExternalId IN (SELECT id FROM @idList)
 		RETURN
 	END
-
-	
-
-
-
-
-
-
-
 	IF @DeletedTarget = 'match'
 	BEGIN
 		DELETE FROM dbo.match WHERE matchid IN (SELECT id FROM @idList)
@@ -153,69 +184,15 @@ BEGIN
 	END
 	IF @DeletedTarget = 'EventInfo3rd'
 	BEGIN
-		DELETE dbo.EventInfo3rd WHERE eventdate = @winlostdate  
+		DELETE FROM dbo.EventInfo3rd WHERE eventdate = @winlostdate  
 		RETURN
 	END
 	IF @DeletedTarget = 'Match3rd'
 	BEGIN
-		DELETE	dbo.Match3rd WHERE EventDate = @Winlostdate
+		DELETE FROM dbo.Match3rd WHERE EventDate = @Winlostdate
 		RETURN
 	END
 
-	/*
-	-- delete odds : Helen -> Done 			
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'odds' AND type = 'U')
-	BEGIN
-		delete from odds
-		where matchid in (select matchid from match where eventdate=@winlostdate)
-	END
-
-	-- delete bingoball: Helen -> Done
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'BingoBall' AND type = 'U')
-	BEGIN
-		delete from BingoBall
-		where MatchID in (SELECT MatchID from Match where eventdate = @winlostdate)
-	END
-
-	--delete Dot_Admin_Assignment_Operator: Helen -> Done
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'Dot_Admin_Assignment_Operator' AND type = 'U')
-	BEGIN
-		delete from Dot_Admin_Assignment_Operator 
-		where MatchID in (SELECT MatchID from Match where eventdate = @winlostdate)
-
-		IF DATEPART(weekday, @winlostdate) = 2
-		BEGIN
-			delete from Dot_Admin_Assignment_Operator 
-			where MatchID not in (SELECT MatchID from Match with(nolock))
-		END
-	END
-
-	-- delete SS_GameState
-	--IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'SS_GameState' AND type = 'U')
-	--BEGIN
-	--	delete from SS_GameState
-	--	where matchid in (select matchid from match where eventdate=@winlostdate)
-	--END
-	
-	-- delete MatchMaxbet: Helen
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'MatchMaxbet' AND type = 'U')
-	BEGIN
-		delete from MatchMaxbet WITH(ROWLOCK)
-		where matchid in (select matchid from match WITH(NOLOCK) where eventdate=@winlostdate)
-	END
-
-	-- delete ResultDetail: Helen
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'ResultDetail' AND type = 'U')
-	BEGIN
-		delete from ResultDetail WITH(ROWLOCK)
-		where matchid in (select matchid from match WITH(NOLOCK) where eventdate=@winlostdate)
-	END
-
-	-- delete ResultDetail@match
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'ResultDetail3rd' AND type = 'U')
-	BEGIN
-		DELETE FROM ResultDetail3rd WITH(ROWLOCK)
-		WHERE matchid in (SELECT matchid FROM match WITH(NOLOCK) WHERE eventdate = @winlostdate)
 
 		-- delete ResultDetail@match3rd
 		IF OBJECT_ID('dbo.Match3rd', 'U') IS NOT NULL
@@ -223,28 +200,6 @@ BEGIN
 			DELETE FROM ResultDetail3rd WITH(ROWLOCK)
 			WHERE matchid in (SELECT m3rd.Match3rdId FROM dbo.Match3rd m3rd WITH(NOLOCK) WHERE m3rd.eventdate = @winlostdate)
 		END
-	END
-	
-	-- delete AutoPayoutResult: AutoPayoutResultId -> July -> Done 	
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'AutoPayoutResult' AND type = 'U')
-	BEGIN
-		DELETE FROM AutoPayoutResult WITH(ROWLOCK)
-		WHERE matchid in (SELECT matchid FROM match WITH(NOLOCK) WHERE eventdate = @winlostdate)
-	END
-	
-	-- delete ProviderResultDetail: ProviderResultDetailId ->July -> Done 	
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'ProviderResultDetail' AND type = 'U')
-	BEGIN
-		DELETE FROM ProviderResultDetail WITH(ROWLOCK)
-		WHERE matchid in (SELECT matchid FROM match WITH(NOLOCK) WHERE eventdate = @winlostdate)
-	END
-
-	-- Delete Odds3rd@match
-	IF	EXISTS (SELECT 1 FROM sys.objects WHERE name = 'Odds3rd' AND type = 'U')
-	BEGIN
-		DELETE
-		FROM	dbo.Odds3rd WITH (ROWLOCK)
-		WHERE	matchid IN (SELECT matchid FROM dbo.match WITH (NOLOCK) WHERE eventdate = @Winlostdate);
 
 		-- Delete Odds3rd@match3rd
 		IF OBJECT_ID('dbo.Match3rd', 'U') IS NOT NULL
@@ -253,137 +208,5 @@ BEGIN
 			FROM	dbo.Odds3rd WITH (ROWLOCK)
 			WHERE	matchid IN (SELECT m3rd.Match3rdId FROM dbo.Match3rd m3rd WITH (NOLOCK) WHERE m3rd.eventdate = @Winlostdate);
 		END;
-	END;
-
-	--	Delete oddsES : oddsid -> July -> Done 	
-		-- 20181204@Billy --
-	IF	OBJECT_ID('dbo.oddsES', 'U') IS NOT NULL
-	BEGIN;
-		DELETE	tbl WITH (ROWLOCK)
-		FROM	dbo.oddsES AS tbl
-		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
-	END;
-
-	--	Delete ResultDetailES : [MatchID, ResourceID] -> Helen
-		-- 20181204@Billy --
-	IF	OBJECT_ID('dbo.ResultDetailES', 'U') IS NOT NULL
-	BEGIN;
-		DELETE	tbl WITH (ROWLOCK)
-		FROM	dbo.ResultDetailES AS tbl
-		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
-	END;
-
-	-- Delete [SMP_Market]: [MatchId, MarketId, VendorId] -> Helen
-		-- 20190325@Billy --
-	IF	OBJECT_ID('dbo.SMP_Market', 'U') IS NOT NULL
-	BEGIN;
-		DELETE	tbl WITH (ROWLOCK)
-		FROM	dbo.SMP_Market AS tbl
-		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
-	END;
-
-	-- Delete [SMP_MarketSelection]: MarketSelectionId -> July -> Done 	
-		-- 20190325@Billy --
-	IF	OBJECT_ID('dbo.SMP_MarketSelection', 'U') IS NOT NULL
-	BEGIN;
-		DELETE	tbl WITH (ROWLOCK)
-		FROM	dbo.SMP_MarketSelection AS tbl
-		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
-	END;
-
-	--	Delete oddsOS: oddsid -> July -> Done 	
-		-- 20190828@Billy --
-	IF	OBJECT_ID('dbo.oddsOS', 'U') IS NOT NULL
-	BEGIN;
-		DELETE	tbl WITH (ROWLOCK)
-		FROM	dbo.oddsOS AS tbl
-		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
-	END;
-
-	--	Delete ResultDetailOS: [MatchID, ResourceID] -> Helen
-		-- 20190828@Billy --
-	IF	OBJECT_ID('dbo.ResultDetailOS', 'U') IS NOT NULL
-	BEGIN;
-		DELETE	tbl WITH (ROWLOCK)
-		FROM	dbo.ResultDetailOS AS tbl
-		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
-	END;
-
-	--	Delete ProviderExternalResultDetailES: ProviderExternalId -> July -> Done 
-	-----20200729@Brice:	Delete ProviderExternalResultDetailES-----
-	IF	OBJECT_ID('dbo.ProviderExternalResultDetailES', 'U') IS NOT NULL
-	BEGIN;
-		DELETE	tbl WITH (ROWLOCK)
-		FROM	dbo.ProviderExternalResultDetailES AS tbl
-		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
-	END;	
-	----/20200729@Brice:	Delete ProviderExternalResultDetailES-----
-
-	--	Delete ProviderExternalResultDetailOS: ProviderExternalId -> July -> Done 
-	-----20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]-----
-	IF	OBJECT_ID('dbo.ProviderExternalResultDetailOS', 'U') IS NOT NULL
-	BEGIN;
-		DELETE	tbl WITH (ROWLOCK)
-		FROM	dbo.ProviderExternalResultDetailOS AS tbl
-		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
-	END;	
-	----/20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]-----
-
-	--	Delete ProviderExternalResultDetail: ProviderExternalId -> July -> Done 
-	-----20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]-----
-	IF	OBJECT_ID('dbo.ProviderExternalResultDetail', 'U') IS NOT NULL
-	BEGIN;
-		DELETE	tbl WITH (ROWLOCK)
-		FROM	dbo.ProviderExternalResultDetail AS tbl
-		WHERE	EXISTS (SELECT 1 FROM dbo.match AS m WITH (NOLOCK) WHERE tbl.matchid = m.matchid AND m.eventdate = @Winlostdate);
-	END;	
-	----/20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]-----
-	
-	-- delete match	: matchid ->July -> Done 
-	DELETE	tbl WITH (ROWLOCK)
-	FROM	dbo.match AS tbl
-	WHERE	eventdate = @Winlostdate;
-
-	-- delete outright: orid ->July -> Done 
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'outright' AND type = 'U')
-	BEGIN
-		delete from outright
-		where eventdate = @winlostdate AND oddsstatus = 'Completed'
-	END
-
-	--VSRaceInfo: EventID ->July -> Done 
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'VSRaceInfo' AND type = 'U')
-	BEGIN
-		delete r with(rowlock)
-		from dbo.VSRaceInfo r
-		where exists (
-			select top 1 1
-			from dbo.VSOutright o with(nolock)
-			where r.eventId = o.eventId AND eventdate = @winlostdate AND EventStatus = 'Completed'
-		)
-	END
-
-	--VSOutright: Orid ->July -> Done 
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'VSOutright' AND type = 'U')
-	BEGIN
-		delete from VSOutright
-		where eventdate = @winlostdate AND EventStatus = 'Completed'
-	END
-
-	-- delete EventInfo3rd: EventInfo3rdID ->July -> Done 
-	IF EXISTS (SELECT 1 FROM sysobjects WHERE name = 'EventInfo3rd' AND type = 'U')
-	BEGIN
-		DELETE dbo.EventInfo3rd
-		WHERE eventdate = @winlostdate  
-	END
-	
-	-- Delete Match3rd: Match3rdId->July -> Done 
-		-- 20171221@Billy --
-	IF	OBJECT_ID('dbo.Match3rd', 'U') IS NOT NULL
-	BEGIN;
-		DELETE	dbo.Match3rd
-		WHERE	EventDate = @Winlostdate;
-	END;
-	*/
 END
 GO
