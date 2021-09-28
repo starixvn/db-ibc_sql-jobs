@@ -28,7 +28,7 @@ AS
 		- 20200826@Brice:		Add table ProviderExternalResultDetailOS [Redmine: #139849]
 		- 20201221@Brice:		Add table ProviderExternalResultDetail [Redmine: #145651]
 		- 20210914@Patrick: Support bitcoin project: Odds3rd & ResultDetail3rd [Redmine: #159842]
-		- 20210924@July:  Deleting event cause the table to be blocked [RedmineId: #160468]
+		- 20210924@July:  Deleting event cause the table to be blocked [Redmine: #160468]
 */ 
 BEGIN
 
@@ -40,22 +40,18 @@ BEGIN
 
 	DECLARE @idList TABLE(id INT, id2 VARCHAR(20), id3 INT)
 	DECLARE @xmlData XML
+	SET @xmlData = CONVERT(XML, @ids)
 
-	IF ISNULL(@ids,'') <> ''
-	BEGIN
-		SET @xmlData = CONVERT(XML, @ids)
-
-		INSERT INTO @idList (id, id2, id3)
-		SELECT T.C.value('./@c1', 'INT') AS id
-			  ,T.C.value('./@c2', 'VARCHAR(20)') AS id2
-			  ,T.C.value('./@c3', 'INT') AS id3
-		FROM @xmlData.nodes('/root/r') AS T(C)
-		OPTION (OPTIMIZE FOR (@xmlData = NULL))
-	END
+	INSERT INTO @idList (id, id2, id3)
+	SELECT T.C.value('./@c1', 'INT') AS id
+			,T.C.value('./@c2', 'VARCHAR(20)') AS id2
+			,T.C.value('./@c3', 'INT') AS id3
+	FROM @xmlData.nodes('/root/r') AS T(C)
+	OPTION (OPTIMIZE FOR (@xmlData = NULL))
 
 	IF @DeletedTarget = 'odds'
 	BEGIN
-		DELETE FROM dbo.odds WHERE oddsid IN (SELECT id FROM @idList)
+		DELETE FROM dbo.odds WITH(ROWLOCK) WHERE oddsid IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'bingoball'
@@ -67,7 +63,7 @@ BEGIN
 	END
 	IF @DeletedTarget = 'Dot_Admin_Assignment_Operator'
 	BEGIN
-		DELETE FROM dbo.Dot_Admin_Assignment_Operator WHERE id IN (SELECT id FROM @idList)
+		DELETE FROM dbo.Dot_Admin_Assignment_Operator WITH(ROWLOCK) WHERE id IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'MatchMaxbet'
@@ -86,27 +82,27 @@ BEGIN
 	END
 	IF @DeletedTarget = 'ResultDetail3rd'
 	BEGIN
-		DELETE FROM dbo.ResultDetail3rd WHERE ResultID IN (SELECT id FROM @idList)
+		DELETE FROM dbo.ResultDetail3rd WITH(ROWLOCK) WHERE ResultID IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'AutoPayoutResult'
 	BEGIN
-		DELETE FROM dbo.AutoPayoutResult WHERE AutoPayoutResultId IN (SELECT id FROM @idList)
+		DELETE FROM dbo.AutoPayoutResult WITH(ROWLOCK) WHERE AutoPayoutResultId IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'ProviderResultDetail'
 	BEGIN
-		DELETE FROM dbo.ProviderResultDetail WHERE ProviderResultDetailId IN (SELECT id FROM @idList)
+		DELETE FROM dbo.ProviderResultDetail WITH(ROWLOCK) WHERE ProviderResultDetailId IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'Odds3rd'
 	BEGIN
-		DELETE FROM dbo.Odds3rd WHERE oddsid IN (SELECT id FROM @idList)
+		DELETE FROM dbo.Odds3rd WITH(ROWLOCK) WHERE oddsid IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'oddsES'
 	BEGIN
-		DELETE FROM dbo.oddsES WHERE oddsid IN (SELECT id FROM @idList)
+		DELETE FROM dbo.oddsES WITH(ROWLOCK) WHERE oddsid IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'ResultDetailES'
@@ -125,12 +121,12 @@ BEGIN
 	END
 	IF @DeletedTarget = 'SMP_MarketSelection'
 	BEGIN
-		DELETE FROM dbo.SMP_MarketSelection WHERE MarketSelectionId IN (SELECT id FROM @idList)
+		DELETE FROM dbo.SMP_MarketSelection WITH(ROWLOCK) WHERE MarketSelectionId IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'oddsOS'
 	BEGIN
-		DELETE FROM dbo.oddsOS WHERE oddsid IN (SELECT id FROM @idList)
+		DELETE FROM dbo.oddsOS WITH(ROWLOCK) WHERE oddsid IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'ResultDetailOS'
@@ -142,64 +138,48 @@ BEGIN
 	END
 	IF @DeletedTarget = 'ProviderExternalResultDetailES'
 	BEGIN
-		DELETE FROM dbo.ProviderExternalResultDetailES WHERE ProviderExternalId IN (SELECT id FROM @idList)
+		DELETE FROM dbo.ProviderExternalResultDetailES WITH(ROWLOCK) WHERE ProviderExternalId IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'ProviderExternalResultDetailOS'
 	BEGIN
-		DELETE FROM dbo.ProviderExternalResultDetailOS WHERE ProviderExternalId IN (SELECT id FROM @idList)
+		DELETE FROM dbo.ProviderExternalResultDetailOS WITH(ROWLOCK) WHERE ProviderExternalId IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'ProviderExternalResultDetail'
 	BEGIN
-		DELETE FROM dbo.ProviderExternalResultDetail WHERE ProviderExternalId IN (SELECT id FROM @idList)
+		DELETE FROM dbo.ProviderExternalResultDetail WITH(ROWLOCK) WHERE ProviderExternalId IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'match'
 	BEGIN
-		DELETE FROM dbo.match WHERE matchid IN (SELECT id FROM @idList)
+		DELETE FROM dbo.match WITH(ROWLOCK) WHERE matchid IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'outright'
 	BEGIN
-		DELETE FROM dbo.outright WHERE orid IN (SELECT id FROM @idList)
+		DELETE FROM dbo.outright WITH(ROWLOCK) WHERE orid IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'VSRaceInfo'
 	BEGIN
-		DELETE FROM dbo.VSRaceInfo WHERE EventID IN (SELECT id FROM @idList)
+		DELETE FROM dbo.VSRaceInfo WITH(ROWLOCK) WHERE EventID IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'VSOutright'
 	BEGIN
-		DELETE FROM VSOutright WHERE Orid IN (SELECT id FROM @idList)
+		DELETE FROM VSOutright WITH(ROWLOCK) WHERE Orid IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'EventInfo3rd'
 	BEGIN
-		DELETE FROM dbo.EventInfo3rd WHERE EventInfo3rdID IN (SELECT id FROM @idList)
+		DELETE FROM dbo.EventInfo3rd WITH(ROWLOCK) WHERE EventInfo3rdID IN (SELECT id FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'Match3rd'
 	BEGIN
-		DELETE FROM dbo.Match3rd WHERE Match3rdId IN (SELECT id FROM @idList)
+		DELETE FROM dbo.Match3rd WITH(ROWLOCK) WHERE Match3rdId IN (SELECT id FROM @idList)
 		RETURN
 	END
-
-
-		-- delete ResultDetail@match3rd
-		IF OBJECT_ID('dbo.Match3rd', 'U') IS NOT NULL
-		BEGIN
-			DELETE FROM ResultDetail3rd WITH(ROWLOCK)
-			WHERE matchid in (SELECT m3rd.Match3rdId FROM dbo.Match3rd m3rd WITH(NOLOCK) WHERE m3rd.eventdate = @winlostdate)
-		END
-
-		-- Delete Odds3rd@match3rd
-		IF OBJECT_ID('dbo.Match3rd', 'U') IS NOT NULL
-		BEGIN
-			DELETE
-			FROM	dbo.Odds3rd WITH (ROWLOCK)
-			WHERE	matchid IN (SELECT m3rd.Match3rdId FROM dbo.Match3rd m3rd WITH (NOLOCK) WHERE m3rd.eventdate = @Winlostdate);
-		END;
 END
 GO

@@ -14,7 +14,7 @@ AS
 		-- 20130520@Victor: Add Delete VSOutright by eventdate
 		-- 20130531@Sophia: Put Delete code into ExecRep_APL_01
 		-- 20190323@Patrick: Set deadlock priority to high [RedmineId: #113997]
-		-- 20210924@July:  Deleting event cause the table to be blocked [RedmineId: #160468]
+		-- 20210924@July:  Deleting event cause the table to be blocked [Redmine: #160468]
 
 */
 BEGIN
@@ -94,16 +94,16 @@ BEGIN
 	SET @DeletedTarget = 'Dot_Admin_Assignment_Operator'
 	TRUNCATE TABLE #DeletedList
 	INSERT INTO #DeletedList (id)
-	SELECT o.matchid
-	FROM Dot_Admin_Assignment_Operator o WITH (NOLOCK)
+	SELECT o.ID
+	FROM dbo.Dot_Admin_Assignment_Operator o WITH (NOLOCK)
 		INNER JOIN #Match_tmp m ON m.Matchid = o.matchid
 	
 	IF DATEPART(weekday, @winlostdate) = 2
 	BEGIN
 		INSERT INTO #DeletedList (id)
-		SELECT o.matchid
-		FROM Dot_Admin_Assignment_Operator o
-			LEFT JOIN #DeletedList d ON o.matchid = d.id
+		SELECT o.ID
+		FROM dbo.Dot_Admin_Assignment_Operator o WITH (NOLOCK)
+			LEFT JOIN #DeletedList d ON o.ID = d.id
 		WHERE MatchID NOT IN (SELECT MatchID FROM match WITH(NOLOCK)) 
 			AND d.id IS NULL
 	END
@@ -192,13 +192,17 @@ BEGIN
 		EXEC [dbo].[ExecRep_APL_01] @DeletedTarget = @DeletedTarget, @ids = @ids
 	END
 
-	-- Delete ResultDetail3rd
+	-- Delete ResultDetail3rd@match & ResultDetail3rd@Match3rd
 	SET @DeletedTarget = 'ResultDetail3rd'
 	TRUNCATE TABLE #DeletedList
 	INSERT INTO #DeletedList (id)
 	SELECT o.ResultID
 	FROM ResultDetail3rd o WITH (NOLOCK)
 		INNER JOIN #Match_tmp m ON m.Matchid = o.matchid
+	UNION 
+	SELECT ResultID
+	FROM ResultDetail3rd WITH(NOLOCK)
+	WHERE matchid IN (SELECT m3rd.Match3rdId FROM dbo.Match3rd m3rd WITH(NOLOCK) WHERE m3rd.eventdate = @winlostdate)
 
 	SET @rowcount = 1
 	WHILE (1=1)
@@ -282,13 +286,17 @@ BEGIN
 		EXEC [dbo].[ExecRep_APL_01] @DeletedTarget = @DeletedTarget, @ids = @ids
 	END
 
-	-- Delete Odds3rd
+	-- Delete Odds3rd@match & Odds3rd@match3rd
 	SET @DeletedTarget = 'Odds3rd'
 	TRUNCATE TABLE #DeletedList
 	INSERT INTO #DeletedList (id)
 	SELECT o.oddsid
 	FROM dbo.Odds3rd o WITH (NOLOCK)
 		INNER JOIN #Match_tmp m ON m.Matchid = o.matchid
+	UNION
+	SELECT oddsid
+	FROM dbo.Odds3rd WITH (NOLOCK)
+	WHERE matchid IN (SELECT m3rd.Match3rdId FROM dbo.Match3rd m3rd WITH (NOLOCK) WHERE m3rd.eventdate = @Winlostdate)
 
 	SET @rowcount = 1
 	WHILE (1=1)
@@ -590,9 +598,8 @@ BEGIN
 	SET @DeletedTarget = 'match'
 	TRUNCATE TABLE #DeletedList
 	INSERT INTO #DeletedList (id)
-	SELECT o.matchid
-	FROM dbo.match o WITH (NOLOCK)
-		INNER JOIN #Match_tmp m ON m.Matchid = o.matchid
+	SELECT matchid
+	FROM #Match_tmp
 
 	SET @rowcount = 1
 	WHILE (1=1)
@@ -651,10 +658,10 @@ BEGIN
 	TRUNCATE TABLE #DeletedList
 	INSERT INTO #DeletedList (id)
 	SELECT r.EventID
-	FROM dbo.VSRaceInfo r WITH(ROWLOCK)
+	FROM dbo.VSRaceInfo r WITH(NOLOCK)
 	WHERE EXISTS (
 		SELECT TOP 1 1
-		FROM dbo.VSOutright o WITH(ROWLOCK)
+		FROM dbo.VSOutright o WITH(NOLOCK)
 		WHERE r.eventId = o.eventId AND eventdate = @winlostdate AND EventStatus = 'Completed'
 	)
 
