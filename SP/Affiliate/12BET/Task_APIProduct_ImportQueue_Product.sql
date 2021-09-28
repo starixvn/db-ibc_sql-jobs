@@ -24,6 +24,7 @@ AS
 		- 20210615@Malcolm: Integrate new product: IM Esports [RedmineID: #157048]
 		- 20210726@Malcolm: Adjust formula of KY Gaming and get data from bettrans_BTi2[RedmineID: #159061]
 		- 20210830@Malcolm: Adjust formula of BTi [RedmineID: #159061]
+		- 20210823@Malcolm: Integrate new product: Skywind [RedmineID: #159566]
 */
 
 BEGIN
@@ -425,6 +426,36 @@ BEGIN
 			SUM(b.ValidBet) AS Turnover,
 			SUM(b.WinLoss) AS Winloss
 		FROM dbo.Sum_Winloss_IMEsports b WITH (NOLOCK)
+			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
+		WHERE b.WinlostDate = @WinlostDate
+			AND NOT EXISTS (
+				SELECT 1 FROM dbo.MemberRemoval mr WITH (NOLOCK)
+				WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
+					AND mi.IBCCustId = mr.IBCCustId
+			)			
+		GROUP BY
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency
+	END
+	-- Skywind
+	ELSE IF @ProductId = 32
+	BEGIN
+		INSERT INTO #tempData
+		(
+			AffId,
+			IBCCustId,
+			Currency,
+			Turnover,
+			Winloss
+		)
+		SELECT
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency,
+			SUM(b.Bet) AS Turnover,
+			SUM(b.Revenue * -1) AS Winloss
+		FROM dbo.bettrans_Skywind b WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
 		WHERE b.WinlostDate = @WinlostDate
 			AND NOT EXISTS (
