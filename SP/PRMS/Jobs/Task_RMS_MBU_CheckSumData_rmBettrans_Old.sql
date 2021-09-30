@@ -14,6 +14,7 @@ AS
 		- 220201204@Danny: Initialize SP [RedmineID: #145926]
 		- 220203205@Danny: Incorporate BetBuilder - Basketball  [RedmineID: #150652]
 		- 20210604@Danny: Add New League Group for Saba Sports [RedmineID: #156453]
+		- 20211001@Danny: Change dataType to support IPv6 [RedmineID: #162348]
 
 */
 
@@ -118,7 +119,7 @@ BEGIN
 			,betdaqid			bigint
 			,actual_stake		money
 			,currency			tinyint
-			,ip					nvarchar(15)
+			,ip					varchar(39)
 			,transdesc			nvarchar(1000)
 			,sdiscount			decimal(9,8)
 			,scomm				money
