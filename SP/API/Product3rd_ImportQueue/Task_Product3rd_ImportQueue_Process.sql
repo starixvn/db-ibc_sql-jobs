@@ -101,7 +101,7 @@ BEGIN
 									) AS NVARCHAR(MAX) ) + N'</table>'
 			
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients		= 'jamie.dao@starixvn.com;percy.nguyen@starixvn.com;pontus@starixvn.com',
+			@recipients		= 'percy.nguyen@starixvn.com;sophia.nguyen@starixvn.com;pontus@starixvn.com',
 			@subject		= @subject,
 			@body			= @Msg,
 			@body_format	= 'HTML'

@@ -22,8 +22,11 @@ BEGIN
 	-- Execute SP to insert data for GD
 	EXEC bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
 
+	IF @@ServerName = 'DBBAL'
+	BEGIN 
 	EXEC bodb_3rdproduct.dbo.Task_DOT_VoidBridge_DailySummary @winlostdate = @winlostdate
-
+	END 
+	
 	EXEC bodb_3rdproduct.dbo.Task_DOT_Exchange_DailySummary @winlostdate = @winlostdate
 
 	--add more 3rd product at here
