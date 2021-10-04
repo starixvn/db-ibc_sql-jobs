@@ -1,6 +1,9 @@
 /*<info serverAlias="DBARC-bodb_Archive" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
 ---bettransRnG_bk
 --++add new column
+use bodb_Archive
+go
+
 alter table bettransRnG_bk add ip_new varchar(45)
 
 select min(winlostdate) '@__datefrom' from dbo.bettransRnG_bk

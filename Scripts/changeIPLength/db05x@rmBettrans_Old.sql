@@ -1,7 +1,7 @@
 /*<info serverAlias="DBRMS-bodb_RMS" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
 use bodb_RMS
 go
-alter table bettransRnG_bk add ip_new varchar(45)
+alter table rmBettrans_Old add ip_new varchar(45)
 
 select min(winlostdate) '@__minWinlostdate', max(winlostdate) '@__winlostdate' from dbo.rmBettrans_Old
 
