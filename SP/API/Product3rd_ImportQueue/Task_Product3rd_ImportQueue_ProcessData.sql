@@ -17,6 +17,7 @@ AS
 		- 20180507@Percy: Update condition of resettledDate for case re-import manually [RedmineID: #94555]
 		- 20190401@Percy: Update JobType correctly [RedmineID: #110692]
 		- 20200818@Percy: Integrate Fancy Bet [RedmineID: #138524]
+		- 20211004@Sol: LAP - Support IPv6 - [RedmineID: #162342]
 
 	Param's Explanation:
 		@QueueID: manually import
@@ -54,7 +55,7 @@ BEGIN
 		matchType		VARCHAR(10) NULL,
 		betID			BIGINT NOT NULL,
 		betPlaced		DATETIME NULL,
-		ip				VARCHAR(15) NULL,
+		ip				VARCHAR(45) NULL,
 		matchOddsReq	SMALLMONEY NULL,
 		unMatchAmount	MONEY NULL,
 		reduction		MONEY NULL,
@@ -460,7 +461,7 @@ BEGIN
 							t.c.value('@matchType', 'VARCHAR(10)') AS matchType,
 							t.c.value('@betId', 'BIGINT') AS betId,
 							t.c.value('@betPlaced', 'DATETIME') AS betPlaced,
-							t.c.value('@ip', 'VARCHAR(15)') AS ip,
+							t.c.value('@ip', 'VARCHAR(45)') AS ip,
 							t.c.value('@matchOddsReq', 'SMALLMONEY') AS matchOddsReq,
 							t.c.value('@unMatchAmount', 'MONEY') AS unMatchAmount,
 							t.c.value('@reduction', 'MONEY') AS reduction,

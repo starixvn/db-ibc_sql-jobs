@@ -1,7 +1,4 @@
 /*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="" viewers="" isFunction="0" isNested="1"></info>*/
-USE [bodb_PlaytechCS]
-GO
-
 ALTER PROCEDURE [dbo].[Task_AGCasino_ImportDataToDB_Queue]
 	@QueueIDInput	BIGINT = 0,
 	@ErrCode		INT = 0 OUTPUT,
@@ -18,6 +15,7 @@ AS
 		- 20161229@Francis: Improve the way to retrieve XmlData [RedmineID: #68972]
 		- 20170214@Francis: Keep about 5000 finished rows in Queue
 		- 20171218@Percy: Add ErrCode, ErrMsg replace RAISERROR [RedmineID: #88325]
+		- 20211004@Sol: LAP - Support IPv6 - [RedmineID: #162342]
 
 	Param explanation:
 	
@@ -45,7 +43,7 @@ BEGIN
 		BetAmount	MONEY,
 		NetAmount	MONEY,
 		PlayType	SMALLINT,
-		LoginIP		VARCHAR(20),
+		LoginIP		VARCHAR(45),
 		Currency	TINYINT,
 	)
 
@@ -79,7 +77,7 @@ BEGIN
 					x.v.value('(BETAMOUNT/text())[1]', 'MONEY') AS BetAmount,	
 					x.v.value('(NETAMOUNT/text())[1]', 'MONEY') AS NetAmount,	
 					x.v.value('(PLAYTYPE/text())[1]', 'SMALLINT') AS PlayType,
-					x.v.value('(LOGINIP/text())[1]', 'VARCHAR(20)') AS LoginIP,	
+					x.v.value('(LOGINIP/text())[1]', 'VARCHAR(45)') AS LoginIP,	
 					x.v.value('(CURRENCY/text())[1]', 'TINYINT') AS Currency
 				FROM @XmlData.nodes('/TransList/TRANSACTION') x(v)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
