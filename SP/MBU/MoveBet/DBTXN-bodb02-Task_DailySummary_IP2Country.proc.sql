@@ -9,12 +9,13 @@ AS
 	DB: DBTXN/bodb02
 	Revisions:
 		- 20190523@Patrick: Convert NULL IP value to empty [RedmineId: #113997]
-	
+		- 20211004@Helen:	Support IPv6 Phase 1 - change datatype first - [Redmine: #160390]
+
 	Para's explaination
 */
 
-CREATE TABLE #tmp1 (transid bigint PRIMARY KEY, winlostdate smalldatetime, IP varchar(15))
-CREATE TABLE #tmp2 (IP varchar(15) PRIMARY KEY, IPKey tinyint default 0, IPLong bigint default 0, countryShort varchar(2) default NULL)
+CREATE TABLE #tmp1 (transid bigint PRIMARY KEY, winlostdate smalldatetime, IP varchar(45))
+CREATE TABLE #tmp2 (IP varchar(45) PRIMARY KEY, IPKey tinyint default 0, IPLong bigint default 0, countryShort varchar(2) default NULL)
 CREATE INDEX IX_cs ON #tmp2 (countryShort)
 CREATE INDEX IX_key ON #tmp2 (IPKey)
 CREATE TABLE #tmp3 (IPKey tinyint PRIMARY KEY)

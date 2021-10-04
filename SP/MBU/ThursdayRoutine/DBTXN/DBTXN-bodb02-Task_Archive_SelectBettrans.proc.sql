@@ -14,6 +14,8 @@ AS
 		- 20191104@Billy:	Add column [epositiontaking] of [bettrans] - [Redmine: #123267]
 		- 20200311@Billy:	Add column [ReasonID] of [bettrans] - [Redmine: #130202]
 		- 20200710@Brice:	Add column [sort] of [bettrans] - [Redmine: #137129]
+		- 20211004@Helen:	Support IPv6 Phase 1 - change datatype first - [Redmine: #160390]
+
 	Developer's Notes:
 		- This SP belongs to bettrans14 set for Thursday Routine:
 			- Task_Archive_SelectBettrans14_Init
@@ -33,7 +35,7 @@ BEGIN;
 			,	[betcheck] = CONVERT(VARCHAR(50), b.betcheck)
 			,	b.checktime, b.oddsspread, b.actualrate, b.matchid, b.recommend, b.mrecommend, b.srecommend
 			,	b.ruben, b.betid, b.statuswinlost, b.modds, b.betdaqid, b.tstamp, b.currency
-			,	[ip] = CONVERT(VARCHAR(15), b.ip)
+			,	[ip] = CONVERT(VARCHAR(45), b.ip)
 			,	b.transdesc, b.virtualrate, b.oddstype, b.statusID
 			,	b.currency2, b.transid, b.bettype, b.balance, b.transid2, b.SecAcceptFlag, b.comstatus
 			,	[CountryCode] = ip.countryShort
