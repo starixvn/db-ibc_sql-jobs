@@ -119,7 +119,7 @@ BEGIN
 			,betdaqid			bigint
 			,actual_stake		money
 			,currency			tinyint
-			,ip					varchar(39)
+			,ip					varchar(45)
 			,transdesc			nvarchar(1000)
 			,sdiscount			decimal(9,8)
 			,scomm				money
