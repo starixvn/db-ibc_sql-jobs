@@ -47,4 +47,4 @@ begin transaction
 commit
 
 ALTER TABLE bettransLC_bk
-drop IP_tmp
+drop column IP_tmp

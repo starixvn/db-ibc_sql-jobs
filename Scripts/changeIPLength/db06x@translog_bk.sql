@@ -43,4 +43,4 @@ begin transaction
 commit
 
 ALTER TABLE translog_bk
-drop IP_tmp
+drop column IP_tmp
