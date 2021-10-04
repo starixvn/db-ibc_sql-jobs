@@ -3,20 +3,20 @@
 --++add new column
 alter table bettransRnG_bk add ip_new varchar(45)
 
-select min(winlostdate) from dbo.bettransRnG_bk
+select min(winlostdate) '@__datefrom' from dbo.bettransRnG_bk
 
 begin --update data
 	set nocount on
-	declare @__datefrom smalldatetime, @__dateto smalldatetime, @__message varchar(200)
-	select @__datefrom = '??', @__dateto = '??'
-	while @__datefrom <= @__dateto
+	declare @__winlostdate smalldatetime, @__minWinlostdate smalldatetime, @__message varchar(200)
+	select @__winlostdate = '2021-09-23', @__minWinlostdate = '2018-01-01'
+	while @__winlostdate >= @__minWinlostdate
 	begin
-		set @__message = '-- start currentdt: ' + convert(varchar(50), getdate(), 121) + ' --++@__datefrom: ' + convert(varchar(50), @__datefrom, 121)
+		set @__message = '-- start currentdt: ' + convert(varchar(50), getdate(), 121) + ' --++@__winlostdate: ' + convert(varchar(50), @__winlostdate, 121)
 		raiserror(@__message, 0, 1) with nowait
 
 		while 1 = 1
 		begin
-			update top(3000) b set ip_new = [ip] 
+			update top(5000) b set ip_new = [ip] 
 			from dbo.bettransRnG_bk b with(rowlock)
 			where winlostdate = @__datefrom 
 				and ip_new is null
@@ -29,15 +29,11 @@ begin --update data
 			raiserror(@__message, 0, 1) with nowait
 		end
 	
-		set @__message = '-- end currentdt: ' + convert(varchar(50), getdate(), 121) + ' --++@__datefrom: ' + convert(varchar(50), @__datefrom, 121)
+		set @__message = '-- end currentdt: ' + convert(varchar(50), getdate(), 121) + ' --++@__winlostdate: ' + convert(varchar(50), @__winlostdate, 121)
 		raiserror(@__message, 0, 1) with nowait
-		set @__datefrom = dateadd(day, 1, @__datefrom)
+		set @__winlostdate = dateadd(day, -1, @__winlostdate)
 	end
 end
 go
-
---UM
---exec sp_rename 'bettransRnG_bk.ip','ip_tmp', 'COLUMN'  
---exec sp_rename 'bettransRnG_bk.ip_new','ip', 'COLUMN'
 
 go
