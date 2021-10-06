@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_CheckData] @WinlostDate SMALLDATETIME
 AS
 /*
@@ -9,6 +9,7 @@ AS
 	Revisions:	
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 	- 20170703@Paul: Check more columns - [Redmine: #79262]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 BEGIN
 	SET NOCOUNT ON

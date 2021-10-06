@@ -1,15 +1,16 @@
-/*<info serverAlias="DBAGE-bodb02,DBACC-bodb02"></info>*/
+/*<info serverAlias="DBAGE-bodb02,DBACC-bodb02,DBBAL-bodb02"></info>*/
 ALTER PROCEDURE [Task_LicenseeBATransaction_Archive_Copy]
 AS
 
 /*
 	Created: 20191022@Percy
-	DB: DBAGE.bodb02, DBACC.bodb02
+	DB: DBAGE.bodb02, DBACC.bodb02, DBBAL-bodb02
 	Task: Archive data for LicenseeBATransaction_active - Copy data
 	
 	Revisions:
 		- 20191022@Percy: Initialize SP [RedmineID: #103656]
 		- 20200401@Percy: Check exists TransID on LicenseeBATransaction_bk [RedmineID: #131643]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN

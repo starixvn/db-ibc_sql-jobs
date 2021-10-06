@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02"></info>*/
+/*<info serverAlias="DBTXN-bodb02,DBBAL-bodb02"></info>*/
 USE [bodb02]
 GO
 /****** Object:  StoredProcedure [dbo].[Task_MoveBetsDayByScheduleSel]    Script Date: 11/16/2020 10:26:54 PM ******/
@@ -13,7 +13,7 @@ AS
 /*    
  Creator:20150807@Sophia  
  Task: Get Move bets day by Schedule   
- DB: DBTXN/bodb02  
+ DB: DBTXN-bodb02, DBBAL-bodb02
     
  Revisions:     
   20150925@Harris: skip move bet for Balance Issue  
@@ -31,6 +31,7 @@ AS
   20200624@Gary: #136338  Move bet 2 days on 20200624 (Thursday morning)
   20201116@Gary: #145497  Move bet 1 days on 20201116 (Tuesday morning)
   20210205@Danny: Change logic get MB date [Redmine: #150053]
+  20210816@Sophia: add DBBAL [Redmine: #154300]
  
 */  
 

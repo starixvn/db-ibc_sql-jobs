@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[Task_Microgaming_Bettrans14] 
@@ -8,7 +8,7 @@ AS
 /*
 	 Creator: 20150731@Florent
 	 Task: Generate data for MicroGaming from bettrans14
-	 DB: DBLIC/bodb_LicenseeReport
+	 DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	 Revisions: 		
 	 - 20151208@Jim: separate MicroGame into 2 products (#45454)
 	 - 20160422@Francis: add Progressive Contribution and Progressive Payout for Microgaming RNG
@@ -26,6 +26,7 @@ AS
 	 - 20210412@Sophia: Integrate PP Live Casino [Redmine: #150971]
 	 - 20210419@Danny: Integrate Creative Gaming [Redmine: #146019]
 	 - 20210412@Sophia: Change Range of AE Casino [Redmine :#152141]
+	 - 20210816@Sophia: add DBBAL [Redmine: #154300]
 	 Param's Explanation:
 */
 

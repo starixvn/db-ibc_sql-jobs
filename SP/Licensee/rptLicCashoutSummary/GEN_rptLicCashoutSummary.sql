@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
@@ -11,12 +11,13 @@ AS
 /*
 	Created: 20170419@Harper
 	Description: Daily summary data of Cashout [RedmineID: #71727]
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 	Revisions:
 		- 20170619@Harper: LA - Edit formula when cout CO ticket [Redmine: #78085]
 		- 20181003@Bruce: LA - Should not include refund ticket for Cash Out Tickets [Redmine: #102578]
 		- 20190510@Percy: Enhance Performance [RedmineID: #112596]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	EXEC GEN_rptLicCashoutSummary @FromDate = '2019-05-10', @ToDate = '2019-05-12', @ProductCodes = 'CO'
 */

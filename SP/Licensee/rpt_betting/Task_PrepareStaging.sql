@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_PrepareStaging]
     @DateFrom		SMALLDATETIME = NULL
     ,@DateTo		SMALLDATETIME = NULL
@@ -9,7 +9,7 @@ AS
 /*
 Created:
 Task:
-DB: DBLIC.bodb_LicenseeReport
+DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 Revisions:
     -20120423@Jim: Add more information for BARM agent 
@@ -38,6 +38,7 @@ Revisions:
 	- 20190910@Amanda: Add bet types that support Half Won/ Half Lose [RedmineID: #118300]
 	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 	- 20191205@Percy: Enhance performance [RedmineID: #125028]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'

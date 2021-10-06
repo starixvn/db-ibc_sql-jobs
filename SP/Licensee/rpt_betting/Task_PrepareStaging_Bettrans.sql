@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isFunction="0" isNested="1"></info>*/
 USE bodb_LicenseeReport
 GO
 
@@ -11,7 +11,7 @@ AS
 /*
 	Created: 20191205@Percy
 	Task: Gen data for bettrans staging
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 	Revisions:
 		- 20191205@Percy: Split code from Task_PrepareStaging and Enhance performance [RedmineID: #125028]
@@ -22,6 +22,7 @@ AS
 		- 20210514@Danny: Integrate Vgaming [#154080]
 		- 20210518@Percy: Change code to get MoveBetsDay [RedmineID: #154866]
 		- 20210707@Danny: Vgaming - Free bets and Jackpot prize integration [Redmine: #156185]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 */
 

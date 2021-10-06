@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="vnteam" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinlossGMT_CopyData]
 	@FromDate SMALLDATETIME,
 	@ToDate	SMALLDATETIME = NULL,

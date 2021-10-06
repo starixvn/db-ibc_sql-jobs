@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 
 USE [bodb_LicenseeReport]
 GO
@@ -8,7 +8,7 @@ AS
 /*
 	 Creator: 20150731@Florent
 	 Task: Generate data for MicroGaming Casino
-	 DB: DBLIC/bodb_LicenseeReport
+	 DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	 Revisions: 		
 		- 20150930@Florent: support Microgaming RNG
 		- 20151208@Jim: seperate MicroGame into 2 products (#45454)
@@ -26,9 +26,8 @@ AS
 		- 20210113@Parsons: Provide timezone filter for Joker Games Win Loss Report [#148617]
 		- 20210412@Sophia: Integrate PP Live Casino [Redmine: #150971]
 		- 20210419@Danny: Integrate Creative Gaming [Redmine: #146019]
-
 		- 20210412@Sophia: Change Range of AE Casino [Redmine :#152141]
-		- 
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 	 Param's Explanation:
 */
 

@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" isFunction="0" isNested="1"></info>*/
 USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[Task_PostStaging]     
@@ -5,10 +6,12 @@ AS
 /*
 Created: Viet @ 20121031
 Task: clean up staging data to save diskspace
-DB: DBLIC.bodb_LicenseeReport
+DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 Revisions:
     -20170525@Paul: Check IsStagingBettrans flag before staging bettrans; insert sporttype, eventdate into staging match table [Redmine: #72914]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
+	
 Param's Explanation:
 
 */
@@ -18,7 +21,10 @@ TRUNCATE TABLE dbo.bettrans
 TRUNCATE TABLE dbo.match
 TRUNCATE TABLE dbo.outright
 
-DBCC SHRINKFILE (N'LicenseeReport_Staging_Data', 0, TRUNCATEONLY)
+IF @@SERVERNAME <> 'DBBAL'
+BEGIN 
+	DBCC SHRINKFILE (N'LicenseeReport_Staging_Data', 0, TRUNCATEONLY)
+END
 
 UPDATE bodb02.dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
 SET VValue = 0

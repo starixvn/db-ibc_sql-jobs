@@ -1,15 +1,16 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_rpt_CustomerWL_ExtraGMT]
 	@WinlostDate SMALLDATETIME
 AS
 
 /*
 	Created: 20200601@Percy
-	DB: DBLIC-bodb_LicenseeReport
+	DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	Task: Gen data into rpt_CustomerWL_ExtraGMT
 
 	Revisions:
 		- 20200601@Percy: Initialize SP [RedmineID: #134867]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN

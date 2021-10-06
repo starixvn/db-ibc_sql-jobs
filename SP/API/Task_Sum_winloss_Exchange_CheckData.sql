@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdProduct" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_3rdProduct,DBBAL-bodb_3rdProduct" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Sum_winloss_Exchange_CheckData]
 	@FromDate	SMALLDATETIME = NULL -- not null for manually
 	,@ToDate	SMALLDATETIME = NULL -- not null for manually
@@ -6,13 +6,14 @@ AS
 
 /*
 	Created: 20190329@Percy
-	DB: DBLIC.bodb_3rdProduct
+	DB: DBLIC.bodb_3rdProduct, DBBAL-bodb_3rdProduct
 	Task: Check Exchange Data
 
 	Revisions:
 		- 20190401@Percy: Initialize SP [RedmineID: #110692]
 		- 20200204@Percy: Remove unused mail + DB054 - Phase 1 [RedmineID: #127823]
-		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
+		- 20201012@Malcolm: Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN
@@ -25,7 +26,7 @@ BEGIN
 	SELECT  @Subject = 'SQL Server Job System: ''bodb_3rdProduct: Check Exchange data monthly'' on ' + @@SERVERNAME
 
 	IF @@SERVERNAME IN ('DB052', 'DB053')
-		SELECT @recipients = 'percy.nguyen@starixvn.com;ann.nguyen@starixvn.com;pontus@starixvn.com'
+		SELECT @recipients = 'percy.nguyen@starixvn.com;sophia.nguyen@starixvn.com;ann.nguyen@starixvn.com;pontus@starixvn.com'
 	ELSE
 		SELECT @recipients = 'dba_local@starixvn.com'
 

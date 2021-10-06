@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptLicWinloss2_CheckData] @WinlostDate SMALLDATETIME
 AS
 /*
@@ -18,6 +18,7 @@ AS
 	- 20201104@Hogan: Add new sport Saba.club Free Bets [RedmineID: #142369]
 	- 20210119@Hogan: Integrate Four Guardians [RedmineID: #148100]
 	- 20210518@Hogan: Integrate Vgaming [RedmineID: #151583]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 */
 BEGIN

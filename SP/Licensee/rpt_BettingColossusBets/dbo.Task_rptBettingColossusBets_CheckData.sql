@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[Task_rptBettingColossusBets_CheckData] @WinlostDate SMALLDATETIME
@@ -9,7 +10,8 @@ AS
  Original:   
  Revisions:   
  - 20161101@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
- - 20161121@Sophia: Correct CashOutAmount,WinPrizeAmount value [RedmineID : #67473] 
+ - 20161121@Sophia: Correct CashOutAmount,WinPrizeAmount value [RedmineID : #67473]
+ - 20210816@Sophia: add DBBAL [Redmine: #154300] 
 */
 BEGIN
 	DECLARE @S_TotalTrans INT

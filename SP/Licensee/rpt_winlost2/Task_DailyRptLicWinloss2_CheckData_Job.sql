@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
  
@@ -9,7 +9,7 @@ AS
 /* 
 	Created by: 20150911@Patrick   
 	Task: Check & correct data after move bet
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
   
 	Revision:   
 		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
@@ -19,6 +19,7 @@ AS
 			. Remove logic check MB (job handle)
 			. Add @tablename param to break step of job: process insert sum step by step
 		- 20201020@Hogan: Add step Check & correct data to rptCasinoTurnover [RedmineID: #128493]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN

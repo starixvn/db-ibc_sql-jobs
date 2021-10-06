@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[GEN_Betting]
@@ -6,11 +7,12 @@ AS
 /*
     Created: 20111021@Don
     Task: 
-    DB: DBLIC.bodb_LicenseeReport
+    DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
     Revisions:
 		20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		20170420@Harper: Add more job gen data for Cashout [#71727]
+		20210816@Sophia: add DBBAL [Redmine: #154300]
 
 */ 
 
@@ -53,9 +55,4 @@ AS
 	PRINT 'GEN_rptLicCashoutSummary ' + CAST(@strDateStart AS VARCHAR) + ', ' + CAST(@strDateEnd AS VARCHAR)
 	EXEC dbo.GEN_rptLicCashoutSummary @strDateStart, @strDateEnd, 'CO'
 
-GO
-GRANT EXECUTE ON [dbo].[GEN_Betting] TO [bodbLicenseeNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[GEN_Betting] TO [vnteam] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[GEN_Betting] TO [vnteam] AS [dbo]
+GO 

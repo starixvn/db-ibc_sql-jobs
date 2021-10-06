@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[GEN_rptBetting_Parlay14]
@@ -12,6 +13,7 @@ AS
 	Revisions:
 		- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
 		- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 DECLARE @tmp_bettrans AS TABLE 
 	(
@@ -149,7 +151,4 @@ GROUP BY
 	b.statusid,
 	b.livehomescore,
 	b.isBA
-GO
-GRANT EXECUTE ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[GEN_rptBetting_Parlay14] TO [vnteam] AS [dbo]
+GO 

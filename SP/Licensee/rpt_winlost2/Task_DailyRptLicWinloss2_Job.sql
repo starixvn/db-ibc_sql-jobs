@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
@@ -10,7 +10,7 @@ AS
 	Created by: Henry   
 	Date: 2011-09-20  
 	Task: Jobs for sum up date for rptLicWinlost  
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport,DBBAL-bodb_LicenseeReport
   
 	Revision:   
 		- 20140108@Don: Add step to generate data to [bodb_LicenseeReport.rptCustomerTurnover]  
@@ -22,6 +22,7 @@ AS
 		- 20171130@Sophia: Add step gen data to rptLicWinlossGMT [Redmine: #84932]
 		- 20180424@Percy: Add @tablename param to break step of job: process insert sum step by step [RedmineID: #94129]
 		- 20181129@Joseph: Add step to generate data to [bodb_LicenseeReport.rptCasinoTurnover]   [RedmineID: #95178]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
  
 BEGIN  

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport," executers="" viewers="vnteam" isFunction="0" isNested=”0”></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested=”0”></info>*/
 USE bodb_LicenseeReport
 GO
 ALTER PROCEDURE [dbo].[Task_rptBetting_BA_CheckData]
@@ -10,9 +10,10 @@ AS
 /*
 Created: 20170522@Sophia
 Task: Check sum rpt_Betting_BA vs Staging bettrans table (Exclude separate wallet 3rd Product : AGC and GD) [Redmine: #72914]
-DB: DBLIC.bodb_LicenseeReport
+DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 Revisions:
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 	
 Param's Explanation:
 

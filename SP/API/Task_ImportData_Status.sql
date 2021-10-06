@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdProduct" executers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_3rdProduct,DBBAL-bodb_3rdProduct" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_3rdProduct]
 GO
 
@@ -8,10 +8,11 @@ AS
 /*
 	Created: 20190401@Percy
 	Task: Check 3rd data has imported
-	DB: DBLIC.bodb_3rdProduct
+	DB: DBLIC.bodb_3rdProduct, DBBAL-bodb_3rdProduct
 
 	Revisions:
 		- 20190401@Percy: Initialize SP [RedmineID: #110692]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 BEGIN
 	SET NOCOUNT ON

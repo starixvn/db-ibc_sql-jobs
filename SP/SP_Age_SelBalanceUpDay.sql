@@ -1,10 +1,10 @@
-﻿/*<info serverAlias="DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBOF-bodb02,DBBAH-bodb02,DBTP-bodb02" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="1"></info>*/
+﻿/*<info serverAlias="DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBOF-bodb02,DBBAH-bodb02,DBTP-bodb02,DBBAL-bodb02" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE  [dbo].[Age_SelBalanceUpDay]	
 AS	
 /*
 Created: 
 Task : Get move bet day, balanceup day
-DB: DB05.bodb02
+DB: DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBOF-bodb02,DBBAH-bodb02,DBTP-bodb02,DBBAL-bodb02
 Original:
 
 Revisions:
@@ -14,6 +14,7 @@ Revisions:
 	- 20101224@Johnson: Apply new arrange of bettype
 	- 20110713@Henry: Change to get @MoveBetsDay from match14 
 	- 20210323@Patrick: Change get movebet date source [Redmine: #149927]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 Param's Explanation:
 */

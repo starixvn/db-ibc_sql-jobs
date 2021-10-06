@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptWinlostbyleague_Bettrans]
 	@Date SMALLDATETIME
@@ -18,6 +18,7 @@ AS
 		- 20191010@Percy: Replace LicenseeBATransaction to LicenseeBATransaction_active [RedmineID: #103656]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 		- 20210608@Kos: Add new column LiveIndicator [RedmineID: #156599]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 */
 
 BEGIN

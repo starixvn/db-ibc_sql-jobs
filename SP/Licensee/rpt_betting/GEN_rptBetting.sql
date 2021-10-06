@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[GEN_rptBetting]
 	@date			SMALLDATETIME,
 	@date2			SMALLDATETIME = NULL,
@@ -8,7 +8,7 @@ AS
 /*
 	Created: 20110517@Elly
 	Task: Generate data into rpt_Betting 
-	DB: DBLIC.bodb_LicenseeReport
+	DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 	Revisions:
 		20110708@Elly: Process data of Fee and Comm
@@ -39,6 +39,7 @@ AS
 		20210113@Parsons: Saba.club Integrate Slot Game [#147977]
 		20210412@Sophia: Change Range of AE Casino [Redmine :#152141]
 		20210514@Danny: Integrate Vgaming [#154080] 
+		20210816@Sophia: add DBBAL [Redmine: #154300]
 
 
 	Param's Explanation:

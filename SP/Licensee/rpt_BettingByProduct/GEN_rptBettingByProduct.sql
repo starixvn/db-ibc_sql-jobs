@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 
@@ -14,7 +14,7 @@ AS
 /*
 	Created: 20150710@Victor
 	Task: Generate data for rpt_BettingByProduct
-	DB: DBLIC/bodb_LicenseeReport
+	DB: DBLIC-bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 	Param's Explanation:
 		@DataSource = 'Rpt_Betting'
 					= 'SeparatedProduct'
@@ -93,6 +93,8 @@ AS
 		- 20210812@Percy: Get ProductCode from Product3rd [RedmineID: #159691]
 		- 20210827@Danny: Update SystemSetting after rptBettingbyProduct step done [redmine: #151993]
 		- 20210901@Percy: Exclude BA Product from code get rpt_Betting source [RedmineID: #159691]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */

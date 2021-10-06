@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdProduct" executers="" viewers="" isFunction="1" isNested="1"></info>*/
+/*<info serverAlias="DBLIC-bodb_3rdProduct,DBBAL-bodb_3rdProduct" executers="" viewers="" isFunction="1" isNested="1"></info>*/
 USE [bodb_3rdProduct]
 GO
 
@@ -13,11 +13,12 @@ AS
 /*
 	Created by Percy
 	Date: 2018-01-05
-	DB: DBLIC.bodb_3rdProduct
+	DB: DBLIC.bodb_3rdProduct,DBBAL-bodb_3rdProduct
 	Task: Check winlostdate is summarized or not
 
 	Revisions:
 		- 20180105@Percy: Initialize function [RedmineID: #87526]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	Param's Explanation:
 		@RefTable:
