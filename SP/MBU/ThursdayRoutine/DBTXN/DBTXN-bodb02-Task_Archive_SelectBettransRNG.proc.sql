@@ -30,7 +30,7 @@ BEGIN;
 	SELECT	b.transid, b.custid, b.transdate, b.odds, b.stake, b.status, b.apositiontaking, b.mpositiontaking, b.tpositiontaking, b.spositiontaking
 		,	b.playerdiscount, b.discount, b.adiscount, b.sdiscount, b.creator, b.winlostdate, b.betfrom, b.virtualrate, b.actualrate, b.actual_stake
 		,	b.currency, b.CurrencyName, b.recommend, b.mrecommend, b.srecommend
-		,	CONVERT(VARCHAR(15), b.ip) AS ip
+		,	CONVERT(NVARCHAR(15), b.ip) AS ip
 		,	b.statusID, b.balance, b.Username, b.transdesc, b.productID, b.gameID
 		,	b.vendorID, b.GameId3rd, b.TranId3rd, b.RefNo, b.IsSum, b.winlost, b.awinlost, b.mwinlost, b.swinlost, b.playercomm, b.comm, b.acomm, b.scomm, b.Transdate3rd
 		,	[countryCode] = ip.countryShort
