@@ -16,6 +16,7 @@ AS
 		- 20200618@Patrick: Fix issue multiple result set [Redmine: #135806]
 		- 20210121@Patrick: Split copy data of bettransRnG14 day by day [Redmine: #149198]
 		- 20210330@Patrick: Add more SiteId [Redmine: #152430]
+		- 20211004@Helen:	Support IPv6 Phase 1 - change datatype first - [Redmine: #160390]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -28,7 +29,9 @@ BEGIN;
 	-- to DB06.bodb_Archive.dbo.bettransRNG_BK
 	SELECT	b.transid, b.custid, b.transdate, b.odds, b.stake, b.status, b.apositiontaking, b.mpositiontaking, b.tpositiontaking, b.spositiontaking
 		,	b.playerdiscount, b.discount, b.adiscount, b.sdiscount, b.creator, b.winlostdate, b.betfrom, b.virtualrate, b.actualrate, b.actual_stake
-		,	b.currency, b.CurrencyName, b.recommend, b.mrecommend, b.srecommend, b.ip, b.statusID, b.balance, b.Username, b.transdesc, b.productID, b.gameID
+		,	b.currency, b.CurrencyName, b.recommend, b.mrecommend, b.srecommend
+		,	CONVERT(VARCHAR(15), b.ip) AS ip
+		,	b.statusID, b.balance, b.Username, b.transdesc, b.productID, b.gameID
 		,	b.vendorID, b.GameId3rd, b.TranId3rd, b.RefNo, b.IsSum, b.winlost, b.awinlost, b.mwinlost, b.swinlost, b.playercomm, b.comm, b.acomm, b.scomm, b.Transdate3rd
 		,	[countryCode] = ip.countryShort
 		,	b.Additional, b.JackpotInfo, b.RefNo2, b.ContributionRate, b.BetStake, b.ContributionStake3rd, b.epositiontaking, b.SiteId
