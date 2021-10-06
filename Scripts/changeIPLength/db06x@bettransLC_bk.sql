@@ -1,6 +1,5 @@
+/*<info serverAlias="DBARC-bodb_Archive" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
 -- check space
-
-
 use bodb_Archive
 
 ALTER TABLE bettransLC_bk
