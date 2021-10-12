@@ -25,6 +25,7 @@ AS
 		- 20210726@Malcolm: Adjust formula of KY Gaming and get data from bettrans_BTi2[RedmineID: #159061]
 		- 20210830@Malcolm: Adjust formula of BTi [RedmineID: #159061]
 		- 20210823@Malcolm: Integrate new product: Skywind [RedmineID: #159566]
+		- 20211007@Malcolm: Divide amount by 1000 with currency in (VND, IDR)[RedmineID: #159566]
 */
 
 BEGIN
@@ -453,8 +454,8 @@ BEGIN
 			mi.AffId,
 			mi.IBCCustId,
 			mi.currency,
-			SUM(b.Bet) AS Turnover,
-			SUM(b.Revenue * -1) AS Winloss
+			SUM(b.Bet/CASE WHEN mi.Currency IN (15,22,33,34,51) THEN 1000.0 ELSE 1.0 END) AS Turnover, -- IDR, VND amount divide by 1000
+			SUM((b.Revenue * -1)/CASE WHEN mi.Currency IN (15,22,33,34,51) THEN 1000.0 ELSE 1.0 END) AS Winloss -- IDR, VND amount divide by 1000
 		FROM dbo.bettrans_Skywind b WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
 		WHERE b.WinlostDate = @WinlostDate
