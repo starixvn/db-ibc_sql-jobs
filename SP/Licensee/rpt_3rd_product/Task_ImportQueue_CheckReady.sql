@@ -8,9 +8,11 @@ Task: Check data separate wallet
 DB: DBLIC.bodb_LicenseeReport, DBBAL-bodb_LicenseeReport
 
 Revisions:
-    - 20211011@Danny: Step1 Check data in Product3rd_ImportQueue table [Redmine: #162947]
+    - 20211011@Danny: Init SP for data checking in Product3rd_ImportQueue table [Redmine: #162947]
 	
-Param's Explanation: ?????
+Explanation: Current data flow: pull data via API -> bodb_PlaytechCS.dbo.Product3rd_ImportQueue ->(job) bodb_PlaytechCS.dbo.bettrans_AGCasino -> (job) rptBettingByProduct
+			 In the case of UM, after UM finish,  (job) rptBettingByProduct start without the data checking in Product3rd_ImportQueue, =>  some separate wallet products in rptBettingByProduct
+			 have incorrect data.
 
 */
 BEGIN
