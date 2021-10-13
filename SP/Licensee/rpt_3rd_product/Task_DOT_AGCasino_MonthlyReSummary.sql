@@ -1,12 +1,4 @@
-
-SET QUOTED_IDENTIFIER ON 
-GO
-SET ANSI_NULLS ON 
-GO
-
-/****** Object:  Stored Procedure dbo.Task_DOT_AGCasino_MonthlyReSummary    Script Date: 12/1/2015 2:37:57 AM ******/
-/****** Object:  Stored Procedure dbo.Task_DOT_AGCasino_MonthlyReSummary    Script Date: 10/1/2015 4:32:32 PM ******/
-/****** Object:  Stored Procedure dbo.Task_DOT_AGCasino_MonthlyReSummary    Script Date: 12/10/2014 11:10:40 AM ******/
+/*<info serverAlias="DBACC-bodb02,DBBAL-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[Task_DOT_AGCasino_MonthlyReSummary]	
 AS
 /*   
@@ -16,6 +8,7 @@ DB: DBACC/bodb02
 Original:
 Revisions:	
 - 20151001@Winnie: Add Gold deluxe
+- 20210816@Sophia: add DBBAL [Redmine: #154300]
 Param's Explanation:
 */ 
 BEGIN 

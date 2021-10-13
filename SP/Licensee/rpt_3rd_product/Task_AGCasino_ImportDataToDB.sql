@@ -1,11 +1,4 @@
-USE [bodb_PlaytechCS]
-GO
-/****** Object:  StoredProcedure [dbo].[Task_AGCasino_ImportDataToDB]    Script Date: 11/28/2017 3:40:10 AM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Task_AGCasino_ImportDataToDB    Script Date: 1/16/2017 18:13:39 ******/
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_AGCasino_ImportDataToDB]
 	@XmlData NVARCHAR(MAX),
 	@LicenseeName VARCHAR(50),
@@ -16,7 +9,7 @@ AS
 Created: 20140909@Victor
 Task : [Task_AGCasino_ImportDataToDB]
 Description: Pulling AG Casino bet tickets from API
-DB: DBPTCS.bodb_PlaytechCS
+DB: DBPTCS.bodb_PlaytechCS,DBBAL-bodb_PlaytechCS
 
 Original:
 
@@ -24,6 +17,7 @@ Revisions:
 	- 20141017@Victor: remove time convertion, input data have GMT -4 timezone already
 	- 20141218@Winnie: DBA- Modify sp to Fix the issue of missing AG Casino's data(Task #27842)
 	- 20161227@Francis: put cmd into a queue to run background to reduce server's loading [RedmineID: #68972]
+	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 Param explanation:
 

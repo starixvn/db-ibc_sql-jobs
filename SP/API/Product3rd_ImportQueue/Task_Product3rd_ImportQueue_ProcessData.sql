@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_3rdProduct" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBLIC-bodb_3rdProduct,DBBAL-bodb_3rdProduct" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_Product3rd_ImportQueue_ProcessData]
 	@QueueIDInput	BIGINT = 0,
 	@ProductID		INT,
@@ -9,7 +9,7 @@ AS
 /*
 	Created by Percy
 	Date: 2017-11-17
-	DB: DBLIC.bodb_3rdProduct
+	DB: DBLIC.bodb_3rdProduct, DBBAL-bodb_3rdProduct
 	Task:
 
 	Revisions:
@@ -18,6 +18,7 @@ AS
 		- 20190401@Percy: Update JobType correctly [RedmineID: #110692]
 		- 20200818@Percy: Integrate Fancy Bet [RedmineID: #138524]
 		- 20211004@Sol: LAP - Support IPv6 - [RedmineID: #162342]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 
 	Param's Explanation:
 		@QueueID: manually import

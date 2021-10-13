@@ -1,4 +1,4 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
 USE [bodb_PlaytechCS]
 GO
 
@@ -12,14 +12,14 @@ AS
 
 /*
 	Created: 20150310@Winnie
-	DB: DBPTCS.bodb_PlaytechCS
+	DB: DBPTCS.bodb_PlaytechCS,DBBAL-bodb_PlaytechCS
 	Task: Gold Deluxe - Import raw data from API - Import into queue
 
 	Revisions:
 		- 20161104@Jim: use bettime instead of balancetime
 		- 20161227@Francis: put cmd into a queue to run background to reduce server's loading [RedmineID: #68972]
 		- 20181003@Percy: Using colum JobType to apply Tip [RedmineID: #70177]
-
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 	Param explanation:
 		. JobType:
 			0: bettrans_GoldDeluxe
