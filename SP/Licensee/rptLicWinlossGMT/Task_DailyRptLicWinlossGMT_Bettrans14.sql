@@ -35,6 +35,7 @@ AS
 		- 20210507@Mark: Support new betfrom and multiple selection on Platform filter [Redmine: #153102]
 		- 20210527@Hogan: Support Add 2 New Betfroms # $ [RedmineID: #155922]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300] 
+		- 20211014@Hogan: Support Add 2 New Betfroms [ ] [RedmineID: #162388]
 
 	EXEC Task_DailyRptLicWinlossGMT_Bettrans14 '2017-11-30'
 */
@@ -158,9 +159,9 @@ BEGIN
 					WHEN BA.transid IS NULL THEN 0
 					WHEN BA.transid IS NOT NULL THEN 1 END AS isBA  
 				,CASE
-					WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$') THEN 1 ELSE 0 END AS isMobile
+					WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$',']') THEN 1 ELSE 0 END AS isMobile
 				,CASE
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$') THEN b.betfrom ELSE '' END AS betfrom
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$','[',']') THEN b.betfrom ELSE '' END AS betfrom
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 				LEFT JOIN bodb02.dbo.Match14 m WITH (NOLOCK)
 					ON m.MatchId = b.MatchId
@@ -207,9 +208,9 @@ BEGIN
 					WHEN BA.transid IS NULL THEN 0
 					WHEN BA.transid IS NOT NULL THEN 1 END
 				,CASE
-					WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$') THEN 1 ELSE 0 END  
+					WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$',']') THEN 1 ELSE 0 END  
 				,CASE
-					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$') THEN b.betfrom ELSE '' END,
+					WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$','[',']') THEN b.betfrom ELSE '' END,
 				CASE 
 					WHEN b.betType = 999 THEN b.betType			--Licensee Spread Setting
 					ELSE 0 

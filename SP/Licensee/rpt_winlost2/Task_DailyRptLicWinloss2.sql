@@ -101,6 +101,7 @@ AS
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
 		- 20210727@Percy: Add column apositiontaking [RedmineID: #155593]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20211014@Hogan: Support Add 2 New Betfroms [ ] [RedmineID: #162388]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -261,11 +262,11 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END AS isBA
 		,CASE
-			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$') THEN 1
+			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$',']') THEN 1
 			ELSE 0
 		END AS isMobile
 		,CASE
-			WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$') THEN b.betfrom
+			WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$','[',']') THEN b.betfrom
 			ELSE ''
 		END AS betfrom
 		,SUM(CASE
@@ -379,11 +380,11 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END
 		,CASE
-			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$') THEN 1
+			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$',']') THEN 1
 			ELSE 0
 		END
 		,CASE
-			WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$') THEN b.betfrom
+			WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$','[',']') THEN b.betfrom
 			ELSE ''
 		END
 		,b.apositiontaking
