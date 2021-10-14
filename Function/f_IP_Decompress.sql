@@ -17,11 +17,13 @@ AS
 */
 RETURN    
 (    
-SELECT CASE LEN(@input) WHEN 4 THEN CONVERT(varchar(45), CONVERT(tinyint, CONVERT(binary(1), SUBSTRING(@input,1,1)))) + '.' +  
+SELECT CASE 
+		WHEN LEN(@input) IN (3,4) THEN CONVERT(varchar(45), CONVERT(tinyint, CONVERT(binary(1), SUBSTRING(@input,1,1)))) + '.' +  
          CONVERT(varchar(45), CONVERT(tinyint, CONVERT(binary(1), SUBSTRING(@input,2,1)))) + '.' +  
          CONVERT(varchar(45), CONVERT(tinyint, CONVERT(binary(1), SUBSTRING(@input,3,1)))) + '.' +  
-         CONVERT(varchar(45), CONVERT(tinyint, CONVERT(binary(1), SUBSTRING(@input,4,1))))    
-      WHEN 16 THEN LOWER(  
+         CONVERT(varchar(45), CONVERT(tinyint, CONVERT(binary(1), SUBSTRING(@input,4,1))))  
+	   
+		WHEN LEN(@input) = 16 THEN LOWER(  
          SUBSTRING(CONVERT(varchar(32), CONVERT(binary(16), @input), 2), 1,4) + ':' +  
          SUBSTRING(CONVERT(varchar(32), CONVERT(binary(16), @input), 2), 5,4) + ':' +  
          SUBSTRING(CONVERT(varchar(32), CONVERT(binary(16), @input), 2), 9,4) + ':' +  
@@ -32,5 +34,5 @@ SELECT CASE LEN(@input) WHEN 4 THEN CONVERT(varchar(45), CONVERT(tinyint, CONVER
          SUBSTRING(CONVERT(varchar(32), CONVERT(binary(16), @input), 2),29,4)  
          ) 
 	ELSE @input END as [IP]  
-)    
+)   
 GO
