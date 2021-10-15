@@ -38,14 +38,15 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM sysobjects WHERE name = 'match' AND type = 'U') RETURN -- no match table, do nothing
 	IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = @DeletedTarget AND type = 'U') RETURN
 
-	DECLARE @idList TABLE(id INT, id2 VARCHAR(20), id3 INT)
+	DECLARE @idList TABLE(id INT, id2 VARCHAR(20), id3 INT, id4 BIGINT)
 	DECLARE @xmlData XML
 	SET @xmlData = CONVERT(XML, @ids)
 
-	INSERT INTO @idList (id, id2, id3)
+	INSERT INTO @idList (id, id2, id3, id4)
 	SELECT T.C.value('./@c1', 'INT') AS id
 			,T.C.value('./@c2', 'VARCHAR(20)') AS id2
 			,T.C.value('./@c3', 'INT') AS id3
+			,T.C.value('./@c4', 'BIGINT') AS id4
 	FROM @xmlData.nodes('/root/r') AS T(C)
 	OPTION (OPTIMIZE FOR (@xmlData = NULL))
 
@@ -121,7 +122,7 @@ BEGIN
 	END
 	IF @DeletedTarget = 'SMP_MarketSelection'
 	BEGIN
-		DELETE FROM dbo.SMP_MarketSelection WITH(ROWLOCK) WHERE MarketSelectionId IN (SELECT id FROM @idList)
+		DELETE FROM dbo.SMP_MarketSelection WITH(ROWLOCK) WHERE MarketSelectionId IN (SELECT id4 FROM @idList)
 		RETURN
 	END
 	IF @DeletedTarget = 'oddsOS'

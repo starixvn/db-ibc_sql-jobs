@@ -21,8 +21,8 @@ BEGIN
 	SET DEADLOCK_PRIORITY HIGH
 
 	DECLARE @ids VARCHAR(MAX), @rowcount INT = 0, @topn INT = 1000, @DeletedTarget VARCHAR(100)	= '', @ids_parse XML
-	CREATE TABLE #output (id INT, id2 VARCHAR(20), id3 INT)	
-	CREATE TABLE #DeletedList (id INT, id2 VARCHAR(20), id3 INT)
+	CREATE TABLE #output (id INT, id2 VARCHAR(20), id3 INT, id4 BIGINT)	
+	CREATE TABLE #DeletedList (id INT, id2 VARCHAR(20), id3 INT, id4 BIGINT)
 	CREATE TABLE #Match_tmp (Matchid INT PRIMARY KEY)
 	
 	INSERT INTO #Match_tmp (matchid)
@@ -416,7 +416,7 @@ BEGIN
 	-- Delete SMP_MarketSelection
 	SET @DeletedTarget = 'SMP_MarketSelection'
 	TRUNCATE TABLE #DeletedList
-	INSERT INTO #DeletedList (id)
+	INSERT INTO #DeletedList (id4)
 	SELECT o.MarketSelectionId
 	FROM dbo.SMP_MarketSelection o WITH (NOLOCK)
 		INNER JOIN #Match_tmp m ON m.Matchid = o.matchid
@@ -428,13 +428,13 @@ BEGIN
 		SET @ids = NULL
 
 		DELETE TOP(@topn) t
-		OUTPUT deleted.id INTO #output(id)
+		OUTPUT deleted.id4 INTO #output(id4)
 		FROM #DeletedList t
 		SET @rowcount = @@ROWCOUNT
 		
 		IF @rowcount = 0 BREAK
 
-		SET @ids_parse = (SELECT  t.id as "@c1"
+		SET @ids_parse = (SELECT  t.id4 as "@c4"
 						  FROM #output t
 						  FOR XML PATH('r'), ROOT('root')
 						 )
