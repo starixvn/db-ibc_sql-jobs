@@ -14,6 +14,7 @@ AS
 		- 20210628@Percy: Get Rebate amount [RedmineID: #157591]
 		- 20210714@Percy: Get Revenue amount [RedmineID: #157958]
 		- 20210805@Percy: Include free spin into P2P Products [RedmineID: #157958]
+		- 20210916@Percy: Add ProgressiveBet, ProgressiveWin [RedmineID: #161540]
 */
 
 BEGIN 
@@ -121,6 +122,8 @@ BEGIN
 			,Turnover		MONEY DEFAULT (0)
 			,Winloss		MONEY DEFAULT (0)
 			,Revenue		MONEY DEFAULT (0)
+			,ProgressiveBet	MONEY DEFAULT (0)
+			,ProgressiveWin	MONEY DEFAULT (0)
 			,AffExRate		FLOAT
 		)
 
@@ -134,6 +137,8 @@ BEGIN
 			,Turnover
 			,Winloss
 			,Revenue
+			,ProgressiveBet
+			,ProgressiveWin
 			,AffExRate
 		)
 		SELECT
@@ -144,6 +149,8 @@ BEGIN
 			,SUM(b.Stake * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)			AS Turnover
 			,SUM(b.WinlostAmount * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)	AS Winloss
 			,SUM(b.Revenue * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)			AS Revenue
+			,SUM(b.ProgressiveBet * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)	AS ProgressiveBet
+			,SUM(b.ProgressiveWin * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)	AS ProgressiveWin
 			,e.Rate
 		FROM bodb_N88.dbo.TpBetRecord b WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.CustId = mi.CustId
@@ -151,10 +158,6 @@ BEGIN
 			CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, mi.currency, 0) e
 		WHERE b.WinlostDate BETWEEN DATEADD(DAY, -1, @WinlostDate) AND DATEADD(DAY, 1, @WinlostDate)
 			AND b.TicketStatus IN (1, 2, 4, 6) -- Won/Lose/Draw/Free Spin
-			AND (
-				p.IsP2P = 1
-				OR (p.IsP2P = 0 AND b.TicketStatus <> 6)
-			)
 			AND CONVERT(DATE, DATEADD(HOUR, @TimeZone, b.SettledTime)) = @WinlostDate
 		GROUP BY
 			mi.CustId
@@ -295,25 +298,27 @@ BEGIN
 			,Turnover		MONEY
 			,Winloss		MONEY
 			,Revenue		MONEY
+			,ProgressiveBet	MONEY
+			,ProgressiveWin	MONEY
 			,Deposit		MONEY
 			,Withdrawal		MONEY
 			,Adjustment		MONEY
 		)
 		;WITH CTE_rptMemberDaily AS
 		(
-			SELECT AffId,CustId,ProductId,Deposit,Withdrawal,Bonus,Rebate,Adjustment,Turnover,Winloss,Revenue,Currency,AffExRate
+			SELECT AffId,CustId,ProductId,Deposit,Withdrawal,Bonus,Rebate,Adjustment,Turnover,Winloss,Revenue,ProgressiveBet,ProgressiveWin,Currency,AffExRate
 			FROM dbo.rptMemberDaily WITH (NOLOCK)
 			WHERE winlostdate = @WinlostDate
 				AND ProductId IN (SELECT ProductId FROM @Products)
 		)
-		INSERT INTO #_CheckData (ModifiedType, CustId, ProductId, AffId, Currency, AffExRate, Bonus, Rebate, Turnover, Winloss, Revenue, Deposit, Withdrawal, Adjustment)
+		INSERT INTO #_CheckData (ModifiedType,CustId,ProductId,AffId,Currency,AffExRate,Bonus,Rebate,Turnover,Winloss,Revenue,ProgressiveBet,ProgressiveWin,Deposit,Withdrawal,Adjustment)
 		SELECT
 			CASE	WHEN t.CustId IS NULL THEN -1 -- delete
 					WHEN r.CustId IS NULL THEN 1 -- insert
 					ELSE 0 END AS ModifiedType -- update
 			,ISNULL(t.CustId, r.CustId) AS CustId
 			,ISNULL(t.ProductId, r.ProductId) AS ProductId
-			,t.AffId, t.Currency, t.AffExRate, t.Bonus, t.Rebate, t.Turnover, t.Winloss, t.Revenue
+			,t.AffId, t.Currency, t.AffExRate, t.Bonus, t.Rebate, t.Turnover, t.Winloss, t.Revenue, t.ProgressiveBet, t.ProgressiveWin
 			,t.Deposit, t.Withdrawal, t.Adjustment
 		FROM #rptMemberDaily t
 			FULL OUTER JOIN CTE_rptMemberDaily r ON t.CustId = r.CustId AND t.ProductId = r.ProductId
@@ -334,9 +339,10 @@ BEGIN
 		BEGIN
 			DELETE #_CheckData
 			OUTPUT @WinlostDate,DELETED.AffId,DELETED.CustId,DELETED.ProductId
-					,DELETED.Deposit,DELETED.Withdrawal,DELETED.Bonus,DELETED.Rebate,DELETED.Adjustment,DELETED.Turnover,DELETED.Winloss,DELETED.Revenue
+					,DELETED.Deposit,DELETED.Withdrawal,DELETED.Bonus,DELETED.Rebate,DELETED.Adjustment
+					,DELETED.Turnover,DELETED.Winloss,DELETED.Revenue,DELETED.ProgressiveBet,DELETED.ProgressiveWin
 					,DELETED.Currency,DELETED.AffExRate
-			INTO dbo.rptMemberDaily(WinlostDate,AffId,CustId,ProductId,Deposit,Withdrawal,Bonus,Rebate,Adjustment,Turnover,Winloss,Revenue,Currency,AffExRate)
+			INTO dbo.rptMemberDaily(WinlostDate,AffId,CustId,ProductId,Deposit,Withdrawal,Bonus,Rebate,Adjustment,Turnover,Winloss,Revenue,ProgressiveBet,ProgressiveWin,Currency,AffExRate)
 			WHERE ModifiedType = 1
 		END
 
@@ -353,23 +359,27 @@ BEGIN
 				,r.Turnover = d.Turnover
 				,r.Winloss = d.Winloss
 				,r.Revenue = d.Revenue
+				,r.ProgressiveBet = d.ProgressiveBet
+				,r.ProgressiveWin = d.ProgressiveWin
 				,r.Currency = d.Currency
 				,r.AffExRate = d.AffExRate
 			FROM dbo.rptMemberDaily r
 				INNER JOIN #_CheckData d ON r.winlostdate = @WinlostDate AND d.CustId = r.CustId AND d.ProductId = r.ProductId
 			WHERE d.ModifiedType = 0
 				AND (
-					r.AffId						<> d.AffId
-					OR ISNULL(r.Bonus, 0)		<> ISNULL(d.Bonus, 0)
-					OR ISNULL(r.Rebate, 0)		<> ISNULL(d.Rebate, 0)
-					OR ISNULL(r.Turnover, 0)	<> ISNULL(d.Turnover, 0)
-					OR ISNULL(r.Winloss, 0)		<> ISNULL(d.Winloss, 0)
-					OR ISNULL(r.Revenue, 0)		<> ISNULL(d.Revenue, 0)
-					OR ISNULL(r.Deposit, 0)		<> ISNULL(d.Deposit, 0)
-					OR ISNULL(r.Withdrawal, 0)	<> ISNULL(d.Withdrawal, 0)
-					OR ISNULL(r.Adjustment, 0)	<> ISNULL(d.Adjustment, 0)
-					OR ISNULL(r.Currency, 0)	<> ISNULL(d.Currency, 0)
-					OR ISNULL(r.AffExRate, 0)	<> ISNULL(d.AffExRate, 0)
+					r.AffId							<> d.AffId
+					OR ISNULL(r.Bonus, 0)			<> ISNULL(d.Bonus, 0)
+					OR ISNULL(r.Rebate, 0)			<> ISNULL(d.Rebate, 0)
+					OR ISNULL(r.Turnover, 0)		<> ISNULL(d.Turnover, 0)
+					OR ISNULL(r.Winloss, 0)			<> ISNULL(d.Winloss, 0)
+					OR ISNULL(r.Revenue, 0)			<> ISNULL(d.Revenue, 0)
+					OR ISNULL(r.ProgressiveBet, 0)	<> ISNULL(d.ProgressiveBet, 0)
+					OR ISNULL(r.ProgressiveWin, 0)	<> ISNULL(d.ProgressiveWin, 0)
+					OR ISNULL(r.Deposit, 0)			<> ISNULL(d.Deposit, 0)
+					OR ISNULL(r.Withdrawal, 0)		<> ISNULL(d.Withdrawal, 0)
+					OR ISNULL(r.Adjustment, 0)		<> ISNULL(d.Adjustment, 0)
+					OR ISNULL(r.Currency, 0)		<> ISNULL(d.Currency, 0)
+					OR ISNULL(r.AffExRate, 0)		<> ISNULL(d.AffExRate, 0)
 				)
 		END
 	END
