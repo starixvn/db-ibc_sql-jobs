@@ -1,4 +1,6 @@
 /*<info serverAlias="DBN88-bodb_N88" isFunction="0" isNested="1"></info>*/
+USE bodb_N88
+GO
 ALTER PROCEDURE [dbo].[Task_API_Queue_WithdrawalInfo]
 	@QueueIDInput	BIGINT = 0
 	,@ErrCode		INT = 0 OUTPUT
@@ -12,6 +14,7 @@ AS
 
 	Revisions:
 		- 20200818@Percy: Initialize SP [RedmineID: #137395]
+		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -276,7 +279,7 @@ BEGIN
 	DELETE dbo.API_Queue WITH (ROWLOCK, UPDLOCK)
 	WHERE DataSource = 'WithdrawalInfo'
 		AND IsFinished = 1
-		AND FinishedTime < DATEADD(MONTH, -1, GETDATE())
+		AND FinishedTime < DATEADD(DAY, -7, GETDATE())
 
 	DROP TABLE #tmpWithdrawalInfo
 END
