@@ -71,6 +71,7 @@ BEGIN
 	END
 
 	-- Novacash's products
+	IF @@ServerName <> 'DBBAL'
 	BEGIN
 		SELECT @ErrCode = 0, @ErrMsg = ''
 		EXEC bodb_3rdProduct.dbo.Task_Product3rd_ImportQueue_Novacash @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT

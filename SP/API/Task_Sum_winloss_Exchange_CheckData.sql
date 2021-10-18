@@ -25,7 +25,7 @@ BEGIN
 	DECLARE @recipients VARCHAR(1000), @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX) = ''
 	SELECT  @Subject = 'SQL Server Job System: ''bodb_3rdProduct: Check Exchange data monthly'' on ' + @@SERVERNAME
 
-	IF @@SERVERNAME IN ('DB052', 'DB053')
+	IF @@SERVERNAME IN ('DB052', 'DB053', 'DBBAL')
 		SELECT @recipients = 'percy.nguyen@starixvn.com;sophia.nguyen@starixvn.com;ann.nguyen@starixvn.com;pontus@starixvn.com'
 	ELSE
 		SELECT @recipients = 'dba_local@starixvn.com'
