@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02,DBTXNIP-IPDB" executers="" viewers="" isFunction="1" isNested=""></info>*/
+/*<info serverAlias="DBTXN-bodb02,DBTXNIP-IPDB,DBCUST-IPDB" executers="" viewers="" isFunction="1" isNested=""></info>*/
 CREATE FUNCTION [dbo].[f_IP_FullForm]
 (
 	@input VARCHAR(45)
@@ -8,7 +8,7 @@ AS
 /*
 	Created: 20211007@Helen
 	Task: IPV6 - [Redmine:160390]
-	Database: DBTXN/bodb02,DBTXN-IPDB
+	Database: DBTXN/bodb02,DBTXN-IPDB,DBCUST-IPDB
 	
 	Revision:
 		- 20211007@Helen: Support IPv6 Phase 1 - Support for 3rd party product bet tickets  [Redmine:160390]
