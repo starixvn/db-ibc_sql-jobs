@@ -20,7 +20,8 @@ AS
 		- 20201007@July:  Saba.club - Data Integrity/Consistency Detection for Free Bets and Blackjack - [Redmine:#140425]
 		- 20210527@July: Check Data Consistency - Exclue bettype BlackJack for VGaming - [Redmine:#155762]
 		- 20210924@July: Vgaming - Exclue bettype Casino Hold'em Poker - [Redmine:#161760]
-	
+		- 20211021@July: Vgaming - Exclue bettype Texas Hold'em Poker - [Redmine:#163463]
+
 	Param's Expanation:
 */
 BEGIN
@@ -66,7 +67,7 @@ BEGIN
 		WHERE	 b.winlostdate = @yesterday
 				AND b.statusID = 0
 				AND b.matchid = @ProductId
-				AND b.bettype NOT IN (3820, 3836) --Exclude Blackjack, Casino Hold'em Poker
+				AND b.bettype NOT IN (3820, 3836, 3837) --Exclude Blackjack, Casino Hold'em Poker, Texas Hold'em Poker
 	END
 	ELSE
 	BEGIN
