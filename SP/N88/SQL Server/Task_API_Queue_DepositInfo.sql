@@ -18,6 +18,7 @@ AS
 		- 20201109@Percy: Update FirstDeposit info [RedmineID: #145020]
 		- 20210824@Percy: Update UpdatedTime on Customer table [RedmineID: #160414]
 		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
+		- 20211022@Percy: Update FirstDeposit info (Disapprove First Deposit) [RedmineID: #159910]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -40,10 +41,6 @@ BEGIN
 			,@XmlData	XML
 			,@LogDesc	VARCHAR(2000) = NULL
 			,@numOftry	TINYINT
-
-	DECLARE @N88_TimeZone	INT
-			,@N8B_TimeZone	INT
-			,@N8G_TimeZone	INT
 
 	CREATE TABLE #tmpDepositInfo
 	(
@@ -72,13 +69,13 @@ BEGIN
 		,Operator		VARCHAR(30)
 		,UpdateTime		DATETIME
 		,DataType		TINYINT -- 0: update, 1: insert
+		,Disapproved	BIT -- update status from 3 (approved to another for first deposit)
 		,PRIMARY KEY (DepositId)
 	)
 
 	CREATE TABLE #tmpFirstDeposit
 	(
 		CustId		INT
-		,SiteId		INT
 		,CreateTime	DATETIME
 		,Amount		DECIMAL(18,4)
 	)
@@ -106,7 +103,6 @@ BEGIN
 		BEGIN
 			-- Reset temp data
 			TRUNCATE TABLE #tmpDepositInfo
-			TRUNCATE TABLE #tmpFirstDeposit
 
 			BEGIN TRY
 				-- Parse XML Data
@@ -170,6 +166,7 @@ BEGIN
 				SET t.DataType = CASE
 									WHEN b.DepositId IS NULL THEN 1 -- insert
 									ELSE 0 END -- update
+					,t.Disapproved = CASE WHEN b.FirstDeposit = 1 AND b.Status = 3 AND (t.Status <> 3 OR t.FirstDeposit = 0) THEN 1 ELSE 0 END
 				FROM #tmpDepositInfo t
 					LEFT JOIN dbo.DepositInfo b WITH (NOLOCK) ON t.DepositId = b.DepositId
 				WHERE b.DepositId IS NULL
@@ -292,12 +289,27 @@ BEGIN
 					END
 
 					-- Update FirstDeposit info
+					IF EXISTS (SELECT 1 FROM #tmpDepositInfo WHERE Disapproved = 1)
+					BEGIN
+						TRUNCATE TABLE #tmpFirstDeposit
+
+						INSERT INTO #tmpFirstDeposit (CustId)
+						SELECT DISTINCT CustId FROM #tmpDepositInfo WHERE Disapproved = 1
+
+						UPDATE c WITH (ROWLOCK)
+						SET c.FirstDepositDate = NULL, c.FirstDepositAmount = NULL, c.UpdatedTime = GETDATE()
+						FROM dbo.Customer c
+							INNER JOIN #tmpFirstDeposit t ON c.CustId = t.CustId
+					END
+
 					IF EXISTS (SELECT 1 FROM #tmpDepositInfo WHERE FirstDeposit = 1 AND Status = 3)
 					BEGIN
-						INSERT INTO #tmpFirstDeposit (CustId, SiteId, CreateTime, Amount)
-						SELECT CustId, SiteId, CreateTime, Amount
+						TRUNCATE TABLE #tmpFirstDeposit
+
+						INSERT INTO #tmpFirstDeposit (CustId, CreateTime, Amount)
+						SELECT CustId, CreateTime, Amount
 						FROM (
-							SELECT CustId, SiteId, CreateTime, Amount
+							SELECT CustId, CreateTime, Amount
 								,ROW_NUMBER() OVER(PARTITION BY CustId ORDER BY CreateTime) AS RN
 							FROM #tmpDepositInfo
 							 WHERE FirstDeposit = 1
