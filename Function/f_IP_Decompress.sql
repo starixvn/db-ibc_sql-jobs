@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02,DBTXNIP-IPDB,DBEXT-bodb02,DBAGE-bodb02,DBACC-bodb02" executers="" viewers="" isFunction="1" isNested=""></info>*/
+/*<info serverAlias="DBTXN-bodb02,DBTXNIP-IPDB,DBEXT-bodb02,DBAGE-bodb02,DBACC-bodb02" selecters="bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="1" isNested=""></info>*/
 CREATE FUNCTION [dbo].[f_IP_Decompress]  
 (  
 	@input VARCHAR(16)  
