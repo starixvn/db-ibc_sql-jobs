@@ -17,6 +17,7 @@ AS
 		- 20171218@Percy: Add ErrCode, ErrMsg replace RAISERROR [RedmineID: #88325]
 		- 20211004@Sol: LAP - Support IPv6 - [RedmineID: #162342]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20211011@Danny: Import data based on settle status [RedmineID: #162947]
 
 	Param explanation:
 	
@@ -46,6 +47,7 @@ BEGIN
 		PlayType	SMALLINT,
 		LoginIP		VARCHAR(45),
 		Currency	TINYINT,
+		Flag		SMALLINT
 	)
 
 	BEGIN TRY
@@ -69,7 +71,7 @@ BEGIN
 			
 			TRUNCATE TABLE #TmpData
 			
-			INSERT INTO #TmpData(BillNo, IBCCustID, BetTime, GameType, BetAmount, NetAmount, PlayType, LoginIP, Currency)
+			INSERT INTO #TmpData(BillNo, IBCCustID, BetTime, GameType, BetAmount, NetAmount, PlayType, LoginIP, Currency, Flag)
 				SELECT 
 					x.v.value('(BILLNO/text())[1]', 'BIGINT') AS BillNo,
 					x.v.value('(IBCCUSTID/text())[1]', 'INT') AS IBCCustID,
@@ -79,7 +81,8 @@ BEGIN
 					x.v.value('(NETAMOUNT/text())[1]', 'MONEY') AS NetAmount,	
 					x.v.value('(PLAYTYPE/text())[1]', 'SMALLINT') AS PlayType,
 					x.v.value('(LOGINIP/text())[1]', 'VARCHAR(45)') AS LoginIP,	
-					x.v.value('(CURRENCY/text())[1]', 'TINYINT') AS Currency
+					x.v.value('(CURRENCY/text())[1]', 'TINYINT') AS Currency,
+					x.v.value('(FLAG/text())[1]', 'SMALLINT') AS Flag
 				FROM @XmlData.nodes('/TransList/TRANSACTION') x(v)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 			--
@@ -157,6 +160,21 @@ BEGIN
 				VALUES (src.BillNo, src.IBCCustID, src.Transdate, src.GameType, src.Stake, src.Actual_Stake, src.Winlost, 
 						src.[Status], src.StatusID, src.PlayType, src.Winlostdate, src.Username, src.LoginIP, 
 						src.recommend, src.mrecommend, src.srecommend, src.currency, src.IsVIPGame);
+
+			/* Flag description
+				1 - settled
+				0 - not yet settled
+				-1 - reset testing balance
+				-2 - bet placed had been modified
+				-8 - cancelled designated bet placed
+				-9 - cancelled bet placed
+			*/
+			DELETE	dbo.bettrans_AGCasino 
+			WHERE  TicketID IN (	SELECT BillNo
+									FROM 	#TmpData 
+									WHERE Flag IN (-1, -8, -9)
+								)
+		
 			--		
 		
 			--Update VersionKey
