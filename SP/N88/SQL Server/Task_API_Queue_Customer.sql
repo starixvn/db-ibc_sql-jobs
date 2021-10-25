@@ -18,6 +18,7 @@ AS
 		- 20210323@Percy: Update UpdatedTime for case update data [RedmineID: #151391]
 		- 20210824@Percy: Change way to get TpUserName [RedmineID: #160657]
 		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
+		- 20211022@Percy: Update FirstDeposit info [RedmineID: #159910]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -38,10 +39,11 @@ BEGIN
 		END
 	END
 
-	DECLARE @QueueID	BIGINT = NULL
-			,@XmlData	XML
-			,@LogDesc	VARCHAR(2000) = NULL
-			,@numOftry	TINYINT
+	DECLARE @QueueID		BIGINT = NULL
+			,@XmlData		XML
+			,@LogDesc		VARCHAR(2000) = NULL
+			,@numOftry		TINYINT
+			,@MinRegDate	DATE
 
 	CREATE TABLE #tmpCustomer
 	(
@@ -61,6 +63,8 @@ BEGIN
 		,Status				TINYINT
 		,TpUserName			VARCHAR(50)
 		,TpSystemUserName	VARCHAR(50)
+		,FirstDepositDate	DATETIME
+		,FirstDepositAmount	MONEY
 		,DataType			TINYINT -- 0: update, 1: insert
 		,PRIMARY KEY (CustId)
 	)
@@ -135,6 +139,16 @@ BEGIN
 				SET t.TpSystemUserName = c.username
 				FROM #tmpCustomer t
 					INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.LicenseeName + '$' + t.SiteName + '_' + CONVERT(VARCHAR(20), t.custid) = c.username2 
+
+				-- Update FirstDeposit
+				SELECT @MinRegDate = MIN(CONVERT(DATE, RegTime)) FROM #tmpCustomer
+
+				UPDATE t
+				SET t.FirstDepositDate = d.CreateTime, t.FirstDepositAmount = d.Amount
+				FROM #tmpCustomer t
+					INNER JOIN dbo.DepositInfo d WITH (NOLOCK) ON t.CustId = d.CustId
+				WHERE d.WinlostDate >= @MinRegDate AND d.CreateTime >= t.RegTime
+					AND d.FirstDeposit = 1 AND d.Status = 3
 				
 				-- Update DataType
 				UPDATE t
@@ -157,6 +171,10 @@ BEGIN
 					OR ISNULL(t.Status, 0) <> ISNULL(b.Status, 0)
 					OR ISNULL(t.TpUserName, '') <> ISNULL(b.TpUserName, '')
 					OR ISNULL(t.TpSystemUserName, '') <> ISNULL(b.TpSystemUserName, '')
+					OR ISNULL(t.FirstDepositDate, '') <> ISNULL(b.FirstDepositDate, '')
+					OR ISNULL(t.FirstDepositAmount, 0) <> ISNULL(b.FirstDepositAmount, 0)
+
+				-- Update Deposit
 				
 				IF @@ROWCOUNT <> 0
 				BEGIN
@@ -177,6 +195,8 @@ BEGIN
 							,b.Status = t.Status
 							,b.TpUserName = t.TpUserName
 							,b.TpSystemUserName = t.TpSystemUserName
+							,b.FirstDepositDate = t.FirstDepositDate
+							,b.FirstDepositAmount = t.FirstDepositAmount
 							,b.UpdatedTime = @CurrentDate
 						FROM dbo.Customer b
 							INNER JOIN #tmpCustomer t ON b.CustId = t.CustId
@@ -202,6 +222,8 @@ BEGIN
 							,Status
 							,TpUserName
 							,TpSystemUserName
+							,FirstDepositDate
+							,FirstDepositAmount
 						)
 						SELECT
 							CustId
@@ -218,6 +240,8 @@ BEGIN
 							,Status
 							,TpUserName
 							,TpSystemUserName
+							,FirstDepositDate
+							,FirstDepositAmount
 						FROM #tmpCustomer
 						WHERE DataType = 1
 					END

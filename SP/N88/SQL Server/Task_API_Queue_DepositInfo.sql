@@ -166,33 +166,12 @@ BEGIN
 				SET t.DataType = CASE
 									WHEN b.DepositId IS NULL THEN 1 -- insert
 									ELSE 0 END -- update
-					,t.Disapproved = CASE WHEN b.FirstDeposit = 1 AND b.Status = 3 AND (t.Status <> 3 OR t.FirstDeposit = 0) THEN 1 ELSE 0 END
+					,t.Disapproved = CASE
+									WHEN b.DepositId IS NULL THEN 0
+									WHEN b.FirstDeposit = 1 AND b.Status = 3 AND (t.Status <> 3 OR t.FirstDeposit = 0) THEN 1
+									ELSE 0 END
 				FROM #tmpDepositInfo t
 					LEFT JOIN dbo.DepositInfo b WITH (NOLOCK) ON t.DepositId = b.DepositId
-				WHERE b.DepositId IS NULL
-					OR ISNULL(t.TransId, '') <> ISNULL(b.TransId, '')
-					OR ISNULL(t.DepositType, 0) <> ISNULL(b.DepositType, 0)
-					OR ISNULL(t.CustId, 0) <> ISNULL(b.CustId, 0)
-					OR ISNULL(t.UserName, '') <> ISNULL(b.UserName, '')
-					OR ISNULL(t.CurrencyId, 0) <> ISNULL(b.CurrencyId, 0)
-					OR ISNULL(t.SiteId, 0) <> ISNULL(b.SiteId, 0)
-					OR ISNULL(t.DepositInfo, '') <> ISNULL(b.DepositInfo, '')
-					OR ISNULL(t.Amount, 0) <> ISNULL(b.Amount, 0)
-					OR ISNULL(t.ActualDeposit, 0) <> ISNULL(b.ActualDeposit, 0)
-					OR ISNULL(t.CreateTime, '') <> ISNULL(b.CreateTime, '')
-					OR ISNULL(t.TPCreateTime, '') <> ISNULL(b.TPCreateTime, '')
-					OR ISNULL(t.CallbackTime, '') <> ISNULL(b.CallbackTime, '')
-					OR ISNULL(t.FirstDeposit, '') <> ISNULL(b.FirstDeposit, '')
-					OR ISNULL(t.ThirdId, '') <> ISNULL(b.ThirdId, '')
-					OR ISNULL(t.RefId, '') <> ISNULL(b.RefId, '')
-					OR ISNULL(t.DepositTime, '') <> ISNULL(b.DepositTime, '')
-					OR ISNULL(t.Memo, '') <> ISNULL(b.Memo, '')
-					OR ISNULL(t.PostScript, '') <> ISNULL(b.PostScript, '')
-					OR ISNULL(t.Comment, '') <> ISNULL(b.Comment, '')
-					OR ISNULL(t.Status, 0) <> ISNULL(b.Status, 0)
-					OR ISNULL(t.Flag, 0) <> ISNULL(b.Flag, 0)
-					OR ISNULL(t.Operator, '') <> ISNULL(b.Operator, '')
-					OR ISNULL(t.UpdateTime, '') <> ISNULL(b.UpdateTime, '')
 				
 				IF @@ROWCOUNT <> 0
 				BEGIN
@@ -293,13 +272,21 @@ BEGIN
 					BEGIN
 						TRUNCATE TABLE #tmpFirstDeposit
 
-						INSERT INTO #tmpFirstDeposit (CustId)
-						SELECT DISTINCT CustId FROM #tmpDepositInfo WHERE Disapproved = 1
+						INSERT INTO #tmpFirstDeposit (CustId, CreateTime, Amount)
+						SELECT CustId, CreateTime, Amount
+						FROM (
+							SELECT CustId, CreateTime, Amount
+								,ROW_NUMBER() OVER(PARTITION BY CustId ORDER BY CreateTime) AS RN
+							FROM #tmpDepositInfo
+							WHERE Disapproved = 1
+						) t
+						WHERE RN = 1
 
 						UPDATE c WITH (ROWLOCK)
 						SET c.FirstDepositDate = NULL, c.FirstDepositAmount = NULL, c.UpdatedTime = GETDATE()
 						FROM dbo.Customer c
-							INNER JOIN #tmpFirstDeposit t ON c.CustId = t.CustId
+							INNER JOIN #tmpFirstDeposit t ON c.CustId = t.CustId AND t.CreateTime = c.FirstDepositDate AND t.Amount = c.FirstDepositAmount
+						WHERE c.FirstDepositDate IS NOT NULL
 					END
 
 					IF EXISTS (SELECT 1 FROM #tmpDepositInfo WHERE FirstDeposit = 1 AND Status = 3)
@@ -312,7 +299,7 @@ BEGIN
 							SELECT CustId, CreateTime, Amount
 								,ROW_NUMBER() OVER(PARTITION BY CustId ORDER BY CreateTime) AS RN
 							FROM #tmpDepositInfo
-							 WHERE FirstDeposit = 1
+							WHERE FirstDeposit = 1
 								AND Status = 3
 						) t
 						WHERE RN = 1
