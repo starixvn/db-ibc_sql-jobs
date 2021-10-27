@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02,DBTXNIP-IPDB,DBCUST-IPDB" executers="" viewers="" isFunction="1" isNested="1"></info>*/
+/*<info serverAlias="DBTXN-bodb02,DBTXNIP-IPDB,DBCUST-IPDB,DBACC-bodb02" executers="" viewers="" isFunction="1" isNested="1"></info>*/
 CREATE FUNCTION [dbo].[f_IP_DecToHex]
 (
 	@input tinyint
@@ -7,7 +7,7 @@ RETURNS char(1)
 /*
 	Created: 20211007@Helen
 	Task: IPV6 - [Redmine:160390]
-	Database: DBTXN/bodb02,DBTXN-IPDB,DBCUST-IPDB
+	Database: DBTXN/bodb02,DBTXN-IPDB,DBCUST-IPDB,DBACC-bodb02
 	
 	Revision:
 		- 20211007@Helen: Support IPv6 Phase 1 - Support for 3rd party product bet tickets  [Redmine:160390]
