@@ -141,7 +141,7 @@ BEGIN
 					AND t.GameType		= c.GameType
 					AND t.TransTime		= c.TransTime
 					AND t.StatusId		= c.StatusId
-					AND t.BonusId		= c.BonusId
+					AND ISNULL(t.BonusId, 0) = ISNULL(c.BonusId, 0)
 		WHERE t.SettledTime IS NULL
 			OR c.SettledTime IS NULL
 			OR ISNULL(t.TurnOver, 0)		<> ISNULL(c.TurnOver, 0)
@@ -165,7 +165,7 @@ BEGIN
 						AND s.GameType		= t.GameType
 						AND s.TransTime		= t.TransTime
 						AND s.StatusId		= t.StatusId
-						AND s.BonusId		= t.BonusId
+						AND ISNULL(s.BonusId, 0) = ISNULL(t.BonusId, 0)
 			WHERE t.DataType = -1
 
 		-- Update
@@ -188,7 +188,7 @@ BEGIN
 						AND s.GameType		= t.GameType
 						AND s.TransTime		= t.TransTime
 						AND s.StatusId		= t.StatusId
-						AND s.BonusId		= t.BonusId
+						AND ISNULL(s.BonusId, 0) = ISNULL(t.BonusId, 0)
 			WHERE t.DataType = 0
 
 		-- Insert
