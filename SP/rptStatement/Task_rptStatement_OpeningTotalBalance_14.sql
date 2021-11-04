@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20190909@Percy: Initialize SP [RedmineID: #115377]
 		- 20191212@Percy: Get UplineId (HeadlineId) from ExtraPT Setting table [RedmineID: #118962]
+		- 20211104@Percy: Fix case UplineId is null [RedmineID: #164203]
 */
 
 BEGIN
@@ -27,7 +28,7 @@ BEGIN
 			CROSS APPLY (
 				SELECT val FROM bodb02.dbo.strSplit(@CustIds, ',') f WHERE c.custid = f.val
 			) AS tmp
-			CROSS APPLY (
+			OUTER APPLY (
 				SELECT TOP (1) ag.UplineId
 				FROM bodb02.dbo.Acc_GroupExtraPTSetting ag WITH (NOLOCK)
 				WHERE c.srecommend = ag.SuperId
@@ -41,7 +42,7 @@ BEGIN
 		FROM bodb02.dbo.Customer c WITH (NOLOCK)
 			INNER JOIN #tmpSuper s ON c.srecommend = s.srecommend
 		UNION ALL
-		SELECT DISTINCT UplineId, 0, 0, 0, 0, UplineId FROM #tmpSuper
+		SELECT DISTINCT UplineId, 0, 0, 0, 0, UplineId FROM #tmpSuper WHERE UplineId IS NOT NULL
 
 		DROP TABLE #tmpSuper
 	END
