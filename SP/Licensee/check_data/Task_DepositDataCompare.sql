@@ -35,6 +35,7 @@ AS
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
+		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -133,7 +134,9 @@ BEGIN
 		,WM BIGINT
 		,BGG BIGINT
 		,VGA BIGINT
-		,CG BIGINT)
+		,CG BIGINT
+		,AP BIGINT
+		,APM BIGINT)
 
 	--exec
 	--rptLicWinloss2
@@ -179,7 +182,9 @@ BEGIN
 		,WM
 		,BGG
 		,VGA
-		,CG)
+		,CG
+		,AP
+		,APM)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
@@ -342,7 +347,9 @@ BEGIN
 		,WM
 		,BGG
 		,VGA
-		,CG)
+		,CG
+		,AP
+		,APM)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (
