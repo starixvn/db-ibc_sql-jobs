@@ -22,7 +22,7 @@ BEGIN
 	SELECT translogid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking
 		, playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake, currency
 		, CurrencyName, recommend, mrecommend, srecommend
-		, CASE WHEN ISNULL(B.ip,'') <> '' THEN cip.IP ELSE B.ip END AS IP
+		, CONVERT(VARCHAR(45),CASE WHEN ISNULL(B.ip,'') <> '' THEN cip.IP ELSE B.ip END) AS ip
 		, statusID, balance, Username, transdesc, productID, gameID, eventID, vendorID
 		, GameId3rd, TranId3rd, custom1, custom2, custom3, LiveIndicator		 
 	FROM dbo.translog14 B   WITH(NOLOCK)

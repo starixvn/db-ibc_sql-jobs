@@ -35,7 +35,7 @@ BEGIN;
 			,	[betcheck] = CONVERT(VARCHAR(50), b.betcheck)
 			,	b.checktime, b.oddsspread, b.actualrate, b.matchid, b.recommend, b.mrecommend, b.srecommend
 			,	b.ruben, b.betid, b.statuswinlost, b.modds, b.betdaqid, b.tstamp, b.currency
-			,	[ip] = ISNULL(ip.IPArchive, b.IP)
+			,	[ip] = ISNULL(ip.IPArchive, b.ip)
 			,	b.transdesc, b.virtualrate, b.oddstype, b.statusID
 			,	b.currency2, b.transid, b.bettype, b.balance, b.transid2, b.SecAcceptFlag, b.comstatus
 			,	[CountryCode] = ip.countryShort
