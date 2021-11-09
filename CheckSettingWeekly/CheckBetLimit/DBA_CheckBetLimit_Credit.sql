@@ -13,6 +13,7 @@ DB: DBCHECK.CheckResultDB
 Revisions:
 	-20180802@Johnson: update ruleid [redmine: #73556]
 	-20210928@Eden: migrate SB and NG betsetting to new tables [redmine: #158073]
+	-20211109@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
 Param's Explanation: 
 	
 */
@@ -33,9 +34,9 @@ BEGIN
 	SELECT 99,1 UNION ALL
 	SELECT 99,9 UNION ALL
 	SELECT 161,81 UNION ALL
-	SELECT 164,8101 
-	--SELECT 9901,1 UNION ALL --saba soccer
-	--SELECT 9902,1 --saba basketball
+	SELECT 164,8101 UNION ALL
+	SELECT 9901,1 UNION ALL --saba soccer
+	SELECT 9902,1 --saba basketball
 
 	CREATE TABLE #DCS_Super (custID INT,SportType SMALLINT, BetType SMALLINT, minbet MONEY, maxbet MONEY, maxpermatch MONEY
 							, MaxPerNumber money, MaxPayoutPerMatch money, PRIMARY KEY (custID,Bettype,SportType))
