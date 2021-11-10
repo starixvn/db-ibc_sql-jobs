@@ -11,23 +11,30 @@
 USE [bodb_Archive]
 GO
 
---dbo.bettrans_AGCasino_bk: select COUNT(1) from dbo.bettrans_AGCasino_bk b with (nolock) where b.Transdate < '2021-10-29' --> count = 0 --> skip
+--dbo.bettrans_AGCasino_bk: select COUNT(1) from dbo.bettrans_AGCasino_bk b with (nolock) where b.Winlostdate < '2021-10-29' --> count = 0 --> skip
 --dbo.bettrans_Staging_bk:  select top 10 * from dbo.bettrans_Staging_bk b with (nolock) --> No row --> skip
 
---dbo.bettrans_bk - 1312 rows : select COUNT(1) from dbo.bettrans_bk b with (nolock) where b.transdate < '2021-10-29'
-BEGIN
-	DELETE b
-	FROM dbo.bettrans_bk b WITH (ROWLOCK, UPDLOCK)
-	WHERE b.transdate < '2021-10-29'
-END
-
---dbo.bettransG - 686847 rows: select COUNT(1) from dbo.bettransG b with (nolock) where b.transdate < '2021-10-29'
+--dbo.bettrans_bk - 1312 rows : select COUNT(1) from dbo.bettrans_bk b with (nolock) where b.winlostdate < '2021-10-29'
 BEGIN
 	WHILE (1=1)
 	BEGIN
-		DELETE TOP(3000) b
+		DELETE TOP(2000) b
+		FROM dbo.bettrans_bk b WITH (ROWLOCK, UPDLOCK)
+		WHERE b.winlostdate < '2021-10-29'
+
+		IF @@ROWCOUNT = 0 BREAK
+
+		WAITFOR DELAY '00:00:00.010'
+	END
+END
+
+--dbo.bettransG - 686847 rows: select COUNT(1) from dbo.bettransG b with (nolock) where b.winlostdate < '2021-10-29'
+BEGIN
+	WHILE (1=1)
+	BEGIN
+		DELETE TOP(2000) b
 		FROM dbo.bettransG b WITH (ROWLOCK, UPDLOCK)
-		WHERE b.transdate < '2021-10-29'
+		WHERE b.winlostdate < '2021-10-29'
 
 		IF @@ROWCOUNT = 0 BREAK
 
@@ -35,20 +42,13 @@ BEGIN
 	END
 END
 
---dbo.bettransLC_bk - 58 rows: select COUNT(1) from dbo.bettransLC_bk b with (nolock) where b.transdate < '2021-10-29'
-BEGIN
-	DELETE b
-	FROM dbo.bettransLC_bk b WITH (ROWLOCK, UPDLOCK)
-	WHERE b.transdate < '2021-10-29'
-END
-
---dbo.bettransm - 1237885 rows: select COUNT(1) from dbo.bettransm b with (nolock) where b.transdate < '2021-10-29'
+--dbo.bettransLC_bk - 58 rows: select COUNT(1) from dbo.bettransLC_bk b with (nolock) where b.winlostdate < '2021-10-29'
 BEGIN
 	WHILE (1=1)
 	BEGIN
-		DELETE TOP(3000) b
-		FROM dbo.bettransm b WITH (ROWLOCK, UPDLOCK)
-		WHERE b.transdate < '2021-10-29'
+		DELETE TOP(2000) b
+		FROM dbo.bettransLC_bk b WITH (ROWLOCK, UPDLOCK)
+		WHERE b.winlostdate < '2021-10-29'
 
 		IF @@ROWCOUNT = 0 BREAK
 
@@ -56,17 +56,45 @@ BEGIN
 	END
 END
 
---dbo.bettransRnG_bk - 1259 rows: select COUNT(1) from dbo.bettransRnG_bk b with (nolock) where b.transdate < '2021-10-29'
+--dbo.bettransm - 1237885 rows: select COUNT(1) from dbo.bettransm b with (nolock) where b.winlostdate < '2021-10-29'
 BEGIN
-	DELETE b
-	FROM dbo.bettransRnG_bk b WITH (ROWLOCK, UPDLOCK)
-	WHERE b.transdate < '2021-10-29'
+	WHILE (1=1)
+	BEGIN
+		DELETE TOP(2000) b
+		FROM dbo.bettransm b WITH (ROWLOCK, UPDLOCK)
+		WHERE b.winlostdate < '2021-10-29'
+
+		IF @@ROWCOUNT = 0 BREAK
+
+		WAITFOR DELAY '00:00:00.010'
+	END
 END
 
---dbo.translog_BK - 81 rows: select COUNT(1) from dbo.translog_BK b with (nolock) where b.transdate < '2021-10-29'
+--dbo.bettransRnG_bk - 1259 rows: select COUNT(1) from dbo.bettransRnG_bk b with (nolock) where b.winlostdate < '2021-10-29'
 BEGIN
-	DELETE b
-	FROM dbo.translog_BK b WITH (ROWLOCK, UPDLOCK)
-	WHERE b.transdate < '2021-10-29'
+	WHILE (1=1)
+	BEGIN
+		DELETE TOP(2000) b
+		FROM dbo.bettransRnG_bk b WITH (ROWLOCK, UPDLOCK)
+		WHERE b.winlostdate < '2021-10-29'
+
+		IF @@ROWCOUNT = 0 BREAK
+
+		WAITFOR DELAY '00:00:00.010'
+	END
+END
+
+--dbo.translog_BK - 81 rows: select COUNT(1) from dbo.translog_BK b with (nolock) where b.winlostdate < '2021-10-29'
+BEGIN
+	WHILE (1=1)
+	BEGIN
+		DELETE TOP(2000) b
+		FROM dbo.translog_BK b WITH (ROWLOCK, UPDLOCK)
+		WHERE b.winlostdate < '2021-10-29'
+
+		IF @@ROWCOUNT = 0 BREAK
+
+		WAITFOR DELAY '00:00:00.010'
+	END
 END
 
