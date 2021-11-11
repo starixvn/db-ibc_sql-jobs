@@ -20,5 +20,6 @@ BEGIN
 	TRUNCATE TABLE dbo.bettransm
 	TRUNCATE TABLE dbo.bettransRnG_bk
 	TRUNCATE TABLE dbo.translog_BK
+	TRUNCATE TABLE dbo.transfer_bk
 END
 
