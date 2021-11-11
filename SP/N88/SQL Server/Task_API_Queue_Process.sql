@@ -14,6 +14,7 @@ AS
 		- 20201021@Percy: Add table: AdjustmentInfo [RedmineID: #143879]
 		- 20210112@Percy: Add 4 tables: RebateMLog, CustBonusRollover, Promotion & PromotionSpecific [RedmineID: #146759]
 		- 20210524@Percy: Add table: CustClosingBalance [RedmineID: #155334]
+		- 20211028@Percy: Add 3 tables: DrawLog, EventDraw, VipUpgradeReview [RedmineID: #161048]
 		
 */
 
@@ -203,6 +204,43 @@ BEGIN
 			VALUES ('CustClosingBalance', @ErrCode, @ErrMsg)
 		END
 	END
+
+	-- DrawLog
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_DrawLog @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('DrawLog', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- EventDraw
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_EventDraw @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('EventDraw', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- VipUpgradeReview
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_VipUpgradeReview @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('VipUpgradeReview', @ErrCode, @ErrMsg)
+		END
+	END
+
 
 	DECLARE @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX), @recipients VARCHAR(MAX)
 

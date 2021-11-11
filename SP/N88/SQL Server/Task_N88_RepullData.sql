@@ -18,6 +18,7 @@ AS
 	Revisions:
 		- 20200525@Percy: Initialize SP [RedmineID: #155230]
 		- 20210909@Percy: Re-pull data every 6 hours [RedmineID: #155230]
+		- 20211028@Percy: Add AdjustmentInfo, DrawLog [RedmineID: #161048]
 */
 
 BEGIN
@@ -63,6 +64,14 @@ BEGIN
 	-- RebateMLog
 	INSERT INTO @tblDataSource (DataSource, KeyValue)
 	SELECT 'RebateMLog', CONVERT(VARCHAR(50), MIN(Id)) FROM dbo.RebateMLog WITH (NOLOCK) WHERE WinlostDate >= @WinlostDate
+
+	-- AdjustmentInfo
+	INSERT INTO @tblDataSource (DataSource, KeyValue)
+	SELECT 'AdjustmentInfo', CONVERT(VARCHAR(50), MIN(AdjustId)) FROM dbo.AdjustmentInfo WITH (NOLOCK) WHERE WinlostDate >= @WinlostDate
+
+	-- DrawLog
+	INSERT INTO @tblDataSource (DataSource, KeyValue)
+	SELECT 'DrawLog', CONVERT(VARCHAR(50), MIN(Id)) FROM dbo.DrawLog WITH (NOLOCK) WHERE WinlostDate >= @WinlostDate
 
 	DELETE @tblDataSource WHERE KeyValue IS NULL OR DataSource <> @DataSource
 
