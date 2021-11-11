@@ -14,37 +14,37 @@ select COUNT(1) from dbo.translog with(nolock) where winlostdate < '2021-10-29 0
 --active
 while 1 = 1
 begin
-	delete top(2000) from dbo.bettrans with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.bettrans with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.bettransLC with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.bettransLC with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.bettransRnG with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.bettransRnG with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.bettransG with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.bettransG with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.bettransm with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.bettransm with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.translog with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.translog with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
@@ -59,37 +59,37 @@ select COUNT(1) from dbo.translog14 with(nolock) where winlostdate < '2021-10-29
 
 while 1 = 1
 begin
-	delete top(2000) from dbo.bettrans14 with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.bettrans14 with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.bettransLC14 with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.bettransLC14 with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.bettransRnG14 with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.bettransRnG14 with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.bettransG14 with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.bettransG14 with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.bettransm14 with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.bettransm14 with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.translog14 with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.translog14 with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
@@ -101,19 +101,19 @@ select count(1) from dbo.Task_bettransRNG14_IP2Country where winlostdate < '2021
 
 while 1 = 1
 begin
-	delete top(2000) from dbo.Task_bettrans14_IP2Country with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.Task_bettrans14_IP2Country with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.Task_bettransLC14_IP2Country with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.Task_bettransLC14_IP2Country with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
 while 1 = 1
 begin
-	delete top(2000) from dbo.Task_bettransRNG14_IP2Country with(rowlock) where winlostdate < '2021-10-29 00:00:00' and custid <> 3
+	delete top(2000) from dbo.Task_bettransRNG14_IP2Country with(rowlock) where winlostdate < '2021-10-29 00:00:00'
 	if @@rowcount = 0
 		break
 end
