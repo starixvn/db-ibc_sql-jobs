@@ -7,7 +7,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_BettransInsBonusWallet]
 	@amount 		MONEY,	
 	@lockedAmount	MONEY = 0,	
 	@transdesc 		NVARCHAR(300) = '',
-	@ip				NVARCHAR(15)='',
+	@ip				VARCHAR(45)='',
 	@betcheck		NVARCHAR(50) = NULL,
 	@transid 		BIGINT = 0 OUTPUT,	
 	@bal_transid 	BIGINT = 0 OUTPUT,
@@ -27,6 +27,7 @@ Revisions:
 	- 20180323@Kathy: Change 2 bonus bettypes [Redmine:#66797]
 	- 20180417@Kathy: Add more input param @betcheck [Redmine:#66797]
 	- 20190731@Bobby: 1stDeposit - Bonus - Update changes on @oddsspread to log a locked amount [Redmine:#117923]
+	- 20211112@Sol: Support IPv6 - Phase 2 - [Redmine: #163963]
 
 Param's Explanation:
 	- @custid: player account who joined bonus program
