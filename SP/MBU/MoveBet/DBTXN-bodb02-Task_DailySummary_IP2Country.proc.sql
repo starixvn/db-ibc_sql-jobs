@@ -102,7 +102,7 @@ BEGIN
 	DELETE FROM dbo.Task_bettrans14_IP2Country WHERE winlostdate = @winlostdate
 
 	INSERT INTO dbo.Task_bettrans14_IP2Country (transid, winlostdate, CountryShort, IPArchive)
-	SELECT t1.transid, t1.winlostdate, t2.countryShort, t2.IPArchive
+	SELECT t1.transid, t1.winlostdate, t2.countryShort, ISNULL(t2.IPArchive,'') AS IPArchive 
 	FROM #tmp1 t1 INNER JOIN #tmp2 t2 ON t1.IP = t2.IP
 
 	End_Bettrans14:
