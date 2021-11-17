@@ -1,6 +1,4 @@
-SET ANSI_NULLS ON;
-SET QUOTED_IDENTIFIER ON;
-GO
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE	dbo.Task_Archive_SelectBettransRNG @winlostdate SMALLDATETIME
 AS
 /*
@@ -18,6 +16,7 @@ AS
 		- 20210330@Patrick: Add more SiteId [Redmine: #152430]
 		- 20211004@Helen:	Support IPv6 Phase 1 - change datatype first - [Redmine: #160390]
 		- 20211013@July:	Support IPv6 Phase 1 - change datatype/length IP - [Redmine: #160390]
+		- 20211007@Helen: Support IPv6 Phase 1 - Support for 3rd party product bet tickets  [Redmine:160390]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -31,7 +30,7 @@ BEGIN;
 	SELECT	b.transid, b.custid, b.transdate, b.odds, b.stake, b.status, b.apositiontaking, b.mpositiontaking, b.tpositiontaking, b.spositiontaking
 		,	b.playerdiscount, b.discount, b.adiscount, b.sdiscount, b.creator, b.winlostdate, b.betfrom, b.virtualrate, b.actualrate, b.actual_stake
 		,	b.currency, b.CurrencyName, b.recommend, b.mrecommend, b.srecommend
-		,	CONVERT(VARCHAR(45), b.ip) AS ip
+		,	ISNULL(ip.IPArchive, b.ip) AS ip
 		,	b.statusID, b.balance, b.Username, b.transdesc, b.productID, b.gameID
 		,	b.vendorID, b.GameId3rd, b.TranId3rd, b.RefNo, b.IsSum, b.winlost, b.awinlost, b.mwinlost, b.swinlost, b.playercomm, b.comm, b.acomm, b.scomm, b.Transdate3rd
 		,	[countryCode] = ip.countryShort
@@ -43,4 +42,3 @@ BEGIN;
 		AND ip.transid BETWEEN @__minTransId AND @__maxTransId
 END;
 GO
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/

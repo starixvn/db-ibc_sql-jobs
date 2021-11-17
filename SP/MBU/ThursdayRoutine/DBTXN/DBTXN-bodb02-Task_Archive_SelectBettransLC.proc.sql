@@ -1,6 +1,4 @@
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE	dbo.Task_Archive_SelectBettransLC
 AS
 /*
@@ -14,6 +12,7 @@ AS
 		- 20200612@Patrick: Avoid sort to reduce log file growth [Redmine: #135806]
 		- 20200618@Patrick: Fix issue multiple result set [Redmine: #135806]
 		- 20201221@Brice:	Add column [siteID] of [bettransLC] - [Redmine: #147084]
+		- 20211007@Helen: Support IPv6 Phase 1 - Support for 3rd party product bet tickets  [Redmine:160390]
 */
 BEGIN 
 	SET NOCOUNT ON
@@ -27,7 +26,9 @@ BEGIN
 	-- to DB06.bodb_Archive.dbo.bettransLC_BK
 	SELECT	b.transid, b.custid, b.transdate, b.odds, b.stake, b.status, b.apositiontaking, b.mpositiontaking, b.tpositiontaking, b.spositiontaking
 		,	b.playerdiscount, b.discount, b.adiscount, b.sdiscount, b.creator, b.winlostdate, b.betfrom, b.virtualrate, b.actualrate, b.actual_stake
-		,	b.currency, b.CurrencyName, b.recommend, b.mrecommend, b.srecommend, b.ip, b.statusID, b.balance, b.Username, b.transdesc, b.productID, b.gameID
+		,	b.currency, b.CurrencyName, b.recommend, b.mrecommend, b.srecommend
+		,   ISNULL(p.IPArchive, b.IP) AS ip
+		,	b.statusID, b.balance, b.Username, b.transdesc, b.productID, b.gameID
 		,	b.vendorID, b.GameId3rd, b.TranId3rd, b.RefNo, b.IsSum, b.winlost, b.awinlost, b.mwinlost, b.swinlost, b.playercomm, b.comm, b.acomm, b.scomm
 		,	b.Transdate3rd, b.NetStake
 		,	[countryCode] = p.CountryShort
@@ -40,4 +41,3 @@ BEGIN
 		AND p.winlostdate = t.winlostdate
 END
 GO
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/

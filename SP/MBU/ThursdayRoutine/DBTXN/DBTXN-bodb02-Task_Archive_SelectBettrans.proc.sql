@@ -1,5 +1,4 @@
-USE [bodb02]
-GO
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Archive_SelectBettrans] @winlostdate SMALLDATETIME
 AS
 
@@ -15,6 +14,7 @@ AS
 		- 20200311@Billy:	Add column [ReasonID] of [bettrans] - [Redmine: #130202]
 		- 20200710@Brice:	Add column [sort] of [bettrans] - [Redmine: #137129]
 		- 20211004@Helen:	Support IPv6 Phase 1 - change datatype first - [Redmine: #160390]
+		- 20211007@Helen: Support IPv6 Phase 1 - Support for 3rd party product bet tickets  [Redmine:160390]
 
 	Developer's Notes:
 		- This SP belongs to bettrans14 set for Thursday Routine:
@@ -35,7 +35,7 @@ BEGIN;
 			,	[betcheck] = CONVERT(VARCHAR(50), b.betcheck)
 			,	b.checktime, b.oddsspread, b.actualrate, b.matchid, b.recommend, b.mrecommend, b.srecommend
 			,	b.ruben, b.betid, b.statuswinlost, b.modds, b.betdaqid, b.tstamp, b.currency
-			,	[ip] = CONVERT(VARCHAR(45), b.ip)
+			,	[ip] = ISNULL(ip.IPArchive, b.ip)
 			,	b.transdesc, b.virtualrate, b.oddstype, b.statusID
 			,	b.currency2, b.transid, b.bettype, b.balance, b.transid2, b.SecAcceptFlag, b.comstatus
 			,	[CountryCode] = ip.countryShort
@@ -48,4 +48,3 @@ BEGIN;
 END;
 GO
 
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/

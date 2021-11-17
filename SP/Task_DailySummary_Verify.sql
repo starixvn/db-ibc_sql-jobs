@@ -21,6 +21,7 @@ AS
 		- 20180918@Patrick: Add more rule check if a custid belong to more than an upline [RedmineID: #101549]
 		- 20190305@Patrick: Remove statement check rowcount for check running/waiting ticket at translog statement [RedmineID: #109805]
 		- 2020203@Patrick: Add more rule check running parlay tickets [RedmineId: #127651]
+		- 20211012@July: Remove check IP rule [RedmineId: #162763]
 */
 
 SET NOCOUNT ON
@@ -168,52 +169,7 @@ BEGIN
 	RAISERROR ('FAILED: Multiple winlostdate for a match', 16, 1)
 	RETURN
 END
-
---//check invalid IP  
---//bettrans  
-IF EXISTS (  
- SELECT TOP 1 1  
- FROM dbo.bettrans WITH(NOLOCK)  
- WHERE winlostdate = @winlostdate AND ISNUMERIC(REPLACE(ip, '.', '')) = 0 AND ip <> ''  
-)  
-BEGIN  
- RAISERROR ('FAILED: Invalid IP on bettrans', 16, 1)  
- RETURN  
-END  
-  
---//bettransrng  
-IF EXISTS (  
- SELECT TOP 1 1  
- FROM dbo.bettransrng WITH(NOLOCK)  
- WHERE winlostdate = @winlostdate AND ISNUMERIC(REPLACE(ip, '.', '')) = 0 AND ip <> ''  
-)  
-BEGIN  
- RAISERROR ('FAILED: Invalid IP on bettransrng', 16, 1)  
- RETURN  
-END  
-  
---//bettranslc  
-IF EXISTS (  
-	SELECT TOP 1 1  
-	FROM dbo.bettranslc WITH(NOLOCK)  
-	WHERE winlostdate = @winlostdate AND ISNUMERIC(REPLACE(ip, '.', '')) = 0 AND ip <> ''  
-)  
-BEGIN  
-	RAISERROR ('FAILED: Invalid IP on bettranslc', 16, 1)  
-	RETURN  
-END  
-  
---//translog  
-IF EXISTS (  
-	SELECT TOP 1 1  
-	FROM dbo.translog WITH(NOLOCK)  
-	WHERE winlostdate = @winlostdate AND ISNUMERIC(REPLACE(ip, '.', '')) = 0 AND ip <> ''  
-)  
-BEGIN  
-	RAISERROR ('FAILED: Invalid IP on translog', 16, 1)  
-	RETURN  
-END  
-
+ 
 --//check a custid belong to more than a upline
 IF EXISTS (
 	SELECT TOP 10 custid, currency
