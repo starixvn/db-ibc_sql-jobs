@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20201005@Sol: Initialize SP - [RedmineID: #142532]
 		- 20201209@Sol: exclude test agent from email list- [RedmineID: #142532]
+		- 20211112@Sol: Support IPv6 - Phase 2 - [Redmine: #163963]
 */
 BEGIN
 	
@@ -41,7 +42,7 @@ BEGIN
 		playerdiscount DECIMAL(9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), livehomescore SMALLINT, liveawayscore SMALLINT, liveindicator BIT, betteam NVARCHAR(10),
 		creator INT, refno BIGINT, comstatus NVARCHAR(20), winlostdate SMALLDATETIME, betfrom NVARCHAR(1), betcheck NVARCHAR(50), checktime DATETIME, oddsspread MONEY,
 		actualrate FLOAT, matchid INT, recommend INT, mrecommend INT, ruben TINYINT, betid BIGINT, statuswinlost TINYINT, modds SMALLMONEY, bettype SMALLINT,
-		betdaqid BIGINT, actual_stake MONEY, currency TINYINT, ip NVARCHAR(15), transdesc NVARCHAR(1000), sdiscount DECIMAL(9,8), scomm MONEY, spositiontaking SMALLMONEY,
+		betdaqid BIGINT, actual_stake MONEY, currency TINYINT, ip VARCHAR(45), transdesc NVARCHAR(1000), sdiscount DECIMAL(9,8), scomm MONEY, spositiontaking SMALLMONEY,
 		swinlost MONEY, srecommend INT, Username NVARCHAR(50), CurrencyName NVARCHAR(50), virtualrate FLOAT, oddstype TINYINT, statusID TINYINT, currency2 TINYINT,
 		balance MONEY, SecAcceptFlag BIT, transid2 BIGINT, RecommDate DATETIME
 	)
@@ -127,15 +128,13 @@ BEGIN
 	)
 	SELECT
 		--new tranid for member dummy
-		--t.memberid AS custid
-	   
 	   GETDATE() transdate
 	   ,0 oddsid
 	   ,999 AS bettype
 	   ,0 hdp1
 	   ,0 hdp2
 	   ,NULL betteam
-	   ,0 betid -- ask?
+	   ,0 betid 
 	   ,0 odds
 	   ,0 stake
 	   ,'DRAW' status
@@ -154,37 +153,31 @@ BEGIN
 	   ,100000000000 refno
 	   ,@WLDate winlostdate
 	   ,999 matchid
-	   --,t.AgentId recommend
-	   --,t.MasterId mrecommend
 	   ,0 actual_stake
 	   ,t.CurrencyId currency
-	   ,0 sdiscount -- ask
+	   ,0 sdiscount 
 	   ,0 scomm
 	   ,0 spositiontaking
 	   ,0 swinlost
 	   ,t.SuperId srecommend
-	   --,t.UserName Username
 	   ,t.CurrencyName CurrencyName
-	   ,1 oddstype --ask , -- decimal odd only -> ask
-	   ,111 statusID -- gdoc = 0 -> ask
-	   ,0 comstatus -- null or 0 ---ask
+	   ,1 oddstype
+	   ,111 statusID
+	   ,0 comstatus 
 	   ,0 oddsspread
 	   ,-1 betdaqid 
 	   ,0 liveindicator
 	   ,0 livehomescore
 	   ,0 liveawayscore
 	   ,0 SecAcceptFlag
-	   ,GETDATE() checktime  -- ask 
-	   --,t.ActualRate --ask 'value in table exchange' actualrate -- ask about this bc the job runs for yesterday
-	   --,t.MemberId AS creator -- ask
-	   ,'d' betfrom -- ask d:deposit
-	   ,'' betcheck -- ask
+	   ,GETDATE() checktime  
+	   ,'d' betfrom 
+	   ,'' betcheck 
 	   ,1 ruben
-	   ,NULL statuswinlost --ask
+	   ,NULL statuswinlost 
 	   ,0 modds
-	   ,'' ip -- ask '' or ...
-	   ,'Odds Spread Adjustment' transdesc -- ask 
-	   --,t.ActualRate virtualrate -- -- ask about this bc the job runs for yesterday 
+	   ,'' ip 
+	   ,'Odds Spread Adjustment' transdesc 
 	   ,NULL currency2
 	   ,0 balance 
 	   ,0 transid2 
