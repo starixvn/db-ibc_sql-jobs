@@ -27,6 +27,7 @@ AS
 		- 20200619@Percy: Correct OpeningBalance on winlostdate = saturday [RedmineID: #134251]
 		- 20201008@Percy: Get SMA from bettrans instead of custinfo table [RedmineID: #142953]
 		- 20210625@Percy: Enhance code to reduce high used tempdb [RedmineID: #154536]
+		- 20211122@Danny: Split transfer tickets out of bettrans [Redmine: #164196]
 */
 BEGIN
 
@@ -159,9 +160,8 @@ BEGIN
 		SELECT custid
 			,COUNT(1) AS TransCount
 			,SUM(winlost - actual_stake) AS TransferAmt
-		FROM bodb02.dbo.bettrans WITH (NOLOCK)
-		WHERE matchid = 0
-			AND bettype > 20000
+		FROM bodb02.dbo.transfer WITH (NOLOCK)
+		WHERE bettype > 20000
 			AND winlostdate = @_Winlostdate
 		GROUP BY custid
 	)
@@ -252,7 +252,7 @@ BEGIN
 							WHEN b.recommend THEN 2
 							ELSE 1 END -- include member & headline
 			FROM #rptOpenningBalanceTable t
-				INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON t.custid = b.custid
+				INNER JOIN bodb02.dbo.transfer b WITH (NOLOCK) ON t.custid = b.custid
 			WHERE t.recommend IS NULL
 				AND b.bettype = 20000
 				AND b.winlostdate = @CurrentBU_Date;

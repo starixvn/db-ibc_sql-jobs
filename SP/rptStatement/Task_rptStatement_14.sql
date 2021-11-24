@@ -13,6 +13,7 @@ AS
 		- 20190909@Percy: Initialize SP [RedmineID: #115377]
 		- 20210802@Sophia: Fix count VoidCount Instead of Betcount only [Redmine: #159511]
 		- 20210505@Sol: NAP - Alpha - Allow more time for transfer - [Redmine: #149927]
+		- 20211122@Danny: Split transfer tickets out of bettrans [Redmine: #164196]
 */
 
 BEGIN
@@ -202,12 +203,11 @@ BEGIN
 			b.custid
 			,SUM(b.winlost - b.actual_stake) AS TransferAmt
 			,SUM(1) AS BetCount
-		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+		FROM bodb02.dbo.transfer b WITH (NOLOCK)
 			CROSS APPLY (
 					SELECT c.CustId FROM @CustInfo c WHERE b.custid = c.CustId
 				) AS tmp
 		WHERE b.winlostdate = @WinlostDate
-			AND b.matchid = 0
 			AND b.bettype > 20000
 		GROUP BY
 			b.custid
@@ -223,16 +223,13 @@ BEGIN
 			SELECT
 				b.custid
 				,SUM(b.winlost - b.actual_stake) AS OpeningBalance
-			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+			FROM bodb02.dbo.transfer b WITH (NOLOCK)
 				CROSS APPLY (
 					SELECT c.CustId FROM @CustInfo c WHERE b.custid = c.CustId
 				) AS tmp
-			WHERE b.matchid = 0
-				AND b.bettype = 20000
+			WHERE  b.bettype = 20000
 				--AND b.winlostdate = @WinlostDate
-			GROUP BY
-				b.matchid -- group by on index matchid, custid
-				,b.custid
+			GROUP BY b.custid
 		END
 		ELSE
 		BEGIN
@@ -251,16 +248,13 @@ BEGIN
 				,SUM(b.acomm) AS acomm
 				,SUM(b.scomm) AS scomm
 			INTO #__tmpOpeningBalance
-			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+			FROM bodb02.dbo.transfer b WITH (NOLOCK)
 				CROSS APPLY (
 					SELECT c.CustId FROM @CustInfo c WHERE b.custid = c.CustId
 				) AS tmp
-			WHERE b.matchid = 0
-				AND b.bettype >= 19999
+			WHERE b.bettype >= 19999
 				AND b.winlostdate < @WinlostDate
-			GROUP BY
-				b.matchid -- group by on index matchid, custid
-				,b.custid
+			GROUP BY b.custid
 				,b.recommend
 				,b.mrecommend
 				,b.srecommend
