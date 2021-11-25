@@ -1,7 +1,7 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
 
-ALTER PROCEDURE [dbo].[Task_rptLicWinlossGMT_CheckData] 
-	@WinlostDate SMALLDATETIME
+ALTER PROCEDURE [dbo].[Task_rptLicWinlossGMT_CheckData]
+	@WinLostDate SMALLDATETIME
 AS
 
 /*
@@ -33,6 +33,7 @@ AS
 		- 20210527@Hogan: Support Add 2 New Betfroms # $ [RedmineID: #155922]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300] 
 		- 20211014@Hogan: Support Add 2 New Betfroms [ ] [RedmineID: #162388]
+		- 20211117@Kos: Merge Sports Lottery into Sportsbook [RedmineID: #163191]
 
 	EXEC Task_rptLicWinlossGMT_CheckData '2017-11-30'
 */
@@ -107,7 +108,7 @@ BEGIN
 		@RecordID TINYINT = 1,
 		@ProcessingTimeZone SMALLINT;
 
-	WHILE EXISTS(SELECT 1 FROM @TimeZones WHERE RecordID = @RecordID)
+	WHILE EXISTS (SELECT 1 FROM @TimeZones WHERE RecordID = @RecordID)
 	BEGIN
 		SELECT @ProcessingTimeZone = TimeZone
 		FROM @TimeZones
@@ -121,82 +122,110 @@ BEGIN
 			Currency, StatusID, IsBA, IsMobile, Betfrom
 		)
 		SELECT
-			@ProcessingTimeZone AS TimeZone	
-			,b.winlostdate    
-			,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate))) AS RptDateGMT 
-			,b.custid  
+			@ProcessingTimeZone AS TimeZone
+			,b.winlostdate
+			,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, CASE
+																		WHEN b.bettype BETWEEN 3611 AND 3620 THEN b.transdate
+																		ELSE ISNULL(m.GlobalShowTime, b.winlostdate)
+																	END)) AS RptDateGMT
+			,b.custid
 			,0
 			,0
 			,0
 			,SUM(ABS(b.stake)) AS TurnOver
-			,SUM(winlost-actual_stake) winlost
-			,SUM(awinlost) awinlost
-			,SUM(mwinlost) mwinlost
-			,SUM(ISNULL(swinlost,0)) swinlost
-			,SUM(playercomm) playercomm  
-			,SUM(comm) comm
-			,SUM(acomm) acomm
-			,SUM(ISNULL(scomm,0)) scomm
-			,CASE WHEN b.statusID IN (112,113)
-				THEN SUM(ABS(winlost-actual_stake))
+			,SUM(b.winlost - b.actual_stake) AS winlost
+			,SUM(b.awinlost) AS awinlost
+			,SUM(b.mwinlost) AS mwinlost
+			,SUM(ISNULL(b.swinlost, 0)) AS swinlost
+			,SUM(b.playercomm) AS playercomm
+			,SUM(b.comm) AS comm
+			,SUM(b.acomm) AS acomm
+			,SUM(ISNULL(b.scomm, 0)) AS scomm
+			,CASE
+				WHEN b.statusID IN (112, 113) THEN SUM(ABS(b.winlost - b.actual_stake))
 				ELSE 0
-				END BetEffective
-			,COUNT(b.transid) BetCount
+			END AS BetEffective
+			,COUNT(b.transid) AS BetCount
 			,b.currency
 			--114: half win, 115: half lose
-			,CASE 
-				WHEN b.winlostdate >= @HWHLCutDate AND b.statusID IN(112,113) AND b.modds IN (-0.25, 0.25) AND b.bettype NOT IN(29,38)
-				THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END 
-				WHEN b.winlostdate < @HWHLCutDate AND b.statusID IN(112,113) AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
-				THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END 
-				ELSE b.statusID END AS statusID
+			,CASE
+				WHEN b.winlostdate >= @HWHLCutDate
+					AND b.statusID IN (112, 113)
+					AND b.modds IN (-0.25, 0.25)
+					AND b.bettype NOT IN (29, 38)
+					THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END 
+				WHEN b.winlostdate < @HWHLCutDate
+					AND b.statusID IN (112, 113)
+					AND b.bettype IN (1,3,7,8,17,18,124,125,482,483,484,485)
+					AND ABS(b.modds) = 0.25
+					THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
+				ELSE b.statusID
+			END AS statusID
 			,CASE
 				WHEN BA.transid IS NULL THEN 0
-				WHEN BA.transid IS NOT NULL THEN 1 END AS isBA  
+				WHEN BA.transid IS NOT NULL THEN 1
+			END AS isBA
 			,CASE
-				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$',']') THEN 1 ELSE 0 END AS isMobile   
+				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$',']') THEN 1
+				ELSE 0
+			END AS isMobile
 			,CASE
-				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$','[',']') THEN b.betfrom ELSE '' END AS betfrom   		
-		FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
-			LEFT JOIN bodb02.dbo.Match14 m WITH (NOLOCK)
-				ON m.MatchId = b.MatchId
-			INNER JOIN bodb02.dbo.Dep_CustSuper s WITH (NOLOCK) 
-				ON b.srecommend = s.CustId
-			LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_bk BA WITH (NOLOCK) 
-				ON b.transid = BA.transid
-		WHERE  b.Winlostdate = @WinlostDate
-			AND b.statusID IN (101,111,112,113)  --REJECT, DRAW, WON, LOSE  
+				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$','[',']') THEN b.betfrom
+				ELSE ''
+			END AS betfrom
+		FROM bodb02.dbo.bettrans14 AS b WITH (NOLOCK)
+			LEFT JOIN bodb02.dbo.match14 AS m WITH (NOLOCK) ON m.matchid = b.MatchId
+			INNER JOIN bodb02.dbo.Dep_CustSuper AS s WITH (NOLOCK) ON b.srecommend = s.CustId
+			LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_bk AS BA WITH (NOLOCK) ON b.transid = BA.transid
+		WHERE b.Winlostdate = @WinlostDate
+			AND b.statusID IN (101, 111, 112, 113)		--REJECT, DRAW, WON, LOSE
 			AND b.bettype <= 19999
 			AND (
 					b.bettype < 31
 					OR b.bettype BETWEEN 121 AND 999
-					OR b.Bettype BETWEEN 1301 AND 1399 --new tennis's bettypes
-					OR b.Bettype BETWEEN 9001 AND 9399 -- E-Sports 2.0
-					OR b.Bettype BETWEEN 9400 AND 9699 -- Cricket AIO
-					OR b.Bettype = 38 -- BetBuilder
+					OR b.bettype BETWEEN 1301 AND 1399	--new tennis's bettypes
+					OR b.bettype BETWEEN 9001 AND 9399	-- E-Sports 2.0
+					OR b.bettype BETWEEN 9400 AND 9699	-- Cricket AIO
+					OR b.bettype = 38 -- BetBuilder
+					OR b.bettype BETWEEN 3611 AND 3620	-- Sports Lottery
 				)
 			AND (b.bettype < 901 OR b.bettype > 904)
 			AND (b.bettype < 911 OR b.bettype > 914)
 		GROUP BY
 			b.winlostdate
-			,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, ISNULL(m.GlobalShowTime, b.Winlostdate)))
+			,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, CASE
+																		WHEN b.bettype BETWEEN 3611 AND 3620 THEN b.transdate
+																		ELSE ISNULL(m.GlobalShowTime, b.winlostdate)
+																	END))
 			,b.custid
 			,b.currency
 			,b.StatusId
-			--114: half win, 115: half lose  
-			,CASE 
-			WHEN b.winlostdate >= @HWHLCutDate AND b.statusID IN(112,113) AND b.modds IN (-0.25, 0.25) AND b.bettype NOT IN(29,38)
-			THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END 
-			WHEN b.winlostdate < @HWHLCutDate AND b.statusID IN(112,113) AND b.bettype IN(1,3,7,8,17,18,124,125,482,483,484,485) AND ABS(modds) = 0.25
-			THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END 
-			ELSE b.statusID END
+			--114: half win, 115: half lose
 			,CASE
-				WHEN BA.transid IS NULL THEN 0  
-				WHEN BA.transid IS NOT NULL THEN 1 END  
+				WHEN b.winlostdate >= @HWHLCutDate
+					AND b.statusID IN (112, 113)
+					AND b.modds IN (-0.25, 0.25)
+					AND b.bettype NOT IN (29,38)
+					THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
+				WHEN b.winlostdate < @HWHLCutDate
+					AND b.statusID IN (112, 113)
+					AND b.bettype IN (1,3,7,8,17,18,124,125,482,483,484,485)
+					AND ABS(b.modds) = 0.25
+					THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END 
+				ELSE b.statusID
+			END
 			,CASE
-				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$',']') THEN 1 ELSE 0 END  
+				WHEN BA.transid IS NULL THEN 0
+				WHEN BA.transid IS NOT NULL THEN 1
+			END
 			,CASE
-				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z', 'o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$','[',']') THEN b.betfrom ELSE '' END;
+				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$',']') THEN 1
+				ELSE 0
+			END
+			,CASE
+				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z', 'o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$','[',']') THEN b.betfrom
+				ELSE ''
+			END;
 
 		SET @S_Count = @S_Count + @@ROWCOUNT;
 

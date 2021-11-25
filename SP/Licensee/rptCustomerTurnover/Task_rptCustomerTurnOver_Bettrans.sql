@@ -1,6 +1,6 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
 
-ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans] 
+ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans]
 	@Date SMALLDATETIME
 AS
 
@@ -26,6 +26,7 @@ AS
 		- 20201231@Louis: Integrate Happy 5 Linked Games [RedmineID: #147446]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20211117@Kos: Merge Sports Lottery into Sportsbook [RedmineID: #163191]
 */
 
 BEGIN 
@@ -36,6 +37,13 @@ BEGIN
 		DELETE dbo.rptCustomerTurnover
 		WHERE winlostdate = @Date
 	END;
+
+	DECLARE @SportBettype TABLE(BetType SMALLINT, ProductCode VARCHAR(10), EventType TINYINT)
+
+	INSERT INTO @SportBettype
+	SELECT BetType, ProductPrefix, EventType
+	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
+	WHERE ProductID IN (1, 3, 5, 27, 63)
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
 
@@ -73,7 +81,7 @@ BEGIN
 					OR a.bettype BETWEEN 1301 AND 1399
 					OR a.bettype BETWEEN 9001 AND 9399
 					OR a.bettype BETWEEN 9400 AND 9699)	-- Sportsbook
-				AND a.bettype NOT IN (29,38,911,912,913,914 )	-- Parlay, betbuilder, Cashout
+				AND a.bettype NOT IN (29,38)	-- Parlay, betbuilder
 				AND a.bettype NOT BETWEEN 81 AND 120
 				THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
 			WHEN a.winlostdate < @HWHLCutDate
@@ -82,19 +90,19 @@ BEGIN
 				AND ABS(a.modds) = 0.25
 				THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
 			ELSE a.statusID
-			END AS statusID
+		END AS statusID
 		,a.winlostdate
-		,COUNT(a.custid) betcount
-		,CASE 
+		,COUNT(a.custid) AS betcount
+		,CASE
 			WHEN BA.transid IS NULL THEN 0
 			WHEN BA.transid IS NOT NULL THEN 1
-			END AS isBA
-	--,sum(awinlost) awinlost
-	--,sum(comm) comm
+		END AS isBA
+		,s.ProductCode
+		,s.EventType
 	INTO #__cte_bettrans
 	FROM bodb02.dbo.bettrans AS a WITH (NOLOCK)
-		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) AS LC
-		ON a.recommend = lc.custid AND a.currency = lc.currency
+		INNER JOIN @SportBettype AS s ON s.BetType = a.bettype
+		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) AS LC ON a.recommend = lc.custid
 		LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction_active AS BA ON a.transid = ba.transid
 		LEFT JOIN #__cte_parlayinfo AS p ON a.transid = p.transid
 	WHERE a.winlostdate = @Date
@@ -102,7 +110,7 @@ BEGIN
 		AND a.bettype < 19999
 		AND a.matchid >= 0
 	GROUP BY a.matchid
-		,a.CustID
+		,a.custid
 		,a.currency
 		,a.recommend
 		,a.bettype
@@ -118,7 +126,7 @@ BEGIN
 					OR a.bettype BETWEEN 1301 AND 1399
 					OR a.bettype BETWEEN 9001 AND 9399
 					OR a.bettype BETWEEN 9400 AND 9699)		-- Sportsbook
-				AND a.bettype NOT IN (29,38,911,912,913,914 )	-- Parlay, betbuilder, Cashout
+				AND a.bettype NOT IN (29, 38)	-- Parlay, betbuilder
 				AND a.bettype NOT BETWEEN 81 AND 120
 				THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
 			WHEN a.winlostdate < @HWHLCutDate
@@ -127,12 +135,14 @@ BEGIN
 				AND ABS(a.modds) = 0.25
 				THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
 			ELSE a.statusID
-			END
+		END
 		,a.winlostdate
 		,CASE
 			WHEN BA.transid IS NULL THEN 0
 			WHEN BA.transid IS NOT NULL THEN 1
-			END
+		END
+		,s.ProductCode
+		,s.EventType
 
 	SELECT o.Orid
 		,r.SportType
@@ -146,8 +156,6 @@ BEGIN
 	SELECT a.CustID
 		,a.bettype
 		,CASE 
-			WHEN a.bettype IN (71, 72) THEN 251		--casino
-			WHEN a.bettype = 1000 THEN 253	--games
 			WHEN a.bettype BETWEEN 81 AND 120 THEN 161 --Number Game
 			WHEN a.bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: HP5
 			WHEN a.bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
@@ -157,8 +165,6 @@ BEGIN
 						WHEN b.sporttype IS NOT NULL THEN b.sporttype
 						ELSE 180
 					END		-- Virtual Sport
-			WHEN a.bettype BETWEEN 51 AND 69 THEN 201
-			WHEN a.bettype BETWEEN 1501 AND 1599 THEN 202	-- Keno
 			WHEN a.bettype BETWEEN 2701 AND 2799
 				THEN CASE
 						WHEN a.bettype = 2799 THEN a.sporttype
@@ -172,10 +178,9 @@ BEGIN
 						WHEN b.sporttype IS NOT NULL THEN b.sporttype
 						ELSE 193 -- Betradar VS: Virtual Basketball
 					END -- Betradar VS: Virtual Basketball
-			WHEN a.bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
-			WHEN a.bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
+			WHEN a.ProductCode = 'SLT' THEN a.matchid
 			ELSE ISNULL(b.sporttype, 0)
-			END sporttype
+		END AS SportType
 		,a.Currency
 		,SUM(stake) stake
 		,SUM(winlost) winlost
@@ -191,35 +196,25 @@ BEGIN
 			WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238) THEN ISNULL(result.LeagueID, - 1)
 			ELSE ISNULL(b.LeagueID, - 1)
 			END LeagueID
-		,winlostdate
+		,a.winlostdate
 		,SUM(a.betcount) betcount
 		,a.isba
 		,SUM(BetEffective) BetEffective
-	--,sum(awinlost) awinlost  
-	--,sum(comm) comm  
-	FROM #__cte_bettrans a
-		LEFT JOIN bodb02.dbo.match b WITH (NOLOCK)
-		ON a.matchid = b.matchid
-		LEFT JOIN #__cte_raceinfo result
-		ON a.oddsid = result.Orid
-		LEFT JOIN bodb02.dbo.outright AS ob WITH (NOLOCK)
-		ON a.matchid = ob.orid
+	FROM #__cte_bettrans AS a
+		LEFT JOIN bodb02.dbo.match AS b WITH (NOLOCK) ON a.matchid = b.matchid
+		LEFT JOIN #__cte_raceinfo AS result ON a.oddsid = result.Orid
+		LEFT JOIN bodb02.dbo.outright AS ob WITH (NOLOCK) ON a.matchid = ob.orid
 	GROUP BY a.CustID
 		,a.bettype
 		,CASE 
-			WHEN a.bettype IN (71, 72) THEN 251 --casino
-			WHEN a.bettype = 1000 THEN 253 --games
 			WHEN a.bettype BETWEEN 81 AND 120 THEN 161 --Number Game
 			WHEN a.bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game: HP5
 			WHEN a.bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
-			WHEN a.bettype BETWEEN 1201
-					AND 1299 THEN CASE 
+			WHEN a.bettype BETWEEN 1201 AND 1299 THEN CASE 
 					WHEN result.sporttype IS NOT NULL THEN result.sporttype
 					WHEN b.sporttype IS NOT NULL THEN b.sporttype
 					ELSE 180 --Virtual Sport
 				END --Virtual Sport
-			WHEN a.bettype BETWEEN 51 AND 69 THEN 201
-			WHEN a.bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
 			WHEN a.bettype BETWEEN 2701 AND 2799 THEN CASE 
 					WHEN a.bettype = 2799 THEN a.sporttype
 					WHEN result.sporttype IS NOT NULL THEN result.sporttype
@@ -231,22 +226,21 @@ BEGIN
 					WHEN b.sporttype IS NOT NULL THEN b.sporttype
 					ELSE 193 -- Betradar VS: Virtual Basketball
 				END -- Betradar VS: Virtual Basketball
-			WHEN a.bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
-			WHEN a.bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
+			WHEN a.ProductCode = 'SLT' THEN a.matchid
 			ELSE ISNULL(b.sporttype, 0)
-			END
+		END
 		,a.Currency
 		,a.Odds
-		,oddstype
+		,a.oddstype
 		,a.statusID
 		,a.recommend
 		,CASE 
-			WHEN a.bettype IN (9, 29) THEN - 9
+			WHEN a.bettype IN (9, 29) THEN -9
 			WHEN a.bettype = 2799 THEN -2799
 			WHEN a.bettype = 10 THEN ISNULL(ob.leagueid, - 1)
 			WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238) THEN ISNULL(result.LeagueID, - 1)
 			ELSE ISNULL(b.LeagueID, - 1)
-			END
+		END
 		,winlostdate
 		,a.isba
 END
