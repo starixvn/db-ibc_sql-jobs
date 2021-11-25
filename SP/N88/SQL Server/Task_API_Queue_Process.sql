@@ -15,6 +15,7 @@ AS
 		- 20210112@Percy: Add 4 tables: RebateMLog, CustBonusRollover, Promotion & PromotionSpecific [RedmineID: #146759]
 		- 20210524@Percy: Add table: CustClosingBalance [RedmineID: #155334]
 		- 20211028@Percy: Add 3 tables: DrawLog, EventDraw, VipUpgradeReview [RedmineID: #161048]
+		- 20211118@Percy: Add table: LogAdminAdjustWallet [RedmineID: #161048]
 		
 */
 
@@ -241,6 +242,17 @@ BEGIN
 		END
 	END
 
+	-- LogAdminAdjustWallet
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_LogAdminAdjustWallet @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('LogAdminAdjustWallet', @ErrCode, @ErrMsg)
+		END
+	END
 
 	DECLARE @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX), @recipients VARCHAR(MAX)
 

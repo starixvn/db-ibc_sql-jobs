@@ -18,7 +18,8 @@ AS
 	Revisions:
 		- 20200525@Percy: Initialize SP [RedmineID: #155230]
 		- 20210909@Percy: Re-pull data every 6 hours [RedmineID: #155230]
-		- 20211028@Percy: Add AdjustmentInfo, DrawLog [RedmineID: #161048]
+		- 20211028@Percy: Add AdjustmentInfo, DrawLog, LogAdminAdjustWallet [RedmineID: #161048]
+		- 20211118@Percy: Add LogAdminAdjustWallet [RedmineID: #161048]
 */
 
 BEGIN
@@ -72,6 +73,10 @@ BEGIN
 	-- DrawLog
 	INSERT INTO @tblDataSource (DataSource, KeyValue)
 	SELECT 'DrawLog', CONVERT(VARCHAR(50), MIN(Id)) FROM dbo.DrawLog WITH (NOLOCK) WHERE WinlostDate >= @WinlostDate
+
+	-- LogAdminAdjustWallet
+	INSERT INTO @tblDataSource (DataSource, KeyValue)
+	SELECT 'LogAdminAdjustWallet', CONVERT(VARCHAR(50), MIN(TransferId)) FROM dbo.LogAdminAdjustWallet WITH (NOLOCK) WHERE WinlostDate >= @WinlostDate
 
 	DELETE @tblDataSource WHERE KeyValue IS NULL OR DataSource <> @DataSource
 
