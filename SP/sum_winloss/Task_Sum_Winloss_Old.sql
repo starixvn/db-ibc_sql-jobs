@@ -21,6 +21,7 @@ AS
 		- 20210310@Malcolm: Add Pragmatic Live Casino [RedmineId : #133717]
 		- 20210609@Malcolm: Add AE Sexy - [Redmine: #156239]	
 		- 20210617@Sol: changed how to calc net turn over - [RedmineId : #156653]
+		- 20211122@Percy: Enhance gross comm formula [RedmineID: #164479]
 */
 
 BEGIN
@@ -32,20 +33,18 @@ BEGIN
 		SELECT  @ProductIds = COALESCE(@ProductIds + ',', '') + CONVERT(VARCHAR(10), ProductId) FROM dbo.Products WITH (NOLOCK)
 	END
 
-	CREATE TABLE #Bettypes (ProductId INT, SportTypeRef SMALLINT, BettypeRef SMALLINT, Bettype SMALLINT, IsUsingOddsSpread BIT)
+	CREATE TABLE #Bettypes (ProductId INT, SportTypeRef SMALLINT, BettypeRef SMALLINT, Bettype SMALLINT, RefTable TINYINT, IsContributionBettype BIT)
 	
-	DECLARE @cutoffDate SMALLDATETIME
+	DECLARE @NetTO_CutOffDate SMALLDATETIME, @GrossComm_CutOffDate SMALLDATETIME
 
-	SELECT @cutoffDate = CutoffDate
+	SELECT  @NetTO_CutOffDate = CASE WHEN f.TypeName = 'NetTO' THEN f.CutoffDate ELSE @NetTO_CutOffDate END
+			,@GrossComm_CutOffDate = CASE WHEN f.TypeName = 'GrossComm' THEN f.CutoffDate ELSE @NetTO_CutOffDate END
 	FROM dbo.f_GetCutOffDate() f
-	WHERE f.TypeName = 'NetTO'
+	WHERE f.TypeName IN ('NetTO', 'GrossComm')
 
-	INSERT INTO #Bettypes (ProductId, SportTypeRef, BettypeRef, Bettype, IsUsingOddsSpread)
-	SELECT f.ProductID, f.SportType AS SportTypeRef, f.BetType AS BettypeRef, s.BetType,	
-			CASE 
-				WHEN s.RefTable IN (1, 2) OR f.ProductID = 47 THEN 1 
-				ELSE 0 
-			END AS IsUsingOddsSpread
+	INSERT INTO #Bettypes (ProductId, SportTypeRef, BettypeRef, Bettype, RefTable, IsContributionBettype)
+	SELECT f.ProductID, f.SportType AS SportTypeRef, f.BetType AS BettypeRef, s.BetType, s.RefTable
+		,CASE WHEN cont.Bettype IS NOT NULL THEN 1 ELSE 0 END AS IsContributionBettype
 	FROM dbo.f_SumWinloss_ConditionSel(@ProductIds) f
 		CROSS APPLY (
 			SELECT DISTINCT s.RefTable, s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
@@ -53,7 +52,13 @@ BEGIN
 				AND (f.ProductID <> 6 OR f.SportType = s.SportType)
 				AND (f.BetType NOT IN (3150, 4297, 4298) AND s.BetType NOT IN (3150, 4297, 4298) OR f.BetType = s.BetType)
 		) AS s
-
+		OUTER APPLY 
+		(
+			SELECT t.Bettype
+			FROM dbo.f_BettypePrizeGroup() t
+			WHERE t.BettypeGroup = 'Contribution'
+				AND t.Bettype = s.bettype
+		) cont
 	-- End Get Bet Types
 
 	-- Get Customer Info
@@ -76,6 +81,9 @@ BEGIN
 		WHERE c.roleid = 1
 	END
 	-- End Get Customer Info
+
+	---- temp table to get data Net TO, Gross Comm from bettransRnG/bettransLC
+	CREATE TABLE #__NetTO_GrossComm (custid INT, sporttype SMALLINT, bettype SMALLINT, TurnoverNoDraw MONEY, grosscomm MONEY, agrosscomm MONEY, mgrosscomm MONEY, sgrosscomm MONEY)
 
 	---- get extra PT from table setting
 	CREATE TABLE #__SuperExtraPT(productId INT, bettypePT INT, SuperId INT, ExtraPT MONEY)
@@ -200,13 +208,17 @@ BEGIN
 			,SUM(b.scomm) AS scomm
 			,SUM(CASE	WHEN b.bettype = 500 THEN 0
 						ELSE 1 END) AS BetCount
-			,SUM(CASE	WHEN b.apositiontaking = 1 THEN 0
+			,SUM(CASE	WHEN bt.RefTable IN (1, 2) AND winlostdate >= @GrossComm_CutOffDate THEN 0
+						WHEN b.apositiontaking = 1 THEN 0
 						ELSE ISNULL(b.comm / (1 - b.apositiontaking), 0) END) AS member_grosscomm
-			,SUM(CASE	WHEN b.apositiontaking + b.mpositiontaking = 1 THEN 0
+			,SUM(CASE	WHEN bt.RefTable IN (1, 2) AND winlostdate >= @GrossComm_CutOffDate THEN 0
+						WHEN b.apositiontaking + b.mpositiontaking = 1 THEN 0
 						ELSE ISNULL(b.acomm / (1 - b.apositiontaking - b.mpositiontaking), 0) END) AS agent_grosscomm
-			,SUM(CASE	WHEN b.tpositiontaking = 1 THEN 0
+			,SUM(CASE	WHEN bt.RefTable IN (1, 2) AND winlostdate >= @GrossComm_CutOffDate THEN 0
+						WHEN b.tpositiontaking = 1 THEN 0
 						ELSE ISNULL(b.scomm / (1 - b.tpositiontaking), 0) END) AS master_grosscomm
-			,SUM(CASE	WHEN b.tpositiontaking = 1 THEN 0
+			,SUM(CASE	WHEN bt.RefTable IN (1, 2) AND winlostdate >= @GrossComm_CutOffDate THEN 0
+						WHEN b.tpositiontaking = 1 THEN 0
 						ELSE ISNULL(b.scomm / (1 - b.tpositiontaking), 0) END) AS super_grosscomm
 			,bt.sporttypeRef AS sporttype
 			,bt.bettypeRef AS bettype
@@ -217,12 +229,11 @@ BEGIN
 			,SUM(CASE
 					WHEN bt.ProductId = 1 AND b.statusID IN (112, 113) AND b.modds IN (-0.25, 0.25) THEN ABS(b.stake) / 2 -- SportsBook
 					WHEN bt.ProductId = 1 AND b.statusID = 111 THEN 0 -- SportsBook
-					WHEN b.winlostdate < @cutoffDate AND bt.ProductID IN (21, 39, 45, 46, 47, 51, 52, 57, 59, 65) THEN b.oddsspread
-					WHEN b.winlostdate >= @cutoffDate AND bt.IsUsingOddsSpread = 1 
-						THEN 
-							CASE WHEN cont.ContributionBettype IS NULL THEN b.oddsspread -- Allbet, SA Gaming, SexyGaming, IBCBet Live Casino, BBIN, WM, ION, GDG, bg, PPL
-								ELSE 0
-							END
+					WHEN b.winlostdate < @NetTO_CutOffDate AND bt.ProductID IN (21, 39, 45, 46, 47, 51, 52, 57, 59, 65) THEN b.oddsspread
+					WHEN bt.ProductId = 47 THEN b.oddsspread -- BBIN
+					WHEN bt.RefTable IN (1, 2) AND b.winlostdate >= @GrossComm_CutOffDate THEN 0
+					WHEN bt.RefTable IN (1, 2) AND b.winlostdate >= @NetTO_CutOffDate THEN
+						CASE WHEN bt.IsContributionBettype = 0 THEN b.oddsspread ELSE 0 END
 					ELSE ABS(b.stake) END) AS TurnoverNoDraw
 			,-1 * SUM(ISNULL(b.ExtraWinloss, 0)) AS ExtraWinloss
 			,-1 * SUM(ISNULL(b.ExtraComm, 0)) AS ExtraComm
@@ -280,13 +291,6 @@ BEGIN
 					AND b.statusID IN (111,112,113)
 			) AS b
 			INNER JOIN #Bettypes bt ON b.bettype = bt.bettype
-			OUTER APPLY 
-			(
-				SELECT f.Bettype AS ContributionBettype
-				FROM dbo.f_BettypePrizeGroup() f
-				WHERE f.BettypeGroup = 'Contribution'
-					AND f.Bettype = b.bettype
-			) cont
 		GROUP BY
 			b.winlostdate
 			,c.username
@@ -296,6 +300,63 @@ BEGIN
 			,c.srecommend
 			,bt.sporttypeRef
 			,bt.bettypeRef
+
+		-- Update Gross Comm / Net Turnover
+		IF @winlostdate >= @GrossComm_CutOffDate
+		BEGIN
+			INSERT INTO #__NetTO_GrossComm (custid, sporttype, bettype, TurnoverNoDraw, grosscomm, agrosscomm, mgrosscomm, sgrosscomm)
+			SELECT c.custid, bt.SporttypeRef, bt.BettypeRef
+				,SUM(CASE WHEN bt.IsContributionBettype = 0 THEN b.BetStake ELSE 0 END) AS TurnoverNoDraw
+				,SUM(b.BetStake * discount) grosscomm
+				,SUM(b.BetStake * adiscount) agrosscomm
+				,SUM(b.BetStake * sdiscount) mgrosscomm
+				,SUM(b.BetStake * sdiscount) sgrosscomm
+			FROM #tmpCust c
+				CROSS APPLY (
+					SELECT b.gameID, b.BetStake, b.discount, b.adiscount, b.sdiscount
+					FROM bodb_Archive.dbo.bettransRnG_bk b WITH (NOLOCK)
+					WHERE b.winlostdate = @WinlostDate
+						AND c.custid = b.custid
+						AND b.statusID IN (111,112,113)
+				) b
+				INNER JOIN #Bettypes bt ON b.gameID = bt.bettype
+			GROUP BY c.custid, bt.SporttypeRef, bt.BettypeRef
+			HAVING SUM(CASE WHEN bt.IsContributionBettype = 0 THEN b.BetStake ELSE 0 END) <> 0
+				OR SUM(b.BetStake * discount) <> 0
+				OR SUM(b.BetStake * adiscount) <> 0
+				OR SUM(b.BetStake * sdiscount) <> 0
+
+			INSERT INTO #__NetTO_GrossComm (custid, sporttype, bettype, TurnoverNoDraw, grosscomm, agrosscomm, mgrosscomm, sgrosscomm)
+			SELECT c.custid, bt.SporttypeRef, bt.BettypeRef
+				,SUM(CASE WHEN bt.IsContributionBettype = 0 THEN b.NetStake ELSE 0 END) AS TurnoverNoDraw
+				,SUM(b.NetStake * discount) grosscomm
+				,SUM(b.NetStake * adiscount) agrosscomm
+				,SUM(b.NetStake * sdiscount) mgrosscomm
+				,SUM(b.NetStake * sdiscount) sgrosscomm
+			FROM #tmpCust c
+				CROSS APPLY (
+					SELECT b.gameID, b.NetStake, b.discount, b.adiscount, b.sdiscount
+					FROM bodb_Archive.dbo.bettransLC_bk b WITH (NOLOCK)
+					WHERE b.winlostdate = @WinlostDate
+						AND c.custid = b.custid
+						AND b.statusID IN (111,112,113)
+				) b
+				INNER JOIN #Bettypes bt ON b.gameID = bt.bettype
+			GROUP BY c.custid, bt.SporttypeRef, bt.BettypeRef
+			HAVING SUM(CASE WHEN bt.IsContributionBettype = 0 THEN b.NetStake ELSE 0 END) <> 0
+				OR SUM(b.NetStake * discount) <> 0
+				OR SUM(b.NetStake * adiscount) <> 0
+				OR SUM(b.NetStake * sdiscount) <> 0
+
+			UPDATE t
+			SET t.TurnoverNoDraw = ISNULL(c.TurnoverNoDraw, 0)
+				,t.member_grosscomm = ISNULL(c.grosscomm, 0)
+				,t.agent_grosscomm = ISNULL(c.agrosscomm, 0)
+				,t.master_grosscomm = ISNULL(c.mgrosscomm, 0)
+				,t.super_grosscomm = ISNULL(c.sgrosscomm, 0)
+			FROM #tmpBettrans t
+				INNER JOIN #__NetTO_GrossComm c ON t.custid = c.custid AND t.sporttype = c.sporttype and t.bettype = c.bettype
+		END
 	END
 	-- End Get Data From bettrans_bk
 
@@ -819,6 +880,6 @@ BEGIN
 	DROP TABLE #tmpSuper
 	DROP TABLE #tmpSum_winloss
 	DROP TABLE #__SuperExtraPT
-
+	DROP TABLE #__NetTO_GrossComm
 END
 GO

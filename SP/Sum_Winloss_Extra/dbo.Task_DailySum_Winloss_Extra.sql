@@ -1,6 +1,5 @@
-/*<info serverAlias="DBSUM-bodb_Summary" executers="" viewers="" isFunction="0" isNested="1"></info>*/
-
-CREATE PROCEDURE [dbo].[Task_DailySum_Winloss_Extra]
+/*<info serverAlias="DBSUM-bodb_Summary" isNested="1"></info>*/
+ALTER PROCEDURE [dbo].[Task_DailySum_Winloss_Extra]
 	@WinlostDate SMALLDATETIME,
 	@ProductIds  VARCHAR(MAX) = ''
 AS
@@ -12,11 +11,20 @@ AS
 	Revisions:
 		- 20200618@Malcolm: Initialize SP [RedmineID: #135593]
 		- 20200831@Sophia: Exclude CustID = 0 [Redmine: #140745]
+		- 20211122@Percy: Enhance gross comm formula [RedmineID: #164479]
  
 	Param's Explanation:
 */
 
 BEGIN
+	SET NOCOUNT ON
+
+	DECLARE @GrossComm_CutOffDate SMALLDATETIME
+
+	SELECT @GrossComm_CutOffDate = f.CutoffDate
+	FROM bodb02.dbo.f_GetCutOffDate() f
+	WHERE f.TypeName = 'GrossComm'
+
 	CREATE TABLE #Bettype (TypeId SMALLINT, ProductId SMALLINT)
 
 	INSERT INTO #Bettype
@@ -109,7 +117,7 @@ BEGIN
 			SUM(ABS(stake * apositiontaking)) AS NetTurnoverAg,
 			sum(ABS(stake * mpositiontaking)) AS NetTurnoverMAg,
 			SUM(ABS(stake * spositiontaking)) AS NetTurnoverSAg,
-			SUM(CASE WHEN b.ProductId = 46 THEN bt.oddsspread ELSE ABS(stake) END) AS TurnoverNoDraw,
+			SUM(CASE WHEN bt.winlostdate < @GrossComm_CutOffDate THEN bt.oddsspread ELSE 0 END) AS TurnoverNoDraw,
 			SUM(winlost-actual_stake) AS Winlost,
 			SUM(awinlost) AS AgWinLoss,
 			SUM(mwinlost) AS MAgWinLoss,
@@ -120,10 +128,10 @@ BEGIN
 			SUM(acomm) - SUM(comm) AS MAgComm,
 			SUM(scomm) - SUM(acomm) AS SAgComm,
 			-SUM(scomm) AS ExtraComm,
-			SUM(CASE WHEN apositiontaking = 1 THEN 0 ELSE comm/(1-apositiontaking) END) AS GrossComm,
-			SUM(CASE WHEN (apositiontaking+mpositiontaking) = 1 THEN 0 ELSE acomm/(1-apositiontaking-mpositiontaking) END) AS GrossCommAg,
-			SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) AS GrossCommMAg,
-			SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) AS GrossCommSAg
+			SUM(CASE WHEN bt.winlostdate < @GrossComm_CutOffDate OR bt.apositiontaking = 1 THEN 0 ELSE ISNULL(comm/(1-apositiontaking), 0) END) AS GrossComm,
+			SUM(CASE WHEN bt.winlostdate < @GrossComm_CutOffDate OR bt.apositiontaking + bt.mpositiontaking = 1 THEN 0 ELSE ISNULL(acomm/(1-apositiontaking-mpositiontaking), 0) END) AS GrossCommAg,
+			SUM(CASE WHEN bt.winlostdate < @GrossComm_CutOffDate OR bt.tpositiontaking = 1 THEN 0 ELSE ISNULL(scomm/(1-tpositiontaking), 0) END) AS GrossCommMAg,
+			SUM(CASE WHEN bt.winlostdate < @GrossComm_CutOffDate OR bt.tpositiontaking = 1 THEN 0 ELSE ISNULL(scomm/(1-tpositiontaking), 0) END) AS GrossCommSAg
 		FROM bodb02.dbo.bettrans bt WITH(NOLOCK)
 			INNER JOIN #Bettype b ON bt.bettype = b.TypeId
 		WHERE bt.winlostdate = @WinlostDate 
