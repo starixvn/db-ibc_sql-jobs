@@ -1,6 +1,4 @@
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
+/*<info serverAlias="DBARC-bodb_Archive" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE	dbo.Task_Archive_Copy
 						@StartDate		DATETIME	= NULL
 					,	@EndDate			DATETIME = NULL
@@ -22,6 +20,7 @@ AS
 		- 20210604@Max: [TVS] Danger Accept Enhancement - Phase 9 [Redmine: #153216]
 		- 20210625@Helen: [TVS] Perfomance tuning for archived process [Redmine: #157539]
 		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
+		- 20211126@Kathy: Add 2 new column bettype,betid [Redmine:#140180]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -365,19 +364,14 @@ OPTION (maxrecursion 0)
 		SELECT	@Query = N'';
 		SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.TicketVoiding_RequestDetailTicket_Single_bk
-	(	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId)
-SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId
+	(	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId, bettype, betid)
+SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId, bettype, betid
 FROM	OPENQUERY(DBTXN, ''\
-DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
-
-SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId
+SELECT	t1.Id, t1.RequestId, t1.IssueTypeId, t1.SubIssueTypeId,t1.TransId, t1.MatchId,t1.RequestDetailId, b.bettype, b.betid
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_Single AS t1 WITH (NOLOCK)
-	CROSS APPLY (
-					SELECT	val AS RequestId
-					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
-					WHERE val = t1.RequestId
-			) r
-OPTION (maxrecursion 0)
+	INNER JOIN bodb02.dbo.bettrans14 b with(nolock)
+		on t1.transid = b.transid
+WHERE t1.requestid in (' + @requestids + ')
 	;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
