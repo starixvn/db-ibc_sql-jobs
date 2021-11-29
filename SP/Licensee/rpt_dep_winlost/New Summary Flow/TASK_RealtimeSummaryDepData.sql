@@ -1,5 +1,4 @@
 /*<info serverAlias="DBACC-bodb02" isFunction="0" isNested="1"></info>*/
-
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
 	@WinLostDate	SMALLDATETIME	= NULL,
 	@IsSuccessful	BIT				= 0 OUTPUT
@@ -64,6 +63,7 @@ AS
 		- 20211216@Kos: Integrate PP 20 new games [RedmineID: #165772]
 		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
+		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -256,13 +256,13 @@ BEGIN
 					WHEN b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173 THEN -173
 					ELSE b.bettype
 				END,
-				SUM(CASE WHEN b.bettype = 22001 THEN b.winlost-b.actual_stake ELSE 0 END), --Deposit
-				-SUM(CASE WHEN b.bettype IN (22002, 22003) THEN b.winlost-b.actual_stake ELSE 0 END),--Withdrawal
-				SUM(CASE WHEN b.bettype = 21006 THEN b.winlost-b.actual_stake ELSE 0 END), --Aff2MemTransfer
-				SUM(CASE WHEN b.bettype IN (22004, 22202) THEN b.winlost-b.actual_stake ELSE 0 END),--Bonus
-				SUM(CASE WHEN b.bettype IN (21001, 21002, 21003, 21004, 21005, 22005, 22203) THEN b.winlost-b.actual_stake ELSE 0 END),--Adjustment
+				0, --Deposit
+				0,--Withdrawal
+				0, --Aff2MemTransfer
+				0,--Bonus
+				0,--Adjustment
 				SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
-				SUM(CASE WHEN (bettype < 19999 OR bettype = 23002) AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
+				SUM(CASE WHEN bettype < 19999 AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 				SUM(CASE
 						WHEN b.bettype < 19999
 							AND b.ruben = 1
@@ -273,15 +273,15 @@ BEGIN
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END),--Winloss
-				SUM(CASE WHEN b.bettype IN (22006, 22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd
+				0,--Transfer3rd
 				SUM(CASE WHEN b.bettype < 19999 AND b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame
 				SUM(CASE WHEN b.bettype < 19999 AND b.ruben = 1 THEN b.playercomm ELSE 0 END),--playercomm
 				SUM(CASE WHEN b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.awinlost ELSE 0 END),--Comm_BetTrade
 				SUM(CASE WHEN b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--Comm_BetTrade_Full
 				SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 				SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
-				SUM(CASE WHEN b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
-				SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END), -- AdjBonusWallet
+				0, -- Bonus Wallet
+				0, -- AdjBonusWallet
 				SUM(CASE
 						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
 							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
@@ -297,11 +297,7 @@ BEGIN
 				AND b.matchid >= 0
 				AND c.roleid = 1
 				AND b.betType <> 999 --Licensee Spread Setting
-				AND 1 = CASE
-							WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
-							WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
-							ELSE 1
-						END
+				AND	bettype < 19999 AND winlostdate > @MoveBetsDay
 			GROUP BY b.custid,
 				CASE
 					WHEN b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150 THEN -150
@@ -309,6 +305,39 @@ BEGIN
 					ELSE b.bettype
 				END
 			OPTION (RECOMPILE, MAXDOP 8)
+
+			---get data from table transfer
+			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
+				, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion)
+			SELECT t.custid,
+				t.bettype,
+				SUM(CASE WHEN t.bettype = 22001 THEN t.winlost - t.actual_stake ELSE 0 END), --Deposit
+				-SUM(CASE WHEN t.bettype IN (22002, 22003) THEN t.winlost - t.actual_stake ELSE 0 END),--Withdrawal
+				SUM(CASE WHEN t.bettype = 21006 THEN t.winlost - t.actual_stake ELSE 0 END), --Aff2MemTransfer
+				SUM(CASE WHEN t.bettype IN (22004, 22202) THEN t.winlost - t.actual_stake ELSE 0 END),--Bonus
+				SUM(CASE WHEN t.bettype IN (21001, 21002, 21003, 21004, 21005, 22005, 22203) THEN t.winlost - t.actual_stake ELSE 0 END),--Adjustment
+				0,--Turnover
+				0,--Outstanding
+				0,--Winloss
+				SUM(CASE WHEN t.bettype IN (22006, 22007) THEN t.winlost - t.actual_stake ELSE 0 END),--Transfer3rd
+				0,--DrawGame
+				0,--playercomm
+				0,--Comm_BetTrade
+				0,--Comm_BetTrade_Full
+				0,--WLBoughtTicket_BetTrade
+				0, --BetCount
+				SUM(CASE WHEN t.bettype = 22200 THEN t.winlost - t.actual_stake ELSE 0 END), -- Bonus Wallet
+				SUM(CASE WHEN t.bettype = 22201 THEN t.winlost - t.actual_stake ELSE 0 END), -- AdjBonusWallet
+				0 -- Promotion
+			FROM dbo.Transfer t WITH (NOLOCK)
+				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON t.srecommend = d.custid
+				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON t.custid = c.custid
+			WHERE t.winlostdate = @Winlostdate
+				AND c.roleid = 1
+				AND (bettype = 19999 AND winlostdate <= @MoveBetsDay OR t.Bettype > 19999)
+			GROUP BY t.custid, t.bettype
+
+			---end
 
 			INSERT INTO #rptDepWinlostOutstanding (
 				CustID,
@@ -374,13 +403,13 @@ BEGIN
 					WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173
 					ELSE b.bettype
 				END,
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 22001 THEN b.winlost-b.actual_stake ELSE 0 END), --Deposit
-				-SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22002, 22003) THEN b.winlost-b.actual_stake ELSE 0 END),--Withdrawal
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 21006 THEN b.winlost-b.actual_stake ELSE 0 END), --Aff2MemTransfer
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22004, 22202) THEN b.winlost-b.actual_stake ELSE 0 END),--Bonus
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (21001, 21002, 21003, 21004, 21005, 22005, 22203) THEN b.winlost-b.actual_stake ELSE 0 END),--Adjustment
+				0, --Deposit
+				0,--Withdrawal
+				0, --Aff2MemTransfer
+				0,--Bonus
+				0,--Adjustment
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
-				SUM(CASE WHEN (bettype < 19999 OR bettype = 23002) AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
+				SUM(CASE WHEN bettype < 19999 AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 				SUM(CASE
 						WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.ruben = 1 
 							AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
@@ -390,15 +419,15 @@ BEGIN
 							) THEN b.winlost - b.actual_stake
 						ELSE 0
 					END),--Winloss
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22006, 22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd
+				0,--Transfer3rd
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.ruben = 1 THEN b.playercomm ELSE 0 END),--playercomm
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.awinlost ELSE 0 END),--Comm_BetTrade
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--Comm_BetTrade_Full
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END), -- AdjBonusWallet
+				0, -- Bonus Wallet
+				0, -- AdjBonusWallet
 				SUM(CASE
 						WHEN b.winlostdate = @Winlostdate 
 							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
@@ -415,10 +444,7 @@ BEGIN
 				AND b.matchid >= 0
 				AND c.roleid = 1
 				AND b.betType <> 999 --Licensee Spread Setting
-				AND 1 = CASE
-						WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
-						WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
-						ELSE 1 END
+				AND	bettype < 19999 AND winlostdate > @MoveBetsDay
 			GROUP BY b.custid,
 				CASE
 					WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150
@@ -426,6 +452,38 @@ BEGIN
 					ELSE b.bettype
 				END
 			OPTION (RECOMPILE, MAXDOP 8)
+
+			---get data from table transfer
+			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
+												, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion)
+			SELECT t.custid,
+				t.bettype,
+				SUM(CASE WHEN t.winlostdate = @Winlostdate AND t.bettype = 22001 THEN t.winlost - t.actual_stake ELSE 0 END), --Deposit
+				-SUM(CASE WHEN t.winlostdate = @Winlostdate AND t.bettype IN (22002, 22003) THEN t.winlost - t.actual_stake ELSE 0 END),--Withdrawal
+				SUM(CASE WHEN t.winlostdate = @Winlostdate AND t.bettype = 21006 THEN t.winlost - t.actual_stake ELSE 0 END), --Aff2MemTransfer
+				SUM(CASE WHEN t.winlostdate = @Winlostdate AND t.bettype IN (22004, 22202) THEN t.winlost - t.actual_stake ELSE 0 END),--Bonus
+				SUM(CASE WHEN t.winlostdate = @Winlostdate AND t.bettype IN (21001, 21002, 21003, 21004, 21005, 22005, 22203) THEN t.winlost - t.actual_stake ELSE 0 END),--Adjustment
+				0,--Turnover
+				0,--Outstanding
+				0,--Winloss
+				SUM(CASE WHEN t.winlostdate = @Winlostdate AND t.bettype IN (22006, 22007) THEN t.winlost - t.actual_stake ELSE 0 END),--Transfer3rd
+				0,--DrawGame
+				0,--playercomm
+				0,--Comm_BetTrade
+				0,--Comm_BetTrade_Full
+				0,--WLBoughtTicket_BetTrade
+				0, --BetCount
+				SUM(CASE WHEN t.winlostdate = @Winlostdate AND t.bettype = 22200 THEN t.winlost - t.actual_stake ELSE 0 END), -- Bonus Wallet
+				SUM(CASE WHEN t.winlostdate = @Winlostdate AND t.bettype = 22201 THEN t.winlost - t.actual_stake ELSE 0 END), -- AdjBonusWallet
+				0 -- Promotion
+			FROM dbo.Transfer t WITH (NOLOCK)
+				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON t.srecommend = d.custid
+				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON t.custid = c.custid
+			WHERE t.winlostdate >= @Winlostdate
+				AND c.roleid = 1
+				AND (bettype = 19999 AND winlostdate <= @MoveBetsDay OR t.Bettype > 19999)
+			GROUP BY t.custid, t.bettype
+			---end
 
 			INSERT INTO #rptDepWinlostOutstanding (
 				CustID,
@@ -481,20 +539,21 @@ BEGIN
 			Transfer3rdOthers_In = t.Transfer3rdOthers_In,
 			Transfer3rdOthers_Out = t.Transfer3rdOthers_Out
 		FROM (
-			SELECT
-				b.custid,
-				p.PartnerId,
-				b.bettype,
-				SUM(b.winlost-b.actual_stake) AS Transfer3rdOthers,
-				SUM(CASE WHEN (winlost-actual_stake) < 0 THEN -(winlost-actual_stake) ELSE 0 END) AS Transfer3rdOthers_In,
-				SUM(CASE WHEN (winlost-actual_stake) > 0 THEN -(winlost-actual_stake) ELSE 0 END) AS Transfer3rdOthers_Out
-			FROM dbo.bettrans b WITH (NOLOCK)
-				INNER JOIN @CasinoPartner p ON b.bettype IN (p.TransferId, p.CancelTransferId)
-			WHERE b.winlostdate = @Winlostdate AND b.matchid = 0
-			GROUP BY
-				b.custid,
-				p.PartnerId,
-				b.bettype) AS t
+				SELECT
+					b.custid,
+					p.PartnerId,
+					b.bettype,
+					SUM(b.winlost-b.actual_stake) AS Transfer3rdOthers,
+					SUM(CASE WHEN (winlost-actual_stake) < 0 THEN -(winlost-actual_stake) ELSE 0 END) AS Transfer3rdOthers_In,
+					SUM(CASE WHEN (winlost-actual_stake) > 0 THEN -(winlost-actual_stake) ELSE 0 END) AS Transfer3rdOthers_Out
+				FROM dbo.Transfer b WITH (NOLOCK)
+					INNER JOIN @CasinoPartner p ON b.bettype IN (p.TransferId, p.CancelTransferId)
+				WHERE b.winlostdate = @Winlostdate 
+				GROUP BY
+					b.custid,
+					p.PartnerId,
+					b.bettype
+			) AS t
 		WHERE #rptDepWinlostDetails.CustID = t.custid AND #rptDepWinlostDetails.Bettype = t.bettype
 
 		/*--PREPARE DATA FOR rptDepWinlost--*/
@@ -795,12 +854,11 @@ BEGIN
 
 		INSERT INTO @RefNoList(RefNo)
 		SELECT b.refno
-		FROM dbo.bettrans b WITH (NOLOCK)
+		FROM dbo.Transfer b WITH (NOLOCK)
 			INNER JOIN @CasinoPartner p ON b.bettype = p.CancelTransferId
 			INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
 			INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = c.srecommend
-		WHERE b.matchid = 0
-			AND b.winlostdate = @Winlostdate
+		WHERE b.winlostdate = @Winlostdate
 			AND c.roleid = 1
 		GROUP BY b.refno
 
@@ -814,7 +872,7 @@ BEGIN
 			, p.PartnerId
 			, SUM(CASE WHEN (b.winlost-b.actual_stake) < 0 THEN -(b.winlost-b.actual_stake) ELSE 0 END)--TransferIn
 			, SUM(CASE WHEN (b.winlost-b.actual_stake) > 0 THEN -(b.winlost-b.actual_stake) ELSE 0 END) --TransferOut
-		FROM dbo.bettrans b WITH (NOLOCK)
+		FROM dbo.Transfer b WITH (NOLOCK)
 			INNER JOIN @CasinoPartner p ON b.bettype IN (p.CancelTransferId, p.PartnerId)
 		WHERE b.refno IN (SELECT RefNo FROM @RefNoList)
 		GROUP BY b.custid,

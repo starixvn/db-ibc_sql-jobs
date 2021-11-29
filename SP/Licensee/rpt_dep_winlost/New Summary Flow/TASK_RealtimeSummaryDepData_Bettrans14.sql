@@ -1,5 +1,4 @@
 /*<info serverAlias="DBACC-bodb02" isFunction="0" isNested="0"></info>*/
-
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
 	@WinLostDate	DATE,
 	@isSuccessful	BIT = 0 OUTPUT
@@ -66,6 +65,8 @@ AS
 		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 
+		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
+		
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
 		- @isSuccessful: -1: Data of the whole day have been summarized completely
@@ -206,19 +207,13 @@ BEGIN
 			SUM(CASE WHEN b.bettype IN (22006,22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd
 			SUM(CASE WHEN b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
 			SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END) -- AdjBonusWallet
-		FROM dbo.bettrans b WITH (NOLOCK)
+		FROM dbo.Transfer b WITH (NOLOCK)
 			INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
 			INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
 		WHERE b.winlostdate = @Winlostdate
-			AND b.matchid = 0
 			AND c.roleid = 1
-			AND b.bettype <> 999 --Licensee Spread Setting
-			AND 1 = CASE
-						WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
-						WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
-						ELSE 1 END
+			AND (bettype = 19999 AND winlostdate <= @MoveBetsDay OR b.Bettype > 19999)
 		GROUP BY b.custid, b.bettype
-		OPTION (RECOMPILE, MAXDOP 8)
 
 		INSERT INTO #DepCustID (CustID)
 		SELECT CustID
@@ -233,21 +228,21 @@ BEGIN
 			Transfer3rdOthers_In = t.Transfer3rdOthers_In,
 			Transfer3rdOthers_Out = t.Transfer3rdOthers_Out
 		FROM (
-			SELECT
-				b.custid,
-				p.PartnerId,
-				b.bettype,
-				SUM(b.winlost - b.actual_stake) AS Transfer3rdOthers,
-				SUM(CASE WHEN (winlost-actual_stake) < 0 THEN -(winlost-actual_stake) ELSE 0 END) AS Transfer3rdOthers_In,
-				SUM(CASE WHEN (winlost-actual_stake) > 0 THEN -(winlost-actual_stake) ELSE 0 END) AS Transfer3rdOthers_Out
-			FROM dbo.bettrans b WITH (NOLOCK)
-				INNER JOIN @CasinoPartner p ON b.bettype IN (p.TransferId, p.CancelTransferId)
-			WHERE b.winlostdate = @Winlostdate
-				AND b.matchid = 0
-			GROUP BY
-				b.custid,
-				p.PartnerId,
-				b.bettype) AS t
+				SELECT
+					b.custid,
+					p.PartnerId,
+					b.bettype,
+					SUM(b.winlost - b.actual_stake) AS Transfer3rdOthers,
+					SUM(CASE WHEN (winlost-actual_stake) < 0 THEN -(winlost-actual_stake) ELSE 0 END) AS Transfer3rdOthers_In,
+					SUM(CASE WHEN (winlost-actual_stake) > 0 THEN -(winlost-actual_stake) ELSE 0 END) AS Transfer3rdOthers_Out
+				FROM dbo.Transfer b WITH (NOLOCK)
+					INNER JOIN @CasinoPartner p ON b.bettype IN (p.TransferId, p.CancelTransferId)
+				WHERE b.winlostdate = @Winlostdate
+				GROUP BY
+					b.custid,
+					p.PartnerId,
+					b.bettype
+			) AS t
 		WHERE #rptDepWinlostDetails.CustID = t.custid AND #rptDepWinlostDetails.Bettype = t.bettype
 
 		/*--Force seek predicate on custid for bettrans14 part
@@ -546,12 +541,11 @@ BEGIN
 
 		INSERT INTO @RefNoList(RefNo)
 		SELECT b.refno
-		FROM dbo.bettrans b WITH (NOLOCK)
+		FROM dbo.Transfer b WITH (NOLOCK)
 			INNER JOIN @CasinoPartner p ON b.bettype = p.CancelTransferId
 			INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
 			INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = c.srecommend
-		WHERE b.matchid = 0
-			AND b.winlostdate = @Winlostdate
+		WHERE b.winlostdate = @Winlostdate
 			AND c.roleid = 1
 		GROUP BY b.refno
 
@@ -560,7 +554,7 @@ BEGIN
 			, p.PartnerId
 			, SUM(CASE WHEN (b.winlost-b.actual_stake) < 0 THEN -(b.winlost-b.actual_stake) ELSE 0 END)--TransferIn
 			, SUM(CASE WHEN (b.winlost-b.actual_stake) > 0 THEN -(b.winlost-b.actual_stake) ELSE 0 END) --TransferOut
-		FROM dbo.bettrans b WITH (NOLOCK)
+		FROM dbo.Transfer b WITH (NOLOCK)
 			INNER JOIN @CasinoPartner p ON b.bettype IN (p.CancelTransferId, p.PartnerId)
 		WHERE b.refno IN (SELECT RefNo FROM @RefNoList)
 		GROUP BY b.custid, p.PartnerId
