@@ -14,6 +14,7 @@ AS
 		- 20170703@Paul: Check more columns - [Redmine: #79262]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20211117@Kos: Merge Sports Lottery into Sportsbook [RedmineID: #163191]
+		- 20211129@Kos: Support Cashout [RedmineID: #163191]
 */
 
 BEGIN
@@ -24,7 +25,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT BetType, ProductPrefix, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 3, 5, 27, 63)
+	WHERE ProductID IN (1, 3, 5, 25, 27, 63)
 
 	DECLARE @S_Winlost MONEY, @T_Winlost MONEY, @S_Turnover MONEY, @T_Turnover MONEY, @S_BetCount INT, @T_BetCount INT,
 			@S_PlayerComm MONEY, @T_PlayerComm MONEY, @S_BetEffective MONEY, @T_BetEffective MONEY

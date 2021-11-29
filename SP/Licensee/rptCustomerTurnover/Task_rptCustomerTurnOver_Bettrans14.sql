@@ -32,6 +32,7 @@ AS
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20211117@Kos: Merge Sports Lottery into Sportsbook [RedmineID: #163191]
+		- 20211129@Kos: Support Cashout [RedmineID: #163191]
 */
 
 BEGIN
@@ -48,7 +49,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT BetType, ProductPrefix, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 3, 5, 27, 63)
+	WHERE ProductID IN (1, 3, 5, 25, 27, 63)
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
 
@@ -91,11 +92,12 @@ BEGIN
 						OR a.bettype BETWEEN 9400 AND 9699)		-- Sportsbook
 					AND a.bettype NOT IN (29, 38)	-- Parlay, betbuilder
 					AND a.bettype NOT BETWEEN 81 AND 120
+					AND s.ProductCode NOT IN ('CO')
 					THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
 				WHEN a.winlostdate < @HWHLCutDate
 					AND a.statusID IN (112, 113)
 					AND a.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
-					AND ABS(modds) = 0.25
+					AND ABS(a.modds) = 0.25
 					THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
 				ELSE a.statusID
 			END AS statusID
@@ -132,6 +134,7 @@ BEGIN
 						OR a.bettype BETWEEN 9400 AND 9699)		-- Sportsbook
 					AND a.bettype NOT IN (29, 38)	-- Parlay, betbuilder
 					AND a.bettype NOT BETWEEN 81 AND 120
+					AND s.ProductCode NOT IN ('CO')
 					THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
 				WHEN a.winlostdate < @HWHLCutDate
 					AND a.statusID IN (112,113)
