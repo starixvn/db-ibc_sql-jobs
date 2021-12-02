@@ -14,6 +14,7 @@ AS
 			- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
 			- 20191025@Bobby: Add column promotion [RedmineID: #120333]
 			- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
+			- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
 
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -237,50 +238,78 @@ BEGIN
 		ELSE --
 		BEGIN
 			INSERT INTO #rptDepWinlost_Main (CustID, OpeningBalance, srecommend, mrecommend, recommend, currency)
-				SELECT b.CustID
-					   , SUM(CASE @Winlostdate WHEN @BalanceUpDay 
-					    		THEN CASE WHEN bettype = 20000 THEN winlost - actual_stake + playercomm ELSE 0 END 
-								ELSE CASE WHEN winlostdate < @Winlostdate THEN winlost - actual_stake + playercomm ELSE 0 END 
-							  END)
-					   , b.srecommend, b.mrecommend, b.recommend, 
-						CASE 
-							WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
-							WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
-						ELSE b.currency 
-						END
-				FROM dbo.bettrans b WITH (NOLOCK) 
-					INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
-					INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
-				WHERE b.winlostdate <= @Winlostdate
-					  AND b.matchid >= 0
-					  AND c.roleid = 1
-					  AND 1 = CASE
-							WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
-							WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
-							ELSE 1 END
-				GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, 
-						CASE 
-							WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
-							WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
-						ELSE b.currency
-						END
-				OPTION (RECOMPILE, MAXDOP 8)
+			SELECT b.custid, SUM(ISNULL(b.OpeningBalance, 0) + ISNULL(t.OpeningBalance, 0)), b.srecommend, b.mrecommend, b.recommend, b.currency
+			FROM
+			(
+				(
+					SELECT b.CustID
+						   , SUM(CASE @Winlostdate WHEN @BalanceUpDay 
+					    			THEN 0
+									ELSE CASE WHEN winlostdate < @Winlostdate THEN winlost - actual_stake + playercomm ELSE 0 END 
+								  END) AS OpeningBalance
+						   , b.srecommend, b.mrecommend, b.recommend, 
+							CASE 
+								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
+								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
+							ELSE b.currency 
+							END AS currency
+					FROM dbo.bettrans b WITH (NOLOCK) 
+						INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
+						INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
+					WHERE b.winlostdate <= @Winlostdate
+						  AND b.matchid >= 0
+						  AND c.roleid = 1
+						  AND	bettype < 19999 AND winlostdate > @MoveBetsDay
+					GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, 
+							CASE 
+								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
+								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
+							ELSE b.currency
+							END
+				) b INNER JOIN
+				(
+					SELECT b.CustID
+						   , SUM(CASE @Winlostdate WHEN @BalanceUpDay 
+					    			THEN CASE WHEN bettype = 20000 THEN winlost - actual_stake + playercomm ELSE 0 END 
+									ELSE CASE WHEN winlostdate < @Winlostdate THEN winlost - actual_stake + playercomm ELSE 0 END 
+								  END) AS OpeningBalance
+						   , b.srecommend, b.mrecommend, b.recommend, 
+							CASE 
+								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
+								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
+							ELSE b.currency 
+							END AS currency
+					FROM dbo.transfer b WITH (NOLOCK) 
+						INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
+						INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
+					WHERE b.winlostdate <= @Winlostdate
+						  AND c.roleid = 1
+						  AND (bettype = 19999 AND winlostdate <= @MoveBetsDay OR b.Bettype > 19999)
+					GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, 
+							CASE 
+								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
+								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
+							ELSE b.currency
+							END
+				) t ON b.custid = t.custid
+			) 
+			GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, b.currency
 				
-				DELETE FROM #rptDepWinlost_Main
-				WHERE CustID NOT IN (SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Trans WITH (NOLOCK) WHERE Winlostdate = @Winlostdate)
-					AND OpeningBalance = 0
+			DELETE FROM #rptDepWinlost_Main
+			WHERE CustID NOT IN (SELECT CustID FROM bodb_Report.dbo.rptDepWinlost_Trans WITH (NOLOCK) WHERE Winlostdate = @Winlostdate)
+				AND OpeningBalance = 0
 				
-				DELETE FROM bodb_Report.dbo.rptDepWinlost_Main WITH (UPDLOCK, ROWLOCK)
-				WHERE Winlostdate = @Winlostdate
+			DELETE FROM bodb_Report.dbo.rptDepWinlost_Main WITH (UPDLOCK, ROWLOCK)
+			WHERE Winlostdate = @Winlostdate
 				
-				INSERT INTO bodb_Report.dbo.rptDepWinlost_Main (Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
-				SELECT @Winlostdate, mt.CustID, mt.OpeningBalance, e.ActualRate, mt.srecommend, mt.mrecommend, mt.recommend, mt.currency
-				FROM #rptDepWinlost_Main mt	 
-				INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON mt.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate 
+			INSERT INTO bodb_Report.dbo.rptDepWinlost_Main (Winlostdate, CustID, OpeningBalance, actualrate, srecommend, mrecommend, recommend, currency)
+			SELECT @Winlostdate, mt.CustID, mt.OpeningBalance, e.ActualRate, mt.srecommend, mt.mrecommend, mt.recommend, mt.currency
+			FROM #rptDepWinlost_Main mt	 
+			INNER JOIN dbo.ExchangeDailyOanda e WITH (NOLOCK) ON mt.currency = e.ExchangeId AND e.ExchangeDate = @Winlostdate 
 				
-				SELECT @NumberofCus = @@ROWCOUNT
+			SELECT @NumberofCus = @@ROWCOUNT
 			
-				SET @isSuccessful = 1
+			SET @isSuccessful = 1
 		END
 	END TRY
 	BEGIN CATCH
