@@ -21,6 +21,7 @@ AS
 		- 20210625@Helen: [TVS] Perfomance tuning for archived process [Redmine: #157539]
 		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
 		- 20211126@Kathy: Add 2 new column bettype,betid [Redmine:#140180]
+		- 20211126@Kathy: get bettype,betid from active table[Redmine:#140180]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -367,10 +368,8 @@ INSERT INTO	dbo.TicketVoiding_RequestDetailTicket_Single_bk
 	(	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId, bettype, betid)
 SELECT	Id, RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId, bettype, betid
 FROM	OPENQUERY(DBTXN, ''\
-SELECT	t1.Id, t1.RequestId, t1.IssueTypeId, t1.SubIssueTypeId,t1.TransId, t1.MatchId,t1.RequestDetailId, b.bettype, b.betid
+SELECT	t1.Id, t1.RequestId, t1.IssueTypeId, t1.SubIssueTypeId,t1.TransId, t1.MatchId,t1.RequestDetailId, t1.bettype, t1.betid
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_Single AS t1 WITH (NOLOCK)
-	INNER JOIN bodb02.dbo.bettrans14 b with(nolock)
-		on t1.transid = b.transid
 WHERE t1.requestid in (' + @requestids + ')
 	;'');';
 
