@@ -373,10 +373,10 @@ BEGIN
 		--get list of recommend.
 		INSERT INTO dbo.Task_Movebet_RecommendList(Recommend, StatusId)
 		SELECT DISTINCT recommend, 0 AS SattusId 
-		FROM dbo.bettrans WITH(NOLOCK) WHERE winlostdate = @winlostdate AND bettype < 19999 AND custid > 0
+		FROM dbo.bettrans WITH(NOLOCK) WHERE winlostdate = @winlostdate AND bettype < 19999 
 		UNION 
 		SELECT DISTINCT recommend, 0 AS SattusId 
-		FROM dbo.translog WITH(NOLOCK) WHERE winlostdate = @winlostdate AND custid > 0
+		FROM dbo.translog WITH(NOLOCK) WHERE winlostdate = @winlostdate 
 
 		WAITFOR DELAY '00:00:01'
 
@@ -385,14 +385,12 @@ BEGIN
 		SELECT b.recommend
 		FROM dbo.bettrans b WITH (NOLOCK)
 		WHERE b.winlostdate = @winlostdate AND b.bettype <= 19000 AND b.statusID NOT IN (101,102)
-			AND b.custid > 0
 			AND NOT EXISTS (SELECT TOP 1 1 FROM Task_Movebet_RecommendList r WITH (NOLOCK) WHERE r.recommend = b.recommend)
 		GROUP BY recommend 
 
 		INSERT INTO Task_Movebet_RecommendList (recommend)
 		SELECT DISTINCT tl.recommend, 0 AS SattusId 
 		FROM dbo.translog tl WITH(NOLOCK) WHERE tl.winlostdate = @winlostdate
-			AND tl.custid > 0
 			AND NOT EXISTS (SELECT TOP 1 1 FROM Task_Movebet_RecommendList r WITH (NOLOCK) WHERE r.recommend = tl.recommend)
 		GROUP BY recommend 
 
