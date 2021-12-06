@@ -86,6 +86,7 @@ AS
 		- 20210727@Percy: Add column apositiontaking [RedmineID: #155593]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20211014@Hogan: Support Add 2 New Betfroms [ ] [RedmineID: #162388]
+		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -210,6 +211,8 @@ BEGIN
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
+			WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
+			WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -330,6 +333,8 @@ BEGIN
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
+			WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
+			WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 			ELSE 0
 		END
 		,CASE

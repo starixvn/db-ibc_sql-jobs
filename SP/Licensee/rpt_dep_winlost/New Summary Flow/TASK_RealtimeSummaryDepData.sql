@@ -62,6 +62,7 @@ AS
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 		- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
+		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -686,6 +687,8 @@ BEGIN
 				WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 				WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
+				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
+				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
@@ -757,6 +760,8 @@ BEGIN
 				WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
 				WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG			
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG			
+				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
+				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 				ELSE 0
 			END
 
