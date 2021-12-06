@@ -384,7 +384,7 @@ BEGIN
 		INSERT INTO Task_Movebet_RecommendList (recommend,StatusId)
 		SELECT b.recommend, 0 AS SattusId
 		FROM dbo.bettrans b WITH (NOLOCK)
-		WHERE b.winlostdate = @winlostdate AND b.bettype <= 19000 AND b.statusID NOT IN (101,102)
+		WHERE b.winlostdate = @winlostdate AND b.bettype <= 19000
 			AND NOT EXISTS (SELECT TOP 1 1 FROM Task_Movebet_RecommendList r WITH (NOLOCK) WHERE r.recommend = b.recommend)
 		GROUP BY recommend 
 
