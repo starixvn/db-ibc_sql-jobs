@@ -361,12 +361,40 @@ BEGIN
 
 	IF @step = 3 -- generate sum tickets
 	BEGIN
-		CREATE TABLE #Recommend_Round1_tmp (recommend INT PRIMARY KEY)
-		CREATE TABLE #Recommend_Round2_tmp (recommend INT PRIMARY KEY)
 		-- Clear deleted/cancel record (custid = 0)
 		DELETE FROM bettrans WHERE winlostdate = @winlostdate AND custid = 0
 
 		DELETE FROM bettranssum WHERE winlostdate = @winlostdate
+
+		-- Get Recommend
+		--reset before start
+		TRUNCATE TABLE dbo.Task_Movebet_RecommendList
+
+		--get list of recommend.
+		INSERT INTO dbo.Task_Movebet_RecommendList(Recommend, StatusId)
+		SELECT DISTINCT recommend, 0 AS SattusId 
+		FROM dbo.bettrans WITH(NOLOCK) WHERE winlostdate = @winlostdate AND bettype < 19999 AND custid > 0
+		UNION 
+		SELECT DISTINCT recommend, 0 AS SattusId 
+		FROM dbo.translog WITH(NOLOCK) WHERE winlostdate = @winlostdate AND custid > 0
+
+		WAITFOR DELAY '00:00:01'
+
+		-- do double check list of recommend if missing
+		INSERT INTO Task_Movebet_RecommendList (recommend)
+		SELECT b.recommend
+		FROM dbo.bettrans b WITH (NOLOCK)
+		WHERE b.winlostdate = @winlostdate AND b.bettype <= 19000 AND b.statusID NOT IN (101,102)
+			AND b.custid > 0
+			AND NOT EXISTS (SELECT TOP 1 1 FROM Task_Movebet_RecommendList r WITH (NOLOCK) WHERE r.recommend = b.recommend)
+		GROUP BY recommend 
+
+		INSERT INTO Task_Movebet_RecommendList (recommend)
+		SELECT DISTINCT tl.recommend, 0 AS SattusId 
+		FROM dbo.translog tl WITH(NOLOCK) WHERE tl.winlostdate = @winlostdate
+			AND tl.custid > 0
+			AND NOT EXISTS (SELECT TOP 1 1 FROM Task_Movebet_RecommendList r WITH (NOLOCK) WHERE r.recommend = tl.recommend)
+		GROUP BY recommend 
 
 		-- Get Exchange Rate
 		DECLARE @Exchange TABLE (currency TINYINT, actualrate FLOAT, CurrencyName NVARCHAR(50))
@@ -379,13 +407,6 @@ BEGIN
 			SET CurrencyName = e.currency
 		FROM @Exchange ex, CustDB.dbo.exchange e WITH (NOLOCK)
 		WHERE ex.currency = e.exchangeid
-
-		INSERT INTO #Recommend_Round1_tmp (recommend)
-		SELECT recommend
-		FROM dbo.bettrans WITH (NOLOCK)
-		WHERE winlostdate = @winlostdate AND bettype <= 19000 AND statusID NOT IN (101,102)
-				AND custid > 0
-		GROUP BY recommend 
 
 		-- Generate SUM record
 		INSERT INTO dbo.bettranssum
@@ -400,7 +421,7 @@ BEGIN
 			, SUM(stake) stake, SUM(actual_stake) actual_stake,
 			SUM(winlost) winlost, SUM(awinlost) awinlost, SUM(mwinlost) mwinlost, SUM(swinlost) swinlost,
 			SUM(playercomm) playercomm, SUM(comm) comm, SUM(acomm) acomm, SUM(scomm) scomm
-		FROM #Recommend_Round1_tmp r
+		FROM dbo.Task_Movebet_RecommendList r WITH (NOLOCK)
 			INNER JOIN dbo.bettrans b WITH (INDEX = IX_recommend) ON r.recommend = b.recommend 
 		WHERE b.winlostdate = @winlostdate AND b.bettype <= 19000 AND b.statusID NOT IN (101,102)
 		GROUP BY custid
@@ -418,55 +439,7 @@ BEGIN
 			INNER JOIN @Exchange e ON c.currency = e.currency
 		WHERE winlostdate = @winlostdate
 
-		-- do double check list of recommend if missing
-		INSERT INTO #Recommend_Round2_tmp (recommend)
-		SELECT b.recommend
-		FROM dbo.bettrans b WITH (NOLOCK)
-		WHERE b.winlostdate = @winlostdate AND b.bettype <= 19000 AND b.statusID NOT IN (101,102)
-			AND b.custid > 0
-			AND NOT EXISTS (SELECT TOP 1 1 FROM #Recommend_Round1_tmp r WHERE r.recommend = b.recommend)
-		GROUP BY recommend 
-
-		IF @@ROWCOUNT > 0
-		BEGIN
-			-- Generate SUM record
-			INSERT INTO dbo.bettranssum
-				(custid
-				, winlostdate
-				, stake, actual_stake
-				, winlost, awinlost, mwinlost, swinlost
-				, playercomm, comm, acomm, scomm)
-			SELECT 
-				custid
-				, @winlostdate winlostdate
-				, SUM(stake) stake, SUM(actual_stake) actual_stake,
-				SUM(winlost) winlost, SUM(awinlost) awinlost, SUM(mwinlost) mwinlost, SUM(swinlost) swinlost,
-				SUM(playercomm) playercomm, SUM(comm) comm, SUM(acomm) acomm, SUM(scomm) scomm
-			FROM #Recommend_Round2_tmp r
-				INNER JOIN dbo.bettrans b WITH (INDEX = IX_recommend) ON r.recommend = b.recommend 
-			WHERE b.winlostdate = @winlostdate AND b.bettype <= 19000 AND b.statusID NOT IN (101,102)
-			GROUP BY custid
-
-			UPDATE s
-				SET actualrate = e.actualrate
-					, username = c.username
-					, currencyname = e.CurrencyName
-					, currency = c.currency
-					, recommend = c.recommend
-					, mrecommend = c.mrecommend
-					, srecommend = c.srecommend
-			FROM dbo.bettranssum s
-				INNER JOIN #Recommend_Round2_tmp r ON r.recommend = s.recommend
-				INNER JOIN CustDB.dbo.custinfo c WITH (NOLOCK) ON s.custid = c.custid AND c.roleid = 1
-				INNER JOIN @Exchange e ON c.currency = e.currency
-			WHERE s.winlostdate = @winlostdate
-
-		END
-		
 		EXEC dbo.Task_BalanceCheck @winlostdate, 1
-
-		DROP TABLE #Recommend_Round1_tmp
-		DROP TABLE #Recommend_Round2_tmp
 
 		RETURN
 	END
@@ -498,17 +471,6 @@ BEGIN
 
 		-- Copy bettransm/bettransg -> bettransm14/bettransg14 for whole day of @winlostdate
 		EXEC dbo.ExecRep_08 @recommend = 0, @winlostdate = @winlostdate, @parlay = 1
-
-		--reset before start
-		TRUNCATE TABLE dbo.Task_Movebet_RecommendList
-
-		--get list of recommend.
-		INSERT INTO dbo.Task_Movebet_RecommendList(Recommend, StatusId)
-		SELECT DISTINCT recommend, 0 AS SattusId 
-		FROM dbo.bettrans WITH(NOLOCK) WHERE winlostdate = @winlostdate AND bettype < 19999
-		UNION 
-		SELECT DISTINCT recommend, 0 AS SattusId 
-		FROM dbo.translog WITH(NOLOCK) WHERE winlostdate = @winlostdate
 
 		SET @Doing = 'Task_DailySummary : MoveBet step 4.20 - start copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121) + ', total recommend: ' + CAST(@@ROWCOUNT AS varchar(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
