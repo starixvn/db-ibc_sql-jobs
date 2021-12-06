@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_DailySummary]
+ALTER PROCEDURE [dbo].[Task_DailySummary_xpre]
 (
 	@winlostdate SMALLDATETIME,
 	@step TINYINT = 0
@@ -381,14 +381,14 @@ BEGIN
 		WAITFOR DELAY '00:00:01'
 
 		-- do double check list of recommend if missing
-		INSERT INTO Task_Movebet_RecommendList (recommend)
-		SELECT b.recommend
+		INSERT INTO Task_Movebet_RecommendList (recommend,StatusId)
+		SELECT b.recommend, 0 AS SattusId
 		FROM dbo.bettrans b WITH (NOLOCK)
 		WHERE b.winlostdate = @winlostdate AND b.bettype <= 19000 AND b.statusID NOT IN (101,102)
 			AND NOT EXISTS (SELECT TOP 1 1 FROM Task_Movebet_RecommendList r WITH (NOLOCK) WHERE r.recommend = b.recommend)
 		GROUP BY recommend 
 
-		INSERT INTO Task_Movebet_RecommendList (recommend)
+		INSERT INTO Task_Movebet_RecommendList (recommend, StatusId)
 		SELECT DISTINCT tl.recommend, 0 AS SattusId 
 		FROM dbo.translog tl WITH(NOLOCK) WHERE tl.winlostdate = @winlostdate
 			AND NOT EXISTS (SELECT TOP 1 1 FROM Task_Movebet_RecommendList r WITH (NOLOCK) WHERE r.recommend = tl.recommend)
