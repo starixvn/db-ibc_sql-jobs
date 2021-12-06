@@ -389,7 +389,7 @@ BEGIN
 		GROUP BY recommend 
 
 		INSERT INTO Task_Movebet_RecommendList (recommend, StatusId)
-		SELECT DISTINCT tl.recommend, 0 AS SattusId 
+		SELECT tl.recommend, 0 AS SattusId 
 		FROM dbo.translog tl WITH(NOLOCK) WHERE tl.winlostdate = @winlostdate
 			AND NOT EXISTS (SELECT TOP 1 1 FROM Task_Movebet_RecommendList r WITH (NOLOCK) WHERE r.recommend = tl.recommend)
 		GROUP BY recommend 
