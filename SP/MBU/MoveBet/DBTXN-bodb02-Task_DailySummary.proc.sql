@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_DailySummary_xpre]
+ALTER PROCEDURE [dbo].[Task_DailySummary]
 (
 	@winlostdate SMALLDATETIME,
 	@step TINYINT = 0
