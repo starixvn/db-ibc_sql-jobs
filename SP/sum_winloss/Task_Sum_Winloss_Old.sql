@@ -319,7 +319,7 @@ BEGIN
 						AND c.custid = b.custid
 						AND b.statusID IN (111,112,113)
 				) b
-				INNER JOIN #Bettypes bt ON b.gameID = bt.bettype
+				INNER JOIN #Bettypes bt ON b.gameID = bt.bettype AND bt.RefTable = 1
 			GROUP BY c.custid, bt.SporttypeRef, bt.BettypeRef
 			HAVING SUM(CASE WHEN bt.IsContributionBettype = 0 THEN b.BetStake ELSE 0 END) <> 0
 				OR SUM(b.BetStake * discount) <> 0
@@ -341,7 +341,7 @@ BEGIN
 						AND c.custid = b.custid
 						AND b.statusID IN (111,112,113)
 				) b
-				INNER JOIN #Bettypes bt ON b.gameID = bt.bettype
+				INNER JOIN #Bettypes bt ON b.gameID = bt.bettype AND bt.RefTable = 2
 			GROUP BY c.custid, bt.SporttypeRef, bt.BettypeRef
 			HAVING SUM(CASE WHEN bt.IsContributionBettype = 0 THEN b.NetStake ELSE 0 END) <> 0
 				OR SUM(b.NetStake * discount) <> 0

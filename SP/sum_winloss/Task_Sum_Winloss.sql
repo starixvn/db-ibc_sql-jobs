@@ -425,7 +425,7 @@ BEGIN
 			,SUM(b.NetStake * sdiscount) mgrosscomm
 			,SUM(b.NetStake * sdiscount) sgrosscomm
 		FROM dbo.bettransLC14 b WITH (NOLOCK)
-			INNER JOIN #__Bettype bt ON b.gameID = bt.Bettype AND bt.RefTable = 1
+			INNER JOIN #__Bettype bt ON b.gameID = bt.Bettype AND bt.RefTable = 2
 		WHERE b.winlostdate = @winlostdate
 		GROUP BY b.custid, bt.SporttypeRef, bt.BettypeRef
 		HAVING SUM(CASE WHEN bt.IsContributionBettype = 0 THEN b.NetStake ELSE 0 END) <> 0

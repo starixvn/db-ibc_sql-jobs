@@ -165,6 +165,8 @@ BEGIN
 				,SUM(b.BetStake * b.discount) AS GrossCommSAg
 			FROM bodb02.dbo.bettransRnG14 b WITH (NOLOCK)
 				INNER JOIN @Bettype bt ON b.gameID = bt.TypeId
+			WHERE b.winlostdate = @WinlostDate 
+				AND b.statusID IN (111, 112, 113)
 			GROUP BY b.custid, b.gameID, bt.ProductId
 		)
 		UPDATE t

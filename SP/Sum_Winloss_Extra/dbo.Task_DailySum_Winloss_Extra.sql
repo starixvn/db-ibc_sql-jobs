@@ -137,6 +137,28 @@ BEGIN
 		WHERE bt.winlostdate = @WinlostDate 
 			AND bt.statusID NOT IN (102,101,103)
 		GROUP BY custid, recommend, mrecommend, srecommend, b.ProductId
+
+		;WITH CTE_NetTO_GrossComm AS (
+			SELECT b.custid, b.gameID AS Bettype, bt.ProductId
+				,SUM(b.BetStake) AS TurnoverNoDraw
+				,SUM(b.BetStake * b.discount) AS GrossComm
+				,SUM(b.BetStake * b.discount) AS GrossCommAg
+				,SUM(b.BetStake * b.discount) AS GrossCommMAg
+				,SUM(b.BetStake * b.discount) AS GrossCommSAg
+			FROM bodb02.dbo.bettransRnG b WITH (NOLOCK)
+				INNER JOIN #Bettype bt ON b.gameID = bt.TypeId
+			WHERE b.winlostdate = @WinlostDate 
+				AND b.statusID IN (111, 112, 113)
+			GROUP BY b.custid, b.gameID, bt.ProductId
+		)
+		UPDATE t
+		SET t.TurnoverNoDraw = ISNULL(c.TurnoverNoDraw, 0)
+			,t.GrossComm = ISNULL(c.GrossComm, 0)
+			,t.GrossCommAg = ISNULL(c.GrossCommAg, 0)
+			,t.GrossCommMAg = ISNULL(c.GrossCommMAg, 0)
+			,t.GrossCommSAg = ISNULL(c.GrossCommSAg, 0)
+		FROM #Sum_Winloss_Extra t
+			INNER JOIN CTE_NetTO_GrossComm c ON t.CustId = c.custid AND t.ProductId = c.ProductId AND t.Bettype = c.Bettype
 	END
 	-- for agent, roleid = 2
 	BEGIN
