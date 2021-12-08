@@ -361,38 +361,22 @@ BEGIN
 
 	IF @step = 3 -- generate sum tickets
 	BEGIN
+		DECLARE @debug_message VARCHAR(500)
+		DECLARE @matchid INT
+		DECLARE @RN INT, @RX INT
+		-- table to stored matchid list, with CIX for force data order.
+		CREATE TABLE #matchid_list (rn int, matchid int)
+		CREATE CLUSTERED INDEX CIX ON #matchid_list (rn)
+
+		CREATE TABLE #matchid_list_batch (matchid INT PRIMARY KEY)
+
+		CREATE TABLE #pre_bettranssum (custid INT, winlostdate SMALLDATETIME, stake MONEY, actual_stake MONEY,
+								winlost MONEY, awinlost MONEY, mwinlost MONEY, swinlost MONEY,
+								playercomm MONEY, comm MONEY, acomm MONEY, scomm MONEY)		
+
 		-- Clear deleted/cancel record (custid = 0)
 		DELETE FROM bettrans WHERE winlostdate = @winlostdate AND custid = 0
-
 		DELETE FROM bettranssum WHERE winlostdate = @winlostdate
-
-		-- Get Recommend
-		--reset before start
-		TRUNCATE TABLE dbo.Task_Movebet_RecommendList
-
-		--get list of recommend.
-		INSERT INTO dbo.Task_Movebet_RecommendList(Recommend, StatusId)
-		SELECT DISTINCT recommend, 0 AS SattusId 
-		FROM dbo.bettrans WITH(NOLOCK) WHERE winlostdate = @winlostdate AND bettype < 19999 
-		UNION 
-		SELECT DISTINCT recommend, 0 AS SattusId 
-		FROM dbo.translog WITH(NOLOCK) WHERE winlostdate = @winlostdate 
-
-		WAITFOR DELAY '00:00:01'
-
-		-- do double check list of recommend if missing
-		INSERT INTO Task_Movebet_RecommendList (recommend,StatusId)
-		SELECT b.recommend, 0 AS SattusId
-		FROM dbo.bettrans b WITH (NOLOCK)
-		WHERE b.winlostdate = @winlostdate AND b.bettype < 19999
-			AND NOT EXISTS (SELECT TOP 1 1 FROM Task_Movebet_RecommendList r WITH (NOLOCK) WHERE r.recommend = b.recommend)
-		GROUP BY recommend 
-
-		INSERT INTO Task_Movebet_RecommendList (recommend, StatusId)
-		SELECT tl.recommend, 0 AS SattusId 
-		FROM dbo.translog tl WITH(NOLOCK) WHERE tl.winlostdate = @winlostdate
-			AND NOT EXISTS (SELECT TOP 1 1 FROM Task_Movebet_RecommendList r WITH (NOLOCK) WHERE r.recommend = tl.recommend)
-		GROUP BY recommend 
 
 		-- Get Exchange Rate
 		DECLARE @Exchange TABLE (currency TINYINT, actualrate FLOAT, CurrencyName NVARCHAR(50))
@@ -405,6 +389,89 @@ BEGIN
 			SET CurrencyName = e.currency
 		FROM @Exchange ex, CustDB.dbo.exchange e WITH (NOLOCK)
 		WHERE ex.currency = e.exchangeid
+
+		INSERT INTO #matchid_list (matchid)
+		SELECT DISTINCT matchid FROM bettrans WITH (NOLOCK, index = CIX_matchid_bettype) 
+		WHERE winlostdate = @winlostdate AND bettype < 19999 AND statusID NOT IN (101,102)
+	
+		-- removed duplicate data, in case we got some.
+		;WITH CTE AS (SELECT matchid, N = ROW_NUMBER() OVER (PARTITION BY matchid ORDER BY matchid) FROM #matchid_list)
+			DELETE FROM CTE WHERE N > 1
+		-- re-order matchid list
+		;WITH CTE AS (SELECT N = ROW_NUMBER() OVER (ORDER BY matchid), matchid FROM #matchid_list)
+		UPDATE #matchid_list
+			SET rn = N
+		FROM CTE INNER JOIN #matchid_list ON CTE.matchid = #matchid_list.matchid
+
+		-- 1st block, process data which spread across multiple winlostdate first such as parlay or 3rd sports.
+		-- therefore, do it 1 by 1 to reduce locking scope.
+		SELECT @RX = MAX(RN) FROM #matchid_list WHERE matchid < 10000
+
+		IF @RX IS NULL SET @RX = 0
+		SET @RN = 1
+
+		WHILE @RN <= @RX
+		BEGIN
+			SELECT @matchid = matchid FROM #matchid_list WHERE rn = @RN
+			SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
+			
+			RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+
+			INSERT INTO #pre_bettranssum
+				(custid,
+				winlostdate, stake, actual_stake,
+				winlost, awinlost, mwinlost, swinlost,
+				playercomm, comm, acomm, scomm)
+			SELECT 
+				custid,
+				@winlostdate winlostdate, SUM(stake) stake, SUM(actual_stake) actual_stake,
+				SUM(winlost) winlost, SUM(awinlost) awinlost, SUM(mwinlost) mwinlost, SUM(swinlost) swinlost,
+				SUM(playercomm) playercomm, SUM(comm) comm, SUM(acomm) acomm, SUM(scomm) scomm
+			FROM dbo.bettrans WITH (ROWLOCK, INDEX=CIX_matchid_bettype)
+			WHERE matchid = @matchid AND winlostdate = @winlostdate AND bettype < 19999 AND statusID NOT IN (101,102)
+			GROUP BY custid
+	
+			DELETE FROM #matchid_list WHERE rn = @RN
+			SET @RN = @RN + 1
+	
+			WAITFOR DELAY '00:00:00.020'
+
+		END
+		-- 2nd block, process data base on matchid
+		-- data is likely group together, and not insert by anything else, let uses PAGLOCK.
+		--------------START TO UPDATE BETTRANS ------------------
+		WHILE (1 = 1)
+		BEGIN
+  
+		  DELETE TOP (1000) r 
+		  OUTPUT DELETED.matchid
+		  INTO #matchid_list_batch (matchid)    
+		  FROM #matchid_list r 
+  
+		  IF @@ROWCOUNT = 0
+			BREAK
+  
+		  SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
+  
+		  RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+  
+		  INSERT INTO #pre_bettranssum
+				(custid, winlostdate, stake, actual_stake, winlost, awinlost, mwinlost, swinlost,
+				playercomm, comm, acomm, scomm)
+			SELECT 
+				custid, winlostdate, SUM(stake) stake, SUM(actual_stake) actual_stake,
+				SUM(winlost) winlost, SUM(awinlost) awinlost, SUM(mwinlost) mwinlost, SUM(swinlost) swinlost,
+				SUM(playercomm) playercomm, SUM(comm) comm, SUM(acomm) acomm, SUM(scomm) scomm
+			FROM dbo.bettrans WITH (PAGLOCK, INDEX=CIX_matchid_bettype)
+				INNER JOIN #matchid_list_batch m ON bettrans.matchid = m.matchid 
+			WHERE winlostdate = @winlostdate AND bettype < 19999 AND statusID NOT IN (101,102)
+			GROUP BY custid, currency, recommend, mrecommend, srecommend, winlostdate
+  
+		  TRUNCATE TABLE #matchid_list_batch
+
+		  WAITFOR DELAY '00:00:00.020'
+    
+		END
 
 		-- Generate SUM record
 		INSERT INTO dbo.bettranssum
@@ -419,9 +486,7 @@ BEGIN
 			, SUM(stake) stake, SUM(actual_stake) actual_stake,
 			SUM(winlost) winlost, SUM(awinlost) awinlost, SUM(mwinlost) mwinlost, SUM(swinlost) swinlost,
 			SUM(playercomm) playercomm, SUM(comm) comm, SUM(acomm) acomm, SUM(scomm) scomm
-		FROM dbo.Task_Movebet_RecommendList r WITH (NOLOCK)
-			INNER JOIN dbo.bettrans b WITH (INDEX = IX_recommend) ON r.recommend = b.recommend 
-		WHERE b.winlostdate = @winlostdate AND b.bettype < 19999 AND b.statusID NOT IN (101,102)
+		FROM #pre_bettranssum r WITH (NOLOCK)
 		GROUP BY custid
 
 		UPDATE s
@@ -469,6 +534,18 @@ BEGIN
 
 		-- Copy bettransm/bettransg -> bettransm14/bettransg14 for whole day of @winlostdate
 		EXEC dbo.ExecRep_08 @recommend = 0, @winlostdate = @winlostdate, @parlay = 1
+
+		--reset before start
+		TRUNCATE TABLE dbo.Task_Movebet_RecommendList
+
+		--get list of recommend.
+		INSERT INTO dbo.Task_Movebet_RecommendList(Recommend, StatusId)
+		SELECT DISTINCT recommend, 0 AS SattusId 
+		FROM dbo.bettrans WITH(NOLOCK) WHERE winlostdate = @winlostdate AND bettype < 19999
+		UNION 
+		SELECT DISTINCT recommend, 0 AS SattusId 
+		FROM dbo.translog WITH(NOLOCK) WHERE winlostdate = @winlostdate
+
 
 		SET @Doing = 'Task_DailySummary : MoveBet step 4.20 - start copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121) + ', total recommend: ' + CAST(@@ROWCOUNT AS varchar(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
