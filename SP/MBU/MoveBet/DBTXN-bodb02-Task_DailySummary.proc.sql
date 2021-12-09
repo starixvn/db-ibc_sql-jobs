@@ -361,19 +361,17 @@ BEGIN
 
 	IF @step = 3 -- generate sum tickets
 	BEGIN
-		DECLARE @debug_message VARCHAR(500)
-		DECLARE @matchid INT
-		DECLARE @RN INT, @RX INT
-		-- table to stored matchid list, with CIX for force data order.
-		CREATE TABLE #matchid_list (rn int, matchid int)
-		CREATE CLUSTERED INDEX CIX ON #matchid_list (rn)
-
+		-- Temporary tables
+		CREATE TABLE #temp_custid_29 (custid INT)
+		CREATE TABLE #custid_list_batch (custid INT PRIMARY KEY)
+		CREATE TABLE #matchid_list (rn int PRIMARY KEY, matchid int)
 		CREATE TABLE #matchid_list_batch (matchid INT PRIMARY KEY)
+		CREATE TABLE #match_pre (matchid int)
 
-		CREATE TABLE #pre_bettranssum (custid INT, winlostdate SMALLDATETIME, stake MONEY, actual_stake MONEY,
+		CREATE TABLE #pre_bettranssum (custid INT, stake MONEY, actual_stake MONEY,
 								winlost MONEY, awinlost MONEY, mwinlost MONEY, swinlost MONEY,
 								playercomm MONEY, comm MONEY, acomm MONEY, scomm MONEY)		
-
+		
 		-- Clear deleted/cancel record (custid = 0)
 		DELETE FROM bettrans WHERE winlostdate = @winlostdate AND custid = 0
 		DELETE FROM bettranssum WHERE winlostdate = @winlostdate
@@ -390,41 +388,101 @@ BEGIN
 		FROM @Exchange ex, CustDB.dbo.exchange e WITH (NOLOCK)
 		WHERE ex.currency = e.exchangeid
 
-		INSERT INTO #matchid_list (matchid)
-		SELECT DISTINCT matchid FROM bettrans WITH (NOLOCK, index = CIX_matchid_bettype) 
-		WHERE winlostdate = @winlostdate AND bettype < 19999 AND statusID NOT IN (101,102)
-	
-		-- removed duplicate data, in case we got some.
-		;WITH CTE AS (SELECT matchid, N = ROW_NUMBER() OVER (PARTITION BY matchid ORDER BY matchid) FROM #matchid_list)
-			DELETE FROM CTE WHERE N > 1
-		-- re-order matchid list
-		;WITH CTE AS (SELECT N = ROW_NUMBER() OVER (ORDER BY matchid), matchid FROM #matchid_list)
-		UPDATE #matchid_list
-			SET rn = N
-		FROM CTE INNER JOIN #matchid_list ON CTE.matchid = #matchid_list.matchid
+		--============================================
+		-- BLOCK #1 : matchid 29 -> get list custid with nolock first, then process by batch by custid
+		--============================================
+		DECLARE @debug_message VARCHAR(500)
+		
+		-- data gathering, this query should perform CLUSTERED INDEX SEEK
+		INSERT INTO #temp_custid_29 (custid)
+		SELECT DISTINCT custid FROM bettrans WITH (NOLOCK)
+		WHERE matchid = 29 AND winlostdate = @winlostdate AND bettype <= 19000 AND statusID NOT IN (101,102)
 
-		-- 1st block, process data which spread across multiple winlostdate first such as parlay or 3rd sports.
+		-- if somehow got duplicate row due to NOLOCK, remove it
+		;WITH CTE AS (SELECT custid, N = ROW_NUMBER() OVER (PARTITION BY custid ORDER BY (SELECT NULL)) FROM #temp_custid_29)
+			DELETE FROM CTE WHERE N > 1
+
+		-- LOOP: run by batch by CustID for matchid = 29
+		WHILE (1=1)
+		BEGIN
+
+			DELETE TOP (1000) r 
+			OUTPUT DELETED.custid
+			INTO #custid_list_batch (custid)    
+			FROM #temp_custid_29 r 
+
+			IF @@ROWCOUNT = 0
+				BREAK
+  
+			SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
+  
+			RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+  
+			INSERT INTO #pre_bettranssum (custid
+							, stake, actual_stake
+							, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm)
+			SELECT 
+				b.custid
+				, SUM(stake) stake, SUM(actual_stake) actual_stake
+				, SUM(winlost) winlost, SUM(awinlost) awinlost, SUM(mwinlost) mwinlost, SUM(swinlost) swinlost
+				, SUM(playercomm) playercomm, SUM(comm) comm, SUM(acomm) acomm, SUM(scomm) scomm
+			FROM dbo.bettrans b WITH (ROWLOCK, INDEX=CIX_matchid_bettype)
+				INNER JOIN #custid_list_batch m ON b.custid = m.custid 
+			WHERE b.matchid = 29 AND winlostdate = @winlostdate AND bettype < 19999 AND statusID NOT IN (101,102)
+			GROUP BY b.custid
+  
+			TRUNCATE TABLE #custid_list_batch
+
+			WAITFOR DELAY '00:00:00.020'
+			
+		END	
+
+		--============================================
+		-- BLOCK #2: process data for match can spread across multiple winlostdate such as 3rd sports
+		-- therefore, do it 1 by 1 to reduce locking scope.
+		--============================================
+		---- Variable
+		DECLARE @matchid INT
+		DECLARE @RN INT, @RX INT
+
+		-- gather matchid, this one still perform INDEX SCAN
+		INSERT INTO #match_pre(matchid)
+		SELECT DISTINCT matchid FROM bettrans WITH (NOLOCK) 
+		WHERE winlostdate = @winlostdate AND bettype <= 19000 AND statusID NOT IN (101,102)
+
+		-- remove matchid 29, as already process by BLOCK #1
+		DELETE FROM #match_pre WHERE matchid = 29
+
+		-- if somehow got duplicate row due to NOLOCK, remove it
+		;WITH CTE AS (SELECT matchid, N = ROW_NUMBER() OVER (PARTITION BY matchid ORDER BY (SELECT NULL)) FROM #match_pre)
+			DELETE FROM CTE WHERE N > 1
+		-- re-order MatchID list
+		INSERT INTO #matchid_list (rn, matchid)
+		SELECT N = ROW_NUMBER() OVER (ORDER BY matchid), matchid FROM #match_pre
+
+		-- process data which spread across multiple winlostdate.
 		-- therefore, do it 1 by 1 to reduce locking scope.
 		SELECT @RX = MAX(RN) FROM #matchid_list WHERE matchid < 10000
-
 		IF @RX IS NULL SET @RX = 0
+
+		-- LOOP: single matchid
 		SET @RN = 1
 
 		WHILE @RN <= @RX
 		BEGIN
 			SELECT @matchid = matchid FROM #matchid_list WHERE rn = @RN
-			SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
 			
+			SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
 			RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
 			INSERT INTO #pre_bettranssum
 				(custid,
-				winlostdate, stake, actual_stake,
+				stake, actual_stake,
 				winlost, awinlost, mwinlost, swinlost,
 				playercomm, comm, acomm, scomm)
 			SELECT 
 				custid,
-				@winlostdate winlostdate, SUM(stake) stake, SUM(actual_stake) actual_stake,
+				SUM(stake) stake, SUM(actual_stake) actual_stake,
 				SUM(winlost) winlost, SUM(awinlost) awinlost, SUM(mwinlost) mwinlost, SUM(swinlost) swinlost,
 				SUM(playercomm) playercomm, SUM(comm) comm, SUM(acomm) acomm, SUM(scomm) scomm
 			FROM dbo.bettrans WITH (ROWLOCK, INDEX=CIX_matchid_bettype)
@@ -432,34 +490,36 @@ BEGIN
 			GROUP BY custid
 	
 			DELETE FROM #matchid_list WHERE rn = @RN
+
 			SET @RN = @RN + 1
 	
 			WAITFOR DELAY '00:00:00.020'
 
 		END
-		-- 2nd block, process data base on matchid
+		--============================================
+		-- BLOCK #3 : process data base on matchid by batch
 		-- data is likely group together, and not insert by anything else, let uses PAGLOCK.
-		--------------START TO UPDATE BETTRANS ------------------
+		--============================================
 		WHILE (1 = 1)
 		BEGIN
   
-		  DELETE TOP (1000) r 
-		  OUTPUT DELETED.matchid
-		  INTO #matchid_list_batch (matchid)    
-		  FROM #matchid_list r 
+			DELETE TOP (1000) r 
+			OUTPUT DELETED.matchid
+			INTO #matchid_list_batch (matchid)    
+			FROM #matchid_list r 
   
-		  IF @@ROWCOUNT = 0
+			IF @@ROWCOUNT = 0
 			BREAK
   
-		  SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
+			SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
   
-		  RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+			RAISERROR (@debug_message, 0, 1) WITH NOWAIT
   
-		  INSERT INTO #pre_bettranssum
-				(custid, winlostdate, stake, actual_stake, winlost, awinlost, mwinlost, swinlost,
+			INSERT INTO #pre_bettranssum
+				(custid, stake, actual_stake, winlost, awinlost, mwinlost, swinlost,
 				playercomm, comm, acomm, scomm)
 			SELECT 
-				custid, winlostdate, SUM(stake) stake, SUM(actual_stake) actual_stake,
+				custid, SUM(stake) stake, SUM(actual_stake) actual_stake,
 				SUM(winlost) winlost, SUM(awinlost) awinlost, SUM(mwinlost) mwinlost, SUM(swinlost) swinlost,
 				SUM(playercomm) playercomm, SUM(comm) comm, SUM(acomm) acomm, SUM(scomm) scomm
 			FROM dbo.bettrans WITH (PAGLOCK, INDEX=CIX_matchid_bettype)
@@ -467,9 +527,9 @@ BEGIN
 			WHERE winlostdate = @winlostdate AND bettype < 19999 AND statusID NOT IN (101,102)
 			GROUP BY custid, currency, recommend, mrecommend, srecommend, winlostdate
   
-		  TRUNCATE TABLE #matchid_list_batch
+			TRUNCATE TABLE #matchid_list_batch
 
-		  WAITFOR DELAY '00:00:00.020'
+			WAITFOR DELAY '00:00:00.020'
     
 		END
 
@@ -486,7 +546,7 @@ BEGIN
 			, SUM(stake) stake, SUM(actual_stake) actual_stake,
 			SUM(winlost) winlost, SUM(awinlost) awinlost, SUM(mwinlost) mwinlost, SUM(swinlost) swinlost,
 			SUM(playercomm) playercomm, SUM(comm) comm, SUM(acomm) acomm, SUM(scomm) scomm
-		FROM #pre_bettranssum r WITH (NOLOCK)
+		FROM #pre_bettranssum 
 		GROUP BY custid
 
 		UPDATE s
@@ -503,6 +563,13 @@ BEGIN
 		WHERE winlostdate = @winlostdate
 
 		EXEC dbo.Task_BalanceCheck @winlostdate, 1
+
+		DROP TABLE #custid_list_batch
+		DROP TABLE #match_pre
+		DROP TABLE #pre_bettranssum
+		DROP TABLE #matchid_list
+		DROP TABLE #matchid_list_batch
+		DROP TABLE #temp_custid_29
 
 		RETURN
 	END
