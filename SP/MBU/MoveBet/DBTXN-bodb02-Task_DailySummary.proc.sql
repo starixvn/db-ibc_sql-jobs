@@ -397,6 +397,7 @@ BEGIN
 		INSERT INTO #temp_custid_29 (custid)
 		SELECT DISTINCT custid FROM bettrans WITH (NOLOCK)
 		WHERE matchid = 29 AND winlostdate = @winlostdate AND bettype <= 19000 AND statusID NOT IN (101,102)
+		ORDER BY custid
 
 		-- if somehow got duplicate row due to NOLOCK, remove it
 		;WITH CTE AS (SELECT custid, N = ROW_NUMBER() OVER (PARTITION BY custid ORDER BY (SELECT NULL)) FROM #temp_custid_29)
@@ -410,6 +411,7 @@ BEGIN
 			OUTPUT DELETED.custid
 			INTO #custid_list_batch (custid)    
 			FROM #temp_custid_29 r 
+			
 
 			IF @@ROWCOUNT = 0
 				BREAK
@@ -525,7 +527,7 @@ BEGIN
 			FROM dbo.bettrans WITH (PAGLOCK, INDEX=CIX_matchid_bettype)
 				INNER JOIN #matchid_list_batch m ON bettrans.matchid = m.matchid 
 			WHERE winlostdate = @winlostdate AND bettype < 19999 AND statusID NOT IN (101,102)
-			GROUP BY custid, currency, recommend, mrecommend, srecommend, winlostdate
+			GROUP BY custid
   
 			TRUNCATE TABLE #matchid_list_batch
 
