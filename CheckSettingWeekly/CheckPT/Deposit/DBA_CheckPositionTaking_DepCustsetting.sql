@@ -31,6 +31,7 @@ AS
 		-20210318@Winfred: add new PT 0.895 and 0.805 [RedmineID:#151673]
 		-20210329@Winfred: add new PT 0.915 and 0.92 and 0.95 [RedmineID:#152407]
 		-20210416@Winfred: remove the check PT rule for Sportsbook [RedmineID:#153633]
+		-20211208@Winfred: PT - Enhance for Sports Lottery after merged into Sportsbook [RedmineID:#165750]
 		
 	Param's Explanation:
 	
@@ -193,6 +194,7 @@ BEGIN
 		WHERE 
 			c.roleid=1 AND s.spositiontaking+s.mpositiontaking+s.apositiontaking <> 0
 			AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid =1)
+			AND (s.sporttype <> 2 OR s.bettype <> 2 OR (s.sporttype <> 2 AND s.bettype <> 2))
 	END
 
 END
