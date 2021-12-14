@@ -187,8 +187,8 @@ BEGIN
 				bettype BETWEEN 2901 AND 2999 THEN 210
 			WHEN bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			WHEN bettype BETWEEN 4001 AND 4100 THEN 212 --Voidbridge
-			WHEN bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
-			WHEN bettype BETWEEN 6701 AND 7000 THEN 248 --Pragmatic
+			WHEN bettype BETWEEN 4101 AND 4300 OR 
+				bettype BETWEEN 6701 AND 7000 THEN 248 -- Pragmatic
 			WHEN bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
@@ -323,8 +323,8 @@ BEGIN
 					 bettype BETWEEN 2901 AND 2999 THEN 210
 				 WHEN bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 				 WHEN bettype BETWEEN 4001 AND 4100 THEN 212 --Voidbridge
-				 WHEN bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
-	  			 WHEN bettype BETWEEN 6701 AND 7000 THEN 248 --Pragmatic
+				 WHEN bettype BETWEEN 4101 AND 4300 OR 
+				 	bettype BETWEEN 6701 AND 7000 THEN 248 -- Pragmatic
 				 WHEN bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 				 WHEN bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 				 WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
@@ -379,7 +379,8 @@ BEGIN
 					OR bettypePT BETWEEN 2901 AND 2999 THEN 210 -- RNG Casino
 				 WHEN bettypePT BETWEEN 2401 AND 2499 THEN 211 -- Allbet
 				 WHEN bettypePT BETWEEN 4001 AND 4100 THEN 212 -- Voidbridge
-				 WHEN bettypePT BETWEEN 4101 AND 4300 THEN 248 -- Pragmatic
+				 WHEN bettypePT BETWEEN 4101 AND 4300 OR 
+				 	bettypePT BETWEEN 6701 AND 7000 THEN 248 -- Pragmatic
 				 WHEN bettypePT BETWEEN 1011 AND 1020 THEN 219 -- Fishing World
 				 WHEN bettypePT BETWEEN 1901 AND 1999 THEN 165 -- Card Club
 				 WHEN bettypePT BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
