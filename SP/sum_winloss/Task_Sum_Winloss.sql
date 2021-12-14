@@ -416,6 +416,7 @@ BEGIN
 			OR SUM(b.BetStake * discount) <> 0
 			OR SUM(b.BetStake * adiscount) <> 0
 			OR SUM(b.BetStake * sdiscount) <> 0
+		OPTION (OPTIMIZE FOR (@winlostdate UNKNOWN))
 
 		INSERT INTO #__NetTO_GrossComm (custid, sporttype, bettype, TurnoverNoDraw, grosscomm, agrosscomm, mgrosscomm, sgrosscomm)
 		SELECT b.custid, bt.SporttypeRef, bt.BettypeRef
@@ -432,6 +433,7 @@ BEGIN
 			OR SUM(b.NetStake * discount) <> 0
 			OR SUM(b.NetStake * adiscount) <> 0
 			OR SUM(b.NetStake * sdiscount) <> 0
+		OPTION (OPTIMIZE FOR (@winlostdate UNKNOWN))
 
 		UPDATE t
 		SET t.TurnoverNoDraw = ISNULL(c.TurnoverNoDraw, 0)
