@@ -32,6 +32,7 @@ AS
 		- 20210617@Sol: changed how to calc net turn over - [RedmineId : #156653]
 		- 20210810@Evan: Add Bitcoin product - [Redmine: #159036]
 		- 20211122@Percy: Enhance gross comm formula [RedmineID: #164479]
+		- 20211214@Evan: Add New Games for PP - [Redmine: #165393]	
 */
 BEGIN
 
@@ -187,6 +188,7 @@ BEGIN
 			WHEN bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 			WHEN bettype BETWEEN 4001 AND 4100 THEN 212 --Voidbridge
 			WHEN bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
+			WHEN bettype BETWEEN 6701 AND 7000 THEN 248 --Pragmatic
 			WHEN bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 			WHEN bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 			WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
@@ -322,6 +324,7 @@ BEGIN
 				 WHEN bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
 				 WHEN bettype BETWEEN 4001 AND 4100 THEN 212 --Voidbridge
 				 WHEN bettype BETWEEN 4101 AND 4300 THEN 248 --Pragmatic
+	  			 WHEN bettype BETWEEN 6701 AND 7000 THEN 248 --Pragmatic
 				 WHEN bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
 				 WHEN bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
 				 WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
