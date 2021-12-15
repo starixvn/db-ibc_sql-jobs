@@ -14,6 +14,7 @@ AS
 		- 20171018@Harper: Include Parlay MuayThai to check data [RedmineID #82827]
 		- 20171114@Harper: Fix Date Range when get detail ticket
 		- 20201217@Percy: Enhance performance: code get data from bettransm bk range [RedmineID: #147351] 
+		- 20211214@Danny: Enhance performance: code get data from bettransm bk range [RedmineID: #166074] 
 
 	DECLARE @HasDataMismatch TINYINT, @IsParlay VARCHAR(20)
 	EXEC Task_rptBettingBySport_CheckData @WinlostDate = '2017-09-29', @HasDataMismatch = @HasDataMismatch OUTPUT, @IsParlay = @IsParlay OUTPUT
@@ -174,7 +175,7 @@ BEGIN
 										FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 											INNER JOIN bodb_Archive.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 										WHERE b.winlostdate = ''''' + CONVERT(VARCHAR(10), @WinlostDate, 120) + ''''' AND b.bettype IN (9, 29) AND b.matchid IN (9, 29) AND b.statusID IN (111, 112, 113)
-											AND bm.statusID NOT IN (101, 102, 103)
+											AND bm.statusID NOT IN (101, 102, 103) AND bm.winlostdate BETWEEN ''''' + CONVERT(VARCHAR(10), DATEADD(DAY, -21, @WinlostDate), 120) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 120) + '''''
 										GROUP BY bm.refno
 										HAVING COUNT(CASE WHEN bm.oddsspread = 44 THEN 1 END) > 0'')'
 
