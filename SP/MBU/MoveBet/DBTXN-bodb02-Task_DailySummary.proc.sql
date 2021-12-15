@@ -92,6 +92,7 @@ Revisions:
 	- 20200708@Sol: Generate data for sum_winloss table - Redmine: [#136320]
 	- 20200820@Sol: enhence performance when statistics are not updated yet - Redmine: [#136320]
 	- 202010316@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
+	- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 	
 */
 
@@ -567,28 +568,42 @@ BEGIN
 
 		IF @@ROWCOUNT = 0
 			BREAK
-
-		BEGIN TRANSACTION
 		
-			INSERT INTO dbo.bettrans
-				(ruben, [status], statusID, matchid, bettype, refno, creator, transdate,
-				custid, currency, recommend, mrecommend, srecommend,
-				winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
-				actual_stake, playercomm, comm, acomm, scomm, 
-				apositiontaking, mpositiontaking, spositiontaking, tpositiontaking,
-				actualrate, virtualrate, Username, CurrencyName, comstatus, checktime)
-			SELECT 1, 'SUM', 142, 0, 19999, refno, 8, winlostdate, --99
-				b.custid, b.currency, b.recommend, b.mrecommend, b.srecommend,
-				winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
-				actual_stake, playercomm, comm, acomm, scomm,
-				0, 0, 0, 0,
-				actualrate, actualrate, username, CurrencyName, '0', getdate()
-			FROM dbo.bettranssum b
+				
+		BEGIN TRANSACTION
+			INSERT INTO dbo.Transfer(custid, transdate, winlostdate, bettype, stake, actual_stake, winlost, awinlost, mwinlost, swinlost
+				,PlayerComm, Comm, AComm, SComm, StatusId, RefNo, Recommend, MRecommend, SRecommend
+				,Username, Currency, CurrencyName, ActualRate, Creator, CheckTime, RepUpdateTime
+			)
+			SELECT	b.custid, b.winlostdate, b.winlostdate, 19999, b.stake, b.actual_stake, b.winlost, b.awinlost, b.mwinlost, b.swinlost
+					,b.playercomm, b.comm, b.acomm, b.scomm, 142, b.refno, b.recommend, b.mrecommend, b.srecommend
+					,b.username, b.currency, b.CurrencyName, b.actualrate, 8, GETDATE(), SYSDATETIME()
+			FROM	dbo.bettranssum b
 			WHERE EXISTS (
 					SELECT TOP 1 1 
 					FROM @__runningCust t 
 					WHERE t.recommend = b.recommend AND t.custid = b.custid AND b.winlostdate = @winlostdate
 				)
+
+			--INSERT INTO dbo.bettrans
+			--	(ruben, [status], statusID, matchid, bettype, refno, creator, transdate,
+			--	custid, currency, recommend, mrecommend, srecommend,
+			--	winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
+			--	actual_stake, playercomm, comm, acomm, scomm, 
+			--	apositiontaking, mpositiontaking, spositiontaking, tpositiontaking,
+			--	actualrate, virtualrate, Username, CurrencyName, comstatus, checktime)
+			--SELECT 1, 'SUM', 142, 0, 19999, refno, 8, winlostdate, --99
+			--	b.custid, b.currency, b.recommend, b.mrecommend, b.srecommend,
+			--	winlostdate, stake, winlost, awinlost, mwinlost, swinlost,
+			--	actual_stake, playercomm, comm, acomm, scomm,
+			--	0, 0, 0, 0,
+			--	actualrate, actualrate, username, CurrencyName, '0', getdate()
+			--FROM dbo.bettranssum b
+			--WHERE EXISTS (
+			--		SELECT TOP 1 1 
+			--		FROM @__runningCust t 
+			--		WHERE t.recommend = b.recommend AND t.custid = b.custid AND b.winlostdate = @winlostdate
+			--	)
 
 		COMMIT TRANSACTION
 		

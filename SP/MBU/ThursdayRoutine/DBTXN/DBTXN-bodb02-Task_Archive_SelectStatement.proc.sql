@@ -1,7 +1,6 @@
-SET ANSI_NULLS ON;
-SET QUOTED_IDENTIFIER ON;
-GO
-CREATE PROCEDURE	dbo.Task_Archive_SelectStatement
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE	dbo.Task_Archive_SelectStatement
+	@WinlostDate DATETIME
 AS
 /*
 	Created:	Unknown
@@ -13,33 +12,23 @@ AS
 		- 20110516@Henry:	Change bettype to new range
 		- 20181106@Sophia:	Add transtype Coll [Redmine: #98621]
 		- 20190827@Billy:	Fix duplicated transfer cause by unhandled transfer ticket - [Redmine: #119258]
+		- 20211214@Kathy:	Separate Transfer Tickets[Redmine:#164197]
 */
 BEGIN;
-	DECLARE	@BU_Date		DATETIME -- Next BalanceUp Date
-		,	@CurrentBU_Date	DATETIME
-		;
-
-	SELECT	@BU_Date		= DATEADD(DAY, 1, MAX(winlostdate))
-		,	@CurrentBU_Date	= MIN(winlostdate)
-	FROM	dbo.Task_ArchiveDate;
-
--- OpenBalance & Transfer for Statement
-	SELECT	[custid]	= b.custid
-		,	[accdate]	= b.transdate
-		,	[totalamt]	= SUM(b.winlost - b.actual_stake)
-		,	[transtype]	= CASE WHEN b.OddsId = 1 THEN CONVERT(NVARCHAR(128), 'COLL') ELSE bt.typenamee END
-		,	[transdesc]	= transdesc
-	FROM		dbo.bettrans AS b WITH (ROWLOCK, INDEX = CIX_matchid_bettype)
-	INNER JOIN	dbo.bettype AS bt WITH (NOLOCK)
-			ON	b.bettype = bt.typeid
-	WHERE	b.ruben = 1
-		AND	b.matchid = 0
-		AND	b.bettype >= 20000
-		AND	b.winlostdate >= @CurrentBU_Date 
-		AND	b.winlostdate < @BU_Date
-		AND custid <> 0
-	GROUP BY b.custid, bt.typenamee, b.transdesc, b.transdate, b.transid, CASE WHEN b.OddsId = 1 THEN CONVERT (NVARCHAR(128), 'COLL') ELSE bt.typenamee END
-	HAVING SUM(winlost - actual_stake) <> 0;
+	-- OpenBalance & Transfer for Statement
+	SELECT	t.CustId AS custid
+			,t.TransDate AS accdate
+			,SUM(t.winlost - t.actual_stake) AS totalamt
+			,CASE WHEN ti.IsCollection = 1 THEN CONVERT(NVARCHAR(128), 'COLL') ELSE bt.typenamee END AS transtype
+			,TransDesc AS transdesc
+	FROM	dbo.Transfer t WITH(ROWLOCK)
+		LEFT JOIN dbo.TransferInfo ti WITH(NOLOCK)
+			ON t.TransId = ti.TransId
+		INNER JOIN dbo.bettype bt WITH(NOLOCK)
+			ON t.Bettype = bt.typeid
+	WHERE	t.WinlostDate = @WinlostDate
+			AND	t.bettype >= 20000
+	GROUP BY t.CustId, t.TransDesc, t.TransDate, t.TransId
+		,CASE WHEN ti.IsCollection = 1 THEN CONVERT(NVARCHAR(128), 'COLL') ELSE bt.typenamee END
 END;
 GO
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/

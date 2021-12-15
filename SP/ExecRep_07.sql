@@ -1,4 +1,5 @@
-CREATE PROCEDURE [dbo].[ExecRep_07]
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[ExecRep_07]
 	@custids varchar(4000),
 	@custid int,
 	@roleid int,
@@ -12,6 +13,7 @@ AS
 	Original:
 
 	Revisions:
+		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 		
 		
 	Param's Explanation:
@@ -26,7 +28,7 @@ BEGIN
 	BEGIN
 
 		;WITH
-			CTE AS (SELECT transid, srecommend FROM dbo.bettrans WITH (NOLOCK) WHERE recommend = 0 AND ruben = 1 AND winlostdate < @winlostdate)
+			CTE AS (SELECT transid, srecommend FROM dbo.Transfer WITH (NOLOCK) WHERE recommend = 0 AND winlostdate < @winlostdate)
 			,s AS (SELECT val AS srecommend FROM dbo.strSplit_Key(@custids, ','))
 		INSERT INTO #ticketList (transid)
 		SELECT transid
@@ -42,11 +44,11 @@ BEGIN
 		;WITH a AS (SELECT val AS recommend FROM dbo.strSplit_Key(@custids, ','))
 		INSERT INTO #ticketList (transid)
 		SELECT transid
-		FROM dbo.bettrans b WITH (NOLOCK)
+		FROM dbo.Transfer b WITH (NOLOCK)
 			INNER JOIN a ON b.recommend = a.recommend
 			WHERE 
 				--recommend IN (SELECT val FROM dbo.strSplit_Key(@custids, ',')) AND
-				ruben = 1 AND winlostdate < @winlostdate
+				winlostdate < @winlostdate
 
 		SET @tc = @@ROWCOUNT
 	END
@@ -56,11 +58,11 @@ BEGIN
 		;WITH c AS (SELECT val AS custid FROM dbo.strSplit_Key(@custids, ','))
 		INSERT INTO #ticketList (transid)
 		SELECT transid
-		FROM dbo.bettrans b WITH (NOLOCK)
+		FROM dbo.Transfer b WITH (NOLOCK)
 			INNER JOIN c ON b.recommend = @custid AND b.custid = c.custid
 			WHERE 
 				--recommend = @custid AND custid IN (SELECT val FROM dbo.strSplit_Key(@custids, ',')) AND
-				ruben = 1 AND winlostdate < @winlostdate
+				winlostdate < @winlostdate
 
 		SET @tc = @@ROWCOUNT
 	END
@@ -69,9 +71,9 @@ BEGIN
 	  
 		INSERT INTO #ticketList (transid)
 		SELECT transid
-		FROM dbo.bettrans WITH (NOLOCK)
+		FROM dbo.Transfer WITH (NOLOCK)
 			WHERE recommend = @custid
-			AND ruben = 1 AND winlostdate < @winlostdate
+			AND winlostdate < @winlostdate
 
 		SET @tc = @@ROWCOUNT
 	END
@@ -80,9 +82,9 @@ BEGIN
 	 
 		INSERT INTO #ticketList (transid)
 		SELECT transid
-		FROM dbo.bettrans WITH (NOLOCK)
+		FROM dbo.Transfer WITH (NOLOCK)
 			WHERE recommend = @custid AND RIGHT(custid, 1) = @custids
-			AND ruben = 1 AND winlostdate < @winlostdate
+			AND winlostdate < @winlostdate
 
 		SET @tc = @@ROWCOUNT
 		SET @custids = CAST(@custid as varchar(50)) + ',' + @custids
@@ -109,9 +111,9 @@ BEGIN
 	BEGIN
 		BEGIN TRY
 		  
-			DELETE B WITH (ROWLOCK)
+			DELETE t WITH (ROWLOCK)
 			FROM #ticketList tl
-				INNER LOOP JOIN dbo.bettrans B ON B.transid = tl.transid
+				INNER LOOP JOIN dbo.Transfer t ON t.transid = tl.transid
 			WHERE
 				tl.rn BETWEEN @rn AND @rx
 			OPTION(FORCE ORDER, MAXDOP 4)
