@@ -1,8 +1,5 @@
-/*<info serverAlias="DBSUM-bodb_Summary" executers="" viewers="" isFunction="0" isNested="1"></info>*/
-USE [bodb_Summary]
-GO
-
-CREATE PROCEDURE [dbo].[Task_DailySum_Winloss_Extra_CheckData]
+/*<info serverAlias="DBSUM-bodb_Summary" isNested="1"></info>*/
+ALTER PROCEDURE [dbo].[Task_DailySum_Winloss_Extra_CheckData]
 	@WinlostDate		SMALLDATETIME,
 	@ProductIds         VARCHAR(MAX),
 	@IsCheckDataOnly	BIT = 0
@@ -16,12 +13,19 @@ AS
 	Revisions:
 		- 20200619@Malcolm: Initialize SPs [RedmineID: #135593]
 		- 20200831@Sophia: Exclude CustID = 0 [Redmine: #140745]
+		- 20211122@Percy: Enhance gross comm formula [RedmineID: #164479]
  
 	Param's Explanation:
 */
 
 BEGIN
 	SET NOCOUNT ON
+
+	DECLARE @GrossComm_CutOffDate SMALLDATETIME
+
+	SELECT @GrossComm_CutOffDate = f.CutoffDate
+	FROM bodb02.dbo.f_GetCutOffDate() f
+	WHERE f.TypeName = 'GrossComm'
 		
 	DECLARE @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME
 		
@@ -131,7 +135,7 @@ BEGIN
 			SUM(ABS(stake * apositiontaking)) AS NetTurnoverAg,
 			sum(ABS(stake * mpositiontaking)) AS NetTurnoverMAg,
 			SUM(ABS(stake * spositiontaking)) AS NetTurnoverSAg,
-			SUM(CASE WHEN b.ProductId = 46 THEN bt.oddsspread ELSE ABS(stake) END) AS TurnoverNoDrawn,
+			SUM(CASE WHEN bt.winlostdate < @GrossComm_CutOffDate THEN bt.oddsspread ELSE 0 END) AS TurnoverNoDraw,
 			SUM(winlost-actual_stake)  AS Winlost,
 			SUM(awinlost) AS AgWinLoss,
 			SUM(mwinlost) AS MAgWinLoss,
@@ -142,15 +146,40 @@ BEGIN
 			SUM(acomm) - SUM(comm) AS MAgComm,
 			SUM(scomm) - SUM(acomm) AS SAgComm,
 			-SUM(scomm) AS ExtraComm,
-			SUM(CASE WHEN apositiontaking = 1 THEN 0 ELSE ISNULL(comm/(1-apositiontaking),0) END) GrossComm,	
-			SUM(CASE WHEN (apositiontaking+mpositiontaking) = 1 THEN 0 ELSE acomm/(1-apositiontaking-mpositiontaking) END) AS GrossCommAg,
-			SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) AS GrossCommMAg,
-			SUM(CASE WHEN tpositiontaking = 1 THEN 0 ELSE scomm / (1-tpositiontaking) END) AS GrossCommSAg
+			SUM(CASE WHEN bt.winlostdate >= @GrossComm_CutOffDate OR bt.apositiontaking = 1 THEN 0 ELSE ISNULL(comm/(1-apositiontaking), 0) END) AS GrossComm,
+			SUM(CASE WHEN bt.winlostdate >= @GrossComm_CutOffDate OR bt.apositiontaking + bt.mpositiontaking = 1 THEN 0 ELSE ISNULL(acomm/(1-apositiontaking-mpositiontaking), 0) END) AS GrossCommAg,
+			SUM(CASE WHEN bt.winlostdate >= @GrossComm_CutOffDate OR bt.tpositiontaking = 1 THEN 0 ELSE ISNULL(scomm/(1-tpositiontaking), 0) END) AS GrossCommMAg,
+			SUM(CASE WHEN bt.winlostdate >= @GrossComm_CutOffDate OR bt.tpositiontaking = 1 THEN 0 ELSE ISNULL(scomm/(1-tpositiontaking), 0) END) AS GrossCommSAg
 		FROM bodb02.dbo.bettrans14 bt WITH(NOLOCK)
 			INNER JOIN @Bettype b ON bt.bettype = b.TypeId
 		WHERE bt.winlostdate = @WinlostDate 
 			AND bt.statusID NOT IN (102,101,103)
 		GROUP BY custid, recommend, mrecommend, srecommend, b.ProductId
+
+		IF @WinlostDate >= @GrossComm_CutOffDate
+		BEGIN
+			;WITH CTE_NetTO_GrossComm AS (
+				SELECT b.custid, 0 AS Bettype, bt.ProductId
+					,SUM(b.NetStake) AS TunroverNoDraw
+					,SUM(b.NetStake * b.discount) AS GrossComm
+					,SUM(b.NetStake * b.adiscount) AS GrossCommAg
+					,SUM(b.NetStake * b.sdiscount) AS GrossCommMAg
+					,SUM(b.NetStake * b.sdiscount) AS GrossCommSAg
+				FROM bodb02.dbo.bettransLC14 b WITH (NOLOCK)
+					INNER JOIN @Bettype bt ON b.gameID = bt.TypeId
+				WHERE b.winlostdate = @WinlostDate 
+					AND b.statusID IN (111, 112, 113)
+				GROUP BY b.custid, bt.ProductId
+			)
+			UPDATE t
+			SET t.TunroverNoDraw = ISNULL(t.TunroverNoDraw, 0) + ISNULL(c.TunroverNoDraw, 0)
+				,t.GrossComm = ISNULL(t.GrossComm, 0) + ISNULL(c.GrossComm, 0)
+				,t.GrossCommAg = ISNULL(t.GrossCommAg, 0) + ISNULL(c.GrossCommAg, 0)
+				,t.GrossCommMAg = ISNULL(t.GrossCommMAg, 0) + ISNULL(c.GrossCommMAg, 0)
+				,t.GrossCommSAg = ISNULL(t.GrossCommSAg, 0) + ISNULL(c.GrossCommSAg, 0)
+			FROM #Sum_Winloss_Extra_Source t
+				INNER JOIN CTE_NetTO_GrossComm c ON t.CustId = c.custid AND t.ProductId = c.ProductId AND t.Bettype = c.Bettype
+		END
 	END
 	-- for agent, roleid = 2
 	BEGIN
