@@ -23,6 +23,7 @@ AS
 		- 20210518@Percy: Change code to get MoveBetsDay [RedmineID: #154866]
 		- 20210707@Danny: Vgaming - Free bets and Jackpot prize integration [Redmine: #156185]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20211215@Sophia: Change formula to get BA Transaction - use LicenseeBATransaction_active & LicenseeBATransaction_bk instead of TransID2 [RedmineID: #166077]
 
 */
 
@@ -151,12 +152,7 @@ BEGIN
 						WHEN b.bettype = 911 THEN CASE WHEN b.transid2 = 0 THEN 1003 ELSE 1004 END -- cashout
 						ELSE -1
 					END AS customercategory
-					,CASE
-						WHEN b.transid2 = 1
-							AND b.bettype NOT IN (901, 911)
-							AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1
-						ELSE 0
-					END AS isBA
+					,b.isBA
 					,b.refno
 					,b.oddsspread
 					,CASE
@@ -175,14 +171,17 @@ BEGIN
 						SELECT	b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,b.stake,b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 								,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid,b.status,b.statusid,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
 								,b.virtualrate,b.discount,b.tpositiontaking,b.refno,b.oddsspread,b.ExtraInfo,b.betdaqid,b.modds,b.transid2,b.currency2
-						FROM bodb02.dbo.bettrans b (NOLOCK)
+								,CASE WHEN BA.transid IS NOT NULL THEN 1 ELSE 0	END AS isBA
+						FROM bodb02.dbo.bettrans b (NOLOCK)	
+							LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_active AS BA WITH (NOLOCK) ON b.transid = BA.transid				
 						WHERE b.matchid = m.matchid
 							AND b.bettype < 19001
 							AND b.winlostdate = @WinlostDate
 							AND b.custid > 0
 							AND b.recommend > 0
 							AND b.statusid NOT IN (0, 101, 102, 121) -- exclude waiting, reject, void ticket (statusID = 1)
-					) b
+								) b
+					
 			END
 			ELSE
 			BEGIN
@@ -229,12 +228,7 @@ BEGIN
 						WHEN b.bettype = 911 THEN CASE WHEN b.transid2 = 0 THEN 1003 ELSE 1004 END -- cashout
 						ELSE -1
 					END AS customercategory
-					,CASE
-						WHEN b.transid2 = 1
-							AND b.bettype NOT IN (901, 911)
-							AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1
-						ELSE 0
-					END AS isBA
+					,b.isBA
 					,b.refno
 					,b.oddsspread
 					,CASE
@@ -253,7 +247,9 @@ BEGIN
 						SELECT	b.transid,b.winlostdate,b.liveindicator,b.bettype,b.custid,b.stake,b.actual_stake,b.winlost,b.awinlost,b.mwinlost,b.swinlost,b.BetID,b.epositiontaking
 								,b.acomm,b.scomm,b.playercomm,b.comm,b.matchid,b.status,b.statusid,b.srecommend,b.currency,b.recommend,b.mrecommend,b.transdate
 								,b.virtualrate,b.discount,b.tpositiontaking,b.refno,b.oddsspread,b.ExtraInfo,b.betdaqid,b.modds,b.transid2,b.currency2
+								,CASE WHEN BA.transid IS NOT NULL THEN 1 ELSE 0	END AS isBA
 						FROM bodb02.dbo.bettrans b (NOLOCK)
+							LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_active AS BA WITH (NOLOCK) ON b.transid = BA.transid	
 							INNER JOIN @BettypeProductMapping bm ON b.bettype = bm.bettype
 						WHERE b.matchid = m.matchid
 							AND b.bettype < 19001
@@ -345,12 +341,7 @@ BEGIN
 					WHEN b.bettype = 911 THEN CASE WHEN b.transid2 = 0 THEN 1003 ELSE 1004 END -- cashout
 					ELSE -1
 				END AS customercategory
-				,CASE
-					WHEN b.transid2 = 1
-						AND b.bettype NOT IN (901, 911)
-						AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1
-					ELSE 0
-				END AS isBA
+				,CASE WHEN BA.transid IS NOT NULL THEN 1 ELSE 0	END AS isBA
 				,b.refno
 				,b.oddsspread
 				,CASE
@@ -371,6 +362,7 @@ BEGIN
 				,c.CashInAmount
 				,c.WinPrizeAmount
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
+				LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_BK AS BA WITH (NOLOCK) ON b.transid = BA.transid	
 				LEFT JOIN @CBTicket c ON b.transid = c.transid AND b.bettype = 18000
 			WHERE b.statusid NOT IN (101, 102, 121)
 				AND b.winlostdate = @WinlostDate
@@ -421,12 +413,7 @@ BEGIN
 					WHEN b.bettype = 911 THEN CASE WHEN b.transid2 = 0 THEN 1003 ELSE 1004 END -- cashout
 					ELSE -1
 				END AS customercategory
-				,CASE
-					WHEN b.transid2 = 1
-						AND b.bettype NOT IN (901, 911)
-						AND (b.bettype NOT BETWEEN 1401 AND 1499) THEN 1
-					ELSE 0
-				END AS isBA
+				,CASE WHEN BA.transid IS NOT NULL THEN 1 ELSE 0	END AS isBA
 				,b.refno
 				,b.oddsspread
 				,CASE
@@ -447,6 +434,7 @@ BEGIN
 				,c.CashInAmount
 				,c.WinPrizeAmount
 			FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
+				LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_BK AS BA WITH (NOLOCK) ON b.transid = BA.transid	
 				INNER JOIN @BettypeProductMapping bm ON b.bettype = bm.bettype
 				LEFT JOIN @CBTicket c ON b.transid = c.transid AND b.bettype = 18000
 			WHERE b.statusid NOT IN (101, 102, 121)
