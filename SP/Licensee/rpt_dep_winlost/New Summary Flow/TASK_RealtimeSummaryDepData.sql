@@ -1,6 +1,4 @@
 /*<info serverAlias="DBACC-bodb02" isFunction="0" isNested="1"></info>*/
-USE bodb02
-GO
 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData]
 	@WinLostDate	SMALLDATETIME	= NULL,
@@ -63,6 +61,7 @@ AS
 		- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
+		- 20211216@Kos: Integrate PP 20 new games [RedmineID: #165772]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -364,7 +363,7 @@ BEGIN
 			OPTION(OPTIMIZE FOR (@i = 1)) --Make it use nested loops
 
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
-												, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion)
+				, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion)
 			SELECT b.custid,
 				CASE
 					WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150
@@ -660,7 +659,7 @@ BEGIN
 				WHEN bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 				WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 				WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-				WHEN bettype BETWEEN 4101 AND 4296 THEN 248 -- PP
+				WHEN bettype BETWEEN 4101 AND 4296 OR bettype BETWEEN 6701 AND 7000 THEN 248 -- PP
 				WHEN bettype BETWEEN 4297 AND 4300 THEN -248 -- PP Prize
 				WHEN (bettype BETWEEN 1901 AND 1999 AND bettype <> 1906) THEN 165 -- CC
 				WHEN bettype = 1906 THEN -165 -- Bonus
@@ -733,7 +732,7 @@ BEGIN
 				WHEN bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 				WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 				WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-				WHEN bettype BETWEEN 4101 AND 4296 THEN 248 -- PP
+				WHEN bettype BETWEEN 4101 AND 4296 OR bettype BETWEEN 6701 AND 7000 THEN 248 -- PP
 				WHEN bettype BETWEEN 4297 AND 4300 THEN -248 -- PP Prize
 				WHEN (bettype BETWEEN 1901 AND 1999 AND bettype <> 1906) THEN 165 -- CC
 				WHEN bettype = 1906 THEN -165 -- Bonus
@@ -758,8 +757,8 @@ BEGIN
 				WHEN bettype = -173 THEN 173 -- VGA Free Bets
 				WHEN bettype BETWEEN 3898 AND 3899 THEN -171 -- VGA Prize
 				WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
-				WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG			
-				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG			
+				WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
+				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 				ELSE 0
