@@ -212,8 +212,11 @@ BEGIN
 	---insert into new table transferinfo
 	SELECT TOP 1 @TransId = TransId FROM @Transfer
 
-	INSERT INTO dbo.TransferInfo(TransId, WalletType, BonusID, Amount, RepUpdateTime)
-	VALUES (@TransId, @WalletType, @BonusID, @oddsspread, SYSDATETIME())
+	IF NOT (@WalletType IS NULL AND @BonusID IS NULL AND @oddsspread IS NULL)
+	BEGIN
+		INSERT INTO dbo.TransferInfo(TransId, WalletType, BonusID, Amount, RepUpdateTime)
+		VALUES (@TransId, @WalletType, @BonusID, @oddsspread, SYSDATETIME())
+	END
 
 	IF @@ERROR <> 0
 	BEGIN						
@@ -245,8 +248,11 @@ BEGIN
 	---insert into new table transferinfo
 	SELECT TOP 1 @bal_transid = TransId FROM @Transfer
 
-	INSERT INTO dbo.TransferInfo(TransId, WalletType, BonusID, RepUpdateTime)
-	VALUES (@bal_transid, @WalletType, @BonusID, SYSDATETIME())
+	IF NOT (@WalletType IS NULL AND @BonusID IS NULL)
+	BEGIN
+		INSERT INTO dbo.TransferInfo(TransId, WalletType, BonusID, RepUpdateTime)
+		VALUES (@bal_transid, @WalletType, @BonusID, SYSDATETIME())
+	END
 
 	IF @@ERROR <> 0
 	BEGIN
