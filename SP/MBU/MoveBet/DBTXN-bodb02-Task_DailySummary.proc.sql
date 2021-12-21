@@ -391,7 +391,7 @@ BEGIN
 		--============================================
 		-- BLOCK #1 : matchid 29 -> get list custid with nolock first, then process by batch by custid
 		--============================================
-		DECLARE @debug_message VARCHAR(500)
+		--DECLARE @debug_message VARCHAR(500)
 		
 		-- data gathering, this query should perform CLUSTERED INDEX SEEK
 		INSERT INTO #temp_custid_29 (custid)
@@ -411,14 +411,13 @@ BEGIN
 			OUTPUT DELETED.custid
 			INTO #custid_list_batch (custid)    
 			FROM #temp_custid_29 r 
-			
 
 			IF @@ROWCOUNT = 0
 				BREAK
-  
-			SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
-  
-			RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+			
+			--debug
+			--SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
+  			--RAISERROR (@debug_message, 0, 1) WITH NOWAIT
   
 			INSERT INTO #pre_bettranssum (custid
 							, stake, actual_stake
@@ -474,8 +473,9 @@ BEGIN
 		BEGIN
 			SELECT @matchid = matchid FROM #matchid_list WHERE rn = @RN
 			
-			SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
-			RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+			--debug
+			--SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
+			--RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
 			INSERT INTO #pre_bettranssum
 				(custid,
@@ -511,11 +511,11 @@ BEGIN
 			FROM #matchid_list r 
   
 			IF @@ROWCOUNT = 0
-			BREAK
-  
-			SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
-  
-			RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+				BREAK
+			
+			--debug	
+			--SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)
+			--RAISERROR (@debug_message, 0, 1) WITH NOWAIT
   
 			INSERT INTO #pre_bettranssum
 				(custid, stake, actual_stake, winlost, awinlost, mwinlost, swinlost,
