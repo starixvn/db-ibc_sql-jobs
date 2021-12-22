@@ -15,6 +15,7 @@ AS
 		- 20180117@Percy: Check product by releasedDate [RedmineID: #106503]
 		- 20191127@Percy: Enhance performance [RedmineID: #118992]
 		- 20210127@Percy: Fix conflict ProductId = -3 with Playtech CS [RedmineID: #149476]
+		- 20211222@Malcolm: Split transfer out of bettrans [RedmineID: #165095]
 */
 
 BEGIN 
@@ -67,21 +68,37 @@ BEGIN
 		SELECT DISTINCT recommend
 		INTO #_recommend
 		FROM dbo.MemberInfo WITH (NOLOCK)
-			
+
+		--Get bet tickets
 		INSERT INTO #tmpBettrans (custid, winlostdate, ProductId, Deposit, Withdrawal, Bonus, Adjustment, Turnover, Winloss)
-		SELECT b.custid, b.winlostdate, CASE WHEN bt.ProductId < 0 THEN -1 ELSE bt.ProductId END AS ProductId
-			,SUM(CASE WHEN bt.ProductId = -1 THEN b.winlost-b.actual_stake		ELSE 0 END) AS Deposit
-			,SUM(CASE WHEN bt.ProductId = -2 THEN -(b.winlost-b.actual_stake)	ELSE 0 END) AS Withdrawal
-			,SUM(CASE WHEN bt.ProductId = -3 THEN b.winlost-b.actual_stake		ELSE 0 END) AS Bonus
-			,SUM(CASE WHEN bt.ProductId = -4 THEN b.winlost-b.actual_stake		ELSE 0 END) AS Adjustment
-			,SUM(CASE WHEN bt.ProductId > 0 AND b.bettype <> 911 THEN b.stake	ELSE 0 END) AS Turnover
-			,SUM(CASE WHEN bt.ProductId > 0 THEN b.winlost-b.actual_stake+b.playercomm ELSE 0 END) AS Winloss
+		SELECT b.custid, b.winlostdate, bt.ProductId AS ProductId
+			,0 AS Deposit
+			,0 AS Withdrawal
+			,0 AS Bonus
+			,0 AS Adjustment
+			,SUM(CASE WHEN b.bettype <> 911 THEN b.stake ELSE 0 END) AS Turnover
+			,SUM(b.winlost-b.actual_stake+b.playercomm) AS Winloss
 		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 			INNER JOIN #_recommend r ON b.recommend = r.recommend
 			INNER JOIN #_bettype bt ON b.bettype = bt.bettype
 		WHERE b.winlostdate = @WinlostDate
-			AND b.statusID NOT IN (0, 1, 101, 102, 103)
-		GROUP BY b.custid, b.winlostdate, CASE WHEN bt.ProductId < 0 THEN -1 ELSE bt.ProductId END
+			AND b.statusID NOT IN (0, 1, 101, 102, 103) AND bt.ProductId > 0
+		GROUP BY b.custid, b.winlostdate, bt.ProductId 
+
+		-- Get transfer tickets
+		INSERT INTO #tmpBettrans (custid, winlostdate, ProductId, Deposit, Withdrawal, Bonus, Adjustment, Turnover, Winloss)
+		SELECT tr.CustId, tr.WinlostDate, -1 AS ProductId
+			,SUM(CASE WHEN bt.ProductId = -1 THEN tr.winlost-tr.actual_stake	ELSE 0 END) AS Deposit
+			,SUM(CASE WHEN bt.ProductId = -2 THEN -(tr.winlost-tr.actual_stake)	ELSE 0 END) AS Withdrawal
+			,SUM(CASE WHEN bt.ProductId = -3 THEN tr.winlost-tr.actual_stake	ELSE 0 END) AS Bonus
+			,SUM(CASE WHEN bt.ProductId = -4 THEN tr.winlost-tr.actual_stake	ELSE 0 END) AS Adjustment
+			,0 AS Turnover
+			,0 AS Winloss
+		FROM bodb02.dbo.Transfer tr WITH(NOLOCK)
+			INNER JOIN #_recommend r ON r.Recommend = tr.Recommend
+			INNER JOIN #_bettype bt ON bt.BetType = tr.Bettype
+		WHERE tr.WinlostDate = @WinlostDate AND bt.ProductId < 0
+		GROUP BY tr.CustId, tr.WinlostDate
 
 		CREATE TABLE #rptMemberDaily
 		(
