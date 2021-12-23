@@ -1,6 +1,4 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
-USE bodb_LicenseeReport
-GO
 
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
 	@WinLostDate SMALLDATETIME
@@ -96,13 +94,14 @@ AS
 		- 20210511@Hogan: Integrate WM Live Casino [RedmineID: #140944]
 		- 20210519@Louis: Integrate Big Gaming product [RedmineID: #146773]
 		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
-		- 20210527@Hogan: Support Add 2 New Betfroms # $ [RedmineID: #155922]		
+		- 20210527@Hogan: Support Add 2 New Betfroms # $ [RedmineID: #155922]
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
 		- 20210727@Percy: Add column apositiontaking [RedmineID: #155593]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20211014@Hogan: Support Add 2 New Betfroms [ ] [RedmineID: #162388]
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
+		- 20211216@Kos: Integrate PP 20 new games [RedmineID: #165772]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -206,7 +205,7 @@ BEGIN
 			WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
 			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 			WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
+			WHEN bettype BETWEEN 4101 AND 4300 OR bettype BETWEEN 6701 AND 7000 THEN 248 -- PP
 			WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 			WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
@@ -328,7 +327,7 @@ BEGIN
 			WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
 			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 			WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN bettype BETWEEN 4101 AND 4300 THEN 248 -- PP
+			WHEN bettype BETWEEN 4101 AND 4300 OR bettype BETWEEN 6701 AND 7000 THEN 248 -- PP
 			WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
 			WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
 			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG

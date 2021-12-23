@@ -1,6 +1,4 @@
 /*<info serverAlias="DBACC-bodb02" isFunction="0" isNested="0"></info>*/
-USE bodb02
-GO
 
 ALTER PROCEDURE [dbo].[TASK_RealtimeSummaryDepData_Bettrans14]
 	@WinLostDate	DATE,
@@ -64,6 +62,7 @@ AS
 		- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
+		- 20211216@Kos: Integrate PP 20 new games [RedmineID: #165772]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -296,7 +295,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 				WHEN b.bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 				WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-				WHEN b.bettype BETWEEN 4101 AND 4296 THEN 248 -- PP
+				WHEN b.bettype BETWEEN 4101 AND 4296 OR bettype BETWEEN 6701 AND 7000 THEN 248 -- PP
 				WHEN b.bettype BETWEEN 4297 AND 4300 THEN -248 -- PP Prize
 				WHEN (b.bettype BETWEEN 1901 AND 1999 AND bettype <> 1906) THEN 165 -- CC
 				WHEN b.bettype = 1906 THEN -165 -- Bonus
@@ -395,7 +394,7 @@ BEGIN
 				WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 				WHEN b.bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
 				WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-				WHEN b.bettype BETWEEN 4101 AND 4296 THEN 248 -- PP
+				WHEN b.bettype BETWEEN 4101 AND 4296 OR bettype BETWEEN 6701 AND 7000 THEN 248 -- PP
 				WHEN b.bettype BETWEEN 4297 AND 4300 THEN -248 -- PP Prize
 				WHEN (b.bettype BETWEEN 1901 AND 1999 AND bettype <> 1906) THEN 165 -- CC
 				WHEN b.bettype = 1906 THEN -165 -- Bonus
