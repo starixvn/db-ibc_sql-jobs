@@ -213,7 +213,7 @@ BEGIN
 			b.custid
 
 		-- Opening Balance
-		IF EXISTS (SELECT 1 FROM bodb02.dbo.bettrans WITH (NOLOCK) WHERE matchid = 0 AND custid = 3 AND winlostdate = @WinlostDate)
+		IF EXISTS (SELECT 1 FROM bodb02.dbo.transfer WITH (NOLOCK) WHERE custid = 3 AND winlostdate = @WinlostDate)
 		BEGIN
 			INSERT INTO #tmpData
 			(

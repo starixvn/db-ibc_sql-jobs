@@ -163,7 +163,7 @@ BEGIN
 			END AS stake
 			,(winlost - actual_stake) AS winlost
 			,CASE 
-				WHEN b.bettype > 20000 AND b.bettype NOT IN (23001,23002,23101,23102,23201,23202) THEN POWER(2*1,1) --> transfer
+				WHEN b.bettype > 20000 THEN POWER(2*1,1) --> transfer
 				WHEN b.bettype = 19999 THEN POWER(2*1,3) --> normal bet
 				ELSE 0
 				END AS transIndicator
