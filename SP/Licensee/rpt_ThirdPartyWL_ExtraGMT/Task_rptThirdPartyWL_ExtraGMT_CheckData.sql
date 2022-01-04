@@ -23,6 +23,7 @@ AS
 		- 20210419@Danny: Integrate Creative Gaming [Redmine: #146019]
 		- 20210412@Sophia: Change Range of AE Casino [Redmine :#152141]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20211216@Danny: Get bettype from SportBettypeMaxtrix dynamically  [Redmine: #166158]
 */
 
 BEGIN
@@ -70,6 +71,16 @@ BEGIN
 	DECLARE @S_Count INT, @T_Count INT,
 			@i INT;
 
+	DECLARE @RnGBettypeList TABLE(Bettype INT)
+	INSERT INTO @RnGBettypeList(Bettype)
+	SELECT	DISTINCT bettype
+	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'FW,PP,CC,SG,JK,CG') la		
+
+	DECLARE @LCBettypeList TABLE(Bettype INT)
+	INSERT INTO @LCBettypeList(Bettype)
+	SELECT	DISTINCT bettype
+	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'AB,SXG,SAG,WM,PPL') la
+
 	INSERT INTO #Source(TableName, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, AWinloss, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
 	(
 		SELECT	'bettransRnG14',
@@ -94,13 +105,7 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
 		WHERE b.winlostdate = @WinlostDate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND (b.gameID BETWEEN 1011 AND 1020 -- FW
-				 OR b.gameID BETWEEN 4101 AND 4300 -- PP
-				 OR b.gameID BETWEEN 1901 AND 1999 -- CC
-				 OR b.gameID BETWEEN 4301 AND 4600 -- SG
-				 OR b.gameID BETWEEN 6401 AND 6700 -- JK
-				 OR b.gameID BETWEEN 7301 AND 7600 -- CG
-				 )
+			AND b.gameID IN (SELECT x.Bettype FROM @RnGBettypeList x)
 		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
 			b.currency, b.statusID	
 			
@@ -127,13 +132,7 @@ BEGIN
 			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
 		WHERE b.winlostdate = @WinlostDate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
-			AND (
-					b.gameID BETWEEN 2401 AND 2499 -- AllBet
-				OR  b.gameID BETWEEN 3101 AND 3150 -- SXG
-				OR  b.gameID BETWEEN 3001 AND 3099 -- SAG
-				OR  b.gameID BETWEEN 3401 AND 3499 -- WM
-				OR  b.gameID BETWEEN 3701 AND 3799 -- PPL	
-				)
+			AND b.gameID IN (SELECT x.Bettype FROM @LCBettypeList x)
 		GROUP BY CAST(b.Transdate3rd AS DATE), ISNULL(site.SiteID, -1), b.gameID,
 			b.currency, b.statusID	
 	);
