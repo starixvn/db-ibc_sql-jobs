@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb02" executers="" viewers="" isNested="0"></info>*/
+/*<info serverAlias="DBTP-bodb02,DBBAL-bodb02" executers="" viewers="" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_AWS_CheckBalance_Get]
 AS
 /*
