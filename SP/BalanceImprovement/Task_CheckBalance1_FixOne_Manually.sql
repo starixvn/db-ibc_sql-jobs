@@ -19,6 +19,7 @@ AS
 		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
 		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
 		20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
+		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
 
 	Param use:
 
@@ -42,7 +43,8 @@ ELSE
 BEGIN
 	Declare @FromBettrans money, 
 			@FromTransLog money, @FromBettransRNG money, @FromBettransLC money,
-			@FromAdjustmentTransfer money
+			@FromAdjustmentTransfer money,
+			@FromTransfer money
 
 	--
 	-- Skip if Pending Found
@@ -75,6 +77,12 @@ BEGIN
 				 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 				 ELSE 1 END
 
+		SELECT @FromTransfer = SUM(winlost-actual_stake+playercomm)	
+		FROM dbo.Transfer with (rowlock) 
+		WHERE custid = @custid
+			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+				 ELSE 1 END
+
 		DECLARE @__movebetdateF SMALLDATETIME
 		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdateF OUTPUT
 
@@ -88,7 +96,7 @@ BEGIN
 		FROM dbo.BonusAdjustmentTransfer WITH(NOLOCK)
 		WHERE isTransferred = 0 AND custid = @custid
 
-		SELECT @FromTransLog = SUM(actual_stake)	FROM dbo.translog with (rowlock) WHERE custid = @custid and statusID IN (0,1)
+		SELECT @FromTransLog = SUM(actual_stake) FROM dbo.translog with (rowlock) WHERE custid = @custid and statusID IN (0,1)
 
 		SELECT @FromBettransRNG = SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) 
 		FROM dbo.bettransRNG WITH(NOLOCK)
@@ -99,7 +107,7 @@ BEGIN
 		WHERE IsSum = 0 AND custid = @custid
 				
 		SELECT 
-			@DiffBalance = IsNull(@FromBettrans, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) + IsNull(@FromAdjustmentTransfer, 0)
+			@DiffBalance = IsNull(@FromBettrans, 0) + IsNull(@FromTransfer, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) + IsNull(@FromAdjustmentTransfer, 0)
 			- (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance)
 		FROM 
 			dbo.BalCreditTransfer cd1 WITH (ROWLOCK)
