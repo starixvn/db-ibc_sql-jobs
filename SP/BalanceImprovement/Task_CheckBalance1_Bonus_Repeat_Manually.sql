@@ -56,11 +56,11 @@ BEGIN
 	)
 
 	INSERT INTO #QuestionLists(custid, BonusId, winlostAmt, RowVersion, winlostAmtBalanceTable)
-	SELECT cb.*
+	SELECT cb.*, 0 AS RowVersion
 		, (c1.Amount - d1.Amount) AS winlostAmtBalanceTable
 	FROM (
 		SELECT ISNULL(t.custid, tt.custid) AS CustId, ISNULL(t.BonusId, tt.BonusId) AS BonusId
-			, SUM(ISNULL(t.winlostAmt, 0) + ISNULL(tt.winlostAmt, 0)) AS winlostAmt, RowVersion AS RowVersion
+			, SUM(ISNULL(t.winlostAmt, 0) + ISNULL(tt.winlostAmt, 0)) AS winlostAmt
 		FROM (
 			SELECT ISNULL(cb.custid, ct.CustId) custid, SUM(ISNULL(cb.winlostAmt, 0) + ISNULL(ct.winlostAmt, 0)) winlostAmt
 				, ISNULL(cb.BonusId, ct.BonusId) BonusId
