@@ -1,3 +1,4 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[ExecRep_00] 
 	@Winlostdate SMALLDATETIME = NULL
 	,@Target VARCHAR(30) = 'DBTRANS' -- DBTRANS/REPLICATED
@@ -116,7 +117,7 @@ BEGIN
 			WHERE b.winlostdate >= @Winlostdate
 				AND b.actualrate <> e.actualrate 
 		END
-		ELSE IF @TableName = 'Transfer_Coll' --transfer_coll@dbtrans
+		ELSE IF @TableName = 'Transfer_Coll' AND EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_NAME(object_id) = 'Transfer_Coll')--transfer_coll@dbtrans
 		BEGIN
 			-- Transfer_Coll tickets
 			INSERT INTO #tmp(transid, actualrate)
@@ -222,7 +223,7 @@ BEGIN
 			WHERE b.winlostdate >= @Winlostdate
 				AND b.actualrate <> e.actualrate 	 
 		END
-		ELSE IF @TableName = 'Transfer_Coll' --transfer_coll@replicated
+		ELSE IF @TableName = 'Transfer_Coll' AND EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_NAME(object_id) = 'Transfer_Coll') --transfer_coll@replicated
 		BEGIN 
 			INSERT INTO #tmp(transid, actualrate)
 			select b.transid, e.actualrate 
@@ -320,7 +321,7 @@ BEGIN
 				INNER JOIN dbo.bettrans b ON t.transid = b.transid 
 		END
 	END
-	ELSE IF @TableName = 'Transfer_Coll' --update transfer_coll
+	ELSE IF @TableName = 'Transfer_Coll' AND EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_NAME(object_id) = 'Transfer_Coll') --update transfer_coll
 	BEGIN 
 		SET @rowcount = 1 
 		WHILE @rowcount <> 0
