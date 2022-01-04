@@ -23,7 +23,6 @@ AS
 		- 20200309@Malcolm : Add table bettransG [Redmine : #128057]
 		- 20220104@Malcolm: Update rates for all existed tickets once financial change rates [RedmineId : #163417]
 
-	
  	Param's Explanation: 
  		@Winlostdate: the date that new rates are updated		
  */
