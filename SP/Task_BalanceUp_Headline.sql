@@ -9,6 +9,7 @@ AS
 
 	Revision: 
 		- 20190910@Patrick: Init [RedmineId: #118818]
+		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -46,7 +47,7 @@ BEGIN
 		WHERE keyId >= @r AND keyId < @r + 200
 
 		SELECT @transIds = COALESCE(@transIds + '^' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
-		FROM dbo.bettrans b WITH(NOLOCK)
+		FROM dbo.Transfer b WITH(NOLOCK)
 		WHERE b.custid IN (SELECT t.custId FROM @__tempCustIds t)
 			AND b.winlostdate < @winlostdate
 	

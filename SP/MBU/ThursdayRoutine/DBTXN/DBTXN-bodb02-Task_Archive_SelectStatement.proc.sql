@@ -28,7 +28,10 @@ BEGIN;
 			ON t.Bettype = bt.typeid
 	WHERE	t.WinlostDate = @WinlostDate
 			AND	t.bettype >= 20000
+			AND custid <> 0
 	GROUP BY t.CustId, t.TransDesc, t.TransDate, t.TransId
 		,CASE WHEN ti.IsCollection = 1 THEN CONVERT(NVARCHAR(128), 'COLL') ELSE bt.typenamee END
+	HAVING SUM(t.winlost - t.actual_stake) <> 0;
+
 END;
 GO

@@ -1,5 +1,5 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_BalanceUp_background]
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[Task_BalanceUp_background]
 	@fdate as datetime = NULL,
 	@step as tinyint = 1
 --	@continue as bit = 0
@@ -34,6 +34,7 @@ Revisions:
 	- 20220118@July: MBU - Timeout due to add full backup for custdb [Redmine:#167669]
 	- 20220301@July: Comment code delete for livescore [Redmine:#169201]
 	- 20220307@Bobby: Re-commit (Comment code delete for livescore [Redmine:#169201])
+	- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 
 Param's Explanation: 
 
@@ -42,8 +43,8 @@ Param's Explanation:
 IF @fdate IS NULL
 BEGIN
 	SELECT TOP(1) @fdate = DATEADD(day, 7, winlostdate)
-	FROM dbo.bettrans with (nolock)
-	WHERE matchid = 0 and bettype = 20000 and transid not in (109646841787,109646841788,109647969173)
+	FROM	dbo.Transfer WITH(NOLOCK) --dbo.bettrans with (nolock)
+	WHERE	bettype = 20000
 	ORDER BY transid
 	
 	IF @fdate > CURRENT_TIMESTAMP
@@ -130,7 +131,7 @@ BEGIN
 				   );
 	END
 
-	IF EXISTS (SELECT * FROM bettrans with (nolock) WHERE winlostdate < @fdate AND (
+	IF EXISTS (SELECT * FROM dbo.Transfer with (nolock) WHERE winlostdate < @fdate AND (
 			srecommend is null or mrecommend is null or recommend is null
 		OR swinlost is null or mwinlost is null or awinlost is null or winlost is null
 		OR scomm is null or acomm is null or comm is null or playercomm is null
@@ -140,7 +141,7 @@ BEGIN
 	--	SELECT 'Some records in BetTrans have NULL AgentID/NULL winlost/NULL commission/incorrect Company SuperAgent setting' Result
 	--	RETURN
 	-- raiserror here to continue to next step of jobs
-		RAISERROR ('Some records in BetTrans have NULL AgentID/NULL winlost/NULL commission/incorrect Company SuperAgent setting', -- Message text.
+		RAISERROR ('Some records in Transfer have NULL AgentID/NULL winlost/NULL commission/incorrect Company SuperAgent setting', -- Message text.
 				   16, -- Severity.
 				   1 -- State.
 				   );
@@ -180,7 +181,8 @@ BEGIN
 	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
 
 	--//turn on isArchivingBet_Local flag
-	EXEC dbo.Bet_ExecRep_09 @mode = 5
+	--EXEC dbo.Bet_ExecRep_09 @mode = 5
+	EXEC dbo.Transfer_ExecRep_02 @Mode = 5
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 5, @tableName = 'SystemSettings'
 
 	-- for safety, shutdown trigger in balanceTable_tmp
@@ -408,13 +410,10 @@ BEGIN
 		SUM(CASE WHEN custid = srecommend THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) amt4,
 		SUM(CASE WHEN custid = srecommend THEN 1 ELSE 0 END) tcnt4
 	FROM
-		dbo.bettrans with (nolock)
-	WHERE
-		ruben = 1
-		AND winlostdate < @fdate
+		dbo.transfer with (nolock)
+	WHERE winlostdate < @fdate
 	GROUP BY
 		custid, recommend, mrecommend, srecommend
-
 
 	CREATE TABLE #balance_cal (roleid tinyint, 
 		custid int, recommend int, mrecommend int, srecommend int, 
@@ -469,14 +468,11 @@ BEGIN
 		SUM(CASE WHEN custid = srecommend THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) amt4,
 		SUM(CASE WHEN custid = srecommend THEN 1 ELSE 0 END) tcnt4
 	FROM
-		dbo.bettrans b with (rowlock)
-		INNER JOIN #filtered f ON b.custid = f.fcustid
-	WHERE
-		ruben = 1
-		AND winlostdate < @fdate
+		dbo.Transfer t with (rowlock)
+		INNER JOIN #filtered f ON t.custid = f.fcustid
+	WHERE winlostdate < @fdate
 	GROUP BY
-		custid, recommend, mrecommend, srecommend
-			
+		custid, recommend, mrecommend, srecommend		
 		
 	INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT custid, amt1, tcnt1, 0			   FROM #balance_cal WHERE roleid = 1
 	INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT recommend , SUM(amt2), SUM(tcnt2), 0 FROM #balance_cal GROUP BY recommend
@@ -625,8 +621,8 @@ IF @step = 7
 BEGIN
 -- ================== Finishing
 	SELECT TOP(1) @fdate = winlostdate
-	FROM dbo.bettrans WITH (NOLOCK)
-	WHERE matchid = 0 and bettype = 20000 and transid not in (109646841787,109646841788,109647969173)
+	FROM dbo.Transfer WITH (NOLOCK)
+	WHERE bettype = 20000
 	ORDER BY transid
 		
 	--//remove all data in processing list
@@ -645,7 +641,8 @@ BEGIN
 	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
 
 	--//turn off isArchivingBet_Local flag
-	EXEC dbo.Bet_ExecRep_09 @mode = 6
+	--EXEC dbo.Bet_ExecRep_09 @mode = 6
+	EXEC dbo.Transfer_ExecRep_02 @Mode = 6
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 6, @tableName = 'SystemSettings'
 
 	SET @Doing = 'Task_BalanceUp_background : Done'
@@ -654,5 +651,4 @@ BEGIN
 END
 -- ================== Finishing
 
-GO
 

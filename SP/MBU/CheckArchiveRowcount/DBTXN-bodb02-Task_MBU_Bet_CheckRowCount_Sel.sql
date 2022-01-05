@@ -80,6 +80,8 @@ BEGIN
 	SELECT	COUNT(1), 'Transfer'
 	FROM	dbo.Transfer WITH(NOLOCK)
 	WHERE	WinlostDate = @DateCheck
+			AND custid <> 0
+			AND (winlost + actual_stake) <> 0
 
 	/*
 	---------------------------------20200728@Brice:	Add 13 tables - [Redmine: #111093]--------------------------------------

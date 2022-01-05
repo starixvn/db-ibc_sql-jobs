@@ -35,5 +35,7 @@ BEGIN;
 	FROM	dbo.Transfer WITH(NOLOCK)
 	WHERE	bettype > 20000
 			AND	winlostdate = @WinlostDate
+			AND	custid <> 0
+			AND	(winlost + actual_stake) <> 0;
 END;
 GO

@@ -24,6 +24,9 @@ BEGIN
 	DECLARE @tc int -- ticket count
 	DECLARE @r int
 
+	IF OBJECT_ID('Transfer', 'U') IS NULL
+		RETURN
+
 	IF @roleid = 44
 	BEGIN
 
@@ -115,6 +118,13 @@ BEGIN
 			FROM #ticketList tl
 				INNER LOOP JOIN dbo.Transfer t ON t.transid = tl.transid
 			WHERE
+				tl.rn BETWEEN @rn AND @rx
+			OPTION(FORCE ORDER, MAXDOP 4)
+
+			DELETE ti WITH(ROWLOCK)
+			FROM #ticketList tl
+				INNER LOOP JOIN dbo.TransferInfo ti ON ti.TransId = tl.transid
+			WHERE	
 				tl.rn BETWEEN @rn AND @rx
 			OPTION(FORCE ORDER, MAXDOP 4)
 
