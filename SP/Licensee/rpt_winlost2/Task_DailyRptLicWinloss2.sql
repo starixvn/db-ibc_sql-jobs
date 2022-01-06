@@ -103,6 +103,7 @@ AS
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
 		- 20211216@Kos: Integrate PP 20 new games [RedmineID: #165772]
 		- 20211231@Hogan: Using betfrom '.' instead of betfrom '#' [RedmineID: #166689]
+		- 20220106@Kos: Hotfix - Missing turnover of Vgaming Jackpot [RedmineID: #167065]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -276,7 +277,7 @@ BEGIN
 				WHEN (b.bettype IN (902, 912)
 						OR (b.bettype = 29 AND b.oddsspread = 1))
 					AND BA.transid IS NULL THEN b.actual_stake
-				WHEN b.bettype IN (4297, 1698) THEN b.oddsspread
+				WHEN b.bettype IN (4297, 1698, 3898) THEN b.oddsspread
 				ELSE 0
 			END) AS BuyBackAmt
 		,SUM(CASE
