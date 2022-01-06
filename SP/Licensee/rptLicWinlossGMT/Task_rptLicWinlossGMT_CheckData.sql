@@ -34,6 +34,7 @@ AS
 		- 20210816@Sophia: add DBBAL [Redmine: #154300] 
 		- 20211014@Hogan: Support Add 2 New Betfroms [ ] [RedmineID: #162388]
 		- 20211117@Kos: Merge Sports Lottery into Sportsbook [RedmineID: #163191]
+		- 20211231@Hogan: Using betfrom '.' instead of betfrom '#' [RedmineID: #166689]
 
 	EXEC Task_rptLicWinlossGMT_CheckData '2017-11-30'
 */
@@ -166,11 +167,11 @@ BEGIN
 				WHEN BA.transid IS NOT NULL THEN 1
 			END AS isBA
 			,CASE
-				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$',']') THEN 1
+				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']') THEN 1
 				ELSE 0
 			END AS isMobile
 			,CASE
-				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$','[',']') THEN b.betfrom
+				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','.','$','[',']') THEN b.betfrom
 				ELSE ''
 			END AS betfrom
 		FROM bodb02.dbo.bettrans14 AS b WITH (NOLOCK)
@@ -219,11 +220,11 @@ BEGIN
 				WHEN BA.transid IS NOT NULL THEN 1
 			END
 			,CASE
-				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','#','$',']') THEN 1
+				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']') THEN 1
 				ELSE 0
 			END
 			,CASE
-				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z', 'o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','#','$','[',']') THEN b.betfrom
+				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z', 'o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','.','$','[',']') THEN b.betfrom
 				ELSE ''
 			END;
 
