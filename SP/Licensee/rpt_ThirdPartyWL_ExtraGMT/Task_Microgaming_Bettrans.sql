@@ -29,6 +29,7 @@ AS
 		- 20210412@Sophia: Change Range of AE Casino [Redmine :#152141]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20211216@Danny: Get bettype from SportBettypeMaxtrix dynamically  [Redmine: #166158]
+		- 20220110@Danny: SG - Jackpot prize integration [#167089]
 	 Param's Explanation:
 */
 
@@ -71,7 +72,7 @@ BEGIN
 			, SUM(b.comm) AS AComm
 			, SUM(b.playercomm) AS PComm
 			, SUM(b.awinlost) AS AWinloss
-			, SUM(CASE WHEN b.gameID = 4297 THEN ContributionStake3rd ELSE 0 END) AS ProgressiveContribution -- Full Contribution(PP-4297)
+			, SUM(CASE WHEN b.gameID IN (4297, 4599) THEN ContributionStake3rd ELSE 0 END) AS ProgressiveContribution -- Full Contribution(PP-4297)
 			, SUM(ISNULL(p.WinAmount, 0)) AS ProgressivePayout
 			, 0 AS ValidBetAmount
 		FROM bodb02.dbo.bettransRnG b WITH (NOLOCK)
