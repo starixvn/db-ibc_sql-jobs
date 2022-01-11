@@ -21,6 +21,7 @@ AS
 		- 20210527@July: Check Data Consistency - Exclue bettype BlackJack for VGaming - [Redmine:#155762]
 		- 20210924@July: Vgaming - Exclue bettype Casino Hold'em Poker - [Redmine:#161760]
 		- 20211021@July: Vgaming - Exclue bettype Texas Hold'em Poker - [Redmine:#163463]
+		- 20220106@July: Saba.club - Exclue bettype Casino Hold'em Poker(1650) - [Redmine:#167030]
 
 	Param's Expanation:
 */
@@ -58,7 +59,7 @@ BEGIN
 				AND b.winlostdate = @yesterday
 				AND b.statusID = 0
 				AND b.matchid = @ProductId
-				AND b.bettype NOT IN (1622, 1631, 1634) --Exclude Keno Pro Viet, Bola Kangtas, Blackjack 
+				AND b.bettype NOT IN (1622, 1631, 1634, 1650) --Exclude Keno Pro Viet, Bola Kangtas, Blackjack, Casino Hold'em Poker 
 	END
 	ELSE IF @ProductId  IN (171,173) -- 171: VGaming - 173: VGaming FreeBets
 	BEGIN
