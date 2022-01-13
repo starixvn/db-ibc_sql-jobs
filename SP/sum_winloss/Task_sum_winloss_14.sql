@@ -25,6 +25,7 @@ AS
 		- 20210609@Malcolm: Add AE Sexy - [Redmine: #156239]	
 		- 20210617@Sol: changed how to calc net turn over - [RedmineId : #156653]
 		- 20211122@Percy: Enhance gross comm formula [RedmineID: #164479]
+		- 20220106@Evan: Add SG Jackpot - [Redmine: #166685]	
 */
 
 BEGIN
@@ -50,7 +51,7 @@ BEGIN
 			SELECT DISTINCT s.RefTable, s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
 			WHERE f.ProductID = s.ProductID
 				AND (f.ProductID <> 6 OR f.SportType = s.SportType)
-				AND (f.BetType NOT IN (3150, 4297, 4298) AND s.BetType NOT IN (3150, 4297, 4298) OR f.BetType = s.BetType)
+				AND (f.BetType NOT IN (3150, 4297, 4298, 4599, 4600) AND s.BetType NOT IN (3150, 4297, 4298, 4599, 4600) OR f.BetType = s.BetType)
 		) AS s
 		OUTER APPLY 
 		(
@@ -262,9 +263,9 @@ BEGIN
 					,b.statusID
 					,CASE
 						-- Jackpot
-						WHEN b.bettype IN (2198, 2398, 2998, 4297) THEN
+						WHEN b.bettype IN (2198, 2398, 2998, 4297, 4599) THEN
 							CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
-						WHEN b.bettype IN (2199, 2399, 2999, 4298) THEN 0
+						WHEN b.bettype IN (2199, 2399, 2999, 4298, 4600) THEN 0
 						ELSE CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END
 					END
 					* CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT
@@ -274,7 +275,7 @@ BEGIN
 					CASE 
 						/*IBCBet Live Casino*/
 						WHEN b.bettype BETWEEN 3201 AND 3299 THEN b.scomm
-						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298) THEN 0
+						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298, 4599, 4600) THEN 0
 						ELSE 
 							CASE 
 								WHEN b.tpositiontaking = 1 THEN 0 
