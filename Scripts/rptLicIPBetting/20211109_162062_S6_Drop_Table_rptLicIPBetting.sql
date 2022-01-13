@@ -10,6 +10,6 @@ USE bodb_LicenseeReport
 
 GO
 
-DROP TABLE rptLicIPBetting
+DROP TABLE DEL_rptLicIPBetting
 
 GO
