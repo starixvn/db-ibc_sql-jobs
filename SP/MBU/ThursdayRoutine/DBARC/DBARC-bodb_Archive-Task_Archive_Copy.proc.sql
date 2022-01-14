@@ -22,6 +22,7 @@ AS
 		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
 		- 20211126@Kathy: Add 2 new column bettype,betid [Redmine:#140180]
 		- 20211126@Kathy: get bettype,betid from active table[Redmine:#140180]
+		- 20220113@Max: [TVS] Cannot execute auto void queue for test match [Redmine: #166895]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -418,7 +419,23 @@ FROM	bodb02.dbo.TicketVoiding_Reason AS t1 WITH (NOLOCK)
 	;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
+
+		---------------Table:  TicketVoiding_AutoVoidRequest_Queue_bk -----------------------------
+		SELECT	@Query = N'';
+		SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.TicketVoiding_AutoVoidRequest_Queue_bk
+	(	QueueId, RequestId, MatchId, [Action], StatusId, UserId, Starttime, Exectime, Duration, IP, ErrMsg, sporttype)
+SELECT	QueueId, RequestId, MatchId, [Action], StatusId, UserId, Starttime, Exectime, Duration, IP, ErrMsg, sporttype
+FROM	OPENQUERY(DBTXN, ''\
+DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) + ''''';
+
+SELECT	QueueId, RequestId, MatchId, [Action], StatusId, UserId, Starttime, Exectime, Duration, IP, ErrMsg, sporttype
+FROM	bodb02.dbo.TicketVoiding_AutoVoidRequest_Queue AS t1 WITH (NOLOCK)
+WHERE	t1.requestid in (' + @requestids + ')
+;'');';
 		
+		EXECUTE	sys.sp_executesql @Query;
+
 		END
 	END;
 
@@ -437,7 +454,9 @@ DECLARE	@EndDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @EndDate, 121) + 
 
 SELECT	QueueId, RequestId, MatchId, [Action], StatusId, UserId, Starttime, Exectime, Duration, IP, ErrMsg, sporttype
 FROM	bodb02.dbo.TicketVoiding_AutoVoidRequest_Queue AS t1 WITH (NOLOCK)
-WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate);'');';
+WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate)
+	AND t1.RequestId = 0
+;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
 	END;
