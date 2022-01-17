@@ -9,14 +9,18 @@ AS
 
 	Revisions:
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
+		- 20220110@Percy: Get current date by timezone [RedmineID: #167244]
 */
 
 BEGIN 
 	SET NOCOUNT ON
 
+	DECLARE @TimeZone INT
+	SELECT  @TimeZone = CONVERT(INT, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
+
 	DECLARE	@FromDate		SMALLDATETIME
 			,@ToDate		SMALLDATETIME
-			,@CurrentDate	SMALLDATETIME = CONVERT(DATE, GETDATE())
+			,@CurrentDate	SMALLDATETIME = CONVERT(DATE, DATEADD(HOUR, 4 + @TimeZone, GETDATE()))
 			,@WinlostDate	SMALLDATETIME
 			,@Retry			TINYINT = 1
 			,@IsErr			BIT
@@ -28,7 +32,7 @@ BEGIN
 	ELSE
 		SELECT @FromDate = DATEADD(MONTH, DATEDIFF(MONTH, 0, @CurrentDate), 0)
 
-	SELECT @ToDate = CONVERT(DATE, GETDATE())
+	SELECT @ToDate = @CurrentDate
 
 	SELECT @WinlostDate = @FromDate
 	WHILE  @WinlostDate <= @ToDate
