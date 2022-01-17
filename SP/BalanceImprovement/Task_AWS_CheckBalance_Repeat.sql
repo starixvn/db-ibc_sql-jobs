@@ -31,6 +31,17 @@ BEGIN
 		RETURN
 	END
 
+	DECLARE @__maxtransId BIGINT, @__maxawstransId BIGINT
+	SELECT @__maxtransId = MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'bettrans'
+	SELECT @__maxawstransId = MAX(transid) FROM DBAWS.bodb02.dbo.bettrans WITH(NOLOCK)
+
+	IF @__maxtransId - @__maxawstransId > 5000
+	BEGIN
+		PRINT 'Replication latency on dbbal....'
+		WAITFOR DELAY '00:00:15:000' --replication latency on dbbal
+		RETURN
+	END
+
 	CREATE TABLE #__balanceDBTP(custid int, balance money)
 	CREATE TABLE #__balanceAWS(custid int, balance money)
 	CREATE TABLE #__balance(custid int, diff money)
@@ -100,7 +111,7 @@ BEGIN
 			IF @balancedbtp <> @balanceaws and ((@balancedbtp - @balanceaws) = @__diffAmt)
 			BEGIN
 				DELETE FROM dbo.Task_AWS_Balance_Check_Verify WHERE custid = @custid
-
+				EXEC dbo.Task_AWS_CheckBalance_Check_One_Logs @custid = @custid
 				-- LOG
 				INSERT INTO dbo.Task_AWS_Balance_Check_Problem (custid, username, diffBalance, IsFixed, roundVerified, Remark)
 				SELECT @custid, username, (@balancedbtp - @balanceaws), 0, @roundVerified, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE currency WHEN 20 THEN ' UUS' ELSE '' END
