@@ -68,7 +68,7 @@ BEGIN
 		FROM dbo.bettrans b with (nolock, index=IX_custid)
 			INNER JOIN dbo.Task_AWS_Balance_Check t ON b.custid = t.custid
 		WHERE b.transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'bettrans')
-			AND 1 =  WHEN bettype >= 19999 THEN 0 --> get from transfer table
+			AND 1 =  CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
 		GROUP BY b.custid
