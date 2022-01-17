@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
 		- 20210317@Percy: Keep Exchange data last day of month [RedmineID: #151391]
+		- 20220110@Percy: Get current date by timezone [RedmineID: #167244]
 */
 
 BEGIN
@@ -21,7 +22,10 @@ BEGIN
 	IF DATEDIFF(HOUR, @LastImportedTime, GETDATE()) < 6
 		RETURN
 
-	DECLARE @CurrentDate SMALLDATETIME = CONVERT(DATE, GETDATE())
+	DECLARE @TimeZone INT
+	SELECT  @TimeZone = CONVERT(INT, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
+
+	DECLARE @CurrentDate SMALLDATETIME = CONVERT(DATE, DATEADD(HOUR, 4 + @TimeZone, GETDATE()))
 	DECLARE @CurrentMonth SMALLDATETIME = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @CurrentDate) + 1, 0))
 	DECLARE @FromMonth SMALLDATETIME
 	
