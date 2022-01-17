@@ -68,7 +68,7 @@ BEGIN
 		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	
 		FROM dbo.bettrans with (rowlock) 
 		WHERE custid = @custid
-			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+			AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 				 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 				 ELSE 1 END
 

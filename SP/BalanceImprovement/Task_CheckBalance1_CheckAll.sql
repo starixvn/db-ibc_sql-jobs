@@ -111,7 +111,7 @@ BEGIN
 		cb AS (
 			SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance
 			FROM dbo.bettrans b WITH (NOLOCK)
-			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+			WHERE 1 = WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
 			GROUP BY b.custid
@@ -182,7 +182,7 @@ BEGIN
 			SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance, 0 as RowVersion
 			FROM dbo.bettrans b with (nolock)
 				INNER JOIN #QuestionLists q ON b.custid = q.custid
-			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+			WHERE 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
 			GROUP BY b.custid

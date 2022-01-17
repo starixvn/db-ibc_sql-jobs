@@ -60,7 +60,7 @@ BEGIN
 			FROM dbo.bettrans WITH (ROWLOCK) 
 			WHERE custid = @custid 
 				AND BonusID = @bonusId
-				AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+				AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
 

@@ -19,12 +19,12 @@ begin
 	--get data from dbtp
 	insert into #__temp1(transid, custid, winlost, actual_stake, stake, playercomm, status)
 	select transid, custid, winlost, actual_stake, stake, playercomm, status 
-	from bodb02.dbo.bettrans with(nolock) where custid = @custid and transid <= @__maxtransid
+	from bodb02.dbo.bettrans with(nolock) where custid = @custid and transid <= @__maxtransid and bettype < 19999
 	
 	--get data from dbbal
 	insert into #__temp2(transid, custid, winlost, actual_stake, stake, playercomm, status)
 	select transid, custid, winlost, actual_stake, stake, playercomm, status
-	from DBAWS.bodb02.dbo.bettrans with(nolock) where custid = @custid and transid <= @__maxtransid
+	from DBAWS.bodb02.dbo.bettrans with(nolock) where custid = @custid and transid <= @__maxtransid and bettype < 19999
 
 	insert into dbo.Task_AWS_Logs_Result(tableName, transid_tp, transid_bal, custid_tp, custid_bal, status_tp, status_bal, balance_tp, balance_bal)
 	select 'bettrans', t1.transid, t2.transid, t1.custid, t2.custid, t1.status, t2.status

@@ -66,7 +66,7 @@ BEGIN
 			SELECT b.custid, b.BonusID, SUM(CASE WHEN walletType = 1 AND bettype NOT IN (22200, 22201) THEN winlost - actual_stake + playercomm ELSE 0 END) winlostAmt
 			FROM dbo.bettrans b WITH (NOLOCK)
 			WHERE b.BonusID > 0
-				AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+				AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
 			GROUP BY b.custid, b.BonusID
@@ -140,7 +140,7 @@ BEGIN
 			FROM dbo.bettrans b WITH (NOLOCK)
 				INNER JOIN #QuestionLists q ON b.custid = q.custid AND b.BonusID = q.BonusID
 			WHERE b.BonusID > 0
-				AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+				AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
 			GROUP BY b.custid, b.BonusID

@@ -43,7 +43,7 @@ BEGIN
 		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance
 		FROM dbo.bettrans b with (nolock)
 			INNER JOIN dbo.Task_Cust_CheckBalanceVerify1 q ON b.custid = q.custid
-		WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+		WHERE 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
 		GROUP BY b.custid
