@@ -30,7 +30,9 @@ Revisions:
 	- 20190327@Helen: Calculating value of @fdate of step #6 is incorrect  [Redmine:110974]
 	- 20190417@Patrick: Ignore verify data for roleid = 0 [Redmine:#112050]
 	- 201900816@Patrick: Implement BU for custid have roleid = 0 [Redmine:#118818]
-	
+	- 20200814@Joe : Improve process of filter Invalid Balance (from BalanceTable_tmp_cal) [RedmineId :#139959]
+	- 20220118@July: MBU - Timeout due to add full backup for custdb [Redmine:#167669]
+
 Param's Explanation: 
 
 */
@@ -39,7 +41,7 @@ IF @fdate IS NULL
 BEGIN
 	SELECT TOP(1) @fdate = DATEADD(day, 7, winlostdate)
 	FROM dbo.bettrans with (nolock)
-	WHERE matchid = 0 and bettype = 20000
+	WHERE matchid = 0 and bettype = 20000 and transid not in (109646841787,109646841788,109647969173)
 	ORDER BY transid
 	
 	IF @fdate > CURRENT_TIMESTAMP
@@ -191,9 +193,10 @@ BEGIN
 	-- doing backup
 	Declare @suffix varchar(10)
 	SET @suffix = 'bbu' + RIGHT(CONVERT(varchar(10), @fdate,120),5)
+	EXEC DBCUST.msdb.dbo.sp_start_job N'BalanceUPBackground_BackupFull_Cust'
 	EXEC dbo.Task_BackupFULL @suffix
 	EXEC DB02.bodb02.dbo.Task_BackupFULL @suffix
-	EXEC DBCUST.custDB.dbo.Task_BackupFull_Cust @suffix = 'FULL' -- Viet: add full backup for custdb also
+	--EXEC DBCUST.custDB.dbo.Task_BackupFull_Cust @suffix = 'FULL' -- Viet: add full backup for custdb also
 	-- doing backup : end
 
 -- ================== END STEP : 2
@@ -380,6 +383,11 @@ BEGIN
 	-- =====================
 	--   CALCULATE BALANCE
 	-- =====================
+	/*
+	BalanceTable_tmp_cal will got data insert (almost) daily from job "DBTRANS : Balance Up (Cal_Balance)"
+	data will uses to help verify value which calculate from below query while using lockhint NOLOCK
+	for custid which data is not valid, then we calculate again using lockhint ROWLOCK
+	*/
 	INSERT INTO dbo.BalanceTable_tmp_cal
 	SELECT
 		DATEPART(dw, CURRENT_TIMESTAMP) dow,
@@ -408,7 +416,7 @@ BEGIN
 
 	CREATE TABLE #balance_cal (roleid tinyint, 
 		custid int, recommend int, mrecommend int, srecommend int, 
-		amt1 money, amt2 money, amt3 money, amt4 money, 
+		amt1 money, amt2 money, amt3 money, amt4 money, cnt int default(0),
 		tcnt1 int default(0), tcnt2 int default(0), tcnt3 int default(0), tcnt4 int default(0)
 		)
 		CREATE CLUSTERED INDEX IX_custid ON #balance_cal (custid)
@@ -416,26 +424,32 @@ BEGIN
 	CREATE TABLE #filtered (fcustid int PRIMARY KEY)
 
 	;WITH q_distinct AS (
-		SELECT DISTINCT roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4
+		SELECT roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4, COUNT(*) cnt
 		FROM dbo.BalanceTable_tmp_cal WITH (PAGLOCK)
+		GROUP BY roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4
 		),
 		q_tcnt AS (
 		SELECT custid fcustid, MAX(tcnt1) as tcnt1, MAX(tcnt2) as tcnt2, MAX(tcnt3) as tcnt3, MAX(tcnt4) AS tcnt4
 		FROM dbo.BalanceTable_tmp_cal WITH (PAGLOCK)
 		GROUP BY custid
 		)
-	INSERT INTO #balance_cal ( roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4, tcnt1, tcnt2, tcnt3, tcnt4 )
-		SELECT q_distinct.*, f.tcnt1, f.tcnt2, f.tcnt3, f.tcnt4
+	INSERT INTO #balance_cal ( 
+		roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4, cnt, 
+		tcnt1, tcnt2, tcnt3, tcnt4 
+		)
+		SELECT q_distinct.* , f.tcnt1, f.tcnt2, f.tcnt3, f.tcnt4
 		FROM
 			q_distinct INNER JOIN q_tcnt f ON q_distinct.custid = f.fcustid
-	
-	INSERT INTO #filtered
-		SELECT custid FROM #balance_cal WITH (PAGLOCK) GROUP BY custid HAVING COUNT(*) > 1
 
+	-- required to have at least 4 rows of matching data to consider valid	
+	INSERT INTO #filtered
+		SELECT DISTINCT custid FROM #balance_cal WITH (PAGLOCK) WHERE CNT <= 4
+
+	-- remove invalid balance
 	DELETE b
 	FROM #balance_cal b INNER JOIN #filtered f ON b.custid = f.fcustid
 
-
+	-- re-calculate balance for customer which got invalid balance
 	INSERT INTO #balance_cal (roleid, custid, recommend, mrecommend, srecommend, amt1, tcnt1, amt2, tcnt2, amt3, tcnt3, amt4, tcnt4)
 	SELECT
 		CASE custid
@@ -610,7 +624,7 @@ BEGIN
 -- ================== Finishing
 	SELECT TOP(1) @fdate = winlostdate
 	FROM dbo.bettrans WITH (NOLOCK)
-	WHERE matchid = 0 and bettype = 20000
+	WHERE matchid = 0 and bettype = 20000 and transid not in (109646841787,109646841788,109647969173)
 	ORDER BY transid
 		
 	--//remove all data in processing list
@@ -639,3 +653,4 @@ END
 -- ================== Finishing
 
 GO
+
