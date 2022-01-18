@@ -23,9 +23,17 @@ Param's Explanation:
 SET NOCOUNT ON
 BEGIN
 	DECLARE @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
-	SELECT TOP 1 @BalanceUpDay = winlostdate
-	FROM dbo.Transfer t WITH(NOLOCK)
-	WHERE bettype = 20000 AND custid = 3
+
+	IF OBJECT_ID(N'dbo.Transfer', N'U') IS NOT NULL
+	BEGIN
+		SELECT TOP 1 @BalanceUpDay = winlostdate
+		FROM dbo.Transfer t WITH(NOLOCK)
+		WHERE bettype = 20000 AND custid = 3
+	END
+	ELSE 
+	BEGIN
+		SET @BalanceUpDay = NULL
+	END
 	
 	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @MoveBetsDay OUTPUT
 
