@@ -22,6 +22,7 @@ AS
 		- 20210625@Helen: [TVS] Perfomance tuning for archived process [Redmine: #157539]
 		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
 		- 20210727@Patrick: Update Job to Support Parlay Range up to 3 Weeks [Redmine: #156498]
+		- 20220121@Max: MBU - Clean up Cash Out Selling [Redmine: #167802]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -499,6 +500,19 @@ BEGIN
 			RETURN
 		END
 		/*--------------*/
+
+		/*------CashOutSelling--------*/
+		ELSE IF @DeletedTarget = 'CashOutSelling'
+		BEGIN			
+			TRUNCATE TABLE #DeletedList
+			INSERT INTO #DeletedList (id,IsDone)
+			SELECT t1.TransID,0 
+			FROM dbo.CashOutSelling AS t1 WITH (NOLOCK)
+				INNER JOIN dbo.bettrans14 AS t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.winlostdate = @StartDate
+			
+			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'CashOutSelling'
+			RETURN
+		END
 	END
 	ELSE IF @Action = 'subtask'
 	BEGIN

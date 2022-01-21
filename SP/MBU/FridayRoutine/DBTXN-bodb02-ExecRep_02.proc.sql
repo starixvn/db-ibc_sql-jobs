@@ -31,6 +31,7 @@ AS
 		- 20200227@Patrick: Implement remove data of Intg_GameRoundBetStake after BU day - 1 [Redmine: #126981]
 		- 20201119@Brice: Enhance MBU process related to removing data on bettransm14 [Redmine: #143763]
 		- 20210225@Max: [TVS] Remove archived data [Redmine: #150524]
+		- 20220121@Max: MBU - Clean up Cash Out Selling [Redmine: #167802]
 */
 -- =======================
 -- Parameter check\control
@@ -557,6 +558,27 @@ BEGIN
 			RETURN
 		END
 		/*-----------------*/
+
+		/*-------CashOutSelling----------*/
+		IF	@deletedTarget = 'CashOutSelling'
+		BEGIN
+			IF	OBJECT_ID('CashOutSelling') IS NOT NULL
+			BEGIN;
+				SELECT	@rowcount = 0;
+
+				BEGIN TRANSACTION;
+
+				DELETE	tbl WITH (ROWLOCK)
+				FROM		dbo.CashOutSelling AS tbl WITH (ROWLOCK)
+				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
+						ON	tbl.TransID = CONVERT(INT, s.val);
+
+				SELECT	@rowcount = @@ROWCOUNT;
+
+				COMMIT TRANSACTION;
+			END
+			RETURN
+		END
 	END
 	ELSE-- Below is UN-ACCEPTED CASE
 	BEGIN

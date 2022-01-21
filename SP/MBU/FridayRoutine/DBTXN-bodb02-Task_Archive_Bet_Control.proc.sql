@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20200729@Brice:	Initialize [Redmine: #111093]
 		- 20210225@Max: [TVS] Remove archived data [Redmine: #150524]
+		- 20220121@Max: MBU - Clean up Cash Out Selling [Redmine: #167802]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -60,6 +61,7 @@ BEGIN;
 	VALUES	('zzzbettrans')
 		,	('zzzbettransM')
 		,	('TicketVoiding_VoidedTransaction')
+		,	('CashOutSelling')
 		;
 
 	INSERT INTO	@ArchiveTable
