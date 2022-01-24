@@ -31,7 +31,7 @@ BEGIN
 
 	IF @Action = 'delete'
 	BEGIN
-		CREATE TABLE #DeletedList (id INT PRIMARY KEY CLUSTERED, IsDone BIT)
+		CREATE TABLE #DeletedList (id BIGINT PRIMARY KEY CLUSTERED, IsDone BIT)
 
 		IF @DeletedTarget = 'betParlayDetail'
 		BEGIN
@@ -517,7 +517,7 @@ BEGIN
 	ELSE IF @Action = 'subtask'
 	BEGIN
 		DECLARE @ids VARCHAR(MAX), @rowcount INT = 0, @topk INT = 300
-		CREATE TABLE #output (id INT)	
+		CREATE TABLE #output (id BIGINT)	
 
 		SET @rowcount = 1
 		WHILE @rowcount <> 0
