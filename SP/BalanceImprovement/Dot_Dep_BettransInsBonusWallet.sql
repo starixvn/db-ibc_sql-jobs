@@ -97,7 +97,7 @@ BEGIN
 			@walletType			= 1
 
 	-- Capture lockedAmt for MNL usages
-	SELECT @oddsspread			= CASE WHEN @bettype = @bonus_initial THEN @lockedAmount ELSE NULL END
+	SELECT @oddsspread = CASE WHEN @bettype = @bonus_initial THEN @lockedAmount ELSE 0 END
 			
 
 	IF (@bettype NOT IN (@bonus_initial, @bonus_zerolize) OR @bonusId <= 0)
