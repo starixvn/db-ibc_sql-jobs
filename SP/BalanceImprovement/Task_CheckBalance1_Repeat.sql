@@ -113,10 +113,10 @@ BEGIN
 
 	UPDATE cb
 	SET roundVerified = 
-			CASE q.Balance-q.Outstanding+BalRNG+BalLC+adjustWinlostAmt-q.FromBalanceTable
+			CASE q.Balance-q.Outstanding+BalRNG+BalLC-adjustWinlostAmt-q.FromBalanceTable
 			WHEN cb.DiffBalance THEN roundVerified + 1 -- if Diff value remain the same amount, increase counter, ELSE reset counter
 			ELSE 0 END,
-		DiffBalance = q.Balance-q.Outstanding+BalRNG+BalLC+adjustWinlostAmt-q.FromBalanceTable -- update new Diff
+		DiffBalance = q.Balance-q.Outstanding+BalRNG+BalLC-adjustWinlostAmt-q.FromBalanceTable -- update new Diff
 	FROM dbo.Task_Cust_CheckBalanceVerify1 cb
 		INNER JOIN #QuestionLists q ON cb.custid = q.custid
 

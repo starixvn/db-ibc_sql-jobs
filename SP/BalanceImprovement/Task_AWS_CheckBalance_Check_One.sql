@@ -55,6 +55,6 @@ BEGIN
 	FROM BalNetPosition b WITH(NOLOCK)
 	WHERE custid = @custid
 				
-	SET @balance = IsNull(@FromBettrans, 0) + IsNull(@FromTransfer, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) + IsNull(@FromAdjustmentTransfer, 0) + ISNULL(@FromBalNetPosition, 0)
+	SET @balance = IsNull(@FromBettrans, 0) + IsNull(@FromTransfer, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) - IsNull(@FromAdjustmentTransfer, 0) + ISNULL(@FromBalNetPosition, 0)
 			
 END

@@ -102,7 +102,7 @@ BEGIN
 		WHERE IsSum = 0 AND custid = @custid
 				
 		SELECT 
-			@DiffBalance = IsNull(@FromBettrans, 0) + IsNull(@FromTransfer, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) + IsNull(@FromAdjustmentTransfer, 0)
+			@DiffBalance = IsNull(@FromBettrans, 0) + IsNull(@FromTransfer, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) - IsNull(@FromAdjustmentTransfer, 0)
 			- (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance)
 		FROM 
 			dbo.BalCreditTransfer cd1 WITH (ROWLOCK)

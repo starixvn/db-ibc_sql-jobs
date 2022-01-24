@@ -83,7 +83,7 @@ BEGIN
 		GROUP BY b.custid
 	)
 
-	SELECT cb.custid, cb.Balance - ISNULL(qq.Outstanding,0) + ISNULL(qq.BalRNG, 0) + ISNULL(qq.BalLC, 0) + ISNULL(adjustWinlostAmt, 0)  + ISNULL(balNetPosition, 0) as balance
+	SELECT cb.custid, cb.Balance - ISNULL(qq.Outstanding,0) + ISNULL(qq.BalRNG, 0) + ISNULL(qq.BalLC, 0) - ISNULL(adjustWinlostAmt, 0)  + ISNULL(balNetPosition, 0) as balance
 	FROM (
 		SELECT ISNULL(cb.custid, ct.CustId) custid, SUM(ISNULL(cb.balance, 0) + ISNULL(ct.balance, 0)) balance
 		FROM cb FULL OUTER JOIN ct ON cb.custid = ct.CustId

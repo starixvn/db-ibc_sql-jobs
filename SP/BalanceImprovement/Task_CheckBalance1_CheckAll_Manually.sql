@@ -143,7 +143,7 @@ BEGIN
 			INNER JOIN dbo.BalDebitCasino db3 with (nolock) ON cb.custid = db3.custid
 			INNER JOIN dbo.BalDebitOthers db4 with (nolock) ON cb.custid = db4.custid
 			LEFT OUTER JOIN #tmpCal qq ON cb.custid = qq.custid
-		WHERE cb.Balance - ISNULL(qq.Outstanding,0) + ISNULL(qq.BalRNG, 0) + ISNULL(qq.BalLC, 0) + ISNULL(adjustWinlostAmt, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
+		WHERE cb.Balance - ISNULL(qq.Outstanding,0) + ISNULL(qq.BalRNG, 0) + ISNULL(qq.BalLC, 0) - ISNULL(adjustWinlostAmt, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
 			AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE cb.custid = ex.custid)
 
 		SET @RC = @@ROWCOUNT
@@ -222,7 +222,7 @@ BEGIN
 		)
 		INSERT INTO dbo.Task_Cust_CheckBalanceVerify1_Manually(custid, roundVerified, MaxRowVersion, DiffBalance)
 		SELECT cb.custid, 0, RowVersion, 
-		   cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) + ISNULL(t.adjustWinlostAmt, 0)
+		   cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) - ISNULL(t.adjustWinlostAmt, 0)
 		   - (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance)
 		FROM (
 			SELECT ISNULL(cb.custid, ct.CustId) custid, SUM(ISNULL(cb.balance, 0) + ISNULL(ct.balance, 0)) balance, 0 as RowVersion
@@ -241,7 +241,7 @@ BEGIN
 			LEFT OUTER JOIN q3 ON cb.custid = q3.custid
 			LEFT OUTER JOIN q4 ON cb.custid = q4.custid	
 			LEFT OUTER JOIN t ON cb.custid = t.CustID
-		WHERE cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) + ISNULL(t.adjustWinlostAmt, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
+		WHERE cb.Balance - ISNULL(q2.Outstanding,0) + ISNULL(BalRNG, 0) + ISNULL(BalLC, 0) - ISNULL(t.adjustWinlostAmt, 0) <> cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance
 			AND NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalance_Exception ex with (nolock) WHERE cb.custid = ex.custid)
 			AND NOT EXISTS (SELECT 1 FROM dbo.BalCreditSportsPending cdp2 with (nolock) WHERE cb.custid = cdp2.custid)
 			AND NOT EXISTS (SELECT 1 FROM dbo.BalCreditCasinoPending cdp3 with (nolock) WHERE cb.custid = cdp3.custid)
