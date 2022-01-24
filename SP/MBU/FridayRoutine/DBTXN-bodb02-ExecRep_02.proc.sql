@@ -571,7 +571,7 @@ BEGIN
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.CashOutSelling AS tbl WITH (ROWLOCK)
 				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.TransID = CONVERT(INT, s.val);
+						ON	tbl.TransID = CONVERT(BIGINT, s.val);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
