@@ -20,6 +20,7 @@ AS
 		- 20210301@Percy: Add column Revenue [RedmineID: #150398]
 		- 20210715@Percy: Add columns ProgressiveBet, ProgressiveWin [RedmineID: #158438]
 		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
+		- 20220120@Percy: Keep raw data within 1 year [RedmineID: #167823]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -317,7 +318,18 @@ BEGIN
 	WHERE DataSource = 'TpBetRecord'
 		AND IsFinished = 1
 		AND FinishedTime < DATEADD(DAY, -7, GETDATE())
+		
+	DECLARE @LastYear SMALLDATETIME = DATEADD(YEAR, -1, GETDATE())
+	
+	WHILE 1 = 1
+	BEGIN
+		DELETE TOP (3000) dbo.TpBetRecord WITH (ROWLOCK, UPDLOCK)
+		WHERE WinlostDate < @LastYear
 
+		IF @@ROWCOUNT < 3000
+			BREAK
+	END
+	
 	DROP TABLE #tmpTpBetRecord
 END
 GO
