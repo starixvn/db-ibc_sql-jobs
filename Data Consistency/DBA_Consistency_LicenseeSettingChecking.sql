@@ -20,6 +20,7 @@ AS
 		- 20210629@Percy: Enhance code get data from bettrans [RedmineID: #153195]
 		- 20210812@Percy: Exclude Oddsspread Adjustment Dummy Account [RedmineID: #153195]
 		- 20211215@Percy: Exclude Sports Lottery [RedmineID: #153195]
+		- 20220121@Percy: Exclude more Dummy Accounts [RedmineID: #153195]
 	
 	Param's Explanation:
 		@RuleId
@@ -112,6 +113,9 @@ BEGIN
 		) c
 		WHERE cs.currency <> 20
 			AND a.username NOT LIKE '%ACC%' -- dummy agent
+			AND a.username NOT LIKE 'AB88CAS%'
+			AND a.username NOT LIKE '%LocalBank%'
+			AND a.username NOT LIKE '%AFF%' -- affiliate
 	) t
 	WHERE RN = 1
 
