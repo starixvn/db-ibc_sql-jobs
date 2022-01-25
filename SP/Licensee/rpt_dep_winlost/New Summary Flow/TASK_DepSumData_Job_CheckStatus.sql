@@ -16,6 +16,7 @@ AS
 		- 20190624@Percy: Check missing import data in the last 15 mins + Remove UUS currency [RedmineID: #115411]
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 		- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
+		- 20220124@Sophia: Remove the code Gen data for Old Cashout [Redmine: #167928]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -135,7 +136,8 @@ BEGIN
 		
 		-- Check opening balance of customers for yesterday only
 		---- Gen data for TradeCust Winlost on the days when move bets
-		EXEC dbo.GEN_rptTradeCustWinlost
+		
+		---EXEC dbo.GEN_rptTradeCustWinlost  ---- 20220124: remove Code Gen Old Cashout
 		
 		CREATE TABLE #Result(CustID INT, Currency INT, OpeningBalance_DepWL MONEY, OpeningBalance_Bettrans MONEY)
 
