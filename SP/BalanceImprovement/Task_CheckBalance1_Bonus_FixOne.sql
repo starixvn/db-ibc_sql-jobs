@@ -90,7 +90,7 @@ BEGIN
 
 			SET @__movebetdate = @__movebetdateF
 				
-			SELECT @DiffBalance = (ISNULL(@FromBettrans, 0) + ISNULL(@FromSumWinloss, 0)) - (c1.Amount - d1.Amount)
+			SELECT @DiffBalance = (ISNULL(@FromBettrans, 0) + ISNULL(@FromTransfer, 0) + ISNULL(@FromSumWinloss, 0)) - (c1.Amount - d1.Amount)
 			FROM dbo.BonusWalletCredit c1 WITH (ROWLOCK)
 				INNER JOIN dbo.BonusWalletDebit d1 WITH (NOLOCK) ON c1.custid = d1.custid AND c1.BonusID = d1.BonusID
 			WHERE c1.custid = @custid AND c1.BonusID = @bonusId
