@@ -1,10 +1,10 @@
-﻿/*<info serverAlias="DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBOF-bodb02,DBBAH-bodb02,DBTP-bodb02,DBBAL-bodb02" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="1"></info>*/
+﻿/*<info serverAlias="DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBAH-bodb02,DBTP-bodb02,DBBAL-bodb02" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE  [dbo].[Age_SelBalanceUpDay]	
 AS	
 /*
 Created: 
 Task : Get move bet day, balanceup day
-DB: DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBOF-bodb02,DBBAH-bodb02,DBTP-bodb02,DBBAL-bodb02
+DB: DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBAH-bodb02,DBTP-bodb02,DBBAL-bodb02
 Original:
 
 Revisions:
@@ -15,7 +15,7 @@ Revisions:
 	- 20110713@Henry: Change to get @MoveBetsDay from match14 
 	- 20210323@Patrick: Change get movebet date source [Redmine: #149927]
 	- 20210816@Sophia: add DBBAL [Redmine: #154300]
-	- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
+	- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - and remove SP at DBBOF [RedmineID: #164301]
 
 Param's Explanation:
 */
@@ -24,16 +24,10 @@ SET NOCOUNT ON
 BEGIN
 	DECLARE @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
 
-	IF OBJECT_ID(N'dbo.Transfer', N'U') IS NOT NULL
-	BEGIN
-		SELECT TOP 1 @BalanceUpDay = winlostdate
-		FROM dbo.Transfer t WITH(NOLOCK)
-		WHERE bettype = 20000 AND custid = 3
-	END
-	ELSE 
-	BEGIN
-		SET @BalanceUpDay = NULL
-	END
+	SELECT TOP 1 @BalanceUpDay = winlostdate
+	FROM dbo.Transfer t WITH(NOLOCK)
+	WHERE bettype = 20000 AND custid = 3
+	
 	
 	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @MoveBetsDay OUTPUT
 
