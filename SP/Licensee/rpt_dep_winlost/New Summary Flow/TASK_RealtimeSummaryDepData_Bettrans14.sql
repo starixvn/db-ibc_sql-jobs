@@ -63,6 +63,7 @@ AS
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
 		- 20211216@Kos: Integrate PP 20 new games [RedmineID: #165772]
+		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -299,7 +300,8 @@ BEGIN
 				WHEN b.bettype BETWEEN 4297 AND 4300 THEN -248 -- PP Prize
 				WHEN (b.bettype BETWEEN 1901 AND 1999 AND bettype <> 1906) THEN 165 -- CC
 				WHEN b.bettype = 1906 THEN -165 -- Bonus
-				WHEN b.bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
+				WHEN b.bettype BETWEEN 4301 AND 4598 THEN 247	-- SG
+				WHEN b.bettype BETWEEN 4599 AND 4600 THEN -247	-- SG Jackpot Contribution and Jackpot Prize
 				WHEN b.bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
@@ -328,12 +330,12 @@ BEGIN
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 			SUM(CASE
-					WHEN b.ruben = 1 AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
-						AND (	(b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
-								AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
-								AND (b.bettype NOT BETWEEN 17000 AND 17030)
-							) 
-					THEN b.winlost-b.actual_stake
+					WHEN b.ruben = 1
+						AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
+						AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
+						AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
+						AND (b.bettype NOT BETWEEN 17000 AND 17030)
+						THEN b.winlost - b.actual_stake
 					ELSE 0
 				END),--Winloss
 			SUM(CASE WHEN b.statusID = 111 THEN b.stake ELSE 0 END),--DrawGame
@@ -342,12 +344,11 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 			SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
 			SUM(CASE
-					WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+					WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
 						OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 						OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 						OR (b.bettype BETWEEN 17000 AND 17030)
-						) 
-					THEN b.winlost-b.actual_stake
+						THEN b.winlost - b.actual_stake
 					ELSE 0
 				END) -- Promotion
 		FROM dbo.bettrans14 b WITH (NOLOCK)
@@ -359,7 +360,7 @@ BEGIN
 			GROUP BY b.custid, b.bettype
 			OPTION(OPTIMIZE FOR (@n = 1)) --Trick SQL optimizer to use nested loop
 		*/
-		WHERE b.winlostdate = @Winlostdate
+		WHERE b.winlostdate = @WinLostDate
 			AND b.bettype < 19999
 			AND b.bettype <> 999
 		GROUP BY
@@ -398,7 +399,8 @@ BEGIN
 				WHEN b.bettype BETWEEN 4297 AND 4300 THEN -248 -- PP Prize
 				WHEN (b.bettype BETWEEN 1901 AND 1999 AND bettype <> 1906) THEN 165 -- CC
 				WHEN b.bettype = 1906 THEN -165 -- Bonus
-				WHEN b.bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
+				WHEN b.bettype BETWEEN 4301 AND 4598 THEN 247	-- SG
+				WHEN b.bettype BETWEEN 4599 AND 4600 THEN -247	-- SG Jackpot Contribution and Jackpot Prize
 				WHEN b.bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
@@ -456,7 +458,7 @@ BEGIN
 			SUM(Adjustment),--Adjustment
 			SUM(Turnover),--Turnover
 			SUM(Outstanding),--Outstanding
-			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173) THEN Winloss ELSE 0 END),--Winloss
+			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247) THEN Winloss ELSE 0 END),--Winloss
 			SUM(Transfer3rd),--Transfer3rd
 			SUM(DrawGame),--DrawGame
 			SUM(Playercomm),--Playercomm
@@ -633,7 +635,7 @@ BEGIN
 			-1,
 			TurnOver,
 			DrawGame,
-			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173) THEN Promotion ELSE Winloss END AS Winloss,
+			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247) THEN Promotion ELSE Winloss END AS Winloss,
 			playercomm,
 			BetCount,
 			OutStanding

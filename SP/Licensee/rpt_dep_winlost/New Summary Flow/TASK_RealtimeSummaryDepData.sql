@@ -62,6 +62,7 @@ AS
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
 		- 20211216@Kos: Integrate PP 20 new games [RedmineID: #165772]
+		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -250,8 +251,8 @@ BEGIN
 				, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion)
 			SELECT b.custid,
 				CASE
-					WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150
-					WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173
+					WHEN b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150 THEN -150
+					WHEN b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173 THEN -173
 					ELSE b.bettype
 				END,
 				SUM(CASE WHEN b.bettype = 22001 THEN b.winlost-b.actual_stake ELSE 0 END), --Deposit
@@ -262,12 +263,13 @@ BEGIN
 				SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 				SUM(CASE WHEN (bettype < 19999 OR bettype = 23002) AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 				SUM(CASE
-						WHEN b.bettype < 19999 AND b.ruben = 1 
-						AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+						WHEN b.bettype < 19999
+							AND b.ruben = 1
+							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)
-							) THEN b.winlost-b.actual_stake
+							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END),--Winloss
 				SUM(CASE WHEN b.bettype IN (22006, 22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd
@@ -280,11 +282,11 @@ BEGIN
 				SUM(CASE WHEN b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
 				SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END), -- AdjBonusWallet
 				SUM(CASE
-						WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
 							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 							OR (b.bettype BETWEEN 17000 AND 17030)
-							) THEN b.winlost-b.actual_stake
+							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END) -- Promotion
 			FROM dbo.bettrans b WITH (NOLOCK)
@@ -295,13 +297,14 @@ BEGIN
 				AND c.roleid = 1
 				AND b.betType <> 999 --Licensee Spread Setting
 				AND 1 = CASE
-						WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
-						WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
-						ELSE 1 END
+							WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
+							WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
+							ELSE 1
+						END
 			GROUP BY b.custid,
 				CASE
-					WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN -150
-					WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173
+					WHEN b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150 THEN -150
+					WHEN b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173 THEN -173
 					ELSE b.bettype
 				END
 			OPTION (RECOMPILE, MAXDOP 8)
@@ -379,11 +382,11 @@ BEGIN
 				SUM(CASE WHEN (bettype < 19999 OR bettype = 23002) AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 				SUM(CASE
 						WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.ruben = 1 
-							AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+							AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)
-							) THEN b.winlost-b.actual_stake
+							) THEN b.winlost - b.actual_stake
 						ELSE 0
 					END),--Winloss
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype IN (22006, 22007) THEN b.winlost-b.actual_stake ELSE 0 END),--Transfer3rd
@@ -397,11 +400,11 @@ BEGIN
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END), -- AdjBonusWallet
 				SUM(CASE
 						WHEN b.winlostdate = @Winlostdate 
-							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
 							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 							OR (b.bettype BETWEEN 17000 AND 17030)
-							) THEN b.winlost-b.actual_stake
+							) THEN b.winlost - b.actual_stake
 						ELSE 0
 					END) -- Promotion
 			FROM dbo.bettrans b WITH (NOLOCK)
@@ -663,7 +666,8 @@ BEGIN
 				WHEN bettype BETWEEN 4297 AND 4300 THEN -248 -- PP Prize
 				WHEN (bettype BETWEEN 1901 AND 1999 AND bettype <> 1906) THEN 165 -- CC
 				WHEN bettype = 1906 THEN -165 -- Bonus
-				WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
+				WHEN bettype BETWEEN 4301 AND 4598 THEN 247 -- SG
+				WHEN bettype BETWEEN 4599 AND 4600 THEN -247 -- SG Jackpot Contribution and Jackpot Prize
 				WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
@@ -691,9 +695,11 @@ BEGIN
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
-			SUM(CASE WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173) 
-						 OR (bettype BETWEEN 17000 AND 17030)
-					 THEN Promotion ELSE Winloss END),--Winloss
+			SUM(CASE
+					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4599, 4600)
+						OR (bettype BETWEEN 17000 AND 17030) THEN Promotion
+					ELSE Winloss
+				END),--Winloss
 			SUM(playercomm),--Playercomm
 			SUM(BetCount),--BetCount
 			SUM(OutStanding)--Outstanding
@@ -736,7 +742,8 @@ BEGIN
 				WHEN bettype BETWEEN 4297 AND 4300 THEN -248 -- PP Prize
 				WHEN (bettype BETWEEN 1901 AND 1999 AND bettype <> 1906) THEN 165 -- CC
 				WHEN bettype = 1906 THEN -165 -- Bonus
-				WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
+				WHEN bettype BETWEEN 4301 AND 4598 THEN 247 -- SG
+				WHEN bettype BETWEEN 4599 AND 4600 THEN -247 -- SG Jackpot Contribution and Jackpot Prize
 				WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
