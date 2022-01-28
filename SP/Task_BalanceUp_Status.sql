@@ -10,6 +10,7 @@ AS
 
 	Revisions:
 		- 20191111@Bobby: Initialize SP [RedmineID: #83787]
+		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
 	
 	Parameters Explanations:
 		@StatusID = 0 --> BU has commpleted
@@ -39,8 +40,8 @@ BEGIN
 	-- the BU date - 6-Friday
 	SELECT @BUDate				= MAX(winlostdate)
 		,@OldBUDate				= MIN(winlostdate)
-	FROM dbo.bettrans WITH(NOLOCK)
-	WHERE matchid = 0 AND bettype = 20000
+	FROM dbo.Transfer WITH(NOLOCK)
+	WHERE bettype = 20000
 	
 	SELECT @StatusID			= 1
 		, @IsArchivingBetName	= 'isArchivingBet_Local'
