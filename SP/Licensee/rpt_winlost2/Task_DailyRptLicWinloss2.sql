@@ -104,6 +104,7 @@ AS
 		- 20211216@Kos: Integrate PP 20 new games [RedmineID: #165772]
 		- 20211231@Hogan: Using betfrom '.' instead of betfrom '#' [RedmineID: #166689]
 		- 20220106@Kos: Hotfix - Missing turnover of Vgaming Jackpot [RedmineID: #167065]
+		- 20220107@Kos: Support new Cash Out [RedmineID: #165160]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -113,9 +114,17 @@ BEGIN
 
 	DELETE FROM dbo.rptLicWinloss2 WITH (ROWLOCK) WHERE winlostdate = @WinLostDate
 
+	CREATE TABLE #SportBettype (ProductId TINYINT, BetType SMALLINT, EventType TINYINT)
+
+	CREATE CLUSTERED INDEX IX_BetType ON #SportBettype (BetType)
+
+	INSERT INTO #SportBettype
+	SELECT ProductID, BetType, EventType
+	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (1, 0, 0, 2, '', '', 1)
+
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
 
-	--Member Level
+	-- Member Level
 	INSERT INTO dbo.rptLicWinloss2 (
 		[winlostdate]
 		,[username]
@@ -148,6 +157,7 @@ BEGIN
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
 		,[apositiontaking]
+		,TicketType
 		)
 	SELECT
 		@WinLostDate
@@ -158,87 +168,84 @@ BEGIN
 		,c.recommend
 		,c.mrecommend
 		,c.srecommend
-		,SUM(CASE
-				WHEN b.liveawayscore = 0 AND b.bettype IN (33, 43) THEN ABS(b.stake/2)
-				ELSE ABS(b.stake)
-			END) AS TurnOver
-		,SUM(winlost - actual_stake) winlost
+		,SUM(ABS(b.stake)) AS TurnOver
+		,SUM(b.winlost - b.actual_stake) AS WinLost
 		,CASE
-			WHEN b.statusID IN (112,113) THEN SUM(CASE
-															WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150, 3898, 3899)
-																OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
-																OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)) THEN 0
-															ELSE ABS(winlost - actual_stake)
-														END)  -- exclude PP Prize, SAG Tip ticket from BetEffective
+			WHEN b.statusID IN (112, 113) THEN SUM(CASE
+														WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150, 3898, 3899)
+															OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
+															OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)) THEN 0
+														ELSE ABS(b.winlost - b.actual_stake)
+													END)  -- exclude PP Prize, SAG Tip ticket from BetEffective
 			ELSE 0
 		END AS BetEffective
-		,SUM(awinlost) awinlost
-		,SUM(mwinlost) mwinlost
-		,SUM(ISNULL(swinlost,0)) swinlost
-		,SUM(playercomm) playercomm
-		,SUM(comm) comm
-		,SUM(acomm) acomm
-		,SUM(ISNULL(scomm,0)) scomm
-		,SUM((winlost - actual_stake) * virtualrate) AS WinlostVirtual
-		,SUM(comm * virtualrate) AS CommVirtual
+		,SUM(b.awinlost) AS awinlost
+		,SUM(b.mwinlost) AS mwinlost
+		,SUM(ISNULL(b.swinlost, 0)) AS swinlost
+		,SUM(b.playercomm) AS playercomm
+		,SUM(b.comm) AS comm
+		,SUM(b.acomm) AS acomm
+		,SUM(ISNULL(b.scomm, 0)) AS scomm
+		,SUM((b.winlost - b.actual_stake) * b.virtualrate) AS WinlostVirtual
+		,SUM(b.comm * b.virtualrate) AS CommVirtual
 		,COUNT(b.transid) BetCount
 		,b.currency
 		,CASE
-			WHEN bettype IN (71,72) THEN 251 --casino
-			WHEN bettype = 1000 THEN 253 --games
-			WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game
-			WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
-			WHEN bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
-			WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
-			WHEN bettype BETWEEN 51 AND 69 THEN 201
-			WHEN bettype IN (31,32,33,41,42,43) THEN 151
-			WHEN bettype BETWEEN 1501  AND 1599 THEN 202 -- Keno
-			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
-			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-			WHEN bettype = 1900 THEN 249 -- VG
-			WHEN bettype BETWEEN 2101 AND 2199 THEN 208
-			WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-			WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
-			WHEN bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
-			WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
-			WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --CB
-			WHEN bettype BETWEEN 1011 AND 1020 THEN 219
-			WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
-			WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
-			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
-			WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN bettype BETWEEN 4101 AND 4300 OR bettype BETWEEN 6701 AND 7000 THEN 248 -- PP
-			WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
-			WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
-			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
-			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
-			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
-			WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- SXG
-			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid <> 150) THEN 200 -- SBC
-			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid = 150) THEN 150 -- SBC FreeBets
-			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
-			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
-			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
-			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
-			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
-			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
-			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
-			WHEN (bettype BETWEEN 3801 AND 3899 AND matchid <> 173) THEN 171 -- VGA
-			WHEN (bettype BETWEEN 3801 AND 3899 AND matchid = 173) THEN 173 -- VGA FreeBets
-			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
-			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
-			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
-			WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
-			WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
+			WHEN b.bettype IN (71,72) THEN 251 --casino
+			WHEN b.bettype = 1000 THEN 253 --games
+			WHEN b.bettype BETWEEN 81 AND 120 THEN 161 --Number Game
+			WHEN b.bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
+			WHEN b.bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
+			WHEN (b.bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
+			WHEN b.bettype BETWEEN 51 AND 69 THEN 201
+			WHEN b.bettype IN (31,32,33,41,42,43) THEN 151
+			WHEN b.bettype BETWEEN 1501  AND 1599 THEN 202 -- Keno
+			WHEN b.bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+			WHEN b.bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
+			WHEN b.bettype = 1900 THEN 249 -- VG
+			WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN (b.bettype BETWEEN 2301 AND 2399 OR b.bettype BETWEEN 2901 AND 2999) THEN 210
+			WHEN b.bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
+			WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
+			WHEN b.bettype BETWEEN 18000 AND 18006 THEN 204 --CB
+			WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
+			WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
+			WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
+			WHEN b.bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
+			WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
+			WHEN b.bettype BETWEEN 4101 AND 4300 OR b.bettype BETWEEN 6701 AND 7000 THEN 248 -- PP
+			WHEN b.bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
+			WHEN b.bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
+			WHEN b.bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
+			WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
+			WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
+			WHEN b.bettype BETWEEN 3101 AND 3150 THEN 243 -- SXG
+			WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid <> 150) THEN 200 -- SBC
+			WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN 150 -- SBC FreeBets
+			WHEN b.bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
+			WHEN b.bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
+			WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
+			WHEN b.bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+			WHEN b.bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
+			WHEN b.bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
+			WHEN b.bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid <> 173) THEN 171 -- VGA
+			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN 173 -- VGA FreeBets
+			WHEN b.bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
+			WHEN b.bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
+			WHEN b.bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
+			WHEN b.bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
+			WHEN b.bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899)
-				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)
-				OR (bettype BETWEEN 3801 AND 3899 AND matchid = 173)
-				OR (bettype BETWEEN 17000 AND 17030)
-				) THEN bettype
+			WHEN (b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899)
+				OR (b.bettype BETWEEN 1611 AND 1697 AND matchid = 150)
+				OR (b.bettype BETWEEN 3801 AND 3899 AND matchid = 173)
+				OR (b.bettype BETWEEN 17000 AND 17030)
+				) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END bettype
@@ -287,9 +294,14 @@ BEGIN
 				ELSE 0
 			END) AS BABuyBackAmt
 		,b.apositiontaking
+		,CASE
+			WHEN s.ProductId = 1 AND s.EventType = 1 AND b.betdaqid = -2 THEN 1
+			ELSE 0
+		END AS TicketType
 	FROM
 		bodb02.dbo.bettrans14 AS b WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.custid = c.custid
+		INNER JOIN bodb02.dbo.Customer AS c WITH (NOLOCK) ON b.custid = c.custid
+		LEFT JOIN #SportBettype AS s ON s.BetType = b.bettype
 		LEFT JOIN bodb_licensee.dbo.LicenseeBATransaction_bk AS ba WITH (NOLOCK) ON b.transid = ba.transid
 	WHERE
 		b.winlostdate = @WinLostDate
@@ -306,60 +318,60 @@ BEGIN
 		,b.currency
 		,b.statusID
 		,CASE
-			WHEN bettype IN (71,72) THEN 251 --casino
-			WHEN bettype = 1000 THEN 253 --games
-			WHEN bettype BETWEEN 81 AND 120 THEN 161 --Number Game
-			WHEN bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
-			WHEN bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
-			WHEN (bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
-			WHEN bettype BETWEEN 51 AND 69 THEN 201
-			WHEN bettype IN (31,32,33,41,42,43) THEN 151
-			WHEN bettype BETWEEN 1501  AND 1599 THEN 202
-			WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
-			WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
-			WHEN bettype = 1900 THEN 249 -- VG
-			WHEN bettype BETWEEN 2101 AND 2199 THEN 208
-			WHEN bettype BETWEEN 2201 AND 2299 THEN 209
-			WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
-			WHEN bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
-			WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
-			WHEN bettype BETWEEN 18000 AND 18006 THEN 204
-			WHEN bettype BETWEEN 1011  AND 1020 THEN 219
-			WHEN bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
-			WHEN bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
-			WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
-			WHEN bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-			WHEN bettype BETWEEN 4101 AND 4300 OR bettype BETWEEN 6701 AND 7000 THEN 248 -- PP
-			WHEN bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
-			WHEN bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
-			WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
-			WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
-			WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
-			WHEN bettype BETWEEN 3101 AND 3150 THEN 243 -- SXG
-			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid <> 150) THEN 200 -- SBC
-			WHEN (bettype BETWEEN 1611 AND 1699 AND matchid = 150) THEN 150 -- SBC FreeBets
-			WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
-			WHEN bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
-			WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
-			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
-			WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
-			WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
-			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
-			WHEN (bettype BETWEEN 3801 AND 3899 AND matchid <> 173) THEN 171 -- VGA
-			WHEN (bettype BETWEEN 3801 AND 3899 AND matchid = 173) THEN 173 -- VGA FreeBets
-			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
-			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
-			WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
-			WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
-			WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
+			WHEN b.bettype IN (71,72) THEN 251 --casino
+			WHEN b.bettype = 1000 THEN 253 --games
+			WHEN b.bettype BETWEEN 81 AND 120 THEN 161 --Number Game
+			WHEN b.bettype BETWEEN 8101 AND 8120 THEN 164 --Number Game - Happy 5
+			WHEN b.bettype BETWEEN 3601 AND 3610 THEN 168 --Happy 5 Linked Games
+			WHEN (b.bettype BETWEEN 1201 AND 1299 ) THEN 180  --Virtual Sport
+			WHEN b.bettype BETWEEN 51 AND 69 THEN 201
+			WHEN b.bettype IN (31,32,33,41,42,43) THEN 151
+			WHEN b.bettype BETWEEN 1501  AND 1599 THEN 202
+			WHEN b.bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+			WHEN b.bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
+			WHEN b.bettype = 1900 THEN 249 -- VG
+			WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
+			WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
+			WHEN (b.bettype BETWEEN 2301 AND 2399 OR b.bettype BETWEEN 2901 AND 2999) THEN 210
+			WHEN b.bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
+			WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
+			WHEN b.bettype BETWEEN 18000 AND 18006 THEN 204
+			WHEN b.bettype BETWEEN 1011  AND 1020 THEN 219
+			WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 --Betradar Virtual Sport
+			WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 --Virtual Basketball
+			WHEN b.bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
+			WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
+			WHEN b.bettype BETWEEN 4101 AND 4300 OR b.bettype BETWEEN 6701 AND 7000 THEN 248 -- PP
+			WHEN b.bettype BETWEEN 1901 AND 1999 THEN 165 -- CC
+			WHEN b.bettype BETWEEN 4301 AND 4600 THEN 247 -- SG
+			WHEN b.bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
+			WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
+			WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
+			WHEN b.bettype BETWEEN 3101 AND 3150 THEN 243 -- SXG
+			WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid <> 150) THEN 200 -- SBC
+			WHEN (b.bettype BETWEEN 1611 AND 1699 AND b.matchid = 150) THEN 150 -- SBC FreeBets
+			WHEN b.bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
+			WHEN b.bettype BETWEEN 3001 AND 3099 THEN 244 -- SAG
+			WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
+			WHEN b.bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
+			WHEN b.bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
+			WHEN b.bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
+			WHEN b.bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
+			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid <> 173) THEN 171 -- VGA
+			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN 173 -- VGA FreeBets
+			WHEN b.bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
+			WHEN b.bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
+			WHEN b.bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
+			WHEN b.bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
+			WHEN b.bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 			ELSE 0
 		END
 		,CASE
-			WHEN (bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899)
-				OR (bettype BETWEEN 1611 AND 1697 AND matchid = 150)
-				OR (bettype BETWEEN 3801 AND 3899 AND matchid = 173)
-				OR (bettype BETWEEN 17000 AND 17030)
-				) THEN bettype
+			WHEN (b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899)
+				OR (b.bettype BETWEEN 1611 AND 1697 AND matchid = 150)
+				OR (b.bettype BETWEEN 3801 AND 3899 AND matchid = 173)
+				OR (b.bettype BETWEEN 17000 AND 17030)
+				) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END
@@ -394,6 +406,10 @@ BEGIN
 			ELSE ''
 		END
 		,b.apositiontaking
+		,CASE
+			WHEN s.ProductId = 1 AND s.EventType = 1 AND b.betdaqid = -2 THEN 1
+			ELSE 0
+		END
 
 	-- Agent Level (sum on member)
 	INSERT INTO dbo.rptLicWinloss2 (
@@ -428,6 +444,7 @@ BEGIN
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
 		,[apositiontaking]
+		,TicketType
 		)
 	SELECT
 		@WinLostDate
@@ -461,6 +478,7 @@ BEGIN
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
 		,b.apositiontaking
+		,b.TicketType
 	FROM
 		dbo.rptLicWinloss2 AS b WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.recommend = c.custid
@@ -483,6 +501,7 @@ BEGIN
 		,b.isMobile
 		,b.betfrom
 		,b.apositiontaking
+		,b.TicketType
 
 	-- Master Level (sum on member)
 	INSERT INTO dbo.rptLicWinloss2
@@ -518,6 +537,7 @@ BEGIN
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
 		,[apositiontaking]
+		,TicketType
 		)
 	SELECT
 		@winlostdate
@@ -551,6 +571,7 @@ BEGIN
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
 		,b.apositiontaking
+		,b.TicketType
 	FROM
 		dbo.rptLicWinloss2 AS b WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.mrecommend = c.custid
@@ -572,6 +593,7 @@ BEGIN
 		,b.isMobile
 		,b.betfrom
 		,b.apositiontaking
+		,b.TicketType
 
 	-- Super Level (Sum on member)
 	INSERT INTO dbo.rptLicWinloss2 (
@@ -606,6 +628,7 @@ BEGIN
 		,[BuyBackAmt]
 		,[BABuyBackAmt]
 		,[apositiontaking]
+		,TicketType
 		)
 	SELECT
 		@winlostdate
@@ -639,6 +662,7 @@ BEGIN
 		,SUM(BuyBackAmt)
 		,SUM(BABuyBackAmt)
 		,b.apositiontaking
+		,b.TicketType
 	FROM
 		dbo.rptLicWinloss2 AS b WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.srecommend = c.custid
@@ -659,5 +683,6 @@ BEGIN
 		,b.isMobile
 		,b.betfrom
 		,b.apositiontaking
+		,b.TicketType
 END
 GO
