@@ -2,7 +2,7 @@
 ALTER PROCEDURE [dbo].[ExecRep_00] 
 	@Winlostdate SMALLDATETIME = NULL
 	,@Target VARCHAR(30) = 'DBTRANS' -- DBTRANS/REPLICATED
-	,@TableName VARCHAR(200) = ''
+	,@TableName VARCHAR(200) 
 AS
 /*
  	DB: DBTXN/bodb02
@@ -35,7 +35,7 @@ BEGIN
 	IF @Target NOT IN ('DBTRANS', 'REPLICATED') RETURN
 	IF @Target = 'DBTRANS' AND @@SERVERNAME NOT IN ('DBTRANS', 'DB206', 'SITDBTRANS') RETURN
 	IF @Target = 'REPLICATED' AND @@SERVERNAME IN ('DB206', 'SITDBTRANS', 'DBTRANS') RETURN
-	IF @TableName <> '' AND OBJECT_ID (@TableName, N'U') IS NULL RETURN
+	IF OBJECT_ID (@TableName, N'U') IS NULL RETURN
 	
 	--CREATE TABLE #tmp (transid BIGINT, actualrate FLOAT, virtualrate FLOAT)
 
@@ -49,7 +49,7 @@ BEGIN
 
 	IF @@SERVERNAME IN ('DBTRANS', 'DB206', 'SITDBTRANS')
 	BEGIN
-		IF @TableName IN  ('bettrans', '') --bettrans@dbtrans
+		IF @TableName = 'bettrans' --bettrans@dbtrans
 		BEGIN
 			-- update for SB's tickets (using virtualrate)
 			INSERT INTO #bettrans(transid, actualrate, virtualrate)
@@ -94,7 +94,7 @@ BEGIN
 		
 		END
 		
-		IF @TableName IN ('translog', '') --translog@dbtrans
+		IF @TableName = 'translog'  --translog@dbtrans
 		BEGIN
 			-- update for TransLog table (using virtualrate)
 			INSERT INTO #translog(transid, actualrate, virtualrate)
@@ -106,7 +106,7 @@ BEGIN
 			 
 		END
 
-		IF @TableName IN ('bettransRnG', '') --bettransRnG@dbtrans
+		IF @TableName = 'bettransRnG' --bettransRnG@dbtrans
 		BEGIN
 			-- update for BettransRNG table (using virtualrate)
 			INSERT INTO #bettransRnG(transid, actualrate, virtualrate)
@@ -118,7 +118,7 @@ BEGIN
 				 
 		END
 		
-		IF @TableName IN ('bettransLC', '') --bettransLC@dbtrans
+		IF @TableName = 'bettransLC' --bettransLC@dbtrans
 		BEGIN
 			-- update for BettransLC table (using virtualrate)
 			INSERT INTO #bettransLC(transid, actualrate, virtualrate)
@@ -129,7 +129,7 @@ BEGIN
 				AND b.actualrate <> e.actualrate 
 		END
 		 
-		IF @TableName IN ('Transfer_Coll', '') AND EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_NAME(object_id) = 'Transfer_Coll')--transfer_coll@dbtrans
+		IF @TableName = 'Transfer_Coll' --transfer_coll@dbtrans
 		BEGIN
 			-- Transfer_Coll tickets
 			INSERT INTO #Transfer_Coll(transid, actualrate)
@@ -140,7 +140,7 @@ BEGIN
 				AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
 		END
 		
-		IF @TableName IN ('bettransG', '') --bettransG@dbtrans
+		IF @TableName = 'bettransG' --bettransG@dbtrans
 		BEGIN
 			-- update for bettransG table 
 			INSERT INTO #bettransG(transid, actualrate, virtualrate)
@@ -151,7 +151,7 @@ BEGIN
 			WHERE b.winlostdate >= @Winlostdate AND b.actualrate <> e.actualrate
 		END
 
-		IF @TableName IN ('Transfer', '') --Transfer@dbtrans
+		IF @TableName = 'Transfer' --Transfer@dbtrans
 		BEGIN
 			-- update for transfer table 
 			INSERT INTO #transfer(transid, actualrate)
@@ -171,7 +171,7 @@ BEGIN
 			WHERE NAME IN ('custinfo', 'bettrans', 'exchange') AND type = 'U'
 		) < 3 RETURN
 
-		IF @TableName IN ('bettrans', '') --bettrans@replicated
+		IF @TableName = 'bettrans' --bettrans@replicated
 		BEGIN
 			-- update for SB's tickets (using virtualrate)
 			INSERT INTO #bettrans(transid, actualrate, virtualrate)
@@ -217,7 +217,7 @@ BEGIN
 		
 		END
 		
-		IF @TableName IN ('translog', '') --translog@replicated
+		IF @TableName = 'translog' --translog@replicated
 		BEGIN
 			-- update for TransLog table (using virtualrate)
 			INSERT INTO #translog(transid, actualrate, virtualrate)
@@ -229,7 +229,7 @@ BEGIN
 			 
 		END
 		
-		IF @TableName IN ('bettransRnG', '') --bettransRnG@replicated
+		IF @TableName = 'bettransRnG' --bettransRnG@replicated
 		BEGIN
 			-- update for BettransRNG table (using virtualrate)
 			INSERT INTO #bettransRnG(transid, actualrate, virtualrate)
@@ -240,7 +240,7 @@ BEGIN
 				AND b.actualrate <> e.actualrate 				
 		END
 		
-		IF @TableName IN ('bettransLC', '') --bettransLC@replicated
+		IF @TableName = 'bettransLC' --bettransLC@replicated
 		BEGIN
 			-- update for BettransLC table (using virtualrate)
 			INSERT INTO #bettransLC(transid, actualrate, virtualrate)
@@ -251,7 +251,7 @@ BEGIN
 				AND b.actualrate <> e.actualrate 	 
 		END
 		
-		IF @TableName IN ('Transfer_Coll', '') AND EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_NAME(object_id) = 'Transfer_Coll') --transfer_coll@replicated
+		IF @TableName = 'Transfer_Coll' --transfer_coll@replicated
 		BEGIN 
 			INSERT INTO #Transfer_Coll(transid, actualrate)
 			select b.transid, e.actualrate 
@@ -261,7 +261,7 @@ BEGIN
 				AND b.winlostdate >= @Winlostdate AND b.bettype >= 19001
 		END
 		
-		IF @TableName IN ('bettransG', '') --bettransG@replicated
+		IF @TableName = 'bettransG' --bettransG@replicated
 		BEGIN
 			-- update for bettransG table 
 			INSERT INTO #bettransG(transid, actualrate, virtualrate)
@@ -273,7 +273,7 @@ BEGIN
 				  AND b.actualrate <> e.actualrate
 		END  
 
-		IF @TableName IN ('Transfer', '') --Transfer@replicated
+		IF @TableName = 'Transfer' --Transfer@replicated
 		BEGIN
 			-- update for transfer table 
 			INSERT INTO #transfer(transid, actualrate)
@@ -289,7 +289,7 @@ BEGIN
 	DECLARE @__table TABLE (transid BIGINT, actualrate FLOAT, virtualrate FLOAT)
 	DECLARE @rowcount INT = 1
 	
-	IF @TableName IN ('bettransRnG', '') --update bettransRnG
+	IF @TableName = 'bettransRnG' --update bettransRnG
 	BEGIN
 		SET @rowcount = 1
 		WHILE @rowcount <> 0
@@ -308,7 +308,7 @@ BEGIN
 		END
 	END
 	
-	IF @TableName IN ('bettransLC', '') --update bettransLC
+	IF @TableName = 'bettransLC' --update bettransLC
 	BEGIN
 		SET @rowcount = 1 
 		WHILE @rowcount <> 0
@@ -327,7 +327,7 @@ BEGIN
 		END
 	END
 	
-	IF @TableName IN ('translog', '') --update translog
+	IF @TableName = 'translog' --update translog
 	BEGIN
 		SET @rowcount = 1 
 		WHILE @rowcount <> 0
@@ -346,7 +346,7 @@ BEGIN
 		END
 	END
 	
-	IF @TableName IN ('bettrans', '') --update bettrans
+	IF @TableName = 'bettrans' --update bettrans
 	BEGIN
 		SET @rowcount = 1 
 		WHILE @rowcount <> 0
@@ -365,7 +365,7 @@ BEGIN
 		END
 	END
 	
-	IF @TableName IN ('Transfer_Coll', '') AND EXISTS(SELECT 1 FROM sys.objects WHERE OBJECT_NAME(object_id) = 'Transfer_Coll') --update transfer_coll
+	IF @TableName = 'Transfer_Coll' --update transfer_coll
 	BEGIN 
 		SET @rowcount = 1 
 		WHILE @rowcount <> 0
@@ -383,7 +383,7 @@ BEGIN
 		END
 	END 
 	
-	IF @TableName IN ('bettransG', '') --update bettransG
+	IF @TableName = 'bettransG' --update bettransG
 	BEGIN
 		SET @rowcount = 1
 		-- update for bettransG 
@@ -402,7 +402,7 @@ BEGIN
 		END
 	END
 
-	IF @TableName IN ('Transfer', '') --update Transfer
+	IF @TableName = 'Transfer' --update Transfer
 	BEGIN
 		SET @rowcount = 1
 		-- update for Transfer 
