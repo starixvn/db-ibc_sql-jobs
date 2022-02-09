@@ -98,7 +98,7 @@ BEGIN
 			g.ProductId,
 			b.Bettype
 			
-		-----PP Jackpot 
+		-----PP,SG Jackpot 
 		INSERT INTO #rptProgressiveGamesContribution
 		(
 			WinlostDate,
@@ -123,7 +123,7 @@ BEGIN
 			bc.Recommend,
 			bc.MRecommend,
 			bc.SRecommend,
-			32 as ProductId,
+			sb.ProductId,
 			bb.GameId,
 			COUNT(bc.TransID) AS Betcount,
 			SUM(ISNULL(bc.BetStake, 0)),
@@ -133,66 +133,19 @@ BEGIN
 			SUM(ISNULL(bc.swinlost, 0)) AS ContributionS
 		FROM bodb02.dbo.bettransRNG bc WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.bettransRNG bb WITH (NOLOCK) ON bc.RefNo2 = bb.TransId
+			INNER JOIN @SportBettypeMatrix sb ON bb.GameId = sb.bettype AND sb.ProductID IN(32,36)
 		WHERE bc.WinlostDate = @WinlostDate
 			AND bc.StatusID IN (111,112,113)
-			AND EXISTS(SELECT sc.ProductID FROM @SportBettypeMatrix sc WHERE bc.GameId = sc.ContributionBettype AND sc.ProductID = 32 )
-			AND EXISTS(SELECT sb.ProductID FROM @SportBettypeMatrix sb WHERE bb.GameId = sb.bettype AND sb.ProductID = 32 )
-		
+			AND EXISTS(SELECT sc.ProductID FROM @SportBettypeMatrix sc WHERE bc.GameId = sc.ContributionBettype AND sc.ProductID IN(32,36))
 		GROUP BY
 			bc.WinlostDate,
 			bc.CustId,
 			bc.Recommend,
 			bc.MRecommend,
 			bc.SRecommend,			
-			bb.GameId	
-
-	-----SG Jackpot 
-		INSERT INTO #rptProgressiveGamesContribution
-		(
-			WinlostDate,
-			CustId,
-			RoleId,
-			Recommend,
-			MRecommend,
-			SRecommend,
-			ProductId,
-			GameId,
-			Betcount,
-			Turnover,
-			Contribution,
-			ContributionA,
-			ContributionM,
-			ContributionS
-		)
-		SELECT
-			bc.WinlostDate,
-			bc.CustId,
-			1 AS RoleId,
-			bc.Recommend,
-			bc.MRecommend,
-			bc.SRecommend,
-			36 as ProductId,
 			bb.GameId,
-			COUNT(bc.TransID) AS Betcount,
-			SUM(ISNULL(bc.BetStake, 0)),
-			SUM(ISNULL(bc.ContributionStake3rd, 0)),
-			SUM(ISNULL(bc.awinlost, 0)) AS ContributionA,
-			SUM(ISNULL(bc.mwinlost, 0)) AS ContributionM,
-			SUM(ISNULL(bc.swinlost, 0)) AS ContributionS
-		FROM bodb02.dbo.bettransRNG bc WITH (NOLOCK)
-			INNER JOIN bodb02.dbo.bettransRNG bb WITH (NOLOCK) ON bc.RefNo2 = bb.TransId
-		WHERE bc.WinlostDate = @WinlostDate
-			AND bc.StatusID IN (111,112,113)
-			AND EXISTS(SELECT sc.ProductID FROM @SportBettypeMatrix sc WHERE bc.GameId = sc.ContributionBettype AND sc.ProductID = 36 )
-			AND EXISTS(SELECT sb.ProductID FROM @SportBettypeMatrix sb WHERE bb.GameId = sb.bettype AND sb.ProductID = 36 )
+			sb.ProductId	
 		
-		GROUP BY
-			bc.WinlostDate,
-			bc.CustId,
-			bc.Recommend,
-			bc.MRecommend,
-			bc.SRecommend,			
-			bb.GameId				
 	END
 
 	-- Agent - RoleId = 2
