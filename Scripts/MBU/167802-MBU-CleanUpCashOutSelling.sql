@@ -51,9 +51,9 @@ BEGIN
 	FROM dbo.CashOutSelling s WITH (ROWLOCK)
 		INNER JOIN #Result_batch t ON t.TransId = s.TransID
 
+	TRUNCATE TABLE #Result_batch
+
 	WAITFOR DELAY '00:00:00.100'
-	
-	TRUNCATE TABLE #Result_batch	
 END
 
 DROP TABLE #Result
