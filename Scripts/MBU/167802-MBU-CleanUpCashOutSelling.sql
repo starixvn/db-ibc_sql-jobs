@@ -50,6 +50,8 @@ BEGIN
 	DELETE s 
 	FROM dbo.CashOutSelling s WITH (ROWLOCK)
 		INNER JOIN #Result_batch t ON t.TransId = s.TransID
+
+	WAITFOR DELAY '00:00:00.100'
 	
 	TRUNCATE TABLE #Result_batch	
 END
