@@ -16,9 +16,7 @@ CREATE TABLE #Result(
 	Isfinished BIT
 )
 
-CREATE TABLE #Result_batch(
-	TransId BIGINT PRIMARY KEY,
-)
+DECLARE @Result_batch AS TABLE(TransId BIGINT PRIMARY KEY)
 
 INSERT INTO #Result (TransId)
 SELECT s.TransID
@@ -36,7 +34,7 @@ BEGIN
 	UPDATE TOP (1000) R
 		SET Isfinished = 1	
 	OUTPUT DELETED.TransId
-		INTO #Result_batch (TransId)		
+		INTO @Result_batch (TransId)		
 	FROM #Result r
 	WHERE r.Isfinished IS NULL
 	
@@ -49,7 +47,7 @@ BEGIN
 	-- YOUR CODE HERE to process each batch
 	DELETE s 
 	FROM dbo.CashOutSelling s WITH (ROWLOCK)
-		INNER JOIN #Result_batch t ON t.TransId = s.TransID
+		INNER JOIN @Result_batch t ON t.TransId = s.TransID
 
 	TRUNCATE TABLE #Result_batch
 
@@ -57,6 +55,5 @@ BEGIN
 END
 
 DROP TABLE #Result
-DROP TABLE #Result_batch
 
 
