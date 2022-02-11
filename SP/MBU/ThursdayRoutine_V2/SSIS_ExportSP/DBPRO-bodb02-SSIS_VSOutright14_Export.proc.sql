@@ -1,0 +1,22 @@
+/*<info serverAlias="DBPRO-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[SSIS_VSOutright14_Export]
+	@winlostdate smalldatetime=null
+AS
+/*
+	Created by:	20130831@Bobby
+	Task:		Revise SSIS Archiving Data Project [Redmine: #166146]	
+	Database: DBPRO.bodb02
+	Original: DB06x.bodb_archive.Task_Archive_Event_Copy
+	
+	Revisions:
+ */
+ BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+	
+	SELECT	Orid, EventID, RacerNum, IsFavor, EventDate, KickoffTime, RacerID, HumanID, WinOdds, PlaceOdds, Lane, MaxBet, Placing, Creator, EventStatus
+	FROM	dbo.VSOutright14 AS t1 WITH (NOLOCK)
+	WHERE	t1.eventdate = @winlostdate;
+END
+GO
