@@ -89,12 +89,13 @@ BEGIN
 			WHERE isTransferred = 0
 			GROUP BY custid
 		)
-		SELECT DISTINCT ISNULL(q2.custid, ISNULL(q3.custid, ISNULL(q4.custid, t.CustId))) custid, ISNULL(Outstanding, 0) Outstanding
-			, ISNULL(BalRNG, 0) BalRNG, ISNULL(BalLC, 0) BalLC, ISNULL(adjustWinlostAmt, 0) adjustWinlostAmt
+		SELECT ISNULL(q2.custid, ISNULL(q3.custid, ISNULL(q4.custid, t.CustId))) custid, SUM(ISNULL(Outstanding, 0)) Outstanding
+			, SUM(ISNULL(BalRNG, 0)) BalRNG, SUM(ISNULL(BalLC, 0)) BalLC, SUM(ISNULL(adjustWinlostAmt, 0)) adjustWinlostAmt
 		INTO #tmpCal
 		FROM q2 FULL OUTER JOIN q3 ON q2.custid = q3.custid
 		FULL OUTER JOIN q4 ON q2.custid = q4.custid
 		FULL OUTER JOIN t ON q2.custid = t.CustID
+		GROUP BY ISNULL(q2.custid, ISNULL(q3.custid, ISNULL(q4.custid, t.CustId)))
 
 		CREATE CLUSTERED INDEX CIX_t ON #tmpCal (custid)
 
