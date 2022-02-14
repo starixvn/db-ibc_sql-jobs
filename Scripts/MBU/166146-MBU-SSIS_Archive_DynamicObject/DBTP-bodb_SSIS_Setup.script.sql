@@ -1,3 +1,4 @@
+/*<info serverAlias="DBTP-bodb_SSIS"></info>*/
 /*
 	Created by:	20130831@Bobby
 	Task:		Revise SSIS Archiving Data Project [Redmine: #166146]				
