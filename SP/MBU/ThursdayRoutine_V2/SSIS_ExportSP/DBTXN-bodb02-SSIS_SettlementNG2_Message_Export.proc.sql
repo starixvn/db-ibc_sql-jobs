@@ -9,6 +9,7 @@ AS
 	Original: Task_Archive_SelectNG2_Message 
 	
 	Revisions:
+		- 20130831@Bobby: Init
  */
  BEGIN 
 	SET NOCOUNT ON

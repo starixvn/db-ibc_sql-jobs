@@ -9,6 +9,7 @@ AS
 	Original: DB06x.bodb_archive.Task_Archive_Event_Copy
 	
 	Revisions:
+		- 20130831@Bobby: Init
  */
 BEGIN
 	SET NOCOUNT ON;

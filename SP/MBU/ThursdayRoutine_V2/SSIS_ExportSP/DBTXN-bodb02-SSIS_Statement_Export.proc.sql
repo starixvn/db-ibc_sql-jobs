@@ -9,6 +9,7 @@ AS
 	Original: Task_Archive_SelectStatement 
 	
 	Revisions:
+		- 20130831@Bobby: Init
  */
 BEGIN
 	DECLARE	@BU_Date		DATETIME -- Next BalanceUp Date

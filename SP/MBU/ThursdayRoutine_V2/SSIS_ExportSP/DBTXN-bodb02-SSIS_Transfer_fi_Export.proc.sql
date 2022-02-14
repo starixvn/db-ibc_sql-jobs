@@ -9,6 +9,7 @@ AS
 	Original: Task_Archive_SelectTransfer_Fi
 	
 	Revisions:
+		- 20130831@Bobby: Init
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from

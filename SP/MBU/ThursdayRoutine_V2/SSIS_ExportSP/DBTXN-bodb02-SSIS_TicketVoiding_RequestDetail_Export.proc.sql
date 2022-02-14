@@ -9,6 +9,7 @@ AS
 	Original: DB06x.bodb_archive.Task_Archive_Copy 
 	
 	Revisions:
+		- 20130831@Bobby: Init
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
