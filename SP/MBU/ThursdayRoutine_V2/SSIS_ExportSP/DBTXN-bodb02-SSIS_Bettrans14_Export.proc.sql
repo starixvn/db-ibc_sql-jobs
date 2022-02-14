@@ -10,7 +10,7 @@ AS
 	
 	Revisions:
 		- 20130831@Bobby: Init
- */
+*/
 BEGIN
 	SET NOCOUNT ON;
 	

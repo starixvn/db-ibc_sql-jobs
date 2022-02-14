@@ -11,7 +11,6 @@ AS
 	Revisions:
 		- 20130831@Bobby: Init
  */
- GO
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
