@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb_SSIS" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTP-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[SSIS_Package_Setting_Init]
 	@environment varchar(10)='DEV'
 	,@packageName varchar(100)=''
@@ -7,7 +7,7 @@ AS
 /*
 	Created by:	20130831@Bobby
 	Task:		Revise SSIS Archiving Data Project [Redmine: #166146]				
-	Database:	DBTP.bodb_SSIS
+	Database:	DBTP.SSISDB
 	Revisions:
 		- 20130831@Bobby: Init
 */
@@ -48,7 +48,7 @@ BEGIN
 	) AS txn
 	outer apply (
 		select dateadd(DAY, -1, txn.MinDate) AS BUDate_Current
-			,dateadd(DAY, 1, txn.MaxDate) AS BUDate_New
+			,dateadd(DAY, 0, txn.MaxDate) AS BUDate_New
 	) AS bu
 	
 	INSERT INTO [dbo].[SSIS_PackageRuntime]

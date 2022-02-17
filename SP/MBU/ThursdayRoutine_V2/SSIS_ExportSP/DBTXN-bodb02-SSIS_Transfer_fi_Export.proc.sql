@@ -1,6 +1,6 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[SSIS_Transfer_fi_Export]
-	@BUDate smalldatetime=null
+	@winlostdate smalldatetime=null
 AS
 /*
 	Created by:	20130831@Bobby
@@ -17,44 +17,44 @@ AS
 	SET NOCOUNT ON;
 	DECLARE @Refno_temp AS TABLE ( refno BIGINT, winlostdate SMALLDATETIME) 
 
-	DECLARE @BalanceUpDay SMALLDATETIME
+	--DECLARE @BalanceUpDay SMALLDATETIME
 
-	SET @BalanceUpDay = @BUDate;
+	--SET @BalanceUpDay = @BUDate;
 	
 	--SELECT TOP 1 @BalanceUpDay = winlostdate + 7
 	--FROM dbo.Bettrans WITH(NOLOCK)
 	--WHERE bettype = 20000 AND matchid = 0 AND custid = 3
 
 	DECLARE @InternalAccList AS TABLE (CustID INT, RoleID TINYINT)
-	--INSERT INTO @InternalAccList (CustID, RoleID)
-	--SELECT 	CustID, 2 
-	--FROM 	DBCUST.CustDB.dbo.custAgent c WITH (NOLOCK)
-	--WHERE 	c.isInternal = 1
-	--UNION ALL 
-	--SELECT 	CustID, 3
-	--FROM 	DBCUST.CustDB.dbo.CustMaster c WITH (NOLOCK)
-	--WHERE 	c.isInternal = 1
-	--UNION ALL
-	--SELECT 	CustID, 4 
-	--FROM 	DBCUST.CustDB.dbo.CustSuper c WITH (NOLOCK)
-	--WHERE 	c.isInternal = 1
+	INSERT INTO @InternalAccList (CustID, RoleID)
+	SELECT 	CustID, 2 
+	FROM 	DBCUST.CustDB.dbo.custAgent c WITH (NOLOCK)
+	WHERE 	c.isInternal = 1
+	UNION ALL 
+	SELECT 	CustID, 3
+	FROM 	DBCUST.CustDB.dbo.CustMaster c WITH (NOLOCK)
+	WHERE 	c.isInternal = 1
+	UNION ALL
+	SELECT 	CustID, 4 
+	FROM 	DBCUST.CustDB.dbo.CustSuper c WITH (NOLOCK)
+	WHERE 	c.isInternal = 1
 
 
 	INSERT INTO @Refno_temp
 	SELECT refno, winlostdate 
 	FROM dbo.bettrans b WITH (NOLOCK)
 		INNER join @InternalAccList c ON b.recommend = c.custid
-	WHERE c.RoleID = 2 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
+	WHERE c.RoleID = 2 AND bettype > 20000 AND matchid = 0 AND winlostdate = @winlostdate
 	UNION
 	SELECT refno, winlostdate 
 	FROM dbo.bettrans b WITH (NOLOCK)
 		INNER join @InternalAccList c ON b.custid = c.custid
-	WHERE c.RoleID = 3 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
+	WHERE c.RoleID = 3 AND bettype > 20000 AND matchid = 0 AND winlostdate = @winlostdate
 	UNION
 	SELECT refno, winlostdate 
 	FROM dbo.bettrans b WITH (NOLOCK)
 		INNER join @InternalAccList c ON b.custid = c.custid
-	WHERE c.RoleID = 4 AND bettype > 20000 AND matchid = 0 AND winlostdate < @BalanceUpDay
+	WHERE c.RoleID = 4 AND bettype > 20000 AND matchid = 0 AND winlostdate = @winlostdate
 
 
 	
@@ -100,7 +100,7 @@ AS
 			betid as CheckerID,
 			CONVERT ( VARCHAR(50),betcheck) as CheckerName,
 			checkTime,
-			liveindicator isReversal
+			liveindicator AS isReversal
 		FROM dbo.bettrans b WITH (NOLOCK) --(NOLOCK, INDEX=CIX_matchid_bettype)
 			INNER JOIN @Refno_temp r ON b.refno = r.refno AND b.winlostdate=r.winlostdate
 		WHERE b.matchid = 0 AND b.bettype > 20000

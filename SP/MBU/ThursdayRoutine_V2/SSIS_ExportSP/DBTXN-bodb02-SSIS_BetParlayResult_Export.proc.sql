@@ -18,7 +18,7 @@ AS
 	
 	Declare @refNos TABLE (refno bigint PRIMARY KEY)
 	INSERT INTO @refNos
-	SELECT refno
+	SELECT DISTINCT refno
 	FROM dbo.bettrans14 with (nolock)
 	WHERE winlostdate = @winlostdate AND bettype = 29
 

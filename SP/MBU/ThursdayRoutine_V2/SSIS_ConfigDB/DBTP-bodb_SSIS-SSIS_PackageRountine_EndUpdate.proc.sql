@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb_SSIS" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTP-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[SSIS_PackageRountine_EndUpdate]
 	@rountineID int
 	, @command varchar(1000)
@@ -11,7 +11,7 @@ AS
 /*
 	Created by:	20130831@Bobby
 	Task:		Revise SSIS Archiving Data Project [Redmine: #166146]				
-	Database:	DBTP.bodb_SSIS
+	Database:	DBTP.SSISDB
 	Revisions:
 		- 20130831@Bobby: Init
 */

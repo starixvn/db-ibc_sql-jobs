@@ -26,7 +26,7 @@ BEGIN
 		,	ISNULL(ip.IPArchive, b.ip) AS ip
 		,	b.statusID, b.balance, b.Username, b.transdesc, b.productID, b.gameID
 		,	b.vendorID, b.GameId3rd, b.TranId3rd, b.RefNo, b.IsSum, b.winlost, b.awinlost, b.mwinlost, b.swinlost, b.playercomm, b.comm, b.acomm, b.scomm, b.Transdate3rd
-		,	[countryCode] = ip.countryShort
+		,	[CountryCode] = ip.CountryShort
 		,	b.Additional, b.JackpotInfo, b.RefNo2, b.ContributionRate, b.BetStake, b.ContributionStake3rd, b.epositiontaking, b.SiteId
 	FROM		dbo.bettransRnG14 AS b WITH (NOLOCK)
 	INNER JOIN	dbo.Task_bettransRNG14_IP2Country AS ip WITH (NOLOCK)

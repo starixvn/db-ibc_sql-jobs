@@ -1,6 +1,6 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[SSIS_Transfer_Coll_Export]
-	@BUDate smalldatetime=null
+	@winlostdate smalldatetime=null
 AS
 /*
 	Created by:	20130831@Bobby
@@ -15,9 +15,9 @@ AS
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-	Declare @BU_Date datetime -- Next BalanceUp Date  
+	--Declare @BU_Date datetime -- Next BalanceUp Date  
 
-	SET @BU_Date=@BUDate;
+	--SET @BU_Date=@BUDate;
 	--SELECT @BU_Date = DATEADD(day, 1, MAX(winlostdate))
 	--FROM dbo.Task_ArchiveDate
 
@@ -45,7 +45,7 @@ AS
 		TransDesc,
 		IP
 	FROM dbo.Transfer_Coll WITH(NOLOCK)
-	WHERE winlostdate < @BU_Date  
+	WHERE winlostdate = @winlostdate  
 
 	
 END

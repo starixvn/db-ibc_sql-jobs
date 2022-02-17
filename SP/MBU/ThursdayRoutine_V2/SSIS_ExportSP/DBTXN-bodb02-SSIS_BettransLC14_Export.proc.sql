@@ -28,8 +28,8 @@ BEGIN
 		,	b.statusID, b.balance, b.Username, b.transdesc, b.productID, b.gameID
 		,	b.vendorID, b.GameId3rd, b.TranId3rd, b.RefNo, b.IsSum, b.winlost, b.awinlost, b.mwinlost, b.swinlost, b.playercomm, b.comm, b.acomm, b.scomm
 		,	b.Transdate3rd, b.NetStake
-		,	[countryCode] = p.CountryShort
-		,	b.epositiontaking, b.siteID
+		,	[CountryCode] = p.CountryShort
+		,	b.epositiontaking, b.SiteID
 	FROM		dbo.bettransLC14 AS b WITH (NOLOCK)
 	INNER JOIN	dbo.Task_bettransLC14_IP2Country AS p WITH (NOLOCK)
 			ON	b.transid = p.transid AND p.winlostdate = b.winlostdate

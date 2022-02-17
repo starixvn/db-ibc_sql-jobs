@@ -21,20 +21,19 @@ AS
 	--FROM	dbo.Task_ArchiveDate;
 
 	-- to DB06.bodb_Archive.dbo.bettransm
-	SELECT	[BetCheck]	= CONVERT(VARCHAR(50), betcheck)
-		,	[BetFrom]	= CONVERT(VARCHAR(1),  betfrom)
-		,	[BetTeam]	= CONVERT(VARCHAR(10), betteam)
-		,	[ComStatus]	= CONVERT(VARCHAR(20), comstatus)
-		,	[Status]	= CONVERT(VARCHAR(10), status)
+	SELECT	[betcheck]	= CONVERT(VARCHAR(50), betcheck)
+		,	[betfrom]	= CONVERT(VARCHAR(1),  betfrom)
+		,	[betteam]	= CONVERT(VARCHAR(10), betteam)
+		,	[comstatus]	= CONVERT(VARCHAR(20), comstatus)
+		,	[status]	= CONVERT(VARCHAR(10), status)
 
 		,	transdate, transid, custid, matchid, oddsid, bettype, hdp1, hdp2, stake, odds, finalodds
 		,	apositiontaking, mpositiontaking, spositiontaking, tpositiontaking, awinlost, mwinlost, swinlost
 		,	playerdiscount, discount, adiscount, sdiscount, playercomm, comm, acomm, scomm
 		,	liveawayscore, livehomescore, liveindicator, matchdate, isfinish
 		,	oddsspread, refno, ruben, statusID, statuswinlost, winlost
-		,	actualrate, checktime, creator, winlostdate, recommdate, transdesc, SecAcceptFlag, reasonIDm
+		,	actualrate, checktime, creator, winlostdate, recommdate, transdesc, SecAcceptFlag, ReasonIDm
 	FROM	dbo.bettransm14 WITH (NOLOCK)
 	WHERE	winlostdate = @winlostdate;
-	--WHERE	winlostdate <= @max_winlostdate;
 END
 GO
