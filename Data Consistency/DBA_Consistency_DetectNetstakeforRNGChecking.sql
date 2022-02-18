@@ -12,7 +12,8 @@ AS
 
 	Revisions: 
 		- 20210712@July: Detect Netstake <> 0 for RNG products [Redmine:#158179]
-	
+	    - 20220218@July: Spadegaming - Exclue bettype 4599 (contribution bettype) - [Redmine:#168750]
+
 	Param's Expanation:
 */
 BEGIN
@@ -28,7 +29,7 @@ BEGIN
 		FROM	bodb02.dbo.bettransRNG b WITH (NOLOCK)
 		WHERE	b.BetStake <> 0 
 				AND b.statusID IN (101,102,103) --Reject/Void/Refund 
-				AND b.GameID NOT IN (2198, 2398, 2998, 4297, 1698, 3898)
+				AND b.GameID NOT IN (2198, 2398, 2998, 4297, 1698, 3898, 4599)
 				AND b.winlostdate = @yesterday
 	END
 
