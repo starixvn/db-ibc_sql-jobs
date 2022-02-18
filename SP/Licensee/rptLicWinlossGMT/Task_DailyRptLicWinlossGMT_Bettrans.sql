@@ -38,10 +38,19 @@ AS
 		- 20211014@Hogan: Support Add 2 New Betfroms [ ] [RedmineID: #162388]
 		- 20211117@Kos: Merge Sports Lottery into Sportsbook [RedmineID: #163191]
 		- 20211231@Hogan: Using betfrom '.' instead of betfrom '#' [RedmineID: #166689]
+		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 */
 
 BEGIN
 	SET NOCOUNT ON
+
+	DECLARE @SportBettype TABLE(ProductId TINYINT, BetType SMALLINT, EventType TINYINT)
+
+	INSERT INTO @SportBettype
+	SELECT ProductID, BetType, EventType
+	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
+	WHERE ProductID IN (1, 63)
+		AND BetType NOT BETWEEN 901 AND 904
 
 	IF @ToDate IS NULL
 	BEGIN
@@ -117,7 +126,7 @@ BEGIN
 				@ProcessingTimeZone AS TimeZone
 				,b.winlostdate
 				,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, CASE
-																		WHEN b.bettype BETWEEN 3611 AND 3620 THEN b.transdate
+																		WHEN sbt.ProductId = 63 THEN b.transdate
 																		ELSE ISNULL(m.GlobalShowTime, b.winlostdate)
 																	END)) AS RptDateGMT
 				,c.username
@@ -176,6 +185,7 @@ BEGIN
 					ELSE ''
 				END AS betfrom
 			FROM bodb02.dbo.bettrans AS b WITH (NOLOCK)
+				INNER JOIN @SportBettype AS sbt ON sbt.BetType = b.bettype
 				LEFT JOIN bodb02.dbo.Match AS m WITH (NOLOCK) ON m.matchid = b.matchid
 				INNER JOIN bodb02.dbo.Dep_CustSuper AS s WITH (NOLOCK) ON b.srecommend = s.custid
 				INNER JOIN bodb02.dbo.Customer AS c WITH (NOLOCK) ON b.custid = c.custid
@@ -185,21 +195,10 @@ BEGIN
 				AND b.statusID IN (101, 111, 112, 113)	--REJECT, DRAW, WON, LOSE
 				AND b.bettype <= 19999
 				AND c.roleid = 1
-				AND (
-						b.bettype < 31
-						OR b.bettype BETWEEN 121 AND 999
-						OR b.bettype BETWEEN 1301 and 1399		--new tennis's bettypes
-						OR b.bettype BETWEEN 9001 and 9399		-- E-Sports 2.0
-						OR b.bettype BETWEEN 9400 AND 9699		-- Cricket AIO
-						OR b.bettype = 38 -- BetBuilder
-						OR b.bettype BETWEEN 3611 AND 3620		-- Sports Lottery
-					)
-				AND (b.bettype < 901 OR b.bettype > 904)
-				AND (b.bettype < 911 OR b.bettype > 914)
-			GROUP BY 
+			GROUP BY
 				b.winlostdate
 				,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, CASE
-																		WHEN b.bettype BETWEEN 3611 AND 3620 THEN b.transdate
+																		WHEN sbt.ProductId = 63 THEN b.transdate
 																		ELSE ISNULL(m.GlobalShowTime, b.winlostdate)
 																	END))
 				,c.username

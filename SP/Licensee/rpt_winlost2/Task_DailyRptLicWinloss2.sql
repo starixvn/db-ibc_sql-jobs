@@ -107,6 +107,7 @@ AS
 		- 20220107@Kos: Support new Cash Out [RedmineID: #165160]
 		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
+		- 20220313@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -260,7 +261,7 @@ BEGIN
 				AND (b.bettype < 999							-- Sportsbook
 					OR b.bettype BETWEEN 1301 AND 1399
 					OR b.bettype BETWEEN 9001 AND 9399
-					OR b.bettype BETWEEN 9400 AND 9699)
+					OR b.bettype BETWEEN 9400 AND 9998)
 				AND b.bettype NOT IN (29,38,911,912,913,914)  --- Parlay, betbuilder, Cashout
 				AND b.bettype NOT BETWEEN 81 AND 120
 				THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
@@ -386,7 +387,7 @@ BEGIN
 				AND (b.bettype < 999						-- Sportsbook
 					OR b.bettype BETWEEN 1301 AND 1399
 					OR b.bettype BETWEEN 9001 AND 9399
-					OR b.bettype BETWEEN 9400 AND 9699)
+					OR b.bettype BETWEEN 9400 AND 9998)
 				AND b.bettype NOT IN (29,38,911,912,913,914)  --- Parlay, betbuilder, Cashout
 				AND b.bettype NOT BETWEEN 81 AND 120
 				THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END

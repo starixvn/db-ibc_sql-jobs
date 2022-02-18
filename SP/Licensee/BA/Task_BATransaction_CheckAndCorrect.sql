@@ -28,6 +28,7 @@ AS
 		- 20210126@Sol: change db instance name (change DB054 to DB054C2\DB054) - [RedmineID: #149273]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 */
 
 BEGIN
@@ -38,7 +39,7 @@ BEGIN
 	DECLARE @BAHistory_Done TABLE (custid INT, ondate DATETIME, offdate DATETIME)
 
 	INSERT INTO @BAHistory_Done
-	SELECT custid, ondate, offdate
+	SELECT CustID, OnDate, OffDate
 	FROM bodb_Licensee.dbo.LicenseeBAHistory WITH (NOLOCK)
 	WHERE LicenseeID IN (
 		SELECT LicenseeID 
@@ -48,7 +49,7 @@ BEGIN
 	AND status = 'Done'
 
 	DECLARE @maxTransId BIGINT
-	SELECT  @maxTransId = CAST(ISNULL(vvalue,0) AS BIGINT)
+	SELECT @maxTransId = CAST(ISNULL(vvalue,0) AS BIGINT)
 	FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)
 	WHERE vname = 'BA_transid'
 
@@ -72,7 +73,7 @@ BEGIN
 						OR (bettype BETWEEN 121 AND 999)
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
-						OR (bettype BETWEEN 9400 AND 9699)
+						OR (bettype BETWEEN 9400 AND 9998)
 						OR bettype = 38 -- BetBuilder
 					)
 				AND bettype NOT IN (901, 911)
@@ -102,7 +103,7 @@ BEGIN
 						OR (bettype BETWEEN 121 AND 999)
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
-						OR (bettype BETWEEN 9400 AND 9699)
+						OR (bettype BETWEEN 9400 AND 9998)
 						OR bettype = 38 -- BetBuilder
 					)
 				AND bettype NOT IN (901, 911)
@@ -147,7 +148,7 @@ BEGIN
 						OR (bettype BETWEEN 121 AND 999)
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
-						OR (bettype BETWEEN 9400 AND 9699)
+						OR (bettype BETWEEN 9400 AND 9998)
 						OR bettype = 38 -- BetBuilder
 					)
 				AND bettype NOT IN (901, 911)
@@ -177,7 +178,7 @@ BEGIN
 						OR (bettype BETWEEN 121 AND 999)
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
-						OR (bettype BETWEEN 9400 AND 9699)
+						OR (bettype BETWEEN 9400 AND 9998)
 						OR bettype = 38 -- BetBuilder
 					)  
 				AND bettype NOT IN (901, 911)

@@ -34,6 +34,7 @@ AS
 		- 20211117@Kos: Merge Sports Lottery into Sportsbook [RedmineID: #163191]
 		- 20211129@Kos: Support Cashout [RedmineID: #163191]
 		- 20220311@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
+		- 20220317@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 */
 
 BEGIN
@@ -90,7 +91,7 @@ BEGIN
 					AND (a.bettype < 999
 						OR a.bettype BETWEEN 1301 AND 1399
 						OR a.bettype BETWEEN 9001 AND 9399
-						OR a.bettype BETWEEN 9400 AND 9699)		-- Sportsbook
+						OR a.bettype BETWEEN 9400 AND 9998)		-- Sportsbook
 					AND a.bettype NOT IN (29, 38)	-- Parlay, betbuilder
 					AND a.bettype NOT BETWEEN 81 AND 120
 					AND s.ProductCode NOT IN ('CO')
@@ -132,7 +133,7 @@ BEGIN
 					AND (a.bettype < 999
 						OR a.bettype BETWEEN 1301 AND 1399
 						OR a.bettype BETWEEN 9001 AND 9399
-						OR a.bettype BETWEEN 9400 AND 9699)		-- Sportsbook
+						OR a.bettype BETWEEN 9400 AND 9998)		-- Sportsbook
 					AND a.bettype NOT IN (29, 38)	-- Parlay, betbuilder
 					AND a.bettype NOT BETWEEN 81 AND 120
 					AND s.ProductCode NOT IN ('CO')
