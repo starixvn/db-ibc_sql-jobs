@@ -31,6 +31,7 @@ AS
 		- 20210924@July: Vgaming - Exclue bettype Casino Hold'em Poker - [Redmine:#161760]
 		- 20211021@July: Vgaming - Exclue bettype Texas Hold'em Poker - [Redmine:#163463]
 		- 20220106@July: Saba.club - Exclue bettype Casino Hold'em Poker(1650) - [Redmine:#167030]
+		- 20220218@July: Vgaming - Exclue bettype Pai Gow Poker(3842) - [Redmine:#168578]
 
 		Param's Expanation:
 */
@@ -450,7 +451,7 @@ BEGIN
 			WHERE b.productID = @ProductId
 				AND b.statusID IN (0,1)
 				AND b.transdate < DATEADD(MINUTE, -3, GETDATE())
-				AND b.gameID NOT IN (1622, 1631, 1634, 3820, 3836, 3837, 1650) --Exclude Saba.club(1622-Keno Pro Viet, 1631-Bola Kangtas, 1634-Blackjack, 1650-Casino Hold'em Poker) + VGaming(3820-Blackjack, 3836-Casino Hold'em Poker, 3837-Texas Hold'em Poker)
+				AND b.gameID NOT IN (1622, 1631, 1634, 3820, 3836, 3837, 1650, 3842) --Exclude Saba.club(1622-Keno Pro Viet, 1631-Bola Kangtas, 1634-Blackjack, 1650-Casino Hold'em Poker) + VGaming(3820-Blackjack, 3836-Casino Hold'em Poker, 3837-Texas Hold'em Poker,3842-Pai Gow Poker)
 							 
 			IF @transId <> ''
 			BEGIN
