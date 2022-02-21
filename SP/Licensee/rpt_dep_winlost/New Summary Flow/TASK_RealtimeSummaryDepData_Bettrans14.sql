@@ -62,7 +62,6 @@ AS
 		- 20210618@Sophia: Expand Range of Saba Promotion [Redmine: #155337]
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
 		- 20211216@Kos: Integrate PP 20 new games [RedmineID: #165772]
-
 		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 
