@@ -16,6 +16,7 @@ AS
 		- 20180417@Patrick: Update rule calculate winlost amount for contribution ticket
 		- 20180419@Kathy: Update rule for RNG Jackpot [Redmine:#83787]
 		- 20200923@Max: Pragmatic - PP Jackpot - Check Data Consistency [Redmine: #138310]
+		- 20220221@July: Spadegaming - SG Contribution ticket - Check Data Consistency [Redmine: #168750]
 		
 */
 BEGIN
@@ -172,7 +173,7 @@ BEGIN
 			OR (statusid IN (112,113) AND (CAST(stake * adiscount * (1 - (mpositiontaking + apositiontaking)) AS money) <> acomm)) --Case 5d: acomm is wrong		
 			OR (statusid IN (112,113) AND (CAST(stake * sdiscount * (1 - (spositiontaking + mpositiontaking + apositiontaking)) AS money) <> scomm)) --Case 5e: scomm is wrong
 			)
-		AND gameid NOT IN (2198, 2398, 2998, 2199, 2399, 2999, 4297)
+		AND gameid NOT IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4599)
 	
 	IF @@ROWCOUNT > 0
 	BEGIN
@@ -201,7 +202,7 @@ BEGIN
 		END
 	END
 
-	IF @ProductId IN (208, 210, 248)
+	IF @ProductId IN (208, 210, 248, 247)
 	BEGIN
 		--check contribution ticket
 		BEGIN
@@ -223,7 +224,7 @@ BEGIN
 					, t.*					
 			INTO #Result1
 			FROM	#tempdata t
-			WHERE	gameid IN (2198, 2398, 2998, 4297) -- contribution bettypes
+			WHERE	gameid IN (2198, 2398, 2998, 4297, 4599) -- contribution bettypes
 					AND (
 							((- ROUND(ContributionStake3rd * apositiontaking, 4) <> awinlost)
 								OR (ContributionStake3rd IS NULL OR apositiontaking IS NULL OR awinlost IS NULL))
@@ -383,7 +384,7 @@ BEGIN
 			SELECT	TOP 1000 
 					CAST(CASE
 						WHEN gameid IN (2179, 2320, 2920) THEN 'Jackpot bet ticket'
-						WHEN gameid IN (2198, 2398, 2998, 4297) THEN 'contribution ticket'
+						WHEN gameid IN (2198, 2398, 2998, 4297, 4599) THEN 'contribution ticket'
 						WHEN gameid IN (2199, 2399, 2999) THEN 'Jackpot win ticket'
 						END AS VARCHAR(100))
 					AS [CASE]
@@ -402,7 +403,7 @@ BEGIN
 					, t.*					
 			INTO	#Result6
 			FROM	#tempdata t
-			WHERE	gameId IN (2179, 2320, 2920, 2198, 2398, 2998, 2199, 2399, 2999, 4297)
+			WHERE	gameId IN (2179, 2320, 2920, 2198, 2398, 2998, 2199, 2399, 2999, 4297, 4599)
 					AND (((playercomm + comm + acomm + scomm  <> 0) 
 							OR playercomm IS NULL OR COMM IS NULL OR acomm IS NULL OR scomm IS NULL )
 						OR (playerdiscount + discount + adiscount + sdiscount <> 0 OR playerdiscount IS NULL OR discount IS NULL OR adiscount IS NULL OR sdiscount IS NULL)

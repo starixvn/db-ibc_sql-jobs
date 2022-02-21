@@ -26,7 +26,7 @@ AS
 		- 20210713@July: Exclude bettypes for VGaming - [Redmine: #158179]
 		- 20210914@July: Saba.club - Exclude new bettype 1644 - [Redmine: #160869]
 		- 20210924@July: Vgaming - Exclue bettype The Legend of Heroes - [Redmine:#162127]
-		- 20220218@July: Spadegaming - Exclue bettype 4599 (contribution bettype) - [Redmine:#168750]
+		- 20220221@July: Spadegaming - Exclue bettype 4599 (contribution bettype) - [Redmine:#168750]
 
 	Param's Expanation:
 */

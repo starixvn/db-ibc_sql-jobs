@@ -12,7 +12,7 @@ AS
 
 	Revisions: 
 		- 20210712@July: Detect Netstake <> 0 for RNG products [Redmine:#158179]
-	    - 20220218@July: Spadegaming - Exclue bettype 4599 (contribution bettype) - [Redmine:#168750]
+	    - 20220221@July: Spadegaming - Exclue bettype 4599 (contribution bettype) - [Redmine:#168750]
 
 	Param's Expanation:
 */
