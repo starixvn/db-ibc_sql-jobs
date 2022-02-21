@@ -14,6 +14,7 @@ AS
 		- 20210628@Helen:	Initial - [RedmineId: #157539]
 		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
 		- 20210709@Helen: [TVS] Duplicate issue [Redmine: #157539]
+		- 20220113@Max: [TVS] Cannot execute auto void queue for test match [Redmine: #166895]
 		
 	Notes:
 		- check by one day: TicketVoiding_VoidedTransaction
@@ -217,6 +218,16 @@ BEGIN
 					FROM	#tmpRequest t
 					WHERE t.RequestId = v.RequestId
 			) r
+		
+		-- 2.9 TicketVoiding_AutoVoidRequest_Queue
+		INSERT INTO @__tempCount(rowcnt, tableName)
+		SELECT	COUNT(1), 'TicketVoiding_AutoVoidRequest_Queue'
+		FROM	dbo.TicketVoiding_AutoVoidRequest_Queue_bk AS t1 WITH (NOLOCK)
+			CROSS APPLY (
+					SELECT	RequestId
+					FROM	#tmpRequest t
+					WHERE t.RequestId = t1.RequestId
+			) r
 	END
 	ELSE IF @tablename = 'TicketVoiding_AutoVoidRequest_Queue'
 	BEGIN
@@ -225,6 +236,7 @@ BEGIN
 		SELECT	COUNT(1), 'TicketVoiding_AutoVoidRequest_Queue'
 		FROM	dbo.TicketVoiding_AutoVoidRequest_Queue_bk AS t1 WITH (NOLOCK)
 		WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate)
+			AND t1.Requestid = 0
 	END
 	ELSE IF @tablename = 'TicketVoiding_AutoUnmarkSetting'
 	BEGIN
