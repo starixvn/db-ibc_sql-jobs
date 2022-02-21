@@ -22,6 +22,7 @@ AS
 		- 20210518@Hogan: Integrate Vgaming [RedmineID: #151583]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20220106@Kos: Hotfix - Missing turnover of Vgaming Jackpot [RedmineID: #167065]
+		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
 */
 
 BEGIN
@@ -34,16 +35,16 @@ BEGIN
 			@S_BABuyBackAmt MONEY, @T_BABuyBackAmt MONEY
 
 	SELECT @S_Winlost = SUM(b.winlost - b.actual_stake)
-		, @S_Turnover = SUM(ABS(b.stake)) --TurnOver
-		, @S_BetCount = COUNT(b.TransId) --BetCount
+		, @S_Turnover = SUM(ABS(b.stake))
+		, @S_BetCount = COUNT(b.TransId)
 		, @S_AWinlost = SUM(b.awinlost)
 		, @S_Comm = SUM(b.comm)
 		, @S_BetEffective = SUM(CASE
 									WHEN b.statusID IN (112,113)
-										AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899)
+										AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
 										AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 										AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)) -- exclude PP Prize from BetEffective
-									THEN ABS(b.winlost - b.actual_stake)
+										THEN ABS(b.winlost - b.actual_stake)
 									ELSE 0
 								END)
 		, @S_MWinlost = SUM(b.mwinlost)
@@ -53,7 +54,7 @@ BEGIN
 		, @S_SComm = SUM(ISNULL(b.scomm, 0))
 		, @S_BuyBackAmt = SUM(CASE
 								WHEN b.bettype IN (902, 912) AND transid2 = 0 THEN b.actual_stake
-								WHEN b.bettype IN (4297, 1698, 3898) THEN b.oddsspread
+								WHEN b.bettype IN (4297, 1698, 3898, 4599) THEN b.oddsspread
 								ELSE 0
 							END)
 		, @S_BABuyBackAmt = SUM(CASE WHEN b.bettype IN (902, 912) AND b.transid2 = 1 THEN b.actual_stake ELSE 0 END)
@@ -61,29 +62,29 @@ BEGIN
 		INNER JOIN bodb02.dbo.customer AS c WITH (NOLOCK) ON b.custid = c.custid
 	WHERE b.winlostdate = @WinLostDate
 		AND c.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All'))
-		AND b.statusID IN (101,111,112,113) --REJECT, DRAW, WON, LOSE
+		AND b.statusID IN (101, 111, 112, 113) --REJECT, DRAW, WON, LOSE
 		AND b.bettype <= 19999
 		AND c.roleid = 1
 	OPTION (RECOMPILE)
 
-	SELECT @T_Winlost = SUM(winlost)
-		, @T_Turnover = SUM(turnover)
-		, @T_BetCount = SUM(BetCount)
-		, @T_AWinlost = SUM(awinlost)
-		, @T_Comm = SUM(comm)
-		, @T_BetEffective = SUM(BetEffective)
-		, @T_MWinlost = SUM(mwinlost)
-		, @T_SWinlost = SUM(swinlost)
-		, @T_PlayerComm = SUM(playercomm)
-		, @T_AComm = SUM(acomm)
-		, @T_SComm = SUM(scomm)
-		, @T_BuyBackAmt = SUM(BuyBackAmt)
-		, @T_BABuyBackAmt = SUM(BABuyBackAmt)
+	SELECT @T_Winlost = SUM(b.winlost)
+		, @T_Turnover = SUM(b.turnover)
+		, @T_BetCount = SUM(b.BetCount)
+		, @T_AWinlost = SUM(b.awinlost)
+		, @T_Comm = SUM(b.comm)
+		, @T_BetEffective = SUM(b.BetEffective)
+		, @T_MWinlost = SUM(b.mwinlost)
+		, @T_SWinlost = SUM(b.swinlost)
+		, @T_PlayerComm = SUM(b.playercomm)
+		, @T_AComm = SUM(b.acomm)
+		, @T_SComm = SUM(b.scomm)
+		, @T_BuyBackAmt = SUM(b.BuyBackAmt)
+		, @T_BABuyBackAmt = SUM(b.BABuyBackAmt)
 	FROM dbo.rptLicWinloss2 AS b WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Customer AS c WITH (NOLOCK) ON b.custid = c.custid
 	WHERE b.winlostdate = @WinLostDate
 		AND c.srecommend IN (SELECT custid FROM bodb02.dbo.f_DepSuper_1('All'))
-		AND b.statusID IN (101,111,112,113,114,115) --REJECT, DRAW, WON, LOSE, HALF-WON, HALF-LOSE
+		AND b.statusID IN (101, 111, 112, 113, 114, 115) --REJECT, DRAW, WON, LOSE, HALF-WON, HALF-LOSE
 		AND b.bettype <= 19999
 		AND b.roleid = 1
 
@@ -103,7 +104,9 @@ BEGIN
 		OR ISNULL(@S_BABuyBackAmt, 0) <> ISNULL(@T_BABuyBackAmt, 0)
 	BEGIN
 		PRINT 'Re-generate data for RptLicWinloss2 on ' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ' date.'
-				EXEC dbo.Task_DailyRptLicWinloss2 @winlostdate = @WinlostDate
+
+		EXEC dbo.Task_DailyRptLicWinloss2 @WinLostDate = @WinLostDate
+
 		RETURN
 	END
 END
