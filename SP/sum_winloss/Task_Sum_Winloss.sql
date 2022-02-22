@@ -33,6 +33,7 @@ AS
 		- 20210810@Evan: Add Bitcoin product - [Redmine: #159036]
 		- 20211122@Percy: Enhance gross comm formula [RedmineID: #164479]
 		- 20211214@Evan: Add New Games for PP - [Redmine: #165393]	
+		- 20220106@Evan: Add SG Jackpot - [Redmine: #166685]
 */
 BEGIN
 
@@ -223,7 +224,7 @@ BEGIN
 			ELSE 0
 		END sporttype
 	   ,CASE
-			WHEN bettype IN (71, 72, 3150, 4297, 4298) THEN bettype
+			WHEN bettype IN (71, 72, 3150, 4297, 4298, 4599, 4600) THEN bettype
 			ELSE 0
 		END bettype
 	   ,0 AS netTurnover
@@ -272,9 +273,9 @@ BEGIN
 		-1 * SUM(
 					CASE
 						-- Jackpot
-						WHEN bettrans.bettype IN (2198, 2398, 2998, 4297) THEN
+						WHEN bettrans.bettype IN (2198, 2398, 2998, 4297, 4599) THEN
 							CASE WHEN bettrans.tpositiontaking = 1 THEN 0 ELSE ISNULL(bettrans.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
-						WHEN bettrans.bettype IN (2199, 2399, 2999, 4298) THEN 0
+						WHEN bettrans.bettype IN (2199, 2399, 2999, 4298, 4600) THEN 0
 						ELSE CASE WHEN bettrans.tpositiontaking = 1 THEN 0 ELSE bettrans.winlost - bettrans.actual_stake END
 					END
 					* CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT
@@ -284,7 +285,7 @@ BEGIN
 		-1 * SUM(CASE 
 					/*IBCBet Live Casino*/
 					WHEN bettrans.bettype BETWEEN 3201 AND 3299 THEN bettrans.scomm
-					WHEN bettrans.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298) THEN 0
+					WHEN bettrans.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298, 4599, 4600) THEN 0
 					ELSE 
 						CASE 
 							WHEN bettrans.tpositiontaking = 1 THEN 0 
@@ -359,7 +360,7 @@ BEGIN
 				 ELSE 0
 			 END
 			,CASE
-				WHEN bettype IN (71, 72, 3150, 4297, 4298) THEN bettype
+				WHEN bettype IN (71, 72, 3150, 4297, 4298, 4599, 4600) THEN bettype
 				 ELSE 0
 			 END
 	OPTION (optimize for (@winlostdate UNKNOWN))
@@ -370,7 +371,7 @@ BEGIN
 		INSERT INTO #__Bettype (Bettype, RefTable, IsContributionBettype, BettypeRef, SporttypeRef)
 		SELECT DISTINCT bettypePT, RefTable, IsContributionBettype
 			-- bettransRnG/bettransLC
-			,CASE WHEN bettypePT IN (3150, 4297, 4298) THEN bettypePT ELSE 0 END AS BettypeRef
+			,CASE WHEN bettypePT IN (3150, 4297, 4298, 4599, 4600) THEN bettypePT ELSE 0 END AS BettypeRef
 			,CASE
 				 WHEN bettypePT BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
 				 WHEN bettypePT BETWEEN 2101 AND 2199 THEN 208 -- RNG Casino

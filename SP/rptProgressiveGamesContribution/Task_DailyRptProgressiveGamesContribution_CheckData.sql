@@ -19,6 +19,7 @@ AS
 		- 20180607@Percy: Change Contribution data type [RedmineID: #96053]
 		- 20200809@Sophia: Add PP Jackpot contribution [Redmine: #138483]
 		- 20210505@Sol: NAP - Alpha - Allow more time for transfer - [Redmine: #149927]
+		- 20220106@Evan: Add SG Jackpot contribution [Redmine: #166685]	
 		
   
 	Param's Explanation:
@@ -117,7 +118,7 @@ BEGIN
 			b.Bettype
 			
 			
-		-----PP Jackpot 
+		-----PP,SG Jackpot 
 		INSERT INTO #rptProgressiveGamesContribution_Source
 		(
 			WinlostDate,
@@ -142,7 +143,7 @@ BEGIN
 			bc.Recommend,
 			bc.MRecommend,
 			bc.SRecommend,
-			32 AS ProductId,
+			sb.ProductId,
 			bb.GameId,
 			COUNT(bc.TransID) AS Betcount,
 			SUM(ISNULL(bc.BetStake, 0)),
@@ -152,17 +153,18 @@ BEGIN
 			SUM(ISNULL(bc.swinlost, 0)) AS ContributionS
 		FROM bodb02.dbo.bettransRNG14 bc WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.bettransRNG14 bb WITH (NOLOCK) ON bc.RefNo2 = bb.TransId
+			INNER JOIN @SportBettypeMatrix sb ON bb.GameId = sb.bettype AND sb.ProductID IN(32,36)
 		WHERE bc.WinlostDate = @WinlostDate
 			AND bc.StatusID IN (111,112,113)
-			AND EXISTS(SELECT sc.ProductID FROM @SportBettypeMatrix sc WHERE bc.GameId = sc.ContributionBettype AND sc.ProductID = 32 )
-			AND EXISTS(SELECT sb.ProductID FROM @SportBettypeMatrix sb WHERE bb.GameId = sb.bettype AND sb.ProductID = 32 )
+			AND EXISTS(SELECT sc.ProductID FROM @SportBettypeMatrix sc WHERE bc.GameId = sc.ContributionBettype AND sc.ProductID IN(32,36) )
 		GROUP BY
 			bc.WinlostDate,
 			bc.CustId,
 			bc.Recommend,
 			bc.MRecommend,
 			bc.SRecommend, 
-			bb.GameId
+			bb.GameId,
+			sb.ProductId
 	END
 
 	-- Agent - RoleId = 2
