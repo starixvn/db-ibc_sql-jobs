@@ -44,6 +44,9 @@ BEGIN
 	CREATE TABLE #rptDepWinlost_Main (CustID INT, OpeningBalance MONEY DEFAULT (0), actualrate FLOAT DEFAULT (0), srecommend INT, mrecommend INT, recommend INT, currency INT
 											  UNIQUE CLUSTERED (CustID))
 	
+	CREATE TABLE #OpeningBalance 
+	(CustID INT, OpeningBalance MONEY DEFAULT(0), srecommend INT, mrecommend INT, recommend INT, currency INT)
+
 	BEGIN TRY 
 		--1. Call SP to summarize data for rptDepWinlost_Trans
 		EXEC dbo.TASK_RealtimeSummaryDepData_Bettrans14 @Winlostdate = @Winlostdate, @isSuccessful = @isSuccessful OUTPUT
@@ -237,62 +240,63 @@ BEGIN
 		END
 		ELSE --
 		BEGIN
+			----insert temp data to sum later
+			--from bettrans
+			INSERT INTO #OpeningBalance(CustID, OpeningBalance, srecommend, mrecommend, recommend, currency)
+			SELECT b.CustID
+					, SUM(CASE @Winlostdate WHEN @BalanceUpDay 
+					    	THEN 0
+							ELSE CASE WHEN winlostdate < @Winlostdate THEN winlost - actual_stake + playercomm ELSE 0 END 
+							END) AS OpeningBalance
+					, b.srecommend, b.mrecommend, b.recommend, 
+					CASE 
+						WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
+						WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
+					ELSE b.currency 
+					END AS currency
+			FROM dbo.bettrans b WITH (NOLOCK) 
+				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
+				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
+			WHERE b.winlostdate <= @Winlostdate
+					AND b.matchid >= 0
+					AND c.roleid = 1
+					AND	bettype < 19999 AND winlostdate > @MoveBetsDay
+			GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, 
+					CASE 
+						WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
+						WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
+						ELSE b.currency
+					END
+
+			--from transfer
+			INSERT INTO #OpeningBalance(CustID, OpeningBalance, srecommend, mrecommend, recommend, currency)
+			SELECT b.CustID
+					, SUM(CASE @Winlostdate WHEN @BalanceUpDay 
+					    	THEN CASE WHEN bettype = 20000 THEN winlost - actual_stake + playercomm ELSE 0 END 
+							ELSE CASE WHEN winlostdate < @Winlostdate THEN winlost - actual_stake + playercomm ELSE 0 END 
+							END) AS OpeningBalance
+					, b.srecommend, b.mrecommend, b.recommend, 
+					CASE 
+						WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
+						WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
+					ELSE b.currency 
+					END AS currency
+			FROM dbo.transfer b WITH (NOLOCK) 
+				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
+				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
+			WHERE b.winlostdate <= @Winlostdate
+					AND c.roleid = 1
+					AND (bettype = 19999 AND winlostdate <= @MoveBetsDay OR b.Bettype > 19999)
+			GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, 
+					CASE 
+						WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
+						WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
+						ELSE b.currency
+					END
+
 			INSERT INTO #rptDepWinlost_Main (CustID, OpeningBalance, srecommend, mrecommend, recommend, currency)
-			SELECT b.custid, SUM(ISNULL(b.OpeningBalance, 0) + ISNULL(t.OpeningBalance, 0)), b.srecommend, b.mrecommend, b.recommend, b.currency
-			FROM
-			(
-				(
-					SELECT b.CustID
-						   , SUM(CASE @Winlostdate WHEN @BalanceUpDay 
-					    			THEN 0
-									ELSE CASE WHEN winlostdate < @Winlostdate THEN winlost - actual_stake + playercomm ELSE 0 END 
-								  END) AS OpeningBalance
-						   , b.srecommend, b.mrecommend, b.recommend, 
-							CASE 
-								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
-								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
-							ELSE b.currency 
-							END AS currency
-					FROM dbo.bettrans b WITH (NOLOCK) 
-						INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
-						INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
-					WHERE b.winlostdate <= @Winlostdate
-						  AND b.matchid >= 0
-						  AND c.roleid = 1
-						  AND	bettype < 19999 AND winlostdate > @MoveBetsDay
-					GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, 
-							CASE 
-								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
-								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
-							ELSE b.currency
-							END
-				) b INNER JOIN
-				(
-					SELECT b.CustID
-						   , SUM(CASE @Winlostdate WHEN @BalanceUpDay 
-					    			THEN CASE WHEN bettype = 20000 THEN winlost - actual_stake + playercomm ELSE 0 END 
-									ELSE CASE WHEN winlostdate < @Winlostdate THEN winlost - actual_stake + playercomm ELSE 0 END 
-								  END) AS OpeningBalance
-						   , b.srecommend, b.mrecommend, b.recommend, 
-							CASE 
-								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
-								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
-							ELSE b.currency 
-							END AS currency
-					FROM dbo.transfer b WITH (NOLOCK) 
-						INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
-						INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
-					WHERE b.winlostdate <= @Winlostdate
-						  AND c.roleid = 1
-						  AND (bettype = 19999 AND winlostdate <= @MoveBetsDay OR b.Bettype > 19999)
-					GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, 
-							CASE 
-								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
-								WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate >= '20141128' THEN 66 
-							ELSE b.currency
-							END
-				) t ON b.custid = t.custid
-			) 
+			SELECT b.custid, SUM(ISNULL(b.OpeningBalance, 0)), b.srecommend, b.mrecommend, b.recommend, b.currency
+			FROM #OpeningBalance b
 			GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, b.currency
 				
 			DELETE FROM #rptDepWinlost_Main
@@ -318,5 +322,6 @@ BEGIN
 	END CATCH
 	
 	DROP TABLE #rptDepWinlost_Main
+	DROP TABLE #OpeningBalance
 END
 GO
