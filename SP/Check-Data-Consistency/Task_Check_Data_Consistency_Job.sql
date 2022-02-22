@@ -16,7 +16,7 @@ AS
 		- 20180516@Paul: Add code for PP [Redmine:#95284]
 		- 20180518@Kathy: Add code for Bullfighting [Redmine:#95199]
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
-		
+		- 20220221@July: Add code for Spadegaming [Redmine: #168750]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -306,6 +306,30 @@ BEGIN
 			SET @HasError1 = 1
 			INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
 			VALUES(207, 'Bullfighting', @CheckDate, @CheckDate, @ErrorTmp)	
+		END
+		
+		--For Spadegaming
+		SELECT @Retry = 1
+		OneMore_247:
+		SELECT @ErrorTmp = ''
+		EXEC dbo.Task_RNG_DataConsistency_Check @FromDate = @CheckDate
+			, @ToDate = @CheckDate
+			, @ProductId = 247
+
+			, @ErrMessage = @ErrorTmp OUTPUT
+	
+		IF ISNULL(@ErrorTmp, '') <> ''
+		BEGIN
+			IF @Retry < 3
+			BEGIN
+				WAITFOR DELAY '00:02:00:000' --retry after 2 minutes
+				SET @Retry = @Retry + 1
+				GOTO OneMore_247
+			END
+
+			SET @HasError1 = 1
+			INSERT INTO @ErrorsTmp(ProductId, ProductName, FromDate, ToDate, ErrMessage)
+			VALUES(247, 'Spadegaming', @CheckDate, @CheckDate, @ErrorTmp)	
 		END
 
 		PRINT @CheckDate

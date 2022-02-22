@@ -26,7 +26,8 @@ AS
 		- 20210713@July: Exclude bettypes for VGaming - [Redmine: #158179]
 		- 20210914@July: Saba.club - Exclude new bettype 1644 - [Redmine: #160869]
 		- 20210924@July: Vgaming - Exclue bettype The Legend of Heroes - [Redmine:#162127]
-		
+		- 20220221@July: Spadegaming - Exclue bettype 4599 (contribution bettype) - [Redmine:#168750]
+
 	Param's Expanation:
 */
 BEGIN
@@ -89,6 +90,15 @@ BEGIN
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
 					AND b.gameID NOT IN (3829, 3898, 3899, 3835) 
+		END
+		ELSE IF @ProductId = 247 -- Spadegaming
+		BEGIN
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM	bodb02.dbo.bettransRNG b WITH (NOLOCK)
+			WHERE	ProductID = @ProductId
+					AND b.stake <= 0
+					AND b.status <> 'Completed'
+					AND b.gameID NOT IN (4599)
 		END
 		ELSE 
 		BEGIN
