@@ -14,6 +14,7 @@ AS
 		- 20201005@Sol: Initialize SP - [RedmineID: #142532]
 		- 20201209@Sol: exclude test agent from email list- [RedmineID: #142532]
 		- 20211112@Sol: Support IPv6 - Phase 2 - [Redmine: #163963]
+		- 20220222@Sol: Support - using ExchangeDailyOanda to get actualRate of @winlostdate - [RedmineID: #168815]
 */
 BEGIN
 	
@@ -79,7 +80,7 @@ BEGIN
 			,dcs.site + e.currency + '01OddsAdj' AS UserName
 			,e.ExchangeId AS CurrencyId
 			,e.currency AS CurrencyName
-			,e.actualrate
+			,eo.actualrate
 		FROM 
 			CustDB.dbo.dep_custsuper dcs WITH (NOLOCK)
 			INNER JOIN @tmpSuper ts 
@@ -88,6 +89,8 @@ BEGIN
 				ON sp.SiteName = dcs.site
 			INNER JOIN CustDB.dbo.exchange e WITH (NOLOCK)
 				ON e.ExchangeId = dcs.currency
+			INNER JOIN CustDB.dbo.ExchangeDailyOanda eo WITH (NOLOCK)
+				ON eo.ExchangeId = e.ExchangeId AND eo.ExchangeDate = @WLDate
 	)
 	INSERT INTO @tblDummyMember(SiteId, UserName, memberid, SuperId, MasterId, AgentId, CurrencyId, CurrencyName, ActualRate, IsSum)	
 	SELECT
