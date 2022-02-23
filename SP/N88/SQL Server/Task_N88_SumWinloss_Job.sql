@@ -30,7 +30,7 @@ BEGIN
 	ELSE
 		SELECT @FromDate = DATEADD(MONTH, DATEDIFF(MONTH, 0, @CurrentDate), 0)
 
-	SELECT @ToDate = @CurrentDate
+	SELECT @ToDate = DATEADD(DAY, 1, @CurrentDate)
 
 	SELECT @WinlostDate = @FromDate
 	WHILE  @WinlostDate <= @ToDate

@@ -15,6 +15,7 @@ AS
 		- 20210714@Percy: Get Revenue amount [RedmineID: #157958]
 		- 20210805@Percy: Include free spin into P2P Products [RedmineID: #157958]
 		- 20210916@Percy: Add ProgressiveBet, ProgressiveWin [RedmineID: #161540]
+		- 20220222@Percy: Use sum table instead of detail [RedmineID: #167823]
 */
 
 BEGIN 
@@ -25,6 +26,10 @@ BEGIN
 
 	DECLARE @TimeZone SMALLINT
 	SELECT  @TimeZone = CONVERT(SMALLINT, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
+
+	DECLARE @FromDateGMT0 DATETIME, @ToDateGMT0 DATETIME
+	SELECT  @FromDateGMT0 = DATEADD(HOUR, -@TimeZone, @WinlostDate)
+	SELECT  @ToDateGMT0 = DATEADD(DAY, 1, @FromDateGMT0)
 
 	-- Update product list
 	BEGIN
@@ -146,19 +151,18 @@ BEGIN
 			,mi.Currency
 			,mi.AffId
 			,p.ProductId
-			,SUM(b.Stake * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)			AS Turnover
-			,SUM(b.WinlostAmount * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)	AS Winloss
-			,SUM(b.Revenue * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)			AS Revenue
-			,SUM(b.ProgressiveBet * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)	AS ProgressiveBet
-			,SUM(b.ProgressiveWin * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END)	AS ProgressiveWin
+			,SUM(s.Turnover)		AS Turnover
+			,SUM(s.Winloss)			AS Winloss
+			,SUM(s.Revenue)			AS Revenue
+			,SUM(s.ProgressiveBet)	AS ProgressiveBet
+			,SUM(s.ProgressiveWin)	AS ProgressiveWin
 			,e.Rate
-		FROM bodb_N88.dbo.TpBetRecord b WITH (NOLOCK)
-			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.CustId = mi.CustId
-			INNER JOIN @Products p ON b.GameType = p.RefProductId
+		FROM bodb_N88.dbo.N88_SumWinloss s WITH (NOLOCK)
+			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON s.CustId = mi.CustId
+			INNER JOIN @Products p ON s.GameType = p.RefProductId
 			CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, mi.currency, 0) e
-		WHERE b.WinlostDate BETWEEN DATEADD(DAY, -1, @WinlostDate) AND DATEADD(DAY, 1, @WinlostDate)
-			AND b.TicketStatus IN (1, 2, 4, 6) -- Won/Lose/Draw/Free Spin
-			AND CONVERT(DATE, DATEADD(HOUR, @TimeZone, b.SettledTime)) = @WinlostDate
+		WHERE s.SettledTime >= @FromDateGMT0 AND s.SettledTime < @ToDateGMT0
+			AND s.StatusId IN (1, 2, 4, 6) -- Won/Lose/Draw/Free Spin
 		GROUP BY
 			mi.CustId
 			,mi.Currency
