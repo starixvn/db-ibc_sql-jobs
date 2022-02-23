@@ -16,6 +16,7 @@ AS
 		- 20191127@Percy: Deduct bonus amount from commission amount [RedmineID: #118992]
 		- 20210301@Percy: Do not calculate commission when affiliate is closed [RedmineID: #149213]
 		- 20210317@Percy: Update affiliate status history [RedmineID: #149213]
+		- 20211207@Percy: Apply core function Group Product [RedmineID: #165777]
 */
 
 BEGIN
@@ -140,7 +141,8 @@ BEGIN
 			@ToMonthDate		= @LastDayOfMonth,
 			@ProductIds			= '0',
 			@IsSumAll			= 0,
-			@GetRowTotalOnly	= 0
+			@GetRowTotalOnly	= 0,
+			@IsGroupProduct		= 0
 	END
 
 		-- Remove invalid data
