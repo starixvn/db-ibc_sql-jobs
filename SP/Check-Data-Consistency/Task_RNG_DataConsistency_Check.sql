@@ -17,6 +17,7 @@ AS
 		- 20180419@Kathy: Update rule for RNG Jackpot [Redmine:#83787]
 		- 20200923@Max: Pragmatic - PP Jackpot - Check Data Consistency [Redmine: #138310]
 		- 20220221@July: Spadegaming - SG Contribution ticket - Check Data Consistency [Redmine: #168750]
+		- 20220221@July: SG - Exclude orphan ticket custid = 0 [Redmine: #168750]
 		
 */
 BEGIN
@@ -73,6 +74,7 @@ BEGIN
 	FROM dbo.bettransRnG WITH (NOLOCK)
 	WHERE productID = @ProductId
 		AND winlostdate BETWEEN @FromDate AND @ToDate
+		AND custid <> 0 --exlude orphan ticket
 
 	INSERT INTO @sourcedata(custid, username, matchid, bettype, winlostdate, status
 		, turnover, winlost, awinlost, swinlost, mwinlost, scomm, acomm, comm, playercomm
