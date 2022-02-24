@@ -108,6 +108,7 @@ AS
 		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 		- 20220313@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
+		- 20220322@Kos: Integrate Allbet Promotion [RedmineID: #167524]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -175,7 +176,7 @@ BEGIN
 		,SUM(b.winlost - b.actual_stake) AS WinLost
 		,CASE
 			WHEN b.statusID IN (112, 113) THEN SUM(CASE
-															WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150, 3898, 3899, 4599, 4600)
+														WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150, 3898, 3899, 4599, 4600, 2499)
 															OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 															OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)) THEN 0
 														ELSE ABS(b.winlost - b.actual_stake)
@@ -245,11 +246,10 @@ BEGIN
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN (b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4599, 4600)
+			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4599, 4600, 2499)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND matchid = 173)
-				OR (b.bettype BETWEEN 17000 AND 17030)
-				) THEN b.bettype
+				OR (b.bettype BETWEEN 17000 AND 17030) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END bettype
@@ -372,11 +372,10 @@ BEGIN
 			ELSE 0
 		END
 		,CASE
-			WHEN (b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4599, 4600)
+			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4599, 4600, 2499)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND matchid = 173)
-				OR (b.bettype BETWEEN 17000 AND 17030)
-				) THEN b.bettype
+				OR (b.bettype BETWEEN 17000 AND 17030) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END
