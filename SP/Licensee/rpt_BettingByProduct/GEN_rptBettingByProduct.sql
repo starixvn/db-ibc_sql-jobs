@@ -94,6 +94,7 @@ AS
 		- 20210827@Danny: Update SystemSetting after rptBettingbyProduct step done [redmine: #151993]
 		- 20210901@Percy: Exclude BA Product from code get rpt_Betting source [RedmineID: #159691]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20220110@Danny: SG - Jackpot prize integration [#167089]
 
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
@@ -212,7 +213,7 @@ BEGIN
 			,bt.ProductID
 			,CASE
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 17005) 
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 17005, 4599, 4600) 
 						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
 						   , SAG_Tips (3007)
 						   , CC-Bonus(1906)
@@ -221,6 +222,7 @@ BEGIN
 						   , AE Casino Lucky Draw (3150)
 						   , Vgaming Contribution(3898), Vgaming Jackpot Prize(3899)
 						   , Saba Promotion (17005) - Promotion for Licensee 
+						   , SG Contribution(4599), SG Jackpot Prize(4600)
 						*/
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
@@ -251,7 +253,7 @@ BEGIN
 			,bt.ProductID
 			,CASE 
 				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 17005) 
+						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 17005, 4599, 4600) 
 						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
 						   , SAG_Tips (3007)
 						   , CC-Bonus(1906)
@@ -260,6 +262,7 @@ BEGIN
 						   , AE Casino Lucky Draw (3150)
 						   , Vgaming Contribution(3898), Vgaming Jackpot Prize(3899)
 						   , Saba Promotion (17005) - Promotion for Licensee 
+						   , SG Contribution(4599), SG Jackpot Prize(4600)
 						*/
 					THEN b.Bettype
 				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
