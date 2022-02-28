@@ -29,11 +29,6 @@ BEGIN
 	FROM dbo.Transfer t WITH(NOLOCK)
 	WHERE bettype = 20000 AND custid = 3
 	
-	---for UAT only - delete this once when go to PROD---
-	--SELECT TOP 1 @BalanceUpDay = winlostdate
-	--FROM Bettrans WITH(NOLOCK)
-	--WHERE bettype = 20000 AND matchid = 0 AND custid = 3
-	
 	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @MoveBetsDay OUTPUT
 
 	SELECT @BalanceUpDay AS BalanceUpDay, @MoveBetsDay AS MoveBetsDay
