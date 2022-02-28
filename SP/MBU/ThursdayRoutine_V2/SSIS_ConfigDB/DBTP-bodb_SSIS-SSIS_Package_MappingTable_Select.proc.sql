@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBWH-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[SSIS_Package_MappingTable_Select]
 	@environment varchar(10)
 	,@packageID int

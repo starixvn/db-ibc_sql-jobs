@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBWH-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[SSIS_Package_Report_Status]
 	@processID int=0
 	,@status varchar(10)='SUCCESS'

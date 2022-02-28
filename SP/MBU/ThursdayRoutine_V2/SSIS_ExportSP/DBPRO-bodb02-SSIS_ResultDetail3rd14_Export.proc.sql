@@ -16,11 +16,11 @@ AS
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 	
-	SELECT	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, Resourceid
+	SELECT	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, Resourceid AS ResourceId
 	FROM	dbo.ResultDetail3rd14 AS t1 WITH (NOLOCK)
 	WHERE	EXISTS (SELECT 1 FROM dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate)
 	UNION
-	SELECT	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, Resourceid
+	SELECT	ResultID, VendorID, MatchID, GameID, Custom1, Custom2, Custom3, ResultStatusID, SettlementStatusID, GameResult, OtherInfo, CreateBy, CreateDate, LastModifyBy, LastModifyDate, Resourceid AS ResourceId
 	FROM	dbo.ResultDetail3rd14 AS t1 WITH (NOLOCK)
 	WHERE	EXISTS (SELECT 1 FROM dbo.match3rd14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.match3rdid AND t2.eventdate = @winlostdate);
 END
