@@ -1,13 +1,3 @@
-USE [bodb02]
-GO
-
-/****** Object:  StoredProcedure [dbo].[ExecRep_APL_02]    Script Date: 01/28/2015 06:02:27 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
 CREATE PROCEDURE [dbo].[ExecRep_APL_02]
 	@fdate Datetime
 AS
@@ -18,7 +8,7 @@ AS
 	DB: DB02.BODB02 / SVRPRO.ProdDB
 	Revisions:
 		-20130809@viet: revise SP, then add to DB02_odds_info publication.
-    
+		-20170322@joychen : add script to fix DBODDS Server ,it haven't match14
  */ 
 SET NOCOUNT ON 
 
@@ -43,6 +33,16 @@ BEGIN
 		select matchid from match14 with(nolock)
 	)
 END	
+------because DBODDS Server haven't match14
+IF @@SERVERNAME LIKE 'DBODDS%' or @@SERVERNAME LIKE 'SITDBODDS%'
+BEGIN
+	delete from liveScore 
+	where matchid not in (
+		select matchid from match with(nolock) 
+	)
+
+END
+
 
 GO
 
