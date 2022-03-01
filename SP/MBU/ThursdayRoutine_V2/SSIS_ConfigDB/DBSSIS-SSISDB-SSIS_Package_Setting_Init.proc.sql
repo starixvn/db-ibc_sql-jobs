@@ -1,4 +1,4 @@
-/*<info serverAlias="DBWH-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBSSIS-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[SSIS_Package_Setting_Init]
 	@environment varchar(10)='DEV'
 	,@packageName varchar(100)=''
@@ -7,7 +7,7 @@ AS
 /*
 	Created by:	20130831@Bobby
 	Task:		Revise SSIS Archiving Data Project [Redmine: #166146]				
-	Database:	DBTP.SSISDB
+	Database:	DBSSIS.SSISDB
 	Revisions:
 		- 20130831@Bobby: Init
 */
@@ -44,7 +44,7 @@ BEGIN
 	FROM cte t
 	outer apply (
 		select min(Winlostdate) AS MinDate, max(Winlostdate) as MaxDate
-		FROM DBTXN.bodb02.dbo.Task_ArchiveDate with(nolock)
+		FROM DBTXN.bodb02.dbo.SSIS_Task_ArchiveDate_Test with(nolock)
 	) AS txn
 	outer apply (
 		select dateadd(DAY, -1, txn.MinDate) AS BUDate_Current

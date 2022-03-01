@@ -1,6 +1,6 @@
-/*<info serverAlias="DBWH-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[SSIS_PackageRuntime_InitBU]
-	@BUDate smalldatetime
+/*<info serverAlias="DBSSIS-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[SSIS_PackageRuntime_Init]
+	@winlostdate smalldatetime
 	,@environment varchar(10)
 	,@packageName varchar(100)
 	,@creator varchar(100)
@@ -9,7 +9,7 @@ AS
 /*
 	Created by:	20130831@Bobby
 	Task:		Revise SSIS Archiving Data Project [Redmine: #166146]				
-	Database:	DBTP.SSISDB
+	Database:	DBSSIS.SSISDB
 	Revisions:
 		- 20130831@Bobby: Init
 */
@@ -38,7 +38,7 @@ BEGIN
 	if @runtimeID > 0
 	begin
 		update rt with(rowlock,updlock)
-		set ParentID = @sessionID, SessionID = @sessionID
+		set ParentID = @sessionID, SessionID=@sessionID
 		FROM [dbo].[SSIS_PackageRuntime] rt
 		where rt.RuntimeID = @runtimeID;
 
@@ -47,8 +47,8 @@ BEGIN
            ,[ParamName]
            ,[ParamValue])
 		SELECT @runtimeID AS [RuntimeID]
-           ,'BUDate' AS [ParamName]
-           ,CONVERT(char(10), @BUDate,126) AS [ParamValue]
+           ,'winlostdate' AS [ParamName]
+           ,CONVERT(char(10), @winlostdate,126) AS [ParamValue]
 	end
 
 	SELECT @runtimeID AS RuntimeID, p.PackageID

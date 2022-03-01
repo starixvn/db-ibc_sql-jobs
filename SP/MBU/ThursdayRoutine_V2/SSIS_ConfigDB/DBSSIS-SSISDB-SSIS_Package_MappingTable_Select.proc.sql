@@ -1,4 +1,4 @@
-/*<info serverAlias="DBWH-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBSSIS-SSISDB" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[SSIS_Package_MappingTable_Select]
 	@environment varchar(10)
 	,@packageID int
@@ -6,7 +6,7 @@ AS
 /*
 	Created by:	20130831@Bobby
 	Task:		Revise SSIS Archiving Data Project [Redmine: #166146]				
-	Database:	DBTP.SSISDB
+	Database:	DBSSIS.SSISDB
 	Revisions:
 		- 20130831@Bobby: Init
 */
