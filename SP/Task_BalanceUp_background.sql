@@ -32,6 +32,7 @@ Revisions:
 	- 201900816@Patrick: Implement BU for custid have roleid = 0 [Redmine:#118818]
 	- 20200814@Joe : Improve process of filter Invalid Balance (from BalanceTable_tmp_cal) [RedmineId :#139959]
 	- 20220118@July: MBU - Timeout due to add full backup for custdb [Redmine:#167669]
+	- 20220301@July: Comment code delete for livescore [Redmine:#169201]
 
 Param's Explanation: 
 
@@ -539,7 +540,7 @@ BEGIN
 
 		EXEC Acc_Apl_ExecRep_03 @fdate 
 
-		EXEC DB02.bodb02.dbo.Task_BalanceUp_DB02 @fdate
+		--EXEC DB02.bodb02.dbo.Task_BalanceUp_DB02 @fdate
 
 	EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 1
 	
