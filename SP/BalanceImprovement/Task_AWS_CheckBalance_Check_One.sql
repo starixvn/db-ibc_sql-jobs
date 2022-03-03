@@ -19,15 +19,27 @@ BEGIN
 	DECLARE @__movebetdate SMALLDATETIME
 	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
 
-	SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	
-	FROM dbo.bettrans WITH (NOLOCK, INDEX=IX_custid) 
-	WHERE custid = @custid AND transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'bettrans')
-		AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
-					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
-					 ELSE 1 END
+	IF @@SERVERNAME IN ('DBBAL', 'SITDBBAL') --for hint index
+	BEGIN
+		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	
+		FROM dbo.bettrans WITH (NOLOCK, INDEX=IX_customerinfo) 
+		WHERE custid = @custid AND transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'bettrans')
+			AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
+						 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
+						 ELSE 1 END
+	END
+	ELSE
+	BEGIN
+		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	
+		FROM dbo.bettrans WITH (NOLOCK, INDEX=IX_custid) 
+		WHERE custid = @custid AND transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'bettrans')
+			AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
+						 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
+						 ELSE 1 END
+	END
 
 	SELECT @FromTransfer = SUM(winlost-actual_stake+playercomm)	
-	FROM dbo.Transfer WITH (NOLOCK) 
+	FROM dbo.Transfer WITH (NOLOCK, INDEX=IX_custid) 
 	WHERE custid = @custid AND transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'transfer')
 		AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 					 ELSE 1 END

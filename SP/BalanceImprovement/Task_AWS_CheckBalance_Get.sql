@@ -48,14 +48,15 @@ BEGIN
 			INNER JOIN dbo.Task_AWS_Balance_Check t ON b.custid = t.custid
 		GROUP BY b.custid
 	)
-	SELECT DISTINCT ISNULL(q2.custid, ISNULL(q3.custid, ISNULL(q4.custid, t.CustId))) custid, ISNULL(Outstanding, 0) Outstanding
-		, ISNULL(BalRNG, 0) BalRNG, ISNULL(BalLC, 0) BalLC, ISNULL(adjustWinlostAmt, 0) adjustWinlostAmt
-		, ISNULL(balNetPosition, 0) balNetPosition
+	SELECT ISNULL(q2.custid, ISNULL(q3.custid, ISNULL(q4.custid, t.CustId))) custid, SUM(ISNULL(Outstanding, 0)) Outstanding
+		, SUM(ISNULL(BalRNG, 0)) BalRNG, SUM(ISNULL(BalLC, 0)) BalLC, SUM(ISNULL(adjustWinlostAmt, 0)) adjustWinlostAmt
+		, SUM(ISNULL(balNetPosition, 0)) balNetPosition
 	INTO #tmpCal
 	FROM q2 FULL OUTER JOIN q3 ON q2.custid = q3.custid
 	FULL OUTER JOIN q4 ON q2.custid = q4.custid
 	FULL OUTER JOIN t ON q2.custid = t.CustID
 	FULL OUTER JOIN q5 ON q2.custid = q5.CustID
+	GROUP BY ISNULL(q2.custid, ISNULL(q3.custid, ISNULL(q4.custid, t.CustId)))
 
 	CREATE CLUSTERED INDEX CIX_t ON #tmpCal (custid)
 
@@ -65,7 +66,7 @@ BEGIN
 	;WITH
 	cb AS (
 		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance
-		FROM dbo.bettrans b with (nolock, index=IX_custid)
+		FROM dbo.bettrans b with (nolock)
 			INNER JOIN dbo.Task_AWS_Balance_Check t ON b.custid = t.custid
 		WHERE b.transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'bettrans')
 			AND 1 =  CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
