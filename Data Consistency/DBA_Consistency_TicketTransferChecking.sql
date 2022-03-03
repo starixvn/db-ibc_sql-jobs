@@ -1,6 +1,7 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_TicketTransferChecking]
-	 @ErrCode		INT			 = 0	OUTPUT
+	 @MaxTransID	BIGINT
+	,@ErrCode		INT			 = 0	OUTPUT
 	,@ErrMsg		VARCHAR(MAX) = ''	OUTPUT 
 	,@SampleData	VARCHAR(MAX) = ''	OUTPUT
 AS
@@ -17,10 +18,11 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @transId		VARCHAR(MAX) =''
-			
+
 	SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 	FROM bodb02.dbo.bettrans WITH(NOLOCK) 
 	WHERE bettype >= 19999
+		AND transid > @MaxTransID
 
 	IF @transId <> ''
 	BEGIN
