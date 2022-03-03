@@ -2,6 +2,7 @@
 ALTER PROCEDURE [dbo].[SSIS_Package_MappingTable_Select]
 	@environment varchar(10)
 	,@packageID int
+	,@grantMode varchar(15)='Normal'
 AS
 /*
 	Created by:	20130831@Bobby
@@ -9,6 +10,9 @@ AS
 	Database:	DBSSIS.SSISDB
 	Revisions:
 		- 20130831@Bobby: Init
+		
+	Explaination:
+		- @runMode: Normal|Bet14
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -21,6 +25,7 @@ BEGIN
 	WHERE ps.PackageID = @packageID
 		AND dt.Active = 1
 		AND pe.[Environment] = @environment
+		AND pt.GrantMode = @grantMode
 
 END
 GO

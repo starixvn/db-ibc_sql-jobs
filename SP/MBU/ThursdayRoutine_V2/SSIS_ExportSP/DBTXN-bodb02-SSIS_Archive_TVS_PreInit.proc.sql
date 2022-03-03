@@ -12,7 +12,7 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON;
-	TRUNCATE TABLE dbo.Task_Archive_TVS;
+	DELETE tvs FROM dbo.Task_Archive_TVS tvs;
 
 	INSERT INTO dbo.Task_Archive_TVS(Winlostdate, RequestId)
 	SELECT	t.Max_EventDate AS Winlostdate, t1.RequestId

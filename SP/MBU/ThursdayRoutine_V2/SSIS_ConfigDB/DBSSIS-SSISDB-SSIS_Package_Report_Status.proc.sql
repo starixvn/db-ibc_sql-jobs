@@ -5,6 +5,7 @@ ALTER PROCEDURE [dbo].[SSIS_Package_Report_Status]
 	,@runEvent bit=null
 	,@runTVS bit=null
 	,@runTransfer bit=null
+	,@runBet14 bit=null
 AS
 /*
 	Created by:	20130831@Bobby
@@ -24,8 +25,8 @@ BEGIN
 	SELECT @cntTask = LEN(@message) - LEN(REPLACE(@message, '#', ''))
 
 	UPDATE p WITH(rowlock,updlock)
-	SET [Status] = case when @cntTask =  1 then 'Closed' else  [Status] end
-		, EndTime = case when @cntTask =  1 then GETDATE() end
+	SET [Status] = case when @cntTask =  2 then 'Closed' else  [Status] end
+		, EndTime = case when @cntTask =  2 then GETDATE() end
 		, SessionID=@processID
 		, [Message] = @message + case when LEN(@message) = 0 then '' else '#' end + @status
 	FROM dbo.SSIS_PackageRuntime p
@@ -37,7 +38,8 @@ BEGIN
 		values
 		('Process Event', @runEvent),
 		('Process TVS', @runTVS),
-		('Process Transfer', @runTransfer)
+		('Process Transfer', @runTransfer),
+		('Process Bet14', @runBet14)
 	) as t (item, val)
 	WHERE t.val = CASE WHEN @status = 'SUCCESS' THEN 1 ELSE 0 END
 END

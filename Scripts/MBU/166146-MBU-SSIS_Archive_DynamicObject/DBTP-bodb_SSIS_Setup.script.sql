@@ -23,6 +23,7 @@ CREATE TABLE [dbo].[SSIS_DynamicMapping](
 	[Active] [bit] NULL,
 	[OutputFileInfo] [varchar](100) NULL,
 	[SyncParallel] [bit] NULL,
+	[IsCanceled] bit default(0),
  CONSTRAINT [PK_SSIS_DynamicMapping] PRIMARY KEY CLUSTERED 
 (
 	[ID] ASC
@@ -58,6 +59,7 @@ GO
 CREATE TABLE [dbo].[SSIS_DynamicMapping_Package](
 	[DynamicMappingID] [int] NOT NULL,
 	[PackageID] [int] NOT NULL,
+	[GrantMode] varchar(15) default('Normal'),
  CONSTRAINT [PK_SSIS_DynamicMapping_Package] PRIMARY KEY CLUSTERED 
 (
 	[DynamicMappingID] ASC,

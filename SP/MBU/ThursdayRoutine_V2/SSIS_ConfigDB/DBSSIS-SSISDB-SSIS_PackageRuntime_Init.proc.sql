@@ -5,6 +5,7 @@ ALTER PROCEDURE [dbo].[SSIS_PackageRuntime_Init]
 	,@packageName varchar(100)
 	,@creator varchar(100)
 	,@sessionID varchar(50)
+	,@grantMode varchar(15)
 AS
 /*
 	Created by:	20130831@Bobby
@@ -46,9 +47,8 @@ BEGIN
            ([RuntimeID]
            ,[ParamName]
            ,[ParamValue])
-		SELECT @runtimeID AS [RuntimeID]
-           ,'winlostdate' AS [ParamName]
-           ,CONVERT(char(10), @winlostdate,126) AS [ParamValue]
+		VALUES (@runtimeID, 'winlostdate', CONVERT(char(10), @winlostdate,126))
+			,(@runtimeID, 'grantMode', @grantMode)
 	end
 
 	SELECT @runtimeID AS RuntimeID, p.PackageID

@@ -7,6 +7,7 @@ ALTER PROCEDURE [dbo].[SSIS_PackageRountine_EndUpdate]
 	, @message varchar(250)
 	, @targetInfo varchar(1000)
 	, @outputFileName varchar(1000)
+	, @IsCanceled BIT = 0
 AS
 /*
 	Created by:	20130831@Bobby
@@ -19,12 +20,13 @@ BEGIN
 	SET NOCOUNT ON;
 
 	UPDATE rt WITH(ROWLOCK, UPDLOCK)
-	SET command=@command
-		,Status = case when @error>0 then 'Failed' else 'Completed'  end
+	SET Status = case 
+			when @IsCanceled = 1 then 'Canceled' 
+			when @error > 0 then 'Failed' 
+			else 'Completed'  end
 		,EndTime=getdate()
 		,Error=@error, Message=case when @error>0 then @message end
 		,RowTotal=@rowCount
-		,TargetInfo=@targetInfo
 	FROM dbo.SSIS_PackageRuntime rt
 	WHERE RuntimeID=@rountineID
 

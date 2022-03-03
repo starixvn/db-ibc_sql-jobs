@@ -20,6 +20,10 @@ BEGIN
 	inner join [dbo].[SSIS_DynamicMapping_Target] tr with(nolock) on tr.[DynamicMappingID] = dt.[ID] 
 	WHERE dt.ID=@sourceID AND tr.Active=1 and tr.Environment=@environment;
 
-	select @targetInfo as [TargetInfo];
+	-- output
+	select @targetInfo as [TargetInfo]
+		,dt.IsCanceled
+	FROM dbo.SSIS_DynamicMapping dt WITH(NOLOCK)
+	WHERE dt.ID=@sourceID;
 END
 GO
