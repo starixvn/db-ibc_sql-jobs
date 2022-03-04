@@ -11,260 +11,382 @@ AS
 */  
  
 BEGIN  
-declare @CutOffDate smalldatetime 
--- Keep data of 3 months
-Select @CutOffDate =  dateadd(MONTH, -3,dateadd(DAY, -day(getdate())+1, cast(getdate() as date)))
-declare @BatchSize INT = 5000
-declare @batch table (recommend int primary key);
 
--- rptCustomerTurnover
-select distinct recommend 
-into #tmpRecc
-from dbo.rptCustomerTurnover with(nolock) where winlostdate < @CutOffDate
-while exists(select 1 from #tmpRecc)
-begin 
-	delete top(100) d
-	output deleted.recommend into @batch
-	from #tmpRecc d
-	while 1 = 1
-	begin
-		delete top(@BatchSize) rpt
-		from dbo.rptCustomerTurnover rpt
-		inner join @batch b on b.recommend = rpt.recommend
-		where rpt.winlostdate < @CutOffDate
-		IF @@ROWCOUNT < @BatchSize
-			break
-	end
-	DELETE FROM @batch;
-end
+	SET NOCOUNT ON
 
--- rptCasinoTurnover
-insert into #tmpRecc
-select distinct recommend from dbo.rptCasinoTurnover with(nolock) where WinlostDate < @CutOffDate
-while exists(select 1 from #tmpRecc)
-begin 
-	delete top(100) d
-	output deleted.recommend into @batch
-	from #tmpRecc d
-	while 1 = 1
-	begin
-		delete top(@BatchSize) rpt
-		from dbo.rptCasinoTurnover rpt
-		inner join @batch b on b.recommend = rpt.recommend
-		where rpt.WinlostDate < @CutOffDate
-		IF @@ROWCOUNT < @BatchSize
-			break
-	end
-	DELETE FROM @batch;
-end
-DROP TABLE #tmpRecc
+	DECLARE @CutOffDate SMALLDATETIME 
 
--- rpt_BettingParlay
-CREATE TABLE #tempBettingParlay(
-	RecordID BIGINT PRIMARY KEY,
-	Isfinished BIT
-)
-CREATE TABLE #BettingParlay_batch(
-	RecordID BIGINT PRIMARY KEY
-)
-INSERT INTO #tempBettingParlay (RecordID)
-SELECT RecordID FROM dbo.rpt_BettingParlay WITH (NOLOCK) where rptDate < @CutOffDate
-while 1 = 1
-begin
-	UPDATE TOP (@BatchSize) R
-		SET Isfinished = 1	
-	OUTPUT DELETED.RecordID
-		INTO #BettingParlay_batch (RecordID)		
-	FROM #tempBettingParlay r
-	WHERE r.Isfinished IS NULL
+	-- Keep data of 3 months
+	SELECT @CutOffDate =  DATEADD(MONTH, -3,DATEADD(DAY,-DAY(GETDATE())+1, CAST(GETDATE() AS DATE)))
+	DECLARE @BatchSize INT = 5000
+	DECLARE @Batch TABLE (recommend INT PRIMARY KEY)
+
+
+	CREATE TABLE #TmpRecommend(
+		recommend INT 
+	)
+
+	INSERT INTO #TmpRecommend(recommend)
+	SELECT DISTINCT recommend 
+		FROM dbo.rptCustomerTurnover WITH(NOLOCK) 
+		WHERE winlostdate < @CutOffDate
+
+	WHILE EXISTS(SELECT 1 FROM #TmpRecommend)
+	BEGIN 
+
+		DELETE TOP(100) d
+		OUTPUT DELETEd.recommend INTO @Batch
+		FROM #TmpRecommend d
+
+		WHILE 1 = 1
+		BEGIN
+			DELETE TOP(@BatchSize) rpt
+			FROM dbo.rptCustomerTurnover rpt
+			INNER JOIN @Batch b on b.recommend = rpt.recommend
+			WHERE rpt.winlostdate < @CutOffDate
+
+			IF @@ROWCOUNT < @BatchSize
+				BREAK
+		END
+
+		DELETE FROM @Batch
+
+	END
+
+
+	INSERT INTO #TmpRecommend(recommend)
+	SELECT DISTINCT recommend 
+		FROM dbo.rptCasinoTurnover WITH(NOLOCK) 
+		WHERE WinlostDate < @CutOffDate
+
+	WHILE EXISTS(SELECT 1 FROM #TmpRecommend)
+	BEGIN 
+
+		DELETE TOP(100) d
+		OUTPUT DELETEd.recommend INTO @Batch
+		FROM #TmpRecommend d
+
+		WHILE 1 = 1
+		BEGIN
+			DELETE TOP(@BatchSize) rpt
+			FROM dbo.rptCasinoTurnover rpt
+			INNER JOIN @Batch b on b.recommend = rpt.recommend
+			WHERE rpt.WinlostDate < @CutOffDate
+
+			IF @@ROWCOUNT < @BatchSize
+				BREAK
+		END
+
+		DELETE FROM @Batch
+
+	END
+
+	DROP TABLE #TmpRecommend
+
+
+	CREATE TABLE #TempBettingParlay(
+		RecordID BIGINT PRIMARY KEY,
+		Isfinished BIT
+	)
+
+	CREATE TABLE #BettingParlay_Batch(
+		RecordID BIGINT PRIMARY KEY
+	)
+
+	INSERT INTO #TempBettingParlay (RecordID)
+	SELECT RecordID 
+		FROM dbo.rpt_BettingParlay WITH (NOLOCK) 
+		WHERE rptDate < @CutOffDate
+
+	WHILE 1 = 1
+	BEGIN
+
+		UPDATE TOP (@BatchSize) R
+			SET Isfinished = 1	
+			OUTPUT DELETED.RecordID
+			INTO #BettingParlay_Batch (RecordID)		
+		FROM #TempBettingParlay r
+		WHERE r.Isfinished IS NULL
 	
-	IF @@ROWCOUNT = 0
-		BREAK
-	DELETE s 
-	FROM dbo.rpt_BettingParlay s 
-		INNER JOIN #BettingParlay_batch t ON t.RecordID = s.RecordID
-	TRUNCATE TABLE #BettingParlay_batch
-end
-DROP TABLE #tempBettingParlay
-DROP TABLE #BettingParlay_batch
+		IF @@ROWCOUNT = 0
+			BREAK
 
--- match
-CREATE TABLE #tempmatch(
-	matchid BIGINT PRIMARY KEY,
-	Isfinished BIT
-)
-CREATE TABLE #match_batch(
-	matchid BIGINT PRIMARY KEY
-)
-INSERT INTO #tempmatch (matchid)
-SELECT matchid FROM dbo.match WITH (NOLOCK) where eventdate < @CutOffDate
-while 1 = 1
-begin
-	UPDATE TOP (@BatchSize) R
-		SET Isfinished = 1	
-	OUTPUT DELETED.matchid
-		INTO #match_batch (matchid)		
-	FROM #tempmatch r
-	WHERE r.Isfinished IS NULL
+		DELETE s 
+		FROM dbo.rpt_BettingParlay s 
+			INNER JOIN #BettingParlay_Batch t ON t.RecordID = s.RecordID
+
+		TRUNCATE TABLE #BettingParlay_Batch
+
+	END
+
+	DROP TABLE #TempBettingParlay
+	DROP TABLE #BettingParlay_Batch
+
+
+	CREATE TABLE #TempMatch(
+		matchid BIGINT PRIMARY KEY,
+		Isfinished BIT
+	)
+
+	CREATE TABLE #Match_Batch(
+		matchid BIGINT PRIMARY KEY
+	)
+
+	INSERT INTO #TempMatch (matchid)
+	SELECT matchid 
+		FROM dbo.match WITH (NOLOCK) 
+		WHERE eventdate < @CutOffDate
+
+	WHILE 1 = 1
+	BEGIN
+
+		UPDATE TOP (@BatchSize) R
+			SET Isfinished = 1	
+			OUTPUT DELETED.matchid
+			INTO #Match_Batch (matchid)		
+		FROM #TempMatch r
+		WHERE r.Isfinished IS NULL
 	
-	IF @@ROWCOUNT = 0
-		BREAK
-	DELETE s 
-	FROM dbo.match s 
-		INNER JOIN #match_batch t ON t.matchid = s.matchid
-	TRUNCATE TABLE #match_batch
-end
-DROP TABLE #tempmatch
-DROP TABLE #match_batch
+		IF @@ROWCOUNT = 0
+			BREAK
 
--- rptCustomerMatch
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rptCustomerMatch where winlostdate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+		DELETE s 
+		FROM dbo.match s 
+			INNER JOIN #Match_Batch t ON t.matchid = s.matchid
 
--- rptLicWinloss2
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rptLicWinloss2 where winlostdate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+		TRUNCATE TABLE #Match_Batch
 
--- rptLicWinlossGMT
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rptLicWinlossGMT where RptDate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+	END
 
--- rptWinlostbyLeague
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rptWinlostbyLeague where winlostdate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+	DROP TABLE #TempMatch
+	DROP TABLE #Match_Batch
 
--- rpt_Betting
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rpt_Betting where rptDate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
 
--- bettrans
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.bettrans where winlostdate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+	WHILE 1 = 1
+	BEGIN
 
--- DataCheckingLog
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.DataCheckingLog where winlostdate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
--- rpt_BettingByProduct
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rpt_BettingByProduct where rptDate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
--- rpt_ThirdPartyWL_ExtraGMT
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rpt_ThirdPartyWL_ExtraGMT where rptDate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rptCustomerMatch 
+		WHERE winlostdate < @CutOffDate
 
--- rpt_Betting_BA
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rpt_Betting_BA where rptDate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
 
--- rptLicCashoutSummary
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rptLicCashoutSummary where Winlostdate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+	END
 
--- rpt_BettingBySport
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rpt_BettingBySport where rptDate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+	WHILE 1 = 1
+	BEGIN
 
--- rpt_BettingColossusBets
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rpt_BettingColossusBets where rptDate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rptLicWinloss2 
+		WHERE winlostdate < @CutOffDate
 
--- outright
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.outright where eventdate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
 
--- rpt_CustomerWL_ExtraGMT
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rpt_CustomerWL_ExtraGMT where RptDate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+	END
 
--- rptDepWinlost_ThirdParty
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rptDepWinlost_ThirdParty where Winlostdate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+	WHILE 1 = 1
+	BEGIN
 
--- rptDepWinlost_ThirdParty_Performance
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rptDepWinlost_ThirdParty_Performance where Winlostdate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rptLicWinlossGMT
+		WHERE RptDate < @CutOffDate
 
--- rptLicIPBetting
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rptLicIPBetting where winlostdate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
 
--- rptLicPromotion
-while 1 = 1
-begin
-	delete top(@BatchSize) from dbo.rptLicPromotion where RptDate < @CutOffDate
-	IF @@ROWCOUNT < @BatchSize
-			break
-end
-end
+	END
+
+	WHILE 1 = 1
+	BEGIN
+	
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rptWinlostbyLeague 
+		WHERE winlostdate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rpt_Betting 
+		WHERE rptDate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.bettrans 
+		WHERE winlostdate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.DataCheckingLog 
+		WHERE winlostdate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rpt_BettingByProduct 
+		WHERE rptDate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rpt_ThirdPartyWL_ExtraGMT 
+		WHERE rptDate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rpt_Betting_BA 
+		WHERE rptDate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rptLicCashoutSummary 
+		WHERE Winlostdate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rpt_BettingBySport 
+		WHERE rptDate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rpt_BettingColossusBets 
+		WHERE rptDate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.outright 
+		WHERE eventdate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rpt_CustomerWL_ExtraGMT 
+		WHERE RptDate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rptDepWinlost_ThirdParty 
+		WHERE Winlostdate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rptDepWinlost_ThirdParty_Performance
+		WHERE Winlostdate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rptLicIPBetting 
+		WHERE winlostdate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+
+	WHILE 1 = 1
+	BEGIN
+
+		DELETE TOP(@BatchSize) 
+		FROM dbo.rptLicPromotion 
+		WHERE RptDate < @CutOffDate
+
+		IF @@ROWCOUNT < @BatchSize
+			BREAK
+
+	END
+END
 GO
