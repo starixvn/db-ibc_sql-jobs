@@ -42,11 +42,12 @@ BEGIN
 		,@HasTVS = CAST(MAX(CASE WHEN txn.MinDate is not null then 1 else 0 end) AS BIT) --AS HasTVS
 		,@HasENV = CAST(MAX(t.IsENV) AS BIT) --AS HasENV
 	FROM cte t
-	outer apply (
-		select min(Winlostdate) AS MinDate, max(Winlostdate) as MaxDate
-		FROM DBTXN.bodb02.dbo.SSIS_Task_ArchiveDate_Test with(nolock)
+	OUTER APPLY (
+		SELECT MIN(Winlostdate) AS MinDate
+			,MAX(Winlostdate)	AS MaxDate
+		FROM DBTXN.bodb02.dbo.SSIS_Task_ArchiveDate WITH(NOLOCK)
 	) AS txn
-	outer apply (
+	OUTER APPLY (
 		select dateadd(DAY, -1, txn.MinDate) AS BUDate_Current
 			,dateadd(DAY, 0, txn.MaxDate) AS BUDate_New
 	) AS bu
@@ -98,7 +99,19 @@ BEGIN
 			(@processID, 'HasTVS', CAST(@HasTVS AS char(10))),
 			(@processID, 'HasENV', CAST(@HasENV AS char(10)))
 
-		) AS t([RuntimeID],[ParamName],[ParamValue])
+		) AS t([RuntimeID],[ParamName],[ParamValue]);
+
+		BEGIN TRY
+			DECLARE @Message  NVARCHAR(1000);
+			SELECT @Message = N'[' + @@SERVERNAME + ']@[DBA : SSIS Thursday-routine] started.'
+			EXEC DBNOTI.NotificationDB.[dbo].[DBA_Skype_NewMessage]
+						@ServerName			= 'PONTUS'
+					,	@JobName			= N'Custom Message'
+					,	@Message			= @Message
+		END TRY
+		BEGIN CATCH
+			--TODO:
+		END CATCH
 	END
 
 	SELECT @BUDate AS BUDate

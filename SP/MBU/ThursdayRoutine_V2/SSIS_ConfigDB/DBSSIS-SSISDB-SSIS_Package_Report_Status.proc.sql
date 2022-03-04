@@ -71,10 +71,16 @@ BEGIN
 						'Status in [Success: ' + cast([SuccessCnt] AS VARCHAR(10)) + '/Failed: ' + cast([FailedCnt] AS VARCHAR(10)) + '].'
 		FROM cte_report
 
-		EXEC DBNOTI.NotificationDB.[dbo].[DBA_Skype_NewMessage]
+		BEGIN TRY
+			EXEC DBNOTI.NotificationDB.[dbo].[DBA_Skype_NewMessage]
 						@ServerName			= 'PONTUS'
 					,	@JobName			= N'Custom Message'
 					,	@Message			= @Message
+		END TRY
+		BEGIN CATCH
+			--TODO:
+		END CATCH
+
 	END
 END
 GO
