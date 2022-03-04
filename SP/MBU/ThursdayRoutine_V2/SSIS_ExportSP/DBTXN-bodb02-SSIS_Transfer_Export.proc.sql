@@ -13,14 +13,7 @@ AS
  */
  BEGIN
 	SET NOCOUNT ON;
-	--DECLARE	@BU_Date		DATETIME -- Next BalanceUp Date
-	--	,	@CurrentBU_Date	DATETIME
-	--	;
-
-	--SELECT	@BU_Date		= DATEADD(DAY, 1, MAX(winlostdate))
-	--	,	@CurrentBU_Date	= MIN(winlostdate)
-	--FROM	dbo.Task_ArchiveDate;
-
+	
 	-- Transfer Archive
 	SELECT	[transid]		= transid
 		,	[custid]		= custid
@@ -37,12 +30,10 @@ AS
 		,	[refno]			= refno
 		,	[creator]		= creator
 		,	[balance]		= balance
-	FROM	dbo.bettrans WITH(NOLOCK)
-	WHERE	ruben = 1
-		AND	matchid = 0
-		AND	bettype > 20000
-		AND	winlostdate = @winlostdate
-		AND	custid <> 0
-		AND	(winlost + actual_stake) <> 0;
+	FROM	dbo.Transfer WITH(NOLOCK)
+	WHERE	bettype > 20000
+			AND	winlostdate = @WinlostDate
+			AND	custid <> 0
+			AND	(winlost + actual_stake) <> 0;
 	
 END

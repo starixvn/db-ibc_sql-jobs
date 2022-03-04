@@ -12,18 +12,9 @@ AS
 		- 20130831@Bobby: Init
  */
  BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-	DECLARE @Refno_temp AS TABLE ( refno BIGINT, winlostdate SMALLDATETIME) 
-
-	--DECLARE @BalanceUpDay SMALLDATETIME
-
-	--SET @BalanceUpDay = @BUDate;
 	
-	--SELECT TOP 1 @BalanceUpDay = winlostdate + 7
-	--FROM dbo.Bettrans WITH(NOLOCK)
-	--WHERE bettype = 20000 AND matchid = 0 AND custid = 3
+	DECLARE @Refno_temp AS TABLE ( refno BIGINT, winlostdate SMALLDATETIME) 
 
 	DECLARE @InternalAccList AS TABLE (CustID INT, RoleID TINYINT)
 	INSERT INTO @InternalAccList (CustID, RoleID)
@@ -41,69 +32,57 @@ AS
 
 
 	INSERT INTO @Refno_temp
-	SELECT refno, winlostdate 
-	FROM dbo.bettrans b WITH (NOLOCK)
-		INNER join @InternalAccList c ON b.recommend = c.custid
-	WHERE c.RoleID = 2 AND bettype > 20000 AND matchid = 0 AND winlostdate = @winlostdate
+	SELECT	t.refno, t.winlostdate 
+	FROM dbo.Transfer t WITH (NOLOCK)
+		INNER join @InternalAccList c 
+			ON	t.recommend = c.custid
+	WHERE	c.RoleID = 2 
+			AND t.bettype > 20000 
+			AND t.winlostdate = @winlostdate
+	UNION
+	SELECT	refno, winlostdate 
+	FROM	dbo.Transfer t WITH (NOLOCK)
+		INNER join @InternalAccList c 
+			ON	t.custid = c.custid
+	WHERE	c.RoleID = 3 
+			AND t.bettype > 20000 
+			AND t.winlostdate = @winlostdate
 	UNION
 	SELECT refno, winlostdate 
-	FROM dbo.bettrans b WITH (NOLOCK)
-		INNER join @InternalAccList c ON b.custid = c.custid
-	WHERE c.RoleID = 3 AND bettype > 20000 AND matchid = 0 AND winlostdate = @winlostdate
-	UNION
-	SELECT refno, winlostdate 
-	FROM dbo.bettrans b WITH (NOLOCK)
-		INNER join @InternalAccList c ON b.custid = c.custid
-	WHERE c.RoleID = 4 AND bettype > 20000 AND matchid = 0 AND winlostdate = @winlostdate
+	FROM dbo.Transfer t WITH (NOLOCK)
+		INNER join @InternalAccList c 
+			ON t.custid = c.custid
+	WHERE	c.RoleID = 4 
+			AND t.bettype > 20000 
+			AND t.winlostdate = @winlostdate
 
-
-	
-	
-	--INSERT INTO DBSUM.bodb_Summary.dbo.transfer_fi
-	--    (
-	--        transid, 
-	--        custid, 
-	--        transdate, 
-	--        bettype, 
-	--        actual_stake, 
-	--        winlost, 
-	--        ActualRate, 
-	--        TransDesc, 
-	--        winlostdate, 
-	--        recommend, 
-	--        mrecommend, 
-	--        srecommend, 
-	--        currency, 
-	--        refno,
-	--        creator,
-	--        CheckerID,
-	--        CheckerName,
-	--        checkTime,
-	--        isReversal
-	--    )
-		SELECT 
-			b.transid, 
-			custid, 
-			transdate, 
-			bettype, 
-			actual_stake, 
-			winlost, 
-			ActualRate, 
-			CONVERT (NVARCHAR(300),TransDesc) AS TransDesc, 
-			b.winlostdate, 
-			recommend, 
-			mrecommend, 
-			srecommend, 
-			currency, 
-			b.refno,
-			creator,
-			betid as CheckerID,
-			CONVERT ( VARCHAR(50),betcheck) as CheckerName,
-			checkTime,
-			liveindicator AS isReversal
-		FROM dbo.bettrans b WITH (NOLOCK) --(NOLOCK, INDEX=CIX_matchid_bettype)
-			INNER JOIN @Refno_temp r ON b.refno = r.refno AND b.winlostdate=r.winlostdate
-		WHERE b.matchid = 0 AND b.bettype > 20000
+	SELECT 
+		t.transid, 
+		t.custid, 
+		t.transdate, 
+		t.bettype, 
+		t.actual_stake, 
+		t.winlost, 
+		t.ActualRate, 
+		CONVERT (NVARCHAR(300),t.TransDesc) AS TransDesc, 
+		t.winlostdate, 
+		t.recommend, 
+		t.mrecommend, 
+		t.srecommend, 
+		t.currency, 
+		t.refno,
+		t.creator,
+		ti.CheckerID,
+		ti.CheckerName,
+		checkTime,
+		ti.IsDel AS isReversal
+	FROM dbo.Transfer t WITH (NOLOCK)
+		LEFT JOIN dbo.TransferInfo ti WITH(NOLOCK)
+			ON t.TransId = ti.TransId
+		INNER JOIN @Refno_temp r 
+			ON	t.refno = r.refno 
+				AND t.winlostdate=r.winlostdate
+	WHERE	t.bettype > 20000
     
 	
 END

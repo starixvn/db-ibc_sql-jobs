@@ -42,5 +42,39 @@ BEGIN
 		('Process Bet14', @runBet14)
 	) as t (item, val)
 	WHERE t.val = CASE WHEN @status = 'SUCCESS' THEN 1 ELSE 0 END
+	
+	IF (@cntTask = 2 AND @@SERVERNAME LIKE 'DBDW%')
+	BEGIN
+		DECLARE @Message	NVARCHAR(4000);
+		WITH cte_stats
+		AS (
+			SELECT MIN(StartTime) AS StartTime
+				,MAX(EndTime) AS EndTime
+				,datediff(MINUTE, MIN(StartTime), MAX(EndTime)) AS duration_MIN
+				,SUM(CASE WHEN DynamicMappingID > 0 AND Error = 0 THEN 1 ELSE 0 END) AS SuccessCnt
+				,SUM(CASE WHEN DynamicMappingID > 0 AND Error > 0 THEN 1 ELSE 0 END) AS FailedCnt
+			FROM SSIS_PackageRuntime rt WITH (NOLOCK)
+			WHERE rt.RuntimeID >= @processID AND rt.SessionID = @processID
+		)
+		,cte_report
+		AS (
+			SELECT StartTime
+				,EndTime
+				,duration_MIN / 60 AS [Hours]
+				,duration_MIN % 60 AS [Minutes]
+				,SuccessCnt
+				,FailedCnt
+			FROM cte_stats
+		)
+		SELECT @Message = N'[' + @@SERVERNAME + ']@[DBA : SSIS Thursday-routine] completed. ' + 
+						'Durations in [Hours: ' + cast([Hours] AS VARCHAR(10)) + '/Minutes: ' + cast([Minutes] AS VARCHAR(10)) + ']. ' +
+						'Status in [Success: ' + cast([SuccessCnt] AS VARCHAR(10)) + '/Failed: ' + cast([FailedCnt] AS VARCHAR(10)) + '].'
+		FROM cte_report
+
+		EXEC DBNOTI.NotificationDB.[dbo].[DBA_Skype_NewMessage]
+						@ServerName			= 'PONTUS'
+					,	@JobName			= N'Custom Message'
+					,	@Message			= @Message
+	END
 END
 GO
