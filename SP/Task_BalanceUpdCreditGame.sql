@@ -15,6 +15,7 @@ AS
         - 20180207@Vicky: Do not count ticket Progressive Jackpot (2199, 2399, 2999) into SMA Win Limit. [Redmine: #89952]
         - 20200806@Elodie: Do not count ticket PP Jackpot Prize (4298) into SMA Win Limit. [Redmine: #138481]
 		- 20210610@Tina: Do not count ticket Lucky Draw (3150) into SMA Win Limit. [Redmine: #154296]
+		- 20220304@Elodie: Do not count ticket Promotion (2499) into SMA Win Limit. [Redmine: #166981]
 	Parameters Explanation:	
 */
 	
@@ -38,7 +39,7 @@ INSERT INTO #Balance(custid, winlostdate, bettype, balance)
 SELECT custid, winlostdate, bettype, SUM(balance)
 FROM dbo.BalancePendingCreditGame WITH (NOLOCK)
 WHERE rn <= @rn
-    AND GameTypeid NOT IN (2199,2399,2999,4298,3150) --do not count ticket Progressive Jackpot, PP Jackpot Prize and Lucky Draw into SMA Win Limit
+    AND GameTypeid NOT IN (2199,2399,2499,2999,4298,3150) --do not count ticket Progressive Jackpot, PP Jackpot Prize, Promotion and Lucky Draw into SMA Win Limit
 GROUP BY custid, winlostdate, bettype
 
 CREATE TABLE #Balance_CWL (custid int, winlostdate smalldatetime,bettypeID smallint, GameTypeid smallint, balance money)
