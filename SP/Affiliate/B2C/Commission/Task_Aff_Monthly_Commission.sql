@@ -14,6 +14,7 @@ AS
 		- 20210301@Percy: Do not calculate commission when affiliate is closed [RedmineID: #149213]
 		- 20210317@Percy: Change commission formula [RedmineID: #151391]
 		- 20210714@Percy: Calculate P2P Fee [RedmineID: #157958]
+		- 20220307@Malcolm: Revenue Share Calculation Enhancement [RedmineId: #167335]
 */
 
 BEGIN
@@ -63,6 +64,7 @@ BEGIN
 			AffId				INT,
 			GroupId				INT,
 			ProductId			INT,
+			GroupProductId		TINYINT,
 			Deposit				MONEY,
 			Withdrawal			MONEY,
 			Bonus				MONEY,
@@ -93,6 +95,7 @@ BEGIN
 			AffId,
 			GroupId,
 			ProductId,
+			GroupProductId,
 			Deposit,
 			Withdrawal,
 			Bonus,
@@ -120,6 +123,7 @@ BEGIN
 			@ProductIds			= '0',
 			@BaseCurrency		= 0,
 			@IsSumAll			= 0,
+			@IsForJob           = 1,
 			@GetRowTotalOnly	= 0
 	END
 
@@ -152,6 +156,7 @@ BEGIN
 		AffId,
 		GroupId,
 		ProductId,
+		GroupProductId,
 		Deposit,
 		Withdrawal,
 		Bonus,
@@ -174,6 +179,7 @@ BEGIN
 		AffId,
 		GroupId,
 		ProductId,
+		GroupProductId,
 		Deposit,
 		Withdrawal,
 		Bonus,
@@ -214,6 +220,13 @@ BEGIN
 	FROM #TempCommission
 	WHERE ProductId > 0
 
+	;WITH CTE_Com AS
+	(
+		SELECT c.AffId, c.MonthDate, SUM(Commission) AS Commission, SUM(SubAffCommission) AS SubAffCommission, SUM(StraightCommission) AS StraightCommission
+		FROM #TempCommission c 
+		WHERE c.ProductId = 0
+		GROUP BY c.AffId, c.MonthDate
+	)
 	INSERT INTO dbo.AffTrans
 	(
 		AffId,
@@ -238,7 +251,7 @@ BEGIN
 		t.TransType,
 		@AffCurrency,
 		@AffRate
-	FROM #TempCommission c
+	FROM CTE_Com c
 		CROSS APPLY (
 			SELECT 201 AS TransType, Commission AS Amount
 			UNION ALL
@@ -246,7 +259,6 @@ BEGIN
 			UNION ALL
 			SELECT 205, StraightCommission
 		) t
-	WHERE c.ProductId = 0
 
 	-- Update Commission Date
 	DECLARE @LaunchDate SMALLDATETIME, @LastCommDate SMALLDATETIME
