@@ -33,6 +33,7 @@ Revisions:
 	- 20200814@Joe : Improve process of filter Invalid Balance (from BalanceTable_tmp_cal) [RedmineId :#139959]
 	- 20220118@July: MBU - Timeout due to add full backup for custdb [Redmine:#167669]
 	- 20220301@July: Comment code delete for livescore [Redmine:#169201]
+	- 20220307@Bobby: Re-commit (Comment code delete for livescore [Redmine:#169201])
 
 Param's Explanation: 
 
