@@ -13,22 +13,29 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON;
-	
-	SELECT	t.CustId AS custid
-			,t.TransDate AS accdate
-			,SUM(t.winlost - t.actual_stake) AS totalamt
-			,CASE WHEN ti.IsCollection = 1 THEN CONVERT(NVARCHAR(128), 'COLL') ELSE bt.typenamee END AS transtype
-			,TransDesc AS transdesc
-	FROM	dbo.Transfer t WITH(ROWLOCK)
-		LEFT JOIN dbo.TransferInfo ti WITH(NOLOCK)
-			ON t.TransId = ti.TransId
-		INNER JOIN dbo.bettype bt WITH(NOLOCK)
-			ON t.Bettype = bt.typeid
-	WHERE	t.WinlostDate = @WinlostDate
-			AND	t.bettype >= 20000
-			AND custid <> 0
-	GROUP BY t.CustId, t.TransDesc, t.TransDate, t.TransId
-		,CASE WHEN ti.IsCollection = 1 THEN CONVERT(NVARCHAR(128), 'COLL') ELSE bt.typenamee END
-	HAVING SUM(t.winlost - t.actual_stake) <> 0;
+	--DECLARE	@BU_Date		DATETIME -- Next BalanceUp Date
+	--	,	@CurrentBU_Date	DATETIME
+	--	;
+
+	--SELECT	@BU_Date		= DATEADD(DAY, 1, MAX(winlostdate))
+	--	,	@CurrentBU_Date	= MIN(winlostdate)
+	--FROM	dbo.Task_ArchiveDate;
+
+-- OpenBalance & Transfer for Statement
+	SELECT	[custid]	= b.custid
+		,	[accdate]	= b.transdate
+		,	[totalamt]	= SUM(b.winlost - b.actual_stake)
+		,	[transtype]	= cast(CASE WHEN b.OddsId = 1 THEN CONVERT(VARCHAR(128), 'COLL') ELSE bt.typenamee END as varchar(128))
+		,	[transdesc]	= CAST(transdesc as varchar(1000))
+	FROM	dbo.bettrans AS b WITH (ROWLOCK, INDEX = CIX_matchid_bettype)
+	INNER JOIN	dbo.bettype AS bt WITH (NOLOCK)
+			ON	b.bettype = bt.typeid
+	WHERE	b.ruben = 1
+		AND	b.matchid = 0
+		AND	b.bettype >= 20000
+		AND	b.winlostdate = @winlostdate 
+		AND custid <> 0
+	GROUP BY b.custid, bt.typenamee, b.transdesc, b.transdate, b.transid, CASE WHEN b.OddsId = 1 THEN CONVERT (NVARCHAR(128), 'COLL') ELSE bt.typenamee END
+	HAVING SUM(winlost - actual_stake) <> 0;
 END
 GO
