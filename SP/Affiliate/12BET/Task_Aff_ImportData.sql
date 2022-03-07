@@ -22,7 +22,12 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @MoveBetsDay SMALLDATETIME
-	SELECT  @MoveBetsDay = MAX(eventdate) FROM bodb02.dbo.match14 WITH (NOLOCK)
+	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+
+	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+	
+	SELECT @MoveBetsDay = MoveBetsDay FROM @tblMoveBetBalanceUp
 
 	IF @WinlostDate IS NULL OR @WinlostDate <= @MoveBetsDay
 		RETURN
