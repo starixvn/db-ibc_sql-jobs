@@ -11,9 +11,9 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DELETE FROM dbo.SSIS_Task_ArchiveDate
+	DELETE FROM dbo.Task_ArchiveDate
 
-	INSERT INTO dbo.SSIS_Task_ArchiveDate
+	INSERT INTO dbo.Task_ArchiveDate
 	SELECT DISTINCT TOP 7 winlostdate
 	FROM dbo.bettrans14 WITH(NOLOCK)
 	ORDER BY winlostdate ASC

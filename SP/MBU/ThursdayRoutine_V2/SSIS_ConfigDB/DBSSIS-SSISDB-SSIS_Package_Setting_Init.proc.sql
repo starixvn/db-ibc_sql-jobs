@@ -45,7 +45,7 @@ BEGIN
 	OUTER APPLY (
 		SELECT MIN(Winlostdate) AS MinDate
 			,MAX(Winlostdate)	AS MaxDate
-		FROM DBTXN.bodb02.dbo.SSIS_Task_ArchiveDate WITH(NOLOCK)
+		FROM DBTXN.bodb02.dbo.Task_ArchiveDate WITH(NOLOCK)
 	) AS txn
 	OUTER APPLY (
 		select dateadd(DAY, -1, txn.MinDate) AS BUDate_Current
