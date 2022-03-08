@@ -35,7 +35,7 @@ BEGIN
 	BEGIN 
 
 		DELETE TOP(100) d
-		OUTPUT DELETEd.recommend INTO @Batch
+		OUTPUT DELETED.recommend INTO @Batch
 		FROM #TmpRecommend d
 
 		WHILE 1 = 1
@@ -63,7 +63,7 @@ BEGIN
 	BEGIN 
 
 		DELETE TOP(100) d
-		OUTPUT DELETEd.recommend INTO @Batch
+		OUTPUT DELETED.recommend INTO @Batch
 		FROM #TmpRecommend d
 
 		WHILE 1 = 1
