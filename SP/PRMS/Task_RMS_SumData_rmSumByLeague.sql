@@ -14,6 +14,7 @@ AS
 		- 20200601@Percy: Initialize SP [RedmineID: #130275]
 		- 20210111@Danny: Enhance performance (get data from bettrans_bk) [RedmineID: #123157]
 		- 20210607@Danny: Move 'Saba789' to Credit Site  [RedmineID: #153874]
+		- 20220301@Danny: Support basketball Sport type data [RedmineID: #169072]
 
 */
 
@@ -87,7 +88,7 @@ BEGIN
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
 		WHERE r.winlostdate = @winlostdate
 			AND r.bettype = 29
-			AND r.liveawayscore IN (1, 3) -- soccer
+			AND r.liveawayscore IN (1, 2, 3) -- soccer
 			AND r.statusID IN (111, 112, 113, 101, 102)
 			AND r.currency <> 20
 	END
@@ -100,7 +101,7 @@ BEGIN
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
 		WHERE r.winlostdate = @winlostdate
 			AND r.bettype = 29
-			AND r.liveawayscore IN (1, 3) -- soccer
+			AND r.liveawayscore IN (1, 2, 3) -- soccer
 			AND r.statusID IN (111, 112, 113, 101, 102)
 			AND r.currency <> 20
 	END
@@ -123,7 +124,7 @@ BEGIN
 	FROM @bettrans b
 		INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
-	WHERE  m.sporttype = 1 AND bm.winlostdate BETWEEN DATEADD(DAY, -21, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
+	WHERE  m.sporttype IN (1,2) AND bm.winlostdate BETWEEN DATEADD(DAY, -21, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
 	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
 	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount )
@@ -144,7 +145,7 @@ BEGIN
 	FROM @bettrans b
 		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
-	WHERE  m.sporttype = 1 AND (bm.winlostdate > @MoveBetsDay OR bm.winlostdate IS NULL)
+	WHERE  m.sporttype IN (1,2) AND (bm.winlostdate > @MoveBetsDay OR bm.winlostdate IS NULL)
 	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
 
@@ -166,7 +167,7 @@ BEGIN
 	FROM @bettrans b
 		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
-	WHERE m.sporttype = 1  AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay
+	WHERE m.sporttype IN (1,2)  AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay
 	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
 	CREATE NONCLUSTERED INDEX idx_#BettransmByLeague ON #BettransmByLeague(leagueid, ParlayType, IsDeposit) INCLUDE (BetCount,WonCount, DrawCount,LoseCount)

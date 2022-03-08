@@ -15,6 +15,7 @@ AS
 		- 20210111@Danny: Enhance performance (get data from bettrans_bk) [RedmineID: #123157]
 		- 20210607@Danny: Move 'Saba789' to Credit Site  [RedmineID: #153874]
 		- 20210809@Danny: Add column bettype,betteam into rmBettransm_bk [RedmineID: #159304]
+		- 20220301@Danny: Support basketball Sport type data [RedmineID: #169072]
 */
 
 BEGIN
@@ -75,7 +76,7 @@ BEGIN
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
 		WHERE r.winlostdate = @winlostdate
 			AND r.bettype = 29
-			AND r.liveawayscore IN (1, 3) -- soccer
+			AND r.liveawayscore IN (1,2, 3) -- soccer
 			AND r.statusID IN (111, 112, 113, 101, 102)
 			AND r.currency <> 20
 	END
@@ -88,7 +89,7 @@ BEGIN
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
 		WHERE r.winlostdate = @winlostdate
 			AND r.bettype = 29
-			AND r.liveawayscore IN (1, 3) -- soccer
+			AND r.liveawayscore IN (1, 2, 3) -- soccer
 			AND r.statusID IN (111, 112, 113, 101, 102)
 			AND r.currency <> 20
 
@@ -123,21 +124,21 @@ BEGIN
 					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
-						AND m.sporttype = 1 AND bm.winlostdate > @MoveBetsDay
+						AND m.sporttype IN (1,2) AND bm.winlostdate > @MoveBetsDay
 
 					UNION ALL
 					SELECT bm.bettype, m.leagueid, bm.statusID
 					FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
-						AND m.sporttype = 1 AND bm.winlostdate BETWEEN @BalanceUpDay AND  @MoveBetsDay
+						AND m.sporttype IN (1,2) AND bm.winlostdate BETWEEN @BalanceUpDay AND  @MoveBetsDay
 
 					UNION ALL
 					SELECT bm.bettype, m.leagueid, bm.statusID
 					FROM dbo.rmBettransm_bk bm WITH (NOLOCK)
 						INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
-						AND m.sporttype = 1 AND bm.winlostdate < @BalanceUpDay
+						AND m.sporttype IN (1,2) AND bm.winlostdate < @BalanceUpDay
 
 				) bm
 			) t
@@ -153,7 +154,7 @@ BEGIN
 			t.bettype
 			,b.ParlayType
 			,b.IsDeposit
-			,0
+			,0  -- soccer only
 			,BetCount			= SUM(1)
 			,WonCount			= SUM(CASE WHEN t.statusID = 112 THEN 1 ELSE 0 END)
 			,LoseCount			= SUM(CASE WHEN t.statusID = 113 THEN 1 ELSE 0 END)
