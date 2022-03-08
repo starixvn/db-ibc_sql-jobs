@@ -102,12 +102,12 @@ BEGIN
 		) AS t([RuntimeID],[ParamName],[ParamValue]);
 
 		BEGIN TRY
-			DECLARE @Message  NVARCHAR(1000);
-			SELECT @Message = N'[' + @@SERVERNAME + ']@[DBA : SSIS Thursday-routine] started.'
+			DECLARE @Notify  NVARCHAR(1000);
+			SELECT @Notify = N'[' + @@SERVERNAME + ']@[DBA : SSIS Thursday-routine] started.'
 			EXEC DBNOTI.NotificationDB.[dbo].[DBA_Skype_NewMessage]
 						@ServerName			= 'PONTUS'
 					,	@JobName			= N'Custom Message'
-					,	@Message			= @Message
+					,	@Message			= @Notify
 		END TRY
 		BEGIN CATCH
 			--TODO:

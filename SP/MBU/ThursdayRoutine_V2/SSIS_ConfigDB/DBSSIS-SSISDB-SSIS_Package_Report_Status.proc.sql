@@ -45,7 +45,7 @@ BEGIN
 	
 	IF (@cntTask = 2 AND @@SERVERNAME LIKE 'DBDW%')
 	BEGIN
-		DECLARE @Message	NVARCHAR(4000);
+		DECLARE @Notify	NVARCHAR(4000);
 		WITH cte_stats
 		AS (
 			SELECT MIN(StartTime) AS StartTime
@@ -66,7 +66,7 @@ BEGIN
 				,FailedCnt
 			FROM cte_stats
 		)
-		SELECT @Message = N'[' + @@SERVERNAME + ']@[DBA : SSIS Thursday-routine] completed. ' + 
+		SELECT @Notify = N'[' + @@SERVERNAME + ']@[DBA : SSIS Thursday-routine] completed. ' + 
 						'Durations in [Hours: ' + cast([Hours] AS VARCHAR(10)) + '/Minutes: ' + cast([Minutes] AS VARCHAR(10)) + ']. ' +
 						'Status in [Success: ' + cast([SuccessCnt] AS VARCHAR(10)) + '/Failed: ' + cast([FailedCnt] AS VARCHAR(10)) + '].'
 		FROM cte_report
@@ -75,7 +75,7 @@ BEGIN
 			EXEC DBNOTI.NotificationDB.[dbo].[DBA_Skype_NewMessage]
 						@ServerName			= 'PONTUS'
 					,	@JobName			= N'Custom Message'
-					,	@Message			= @Message
+					,	@Message			= @Notify
 		END TRY
 		BEGIN CATCH
 			--TODO:
