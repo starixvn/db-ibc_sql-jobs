@@ -34,6 +34,7 @@ AS
 		- 20211122@Percy: Enhance gross comm formula [RedmineID: #164479]
 		- 20211214@Evan: Add New Games for PP - [Redmine: #165393]	
 		- 20220106@Evan: Add SG Jackpot - [Redmine: #166685]
+		- 20220124@Evan: Add Allbet Promotion - [Redmine: #166981]
 */
 BEGIN
 
@@ -224,7 +225,7 @@ BEGIN
 			ELSE 0
 		END sporttype
 	   ,CASE
-			WHEN bettype IN (71, 72, 3150, 4297, 4298, 4599, 4600) THEN bettype
+			WHEN bettype IN (71, 72, 3150, 4297, 4298, 4599, 4600, 2499) THEN bettype
 			ELSE 0
 		END bettype
 	   ,0 AS netTurnover
@@ -360,7 +361,7 @@ BEGIN
 				 ELSE 0
 			 END
 			,CASE
-				WHEN bettype IN (71, 72, 3150, 4297, 4298, 4599, 4600) THEN bettype
+				WHEN bettype IN (71, 72, 3150, 4297, 4298, 4599, 4600, 2499) THEN bettype
 				 ELSE 0
 			 END
 	OPTION (optimize for (@winlostdate UNKNOWN))
