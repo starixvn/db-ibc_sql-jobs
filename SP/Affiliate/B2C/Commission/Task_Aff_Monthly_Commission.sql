@@ -85,7 +85,8 @@ BEGIN
 			CommissionRate		FLOAT,
 			Commission			MONEY,
 			StraightCommission	MONEY,
-			SubAffCommission	MONEY
+			SubAffCommission	MONEY,
+			IsMultiGroupProduct TINYINT
 		)
 
 		-- Uncalculated Months
@@ -114,7 +115,8 @@ BEGIN
 			CommissionRate,
 			Commission,
 			StraightCommission,
-			SubAffCommission
+			SubAffCommission,
+			IsMultiGroupProduct
 		)
 		EXEC dbo.Aff_Commission_UnCalc
 			@AffIds				= 'all',
