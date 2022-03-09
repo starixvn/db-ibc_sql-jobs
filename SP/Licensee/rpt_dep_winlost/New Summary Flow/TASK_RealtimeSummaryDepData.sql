@@ -63,6 +63,7 @@ AS
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
 		- 20211216@Kos: Integrate PP 20 new games [RedmineID: #165772]
 		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
+		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -692,6 +693,7 @@ BEGIN
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
+				WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
@@ -768,6 +770,7 @@ BEGIN
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
+				WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
 				ELSE 0
 			END
 
