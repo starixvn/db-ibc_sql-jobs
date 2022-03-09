@@ -1,0 +1,42 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[SSIS_TicketVoiding_RequestDetailTicket_Single_Export]
+	@winlostdate smalldatetime=null
+AS
+/*
+	Created by:	20130831@Bobby
+	Task:		Revise SSIS Archiving Data Project [Redmine: #166146]	
+	Database: DBTXN.bodb02
+	Original: DB06x.bodb_archive.Task_Archive_Copy 
+	
+	Revisions:
+		- 20130831@Bobby: Init
+ */
+ BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+	declare @tmpRequest table(RequestId INT);
+	declare @RequestIds nvarchar(max);
+
+	INSERT INTO @tmpRequest(RequestId)
+	SELECT RequestID
+	FROM dbo.Task_Archive_TVS tvs with(nolock)
+	WHERE tvs.Winlostdate=@winlostdate
+
+	SET @RequestIds = STUFF((SELECT ',' + CAST(RequestId AS VARCHAR(50)) FROM @tmpRequest FOR XML PATH('')),1,1,'')
+
+	SELECT	t1.Id, t1.RequestId, t1.IssueTypeId, t1.SubIssueTypeId,t1.TransId, t1.MatchId,t1.RequestDetailId
+		--, t1.bettype, t1.betid
+		,t1.Bettype, t1.BetId
+	FROM	dbo.TicketVoiding_RequestDetailTicket_Single AS t1 WITH (NOLOCK)
+	CROSS APPLY (
+		SELECT	cast(val as int) AS RequestId
+		FROM	dbo.f_SplitString(@RequestIds, ',')
+		WHERE val = t1.RequestId
+	) r
+	OPTION (maxrecursion 0);
+
+END
+GO
+

@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30002.166
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{159641D6-6404-4A2A-AE62-294DE0FE8301}") = "DBA_SSIS_Automation_ObjectMapping", "DBA_SSIS_Automation_ObjectMapping\DBA_SSIS_Automation_ObjectMapping.dtproj", "{258DF7BC-E427-41A9-99DB-92BB22620A1F}"
+EndProject
+Project("{159641D6-6404-4A2A-AE62-294DE0FE8301}") = "MNL_SSIS_AutomationMapping_DR", "MNL_SSIS_AutomationMapping_DR\MNL_SSIS_AutomationMapping_DR.dtproj", "{26D36311-B1B2-4A94-AFDA-9F3FBD68B4EC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Development|Default = Development|Default
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{258DF7BC-E427-41A9-99DB-92BB22620A1F}.Development|Default.ActiveCfg = Development
+		{258DF7BC-E427-41A9-99DB-92BB22620A1F}.Development|Default.Build.0 = Development
+		{26D36311-B1B2-4A94-AFDA-9F3FBD68B4EC}.Development|Default.ActiveCfg = Development
+		{26D36311-B1B2-4A94-AFDA-9F3FBD68B4EC}.Development|Default.Build.0 = Development
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E90F4619-697D-4139-BCD5-BE17C0F1AA64}
+	EndGlobalSection
+EndGlobal
