@@ -15,6 +15,7 @@ AS
 		- 20201209@Sol: exclude test agent from email list- [RedmineID: #142532]
 		- 20211112@Sol: Support IPv6 - Phase 2 - [Redmine: #163963]
 		- 20220222@Sol: Support - using ExchangeDailyOanda to get actualRate of @winlostdate - [RedmineID: #168815]
+		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
 */
 BEGIN
 	
@@ -66,10 +67,9 @@ BEGIN
 	FROM CustDB.dbo.Customer c WITH (NOLOCK)
 		CROSS APPLY 
 		(
-			SELECT val FROM bodb02.dbo.f_SplitString(@CustIds, ',') f WHERE c.custid = f.val
+			SELECT value FROM STRING_SPLIT(@CustIds, ',') f WHERE c.custid = f.value
 		) AS tmp
 	WHERE c.roleid = 1
-	OPTION (MAXRECURSION 0)
 
 	--- get dummies member acc 
 	;WITH rs AS

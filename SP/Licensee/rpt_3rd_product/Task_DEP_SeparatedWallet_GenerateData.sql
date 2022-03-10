@@ -10,6 +10,7 @@ AS
 
 	Revisions:
 		- 20200407@Percy: Initialize SP [RedmineID: #131885]
+		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
 */
 
 BEGIN
@@ -105,7 +106,7 @@ BEGIN
 			IF @ReadyType = 2
 				BREAK
 
-			DELETE @Products WHERE ProductId IN (SELECT val FROM dbo.strSplit(@ReadyProductIds, ','))
+			DELETE @Products WHERE ProductId IN (SELECT value FROM STRING_SPLIT(@ReadyProductIds, ','))
 			
 			SET @CheckProductIds = NULL
 			SELECT @CheckProductIds = COALESCE(@CheckProductIds + ',', '') + CONVERT(VARCHAR(10), ProductId) FROM @Products

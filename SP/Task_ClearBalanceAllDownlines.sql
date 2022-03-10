@@ -19,6 +19,7 @@ AS
 	- 20200730@Sophia: Check UM Transfer Function [Redmine: #136992]
 	- 20201007@Sophia: Hot fix - account keep waiting [Redmine: #143099]
 	- 20210729@Sol: Hot fix - change table which is used in order by - [Redmine: #159245]
+	- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
 */
 BEGIN
 
@@ -56,7 +57,7 @@ BEGIN
 		
 		UPDATE 	#Cust 
 		SET  	IsTransferring = 1
-		WHERE 	Custid IN (Select Val from [f_SplitString](@CustIDList, ',')) 
+		WHERE 	Custid IN (Select value from STRING_SPLIT(@CustIDList, ',')) 
 
 		WAITFOR DELAY '00:00:05' 
 		-----------------------------------------------------------------------------------
