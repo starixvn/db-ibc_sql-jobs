@@ -34,7 +34,10 @@ BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM bodb02.dbo.bettransRNG WITH(NOLOCK) 
 		WHERE
-			((aWinLost <> -(winlost-actual_stake) * apositiontaking) or (mWinLost <> -(winlost-actual_stake) * mpositiontaking) or (sWinLost <> -(winlost-actual_stake) * spositiontaking)) 
+			(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.0001 
+			OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.0001
+			OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.0001
+			) 
 			AND statusid IN (112, 113, 111) --Won/lose/draw
 			AND (winlostdate = @Today OR winlostdate = @yesterday) 
 			AND gameID NOT IN (2198, 2398, 2998, 1698, 3898, 4297, 4599)
@@ -44,7 +47,10 @@ BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM bodb02.dbo.bettransLC WITH(NOLOCK) 
 		WHERE
-			((aWinLost <> -(winlost-actual_stake) * apositiontaking) or (mWinLost <> -(winlost-actual_stake) * mpositiontaking) or (sWinLost <> -(winlost-actual_stake) * spositiontaking)) 
+			(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.0001 
+			OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.0001
+			OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.0001
+			) 
 			AND statusid IN (111, 112, 113) --Won/lose/draw
 			AND (winlostdate = @Today OR winlostdate = @yesterday)
 	END
