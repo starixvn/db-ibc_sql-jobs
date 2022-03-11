@@ -38,6 +38,7 @@ AS
 		- 20210525@Hogan: Integrate Vgaming [RedmineID: #151583]
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
+		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 
 	Param's Explanation:
 		@DrawFilter
@@ -226,6 +227,10 @@ BEGIN
 		,@APMTurnover MONEY
 		,@APMCustomerWl MONEY
 		,@APMBetCount MONEY
+		----VS3
+		,@VS3Turnover MONEY
+		,@VS3CustomerWl MONEY
+		,@VS3BetCount MONEY
 
 	DECLARE @tblSporttype AS TABLE (ProductPrefix VARCHAR(10), Sporttype SMALLINT)
 
@@ -237,8 +242,8 @@ BEGIN
 		s.SportType
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB',
-		'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM')
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2',
+		'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3')
 
 	INSERT INTO @tblSporttype
 	SELECT 'SB', 0
@@ -933,6 +938,22 @@ BEGIN
 	FROM @tblData b
 	WHERE ProductPrefix = 'APM'
 
+	----VS3
+	SELECT
+		@VS3Turnover=SUM(CASE
+							WHEN @DrawFilter IN (2,3) THEN
+								CASE
+									WHEN b.StatusID = 111 THEN 0
+									WHEN b.StatusID IN (114,115) THEN 0.5
+									ELSE 1
+								END
+							ELSE 1
+						END * b.Turnover)
+		,@VS3CustomerWl=SUM(b.winlost)
+		,@VS3BetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
+	FROM @tblData b
+	WHERE ProductPrefix = 'VS3'
+
 	-- Result
 	SELECT
 		1 AS id
@@ -979,6 +1000,7 @@ BEGIN
 		, ISNULL(@CGTurnover,0) AS CG
 		, ISNULL(@APTurnover,0) AS AP
 		, ISNULL(@APMTurnover,0) AS APM
+		, ISNULL(@VS3Turnover,0) AS VS3
 	UNION
 	SELECT
 		2
@@ -1025,6 +1047,7 @@ BEGIN
 		, ISNULL(@CGCustomerWl,0)
 		, ISNULL(@APCustomerWl,0)
 		, ISNULL(@APMCustomerWl,0)
+		, ISNULL(@VS3CustomerWl,0)
 	UNION
 	SELECT
 		3
@@ -1071,6 +1094,7 @@ BEGIN
 		, ISNULL(@CGBetCount,0)
 		, ISNULL(@APBetCount,0)
 		, ISNULL(@APMBetCount,0)
+		, ISNULL(@VS3BetCount,0)
 
 	SET NOCOUNT OFF
 END

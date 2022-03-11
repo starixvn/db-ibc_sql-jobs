@@ -106,6 +106,7 @@ AS
 		- 20220106@Kos: Hotfix - Missing turnover of Vgaming Jackpot [RedmineID: #167065]
 		- 20220107@Kos: Support new Cash Out [RedmineID: #165160]
 		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
+		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -238,6 +239,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 			WHEN b.bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 			WHEN b.bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
+			WHEN b.bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -365,6 +367,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 			WHEN b.bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 			WHEN b.bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
+			WHEN b.bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
 			ELSE 0
 		END
 		,CASE
