@@ -15,6 +15,7 @@ AS
 		- 20210628@Helen:	Initial - [RedmineId: #157539]
 		- 20210701@Helen: [TVS] Duplicate issue [Redmine: #157539]
 		- 20220113@Max: [TVS] Cannot execute auto void queue for test match [Redmine: #166895]
+		- 20220309@Max: MBU - Copy data of Cash Out Selling to bk table [Redmine: #169593]
 	Notes:
 		- check by one day: TicketVoiding_VoidedTransaction
 		- check by range from startdate & enddate: others	
@@ -305,6 +306,14 @@ BEGIN
 		FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
 		WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @StartDate)
 			AND t1.VoidingHistoryId IS NULL
+	END	
+	ELSE IF @tablename = 'CashOutSelling'	
+	BEGIN
+		INSERT INTO @__tempCount(rowcnt, tableName)
+		SELECT	COUNT(1),'CashOutSelling'
+		FROM	bodb02.dbo.CashOutSelling AS t1 WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.winlostdate = @StartDate	
+		
 	END	
 	---------------------------------------------------------------------		
 	SELECT @OutputData = (

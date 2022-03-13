@@ -23,6 +23,7 @@ AS
 		- 20211126@Kathy: Add 2 new column bettype,betid [Redmine:#140180]
 		- 20211126@Kathy: get bettype,betid from active table[Redmine:#140180]
 		- 20220113@Max: [TVS] Cannot execute auto void queue for test match [Redmine: #166895]
+		- 20220309@Max: MBU - Copy data of Cash Out Selling to bk table [Redmine: #169593]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -570,6 +571,24 @@ SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winl
 FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
 WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @StartDate)
 	AND t1.VoidingHistoryId IS NULL;'');';
+
+			EXECUTE	sys.sp_executesql @Query;
+	END
+
+	---------------Table : CashOutSelling_bk --------------------
+	ELSE IF	@TableName = N'CashOutSelling'
+	BEGIN;
+			SELECT	@Query = '';
+			SELECT	@Query = @Query + N'\
+INSERT INTO	dbo.CashOutSelling_bk
+	(TransId, MatchID, Bettype, Custid, CashOutStatus, Winlost, PriceInfo, CheckTime, CreateDate, ChangeDate, VirtualRate)
+SELECT TransId, MatchID, Bettype, Custid, CashOutStatus, Winlost, PriceInfo, CheckTime, CreateDate, ChangeDate, VirtualRate
+FROM	OPENQUERY(DBTXN, ''\
+DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
+
+SELECT	TransId, MatchID, Bettype, Custid, CashOutStatus, Winlost, PriceInfo, CheckTime, CreateDate, ChangeDate, VirtualRate
+FROM	bodb02.dbo.CashOutSelling AS t1 WITH (NOLOCK)
+	INNER JOIN bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.winlostdate = @StartDate;'');';
 
 			EXECUTE	sys.sp_executesql @Query;
 	END
