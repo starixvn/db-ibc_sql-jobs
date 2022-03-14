@@ -586,7 +586,7 @@ SELECT TransId, MatchID, Bettype, Custid, CashOutStatus, Winlost, PriceInfo, Che
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
 
-SELECT	TransId, MatchID, Bettype, Custid, CashOutStatus, Winlost, PriceInfo, CheckTime, CreateDate, ChangeDate, VirtualRate
+SELECT	t1.TransId, t1.MatchID, t1.Bettype, t1.Custid, t1.CashOutStatus, t1.Winlost, t1.PriceInfo, t1.CheckTime, t1.CreateDate, t1.ChangeDate, t1.VirtualRate
 FROM	bodb02.dbo.CashOutSelling AS t1 WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.winlostdate = @StartDate;'');';
 
