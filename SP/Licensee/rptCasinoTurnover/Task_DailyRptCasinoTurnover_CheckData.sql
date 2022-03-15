@@ -24,25 +24,25 @@ AS
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
+		- 20220315@Kos: Revise net turnover [RedmineID: #169843]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @SportBetTypeMatrix TABLE (
-		ProductId	TINYINT,
-		BetType		SMALLINT )
+	DECLARE @SportBetTypeMatrix TABLE (ProductId TINYINT, BetType SMALLINT, RefTable TINYINT)
 
 	INSERT INTO @SportBetTypeMatrix
 	SELECT DISTINCT
 		ProductId,
-		BetType
+		BetType,
+		RefTable
 	FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
-	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51, 57, 66, 62, 67, 68)
+	WHERE RefTable IN (1, 2) AND ProductID NOT IN (11, 17)
 
 	DECLARE
-		@S_Winlost			MONEY,
-		@T_Winlost			MONEY,
+		@S_WinLost			MONEY,
+		@T_WinLost			MONEY,
 		@S_Turnover			MONEY,
 		@T_Turnover			MONEY,
 		@S_BetCount			INT,
@@ -50,48 +50,53 @@ BEGIN
 		@S_ValidBetAmount	MONEY,
 		@T_ValidBetAmount	MONEY
 
-	SELECT @S_Winlost = SUM(ISNULL(Winlost, 0))
-		, @S_Turnover = SUM(ISNULL(Turnover, 0))
-		, @S_BetCount = SUM(ISNULL(BetCount, 0))
-		, @S_ValidBetAmount = SUM(ISNULL(ValidBetAmount, 0))
+	SELECT
+		@S_WinLost = SUM(ISNULL(t.WinLost, 0)),
+		@S_Turnover = SUM(ISNULL(t.Turnover, 0)),
+		@S_BetCount = SUM(ISNULL(t.BetCount, 0)),
+		@S_ValidBetAmount = SUM(ISNULL(t.ValidBetAmount, 0))
 	FROM (
-		-- RNG Casino, Macau Games, PG Soft, PP, Saba.club, Habanero, Vgaming, Creative Gaming
-		SELECT SUM(b.winlost - b.actual_stake) AS Winlost
-			, SUM(b.stake) AS Turnover
-			, COUNT(b.transid) AS BetCount
-			, SUM(b.stake) AS ValidBetAmount
+		-- bettransRnG
+		SELECT
+			SUM(b.winlost - b.actual_stake) AS WinLost,
+			SUM(b.stake) AS Turnover,
+			COUNT(b.transid) AS BetCount,
+			SUM(b.BetStake) AS ValidBetAmount
 		FROM bodb02.dbo.bettransRnG14 AS b WITH (NOLOCK)
 			INNER JOIN @SportBetTypeMatrix AS s ON b.gameID = s.BetType
 		WHERE b.winlostdate = @WinLostDate
 			AND b.statusID IN (111, 112, 113)
-			AND s.ProductID IN (6, 22, 55, 32, 42, 61, 66, 62, 67, 68) -- RNG Casino, Macau Games, PG Soft, PP, Saba.club, Habanero, Vgaming, Creative Gaming, AdvantPlay
+			AND s.RefTable = 1
 
 		UNION ALL
 
-		-- AllBet, Sexy Gaming, SA Gaming, GDG
-		SELECT SUM(b.winlost - b.actual_stake) AS Winlost
-			, SUM(b.stake) AS Turnover
-			, COUNT(b.transid) AS BetCount
-			, SUM(b.netstake) AS ValidBetAmount
+		-- bettransLC
+		SELECT
+			SUM(b.winlost - b.actual_stake) AS WinLost,
+			SUM(b.stake) AS Turnover,
+			COUNT(b.transid) AS BetCount,
+			SUM(b.NetStake) AS ValidBetAmount
 		FROM bodb02.dbo.bettransLC14 AS b WITH (NOLOCK)
 			INNER JOIN @SportBetTypeMatrix AS s ON b.gameID = s.BetType
 		WHERE b.winlostdate = @WinLostDate
 			AND b.statusID IN (111, 112, 113)
-			AND s.ProductID IN (21, 45, 39, 59, 51, 57) -- All bet, Sexy Gaming, SA Gaming, GDG, WM Live Casino, Big Gaming
+			AND s.RefTable = 2
 	) t
 	OPTION (RECOMPILE)
 
-	SELECT @T_Winlost = SUM(Winlost)
-		, @T_Turnover = SUM(Turnover)
-		, @T_BetCount = SUM(BetCount)
-		, @T_ValidBetAmount = SUM(ValidBetAmount)
-	FROM dbo.rptCasinoTurnover WITH (NOLOCK)
-	WHERE WinlostDate = @WinLostDate
-		AND StatusId IN (111, 112, 113)
-		AND ProductID IN (6, 22, 21, 45, 39, 55, 32, 42, 59, 61, 51, 57, 66, 62, 67, 68) -- RNG Casino, Macau Games, All Bet, SA Gaming, PG Soft, PP, Saba.club, Habanero, WM Live Casino, Big Gaming, Vgaming, Creative Gaming, AdvantPlay
+	SELECT
+		@T_Winlost = SUM(b.Winlost),
+		@T_Turnover = SUM(b.Turnover),
+		@T_BetCount = SUM(b.BetCount),
+		@T_ValidBetAmount = SUM(b.ValidBetAmount)
+	FROM dbo.rptCasinoTurnover AS b WITH (NOLOCK)
+		INNER JOIN bodb_licensee.dbo.Product3rd AS p3rd WITH (NOLOCK) ON p3rd.Productid = b.ProductId
+		INNER JOIN bodb02.dbo.Products AS p WITH (NOLOCK) ON p.ProductPrefix = p3rd.ProductPrefix
+		INNER JOIN @SportBetTypeMatrix AS sbt ON sbt.ProductId = p.ProductID
+	WHERE WinlostDate = @WinLostDate AND StatusId IN (111, 112, 113)
 
 	-- compare
-	IF ISNULL(@S_Winlost, 0) <> ISNULL(@T_Winlost, 0)
+	IF ISNULL(@S_WinLost, 0) <> ISNULL(@T_WinLost, 0)
 		OR ISNULL(@S_Turnover, 0) <> ISNULL(@T_Turnover, 0)
 		OR ISNULL(@S_BetCount, 0) <> ISNULL(@T_BetCount, 0)
 		OR ISNULL(@S_ValidBetAmount, 0) <> ISNULL(@T_ValidBetAmount, 0)
