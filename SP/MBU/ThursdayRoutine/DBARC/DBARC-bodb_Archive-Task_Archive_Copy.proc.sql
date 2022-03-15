@@ -576,7 +576,7 @@ WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.
 	END
 
 	---------------Table : CashOutSelling_bk --------------------
-	ELSE IF	@TableName = N'CashOutSelling'
+	ELSE IF	@TableName = N'CashOutSelling_bk'
 	BEGIN;
 			SELECT	@Query = '';
 			SELECT	@Query = @Query + N'\
