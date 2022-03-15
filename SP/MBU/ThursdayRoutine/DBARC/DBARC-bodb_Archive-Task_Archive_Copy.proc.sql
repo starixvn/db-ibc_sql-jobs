@@ -581,12 +581,12 @@ WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.
 			SELECT	@Query = '';
 			SELECT	@Query = @Query + N'\
 INSERT INTO	dbo.CashOutSelling_bk
-	(TransId, MatchID, Bettype, Custid, CashOutStatus, Winlost, PriceInfo, CheckTime, CreateDate, ChangeDate, VirtualRate)
-SELECT TransId, MatchID, Bettype, Custid, CashOutStatus, Winlost, PriceInfo, CheckTime, CreateDate, ChangeDate, VirtualRate
+	(TransId, MatchID, Bettype, Custid, CashOutStatus, Winlost, PriceInfo, CheckTime, CreateDate, ChangeDate, VirtualRate, CashoutExtraInfo)
+SELECT TransId, MatchID, Bettype, Custid, CashOutStatus, Winlost, PriceInfo, CheckTime, CreateDate, ChangeDate, VirtualRate, CashoutExtraInfo
 FROM	OPENQUERY(DBTXN, ''\
 DECLARE	@StartDate	SMALLDATETIME = ''''' + CONVERT(NVARCHAR(50), @StartDate, 121) + ''''';
 
-SELECT	t1.TransId, t1.MatchID, t1.Bettype, t1.Custid, t1.CashOutStatus, t1.Winlost, t1.PriceInfo, t1.CheckTime, t1.CreateDate, t1.ChangeDate, t1.VirtualRate
+SELECT	t1.TransId, t1.MatchID, t1.Bettype, t1.Custid, t1.CashOutStatus, t1.Winlost, t1.PriceInfo, t1.CheckTime, t1.CreateDate, t1.ChangeDate, t1.VirtualRate, t1.CashoutExtraInfo
 FROM	bodb02.dbo.CashOutSelling AS t1 WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.bettrans14 AS t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.winlostdate = @StartDate;'');';
 
