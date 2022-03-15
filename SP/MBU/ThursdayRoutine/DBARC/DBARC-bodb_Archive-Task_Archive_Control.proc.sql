@@ -13,6 +13,7 @@ AS
 		- 20200720@Brice:	Initialize - 13 tables [Redmine: #111093]
 		- 20201210@Max: TVS - New issue type Abnormal Accounts [Redmine: #143666]
 		- 20200209@Helen: TVS - New issue type Abnormal Accounts - archive zzzbettrans  [Redmine: #143666]
+		- 20220309@Max: MBU - Copy data of Cash Out Selling to bk table [Redmine: #169593]
 
 */
 BEGIN;
@@ -76,6 +77,7 @@ BEGIN;
 	VALUES	('zzzbettransM_bk')
 		,	('zzzbettrans_bk')
 		,	('TicketVoiding_VoidedTransaction_bk')
+		,   ('CashOutSelling_bk')
 		;
 		
 	SELECT	@StartDate	= MIN(winlostdate)
