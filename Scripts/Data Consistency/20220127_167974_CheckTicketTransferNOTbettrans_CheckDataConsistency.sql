@@ -19,7 +19,7 @@ VALUES (N'Check ticket transfer is not in bettrans', N'Alert if ticket with bett
 SET @ruleId_g13 = SCOPE_IDENTITY()
 
 INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
-VALUES (@ruleId_g13, N'EXEC dbo.DBA_Consistency_TicketTransferChecking @MaxTransID = 0, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
+VALUES (@ruleId_g13, N'EXEC dbo.DBA_Consistency_TicketTransferChecking @MaxTransID = 115026161942, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT ')
 
 SET @taskId_g13 = SCOPE_IDENTITY()
 
