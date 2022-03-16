@@ -13,6 +13,8 @@ AS
 	Revisions:
 		- .....
 		- 20190312@Patrick: Fix issue always scan temp table #custid [RedmineID: #110106]
+		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
+
 */
 CREATE TABLE #recommend (KeyID int PRIMARY KEY IDENTITY(1,1), recommend int, ticketCount int)
 CREATE TABLE #custid (KeyID int PRIMARY KEY IDENTITY(1,1), custid int, ticketCount int)
@@ -25,9 +27,9 @@ CREATE TABLE #custid_nobet (KeyID int PRIMARY KEY IDENTITY(1,1), custid int, BAL
 
 ;WITH C AS (SELECT custid, 
 	COUNT(*) AS Ticket_Count, 
-	SUM(CASE WHEN matchid = 0 AND bettype = 20000 THEN 1 ELSE 0 END) AS BAL_Count,
-	MAX(CASE WHEN matchid = 0 AND bettype = 20000 THEN transid ELSE 0 END) AS BAL_TransID
-	FROM dbo.bettrans WITH (NOLOCK)
+	SUM(CASE WHEN bettype = 20000 THEN 1 ELSE 0 END) AS BAL_Count,
+	MAX(CASE WHEN bettype = 20000 THEN transid ELSE 0 END) AS BAL_TransID
+	FROM dbo.Transfer WITH (NOLOCK)
 	WHERE winlostdate < @winlostdate
 	GROUP BY custid
 )

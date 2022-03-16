@@ -13,6 +13,7 @@ AS
 		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
 		- 20200728@Brice:	Add 13 tables - [Redmine: #111093]
 		- 20210628@Helen:	Move checking for TVS tables to another SP Task_MBU_TVS_CheckRowCount_Sel [RedmineId: #157539]
+		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -68,12 +69,19 @@ BEGIN
 	WHERE winlostdate = @DateCheck
 
 	--//transfer
+	--INSERT INTO @__tempCount(rowcnt, tableName)
+	--SELECT COUNT(1), 'transfer'
+	--FROM dbo.bettrans WITH(NOLOCK, INDEX=CIX_matchid_bettype)
+	--WHERE ruben = 1 AND matchid = 0 AND bettype > 20000  
+	--	AND winlostdate = @DateCheck AND custid <> 0
+	--	AND (winlost + actual_stake) <> 0
+
 	INSERT INTO @__tempCount(rowcnt, tableName)
-	SELECT COUNT(1), 'transfer'
-	FROM dbo.bettrans WITH(NOLOCK, INDEX=CIX_matchid_bettype)
-	WHERE ruben = 1 AND matchid = 0 AND bettype > 20000  
-		AND winlostdate = @DateCheck AND custid <> 0
-		AND (winlost + actual_stake) <> 0
+	SELECT	COUNT(1), 'Transfer'
+	FROM	dbo.Transfer WITH(NOLOCK)
+	WHERE	WinlostDate = @DateCheck
+			AND custid <> 0
+			AND (winlost + actual_stake) <> 0
 
 	/*
 	---------------------------------20200728@Brice:	Add 13 tables - [Redmine: #111093]--------------------------------------

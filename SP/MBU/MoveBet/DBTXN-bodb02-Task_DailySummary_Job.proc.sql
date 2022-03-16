@@ -1,6 +1,4 @@
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
-GO
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE	[dbo].[Task_DailySummary_Job]
 AS
 /*
@@ -25,6 +23,7 @@ AS
 			+ When processing a line then insert itself and upline's to [List]
 		- 20180329@Percy: Add Bet_ExecRep_09 [RedmineID: #92391]
 		- 202010316@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
+		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
  */
 BEGIN 
 	CHECKPOINT
@@ -51,7 +50,8 @@ BEGIN
 			, @TotalMoveBetDays = @TotalMoveBetDays
 		
 		--//turn on isMovingBet_Local flag
-		EXEC dbo.Bet_ExecRep_09 @mode = 3
+		--EXEC dbo.Bet_ExecRep_09 @mode = 3
+		EXEC dbo.Transfer_ExecRep_02 @Mode = 1
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 3, @tableName = 'SystemSettings'
 
 		-- delete old data from bettranssum before movebet
@@ -139,9 +139,9 @@ BEGIN
 		END
 		
 		--//turn off isMovingBet_Local flag
-		EXEC dbo.Bet_ExecRep_09 @mode = 4
+		--EXEC dbo.Bet_ExecRep_09 @mode = 4
+		EXEC dbo.Transfer_ExecRep_02 @Mode = 2
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 4, @tableName = 'SystemSettings'
 	END
 END
 GO
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
