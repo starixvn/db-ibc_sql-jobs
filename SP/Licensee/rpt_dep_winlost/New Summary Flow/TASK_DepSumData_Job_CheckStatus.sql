@@ -17,6 +17,7 @@ AS
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 		- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
 		- 20220124@Sophia: Remove the code Gen data for Old Cashout [Redmine: #167928]
+		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -150,26 +151,35 @@ BEGIN
 					WHERE m.Winlostdate = @Yesterday AND m.currency <> 20
 				) DepWL
 				CROSS APPLY (
-					SELECT  B.CustID, (B.OpeningBalance - C.WinlossCO) as OpeningBalance
+					SELECT  B.CustID, (B.OpeningBalance - ISNULL(C.WinlossCO, 0)) as OpeningBalance
 					FROM ( 
-							SELECT b.CustID, 
-									ISNULL( 
-										SUM(
-											CASE
-												WHEN b.bettype IN (903, 913, 914) THEN 0
-												ELSE (b.winlost - b.actual_stake + b.playercomm) 
-											END
-										), 0
-									) AS OpeningBalance  
-							FROM bodb02.dbo.bettrans b WITH(NOLOCK) 					
-							WHERE b.winlostdate < @Yesterday
-								AND b.custid = DepWL.CustID
-								AND 1 = CASE
-											WHEN b.bettype = 19999 AND b.winlostdate > @MoveBetsDay THEN 0
-											WHEN b.bettype < 19999 AND b.winlostdate <= @MoveBetsDay THEN 0
-											ELSE 1 END
-							GROUP BY  b.CustID 
-							) B
+							SELECT tbl.CustID, SUM(OpeningBalance) AS OpeningBalance
+							FROM
+							(
+								SELECT b.CustID, 
+										ISNULL( 
+											SUM(
+												CASE
+													WHEN b.bettype IN (903, 913, 914) THEN 0
+													ELSE (b.winlost - b.actual_stake + b.playercomm) 
+												END
+											), 0
+										) AS OpeningBalance  
+								FROM bodb02.dbo.bettrans b WITH(NOLOCK) 					
+								WHERE b.winlostdate < @Yesterday
+									AND b.custid = DepWL.CustID
+									AND	bettype < 19999 AND winlostdate > @MoveBetsDay
+								GROUP BY b.CustID 
+								UNION ALL	
+								SELECT t.CustID, ISNULL(SUM(t.winlost - t.actual_stake + t.playercomm), 0) AS OpeningBalance  
+								FROM bodb02.dbo.Transfer t WITH(NOLOCK) 					
+								WHERE t.winlostdate < @Yesterday
+									AND t.custid = DepWL.CustID
+									AND (bettype = 19999 AND winlostdate <= @MoveBetsDay OR t.Bettype > 19999)
+								GROUP BY t.CustID 
+							) tbl 
+							GROUP BY tbl.CustID
+						) B
 					LEFT JOIN (
 							SELECT 	c.CustID, SUM (Winloss) as WinlossCO
 							FROM 	bodb_Report.dbo.rptTradeCustWinlost C WITH (NOLOCK)

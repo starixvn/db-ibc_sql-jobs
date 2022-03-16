@@ -28,6 +28,7 @@ Revisions:
 	- 20180417@Kathy: Add more input param @betcheck [Redmine:#66797]
 	- 20190731@Bobby: 1stDeposit - Bonus - Update changes on @oddsspread to log a locked amount [Redmine:#117923]
 	- 20211112@Sol: Support IPv6 - Phase 2 - [Redmine: #163963]
+	- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
 
 Param's Explanation:
 	- @custid: player account who joined bonus program
@@ -96,7 +97,7 @@ BEGIN
 			@walletType			= 1
 
 	-- Capture lockedAmt for MNL usages
-	SELECT @oddsspread			= CASE WHEN @bettype = @bonus_initial THEN @lockedAmount ELSE NULL END
+	SELECT @oddsspread = CASE WHEN @bettype = @bonus_initial THEN @lockedAmount ELSE 0 END
 			
 
 	IF (@bettype NOT IN (@bonus_initial, @bonus_zerolize) OR @bonusId <= 0)
@@ -197,19 +198,33 @@ BEGIN
 	---Insert bonus transfer for cust
 	SELECT @transdate = CURRENT_TIMESTAMP
 
-	INSERT INTO bettrans 
-		(custid, username, refno, transdate, matchid, bettype, transdesc,winlost, actual_stake, winlostdate, 
-		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid, betcheck, oddsspread)
+	---get transid into table variable
+	DECLARE @Transfer TABLE(TransId BIGINT)
+
+	INSERT INTO dbo.Transfer 
+		(custid, username, refno, transdate, bettype, transdesc,winlost, actual_stake, winlostdate, 
+		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, statusID, ip, SerialNo, RepUpdateTime)
+	OUTPUT INSERTED.TransId INTO @Transfer(TransId)
 	VALUES 
-		(@CustID, @username, @RefNo, @transdate, 0, @bettype, @transdesc,@cust_winlost, @cust_actual_stake, convert(nvarchar(10), @transdate, 120), 
-		 @CustID, @Recommend, @MRecommend, @SRecommend, @Currency,@actualrate, @currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId, @betcheck, @oddsspread)
+		(@CustID, @username, @RefNo, @transdate, @bettype, @transdesc,@cust_winlost, @cust_actual_stake, convert(nvarchar(10), @transdate, 120), 
+		 @CustID, @Recommend, @MRecommend, @SRecommend, @Currency,@actualrate, @currencyName, 131, @ip, @betcheck, SYSDATETIME())
+
+	---insert into new table transferinfo
+	SELECT TOP 1 @TransId = TransId FROM @Transfer
+
+	IF NOT (@WalletType IS NULL AND @BonusID IS NULL AND @oddsspread IS NULL)
+	BEGIN
+		INSERT INTO dbo.TransferInfo(TransId, WalletType, BonusID, Amount, RepUpdateTime)
+		VALUES (@TransId, @WalletType, @BonusID, @oddsspread, SYSDATETIME())
+	END
 
 	IF @@ERROR <> 0
 	BEGIN						
 		SELECT @ErrMsg = 'Insert transaction for account failed.', @ErrCode = 105	
 		--Manually rollback 
-		DELETE FROM dbo.bettrans WHERE refno = @RefNo AND matchid = 0 AND bettype = @bettype AND custid IN (@custid, @bal_custID)
-		
+		DELETE FROM dbo.Transfer WHERE refno = @RefNo AND bettype = @bettype AND custid IN (@custid, @bal_custID)
+		DELETE FROM dbo.TransferInfo WHERE TransId = @TransId
+
 		--Manually rollback balance debit if any
 		IF(@amount < 0 AND @bettype = @bonus_zerolize)
 		BEGIN
@@ -217,22 +232,35 @@ BEGIN
 		END
 		RETURN
 	END
-	
-	SELECT @TransID = SCOPE_IDENTITY()
+
+	---clear table variable
+	DELETE FROM @Transfer
 
 	---Insert bonus transfer for bal acc
-	INSERT INTO bettrans 
-		(custid, username, refno, transdate, matchid, bettype, transdesc,winlost, actual_stake, winlostdate, 
-		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, ruben, status, statusID, ip, WalletType, bonusid, betcheck)
+	INSERT INTO dbo.Transfer
+		(custid, username, refno, transdate, bettype, transdesc,winlost, actual_stake, winlostdate, 
+		 creator,recommend,mrecommend,srecommend,currency,actualrate, currencyName, statusID, ip, SerialNo, RepUpdateTime)
+	OUTPUT INSERTED.TransId INTO @Transfer(TransId)
 	VALUES 
-		(@bal_custID, @bal_Username, @RefNo, @transdate, 0, @bettype, @transdesc, @bal_winlost, @bal_actual_stake, convert(nvarchar(10), @transdate, 120), 
-		 @CustID, @bal_recommend, @bal_mrecommend, @bal_srecommend, @bal_currency, @bal_actualrate, @bal_currencyName, 1, 'Completed', 131, @ip, @walletType, @bonusId, @betcheck)
+		(@bal_custID, @bal_Username, @RefNo, @transdate, @bettype, @transdesc, @bal_winlost, @bal_actual_stake, convert(nvarchar(10), @transdate, 120), 
+		 @CustID, @bal_recommend, @bal_mrecommend, @bal_srecommend, @bal_currency, @bal_actualrate, @bal_currencyName, 131, @ip, @betcheck, SYSDATETIME())
+
+	---insert into new table transferinfo
+	SELECT TOP 1 @bal_transid = TransId FROM @Transfer
+
+	IF NOT (@WalletType IS NULL AND @BonusID IS NULL)
+	BEGIN
+		INSERT INTO dbo.TransferInfo(TransId, WalletType, BonusID, RepUpdateTime)
+		VALUES (@bal_transid, @WalletType, @BonusID, SYSDATETIME())
+	END
 
 	IF @@ERROR <> 0
 	BEGIN
 		SELECT @ErrMsg = 'Insert transaction for dummy failed.', @ErrCode = 106
 		--Manually rollback
-		DELETE FROM dbo.bettrans WHERE refno = @RefNo AND matchid = 0 AND bettype = @bettype AND custid IN (@custid, @bal_custID)
+		DELETE FROM dbo.Transfer WHERE refno = @RefNo AND bettype = @bettype AND custid IN (@custid, @bal_custID)
+		DELETE FROM dbo.TransferInfo WHERE TransId IN (@transid, @bal_transid)
+
 		--Manually rollback balance debit if any
 		IF(@amount < 0 AND @bettype = @bonus_zerolize)
 		BEGIN
@@ -241,7 +269,6 @@ BEGIN
 		RETURN
 	END
 	
-	SELECT @bal_transid = SCOPE_IDENTITY()
 	SET @transdate = CONVERT(CHAR(30),@transdate, 121)
 	
 	DECLARE @Bal_Success 	BIT = 0
@@ -322,7 +349,8 @@ BEGIN
 				SELECT @ErrMsg = 'Insert balance credit failed.', @ErrCode = 107
 				
 				--Manually rollback
-				DELETE FROM dbo.bettrans WHERE refno = @RefNo AND matchid = 0 AND bettype = @bettype AND custid IN (@custid, @bal_custID)
+				DELETE FROM dbo.Transfer WHERE refno = @RefNo AND bettype = @bettype AND custid IN (@custid, @bal_custID)
+				DELETE FROM dbo.TransferInfo WHERE TransId IN (@transid, @bal_transid)
 
 				--delete [BonusWalletCredit]
 				DELETE [dbo].[BonusWalletCredit]
@@ -354,7 +382,8 @@ BEGIN
 				SELECT @ErrMsg = 'Insert balance credit failed.', @ErrCode = 109
 				
 				--Manually rollback
-				DELETE FROM dbo.bettrans WHERE refno = @RefNo AND matchid = 0 AND bettype = @bettype AND custid IN (@custid, @bal_custID)
+				DELETE FROM dbo.Transfer WHERE refno = @RefNo AND bettype = @bettype AND custid IN (@custid, @bal_custID)
+				DELETE FROM dbo.TransferInfo WHERE TransId IN (@transid, @bal_transid)
 				
 				RETURN
 			END
@@ -368,7 +397,8 @@ BEGIN
 		SELECT @ErrMsg = 'Insert/Update bonus wallet failed.', @ErrCode = 108
 		
 		--Manually rollback
-		DELETE FROM dbo.bettrans WHERE refno = @RefNo AND matchid = 0 AND bettype = @bettype AND custid IN (@custid, @bal_custID)
+		DELETE FROM dbo.Transfer WHERE refno = @RefNo AND bettype = @bettype AND custid IN (@custid, @bal_custID)
+		DELETE FROM dbo.TransferInfo WHERE TransId IN (@transid, @bal_transid)
 		
 		IF (@bettype = @bonus_initial)
 		BEGIN

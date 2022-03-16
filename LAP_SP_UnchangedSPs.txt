@@ -1,1 +1,3 @@
-SP\API\Product3rd_ImportQueue\Task_Product3rd_ImportQueue_Process.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\TASK_HourlySummaryDepData.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\GEN_HourlySummaryDepData.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\TASK_DepSumData_Job.sql
