@@ -14,6 +14,7 @@ AS
 		- 20200728@Brice:	Add 13 tables - [Redmine: #111093]
 		- 20210628@Helen:	Move checking for TVS tables to another SP Task_MBU_TVS_CheckRowCount_Sel [RedmineId: #157539]
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
+		- 20220317@Helen: Missing bettype when checking transfer data [Redmine:#164197]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -82,6 +83,7 @@ BEGIN
 	WHERE	WinlostDate = @DateCheck
 			AND custid <> 0
 			AND (winlost + actual_stake) <> 0
+			AND bettype > 20000
 
 	/*
 	---------------------------------20200728@Brice:	Add 13 tables - [Redmine: #111093]--------------------------------------
