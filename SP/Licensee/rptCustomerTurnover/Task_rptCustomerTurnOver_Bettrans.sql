@@ -28,6 +28,8 @@ AS
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20211117@Kos: Merge Sports Lottery into Sportsbook [RedmineID: #163191]
 		- 20211129@Kos: Support Cashout [RedmineID: #163191]
+		- 20220311@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
+ 
 */
 
 BEGIN 
@@ -44,7 +46,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT BetType, ProductPrefix, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 3, 5, 25, 27, 63)
+	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 49)
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
 
@@ -182,6 +184,7 @@ BEGIN
 						ELSE 193 -- Betradar VS: Virtual Basketball
 					END -- Betradar VS: Virtual Basketball
 			WHEN a.ProductCode = 'SLT' THEN a.matchid
+			WHEN a.bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sport 3
 			ELSE ISNULL(b.sporttype, 0)
 		END AS SportType
 		,a.Currency
@@ -230,6 +233,7 @@ BEGIN
 					ELSE 193 -- Betradar VS: Virtual Basketball
 				END -- Betradar VS: Virtual Basketball
 			WHEN a.ProductCode = 'SLT' THEN a.matchid
+			WHEN a.bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sport 3
 			ELSE ISNULL(b.sporttype, 0)
 		END
 		,a.Currency
