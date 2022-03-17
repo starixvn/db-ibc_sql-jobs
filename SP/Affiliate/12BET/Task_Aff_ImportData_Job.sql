@@ -11,6 +11,7 @@ AS
 		- 20180601@Percy: Initialize SP [RedmineID: #87923]
 		- 20191127@Percy: Input job name into error message [RedmineID: #118992]
 		- 20191206@Percy: Change way get MoveBetsDay [RedmineID: #117197]
+		- 20211222@Malcolm: Get move bet date from sp : Age_SelBalanceUpDay  [RedmineID: #165095]
 */
 
 BEGIN 
@@ -20,7 +21,13 @@ BEGIN
 	
 	DECLARE @MoveBetsDay SMALLDATETIME, @CurrentDate SMALLDATETIME, @WinlostDate SMALLDATETIME
 
-	SELECT @MoveBetsDay = MAX(eventdate) FROM bodb02.dbo.match14 WITH (NOLOCK)
+	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+
+	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+	
+	SELECT  @MoveBetsDay = MoveBetsDay FROM @tblMoveBetBalanceUp
+	
 	SELECT @WinlostDate = DATEADD(DAY, 1, @MoveBetsDay)
 	SELECT @CurrentDate = CONVERT(DATE, GETDATE())
 
