@@ -20,6 +20,7 @@ Revisions:
 	- 20201008@Percy: Get SMA from bettrans instead of custinfo table [RedmineID: #142953]
 	- 20210625@Percy: Enhance code to reduce high used tempdb [RedmineID: #154536]
 	- 20210505@Sol: NAP - Alpha - Allow more time for transfer - [Redmine: #149927]
+	- 20211122@Danny: Split transfer tickets out of bettrans [Redmine: #164196]
  */
 BEGIN
 
@@ -114,9 +115,56 @@ BEGIN
 			END AS stake
 			,(winlost - actual_stake) AS winlost
 			,CASE 
-				WHEN b.matchid = 0 AND b.bettype > 20000 AND b.bettype NOT IN (23001,23002,23101,23102,23201,23202) THEN POWER(2*1,1) --> transfer
-				WHEN b.bettype <= 19999 AND b.statusID IN (101,102) AND b.bettype NOT IN (903, 500, 913, 914) THEN POWER(2*1,2) --> void bet
-				WHEN b.bettype <= 19999 THEN POWER(2*1,3) --> normal bet
+				WHEN b.bettype < 19999 AND b.statusID IN (101,102) AND b.bettype NOT IN (903, 500, 913, 914) THEN POWER(2*1,2) --> void bet
+				WHEN b.bettype < 19999 THEN POWER(2*1,3) --> normal bet
+				ELSE 0
+				END AS transIndicator
+			,1 AS roleID
+				
+	) AS bet
+	WHERE
+		b.winlostdate = @_Winlostdate
+		AND b.statusID NOT IN (0,1) -- 'running','waiting'
+		AND bet.transIndicator > 0
+		AND b.bettype < 19999
+		AND b.winlostdate > @CurrentMB_Date
+
+	GROUP BY b.custid
+		,b.recommend,b.mrecommend,b.srecommend
+		,bet.transIndicator
+		,bet.roleID
+
+	-- transfer
+	INSERT INTO #bettrans_temp
+	SELECT b.custid
+		,b.recommend,b.mrecommend,b.srecommend
+		,bet.transIndicator
+		,bet.roleID
+		,SUM(bet.stake) AS stake
+		,SUM(bet.winlost) as winlost
+		,SUM(b.playercomm) AS playercomm
+		,SUM(b.comm) AS comm
+		,SUM(b.acomm) AS acomm
+		,SUM(b.scomm) AS scomm
+		,SUM(b.awinlost) AS awinlost
+		,SUM(b.mwinlost) AS mwinlost
+		,SUM(b.swinlost) AS swinlost
+		,SUM(bet.stake* ISNULL(ti.apositiontaking,0)) AS anet_stake
+		,SUM(bet.stake* ISNULL(ti.mpositiontaking,0)) AS mnet_stake
+		,SUM(bet.stake* ISNULL(ti.spositiontaking,0)) AS snet_stake
+	FROM
+		bodb02.dbo.transfer b WITH(NOLOCK)
+		LEFT JOIN bodb02.dbo.transferInfo ti WITH(NOLOCK) ON b.TransId = ti.TransId
+	OUTER APPLY (
+		SELECT 
+			CASE 
+				WHEN b.statusID IN(103) THEN 0 -- Refund
+				ELSE ABS(b.stake)
+			END AS stake
+			,(winlost - actual_stake) AS winlost
+			,CASE 
+				WHEN b.bettype > 20000 THEN POWER(2*1,1) --> transfer
+				WHEN b.bettype = 19999 THEN POWER(2*1,3) --> normal bet
 				ELSE 0
 				END AS transIndicator
 			,CASE 
@@ -131,10 +179,7 @@ BEGIN
 		b.winlostdate = @_Winlostdate
 		AND b.statusID NOT IN (0,1) -- 'running','waiting'
 		AND bet.transIndicator > 0
-		AND 1 = CASE 
-					WHEN bettype = 19999 and winlostdate > @CurrentMB_Date THEN 0 --> get data from ticket detail
-					WHEN bettype < 19999 and winlostdate <= @CurrentMB_Date THEN 0 --> get data from sum record
-				ELSE 1 END
+		AND ((bettype = 19999 AND winlostdate <= @CurrentMB_Date) OR (bettype > 19999))
 	GROUP BY b.custid
 		,b.recommend,b.mrecommend,b.srecommend
 		,bet.transIndicator
@@ -240,7 +285,7 @@ BEGIN
 						WHEN b.recommend THEN 2
 						ELSE 1 END -- include member & headline
 		FROM #rptOpenningBalanceTable t
-			INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON t.custid = b.custid
+			INNER JOIN bodb02.dbo.transfer b WITH (NOLOCK) ON t.custid = b.custid
 		WHERE t.recommend IS NULL
 			AND b.bettype = 20000
 			AND b.winlostdate = @CurrentBU_Date;

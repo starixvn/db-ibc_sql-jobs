@@ -14,6 +14,7 @@ AS
 		- 20200310@Bobby: Remove readpast hint and improve index seek [RedmineID: #130122]
 		- 20201008@Percy: Get SMA from bettrans instead of custinfo table [RedmineID: #142953]
 		- 20210527@Danny: Enhance merge statement [RedmineID: #154536]
+		- 20211122@Danny: Split transfer tickets out of bettrans [Redmine: #164196]
  */
 
 BEGIN
@@ -79,7 +80,7 @@ BEGIN
 							WHEN b.recommend THEN 2
 							ELSE 1 END -- include member & headline
 			FROM #rptOpenningBalanceTable t
-				INNER JOIN bodb02.dbo.bettrans b WITH (NOLOCK) ON t.custid = b.custid
+				INNER JOIN bodb02.dbo.transfer b WITH (NOLOCK) ON t.custid = b.custid
 			WHERE t.recommend IS NULL
 				AND b.bettype = 20000
 				AND b.winlostdate = @BalanceUpDay;
@@ -211,10 +212,9 @@ BEGIN
 				, 0 AS awinlost
 				, 0 AS mwinlost
 				, 0 AS swinlost
-			FROM bodb02.dbo.bettrans WITH (NOLOCK)
+			FROM bodb02.dbo.transfer WITH (NOLOCK)
 			WHERE winlostdate = @TheDayBefore
 				AND bettype > 19999 --> transfer tickets
-				AND ruben = 1
 				AND statusID NOT IN (0, 1)
 			GROUP BY custid, recommend, mrecommend, srecommend
 		) AS rpt
