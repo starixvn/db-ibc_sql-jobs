@@ -7,6 +7,7 @@ AS
 	Revision: 
 		-- 20131108@Elodie: Splitting bodb02 into CustDB (call custinfo, Exchange by link database)
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
+		- 20220317@Kathy: Dont get data from bettrans [Redmine:#170113]
 */
 IF @winlostdate IS NULL
 BEGIN
@@ -55,26 +56,15 @@ ELSE
 BEGIN
 	INSERT INTO dbo.Task_BalanceRecord (step, winlostdate, SPCode, TotalAmt, TotalSum)
 	--exec companybalance2
-	SELECT @step, @winlostdate, 0, SUM(b.totalSUM), SUM(b.totalSUM)
-	FROM (
-	SELECT b.currency,
-		sum((winlost-actual_stake+awinlost+mwinlost+swinlost +scomm)*e.actualrate) totalamt,
-		sum((winlost-actual_stake+awinlost+mwinlost+swinlost +scomm)) TotalSUM
-	from bettrans b with (rowlock) 
-		inner join CustDB.dbo.exchange e with (nolock) 
-			ON b.currency=e.exchangeid
-	where ruben=1 AND winlostdate <= @winlostdate
-	GROUP BY b.currency
-	UNION ALL
-	SELECT t.currency,
+	SELECT @step,
+		@winlostdate,
+		0,
 		sum((winlost-actual_stake+awinlost+mwinlost+swinlost +scomm)*e.actualrate) totalamt,
 		sum((winlost-actual_stake+awinlost+mwinlost+swinlost +scomm)) TotalSUM
 	from dbo.transfer t with (rowlock) 
 		inner join CustDB.dbo.exchange e with (nolock) 
 			ON t.currency=e.exchangeid
 	where winlostdate <= @winlostdate
-	group by t.Currency
-	) b
 
 	INSERT INTO dbo.Task_BalanceRecord (step, winlostdate, SPCode, TotalAmt, TotalSum)
 	--exec admin_rpt_sabalance
@@ -85,14 +75,6 @@ BEGIN
 	LEFT OUTER JOIN (
 		SELECT srecommend, SUM(Bal) AS Bal
 		FROM (
-			SELECT srecommend,
-				IsNull(sum(case when custid=srecommend then winlost-actual_stake else swinlost+scomm-acomm end),0)
-			+ IsNull(sum(case when custid=mrecommend then winlost-actual_stake else mwinlost+acomm-comm end),0)
-			+ IsNull(sum(case when custid=recommend  then winlost-actual_stake else awinlost+comm-playercomm end),0)
-			+ IsNull(sum(case when custid <> recommend and custid <> mrecommend and custid <> srecommend and ruben=1 then winlost-actual_stake+playercomm else 0 end),0) Bal
-			FROM bettrans (rowlock) WHERE winlostdate <= @winlostdate 
-			GROUP BY srecommend
-			UNION ALL
 			SELECT srecommend,
 				IsNull(sum(case when custid=srecommend then winlost-actual_stake else swinlost+scomm-acomm end),0)
 			+ IsNull(sum(case when custid=mrecommend then winlost-actual_stake else mwinlost+acomm-comm end),0)
