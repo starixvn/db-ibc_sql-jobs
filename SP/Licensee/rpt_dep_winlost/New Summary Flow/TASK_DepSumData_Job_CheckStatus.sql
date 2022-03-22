@@ -18,6 +18,7 @@ AS
 		- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
 		- 20220124@Sophia: Remove the code Gen data for Old Cashout [Redmine: #167928]
 		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
+		- 20220321@Percy: Enhance code check Opening Balance [RedmineID: #170118]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -139,54 +140,56 @@ BEGIN
 		---- Gen data for TradeCust Winlost on the days when move bets
 		
 		---EXEC dbo.GEN_rptTradeCustWinlost  ---- 20220124: remove Code Gen Old Cashout
-		
-		CREATE TABLE #Result(CustID INT, Currency INT, OpeningBalance_DepWL MONEY, OpeningBalance_Bettrans MONEY)
 
 		-- Get opening balance of customer from rptDepWinlost_Main & bettrans
-		INSERT INTO #Result(CustID, Currency, OpeningBalance_DepWL, OpeningBalance_Bettrans)
-		SELECT DepWL.CustID, DepWL.currency, DepWL.OpeningBalance, bettrans.OpeningBalance
-			FROM (
-					SELECT m.CustID, m.currency, m.OpeningBalance
-					FROM bodb_Report.dbo.rptDepWinlost_Main m WITH(NOLOCK)
-					WHERE m.Winlostdate = @Yesterday AND m.currency <> 20
-				) DepWL
-				CROSS APPLY (
-					SELECT  B.CustID, (B.OpeningBalance - ISNULL(C.WinlossCO, 0)) as OpeningBalance
-					FROM ( 
-							SELECT tbl.CustID, SUM(OpeningBalance) AS OpeningBalance
-							FROM
-							(
-								SELECT b.CustID, 
-										ISNULL( 
-											SUM(
-												CASE
-													WHEN b.bettype IN (903, 913, 914) THEN 0
-													ELSE (b.winlost - b.actual_stake + b.playercomm) 
-												END
-											), 0
-										) AS OpeningBalance  
-								FROM bodb02.dbo.bettrans b WITH(NOLOCK) 					
-								WHERE b.winlostdate < @Yesterday
-									AND b.custid = DepWL.CustID
-									AND	bettype < 19999 AND winlostdate > @MoveBetsDay
-								GROUP BY b.CustID 
-								UNION ALL	
-								SELECT t.CustID, ISNULL(SUM(t.winlost - t.actual_stake + t.playercomm), 0) AS OpeningBalance  
-								FROM bodb02.dbo.Transfer t WITH(NOLOCK) 					
-								WHERE t.winlostdate < @Yesterday
-									AND t.custid = DepWL.CustID
-									AND (bettype = 19999 AND winlostdate <= @MoveBetsDay OR t.Bettype > 19999)
-								GROUP BY t.CustID 
-							) tbl 
-							GROUP BY tbl.CustID
-						) B
-					LEFT JOIN (
-							SELECT 	c.CustID, SUM (Winloss) as WinlossCO
-							FROM 	bodb_Report.dbo.rptTradeCustWinlost C WITH (NOLOCK)
-							GROUP BY C.CustID			
-							) C  ON C.CustID = B.CustID				
-						) bettrans
-			WHERE DepWL.OpeningBalance != bettrans.OpeningBalance
+		CREATE TABLE #rptDepWinlost_Main (CustId INT PRIMARY KEY, OpeningBalance MONEY)
+		INSERT INTO #rptDepWinlost_Main (CustId, OpeningBalance)
+		SELECT m.CustID, m.OpeningBalance
+		FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK)
+		WHERE m.Winlostdate = @Yesterday AND m.currency <> 20
+
+		CREATE TABLE #rptTradeCustWinlost (CustId INT PRIMARY KEY, Winloss MONEY)
+		INSERT INTO #rptTradeCustWinlost (CustId, Winloss)
+		SELECT CustID, SUM(Winloss) AS Winloss
+		FROM bodb_Report.dbo.rptTradeCustWinlost WITH (NOLOCK)
+		GROUP BY CustID
+
+		CREATE TABLE #bettrans (CustId INT PRIMARY KEY, OpeningBalance MONEY)
+		INSERT INTO #bettrans (CustId, OpeningBalance)
+		SELECT CustID, SUM(b.winlost - b.actual_stake + b.playercomm) AS Winloss
+		FROM bodb02.dbo.bettrans b WITH(NOLOCK) 					
+		WHERE b.winlostdate < @Yesterday AND winlostdate > @MoveBetsDay
+			AND bettype NOT IN (902, 913, 914)
+		GROUP BY b.custid
+
+		CREATE TABLE #Transfer (CustId INT PRIMARY KEY, OpeningBalance MONEY)
+		INSERT INTO #Transfer (CustId, OpeningBalance)
+		SELECT CustId, SUM(OpeningBalance)
+		FROM (
+			SELECT b.CustID, SUM(b.winlost - b.actual_stake) AS OpeningBalance
+			FROM bodb02.dbo.Transfer b WITH (NOLOCK)
+			WHERE bettype >= 20000
+				AND b.WinlostDate < @Yesterday
+			GROUP BY CustID
+			UNION ALL
+			SELECT b.CustID, SUM(b.winlost - b.actual_stake + b.PlayerComm) AS OpeningBalance
+			FROM #rptDepWinlost_Main r
+				INNER LOOP JOIN bodb02.dbo.Transfer b WITH (NOLOCK) ON r.CustId = b.CustId -- force index seek on CustId
+			WHERE bettype = 19999
+				AND b.WinlostDate <= @MoveBetsDay
+			GROUP BY b.CustID
+		) t
+		GROUP BY CustId
+
+		CREATE TABLE #Result (CustID INT, OpeningBalance_DepWL MONEY, OpeningBalance_Bettrans MONEY)
+		INSERT INTO #Result (CustID, OpeningBalance_DepWL, OpeningBalance_Bettrans)
+		SELECT r.CustID, r.OpeningBalance, ISNULL(b.OpeningBalance, 0) + ISNULL(t.OpeningBalance, 0) - ISNULL(c.Winloss, 0)
+		FROM #rptDepWinlost_Main r
+			LEFT JOIN #bettrans b ON r.CustId = b.CustId
+			LEFT JOIN #Transfer t ON r.CustId = t.CustId
+			LEFT JOIN #rptTradeCustWinlost c ON r.CustID = c.CustID
+		WHERE (b.CustId IS NOT NULL OR t.CustId IS NOT NULL)
+			AND (r.OpeningBalance <> ISNULL(b.OpeningBalance, 0) + ISNULL(t.OpeningBalance, 0) - ISNULL(c.Winloss, 0))
 			
 		SELECT @Count = @@ROWCOUNT
 		
@@ -232,8 +235,12 @@ BEGIN
 			END
 		END
 
+		DROP TABLE #bettrans
 		DROP TABLE #Result
-	
+		DROP TABLE #rptDepWinlost_Main
+		DROP TABLE #rptTradeCustWinlost
+		DROP TABLE #Transfer
+
 		UPDATE bodb_Report.dbo.rptDepWinlost_Log WITH (ROWLOCK) 
 		SET EndTime = CURRENT_TIMESTAMP, LogDesc = 'Date checked: ' +  CONVERT(VARCHAR(20),@CurrentDate) + '; Type: checkStatus'
 			,StatusID = 1
