@@ -34,7 +34,7 @@ AS
 		- 20210302@Hogan: Hard code Licensee Spread Setting [RedmineID: #148100]
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
-
+		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 */
 
 BEGIN
@@ -68,7 +68,7 @@ BEGIN
 				OR (bettype BETWEEN 121 AND 999)
 				OR (bettype BETWEEN 1301 AND 1399)
 				OR (bettype BETWEEN 9001 AND 9399)
-				OR (bettype BETWEEN 9400 AND 9699)
+				OR (bettype BETWEEN 9400 AND 9998)
 				OR (bettype = 38) -- BetBuilder
 			)
 		AND statusID <> 121 --DONE

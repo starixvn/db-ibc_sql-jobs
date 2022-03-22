@@ -19,6 +19,7 @@ AS
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 		- 20210608@Kos: Add new column LiveIndicator [RedmineID: #156599]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 */
 
 BEGIN
@@ -57,7 +58,7 @@ BEGIN
 					AND (a.bettype < 999
 						OR a.bettype BETWEEN 1301 AND 1399
 						OR a.bettype BETWEEN 9001 AND 9399
-						OR a.bettype BETWEEN 9400 AND 9699)
+						OR a.bettype BETWEEN 9400 AND 9998)
 					AND a.bettype NOT IN (29, 38, 911, 912, 913, 914)	-- Parlay, betbuilder, Cashout
 					AND a.bettype NOT BETWEEN 81 AND 120
 					THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
@@ -102,7 +103,7 @@ BEGIN
 					AND (a.bettype < 999
 						OR a.bettype BETWEEN 1301 AND 1399
 						OR a.bettype BETWEEN 9001 AND 9399
-						OR a.bettype BETWEEN 9400 AND 9699)
+						OR a.bettype BETWEEN 9400 AND 9998)
 					AND a.bettype NOT IN (29, 38, 911, 912, 913, 914)	-- Parlay, betbuilder, Cashout
 					AND a.bettype NOT BETWEEN 81 AND 120
 					THEN CASE WHEN a.statusID = 112 THEN 114 ELSE 115 END
