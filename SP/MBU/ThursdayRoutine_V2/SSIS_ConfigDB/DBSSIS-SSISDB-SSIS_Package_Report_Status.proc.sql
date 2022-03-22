@@ -16,9 +16,9 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON;
-	declare @message varchar(250), @cntTask INT;
+	declare @message varchar(250), @cntTask INT, @environment varchar(15);
 
-	select @message = ISNULL([Message],'')
+	select @message = ISNULL([Message],''), @environment = ISNULL(p.Environment,'NA')
 	FROM dbo.SSIS_PackageRuntime p WITH(NOLOCK)
 	WHERE p.RuntimeID=@processID
 
@@ -66,7 +66,7 @@ BEGIN
 				,FailedCnt
 			FROM cte_stats
 		)
-		SELECT @Notify = N'[' + @@SERVERNAME + ']@[DBA : SSIS Thursday-routine] completed. ' + 
+		SELECT @Notify = N'[' + @environment + '-' + @@SERVERNAME + ']@[DBA : SSIS Thursday-routine] completed. ' + 
 						'Durations in [Hours: ' + cast([Hours] AS VARCHAR(10)) + '/Minutes: ' + cast([Minutes] AS VARCHAR(10)) + ']. ' +
 						'Status in [Success: ' + cast([SuccessCnt] AS VARCHAR(10)) + '/Failed: ' + cast([FailedCnt] AS VARCHAR(10)) + '].'
 		FROM cte_report
@@ -83,4 +83,3 @@ BEGIN
 
 	END
 END
-GO

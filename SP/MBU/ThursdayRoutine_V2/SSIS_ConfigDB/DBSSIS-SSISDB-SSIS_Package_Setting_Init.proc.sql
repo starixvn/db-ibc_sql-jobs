@@ -100,18 +100,21 @@ BEGIN
 			(@processID, 'HasENV', CAST(@HasENV AS char(10)))
 
 		) AS t([RuntimeID],[ParamName],[ParamValue]);
-
-		BEGIN TRY
-			DECLARE @Notify  NVARCHAR(1000);
-			SELECT @Notify = N'[' + @@SERVERNAME + ']@[DBA : SSIS Thursday-routine] started.'
-			EXEC DBNOTI.NotificationDB.[dbo].[DBA_Skype_NewMessage]
-						@ServerName			= 'PONTUS'
-					,	@JobName			= N'Custom Message'
-					,	@Message			= @Notify
-		END TRY
-		BEGIN CATCH
-			--TODO:
-		END CATCH
+		
+		IF (@@SERVERNAME LIKE 'DBDW%')
+		BEGIN	
+			BEGIN TRY
+				DECLARE @Notify  NVARCHAR(1000);
+				SELECT @Notify = N'[' + @environment + '-' + @@SERVERNAME + ']@[DBA : SSIS Thursday-routine] started.'
+				EXEC DBNOTI.NotificationDB.[dbo].[DBA_Skype_NewMessage]
+							@ServerName			= 'PONTUS'
+						,	@JobName			= N'Custom Message'
+						,	@Message			= @Notify
+			END TRY
+			BEGIN CATCH
+				--TODO:
+			END CATCH
+		END
 	END
 
 	SELECT @BUDate AS BUDate

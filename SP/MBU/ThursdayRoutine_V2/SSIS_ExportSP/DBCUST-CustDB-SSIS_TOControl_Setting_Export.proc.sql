@@ -21,7 +21,7 @@ BEGIN
 	FROM DBAGE.bodb02.dbo.match14 WITH (NOLOCK)
 	WHERE eventdate = @winlostdate
 
-	SELECT	ts.CustID, ts.matchid, ts.MaxTurnOver, ts.TotalTurnOver, ts.IsNotified, ts.HouseTurnover, ts.PercentLevel, ts.IsGroupHeadLine
+	SELECT DISTINCT ts.CustID, ts.matchid, ts.MaxTurnOver, ts.TotalTurnOver, ts.IsNotified, ts.HouseTurnover, ts.PercentLevel, ts.IsGroupHeadLine
 		, @winlostdate AS winlostdate
 		, ts.ProfileID, ts.IsGlobalLockTOLimit, ts.IsEventLockTOLimit
 	FROM dbo.TOControl_Setting ts WITH (NOLOCK)
