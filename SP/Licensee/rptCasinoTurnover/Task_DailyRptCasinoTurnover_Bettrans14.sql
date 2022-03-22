@@ -1,13 +1,14 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DailyRptCasinoTurnover_Bettrans14]
-	@winlostdate DATETIME
+	@WinLostDate SMALLDATETIME
 AS
 
 /*
-	Created:20181129@Joseph
+	Created: 20181129@Joseph
 	Task: daily summary for casino turnover
 	DB: DBLIC.bodb_LicenseeReport
+
 	Revisions:
 		- 20181129@Joseph: Create [Redmine: #95178]
 		- 20200423@Hogan: Add new product Sexy Gaming [RedmineID: #132829]
@@ -24,116 +25,114 @@ AS
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
+		- 20220315@Kos: Revise net turnover [RedmineID: #169843]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
-	DELETE FROM dbo.rptCasinoTurnover WITH (ROWLOCK) WHERE winlostdate = @winlostdate
+	DELETE FROM dbo.rptCasinoTurnover WITH (ROWLOCK) WHERE WinlostDate = @WinLostDate
 
-	DECLARE @SportBetTypeMatrix TABLE (
-		ProductId	TINYINT,
-		BetType		SMALLINT )
+	DECLARE @SportBetTypeMatrix TABLE (ProductId TINYINT, BetType SMALLINT, RefTable TINYINT)
 
 	INSERT INTO @SportBetTypeMatrix
 	SELECT DISTINCT
 		ProductId,
-		BetType
+		BetType,
+		RefTable
 	FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK)
-	WHERE ProductID IN (6, 22, 55, 32, 42, 21, 45, 39, 59, 61, 51, 57, 66, 62, 67, 68)
+	WHERE RefTable IN (1, 2) AND ProductID NOT IN (11, 17)
 
 	INSERT INTO dbo.rptCasinoTurnover(
-		[WinlostDate]
-		,[CustId]
-		,[Recommend]
-		,[ProductId]
-		,[StatusId]
-		,[Currency]
-		,[BetCount]
-		,[Turnover]
-		,[Winlost]
-		,[ValidBetAmount]
-		,[TicketType] )
+		WinlostDate,
+		CustId,
+		Recommend,
+		ProductId,
+		StatusId,
+		Currency,
+		BetCount,
+		Turnover,
+		Winlost,
+		ValidBetAmount,
+		TicketType )
 	(
-		-- RNG Casino and Macau Games
-		SELECT @winlostdate
-			,bettrans.custid
-			,bettrans.recommend
-			,p3rd.ProductID
-			,bettrans.statusID
-			,bettrans.currency
-			,COUNT(bettrans.transid) AS BetCount
-			,SUM(bettrans.stake) AS Turnover
-			,SUM(bettrans.winlost-bettrans.actual_stake) AS winlost
-			,SUM(bettrans.stake) AS ValidBetAmount
-			,CASE
-				WHEN (bettrans.productId = 150 AND matrix.ProductID = 42) -- Saba.club Free Bets
-					THEN 1
-				WHEN (bettrans.productId = 173 AND matrix.ProductID = 66) -- Vgaming Free Bets
-					THEN 1
-				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150, 3898, 3899)
-					THEN 1
-				ELSE 0 END AS TicketType
+		-- bettransRnG14
+		SELECT
+			@WinLostDate,
+			b.custid,
+			b.recommend,
+			p3rd.Productid,
+			b.statusID,
+			b.currency,
+			COUNT(b.transid) AS BetCount,
+			SUM(b.stake) AS Turnover,
+			SUM(b.winlost - b.actual_stake) AS WinLost,
+			SUM(b.BetStake) AS ValidBetAmount,
+			CASE
+				WHEN b.productId = 150 AND sbt.ProductID = 42 THEN 1	-- Saba.club Free Bets
+				WHEN b.productId = 173 AND sbt.ProductID = 66 THEN 1	-- Vgaming Free Bets
+				WHEN sbt.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150, 3898, 3899, 1906, 4599, 4600) THEN 1
+				ELSE 0
+			END AS TicketType
  		FROM
-			bodb02.dbo.bettransRnG14 bettrans WITH (NOLOCK)
-			INNER JOIN @SportBetTypeMatrix matrix ON bettrans.gameid = matrix.bettype
-			INNER JOIN bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductID = matrix.productId
-			INNER JOIN bodb_licensee.dbo.product3rd p3rd WITH (NOLOCK) ON p.ProductPrefix = p3rd.ProductPrefix
+			bodb02.dbo.bettransRnG14 AS b WITH (NOLOCK)
+			INNER JOIN @SportBetTypeMatrix AS sbt ON sbt.BetType = b.gameID
+			INNER JOIN bodb02.dbo.Products AS p WITH (NOLOCK) ON p.ProductID = sbt.ProductId
+			INNER JOIN bodb_licensee.dbo.Product3rd AS p3rd WITH (NOLOCK) ON p3rd.ProductPrefix = p.ProductPrefix
 		WHERE
-			bettrans.winlostdate = @winlostdate AND
-			bettrans.statusID IN (111, 112, 113) AND -- DRAW, WON, LOSE
-			matrix.ProductID IN (6, 22, 55, 32, 42, 61, 66, 62, 67, 68) -- RNG Casino, Macau Games, PG Soft, PP, Saba.club, Vgaming, Creative Gaming, AdvantPlay
+			b.winlostdate = @WinLostDate
+			AND b.statusID IN (111, 112, 113)
+			AND sbt.RefTable = 1
 		GROUP BY
-			bettrans.custid
-			,bettrans.recommend
-			,p3rd.ProductID
-			,bettrans.statusID
-			,bettrans.currency
-			,CASE
-				WHEN (bettrans.productId = 150 AND matrix.ProductID = 42) -- Saba.club Free Bets
-					THEN 1
-				WHEN (bettrans.productId = 173 AND matrix.ProductID = 66) -- Vgaming Free Bets
-					THEN 1
-				WHEN matrix.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150, 3898, 3899)
-					THEN 1
-				ELSE 0 END
+			b.custid,
+			b.recommend,
+			p3rd.ProductID,
+			b.statusID,
+			b.currency,
+			CASE
+				WHEN b.productId = 150 AND sbt.ProductID = 42 THEN 1	-- Saba.club Free Bets
+				WHEN b.productId = 173 AND sbt.ProductID = 66 THEN 1	-- Vgaming Free Bets
+				WHEN sbt.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150, 3898, 3899, 1906, 4599, 4600) THEN 1
+				ELSE 0
+			END
 
 		UNION ALL
 
-		-- AllBet, Sexy Gaming, SA Gaming, GDG, WM Live Casino, Big Gaming
-		SELECT @winlostdate
-			,bettrans.custid
-			,bettrans.recommend
-			,p3rd.ProductID
-			,bettrans.statusID
-			,bettrans.currency
-			,COUNT(bettrans.transid) AS BetCount
-			,SUM(bettrans.stake) AS Turnover
-			,SUM(bettrans.winlost-bettrans.actual_stake) AS winlost
-			,SUM(ISNULL(bettrans.netstake, 0)) AS ValidBetAmount
-			,CASE
-				WHEN matrix.bettype IN (3007)
-					THEN 1
-				ELSE 0 END AS TicketType
+		-- bettransLC
+		SELECT
+			@WinLostDate,
+			b.custid,
+			b.recommend,
+			p3rd.Productid,
+			b.statusID,
+			b.currency,
+			COUNT(b.transid) AS BetCount,
+			SUM(b.stake) AS Turnover,
+			SUM(b.winlost - b.actual_stake) AS WinLost,
+			SUM(ISNULL(b.NetStake, 0)) AS ValidBetAmount,
+			CASE
+				WHEN sbt.bettype IN (3007, 2499) THEN 1
+				ELSE 0
+			END AS TicketType
 		FROM
-			bodb02.dbo.bettransLC14 bettrans WITH (NOLOCK)
-			INNER JOIN @SportBetTypeMatrix matrix ON bettrans.gameid = matrix.bettype
-			INNER JOIN bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductID = matrix.productId
-			INNER JOIN bodb_licensee.dbo.product3rd p3rd WITH (NOLOCK) ON p.ProductPrefix = p3rd.ProductPrefix
+			bodb02.dbo.bettransLC14 AS b WITH (NOLOCK)
+			INNER JOIN @SportBetTypeMatrix AS sbt ON sbt.BetType = b.gameID
+			INNER JOIN bodb02.dbo.Products AS p WITH(NOLOCK) ON p.ProductID = sbt.ProductId
+			INNER JOIN bodb_licensee.dbo.Product3rd AS p3rd WITH (NOLOCK) ON p3rd.ProductPrefix = p.ProductPrefix
 		WHERE
-			bettrans.winlostdate = @winlostdate AND
-			bettrans.statusID IN (111, 112, 113) AND -- DRAW, WON, LOSE
-			matrix.ProductID IN (21, 45, 39, 59, 51, 57) -- AllBet, Sexy Gaming, SA Gaming, GDG, WM Live Casino, Big Gaming
+			b.winlostdate = @WinLostDate
+			AND b.statusID IN (111, 112, 113)
+			AND sbt.RefTable = 2
 		GROUP BY
-			bettrans.custid
-			,bettrans.recommend
-			,p3rd.ProductID
-			,bettrans.statusID
-			,bettrans.currency
-			,CASE
-				WHEN matrix.bettype IN (3007)
-					THEN 1
-				ELSE 0 END
+			b.custid,
+			b.recommend,
+			p3rd.Productid,
+			b.statusID,
+			b.currency,
+			CASE
+				WHEN sbt.bettype IN (3007, 2499) THEN 1
+				ELSE 0
+			END
 	)
 END
 GO
