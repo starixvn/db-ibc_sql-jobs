@@ -64,9 +64,9 @@ AS
 		- 20211216@Kos: Integrate PP 20 new games [RedmineID: #165772]
 		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
-
 		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
-		
+		- 20220313@Kos: Integrate Allbet Promotion [RedmineID: #167524]
+
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
 		- @isSuccessful: -1: Data of the whole day have been summarized completely
@@ -286,7 +286,8 @@ BEGIN
 				WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
 				WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
 				WHEN (b.bettype BETWEEN 2301 AND 2399 OR b.bettype BETWEEN 2901 AND 2999) THEN 210
-				WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
+				WHEN b.bettype BETWEEN 2401 AND 2498 THEN 211	-- Allbet
+				WHEN b.bettype = 2499 THEN -211					-- Allbet Promotion
 				WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
 				WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
@@ -328,7 +329,7 @@ BEGIN
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 			SUM(CASE
 					WHEN b.ruben = 1
-						AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
+						AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
 						AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 						AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 						AND (b.bettype NOT BETWEEN 17000 AND 17030)
@@ -341,7 +342,7 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 			SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
 			SUM(CASE
-					WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
+					WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
 						OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 						OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 						OR (b.bettype BETWEEN 17000 AND 17030)
@@ -386,7 +387,8 @@ BEGIN
 				WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
 				WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
 				WHEN (b.bettype BETWEEN 2301 AND 2399 OR b.bettype BETWEEN 2901 AND 2999) THEN 210
-				WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
+				WHEN b.bettype BETWEEN 2401 AND 2498 THEN 211	-- Allbet
+				WHEN b.bettype = 2499 THEN -211					-- Allbet Promotion
 				WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
 				WHEN b.bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				WHEN b.bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
@@ -456,7 +458,7 @@ BEGIN
 			SUM(Adjustment),--Adjustment
 			SUM(Turnover),--Turnover
 			SUM(Outstanding),--Outstanding
-			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247) THEN Winloss ELSE 0 END),--Winloss
+			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211) THEN Winloss ELSE 0 END),--Winloss
 			SUM(Transfer3rd),--Transfer3rd
 			SUM(DrawGame),--DrawGame
 			SUM(Playercomm),--Playercomm
@@ -632,7 +634,7 @@ BEGIN
 			-1,
 			TurnOver,
 			DrawGame,
-			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247) THEN Promotion ELSE Winloss END AS Winloss,
+			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211) THEN Promotion ELSE Winloss END AS Winloss,
 			playercomm,
 			BetCount,
 			OutStanding

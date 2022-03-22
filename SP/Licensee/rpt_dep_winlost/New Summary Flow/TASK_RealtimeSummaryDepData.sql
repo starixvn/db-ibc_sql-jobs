@@ -64,6 +64,7 @@ AS
 		- 20220126@Kos: Integrate Spadegaming Jackpot [RedmineID: #167035]
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
+		- 20220313@Kos: Integrate Allbet Promotion [RedmineID: #167524]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -266,7 +267,7 @@ BEGIN
 				SUM(CASE
 						WHEN b.bettype < 19999
 							AND b.ruben = 1
-							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
+							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)
@@ -283,7 +284,7 @@ BEGIN
 				0, -- Bonus Wallet
 				0, -- AdjBonusWallet
 				SUM(CASE
-						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
+						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
 							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 							OR (b.bettype BETWEEN 17000 AND 17030)
@@ -411,12 +412,13 @@ BEGIN
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 				SUM(CASE WHEN bettype < 19999 AND b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 				SUM(CASE
-						WHEN b.winlostdate = @Winlostdate AND b.bettype < 19999 AND b.ruben = 1 
-							AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
+						WHEN b.winlostdate = @WinLostDate
+							AND b.bettype < 19999
+							AND b.ruben = 1
+							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
-							AND (b.bettype NOT BETWEEN 17000 AND 17030)
-							) THEN b.winlost - b.actual_stake
+							AND (b.bettype NOT BETWEEN 17000 AND 17030) THEN b.winlost - b.actual_stake
 						ELSE 0
 					END),--Winloss
 				0,--Transfer3rd
@@ -430,16 +432,16 @@ BEGIN
 				0, -- AdjBonusWallet
 				SUM(CASE
 						WHEN b.winlostdate = @Winlostdate 
-							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600)
-							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
-							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
-							OR (b.bettype BETWEEN 17000 AND 17030)
-							) THEN b.winlost - b.actual_stake
+							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
+								OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
+								OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
+								OR (b.bettype BETWEEN 17000 AND 17030))
+							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END) -- Promotion
-			FROM dbo.bettrans b WITH (NOLOCK)
-				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
-				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
+			FROM dbo.bettrans AS b WITH (NOLOCK)
+				INNER JOIN dbo.Dep_CustSuper AS d WITH (NOLOCK) ON b.srecommend = d.custid
+				INNER JOIN dbo.CustInfo AS c WITH (NOLOCK) ON b.custid = c.custid
 			WHERE b.winlostdate >= @Winlostdate
 				AND b.matchid >= 0
 				AND c.roleid = 1
@@ -716,7 +718,8 @@ BEGIN
 				WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 				WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 				WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
-				WHEN bettype BETWEEN 2401 AND 2499 THEN 211
+				WHEN bettype BETWEEN 2401 AND 2498 THEN 211
+				WHEN bettype = 2499 THEN -211	-- Allbet Promotion
 				WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 				WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				WHEN bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
@@ -757,7 +760,7 @@ BEGIN
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
 			SUM(CASE
-					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4599, 4600)
+					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4599, 4600, 2499)
 						OR (bettype BETWEEN 17000 AND 17030) THEN Promotion
 					ELSE Winloss
 				END),--Winloss
@@ -793,7 +796,8 @@ BEGIN
 				WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 				WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 				WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
-				WHEN bettype BETWEEN 2401 AND 2499 THEN 211 -- Allbet
+				WHEN bettype BETWEEN 2401 AND 2498 THEN 211
+				WHEN bettype = 2499 THEN -211	-- Allbet Promotion
 				WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 				WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				WHEN bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
