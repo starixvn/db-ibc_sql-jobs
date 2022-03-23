@@ -17,6 +17,7 @@ AS
 		- 20200520@Percy: Initialize SP [RedmineID: #133254]
 		- 20200716@Percy: Add KeyValue [RedmineID: #137395]
 		- 20200916@Percy: Add IsReset to reset setting value [RedmineID: #137395]
+		- 20220310@Percy: Keep 1000 latest records [RedmineID: #137395]
 */
 
 BEGIN
@@ -47,10 +48,14 @@ BEGIN
 			SELECT @ErrCode = @@ERROR, @ErrMsg = ERROR_MESSAGE()
 		END CATCH
 
-		-- Remove old data
-		DELETE dbo.API_TimeTracker WITH (ROWLOCK, UPDLOCK)
-		WHERE DataSource = @DataSource
-			AND CalledTime < DATEADD(MONTH, -1, GETDATE())
+		-- Remove old data: keep 1000 latest records
+		DELETE t
+		FROM (
+			SELECT Id, ROW_NUMBER() OVER(ORDER BY Id DESC) AS RN
+			FROM dbo.API_TimeTracker WITH (ROWLOCK, UPDLOCK)
+			WHERE DataSource = @DataSource
+		) t
+		WHERE RN > 1000
 	END
 END
 GO
