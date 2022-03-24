@@ -15,6 +15,7 @@ AS
 		- 20210628@Helen:	Move checking for TVS tables to another SP Task_MBU_TVS_CheckRowCount_Sel [RedmineId: #157539]
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 		- 20220317@Helen: Missing bettype when checking transfer data [Redmine:#164197]
+		- 20220324@Kathy: Add index hint to get rowcount of transfer [Redmine:#170113]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -79,7 +80,7 @@ BEGIN
 
 	INSERT INTO @__tempCount(rowcnt, tableName)
 	SELECT	COUNT(1), 'Transfer'
-	FROM	dbo.Transfer WITH(NOLOCK)
+	FROM	dbo.Transfer WITH(NOLOCK, INDEX=IX_WinlostDate)
 	WHERE	WinlostDate = @DateCheck
 			AND custid <> 0
 			AND (winlost + actual_stake) <> 0
