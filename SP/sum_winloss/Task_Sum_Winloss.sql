@@ -35,6 +35,7 @@ AS
 		- 20211214@Evan: Add New Games for PP - [Redmine: #165393]	
 		- 20220106@Evan: Add SG Jackpot - [Redmine: #166685]
 		- 20220124@Evan: Add Allbet Promotion - [Redmine: #166981]
+		- 20220209@Evan: Expand Sportsbook bettype range - Cricket [Redmine: #166332]
 */
 BEGIN
 
@@ -239,7 +240,7 @@ BEGIN
 				AND (bettype < 999 OR
 				bettype BETWEEN 1301 AND 1399 OR--Sporting Solution
 				bettype BETWEEN 9001 AND 9399 OR--E-Sports
-				bettype BETWEEN 9400 AND 9699) AND --Cricket AIO
+				bettype BETWEEN 9400 AND 9998) AND --Cricket AIO
 				bettype NOT IN (71, 72) AND
 				bettype NOT BETWEEN 81 AND 120 THEN ABS(stake) / 2
 			WHEN statusID = 111 AND
@@ -248,7 +249,7 @@ BEGIN
 				(bettype < 999 OR
 				bettype BETWEEN 1301 AND 1399 OR--Sporting Solution
 				bettype BETWEEN 9001 AND 9399 OR--E-Sports
-				bettype BETWEEN 9400 AND 9699) AND--Cricket AIO
+				bettype BETWEEN 9400 AND 9998) AND--Cricket AIO
 				bettype NOT IN (71, 72) AND
 				bettype NOT BETWEEN 81 AND 120
 				) THEN 0
