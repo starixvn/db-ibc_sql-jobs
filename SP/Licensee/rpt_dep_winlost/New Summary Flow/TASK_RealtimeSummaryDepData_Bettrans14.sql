@@ -66,6 +66,7 @@ AS
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
 		- 20220313@Kos: Integrate Allbet Promotion [RedmineID: #167524]
+		- 20220322@Percy: Enhance code get data from Transfer table [RedmineID: #170118]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -208,12 +209,15 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
 			SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END) -- AdjBonusWallet
 		FROM dbo.Transfer b WITH (NOLOCK)
-			INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
-			INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
 		WHERE b.winlostdate = @Winlostdate
-			AND c.roleid = 1
-			AND (bettype = 19999 AND winlostdate <= @MoveBetsDay OR b.Bettype > 19999)
+			AND b.Bettype > 20000
 		GROUP BY b.custid, b.bettype
+
+		DELETE r
+		FROM #rptDepWinlostDetails r
+			LEFT JOIN dbo.custInfo c WITH (NOLOCK) ON r.CustID = c.custid AND c.roleid = 1
+			LEFT JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
+		WHERE s.custid IS NULL
 
 		INSERT INTO #DepCustID (CustID)
 		SELECT CustID

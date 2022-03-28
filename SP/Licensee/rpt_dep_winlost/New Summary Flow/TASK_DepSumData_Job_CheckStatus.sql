@@ -159,7 +159,7 @@ BEGIN
 		SELECT CustID, SUM(b.winlost - b.actual_stake + b.playercomm) AS Winloss
 		FROM bodb02.dbo.bettrans b WITH(NOLOCK) 					
 		WHERE b.winlostdate < @Yesterday AND winlostdate > @MoveBetsDay
-			AND bettype NOT IN (902, 913, 914)
+			AND bettype NOT IN (903, 913, 914)
 		GROUP BY b.custid
 
 		CREATE TABLE #Transfer (CustId INT PRIMARY KEY, OpeningBalance MONEY)
