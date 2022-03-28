@@ -210,7 +210,7 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END) -- AdjBonusWallet
 		FROM dbo.Transfer b WITH (NOLOCK)
 		WHERE b.winlostdate = @Winlostdate
-			AND b.Bettype > 20000
+			AND (b.Bettype > 19999 OR (b.bettype = 19999 AND winlostdate <= @MoveBetsDay)) -- keep get data of bettype 19999 to get custid
 		GROUP BY b.custid, b.bettype
 
 		DELETE r
