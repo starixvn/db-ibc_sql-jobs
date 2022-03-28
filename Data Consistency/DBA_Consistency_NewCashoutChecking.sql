@@ -12,7 +12,8 @@ AS
 
 	Revisions: 
 		- 20220112@July: Detect Cashout ticket with WinLoseDate > today [Redmine:#167311]
-	
+		- 20220328@July: Update WinloseDate > current date+ 1 [Redmine:#170612]
+
 	Param's Expanation:
 		+ @ProductId = 1 (Offer to Cashout of sportbook product)
 */
@@ -20,10 +21,10 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @transId		VARCHAR(MAX)
-			,@Today			DATETIME
+			,@Today			SMALLDATETIME
 
 	SET @transId = ''
-	SET @Today = CAST(GETDATE() AS DATE)
+	SET @Today = DATEADD(DAY,1,CAST(GETDATE() AS DATE))
 		
 	IF @ProductId = 1
 	BEGIN

@@ -18,7 +18,7 @@ AS
 		- 20200923@Max: Pragmatic - PP Jackpot - Check Data Consistency [Redmine: #138310]
 		- 20220221@July: Spadegaming - SG Contribution ticket - Check Data Consistency [Redmine: #168750]
 		- 20220221@July: SG - Exclude orphan ticket custid = 0 [Redmine: #168750]
-		
+		- 20220329@July: In bettransRNG, check comm value is calculated from bettransRNG.betstake [Redmine: #170612]
 */
 BEGIN
 	SET @ErrMessage = ''
@@ -155,10 +155,10 @@ BEGIN
 				 WHEN (-(winlost - actual_stake) * apositiontaking <> awinlost) THEN 'Issue: awinlost is calculated wrongly' 
 				 WHEN (-(winlost - actual_stake) * mpositiontaking <> mwinlost) THEN 'Issue: mwinlost is calculated wrongly' 
 				 WHEN (-(winlost - actual_stake) * spositiontaking <> swinlost) THEN 'Issue: swinlost is calculated wrongly' 
-				 WHEN (stake * playerdiscount <> playercomm) THEN 'Issue: playercomm is wrong'
-				 WHEN (stake * discount * (1 - apositiontaking) <> comm) THEN 'Issue: comm is wrong'
-				 WHEN (stake * adiscount * (1 - (mpositiontaking + apositiontaking)) <> acomm) THEN 'Issue: acomm is wrong'
-				 WHEN (stake * sdiscount * (1 - (spositiontaking + mpositiontaking + apositiontaking)) <> scomm) THEN 'Issue: scomm is wrong'
+				 WHEN (BetStake * playerdiscount <> playercomm) THEN 'Issue: playercomm is wrong'
+				 WHEN (BetStake * discount * (1 - apositiontaking) <> comm) THEN 'Issue: comm is wrong'
+				 WHEN (BetStake * adiscount * (1 - (mpositiontaking + apositiontaking)) <> acomm) THEN 'Issue: acomm is wrong'
+				 WHEN (BetStake * sdiscount * (1 - (spositiontaking + mpositiontaking + apositiontaking)) <> scomm) THEN 'Issue: scomm is wrong'
 			END AS 'Comment'
 	FROM #tempdata t
 	WHERE StatusId NOT IN (0,1)
@@ -170,10 +170,10 @@ BEGIN
 			OR (-(winlost - actual_stake) * mpositiontaking <> mwinlost)
 			OR (-(winlost - actual_stake) * spositiontaking <> swinlost)
 			
-			OR (statusid IN (112,113) AND (CAST(stake * playerdiscount AS money) <> playercomm)) --Case 5b: playercomm is wrong
-			OR (statusid IN (112,113) AND (CAST(stake * discount * (1 - apositiontaking) AS money) <> comm)) --Case 5c: comm is wrong
-			OR (statusid IN (112,113) AND (CAST(stake * adiscount * (1 - (mpositiontaking + apositiontaking)) AS money) <> acomm)) --Case 5d: acomm is wrong		
-			OR (statusid IN (112,113) AND (CAST(stake * sdiscount * (1 - (spositiontaking + mpositiontaking + apositiontaking)) AS money) <> scomm)) --Case 5e: scomm is wrong
+			OR (statusid IN (112,113) AND (CAST(BetStake * playerdiscount AS money) <> playercomm)) --Case 5b: playercomm is wrong
+			OR (statusid IN (112,113) AND (CAST(BetStake * discount * (1 - apositiontaking) AS money) <> comm)) --Case 5c: comm is wrong
+			OR (statusid IN (112,113) AND (CAST(BetStake * adiscount * (1 - (mpositiontaking + apositiontaking)) AS money) <> acomm)) --Case 5d: acomm is wrong		
+			OR (statusid IN (112,113) AND (CAST(BetStake * sdiscount * (1 - (spositiontaking + mpositiontaking + apositiontaking)) AS money) <> scomm)) --Case 5e: scomm is wrong
 			)
 		AND gameid NOT IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4599)
 	
