@@ -37,6 +37,7 @@ AS
 		- 20220124@Evan: Add Allbet Promotion - [Redmine: #166981]
 		- 20220209@Evan: Expand Sportsbook bettype range - Cricket [Redmine: #166332]
 		- 20220208@Evan: Add FGG product - [Redmine: #165685]	
+		- 20220328@Evan: Expand bettype of Macau Games - [Redmine: #170383]
 */
 BEGIN
 
@@ -190,7 +191,8 @@ BEGIN
 			WHEN bettype BETWEEN 2301 AND 2399 OR
 				bettype BETWEEN 2901 AND 2999 THEN 210
 			WHEN bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
-			WHEN bettype BETWEEN 4001 AND 4100 THEN 212 --Voidbridge
+			WHEN bettype BETWEEN 4001 AND 4100 OR 
+				bettype BETWEEN 5800 AND 5999 THEN 212 -- Voidbridge
 			WHEN bettype BETWEEN 4101 AND 4300 OR 
 				bettype BETWEEN 6701 AND 7000 THEN 248 -- Pragmatic
 			WHEN bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
@@ -327,7 +329,8 @@ BEGIN
 				 WHEN bettype BETWEEN 2301 AND 2399 OR
 					 bettype BETWEEN 2901 AND 2999 THEN 210
 				 WHEN bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
-				 WHEN bettype BETWEEN 4001 AND 4100 THEN 212 --Voidbridge
+				 WHEN bettype BETWEEN 4001 AND 4100 OR 
+				 	bettype BETWEEN 5800 AND 5999 THEN 212 -- Voidbridge
 				 WHEN bettype BETWEEN 4101 AND 4300 OR 
 				 	bettype BETWEEN 6701 AND 7000 THEN 248 -- Pragmatic
 				 WHEN bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
@@ -385,7 +388,8 @@ BEGIN
 				 WHEN bettypePT BETWEEN 2301 AND 2399
 					OR bettypePT BETWEEN 2901 AND 2999 THEN 210 -- RNG Casino
 				 WHEN bettypePT BETWEEN 2401 AND 2499 THEN 211 -- Allbet
-				 WHEN bettypePT BETWEEN 4001 AND 4100 THEN 212 -- Voidbridge
+				 WHEN bettypePT BETWEEN 4001 AND 4100 OR 
+				 	bettypePT BETWEEN 5800 AND 5999 THEN 212 -- Voidbridge
 				 WHEN bettypePT BETWEEN 4101 AND 4300 OR 
 				 	bettypePT BETWEEN 6701 AND 7000 THEN 248 -- Pragmatic
 				 WHEN bettypePT BETWEEN 1011 AND 1020 THEN 219 -- Fishing World
