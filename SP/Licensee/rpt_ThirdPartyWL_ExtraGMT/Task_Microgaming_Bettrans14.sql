@@ -29,6 +29,7 @@ AS
 	 - 20210816@Sophia: add DBBAL [Redmine: #154300]
 	 - 20211216@Danny: Get bettype from SportBettypeMaxtrix dynamically  [Redmine: #166158]
 	 - 20220110@Danny: SG - Jackpot prize integration [#167089]
+	 - 20220329@Danny: Intergrate Guaranteed Gaming [#167626]
 	 Param's Explanation:
 */
 
@@ -51,7 +52,7 @@ BEGIN
 	DECLARE @LCBettypeList TABLE(Bettype INT)
 	INSERT INTO @LCBettypeList(Bettype)
 	SELECT	DISTINCT bettype
-	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'AB,SXG,SAG,WM,PPL') la
+	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'AB,SXG,SAG,WM,PPL,FGGL') la
 
 	WHILE (@Winlostdate <= @Todate)
 	BEGIN
