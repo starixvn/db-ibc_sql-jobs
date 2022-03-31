@@ -36,6 +36,7 @@ AS
 		- 20220106@Evan: Add SG Jackpot - [Redmine: #166685]
 		- 20220124@Evan: Add Allbet Promotion - [Redmine: #166981]
 		- 20220209@Evan: Expand Sportsbook bettype range - Cricket [Redmine: #166332]
+		- 20220208@Evan: Add FGG product - [Redmine: #165685]	
 */
 BEGIN
 
@@ -223,6 +224,7 @@ BEGIN
 			WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
 			WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product
 			WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin Product
+			WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG Product
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -359,6 +361,8 @@ BEGIN
 				 WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
 				 WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product
 				 WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin Product
+				 WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG Product
+
 				 ELSE 0
 			 END
 			,CASE
@@ -405,6 +409,8 @@ BEGIN
 				 WHEN bettypePT BETWEEN 3801 AND 3899 THEN 171 -- VGaming
 				 WHEN bettypePT BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
 				 WHEN bettypePT BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product
+				 WHEN bettypePT BETWEEN 8201 AND 8299 THEN 176 -- FGG Product
+				 
 				 ELSE 0 END AS SporttypeRef
 		FROM #__SuperExtraPT WHERE RefTable IN (1, 2)
 
