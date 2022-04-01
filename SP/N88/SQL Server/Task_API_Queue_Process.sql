@@ -16,6 +16,7 @@ AS
 		- 20210524@Percy: Add table: CustClosingBalance [RedmineID: #155334]
 		- 20211028@Percy: Add 3 tables: DrawLog, EventDraw, VipUpgradeReview [RedmineID: #161048]
 		- 20211118@Percy: Add table: LogAdminAdjustWallet [RedmineID: #161048]
+		- 20220325@Percy: Add table: CustVerificationReward [RedmineID: #170390]
 		
 */
 
@@ -251,6 +252,18 @@ BEGIN
 		BEGIN
 			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
 			VALUES ('LogAdminAdjustWallet', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- CustVerificationReward
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_CustVerificationReward @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('CustVerificationReward', @ErrCode, @ErrMsg)
 		END
 	END
 
