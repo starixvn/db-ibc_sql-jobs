@@ -23,7 +23,9 @@ AS
 		- 20211126@Kathy: Add 2 new column bettype,betid [Redmine:#140180]
 		- 20211126@Kathy: get bettype,betid from active table[Redmine:#140180]
 		- 20220113@Max: [TVS] Cannot execute auto void queue for test match [Redmine: #166895]
-		- 20220309@Max: MBU - Copy data of Cash Out Selling to bk table [Redmine: #169593]
+		- 20220309@Max: MBU - Copy data of Cash Out Selling to bk table [Redmine: #169593
+		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
+		
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -268,13 +270,13 @@ SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winl
 FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
 	CROSS APPLY (
-				SELECT	val AS RequestId
-				FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
-				WHERE val = v.RequestId
+				SELECT	value AS RequestId
+				FROM	STRING_SPLIT(@RequestIds, '''','''')
+				WHERE value = v.RequestId
 		) r
 WHERE	t1.VoidingHistoryId IS NOT NULL
-	AND r.RequestId IS NOT NULL
-OPTION (maxrecursion 0);'');';
+	AND r.RequestId IS NOT NULL ;'');';
+
 
 			EXECUTE	sys.sp_executesql @Query;
 
@@ -291,13 +293,12 @@ SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, STATUS, winl
 FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
 		CROSS APPLY (
-					SELECT	val AS RequestId
-					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
-					WHERE val = v.RequestId
+					SELECT	value AS RequestId
+					FROM	STRING_SPLIT(@RequestIds, '''','''')
+					WHERE value = v.RequestId
 			) r
 	WHERE	t1.VoidingHistoryId IS NOT NULL
 		AND r.RequestId IS NOT NULL
-	OPTION (maxrecursion 0)
 	;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
@@ -314,11 +315,10 @@ DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) 
 SELECT	t1.RequestId, OperatorId, OperatorTypeId, Id
 FROM	bodb02.dbo.TicketVoiding_OperatorInfo AS t1 WITH (NOLOCK)
 	CROSS APPLY (
-					SELECT	val AS RequestId
-					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
-					WHERE val = t1.RequestId
+					SELECT	value AS RequestId
+					FROM	STRING_SPLIT(@RequestIds, '''','''')
+					WHERE value = t1.RequestId
 			) r
-OPTION (maxrecursion 0)
 	;'');';
 		EXECUTE	sys.sp_executesql @Query;
 
@@ -334,11 +334,10 @@ DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) 
 SELECT	QueueId, t1.RequestId, MatchId, VoidingHistoryId, TransIds, StatusId, UserId, Starttime, Exectime, Duration, IP, VoidingTypeId, TotalTicket, ErrMsg, FailedTransIds, NegativeBalanceUsers
 FROM	bodb02.dbo.TicketVoiding_Queue AS t1 WITH (NOLOCK)
 	CROSS APPLY (
-					SELECT	val AS RequestId
-					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
-					WHERE val = t1.RequestId
+					SELECT	value AS RequestId
+					FROM	STRING_SPLIT(@RequestIds, '''','''')
+					WHERE value = t1.RequestId
 			) r
-OPTION (maxrecursion 0)
 	;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
@@ -355,11 +354,10 @@ DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) 
 SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,CONVERT(NVARCHAR(MAX),VoidData) AS VoidData
 FROM	bodb02.dbo.TicketVoiding_VoidingHistory AS t1 WITH (NOLOCK)
 	CROSS APPLY (
-					SELECT	val AS RequestId
-					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
-					WHERE val = t1.RequestId
+					SELECT	value AS RequestId
+					FROM	STRING_SPLIT(@RequestIds, '''','''')
+					WHERE value = t1.RequestId
 			) r
-OPTION (maxrecursion 0)
 	;'');';
 		EXECUTE	sys.sp_executesql @Query;
 
@@ -389,11 +387,10 @@ DECLARE	@RequestIds	NVARCHAR(MAX) = ''''' + CONVERT(NVARCHAR(MAX), @RequestIds) 
 SELECT	Id, t1.RequestId, IssueTypeId, SubIssueTypeId,TransId, MatchId,RequestDetailId,MainTransId
 FROM	bodb02.dbo.TicketVoiding_RequestDetailTicket_SubParlay AS t1 WITH (NOLOCK)
 	CROSS APPLY (
-					SELECT	val AS RequestId
-					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
-					WHERE val = t1.RequestId
+					SELECT	value AS RequestId
+					FROM	STRING_SPLIT(@RequestIds, '''','''')
+					WHERE value = t1.RequestId
 			) r
-OPTION (maxrecursion 0)
 	;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
@@ -411,12 +408,11 @@ SELECT	t1.ReasonId, ReasonEnglish, ReasonChineseSimplified
 FROM	bodb02.dbo.TicketVoiding_Reason AS t1 WITH (NOLOCK)
 	INNER JOIN bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.ReasonId = t1.ReasonId
 		CROSS APPLY (
-					SELECT	val AS RequestId
-					FROM	bodb02.dbo.f_SplitString(@RequestIds, '''','''')
-					WHERE val = v.RequestId
+					SELECT	value AS RequestId
+					FROM	STRING_SPLIT(@RequestIds, '''','''')
+					WHERE value = v.RequestId
 			) r
 	WHERE	r.RequestId IS NOT NULL
-	OPTION (maxrecursion 0)
 	;'');';
 
 		EXECUTE	sys.sp_executesql @Query;
