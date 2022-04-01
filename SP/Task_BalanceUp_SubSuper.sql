@@ -1,18 +1,17 @@
-USE [bodb02]
-GO
-
-/****** Object:  StoredProcedure [dbo].[Task_BalanceUp_SubSuper]    Script Date: 01/26/2015 23:27:38 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE PROCEDURE [dbo].[Task_BalanceUp_SubSuper]
-	@winlostdate smalldatetime,
-	@preview bit = 0
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[Task_BalanceUp_SubSuper]
+    @winlostdate smalldatetime,
+    @preview bit = 0
 AS
+/*
+	Created by:[]
+	Date:
+	Task: 
+	DB: DBTXN/BODB02
+	Revisions:				
+		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
 
+*/
 create table #srecommend (KeyID int PRIMARY KEY IDENTITY(1,1), srecommend int, ticketCount int)
 
 -- Get ticketcount per Super
@@ -40,46 +39,43 @@ FROM #srecommend
 SET @rc = @@ROWCOUNT
 IF @rc > 0
 BEGIN
-	SET @custid_list = @custid_list + CAST(@srecommend as varchar(40)) + ','
-	SET @cnt = @cnt + @ticketCount
-	SET @custid_cnt = @custid_cnt + 1
+    SET @custid_list = @custid_list + CAST(@srecommend as varchar(40)) + ','
+    SET @cnt = @cnt + @ticketCount
+    SET @custid_cnt = @custid_cnt + 1
 
-	DELETE FROM #srecommend WHERE KeyID = @keyID
+    DELETE FROM #srecommend WHERE KeyID = @keyID
 END
 
-IF (@cnt < 5000) AND LEN(@custid_list) < 2000 AND @custid_cnt < 200 AND @rc > 0 GOTO AddSuper -- add next Super into list until condition meet
+IF (@cnt < 5000) AND LEN(@custid_list) < 2000 AND @custid_cnt < 5 AND @rc > 0 GOTO AddSuper -- add next Super into list until condition meet
 
 IF @custid_cnt > 0
 BEGIN
-	SET @custid_list = LEFT(@custid_list, LEN(@custid_list) -1)
+    SET @custid_list = LEFT(@custid_list, LEN(@custid_list) -1)
 
-	IF @preview = 1
-	BEGIN
-		PRINT CAST(@r as varchar(40)) + '  Total Ticket : ' + CAST(@cnt as varchar(40)) + '  Total srecommend : ' + CAST(@custid_cnt as varchar(40)) + '   ' + @custid_list
-		SET @r = @r + 1
-	END
-	ELSE
-	BEGIN
-		BEGIN TRANSACTION
-		DELETE FROM dbo.balanceTable_tmp
-		WHERE srecommend IN (select val from dbo.strSplit(@custid_list, ','))
+    IF @preview = 1
+    BEGIN
+        PRINT CAST(@r as varchar(40)) + '  Total Ticket : ' + CAST(@cnt as varchar(40)) + '  Total srecommend : ' + CAST(@custid_cnt as varchar(40)) + '   ' + @custid_list
+        SET @r = @r + 1
+    END
+    ELSE
+    BEGIN
+        --insert processing list
+        EXEC dbo.Task_Core_ProcessingCustListIns @CustIds = @custid_list
+        WAITFOR DELAY '000:00:01:000'
 
-		EXEC dbo.ExecRep_07 @custid_list, 0, 44, @winlostdate
-		COMMIT TRANSACTION
+        --BEGIN TRANSACTION
+        DELETE FROM dbo.balanceTable_tmp
+        WHERE srecommend IN (select value from STRING_SPLIT(@custid_list, ','))
 
-		WAITFOR DELAY '000:00:01.500'
-	END
+        EXEC dbo.ExecRep_07 @custid_list, 0, 44, @winlostdate
+        --COMMIT TRANSACTION
+
+        --WAITFOR DELAY '000:00:01.500'
+        --delete processing list
+        EXEC dbo.Task_Core_ProcessingCustListDel @CustIds = @custid_list
+    END
 END
 
 IF @rc > 0 GOTO NewSuperList
 
 NoMoreSuper:
-
-
-
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[Task_BalanceUp_SubSuper] TO [vnteam] AS [dbo]
-GO
-
-

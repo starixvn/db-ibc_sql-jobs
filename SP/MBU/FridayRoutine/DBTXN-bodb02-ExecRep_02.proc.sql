@@ -1,7 +1,7 @@
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
-CREATE PROCEDURE [dbo].[ExecRep_02]
+ALTER PROCEDURE [dbo].[ExecRep_02]
 	@tmp1 sql_variant = NULL,
 	@tmp2 sql_variant = NULL,
 	@tmp3 sql_variant = NULL,
@@ -32,6 +32,7 @@ AS
 		- 20201119@Brice: Enhance MBU process related to removing data on bettransm14 [Redmine: #143763]
 		- 20210225@Max: [TVS] Remove archived data [Redmine: #150524]
 		- 20220121@Max: MBU - Clean up Cash Out Selling [Redmine: #167802]
+		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
 */
 -- =======================
 -- Parameter check\control
@@ -308,8 +309,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.TicketVoiding_VoidedTransaction AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.id = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT(@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -328,8 +329,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.TicketVoiding_Reason AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.ReasonId = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.ReasonId = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -348,8 +349,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.TicketVoiding_VoidingHistory AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.VoidingHistoryId = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.VoidingHistoryId = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -368,8 +369,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.TicketVoiding_Queue AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.QueueId = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.QueueId = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -388,8 +389,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.TicketVoiding_OperatorInfo AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.id = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -408,8 +409,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.TicketVoiding_Request AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.RequestId = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.RequestId = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -428,8 +429,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.TicketVoiding_AutoUnmarkSetting AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.id = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -448,8 +449,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.TicketVoiding_AutoVoidRequest_Queue AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.QueueId = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.QueueId = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -468,8 +469,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.zzzbettrans AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.keyid = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.keyid = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -488,8 +489,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.zzzbettransM AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.keyid = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.keyid = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -508,8 +509,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.TicketVoiding_RequestDetail AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.id = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -528,8 +529,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.TicketVoiding_RequestDetailTicket_Single AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.id = CONVERT(INT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 
@@ -548,9 +549,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.TicketVoiding_RequestDetailTicket_SubParlay AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.id = CONVERT(INT, s.val);
-
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.id = CONVERT(INT, s.value);
 				SELECT	@rowcount = @@ROWCOUNT;
 
 				COMMIT TRANSACTION;
@@ -570,8 +570,8 @@ BEGIN
 
 				DELETE	tbl WITH (ROWLOCK)
 				FROM		dbo.CashOutSelling AS tbl WITH (ROWLOCK)
-				INNER JOIN	dbo.strSplit (@transIds, ',') AS s
-						ON	tbl.TransID = CONVERT(BIGINT, s.val);
+				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
+						ON	tbl.TransID = CONVERT(BIGINT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 

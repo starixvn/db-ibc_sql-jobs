@@ -11,6 +11,7 @@ AS
 
 	Revisions:
 		- 20170914@Patrick:	Initialize - [Redmine: #000000]
+		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
  */
  BEGIN
 	SET NOCOUNT ON
@@ -23,7 +24,7 @@ AS
 			SELECT mrecommend UNION ALL
 			SELECT srecommend
 		)t
-		WHERE c.custid IN (SELECT val FROM dbo.strSplit_Key(@CustIds, ','))
+		WHERE c.custid IN (SELECT value FROM STRING_SPLIT(@CustIds, ','))
 			AND t.CustId > 0
 		GROUP BY t.CustId
 	)

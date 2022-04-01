@@ -10,6 +10,7 @@ AS
 	
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -29,10 +30,9 @@ AS
     SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,CONVERT(NVARCHAR(MAX),VoidData) AS VoidData
 	FROM	dbo.TicketVoiding_VoidingHistory AS t1 WITH (NOLOCK)
 	CROSS APPLY (
-		SELECT	val AS RequestId
-		FROM	dbo.f_SplitString(@RequestIds, ',')
-		WHERE val = t1.RequestId
+		SELECT	value AS RequestId
+		FROM	STRING_SPLIT(@RequestIds, ',')
+		WHERE value = t1.RequestId
 	) r
-	OPTION (maxrecursion 0);
-
+	
 END
