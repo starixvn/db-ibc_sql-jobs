@@ -13,14 +13,15 @@ AS
 	Original:
 
 	Revisions:
-		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
+		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]		
+		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
 		
 		
 	Param's Explanation:
 */
 BEGIN
 
-	CREATE TABLE #ticketList (rn int PRIMARY KEY IDENTITY(0,1), transid bigint)
+	CREATE TABLE #ticketList (rn int PRIMARY KEY IDENTITY(0,1), transid bigint)   
 	DECLARE @tc int -- ticket count
 	DECLARE @r int
 
@@ -32,25 +33,23 @@ BEGIN
 
 		;WITH
 			CTE AS (SELECT transid, srecommend FROM dbo.Transfer WITH (NOLOCK) WHERE recommend = 0 AND winlostdate < @winlostdate)
-			,s AS (SELECT val AS srecommend FROM dbo.strSplit_Key(@custids, ','))
+			,s AS (SELECT value AS srecommend FROM STRING_SPLIT(@custids, ','))
 		INSERT INTO #ticketList (transid)
 		SELECT transid
 		FROM CTE
 			INNER JOIN s ON CTE.srecommend = s.srecommend
-			--WHERE srecommend IN (SELECT val FROM dbo.strSplit_Key(@custids, ','))
-
+			
 		SET @tc = @@ROWCOUNT
 	END
 	ELSE IF @roleid = 22
 	BEGIN
 	   
-		;WITH a AS (SELECT val AS recommend FROM dbo.strSplit_Key(@custids, ','))
+		;WITH a AS (SELECT value AS recommend FROM STRING_SPLIT(@custids, ','))
 		INSERT INTO #ticketList (transid)
 		SELECT transid
 		FROM dbo.Transfer b WITH (NOLOCK)
 			INNER JOIN a ON b.recommend = a.recommend
 			WHERE 
-				--recommend IN (SELECT val FROM dbo.strSplit_Key(@custids, ',')) AND
 				winlostdate < @winlostdate
 
 		SET @tc = @@ROWCOUNT
@@ -58,13 +57,12 @@ BEGIN
 	ELSE IF @roleid = 11
 	BEGIN
 	   
-		;WITH c AS (SELECT val AS custid FROM dbo.strSplit_Key(@custids, ','))
+		;WITH c AS (SELECT value AS custid FROM STRING_SPLIT(@custids, ','))
 		INSERT INTO #ticketList (transid)
 		SELECT transid
 		FROM dbo.Transfer b WITH (NOLOCK)
 			INNER JOIN c ON b.recommend = @custid AND b.custid = c.custid
 			WHERE 
-				--recommend = @custid AND custid IN (SELECT val FROM dbo.strSplit_Key(@custids, ',')) AND
 				winlostdate < @winlostdate
 
 		SET @tc = @@ROWCOUNT
