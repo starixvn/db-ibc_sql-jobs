@@ -6,14 +6,14 @@
   <DTS:PropertyExpression
     DTS:Name="InitialCatalog">@[$Project::HostDB]</DTS:PropertyExpression>
   <DTS:PropertyExpression
-    DTS:Name="Password">("@sqllinked#")</DTS:PropertyExpression>
+    DTS:Name="Password">("xxxxxxxxxx")</DTS:PropertyExpression>
   <DTS:PropertyExpression
     DTS:Name="ServerName">@[$Project::HostServer]</DTS:PropertyExpression>
   <DTS:PropertyExpression
     DTS:Name="UserName">@[$Project::UserID]</DTS:PropertyExpression>
   <DTS:ObjectData>
     <DTS:ConnectionManager
-      DTS:ConnectionString="Data Source=DBSSIS;User ID=sqllink;Initial Catalog=SSISDB;Provider=SQLNCLI11.1;Auto Translate=False;">
+      DTS:ConnectionString="Data Source=.\MSSQL2019;User ID=sqllink;Initial Catalog=SSISDB;Provider=SQLNCLI11.1;Auto Translate=False;">
       <DTS:Password
         DTS:Name="Password"
         Sensitive="1"></DTS:Password>

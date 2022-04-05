@@ -64,7 +64,7 @@
                 <SSIS:Property SSIS:Name="IncludeInDebugDump">0</SSIS:Property>
                 <SSIS:Property SSIS:Name="Required">0</SSIS:Property>
                 <SSIS:Property SSIS:Name="Sensitive">0</SSIS:Property>
-                <SSIS:Property SSIS:Name="Value">Data Source=DB232;User ID=sqllink;Initial Catalog=SSISDB;Provider=SQLNCLI11.1;Persist Security Info=True;Auto Translate=False;</SSIS:Property>
+                <SSIS:Property SSIS:Name="Value">Data Source=.\MSSQL2019;User ID=sqllink;Initial Catalog=SSISDB;Provider=SQLNCLI11.1;Auto Translate=False;</SSIS:Property>
                 <SSIS:Property SSIS:Name="DataType">18</SSIS:Property>
               </SSIS:Properties>
             </SSIS:Parameter>
@@ -81,20 +81,6 @@
                 <SSIS:Property SSIS:Name="Sensitive">0</SSIS:Property>
                 <SSIS:Property SSIS:Name="Value">false</SSIS:Property>
                 <SSIS:Property SSIS:Name="DataType">3</SSIS:Property>
-              </SSIS:Properties>
-            </SSIS:Parameter>
-            <SSIS:Parameter SSIS:Name="CM.DBSSIS.SSISDB.sqllink.Password">
-              <SSIS:Properties>
-                <SSIS:Property SSIS:Name="ID">
-                </SSIS:Property>
-                <SSIS:Property SSIS:Name="CreationName">
-                </SSIS:Property>
-                <SSIS:Property SSIS:Name="Description">
-                </SSIS:Property>
-                <SSIS:Property SSIS:Name="IncludeInDebugDump">0</SSIS:Property>
-                <SSIS:Property SSIS:Name="Required">0</SSIS:Property>
-                <SSIS:Property SSIS:Name="Sensitive">1</SSIS:Property>
-                <SSIS:Property SSIS:Name="DataType">18</SSIS:Property>
               </SSIS:Properties>
             </SSIS:Parameter>
             <SSIS:Parameter SSIS:Name="CM.DBSSIS.SSISDB.sqllink.RetainSameConnection">
@@ -120,10 +106,10 @@
                 <SSIS:Property SSIS:Name="Name">ETL_Process_Main</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionMajor">1</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionMinor">0</SSIS:Property>
-                <SSIS:Property SSIS:Name="VersionBuild">108</SSIS:Property>
+                <SSIS:Property SSIS:Name="VersionBuild">111</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionComments">
                 </SSIS:Property>
-                <SSIS:Property SSIS:Name="VersionGUID">{45BB157C-C945-4B69-840B-586019BF4FD8}</SSIS:Property>
+                <SSIS:Property SSIS:Name="VersionGUID">{A80D47CD-8993-4A29-8868-A842E8ECDF07}</SSIS:Property>
                 <SSIS:Property SSIS:Name="PackageFormatVersion">8</SSIS:Property>
                 <SSIS:Property SSIS:Name="Description">
                 </SSIS:Property>
@@ -137,10 +123,10 @@
                 <SSIS:Property SSIS:Name="Name">ETL_Dynamic_Mapping</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionMajor">1</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionMinor">0</SSIS:Property>
-                <SSIS:Property SSIS:Name="VersionBuild">290</SSIS:Property>
+                <SSIS:Property SSIS:Name="VersionBuild">291</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionComments">
                 </SSIS:Property>
-                <SSIS:Property SSIS:Name="VersionGUID">{522BA932-3E74-4A5D-996B-B29A2F1D3F57}</SSIS:Property>
+                <SSIS:Property SSIS:Name="VersionGUID">{FA2FF7F4-DF96-49C4-931A-246199195C19}</SSIS:Property>
                 <SSIS:Property SSIS:Name="PackageFormatVersion">8</SSIS:Property>
                 <SSIS:Property SSIS:Name="Description">
                 </SSIS:Property>
@@ -212,10 +198,10 @@
                 <SSIS:Property SSIS:Name="Name">ETL_Dynamic_Mapping_TVS</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionMajor">1</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionMinor">0</SSIS:Property>
-                <SSIS:Property SSIS:Name="VersionBuild">270</SSIS:Property>
+                <SSIS:Property SSIS:Name="VersionBuild">272</SSIS:Property>
                 <SSIS:Property SSIS:Name="VersionComments">
                 </SSIS:Property>
-                <SSIS:Property SSIS:Name="VersionGUID">{BB74B815-7AB0-42A0-839D-C2680A0A837B}</SSIS:Property>
+                <SSIS:Property SSIS:Name="VersionGUID">{4A743027-964B-4E74-AA8A-AFAE04E0B051}</SSIS:Property>
                 <SSIS:Property SSIS:Name="PackageFormatVersion">8</SSIS:Property>
                 <SSIS:Property SSIS:Name="Description">
                 </SSIS:Property>
@@ -286,12 +272,7 @@
       </SSIS:Project>
     </Manifest>
   </DeploymentModelSpecificContent>
-  <ControlFlowParts>
-    <ProjectItem>
-      <Name>ETL_Dynamic_Rountine.dtsxp</Name>
-      <FullPath>ETL_Dynamic_Rountine.dtsxp</FullPath>
-    </ProjectItem>
-  </ControlFlowParts>
+  <ControlFlowParts />
   <Miscellaneous />
   <Configurations>
     <Configuration>
