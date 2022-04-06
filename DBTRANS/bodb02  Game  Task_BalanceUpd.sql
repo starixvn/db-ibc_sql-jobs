@@ -14,7 +14,7 @@ IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 END
 
 DECLARE @jobId BINARY(16)
-EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Game : Task_BalanceUpd New', 
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Game : Task_BalanceUpd', 
 		@enabled=1, 
 		@notify_level_eventlog=0, 
 		@notify_level_email=0, 
