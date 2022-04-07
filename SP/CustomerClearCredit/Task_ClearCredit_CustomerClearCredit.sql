@@ -125,7 +125,7 @@ BEGIN
 	DECLARE @Log XML = '', @SB_Error BIT = 0, @LogData VARCHAR(1000), @ActionId INT = 1221
 	DECLARE @UserId INT = 10278938, @ITName VARCHAR(50) = 'starixIT'
 
-	SELECT @LogData = 'Remove the unused account''s credit by IT Admin'
+	SELECT @LogData = 'Removed the unused account''s given credit by System'
 
 	--Clear credit for master
 	WHILE(1=1)
