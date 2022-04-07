@@ -1,11 +1,12 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02 : Game : Task_BalanceUpd]    Script Date: 01/25/2015 22:34:47 ******/
+/****** Object:  Job [bodb02 : Game : Task_BalanceUpd]    Script Date: 4/6/2022 3:43:52 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 01/25/2015 22:34:47 ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 4/6/2022 3:43:52 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -14,7 +15,7 @@ IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 END
 
 DECLARE @jobId BINARY(16)
-EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Game  Task_BalanceUpd', 
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Game : Task_BalanceUpd', 
 		@enabled=1, 
 		@notify_level_eventlog=0, 
 		@notify_level_email=0, 
@@ -25,8 +26,8 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Game  Task_BalanceU
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Credit]    Script Date: 01/25/2015 22:34:47 ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Credit', 
+/****** Object:  Step [Debit]    Script Date: 4/6/2022 3:43:52 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Update Balance Game', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
 		@on_success_action=3, 
@@ -36,28 +37,13 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Credit',
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.Task_BalanceUpdCreditGame', 
+		@command=N'EXEC dbo.Task_CustSetting_JobManagement @Jobname = ''bodb02 : Game : Task_BalanceUpd''', 
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Debit]    Script Date: 01/25/2015 22:34:47 ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Debit', 
+/****** Object:  Step [Loop]    Script Date: 4/6/2022 3:43:52 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Delay 100ms', 
 		@step_id=2, 
-		@cmdexec_success_code=0, 
-		@on_success_action=3, 
-		@on_success_step_id=0, 
-		@on_fail_action=3, 
-		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
-		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.Task_BalanceUpdDebitGame', 
-		@database_name=N'bodb02', 
-		@flags=0
-IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Loop]    Script Date: 01/25/2015 22:34:47 ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Loop', 
-		@step_id=3, 
 		@cmdexec_success_code=0, 
 		@on_success_action=4, 
 		@on_success_step_id=1, 
@@ -66,8 +52,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Loop',
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'Declare @i int
-SET @i = 1', 
+		@command=N'WAITFOR DELAY ''00:00:00.100''', 
 		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -85,7 +70,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'1 minute'
 		@active_end_date=99991231, 
 		@active_start_time=0, 
 		@active_end_time=235959, 
-		@schedule_uid=N'b4581041-7ad0-4694-b30f-9714656be3d0'
+		@schedule_uid=N'693a8746-eb01-4cc3-8248-7f4e1c63ab8a'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -94,7 +79,6 @@ GOTO EndSave
 QuitWithRollback:
     IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
 EndSave:
-
 GO
 
 

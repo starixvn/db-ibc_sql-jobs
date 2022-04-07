@@ -1,11 +1,12 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb02 : Game : ResetYesterday]    Script Date: 05/19/2016 22:16:13 ******/
+/****** Object:  Job [bodb02 : Game : ResetYesterday]    Script Date: 4/6/2022 3:42:28 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 05/19/2016 22:16:13 ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 4/6/2022 3:42:28 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -25,27 +26,9 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02 : Game : ResetYesterd
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Reset]    Script Date: 05/19/2016 22:16:13 ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Reset', 
+/****** Object:  Step [Reset data for CWL]    Script Date: 4/6/2022 3:42:28 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Reset SMA WinLimit and CWL', 
 		@step_id=1, 
-		@cmdexec_success_code=0, 
-		@on_success_action=3, 
-		@on_success_step_id=0, 
-		@on_fail_action=2, 
-		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
-		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 162, @bettype = 1101
-EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 255, @bettype = 1701
-EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 208, @bettype = 2101
-EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 212, @bettype = 4001', 
-		@database_name=N'bodb02', 
-		@flags=0
-IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Reset data for CWL]    Script Date: 05/19/2016 22:16:13 ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Reset data for CWL', 
-		@step_id=2, 
 		@cmdexec_success_code=0, 
 		@on_success_action=1, 
 		@on_success_step_id=0, 
@@ -54,9 +37,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Reset da
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'DECLARE @WinlostDate SMALLDATETIME
-SET @WinlostDate = CAST(GETDATE() AS DATE)
-EXEC dbo.Task_Winlimit_ResetData @WinlostDate = @WinlostDate', 
+		@command=N'EXEC dbo.Task_CustSetting_JobManagement @Jobname = ''bodb02 : Game : ResetYesterday''', 
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -83,7 +64,6 @@ GOTO EndSave
 QuitWithRollback:
     IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
 EndSave:
-
 GO
 
 
