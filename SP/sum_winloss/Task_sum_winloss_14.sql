@@ -26,6 +26,7 @@ AS
 		- 20210617@Sol: changed how to calc net turn over - [RedmineId : #156653]
 		- 20211122@Percy: Enhance gross comm formula [RedmineID: #164479]
 		- 20220106@Evan: Add SG Jackpot - [Redmine: #166685]	
+		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
 */
 
 BEGIN
@@ -70,7 +71,7 @@ BEGIN
 		SELECT DISTINCT c.srecommend
 		FROM CustDB.dbo.Customer c WITH (NOLOCK)
 			CROSS APPLY (
-				SELECT val FROM bodb02.dbo.strSplit(@CustIds, ',') f WHERE c.custid = f.val
+				SELECT value FROM STRING_SPLIT(@CustIds, ',') f WHERE c.custid = f.value
 			) AS tmp
 
 		-- Member

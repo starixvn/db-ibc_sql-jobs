@@ -17,6 +17,7 @@ AS
 		- 20200108@Percy: Support billing terms by product & currency instead of product only [RedmineID: #120005]
 		- 20200407@Percy: Add @ProductIds to support input product list [RedmineID: #131885]
 		- 20200501@Sophia: Fix bug @bettypeIds [Redmine: #131885]
+		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
 		
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
@@ -229,7 +230,7 @@ BEGIN
 		SELECT CustId, WinlostDate, Stake, Actual_stake, Winlost, TransDesc, RefNo, Apositiontaking, actualrate, currency, Bettype, PlayerComm, Comm
 		FROM dbo.bettrans14 WITH(NOLOCK)
 		WHERE custid = @CustDummyId-- custid IN (SELECT val FROM dbo.strSplit(@CustDummyIds, ','))
-			AND bettype IN (SELECT val FROM dbo.strSplit(@BettypeIds, ','))
+			AND bettype IN (SELECT value FROM STRING_SPLIT(@BettypeIds, ','))
 			AND winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay
 			
 		-- get data from bettrans
@@ -237,7 +238,7 @@ BEGIN
 		SELECT CustId, WinlostDate, Stake, Actual_stake, Winlost, TransDesc, RefNo, Apositiontaking, actualrate, currency, Bettype, PlayerComm, Comm
 		FROM dbo.bettrans WITH(NOLOCK)
 		WHERE custid = @CustDummyId--custid IN (SELECT val FROM dbo.strSplit(@CustDummyIds, ','))
-			AND bettype IN (SELECT val FROM dbo.strSplit(@BettypeIds, ','))
+			AND bettype IN (SELECT value FROM STRING_SPLIT(@BettypeIds, ','))
 			AND winlostdate BETWEEN @MoveBetsDay + 1 AND @WinlostDate
 			
 		--exclude ticket sum of current month
