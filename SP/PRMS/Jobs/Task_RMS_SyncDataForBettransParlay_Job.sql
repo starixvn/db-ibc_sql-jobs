@@ -25,6 +25,7 @@ AS
 		- 20210319@Danny: Incorporate Cricket AIO into PRMS [RedmineID: #151319]
 		- 20210604@Danny: Add New League Group for Saba Sports [RedmineID: #156453]
 		- 20211001@Danny: Change dataType to support IPv6 [RedmineID: #162348]
+		- 20211001@Danny: Force index to avoid scan  [RedmineID: #162348]
 */
 
 BEGIN
@@ -284,7 +285,7 @@ BEGIN
 			,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 			,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
 			,balance,SecAcceptFlag,epositiontaking,1,hdp2,odds,1
-		FROM bodb02.dbo.bettrans WITH (NOLOCK)
+		FROM bodb02.dbo.bettrans WITH (NOLOCK, INDEX = IX_tstamp_transid)
 		WHERE tstamp BETWEEN @min_tstamp AND @max_tstamp
 			AND bettype IN (29, 38, 376)
 
