@@ -13,7 +13,8 @@ AS
 	Revisions:
 		- .....
 		- 20190312@Patrick: Fix issue always scan temp table #custid [RedmineID: #110106]
-		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
+		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]				
+		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
 
 */
 CREATE TABLE #recommend (KeyID int PRIMARY KEY IDENTITY(1,1), recommend int, ticketCount int)
@@ -128,7 +129,7 @@ BEGIN
 
 		--BEGIN TRANSACTION
 		DELETE FROM dbo.balanceTable_tmp
-		WHERE recommend IN (select val from dbo.strSplit(@custid_list, ','))
+		WHERE recommend IN (select value from STRING_SPLIT(@custid_list, ','))
 
 		EXEC dbo.ExecRep_07 @custid_list, 0, 22, @winlostdate
 		--COMMIT TRANSACTION
@@ -200,7 +201,7 @@ BEGIN
 
 		--BEGIN TRANSACTION
 		DELETE FROM dbo.balanceTable_tmp
-		WHERE custid IN (select val from dbo.strSplit(@custid_list, ','))
+		WHERE custid IN (select value from STRING_SPLIT(@custid_list, ','))
 
 		EXEC dbo.ExecRep_07 @custid_list, @recommend, 11, @winlostdate
 		--COMMIT TRANSACTION

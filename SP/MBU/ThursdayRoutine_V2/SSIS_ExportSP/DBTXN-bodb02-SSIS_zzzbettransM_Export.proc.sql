@@ -10,6 +10,7 @@ AS
 	
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -30,9 +31,9 @@ AS
 	FROM	dbo.zzzbettransM AS t1 WITH (NOLOCK)
 		INNER JOIN dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
 		CROSS APPLY (
-					SELECT	val AS RequestId
-					FROM	dbo.f_SplitString(@RequestIds, ',')
-					WHERE val = v.RequestId
+					SELECT	value AS RequestId
+					FROM	STRING_SPLIT(@RequestIds, ',')
+					WHERE value = v.RequestId
 			) r
 	WHERE	t1.VoidingHistoryId IS NOT NULL
 		AND r.RequestId IS NOT NULL
@@ -43,6 +44,5 @@ AS
 	FROM	dbo.zzzbettransM AS t1 WITH (NOLOCK)
 	WHERE	EXISTS (SELECT 1 FROM dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @winlostdate)
 		AND t1.VoidingHistoryId IS NULL
-	OPTION (maxrecursion 0);
 END
 GO
