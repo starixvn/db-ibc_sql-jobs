@@ -25,6 +25,7 @@ AS
 		- 20220218@July: Vgaming - Exclue bettype Pai Gow Poker(3842) - [Redmine:#168578]
 		- 20220222@July: Saba.games - Exclue bettype Hi-Lo(1651) - [Redmine:#168804]
 		- 20220408@July: Saba.games - Exclue bettype Texas Hold'em Poker(1652) - [Redmine:#171263]
+		- 20220413@July: Vgaming - Exclue bettype Hi-Lo(3844) - [Redmine:#171349]
 
 	Param's Expanation:
 */
@@ -71,7 +72,7 @@ BEGIN
 		WHERE	 b.winlostdate = @yesterday
 				AND b.statusID = 0
 				AND b.matchid = @ProductId
-				AND b.bettype NOT IN (3820, 3836, 3837, 3842) --Exclude Blackjack, Casino Hold'em Poker, Texas Hold'em Poker, Pai Gow Poker
+				AND b.bettype NOT IN (3820, 3836, 3837, 3842, 3844) --Exclude Blackjack, Casino Hold'em Poker, Texas Hold'em Poker, Pai Gow Poker, Hi-Lo
 	END
 	ELSE
 	BEGIN

@@ -15,6 +15,7 @@ AS
 		- 20191025@Helen: Virtual Sport, Number Games, Happy 5 - Check status rules for Apply new rule to detect pending payout for today running tickets [Redmine:#122716]
 		- 20191025@Helen: check kickofftime instead of transdate for Virtual Sport, Number Games, Happy 5 [Redmine:#122716]
 		- 20220222@July:  Apply for Saba.games - bettype 1651 (Hi-Lo) - [Redmine:#168804]
+		- 20220413@July:  Apply for Vgaming - bettype 3844 (Hi-Lo) - [Redmine:#171349]
 
 	Param's Expanation:
 	Number Game: 161 ; bettype: 81 - 120
@@ -31,6 +32,7 @@ AS
 	185
 	
 	Saba.games (150,200); bettype 1651
+	Vgaming (171,173); bettype 3844
 */
 BEGIN
 	SET NOCOUNT ON
@@ -38,7 +40,7 @@ BEGIN
 	DECLARE @transId VARCHAR(MAX)
 	DECLARE @date_compare DATETIME 
 	DECLARE @tblMatch TABLE (matchid INT, sporttype SMALLINT)
-	DECLARE @IsVS BIT = 0, @isNG BIT = 0, @IsHappy5 BIT = 0, @IsSaba BIT = 0
+	DECLARE @IsVS BIT = 0, @isNG BIT = 0, @IsHappy5 BIT = 0, @IsSaba BIT = 0, @IsVgaming BIT = 0
 	
 	DECLARE @date datetime
 	
@@ -89,33 +91,44 @@ BEGIN
 						WHERE	b.bettype < 20000
 							AND b.statusID = 0
 							AND b.matchid IN (SELECT matchid FROM @tblMatch WHERE sporttype = 164) )								
+		
+			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+					,@ErrCode = 100
+					,@ErrMsg = 'All today tickets running > 30 minutes must be settled on' + CASE WHEN @IsVS = 1 THEN  ' Virtual Sports' ELSE '' END
+								+ CASE WHEN @isNG = 1 THEN  ' Number Games' ELSE '' END
+								+ CASE WHEN @IsHappy5 = 1 THEN  ' Happy 5' ELSE '' END
+					,@SampleData = @tablename + '.TransId in (' + @transId + ')'
+		
 		END
 
 	END
 	ELSE IF @tablename = 'bettransRNG'
 	BEGIN
-		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		DECLARE @tblProductTicket TABLE (productID SMALLINT, transid BIGINT)
+		INSERT INTO @tblProductTicket (productID, transid)
+		SELECT b.productID, b.transid
 		FROM	bodb02.dbo.bettransRNG b WITH (NOLOCK)
 		WHERE	b.statusID = 0
-				AND b.productID IN (150,200)
-				AND b.GameID = 1651
+				AND b.productID IN (150,200,171,173)
+				AND b.GameID IN (1651,3844)
 				AND b.transdate < @date_compare
+		
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM @tblProductTicket
 
-		SET @IsSaba = 1
+		IF @transId <> ''
+		BEGIN
+			SET @IsSaba = (SELECT TOP 1 1 FROM @tblProductTicket WHERE productID IN (150,200))
+
+			SET @IsVgaming = (SELECT TOP 1 1 FROM @tblProductTicket WHERE productID IN (171,173))
+
+			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+					,@ErrCode = 100
+					,@ErrMsg = 'All today tickets running > 30 minutes must be settled on' + CASE WHEN @IsSaba = 1 THEN  ' Saba.games' ELSE '' END
+								+ CASE WHEN @IsVgaming = 1 THEN  ' Vgaming' ELSE '' END
+					,@SampleData = @tablename + '.TransId in (' + @transId + ')'
+		END
 	END
-
-	IF @transId <> ''
-	BEGIN
-		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-				,@ErrCode = 100
-				,@ErrMsg = 'All today tickets running > 30 minutes must be settled on' + CASE WHEN @IsVS = 1 THEN  ' Virtual Sports' ELSE '' END
-							+ CASE WHEN @isNG = 1 THEN  ' Number Games' ELSE '' END
-							+ CASE WHEN @IsHappy5 = 1 THEN  ' Happy 5' ELSE '' END
-							+ CASE WHEN @IsSaba = 1 THEN  ' Saba.games' ELSE '' END
-
-				,@SampleData = @tablename + '.TransId in (' + @transId + ')'
-	END
-
 
 END
 GO
