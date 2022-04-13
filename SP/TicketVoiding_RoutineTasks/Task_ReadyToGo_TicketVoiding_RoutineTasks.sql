@@ -14,6 +14,7 @@ AS
 
 	Revisions:
 		- 20190906@Lukas: Initialize SP [RedmineID: #115377]
+		- 20220413@Sol: add order by winlostdate - [RedmineID: #171429]
 */
 BEGIN
 	DECLARE @inputList TABLE (custid INT, winlostdate DATETIME, isDone BIT)
@@ -65,7 +66,8 @@ BEGIN
 											FOR XML PATH ('')),1,1,'')
 			FROM @inputList t 
 			WHERE isDone = 0
-			GROUP BY winlostdate 
+			GROUP BY winlostdate
+			ORDER BY t.winlostdate
 
 			EXECUTE Task_Execute_TicketVoiding_RoutineTasks @stepNo = @stepNo, @winlostdate = @winlostdate, @custIDs = @custIDs, @errmsg = @errmsg OUTPUT
 
