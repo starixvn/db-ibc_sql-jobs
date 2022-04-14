@@ -14,6 +14,7 @@ AS
 
 	Revisions:
 		- 20220325@Percy: Initialize SP [RedmineID: #170390]
+		- 20220412@Percy: Import SUM data [RedmineID: #171245]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -37,6 +38,8 @@ BEGIN
 			,@LogDesc	VARCHAR(2000) = NULL
 			,@numOftry	TINYINT
 
+	DECLARE @WinlostDate TABLE (WinlostDate DATE PRIMARY KEY)
+	
 	CREATE TABLE #tmpCustVerificationReward
 	(
 		CustId				INT
@@ -188,6 +191,20 @@ BEGIN
 					WHEN NOT MATCHED BY SOURCE THEN DELETE;
 				END
 
+				INSERT INTO @WinlostDate (WinlostDate)
+				SELECT b.WinlostDate
+				FROM (
+					SELECT DISTINCT CONVERT(DATE, c.RewardTime) AS WinlostDate
+					FROM #tmpCustVerificationReward t
+						CROSS APPLY (
+							SELECT t.EmailRewardTime AS RewardTime WHERE t.EmailRewardTime IS NOT NULL
+							UNION ALL SELECT t.PhoneRewardTime WHERE t.PhoneRewardTime IS NOT NULL
+						) c
+					WHERE t.DataType IN (0, 1)
+				) b
+					LEFT JOIN @WinlostDate w ON b.WinlostDate = w.WinlostDate
+				WHERE w.WinlostDate IS NULL
+
 				-- if parse xml and insert/update data successfully --> break out of while
 				BREAK
 			END TRY
@@ -228,6 +245,10 @@ BEGIN
 		IF @ErrCode <> 0
 			RETURN
 	END
+
+	-- For SUM data
+	INSERT INTO dbo.BonusImportStatus (DataSource, WinlostDate)
+	SELECT 'CustVerificationReward', WinlostDate FROM @WinlostDate
 
 	-- Remove old data
 	DELETE dbo.API_Queue WITH (ROWLOCK, UPDLOCK)
