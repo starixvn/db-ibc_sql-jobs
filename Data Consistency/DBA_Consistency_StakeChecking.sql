@@ -27,6 +27,7 @@ AS
 		- 20210914@July: Saba.club - Exclude new bettype 1644 - [Redmine: #160869]
 		- 20210924@July: Vgaming - Exclue bettype The Legend of Heroes - [Redmine:#162127]
 		- 20220221@July: Spadegaming - Exclue bettype 4599 (contribution bettype) - [Redmine:#168750]
+		- 20220418@July: Saba.games - Exclude new bettype 1653 (Nightclub Lady) - [Redmine: #171560]
 
 	Param's Expanation:
 */
@@ -80,7 +81,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (1640, 1698, 1699, 1644) --exclude bettype Four Guardians, Jackpot & The Legend of Heroes
+					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653) --exclude bettype Four Guardians, Jackpot & The Legend of Heroes, Nightclub Lady
 		END
 		ELSE IF @ProductId = 171 -- Vgaming
 		BEGIN
