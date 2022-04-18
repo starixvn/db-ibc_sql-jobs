@@ -1,0 +1,22 @@
+﻿<?xml version="1.0"?>
+<DTS:ConnectionManager xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:ObjectName="DBSSIS.SSBDB.sqllink"
+  DTS:DTSID="{F237F3BC-5862-4545-AD62-D4DD0CF8FD14}"
+  DTS:CreationName="OLEDB">
+  <DTS:PropertyExpression
+    DTS:Name="InitialCatalog">@[$Project::HostDB]</DTS:PropertyExpression>
+  <DTS:PropertyExpression
+    DTS:Name="Password">("11nks3rv3r")</DTS:PropertyExpression>
+  <DTS:PropertyExpression
+    DTS:Name="ServerName">@[$Project::HostServer]</DTS:PropertyExpression>
+  <DTS:PropertyExpression
+    DTS:Name="UserName">@[$Project::UserID]</DTS:PropertyExpression>
+  <DTS:ObjectData>
+    <DTS:ConnectionManager
+      DTS:ConnectionString="Data Source=.\MSSQL2019;User ID=sqllink;Initial Catalog=SSISDB;Provider=SQLNCLI11.1;Auto Translate=False;">
+      <DTS:Password
+        DTS:Name="Password"
+        Sensitive="1">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAylk4R3x4BU+AT3ZCZAtmmQAAAAACAAAAAAADZgAAwAAAABAAAAClP+hVleIVtqb5b4P4WMOMAAAAAASAAACgAAAAEAAAAAyaM5m6u0tWZ0Bx9wSf4414AAAANTKfpItDgFiQKd5BgoJIbMNNLKbi3UGxDLR/vNmLEkrj8CbwIs7R9uX6CuEdtLIGo6iaQeSsbs99VTIYmA4bFcSHMaGUl4LwuGxvptIVYA93gAzStaEmwgAPZe4G09XdIowgiWrgVO/MGT2u9b94EfN6Vvs4l9Q8FAAAACj5xVnynF4/Ftag41bqcAXOPmpY</DTS:Password>
+    </DTS:ConnectionManager>
+  </DTS:ObjectData>
+</DTS:ConnectionManager>

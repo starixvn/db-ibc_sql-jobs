@@ -1,0 +1,481 @@
+﻿<?xml version="1.0"?>
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:refId="Package"
+  DTS:CreationDate="4/7/2022 1:33:15 PM"
+  DTS:CreationName="Microsoft.Package"
+  DTS:CreatorComputerName="NB016-BOBBY"
+  DTS:CreatorName="SPVN\bobby.nguyen"
+  DTS:DTSID="{8D83A900-6FA9-4ACE-9333-99E821A37563}"
+  DTS:ExecutableType="Microsoft.Package"
+  DTS:LastModifiedProductVersion="15.0.2000.93"
+  DTS:LocaleID="1033"
+  DTS:ObjectName="ETL_Process_MainDR"
+  DTS:PackageType="5"
+  DTS:VersionBuild="18"
+  DTS:VersionGUID="{1EDD81C9-9E87-4F6F-8C88-6141C88E69DA}">
+  <DTS:Property
+    DTS:Name="PackageFormatVersion">8</DTS:Property>
+  <DTS:Variables>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{36BFCD1D-70B2-4E62-BB9D-B2C5E6977FDB}"
+      DTS:IncludeInDebugDump="6789"
+      DTS:Namespace="User"
+      DTS:ObjectName="hasDR">
+      <DTS:VariableValue
+        DTS:DataType="11">0</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{7665A09E-D240-4883-911C-CE0157020010}"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="runModeBet14">
+      <DTS:VariableValue
+        DTS:DataType="8">Bet14</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{7FC81B91-03E5-48D9-922C-B7FAE6DA821A}"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="runModeNormal">
+      <DTS:VariableValue
+        DTS:DataType="8">Normal</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{D93BC6B3-022A-4933-BA61-FC6C71E75AA9}"
+      DTS:IncludeInDebugDump="6789"
+      DTS:Namespace="User"
+      DTS:ObjectName="sessionID">
+      <DTS:VariableValue
+        DTS:DataType="3">0</DTS:VariableValue>
+    </DTS:Variable>
+  </DTS:Variables>
+  <DTS:Executables>
+    <DTS:Executable
+      DTS:refId="Package\Check DR Environment"
+      DTS:CreationName="Microsoft.ExpressionTask"
+      DTS:Description="Expression Task"
+      DTS:DTSID="{CEC1C6BA-E3DE-4795-AC07-2C1666C65AFD}"
+      DTS:ExecutableType="Microsoft.ExpressionTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Check DR Environment"
+      DTS:TaskContact="Expression Task;Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="0">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <ExpressionTask
+          Expression="@[User::hasDR]=(@hasDR==True &amp;&amp; @[User::sessionID]&gt;0)" />
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\Check DR Setting"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{48F98B24-F0DB-448B-A754-D820795B3CCE}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Check DR Setting"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="0">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{F237F3BC-5862-4545-AD62-D4DD0CF8FD14}"
+          SQLTask:SqlStatementSource="EXEC [dbo].[SSIS_DR_Package_Setting_Init]&#xA;@environment=?&#xA;,@packageName=?&#xA;,@creator=?;"
+          SQLTask:ResultType="ResultSetType_SingleRow" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
+          <SQLTask:ResultBinding
+            SQLTask:ResultName="0"
+            SQLTask:DtsVariableName="User::hasDR" />
+          <SQLTask:ResultBinding
+            SQLTask:ResultName="1"
+            SQLTask:DtsVariableName="User::sessionID" />
+          <SQLTask:ParameterBinding
+            SQLTask:ParameterName="0"
+            SQLTask:DtsVariableName="$Project::Environment"
+            SQLTask:ParameterDirection="Input"
+            SQLTask:DataType="129"
+            SQLTask:ParameterSize="-1" />
+          <SQLTask:ParameterBinding
+            SQLTask:ParameterName="1"
+            SQLTask:DtsVariableName="System::PackageName"
+            SQLTask:ParameterDirection="Input"
+            SQLTask:DataType="129"
+            SQLTask:ParameterSize="-1" />
+          <SQLTask:ParameterBinding
+            SQLTask:ParameterName="2"
+            SQLTask:DtsVariableName="System::UserName"
+            SQLTask:ParameterDirection="Input"
+            SQLTask:DataType="129"
+            SQLTask:ParameterSize="-1" />
+        </SQLTask:SqlTaskData>
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\Download Files"
+      DTS:CreationName="Microsoft.ExecutePackageTask"
+      DTS:Description="Execute Package Task"
+      DTS:Disabled="True"
+      DTS:DTSID="{9DE82A36-418B-44D4-9DF3-0F1A9891C765}"
+      DTS:ExecutableType="Microsoft.ExecutePackageTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Download Files"
+      DTS:TaskContact="Microsoft Corporation; Microsoft SQL Server; Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <ExecutePackageTask>
+          <UseProjectReference>True</UseProjectReference>
+          <PackageName>ETL_Process_File_Download.dtsx</PackageName>
+          <ParameterAssignment>
+            <ParameterName>SessionID</ParameterName>
+            <BindedVariableOrParameterName>User::sessionID</BindedVariableOrParameterName>
+          </ParameterAssignment>
+        </ExecutePackageTask>
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\Mapping Bet14 Files"
+      DTS:CreationName="Microsoft.ExecutePackageTask"
+      DTS:Description="Execute Package Task"
+      DTS:DTSID="{488A5AE2-38CE-4602-BBAD-D97CFACFF0E0}"
+      DTS:ExecutableType="Microsoft.ExecutePackageTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Mapping Bet14 Files"
+      DTS:TaskContact="Microsoft Corporation; Microsoft SQL Server; Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <ExecutePackageTask>
+          <UseProjectReference>True</UseProjectReference>
+          <PackageName>ETL_Dynamic_Mapping_File.dtsx</PackageName>
+          <ParameterAssignment>
+            <ParameterName>SessionID</ParameterName>
+            <BindedVariableOrParameterName>User::sessionID</BindedVariableOrParameterName>
+          </ParameterAssignment>
+          <ParameterAssignment>
+            <ParameterName>GrantMode</ParameterName>
+            <BindedVariableOrParameterName>User::runModeBet14</BindedVariableOrParameterName>
+          </ParameterAssignment>
+        </ExecutePackageTask>
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\Mapping Normal Files"
+      DTS:CreationName="Microsoft.ExecutePackageTask"
+      DTS:Description="Execute Package Task"
+      DTS:DTSID="{BB704A5B-7FFD-49C1-990E-C0557A33A9B5}"
+      DTS:ExecutableType="Microsoft.ExecutePackageTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Mapping Normal Files"
+      DTS:TaskContact="Microsoft Corporation; Microsoft SQL Server; Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <ExecutePackageTask>
+          <UseProjectReference>True</UseProjectReference>
+          <PackageName>ETL_Dynamic_Mapping_File.dtsx</PackageName>
+          <ParameterAssignment>
+            <ParameterName>SessionID</ParameterName>
+            <BindedVariableOrParameterName>User::sessionID</BindedVariableOrParameterName>
+          </ParameterAssignment>
+          <ParameterAssignment>
+            <ParameterName>GrantMode</ParameterName>
+            <BindedVariableOrParameterName>User::runModeNormal</BindedVariableOrParameterName>
+          </ParameterAssignment>
+        </ExecutePackageTask>
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\Report Status"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{67F70AB9-2C9D-423F-977C-185F98CA535E}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Report Status"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="0">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{F237F3BC-5862-4545-AD62-D4DD0CF8FD14}"
+          SQLTask:SqlStatementSource="EXEC [dbo].[SSIS_DR_Package_Report_Status]&#xA;@SessionID=?;" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
+          <SQLTask:ParameterBinding
+            SQLTask:ParameterName="0"
+            SQLTask:DtsVariableName="User::sessionID"
+            SQLTask:ParameterDirection="Input"
+            SQLTask:DataType="3"
+            SQLTask:ParameterSize="-1" />
+        </SQLTask:SqlTaskData>
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
+  <DTS:PrecedenceConstraints>
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint]"
+      DTS:CreationName=""
+      DTS:DTSID="{C6AC0CF8-0537-4041-9AD5-1CB1EAA0F98D}"
+      DTS:From="Package\Check DR Setting"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint"
+      DTS:To="Package\Check DR Environment" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 1]"
+      DTS:CreationName=""
+      DTS:DTSID="{266232D5-5865-4753-B042-7E68F37E945D}"
+      DTS:From="Package\Check DR Environment"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint 1"
+      DTS:To="Package\Download Files" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 2]"
+      DTS:CreationName=""
+      DTS:DTSID="{4FD17D4F-F1A5-4543-810E-4EB6F8126528}"
+      DTS:From="Package\Download Files"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint 2"
+      DTS:To="Package\Mapping Bet14 Files" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 3]"
+      DTS:CreationName=""
+      DTS:DTSID="{C1E35FDF-072D-4951-A903-503EA02B0A1D}"
+      DTS:From="Package\Mapping Bet14 Files"
+      DTS:ObjectName="Constraint 3"
+      DTS:To="Package\Report Status" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 4]"
+      DTS:CreationName=""
+      DTS:DTSID="{23D97296-32A0-4938-A63F-A108CCA1AE58}"
+      DTS:From="Package\Download Files"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint 4"
+      DTS:To="Package\Mapping Normal Files" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 5]"
+      DTS:CreationName=""
+      DTS:DTSID="{427D8965-2A6A-4279-9DF9-73841BD25B28}"
+      DTS:From="Package\Mapping Normal Files"
+      DTS:ObjectName="Constraint 5"
+      DTS:To="Package\Report Status" />
+  </DTS:PrecedenceConstraints>
+  <DTS:DesignTimeProperties><![CDATA[<?xml version="1.0"?>
+<!--This CDATA section contains the layout information of the package. The section includes information such as (x,y) coordinates, width, and height.-->
+<!--If you manually edit this section and make a mistake, you can delete it. -->
+<!--The package will still be able to load normally but the previous layout information will be lost and the designer will automatically re-arrange the elements on the design surface.-->
+<Objects
+  Version="8">
+  <!--Each node below will contain properties that do not affect runtime behavior.-->
+  <Package
+    design-time-name="Package">
+    <LayoutInfo>
+      <GraphLayout
+        Capacity="16" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml">
+        <NodeLayout
+          Size="190.666666666667,42.6666666666667"
+          Id="Package\Check DR Environment"
+          TopLeft="242.857139238289,82.1052647033227" />
+        <NodeLayout
+          Size="164,42.6666666666667"
+          Id="Package\Check DR Setting"
+          TopLeft="263.869043687092,6.19047630699656" />
+        <NodeLayout
+          Size="152,42.6666666666667"
+          Id="Package\Download Files"
+          TopLeft="263.492059565726,153.132834962546" />
+        <NodeLayout
+          Size="177.333333333334,42.6666666666667"
+          Id="Package\Mapping Bet14 Files"
+          TopLeft="131.547617087407,239.799503260498" />
+        <NodeLayout
+          Size="184,42.6666666666667"
+          Id="Package\Mapping Normal Files"
+          TopLeft="347.023804352752,243.700922690684" />
+        <NodeLayout
+          Size="168,42.6666666666667"
+          Id="Package\Report Status"
+          TopLeft="247.123012190595,360.350883975694" />
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint]"
+          TopLeft="342.029758129358,48.8571429736632">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="0,33.2481217296595"
+              Start="0,0"
+              End="0,25.7481217296595">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,25.7481217296595" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 1]"
+          TopLeft="338.841266068674,124.771931369989">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="0,28.3609035925566"
+              Start="0,0"
+              End="0,20.8609035925566">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,20.8609035925566" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 2]"
+          TopLeft="315.492059565726,195.799501629213">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="-95.2777758116525,44.0000016312853"
+              Start="0,0"
+              End="-95.2777758116525,36.5000016312853">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,13.8750006627097" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,13.8750006627097"
+                    Point2="0,17.8750006627097"
+                    Point3="-4,17.8750006627097" />
+                  <mssgle:LineSegment
+                    End="-91.2777758116525,17.8750006627097" />
+                  <mssgle:CubicBezierSegment
+                    Point1="-91.2777758116525,17.8750006627097"
+                    Point2="-95.2777758116525,17.8750006627097"
+                    Point3="-95.2777758116525,21.8750006627097" />
+                  <mssgle:LineSegment
+                    End="-95.2777758116525,36.5000016312853" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 3]"
+          TopLeft="220.214283754074,282.466169927165">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="84.2420617698551,77.8847140485295"
+              Start="0,0"
+              End="84.2420617698551,70.3847140485295">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,42.2899715571449" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,42.2899715571449"
+                    Point2="0,46.2899715571449"
+                    Point3="4,46.2899715571449" />
+                  <mssgle:LineSegment
+                    End="80.2420617698551,46.2899715571449" />
+                  <mssgle:CubicBezierSegment
+                    Point1="80.2420617698551,46.2899715571449"
+                    Point2="84.2420617698551,46.2899715571449"
+                    Point3="84.2420617698551,50.2899715571449" />
+                  <mssgle:LineSegment
+                    End="84.2420617698551,70.3847140485295" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 4]"
+          TopLeft="363.492059565726,195.799501629213">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="75.5317447870258,47.9014210614712"
+              Start="0,0"
+              End="75.5317447870258,40.4014210614712">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,15.4599523062227" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,15.4599523062227"
+                    Point2="0,19.4599523062227"
+                    Point3="4,19.4599523062227" />
+                  <mssgle:LineSegment
+                    End="71.5317447870258,19.4599523062227" />
+                  <mssgle:CubicBezierSegment
+                    Point1="71.5317447870258,19.4599523062227"
+                    Point2="75.5317447870258,19.4599523062227"
+                    Point3="75.5317447870258,23.4599523062227" />
+                  <mssgle:LineSegment
+                    End="75.5317447870258,40.4014210614712" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 5]"
+          TopLeft="439.023804352752,286.367589357351">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="-81.2341254954899,73.9832946183436"
+              Start="0,0"
+              End="-81.2341254954899,66.4832946183436">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,39.9712034052419" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,39.9712034052419"
+                    Point2="0,43.9712034052419"
+                    Point3="-4,43.9712034052419" />
+                  <mssgle:LineSegment
+                    End="-77.2341254954899,43.9712034052419" />
+                  <mssgle:CubicBezierSegment
+                    Point1="-77.2341254954899,43.9712034052419"
+                    Point2="-81.2341254954899,43.9712034052419"
+                    Point3="-81.2341254954899,47.9712034052419" />
+                  <mssgle:LineSegment
+                    End="-81.2341254954899,66.4832946183436" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+      </GraphLayout>
+    </LayoutInfo>
+  </Package>
+</Objects>]]></DTS:DesignTimeProperties>
+</DTS:Executable>

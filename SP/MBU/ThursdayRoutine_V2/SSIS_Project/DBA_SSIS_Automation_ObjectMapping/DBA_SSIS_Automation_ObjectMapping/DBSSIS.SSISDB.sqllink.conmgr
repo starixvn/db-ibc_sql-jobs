@@ -6,7 +6,7 @@
   <DTS:PropertyExpression
     DTS:Name="InitialCatalog">@[$Project::HostDB]</DTS:PropertyExpression>
   <DTS:PropertyExpression
-    DTS:Name="Password">("xxxxxxxxxx")</DTS:PropertyExpression>
+    DTS:Name="Password">("11nks3rv3r")</DTS:PropertyExpression>
   <DTS:PropertyExpression
     DTS:Name="ServerName">@[$Project::HostServer]</DTS:PropertyExpression>
   <DTS:PropertyExpression

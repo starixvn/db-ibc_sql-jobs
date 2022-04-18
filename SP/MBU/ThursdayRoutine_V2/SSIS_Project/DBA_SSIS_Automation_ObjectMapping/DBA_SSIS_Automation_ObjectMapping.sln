@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30002.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{159641D6-6404-4A2A-AE62-294DE0FE8301}") = "DBA_SSIS_Automation_ObjectMapping", "DBA_SSIS_Automation_ObjectMapping\DBA_SSIS_Automation_ObjectMapping.dtproj", "{258DF7BC-E427-41A9-99DB-92BB22620A1F}"
 EndProject
-Project("{159641D6-6404-4A2A-AE62-294DE0FE8301}") = "MNL_SSIS_AutomationMapping_DR", "MNL_SSIS_AutomationMapping_DR\MNL_SSIS_AutomationMapping_DR.dtproj", "{26D36311-B1B2-4A94-AFDA-9F3FBD68B4EC}"
+Project("{159641D6-6404-4A2A-AE62-294DE0FE8301}") = "DBA_SSIS_Automation_FileMapping", "DBA_SSIS_Automation_FileMapping\DBA_SSIS_Automation_FileMapping.dtproj", "{26D36311-B1B2-4A94-AFDA-9F3FBD68B4EC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
