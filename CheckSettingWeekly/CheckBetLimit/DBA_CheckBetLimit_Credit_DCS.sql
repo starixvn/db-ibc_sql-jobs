@@ -11,6 +11,7 @@ DB: DBCHECK.CheckResultDB
 Revisions:
 	-20180802@Johnson: update ruleid [redmine: #73556]
 	-20201118@Eden: Insert New SettingType = 20, new rules [Redmine: #131370]
+	-20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
 Param's Explanation: 
 
 	CustBetSetting3rd_Member, CustBetSetting3rd_Agent
@@ -104,9 +105,11 @@ BEGIN
 	SELECT CPS.CustID,CPS.SportType,CPS.BetType,cps.MinBet,CPS.MaxBet,cps.MaxPerMatch
 	FROM CheckCustDB.dbo.CustBetSetting3rd_Agent CPS (NOLOCK)
 		INNER JOIN CheckCustDB.dbo.custInfo CI (NOLOCK) ON CPS.CustID = CI.custid
+		INNER JOIN CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustSuper CS WITH (NOLOCK)  ON CI.srecommend = CS.custid AND CS.IsInternal = 0
 		INNER JOIN @SportBettypeFilter T ON T.SportType = CPS.SportType AND T.BetType = CPS.Bettype
 	WHERE CI.roleid = 4 
+		AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)	
 		AND ci.srecommend = @srecommend
 		AND CI.Enabled = 1
 		AND CI.Currency NOT IN (20,72,27,28)
@@ -116,9 +119,11 @@ BEGIN
 	SELECT CPS.CustID,ci.srecommend,cps.SportType,cps.BetType,cps.MinBet,CPS.MaxBet,cps.MaxPerMatch
 	FROM CheckCustDB.dbo.CustBetSetting3rd_Agent CPS (NOLOCK)
 		INNER JOIN CheckCustDB.dbo.custInfo CI (NOLOCK) ON CPS.CustID = CI.custid
+		INNER JOIN CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustSuper CS WITH (NOLOCK)  ON CI.srecommend = CS.custid AND CS.IsInternal = 0 
 		INNER JOIN @SportBettypeFilter T ON T.SportType = CPS.SportType AND T.BetType = CPS.Bettype
 	WHERE CI.roleid = 3 
+		AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)	
 		AND ci.srecommend = @srecommend
 		AND CI.Enabled = 1
 		AND CI.Currency NOT IN (20,72,27,28)
@@ -128,9 +133,11 @@ BEGIN
 	SELECT CPS.CustID,ci.mrecommend,cps.SportType,cps.BetType,cps.MinBet,CPS.MaxBet,cps.MaxPerMatch
 	FROM CheckCustDB.dbo.CustBetSetting3rd_Agent CPS (NOLOCK)
 		INNER JOIN CheckCustDB.dbo.custInfo CI (NOLOCK) ON CPS.CustID = CI.custid
+		INNER JOIN CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustSuper CS WITH (NOLOCK)  ON CI.srecommend = CS.custid AND CS.IsInternal = 0 
 		INNER JOIN @SportBettypeFilter T ON T.SportType = CPS.SportType AND T.BetType = CPS.Bettype
 	WHERE CI.roleid = 2 
+		AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)	
 		AND ci.srecommend = @srecommend
 		AND CI.Enabled = 1
 		AND CI.Currency NOT IN (20,72,27,28)
@@ -146,10 +153,12 @@ BEGIN
 		INSERT INTO CheckBetLimitResult_DCS (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
 		SELECT 313,T3.SportType,T3.BetType,CI.custID,CI.custID,NULL,NULL,@CreatedDate,0
 		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
+			INNER JOIN CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS JOIN @SportBettypeFilter AS T3
 		WHERE CI.custid NOT IN (SELECT custID FROM #DCS_Super T5 WHERE T5.SportType = T3.SportType AND T5.BetType = T3.BetType)
 			AND NOT EXISTS (SELECT 1 FROM CheckCustDB.dbo.CustBetSetting3rd_Agent T4 WITH (NOLOCK) WHERE T4.custid = CI.CustID AND T4.SportType = T3.SportType AND T4.BetType = T3.BetType)
 			AND CI.roleid = 4
+			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)	
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)
@@ -158,10 +167,12 @@ BEGIN
 		
 		SELECT 313,T3.SportType,T3.BetType,CI.custID,CI.custID,NULL,NULL,@CreatedDate,0
 		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
+			INNER JOIN CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS JOIN @SportBettypeFilter AS T3
 		WHERE CI.custid NOT IN (SELECT custID FROM #DCS_Master T5 WHERE T5.SportType = T3.SportType AND T5.BetType = T3.BetType)
 			AND NOT EXISTS (SELECT 1 FROM CheckCustDB.dbo.CustBetSetting3rd_Agent T4 WITH (NOLOCK) WHERE T4.custid = CI.CustID AND T4.SportType = T3.SportType AND T4.BetType = T3.BetType)		
 			AND CI.roleid = 3
+			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)
@@ -170,10 +181,12 @@ BEGIN
 		
 		SELECT 313,T3.SportType,T3.BetType,CI.custID,CI.custID,NULL,NULL,@CreatedDate,0
 		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
+			INNER JOIN CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS JOIN @SportBettypeFilter AS T3
 		WHERE CI.custid NOT IN (SELECT custID FROM #DCS_Agent T5 WHERE T5.SportType = T3.SportType AND T5.BetType = T3.BetType)
 			AND NOT EXISTS (SELECT 1 FROM CheckCustDB.dbo.CustBetSetting3rd_Agent T4 WITH (NOLOCK) WHERE T4.custid = CI.CustID AND T4.SportType = T3.SportType AND T4.BetType = T3.BetType)		
 			AND CI.roleid = 2
+			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)
@@ -182,9 +195,11 @@ BEGIN
 		
 		SELECT 313,T3.SportType,T3.BetType,CI.custID,CI.custID,NULL,NULL,@CreatedDate,0
 		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
+			INNER JOIN CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS JOIN @SportBettypeFilter AS T3
 		WHERE NOT EXISTS (SELECT 1 FROM CheckCustDB.dbo.CustBetSetting3rd_Member T4 WITH (NOLOCK) WHERE T4.custid = CI.CustID AND T4.SportType = T3.SportType AND T4.BetType = T3.BetType)		
 			AND CI.roleid = 1
+			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)

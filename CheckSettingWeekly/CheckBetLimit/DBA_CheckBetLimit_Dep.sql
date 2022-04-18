@@ -19,6 +19,7 @@ AS
 		- 20200206@Johnson: exclude closed customers[redmine:#127831]
 		- 20200409@Tiara: Change data source from Customer to Custinfo [redmine #132051]
 		- 20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
+		- 20220407@Winfred: LG Virtual Sports - Add rule for new product for setting type 11 [redmine:#170454]
 		
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
@@ -156,7 +157,7 @@ BEGIN
 		AND ci.custid NOT IN(SELECT custid FROM #Agent)
 		AND cs.sporttype NOT BETWEEN 151 AND 154 
 		AND cs.sporttype <>44
-		
+
 	IF @ruleid IN (0,317)	
 	BEGIN
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
@@ -1218,7 +1219,27 @@ BEGIN
 	WHERE ci.srecommend=@srecommend 
 		AND ci.roleID = 2
 		AND ci.custid NOT IN(SELECT custid FROM #Agent)
+	
+	
+	--product has offered Bet limit
+	DECLARE @currency INT
+	
+	SELECT @currency = currency	FROM CheckCustDB.dbo.customer WITH(NOLOCK) WHERE custid = @srecommend
+
+	CREATE TABLE #OfferedProductList(ProductID TINYINT, ProductSettingID TINYINT, SportType SMALLINT ,BetType SMALLINT,SettingType TINYINT)
+	INSERT INTO #OfferedProductList (ProductID, ProductSettingID, SportType, BetType, SettingType)
+	SELECT DISTINCT ProductID, ps.ProductSettingID, SportType, BetType, SettingType
+	FROM CheckCustDB.dbo.Dep_ProductSetting pd WITH (NOLOCK)
+		INNER JOIN CheckCustDB.dbo.Dep_ProductSettingDetail ps WITH(NOLOCK) ON pd.ProductSettingID = ps.ProductSettingID
+	WHERE pd.SettingType IN (2,10,11,12)  AND ps.SettingStatus = 0
 		
+	CREATE TABLE #GlobalSetting([SportType] [smallint] ,[BetType] [smallint], Maxbet [MONEY], Minbet [MONEY])
+	INSERT INTO #GlobalSetting(SportType,BetType,Maxbet,Minbet)
+	SELECT s.Sporttype,s.Bettype,ISNULL(s.MaxBet,0),ISNULL(s.MinBet,0)
+	FROM CheckCustDB.dbo.Dep_ProductBetSetting s WITH(NOLOCK) 
+		INNER JOIN #OfferedProductList p ON p.SportType = s.Sporttype AND p.Bettype = s.Bettype AND p.SettingType = 11
+	WHERE s.Currency = @currency 
+		AND (ISNULL(s.MaxBet,0) <> 0 OR ISNULL(s.MinBet,0) <> 0)
 	
 	IF @ruleid IN (0,317)
 	BEGIN
@@ -1424,18 +1445,18 @@ BEGIN
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 322,s.sporttypeID,s.bettypeID,s.CustID,NULL,MaxPerMatch,NULL,GETDATE(),1
 		FROM #Dep_CustSetting_Super s
-		WHERE s.MaxPerMatch<0 
+		WHERE s.MaxPerMatch<0 AND s.SporttypeID NOT IN (SELECT SportType FROM #OfferedProductList WHERE SettingType NOT IN (11) )
 					
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 322,s.sporttypeID,s.bettypeID,s.CustID,NULL,MaxPerMatch,NULL,GETDATE(),1
 		FROM #Dep_CustSetting_Master s
-		WHERE s.MaxPerMatch<0 
+		WHERE s.MaxPerMatch<0 AND s.SporttypeID NOT IN (SELECT SportType FROM #OfferedProductList WHERE SettingType NOT IN (11) )
 			AND custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 3)
 		
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 322,s.sporttypeID,s.bettypeID,s.CustID,NULL,MaxPerMatch,NULL,GETDATE(),1
 		FROM #Dep_CustSetting_Agent s
-		WHERE s.MaxPerMatch<0 
+		WHERE s.MaxPerMatch<0 AND s.SporttypeID NOT IN (SELECT SportType FROM #OfferedProductList WHERE SettingType NOT IN (11) )
 			AND custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 		
 		IF @count > 200000
@@ -1444,6 +1465,7 @@ BEGIN
 			SELECT 322,cs.sporttype,cs.bettype,cs.CustID,NULL,cs.MaxPerMatch,NULL,GETDATE(),1
 			FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
 				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid 				
+				INNER JOIN #OfferedProductList opl WITH(NOLOCK) ON cs.SportType = opl.SportType AND cs.BetType = opl.BetType AND opl.SettingType NOT IN (11)
 			WHERE ci.srecommend = @srecommend
 				AND ci.roleid = 1
 				AND ci.custid NOT IN(SELECT custid FROM #Trade)	
@@ -1457,6 +1479,7 @@ BEGIN
 			SELECT 322,cs.sporttype,cs.bettype,cs.CustID,NULL,cs.MaxPerMatch,NULL,GETDATE(),1
 			FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
 				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid 				
+				INNER JOIN #OfferedProductList opl WITH(NOLOCK) ON cs.SportType = opl.SportType AND cs.BetType = opl.BetType AND opl.SettingType NOT IN (11) 				
 			WHERE ci.srecommend = @srecommend
 				AND ci.roleid = 1
 				AND ci.custid NOT IN(SELECT custid FROM #Trade)	
@@ -1471,14 +1494,14 @@ BEGIN
 		SELECT 323,s.SporttypeID,s.BettypeID,s.custid,m.CustID,s.MaxPerMatch,m.MaxPerMatch,GETDATE(),1
 		FROM #Dep_CustSetting_Super s
 			INNER JOIN #Dep_CustSetting_Master m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID AND s.islive = m.islive
-		WHERE s.MaxPerMatch<m.MaxPerMatch
+		WHERE s.MaxPerMatch<m.MaxPerMatch AND s.SporttypeID NOT IN (SELECT SportType FROM #OfferedProductList WHERE SettingType NOT IN (11) )
 			AND m.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 3)
 		
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 323,s.SporttypeID,s.BettypeID,s.CustID,m.CustID,s.MaxPerMatch,m.MaxPerMatch,GETDATE(),1
 		FROM #Dep_CustSetting_Master s
 			INNER JOIN #Dep_CustSetting_Agent m ON  s.SporttypeID=m.SporttypeID AND s.BettypeID=m.BettypeID AND s.islive = m.islive AND s.CustID=m.mrecommend
-		WHERE s.MaxPerMatch<m.MaxPerMatch
+		WHERE s.MaxPerMatch<m.MaxPerMatch AND s.SporttypeID NOT IN (SELECT SportType FROM #OfferedProductList WHERE SettingType NOT IN (11) )
 			AND m.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 	END
 	
@@ -1533,18 +1556,18 @@ BEGIN
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 327,s.sporttypeID,s.bettypeID,s.CustID,NULL,Maxbet,maxpermatch,GETDATE(),1
 		FROM #Dep_CustSetting_Super s
-		WHERE maxbet>maxpermatch  
+		WHERE maxbet>maxpermatch  AND s.SporttypeID NOT IN (SELECT SportType FROM #OfferedProductList WHERE SettingType NOT IN (11) )
 		
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 327,s.sporttypeID,s.bettypeID,s.CustID,NULL,Maxbet,maxpermatch,GETDATE(),1
 		FROM #Dep_CustSetting_Master s
-		WHERE maxbet>maxpermatch 
+		WHERE maxbet>maxpermatch AND s.SporttypeID NOT IN (SELECT SportType FROM #OfferedProductList WHERE SettingType NOT IN (11) )
 			AND custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 3)
 		
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 327,s.sporttypeID,s.bettypeID,s.CustID,NULL,Maxbet,maxpermatch,GETDATE(),1
 		FROM #Dep_CustSetting_Agent s
-		WHERE maxbet>maxpermatch 
+		WHERE maxbet>maxpermatch AND s.SporttypeID NOT IN (SELECT SportType FROM #OfferedProductList WHERE SettingType NOT IN (11) )
 			AND custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 2)
 		
 		IF @count > 200000
@@ -1552,7 +1575,8 @@ BEGIN
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 			SELECT 327,cs.sporttype,cs.bettype,cs.CustID,NULL,Maxbet,cs.maxpermatch,GETDATE(),1
 			FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
-				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid 				
+				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid 
+				INNER JOIN #OfferedProductList opl WITH(NOLOCK) ON cs.SportType = opl.SportType AND cs.BetType = opl.BetType AND opl.SettingType NOT IN (11) 
 			WHERE ci.srecommend = @srecommend
 				AND ci.roleid = 1
 				AND ci.custid NOT IN(SELECT custid FROM #Trade)	
@@ -1565,13 +1589,114 @@ BEGIN
 			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 			SELECT 327,cs.sporttype,cs.bettype,cs.CustID,NULL,Maxbet,cs.maxpermatch,GETDATE(),1
 			FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
-				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid 				
+				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid 
+				INNER JOIN #OfferedProductList opl WITH(NOLOCK) ON cs.SportType = opl.SportType AND cs.BetType = opl.BetType AND opl.SettingType NOT IN (11) 
 			WHERE ci.srecommend = @srecommend
 				AND ci.roleid = 1
 				AND ci.custid NOT IN(SELECT custid FROM #Trade)	
 				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
 				AND cs.maxbet> cs.maxpermatch		
 		END		
+	END
+	-- Rule 329: Maxbet > Global Maxbet -- only settingtype = 11	
+	IF @RuleId IN (0,329)  
+	BEGIN
+		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+		SELECT 329,s.sporttypeID,s.bettypeID,s.CustID,NULL,s.Maxbet,maxpermatch,GETDATE(),1
+		FROM #Dep_CustSetting_Super s
+			INNER JOIN #GlobalSetting T2 ON s.sporttypeID = t2.SportType AND s.bettypeID = t2.BetType AND t2.Maxbet <> 0
+		WHERE s.maxbet > T2.Maxbet AND s.Maxbet >= 1
+		
+		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+		SELECT 329,s.sporttypeID,s.bettypeID,s.CustID,NULL,s.Maxbet,maxpermatch,GETDATE(),1
+		FROM #Dep_CustSetting_Master s
+			INNER JOIN #GlobalSetting T2 ON s.sporttypeID = t2.SportType AND s.bettypeID = t2.BetType AND t2.Maxbet <> 0
+		WHERE s.maxbet > T2.Maxbet AND s.Maxbet >= 1
+		
+		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+		SELECT 329,s.sporttypeID,s.bettypeID,s.CustID,NULL,s.Maxbet,maxpermatch,GETDATE(),1
+		FROM #Dep_CustSetting_Agent s
+			INNER JOIN #GlobalSetting T2 ON s.sporttypeID = t2.SportType AND s.bettypeID = t2.BetType AND t2.Maxbet <> 0
+		WHERE s.maxbet > T2.Maxbet AND s.Maxbet >= 1
+		
+		IF @count > 200000
+		BEGIN
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 329,cs.sporttype,cs.bettype,cs.CustID,NULL,cs.Maxbet,cs.maxpermatch,GETDATE(),1
+			FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
+				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid 
+				INNER JOIN #GlobalSetting T2 ON cs.sporttype = t2.SportType AND cs.bettype = t2.BetType AND t2.Maxbet <> 0
+			WHERE ci.srecommend = @srecommend
+				AND ci.roleid = 1
+				AND ci.custid NOT IN(SELECT custid FROM #Trade)	
+				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
+				AND cs.maxbet> T2.Maxbet AND cs.Maxbet >= 1
+			OPTION (OPTIMIZE FOR (@srecommend = 10580722))
+		END
+		ELSE
+		BEGIN
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 329,cs.sporttype,cs.bettype,cs.CustID,NULL,cs.Maxbet,cs.maxpermatch,GETDATE(),1
+			FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
+				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid
+				INNER JOIN #GlobalSetting T2 ON cs.sporttype = t2.SportType AND cs.bettype = t2.BetType AND t2.Maxbet <> 0
+			WHERE ci.srecommend = @srecommend
+				AND ci.roleid = 1
+				AND ci.custid NOT IN(SELECT custid FROM #Trade)	
+				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
+				AND cs.maxbet> T2.Maxbet AND cs.Maxbet >= 1		
+		END	
+
+	END
+	-- Minbet < Global Minbet -- only settingtype = 11	
+	IF @RuleId IN (0,330)  
+	BEGIN
+		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+		SELECT 330,s.sporttypeID,s.bettypeID,s.CustID,NULL,s.Maxbet,maxpermatch,GETDATE(),1
+		FROM #Dep_CustSetting_Super s
+			INNER JOIN #GlobalSetting T2 ON s.sporttypeID = t2.SportType AND s.bettypeID = t2.BetType AND t2.Minbet <> 0
+		WHERE s.minbet > T2.minbet AND s.Maxbet >= 1
+		
+		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+		SELECT 330,s.sporttypeID,s.bettypeID,s.CustID,NULL,s.Maxbet,maxpermatch,GETDATE(),1
+		FROM #Dep_CustSetting_Master s
+			INNER JOIN #GlobalSetting T2 ON s.sporttypeID = t2.SportType AND s.bettypeID = t2.BetType AND t2.Minbet <> 0
+		WHERE s.minbet > T2.minbet AND s.Maxbet >= 1
+		
+		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+		SELECT 330,s.sporttypeID,s.bettypeID,s.CustID,NULL,s.Maxbet,maxpermatch,GETDATE(),1
+		FROM #Dep_CustSetting_Agent s
+			INNER JOIN #GlobalSetting T2 ON s.sporttypeID = t2.SportType AND s.bettypeID = t2.BetType AND t2.Minbet <> 0
+		WHERE s.minbet > T2.minbet AND s.Maxbet >= 1
+		
+		IF @count > 200000
+		BEGIN
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 330,cs.sporttype,cs.bettype,cs.CustID,NULL,cs.Maxbet,cs.maxpermatch,GETDATE(),1
+			FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
+				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid 
+				INNER JOIN #GlobalSetting T2 ON cs.sporttype = t2.SportType AND cs.bettype = t2.BetType AND t2.Minbet <> 0
+			WHERE ci.srecommend = @srecommend
+				AND ci.roleid = 1
+				AND ci.custid NOT IN(SELECT custid FROM #Trade)	
+				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
+				AND cs.minbet> T2.minbet AND cs.Maxbet >= 1
+			OPTION (OPTIMIZE FOR (@srecommend = 10580722))
+		END
+		ELSE
+		BEGIN
+			INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+			SELECT 330,cs.sporttype,cs.bettype,cs.CustID,NULL,cs.Maxbet,cs.maxpermatch,GETDATE(),1
+			FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)			
+				INNER JOIN CheckCustDB.dbo.Dep_CustBetSetting_Member cs WITH(NOLOCK) ON cs.custid = ci.custid
+				INNER JOIN #GlobalSetting T2 ON cs.sporttype = t2.SportType AND cs.bettype = t2.BetType AND t2.Minbet <> 0
+			WHERE ci.srecommend = @srecommend
+				AND ci.roleid = 1
+				AND ci.custid NOT IN(SELECT custid FROM #Trade)	
+				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
+				AND cs.minbet> T2.minbet AND cs.Maxbet >= 1		
+		END	
+
 	END
 	
 	TRUNCATE TABLE #Dep_CustSetting_Super
