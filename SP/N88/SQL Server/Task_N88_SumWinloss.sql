@@ -12,13 +12,16 @@ AS
 		- 20210218@Percy: Initialize SP [RedmineID: #150398]
 		- 20210715@Percy: Add columns ProgressiveBet, ProgressiveWin [RedmineID: #158438]
 		- 20211102@Percy: Add column BonusId [RedmineID: #164141]
+		- 20220222@Percy: Add TpBetRecord_bk table [RedmineID: #167823]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @FDate DATETIME, @TDate DATETIME
-	SELECT  @FDate = DATEADD(HOUR, 4, @WinlostDate), @TDate = DATEADD(DAY, 1, @FDate)
+	DECLARE @ArchiveDate DATETIME = dbo.N88_f_GetSystemSettings('ArchiveData_Date')
+
+	DECLARE @FDate DATETIME = CONVERT(DATE, @WinlostDate)
+	DECLARE @TDate DATETIME = DATEADD(DAY, 1, @FDate)
 
 	-- Get data
 	BEGIN
@@ -43,31 +46,59 @@ BEGIN
 			,BonusId		INT
 		)
 
-		INSERT INTO #__TpBetRecord (
-			CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, StatusId, BonusId
-			,BetCount, TurnOver, ValidBet, Winloss, Revenue, ProgressiveBet, ProgressiveWin)
-		SELECT
-			t.CustId, t.UserName, 0 AS IsTest, t.CurrencyId, t.SiteId, t.GameType
-			,DATEADD(HOUR, DATEPART(HOUR, t.TransTime), CONVERT(VARCHAR(10), t.TransTime, 120)) -- date & hour
-			,DATEADD(HOUR, DATEPART(HOUR, t.SettledTime), CONVERT(VARCHAR(10), t.SettledTime, 120)) -- date & hour
-			,t.TicketStatus
-			,ISNULL(t.BonusId, 0)
-			,COUNT(1) AS BetCount
-			,SUM(t.Stake / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS TurnOver
-			,SUM(ISNULL(t.ValidBet, t.Stake) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ValidBet
-			,SUM(t.WinlostAmount / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS Winloss
-			,SUM(ISNULL(t.Revenue, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS Revenue
-			,SUM(ISNULL(t.ProgressiveBet, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ProgressiveBet
-			,SUM(ISNULL(t.ProgressiveWin, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ProgressiveWin
-		FROM dbo.TpBetRecord t WITH (NOLOCK)
-		WHERE t.WinlostDate BETWEEN DATEADD(DAY, -1, @WinlostDate) AND DATEADD(DAY, 1, @WinlostDate)
-			AND t.SettledTime >= @FDate AND t.SettledTime < @TDate
-		GROUP BY
-			t.CustId, t.UserName, t.CurrencyId, t.SiteId, t.GameType
-			,DATEADD(HOUR, DATEPART(HOUR, t.TransTime), CONVERT(VARCHAR(10), t.TransTime, 120)) -- date & hour
-			,DATEADD(HOUR, DATEPART(HOUR, t.SettledTime), CONVERT(VARCHAR(10), t.SettledTime, 120)) -- date & hour
-			,t.TicketStatus
-			,ISNULL(t.BonusId, 0)
+		-- TpBetRecord
+		IF @WinlostDate >= @ArchiveDate
+			INSERT INTO #__TpBetRecord (
+				CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, StatusId, BonusId
+				,BetCount, TurnOver, ValidBet, Winloss, Revenue, ProgressiveBet, ProgressiveWin)
+			SELECT
+				t.CustId, t.UserName, 0 AS IsTest, t.CurrencyId, t.SiteId, t.GameType
+				,DATEADD(HOUR, DATEPART(HOUR, t.TransTime), CONVERT(VARCHAR(10), t.TransTime, 120)) -- date & hour
+				,DATEADD(HOUR, DATEPART(HOUR, t.SettledTime), CONVERT(VARCHAR(10), t.SettledTime, 120)) -- date & hour
+				,t.TicketStatus
+				,ISNULL(t.BonusId, 0)
+				,COUNT(1) AS BetCount
+				,SUM(t.Stake / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS TurnOver
+				,SUM(ISNULL(t.ValidBet, t.Stake) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ValidBet
+				,SUM(t.WinlostAmount / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS Winloss
+				,SUM(ISNULL(t.Revenue, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS Revenue
+				,SUM(ISNULL(t.ProgressiveBet, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ProgressiveBet
+				,SUM(ISNULL(t.ProgressiveWin, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ProgressiveWin
+			FROM dbo.TpBetRecord t WITH (NOLOCK)
+			WHERE t.WinlostDate = @WinlostDate
+			GROUP BY
+				t.CustId, t.UserName, t.CurrencyId, t.SiteId, t.GameType
+				,DATEADD(HOUR, DATEPART(HOUR, t.TransTime), CONVERT(VARCHAR(10), t.TransTime, 120)) -- date & hour
+				,DATEADD(HOUR, DATEPART(HOUR, t.SettledTime), CONVERT(VARCHAR(10), t.SettledTime, 120)) -- date & hour
+				,t.TicketStatus
+				,ISNULL(t.BonusId, 0)
+
+		-- TpBetRecord_bk
+		IF @WinlostDate < @ArchiveDate
+			INSERT INTO #__TpBetRecord (
+				CustId, UserName, IsTest, Currency, SiteId, GameType, TransTime, SettledTime, StatusId, BonusId
+				,BetCount, TurnOver, ValidBet, Winloss, Revenue, ProgressiveBet, ProgressiveWin)
+			SELECT
+				t.CustId, t.UserName, 0 AS IsTest, t.CurrencyId, t.SiteId, t.GameType
+				,DATEADD(HOUR, DATEPART(HOUR, t.TransTime), CONVERT(VARCHAR(10), t.TransTime, 120)) -- date & hour
+				,DATEADD(HOUR, DATEPART(HOUR, t.SettledTime), CONVERT(VARCHAR(10), t.SettledTime, 120)) -- date & hour
+				,t.TicketStatus
+				,ISNULL(t.BonusId, 0)
+				,COUNT(1) AS BetCount
+				,SUM(t.Stake / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS TurnOver
+				,SUM(ISNULL(t.ValidBet, t.Stake) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ValidBet
+				,SUM(t.WinlostAmount / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS Winloss
+				,SUM(ISNULL(t.Revenue, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS Revenue
+				,SUM(ISNULL(t.ProgressiveBet, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ProgressiveBet
+				,SUM(ISNULL(t.ProgressiveWin, 0) / CASE WHEN t.CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS ProgressiveWin
+			FROM bodb_N88_Archive.dbo.TpBetRecord_bk t WITH (NOLOCK)
+			WHERE t.WinlostDate = @WinlostDate
+			GROUP BY
+				t.CustId, t.UserName, t.CurrencyId, t.SiteId, t.GameType
+				,DATEADD(HOUR, DATEPART(HOUR, t.TransTime), CONVERT(VARCHAR(10), t.TransTime, 120)) -- date & hour
+				,DATEADD(HOUR, DATEPART(HOUR, t.SettledTime), CONVERT(VARCHAR(10), t.SettledTime, 120)) -- date & hour
+				,t.TicketStatus
+				,ISNULL(t.BonusId, 0)
 
 		UPDATE t
 		SET t.IsTest = c.IsTest

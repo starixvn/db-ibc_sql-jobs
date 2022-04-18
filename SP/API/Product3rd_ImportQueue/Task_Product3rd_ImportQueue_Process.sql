@@ -14,6 +14,7 @@ AS
 		- 20200417@Percy: Integrate Novacash's products [RedmineID: #129873]
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20220222@Percy: Remove Novacash's products [RedmineID: #167823]
 */
 
 BEGIN
@@ -69,20 +70,7 @@ BEGIN
 			VALUES (31, @ErrCode, @ErrMsg)
 		END
 	END
-
-	-- Novacash's products
-	IF @@ServerName <> 'DBBAL'
-	BEGIN
-		SELECT @ErrCode = 0, @ErrMsg = ''
-		EXEC bodb_3rdProduct.dbo.Task_Product3rd_ImportQueue_Novacash @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-
-		IF @ErrCode <> 0
-		BEGIN
-			INSERT INTO @ErrTable (ProductId, ErrCode, ErrMsg)
-			VALUES (0, @ErrCode, @ErrMsg)
-		END
-	END
-
+	
 	DECLARE @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX) 
 
 	-- In case having error

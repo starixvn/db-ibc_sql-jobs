@@ -1,6 +1,7 @@
 /*<info serverAlias="DBN88-bodb_N88" isFunction="0" isNested="1"></info>*/
 USE bodb_N88
 GO
+
 ALTER PROCEDURE [dbo].[Task_API_Queue_TpBetRecord]
 	@QueueIDInput	BIGINT = 0
 	,@ErrCode		INT = 0 OUTPUT
@@ -21,6 +22,7 @@ AS
 		- 20210715@Percy: Add columns ProgressiveBet, ProgressiveWin [RedmineID: #158438]
 		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
 		- 20220120@Percy: Keep raw data within 1 year [RedmineID: #167823]
+		- 20220222@Percy: Add TpBetRecord_bk table [RedmineID: #167823]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -39,6 +41,8 @@ BEGIN
 		END
 	END
 
+	DECLARE @ArchiveDate DATETIME = dbo.N88_f_GetSystemSettings('ArchiveData_Date')
+
 	DECLARE @QueueID	BIGINT = NULL
 			,@XmlData	XML
 			,@LogDesc	VARCHAR(2000) = NULL
@@ -56,9 +60,9 @@ BEGIN
 		,TpUserName		VARCHAR(50)
 		,TransTime		DATETIME
 		,SettledTime	DATETIME
-		,Stake			DECIMAL(18,2)
-		,ValidBet		DECIMAL(18,2)
-		,WinlostAmount	DECIMAL(18,2)
+		,Stake			DECIMAL(20,4)
+		,ValidBet		DECIMAL(20,4)
+		,WinlostAmount	DECIMAL(20,4)
 		,Revenue		DECIMAL(20,4)
 		,ProgressiveBet	DECIMAL(20,4)
 		,ProgressiveWin	DECIMAL(20,4)
@@ -68,6 +72,7 @@ BEGIN
 		,TicketKey		BIGINT
 		,CreateTime		DATETIME
 		,BonusId		INT
+		,IsBk			BIT
 		,DataType		TINYINT DEFAULT ((1)) -- 0: update, 1: insert
 		--,PRIMARY KEY (TpId, TransId, GameType)
 	)
@@ -122,31 +127,58 @@ BEGIN
 					,TicketKey
 					,CreateTime
 					,BonusId
+					,IsBk
 				)
 				SELECT
-					t.c.value('@tpid', 'INT')
-					,t.c.value('@transid', 'VARCHAR(50)')
-					,t.c.value('@gametype', 'INT')
-					,t.c.value('@custid', 'VARCHAR(45)')
-					,t.c.value('@username', 'VARCHAR(30)')
-					,t.c.value('@currencyid', 'INT')
-					,t.c.value('@siteid', 'INT')
-					,t.c.value('@tpusername', 'VARCHAR(50)')
-					,t.c.value('@transtime', 'DATETIME')
-					,t.c.value('@settledtime', 'DATETIME')
-					,t.c.value('@stake', 'DECIMAL(18,2)')
-					,CAST(NULLIF(t.c.value('@validbet', 'varchar(30)'), '') AS DECIMAL(18,2))
-					,t.c.value('@winlostamount', 'DECIMAL(18,2)')
-					,CAST(NULLIF(t.c.value('@revenue', 'varchar(30)'), '') AS DECIMAL(20,4))
-					,CAST(NULLIF(t.c.value('@progressivebet', 'varchar(30)'), '') AS DECIMAL(20,4))
-					,CAST(NULLIF(t.c.value('@progressivewin', 'varchar(30)'), '') AS DECIMAL(20,4))
-					,t.c.value('@settlementtype', 'TINYINT')
-					,t.c.value('@ticketstatus', 'TINYINT')
-					,t.c.value('@originalstate', 'VARCHAR(10)')
-					,t.c.value('@ticketkey', 'BIGINT')
-					,t.c.value('@createtime', 'DATETIME')
-					,t.c.value('@bonusid', 'INT')
-				FROM @XmlData.nodes('transaction/trans') t(c)
+					TpId
+					,TransId
+					,GameType
+					,CustId
+					,UserName
+					,CurrencyId
+					,SiteId
+					,TpUserName
+					,TransTime
+					,SettledTime
+					,Stake
+					,ValidBet
+					,WinlostAmount
+					,Revenue
+					,ProgressiveBet
+					,ProgressiveWin
+					,SettlementType
+					,TicketStatus
+					,OriginalState
+					,TicketKey
+					,CreateTime
+					,BonusId
+					,CASE WHEN CONVERT(DATE, SettledTime) >= @ArchiveDate THEN 0 ELSE 1 END
+				FROM (
+					SELECT
+						t.c.value('@tpid', 'INT') AS TpId
+						,t.c.value('@transid', 'VARCHAR(50)') AS TransId
+						,t.c.value('@gametype', 'INT') AS GameType
+						,t.c.value('@custid', 'VARCHAR(45)') AS CustId
+						,t.c.value('@username', 'VARCHAR(30)') AS UserName
+						,t.c.value('@currencyid', 'INT') AS CurrencyId
+						,t.c.value('@siteid', 'INT') AS SiteId
+						,t.c.value('@tpusername', 'VARCHAR(50)') AS TpUserName
+						,t.c.value('@transtime', 'DATETIME') AS TransTime
+						,t.c.value('@settledtime', 'DATETIME') AS SettledTime
+						,t.c.value('@stake', 'DECIMAL(20,4)') AS Stake
+						,CAST(NULLIF(t.c.value('@validbet', 'varchar(30)'), '') AS DECIMAL(20,4)) AS ValidBet
+						,t.c.value('@winlostamount', 'DECIMAL(20,4)') AS WinlostAmount
+						,CAST(NULLIF(t.c.value('@revenue', 'varchar(30)'), '') AS DECIMAL(20,4)) AS Revenue
+						,CAST(NULLIF(t.c.value('@progressivebet', 'varchar(30)'), '') AS DECIMAL(20,4)) AS ProgressiveBet
+						,CAST(NULLIF(t.c.value('@progressivewin', 'varchar(30)'), '') AS DECIMAL(20,4)) AS ProgressiveWin
+						,t.c.value('@settlementtype', 'TINYINT') AS SettlementType
+						,t.c.value('@ticketstatus', 'TINYINT') AS TicketStatus
+						,t.c.value('@originalstate', 'VARCHAR(10)') AS OriginalState
+						,t.c.value('@ticketkey', 'BIGINT') AS TicketKey
+						,t.c.value('@createtime', 'DATETIME') AS CreateTime
+						,t.c.value('@bonusid', 'INT') AS BonusId
+					FROM @XmlData.nodes('transaction/trans') t(c)
+				) r
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
 				-- Remove duplicate data
@@ -158,118 +190,240 @@ BEGIN
 				) t
 				WHERE RN > 1
 
-				-- Update DataType for update
-				UPDATE t
-				SET t.DataType = 0 -- update
-				FROM #tmpTpBetRecord t
-					INNER JOIN dbo.TpBetRecord b WITH (NOLOCK) ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
-				
-				IF @@ROWCOUNT <> 0
+				-- Update data for TpBetRecord
+				IF EXISTS (SELECT 1 FROM #tmpTpBetRecord WHERE IsBk = 0)
 				BEGIN
-					UPDATE b WITH (ROWLOCK)
-					SET b.CustId			= t.CustId
-						,b.UserName			= t.UserName
-						,b.CurrencyId		= t.CurrencyId
-						,b.SiteId			= t.SiteId
-						,b.TpUserName		= t.TpUserName
-						,b.TransTime		= t.TransTime
-						,b.SettledTime		= t.SettledTime
-						,b.Stake			= t.Stake
-						,b.ValidBet			= t.ValidBet
-						,b.WinlostAmount	= t.WinlostAmount
-						,b.Revenue			= t.Revenue
-						,b.ProgressiveBet	= t.ProgressiveBet
-						,b.ProgressiveWin	= t.ProgressiveWin
-						,b.SettlementType	= t.SettlementType
-						,b.TicketStatus		= t.TicketStatus
-						,b.OriginalState	= t.OriginalState
-						,b.TicketKey		= t.TicketKey
-						,b.CreateTime		= t.CreateTime
-						,b.BonusId			= t.BonusId
-						,b.WinlostDate		= CONVERT(DATE, t.SettledTime)
-					FROM dbo.TpBetRecord b
-						INNER JOIN #tmpTpBetRecord t ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
-					WHERE
-						t.DataType = 0
-						AND
+					UPDATE t
+					SET t.DataType = 0 -- update
+					FROM #tmpTpBetRecord t
+						INNER JOIN dbo.TpBetRecord b WITH (NOLOCK) ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
+					WHERE t.IsBk = 0
+					
+					IF @@ROWCOUNT <> 0
+					BEGIN
+						UPDATE b WITH (ROWLOCK)
+						SET b.CustId			= t.CustId
+							,b.UserName			= t.UserName
+							,b.CurrencyId		= t.CurrencyId
+							,b.SiteId			= t.SiteId
+							,b.TpUserName		= t.TpUserName
+							,b.TransTime		= t.TransTime
+							,b.SettledTime		= t.SettledTime
+							,b.Stake			= t.Stake
+							,b.ValidBet			= t.ValidBet
+							,b.WinlostAmount	= t.WinlostAmount
+							,b.Revenue			= t.Revenue
+							,b.ProgressiveBet	= t.ProgressiveBet
+							,b.ProgressiveWin	= t.ProgressiveWin
+							,b.SettlementType	= t.SettlementType
+							,b.TicketStatus		= t.TicketStatus
+							,b.OriginalState	= t.OriginalState
+							,b.TicketKey		= t.TicketKey
+							,b.CreateTime		= t.CreateTime
+							,b.BonusId			= t.BonusId
+							,b.WinlostDate		= CONVERT(DATE, t.SettledTime)
+						FROM dbo.TpBetRecord b
+							INNER JOIN #tmpTpBetRecord t ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
+						WHERE
+							t.IsBk = 0 AND t.DataType = 0
+							AND
+							(
+								ISNULL(b.CustId, 0)				<> ISNULL(t.CustId, 0)
+								OR ISNULL(b.UserName, '')		<> ISNULL(t.UserName, '')
+								OR ISNULL(b.CurrencyId, 0)		<> ISNULL(t.CurrencyId, 0)
+								OR ISNULL(b.SiteId, 0)			<> ISNULL(t.SiteId, 0)
+								OR ISNULL(b.TpUserName, '')		<> ISNULL(t.TpUserName, '')
+								OR ISNULL(b.TransTime, '')		<> ISNULL(t.TransTime, '')
+								OR ISNULL(b.SettledTime, '')	<> ISNULL(t.SettledTime, '')
+								OR ISNULL(b.Stake, 0)			<> ISNULL(t.Stake, 0)
+								OR ISNULL(b.ValidBet, 0)		<> ISNULL(t.ValidBet, 0)
+								OR ISNULL(b.WinlostAmount, 0)	<> ISNULL(t.WinlostAmount, 0)
+								OR ISNULL(b.Revenue, 0)			<> ISNULL(t.Revenue, 0)
+								OR ISNULL(b.ProgressiveBet, 0)	<> ISNULL(t.ProgressiveBet, 0)
+								OR ISNULL(b.ProgressiveWin, 0)	<> ISNULL(t.ProgressiveWin, 0)
+								OR ISNULL(b.SettlementType, 0)	<> ISNULL(t.SettlementType, 0)
+								OR ISNULL(b.TicketStatus, 0)	<> ISNULL(t.TicketStatus, 0)
+								OR ISNULL(b.OriginalState, '')	<> ISNULL(t.OriginalState, '')
+								OR ISNULL(b.TicketKey, 0)		<> ISNULL(t.TicketKey, 0)
+								OR ISNULL(b.CreateTime, '')		<> ISNULL(t.CreateTime, '')
+								OR ISNULL(b.BonusId, 0)			<> ISNULL(t.BonusId, 0)
+							)
+					END
+
+					-- insert
+					IF EXISTS (SELECT 1 FROM #tmpTpBetRecord WHERE IsBk = 0 AND DataType = 1)
+					BEGIN
+						INSERT INTO dbo.TpBetRecord
 						(
-							ISNULL(b.CustId, 0)				<> ISNULL(t.CustId, 0)
-							OR ISNULL(b.UserName, '')		<> ISNULL(t.UserName, '')
-							OR ISNULL(b.CurrencyId, 0)		<> ISNULL(t.CurrencyId, 0)
-							OR ISNULL(b.SiteId, 0)			<> ISNULL(t.SiteId, 0)
-							OR ISNULL(b.TpUserName, '')		<> ISNULL(t.TpUserName, '')
-							OR ISNULL(b.TransTime, '')		<> ISNULL(t.TransTime, '')
-							OR ISNULL(b.SettledTime, '')	<> ISNULL(t.SettledTime, '')
-							OR ISNULL(b.Stake, 0)			<> ISNULL(t.Stake, 0)
-							OR ISNULL(b.ValidBet, 0)		<> ISNULL(t.ValidBet, 0)
-							OR ISNULL(b.WinlostAmount, 0)	<> ISNULL(t.WinlostAmount, 0)
-							OR ISNULL(b.Revenue, 0)			<> ISNULL(t.Revenue, 0)
-							OR ISNULL(b.ProgressiveBet, 0)	<> ISNULL(t.ProgressiveBet, 0)
-							OR ISNULL(b.ProgressiveWin, 0)	<> ISNULL(t.ProgressiveWin, 0)
-							OR ISNULL(b.SettlementType, 0)	<> ISNULL(t.SettlementType, 0)
-							OR ISNULL(b.TicketStatus, 0)	<> ISNULL(t.TicketStatus, 0)
-							OR ISNULL(b.OriginalState, '')	<> ISNULL(t.OriginalState, '')
-							OR ISNULL(b.TicketKey, 0)		<> ISNULL(t.TicketKey, 0)
-							OR ISNULL(b.CreateTime, '')		<> ISNULL(t.CreateTime, '')
-							OR ISNULL(b.BonusId, 0)			<> ISNULL(t.BonusId, 0)
+							TpId
+							,TransId
+							,GameType
+							,CustId
+							,UserName
+							,CurrencyId
+							,SiteId
+							,TpUserName
+							,TransTime
+							,SettledTime
+							,Stake
+							,ValidBet
+							,WinlostAmount
+							,Revenue
+							,ProgressiveBet
+							,ProgressiveWin
+							,SettlementType
+							,TicketStatus
+							,OriginalState
+							,TicketKey
+							,CreateTime
+							,BonusId
+							,WinlostDate
 						)
+						SELECT
+							TpId
+							,TransId
+							,GameType
+							,CustId
+							,UserName
+							,CurrencyId
+							,SiteId
+							,TpUserName
+							,TransTime
+							,SettledTime
+							,Stake
+							,ValidBet
+							,WinlostAmount
+							,Revenue
+							,ProgressiveBet
+							,ProgressiveWin
+							,SettlementType
+							,TicketStatus
+							,OriginalState
+							,TicketKey
+							,CreateTime
+							,BonusId
+							,CONVERT(DATE, SettledTime)
+						FROM #tmpTpBetRecord
+						WHERE IsBk = 0 AND DataType = 1
+					END
 				END
 
-				-- insert
-				IF EXISTS (SELECT 1 FROM #tmpTpBetRecord WHERE DataType = 1)
+				-- Update data for TpBetRecord_bk
+				IF EXISTS (SELECT 1 FROM #tmpTpBetRecord WHERE IsBk = 1)
 				BEGIN
-					INSERT INTO dbo.TpBetRecord
-					(
-						TpId
-						,TransId
-						,GameType
-						,CustId
-						,UserName
-						,CurrencyId
-						,SiteId
-						,TpUserName
-						,TransTime
-						,SettledTime
-						,Stake
-						,ValidBet
-						,WinlostAmount
-						,Revenue
-						,ProgressiveBet
-						,ProgressiveWin
-						,SettlementType
-						,TicketStatus
-						,OriginalState
-						,TicketKey
-						,CreateTime
-						,BonusId
-						,WinlostDate
-					)
-					SELECT
-						TpId
-						,TransId
-						,GameType
-						,CustId
-						,UserName
-						,CurrencyId
-						,SiteId
-						,TpUserName
-						,TransTime
-						,SettledTime
-						,Stake
-						,ValidBet
-						,WinlostAmount
-						,Revenue
-						,ProgressiveBet
-						,ProgressiveWin
-						,SettlementType
-						,TicketStatus
-						,OriginalState
-						,TicketKey
-						,CreateTime
-						,BonusId
-						,CONVERT(DATE, SettledTime)
-					FROM #tmpTpBetRecord
-					WHERE DataType = 1
+					UPDATE t
+					SET t.DataType = 0 -- update
+					FROM #tmpTpBetRecord t
+						INNER JOIN bodb_N88_Archive.dbo.TpBetRecord_bk b WITH (NOLOCK) ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
+					WHERE t.IsBk = 1
+					
+					IF @@ROWCOUNT <> 0
+					BEGIN
+						UPDATE b WITH (ROWLOCK)
+						SET b.CustId			= t.CustId
+							,b.UserName			= t.UserName
+							,b.CurrencyId		= t.CurrencyId
+							,b.SiteId			= t.SiteId
+							,b.TpUserName		= t.TpUserName
+							,b.TransTime		= t.TransTime
+							,b.SettledTime		= t.SettledTime
+							,b.Stake			= t.Stake
+							,b.ValidBet			= t.ValidBet
+							,b.WinlostAmount	= t.WinlostAmount
+							,b.Revenue			= t.Revenue
+							,b.ProgressiveBet	= t.ProgressiveBet
+							,b.ProgressiveWin	= t.ProgressiveWin
+							,b.SettlementType	= t.SettlementType
+							,b.TicketStatus		= t.TicketStatus
+							,b.OriginalState	= t.OriginalState
+							,b.TicketKey		= t.TicketKey
+							,b.CreateTime		= t.CreateTime
+							,b.BonusId			= t.BonusId
+							,b.WinlostDate		= CONVERT(DATE, t.SettledTime)
+						FROM bodb_N88_Archive.dbo.TpBetRecord_bk b
+							INNER JOIN #tmpTpBetRecord t ON t.TpId = b.TpId AND t.TransId = b.TransId AND t.GameType = b.GameType
+						WHERE
+							t.IsBk = 1 AND t.DataType = 0
+							AND
+							(
+								ISNULL(b.CustId, 0)				<> ISNULL(t.CustId, 0)
+								OR ISNULL(b.UserName, '')		<> ISNULL(t.UserName, '')
+								OR ISNULL(b.CurrencyId, 0)		<> ISNULL(t.CurrencyId, 0)
+								OR ISNULL(b.SiteId, 0)			<> ISNULL(t.SiteId, 0)
+								OR ISNULL(b.TpUserName, '')		<> ISNULL(t.TpUserName, '')
+								OR ISNULL(b.TransTime, '')		<> ISNULL(t.TransTime, '')
+								OR ISNULL(b.SettledTime, '')	<> ISNULL(t.SettledTime, '')
+								OR ISNULL(b.Stake, 0)			<> ISNULL(t.Stake, 0)
+								OR ISNULL(b.ValidBet, 0)		<> ISNULL(t.ValidBet, 0)
+								OR ISNULL(b.WinlostAmount, 0)	<> ISNULL(t.WinlostAmount, 0)
+								OR ISNULL(b.Revenue, 0)			<> ISNULL(t.Revenue, 0)
+								OR ISNULL(b.ProgressiveBet, 0)	<> ISNULL(t.ProgressiveBet, 0)
+								OR ISNULL(b.ProgressiveWin, 0)	<> ISNULL(t.ProgressiveWin, 0)
+								OR ISNULL(b.SettlementType, 0)	<> ISNULL(t.SettlementType, 0)
+								OR ISNULL(b.TicketStatus, 0)	<> ISNULL(t.TicketStatus, 0)
+								OR ISNULL(b.OriginalState, '')	<> ISNULL(t.OriginalState, '')
+								OR ISNULL(b.TicketKey, 0)		<> ISNULL(t.TicketKey, 0)
+								OR ISNULL(b.CreateTime, '')		<> ISNULL(t.CreateTime, '')
+								OR ISNULL(b.BonusId, 0)			<> ISNULL(t.BonusId, 0)
+							)
+					END
+
+					-- insert
+					IF EXISTS (SELECT 1 FROM #tmpTpBetRecord WHERE IsBk = 1 AND DataType = 1)
+					BEGIN
+						INSERT INTO bodb_N88_Archive.dbo.TpBetRecord_bk
+						(
+							TpId
+							,TransId
+							,GameType
+							,CustId
+							,UserName
+							,CurrencyId
+							,SiteId
+							,TpUserName
+							,TransTime
+							,SettledTime
+							,Stake
+							,ValidBet
+							,WinlostAmount
+							,Revenue
+							,ProgressiveBet
+							,ProgressiveWin
+							,SettlementType
+							,TicketStatus
+							,OriginalState
+							,TicketKey
+							,CreateTime
+							,BonusId
+							,WinlostDate
+						)
+						SELECT
+							TpId
+							,TransId
+							,GameType
+							,CustId
+							,UserName
+							,CurrencyId
+							,SiteId
+							,TpUserName
+							,TransTime
+							,SettledTime
+							,Stake
+							,ValidBet
+							,WinlostAmount
+							,Revenue
+							,ProgressiveBet
+							,ProgressiveWin
+							,SettlementType
+							,TicketStatus
+							,OriginalState
+							,TicketKey
+							,CreateTime
+							,BonusId
+							,CONVERT(DATE, SettledTime)
+						FROM #tmpTpBetRecord
+						WHERE IsBk = 1 AND DataType = 1
+					END
 				END
 
 				-- if parse xml and insert/update data successfully --> break out of while
@@ -319,17 +473,6 @@ BEGIN
 		AND IsFinished = 1
 		AND FinishedTime < DATEADD(DAY, -7, GETDATE())
 		
-	DECLARE @LastYear SMALLDATETIME = DATEADD(YEAR, -1, GETDATE())
-	
-	WHILE 1 = 1
-	BEGIN
-		DELETE TOP (3000) dbo.TpBetRecord WITH (ROWLOCK, UPDLOCK)
-		WHERE WinlostDate < @LastYear
-
-		IF @@ROWCOUNT < 3000
-			BREAK
-	END
-	
 	DROP TABLE #tmpTpBetRecord
 END
 GO
