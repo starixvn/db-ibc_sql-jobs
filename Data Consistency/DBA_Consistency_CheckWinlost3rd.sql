@@ -15,6 +15,7 @@ AS
 		- 20210614@July: Saba.club - Missing wrong winlost of yesterday ticket - Check Data Consistency - [Redmine:#156865]
 		- 20210924@July: Apply for VGaming product - [Redmine:#161760]
 		- 20221003@July: Add new rule to detect bet ticket with draw status - [Redmine:#169699]
+		- 20220418@July: Ignore ticket greater than 0.0002 - [Redmine:#169699]
 
 	Param's Expanation:
 */
@@ -22,8 +23,8 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @transId VARCHAR(MAX)
-			,@Today DATETIME
-			,@yesterday DATETIME 
+			,@Today SMALLDATETIME
+			,@yesterday SMALLDATETIME 
 
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
@@ -34,11 +35,11 @@ BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM bodb02.dbo.bettransRNG WITH(NOLOCK) 
 		WHERE
-			(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.0001 
-			OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.0001
-			OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.0001
+			(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.0002 
+			OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.0002
+			OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.0002
 			) 
-			AND statusid IN (112, 113, 111) --Won/lose/draw
+			AND statusid IN (111, 112, 113) --Draw/Won/Lose
 			AND (winlostdate = @Today OR winlostdate = @yesterday) 
 			AND gameID NOT IN (2198, 2398, 2998, 1698, 3898, 4297, 4599)
 	END
@@ -47,11 +48,11 @@ BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM bodb02.dbo.bettransLC WITH(NOLOCK) 
 		WHERE
-			(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.0001 
-			OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.0001
-			OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.0001
+			(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.0002 
+			OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.0002
+			OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.0002
 			) 
-			AND statusid IN (111, 112, 113) --Won/lose/draw
+			AND statusid IN (111, 112, 113) --Draw/Won/Lose
 			AND (winlostdate = @Today OR winlostdate = @yesterday)
 	END
 
