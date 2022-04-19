@@ -66,6 +66,7 @@ AS
 		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
 		- 20220313@Kos: Integrate Allbet Promotion [RedmineID: #167524]
 		- 20220322@Percy: Enhance code get data from Transfer table [RedmineID: #170118]
+		- 20220329@Hogan: Macau Games Add new Range bettype[RedmineID: #170607]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -710,7 +711,7 @@ BEGIN
 				WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 				WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
 				WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --Colossus Bet
-				WHEN bettype BETWEEN 4001 AND 4100 THEN 212--Voidbridge
+				WHEN bettype BETWEEN 4001 AND 4100 OR bettype BETWEEN 5800 AND 5999 THEN 212--Voidbridge
 				WHEN bettype = 901 THEN -2--BetTrade - Sold
 				WHEN bettype = 902 THEN -3--BetTrade - Bought.
 				WHEN bettype = 903 THEN -4--BetTrade - Commission
@@ -788,7 +789,7 @@ BEGIN
 				WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 				WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
 				WHEN bettype BETWEEN 18000 AND 18006 THEN 204 -- Colossus Bet
-				WHEN bettype BETWEEN 4001 AND 4100 THEN 212--Voidbridge
+				WHEN bettype BETWEEN 4001 AND 4100 OR bettype BETWEEN 5800 AND 5999 THEN 212--Voidbridge
 				WHEN bettype = 901 THEN -2--BetTrade - Sold
 				WHEN bettype = 902 THEN -3--BetTrade - Bought
 				WHEN bettype = 903 THEN -4--BetTrade - Commission

@@ -93,6 +93,7 @@ AS
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 		- 20220313@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 		- 20220322@Kos: Integrate Allbet Promotion [RedmineID: #167524]
+		- 20220329@Hogan: Macau Games Add new Range bettype[RedmineID: #170607]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -194,7 +195,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN (b.bettype BETWEEN 2301 AND 2399 OR b.bettype BETWEEN 2901 AND 2999) THEN 210
-			WHEN b.bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
+			WHEN b.bettype BETWEEN 4001 AND 4100 OR b.bettype BETWEEN 5800 AND 5999 THEN 212 -- VB
 			WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 			WHEN b.bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 			WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
@@ -321,7 +322,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
 			WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
 			WHEN (b.bettype BETWEEN 2301 AND 2399 OR b.bettype BETWEEN 2901 AND 2999) THEN 210
-			WHEN b.bettype BETWEEN 4001 AND 4100 THEN 212 -- VB
+			WHEN b.bettype BETWEEN 4001 AND 4100 OR b.bettype BETWEEN 5800 AND 5999 THEN 212 -- VB
 			WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 -- AB
 			WHEN b.bettype BETWEEN 18000 AND 18006 THEN 204 --CB
 			WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219
