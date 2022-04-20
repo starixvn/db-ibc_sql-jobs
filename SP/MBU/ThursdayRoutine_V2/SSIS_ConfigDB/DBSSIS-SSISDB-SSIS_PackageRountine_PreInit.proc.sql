@@ -14,6 +14,7 @@ AS
 	Database:	DBSSIS.SSISDB
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20220419@Bobby: Correct CSV @outputFileName [Redmine: #166146]
 */
 BEGIN
 	SET NOCOUNT ON;

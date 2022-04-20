@@ -12,8 +12,8 @@
   DTS:ObjectName="ETL_Process_UpdateStats"
   DTS:PackageType="5"
   DTS:ProtectionLevel="0"
-  DTS:VersionBuild="34"
-  DTS:VersionGUID="{751828F1-EEE2-4295-8A07-9BB485E0B170}">
+  DTS:VersionBuild="36"
+  DTS:VersionGUID="{99C01E11-EFC9-47D7-A6EE-76FB930C39CB}">
   <DTS:Property
     DTS:Name="PackageFormatVersion">8</DTS:Property>
   <DTS:ConnectionManagers>
@@ -119,6 +119,17 @@
       <DTS:VariableValue
         DTS:DataType="11">0</DTS:VariableValue>
     </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{11C50308-F474-4BA7-95EA-95689BB458B0}"
+      DTS:EvaluateAsExpression="True"
+      DTS:Expression="&quot;use &quot; + @[$Package::HostDbName] + &quot;;EXEC sp_updatestats;&quot;"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="updStatsCommand">
+      <DTS:VariableValue
+        DTS:DataType="8">use bodb_archive;EXEC sp_updatestats;</DTS:VariableValue>
+    </DTS:Variable>
   </DTS:Variables>
   <DTS:Executables>
     <DTS:Executable
@@ -150,59 +161,73 @@
       </DTS:ObjectData>
     </DTS:Executable>
     <DTS:Executable
-      DTS:refId="Package\DB061 - Update Statistics"
-      DTS:CreationName="Microsoft.DbMaintenanceUpdateStatisticsTask"
-      DTS:Description="Update Statistics Task"
-      DTS:DTSID="{8054442B-8F05-442F-92F7-DDE73408FC7A}"
-      DTS:ExecutableType="Microsoft.DbMaintenanceUpdateStatisticsTask"
+      DTS:refId="Package\DB061 - Update statistics - DBARC"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{80A765C3-FD95-47EE-AE3A-B3AAA11AE443}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
       DTS:LocaleID="-1"
-      DTS:ObjectName="DB061 - Update Statistics"
-      DTS:TaskContact="Update Statistics Task; Microsoft Corporation; Microsoft SQL Server v9; © 2004 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ObjectName="DB061 - Update statistics - DBARC"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
       DTS:ThreadHint="0">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
           SQLTask:Connection="{C8AEFFF1-5FE4-4051-9AA0-FAF57B8753DB}"
-          SQLTask:DatabaseSelectionType="4"
-          SQLTask:ServerVersion="9"
-          SQLTask:ExtendedLogging="True"
-          SQLTask:LocalConnectionForLogging=""
-          SQLTask:TaskName=""
-          SQLTask:IgnoreDatabasesInNotOnlineState="True"
-          SQLTask:UpdateStatisticsType="2"
-          SQLTask:UpdateScanType="3"
-          SQLTask:UpdateSampleValue="50" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
-          <SQLTask:SelectedDatabases
-            SQLTask:DatabaseName="bodb_archive" />
-        </SQLTask:SqlTaskData>
+          SQLTask:SqlStmtSourceType="Variable"
+          SQLTask:SqlStatementSource="User::updStatsCommand" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
       </DTS:ObjectData>
     </DTS:Executable>
     <DTS:Executable
-      DTS:refId="Package\DB062 - Update Statistics"
-      DTS:CreationName="Microsoft.DbMaintenanceUpdateStatisticsTask"
-      DTS:Description="Update Statistics Task"
-      DTS:DTSID="{212FC822-E424-4710-8018-C9D26F4B8C0C}"
-      DTS:ExecutableType="Microsoft.DbMaintenanceUpdateStatisticsTask"
+      DTS:refId="Package\DB061 - Update statistics - DBRPT"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{69673604-140c-4438-ba98-e6950fc70a72}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
       DTS:LocaleID="-1"
-      DTS:ObjectName="DB062 - Update Statistics"
-      DTS:TaskContact="Update Statistics Task; Microsoft Corporation; Microsoft SQL Server v9; © 2004 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ObjectName="DB061 - Update statistics - DBRPT"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="0">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{C8AEFFF1-5FE4-4051-9AA0-FAF57B8753DB}"
+          SQLTask:SqlStatementSource="use bodb_report;&#xA;EXEC sp_updatestats" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\DB062 - Update statistics - DBARC"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{eacfa8e6-d099-4f60-a30e-3362b3deb285}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="DB062 - Update statistics - DBARC"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
       DTS:ThreadHint="1">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
           SQLTask:Connection="{84CE2E92-1426-40BB-AFBB-A9AF425E07BB}"
-          SQLTask:DatabaseSelectionType="4"
-          SQLTask:ServerVersion="9"
-          SQLTask:ExtendedLogging="True"
-          SQLTask:LocalConnectionForLogging=""
-          SQLTask:TaskName=""
-          SQLTask:IgnoreDatabasesInNotOnlineState="True"
-          SQLTask:UpdateStatisticsType="2"
-          SQLTask:UpdateScanType="3"
-          SQLTask:UpdateSampleValue="50" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
-          <SQLTask:SelectedDatabases
-            SQLTask:DatabaseName="bodb_archive" />
-        </SQLTask:SqlTaskData>
+          SQLTask:SqlStmtSourceType="Variable"
+          SQLTask:SqlStatementSource="User::updStatsCommand" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\DB062 - Update statistics - DBRPT"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{4033e447-c1ab-414f-ac20-ad59732ac7fe}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="DB062 - Update statistics - DBRPT"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="1">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{84CE2E92-1426-40BB-AFBB-A9AF425E07BB}"
+          SQLTask:SqlStatementSource="use bodb_report;&#xA;EXEC sp_updatestats" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
       </DTS:ObjectData>
     </DTS:Executable>
   </DTS:Executables>
@@ -210,23 +235,37 @@
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint]"
       DTS:CreationName=""
-      DTS:DTSID="{876F1B27-4606-48D8-B59D-4905C4E4D6D4}"
-      DTS:EvalOp="3"
-      DTS:Expression="@[User::IsClosed]==True"
+      DTS:DTSID="{71639C2B-57AA-4703-817E-00D99EB21FD1}"
       DTS:From="Package\Check SSIS Project Status"
       DTS:LogicalAnd="True"
       DTS:ObjectName="Constraint"
-      DTS:To="Package\DB061 - Update Statistics" />
+      DTS:To="Package\DB061 - Update statistics - DBARC" />
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint 1]"
       DTS:CreationName=""
-      DTS:DTSID="{AF310776-A12B-419B-88C3-436608F3875D}"
+      DTS:DTSID="{F941B993-39A5-48AC-87E7-48E3CB1A970A}"
       DTS:EvalOp="3"
-      DTS:Expression="@[User::IsClosed]==True &amp;&amp;  @[$Package::HostDB061] != @[$Package::HostDB062]"
+      DTS:Expression="@[$Package::HostDB061] != @[$Package::HostDB062]"
       DTS:From="Package\Check SSIS Project Status"
       DTS:LogicalAnd="True"
       DTS:ObjectName="Constraint 1"
-      DTS:To="Package\DB062 - Update Statistics" />
+      DTS:To="Package\DB062 - Update statistics - DBARC" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 2]"
+      DTS:CreationName=""
+      DTS:DTSID="{2B9EB0EC-76C7-4185-B0FB-9B6389124C31}"
+      DTS:From="Package\DB061 - Update statistics - DBARC"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint 2"
+      DTS:To="Package\DB061 - Update statistics - DBRPT" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 3]"
+      DTS:CreationName=""
+      DTS:DTSID="{590CCD62-5660-460A-B26C-86DBE337B2E6}"
+      DTS:From="Package\DB062 - Update statistics - DBARC"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint 3"
+      DTS:To="Package\DB062 - Update statistics - DBRPT" />
   </DTS:PrecedenceConstraints>
   <DTS:DesignTimeProperties><![CDATA[<?xml version="1.0"?>
 <!--This CDATA section contains the layout information of the package. The section includes information such as (x,y) coordinates, width, and height.-->
@@ -239,89 +278,139 @@
     design-time-name="Package">
     <LayoutInfo>
       <GraphLayout
-        Capacity="8" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mssgm="clr-namespace:Microsoft.SqlServer.Graph.Model;assembly=Microsoft.SqlServer.Graph">
+        Capacity="16" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mssgm="clr-namespace:Microsoft.SqlServer.Graph.Model;assembly=Microsoft.SqlServer.Graph">
         <NodeLayout
           Size="206.666666666667,42.6666666666667"
           Id="Package\Check SSIS Project Status"
-          TopLeft="203.511901729341,38.9022563713362" />
+          TopLeft="168.095235590424,36.1654142145588" />
         <NodeLayout
-          Size="201.333333333334,42.6666666666667"
-          Id="Package\DB061 - Update Statistics"
-          TopLeft="70.4761894260134,173.137847870419" />
+          Size="246.666666666667,42.6666666666667"
+          Id="Package\DB061 - Update statistics - DBARC"
+          TopLeft="37.187499445863,134.675441131422" />
         <NodeLayout
-          Size="201.333333333334,42.6666666666667"
-          Id="Package\DB062 - Update Statistics"
-          TopLeft="330.952376020806,174.636594765797" />
+          Size="245.333333333334,42.6666666666667"
+          Id="Package\DB061 - Update statistics - DBRPT"
+          TopLeft="32.2916661854833,220.087723440851" />
+        <NodeLayout
+          Size="246.666666666667,42.6666666666667"
+          Id="Package\DB062 - Update statistics - DBARC"
+          TopLeft="302.083328831941,132.964914783436" />
+        <NodeLayout
+          Size="245.333333333334,42.6666666666667"
+          Id="Package\DB062 - Update statistics - DBRPT"
+          TopLeft="298.958328878507,214.421054735078" />
         <EdgeLayout
           Id="Package.PrecedenceConstraints[Constraint]"
-          TopLeft="273.734123951563,81.5689230380029">
+          TopLeft="238.317457812646,78.8320808812255">
           <EdgeLayout.Curve>
             <mssgle:Curve
               StartConnector="{assembly:Null}"
-              EndConnector="-102.591267858883,91.5689248324161"
+              EndConnector="-77.7966250334497,55.8433602501968"
               Start="0,0"
-              End="-102.591267858883,84.0689248324161">
+              End="-77.7966250334497,48.3433602501968">
               <mssgle:Curve.Segments>
                 <mssgle:SegmentCollection
                   Capacity="5">
                   <mssgle:LineSegment
-                    End="0,33.0496546056895" />
+                    End="0,18.5947526748556" />
                   <mssgle:CubicBezierSegment
-                    Point1="0,33.0496546056895"
-                    Point2="0,37.0496546056895"
-                    Point3="-4,37.0496546056895" />
+                    Point1="0,18.5947526748556"
+                    Point2="0,22.5947526748556"
+                    Point3="-4,22.5947526748556" />
                   <mssgle:LineSegment
-                    End="-98.5912678588832,37.0496546056895" />
+                    End="-73.7966250334497,22.5947526748556" />
                   <mssgle:CubicBezierSegment
-                    Point1="-98.5912678588832,37.0496546056895"
-                    Point2="-102.591267858883,37.0496546056895"
-                    Point3="-102.591267858883,41.0496546056895" />
+                    Point1="-73.7966250334497,22.5947526748556"
+                    Point2="-77.7966250334497,22.5947526748556"
+                    Point3="-77.7966250334497,26.5947526748556" />
                   <mssgle:LineSegment
-                    End="-102.591267858883,84.0689248324161" />
+                    End="-77.7966250334497,48.3433602501968" />
                 </mssgle:SegmentCollection>
               </mssgle:Curve.Segments>
             </mssgle:Curve>
           </EdgeLayout.Curve>
           <EdgeLayout.Labels>
-            <mssgm:EdgeLabel
-              BoundingBox="-59.2956339294416,42.0496546056895,16,16"
-              RelativePosition="Any" />
+            <EdgeLabelCollection />
           </EdgeLayout.Labels>
         </EdgeLayout>
         <EdgeLayout
           Id="Package.PrecedenceConstraints[Constraint 1]"
-          TopLeft="339.956346173785,81.5689230380029">
+          TopLeft="304.539680034868,78.8320808812255">
           <EdgeLayout.Curve>
             <mssgle:Curve
               StartConnector="{assembly:Null}"
-              EndConnector="91.6626965136873,93.0676717277941"
+              EndConnector="120.876982130406,54.132833902211"
               Start="0,0"
-              End="91.6626965136873,85.5676717277941">
+              End="120.876982130406,46.632833902211">
               <mssgle:Curve.Segments>
                 <mssgle:SegmentCollection
                   Capacity="5">
                   <mssgle:LineSegment
-                    End="0,33.6560618002343" />
+                    End="0,17.9026575071686" />
                   <mssgle:CubicBezierSegment
-                    Point1="0,33.6560618002343"
-                    Point2="0,37.6560618002343"
-                    Point3="4,37.6560618002343" />
+                    Point1="0,17.9026575071686"
+                    Point2="0,21.9026575071686"
+                    Point3="4,21.9026575071686" />
                   <mssgle:LineSegment
-                    End="87.6626965136873,37.6560618002343" />
+                    End="116.876982130406,21.9026575071686" />
                   <mssgle:CubicBezierSegment
-                    Point1="87.6626965136873,37.6560618002343"
-                    Point2="91.6626965136873,37.6560618002343"
-                    Point3="91.6626965136873,41.6560618002343" />
+                    Point1="116.876982130406,21.9026575071686"
+                    Point2="120.876982130406,21.9026575071686"
+                    Point3="120.876982130406,25.9026575071686" />
                   <mssgle:LineSegment
-                    End="91.6626965136873,85.5676717277941" />
+                    End="120.876982130406,46.632833902211" />
                 </mssgle:SegmentCollection>
               </mssgle:Curve.Segments>
             </mssgle:Curve>
           </EdgeLayout.Curve>
           <EdgeLayout.Labels>
             <mssgm:EdgeLabel
-              BoundingBox="37.8313482568437,42.6560618002343,16,16"
+              BoundingBox="52.438491065203,26.9026575071686,16,16"
               RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 2]"
+          TopLeft="160.072916149006,177.342107798089">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="0,42.7456156427621"
+              Start="0,0"
+              End="0,35.2456156427621">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,35.2456156427621" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 3]"
+          TopLeft="423.520828855224,175.631581450103">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="0,38.7894732849749"
+              Start="0,0"
+              End="0,31.2894732849749">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,31.2894732849749" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
           </EdgeLayout.Labels>
         </EdgeLayout>
       </GraphLayout>
