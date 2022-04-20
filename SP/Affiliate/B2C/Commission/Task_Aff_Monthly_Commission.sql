@@ -141,6 +141,9 @@ BEGIN
 		DELETE dbo.rptAffCommission WITH (ROWLOCK, UPDLOCK)
 		WHERE MonthDate = @LastDayOfMonth
 
+		DELETE dbo.rptAffCommissionDetail WITH (ROWLOCK, UPDLOCK)
+		WHERE MonthDate = @LastDayOfMonth
+
 		DELETE dbo.rptAffMonthly WITH (ROWLOCK, UPDLOCK)
 		WHERE MonthDate = @LastDayOfMonth
 
@@ -153,6 +156,53 @@ BEGIN
 	SELECt  @AffRate = Rate FROM dbo.Aff_f_ExchangeRate_Sel(@LastDayOfMonth, @AffCurrency, 0)
 
 	INSERT INTO dbo.rptAffCommission
+	(
+		MonthDate,
+		AffId,
+		GroupId,
+		ProductId,
+		Deposit,
+		Withdrawal,
+		Bonus,
+		Rebate,
+		Turnover,
+		Winloss,
+		Revenue,
+		GrossWinloss,
+		NetWinloss,
+		ActivePlayer,
+		P2PFee,
+		PlatFormFee,
+		OperationalFee,
+		DepositFee,
+		WithdrawalFee,
+		CommissionRate
+	)
+	SELECT
+		MonthDate,
+		AffId,
+		GroupId,
+		ProductId,
+		Deposit,
+		Withdrawal,
+		Bonus,
+		Rebate,
+		Turnover,
+		Winloss,
+		Revenue,
+		GrossWinloss,
+		NetWinloss,
+		ActivePlayer,
+		P2PFee,
+		PlatFormFee,
+		OperationalFee,
+		DepositFee,
+		WithdrawalFee,
+		CommissionRate
+	FROM #TempCommission
+	WHERE ProductId = 0
+
+	INSERT INTO dbo.rptAffCommissionDetail
 	(
 		MonthDate,
 		AffId,
@@ -180,7 +230,7 @@ BEGIN
 		MonthDate,
 		AffId,
 		GroupId,
-		ProductId,
+		0 AS ProductId,
 		GroupProductId,
 		Deposit,
 		Withdrawal,
@@ -199,7 +249,7 @@ BEGIN
 		WithdrawalFee,
 		CommissionRate
 	FROM #TempCommission
-	WHERE ProductId = 0
+	WHERE ProductId = -1
 
 	INSERT INTO dbo.rptAffMonthly
 	(
@@ -222,13 +272,6 @@ BEGIN
 	FROM #TempCommission
 	WHERE ProductId > 0
 
-	;WITH CTE_Com AS
-	(
-		SELECT c.AffId, c.MonthDate, SUM(Commission) AS Commission, SUM(SubAffCommission) AS SubAffCommission, SUM(StraightCommission) AS StraightCommission
-		FROM #TempCommission c 
-		WHERE c.ProductId = 0
-		GROUP BY c.AffId, c.MonthDate
-	)
 	INSERT INTO dbo.AffTrans
 	(
 		AffId,
@@ -253,7 +296,7 @@ BEGIN
 		t.TransType,
 		@AffCurrency,
 		@AffRate
-	FROM CTE_Com c
+	FROM #TempCommission c
 		CROSS APPLY (
 			SELECT 201 AS TransType, Commission AS Amount
 			UNION ALL
@@ -261,6 +304,7 @@ BEGIN
 			UNION ALL
 			SELECT 205, StraightCommission
 		) t
+	WHERE c.ProductId = 0
 
 	-- Update Commission Date
 	DECLARE @LaunchDate SMALLDATETIME, @LastCommDate SMALLDATETIME
