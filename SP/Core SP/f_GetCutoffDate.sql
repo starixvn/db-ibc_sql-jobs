@@ -21,7 +21,7 @@ RETURN
 	FROM (
 		VALUES ('2021-08-05', 'NetTO')
 			,('2021-12-11', 'GrossComm')
-			,('2022-04-06', 'SabaSport')
+			,('2022-05-24', 'SabaSport')
 	) AS t (CutoffDate, TypeName)
 	
 GO

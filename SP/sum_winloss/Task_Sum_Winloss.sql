@@ -319,7 +319,10 @@ BEGIN
 				ON bettrans.srecommend = tbl.SuperId
 					AND bettrans.bettype = tbl.bettypePT
 	LEFT JOIN dbo.match14 m WITH(NOLOCK) ON bettrans.matchid = m.matchid
-	LEFT JOIN dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
+	LEFT JOIN (
+				SELECT LeagueGroupID, leagueid
+				FROM dbo.League l WITH(NOLOCK) WHERE l.LeagueGroupID IN (42,74,108,113,122)
+			  )l  ON m.leagueid = l.leagueid
 	WHERE 
 		bettrans.winlostdate = @winlostdate
 		AND bettrans.statusID NOT IN (0, 1, 102, 101, 103)

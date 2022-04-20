@@ -47,11 +47,8 @@ BEGIN
 
 	INSERT INTO #Bettypes (ProductId, SportTypeRef, BettypeRef, Bettype, RefTable, IsContributionBettype, LeagueGroupID, TicketType)
 	SELECT f.ProductID, f.SportType AS SportTypeRef, f.BetType AS BettypeRef, s.BetType, s.RefTable
-		,CASE WHEN cont.Bettype IS NOT NULL THEN 1 ELSE 0 END AS IsContributionBettype, z.LeagueGroupID, f.TicketType
+		,CASE WHEN cont.Bettype IS NOT NULL THEN 1 ELSE 0 END AS IsContributionBettype, f.LeagueGroupID, f.TicketType
 	FROM dbo.f_SumWinloss_ConditionSel(@ProductIds) f
-		CROSS APPLY (
-			SELECT CAST(val AS SMALLINT) AS LeagueGroupID FROM strSplit(f.LeagueGroupID, ',') z
-		)z
 		CROSS APPLY (
 			SELECT DISTINCT s.RefTable, s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
 			WHERE f.ProductID = s.ProductID
@@ -308,7 +305,10 @@ BEGIN
 				FROM bodb_Archive.dbo.bettrans_bk b WITH (NOLOCK)
 					INNER JOIN #__SuperExtraPT tbl  ON b.srecommend = tbl.SuperId AND b.bettype = tbl.bettypePT
 					LEFT JOIN bodb_Archive.dbo.match_bk m WITH (NOLOCK) ON b.matchid = m.matchid
-					LEFT JOIN dbo.league l WITH (NOLOCK) ON m.leagueid = l.leagueid
+					LEFT JOIN (
+								SELECT LeagueGroupID, leagueid
+								FROM dbo.League l WITH(NOLOCK) WHERE l.LeagueGroupID IN (42,74,108,113,122)
+							  )l  ON m.leagueid = l.leagueid
 				WHERE b.winlostdate = @WinlostDate
 					AND c.custid = b.custid
 					AND b.statusID IN (111,112,113)
