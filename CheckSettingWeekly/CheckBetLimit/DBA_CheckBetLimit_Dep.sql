@@ -1655,19 +1655,19 @@ BEGIN
 		SELECT 330,s.sporttypeID,s.bettypeID,s.CustID,NULL,s.minbet,t2.Minbet,GETDATE(),1
 		FROM #Dep_CustSetting_Super s
 			INNER JOIN #GlobalSetting T2 ON s.sporttypeID = t2.SportType AND s.bettypeID = t2.BetType AND t2.Minbet <> 0
-		WHERE s.minbet > T2.minbet AND s.Maxbet >= 1
+		WHERE s.minbet < T2.minbet AND s.Maxbet >= 1
 		
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 330,s.sporttypeID,s.bettypeID,s.CustID,NULL,s.minbet,t2.Minbet,GETDATE(),1
 		FROM #Dep_CustSetting_Master s
 			INNER JOIN #GlobalSetting T2 ON s.sporttypeID = t2.SportType AND s.bettypeID = t2.BetType AND t2.Minbet <> 0
-		WHERE s.minbet > T2.minbet AND s.Maxbet >= 1
+		WHERE s.minbet < T2.minbet AND s.Maxbet >= 1
 		
 		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
 		SELECT 330,s.sporttypeID,s.bettypeID,s.CustID,NULL,s.minbet,t2.Minbet,GETDATE(),1
 		FROM #Dep_CustSetting_Agent s
 			INNER JOIN #GlobalSetting T2 ON s.sporttypeID = t2.SportType AND s.bettypeID = t2.BetType AND t2.Minbet <> 0
-		WHERE s.minbet > T2.minbet AND s.Maxbet >= 1
+		WHERE s.minbet < T2.minbet AND s.Maxbet >= 1
 		
 		IF @count > 200000
 		BEGIN
@@ -1680,7 +1680,7 @@ BEGIN
 				AND ci.roleid = 1
 				AND ci.custid NOT IN(SELECT custid FROM #Trade)	
 				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
-				AND cs.minbet> T2.minbet AND cs.Maxbet >= 1
+				AND cs.minbet< T2.minbet AND cs.Maxbet >= 1
 			OPTION (OPTIMIZE FOR (@srecommend = 10580722))
 		END
 		ELSE
@@ -1694,7 +1694,7 @@ BEGIN
 				AND ci.roleid = 1
 				AND ci.custid NOT IN(SELECT custid FROM #Trade)	
 				AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
-				AND cs.minbet> T2.minbet AND cs.Maxbet >= 1		
+				AND cs.minbet< T2.minbet AND cs.Maxbet >= 1		
 		END	
 
 	END
