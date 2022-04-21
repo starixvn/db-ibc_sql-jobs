@@ -20,7 +20,8 @@ AS
 		- 20210423@Danny: exclude ticket Void/Reject/Refund [Redmine: #153907]
 		- 20210518@Danny: Exclude Jackpot ticket [Redmine: #153924]
 		- 20210531@Danny: Exclude orphan ticket from job check Epositiontaking IS NULL [Redmine: #156063]
-	
+		- 20220421@July: Allbet - Exclude bettype 2499 (promotion) [Redmine: #171770]
+
 	Param's Expanation:
 		@Duration = 'hour', 'lastday'
 		@CheckMode  1: Wrong Epositiontaking vs ExtraPT
@@ -64,7 +65,7 @@ BEGIN
 			INSERT INTO @ExcludeBettype (Bettype, Reftable)
 			SELECT DISTINCT Bettype, Reftable
 			FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
-			WHERE BetType IN (2199, 2399, 2999, 4298, 17004, 3150)
+			WHERE BetType IN (2199, 2399, 2999, 4298, 17004, 3150, 2499)
 
 			--- I.I: Wrong Epositiontaking vs ExtraPT
 			------I.I.a. Bettrans
