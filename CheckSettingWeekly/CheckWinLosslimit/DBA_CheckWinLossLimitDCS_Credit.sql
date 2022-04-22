@@ -10,6 +10,7 @@ AS
 	DB: DBCHECK.CheckResultDB
 	Revisions:
 		-20191025@Johnson: initial sp [redmine:#122666]
+		-20200526@Tiara: Check offered products only [Redmine: #134813]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -20,19 +21,53 @@ BEGIN
 	CREATE TABLE #AgentWinLossLimit (custid INT, mrecommend INT, sporttype SMALLINT, bettype SMALLINT, MaxWinLimit SMALLMONEY, MaxLossLimit	money, IsAutoReset BIT, PRIMARY KEY(CustID,SportType,Bettype))
 	CREATE TABLE #MemberWinLossLimit (custid INT, recommend INT, mrecommend INT, sporttype SMALLINT, bettype SMALLINT, MaxWinLimit SMALLMONEY, MaxLossLimit	money, IsAutoReset BIT, PRIMARY KEY(CustID,SportType,Bettype))
 	DECLARE @SportBettype TABLE (ProductID INT, sporttype INT, bettype INT, WinLimit BIT)
-	DECLARE @currency INT
-	
+	DECLARE @currency INT, @Site VARCHAR(10), @SiteID INT
+
 	SELECT @currency = currency FROM CheckCustDB.dbo.custinfo WITH(NOLOCK)
 	WHERE custid = @srecommend
 	
+	CREATE TABLE #OfferedProductList(
+		[ProductID] [tinyint] NOT NULL,
+		[SportType] [smallint] NOT NULL,
+		[BetType] [smallint] NOT NULL,
+		[IsHidden] [BIT] NOT NULL
+	)
+	SELECT @Site = Site, @Currency = currency FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE CustID = @srecommend
+	SELECT @SiteID = siteid FROM CheckCustDB.dbo.Site WITH(NOLOCK) WHERE site = @Site
+
+	INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden)
+	SELECT DISTINCT RealProductId, SportType, BetType, IsHidden
+	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH (NOLOCK)
+		CROSS JOIN CheckCustDB.dbo.Site s WITH (NOLOCK)
+	WHERE SettingType IN (4,11,13) AND ps.SettingStatus = 0
+
+	UPDATE op
+	SET op.IsHidden = stt.IsHidden
+	FROM #OfferedProductList op
+		INNER JOIN CheckCustDB.dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON op.SportType = stt.SportType AND op.Bettype = stt.Bettype
+	WHERE stt.Currency = @Currency AND (stt.SiteID = @SiteID OR stt.SiteID = 0)
+			
+	UPDATE op
+	SET op.IsHidden = stt.IsHidden
+	FROM #OfferedProductList op
+		INNER JOIN CheckCustDB.dbo.ProductStatusSiteCurrency stt WITH(NOLOCK) ON op.SportType = stt.SportType AND op.Bettype = stt.Bettype
+	WHERE (stt.Currency = @Currency OR stt.Currency = 0 ) AND stt.SiteID = @SiteID
+
+	UPDATE op
+	SET op.IsHidden = CASE WHEN @Site = 'IMBC' THEN 0 ELSE 1 END
+	FROM #OfferedProductList op
+	WHERE ProductID = 20
+
 	INSERT INTO @SportBettype (productID,sporttype,bettype,WinLimit)
-	SELECT productID,sporttype,bettype, CASE WHEN SettingType = 12 THEN 0 ELSE 1 END
+	SELECT ps.productID,ps.sporttype,ps.bettype, CASE WHEN SettingType = 12 THEN 0 ELSE 1 END
 	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH(NOLOCK) 
-	WHERE SettingType in (6,12)
+		INNER JOIN #OfferedProductList op ON ps.Sporttype = op.SportType AND ps.Bettype = OP.BetType
+	WHERE ps.SettingType in (6,12)
 		AND ps.SettingStatus = 0
-		AND sporttype = CASE WHEN @sporttype = 0 THEN sporttype ELSE @sporttype END
-		AND sporttype NOT IN (245)
-		
+		AND op.IsHidden = 0
+		AND ps.sporttype = CASE WHEN @sporttype = 0 THEN ps.sporttype ELSE @sporttype END
+		AND ps.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSettingDCS')) 
+
 	INSERT INTO #SuperWinLossLimit (custid, sporttype, bettype, MaxWinLimit, MaxLossLimit, IsAutoReset)
 	SELECT custid, cs.sporttype, cs.bettype, ISNULL(MaxWinLimit,0), ISNULL(MaxLossLimit,0), ISNULL(IsAutoReset,0)
 	FROM CheckCustDB.dbo.CustWinLossLimit_Agent cs WITH (NOLOCK)
@@ -168,6 +203,7 @@ BEGIN
 			INNER JOIN @SportBettype s ON scs.sporttype = s.sporttype AND scs.bettype = s.bettype	
 			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON s.productID = g.productID AND g.ExchangeId = @currency
 		WHERE scs.MaxLossLimit < g.MinLossLimit
+			AND scs.MaxLossLimit <> 0
 		
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 505, cs.sporttype, cs.bettype, cs.custid as custidA, 0 custidB, cs.MaxLossLimit , g.MinLossLimit
@@ -175,6 +211,7 @@ BEGIN
 			INNER JOIN @SportBettype s ON cs.sporttype = s.sporttype AND cs.bettype = s.bettype	
 			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON s.productID = g.productID AND g.ExchangeId = @currency
 		WHERE cs.MaxLossLimit < g.MinLossLimit
+			AND cs.MaxLossLimit <> 0
 		
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 505, cs.sporttype, cs.bettype, cs.custid as custidA, 0 custidB, cs.MaxLossLimit , g.MinLossLimit
@@ -182,6 +219,7 @@ BEGIN
 			INNER JOIN @SportBettype s ON cs.sporttype = s.sporttype AND cs.bettype = s.bettype	
 			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON s.productID = g.productID AND g.ExchangeId = @currency
 		WHERE cs.MaxLossLimit < g.MinLossLimit
+			AND cs.MaxLossLimit <> 0
 		
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 505, cs.sporttype, cs.bettype, cs.custid as custidA, 0 custidB, cs.MaxLossLimit , g.MinLossLimit
@@ -189,6 +227,7 @@ BEGIN
 			INNER JOIN @SportBettype s ON cs.sporttype = s.sporttype AND cs.bettype = s.bettype	
 			INNER JOIN CheckCustDB.dbo.LossLimit_GlobalSetting g WITH(NOLOCK) ON s.productID = g.productID AND g.ExchangeId = @currency
 		WHERE cs.MaxLossLimit < g.MinLossLimit
+			AND cs.MaxLossLimit <> 0
 	END 
 
 	--Super's Maximum Loss < Master's Maximum Loss		
