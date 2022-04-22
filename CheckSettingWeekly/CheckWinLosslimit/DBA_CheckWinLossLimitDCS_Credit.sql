@@ -10,7 +10,7 @@ AS
 	DB: DBCHECK.CheckResultDB
 	Revisions:
 		- 20191025@Johnson: initial sp [redmine:#122666]
-		-20200526@Tiara: Check offered products only [Redmine: #134813]
+		- 20200526@Tiara: Check offered products only [Redmine: #134813]
 		- 20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
 	Parameter's Explanations:
 */
