@@ -25,9 +25,10 @@ AS
 		- 20210201@July: Check Data Consistency for Four Guardians - [Redmine: #149821]
 		- 20210713@July: Exclude bettypes for VGaming - [Redmine: #158179]
 		- 20210914@July: Saba.club - Exclude new bettype 1644 - [Redmine: #160869]
-		- 20210924@July: Vgaming - Exclue bettype The Legend of Heroes - [Redmine:#162127]
-		- 20220221@July: Spadegaming - Exclue bettype 4599 (contribution bettype) - [Redmine:#168750]
+		- 20210924@July: Vgaming - Exclude bettype The Legend of Heroes - [Redmine:#162127]
+		- 20220221@July: Spadegaming - Exclude bettype 4599 (contribution bettype) - [Redmine:#168750]
 		- 20220418@July: Saba.games - Exclude new bettype 1653 (Nightclub Lady) - [Redmine: #171560]
+		- 20220421@July: Allbet - Exclude bettype 2499 & AESexy - Exclue bettype 3150 - [Redmine:#171770]
 
 	Param's Expanation:
 */
@@ -51,6 +52,7 @@ BEGIN
 		WHERE	ProductID = @ProductId
 				AND b.stake <= 0
 				AND b.status <> 'Completed'
+				AND b.gameID NOT IN (2499, 3150)
 	END
 	ELSE IF @ProductId IN (165, 248) OR @tablename = 'bettransRNG'
 	BEGIN
