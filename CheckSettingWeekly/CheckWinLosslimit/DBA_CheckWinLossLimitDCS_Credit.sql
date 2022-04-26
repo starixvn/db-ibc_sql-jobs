@@ -9,8 +9,9 @@ AS
 	Task: Check winloss limit setting for credit customers for dcs product
 	DB: DBCHECK.CheckResultDB
 	Revisions:
-		-20191025@Johnson: initial sp [redmine:#122666]
-		-20200526@Tiara: Check offered products only [Redmine: #134813]
+		- 20191025@Johnson: initial sp [redmine:#122666]
+		- 20200526@Tiara: Check offered products only [Redmine: #134813]
+		- 20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -78,27 +79,33 @@ BEGIN
 	SELECT cs.custid, cs.sporttype, cs.bettype, ISNULL(MaxWinLimit,0), ISNULL(MaxLossLimit,0), ISNULL(IsAutoReset,0)
 	FROM CheckCustDB.dbo.CustWinLossLimit_Agent cs WITH (NOLOCK)
 		INNER JOIN CheckCustDB.dbo.custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid
+		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN @SportBettype s ON cs.sporttype = s.sporttype AND cs.bettype =s.bettype
 	WHERE ci.srecommend = @srecommend
-		AND roleid = 3
+		AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
+		AND ci.roleid = 3
 		AND enabled = 1
 	
 	INSERT INTO #AgentWinLossLimit (custid, mrecommend, sporttype, bettype, MaxWinLimit, MaxLossLimit, IsAutoReset)
-	SELECT cs.custid, mrecommend, cs.sporttype, cs.bettype, ISNULL(MaxWinLimit,0), ISNULL(MaxLossLimit,0), ISNULL(IsAutoReset,0)
+	SELECT cs.custid, ci.mrecommend, cs.sporttype, cs.bettype, ISNULL(MaxWinLimit,0), ISNULL(MaxLossLimit,0), ISNULL(IsAutoReset,0)
 	FROM CheckCustDB.dbo.CustWinLossLimit_Agent cs WITH (NOLOCK)
 		INNER JOIN CheckCustDB.dbo.custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid
+		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN @SportBettype s ON cs.sporttype = s.sporttype AND cs.bettype =s.bettype
 	WHERE ci.srecommend = @srecommend
-		AND roleid = 2
+		AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
+		AND ci.roleid = 2
 		AND enabled = 1
 		
 	INSERT INTO #MemberWinLossLimit (custid, mrecommend, recommend, sporttype, bettype, MaxWinLimit, MaxLossLimit, IsAutoReset)
-	SELECT cs.custid, mrecommend, recommend, cs.sporttype, cs.bettype, ISNULL(MaxWinLimit,0), ISNULL(MaxLossLimit,0), ISNULL(IsAutoReset,0)
+	SELECT cs.custid, ci.mrecommend, ci.recommend, cs.sporttype, cs.bettype, ISNULL(MaxWinLimit,0), ISNULL(MaxLossLimit,0), ISNULL(IsAutoReset,0)
 	FROM CheckCustDB.dbo.CustWinLossLimit_Member cs WITH (NOLOCK)
 		INNER JOIN CheckCustDB.dbo.custinfo ci WITH(NOLOCK) ON ci.custid = cs.custid
+		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN @SportBettype s ON cs.sporttype = s.sporttype AND cs.bettype =s.bettype
 	WHERE ci.srecommend = @srecommend
-		AND roleid = 1	
+		AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
+		AND ci.roleid = 1	
 		AND enabled = 1
 		
 	--missing settings
@@ -117,9 +124,11 @@ BEGIN
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 501, s.sporttype, s.bettype, ci.custid as custidA, 0, 0 , 0
 		FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)
+			INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS JOIN (SELECT * FROM @SportBettype ) s
 		WHERE ci.srecommend = @srecommend
-			AND roleid = 3
+			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
+			AND ci.roleid = 3
 			AND enabled = 1
 			AND NOT EXISTS (SELECT 1 FROM #MasterWinLossLimit cs 
 						WHERE ci.custid = cs.custid
@@ -130,9 +139,11 @@ BEGIN
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 501, s.sporttype, s.bettype, ci.custid as custidA, 0, 0 , 0
 		FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)
+			INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS JOIN (SELECT * FROM @SportBettype ) s
 		WHERE ci.srecommend = @srecommend
-			AND roleid = 2
+			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
+			AND ci.roleid = 2
 			AND enabled = 1
 			AND NOT EXISTS (SELECT 1 FROM #AgentWinLossLimit cs 
 						WHERE ci.custid = cs.custid
@@ -143,9 +154,11 @@ BEGIN
 		INSERT INTO CheckWinLossLimitResult_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT 501, s.sporttype, s.bettype, ci.custid as custidA, 0, 0 , 0
 		FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)
+			INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS JOIN (SELECT * FROM @SportBettype ) s
 		WHERE ci.srecommend = @srecommend
-			AND roleid = 1
+			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
+			AND ci.roleid = 1
 			AND enabled = 1
 			AND NOT EXISTS (SELECT 1 FROM #MemberWinLossLimit cs 
 						WHERE ci.custid = cs.custid

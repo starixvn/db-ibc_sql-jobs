@@ -15,6 +15,7 @@ AS
 		- 20200818@Johnson: check duplicate stakelevel [redmine:#139677]
 		-20200904@Elodie: Modify rule to check unlimited choice stake level at member level [RedmineID:#134156]
 		-20200909@Winfred: check Non offered stakelevel [redmine:#141236]
+		- 20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -96,9 +97,11 @@ BEGIN
 	SELECT cs.custid, cs.sporttype, cs.bettype, StakeLevelList
 	FROM CheckCustDB.dbo.CustStakeLevel_Agent cs WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.custinfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN @sportBettypeFilter t ON cs.sporttype = t.sporttype
 											AND cs.bettype = t.bettype
-	WHERE ci.custid = @srecommend	
+	WHERE ci.custid = @srecommend
+		AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)	
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,72,27,28)
 	
@@ -106,32 +109,38 @@ BEGIN
 	SELECT cs.custid, cs.sporttype,cs.bettype,StakeLevelList
 	FROM CheckCustDB.dbo.CustStakeLevel_Agent cs WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN @sportBettypeFilter t ON cs.sporttype = t.sporttype
 											AND cs.bettype = t.bettype
 	WHERE ci.srecommend = @srecommend
-		AND roleid = 3
+		AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
+		AND ci.roleid = 3
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,72,27,28)
 			
 	INSERT INTO #AgentStakeLevel(custid,mrecommend,sporttype,bettype,StakeLevelList)
-	SELECT cs.custid, mrecommend, cs.sporttype, cs.bettype, StakeLevelList
+	SELECT cs.custid, ci.mrecommend, cs.sporttype, cs.bettype, StakeLevelList
 	FROM CheckCustDB.dbo.CustStakeLevel_Agent cs WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN @sportBettypeFilter t ON cs.sporttype = t.sporttype
 											AND cs.bettype = t.bettype
 	WHERE ci.srecommend = @srecommend
-		AND roleid = 2
+		AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
+		AND ci.roleid = 2
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,72,27,28)
 			
 	INSERT INTO #MemberStakeLevel(custid,recommend,sporttype,bettype,StakeLevelList)
-	SELECT cs.custid, recommend, cs.sporttype, cs.bettype, StakeLevelList
+	SELECT cs.custid, ci.recommend, cs.sporttype, cs.bettype, StakeLevelList
 	FROM CheckCustDB.dbo.CustStakeLevel_Member cs WITH(NOLOCK)
 		INNER JOIN CheckCustDB.dbo.CustInfo ci WITH(NOLOCK) ON cs.custid = ci.custid
+		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN @sportBettypeFilter t ON cs.sporttype = t.sporttype
 											AND cs.bettype = t.bettype
 	WHERE ci.srecommend = @srecommend
-		AND roleid = 1
+		AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
+		AND ci.roleid = 1
 		AND Enabled = 1
 		AND ci.Currency NOT IN (20,72,27,28)
 	-- End of DATA PREPARATION	
@@ -142,9 +151,11 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.custInfo ci WITH (NOLOCK)
+			INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE CI.roleid = 4
-			AND ci.srecommend = @srecommend
+			AND ci.srecommend = @srecommend  
+			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)		
 			AND NOT EXISTS (SELECT 1 FROM #SuperStakeLevel cs2 
@@ -156,9 +167,11 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.custInfo ci WITH (NOLOCK)
+			INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE CI.roleid = 3
-			AND ci.srecommend = @srecommend
+			AND ci.srecommend = @srecommend  
+			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)	
 			AND NOT EXISTS (SELECT 1 FROM #MasterStakeLevel cs2 
@@ -170,9 +183,11 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.custInfo ci WITH (NOLOCK)
+			INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE CI.roleid = 2
-			AND ci.srecommend = @srecommend
+			AND ci.srecommend = @srecommend  
+			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)		
 			AND NOT EXISTS (SELECT 1 FROM #AgentStakeLevel cs2 
@@ -184,9 +199,11 @@ BEGIN
 		INSERT INTO CheckResultStakeLevel_Credit(RuleID,SportType,bettype,CustIDA,CustIDB,ValueA,ValueB) 
 		SELECT DISTINCT 301 as RuleId,t.sportType,t.bettype,ci.CustID custidA,0 as custidB, '' as ValueA, '' ValueB
 		FROM CheckCustDB.dbo.custInfo ci WITH (NOLOCK)
+			INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS APPLY (SELECT SportType, bettype FROM #GlobalStakeLevel) t
 		WHERE CI.roleid = 1
-			AND ci.srecommend = @srecommend
+			AND ci.srecommend = @srecommend  
+			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)	
 			AND NOT EXISTS (SELECT 1 FROM #MemberStakeLevel cs2 
