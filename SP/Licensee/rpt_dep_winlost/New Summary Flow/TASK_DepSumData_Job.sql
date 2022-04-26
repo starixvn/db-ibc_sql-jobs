@@ -12,6 +12,7 @@ AS
 		- 20170728@Patrick: Remove code check HighCPU
 		- 20180618@Sophia: Change the flag of Movebet and Balanceup  [redmine: #97071]
 		- 20200417@Percy: Remove code gen data for MemberDailyIA [RedmineID: #132740]
+		- 20220422@Sol: LAP - Enhance database jobs - [RedmineID: #171747]
 		
 	Input Params:	
 	- @IdlingHour: The time when the system is more idle
@@ -29,7 +30,7 @@ BEGIN
 	SELECT  @CurrentHour	= DATEPART(HOUR, CURRENT_TIMESTAMP)
 
 	-- Check system movebet and balanceup
-	IF EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isMovingBet_Local','isArchivingBet_Local','isArchivingDEPdata','isSummaryingDEPdata') AND VValue <> '0')
+	IF EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isArchivingBet_Local','isArchivingDEPdata','isSummaryingDEPdata') AND VValue <> '0')
 	BEGIN
 		PRINT 'EXEC TASK_DepSumDataJob: MoveBet/BalanceUp/ArchivingDEPdata/SummaryingDEPdata is performing ==> RETURN'
 		RETURN
@@ -47,10 +48,6 @@ BEGIN
 		IF (NOT EXISTS (SELECT 1 FROM bodb_Report.dbo.rptDepWinlost_Log WITH (NOLOCK) WHERE LogDate = @CurrentDate AND LogHour = @CurrentHour AND StatusID = 1 AND LogType BETWEEN 1 AND 3) --Daily/Manually/Hourly Type
 					AND 0 = CASE WHEN @CurrentHour < @IdlingHour THEN 0 ELSE @CurrentHour % 2 END)
 		BEGIN
-			EXEC dbo.Task_rptWinLost_UpdateTable @winlostdate = @CurrentDate
-			EXEC dbo.Task_rptWinLost_UpdateTable @winlostdate = @Yesterday
-			EXEC dbo.Task_rptWinLost_UpdateTable @winlostdate = @Earlyday
-			
 			EXEC bodb_Report.dbo.TASK_HourlySummaryDepData
 		END
 		ELSE -- run realtime

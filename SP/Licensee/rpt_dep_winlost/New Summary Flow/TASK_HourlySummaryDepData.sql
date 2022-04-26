@@ -16,6 +16,7 @@ AS
 	Revisions:
 		- 20161004@Francis: Check movebet schedule to regen data for bettrans14
 		- 20210518@Percy: Change code to get MoveBetsDay [RedmineID: #154866]
+		- 20220422@Sol: LAP - Enhance database jobs - [RedmineID: #171747]
 
 	Input Params:	
 		- @isDailyArc:	-0: Called for data re-summary of hourly summary task (data will be re-summarize from the minimum day of early day and manually summarized day til today)
@@ -63,12 +64,10 @@ BEGIN
 	SELECT @MaxDate = CONVERT(DATE,CURRENT_TIMESTAMP,112)
 	SELECT @MinDate = DATEADD(DAY,-2,@MaxDate)
 	
-	
-	
 	--Re-summarize from 2 days before MoveBetDay for BetTrade Comm ClosingBalance case
-	IF @isDailyArc = 1 AND DATEADD(DAY,-2, @MoveBetsDay) < @MinDate
-		SELECT @MinDate = DATEADD(DAY, -2, @MoveBetsDay)
-	IF @isManual = 1 AND @MinManualDate < @MinDate
+	IF (@isDailyArc = 1)
+		SELECT @MinDate = @BalanceUpDay
+	ELSE IF (@isManual = 1 AND @MinManualDate < @MinDate)
 		SELECT @MinDate = @MinManualDate
 		
 	--1.Check if there is any day to summarize or not
