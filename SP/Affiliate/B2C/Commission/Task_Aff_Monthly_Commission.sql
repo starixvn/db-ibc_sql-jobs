@@ -14,6 +14,7 @@ AS
 		- 20210301@Percy: Do not calculate commission when affiliate is closed [RedmineID: #149213]
 		- 20210317@Percy: Change commission formula [RedmineID: #151391]
 		- 20210714@Percy: Calculate P2P Fee [RedmineID: #157958]
+		- 20220307@Malcolm: Revenue Share Calculation Enhancement [RedmineId: #167335]
 */
 
 BEGIN
@@ -63,6 +64,7 @@ BEGIN
 			AffId				INT,
 			GroupId				INT,
 			ProductId			INT,
+			GroupProductId		TINYINT,
 			Deposit				MONEY,
 			Withdrawal			MONEY,
 			Bonus				MONEY,
@@ -83,7 +85,8 @@ BEGIN
 			CommissionRate		FLOAT,
 			Commission			MONEY,
 			StraightCommission	MONEY,
-			SubAffCommission	MONEY
+			SubAffCommission	MONEY,
+			IsMultiGroupProduct BIT
 		)
 
 		-- Uncalculated Months
@@ -93,6 +96,7 @@ BEGIN
 			AffId,
 			GroupId,
 			ProductId,
+			GroupProductId,
 			Deposit,
 			Withdrawal,
 			Bonus,
@@ -111,7 +115,8 @@ BEGIN
 			CommissionRate,
 			Commission,
 			StraightCommission,
-			SubAffCommission
+			SubAffCommission,
+			IsMultiGroupProduct
 		)
 		EXEC dbo.Aff_Commission_UnCalc
 			@AffIds				= 'all',
@@ -120,6 +125,7 @@ BEGIN
 			@ProductIds			= '0',
 			@BaseCurrency		= 0,
 			@IsSumAll			= 0,
+			@IsForJob           = 1,
 			@GetRowTotalOnly	= 0
 	END
 
@@ -133,6 +139,9 @@ BEGIN
 	IF @IsForceUpdate = 1
 	BEGIN
 		DELETE dbo.rptAffCommission WITH (ROWLOCK, UPDLOCK)
+		WHERE MonthDate = @LastDayOfMonth
+
+		DELETE dbo.rptAffCommissionDetail WITH (ROWLOCK, UPDLOCK)
 		WHERE MonthDate = @LastDayOfMonth
 
 		DELETE dbo.rptAffMonthly WITH (ROWLOCK, UPDLOCK)
@@ -192,6 +201,55 @@ BEGIN
 		CommissionRate
 	FROM #TempCommission
 	WHERE ProductId = 0
+
+	INSERT INTO dbo.rptAffCommissionDetail
+	(
+		MonthDate,
+		AffId,
+		GroupId,
+		ProductId,
+		GroupProductId,
+		Deposit,
+		Withdrawal,
+		Bonus,
+		Rebate,
+		Turnover,
+		Winloss,
+		Revenue,
+		GrossWinloss,
+		NetWinloss,
+		ActivePlayer,
+		P2PFee,
+		PlatFormFee,
+		OperationalFee,
+		DepositFee,
+		WithdrawalFee,
+		CommissionRate
+	)
+	SELECT
+		MonthDate,
+		AffId,
+		GroupId,
+		0 AS ProductId,
+		GroupProductId,
+		Deposit,
+		Withdrawal,
+		Bonus,
+		Rebate,
+		Turnover,
+		Winloss,
+		Revenue,
+		GrossWinloss,
+		NetWinloss,
+		ActivePlayer,
+		P2PFee,
+		PlatFormFee,
+		OperationalFee,
+		DepositFee,
+		WithdrawalFee,
+		CommissionRate
+	FROM #TempCommission
+	WHERE ProductId = -1
 
 	INSERT INTO dbo.rptAffMonthly
 	(

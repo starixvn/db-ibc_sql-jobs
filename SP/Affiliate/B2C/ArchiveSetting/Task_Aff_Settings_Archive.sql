@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
 		- 20210714@Percy: Add table StraightSettingHistory [RedmineID: #157958]
+		- 20220307@Malcolm: Revenue Share Calculation Enhancement [RedmineId: #167335]
 */
 
 BEGIN
@@ -36,12 +37,12 @@ BEGIN
 
 	-- Archive settings
 	BEGIN
-		INSERT INTO dbo.TierSettingHistory (GroupId,TierId,MonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission)
-		SELECT GroupId,TierId,@MonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission
+		INSERT INTO dbo.TierSettingHistory (GroupId, GroupProductId, TierId,MonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission,IsActivePlayerSum)
+		SELECT GroupId,GroupProductId,TierId,@MonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission,IsActivePlayerSum
 		FROM dbo.TierSetting t WITH (NOLOCK)
 
-		INSERT INTO dbo.TierSettingHistory (GroupId,TierId,MonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission)
-		SELECT GroupId,TierId,@NextMonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission
+		INSERT INTO dbo.TierSettingHistory (GroupId,GroupProductId,TierId,MonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission,IsActivePlayerSum)
+		SELECT GroupId,GroupProductId,TierId,@NextMonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission,IsActivePlayerSum
 		FROM dbo.TierSetting WITH (NOLOCK)
 
 		INSERT INTO dbo.AffGroupHistory (AffId,MonthDate,GroupId,ParentAffId,AllParentAffId)
