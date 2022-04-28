@@ -20,6 +20,8 @@ AS
 BEGIN
 
 	DECLARE  @startDate		DATETIME
+		, @ErrMsg			VARCHAR(300)
+
 	SET  @startDate  = GETDATE()
 
 	WHILE (1=1)
@@ -35,9 +37,7 @@ BEGIN
 			BEGIN TRY
 				EXEC dbo.Task_BalanceRecord_Insert 1000
 			END TRY
-			BEGIN CATCH
-				GOTO STEP1
-			END CATCH
+			BEGIN CATCH				SET @ErrMsg = ERROR_MESSAGE() 				IF @ErrMsg = '* LOOP *'				BEGIN					GOTO STEP1				END				ELSE				BEGIN					RAISERROR ('EXEC dbo.Task_BalanceRecord_Insert_maxtest failed!', -- Message text.						16, -- Severity.						1 -- State.						);				END				END CATCH
 		END
 
 		IF DATEDIFF(SECOND, @startDate, GETDATE() ) >= 600 -- loop within 10 minutes

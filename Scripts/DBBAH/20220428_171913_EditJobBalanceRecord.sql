@@ -10,8 +10,8 @@ USE [msdb]
 GO
 EXEC msdb.dbo.sp_update_jobstep @job_name=N'bodb02 : Task_BalanceRecord_Insert'
 		,@step_id=2
-		,@on_success_action=4
-		,@on_success_step_id=3
+		,@on_success_action=3
+		,@on_success_step_id=0
 		,@on_fail_action=2
 		,@step_name=N'Call SP Task_BalanceRecord_Control_Job'
 		,@command=N'EXEC dbo.Task_DBBAH_Control_Job  @Jobname = ''bodb02 : Task_BalanceRecord_Insert'' , @Waitfordelay = ''00:00:08.000'''
