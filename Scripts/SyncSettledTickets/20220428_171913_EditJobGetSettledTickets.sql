@@ -14,7 +14,7 @@ EXEC msdb.dbo.sp_update_jobstep @job_name=N'bodb02: SSB - Get settled tickets'
 		,@on_success_step_id=2
 		,@on_fail_action=2
 		,@step_name=N'Call SP Task_SSB_SettledTickets_Control_Job'
-		,@command=N'EXEC dbo.Task_SSB_SettledTickets_Control_Job  @Jobname = ''bodb02: SSB - Get settled tickets'' , @Waitfordelay = ''00:00:00.280'''
+		,@command=N'EXEC dbo.Task_SSB_SettledTickets_Control_Job  @Jobname = ''bodb02: SSB - Get settled tickets'' , @Waitfordelay = ''00:00:00.030'''
 GO
 
 

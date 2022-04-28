@@ -14,7 +14,7 @@ EXEC msdb.dbo.sp_update_jobstep @job_name=N'bodb02 : Task_BalanceRecord_Insert'
 		,@on_success_step_id=3
 		,@on_fail_action=2
 		,@step_name=N'Call SP Task_BalanceRecord_Control_Job'
-		,@command=N'EXEC dbo.Task_BalanceRecord_Control_Job  @Jobname = ''bodb02 : Task_BalanceRecord_Insert'' , @Waitfordelay = ''00:00:00.280'''
+		,@command=N'EXEC dbo.Task_BalanceRecord_Control_Job  @Jobname = ''bodb02 : Task_BalanceRecord_Insert'' , @Waitfordelay = ''00:00:08.000'''
 GO
 
 EXEC msdb.dbo.sp_update_jobstep @job_name=N'bodb02 : Task_BalanceRecord_Insert'
@@ -23,7 +23,7 @@ EXEC msdb.dbo.sp_update_jobstep @job_name=N'bodb02 : Task_BalanceRecord_Insert'
 		,@on_success_step_id=2
 		,@on_fail_action=2 
 		,@step_name=N'Delay 20 seconds'
-		,@command=N'WAITFOR DELAY ''00:00:20.000'''
+		,@command=N'WAITFOR DELAY ''00:00:08.000'''
 GO
 
 EXEC msdb.dbo.sp_delete_jobstep  @job_name=N'bodb02 : Task_BalanceRecord_Insert'
