@@ -1,5 +1,5 @@
 /*<info serverAlias="DBAGE-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE Task_SSB_SettledTickets_Control_Job
+ALTER PROCEDURE Task_DBAGE_Control_Job
 (
 	 @Jobname VARCHAR(100)	
 	,@Waitfordelay VARCHAR(12) = NULL

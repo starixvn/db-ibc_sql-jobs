@@ -1,5 +1,5 @@
 /*<info serverAlias="DBBAH-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE Task_BalanceRecord_Control_Job
+ALTER PROCEDURE Task_DBBAH_Control_Job
 (
 	 @Jobname VARCHAR(100)	
 	,@Waitfordelay VARCHAR(12) = NULL
