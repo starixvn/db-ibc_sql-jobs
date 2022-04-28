@@ -20,6 +20,7 @@ AS
 		- 20210909@Percy: Re-pull data every 6 hours [RedmineID: #155230]
 		- 20211028@Percy: Add AdjustmentInfo, DrawLog, LogAdminAdjustWallet [RedmineID: #161048]
 		- 20211118@Percy: Add LogAdminAdjustWallet [RedmineID: #161048]
+		- 20220412@Percy: Add ReferralMLog [RedmineID: #171245]
 */
 
 BEGIN
@@ -77,6 +78,10 @@ BEGIN
 	-- LogAdminAdjustWallet
 	INSERT INTO @tblDataSource (DataSource, KeyValue)
 	SELECT 'LogAdminAdjustWallet', CONVERT(VARCHAR(50), MIN(TransferId)) FROM dbo.LogAdminAdjustWallet WITH (NOLOCK) WHERE WinlostDate >= @WinlostDate
+
+	-- ReferralMLog
+	INSERT INTO @tblDataSource (DataSource, KeyValue)
+	SELECT 'ReferralMLog', CONVERT(VARCHAR(50), MIN(Id)) FROM dbo.ReferralMLog WITH (NOLOCK) WHERE WinlostDate >= @WinlostDate
 
 	DELETE @tblDataSource WHERE KeyValue IS NULL OR DataSource <> @DataSource
 

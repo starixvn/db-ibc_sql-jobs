@@ -113,7 +113,7 @@ BEGIN
 			INSERT INTO #__CustBonusSummary (CustId, CurrencyId, SiteId, DataSource, BonusTime, BonusAmount)
 			SELECT CustId, CurrencyId, SiteId, 'ReferralMLog' AS DataSource
 				,DATEADD(HOUR, DATEPART(HOUR, CreateTime), CONVERT(VARCHAR(10), CreateTime, 120)) AS BonusTime -- date & hour
-				,SUM(RefferalAmount / CASE WHEN CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS BonusAmount
+				,SUM(ReferralAmount / CASE WHEN CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS BonusAmount
 			FROM dbo.ReferralMLog WITH (NOLOCK)
 			WHERE WinlostDate = @WinlostDate
 			GROUP BY CustId, CurrencyId, SiteId

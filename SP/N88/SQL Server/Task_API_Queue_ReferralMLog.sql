@@ -46,7 +46,7 @@ BEGIN
 		,CurrencyId		INT
 		,Username		VARCHAR(50)
 		,SiteId			INT
-		,RefferalAmount	DECIMAL(20, 4)
+		,ReferralAmount	DECIMAL(20, 4)
 		,Memo			VARCHAR(200)
 		,RelId			BIGINT
 		,CreateTime		DATETIME
@@ -87,7 +87,7 @@ BEGIN
 					,CurrencyId
 					,Username
 					,SiteId
-					,RefferalAmount
+					,ReferralAmount
 					,Memo
 					,RelId
 					,CreateTime
@@ -98,7 +98,7 @@ BEGIN
 					,t.c.value('@currencyid', 'INT')
 					,t.c.value('@username', 'VARCHAR(50)')
 					,t.c.value('@siteid', 'INT')
-					,t.c.value('@refferalamount', 'DECIMAL(20, 4)')
+					,t.c.value('@referralamount', 'DECIMAL(20, 4)')
 					,t.c.value('@memo', 'VARCHAR(200)')
 					,t.c.value('@relid', 'BIGINT')
 					,NULLIF(t.c.value('@createtime', 'DATETIME'), '')
@@ -117,7 +117,7 @@ BEGIN
 					OR ISNULL(t.CurrencyId, 0) <> ISNULL(b.CurrencyId, 0)
 					OR ISNULL(t.UserName, '') <> ISNULL(b.UserName, '')
 					OR ISNULL(t.SiteId, 0) <> ISNULL(b.SiteId, 0)
-					OR ISNULL(t.RefferalAmount, 0) <> ISNULL(b.RefferalAmount, 0)
+					OR ISNULL(t.ReferralAmount, 0) <> ISNULL(b.ReferralAmount, 0)
 					OR ISNULL(t.Memo, '') <> ISNULL(b.Memo, '')
 					OR ISNULL(t.RelId, 0) <> ISNULL(b.RelId, 0)
 					OR ISNULL(t.CreateTime, '') <> ISNULL(b.CreateTime, '')
@@ -132,7 +132,7 @@ BEGIN
 							,b.CurrencyId = t.CurrencyId
 							,b.UserName = t.UserName
 							,b.SiteId = t.SiteId
-							,b.RefferalAmount = t.RefferalAmount
+							,b.ReferralAmount = t.ReferralAmount
 							,b.Memo = t.Memo
 							,b.RelId = t.RelId
 							,b.CreateTime = t.CreateTime
@@ -151,7 +151,7 @@ BEGIN
 							,CurrencyId
 							,Username
 							,SiteId
-							,RefferalAmount
+							,ReferralAmount
 							,Memo
 							,RelId
 							,CreateTime
@@ -162,7 +162,7 @@ BEGIN
 							,CurrencyId
 							,Username
 							,SiteId
-							,RefferalAmount
+							,ReferralAmount
 							,Memo
 							,RelId
 							,CreateTime
