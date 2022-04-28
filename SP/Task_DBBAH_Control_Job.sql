@@ -28,10 +28,16 @@ BEGIN
 		IF(@Jobname = 'bodb02 : Task_BalanceRecord_Insert')
 		BEGIN
 			--TransferData - BalanceTrigger to BalanceTrigger_ProcessData
-			EXEC dbo.Task_BalanceTrigger_TransferData 1000
+			STEP1:
+				EXEC dbo.Task_BalanceTrigger_TransferData 1000
 
 			--DELETE FROM balancetrigger with (rowlock)
-			EXEC dbo.Task_BalanceRecord_Insert 1000
+			BEGIN TRY
+				EXEC dbo.Task_BalanceRecord_Insert 1000
+			END TRY
+			BEGIN CATCH
+				GOTO STEP1
+			END CATCH
 		END
 
 		IF DATEDIFF(SECOND, @startDate, GETDATE() ) >= 600 -- loop within 10 minutes
