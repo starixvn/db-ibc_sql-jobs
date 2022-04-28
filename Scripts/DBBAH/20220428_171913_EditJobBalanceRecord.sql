@@ -22,7 +22,7 @@ EXEC msdb.dbo.sp_update_jobstep @job_name=N'bodb02 : Task_BalanceRecord_Insert'
 		,@on_success_action=4
 		,@on_success_step_id=2
 		,@on_fail_action=2 
-		,@step_name=N'Delay 20 seconds'
+		,@step_name=N'WAITFOR DELAY'
 		,@command=N'WAITFOR DELAY ''00:00:08.000'''
 GO
 
