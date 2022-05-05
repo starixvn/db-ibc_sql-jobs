@@ -32,7 +32,7 @@ BEGIN
 			BREAK
 
 		IF @Waitfordelay IS NOT NULL 
-			WAITFOR DELAY @Waitfordelay
+			WAITFOR DELAY @Waitfordelay -- [SSB - Get settled tickets] waitfor
 
 	END
 END
