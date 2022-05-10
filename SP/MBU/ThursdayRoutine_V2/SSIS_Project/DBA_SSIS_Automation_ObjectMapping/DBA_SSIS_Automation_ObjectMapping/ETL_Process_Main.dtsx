@@ -12,10 +12,45 @@
   DTS:ObjectName="ETL_Process_Main"
   DTS:PackageType="5"
   DTS:ProtectionLevel="0"
-  DTS:VersionBuild="115"
-  DTS:VersionGUID="{01152774-C1FA-41F8-858F-E5847AE692AF}">
+  DTS:VersionBuild="142"
+  DTS:VersionGUID="{CFC915B7-A63E-4B4D-B1AB-A0571B2E49AE}">
   <DTS:Property
     DTS:Name="PackageFormatVersion">8</DTS:Property>
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[DBTP]"
+      DTS:CreationName="ADO.NET:SQL"
+      DTS:DTSID="{CE6E8F08-62EE-4719-A198-370F5E3D1DCC}"
+      DTS:ObjectName="DBTP">
+      <DTS:PropertyExpression
+        DTS:Name="InitialCatalog">"bodb02"</DTS:PropertyExpression>
+      <DTS:PropertyExpression
+        DTS:Name="Password">("11nks3rv3r")</DTS:PropertyExpression>
+      <DTS:PropertyExpression
+        DTS:Name="ServerName">@[$Package::DBTP]</DTS:PropertyExpression>
+      <DTS:PropertyExpression
+        DTS:Name="UserName">@[$Project::UserID]</DTS:PropertyExpression>
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="Data Source=NB016-BOBBY\MSSQL2019;User ID=sqllink;Initial Catalog=bodb02;Connect Timeout=30;">
+          <DTS:Password
+            DTS:Name="Password"
+            Sensitive="1"></DTS:Password>
+        </DTS:ConnectionManager>
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+  <DTS:PackageParameters>
+    <DTS:PackageParameter
+      DTS:CreationName=""
+      DTS:DataType="8"
+      DTS:DTSID="{EF856C9B-8F87-4142-AA60-210558E81104}"
+      DTS:ObjectName="DBTP">
+      <DTS:Property
+        DTS:DataType="8"
+        DTS:Name="ParameterValue">NB016-BOBBY\MSSQL2019</DTS:Property>
+    </DTS:PackageParameter>
+  </DTS:PackageParameters>
   <DTS:Variables>
     <DTS:Variable
       DTS:CreationName=""
@@ -25,6 +60,15 @@
       DTS:ObjectName="BUDate">
       <DTS:VariableValue
         DTS:DataType="7">1/1/2001</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{B6A19736-7408-4D11-A35D-6808B3E1C923}"
+      DTS:IncludeInDebugDump="6789"
+      DTS:Namespace="User"
+      DTS:ObjectName="FailedCount">
+      <DTS:VariableValue
+        DTS:DataType="3">0</DTS:VariableValue>
     </DTS:Variable>
     <DTS:Variable
       DTS:CreationName=""
@@ -52,6 +96,15 @@
       DTS:ObjectName="grantTransfer">
       <DTS:VariableValue
         DTS:DataType="8">Transfer</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{AE275002-F79A-427C-AA12-9CF6E01C446E}"
+      DTS:IncludeInDebugDump="6789"
+      DTS:Namespace="User"
+      DTS:ObjectName="HasDiff">
+      <DTS:VariableValue
+        DTS:DataType="11">0</DTS:VariableValue>
     </DTS:Variable>
     <DTS:Variable
       DTS:CreationName=""
@@ -86,6 +139,15 @@
       DTS:IncludeInDebugDump="6789"
       DTS:Namespace="User"
       DTS:ObjectName="HasTVS">
+      <DTS:VariableValue
+        DTS:DataType="11">0</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{41A4BB45-0F40-462C-9597-218B01E060C3}"
+      DTS:IncludeInDebugDump="6789"
+      DTS:Namespace="User"
+      DTS:ObjectName="IsClosed">
       <DTS:VariableValue
         DTS:DataType="11">0</DTS:VariableValue>
     </DTS:Variable>
@@ -198,6 +260,15 @@
         DTS:DataType="8"
         xml:space="preserve"></DTS:VariableValue>
     </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{0B0FA9EC-0676-4964-929A-76736BFB09A7}"
+      DTS:IncludeInDebugDump="6789"
+      DTS:Namespace="User"
+      DTS:ObjectName="SuccessCount">
+      <DTS:VariableValue
+        DTS:DataType="3">0</DTS:VariableValue>
+    </DTS:Variable>
   </DTS:Variables>
   <DTS:Executables>
     <DTS:Executable
@@ -209,7 +280,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Check Bet14"
       DTS:TaskContact="Expression Task;Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="3">
+      DTS:ThreadHint="1">
       <DTS:Variables />
       <DTS:ObjectData>
         <ExpressionTask
@@ -233,6 +304,40 @@
       </DTS:ObjectData>
     </DTS:Executable>
     <DTS:Executable
+      DTS:refId="Package\Check SSIS Process Status"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{198a50bd-0a5a-43c2-b138-244a545f24bb}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Check SSIS Process Status"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="4">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{330E61D2-1A1F-41CC-8A40-D4D415B9827A}"
+          SQLTask:SqlStatementSource="EXEC [dbo].[SSIS_Process_CheckStatus] @SessionID=?"
+          SQLTask:ResultType="ResultSetType_SingleRow" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
+          <SQLTask:ResultBinding
+            SQLTask:ResultName="0"
+            SQLTask:DtsVariableName="User::IsClosed" />
+          <SQLTask:ResultBinding
+            SQLTask:ResultName="1"
+            SQLTask:DtsVariableName="User::FailedCount" />
+          <SQLTask:ResultBinding
+            SQLTask:ResultName="2"
+            SQLTask:DtsVariableName="User::SuccessCount" />
+          <SQLTask:ParameterBinding
+            SQLTask:ParameterName="0"
+            SQLTask:DtsVariableName="User::sessionID"
+            SQLTask:ParameterDirection="Input"
+            SQLTask:DataType="3"
+            SQLTask:ParameterSize="-1" />
+        </SQLTask:SqlTaskData>
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
       DTS:refId="Package\Check Transfer"
       DTS:CreationName="Microsoft.ExpressionTask"
       DTS:Description="Expression Transfer Task"
@@ -241,7 +346,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Check Transfer"
       DTS:TaskContact="Expression Task;Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="1">
+      DTS:ThreadHint="2">
       <DTS:Variables />
       <DTS:ObjectData>
         <ExpressionTask
@@ -257,7 +362,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Check TVS"
       DTS:TaskContact="Expression Task;Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="2">
+      DTS:ThreadHint="3">
       <DTS:Variables />
       <DTS:ObjectData>
         <ExpressionTask
@@ -401,7 +506,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Report Bet14 Complete"
       DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="3">
+      DTS:ThreadHint="1">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
@@ -435,7 +540,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Report Bet14 FAILED"
       DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="4">
+      DTS:ThreadHint="5">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
@@ -503,7 +608,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Report Event FAILED"
       DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="5">
+      DTS:ThreadHint="6">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
@@ -537,7 +642,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Report Transfer Complete"
       DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="1">
+      DTS:ThreadHint="2">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
@@ -571,7 +676,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Report Transfer FAILED"
       DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="6">
+      DTS:ThreadHint="7">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
@@ -605,7 +710,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Report TVS Complete"
       DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="7">
+      DTS:ThreadHint="3">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
@@ -639,7 +744,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Report TVS FAILED"
       DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="2">
+      DTS:ThreadHint="8">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
@@ -662,6 +767,27 @@
             SQLTask:DataType="17"
             SQLTask:ParameterSize="-1" />
         </SQLTask:SqlTaskData>
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\Sart DBARC - Update Statistics"
+      DTS:CreationName="Microsoft.ExecutePackageTask"
+      DTS:Description="Execute Package Task"
+      DTS:DTSID="{16DD5B20-1FFD-46D4-9767-4C91E1FF83A9}"
+      DTS:ExecutableType="Microsoft.ExecutePackageTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Sart DBARC - Update Statistics"
+      DTS:TaskContact="Microsoft Corporation; Microsoft SQL Server; Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <ExecutePackageTask>
+          <UseProjectReference>True</UseProjectReference>
+          <PackageName>ETL_Process_UpdateStats.dtsx</PackageName>
+          <ParameterAssignment>
+            <ParameterName>SessionID</ParameterName>
+            <BindedVariableOrParameterName>User::processID</BindedVariableOrParameterName>
+          </ParameterAssignment>
+        </ExecutePackageTask>
       </DTS:ObjectData>
     </DTS:Executable>
     <DTS:Executable
@@ -729,24 +855,37 @@
       </DTS:ObjectData>
     </DTS:Executable>
     <DTS:Executable
-      DTS:refId="Package\Update Statistics Task"
-      DTS:CreationName="Microsoft.ExecutePackageTask"
-      DTS:Description="Execute Package Task"
-      DTS:DTSID="{16DD5B20-1FFD-46D4-9767-4C91E1FF83A9}"
-      DTS:ExecutableType="Microsoft.ExecutePackageTask"
+      DTS:refId="Package\Start AWS - Thursday Routine"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{2050E646-D2FD-4A9A-A18A-99EF6D3EA2AD}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
       DTS:LocaleID="-1"
-      DTS:ObjectName="Update Statistics Task"
-      DTS:TaskContact="Microsoft Corporation; Microsoft SQL Server; Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1">
+      DTS:ObjectName="Start AWS - Thursday Routine"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="9">
       <DTS:Variables />
       <DTS:ObjectData>
-        <ExecutePackageTask>
-          <UseProjectReference>True</UseProjectReference>
-          <PackageName>ETL_Process_UpdateStats.dtsx</PackageName>
-          <ParameterAssignment>
-            <ParameterName>SessionID</ParameterName>
-            <BindedVariableOrParameterName>User::processID</BindedVariableOrParameterName>
-          </ParameterAssignment>
-        </ExecutePackageTask>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{330E61D2-1A1F-41CC-8A40-D4D415B9827A}"
+          SQLTask:SqlStatementSource="EXEC msdb.dbo.sp_start_job @job_name=N'AWS - Thursday Routine'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\Start DBTP -  CheckRowcount Job"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{91D5C550-BEDA-4C7F-AAA3-BFD11D84118D}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Start DBTP -  CheckRowcount Job"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="4">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{330E61D2-1A1F-41CC-8A40-D4D415B9827A}"
+          SQLTask:SqlStatementSource="EXEC DBTP.msdb.dbo.sp_start_job N'bodb02: Check consistency data for archiving process'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
       </DTS:ObjectData>
     </DTS:Executable>
   </DTS:Executables>
@@ -820,31 +959,31 @@
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint 16]"
       DTS:CreationName=""
-      DTS:DTSID="{BB5EC007-3696-4B7E-8BB5-645F1B70FC6C}"
+      DTS:DTSID="{2DFE3E41-7A90-45C8-B861-397FEF1B1DBF}"
       DTS:From="Package\Report Bet14 Complete"
       DTS:ObjectName="Constraint 16"
-      DTS:To="Package\Update Statistics Task" />
+      DTS:To="Package\Check SSIS Process Status" />
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint 17]"
       DTS:CreationName=""
-      DTS:DTSID="{F313A5B0-53E9-4417-A1C6-A3C0D91901E1}"
+      DTS:DTSID="{7267B9B3-4F6D-4B6A-BDA7-0A49617A223B}"
       DTS:From="Package\Report Event Complete"
       DTS:ObjectName="Constraint 17"
-      DTS:To="Package\Update Statistics Task" />
+      DTS:To="Package\Check SSIS Process Status" />
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint 18]"
       DTS:CreationName=""
-      DTS:DTSID="{F7C2D3F3-827C-4400-A355-CA86F0BCE154}"
+      DTS:DTSID="{E85988DC-1271-4982-8E87-B67BD61AD2DA}"
       DTS:From="Package\Report TVS Complete"
       DTS:ObjectName="Constraint 18"
-      DTS:To="Package\Update Statistics Task" />
+      DTS:To="Package\Check SSIS Process Status" />
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint 19]"
       DTS:CreationName=""
-      DTS:DTSID="{9B2B7878-5A04-431D-AFE2-34AB4ECC2922}"
+      DTS:DTSID="{716E4D8D-3DDC-44B5-9115-B110536B1EDB}"
       DTS:From="Package\Report Transfer Complete"
       DTS:ObjectName="Constraint 19"
-      DTS:To="Package\Update Statistics Task" />
+      DTS:To="Package\Check SSIS Process Status" />
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint 2]"
       DTS:CreationName=""
@@ -855,6 +994,34 @@
       DTS:LogicalAnd="True"
       DTS:ObjectName="Constraint 2"
       DTS:To="Package\Execute Package TVS" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 20]"
+      DTS:CreationName=""
+      DTS:DTSID="{CC000EAC-D852-4874-B6F0-A1053A5AD744}"
+      DTS:From="Package\Check SSIS Process Status"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint 20"
+      DTS:To="Package\Sart DBARC - Update Statistics" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 21]"
+      DTS:CreationName=""
+      DTS:DTSID="{D92C8730-45D4-4156-8AAF-369AF88C3640}"
+      DTS:EvalOp="3"
+      DTS:Expression="@[User::FailedCount]==0"
+      DTS:From="Package\Check SSIS Process Status"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint 21"
+      DTS:To="Package\Start DBTP -  CheckRowcount Job" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 22]"
+      DTS:CreationName=""
+      DTS:DTSID="{21A91C35-4CB7-45B8-9A13-BB7EECE25008}"
+      DTS:EvalOp="3"
+      DTS:Expression="@[User::FailedCount]==0"
+      DTS:From="Package\Check SSIS Process Status"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint 22"
+      DTS:To="Package\Start AWS - Thursday Routine" />
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint 3]"
       DTS:CreationName=""
@@ -937,6 +1104,10 @@
           Id="Package\Check Event"
           TopLeft="320.462958187693,248.545813645121" />
         <NodeLayout
+          Size="212,42.6666666666667"
+          Id="Package\Check SSIS Process Status"
+          TopLeft="1177.98609355775,196.812863429352" />
+        <NodeLayout
           Size="158.666666666667,42.6666666666667"
           Id="Package\Check Transfer"
           TopLeft="323.263884071882,446.257318341208" />
@@ -997,9 +1168,9 @@
           Id="Package\SSIS - Load Setting"
           TopLeft="58.1944435772797,341.877199417447" />
         <NodeLayout
-          Size="185.333333333334,42.6666666666667"
-          Id="Package\Update Statistics Task"
-          TopLeft="1197.91664881632,201.842109062335" />
+          Size="228,42.6666666666667"
+          Id="Package\Sart DBARC - Update Statistics"
+          TopLeft="1458.33331160248,85.5263173992946" />
         <EdgeLayout
           Id="Package.PrecedenceConstraints[Constraint]"
           TopLeft="117.749999132835,341.877199417447">
@@ -1250,26 +1421,26 @@
           <EdgeLayout.Curve>
             <mssgle:Curve
               StartConnector="{assembly:Null}"
-              EndConnector="315.152772422672,86.1929848816037"
+              EndConnector="274.555550497438,81.1637392486207"
               Start="0,0"
-              End="315.152772422672,78.6929848816037">
+              End="274.555550497438,73.6637392486207">
               <mssgle:Curve.Segments>
                 <mssgle:SegmentCollection
                   Capacity="5">
                   <mssgle:LineSegment
-                    End="0,30.8732306413125" />
+                    End="0,36.5903254387878" />
                   <mssgle:CubicBezierSegment
-                    Point1="0,30.8732306413125"
-                    Point2="0,34.8732306413125"
-                    Point3="4,34.8732306413125" />
+                    Point1="0,36.5903254387878"
+                    Point2="0,40.5903254387878"
+                    Point3="4,40.5903254387878" />
                   <mssgle:LineSegment
-                    End="311.152772422672,34.8732306413125" />
+                    End="270.555550497438,40.5903254387878" />
                   <mssgle:CubicBezierSegment
-                    Point1="311.152772422672,34.8732306413125"
-                    Point2="315.152772422672,34.8732306413125"
-                    Point3="315.152772422672,38.8732306413125" />
+                    Point1="270.555550497438,40.5903254387878"
+                    Point2="274.555550497438,40.5903254387878"
+                    Point3="274.555550497438,44.5903254387878" />
                   <mssgle:LineSegment
-                    End="315.152772422672,78.6929848816037" />
+                    End="274.555550497438,73.6637392486207" />
                 </mssgle:SegmentCollection>
               </mssgle:Curve.Segments>
             </mssgle:Curve>
@@ -1280,18 +1451,18 @@
         </EdgeLayout>
         <EdgeLayout
           Id="Package.PrecedenceConstraints[Constraint 17]"
-          TopLeft="1050.37498751717,221.298249381016">
+          TopLeft="1050.37498751717,218.783626564524">
           <EdgeLayout.Curve>
             <mssgle:Curve
               StartConnector="{assembly:Null}"
-              EndConnector="147.541661299148,0"
+              EndConnector="127.61110604058,0"
               Start="0,0"
-              End="140.041661299148,0">
+              End="120.11110604058,0">
               <mssgle:Curve.Segments>
                 <mssgle:SegmentCollection
                   Capacity="5">
                   <mssgle:LineSegment
-                    End="140.041661299148,0" />
+                    End="120.11110604058,0" />
                 </mssgle:SegmentCollection>
               </mssgle:Curve.Segments>
             </mssgle:Curve>
@@ -1306,26 +1477,26 @@
           <EdgeLayout.Curve>
             <mssgle:Curve
               StartConnector="{assembly:Null}"
-              EndConnector="317.152772522014,-84.4035092312644"
+              EndConnector="289.111106152336,-89.4327548642473"
               Start="0,0"
-              End="317.152772522014,-76.9035092312644">
+              End="289.111106152336,-81.9327548642473">
               <mssgle:Curve.Segments>
                 <mssgle:SegmentCollection
                   Capacity="5">
                   <mssgle:LineSegment
-                    End="0,-46.2086495712372" />
+                    End="0,-54.8811926435417" />
                   <mssgle:CubicBezierSegment
-                    Point1="0,-46.2086495712372"
-                    Point2="0,-50.2086495712372"
-                    Point3="4,-50.2086495712372" />
+                    Point1="0,-54.8811926435417"
+                    Point2="0,-58.8811926435417"
+                    Point3="4,-58.8811926435417" />
                   <mssgle:LineSegment
-                    End="313.152772522014,-50.2086495712372" />
+                    End="285.111106152336,-58.8811926435417" />
                   <mssgle:CubicBezierSegment
-                    Point1="313.152772522014,-50.2086495712372"
-                    Point2="317.152772522014,-50.2086495712372"
-                    Point3="317.152772522014,-54.2086495712372" />
+                    Point1="285.111106152336,-58.8811926435417"
+                    Point2="289.111106152336,-58.8811926435417"
+                    Point3="289.111106152336,-62.8811926435417" />
                   <mssgle:LineSegment
-                    End="317.152772522014,-76.9035092312644" />
+                    End="289.111106152336,-81.9327548642473" />
                 </mssgle:SegmentCollection>
               </mssgle:Curve.Segments>
             </mssgle:Curve>
@@ -1340,26 +1511,26 @@
           <EdgeLayout.Curve>
             <mssgle:Curve
               StartConnector="{assembly:Null}"
-              EndConnector="368.819439230072,-197.222224805091"
+              EndConnector="332.666661749283,-202.251470438074"
               Start="0,0"
-              End="368.819439230072,-189.722224805091">
+              End="332.666661749283,-194.751470438074">
               <mssgle:Curve.Segments>
                 <mssgle:SegmentCollection
                   Capacity="5">
                   <mssgle:LineSegment
-                    End="0,-113.320496068079" />
+                    End="0,-97.1257352190372" />
                   <mssgle:CubicBezierSegment
-                    Point1="0,-113.320496068079"
-                    Point2="0,-117.320496068079"
-                    Point3="4,-117.320496068079" />
+                    Point1="0,-97.1257352190372"
+                    Point2="0,-101.125735219037"
+                    Point3="4,-101.125735219037" />
                   <mssgle:LineSegment
-                    End="364.819439230072,-117.320496068079" />
+                    End="328.666661749283,-101.125735219037" />
                   <mssgle:CubicBezierSegment
-                    Point1="364.819439230072,-117.320496068079"
-                    Point2="368.819439230072,-117.320496068079"
-                    Point3="368.819439230072,-121.320496068079" />
+                    Point1="328.666661749283,-101.125735219037"
+                    Point2="332.666661749283,-101.125735219037"
+                    Point3="332.666661749283,-105.125735219037" />
                   <mssgle:LineSegment
-                    End="368.819439230072,-189.722224805091" />
+                    End="332.666661749283,-194.751470438074" />
                 </mssgle:SegmentCollection>
               </mssgle:Curve.Segments>
             </mssgle:Curve>
@@ -1390,6 +1561,40 @@
             <mssgm:EdgeLabel
               BoundingBox="20.2708316740263,5,16,16"
               RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 20]"
+          TopLeft="1317.98609355775,196.812863429352">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="254.34721804473,-68.6198793633907"
+              Start="0,0"
+              End="254.34721804473,-61.1198793633907">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,-23.7563556975513" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,-23.7563556975513"
+                    Point2="0,-27.7563556975513"
+                    Point3="4,-27.7563556975513" />
+                  <mssgle:LineSegment
+                    End="250.34721804473,-27.7563556975513" />
+                  <mssgle:CubicBezierSegment
+                    Point1="250.34721804473,-27.7563556975513"
+                    Point2="254.34721804473,-27.7563556975513"
+                    Point3="254.34721804473,-31.7563556975513" />
+                  <mssgle:LineSegment
+                    End="254.34721804473,-61.1198793633907" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
           </EdgeLayout.Labels>
         </EdgeLayout>
         <EdgeLayout
@@ -1597,6 +1802,74 @@
           <EdgeLayout.Labels>
             <mssgm:EdgeLabel
               BoundingBox="26.2947950841044,-15.7490234375,30.4826953125,9.7490234375"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <NodeLayout
+          Size="222.666666666667,42.6666666666667"
+          Id="Package\Start AWS - Thursday Routine"
+          TopLeft="1487.49997783452,368.333340266295" />
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 22]"
+          TopLeft="1334.98609355775,239.479530096019">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="263.847217610106,128.853810170276"
+              Start="0,0"
+              End="263.847217610106,121.353810170276">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,40.0183823563055" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,40.0183823563055"
+                    Point2="0,44.0183823563055"
+                    Point3="4,44.0183823563055" />
+                  <mssgle:LineSegment
+                    End="259.847217610106,44.0183823563055" />
+                  <mssgle:CubicBezierSegment
+                    Point1="259.847217610106,44.0183823563055"
+                    Point2="263.847217610106,44.0183823563055"
+                    Point3="263.847217610106,48.0183823563055" />
+                  <mssgle:LineSegment
+                    End="263.847217610106,121.353810170276" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="123.923608805053,49.0183823563055,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <NodeLayout
+          Size="242.666666666667,42.6666666666667"
+          Id="Package\Start DBTP -  CheckRowcount Job"
+          TopLeft="1465.62497816049,204.122810859649" />
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 21]"
+          TopLeft="1389.98609355775,221.801170477834">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="75.6388846027357,0"
+              Start="0,0"
+              End="68.1388846027357,0">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="68.1388846027357,0" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="26.0694423013679,5,16,16"
               RelativePosition="Any" />
           </EdgeLayout.Labels>
         </EdgeLayout>

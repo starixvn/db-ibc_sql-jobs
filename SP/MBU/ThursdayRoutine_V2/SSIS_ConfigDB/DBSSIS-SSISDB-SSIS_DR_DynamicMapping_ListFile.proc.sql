@@ -27,6 +27,7 @@ BEGIN
 		AND pd.GrantMode = @GrantMode
 		AND df.[DR_Status] = 0
 		AND evn.Environment=@Environment
+		AND d.Active = 1
 
 END
 GO

@@ -13,7 +13,7 @@ AS
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 		- 20210628@Helen:	Move checking for TVS tables to another SP Task_MBU_TVS_BK_CheckRowCount_Sel [RedmineId: #157539]
 		- 20210801@Patrick:	Update Job to Support Parlay Range up to 3 Weeks [Redmine: #156498]
-		- 20220309@Max: MBU - Copy data of Cash Out Selling to bk table [Redmine: #169593]
+		- 20220505@Bobby: MBU - Add Task_MBU_CheckRowCount_Logs [Redmine: #172335]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -452,6 +452,33 @@ BEGIN;
 		SET	@hasDiff = 0;
 	END;
 
+	-- INSERT Logs
+	BEGIN TRY
+		INSERT INTO dbo.Task_MBU_CheckRowCount_Logs (
+			SourceName,
+			TableName,
+			Winlostdate,
+			CheckRowCount,
+			Thursday
+		)
+		SELECT 'DB061' AS SourceName, a.tablename, ISNULL(a.winlostdate, @StartDate) AS Winlostdate, a.archiveRowCount AS CheckRowCount, @EndDate AS [Thursday]
+		FROM #__archiveResult a
+
+		union all
+		SELECT 'DB062', a.tablename, ISNULL(a.winlostdate, @StartDate), a.archiveHARowCount, @EndDate
+		FROM #__archiveResult a
+
+		union all
+		SELECT 'DBActive', a.tablename, ISNULL(a.winlostdate, @StartDate), a.activeRowCount, @EndDate
+		FROM #__activeResult a
+	END TRY
+	BEGIN CATCH
+		-- TODO: 
+		SELECT ERROR_PROCEDURE() AS [ERROR_PROCEDURE]
+			, ERROR_NUMBER() AS [ERROR_NUMBER]
+			, ERROR_MESSAGE() AS [ERROR_MESSAGE]
+	END CATCH
+
 	DECLARE @ArchiveRange_TVS VARCHAR(50)
 	SET @ArchiveRange_TVS = CONVERT(VARCHAR(12),@startdate, 23) + ' -> ' + CONVERT(VARCHAR(12),@EndDate,23)
 	
@@ -532,6 +559,8 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 			,	@body					= @email_body
 			,	@body_format			= 'HTML'
 			;
-
+	
+	-- RETURN:	
+	SELECT	@hasDiff AS [HasDiff];
 END;
 GO
