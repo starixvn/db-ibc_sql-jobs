@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
-USE CheckResultDB
-GO 
-
 ALTER PROCEDURE [dbo].[DBA_CheckCommGame_Credit]  
 (	@srecommend INT   
 	,@SportType SMALLINT = 0  
@@ -17,6 +14,7 @@ AS
 	Revisions:  :
 		- 20170928@Johnson: Add rule 107,108,109 check comm of SMA on member [Redmine: #73556]
 		- 20180807@Elodie: Apply f_GetSportNotOffer function
+		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
@@ -48,8 +46,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 	
-			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
-						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
+			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno					
 						ELSE 0 END
 			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 	
@@ -62,8 +59,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 		
-			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
-						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
+			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno				
 						ELSE 0 END
 			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 			
@@ -76,8 +72,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END		
-			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
-						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
+			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno					
 						ELSE 0 END
 			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 
@@ -90,8 +85,7 @@ BEGIN
 			AND ci.Enabled = 1      
 			AND ci.Currency NOT IN (20,27,28)     
 			AND cs.SportType = CASE WHEN @SportType = 0 then cs.SportType  ELSE @SportType END 
-			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno
-						WHEN cs.SportType =255 THEN ci.HideGoldDeluxe						
+			AND 0= CASE WHEN cs.SportType=202 THEN ci.HideKeno					
 						ELSE 0 END
 			AND cs.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('custsettinggame')) 
 			

@@ -8,12 +8,13 @@ AS
 		
 		Revisions:
 			- 20200309@Eden: Initial Version [#122743]
+			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 		Parameters Explanation:	
 */
---Reset yesterday balance for Non-DCS Products
-EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 255, @bettype = 1701 -- Gold Deluxe
-EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 208, @bettype = 2101 -- RNG Casino
+----Reset yesterday balance for Non-DCS Products
+--EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 255, @bettype = 1701 -- Gold Deluxe
+--EXEC dbo.Task_BalanceGameResetYesterday @sporttype = 208, @bettype = 2101 -- RNG Casino
 
 --Reset yesterday balance for DCS Products
 DECLARE @SportType SMALLINT , @Bettype SMALLINT

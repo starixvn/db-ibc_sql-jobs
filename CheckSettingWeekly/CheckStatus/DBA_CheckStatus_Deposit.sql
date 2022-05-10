@@ -18,7 +18,8 @@ DB: DB054.CheckResultDB
 Revisions:
 		- 20190130@Winnie:	Remove ClearBal Acc - [Redmine: #73556]
 		- 20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
-		- 20201223@Winfred: not check data from CustSuper table[redmine:#147408]	
+		- 20201223@Winfred: not check data from CustSuper table[redmine:#147408]
+		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 		
 Param's Explanation: 
 	@RuleId = 0 : 'all'
@@ -86,7 +87,7 @@ BEGIN
 			AND CI.username NOT LIKE ''%BetTrade%''
 			AND ci.username NOT LIKE ''%ClearBal%''
 			AND ci.username NOT LIKE ''%OddsAdj%''
-			AND CI.srecommend IN (SELECT custid FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK)) AND ci.Enabled = 1 AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1)) '
+			AND CI.srecommend IN (SELECT custid FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK)) AND ci.Enabled = 1 AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251) '
 		SET @sql_master = 'SELECT CI.CustID, 1
 		FROM CheckCustDB.dbo.custInfo CI (NOLOCK)
 		WHERE CI.roleid = 3 
@@ -99,7 +100,7 @@ BEGIN
 			AND CI.username NOT LIKE ''%BetTrade%''
 			AND ci.username NOT LIKE ''%ClearBal%''
 			AND ci.username NOT LIKE ''%OddsAdj%''
-			AND ci.srecommend IN (SELECT custid FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK)) AND ci.Enabled = 1 AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1)) '
+			AND ci.srecommend IN (SELECT custid FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK)) AND ci.Enabled = 1 AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251) '
 		SET @sql_agent = 'SELECT CI.CustID, 1
 		FROM CheckCustDB.dbo.custInfo CI (NOLOCK)
 		WHERE CI.roleid = 2 
@@ -112,7 +113,7 @@ BEGIN
 			AND CI.username NOT LIKE ''%BetTrade%''
 			AND ci.username NOT LIKE ''%ClearBal%''
 			AND ci.username NOT LIKE ''%OddsAdj%''
-			AND ci.srecommend IN (SELECT custid FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK)) AND ci.Enabled = 1 AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1)) '
+			AND ci.srecommend IN (SELECT custid FROM CheckCustDB.dbo.Dep_CustSuper WITH(NOLOCK)) AND ci.Enabled = 1 AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251) '
 		INSERT INTO #Super_Disabled (custID,IsDisabled)
 		EXEC sp_executeSQL @sql_super, N'@SportType SMALLINT', @SportType	
 		INSERT INTO #Master_Disabled (custID,IsDisabled)
@@ -258,7 +259,7 @@ BEGIN
 			AND CI.username NOT LIKE ''%dummy%''
 			AND ci.username NOT LIKE ''%ClearBal%''
 			AND ci.username NOT LIKE ''%OddsAdj%''
-			AND CI.username NOT LIKE ''%BetTrade%'' AND CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1)) '
+			AND CI.username NOT LIKE ''%BetTrade%'' AND CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251) '
 		SELECT @SQLResult
 		INSERT INTO CheckStatusResult (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
 		EXEC sp_executeSQL @SQLResult,N'@Sporttype SMALLINT,@Bettype SMALLINT', @Sporttype, @Bettype
@@ -277,7 +278,7 @@ BEGIN
 			AND CI.username NOT LIKE ''%dummy%''
 			AND ci.username NOT LIKE ''%ClearBal%''
 			AND ci.username NOT LIKE ''%OddsAdj%''
-			AND CI.username NOT LIKE ''%BetTrade%'' AND  CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1)) '
+			AND CI.username NOT LIKE ''%BetTrade%'' AND  CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251) '
 		SELECT @SQLResult
 		INSERT INTO CheckStatusResult (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
 		EXEC sp_executeSQL @SQLResult,N'@Sporttype SMALLINT,@Bettype SMALLINT', @Sporttype, @Bettype
@@ -296,7 +297,7 @@ BEGIN
 			AND CI.username NOT LIKE ''%dummy%''
 			AND ci.username NOT LIKE ''%ClearBal%''
 			AND ci.username NOT LIKE ''%OddsAdj%''
-			AND CI.username NOT LIKE ''%BetTrade%'' AND  CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1)) '
+			AND CI.username NOT LIKE ''%BetTrade%'' AND  CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251) '
 		SELECT @SQLResult
 		INSERT INTO CheckStatusResult (RuleId, SportType, BetType, CustIdA, CustIdB, ValueA, ValueB, CreatedDate,IsDeposit )
 		EXEC sp_executeSQL @SQLResult,N'@Sporttype SMALLINT,@Bettype SMALLINT', @Sporttype, @Bettype
