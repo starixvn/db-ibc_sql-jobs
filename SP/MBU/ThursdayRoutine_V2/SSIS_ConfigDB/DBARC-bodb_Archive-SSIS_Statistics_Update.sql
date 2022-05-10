@@ -35,6 +35,7 @@ BEGIN
 			values 
 			('DBSUM','bodb_summary','sum_winloss_old'),
 			('DBRPT','bodb_report','Statement'),
+			('DBRPT','bodb_report','Statement_Accum'),
 			('DBARC','bodb_archive','bettransm'),
 			('DBARC','bodb_archive','bettrans_bk'),
 			('DBARC','bodb_archive','transfer_bk'),
@@ -122,7 +123,7 @@ BEGIN
 	) as c(CMD)--, CNT)
 	where t.pNUM=1
 
-	select * from @tempStatsCmd;
+	--select * from @tempStatsCmd;
 
 	declare @tableName VARCHAR(100), @statsCmd VARCHAR(1000), @idxCnt INT = 1;
 	WHILE EXISTS(select 1 FROM @tempStatsCmd WHERE Idx = @idxCnt)
@@ -132,9 +133,9 @@ BEGIN
 		FROM @tempStatsCmd 
 		WHERE Idx = @idxCnt
 
-		--EXEC (@statsCmd);
+		EXEC (@statsCmd);
 
-		select @statsCmd AS [@statsCmd]
+		--select @statsCmd AS [@statsCmd]
 
 		SET @idxCnt += 1;
 	end
