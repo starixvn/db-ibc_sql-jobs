@@ -26,12 +26,13 @@ AS
 		- 20210726@Malcolm: Change key from BetId to purchaseId [RedmineID: #159061]
 		- 20210810@Malcolm: get data for many days in the same queue[RedmineID: #159061]
 		- 20210823@Malcolm: Integrate new product: Skywind [RedmineID: #159566]
+		- 20220506@Malcolm: Integrate new product: Jasper (N2), Sunstone (EA) [RedmineID: #172068]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @QueueId BIGINT, @XmlData XML, @WinlostDate SMALLDATETIME, @LastQueueId BIGINT, @MaxWinlostDate SMALLDATETIME
+	DECLARE @QueueId BIGINT, @XmlData XML, @WinlostDate SMALLDATETIME, @LastQueueId BIGINT, @MaxWinlostDate SMALLDATETIME, @SuccessfullMsg NVARCHAR(200) = 'Successfully',  @StatusOfAPI VARCHAR(50) = ''
 
 	DECLARE @Exchange TABLE (ExchangeDate SMALLDATETIME, ExchangeId INT, Currency NVARCHAR(50), ExRate FLOAT, AffExRate FLOAT)
 	DECLARE @tmpWinlostDate TABLE (winlostdate SMALLDATETIME)
@@ -848,6 +849,142 @@ BEGIN
 			DROP TABLE #bettrans_Skywind
 		END
 
+		ELSE IF @ProductId = 34 --Jasper (N2)
+		BEGIN
+			CREATE TABLE #bettrans_N2 
+			(
+				dealid			BIGINT
+				,startdate		DATETIME
+				,enddate		DATETIME
+				,status			TINYINT
+				,code			VARCHAR(100)
+				,login			VARCHAR(50)
+				,valid_turnover MONEY
+				,handle			MONEY
+				,hold			MONEY
+				,betid			BIGINT
+				,IBCCustId		INT
+				,WinlostDate	SMALLDATETIME
+			)
+					
+			BEGIN TRY
+				SELECT @StatusOfAPI = t.c.value('(status/text())[1]', 'VARCHAR(50)')	
+				FROM @XmlData.nodes('message') AS t(c)
+				OPTION (OPTIMIZE FOR (@XmlData = NULL))
+
+				IF @StatusOfAPI = 'success'
+				BEGIN
+					INSERT INTO #bettrans_N2 (dealid, startdate, enddate, status, code, login, valid_turnover, hold, betid, WinlostDate)
+					SELECT	t.c.value('(dealid/text())[1]', 'BIGINT') AS dealId	
+							,t.c.value('(startdate/text())[1]', 'DATETIME') AS startdate
+							,t.c.value('(enddate/text())[1]', 'DATETIME') AS enddate
+							,t.c.value('(status/text())[1]', 'TINYINT') AS status
+							,t.c.value('(code/text())[1]', 'VARCHAR(100)') AS code
+							,t1.c.value('(login/text())[1]', 'VARCHAR(50)') AS login
+							,t1.c.value('(valid_turnover/text())[1]', 'MONEY') AS valid_turnover
+							,t1.c.value('(hold/text())[1]', 'MONEY') AS hold
+							,t1.c.value('(betid/text())[1]', 'BIGINT') AS betid
+							,CONVERT(DATE, DATEADD(HOUR, -12, t.c.value('(startdate/text())[1]', 'DATETIME'))) AS WinlostDate
+					FROM @XmlData.nodes('message/result/gameinfo/game/deal') AS t(c)
+						CROSS APPLY t.c.nodes('clientbet') t1(c)
+					OPTION (OPTIMIZE FOR (@XmlData = NULL))
+
+					DELETE bt WITH (ROWLOCK, UPDLOCK)
+					FROM dbo.bettrans_N2 bt	
+					WHERE EXISTS (SELECT 1 FROM #bettrans_N2 t WHERE bt.betid = t.betid)
+				
+					INSERT INTO dbo.bettrans_N2 (dealId, startdate, enddate, status, code, login, valid_turnover, hold, betid, WinlostDate, IBCCustId)
+					SELECT k.dealId, k.startdate, k.enddate, k.status, k.code, k.login, k.valid_turnover, k.hold, k.betid, k.WinlostDate, m.IBCCustID
+					FROM #bettrans_N2 k
+						INNER JOIN dbo.MemberInfo m WITH (NOLOCK) ON '12BET$' + k.login = m.Username
+
+					SELECT @WinlostDate = MIN(WinlostDate) FROM #bettrans_N2
+					
+				END
+				ELSE 
+				BEGIN
+					SELECT @SuccessfullMsg = 'Status = Fail'
+				END
+
+				SELECT @IsErr = 0
+			END TRY
+			BEGIN CATCH
+				UPDATE dbo.APIProduct_ImportQueue WITH (ROWLOCK, UPDLOCK)
+				SET FinishedTime = NULL, WinlostDate = NULL, LogDesc = 'Failed. Error Message = ' + ERROR_MESSAGE()
+				WHERE QueueId = @QueueId
+			END CATCH
+			
+			DROP TABLE #bettrans_N2
+		END
+
+		ELSE IF @ProductId = 35 -- Sunstone (EA)
+		BEGIN
+			CREATE TABLE #bettrans_EA
+			(
+				dealid			BIGINT
+				,startdate		DATETIME
+				,enddate		DATETIME
+				,status			TINYINT
+				,code			VARCHAR(100)
+				,login			VARCHAR(50)
+				,bet_amount		MONEY
+				,payout_amount	MONEY
+				,valid_turnover MONEY
+				,handle			MONEY
+				,hold			MONEY
+				,betid			BIGINT
+				,IBCCustId		INT
+				,WinlostDate	SMALLDATETIME
+			)
+					
+			BEGIN TRY
+				SELECT @StatusOfAPI = t.c.value('(status/text())[1]', 'VARCHAR(50)')	
+				FROM @XmlData.nodes('response/element') AS t(c)
+				OPTION (OPTIMIZE FOR (@XmlData = NULL))
+
+				IF @StatusOfAPI = 'success'
+				BEGIN
+					INSERT INTO #bettrans_EA (dealid, startdate, enddate, status, code, login, valid_turnover, hold, betid, WinlostDate)
+					SELECT	t.c.value('(dealid/text())[1]', 'BIGINT') AS dealId	
+							,t.c.value('(startdate/text())[1]', 'DATETIME') AS startdate
+							,t.c.value('(enddate/text())[1]', 'DATETIME') AS enddate
+							,t.c.value('(status/text())[1]', 'TINYINT') AS status
+							,t.c.value('(code/text())[1]', 'VARCHAR(100)') AS code
+							,t1.c.value('(login/text())[1]', 'VARCHAR(50)') AS login
+							,t1.c.value('(valid_turnover/text())[1]', 'MONEY') AS valid_turnover
+							,t1.c.value('(hold/text())[1]', 'MONEY') AS hold
+							,t1.c.value('(betid/text())[1]', 'BIGINT') AS betid
+							,CONVERT(DATE, DATEADD(HOUR, -12, t.c.value('(startdate/text())[1]', 'DATETIME'))) AS WinlostDate
+					FROM @XmlData.nodes('response/element/result/game/deal') AS t(c)
+						CROSS APPLY t.c.nodes('clientbet') t1(c)
+					OPTION (OPTIMIZE FOR (@XmlData = NULL))
+
+					DELETE bt WITH (ROWLOCK, UPDLOCK)
+					FROM dbo.bettrans_EA bt	
+					WHERE EXISTS (SELECT 1 FROM #bettrans_EA t WHERE bt.betid = t.betid)
+				
+					INSERT INTO dbo.bettrans_EA (dealId, startdate, enddate, status, code, login, valid_turnover, hold, betid, WinlostDate, IBCCustId)
+					SELECT k.dealId, k.startdate, k.enddate, k.status, k.code, k.login, k.valid_turnover, k.hold, k.betid, k.WinlostDate, m.IBCCustID
+					FROM #bettrans_EA k
+						INNER JOIN dbo.MemberInfo m WITH (NOLOCK) ON '12BET$' + k.login = m.Username
+
+					SELECT @WinlostDate = MIN(WinlostDate) FROM #bettrans_EA
+				END
+				ELSE
+				BEGIN
+					SELECT @SuccessfullMsg = 'Status = Fail'
+				END
+				SELECT @IsErr = 0
+			END TRY
+			BEGIN CATCH
+				UPDATE dbo.APIProduct_ImportQueue WITH (ROWLOCK, UPDLOCK)
+				SET FinishedTime = NULL, WinlostDate = NULL, LogDesc = 'Failed. Error Message = ' + ERROR_MESSAGE()
+				WHERE QueueId = @QueueId
+			END CATCH
+
+			DROP TABLE #bettrans_EA
+		END
+
 		IF @IsErr = 1
 		BEGIN
 			SELECT @ErrCode = 101, @ErrMsg = 'Please help check data in APIProduct_ImportQueue table with QueueId = ' + CONVERT(NVARCHAR(100), @QueueId)
@@ -856,7 +993,7 @@ BEGIN
 		ELSE
 		BEGIN
 			UPDATE dbo.APIProduct_ImportQueue WITH (ROWLOCK, UPDLOCK)
-			SET FinishedTime = GETDATE(), WinlostDate = @WinlostDate, LogDesc = 'Successfully'
+			SET FinishedTime = GETDATE(), WinlostDate = @WinlostDate, LogDesc = @SuccessfullMsg
 			WHERE QueueId = @QueueId
 
 			SELECT @LastQueueId = @QueueId
