@@ -24,6 +24,7 @@ AS
 	  - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 	  - 20181123@Amanda: Update effective date for LicenseePorduct3rd if call SP with multi products and use DBA_Lrf_PullServiceSetting to add pull service setting [redmine: #83584]
 	  - 20181228@Amanda: Modify to allow offer multi products for multi licensees[Redmine: #83584]
+	  - 20220510@Danny: Use String_split built-in function [RemineID: #171831]
 
 	Param's Explanation:    
    
@@ -59,8 +60,8 @@ BEGIN
 	--1-----------------------------------------* GET LICENSEE LIST *------------------------------------- 
 
 	INSERT INTO @tblLicensee (LicenseeName)
-	SELECT DISTINCT val
-	FROM CUSTDB.dbo.strSplit(@LicenseeNameList,',')
+	SELECT DISTINCT value
+	FROM STRING_SPLIT(@LicenseeNameList,',')
 
 	UPDATE tl  
 	SET tl.LicenseeId = l.LicenseeID
@@ -85,8 +86,8 @@ BEGIN
 	--2-----------------------------------------* GET PRODUCT LIST *-------------------------------------
 
 	INSERT INTO @tblProductPrefix (ProductCode)
-	SELECT DISTINCT val
-	FROM CUSTDB.dbo.strSplit(@ProductCode,',')
+	SELECT DISTINCT value
+	FROM STRING_SPLIT(@ProductCode,',')
    
 	UPDATE a
 	SET a.ProductId = b.ProductId
