@@ -1,8 +1,4 @@
 /*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[DBA_CheckStatus_Credit]
 	@RuleId	SMALLINT = 0
 	,@Sporttype SMALLINT = 0
@@ -28,6 +24,7 @@ Revisions:
 	- 20180201@Johnson: update rule check un-sync customer for GD,Casino,VB,AB [Redmine: #87745]
 	- 20190610@Johnson: exclude cn88 site for checking [redmine:#114675]
 	- 20210419@Winfred: Remove check Gold Deluxe [redmine:#153659]
+	- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 Param's Explanation: 
 	@RuleId = 0 : 'all'
 	@RuleId IN (1->6)
@@ -199,7 +196,7 @@ BEGIN
 		
 		SET @sql_super = 'SELECT CI.CustID, 1
 		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK) 			
-		WHERE CI.custid IN (SELECT custID FROM #Supers)  AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1)) '
+		WHERE CI.custid IN (SELECT custID FROM #Supers)  AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251) '
 		
 		SET @sql_master = 'SELECT CI.CustID, 1
 		FROM CheckCustDB.dbo.custInfo CI (NOLOCK) 
@@ -212,7 +209,7 @@ BEGIN
 			AND CI.username NOT LIKE ''%cashout%''
 			AND CI.username NOT LIKE ''%dummy%''
 			AND CI.username NOT LIKE ''%BetTrade%''
-			AND ci.Enabled = 1 AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1)) '
+			AND ci.Enabled = 1 AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251) '
 		
 		SET @sql_agent = 'SELECT CI.CustID, 1
 		FROM CheckCustDB.dbo.custInfo CI (NOLOCK) 
@@ -225,7 +222,7 @@ BEGIN
 			AND CI.username NOT LIKE ''%cashout%''
 			AND CI.username NOT LIKE ''%dummy%''
 			AND CI.username NOT LIKE ''%BetTrade%''
-			AND ci.Enabled = 1 AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1)) '
+			AND ci.Enabled = 1 AND '  +  @DisableColumnName + ' = 1 AND (@SportType <> 251) '
 		
 		INSERT INTO #Super_Disabled (custID,IsDisabled)
 		EXEC sp_executeSQL @sql_super, N'@SportType SMALLINT', @SportType	
@@ -378,7 +375,7 @@ BEGIN
 			AND CI.username NOT LIKE ''%cashout%''
 			AND CI.username NOT LIKE ''%dummy%''
 			AND CI.username NOT LIKE ''%BetTrade%'' 
-			AND CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1)) '
+			AND CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251) '
 		
 		SELECT @SQLResult
 		
@@ -400,7 +397,7 @@ BEGIN
 			AND CI.username NOT LIKE ''%cashout%''
 			AND CI.username NOT LIKE ''%dummy%''
 			AND CI.username NOT LIKE ''%BetTrade%'' 
-			AND CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1)) '
+			AND CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251) '
 		
 		SELECT @SQLResult
 		
@@ -422,7 +419,7 @@ BEGIN
 			AND CI.username NOT LIKE ''%cashout%''
 			AND CI.username NOT LIKE ''%dummy%''
 			AND CI.username NOT LIKE ''%BetTrade%'' 
-			AND CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251 OR (@sportType = 251 AND CI.SyncCasino = 1))'
+			AND CI.' + @DisableColumnName + ' = 0  AND (@SportType <> 251)'
 		
 		SELECT @SQLResult
 		

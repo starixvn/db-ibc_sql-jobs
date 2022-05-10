@@ -12,14 +12,13 @@ AS
 		- 20191106@Winnie: 3rd party products - Remove InActive Products Phase 2  - [Redmine: #118699]
 		- 20210419@Winfred: Remove check Gold Deluxe [redmine:#153659]
 		- 20210727@Tina: remove check suspend status [RedmineID: #148600]
+		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 	Developer's Notes:
 		- @Example:			NULL		- Explaination [DEFAULT]
 		
 */
 BEGIN
 	SET NOCOUNT ON;
-	
-	EXECUTE dbo.DBA_CheckStatus_Credit @sportType=251, @bettype = 71, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableCasino', @HiddenTable='', @HiddenColumnName = '',@SynTable='CustInfo',@SynColumnName = 'SyncCasino';
 
 	EXECUTE dbo.DBA_CheckStatus_Credit @sportType=1, @bettype = 801, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableSuperLive', @HiddenTable='', @HiddenColumnName = '',@SynTable='',@SynColumnName = '';
 	

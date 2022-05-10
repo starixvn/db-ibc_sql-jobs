@@ -17,6 +17,7 @@ AS
 			- 20160204@Elodie: Add WinLossLimit setting type for DCS [Redmine: #49606]
 			- 20160718@Elodie: Reset data from yesterday backward [Redmine: #60993]
 			- 20191216@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 
 		Parameters Explanation:	
 */
@@ -26,15 +27,6 @@ CREATE TABLE #WeeklyResetCustomer(custid INT, srecommend INT)
 IF @bettype = 1101 --LiveCS
 BEGIN
 	RETURN
-END
-ELSE IF @bettype IN (1701,2101) --GoldDeluxe & OneRNG
-BEGIN
-	INSERT INTO #WeeklyResetCustomer(custid, srecommend)
-	SELECT c.custid, srecommend
-	FROM CustDB.dbo.custinfo c WITH (NOLOCK)
-		INNER JOIN DBCUST.CustDB.dbo.CustWinLimit cwl WITH (NOLOCK) ON cwl.CustId = c.custid AND cwl.sporttype = @sporttype AND cwl.bettype = @bettype
-	WHERE c.roleid = 1 AND IsAutoReset = 0 AND ((BetType = 1701 AND MaxWinlimit > 0) OR BetType = 2101)
-	
 END
 ELSE --others DCS products
 BEGIN
