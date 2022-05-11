@@ -11,8 +11,8 @@
   DTS:LocaleID="1033"
   DTS:ObjectName="ETL_Process_MainDR"
   DTS:PackageType="5"
-  DTS:VersionBuild="23"
-  DTS:VersionGUID="{A9A55E5A-0084-4CB7-A68A-B4E3B54F04C6}">
+  DTS:VersionBuild="24"
+  DTS:VersionGUID="{C0E15F35-D550-4928-AAB0-A0AD0A9B5751}">
   <DTS:Property
     DTS:Name="PackageFormatVersion">8</DTS:Property>
   <DTS:Variables>
@@ -205,7 +205,7 @@
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
           SQLTask:Connection="{F237F3BC-5862-4545-AD62-D4DD0CF8FD14}"
-          SQLTask:SqlStatementSource="select 1" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+          SQLTask:SqlStatementSource="EXEC DBTP.msdb.dbo.sp_start_job @job_name = N'bodb02: Check consistency data for archiving process', @step_name=N'AWS@DR - Check consistency data'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
       </DTS:ObjectData>
     </DTS:Executable>
     <DTS:Executable
