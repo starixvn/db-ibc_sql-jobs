@@ -1,4 +1,4 @@
-/*<info serverAlias="DBARC-bodb_archive,DBARC-bodb_report,DBAGE-bodb_summary" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBARC-bodb_archive,DBRPT-bodb_report,DBSUM-bodb_summary" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[SSIS_Statistics_Update]
 AS
 /*
