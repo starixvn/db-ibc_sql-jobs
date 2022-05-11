@@ -104,7 +104,7 @@ BEGIN
 	--ROLLBACK
 	IF @@ERROR<>0
 	BEGIN
-		SET @ErrMsg='Insert failed.'
+		SET @ErrMsg='Insert history of member bet setting failed.'
 
 		DELETE his
 		FROM CustMaxBetSetting_History his
