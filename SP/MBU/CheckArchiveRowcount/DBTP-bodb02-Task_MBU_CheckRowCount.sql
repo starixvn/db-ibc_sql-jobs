@@ -13,6 +13,7 @@ AS
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 		- 20210628@Helen:	Move checking for TVS tables to another SP Task_MBU_TVS_BK_CheckRowCount_Sel [RedmineId: #157539]
 		- 20210801@Patrick:	Update Job to Support Parlay Range up to 3 Weeks [Redmine: #156498]
+		- 20220309@Max: MBU - Copy data of Cash Out Selling to bk table [Redmine: #169593]
 		- 20220505@Bobby: MBU - Add Task_MBU_CheckRowCount_Logs [Redmine: #172335]
 */
 BEGIN;
