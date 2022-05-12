@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb02" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTP-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DetectBet_SyncBetSettingHistory] 
 AS
@@ -24,7 +24,7 @@ BEGIN
 	CREATE TABLE #tmpBetSetting_History (
 			CustID			INT
 		,	SportType		SMALLINT
-		,	BetType			SMALLINT
+		,	BetType			INT
 		,	OldMaxBet		MONEY
 		,	OldMaxPerMatch	MONEY
 		,	StakeLevelList	VARCHAR(200)
