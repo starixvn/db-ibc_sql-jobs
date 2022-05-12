@@ -19,6 +19,8 @@ BEGIN
 
 	DECLARE @UpdateTime DATETIME
 
+	SET @UpdateTime = GETDATE()
+
 	CREATE TABLE #tmpBetSetting_History (
 			CustID			INT
 		,	SportType		SMALLINT
@@ -57,9 +59,6 @@ BEGIN
 				AND t.BetType	= cbsh.BetType
 				AND t.UpdateTime= cbsh.UpdateTime
 
-		SELECT TOP (1) @UpdateTime=UpdateTime
-		FROM #tmpBetSetting_History
-
 		TRUNCATE TABLE #tmpBetSetting_History
 	END
 
@@ -81,9 +80,6 @@ BEGIN
 				AND t.BetType	= cbsh.BetType
 				AND t.UpdateTime= cbsh.UpdateTime
 		
-		SELECT TOP (1) @UpdateTime=UpdateTime
-		FROM #tmpBetSetting_History
-
 		TRUNCATE TABLE #tmpBetSetting_History
 	END
 
@@ -103,9 +99,6 @@ BEGIN
 			INNER JOIN #tmpStakeLevel_History t 
 				ON	t.StakeLevelID	= cslh.StakeLevelID
 				AND t.UpdateTime	= cslh.UpdateTime
-
-		SELECT TOP (1) @UpdateTime=UpdateTime
-		FROM #tmpStakeLevel_History
 
 		TRUNCATE TABLE #tmpStakeLevel_History
 	END
@@ -127,9 +120,6 @@ BEGIN
 				ON	t.StakeLevelID	= cslh.StakeLevelID
 				AND t.UpdateTime	= cslh.UpdateTime
 		
-		SELECT TOP (1) @UpdateTime=UpdateTime
-		FROM #tmpStakeLevel_History
-
 		TRUNCATE TABLE #tmpStakeLevel_History
 	END
 
@@ -151,9 +141,6 @@ BEGIN
 				AND t.GameTypeID	= cslh.GameTypeID
 				AND t.UpdateTime	= cslh.UpdateTime
 		
-		SELECT TOP (1) @UpdateTime=UpdateTime
-		FROM #tmpStakeLevel_History
-
 		TRUNCATE TABLE #tmpStakeLevel_History
 	END
 
@@ -175,9 +162,6 @@ BEGIN
 				AND t.GameTypeID	= cslh.GameTypeID
 				AND t.UpdateTime	= cslh.UpdateTime
 		
-		SELECT TOP (1) @UpdateTime=UpdateTime
-		FROM #tmpStakeLevel_History
-
 		TRUNCATE TABLE #tmpStakeLevel_History
 	END
 
