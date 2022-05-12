@@ -137,9 +137,9 @@ BEGIN
 		DELETE cslgh
 		FROM DBCust.CustDB.dbo.StakeLevelGroupDetail_History cslgh WITH (ROWLOCK)
 			INNER JOIN #tmpStakeLevel_History t 
-				ON	t.StakeLevelID	= cslh.StakeLevelID
-				AND t.GameTypeID	= cslh.GameTypeID
-				AND t.UpdateTime	= cslh.UpdateTime
+				ON	t.StakeLevelID	= cslgh.StakeLevelID
+				AND t.GameTypeID	= cslgh.GameTypeID
+				AND t.UpdateTime	= cslgh.UpdateTime
 		
 		TRUNCATE TABLE #tmpStakeLevel_History
 	END
@@ -158,9 +158,9 @@ BEGIN
 		DELETE cslgh
 		FROM DBCust.CustDB.dbo.Dep_StakeLevelGroupDetail_History cslgh WITH (ROWLOCK)
 			INNER JOIN #tmpStakeLevel_History t 
-				ON	t.StakeLevelID	= cslh.StakeLevelID
-				AND t.GameTypeID	= cslh.GameTypeID
-				AND t.UpdateTime	= cslh.UpdateTime
+				ON	t.StakeLevelID	= cslgh.StakeLevelID
+				AND t.GameTypeID	= cslgh.GameTypeID
+				AND t.UpdateTime	= cslgh.UpdateTime
 		
 		TRUNCATE TABLE #tmpStakeLevel_History
 	END
