@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0" isNested=1></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DetectBet_CustMaxBetHistoryIns] 
 		@CustList	VARCHAR(MAX) = '',
@@ -17,7 +17,7 @@ AS
 	• @CustList:
 		<root>
 			<r CustID= ''1400001''  SportType=''169'' BetType=''3612'' MaxBet=''100''  MaxPerMatch=''2000'' StakeLevelList=''NULL''  UpdateTime=''2022-03-10 04:10:10.000''/>
-			<r CustID= ''23700002'' SportType=''176'' BetType=''8201'' MaxBet=''2500'' MaxPerMatch=''NULL'' StakeLevelList=''21136'' UpdateTime=''2022-03-10 04:10:10.000''/>
+			<r CustID= ''23700002'' SportType=''176'' BetType=''8201'' MaxBet=''NULL'' MaxPerMatch=''NULL'' StakeLevelList=''21136'' UpdateTime=''2022-03-10 04:10:10.000''/>
 		</root>
 */
 BEGIN
@@ -36,13 +36,17 @@ BEGIN
 	)
 
 	IF @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','DB233','DB230\SQLSERVER2008R2','TESTDBCUST')
+	BEGIN
 		SET @ErrMsg='Server name is invailid.'
 		RETURN
+	END
 
 	--Check if XML is null or empty
 	IF @CustList IS NULL OR @CustList=''
+	BEGIN
 		SET @ErrMsg='Customer list is invalid.'
 		RETURN
+	END
 
 	SET @xml = CONVERT(XML, @CustList)
 
@@ -56,7 +60,7 @@ BEGIN
 	SELECT CustID, SportType, BetType
 		, CASE WHEN ISNUMERIC(MaxBet)=1			THEN MaxBet ELSE NULL END MaxBet
 		, CASE WHEN ISNUMERIC(MaxPerMatch)=1	THEN MaxPerMatch ELSE NULL END MaxPerMatch
-		, CASE WHEN ISNUMERIC(StakeLevelList)=1 THEN StakeLevelList ELSE NULL END StakeLevelList
+		, CASE WHEN StakeLevelList<>'NULL'		THEN StakeLevelList ELSE NULL END StakeLevelList
 		, UpdateTime
 	FROM OPENXML(@iDoc, '/root/r', 1) WITH (
 			CustID			INT
@@ -77,7 +81,7 @@ BEGIN
 			SELECT tc.CustID, SportType, BetType, tc.StakeLevelList
 				, MAX(CASE WHEN st.GameGroupID=0 THEN st.MaxStake ELSE stgd.MaxStake END) MaxStake
 			FROM #tmpCustList tc 
-				CROSS APPLY (SELECT value AS val FROM STRING_SPLIT(tc.StakeLevelList,',')) ss
+				CROSS APPLY (SELECT TRIM(value) AS val FROM STRING_SPLIT(tc.StakeLevelList,',')) ss
 				INNER JOIN StakeLevel st WITH (NOLOCK) ON st.StakeLevelID = CAST(ss.val AS INT)
 				CROSS APPLY (SELECT TOP 1 stg.StakeLevelID, CAST(stg.MaxLabel AS MONEY) AS MaxStake
 							 FROM StakeLevelGroupDetail stg WITH (NOLOCK)
