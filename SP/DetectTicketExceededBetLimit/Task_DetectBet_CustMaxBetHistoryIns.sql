@@ -16,30 +16,30 @@ AS
 	Param's Explanation:
 	• @CustList:
 		<root>
-			<r CustID= ''1400001''  SportType=''169'' BetType=''3612'' MaxBet=''100''  MaxPerMatch=''2000'' StakeLevelList=''NULL''  UpdateTime=''2022-03-10 04:10:10.000''/>
-			<r CustID= ''23700002'' SportType=''176'' BetType=''8201'' MaxBet=''NULL'' MaxPerMatch=''NULL'' StakeLevelList=''21136'' UpdateTime=''2022-03-10 04:10:10.000''/>
+			<r CustID= ''1400001''  SportType=''175'' BetType=''7901'' MaxBet=''600''  MaxPerMatch=''1800'' StakeLevelList=''NULL''  UpdateTime=''2022-03-10 04:10:10.000''/>
+			<r CustID= ''23700002'' SportType=''200'' BetType=''1611'' MaxBet=''NULL'' MaxPerMatch=''NULL'' StakeLevelList=''1191'' UpdateTime=''2022-03-10 04:10:10.000''/>
 		</root>
 */
 BEGIN
+	IF @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','DB233','DB230\SQLSERVER2008R2','TESTDBCUST')
+	BEGIN
+		SET @ErrMsg='Server name is invailid.'
+		RETURN
+	END
+
 	SET NOCOUNT ON
 	DECLARE @xml XML = NULL
 
 	CREATE TABLE #tmpCustList (
 			CustID			INT
 		,	SportType		SMALLINT
-		,	BetType			SMALLINT
+		,	BetType			INT
 		,	MaxBet			MONEY
 		,	MaxPerMatch		MONEY
 		,	StakeLevelList	VARCHAR(200)
 		,	UpdateTime		DATETIME
 		,	PRIMARY KEY CLUSTERED (CustID, SportType, BetType, UpdateTime)
 	)
-
-	IF @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','DB233','DB230\SQLSERVER2008R2','TESTDBCUST')
-	BEGIN
-		SET @ErrMsg='Server name is invailid.'
-		RETURN
-	END
 
 	--Check if XML is null or empty
 	IF @CustList IS NULL OR @CustList=''
@@ -65,7 +65,7 @@ BEGIN
 	FROM OPENXML(@iDoc, '/root/r', 1) WITH (
 			CustID			INT
 		,	SportType		SMALLINT
-		,	BetType			SMALLINT
+		,	BetType			INT
 		,	MaxBet			VARCHAR(100)
 		,	MaxPerMatch		VARCHAR(100)
 		,	StakeLevelList	VARCHAR(200)
@@ -100,21 +100,22 @@ BEGIN
 	END
 
 	INSERT INTO CustMaxBetSetting_History 
-		  (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, StakeLevelList, UpdateTime)
+		  (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
 	SELECT CustID, SportType, BetType, MaxBet, MaxPerMatch, StakeLevelList, UpdateTime
 	FROM #tmpCustList
 
-	--check Error
 	--ROLLBACK
 	IF @@ERROR<>0
 	BEGIN
 		SET @ErrMsg='Insert history of member bet setting failed.'
 
-		DELETE his
-		FROM CustMaxBetSetting_History his
-			INNER JOIN #tmpCustList t ON t.CustID=his.CustID 
-		WHERE his.UpdateTime>=t.UpdateTime
-
+		DELETE cbsh
+		FROM CustMaxBetSetting_History cbsh WITH (ROWLOCK)
+			INNER JOIN #tmpCustList t 
+				ON t.CustID	= cbsh.CustID
+				AND t.SportType	= cbsh.SportType
+				AND t.BetType	= cbsh.BetType
+				AND t.UpdateTime= cbsh.UpdateTime
 		RETURN
 	END
 

@@ -27,7 +27,7 @@ BEGIN
 		,	BetType			INT
 		,	OldMaxBet		MONEY
 		,	OldMaxPerMatch	MONEY
-		,	StakeLevelList	VARCHAR(200)
+		,	OldStakeLevelList VARCHAR(200)
 		,	UpdateTime		DATETIME
 	)
 
@@ -43,12 +43,12 @@ BEGIN
 	--History: SMA update member bet setting
 	IF EXISTS (SELECT 1 FROM DBCust.CustDB.dbo.CustMaxBetSetting_History)
 	BEGIN
-		INSERT INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, StakeLevelList, UpdateTime)
-		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, StakeLevelList, UpdateTime
+		INSERT INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
+		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 		FROM DBCust.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK)
 
-		INSERT INTO dbo.CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, StakeLevelList, UpdateTime)
-		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, StakeLevelList, UpdateTime
+		INSERT INTO dbo.CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
+		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 		FROM #tmpBetSetting_History 
 
 		DELETE cbsh
@@ -64,12 +64,12 @@ BEGIN
 
 	IF EXISTS (SELECT 1 FROM DBCust.CustDB.dbo.Dep_CustMaxBetSetting_History)
 	BEGIN
-		INSERT INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, StakeLevelList, UpdateTime)
-		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, StakeLevelList, UpdateTime
+		INSERT INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
+		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 		FROM DBCust.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK)
 
-		INSERT INTO dbo.Dep_CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, StakeLevelList, UpdateTime)
-		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, StakeLevelList, UpdateTime
+		INSERT INTO dbo.Dep_CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
+		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 		FROM #tmpBetSetting_History 
 
 		DELETE cbsh
