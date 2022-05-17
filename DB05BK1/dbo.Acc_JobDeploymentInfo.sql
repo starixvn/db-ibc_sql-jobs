@@ -18,12 +18,12 @@ BEGIN
 
 	DECLARE @tmpJobInfo TABLE (JobName VARCHAR(100), WaitingTime VARCHAR(10), IsWaiting BIT DEFAULT (0))
 
-	SET @WaitingTime = '00:01:00'
+	SET @WaitingTime = '00:00:05'
 	SET @IsWaiting = 0
 
 	---1.
 	INSERT INTO @tmpJobInfo (JobName, WaitingTime, IsWaiting)
-	SELECT 'bodb02 : Task_BalanceRecord_Insert'		, '00:01:00', 0
+	SELECT 'bodb02 : Task_BalanceRecord_Insert'		, '00:00:05', 0
 
 	SELECT @WaitingTime = WaitingTime
 			,@IsWaiting = IsWaiting
