@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20210112@Percy: Initialize SP [RedmineID: #146759]
 		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
+		- 20220412@Percy: Import SUM data [RedmineID: #171245]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -38,6 +39,8 @@ BEGIN
 			,@LogDesc	VARCHAR(2000) = NULL
 			,@numOftry	TINYINT
 
+	DECLARE @WinlostDate TABLE (WinlostDate DATE PRIMARY KEY)
+	
 	CREATE TABLE #tmpRebateMLog
 	(
 		Id				INT
@@ -184,6 +187,12 @@ BEGIN
 					END
 				END
 
+				INSERT INTO @WinlostDate (WinlostDate)
+				SELECT b.WinlostDate
+				FROM (SELECT DISTINCT CONVERT(DATE, CreateTime) AS WinlostDate FROM #tmpRebateMLog WHERE DataType IN (0, 1)) b
+					LEFT JOIN @WinlostDate w ON b.WinlostDate = w.WinlostDate
+				WHERE w.WinlostDate IS NULL
+
 				-- if parse xml and insert/update data successfully --> break out of while
 				BREAK
 			END TRY
@@ -224,6 +233,10 @@ BEGIN
 		IF @ErrCode <> 0
 			RETURN
 	END
+
+	-- For SUM data
+	INSERT INTO dbo.BonusImportStatus (DataSource, WinlostDate)
+	SELECT 'RebateMLog', WinlostDate FROM @WinlostDate
 
 	-- Remove old data
 	DELETE dbo.API_Queue WITH (ROWLOCK, UPDLOCK)
