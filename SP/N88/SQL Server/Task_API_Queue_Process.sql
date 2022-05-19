@@ -18,6 +18,7 @@ AS
 		- 20211118@Percy: Add table: LogAdminAdjustWallet [RedmineID: #161048]
 		- 20220325@Percy: Add table: CustVerificationReward [RedmineID: #170390]
 		- 20220412@Percy: Add table: ReferralMLog [RedmineID: #171245]
+		- 20220518@Percy: Add 2 tables: TpReport9W & TpWager9W [RedmineID: #172917]
 		
 */
 
@@ -277,6 +278,30 @@ BEGIN
 		BEGIN
 			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
 			VALUES ('ReferralMLog', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- TpReport9W
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_TpReport9W @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('TpReport9W', @ErrCode, @ErrMsg)
+		END
+	END
+
+	-- TpWager9W
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_TpWager9W @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('TpWager9W', @ErrCode, @ErrMsg)
 		END
 	END
 
