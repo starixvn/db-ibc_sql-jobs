@@ -1,5 +1,5 @@
 /*<info serverAlias="DBRMS-bodb_RMS" isFunction="0" isNested="1"></info>*/
-CREATE PROCEDURE [dbo].[Task_RMS_MBU_CheckSumData_rmSumWinloss]
+ALTER PROCEDURE [dbo].[Task_RMS_MBU_CheckSumData_rmSumWinloss]
 	@winlostdate	DATETIME,
 	@ErrCode		INT = 0				OUTPUT,
 	@ErrMsg			VARCHAR(1000) = ''	OUTPUT
@@ -15,6 +15,7 @@ AS
 		- 20201214@Danny: Separate Data of Virtual Soccer & Virtual Basketball [RedmineID: #145926]
 		- 20200203@Danny: Prepare Separate Data GOF for deposit [RedmineID: #149966]
 		- 20200203@Danny: Separate Data GOF for deposit [RedmineID: #149966]
+		- 20220519@Danny: add column LiveIndicator [RedmineID: #172691]
 */
 
 BEGIN
@@ -61,14 +62,15 @@ BEGIN
 				[actual_stake] [money] NULL,
 				[playercomm] [money] NULL,
 				[comm] [money] NULL,
-				[acomm] [money] NULL
+				[acomm] [money] NULL,
+				[LiveIndicator] [smallint] NULL
 			)
 			INSERT INTO #rmSumWinloss
 		(
 			winlostdate,custid,sporttype,statusID,combo,username,currency,stake,winlost
 			,company_stake,company_winlost,actualrate,odds,betcount,recommend,parlaytype
 			,scomm,Extra_comm,Extra_stake,Extra_winlost,
-			mrecommend,srecommend,awinlost,mwinlost,swinlost,actual_stake,playercomm,comm,acomm
+			mrecommend,srecommend,awinlost,mwinlost,swinlost,actual_stake,playercomm,comm,acomm, LiveIndicator
 		)
 		SELECT
 			b.winlostdate
@@ -105,7 +107,8 @@ BEGIN
 			SUM(actual_stake) as actual_stake,
 			SUM(playercomm) as playercomm,
 			SUM(comm) as comm,
-			SUM(acomm) as acomm
+			SUM(acomm) as acomm,
+			CASE WHEN b.bettype = 29 THEN b.livehomescore ELSE b.liveindicator END liveindicator
 		FROM dbo.rmBettrans_old b WITH (NOLOCK)
 		WHERE b.winlostdate = @winlostdate
 			AND b.statusID IN (111, 112, 113)
@@ -127,7 +130,8 @@ BEGIN
 				WHEN b.bettype = 376 THEN 5
 				ELSE 0 END,
 			b.mrecommend,
-			b.srecommend;
+			b.srecommend,
+			CASE WHEN b.bettype = 29 THEN b.livehomescore ELSE b.liveindicator END;
 
 		MERGE dbo.rmSumWinloss AS TARGET
 			USING #rmSumWinloss AS SOURCE
@@ -141,7 +145,7 @@ BEGIN
 					AND TARGET.actualrate	= SOURCE.actualrate
 					AND TARGET.recommend	= SOURCE.recommend
 					AND TARGET.ParlayType	= SOURCE.ParlayType
-					
+					AND TARGET.liveindicator	= SOURCE.liveindicator
 					
 
 			WHEN MATCHED THEN
@@ -197,7 +201,8 @@ BEGIN
 						actual_stake,
 						playercomm,
 						comm,
-						acomm
+						acomm,
+						LiveIndicator
 					)
 					VALUES
 					(
@@ -229,7 +234,8 @@ BEGIN
 						SOURCE.actual_stake,
 						SOURCE.playercomm,
 						SOURCE.comm,
-						SOURCE.acomm
+						SOURCE.acomm,
+						SOURCE.liveindicator
 					)
 					WHEN NOT MATCHED BY SOURCE AND TARGET.winlostdate = @winlostdate THEN DELETE;
 

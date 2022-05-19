@@ -1,5 +1,5 @@
 /*<info serverAlias="DBRMS-bodb_RMS" isFunction="0" isNested="1"></info>*/
-CREATE PROCEDURE [dbo].[Task_RMS_MBU_CopyData_rmSumWinloss]
+ALTER PROCEDURE [dbo].[Task_RMS_MBU_CopyData_rmSumWinloss]
 	@winlostdate SMALLDATETIME
 	,@ErrCode		INT = 0 OUTPUT
 	,@ErrMsg		VARCHAR(4000) = '' OUTPUT
@@ -29,13 +29,13 @@ BEGIN
 		(
 			winlostdate,custid,sporttype,statusid,combo,username,currency,stake,winlost,company_stake,company_winlost
 			,actualrate,odds,betcount,recommend,parlaytype,scomm,Extra_comm,Extra_stake,Extra_winlost,
-			mrecommend,srecommend,awinlost,mwinlost,swinlost,actual_stake,playercomm,comm,acomm
+			mrecommend,srecommend,awinlost,mwinlost,swinlost,actual_stake,playercomm,comm,acomm, liveindicator
 
 		)
 		SELECT
 			winlostdate,custid,sporttype,statusid,combo,username,currency,stake,winlost,company_stake,company_winlost
 			,actualrate,odds,betcount,recommend,parlaytype,scomm,Extra_comm,Extra_stake,Extra_winlost,
-			mrecommend,srecommend,awinlost,mwinlost,swinlost,actual_stake,playercomm,comm,acomm
+			mrecommend,srecommend,awinlost,mwinlost,swinlost,actual_stake,playercomm,comm,acomm, liveindicator
 		FROM dbo.rmSumWinloss WITH (NOLOCK)
 		WHERE winlostdate = @winlostdate
 	END TRY
