@@ -38,6 +38,8 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\dory.vu')
 		, ('spvn\Mike.vu')
 		, ('spvn\Kenny.ho')
+		,('spvn\ariana.nguyen')
+		,('spvn\benjamin.nguyen')
 		
 /*
 	USE DBName
@@ -98,6 +100,8 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\dory.vu')
 		, ('spvn\Mike.vu')
 		, ('spvn\Kenny.ho')
+		,('spvn\ariana.nguyen')
+		,('spvn\benjamin.nguyen')
 
 		
 UPDATE @tmpMember

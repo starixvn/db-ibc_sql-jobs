@@ -22,6 +22,9 @@ INSERT INTO @tmpMember (Name)
 		,('spvn\jane.dinh'), ('spvn\harley.nguyen'), ('spvn\dory.vu')
 		,('spvn\Mike.vu')
 		,('spvn\Kenny.ho')
+		,('spvn\ariana.nguyen')
+		,('spvn\benjamin.nguyen')
+
 SELECT	@strUser = @strUser 
 			+ 'CREATE USER ' + '[' + t.Name + ']' + ' FOR LOGIN ' + '[' + t.Name + ']' + ' WITH DEFAULT_SCHEMA=[dbo]; '
 			+ CHAR(13)
@@ -59,8 +62,10 @@ VALUES ('spvn\kaka.huynh')
 		, ('spvn\jane.dinh')
 		, ('spvn\harley.nguyen')
 		, ('spvn\dory.vu')
-		, ('spvn\Mike.vu'
+		, ('spvn\Mike.vu')
 		, ('spvn\Kenny.ho')
+		, ('spvn\ariana.nguyen')
+		, ('spvn\benjamin.nguyen')
 
 SELECT	@strUser = @strUser + 'EXEC sp_AddRoleMember ''SQLAgentReaderRole''' + ', ''' + t.Name + '''' 
 		+ CHAR(13)

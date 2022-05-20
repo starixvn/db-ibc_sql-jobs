@@ -33,6 +33,9 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\dory.vu')
 		, ('spvn\Mike.vu')
 		, ('spvn\Kenny.ho')
+		,('spvn\ariana.nguyen')
+		,('spvn\benjamin.nguyen')
+
 /*
 	USE DBName
 	GO 
@@ -91,6 +94,8 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\dory.vu')
 		, ('spvn\Mike.vu')
 		, ('spvn\Kenny.ho')
+		,('spvn\ariana.nguyen')
+		,('spvn\benjamin.nguyen')
 
 UPDATE @tmpMember
 	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
