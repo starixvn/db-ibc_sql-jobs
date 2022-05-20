@@ -127,11 +127,11 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM DBCust.CustDB.dbo.StakeLevelGroupDetail_History)
 	BEGIN
 		INSERT INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 		FROM DBCust.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK)
 
 		INSERT INTO dbo.StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake , UpdateTime
 		FROM #tmpStakeLevel_History
 
 		DELETE cslgh
@@ -148,11 +148,11 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM DBCust.CustDB.dbo.Dep_StakeLevelGroupDetail_History)
 	BEGIN
 		INSERT INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 		FROM DBCust.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK)
 
 		INSERT INTO dbo.Dep_StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 		FROM #tmpStakeLevel_History
 
 		DELETE cslgh
