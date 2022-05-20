@@ -426,7 +426,7 @@ FROM DB232.custdb_tmp.dbo.customer c (nolock)
 					  IsNull(sum(case when custid=srecommend then winlost-actual_stake else swinlost+scomm-acomm end),0)
 					+ IsNull(sum(case when custid=mrecommend then winlost-actual_stake else mwinlost+acomm-comm end),0)
 					+ IsNull(sum(case when custid=recommend  then winlost-actual_stake else awinlost+comm-playercomm end),0)
-					+ IsNull(sum(case when custid <> recommend and custid <> mrecommend and custid <> srecommend and ruben=1 then winlost-actual_stake+playercomm else 0 end),0) Bal
+					+ IsNull(sum(case when custid <> recommend and custid <> mrecommend and custid <> srecommend then winlost-actual_stake+playercomm else 0 end),0) Bal
 					FROM dbo.transfer t (nolock) GROUP BY t.srecommend
 				) bal ON c.custid = bal.srecommend
 INNER JOIN DB232.custdb_tmp.dbo.exchange e (nolock) ON c.currency = e.exchangeid
