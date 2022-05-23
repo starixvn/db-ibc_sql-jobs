@@ -30,6 +30,7 @@ AS
 		- 20211129@Kos: Support Cashout [RedmineID: #163191]
 		- 20220311@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 		- 20220317@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
+		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
  
 */
 
@@ -47,7 +48,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT BetType, ProductPrefix, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 49)
+	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 49, 69)
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
 
@@ -186,6 +187,7 @@ BEGIN
 					END -- Betradar VS: Virtual Basketball
 			WHEN a.ProductCode = 'SLT' THEN a.matchid
 			WHEN a.bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sport 3
+			WHEN a.bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin
 			ELSE ISNULL(b.sporttype, 0)
 		END AS SportType
 		,a.Currency
@@ -201,6 +203,7 @@ BEGIN
 			WHEN a.bettype = 2799 THEN -2799
 			WHEN a.bettype = 10 THEN ISNULL(ob.leagueid, - 1)
 			WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238) THEN ISNULL(result.LeagueID, - 1)
+			WHEN a.bettype BETWEEN 7901 AND 7999 THEN ISNULL(b3rd.league3rdId, -1)
 			ELSE ISNULL(b.LeagueID, - 1)
 			END LeagueID
 		,a.winlostdate
@@ -211,6 +214,8 @@ BEGIN
 		LEFT JOIN bodb02.dbo.match AS b WITH (NOLOCK) ON a.matchid = b.matchid
 		LEFT JOIN #__cte_raceinfo AS result ON a.oddsid = result.Orid
 		LEFT JOIN bodb02.dbo.outright AS ob WITH (NOLOCK) ON a.matchid = ob.orid
+		LEFT JOIN bodb02.dbo.match3rd AS b3rd WITH (NOLOCK)
+		ON a.matchid = b3rd.match3rdId
 	GROUP BY a.CustID
 		,a.bettype
 		,CASE 
@@ -235,6 +240,7 @@ BEGIN
 				END -- Betradar VS: Virtual Basketball
 			WHEN a.ProductCode = 'SLT' THEN a.matchid
 			WHEN a.bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sport 3
+			WHEN a.bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin
 			ELSE ISNULL(b.sporttype, 0)
 		END
 		,a.Currency
@@ -247,6 +253,7 @@ BEGIN
 			WHEN a.bettype = 2799 THEN -2799
 			WHEN a.bettype = 10 THEN ISNULL(ob.leagueid, - 1)
 			WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238) THEN ISNULL(result.LeagueID, - 1)
+			WHEN a.bettype BETWEEN 7901 AND 7999 THEN ISNULL(b3rd.league3rdId, -1)
 			ELSE ISNULL(b.LeagueID, - 1)
 		END
 		,winlostdate

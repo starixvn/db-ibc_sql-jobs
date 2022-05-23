@@ -15,6 +15,7 @@ AS
 		- 20170703@Paul: Check more columns [Redmine: #79262]
 		- 20210608@Kos: Support SB, NG, VS, CO only [RedmineID: #156599]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20210824@Hogan: Integrate BitCoin [RedmineID: #160160]
 */
 
 BEGIN
@@ -25,7 +26,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT ProductID, BetType, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 3, 5, 25, 27)
+	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 69)
 
 	DECLARE @B_WinLost MONEY, @R_WinLost MONEY
 		,@B_Stake MONEY, @R_Stake MONEY
@@ -43,6 +44,7 @@ BEGIN
 		@B_PlayerComm = SUM(b.playercomm)
 	FROM bodb02.dbo.bettrans14 AS b WITH (NOLOCK)
 		INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) AS lc ON b.recommend = lc.custid AND b.currency = lc.currency
+		INNER JOIN @SportBettype AS s ON s.BetType = b.bettype
 	WHERE b.winlostdate = @WinLostDate
 		AND b.statusID IN (111, 112, 113)
 
