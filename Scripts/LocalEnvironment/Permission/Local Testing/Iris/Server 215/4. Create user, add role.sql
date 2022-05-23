@@ -1,18 +1,4 @@
-/*
-	For Olympus team:
-	Affected DB:
-		bodb02
-		BK
-		bodb_dwrs
-		bodb_License
-		bodb_CustomerLog
-		bodb_Maintenance
-		bodb_NAP
-		ON_USER
-		bodb_EAS
-		bodb_Customer
-		
-*/
+
 -- Create User
 IF @@SERVERNAME NOT IN ( 'DB215' , 'DB-61\DevDB053' , 'TESTDB053' )
 BEGIN
@@ -50,16 +36,16 @@ INSERT INTO @tmpAffectedDB (DBName)
 			,('bodb_ODS')
 			--,('bodb_Age')
 			,('bodb_OLAP')
+			,('bodb_CRM')
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('spvn\kaka.huynh'),
-		('spvn\dora.le'),
+		--('spvn\dora.le'),
 		('spvn\jane.dinh'),
 		('spvn\megan.dinh'),
 		('spvn\tommy.nguyen'),
-		('spvn\Dory.vu'),
 		('spvn\Neil.dao'),
 		('spvn\harley.nguyen'),
 		('spvn\Mike.vu'),
@@ -138,14 +124,14 @@ INSERT INTO @tmpAffectedDB (DBName)
 			,('bodb_ODS')
 		--	,('bodb_Age')
 			,('bodb_OLAP')
+			,('bodb_CRM')
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('spvn\kaka.huynh'),
-		('spvn\dora.le'),
+		--('spvn\dora.le'),
 		('spvn\jane.dinh'),
 		('spvn\megan.dinh'),
 		('spvn\tommy.nguyen'),
-		('spvn\Dory.vu'),
 		('spvn\Neil.dao'),
 		('spvn\harley.nguyen'),
 		('spvn\Mike.vu'),

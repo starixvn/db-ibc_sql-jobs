@@ -6,7 +6,7 @@ GO
 
 -- Grant permisison Profiler for login
 
-IF @@SERVERNAME NOT IN ( 'DB215' , 'TESTDB053' )
+IF @@SERVERNAME NOT IN ( 'DB215' , 'DB-61\DevDB053' , 'TESTDB053' )
 BEGIN
 	SELECT 'Must be run on DB215 or TESTDB053' AS 'Error'
 
@@ -23,7 +23,6 @@ INSERT INTO @tmpMember (Name)
 		('spvn\jane.dinh'),
 		('spvn\megan.dinh'),
 		('spvn\tommy.nguyen'),
-		('spvn\Dory.vu'),
 		('spvn\Neil.dao'),
 		('spvn\harley.nguyen'),
 		('spvn\Mike.vu'),

@@ -1,18 +1,4 @@
-/*
-	For Rome team:
-	Affected DB:
-		bodb02
-		BK
-		bodb_dwrs
-		bodb_License
-		bodb_CustomerLog
-		bodb_Maintenance
-		bodb_NAP
-		ON_USER
-		bodb_EAS
-		bodb_Customer
-		
-*/
+
 -- Create Role
 IF @@SERVERNAME NOT IN ( 'DB215' , 'DB-61\DevDB053' , 'TESTDB053' )
 BEGIN
@@ -52,6 +38,7 @@ INSERT INTO @tmpAffectedDB (DBName)
 			,('bodb_ODS')
 			--,('bodb_Age')
 			,('bodb_OLAP')
+			,('bodb_CRM')
 
 SELECT @strRole = @strRole + ' '
 					 + 'USE ' + DBName + ';'
@@ -106,6 +93,7 @@ INSERT INTO @tmpAffectedDB (DBName)
 			,('bodb_ODS')
 			--,('bodb_Age')
 			,('bodb_OLAP')
+			,('bodb_CRM')
 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')
