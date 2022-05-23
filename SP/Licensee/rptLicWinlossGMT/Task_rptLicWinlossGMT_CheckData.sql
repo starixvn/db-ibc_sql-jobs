@@ -36,6 +36,7 @@ AS
 		- 20211117@Kos: Merge Sports Lottery into Sportsbook [RedmineID: #163191]
 		- 20211231@Hogan: Using betfrom '.' instead of betfrom '#' [RedmineID: #166689]
 		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
+		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 
 	EXEC Task_rptLicWinlossGMT_CheckData '2017-11-30'
 */
@@ -48,7 +49,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT ProductID, BetType, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 63)
+	WHERE ProductID IN (1, 63, 69)
 		AND BetType NOT BETWEEN 901 AND 904
 
 	CREATE TABLE #Source
@@ -135,6 +136,7 @@ BEGIN
 			@ProcessingTimeZone AS TimeZone
 			,b.winlostdate
 			,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, CASE
+																		WHEN sbt.ProductId = 69 THEN ISNULL(m3rd.StartTime, b.Winlostdate)
 																		WHEN sbt.ProductId = 63 THEN b.transdate
 																		ELSE ISNULL(m.GlobalShowTime, b.winlostdate)
 																	END)) AS RptDateGMT
@@ -188,12 +190,15 @@ BEGIN
 			LEFT JOIN bodb02.dbo.match14 AS m WITH (NOLOCK) ON m.matchid = b.MatchId
 			INNER JOIN bodb02.dbo.Dep_CustSuper AS s WITH (NOLOCK) ON b.srecommend = s.CustId
 			LEFT JOIN bodb_Licensee.dbo.LicenseeBATransaction_bk AS BA WITH (NOLOCK) ON b.transid = BA.transid
+			LEFT JOIN bodb02.dbo.Match3rd14 AS m3rd WITH (NOLOCK)
+				ON b.matchid = m3rd.match3rdId
 		WHERE b.Winlostdate = @WinlostDate
 			AND b.statusID IN (101, 111, 112, 113)		--REJECT, DRAW, WON, LOSE
 			AND b.bettype <= 19999
 		GROUP BY
 			b.winlostdate
 			,CONVERT(DATE, DATEADD(HOUR, @ProcessingTimeZone + 4, CASE
+																		WHEN sbt.ProductId = 69 THEN ISNULL(m3rd.StartTime, b.Winlostdate)
 																		WHEN sbt.ProductId = 63 THEN b.transdate
 																		ELSE ISNULL(m.GlobalShowTime, b.winlostdate)
 																	END))

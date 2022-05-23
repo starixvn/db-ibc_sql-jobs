@@ -67,6 +67,7 @@ AS
 		- 20220313@Kos: Integrate Allbet Promotion [RedmineID: #167524]
 		- 20220322@Percy: Enhance code get data from Transfer table [RedmineID: #170118]
 		- 20220329@Hogan: Macau Games Add new Range bettype[RedmineID: #170607]
+		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -764,6 +765,7 @@ BEGIN
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 				WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
+				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
@@ -842,6 +844,7 @@ BEGIN
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 				WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
+				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 				ELSE 0
 			END
 

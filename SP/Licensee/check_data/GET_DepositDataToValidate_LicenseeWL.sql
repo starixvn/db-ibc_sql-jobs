@@ -39,6 +39,7 @@ AS
 		- 20210630@Hogan: Integrate Creative Gaming [RedmineID: #152619]
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
+		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 
 	Param's Explanation:
 		@DrawFilter
@@ -231,6 +232,10 @@ BEGIN
 		,@VS3Turnover MONEY
 		,@VS3CustomerWl MONEY
 		,@VS3BetCount MONEY
+		----BTC
+		,@BTCTurnover MONEY
+		,@BTCCustomerWl MONEY
+		,@BTCBetCount MONEY
 
 	DECLARE @tblSporttype AS TABLE (ProductPrefix VARCHAR(10), Sporttype SMALLINT)
 
@@ -243,7 +248,8 @@ BEGIN
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2',
-		'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3')
+		'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3',
+		'BTC')
 
 	INSERT INTO @tblSporttype
 	SELECT 'SB', 0
@@ -954,6 +960,22 @@ BEGIN
 	FROM @tblData b
 	WHERE ProductPrefix = 'VS3'
 
+	----BTC
+	SELECT
+		@BTCTurnover=SUM(CASE
+							WHEN @DrawFilter IN (2,3) THEN
+								CASE
+									WHEN b.StatusID = 111 THEN 0
+									WHEN b.StatusID IN (114,115) THEN 0.5
+									ELSE 1
+								END
+							ELSE 1
+						END * b.Turnover)
+		,@BTCCustomerWl=SUM(b.winlost)
+		,@BTCBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
+	FROM @tblData b
+	WHERE ProductPrefix = 'BTC'
+	
 	-- Result
 	SELECT
 		1 AS id
@@ -1001,6 +1023,7 @@ BEGIN
 		, ISNULL(@APTurnover,0) AS AP
 		, ISNULL(@APMTurnover,0) AS APM
 		, ISNULL(@VS3Turnover,0) AS VS3
+		, ISNULL(@BTCTurnover,0) AS BTC
 	UNION
 	SELECT
 		2
@@ -1048,6 +1071,7 @@ BEGIN
 		, ISNULL(@APCustomerWl,0)
 		, ISNULL(@APMCustomerWl,0)
 		, ISNULL(@VS3CustomerWl,0)
+		, ISNULL(@BTCCustomerWl,0)
 	UNION
 	SELECT
 		3
@@ -1095,6 +1119,7 @@ BEGIN
 		, ISNULL(@APBetCount,0)
 		, ISNULL(@APMBetCount,0)
 		, ISNULL(@VS3BetCount,0)
+		, ISNULL(@BTCBetCount,0)
 
 	SET NOCOUNT OFF
 END
