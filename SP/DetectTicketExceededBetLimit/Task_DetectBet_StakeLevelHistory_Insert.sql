@@ -17,8 +17,8 @@ AS
 	Param's Explanation:
 	• @SettingList:
 		<root>
-			<r StakeLevelID= ''1400001'' GameTypeID=''3612'' MaxLabel="2000" MaxStake="2000" MaxGameStake="2000" UpdateTime="2022-03-10 04:10:10.000"/>
-			<r StakeLevelID= ''1400002'' GameTypeID=''3612'' MaxLabel="2000" MaxStake="2000" MaxGameStake="NULL" UpdateTime="2022-03-10 04:10:10.000"/>
+			<r StakeLevelID= ''1400001'' GameTypeID=''3612'' MaxLabel=''2000'' MaxStake=''2000'' MaxGameStake=''2000'' UpdateTime=''2022-03-10 04:10:10.000''/>
+			<r StakeLevelID= ''1400002'' GameTypeID=''3612'' MaxLabel=''2000'' MaxStake=''2000'' MaxGameStake=''NULL'' UpdateTime=''2022-03-10 04:10:10.000''/>
 		</root>
 */
 BEGIN

@@ -17,8 +17,8 @@ AS
 	Param's Explanation:
 	• @SettingList:
 		<root>
-			<r StakeLevelID= ''1400001'' GameTypeID=''3612'' MaxLabel="2000" MaxStake="2000" MaxGameStake="2000" UpdateTime="2022-03-10 04:10:10.000"/>
-			<r StakeLevelID= ''1400002'' GameTypeID=''3612'' MaxLabel="2000" MaxStake="2000" MaxGameStake="NULL" UpdateTime="2022-03-10 04:10:10.000"/>
+			<r StakeLevelID= ''1400001'' GameTypeID=''3612'' MaxLabel=''2000'' MaxStake=''2000'' MaxGameStake=''2000'' SiteID=''53'' UpdateTime=''2022-03-10 04:10:10.000''/>
+			<r StakeLevelID= ''1400002'' GameTypeID=''3612'' MaxLabel=''2000'' MaxStake=''2000'' MaxGameStake=''NULL'' SiteID=''53'' UpdateTime=''2022-03-10 04:10:10.000''/>
 		</root>
 */
 BEGIN
@@ -38,6 +38,7 @@ BEGIN
 		,	MaxLabel		NVARCHAR(50)
 		,	MaxStake		DECIMAL(19,8)
 		,	MaxGameStake	DECIMAL(19,8)
+		,	SiteID			INT
 		,	UpdateTime		DATETIME
 		,	IsGroup			BIT
 		,	PRIMARY KEY CLUSTERED (StakeLevelID, GameTypeID, UpdateTime)
@@ -58,11 +59,12 @@ BEGIN
 	EXEC sp_xml_preparedocument @iDoc OUTPUT
 		, @xml
 
-	INSERT INTO #tmpSettingList(StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, IsGroup, UpdateTime)
+	INSERT INTO #tmpSettingList(StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, SiteID, IsGroup, UpdateTime)
 	SELECT StakeLevelID, GameTypeID
 		, CASE WHEN MaxLabel<>'NULL'			THEN MaxLabel		ELSE NULL END MaxLabel
 		, CASE WHEN ISNUMERIC(MaxStake)=1		THEN MaxStake		ELSE NULL END MaxStake
 		, CASE WHEN ISNUMERIC(MaxGameStake)=1	THEN MaxGameStake	ELSE NULL END MaxGameStake
+		, SiteID
 		, @IsGroup
 		, UpdateTime
 	FROM OPENXML(@iDoc, '/root/r', 1) WITH (
@@ -71,6 +73,7 @@ BEGIN
 		,	MaxLabel		VARCHAR(50)
 		,	MaxStake		VARCHAR(50)
 		,	MaxGameStake	VARCHAR(50)
+		,	SiteID			INT
 		,	UpdateTime		DATETIME
 		)
 	
@@ -78,8 +81,8 @@ BEGIN
 
 	IF @IsGroup=0
 	BEGIN
-		INSERT INTO Dep_StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
-		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
+		INSERT INTO Dep_StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
 		FROM #tmpSettingList
 	END
 	ELSE
