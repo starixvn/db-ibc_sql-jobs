@@ -37,6 +37,7 @@ BEGIN
 		,	MaxLabel		NVARCHAR(50)
 		,	MaxStake		DECIMAL(19,8)
 		,	MaxGameStake	DECIMAL(19,8)
+		,	SiteID			INT
 		,	UpdateTime		DATETIME
 	)
 
@@ -103,15 +104,14 @@ BEGIN
 		TRUNCATE TABLE #tmpStakeLevel_History
 	END
 
-
 	IF EXISTS (SELECT 1 FROM DBCust.CustDB.dbo.Dep_StakeLevel_History)
 	BEGIN
-		INSERT INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
-		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
+		INSERT INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
 		FROM DBCust.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK)
 
-		INSERT INTO dbo.Dep_StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
-		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
+		INSERT INTO dbo.Dep_StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
 		FROM #tmpStakeLevel_History
 
 		DELETE cslh
