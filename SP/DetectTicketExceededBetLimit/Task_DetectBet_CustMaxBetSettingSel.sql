@@ -248,7 +248,7 @@ BEGIN
 			SELECT cls.transid
 				, MAX(CASE WHEN st.GameGroupID=0 THEN CAST(st.MaxLabel AS MONEY) ELSE stg.MaxStake END) MaxStake
 			FROM #tmpCustListSel cls
-			OUTER APPLY (SELECT TRIM(value) AS val FROM STRING_SPLIT(cls.StakeLevelList,',')) ss
+			OUTER APPLY (SELECT value AS val FROM STRING_SPLIT(cls.StakeLevelList,',')) ss
 			LEFT JOIN StakeLevel st ON st.StakeLevelID=CAST(ss.val AS INT)
 									AND st.StakeLevelID<>cls.StakeLevelID_Changed
 			OUTER APPLY (SELECT TOP 1 stg.StakeLevelID, CAST(stg.MaxLabel AS MONEY) AS MaxStake
