@@ -202,25 +202,25 @@ BEGIN
 					WHEN dstg.StakeLevelID IS NOT NULL THEN dst.StakeLevelID
 				  END) AS MaxStake_Changed 
 		FROM #tmpCustListSel cls
-		OUTER APPLY (SELECT TRIM(value) AS val FROM STRING_SPLIT(cls.StakeLevelList,',')) ss
-		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM StakeLevel_History sst WITH (NOLOCK) 
-					 WHERE sst.StakeLevelID = CAST(ss.val AS INT)
-						AND sst.UpdateTime>cls.transdate
+		OUTER APPLY (SELECT value AS val FROM STRING_SPLIT(cls.StakeLevelList,',')) ss
+		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM StakeLevel_History st WITH (NOLOCK) 
+					 WHERE st.StakeLevelID = CAST(ss.val AS INT)
+						AND st.UpdateTime>cls.transdate
 				--	 ORDER BY UpdateTime
 					 ) st
-		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM Dep_StakeLevel_History dsst WITH (NOLOCK) 
-					 WHERE dsst.StakeLevelID = CAST(ss.val AS INT)
-						AND dsst.UpdateTime>cls.transdate
+		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM Dep_StakeLevel_History dst WITH (NOLOCK) 
+					 WHERE dst.StakeLevelID = CAST(ss.val AS INT)
+						AND dst.UpdateTime>cls.transdate
 				--	 ORDER BY UpdateTime
 					) dst
-		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM StakeLevelGroupDetail_History sstg WITH (NOLOCK) 
-					 WHERE sstg.StakeLevelID = CAST(ss.val AS INT)
-						AND sstg.UpdateTime>cls.transdate
+		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM StakeLevelGroupDetail_History stg WITH (NOLOCK) 
+					 WHERE stg.StakeLevelID = CAST(ss.val AS INT)
+						AND stg.UpdateTime>cls.transdate
 				--	 ORDER BY UpdateTime
 					 ) stg
-		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM Dep_StakeLevelGroupDetail_History dsstg WITH (NOLOCK) 
-					 WHERE dsstg.StakeLevelID = CAST(ss.val AS INT)
-						AND dsstg.UpdateTime>cls.transdate
+		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM Dep_StakeLevelGroupDetail_History dstg WITH (NOLOCK) 
+					 WHERE dstg.StakeLevelID = CAST(ss.val AS INT)
+						AND dstg.UpdateTime>cls.transdate
 				--	 ORDER BY UpdateTime
 					 ) dstg
 		WHERE cls.StakeLevelList IS NOT NULL
