@@ -12,43 +12,28 @@
   DTS:ObjectName="ETL_Process_Main"
   DTS:PackageType="5"
   DTS:ProtectionLevel="0"
-  DTS:VersionBuild="142"
-  DTS:VersionGUID="{CFC915B7-A63E-4B4D-B1AB-A0571B2E49AE}">
+  DTS:VersionBuild="147"
+  DTS:VersionGUID="{348D59C4-286D-4B1F-8AFF-F381056E8060}">
   <DTS:Property
     DTS:Name="PackageFormatVersion">8</DTS:Property>
-  <DTS:ConnectionManagers>
-    <DTS:ConnectionManager
-      DTS:refId="Package.ConnectionManagers[DBTP]"
-      DTS:CreationName="ADO.NET:SQL"
-      DTS:DTSID="{CE6E8F08-62EE-4719-A198-370F5E3D1DCC}"
-      DTS:ObjectName="DBTP">
-      <DTS:PropertyExpression
-        DTS:Name="InitialCatalog">"bodb02"</DTS:PropertyExpression>
-      <DTS:PropertyExpression
-        DTS:Name="Password">("11nks3rv3r")</DTS:PropertyExpression>
-      <DTS:PropertyExpression
-        DTS:Name="ServerName">@[$Package::DBTP]</DTS:PropertyExpression>
-      <DTS:PropertyExpression
-        DTS:Name="UserName">@[$Project::UserID]</DTS:PropertyExpression>
-      <DTS:ObjectData>
-        <DTS:ConnectionManager
-          DTS:ConnectionString="Data Source=NB016-BOBBY\MSSQL2019;User ID=sqllink;Initial Catalog=bodb02;Connect Timeout=30;">
-          <DTS:Password
-            DTS:Name="Password"
-            Sensitive="1"></DTS:Password>
-        </DTS:ConnectionManager>
-      </DTS:ObjectData>
-    </DTS:ConnectionManager>
-  </DTS:ConnectionManagers>
   <DTS:PackageParameters>
     <DTS:PackageParameter
       DTS:CreationName=""
-      DTS:DataType="8"
-      DTS:DTSID="{EF856C9B-8F87-4142-AA60-210558E81104}"
-      DTS:ObjectName="DBTP">
+      DTS:DataType="11"
+      DTS:DTSID="{9AB7CF9F-9BA3-4C37-BDBC-2B09B21271D6}"
+      DTS:ObjectName="RunDR">
       <DTS:Property
-        DTS:DataType="8"
-        DTS:Name="ParameterValue">NB016-BOBBY\MSSQL2019</DTS:Property>
+        DTS:DataType="11"
+        DTS:Name="ParameterValue">0</DTS:Property>
+    </DTS:PackageParameter>
+    <DTS:PackageParameter
+      DTS:CreationName=""
+      DTS:DataType="11"
+      DTS:DTSID="{493B4203-063C-4E0E-977C-8FB0ABFD1DB1}"
+      DTS:ObjectName="RunHA">
+      <DTS:Property
+        DTS:DataType="11"
+        DTS:Name="ParameterValue">0</DTS:Property>
     </DTS:PackageParameter>
   </DTS:PackageParameters>
   <DTS:Variables>
@@ -280,7 +265,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Check Bet14"
       DTS:TaskContact="Expression Task;Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="1">
+      DTS:ThreadHint="0">
       <DTS:Variables />
       <DTS:ObjectData>
         <ExpressionTask
@@ -296,7 +281,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Check Event"
       DTS:TaskContact="Expression Task;Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="0">
+      DTS:ThreadHint="1">
       <DTS:Variables />
       <DTS:ObjectData>
         <ExpressionTask
@@ -506,7 +491,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Report Bet14 Complete"
       DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="1">
+      DTS:ThreadHint="0">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
@@ -574,7 +559,7 @@
       DTS:LocaleID="-1"
       DTS:ObjectName="Report Event Complete"
       DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="0">
+      DTS:ThreadHint="1">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
@@ -770,27 +755,6 @@
       </DTS:ObjectData>
     </DTS:Executable>
     <DTS:Executable
-      DTS:refId="Package\Sart DBARC - Update Statistics"
-      DTS:CreationName="Microsoft.ExecutePackageTask"
-      DTS:Description="Execute Package Task"
-      DTS:DTSID="{16DD5B20-1FFD-46D4-9767-4C91E1FF83A9}"
-      DTS:ExecutableType="Microsoft.ExecutePackageTask"
-      DTS:LocaleID="-1"
-      DTS:ObjectName="Sart DBARC - Update Statistics"
-      DTS:TaskContact="Microsoft Corporation; Microsoft SQL Server; Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1">
-      <DTS:Variables />
-      <DTS:ObjectData>
-        <ExecutePackageTask>
-          <UseProjectReference>True</UseProjectReference>
-          <PackageName>ETL_Process_UpdateStats.dtsx</PackageName>
-          <ParameterAssignment>
-            <ParameterName>SessionID</ParameterName>
-            <BindedVariableOrParameterName>User::processID</BindedVariableOrParameterName>
-          </ParameterAssignment>
-        </ExecutePackageTask>
-      </DTS:ObjectData>
-    </DTS:Executable>
-    <DTS:Executable
       DTS:refId="Package\SSIS - Load Setting"
       DTS:CreationName="Microsoft.ExecuteSQLTask"
       DTS:Description="Load Process Setting"
@@ -855,37 +819,58 @@
       </DTS:ObjectData>
     </DTS:Executable>
     <DTS:Executable
-      DTS:refId="Package\Start AWS - Thursday Routine"
-      DTS:CreationName="Microsoft.ExecuteSQLTask"
-      DTS:Description="Execute SQL Task"
-      DTS:DTSID="{2050E646-D2FD-4A9A-A18A-99EF6D3EA2AD}"
-      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
-      DTS:LocaleID="-1"
-      DTS:ObjectName="Start AWS - Thursday Routine"
-      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="9">
-      <DTS:Variables />
-      <DTS:ObjectData>
-        <SQLTask:SqlTaskData
-          SQLTask:Connection="{330E61D2-1A1F-41CC-8A40-D4D415B9827A}"
-          SQLTask:SqlStatementSource="EXEC msdb.dbo.sp_start_job @job_name=N'AWS - Thursday Routine'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
-      </DTS:ObjectData>
-    </DTS:Executable>
-    <DTS:Executable
-      DTS:refId="Package\Start DBTP -  CheckRowcount Job"
+      DTS:refId="Package\START -  CheckRowcount Job - HA"
       DTS:CreationName="Microsoft.ExecuteSQLTask"
       DTS:Description="Execute SQL Task"
       DTS:DTSID="{91D5C550-BEDA-4C7F-AAA3-BFD11D84118D}"
       DTS:ExecutableType="Microsoft.ExecuteSQLTask"
       DTS:LocaleID="-1"
-      DTS:ObjectName="Start DBTP -  CheckRowcount Job"
+      DTS:ObjectName="START -  CheckRowcount Job - HA"
       DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
       DTS:ThreadHint="4">
       <DTS:Variables />
       <DTS:ObjectData>
         <SQLTask:SqlTaskData
           SQLTask:Connection="{330E61D2-1A1F-41CC-8A40-D4D415B9827A}"
-          SQLTask:SqlStatementSource="EXEC DBTP.msdb.dbo.sp_start_job N'bodb02: Check consistency data for archiving process'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+          SQLTask:SqlStatementSource="EXEC DBTP.msdb.dbo.sp_start_job N'bodb02: Check consistency data for archiving process', @step_name=N'KBT@HA - Check consistency data'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\START - Thursday Routine DR"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{2050E646-D2FD-4A9A-A18A-99EF6D3EA2AD}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="START - Thursday Routine DR"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="9">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{330E61D2-1A1F-41CC-8A40-D4D415B9827A}"
+          SQLTask:SqlStatementSource="EXEC msdb.dbo.sp_start_job @job_name=N'DBA: SSISDB - Thursday Routine - DR'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\START - Update Statistics"
+      DTS:CreationName="Microsoft.ExecutePackageTask"
+      DTS:Description="Execute Package Task"
+      DTS:DTSID="{16DD5B20-1FFD-46D4-9767-4C91E1FF83A9}"
+      DTS:ExecutableType="Microsoft.ExecutePackageTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="START - Update Statistics"
+      DTS:TaskContact="Microsoft Corporation; Microsoft SQL Server; Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <ExecutePackageTask>
+          <UseProjectReference>True</UseProjectReference>
+          <PackageName>ETL_Process_UpdateStats.dtsx</PackageName>
+          <ParameterAssignment>
+            <ParameterName>SessionID</ParameterName>
+            <BindedVariableOrParameterName>User::processID</BindedVariableOrParameterName>
+          </ParameterAssignment>
+        </ExecutePackageTask>
       </DTS:ObjectData>
     </DTS:Executable>
   </DTS:Executables>
@@ -1001,27 +986,27 @@
       DTS:From="Package\Check SSIS Process Status"
       DTS:LogicalAnd="True"
       DTS:ObjectName="Constraint 20"
-      DTS:To="Package\Sart DBARC - Update Statistics" />
+      DTS:To="Package\START - Update Statistics" />
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint 21]"
       DTS:CreationName=""
       DTS:DTSID="{D92C8730-45D4-4156-8AAF-369AF88C3640}"
       DTS:EvalOp="3"
-      DTS:Expression="@[User::FailedCount]==0"
+      DTS:Expression="@[User::FailedCount]==0 &amp;&amp; @[$Package::RunHA]==True"
       DTS:From="Package\Check SSIS Process Status"
       DTS:LogicalAnd="True"
       DTS:ObjectName="Constraint 21"
-      DTS:To="Package\Start DBTP -  CheckRowcount Job" />
+      DTS:To="Package\START -  CheckRowcount Job - HA" />
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint 22]"
       DTS:CreationName=""
       DTS:DTSID="{21A91C35-4CB7-45B8-9A13-BB7EECE25008}"
       DTS:EvalOp="3"
-      DTS:Expression="@[User::FailedCount]==0"
+      DTS:Expression="@[User::FailedCount]==0 &amp;&amp; @[$Package::RunDR]==True"
       DTS:From="Package\Check SSIS Process Status"
       DTS:LogicalAnd="True"
       DTS:ObjectName="Constraint 22"
-      DTS:To="Package\Start AWS - Thursday Routine" />
+      DTS:To="Package\START - Thursday Routine DR" />
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint 3]"
       DTS:CreationName=""
@@ -1168,8 +1153,16 @@
           Id="Package\SSIS - Load Setting"
           TopLeft="58.1944435772797,341.877199417447" />
         <NodeLayout
+          Size="248,42.6666666666667"
+          Id="Package\START -  CheckRowcount Job - HA"
+          TopLeft="1465.62497816049,204.122810859649" />
+        <NodeLayout
+          Size="226.666666666667,42.6666666666667"
+          Id="Package\START - Thursday Routine DR"
+          TopLeft="1487.49997783452,368.333340266295" />
+        <NodeLayout
           Size="228,42.6666666666667"
-          Id="Package\Sart DBARC - Update Statistics"
+          Id="Package\START - Update Statistics"
           TopLeft="1458.33331160248,85.5263173992946" />
         <EdgeLayout
           Id="Package.PrecedenceConstraints[Constraint]"
@@ -1598,6 +1591,66 @@
           </EdgeLayout.Labels>
         </EdgeLayout>
         <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 21]"
+          TopLeft="1389.98609355775,221.801170477834">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="75.6388846027398,0"
+              Start="0,0"
+              End="68.1388846027398,0">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="68.1388846027398,0" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="26.0694423013699,5,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 22]"
+          TopLeft="1334.98609355775,239.479530096019">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="263.847217610103,128.853810170276"
+              Start="0,0"
+              End="263.847217610103,121.353810170276">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,40.0183823563056" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,40.0183823563056"
+                    Point2="0,44.0183823563056"
+                    Point3="4,44.0183823563056" />
+                  <mssgle:LineSegment
+                    End="259.847217610103,44.0183823563056" />
+                  <mssgle:CubicBezierSegment
+                    Point1="259.847217610103,44.0183823563056"
+                    Point2="263.847217610103,44.0183823563056"
+                    Point3="263.847217610103,48.0183823563056" />
+                  <mssgle:LineSegment
+                    End="263.847217610103,121.353810170276" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="123.923608805052,49.0183823563056,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
           Id="Package.PrecedenceConstraints[Constraint 3]"
           TopLeft="479.12962485436,268.905323512616">
           <EdgeLayout.Curve>
@@ -1802,74 +1855,6 @@
           <EdgeLayout.Labels>
             <mssgm:EdgeLabel
               BoundingBox="26.2947950841044,-15.7490234375,30.4826953125,9.7490234375"
-              RelativePosition="Any" />
-          </EdgeLayout.Labels>
-        </EdgeLayout>
-        <NodeLayout
-          Size="222.666666666667,42.6666666666667"
-          Id="Package\Start AWS - Thursday Routine"
-          TopLeft="1487.49997783452,368.333340266295" />
-        <EdgeLayout
-          Id="Package.PrecedenceConstraints[Constraint 22]"
-          TopLeft="1334.98609355775,239.479530096019">
-          <EdgeLayout.Curve>
-            <mssgle:Curve
-              StartConnector="{assembly:Null}"
-              EndConnector="263.847217610106,128.853810170276"
-              Start="0,0"
-              End="263.847217610106,121.353810170276">
-              <mssgle:Curve.Segments>
-                <mssgle:SegmentCollection
-                  Capacity="5">
-                  <mssgle:LineSegment
-                    End="0,40.0183823563055" />
-                  <mssgle:CubicBezierSegment
-                    Point1="0,40.0183823563055"
-                    Point2="0,44.0183823563055"
-                    Point3="4,44.0183823563055" />
-                  <mssgle:LineSegment
-                    End="259.847217610106,44.0183823563055" />
-                  <mssgle:CubicBezierSegment
-                    Point1="259.847217610106,44.0183823563055"
-                    Point2="263.847217610106,44.0183823563055"
-                    Point3="263.847217610106,48.0183823563055" />
-                  <mssgle:LineSegment
-                    End="263.847217610106,121.353810170276" />
-                </mssgle:SegmentCollection>
-              </mssgle:Curve.Segments>
-            </mssgle:Curve>
-          </EdgeLayout.Curve>
-          <EdgeLayout.Labels>
-            <mssgm:EdgeLabel
-              BoundingBox="123.923608805053,49.0183823563055,16,16"
-              RelativePosition="Any" />
-          </EdgeLayout.Labels>
-        </EdgeLayout>
-        <NodeLayout
-          Size="242.666666666667,42.6666666666667"
-          Id="Package\Start DBTP -  CheckRowcount Job"
-          TopLeft="1465.62497816049,204.122810859649" />
-        <EdgeLayout
-          Id="Package.PrecedenceConstraints[Constraint 21]"
-          TopLeft="1389.98609355775,221.801170477834">
-          <EdgeLayout.Curve>
-            <mssgle:Curve
-              StartConnector="{assembly:Null}"
-              EndConnector="75.6388846027357,0"
-              Start="0,0"
-              End="68.1388846027357,0">
-              <mssgle:Curve.Segments>
-                <mssgle:SegmentCollection
-                  Capacity="5">
-                  <mssgle:LineSegment
-                    End="68.1388846027357,0" />
-                </mssgle:SegmentCollection>
-              </mssgle:Curve.Segments>
-            </mssgle:Curve>
-          </EdgeLayout.Curve>
-          <EdgeLayout.Labels>
-            <mssgm:EdgeLabel
-              BoundingBox="26.0694423013679,5,16,16"
               RelativePosition="Any" />
           </EdgeLayout.Labels>
         </EdgeLayout>

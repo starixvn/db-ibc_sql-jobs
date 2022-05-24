@@ -11,8 +11,8 @@
   DTS:LocaleID="1033"
   DTS:ObjectName="ETL_Process_MainDR"
   DTS:PackageType="5"
-  DTS:VersionBuild="24"
-  DTS:VersionGUID="{C0E15F35-D550-4928-AAB0-A0AD0A9B5751}">
+  DTS:VersionBuild="25"
+  DTS:VersionGUID="{79A4F9DD-EFDE-46B7-8FDC-975E98F17216}">
   <DTS:Property
     DTS:Name="PackageFormatVersion">8</DTS:Property>
   <DTS:Variables>
@@ -175,40 +175,6 @@
       </DTS:ObjectData>
     </DTS:Executable>
     <DTS:Executable
-      DTS:refId="Package\DR - DB061AWS Update Stats"
-      DTS:CreationName="Microsoft.ExecuteSQLTask"
-      DTS:Description="Execute SQL Task"
-      DTS:DTSID="{7C3B4B72-8BA9-4C63-B282-EFBB9F9DC17A}"
-      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
-      DTS:LocaleID="-1"
-      DTS:ObjectName="DR - DB061AWS Update Stats"
-      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="1">
-      <DTS:Variables />
-      <DTS:ObjectData>
-        <SQLTask:SqlTaskData
-          SQLTask:Connection="{F237F3BC-5862-4545-AD62-D4DD0CF8FD14}"
-          SQLTask:SqlStatementSource="EXEC DB061AWS.msdb.dbo.sp_start_job @job_name = N'DBA: SSIS Thursday Routine - Update Statistics'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
-      </DTS:ObjectData>
-    </DTS:Executable>
-    <DTS:Executable
-      DTS:refId="Package\DR - DBTP CheckRowCount"
-      DTS:CreationName="Microsoft.ExecuteSQLTask"
-      DTS:Description="Execute SQL Task"
-      DTS:DTSID="{5808AD04-5AF0-4108-98D1-D4121D48D885}"
-      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
-      DTS:LocaleID="-1"
-      DTS:ObjectName="DR - DBTP CheckRowCount"
-      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
-      DTS:ThreadHint="0">
-      <DTS:Variables />
-      <DTS:ObjectData>
-        <SQLTask:SqlTaskData
-          SQLTask:Connection="{F237F3BC-5862-4545-AD62-D4DD0CF8FD14}"
-          SQLTask:SqlStatementSource="EXEC DBTP.msdb.dbo.sp_start_job @job_name = N'bodb02: Check consistency data for archiving process', @step_name=N'AWS@DR - Check consistency data'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
-      </DTS:ObjectData>
-    </DTS:Executable>
-    <DTS:Executable
       DTS:refId="Package\Mapping Bet14 Files"
       DTS:CreationName="Microsoft.ExecutePackageTask"
       DTS:Description="Execute Package Task"
@@ -282,6 +248,40 @@
         </SQLTask:SqlTaskData>
       </DTS:ObjectData>
     </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\START - CheckRowCount DR"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{5808AD04-5AF0-4108-98D1-D4121D48D885}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="START - CheckRowCount DR"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="1">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{F237F3BC-5862-4545-AD62-D4DD0CF8FD14}"
+          SQLTask:SqlStatementSource="EXEC DBTP.msdb.dbo.sp_start_job @job_name = N'bodb02: Check consistency data for archiving process', @step_name=N'AWS@DR - Check consistency data'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\START - Update Statistics DR"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{7C3B4B72-8BA9-4C63-B282-EFBB9F9DC17A}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="START - Update Statistics DR"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="0">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{F237F3BC-5862-4545-AD62-D4DD0CF8FD14}"
+          SQLTask:SqlStatementSource="EXEC DB061AWS.msdb.dbo.sp_start_job @job_name = N'DBA: SSIS Thursday Routine - Update Statistics'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+      </DTS:ObjectData>
+    </DTS:Executable>
   </DTS:Executables>
   <DTS:PrecedenceConstraints>
     <DTS:PrecedenceConstraint
@@ -322,7 +322,7 @@
       DTS:From="Package\Check SSIS Process Status"
       DTS:LogicalAnd="True"
       DTS:ObjectName="Constraint 4"
-      DTS:To="Package\DR - DB061AWS Update Stats" />
+      DTS:To="Package\START - Update Statistics DR" />
     <DTS:PrecedenceConstraint
       DTS:refId="Package.PrecedenceConstraints[Constraint 5]"
       DTS:CreationName=""
@@ -347,7 +347,7 @@
       DTS:From="Package\Check SSIS Process Status"
       DTS:LogicalAnd="True"
       DTS:ObjectName="Constraint 7"
-      DTS:To="Package\DR - DBTP CheckRowCount" />
+      DTS:To="Package\START - CheckRowCount DR" />
   </DTS:PrecedenceConstraints>
   <DTS:DesignTimeProperties><![CDATA[<?xml version="1.0"?>
 <!--This CDATA section contains the layout information of the package. The section includes information such as (x,y) coordinates, width, and height.-->
@@ -375,11 +375,11 @@
           TopLeft="766.666655242443,211.649126790787" />
         <NodeLayout
           Size="229.333333333334,42.6666666666667"
-          Id="Package\DR - DB061AWS Update Stats"
+          Id="Package\START - Update Statistics DR"
           TopLeft="980.833318717778,121.333335617132" />
         <NodeLayout
           Size="229.333333333334,42.6666666666667"
-          Id="Package\DR - DBTP CheckRowCount"
+          Id="Package\START - CheckRowCount DR"
           TopLeft="987.499985285104,312.000005872626" />
         <NodeLayout
           Size="177.333333333334,42.6666666666667"

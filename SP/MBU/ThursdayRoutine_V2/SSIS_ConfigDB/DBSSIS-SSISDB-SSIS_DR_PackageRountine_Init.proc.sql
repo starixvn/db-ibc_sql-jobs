@@ -3,11 +3,11 @@ ALTER PROCEDURE [dbo].[SSIS_DR_PackageRountine_Init]
 	@PackageID int
 	, @Environment VARCHAR(10)
 	, @RuntimeID INT
-	, @SourceTable VARCHAR(100)
 	, @GrantMode VARCHAR(1000)
 	, @SessionID INT
 	, @DataFile varchar(1000)
 	, @SourceID  INT
+	, @RunningDate DATE = NULL
 AS
 /*
 	Created by:	20220415@Bobby
@@ -15,6 +15,7 @@ AS
 	Database:	DBSSIS.SSISDB
 	Revisions:
 		- 20220415@Bobby: Init
+		- 20220518@Bobby: Support partitioned view [Redmine: #166146]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -24,7 +25,7 @@ BEGIN
 		,@sourceServer VARCHAR(100)
 		,@sourceDB VARCHAR(100)
 		,@execCommand VARCHAR(1000)
-		,@TableName VARCHAR(100)
+		,@sourceTable VARCHAR(100)
 		,@DR_FileID INT
 
 		,@batchSize INT
@@ -32,7 +33,10 @@ BEGIN
 		,@syncParallel BIT
 		,@rowTotal INT = 0
 		,@targetInfo VARCHAR(1000)
-		,@isCanceled BIT;
+		,@isCanceled BIT
+		,@partitionedView INT;
+
+	SELECT @partitionedView = CASE WHEN @runningDate IS NOT NULL THEN YEAR(@runningDate) ELSE YEAR(CURRENT_TIMESTAMP) END;
 
 	INSERT INTO [dbo].[SSIS_PackageRuntime]
 		([PackageID],[DynamicMappingID]
@@ -54,7 +58,7 @@ BEGIN
 	INNER JOIN dbo.SSIS_DynamicMapping d WITH(NOLOCK) ON d.ID = dp.DynamicMappingID 
 	where p.PackageID=@packageID
 		AND env.Environment = @Environment
-		AND d.TableName = @SourceTable AND d.ID = @SourceID
+		AND d.ID = @SourceID
 		AND dp.GrantMode = @GrantMode;
 
 	SET @routineID = SCOPE_IDENTITY();
@@ -70,12 +74,12 @@ BEGIN
 			,@chunkSize = dt.ChunkSize
 			,@syncParallel = ISNULL(dt.SyncParallel,0)
 			,@isCanceled = ISNULL(IsCanceled, 0)
-			,@TableName = dt.TableName
+			,@sourceTable = dt.TableName
 		FROM [dbo].[SSIS_DynamicMapping] dt with(nolock)
 		WHERE dt.ID=@SourceID;
 
 		-- match target
-		SELECT @targetInfo = COALESCE(@targetInfo + ';', '') + (tr.[TargetServer]+'#'+tr.[TargetDB]+'#'+tr.[TargetTable]) 
+		SELECT @targetInfo = COALESCE(@targetInfo + ';', '') + (tr.[TargetServer]+'#'+tr.[TargetDB]+'#'+ CASE WHEN tr.[IsPartitionedView]=1 THEN REPLACE(tr.[TargetTable], 'VIEW', CAST(@partitionedView AS VARCHAR(10))) ELSE tr.[TargetTable] END) 
 		FROM [dbo].[SSIS_DynamicMapping_Target] tr with(nolock) 
 		WHERE tr.DynamicMappingID=@SourceID AND tr.Active=1 and tr.Environment=@environment;
 
@@ -113,7 +117,7 @@ BEGIN
 		,@syncParallel AS SyncParallel
 		,@rowTotal AS RowTotal
 		,@isCanceled AS  IsCanceled
-		,@TableName AS TableName
+		,@sourceTable AS SourceTable
 		,@DR_FileID AS DR_FileID
 END
 GO

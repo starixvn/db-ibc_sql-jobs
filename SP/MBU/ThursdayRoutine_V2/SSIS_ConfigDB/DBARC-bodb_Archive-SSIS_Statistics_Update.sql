@@ -97,11 +97,11 @@ BEGIN
 	select [Table Name], [CMD]
 	FROM (
 		SELECT DISTINCT
-			t.name AS [Table Name]
+			t.name AS [Table Name], i.name AS [Index Name]
 				--, i.name as [Index Name], i.type_desc--, i.data_space_id
 				, s.name AS [Partition Scheme], p.partition_number, pv.value as range_value ,c.pdate,c.cdate
 				--, ROW_NUMBER() OVER(partition by t.name, i.name order by i.type, p.partition_number asc) as pNUM
-				, ROW_NUMBER() OVER(partition by t.name ORDER BY p.partition_number asc) as pNUM
+				, ROW_NUMBER() OVER(partition by t.name, i.name ORDER BY p.partition_number asc) as pNUM
 		FROM sys.tables t
 		inner join cte_ssis_table cte on cte.name = t.name
 		inner join cte_server_dict dict ON dict.Alias = cte.Alias
@@ -118,7 +118,7 @@ BEGIN
 	) as t
 	cross apply (
 		--select 'UPDATE STATISTICS dbo.' + t.[Table Name]+'(' + t.[Index Name] + ') WITH RESAMPLE' + case when t.[Partition Scheme] is null then ';' else ' ON PARTITIONS('+cast(t.partition_number as varchar(10))+');' end
-		select 'UPDATE STATISTICS dbo.' + t.[Table Name]+ ' WITH RESAMPLE' + case when t.[Partition Scheme] is null then ';' else ' ON PARTITIONS('+cast(t.partition_number as varchar(10))+');' end
+		select 'UPDATE STATISTICS dbo.' + t.[Table Name] + '(' + t.[Index Name] + ') WITH RESAMPLE' + case when t.[Partition Scheme] is null then ';' else ' ON PARTITIONS('+cast(t.partition_number as varchar(10))+');' end
 			--, 'select count(1) from dbo.' + t.[Table Name]+ ' WITH(nolock);'
 	) as c(CMD)--, CNT)
 	where t.pNUM=1
