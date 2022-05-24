@@ -28,7 +28,7 @@ BEGIN
 		,	@SQL				NVARCHAR(MAX)
 
 /*	DECLARE @CustList VARCHAR(MAX),@ErMsg nvarchar(max)
-	SET @CustList = '<root><r custid="64074994" BetType="3704" SportType="170" transid="519399694" transdate="2022-05-23T00:00:00"/><r custid="52289958" BetType="2401" SportType="211" transid="519399693" transdate="2022-05-18T02:02:41.370"/><r custid="52289958" BetType="2401" SportType="211" transid="519399429" transdate="2022-05-18T02:01:28.820"/><r custid="52289958" BetType="2401" SportType="211" transid="519399157" transdate="2022-05-18T02:00:21.133"/><r custid="52289958" BetType="2401" SportType="211" transid="519398896" transdate="2022-05-18T01:59:11.523"/><r custid="23639495" BetType="3409" SportType="233" transid="519398746" transdate="2022-05-18T01:58:29.023"/><r custid="23639495" BetType="3409" SportType="233" transid="519398562" transdate="2022-05-18T01:57:39.960"/><r custid="52289958" BetType="2401" SportType="211" transid="519398272" transdate="2022-05-18T01:56:27.210"/><r custid="52289958" BetType="2401" SportType="211" transid="519398075" transdate="2022-05-18T01:55:28.507"/><r custid="52289958" BetType="2401" SportType="211" transid="519397805" transdate="2022-05-18T01:54:11.507"/></root>'
+	SET @CustList = '<root><r custid="16196129" BetType="2179" SportType="208" transid="100865730795" transdate="2018-12-23T23:54:55.480"/><r custid="16196129" BetType="2178" SportType="208" transid="100865730780" transdate="2018-12-23T23:54:55.480"/><r custid="14242644" BetType="2161" SportType="208" transid="100865638950" transdate="2018-12-23T22:34:14.430"/><r custid="14242644" BetType="2105" SportType="208" transid="100864516067" transdate="2018-12-23T08:26:50.243"/><r custid="14242644" BetType="2104" SportType="208" transid="100864510971" transdate="2018-12-23T08:23:00.060"/><r custid="14242644" BetType="2203" SportType="209" transid="100862352395" transdate="2018-12-22T05:02:31.390"/><r custid="14242644" BetType="2103" SportType="208" transid="100862283045" transdate="2018-12-22T04:06:53.563"/><r custid="1382337" BetType="2121" SportType="208" transid="100829926805" transdate="2018-12-05T06:22:44.110"/><r custid="1425064" BetType="2121" SportType="208" transid="100829528036" transdate="2018-12-05T01:46:05.127"/><r custid="1425064" BetType="2121" SportType="208" transid="100829528031" transdate="2018-12-05T01:46:05.123"/></root>'
 	*/
 	CREATE TABLE #tmpCustList (
 			custid		INT
@@ -144,17 +144,13 @@ BEGIN
 					 FROM CustMaxBetSetting_History ch 
 					 WHERE  ch.custid=cls.custid AND ch.SportType=cls.SportType
 						AND ch.BetType=cls.BetType AND ch.UpdateTime>cls.transdate 
-				--	 ORDER BY UpdateTime
 					 ) ch
 		OUTER APPLY (SELECT TOP (1) dch.custid, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime 
 					 FROM Dep_CustMaxBetSetting_History dch 
 					 WHERE dch.custid=cls.custid AND dch.SportType=cls.SportType
 						AND dch.BetType=cls.BetType AND dch.UpdateTime>cls.transdate  
-				--	 ORDER BY UpdateTime
 					 ) dch
 	
---	select * from #tmpCustListSel
-
 	--Update: StakeLevelList current
 	IF EXISTS (SELECT 1 FROM #tmpCustListSel WHERE TableBetSetting='CustStakeLevel_Member')
 	BEGIN
@@ -168,7 +164,7 @@ BEGIN
 		WHERE cls.StakeLevelList IS NULL AND cls.isChangedSMA=0
 	END
 
-	IF EXISTS (SELECT 1 FROM #tmpCustListSel WHERE TableBetSetting='Dep_CustStakeLevel_Member')
+	IF EXISTS (SELECT 1 FROM #tmpCustListSel WHERE TableBetSetting='Dep_custStakeLevel_member')
 	BEGIN
 		UPDATE cls
 		SET cls.StakeLevelList=cslm.StakeLevelList
@@ -206,22 +202,18 @@ BEGIN
 		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM StakeLevel_History st WITH (NOLOCK) 
 					 WHERE st.StakeLevelID = CAST(ss.val AS INT)
 						AND st.UpdateTime>cls.transdate
-				--	 ORDER BY UpdateTime
 					 ) st
 		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM Dep_StakeLevel_History dst WITH (NOLOCK) 
 					 WHERE dst.StakeLevelID = CAST(ss.val AS INT)
 						AND dst.UpdateTime>cls.transdate
-				--	 ORDER BY UpdateTime
 					) dst
 		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM StakeLevelGroupDetail_History stg WITH (NOLOCK) 
 					 WHERE stg.StakeLevelID = CAST(ss.val AS INT)
 						AND stg.UpdateTime>cls.transdate
-				--	 ORDER BY UpdateTime
 					 ) stg
 		OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime FROM Dep_StakeLevelGroupDetail_History dstg WITH (NOLOCK) 
 					 WHERE dstg.StakeLevelID = CAST(ss.val AS INT)
 						AND dstg.UpdateTime>cls.transdate
-				--	 ORDER BY UpdateTime
 					 ) dstg
 		WHERE cls.StakeLevelList IS NOT NULL
 		GROUP BY cls.custid, cls.transid
@@ -232,16 +224,14 @@ BEGIN
 			END
 	)
 	UPDATE cls
-	SET cls.isChangedGlobal=cg.isChangedGlobal
+	SET cls.isChangedGlobal=CASE WHEN cg.transid IS NOT NULL THEN cg.isChangedGlobal ELSE 0 END
 		, cls.StakeLevelID_Changed=cg.StakeLevelID_Changed
 		, cls.MaxStake_Changed=cg.MaxStake_Changed
 		, cls.UpdateTime_Global=cg.UpdateTime
 	FROM #tmpCustListSel cls
 		LEFT JOIN changedGlobal cg ON cg.transid=cls.transid
 	
---	select * from #tmpCustListSel
-
-	--update Global only
+	--update old: MaxBet
 	IF EXISTS (SELECT 1 FROM #tmpCustListSel WHERE isChangedGlobal=1)
 	BEGIN
 		;WITH tmp1 AS (
@@ -272,27 +262,23 @@ BEGIN
 			LEFT JOIN tmp2 t ON t.transid=cls.transid
 
 	END
---	select * from #tmpCustListSel
-
+	
 	-- Insert result data
-	INSERT INTO #returnTable (custid, transid, SportType, BetType, MaxBet, MaxPerMatch, StakeLevelList)
-	SELECT custid, transid, SportType, BetType, MaxBet, MaxPerMatch, StakeLevelList
-	FROM #tmpCustListSel
+	DELETE #tmpCustListSel
+	OUTPUT deleted.custid, deleted.transid, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, deleted.StakeLevelList
+		INTO #returnTable (custid, transid, SportType, BetType, MaxBet, MaxPerMatch, StakeLevelList)
 	WHERE isChangedSMA=1 OR isChangedGlobal=1
 
-	select @@ROWCOUNT
-
 	--Get Current MaxBet
-	IF EXISTS (SELECT 1 FROM #tmpCustListSel WHERE isChangedSMA=0 AND isChangedGlobal=0)
+	IF EXISTS (SELECT 1 FROM #tmpCustListSel WHERE isChangedSMA=0 AND isChangedGlobal=0
+				AND TableBetSetting NOT IN('Dep_custStakeLevel_member','CustStakeLevel_Member'))
 	BEGIN
 		WHILE 1=1
 		BEGIN 
 			SELECT TOP 1 @TableBetSetting=TableBetSetting
 			FROM #tmpCustListSel
-			WHERE TableBetSetting NOT IN ('CustStakeLevel_Member','Dep_CustStakeLevel_Member')
-				AND isChangedSMA=0 AND isChangedGlobal=0
-
-		--	select @TableBetSetting
+			WHERE isChangedSMA=0 AND isChangedGlobal=0
+				AND TableBetSetting NOT IN('Dep_custStakeLevel_member','CustStakeLevel_Member')
 
 			IF @@ROWCOUNT = 0	
 				BREAK;
@@ -309,57 +295,39 @@ BEGIN
 											AND cls.TableBetSetting	= @TableBetSetting
 											AND isChangedSMA=0 AND isChangedGlobal=0)'
 			
-	--		INSERT INTO #returnTable (custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
+			INSERT INTO #returnTable (custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
 			EXECUTE sys.sp_executesql @SQL, N'@TableBetSetting	VARCHAR(50)', @TableBetSetting
 
-		/*	ELSE
-			BEGIN
-				SET @SQL = 'SELECT bs.custid, cls.transid, bs.SportType
-								, bs.BetType, bs.StakeLevelList
-							FROM [' + @TableBetSetting + '] bs WITH (NOLOCK)
-							WHERE EXISTS (	SELECT 1 
-											FROM #tmpCustListSel cls
-											WHERE	cls.custid		= bs.custid
-												AND cls.SportType	= bs.SportType
-												AND cls.BetType		= bs.BetType
-												AND cls.TableBetSetting	= @TableBetSetting)'
-
-				INSERT INTO #returnTable (custid, transid, SportType, BetType, StakeLevelList)
-				EXECUTE sys.sp_executesql @SQL, N'@TableBetSetting VARCHAR(500)', @TableBetSetting;
-			END*/
-		
-			DELETE FROM #tmpCustListSel
+			DELETE #tmpCustListSel
 			WHERE TableBetSetting=@TableBetSetting
 		END
-		
-		IF @@ERROR<>0
-			RETURN
-		TRUNCATE TABLE #tmpCustListSel
+	END
 
-		select * from #returnTable
-	
+	IF @@ERROR<>0
+		RETURN
+		
+	IF EXISTS (SELECT 1 FROM #tmpCustListSel)
+	BEGIN
+		INSERT INTO #returnTable (custid, transid, SportType, BetType, MaxBet, MaxPerMatch, StakeLevelList)
+		SELECT custid, transid, SportType, BetType, MaxBet, MaxPerMatch, StakeLevelList
+		FROM #tmpCustListSel
+
 		--UPDATE MAXBET : Credit
-		IF EXISTS (SELECT 1 
-					FROM #returnTable r
-						INNER JOIN #tmpCustList cl ON cl.custid=r.custid
-					WHERE r.StakeLevelList IS NOT NULL AND r.MaxBet IS NULL
-						AND cl.isLicensee=0)
+		IF EXISTS (SELECT 1 FROM #tmpCustListSel WHERE isLicensee=0)
 		BEGIN
 			WITH csll AS (
 				SELECT r.custid, r.SportType, r.BetType, r.StakeLevelList
 					, MAX(CASE WHEN st.GameGroupID=0 THEN st.MaxStake ELSE stgd.MaxStake END) AS MaxStake
 				FROM #returnTable r WITH (ROWLOCK, UPDLOCK)
-					INNER JOIN #tmpCustList cl ON cl.custid=r.custid
+					INNER JOIN #tmpCustListSel cls ON cls.custid=r.custid
 					CROSS APPLY (SELECT CAST(value AS INT) AS StakeLevelList_Value FROM STRING_SPLIT(r.StakeLevelList,',')) ss
 					INNER JOIN DBCust.CustDB.dbo.StakeLevel st WITH (NOLOCK) ON st.StakeLevelID = ss.StakeLevelList_Value
 					CROSS APPLY (SELECT TOP 1 stg.StakeLevelID, CAST(stg.MaxLabel AS MONEY) AS MaxStake
-								 FROM DBCust.CustDB.dbo.StakeLevelGroupDetail stg WITH (NOLOCK)
-								 WHERE stg.StakeLevelID = st.StakeLevelID
-								 ORDER BY CAST(stg.MaxLabel AS MONEY) DESC
-								 ) stgd
-
-				WHERE r.StakeLevelList IS NOT NULL
-					AND cl.isLicensee=0 AND r.MaxBet IS NULL
+									FROM DBCust.CustDB.dbo.StakeLevelGroupDetail stg WITH (NOLOCK)
+									WHERE stg.StakeLevelID = st.StakeLevelID
+									ORDER BY CAST(stg.MaxLabel AS MONEY) DESC
+									) stgd
+				WHERE cls.isLicensee=0
 				GROUP BY r.custid, r.SportType, r.BetType, r.StakeLevelList
 			)
 			UPDATE r
@@ -371,26 +339,21 @@ BEGIN
 		END
 
 		--UPDATE MAXBET : Deposit
-		IF EXISTS (SELECT 1 
-				FROM #returnTable r
-					INNER JOIN #tmpCustList cls ON cls.custid=r.custid
-				WHERE r.StakeLevelList IS NOT NULL AND r.MaxBet IS NULL
-					AND cls.isLicensee=1)
+		IF EXISTS (SELECT 1 FROM #tmpCustListSel WHERE isLicensee=1)
 		BEGIN
 			WITH csll AS (
 				SELECT r.custid, r.SportType, r.BetType, r.StakeLevelList
 					, MAX(CASE WHEN st.GameGroupID=0 THEN st.MaxStake ELSE stgd.MaxStake END) AS MaxStake
 				FROM #returnTable r WITH (ROWLOCK, UPDLOCK)
-					INNER JOIN #tmpCustList cl ON cl.custid=r.custid
+					INNER JOIN #tmpCustListSel cls ON cls.custid=r.custid
 					CROSS APPLY (SELECT CAST(value AS INT) AS StakeLevelList_Value FROM STRING_SPLIT(r.StakeLevelList,',')) ss
 					INNER JOIN DBCust.CustDB.dbo.Dep_StakeLevel st WITH (NOLOCK) ON st.StakeLevelID = ss.StakeLevelList_Value
 					CROSS APPLY (SELECT TOP 1 stg.StakeLevelID, CAST(stg.MaxLabel AS MONEY) AS MaxStake
-								 FROM DBCust.CustDB.dbo.Dep_StakeLevelGroupDetail stg WITH (NOLOCK)
-								 WHERE stg.StakeLevelID = st.StakeLevelID
-								 ORDER BY CAST(stg.MaxLabel AS MONEY) DESC
-								 ) stgd
-				WHERE r.StakeLevelList IS NOT NULL
-					AND cl.isLicensee=1 AND r.MaxBet IS NULL
+									FROM DBCust.CustDB.dbo.Dep_StakeLevelGroupDetail stg WITH (NOLOCK)
+									WHERE stg.StakeLevelID = st.StakeLevelID
+									ORDER BY CAST(stg.MaxLabel AS MONEY) DESC
+									) stgd
+				WHERE cls.isLicensee=1
 				GROUP BY r.custid, r.SportType, r.BetType, r.StakeLevelList
 			)
 			UPDATE r
