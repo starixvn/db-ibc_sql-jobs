@@ -27,9 +27,9 @@ BEGIN
 		,	@TableBetSetting	VARCHAR(50)
 		,	@SQL				NVARCHAR(MAX)
 
-	DECLARE @CustList VARCHAR(MAX),@ErMsg nvarchar(max)
+/*	DECLARE @CustList VARCHAR(MAX),@ErMsg nvarchar(max)
 	SET @CustList = '<root><r custid="64074994" BetType="3704" SportType="170" transid="519399694" transdate="2022-05-23T00:00:00"/><r custid="52289958" BetType="2401" SportType="211" transid="519399693" transdate="2022-05-18T02:02:41.370"/><r custid="52289958" BetType="2401" SportType="211" transid="519399429" transdate="2022-05-18T02:01:28.820"/><r custid="52289958" BetType="2401" SportType="211" transid="519399157" transdate="2022-05-18T02:00:21.133"/><r custid="52289958" BetType="2401" SportType="211" transid="519398896" transdate="2022-05-18T01:59:11.523"/><r custid="23639495" BetType="3409" SportType="233" transid="519398746" transdate="2022-05-18T01:58:29.023"/><r custid="23639495" BetType="3409" SportType="233" transid="519398562" transdate="2022-05-18T01:57:39.960"/><r custid="52289958" BetType="2401" SportType="211" transid="519398272" transdate="2022-05-18T01:56:27.210"/><r custid="52289958" BetType="2401" SportType="211" transid="519398075" transdate="2022-05-18T01:55:28.507"/><r custid="52289958" BetType="2401" SportType="211" transid="519397805" transdate="2022-05-18T01:54:11.507"/></root>'
-	
+	*/
 	CREATE TABLE #tmpCustList (
 			custid		INT
 		,	SportType	SMALLINT
