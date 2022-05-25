@@ -64,7 +64,7 @@ BEGIN
 		, CASE WHEN MaxLabel<>'NULL'			THEN MaxLabel		ELSE NULL END MaxLabel
 		, CASE WHEN ISNUMERIC(MaxStake)=1		THEN MaxStake		ELSE NULL END MaxStake
 		, CASE WHEN ISNUMERIC(MaxGameStake)=1	THEN MaxGameStake	ELSE NULL END MaxGameStake
-		, SiteID
+		, CASE WHEN ISNUMERIC(SiteID)=1			THEN SiteID			ELSE NULL END SiteID
 		, @IsGroup
 		, UpdateTime
 	FROM OPENXML(@iDoc, '/root/r', 1) WITH (
@@ -73,7 +73,7 @@ BEGIN
 		,	MaxLabel		VARCHAR(50)
 		,	MaxStake		VARCHAR(50)
 		,	MaxGameStake	VARCHAR(50)
-		,	SiteID			INT
+		,	SiteID			VARCHAR(50)
 		,	UpdateTime		DATETIME
 		)
 	
