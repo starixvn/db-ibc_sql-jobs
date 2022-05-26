@@ -29,6 +29,7 @@ AS
 		- 20220221@July: Spadegaming - Exclude bettype 4599 (contribution bettype) - [Redmine:#168750]
 		- 20220418@July: Saba.games - Exclude new bettype 1653 (Nightclub Lady) - [Redmine: #171560]
 		- 20220421@July: Allbet - Exclude bettype 2499 & AESexy - Exclue bettype 3150 - [Redmine:#171770]
+		- 20220526@July: Vgaming - Exclude bettype 3845 (Nightclub Lady) - [Redmine:#173227]
 
 	Param's Expanation:
 */
@@ -92,7 +93,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (3829, 3898, 3899, 3835) 
+					AND b.gameID NOT IN (3829, 3898, 3899, 3835, 3845) 
 		END
 		ELSE IF @ProductId = 247 -- Spadegaming
 		BEGIN
