@@ -17,6 +17,7 @@ AS
 						  - Cash Out - Add 2 new Action ID [Redmine:#168627]
 		- 20220329@Kathy: Wrong actionId when undo ticket [Redmine:168627]
 		- 20220505@Louisa: For parlay and Outright, only capture when new winlostdate > old winlostdate [Redmine:#167296]
+		- 20220526@Louisa: Do not capture when ticket change status from Running to Settled [Redmine:#167296]
 */
 
 BEGIN
@@ -72,7 +73,8 @@ BEGIN
 		--[Action]--vvv
 		CASE 
 			WHEN ( i.winlostdate <> d.winlostdate AND i.bettype NOT IN (29, 10)	)
-				OR (i.winlostdate > d.winlostdate AND i.bettype IN (29, 10)	)
+				OR (i.winlostdate > d.winlostdate AND i.bettype = 10 )
+				OR (i.winlostdate > d.winlostdate AND i.bettype = 29 AND d.statusID NOT IN (0,1) )
 				THEN 'Move WLD from ' 
 						+ CASE 
 							WHEN ISNULL(d.winlostdate,'') = '' THEN REPLICATE(' ', 10) 
