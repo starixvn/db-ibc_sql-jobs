@@ -155,7 +155,7 @@ BEGIN;
 		
 		----------- DR AWS@DB061--------
 		SET	@OutputData = NULL;
-		EXECUTE	DB061AWS.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
+		EXECUTE	DB061AWS.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel_DR
 				@StartDate	= @StartDate
 				, @EndDate = @EndDate
 				, @TableName = @TableName
@@ -185,7 +185,7 @@ BEGIN;
 		BEGIN
 			----------------------DR AWS@DB061 -----------------
 			SET	@OutputData = NULL;
-			EXECUTE	DB061AWS.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel
+			EXECUTE	DB061AWS.bodb_Archive.dbo.Task_MBU_TVS_BK_CheckRowCount_Sel_DR
 					@StartDate	= @StartDate_tmp
 					, @TableName = @TableName
 					,	@OutputData	= @OutputData	OUTPUT
