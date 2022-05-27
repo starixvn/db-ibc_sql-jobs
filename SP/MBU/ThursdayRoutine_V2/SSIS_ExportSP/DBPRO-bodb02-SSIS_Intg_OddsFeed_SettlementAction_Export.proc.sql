@@ -1,5 +1,5 @@
 /*<info serverAlias="DBPRO-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[SSIS_Intg_OddsFeed_SettlementAction_Outright_Export]
+ALTER PROCEDURE [dbo].[SSIS_Intg_OddsFeed_SettlementAction_Export]
 	@winlostdate smalldatetime=null
 AS
 /*
@@ -11,11 +11,11 @@ AS
 	Revisions:
 		- 20130831@Bobby: Init
  */
-BEGIN
+ BEGIN
 	SET NOCOUNT ON;
 	
-	SELECT	ActionId, ActionType, OrId, LeagueId, TeamId, Status, IsDeadheat, Deadheat, CreateTime
-	FROM	dbo.Intg_OddsFeed_SettlementAction_Outright AS t1 WITH (NOLOCK)
-	WHERE	EXISTS (SELECT 1 FROM dbo.outright14 AS t2 WITH (NOLOCK) WHERE t1.orid = t2.orid AND t2.eventdate = @winlostdate);
+	SELECT	ActionId, LeagueId, MatchId, ActionType, HTHomeScore, HTAwayScore, FTHomeScore, FTAwayScore, CreateTime, OtherInfo
+	FROM	dbo.Intg_OddsFeed_SettlementAction AS t1 WITH (NOLOCK)
+	WHERE	EXISTS (SELECT 1 FROM dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);
 END
 GO

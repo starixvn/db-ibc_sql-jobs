@@ -14,6 +14,7 @@ AS
 	Database:	DBSSIS.SSISDB
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20220419@Bobby: Correct CSV @outputFileName [Redmine: #166146]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -55,7 +56,7 @@ BEGIN
 			,@sourceServer = dt.SourceServer
 			,@sourceDB = dt.SourceDB
 			,@execCommand = t.ExecCommand
-			,@outputFileName = ISNULL(@outputFileDir,'')+'\\'+@environment+'_'+CAST(@routineID AS varchar(10))+'_'+dt.TableName+ '_' + ti.subfix 
+			,@outputFileName = CASE WHEN ISNULL(dt.OutputFileInfo, '') LIKE '%csv%' THEN ISNULL(@outputFileDir,'')+'\'+@environment+'_'+CAST(@routineID AS varchar(10))+'_'+dt.TableName+ '_' + ti.subfix ELSE '' END
 			,@outputFileInfo = dt.OutputFileInfo
 			,@BatchSize = dt.BatchSize
 			,@chunkSize = dt.ChunkSize
@@ -86,7 +87,7 @@ BEGIN
 		WHERE dt.ID=@sourceID AND rp.ParamName = rt.ParamName;
 
 		-- update back target vs exec command
-		UPDATE rt
+		UPDATE rt WITH(ROWLOCK,UPDLOCK)
 		SET Command = @execCommand
 			, TargetInfo = @targetInfo
 		FROM [dbo].[SSIS_PackageRuntime] rt

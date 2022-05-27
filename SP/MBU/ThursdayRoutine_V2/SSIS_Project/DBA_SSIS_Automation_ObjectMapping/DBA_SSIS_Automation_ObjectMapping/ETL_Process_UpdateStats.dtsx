@@ -1,0 +1,283 @@
+﻿<?xml version="1.0"?>
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:refId="Package"
+  DTS:CreationDate="4/5/2022 3:54:45 PM"
+  DTS:CreationName="Microsoft.Package"
+  DTS:CreatorComputerName="NB016-BOBBY"
+  DTS:CreatorName="SPVN\bobby.nguyen"
+  DTS:DTSID="{969268D8-BF92-44F3-99AF-82361DDE88F8}"
+  DTS:ExecutableType="Microsoft.Package"
+  DTS:LastModifiedProductVersion="15.0.2000.93"
+  DTS:LocaleID="1033"
+  DTS:ObjectName="ETL_Process_UpdateStats"
+  DTS:PackageType="5"
+  DTS:ProtectionLevel="0"
+  DTS:VersionBuild="44"
+  DTS:VersionGUID="{49C982C7-A983-41DE-B4E5-E5CB9798241C}">
+  <DTS:Property
+    DTS:Name="PackageFormatVersion">8</DTS:Property>
+  <DTS:PackageParameters>
+    <DTS:PackageParameter
+      DTS:CreationName=""
+      DTS:DataType="8"
+      DTS:DTSID="{67B6906B-48DB-4747-93BA-D609225ABE93}"
+      DTS:ObjectName="HostDB061">
+      <DTS:Property
+        DTS:DataType="8"
+        DTS:Name="ParameterValue">DB061</DTS:Property>
+    </DTS:PackageParameter>
+    <DTS:PackageParameter
+      DTS:CreationName=""
+      DTS:DataType="8"
+      DTS:DTSID="{B78FC522-F1D4-410A-A652-20D2D9D67DDF}"
+      DTS:ObjectName="HostDB062">
+      <DTS:Property
+        DTS:DataType="8"
+        DTS:Name="ParameterValue">DB061</DTS:Property>
+    </DTS:PackageParameter>
+    <DTS:PackageParameter
+      DTS:CreationName=""
+      DTS:DataType="8"
+      DTS:DTSID="{8AB92197-9CE4-4279-9F72-A3FA4E039C44}"
+      DTS:ObjectName="HostDbName">
+      <DTS:Property
+        DTS:DataType="8"
+        DTS:Name="ParameterValue">bodb_archive</DTS:Property>
+    </DTS:PackageParameter>
+    <DTS:PackageParameter
+      DTS:CreationName=""
+      DTS:DataType="3"
+      DTS:DTSID="{BD244CF9-BBC6-4674-9DA4-557964BE07AA}"
+      DTS:ObjectName="SessionID">
+      <DTS:Property
+        DTS:DataType="3"
+        DTS:Name="ParameterValue">0</DTS:Property>
+    </DTS:PackageParameter>
+    <DTS:PackageParameter
+      DTS:CreationName=""
+      DTS:DataType="8"
+      DTS:DTSID="{D18011A4-BBDF-46BE-B3EC-FDECC3F1DB3B}"
+      DTS:ObjectName="UserID">
+      <DTS:Property
+        DTS:DataType="8"
+        DTS:Name="ParameterValue">sqllink</DTS:Property>
+    </DTS:PackageParameter>
+  </DTS:PackageParameters>
+  <DTS:Variables>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{B85E310B-017B-46FA-80A1-0FCC9B0EE327}"
+      DTS:IncludeInDebugDump="6789"
+      DTS:Namespace="User"
+      DTS:ObjectName="FailedCount">
+      <DTS:VariableValue
+        DTS:DataType="3">0</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{8D74438A-48F4-4177-A05F-10319E7E4313}"
+      DTS:IncludeInDebugDump="6789"
+      DTS:Namespace="User"
+      DTS:ObjectName="IsClosed">
+      <DTS:VariableValue
+        DTS:DataType="11">0</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{ECAFE7FF-D65A-4077-9D98-FE381A4A7F6D}"
+      DTS:IncludeInDebugDump="6789"
+      DTS:Namespace="User"
+      DTS:ObjectName="SuccessCount">
+      <DTS:VariableValue
+        DTS:DataType="3">0</DTS:VariableValue>
+    </DTS:Variable>
+  </DTS:Variables>
+  <DTS:Executables>
+    <DTS:Executable
+      DTS:refId="Package\Check SSIS Project Status"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{50F84C9E-A9A9-467A-A94C-A7250ED47200}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="Check SSIS Project Status"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="0">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{330E61D2-1A1F-41CC-8A40-D4D415B9827A}"
+          SQLTask:SqlStatementSource="EXEC [dbo].[SSIS_Process_CheckStatus] @SessionID=?"
+          SQLTask:ResultType="ResultSetType_SingleRow" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask">
+          <SQLTask:ResultBinding
+            SQLTask:ResultName="0"
+            SQLTask:DtsVariableName="User::IsClosed" />
+          <SQLTask:ResultBinding
+            SQLTask:ResultName="1"
+            SQLTask:DtsVariableName="User::FailedCount" />
+          <SQLTask:ResultBinding
+            SQLTask:ResultName="2"
+            SQLTask:DtsVariableName="User::SuccessCount" />
+          <SQLTask:ParameterBinding
+            SQLTask:ParameterName="0"
+            SQLTask:DtsVariableName="$Package::SessionID"
+            SQLTask:ParameterDirection="Input"
+            SQLTask:DataType="3"
+            SQLTask:ParameterSize="-1" />
+        </SQLTask:SqlTaskData>
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\DB061 - Update statistics"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{80A765C3-FD95-47EE-AE3A-B3AAA11AE443}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="DB061 - Update statistics"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="1">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{330E61D2-1A1F-41CC-8A40-D4D415B9827A}"
+          SQLTask:SqlStatementSource="EXEC DB061.msdb.dbo.sp_start_job @job_name = N'DBA: SSIS Thursday Routine - Update Statistics'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+      </DTS:ObjectData>
+    </DTS:Executable>
+    <DTS:Executable
+      DTS:refId="Package\DB062 - Update statistics"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:Description="Execute SQL Task"
+      DTS:DTSID="{eacfa8e6-d099-4f60-a30e-3362b3deb285}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="DB062 - Update statistics"
+      DTS:TaskContact="Execute SQL Task; Microsoft Corporation; SQL Server 2019; © 2019 Microsoft Corporation; All Rights Reserved;http://www.microsoft.com/sql/support/default.asp;1"
+      DTS:ThreadHint="0">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          SQLTask:Connection="{330E61D2-1A1F-41CC-8A40-D4D415B9827A}"
+          SQLTask:SqlStatementSource="EXEC DB06.msdb.dbo.sp_start_job @job_name = N'DBA: SSIS Thursday Routine - Update Statistics'" xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask" />
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
+  <DTS:PrecedenceConstraints>
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint]"
+      DTS:CreationName=""
+      DTS:DTSID="{71639C2B-57AA-4703-817E-00D99EB21FD1}"
+      DTS:From="Package\Check SSIS Project Status"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint"
+      DTS:To="Package\DB061 - Update statistics" />
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Constraint 1]"
+      DTS:CreationName=""
+      DTS:DTSID="{F941B993-39A5-48AC-87E7-48E3CB1A970A}"
+      DTS:EvalOp="3"
+      DTS:Expression="@[$Package::HostDB061] != @[$Package::HostDB062]"
+      DTS:From="Package\Check SSIS Project Status"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Constraint 1"
+      DTS:To="Package\DB062 - Update statistics" />
+  </DTS:PrecedenceConstraints>
+  <DTS:DesignTimeProperties><![CDATA[<?xml version="1.0"?>
+<!--This CDATA section contains the layout information of the package. The section includes information such as (x,y) coordinates, width, and height.-->
+<!--If you manually edit this section and make a mistake, you can delete it. -->
+<!--The package will still be able to load normally but the previous layout information will be lost and the designer will automatically re-arrange the elements on the design surface.-->
+<Objects
+  Version="8">
+  <!--Each node below will contain properties that do not affect runtime behavior.-->
+  <Package
+    design-time-name="Package">
+    <LayoutInfo>
+      <GraphLayout
+        Capacity="8" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph" xmlns:mssgle="clr-namespace:Microsoft.SqlServer.Graph.LayoutEngine;assembly=Microsoft.SqlServer.Graph" xmlns:assembly="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:mssgm="clr-namespace:Microsoft.SqlServer.Graph.Model;assembly=Microsoft.SqlServer.Graph">
+        <NodeLayout
+          Size="206.666666666667,42.6666666666667"
+          Id="Package\Check SSIS Project Status"
+          TopLeft="168.095235590424,36.1654142145588" />
+        <NodeLayout
+          Size="246.666666666667,42.6666666666667"
+          Id="Package\DB061 - Update statistics"
+          TopLeft="37.187499445863,134.675441131422" />
+        <NodeLayout
+          Size="246.666666666667,42.6666666666667"
+          Id="Package\DB062 - Update statistics"
+          TopLeft="302.083328831941,132.964914783436" />
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint]"
+          TopLeft="238.317457812646,78.8320808812255">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="-77.7966250334497,55.8433602501968"
+              Start="0,0"
+              End="-77.7966250334497,48.3433602501968">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,18.5947526748556" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,18.5947526748556"
+                    Point2="0,22.5947526748556"
+                    Point3="-4,22.5947526748556" />
+                  <mssgle:LineSegment
+                    End="-73.7966250334497,22.5947526748556" />
+                  <mssgle:CubicBezierSegment
+                    Point1="-73.7966250334497,22.5947526748556"
+                    Point2="-77.7966250334497,22.5947526748556"
+                    Point3="-77.7966250334497,26.5947526748556" />
+                  <mssgle:LineSegment
+                    End="-77.7966250334497,48.3433602501968" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <EdgeLabelCollection />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+        <EdgeLayout
+          Id="Package.PrecedenceConstraints[Constraint 1]"
+          TopLeft="304.539680034868,78.8320808812255">
+          <EdgeLayout.Curve>
+            <mssgle:Curve
+              StartConnector="{assembly:Null}"
+              EndConnector="120.876982130406,54.132833902211"
+              Start="0,0"
+              End="120.876982130406,46.632833902211">
+              <mssgle:Curve.Segments>
+                <mssgle:SegmentCollection
+                  Capacity="5">
+                  <mssgle:LineSegment
+                    End="0,17.9026575071686" />
+                  <mssgle:CubicBezierSegment
+                    Point1="0,17.9026575071686"
+                    Point2="0,21.9026575071686"
+                    Point3="4,21.9026575071686" />
+                  <mssgle:LineSegment
+                    End="116.876982130406,21.9026575071686" />
+                  <mssgle:CubicBezierSegment
+                    Point1="116.876982130406,21.9026575071686"
+                    Point2="120.876982130406,21.9026575071686"
+                    Point3="120.876982130406,25.9026575071686" />
+                  <mssgle:LineSegment
+                    End="120.876982130406,46.632833902211" />
+                </mssgle:SegmentCollection>
+              </mssgle:Curve.Segments>
+            </mssgle:Curve>
+          </EdgeLayout.Curve>
+          <EdgeLayout.Labels>
+            <mssgm:EdgeLabel
+              BoundingBox="52.438491065203,26.9026575071686,16,16"
+              RelativePosition="Any" />
+          </EdgeLayout.Labels>
+        </EdgeLayout>
+      </GraphLayout>
+    </LayoutInfo>
+  </Package>
+</Objects>]]></DTS:DesignTimeProperties>
+</DTS:Executable>
