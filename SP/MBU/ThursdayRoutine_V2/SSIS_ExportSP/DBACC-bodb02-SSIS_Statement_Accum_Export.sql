@@ -51,12 +51,13 @@ BEGIN
 		SELECT CustId, SUM(Winlost - Actual_Stake) AS totalamt
 		FROM dbo.Transfer WITH (NOLOCK)
 		WHERE TransDate BETWEEN @fromdate AND @todate AND bettype > 20000
+			AND winlostdate >= @min_winlostdate
 		GROUP BY CustId
 		UNION ALL
 		SELECT CustId, SUM(Credit - Debit) AS totalamt
 		FROM bodb_Archive.dbo.Transfer_bk WITH (NOLOCK)
 		WHERE TransDate BETWEEN @fromdate AND @todate AND bettype > 20000
-			AND winlostdate >= DATEADD(DAY, -14, @min_winlostdate)
+			AND winlostdate >= DATEADD(DAY, -14, @min_winlostdate) AND winlostdate < @min_winlostdate
 		GROUP BY CustId
 
 		-- Prize tickets
