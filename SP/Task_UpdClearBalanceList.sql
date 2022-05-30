@@ -62,7 +62,6 @@ BEGIN
     UPDATE 	dbo.Acc_ClearBalanceList WITH(ROWLOCK)
     SET  	IsTransferring = @IsTransferring
     WHERE 	Custid IN (Select Value from STRING_SPLIT(@CustIDList, ','))
-	OPTION (MAXRECURSION 0)
 END
  
 

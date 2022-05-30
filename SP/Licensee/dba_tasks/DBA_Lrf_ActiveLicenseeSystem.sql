@@ -16,7 +16,6 @@ CREATE PROCEDURE [dbo].[DBA_Lrf_ActiveLicenseeSystem] (
 	   - 20180926@Sophia: migrate bodb_Licensee from DB052 to DBCUST [redmine: #99855]
 	   - 20181129@Amanda: User SP DBA_Lrf_PullServiceSetting to delete pull service [redmine: #83584]
 	   - 20190115@Amanda: Correct error message [redmine: #83584]
-	   - 20220510@Danny: Use String_split built-in function [RemineID: #171831]
 	   
 	Param's Explanation:
    
@@ -45,9 +44,9 @@ BEGIN
 			, isActive
 			)
 		SELECT 0
-			, value
+			, val
 			, 1
-		FROM STRING_SPLIT(@SystemisActive, ',')
+		FROM CUSTDB.dbo.strSplit(@SystemisActive, ',')
 	END
 
 	IF ISNULL(@SystemDeactivate, '') <> ''
@@ -58,9 +57,9 @@ BEGIN
 			, isActive
 			)
 		SELECT 0
-			, value
+			, val
 			, 0
-		FROM STRING_SPLIT(@SystemDeactivate, ',')
+		FROM CUSTDB.dbo.strSplit(@SystemDeactivate, ',')
 	END
 
 	----- Correct Data   
