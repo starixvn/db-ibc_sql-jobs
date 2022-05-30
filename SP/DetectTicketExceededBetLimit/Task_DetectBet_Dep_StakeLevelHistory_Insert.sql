@@ -47,7 +47,7 @@ BEGIN
 	--Check if XML is null or empty
 	IF @SettingList IS NULL OR @SettingList=''
 	BEGIN
-		SET @ErrMsg='Customer list is invalid.'
+		SET @ErrMsg='Setting list is invalid.'
 		RETURN
 	END
 
