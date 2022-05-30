@@ -85,9 +85,7 @@ BEGIN
 	ELSE
 	BEGIN
 		INSERT INTO StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake
-			, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS money) END AS MaxGameStake
-			, UpdateTime
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 		FROM #tmpSettingList
 	END
 

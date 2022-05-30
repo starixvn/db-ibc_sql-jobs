@@ -311,7 +311,10 @@ BEGIN
 							 WHERE st.StakeLevelID = CAST(ss.val AS INT)
 								AND st.UpdateTime>cl.transdate
 							) st
-				OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxGameStake, UpdateTime FROM StakeLevelGroupDetail_History stg WITH (NOLOCK) 
+				OUTER APPLY (SELECT TOP (1) StakeLevelID
+										, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
+										, UpdateTime 
+							 FROM StakeLevelGroupDetail_History stg WITH (NOLOCK) 
 							 WHERE stg.StakeLevelID = CAST(ss.val AS INT)
 								AND stg.GameTypeID=cl.BetType
 								AND stg.UpdateTime>cl.transdate
@@ -321,7 +324,10 @@ BEGIN
 							 WHERE dst.StakeLevelID = CAST(ss.val AS INT)
 								AND dst.UpdateTime>cl.transdate
 							) dst
-				OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxGameStake, UpdateTime FROM Dep_StakeLevelGroupDetail_History dstg WITH (NOLOCK) 
+				OUTER APPLY (SELECT TOP (1) StakeLevelID
+										, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
+										, UpdateTime 
+							 FROM Dep_StakeLevelGroupDetail_History dstg WITH (NOLOCK) 
 							 WHERE dstg.StakeLevelID = CAST(ss.val AS INT)
 								AND dstg.GameTypeID=cl.BetType
 								AND dstg.UpdateTime>cl.transdate
@@ -390,17 +396,19 @@ BEGIN
 				CROSS APPLY (SELECT value AS val FROM STRING_SPLIT(sma.StakeLevelList,',')) ss
 				--Credit
 				LEFT JOIN StakeLevel st ON st.StakeLevelID=CAST(ss.val AS INT)
-				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID, MaxGameStake
-								FROM StakeLevelGroupDetail stg WITH (NOLOCK)
-								WHERE stg.StakeLevelID = st.StakeLevelID
-									AND stg.GameTypeID=cl.BetType
+				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID
+									, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
+							 FROM StakeLevelGroupDetail stg WITH (NOLOCK)
+							 WHERE stg.StakeLevelID = st.StakeLevelID
+								AND stg.GameTypeID=cl.BetType
 							) stg
 				--Deposit
 				LEFT JOIN Dep_StakeLevel dst ON dst.StakeLevelID=CAST(ss.val AS INT)
-				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID, MaxGameStake
-								FROM Dep_StakeLevelGroupDetail dstg WITH (NOLOCK)
-								WHERE dstg.StakeLevelID = dst.StakeLevelID
-									AND dstg.GameTypeID=cl.BetType
+				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID
+									, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
+							 FROM Dep_StakeLevelGroupDetail dstg WITH (NOLOCK)
+							 WHERE dstg.StakeLevelID = dst.StakeLevelID
+								AND dstg.GameTypeID=cl.BetType
 							) dstg
 			WHERE gl.IsChangedGlobal=1
 				AND gl.UpdateTime_Global<sma.UpdateTime_SMA AND CHARINDEX(sma.StakeLevelList, ',')=1
