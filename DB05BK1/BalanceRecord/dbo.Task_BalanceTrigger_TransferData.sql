@@ -13,6 +13,7 @@ AS
 		- 20210525@Kathy: Exclude redundant match [Redmine:#154732]
 		- 20220217@Kathy: Alpha - Avoid confusion when event date is moved [Redmine:#167296]
 		- 20220511@Kathy: Remove text 'Move WLD...' when undo ticket [Redmine:#167296]
+		- 20220531@Kathy: wrongly updating action [Redmine:#167296]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -66,6 +67,8 @@ BEGIN
 	BEGIN
 		-- Note : data will insert to BalanceTrigger_ProcessData 
 		--        by AFTER DELETE trigger in Table BalanceTrigger
+		SET @IsChangedWLD = 0
+		SET @StatusId = 0
 
 		SELECT 	@IsChangedWLD = 1
 				,@StatusId = b.StatusId
