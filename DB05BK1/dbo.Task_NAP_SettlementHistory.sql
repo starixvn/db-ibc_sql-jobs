@@ -9,12 +9,15 @@ AS
 	
 	Revisions:
 		- 20210520@Kathy: Delete history  [Redmine:#154732]
+		- 20220530@Kathy: delete StatementMovementHistory [Redmine:#167296]
 
 */
 BEGIN
     SET NOCOUNT ON
 	
 	DECLARE @batchNo INT
+			,@DeleteFromDate DATETIME
+			
 	SET @batchNo = 5000
 
 	WHILE(1=1)
@@ -22,6 +25,18 @@ BEGIN
 		DELETE	TOP (@batchNo)
 		FROM	dbo.SettlementHistory WITH(ROWLOCK, UPDLOCK)
 		WHERE	CreatedDate < @Date
+
+		IF @@ROWCOUNT < @batchNo
+			BREAK
+	END
+	
+	SET @DeleteFromDate = DATEADD(DAY,-5, DATEADD(MONTH,-3,GETDATE()))
+	
+	WHILE(1=1)
+	BEGIN
+		DELETE	TOP (@batchNo)
+		FROM	dbo.StatementMovementHistory WITH(ROWLOCK, UPDLOCK)
+		WHERE	Winlostdate < @DeleteFromDate
 
 		IF @@ROWCOUNT < @batchNo
 			BREAK
