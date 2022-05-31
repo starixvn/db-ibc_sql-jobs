@@ -30,25 +30,27 @@ AS
 		- 20210512@Malcolm: Add AdvantPlay Product [redmine: #154256]
 		- 20210609@Malcolm: Add AE Sexy and change bettype range of Happy 5 Linked Games- [Redmine: #156239]
 		- 20210617@Sol: changed how to calc net turn over - [RedmineId : #156653]
-		- 20210810@Evan: Add Bitcoin product - [Redmine: #159036]
+		- 20210810@Evan: Add Bitcoin product [Redmine: #159036]
 		- 20211122@Percy: Enhance gross comm formula [RedmineID: #164479]
-		- 20211214@Evan: Add New Games for PP - [Redmine: #165393]	
+		- 20211214@Evan: Add New Games for PP [Redmine: #165393]
 		- 20220106@Evan: Add SG Jackpot - [Redmine: #166685]
 		- 20220124@Evan: Add Allbet Promotion - [Redmine: #166981]
 		- 20220209@Evan: Expand Sportsbook bettype range - Cricket [Redmine: #166332]
 		- 20220208@Evan: Add FGG product - [Redmine: #165685]	
 		- 20220328@Evan: Expand bettype of Macau Games - [Redmine: #170383]
+		- 20221002@Danny: Add New LeagueGroupID and TicketType columns [Redmine: #167177]	
 */
 BEGIN
 
 	SET NOCOUNT ON
 
-	DECLARE @NetTO_CutOffDate SMALLDATETIME, @GrossComm_CutOffDate SMALLDATETIME
+	DECLARE @NetTO_CutOffDate SMALLDATETIME, @GrossComm_CutOffDate SMALLDATETIME, @SabaInfo_CutOffDate SMALLDATETIME
 
 	SELECT  @NetTO_CutOffDate = CASE WHEN f.TypeName = 'NetTO' THEN f.CutoffDate ELSE @NetTO_CutOffDate END
 			,@GrossComm_CutOffDate = CASE WHEN f.TypeName = 'GrossComm' THEN f.CutoffDate ELSE @NetTO_CutOffDate END
+			,@SabaInfo_CutOffDate = CASE WHEN f.TypeName = 'SabaSport' THEN f.CutoffDate ELSE @SabaInfo_CutOffDate END
 	FROM dbo.f_GetCutOffDate() f
-	WHERE f.TypeName IN ('NetTO', 'GrossComm')
+	WHERE f.TypeName IN ('NetTO', 'GrossComm','SabaSport')
 
 	---- get extra PT from table setting
 	CREATE TABLE #__SuperExtraPT(productId INT, bettypePT INT, SuperId INT, ExtraPT MONEY, RefTable TINYINT, IsUsingOddsSpread BIT, IsContributionBettype BIT)
@@ -90,7 +92,9 @@ BEGIN
 		[snetTurnover] [money] NULL,
 		[TurnoverNoDraw] [money] NULL,
 		[ExtraWinloss] [money] NULL,
-		[ExtraComm] [money] NULL
+		[ExtraComm] [money] NULL,
+		[leagueGroupID] [smallint] NULL,
+		[ticketType] [tinyint] NULL
 	)
 
 	;WITH rs AS 
@@ -134,7 +138,8 @@ BEGIN
 	INSERT INTO #sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, betcount, grosscomm, agrosscomm, mgrosscomm, sgrosscomm, Sporttype, bettype, netTurnover, anetTurnover, mnetTurnover, snetTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, betcount, grosscomm, agrosscomm, mgrosscomm, sgrosscomm, Sporttype, bettype, netTurnover, anetTurnover, mnetTurnover, snetTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm,
+		leagueGroupID, ticketType
 	)
 	SELECT
 		@winlostdate
@@ -173,7 +178,11 @@ BEGIN
 			WHEN tpositiontaking = 1 THEN 0
 			ELSE scomm / (1 - tpositiontaking)
 		END) sgrosscomm
-	   ,CASE
+	   ,CASE WHEN ( 
+					(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
+						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+				 ) AND betdaqid <> -2   AND winlostdate >= @SabaInfo_CutOffDate THEN m.sporttype
 			WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
 				bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
 				bettype BETWEEN 3601 AND 3610 THEN 161 -- Happy 5 Linked Games
@@ -298,11 +307,22 @@ BEGIN
 							ELSE bettrans.scomm / (1 - bettrans.tpositiontaking)
 						END * CASE WHEN tbl.ExtraPT IS NOT NULL THEN tbl.ExtraPT ELSE ISNULL(bettrans.epositiontaking, 0) END
 				END
-			) AS ExtraComm
+			) AS ExtraComm,
+		  CASE WHEN ( 
+						(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
+						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+					) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN l.LeagueGroupID ELSE 0 END AS LeagueGroupID,
+		  CASE WHEN bettrans.betdaqid = -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN 1 ELSE 0 END ticketType
 	FROM dbo.bettrans14 bettrans WITH (NOLOCK)
 			INNER JOIN #__SuperExtraPT tbl 
 				ON bettrans.srecommend = tbl.SuperId
 					AND bettrans.bettype = tbl.bettypePT
+	LEFT JOIN dbo.match14 m WITH(NOLOCK) ON bettrans.matchid = m.matchid
+	LEFT JOIN (
+				SELECT LeagueGroupID, leagueid
+				FROM dbo.League l WITH(NOLOCK) WHERE l.LeagueGroupID IN (42,74,108,113,122)
+			  )l  ON m.leagueid = l.leagueid
 	WHERE 
 		bettrans.winlostdate = @winlostdate
 		AND bettrans.statusID NOT IN (0, 1, 102, 101, 103)
@@ -312,6 +332,11 @@ BEGIN
 			,bettrans.mrecommend
 			,bettrans.srecommend
 			,CASE
+				WHEN ( 
+					(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
+						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+				 ) AND betdaqid <> -2   AND winlostdate >= @SabaInfo_CutOffDate THEN m.sporttype
 				 WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
 					bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
 					bettype BETWEEN 3601 AND 3610 THEN 161 -- Happy 5 Linked Games
@@ -371,7 +396,13 @@ BEGIN
 			,CASE
 				WHEN bettype IN (71, 72, 3150, 4297, 4298, 4599, 4600, 2499) THEN bettype
 				 ELSE 0
-			 END
+			 END,
+			  CASE WHEN ( 
+						(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
+						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+					) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN l.LeagueGroupID ELSE 0 END,
+			 CASE WHEN bettrans.betdaqid = -2 AND winlostdate >= @SabaInfo_CutOffDate THEN 1 ELSE 0 END 
 	OPTION (optimize for (@winlostdate UNKNOWN))
 
 	-- Update Gross Comm / Net Turnover
@@ -467,17 +498,17 @@ BEGIN
 	INSERT INTO dbo.sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm, leagueGroupID, ticketType
 	)
 	SELECT winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm 
+		playercomm, comm, acomm, scomm, betcount, grosscomm, Sporttype, bettype, netTurnover, TurnoverNoDraw, ExtraWinloss, ExtraComm, leagueGroupID, ticketType
 	FROM #sum_winloss_tmp
 
 	---- Agent
 	INSERT INTO sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm, leagueGroupID, ticketType
 	)
 	SELECT
 		@winlostdate
@@ -502,19 +533,23 @@ BEGIN
 	   ,SUM(bettrans.anetTurnover) AS netTurnover
 	   ,SUM(TurnoverNoDraw) AS TurnoverNoDraw,
 		SUM(ExtraWinloss) AS ExtraWinloss,
-		SUM(ExtraComm) AS ExtraComm
+		SUM(ExtraComm) AS ExtraComm,
+		bettrans.leagueGroupID,
+		bettrans.ticketType
 	FROM #sum_winloss_tmp bettrans WITH (NOLOCK)
 	GROUP BY bettrans.recommend
 			,bettrans.mrecommend
 			,bettrans.srecommend
 			,bettrans.sporttype
 			,bettrans.bettype
+			,bettrans.leagueGroupID
+			,bettrans.ticketType
 
 	---- Master
 	INSERT INTO sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm, leagueGroupID, ticketType
 	)
 	SELECT
 		@winlostdate
@@ -540,17 +575,22 @@ BEGIN
 	   ,SUM(bettrans.TurnoverNoDraw) AS TurnoverNoDraw,
 		SUM(ExtraWinloss) AS ExtraWinloss,
 		SUM(ExtraComm) AS ExtraComm
+	   ,bettrans.leagueGroupID
+	   ,bettrans.ticketType
 	FROM #sum_winloss_tmp bettrans WITH (NOLOCK)
 	GROUP BY bettrans.mrecommend
 			,bettrans.srecommend
 			,bettrans.sporttype
 			,bettrans.bettype
+			,bettrans.leagueGroupID
+			,bettrans.ticketType
+
 
 	---- Super
 	INSERT INTO sum_winloss_tmp
 	(
 		winlostdate, roleid, custid, recommend, mrecommend, srecommend, turnover, winlost, awinlost, mwinlost, swinlost,
-		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm
+		playercomm, comm, acomm, scomm, BetCount, grosscomm, sporttype, bettype, netTurnover, TunroverNoDraw, ExtraWinloss, ExtraComm, leagueGroupID, ticketType
 	)
 	SELECT
 		@winlostdate
@@ -576,10 +616,14 @@ BEGIN
 	   ,SUM(bettrans.TurnoverNoDraw) AS TurnoverNoDraw,
 		SUM(ExtraWinloss) AS ExtraWinloss,
 		SUM(ExtraComm) AS ExtraComm
+	   ,bettrans.leagueGroupID
+	   ,bettrans.ticketType
 	FROM #sum_winloss_tmp bettrans WITH (NOLOCK)
 	GROUP BY bettrans.srecommend
 			,bettrans.sporttype
 			,bettrans.bettype
+			,bettrans.leagueGroupID
+			,bettrans.ticketType
 
 	-- update username for main table
 	-- temp table for only one day, no need to update by batch

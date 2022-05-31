@@ -10,6 +10,7 @@ AS
 	
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20220519@Danny: Add more fields LeagueGroupID and TicketType [Redmine: #167177]
  */
 BEGIN
 	SET NOCOUNT ON
@@ -31,7 +32,7 @@ BEGIN
 	SELECT
 	 [winlostdate],[username],[custid],[roleid],[recommend],[mrecommend],[srecommend],
 	 [turnover],[winlost],[awinlost],[mwinlost],[swinlost],[playercomm],[comm],[acomm],[scomm]
-	 ,[BetCount],[grosscomm],[sporttype],[bettype],[netTurnover],[TunroverNoDraw], [ExtraWinloss], [ExtraComm]
+	 ,[BetCount],[grosscomm],[sporttype],[bettype],[netTurnover],[TunroverNoDraw], [ExtraWinloss], [ExtraComm], [leagueGroupID], [ticketType]
 	FROM dbo.sum_winloss  WITH(NOLOCK)
 	WHERE winlostdate BETWEEN @min_winlostdate AND @max_winlostdate
 END
