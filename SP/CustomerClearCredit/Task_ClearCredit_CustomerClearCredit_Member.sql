@@ -9,6 +9,7 @@ AS
 
 	Revisions:    
 		- 20190514@Elodie: Initial SP [Redmine:#112458]
+		- 20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
 
 	Param's Explanation:
 		
@@ -19,6 +20,11 @@ BEGIN
 	CREATE TABLE #CustomerList (custid INT PRIMARY KEY, roleid TINYINT, username VARCHAR(30), credit MONEY, srecommend INT, mrecommend INT, recommend INT)
 	DECLARE @CustIdList XML, @CustIdStr VARCHAR(MAX)
 	DECLARE @Today DATETIME = CONVERT(date, GETDATE())
+	CREATE TABLE #Task_Cust_ArchiveAcc_Exception(CustID INT PRIMARY KEY)
+
+	INSERT INTO #Task_Cust_ArchiveAcc_Exception(CustID)
+	SELECT CustID
+	FROM OPENQUERY (DBACC, 'SELECT d.CustID FROM bodb_report.dbo.[Task_Cust_ArchiveAcc_Exception] d WITH(NOLOCK)')
 
 	------------------------------STEP 1: Get Customer list--------------------------------------------------------------
 	--Get customer list
@@ -52,7 +58,15 @@ BEGIN
 	--exclude exception list used by OPS/Finance (bodb_report.dbo.Task_Cust_ArchiveAcc_Exception)
 	DELETE m 
 	FROM #CustomerList m 
-		INNER JOIN DBACC.bodb_report.dbo.Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.recommend	
+		INNER JOIN #Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.recommend
+		
+	DELETE m 
+	FROM #CustomerList m 
+		INNER JOIN #Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.mrecommend	
+
+	DELETE m 
+	FROM #CustomerList m 
+		INNER JOIN #Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.srecommend
 
 	--exclude phone betting
 	DELETE m 

@@ -9,6 +9,7 @@ AS
 
 	Revisions:    
 		- 20190509@Elodie: Initial SP [Redmine:#112458]
+		- 20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
 
 	Param's Explanation:
 		
@@ -20,12 +21,17 @@ BEGIN
 	CREATE TABLE #MasterList (custid INT PRIMARY KEY, username VARCHAR(30), credit MONEY, srecommend INT, mrecommend INT)
 	CREATE TABLE #AgentList (custid INT PRIMARY KEY, username VARCHAR(30), credit MONEY, srecommend INT, mrecommend INT)
 	DECLARE @Today DATETIME = CONVERT(date, GETDATE())
+	CREATE TABLE #Task_Cust_ArchiveAcc_Exception(CustID INT PRIMARY KEY)
+
+	INSERT INTO #Task_Cust_ArchiveAcc_Exception(CustID)
+	SELECT CustID
+	FROM OPENQUERY (DBACC, 'SELECT d.CustID FROM bodb_report.dbo.[Task_Cust_ArchiveAcc_Exception] d WITH(NOLOCK)')
 
 	------------------------------STEP 1: Get Customer list--------------------------------------------------------------
 	--Get customer list
 	INSERT INTO #CustomerList (custid, roleid, username, credit, srecommend, mrecommend)
 	SELECT c.custid, ci.roleid, c.username, ci.credit, c.srecommend, c.mrecommend
-	FROM vw_Customer c WITH (NOLOCK) 
+	FROM Customer c WITH (NOLOCK) 
 		INNER JOIN dbo.custInfo ci WITH (NOLOCK) ON ci.CustID = c.custid
 		INNER JOIN dbo.CustLoginInfo li WITH (NOLOCK) ON c.CustID = li.custid
 	WHERE NOT EXISTS (SELECT 1 FROM dbo.Dep_CustSuper s WITH (NOLOCK) WHERE s.custid = c.srecommend)
@@ -85,14 +91,26 @@ BEGIN
 	FROM #AgentList a 
 		INNER JOIN dbo.CustDirectAccount da WITH (NOLOCK) ON da.CustID = a.mrecommend
 
-	--exclude exception list used by OPS/Finance (bodb_report.dbo.Task_Cust_ArchiveAcc_Exception)
+	--exclude exception list used by OPS/Finance (bodb_report.dbo.Task_Cust_ArchiveAcc_Exception)	
 	DELETE m 
 	FROM #MasterList m 
-		INNER JOIN DBACC.bodb_report.dbo.Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.custid
+		INNER JOIN #Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.custid	
 
-	DELETE a 
-	FROM #AgentList a 
-		INNER JOIN DBACC.bodb_report.dbo.Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = a.custid
+	DELETE m 
+	FROM #MasterList m 
+		INNER JOIN #Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.srecommend
+
+	DELETE m 
+	FROM #AgentList m 
+		INNER JOIN #Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.custid	
+
+	DELETE m 
+	FROM #AgentList m 
+		INNER JOIN #Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.mrecommend
+	
+	DELETE m 
+	FROM #AgentList m 
+		INNER JOIN #Task_Cust_ArchiveAcc_Exception e WITH (NOLOCK) ON e.CustID = m.srecommend
 
 	--exclude internal accounts
 	DELETE m 
