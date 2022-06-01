@@ -190,7 +190,7 @@ BEGIN
 										WHERE re.transid=cl.transid)
 					)
 		BEGIN
-			INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch, StakeLevelList)
+			INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
 			SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, cbs.MaxBet, cbs.MaxPerMatch
 			FROM #tmpCustList cl
 				INNER JOIN #RefBetSettingTbl ref ON ref.custid=cl.custid 
@@ -207,7 +207,7 @@ BEGIN
 										WHERE re.transid=cl.transid)
 					)
 		BEGIN
-			INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch, StakeLevelList)
+			INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
 			SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, dcbs.MaxBet, dcbs.MaxPerMatch
 			FROM #tmpCustList cl
 				INNER JOIN #RefBetSettingTbl ref ON ref.custid=cl.custid 
@@ -344,18 +344,21 @@ BEGIN
 		;WITH tmpCustList1 AS (
 			SELECT gl.transid, gl.StakeLevelList
 				, MAX(CASE WHEN cl.isLicensee=0	
-						THEN (CASE WHEN st.GameGroupID=0 THEN CAST(st.MaxLabel AS MONEY) ELSE stg.MaxGameStake END)
-						ELSE (CASE WHEN dst.GameGroupID=0 THEN CAST(dst.MaxLabel AS MONEY) ELSE dstg.MaxGameStake END)
+						THEN (CASE WHEN ref.SettingType=7 THEN CAST(st.MaxLabel AS MONEY) ELSE stg.MaxGameStake END)
+						ELSE (CASE WHEN ref.SettingType=7 THEN CAST(dst.MaxLabel AS MONEY) ELSE dstg.MaxGameStake END)
 				END) AS MaxStake
 			FROM #CustList_ChangedGlobal gl
 				INNER JOIN #tmpCustList cl ON gl.transid=cl.transid
-				CROSS APPLY (SELECT CAST(value AS INT) StakeLevelList_Value FROM STRING_SPLIT(gl.StakeLevelList,',')) ss
+				INNER JOIN #RefBetSettingTbl ref ON ref.custid=cl.custid 
+												AND ref.BetType=cl.BetType
+												AND ref.SportType=cl.SportType
+				CROSS APPLY (SELECT CAST(value AS INT) AS StakeLevelList_Value FROM STRING_SPLIT(gl.StakeLevelList,',')) ss
 				--Credit
 				LEFT JOIN StakeLevel st WITH (NOLOCK) ON st.StakeLevelID = ss.StakeLevelList_Value
 				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID
 										, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
 								FROM StakeLevelGroupDetail stg WITH (NOLOCK)
-								WHERE stg.StakeLevelID = st.StakeLevelID
+								WHERE stg.StakeLevelID = ss.StakeLevelList_Value
 									AND stg.GameTypeID=cl.BetType
 								) stg 
 				--Deposit
@@ -363,14 +366,14 @@ BEGIN
 				OUTER APPLY (SELECT TOP 1 dstg.StakeLevelID
 										, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
 								FROM Dep_StakeLevelGroupDetail dstg WITH (NOLOCK)
-								WHERE dstg.StakeLevelID = dst.StakeLevelID
+								WHERE dstg.StakeLevelID = ss.StakeLevelList_Value
 									AND dstg.GameTypeID=cl.BetType
 								) dstg 
 			WHERE gl.IsChangedGlobal=0 AND
 				(
-				  (cl.isLicensee=0 AND st.StakeLevelID IS NOT NULL)
+				  (cl.isLicensee=0 AND (st.StakeLevelID IS NOT NULL OR stg.StakeLevelID IS NOT NULL))
 				OR 
-				  (cl.isLicensee=1 AND dst.StakeLevelID IS NOT NULL)
+				  (cl.isLicensee=1 AND (dst.StakeLevelID IS NOT NULL OR dstg.StakeLevelID IS NOT NULL))
 				)
 			GROUP BY gl.transid, gl.StakeLevelList
 		)
@@ -382,33 +385,39 @@ BEGIN
 		;WITH tmpMaxBet1 AS (--exclude StakeLevelID is changed [stakelevelList: ',']
 			SELECT gl.transid
 				, MAX(CASE WHEN cl.isLicensee=0	
-						THEN (CASE WHEN st.GameGroupID=0 THEN CAST(st.MaxLabel AS MONEY) ELSE stg.MaxGameStake END)
-						ELSE (CASE WHEN dst.GameGroupID=0 THEN CAST(dst.MaxLabel AS MONEY) ELSE dstg.MaxGameStake END)
+						THEN (CASE WHEN ref.SettingType=7 THEN CAST(st.MaxLabel AS MONEY) ELSE stg.MaxGameStake END)
+						ELSE (CASE WHEN ref.SettingType=7 THEN CAST(dst.MaxLabel AS MONEY) ELSE dstg.MaxGameStake END)
 					END) AS MaxStake
 			FROM #CustList_ChangedGlobal gl
 				INNER JOIN #tmpCustList cl ON cl.transid=gl.transid
+				INNER JOIN #RefBetSettingTbl ref ON ref.custid=cl.custid 
+												AND ref.BetType=cl.BetType
+												AND ref.SportType=cl.SportType
 				INNER JOIN #CustList_ChangedSMA sma ON sma.transid=gl.transid
-				CROSS APPLY (SELECT value AS val FROM STRING_SPLIT(sma.StakeLevelList,',')) ss
+				CROSS APPLY (SELECT CAST(value AS INT) AS StakeLevelList_Value FROM STRING_SPLIT(sma.StakeLevelList,',')) ss
 				--Credit
-				LEFT JOIN StakeLevel st ON st.StakeLevelID=CAST(ss.val AS INT)
+				LEFT JOIN StakeLevel st ON st.StakeLevelID=ss.StakeLevelList_Value
 				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID
 									, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
 							 FROM StakeLevelGroupDetail stg WITH (NOLOCK)
-							 WHERE stg.StakeLevelID = st.StakeLevelID
+							 WHERE stg.StakeLevelID = ss.StakeLevelList_Value
 								AND stg.GameTypeID=cl.BetType
 							) stg
 				--Deposit
-				LEFT JOIN Dep_StakeLevel dst ON dst.StakeLevelID=CAST(ss.val AS INT)
+				LEFT JOIN Dep_StakeLevel dst ON dst.StakeLevelID=ss.StakeLevelList_Value
 				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID
 									, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
 							 FROM Dep_StakeLevelGroupDetail dstg WITH (NOLOCK)
-							 WHERE dstg.StakeLevelID = dst.StakeLevelID
+							 WHERE dstg.StakeLevelID = ss.StakeLevelList_Value
 								AND dstg.GameTypeID=cl.BetType
 							) dstg
 			WHERE gl.IsChangedGlobal=1
 				AND gl.UpdateTime_Global<sma.UpdateTime_SMA AND CHARINDEX(sma.StakeLevelList, ',')=1
-				AND ((st.StakeLevelID IS NOT NULL AND st.StakeLevelID<>gl.StakeLevelID_Changed)
-					OR (dst.StakeLevelID IS NOT NULL AND dst.StakeLevelID<>gl.StakeLevelID_Changed))
+				AND (  (st.StakeLevelID IS NOT NULL AND st.StakeLevelID<>gl.StakeLevelID_Changed)
+					OR (dst.StakeLevelID IS NOT NULL AND dst.StakeLevelID<>gl.StakeLevelID_Changed)
+					OR (stg.StakeLevelID IS NOT NULL AND stg.StakeLevelID<>gl.StakeLevelID_Changed)
+					OR (dstg.StakeLevelID IS NOT NULL AND dstg.StakeLevelID<>gl.StakeLevelID_Changed)
+					)
 			GROUP BY gl.transid
 		),
 		tmpMaxBet2 AS (
