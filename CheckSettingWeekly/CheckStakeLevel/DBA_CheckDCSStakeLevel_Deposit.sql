@@ -17,6 +17,7 @@ AS
 		- 20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
 		- 20210111@Winfred: fix check member missing stake level when agent disable[redmine:#148413]
 		- 20210609@Winfred: exclude Excluded dummy line[redmine:#156460]
+		- 20220601@Winfred: fix check site for stake level[redmine:#173606]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -27,18 +28,22 @@ BEGIN
 	CREATE TABLE #AgentStakeLevel (CustID INT, SportType INT, bettype INT, mrecommend INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,SportType , bettype))
 	CREATE TABLE #MemberStakeLevel (CustID INT, SportType INT, bettype INT, recommend INT, StakeLevelList VARCHAR(100), PRIMARY KEY(CustID,SportType , bettype))
 	CREATE TABLE #GlobalStakeLevel (sporttype INT, bettype INT, StakeLevelList VARCHAR(5000))
-	CREATE TABLE #OfferedProductList(ProductID TINYINT, ProductSettingID INT,SportType SMALLINT ,BetType SMALLINT)
+	CREATE TABLE #OfferedProductList(ProductID TINYINT, ProductSettingID INT,SportType SMALLINT ,BetType SMALLINT,SettingType	tinyint)
 		
-	DECLARE @SportBettypeFilter TABLE(SportType INT, Bettype INT)
-	DECLARE @currency INT, @rowcount INT
+	DECLARE @SportBettypeFilter TABLE(SportType INT, Bettype INT,SettingType	tinyint)
+	DECLARE @currency INT, @rowcount INT,@Site VARCHAR(10), @SiteID INT
 		
-	SELECT @currency = currency 
-	FROM CheckCustDB.dbo.custinfo WITH(NOLOCK)
+	SELECT @currency = currency,@site = site 
+	FROM CheckCustDB.dbo.customer WITH(NOLOCK)
 	WHERE custid = @srecommend
 	
+	SELECT @SiteID = SiteID
+	FROM CheckCustDB.dbo.site WITH(NOLOCK)
+	WHERE site = @site
+
 	--product has offered stakelevel
-	INSERT INTO #OfferedProductList (ProductID, ProductSettingID, SportType, BetType)
-	SELECT DISTINCT ProductID, ps.ProductSettingID, SportType, BetType
+	INSERT INTO #OfferedProductList (ProductID, ProductSettingID, SportType, BetType,SettingType)
+	SELECT DISTINCT ProductID, ps.ProductSettingID, SportType, BetType,SettingType
 	FROM CheckCustDB.dbo.Dep_ProductSetting pd WITH (NOLOCK)
 		INNER JOIN CheckCustDB.dbo.Dep_ProductSettingDetail ps WITH(NOLOCK) ON pd.ProductSettingID = ps.ProductSettingID
 	WHERE pd.SettingType IN (7,8) 
@@ -46,8 +51,8 @@ BEGIN
 		AND ps.sportType = CASE WHEN @sportType = 0 THEN ps.sportType ELSE @sportType END
 						
 	--get sport/bettype has stakelevel setting for this licensee
-	INSERT INTO @SportBettypeFilter(sporttype,bettype)
-	SELECT sporttype, bettype
+	INSERT INTO @SportBettypeFilter(sporttype,bettype,SettingType)
+	SELECT sporttype, bettype,SettingType
 	FROM #OfferedProductList op
 		INNER JOIN CheckCustDB.dbo.Dep_LicenseeProductSetting ls WITH(NOLOCK) ON ls.custid = @srecommend
 																				AND ls.ProductSettingID = op.ProductSettingID		
@@ -57,12 +62,11 @@ BEGIN
 	IF @Rowcount = 0
 		RETURN
 	
-	
-		
 	INSERT INTO #GlobalStakeLevel(sporttype,bettype,StakeLevelList)		
 	SELECT t.sportType,s1.GameTypeID,  STUFF((SELECT ',' + cast(StakeLevelID as VARCHAR(10)) 
 						FROM CheckCustDB.dbo.Dep_StakeLevel s2 (NOLOCK) 
 						WHERE s2.GameTypeID = s1.gametypeid and s2.ExchangeId = @currency
+							AND (t.SettingType = 8 OR (t.SettingType = 7 AND s2.SiteID = @SiteID))
 						FOR XML PATH('')
 						),1,1,'')
 	FROM CheckCustDB.dbo.Dep_StakeLevel s1 WITH(NOLOCK)
