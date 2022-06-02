@@ -86,7 +86,6 @@ BEGIN
 		,	MaxPerMatch		MONEY
 		,	PRIMARY KEY CLUSTERED (transid)
 	)
-	
 
 	--Check if XML is null or empty
 	IF @CustList IS NULL OR @CustList=''
@@ -202,7 +201,7 @@ BEGIN
 								WHERE re.transid=cl.transid)
 		END
 
---		DELETE #tmpCustList WHERE SettingType NOT IN (7,8)
+		DELETE #tmpCustList WHERE SettingType NOT IN (7,8)
 	END
 	-- @sporttype: support StakeLevel
 	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType IN (7,8))
@@ -424,10 +423,8 @@ BEGIN
 	END
 
 
-	SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
-		, re.MaxBet, re.MaxPerMatch
-	FROM #tmpCustList cl
-		LEFT JOIN #returnTbl re ON re.transid=cl.transid
+	SELECT *
+	FROM #returnTbl
 	
 	DROP TABLE #tmpCustList
 	DROP TABLE #CustList_ChangedSMA
