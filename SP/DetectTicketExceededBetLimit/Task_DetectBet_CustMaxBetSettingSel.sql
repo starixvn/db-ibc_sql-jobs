@@ -70,7 +70,6 @@ BEGIN
 		,	BetType					INT
 		,	MaxBet					MONEY
 		,	StakeLevelList			VARCHAR(200)
-		,	StakeLevelID_Changed	INT
 		,	MaxStake_Old			MONEY
 		,	IsChangedGlobal			BIT
 		,	UpdateTime_Global		DATETIME
@@ -86,6 +85,11 @@ BEGIN
 		,	MaxPerMatch		MONEY
 		,	PRIMARY KEY CLUSTERED (transid)
 	)
+	
+	--nonClustered
+	CREATE NONCLUSTERED INDEX IX_tmpCustList ON #tmpCustList(custid,SportType,BetType)
+	CREATE NONCLUSTERED INDEX IX_CustList_ChangedSMA ON #tmpCustList(custid,SportType,BetType)
+	CREATE NONCLUSTERED INDEX IX_CustList_ChangedGlobal ON #tmpCustList(custid,SportType,BetType)
 
 	--Check if XML is null or empty
 	IF @CustList IS NULL OR @CustList=''
@@ -256,7 +260,7 @@ BEGIN
 			WHERE SettingType IN (7,8) AND 
 				(cslm.CustID IS NOT NULL OR dcslm.CustID IS NOT NULL)
 		),
-		CustList_Global2 AS (--get isChangedGlobal, StakeLevelID_Changed, MaxStake_old
+		CustList_Global2 AS (--get isChangedGlobal, MaxStake_old
 			SELECT clg.custid, clg.transid
 				, CASE	WHEN st.StakeLevelID IS NOT NULL THEN st.UpdateTime
 						WHEN dst.StakeLevelID IS NOT NULL THEN dst.UpdateTime
@@ -266,15 +270,15 @@ BEGIN
 				, MAX(CASE WHEN st.StakeLevelID IS NOT NULL OR stg.StakeLevelID IS NOT NULL 
 						OR dst.StakeLevelID IS NOT NULL OR dstg.StakeLevelID IS NOT NULL THEN 1 ELSE 0 
 					END) AS isChangedGlobal
-				, MAX(CASE	WHEN cl.SettingType=7 AND st.StakeLevelID IS NOT NULL	THEN st.StakeLevelID
-							WHEN cl.SettingType=7 AND dst.StakeLevelID IS NOT NULL	THEN dst.StakeLevelID
-							WHEN cl.SettingType=8 AND stg.StakeLevelID IS NOT NULL	THEN stg.StakeLevelID
-							WHEN cl.SettingType=8 AND dstg.StakeLevelID IS NOT NULL	THEN dstg.StakeLevelID
-						END) AS StakeLevelID_Changed 
-				, MAX(CASE	WHEN cl.SettingType=7 AND st.StakeLevelID IS NOT NULL	THEN st.MaxLabel
-							WHEN cl.SettingType=7 AND dst.StakeLevelID IS NOT NULL	THEN dst.MaxLabel
-							WHEN cl.SettingType=8 AND stg.StakeLevelID IS NOT NULL	THEN stg.MaxGameStake
-							WHEN cl.SettingType=8 AND dstg.StakeLevelID IS NOT NULL	THEN dstg.MaxGameStake
+				, MAX(CASE	WHEN cl.SettingType=7 AND st.StakeLevelID IS NOT NULL	 THEN st.MaxLabel
+							WHEN cl.SettingType=7 AND dst.StakeLevelID IS NOT NULL	 THEN dst.MaxLabel
+							WHEN cl.SettingType=8 AND stg.StakeLevelID IS NOT NULL	 THEN stg.MaxGameStake
+							WHEN cl.SettingType=8 AND dstg.StakeLevelID IS NOT NULL	 THEN dstg.MaxGameStake
+							--current
+							WHEN cl.SettingType=7 AND stc.StakeLevelID IS NOT NULL	 THEN CAST(stc.MaxLabel AS MONEY)
+							WHEN cl.SettingType=7 AND dstc.StakeLevelID IS NOT NULL	 THEN CAST(dstc.MaxLabel AS MONEY)
+							WHEN cl.SettingType=8 AND stgc.StakeLevelID IS NOT NULL	 THEN stgc.MaxGameStake
+							WHEN cl.SettingType=8 AND dstgc.StakeLevelID IS NOT NULL THEN dstgc.MaxGameStake
 						END) AS MaxStake_old
 			FROM CustList_Global1 clg
 				INNER JOIN #tmpCustList cl ON cl.transid=clg.transid
@@ -307,6 +311,23 @@ BEGIN
 								AND dstg.GameTypeID=cl.BetType
 								AND dstg.UpdateTime>cl.transdate
 								) dstg
+				--current
+				--Credit
+				LEFT JOIN StakeLevel stc WITH (NOLOCK) ON st.StakeLevelID = ss.StakeLevelID
+				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID
+										, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
+								FROM StakeLevelGroupDetail stg WITH (NOLOCK)
+								WHERE stg.StakeLevelID = ss.StakeLevelID
+									AND stg.GameTypeID=cl.BetType
+								) stgc 
+				--Deposit
+				LEFT JOIN Dep_StakeLevel dstc WITH (NOLOCK) ON dst.StakeLevelID = ss.StakeLevelID
+				OUTER APPLY (SELECT TOP 1 dstg.StakeLevelID
+										, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
+								FROM Dep_StakeLevelGroupDetail dstg WITH (NOLOCK)
+								WHERE dstg.StakeLevelID = ss.StakeLevelID
+									AND dstg.GameTypeID=cl.BetType
+								) dstgc
 			GROUP BY clg.custid, clg.transid
 				, CASE	WHEN st.StakeLevelID IS NOT NULL THEN st.UpdateTime
 					WHEN dst.StakeLevelID IS NOT NULL THEN dst.UpdateTime
@@ -314,111 +335,32 @@ BEGIN
 					WHEN dstg.StakeLevelID IS NOT NULL THEN dstg.UpdateTime
 				END
 		)
-		INSERT INTO #CustList_ChangedGlobal (custid, transid, SportType, BetType, StakeLevelList, StakeLevelID_Changed, MaxStake_Old, IsChangedGlobal, UpdateTime_Global)
+		INSERT INTO #CustList_ChangedGlobal (custid, transid, SportType, BetType, StakeLevelList, MaxStake_Old, IsChangedGlobal, UpdateTime_Global)
 		SELECT clg1.custid, clg1.transid, clg1.SportType, clg1.BetType, clg1.StakeLevelList
-			, clg2.StakeLevelID_Changed, clg2.MaxStake_old, clg2.isChangedGlobal, clg2.UpdateTime
+			, clg2.MaxStake_old, clg2.isChangedGlobal, clg2.UpdateTime
 		FROM CustList_Global1 clg1 
 			INNER JOIN CustList_Global2 clg2 ON clg2.transid=clg1.transid
 
-		----
-		;WITH tmpCustList1 AS ( --custlist: not change by SMA|| Global
-			SELECT gl.transid, gl.StakeLevelList
-				, MAX(CASE WHEN cl.isLicensee=0	
-						THEN (CASE WHEN cl.SettingType=7 THEN CAST(st.MaxLabel AS MONEY) ELSE stg.MaxGameStake END)
-						ELSE (CASE WHEN cl.SettingType=7 THEN CAST(dst.MaxLabel AS MONEY) ELSE dstg.MaxGameStake END)
-				END) AS MaxStake
-			FROM #CustList_ChangedGlobal gl
-				INNER JOIN #tmpCustList cl ON gl.transid=cl.transid
-				CROSS APPLY (SELECT CAST(value AS INT) AS StakeLevelID FROM STRING_SPLIT(gl.StakeLevelList,',')) ss
-				--Credit
-				LEFT JOIN StakeLevel st WITH (NOLOCK) ON st.StakeLevelID = ss.StakeLevelID
-				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID
-										, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
-								FROM StakeLevelGroupDetail stg WITH (NOLOCK)
-								WHERE stg.StakeLevelID = ss.StakeLevelID
-									AND stg.GameTypeID=cl.BetType
-								) stg 
-				--Deposit
-				LEFT JOIN Dep_StakeLevel dst WITH (NOLOCK) ON dst.StakeLevelID = ss.StakeLevelID
-				OUTER APPLY (SELECT TOP 1 dstg.StakeLevelID
-										, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
-								FROM Dep_StakeLevelGroupDetail dstg WITH (NOLOCK)
-								WHERE dstg.StakeLevelID = ss.StakeLevelID
-									AND dstg.GameTypeID=cl.BetType
-								) dstg 
-			WHERE gl.IsChangedGlobal=0 
-				AND (
-					  (cl.isLicensee=0 AND (st.StakeLevelID IS NOT NULL OR stg.StakeLevelID IS NOT NULL))
-					OR 
-					  (cl.isLicensee=1 AND (dst.StakeLevelID IS NOT NULL OR dstg.StakeLevelID IS NOT NULL))
-					)
-				AND NOT EXISTS (SELECT 1 FROM #CustList_ChangedSMA sma WHERE sma.transid=gl.transid)
-			GROUP BY gl.transid, gl.StakeLevelList
-		)
+		--Custlist: not change by SMA || Global
 		INSERT INTO #returnTbl (custid, transid, SportType, BetType, MaxBet)
-		SELECT gl.custid, gl.transid, gl.SportType, gl.BetType, t.MaxStake
+		SELECT gl.custid, gl.transid, gl.SportType, gl.BetType, gl.MaxStake_Old
 		FROM #CustList_ChangedGlobal gl
-			 INNER JOIN tmpCustList1 t ON gl.transid=t.transid
-
-		----
-		;WITH tmpMaxBet1 AS (--get maxBet, exclude StakeLevelID is changed [stakelevelList: ',']
-			SELECT gl.transid
-				, MAX(CASE WHEN cl.isLicensee=0	
-						THEN (CASE WHEN cl.SettingType=7 THEN CAST(st.MaxLabel AS MONEY) ELSE stg.MaxGameStake END)
-						ELSE (CASE WHEN cl.SettingType=7 THEN CAST(dst.MaxLabel AS MONEY) ELSE dstg.MaxGameStake END)
-					END) AS MaxStake
-			FROM #CustList_ChangedGlobal gl
-				INNER JOIN #tmpCustList cl ON cl.transid=gl.transid
-				INNER JOIN #CustList_ChangedSMA sma ON sma.transid=gl.transid
-				CROSS APPLY (SELECT CAST(value AS INT) AS StakeLevelID FROM STRING_SPLIT(sma.StakeLevelList,',')) ss
-				--Credit
-				LEFT JOIN StakeLevel st ON st.StakeLevelID=ss.StakeLevelID
-				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID
-									, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
-							 FROM StakeLevelGroupDetail stg WITH (NOLOCK)
-							 WHERE stg.StakeLevelID = ss.StakeLevelID
-								AND stg.GameTypeID=cl.BetType
-							) stg
-				--Deposit
-				LEFT JOIN Dep_StakeLevel dst ON dst.StakeLevelID=ss.StakeLevelID
-				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID
-									, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
-							 FROM Dep_StakeLevelGroupDetail dstg WITH (NOLOCK)
-							 WHERE dstg.StakeLevelID = ss.StakeLevelID
-								AND dstg.GameTypeID=cl.BetType
-							) dstg
-			WHERE gl.IsChangedGlobal=1
-				AND gl.UpdateTime_Global<sma.UpdateTime_SMA AND CHARINDEX(sma.StakeLevelList, ',')=1
-				AND (  (st.StakeLevelID IS NOT NULL AND st.StakeLevelID<>gl.StakeLevelID_Changed)
-					OR (dst.StakeLevelID IS NOT NULL AND dst.StakeLevelID<>gl.StakeLevelID_Changed)
-					OR (stg.StakeLevelID IS NOT NULL AND stg.StakeLevelID<>gl.StakeLevelID_Changed)
-					OR (dstg.StakeLevelID IS NOT NULL AND dstg.StakeLevelID<>gl.StakeLevelID_Changed)
-					)
-			GROUP BY gl.transid
-		),
-		tmpMaxBet2 AS (
-			SELECT gl.transid
-				, CASE WHEN gl.MaxStake_Old>t.MaxStake THEN gl.MaxStake_Old ELSE t.MaxStake END MaxStake
-			FROM #CustList_ChangedGlobal gl
-				INNER JOIN tmpMaxBet1 t ON t.transid=gl.transid 
-		)
+		WHERE IsChangedGlobal=0
+		AND NOT EXISTS (SELECT 1 FROM #CustList_ChangedSMA sma WHERE sma.transid=gl.transid)
+		
+		--Custlist: changed by SMA || Global
 		INSERT INTO #returnTbl (custid, transid, SportType, BetType, MaxBet)
 		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
 			, CASE WHEN sma.transid IS NOT NULL AND gl.transid IS NULL	THEN sma.MaxBet
 				   WHEN sma.transid IS NULL AND gl.transid IS NOT NULL	THEN gl.MaxStake_Old
 				   WHEN sma.UpdateTime_SMA<gl.UpdateTime_Global			THEN sma.MaxBet 
-				   ELSE
-						CASE WHEN CHARINDEX(sma.StakeLevelList,',')=0	
-							THEN gl.MaxStake_Old
-							ELSE t.MaxStake
-						END
+																		ELSE gl.MaxStake_Old
 			END MaxBet
 		FROM #tmpCustList cl
 			LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
 			LEFT JOIN #CustList_ChangedGlobal gl ON gl.transid=cl.transid AND gl.IsChangedGlobal=1
-			LEFT JOIN tmpMaxBet2 t ON  t.transid=cl.transid
 		WHERE SettingType IN (7,8) 
-			AND (sma.transid IS NOT NULL OR gl.transid IS NOT NULL OR t.transid IS NOT NULL)
+			AND (sma.transid IS NOT NULL OR gl.transid IS NOT NULL)
 			AND NOT EXISTS (SELECT 1 FROM #returnTbl re WHERE re.transid=cl.transid)
 	END
 
