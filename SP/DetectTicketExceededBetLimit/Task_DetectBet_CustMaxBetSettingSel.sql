@@ -17,9 +17,18 @@ AS
 	Param's Explanation:
 	• @CustList:
 		<root>
-			<r custid= ''1400001'' SportType=''248'' BetType=''4186'' transid=''12345678'' transdate=''2022-03-10 04:10:10.000'' srecommend=''1300001'' recommend=''1300003'' isLive=''0''/>
-			<r custid=''23700002'' SportType=''176'' BetType=''8202'' transid=''13524659'' transdate=''2022-03-10 04:10:10.000'' srecommend=''23600001'' recommend=''23600003'' isLive=''0''/>
+			<r c= ''1400001'' s=''248'' b=''4186'' tid=''12345678'' t=''2022-03-10 04:10:10.000'' sr=''1300001'' r=''1300003'' il=''0''/>
+			<r c=''23700002'' s=''176'' b=''8202'' tid=''13524659'' t=''2022-03-10 04:10:10.000'' sr=''23600001'' r=''23600003'' il=''0''/>
 		</root>
+
+	• c: custid
+      s: sporttype
+      b: bettype
+      t: transdate
+      tid: transid
+      sr: srecommend
+      r: recommend
+      il: IsLive
 */
 BEGIN
 	SET NOCOUNT ON
@@ -94,17 +103,17 @@ BEGIN
 		, @xml
 
 	INSERT INTO #tmpCustList(custid, SportType, BetType, transid, transdate, srecommend, recommend, isLive)
-	SELECT custid, SportType, BetType, transid, transdate, srecommend, recommend, isLive
+	SELECT c, s, b, tid, t, sr, r, il
 	FROM OPENXML(@iDoc, '/root/r', 1) 
 	WITH (
-			custid		INT
-		,	SportType	SMALLINT
-		,	BetType		INT
-		,	transid		BIGINT
-		,	transdate	DATETIME
-		,	srecommend	INT
-		,	recommend	INT
-		,	isLive		BIT
+			c	INT
+		,	s	SMALLINT
+		,	b	INT
+		,	tid	BIGINT
+		,	t	DATETIME
+		,	sr	INT
+		,	r	INT
+		,	il	BIT
 		) t
 		
 	EXEC sp_xml_removedocument @iDoc
@@ -409,7 +418,7 @@ BEGIN
 			END StakeLevelList
 		FROM #tmpCustList cl
 			LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
-			LEFT JOIN #CustList_ChangedGlobal gl ON gl.transid=cl.transid AND gl.IsChangedGlobal=1.
+			LEFT JOIN #CustList_ChangedGlobal gl ON gl.transid=cl.transid AND gl.IsChangedGlobal=1
 			LEFT JOIN tmpMaxBet2 t ON  t.transid=cl.transid
 		WHERE SettingType IN (7,8) 
 			AND (sma.transid IS NOT NULL OR gl.transid IS NOT NULL OR t.transid IS NOT NULL)
