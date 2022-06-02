@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb02" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" isFunction="0"></info>*/
+/*<info serverAlias="DBTP-bodb02" executers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DetectBet_CustMaxBetSettingSel] 
 		@CustList	VARCHAR(MAX) = '',
