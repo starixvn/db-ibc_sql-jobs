@@ -156,11 +156,13 @@ BEGIN
 						 FROM CustMaxBetSetting_History ch 
 						 WHERE  ch.custid=cl.custid AND ch.SportType=cl.SportTypeRef
 							AND ch.BetType=cl.BetTypeRef AND ch.UpdateTime>cl.transdate 
+						 ORDER BY UpdateTime
 						 ) ch
 			OUTER APPLY (SELECT TOP (1) dch.custid, OldMaxBet, OldMaxPerMatch, UpdateTime 
 						 FROM Dep_CustMaxBetSetting_History dch 
 						 WHERE dch.custid=cl.custid AND dch.SportType=cl.SportTypeRef
 							AND dch.BetType=cl.BetTypeRef AND dch.UpdateTime>cl.transdate  
+						 ORDER BY UpdateTime
 						 ) dch
 		WHERE cl.SettingType NOT IN (7,8) AND
 			(
@@ -227,12 +229,14 @@ BEGIN
 						 FROM CustMaxBetSetting_History ch 
 						 WHERE  ch.custid=cl.custid AND ch.SportType=cl.SportTypeRef
 							AND ch.BetType=cl.BetTypeRef AND ch.UpdateTime>cl.transdate 
-						 ) ch
+						 ORDER BY UpdateTime
+						) ch
 			OUTER APPLY (SELECT TOP (1) dch.custid, OldMaxBet, OldStakeLevelList, UpdateTime 
 						 FROM Dep_CustMaxBetSetting_History dch 
 						 WHERE dch.custid=cl.custid AND dch.SportType=cl.SportTypeRef
 							AND dch.BetType=cl.BetTypeRef AND dch.UpdateTime>cl.transdate  
-						 ) dch
+						 ORDER BY UpdateTime
+						) dch
 		WHERE cl.SettingType IN (7,8) AND
 			(
 			  (cl.isLicensee=0 AND ch.custid IS NOT NULL)
@@ -288,6 +292,7 @@ BEGIN
 							 FROM StakeLevel_History st WITH (NOLOCK) 
 							 WHERE st.StakeLevelID = ss.StakeLevelID
 								AND st.UpdateTime>cl.transdate
+							ORDER BY UpdateTime
 							) st
 				OUTER APPLY (SELECT TOP (1) StakeLevelID
 										, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
@@ -296,12 +301,14 @@ BEGIN
 							 WHERE stg.StakeLevelID = ss.StakeLevelID
 								AND stg.GameTypeID=cl.BetType
 								AND stg.UpdateTime>cl.transdate
+							ORDER BY UpdateTime
 							) stg
 				--Deposit
 				OUTER APPLY (SELECT TOP (1) StakeLevelID, CAST(MaxLabel AS MONEY) AS MaxLabel, UpdateTime 
 							 FROM Dep_StakeLevel_History dst WITH (NOLOCK) 
 							 WHERE dst.StakeLevelID = ss.StakeLevelID
 								AND dst.UpdateTime>cl.transdate
+							ORDER BY UpdateTime
 							) dst
 				OUTER APPLY (SELECT TOP (1) StakeLevelID
 										, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
@@ -310,7 +317,8 @@ BEGIN
 							 WHERE dstg.StakeLevelID = ss.StakeLevelID
 								AND dstg.GameTypeID=cl.BetType
 								AND dstg.UpdateTime>cl.transdate
-								) dstg
+							ORDER BY UpdateTime
+							) dstg
 				--current
 				--Credit
 				LEFT JOIN StakeLevel stc WITH (NOLOCK) ON st.StakeLevelID = ss.StakeLevelID
