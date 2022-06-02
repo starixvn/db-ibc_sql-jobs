@@ -72,7 +72,7 @@ BEGIN
 	FROM CheckCustDB.dbo.Dep_StakeLevel s1 WITH(NOLOCK)
 		INNER JOIN @sportBettypeFilter t ON s1.gametypeid = t.bettype
 	WHERE ExchangeId = @currency
-	GROUP BY t.sportType,s1.GameTypeID
+	GROUP BY t.sportType,s1.GameTypeID, t.SettingType
 			
 	INSERT INTO #SuperStakeLevel(custid,sporttype,bettype,StakeLevelList)
 	SELECT custid, cs.sporttype, cs.bettype, StakeLevelList
