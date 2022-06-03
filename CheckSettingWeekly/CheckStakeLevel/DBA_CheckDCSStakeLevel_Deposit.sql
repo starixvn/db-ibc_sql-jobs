@@ -72,7 +72,7 @@ BEGIN
 	FROM CheckCustDB.dbo.Dep_StakeLevel s1 WITH(NOLOCK)
 		INNER JOIN @sportBettypeFilter t ON s1.gametypeid = t.bettype
 	WHERE ExchangeId = @currency AND t.SettingType = 7 AND s1.SiteID = @SiteID
-	GROUP BY t.sportType,s1.GameTypeID, t.SettingType
+	GROUP BY t.sportType,s1.GameTypeID
 	UNION ALL
 	SELECT t.sportType,s1.GameTypeID,  STUFF((SELECT ',' + cast(StakeLevelID as VARCHAR(10)) 
 						FROM CheckCustDB.dbo.Dep_StakeLevel s2 (NOLOCK) 
@@ -82,7 +82,7 @@ BEGIN
 	FROM CheckCustDB.dbo.Dep_StakeLevel s1 WITH(NOLOCK)
 		INNER JOIN @sportBettypeFilter t ON s1.gametypeid = t.bettype
 	WHERE ExchangeId = @currency AND t.SettingType = 8
-	GROUP BY t.sportType,s1.GameTypeID, t.SettingType
+	GROUP BY t.sportType,s1.GameTypeID
 			
 	INSERT INTO #SuperStakeLevel(custid,sporttype,bettype,StakeLevelList)
 	SELECT custid, cs.sporttype, cs.bettype, StakeLevelList
