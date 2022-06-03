@@ -21,7 +21,7 @@ BEGIN
 	DECLARE @CustList VARCHAR(MAX) = NULL
 
 	CREATE TABLE #tmp_TransId (TransId BIGINT, CustId INT, Username NVARCHAR(100), sporttype SMALLINT, bettype SMALLINT, stake MONEY, srecommend INT, recommend INT, isLive BIT, transdate DATETIME)
-	CREATE TABLE #tmp_TransId_MaxBet (TransId BIGINT, CustId INT, sporttype SMALLINT, bettype SMALLINT, MaxBet MONEY, MaxPerMatch MONEY, StakeLevelList VARCHAR(200))
+	CREATE TABLE #tmp_TransId_MaxBet (TransId BIGINT, CustId INT, sporttype SMALLINT, bettype SMALLINT, MaxBet MONEY, MaxPerMatch MONEY)
 
 	CREATE CLUSTERED INDEX CIX_tmp_transId ON #tmp_TransId (TransId)
 	CREATE CLUSTERED INDEX CIX_tmp_transId_MaxBet ON #tmp_TransId_MaxBet (TransId)
@@ -54,7 +54,7 @@ BEGIN
 			FOR XML PATH('r'), ROOT('root')
 		)
 
-	INSERT INTO #tmp_TransId_MaxBet (CustId, TransId, sporttype, bettype, MaxBet, MaxPerMatch, StakeLevelList)
+	INSERT INTO #tmp_TransId_MaxBet (CustId, TransId, sporttype, bettype, MaxBet, MaxPerMatch)
 	EXEC dbo.Task_DetectBet_CustMaxBetSettingSel
 		@CustList = @CustList
 	
@@ -62,7 +62,7 @@ BEGIN
 	SELECT t1.TransId, t1.CustId, t1.sporttype, t1.bettype, t2.MaxBet, t1.stake
 	FROM #tmp_TransId t1
 		INNER JOIN #tmp_TransId_MaxBet t2 ON t2.TransId = t1.TransId
-	WHERE t1.stake > t2.MaxBet
+	WHERE t1.stake > ISNULL(t2.MaxBet,0)
 
 	DROP TABLE #tmp_TransId
 	DROP TABLE #tmp_TransId_MaxBet
