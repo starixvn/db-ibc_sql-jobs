@@ -74,9 +74,7 @@ BEGIN
 	)
 	
 	--nonClustered
-	CREATE NONCLUSTERED INDEX IX_tmpCustList ON #tmpCustList(custid,SportType,BetType)
-	CREATE NONCLUSTERED INDEX IX_CustList_ChangedSMA ON #tmpCustList(custid,SportType,BetType)
-	CREATE NONCLUSTERED INDEX IX_CustList_ChangedGlobal ON #tmpCustList(custid,SportType,BetType)
+	CREATE NONCLUSTERED INDEX IX_tmpCustList ON #tmpCustList(custid,SportTypeRef,BetTypeRef)
 
 	--Check if XML is null or empty
 	IF @CustList IS NULL OR @CustList=''
@@ -292,10 +290,10 @@ BEGIN
 		)
 		INSERT INTO #returnTbl (custid, transid, SportType, BetType, MaxBet)
 		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
-			, CASE WHEN sma.transid IS NOT NULL AND gl.transid IS NULL	THEN sma.MaxBet
-				   WHEN sma.transid IS NULL AND gl.transid IS NOT NULL	THEN gl.MaxStake_Old
-				   WHEN sma.UpdateTime_SMA<gl.UpdateTime_Global			THEN sma.MaxBet 
-																		ELSE gl.MaxStake_Old
+			, CASE WHEN sma.UpdateTime_SMA IS NOT NULL AND gl.UpdateTime_Global IS NULL	THEN sma.MaxBet
+				   WHEN sma.UpdateTime_SMA IS NULL AND gl.UpdateTime_Global IS NOT NULL	THEN gl.MaxStake_Old
+				   WHEN sma.UpdateTime_SMA<gl.UpdateTime_Global							THEN sma.MaxBet 
+																						ELSE gl.MaxStake_Old
 			END MaxBet
 		FROM #tmpCustList cl
 			LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
@@ -414,10 +412,9 @@ BEGIN
 		)
 		INSERT INTO #returnTbl (custid, transid, SportType, BetType, MaxBet)
 		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
-			, CASE WHEN sma.transid IS NOT NULL AND gl.transid IS NULL	THEN sma.MaxBet
-				   WHEN sma.transid IS NULL AND gl.transid IS NOT NULL	THEN gl.MaxStake_Old
-				   WHEN sma.UpdateTime_SMA<gl.UpdateTime_Global			THEN sma.MaxBet 
-																		ELSE gl.MaxStake_Old
+			, CASE WHEN sma.UpdateTime_SMA IS NOT NULL AND gl.UpdateTime_Global IS NULL	THEN sma.MaxBet
+				   WHEN sma.UpdateTime_SMA IS NULL AND gl.UpdateTime_Global IS NOT NULL	THEN gl.MaxStake_Old
+																						ELSE gl.MaxStake_Old
 			END MaxBet
 		FROM #tmpCustList cl
 			LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
