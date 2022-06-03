@@ -65,14 +65,24 @@ BEGIN
 	INSERT INTO #GlobalStakeLevel(sporttype,bettype,StakeLevelList)		
 	SELECT t.sportType,s1.GameTypeID,  STUFF((SELECT ',' + cast(StakeLevelID as VARCHAR(10)) 
 						FROM CheckCustDB.dbo.Dep_StakeLevel s2 (NOLOCK) 
-						WHERE s2.GameTypeID = s1.gametypeid and s2.ExchangeId = @currency
-							AND (t.SettingType = 8 OR (t.SettingType = 7 AND s2.SiteID = @SiteID))
+						WHERE s2.GameTypeID = s1.gametypeid AND s2.ExchangeId = @currency
+							AND s1.SiteID = s2.SiteID
 						FOR XML PATH('')
 						),1,1,'')
 	FROM CheckCustDB.dbo.Dep_StakeLevel s1 WITH(NOLOCK)
 		INNER JOIN @sportBettypeFilter t ON s1.gametypeid = t.bettype
-	WHERE ExchangeId = @currency
-	GROUP BY t.sportType,s1.GameTypeID, t.SettingType
+	WHERE ExchangeId = @currency AND t.SettingType = 7 AND s1.SiteID = @SiteID
+	GROUP BY t.sportType,s1.GameTypeID, t.SettingType,s1.SiteID
+	UNION ALL
+	SELECT t.sportType,s1.GameTypeID,  STUFF((SELECT ',' + cast(StakeLevelID as VARCHAR(10)) 
+						FROM CheckCustDB.dbo.Dep_StakeLevel s2 (NOLOCK) 
+						WHERE s2.GameTypeID = s1.gametypeid AND s2.ExchangeId = @currency
+						FOR XML PATH('')
+						),1,1,'')
+	FROM CheckCustDB.dbo.Dep_StakeLevel s1 WITH(NOLOCK)
+		INNER JOIN @sportBettypeFilter t ON s1.gametypeid = t.bettype
+	WHERE ExchangeId = @currency AND t.SettingType = 8
+	GROUP BY t.sportType,s1.GameTypeID
 			
 	INSERT INTO #SuperStakeLevel(custid,sporttype,bettype,StakeLevelList)
 	SELECT custid, cs.sporttype, cs.bettype, StakeLevelList
