@@ -26,6 +26,7 @@ AS
 		- 20210830@Malcolm: Adjust formula of BTi [RedmineID: #159061]
 		- 20210823@Malcolm: Integrate new product: Skywind [RedmineID: #159566]
 		- 20211007@Malcolm: Divide amount by 1000 with currency in (VND, IDR)[RedmineID: #159566]
+		- 20220506@Malcolm: Integrate new product: Jasper (N2), Sunstone (EA) [RedmineID: #172068]
 */
 
 BEGIN
@@ -457,6 +458,66 @@ BEGIN
 			SUM(b.Bet/CASE WHEN mi.Currency IN (15,22,33,34,51) THEN 1000.0 ELSE 1.0 END) AS Turnover, -- IDR, VND amount divide by 1000
 			SUM((b.Revenue * -1)/CASE WHEN mi.Currency IN (15,22,33,34,51) THEN 1000.0 ELSE 1.0 END) AS Winloss -- IDR, VND amount divide by 1000
 		FROM dbo.bettrans_Skywind b WITH (NOLOCK)
+			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
+		WHERE b.WinlostDate = @WinlostDate
+			AND NOT EXISTS (
+				SELECT 1 FROM dbo.MemberRemoval mr WITH (NOLOCK)
+				WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
+					AND mi.IBCCustId = mr.IBCCustId
+			)			
+		GROUP BY
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency
+	END
+	-- Jasper (N2)
+	ELSE IF @ProductId = 34
+	BEGIN
+		INSERT INTO #tempData
+		(
+			AffId,
+			IBCCustId,
+			Currency,
+			Turnover,
+			Winloss
+		)
+		SELECT
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency,
+			SUM(b.valid_turnover/CASE WHEN mi.Currency IN (15,22,33,34,51) THEN 1000.0 ELSE 1.0 END) AS Turnover, -- IDR, VND amount divide by 1000
+			SUM((b.hold)/CASE WHEN mi.Currency IN (15,22,33,34,51) THEN 1000.0 ELSE 1.0 END) AS Winloss -- IDR, VND amount divide by 1000
+		FROM dbo.bettrans_N2 b WITH (NOLOCK)
+			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
+		WHERE b.WinlostDate = @WinlostDate
+			AND NOT EXISTS (
+				SELECT 1 FROM dbo.MemberRemoval mr WITH (NOLOCK)
+				WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
+					AND mi.IBCCustId = mr.IBCCustId
+			)			
+		GROUP BY
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency
+	END
+	-- Sunstone (EA)
+	ELSE IF @ProductId = 35
+	BEGIN
+		INSERT INTO #tempData
+		(
+			AffId,
+			IBCCustId,
+			Currency,
+			Turnover,
+			Winloss
+		)
+		SELECT
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency,
+			SUM(b.valid_turnover/CASE WHEN mi.Currency IN (15,22,33,34,51) THEN 1000.0 ELSE 1.0 END) AS Turnover, -- IDR, VND amount divide by 1000
+			SUM((b.hold)/CASE WHEN mi.Currency IN (15,22,33,34,51) THEN 1000.0 ELSE 1.0 END) AS Winloss -- IDR, VND amount divide by 1000
+		FROM dbo.bettrans_EA b WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
 		WHERE b.WinlostDate = @WinlostDate
 			AND NOT EXISTS (
