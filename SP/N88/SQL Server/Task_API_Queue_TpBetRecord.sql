@@ -190,6 +190,16 @@ BEGIN
 				) t
 				WHERE RN > 1
 
+				-- Update settledTime for 9W
+				IF EXISTS (SELECT 1 FROM #tmpTpBetRecord WHERE TpId = 31 AND GameType = 51)
+				BEGIN
+					UPDATE t
+					SET t.SettledTime = DATEADD(HOUR, -8, w.settledDate)
+					FROM #tmpTpBetRecord t
+						INNER JOIN dbo.TpWager9W w WITH (NOLOCK) ON t.TransId = w.betId
+					WHERE t.TpId = 31 AND t.GameType = 51 AND t.SettledTime <> DATEADD(HOUR, -8, w.settledDate)
+				END
+
 				-- Update data for TpBetRecord
 				IF EXISTS (SELECT 1 FROM #tmpTpBetRecord WHERE IsBk = 0)
 				BEGIN
