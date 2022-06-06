@@ -17,10 +17,11 @@ BEGIN;
 
 	CREATE TABLE #tmp_TransId (TransId BIGINT, Username NVARCHAR(100), site VARCHAR(100), Product VARCHAR(100), stake MONEY, MaxBet Money, game VARCHAR(100))
 
-	DECLARE @procName NVARCHAR(50), @IsTest BIT =  0, @IsSendTestCurrencyOnly BIT = 0
+	DECLARE @procName NVARCHAR(50), @IsTest BIT =  0, @IsSendTestCurrencyOnly BIT = 0,@serverName NVARCHAR(50)
 	SET @procName = OBJECT_NAME(@@procid)
+	SET @serverName = @@SERVERNAME
 	
-	IF @procName LIKE '%_xtest' OR @procName LIKE '%_xpre' OR @procName LIKE '%_UAT_'
+	IF @procName LIKE '%_xtest' OR @procName LIKE '%_xpre' OR @procName LIKE '%_UAT_' OR @serverName LIKE 'DEV%' OR @serverName LIKE 'TEST%' OR @serverName LIKE 'SIT%'
 	BEGIN
 		SET @IsTest = 1
 	END
@@ -47,51 +48,67 @@ BEGIN;
 	SELECT	@subject	= N'Violate Max Bet Limit Setting'
 		,	@email_body = (
 				SELECT	
-						[@style]		= N'width: 100%;'
-					,	[h1/@align]		= N'center'
-					,	[h1]			= N'Violate Max Bet Limit Setting - ' + CONVERT(NVARCHAR, GETDATE(), 120)
-					,	[div/@align]	= N'center'
-					,	[div/@style]	= N'\
-background-color:' + s.color + N';\
-width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30px;\
-'
-					,	[br]			= N''
-					,	(
-						SELECT	[@border]		= 1
-							,	[@cellpadding]	= 5
-							,	[@width]		= N'95%'
-							,	[@style]		= N'margin:0 auto;white-space:nowrap;border-collapse:collapse;'
-							,	(
-								SELECT	NULL, [th]	= N'#'
-									,	NULL, [th]	= N'Username'
-									,	NULL, [th]	= N'Site'
-									,	NULL, [th]	= N'Product'
-									,	NULL, [th]	= N'Game'
-									,	NULL, [th]	= N'Setting value'
-									,	NULL, [th]	= N'Violate Stake'
-									,	NULL, [th]	= N'RefNo'
-								FOR XML PATH ('tr')
-								,	TYPE
-								)
-							,	(
-								SELECT	NULL, [td]	= '1'
-									,	NULL, [td]	= t.Username
-									,	NULL, [td]	= t.site
-									,	NULL, [td]	= t.Product
-									,	NULL, [td]	= t.game
-									,	NULL, [td]	= CONVERT(VARCHAR(50), t.MaxBet)
-									,	NULL, [td]	= CONVERT(VARCHAR(50), t.stake)
-									,	NULL, [td]	= CONVERT(VARCHAR(50), t.TransId)
-								FROM			#tmp_TransId AS t 
-								FOR XML PATH ('tr')
-								,	TYPE
-								)
-						FOR XML PATH ('table')
+					[@style]		= N'width: 100%;'
+					, (
+						SELECT	NULL, [p]	= N'Dear users,'
+							,	NULL, [p]	= N'This is the auto-mail notification about the Violate Max Bet Limit Setting cases.'
+							,	NULL, [p]	= N'Kindly check the following table for more details.'
+							,	NULL, [p]	= N'Thanks & Best Regards,'
+							,	NULL, [p]	= N'Starix IT'
+						FOR XML PATH ('div')
 						,	TYPE
+					)
+					,	(
+							SELECT	[@border]		= 1
+								,	[@cellpadding]	= 5
+								,	[@width]		= N'85%'
+								,	[@style]		= N'margin:0 auto;white-space:nowrap;border-collapse:collapse;'
+								,	(
+									SELECT	[@style] = N'background-color:#FFFF00'
+										, [th/@colspan]	= N'8'
+										, [th]	= N'Violate Max Bet Limit Setting - ' + CONVERT(NVARCHAR, GETDATE(), 106)
+									FOR XML PATH ('tr')
+									,	TYPE
+									)
+								,	(
+									SELECT	[@style] = N'background-color:#B4EEB4'
+										,	NULL, [th]	= N'#'
+										,	NULL, [th]	= N'Username'
+										,	NULL, [th]	= N'Site'
+										,	NULL, [th]	= N'Product'
+										,	NULL, [th]	= N'Game'
+										,	NULL, [th]	= N'Setting value'
+										,	NULL, [th]	= N'Violate Stake'
+										,	NULL, [th]	= N'RefNo'
+									FOR XML PATH ('tr')
+									,	TYPE
+									)
+								,	(
+									SELECT	NULL, [td]	= ROW_NUMBER() OVER(ORDER BY t.Username)
+										,	NULL, [td]	= t.Username
+										,	NULL, [td]	= t.site
+										,	NULL, [td]	= t.Product
+										,	NULL, [td]	= t.game
+										,	NULL, [td]	= CONVERT(VARCHAR(50), t.MaxBet)
+										,	NULL, [td]	= CONVERT(VARCHAR(50), t.stake)
+										,	NULL, [td]	= CONVERT(VARCHAR(50), t.TransId)
+									FROM	#tmp_TransId AS t 
+									FOR XML PATH ('tr')
+									,	TYPE
+									)
+							FOR XML PATH ('table')
+							,	TYPE
 						)
-				FROM	(
-					SELECT	[color]		= N'red'
-				) AS s
+					, (
+						SELECT	[@style] = N'font-style:italic;'
+							,	NULL, [p]	= N'----------------------------------------------------------------------'
+							,	NULL, [p]	= N'This email is confidential. '
+							,	NULL, [p]	= N'If you are not the addressee you may not copy, forward, disclose or use any part of it. '
+							,	NULL, [p]	= N'If you have received this message in error, please delete it from your system. '
+							,	NULL, [p]	= N'This is an auto-generated email, please do not reply.'
+						FOR XML PATH ('div')
+						,	TYPE
+					)
 				FOR XML PATH ('body')
 				,	ROOT ('html')
 			);
