@@ -248,7 +248,7 @@ BEGIN
 						AND dcslm.BetType=cl.BetTypeRef
 				LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
 			WHERE SettingType=7 AND 
-				(cslm.CustID IS NOT NULL OR dcslm.CustID IS NOT NULL)
+				(cslm.CustID IS NOT NULL OR dcslm.CustID IS NOT NULL OR sma.transid IS NOT NULL)
 		),
 		CustList_Global2 AS (--get isChangedGlobal, MaxStake_old
 			SELECT clg.custid, clg.transid
@@ -367,26 +367,24 @@ BEGIN
 						AND dcslm.BetType=cl.BetTypeRef
 				LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
 			WHERE SettingType=8 AND 
-				(cslm.CustID IS NOT NULL OR dcslm.CustID IS NOT NULL)
+				(cslm.CustID IS NOT NULL OR dcslm.CustID IS NOT NULL OR sma.transid IS NOT NULL)
 		),
 		CustList_Global2 AS (--get isChangedGlobal, MaxStake_old
 			SELECT clg.custid, clg.transid
 				, CASE	WHEN cre.StakeLevelID IS NOT NULL THEN cre.UpdateTime
 						WHEN dep.StakeLevelID IS NOT NULL THEN dep.UpdateTime
 					END UpdateTime_Global
-				, CASE WHEN cre.StakeLevelID IS NOT NULL OR dep.StakeLevelID IS NOT NULL 
-						THEN 1 ELSE 0 END AS isChangedGlobal
 				, CASE	WHEN cre.StakeLevelID IS NOT NULL	 THEN cre.MaxGameStake
 						WHEN dep.StakeLevelID IS NOT NULL	 THEN dep.MaxGameStake
 					END AS MaxStake_old
 			FROM CustList_Global1 clg
 				INNER JOIN #tmpCustList cl ON cl.transid=clg.transid
 				--Credit
-				OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxGameStake, UpdateTime, isChangedGlobal
+				OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxGameStake, UpdateTime
 							 FROM
 								(SELECT TOP (1) StakeLevelID
 											, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
-											, UpdateTime, 1 AS isChangedGlobal
+											, UpdateTime
 								 FROM StakeLevelGroupDetail_History stg WITH (NOLOCK) 
 								 WHERE stg.StakeLevelID = clg.StakeLevelList
 									AND stg.GameTypeID=cl.BetType
@@ -394,7 +392,7 @@ BEGIN
 								UNION ALL
 								SELECT TOP (1) StakeLevelID
 											, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
-											, GETDATE() AS UpdateTime, 0 AS isChangedGlobal
+											, GETDATE() AS UpdateTime
 								 FROM StakeLevelGroupDetail stgc WITH (NOLOCK) 
 								 WHERE stgc.StakeLevelID = clg.StakeLevelList
 									AND stgc.GameTypeID=cl.BetType
@@ -402,11 +400,11 @@ BEGIN
 								ORDER BY UpdateTime
 							) cre
 				--Deposit
-				OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxGameStake, UpdateTime, isChangedGlobal
+				OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxGameStake, UpdateTime
 							 FROM
 								(SELECT TOP (1) StakeLevelID
 											, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
-											, UpdateTime, 1 AS isChangedGlobal
+											, UpdateTime
 								 FROM Dep_StakeLevelGroupDetail_History dstg WITH (NOLOCK) 
 								 WHERE dstg.StakeLevelID = clg.StakeLevelList
 									AND dstg.GameTypeID=cl.BetType
@@ -414,7 +412,7 @@ BEGIN
 								UNION ALL
 								SELECT TOP (1) StakeLevelID
 											, CASE WHEN MaxGameStake IS NOT NULL THEN MaxGameStake ELSE CAST(MaxLabel AS MONEY) END MaxGameStake
-											, GETDATE() AS UpdateTime, 0 AS isChangedGlobal
+											, GETDATE() AS UpdateTime
 								 FROM Dep_StakeLevelGroupDetail dstgc WITH (NOLOCK) 
 								 WHERE dstgc.StakeLevelID = clg.StakeLevelList
 									AND dstgc.GameTypeID=cl.BetType
@@ -423,12 +421,7 @@ BEGIN
 							) dep
 		)
 		INSERT INTO #returnTbl (custid, transid, SportType, BetType, MaxBet)
-		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
-			, CASE WHEN sma.UpdateTime_SMA IS NOT NULL AND gl.isChangedGlobal=0			THEN sma.MaxBet
-				   WHEN sma.UpdateTime_SMA IS NULL AND isChangedGlobal=1				THEN gl.MaxStake_Old
-				   WHEN sma.UpdateTime_SMA<gl.UpdateTime_Global	AND isChangedGlobal=1	THEN sma.MaxBet
-																						ELSE gl.MaxStake_Old
-			END MaxBet
+		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, gl.MaxStake_Old
 		FROM #tmpCustList cl
 			LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
 			LEFT JOIN CustList_Global2 gl ON gl.transid=cl.transid 
