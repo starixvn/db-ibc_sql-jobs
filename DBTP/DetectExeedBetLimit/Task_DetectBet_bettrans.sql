@@ -38,6 +38,7 @@ BEGIN
 		INNER JOIN dbo.match m WITH (NOLOCK) ON m.matchid = b.matchid
 	WHERE b.transid > @maxTransId_setting
 		AND b.statusID NOT IN (101, 102)
+	ORDER BY  b.transid ASC 
 
 	SET @maxTransId = (SELECT MAX(TransId) FROM #tmp_TransId)
 

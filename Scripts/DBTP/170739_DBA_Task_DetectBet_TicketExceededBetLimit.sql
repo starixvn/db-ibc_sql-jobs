@@ -36,7 +36,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Step: De
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.NAP_Admin_Settlement_Job  @Jobname = ''bodb02 : Task Max Payout Per Match''
+		@command=N'EXEC dbo.Task_DBTP_Control_Job  @Jobname = ''DBA: Task_DetectBet_TicketExceededBetLimit''
 						,@Waitfordelay = ''00:00:00.280''', 
 		@database_name=N'bodb02', 
 		@flags=0

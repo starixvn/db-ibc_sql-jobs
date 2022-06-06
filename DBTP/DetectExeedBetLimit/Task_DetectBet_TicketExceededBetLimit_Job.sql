@@ -45,21 +45,33 @@ BEGIN
 	EXEC dbo.Task_DetectBet_SendMail
 
 	--6. Update Setting
-	UPDATE c SET c.ConfigValue = @maxTransId_bettrans
-	FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
-	WHERE c.ConfigName = 'bettrans'
+	IF @maxTransId_bettrans IS NOT NULL
+	BEGIN
+		UPDATE c SET c.ConfigValue = @maxTransId_bettrans
+		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
+		WHERE c.ConfigName = 'bettrans'
+	END
 
-	UPDATE c SET c.ConfigValue = @maxTransId_bettransLC
-	FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
-	WHERE c.ConfigName = 'bettransLC'
+	IF @maxTransId_bettransLC IS NOT NULL
+	BEGIN
+		UPDATE c SET c.ConfigValue = @maxTransId_bettransLC
+		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
+		WHERE c.ConfigName = 'bettransLC'
+    END
 
-	UPDATE c SET c.ConfigValue = @maxTransId_bettransRnG
-	FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
-	WHERE c.ConfigName = 'bettransRnG'
+	IF @maxTransId_bettransRnG IS NOT NULL
+	BEGIN
+		UPDATE c SET c.ConfigValue = @maxTransId_bettransRnG
+		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
+		WHERE c.ConfigName = 'bettransRnG'
+	END
 
-	UPDATE c SET c.ConfigValue = @maxTransId_translog
-	FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
-	WHERE c.ConfigName = 'translog'
+	IF @maxTransId_translog IS NOT NULL
+	BEGIN
+		UPDATE c SET c.ConfigValue = @maxTransId_translog
+		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
+		WHERE c.ConfigName = 'translog'
+	END
 
 END
 

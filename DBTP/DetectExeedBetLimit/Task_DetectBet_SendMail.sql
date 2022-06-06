@@ -98,7 +98,7 @@ width:80%;color:white;text-align:center;margin:0 auto;padding:20px;font-size:30p
 
 	EXECUTE	msdb.dbo.sp_send_dbmail
 				@profile_name			= DEFAULT
-			,	@recipients				= 'max.tran@starixvn.com'
+			,	@recipients				= 'max.tran@starixvn.com;benji.duong@starixvn.com'
 			,	@copy_recipients		= ''
 			,	@blind_copy_recipients	= ''
 			,	@subject				= @subject

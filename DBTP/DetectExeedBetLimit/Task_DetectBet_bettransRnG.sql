@@ -37,6 +37,7 @@ BEGIN
 	FROM dbo.bettransRnG b WITH (NOLOCK)
 	WHERE b.transid > @maxTransId_setting
 		AND b.statusID NOT IN (101, 102)
+	ORDER BY  b.transid ASC
 
 	SET @maxTransId = (SELECT MAX(TransId) FROM #tmp_TransId)
 
