@@ -21,6 +21,7 @@ AS
 		- 20211028@Percy: Add AdjustmentInfo, DrawLog, LogAdminAdjustWallet [RedmineID: #161048]
 		- 20211118@Percy: Add LogAdminAdjustWallet [RedmineID: #161048]
 		- 20220412@Percy: Add ReferralMLog [RedmineID: #171245]
+		- 20220606@Percy: Fix Re-pull data every 6 hours [RedmineID: #172501]
 */
 
 BEGIN
@@ -35,7 +36,7 @@ BEGIN
 	BEGIN
 		SELECT @RepullDate = CONVERT(DATETIME, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'RepullData_Date'
 
-		IF DATEDIFF(HOUR, @RepullDate, GETDATE()) < 6
+		IF DATEDIFF(HOUR, @RepullDate, GETDATE()) >= 6
 			RETURN
 	END
 
