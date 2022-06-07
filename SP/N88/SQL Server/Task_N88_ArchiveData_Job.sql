@@ -9,6 +9,7 @@ AS
 
 	Revisions:
 		- 20220222@Percy: Initialize SP [RedmineID: #167823]
+		- 20220601@Percy: Add step send mail if data is changed [RedmineID: #173790]
 */
 
 BEGIN
@@ -76,5 +77,8 @@ BEGIN
 
 		SET @WinlostDate = DATEADD(DAY, 1, @WinlostDate)
 	END
+
+	-- Step 5: Send mail if data is changed
+	EXEC dbo.Task_N88_Archive_SendMail
 END
 GO
