@@ -29,7 +29,7 @@ BEGIN
 		INNER JOIN dbo.bettype bt WITH (NOLOCK) ON bt.typeid = t.BetType
 		INNER JOIN dbo.Sports s with (NOLOCK) ON s.SportType = t.SportType
 		INNER JOIN dbo.Customer c WITH (NOLOCK) ON c.custid = t.CustID
-	WHERE ISNULL(t.IsSendLettalk, 0) = 0
+	WHERE ISNULL(t.IsSendLetstalk, 0) = 0
 		AND 1 = CASE WHEN @IsTest = 0 AND c.currency NOT IN (20, 72) THEN 1
 					WHEN @IsTest = 1 AND @IsSendTestCurrencyOnly = 1 AND c.currency IN (20, 72) THEN 1
 					WHEN @IsTest = 1 AND @IsSendTestCurrencyOnly = 0 THEN 1 

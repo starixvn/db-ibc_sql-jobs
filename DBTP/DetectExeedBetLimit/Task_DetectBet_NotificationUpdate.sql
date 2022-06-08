@@ -15,7 +15,11 @@ AS
 	Revisions: 
 		- 20220525@Max: Create SP [Redmine: #170739]
 	
-	Param's explanation:		
+	Param's explanation:
+	- @CustList:
+		<root>
+			<r custid="123" transid="789654" />
+		</root>
 */
 BEGIN
 	SET NOCOUNT ON 
@@ -50,7 +54,7 @@ BEGIN
 
 		IF @@ROWCOUNT = 0 BREAK
 
-		UPDATE t SET t.IsSendLettalk = 1, t.IsSendLettalkTest = 1
+		UPDATE t SET t.IsSendLetstalk = 1, t.IsSendLetstalkTest = 1
 		FROM dbo.CustMaxBet_Invalid t WITH (ROWLOCK, UPDLOCK)
 			INNER JOIN @CustTransId_Batch tmp ON tmp.transid = t.TransID and tmp.CustId = t.CustID
 	END
