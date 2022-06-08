@@ -21,7 +21,8 @@ AS
 		- 20210812@Percy: Exclude Oddsspread Adjustment Dummy Account [RedmineID: #153195]
 		- 20211215@Percy: Exclude Sports Lottery [RedmineID: #153195]
 		- 20220121@Percy: Exclude more Dummy Accounts [RedmineID: #153195]
-		- 20211215@Percy: Exclude Bitcoin [RedmineID: #153195]
+		- 20220531@Percy: Exclude Bitcoin [RedmineID: #153195]
+		- 20220606@Percy: Check if apt = 1 then charge rate is null or 0 [RedmineID: #153195]
 	
 	Param's Explanation:
 		@RuleId
@@ -56,8 +57,8 @@ BEGIN
 		LEFT JOIN bodb_Licensee.dbo.Product3rd p3rd WITH (NOLOCK) ON p.ProductPrefix = p3rd.ProductPrefix
 
 	-- Get data on bettrans
-	CREATE TABLE #bettrans (LicenseeName VARCHAR(50), Currency INT, Product3rdId INT, TransId BIGINT, WinlostDate SMALLDATETIME, HousePT FLOAT)
-	CREATE CLUSTERED INDEX CIX_bettrans ON #bettrans (Product3rdId, LicenseeName, Currency)
+	CREATE TABLE #__bettrans (LicenseeName VARCHAR(50), Currency INT, Product3rdId INT, TransId BIGINT, WinlostDate SMALLDATETIME, HousePT FLOAT)
+	CREATE CLUSTERED INDEX CIX_bettrans ON #__bettrans (Product3rdId, LicenseeName, Currency)
 
 	CREATE TABLE #tmp_bettrans (recommend INT, bettype INT, winlostdate SMALLDATETIME, transid BIGINT, apositiontaking FLOAT)
 	INSERT INTO #tmp_bettrans (recommend, bettype, winlostdate, transid, apositiontaking)
@@ -74,25 +75,16 @@ BEGIN
 
 	CREATE CLUSTERED INDEX CIX_tmp_bettrans ON #tmp_bettrans (recommend, bettype, winlostdate)
 
-	INSERT INTO #bettrans (LicenseeName, Currency, Product3rdId, TransId, WinlostDate, HousePT)
-	SELECT DISTINCT c.site, c.currency, b.Product3rdId, b.transid, b.winlostdate, CASE WHEN b.Product3rdId = 6 THEN 1.0 - b.apositiontaking ELSE 0 END
+	INSERT INTO #__bettrans (LicenseeName, Currency, Product3rdId, TransId, WinlostDate)
+	SELECT DISTINCT c.site, c.currency, b.Product3rdId, b.transid, b.winlostdate
 	FROM (
-		SELECT b.recommend, sb.Product3rdId, b.transid, b.winlostdate, b.apositiontaking
+		SELECT b.recommend, sb.Product3rdId, b.transid, b.winlostdate
 			,ROW_NUMBER() OVER(PARTITION BY b.recommend, sb.Product3rdId, b.winlostdate ORDER BY b.transid) AS RN
 		FROM #tmp_bettrans b
 			INNER JOIN #SportBettypeMatrix sb ON b.bettype = sb.Bettype
 	) b
 		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid
 	WHERE b.RN = 1
-
-	-- Keep latest date for RNG Casino
-	DELETE t
-	FROM (
-		SELECT ROW_NUMBER() OVER(PARTITION BY LicenseeName, currency ORDER BY winlostdate DESC) AS RN
-		FROM #bettrans
-		WHERE Product3rdId = 6
-	) t
-	WHERE RN > 1
 
 	-- Get house pt setting
 	CREATE TABLE #Member (LicenseeName VARCHAR(50), Currency INT, CustId INT, recommend INT, IsGroupPT BIT DEFAULT (0)) 
@@ -189,13 +181,6 @@ BEGIN
 		GROUP BY m.LicenseeName, m.Currency
 	END
 
-	-- RnG Casino
-	INSERT INTO #PT (LicenseeName, Currency, Product3rdId, HousePT)
-	SELECT LicenseeName, Currency, 6, MAX(HousePT) AS HousePT
-	FROM #bettrans
-	WHERE Product3rdId = 6
-	GROUP BY LicenseeName, Currency
-
 	-- Others
 	BEGIN
 		CREATE TABLE #ProductSetting (ProductId INT, Product3rdId INT, SportType SMALLINT, BetType SMALLINT, IsLive BIT)
@@ -218,7 +203,7 @@ BEGIN
 			INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON ps.ProductId = p.ProductId
 			INNER JOIN bodb_Licensee.dbo.Product3rd p3 WITH (NOLOCK) ON p.ProductPrefix = p3.ProductPrefix
 
-		DELETE #ProductSetting WHERE Product3rdId IN (0, 2, 6, 8)
+		DELETE #ProductSetting WHERE Product3rdId IN (0, 2, 8)
 
 		-- member
 		INSERT INTO #PT (LicenseeName, Currency, Product3rdId, HousePT)
@@ -321,7 +306,7 @@ BEGIN
 		)
 		AND c.Currency IS NOT NULL
 
-	DELETE #bettrans WHERE LicenseeName IN ('Spondemo', 'Athena000')
+	DELETE #__bettrans WHERE LicenseeName IN ('Spondemo', 'Athena000')
 	DELETE #Licensees WHERE LicenseeName IN ('Spondemo', 'Athena000')
 	DELETE #PT WHERE LicenseeName IN ('Spondemo', 'Athena000')
 
@@ -330,17 +315,22 @@ BEGIN
 	
 	IF @RuleId IN (1, 2)
 	BEGIN
+		UPDATE b
+		SET b.HousePT = ISNULL(p.HousePT, 0)
+		FROM #__bettrans b
+			LEFT JOIN #PT p ON b.LicenseeName = p.LicenseeName AND b.Currency = p.Currency AND b.Product3rdId = p.Product3rdId
+		
 		INSERT INTO @Result (RuleId, LicenseeName, TransId, Product3rdId, Currency)
 		SELECT
 			CASE
 				WHEN l.LicenseeName IS NULL OR l.LaunchDate IS NULL OR l.LaunchDate > b.WinlostDate THEN 1
-				WHEN c.PartyId IS NULL OR b.WinlostDate NOT BETWEEN c.FromDate AND c.ToDate THEN 2
+				WHEN (c.PartyId IS NULL AND b.HousePT <> 0) OR b.WinlostDate NOT BETWEEN c.FromDate AND c.ToDate THEN 2
 				ELSE 0 END AS RuleId
 			,ISNULL(ls.LicenseeName, b.LicenseeName)
 			,CONVERT(VARCHAR(20), b.TransId)
 			,b.Product3rdId
 			,b.Currency
-		FROM #bettrans b
+		FROM #__bettrans b
 			LEFT JOIN #Licensees l ON b.LicenseeName = l.LicenseeName
 			LEFT JOIN bodb_Licensee.dbo.OAS_Party p WITH (NOLOCK) ON l.PartyId = p.PartyId AND l.IsDeposit = 0
 			LEFT JOIN bodb_Licensee.dbo.Licensees ls WITH (NOLOCK) ON p.OldRefId = ls.LicenseeId
@@ -351,7 +341,7 @@ BEGIN
 				GROUP BY PartyId, Product3rdId
 			) c ON l.PartyId = c.PartyId AND b.Product3rdId = c.Product3rdId
 		WHERE (l.LicenseeName IS NULL OR l.LaunchDate IS NULL OR l.LaunchDate > b.WinlostDate) -- Rule 1
-			OR (c.PartyId IS NULL OR b.WinlostDate NOT BETWEEN c.FromDate AND c.ToDate) -- Rule 2
+			OR ((c.PartyId IS NULL AND b.HousePT <> 0) OR b.WinlostDate NOT BETWEEN c.FromDate AND c.ToDate) -- Rule 2
 
 		DELETE r
 		FROM (
@@ -418,7 +408,7 @@ BEGIN
 							WHEN 3 THEN ': NAP PT is different from LA product charge rate'
 							ELSE '' END
 	
-	DROP TABLE #bettrans
+	DROP TABLE #__bettrans
 	DROP TABLE #ChargeRate
 	DROP TABLE #Licensees
 	DROP TABLE #Member
