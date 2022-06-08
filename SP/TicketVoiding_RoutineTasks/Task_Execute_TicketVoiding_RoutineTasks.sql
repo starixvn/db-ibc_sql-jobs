@@ -20,8 +20,6 @@ AS
 		- 20200106@Sol: Recover/Void - add missing sub-steps to step 6 - [RedmineID: #148325]
 		- 20220422@Sol: LAP - Enhance database jobs - [RedmineID: #171747]
 		- 20220805@Sol: LAP - Scale out DBTrans phase 1 - Check siteDB or central to run specific code - [RedmineID: #175297]
-		- 20230522@Lewis: Database - Abnormal Account - call sum Sps on other servers - [RedmineID: #188463]
-		- 20230612@Evan: remove code related to Saba Promotion report - [RedmineID: #189234]
 */
 BEGIN
 	DECLARE @GenerateData TINYINT,
@@ -80,14 +78,7 @@ BEGIN
 			EXEC DBRPT.bodb_report.dbo.Task_rptStatement_14
 					@WinlostDate = @WinlostDate,
 					@CustIds = @CustIds
-
-			IF @@SERVERNAME = 'DBTRANS'
-			BEGIN
-				EXEC DB062.bodb_report.dbo.Task_rptStatement_14
-						@WinlostDate = @WinlostDate,
-						@CustIds = @CustIds
-			END 
-			
+		
 		END
 		IF @stepNo = 5
 		BEGIN
@@ -103,175 +94,29 @@ BEGIN
 		END
 		IF @stepNo = 6
 		BEGIN
-				BEGIN TRY
-					SET @errmsg = ''
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_PrepareStaging
-						   @datefrom = @WinlostDate,
-						   @dateto = @WinlostDate, 
-						   @ErrorMsg = @errmsg OUTPUT  
-					IF @errmsg <> ''
-					BEGIN
-						SET @errmsg = @errmsg  
-						RAISERROR(@errmsg,16,1)
-					END
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.01' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
 
-				BEGIN TRY
-
-					SET @GenerateData = 0
-
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_rptBetting_CheckData 
-						@WinlostDate	 = @WinlostDate,
-						@HasDataMismatch = @GenerateData OUTPUT,
-						@BetTypes		 = @BetTypes OUTPUT
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.02' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				IF (@GenerateData <> 0)
-				BEGIN 
-					BEGIN TRY
-						EXEC DBLIC.bodb_LicenseeReport.dbo.GEN_rptBetting @date = @WinlostDate, @date2 = @WinlostDate
-					END TRY
-					BEGIN CATCH
-						SET @errmsg = 'step 6.03' + '--' + ERROR_MESSAGE()			
-						RAISERROR(@errmsg,16,1)
-					END CATCH
-
-					BEGIN TRY
-						EXEC DBLIC.bodb_LicenseeReport.dbo.GEN_rptBettingByProduct
-							@date = @winlostdate,
-							@date2 = @winlostdate,
-							@DataSource = 'rpt_Betting'
-					END TRY
-					BEGIN CATCH
-						SET @errmsg = 'step 6.04' + '--' + ERROR_MESSAGE()			
-						RAISERROR(@errmsg,16,1)
-					END CATCH
-				END
-
-				BEGIN TRY
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_PostStaging
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.05' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-
-					SET @GenerateData = 0
-
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_rptBettingBySport_CheckData 
-						@WinlostDate = @WinlostDate,
-						@HasDataMismatch = @GenerateData OUTPUT,
-						@IsParlay = @result OUTPUT
-
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.06' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				IF @GenerateData <> 0
+			BEGIN TRY
+				SET @errmsg = ''
+				EXEC DBLIC.bodb_LicenseeReport.dbo.Task_PrepareStaging
+					   @datefrom = @WinlostDate,
+					   @dateto = @WinlostDate, 
+					   @ErrorMsg = @errmsg OUTPUT  
+				IF @errmsg <> ''
 				BEGIN
-					BEGIN TRY
-						EXEC DBLIC.bodb_LicenseeReport.dbo.GEN_rptBettingBySport14 @Date = @WinlostDate
-					END TRY
-					BEGIN CATCH
-						SET @errmsg = 'step 6.07' + '--' + ERROR_MESSAGE()			
+					SET @errmsg = @errmsg  
 					RAISERROR(@errmsg,16,1)
-					END CATCH
 				END
+			END TRY
+			BEGIN CATCH
+				SET @errmsg = 'step 6.01' + '--' + ERROR_MESSAGE()			
+				RAISERROR(@errmsg,16,1)
+			END CATCH
 
-				BEGIN TRY
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_DailyRptLicWinloss2 @winlostdate = @WinlostDate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.08' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_rptCustomerTurnOver_Bettrans14 @Date = @WinlostDate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.09' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_rptWinlostbyleague_Bettrans14 @Date = @WinlostDate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.10' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_rptCustomerMatch_Bettrans14 @Date = @WinlostDate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.11' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DBLIC.bodb_LicenseeReport.dbo.GEN_rptBetting_Parlay14
-						   @datefrom = @WinlostDate,
-						   @dateto = @WinlostDate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.12' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_DailyRptLicWinlossGMT_Bettrans14 @FromDate = @winlostdate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.13' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14 @Fromdate= @winlostdate, @Todate= @winlostdate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.14' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-			-- clone step 6 --
-			IF @@SERVERNAME = 'DBTRANS'
-			BEGIN
-				BEGIN TRY
-					SET @errmsg = ''
-					EXEC DB053.bodb_LicenseeReport.dbo.Task_PrepareStaging
-						   @datefrom = @WinlostDate,
-						   @dateto = @WinlostDate, 
-						   @ErrorMsg = @errmsg OUTPUT  
-					IF @errmsg <> ''
-					BEGIN
-						SET @errmsg = @errmsg  
-						RAISERROR(@errmsg,16,1)
-					END
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.01' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
+			BEGIN TRY			 
 
 				SET @GenerateData = 0
 
-				EXEC DB053.bodb_LicenseeReport.dbo.Task_rptBetting_CheckData 
+				EXEC DBLIC.bodb_LicenseeReport.dbo.Task_rptBetting_CheckData 
 					@WinlostDate	 = @WinlostDate,
 					@HasDataMismatch = @GenerateData OUTPUT,
 					@BetTypes		 = @BetTypes OUTPUT
@@ -281,19 +126,19 @@ BEGIN
 				RAISERROR(@errmsg,16,1)
 			END CATCH
 
-				IF (@GenerateData <> 0)
-				BEGIN 
+			IF (@GenerateData <> 0)
+			BEGIN 
 
-					BEGIN TRY
-						EXEC DB053.bodb_LicenseeReport.dbo.GEN_rptBetting @date = @WinlostDate, @date2 = @WinlostDate
-					END TRY
-					BEGIN CATCH
-						SET @errmsg = 'step 6.03' + '--' + ERROR_MESSAGE()			
-						RAISERROR(@errmsg,16,1)
-					END CATCH
+				BEGIN TRY
+					EXEC DBLIC.bodb_LicenseeReport.dbo.GEN_rptBetting @date = @WinlostDate, @date2 = @WinlostDate
+				END TRY
+				BEGIN CATCH
+					SET @errmsg = 'step 6.03' + '--' + ERROR_MESSAGE()			
+					RAISERROR(@errmsg,16,1)
+				END CATCH
 
-					BEGIN TRY
-					EXEC DB053.bodb_LicenseeReport.dbo.GEN_rptBettingByProduct
+				BEGIN TRY
+					EXEC DBLIC.bodb_LicenseeReport.dbo.GEN_rptBettingByProduct
 						@date = @winlostdate,
 						@date2 = @winlostdate,
 						@DataSource = 'rpt_Betting'
@@ -303,21 +148,21 @@ BEGIN
 					RAISERROR(@errmsg,16,1)
 				END CATCH
 
-				END
+			END
 
-				BEGIN TRY
-					EXEC DB053.bodb_LicenseeReport.dbo.Task_PostStaging
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.05' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
+			BEGIN TRY
+				EXEC DBLIC.bodb_LicenseeReport.dbo.Task_PostStaging
+			END TRY
+			BEGIN CATCH
+				SET @errmsg = 'step 6.05' + '--' + ERROR_MESSAGE()			
+				RAISERROR(@errmsg,16,1)
+			END CATCH
 
-				BEGIN TRY
+			BEGIN TRY
 
 				SET @GenerateData = 0
 
-				EXEC DB053.bodb_LicenseeReport.dbo.Task_rptBettingBySport_CheckData 
+				EXEC DBLIC.bodb_LicenseeReport.dbo.Task_rptBettingBySport_CheckData 
 					@WinlostDate = @WinlostDate,
 					@HasDataMismatch = @GenerateData OUTPUT,
 					@IsParlay = @result OUTPUT
@@ -328,82 +173,86 @@ BEGIN
 				RAISERROR(@errmsg,16,1)
 			END CATCH
 
-				IF @GenerateData <> 0
-				BEGIN
+			IF @GenerateData <> 0
+			BEGIN
 
-					BEGIN TRY
-					EXEC DB053.bodb_LicenseeReport.dbo.GEN_rptBettingBySport14 @Date = @WinlostDate
+				BEGIN TRY
+					EXEC DBLIC.bodb_LicenseeReport.dbo.GEN_rptBettingBySport14 @Date = @WinlostDate
 				END TRY
 				BEGIN CATCH
 					SET @errmsg = 'step 6.07' + '--' + ERROR_MESSAGE()			
 				RAISERROR(@errmsg,16,1)
 				END CATCH
 
-				END
-
-				BEGIN TRY
-					EXEC DB053.bodb_LicenseeReport.dbo.Task_DailyRptLicWinloss2 @winlostdate = @WinlostDate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.08' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DB053.bodb_LicenseeReport.dbo.Task_rptCustomerTurnOver_Bettrans14 @Date = @WinlostDate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.09' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DB053.bodb_LicenseeReport.dbo.Task_rptWinlostbyleague_Bettrans14 @Date = @WinlostDate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.10' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DB053.bodb_LicenseeReport.dbo.Task_rptCustomerMatch_Bettrans14 @Date = @WinlostDate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.11' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DB053.bodb_LicenseeReport.dbo.GEN_rptBetting_Parlay14
-						   @datefrom = @WinlostDate,
-						   @dateto = @WinlostDate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.12' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DB053.bodb_LicenseeReport.dbo.Task_DailyRptLicWinlossGMT_Bettrans14 @FromDate = @winlostdate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.13' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
-				BEGIN TRY
-					EXEC DB053.bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14 @Fromdate= @winlostdate, @Todate= @winlostdate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.14' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
-
 			END
-		END
-		
--- end Clone step 6
 
+			BEGIN TRY
+				EXEC DBLIC.bodb_LicenseeReport.dbo.Task_DailyRptLicWinloss2 @winlostdate = @WinlostDate
+			END TRY
+			BEGIN CATCH
+				SET @errmsg = 'step 6.08' + '--' + ERROR_MESSAGE()			
+				RAISERROR(@errmsg,16,1)
+			END CATCH
+
+			BEGIN TRY
+				EXEC DBLIC.bodb_LicenseeReport.dbo.Task_rptCustomerTurnOver_Bettrans14 @Date = @WinlostDate
+			END TRY
+			BEGIN CATCH
+				SET @errmsg = 'step 6.09' + '--' + ERROR_MESSAGE()			
+				RAISERROR(@errmsg,16,1)
+			END CATCH
+
+			BEGIN TRY 
+				EXEC DBLIC.bodb_LicenseeReport.dbo.Task_rptWinlostbyleague_Bettrans14 @Date = @WinlostDate
+			END TRY
+			BEGIN CATCH
+				SET @errmsg = 'step 6.10' + '--' + ERROR_MESSAGE()			
+				RAISERROR(@errmsg,16,1)
+			END CATCH
+
+			BEGIN TRY
+				EXEC DBLIC.bodb_LicenseeReport.dbo.Task_rptCustomerMatch_Bettrans14 @Date = @WinlostDate
+			END TRY
+			BEGIN CATCH
+				SET @errmsg = 'step 6.11' + '--' + ERROR_MESSAGE()			
+				RAISERROR(@errmsg,16,1)
+			END CATCH
+
+			BEGIN TRY
+				EXEC DBLIC.bodb_LicenseeReport.dbo.GEN_rptBetting_Parlay14
+					   @datefrom = @WinlostDate,
+					   @dateto = @WinlostDate
+			END TRY
+			BEGIN CATCH
+				SET @errmsg = 'step 6.12' + '--' + ERROR_MESSAGE()			
+				RAISERROR(@errmsg,16,1)
+			END CATCH
+
+			BEGIN TRY
+				EXEC DBLIC.bodb_LicenseeReport.dbo.Task_DailyRptLicWinlossGMT_Bettrans14 @FromDate = @winlostdate
+			END TRY
+			BEGIN CATCH
+				SET @errmsg = 'step 6.13' + '--' + ERROR_MESSAGE()			
+				RAISERROR(@errmsg,16,1)
+			END CATCH
+
+			BEGIN TRY
+				EXEC DBLIC.bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14 @PromoDate = @winlostdate, @IsCheckDataOnly = 0
+			END TRY
+			BEGIN CATCH
+				SET @errmsg = 'step 6.14' + '--' + ERROR_MESSAGE()			
+				RAISERROR(@errmsg,16,1)
+			END CATCH
+
+			BEGIN TRY
+				EXEC DBLIC.bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14 @Fromdate= @winlostdate, @Todate= @winlostdate
+			END TRY
+			BEGIN CATCH
+				SET @errmsg = 'step 6.15' + '--' + ERROR_MESSAGE()			
+				RAISERROR(@errmsg,16,1)
+			END CATCH
+
+		END
 		IF @stepNo = 7
 		BEGIN
 			EXECUTE DBFS.bodb_FraudSensor.dbo.FS_Task_MatchDailyDataCapture @GenerateFromDate = @winlostdate, @GenerateToDate = @winlostdate
