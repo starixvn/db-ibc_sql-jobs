@@ -69,6 +69,7 @@ AS
 		- 20220322@Percy: Enhance code get data from Transfer table [RedmineID: #170118]
 		- 20220329@Hogan: Macau Games Add new Range bettype[RedmineID: #170607]
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
+		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -331,6 +332,7 @@ BEGIN
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 				WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
+				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
@@ -433,6 +435,7 @@ BEGIN
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 				WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
+				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				ELSE 0
 			END--SportType
 		OPTION (RECOMPILE, MAXDOP 8)
