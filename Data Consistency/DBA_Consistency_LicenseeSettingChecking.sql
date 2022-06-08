@@ -21,6 +21,7 @@ AS
 		- 20210812@Percy: Exclude Oddsspread Adjustment Dummy Account [RedmineID: #153195]
 		- 20211215@Percy: Exclude Sports Lottery [RedmineID: #153195]
 		- 20220121@Percy: Exclude more Dummy Accounts [RedmineID: #153195]
+		- 20211215@Percy: Exclude Bitcoin [RedmineID: #153195]
 	
 	Param's Explanation:
 		@RuleId
@@ -45,7 +46,7 @@ BEGIN
 	-- Get Product - Bettype
 	CREATE TABLE #SportBettypeMatrix (ProductId INT, Product3rdId INT, Bettype SMALLINT)
 	INSERT INTO #SportBettypeMatrix (ProductId, Bettype)
-	SELECT DISTINCT ProductId, Bettype FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK) WHERE ProductId NOT IN (37, 63)
+	SELECT DISTINCT ProductId, Bettype FROM bodb02.dbo.SportBettypeMatrix WITH (NOLOCK) WHERE ProductId NOT IN (37, 63, 69) -- SPR, SLT, BTC
 		AND BetType NOT IN (911, 912, 913, 914, 999, 1700, 1800, 8000, 1906, 1698, 1699, 4297, 4298, 4299, 4300, 18000)
 
 	UPDATE s
