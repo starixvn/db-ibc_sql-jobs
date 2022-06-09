@@ -36,7 +36,8 @@ BEGIN
 	SELECT TOP(@batchCount) b.translogid, b.custid, b.Username, b.productID, b.gameID, b.stake, b.srecommend, b.recommend, 0, b.transdate
 	FROM dbo.translog b WITH (NOLOCK)
 	WHERE b.translogid > @maxTransId_setting
-		AND b.statusID NOT IN (101, 102)
+		AND b.statusID NOT IN (101, 102, 103)
+		AND b.productID IN (202,220,245,222,223,231,169)
 	ORDER BY  b.translogid ASC
 
 	SET @maxTransId = (SELECT MAX(TransId) FROM #tmp_TransId)

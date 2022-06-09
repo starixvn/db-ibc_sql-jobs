@@ -35,9 +35,24 @@ BEGIN
 	INSERT INTO #tmp_TransId (TransId, CustId, Username, sporttype, bettype, stake, srecommend, recommend, isLive, transdate)
 	SELECT TOP(@batchCount) b.transid, b.custid, b.Username, m.sporttype, b.bettype, b.stake, b.srecommend, b.recommend, b.liveindicator, b.transdate
 	FROM dbo.bettrans b WITH (NOLOCK)
-		INNER JOIN dbo.match m WITH (NOLOCK) ON m.matchid = b.matchid
+		CROSS APPLY (
+			SELECT m.sporttype
+			FROM dbo.match m WITH (NOLOCK) 
+			WHERE m.matchid = b.matchid
+				AND (
+						m.sporttype BETWEEN 180 AND 186
+						OR m.sporttype BETWEEN 190 AND 197
+						OR m.sporttype IN (213,214,215,217,218,199)
+					)
+
+			UNION ALL
+			SELECT m.sporttype
+			FROM dbo.Match3rd m WITH (NOLOCK) 
+			WHERE m.Match3rdId = b.matchid
+				AND m.SportType = 175 --Bitcoin
+		)m
 	WHERE b.transid > @maxTransId_setting
-		AND b.statusID NOT IN (101, 102)
+		AND b.statusID NOT IN (101, 102, 103)
 	ORDER BY  b.transid ASC 
 
 	SET @maxTransId = (SELECT MAX(TransId) FROM #tmp_TransId)

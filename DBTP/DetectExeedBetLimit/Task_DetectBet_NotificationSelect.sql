@@ -14,17 +14,27 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @procName NVARCHAR(50), @IsTest BIT =  0, @IsSendTestCurrencyOnly BIT = 0
+
+	DECLARE @procName NVARCHAR(50), @IsTest BIT =  0, @IsSendTestCurrencyOnly BIT = 0,@serverName NVARCHAR(50)
 	SET @procName = OBJECT_NAME(@@procid)
+	SET @serverName = @@SERVERNAME
 	
-	IF @procName LIKE '%_xtest' OR @procName LIKE '%_xpre' OR @procName LIKE '%_UAT_'
+	IF @procName LIKE '%_xtest' OR @procName LIKE '%_xpre' OR @procName LIKE '%_UAT_' OR @serverName LIKE 'DEV%' OR @serverName LIKE 'TEST%' OR @serverName LIKE 'SIT%' 
 	BEGIN
 		SET @IsTest = 1
 	END
 
 	SET @IsSendTestCurrencyOnly = (SELECT ISNULL(c.ConfigValue,0) FROM dbo.CustMaxBetSetting_Config c WITH (NOLOCK) WHERE c.ConfigName = 'IsSendTestCurrencyOnly')
 	
-	SELECT c.username, c.site, s.SportName AS Product, bt.typenamee AS Game, t.MaxBet AS SettingValue, t.Stake AS ViolateStake, t.TransID AS RefNo, c.custid, NULL AS Remark
+	SELECT c.username
+		, c.site
+		, s.SportName AS Product
+		, bt.typenamee AS Game
+		, t.MaxBet AS SettingValue
+		, t.Stake AS ViolateStake
+		, t.TransID AS RefNo
+		, c.custid
+		, bt.typedesc AS Remark
 	FROM dbo.CustMaxBet_Invalid t WITH (NOLOCK)
 		INNER JOIN dbo.bettype bt WITH (NOLOCK) ON bt.typeid = t.BetType
 		INNER JOIN dbo.Sports s with (NOLOCK) ON s.SportType = t.SportType
