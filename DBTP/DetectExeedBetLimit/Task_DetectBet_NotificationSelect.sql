@@ -24,7 +24,7 @@ BEGIN
 
 	SET @IsSendTestCurrencyOnly = (SELECT ISNULL(c.ConfigValue,0) FROM dbo.CustMaxBetSetting_Config c WITH (NOLOCK) WHERE c.ConfigName = 'IsSendTestCurrencyOnly')
 	
-	SELECT c.username, c.site, s.SportName AS Product, bt.typenamee AS Game, t.MaxBet AS SettingValue, t.Stake AS ViolateStake, t.TransID AS RefNo
+	SELECT c.username, c.site, s.SportName AS Product, bt.typenamee AS Game, t.MaxBet AS SettingValue, t.Stake AS ViolateStake, t.TransID AS RefNo, c.custid, NULL AS Remark
 	FROM dbo.CustMaxBet_Invalid t WITH (NOLOCK)
 		INNER JOIN dbo.bettype bt WITH (NOLOCK) ON bt.typeid = t.BetType
 		INNER JOIN dbo.Sports s with (NOLOCK) ON s.SportType = t.SportType
