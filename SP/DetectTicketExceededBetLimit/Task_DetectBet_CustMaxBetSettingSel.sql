@@ -117,7 +117,7 @@ BEGIN
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
 	, cl.SettingType=ps.SettingType
 	FROM #tmpCustList cl
-		INNER JOIN dbtxn.bodb02.dbo.Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
+		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
 				ON	ref.Sporttype	= cl.sporttype 
 				AND ref.Bettype		= cl.bettype
 				AND ref.isLicensee	= cl.isLicensee
@@ -133,7 +133,7 @@ BEGIN
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
 	, cl.SettingType=ps.SettingType
 	FROM #tmpCustList cl
-		INNER JOIN dbtxn.bodb02.dbo.Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
+		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
 				ON	ref.Sporttype	= cl.sporttype 
 				AND ref.Bettype		= cl.bettype
 				AND ref.isLicensee	= cl.isLicensee
@@ -143,7 +143,7 @@ BEGIN
 				AND psd.BetType=ref.BetTypeRefBetSetting
 		INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) 
 				ON ps.ProductSettingID=psd.ProductSettingID
-	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=1
+	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1
 
 	-- @sporttype: not support StakeLevel
 	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType NOT IN (7,8,17))
