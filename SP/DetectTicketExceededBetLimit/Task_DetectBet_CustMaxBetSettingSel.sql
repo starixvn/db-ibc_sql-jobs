@@ -272,13 +272,13 @@ BEGIN
 		),
 		CustList_Global2 AS (--get isChangedGlobal, MaxStake_old
 			SELECT clg.custid, clg.transid
-				, CASE	WHEN cre.StakeLevelID IS NOT NULL THEN cre.UpdateTime
-						WHEN dep.StakeLevelID IS NOT NULL THEN dep.UpdateTime
+				, CASE	WHEN cre.StakeLevelID IS NOT NULL AND cl.isLicensee=0 THEN cre.UpdateTime
+						WHEN dep.StakeLevelID IS NOT NULL AND cl.isLicensee=1 THEN dep.UpdateTime
 					END UpdateTime_Global
-				, MAX(CASE	WHEN cre.StakeLevelID IS NOT NULL THEN cre.isChangedGlobal
-							WHEN dep.StakeLevelID IS NOT NULL THEN dep.isChangedGlobal END) AS isChangedGlobal
-				, MAX(CASE	WHEN cre.StakeLevelID IS NOT NULL THEN cre.MaxLabel
-							WHEN dep.StakeLevelID IS NOT NULL THEN dep.MaxLabel
+				, MAX(CASE	WHEN cre.StakeLevelID IS NOT NULL AND cl.isLicensee=0 THEN cre.isChangedGlobal
+							WHEN dep.StakeLevelID IS NOT NULL AND cl.isLicensee=1 THEN dep.isChangedGlobal END) AS isChangedGlobal
+				, MAX(CASE	WHEN cre.StakeLevelID IS NOT NULL AND cl.isLicensee=0 THEN cre.MaxLabel
+							WHEN dep.StakeLevelID IS NOT NULL AND cl.isLicensee=1 THEN dep.MaxLabel
 						END) AS MaxStake_old
 			FROM CustList_Global1 clg
 				INNER JOIN #tmpCustList cl ON cl.transid=clg.transid
@@ -312,8 +312,8 @@ BEGIN
 							 ORDER BY UpdateTime
 							) dep
 			GROUP BY clg.custid, clg.transid
-				, CASE	WHEN cre.StakeLevelID IS NOT NULL THEN cre.UpdateTime
-						WHEN dep.StakeLevelID IS NOT NULL THEN dep.UpdateTime
+				, CASE	WHEN cre.StakeLevelID IS NOT NULL AND cl.isLicensee=0 THEN cre.UpdateTime
+						WHEN dep.StakeLevelID IS NOT NULL AND cl.isLicensee=1 THEN dep.UpdateTime
 					END
 		)
 		INSERT INTO #returnTbl (custid, transid, SportType, BetType, MaxBet)
@@ -391,11 +391,11 @@ BEGIN
 		),
 		CustList_Global2 AS (--get MaxStake_old
 			SELECT clg.custid, clg.transid
-				, CASE	WHEN cre.StakeLevelID IS NOT NULL THEN cre.UpdateTime
-						WHEN dep.StakeLevelID IS NOT NULL THEN dep.UpdateTime
+				, CASE	WHEN cre.StakeLevelID IS NOT NULL AND cl.isLicensee=0 THEN cre.UpdateTime
+						WHEN dep.StakeLevelID IS NOT NULL AND cl.isLicensee=1 THEN dep.UpdateTime
 					END UpdateTime_Global
-				, CASE	WHEN cre.StakeLevelID IS NOT NULL	 THEN cre.MaxGameStake
-						WHEN dep.StakeLevelID IS NOT NULL	 THEN dep.MaxGameStake
+				, CASE	WHEN cre.StakeLevelID IS NOT NULL AND cl.isLicensee=0 THEN cre.MaxGameStake
+						WHEN dep.StakeLevelID IS NOT NULL AND cl.isLicensee=1 THEN dep.MaxGameStake
 					END AS MaxStake_old
 			FROM CustList_Global1 clg
 				INNER JOIN #tmpCustList cl ON cl.transid=clg.transid
