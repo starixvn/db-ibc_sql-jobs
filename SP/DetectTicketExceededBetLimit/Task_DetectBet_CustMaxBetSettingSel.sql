@@ -111,19 +111,39 @@ BEGIN
 		LEFT JOIN Dep_CustSuper dep WITH (NOLOCK) ON dep.custid=tc.srecommend
 
 	--Get: SportTypeBetSetting, BetTypeBetSetting, SettingType
+	--Credit
 	UPDATE cl 
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
 	, cl.SettingType=ps.SettingType
 	FROM #tmpCustList cl
 		INNER JOIN dbtxn.bodb02.dbo.Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
-			ON	ref.Sporttype	= cl.sporttype 
-			AND ref.Bettype		= cl.bettype
-			AND ref.isLicensee	= cl.isLicensee
-			AND ref.isLive		= cl.isLive
-		INNER JOIN ProductSettingDetail ps ON ps.SportType=ref.SportTypeRefBetSetting
-										AND ps.BetType=ref.BetTypeRefBetSetting
-	WHERE ps.SettingType IN (2,7,8,9,16,17,20)
+				ON	ref.Sporttype	= cl.sporttype 
+				AND ref.Bettype		= cl.bettype
+				AND ref.isLicensee	= cl.isLicensee
+				AND ref.isLive		= cl.isLive
+		INNER JOIN ProductSettingDetail ps 
+				ON ps.SportType=ref.SportTypeRefBetSetting
+				AND ps.BetType=ref.BetTypeRefBetSetting
+	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0
+
+	--Deposit
+	UPDATE cl 
+	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
+	, cl.BetTypeRef=ref.BetTypeRefBetSetting
+	, cl.SettingType=ps.SettingType
+	FROM #tmpCustList cl
+		INNER JOIN dbtxn.bodb02.dbo.Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
+				ON	ref.Sporttype	= cl.sporttype 
+				AND ref.Bettype		= cl.bettype
+				AND ref.isLicensee	= cl.isLicensee
+				AND ref.isLive		= cl.isLive
+		INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) 
+				ON psd.SportType=ref.SportTypeRefBetSetting
+				AND psd.BetType=ref.BetTypeRefBetSetting
+		INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) 
+				ON ps.ProductSettingID=psd.ProductSettingID
+	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=1
 
 	-- @sporttype: not support StakeLevel
 	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType NOT IN (7,8,17))
