@@ -123,10 +123,10 @@ BEGIN
 			AND ref.isLive		= cl.isLive
 		INNER JOIN ProductSettingDetail ps ON ps.SportType=ref.SportTypeRefBetSetting
 										AND ps.BetType=ref.BetTypeRefBetSetting
-	WHERE ps.SettingType IN (2,7,8,9,16,20)
+	WHERE ps.SettingType IN (2,7,8,9,16,17,20)
 
 	-- @sporttype: not support StakeLevel
-	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType NOT IN (7,8))
+	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType NOT IN (7,8,17))
 	BEGIN
 		INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
 		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
@@ -149,7 +149,7 @@ BEGIN
 							AND dch.BetType=cl.BetTypeRef AND dch.UpdateTime>cl.transdate  
 						 ORDER BY UpdateTime
 						 ) dch
-		WHERE cl.SettingType NOT IN (7,8) AND
+		WHERE cl.SettingType NOT IN (7,8,17) AND
 			(
 			  (cl.isLicensee=0 AND ch.custid IS NOT NULL)
 			OR 
@@ -159,7 +159,7 @@ BEGIN
 		--Current Maxbet
 		--Credit
 		IF EXISTS (	SELECT 1 FROM #tmpCustList cl
-					WHERE cl.SettingType NOT IN (7,8) AND cl.isLicensee=0
+					WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=0
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
 					)
@@ -170,13 +170,13 @@ BEGIN
 				INNER JOIN CustBetSetting3rd_Member cbs WITH (NOLOCK) ON cbs.CustID=cl.custid
 																	AND cbs.SportType=cl.SportTypeRef
 																	AND cbs.BetType=cl.BetTypeRef
-			WHERE cl.SettingType NOT IN (7,8) AND cl.isLicensee=0
+			WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=0
 				AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 								WHERE re.transid=cl.transid)
 		END
 		--deposit
 		IF EXISTS (	SELECT 1 FROM #tmpCustList cl
-					WHERE cl.SettingType NOT IN (7,8) AND cl.isLicensee=1
+					WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=1
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
 					)
@@ -187,16 +187,16 @@ BEGIN
 				INNER JOIN Dep_CustBetSetting_Member dcbs WITH (NOLOCK) ON dcbs.CustID=cl.custid
 																		AND dcbs.SportType=cl.SportTypeRef
 																		AND dcbs.BetType=cl.BetTypeRef
-			WHERE cl.SettingType NOT IN (7,8) AND cl.isLicensee=1
+			WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=1
 				AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 								WHERE re.transid=cl.transid)
 		END
 
-		DELETE #tmpCustList WHERE SettingType NOT IN (7,8)
+		DELETE #tmpCustList WHERE SettingType NOT IN (7,8,17)
 	END
 
-	-- @sporttype: support StakeLevel - SettingType=7
-	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType=7)
+	-- @sporttype: support StakeLevel - SettingType IN (7,17)
+	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType IN (7,17))
 	BEGIN
 		--Get List cust: MaxBet is changed by SMA
 		INSERT INTO #CustList_ChangedSMA(custid, transid, SportType, BetType, MaxBet, StakeLevelList, UpdateTime_SMA)
@@ -223,14 +223,14 @@ BEGIN
 							AND dch.BetType=cl.BetTypeRef AND dch.UpdateTime>cl.transdate  
 						 ORDER BY UpdateTime
 						) dch
-		WHERE cl.SettingType=7 AND
+		WHERE cl.SettingType IN (7,17) AND
 			(
 			  (cl.isLicensee=0 AND ch.custid IS NOT NULL)
 			OR 
 			  (cl.isLicensee=1 AND dch.custid IS NOT NULL)
 			)
 
-		--flag isChangedGlobal???
+
 		;WITH CustList_Global1 AS (--get StakeLevelList
 			SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
 				, CASE	WHEN sma.transid IS NOT NULL  THEN sma.StakeLevelList
@@ -247,7 +247,7 @@ BEGIN
 						AND dcslm.SportType=cl.SportTypeRef
 						AND dcslm.BetType=cl.BetTypeRef
 				LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
-			WHERE SettingType=7 AND 
+			WHERE SettingType IN (7,17) AND 
 				(cslm.CustID IS NOT NULL OR dcslm.CustID IS NOT NULL OR sma.transid IS NOT NULL)
 		),
 		CustList_Global2 AS (--get isChangedGlobal, MaxStake_old
@@ -306,11 +306,11 @@ BEGIN
 		FROM #tmpCustList cl
 			LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
 			LEFT JOIN CustList_Global2 gl ON gl.transid=cl.transid 
-		WHERE SettingType=7 
+		WHERE SettingType IN (7,17) 
 			AND (sma.transid IS NOT NULL OR gl.transid IS NOT NULL)
 			AND NOT EXISTS (SELECT 1 FROM #returnTbl re WHERE re.transid=cl.transid)
 
-		DELETE #tmpCustList WHERE SettingType=7
+		DELETE #tmpCustList WHERE SettingType IN (7,17)
 		DELETE #CustList_ChangedSMA
 	END
 
@@ -349,7 +349,7 @@ BEGIN
 			  (cl.isLicensee=1 AND dch.custid IS NOT NULL)
 			)
 
-		--flag isChangedGlobal???
+
 		;WITH CustList_Global1 AS (--get StakeLevelList
 			SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
 				, CASE	WHEN sma.transid IS NOT NULL  THEN sma.StakeLevelList
@@ -369,7 +369,7 @@ BEGIN
 			WHERE SettingType=8 AND 
 				(cslm.CustID IS NOT NULL OR dcslm.CustID IS NOT NULL OR sma.transid IS NOT NULL)
 		),
-		CustList_Global2 AS (--get isChangedGlobal, MaxStake_old
+		CustList_Global2 AS (--get MaxStake_old
 			SELECT clg.custid, clg.transid
 				, CASE	WHEN cre.StakeLevelID IS NOT NULL THEN cre.UpdateTime
 						WHEN dep.StakeLevelID IS NOT NULL THEN dep.UpdateTime
