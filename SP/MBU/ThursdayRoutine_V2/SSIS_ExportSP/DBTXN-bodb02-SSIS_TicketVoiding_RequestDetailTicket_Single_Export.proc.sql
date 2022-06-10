@@ -11,6 +11,8 @@ AS
 	Revisions:
 		- 20130831@Bobby: Init
 		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
+		- 20220603@July: Get column CustId from active table [Redmine:#172634]
+		
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -28,8 +30,7 @@ AS
 	SET @RequestIds = STUFF((SELECT ',' + CAST(RequestId AS VARCHAR(50)) FROM @tmpRequest FOR XML PATH('')),1,1,'')
 
 	SELECT	t1.Id, t1.RequestId, t1.IssueTypeId, t1.SubIssueTypeId,t1.TransId, t1.MatchId,t1.RequestDetailId
-		--, t1.bettype, t1.betid
-		,t1.Bettype, t1.BetId
+		,t1.Bettype, t1.BetId, t1.CustId
 	FROM	dbo.TicketVoiding_RequestDetailTicket_Single AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 		SELECT	cast(value as int) AS RequestId
