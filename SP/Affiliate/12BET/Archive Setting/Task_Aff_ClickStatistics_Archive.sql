@@ -14,6 +14,7 @@ AS
 	Revisions:
 		- 20180601@Percy: Initialize SP [RedmineID: #87923]
 		- 20190808@Percy: Loop archive data + delete 3000 rows per batch to prevent lock tables [RedmineID: #115959]
+		- 20220609@Malcolm: Sum and backup data in BannerStatistics table [RedmineID: #173433]
 */
 
 BEGIN
@@ -35,6 +36,7 @@ BEGIN
 	-- Check job run already
 	IF EXISTS (SELECT 1 FROM dbo.ClickStatisticsSum WITH (NOLOCK) WHERE IsForMonth = 1 AND Date = @FirstDayOfMonth)
 		AND EXISTS (SELECT 1 FROM dbo.ClickStatistics1Sum WITH (NOLOCK) WHERE Date = @FirstDayOfMonth)
+		AND EXISTS (SELECT 1 FROM dbo.BannerStatisticsSum WITH(NOLOCK) WHERE CopyDate = @FirstDayOfMonth)
 	BEGIN
 		SELECT 'Data is already done for this month!'
 		RETURN
@@ -103,6 +105,22 @@ BEGIN
 			SportCode,
 			LanguageCode,
 			DeviceType
+
+		INSERT INTO dbo.BannerStatisticsSum 
+		(
+			BannerId
+			,CopyDate
+			,TotalClick
+		)
+		SELECT 
+			bs.BannerId
+			,CONVERT(DATE, bs.CopyDate) AS CopyDate
+			,COUNT(1) AS TotalClick
+		FROM dbo.BannerStatistics bs WITH(NOLOCK)
+		WHERE bs.CopyDate >= @FirstDayOfMonth AND bs.CopyDate < DATEADD (DAY, 1, @LastDayOfMonth)
+		GROUP BY 
+			bs.BannerId
+			,CONVERT(DATE, bs.CopyDate) 
 
 			-- For Monthly
 		INSERT INTO dbo.ClickStatisticsSum
@@ -217,6 +235,29 @@ BEGIN
 					DeviceType
 				)
 				WHERE Date = @winlostdate
+
+				IF @@ROWCOUNT < 3000
+					BREAK
+
+				WAITFOR DELAY '00:00:00.280'
+			END
+
+			WHILE 1 = 1 
+			BEGIN
+				DELETE TOP(3000) dbo.BannerStatistics WITH(ROWLOCK, UPDLOCK)
+				OUTPUT 
+					DELETED.ClickId
+					,DELETED.AffId
+					,DELETED.BannerId
+					,DELETED.CopyDate
+				INTO dbo.BannerStatistics_bk
+				(
+					ClickId
+					,AffId
+					,BannerId
+					,CopyDate
+				)
+				WHERE CopyDate >= @winlostdate AND CopyDate < DATEADD(DAY, 1, @winlostdate)
 
 				IF @@ROWCOUNT < 3000
 					BREAK
