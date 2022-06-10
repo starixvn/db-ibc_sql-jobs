@@ -43,7 +43,6 @@ BEGIN
 			('DBACC', 'bodb02.dbo.Task_CS_HeadlineBalance14'),
 			('DBACC', 'bodb02.dbo.Acc_ResetWinning_SelByDate14'),
 			('DBACC', 'bodb02.dbo.Task_ResetWinning_ExtraPT14'),
-			('DBACC', 'bodb02.dbo.Task_rptWinLost_UpdateTable'),
 			('DBRPT', 'bodb_report.dbo.Task_rptStatement_14'),
 			('DBLIC', 'bodb_LicenseeReport.dbo.Task_PrepareStaging'),
 			('DBLIC', 'bodb_LicenseeReport.dbo.Task_rptBetting_CheckData'),
@@ -56,6 +55,7 @@ BEGIN
 			('DBLIC', 'bodb_LicenseeReport.dbo.GEN_rptBetting_Parlay14'),
 			('DBLIC', 'bodb_LicenseeReport.dbo.Task_DailyRptLicWinlossGMT_Bettrans14'),
 			('DBLIC', 'bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14'),
+			('DBLIC', 'bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14'),
 			('DBFS', 'bodb_FraudSensor.dbo.FS_Task_MatchDailyDataCapture'),
 			('DBTGRS', 'bodb_TGRS.dbo.Task_RegenerateTGRSData')
 

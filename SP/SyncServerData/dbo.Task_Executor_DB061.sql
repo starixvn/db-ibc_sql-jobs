@@ -211,22 +211,6 @@ BEGIN
 						@ToDate = @todate,
 						@Mode = @mode
 				END
-				--step 6.1
-				ELSE IF (@spName = 'bodb02.dbo.Task_rptWinLost_UpdateTable')
-				BEGIN  
-            		---get/set params
-					SET @xml = @params
-				
-					INSERT INTO @tblRecover7Days(Winlostdate)
-					SELECT	
-						t.c.value('@w', 'DATETIME')	AS winlostdate
-					FROM @xml.nodes('/root') AS t(c)
-
-					SELECT @winlostdate = Winlostdate FROM @tblRecover7Days
-
-					---run sp
-					EXEC bodb02.dbo.Task_rptWinLost_UpdateTable @winlostdate = @WinlostDate
-				END
 				--step 8
 				ELSE IF (@spName = 'bodb_TGRS.dbo.Task_RegenerateTGRSData')
 				BEGIN  

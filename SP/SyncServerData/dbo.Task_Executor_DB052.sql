@@ -177,7 +177,7 @@ BEGIN
 		IF @@ROWCOUNT > 0
 		BEGIN
 			BEGIN TRY
-				--step 6.02
+				--step 6.01
 				IF (@spName = 'bodb_LicenseeReport.dbo.Task_PrepareStaging')
 				BEGIN  
             		---get/set params
@@ -202,7 +202,7 @@ BEGIN
 						RAISERROR(@errMsg, 16, 1)
 					END
 				END
-				--step 6.03
+				--step 6.02
 				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.Task_rptBetting_CheckData')
 				BEGIN 
             		---get/set params
@@ -228,7 +228,7 @@ BEGIN
 							EXEC bodb_LicenseeReport.dbo.GEN_rptBetting @date = @WinlostDate, @date2 = @WinlostDate
 						END TRY
 						BEGIN CATCH
-							SET @errmsg = 'step 6.04' + ' - ' + ERROR_MESSAGE()			
+							SET @errmsg = 'step 6.03' + ' - ' + ERROR_MESSAGE()			
 							RAISERROR(@errmsg, 16, 1)
 						END CATCH
 						
@@ -239,18 +239,18 @@ BEGIN
 								@DataSource = 'rpt_Betting'
 						END TRY
 						BEGIN CATCH
-							SET @errmsg = 'step 6.05' + ' - ' + ERROR_MESSAGE()			
+							SET @errmsg = 'step 6.04' + ' - ' + ERROR_MESSAGE()			
 							RAISERROR(@errmsg, 16, 1)
 						END CATCH
 					END
 				END
-				--step 6.06
+				--step 6.05
 				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.Task_PostStaging')
 				BEGIN  
 					---run sp
 					EXEC bodb_LicenseeReport.dbo.Task_PostStaging
 				END
-				--step 6.07
+				--step 6.06
 				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.Task_rptBettingBySport_CheckData')
 				BEGIN  
             		---get/set params
@@ -276,12 +276,12 @@ BEGIN
 							EXEC bodb_LicenseeReport.dbo.GEN_rptBettingBySport14 @Date = @WinlostDate
 						END TRY
 						BEGIN CATCH
-							SET @errmsg = 'step 6.08' + ' - ' + ERROR_MESSAGE()			
+							SET @errmsg = 'step 6.07' + ' - ' + ERROR_MESSAGE()			
 							RAISERROR(@errmsg, 16, 1)
 						END CATCH
 					END
 				END
-				--step 6.09
+				--step 6.08
 				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.Task_DailyRptLicWinloss2')
 				BEGIN  
             		---get/set params
@@ -297,7 +297,7 @@ BEGIN
 					---run sp
 					EXEC bodb_LicenseeReport.dbo.Task_DailyRptLicWinloss2 @winlostdate = @WinlostDate
 				END
-				--step 6.10
+				--step 6.09
 				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.Task_rptCustomerTurnOver_Bettrans14')
 				BEGIN  
             		---get/set params
@@ -313,7 +313,7 @@ BEGIN
 					---run sp
 					EXEC bodb_LicenseeReport.dbo.Task_rptCustomerTurnOver_Bettrans14 @Date = @WinlostDate
 				END
-				--step 6.11
+				--step 6.10
 				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.Task_rptWinlostbyleague_Bettrans14')
 				BEGIN  
             		---get/set params
@@ -329,7 +329,7 @@ BEGIN
 					---run sp
 					EXEC bodb_LicenseeReport.dbo.Task_rptWinlostbyleague_Bettrans14 @Date = @WinlostDate
 				END
-				--step 6.12
+				--step 6.11
 				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.Task_rptCustomerMatch_Bettrans14')
 				BEGIN  
             		---get/set params
@@ -346,22 +346,6 @@ BEGIN
 					EXEC bodb_LicenseeReport.dbo.Task_rptCustomerMatch_Bettrans14 @Date = @WinlostDate
 				END
 				--step 6.12
-				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.Task_rptCustomerMatch_Bettrans14')
-				BEGIN  
-            		---get/set params
-					SET @xml = @params
-				
-					INSERT INTO @tblRecover7Days(Winlostdate)
-					SELECT	
-						t.c.value('@d', 'DATETIME')	AS WinlostDate
-					FROM @xml.nodes('/root') AS t(c)
-
-					SELECT @WinlostDate = Winlostdate FROM @tblRecover7Days
-
-					---run sp
-					EXEC bodb_LicenseeReport.dbo.Task_rptCustomerMatch_Bettrans14 @Date = @WinlostDate
-				END
-				--step 6.13
 				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.GEN_rptBetting_Parlay14')
 				BEGIN  
             		---get/set params
@@ -380,7 +364,7 @@ BEGIN
 						@datefrom = @fromDate,
 						@dateto = @toDate
 				END
-				--step 6.14
+				--step 6.13
 				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.Task_DailyRptLicWinlossGMT_Bettrans14')
 				BEGIN  
             		---get/set params
@@ -396,7 +380,7 @@ BEGIN
 					---run sp
 					EXEC bodb_LicenseeReport.dbo.Task_DailyRptLicWinlossGMT_Bettrans14 @FromDate = @fromDate
 				END
-				--step 6.15
+				--step 6.14
 				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14')
 				BEGIN  
             		---get/set params
@@ -412,6 +396,23 @@ BEGIN
 
 					---run sp
 					EXEC bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14 @PromoDate = @winlostdate, @IsCheckDataOnly = @IsCheckDataOnly
+				END
+				--step 6.15
+				ELSE IF (@spName = 'bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14')
+				BEGIN  
+            		---get/set params
+					SET @xml = @params
+				
+					INSERT INTO @tblRecover7Days(FromDate, ToDate)
+					SELECT	
+						t.c.value('@fd', 'DATETIME') AS FromDate,
+						t.c.value('@td', 'DATETIME') AS ToDate
+					FROM @xml.nodes('/root') AS t(c)
+
+					SELECT @fromDate = FromDate, @toDate = ToDate FROM @tblRecover7Days
+
+					---run sp
+					EXEC bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14 @FromDate = @fromDate, @Todate = @Todate
 				END
 				--step 7
 				ELSE IF (@spName = 'bodb_FraudSensor.dbo.FS_Task_MatchDailyDataCapture')
