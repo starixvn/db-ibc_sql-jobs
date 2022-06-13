@@ -15,9 +15,14 @@ AS
 BEGIN;
 	SET NOCOUNT ON;
 
-	CREATE TABLE #tmp_TransId (TransId BIGINT, Username NVARCHAR(100), site VARCHAR(100), Product VARCHAR(100), stake MONEY, MaxBet Money, game VARCHAR(100))
+	CREATE TABLE #tmp_TransId (TransId BIGINT, Username NVARCHAR(100), site VARCHAR(100), Product VARCHAR(100), stake MONEY, MaxBet Money, game VARCHAR(100), Remark NVARCHAR(256))
 
-	DECLARE @procName NVARCHAR(50), @IsTest BIT =  0, @IsSendTestCurrencyOnly BIT = 0,@serverName NVARCHAR(50)
+	DECLARE @procName NVARCHAR(50)
+		, @IsTest BIT =  0
+		, @IsSendTestCurrencyOnly BIT = 0
+		, @serverName NVARCHAR(50)
+		, @recipients VARCHAR(2000) = NULL
+
 	SET @procName = OBJECT_NAME(@@procid)
 	SET @serverName = @@SERVERNAME
 	
@@ -28,8 +33,15 @@ BEGIN;
 
 	SET @IsSendTestCurrencyOnly = (SELECT ISNULL(c.ConfigValue,0) FROM dbo.CustMaxBetSetting_Config c WITH (NOLOCK) WHERE c.ConfigName = 'IsSendTestCurrencyOnly')
 	
-	INSERT INTO #tmp_TransId (Username, site, Product, game, MaxBet, stake, TransId)
-	SELECT c.username, c.site, s.SportName AS Product, bt.typenamee AS Game, ISNULL(t.MaxBet, 0) AS SettingValue, t.Stake AS ViolateStake, t.TransID AS RefNo
+	INSERT INTO #tmp_TransId (Username, site, Product, game, MaxBet, stake, TransId, Remark)
+	SELECT c.username
+		, c.site
+		, s.SportName AS Product
+		, bt.typenamee AS Game
+		, ISNULL(t.MaxBet, 0) AS SettingValue
+		, t.Stake AS ViolateStake
+		, t.TransID AS RefNo
+		, bt.typedesc AS Remark
 	FROM dbo.CustMaxBet_Invalid t WITH (NOLOCK)
 		INNER JOIN dbo.bettype bt WITH (NOLOCK) ON bt.typeid = t.BetType
 		INNER JOIN dbo.Sports s with (NOLOCK) ON s.SportType = t.SportType
@@ -67,7 +79,7 @@ BEGIN;
 									,	[@style]		= N'margin:0 auto;white-space:nowrap;border-collapse:collapse;'
 									,	(
 										SELECT	[@style] = N'background-color:#FFFF00'
-											, [th/@colspan]	= N'8'
+											, [th/@colspan]	= N'9'
 											, [th]	= N'Violate Max Bet Limit Setting - ' + CONVERT(NVARCHAR, GETDATE(), 106)
 										FOR XML PATH ('tr')
 										,	TYPE
@@ -82,6 +94,7 @@ BEGIN;
 											,	NULL, [th]	= N'Setting value'
 											,	NULL, [th]	= N'Violate Stake'
 											,	NULL, [th]	= N'RefNo'
+											,	NULL, [th]	= N'Remark'
 										FOR XML PATH ('tr')
 										,	TYPE
 										)
@@ -94,6 +107,7 @@ BEGIN;
 											,	NULL, [td]	= CONVERT(VARCHAR(50), t.MaxBet)
 											,	NULL, [td]	= CONVERT(VARCHAR(50), t.stake)
 											,	NULL, [td]	= CONVERT(VARCHAR(50), t.TransId)
+											,	NULL, [td]	= ISNULL(t.Remark, '')
 										FROM	#tmp_TransId AS t 
 										FOR XML PATH ('tr')
 										,	TYPE
