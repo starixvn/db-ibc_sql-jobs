@@ -39,6 +39,7 @@ AS
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
+		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -142,7 +143,8 @@ BEGIN
 		,APM BIGINT
 		,VS3 BIGINT
 		,BTC BIGINT
-		,FGGL BIGINT)
+		,FGGL BIGINT
+		,MXG BIGINT)
 
 	--exec
 	--rptLicWinloss2
@@ -193,7 +195,8 @@ BEGIN
 		,APM
 		,VS3
 		,BTC
-		,FGGL)
+		,FGGL
+		,MXG)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
@@ -361,7 +364,8 @@ BEGIN
 		,APM
 		,VS3
 		,BTC
-		,FGGL)
+		,FGGL
+		,MXG)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (

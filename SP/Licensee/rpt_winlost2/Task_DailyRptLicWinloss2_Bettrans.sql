@@ -96,6 +96,7 @@ AS
 		- 20220329@Hogan: Macau Games Add new Range bettype[RedmineID: #170607]
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
+		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -231,6 +232,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
 			WHEN b.bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
+			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -360,6 +362,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
 			WHEN b.bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
+			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 			ELSE 0
 		END
 		,CASE
