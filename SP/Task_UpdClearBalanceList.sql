@@ -19,6 +19,7 @@ AS
 	Revisions: 
 		- 20150617@Daniel: Created for nested Sp call in Task_ClearBalanceAllDownline - separating custDB to new server DBCUST [Redmine:#36216]  
 		- 20200727@Sophia: prevent duplicated transfer [Redmine: #137141]
+		- 20220510@Danny: Use String_split built-in function [RemineID: #171831]
 		
 	Param explain:
 	   * @Mode = 0: Update status 'waiting' for customers having lastTransfer date before today, params are not used
@@ -60,8 +61,7 @@ BEGIN
 	
     UPDATE 	dbo.Acc_ClearBalanceList WITH(ROWLOCK)
     SET  	IsTransferring = @IsTransferring
-    WHERE 	Custid IN (Select Val from [f_SplitString](@CustIDList, ','))
-	OPTION (MAXRECURSION 0)
+    WHERE 	Custid IN (Select Value from STRING_SPLIT(@CustIDList, ','))
 END
  
 
