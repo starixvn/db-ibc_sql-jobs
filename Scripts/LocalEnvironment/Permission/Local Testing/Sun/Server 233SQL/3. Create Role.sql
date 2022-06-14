@@ -59,6 +59,7 @@ INSERT INTO @tmpAffectedDB (DBName)
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')
 
+	--grant permission on schema dbo
 SELECT @strPermission = @strPermission + ' '
 					 + 'USE ' + d.DBName + ' ' + ';'
 					 + CHAR(13)
@@ -70,4 +71,16 @@ FROM	@tmpAffectedDB d
 		FROM	@tmpPermission
 	) p
 EXEC (@strPermission)
+
+--grant permission on schema sb
+SET @strPermission = ''
+SELECT @strPermission = @strPermission + ' '
+					 + 'USE bodb_CustomerLog ;'
+					 + CHAR(13)
+					 + 'GRANT ' + p.PermissionName + ' ON SCHEMA::sb TO ' + @RoleName + ' ' + ';'
+					 + CHAR(13)
+		FROM	@tmpPermission p
+
+EXEC (@strPermission)
+
 GO
