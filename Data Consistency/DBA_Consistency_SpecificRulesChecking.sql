@@ -2,6 +2,7 @@
 ALTER PROCEDURE [dbo].[DBA_Consistency_SpecificRulesChecking]
 (
 	@ProductId		INT		
+	,@tablename		VARCHAR(50)		= NULL
 	,@Rule			VARCHAR(50)
 	,@ErrCode		INT				= 0		OUTPUT
 	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
@@ -27,14 +28,15 @@ AS
 		- 20201007@July:  Saba.club - Data Integrity/Consistency Detection for Free Bets and Blackjack - [Redmine:#140425]
 		- 20201030@July: Check Data Consistency - All products - exclude checking commission/discount of licensee tickets for rule 16 - [Redmine:#144533]
 		- 20210510@July: Check Data Consistency - VGaming & Creative Gaming - [Redmine:#154502]
-		- 20210527@July: Check Data Consistency - Exclue bettype BlackJack for VGaming - [Redmine:#155762]
-		- 20210924@July: Vgaming - Exclue bettype Casino Hold'em Poker - [Redmine:#161760]
-		- 20211021@July: Vgaming - Exclue bettype Texas Hold'em Poker - [Redmine:#163463]
-		- 20220106@July: Saba.club - Exclue bettype Casino Hold'em Poker(1650) - [Redmine:#167030]
-		- 20220218@July: Vgaming - Exclue bettype Pai Gow Poker(3842) - [Redmine:#168578]
-		- 20220222@July: Saba.games - Exclue bettype Hi-Lo(1651) - [Redmine:#168804]
-		- 20220408@July: Saba.games - Exclue bettype Texas Hold'em Poker(1652) - [Redmine:#171263]
-		- 20220413@July: Vgaming - Exclue bettype Hi-Lo(3844) - [Redmine:#171349]
+		- 20210527@July: Check Data Consistency - Exclude bettype BlackJack for VGaming - [Redmine:#155762]
+		- 20210924@July: Vgaming - Exclude bettype Casino Hold'em Poker - [Redmine:#161760]
+		- 20211021@July: Vgaming - Exclude bettype Texas Hold'em Poker - [Redmine:#163463]
+		- 20220106@July: Saba.club - Exclude bettype Casino Hold'em Poker(1650) - [Redmine:#167030]
+		- 20220218@July: Vgaming - Exclude bettype Pai Gow Poker(3842) - [Redmine:#168578]
+		- 20220222@July: Saba.games - Exclude bettype Hi-Lo(1651) - [Redmine:#168804]
+		- 20220408@July: Saba.games - Exclude bettype Texas Hold'em Poker(1652) - [Redmine:#171263]
+		- 20220413@July: Vgaming - Exclude bettype Hi-Lo(3844) - [Redmine:#171349]
+		- 20220608@July: Check Member Stake/WinLost consistent among tables BettransLC, bettransRNG and Bettrans for all related products - [Redmine:#173808]
 
 		Param's Expanation:
 */
@@ -44,11 +46,13 @@ BEGIN
 	DECLARE @transId VARCHAR(MAX)
 			,@maxError INT = 100
 			,@translogid VARCHAR(MAX)
-	
+			
 	DECLARE @yesterday SMALLDATETIME
+			,@Today SMALLDATETIME
 	
+	SET @Today = CAST(GETDATE() AS DATE)
 	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
-	
+
 	CREATE TABLE #tmpBettrans (		
 		transId				BIGINT
 		,betid				BIGINT
@@ -95,6 +99,12 @@ BEGIN
 		,stake		MONEY
 		,winlost	MONEY
 	)
+	CREATE TABLE #tmpBettransRNG (		
+		custid		INT
+		,refno 		BIGINT
+		,stake		MONEY
+		,winlost	MONEY
+	)
 
 	
 	SET @transId = ''
@@ -111,25 +121,37 @@ BEGIN
 		,modds, bettype, statusId, transid2, hdp2, stake,winlost,custid,srecommend,winlostdate,currency
 		,refno,playerdiscount,discount,sdiscount,adiscount,actual_stake
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-	WHERE	b.bettype < 20000
-			AND b.matchid = @ProductId
-	
+	WHERE (b.matchid = @ProductId OR @tablename = 'bettransLC' OR @tablename = 'bettransRNG')
+			AND (winlostdate = @Today OR winlostdate = @yesterday)
+
 	IF @ProductId IN (255, 244, 241)
 	BEGIN
 		INSERT INTO #tmpBettransG(custid,refno, stake, winlost)
 		SELECT	custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
 		FROM	bodb02.dbo.bettransG b WITH (NOLOCK)
-		WHERE	b.bettype < 20000
-				AND b.matchid = @ProductId
+		WHERE b.matchid = @ProductId
+			AND (winlostdate = @Today OR winlostdate = @yesterday)
 		GROUP BY custid, refno
 	END
 
-	IF @ProductId IN (244)
+	IF @ProductId IN (244) OR @tablename = 'bettransLC'
 	BEGIN
 		INSERT INTO #tmpBettransLC(custid,refno, stake, winlost)
-		SELECT	custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
-		FROM	bodb02.dbo.bettransLC b WITH (NOLOCK)
-		WHERE b.productID = @ProductId
+		SELECT custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
+		FROM bodb02.dbo.bettransLC b WITH (NOLOCK)
+		WHERE IsSum = 1
+			AND (b.productID = @ProductId OR (@tablename = 'bettransLC' AND b.productID <> 244)) 
+			AND (winlostdate = @Today OR winlostdate = @yesterday)
+		GROUP BY custid, refno
+	END
+
+	IF @tablename = 'bettransRNG'
+	BEGIN
+		INSERT INTO #tmpBettransRNG(custid,refno, stake, winlost)
+		SELECT custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
+		FROM bodb02.dbo.bettransRNG b WITH (NOLOCK)
+		WHERE IsSum = 1 
+			AND (winlostdate = @Today OR winlostdate = @yesterday)
 		GROUP BY custid, refno
 	END
 			
@@ -605,9 +627,88 @@ BEGIN
 			END
 		END
 	END
-	
+
+	--Rule #34: Check Member Winlost Consistent among tables BettransLC/BettransRNG and Bettrans
+	IF @Rule = 'winlost'
+	BEGIN
+		IF @tablename = 'bettransLC'
+		BEGIN
+			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(bt.transid AS VARCHAR)
+			FROM	#tmpBettrans bt
+				INNER HASH JOIN #tmpBettransLC blc ON bt.transId = blc.refno AND bt.winlost <> blc.winlost
+			WHERE bt.statusId NOT IN (101,102,103)  
+							 
+			IF @transId <> ''
+			BEGIN
+				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+						,@ErrCode = 100
+						,@ErrMsg = 'Wrong winlost value between bettrans and bettransLC '
+						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+
+				RETURN
+			END
+		END
+		IF @tablename = 'bettransRNG'
+		BEGIN
+			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(bt.transid AS VARCHAR)
+			FROM	#tmpBettrans bt
+				INNER HASH JOIN #tmpBettransRNG rng ON bt.transId = rng.refno AND bt.winlost <> rng.winlost
+			WHERE bt.statusId NOT IN (101,102,103)  
+							 
+			IF @transId <> ''
+			BEGIN
+				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+						,@ErrCode = 100
+						,@ErrMsg = 'Wrong winlost value between bettrans and bettransRNG '
+						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+
+				RETURN
+			END
+		END
+	END
+
+	--Rule #35: Check Member Stake Consistent among tables BettransLC/BettransRNG and Bettrans
+	IF @Rule = 'stake'
+	BEGIN
+		IF @tablename = 'bettransLC'
+		BEGIN
+			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(bt.transid AS VARCHAR)
+			FROM	#tmpBettrans bt
+				INNER HASH JOIN #tmpBettransLC blc ON bt.transId = blc.refno AND bt.stake <> blc.stake
+			WHERE bt.statusId NOT IN (101,102,103)  
+							 
+			IF @transId <> ''
+			BEGIN
+				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+						,@ErrCode = 100
+						,@ErrMsg = 'Wrong stake value between bettrans and bettransLC '
+						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+
+				RETURN
+			END
+		END
+		IF @tablename = 'bettransRNG'
+		BEGIN
+			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(bt.transid AS VARCHAR)
+			FROM	#tmpBettrans bt
+				INNER HASH JOIN #tmpBettransRNG rng ON bt.transId = rng.refno AND bt.stake <> rng.stake
+			WHERE bt.statusId NOT IN (101,102,103)  
+							 
+			IF @transId <> ''
+			BEGIN
+				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+						,@ErrCode = 100
+						,@ErrMsg = 'Wrong stake value between bettrans and bettransRNG '
+						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+
+				RETURN
+			END
+		END
+	END
+
 	DROP TABLE #tmpBettrans
 	DROP TABLE #tmpBettransG
 	DROP TABLE #tmpBettransLC
+	DROP TABLE #tmpBettransRNG
 END
 GO
