@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_SpecificRulesChecking]
 (
-	@ProductId		INT		
+	@ProductId		INT			    = NULL		
 	,@tablename		VARCHAR(50)		= NULL
 	,@Rule			VARCHAR(50)
 	,@ErrCode		INT				= 0		OUTPUT
@@ -37,6 +37,7 @@ AS
 		- 20220408@July: Saba.games - Exclude bettype Texas Hold'em Poker(1652) - [Redmine:#171263]
 		- 20220413@July: Vgaming - Exclude bettype Hi-Lo(3844) - [Redmine:#171349]
 		- 20220608@July: Check Member Stake/WinLost consistent among tables BettransLC, bettransRNG and Bettrans for all related products - [Redmine:#173808]
+		- 20220608@July: Param @ProductId miss default NULL - [Redmine:#173808]
 
 		Param's Expanation:
 */
