@@ -59,7 +59,7 @@ BEGIN
  		CASE
  		WHEN i.IsSum = d.IsSum THEN  (ISNULL(i.winlost,0) - ISNULL(i.actual_stake,0) + ISNULL(i.playercomm,0))
 							- (ISNULL(d.winlost,0) - ISNULL(d.actual_stake,0) + ISNULL(d.playercomm,0))
- 		WHEN i.IsSum = 1 AND d.IsSum = 0 THEN -(i.winlost-i.actual_stake+i.playercomm) -- value transfer to handle in bettrans
+ 		WHEN i.IsSum = 1 AND d.IsSum = 0 THEN -(ISNULL(i.winlost,0) - ISNULL(i.actual_stake,0) + ISNULL(i.playercomm,0) ) -- value transfer to handle in bettrans
  		ELSE 0 END
 	FROM
 		inserted i INNER JOIN deleted d
