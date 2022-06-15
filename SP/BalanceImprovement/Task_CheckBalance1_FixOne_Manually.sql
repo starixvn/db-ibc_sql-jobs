@@ -1,8 +1,9 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
 USE [bodb02]
 GO
-CREATE PROCEDURE [dbo].[Task_CheckBalance1_FixOne_Manually]
+ALTER PROCEDURE [dbo].[Task_CheckBalance1_FixOne_Manually]
 	@custid int,
+	@DiffBalanceInput money,
 	@DiffBalance money OUTPUT,
 	@result int OUTPUT,
 	@IsUUS bit = 0 OUTPUT
@@ -20,6 +21,7 @@ AS
 		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
 		20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
+		20220615@Patrick: Update code for DBBR Redmine: [#174024]
 
 	Param use:
 
@@ -44,7 +46,8 @@ BEGIN
 	Declare @FromBettrans money, 
 			@FromTransLog money, @FromBettransRNG money, @FromBettransLC money,
 			@FromAdjustmentTransfer money,
-			@FromTransfer money
+			@FromTransfer money,
+			@FromBetRunning money
 
 	--
 	-- Skip if Pending Found
@@ -66,9 +69,31 @@ BEGIN
 		-- Get/Compare Balance
 		--
 		DECLARE @__movebetdate SMALLDATETIME
+			, @__fromRepUpdateTime DATETIME2
+
+		SET @__fromRepUpdateTime = DATEADD(HOUR, -2, GETDATE()) --get data within 2 hours ==> need to review to select best value
 		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
 
 		__tryagain:
+
+		--getting data from BR
+		DECLARE @__betsRunningByCustId TABLE(BRID BIGINT, actual_stake MONEY)
+		INSERT INTO @__betsRunningByCustId(BRID, actual_stake)
+		SELECT BRID, actual_stake
+		FROM DBBR.bodb02.dbo.bettrans_running br WITH(NOLOCK)
+		WHERE custid = @custid AND RepUpdateTime >= @__fromRepUpdateTime
+
+		SELECT @FromBetRunning = SUM(-ISNULL(actual_stake, 0))
+		FROM @__betsRunningByCustId br
+			LEFT JOIN (
+				SELECT BRID
+				FROM dbo.bettrans WITH(NOLOCK)
+				WHERE custid = @custid
+					AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
+						 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
+						 ELSE 1 END
+			) b ON br.BRID = b.BRID
+		WHERE b.BRID IS NULL
 
 		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	
 		FROM dbo.bettrans with (rowlock) 
@@ -107,7 +132,7 @@ BEGIN
 		WHERE IsSum = 0 AND custid = @custid
 				
 		SELECT 
-			@DiffBalance = IsNull(@FromBettrans, 0) + IsNull(@FromTransfer, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) - IsNull(@FromAdjustmentTransfer, 0)
+			@DiffBalance = IsNull(@FromBettrans, 0) + ISNULL(@FromBetRunning, 0) + IsNull(@FromTransfer, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) - IsNull(@FromAdjustmentTransfer, 0)
 			- (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance)
 		FROM 
 			dbo.BalCreditTransfer cd1 WITH (ROWLOCK)
@@ -120,6 +145,17 @@ BEGIN
 			INNER JOIN dbo.BalDebitOthers db4 WITH (ROWLOCK) ON cd1.custid = db4.custid	
 		WHERE cd1.custid = @custid
 		
+		IF @DiffBalance <> ISNULL(@DiffBalanceInput, 0)
+		BEGIN
+			SET @result = 300 -->>balance amnt has changed
+			RETURN
+		END
+		ELSE IF ISNULL(@FromBetRunning, 0) <> 0
+		BEGIN
+			SET @result = 333 -->>having data in BR
+			RETURN
+		END
+
 		--
 		-- Take Action accordingly --> dont auto correct data
 		--

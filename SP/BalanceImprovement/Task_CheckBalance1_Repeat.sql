@@ -1,7 +1,7 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
 USE [bodb02]
 GO
-CREATE PROCEDURE [dbo].[Task_CheckBalance1_Repeat]
+ALTER PROCEDURE [dbo].[Task_CheckBalance1_Repeat]
 AS
 /*
 	Task: Compute/Compare balance vs BalanceTable for detected account
@@ -17,6 +17,7 @@ AS
 		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
 		20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
+		20220615@Patrick: Update code for DBBR Redmine: [#174024]
 	   
 	Param use:
 
@@ -137,31 +138,48 @@ BEGIN
 	ELSE IF EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE roundVerified >= 5)
 	BEGIN
 		PRINT 'Start FixOne'
-		Declare @i int, @maxRN int, @custid int, @roundVerified int, @DiffBalance money, @result int, @IsUUS bit
+		Declare @i int, @maxRN int, @custid int, @roundVerified int
+			, @DiffBalance money, @result int, @IsUUS bit
+			, @DiffBalanceInput money
 	
-		CREATE TABLE #c (RN int IDENTITY(1,1) PRIMARY KEY, custid int, roundVerified int)
-		INSERT INTO #c (custid, roundVerified) SELECT custid, roundVerified FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE roundVerified >= 5
+		CREATE TABLE #c (RN int IDENTITY(1,1) PRIMARY KEY, custid int, roundVerified int, diffBalance money)
+		INSERT INTO #c (custid, roundVerified, diffBalance) 
+		SELECT custid, roundVerified, DiffBalance
+		FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE roundVerified >= 5
+		
 		SELECT @maxRN = @@ROWCOUNT
 		SET @i = 1
 	
 		WHILE @i <= @maxRN
 		BEGIN
-			SELECT @custid = custid, @roundVerified = roundVerified FROM #c WHERE RN = @i
-			EXEC dbo.Task_CheckBalance1_FixOne @custid, @DiffBalance OUTPUT, @result OUTPUT, @IsUUS OUTPUT
-		
+			SELECT @custid = custid, @roundVerified = roundVerified, @DiffBalanceInput = diffBalance
+			FROM #c WHERE RN = @i
+			
+			EXEC dbo.Task_CheckBalance1_FixOne @custid = @custid
+				, @DiffBalanceInput = @DiffBalanceInput
+				, @DiffBalance = @DiffBalance OUTPUT
+				, @result = @result OUTPUT
+				, @IsUUS = @IsUUS OUTPUT
+
 			IF @result = 0
 			BEGIN
 				DELETE FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE custid = @custid
 
 				-- LOG
 				INSERT INTO dbo.Task_Cust_BalanceProblem1 (UserName, custid, DiffBalance, IsFixed, Remark)
-				SELECT
-					username, @custid, @DiffBalance, 1, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE @IsUUS WHEN 1 THEN ' UUS' ELSE '' END
-				FROM
-					CustDB.dbo.custInfo with (nolock)
-				WHERE
-					custid = @custid
+				SELECT username, @custid, @DiffBalance, 1, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE @IsUUS WHEN 1 THEN ' UUS' ELSE '' END
+				FROM CustDB.dbo.custInfo with (nolock)
+				WHERE custid = @custid
 
+			END
+			ELSE IF @result > 0 AND @roundVerified > 13 --wont fix
+			BEGIN
+				DELETE FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE custid = @custid
+
+				INSERT INTO dbo.Task_Cust_BalanceProblem1 (UserName, custid, DiffBalance, IsFixed, Remark)
+				SELECT username, @custid, @DiffBalance, 0, 'wont fix, roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE WHEN currency = 20 THEN ' UUS' ELSE '' END + ', errCode = ' + CAST(@result AS VARCHAR(50))
+				FROM CustDB.dbo.custInfo with (nolock)
+				WHERE custid = @custid
 			END
 		
 			SET @i = @i + 1

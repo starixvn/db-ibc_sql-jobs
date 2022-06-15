@@ -11,6 +11,7 @@ AS
 		- 20180326@Patrick: Changes bettype from 22026, 22027 to 22200, 22201
 		- 20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		- 20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
+		- 20220615@Patrick: Update code for DBBR Redmine: [#174024]
 
 	Param use:
 	Logic & Process:
@@ -109,11 +110,13 @@ BEGIN
 	ELSE IF EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1_Bonus WHERE roundVerified >= 5)
 	BEGIN
 		PRINT 'Start FixOne'
-		Declare @i int, @maxRN int, @custid int, @roundVerified int, @DiffBalance money, @bonusId int, @result int, @IsUUS bit
+		Declare @i int, @maxRN int, @custid int, @roundVerified int
+			, @DiffBalance money, @bonusId int, @result int, @IsUUS bit
+			, @diffBalanceInput money
 	
-		CREATE TABLE #c (RN int IDENTITY(1,1) PRIMARY KEY, custid int, bonusId int, roundVerified int)
-		INSERT INTO #c (custid, bonusId, roundVerified) 
-		SELECT custid, bonusId, roundVerified 
+		CREATE TABLE #c (RN int IDENTITY(1,1) PRIMARY KEY, custid int, bonusId int, roundVerified int, diffBalance money)
+		INSERT INTO #c (custid, bonusId, roundVerified, diffBalance) 
+		SELECT custid, bonusId, roundVerified, DiffBalance
 		FROM dbo.Task_Cust_CheckBalanceVerify1_Bonus WHERE roundVerified >= 5
 	
 		SELECT @maxRN = @@ROWCOUNT
@@ -121,8 +124,15 @@ BEGIN
 	
 		WHILE @i <= @maxRN
 		BEGIN
-			SELECT @custid = custid, @bonusId = bonusId, @roundVerified = roundVerified FROM #c WHERE RN = @i
-			EXEC dbo.Task_CheckBalance1_Bonus_FixOne @custid, @bonusId, @DiffBalance OUTPUT, @result OUTPUT, @IsUUS OUTPUT
+			SELECT @custid = custid, @bonusId = bonusId, @roundVerified = roundVerified, @diffBalanceInput = diffBalance 
+			FROM #c WHERE RN = @i
+			
+			EXEC dbo.Task_CheckBalance1_Bonus_FixOne @custid = @custid
+				, @bonusId = @bonusId
+				, @DiffBalanceInput = @DiffBalanceInput
+				, @DiffBalance = @DiffBalance OUTPUT
+				, @result = @result OUTPUT
+				, @IsUUS = @IsUUS OUTPUT
 		
 			IF @result = 0
 			BEGIN
@@ -134,6 +144,15 @@ BEGIN
 				FROM CustDB.dbo.custInfo with (nolock)
 				WHERE custid = @custid
 
+			END
+			ELSE IF @result > 0 AND @roundVerified > 13 --wont fix
+			BEGIN
+				DELETE FROM dbo.Task_Cust_CheckBalanceVerify1_Bonus WHERE custid = @custid
+
+				INSERT INTO dbo.Task_Cust_BalanceProblem1_Bonus (UserName, custid, DiffBalance, IsFixed, Remark)
+				SELECT username, @custid, @DiffBalance, 0, 'wont fix, roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE WHEN currency = 20 THEN ' UUS' ELSE '' END + ', errCode = ' + CAST(@result AS VARCHAR(50))
+				FROM CustDB.dbo.custInfo with (nolock)
+				WHERE custid = @custid
 			END
 		
 			SET @i = @i + 1
