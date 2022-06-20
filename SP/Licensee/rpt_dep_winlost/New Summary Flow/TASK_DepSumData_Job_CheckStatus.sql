@@ -19,6 +19,7 @@ AS
 		- 20220124@Sophia: Remove the code Gen data for Old Cashout [Redmine: #167928]
 		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
 		- 20220321@Percy: Enhance code check Opening Balance [RedmineID: #170118]
+		- 20220620@Sol: Enhance code to prevent arithmetic overflow [RedmineID: #174296]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -29,7 +30,7 @@ BEGIN
 
 	DECLARE @LogID BIGINT,
 			@FailedHour TINYINT,
-			@Count SMALLINT = 0,
+			@Count INT = 0,
 			@Date DATE,
 			@Subject VARCHAR(500) = '',
 			@ErrMsg VARCHAR(MAX) = '',
@@ -197,7 +198,7 @@ BEGIN
 		BEGIN
 			-- Get list of licensee
 			DECLARE @CustomerIDs VARCHAR(MAX)
-			SELECT	@CustomerIDs = COALESCE(@CustomerIDs + ',', '') + CONVERT(VARCHAR(10), CustID) FROM #Result
+			SELECT TOP 100 @CustomerIDs = COALESCE(@CustomerIDs + ',', '') + CONVERT(VARCHAR(10), CustID) FROM #Result
 
 			SELECT @ErrMsg = ''
 			SELECT @ErrMsg = 'Opening balances of ' + CONVERT(VARCHAR(20),@Count) +  ' real customer(s) ' 							 					 
