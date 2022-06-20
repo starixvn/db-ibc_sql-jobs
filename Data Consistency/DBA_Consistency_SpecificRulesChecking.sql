@@ -38,6 +38,7 @@ AS
 		- 20220413@July: Vgaming - Exclude bettype Hi-Lo(3844) - [Redmine:#171349]
 		- 20220608@July: Check Member Stake/WinLost consistent among tables BettransLC, bettransRNG and Bettrans for all related products - [Redmine:#173808]
 		- 20220608@July: Param @ProductId miss default NULL - [Redmine:#173808]
+		- 20220616@July: Check tickets before yesterday in dbo.bettrans - [Redmine:#173956]
 
 		Param's Expanation:
 */
@@ -123,7 +124,7 @@ BEGIN
 		,refno,playerdiscount,discount,sdiscount,adiscount,actual_stake
 	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
 	WHERE (b.matchid = @ProductId OR @tablename = 'bettransLC' OR @tablename = 'bettransRNG')
-			AND (winlostdate = @Today OR winlostdate = @yesterday)
+			AND (winlostdate <= @yesterday)
 
 	IF @ProductId IN (255, 244, 241)
 	BEGIN
