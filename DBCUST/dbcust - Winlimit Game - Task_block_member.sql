@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [dbcust - Winlimit Game - Task_block_member]    Script Date: 07/13/2016 09:08:33 ******/
+/****** Object:  Job [dbcust - Winlimit Game - Task_block_member]    Script Date: 6/20/2022 9:51:22 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]]    Script Date: 07/13/2016 09:08:33 ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 6/20/2022 9:51:22 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -25,34 +25,18 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'dbcust - Winlimit Game - Tas
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'dbateam', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [block member]    Script Date: 07/13/2016 09:08:33 ******/
+/****** Object:  Step [block member]    Script Date: 6/20/2022 9:51:22 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'block member', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
-		@on_success_action=3, 
+		@on_success_action=1, 
 		@on_success_step_id=0, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'exec dbo.Task_Winlimit_BlockedUser
-', 
-		@database_name=N'CustDB', 
-		@flags=0
-IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [delay 3 seconds]    Script Date: 07/13/2016 09:08:33 ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'delay 3 seconds', 
-		@step_id=2, 
-		@cmdexec_success_code=0, 
-		@on_success_action=4, 
-		@on_success_step_id=1, 
-		@on_fail_action=2, 
-		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
-		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'WAITFOR DELAY ''00:00:03.000''', 
+		@command=N'EXEC dbo.Task_CustSetting_JobManagement @Jobname = ''dbcust - Winlimit Game - Task_block_member''', 
 		@database_name=N'CustDB', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -79,7 +63,6 @@ GOTO EndSave
 QuitWithRollback:
     IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
 EndSave:
-
 GO
 
 
