@@ -328,7 +328,10 @@ BEGIN
 		FROM #tmpCustList cl
 			LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
 			LEFT JOIN CustList_Global_tmp t ON t.transid=cl.transid
-			LEFT JOIN CustList_Global2 gl ON gl.transid=cl.transid AND gl.transid<>t.transid
+			OUTER APPLY (SELECT gl.transid, gl.MaxStake_old, gl.isChangedGlobal, gl.UpdateTime_Global
+						 FROM CustList_Global2 gl
+						 WHERE gl.transid=cl.transid
+						 AND NOT EXISTS (SELECT 1 FROM CustList_Global_tmp t WHERE t.transid=gl.transid)) gl
 		WHERE SettingType IN (7,17) 
 			AND (sma.transid IS NOT NULL OR gl.transid IS NOT NULL OR t.transid IS NOT NULL)
 			AND NOT EXISTS (SELECT 1 FROM #returnTbl re WHERE re.transid=cl.transid)
