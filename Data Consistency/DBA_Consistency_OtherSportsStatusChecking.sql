@@ -16,6 +16,7 @@ AS
 		- 20191025@Helen: check kickofftime instead of transdate for Virtual Sport, Number Games, Happy 5 [Redmine:#122716]
 		- 20220222@July:  Apply for Saba.games - bettype 1651 (Hi-Lo) - [Redmine:#168804]
 		- 20220413@July:  Apply for Vgaming - bettype 3844 (Hi-Lo) - [Redmine:#171349]
+		- 20220620@July:  Apply for Virtual Sport 3 - [Redmine:#174264]
 
 	Param's Expanation:
 	Number Game: 161 ; bettype: 81 - 120
@@ -23,7 +24,8 @@ AS
 	Virtual Sport, Virtual Sport 2 - bettype: 180 - 199
 		VS: bettype 1201 AND 1299
 		VS2:bettype BETWEEN 2700 AND 2899
-	
+	Virtual Sport 3 : 231
+
 	VSoutright vs VSHorceRace	
 	181
 	182
@@ -37,17 +39,21 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @transId VARCHAR(MAX)
+	DECLARE @transId VARCHAR(MAX) = ''
 	DECLARE @date_compare DATETIME 
-	DECLARE @tblMatch TABLE (matchid INT, sporttype SMALLINT)
-	DECLARE @IsVS BIT = 0, @isNG BIT = 0, @IsHappy5 BIT = 0, @IsSaba BIT = 0, @IsVgaming BIT = 0
-	
-	DECLARE @date datetime
-	
+		   ,@date		  DATETIME
+
 	SET @date = CONVERT(VARCHAR(12), GETDATE(),101)
 	SET @date_compare = DATEADD (MI,-30,GETDATE())
-	
-	SET @transId = ''
+
+	DECLARE @IsVS		BIT = 0
+		  , @IsNG		BIT = 0
+		  , @IsHappy5	BIT = 0
+		  , @IsSaba		BIT = 0
+		  , @IsVgaming	BIT = 0
+
+	DECLARE @tblMatch TABLE (matchid INT, sporttype SMALLINT)
+	DECLARE @tmpTicket TABLE (transid BIGINT, sporttype SMALLINT)
 	
 	IF @tablename = 'bettrans'
 	BEGIN
@@ -55,7 +61,7 @@ BEGIN
 		SELECT matchid,m.sporttype
 		FROM bodb02.dbo.Match m WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.league l WITH (NOLOCK) ON l.leagueid = m.LeagueID AND l.isTest = 0
-		WHERE (m.Sporttype IN (161,164,180) OR m.sporttype BETWEEN 186 AND 199) 
+		WHERE (m.Sporttype IN (161,164,180,231) OR m.sporttype BETWEEN 186 AND 199) 
 				AND m.kickofftime < @date_compare
 				AND m.eventdate = @date
 		UNION ALL
@@ -66,47 +72,36 @@ BEGIN
 				AND o.EventTime < @date_compare
 				AND o.EventTime >= @date AND o.EventTime < DATEADD(d, 1, @date)
 
-		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		INSERT INTO @tmpTicket (sporttype, transid)
+		SELECT m.sporttype, b.transid
 		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		WHERE	b.bettype < 20000
-				AND b.statusID = 0
-				AND b.matchid IN (SELECT matchid FROM @tblMatch)
+				INNER JOIN @tblMatch m ON b.matchid = m.matchid
+		WHERE	b.bettype < 20000 AND b.statusID = 0
 	
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM @tmpTicket
+
 		IF @transId <> ''
 		BEGIN
-			SET @IsVS = (SELECT TOP 1 1 
-						FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-						WHERE	b.bettype < 20000
-							AND b.statusID = 0
-							AND b.matchid IN (SELECT matchid FROM @tblMatch WHERE sporttype BETWEEN 180 AND 199))
+			SET @IsVS = (SELECT TOP 1 1 FROM @tmpTicket WHERE (sporttype BETWEEN 180 AND 199) OR sporttype = 231)
 						
-			SET @isNG = (SELECT TOP 1 1 
-						FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-						WHERE	b.bettype < 20000
-							AND b.statusID = 0
-							AND b.matchid IN (SELECT matchid FROM @tblMatch WHERE sporttype = 161) )
+			SET @isNG = (SELECT TOP 1 1 FROM @tmpTicket WHERE sporttype = 161)
 							
-			SET @IsHappy5 = (SELECT TOP 1 1 
-						FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-						WHERE	b.bettype < 20000
-							AND b.statusID = 0
-							AND b.matchid IN (SELECT matchid FROM @tblMatch WHERE sporttype = 164) )								
+			SET @IsHappy5 = (SELECT TOP 1 1 FROM @tmpTicket WHERE sporttype = 164)
 		
 			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 					,@ErrCode = 100
-					,@ErrMsg = 'All today tickets running > 30 minutes must be settled on' + CASE WHEN @IsVS = 1 THEN  ' Virtual Sports' ELSE '' END
+					,@ErrMsg = 'All today tickets running > 30 minutes must be settled on' 
+								+ CASE WHEN @IsVS = 1 THEN  ' Virtual Sports' ELSE '' END
 								+ CASE WHEN @isNG = 1 THEN  ' Number Games' ELSE '' END
 								+ CASE WHEN @IsHappy5 = 1 THEN  ' Happy 5' ELSE '' END
 					,@SampleData = @tablename + '.TransId in (' + @transId + ')'
-		
 		END
-
 	END
 	ELSE IF @tablename = 'bettransRNG'
 	BEGIN
-		DECLARE @tblProductTicket TABLE (productID SMALLINT, transid BIGINT)
-		INSERT INTO @tblProductTicket (productID, transid)
-		SELECT b.productID, b.transid
+		INSERT INTO @tmpTicket (sporttype, transid)
+		SELECT b.productID AS sporttype, b.transid
 		FROM	bodb02.dbo.bettransRNG b WITH (NOLOCK)
 		WHERE	b.statusID = 0
 				AND b.productID IN (150,200,171,173)
@@ -114,17 +109,18 @@ BEGIN
 				AND b.transdate < @date_compare
 		
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-		FROM @tblProductTicket
+		FROM @tmpTicket
 
 		IF @transId <> ''
 		BEGIN
-			SET @IsSaba = (SELECT TOP 1 1 FROM @tblProductTicket WHERE productID IN (150,200))
+			SET @IsSaba = (SELECT TOP 1 1 FROM @tmpTicket WHERE sporttype IN (150,200))
 
-			SET @IsVgaming = (SELECT TOP 1 1 FROM @tblProductTicket WHERE productID IN (171,173))
+			SET @IsVgaming = (SELECT TOP 1 1 FROM @tmpTicket WHERE sporttype IN (171,173))
 
 			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 					,@ErrCode = 100
-					,@ErrMsg = 'All today tickets running > 30 minutes must be settled on' + CASE WHEN @IsSaba = 1 THEN  ' Saba.games' ELSE '' END
+					,@ErrMsg = 'All today tickets running > 30 minutes must be settled on' 
+								+ CASE WHEN @IsSaba = 1 THEN  ' Saba.games' ELSE '' END
 								+ CASE WHEN @IsVgaming = 1 THEN  ' Vgaming' ELSE '' END
 					,@SampleData = @tablename + '.TransId in (' + @transId + ')'
 		END
