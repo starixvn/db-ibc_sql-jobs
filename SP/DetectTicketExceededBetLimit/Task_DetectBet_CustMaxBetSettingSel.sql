@@ -269,6 +269,7 @@ BEGIN
 				, MAX(CASE	WHEN cre.StakeLevelID IS NOT NULL AND cl.isLicensee=0 THEN cre.MaxLabel
 							WHEN dep.StakeLevelID IS NOT NULL AND cl.isLicensee=1 THEN dep.MaxLabel
 						END) AS MaxStake_old
+				, ss.StakeLevelID
 			FROM CustList_Global1 clg
 				INNER JOIN #tmpCustList cl ON cl.transid=clg.transid
 				OUTER APPLY (SELECT CAST(value AS INT) AS StakeLevelID FROM STRING_SPLIT(clg.StakeLevelList,',')) ss
@@ -304,19 +305,32 @@ BEGIN
 				, CASE	WHEN cre.StakeLevelID IS NOT NULL AND cl.isLicensee=0 THEN cre.UpdateTime
 						WHEN dep.StakeLevelID IS NOT NULL AND cl.isLicensee=1 THEN dep.UpdateTime
 					END
+				, ss.StakeLevelID
+		),
+		CustList_Global_tmp AS (
+			SELECT gl.transid, MAX(gl.MaxStake_old) MaxStake_old
+			FROM CustList_Global2 gl
+				CROSS APPLY (SELECT gl2.transid, COUNT(DISTINCT gl2.StakeLevelID) AS cnt 
+							 FROM CustList_Global2 gl2 
+							 WHERE gl.transid=gl2.transid
+							 GROUP BY gl2.transid) gl2
+			WHERE gl2.cnt>1
+			GROUP BY gl.transid
 		)
 		INSERT INTO #returnTbl (custid, transid, SportType, BetType, MaxBet)
 		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
-			, CASE WHEN sma.UpdateTime_SMA IS NOT NULL AND gl.isChangedGlobal=0			THEN sma.MaxBet
+			, CASE WHEN t.transid IS NOT NULL											THEN t.MaxStake_old
+				   WHEN sma.UpdateTime_SMA IS NOT NULL AND gl.isChangedGlobal=0			THEN gl.MaxStake_Old
 				   WHEN sma.UpdateTime_SMA IS NULL										THEN gl.MaxStake_Old
 				   WHEN sma.UpdateTime_SMA<gl.UpdateTime_Global	AND isChangedGlobal=1	THEN sma.MaxBet
 				   WHEN sma.UpdateTime_SMA>gl.UpdateTime_Global							THEN gl.MaxStake_Old
 			END MaxBet
 		FROM #tmpCustList cl
 			LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
-			LEFT JOIN CustList_Global2 gl ON gl.transid=cl.transid 
+			LEFT JOIN CustList_Global_tmp t ON t.transid=cl.transid
+			LEFT JOIN CustList_Global2 gl ON gl.transid=cl.transid AND gl.transid<>t.transid
 		WHERE SettingType IN (7,17) 
-			AND (sma.transid IS NOT NULL OR gl.transid IS NOT NULL)
+			AND (sma.transid IS NOT NULL OR gl.transid IS NOT NULL OR t.transid IS NOT NULL)
 			AND NOT EXISTS (SELECT 1 FROM #returnTbl re WHERE re.transid=cl.transid)
 
 		DELETE #tmpCustList WHERE SettingType IN (7,17)
