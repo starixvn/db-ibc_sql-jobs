@@ -39,7 +39,7 @@ AS
 		- 20220608@July: Check Member Stake/WinLost consistent among tables BettransLC, bettransRNG and Bettrans for all related products - [Redmine:#173808]
 		- 20220608@July: Param @ProductId miss default NULL - [Redmine:#173808]
 		- 20220616@July: Check tickets before yesterday in dbo.bettrans - [Redmine:#173956]
-		- 20220620@July: Check tickets before yesterday in bettrans/bettransLC/bettransRNG & Remove code for Poker Games(163) product - [Redmine:#174264]
+		- 20220620@July: Check tickets before yesterday in bettrans/bettransLC/bettransRNG & Remove code for Poker Games(163), GoldDeluxe(255) product - [Redmine:#174264]
 
 		Param's Expanation:
 */
@@ -128,7 +128,7 @@ BEGIN
 				   WHEN winlostdate <= @yesterday AND (@tablename = 'bettransLC' OR @tablename = 'bettransRNG') THEN 1
 				   ELSE 0 END
 
-	IF @ProductId IN (255, 244, 241)
+	IF @ProductId IN (244, 241)
 	BEGIN
 		INSERT INTO #tmpBettransG(custid,refno, stake, winlost)
 		SELECT	custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
@@ -158,65 +158,6 @@ BEGIN
 		GROUP BY custid, refno
 	END
 			
-	IF @ProductId = 255
-	BEGIN
-		IF @Rule = 'oddsspread'
-		BEGIN
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM	#tmpBettrans
-			WHERE	1 = CASE WHEN oddsspread < 0 THEN 1
-							 WHEN oddsspread > stake THEN 1
-							 ELSE 0 END
-							 
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong oddsspread value on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-
-				RETURN
-			END
-		END
-		
-		IF @Rule = 'winlost'
-		BEGIN
-			
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(bt.transid AS VARCHAR)
-			FROM	#tmpBettrans bt
-				INNER HASH JOIN #tmpBettransG btg ON bt.transId = btg.refno AND bt.winlost <> btg.winlost	
-			WHERE bt.statusId NOT IN (101,102,103)
-							 
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong winlost value between bettrans and bettransG on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-
-				RETURN
-			END
-		END
-		IF @Rule = 'stake'
-		BEGIN
-			
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(bt.transid AS VARCHAR)
-			FROM	#tmpBettrans bt
-				INNER HASH JOIN #tmpBettransG btg ON bt.transId = btg.refno AND bt.stake <> btg.stake
-			WHERE bt.statusId NOT IN (101,102,103)  
-							 
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong stake value between bettrans and bettransG on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-
-				RETURN
-			END
-		END
-	END
-	
 	IF @ProductId = 211
 	BEGIN
 		IF @Rule = 'VipBaccarat_2402'
