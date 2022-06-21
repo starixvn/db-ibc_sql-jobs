@@ -15,7 +15,7 @@ AS
 BEGIN;
 	SET NOCOUNT ON;
 
-	CREATE TABLE #tmp_TransId (TransId BIGINT, Username NVARCHAR(100), site VARCHAR(100), Product VARCHAR(100), stake MONEY, MaxBet Money, game VARCHAR(100), Remark NVARCHAR(256))
+	CREATE TABLE #tmp_TransId (TransId BIGINT, Username NVARCHAR(100), site VARCHAR(100), Product VARCHAR(100), stake MONEY, MaxBet Money, game VARCHAR(100), Remark VARCHAR(100))
 
 	DECLARE @procName NVARCHAR(50)
 		, @IsTest BIT =  0
@@ -41,7 +41,7 @@ BEGIN;
 		, ISNULL(t.MaxBet, 0) AS SettingValue
 		, t.Stake AS ViolateStake
 		, t.TransID AS RefNo
-		, CASE WHEN t.Remark = 1 THEN 'BuyBonus' ELSE t.Remark END AS Remark
+		, CASE WHEN t.Remark = '1' THEN 'BuyBonus' ELSE t.Remark END AS Remark
 	FROM dbo.CustMaxBet_Invalid t WITH (NOLOCK)
 		INNER JOIN dbo.bettype bt WITH (NOLOCK) ON bt.typeid = t.BetType
 		INNER JOIN dbo.Sports s with (NOLOCK) ON s.SportType = t.SportType
@@ -131,7 +131,7 @@ BEGIN;
 
 		EXECUTE	msdb.dbo.sp_send_dbmail
 					@profile_name			= DEFAULT
-				,	@recipients				= 'max.tran@starixvn.com;benji.duong@starixvn.com'
+				,	@recipients				= 'max.tran@starixvn.com;benji.duong@starixvn.com;roshan.nguyen@starixvn.com;jenny.phan@starixvn.com'
 				,	@copy_recipients		= ''
 				,	@blind_copy_recipients	= ''
 				,	@subject				= @subject

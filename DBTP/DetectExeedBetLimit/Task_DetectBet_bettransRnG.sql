@@ -34,7 +34,7 @@ BEGIN
 
 	INSERT INTO #tmp_TransId (TransId, CustId, Username, sporttype, bettype, stake, srecommend, recommend, isLive, transdate, Remark)
 	SELECT TOP(@batchCount) b.transid, b.custid, b.Username, b.productID, b.gameID, b.stake, b.srecommend, b.recommend, 0, b.transdate
-		, CASE WHEN bt.typedesc = 'BuyBonus' THEN 1 ELSE NULL END
+		, CASE WHEN bt.typedesc = 'BuyBonus' THEN '1' ELSE NULL END
 	FROM dbo.bettransRnG b WITH (NOLOCK)
 		INNER JOIN dbo.bettype bt WITH (NOLOCK) ON bt.typeid = b.gameID
 	WHERE b.transid > @maxTransId_setting
