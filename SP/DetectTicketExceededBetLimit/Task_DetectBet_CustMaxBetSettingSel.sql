@@ -39,6 +39,7 @@ BEGIN
 			custid				INT
 		,	SportType			SMALLINT
 		,	BetType				INT
+		,	GameTypeId			INT
 		,	transid				BIGINT
 		,	transdate			DATETIME
 		,	srecommend			INT
@@ -110,15 +111,15 @@ BEGIN
 	FROM #tmpCustList tc
 		LEFT JOIN Dep_CustSuper dep WITH (NOLOCK) ON dep.custid=tc.srecommend
 
-	--Get: SportTypeBetSetting, BetTypeBetSetting, SettingType
+	--Get: SportTypeBetSetting, BetTypeBetSetting, SettingType, GameTypeId
 	--Credit
-	UPDATE cl 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting	, cl.BetTypeRef=ref.BetTypeRefBetSetting	, cl.BetType=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END	, cl.SettingType=ps.SettingType	FROM #tmpCustList cl		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)				ON	ref.Sporttype	= cl.sporttype 				AND ref.Bettype		= cl.bettype				AND ref.isLicensee	= cl.isLicensee				AND ref.isLive		= cl.isLive		INNER JOIN ProductSettingDetail ps 				ON ps.SportType=ref.SportTypeRefBetSetting				AND ps.BetType=ref.BetTypeRefBetSetting	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0
+	UPDATE cl 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting	, cl.BetTypeRef=ref.BetTypeRefBetSetting	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END	, cl.SettingType=ps.SettingType	FROM #tmpCustList cl		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)				ON	ref.Sporttype	= cl.sporttype 				AND ref.Bettype		= cl.bettype				AND ref.isLicensee	= cl.isLicensee				AND ref.isLive		= cl.isLive		INNER JOIN ProductSettingDetail ps 				ON ps.SportType=ref.SportTypeRefBetSetting				AND ps.BetType=ref.BetTypeRefBetSetting	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0
 
 	--Deposit
 	UPDATE cl 
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
-	, cl.BetType=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END	, cl.SettingType=ps.SettingType
+	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END	, cl.SettingType=ps.SettingType
 	FROM #tmpCustList cl
 		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
 				ON	ref.Sporttype	= cl.sporttype 
@@ -413,7 +414,7 @@ BEGIN
 											, UpdateTime
 								 FROM StakeLevelGroupDetail_History stg WITH (NOLOCK) 
 								 WHERE stg.StakeLevelID = clg.StakeLevelList
-									AND stg.GameTypeID=cl.BetType
+									AND stg.GameTypeID=cl.GameTypeId
 									AND stg.UpdateTime>cl.transdate
 								UNION ALL
 								SELECT TOP (1) StakeLevelID
@@ -421,7 +422,7 @@ BEGIN
 											, GETDATE() AS UpdateTime
 								 FROM StakeLevelGroupDetail stgc WITH (NOLOCK) 
 								 WHERE stgc.StakeLevelID = clg.StakeLevelList
-									AND stgc.GameTypeID=cl.BetType
+									AND stgc.GameTypeID=cl.GameTypeId
 								) a
 								ORDER BY UpdateTime
 							) cre
@@ -433,7 +434,7 @@ BEGIN
 											, UpdateTime
 								 FROM Dep_StakeLevelGroupDetail_History dstg WITH (NOLOCK) 
 								 WHERE dstg.StakeLevelID = clg.StakeLevelList
-									AND dstg.GameTypeID=cl.BetType
+									AND dstg.GameTypeID=cl.GameTypeId
 									AND dstg.UpdateTime>cl.transdate
 								UNION ALL
 								SELECT TOP (1) StakeLevelID
@@ -441,7 +442,7 @@ BEGIN
 											, GETDATE() AS UpdateTime
 								 FROM Dep_StakeLevelGroupDetail dstgc WITH (NOLOCK) 
 								 WHERE dstgc.StakeLevelID = clg.StakeLevelList
-									AND dstgc.GameTypeID=cl.BetType
+									AND dstgc.GameTypeID=cl.GameTypeId
 								) a
 								ORDER BY UpdateTime
 							) dep
