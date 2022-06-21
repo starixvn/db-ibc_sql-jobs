@@ -58,6 +58,7 @@ BEGIN
 				FROM dbo.translog b WITH (NOLOCK)
 				WHERE b.Gameid3rd= c.Gameid3rd
 		)t
+	WHERE c.sporttype IN (245)
 	---------------------
 
 	SET @maxTransId = (SELECT MAX(TransId) FROM #tmp_TransId)
