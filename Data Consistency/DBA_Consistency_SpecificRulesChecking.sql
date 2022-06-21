@@ -358,8 +358,10 @@ BEGIN
 		END
 	END
 
-	--Rule #3, #16 for Virtual Games, Table Games, Saba.club, Saba.club Free Bets, VGaming, VGaming Free Bets
-	IF @ProductId IN (245, 222, 200, 150, 171, 173)
+	/* Rule #18: Check settled tickets in translog but not having in bettrans
+			for Virtual Games, Table Games, Sports Lottery
+	*/
+	IF @ProductId IN (245, 222, 169)
 	BEGIN
 		IF @Rule = 'translog'
 		BEGIN
@@ -380,6 +382,13 @@ BEGIN
 				RETURN
 			END
 		END
+	END
+
+	/* Rule #3: Check if no discount, no comm (apply to product non-offer comm)
+			for Virtual Games, Table Games, Sports Lottery, Saba.club, Saba.club Free Bets, VGaming, VGaming Free Bets, FGG, Keno, Lottery, Funky Games, Macau Games, PP, PG Soft, SG, Arcadia Gaming, Joker, MaxGame, Habanero, CG, AdvantPlay, AdvantPlay Mini, Virtual Sports, Virtual Sports 2, Virtual Sports 3
+	*/
+	IF @ProductId IN (245, 222, 169, 200, 150, 171, 173, 176, 202, 220, 224, 212, 248, 232, 247, 165, 234, 237, 238, 167, 172, 174, 180, 181, 182, 183, 184, 185, 186, 190, 191, 192, 193, 194, 195, 196, 197, 231)
+	BEGIN
 		IF @Rule = 'no_discount_comm'
 		BEGIN
 			
