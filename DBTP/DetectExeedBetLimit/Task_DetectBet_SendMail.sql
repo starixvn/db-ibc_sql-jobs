@@ -15,7 +15,7 @@ AS
 BEGIN;
 	SET NOCOUNT ON;
 
-	CREATE TABLE #tmp_TransId (TransId BIGINT, Username NVARCHAR(100), site VARCHAR(100), Product VARCHAR(100), stake MONEY, MaxBet Money, game VARCHAR(100), Remark VARCHAR(100))
+	CREATE TABLE #tmp_TransId (TransId BIGINT, Username NVARCHAR(100), site VARCHAR(100), Product VARCHAR(100), stake VARCHAR(50), MaxBet VARCHAR(50), game VARCHAR(100), Remark VARCHAR(100))
 
 	DECLARE @procName NVARCHAR(50)
 		, @IsTest BIT =  0
@@ -38,8 +38,8 @@ BEGIN;
 		, c.site
 		, s.SportName AS Product
 		, bt.typenamee AS Game
-		, ISNULL(t.MaxBet, 0) AS SettingValue
-		, t.Stake AS ViolateStake
+		, CASE WHEN t.MaxBet IS NULL THEN 'Not assigned' ELSE CONVERT(VARCHAR(50), t.MaxBet) END
+		, CONVERT(VARCHAR(50), t.stake)
 		, t.TransID AS RefNo
 		, CASE WHEN t.Remark = '1' THEN 'BuyBonus' ELSE t.Remark END AS Remark
 	FROM dbo.CustMaxBet_Invalid t WITH (NOLOCK)
@@ -104,8 +104,8 @@ BEGIN;
 											,	NULL, [td]	= t.site
 											,	NULL, [td]	= t.Product
 											,	NULL, [td]	= t.game
-											,	NULL, [td]	= CONVERT(VARCHAR(50), t.MaxBet)
-											,	NULL, [td]	= CONVERT(VARCHAR(50), t.stake)
+											,	NULL, [td]	= t.MaxBet
+											,	NULL, [td]	= t.stake
 											,	NULL, [td]	= CONVERT(VARCHAR(50), t.TransId)
 											,	NULL, [td]	= ISNULL(t.Remark, '')
 										FROM	#tmp_TransId AS t 

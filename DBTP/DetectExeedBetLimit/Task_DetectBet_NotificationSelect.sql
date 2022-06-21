@@ -30,7 +30,7 @@ BEGIN
 		, c.site
 		, s.SportName AS Product
 		, bt.typenamee AS Game
-		, t.MaxBet AS SettingValue
+		, CASE WHEN t.MaxBet IS NULL THEN 'Not assigned' ELSE CONVERT(VARCHAR(50), t.MaxBet) END AS SettingValue
 		, t.Stake AS ViolateStake
 		, t.TransID AS RefNo
 		, c.custid

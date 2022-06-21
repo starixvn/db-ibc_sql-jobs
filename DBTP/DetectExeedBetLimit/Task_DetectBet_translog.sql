@@ -82,7 +82,11 @@ BEGIN
 	INSERT INTO dbo.CustMaxBet_Invalid (TransID, CustID, SportType, BetType, MaxBet, Stake, Remark)
 	SELECT t1.TransId, t1.CustId, t1.sporttype, t1.bettype, t2.MaxBet, t1.stake, t1.Gameid3rd
 	FROM #tmp_TransId t1
-		INNER JOIN #tmp_TransId_MaxBet t2 ON t2.TransId = t1.TransId
+		OUTER APPLY(
+			SELECT t2.MaxBet
+			FROM #tmp_TransId_MaxBet t2 
+			WHERE t2.TransId = t1.TransId
+		)t2
 	WHERE t1.stake > ISNULL(t2.MaxBet,0)
 
 	DROP TABLE #tmp_TransId
