@@ -73,12 +73,12 @@ BEGIN
 				AND o.EventTime >= @date AND o.EventTime < DATEADD(d, 1, @date)
 
 		INSERT INTO @tmpTicket (sporttype, transid)
-		SELECT m.sporttype, b.transid
+		SELECT TOP (100) m.sporttype, b.transid
 		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
 				INNER JOIN @tblMatch m ON b.matchid = m.matchid
 		WHERE	b.bettype < 20000 AND b.statusID = 0
 	
-		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		SELECT @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM @tmpTicket
 
 		IF @transId <> ''
@@ -101,14 +101,14 @@ BEGIN
 	ELSE IF @tablename = 'bettransRNG'
 	BEGIN
 		INSERT INTO @tmpTicket (sporttype, transid)
-		SELECT b.productID AS sporttype, b.transid
+		SELECT TOP (100) b.productID AS sporttype, b.transid
 		FROM	bodb02.dbo.bettransRNG b WITH (NOLOCK)
 		WHERE	b.statusID = 0
 				AND b.productID IN (150,200,171,173)
 				AND b.GameID IN (1651,3844)
 				AND b.transdate < @date_compare
 		
-		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		SELECT @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM @tmpTicket
 
 		IF @transId <> ''
