@@ -4,7 +4,7 @@ ALTER PROCEDURE [dbo].[Task_DetectBet_SyncBetSettingHistory]
 AS
 /*
 	Created: 20220512@Tacy
-	Task : Sync history of bet setting from DBCUST.CustDB to DBTP.bodb02
+	Task : Sync history of bet setting from DBcust.CustDB to DBTP.bodb02
 	DB: DBTP/bodb02
 	Original:
 
@@ -17,10 +17,10 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @UpdateTime		DATETIME, 
-			@batch			INT=5000,
-			@History_List	VARCHAR(MAX)=NULL
-	
+	DECLARE @UpdateTime DATETIME
+
+	SET @UpdateTime = GETDATE()
+
 	CREATE TABLE #tmpBetSetting_History (
 			CustID			INT
 		,	SportType		SMALLINT
@@ -41,214 +41,127 @@ BEGIN
 		,	UpdateTime		DATETIME
 	)
 
-	SET @UpdateTime = GETDATE()
-
 	--History: SMA update member bet setting
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK))
+	IF EXISTS (SELECT 1 FROM DBCust.CustDB.dbo.CustMaxBetSetting_History)
 	BEGIN
-		-- to avoid page split
-		;WITH CTE AS ( 
-			SELECT TOP (@batch) CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
-			FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK)
-		),
-		CTE1 AS (
-			SELECT  CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime,
-				ROW_NUMBER() OVER (PARTITION BY CustID, SportType, BetType, UpdateTime ORDER BY (SELECT NULL)) AS N
-			FROM CTE
-		)
 		INSERT INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-		SELECT  CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
-		FROM CTE1
-		WHERE N=1
-
-		INSERT INTO CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
 		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
-		FROM #tmpBetSetting_History
+		FROM DBCust.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK)
 
-		SET @History_List = (SELECT	CustID				AS '@c',
-									SportType			AS '@s',
-									BetType				AS '@b',
-									UpdateTime			AS '@u'
-							FROM #tmpBetSetting_History
-							FOR XML PATH('r'), ROOT ('root')
-							)
+		INSERT INTO dbo.CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
+		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
+		FROM #tmpBetSetting_History 
 
-		--Delete data - DBCUST.CustDB
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @Mode=1, @History_List=@History_List
+		DELETE cbsh
+		FROM DBCust.CustDB.dbo.CustMaxBetSetting_History cbsh WITH (ROWLOCK)
+			INNER JOIN #tmpBetSetting_History t 
+				ON	t.CustID	= cbsh.CustID
+				AND t.SportType	= cbsh.SportType
+				AND t.BetType	= cbsh.BetType
+				AND t.UpdateTime= cbsh.UpdateTime
 
 		TRUNCATE TABLE #tmpBetSetting_History
 	END
 
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK))
+	IF EXISTS (SELECT 1 FROM DBCust.CustDB.dbo.Dep_CustMaxBetSetting_History)
 	BEGIN
-		-- to avoid page split
-		;WITH CTE AS (
-			SELECT TOP (@batch) CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
-			FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK)
-		),
-		CTE1 AS (
-			SELECT  CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime,
-				ROW_NUMBER() OVER (PARTITION BY CustID, SportType, BetType, UpdateTime ORDER BY (SELECT NULL)) AS N
-			FROM CTE
-		)
 		INSERT INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-		SELECT  CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
-		FROM CTE1
-		WHERE N=1
-
-		INSERT INTO Dep_CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
 		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
-		FROM #tmpBetSetting_History
+		FROM DBCust.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK)
 
-		SET @History_List = (SELECT	CustID				AS '@c',
-									SportType			AS '@s',
-									BetType				AS '@b',
-									UpdateTime			AS '@u'
-							FROM #tmpBetSetting_History
-							FOR XML PATH('r'), ROOT ('root')
-							)
+		INSERT INTO dbo.Dep_CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
+		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
+		FROM #tmpBetSetting_History 
 
-		--Delete data - DBCUST.CustDB
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @Mode=2, @History_List=@History_List
-
+		DELETE cbsh
+		FROM DBCust.CustDB.dbo.Dep_CustMaxBetSetting_History cbsh WITH (ROWLOCK)
+			INNER JOIN #tmpBetSetting_History t 
+				ON	t.CustID	= cbsh.CustID
+				AND t.SportType	= cbsh.SportType
+				AND t.BetType	= cbsh.BetType
+				AND t.UpdateTime= cbsh.UpdateTime
+		
 		TRUNCATE TABLE #tmpBetSetting_History
 	END
 
 	--History: update global bet setting
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK))
+	IF EXISTS (SELECT 1 FROM DBCust.CustDB.dbo.StakeLevel_History)
 	BEGIN
-		-- to avoid page split
-		;WITH CTE AS (
-			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
-			FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK)
-		),
-		CTE1 AS (
-			SELECT  StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime,
-					ROW_NUMBER() OVER (PARTITION BY StakeLevelID, UpdateTime ORDER BY (SELECT NULL)) AS N
-			FROM CTE
-		)
 		INSERT INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
-		SELECT  StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
-		FROM CTE1
-		WHERE N=1
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
+		FROM DBCust.CustDB.dbo.StakeLevel_History WITH (NOLOCK)
 
-		INSERT INTO StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
+		INSERT INTO dbo.StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
 		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
 		FROM #tmpStakeLevel_History
 
-		SET @History_List = (SELECT	StakeLevelID	AS '@sl',
-									UpdateTime		AS '@u'
-							FROM #tmpStakeLevel_History
-							FOR XML PATH('r'), ROOT ('root')
-							)
-
-		--Delete data - DBCUST.CustDB
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @Mode=3, @History_List=@History_List
+		DELETE cslh
+		FROM DBCust.CustDB.dbo.StakeLevel_History cslh WITH (ROWLOCK)
+			INNER JOIN #tmpStakeLevel_History t 
+				ON	t.StakeLevelID	= cslh.StakeLevelID
+				AND t.UpdateTime	= cslh.UpdateTime
 
 		TRUNCATE TABLE #tmpStakeLevel_History
-	
 	END
 
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK))
+	IF EXISTS (SELECT 1 FROM DBCust.CustDB.dbo.Dep_StakeLevel_History)
 	BEGIN
-		-- to avoid page split
-		;WITH CTE AS (
-			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
-			FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK)
-		),
-		CTE1 AS (
-			SELECT  StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime,
-					ROW_NUMBER() OVER (PARTITION BY StakeLevelID, UpdateTime ORDER BY (SELECT NULL)) AS N
-			FROM CTE
-		)
 		INSERT INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
-		SELECT  StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
-		FROM CTE1
-		WHERE N=1
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
+		FROM DBCust.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK)
 
-		INSERT INTO Dep_StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
+		INSERT INTO dbo.Dep_StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
 		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
 		FROM #tmpStakeLevel_History
 
-		SET @History_List = (SELECT	StakeLevelID	AS '@sl',
-									UpdateTime		AS '@u'
-							FROM #tmpStakeLevel_History
-							FOR XML PATH('r'), ROOT ('root')
-							)
-
-		--Delete data - DBCUST.CustDB
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @Mode=4, @History_List=@History_List
-
+		DELETE cslh
+		FROM DBCust.CustDB.dbo.Dep_StakeLevel_History cslh WITH (ROWLOCK)
+			INNER JOIN #tmpStakeLevel_History t 
+				ON	t.StakeLevelID	= cslh.StakeLevelID
+				AND t.UpdateTime	= cslh.UpdateTime
+		
 		TRUNCATE TABLE #tmpStakeLevel_History
 	END
 
 	----------------------------------------------------------------------------------------------------------
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK))
+	IF EXISTS (SELECT 1 FROM DBCust.CustDB.dbo.StakeLevelGroupDetail_History)
 	BEGIN
-		-- to avoid page split
-		;WITH CTE AS (
-			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
-			FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK)
-		),
-		CTE1 AS (
-			SELECT  StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime,
-					ROW_NUMBER() OVER (PARTITION BY StakeLevelID, GameTypeID, UpdateTime ORDER BY (SELECT NULL)) AS N
-			FROM CTE
-		)
 		INSERT INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-		SELECT  StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
-		FROM CTE1
-		WHERE N=1
-
-		INSERT INTO StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
 		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
+		FROM DBCust.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK)
+
+		INSERT INTO dbo.StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake , UpdateTime
 		FROM #tmpStakeLevel_History
 
-		SET @History_List = (SELECT	StakeLevelID	AS '@sl',
-									GameTypeID		AS '@gt',
-									UpdateTime		AS '@u'
-							FROM #tmpStakeLevel_History
-							FOR XML PATH('r'), ROOT ('root')
-							)
-
-		--Delete data - DBCUST.CustDB
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @Mode=5, @History_List=@History_List
-
+		DELETE cslgh
+		FROM DBCust.CustDB.dbo.StakeLevelGroupDetail_History cslgh WITH (ROWLOCK)
+			INNER JOIN #tmpStakeLevel_History t 
+				ON	t.StakeLevelID	= cslgh.StakeLevelID
+				AND t.GameTypeID	= cslgh.GameTypeID
+				AND t.UpdateTime	= cslgh.UpdateTime
+		
 		TRUNCATE TABLE #tmpStakeLevel_History
 	END
 
 
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK))
+	IF EXISTS (SELECT 1 FROM DBCust.CustDB.dbo.Dep_StakeLevelGroupDetail_History)
 	BEGIN
-		-- to avoid page split
-		;WITH CTE AS (
-			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
-			FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK)
-		),
-		CTE1 AS (
-			SELECT  StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime,
-					ROW_NUMBER() OVER (PARTITION BY StakeLevelID, GameTypeID, UpdateTime ORDER BY (SELECT NULL)) AS N
-			FROM CTE
-		)
 		INSERT INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-		SELECT  StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
-		FROM CTE1
-		WHERE N=1
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
+		FROM DBCust.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK)
 
-		INSERT INTO Dep_StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
+		INSERT INTO dbo.Dep_StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
 		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 		FROM #tmpStakeLevel_History
 
-		SET @History_List = (SELECT	StakeLevelID	AS '@sl',
-									GameTypeID		AS '@gt',
-									UpdateTime		AS '@u'
-							FROM #tmpStakeLevel_History
-							FOR XML PATH('r'), ROOT ('root')
-							)
-
-		--Delete data - DBCUST.CustDB
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @Mode=6, @History_List=@History_List
-
+		DELETE cslgh
+		FROM DBCust.CustDB.dbo.Dep_StakeLevelGroupDetail_History cslgh WITH (ROWLOCK)
+			INNER JOIN #tmpStakeLevel_History t 
+				ON	t.StakeLevelID	= cslgh.StakeLevelID
+				AND t.GameTypeID	= cslgh.GameTypeID
+				AND t.UpdateTime	= cslgh.UpdateTime
+		
 		TRUNCATE TABLE #tmpStakeLevel_History
 	END
 
@@ -261,3 +174,4 @@ BEGIN
 	DROP TABLE #tmpBetSetting_History
 	DROP TABLE #tmpStakeLevel_History
 END
+GO
