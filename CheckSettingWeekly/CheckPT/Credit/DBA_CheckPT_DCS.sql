@@ -22,6 +22,7 @@ AS
 		- 20200820@Johnson: add new settingtype = 18 for PT [redmine:#140011]
 		- 20201211@Winfred: Change data type for PT [redmine:#140011]
 		- 20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 		
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
@@ -69,6 +70,11 @@ BEGIN
 	CREATE TABLE #SuperPT_NotSynced (CustID INT, sporttype SMALLINT, bettype SMALLINT, IsLive BIT)
 	
 	CREATE TABLE #DirectMaster (CustID INT)
+
+	CREATE TABLE #MemberMissSetting (custid INT)
+	CREATE TABLE #AgentMissSetting (custid INT)
+	CREATE TABLE #MasterMissSetting (custid INT)
+	CREATE TABLE #SuperMissSetting (custid INT)
 	
 	DECLARE @isDummySuper BIT = 0
 	
@@ -355,26 +361,26 @@ BEGIN
 	WHERE SportType = CASE WHEN @SportType = 0 then SportType  ELSE @SportType END 
 		AND SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSettingDCS')) 
 
+	INSERT INTO #MemberMissSetting
 	SELECT custid
-	INTO #MemberMissSetting
 	FROM (SELECT custid FROM #MemberPT UNION ALL SELECT custid FROM #MemberPT_NotSynced) cs
 	GROUP BY CustID
 	HAVING COUNT(1)<@RowCount
 
+	INSERT INTO #AgentMissSetting
 	SELECT custid	
-	INTO #AgentMissSetting
 	FROM (SELECT custid FROM #AgentPT UNION ALL SELECT custid FROM #AgentPT_NotSynced) cs
 	GROUP BY CustID
 	HAVING COUNT(1)<@RowCount
 
+	INSERT INTO #MasterMissSetting
 	SELECT custid
-	INTO #MasterMissSetting
 	FROM (SELECT custid FROM #MasterPT UNION ALL SELECT custid FROM #MasterPT_NotSynced) cs
 	GROUP BY CustID
 	HAVING COUNT(1)<@RowCount
 
+	INSERT INTO #SuperMissSetting
 	SELECT custid
-	INTO #SuperMissSetting
 	FROM (SELECT custid FROM #SuperPT UNION ALL SELECT custid FROM #SuperPT_NotSynced) cs
 	GROUP BY CustID
 	HAVING COUNT(1)<@RowCount
