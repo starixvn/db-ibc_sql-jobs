@@ -1,3 +1,13 @@
+/*<info serverAlias="DBTP-msdb" executers="" selectors="" viewers="" isFunction="0" isNested="0"></info>*/
+/* 
+	Created:20220324@Louisa
+    Task: 
+    DB: DBTP/msdb
+	
+	Revisions:
+		- 20220512@Tacy: Sync history of bet setting [Redmine:#170739]
+*/
+
 USE [msdb]
 GO
 
