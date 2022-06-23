@@ -39,6 +39,7 @@ AS
 		- 20220608@July: Check Member Stake/WinLost consistent among tables BettransLC, bettransRNG and Bettrans for all related products - [Redmine:#173808]
 		- 20220608@July: Param @ProductId miss default NULL - [Redmine:#173808]
 		- 20220616@July: Check tickets before yesterday in dbo.bettrans - [Redmine:#173956]
+		- 20220620@July: Check tickets before yesterday in bettrans/bettransLC/bettransRNG & Remove code for Poker Games(163), GoldDeluxe(255) product - [Redmine:#174264]
 
 		Param's Expanation:
 */
@@ -122,17 +123,17 @@ BEGIN
 		,scomm, acomm, comm, playercomm
 		,modds, bettype, statusId, transid2, hdp2, stake,winlost,custid,srecommend,winlostdate,currency
 		,refno,playerdiscount,discount,sdiscount,adiscount,actual_stake
-	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-	WHERE (b.matchid = @ProductId OR @tablename = 'bettransLC' OR @tablename = 'bettransRNG')
-			AND (winlostdate <= @yesterday)
+	FROM	bodb02.dbo.bettrans WITH (NOLOCK)
+	WHERE 1 = CASE WHEN matchid = @ProductId THEN 1 
+				   WHEN winlostdate <= @yesterday AND (@tablename = 'bettransLC' OR @tablename = 'bettransRNG') THEN 1
+				   ELSE 0 END
 
-	IF @ProductId IN (255, 244, 241)
+	IF @ProductId IN (244, 241)
 	BEGIN
 		INSERT INTO #tmpBettransG(custid,refno, stake, winlost)
 		SELECT	custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
 		FROM	bodb02.dbo.bettransG b WITH (NOLOCK)
 		WHERE b.matchid = @ProductId
-			AND (winlostdate = @Today OR winlostdate = @yesterday)
 		GROUP BY custid, refno
 	END
 
@@ -140,10 +141,11 @@ BEGIN
 	BEGIN
 		INSERT INTO #tmpBettransLC(custid,refno, stake, winlost)
 		SELECT custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
-		FROM bodb02.dbo.bettransLC b WITH (NOLOCK)
+		FROM bodb02.dbo.bettransLC WITH (NOLOCK)
 		WHERE IsSum = 1
-			AND (b.productID = @ProductId OR (@tablename = 'bettransLC' AND b.productID <> 244)) 
-			AND (winlostdate = @Today OR winlostdate = @yesterday)
+			AND 1 = CASE WHEN productID = @ProductId THEN 1
+						 WHEN winlostdate <= @yesterday AND	@tablename = 'bettransLC' AND productID <> 244 THEN 1
+						 ELSE 0 END
 		GROUP BY custid, refno
 	END
 
@@ -151,226 +153,11 @@ BEGIN
 	BEGIN
 		INSERT INTO #tmpBettransRNG(custid,refno, stake, winlost)
 		SELECT custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
-		FROM bodb02.dbo.bettransRNG b WITH (NOLOCK)
-		WHERE IsSum = 1 
-			AND (winlostdate = @Today OR winlostdate = @yesterday)
+		FROM bodb02.dbo.bettransRNG WITH (NOLOCK)
+		WHERE IsSum = 1 AND winlostdate <= @yesterday
 		GROUP BY custid, refno
 	END
 			
-	IF @ProductId = 163
-	BEGIN
-		IF @Rule = 'oddsspread'
-		BEGIN
-			-- check oddsspread value (Club Fee)
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM	#tmpBettrans
-			WHERE	1 = CASE 
-							WHEN  bettype <> 1499 
-								THEN CASE WHEN betid = 0 THEN CASE -- no round
-																WHEN ISNULL(oddsspread,0) = 0 THEN 0 -- passed
-																ELSE 1 -- failed
-															END
-										ELSE CASE
-												WHEN ISNULL(oddsspread,0) >= scomm THEN 0
-												ELSE 1
-											END
-									END
-							ELSE CASE 
-									WHEN statusId <> 0 THEN CASE
-																WHEN oddsspread = 0 THEN 0 -- passed
-																ELSE 1 -- failed
-															END
-									ELSE 0
-								END
-						END
-	
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong oddsspread value on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-
-				RETURN
-			END
-		END
-
-		IF @Rule = 'modds'
-		BEGIN
-			-- modds value (3rd comm share rate)
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM	#tmpBettrans
-			WHERE	modds <= 0		
-	
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong modds value on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-				
-				RETURN
-			END
-		END
-
-		IF @Rule = 'comm'
-		BEGIN
-			-- sma comm value
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM	#tmpBettrans b
-			WHERE	1 = CASE 
-							WHEN oddsspread = 0 THEN CASE
-														WHEN scomm = 0 AND acomm = 0 AND comm = 0 AND playercomm = 0 THEN 0 -- PASSED
-														ELSE 1
-													END
-							ELSE CASE
-									WHEN scomm >= acomm AND acomm >= comm AND comm >= playercomm THEN 0 -- PASSED
-									ELSE 1
-								END
-						END
-				
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Commission must be 0 if member not play any rounds, and vice versa on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-
-				RETURN
-			END
-		END
-
-		IF @Rule = 'winlost'
-		BEGIN
-			-- sma winlost value
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM	#tmpBettrans b
-			WHERE	1 = CASE
-							WHEN ISNULL(transId2,0) = 0 THEN CASE
-														WHEN swinlost = 0 AND mwinlost = 0 AND awinlost = 0 THEN 0
-														ELSE 1
-													END
-							ELSE CASE
-									WHEN spositiontaking > 0 AND swinlost <> 0 THEN 0
-									WHEN mpositiontaking > 0 AND mwinlost <> 0 THEN 0
-									WHEN apositiontaking > 0 AND awinlost <> 0 THEN 0
-									ELSE 1
-								END
-						END
-				
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'SMA winlost must be 0 on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-
-				RETURN
-			END
-		END
-
-		IF @Rule = 'hdp2'
-		BEGIN
-			-- hdp2 value (3rd insurance share rate)
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM	#tmpBettrans
-			WHERE	hdp2 <= 0		
-	
-				
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong hdp2 value on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-				
-				RETURN
-			END
-		END
-
-		IF @Rule = 'transid2'
-		BEGIN
-			-- transid2 value (insurance * 10000 or bought gem value * 10000)
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM	#tmpBettrans
-			WHERE	statusId IN (102, 103, 0) -- void, refund, running	
-					AND 1 = CASE
-								WHEN transId2 IS NULL AND StatusId IN (103,102) THEN 1
-								WHEN ISNULL(transId2,0) <> 0 THEN 1
-								ELSE 0
-							END
-				
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong transid2 value on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-				
-				RETURN
-			END
-		END
-	END
-	
-	IF @ProductId = 255
-	BEGIN
-		IF @Rule = 'oddsspread'
-		BEGIN
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM	#tmpBettrans
-			WHERE	1 = CASE WHEN oddsspread < 0 THEN 1
-							 WHEN oddsspread > stake THEN 1
-							 ELSE 0 END
-							 
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong oddsspread value on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-
-				RETURN
-			END
-		END
-		
-		IF @Rule = 'winlost'
-		BEGIN
-			
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(bt.transid AS VARCHAR)
-			FROM	#tmpBettrans bt
-				INNER HASH JOIN #tmpBettransG btg ON bt.transId = btg.refno AND bt.winlost <> btg.winlost	
-			WHERE bt.statusId NOT IN (101,102,103)
-							 
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong winlost value between bettrans and bettransG on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-
-				RETURN
-			END
-		END
-		IF @Rule = 'stake'
-		BEGIN
-			
-			SELECT TOP (@maxError) @transId = @transId + ',' + CAST(bt.transid AS VARCHAR)
-			FROM	#tmpBettrans bt
-				INNER HASH JOIN #tmpBettransG btg ON bt.transId = btg.refno AND bt.stake <> btg.stake
-			WHERE bt.statusId NOT IN (101,102,103)  
-							 
-			IF @transId <> ''
-			BEGIN
-				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong stake value between bettrans and bettransG on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
-
-				RETURN
-			END
-		END
-	END
-	
 	IF @ProductId = 211
 	BEGIN
 		IF @Rule = 'VipBaccarat_2402'
@@ -512,8 +299,10 @@ BEGIN
 		END
 	END
 
-	--Rule #3, #16 for Virtual Games, Table Games, Saba.club, Saba.club Free Bets, VGaming, VGaming Free Bets
-	IF @ProductId IN (245, 222, 200, 150, 171, 173)
+	/* Rule #18: Check settled tickets in translog but not having in bettrans
+			for Virtual Games, Table Games, Sports Lottery
+	*/
+	IF @ProductId IN (245, 222, 169)
 	BEGIN
 		IF @Rule = 'translog'
 		BEGIN
@@ -534,6 +323,13 @@ BEGIN
 				RETURN
 			END
 		END
+	END
+
+	/* Rule #3: Check if no discount, no comm (apply to product non-offer comm)
+			for Virtual Games, Table Games, Sports Lottery, Saba.club, Saba.club Free Bets, VGaming, VGaming Free Bets, FGG, Keno, Lottery, Funky Games, Macau Games, PP, PG Soft, SG, Arcadia Gaming, Joker, MaxGame, Habanero, CG, AdvantPlay, AdvantPlay Mini, Virtual Sports, Virtual Sports 2, Virtual Sports 3
+	*/
+	IF @ProductId IN (245, 222, 169, 200, 150, 171, 173, 176, 202, 220, 224, 212, 248, 232, 247, 165, 234, 237, 238, 167, 172, 174, 180, 181, 182, 183, 184, 185, 186, 190, 191, 192, 193, 194, 195, 196, 197, 231)
+	BEGIN
 		IF @Rule = 'no_discount_comm'
 		BEGIN
 			
