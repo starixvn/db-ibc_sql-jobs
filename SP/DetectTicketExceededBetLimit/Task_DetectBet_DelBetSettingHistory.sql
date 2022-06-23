@@ -1,9 +1,12 @@
 /*<info serverAlias="DBCUST-CustDB" executers="" isFunction="0" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DetectBet_DelBetSettingHistory] 
-			@ID			INT,
-			@IsLicensee	BIT,
-			@IsGroup	BIT=NULL
+			@StakeLevel_ID					INT=NULL,
+			@StakeLevelGroupDetail_ID		INT=NULL,
+			@Dep_StakeLevel_ID				INT=NULL,
+			@Dep_StakeLevelGroupDetail_ID	INT=NULL,
+			@CustMaxBetSetting_ID			INT=NULL,
+			@Dep_CustMaxBetSetting_ID		INT=NULL
 AS
 /*
 	Created: 20220623@Tacy
@@ -20,37 +23,35 @@ AS
 BEGIN
 	SET NOCOUNT ON 
 
-	IF @IsLicensee=0 AND @IsGroup IS NULL
+	IF @CustMaxBetSetting_ID IS NOT NULL
 	BEGIN
 		DELETE CustMaxBetSetting_History WITH (ROWLOCK)
-		WHERE ID<=@ID
+		WHERE ID<=@CustMaxBetSetting_ID
 	END
-	ELSE IF @IsLicensee=1 AND @IsGroup IS NULL
+	ELSE IF @Dep_CustMaxBetSetting_ID IS NOT NULL
 	BEGIN
 		DELETE Dep_CustMaxBetSetting_History WITH (ROWLOCK)
-		WHERE ID<=@ID
+		WHERE ID<=@Dep_CustMaxBetSetting_ID
 	END
-
-	IF @IsLicensee=0 AND @IsGroup=0
+	ELSE IF @StakeLevel_ID IS NOT NULL
 	BEGIN
 		DELETE StakeLevel_History WITH (ROWLOCK)
-		WHERE ID<=@ID
+		WHERE ID<=@StakeLevel_ID
 	END
-	ELSE IF @IsLicensee=0 AND @IsGroup=1
+	ELSE IF @StakeLevelGroupDetail_ID IS NOT NULL
 	BEGIN
 		DELETE StakeLevelGroupDetail_History WITH (ROWLOCK)
-		WHERE ID<=@ID
+		WHERE ID<=@Dep_StakeLevel_ID
 	END
-
-	IF @IsLicensee=1 AND @IsGroup=0
+	ELSE IF @Dep_StakeLevel_ID IS NOT NULL
 	BEGIN
 		DELETE Dep_StakeLevel_History WITH (ROWLOCK)
-		WHERE ID<=@ID
+		WHERE ID<=@Dep_StakeLevel_ID
 	END
-	ELSE IF @IsLicensee=1 AND @IsGroup=1
+	ELSE IF @Dep_StakeLevelGroupDetail_ID IS NOT NULL
 	BEGIN
 		DELETE Dep_StakeLevelGroupDetail_History WITH (ROWLOCK)
-		WHERE ID<=@ID
+		WHERE ID<=@Dep_StakeLevelGroupDetail_ID
 	END
 END
 GO

@@ -18,16 +18,19 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @UpdateTime DATETIME, 
-			@ID			INT,
-			@ID_max		INT,
 			@rows		INT,
-			@batch		INT = 5000
+			@batch		INT = 5000,
+			@StakeLevel_ID					INT=NULL,
+			@StakeLevelGroupDetail_ID		INT=NULL,
+			@Dep_StakeLevel_ID				INT=NULL,
+			@Dep_StakeLevelGroupDetail_ID	INT=NULL,
+			@CustMaxBetSetting_ID			INT=NULL,
+			@Dep_CustMaxBetSetting_ID		INT=NULL
 
 	SET @UpdateTime = GETDATE()
 
 	CREATE TABLE #tmpBetSetting_History (
-			ID				INT
-		,	CustID			INT
+			CustID			INT
 		,	SportType		SMALLINT
 		,	BetType			INT
 		,	OldMaxBet		MONEY
@@ -37,8 +40,7 @@ BEGIN
 	)
 
 	CREATE TABLE #tmpStakeLevel_History (
-			ID				INT
-		,	StakeLevelID	INT
+			StakeLevelID	INT
 		,	GameTypeID		INT
 		,	MaxLabel		NVARCHAR(50)
 		,	MaxStake		DECIMAL(19,8)
@@ -47,48 +49,43 @@ BEGIN
 		,	UpdateTime		DATETIME
 	)
 
+	SET @CustMaxBetSetting_ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='CustMaxBetSetting_ID')
+	SET @Dep_CustMaxBetSetting_ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='Dep_CustMaxBetSetting_ID')
+	SET @StakeLevel_ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='StakeLevel_ID')
+	SET @StakeLevelGroupDetail_ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='StakeLevelGroupDetail_ID')
+	SET @Dep_StakeLevel_ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='Dep_StakeLevel_ID')
+	SET @Dep_StakeLevelGroupDetail_ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='Dep_StakeLevelGroupDetail_ID')
+
 	--History: SMA update member bet setting
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History)
 	BEGIN
-		SET @ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='CustMaxBetSetting_ID')
-		
-		SELECT @rows=COUNT(1), @ID_max=MAX(ID) 
-		FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK) 
+		SET @rows = (SELECT COUNT(1) FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK))
 
 		IF @rows<=@batch
 		BEGIN
 			INSERT INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
 			SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 			FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK)
-			
-			INSERT INTO dbo.CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-			SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
-			FROM #tmpBetSetting_History 
+
+			SET @CustMaxBetSetting_ID=(SELECT MAX(ID) FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK))
 		END
 		ELSE
 		BEGIN
-			WHILE @rows>0
-			BEGIN 
-				INSERT TOP (@batch) INTO #tmpBetSetting_History (ID, CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-				SELECT ID, CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
-				FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK)
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
+			INSERT TOP (@batch) INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
+			SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
+			FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK)
+			WHERE ID BETWEEN @CustMaxBetSetting_ID AND (@CustMaxBetSetting_ID+@batch)
 
-				INSERT INTO dbo.CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-				SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
-				FROM #tmpBetSetting_History 
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
-
-				SET @rows=@rows-@batch
-				SET @ID=@ID+@batch
-			END
+			SET @CustMaxBetSetting_ID=@CustMaxBetSetting_ID+@batch
 		END
 
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @ID=@ID_max, @IsLicensee=0
+		INSERT INTO dbo.CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
+		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
+		FROM #tmpBetSetting_History 
 
 		--update ID:
 		UPDATE conf
-		SET ConfigValue=CAST(@ID_max AS VARCHAR)
+		SET ConfigValue=CAST(@CustMaxBetSetting_ID AS VARCHAR)
 		FROM CustMaxBetSetting_Config AS conf WITH (ROWLOCK, UPDLOCK)
 		WHERE ConfigName='CustMaxBetSetting_ID'
 
@@ -97,10 +94,7 @@ BEGIN
 
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History)
 	BEGIN
-		SET @ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='Dep_CustMaxBetSetting_ID')
-		
-		SELECT @rows=COUNT(1), @ID_max=MAX(ID) 
-		FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK) 
+		SET @rows = (SELECT COUNT(1) FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK))
 
 		IF @rows<=@batch
 		BEGIN
@@ -108,9 +102,7 @@ BEGIN
 			SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 			FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK)
 
-			INSERT INTO dbo.Dep_CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-			SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
-			FROM #tmpBetSetting_History 
+			SET @Dep_CustMaxBetSetting_ID=(SELECT MAX(ID) FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK))
 		END
 		ELSE
 		BEGIN
@@ -119,23 +111,19 @@ BEGIN
 				INSERT TOP (@batch) INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
 				SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 				FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK)
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
+				WHERE ID BETWEEN @Dep_CustMaxBetSetting_ID AND (@Dep_CustMaxBetSetting_ID+@batch)
 
-				INSERT INTO dbo.Dep_CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-				SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
-				FROM #tmpBetSetting_History 
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
-
-				SET @rows=@rows-@batch
-				SET @ID=@ID+@batch
+				SET @Dep_CustMaxBetSetting_ID=@Dep_CustMaxBetSetting_ID+@batch
 			END 
 		END
 
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @ID=@ID_max, @IsLicensee=1
-		
+		INSERT INTO dbo.Dep_CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
+		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
+		FROM #tmpBetSetting_History 
+
 		--update ID:
 		UPDATE conf
-		SET ConfigValue=CAST(@ID_max AS VARCHAR)
+		SET ConfigValue=CAST(@Dep_CustMaxBetSetting_ID AS VARCHAR)
 		FROM CustMaxBetSetting_Config AS conf WITH (ROWLOCK, UPDLOCK)
 		WHERE ConfigName='Dep_CustMaxBetSetting_ID'
 
@@ -145,10 +133,7 @@ BEGIN
 	--History: update global bet setting
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevel_History)
 	BEGIN
-		SET @ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='StakeLevel_ID')
-		
-		SELECT @rows=COUNT(1), @ID_max=MAX(ID) 
-		FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK) 
+		SET @rows=(SELECT COUNT(1) FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK))
 
 		IF @rows<=@batch
 		BEGIN
@@ -156,34 +141,28 @@ BEGIN
 			SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
 			FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK)
 
-			INSERT INTO dbo.StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
-			SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
-			FROM #tmpStakeLevel_History
+			SET @StakeLevel_ID=(SELECT MAX(ID) FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK))
 		END
 		ELSE 
 		BEGIN
 			WHILE @rows>0
 			BEGIN
-				INSERT TOP (@batch) INTO #tmpStakeLevel_History (ID, StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
-				SELECT ID, StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
-				FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK)
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
-
-				INSERT INTO dbo.StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
+				INSERT TOP (@batch) INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
 				SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
-				FROM #tmpStakeLevel_History
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
+				FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK)
+				WHERE ID BETWEEN @StakeLevel_ID AND (@StakeLevel_ID+@batch)
 
-				SET @rows=@rows-@batch
-				SET @ID=@ID+@batch
+				SET @StakeLevel_ID=@StakeLevel_ID+@batch
 			END
 		END
 
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @ID=@ID_max, @IsLicensee=0, @IsGroup=0
+		INSERT INTO dbo.StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
+		FROM #tmpStakeLevel_History
 
 		--update ID:
 		UPDATE conf
-		SET ConfigValue=CAST(@ID_max AS VARCHAR)
+		SET ConfigValue=CAST(@StakeLevel_ID AS VARCHAR)
 		FROM CustMaxBetSetting_Config AS conf WITH (ROWLOCK, UPDLOCK)
 		WHERE ConfigName='StakeLevel_ID'
 
@@ -192,10 +171,7 @@ BEGIN
 
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History)
 	BEGIN
-		SET @ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='Dep_StakeLevel_ID')
-		
-		SELECT @rows=COUNT(1), @ID_max=MAX(ID) 
-		FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK) 
+		SET @rows=(SELECT COUNT(1) FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK))
 
 		IF @rows<=@batch
 		BEGIN
@@ -203,34 +179,25 @@ BEGIN
 			SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
 			FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK)
 
-			INSERT INTO dbo.Dep_StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
-			SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
-			FROM #tmpStakeLevel_History
+			SET @Dep_StakeLevel_ID=(SELECT MAX(ID) FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK))
 		END
 		ELSE
 		BEGIN
-			WHILE @rows>0
-			BEGIN
-				INSERT TOP (@batch) INTO #tmpStakeLevel_History (ID, StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
-				SELECT ID, StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
-				FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK)
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
+			INSERT TOP (@batch) INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
+			SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
+			FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK)
+			WHERE ID BETWEEN @Dep_StakeLevel_ID AND (@Dep_StakeLevel_ID+@batch)
 
-				INSERT INTO dbo.Dep_StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
-				SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
-				FROM #tmpStakeLevel_History
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
-
-				SET @rows=@rows-@batch
-				SET @ID=@ID+@batch
-			END
+			SET @Dep_StakeLevel_ID=@Dep_StakeLevel_ID+@batch
 		END
 
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @ID=@ID_max, @IsLicensee=0, @IsGroup=1
+		INSERT INTO dbo.Dep_StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
+		FROM #tmpStakeLevel_History
 		
 		--update ID:
 		UPDATE conf
-		SET ConfigValue=CAST(@ID_max AS VARCHAR)
+		SET ConfigValue=CAST(@Dep_StakeLevel_ID AS VARCHAR)
 		FROM CustMaxBetSetting_Config AS conf WITH (ROWLOCK, UPDLOCK)
 		WHERE ConfigName='Dep_StakeLevel_ID'
 
@@ -240,10 +207,7 @@ BEGIN
 	----------------------------------------------------------------------------------------------------------
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History)
 	BEGIN
-		SET @ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='StakeLevelGroupDetail_ID')
-		
-		SELECT @rows=COUNT(1), @ID_max=MAX(ID) 
-		FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK) 
+		SET @rows=(SELECT COUNT(1) FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK))
 
 		IF @rows<=@batch
 		BEGIN
@@ -251,38 +215,25 @@ BEGIN
 			SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 			FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK)
 
-			INSERT INTO dbo.StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-			SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake , UpdateTime
-			FROM #tmpStakeLevel_History
+			SET @StakeLevelGroupDetail_ID=(SELECT MAX(ID) FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK))
 		END
 		ELSE
 		BEGIN
-			WHILE @rows>0
-			BEGIN
-				INSERT TOP (@batch) INTO #tmpStakeLevel_History (ID, StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-				SELECT ID, StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
-				FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK)
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
+			INSERT TOP (@batch) INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
+			SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
+			FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK)
+			WHERE ID BETWEEN @StakeLevelGroupDetail_ID AND (@StakeLevelGroupDetail_ID+@batch)
 
-				INSERT INTO dbo.StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-				SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake , UpdateTime
-				FROM #tmpStakeLevel_History
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
-
-				SET @rows=@rows-@batch
-				SET @ID=@ID+@batch
-			END
+			SET @StakeLevelGroupDetail_ID=@StakeLevelGroupDetail_ID+@batch
 		END
 
 		INSERT INTO dbo.StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
 		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake , UpdateTime
 		FROM #tmpStakeLevel_History
 
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @ID=@ID_max, @IsLicensee=1, @IsGroup=0
-
 		--update ID:
 		UPDATE conf
-		SET ConfigValue=CAST(@ID_max AS VARCHAR)
+		SET ConfigValue=CAST(@StakeLevelGroupDetail_ID AS VARCHAR)
 		FROM CustMaxBetSetting_Config AS conf WITH (ROWLOCK, UPDLOCK)
 		WHERE ConfigName='StakeLevelGroupDetail_ID'
 
@@ -292,10 +243,7 @@ BEGIN
 
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History)
 	BEGIN
-		SET @ID = (SELECT CAST(ConfigValue AS INT) FROM CustMaxBetSetting_Config WITH (NOLOCK) WHERE ConfigName='StakeLevelGroupDetail_ID')
-		
-		SELECT @rows=COUNT(1), @ID_max=MAX(ID) 
-		FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK) 
+		SET @rows=(SELECT COUNT(1) FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK))
 
 		IF @rows<=@batch
 		BEGIN
@@ -303,35 +251,25 @@ BEGIN
 			SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 			FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK)
 
-			INSERT INTO dbo.Dep_StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-			SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
-			FROM #tmpStakeLevel_History
+			SET @Dep_StakeLevelGroupDetail_ID=(SELECT MAX(ID) FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK))
 		END
 		ELSE
 		BEGIN
-			WHILE @rows>0
-			BEGIN
-				INSERT TOP (@batch) INTO #tmpStakeLevel_History (ID, StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-				SELECT ID, StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
-				FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK)
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
-
-				INSERT INTO dbo.Dep_StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-				SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
-				FROM #tmpStakeLevel_History
-				WHERE ID BETWEEN @ID AND (@ID+@batch)
-
-				SET @rows=@rows-@batch
-				SET @ID=@ID+@batch
-			END
+			INSERT TOP (@batch) INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
+			SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
+			FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK)
+			WHERE ID BETWEEN @Dep_StakeLevelGroupDetail_ID AND (@Dep_StakeLevelGroupDetail_ID+@batch)
+				
+			SET @Dep_StakeLevelGroupDetail_ID=@Dep_StakeLevelGroupDetail_ID+@batch
 		END
 
-		--Delete data DBCUST.CustDB
-		EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory @ID=@ID_max, @IsLicensee=1, @IsGroup=1
+		INSERT INTO dbo.Dep_StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
+		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
+		FROM #tmpStakeLevel_History
 
 		--update ID:
 		UPDATE conf
-		SET ConfigValue=CAST(@ID_max AS VARCHAR)
+		SET ConfigValue=CAST(@Dep_StakeLevelGroupDetail_ID AS VARCHAR)
 		FROM CustMaxBetSetting_Config AS conf WITH (ROWLOCK, UPDLOCK)
 		WHERE ConfigName='Dep_StakeLevelGroupDetail_ID'
 
@@ -343,6 +281,15 @@ BEGIN
 	SET ConfigValue=CONVERT(VARCHAR, @UpdateTime, 121)
 	FROM CustMaxBetSetting_Config AS conf WITH (ROWLOCK, UPDLOCK)
 	WHERE ConfigName='SyncHistoryDataLastTime'
+
+	--Delete data - DBCUST.CustDB
+	EXEC DBCUST.CustDB.dbo.Task_DetectBet_DelBetSettingHistory
+		@StakeLevel_ID					= @StakeLevel_ID,
+		@StakeLevelGroupDetail_ID		= @StakeLevelGroupDetail_ID,
+		@Dep_StakeLevel_ID				= @Dep_StakeLevel_ID, 
+		@Dep_StakeLevelGroupDetail_ID	= @Dep_StakeLevelGroupDetail_ID,
+		@CustMaxBetSetting_ID			= @CustMaxBetSetting_ID,
+		@Dep_CustMaxBetSetting_ID		= @Dep_CustMaxBetSetting_ID
 
 
 	DROP TABLE #tmpBetSetting_History
