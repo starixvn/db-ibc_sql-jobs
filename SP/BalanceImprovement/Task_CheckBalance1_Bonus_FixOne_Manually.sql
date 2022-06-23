@@ -85,7 +85,7 @@ WHERE custid = @__custid AND RepUpdateTime >= @__repUpdateTime'');';
 			FROM #__betsRunningByCustId br
 				LEFT JOIN (
 					SELECT BRID
-					FROM dbo.bettrans WITH(NOLOCK)
+					FROM dbo.bettrans WITH(NOLOCK, INDEX=IX_customerinfo)
 					WHERE custid = @custid
 						AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 							 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
