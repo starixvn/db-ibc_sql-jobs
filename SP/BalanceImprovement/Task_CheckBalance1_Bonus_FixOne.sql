@@ -60,22 +60,33 @@ BEGIN
 			DECLARE @__movebetdate SMALLDATETIME
 				, @__fromRepUpdateTime DATETIME2
 
-			SET @__fromRepUpdateTime = DATEADD(HOUR, -2, GETDATE()) --get data within 2 hours ==> need to review to select best value
+			SET @__fromRepUpdateTime = DATEADD(HOUR, -2, SYSDATETIME()) --get data within 2 hours ==> need to review to select best value
 
 			EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
 
 			__tryagain:
 
 			--getting data from BR
-			DECLARE @__betsRunningByCustId TABLE(BRID BIGINT, actual_stake MONEY)
-			INSERT INTO @__betsRunningByCustId(BRID, actual_stake)
-			SELECT BRID, actual_stake
-			FROM DBBR.bodb02.dbo.bettrans_running br WITH(NOLOCK)
-			WHERE custid = @custid AND RepUpdateTime >= @__fromRepUpdateTime
-				AND WalletType = 1
+			IF OBJECT_ID('tempdb.dbo.#__betsRunningByCustId') IS NOT NULL
+				DROP TABLE #__betsRunningByCustId
+
+			CREATE TABLE #__betsRunningByCustId (BRID BIGINT, actual_stake MONEY)
+			DECLARE @__query NVARCHAR(MAX) = ''
+			SELECT	@__query = @__query + N'\
+INSERT INTO	#__betsRunningByCustId(BRID, actual_stake)
+SELECT BRID, actual_stake
+FROM	OPENQUERY(DBBR, ''\
+DECLARE	@__custid INT = ''''' + CONVERT(NVARCHAR(50), @custid, 121) + '''''
+DECLARE	@__repUpdateTime DATETIME2 = ''''' + CONVERT(NVARCHAR(50), @__fromRepUpdateTime, 121) + '''''
+
+SELECT BRID, actual_stake
+FROM bodb02.dbo.bettrans_running br WITH(NOLOCK, INDEX=IX_custid)
+WHERE custid = @__custid AND RepUpdateTime >= @__repUpdateTime'');';
+
+			EXECUTE	sys.sp_executesql @__query
 
 			SELECT @FromBetRunning = SUM(-ISNULL(actual_stake, 0))
-			FROM @__betsRunningByCustId br
+			FROM #__betsRunningByCustId br
 				LEFT JOIN (
 					SELECT BRID
 					FROM dbo.bettrans WITH(NOLOCK)
@@ -86,6 +97,12 @@ BEGIN
 						AND WalletType = 1
 				) b ON br.BRID = b.BRID
 			WHERE b.BRID IS NULL
+
+			IF ISNULL(@FromBetRunning, 0) <> 0
+			BEGIN
+				SET @result = 333 -->>having data in BR
+				RETURN
+			END
 
 			SELECT @FromBettrans = SUM(CASE WHEN WalletType = 1 AND bettype NOT IN (22200, 22201) THEN winlost - actual_stake + playercomm ELSE 0 END)
 			FROM dbo.bettrans WITH (ROWLOCK) 
@@ -124,14 +141,9 @@ BEGIN
 				INNER JOIN dbo.BonusWalletDebit d1 WITH (NOLOCK) ON c1.custid = d1.custid AND c1.BonusID = d1.BonusID
 			WHERE c1.custid = @custid AND c1.BonusID = @bonusId
 			
-			IF @DiffBalance <> ISNULL(@DiffBalanceInput, 0)
+			IF ISNULL(@DiffBalance, 0) <> ISNULL(@DiffBalanceInput, 0)
 			BEGIN
 				SET @result = 300 -->>balance amnt has changed
-				RETURN
-			END
-			ELSE IF ISNULL(@FromBetRunning, 0) <> 0
-			BEGIN
-				SET @result = 333 -->>having data in BR
 				RETURN
 			END
 
