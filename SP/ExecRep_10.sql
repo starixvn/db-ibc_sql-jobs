@@ -11,6 +11,7 @@ AS
 	Revisions:   
 		- 20210323@Patrick: Initial [Redmine: #149927] 
 		- 20211223@July: SQL Server Upgrade 2019- Phase 3 [Redmine: #166039] 
+		- 20220624@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -52,6 +53,13 @@ BEGIN
 		SELECT @Allow = 1, @AliasServer = ServerAlias
 		FROM @__serverList
 		WHERE ServerAlias IN ('DBACC', 'DBBOF', 'DBAGE')
+			AND ServerName = @__serverName
+	END
+	ELSE IF @FunctionName = 'WaitforBUCompleted'
+	BEGIN
+		SELECT @Allow = 1, @AliasServer = ServerAlias
+		FROM @__serverList
+		WHERE ServerAlias IN ('DBACC', 'DBAGE')
 			AND ServerName = @__serverName
 	END
 	

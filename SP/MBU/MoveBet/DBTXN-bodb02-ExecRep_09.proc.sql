@@ -44,6 +44,7 @@ AS
 		- 20200916@Brice:	Change serverName DB06 to DB06C2\DB06 [Redmine: #140355]
 		- 20210126@Patrick: Migrate DB Server DB054 to cluster [Redmine: #149273]
 		- 202010316@Patrick: Revise Movebet flow to support transfer 247 Redmine: [#149927]
+		- 20220624@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
 
  */
 BEGIN
@@ -175,7 +176,24 @@ BEGIN
 				WHERE VName = 'MovebetDate'
 				
 			END
+			ELSE IF @parlay = 11 --prepare balanceup process
+			BEGIN
+				--==being balance-up
+				UPDATE dbo.SystemSettings WITH (ROWLOCK)
+				SET VValue = CONVERT(VARCHAR(10), @winlostdate, 121)
+				WHERE VName = 'BeingBalanceUpDate'
+				
+			END
+			ELSE IF @parlay = 12 -- update new BU date
+			BEGIN
+				--==update @winlostdate to new balanceUp date
+				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+				SET VValue = CONVERT(VARCHAR(10), @winlostdate, 121)
+				WHERE VName = 'BalanceUpDate'
+				
+			END
 		END
+
 		RETURN
 	END
 

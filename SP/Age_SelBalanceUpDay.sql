@@ -16,6 +16,7 @@ Revisions:
 	- 20210323@Patrick: Change get movebet date source [Redmine: #149927]
 	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 	- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - and remove SP at DBBOF [RedmineID: #164301]
+	- 20220624@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
 
 Param's Explanation:
 */
@@ -24,12 +25,8 @@ SET NOCOUNT ON
 BEGIN
 	DECLARE @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
 
-	---using this when release to PROD---
-	SELECT TOP 1 @BalanceUpDay = winlostdate
-	FROM dbo.Transfer t WITH(NOLOCK)
-	WHERE bettype = 20000 AND custid = 3
-	
 	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @MoveBetsDay OUTPUT
+	EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @BalanceUpDay OUTPUT
 
 	SELECT @BalanceUpDay AS BalanceUpDay, @MoveBetsDay AS MoveBetsDay
 END

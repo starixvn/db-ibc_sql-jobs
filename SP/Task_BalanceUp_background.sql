@@ -4,9 +4,6 @@ ALTER PROCEDURE [dbo].[Task_BalanceUp_background]
 	@step as tinyint = 1
 --	@continue as bit = 0
 AS
-
-Declare @Doing nvarchar(300)
-
 /*
 Created: 
 Task : 
@@ -35,459 +32,295 @@ Revisions:
 	- 20220301@July: Comment code delete for livescore [Redmine:#169201]
 	- 20220307@Bobby: Re-commit (Comment code delete for livescore [Redmine:#169201])
 	- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
+	- 20220624@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
 
 Param's Explanation: 
 
 */
 
-IF @fdate IS NULL
 BEGIN
-	SELECT TOP(1) @fdate = DATEADD(day, 7, winlostdate)
-	FROM	dbo.Transfer WITH(NOLOCK) --dbo.bettrans with (nolock)
-	WHERE	bettype = 20000
-	ORDER BY transid
-	
-	IF @fdate > CURRENT_TIMESTAMP
-		SET @fdate = DATEADD(day, -7, @fdate)
-END
+	SET NOCOUNT ON
+	DECLARE @__delayTimeValue VARCHAR(50), @Doing VARCHAR(300)
+		, @__rowId INT, @__errorMessage VARCHAR(300)
 
-PRINT '@fdate = ' + CONVERT(varchar(10), @fdate, 120)
-
--- verify @fdate
-Declare @testdate datetime
-SET @testdate = CONVERT(varchar(10), @fdate, 120)
-IF @testdate <> @fdate
-BEGIN
---	SELECT 'ERROR: Input parameter is DATE value with TIME.' Result
---	RETURN
--- raiserror here to continue to next step of jobs
-	RAISERROR ('ERROR: Input parameter is DATE value with TIME.', -- Message text.
-               16, -- Severity.
-               1 -- State.
-               );
-END
-
-/*
-SET @fdate = CONVERT(nvarchar(10), @fdate, 120)
-IF (DATEPART(weekday, @fdate) <> 2) AND (@continue = 0)
-BEGIN
-	PRINT 'Input date is not Monday'
-	PRINT 'If you really want to continue, call with @continue = 1'
-	RETURN
-END
-*/
-
-SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2))
-EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
-
--- ================== STEP : 1 
-IF @step = 1
-BEGIN
--- ================== DATA VERIFY
-
-	--- DATA VERIFY
-	IF EXISTS (SELECT * FROM CustDB.dbo.Customer with (nolock) WHERE (recommend is null or mrecommend is null or srecommend is null) AND roleid IN (2,1))
+	IF @fdate IS NULL
 	BEGIN
-	--	SELECT 'Some Customer/Agent records have NULL AgentID' Result
-	--	SELECT custid, username, roleid, recommend, mrecommend, srecommend, currency
-	--		FROM customer with (nolock)
-	--		WHERE roleid <= 2
-	--		AND (recommend is NULL or mrecommend is NULL or srecommend is NULL)
-	--	RETURN
-	-- raiserror here to continue to next step of jobs
-		RAISERROR ('Some Customer/Agent records have NULL AgentID', -- Message text.
-				   16, -- Severity.
-				   1 -- State.
-				   );
+		SET @__errorMessage = 'ERROR: Please check a balance-up date value. @fdate = null, @step: ' + CAST(@step AS VARCHAR(10))
+		RAISERROR (@__errorMessage, 16, 1);
+		RETURN
 	END
 
-	IF EXISTS (SELECT * FROM CustDB.dbo.customer with (nolock) WHERE (recommend is NULL or mrecommend is null or srecommend is null) AND roleid = 3)
-	BEGIN
-	--	SELECT 'Some Master records have NULL AgentID' Result
-	--	SELECT custid, username, roleid, recommend, mrecommend, srecommend, currency
-	--		FROM customer with (nolock)
-	--		WHERE roleid = 3
-	--		AND (recommend is NULL or mrecommend is NULL or srecommend is NULL)
-	--	RETURN
-	-- raiserror here to continue to next step of jobs
-		RAISERROR ('Some Master records have NULL AgentID', -- Message text.
-				   16, -- Severity.
-				   1 -- State.
-				   );
-	END
+	SET @Doing = 'Task_BalanceUp_background: Starting step: ' + CAST(@step AS VARCHAR(10))
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	IF EXISTS (SELECT * FROM CustDB.dbo.customer with (nolock) WHERE (recommend is NULL or mrecommend is null or srecommend is null) AND roleid = 4)
+	IF @step = 1 -- update being balance-up date
 	BEGIN
-	--	SELECT 'Some SuperAgent records have NULL AgentID' Result
-	--	SELECT custid, username, roleid, recommend, mrecommend, srecommend, currency
-	--		FROM customer with (nolock)
-	--		WHERE roleid = 4
-	--		AND (recommend is NULL or mrecommend is NULL or srecommend is NULL)
-	--	RETURN
-	-- raiserror here to continue to next step of jobs
-		RAISERROR ('Some SuperAgent records have NULL AgentID', -- Message text.
-				   16, -- Severity.
-				   1 -- State.
-				   );
-	END
+		--turn on starting BU process
+		SET @Doing = 'Task_BalanceUp_background: BU step 1.01 - start updating BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	IF EXISTS (SELECT * FROM dbo.Transfer with (nolock) WHERE winlostdate < @fdate AND (
-			srecommend is null or mrecommend is null or recommend is null
-		OR swinlost is null or mwinlost is null or awinlost is null or winlost is null
-		OR scomm is null or acomm is null or comm is null or playercomm is null
-		OR ((scomm <> acomm OR swinlost <> 0) AND srecommend <= 100)
-		) )
-	BEGIN
-	--	SELECT 'Some records in BetTrans have NULL AgentID/NULL winlost/NULL commission/incorrect Company SuperAgent setting' Result
-	--	RETURN
-	-- raiserror here to continue to next step of jobs
-		RAISERROR ('Some records in Transfer have NULL AgentID/NULL winlost/NULL commission/incorrect Company SuperAgent setting', -- Message text.
-				   16, -- Severity.
-				   1 -- State.
-				   );
+		--**update being balanceUp date flag ==> the purpose for which process need to check balanceUp processing
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @parlay = 11, @tableName = 'SystemSettings'
+
+		SET @Doing = 'Task_BalanceUp_background: BU step 1.01 - start updating BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		--//
+		SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('BeforeBU')
+		WAITFOR DELAY @__delayTimeValue --waitfor a seconds to start balanceUp process
+
+		SET @Doing = 'Task_BalanceUp_background: Ending step: ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		RETURN
 	END
 	
+	IF @step = 2 --data verify
+	BEGIN
 
--- ================== END STEP : 1 
-END
--- ================== DATA VERIFY
+		SET @Doing = 'Task_BalanceUp_background: BU step 2.00 - Verify data, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
---IF @check = 1
---	RETURN
+		--- DATA VERIFY
+		IF EXISTS (
+			SELECT TOP 1 1 
+			FROM CustDB.dbo.Customer WITH (NOLOCK) 
+			WHERE (recommend IS NULL OR mrecommend IS NULL OR srecommend IS NULL) 
+				AND roleid IN (2,1)
+		)
+		BEGIN
+			RAISERROR ('Some Customer/Agent records have NULL AgentID', 16, 1)
+			RETURN
+		END
 
+		IF EXISTS (
+			SELECT TOP 1 1 
+			FROM CustDB.dbo.customer WITH (NOLOCK) 
+			WHERE (recommend IS NULL OR mrecommend IS NULL OR srecommend IS NULL) 
+				AND roleid = 3
+		)
+		BEGIN
+			RAISERROR ('Some Master records have NULL AgentID', 16, 1)
+			RETURN
+		END
 
---- START --- START --- START ---
---- START --- START --- START ---
---- START --- START --- START ---
+		IF EXISTS (
+			SELECT TOP 1 1 
+			FROM CustDB.dbo.customer WITH (NOLOCK) 
+			WHERE (recommend IS NULL OR mrecommend IS NULL OR srecommend IS NULL) 
+				AND roleid = 4
+		)
+		BEGIN
+			RAISERROR ('Some SuperAgent records have NULL AgentID', 16, 1)
+			RETURN
+		END
 
+		IF EXISTS (
+			SELECT TOP 1 1
+			FROM dbo.Transfer WITH (NOLOCK) 
+			WHERE winlostdate < @fdate 
+				AND (srecommend IS NULL OR mrecommend IS NULL OR recommend IS NULL
+					OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL
+					OR scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL
+					OR ((scomm <> acomm OR swinlost <> 0) AND srecommend <= 100))
+		)
+		BEGIN
+			RAISERROR ('Some records in Transfer have NULL AgentID/NULL winlost/NULL commission/incorrect Company SuperAgent setting', 16, 1)
+			RETURN
+		END
 
--- ================== STEP : 2
-IF @step = 2
-BEGIN
--- ================== Clear BalanceTable and Perform Backup
+		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	END
 	
-	--record endtime
-	DECLARE @CurrentDateTime DATETIME
-	SELECT @CurrentDateTime = GETDATE()
+	IF @step = 3 -- backup dbs
+	BEGIN
 
-	EXEC dbo.Task_EstimatedTimeForJobDone @IsMoveBet = 0
-		, @CurrentDateTime = @CurrentDateTime
-		, @TotalMoveBetDays = NULL
+		--record endtime
+		DECLARE @CurrentDateTime DATETIME
+		SELECT @CurrentDateTime = GETDATE()
 
-	-- UPDATE DBACC.bodb02.dbo.SystemSettings
-	-- SET VValue = '1'
-	-- WHERE VName = 'isArchivingBet' 
-	EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
-	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
+		EXEC dbo.Task_EstimatedTimeForJobDone @IsMoveBet = 0
+			, @CurrentDateTime = @CurrentDateTime
+			, @TotalMoveBetDays = NULL
 
-	--//turn on isArchivingBet_Local flag
-	--EXEC dbo.Bet_ExecRep_09 @mode = 5
-	EXEC dbo.Transfer_ExecRep_02 @Mode = 5
-	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 5, @tableName = 'SystemSettings'
+		EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
+		EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
 
-	-- for safety, shutdown trigger in balanceTable_tmp
-	EXEC dbo.Task_BalanceUp_TriggerControl @step = 1, @on = 0
-	EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 0
+		--//turn on isArchivingBet_Local flag
+		EXEC dbo.Transfer_ExecRep_02 @Mode = 5
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 5, @tableName = 'SystemSettings'
 
-	truncate table dbo.balanceTable;
-	truncate table dbo.balanceTable_tmp
+		--//turn on BU_DoneSum20k flag
+		EXEC dbo.Transfer_ExecRep_02 @Mode = 7
 
+		-- for safety, shutdown trigger in balanceTable_tmp
+		EXEC dbo.Task_BalanceUp_TriggerControl @step = 1, @on = 0
+		EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 0
+
+		TRUNCATE TABLE dbo.balanceTable;
+		TRUNCATE TABLE dbo.balanceTable_tmp
 
 		EXEC dbo.balancecheck @fdate, 11
-	-- doing backup
-	Declare @suffix varchar(10)
-	SET @suffix = 'bbu' + RIGHT(CONVERT(varchar(10), @fdate,120),5)
-	EXEC DBCUST.msdb.dbo.sp_start_job N'BalanceUPBackground_BackupFull_Cust'
-	EXEC dbo.Task_BackupFULL @suffix
-	EXEC DB02.bodb02.dbo.Task_BackupFULL @suffix
-	--EXEC DBCUST.custDB.dbo.Task_BackupFull_Cust @suffix = 'FULL' -- Viet: add full backup for custdb also
-	-- doing backup : end
-
--- ================== END STEP : 2
-END
--- ================== Clear BalanceTable and Perform Backup
-
-
-/*
--- ================== STEP : 3
-IF @step = 33
-BEGIN
--- ================== Calculate Balance
-
-
-	--BEGIN TRANSACTION
-		-- Member
-		insert into dbo.balancetable(custid,  amount, TicketCount, balTicketCount)
-		select 	bettrans.custid custid,
-			sum(winlost-actual_stake + playercomm) amount,
-			COUNT(*) TicketCount,
-			sum(CASE bettype WHEN 20000 THEN 1 ELSE 0 END) balTicketCount
-		from
-			dbo.bettrans with (rowlock)
-			--INNER JOIN dbo.custinfo c with (nolock) ON bettrans.custid = c.custid
-		where
-			ruben = 1 and
-			winlostdate < @fdate and
-			bettrans.custid <> bettrans.recommend and
-			bettrans.custid <> bettrans.mrecommend and
-			bettrans.custid <> bettrans.srecommend
-		group by bettrans.custid;
-	--COMMIT TRANSACTION
-
-	--BEGIN TRANSACTION
-		-- Agent
-		insert into dbo.balancetable(custid, amount, TicketCount, balTicketCount)
-		select	bettrans.recommend custid,
-			sum(case
-			when bettrans.custid=bettrans.recommend then winlost-actual_stake
-			else awinlost+comm-playercomm
-			end) amount,
-			sum(CASE custid WHEN recommend THEN 1 ELSE 0 END) TicketCount,
-			sum(CASE bettype WHEN 20000 THEN 1 ELSE 0 END) balTicketCount
-		from
-			dbo.bettrans with (rowlock)
-			--INNER JOIN dbo.custinfo c with (nolock) ON bettrans.custid = c.custid
-		where
-			ruben=1 and 
-			winlostdate < @fdate
-		group by bettrans.recommend;
-
-		-- Master
-		insert into dbo.balancetable(custid, amount, TicketCount, balTicketCount)
-		select	bettrans.mrecommend custid,
-			sum(case
-			when bettrans.custid=bettrans.mrecommend then winlost-actual_stake
-			else mwinlost+acomm-comm
-			end) amount,
-			sum(CASE custid WHEN mrecommend THEN 1 ELSE 0 END) TicketCount,
-			sum(CASE bettype WHEN 20000 THEN 1 ELSE 0 END) balTicketCount
-		from
-			dbo.bettrans with (rowlock)
-			--INNER JOIN dbo.custinfo c with (nolock) ON bettrans.custid = c.custid
-		where
-			ruben=1 and 
-			winlostdate < @fdate
-		group by bettrans.mrecommend;
-
-		-- Super
-		insert into dbo.balancetable(custid, amount, TicketCount, balTicketCount)
-		select	bettrans.srecommend custid, 
-			sum(case
-			when bettrans.custid=bettrans.srecommend then winlost-actual_stake
-			else swinlost+scomm-acomm
-			end) amount,
-			sum(CASE custid WHEN srecommend THEN 1 ELSE 0 END) TicketCount,
-			sum(CASE bettype WHEN 20000 THEN 1 ELSE 0 END) balTicketCount
-		from
-			dbo.bettrans with (rowlock)
-			--INNER JOIN dbo.custinfo c with (nolock) ON bettrans.custid = c.custid
-		where
-			ruben=1 and 
-			winlostdate < @fdate
-		group by bettrans.srecommend;
-	--COMMIT TRANSACTION
-
-END
-*/
-
-/*
--- ================== STEP : 3
-IF @step = 32
-BEGIN
--- ================== Calculate Balance
-
-	-- =====================
-	--   CALCULATE BALANCE
-	-- =====================
-	SELECT
-		CASE custid
-		WHEN  recommend THEN 2
-		WHEN mrecommend THEN 3
-		WHEN srecommend THEN 4
-		ELSE 1 END roleid, 
-		custid, recommend, mrecommend, srecommend,
-		SUM(CASE WHEN custid NOT IN (recommend, mrecommend, srecommend) THEN winlost-actual_stake + playercomm ELSE 0 END) amt1,
-		SUM(CASE WHEN custid NOT IN (recommend, mrecommend, srecommend) THEN 1 ELSE 0 END) tcnt1,
-		SUM(CASE WHEN custid =  recommend THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) amt2,
-		SUM(CASE WHEN custid =  recommend THEN 1 ELSE 0 END) tcnt2,
-		SUM(CASE WHEN custid = mrecommend THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) amt3,
-		SUM(CASE WHEN custid = mrecommend THEN 1 ELSE 0 END) tcnt3,
-		SUM(CASE WHEN custid = srecommend THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) amt4,
-		SUM(CASE WHEN custid = srecommend THEN 1 ELSE 0 END) tcnt4
-	INTO #tempx
-	FROM
-		dbo.bettrans with (rowlock)
-	WHERE
-		ruben = 1
-		AND winlostdate < @fdate
-	GROUP BY
-		custid, recommend, mrecommend, srecommend
 		
-	INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT custid, amt1, tcnt1, 0 FROM #tempx WHERE roleid = 1
-	INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT recommend , SUM(amt2), SUM(tcnt2), 0 FROM #tempx GROUP BY recommend
-	INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT mrecommend, SUM(amt3), SUM(tcnt3), 0 FROM #tempx GROUP BY mrecommend
-	INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT srecommend, SUM(amt4), SUM(tcnt4), 0 FROM #tempx GROUP BY srecommend
+		-- doing backup
+		SET @Doing = 'Task_BalanceUp_background: BU step 3.01 - backup database: custdb, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	DROP TABLE #tempx
+		Declare @suffix VARCHAR(10)
+		SET @suffix = 'bbu' + RIGHT(CONVERT(VARCHAR(10), @fdate, 120), 5)
+		EXEC DBCUST.msdb.dbo.sp_start_job N'BalanceUPBackground_BackupFull_Cust'
 
+		SET @Doing = 'Task_BalanceUp_background: BU step 3.02 - backup database: bodb02 @dbtrans, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	--BEGIN TRANSACTION
-		DELETE FROM dbo.balanceTable
-		WHERE custid = 0
+		EXEC dbo.Task_BackupFULL @suffix
 
-		update b
-		set
-			roleid = c.roleid,
-			recommend = c.recommend,
-			mrecommend= c.mrecommend,
-			srecommend= c.srecommend,
-			currency  = c.currency,
-			UserName  = c.username,
-			CurrencyName = e.currency,
-			actualrate = IsNull(ed.ActualRate, e.ActualRate)
-		from dbo.balancetable b
-			INNER JOIN CustDB.dbo.custinfo c ON b.custid = c.custid
-			INNER JOIN CustDB.dbo.exchange e ON c.currency = e.exchangeid
-			LEFT OUTER JOIN CustDB.dbo.ExchangeDailyOanda ed ON c.currency = ed.ExchangeId AND ed.ExchangeDate = @fdate
+		SET @Doing = 'Task_BalanceUp_background: BU step 3.03 - backup database: bodb02 @prod, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
+		EXEC DB02.bodb02.dbo.Task_BackupFULL @suffix
 
-		-- copy data, ready for insertion
-		INSERT INTO dbo.balancetable_tmp
-		SELECT @fdate, * FROM dbo.balancetable
-	--COMMIT TRANSACTION
+		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	-- =====================
-	--   CLEAN OLD EVENTS
-	-- =====================
+		RETURN
+	END
+	
+	IF @step = 4 --calculate balance
+	BEGIN
+		
+		-- ================== Calculate Balance
 
-		---- delete event/odds information
+		-- =====================
+		--   CALCULATE BALANCE
+		-- =====================
+		/*
+		BalanceTable_tmp_cal will got data insert (almost) daily from job "DBTRANS : Balance Up (Cal_Balance)"
+		data will uses to help verify value which calculate from below query while using lockhint NOLOCK
+		for custid which data is not valid, then we calculate again using lockhint ROWLOCK
+		*/
 
-		--delete from DB02.bodb02.dbo.match
-		--where matchid not in (select distinct matchid from bettrans where bettype <= 19000)
-		--and kickofftime < @fdate
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.01 - Starting insert data into BalanceTable_tmp_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-		-----> Put this code into [Acc_Apl_ExecRep_03]
+		INSERT INTO dbo.BalanceTable_tmp_cal
+		SELECT
+			DATEPART(dw, CURRENT_TIMESTAMP) dow,
+			CASE custid
+			WHEN  recommend THEN 2
+			WHEN mrecommend THEN 3
+			WHEN srecommend THEN 4
+			ELSE 1 END roleid, 
+			custid, recommend, mrecommend, srecommend,
+			SUM(CASE WHEN custid NOT IN (recommend, mrecommend, srecommend) THEN winlost-actual_stake + playercomm ELSE 0 END) amt1,
+			SUM(CASE WHEN custid NOT IN (recommend, mrecommend, srecommend) THEN 1 ELSE 0 END) tcnt1,
+			SUM(CASE WHEN custid =  recommend THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) amt2,
+			SUM(CASE WHEN custid =  recommend THEN 1 ELSE 0 END) tcnt2,
+			SUM(CASE WHEN custid = mrecommend THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) amt3,
+			SUM(CASE WHEN custid = mrecommend THEN 1 ELSE 0 END) tcnt3,
+			SUM(CASE WHEN custid = srecommend THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) amt4,
+			SUM(CASE WHEN custid = srecommend THEN 1 ELSE 0 END) tcnt4
+		FROM dbo.transfer WITH (NOLOCK)
+		WHERE winlostdate < @fdate
+		GROUP BY custid, recommend, mrecommend, srecommend
 
-		EXEC Acc_Apl_ExecRep_03 @fdate 
-
-		EXEC DB02.bodb02.dbo.Task_BalanceUp_DB02 @fdate
-
-	EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 1
-
--- ================== END STEP : 3
-END
--- ================== Calculate Balance
-*/
-
--- ================== STEP : 3
-IF @step = 3
-BEGIN
--- ================== Calculate Balance
-
-	-- =====================
-	--   CALCULATE BALANCE
-	-- =====================
-	/*
-	BalanceTable_tmp_cal will got data insert (almost) daily from job "DBTRANS : Balance Up (Cal_Balance)"
-	data will uses to help verify value which calculate from below query while using lockhint NOLOCK
-	for custid which data is not valid, then we calculate again using lockhint ROWLOCK
-	*/
-	INSERT INTO dbo.BalanceTable_tmp_cal
-	SELECT
-		DATEPART(dw, CURRENT_TIMESTAMP) dow,
-		CASE custid
-		WHEN  recommend THEN 2
-		WHEN mrecommend THEN 3
-		WHEN srecommend THEN 4
-		ELSE 1 END roleid, 
-		custid, recommend, mrecommend, srecommend,
-		SUM(CASE WHEN custid NOT IN (recommend, mrecommend, srecommend) THEN winlost-actual_stake + playercomm ELSE 0 END) amt1,
-		SUM(CASE WHEN custid NOT IN (recommend, mrecommend, srecommend) THEN 1 ELSE 0 END) tcnt1,
-		SUM(CASE WHEN custid =  recommend THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) amt2,
-		SUM(CASE WHEN custid =  recommend THEN 1 ELSE 0 END) tcnt2,
-		SUM(CASE WHEN custid = mrecommend THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) amt3,
-		SUM(CASE WHEN custid = mrecommend THEN 1 ELSE 0 END) tcnt3,
-		SUM(CASE WHEN custid = srecommend THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) amt4,
-		SUM(CASE WHEN custid = srecommend THEN 1 ELSE 0 END) tcnt4
-	FROM
-		dbo.transfer with (nolock)
-	WHERE winlostdate < @fdate
-	GROUP BY
-		custid, recommend, mrecommend, srecommend
-
-	CREATE TABLE #balance_cal (roleid tinyint, 
-		custid int, recommend int, mrecommend int, srecommend int, 
-		amt1 money, amt2 money, amt3 money, amt4 money, cnt int default(0),
-		tcnt1 int default(0), tcnt2 int default(0), tcnt3 int default(0), tcnt4 int default(0)
+		CREATE TABLE #balance_cal (roleid tinyint, 
+			custid int, recommend int, mrecommend int, srecommend int, 
+			amt1 money, amt2 money, amt3 money, amt4 money, cnt int default(0),
+			tcnt1 int default(0), tcnt2 int default(0), tcnt3 int default(0), tcnt4 int default(0)
 		)
 		CREATE CLUSTERED INDEX IX_custid ON #balance_cal (custid)
 		CREATE INDEX IX_roleid ON #balance_cal (roleid)
-	CREATE TABLE #filtered (fcustid int PRIMARY KEY)
 
-	;WITH q_distinct AS (
+		CREATE TABLE #filtered (fcustid INT PRIMARY KEY)
+		CREATE TABLE #q_distinct(roleid INT, custid INT, recommend INT, mrecommend INT, srecommend INT
+			, amt1 MONEY, amt2 MONEY, amt3 MONEY, amt4 MONEY, cnt INT)
+		CREATE TABLE #q_tcnt(fcustid INT, tcnt1 INT, tcnt2 INT, tcnt3 INT, tcnt4 INT)
+
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.01 - Starting insert data into #q_distinct, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		INSERT INTO #q_distinct(roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4, cnt)
 		SELECT roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4, COUNT(*) cnt
 		FROM dbo.BalanceTable_tmp_cal WITH (PAGLOCK)
 		GROUP BY roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4
-		),
-		q_tcnt AS (
+
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.02 - Starting insert data into #q_tcnt, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		INSERT INTO #q_tcnt(fcustid, tcnt1, tcnt2, tcnt3, tcnt4)
 		SELECT custid fcustid, MAX(tcnt1) as tcnt1, MAX(tcnt2) as tcnt2, MAX(tcnt3) as tcnt3, MAX(tcnt4) AS tcnt4
 		FROM dbo.BalanceTable_tmp_cal WITH (PAGLOCK)
 		GROUP BY custid
-		)
-	INSERT INTO #balance_cal ( 
-		roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4, cnt, 
-		tcnt1, tcnt2, tcnt3, tcnt4 
-		)
-		SELECT q_distinct.* , f.tcnt1, f.tcnt2, f.tcnt3, f.tcnt4
-		FROM
-			q_distinct INNER JOIN q_tcnt f ON q_distinct.custid = f.fcustid
 
-	-- required to have at least 4 rows of matching data to consider valid	
-	INSERT INTO #filtered
-		SELECT DISTINCT custid FROM #balance_cal WITH (PAGLOCK) WHERE CNT <= 4
-
-	-- remove invalid balance
-	DELETE b
-	FROM #balance_cal b INNER JOIN #filtered f ON b.custid = f.fcustid
-
-	-- re-calculate balance for customer which got invalid balance
-	INSERT INTO #balance_cal (roleid, custid, recommend, mrecommend, srecommend, amt1, tcnt1, amt2, tcnt2, amt3, tcnt3, amt4, tcnt4)
-	SELECT
-		CASE custid
-		WHEN  recommend THEN 2
-		WHEN mrecommend THEN 3
-		WHEN srecommend THEN 4
-		ELSE 1 END roleid, 
-		custid, recommend, mrecommend, srecommend,
-		SUM(CASE WHEN custid NOT IN (recommend, mrecommend, srecommend) THEN winlost-actual_stake + playercomm ELSE 0 END) amt1,
-		SUM(CASE WHEN custid NOT IN (recommend, mrecommend, srecommend) THEN 1 ELSE 0 END) tcnt1,
-		SUM(CASE WHEN custid =  recommend THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) amt2,
-		SUM(CASE WHEN custid =  recommend THEN 1 ELSE 0 END) tcnt2,
-		SUM(CASE WHEN custid = mrecommend THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) amt3,
-		SUM(CASE WHEN custid = mrecommend THEN 1 ELSE 0 END) tcnt3,
-		SUM(CASE WHEN custid = srecommend THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) amt4,
-		SUM(CASE WHEN custid = srecommend THEN 1 ELSE 0 END) tcnt4
-	FROM
-		dbo.Transfer t with (rowlock)
-		INNER JOIN #filtered f ON t.custid = f.fcustid
-	WHERE winlostdate < @fdate
-	GROUP BY
-		custid, recommend, mrecommend, srecommend		
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.03 - Starting insert data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 		
-	INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT custid, amt1, tcnt1, 0			   FROM #balance_cal WHERE roleid = 1
-	INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT recommend , SUM(amt2), SUM(tcnt2), 0 FROM #balance_cal GROUP BY recommend
-	INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT mrecommend, SUM(amt3), SUM(tcnt3), 0 FROM #balance_cal GROUP BY mrecommend
-	INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT srecommend, SUM(amt4), SUM(tcnt4), 0 FROM #balance_cal GROUP BY srecommend
+		INSERT INTO #balance_cal ( roleid, custid, recommend, mrecommend, srecommend
+			, amt1, amt2, amt3, amt4, cnt
+			, tcnt1, tcnt2, tcnt3, tcnt4 
+		)
+		SELECT q.*, f.tcnt1, f.tcnt2, f.tcnt3, f.tcnt4
+		FROM #q_distinct q WITH (PAGLOCK)
+		INNER JOIN #q_tcnt f WITH (PAGLOCK) ON q.custid = f.fcustid
 
-	DROP TABLE #balance_cal
-	DROP TABLE #filtered
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.04 - Starting adjust data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	--BEGIN TRANSACTION
+		-- required to have at least 4 rows of matching data to consider valid	
+		INSERT INTO #filtered(fcustid)
+		SELECT DISTINCT custid 
+		FROM #balance_cal WITH (PAGLOCK) WHERE cnt <= 4
+
+		-- remove invalid balance
+		DELETE b
+		FROM #balance_cal b INNER JOIN #filtered f ON b.custid = f.fcustid
+
+		-- re-calculate balance for customer which got invalid balance
+		INSERT INTO #balance_cal (roleid, custid, recommend, mrecommend, srecommend, amt1, tcnt1, amt2, tcnt2, amt3, tcnt3, amt4, tcnt4)
+		SELECT
+			CASE custid
+			WHEN  recommend THEN 2
+			WHEN mrecommend THEN 3
+			WHEN srecommend THEN 4
+			ELSE 1 END roleid, 
+			custid, recommend, mrecommend, srecommend,
+			SUM(CASE WHEN custid NOT IN (recommend, mrecommend, srecommend) THEN winlost-actual_stake + playercomm ELSE 0 END) amt1,
+			SUM(CASE WHEN custid NOT IN (recommend, mrecommend, srecommend) THEN 1 ELSE 0 END) tcnt1,
+			SUM(CASE WHEN custid =  recommend THEN winlost-actual_stake ELSE awinlost+comm-playercomm END) amt2,
+			SUM(CASE WHEN custid =  recommend THEN 1 ELSE 0 END) tcnt2,
+			SUM(CASE WHEN custid = mrecommend THEN winlost-actual_stake ELSE mwinlost+acomm-comm END) amt3,
+			SUM(CASE WHEN custid = mrecommend THEN 1 ELSE 0 END) tcnt3,
+			SUM(CASE WHEN custid = srecommend THEN winlost-actual_stake ELSE swinlost+scomm-acomm END) amt4,
+			SUM(CASE WHEN custid = srecommend THEN 1 ELSE 0 END) tcnt4
+		FROM dbo.Transfer t with (rowlock)
+			INNER JOIN #filtered f ON t.custid = f.fcustid
+		WHERE winlostdate < @fdate
+		GROUP BY custid, recommend, mrecommend, srecommend
+		
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.04 - Starting insert data into BalanceTable, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT custid, amt1, tcnt1, 0			   FROM #balance_cal WHERE roleid = 1
+		INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT recommend , SUM(amt2), SUM(tcnt2), 0 FROM #balance_cal GROUP BY recommend
+		INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT mrecommend, SUM(amt3), SUM(tcnt3), 0 FROM #balance_cal GROUP BY mrecommend
+		INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT srecommend, SUM(amt4), SUM(tcnt4), 0 FROM #balance_cal GROUP BY srecommend
+
+		DROP TABLE #balance_cal
+		DROP TABLE #filtered
+		DROP TABLE #q_distinct
+		DROP TABLE #q_tcnt
+
+		--BEGIN TRANSACTION
 		DELETE FROM dbo.balanceTable
 		WHERE custid = 0
 
-		update b
-		set
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.05 - Starting update sma | actualrate data on BalanceTable (1), @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		UPDATE b
+		SET 
 			roleid = c.roleid,
 			recommend = c.recommend,
 			mrecommend= c.mrecommend,
@@ -495,14 +328,17 @@ BEGIN
 			currency  = c.currency,
 			UserName  = c.username,
 			CurrencyName = e.currency,
-			actualrate = IsNull(ed.ActualRate, e.ActualRate)
-		from dbo.balancetable b
+			actualrate = ISNULL(ed.ActualRate, e.ActualRate)
+		FROM dbo.balancetable b
 			INNER JOIN CustDB.dbo.custinfo c ON b.custid = c.custid
 			INNER JOIN CustDB.dbo.exchange e ON c.currency = e.exchangeid
 			LEFT OUTER JOIN CustDB.dbo.ExchangeDailyOanda ed ON c.currency = ed.ExchangeId AND ed.ExchangeDate = DATEADD(day, -1, @fdate)
 
-		update b
-		set
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.06 - Starting update sma | actualrate data on BalanceTable (2), @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		UPDATE b
+		SET
 			roleid = 1,
 			recommend = c.recommend,
 			mrecommend= ag.mrecommend,
@@ -511,144 +347,206 @@ BEGIN
 			UserName  = c.username,
 			CurrencyName = e.currency,
 			actualrate = IsNull(ed.ActualRate, e.ActualRate)
-		from dbo.balancetable b
+		FROM dbo.balancetable b
 			INNER JOIN CustDB.dbo.Dep_Customer_Archived c ON b.custid = c.custid
 			INNER JOIN CustDB.dbo.custinfo ag ON ag.custid = c.Recommend
 			INNER JOIN CustDB.dbo.exchange e ON ag.currency = e.exchangeid
 			LEFT OUTER JOIN CustDB.dbo.ExchangeDailyOanda ed ON ag.currency = ed.ExchangeId AND ed.ExchangeDate = DATEADD(day, -1, @fdate)
 
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.07 - Starting insert data into balancetable_tmp, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		-- copy data, ready for insertion
 		INSERT INTO dbo.balancetable_tmp
 		SELECT @fdate, * FROM dbo.balancetable
-	--COMMIT TRANSACTION
 
-	-- =====================
-	--   CLEAN OLD EVENTS
-	-- =====================
+		EXEC Acc_Apl_ExecRep_03 @fdate
 
-		---- delete event/odds information
-
-		--delete from DB02.bodb02.dbo.match
-		--where matchid not in (select distinct matchid from bettrans where bettype <= 19000)
-		--and kickofftime < @fdate
-
-		-----> Put this code into [Acc_Apl_ExecRep_03]
-
-		EXEC Acc_Apl_ExecRep_03 @fdate 
-
-		--EXEC DB02.bodb02.dbo.Task_BalanceUp_DB02 @fdate
-
-	EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 1
+		EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 1
 	
-	--//remove all data in processing list
-	DELETE FROM dbo.ProcessingCustList WITH(ROWLOCK)
+		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
--- ================== END STEP : 3
-END
--- ================== Calculate Balance
-
-
--- ======================
---   INSERT NEW BALANCE
--- ======================
--- start remove transaction/insert balance
-
--- ================== STEP : 4
-IF @step = 4
-BEGIN
-
-	SET DEADLOCK_PRIORITY HIGH
-
-	--insert processing list
-	EXEC dbo.Task_Core_ProcessingCustListIns @CustIds = '3'
-	WAITFOR DELAY '00:00:03:000'
-
-	BEGIN TRANSACTION
-
-	DELETE FROM dbo.balanceTable_tmp
-	WHERE srecommend = 3 AND recommend = 0
-
-	EXEC dbo.ExecRep_07 3, 0, 44, @fdate
-
-	COMMIT TRANSACTION
-
-	--delete processing list
-	EXEC dbo.Task_Core_ProcessingCustListDel @CustIds = '3'
-
--- ================== BalanceUp Agent
-	SET NOCOUNT ON
-	EXEC dbo.Task_BalanceUp_SubAgent @fdate
-	SET NOCOUNT OFF
--- ================== END STEP : 4
+		RETURN
+	END
 	
-	SET DEADLOCK_PRIORITY NORMAL
+	IF @step = 5 --insert new 20k
+	BEGIN
 
-END
--- ================== BalanceUp Agent
+		SET DEADLOCK_PRIORITY HIGH
 
--- ================== STEP : 5
-IF @step = 5
-BEGIN
-	SET DEADLOCK_PRIORITY HIGH
+		CREATE TABLE #__custIds(rowId INT IDENTITY(1,1) PRIMARY KEY, custId INT)
+		DECLARE @__tempCustIds TABLE (custid INT)
 
--- ================== BalanceUp Super
-	SET NOCOUNT ON
-	EXEC dbo.Task_BalanceUp_SubSuper @fdate
-	SET NOCOUNT OFF
--- ================== END STEP : 5
+		WHILE 1 = 1
+		BEGIN
+			TRUNCATE TABLE #__custIds
+			SELECT @__rowId = 1
 
-	SET DEADLOCK_PRIORITY NORMAL
+			INSERT INTO #__custIds(custId)
+			SELECT TOP(50000) custid
+			FROM dbo.balanceTable_tmp
 
-END
--- ================== BalanceUp Super
+			IF @@ROWCOUNT = 0
+				BREAK
 
--- ================== STEP : 6 BalanceUp Headline
-IF @step = 6
-BEGIN
-	SET DEADLOCK_PRIORITY HIGH
+			WHILE 1 = 1
+			BEGIN
+				DELETE FROM @__tempCustIds
+				
+				INSERT INTO @__tempCustIds(custid)
+				SELECT custid 
+				FROM #__custIds WHERE rowId >= @__rowId AND rowId < @__rowId + 1000
 
-	EXEC dbo.Task_BalanceUp_Headline @winlostdate = @fdate
+				IF @@ROWCOUNT = 0
+					BREAK
 
-	SET DEADLOCK_PRIORITY NORMAL
+				BEGIN TRANSACTION
 
-END
--- ================== BalanceUp headline (roleid = 0)
+				--//insert new 20k
+				DELETE bal FROM dbo.balanceTable_tmp bal
+				WHERE EXISTS (
+					SELECT TOP 1 1 FROM @__tempCustIds t WHERE bal.custid = t.custid
+				)
+				
+				COMMIT TRANSACTION
 
+				SET @__rowId += 1000
 
--- ================== STEP : 7
-IF @step = 7
-BEGIN
--- ================== Finishing
-	SELECT TOP(1) @fdate = winlostdate
-	FROM dbo.Transfer WITH (NOLOCK)
-	WHERE bettype = 20000
-	ORDER BY transid
+				SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key1') --default 700ms
+				WAITFOR DELAY @__delayTimeValue --Task_BalanceUp_background: waitfor insert new 20k
+			END
+
+		END
+
+		SET DEADLOCK_PRIORITY NORMAL
 		
-	--//remove all data in processing list
-	DELETE FROM dbo.ProcessingCustList WITH(ROWLOCK)
+		DROP TABLE #__custIds
 
-	EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 0
+		--//turn off BU_DoneSum20k flag
+		EXEC dbo.Transfer_ExecRep_02 @Mode = 8
 
-	-- end comment
+		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	END
+	
+	IF @step = 6 --wait for replicated servers perform done and then go to update balanceUp date flag
+	BEGIN
+		DECLARE @__start DATETIME
+		SET @__start = GETDATE()
+		WHILE EXISTS (
+			SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'BU_ReadyUpdBUDate' AND VValue <> '0'
+		)
+		BEGIN
+			WAITFOR DELAY '00:00:30:000' --waitfor BalanceUp done...
+			IF DATEDIFF(MINUTE, @__start, GETDATE()) > 30
+			BEGIN
+				--send out message for DBA to check...
+				PRINT 'hey guys, please check...'
+				EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = N'PONTUS', 
+					@JobId = NULL, @JobName = N'Custom Message', 
+					@Message = 'Urgently!!! BalanceUp - hey guys, BalanceUp background run long time at step 6. Please check!!!', @CaseId = 1;
+
+				EXECUTE msdb.dbo.sp_send_dbmail @profile_name	= DEFAULT
+				   , @recipients			 = 'pontus@starixvn.com' --will replace email address later
+				   , @copy_recipients		 = ''
+				   , @blind_copy_recipients	 = ''
+				   , @subject				 = 'Urgently!!! BalanceUp - Notification'
+				   , @body					 = 'Please call DBA to check since BalanceUp run long time at step 6.'
+				   , @body_format			 = 'HTML';
+
+			END
+		END
+
+		SET @Doing = 'Task_BalanceUp_background BU step 6.01 - Starting update BalanceUpDate flag ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		--//**update BalanceUpDate value
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @parlay = 12, @tableName = 'SystemSettings'
+
+		SET @Doing = 'Task_BalanceUp_background BU step 6.01 - Ending update BalanceUpDate flag' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		--//
+		SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('AfterUpdBUD')
+		WAITFOR DELAY @__delayTimeValue --Task_BalanceUp_background: waitfor go to delete step...
+
+		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		RETURN
+
+	END
+	
+	IF @step = 7 --delete old data: old 20k, sum 19999 and transfer
+	BEGIN
+		SET @__rowId  = 0
+		CREATE TABLE #__transIds(rowId INT IDENTITY(1,1) PRIMARY KEY, transId BIGINT)
+
+		DECLARE @__strTransIds NVARCHAR(MAX)
+
+		WHILE 1 = 1
+		BEGIN
+			TRUNCATE TABLE #__transIds
+			SELECT @__rowId = 1
+
+			INSERT INTO #__transIds(transId)
+			SELECT TOP(50000) transid
+			FROM dbo.Transfer WITH(NOLOCK)
+			WHERE winlostdate < @fdate
+
+			IF @@ROWCOUNT = 0
+				BREAK
+				
+			WHILE 1 = 1
+			BEGIN
+				SET @__strTransIds = NULL
+
+				SELECT @__strTransIds = COALESCE(@transIds + '^' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
+				FROM #__transIds WHERE rowId >= @__rowId AND rowId < @__rowId + 2000
+
+				IF @@ROWCOUNT = 0
+					BREAK
+
+				EXEC dbo.ExecRep_07 @custids = '', @custid = 0, @roleid = 111, @winlostdate = @fdate, @transIds = @__strTransIds
+				
+				SET @__rowId += 2000
+			END
+
+			--waitfor delay on each batch 50k.
+			SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('DeleteBU') --default 280ms
+			WAITFOR DELAY @__delayTimeValue --waitfor deleting data BU...
+
+		END
+
+		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		SET DEADLOCK_PRIORITY NORMAL
+		RETURN
+	END
+	
+	IF @step = 8 --turn off trigger | flag and completed balanceUP
+	BEGIN
+
+		EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 0
 
 		EXEC dbo.balancecheck @fdate, 21
 
-	-- UPDATE DBACC.bodb02.dbo.SystemSettings
-	-- SET VValue = '0'
-	-- WHERE VName = 'isArchivingBet' 
-	EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
-	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
+		EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
+		EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
 
-	--//turn off isArchivingBet_Local flag
-	--EXEC dbo.Bet_ExecRep_09 @mode = 6
-	EXEC dbo.Transfer_ExecRep_02 @Mode = 6
-	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 6, @tableName = 'SystemSettings'
+		--reset being balanceup date
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @parlay = 11, @tableName = 'SystemSettings'
 
-	SET @Doing = 'Task_BalanceUp_background : Done'
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
--- ================== END STEP : 7
+		--//turn off isArchivingBet_Local flag
+		EXEC dbo.Transfer_ExecRep_02 @Mode = 6
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 6, @tableName = 'SystemSettings'
+
+		SET @Doing = 'Task_BalanceUp_background : Done'
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	END
 END
--- ================== Finishing
-
-
+GO
