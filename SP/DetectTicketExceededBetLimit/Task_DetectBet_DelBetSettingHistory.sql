@@ -41,7 +41,7 @@ BEGIN
 	ELSE IF @StakeLevelGroupDetail_Time IS NOT NULL
 	BEGIN
 		DELETE StakeLevelGroupDetail_History WITH (ROWLOCK)
-		WHERE UpdateTime<@Dep_StakeLevel_Time
+		WHERE UpdateTime<@StakeLevelGroupDetail_Time
 	END
 	ELSE IF @Dep_StakeLevel_Time IS NOT NULL
 	BEGIN
