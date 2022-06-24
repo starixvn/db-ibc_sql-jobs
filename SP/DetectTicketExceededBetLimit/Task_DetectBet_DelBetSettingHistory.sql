@@ -28,27 +28,27 @@ BEGIN
 		DELETE CustMaxBetSetting_History WITH (ROWLOCK)
 		WHERE UpdateTime<@CustMaxBetSetting_Time
 	END
-	ELSE IF @Dep_CustMaxBetSetting_Time IS NOT NULL
+	IF @Dep_CustMaxBetSetting_Time IS NOT NULL
 	BEGIN
 		DELETE Dep_CustMaxBetSetting_History WITH (ROWLOCK)
 		WHERE UpdateTime<@Dep_CustMaxBetSetting_Time
 	END
-	ELSE IF @StakeLevel_Time IS NOT NULL
+	IF @StakeLevel_Time IS NOT NULL
 	BEGIN
 		DELETE StakeLevel_History WITH (ROWLOCK)
 		WHERE UpdateTime<@StakeLevel_Time
 	END
-	ELSE IF @StakeLevelGroupDetail_Time IS NOT NULL
+	IF @StakeLevelGroupDetail_Time IS NOT NULL
 	BEGIN
 		DELETE StakeLevelGroupDetail_History WITH (ROWLOCK)
 		WHERE UpdateTime<@StakeLevelGroupDetail_Time
 	END
-	ELSE IF @Dep_StakeLevel_Time IS NOT NULL
+	IF @Dep_StakeLevel_Time IS NOT NULL
 	BEGIN
 		DELETE Dep_StakeLevel_History WITH (ROWLOCK)
 		WHERE UpdateTime<@Dep_StakeLevel_Time
 	END
-	ELSE IF @Dep_StakeLevelGroupDetail_Time IS NOT NULL
+	IF @Dep_StakeLevelGroupDetail_Time IS NOT NULL
 	BEGIN
 		DELETE Dep_StakeLevelGroupDetail_History WITH (ROWLOCK)
 		WHERE UpdateTime<@Dep_StakeLevelGroupDetail_Time
