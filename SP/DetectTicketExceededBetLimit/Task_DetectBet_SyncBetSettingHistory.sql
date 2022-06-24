@@ -29,7 +29,7 @@ BEGIN
 	SET @UpdateTime = GETDATE()
 
 	--History: SMA update member bet setting
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History)
+	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK))
 	BEGIN
 		SET @CustMaxBetSetting_Time=(SELECT MAX(UpdateTime)
 									 FROM (SELECT TOP (@batch+1) UpdateTime
@@ -43,7 +43,7 @@ BEGIN
 		WHERE UpdateTime<@CustMaxBetSetting_Time
 	END
 
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History)
+	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK))
 	BEGIN
 		SET @Dep_CustMaxBetSetting_Time=(SELECT MAX(UpdateTime)
 										 FROM (SELECT TOP (@batch+1) UpdateTime
@@ -58,7 +58,7 @@ BEGIN
 	END
 
 	--History: update global bet setting
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevel_History)
+	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK))
 	BEGIN
 		SET @StakeLevel_Time=(SELECT MAX(UpdateTime)
 							  FROM (SELECT TOP (@batch+1) UpdateTime
@@ -72,7 +72,7 @@ BEGIN
 		WHERE UpdateTime<@StakeLevel_Time
 	END
 
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History)
+	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK))
 	BEGIN
 		SET @Dep_StakeLevel_Time=(SELECT MAX(UpdateTime)
 								  FROM (SELECT TOP (@batch+1) UpdateTime
@@ -87,7 +87,7 @@ BEGIN
 	END
 
 	----------------------------------------------------------------------------------------------------------
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History)
+	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK))
 	BEGIN
 		SET @StakeLevelGroupDetail_Time=(SELECT MAX(UpdateTime)
 										 FROM (SELECT TOP (@batch+1) UpdateTime
@@ -102,7 +102,7 @@ BEGIN
 	END
 
 
-	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History)
+	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK))
 	BEGIN
 		SET @Dep_StakeLevelGroupDetail_Time=(SELECT MAX(UpdateTime)
 											FROM (SELECT TOP (@batch+1) UpdateTime
