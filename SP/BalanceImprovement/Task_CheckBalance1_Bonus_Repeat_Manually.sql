@@ -148,7 +148,7 @@ BEGIN
 				DELETE FROM dbo.Task_Cust_CheckBalanceVerify1_Bonus_Manually WHERE custid = @custid
 
 				INSERT INTO dbo.Task_Cust_BalanceProblem1_Bonus_Manually (UserName, custid, DiffBalance, IsFixed, Remark)
-				SELECT username, @custid, @DiffBalance, 0, 'wont fix, roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE WHEN currency = 20 THEN ' UUS' ELSE '' END + ', errCode = ' + CAST(@result AS VARCHAR(50))
+				SELECT username, @custid, @DiffBalanceInput, 0, 'wont fix, roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE WHEN currency = 20 THEN ' UUS' ELSE '' END + ', errCode = ' + CAST(@result AS VARCHAR(50))
 				FROM CustDB.dbo.custInfo with (nolock)
 				WHERE custid = @custid
 			END
