@@ -1,7 +1,7 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_CheckBalance1_FixOne]
 	@custid int,
-	@DiffBalanceInput money,
+	@DiffBalanceInput money = NULL,
 	@DiffBalance money OUTPUT,
 	@result int OUTPUT,
 	@IsUUS bit = 0 OUTPUT
@@ -160,7 +160,7 @@ WHERE custid = @__custid AND RepUpdateTime >= @__repUpdateTime'');';
 			INNER JOIN dbo.BalDebitOthers db4 WITH (ROWLOCK) ON cd1.custid = db4.custid	
 		WHERE cd1.custid = @custid
 		
-		IF ISNULL(@DiffBalance, 0) <> ISNULL(@DiffBalanceInput, 0)
+		IF @DiffBalanceInput IS NOT NULL AND ISNULL(@DiffBalance, 0) <> ISNULL(@DiffBalanceInput, 0)
 		BEGIN
 			SET @result = 300 -->>balance amnt has changed
 			RETURN

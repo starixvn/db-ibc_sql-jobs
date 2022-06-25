@@ -4,7 +4,7 @@ GO
 ALTER PROCEDURE [dbo].[Task_CheckBalance1_Bonus_FixOne]
 	@custid int,
 	@bonusId int,
-	@DiffBalanceInput money,
+	@DiffBalanceInput money = NULL,
 	@DiffBalance money OUTPUT,
 	@result int OUTPUT,
 	@IsUUS bit = 0 OUTPUT
@@ -141,7 +141,7 @@ WHERE custid = @__custid AND RepUpdateTime >= @__repUpdateTime'');';
 				INNER JOIN dbo.BonusWalletDebit d1 WITH (NOLOCK) ON c1.custid = d1.custid AND c1.BonusID = d1.BonusID
 			WHERE c1.custid = @custid AND c1.BonusID = @bonusId
 			
-			IF ISNULL(@DiffBalance, 0) <> ISNULL(@DiffBalanceInput, 0)
+			IF @DiffBalanceInput IS NOT NULL AND ISNULL(@DiffBalance, 0) <> ISNULL(@DiffBalanceInput, 0)
 			BEGIN
 				SET @result = 300 -->>balance amnt has changed
 				RETURN
