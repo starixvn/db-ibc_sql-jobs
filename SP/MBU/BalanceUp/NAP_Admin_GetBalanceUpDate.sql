@@ -1,11 +1,11 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBAH-bodb02,DBTP-bodb02,DBBAL-bodb02" executers="dot_member,bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="1"></info>*/
 CREATE PROCEDURE [dbo].[NAP_Admin_GetBalanceUpDate]
 	@BalanceUpDate SMALLDATETIME OUTPUT
 AS
 /*
 	Created: 20220602@Patrick
 	Task: Get current balanceUp date
-	DB: DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBOF-bodb02,DBBAH-bodb02,DBTP-bodb02,DBBAL-bodb02
+	DB: DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBAH-bodb02,DBTP-bodb02,DBBAL-bodb02
 	Params:
 		@BalanceUpDate: current BalanceUp date
 		
