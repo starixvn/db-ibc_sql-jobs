@@ -230,43 +230,30 @@ BEGIN
 			amt1 money, amt2 money, amt3 money, amt4 money, cnt int default(0),
 			tcnt1 int default(0), tcnt2 int default(0), tcnt3 int default(0), tcnt4 int default(0)
 		)
-		CREATE CLUSTERED INDEX IX_custid ON #balance_cal (custid)
-		CREATE INDEX IX_roleid ON #balance_cal (roleid)
 
 		CREATE TABLE #filtered (fcustid INT PRIMARY KEY)
-		CREATE TABLE #q_distinct(roleid INT, custid INT, recommend INT, mrecommend INT, srecommend INT
-			, amt1 MONEY, amt2 MONEY, amt3 MONEY, amt4 MONEY, cnt INT)
-		CREATE TABLE #q_tcnt(fcustid INT, tcnt1 INT, tcnt2 INT, tcnt3 INT, tcnt4 INT)
 
-		SET @Doing = 'Task_BalanceUp_background: BU step 4.01 - Starting insert data into #q_distinct, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.02 - Starting insert data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-		INSERT INTO #q_distinct(roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4, cnt)
-		SELECT roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4, COUNT(*) cnt
-		FROM dbo.BalanceTable_tmp_cal WITH (PAGLOCK)
-		GROUP BY roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4
-
-		SET @Doing = 'Task_BalanceUp_background: BU step 4.02 - Starting insert data into #q_tcnt, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
-
-		INSERT INTO #q_tcnt(fcustid, tcnt1, tcnt2, tcnt3, tcnt4)
-		SELECT custid fcustid, MAX(tcnt1) as tcnt1, MAX(tcnt2) as tcnt2, MAX(tcnt3) as tcnt3, MAX(tcnt4) AS tcnt4
-		FROM dbo.BalanceTable_tmp_cal WITH (PAGLOCK)
-		GROUP BY custid
-
-		SET @Doing = 'Task_BalanceUp_background: BU step 4.03 - Starting insert data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
-		
-		INSERT INTO #balance_cal ( roleid, custid, recommend, mrecommend, srecommend
-			, amt1, amt2, amt3, amt4, cnt
-			, tcnt1, tcnt2, tcnt3, tcnt4 
+		;WITH q_distinct AS (
+			SELECT roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4, COUNT(*) cnt
+			FROM dbo.BalanceTable_tmp_cal WITH (PAGLOCK)
+			GROUP BY roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4
+		), q_tcnt AS (
+			SELECT custid fcustid, MAX(tcnt1) as tcnt1, MAX(tcnt2) as tcnt2, MAX(tcnt3) as tcnt3, MAX(tcnt4) AS tcnt4
+			FROM dbo.BalanceTable_tmp_cal WITH (PAGLOCK)
+			GROUP BY custid
 		)
-		SELECT q.*, f.tcnt1, f.tcnt2, f.tcnt3, f.tcnt4
-		FROM #q_distinct q WITH (PAGLOCK)
-		INNER JOIN #q_tcnt f WITH (PAGLOCK) ON q.custid = f.fcustid
+		INSERT INTO #balance_cal (roleid, custid, recommend, mrecommend, srecommend, amt1, amt2, amt3, amt4, cnt, tcnt1, tcnt2, tcnt3, tcnt4)
+		SELECT q_distinct.* , f.tcnt1, f.tcnt2, f.tcnt3, f.tcnt4
+		FROM q_distinct INNER JOIN q_tcnt f ON q_distinct.custid = f.fcustid
 
-		SET @Doing = 'Task_BalanceUp_background: BU step 4.04 - Starting adjust data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.03 - Starting adjust data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		CREATE CLUSTERED INDEX IX_custid ON #balance_cal (custid)
+		CREATE INDEX IX_roleid ON #balance_cal (roleid)
 
 		-- required to have at least 4 rows of matching data to consider valid	
 		INSERT INTO #filtered(fcustid)
