@@ -198,5 +198,8 @@ BEGIN
 	SET ConfigValue=CONVERT(VARCHAR, @UpdateTime, 121)
 	FROM CustMaxBetSetting_Config AS conf WITH (ROWLOCK, UPDLOCK)
 	WHERE ConfigName='SyncHistoryDataLastTime'
+
+	DROP TABLE #tmpBetSetting_History
+	DROP TABLE #tmpStakeLevel_History
 END
 GO
