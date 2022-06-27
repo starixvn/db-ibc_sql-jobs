@@ -25,19 +25,12 @@ BEGIN
 			CustID			INT
 		,	SportType		SMALLINT
 		,	BetType			INT
-		,	OldMaxBet		MONEY
-		,	OldMaxPerMatch	MONEY
-		,	OldStakeLevelList VARCHAR(200)
 		,	UpdateTime		DATETIME
 	)
 
 	CREATE TABLE #tmpStakeLevel_History (
 			StakeLevelID	INT
 		,	GameTypeID		INT
-		,	MaxLabel		NVARCHAR(50)
-		,	MaxStake		DECIMAL(19,8)
-		,	MaxGameStake	DECIMAL(19,8)
-		,	SiteID			INT
 		,	UpdateTime		DATETIME
 	)
 
@@ -47,17 +40,14 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK))
 	BEGIN
 		INSERT INTO dbo.CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-		OUTPUT inserted.CustID, inserted.SportType, inserted.BetType, inserted.OldMaxBet, inserted.OldMaxPerMatch, inserted.OldStakeLevelList, inserted.UpdateTime
-			INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
+		OUTPUT inserted.CustID, inserted.SportType, inserted.BetType, inserted.UpdateTime
+			INTO #tmpBetSetting_History (CustID, SportType, BetType, UpdateTime)
 		SELECT TOP (@batch) CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 		FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK)
 
 		SET @History_List = (SELECT	CustID				AS '@CustID',
 									SportType			AS '@SportType',
 									BetType				AS '@BetType',
-									OldMaxBet			AS '@OldMaxBet',
-									OldMaxPerMatch		AS '@OldMaxPerMatch',
-									OldStakeLevelList	AS '@OldStakeLevelList',
 									UpdateTime			AS '@UpdateTime'
 							FROM #tmpBetSetting_History
 							FOR XML PATH('r'), ROOT ('root')
@@ -72,17 +62,14 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK))
 	BEGIN
 		INSERT INTO dbo.Dep_CustMaxBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-		OUTPUT inserted.CustID, inserted.SportType, inserted.BetType, inserted.OldMaxBet, inserted.OldMaxPerMatch, inserted.OldStakeLevelList, inserted.UpdateTime
-			INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
+		OUTPUT inserted.CustID, inserted.SportType, inserted.BetType, inserted.UpdateTime
+			INTO #tmpBetSetting_History (CustID, SportType, BetType, UpdateTime)
 		SELECT TOP (@batch) CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 		FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK)
 
 		SET @History_List = (SELECT	CustID				AS '@CustID',
 									SportType			AS '@SportType',
 									BetType				AS '@BetType',
-									OldMaxBet			AS '@OldMaxBet',
-									OldMaxPerMatch		AS '@OldMaxPerMatch',
-									OldStakeLevelList	AS '@OldStakeLevelList',
 									UpdateTime			AS '@UpdateTime'
 							FROM #tmpBetSetting_History
 							FOR XML PATH('r'), ROOT ('root')
@@ -98,15 +85,12 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK))
 	BEGIN
 		INSERT INTO dbo.StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
-		OUTPUT inserted.StakeLevelID, inserted.GameTypeID, inserted.MaxLabel, inserted.MaxStake, inserted.UpdateTime
-			INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
+		OUTPUT inserted.StakeLevelID, inserted.UpdateTime
+			INTO #tmpStakeLevel_History (StakeLevelID, UpdateTime)
 		SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
 		FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK)
 	
 		SET @History_List = (SELECT	StakeLevelID	AS '@StakeLevelID',
-									GameTypeID		AS '@GameTypeID',
-									MaxLabel		AS '@MaxLabel',
-									MaxStake		AS '@MaxStake',
 									UpdateTime		AS '@UpdateTime'
 							FROM #tmpStakeLevel_History
 							FOR XML PATH('r'), ROOT ('root')
@@ -122,16 +106,12 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK))
 	BEGIN
 		INSERT INTO dbo.Dep_StakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
-		OUTPUT inserted.StakeLevelID, inserted.GameTypeID, inserted.MaxLabel, inserted.MaxStake, inserted.SiteID, inserted.UpdateTime
-			INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
+		OUTPUT inserted.StakeLevelID, inserted.UpdateTime
+			INTO #tmpStakeLevel_History (StakeLevelID, UpdateTime)
 		SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
 		FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK)
 
 		SET @History_List = (SELECT	StakeLevelID	AS '@StakeLevelID',
-									GameTypeID		AS '@GameTypeID',
-									MaxLabel		AS '@MaxLabel',
-									MaxStake		AS '@MaxStake',
-									SiteID			AS '@SiteID',
 									UpdateTime		AS '@UpdateTime'
 							FROM #tmpStakeLevel_History
 							FOR XML PATH('r'), ROOT ('root')
@@ -147,16 +127,13 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK))
 	BEGIN
 		INSERT INTO dbo.StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-		OUTPUT inserted.StakeLevelID, inserted.GameTypeID, inserted.MaxLabel, inserted.MaxStake, inserted.MaxGameStake, inserted.UpdateTime
-			INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
+		OUTPUT inserted.StakeLevelID, inserted.GameTypeID, inserted.UpdateTime
+			INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, UpdateTime)
 		SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 		FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK)
 		
 		SET @History_List = (SELECT	StakeLevelID	AS '@StakeLevelID',
 									GameTypeID		AS '@GameTypeID',
-									MaxLabel		AS '@MaxLabel',
-									MaxStake		AS '@MaxStake',
-									MaxGameStake	AS '@MaxGameStake',
 									UpdateTime		AS '@UpdateTime'
 							FROM #tmpStakeLevel_History
 							FOR XML PATH('r'), ROOT ('root')
@@ -172,16 +149,13 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK))
 	BEGIN
 		INSERT INTO dbo.Dep_StakeLevelGroupDetail_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-		OUTPUT inserted.StakeLevelID, inserted.GameTypeID, inserted.MaxLabel, inserted.MaxStake, inserted.MaxGameStake, inserted.UpdateTime
-			INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
+		OUTPUT inserted.StakeLevelID, inserted.GameTypeID, inserted.UpdateTime
+			INTO #tmpStakeLevel_History (StakeLevelID, GameTypeID, UpdateTime)
 		SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 		FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK)
 
 		SET @History_List = (SELECT	StakeLevelID	AS '@StakeLevelID',
 									GameTypeID		AS '@GameTypeID',
-									MaxLabel		AS '@MaxLabel',
-									MaxStake		AS '@MaxStake',
-									MaxGameStake	AS '@MaxGameStake',
 									UpdateTime		AS '@UpdateTime'
 							FROM #tmpStakeLevel_History
 							FOR XML PATH('r'), ROOT ('root')

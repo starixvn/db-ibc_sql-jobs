@@ -31,19 +31,12 @@ BEGIN
 			CustID			INT
 		,	SportType		SMALLINT
 		,	BetType			INT
-		,	OldMaxBet		MONEY
-		,	OldMaxPerMatch	MONEY
-		,	OldStakeLevelList VARCHAR(200)
 		,	UpdateTime		DATETIME
 	)
 
 	CREATE TABLE #tmpStakeLevel_History (
 			StakeLevelID	INT
 		,	GameTypeID		INT
-		,	MaxLabel		VARCHAR(50)
-		,	MaxStake		DECIMAL(19,8)
-		,	MaxGameStake	DECIMAL(19,8)
-		,	SiteID			INT
 		,	UpdateTime		DATETIME
 	)
 
@@ -58,19 +51,12 @@ BEGIN
 		EXEC sp_xml_preparedocument @iDoc OUTPUT
 			, @xml
 
-		INSERT INTO #tmpBetSetting_History(CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-		SELECT CustID, SportType, BetType
-			, CASE WHEN ISNUMERIC(OldMaxBet)=1		THEN OldMaxBet ELSE NULL END OldMaxBet
-			, CASE WHEN ISNUMERIC(OldMaxPerMatch)=1	THEN OldMaxPerMatch ELSE NULL END OldMaxPerMatch
-			, CASE WHEN OldStakeLevelList<>'NULL'	THEN OldStakeLevelList ELSE NULL END OldStakeLevelList
-			, UpdateTime
+		INSERT INTO #tmpBetSetting_History(CustID, SportType, BetType, UpdateTime)
+		SELECT CustID, SportType, BetType, UpdateTime
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
 				CustID			INT
 			,	SportType		SMALLINT
 			,	BetType			INT
-			,	OldMaxBet		VARCHAR(100)
-			,	OldMaxPerMatch	VARCHAR(100)
-			,	OldStakeLevelList VARCHAR(200)
 			,	UpdateTime		DATETIME
 		)
 	
@@ -91,19 +77,12 @@ BEGIN
 		EXEC sp_xml_preparedocument @iDoc OUTPUT
 			, @xml
 
-		INSERT INTO #tmpBetSetting_History(CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-		SELECT CustID, SportType, BetType
-			, CASE WHEN ISNUMERIC(OldMaxBet)=1		THEN OldMaxBet ELSE NULL END OldMaxBet
-			, CASE WHEN ISNUMERIC(OldMaxPerMatch)=1	THEN OldMaxPerMatch ELSE NULL END OldMaxPerMatch
-			, CASE WHEN OldStakeLevelList<>'NULL'	THEN OldStakeLevelList ELSE NULL END OldStakeLevelList
-			, UpdateTime
+		INSERT INTO #tmpBetSetting_History(CustID, SportType, BetType, UpdateTime)
+		SELECT CustID, SportType, BetType, UpdateTime
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
 				CustID			INT
 			,	SportType		SMALLINT
 			,	BetType			INT
-			,	OldMaxBet		VARCHAR(100)
-			,	OldMaxPerMatch	VARCHAR(100)
-			,	OldStakeLevelList VARCHAR(200)
 			,	UpdateTime		DATETIME
 		)
 	
@@ -124,16 +103,10 @@ BEGIN
 		EXEC sp_xml_preparedocument @iDoc OUTPUT
 			, @xml
 
-		INSERT INTO #tmpStakeLevel_History(StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime)
-		SELECT StakeLevelID, GameTypeID
-			, CASE WHEN MaxLabel<>'NULL'		THEN MaxLabel ELSE NULL END MaxLabel
-			, CASE WHEN ISNUMERIC(MaxStake)=1	THEN MaxStake ELSE NULL END MaxStake
-			, UpdateTime
+		INSERT INTO #tmpStakeLevel_History(StakeLevelID, UpdateTime)
+		SELECT StakeLevelID, UpdateTime
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
 				StakeLevelID	INT
-			,	GameTypeID		INT
-			,	MaxLabel		VARCHAR(50)
-			,	MaxStake		VARCHAR(50)
 			,	UpdateTime		DATETIME
 		)
 	
@@ -152,18 +125,10 @@ BEGIN
 		EXEC sp_xml_preparedocument @iDoc OUTPUT
 			, @xml
 
-		INSERT INTO #tmpStakeLevel_History(StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime)
-		SELECT StakeLevelID, GameTypeID
-			, CASE WHEN MaxLabel<>'NULL'		THEN MaxLabel ELSE NULL END MaxLabel
-			, CASE WHEN ISNUMERIC(MaxStake)=1	THEN MaxStake ELSE NULL END MaxStake
-			, CASE WHEN ISNUMERIC(SiteID)=1		THEN SiteID ELSE NULL END SiteID
-			, UpdateTime
+		INSERT INTO #tmpStakeLevel_History(StakeLevelID, UpdateTime)
+		SELECT StakeLevelID, UpdateTime
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
 				StakeLevelID	INT
-			,	GameTypeID		INT
-			,	MaxLabel		VARCHAR(50)
-			,	MaxStake		VARCHAR(50)
-			,	SiteID			VARCHAR(5)
 			,	UpdateTime		DATETIME
 		)
 	
@@ -182,18 +147,11 @@ BEGIN
 		EXEC sp_xml_preparedocument @iDoc OUTPUT
 			, @xml
 
-		INSERT INTO #tmpStakeLevel_History(StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-		SELECT StakeLevelID, GameTypeID
-			, CASE WHEN MaxLabel<>'NULL'			THEN MaxLabel ELSE NULL END MaxLabel
-			, CASE WHEN ISNUMERIC(MaxStake)=1		THEN MaxStake ELSE NULL END MaxStake
-			, CASE WHEN ISNUMERIC(MaxGameStake)=1	THEN MaxGameStake ELSE NULL END MaxGameStake
-			, UpdateTime
+		INSERT INTO #tmpStakeLevel_History(StakeLevelID, GameTypeID, UpdateTime)
+		SELECT StakeLevelID, GameTypeID, UpdateTime
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
 				StakeLevelID	INT
 			,	GameTypeID		INT
-			,	MaxLabel		VARCHAR(50)
-			,	MaxStake		VARCHAR(50)
-			,	MaxGameStake	VARCHAR(100)
 			,	UpdateTime		DATETIME
 		)
 	
@@ -213,18 +171,11 @@ BEGIN
 		EXEC sp_xml_preparedocument @iDoc OUTPUT
 			, @xml
 
-		INSERT INTO #tmpStakeLevel_History(StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime)
-		SELECT StakeLevelID, GameTypeID
-			, CASE WHEN MaxLabel<>'NULL'			THEN MaxLabel ELSE NULL END MaxLabel
-			, CASE WHEN ISNUMERIC(MaxStake)=1		THEN MaxStake ELSE NULL END MaxStake
-			, CASE WHEN ISNUMERIC(MaxGameStake)=1	THEN MaxGameStake ELSE NULL END MaxGameStake
-			, UpdateTime
+		INSERT INTO #tmpStakeLevel_History(StakeLevelID, GameTypeID, UpdateTime)
+		SELECT StakeLevelID, GameTypeID, UpdateTime
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
 				StakeLevelID	INT
 			,	GameTypeID		INT
-			,	MaxLabel		VARCHAR(50)
-			,	MaxStake		VARCHAR(50)
-			,	MaxGameStake	VARCHAR(100)
 			,	UpdateTime		DATETIME
 		)
 	
