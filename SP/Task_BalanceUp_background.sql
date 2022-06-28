@@ -230,7 +230,7 @@ BEGIN
 			amt1 money, amt2 money, amt3 money, amt4 money, cnt int default(0),
 			tcnt1 int default(0), tcnt2 int default(0), tcnt3 int default(0), tcnt4 int default(0)
 		)
-
+		CREATE CLUSTERED INDEX IX_custid ON #balance_cal (custid)
 		CREATE TABLE #filtered (fcustid INT PRIMARY KEY)
 
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.02 - Starting insert data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
@@ -251,9 +251,8 @@ BEGIN
 
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.03 - Starting adjust data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
-
-		CREATE CLUSTERED INDEX IX_custid ON #balance_cal (custid)
-		CREATE INDEX IX_roleid ON #balance_cal (roleid)
+		
+		--CREATE INDEX IX_roleid ON #balance_cal (roleid)
 
 		-- required to have at least 4 rows of matching data to consider valid	
 		INSERT INTO #filtered(fcustid)
