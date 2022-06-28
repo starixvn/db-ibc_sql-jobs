@@ -56,7 +56,8 @@ BEGIN
 		CROSS APPLY (
 				SELECT SUM(b.stake) AS stake
 				FROM dbo.translog b WITH (NOLOCK)
-				WHERE b.Gameid3rd= c.Gameid3rd
+				WHERE b.Gameid3rd = c.Gameid3rd
+					AND b.custid = c.CustId
 		)t
 	WHERE c.sporttype IN (245)
 	---------------------
