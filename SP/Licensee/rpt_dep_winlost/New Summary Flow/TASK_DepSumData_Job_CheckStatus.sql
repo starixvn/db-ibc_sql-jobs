@@ -20,6 +20,7 @@ AS
 		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
 		- 20220321@Percy: Enhance code check Opening Balance [RedmineID: #170118]
 		- 20220620@Sol: Enhance code to prevent arithmetic overflow [RedmineID: #174296]
+		- 20220620@Sol: LAP - Enhance database jobs - ignore bettype 23203 for archived member - [RedmineID: #171747]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -148,11 +149,13 @@ BEGIN
 		SELECT m.CustID, m.OpeningBalance
 		FROM bodb_Report.dbo.rptDepWinlost_Main m WITH (NOLOCK)
 		WHERE m.Winlostdate = @Yesterday AND m.currency <> 20
+			AND NOT EXISTS (SELECT TOP 1 1 FROM bodb02.dbo.Dep_Customer_Archived da WITH(NOLOCK) WHERE m.CustID = da.CustID)
 
 		CREATE TABLE #rptTradeCustWinlost (CustId INT PRIMARY KEY, Winloss MONEY)
 		INSERT INTO #rptTradeCustWinlost (CustId, Winloss)
 		SELECT CustID, SUM(Winloss) AS Winloss
-		FROM bodb_Report.dbo.rptTradeCustWinlost WITH (NOLOCK)
+		FROM bodb_Report.dbo.rptTradeCustWinlost ta WITH (NOLOCK)
+		WHERE NOT EXISTS (SELECT TOP 1 1 FROM bodb02.dbo.Dep_Customer_Archived da WITH(NOLOCK) WHERE ta.CustID = da.CustID)
 		GROUP BY CustID
 
 		CREATE TABLE #bettrans (CustId INT PRIMARY KEY, OpeningBalance MONEY)
@@ -161,6 +164,7 @@ BEGIN
 		FROM bodb02.dbo.bettrans b WITH(NOLOCK) 					
 		WHERE b.winlostdate < @Yesterday AND winlostdate > @MoveBetsDay
 			AND bettype NOT IN (903, 913, 914)
+			AND NOT EXISTS (SELECT TOP 1 1 FROM bodb02.dbo.Dep_Customer_Archived da WITH(NOLOCK) WHERE b.CustID = da.CustID)
 		GROUP BY b.custid
 
 		CREATE TABLE #Transfer (CustId INT PRIMARY KEY, OpeningBalance MONEY)
@@ -170,7 +174,13 @@ BEGIN
 			SELECT b.CustID, SUM(b.winlost - b.actual_stake) AS OpeningBalance
 			FROM bodb02.dbo.Transfer b WITH (NOLOCK)
 			WHERE bettype >= 20000
-				AND b.WinlostDate < @Yesterday
+				AND b.WinlostDate <= @CurrentDate
+				AND NOT EXISTS (SELECT TOP 1 1 FROM bodb02.dbo.Dep_Customer_Archived da WITH(NOLOCK) WHERE b.CustID = da.CustID)
+				AND 1 = CASE 
+							WHEN b.Bettype = 23203 AND b.WinlostDate <= @CurrentDate THEN 1 
+							WHEN b.Bettype <> 23203 AND b.WinlostDate < @Yesterday THEN 1 
+							ELSE 0 
+						END
 			GROUP BY CustID
 			UNION ALL
 			SELECT b.CustID, SUM(b.winlost - b.actual_stake + b.PlayerComm) AS OpeningBalance
