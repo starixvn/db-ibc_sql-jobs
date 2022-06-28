@@ -10,6 +10,7 @@ AS
 	
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20220628@Kathy: Remove column rID [Redmine:#173205]
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -23,7 +24,7 @@ AS
 	WHERE winlostdate = @winlostdate AND bettype = 29
 
 	SELECT
-		rID, b.RefNo, Serial, transid, winlostdate, statusid, stake, Odds, mOdds,
+		b.RefNo, Serial, transid, winlostdate, statusid, stake, Odds, mOdds,
 		winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm
 	FROM
 		dbo.BetParlayResult b WITH (NOLOCK)
