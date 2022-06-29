@@ -26,16 +26,16 @@ BEGIN
 		SET @__fdate = DATEADD(DAY, 7, @__currBalanceUpDate)
 		PRINT '@fdate = ' + CONVERT(VARCHAR(10), @__fdate, 120)
 
-		IF @__fdate IS NULL OR @__fdate >= CAST(GETDATE() AS DATE)
-		BEGIN
-			RAISERROR ('ERROR: Please check a balance-up date value. (1)', 16, 1);
-			RETURN
-		END
-
-		SET @__doing = 'Task_BalanceUp_background_Job: calculate being balance up date, @__currBalanceUpDate: '+ CONVERT(VARCHAR(10), @__currBalanceUpDate, 121) +', @__fdate: ' + CONVERT(VARCHAR(10), @__fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
-		
 	END
+
+	IF @__fdate IS NULL OR @__fdate >= CAST(GETDATE() AS DATE)
+	BEGIN
+		RAISERROR ('ERROR: Please check a balance-up date value. (1)', 16, 1);
+		RETURN
+	END
+
+	SET @__doing = 'Task_BalanceUp_background_Job: calculate being balance up date, @__currBalanceUpDate: '+ CONVERT(VARCHAR(10), @__currBalanceUpDate, 121) +', @__fdate: ' + CONVERT(VARCHAR(10), @__fdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
 
 	--verify with old way
 	DECLARE @__verifyDate SMALLDATETIME

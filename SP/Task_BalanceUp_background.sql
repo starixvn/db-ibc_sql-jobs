@@ -42,6 +42,7 @@ BEGIN
 	SET NOCOUNT ON
 	DECLARE @__delayTimeValue VARCHAR(50), @Doing VARCHAR(300)
 		, @__rowId INT, @__errorMessage VARCHAR(300)
+		, @__rowcount INT = 0
 
 	IF @fdate IS NULL
 	BEGIN
@@ -56,13 +57,13 @@ BEGIN
 	IF @step = 1 -- update being balance-up date
 	BEGIN
 		--turn on starting BU process
-		SET @Doing = 'Task_BalanceUp_background: BU step 1.01 - start updating BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		SET @Doing = 'Task_BalanceUp_background: BU step 1.01 - Starting update BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		--**update being balanceUp date flag ==> the purpose for which process need to check balanceUp processing
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @parlay = 11, @tableName = 'SystemSettings'
 
-		SET @Doing = 'Task_BalanceUp_background: BU step 1.01 - start updating BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		SET @Doing = 'Task_BalanceUp_background: BU step 1.01 - Ending update BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		--//
@@ -285,6 +286,10 @@ BEGIN
 		WHERE winlostdate < @fdate
 		GROUP BY custid, recommend, mrecommend, srecommend
 		
+		SET @__rowcount = @@ROWCOUNT
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.03 - Ending adjust data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121) + ', @__rowcount: ' + CAST(@__rowcount AS VARCHAR(20))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.04 - Starting insert data into BalanceTable, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
@@ -295,8 +300,6 @@ BEGIN
 
 		DROP TABLE #balance_cal
 		DROP TABLE #filtered
-		DROP TABLE #q_distinct
-		DROP TABLE #q_tcnt
 
 		--BEGIN TRANSACTION
 		DELETE FROM dbo.balanceTable
@@ -346,6 +349,10 @@ BEGIN
 		INSERT INTO dbo.balancetable_tmp
 		SELECT @fdate, * FROM dbo.balancetable
 
+		SET @__rowcount = @@ROWCOUNT
+		SET @Doing = 'Task_BalanceUp_background: BU step 4.07 - Ending insert data into balancetable_tmp, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121) + ', @__rowcount: ' + CAST(@__rowcount AS VARCHAR(20))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
 		EXEC Acc_Apl_ExecRep_03 @fdate
 
 		EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 1
@@ -361,54 +368,20 @@ BEGIN
 
 		SET DEADLOCK_PRIORITY HIGH
 
-		CREATE TABLE #__custIds(rowId INT IDENTITY(1,1) PRIMARY KEY, custId INT)
-		DECLARE @__tempCustIds TABLE (custid INT)
-
 		WHILE 1 = 1
 		BEGIN
-			TRUNCATE TABLE #__custIds
-			SELECT @__rowId = 1
-
-			INSERT INTO #__custIds(custId)
-			SELECT TOP(50000) custid
-			FROM dbo.balanceTable_tmp
-
+			--//insert new 20k
+			DELETE TOP(1000) bal FROM dbo.balanceTable_tmp bal
+				
 			IF @@ROWCOUNT = 0
 				BREAK
 
-			WHILE 1 = 1
-			BEGIN
-				DELETE FROM @__tempCustIds
-				
-				INSERT INTO @__tempCustIds(custid)
-				SELECT custid 
-				FROM #__custIds WHERE rowId >= @__rowId AND rowId < @__rowId + 1000
-
-				IF @@ROWCOUNT = 0
-					BREAK
-
-				BEGIN TRANSACTION
-
-				--//insert new 20k
-				DELETE bal FROM dbo.balanceTable_tmp bal
-				WHERE EXISTS (
-					SELECT TOP 1 1 FROM @__tempCustIds t WHERE bal.custid = t.custid
-				)
-				
-				COMMIT TRANSACTION
-
-				SET @__rowId += 1000
-
-				SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key1') --default 700ms
-				WAITFOR DELAY @__delayTimeValue --Task_BalanceUp_background: waitfor insert new 20k
-			END
-
+			SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key1') --default 700ms
+			WAITFOR DELAY @__delayTimeValue --Task_BalanceUp_background: waitfor insert new 20k
 		END
 
 		SET DEADLOCK_PRIORITY NORMAL
 		
-		DROP TABLE #__custIds
-
 		--//turn off BU_DoneSum20k flag
 		EXEC dbo.Transfer_ExecRep_02 @Mode = 8
 
@@ -467,29 +440,32 @@ BEGIN
 	
 	IF @step = 7 --delete old data: old 20k, sum 19999 and transfer
 	BEGIN
-		SET @__rowId  = 0
+		SELECT @__rowId  = 0, @__rowcount = 0
 		CREATE TABLE #__transIds(rowId INT IDENTITY(1,1) PRIMARY KEY, transId BIGINT)
 
-		DECLARE @__strTransIds NVARCHAR(MAX)
-
+		DECLARE @__strTransIds NVARCHAR(MAX), @__rowcounttemp INT = 0
+		
 		WHILE 1 = 1
 		BEGIN
 			TRUNCATE TABLE #__transIds
-			SELECT @__rowId = 1
+			SELECT @__rowId = 1, @__rowcounttemp = 0
 
 			INSERT INTO #__transIds(transId)
 			SELECT TOP(50000) transid
 			FROM dbo.Transfer WITH(NOLOCK)
 			WHERE winlostdate < @fdate
 
-			IF @@ROWCOUNT = 0
+			SET @__rowcounttemp = @@ROWCOUNT
+			IF @__rowcounttemp = 0
 				BREAK
+
+			SET @__rowcount += @__rowcounttemp
 				
 			WHILE 1 = 1
 			BEGIN
 				SET @__strTransIds = NULL
 
-				SELECT @__strTransIds = COALESCE(@transIds + '^' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
+				SELECT @__strTransIds = COALESCE(@__strTransIds + '^' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
 				FROM #__transIds WHERE rowId >= @__rowId AND rowId < @__rowId + 2000
 
 				IF @@ROWCOUNT = 0
@@ -506,7 +482,7 @@ BEGIN
 
 		END
 
-		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
+		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10)) + ', @__rowcount: ' + CAST(@__rowcount AS VARCHAR(20))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		SET DEADLOCK_PRIORITY NORMAL
