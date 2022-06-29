@@ -113,13 +113,30 @@ BEGIN
 
 	--Get: SportTypeBetSetting, BetTypeBetSetting, SettingType, GameTypeId
 	--Credit
-	UPDATE cl 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting	, cl.BetTypeRef=ref.BetTypeRefBetSetting	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END	, cl.SettingType=ps.SettingType	FROM #tmpCustList cl		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)				ON	ref.Sporttype	= cl.sporttype 				AND ref.Bettype		= cl.bettype				AND ref.isLicensee	= cl.isLicensee				AND ref.isLive		= cl.isLive		INNER JOIN ProductSettingDetail ps 				ON ps.SportType=ref.SportTypeRefBetSetting				AND ps.BetType=ref.BetTypeRefBetSetting	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0
+	UPDATE cl 
+	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
+	, cl.BetTypeRef=ref.BetTypeRefBetSetting
+	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games
+					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
+	, cl.SettingType=ps.SettingType
+	FROM #tmpCustList cl
+		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
+				ON	ref.Sporttype	= cl.sporttype 
+				AND ref.Bettype		= cl.bettype
+				AND ref.isLicensee	= cl.isLicensee
+				AND ref.isLive		= cl.isLive
+		INNER JOIN ProductSettingDetail ps WITH (NOLOCK)
+				ON ps.SportType=ref.SportTypeRefBetSetting
+				AND ps.BetType=ref.BetTypeRefBetSetting
+	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0
 
 	--Deposit
 	UPDATE cl 
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
-	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END	, cl.SettingType=ps.SettingType
+	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games
+					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
+	, cl.SettingType=ps.SettingType
 	FROM #tmpCustList cl
 		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
 				ON	ref.Sporttype	= cl.sporttype 
@@ -148,13 +165,13 @@ BEGIN
 					WHEN (cl.isLicensee=1 AND dch.custid IS NOT NULL) THEN dch.OldMaxPerMatch END MaxPerMatch
 		FROM #tmpCustList cl
 			OUTER APPLY (SELECT TOP (1) ch. custid, OldMaxBet, OldMaxPerMatch, UpdateTime 
-						 FROM CustMaxBetSetting_History ch 
+						 FROM CustMaxBetSetting_History ch WITH (NOLOCK)
 						 WHERE  ch.custid=cl.custid AND ch.SportType=cl.SportTypeRef
 							AND ch.BetType=cl.BetTypeRef AND ch.UpdateTime>cl.transdate 
 						 ORDER BY UpdateTime
 						 ) ch
 			OUTER APPLY (SELECT TOP (1) dch.custid, OldMaxBet, OldMaxPerMatch, UpdateTime 
-						 FROM Dep_CustMaxBetSetting_History dch 
+						 FROM Dep_CustMaxBetSetting_History dch WITH (NOLOCK)
 						 WHERE dch.custid=cl.custid AND dch.SportType=cl.SportTypeRef
 							AND dch.BetType=cl.BetTypeRef AND dch.UpdateTime>cl.transdate  
 						 ORDER BY UpdateTime
@@ -222,13 +239,13 @@ BEGIN
 					WHEN (cl.isLicensee=1 AND dch.custid IS NOT NULL) THEN dch.UpdateTime END UpdateTime_SMA
 		FROM #tmpCustList cl
 			OUTER APPLY (SELECT TOP (1) ch. custid, OldMaxBet, OldStakeLevelList, UpdateTime 
-						 FROM CustMaxBetSetting_History ch 
+						 FROM CustMaxBetSetting_History ch WITH (NOLOCK)
 						 WHERE  ch.custid=cl.custid AND ch.SportType=cl.SportTypeRef
 							AND ch.BetType=cl.BetTypeRef AND ch.UpdateTime>cl.transdate 
 						 ORDER BY UpdateTime
 						) ch
 			OUTER APPLY (SELECT TOP (1) dch.custid, OldMaxBet, OldStakeLevelList, UpdateTime 
-						 FROM Dep_CustMaxBetSetting_History dch 
+						 FROM Dep_CustMaxBetSetting_History dch WITH (NOLOCK)
 						 WHERE dch.custid=cl.custid AND dch.SportType=cl.SportTypeRef
 							AND dch.BetType=cl.BetTypeRef AND dch.UpdateTime>cl.transdate  
 						 ORDER BY UpdateTime
@@ -358,13 +375,13 @@ BEGIN
 					WHEN (cl.isLicensee=1 AND dch.custid IS NOT NULL) THEN dch.UpdateTime END UpdateTime_SMA
 		FROM #tmpCustList cl
 			OUTER APPLY (SELECT TOP (1) ch. custid, OldMaxBet, OldStakeLevelList, UpdateTime 
-						 FROM CustMaxBetSetting_History ch 
+						 FROM CustMaxBetSetting_History ch WITH (NOLOCK)
 						 WHERE  ch.custid=cl.custid AND ch.SportType=cl.SportTypeRef
 							AND ch.BetType=cl.BetTypeRef AND ch.UpdateTime>cl.transdate 
 						 ORDER BY UpdateTime
 						) ch
 			OUTER APPLY (SELECT TOP (1) dch.custid, OldMaxBet, OldStakeLevelList, UpdateTime 
-						 FROM Dep_CustMaxBetSetting_History dch 
+						 FROM Dep_CustMaxBetSetting_History dch WITH (NOLOCK)
 						 WHERE dch.custid=cl.custid AND dch.SportType=cl.SportTypeRef
 							AND dch.BetType=cl.BetTypeRef AND dch.UpdateTime>cl.transdate  
 						 ORDER BY UpdateTime
