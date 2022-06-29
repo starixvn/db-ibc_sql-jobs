@@ -30,6 +30,7 @@ AS
 		- 20220418@July: Saba.games - Exclude new bettype 1653 (Nightclub Lady) - [Redmine: #171560]
 		- 20220421@July: Allbet - Exclude bettype 2499 & AESexy - Exclue bettype 3150 - [Redmine:#171770]
 		- 20220526@July: Vgaming - Exclude bettype 3845 (Nightclub Lady) - [Redmine:#173227]
+		- 20220628@July: Saba.games - Exclude bettype 1654 (Treasure Island) - [Redmine: #174581]
 
 	Param's Expanation:
 */
@@ -84,7 +85,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653) --exclude bettype Four Guardians, Jackpot & The Legend of Heroes, Nightclub Lady
+					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653, 1654)
 		END
 		ELSE IF @ProductId = 171 -- Vgaming
 		BEGIN
@@ -113,24 +114,6 @@ BEGIN
 					AND b.status <> 'Completed'
 		END	
 	END
-	ELSE IF @ProductId = 223 --Indo 4D
-	BEGIN
-		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		WHERE	b.bettype < 20000
-				AND b.stake <= 0
-				AND b.matchid = @ProductId
-				AND b.status <> 'Completed'
-	END
-	ELSE IF @ProductId = 241 --BBIN
-	BEGIN
-		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		WHERE	b.bettype < 20000
-				AND b.stake <= 0
-				AND b.matchid = @ProductId
-				AND b.status NOT IN ('running','Completed')
-	END
 	ELSE
 	BEGIN
 		SET @tablename = 'bettrans'
@@ -150,6 +133,15 @@ BEGIN
 					AND b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
 					AND b.winlostdate = @Today
 					AND b.status <> 'Completed'
+		END
+		ELSE IF @ProductId = 241 --BBIN
+		BEGIN
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+			WHERE	b.bettype < 20000
+					AND b.stake <= 0
+					AND b.matchid = @ProductId
+					AND b.status NOT IN ('running','Completed')
 		END
 		ELSE
 		BEGIN
