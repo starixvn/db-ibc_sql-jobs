@@ -32,8 +32,6 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @xml			XML = NULL
-		,	@SettingType	VARCHAR(50)
-		,	@SQL			NVARCHAR(MAX)
 
 	CREATE TABLE #tmpCustList (
 			custid				INT
