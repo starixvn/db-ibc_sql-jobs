@@ -33,7 +33,7 @@ BEGIN
 			BREAK
 
 		IF @Waitfordelay IS NOT NULL 
-			WAITFOR DELAY @Waitfordelay -- [SSB - Get settled tickets] waitfor
+			WAITFOR DELAY @Waitfordelay -- [Task_DetectBet_TicketExceededBetLimit] waitfor
 
 	END
 END
