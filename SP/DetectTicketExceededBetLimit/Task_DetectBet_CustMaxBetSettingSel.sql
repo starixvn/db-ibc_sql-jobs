@@ -1,7 +1,6 @@
-/*<info serverAlias="DBTP-bodb02" executers="" isFunction="0"></info>*/
+/*<info serverAlias="DBTP-bodb02" executers="" isFunction="0" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DetectBet_CustMaxBetSettingSel] 
-		@CustList	VARCHAR(MAX) = ''
 AS
 /*
 	Created: 20220523@Tacy
@@ -13,40 +12,25 @@ AS
 		- 20220523@Tacy: Initial SP [RedmineID: #170739]
 
 	Param's Explanation:
-	• @CustList:
-		<root>
-			<r c= ''1400001'' s=''248'' b=''4186'' tid=''12345678'' t=''2022-03-10 04:10:10.000'' sr=''1300001''  r=''1300003''  il=''0''/>
-			<r c=''23700002'' s=''176'' b=''8202'' tid=''13524659'' t=''2022-03-10 04:10:10.000'' sr=''23600001'' r=''23600003'' il=''0''/>
-		</root>
-
-	• c: custid
-      s: sporttype
-      b: bettype
-      t: transdate
-      tid: transid
-      sr: srecommend
-      r: recommend
-      il: isLive
 */
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @xml			XML = NULL
-
 	CREATE TABLE #tmpCustList (
-			custid				INT
-		,	SportType			SMALLINT
-		,	BetType				INT
-		,	GameTypeId			INT
-		,	transid				BIGINT
-		,	transdate			DATETIME
-		,	srecommend			INT
-		,	recommend			INT
-		,	isLive				BIT
-		,	SportTypeRef		SMALLINT
-		,	BetTypeRef			INT
-		,	SettingType			TINYINT
-		,	isLicensee			BIT
+			custid			INT
+		,	Username		NVARCHAR(100)
+		,	SportType		SMALLINT
+		,	BetType			INT
+		,	GameTypeId		INT
+		,	transid			BIGINT
+		,	transdate		DATETIME
+		,	srecommend		INT
+		,	recommend		INT
+		,	isLive			BIT
+		,	SportTypeRef	SMALLINT
+		,	BetTypeRef		INT
+		,	SettingType		TINYINT
+		,	isLicensee		BIT
 		,	PRIMARY KEY CLUSTERED (transid)
 	)
 
@@ -75,34 +59,17 @@ BEGIN
 	--nonClustered
 	CREATE NONCLUSTERED INDEX IX_tmpCustList ON #tmpCustList(custid,SportTypeRef,BetTypeRef)
 
-	--Check if XML is null or empty
-	IF @CustList IS NULL OR @CustList=''
+	-- checking dependency        
+	IF OBJECT_ID('tempdb..#tmp_TransId') IS NULL
+	BEGIN  
 		RETURN
+	END
+
+	--Get data from #tmp_TransId (exists in super sp: [Task_DetectBet_bettrans], [Task_DetectBet_bettransLC], [Task_DetectBet_bettransRnG])
+	INSERT INTO #tmpCustList (custid, SportType, BetType, transid, transdate, srecommend, recommend, isLive)
+	SELECT custid, SportType, BetType, transid, transdate, srecommend, recommend, isLive
+	FROM #tmp_TransId
 	
-	SET @xml = CONVERT(XML, @CustList)
-
-	--Parse XML	
-	DECLARE @iDoc INT
-
-	EXEC sp_xml_preparedocument @iDoc OUTPUT
-		, @xml
-
-	INSERT INTO #tmpCustList(custid, SportType, BetType, transid, transdate, srecommend, recommend, isLive)
-	SELECT c, s, b, tid, t, sr, r, il
-	FROM OPENXML(@iDoc, '/root/r', 1) 
-	WITH (
-			c	INT
-		,	s	SMALLINT
-		,	b	INT
-		,	tid	BIGINT
-		,	t	DATETIME
-		,	sr	INT
-		,	r	INT
-		,	il	BIT
-		) t
-		
-	EXEC sp_xml_removedocument @iDoc
-
 	--Update isLicensee
 	UPDATE #tmpCustList
 	SET isLicensee = CASE WHEN dep.custid IS NULL THEN 0 ELSE 1 END
@@ -148,14 +115,11 @@ BEGIN
 				ON ps.ProductSettingID=psd.ProductSettingID
 	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1
 
-
-
 	-- @sporttype: not support StakeLevel
 	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType NOT IN (7,8,17))
 	BEGIN
 		INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
 		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
-
 			, CASE WHEN (cl.isLicensee=0 AND ch.custid IS NOT NULL) THEN ch.OldMaxBet
 				   WHEN (cl.isLicensee=1 AND dch.custid IS NOT NULL) THEN dch.OldMaxBet END MaxBet
 		
@@ -474,11 +438,17 @@ BEGIN
 		DELETE #tmpCustList WHERE SettingType=8
 	END
 
+	UPDATE t1 
+	SET IsInvalid = 1, 
+		t1.MaxBet = t2.MaxBet
+	FROM #tmp_TransId t1
+		OUTER APPLY(
+			SELECT t2.MaxBet
+			FROM #returnTbl t2 
+			WHERE t2.TransId = t1.TransId
+		)t2
+	WHERE t1.stake > ISNULL(t2.MaxBet,0)
 
-	SELECT custid, transid, SportType
-		, BetType, MaxBet, MaxPerMatch
-	FROM #returnTbl
-	
 	DROP TABLE #tmpCustList
 	DROP TABLE #CustList_ChangedSMA
 	DROP TABLE #returnTbl
