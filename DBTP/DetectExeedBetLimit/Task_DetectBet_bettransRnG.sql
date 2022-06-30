@@ -18,61 +18,55 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @CustList VARCHAR(MAX) = NULL
+	CREATE TABLE #tmp_TransId (
+		TransId BIGINT
+		, CustId INT
+		, sporttype SMALLINT
+		, bettype SMALLINT
+		, stake MONEY
+		, srecommend INT
+		, recommend INT
+		, isLive BIT
+		, transdate DATETIME
+		, MaxBet MONEY
+		, MaxPerMatch MONEY
+		, Remark VARCHAR(100)
+		, Gameid3rd NVARCHAR(50)
+		, IsInvalid BIT DEFAULT(0)
+	)
 
-	CREATE TABLE #tmp_TransId (TransId BIGINT, CustId INT, Username NVARCHAR(100), sporttype SMALLINT, bettype SMALLINT, stake MONEY, srecommend INT, recommend INT, isLive BIT, transdate DATETIME, Remark VARCHAR(100))
-	CREATE TABLE #tmp_TransId_MaxBet (TransId BIGINT, CustId INT, sporttype SMALLINT, bettype SMALLINT, MaxBet MONEY, MaxPerMatch MONEY)
-
-	CREATE CLUSTERED INDEX CIX_tmp_transId ON #tmp_TransId (TransId)
-	CREATE CLUSTERED INDEX CIX_tmp_transId_MaxBet ON #tmp_TransId_MaxBet (TransId)
-
-	DECLARE @maxTransId_setting BIGINT
+	DECLARE @maxTransId_setting BIGINT, @SyncHistoryDataLastTime DATETIME
 	
 	SELECT @maxTransId_setting = CONVERT(BIGINT, c.ConfigValue)
 	FROM dbo.CustMaxBetSetting_Config c WITH (NOLOCK)
 	WHERE c.ConfigName = 'bettransRnG'
 
-	INSERT INTO #tmp_TransId (TransId, CustId, Username, sporttype, bettype, stake, srecommend, recommend, isLive, transdate, Remark)
-	SELECT TOP(@batchCount) b.transid, b.custid, b.Username, b.productID, b.gameID, b.stake, b.srecommend, b.recommend, 0, b.transdate
+	SELECT @SyncHistoryDataLastTime = CONVERT(BIGINT, c.ConfigValue)
+	FROM dbo.CustMaxBetSetting_Config c WITH (NOLOCK)
+	WHERE c.ConfigName = 'SyncHistoryDataLastTime'
+
+	INSERT INTO #tmp_TransId (TransId, CustId, sporttype, bettype, stake, srecommend, recommend, isLive, transdate, Remark)
+	SELECT TOP(@batchCount) b.transid, b.custid, b.productID, b.gameID, b.stake, b.srecommend, b.recommend, 0, b.transdate
 		, CASE WHEN bt.typedesc = 'BuyBonus' THEN '1' ELSE NULL END
 	FROM dbo.bettransRnG b WITH (NOLOCK)
 		INNER JOIN dbo.bettype bt WITH (NOLOCK) ON bt.typeid = b.gameID
 	WHERE b.transid > @maxTransId_setting
+		AND b.transdate <= @SyncHistoryDataLastTime
 		AND b.statusID NOT IN (101, 102, 103)
 		AND b.productID IN (208,209,212,248,165,247,232,234,237,238,167,172,174,150,200,224,171,173)
 	ORDER BY  b.transid ASC
 
 	SET @maxTransId = (SELECT MAX(TransId) FROM #tmp_TransId)
 
-	SET @CustList = (
-			SELECT t.CustId AS '@c'
-				,t.sporttype AS '@s'
-				,t.bettype AS '@b'
-				,t.TransId AS '@tid'
-				,t.transdate AS '@t'
-				,t.srecommend AS '@sr'
-				,t.recommend AS '@r'
-				,t.isLive AS '@il'
-			FROM #tmp_TransId t
-			FOR XML PATH('r'), ROOT('root')
-		)
-
-	INSERT INTO #tmp_TransId_MaxBet (CustId, TransId, sporttype, bettype, MaxBet, MaxPerMatch)
+	--Process detect invalid
 	EXEC dbo.Task_DetectBet_CustMaxBetSettingSel
-		@CustList = @CustList
 	
-	INSERT INTO dbo.CustMaxBet_Invalid (TransID, CustID, SportType, BetType, MaxBet, Stake, Remark)
-	SELECT t1.TransId, t1.CustId, t1.sporttype, t1.bettype, t2.MaxBet, t1.stake, t1.Remark
+	INSERT INTO dbo.CustMaxBet_Invalid (TransID, CustID, SportType, BetType, MaxBet, Stake)
+	SELECT t1.TransId, t1.CustId, t1.sporttype, t1.bettype, t1.MaxBet, t1.stake
 	FROM #tmp_TransId t1
-		OUTER APPLY(
-			SELECT t2.MaxBet
-			FROM #tmp_TransId_MaxBet t2 
-			WHERE t2.TransId = t1.TransId
-		)t2
-	WHERE t1.stake > ISNULL(t2.MaxBet,0)
+	WHERE t1.IsInvalid = 1
 
 	DROP TABLE #tmp_TransId
-	DROP TABLE #tmp_TransId_MaxBet
 END
 
 

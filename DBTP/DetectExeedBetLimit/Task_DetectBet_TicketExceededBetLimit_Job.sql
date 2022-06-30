@@ -9,7 +9,8 @@ AS
 	Revisions: 
 		- 20220525@Max: Create SP [Redmine: #170739]
 	
-	Param's explanation:		
+	Param's explanation:	
+		- Temp table #tmp_TransId will be created at each parent (Ex: Task_DetectBet_bettrans) SP for each table and will be used inheritance in Task_DetectBet_CustMaxBetSettingSel
 */
 BEGIN
 	SET NOCOUNT ON
@@ -26,31 +27,19 @@ BEGIN
 		@batchCount = @bachCount
 		, @maxTransId = @maxTransId_bettrans OUTPUT
 
-	--2. bettransLC
-	EXEC dbo.Task_DetectBet_bettransLC
-		@batchCount = @bachCount
-		, @maxTransId = @maxTransId_bettransLC OUTPUT
-
-	--3. bettransRnG
-	EXEC dbo.Task_DetectBet_bettransRnG
-		@batchCount = @bachCount
-		, @maxTransId = @maxTransId_bettransRnG OUTPUT
-
-	--4. translog
-	EXEC dbo.Task_DetectBet_translog
-		@batchCount = @bachCount
-		, @maxTransId = @maxTransId_translog OUTPUT
-
-	--5. Send Mail
-	EXEC dbo.Task_DetectBet_SendMail
-
-	--6. Update Setting
+	--Update Setting
 	IF @maxTransId_bettrans IS NOT NULL
 	BEGIN
 		UPDATE c SET c.ConfigValue = @maxTransId_bettrans
 		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'bettrans'
 	END
+	-----------------------------------------------
+
+	--2. bettransLC
+	EXEC dbo.Task_DetectBet_bettransLC
+		@batchCount = @bachCount
+		, @maxTransId = @maxTransId_bettransLC OUTPUT
 
 	IF @maxTransId_bettransLC IS NOT NULL
 	BEGIN
@@ -58,6 +47,12 @@ BEGIN
 		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'bettransLC'
     END
+	------------------------------------------------
+
+	--3. bettransRnG
+	EXEC dbo.Task_DetectBet_bettransRnG
+		@batchCount = @bachCount
+		, @maxTransId = @maxTransId_bettransRnG OUTPUT
 
 	IF @maxTransId_bettransRnG IS NOT NULL
 	BEGIN
@@ -65,6 +60,12 @@ BEGIN
 		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'bettransRnG'
 	END
+	------------------------------------------------------
+
+	--4. translog
+	EXEC dbo.Task_DetectBet_translog
+		@batchCount = @bachCount
+		, @maxTransId = @maxTransId_translog OUTPUT
 
 	IF @maxTransId_translog IS NOT NULL
 	BEGIN
@@ -72,6 +73,10 @@ BEGIN
 		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'translog'
 	END
+	-----------------------------------------------------
+
+	--5. Send Mail
+	EXEC dbo.Task_DetectBet_SendMail
 
 END
 
