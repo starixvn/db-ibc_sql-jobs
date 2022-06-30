@@ -41,7 +41,7 @@ BEGIN
 	FROM dbo.CustMaxBetSetting_Config c WITH (NOLOCK)
 	WHERE c.ConfigName = 'bettransRnG'
 
-	SELECT @SyncHistoryDataLastTime = CONVERT(BIGINT, c.ConfigValue)
+	SELECT @SyncHistoryDataLastTime = CONVERT(DATETIME, c.ConfigValue)
 	FROM dbo.CustMaxBetSetting_Config c WITH (NOLOCK)
 	WHERE c.ConfigName = 'SyncHistoryDataLastTime'
 
