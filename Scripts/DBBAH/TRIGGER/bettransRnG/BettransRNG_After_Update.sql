@@ -9,6 +9,7 @@ AS
 	Task: 
 	Revision:
 		- 20210309@Kathy: Allow null for bettype,actual_stake, winlost, playercomm [Redmine:#138552]
+		- 20220629@Helen: BalanceRecord -> wrong capture balance change and new balance when resettle tickets AE-Sexy product [Redmine:#173971]
 */
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -54,12 +55,9 @@ BEGIN
 			ELSE ' updated, ' + d.[status] + ' to ' + i.[status]
 		END
 		--[Action]--^^^	
- 		, 
- 		CASE
- 		WHEN i.IsSum = 0 AND d.IsSum = 0 THEN  (ISNULL(i.winlost,0) - ISNULL(i.actual_stake,0) + ISNULL(i.playercomm,0))
-												- (ISNULL(d.winlost,0) - ISNULL(d.actual_stake,0) + ISNULL(d.playercomm,0))
- 		WHEN i.IsSum = 1 AND d.IsSum = 0 THEN -(i.winlost-i.actual_stake+i.playercomm) -- value transfer to handle in bettrans
- 		ELSE 0 END
+ 		, CASE  WHEN (ISNULL(i.winlost,0)- ISNULL(i.actual_stake,0) + ISNULL(i.playercomm,0)) <> (ISNULL(d.winlost,0) - ISNULL(d.actual_stake,0) + ISNULL(d.playercomm,0)) 
+			THEN (ISNULL(i.winlost,0)- ISNULL(i.actual_stake,0) + ISNULL(i.playercomm,0)) - (ISNULL(d.winlost,0) - ISNULL(d.actual_stake,0) + ISNULL(d.playercomm,0)) 
+		ELSE 0 END
 	FROM
 		inserted i INNER JOIN deleted d
 		ON i.transid = d.transid

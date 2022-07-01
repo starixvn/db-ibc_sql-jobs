@@ -18,12 +18,20 @@ AS
 		- 20220329@Kathy: Wrong actionId when undo ticket [Redmine:168627]
 		- 20220505@Louisa: For parlay and Outright, only capture when new winlostdate > old winlostdate [Redmine:#167296]
 		- 20220526@Louisa: Do not capture when ticket change status from Running to Settled [Redmine:#167296]
+		- 20220629@Helen: BalanceRecord -> wrong capture balance change and new balance when resettle tickets AE-Sexy product [Redmine:#173971]
 */
 
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
+	DECLARE @bettype SMALLINT, @IsLC_RnG BIT = 0
+	SET @bettype = (SELECT TOP 1 bettype FROM inserted)
+
+	SET @IsLC_RnG = (SELECT TOP 1 1  FROM SportBettypeMatrix WITH (NOLOCK)
+					WHERE RefTable IN (1,2) AND bettype = @bettype
+					)
+	IF @IsLC_RnG = 1 RETURN
 
     -- Insert statements for trigger here
 	INSERT INTO dbo.BalanceTrigger (custid, transid, bettype, actual_stake, winlost, playercomm, ActionDate, 
