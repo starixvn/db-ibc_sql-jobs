@@ -1,7 +1,4 @@
 /*<info serverAlias="DBAFF12BET-Affiliate_12BET" executers="" isFunction="0" isNested="0"></info>*/
-USE [Affiliate_12BET]
-GO
-
 ALTER PROCEDURE [dbo].[Task_APIProduct_ImportQueue_CheckData_Job]
 AS
 
@@ -13,6 +10,7 @@ AS
 	Revisions:
 		- 20181001@Percy: Initialize SP [RedmineID: #102322]
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
+		- 20220704@Sol : remove email account - [RedmineId: #175043]
 */
 
 BEGIN
@@ -70,7 +68,7 @@ BEGIN
 								) AS NVARCHAR(MAX)) + N'</table>'
 			
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients		= 'percy.nguyen@starixvn.com;pontus@starixvn.com',
+			@recipients		= 'sophia.nguyen@starixvn.com;pontus@starixvn.com',
 			@subject		= @subject,
 			@body			= @Msg,
 			@body_format	= 'HTML'

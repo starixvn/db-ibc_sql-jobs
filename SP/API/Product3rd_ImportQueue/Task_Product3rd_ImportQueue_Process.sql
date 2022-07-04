@@ -15,6 +15,7 @@ AS
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20220222@Percy: Remove Novacash's products [RedmineID: #167823]
+		- 20220704@Sol : remove email account - [RedmineId: #175043]
 */
 
 BEGIN
@@ -90,7 +91,7 @@ BEGIN
 									) AS NVARCHAR(MAX) ) + N'</table>'
 			
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients		= 'percy.nguyen@starixvn.com;sophia.nguyen@starixvn.com;pontus@starixvn.com',
+			@recipients		= 'sophia.nguyen@starixvn.com;pontus@starixvn.com',
 			@subject		= @subject,
 			@body			= @Msg,
 			@body_format	= 'HTML'
