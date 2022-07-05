@@ -19,7 +19,6 @@ AS
 	--1. DBA: Task_DetectBet_TicketExceededBetLimit
 */
 BEGIN
-
 	DECLARE  @startDate		DATETIME
 	SET  @startDate  = GETDATE()
 
@@ -32,8 +31,11 @@ BEGIN
 		IF DATEDIFF(SECOND, @startDate, GETDATE() ) >= 600 -- loop within 10 minutes
 			BREAK
 
-		IF @Waitfordelay IS NOT NULL 
+		IF @Waitfordelay IS NULL 
+		BEGIN
+			SET @Waitfordelay = dbo.f_Job_SetWaitforDelay() 
 			WAITFOR DELAY @Waitfordelay -- [Task_DetectBet_TicketExceededBetLimit] waitfor
+		END
 
 	END
 END

@@ -50,6 +50,7 @@ BEGIN
 	SELECT TOP(@batchCount) b.translogid, b.custid, b.productID, b.gameID, b.stake, b.srecommend, b.recommend, 0, b.transdate
 	FROM dbo.translog b WITH (NOLOCK)
 	WHERE b.translogid > @maxTransId_setting
+		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
 		AND b.productID IN (220,222,223,231,169)
 	ORDER BY  b.translogid ASC
@@ -60,7 +61,7 @@ BEGIN
 	SELECT TOP(@batchCount) b.translogid, b.custid, b.productID, b.gameID, b.srecommend, b.recommend, 0, b.transdate, Gameid3rd
 	FROM dbo.translog b WITH (NOLOCK)
 	WHERE b.translogid > @maxTransId_setting
-		AND b.transdate <= @SyncHistoryDataLastTime
+		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
 		AND b.productID IN (245)
 	ORDER BY  b.translogid ASC

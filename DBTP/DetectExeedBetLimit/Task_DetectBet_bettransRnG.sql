@@ -51,7 +51,7 @@ BEGIN
 	FROM dbo.bettransRnG b WITH (NOLOCK)
 		INNER JOIN dbo.bettype bt WITH (NOLOCK) ON bt.typeid = b.gameID
 	WHERE b.transid > @maxTransId_setting
-		AND b.transdate <= @SyncHistoryDataLastTime
+		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
 		AND b.productID IN (208,209,212,248,165,247,232,234,237,238,167,172,174,150,200,224,171,173)
 	ORDER BY  b.transid ASC

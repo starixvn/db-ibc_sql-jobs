@@ -65,7 +65,7 @@ BEGIN
 				AND m.SportType = 175 --Bitcoin
 		)m
 	WHERE b.transid > @maxTransId_setting
-		AND b.transdate <= @SyncHistoryDataLastTime
+		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
 	ORDER BY  b.transid ASC 
 

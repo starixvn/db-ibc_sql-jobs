@@ -13,16 +13,16 @@ DECLARE @minTransId_bettrans BIGINT
 	, @minTransId_bettransRnG BIGINT
 	, @minTransId_translog BIGINT
 
-SELECT @minTransId_bettrans = MIN(transid)
+SELECT @minTransId_bettrans = MAX(transid)
 FROM dbo.bettrans WITH (NOLOCK)
 
-SELECT @minTransId_bettransLC = MIN(transid)
+SELECT @minTransId_bettransLC = MAx(transid)
 FROM dbo.bettransLC WITH (NOLOCK)
 
-SELECT @minTransId_bettransRnG = MIN(transid)
+SELECT @minTransId_bettransRnG = MAX(transid)
 FROM dbo.bettransRnG WITH (NOLOCK)
 
-SELECT @minTransId_translog = MIN(translogid)
+SELECT @minTransId_translog = MAX(translogid)
 FROM dbo.translog WITH (NOLOCK)
 
 INSERT INTO dbo.CustMaxBetSetting_Config (ConfigName, ConfigValue)
