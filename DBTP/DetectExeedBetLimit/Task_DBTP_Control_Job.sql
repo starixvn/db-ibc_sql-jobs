@@ -34,8 +34,9 @@ BEGIN
 		IF @Waitfordelay IS NULL 
 		BEGIN
 			SET @Waitfordelay = dbo.f_Job_SetWaitforDelay() 
-			WAITFOR DELAY @Waitfordelay -- [Task_DetectBet_TicketExceededBetLimit] waitfor
 		END
+
+		WAITFOR DELAY @Waitfordelay -- [Task_DetectBet_TicketExceededBetLimit] waitfor
 
 	END
 END
