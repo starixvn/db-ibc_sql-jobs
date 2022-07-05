@@ -15,7 +15,7 @@ Step 3 - script verify balance of member manually (SAS, DBA, QC)
 USE bodb02
 GO
 
-DECLARE @maxcustid INT = 0, @maxcust_recommend INT = 0
+DECLARE @maxcustid INT = 0
 
 DECLARE @srecommend_input  INT = xxxx -- if run by specific srecommend
 SELECT @maxcustid = max(custid) FROM customer ci WITH (NOLOCK)
@@ -29,7 +29,7 @@ CREATE TABLE #temp_srecommend_recommend(
 	isFinish BIT
 )
 
-CREATE TABLE #tempMemberPerRecommend (custid INT PRIMARY KEY, ID INT IDENTITY (1,1))
+CREATE TABLE #tempMemberPerRecommend (custid INT, ID INT IDENTITY (1,1) PRIMARY KEY)
 CREATE TABLE #tempMember_batch (custid INT PRIMARY KEY)
 --------------GET srecommend/recommend needs to process ------------------
 IF @srecommend_input IS NULL
@@ -99,8 +99,6 @@ BEGIN
 		
 			IF @@ROWCOUNT = 0 BREAK
 
-			SET @maxcust_recommend = (SELECT MAX(custid) FROM #tempMemberPerRecommend)
-		
 			-- step 1: check BalanceTrigger_ProcessData before insert balancerecord
 			/*
 			WHILE (1=1)
@@ -133,7 +131,7 @@ BEGIN
 
 			TRUNCATE TABLE #tempMember_batch
 
-			WAITFOR DELAY '00:00:00.50'
+			WAITFOR DELAY '00:00:00.30'
 
 			SET @StartRow = @StopRow + 1
 			SET @StopRow = 1 + @StopRow + @Threshold
@@ -143,6 +141,7 @@ BEGIN
 
 		END	
 	END
+
 	SET @rid = @rid + 1
 END
 
