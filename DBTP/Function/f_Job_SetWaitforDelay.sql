@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBTP-bodb02" executers="" viewers="" isFunction="1"></info>*/
 CREATE FUNCTION [dbo].[f_Job_SetWaitforDelay] ()
 RETURNS VARCHAR(100)
 /* 
