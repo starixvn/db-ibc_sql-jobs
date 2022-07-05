@@ -51,7 +51,7 @@ BEGIN
 	FROM dbo.translog b WITH (NOLOCK)
 	WHERE b.translogid > @maxTransId_setting
 		AND b.statusID NOT IN (101, 102, 103)
-		AND b.productID IN (202,220,222,223,231,169)
+		AND b.productID IN (220,222,223,231,169)
 	ORDER BY  b.translogid ASC
 	-------------------
 

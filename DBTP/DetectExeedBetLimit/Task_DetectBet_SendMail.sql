@@ -51,7 +51,7 @@ BEGIN;
 	BEGIN
 		SELECT @subject	= N'Violate Max Bet Limit Setting'
 			, @recipients_TestGroup = 'max.tran@starixvn.com;benji.duong@starixvn.com;roshan.nguyen@starixvn.com;jenny.phan@starixvn.com'
-			, @recipients_RealGroup = '' --Update when release PRO
+			, @recipients_RealGroup = 'max.tran@starixvn.com;benji.duong@starixvn.com;roshan.nguyen@starixvn.com;jenny.phan@starixvn.com' --Update when release PRO
 
 		IF @serverName NOT IN ('DBTP10C')
 		BEGIN
@@ -131,8 +131,6 @@ BEGIN;
 			EXECUTE	msdb.dbo.sp_send_dbmail
 						@profile_name			= DEFAULT
 					,	@recipients				= @recipients_TestGroup
-					,	@copy_recipients		= ''
-					,	@blind_copy_recipients	= ''
 					,	@subject				= @subject
 					,	@body					= @email_body_TestGroup
 					,	@body_format			= 'HTML'
@@ -219,8 +217,6 @@ BEGIN;
 			EXECUTE	msdb.dbo.sp_send_dbmail
 						@profile_name			= DEFAULT
 					,	@recipients				= @recipients_RealGroup
-					,	@copy_recipients		= ''
-					,	@blind_copy_recipients	= ''
 					,	@subject				= @subject
 					,	@body					= @email_body_RealGroup
 					,	@body_format			= 'HTML'
@@ -302,8 +298,6 @@ BEGIN;
 			EXECUTE	msdb.dbo.sp_send_dbmail
 						@profile_name			= DEFAULT
 					,	@recipients				= @recipients_TestGroup
-					,	@copy_recipients		= ''
-					,	@blind_copy_recipients	= ''
 					,	@subject				= @subject
 					,	@body					= @email_body_TestGroup
 					,	@body_format			= 'HTML'
