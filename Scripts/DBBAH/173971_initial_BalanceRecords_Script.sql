@@ -45,16 +45,16 @@ BEGIN
 	WHERE srecommend = @srecommend_input AND roleid = 4
 	
 END
------- info for deployer
+------ info for deployer 
 DECLARE @debug_message VARCHAR(MAX) = ''
 
 --------------LOOP BY srecommend/recommend ------------------
-DECLARE @srecommend INT, @recommend INT, @rid INT = 1, @rid_max INT
+DECLARE @srecommend INT, @rid INT = 1, @rid_max INT
 SET @rid_max = (SELECT MAX(ID) FROM #temp_srecommend)
 
 WHILE (@rid <= @rid_max)
 BEGIN
-	SELECT @srecommend = srecommend, @recommend = recommend FROM #temp_srecommend WHERE id = @rid
+	SELECT @srecommend = srecommend FROM #temp_srecommend WHERE id = @rid
 	
 	SET @maxcust_recommend = 0
 	TRUNCATE TABLE #tempMember
