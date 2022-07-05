@@ -51,7 +51,7 @@ BEGIN;
 	BEGIN
 		SELECT @subject	= N'Violate Max Bet Limit Setting'
 			, @recipients_TestGroup = 'max.tran@starixvn.com;benji.duong@starixvn.com;roshan.nguyen@starixvn.com;jenny.phan@starixvn.com'
-			, @recipients_RealGroup = 'max.tran@starixvn.com;benji.duong@starixvn.com;roshan.nguyen@starixvn.com;jenny.phan@starixvn.com' --Update when release PRO
+			, @recipients_RealGroup = 'max.tran@starixvn.com' --Update when release PRO
 
 		IF @serverName NOT IN ('DBTP10C')
 		BEGIN
