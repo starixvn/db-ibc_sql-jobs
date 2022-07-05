@@ -35,7 +35,7 @@ BEGIN
 	SELECT srecommend
 	FROM customer ci WITH (NOLOCK)
 	WHERE ci.roleid = 4 AND custid <= @maxcustid
-	ORDER BY srecommend, recommend
+	ORDER BY srecommend
 END
 ELSE
 BEGIN
