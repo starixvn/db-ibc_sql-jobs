@@ -14,8 +14,6 @@ Step 3 - script verify balance of member manually (SAS, DBA, QC)
 */
 USE bodb02
 GO
--- disable trigger
-ALTER TABLE [dbo].[BalanceTrigger_ProcessData] DISABLE TRIGGER [TG_BalanceTrigger_ProcessData_20180630]
 ---------------------------------------------------------------------------------
 DECLARE @maxcustid INT = 0
 SELECT @maxcustid = MAX(custid) FROM customer ci WITH (NOLOCK)
@@ -88,8 +86,6 @@ BEGIN
 		,@loop_cnt += 1
 
 END
--- enable trigger
-ALTER TABLE [dbo].[BalanceTrigger_ProcessData] ENABLE TRIGGER [TG_BalanceTrigger_ProcessData_20180630]
 
 DROP TABLE #temp_MemberInput
 DROP TABLE #tempMember
