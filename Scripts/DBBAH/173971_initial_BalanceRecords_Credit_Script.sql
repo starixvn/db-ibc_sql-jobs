@@ -84,6 +84,8 @@ BEGIN
 	DELETE b
 	FROM BalanceTrigger b
 		INNER JOIN #tempMember m ON b.custid = m.custid
+	
+	WAITFOR DELAY '00:00:00.50' --optional
 
 	SET @StartRow = @StopRow + 1
 	SET @StopRow = 1 + @StopRow + @batch
