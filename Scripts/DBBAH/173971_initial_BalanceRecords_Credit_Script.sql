@@ -75,12 +75,11 @@ BEGIN
 			WHERE b.custid = m.custid
 		) AS bal
 
+	SET @rowCount += @@ROWCOUNT
 	-- step 3: delete balance trigger if exists
 	DELETE b
 	FROM BalanceTrigger b
 		INNER JOIN #tempMember m ON b.custid = m.custid
-
-	SET @rowCount += @@ROWCOUNT
 
 	SELECT  @rid += @batch
 		,@loop_cnt += 1
