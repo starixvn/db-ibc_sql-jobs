@@ -45,8 +45,12 @@ FROM BalanceTrigger_ProcessData b
 DECLARE @debug_message VARCHAR(MAX) = ''
 
 --------------LOOP BY batch 500 of customers ------------------
-DECLARE @rid INT = 1, @rid_loop INT, @rowCount int  =0, @batch int = 500, @loop_cnt int = 1
+DECLARE @rid_loop INT, @rowCount int  =0, @batch int = 500, @loop_cnt int = 1
+DECLARE @StartRow INT = 1
+		, @StopRow INT 
+		
 SET @rid_loop = ((SELECT MAX(ID) FROM #temp_MemberInput)/@batch) + 1
+SET @StopRow = @batch
 
 WHILE (@loop_cnt <= @rid_loop)
 BEGIN
@@ -58,9 +62,9 @@ BEGIN
 
 	-- process by recommend, 2000 customers per batch
 	INSERT INTO #tempMember(custid)
-	SELECT TOP(@batch) custid
+	SELECT custid
 	FROM #temp_MemberInput 
-	WHERE id >= @rid
+	WHERE ID BETWEEN @StartRow AND @StopRow
 
 	IF @@ROWCOUNT = 0
 		BREAK
@@ -81,10 +85,14 @@ BEGIN
 	FROM BalanceTrigger b
 		INNER JOIN #tempMember m ON b.custid = m.custid
 
-	SELECT  @rid += @batch
-		,@loop_cnt += 1
+	SET @StartRow = @StopRow + 1
+	SET @StopRow = 1 + @StopRow + @batch
+
+	SELECT  @loop_cnt += 1
 
 END
+
+SELECT @rowCount
 
 DROP TABLE #temp_MemberInput
 DROP TABLE #tempMember
