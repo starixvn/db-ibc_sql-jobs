@@ -12,6 +12,8 @@ Revisions:
 	-20180802@Johnson: update ruleid [redmine: #73556]
 	-20201118@Eden: Insert New SettingType = 20, new rules [Redmine: #131370]
 	-20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
+	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+
 Param's Explanation: 
 
 	CustBetSetting3rd_Member, CustBetSetting3rd_Agent
@@ -42,10 +44,12 @@ BEGIN
 	
 	--product has offered stakelevel
 	INSERT INTO #OfferedProductList (ProductID,SportType,BetType,IsHidden,RealProductID)
-	SELECT ProductID,Sporttype,Bettype,IsHidden,RealProductId
-	FROM CheckCustDB.dbo.ProductSettingDetail ps2 WITH(NOLOCK)
-	WHERE ps2.SettingType in (4,11,13) 
-		AND ps2.SettingStatus = 0 
+	SELECT DISTINCT ps.ProductId, ps.SportType, ps.BetType, ps.IsHidden,ps.RealProductId
+	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH (NOLOCK)
+		INNER JOIN CheckCustDB.dbo.ProductSettingType s WITH (NOLOCK)
+		ON ps.SettingType = s.SettingType
+	WHERE s.SettingName = 'Product Status'  
+		AND ps.SettingStatus = 0	
 			
 	UPDATE op
 	SET op.IsHidden = stt.IsHidden

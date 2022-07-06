@@ -16,6 +16,8 @@ AS
 		-20200904@Elodie: Modify rule to check unlimited choice stake level at member level [RedmineID:#134156]
 		-20200909@Winfred: check Non offered stakelevel [redmine:#141236]
 		- 20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+
 	Parameter's Explanations:
 */
 BEGIN 
@@ -41,10 +43,12 @@ BEGIN
 	
 	--product has offered stakelevel
 	INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden)
-	SELECT ps.RealProductId, ps.SportType, ps.BetType, ps.IsHidden
+	SELECT DISTINCT ps.RealProductId, ps.SportType, ps.BetType, ps.IsHidden
 	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH (NOLOCK)
-		CROSS JOIN CheckCustDB.dbo.Site s WITH (NOLOCK)
-	WHERE ps.SettingType IN (4,11,13) AND ps.SettingStatus = 0	
+		INNER JOIN CheckCustDB.dbo.ProductSettingType s WITH (NOLOCK)
+		ON ps.SettingType = s.SettingType
+	WHERE s.SettingName = 'Product Status'  
+		AND ps.SettingStatus = 0	
 			
 	UPDATE op
 	SET op.IsHidden = stt.IsHidden
