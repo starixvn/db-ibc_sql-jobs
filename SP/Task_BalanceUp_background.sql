@@ -61,7 +61,7 @@ BEGIN
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		--**update being balanceUp date flag ==> the purpose for which process need to check balanceUp processing
-		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @parlay = 11, @tableName = 'SystemSettings'
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 11, @tableName = 'MBUSettings'
 
 		SET @Doing = 'Task_BalanceUp_background: BU step 1.01 - Ending update BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
@@ -145,15 +145,31 @@ BEGIN
 			, @CurrentDateTime = @CurrentDateTime
 			, @TotalMoveBetDays = NULL
 
-		EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
-		EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
+		EXEC dbo.Task_MBUSettingsUpd @VValue = '1', @VName = 'isArchivingBet', @Mode = 0
+		EXEC DBACC.bodb02.dbo.Task_MBUSettingsUpd @VValue = '1', @VName = 'isArchivingBet', @Mode = 0
 
 		--//turn on isArchivingBet_Local flag
 		EXEC dbo.Transfer_ExecRep_02 @Mode = 5
-		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 5, @tableName = 'SystemSettings'
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @keyFlag = 5, @tableName = 'MBUSettings'
+
+		SET @Doing = 'Task_BalanceUp_background BU step 3.01 - Starting turn on BU_DoneSum20k flag ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		--//turn on BU_DoneSum20k flag
 		EXEC dbo.Transfer_ExecRep_02 @Mode = 7
+		
+		SET @Doing = 'Task_BalanceUp_background BU step 3.01 - Ending turn on BU_DoneSum20k flag ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		--//turn on BU_UpdBUDate_Local
+		SET @Doing = 'Task_BalanceUp_background BU step 3.02 - Starting turn on BU_UpdBalDate_Local flag ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		--//**turn on BU_UpdBUDate_Local flag
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 13, @tableName = 'MBUSettings'
+
+		SET @Doing = 'Task_BalanceUp_background BU step 3.02 - Ending turn on BU_UpdBalDate_Local flag ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		-- for safety, shutdown trigger in balanceTable_tmp
 		EXEC dbo.Task_BalanceUp_TriggerControl @step = 1, @on = 0
@@ -395,24 +411,24 @@ BEGIN
 		DECLARE @__start DATETIME
 		SET @__start = GETDATE()
 		WHILE EXISTS (
-			SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'BU_ReadyUpdBUDate' AND VValue <> '0'
+			SELECT TOP 1 1 FROM dbo.MBUSettings WHERE VName = 'BU_ReadyUpdBUDate' AND VValue <> '0'
 		)
 		BEGIN
-			WAITFOR DELAY '00:00:30:000' --waitfor BalanceUp done...
+			WAITFOR DELAY '00:00:30:000' --waitfor BU_ReadyUpdBUDate done...
 			IF DATEDIFF(MINUTE, @__start, GETDATE()) > 30
 			BEGIN
 				--send out message for DBA to check...
 				PRINT 'hey guys, please check...'
 				EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = N'PONTUS', 
 					@JobId = NULL, @JobName = N'Custom Message', 
-					@Message = 'Urgently!!! BalanceUp - hey guys, BalanceUp background run long time at step 6. Please check!!!', @CaseId = 1;
+					@Message = 'Urgently!!! BalanceUp - hey guys, BalanceUp background run long time at step 6 (1). Please check!!!', @CaseId = 1;
 
 				EXECUTE msdb.dbo.sp_send_dbmail @profile_name	= DEFAULT
 				   , @recipients			 = 'pontus@starixvn.com' --will replace email address later
 				   , @copy_recipients		 = ''
 				   , @blind_copy_recipients	 = ''
 				   , @subject				 = 'Urgently!!! BalanceUp - Notification'
-				   , @body					 = 'Please call DBA to check since BalanceUp run long time at step 6.'
+				   , @body					 = 'Please call DBA to check since BalanceUp run long time at step 6 (1).'
 				   , @body_format			 = 'HTML';
 
 			END
@@ -422,14 +438,50 @@ BEGIN
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		--//**update BalanceUpDate value
-		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @parlay = 12, @tableName = 'SystemSettings'
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 12, @tableName = 'MBUSettings'
 
 		SET @Doing = 'Task_BalanceUp_background BU step 6.01 - Ending update BalanceUpDate flag' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		--==
+		SET @Doing = 'Task_BalanceUp_background BU step 6.02 - Starting turn off BU_UpdBalDate_Local flag ' + CAST(@step AS VARCHAR(10))
+		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+		--//**turn off BU_UpdBalDate_Local flag
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 14, @tableName = 'MBUSettings'
+
+		SET @Doing = 'Task_BalanceUp_background BU step 6.02 - Ending turn off BU_UpdBalDate_Local flag ' + CAST(@step AS VARCHAR(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		--//
 		SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('AfterUpdBUD')
 		WAITFOR DELAY @__delayTimeValue --Task_BalanceUp_background: waitfor go to delete step...
+
+		--//whether update balanceup date has done on replicated servers yet?
+		SET @__start = GETDATE()
+		WHILE EXISTS (
+			SELECT TOP 1 1 FROM dbo.MBUSettings WHERE VName = 'BU_ReadyToDelete' AND VValue <> '0'
+		)
+		BEGIN
+			WAITFOR DELAY '00:00:30:000' --waitfor BU_ReadyUpdBUDate done...
+			IF DATEDIFF(MINUTE, @__start, GETDATE()) > 30
+			BEGIN
+				--send out message for DBA to check...
+				PRINT 'hey guys, please check...'
+				EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = N'PONTUS', 
+					@JobId = NULL, @JobName = N'Custom Message', 
+					@Message = 'Urgently!!! BalanceUp - hey guys, BalanceUp background run long time at step 6 (2). Please check!!!', @CaseId = 1;
+
+				EXECUTE msdb.dbo.sp_send_dbmail @profile_name	= DEFAULT
+				   , @recipients			 = 'pontus@starixvn.com' --will replace email address later
+				   , @copy_recipients		 = ''
+				   , @blind_copy_recipients	 = ''
+				   , @subject				 = 'Urgently!!! BalanceUp - Notification'
+				   , @body					 = 'Please call DBA to check since BalanceUp run long time at step 6 (2).'
+				   , @body_format			 = 'HTML';
+
+			END
+		END
 
 		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
@@ -496,15 +548,15 @@ BEGIN
 
 		EXEC dbo.balancecheck @fdate, 21
 
-		EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
-		EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
+		EXEC dbo.Task_MBUSettingsUpd @VValue = '0', @VName = 'isArchivingBet', @Mode = 0
+		EXEC DBACC.bodb02.dbo.Task_MBUSettingsUpd @VValue = '0', @VName = 'isArchivingBet', @Mode = 0
 
 		--reset being balanceup date
-		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @parlay = 11, @tableName = 'SystemSettings'
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @keyFlag = 11, @tableName = 'MBUSettings'
 
 		--//turn off isArchivingBet_Local flag
 		EXEC dbo.Transfer_ExecRep_02 @Mode = 6
-		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 6, @tableName = 'SystemSettings'
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @keyFlag = 6, @tableName = 'MBUSettings'
 
 		SET @Doing = 'Task_BalanceUp_background : Done'
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing

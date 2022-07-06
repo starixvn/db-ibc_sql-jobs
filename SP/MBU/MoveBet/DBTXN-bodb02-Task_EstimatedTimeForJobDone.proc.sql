@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20160908@Patrick:	Initialize - [Redmine: #000000]
+		- 20220624@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -22,28 +23,22 @@ BEGIN
 	BEGIN
 		--get BU's duration from config
 		SELECT @Duration = CAST(ISNULL(VValue, '240') AS INT)
-		FROM dbo.SystemSettings WITH(NOLOCK)
+		FROM dbo.MBUSettings WITH(NOLOCK)
 		WHERE VName = 'schMovingArchivingBetDuration'
 
 		--set default value if null
 		IF ISNULL(@Duration, 0) = 0
 			SET @Duration = 240
+
+		SELECT @EndTime = DATEADD(MINUTE, @Duration, @CurrentDateTime)
+
+		UPDATE dbo.MBUSettings WITH(ROWLOCK, UPDLOCK)
+		SET VValue = CONVERT(VARCHAR(50), @EndTime, 121)
+		WHERE VName = 'schDataProcessingEndTime'
 		
 	END
 	ELSE --incase moving bet
 	BEGIN
-		--DECLARE @MoveBetSchedule TABLE(ScheduleId TINYINT, MoveBetDay SMALLDATETIME)
-		--INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
-		--EXEC dbo.Task_MoveBetsDayByScheduleSel
-
-		--SELECT @TotalDays = COUNT(1)
-		--FROM @MoveBetSchedule
-
-		--SET @TotalDays = ISNULL(@TotalDays, 0)
-		--IF @TotalDays = 0 --no move bet on that day
-		--BEGIN
-		--	RETURN
-		--END
 
 		--get MB's duration from config
 		SELECT @Duration = CAST(ISNULL(VValue, '60') AS INT)
@@ -56,14 +51,13 @@ BEGIN
 
 		SELECT @Duration = @TotalMoveBetDays * @Duration
 
+		SELECT @EndTime = DATEADD(MINUTE, @Duration, @CurrentDateTime)
+
+		UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+		SET VValue = CONVERT(VARCHAR(50), @EndTime, 121)
+		WHERE VName = 'schDataProcessingEndTime'
+
 	END
-
-	SELECT @EndTime = DATEADD(MINUTE, @Duration, @CurrentDateTime)
-
-	UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
-	SET VValue = CONVERT(VARCHAR(50), @EndTime, 121)
-	WHERE VName = 'schDataProcessingEndTime'
-	
 END
 GO
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/

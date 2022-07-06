@@ -18,7 +18,7 @@ BEGIN
 
 	IF EXISTS (
 		SELECT TOP 1 1
-		FROM dbo.SystemSettings
+		FROM dbo.MBUSettings
 		WHERE VName = 'BeingBalanceUpDate' AND VValue IS NULL
 	)
 	BEGIN

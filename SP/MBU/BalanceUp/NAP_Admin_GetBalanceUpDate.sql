@@ -15,7 +15,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	SELECT @BalanceUpDate = CONVERT(SMALLDATETIME, VValue)
-	FROM dbo.SystemSettings
+	FROM dbo.MBUSettings
 	WHERE VName = 'BalanceUpDate'
 
 	IF @BalanceUpDate IS NULL
@@ -23,5 +23,6 @@ BEGIN
 		SELECT TOP(1) @BalanceUpDate = winlostdate
 		FROM dbo.Transfer t WITH(NOLOCK)
 		WHERE bettype = 20000 AND custid = 3
+		ORDER BY TransId
 	END
 END

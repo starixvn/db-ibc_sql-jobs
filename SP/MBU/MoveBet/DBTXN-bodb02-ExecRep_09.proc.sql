@@ -9,7 +9,8 @@ ALTER PROCEDURE dbo.ExecRep_09
 	@refnos varchar(max) = '',
 	@rowDeleted int = 0 OUTPUT,
 	@firstRound bit = 0,
-	@matchId int = 0
+	@matchId int = 0,
+	@keyFlag int = 0
 AS
 -- *** IMPORTANT ***
 -- IF code altered, must to go check related SP of ExecRep_Queue @ DBTP
@@ -73,25 +74,15 @@ BEGIN
 			FROM dbo.sysobjects WHERE name = 'SystemSettings'
 		)
 		BEGIN
-			/*
-			@parlay:
-				3: MB on
-				4: MB off
-				5: BU on
-				6: BU off
-			*/
-			DECLARE @VName VARCHAR(50)
-			SELECT  @VName = CASE WHEN @parlay IN (3,4) THEN 'isMovingBet_Local' WHEN @parlay IN (5,6) THEN 'isArchivingBet_Local' END
-
 			DECLARE @updatedFlag TABLE (VValue VARCHAR(200))
 
-			--//@parlay = 3,5: turn on flag --> input start time, @parlay = 4,6: turn off flag --> input end time
-			IF @parlay IN (3,5)
+			--//on for MB
+			IF @parlay = 3
 			BEGIN
 				UPDATE dbo.SystemSettings WITH (ROWLOCK)
 				SET VValue = CONVERT(VARCHAR(200), CONVERT(SMALLINT, VValue) + 1)
 				OUTPUT DELETED.VValue INTO @updatedFlag (VValue)
-				WHERE VName = @VName
+				WHERE VName = 'isMovingBet_Local'
 
 				IF EXISTS (SELECT 1 FROM @updatedFlag WHERE VValue = '0')
 				BEGIN
@@ -100,12 +91,12 @@ BEGIN
 					WHERE VName = 'StartMoving_Local'
 				END
 			END
-			ELSE IF @parlay IN (4,6)
+			ELSE IF @parlay = 4
 			BEGIN
 				UPDATE dbo.SystemSettings WITH (ROWLOCK)
 				SET VValue = CONVERT(VARCHAR(200), CONVERT(SMALLINT, VValue) - 1)
 				OUTPUT INSERTED.VValue INTO @updatedFlag (VValue)
-				WHERE VName = @VName
+				WHERE VName = 'isMovingBet_Local'
 
 				IF EXISTS (SELECT 1 FROM @updatedFlag WHERE VValue = '0')
 				BEGIN
@@ -176,20 +167,94 @@ BEGIN
 				WHERE VName = 'MovebetDate'
 				
 			END
-			ELSE IF @parlay = 11 --prepare balanceup process
+
+		END
+
+		RETURN
+	END
+
+	--//for MBU
+	IF @tableName = 'MBUSettings'
+	BEGIN
+		IF EXISTS (
+				SELECT TOP 1 1 
+				FROM dbo.sysobjects WHERE name = 'MBUSettings'
+			)
+		BEGIN
+			DECLARE @updatedFlag4MBU TABLE (VValue VARCHAR(200))
+
+			IF @keyFlag = 5
+			BEGIN
+				UPDATE dbo.MBUSettings WITH (ROWLOCK)
+				SET VValue = CONVERT(VARCHAR(200), CONVERT(SMALLINT, VValue) + 1)
+				OUTPUT DELETED.VValue INTO @updatedFlag4MBU (VValue)
+				WHERE VName = 'isArchivingBet_Local'
+
+				IF EXISTS (SELECT 1 FROM @updatedFlag4MBU WHERE VValue = '0')
+				BEGIN
+					UPDATE dbo.MBUSettings WITH (ROWLOCK)
+					SET VValue = CONVERT(VARCHAR(200), GETDATE(), 121)
+					WHERE VName = 'StartBalanceUp_Local'
+				END
+			END
+			ELSE IF @keyFlag = 6
+			BEGIN
+				UPDATE dbo.MBUSettings WITH (ROWLOCK)
+				SET VValue = CONVERT(VARCHAR(200), CONVERT(SMALLINT, VValue) - 1)
+				OUTPUT INSERTED.VValue INTO @updatedFlag4MBU (VValue)
+				WHERE VName = 'isArchivingBet_Local'
+
+				IF EXISTS (SELECT 1 FROM @updatedFlag4MBU WHERE VValue = '0')
+				BEGIN
+					UPDATE dbo.MBUSettings WITH (ROWLOCK)
+					SET VValue = CONVERT(VARCHAR(200), GETDATE(), 121)
+					WHERE VName = 'EndBalanceUp_Local'
+				END
+			END
+			ELSE IF @keyFlag = 11 --prepare balanceup process
 			BEGIN
 				--==being balance-up
-				UPDATE dbo.SystemSettings WITH (ROWLOCK)
+				UPDATE dbo.MBUSettings WITH (ROWLOCK)
 				SET VValue = CONVERT(VARCHAR(10), @winlostdate, 121)
 				WHERE VName = 'BeingBalanceUpDate'
 				
 			END
-			ELSE IF @parlay = 12 -- update new BU date
+			ELSE IF @keyFlag = 12 -- update new BU date
 			BEGIN
-				--==update @winlostdate to new balanceUp date
-				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
+				--***update @winlostdate to new balanceUp date
+				UPDATE dbo.MBUSettings WITH (ROWLOCK, UPDLOCK)
 				SET VValue = CONVERT(VARCHAR(10), @winlostdate, 121)
 				WHERE VName = 'BalanceUpDate'
+				
+			END
+			ELSE IF @keyFlag = 13 -- start turn on update balanceup date
+			BEGIN
+				UPDATE dbo.MBUSettings WITH (ROWLOCK)
+				SET VValue = '1'
+				WHERE VName = 'BU_UpdBUDate_Local'
+
+				DECLARE @__allowUpdBalanceUpDateOn BIT = 0
+				EXEC dbo.ExecRep_10 @FunctionName = 'WaitforBUCompleted', @Allow = @__allowUpdBalanceUpDateOn OUTPUT
+
+				IF @__allowUpdBalanceUpDateOn = 1
+				BEGIN
+					EXEC DBTXN.bodb02.dbo.Task_MBUSettingsUpd @VName = 'BU_ReadyToDelete', @VValue = '1', @Mode = 9999
+				END
+				
+			END
+			ELSE IF @keyFlag = 14 -- start turn off update balanceup date
+			BEGIN
+				UPDATE dbo.MBUSettings WITH (ROWLOCK)
+				SET VValue = '0'
+				WHERE VName = 'BU_UpdBUDate_Local'
+
+				DECLARE @__allowUpdBalanceUpDateOff BIT = 0
+				EXEC dbo.ExecRep_10 @FunctionName = 'WaitforBUCompleted', @Allow = @__allowUpdBalanceUpDateOff OUTPUT
+
+				IF @__allowUpdBalanceUpDateOff = 1
+				BEGIN
+					EXEC DBTXN.bodb02.dbo.Task_MBUSettingsUpd @VName = 'BU_ReadyToDelete', @VValue = '-1', @Mode = 9999
+				END
 				
 			END
 		END
