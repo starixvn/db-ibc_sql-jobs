@@ -88,7 +88,7 @@ BEGIN
 	WAITFOR DELAY '00:00:00.50' --optional
 
 	SET @StartRow = @StopRow + 1
-	SET @StopRow = 1 + @StopRow + @batch
+	SET @StopRow = @StopRow + @batch
 
 	SELECT  @loop_cnt += 1
 
