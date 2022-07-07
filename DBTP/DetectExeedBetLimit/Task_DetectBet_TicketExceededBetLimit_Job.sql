@@ -21,11 +21,11 @@ BEGIN
 		, @maxTransId_translog BIGINT
 		, @maxTransId_bettransG BIGINT
 
-		, @bachCount INT = 2000
+		, @batchCount INT = 2000
 	
 	--1. bettrans
 	EXEC dbo.Task_DetectBet_bettrans
-		@batchCount = @bachCount
+		@batchCount = @batchCount
 		, @maxTransId = @maxTransId_bettrans OUTPUT
 
 	--Update Setting
@@ -39,7 +39,7 @@ BEGIN
 
 	--2. bettransLC
 	EXEC dbo.Task_DetectBet_bettransLC
-		@batchCount = @bachCount
+		@batchCount = @batchCount
 		, @maxTransId = @maxTransId_bettransLC OUTPUT
 
 	IF @maxTransId_bettransLC IS NOT NULL
@@ -52,7 +52,7 @@ BEGIN
 
 	--3. bettransRnG
 	EXEC dbo.Task_DetectBet_bettransRnG
-		@batchCount = @bachCount
+		@batchCount = @batchCount
 		, @maxTransId = @maxTransId_bettransRnG OUTPUT
 
 	IF @maxTransId_bettransRnG IS NOT NULL
@@ -65,7 +65,7 @@ BEGIN
 
 	--4. translog
 	EXEC dbo.Task_DetectBet_translog
-		@batchCount = @bachCount
+		@batchCount = @batchCount
 		, @maxTransId = @maxTransId_translog OUTPUT
 
 	IF @maxTransId_translog IS NOT NULL
@@ -78,7 +78,7 @@ BEGIN
 
 	--5. bettransG
 	EXEC dbo.Task_DetectBet_bettransG
-		@batchCount = @bachCount
+		@batchCount = @batchCount
 		, @maxTransId = @maxTransId_bettransG OUTPUT
 
 	IF @maxTransId_bettransG IS NOT NULL
