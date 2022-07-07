@@ -8,31 +8,31 @@
 USE [bodb02]
 GO
 
-DECLARE @minTransId_bettrans BIGINT
-	, @minTransId_bettransLC BIGINT
-	, @minTransId_bettransRnG BIGINT
-	, @minTransId_translog BIGINT
+DECLARE @maxTransId_bettrans BIGINT
+	, @maxTransId_bettransLC BIGINT
+	, @maxTransId_bettransRnG BIGINT
+	, @maxTransId_translog BIGINT
 
-SELECT @minTransId_bettrans = MAX(transid)
+SELECT @maxTransId_bettrans = MAX(transid)
 FROM dbo.bettrans WITH (NOLOCK)
 
-SELECT @minTransId_bettransLC = MAx(transid)
+SELECT @maxTransId_bettransLC = MAX(transid)
 FROM dbo.bettransLC WITH (NOLOCK)
 
-SELECT @minTransId_bettransRnG = MAX(transid)
+SELECT @maxTransId_bettransRnG = MAX(transid)
 FROM dbo.bettransRnG WITH (NOLOCK)
 
-SELECT @minTransId_translog = MAX(translogid)
+SELECT @maxTransId_translog = MAX(translogid)
 FROM dbo.translog WITH (NOLOCK)
 
 INSERT INTO dbo.CustMaxBetSetting_Config (ConfigName, ConfigValue)
-SELECT 'bettrans', @minTransId_bettrans
+SELECT 'bettrans', @maxTransId_bettrans
 UNION
-SELECT 'bettransLC', @minTransId_bettransLC
+SELECT 'bettransLC', @maxTransId_bettransLC
 UNION
-SELECT 'bettransRnG', @minTransId_bettransRnG
+SELECT 'bettransRnG', @maxTransId_bettransRnG
 UNION
-SELECT 'translog', @minTransId_translog
+SELECT 'translog', @maxTransId_translog
 UNION
 SELECT 'IsSendTestCurrencyOnly', 0
 

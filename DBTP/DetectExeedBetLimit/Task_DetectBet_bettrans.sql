@@ -49,20 +49,26 @@ BEGIN
 	SELECT TOP(@batchCount) b.transid, b.custid, m.sporttype, b.bettype, b.stake, b.srecommend, b.recommend, b.liveindicator, b.transdate
 	FROM dbo.bettrans b WITH (NOLOCK)
 		CROSS APPLY (
-			SELECT m.sporttype
+			SELECT TOP(1) m.sporttype
 			FROM dbo.match m WITH (NOLOCK) 
 			WHERE m.matchid = b.matchid
 				AND (
 						m.sporttype BETWEEN 180 AND 186
 						OR m.sporttype BETWEEN 190 AND 197
-						OR m.sporttype IN (213,214,215,217,218,199)
+						OR m.sporttype IN (199)
 					)
 
 			UNION ALL
-			SELECT m.sporttype
+			SELECT TOP(1) m.sporttype
 			FROM dbo.Match3rd m WITH (NOLOCK) 
 			WHERE m.Match3rdId = b.matchid
 				AND m.SportType = 175 --Bitcoin
+
+			UNION ALL
+			SELECT TOP(1) pt.sporttype
+			FROM dbo.SportBettypeMatrix pt WITH (NOLOCK) 
+			WHERE pt.BetType = b.bettype
+				AND pt.sporttype IN (213,214,215,217,218) --NG2
 		)m
 	WHERE b.transid > @maxTransId_setting
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)

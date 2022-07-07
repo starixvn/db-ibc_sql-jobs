@@ -19,6 +19,7 @@ BEGIN
 		, @maxTransId_bettransLC BIGINT
 		, @maxTransId_bettransRnG BIGINT
 		, @maxTransId_translog BIGINT
+		, @maxTransId_bettransG BIGINT
 
 		, @bachCount INT = 2000
 	
@@ -74,6 +75,19 @@ BEGIN
 		WHERE c.ConfigName = 'translog'
 	END
 	-----------------------------------------------------
+
+	--5. bettransG
+	EXEC dbo.Task_DetectBet_bettransG
+		@batchCount = @bachCount
+		, @maxTransId = @maxTransId_bettransG OUTPUT
+
+	IF @maxTransId_bettransG IS NOT NULL
+	BEGIN
+		UPDATE c SET c.ConfigValue = @maxTransId_bettransG
+		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
+		WHERE c.ConfigName = 'bettransG'
+    END
+	------------------------------------------------
 
 	--5. Send Mail
 	EXEC dbo.Task_DetectBet_SendMail

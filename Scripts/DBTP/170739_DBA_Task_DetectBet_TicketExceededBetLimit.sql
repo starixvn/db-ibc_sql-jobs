@@ -37,7 +37,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Step: De
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
 		@command=N'EXEC dbo.Task_DBTP_Control_Job  @Jobname = ''DBA: Task_DetectBet_TicketExceededBetLimit''
-						,@Waitfordelay = ''00:00:00.280''', 
+						,@Waitfordelay = ''NULL''', 
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -52,7 +52,9 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Step2: W
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'WAITFOR DELAY ''00:00:00.280''', 
+		@command=N'DECLARE @Delay VARCHAR(100) = ''
+					SET @Delay = dbo.f_Job_SetWaitforDelay () 
+					WAITFOR DELAY @Delay', 
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
