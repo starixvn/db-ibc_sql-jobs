@@ -51,7 +51,7 @@ BEGIN
 	WHERE b.transid > @maxTransId_setting
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
-		AND b.productID IN (211,244,243,242,233,225,239,170,176)
+		AND b.productID IN (211,243,242,233,225,239,170,176)
 	ORDER BY b.transid ASC
 
 	SET @maxTransId = (SELECT MAX(TransId) FROM #tmp_TransId)
