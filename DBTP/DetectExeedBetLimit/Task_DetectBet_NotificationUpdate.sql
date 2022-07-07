@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTP-bodb02" executers="bodbAdminNet" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DetectBet_NotificationUpdate]
 (
 	@CustList			VARCHAR(MAX) = NULL,
