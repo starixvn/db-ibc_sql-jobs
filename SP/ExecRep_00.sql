@@ -24,6 +24,7 @@ AS
 		- 20200309@Malcolm : Add table bettransG [Redmine : #128057]
 		- 20220104@Malcolm: Update rates for all existed tickets once financial change rates [RedmineId : #163417]
 		- 20220316@Malcolm: Adjust virtual rate when cash out [RedmineId : #169003]
+		- 20220707@Evan: Wait for (x) seconds before update bettrans to wait for in-house replication  [RedmineId : #174755]
 
  	Param's Explanation: 
  		@Winlostdate: the date that new rates are updated		
@@ -34,8 +35,8 @@ BEGIN
 
 	IF @Winlostdate IS NULL RETURN
 	IF @Target NOT IN ('DBTRANS', 'REPLICATED') RETURN
-	IF @Target = 'DBTRANS' AND @@SERVERNAME NOT IN ('DBTRANS', 'DB206', 'SITDBTRANS') RETURN
-	IF @Target = 'REPLICATED' AND @@SERVERNAME IN ('DB206', 'SITDBTRANS', 'DBTRANS') RETURN
+	IF @Target = 'DBTRANS' AND @@SERVERNAME NOT IN ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS') RETURN
+	IF @Target = 'REPLICATED' AND @@SERVERNAME IN ('TESTDBTRANS', 'SITDBTRANS', 'DBTRANS') RETURN
 	IF OBJECT_ID (@TableName, N'U') IS NULL RETURN
 	
 	--CREATE TABLE #tmp (transid BIGINT, actualrate FLOAT, virtualrate FLOAT)
@@ -50,10 +51,15 @@ BEGIN
 	CREATE TABLE #CashOutSelling (transid BIGINT, virtualrate FLOAT)
 	CREATE CLUSTERED INDEX ix_bettrans ON #bettrans (transid)
 
-	IF @@SERVERNAME IN ('DBTRANS', 'DB206', 'SITDBTRANS')
+	DECLARE @Delay VARCHAR(100) = ''
+
+	IF @@SERVERNAME IN ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS')
 	BEGIN
 		IF @TableName = 'bettrans' --bettrans@dbtrans
 		BEGIN
+			-- Delay Before Update Bettrans (When Change Exchange rate)
+			SET @Delay = dbo.f_SetWaitforDelay ('Exchange') 
+			WAITFOR DELAY @Delay	
 			-- update for SB's tickets (using virtualrate)
 			INSERT INTO #bettrans(transid, actualrate, virtualrate, old_actualrate)
 			SELECT transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) AS virtualrate, b.actualrate
@@ -165,7 +171,7 @@ BEGIN
 		END
 	END
 	
-	IF @@SERVERNAME NOT IN  ('DBTRANS', 'DB206', 'SITDBTRANS')
+	IF @@SERVERNAME NOT IN  ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS')
 	BEGIN
 		IF (
 			SELECT COUNT(1)
@@ -175,6 +181,10 @@ BEGIN
 
 		IF @TableName = 'bettrans' --bettrans@replicated
 		BEGIN
+			-- Delay Before Update Bettrans (When Change Exchange rate)
+			SET @Delay = dbo.f_SetWaitforDelay ('Exchange') 
+			WAITFOR DELAY @Delay
+			
 			-- update for SB's tickets (using virtualrate)
 			INSERT INTO #bettrans(transid, actualrate, virtualrate, old_actualrate)
 			SELECT transid, e.actualrate, e.actualrate*(b.virtualrate/b.actualrate) as virtualrate, b.actualrate
