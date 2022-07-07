@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTP-bodb02" executers="bodbAdminNet" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_DetectBet_bettransLC]
+ALTER PROCEDURE [dbo].[Task_DetectBet_bettransG]
 (	
 	@batchCount INT = 0
 	, @maxTransId BIGINT = NULL OUTPUT
