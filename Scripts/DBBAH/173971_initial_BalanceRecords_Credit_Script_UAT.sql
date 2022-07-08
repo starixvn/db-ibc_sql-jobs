@@ -46,21 +46,20 @@ FROM BalanceTrigger_ProcessData b
 ----------- get maxtransid----------------
 select *
 from (
-	select MAX(transid) AS transid_bettrans FROM dbo.bettrans WITH(NOLOCK)
+	select MAX(transid) FROM dbo.bettrans WITH(NOLOCK)
 ) as b(bettrans_transid)
 outer apply (
-	select MAX(transid) AS transid_transfer from dbo.Transfer WITH(NOLOCK)
+	select MAX(transid) FROM dbo.Transfer WITH(NOLOCK)
 ) as b2(Transfer_transid)
 outer apply (
-	select MAX(translogid) AS transid_translog from dbo.translog WITH(NOLOCK)
+	select MAX(translogid) FROM dbo.translog WITH(NOLOCK)
 ) as b3(translog_translogid)
 outer apply (
-	select MAX(transid) AS transid_bettransLC from dbo.bettransLC WITH(NOLOCK)
+	select MAX(transid) FROM dbo.bettransLC WITH(NOLOCK)
 ) as b4(bettransLC_transid)
 outer apply (
-	select MAX(transid) AS transid_bettransRnG from dbo.bettransRnG WITH(NOLOCK)
+	select MAX(transid) FROM dbo.bettransRnG WITH(NOLOCK)
 ) as b5(bettransRnG_transid)
-
 
 ------ info for deployer 
 DECLARE @debug_message VARCHAR(MAX) = ''
