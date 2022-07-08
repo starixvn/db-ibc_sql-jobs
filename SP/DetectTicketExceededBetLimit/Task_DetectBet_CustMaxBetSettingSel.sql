@@ -18,7 +18,6 @@ BEGIN
 
 	CREATE TABLE #tmpCustList (
 			custid			INT
-		,	Username		NVARCHAR(100)
 		,	SportType		SMALLINT
 		,	BetType			INT
 		,	GameTypeId		INT
@@ -81,7 +80,7 @@ BEGIN
 	UPDATE cl 
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
-	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games
+	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame
 					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
 	, cl.SettingType=ps.SettingType
 	FROM #tmpCustList cl
@@ -99,7 +98,7 @@ BEGIN
 	UPDATE cl 
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
-	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games
+	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame
 					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
 	, cl.SettingType=ps.SettingType
 	FROM #tmpCustList cl
