@@ -27,6 +27,7 @@ AS
 		- 20210823@Malcolm: Integrate new product: Skywind [RedmineID: #159566]
 		- 20211007@Malcolm: Divide amount by 1000 with currency in (VND, IDR)[RedmineID: #159566]
 		- 20220506@Malcolm: Integrate new product: Jasper (N2), Sunstone (EA) [RedmineID: #172068]
+		- 20220711@Malcolm: Integrate new product:  Zircon (BG) [RedmineID: #173800]
 */
 
 BEGIN
@@ -530,6 +531,68 @@ BEGIN
 			mi.IBCCustId,
 			mi.currency
 	END
+	-- BG (LiveCasino)
+	ELSE IF @ProductId = 37
+	BEGIN
+		INSERT INTO #tempData
+		(
+			AffId,
+			IBCCustId,
+			Currency,
+			Turnover,
+			Winloss
+		)
+		SELECT
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency,
+			SUM(b.validBet) AS Turnover,
+			SUM(b.payment) AS Winloss 
+		FROM dbo.bettrans_BG_LiveCasino b WITH (NOLOCK)
+			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
+		WHERE b.WinlostDate = @WinlostDate AND b.orderstatus IN (2, 3, 4)
+			AND NOT EXISTS (
+				SELECT 1 FROM dbo.MemberRemoval mr WITH (NOLOCK)
+				WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
+					AND mi.IBCCustId = mr.IBCCustId
+			) 	
+		GROUP BY
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency
+	END
+
+	-- BG (Fish)
+	ELSE IF @ProductId = 38
+	BEGIN
+		INSERT INTO #tempData
+		(
+			AffId,
+			IBCCustId,
+			Currency,
+			Turnover,
+			Winloss
+		)
+		SELECT
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency,
+			SUM(b.validAmount) AS Turnover,
+			SUM(b.payout) AS Winloss 
+		FROM dbo.bettrans_BG_Fish b WITH (NOLOCK)
+			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
+		WHERE b.WinlostDate = @WinlostDate
+			AND NOT EXISTS (
+				SELECT 1 FROM dbo.MemberRemoval mr WITH (NOLOCK)
+				WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
+					AND mi.IBCCustId = mr.IBCCustId
+			)			
+		GROUP BY
+			mi.AffId,
+			mi.IBCCustId,
+			mi.currency
+	END
+
 	ELSE
 	BEGIN
 		-- Prevent input wrong ProductId

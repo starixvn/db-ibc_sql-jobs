@@ -27,6 +27,7 @@ AS
 		- 20210810@Malcolm: get data for many days in the same queue[RedmineID: #159061]
 		- 20210823@Malcolm: Integrate new product: Skywind [RedmineID: #159566]
 		- 20220506@Malcolm: Integrate new product: Jasper (N2), Sunstone (EA) [RedmineID: #172068]
+		- 20220711@Malcolm: Integrate new product:  Zircon (BG) [RedmineID: #173800]
 */
 
 BEGIN
@@ -983,6 +984,97 @@ BEGIN
 			END CATCH
 
 			DROP TABLE #bettrans_EA
+		END
+		ELSE IF @ProductId = 37
+		BEGIN
+			CREATE TABLE #bettrans_BG_LiveCasino 
+			(
+				orderstatus	 INT
+				,orderTime	 DATETIME
+				,payment	 MONEY
+				,validBet	 MONEY
+				,loginId	 VARCHAR(30)
+				,orderid	 BIGINT
+				,IBCCustId	 INT
+				,WinlostDate SMALLDATETIME
+			)
+
+			BEGIN TRY
+				INSERT INTO #bettrans_BG_LiveCasino (orderstatus, orderTime, payment, validBet, loginId, orderid, WinlostDate)
+				SELECT	t.c.value('(orderstatus/text())[1]', 'INT') AS orderstatus,
+						t.c.value('(orderTime/text())[1]', 'DATETIME') AS orderTime,
+						t.c.value('(payment/text())[1]', 'MONEY') AS payment,
+						t.c.value('(validBet/text())[1]', 'MONEY') AS validBet,
+						t.c.value('(loginId/text())[1]', 'VARCHAR(30)') AS loginId,
+						t.c.value('(orderId/text())[1]', 'BIGINT') AS orderid,		
+						CONVERT(DATE, t.c.value('(orderTime/text())[1]', 'SMALLDATETIME')) AS WinlostDate 
+				FROM @XmlData.nodes('root/item') AS t(c)
+				OPTION (OPTIMIZE FOR (@XmlData = NULL))
+
+				DELETE bt WITH (ROWLOCK, UPDLOCK)
+				FROM dbo.bettrans_BG_LiveCasino bt	
+				WHERE EXISTS (SELECT 1 FROM #bettrans_BG_LiveCasino t WHERE bt.orderid = t.orderid)
+				
+				INSERT INTO dbo.bettrans_BG_LiveCasino (orderstatus, orderTime, payment, validBet, loginId, orderid, WinlostDate, IBCCustId)
+				SELECT k.orderstatus, k.orderTime, k.payment, k.validBet, k.loginId, k.orderid, k.WinlostDate, m.IBCCustId
+				FROM #bettrans_BG_LiveCasino k
+					INNER JOIN dbo.MemberInfo m WITH (NOLOCK) ON '12BET$' + k.loginId = m.Username
+
+				SELECT @WinlostDate = MIN(WinlostDate) FROM #bettrans_BG_LiveCasino
+
+				SELECT @IsErr = 0
+			END TRY
+			BEGIN CATCH
+				UPDATE dbo.APIProduct_ImportQueue WITH (ROWLOCK, UPDLOCK)
+				SET FinishedTime = NULL, WinlostDate = NULL, LogDesc = 'Failed. Error Message = ' + ERROR_MESSAGE()
+				WHERE QueueId = @QueueId
+			END CATCH
+
+			DROP TABLE #bettrans_BG_LiveCasino
+		END
+		ELSE IF @ProductId = 38
+		BEGIN
+			CREATE TABLE #bettrans_BG_Fish
+			(
+				payout		 MONEY
+				,orderTime	 DATETIME
+				,validAmount MONEY
+				,loginId	 VARCHAR(30)
+				,betid		 BIGINT
+				,WinlostDate SMALLDATETIME
+			)
+
+			BEGIN TRY
+				INSERT INTO #bettrans_BG_Fish (payout, orderTime, validAmount, loginId, betid, WinlostDate)
+				SELECT	t.c.value('(payout/text())[1]', 'MONEY') AS payout,
+						t.c.value('(orderTime/text())[1]', 'DATETIME') AS orderTime,
+						t.c.value('(validAmount/text())[1]', 'MONEY') AS validAmount,
+						t.c.value('(loginId/text())[1]', 'VARCHAR(30)') AS loginId,
+						t.c.value('(betId/text())[1]', 'BIGINT') AS betid,		
+						CONVERT(DATE, t.c.value('(orderTime/text())[1]', 'SMALLDATETIME')) AS WinlostDate 
+				FROM @XmlData.nodes('root/item') AS t(c)
+				OPTION (OPTIMIZE FOR (@XmlData = NULL))
+
+				DELETE bt WITH (ROWLOCK, UPDLOCK)
+				FROM dbo.bettrans_BG_Fish bt	
+				WHERE EXISTS (SELECT 1 FROM #bettrans_BG_Fish t WHERE bt.betid = t.betid)
+				
+				INSERT INTO dbo.bettrans_BG_Fish (payout, orderTime, validAmount, loginId, betid, WinlostDate, IBCCustId)
+				SELECT k.payout, k.orderTime, k.validAmount, k.loginId, k.betid, k.WinlostDate, m.IBCCustId
+				FROM #bettrans_BG_Fish k
+					INNER JOIN dbo.MemberInfo m WITH (NOLOCK) ON '12BET$' + k.loginId = m.Username
+
+				SELECT @WinlostDate = MIN(WinlostDate) FROM #bettrans_BG_Fish
+
+				SELECT @IsErr = 0
+			END TRY
+			BEGIN CATCH
+				UPDATE dbo.APIProduct_ImportQueue WITH (ROWLOCK, UPDLOCK)
+				SET FinishedTime = NULL, WinlostDate = NULL, LogDesc = 'Failed. Error Message = ' + ERROR_MESSAGE()
+				WHERE QueueId = @QueueId
+			END CATCH
+
+			DROP TABLE #bettrans_BG_Fish
 		END
 
 		IF @IsErr = 1
