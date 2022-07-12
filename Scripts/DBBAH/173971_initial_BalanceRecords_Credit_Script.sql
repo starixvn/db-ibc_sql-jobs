@@ -4,13 +4,6 @@
 	Task: BalanceRecord -> wrong capture balance change and new balance when resettle tickets AE-Sexy product [Redmine:#173971]
 	DB:DBBAH/bodb02
 
-Step 1 - enable flag to stop job bodb02 : Task_BalanceRecord_Insert on DBBAH
-Step 2 - run sp init new row in balanceRecord by batch (2000 customers) by srecommend, recommend
-	2.1 - check data in table BalanceTrigger_ProcessData
-	2.2 - insert balancerecord
-	2.3 - delete balancetrigger
-Step 3 - script verify balance of member manually (SAS, DBA, QC)
-
 */
 USE bodb02
 GO
@@ -85,7 +78,7 @@ BEGIN
 	FROM BalanceTrigger b
 		INNER JOIN #tempMember m ON b.custid = m.custid
 	
-	WAITFOR DELAY '00:00:00.50' --optional
+	WAITFOR DELAY '00:00:00.020' --optional
 
 	SET @StartRow = @StopRow + 1
 	SET @StopRow = @StopRow + @batch
