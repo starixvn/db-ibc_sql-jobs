@@ -9,6 +9,7 @@ AS
 		Revisions:
 			- 20200309@Eden: Initial Version [#122743]
 			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+			- 20220714@Johnson: Declare structure for temp table [RedmineID: #174035]
 
 		Parameters Explanation:	
 */
@@ -18,9 +19,10 @@ AS
 
 --Reset yesterday balance for DCS Products
 DECLARE @SportType SMALLINT , @Bettype SMALLINT
+CREATE TABLE #SportBettypeDCS(SportType SMALLINT,Bettype SMALLINT,IsProcessed BIT)
 
+INSERT INTO #SportBettypeDCS(SportType,Bettype,IsProcessed)
 SELECT DISTINCT b.SportType,b.BetType,CAST(0 AS BIT) AS IsProcessed
-INTO #SportBettypeDCS
 FROM dbo.WinLimit_ProductOffer a WITH(NOLOCK) 
 	INNER JOIN  DBCUST.CUSTDB.dbo.ProductSettingDetail b WITH(NOLOCK) 
 		ON b.SettingType IN (6,12) AND b.SettingStatus <> 2
