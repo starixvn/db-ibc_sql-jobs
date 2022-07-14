@@ -14,6 +14,8 @@ AS
 		- 20201209@Sol: exclude test agent from email list- [RedmineID: #142532]
 		- 20211112@Sol: Support IPv6 - Phase 2 - [Redmine: #163963]
 		- 20220222@Sol: Support - using ExchangeDailyOanda to get actualRate of @winlostdate - [RedmineID: #168815]
+		- 20220714@Evan: Modify sp to avoid dump (remove code select into) - [Redmine: #175450]
+
 */
 BEGIN
 	
@@ -275,8 +277,15 @@ BEGIN
 		SELECT @Subject = 'Missing dummy account notification'
 			, @bodymsg = ''
 			, @recipients = CASE WHEN @isTest = 0 AND @@SERVERNAME = 'DBTRANS' THEN 'it@starixvn.com;ben.nguyen@starixvn.com' ELSE 'dba_local@starixvn.com' END
+		
+		CREATE TABLE #__tblRealLicensee
+		(
+			CustID INT,
+			Currency INT 
+		)
 
-		SELECT lc.CustID, Currency INTO #__tblRealLicensee
+		INSERT INTO #__tblRealLicensee (CustID, Currency)
+		SELECT lc.CustID, Currency 
 		FROM DBCUST.bodb_licensee.dbo.LicenseeCust lc WITH(NOLOCK)
 
 		;WITH rs AS
