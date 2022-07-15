@@ -20,7 +20,8 @@ AS
 		- 20210426@Sol: Alpha/NAP - Migrate from DBACC to DBCust - [Redmine: #154041]
 		20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
-		
+		20220715@Patrick: Use insert into instead of select into Redmine: [#175440]
+
 	Param use:
 
 
@@ -63,6 +64,11 @@ BEGIN
 
 	IF NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1_Manually)
 	BEGIN
+		
+		IF OBJECT_ID('tempdb.dbo.#tmpCal') IS NOT NULL
+			DROP TABLE #tmpCal
+
+		CREATE TABLE #tmpCal ( custid INT, Outstanding MONEY, BalRNG MONEY, BalLC MONEY, adjustWinlostAmt MONEY)
 
 		;WITH q2 AS (
 			-- translog
@@ -89,9 +95,10 @@ BEGIN
 			WHERE isTransferred = 0
 			GROUP BY custid
 		)
+
+		INSERT INTO #tmpCal(custid, Outstanding, BalRNG, BalLC, adjustWinlostAmt)
 		SELECT ISNULL(q2.custid, ISNULL(q3.custid, ISNULL(q4.custid, t.CustId))) custid, SUM(ISNULL(Outstanding, 0)) Outstanding
 			, SUM(ISNULL(BalRNG, 0)) BalRNG, SUM(ISNULL(BalLC, 0)) BalLC, SUM(ISNULL(adjustWinlostAmt, 0)) adjustWinlostAmt
-		INTO #tmpCal
 		FROM q2 FULL OUTER JOIN q3 ON q2.custid = q3.custid
 		FULL OUTER JOIN q4 ON q2.custid = q4.custid
 		FULL OUTER JOIN t ON q2.custid = t.CustID
