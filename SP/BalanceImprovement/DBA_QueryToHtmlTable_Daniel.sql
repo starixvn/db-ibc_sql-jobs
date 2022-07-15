@@ -25,6 +25,7 @@ BEGIN
   END
 
   SET @orderBy = REPLACE(@orderBy, '''', '''''');
+  SET @query = REPLACE(@query, '''', '''''');
 
   DECLARE @realQuery nvarchar(MAX) = '
     DECLARE @headerRow nvarchar(MAX);
