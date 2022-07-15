@@ -8,6 +8,7 @@ AS
 
 	Revisions :	
 		- 20210702@Tina: All Sites - Lock account & indirect close account [RedmineID: #148600]
+		- 20220714@Johnson: Declare structure for temp table [RedmineID: #174035]
 */
 
 BEGIN
@@ -22,6 +23,7 @@ BEGIN
 		Locked TINYINT NULL,
 		CloseInfo TINYINT NULL
 	)	
+	
 	CREATE TABLE #tmpListUpdateCust_Batch
 	(   CustID INT NOT NULL PRIMARY KEY,
 		bitmapHasSynced BINARY(32) NOT NULL,
@@ -31,8 +33,19 @@ BEGIN
 		Locked TINYINT NULL,
 		CloseInfo TINYINT NULL
 	)
-
-	SELECT * INTO #tmpCustProductStatus 
+	
+	CREATE TABLE #tmpCustProductStatus (
+	[CustID] [int] NOT NULL PRIMARY KEY,
+	[bitmapHasSynced] [binary](32) NOT NULL,
+	[bitmapIsHidden] [binary](32) NOT NULL,
+	[bitmapIsDisabled] [binary](32) NOT NULL,
+	[SuspendInfo] [tinyint] NULL,
+	[Locked] [tinyint] NULL,
+	[CloseInfo] [tinyint] NULL
+	)
+	
+	INSERT INTO #tmpCustProductStatus(CustID, bitmapHasSynced, bitmapIsDisabled, bitmapIsHidden, SuspendInfo, CloseInfo, Locked) 
+	SELECT CustID, bitmapHasSynced, bitmapIsDisabled, bitmapIsHidden, SuspendInfo, CloseInfo, Locked
 	FROM OPENQUERY(DBACC, '
 	SELECT cps.CustID, cps.bitmapHasSynced, cps.bitmapIsDisabled, cps.bitmapIsHidden, cps.SuspendInfo, cps.CloseInfo, cps.Locked
 	FROM bodb02.dbo.CustProductStatus cps WITH (NOLOCK)
@@ -96,5 +109,11 @@ BEGIN
 		
 		DELETE #tmpListInsertCust_Batch
 	END
-
+	
+	DROP TABLE #tmpListInsertCust
+	DROP TABLE #tmpListInsertCust_Batch
+	DROP TABLE #tmpCustProductStatus
+	DROP TABLE #tmpListUpdateCust
+	DROP TABLE #tmpListUpdateCust_Batch
+	
 END
