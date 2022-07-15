@@ -34,6 +34,24 @@ DELETE b
 FROM BalanceTrigger_ProcessData b
 	INNER JOIN #temp_MemberInput m ON b.custid = m.custid
 
+----------- get maxtransid: Run on DBTRans/bodb02----------------
+select *
+from (
+	select MAX(transid) FROM dbo.bettrans WITH(NOLOCK)
+) as b(bettrans_transid)
+outer apply (
+	select MAX(transid) FROM dbo.Transfer WITH(NOLOCK)
+) as b2(Transfer_transid)
+outer apply (
+	select MAX(translogid) FROM dbo.translog WITH(NOLOCK)
+) as b3(translog_translogid)
+outer apply (
+	select MAX(transid) FROM dbo.bettransLC WITH(NOLOCK)
+) as b4(bettransLC_transid)
+outer apply (
+	select MAX(transid) FROM dbo.bettransRnG WITH(NOLOCK)
+) as b5(bettransRnG_transid)
+
 ------ info for deployer 
 DECLARE @debug_message VARCHAR(MAX) = ''
 
