@@ -92,7 +92,7 @@ BEGIN
 		INNER JOIN ProductSettingDetail ps WITH (NOLOCK)
 				ON ps.SportType=ref.SportTypeRefBetSetting
 				AND ps.BetType=ref.BetTypeRefBetSetting
-	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0
+	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0 AND ps.SettingStatus=0
 
 	--Deposit
 	UPDATE cl 
@@ -112,7 +112,7 @@ BEGIN
 				AND psd.BetType=ref.BetTypeRefBetSetting
 		INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) 
 				ON ps.ProductSettingID=psd.ProductSettingID
-	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1
+	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1 AND psd.SettingStatus=0
 
 	-- @sporttype: not support StakeLevel
 	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType NOT IN (7,8,17))
