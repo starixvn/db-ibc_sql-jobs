@@ -69,6 +69,7 @@ AS
 		- 20220329@Hogan: Macau Games Add new Range bettype[RedmineID: #170607]
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
+		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -768,6 +769,7 @@ BEGIN
 				WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
+				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
@@ -848,6 +850,7 @@ BEGIN
 				WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
+				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 				ELSE 0
 			END
 

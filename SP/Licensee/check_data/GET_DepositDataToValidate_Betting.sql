@@ -43,6 +43,7 @@ AS
 		- 20220309@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
+		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 
 
 	Param's Explanation:
@@ -244,6 +245,10 @@ BEGIN
 		,@FGGLTurnover MONEY
 		,@FGGLCustomerWl MONEY
 		,@FGGLBetCount MONEY
+		----MXG
+		,@MXGTurnover MONEY
+		,@MXGCustomerWl MONEY
+		,@MXGBetCount MONEY
 
 	DECLARE @tblBettype TABLE (ProductPrefix VARCHAR(10), Bettype INT)
 
@@ -257,7 +262,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 
 			'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3',
-			'BTC', 'FGGL')
+			'BTC', 'FGGL', 'MXG')
 
 	-- Data Source
 	DECLARE @tblData AS TABLE (
@@ -1046,6 +1051,25 @@ BEGIN
 	FROM @tblData
 	WHERE ProductPrefix = 'FGGL'
 	
+	-- MXG
+	SELECT
+		@MXGTurnover = SUM(CASE
+						WHEN @DrawFilter IN (2, 3) THEN
+							CASE
+								WHEN Status = 111 THEN 0
+								WHEN Status IN (114, 115) THEN 0.5
+								ELSE 1
+							END
+						ELSE 1
+					END * Turnover),
+		@MXGCustomerWl = SUM(WinLoss),
+		@MXGBetCount = SUM(CASE
+								WHEN @DrawFilter = 2 AND Status = 111 THEN 0
+								ELSE BetCount
+							END)
+	FROM @tblData
+	WHERE ProductPrefix = 'MXG'
+
 	-- Result
 	SELECT
 		1 AS Id,
@@ -1095,6 +1119,7 @@ BEGIN
 		, ISNULL(@VS3Turnover, 0) AS VS3
 		, ISNULL(@BTCTurnover, 0) AS BTC
 		, ISNULL(@FGGLTurnover, 0) AS FGGL
+		, ISNULL(@MXGTurnover, 0) AS MXG
 
 	UNION
 	SELECT
@@ -1145,6 +1170,7 @@ BEGIN
 		, ISNULL(@VS3CustomerWl, 0)
 		, ISNULL(@BTCCustomerWl, 0)
 		, ISNULL(@FGGLCustomerWl, 0)
+		, ISNULL(@MXGCustomerWl, 0)
 	UNION
 	SELECT
 		3
@@ -1194,6 +1220,7 @@ BEGIN
 		, ISNULL(@VS3BetCount, 0)
 		, ISNULL(@BTCBetCount, 0)
 		, ISNULL(@FGGLBetCount, 0)
+		, ISNULL(@MXGBetCount, 0)
 
 	SET NOCOUNT OFF
 END
