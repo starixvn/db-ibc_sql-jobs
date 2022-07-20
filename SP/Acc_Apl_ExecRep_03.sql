@@ -1,13 +1,4 @@
-USE [bodb02]
-GO
-
-/****** Object:  StoredProcedure [dbo].[Acc_Apl_ExecRep_03]    Script Date: 01/26/2015 23:17:40 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 CREATE PROCEDURE [dbo].[Acc_Apl_ExecRep_03]
 	@fdate Datetime
 AS
@@ -18,6 +9,7 @@ Task:	Called by Task_BalanceUp_background
 		Delete match (put this code from Task_BalanceUp_background to a new Sp)
 DB: DBTXN.BODB02 / SVRTXN.TRANSDB
 Revisions:
+	- 20220719@Patrick: Add more condition check existing on bettransm as well [RedmineId: #175617]
     
  */
 
@@ -30,7 +22,8 @@ IF @@SERVERNAME IN ('SDBTRANS1','SDBTRANS2') --- TransDB of Apollo
 DECLARE @S VARCHAR(4000)	
 SET @S = '
 DELETE FROM DB02.bodb02.dbo.match
-WHERE	matchid not in (select distinct matchid from bettrans where bettype <= 19000)
+WHERE	matchid not in (select distinct b.matchid from bettrans b with(nolock))
+		and matchid not in (select distinct bm.matchid from bettransm bm with(nolock))
 		and kickofftime < '''+ CONVERT(VARCHAR(10),@fdate,120)+''''
 
 -- PRINT @S
