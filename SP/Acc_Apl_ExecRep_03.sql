@@ -22,8 +22,8 @@ IF @@SERVERNAME IN ('SDBTRANS1','SDBTRANS2') --- TransDB of Apollo
 DECLARE @S VARCHAR(4000)	
 SET @S = '
 DELETE FROM DB02.bodb02.dbo.match
-WHERE	matchid not in (select distinct matchid from bettrans where bettype <= 19000)
-		and matchid not in (select distinct matchid from bettransm with(nolock))
+WHERE	matchid not in (select distinct b.matchid from bettrans b with(nolock))
+		and matchid not in (select distinct bm.matchid from bettransm bm with(nolock))
 		and kickofftime < '''+ CONVERT(VARCHAR(10),@fdate,120)+''''
 
 -- PRINT @S
