@@ -32,6 +32,8 @@ AS
 		- 20220526@July: Vgaming - Exclude bettype 3845 (Nightclub Lady) - [Redmine:#173227]
 		- 20220628@July: Saba.games - Exclude bettype 1654 (Treasure Island) - [Redmine: #174581]
 		- 20220711@July: Spadegaming - Exclude bettype 4600 (jackpot prize) - [Redmine: #168750]
+		- 20220720@July: Vgaming - Exclude bettype 3846 (Treasure Island) - [Redmine: #175528]
+		- 20220720@July: Saba.games - Exclude bettype 1656 (Way to Goal) - [Redmine: #175533]
 
 	Param's Expanation:
 */
@@ -86,7 +88,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653, 1654)
+					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653, 1654, 1656)
 		END
 		ELSE IF @ProductId = 171 -- Vgaming
 		BEGIN
@@ -95,7 +97,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (3829, 3898, 3899, 3835, 3845) 
+					AND b.gameID NOT IN (3829, 3898, 3899, 3835, 3845, 3846) 
 		END
 		ELSE IF @ProductId = 247 -- Spadegaming
 		BEGIN
