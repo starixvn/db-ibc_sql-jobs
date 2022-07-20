@@ -56,6 +56,13 @@ BEGIN
 		AND b.productID IN (208,209,212,248,165,247,232,234,237,238,167,172,174,150,200,224,171,173)
 	ORDER BY  b.transid ASC
 
+	--Remove unsupport deposit ticket
+	DELETE b
+	FROM #tmp_TransId b
+		INNER JOIN Dep_CustSuper s WITH (NOLOCK) ON s.custid = b.srecommend
+	WHERE b.sporttype IN (247) --SG
+		AND b.bettype IN (4326, 4385, 4386)
+
 	SET @maxTransId = (SELECT MAX(TransId) FROM #tmp_TransId)
 
 	--Process detect invalid
