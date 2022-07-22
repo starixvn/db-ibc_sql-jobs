@@ -52,12 +52,12 @@ BEGIN
 			, @xml
 
 		INSERT INTO #tmpBetSetting_History(CustID, SportType, BetType, UpdateTime)
-		SELECT CustID, SportType, BetType, UpdateTime
+		SELECT c, s, b, u
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
-				CustID			INT
-			,	SportType		SMALLINT
-			,	BetType			INT
-			,	UpdateTime		DATETIME
+				c	INT
+			,	s	SMALLINT
+			,	b	INT
+			,	u	DATETIME
 		)
 	
 		EXEC sp_xml_removedocument @iDoc
@@ -78,12 +78,12 @@ BEGIN
 			, @xml
 
 		INSERT INTO #tmpBetSetting_History(CustID, SportType, BetType, UpdateTime)
-		SELECT CustID, SportType, BetType, UpdateTime
+		SELECT c, s, b, u
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
-				CustID			INT
-			,	SportType		SMALLINT
-			,	BetType			INT
-			,	UpdateTime		DATETIME
+				c	INT
+			,	s	SMALLINT
+			,	b	INT
+			,	u	DATETIME
 		)
 	
 		EXEC sp_xml_removedocument @iDoc
@@ -104,10 +104,10 @@ BEGIN
 			, @xml
 
 		INSERT INTO #tmpStakeLevel_History(StakeLevelID, UpdateTime)
-		SELECT StakeLevelID, UpdateTime
+		SELECT sl, u
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
-				StakeLevelID	INT
-			,	UpdateTime		DATETIME
+				sl	INT
+			,	u	DATETIME
 		)
 	
 		EXEC sp_xml_removedocument @iDoc
@@ -126,10 +126,10 @@ BEGIN
 			, @xml
 
 		INSERT INTO #tmpStakeLevel_History(StakeLevelID, UpdateTime)
-		SELECT StakeLevelID, UpdateTime
+		SELECT sl, u
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
-				StakeLevelID	INT
-			,	UpdateTime		DATETIME
+				sl	INT
+			,	u	DATETIME
 		)
 	
 		EXEC sp_xml_removedocument @iDoc
@@ -148,11 +148,11 @@ BEGIN
 			, @xml
 
 		INSERT INTO #tmpStakeLevel_History(StakeLevelID, GameTypeID, UpdateTime)
-		SELECT StakeLevelID, GameTypeID, UpdateTime
+		SELECT sl, gt, u
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
-				StakeLevelID	INT
-			,	GameTypeID		INT
-			,	UpdateTime		DATETIME
+				sl	INT
+			,	gt	INT
+			,	u	DATETIME
 		)
 	
 		EXEC sp_xml_removedocument @iDoc
@@ -172,11 +172,11 @@ BEGIN
 			, @xml
 
 		INSERT INTO #tmpStakeLevel_History(StakeLevelID, GameTypeID, UpdateTime)
-		SELECT StakeLevelID, GameTypeID, UpdateTime
+		SELECT sl, gt, u
 		FROM OPENXML(@iDoc, '/root/r', 1) WITH (
-				StakeLevelID	INT
-			,	GameTypeID		INT
-			,	UpdateTime		DATETIME
+				sl	INT
+			,	gt	INT
+			,	u	DATETIME
 		)
 	
 		EXEC sp_xml_removedocument @iDoc

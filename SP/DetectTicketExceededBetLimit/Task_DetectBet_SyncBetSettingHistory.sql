@@ -21,7 +21,7 @@ BEGIN
 			@batch			INT=5000,
 			@History_List	VARCHAR(MAX)=NULL
 	
-		CREATE TABLE #tmpBetSetting_History (
+	CREATE TABLE #tmpBetSetting_History (
 			CustID			INT
 		,	SportType		SMALLINT
 		,	BetType			INT
@@ -65,10 +65,10 @@ BEGIN
 		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 		FROM #tmpBetSetting_History
 
-		SET @History_List = (SELECT	CustID				AS '@CustID',
-									SportType			AS '@SportType',
-									BetType				AS '@BetType',
-									UpdateTime			AS '@UpdateTime'
+		SET @History_List = (SELECT	CustID				AS '@c',
+									SportType			AS '@s',
+									BetType				AS '@b',
+									UpdateTime			AS '@u'
 							FROM #tmpBetSetting_History
 							FOR XML PATH('r'), ROOT ('root')
 							)
@@ -100,10 +100,10 @@ BEGIN
 		SELECT CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 		FROM #tmpBetSetting_History
 
-		SET @History_List = (SELECT	CustID				AS '@CustID',
-									SportType			AS '@SportType',
-									BetType				AS '@BetType',
-									UpdateTime			AS '@UpdateTime'
+		SET @History_List = (SELECT	CustID				AS '@c',
+									SportType			AS '@s',
+									BetType				AS '@b',
+									UpdateTime			AS '@u'
 							FROM #tmpBetSetting_History
 							FOR XML PATH('r'), ROOT ('root')
 							)
@@ -136,8 +136,8 @@ BEGIN
 		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
 		FROM #tmpStakeLevel_History
 
-		SET @History_List = (SELECT	StakeLevelID	AS '@StakeLevelID',
-									UpdateTime		AS '@UpdateTime'
+		SET @History_List = (SELECT	StakeLevelID	AS '@sl',
+									UpdateTime		AS '@u'
 							FROM #tmpStakeLevel_History
 							FOR XML PATH('r'), ROOT ('root')
 							)
@@ -170,8 +170,8 @@ BEGIN
 		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
 		FROM #tmpStakeLevel_History
 
-		SET @History_List = (SELECT	StakeLevelID	AS '@StakeLevelID',
-									UpdateTime		AS '@UpdateTime'
+		SET @History_List = (SELECT	StakeLevelID	AS '@sl',
+									UpdateTime		AS '@u'
 							FROM #tmpStakeLevel_History
 							FOR XML PATH('r'), ROOT ('root')
 							)
@@ -204,9 +204,9 @@ BEGIN
 		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 		FROM #tmpStakeLevel_History
 
-		SET @History_List = (SELECT	StakeLevelID	AS '@StakeLevelID',
-									GameTypeID		AS '@GameTypeID',
-									UpdateTime		AS '@UpdateTime'
+		SET @History_List = (SELECT	StakeLevelID	AS '@sl',
+									GameTypeID		AS '@gt',
+									UpdateTime		AS '@u'
 							FROM #tmpStakeLevel_History
 							FOR XML PATH('r'), ROOT ('root')
 							)
@@ -239,9 +239,9 @@ BEGIN
 		SELECT StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 		FROM #tmpStakeLevel_History
 
-		SET @History_List = (SELECT	StakeLevelID	AS '@StakeLevelID',
-									GameTypeID		AS '@GameTypeID',
-									UpdateTime		AS '@UpdateTime'
+		SET @History_List = (SELECT	StakeLevelID	AS '@sl',
+									GameTypeID		AS '@gt',
+									UpdateTime		AS '@u'
 							FROM #tmpStakeLevel_History
 							FOR XML PATH('r'), ROOT ('root')
 							)
