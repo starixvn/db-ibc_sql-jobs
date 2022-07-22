@@ -29,7 +29,6 @@ BEGIN
 		,	OldMaxPerMatch	MONEY
 		,	OldStakeLevelList VARCHAR(200)
 		,	UpdateTime		DATETIME
-		,	N				TINYINT
 	)
 
 	CREATE TABLE #tmpStakeLevel_History (
@@ -40,7 +39,6 @@ BEGIN
 		,	MaxGameStake	DECIMAL(19,8)
 		,	SiteID			INT
 		,	UpdateTime		DATETIME
-		,	N				TINYINT
 	)
 
 	SET @UpdateTime = GETDATE()
