@@ -46,13 +46,14 @@ BEGIN
 	--History: SMA update member bet setting
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK))
 	BEGIN
-		;WITH CTE AS (
+		-- to avoid page split
+		;WITH CTE AS ( 
 			SELECT TOP (@batch) CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 			FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK)
 		),
 		CTE1 AS (
 			SELECT  CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime,
-				ROW_NUMBER() OVER (PARTITION BY CustID, SportType, BetType, UpdateTime ORDER BY (SELECT NULL)) N
+				ROW_NUMBER() OVER (PARTITION BY CustID, SportType, BetType, UpdateTime ORDER BY (SELECT NULL)) AS N
 			FROM CTE
 		)
 		INSERT INTO #tmpBetSetting_History (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
@@ -80,6 +81,7 @@ BEGIN
 
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK))
 	BEGIN
+		-- to avoid page split
 		;WITH CTE AS (
 			SELECT TOP (@batch) CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 			FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK)
@@ -115,6 +117,7 @@ BEGIN
 	--History: update global bet setting
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK))
 	BEGIN
+		-- to avoid page split
 		;WITH CTE AS (
 			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
 			FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK)
@@ -148,6 +151,7 @@ BEGIN
 
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK))
 	BEGIN
+		-- to avoid page split
 		;WITH CTE AS (
 			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
 			FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK)
@@ -181,6 +185,7 @@ BEGIN
 	----------------------------------------------------------------------------------------------------------
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK))
 	BEGIN
+		-- to avoid page split
 		;WITH CTE AS (
 			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 			FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK)
@@ -215,6 +220,7 @@ BEGIN
 
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK))
 	BEGIN
+		-- to avoid page split
 		;WITH CTE AS (
 			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 			FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK)
