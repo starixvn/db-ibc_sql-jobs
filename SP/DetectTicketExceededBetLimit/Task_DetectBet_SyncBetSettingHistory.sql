@@ -46,7 +46,7 @@ BEGIN
 	--History: SMA update member bet setting
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK))
 	BEGIN
-		-- to avoid page split
+		-- remove dup data, cause: page split
 		;WITH CTE AS ( 
 			SELECT TOP (@batch) CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 			FROM DBCUST.CustDB.dbo.CustMaxBetSetting_History WITH (NOLOCK)
@@ -81,7 +81,7 @@ BEGIN
 
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK))
 	BEGIN
-		-- to avoid page split
+		-- remove dup data, cause: page split
 		;WITH CTE AS (
 			SELECT TOP (@batch) CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime
 			FROM DBCUST.CustDB.dbo.Dep_CustMaxBetSetting_History WITH (NOLOCK)
@@ -117,7 +117,7 @@ BEGIN
 	--History: update global bet setting
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK))
 	BEGIN
-		-- to avoid page split
+		-- remove dup data, cause: page split
 		;WITH CTE AS (
 			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, UpdateTime
 			FROM DBCUST.CustDB.dbo.StakeLevel_History WITH (NOLOCK)
@@ -151,7 +151,7 @@ BEGIN
 
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK))
 	BEGIN
-		-- to avoid page split
+		-- remove dup data, cause: page split
 		;WITH CTE AS (
 			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, SiteID, UpdateTime
 			FROM DBCUST.CustDB.dbo.Dep_StakeLevel_History WITH (NOLOCK)
@@ -185,7 +185,7 @@ BEGIN
 	----------------------------------------------------------------------------------------------------------
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK))
 	BEGIN
-		-- to avoid page split
+		-- remove dup data, cause: page split
 		;WITH CTE AS (
 			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 			FROM DBCUST.CustDB.dbo.StakeLevelGroupDetail_History WITH (NOLOCK)
@@ -220,7 +220,7 @@ BEGIN
 
 	IF EXISTS (SELECT 1 FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK))
 	BEGIN
-		-- to avoid page split
+		-- remove dup data, cause: page split
 		;WITH CTE AS (
 			SELECT TOP (@batch) StakeLevelID, GameTypeID, MaxLabel, MaxStake, MaxGameStake, UpdateTime
 			FROM DBCUST.CustDB.dbo.Dep_StakeLevelGroupDetail_History WITH (NOLOCK)
