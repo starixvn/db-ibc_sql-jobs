@@ -2,7 +2,7 @@
 
 ALTER PROCEDURE [dbo].[Task_DetectBet_DelBetSettingHistory] 
 			@Mode			TINYINT,
-			@History_List	NVARCHAR(MAX)=NULL
+			@History_List	VARCHAR(MAX)=NULL
 AS
 /*
 	Created: 20220623@Tacy
