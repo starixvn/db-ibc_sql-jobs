@@ -1,10 +1,4 @@
-USE [bodb02]
-GO
-/****** Object:  StoredProcedure [dbo].[Task_DetectBet_SyncBetSettingHistory]    Script Date: 25 Jul, 2022 10:48:53 AM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBTP-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DetectBet_SyncBetSettingHistory] 
 AS
