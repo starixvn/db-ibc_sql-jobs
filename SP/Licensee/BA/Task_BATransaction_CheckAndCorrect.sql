@@ -29,6 +29,7 @@ AS
 		- 20210315@Hogan: Integrate Cricket AIO [RedmineID: #150386]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
+		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
 */
 
 BEGIN
@@ -74,6 +75,7 @@ BEGIN
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
 						OR (bettype BETWEEN 9400 AND 9998)
+						OR (bettype BETWEEN 3900 and 3999)
 						OR bettype = 38 -- BetBuilder
 					)
 				AND bettype NOT IN (901, 911)
@@ -104,6 +106,7 @@ BEGIN
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
 						OR (bettype BETWEEN 9400 AND 9998)
+						OR (bettype BETWEEN 3900 and 3999)
 						OR bettype = 38 -- BetBuilder
 					)
 				AND bettype NOT IN (901, 911)
@@ -149,6 +152,7 @@ BEGIN
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
 						OR (bettype BETWEEN 9400 AND 9998)
+						OR (bettype BETWEEN 3900 and 3999)
 						OR bettype = 38 -- BetBuilder
 					)
 				AND bettype NOT IN (901, 911)
@@ -179,6 +183,7 @@ BEGIN
 						OR (bettype BETWEEN 1301 AND 1399)
 						OR (bettype BETWEEN 9001 AND 9399)
 						OR (bettype BETWEEN 9400 AND 9998)
+						OR (bettype BETWEEN 3900 and 3999)
 						OR bettype = 38 -- BetBuilder
 					)  
 				AND bettype NOT IN (901, 911)
