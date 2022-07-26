@@ -139,7 +139,7 @@ BEGIN
 							AND dch.BetType=cl.BetTypeRef AND dch.UpdateTime>cl.transdate  
 						 ORDER BY UpdateTime
 						 ) dch
-		WHERE cl.SettingType NOT IN (7,8,17) AND
+		WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,202)) AND
 			(
 			  (cl.isLicensee=0 AND ch.custid IS NOT NULL)
 			OR 
