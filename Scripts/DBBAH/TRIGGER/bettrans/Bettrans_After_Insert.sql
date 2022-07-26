@@ -13,6 +13,7 @@ AS
 		- 20200922@Kathy: Add column MatchId, StatusId, SettlementType, sma winlost, sma commission [Redmine:#138552]
 		- 20201119@Kathy: Add column modds [Redmine:#142346]
 		- 20210309@Kathy: Allow null for bettype,actual_stake, winlost, playercomm [Redmine:#138552]
+		- 20220629@Helen: BalanceRecord -> wrong capture balance change and new balance when resettle tickets AE-Sexy product [Redmine:#173971]
 */
 
 BEGIN
@@ -43,6 +44,16 @@ BEGIN
 
 --	IF @DelaySeconds < 60 AND @__IsCN88 = 0
 		--PRINT GETDATE()
+
+		DECLARE @bettype SMALLINT, @IsLC_RnG BIT = 0
+		
+		SET @bettype = (SELECT TOP 1 bettype FROM inserted)
+
+		SET @IsLC_RnG = (SELECT TOP 1 1 FROM SportBettypeMatrix WITH (NOLOCK)
+						WHERE RefTable in (1,2) and bettype = @bettype
+						)
+		IF @IsLC_RnG = 1 RETURN
+
 		INSERT INTO BalanceTrigger (
 			custid, transid, bettype, 
 			actual_stake, winlost, playercomm,
