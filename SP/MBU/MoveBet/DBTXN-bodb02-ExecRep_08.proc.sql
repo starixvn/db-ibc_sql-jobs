@@ -45,6 +45,7 @@ AS
 		- 20201221@Brice:	Add column [siteID] of [bettransLC] - [Redmine: #147084]
 		- 20210126@Patrick: Migrate DB Server DB054 to cluster [Redmine: #149273]
 		- 20210519@Patrick: Support SIT environment [Redmine: #149927]
+		- 20220727@Patrick: Add column ThirdTransID into bettransInfo/14 [Redmine: #175666]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -101,8 +102,8 @@ BEGIN
 
 	-- 20190828@Billy: Add [bettransInfo]
 	INSERT INTO	dbo.BettransInfo14
-		(	transid, SecAcceptTime, LiveBetAcceptTime,OriginalOdds)
-	SELECT	transid, SecAcceptTime, LiveBetAcceptTime,OriginalOdds
+		(	transid, SecAcceptTime, LiveBetAcceptTime, OriginalOdds, ThirdTransID)
+	SELECT	transid, SecAcceptTime, LiveBetAcceptTime, OriginalOdds, ThirdTransID
 	FROM		dbo.BettransInfo AS bi WITH (NOLOCK)
 	INNER JOIN	@__tmpTransId AS tmp
 			ON	bi.transid = tmp.id;
