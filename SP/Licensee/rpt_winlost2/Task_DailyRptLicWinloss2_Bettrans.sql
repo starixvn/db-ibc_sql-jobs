@@ -97,6 +97,7 @@ AS
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
+		- 20220708@Hogan: Support add new betfrom '}' [RedmineID: #174895]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -268,11 +269,11 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END AS isBA
 		,CASE
-			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']') THEN 1
+			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']','}') THEN 1
 			ELSE 0
 		END AS isMobile
 		,CASE
-			WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','.','$','[',']') THEN b.betfrom
+			WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','.','$','[',']','}') THEN b.betfrom
 			ELSE ''
 		END AS betfrom
 		,SUM(CASE
@@ -396,11 +397,11 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END
 		,CASE
-			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']') THEN 1
+			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']','}') THEN 1
 			ELSE 0
 		END
 		,CASE
-			WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','.','$','[',']') THEN b.betfrom
+			WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','.','$','[',']','}') THEN b.betfrom
 			ELSE ''
 		END
 		,b.apositiontaking
