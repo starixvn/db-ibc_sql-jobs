@@ -12,6 +12,7 @@ AS
 	
 	Revisions: 
 		- 20220525@Max: Create SP [Redmine: #170739]
+		- 20220721@Max: Change logic get stake for NG2 [Redmine: #170739]
 	
 	Param's explanation:		
 */
@@ -46,7 +47,9 @@ BEGIN
 	WHERE c.ConfigName = 'SyncHistoryDataLastTime'
 
 	INSERT INTO #tmp_TransId (TransId, CustId, sporttype, bettype, stake, srecommend, recommend, isLive, transdate)
-	SELECT TOP(@batchCount) b.transid, b.custid, m.sporttype, b.bettype, b.stake, b.srecommend, b.recommend, b.liveindicator, b.transdate
+	SELECT TOP(@batchCount) b.transid, b.custid, m.sporttype, b.bettype
+		, CASE WHEN m.sporttype IN (213,214,215,217,218) THEN (b.stake/ISNULL(hdp1,1)) ELSE b.stake END AS stake
+		, b.srecommend, b.recommend, b.liveindicator, b.transdate
 	FROM dbo.bettrans b WITH (NOLOCK)
 		CROSS APPLY (
 			SELECT TOP(1) m.sporttype
