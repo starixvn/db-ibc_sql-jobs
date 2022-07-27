@@ -24,6 +24,7 @@ AS
 		- 20180329@Percy: Add Bet_ExecRep_09 [RedmineID: #92391]
 		- 202010316@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
+		- 20220720@Patrick: Support new transid [Redmine: #175666]
  */
 BEGIN 
 	CHECKPOINT
@@ -56,6 +57,8 @@ BEGIN
 
 		-- delete old data from bettranssum before movebet
 		TRUNCATE TABLE dbo.bettranssum
+
+		DECLARE @__errorMessage VARCHAR(300), @__doing VARCHAR(300)
 		
 		WHILE 1 = 1 
 		BEGIN 
@@ -66,76 +69,160 @@ BEGIN
 				WHERE	IsFinish = 0
 				ORDER BY ScheduleId 
 
-				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 1
-				IF @@ERROR <> 0
-				BEGIN
-					RAISERROR('** DailySummary JOB Failed @ step = 1 **', 16, 1)
-					RETURN
-				END
-
-				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 2
-				IF @@ERROR <> 0
-				BEGIN
-					RAISERROR('** DailySummary JOB Failed @ step = 2 **', 16, 1)
-					RETURN
-				END
-
-				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 3
-				IF @@ERROR <> 0
-				BEGIN
-					RAISERROR('** DailySummary JOB Failed @ step = 3 **', 16, 1)
-					RETURN
-				END
-
-				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 4
-				IF @@ERROR <> 0
-				BEGIN
-					RAISERROR('** DailySummary JOB Failed @ step = 4 **', 16, 1)
-					RETURN
-				END
-
-				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 5
-				IF @@ERROR <> 0
-				BEGIN
-					RAISERROR('** DailySummary JOB Failed @ step = 5 **', 16, 1)
-					RETURN
-				END
-
-				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 6
-				IF @@ERROR <> 0
-				BEGIN
-					RAISERROR('** DailySummary JOB Failed @ step = 6 **', 16, 1)
-					RETURN
-				END
-
-				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 7
-				IF @@ERROR <> 0
-				BEGIN
-					RAISERROR('** DailySummary JOB Failed @ step = 7 **', 16, 1)
-					RETURN
-				END
-
-				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 8
-				IF @@ERROR <> 0
-				BEGIN
-					RAISERROR('** DailySummary JOB Failed @ step = 8 **', 16, 1)
-					RETURN
-				END
-
-				EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 9
-				IF @@ERROR <> 0
-				BEGIN
-					RAISERROR('** DailySummary JOB Failed @ step = 9 **', 16, 1)
-					RETURN
-				END
+				--//1: update ticket (if any) which winlostdate is not synced with eventdate 
+				BEGIN TRY
+					SET @__errorMessage = ''
+					EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 1
+	
+				END TRY
+				BEGIN CATCH
+					SET @__errorMessage = ERROR_MESSAGE()
+					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(1 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
+					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
 		
-				UPDATE  @Days
-				SET		IsFinish = 1
-				WHERE	ScheduleId = @ScheduleId
-						
+					--throw exception and terminated process
+					RAISERROR (@__errorMessage, 16, 1)
+					RETURN
+				END CATCH
+
+				--//2: check qualify data && void UUS tickets
+				BEGIN TRY
+					SET @__errorMessage = ''
+					EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 2
+	
+				END TRY
+				BEGIN CATCH
+					SET @__errorMessage = ERROR_MESSAGE()
+					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(2 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
+					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+		
+					--throw exception and terminated process
+					RAISERROR (@__errorMessage, 16, 1)
+					RETURN
+				END CATCH
+
+				--//3: generate sum tickets
+				BEGIN TRY
+					SET @__errorMessage = ''
+					EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 3
+	
+				END TRY
+				BEGIN CATCH
+					SET @__errorMessage = ERROR_MESSAGE()
+					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(3 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
+					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+		
+					--throw exception and terminated process
+					RAISERROR (@__errorMessage, 16, 1)
+					RETURN
+				END CATCH
+
+				--//4: copy event | bet data to [14]
+				BEGIN TRY
+					SET @__errorMessage = ''
+					EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 4
+	
+				END TRY
+				BEGIN CATCH
+					SET @__errorMessage = ERROR_MESSAGE()
+					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(4 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
+					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+		
+					--throw exception and terminated process
+					RAISERROR (@__errorMessage, 16, 1)
+					RETURN
+				END CATCH
+
+				--//5: insert data for sum_winloss
+				BEGIN TRY
+					SET @__errorMessage = ''
+					EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 5
+	
+				END TRY
+				BEGIN CATCH
+					SET @__errorMessage = ERROR_MESSAGE()
+					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(5 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
+					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+		
+					--throw exception and terminated process
+					RAISERROR (@__errorMessage, 16, 1)
+					RETURN
+				END CATCH
+
+				--//6: insert sum ticket 19999
+				BEGIN TRY
+					SET @__errorMessage = ''
+					EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 6
+	
+				END TRY
+				BEGIN CATCH
+					SET @__errorMessage = ERROR_MESSAGE()
+					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(6 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
+					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+		
+					--throw exception and terminated process
+					RAISERROR (@__errorMessage, 16, 1)
+					RETURN
+				END CATCH
+
+				--//7: wait for replicated servers perform done and then go to update movebetdate flag
+				BEGIN TRY
+					SET @__errorMessage = ''
+					EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 7
+	
+				END TRY
+				BEGIN CATCH
+					SET @__errorMessage = ERROR_MESSAGE()
+					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(7 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
+					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+		
+					--throw exception and terminated process
+					RAISERROR (@__errorMessage, 16, 1)
+					RETURN
+				END CATCH
+
+				--//8: remove bet tickets
+				BEGIN TRY
+					SET @__errorMessage = ''
+					EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 8
+	
+				END TRY
+				BEGIN CATCH
+					SET @__errorMessage = ERROR_MESSAGE()
+					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(8 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
+					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+		
+					--throw exception and terminated process
+					RAISERROR (@__errorMessage, 16, 1)
+					RETURN
+				END CATCH
+
+				--//9: movebet done
+				BEGIN TRY
+					SET @__errorMessage = ''
+					EXEC dbo.Task_DailySummary @winlostdate = @RunningDay, @step = 9
+	
+				END TRY
+				BEGIN CATCH
+					SET @__errorMessage = ERROR_MESSAGE()
+					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(9 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
+					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+		
+					--throw exception and terminated process
+					RAISERROR (@__errorMessage, 16, 1)
+					RETURN
+				END CATCH
+
+				--
+				UPDATE @Days
+				SET IsFinish = 1
+				WHERE ScheduleId = @ScheduleId
+
 			END
-			ELSE 
+			ELSE
+			BEGIN
 				BREAK
+			END
 		END
 		
 		--//turn off isMovingBet_Local flag
