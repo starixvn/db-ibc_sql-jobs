@@ -24,6 +24,8 @@ GO
 ALTER DATABASE [BalanceRecord] ADD FILE ( NAME = N'BR_22M03', FILENAME = N'T:\USER_DB\BalanceRecord\BR_22M03.ndf' , SIZE = 1024KB , FILEGROWTH = 32768KB ) TO FILEGROUP [BR_22M03]
 GO
 
+use [BalanceRecord];
+GO
 CREATE TABLE dbo.DBA_AutoPartition_Logs
 (
 	table_name		VARCHAR(128),
@@ -35,5 +37,5 @@ CREATE TABLE dbo.DBA_AutoPartition_Logs
 	start_time		DATETIME,
 	end_time		DATETIME,
 	error			VARCHAR(1000),
-	CONSTRAINT PK_running_month PRIMARY KEY (table_name, running_month)
+	CONSTRAINT PK_running_month PRIMARY KEY (table_name, running_month, clean_range)
 ) ON [PRIMARY]

@@ -1,5 +1,5 @@
 /*<info serverAlias="DBBAH-bodb02" executers="" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_BalanceRecord_AutoCreation_Partitioning]
+ALTER PROCEDURE [dbo].[Task_BalanceRecord_AutoCreation_Partitioning]
 	@MonthDate DATE = NULL
 	, @ModeView BIT = 1
 AS
@@ -185,13 +185,13 @@ BEGIN
 		split_command,
 		start_time
 	)
-	SELECT ex.TABLE_NAME, ex.running_month, ex.clean_range, @cleanCommand, ex.next_range, @splitCommand, CURRENT_TIMESTAMP
+	SELECT ex.TABLE_NAME, ex.running_month, ex.FIRST_RANGE, @cleanCommand, ex.next_range, @splitCommand, CURRENT_TIMESTAMP
 	FROM @DBA_Task_AutoPartitionExtend ex
 	WHERE @ModeView = 0
 		AND (ex.isClean = 1 OR ex.isNextExtend = 1)
 		AND NOT EXISTS (
 			SELECT 1 FROM dbo.DBA_AutoPartition_Logs l
-			WHERE l.table_name =  ex.TABLE_NAME AND l.running_month = ex.running_month
+			WHERE l.table_name =  ex.TABLE_NAME AND l.running_month = ex.running_month AND l.clean_range = ex.clean_range
 		)
 	------ END Logs
 
@@ -235,7 +235,8 @@ BEGIN
 	SET end_time	= CURRENT_TIMESTAMP
 		, error		= @ERROR 
 	FROM dbo.DBA_AutoPartition_Logs l
-	INNER JOIN @DBA_Task_AutoPartitionExtend ex ON ex.TABLE_NAME = l.table_name AND ex.running_month = l.running_month
+	INNER JOIN @DBA_Task_AutoPartitionExtend ex 
+		ON ex.TABLE_NAME = l.table_name AND ex.running_month = l.running_month AND l.clean_range = ex.FIRST_RANGE
 	WHERE @ModeView = 0
 	------ END Logs
 
@@ -256,7 +257,7 @@ BEGIN
 		SELECT @msgNotify = CONCAT(@@SERVERNAME, '@',DB_NAME(), '.dbo.',OBJECT_NAME(@@PROCID),' auto partition with SUCCESS on [CURRENT-Partition: ', @MonthDate, ', MERGE-Partition: ', @mergeP ,', SPLIT-Partition: ', @splitP, ']')
 		WHERE @mergeP IS NOT NULL OR @splitP IS NOT NULL
 
-		--select @msgNotify AS [@msgNotify]
+		SELECT @msgNotify AS [@msgNotify]
 		IF (@checkServer = 1)
 		BEGIN	
 			BEGIN TRY
@@ -276,9 +277,8 @@ BEGIN
 
 		SELECT @shinkFileGroup = COALESCE(@shinkFileGroup + ' ', '') + ISNULL(CmdText,'')
 		FROM @DBA_Task_AutoPartitionExtend t
-		CROSS APPLY (SELECT CAST(FILEPROPERTY(t.Clean_FileGroup, 'SpaceUsed') AS INT)) f(SpaceUsed)
 		CROSS APPLY (
-			SELECT concat('DBCC SHRINKFILE (N''',t.Clean_FileGroup,''',', CEILING((CAST(f.SpaceUsed AS FLOAT)*8)/1024),')')
+			SELECT CONCAT('DBCC SHRINKFILE (N''',t.Clean_FileGroup,''', 0, TRUNCATEONLY)')
 		) AS c (CmdText)
 		WHERE t.isClean = 1 AND t.Clean_FileGroup IS NOT NULL
 
@@ -299,7 +299,7 @@ BEGIN
 			SELECT @msgNotify = CONCAT(@@SERVERNAME, '@',DB_NAME(), '-SHRINKFILE with ERROR.', @ERROR)
 		END CATCH
 
-		--select @msgNotify AS [@msgNotify]
+		SELECT @msgNotify AS [@msgNotify]
 		IF (@checkServer = 1)
 		BEGIN	
 			BEGIN TRY
