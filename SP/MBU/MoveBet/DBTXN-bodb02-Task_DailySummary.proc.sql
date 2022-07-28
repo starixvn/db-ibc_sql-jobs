@@ -731,7 +731,7 @@ BEGIN
 	ORDER BY recommend, custid
 
 	DECLARE @__runningCust TABLE(recommend INT, custid INT PRIMARY KEY (recommend, custid))
-	DECLARE @__transIdList TABLE(seq SMALLINT, transId BIGINT, rowId INT IDENTITY(1,1) PRIMARY KEY)
+	CREATE TABLE #__transIdList (seq SMALLINT, transId BIGINT, rowId INT IDENTITY(1,1) PRIMARY KEY)
 	DECLARE @__rowcnt INT = 0
 		, @__transIdsEachBatch INT = 0, @__maxTransIdsEachBatch INT = 255
 		, @__rowIndex INT = 0
@@ -756,7 +756,7 @@ BEGIN
 		Retry_handle_dup_PK:
 
 		--cleanup old data
-		DELETE FROM @__transIdList
+		TRUNCATE TABLE #__transIdList
 
 		--//start: generate transid list
 		WHILE @__rowIndex < @__rowcnt
@@ -775,7 +775,7 @@ BEGIN
 				SET @__transIdsEachBatch = @__maxTransIdsEachBatch
 			END
 
-			INSERT INTO @__transIdList(seq, transId)
+			INSERT INTO #__transIdList(seq, transId)
 			EXEC dbo.Get_bettrans_transid_Range @total_transid = @__transIdsEachBatch
 
 			SET @__rowIndex += @__transIdsEachBatch
@@ -805,7 +805,7 @@ BEGIN
 									FROM @__runningCust t
 									WHERE t.recommend = b.recommend AND t.custid = b.custid AND b.winlostdate = @winlostdate
 								)
-				) t LEFT JOIN @__transIdList tt ON t.rowId = tt.rowId
+				) t LEFT JOIN #__transIdList tt ON t.rowId = tt.rowId
 
 			COMMIT TRANSACTION
 
@@ -845,6 +845,7 @@ BEGIN
 
 		END CATCH
 		
+		DROP TABLE #__transIdList
 		--waitfor delay on each batch.
 		SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key11')
 		WAITFOR DELAY @__delayTimeValue --waitfor inserting sum 19999...
