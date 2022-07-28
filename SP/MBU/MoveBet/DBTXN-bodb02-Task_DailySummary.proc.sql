@@ -845,12 +845,12 @@ BEGIN
 
 		END CATCH
 		
-		DROP TABLE #__transIdList
 		--waitfor delay on each batch.
 		SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('Key11')
 		WAITFOR DELAY @__delayTimeValue --waitfor inserting sum 19999...
 	END
 
+	DROP TABLE #__transIdList
 	SET DEADLOCK_PRIORITY NORMAL
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - start turn off MB_Sum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
