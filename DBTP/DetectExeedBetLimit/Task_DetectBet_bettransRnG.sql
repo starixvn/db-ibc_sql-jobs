@@ -12,6 +12,7 @@ AS
 	
 	Revisions: 
 		- 20220525@Max: Create SP [Redmine: #170739]
+		- 20220722@Max: Exclude some bettypes [Redmine: #170739]
 	
 	Param's explanation:		
 */
@@ -64,6 +65,12 @@ BEGIN
 		INNER JOIN Dep_CustSuper s WITH (NOLOCK) ON s.custid = b.srecommend
 	WHERE b.sporttype IN (247) --SG
 		AND b.bettype IN (4326, 4385, 4386)
+
+	--Remove unsupport bettype of SABA.games, Vgaming, Saba Casino, Macau Games
+	DELETE b
+	FROM #tmp_TransId b
+	WHERE b.sporttype IN (208,209,212,150,200,171,173)
+		AND b.bettype IN (1650,1652,3836,3837,2105,2120,2104,4004)
 
 	--Process detect invalid
 	EXEC dbo.Task_DetectBet_CustMaxBetSettingSel
