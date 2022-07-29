@@ -11,6 +11,7 @@ AS
 		- 20191022@Percy: Initialize SP [RedmineID: #103656]
 		- 20200401@Percy: Check exists TransID on LicenseeBATransaction_bk [RedmineID: #131643]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20220724@Evan: Remove code select into  [Redmine: #175297]
 */
 
 BEGIN
@@ -23,9 +24,19 @@ BEGIN
 
 	IF @@ROWCOUNT = 0
 		RETURN
-
+		
+	CREATE TABLE #TempData
+	(
+		TransID	BIGINT,
+		transdate	DATETIME,
+		custid	INT,
+		recommend	INT,
+		srecommend	INT,
+		winlostdate	SMALLDATETIME
+	)
+	
+	INSERT INTO #TempData (TransID, transdate, custid, recommend, srecommend, winlostdate)		
 	SELECT ba.TransID, ba.transdate, ba.custid, ba.recommend, ba.srecommend, b.winlostdate
-	INTO #TempData
 	FROM bodb_licensee.dbo.LicenseeBATransaction_active ba WITH (ROWLOCK)
 		INNER JOIN dbo.bettrans b WITH (NOLOCK) ON b.transid = ba.transid
 	WHERE b.winlostdate IN (SELECT MoveBetsDay FROM @MoveBetSchedule)

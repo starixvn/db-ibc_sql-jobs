@@ -16,6 +16,8 @@ AS
 		- 20200108@Percy: Support billing terms by product & currency instead of product only [RedmineID: #120005]
 		- 20200407@Percy: Add @ProductIds to support input product list [RedmineID: #131885]
 		- 20210219@Percy: Change code get MBBU date [RedmineID: #150327]
+		- 20220721@Evan: Integrate new transid [Redmine: #175640]
+		- 20220724@Evan: Scale-Out Check @CustDummyId run on CentralDB  [Redmine: #175297]
 
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
@@ -45,11 +47,11 @@ BEGIN
 		, @SqlQueryFor3rd VARCHAR(8000), @CustDummyId INT, @SqlQueryChargeRate VARCHAR(8000)
 		, @RefNo BIGINT, @SqlQuery VARCHAR(8000), @ExchangeRate FLOAT
 		, @LicenseeId INT, @PartyList VARCHAR(4000), @BettingIndicator VARCHAR(125), @ProductCodeList VARCHAR(1000)
-		, @MoveBetsDay SMALLDATETIME
+		, @MoveBetsDay SMALLDATETIME, @TransId BIGINT
 	
 	--check @WinlostDate less than @MoveBetDay
 	INSERT INTO @BalanceUpTable(BalanceUpDay, MoveBetsDay)
-	EXEC DBEXT.bodb02.dbo.Lrf_SelBalanceUpDay
+	EXEC dbo.Age_SelBalanceUpDay 
 	
 	SELECT @MoveBetsDay = MoveBetsDay
 	FROM @BalanceUpTable
@@ -166,15 +168,18 @@ BEGIN
 	INSERT INTO #ChargeRateByCurrency (ChargeId, CurrencyId, Rate)
 	EXEC (@SqlQueryChargeRate)
 
-	DECLARE @FinalData TABLE (CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
+	DECLARE @FinalData TABLE (TransId BIGINT, CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
 			, StatusId TINYINT, Status VARCHAR(10), apositiontaking MONEY, awinlost MONEY, RefNo BIGINT, actualrate FLOAT
 			, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50)
 			, PlayerComm MONEY, Comm MONEY, betfrom NVARCHAR(1))
+
+	DECLARE @SiteGroupInfo TABLE(SiteDBGroupID SMALLINT, LinkedServerName  VARCHAR(512), ClientAccessName VARCHAR(512), AGIP VARCHAR (50))
 
 	WHILE EXISTS (SELECT 1 FROM @LicenseeTable WHERE RowId = @RowId)
 	BEGIN
 		--clean data
 		DELETE @FinalData
+		DELETE @SiteGroupInfo
 		DELETE @DataTmp
 		DELETE #3rdData
 
@@ -189,13 +194,22 @@ BEGIN
 		FROM #LicenseeProductTable
 		WHERE CurrencyId = @CurrencyId AND LicenseeName = @LicenseeName
 
-				EXEC dbo.Lrf_Get_DummyAccount3rd @LicenseeName = @LicenseeName
+		EXEC dbo.Lrf_Get_DummyAccount3rd @LicenseeName = @LicenseeName
 			, @CurrencyId = @CurrencyId
 			, @CustId = @CustDummyId OUTPUT
 		
 		IF ISNULL(@CustDummyId, 0) = 0 OR ISNULL(@ProductIds, '') = ''
 			CONTINUE
 		
+		INSERT INTO @SiteGroupInfo(SiteDBGroupID, LinkedServerName, ClientAccessName, AGIP)
+		EXEC DBCUST.CustDB.dbo.Acc_SiteDBConfigSel @CustID = @CustDummyId
+
+		-- Exclude CustDummyId on SiteDB
+		IF EXISTS (SELECT 1 FROM @SiteGroupInfo WHERE SiteDBGroupID <> 0)
+		BEGIN 
+			CONTINUE
+		END
+
 		IF CHARINDEX('10', @ProductIds, 0) > 0 --AG Casino
 		BEGIN
 			--print ('AG Casino')
@@ -276,7 +290,7 @@ BEGIN
 			--PRINT('No data on that day. - WinlostDate: ' + CONVERT(VARCHAR(10), @WinlostDate, 112))
 			CONTINUE
 		END
-		
+
 		--incase daily sum
 		INSERT @DataTmp(RowId, CurrencyId, Bettype)
 		SELECT ROW_NUMBER() OVER(ORDER BY CurrencyId) AS RowId, CurrencyId, Bettype
@@ -299,9 +313,10 @@ BEGIN
 
 			--generate refno
 			SET @RefNo = 0
-			EXEC dbo.Acc_SelRefNo @refNo = @RefNo OUTPUT
-			SELECT @RefNo = @RefNo + 100000000000
-
+			EXEC dbo.Get_refno_transid @refNo = @RefNo OUTPUT
+			---get new transid 
+			SET @TransId = 0
+			EXEC Get_Bettrans_TransID @TransID = @TransId OUTPUT	
 			--get exchangerate
 			SELECT @ExchangeRate = ActualRate
 			FROM CustDB.dbo.ExchangeDailyOanda WITH(NOLOCK)
@@ -315,8 +330,8 @@ BEGIN
 							WHERE d.WinlostDate = @WinlostDate AND d.CurrencyId = @CurrencyIdTmp AND d.Bettype = @BettypeTmp
 								AND d.Stake = dd.Stake AND d.Actual_Stake = dd.Actual_stake AND d.Winlost = dd.Winlost)
 			BEGIN
-				INSERT INTO @FinalData(WinlostDate, CustId, Stake, Actual_Stake, Winlost, RefNo, actualrate, CurrencyId, Bettype, PlayerComm, Comm)
-				SELECT WinlostDate, @CustDummyId, Stake, Actual_Stake, Winlost, @RefNo, @ExchangeRate, @CurrencyIdTmp, @BettypeTmp, PlayerComm, Comm
+				INSERT INTO @FinalData(TransId, WinlostDate, CustId, Stake, Actual_Stake, Winlost, RefNo, actualrate, CurrencyId, Bettype, PlayerComm, Comm)
+				SELECT @TransId, WinlostDate, @CustDummyId, Stake, Actual_Stake, Winlost, @RefNo, @ExchangeRate, @CurrencyIdTmp, @BettypeTmp, PlayerComm, Comm
 				FROM #3rdData tmp
 				WHERE WinlostDate = @WinlostDate AND tmp.CurrencyId = @CurrencyIdTmp AND tmp.Bettype = @BettypeTmp
 			END
@@ -366,7 +381,8 @@ BEGIN
 			OR ISNULL(TransDesc, '') = ''
 			OR ISNULL(RefNo, 0) = 0
 
-		INSERT INTO dbo.bettrans(custid
+		INSERT INTO dbo.bettrans(TransId
+			, custid
 			, transdate
 			, oddsid
 			, hdp1
@@ -428,7 +444,8 @@ BEGIN
 			, SecAcceptFlag
 			, transid2
 			, RecommDate)
-		SELECT custid
+		SELECT TransId
+			, custid
 			, GETDATE() transdate
 			, 0 oddsid
 			, 0 hdp1
