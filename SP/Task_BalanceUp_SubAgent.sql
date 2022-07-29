@@ -82,7 +82,7 @@ BEGIN
 
 			IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
 			BEGIN
-				IF @__tryCnt = 3
+				IF @__tryCnt = 5
 				BEGIN
 					--duplicated PK reach to limitation then throw error and quit job
 					RAISERROR(@__errorMessage, 16, 1)
@@ -90,11 +90,11 @@ BEGIN
 				END
 
 				--Send notification to dba
-				EXEC [dbo].[DBA_Task_Send_SimpleNotifyMessageToDBA] 
+				EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
 					@SubjectName = 'Urgently!!! BU - Notification',
 					@MessageName = @__doing
 
-				WAITFOR DELAY '00:00:01:001' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
+				WAITFOR DELAY '00:00:01:333' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
 			END
 			ELSE
 			BEGIN
@@ -191,7 +191,7 @@ BEGIN
 
 				IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
 				BEGIN
-					IF @__tryCnt = 3
+					IF @__tryCnt = 5
 					BEGIN
 						--duplicated PK reach to limitation then throw error and quit job
 						RAISERROR(@__errorMessage, 16, 1)
@@ -199,11 +199,11 @@ BEGIN
 					END
 
 					--Send notification to dba
-					EXEC [dbo].[DBA_Task_Send_SimpleNotifyMessageToDBA] 
+					EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
 						@SubjectName = 'Urgently!!! BU - Notification',
 						@MessageName = @__doing
 
-					WAITFOR DELAY '00:00:01:001' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
+					WAITFOR DELAY '00:00:01:333' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
 				END
 				ELSE
 				BEGIN
@@ -305,7 +305,7 @@ BEGIN
 
 				IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
 				BEGIN
-					IF @__tryCnt = 3
+					IF @__tryCnt = 5
 					BEGIN
 						--duplicated PK reach to limitation then throw error and quit job
 						RAISERROR(@__errorMessage, 16, 1)
@@ -313,11 +313,11 @@ BEGIN
 					END
 
 					--Send notification to dba
-					EXEC [dbo].[DBA_Task_Send_SimpleNotifyMessageToDBA] 
+					EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
 						@SubjectName = 'Urgently!!! BU - Notification',
 						@MessageName = @__doing
 
-					WAITFOR DELAY '00:00:01:001' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
+					WAITFOR DELAY '00:00:01:333' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
 				END
 				ELSE
 				BEGIN
@@ -381,7 +381,7 @@ BEGIN
 
 			IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
 			BEGIN
-				IF @__tryCnt = 3
+				IF @__tryCnt = 5
 				BEGIN
 					--duplicated PK reach to limitation then throw error and quit job
 					RAISERROR(@__errorMessage, 16, 1)
@@ -393,7 +393,7 @@ BEGIN
 					@SubjectName = 'Urgently!!! BU - Notification',
 					@MessageName = @__doing
 
-				WAITFOR DELAY '00:00:01:001' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
+				WAITFOR DELAY '00:00:01:333' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
 			END
 			ELSE
 			BEGIN

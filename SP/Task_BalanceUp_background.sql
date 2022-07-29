@@ -586,7 +586,10 @@ BEGIN
 		END TRY
 		BEGIN CATCH
 			SELECT @__errorCode = @@ERROR, @__errorMessage = ERROR_MESSAGE(), @__tryCnt = @__tryCnt + 1
-			ROLLBACK
+			IF @@TRANCOUNT > 0
+			BEGIN
+				ROLLBACK
+			END
 
 			--write logs:
 			SET @Doing = 'Task_BalanceUp_background: duplicated transid (1). Err: ' + @__errorMessage
@@ -594,7 +597,7 @@ BEGIN
 
 			IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
 			BEGIN
-				IF @__tryCnt = 3
+				IF @__tryCnt = 5
 				BEGIN
 					--duplicated PK reach to limitation then throw error and quit job
 					RAISERROR(@__errorMessage, 16, 1)
@@ -606,7 +609,7 @@ BEGIN
 					@SubjectName = 'Urgently!!! BU - Notification',
 					@MessageName = @Doing
 
-				WAITFOR DELAY '00:00:01:001' -- Task_BalanceUp_background: duplicated transid then waitfor to retry
+				WAITFOR DELAY '00:00:01:333' -- Task_BalanceUp_background: duplicated transid then waitfor to retry
 			END
 			ELSE
 			BEGIN

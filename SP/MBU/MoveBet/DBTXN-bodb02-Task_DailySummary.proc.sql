@@ -731,81 +731,39 @@ BEGIN
 	ORDER BY recommend, custid
 
 	DECLARE @__runningCust TABLE(recommend INT, custid INT PRIMARY KEY (recommend, custid))
-	CREATE TABLE #__transIdList (seq SMALLINT, transId BIGINT, rowId INT IDENTITY(1,1) PRIMARY KEY)
-	DECLARE @__rowcnt INT = 0
-		, @__transIdsEachBatch INT = 0, @__maxTransIdsEachBatch INT = 255
-		, @__rowIndex INT = 0
-		, @__errorCode int, @__errorMessage varchar(200), @__tryCnt int = 0
+	DECLARE @__errorCode int, @__errorMessage varchar(200), @__tryCnt int = 0
 
 	WHILE 1 = 1
 	BEGIN
 		
 		DELETE FROM @__runningCust
-
-		SELECT @__rowcnt = 0, @__rowIndex = 0, @__transIdsEachBatch = 0
-			, @__tryCnt = 0, @__errorCode = 0, @__errorMessage = ''
+		SELECT @__tryCnt = 0, @__errorCode = 0, @__errorMessage = ''
 
 		DELETE TOP(1000) FROM #__temp
 		OUTPUT deleted.recommend, deleted.custid INTO @__runningCust(recommend, custid)
-
-		SET @__rowcnt = @@ROWCOUNT
-
-		IF @__rowcnt = 0
+		
+		IF @@ROWCOUNT = 0
 			BREAK
 		
 		Retry_handle_dup_PK:
 
-		--cleanup old data
-		TRUNCATE TABLE #__transIdList
-
-		--//start: generate transid list
-		WHILE @__rowIndex < @__rowcnt
-		BEGIN
-		
-			IF @__rowcnt < @__maxTransIdsEachBatch
-			BEGIN
-				SET @__transIdsEachBatch = @__rowcnt
-			END
-			ELSE IF @__rowcnt < @__rowIndex + @__maxTransIdsEachBatch
-			BEGIN
-				SET @__transIdsEachBatch = @__rowcnt - @__rowIndex
-			END
-			ELSE
-			BEGIN
-				SET @__transIdsEachBatch = @__maxTransIdsEachBatch
-			END
-
-			INSERT INTO #__transIdList(seq, transId)
-			EXEC dbo.Get_bettrans_transid_Range @total_transid = @__transIdsEachBatch
-
-			SET @__rowIndex += @__transIdsEachBatch
-
-		END
-
-		--//end: generate transid list
-
 		--//insert sum ticket with handling duplicate PK
 		BEGIN TRY
 
+			--//transid value will fill out by default constraint via CLR function
 			BEGIN TRANSACTION
-				INSERT INTO dbo.Transfer(TransId, custid, transdate, winlostdate, bettype, stake, actual_stake, winlost, awinlost, mwinlost, swinlost
+				INSERT INTO dbo.Transfer(custid, transdate, winlostdate, bettype, stake, actual_stake, winlost, awinlost, mwinlost, swinlost
 					,PlayerComm, Comm, AComm, SComm, StatusId, RefNo, Recommend, MRecommend, SRecommend
 					,Username, Currency, CurrencyName, ActualRate, Creator, CheckTime, RepUpdateTime
 				)
-				SELECT TransId, custid, transdate, winlostdate, bettype, stake, actual_stake, winlost, awinlost, mwinlost, swinlost
-					,PlayerComm, Comm, AComm, SComm, StatusId, RefNo, Recommend, MRecommend, SRecommend
-					,Username, Currency, CurrencyName, ActualRate, Creator, CheckTime, RepUpdateTime
-				FROM (
-					SELECT ROW_NUMBER() OVER (ORDER BY custid) rowId
-						,b.custid, b.winlostdate AS transdate, b.winlostdate AS winlostdate, 19999 AS bettype, b.stake, b.actual_stake, b.winlost, b.awinlost, b.mwinlost, b.swinlost
-						,b.playercomm, b.comm, b.acomm, b.scomm, 142 AS StatusId, b.refno, b.recommend, b.mrecommend, b.srecommend
-						,b.username, b.currency, b.CurrencyName, b.actualrate, 8 AS Creator, GETDATE() AS CheckTime, SYSDATETIME() AS RepUpdateTime
-					FROM dbo.bettranssum b
-					WHERE EXISTS (	SELECT TOP 1 1
-									FROM @__runningCust t
-									WHERE t.recommend = b.recommend AND t.custid = b.custid AND b.winlostdate = @winlostdate
-								)
-				) t LEFT JOIN #__transIdList tt ON t.rowId = tt.rowId
+				SELECT b.custid, b.winlostdate AS transdate, b.winlostdate AS winlostdate, 19999 AS bettype, b.stake, b.actual_stake, b.winlost, b.awinlost, b.mwinlost, b.swinlost
+					,b.playercomm, b.comm, b.acomm, b.scomm, 142 AS StatusId, b.refno, b.recommend, b.mrecommend, b.srecommend
+					,b.username, b.currency, b.CurrencyName, b.actualrate, 8 AS Creator, GETDATE() AS CheckTime, SYSDATETIME() AS RepUpdateTime
+				FROM dbo.bettranssum b
+				WHERE EXISTS (	SELECT TOP 1 1
+								FROM @__runningCust t
+								WHERE t.recommend = b.recommend AND t.custid = b.custid AND b.winlostdate = @winlostdate
+							)
 
 			COMMIT TRANSACTION
 
@@ -820,7 +778,7 @@ BEGIN
 
 			IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
 			BEGIN
-				IF @__tryCnt = 3
+				IF @__tryCnt = 5
 				BEGIN
 					--duplicated PK reach to limitation then throw error and quit job
 					RAISERROR(@__errorMessage, 16, 1)
@@ -828,11 +786,11 @@ BEGIN
 				END
 
 				--Send notification to dba
-				EXEC [dbo].[DBA_Task_Send_SimpleNotifyMessageToDBA] 
+				EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
 					@SubjectName = 'Urgently!!! Movebet - Notification',
 					@MessageName = @Doing
 
-				WAITFOR DELAY '00:00:01:001' -- Task_DailySummary: duplicated transid then waitfor to retry
+				WAITFOR DELAY '00:00:01:333' -- Task_DailySummary: duplicated transid then waitfor to retry
 				
 				GOTO Retry_handle_dup_PK
 			END
@@ -850,7 +808,6 @@ BEGIN
 		WAITFOR DELAY @__delayTimeValue --waitfor inserting sum 19999...
 	END
 
-	DROP TABLE #__transIdList
 	SET DEADLOCK_PRIORITY NORMAL
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - start turn off MB_Sum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
