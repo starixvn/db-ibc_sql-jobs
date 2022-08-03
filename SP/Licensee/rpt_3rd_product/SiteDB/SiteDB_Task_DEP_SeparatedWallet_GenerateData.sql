@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSID-bodb02" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[SiteDB_Task_DEP_SeparatedWallet_GenerateData]
+CREATE PROCEDURE [dbo].[SiteDB_Task_DEP_SeparatedWallet_GenerateData]
 	@WinlostDate SMALLDATETIME
 AS
 

@@ -22,13 +22,13 @@ BEGIN
 
 	INSERT INTO @BAHistory_Done
 	SELECT CustID, OnDate, OffDate
-	FROM DBCUST.bodb_Licensee.dbo.LicenseeBAHistory WITH (NOLOCK)
+	FROM DBCUST.bodb_Licensee.dbo.LicenseeBAHistory l WITH (NOLOCK)
 	WHERE LicenseeID IN (
-		SELECT LicenseeID 
-		FROM DBCUST.bodb_Licensee.dbo.LicenseeBAConfig WITH (NOLOCK)
-		WHERE EnableBA = 1
+		SELECT s.LicenseeID 
+		FROM DBCUST.bodb_Licensee.dbo.LicenseeBAConfig s WITH (NOLOCK)
+		WHERE s.EnableBA = 1
 	)
-	AND status = 'Done'
+	AND l.status = 'Done'
 
 	DECLARE @maxTransId BIGINT
 	SELECT @maxTransId = CAST(ISNULL(vvalue,0) AS BIGINT)
@@ -69,13 +69,13 @@ BEGIN
 
 	INSERT INTO @BAHistory_Running
 	SELECT custid, ondate
-	FROM DBCUST.bodb_Licensee.dbo.LicenseeBAHistory WITH (NOLOCK)
+	FROM DBCUST.bodb_Licensee.dbo.LicenseeBAHistory l WITH (NOLOCK)
 	WHERE LicenseeID IN (
-		SELECT LicenseeID
-		FROM DBCUST.bodb_Licensee.dbo.LicenseeBAConfig (NOLOCK)
-		WHERE EnableBA = 1
+		SELECT s.LicenseeID
+		FROM DBCUST.bodb_Licensee.dbo.LicenseeBAConfig s WITH (NOLOCK)
+		WHERE s.EnableBA = 1
 	)
-	AND Status = 'running'
+	AND l.Status = 'running'
 
 	DECLARE @custid_r INT, @ondate_r DATETIME, @cnt_r INT
 

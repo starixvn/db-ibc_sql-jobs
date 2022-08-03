@@ -17,7 +17,7 @@ AS
 		- 20200407@Percy: Add @ProductIds to support input product list [RedmineID: #131885]
 		- 20210219@Percy: Change code get MBBU date [RedmineID: #150327]
 		- 20220721@Evan: Integrate new transid [Redmine: #175640]
-		- 20220724@Evan: Scale-Out Check @CustDummyId run on CentralDB  [Redmine: #175297]
+		- 20220724@Evan: Check @SiteDBGroupID to support Scale-Out  [Redmine: #175297]
 
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
@@ -94,10 +94,17 @@ BEGIN
 		RETURN
 	END
 	
+	--- get SiteDBGroupID
+	DECLARE @SiteDBGroupID SMALLINT;
+	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
+
 	INSERT INTO @LicenseeTable(LicenseeId, LicenseeName, CurrencyId)
-	SELECT LicenseeId, LicenseeName, CurrencyId
-	FROM #LicenseeProductTable
-	GROUP BY LicenseeId, LicenseeName, CurrencyId
+	SELECT DISTINCT l.LicenseeId, l.LicenseeName, l.CurrencyId
+	FROM #LicenseeProductTable l 
+		INNER JOIN DBCUST.CUSTDB.dbo.site s WITH (NOLOCK) ON l.LicenseeName = s.Site 
+		INNER JOIN DBCUST.CUSTDB.dbo.SiteDBConfig sc WITH (NOLOCK) ON sc.SiteDBGroupID = s.SiteDBGroupID  
+	WHERE sc.SiteDBGroupID = @SiteDBGroupID
+	GROUP BY l.LicenseeId, l.LicenseeName, l.CurrencyId
 
 	--get party list
 	SET @SqlQuery = ''
@@ -173,13 +180,10 @@ BEGIN
 			, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50)
 			, PlayerComm MONEY, Comm MONEY, betfrom NVARCHAR(1))
 
-	DECLARE @SiteGroupInfo TABLE(SiteDBGroupID SMALLINT, LinkedServerName  VARCHAR(512), ClientAccessName VARCHAR(512), AGIP VARCHAR (50))
-
 	WHILE EXISTS (SELECT 1 FROM @LicenseeTable WHERE RowId = @RowId)
 	BEGIN
 		--clean data
 		DELETE @FinalData
-		DELETE @SiteGroupInfo
 		DELETE @DataTmp
 		DELETE #3rdData
 
@@ -201,15 +205,6 @@ BEGIN
 		IF ISNULL(@CustDummyId, 0) = 0 OR ISNULL(@ProductIds, '') = ''
 			CONTINUE
 		
-		INSERT INTO @SiteGroupInfo(SiteDBGroupID, LinkedServerName, ClientAccessName, AGIP)
-		EXEC DBCUST.CustDB.dbo.Acc_SiteDBConfigSel @CustID = @CustDummyId
-
-		-- Exclude CustDummyId on SiteDB
-		IF EXISTS (SELECT 1 FROM @SiteGroupInfo WHERE SiteDBGroupID <> 0)
-		BEGIN 
-			CONTINUE
-		END
-
 		IF CHARINDEX('10', @ProductIds, 0) > 0 --AG Casino
 		BEGIN
 			--print ('AG Casino')
@@ -443,7 +438,9 @@ BEGIN
 			, balance
 			, SecAcceptFlag
 			, transid2
-			, RecommDate)
+			, RecommDate
+			, RepUpdateTime 
+			, SiteDBGroupID)
 		SELECT TransId
 			, custid
 			, GETDATE() transdate
@@ -507,6 +504,8 @@ BEGIN
 			, NULL SecAcceptFlag
 			, NULL transid2
 			, NULL RecommDate
+			, SYSDATETIME() RepUpdateTime
+			, @SiteDBGroupID SiteDBGroupID
 		FROM @FinalData
 
 		

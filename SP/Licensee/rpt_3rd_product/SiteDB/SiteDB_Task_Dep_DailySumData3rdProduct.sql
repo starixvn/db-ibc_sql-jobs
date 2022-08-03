@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE dbo.SiteDB_Task_Dep_DailySumData3rdProduct
+CREATE PROCEDURE dbo.SiteDB_Task_Dep_DailySumData3rdProduct
 	@WinlostDate	SMALLDATETIME
 	,@ProductIds	VARCHAR(MAX)
 AS
@@ -431,7 +431,8 @@ BEGIN
 			, balance
 			, SecAcceptFlag
 			, transid2
-			, RecommDate)
+			, RecommDate
+			, RepUpdateTime)
 		SELECT TransId
 			, custid
 			, GETDATE() transdate
@@ -495,6 +496,7 @@ BEGIN
 			, NULL SecAcceptFlag
 			, NULL transid2
 			, NULL RecommDate
+			, SYSDATETIME() RepUpdateTime
 		FROM @FinalData
 
 		

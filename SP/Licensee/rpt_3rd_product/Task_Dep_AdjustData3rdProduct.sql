@@ -19,7 +19,7 @@ AS
 		- 20200501@Sophia: Fix bug @bettypeIds [Redmine: #131885]
 		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
 		- 20220721@Evan: Integrate new transid [Redmine: #175640]
-		- 20220724@Evan: Check @CustDummyId run on CentralDB only [Redmine: #175297]
+		- 20220724@Evan: Check @SiteDBGroupID to support Scale-Out  [Redmine: #175297]
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -69,7 +69,7 @@ BEGIN
 
 	--check @WinlostDate less than @MoveBetDay
 	INSERT INTO @BalanceUpTable(BalanceUpDay, MoveBetsDay)
-	EXEC DBEXT.bodb02.dbo.Lrf_SelBalanceUpDay
+	EXEC dbo.Age_SelBalanceUpDay
 	
 	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDay = BalanceUpDay
 	FROM @BalanceUpTable
@@ -99,10 +99,17 @@ BEGIN
 		RETURN
 	END
 	
+	--- get SiteDBGroupID
+	DECLARE @SiteDBGroupID SMALLINT;
+	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
+
 	INSERT INTO @LicenseeTable(LicenseeId, LicenseeName, CurrencyId)
-	SELECT DISTINCT LicenseeId, LicenseeName, CurrencyId
-	FROM #LicenseeProductTable
-	GROUP BY LicenseeId, LicenseeName, CurrencyId
+	SELECT DISTINCT l.LicenseeId, l.LicenseeName, l.CurrencyId
+	FROM #LicenseeProductTable l 
+		INNER JOIN DBCUST.CUSTDB.dbo.site s WITH (NOLOCK) ON l.LicenseeName = s.Site 
+		INNER JOIN DBCUST.CUSTDB.dbo.SiteDBConfig sc WITH (NOLOCK) ON sc.SiteDBGroupID = s.SiteDBGroupID  
+	WHERE sc.SiteDBGroupID = @SiteDBGroupID
+	GROUP BY l.LicenseeId, l.LicenseeName, l.CurrencyId
 
 	--get party list
 	SET @SqlQuery = ''
@@ -179,12 +186,9 @@ BEGIN
 			, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50)
 			, PlayerComm MONEY, Comm MONEY, betfrom NVARCHAR(1))
 
-	DECLARE @SiteGroupInfo TABLE(SiteDBGroupID SMALLINT, LinkedServerName  VARCHAR(512), ClientAccessName VARCHAR(512), AGIP VARCHAR (50))
-	
 	WHILE EXISTS (SELECT 1 FROM @LicenseeTable WHERE RowId = @RowId)
 	BEGIN
 		--clean data
-		DELETE @SiteGroupInfo
 		DELETE @FinalData
 		DELETE #3rdData
 		DELETE #3rdDummnyData
@@ -207,15 +211,6 @@ BEGIN
 		IF ISNULL(@CustDummyId, 0) = 0 OR ISNULL(@ProductIds, '') = ''
 			CONTINUE
 		
-		INSERT INTO @SiteGroupInfo(SiteDBGroupID, LinkedServerName, ClientAccessName, AGIP)
-		EXEC DBCUST.CustDB.dbo.Acc_SiteDBConfigSel @CustID = @CustDummyId
-
-		-- Exclude CustDummyId on SiteDB
-		IF EXISTS (SELECT 1 FROM @SiteGroupInfo WHERE SiteDBGroupID <> 0)
-		BEGIN 
-			CONTINUE
-		END
-
 		IF CHARINDEX('10', @ProductIds, 0) > 0 --AG Casino
 			SELECT @BettypeIds = COALESCE(@BettypeIds + ',1800', '1800')
 
@@ -527,7 +522,9 @@ BEGIN
 			, balance
 			, SecAcceptFlag
 			, transid2
-			, RecommDate)
+			, RecommDate
+			, RepUpdateTime 
+			, SiteDBGroupID)
 		SELECT TransId
 			, custid
 			, GETDATE() transdate
@@ -591,6 +588,8 @@ BEGIN
 			, NULL SecAcceptFlag
 			, NULL transid2
 			, NULL RecommDate
+			, SYSDATETIME() RepUpdateTime
+			, @SiteDBGroupID SiteDBGroupID
 		FROM @FinalData
 
 		--WAITFOR DELAY '000:00:00.280'

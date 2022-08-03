@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSID-bodb02" executers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [SiteDB_Task_LicenseeBATransaction_Archive_Delete]
+CREATE PROCEDURE [SiteDB_Task_LicenseeBATransaction_Archive_Delete]
 AS
 
 /*
@@ -15,37 +15,34 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @MoveBetSchedule TABLE(RowId TINYINT IDENTITY(1,1), ScheduleId TINYINT, MoveBetsDay SMALLDATETIME)
-	
-	INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetsDay)
-	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+	CREATE TABLE #ArchiveData (TransID BIGINT)
 
-	IF @@ROWCOUNT = 0
-		RETURN
+	INSERT INTO #ArchiveData
+	SELECT t.TransId
+	FROM dbo.LicenseeBATransaction_active t WITH(NOLOCK)
+		LEFT JOIN dbo.bettrans b WITH(NOLOCK) ON t.TransID = b.transid
+	WHERE b.transid IS NULL
 
-	CREATE TABLE #TempData
-	(
-		TransID	BIGINT,
-		transdate	DATETIME,
-		custid	INT,
-		recommend	INT,
-		srecommend	INT,
-		winlostdate	SMALLDATETIME
-	)
+	DECLARE @__TransIds TABLE (transId BIGINT)
+	WHILE 1 = 1
+	BEGIN
+		
+		DELETE FROM @__TransIds
+		
+		DELETE TOP(2000) 
+		FROM #ArchiveData
+		OUTPUT DELETED.TransID INTO @__TransIds
+		
+		IF @@ROWCOUNT = 0
+			BREAK
 
-	INSERT INTO #TempData (TransID, transdate, custid, recommend, srecommend, winlostdate)
-	SELECT ba.TransID, ba.transdate, ba.custid, ba.recommend, ba.srecommend, b.winlostdate
-	FROM dbo.LicenseeBATransaction_active ba WITH (ROWLOCK)
-		INNER JOIN dbo.bettrans14 b WITH (NOLOCK) ON b.transid = ba.transid
-	WHERE b.winlostdate IN (SELECT m.MoveBetsDay FROM @MoveBetSchedule m)
+		DELETE
+		FROM dbo.LicenseeBATransaction_active WITH(ROWLOCK)
+		WHERE TransID IN (SELECT t.transId FROM @__TransIds t)
 
-	-- delete LicenseeBATransaction_active
-	DELETE l
-	FROM dbo.LicenseeBATransaction_active l
-		INNER JOIN #TempData t ON l.TransID = t.TransID
-	
+	END
 
-	DROP TABLE #TempData
+	DROP TABLE #ArchiveData;
 	
 	SET NOCOUNT OFF
 END

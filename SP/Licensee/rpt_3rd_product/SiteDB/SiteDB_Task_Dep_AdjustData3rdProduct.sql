@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSID-bodb02" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[SiteDB_Task_Dep_AdjustData3rdProduct]
+CREATE PROCEDURE [dbo].[SiteDB_Task_Dep_AdjustData3rdProduct]
 	@WinlostDate		SMALLDATETIME
 	,@ProductIds		VARCHAR(MAX)
 	,@DayForAdjustment	VARCHAR(125) = '1,2,3,4,5,6,7'
@@ -57,7 +57,7 @@ BEGIN
 
 	--check @WinlostDate less than @MoveBetDay
 	INSERT INTO @BalanceUpTable(BalanceUpDay, MoveBetsDay)
-	EXEC DBEXT.bodb02.dbo.Lrf_SelBalanceUpDay
+	EXEC dbo.Age_SelBalanceUpDay 
 	
 	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDay = BalanceUpDay
 	FROM @BalanceUpTable
@@ -515,7 +515,8 @@ BEGIN
 			, balance
 			, SecAcceptFlag
 			, transid2
-			, RecommDate)
+			, RecommDate
+			, RepUpdateTime)
 		SELECT TransId
 			, custid
 			, GETDATE() transdate
@@ -579,6 +580,7 @@ BEGIN
 			, NULL SecAcceptFlag
 			, NULL transid2
 			, NULL RecommDate
+			, SYSDATETIME() RepUpdateTime
 		FROM @FinalData
 
 		--WAITFOR DELAY '000:00:00.280'

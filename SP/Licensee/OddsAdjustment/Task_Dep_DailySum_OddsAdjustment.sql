@@ -16,8 +16,7 @@ AS
 		- 20220222@Sol: Support - using ExchangeDailyOanda to get actualRate of @winlostdate - [RedmineID: #168815]
 		- 20220714@Evan: Modify sp to avoid dump (remove code select into) - [Redmine: #175450]
 		- 20220721@Evan: Integrate new transid - [Redmine: #175640]
-		- 20220724@Evan: Scale-Out Check Site on CentralDB  [Redmine: #175297]
-
+		- 20220724@Evan: Check @SiteDBGroupID to support Scale-Out  [Redmine: #175297]
 */
 BEGIN
 	
@@ -52,6 +51,10 @@ BEGIN
 		balance MONEY, SecAcceptFlag BIT, transid2 BIGINT, RecommDate DATETIME
 	)
 
+	--- get SiteDBGroupID
+	DECLARE @SiteDBGroupID SMALLINT;
+	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
+
 	--- get all licensees that support odds adjustment
 	INSERT INTO @tblSiteSupported(SiteName)
 	SELECT vp.SiteName
@@ -60,7 +63,7 @@ BEGIN
 		INNER JOIN DBCUST.SiteConfig.dbo.LicVendorProfile vp WITH(NOLOCK) ON ss.SiteId = vp.SiteId
 		INNER JOIN DBCUST.CUSTDB.dbo.site s WITH (NOLOCK) ON vp.SiteName = s.Site 
 		INNER JOIN DBCUST.CUSTDB.dbo.SiteDBConfig sc WITH (NOLOCK) ON sc.SiteDBGroupID = s.SiteDBGroupID  
-	WHERE ss.ApplySpreadAdjustment = 1 AND sc.SiteDBGroupID = 0
+	WHERE ss.ApplySpreadAdjustment = 1 AND sc.SiteDBGroupID = @SiteDBGroupID
 
 	--- get dummies member acc 
 	;WITH rs AS
@@ -269,13 +272,13 @@ BEGIN
 		, tpositiontaking, playerdiscount, discount, adiscount, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate
 		, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid
 		, actual_stake, currency, ip, transdesc, sdiscount, scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype
-		, statusID, currency2, balance, SecAcceptFlag, transid2, RecommDate, RepUpdateTime
+		, statusID, currency2, balance, SecAcceptFlag, transid2, RecommDate, RepUpdateTime, SiteDBGroupID
 	)
 	SELECT tr.TransID, custid, transdate, oddsid, hdp1, hdp2, odds, stake, Status, winlost, awinlost, mwinlost, playercomm, comm, acomm, apositiontaking, mpositiontaking
 		, tpositiontaking, playerdiscount, discount, adiscount, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate
 		, betfrom, betcheck, checktime, oddsspread, actualrate, matchid, recommend, mrecommend, ruben, betid, statuswinlost, modds, bettype, betdaqid
 		, actual_stake, currency, ip, transdesc, sdiscount, scomm, spositiontaking, swinlost, srecommend, Username, CurrencyName, virtualrate, oddstype
-		, statusID, currency2, balance, SecAcceptFlag, transid2, RecommDate, SYSDATETIME()
+		, statusID, currency2, balance, SecAcceptFlag, transid2, RecommDate, SYSDATETIME(), @SiteDBGroupID
 	FROM #__tmpTransInsertUpdate t INNER JOIN @TransIDs tr ON tr.RowID = t.RowID
 	WHERE 
 		NOT EXISTS 

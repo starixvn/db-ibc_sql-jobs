@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSID-bodb02" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[SiteDB_Task_Dep_DailySum_OddsAdjustment_Job]
+CREATE PROCEDURE [dbo].[SiteDB_Task_Dep_DailySum_OddsAdjustment_Job]
 AS
 /*
 	Created by: Evan 
