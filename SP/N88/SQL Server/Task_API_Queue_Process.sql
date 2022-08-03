@@ -19,6 +19,7 @@ AS
 		- 20220325@Percy: Add table: CustVerificationReward [RedmineID: #170390]
 		- 20220412@Percy: Add table: ReferralMLog [RedmineID: #171245]
 		- 20220518@Percy: Add 2 tables: TpReport9W & TpWager9W [RedmineID: #172917]
+		- 20220704@Sol : remove email account - [RedmineId: #175043]
 		
 */
 
@@ -311,9 +312,9 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM @ErrTable)
 	BEGIN
 		IF @@SERVERNAME IN ('DB052', 'DB053')
-			SELECT @recipients = 'percy.nguyen@starixvn.com;sophia.nguyen@starixvn.com;pontus@starixvn.com'
+			SELECT @recipients = 'sophia.nguyen@starixvn.com;pontus@starixvn.com'
 		ELSE
-			SELECT @recipients = 'percy.nguyen@starixvn.com'
+			SELECT @recipients = 'sophia.nguyen@starixvn.com'
 
 		SELECT @Subject = 'SQL Server Job System: ''Import data from API_Queue'' failed on ' + @@SERVERNAME
 

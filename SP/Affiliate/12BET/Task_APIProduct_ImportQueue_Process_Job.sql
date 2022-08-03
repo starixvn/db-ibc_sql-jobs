@@ -12,6 +12,7 @@ AS
 		- 20191010@Percy: Clean old data (keep 1 month) [RedmineID: #121795]
 		- 20191206@Percy: Update send mail part [RedmineID: #117197]
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
+		- 20220704@Sol : remove email account - [RedmineId: #175043]
 */
 
 BEGIN
@@ -81,7 +82,7 @@ BEGIN
 		SELECT @recipients = 'dba_local@starixvn.com'
 		
 		IF @@SERVERNAME IN ('DB052', 'DB053')
-			SELECT @recipients = 'percy.nguyen@starixvn.com;pontus@starixvn.com'
+			SELECT @recipients = 'sophia.nguyen@starixvn.com;pontus@starixvn.com'
 
 		SELECT @Msg = '<H3>List of products have wrong data</H3>'
 						+ '<table border="1"> '
