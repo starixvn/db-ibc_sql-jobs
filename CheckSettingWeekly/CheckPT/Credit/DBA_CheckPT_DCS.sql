@@ -23,6 +23,7 @@ AS
 		- 20201211@Winfred: Change data type for PT [redmine:#140011]
 		- 20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
@@ -321,10 +322,12 @@ BEGIN
 	SELECT @_SiteID = siteid FROM CheckCustDB.dbo.Site WITH(NOLOCK) WHERE site = @_Site
 
 	INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden)
-	SELECT RealProductId, SportType, BetType, IsHidden
+	SELECT DISTINCT ps.RealProductId, ps.SportType, ps.BetType, ps.IsHidden
 	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH (NOLOCK)
-		CROSS JOIN CheckCustDB.dbo.Site s WITH (NOLOCK)
-	WHERE SettingType IN (4,11,13) AND ps.SettingStatus = 0
+		INNER JOIN CheckCustDB.dbo.ProductSettingType s WITH (NOLOCK)
+		ON ps.SettingType = s.SettingType
+	WHERE s.SettingName = 'Product Status'  
+		AND ps.SettingStatus = 0
 		
 	UPDATE op
 	SET op.IsHidden = stt.IsHidden

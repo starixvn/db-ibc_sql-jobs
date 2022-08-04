@@ -12,6 +12,7 @@ AS
 		- 20191025@Johnson: initial sp [redmine:#122666]
 		- 20200526@Tiara: Check offered products only [Redmine: #134813]
 		- 20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
+		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -37,10 +38,12 @@ BEGIN
 	SELECT @SiteID = siteid FROM CheckCustDB.dbo.Site WITH(NOLOCK) WHERE site = @Site
 
 	INSERT INTO #OfferedProductList (ProductID, SportType, BetType, IsHidden)
-	SELECT DISTINCT RealProductId, SportType, BetType, IsHidden
+	SELECT DISTINCT ps.RealProductId, ps.SportType, ps.BetType, ps.IsHidden
 	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH (NOLOCK)
-		CROSS JOIN CheckCustDB.dbo.Site s WITH (NOLOCK)
-	WHERE SettingType IN (4,11,13) AND ps.SettingStatus = 0
+		INNER JOIN CheckCustDB.dbo.ProductSettingType s WITH (NOLOCK)
+		ON ps.SettingType = s.SettingType
+	WHERE s.SettingName = 'Product Status'  
+		AND ps.SettingStatus = 0
 
 	UPDATE op
 	SET op.IsHidden = stt.IsHidden
