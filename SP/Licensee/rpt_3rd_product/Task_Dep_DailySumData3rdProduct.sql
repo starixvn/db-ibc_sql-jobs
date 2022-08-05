@@ -23,7 +23,7 @@ AS
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
 	
-*/
+*/ 
 BEGIN
 	SET NOCOUNT ON
 	--@WinlostDate > CurrentDate

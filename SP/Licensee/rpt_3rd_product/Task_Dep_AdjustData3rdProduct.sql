@@ -98,7 +98,7 @@ BEGIN
 		DROP TABLE #ChargeRateByCurrency
 		RETURN
 	END
-	
+	 
 	--- get SiteDBGroupID
 	DECLARE @SiteDBGroupID SMALLINT;
 	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()

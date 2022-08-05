@@ -263,7 +263,7 @@ BEGIN
 		SET @MaxGenTransId = @MaxGenTransId - @total_transid
 
 	END
-
+ 
 
 	--- insert new trans 
 	INSERT INTO dbo.bettrans
