@@ -8,6 +8,7 @@ AS
 	
 	Revisions:
 		- 20201012@Sol: Initialize SP - [RedmineID: #142532]
+		- 20220724@Evan: exec Age_SelBalanceUpDay to support Scale-Out  [Redmine: #175297]
 */
 BEGIN
 
@@ -17,7 +18,7 @@ BEGIN
 
 	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
 	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
-	EXEC DBEXT.bodb02.dbo.Age_SelBalanceUpDay
+	EXEC dbo.Age_SelBalanceUpDay
 	
 	DECLARE @WinlostDate SMALLDATETIME, @Yesterday SMALLDATETIME
 	SELECT  @WinlostDate = DATEADD(DAY, 1, MoveBetsDay), @Yesterday = DATEADD(DAY, -1, CONVERT(SMALLDATETIME, GETDATE())) FROM @MBBU

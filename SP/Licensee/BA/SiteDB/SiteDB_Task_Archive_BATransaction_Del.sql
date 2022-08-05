@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSID-bodb02" executers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [SiteDB_Task_LicenseeBATransaction_Archive_Delete]
+CREATE PROCEDURE [SiteDB_Task_Archive_BATransaction_Del]
 AS
 
 /*
