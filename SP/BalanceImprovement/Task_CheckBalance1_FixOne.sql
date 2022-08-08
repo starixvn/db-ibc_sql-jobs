@@ -3,7 +3,8 @@ ALTER PROCEDURE [dbo].[Task_CheckBalance1_FixOne]
 	@custid int,
 	@DiffBalance money OUTPUT,
 	@result int OUTPUT,
-	@IsUUS bit = 0 OUTPUT
+	@IsUUS bit = 0 OUTPUT,
+	@DiffBalanceInput money = NULL
 AS
 /*
 	Task: Correct member balance (balance tables) for one given account
@@ -17,6 +18,7 @@ AS
 		20171201@Patrick: Bullfighting - calc waiting ticket into outstanding amt on translog
 		20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
+		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 
 	Param use:
 
@@ -61,22 +63,27 @@ BEGIN
 		--
 		-- Get/Compare Balance
 		--
-		DECLARE @__movebetdate SMALLDATETIME
+		DECLARE @__movebetdate SMALLDATETIME, @__siteDBGroupId SMALLINT = 0
 		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
+
+		SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
 
 		__tryagain:
 		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	
-		FROM dbo.bettrans with (rowlock) 
+		FROM dbo.bettrans WITH (ROWLOCK) 
 		WHERE custid = @custid
 			AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 				 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 				 ELSE 1 END
+			AND SiteDBGroupID = @__siteDBGroupId
 
 		SELECT @FromTransfer = SUM(winlost-actual_stake+playercomm)	
-		FROM dbo.Transfer with (rowlock) 
-		WHERE custid = @custid
+		FROM dbo.Transfer t WITH (ROWLOCK) 
+			LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
+		WHERE t.custid = @custid
 			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 				 ELSE 1 END
+			AND ISNULL(c.SiteDBGroupID, 0) = @__siteDBGroupId
 
 		DECLARE @__movebetdateF SMALLDATETIME
 		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdateF OUTPUT
@@ -91,15 +98,17 @@ BEGIN
 		FROM dbo.BonusAdjustmentTransfer WITH(NOLOCK)
 		WHERE isTransferred = 0 AND custid = @custid
 
-		SELECT @FromTransLog = SUM(actual_stake)	FROM dbo.translog with (rowlock) WHERE custid = @custid and statusID IN (0,1)
+		SELECT @FromTransLog = SUM(actual_stake)	
+		FROM dbo.translog WITH (ROWLOCK) 
+		WHERE custid = @custid and statusID IN (0,1) AND SiteDBGroupID = @__siteDBGroupId
 
 		SELECT @FromBettransRNG = SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) 
 		FROM dbo.bettransRNG WITH(NOLOCK)
-		WHERE IsSum = 0 AND custid = @custid
+		WHERE IsSum = 0 AND custid = @custid AND SiteDBGroupID = @__siteDBGroupId
 		
 		SELECT @FromBettransLC = SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) 
 		FROM dbo.bettransLC WITH(NOLOCK)
-		WHERE IsSum = 0 AND custid = @custid
+		WHERE IsSum = 0 AND custid = @custid AND SiteDBGroupID = @__siteDBGroupId
 				
 		SELECT 
 			@DiffBalance = IsNull(@FromBettrans, 0) + IsNull(@FromTransfer, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) - IsNull(@FromAdjustmentTransfer, 0)
@@ -115,6 +124,12 @@ BEGIN
 			INNER JOIN dbo.BalDebitOthers db4 WITH (ROWLOCK) ON cd1.custid = db4.custid	
 		WHERE cd1.custid = @custid
 		
+		IF @DiffBalanceInput IS NOT NULL AND ISNULL(@DiffBalance, 0) <> ISNULL(@DiffBalanceInput, 0)
+		BEGIN
+			SET @result = 300 -->>balance amnt has been changed
+			RETURN
+		END
+
 		--
 		-- Take Action accordingly
 		--

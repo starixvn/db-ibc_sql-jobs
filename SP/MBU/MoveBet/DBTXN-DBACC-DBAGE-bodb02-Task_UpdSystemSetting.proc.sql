@@ -2,14 +2,19 @@
 ALTER PROCEDURE [dbo].[Task_UpdSystemSetting]
 (
 	@VValue VARCHAR(200),
-	@VName VARCHAR(50)
+	@VName VARCHAR(50),
+	@Mode INT = 0
 )
 AS
 /*
 	Created: 20150617@Daniel
 	DB: DBACC/bodb02,DBTXN/bodb02,DBAGE/bodb02
 	Task: Update a specific flag of system's Global Settings
-	
+	Params:
+		+ @Mode: 
+			0: @VValue value is free text & set override VValue
+			9999: @VValue value must be integer & not set override VValue.
+
 	Revisions: 
 		- 20150617@Daniel: Created for separating custDB to new server DBCUST [Redmine:#36216]  
 		- 20160909@Patrick: Duplicated to DBTXN
@@ -17,7 +22,7 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	IF @VName = 'MB_ReadyUpdMBDate'
+	IF @VName = 'MB_ReadyUpdMBDate' OR @Mode = 9999
 	BEGIN
 		UPDATE s WITH(ROWLOCK, UPDLOCK)
 		SET VValue = CAST((CAST(VValue AS INT) + CAST(@VValue AS INT)) AS VARCHAR(10))

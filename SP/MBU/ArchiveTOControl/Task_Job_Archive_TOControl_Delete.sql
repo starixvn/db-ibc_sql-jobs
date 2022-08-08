@@ -11,6 +11,7 @@ CREATE PROCEDURE dbo.Task_Job_Archive_TOControl_Delete
 	
 	Revisions:
 		- 20191126@Helen: Archive TO Control - delete [Redimine:98467]
+		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 */
 AS
 BEGIN
@@ -23,7 +24,13 @@ BEGIN
 			, @end INT
 			, @winlostdate DATETIME   
 			, @winlostdate_tmp VARCHAR(12)
-			
+			, @__aliasServer VARCHAR(128) = ''
+
+	EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut-Central', @AliasServer = @__aliasServer OUTPUT
+	IF @__aliasServer <> 'DBCTG' --only run that command at central server
+	BEGIN
+		RETURN
+	END
 
 	CREATE TABLE #archiveDate (ID INT IDENTITY (1,1), winlostdate DATETIME)
 

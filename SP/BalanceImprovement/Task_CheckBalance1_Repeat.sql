@@ -17,6 +17,7 @@ AS
 		20190319@Patrick: Exclude CN88 account - push code to git [RedmineID: #110530]
 		20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
+		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 	   
 	Param use:
 
@@ -29,8 +30,10 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @__movebetdate SMALLDATETIME
+	DECLARE @__movebetdate SMALLDATETIME, @__siteDBGroupId SMALLINT = 0
 	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
+
+	SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
 
 	__tryagain:
 	IF OBJECT_ID('tempdb.dbo.#QuestionLists') IS NOT NULL
@@ -41,19 +44,22 @@ BEGIN
 	;WITH
 	cb AS (
 		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance
-		FROM dbo.bettrans b with (nolock)
+		FROM dbo.bettrans b WITH (NOLOCK)
 			INNER JOIN dbo.Task_Cust_CheckBalanceVerify1 q ON b.custid = q.custid
 		WHERE 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
+			AND b.SiteDBGroupID = @__siteDBGroupId
 		GROUP BY b.custid
 	),
 	ct AS (
 		SELECT t.custid, SUM(winlost-actual_stake+playercomm) Balance
-		FROM dbo.Transfer t with (nolock)
+		FROM dbo.Transfer t WITH (NOLOCK)
 			INNER JOIN dbo.Task_Cust_CheckBalanceVerify1 q ON t.custid = q.custid
+			LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 		WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 					 ELSE 1 END
+			AND ISNULL(c.SiteDBGroupID, 0) = @__siteDBGroupId
 		GROUP BY t.custid
 	),
 	q2 AS (
@@ -61,18 +67,19 @@ BEGIN
 		SELECT tl.custid, SUM(actual_stake) AS Outstanding
 		FROM dbo.translog tl with (nolock)
 		WHERE tl.statusID IN (0,1) --summary running tickets only
+			AND tl.SiteDBGroupID = @__siteDBGroupId
 		GROUP BY tl.custid
 	),
 	q3 AS (
 		SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
 		FROM dbo.bettransRNG WITH(NOLOCK)
-		WHERE IsSum = 0
+		WHERE IsSum = 0 AND SiteDBGroupID = @__siteDBGroupId
 		GROUP BY custid
 	),
 	q4 AS (
 		SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalLC
 		FROM dbo.bettransLC WITH(NOLOCK)
-		WHERE IsSum = 0
+		WHERE IsSum = 0 AND SiteDBGroupID = @__siteDBGroupId
 		GROUP BY custid
 	),
 	t AS (
@@ -137,17 +144,26 @@ BEGIN
 	ELSE IF EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE roundVerified >= 5)
 	BEGIN
 		PRINT 'Start FixOne'
-		Declare @i int, @maxRN int, @custid int, @roundVerified int, @DiffBalance money, @result int, @IsUUS bit
+		Declare @i int, @maxRN int, @custid int, @roundVerified int
+			, @DiffBalance money, @result int, @IsUUS bit, @DiffBalanceInput money
 	
-		CREATE TABLE #c (RN int IDENTITY(1,1) PRIMARY KEY, custid int, roundVerified int)
-		INSERT INTO #c (custid, roundVerified) SELECT custid, roundVerified FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE roundVerified >= 5
+		CREATE TABLE #c (RN int IDENTITY(1,1) PRIMARY KEY, custid int, roundVerified int, DiffBalanceInput money)
+		INSERT INTO #c (custid, roundVerified) SELECT custid, roundVerified, DiffBalance 
+		FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE roundVerified >= 5
+		
 		SELECT @maxRN = @@ROWCOUNT
 		SET @i = 1
 	
 		WHILE @i <= @maxRN
 		BEGIN
-			SELECT @custid = custid, @roundVerified = roundVerified FROM #c WHERE RN = @i
-			EXEC dbo.Task_CheckBalance1_FixOne @custid, @DiffBalance OUTPUT, @result OUTPUT, @IsUUS OUTPUT
+			SELECT @custid = custid, @roundVerified = roundVerified, @DiffBalanceInput = DiffBalanceInput
+			FROM #c WHERE RN = @i
+			
+			EXEC dbo.Task_CheckBalance1_FixOne @custid = @custid
+				, @DiffBalance = @DiffBalance OUTPUT
+				, @result = @result OUTPUT
+				, @IsUUS = @IsUUS OUTPUT
+				, @DiffBalanceInput = @DiffBalanceInput
 		
 			IF @result = 0
 			BEGIN
@@ -155,13 +171,19 @@ BEGIN
 
 				-- LOG
 				INSERT INTO dbo.Task_Cust_BalanceProblem1 (UserName, custid, DiffBalance, IsFixed, Remark)
-				SELECT
-					username, @custid, @DiffBalance, 1, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE @IsUUS WHEN 1 THEN ' UUS' ELSE '' END
-				FROM
-					CustDB.dbo.custInfo with (nolock)
-				WHERE
-					custid = @custid
+				SELECT username, @custid, @DiffBalance, 1, 'roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE @IsUUS WHEN 1 THEN ' UUS' ELSE '' END
+				FROM CustDB.dbo.custInfo with (nolock)
+				WHERE custid = @custid
 
+			END
+			ELSE IF @result <> 0 AND @roundVerified > 21 --wont fix
+			BEGIN
+				DELETE FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE custid = @custid
+
+				INSERT INTO dbo.Task_Cust_BalanceProblem1 (UserName, custid, DiffBalance, IsFixed, Remark)
+				SELECT username, @custid, @DiffBalanceInput, 0, 'wont fix, roundVerified = ' + CAST(@roundVerified as varchar(50)) + CASE WHEN currency = 20 THEN ' UUS' ELSE '' END + ', errCode = ' + CAST(@result AS VARCHAR(50))
+				FROM CustDB.dbo.custInfo with (nolock)
+				WHERE custid = @custid
 			END
 		
 			SET @i = @i + 1
