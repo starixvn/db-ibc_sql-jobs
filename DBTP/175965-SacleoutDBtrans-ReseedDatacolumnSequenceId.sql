@@ -5,7 +5,7 @@
 	DB: DBTXN/bodb02
 	
 	Revisions:
-		- 20220802@July: Reseed data  [Redmine:#175965]
+		- 20220802@July: Reseed data  - SUPPORT LOCAL [Redmine:#175965]
 
 */
 
