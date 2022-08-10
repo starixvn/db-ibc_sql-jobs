@@ -24,7 +24,7 @@ BEGIN
 	IF @__aliasServer = 'DBSite' --only run that command at DBSite server
 	BEGIN
 		EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'Fri-routine-s', @VValue = @__startStep
-		EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'Fri-routine-f', @VValue = '1', @Mode = 9999
+		EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'Fri-routine-f', @VValue = '1', @IsOverride = 0
 	END
 
 	SELECT @wldate = MAX(winlostdate) FROM @archiveDate;
@@ -36,7 +36,7 @@ BEGIN
 	--turn on flag wait for delete event
 	IF @__aliasServer = 'DBSite' --only run that command at DBSite server
 	BEGIN
-		EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'Friday-routine', @VValue = '-1'
+		EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'Friday-routine', @VValue = '-1', @IsOverride = 0
 	END
 
 	--only run at central DB
@@ -55,7 +55,7 @@ BEGIN
 				AND CAST(VValue AS DATE) < DATEADD(DAY, -1, CAST(@__start AS DATE)) --not in less than yesterday ==> job at DBSite not start yet
 		)
 		BEGIN
-			WAITFOR DELAY '00:01:00:000' --waitfor BU done step 3...
+			WAITFOR DELAY '00:01:00:000' --waitfor Friday delete event 14...
 			IF DATEDIFF(MINUTE, @__start, GETDATE()) > 120
 			BEGIN
 				--Send notification to dba
