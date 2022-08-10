@@ -25,13 +25,14 @@ AS
 		- 202010316@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 		- 20220720@Patrick: Support new transid [Redmine: #175666]
+		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
  */
 BEGIN 
 	CHECKPOINT
 	
 	DECLARE @Days AS TABLE (ScheduleId TINYINT, RunningDay DATETIME, IsFinish BIT DEFAULT (0))
 	INSERT INTO @Days (ScheduleId, RunningDay)
-		EXEC dbo.Task_MoveBetsDayByScheduleSel 
+		EXEC DBCTG.bodb02.dbo.Task_MoveBetsDayByScheduleSel 
 
 	DECLARE @RunningDay DATETIME , @ScheduleId TINYINT
 	

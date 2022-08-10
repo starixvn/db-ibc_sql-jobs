@@ -9,6 +9,7 @@ AS
 	DB: DBTXN/bodb02
 	Revisions:
 		- 20210323@Patrick: Initial [Redmine: #149927] 
+		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
  */
 
 BEGIN
@@ -33,7 +34,7 @@ BEGIN
 
 			IF @__allowOn = 1
 			BEGIN
-				EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '1'
+				EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '1', @IsOverride = 0
 			END
 
 		END
@@ -48,7 +49,7 @@ BEGIN
 
 			IF @__allowOff = 1
 			BEGIN
-				EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '-1'
+				EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '-1', @IsOverride = 0
 			END
 		END
 		RETURN
