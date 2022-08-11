@@ -10,6 +10,7 @@ AS
 	Database:	DBSSIS.SSISDB
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20220812@Bobby: Support scaleout DB [Redmine: #175602]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -25,7 +26,42 @@ BEGIN
 		,@SessionID varchar(50)
 		,@processID int;
 
-	with cte as (
+	---- Get MoveBet, BU
+	DECLARE @MBU TABLE ( MoveBetsDay SMALLDATETIME, BalanceUpDay SMALLDATETIME)
+	INSERT INTO @MBU (BalanceUpDay, MoveBetsDay)
+	EXEC DBTXN.bodb02.dbo.Age_SelBalanceUpDay
+
+	SELECT @BUDate = BalanceUpDay
+	FROM @MBU;
+
+	--TODO: wait for execRep DBPRO.bodb02.dboExecRep_APL_07
+	DECLARE @tryCount INT = 1, @validArcDate BIT = 0, @msgError VARCHAR(1000);
+	WHILE (@tryCount <= 18) -- 3 minutes
+	BEGIN
+		IF NOT EXISTS(SELECT 1
+			FROM DBTXN.bodb02.dbo.Task_ArchiveDate WITH(NOLOCK)
+			WHERE Winlostdate < @BUDate)
+		BEGIN
+			SET @validArcDate = 1;
+			BREAK;
+		END
+		ELSE 
+		BEGIN
+			SET @tryCount += 1;
+			WAITFOR DELAY '00:00:10';
+		END
+	END
+
+	-- TODO: FAILED first
+	IF (@validArcDate = 0)
+	BEGIN
+		SET @msgError = CONCAT(@@SERVERNAME,'@DBA : SSIS Thursday-routine@DBTXN.bodb02.dbo.Task_ArchiveDate is NOT ready.');
+		RAISERROR (@msgError, 16, 1) WITH NOWAIT;
+		RETURN;
+	END
+
+	--TODO: start SSIS process
+	;WITH cte as (
 		select 0 as IsENV
 		union all
 		SELECT top 1 1 as IsENV
@@ -34,7 +70,7 @@ BEGIN
 		where e.Environment=@environment 
 			and p.PackageName = @packageName
 	)
-	select @BUDate = MAX(bu.BUDate_New)
+	SELECT @BUDate = MAX(bu.BUDate_New)
 		,@MinDate = MAX(txn.MinDate) --AS MinDate
 		,@MaxDate = MAX(txn.MaxDate) --AS MaxDate
 		,@HasEvent = CAST(MAX(CASE WHEN txn.MaxDate is not null then 1 else 0 end) AS BIT) --AS HasEvent
@@ -48,9 +84,10 @@ BEGIN
 		FROM DBTXN.bodb02.dbo.Task_ArchiveDate WITH(NOLOCK)
 	) AS txn
 	OUTER APPLY (
-		select dateadd(DAY, -1, txn.MinDate) AS BUDate_Current
-			,dateadd(DAY, 0, txn.MaxDate) AS BUDate_New
+		select dateadd(DAY, 0, txn.MinDate) AS BUDate_Current
+			,dateadd(DAY, 1, txn.MaxDate) AS BUDate_New
 	) AS bu
+	WHERE txn.MinDate >= @BUDate
 	
 	INSERT INTO [dbo].[SSIS_PackageRuntime]
            ([PackageID]
