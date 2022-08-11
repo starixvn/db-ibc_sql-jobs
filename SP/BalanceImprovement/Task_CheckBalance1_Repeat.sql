@@ -148,7 +148,7 @@ BEGIN
 			, @DiffBalance money, @result int, @IsUUS bit, @DiffBalanceInput money
 	
 		CREATE TABLE #c (RN int IDENTITY(1,1) PRIMARY KEY, custid int, roundVerified int, DiffBalanceInput money)
-		INSERT INTO #c (custid, roundVerified) SELECT custid, roundVerified, DiffBalance 
+		INSERT INTO #c (custid, roundVerified, DiffBalanceInput) SELECT custid, roundVerified, DiffBalance 
 		FROM dbo.Task_Cust_CheckBalanceVerify1 WHERE roundVerified >= 5
 		
 		SELECT @maxRN = @@ROWCOUNT
