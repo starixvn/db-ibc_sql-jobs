@@ -10,13 +10,14 @@ AS
 
 	Revisions:
 		- 20220523@Tacy: Initial SP [RedmineID: #170739]
+		- 20220810@Elodie: Change name of temp table
 
 	Param's Explanation:
 */
 BEGIN
 	SET NOCOUNT ON
 
-	CREATE TABLE #tmpCustList (
+	CREATE TABLE #ListTmp (
 			custid			INT
 		,	SportType		SMALLINT
 		,	BetType			INT
@@ -56,7 +57,7 @@ BEGIN
 	)
 	
 	--nonClustered
-	CREATE NONCLUSTERED INDEX IX_tmpCustList ON #tmpCustList(custid,SportTypeRef,BetTypeRef)
+	CREATE NONCLUSTERED INDEX IX_tmpCustList ON #ListTmp(custid,SportTypeRef,BetTypeRef)
 
 	-- checking dependency        
 	IF OBJECT_ID('tempdb..#tmp_TransId') IS NULL
@@ -65,14 +66,14 @@ BEGIN
 	END
 
 	--Get data from #tmp_TransId (exists in super sp: [Task_DetectBet_bettrans], [Task_DetectBet_bettransLC], [Task_DetectBet_bettransRnG])
-	INSERT INTO #tmpCustList (custid, SportType, BetType, transid, transdate, srecommend, recommend, isLive)
+	INSERT INTO #ListTmp (custid, SportType, BetType, transid, transdate, srecommend, recommend, isLive)
 	SELECT custid, SportType, BetType, transid, transdate, srecommend, recommend, isLive
 	FROM #tmp_TransId
 	
 	--Update isLicensee
-	UPDATE #tmpCustList
+	UPDATE #ListTmp
 	SET isLicensee = CASE WHEN dep.custid IS NULL THEN 0 ELSE 1 END
-	FROM #tmpCustList tc
+	FROM #ListTmp tc
 		LEFT JOIN Dep_CustSuper dep WITH (NOLOCK) ON dep.custid=tc.srecommend
 
 	--Get: SportTypeBetSetting, BetTypeBetSetting, SettingType, GameTypeId
@@ -83,7 +84,7 @@ BEGIN
 	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame
 					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
 	, cl.SettingType=ps.SettingType
-	FROM #tmpCustList cl
+	FROM #ListTmp cl
 		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
 				ON	ref.Sporttype	= cl.sporttype 
 				AND ref.Bettype		= cl.bettype
@@ -101,7 +102,7 @@ BEGIN
 	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame
 					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
 	, cl.SettingType=ps.SettingType
-	FROM #tmpCustList cl
+	FROM #ListTmp cl
 		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
 				ON	ref.Sporttype	= cl.sporttype 
 				AND ref.Bettype		= cl.bettype
@@ -115,7 +116,7 @@ BEGIN
 	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1 AND psd.SettingStatus=0
 
 	-- @sporttype: not support StakeLevel
-	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType NOT IN (7,8,17))
+	IF EXISTS (SELECT 1 FROM #ListTmp WHERE SettingType NOT IN (7,8,17))
 	BEGIN
 		INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
 		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
@@ -124,7 +125,7 @@ BEGIN
 		
 			, CASE WHEN (cl.isLicensee=0 AND ch.custid IS NOT NULL) THEN ch.OldMaxPerMatch
 					WHEN (cl.isLicensee=1 AND dch.custid IS NOT NULL) THEN dch.OldMaxPerMatch END MaxPerMatch
-		FROM #tmpCustList cl
+		FROM #ListTmp cl
 			OUTER APPLY (SELECT TOP (1) ch. custid, OldMaxBet, OldMaxPerMatch, UpdateTime 
 						 FROM CustMaxBetSetting_History ch WITH (NOLOCK)
 						 WHERE  ch.custid=cl.custid AND ch.SportType=cl.SportTypeRef
@@ -146,7 +147,7 @@ BEGIN
 
 		--Current Maxbet
 		--Credit
-		IF EXISTS (	SELECT 1 FROM #tmpCustList cl
+		IF EXISTS (	SELECT 1 FROM #ListTmp cl
 					WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=0
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
@@ -154,7 +155,7 @@ BEGIN
 		BEGIN
 			INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
 			SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, cbs.MaxBet, cbs.MaxPerMatch
-			FROM #tmpCustList cl
+			FROM #ListTmp cl
 				INNER JOIN CustBetSetting3rd_Member cbs WITH (NOLOCK) ON cbs.CustID=cl.custid
 																	AND cbs.SportType=cl.SportTypeRef
 																	AND cbs.BetType=cl.BetTypeRef
@@ -163,7 +164,7 @@ BEGIN
 								WHERE re.transid=cl.transid)
 		END
 		--deposit
-		IF EXISTS (	SELECT 1 FROM #tmpCustList cl
+		IF EXISTS (	SELECT 1 FROM #ListTmp cl
 					WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=1
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
@@ -171,7 +172,7 @@ BEGIN
 		BEGIN
 			INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
 			SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, dcbs.MaxBet, dcbs.MaxPerMatch
-			FROM #tmpCustList cl
+			FROM #ListTmp cl
 				INNER JOIN Dep_CustBetSetting_Member dcbs WITH (NOLOCK) ON dcbs.CustID=cl.custid
 																		AND dcbs.SportType=cl.SportTypeRef
 																		AND dcbs.BetType=cl.BetTypeRef
@@ -180,11 +181,11 @@ BEGIN
 								WHERE re.transid=cl.transid)
 		END
 
-		DELETE #tmpCustList WHERE SettingType NOT IN (7,8,17)
+		DELETE #ListTmp WHERE SettingType NOT IN (7,8,17)
 	END
 
 	-- @sporttype: support StakeLevel - SettingType IN (7,17)
-	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType IN (7,17))
+	IF EXISTS (SELECT 1 FROM #ListTmp WHERE SettingType IN (7,17))
 	BEGIN
 		--Get List cust: MaxBet is changed by SMA
 		INSERT INTO #CustList_ChangedSMA(custid, transid, SportType, BetType, MaxBet, StakeLevelList, UpdateTime_SMA)
@@ -198,7 +199,7 @@ BEGIN
 			
 			, CASE WHEN (cl.isLicensee=0 AND ch.custid IS NOT NULL) THEN ch.UpdateTime
 					WHEN (cl.isLicensee=1 AND dch.custid IS NOT NULL) THEN dch.UpdateTime END UpdateTime_SMA
-		FROM #tmpCustList cl
+		FROM #ListTmp cl
 			OUTER APPLY (SELECT TOP (1) ch. custid, OldMaxBet, OldStakeLevelList, UpdateTime 
 						 FROM CustMaxBetSetting_History ch WITH (NOLOCK)
 						 WHERE  ch.custid=cl.custid AND ch.SportType=cl.SportTypeRef
@@ -225,7 +226,7 @@ BEGIN
 						WHEN cslm.CustID IS NOT NULL  THEN cslm.StakeLevelList
 						WHEN dcslm.CustID IS NOT NULL THEN dcslm.StakeLevelList
 					END	AS StakeLevelList
-			FROM #tmpCustList cl
+			FROM #ListTmp cl
 				LEFT JOIN CustStakeLevel_Member cslm WITH (NOLOCK)
 						ON cslm.custid=cl.custid
 						AND cslm.SportType=cl.SportTypeRef
@@ -250,7 +251,7 @@ BEGIN
 						END) AS MaxStake_old
 				, ss.StakeLevelID
 			FROM CustList_Global1 clg
-				INNER JOIN #tmpCustList cl ON cl.transid=clg.transid
+				INNER JOIN #ListTmp cl ON cl.transid=clg.transid
 				OUTER APPLY (SELECT CAST(value AS INT) AS StakeLevelID FROM STRING_SPLIT(clg.StakeLevelList,',')) ss
 				--Credit
 				OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxLabel, UpdateTime, isChangedGlobal
@@ -304,7 +305,7 @@ BEGIN
 				   WHEN sma.UpdateTime_SMA<gl.UpdateTime_Global	AND isChangedGlobal=1	THEN sma.MaxBet
 				   WHEN sma.UpdateTime_SMA>gl.UpdateTime_Global							THEN gl.MaxStake_Old
 			END MaxBet
-		FROM #tmpCustList cl
+		FROM #ListTmp cl
 			LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
 			LEFT JOIN CustList_Global_tmp t ON t.transid=cl.transid
 			OUTER APPLY (SELECT gl.transid, gl.MaxStake_old, gl.isChangedGlobal, gl.UpdateTime_Global
@@ -315,12 +316,12 @@ BEGIN
 			AND (sma.transid IS NOT NULL OR gl.transid IS NOT NULL OR t.transid IS NOT NULL)
 			AND NOT EXISTS (SELECT 1 FROM #returnTbl re WHERE re.transid=cl.transid)
 
-		DELETE #tmpCustList WHERE SettingType IN (7,17)
+		DELETE #ListTmp WHERE SettingType IN (7,17)
 		DELETE #CustList_ChangedSMA
 	END
 
 	-- @sporttype: support StakeLevel - SettingType=8; 
-	IF EXISTS (SELECT 1 FROM #tmpCustList WHERE SettingType=8)
+	IF EXISTS (SELECT 1 FROM #ListTmp WHERE SettingType=8)
 	BEGIN
 		--Get List cust: MaxBet is changed by SMA
 		INSERT INTO #CustList_ChangedSMA(custid, transid, SportType, BetType, MaxBet, StakeLevelList, UpdateTime_SMA)
@@ -334,7 +335,7 @@ BEGIN
 			
 			, CASE WHEN (cl.isLicensee=0 AND ch.custid IS NOT NULL) THEN ch.UpdateTime
 					WHEN (cl.isLicensee=1 AND dch.custid IS NOT NULL) THEN dch.UpdateTime END UpdateTime_SMA
-		FROM #tmpCustList cl
+		FROM #ListTmp cl
 			OUTER APPLY (SELECT TOP (1) ch. custid, OldMaxBet, OldStakeLevelList, UpdateTime 
 						 FROM CustMaxBetSetting_History ch WITH (NOLOCK)
 						 WHERE  ch.custid=cl.custid AND ch.SportType=cl.SportTypeRef
@@ -361,7 +362,7 @@ BEGIN
 						WHEN cslm.CustID IS NOT NULL  THEN cslm.StakeLevelList
 						WHEN dcslm.CustID IS NOT NULL THEN dcslm.StakeLevelList
 					END	AS StakeLevelList
-			FROM #tmpCustList cl
+			FROM #ListTmp cl
 				LEFT JOIN CustStakeLevel_Member cslm WITH (NOLOCK)
 						ON cslm.custid=cl.custid
 						AND cslm.SportType=cl.SportTypeRef
@@ -383,7 +384,7 @@ BEGIN
 						WHEN dep.StakeLevelID IS NOT NULL AND cl.isLicensee=1 THEN dep.MaxGameStake
 					END AS MaxStake_old
 			FROM CustList_Global1 clg
-				INNER JOIN #tmpCustList cl ON cl.transid=clg.transid
+				INNER JOIN #ListTmp cl ON cl.transid=clg.transid
 				--Credit
 				OUTER APPLY (SELECT TOP (1) StakeLevelID, MaxGameStake, UpdateTime
 							 FROM
@@ -427,14 +428,14 @@ BEGIN
 		)
 		INSERT INTO #returnTbl (custid, transid, SportType, BetType, MaxBet)
 		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, gl.MaxStake_Old
-		FROM #tmpCustList cl
+		FROM #ListTmp cl
 			LEFT JOIN #CustList_ChangedSMA sma ON sma.transid=cl.transid
 			LEFT JOIN CustList_Global2 gl ON gl.transid=cl.transid 
 		WHERE SettingType=8
 			AND (sma.transid IS NOT NULL OR gl.transid IS NOT NULL)
 			AND NOT EXISTS (SELECT 1 FROM #returnTbl re WHERE re.transid=cl.transid)
 	
-		DELETE #tmpCustList WHERE SettingType=8
+		DELETE #ListTmp WHERE SettingType=8
 	END
 
 	UPDATE t1 
@@ -448,7 +449,7 @@ BEGIN
 		)t2
 	WHERE t1.stake > ISNULL(t2.MaxBet,0)
 
-	DROP TABLE #tmpCustList
+	DROP TABLE #ListTmp
 	DROP TABLE #CustList_ChangedSMA
 	DROP TABLE #returnTbl
 END
