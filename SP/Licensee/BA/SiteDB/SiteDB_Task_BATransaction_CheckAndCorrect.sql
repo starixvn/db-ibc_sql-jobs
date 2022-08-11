@@ -1,5 +1,4 @@
 ﻿/*<info serverAlias="DBSID-bodb02" executers="" isFunction="0" isNested="0"></info>*/
-
 CREATE PROCEDURE [dbo].[SiteDB_Task_BATransaction_CheckAndCorrect]
 AS
 
@@ -17,8 +16,8 @@ BEGIN
 	SET NOCOUNT ON
 
 	-- Query data with DONE status
-	DECLARE @BATransaction TABLE (custid INT, transid BIGINT, transdate DATETIME)
-	DECLARE @BAHistory_Done TABLE (custid INT, ondate DATETIME, offdate DATETIME)
+	DECLARE @BATransaction TABLE (custid INT, transid BIGINT, transdate DATETIME, INDEX IX_transid (transid) )
+	DECLARE @BAHistory_Done TABLE (ID INT Identity (1,1) PRIMARY KEY, custid INT, ondate DATETIME, offdate DATETIME)
 
 	INSERT INTO @BAHistory_Done
 	SELECT CustID, OnDate, OffDate
@@ -35,10 +34,10 @@ BEGIN
 	FROM dbo.LICSettings WITH (NOLOCK)
 	WHERE vname = 'BA_transid'
 
-	DECLARE @custid INT, @ondate DATETIME, @offdate DATETIME, @cnt INT
+	DECLARE @custid INT, @ondate DATETIME, @offdate DATETIME, @cnt INT, @ID INT = 1;
 
 	StartLoop:
-		SELECT TOP 1 @custid = custid, @ondate = ondate, @offdate = offdate FROM @BAHistory_Done
+		SELECT @custid = custid, @ondate = ondate, @offdate = offdate FROM @BAHistory_Done WHERE ID = @ID
 
 		SELECT @cnt = @@ROWCOUNT
 		IF @cnt = 0 GOTO EndLoop
@@ -54,18 +53,21 @@ BEGIN
 					OR (bettype BETWEEN 1301 AND 1399)
 					OR (bettype BETWEEN 9001 AND 9399)
 					OR (bettype BETWEEN 9400 AND 9998)
+					OR (bettype BETWEEN 3900 and 3999)
 					OR bettype = 38 -- BetBuilder
 				)
 			AND bettype NOT IN (901, 911)
 
 		DELETE FROM @BAHistory_Done
-		WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate
+		WHERE ID = @ID
+
+		SET @ID = @ID + 1
 
 		GOTO StartLoop
 	EndLoop:
 
 	-- Query data with Running status
-	DECLARE @BAHistory_Running TABLE (custid INT, ondate DATETIME)
+	DECLARE @BAHistory_Running TABLE (ID INT Identity (1,1) PRIMARY KEY, custid INT, ondate DATETIME)
 
 	INSERT INTO @BAHistory_Running
 	SELECT custid, ondate
@@ -77,10 +79,10 @@ BEGIN
 	)
 	AND l.Status = 'running'
 
-	DECLARE @custid_r INT, @ondate_r DATETIME, @cnt_r INT
+	DECLARE @custid_r INT, @ondate_r DATETIME, @cnt_r INT, @ID_r INT = 1
 
 	StartLoop_r:
-		SELECT TOP 1 @custid_r = custid, @ondate_r = ondate FROM @BAHistory_Running
+		SELECT @custid_r = custid, @ondate_r = ondate FROM @BAHistory_Running WHERE ID = @ID_r
 
 		SELECT @cnt_r = @@ROWCOUNT
 		IF @cnt_r = 0 GOTO EndLoop_r
@@ -96,13 +98,16 @@ BEGIN
 					OR (bettype BETWEEN 1301 AND 1399)
 					OR (bettype BETWEEN 9001 AND 9399)
 					OR (bettype BETWEEN 9400 AND 9998)
+					OR (bettype BETWEEN 3900 and 3999)
 					OR bettype = 38 -- BetBuilder
 				)
 			AND bettype NOT IN (901, 911)
 
 		DELETE FROM @BAHistory_Running
-		WHERE custid = @custid_r AND ondate = @ondate_r
+		WHERE ID = @ID_r
 
+		SET @ID_r = @ID_r + 1
+		
 		GOTO StartLoop_r
 	EndLoop_r:
 	

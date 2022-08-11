@@ -36,6 +36,7 @@ AS
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
+		- 20220721@Evan: Integrate new transid [Redmine: #175640]
 
 */
 
