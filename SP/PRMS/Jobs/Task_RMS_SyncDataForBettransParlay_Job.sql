@@ -26,6 +26,7 @@ AS
 		- 20210604@Danny: Add New League Group for Saba Sports [RedmineID: #156453]
 		- 20211001@Danny: Change dataType to support IPv6 [RedmineID: #162348]
 		- 20211001@Danny: Force index to avoid scan  [RedmineID: #162348]
+		- 20220802@Danny: Add retry step to avoid dirty read  [RedmineID: #176329]
 */
 
 BEGIN
@@ -37,6 +38,8 @@ BEGIN
 	SELECT  @min_tstamp = CONVERT(BINARY(8), CONVERT(BIGINT, ISNULL(VValue, 0)) + 1)
 	FROM dbo.rmSettings WITH (ROWLOCK)
 	WHERE VName = 'rmBettrans'
+
+	DECLARE @retry_cnt TINYINT = 5, @err_message VARCHAR(4000)
 
 	SELECT  @max_tstamp = MAX(tstamp) FROM bodb02.dbo.bettrans WITH (NOLOCK)
 	SELECT  @max_tstamp = ISNULL(@max_tstamp, @min_tstamp)
@@ -269,6 +272,8 @@ BEGIN
 			,epositiontaking	smallmoney
 		)
 		
+		START_GETDATA:
+		BEGIN TRY
 		INSERT INTO #rmBettrans
 		(
 			transid,custid,transdate,oddsid,hdp1,hdp2,odds,stake,status,winlost,awinlost,mwinlost,playercomm,comm,acomm
@@ -288,7 +293,24 @@ BEGIN
 		FROM bodb02.dbo.bettrans WITH (NOLOCK, INDEX = IX_tstamp_transid)
 		WHERE tstamp BETWEEN @min_tstamp AND @max_tstamp
 			AND bettype IN (29, 38, 376)
+		END TRY
+		BEGIN CATCH
+			
+			IF @@ERROR =  2627 AND  @retry_cnt > 0 --Violation of PRIMARY KEY constrain
+			BEGIN
+				SELECT @retry_cnt = @retry_cnt - 1
+				GOTO START_GETDATA
+			END
+			ELSE
+			BEGIN
+				SELECT @err_message = ERROR_MESSAGE()
+				RAISERROR (@err_message,16,1)
+				RETURN
+			END
 
+		END CATCH
+
+	
 			
 		-- Update some columns for bettype = 38
 		IF EXISTS (SELECT 1 FROM #rmBettrans WHERE bettype = 38)
