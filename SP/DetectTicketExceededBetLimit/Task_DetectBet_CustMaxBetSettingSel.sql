@@ -31,8 +31,8 @@ BEGIN
 		,	BetTypeRef		INT
 		,	SettingType		TINYINT
 		,	isLicensee		BIT
-		,	PRIMARY KEY CLUSTERED (transid)
 	)
+	CREATE CLUSTERED INDEX PK_transid ON #ListTmp (transid)
 
 	CREATE TABLE #CustList_ChangedSMA (
 			custid				INT
@@ -45,7 +45,7 @@ BEGIN
 		,	UpdateTime_SMA		DATETIME
 		,	PRIMARY KEY CLUSTERED (transid)
 	)
-
+	
 	CREATE TABLE #returnTbl (
 			custid			INT
 		,	transid			BIGINT
