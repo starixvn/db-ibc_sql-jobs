@@ -114,6 +114,7 @@ AS
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 		- 20220708@Hogan: Support add new betfrom '}' [RedmineID: #174895]
+		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -269,7 +270,8 @@ BEGIN
 				AND (b.bettype < 999							-- Sportsbook
 					OR b.bettype BETWEEN 1301 AND 1399
 					OR b.bettype BETWEEN 9001 AND 9399
-					OR b.bettype BETWEEN 9400 AND 9998)
+					OR b.bettype BETWEEN 9400 AND 9998
+					OR b.bettype BETWEEN 3900 AND 3999)
 				AND b.bettype NOT IN (29,38,911,912,913,914)  --- Parlay, betbuilder, Cashout
 				AND b.bettype NOT BETWEEN 81 AND 120
 				THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
@@ -397,7 +399,8 @@ BEGIN
 				AND (b.bettype < 999						-- Sportsbook
 					OR b.bettype BETWEEN 1301 AND 1399
 					OR b.bettype BETWEEN 9001 AND 9399
-					OR b.bettype BETWEEN 9400 AND 9998)
+					OR b.bettype BETWEEN 9400 AND 9998
+					OR b.bettype BETWEEN 3900 AND 3999)
 				AND b.bettype NOT IN (29,38,911,912,913,914)  --- Parlay, betbuilder, Cashout
 				AND b.bettype NOT BETWEEN 81 AND 120
 				THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
