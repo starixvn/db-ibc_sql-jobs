@@ -11,7 +11,7 @@ AS
 	Revisions:
 		- 20220523@Tacy: Initial SP [RedmineID: #170739]
 		- 20220810@Elodie: Change name of temp table
-		- 20220811@Tacy: detect maxbet for Keno, Number Game, HP5 product [RedmineID: #170739]
+		- 20220811@Tacy: Detect maxbet for Keno, Number Game, HP5 product [RedmineID: #170739]
 
 	Param's Explanation:
 */
@@ -216,7 +216,7 @@ BEGIN
 							END MaxPerMatch
 					FROM #ListTmp cl
 						INNER JOIN Dep_custsettingmode mode WITH (NOLOCK) ON mode.CustID=cl.custid
-						INNER JOIN Dep_CustBetSettingGameGroup_Member gg WITH (NOLOCK) ON gg.AgentID=cl.recommend
+						LEFT JOIN Dep_CustBetSettingGameGroup_Member gg WITH (NOLOCK) ON gg.AgentID=cl.recommend
 						LEFT JOIN Dep_CustBetSettingGame_Member dcbs WITH (NOLOCK) ON dcbs.CustID=cl.custid
 																	AND dcbs.SportType=cl.SportType
 																	AND dcbs.BetType=cl.BetType
@@ -227,7 +227,7 @@ BEGIN
 			
 		END
 
-		DELETE #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,202)
+		DELETE #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,164,202)
 	END
 
 	-- @sporttype: support StakeLevel - SettingType IN (7,17)
