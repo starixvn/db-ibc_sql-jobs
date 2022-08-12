@@ -80,7 +80,7 @@ BEGIN
 			AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 				 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 				 ELSE 1 END
-			AND SiteDBGroupID = @__siteDBGroupId
+			AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
 
 		SELECT @FromTransfer = SUM(winlost-actual_stake+playercomm)	
 		FROM dbo.Transfer t WITH (ROWLOCK)
@@ -105,15 +105,15 @@ BEGIN
 
 		SELECT @FromTransLog = SUM(actual_stake) 
 		FROM dbo.translog with (rowlock) 
-		WHERE custid = @custid and statusID IN (0,1) AND SiteDBGroupID = @__siteDBGroupId
+		WHERE custid = @custid and statusID IN (0,1) AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
 
 		SELECT @FromBettransRNG = SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) 
 		FROM dbo.bettransRNG WITH(NOLOCK)
-		WHERE IsSum = 0 AND custid = @custid AND SiteDBGroupID = @__siteDBGroupId
+		WHERE IsSum = 0 AND custid = @custid AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
 		
 		SELECT @FromBettransLC = SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) 
 		FROM dbo.bettransLC WITH(NOLOCK)
-		WHERE IsSum = 0 AND custid = @custid AND SiteDBGroupID = @__siteDBGroupId
+		WHERE IsSum = 0 AND custid = @custid AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
 				
 		SELECT 
 			@DiffBalance = IsNull(@FromBettrans, 0) + IsNull(@FromTransfer, 0) - IsNull(@FromTransLog, 0) + IsNull(@FromBettransRNG, 0) + IsNull(@FromBettransLC, 0) - IsNull(@FromAdjustmentTransfer, 0)

@@ -49,7 +49,7 @@ BEGIN
 		WHERE 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
-			AND b.SiteDBGroupID = @__siteDBGroupId
+			AND ISNULL(b.SiteDBGroupID, 0) = @__siteDBGroupId
 		GROUP BY b.custid
 	),
 	ct AS (
@@ -67,19 +67,19 @@ BEGIN
 		SELECT tl.custid, SUM(actual_stake) AS Outstanding
 		FROM dbo.translog tl with (nolock)
 		WHERE tl.statusID IN (0,1) --summary running tickets only
-			AND tl.SiteDBGroupID = @__siteDBGroupId
+			AND ISNULL(tl.SiteDBGroupID, 0) = @__siteDBGroupId
 		GROUP BY tl.custid
 	),
 	q3 AS (
 		SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
 		FROM dbo.bettransRNG WITH(NOLOCK)
-		WHERE IsSum = 0 AND SiteDBGroupID = @__siteDBGroupId
+		WHERE IsSum = 0 AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
 		GROUP BY custid
 	),
 	q4 AS (
 		SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalLC
 		FROM dbo.bettransLC WITH(NOLOCK)
-		WHERE IsSum = 0 AND SiteDBGroupID = @__siteDBGroupId
+		WHERE IsSum = 0 AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
 		GROUP BY custid
 	),
 	t AS (
