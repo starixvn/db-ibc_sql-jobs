@@ -16,7 +16,7 @@ AS
 		- 20220222@Sol: Support - using ExchangeDailyOanda to get actualRate of @winlostdate - [RedmineID: #168815]
 		- 20220714@Evan: Modify sp to avoid dump (remove code select into) - [Redmine: #175450]
 		- 20220721@Evan: Integrate new transid - [Redmine: #175640]
-		- 20220724@Evan: Check @SiteDBGroupID to support Scale-Out  [Redmine: #175297]
+		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - classify data between SiteDB & CentralDB [Redmine: #175297]
 */
 BEGIN
 	

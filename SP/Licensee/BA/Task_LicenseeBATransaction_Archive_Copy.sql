@@ -11,7 +11,7 @@ AS
 		- 20191022@Percy: Initialize SP [RedmineID: #103656]
 		- 20200401@Percy: Check exists TransID on LicenseeBATransaction_bk [RedmineID: #131643]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
-		- 20220724@Evan: Remove code select into  [Redmine: #175297]
+		- 20220724@Evan: Enhance code [Redmine: #175297]
 */
 
 BEGIN

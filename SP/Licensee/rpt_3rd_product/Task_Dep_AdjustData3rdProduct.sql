@@ -19,7 +19,7 @@ AS
 		- 20200501@Sophia: Fix bug @bettypeIds [Redmine: #131885]
 		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
 		- 20220721@Evan: Integrate new transid [Redmine: #175640]
-		- 20220724@Evan: Check @SiteDBGroupID to support Scale-Out  [Redmine: #175297]
+		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - classify data between SiteDB & CentralDB [Redmine: #175297]
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26

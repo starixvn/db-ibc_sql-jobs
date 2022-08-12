@@ -17,7 +17,7 @@ AS
 		- 20200407@Percy: Add @ProductIds to support input product list [RedmineID: #131885]
 		- 20210219@Percy: Change code get MBBU date [RedmineID: #150327]
 		- 20220721@Evan: Integrate new transid [Redmine: #175640]
-		- 20220724@Evan: Check @SiteDBGroupID to support Scale-Out  [Redmine: #175297]
+		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - classify data between SiteDB & CentralDB [Redmine: #175297]
 
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook

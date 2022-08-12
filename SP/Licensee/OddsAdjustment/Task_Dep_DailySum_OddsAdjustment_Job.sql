@@ -9,6 +9,7 @@ AS
 	Revisions:
 		- 20201012@Sol: Initialize SP - [RedmineID: #142532]
 		- 20220724@Evan: exec Age_SelBalanceUpDay to support Scale-Out  [Redmine: #175297]
+		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - remove linkserver [Redmine: #175297]
 */
 BEGIN
 
