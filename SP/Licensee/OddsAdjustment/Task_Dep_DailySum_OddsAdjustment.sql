@@ -62,8 +62,7 @@ BEGIN
 		DBPRO.bodb02.dbo.LicSiteSetting ss WITH(NOLOCK)
 		INNER JOIN DBCUST.SiteConfig.dbo.LicVendorProfile vp WITH(NOLOCK) ON ss.SiteId = vp.SiteId
 		INNER JOIN DBCUST.CUSTDB.dbo.site s WITH (NOLOCK) ON vp.SiteName = s.Site 
-		INNER JOIN DBCUST.CUSTDB.dbo.SiteDBConfig sc WITH (NOLOCK) ON sc.SiteDBGroupID = s.SiteDBGroupID  
-	WHERE ss.ApplySpreadAdjustment = 1 AND sc.SiteDBGroupID = @SiteDBGroupID
+	WHERE ss.ApplySpreadAdjustment = 1 AND s.SiteDBGroupID = @SiteDBGroupID
 
 	--- get dummies member acc 
 	;WITH rs AS

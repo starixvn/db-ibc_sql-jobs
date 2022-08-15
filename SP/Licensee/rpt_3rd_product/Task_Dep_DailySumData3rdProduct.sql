@@ -102,8 +102,7 @@ BEGIN
 	SELECT DISTINCT l.LicenseeId, l.LicenseeName, l.CurrencyId
 	FROM #LicenseeProductTable l 
 		INNER JOIN DBCUST.CUSTDB.dbo.site s WITH (NOLOCK) ON l.LicenseeName = s.Site 
-		INNER JOIN DBCUST.CUSTDB.dbo.SiteDBConfig sc WITH (NOLOCK) ON sc.SiteDBGroupID = s.SiteDBGroupID  
-	WHERE sc.SiteDBGroupID = @SiteDBGroupID
+	WHERE s.SiteDBGroupID = @SiteDBGroupID
 	GROUP BY l.LicenseeId, l.LicenseeName, l.CurrencyId
 
 	--get party list
