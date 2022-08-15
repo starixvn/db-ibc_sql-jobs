@@ -11,6 +11,7 @@ AS
 	Revision:  
 		- 20140622@Thien: revise the job schedule for WC 2014, to perform Move Bet every day except Friday's morning (Balance Up day)  
 		- 20150806@Sophia: Control schedule by a new store procedure
+		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 
 */
 BEGIN 
@@ -71,7 +72,7 @@ BEGIN
 	
 	DECLARE @Days AS TABLE (ScheduleId TINYINT, RunningDay DATETIME, IsFinish BIT DEFAULT (0))
 	INSERT INTO @Days (ScheduleId, RunningDay)
-		EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel 
+		EXEC DBCTG.bodb02.dbo.Task_MoveBetsDayByScheduleSel 
 
 	DECLARE @RunningDay DATETIME , @ScheduleId TINYINT
 	
