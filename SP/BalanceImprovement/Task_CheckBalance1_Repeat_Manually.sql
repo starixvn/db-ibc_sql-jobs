@@ -165,7 +165,7 @@ BEGIN
 				, @DiffBalance = @DiffBalance OUTPUT
 				, @result = @result OUTPUT
 				, @IsUUS = @IsUUS OUTPUT
-				, @DiffBalanceInput = DiffBalanceInput
+				, @DiffBalanceInput = @DiffBalanceInput
 		
 			IF @result = 0 --fixed
 			BEGIN
