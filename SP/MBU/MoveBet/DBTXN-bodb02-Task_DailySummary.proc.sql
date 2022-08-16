@@ -127,6 +127,22 @@ BEGIN
 	SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('BeforeMB')
 	WAITFOR DELAY @__delayTimeValue --waitfor all settle running commands can be done to start MB
 
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - start turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	--**turn on flag for starting copy to [14]
+	--pub SP ExcepRep
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @parlay = 7, @tableName = 'SystemSettings'
+	--pub bet
+	--EXEC dbo.Bet_ExecRep_09	@mode = 7
+	EXEC dbo.Transfer_ExecRep_02 @Mode = 3
+
+	--pub bet14
+	EXEC dbo.Bet_ExecRep14_01 @Mode = 1, @TableName = 'SystemSettings'
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - end turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
 	-- update ticket (if any) which winlostdate is not synced with eventdate 
 	DECLARE @transTable TABLE (transid BIGINT PRIMARY KEY, winlostdate SMALLDATETIME)
 
@@ -586,21 +602,6 @@ END
 
 IF @step = 4 --copy event | bet data to [14]
 BEGIN
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - start turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
-
-	--**turn on flag for starting copy to [14]
-	--pub SP ExcepRep
-	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @parlay = 7, @tableName = 'SystemSettings'
-	--pub bet
-	--EXEC dbo.Bet_ExecRep_09	@mode = 7
-	EXEC dbo.Transfer_ExecRep_02 @Mode = 3
-
-	--pub bet14
-	EXEC dbo.Bet_ExecRep14_01 @Mode = 1, @TableName = 'SystemSettings'
-
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - end turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 	
 	-- viet ----
 	EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'

@@ -87,6 +87,15 @@ DECLARE @__aliasServer VARCHAR(128) = ''
 -- ================== STEP : 1 
 IF @step = 1
 BEGIN
+	SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', start turn on flag 20k'
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+
+	--turn on copy 20k flag
+	EXEC dbo.Transfer_ExecRep_02 @Mode = 7
+
+	SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', end turn on flag 20k'
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+
 -- ================== DATA VERIFY
 
 	--- DATA VERIFY
@@ -189,9 +198,6 @@ BEGIN
 	--//turn on isArchivingBet_Local flag
 	EXEC dbo.Transfer_ExecRep_02 @Mode = 5
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 5, @tableName = 'SystemSettings'
-
-	--turn on copy 20k flag
-	EXEC dbo.Transfer_ExecRep_02 @Mode = 7
 
 	-- for safety, shutdown trigger in balanceTable_tmp
 	EXEC dbo.Task_BalanceUp_TriggerControl @step = 1, @on = 0
@@ -584,9 +590,14 @@ END
 -- ================== STEP : 4
 IF @step = 4
 BEGIN
-
+	SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', start turn off flag 20k'
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+	
 	--turn off copy 20k flag
 	EXEC dbo.Transfer_ExecRep_02 @Mode = 8
+
+	SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', start turn off flag 20k'
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
 
 	--check BU done step 3 or not
 	DECLARE @__start DATETIME
