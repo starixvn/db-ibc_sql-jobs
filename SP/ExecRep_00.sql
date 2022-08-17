@@ -44,7 +44,7 @@ BEGIN
 	IF @Target = 'DBTXN' AND @isSiteDB = 0 AND ( @SiteDBGroupID <> 0 OR @@SERVERNAME NOT IN ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS')) RETURN
 	
 	-- Check SiteDB
-	IF @Target = 'DBTXN' AND @isSiteDB = 1 AND (@SiteDBGroupID = 0 AND @@SiteDBGroupID = 1023)  RETURN
+	IF @Target = 'DBTXN' AND @isSiteDB = 1 AND (@SiteDBGroupID = 0 AND @SiteDBGroupID = 1023)  RETURN
 	
 	--Check replicated server
 	IF @Target = 'REPLICATED' AND ( @@SERVERNAME IN  ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS') OR @SiteDBGroupID < 1023) RETURN
