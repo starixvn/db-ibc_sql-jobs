@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE dbo.Task_Archive_Event_Control
+ALTER PROCEDURE dbo.Task_Archive_Event_Control_Job
 	
 AS
 /*
