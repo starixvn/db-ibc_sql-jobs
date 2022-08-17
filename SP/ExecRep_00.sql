@@ -1,8 +1,9 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02,DBSIG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[ExecRep_00] 
 	@Winlostdate SMALLDATETIME = NULL
-	,@Target VARCHAR(30) = 'DBTRANS' -- DBTRANS/REPLICATED
+	,@Target VARCHAR(30) = 'DBTXN' -- DBTRANS/REPLICATED
 	,@TableName VARCHAR(200) 
+	,@isSiteDB BIT = 0
 AS
 /*
  	DB: DBTXN/bodb02
@@ -24,7 +25,7 @@ AS
 		- 20200309@Malcolm : Add table bettransG [Redmine : #128057]
 		- 20220104@Malcolm: Update rates for all existed tickets once financial change rates [RedmineId : #163417]
 		- 20220316@Malcolm: Adjust virtual rate when cash out [RedmineId : #169003]		
-		- 20220801@Sophia: Change server name  [RedmineID: #175253]
+		- 20220801@Sophia: Scale out DB, Change server name  [RedmineID: #175253]
 
  	Param's Explanation: 
  		@Winlostdate: the date that new rates are updated		
@@ -34,9 +35,21 @@ BEGIN
 	SET NOCOUNT ON
 
 	IF @Winlostdate IS NULL RETURN
-	IF @Target NOT IN ('DBTRANS', 'REPLICATED') RETURN
-	IF @Target = 'DBTRANS' AND @@SERVERNAME NOT IN ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS') RETURN
-	IF @Target = 'REPLICATED' AND @@SERVERNAME IN  ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS') RETURN
+	IF @Target NOT IN ('DBTXN', 'REPLICATED') RETURN
+	
+	DECLARE @SiteDBGroupID INT	
+	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID ()	 
+	
+	-- Check Central DBTRANS
+	IF @Target = 'DBTXN' AND @isSiteDB = 0 AND ( @SiteDBGroupID <> 0 OR @@SERVERNAME NOT IN ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS')) RETURN
+	
+	-- Check SiteDB
+	IF @Target = 'DBTXN' AND @isSiteDB = 1 AND (@SiteDBGroupID = 0 AND @@SiteDBGroupID = 1023)  RETURN
+	
+	--Check replicated server
+	IF @Target = 'REPLICATED' AND ( @@SERVERNAME IN  ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS') OR @SiteDBGroupID < 1023) RETURN
+	
+	
 	IF OBJECT_ID (@TableName, N'U') IS NULL RETURN
 	
 	--CREATE TABLE #tmp (transid BIGINT, actualrate FLOAT, virtualrate FLOAT)
@@ -51,7 +64,7 @@ BEGIN
 	CREATE TABLE #CashOutSelling (transid BIGINT, virtualrate FLOAT)
 	CREATE CLUSTERED INDEX ix_bettrans ON #bettrans (transid)
 
-	IF @@SERVERNAME IN ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS')
+	IF @Target = 'DBTXN' AND @SiteDBGroupID < 1023    --- Run at Central DBTrans and SiteDBGroupID
 	BEGIN
 		IF @TableName = 'bettrans' --bettrans@dbtrans
 		BEGIN
@@ -166,7 +179,7 @@ BEGIN
 		END
 	END
 	
-	IF @@SERVERNAME NOT IN  ('DBTRANS', 'DB206', 'SITDBTRANS')
+	IF @Target = 'REPLICATED' AND @SiteDBGroupID = 1023 
 	BEGIN
 		IF (
 			SELECT COUNT(1)
