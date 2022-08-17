@@ -1,0 +1,57 @@
+/*<info serverAlias="DBBAL-bodb02" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[TASK_DepSumData_Job]
+	@IdlingHour TINYINT = 9
+AS
+
+/*
+	Created: 20220816@Sol
+	DB: DBBAL.bodb02
+	Task: Flow controlling for Depopsit Data Summary system
+		
+	Revisions:
+		- 20220816@Sol: AWS - comment code related to 3rd products due to un-supported in cloud - [RedmineID: #176479]
+		
+	Input Params:	
+	- @IdlingHour: The time when the system is more idle
+*/
+
+BEGIN
+	DECLARE @CurrentDate	DATE,
+			@Yesterday		DATE,
+			@Earlyday		DATE,
+			@CurrentHour	TINYINT
+
+	SELECT  @CurrentDate	= CONVERT(DATE, CURRENT_TIMESTAMP, 112)
+	SELECT  @Yesterday		= DATEADD(DAY, -1, @CurrentDate)
+	SELECT  @Earlyday		= DATEADD(DAY, -2, @CurrentDate)
+	SELECT  @CurrentHour	= DATEPART(HOUR, CURRENT_TIMESTAMP)
+
+	-- Check system movebet and balanceup
+	IF EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isArchivingBet_Local','isArchivingDEPdata','isSummaryingDEPdata') AND VValue <> '0')
+	BEGIN
+		PRINT 'EXEC TASK_DepSumDataJob: MoveBet/BalanceUp/ArchivingDEPdata/SummaryingDEPdata is performing ==> RETURN'
+		RETURN
+	END
+
+	-- Check today's daily archive
+	IF NOT EXISTS (SELECT 1 FROM bodb_Report.dbo.rptDepWinlost_Log WITH (NOLOCK) WHERE LogDate = @CurrentDate AND StatusID = 1 AND LogType = 2) -- Daily Type
+	BEGIN
+		EXEC bodb_Report.dbo.TASK_DailyArchiveDepData
+		--EXEC dbo.Task_DOT_AGCasino_MonthlyReSummary
+	END
+	ELSE
+	BEGIN
+		-- Check today's hourly summary at the current's hour
+		IF (NOT EXISTS (SELECT 1 FROM bodb_Report.dbo.rptDepWinlost_Log WITH (NOLOCK) WHERE LogDate = @CurrentDate AND LogHour = @CurrentHour AND StatusID = 1 AND LogType BETWEEN 1 AND 3) --Daily/Manually/Hourly Type
+					AND 0 = CASE WHEN @CurrentHour < @IdlingHour THEN 0 ELSE @CurrentHour % 2 END)
+		BEGIN
+			EXEC bodb_Report.dbo.TASK_HourlySummaryDepData
+		END
+		ELSE -- run realtime
+		BEGIN
+			EXEC dbo.TASK_RealtimeSummaryDepData @Winlostdate = @Yesterday
+			EXEC dbo.TASK_RealtimeSummaryDepData
+		END
+	END		
+END
+GO
