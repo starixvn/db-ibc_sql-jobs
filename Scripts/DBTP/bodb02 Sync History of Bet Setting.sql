@@ -5,7 +5,7 @@
     DB: DBTP/msdb
 	
 	Revisions:
-		- 20220512@Tacy: Sync history of bet setting [Redmine:#170739]
+		- 20220512@Tacy: Sync history of bet setting [Redmine:#170739] 
 */
 
 USE [msdb]
