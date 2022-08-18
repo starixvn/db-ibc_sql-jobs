@@ -853,23 +853,14 @@ BEGIN
 	)
 	BEGIN
 		WAITFOR DELAY '00:00:30:000' --waitfor MB done...
-		IF DATEDIFF(MINUTE, @__start, GETDATE()) > 30
+		IF DATEDIFF(MINUTE, @__start, GETDATE()) > 90
 		BEGIN
 			--send out message for DBA to check...
 			DECLARE @__notifyMessage VARCHAR(300)
 			SET @__notifyMessage = CONCAT(@@SERVERNAME, ' | Urgently!!! Movebet - hey guys, Movebet run long time at step 7. Please check!!!')
-			EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = N'PONTUS', 
-				@JobId = NULL, @JobName = N'Custom Message', 
-				@Message = @__notifyMessage, 
-				@CaseId = 1;
-
-			EXECUTE msdb.dbo.sp_send_dbmail @profile_name	= DEFAULT
-			   , @recipients			 = 'pontus@starixvn.com' --will replace email address later
-			   , @copy_recipients		 = ''
-			   , @blind_copy_recipients	 = ''
-			   , @subject				 = 'Urgently!!! Movebet - Notification'
-			   , @body					 = @__notifyMessage
-			   , @body_format			 = 'HTML';
+			EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
+				@SubjectName = 'Urgently!!! Movebet - Notification',
+				@MessageName = @Doing
 
 		END
 	END

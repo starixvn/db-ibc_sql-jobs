@@ -607,7 +607,7 @@ BEGIN
 	)
 	BEGIN
 		WAITFOR DELAY '00:00:30:000' --waitfor BU done step 3...
-		IF DATEDIFF(MINUTE, @__start, GETDATE()) > 30
+		IF DATEDIFF(MINUTE, @__start, GETDATE()) > 90
 		BEGIN
 			--Send notification to dba
 			SET @Doing = CONCAT(@@SERVERNAME, ' | Urgently!!! BU - hey guys, BalanceUp run long time at step 4. Please check!!!')
