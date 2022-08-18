@@ -36,7 +36,7 @@ BEGIN
 	--turn on flag wait for delete event
 	IF @__aliasServer = 'DBSite' --only run that command at DBSite server
 	BEGIN
-		EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'Friday-routine', @VValue = '-1', @IsOverride = 0
+		EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'Friday-routine-f', @VValue = '-1', @IsOverride = 0
 	END
 
 	--only run at central DB
