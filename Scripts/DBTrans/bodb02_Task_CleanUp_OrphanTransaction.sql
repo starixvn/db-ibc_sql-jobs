@@ -16,6 +16,13 @@ BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
 
+IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
+BEGIN
+EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+END
+
 DECLARE @jobId BINARY(16)
 EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb02: Task_CleanUp_OrphanTransaction', 
 		@enabled=1, 
@@ -49,13 +56,13 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Task_Clea
 		@enabled=1, 
 		@freq_type=4, 
 		@freq_interval=1, 
-		@freq_subday_type=8, 
+		@freq_subday_type=1, 
 		@freq_subday_interval=1, 
 		@freq_relative_interval=0, 
 		@freq_recurrence_factor=0, 
-		@active_start_date=20220822, 
+		@active_start_date=20220825, 
 		@active_end_date=99991231, 
-		@active_start_time=0, 
+		@active_start_time=20000, 
 		@active_end_time=235959, 
 		@schedule_uid=N'b33eb021-1efb-4c63-90ea-d794a5f63c7f'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
