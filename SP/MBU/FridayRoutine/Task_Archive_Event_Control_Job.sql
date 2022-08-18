@@ -48,7 +48,7 @@ BEGIN
 		WHILE EXISTS (
 			SELECT TOP 1 1 
 			FROM dbo.SystemSettings WHERE VName = 'Fri-routine-f' AND VValue <> '0'
-		) AND EXISTS (
+		) OR EXISTS (
 			SELECT TOP 1 1 
 			FROM dbo.SystemSettings 
 			WHERE VName = 'Fri-routine-s' 

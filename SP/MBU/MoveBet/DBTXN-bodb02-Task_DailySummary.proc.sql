@@ -842,7 +842,14 @@ BEGIN
 	DECLARE @__start DATETIME
 	SET @__start = GETDATE()
 	WHILE EXISTS (
-		SELECT TOP 1 1 FROM DBCTG.bodb02.dbo.SystemSettings WHERE VName = 'MB_ReadyUpdMBDate' AND VValue <> '0'
+		SELECT TOP 1 1 
+		FROM DBCTG.bodb02.dbo.SystemSettings 
+		WHERE VName = 'MB_ReadyUpdMBDate' AND VValue <> '0'
+	) OR EXISTS (
+		SELECT TOP 1 1 
+		FROM DBCTG.bodb02.dbo.SystemSettings 
+		WHERE VName = 'BeingMovebetDate'
+			AND VValue <> (SELECT VValue FROM dbo.SystemSettings WHERE VName = 'BeingMovebetDate')
 	)
 	BEGIN
 		WAITFOR DELAY '00:00:30:000' --waitfor MB done...
