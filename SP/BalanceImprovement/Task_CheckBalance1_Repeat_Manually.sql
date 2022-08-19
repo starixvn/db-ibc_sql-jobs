@@ -159,7 +159,8 @@ BEGIN
 	
 		WHILE @i <= @maxRN
 		BEGIN
-			SELECT @custid = custid, @roundVerified = roundVerified FROM #c WHERE RN = @i
+			SELECT @custid = custid, @roundVerified = roundVerified, @DiffBalanceInput = DiffBalanceInput 
+			FROM #c WHERE RN = @i
 			--just call sp to return diff balance amount. This sp dont correct data
 			EXEC dbo.Task_CheckBalance1_FixOne_Manually @custid = @custid
 				, @DiffBalance = @DiffBalance OUTPUT
