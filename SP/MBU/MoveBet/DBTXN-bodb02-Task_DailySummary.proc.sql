@@ -762,7 +762,7 @@ BEGIN
 		BEGIN TRY
 
 			--//transid value will fill out by default constraint via CLR function
-		BEGIN TRY
+			--==RepUpdateTime value MUST HAVE NULL value to prevent Inhouse replicator sync to central
 
 			--//transid value will fill out by default constraint via CLR function
 			BEGIN TRANSACTION
@@ -772,7 +772,7 @@ BEGIN
 				)
 				SELECT b.custid, b.winlostdate AS transdate, b.winlostdate AS winlostdate, 19999 AS bettype, b.stake, b.actual_stake, b.winlost, b.awinlost, b.mwinlost, b.swinlost
 					,b.playercomm, b.comm, b.acomm, b.scomm, 142 AS StatusId, b.refno, b.recommend, b.mrecommend, b.srecommend
-					,b.username, b.currency, b.CurrencyName, b.actualrate, 8 AS Creator, GETDATE() AS CheckTime, SYSDATETIME() AS RepUpdateTime
+					,b.username, b.currency, b.CurrencyName, b.actualrate, 8 AS Creator, GETDATE() AS CheckTime, NULL AS RepUpdateTime
 				FROM dbo.bettranssum b
 				WHERE EXISTS (	SELECT TOP 1 1
 								FROM @__runningCust t
