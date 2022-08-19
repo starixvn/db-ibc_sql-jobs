@@ -206,19 +206,18 @@ BEGIN
 	truncate table dbo.balanceTable;
 	truncate table dbo.balanceTable_tmp
 
-
 	EXEC dbo.balancecheck @fdate, 11
 	EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
 	
 	--//only central server can run backup DBCUST.custdb
 	IF @__aliasServer = 'DBCTG' --only run that command at central server
 	BEGIN
-		-- doing backup
-		Declare @suffix varchar(10)
-		SET @suffix = 'bbu' + RIGHT(CONVERT(varchar(10), @fdate,120),5)
 		EXEC DBCUST.msdb.dbo.sp_start_job N'BalanceUPBackground_BackupFull_Cust'
 	END
-	
+
+	-- doing backup
+	Declare @suffix varchar(10)
+	SET @suffix = 'bbu' + RIGHT(CONVERT(varchar(10), @fdate,120),5)
 	--//backup bodb02@dbtrans
 	EXEC dbo.Task_BackupFULL @suffix
 	
