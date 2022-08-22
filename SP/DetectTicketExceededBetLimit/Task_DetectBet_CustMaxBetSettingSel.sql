@@ -11,7 +11,7 @@ AS
 	Revisions:
 		- 20220523@Tacy: Initial SP [RedmineID: #170739]
 		- 20220810@Elodie: Change name of temp table
-		- 20220811@Tacy: Detect maxbet for Keno, Number Game, HP5 product [RedmineID: #170739]
+		- 20220811@Tacy: Detect maxbet for Keno, Number Game product [RedmineID: #170739]
 
 	Param's Explanation:
 */
@@ -117,7 +117,7 @@ BEGIN
 	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1 AND psd.SettingStatus=0
 
 	-- @sporttype: not support StakeLevel
-	IF EXISTS (SELECT 1 FROM #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,202))
+	IF EXISTS (SELECT 1 FROM #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,164,202))
 	BEGIN
 		INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
 		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
@@ -141,7 +141,7 @@ BEGIN
 							AND dch.BetType=cl.BetTypeRef AND dch.UpdateTime>cl.transdate  
 						 ORDER BY UpdateTime
 						 ) dch
-		WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,202)) AND
+		WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,164,202)) AND
 			(
 			  (cl.isLicensee=0 AND ch.custid IS NOT NULL)
 			OR 
