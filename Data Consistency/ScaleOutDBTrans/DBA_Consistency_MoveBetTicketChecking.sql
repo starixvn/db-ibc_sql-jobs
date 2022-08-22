@@ -1,10 +1,10 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[ScaleOut_Consistency_MoveBetTicketChecking] @row_cnt INT OUTPUT
 AS 
 /*
 Created by: 20220819@Victoria
 Task: Check MoveBet Ticket
-DB: DBCONSISTENCY-bodb_Consistency
+DB: DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02
 Revisions:
 	- 20220819@Victoria: Check MoveBet Ticket [Redmine:#175881]
 	
