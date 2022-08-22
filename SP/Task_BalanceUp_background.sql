@@ -595,7 +595,7 @@ BEGIN
 	--turn off copy 20k flag
 	EXEC dbo.Transfer_ExecRep_02 @Mode = 8
 
-	SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', start turn off flag 20k'
+	SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', end turn off flag 20k'
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
 
 	--check BU done step 3 or not
