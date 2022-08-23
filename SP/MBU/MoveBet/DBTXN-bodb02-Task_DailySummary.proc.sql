@@ -860,7 +860,7 @@ BEGIN
 			SET @__notifyMessage = CONCAT(@@SERVERNAME, ' | Urgently!!! Movebet - hey guys, Movebet run long time at step 7. Please check!!!')
 			EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
 				@SubjectName = 'Urgently!!! Movebet - Notification',
-				@MessageName = @Doing
+				@MessageName = @__notifyMessage
 
 		END
 	END
