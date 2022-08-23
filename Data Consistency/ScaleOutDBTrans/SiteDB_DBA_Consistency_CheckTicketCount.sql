@@ -26,7 +26,7 @@ BEGIN
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
-	UNION
+	UNION ALL
 	SELECT	'bettransRnG' AS TableName,
 			SiteDBGroupID, 
 			Recommend, 
@@ -38,7 +38,7 @@ BEGIN
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
-	UNION
+	UNION ALL
 	SELECT	'bettransLC' AS TableName,
 			SiteDBGroupID, 
 			Recommend, 
@@ -50,7 +50,7 @@ BEGIN
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
-	UNION
+	UNION ALL
 	SELECT	'bettransm' AS TableName,
 			bm.SiteDBGroupID, 				
 			c.Recommend, 
@@ -63,7 +63,7 @@ BEGIN
 	GROUP BY	bm.SiteDBGroupID, 
 				c.Recommend, 
 				bm.Status
-	UNION
+	UNION ALL
 	SELECT	'zzzbettrans' AS TableName,
 			z.SiteDBGroupID, 
 			c.Recommend, 
@@ -76,7 +76,7 @@ BEGIN
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
 				z.Status
-	UNION
+	UNION ALL
 	SELECT	'zzzbettransm' AS TableName,
 			z.SiteDBGroupID,  
 			c.Recommend, 
@@ -89,7 +89,6 @@ BEGIN
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
 				z.Status
-	ORDER BY TableName,SiteDBGroupID,Recommend,Status 
 	
 END
 

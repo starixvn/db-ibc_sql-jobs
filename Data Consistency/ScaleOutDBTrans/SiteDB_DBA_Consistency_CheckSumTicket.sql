@@ -30,7 +30,7 @@ BEGIN
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
-	UNION
+	UNION ALL
 	SELECT	'bettransRnG' AS TableName,
 			[SiteDBGroupID],  
 			[Recommend],  
@@ -44,7 +44,7 @@ BEGIN
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
-	UNION
+	UNION ALL
 	SELECT	'bettransLC' AS TableName,
 			[SiteDBGroupID],  
 			[Recommend],   
@@ -58,7 +58,7 @@ BEGIN
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
-	UNION
+	UNION ALL
 	SELECT	'bettransG' AS TableName,
 			g.[SiteDBGroupID],  
 			c.[Recommend], 
@@ -72,7 +72,7 @@ BEGIN
 		AND g.[SiteDBGroupID] > 0
 	GROUP BY	g.[SiteDBGroupID], 
 				c.[recommend]
-	UNION
+	UNION ALL
 	SELECT	'translog' AS TableName,
 			[SiteDBGroupID], 
 			[Recommend],  
@@ -86,7 +86,7 @@ BEGIN
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
-	UNION
+	UNION ALL
 	SELECT	'bettransm' AS TableName,
 			bm.[SiteDBGroupID], 
 			c.[Recommend], 
@@ -103,6 +103,5 @@ BEGIN
 		AND bm.[SiteDBGroupID] > 0
 	GROUP BY	bm.[SiteDBGroupID], 
 				c.[recommend]
-	ORDER BY TableName,SiteDBGroupID,Recommend
 END
 

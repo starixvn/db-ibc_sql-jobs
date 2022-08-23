@@ -12,9 +12,14 @@ Revisions:
 BEGIN
 	SET NOCOUNT ON
 	
-	SELECT  COUNT(1) AS TotalCount
-	FROM	bodb02.dbo.Transfer WITH (NOLOCK) 
-	WHERE	bettype = 20000
+	DECLARE @WinlostDate SMALLDATETIME = NULL
+	SET @WinlostDate = (SELECT	TOP 1  winlostdate
+						FROM	bodb02.dbo.Transfer t WITH(NOLOCK)
+						WHERE	bettype = 20000 AND custid = 3)
+
+	SELECT  custid AS Custid, COUNT(1) AS TotalCount
+	FROM	bodb02.dbo.Transfer WITH (NOLOCK, INDEX=IX_WinlostDate) 
+	WHERE	bettype = 20000 AND winlostdate = @WinlostDate
 	GROUP BY custid
 	HAVING COUNT(1) > 1
 
