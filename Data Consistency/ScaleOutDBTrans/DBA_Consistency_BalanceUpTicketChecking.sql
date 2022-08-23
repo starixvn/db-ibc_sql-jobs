@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[ScaleOut_Consistency_BalanceUpTicketChecking] @row_cnt INT OUTPUT
+CREATE PROCEDURE [dbo].[DBA_Consistency_BalanceUpTicketChecking] @row_cnt INT OUTPUT
 AS 
 /*
 Created by: 20220819@Victoria

@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSIG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[SiteDB_ScaleOut_Consistency_CheckTicketCount]
+CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_CheckTicketCount]
 	@tablename		VARCHAR(50)		= NULL
 AS 
 /*

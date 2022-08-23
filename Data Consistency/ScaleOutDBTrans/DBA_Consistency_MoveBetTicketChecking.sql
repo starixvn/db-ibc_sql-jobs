@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[ScaleOut_Consistency_MoveBetTicketChecking] @row_cnt INT OUTPUT
+ALTER PROCEDURE [dbo].[DBA_Consistency_MoveBetTicketChecking] @row_cnt INT OUTPUT
 AS 
 /*
 Created by: 20220819@Victoria

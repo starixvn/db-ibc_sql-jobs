@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[ScaleOut_Consistency_CheckSumTicket]
+CREATE PROCEDURE [dbo].[DBA_Consistency_CheckSumTicket]
 	@tablename		VARCHAR(50)		= NULL
 AS 
 /*
