@@ -1,0 +1,80 @@
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+CREATE PROCEDURE [dbo].[DBA_Consistency_R51_AutoTransfer_Check_TotalTicketCorrect]
+(
+	@ScheduledDate DATE = NULL
+	,@ErrCode		INT				= 0		OUTPUT
+	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
+	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
+)
+AS
+/*
+	Created: 20220823@Sol
+	Task: Data consistency - rule 51
+	DB: DBCONSISTENCY-bodb_Consistency
+
+	Revisions: 
+		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
+						- Check total ticket is correctly insert related to the number of super accounts - [Redmine:#155714]
+
+	Param's Expanation:
+*/
+BEGIN
+	SET NOCOUNT ON
+	
+	--parameters
+	DECLARE 
+		@totalEstimatedTicket INT = 0
+		,@totalTransferTicket INT = 0
+		,@endOfPreviousMonth DATE
+		,@currentDate DATETIME
+		,@listFromCustSuper VARCHAR(MAX) = ''
+		,@listToCustSuper VARCHAR(MAX) = ''
+		,@forexUsername VARCHAR(50) = 'MYS-Forex G/(L)' --hard code from Acc_LicenseeTransfer_Job
+		,@forexCustID VARCHAR(20) = '' -- using to create a custid list
+
+	--set value for para
+	SELECT 
+		@currentDate = GETDATE(), 
+		@endOfPreviousMonth = EOMONTH(DATEADD(MONTH, - 1, @currentDate))
+
+	SELECT @forexCustID = CAST(c.custid AS VARCHAR(20))
+	FROM bodb02.dbo.custInfo c WITH (NOLOCK)
+	WHERE c.username = @forexUsername
+
+
+	IF (ISNULL(@ScheduledDate, '') = '' ) 
+	BEGIN
+		SET @ScheduledDate = DATEADD(DAY, 5, @endOfPreviousMonth) ---5th of each month
+	END
+
+	--get total super in table LicenseeTransferPool from central DB
+	SELECT 
+		@totalEstimatedTicket = SUM
+								(
+									CASE 
+										WHEN p.Fromcurrency = p.Tocurrency THEN 2 
+										WHEN p.Fromcurrency <> p.Tocurrency THEN 4 
+										ELSE 0 END
+								) OVER (ORDER BY p.TransferId),
+		@listFromCustSuper = @listFromCustSuper + CAST(p.FromCustId AS VARCHAR(20)) + ',',
+		@listToCustSuper = @listToCustSuper + CAST(p.ToCustId AS VARCHAR(20)) + ','
+	FROM DBCTG.bodb02.dbo.LicenseeTransferPool p WITH (NOLOCK)
+	WHERE MonthDate = EOMONTH(DATEADD(MONTH, - 1, GETDATE()))
+
+	--get total ticket from transfer table in siteDB
+	SELECT @totalTransferTicket = Count(1)
+	FROM bodb02.dbo.Transfer t WITH (NOLOCK)
+	WHERE 
+		t.WinlostDate = @ScheduledDate
+		AND t.CustId IN (SELECT DISTINCT value FROM STRING_SPLIT(@listFromCustSuper + @listToCustSuper + @forexCustID, ',') WHERE ISNULL(value, '') <> '')
+
+	--compare value
+	IF (@totalEstimatedTicket <> @totalTransferTicket)
+	BEGIN
+		SELECT	 @ErrCode = 100
+				,@ErrMsg = 'Compare estimated number of transfer tickets (from Super to Licensee Code) equal to actual number of transfer tickets is incorrect'
+				,@SampleData =  'Number of estimated transfer tickets: ' + CAST(@totalEstimatedTicket AS VARCHAR(20)) + ' <> ' + 'Number of actual transfer tickets: ' + CAST(@totalTransferTicket AS VARCHAR(20))
+	END
+
+END
+GO
