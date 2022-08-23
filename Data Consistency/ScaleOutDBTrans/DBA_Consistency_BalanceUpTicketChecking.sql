@@ -12,7 +12,7 @@ Revisions:
 BEGIN
 	SET NOCOUNT ON
 	
-	SELECT  COUNT(1) AS Total_Count
+	SELECT  COUNT(1) AS TotalCount
 	FROM	bodb02.dbo.Transfer WITH (NOLOCK) 
 	WHERE	bettype = 20000
 	GROUP BY custid

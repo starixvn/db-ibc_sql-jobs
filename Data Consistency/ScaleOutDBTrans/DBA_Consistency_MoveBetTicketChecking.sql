@@ -16,7 +16,7 @@ BEGIN
 	EXEC bodb02.dbo.NAP_Admin_GetMovebetDate	@MovebetDate = @MovebetDate OUTPUT
 	--SELECT @MovebetDate
 
-	SELECT  COUNT(1) AS Total_Count
+	SELECT  COUNT(1) AS TotalCount
 	FROM	bodb02.dbo.Transfer WITH (NOLOCK) 
 	WHERE	bettype = 19999 
 		AND WinlostDate = @MovebetDate
