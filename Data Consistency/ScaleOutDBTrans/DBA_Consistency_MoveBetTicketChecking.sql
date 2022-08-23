@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[DBA_Consistency_MoveBetTicketChecking] @row_cnt INT OUTPUT
+CREATE PROCEDURE [dbo].[DBA_Consistency_MoveBetTicketChecking]
 AS 
 /*
 Created by: 20220819@Victoria
@@ -13,13 +13,11 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @MovebetDate SMALLDATETIME = NULL
-	EXEC dbo.NAP_Admin_GetMovebetDate	@MovebetDate = @MovebetDate OUTPUT
+	EXEC bodb02.dbo.NAP_Admin_GetMovebetDate	@MovebetDate = @MovebetDate OUTPUT
 	--SELECT @MovebetDate
 
-	SET @row_cnt = 0
-
-	SELECT  @row_cnt = COUNT(1)
-	FROM dbo.Transfer WITH (NOLOCK) 
+	SELECT  COUNT(1) AS Total_Count
+	FROM	bodb02.dbo.Transfer WITH (NOLOCK) 
 	WHERE	bettype = 19999 
 		AND WinlostDate = @MovebetDate
 	GROUP BY custid

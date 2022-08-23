@@ -1,13 +1,12 @@
 /*<info serverAlias="DBSIG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_CheckTicketCount]
-	@tablename		VARCHAR(50)		= NULL
 AS 
 /*
 Created by: 20220819@Victoria
-Task: Check ticket count by status - SiteDB
+Task: Check ticket count by Status - SiteDB
 DB: DBSIG-bodb02
 Revisions:
-	- 20220819@Victoria: Check ticket count by status - DBCONSISTENCY [Redmine:#175881]
+	- 20220819@Victoria: Check ticket count by Status - DBCONSISTENCY [Redmine:#175881]
 	
 */
 BEGIN
@@ -15,87 +14,82 @@ BEGIN
 
 	DECLARE @yesterday SMALLDATETIME
 	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
-
-	IF @tablename = 'bettrans'
-	BEGIN
-		SELECT	SiteDBGroupID, 
-				recommend, 
-				status, 
-				COUNT(1) AS TicketCount
-		FROM	dbo.bettrans WITH (NOLOCK)
-		WHERE	winlostdate = @yesterday
-			AND SiteDBGroupID > 0
-		GROUP BY	SiteDBGroupID, 
-					recommend, 
-					status
-	END
-	ELSE IF @tablename = 'bettransRnG'
-	BEGIN
-		SELECT	SiteDBGroupID, 
-				recommend, 
-				status, 
-				COUNT(1) AS TicketCount
-		FROM	dbo.bettransRnG WITH (NOLOCK)
-		WHERE	winlostdate = @yesterday
-			AND SiteDBGroupID > 0
-		GROUP BY	SiteDBGroupID, 
-					recommend, 
-					status
-	END
-	ELSE IF @tablename = 'bettransLC'
-	BEGIN
-		SELECT	SiteDBGroupID, 
-				recommend, 
-				status, 
-				COUNT(1) AS TicketCount
-		FROM	dbo.bettransLC WITH (NOLOCK)
-		WHERE	winlostdate = @yesterday
-			AND SiteDBGroupID > 0
-		GROUP BY	SiteDBGroupID, 
-					recommend, 
-					status
-	END
-	ELSE IF @tablename = 'bettransm'
-	BEGIN
-		SELECT	bm.SiteDBGroupID, 
-				c.recommend, 
-				bm.status, 
-				COUNT(1) AS TicketCount
-		FROM	dbo.bettransm bm WITH (NOLOCK) 
-			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = bm.custid
-		WHERE	bm.winlostdate = @yesterday
-			AND bm.SiteDBGroupID > 0
-		GROUP BY	bm.SiteDBGroupID, 
-					c.recommend, 
-					bm.status
-	END
-	ELSE IF @tablename = 'zzzbettrans'
-	BEGIN
-		SELECT	z.SiteDBGroupID, 
-				c.recommend, 
-				z.status, 
-				COUNT(1) AS TicketCount
-		FROM	dbo.zzzbettrans z WITH (NOLOCK)
-			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
-		WHERE	z.winlostdate = @yesterday
-			AND z.SiteDBGroupID > 0
-		GROUP BY	z.SiteDBGroupID, 
-					c.recommend, 
-					z.status
-	END
-	ELSE IF @tablename = 'zzzbettransm'
-	BEGIN
-		SELECT	z.SiteDBGroupID, 
-				c.recommend, 
-				z.status, 
-				COUNT(1) AS TicketCount
-		FROM	dbo.zzzbettransm z WITH (NOLOCK)
-			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
-		WHERE	z.winlostdate = @yesterday
-			AND z.SiteDBGroupID > 0
-		GROUP BY	z.SiteDBGroupID, 
-					c.recommend, 
-					z.status
-	END
+	
+	SELECT	'bettrans' AS TableName,
+			SiteDBGroupID, 
+			Recommend, 
+			Status, 
+			COUNT(1) AS TicketCount
+	FROM	dbo.bettrans WITH (NOLOCK)
+	WHERE	winlostdate = @yesterday
+		AND SiteDBGroupID > 0
+	GROUP BY	SiteDBGroupID, 
+				Recommend, 
+				Status
+	UNION
+	SELECT	'bettransRnG' AS TableName,
+			SiteDBGroupID, 
+			Recommend, 
+			Status, 
+			COUNT(1) AS TicketCount
+	FROM	dbo.bettransRnG WITH (NOLOCK)
+	WHERE	winlostdate = @yesterday
+		AND SiteDBGroupID > 0
+	GROUP BY	SiteDBGroupID, 
+				Recommend, 
+				Status
+	UNION
+	SELECT	'bettransLC' AS TableName,
+			SiteDBGroupID, 
+			Recommend, 
+			Status, 
+			COUNT(1) AS TicketCount
+	FROM	dbo.bettransLC WITH (NOLOCK)
+	WHERE	winlostdate = @yesterday
+		AND SiteDBGroupID > 0
+	GROUP BY	SiteDBGroupID, 
+				Recommend, 
+				Status
+	UNION
+	SELECT	'bettransm' AS TableName,
+			bm.SiteDBGroupID, 				
+			c.Recommend, 
+			bm.Status, 
+			COUNT(1) AS TicketCount
+	FROM	dbo.bettransm bm WITH (NOLOCK) 
+		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = bm.custid
+	WHERE	bm.winlostdate = @yesterday
+		AND bm.SiteDBGroupID > 0
+	GROUP BY	bm.SiteDBGroupID, 
+				c.Recommend, 
+				bm.Status
+	UNION
+	SELECT	'zzzbettrans' AS TableName,
+			z.SiteDBGroupID, 
+			c.Recommend, 
+			z.Status, 
+			COUNT(1) AS TicketCount
+	FROM	dbo.zzzbettrans z WITH (NOLOCK)
+		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
+	WHERE	z.winlostdate = @yesterday
+		AND z.SiteDBGroupID > 0
+	GROUP BY	z.SiteDBGroupID, 
+				c.Recommend, 
+				z.Status
+	UNION
+	SELECT	'zzzbettransm' AS TableName,
+			z.SiteDBGroupID,  
+			c.Recommend, 
+			z.Status, 
+			COUNT(1) AS TicketCount
+	FROM	dbo.zzzbettransm z WITH (NOLOCK)
+		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
+	WHERE	z.winlostdate = @yesterday
+		AND z.SiteDBGroupID > 0
+	GROUP BY	z.SiteDBGroupID, 
+				c.Recommend, 
+				z.Status
+	ORDER BY TableName,SiteDBGroupID,Recommend,Status 
+	
 END
 
