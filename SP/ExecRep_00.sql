@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02,DBSIG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[ExecRep_00] 
 	@Winlostdate SMALLDATETIME = NULL
 	,@Target VARCHAR(30) = 'DBTXN' -- DBTRANS/REPLICATED
@@ -41,13 +41,13 @@ BEGIN
 	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID ()	 
 	
 	-- Check Central DBTRANS
-	IF @Target = 'DBTXN' AND @isSiteDB = 0 AND ( @SiteDBGroupID <> 0 OR @@SERVERNAME NOT IN ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS')) RETURN
+	IF @Target = 'DBTXN' AND @isSiteDB = 0 AND @SiteDBGroupID <> 0 RETURN
 	
 	-- Check SiteDB
-	IF @Target = 'DBTXN' AND @isSiteDB = 1 AND (@SiteDBGroupID = 0 AND @SiteDBGroupID = 1023)  RETURN
+	IF @Target = 'DBTXN' AND @isSiteDB = 1 AND @SiteDBGroupID IN (0,1023) RETURN
 	
 	--Check replicated server
-	IF @Target = 'REPLICATED' AND ( @@SERVERNAME IN  ('DBTRANS', 'TESTDBTRANS', 'SITDBTRANS') OR @SiteDBGroupID < 1023) RETURN
+	IF @Target = 'REPLICATED' AND @SiteDBGroupID < 1023 RETURN
 	
 	
 	IF OBJECT_ID (@TableName, N'U') IS NULL RETURN
