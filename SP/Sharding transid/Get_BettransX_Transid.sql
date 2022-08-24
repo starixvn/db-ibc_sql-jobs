@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="Dot_Member,Dot_Intg,bodbAdminNet" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="Dot_Member,Dot_Intg,Dot_Bonus,bodbAdminNet,bodbDownlineNet" isFunction="0" isNested="0"></info>*/
 
 create PROCEDURE [dbo].[Get_BettransX_Transid] 
 (
