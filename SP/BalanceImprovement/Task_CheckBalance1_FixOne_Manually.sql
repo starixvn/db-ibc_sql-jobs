@@ -137,35 +137,35 @@ BEGIN
 
 		--check have more than groupid on custid
 		IF EXISTS (
-			SELECT ISNULL(SiteDBGroupID, 0) SiteDBGroupID
+			SELECT custid
 			FROM dbo.translog WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY SiteDBGroupID HAVING COUNT(DISTINCT SiteDBGroupID) > 1
+			GROUP BY custid HAVING COUNT(DISTINCT SiteDBGroupID) > 1
 			
 			UNION ALL
-			SELECT ISNULL(SiteDBGroupID, 0)
+			SELECT custid
 			FROM dbo.bettransLC WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY SiteDBGroupID HAVING COUNT(DISTINCT SiteDBGroupID) > 1
+			GROUP BY custid HAVING COUNT(DISTINCT SiteDBGroupID) > 1
 			
 			UNION ALL
-			SELECT ISNULL(SiteDBGroupID, 0)
+			SELECT custid
 			FROM dbo.bettransRnG WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY SiteDBGroupID HAVING COUNT(DISTINCT SiteDBGroupID) > 1
+			GROUP BY custid HAVING COUNT(DISTINCT SiteDBGroupID) > 1
 			
 			UNION ALL
-			SELECT ISNULL(SiteDBGroupID, 0)
+			SELECT custid
 			FROM dbo.bettrans WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY SiteDBGroupID HAVING COUNT(DISTINCT SiteDBGroupID) > 1
+			GROUP BY custid HAVING COUNT(DISTINCT SiteDBGroupID) > 1
 			
 			UNION ALL
-			SELECT ISNULL(c.SiteDBGroupID, 0)
+			SELECT t.custid
 			FROM dbo.Transfer t WITH(NOLOCK) 
 				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE t.custid = @custid
-			GROUP BY SiteDBGroupID HAVING COUNT(DISTINCT SiteDBGroupID) > 1
+			GROUP BY t.custid HAVING COUNT(DISTINCT ISNULL(SiteDBGroupID, 0)) > 1
 		)
 		BEGIN
 			SET @result = 333 -->>wrong SiteDBGroupId setting
