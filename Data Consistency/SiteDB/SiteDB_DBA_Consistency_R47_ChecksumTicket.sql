@@ -48,7 +48,7 @@ BEGIN
 	---get total ticket by recommend
 	BEGIN
 		
-		SELECT TOP(@rowPerCall)
+		SELECT --TOP(@rowPerCall)
 			'Transfer' AS TableName,
 			@SiteDBGroupID AS SiteDBGroupID, 
 			Recommend,
@@ -65,7 +65,7 @@ BEGIN
 			
 		UNION ALL
 
-		SELECT TOP(@rowPerCall)
+		SELECT --TOP(@rowPerCall)
 			'TransferInfo' AS TableName,
 			@SiteDBGroupID AS SiteDBGroupID, 
 			t.Recommend, 
@@ -83,7 +83,7 @@ BEGIN
 
 		UNION ALL
 
-		SELECT TOP(@rowPerCall)
+		SELECT --TOP(@rowPerCall)
 			'Transfer_Coll' AS TableName,
 			@SiteDBGroupID AS SiteDBGroupID, 
 			tc.Recommend, 

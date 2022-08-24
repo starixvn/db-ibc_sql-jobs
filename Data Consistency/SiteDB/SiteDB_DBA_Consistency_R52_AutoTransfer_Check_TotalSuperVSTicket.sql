@@ -39,7 +39,15 @@ BEGIN
 
 	--get total super in table LicenseeTransferPool from central DB
 	SELECT 
-		@totalSuper = COUNT(1) OVER(ORDER BY p.TransferId), 
+		@totalSuper = COUNT(1)
+	FROM DBCTG.bodb02.dbo.LicenseeTransferPool p WITH (NOLOCK)
+		INNER JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK)
+			ON p.FromCustId = s.custid
+	WHERE s.SiteDBGroupID > 0 
+		AND MonthDate = EOMONTH(DATEADD(MONTH, - 1, GETDATE()))
+
+	--get list custId
+	SELECT 
 		@listCustSuper = @listCustSuper + CAST(p.FromCustId AS VARCHAR(20)) + ','
 	FROM DBCTG.bodb02.dbo.LicenseeTransferPool p WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK)

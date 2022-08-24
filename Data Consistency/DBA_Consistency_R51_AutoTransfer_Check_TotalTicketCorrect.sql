@@ -28,7 +28,7 @@ BEGIN
 		,@endOfPreviousMonth DATE
 		,@currentDate DATETIME
 		,@listFromCustSuper VARCHAR(MAX) = ''
-		,@listToCustSuper VARCHAR(MAX) = ''
+		,@listToCust VARCHAR(MAX) = ''
 		,@forexUsername VARCHAR(50) = 'MYS-Forex G/(L)' --hard code from Acc_LicenseeTransfer_Job
 		,@forexCustID VARCHAR(20) = '' -- using to create a custid list
 
@@ -55,18 +55,33 @@ BEGIN
 										WHEN p.Fromcurrency = p.Tocurrency THEN 2 
 										WHEN p.Fromcurrency <> p.Tocurrency THEN 4 
 										ELSE 0 END
-								) OVER (ORDER BY p.TransferId),
+								)
+	FROM DBCTG.bodb02.dbo.LicenseeTransferPool p WITH (NOLOCK)
+	WHERE MonthDate = EOMONTH(DATEADD(MONTH, - 1, GETDATE()))
+
+	--get list custId
+	SELECT 
 		@listFromCustSuper = @listFromCustSuper + CAST(p.FromCustId AS VARCHAR(20)) + ',',
-		@listToCustSuper = @listToCustSuper + CAST(p.ToCustId AS VARCHAR(20)) + ','
+		@listToCust = @listToCust + CAST(p.ToCustId AS VARCHAR(20)) + ','
 	FROM DBCTG.bodb02.dbo.LicenseeTransferPool p WITH (NOLOCK)
 	WHERE MonthDate = EOMONTH(DATEADD(MONTH, - 1, GETDATE()))
 
 	--get total ticket from transfer table in siteDB
+	;WITH rs AS
+	(
+		SELECT t.RefNo
+		FROM bodb02.dbo.Transfer t WITH (NOLOCK)
+		WHERE 
+			t.WinlostDate = @ScheduledDate
+			AND t.CustId IN (SELECT DISTINCT value FROM STRING_SPLIT(@listFromCustSuper, ',') WHERE ISNULL(value, '') <> '')
+	)
 	SELECT @totalTransferTicket = Count(1)
 	FROM bodb02.dbo.Transfer t WITH (NOLOCK)
+		INNER JOIN rs 
+			ON rs.RefNo = t.RefNo
 	WHERE 
 		t.WinlostDate = @ScheduledDate
-		AND t.CustId IN (SELECT DISTINCT value FROM STRING_SPLIT(@listFromCustSuper + @listToCustSuper + @forexCustID, ',') WHERE ISNULL(value, '') <> '')
+		AND t.CustId IN (SELECT DISTINCT value FROM STRING_SPLIT(@listFromCustSuper + @listToCust + @forexCustID, ',') WHERE ISNULL(value, '') <> '')
 
 	--compare value
 	IF (@totalEstimatedTicket <> @totalTransferTicket)

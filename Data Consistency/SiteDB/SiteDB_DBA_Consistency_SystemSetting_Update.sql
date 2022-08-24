@@ -2,8 +2,8 @@
 CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_SystemSetting_Update]
 (
 	@SiteDBGroupID SMALLINT,
-	@TransferLastTransId BIGINT = 0,
-	@TransferCollLastTransId BIGINT = 0,
+	@NewTransferLastTransId BIGINT = 0,
+	@NewTransferCollLastTransId BIGINT = 0,
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg VARCHAR(MAX) = '' OUTPUT 
 )
@@ -38,7 +38,7 @@ BEGIN
 		RETURN
 	END
 
-	IF (ISNULL(@TransferLastTransId, 0) = 0 OR ISNULL(@TransferCollLastTransId, 0) = 0)
+	IF (ISNULL(@NewTransferLastTransId, 0) = 0 OR ISNULL(@NewTransferCollLastTransId, 0) = 0)
 	BEGIN
 		SELECT @ErrCode = 101, @ErrMsg = 'Invalid LastTransID!'
 		RETURN
@@ -48,11 +48,11 @@ BEGIN
 	BEGIN
 		
 		UPDATE bodb02.dbo.SystemSettings
-			SET VValue = @TransferLastTransId
+			SET VValue = @NewTransferLastTransId
 		where VName = @transferKey
 			
 		UPDATE bodb02.dbo.SystemSettings
-			SET VValue = @TransferCollLastTransId
+			SET VValue = @NewTransferCollLastTransId
 		where VName = @transferCollKey
 	END
 	

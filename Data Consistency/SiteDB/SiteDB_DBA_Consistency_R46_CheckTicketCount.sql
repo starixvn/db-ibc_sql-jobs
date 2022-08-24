@@ -3,7 +3,9 @@ CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_R46_CheckTicketCount]
 (
 	@SiteDBGroupID SMALLINT OUTPUT,
 	@TransferLastTransId BIGINT OUTPUT,
-	@TransferCollLastTransId BIGINT OUTPUT
+	@TransferCollLastTransId BIGINT OUTPUT,
+	@NewTransferLastTransId BIGINT OUTPUT,
+	@NewTransferCollLastTransId BIGINT OUTPUT
 )
 AS
 /*
@@ -66,27 +68,36 @@ BEGIN
 	---get site group id
 	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
 
+	---get last transid
+	BEGIN
+		SELECT @NewTransferLastTransId = MAX(t.TransId)
+		FROM dbo.Transfer t WITH (NOLOCK)
+		WHERE t.TransId > @transferLastTransId
+
+		SELECT @NewTransferCollLastTransId = MAX(tc.TransId)
+		FROM dbo.Transfer_Coll tc WITH (NOLOCK)
+		WHERE	tc.TransId > @transferCollLastTransId
+
+	END
 	---get total ticket by recommend
 	BEGIN
 		
-		SELECT TOP(@rowPerCall)
+		SELECT --TOP(@rowPerCall)
 			'Transfer' AS TableName,
 			@SiteDBGroupID AS SiteDBGroupID, 
 			Recommend,
-			COUNT(1) OVER(PARTITION BY t.Recommend) AS TicketCount,
-			MAX(t.TransId) OVER(ORDER BY (SELECT NULL)) AS LastTransId
+			COUNT(1) AS TicketCount
 		FROM dbo.Transfer t WITH (NOLOCK)
 		WHERE t.TransId > @transferLastTransId
 		GROUP BY Recommend 
 			
 		UNION ALL
 
-		SELECT TOP(@rowPerCall)
+		SELECT --TOP(@rowPerCall)
 			'TransferInfo' AS TableName,
 			@SiteDBGroupID AS SiteDBGroupID, 
 			t.Recommend, 
-			COUNT(1) OVER(PARTITION BY t.Recommend) AS TicketCount,
-			MAX(t.TransId) OVER(ORDER BY (SELECT NULL)) AS LastTransId
+			COUNT(1) AS TicketCount
 		FROM dbo.TransferInfo ti WITH (NOLOCK)
 			inner join Transfer t with(nolock)
 				on ti.TransId = t.TransId
@@ -95,12 +106,11 @@ BEGIN
 
 		UNION ALL
 
-		SELECT TOP(@rowPerCall)
+		SELECT --TOP(@rowPerCall)
 			'Transfer_Coll' AS TableName,
 			@SiteDBGroupID AS SiteDBGroupID, 
 			tc.Recommend, 
-			COUNT(1) OVER(PARTITION BY t.Recommend) AS TicketCount,
-			MAX(tc.TransId) OVER(ORDER BY (SELECT NULL)) AS LastTransId
+			COUNT(1) AS TicketCount
 		FROM dbo.Transfer_Coll tc WITH (NOLOCK)
 		WHERE	tc.TransId > @transferCollLastTransId
 		GROUP BY tc.Recommend 
