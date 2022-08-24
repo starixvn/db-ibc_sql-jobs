@@ -135,25 +135,25 @@ BEGIN
 			SELECT custid
 			FROM dbo.translog WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY custid HAVING COUNT(DISTINCT SiteDBGroupID) > 1
+			GROUP BY custid HAVING COUNT(DISTINCT ISNULL(SiteDBGroupID, 0)) > 1
 			
 			UNION ALL
 			SELECT custid
 			FROM dbo.bettransLC WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY custid HAVING COUNT(DISTINCT SiteDBGroupID) > 1
+			GROUP BY custid HAVING COUNT(DISTINCT ISNULL(SiteDBGroupID, 0)) > 1
 			
 			UNION ALL
 			SELECT custid
 			FROM dbo.bettransRnG WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY custid HAVING COUNT(DISTINCT SiteDBGroupID) > 1
+			GROUP BY custid HAVING COUNT(DISTINCT ISNULL(SiteDBGroupID, 0)) > 1
 			
 			UNION ALL
 			SELECT custid
 			FROM dbo.bettrans WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY custid HAVING COUNT(DISTINCT SiteDBGroupID) > 1
+			GROUP BY custid HAVING COUNT(DISTINCT ISNULL(SiteDBGroupID, 0)) > 1
 			
 			UNION ALL
 			SELECT t.custid
