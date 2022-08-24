@@ -57,14 +57,14 @@ BEGIN
 										ELSE 0 END
 								)
 	FROM DBCTG.bodb02.dbo.LicenseeTransferPool p WITH (NOLOCK)
-	WHERE MonthDate = EOMONTH(DATEADD(MONTH, - 1, GETDATE()))
+	WHERE MonthDate = @endOfPreviousMonth
 
 	--get list custId
 	SELECT 
 		@listFromCustSuper = @listFromCustSuper + CAST(p.FromCustId AS VARCHAR(20)) + ',',
 		@listToCust = @listToCust + CAST(p.ToCustId AS VARCHAR(20)) + ','
 	FROM DBCTG.bodb02.dbo.LicenseeTransferPool p WITH (NOLOCK)
-	WHERE MonthDate = EOMONTH(DATEADD(MONTH, - 1, GETDATE()))
+	WHERE MonthDate = @endOfPreviousMonth
 
 	--get total ticket from transfer table in siteDB
 	;WITH rs AS

@@ -32,37 +32,48 @@ BEGIN
 	--check if the setting exists or not, if exists, get the value, if not, select min transid and insert the setting
 	--this is for the first time that sp run, next time will get the last transid
 	BEGIN
-		IF NOT EXists ( select 1 from bodb02.dbo.SystemSettings s with(nolock) where s.VName = @transferKey)
-		begin
-			select @minTransID = MIN(t.TransId) from Transfer t with(nolock)
+		IF NOT EXISTS (
+				SELECT 1
+				FROM bodb02.dbo.SystemSettings s WITH (NOLOCK)
+				WHERE s.VName = @transferKey
+				)
+		BEGIN
+			SELECT @minTransID = MIN(t.TransId)
+			FROM Transfer t WITH (NOLOCK)
 
 			---insert to table setting
-			INsert into bodb02.dbo.SystemSettings(VName, VValue)
-			values (@transferKey, CAST(@minTransID AS VARCHAR(200)))
-		end
+			INSERT INTO bodb02.dbo.SystemSettings (VName,VValue)
+			VALUES (@transferKey,CAST(@minTransID AS VARCHAR(200))
+				)
+		END
 		ELSE --get value from system setting
 		BEGIN
-			select @transferLastTransId = CAST(VValue AS BIGINT) 
-			from bodb02.dbo.SystemSettings s with(nolock) 
-			where VName = @transferKey
-		end
+			SELECT @transferLastTransId = CAST(VValue AS BIGINT)
+			FROM bodb02.dbo.SystemSettings s WITH (NOLOCK)
+			WHERE VName = @transferKey
+		END
 
 		--transferCollection
-		IF NOT EXists ( select 1 from bodb02.dbo.SystemSettings s with(nolock) where s.VName = @transferCollKey)
-		begin
-			select @minTransID = MIN(t.TransId) 
-			from Transfer_Coll t with(nolock)
+		IF NOT EXISTS (
+				SELECT 1
+				FROM bodb02.dbo.SystemSettings s WITH (NOLOCK)
+				WHERE s.VName = @transferCollKey
+				)
+		BEGIN
+			SELECT @minTransID = MIN(t.TransId)
+			FROM Transfer_Coll t WITH (NOLOCK)
 
 			---insert to table setting
-			INsert into bodb02.dbo.SystemSettings(VName, VValue)
-			values (@transferCollKey, CAST(@minTransID AS VARCHAR(200)))
-		end
+			INSERT INTO bodb02.dbo.SystemSettings (VName,VValue)
+			VALUES (@transferCollKey,CAST(@minTransID AS VARCHAR(200))
+				)
+		END
 		ELSE --get value from system setting
 		BEGIN
-			select @transferCollLastTransId = CAST(VValue AS BIGINT) 
-			from bodb02.dbo.SystemSettings s with(nolock) 
-			where VName = @transferCollKey
-		end
+			SELECT @transferCollLastTransId = CAST(VValue AS BIGINT)
+			FROM bodb02.dbo.SystemSettings s WITH (NOLOCK)
+			WHERE VName = @transferCollKey
+		END
 	END
 
 	---get site group id

@@ -76,8 +76,8 @@ BEGIN
 						)
 				) AS Total_CheckSum_Agg
 		FROM dbo.TransferInfo ti WITH (NOLOCK)
-			inner join Transfer t with(nolock)
-				on ti.TransId = t.TransId
+			INNER JOIN Transfer t with(nolock)
+				ON ti.TransId = t.TransId
 		WHERE	t.TransId > @TransferLastTransId
 		GROUP BY t.Recommend 
 

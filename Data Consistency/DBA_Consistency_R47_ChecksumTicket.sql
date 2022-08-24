@@ -37,10 +37,10 @@ BEGIN
 						)
 				) AS Total_CheckSum_Agg
 	FROM bodb02.dbo.Transfer t WITH (NOLOCK)
-		inner join bodb02.dbo.Customer c with(nolock)
-			on t.CustId = c.custid
-		inner join bodb02.dbo.Site s with(nolock)
-			on s.site = c.site
+		INNER JOIN bodb02.dbo.Customer c WITH(NOLOCK)
+			ON t.CustId = c.custid
+		INNER JOIN bodb02.dbo.Site s WITH(NOLOCK)
+			ON s.site = c.site
 	WHERE t.TransId > @transferLastTransId
 		AND s.SiteDBGroupID = @SiteDBGroupID
 	GROUP BY t.Recommend 
@@ -58,13 +58,14 @@ BEGIN
 						)
 				) AS Total_CheckSum_Agg
 	FROM bodb02.dbo.TransferInfo ti WITH (NOLOCK)
-		inner join bodb02.dbo.Transfer t with(nolock)
-			on ti.TransId = t.TransId
-		inner join bodb02.dbo.Customer c with(nolock)
-			on t.CustId = c.custid
-		inner join bodb02.dbo.Site s with(nolock)
-			on s.site = c.site
-	WHERE	t.TransId > @transferLastTransId
+		INNER JOIN bodb02.dbo.Transfer t WITH(NOLOCK)
+			ON ti.TransId = t.TransId
+		INNER JOIN bodb02.dbo.Customer c WITH(NOLOCK)
+			ON t.CustId = c.custid
+		INNER JOIN bodb02.dbo.Site s WITH(NOLOCK)
+			ON s.site = c.site
+	WHERE t.TransId > @transferLastTransId
+		AND s.SiteDBGroupID = @SiteDBGroupID
 	GROUP BY t.Recommend 
 
 	UNION ALL
@@ -80,11 +81,12 @@ BEGIN
 						)
 				) AS Total_CheckSum_Agg
 	FROM bodb02.dbo.Transfer_Coll tc WITH (NOLOCK)
-		inner join bodb02.dbo.Customer c with(nolock)
-			on tc.CustId = c.custid
-		inner join bodb02.dbo.Site s with(nolock)
-			on s.site = c.site
-	WHERE	tc.TransId > @transferCollLastTransId
+		INNER JOIN bodb02.dbo.Customer c WITH(NOLOCK)
+			ON tc.CustId = c.custid
+		INNER JOIN bodb02.dbo.Site s WITH(NOLOCK)
+			ON s.site = c.site
+	WHERE tc.TransId > @transferCollLastTransId
+		AND s.SiteDBGroupID = @SiteDBGroupID
 	GROUP BY tc.Recommend 
 
 END

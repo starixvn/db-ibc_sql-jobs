@@ -49,11 +49,11 @@ BEGIN
 		
 		UPDATE bodb02.dbo.SystemSettings
 			SET VValue = @NewTransferLastTransId
-		where VName = @transferKey
+		WHERE VName = @transferKey
 			
 		UPDATE bodb02.dbo.SystemSettings
 			SET VValue = @NewTransferCollLastTransId
-		where VName = @transferCollKey
+		WHERE VName = @transferCollKey
 	END
 	
 END

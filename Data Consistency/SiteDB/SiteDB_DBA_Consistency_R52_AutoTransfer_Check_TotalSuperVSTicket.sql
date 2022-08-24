@@ -44,7 +44,7 @@ BEGIN
 		INNER JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK)
 			ON p.FromCustId = s.custid
 	WHERE s.SiteDBGroupID > 0 
-		AND MonthDate = EOMONTH(DATEADD(MONTH, - 1, GETDATE()))
+		AND MonthDate = @endOfPreviousMonth
 
 	--get list custId
 	SELECT 
@@ -53,7 +53,7 @@ BEGIN
 		INNER JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK)
 			ON p.FromCustId = s.custid
 	WHERE s.SiteDBGroupID > 0 
-		AND MonthDate = EOMONTH(DATEADD(MONTH, - 1, GETDATE()))
+		AND MonthDate = @endOfPreviousMonth
 
 	--get total ticket from transfer table in siteDB
 	SELECT @totalTransferTicket = Count(1)
