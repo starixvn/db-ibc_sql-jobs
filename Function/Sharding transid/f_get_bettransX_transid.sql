@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="1" isNested=""></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="Dot_Member,Dot_Intg,Dot_Bonus,bodbAdminNet,bodbDownlineNet" viewers="" isFunction="1" isNested=""></info>*/
 
 CREATE FUNCTION [dbo].[f_get_bettransX_transid]()
 RETURNS [bigint] WITH EXECUTE AS CALLER
