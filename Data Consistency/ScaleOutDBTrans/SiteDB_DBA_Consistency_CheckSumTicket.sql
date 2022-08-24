@@ -24,7 +24,7 @@ BEGIN
 									[liveindicator], [betteam], [creator], [refno], [comstatus], [betfrom], [betcheck], [checktime], [oddsspread], [actualrate], [matchid], 
 									[Recommend], [mrecommend], [ruben], [betid], [statuswinlost], [modds], [bettype], [betdaqid], [actual_stake], [currency], [ip], [transdesc], 
 									[sdiscount], [scomm], [spositiontaking], [swinlost], [srecommend], [Username], [CurrencyName], [virtualrate], [oddstype], [statusID], [currency2], 
-									[balance], [transid2], [WalletType], [BonusID], [RefCode])) AS Total_CheckSum_Agg
+									[balance], [transid2], [WalletType], [BonusID], [RefCode])) AS TotalCheckSumAgg
 	FROM	dbo.bettrans WITH (NOLOCK)
 	WHERE	[winlostdate] = @yesterday
 		AND [SiteDBGroupID] > 0
@@ -38,7 +38,7 @@ BEGIN
 									[adiscount], [sdiscount], [creator], [betfrom], [virtualrate], [actualrate], [actual_stake], [currency], [CurrencyName], [Recommend], 
 									[mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], [gameID], [vendorID], [GameId3rd], 
 									[TranId3rd], [RefNo], [IsSum], [winlost], [awinlost], [mwinlost], [swinlost], [playercomm], [comm], [acomm], [scomm], [Transdate3rd], 
-									[SiteID], [Additional], [JackpotInfo], [RefNo2], [ContributionRate], [BetStake], [ContributionStake3rd])) AS Total_CheckSum_Agg
+									[SiteID], [Additional], [JackpotInfo], [RefNo2], [ContributionRate], [BetStake], [ContributionStake3rd])) AS TotalCheckSumAgg
 	FROM	dbo.bettransRnG WITH (NOLOCK)
 	WHERE	[winlostdate] = @yesterday
 		AND [SiteDBGroupID] > 0
@@ -52,7 +52,7 @@ BEGIN
 									[discount], [adiscount], [sdiscount], [creator], [betfrom], [virtualrate], [actualrate], [actual_stake], [currency], [CurrencyName], 
 									[Recommend], [mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], [gameID], [vendorID], [GameId3rd], 
 									[TranId3rd], [RefNo], [IsSum], [winlost], [awinlost], [mwinlost], [swinlost], [playercomm], [comm], [acomm], [scomm], [Transdate3rd], [NetStake], 
-									[SiteID])) AS Total_CheckSum_Agg
+									[SiteID])) AS TotalCheckSumAgg
 	FROM	dbo.bettransLC WITH (NOLOCK)
 	WHERE	[winlostdate] = @yesterday
 		AND [SiteDBGroupID] > 0
@@ -65,7 +65,7 @@ BEGIN
 			CHECKSUM_AGG(CHECKSUM(	g.[custid], g.[oddsid], g.[odds], g.[stake], g.[status], g.[winlost], g.[betteam], g.[creator], g.[refno], g.[betfrom], g.[checktime], 
 									[apositiontaking], g.[mpositiontaking], g.[tpositiontaking], g.[awinlost], g.[mwinlost], g.[playerdiscount], g.[discount], g.[adiscount], g.[playercomm], g.[comm], 
 									[acomm], g.[actualrate], g.[matchid], g.[matchdate], g.[statuswinlost], g.[ruben], g.[bettype], g.[spositiontaking], g.[swinlost], g.[sdiscount], g.[scomm], g.[statusID], 
-									[virtualrate], g.[SiteID], g.[TransDesc], g.[BetID3rd], g.[actual_stake], g.[netstake])) AS Total_CheckSum_Agg
+									[virtualrate], g.[SiteID], g.[TransDesc], g.[BetID3rd], g.[actual_stake], g.[netstake])) AS TotalCheckSumAgg
 	FROM	dbo.bettransG g WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = g.custid
 	WHERE	[winlostdate] = @yesterday
@@ -80,7 +80,7 @@ BEGIN
 									[playerdiscount], [discount], [adiscount], [sdiscount], [creator], [betfrom], [virtualrate], [actualrate], [actual_stake], 
 									[currency], [CurrencyName], [Recommend], [mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], 
 									[gameID], [eventID], [vendorID], [Gameid3rd], [Tranid3rd], [custom1], [liveindicator], [custom2], [custom3], [SiteId], 
-									[checkCount])) AS Total_CheckSum_Agg
+									[checkCount])) AS TotalCheckSumAgg
 	FROM	dbo.translog WITH (NOLOCK)
 	WHERE	[winlostdate] = @yesterday
 		AND [SiteDBGroupID] > 0
@@ -96,7 +96,7 @@ BEGIN
 									bm.[mwinlost], bm.[playerdiscount], bm.[discount], bm.[adiscount], bm.[playercomm], bm.[comm], bm.[acomm], bm.[actualrate], bm.[matchid], 
 									bm.[matchdate], bm.[finalodds], bm.[isfinish], bm.[statuswinlost], bm.[ruben], bm.[bettype], bm.[spositiontaking], bm.[swinlost], 
 									bm.[sdiscount], bm.[scomm], bm.[statusID], bm.[transdesc], bm.[SecAcceptFlag], bm.[SecAcceptTime], bm.[LiveBetAcceptTime], 
-									bm.[PriceMultiplier])) AS Total_CheckSum_Agg
+									bm.[PriceMultiplier])) AS TotalCheckSumAgg
 	FROM	dbo.bettransm bm WITH (NOLOCK) 
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = bm.custid
 	WHERE	bm.[winlostdate] = @yesterday
