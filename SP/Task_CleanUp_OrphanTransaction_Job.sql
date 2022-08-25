@@ -13,7 +13,7 @@ Revisions:
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @Days AS TABLE (ScheduleId TINYINT, RunningDay DATETIME, IsFinish BIT DEFAULT (0))
+	DECLARE @Days AS TABLE (ScheduleId TINYINT, RunningDay DATETIME)
 	DECLARE @MovebetDate SMALLDATETIME = NULL, @batch_cnt INT = 2000
 	INSERT INTO @Days (ScheduleId, RunningDay)
 	EXEC dbo.Task_MoveBetsDayByScheduleSel 
