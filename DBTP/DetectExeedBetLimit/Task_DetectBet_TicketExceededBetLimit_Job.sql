@@ -8,30 +8,30 @@ AS
 	
 	Revisions: 
 		- 20220525@Max: Create SP [Redmine: #170739]
-	
+		- 20220728@July: Scale out DBTRANS - Change maxTransIdSetting to SequenceIdSetting [Redmine: #175965]
+
 	Param's explanation:	
 		- Temp table #tmp_TransId will be created at each parent (Ex: Task_DetectBet_bettrans) SP for each table and will be used inheritance in Task_DetectBet_CustMaxBetSettingSel
 */
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @maxTransId_bettrans BIGINT
-		, @maxTransId_bettransLC BIGINT
-		, @maxTransId_bettransRnG BIGINT
-		, @maxTransId_translog BIGINT
-		, @maxTransId_bettransG BIGINT
-
-		, @batchCount INT = 2000
+	DECLARE @maxSequenceId_bettrans BIGINT
+		  , @maxSequenceId_bettransLC BIGINT
+		  , @maxSequenceId_bettransRnG BIGINT
+		  , @maxSequenceId_translog BIGINT
+		  , @maxSequenceId_bettransG BIGINT
+		  , @batchCount INT = 2000
 	
 	--1. bettrans
 	EXEC dbo.Task_DetectBet_bettrans
 		@batchCount = @batchCount
-		, @maxTransId = @maxTransId_bettrans OUTPUT
+		, @maxSequenceId = @maxSequenceId_bettrans OUTPUT
 
 	--Update Setting
-	IF @maxTransId_bettrans IS NOT NULL
+	IF @maxSequenceId_bettrans IS NOT NULL
 	BEGIN
-		UPDATE c SET c.ConfigValue = @maxTransId_bettrans
+		UPDATE c SET c.ConfigValue = @maxSequenceId_bettrans
 		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'bettrans'
 	END
@@ -40,11 +40,11 @@ BEGIN
 	--2. bettransLC
 	EXEC dbo.Task_DetectBet_bettransLC
 		@batchCount = @batchCount
-		, @maxTransId = @maxTransId_bettransLC OUTPUT
+		, @maxSequenceId = @maxSequenceId_bettransLC OUTPUT
 
-	IF @maxTransId_bettransLC IS NOT NULL
+	IF @maxSequenceId_bettransLC IS NOT NULL
 	BEGIN
-		UPDATE c SET c.ConfigValue = @maxTransId_bettransLC
+		UPDATE c SET c.ConfigValue = @maxSequenceId_bettransLC
 		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'bettransLC'
     END
@@ -53,11 +53,11 @@ BEGIN
 	--3. bettransRnG
 	EXEC dbo.Task_DetectBet_bettransRnG
 		@batchCount = @batchCount
-		, @maxTransId = @maxTransId_bettransRnG OUTPUT
+		, @maxSequenceId = @maxSequenceId_bettransRnG OUTPUT
 
-	IF @maxTransId_bettransRnG IS NOT NULL
+	IF @maxSequenceId_bettransRnG IS NOT NULL
 	BEGIN
-		UPDATE c SET c.ConfigValue = @maxTransId_bettransRnG
+		UPDATE c SET c.ConfigValue = @maxSequenceId_bettransRnG
 		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'bettransRnG'
 	END
@@ -66,11 +66,11 @@ BEGIN
 	--4. translog
 	EXEC dbo.Task_DetectBet_translog
 		@batchCount = @batchCount
-		, @maxTransId = @maxTransId_translog OUTPUT
+		, @maxSequenceId = @maxSequenceId_translog OUTPUT
 
-	IF @maxTransId_translog IS NOT NULL
+	IF @maxSequenceId_translog IS NOT NULL
 	BEGIN
-		UPDATE c SET c.ConfigValue = @maxTransId_translog
+		UPDATE c SET c.ConfigValue = @maxSequenceId_translog
 		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'translog'
 	END
@@ -79,11 +79,11 @@ BEGIN
 	--5. bettransG
 	EXEC dbo.Task_DetectBet_bettransG
 		@batchCount = @batchCount
-		, @maxTransId = @maxTransId_bettransG OUTPUT
+		, @maxSequenceId = @maxSequenceId_bettransG OUTPUT
 
-	IF @maxTransId_bettransG IS NOT NULL
+	IF @maxSequenceId_bettransG IS NOT NULL
 	BEGIN
-		UPDATE c SET c.ConfigValue = @maxTransId_bettransG
+		UPDATE c SET c.ConfigValue = @maxSequenceId_bettransG
 		FROM dbo.CustMaxBetSetting_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'bettransG'
     END

@@ -2,7 +2,7 @@
 ALTER PROCEDURE [dbo].[Task_DetectBet_bettransRnG]
 (	
 	@batchCount INT = 0
-	, @maxTransId BIGINT = NULL OUTPUT
+	, @maxSequenceId BIGINT = NULL OUTPUT
 )
 AS
 /*	Created by: Max
@@ -13,7 +13,8 @@ AS
 	Revisions: 
 		- 20220525@Max: Create SP [Redmine: #170739]
 		- 20220722@Max: Exclude some bettypes [Redmine: #170739]
-	
+		- 20220728@July: Scale out DBTRANS - Change maxTransIdSetting to SequenceIdSetting [Redmine: #175965]
+
 	Param's explanation:		
 */
 BEGIN
@@ -34,11 +35,12 @@ BEGIN
 		, Remark VARCHAR(100)
 		, Gameid3rd NVARCHAR(50)
 		, IsInvalid BIT DEFAULT(0)
+		, SequenceId BIGINT
 	)
 
-	DECLARE @maxTransId_setting BIGINT, @SyncHistoryDataLastTime DATETIME
+	DECLARE @maxSequenceId_setting BIGINT, @SyncHistoryDataLastTime DATETIME
 	
-	SELECT @maxTransId_setting = CONVERT(BIGINT, c.ConfigValue)
+	SELECT @maxSequenceId_setting = CONVERT(BIGINT, c.ConfigValue)
 	FROM dbo.CustMaxBetSetting_Config c WITH (NOLOCK)
 	WHERE c.ConfigName = 'bettransRnG'
 
@@ -46,18 +48,19 @@ BEGIN
 	FROM dbo.CustMaxBetSetting_Config c WITH (NOLOCK)
 	WHERE c.ConfigName = 'SyncHistoryDataLastTime'
 
-	INSERT INTO #tmp_TransId (TransId, CustId, sporttype, bettype, stake, srecommend, recommend, isLive, transdate, Remark)
+	INSERT INTO #tmp_TransId (TransId, CustId, sporttype, bettype, stake, srecommend, recommend, isLive, transdate, Remark, SequenceId)
 	SELECT TOP(@batchCount) b.transid, b.custid, b.productID, b.gameID, b.stake, b.srecommend, b.recommend, 0, b.transdate
 		, CASE WHEN bt.typedesc = 'BuyBonus' THEN '1' ELSE NULL END
+		, b.sequenceid
 	FROM dbo.bettransRnG b WITH (NOLOCK)
 		INNER JOIN dbo.bettype bt WITH (NOLOCK) ON bt.typeid = b.gameID
-	WHERE b.transid > @maxTransId_setting
+	WHERE b.SequenceID > @maxSequenceId_setting
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
 		AND b.productID IN (208,209,212,248,165,247,232,234,237,238,167,172,174,150,200,224,171,173)
 	ORDER BY  b.transid ASC
 
-	SET @maxTransId = (SELECT MAX(TransId) FROM #tmp_TransId)
+	SET @maxSequenceId = (SELECT MAX(SequenceId) FROM #tmp_TransId)
 
 	--Remove unsupport deposit ticket
 	DELETE b
