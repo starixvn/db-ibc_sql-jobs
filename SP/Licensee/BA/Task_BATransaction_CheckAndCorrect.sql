@@ -30,14 +30,15 @@ AS
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
+		- 20220721@Evan: Integrate new transid, Enhance performance [Redmine: #175640]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
 	-- Query data with DONE status
-	DECLARE @BATransaction TABLE (custid INT, transid BIGINT, transdate DATETIME)
-	DECLARE @BAHistory_Done TABLE (custid INT, ondate DATETIME, offdate DATETIME)
+	DECLARE @BATransaction TABLE (SequenceID BIGINT, custid INT, transid BIGINT, transdate DATETIME, INDEX IX_SequenceID (SequenceID))
+	DECLARE @BAHistory_Done TABLE (ID INT IDENTITY (1,1) PRIMARY KEY, custid INT, ondate DATETIME, offdate DATETIME)
 
 	INSERT INTO @BAHistory_Done
 	SELECT CustID, OnDate, OffDate
@@ -49,23 +50,23 @@ BEGIN
 	)
 	AND status = 'Done'
 
-	DECLARE @maxTransId BIGINT
-	SELECT @maxTransId = CAST(ISNULL(vvalue,0) AS BIGINT)
+	DECLARE @maxSequenceID BIGINT
+	SELECT @maxSequenceID = CAST(ISNULL(vvalue,0) AS BIGINT)
 	FROM bodb_licensee.dbo.LICSettings WITH (NOLOCK)
 	WHERE vname = 'BA_transid'
 
-	DECLARE @custid INT, @ondate DATETIME, @offdate DATETIME, @cnt INT
+	DECLARE @custid INT, @ondate DATETIME, @offdate DATETIME, @cnt INT, @ID INT = 1
 
-	IF @@SERVERNAME IN ('DB042', 'DB055', 'DB054', 'DB054C2\DB054', 'SITDB042', 'DB232\SQLSERVER2008R2', 'DB233\SQLSERVER2008R2')
+	IF @@SERVERNAME IN ('DB055', 'DB054', 'SITDB055', 'TESTDB055', 'DB-61\DevDB055')
 	BEGIN
-		StartLoop_042:
-			SELECT TOP 1 @custid = custid, @ondate = ondate, @offdate = offdate FROM @BAHistory_Done
+		StartLoop_DBBOF:
+			SELECT @custid = custid, @ondate = ondate, @offdate = offdate FROM @BAHistory_Done WHERE ID = @ID
 
 			SELECT @cnt = @@ROWCOUNT
-			IF @cnt = 0 GOTO EndLoop_042
+			IF @cnt = 0 GOTO EndLoop_DBBOF
 
 			INSERT INTO @BATransaction
-			SELECT custid, transid, transdate
+			SELECT SequenceID, custid, transid, transdate
 			FROM dbo.bettrans WITH (NOLOCK)
 			WHERE custid = @custid
 				AND transdate BETWEEN @ondate AND @offdate
@@ -82,21 +83,23 @@ BEGIN
 				AND statusID IN (0, 1)
 
 			DELETE FROM @BAHistory_Done
-			WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate
+			WHERE ID = @ID
 
-			GOTO StartLoop_042
-		EndLoop_042:
+			SET @ID = @ID + 1
+
+			GOTO StartLoop_DBBOF
+		EndLoop_DBBOF:
 	END
 	ELSE
 	BEGIN
 		StartLoop:
-			SELECT TOP 1 @custid = custid, @ondate = ondate, @offdate = offdate FROM @BAHistory_Done
+			SELECT @custid = custid, @ondate = ondate, @offdate = offdate FROM @BAHistory_Done WHERE ID = @ID
 
 			SELECT @cnt = @@ROWCOUNT
 			IF @cnt = 0 GOTO EndLoop
 
 			INSERT INTO @BATransaction
-			SELECT custid, transid, transdate
+			SELECT SequenceID, custid, transid, transdate
 			FROM dbo.bettrans WITH (NOLOCK)
 			WHERE custid = @custid
 				AND transdate BETWEEN @ondate AND @offdate
@@ -112,14 +115,16 @@ BEGIN
 				AND bettype NOT IN (901, 911)
 
 			DELETE FROM @BAHistory_Done
-			WHERE custid = @custid AND ondate = @ondate AND offdate = @offdate
+			WHERE ID = @ID
+
+			SET @ID = @ID + 1
 
 			GOTO StartLoop
 		EndLoop:
 	END
 
 	-- Query data with Running status
-	DECLARE @BAHistory_Running TABLE (custid INT, ondate DATETIME)
+	DECLARE @BAHistory_Running TABLE (ID INT Identity (1,1) PRIMARY KEY, custid INT, ondate DATETIME)
 
 	INSERT INTO @BAHistory_Running
 	SELECT custid, ondate
@@ -131,18 +136,18 @@ BEGIN
 	)
 	AND Status = 'running'
 
-	DECLARE @custid_r INT, @ondate_r DATETIME, @cnt_r INT
+	DECLARE @custid_r INT, @ondate_r DATETIME, @cnt_r INT, @ID_r INT = 1
 
-	IF @@SERVERNAME IN ('DB042', 'DB055', 'DB054', 'DB054C2\DB054', 'SITDB042', 'DB232\SQLSERVER2008R2', 'DB233\SQLSERVER2008R2')
+	IF @@SERVERNAME IN ('DB055', 'DB054', 'SITDB055', 'TESTDB055', 'DB-61\DevDB055')
 	BEGIN
-		StartLoop_r_042:
-			SELECT TOP 1 @custid_r = custid, @ondate_r = ondate FROM @BAHistory_Running
+		StartLoop_r_DBBOF:
+			SELECT @custid_r = custid, @ondate_r = ondate FROM @BAHistory_Running WHERE ID = @ID_r
 
 			SELECT @cnt_r = @@ROWCOUNT
-			IF @cnt_r = 0 GOTO EndLoop_r_042
+			IF @cnt_r = 0 GOTO EndLoop_r_DBBOF
 
 			INSERT INTO @BATransaction
-			SELECT custid, transid, transdate
+			SELECT SequenceID, custid, transid, transdate
 			FROM dbo.bettrans WITH (NOLOCK)
 			WHERE custid = @custid_r
 				AND transdate >= @ondate_r
@@ -159,21 +164,23 @@ BEGIN
 				AND statusID IN (0, 1)
 
 			DELETE FROM @BAHistory_Running
-			WHERE custid = @custid_r AND ondate = @ondate_r
+			WHERE ID = @ID_r
 
-			GOTO StartLoop_r_042
-		EndLoop_r_042:
+			SET @ID_r = @ID_r + 1
+
+			GOTO StartLoop_r_DBBOF
+		EndLoop_r_DBBOF:
 	END
 	ELSE
 	BEGIN
 		StartLoop_r:
-			SELECT TOP 1 @custid_r = custid, @ondate_r = ondate FROM @BAHistory_Running
+			SELECT @custid_r = custid, @ondate_r = ondate FROM @BAHistory_Running WHERE ID = @ID_r
 
 			SELECT @cnt_r = @@ROWCOUNT
 			IF @cnt_r = 0 GOTO EndLoop_r
 
 			INSERT INTO @BATransaction
-			SELECT custid, transid, transdate
+			SELECT SequenceID, custid, transid, transdate
 			FROM dbo.bettrans WITH (NOLOCK)
 			WHERE custid = @custid_r
 				AND transdate >= @ondate_r
@@ -189,13 +196,15 @@ BEGIN
 				AND bettype NOT IN (901, 911)
 
 			DELETE FROM @BAHistory_Running
-			WHERE custid = @custid_r AND ondate = @ondate_r
+			WHERE ID = @ID_r
+
+			SET @ID_r = @ID_r + 1
 
 			GOTO StartLoop_r
 		EndLoop_r:
 	END
 
-	DELETE FROM @BATransaction WHERE transid > @maxTransId
+	DELETE FROM @BATransaction WHERE SequenceID > @maxSequenceID
 
 	IF (SELECT COUNT(a.transid)
 		FROM @BATransaction a
@@ -252,7 +261,7 @@ BEGIN
 				,VValue2 = ''
 			WHERE VName = 'BA_MissingTransID'
 
-			SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + '. The job has just inserted the missing tickets. Current VValue: ' + CAST(ISNULL(@maxTransId, 0) AS VARCHAR(20))
+			SELECT @alert = 'Missing one or more BA tickets: ' + @tickets + '. The job has just inserted the missing tickets. Current VValue: ' + CAST(ISNULL(@maxSequenceID, 0) AS VARCHAR(20))
 			RAISERROR (@alert, 16, 1)
 		END
 	END

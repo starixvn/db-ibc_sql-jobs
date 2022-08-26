@@ -36,6 +36,8 @@ AS
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
+		- 20220721@Evan: Integrate new transid [Redmine: #175640]
+
 */
 
 BEGIN
@@ -58,13 +60,13 @@ BEGIN
 	FROM bodb_licensee.dbo.LICSettings WITH (ROWLOCK)
 	WHERE vname = 'BA_transid'
 
-	SELECT @maxtransID = MAX(transid)
-	FROM dbo.bettrans WITH(NOLOCK) --WHERE transid < 100000000000
+	SELECT @maxtransID = MAX(SequenceID)
+	FROM dbo.bettrans WITH(NOLOCK)
 
 	INSERT INTO @temptrans (TransId, TransDate, CustId, Recommend, SRecommend)
 	SELECT transid, transdate, custid, recommend, srecommend
-	FROM dbo.bettrans WITH(NOLOCK, INDEX=PK_bettrans) --IXU_transid/PK_bettrans
-	WHERE transid BETWEEN @smallID AND @maxtransID
+	FROM dbo.bettrans WITH(NOLOCK)
+	WHERE SequenceID BETWEEN @smallID AND @maxtransID
 		AND (bettype < 31
 				OR (bettype BETWEEN 121 AND 999)
 				OR (bettype BETWEEN 1301 AND 1399)
@@ -78,6 +80,7 @@ BEGIN
 		AND (bettype < 901 OR bettype > 904)
 		AND (bettype < 911 OR bettype > 914)
 		AND bettype <> 999  --Exclude: Licensee Spread Setting
+	
 
 	IF @@ROWCOUNT <> 0
 	BEGIN

@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20191022@Percy: Initialize SP [RedmineID: #103656]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20220724@Evan: Enhance code [Redmine: #175297]
 */
 
 BEGIN
@@ -23,15 +24,21 @@ BEGIN
 	IF @@ROWCOUNT = 0
 		RETURN
 
+	CREATE TABLE #TempData
+	(
+		TransID	BIGINT,
+		transdate	DATETIME,
+		custid	INT,
+		recommend	INT,
+		srecommend	INT,
+		winlostdate	SMALLDATETIME
+	)
+
+	INSERT INTO #TempData (TransID, transdate, custid, recommend, srecommend, winlostdate)
 	SELECT ba.TransID, ba.transdate, ba.custid, ba.recommend, ba.srecommend, b.winlostdate
-	INTO #TempData
 	FROM bodb_licensee.dbo.LicenseeBATransaction_active ba WITH (ROWLOCK)
 		INNER JOIN dbo.bettrans14 b WITH (NOLOCK) ON b.transid = ba.transid
-
-	DELETE t
-	FROM #TempData t
-		LEFT JOIN @MoveBetSchedule m ON t.winlostdate = m.MoveBetsDay
-	WHERE m.MoveBetsDay IS NULL
+	WHERE b.winlostdate IN (SELECT m.MoveBetsDay FROM @MoveBetSchedule m)
 
 	-- delete LicenseeBATransaction_active
 	DELETE l

@@ -18,7 +18,8 @@ AS
 		- 20200407@Percy: Add @ProductIds to support input product list [RedmineID: #131885]
 		- 20200501@Sophia: Fix bug @bettypeIds [Redmine: #131885]
 		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
-		
+		- 20220721@Evan: Integrate new transid [Redmine: #175640]
+		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - classify data between SiteDB & CentralDB [Redmine: #175297]
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -58,7 +59,8 @@ BEGIN
 		, @RefNo BIGINT, @SqlQuery VARCHAR(8000), @ExchangeRate FLOAT
 		, @LicenseeId INT, @BettypeIds VARCHAR(512), @FirstDateOfLastMonth SMALLDATETIME, @LastDateOfLastMonth SMALLDATETIME
 		, @AdjustmentIndicator VARCHAR(125), @BettingIndicator VARCHAR(125), @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
-	
+		, @TransId BIGINT
+		
 	SELECT @RowId = 1
 	SELECT @FirstDateOfLastMonth = DATEADD(MONTH, DATEDIFF(MONTH, 0, @Today) -1, 0) --First day of last month
 		, @LastDateOfLastMonth = DATEADD(MONTH, DATEDIFF(MONTH, -1, @Today) -1, -1) --Last day of last month
@@ -67,7 +69,7 @@ BEGIN
 
 	--check @WinlostDate less than @MoveBetDay
 	INSERT INTO @BalanceUpTable(BalanceUpDay, MoveBetsDay)
-	EXEC DBEXT.bodb02.dbo.Lrf_SelBalanceUpDay
+	EXEC dbo.Age_SelBalanceUpDay
 	
 	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDay = BalanceUpDay
 	FROM @BalanceUpTable
@@ -96,11 +98,17 @@ BEGIN
 		DROP TABLE #ChargeRateByCurrency
 		RETURN
 	END
-	
+	 
+	--- get SiteDBGroupID
+	DECLARE @SiteDBGroupID SMALLINT;
+	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
+
 	INSERT INTO @LicenseeTable(LicenseeId, LicenseeName, CurrencyId)
-	SELECT DISTINCT LicenseeId, LicenseeName, CurrencyId
-	FROM #LicenseeProductTable
-	GROUP BY LicenseeId, LicenseeName, CurrencyId
+	SELECT DISTINCT l.LicenseeId, l.LicenseeName, l.CurrencyId
+	FROM #LicenseeProductTable l 
+		INNER JOIN DBCUST.CUSTDB.dbo.site s WITH (NOLOCK) ON l.LicenseeName = s.Site 
+	WHERE s.SiteDBGroupID = @SiteDBGroupID
+	GROUP BY l.LicenseeId, l.LicenseeName, l.CurrencyId
 
 	--get party list
 	SET @SqlQuery = ''
@@ -172,7 +180,7 @@ BEGIN
 	INSERT INTO #ChargeRateByCurrency (ChargeId, CurrencyId, Rate)
 	EXEC (@SqlQueryChargeRate)
 
-	DECLARE @FinalData TABLE (CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
+	DECLARE @FinalData TABLE (TransId BIGINT,CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
 			, StatusId TINYINT, Status VARCHAR(10), apositiontaking MONEY, awinlost MONEY, RefNo BIGINT, actualrate FLOAT
 			, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50)
 			, PlayerComm MONEY, Comm MONEY, betfrom NVARCHAR(1))
@@ -387,8 +395,11 @@ BEGIN
 			FROM @FinalData WHERE RefNo IS NULL
 
 			SET @RefNo = 0
-			EXEC dbo.Acc_SelRefNo @refNo = @RefNo OUTPUT
-			SELECT @RefNo = @RefNo + 100000000000
+			EXEC dbo.Get_refno_transid @refNo = @RefNo OUTPUT
+
+			---get new transid 
+			SET @TransId = 0
+			EXEC Get_Bettrans_TransID @TransID = @TransId OUTPUT	
 
 			--get exchange rate
 			SELECT @ExchangeRate = ActualRate
@@ -398,6 +409,7 @@ BEGIN
 			UPDATE @FinalData
 			SET RefNo = @RefNo
 				, ActualRate = @ExchangeRate
+				, TransId = @TransId
 			WHERE WinlostDate = @WinlostDateTmp AND CurrencyId = @CurrencyIdTmp AND Bettype = @BettypeTmp
 		END
 		
@@ -447,7 +459,8 @@ BEGIN
 			OR ISNULL(TransDesc, '') = ''
 			OR ISNULL(RefNo, 0) = 0
 
-		INSERT INTO dbo.bettrans(custid
+		INSERT INTO dbo.bettrans(TransId
+			, custid
 			, transdate
 			, oddsid
 			, hdp1
@@ -508,8 +521,11 @@ BEGIN
 			, balance
 			, SecAcceptFlag
 			, transid2
-			, RecommDate)
-		SELECT custid
+			, RecommDate
+			, RepUpdateTime 
+			, SiteDBGroupID)
+		SELECT TransId
+			, custid
 			, GETDATE() transdate
 			, 0 oddsid
 			, 0 hdp1
@@ -571,6 +587,8 @@ BEGIN
 			, NULL SecAcceptFlag
 			, NULL transid2
 			, NULL RecommDate
+			, SYSDATETIME() RepUpdateTime
+			, @SiteDBGroupID SiteDBGroupID
 		FROM @FinalData
 
 		--WAITFOR DELAY '000:00:00.280'
