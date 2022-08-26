@@ -29,7 +29,7 @@ BEGIN
 			, @maxTransId_bettransRnG BIGINT
 			, @maxTransId_translog BIGINT
 			, @maxTransId_Transfer BIGINT 
-			, @batchCount INT = 2000
+			, @batchCount INT = 4000
 			, @SiteDBGroupID SMALLINT
 
 	SET @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
