@@ -23,6 +23,7 @@ AS
 		- 20220121@Percy: Exclude more Dummy Accounts [RedmineID: #153195]
 		- 20220531@Percy: Exclude Bitcoin [RedmineID: #153195]
 		- 20220606@Percy: Check if apt = 1 then charge rate is null or 0 [RedmineID: #153195]
+		- 20220818@Malcolm: Get PT for SB, Number Games, keno On new tables [RedmineID: #153195]
 	
 	Param's Explanation:
 		@RuleId
@@ -91,7 +92,7 @@ BEGIN
 	INSERT INTO #Member (LicenseeName, Currency, CustId, recommend)
 	SELECT Site, Currency, CustId, recommend
 	FROM (
-		SELECT cs.Site, cs.Currency, c.CustId, a.CustId AS recommend, ROW_NUMBER() OVER(PARTITION BY cs.Site, cs.Currency ORDER BY cs.Site) AS RN
+		SELECT cs.Site, cs.Currency, c.CustId, a.CustId AS recommend, ROW_NUMBER() OVER(PARTITION BY cs.Site, cs.Currency ORDER BY a.CustId) AS RN
 		FROM bodb02.dbo.Dep_CustSuper cs WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.CustInfo a WITH (NOLOCK) ON cs.custid = a.srecommend AND a.roleid = 2 AND a.Enabled = 1
 			OUTER APPLY (
@@ -119,71 +120,14 @@ BEGIN
 	WHERE dcs.IsGroupedPT = 1
 
 	CREATE TABLE #PT (LicenseeName VARCHAR(50), Currency INT, Product3rdId INT, HousePT SMALLMONEY, Rate SMALLMONEY)
-	
-	-- SB
-	BEGIN
-		-- member
-		INSERT INTO #PT (LicenseeName, Currency, Product3rdId, HousePT)
-		SELECT m.LicenseeName, m.Currency, 0, MAX(CONVERT(FLOAT, 1.0 - dcs.apositiontaking))
-		FROM bodb02.dbo.Dep_CustSetting dcs WITH (NOLOCK)
-			INNER JOIN #Member m ON m.CustId = dcs.CustId
-		WHERE dcs.bettype = 1 AND dcs.sporttype = 1 AND dcs.islive = 0 AND dcs.apositiontaking <> 0 -- BA
-		GROUP BY m.LicenseeName, m.Currency
 
-		-- agent
-		INSERT INTO #PT (LicenseeName, Currency, Product3rdId, HousePT)
-		SELECT m.LicenseeName, m.Currency, 0, MAX(CONVERT(FLOAT, 1.0 - dcs.apositiontaking))
-		FROM bodb02.dbo.Dep_CustSetting dcs WITH (NOLOCK)
-			INNER JOIN #Member m ON m.recommend = dcs.CustId AND m.CustId IS NULL
-		WHERE dcs.bettype = 1 AND dcs.sporttype = 1 AND dcs.islive = 0 AND dcs.apositiontaking <> 0 -- BA
-		GROUP BY m.LicenseeName, m.Currency
-	END
-
-	-- Number Games
-	BEGIN
-		-- member
-		INSERT INTO #PT (LicenseeName, Currency, Product3rdId, HousePT)
-		SELECT m.LicenseeName, m.Currency, 2, MAX(CONVERT(FLOAT, 1.0 - dcs.apositiontaking)) AS HousePT
-		FROM bodb02.dbo.Dep_CustSetting3rd dcs WITH (NOLOCK)
-			INNER JOIN #Member m ON m.CustId = dcs.CustId
-			INNER JOIN bodb02.dbo.CustInfo ci WITH (NOLOCK) ON m.CustId = ci.CustId AND ci.DisableNumber = 0
-		WHERE dcs.bettype = 81 AND dcs.sporttype = 161 AND dcs.islive = 0
-		GROUP BY m.LicenseeName, m.Currency
-
-		-- agent
-		INSERT INTO #PT (LicenseeName, Currency, Product3rdId, HousePT)
-		SELECT m.LicenseeName, m.Currency, 2, MAX(CONVERT(FLOAT, 1.0 - dcs.apositiontaking)) AS HousePT
-		FROM bodb02.dbo.Dep_CustSetting3rd dcs WITH (NOLOCK)
-			INNER JOIN #Member m ON m.recommend = dcs.CustId AND m.CustId IS NULL
-			INNER JOIN bodb02.dbo.CustInfo ci WITH (NOLOCK) ON m.recommend = ci.CustId AND ci.DisableNumber = 0
-		WHERE dcs.bettype = 81 AND dcs.sporttype = 161 AND dcs.islive = 0
-		GROUP BY m.LicenseeName, m.Currency
-	END
-	
-	-- Keno
-	BEGIN
-		-- member
-		INSERT INTO #PT (LicenseeName, Currency, Product3rdId, HousePT)
-		SELECT m.LicenseeName, m.Currency, 8, MAX(CONVERT(FLOAT, 1.0 - dcs.apositiontaking)) AS HousePT
-		FROM bodb02.dbo.CustSettingGame dcs WITH (NOLOCK)
-			INNER JOIN #Member m ON m.CustId = dcs.CustId
-			INNER JOIN bodb02.dbo.CustGameType cgt WITH (NOLOCK) ON m.CustId = cgt.CustId AND cgt.GameTypeId = 1 -- Keno Deposit
-		WHERE dcs.bettype = 1501 AND dcs.sporttype = 202 AND cgt.IsDisabled = 0
-		GROUP BY m.LicenseeName, m.Currency
-
-		-- agent
-		INSERT INTO #PT (LicenseeName, Currency, Product3rdId, HousePT)
-		SELECT m.LicenseeName, m.Currency, 8, MAX(CONVERT(FLOAT, 1.0 - dcs.apositiontaking)) AS HousePT
-		FROM bodb02.dbo.CustSettingGame dcs WITH (NOLOCK)
-			INNER JOIN #Member m ON m.recommend = dcs.CustId AND m.CustId IS NULL
-			INNER JOIN bodb02.dbo.CustGameType cgt WITH (NOLOCK) ON m.recommend = cgt.CustId AND cgt.GameTypeId = 1 -- Keno Deposit
-		WHERE dcs.bettype = 1501 AND dcs.sporttype = 202 AND cgt.IsDisabled = 0
-		GROUP BY m.LicenseeName, m.Currency
-	END
-
-	-- Others
+	--Get PT
 	BEGIN
 		CREATE TABLE #ProductSetting (ProductId INT, Product3rdId INT, SportType SMALLINT, BetType SMALLINT, IsLive BIT)
+
+		INSERT INTO #ProductSetting (ProductId, SportType, BetType, IsLive, Product3rdId)
+		VALUES (1, 1, 1, 0, 0)  --SportBook
+
 		INSERT INTO #ProductSetting (ProductId, SportType, BetType, IsLive)
 		SELECT ProductId, SportType, BetType, IsLive
 		FROM (
@@ -191,9 +135,7 @@ BEGIN
 				,ROW_NUMBER() OVER(PARTITION BY ds.ProductId ORDER BY (SELECT NULL)) AS RN
 			FROM bodb02.dbo.Dep_ProductSetting ds WITH (NOLOCK)
 				INNER JOIN bodb02.dbo.Dep_ProductSettingDetail dsd WITH (NOLOCK) ON ds.ProductSettingId = dsd.ProductSettingId
-			WHERE ds.SettingType = 1 -- PT
-				AND dsd.SettingStatus = 0 -- PRO
-				AND ds.ProductId <> 16
+			WHERE (ds.SettingType = 1 AND dsd.SettingStatus = 0 AND ds.ProductId NOT IN (1, 16)) -- SettingType = 1 : PT, SettingStatus = 0 : PRO, ProductId = 16 : E-Sport
 		) p
 		WHERE RN = 1
 
@@ -203,8 +145,6 @@ BEGIN
 			INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON ps.ProductId = p.ProductId
 			INNER JOIN bodb_Licensee.dbo.Product3rd p3 WITH (NOLOCK) ON p.ProductPrefix = p3.ProductPrefix
 
-		DELETE #ProductSetting WHERE Product3rdId IN (0, 2, 8)
-
 		-- member
 		INSERT INTO #PT (LicenseeName, Currency, Product3rdId, HousePT)
 		SELECT LicenseeName, Currency, Product3rdId, MAX(HousePT) AS HousePT
@@ -213,20 +153,20 @@ BEGIN
 			FROM bodb02.dbo.Dep_CustPTGroupSetting_Member dcs WITH (NOLOCK)
 				INNER JOIN #Member m ON m.recommend = dcs.AgentId AND m.IsGroupPT = 1
 				INNER JOIN #ProductSetting ps ON dcs.SportType = ps.SportType AND dcs.BetType = ps.BetType AND dcs.IsLive = ps.IsLive
-				INNER JOIN bodb02.dbo.Dep_ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = ps.SportType AND psp.BetType = ps.BetType
-				INNER JOIN bodb02.dbo.Dep_CustProductStatus cps WITH (NOLOCK) ON m.recommend = cps.CustId
-				CROSS APPLY bodb02.dbo.f_CustSetting_ProductStatusSel (cps.bitmapIsDisabled, psp.bitmapOrder) ds
-			WHERE ds.value = 0
+				LEFT JOIN bodb02.dbo.Dep_ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = ps.SportType AND psp.BetType = ps.BetType
+				LEFT JOIN bodb02.dbo.Dep_CustProductStatus cps WITH (NOLOCK) ON m.recommend = cps.CustId
+				OUTER APPLY bodb02.dbo.f_CustSetting_ProductStatusSel (cps.bitmapIsDisabled, psp.bitmapOrder) ds
+			WHERE ISNULL(ds.value, 1) = 0 OR (ps.ProductId = 1 AND dcs.AgentPT <> 0)
 			GROUP BY ps.Product3rdId, m.LicenseeName, m.Currency
 			UNION ALL
 			SELECT ps.Product3rdId, m.LicenseeName, m.Currency, MAX(CONVERT(FLOAT, 1.0 - dcs.AgentPT / 100.00)) AS HousePT
 			FROM bodb02.dbo.Dep_CustPTSetting_Member dcs WITH (NOLOCK)
 				INNER JOIN #Member m ON m.CustId = dcs.CustId AND m.IsGroupPT = 0
 				INNER JOIN #ProductSetting ps ON dcs.SportType = ps.SportType AND dcs.BetType = ps.BetType AND dcs.IsLive = ps.IsLive
-				INNER JOIN bodb02.dbo.Dep_ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = ps.SportType AND psp.BetType = ps.BetType
-				INNER JOIN bodb02.dbo.Dep_CustProductStatus cps WITH (NOLOCK) ON m.CustId = cps.CustId
-				CROSS APPLY bodb02.dbo.f_CustSetting_ProductStatusSel (cps.bitmapIsDisabled, psp.bitmapOrder) ds
-			WHERE ds.value = 0
+				LEFT JOIN bodb02.dbo.Dep_ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = ps.SportType AND psp.BetType = ps.BetType
+				LEFT JOIN bodb02.dbo.Dep_CustProductStatus cps WITH (NOLOCK) ON m.CustId = cps.CustId
+				OUTER APPLY bodb02.dbo.f_CustSetting_ProductStatusSel (cps.bitmapIsDisabled, psp.bitmapOrder) ds
+			WHERE ISNULL(ds.value, 1) = 0 OR (ps.ProductId = 1 AND dcs.AgentPT <> 0)
 			GROUP BY ps.Product3rdId, m.LicenseeName, m.Currency
 		) t
 		GROUP BY LicenseeName, Currency, Product3rdId
@@ -237,10 +177,10 @@ BEGIN
 		FROM bodb02.dbo.Dep_CustPTSetting_Agent dcs WITH (NOLOCK)
 			INNER JOIN #Member m ON m.recommend = dcs.CustId AND m.IsGroupPT = 0 AND m.CustId IS NULL
 			INNER JOIN #ProductSetting ps ON dcs.SportType = ps.SportType AND dcs.BetType = ps.BetType AND dcs.IsLive = ps.IsLive
-			INNER JOIN bodb02.dbo.Dep_ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = ps.SportType AND psp.BetType = ps.BetType
-			INNER JOIN bodb02.dbo.Dep_CustProductStatus cps WITH (NOLOCK) ON m.recommend = cps.CustId
-			CROSS APPLY bodb02.dbo.f_CustSetting_ProductStatusSel (cps.bitmapIsDisabled, psp.bitmapOrder) ds
-		WHERE ds.value = 0
+			LEFT JOIN bodb02.dbo.Dep_ProductStatusProfile psp WITH (NOLOCK) ON psp.Sporttype = ps.SportType AND psp.BetType = ps.BetType
+			LEFT JOIN bodb02.dbo.Dep_CustProductStatus cps WITH (NOLOCK) ON m.recommend = cps.CustId
+			OUTER APPLY bodb02.dbo.f_CustSetting_ProductStatusSel (cps.bitmapIsDisabled, psp.bitmapOrder) ds
+		WHERE ISNULL(ds.value, 1) = 0 OR (ps.ProductId = 1 AND dcs.AgentPT <> 0)
 		GROUP BY m.LicenseeName, m.Currency, ps.Product3rdId
 
 		DROP TABLE #ProductSetting
