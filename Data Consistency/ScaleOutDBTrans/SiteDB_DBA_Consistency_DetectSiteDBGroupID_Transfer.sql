@@ -25,7 +25,7 @@ BEGIN
 	CREATE TABLE #tmp_TransId (
 		TransId BIGINT PRIMARY KEY
 		, CustId INT
-		, IsInvalid SMALLINT DEFAULT(0)
+		, IsInvalid BIT DEFAULT(0)
 		, SiteDBGroupID SMALLINT
 		, SiteDBGroupIDConfigured SMALLINT
 	)
@@ -48,16 +48,17 @@ BEGIN
 
 	SET @maxTransId = (SELECT MAX(TransId) FROM #tmp_TransId)
 	---------------------------------------
-
+	-- Invalid in case of checking mismatch sitedbgroupid between server config & table site 
 	UPDATE	ttrans
-	SET		ttrans.IsInvalid = 2
+	SET		ttrans.IsInvalid = 1
 	FROM	#tmp_TransId ttrans
 	WHERE	ttrans.SiteDBGroupID <> @SiteDBGroupID
 
-	INSERT INTO #CustSiteDBGroupID_Invalid (TableName, TransID, CustID, SiteDBGroupID, SiteDBGroupIDConfigured, IsInvalid)
-	SELECT 'translog' AS TableName, ttrans.TransId, ttrans.CustId, ttrans.SiteDBGroupID, ttrans.SiteDBGroupIDConfigured, ttrans.IsInvalid
+	---------------------------------------
+	INSERT INTO #CustSiteDBGroupID_Invalid (TableName, TransID, CustID, SiteDBGroupID, SiteDBGroupIDConfigured)
+	SELECT 'Transfer' AS TableName, ttrans.TransId, ttrans.CustId, ttrans.SiteDBGroupID, ttrans.SiteDBGroupIDConfigured
 	FROM #tmp_TransId ttrans
-	WHERE ttrans.IsInvalid > 0
+	WHERE ttrans.IsInvalid = 1
 
 	DROP TABLE #tmp_TransId
 END

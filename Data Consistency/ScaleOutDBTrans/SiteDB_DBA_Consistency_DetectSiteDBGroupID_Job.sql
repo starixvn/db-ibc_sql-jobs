@@ -19,7 +19,6 @@ BEGIN
 		[TableName] [VARCHAR](50) NOT NULL,
 		[TransID] [bigint] NOT NULL,
 		[CustID] [int] NULL,
-		[IsInvalid] [SMALLINT] DEFAULT (0),
 		[SiteDBGroupID] [SMALLINT] NULL,
 		[SiteDBGroupIDConfigured] [SMALLINT] NULL
 	)
@@ -122,12 +121,11 @@ BEGIN
 	END
 
 	--7. Send Mail
-	--IsInvalid = 1: Detect tickets contain value different from SiteDBGroupID of the site setting configuration
-	--IsInvalid = 2: Detect SiteGroupDBID on tickets contain value different from site of customer
-	SELECT TableName, TransID, CustID, SiteDBGroupID, SiteDBGroupIDConfigured, IsInvalid 
+	--Invalid in case of checking mismatch sitedbgroupid between server config and ticket
+	--OR Invalid in case of checking mismatch sitedbgroupid between ticket & table site 
+	SELECT TableName, TransID, CustID, SiteDBGroupID, SiteDBGroupIDConfigured 
 	FROM #CustSiteDBGroupID_Invalid
 	--WHERE CustID = 23963984
-	--ORDER BY IsInvalid
 
 	DROP TABLE #CustSiteDBGroupID_Invalid
 END
