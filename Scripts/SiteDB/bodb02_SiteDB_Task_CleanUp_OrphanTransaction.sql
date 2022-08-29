@@ -2,7 +2,7 @@
 /*
 Created by: 20220817@Victoria
 Task: Clean Up custid equal to zero - SiteDB
-DB: DBTXN-msdb
+DB: DBSIG-msdb
 Revisions:
 	- 20220817@Victoria: Deleting records with custid equal to zero for the following tables: 
 							bettrans/bettransLC/bettransRnG/Transfer/TransferInfo/Transfer_Coll [Redmine:#176760]
