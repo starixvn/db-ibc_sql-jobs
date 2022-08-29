@@ -1,10 +1,10 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCTG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[Task_CleanUp_OrphanTransaction_Job]
 AS 
 /*
 Created by: 20220817@Victoria
-Task: Clean Up custid equal to zero
-DB: DBTXN-bodb02
+Task: Clean Up custid equal to zero - DBTrans
+DB: DBCTG-bodb02
 Revisions:
 	- 20220817@Victoria: Deleting records with custid equal to zero for the following tables: 
 							bettrans/bettransLC/bettransRnG/Transfer/TransferInfo/Transfer_Coll [Redmine:#176760]
