@@ -763,8 +763,6 @@ BEGIN
 
 			--//transid value will fill out by default constraint via CLR function
 			--==RepUpdateTime value MUST HAVE NULL value to prevent Inhouse replicator sync to central
-
-			--//transid value will fill out by default constraint via CLR function
 			BEGIN TRANSACTION
 				INSERT INTO dbo.Transfer(custid, transdate, winlostdate, bettype, stake, actual_stake, winlost, awinlost, mwinlost, swinlost
 					,PlayerComm, Comm, AComm, SComm, StatusId, RefNo, Recommend, MRecommend, SRecommend
