@@ -15,6 +15,7 @@ AS
 		- 20190312@Patrick: Fix issue always scan temp table #custid [RedmineID: #110106]
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]				
 		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
+		- 20220727@Patrick: Support new transid [Redmine: #175666]
 
 */
 CREATE TABLE #recommend (KeyID int PRIMARY KEY IDENTITY(1,1), recommend int, ticketCount int)
@@ -23,6 +24,7 @@ Declare @rKeyID int, @cKeyID int
 Declare @custid_list varchar(2100), @cnt int, @custid_cnt int, @rc int, @r int
 Declare @keyID int, @custid_listustid int, @recommend int, @ticketCount int
 Declare @custid int, @BAL_TransID bigint
+DECLARE @__tryCnt INT = 0, @__errorCode INT, @__errorMessage varchar(200) = '', @__doing varchar(300)
 
 CREATE TABLE #custid_nobet (KeyID int PRIMARY KEY IDENTITY(1,1), custid int, BAL_transid bigint)
 
@@ -60,9 +62,49 @@ BEGIN
 	INSERT INTO @tblNoBetTmp(custid, transid)
 	SELECT custid, BAL_transid
 	FROM #custid_nobet WITH (NOLOCK) WHERE KeyID BETWEEN @r AND @r + 1000
-	
-	DELETE FROM dbo.balanceTable_tmp WHERE custid IN (SELECT t.custid FROM @tblNoBetTmp t)
-	--DELETE FROM dbo.bettrans WITH (ROWLOCK) WHERE transid IN (SELECT t.transid FROM @tblNoBetTmp t)
+
+	--handle case duplicated PK
+	SELECT @__tryCnt = 0, @__errorCode = 0, @__errorMessage = ''
+	WHILE 1 = 1
+	BEGIN
+		BEGIN TRY
+			--//.....
+			DELETE FROM dbo.balanceTable_tmp WHERE custid IN (SELECT t.custid FROM @tblNoBetTmp t)
+			BREAK
+
+		END TRY
+		BEGIN CATCH
+			SELECT @__errorCode = @@ERROR, @__errorMessage = ERROR_MESSAGE(), @__tryCnt = @__tryCnt + 1
+
+			--write logs:
+			SET @__doing = 'Task_BalanceUp_SubAgent: duplicated transid (1). Err: ' + @__errorMessage
+			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+
+			IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
+			BEGIN
+				IF @__tryCnt = 5
+				BEGIN
+					--duplicated PK reach to limitation then throw error and quit job
+					RAISERROR(@__errorMessage, 16, 1)
+					RETURN
+				END
+
+				--Send notification to dba
+				EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
+					@SubjectName = 'Urgently!!! BU - Notification',
+					@MessageName = @__doing
+
+				WAITFOR DELAY '00:00:01:333' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
+			END
+			ELSE
+			BEGIN
+				--other exception then throw error and quit job
+				RAISERROR(@__errorMessage, 16, 1)
+				RETURN
+			END
+
+		END CATCH
+	END
 	
 	SELECT @transIds = COALESCE(@transIds + '^' + CAST(transid AS VARCHAR(50)), CAST(transid AS VARCHAR(50)))
 	FROM @tblNoBetTmp
@@ -128,8 +170,50 @@ BEGIN
 		WAITFOR DELAY @delayTimeValue
 
 		--BEGIN TRANSACTION
-		DELETE FROM dbo.balanceTable_tmp
-		WHERE recommend IN (select value from STRING_SPLIT(@custid_list, ','))
+		--handle case duplicated PK
+		SELECT @__tryCnt = 0, @__errorCode = 0, @__errorMessage = ''
+		WHILE 1 = 1
+		BEGIN
+			BEGIN TRY
+				--//.....
+				DELETE FROM dbo.balanceTable_tmp
+				WHERE recommend IN (select value from STRING_SPLIT(@custid_list, ','))
+				
+				BREAK
+
+			END TRY
+			BEGIN CATCH
+				SELECT @__errorCode = @@ERROR, @__errorMessage = ERROR_MESSAGE(), @__tryCnt = @__tryCnt + 1
+
+				--write logs:
+				SET @__doing = 'Task_BalanceUp_SubAgent: duplicated transid (2). Err: ' + @__errorMessage
+				EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+
+				IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
+				BEGIN
+					IF @__tryCnt = 5
+					BEGIN
+						--duplicated PK reach to limitation then throw error and quit job
+						RAISERROR(@__errorMessage, 16, 1)
+						RETURN
+					END
+
+					--Send notification to dba
+					EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
+						@SubjectName = 'Urgently!!! BU - Notification',
+						@MessageName = @__doing
+
+					WAITFOR DELAY '00:00:01:333' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
+				END
+				ELSE
+				BEGIN
+					--other exception then throw error and quit job
+					RAISERROR(@__errorMessage, 16, 1)
+					RETURN
+				END
+
+			END CATCH
+		END
 
 		EXEC dbo.ExecRep_07 @custid_list, 0, 22, @winlostdate
 		--COMMIT TRANSACTION
@@ -199,9 +283,51 @@ BEGIN
 		SELECT @delayTimeValue = dbo.f_BU_GetDelayTime('Key3')
 		WAITFOR DELAY @delayTimeValue
 
-		--BEGIN TRANSACTION
-		DELETE FROM dbo.balanceTable_tmp
-		WHERE custid IN (select value from STRING_SPLIT(@custid_list, ','))
+		--handle case duplicated PK
+		SELECT @__tryCnt = 0, @__errorCode = 0, @__errorMessage = ''
+		WHILE 1 = 1
+		BEGIN
+			BEGIN TRY
+				--//.....
+
+				DELETE FROM dbo.balanceTable_tmp
+				WHERE custid IN (select value from STRING_SPLIT(@custid_list, ','))
+
+				BREAK
+
+			END TRY
+			BEGIN CATCH
+				SELECT @__errorCode = @@ERROR, @__errorMessage = ERROR_MESSAGE(), @__tryCnt = @__tryCnt + 1
+
+				--write logs:
+				SET @__doing = 'Task_BalanceUp_SubAgent: duplicated transid (3). Err: ' + @__errorMessage
+				EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+
+				IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
+				BEGIN
+					IF @__tryCnt = 5
+					BEGIN
+						--duplicated PK reach to limitation then throw error and quit job
+						RAISERROR(@__errorMessage, 16, 1)
+						RETURN
+					END
+
+					--Send notification to dba
+					EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
+						@SubjectName = 'Urgently!!! BU - Notification',
+						@MessageName = @__doing
+
+					WAITFOR DELAY '00:00:01:333' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
+				END
+				ELSE
+				BEGIN
+					--other exception then throw error and quit job
+					RAISERROR(@__errorMessage, 16, 1)
+					RETURN
+				END
+
+			END CATCH
+		END
 
 		EXEC dbo.ExecRep_07 @custid_list, @recommend, 11, @winlostdate
 		--COMMIT TRANSACTION
@@ -234,9 +360,50 @@ BEGIN
 	SELECT @delayTimeValue = dbo.f_BU_GetDelayTime('Key4')
 	WAITFOR DELAY @delayTimeValue
 
-	--BEGIN TRANSACTION
-	DELETE FROM dbo.balanceTable_tmp
-	WHERE recommend = @recommend
+	--handle case duplicated PK
+	SELECT @__tryCnt = 0, @__errorCode = 0, @__errorMessage = ''
+	WHILE 1 = 1
+	BEGIN
+		BEGIN TRY
+			--//.....
+			DELETE FROM dbo.balanceTable_tmp
+			WHERE recommend = @recommend
+
+			BREAK
+
+		END TRY
+		BEGIN CATCH
+			SELECT @__errorCode = @@ERROR, @__errorMessage = ERROR_MESSAGE(), @__tryCnt = @__tryCnt + 1
+
+			--write logs:
+			SET @__doing = 'Task_BalanceUp_SubAgent: duplicated transid (4). Err: ' + @__errorMessage
+			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+
+			IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
+			BEGIN
+				IF @__tryCnt = 5
+				BEGIN
+					--duplicated PK reach to limitation then throw error and quit job
+					RAISERROR(@__errorMessage, 16, 1)
+					RETURN
+				END
+
+				--Send notification to dba
+				EXEC [dbo].[DBA_Task_Send_SimpleNotifyMessageToDBA] 
+					@SubjectName = 'Urgently!!! BU - Notification',
+					@MessageName = @__doing
+
+				WAITFOR DELAY '00:00:01:333' -- Task_BalanceUp_SubAgent: duplicated transid then waitfor to retry
+			END
+			ELSE
+			BEGIN
+				--other exception then throw error and quit job
+				RAISERROR(@__errorMessage, 16, 1)
+				RETURN
+			END
+
+		END CATCH
+	END
 
 	EXEC dbo.ExecRep_07 '', @recommend, 2, @winlostdate
 	--COMMIT TRANSACTION

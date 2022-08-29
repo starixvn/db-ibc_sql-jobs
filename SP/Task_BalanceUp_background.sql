@@ -35,6 +35,7 @@ Revisions:
 	- 20220301@July: Comment code delete for livescore [Redmine:#169201]
 	- 20220307@Bobby: Re-commit (Comment code delete for livescore [Redmine:#169201])
 	- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
+	- 20220727@Patrick: Support new transid [Redmine: #175666]
 
 Param's Explanation: 
 
@@ -420,8 +421,11 @@ BEGIN
 		amt1 money, amt2 money, amt3 money, amt4 money, cnt int default(0),
 		tcnt1 int default(0), tcnt2 int default(0), tcnt3 int default(0), tcnt4 int default(0)
 		)
-		CREATE CLUSTERED INDEX IX_custid ON #balance_cal (custid)
-		CREATE INDEX IX_roleid ON #balance_cal (roleid)
+	CREATE CLUSTERED INDEX IX_custid ON #balance_cal (custid)
+
+	--due to IX_roleId index does not help so removing statement create non clustered to avoid transaction log growth
+	--CREATE INDEX IX_roleid ON #balance_cal (roleid)
+	
 	CREATE TABLE #filtered (fcustid int PRIMARY KEY)
 
 	;WITH q_distinct AS (
@@ -564,14 +568,58 @@ BEGIN
 	EXEC dbo.Task_Core_ProcessingCustListIns @CustIds = '3'
 	WAITFOR DELAY '00:00:03:000'
 
-	BEGIN TRANSACTION
+	--handle case duplicated PK
+	DECLARE @__tryCnt INT = 0, @__errorCode INT, @__errorMessage varchar(200) = ''
+	WHILE 1 = 1
+	BEGIN
+		BEGIN TRY
+			BEGIN TRANSACTION
 
-	DELETE FROM dbo.balanceTable_tmp
-	WHERE srecommend = 3 AND recommend = 0
+			DELETE FROM dbo.balanceTable_tmp
+			WHERE srecommend = 3 AND recommend = 0
 
-	EXEC dbo.ExecRep_07 3, 0, 44, @fdate
+			EXEC dbo.ExecRep_07 3, 0, 44, @fdate
 
-	COMMIT TRANSACTION
+			COMMIT TRANSACTION
+			BREAK
+
+		END TRY
+		BEGIN CATCH
+			SELECT @__errorCode = @@ERROR, @__errorMessage = ERROR_MESSAGE(), @__tryCnt = @__tryCnt + 1
+			IF @@TRANCOUNT > 0
+			BEGIN
+				ROLLBACK
+			END
+
+			--write logs:
+			SET @Doing = 'Task_BalanceUp_background: duplicated transid (1). Err: ' + @__errorMessage
+			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+			IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
+			BEGIN
+				IF @__tryCnt = 5
+				BEGIN
+					--duplicated PK reach to limitation then throw error and quit job
+					RAISERROR(@__errorMessage, 16, 1)
+					RETURN
+				END
+
+				--Send notification to dba
+				EXEC [dbo].[DBA_Task_Send_SimpleNotifyMessageToDBA] 
+					@SubjectName = 'Urgently!!! BU - Notification',
+					@MessageName = @Doing
+
+				WAITFOR DELAY '00:00:01:333' -- Task_BalanceUp_background: duplicated transid then waitfor to retry
+			END
+			ELSE
+			BEGIN
+				--other exception then throw error and quit job
+				RAISERROR(@__errorMessage, 16, 1)
+				RETURN
+			END
+
+		END CATCH
+	END
 
 	--delete processing list
 	EXEC dbo.Task_Core_ProcessingCustListDel @CustIds = '3'
