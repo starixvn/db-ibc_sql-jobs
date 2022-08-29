@@ -1,9 +1,9 @@
 /*<info serverAlias="DBTXN-bodb02" executers="Dot_Member,Dot_Intg,Dot_Bonus,bodbAdminNet,bodbDownlineNet" isFunction="0" isNested="0"></info>*/
 
-create PROCEDURE [dbo].[Get_BettransX_Transid] 
+ALTER PROCEDURE [dbo].[Get_BettransX_Transid] 
 (
 	@transid bigint OUTPUT,
-	@sourceID bigint = NULL
+	@sourceID BIGINT = NULL
 )
 AS
 /*
@@ -13,6 +13,7 @@ AS
 
 	Revisions:
 		- 20220726@Lukas: Create [RedmineID: #158293]
+		- 20220829@Tina: Using same sequence object with SP Get_Bettrans_Transid
 */
 BEGIN
 	 
@@ -28,17 +29,17 @@ BEGIN
 	END 
  
 	SELECT	@transid = DATEDIFF_BIG(SECOND, '2022-07-01 00:00:00', GETUTCDATE())
-	
-	     IF @transid % 10 = 0 		set @nextseq = next value for dbo.seq_betX00
-	ELSE IF @transid % 10 = 1		set @nextseq = next value for dbo.seq_betX01
-	ELSE IF @transid % 10 = 2		set @nextseq = next value for dbo.seq_betX02
-	ELSE IF @transid % 10 = 3		set @nextseq = next value for dbo.seq_betX03
-	ELSE IF @transid % 10 = 4		set @nextseq = next value for dbo.seq_betX04
-	ELSE IF @transid % 10 = 5		set @nextseq = next value for dbo.seq_betX05
-	ELSE IF @transid % 10 = 6		set @nextseq = next value for dbo.seq_betX06
-	ELSE IF @transid % 10 = 7		set @nextseq = next value for dbo.seq_betX07
-	ELSE IF @transid % 10 = 8		set @nextseq = next value for dbo.seq_betX08
-	ELSE IF @transid % 10 = 9		set @nextseq = next value for dbo.seq_betX09
+
+	     IF @transid % 10 = 0 		set @nextseq = next value for dbo.seq_bet00
+	ELSE IF @transid % 10 = 1		set @nextseq = next value for dbo.seq_bet01
+	ELSE IF @transid % 10 = 2		set @nextseq = next value for dbo.seq_bet02
+	ELSE IF @transid % 10 = 3		set @nextseq = next value for dbo.seq_bet03
+	ELSE IF @transid % 10 = 4		set @nextseq = next value for dbo.seq_bet04
+	ELSE IF @transid % 10 = 5		set @nextseq = next value for dbo.seq_bet05
+	ELSE IF @transid % 10 = 6		set @nextseq = next value for dbo.seq_bet06
+	ELSE IF @transid % 10 = 7		set @nextseq = next value for dbo.seq_bet07
+	ELSE IF @transid % 10 = 8		set @nextseq = next value for dbo.seq_bet08
+	ELSE IF @transid % 10 = 9		set @nextseq = next value for dbo.seq_bet09
 
 	-- 1 + 31 + 10 + 22
 	-- shift <time> left by 32 for site + sequence
