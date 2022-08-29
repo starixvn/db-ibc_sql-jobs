@@ -1,8 +1,4 @@
 /*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[DBA_CheckStatus_Deposit_DCS]
 	@RuleId	SMALLINT = 0
 	, @SportType SMALLINT = 0
@@ -14,6 +10,7 @@ DB: DB054.CheckResultDB
 Revisions:
 	- 20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
 	- 20201223@Winfred: not check data from CustSuper table[redmine:#147408]	
+	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 Param's Explanation: 
 	@RuleId = 0 : 'all'
 	@RuleId IN (1->9)
@@ -50,6 +47,7 @@ BEGIN
 		AND CI.username NOT LIKE '%dummy%'
 		AND CI.username NOT LIKE '%BetTrade%'
 		AND CI.username NOT LIKE '%OddsAdj%'
+		AND ci.username NOT LIKE '%ClearBal%'
 	INSERT INTO #DCS_Master_Hidden_Disabled (custID,bitmapOrder,IsDisabled,IsHidden)
 	SELECT CPS.CustID,T.bitmapOrder,CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsDisabled,T.bitmapOrder),CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsHidden,T.bitmapOrder) 
 	FROM CheckCustDB.dbo.Dep_CustProductStatus CPS (NOLOCK)
@@ -65,6 +63,7 @@ BEGIN
 		AND CI.username NOT LIKE '%dummy%'
 		AND CI.username NOT LIKE '%BetTrade%'
 		AND CI.username NOT LIKE '%OddsAdj%'
+		AND ci.username NOT LIKE '%ClearBal%'
 	INSERT INTO #DCS_Agent_Hidden_Disabled (custID,bitmapOrder,IsDisabled,IsHidden)
 	SELECT CPS.CustID,T.bitmapOrder,CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsDisabled,T.bitmapOrder),CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsHidden,T.bitmapOrder) 
 	FROM CheckCustDB.dbo.Dep_CustProductStatus CPS (NOLOCK)
@@ -80,6 +79,7 @@ BEGIN
 		AND CI.username NOT LIKE '%dummy%'
 		AND CI.username NOT LIKE '%BetTrade%'
 		AND CI.username NOT LIKE '%OddsAdj%'
+		AND ci.username NOT LIKE '%ClearBal%'
 	-------------------END OF PREPARATION: GET LIST SUPER/Master/Agent disabled FIRST----------------------------
 	----------------------------FINAL RESULT ------------------------------------
 	-- Rule 1: Super IsDisabled= 1, Master IsDisabled = 0		
@@ -101,6 +101,7 @@ BEGIN
 			AND CI.username NOT LIKE '%dummy%'
 			AND CI.username NOT LIKE '%BetTrade%'
 			AND CI.username NOT LIKE '%OddsAdj%'
+			AND ci.username NOT LIKE '%ClearBal%'
 	END
 	-- Rule 2: Master IsDisabled= 1, Agent IsDisabled = 0		
 	IF @RuleId IN (0,2)
@@ -120,6 +121,7 @@ BEGIN
 			AND CI.username NOT LIKE '%dummy%'
 			AND CI.username NOT LIKE '%BetTrade%'
 			AND CI.username NOT LIKE '%OddsAdj%'
+			AND ci.username NOT LIKE '%ClearBal%'
 	END	
 	-- Rule 3: Agent IsDisabled= 1, Member IsDisabled = 0		
 	IF @RuleId IN (0,3)
@@ -140,6 +142,7 @@ BEGIN
 			AND CI.username NOT LIKE '%dummy%'
 			AND CI.username NOT LIKE '%BetTrade%'
 			AND CI.username NOT LIKE '%OddsAdj%'
+			AND ci.username NOT LIKE '%ClearBal%'
 	END
 	-- Rule 4: Super IsHidden= 1, Master IsHidden= 0		
 	IF @RuleId IN (0,4)
@@ -160,6 +163,7 @@ BEGIN
 			AND CI.username NOT LIKE '%dummy%'
 			AND CI.username NOT LIKE '%BetTrade%'
 			AND CI.username NOT LIKE '%OddsAdj%'
+			AND ci.username NOT LIKE '%ClearBal%'
 	END
 	-- Rule 5: Master IsHidden= 1, Agent IsHidden= 0		
 	IF @RuleId IN (0,5)
@@ -179,6 +183,7 @@ BEGIN
 			AND CI.username NOT LIKE '%dummy%'
 			AND CI.username NOT LIKE '%BetTrade%'
 			AND CI.username NOT LIKE '%OddsAdj%'
+			AND ci.username NOT LIKE '%ClearBal%'
 	END	
 	-- Rule 6: Agent IsHidden= 1, Member IsHidden= 0		 
 	IF @RuleId IN (0,6)
@@ -200,6 +205,7 @@ BEGIN
 			AND CI.username NOT LIKE '%dummy%'
 			AND CI.username NOT LIKE '%BetTrade%'
 			AND CI.username NOT LIKE '%OddsAdj%'
+			AND ci.username NOT LIKE '%ClearBal%'
 	END	
 	
 	DROP TABLE #DCS_Agent_Hidden_Disabled
