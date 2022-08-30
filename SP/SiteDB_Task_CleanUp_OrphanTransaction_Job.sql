@@ -7,7 +7,7 @@ Task: Clean Up custid equal to zero - SiteDB
 DB: DBSIG-bodb02
 Revisions:
 	- 20220817@Victoria: Deleting records with custid equal to zero for the following tables: 
-							bettrans/bettransLC/bettransRnG/Transfer/TransferInfo/Transfer_Coll [Redmine:#176760]
+							bettrans/bettransLC/bettransRnG/translog/Transfer/TransferInfo/Transfer_Coll [Redmine:#176760]
 	
 */
 BEGIN
@@ -59,6 +59,17 @@ BEGIN
 		WAITFOR DELAY '00:00:00:050'
 	END
 
+	WHILE (1=1)
+	BEGIN
+		DELETE TOP(@batch_cnt) b
+		FROM dbo.translog b WITH(ROWLOCK)
+		WHERE b.winlostdate <= @MovebetDate AND b.custid = 0
+
+		IF @@ROWCOUNT = 0 
+			BREAK
+
+		WAITFOR DELAY '00:00:00:050'
+	END
 	
 	WHILE (1=1)
 	BEGIN
