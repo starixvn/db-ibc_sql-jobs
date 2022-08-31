@@ -221,7 +221,7 @@ BEGIN
 
 		--DEPOSIT
 		IF EXISTS (	SELECT 1 FROM #ListTmp cl
-					WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,202)) 
+					WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,164,202)) 
 						AND cl.isLicensee=1
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
@@ -251,7 +251,7 @@ BEGIN
 						LEFT JOIN Dep_CustBetSettingGame_Member dcbs WITH (NOLOCK) ON dcbs.CustID=cl.custid
 																	AND dcbs.SportType=cl.SportType
 																	AND dcbs.BetType=cl.BetType
-					WHERE cl.SportType = 161 AND cl.isLicensee=1
+					WHERE cl.SportType IN (161,164) AND cl.isLicensee=1
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
 				) a
