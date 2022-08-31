@@ -14,7 +14,7 @@ AS
 
 	Revisions: 
 		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
-						- Check total ticket is correctly insert related to the number of super accounts - [Redmine:#155714]
+						- Check total ticket is correctly insert related to the number of super accounts - [Redmine:#175881]
 
 	Param's Expanation:
 */

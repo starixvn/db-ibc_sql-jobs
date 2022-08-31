@@ -14,7 +14,7 @@ AS
 
 	Revisions: 
 		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
-						- Compare total transfer ticket with total super - [Redmine:#155714]
+						- Compare total transfer ticket with total super - [Redmine:#175881]
 
 	Param's Expanation:
 */

@@ -15,7 +15,7 @@ AS
 
 	Revisions: 
 		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
-						- update last transid into system setting - [Redmine:#155714]
+						- update last transid into system setting - [Redmine:#175881]
 
 	Param's Expanation:
 */
