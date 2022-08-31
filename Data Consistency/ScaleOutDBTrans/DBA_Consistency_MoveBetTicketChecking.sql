@@ -12,15 +12,18 @@ Revisions:
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @MovebetDate SMALLDATETIME = NULL
-	EXEC bodb02.dbo.NAP_Admin_GetMovebetDate	@MovebetDate = @MovebetDate OUTPUT
-	--SELECT @MovebetDate
+	DECLARE @Days AS TABLE (ScheduleId TINYINT, RunningDay DATETIME)
+	INSERT INTO @Days (ScheduleId, RunningDay)
+	EXEC DBCTG.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+
+	IF @@ROWCOUNT = 0
+		RETURN
 
 	SELECT  custid AS Custid, COUNT(1) AS TotalCount
 	FROM	bodb02.dbo.Transfer WITH (NOLOCK, INDEX=IX_WinlostDate) 
 	WHERE	bettype = 19999 
-		AND WinlostDate = @MovebetDate
+		AND WinlostDate IN (SELECT runningDay FROM @Days)
 	GROUP BY custid
 	HAVING COUNT(1) > 1
-
 END
+GO
