@@ -116,7 +116,7 @@ BEGIN
 	SET cl.SportTypeRef=cl.SportType
 	, cl.BetTypeRef=cl.BetType
 	FROM #ListTmp cl
-	WHERE SportType IN (161,164) AND cl.isLicensee=0
+	WHERE SportType IN (161,164,168) AND cl.isLicensee=0
 
 	--Keno:
 	UPDATE cl 
@@ -148,7 +148,7 @@ BEGIN
 	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1 AND psd.SettingStatus=0
 
 	-- @sporttype: not support StakeLevel
-	IF EXISTS (SELECT 1 FROM #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,164,202))
+	IF EXISTS (SELECT 1 FROM #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202))
 	BEGIN
 		INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
 		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
@@ -172,7 +172,7 @@ BEGIN
 							AND dch.BetType=cl.BetTypeRef AND dch.UpdateTime>cl.transdate  
 						 ORDER BY UpdateTime
 						 ) dch
-		WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,164,202)) AND
+		WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202)) AND
 			(
 			  (cl.isLicensee=0 AND ch.custid IS NOT NULL)
 			OR 
@@ -182,7 +182,7 @@ BEGIN
 		--Current Maxbet
 		--CREDIT
 		IF EXISTS (	SELECT 1 FROM #ListTmp cl
-					WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,164,202)) 
+					WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202)) 
 						AND cl.isLicensee=0
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
@@ -204,7 +204,7 @@ BEGIN
 						INNER JOIN CustBetSetting_Member cbs WITH (NOLOCK) ON cbs.CustID=cl.custid
 																		AND cbs.SportType=cl.SportType
 																		AND cbs.BetType=cl.BetType
-					WHERE cl.SportType IN (161,164) AND cl.isLicensee=0
+					WHERE cl.SportType IN (161,164,168) AND cl.isLicensee=0
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
 					UNION	--Keno
@@ -221,7 +221,7 @@ BEGIN
 
 		--DEPOSIT
 		IF EXISTS (	SELECT 1 FROM #ListTmp cl
-					WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,164,202)) 
+					WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202)) 
 						AND cl.isLicensee=1
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
@@ -251,13 +251,13 @@ BEGIN
 						LEFT JOIN Dep_CustBetSettingGame_Member dcbs WITH (NOLOCK) ON dcbs.CustID=cl.custid
 																	AND dcbs.SportType=cl.SportType
 																	AND dcbs.BetType=cl.BetType
-					WHERE cl.SportType IN (161,164) AND cl.isLicensee=1
+					WHERE cl.SportType IN (161,164,168) AND cl.isLicensee=1
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
 				) a
 		END
 
-		DELETE #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,164,202)
+		DELETE #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202)
 	END
 
 	-- @sporttype: support StakeLevel - SettingType IN (7,17)
