@@ -96,6 +96,13 @@ BEGIN
 				AND ps.BetType=ref.BetTypeRefBetSetting
 	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0 AND ps.SettingStatus=0
 
+	--Keno, NG, HP5:
+	UPDATE cl 
+	SET cl.SportTypeRef=cl.SportType
+	, cl.BetTypeRef=cl.BetType
+	FROM #ListTmp cl
+	WHERE SportType IN (161,164,202) AND cl.isLicensee=0
+
 	--Deposit
 	UPDATE cl 
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
@@ -224,7 +231,6 @@ BEGIN
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
 				) a
-			
 		END
 
 		DELETE #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,164,202)
