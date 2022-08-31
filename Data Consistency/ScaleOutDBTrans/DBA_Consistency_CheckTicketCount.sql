@@ -51,6 +51,31 @@ BEGIN
 				Recommend, 
 				Status
 	UNION ALL
+	SELECT	'bettransG' AS TableName,
+			b.SiteDBGroupID, 
+			c.Recommend, 
+			b.Status, 
+			COUNT(1) AS TicketCount
+	FROM bodb02.dbo.bettransG b WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.custid
+	WHERE	winlostdate = @yesterday
+		AND SiteDBGroupID > 0
+	GROUP BY	b.SiteDBGroupID, 
+				c.Recommend, 
+				b.Status
+	UNION ALL
+	SELECT	'translog' AS TableName,
+			SiteDBGroupID, 
+			Recommend, 
+			Status, 
+			COUNT(1) AS TicketCount
+	FROM bodb02.dbo.translog WITH (NOLOCK)
+	WHERE	winlostdate = @yesterday
+		AND SiteDBGroupID > 0
+	GROUP BY	SiteDBGroupID, 
+				Recommend, 
+				Status
+	UNION ALL
 	SELECT	'bettransm' AS TableName,
 			bm.SiteDBGroupID, 
 			c.Recommend, 
