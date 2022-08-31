@@ -56,6 +56,21 @@ BEGIN
 		,	MaxPerMatch		MONEY
 		,	PRIMARY KEY CLUSTERED (transid)
 	)
+
+	DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
+
+	BEGIN TRY		
+		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
+		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID 
+		FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK)
+		WHERE IBCBetTypeID BETWEEN 1501 AND 1599	--Keno
+	END TRY
+	BEGIN CATCH		
+		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
+		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID 
+		FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK)
+		WHERE IBCBetTypeID BETWEEN 1501 AND 1599	--Keno
+	END CATCH
 	
 	--nonClustered
 	CREATE NONCLUSTERED INDEX IX_tmpCustList ON #ListTmp(custid,SportTypeRef,BetTypeRef)
@@ -96,12 +111,21 @@ BEGIN
 				AND ps.BetType=ref.BetTypeRefBetSetting
 	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0 AND ps.SettingStatus=0
 
-	--Keno, NG, HP5:
+	--NG, HP5:
 	UPDATE cl 
 	SET cl.SportTypeRef=cl.SportType
 	, cl.BetTypeRef=cl.BetType
 	FROM #ListTmp cl
-	WHERE SportType IN (161,164,202) AND cl.isLicensee=0
+	WHERE SportType IN (161,164) AND cl.isLicensee=0
+
+	--Keno:
+	UPDATE cl 
+	SET cl.SportTypeRef=cl.SportType
+	, cl.BetTypeRef=cl.BetType
+	, cl.GameTypeId=gt.GameTypeID
+	FROM #ListTmp cl
+		INNER JOIN @tmp_GameType gt ON gt.IBCBettypeID=cl.BetType
+	WHERE SportType=202 AND cl.isLicensee=0
 
 	--Deposit
 	UPDATE cl 
@@ -187,7 +211,7 @@ BEGIN
 					SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, cgt.MaxBet, cgt.MaxPerGameType
 					FROM #ListTmp cl
 						INNER JOIN CustGameType cgt WITH (NOLOCK) ON cl.custid=cgt.CustID
-																AND cl.BetType=cgt.GameTypeID
+																AND cl.GameTypeId=cgt.GameTypeID
 																AND cgt.IsDisabled=0
 					WHERE cl.SportType=202 AND cl.isLicensee=0
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
