@@ -95,7 +95,7 @@ Revisions:
 	- 20211203@Helen: Movebet failed by deadlock - Redmine: [#165705]
 	- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 	- 20220720@Patrick: Support new transid [Redmine: #175666]
-	
+	- 20220831@Bobby: Remove translog.custid=0 [Redmine: #176685]
 */
 
 SET NOCOUNT ON
@@ -374,7 +374,8 @@ BEGIN
 							playercomm MONEY, comm MONEY, acomm MONEY, scomm MONEY)		
 		
 	-- Clear deleted/cancel record (custid = 0)
-	DELETE FROM bettrans WHERE winlostdate = @winlostdate AND custid = 0
+	DELETE FROM dbo.bettrans WHERE winlostdate = @winlostdate AND custid = 0
+	DELETE FROM dbo.translog WHERE winlostdate = @winlostdate AND custid = 0
 	DELETE FROM bettranssum WHERE winlostdate = @winlostdate
 
 	-- Get Exchange Rate
