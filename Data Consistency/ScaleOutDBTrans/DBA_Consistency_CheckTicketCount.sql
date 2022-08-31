@@ -114,5 +114,6 @@ BEGIN
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
 				z.Status
+	ORDER BY TableName, SiteDBGroupID, Recommend,  Status
 END
 

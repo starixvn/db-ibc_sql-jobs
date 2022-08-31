@@ -103,5 +103,6 @@ BEGIN
 		AND bm.[SiteDBGroupID] > 0
 	GROUP BY	bm.[SiteDBGroupID], 
 				c.[recommend]
+	ORDER BY TableName, SiteDBGroupID, Recommend
 END
 
