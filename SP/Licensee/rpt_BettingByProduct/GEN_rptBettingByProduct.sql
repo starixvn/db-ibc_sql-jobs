@@ -1,7 +1,4 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_LicenseeReport]
-GO
-
 ALTER PROCEDURE [dbo].[GEN_rptBettingByProduct]
 	@date				DATE,
 	@date2				DATE			= NULL,
@@ -97,6 +94,8 @@ AS
 		- 20220110@Danny: SG - Jackpot prize integration [#167089]
 		- 20220222@Danny: Allbet - Promotion integration [#167510]
 		- 20221018@Danny: Integrate MG-RNG (ProductID = 73) [#176986]
+
+		- 2022831@Sol: Deposit - AWS - Modify jobs of separated wallet - Move table rptDepWinlost_AGCasino to DB05x - [RedmineID: #176479]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -468,7 +467,7 @@ BEGIN
 				SUM(Turnover),
 				SUM(BetCount),
 				SUM(PlayerComm)
-			FROM DBRPT.bodb_report.dbo.rptDepWinlost_AGCasino WITH (NOLOCK)
+			FROM dbo.rptDepWinlost_AGCasino WITH (NOLOCK)
 			WHERE Winlostdate >= @date AND Winlostdate < @date2
 				AND [Currency] <> 20
 			GROUP BY Winlostdate, Custid, Currency

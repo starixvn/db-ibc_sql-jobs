@@ -1,12 +1,8 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_LicenseeReport]
-GO
-
 ALTER PROCEDURE [dbo].[Task_rptDepWinlost_AGCasino_CheckData]
 	@WinlostDate		SMALLDATETIME,
 	@HasDataMismatch	TINYINT OUTPUT --0: No mismatch; 1: Has real currencies; 2: UUS only
 AS
-
 /*
 	Created: 20170530@Paul
 	Task : Check & correct data of rptDepWinlost_AGCasino
@@ -14,6 +10,8 @@ AS
 	Original:
 	Revisions:
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 2022831@Sol: Deposit - AWS - Modify jobs of separated wallet - Move table rptDepWinlost_AGCasino to DB05x - [RedmineID: #176479]
+
 */
 
 BEGIN
@@ -73,7 +71,7 @@ BEGIN
 			winlost,
 			BetCount,
 			drawBetCount
-	FROM DBACC.bodb_report.dbo.rptDepWinlost_AGCasino WITH(NOLOCK)
+	FROM dbo.rptDepWinlost_AGCasino WITH(NOLOCK)
 	WHERE winlostdate = @WinlostDate
 		AND sporttype = 250;
 

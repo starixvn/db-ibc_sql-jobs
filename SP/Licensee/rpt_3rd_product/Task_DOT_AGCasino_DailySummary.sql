@@ -1,5 +1,4 @@
-/*<info serverAlias="DBACC-bodb02,DBBAL-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-
+/*<info serverAlias="DBLIC-bodb_3rdproduct,DBBAL-bodb_3rdproduct" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
 	@winlostdate DATETIME
 	,@IsManual BIT = 0
@@ -8,7 +7,8 @@ AS
 /*   
 	Created: 20140911@Victor
 	Task: Summary AG Casino data and insert into rptDepWinlost_AGCasino
-	DB: DBACC-bodb02, DBBAL-bodb02
+	DB: DBLIC-bodb_3rdproduct, DBBAL-bodb_3rdproduct
+	Original: DBACC-bodb02, DBBAL-bodb02
 
 	Revisions:
 		- 20141017@Victor: remove RAISEERROR statement to avoid affection to rptDepWinlost Summary job
@@ -20,6 +20,8 @@ AS
 								6th -> end of the month : Edit data of current month only
 		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 2022831@Sol: Deposit - AWS - Modify jobs of separated wallet - Move table rptDepWinlost_AGCasino to DB05x - [RedmineID: #176479]
+
 	Param's Explanation:
 		- @winlostdate: The date need to summary
 		- @IsManual: task run manual or auto
@@ -45,7 +47,7 @@ BEGIN TRY
 	END
 
 	DECLARE @BackupDay DATE
-	SELECT @BackupDay = ISNULL(MIN(Winlostdate),'') FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino
+	SELECT @BackupDay = ISNULL(MIN(Winlostdate),'') FROM bodb_PlaytechCS.dbo.bettrans_AGCasino
 	
 	DECLARE @WLDateTab AS TABLE (ID SMALLINT IDENTITY (1,1), winlostdate DATE)
 	DECLARE @i SMALLINT = 1, @SqlStr VARCHAR (1000) = ''
@@ -66,12 +68,12 @@ BEGIN TRY
 	FROM
 		(SELECT CAST(@winlostdate AS DATE) AS Winlostdate
 		 UNION ALL
-		 SELECT * FROM
-		 OPENQUERY (DBPTCS, 'SELECT DISTINCT Winlostdate AS Winlostdate
+		 SELECT DISTINCT Winlostdate AS Winlostdate
 		 FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
 		 WHERE FinishedTime IS NOT NULL 
 			   AND isSummarized = 0 
-			   AND ProductID = 10')) t  
+			   AND ProductID = 10
+		) t  
 	
 	CREATE TABLE #TicketData (	custid			INT,
 								sporttype		SMALLINT,
@@ -121,7 +123,7 @@ BEGIN TRY
 					0 AS PlayerComm,
 					ISNULL(COUNT(*),0) AS Betcount,
 					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount
-				FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino b WITH (ROWLOCK)
+				FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b WITH (ROWLOCK)
 				WHERE Winlostdate = @winlostdate
 					AND StatusId IN (111, 112, 113)
 				GROUP BY b.CustID, b.currency, isVIPGame
@@ -140,7 +142,7 @@ BEGIN TRY
 					0 AS PlayerComm,
 					ISNULL(COUNT(*),0) AS Betcount,
 					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount
-				FROM bodb_archive.dbo.bettrans_AGCasino_bk b WITH (ROWLOCK)
+				FROM DBARC.bodb_archive.dbo.bettrans_AGCasino_bk b WITH (ROWLOCK)
 				WHERE Winlostdate = @winlostdate
 					AND StatusId IN (111, 112, 113)
 				GROUP BY b.CustID, b.currency, isVIPGame
@@ -150,20 +152,20 @@ BEGIN TRY
 			IF @GenForDataWarehouse = 0
 			BEGIN
 				--Insert data to rptDepWinlost_AGCasino
-				DELETE FROM bodb_report.dbo.rptDepWinlost_AGCasino WITH (ROWLOCK) WHERE Winlostdate = @winlostdate
+				DELETE FROM bodb_LicenseeReport.dbo.rptDepWinlost_AGCasino WITH (ROWLOCK) WHERE Winlostdate = @winlostdate
 
-				INSERT INTO bodb_report.dbo.rptDepWinlost_AGCasino (winlostdate, custid, sporttype, currency, turnover, drawTO, 
+				INSERT INTO bodb_LicenseeReport.dbo.rptDepWinlost_AGCasino (winlostdate, custid, sporttype, currency, turnover, drawTO, 
 																	winlost, playercomm, BetCount, drawBetCount, IsVIPGame)
 				SELECT @winlostdate, custid, sporttype, currency, turnover, drawTO, 
 					winlost, playercomm, BetCount, drawBetCount, IsVIPGame
 				FROM #TicketData					
 		
-				SET @SqlStr = 'UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
+				UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
 				SET isSummarized = 1
-				WHERE Winlostdate = ''' + CONVERT(VARCHAR(20),@winlostdate,112) + ''' AND isSummarized = 0
-					AND ProductID = 10;'
+				WHERE Winlostdate = @winlostdate 
+					AND isSummarized = 0
+					AND ProductID = 10
 				
-				EXEC(@SqlStr) AT [DBPTCS]
 			END
 			ELSE
 			BEGIN

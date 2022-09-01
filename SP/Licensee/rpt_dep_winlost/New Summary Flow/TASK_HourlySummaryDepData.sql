@@ -17,6 +17,7 @@ AS
 		- 20161004@Francis: Check movebet schedule to regen data for bettrans14
 		- 20210518@Percy: Change code to get MoveBetsDay [RedmineID: #154866]
 		- 20220422@Sol: LAP - Enhance database jobs - [RedmineID: #171747]
+		- 2022831@Sol: Deposit - AWS - Modify jobs of separated wallet - Move table rptDepWinlost_AGCasino to DB05x - [RedmineID: #176479]
 
 	Input Params:	
 		- @isDailyArc:	-0: Called for data re-summary of hourly summary task (data will be re-summarize from the minimum day of early day and manually summarized day til today)
@@ -113,12 +114,6 @@ BEGIN
 		
 		IF @TempDay <= @MaxSumDate AND @isDailyArc = 0
 			EXEC dbo.Task_DepWinlostSUM @date = @TempDay 
-		
-		IF @isManual = 0
-		BEGIN
-			-- Execute SP to insert data for AG Casino
-			EXEC bodb02.dbo.Task_DOT_AGCasino_DailySummary @winlostdate = @TempDay
-		END
 		
 		SELECT @TempDay = DATEADD(DAY,1,@TempDay)
 	END

@@ -1,15 +1,18 @@
 /*<info serverAlias="DBACC-bodb02,DBBAL-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_DOT_AGCasino_MonthlyReSummary]	
+ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_MonthlyReSummary]	
 AS
 /*   
-Created: 20141209@Winnie
-Task: Summary AG Casino data and insert into rptDepWinlost_AGCasino
-DB: DBACC/bodb02
-Original:
-Revisions:	
-- 20151001@Winnie: Add Gold deluxe
-- 20210816@Sophia: add DBBAL [Redmine: #154300]
-Param's Explanation:
+	Created: 20141209@Winnie
+	Task: Summary AG Casino data and insert into rptDepWinlost_AGCasino
+	DB: DBACC/bodb02
+	Original:
+
+	Revisions:	
+		- 20151001@Winnie: Add Gold deluxe
+		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 2022831@Sol: Deposit - AWS - Modify jobs of separated wallet - Move table rptDepWinlost_AGCasino to DB05x - [RedmineID: #176479]
+
+	Param's Explanation:
 */ 
 BEGIN 
 SET NOCOUNT ON
@@ -22,11 +25,11 @@ BEGIN TRY
 		
 	WHILE(@DayOfMonth<getdate())
 	BEGIN
-	EXEC dbo.Task_DOT_AGCasino_DailySummary @winlostdate = @DayOfMonth
-	EXEC DBPTCS.bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @DayOfMonth
-	print 'exec'
-	print @DayOfMonth
-	SET @DayOfMonth=DATEADD(day,1,@DayOfMonth)
+	
+		EXEC DBPTCS.bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @DayOfMonth
+		print 'exec'
+		print @DayOfMonth
+		SET @DayOfMonth=DATEADD(day,1,@DayOfMonth)
 	END
 	
 END TRY
@@ -38,11 +41,3 @@ BEGIN CATCH
 END CATCH
 END
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
