@@ -20,6 +20,7 @@ AS
 		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
 		- 20220721@Evan: Integrate new transid [Redmine: #175640]
 		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - classify data between SiteDB & CentralDB [Redmine: #175297]
+		- 20220724@Evan: Fix bug @transid null when existed refno  [Redmine: #175640]
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -180,7 +181,7 @@ BEGIN
 	INSERT INTO #ChargeRateByCurrency (ChargeId, CurrencyId, Rate)
 	EXEC (@SqlQueryChargeRate)
 
-	DECLARE @FinalData TABLE (TransId BIGINT,CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
+	DECLARE @FinalData TABLE (RowID INT IDENTITY(1,1) PRIMARY KEY,CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
 			, StatusId TINYINT, Status VARCHAR(10), apositiontaking MONEY, awinlost MONEY, RefNo BIGINT, actualrate FLOAT
 			, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50)
 			, PlayerComm MONEY, Comm MONEY, betfrom NVARCHAR(1))
@@ -388,6 +389,7 @@ BEGIN
 		DECLARE @Count INT, @IndexId INT, @WinlostDateTmp SMALLDATETIME, @CurrencyIdTmp TINYINT, @BettypeTmp SMALLINT
 		SELECT @Count = 0, @IndexId = 1
 		--SELECT @Count = COUNT(1) FROM @FinalData WHERE RefNo IS NULL
+		
 		WHILE EXISTS (SELECT 1 FROM @FinalData WHERE RefNo IS NULL)
 		BEGIN
 			SELECT @WinlostDateTmp = NULL, @CurrencyIdTmp = 0, @BettypeTmp = 0
@@ -397,10 +399,6 @@ BEGIN
 			SET @RefNo = 0
 			EXEC dbo.Get_refno_transid @refNo = @RefNo OUTPUT
 
-			---get new transid 
-			SET @TransId = 0
-			EXEC Get_Bettrans_TransID @TransID = @TransId OUTPUT	
-
 			--get exchange rate
 			SELECT @ExchangeRate = ActualRate
 			FROM CustDB.dbo.ExchangeDailyOanda WITH(NOLOCK)
@@ -409,10 +407,29 @@ BEGIN
 			UPDATE @FinalData
 			SET RefNo = @RefNo
 				, ActualRate = @ExchangeRate
-				, TransId = @TransId
 			WHERE WinlostDate = @WinlostDateTmp AND CurrencyId = @CurrencyIdTmp AND Bettype = @BettypeTmp
 		END
 		
+		---get new transid 
+
+		DECLARE @TransIDs TABLE (RowID INT IDENTITY(1,1) PRIMARY KEY, TransID BIGINT, seq TINYINT)
+		DECLARE @MaxGenTransId INT, @total_transid INT;
+
+		SELECT @MaxGenTransId = MAX(RowID) FROM @FinalData
+	
+		WHILE (@MaxGenTransId > 0)
+		BEGIN
+			IF (@MaxGenTransId > 255)
+				SET @total_transid = 255
+			ELSE 
+				SET @total_transid = @MaxGenTransId
+
+			INSERT INTO @TransIDs (seq, TransID)
+			EXEC Get_bettrans_transid_Range @total_transid = @total_transid
+
+			SET @MaxGenTransId = @MaxGenTransId - @total_transid
+		END
+
 		--update some info: transdesc, awinlost, apositiontaking, status, recommend, ...
 		--AGC Adjustment - Date: 2015-05-26
 		UPDATE tmp
@@ -452,7 +469,6 @@ BEGIN
 		FROM CustDB.dbo.ExchangeDailyOanda WITH(NOLOCK)
 		WHERE ExchangeDate = @WinlostDate AND ExchangeId = @CurrencyId
 
-		--select * from @FinalData
 		--delete data when charge rate did not config & avoid error a while insert into @bettrans
 		DELETE @FinalData 
 		WHERE awinlost IS NULL
@@ -524,7 +540,7 @@ BEGIN
 			, RecommDate
 			, RepUpdateTime 
 			, SiteDBGroupID)
-		SELECT TransId
+		SELECT tr.TransId
 			, custid
 			, GETDATE() transdate
 			, 0 oddsid
@@ -589,8 +605,8 @@ BEGIN
 			, NULL RecommDate
 			, SYSDATETIME() RepUpdateTime
 			, @SiteDBGroupID SiteDBGroupID
-		FROM @FinalData
-
+		FROM @FinalData t
+			INNER JOIN @TransIDs tr ON tr.RowID = t.RowID
 		--WAITFOR DELAY '000:00:00.280'
 		
 	END
