@@ -23,7 +23,7 @@ BEGIN
 	FROM	bodb02.dbo.Transfer WITH (NOLOCK, INDEX=IX_WinlostDate) 
 	WHERE	bettype = 19999 
 		AND WinlostDate IN (SELECT runningDay FROM @Days)
-	GROUP BY custid
+	GROUP BY custid, WinlostDate
 	HAVING COUNT(1) > 1
 END
 GO
