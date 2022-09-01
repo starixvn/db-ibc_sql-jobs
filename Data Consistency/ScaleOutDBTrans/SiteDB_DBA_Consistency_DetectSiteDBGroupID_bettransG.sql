@@ -47,7 +47,6 @@ BEGIN
 	INSERT INTO #tmp_TransId (TransId, CustId, SiteDBGroupID)
 	SELECT TOP(@batchCount) b.transid, b.custid, b.SiteDBGroupID
 	FROM dbo.bettransG b WITH (NOLOCK)
-		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = b.custid
 	WHERE b.transid > @maxTransId_setting
 	ORDER BY b.transid ASC
 
