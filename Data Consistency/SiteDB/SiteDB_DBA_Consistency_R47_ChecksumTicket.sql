@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSIG-bodb02" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_R47_ChecksumTicket]
 (
 	@SiteDBGroupID SMALLINT,
