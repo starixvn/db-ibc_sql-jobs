@@ -48,5 +48,3 @@ UNION
 SELECT 'translog', @maxTransId_translog
 UNION
 SELECT 'Transfer', @maxTransId_Transfer
-UNION
-SELECT 'IsSendTestCurrencyOnly', 0
