@@ -6,7 +6,7 @@ Created by: 20220819@Victoria
 Task: Check BalanceUp Ticket
 DB: DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02
 Revisions:
-	- 20220819@Victoria: Check BalanceUp Ticket [Redmine:#175881]
+	- 20220819@Victoria: Rule #50 - Check BalanceUp Ticket [Redmine:#175881]
 	
 */
 BEGIN

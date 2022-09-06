@@ -6,7 +6,7 @@ Created by: 20220819@Victoria
 Task: CheckSum ticket - SiteDB
 DB: DBSIG-bodb02
 Revisions:
-	- 20220819@Victoria: CheckSum ticket - SiteDB [Redmine:#175881]
+	- 20220819@Victoria: Rule #49 - CheckSum ticket - SiteDB [Redmine:#175881]
 	
 */
 

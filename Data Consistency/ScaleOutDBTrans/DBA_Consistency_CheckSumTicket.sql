@@ -6,7 +6,7 @@ Created by: 20220819@Victoria
 Task: CheckSum ticket
 DB: DBCONSISTENCY-bodb_Consistency
 Revisions:
-	- 20220819@Victoria: CheckSum ticket [Redmine:#175881]
+	- 20220819@Victoria: Rule #49 - CheckSum ticket [Redmine:#175881]
 	
 */
 

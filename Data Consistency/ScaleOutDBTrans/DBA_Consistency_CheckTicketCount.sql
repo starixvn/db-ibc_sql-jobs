@@ -6,7 +6,7 @@ Created by: 20220819@Victoria
 Task: Check ticket count by Status - DBCONSISTENCY
 DB: DBCONSISTENCY-bodb_Consistency
 Revisions:
-	- 20220819@Victoria: Check ticket count by Status - DBCONSISTENCY [Redmine:#175881]
+	- 20220819@Victoria: Rule #48 - Check ticket count by Status - DBCONSISTENCY [Redmine:#175881]
 	
 */
 BEGIN
