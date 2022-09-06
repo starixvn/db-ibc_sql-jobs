@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[SiteDB_DBA_Consistency_R52_AutoTransfer_Check_TotalSuperVSTicket]
+ALTER PROCEDURE [dbo].[SiteDB_DBA_Consistency_AutoTransfer_Check_TotalSuperVSTicket]
 (
 	@ScheduledDate DATE = NULL
 	,@ErrCode		INT				= 0		OUTPUT

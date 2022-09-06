@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[DBA_Consistency_R51_AutoTransfer_Check_TotalTicketCorrect]
+CREATE PROCEDURE [dbo].[DBA_Consistency_AutoTransfer_Check_TotalTicketCorrect]
 (
 	@ScheduledDate DATE = NULL
 	,@ErrCode		INT				= 0		OUTPUT

@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[DBA_Consistency_R47_ChecksumTicket]
+CREATE PROCEDURE [dbo].[DBA_Consistency_ChecksumTicket_Transfer]
 (
 	@SiteDBGroupID SMALLINT,
 	@TransferLastTransId BIGINT,
@@ -8,7 +8,7 @@ CREATE PROCEDURE [dbo].[DBA_Consistency_R47_ChecksumTicket]
 AS
 /*
 	Created: 20220823@Sol
-	Task: Data consistency
+	Task: Data consistency - Rule 47
 	DB: DBCONSISTENCY-bodb_Consistency
 
 	Revisions: 

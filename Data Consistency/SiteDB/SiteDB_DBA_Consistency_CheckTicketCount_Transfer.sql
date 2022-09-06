@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_R46_CheckTicketCount]
+CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_CheckTicketCount_Transfer]
 (
 	@SiteDBGroupID SMALLINT OUTPUT,
 	@TransferLastTransId BIGINT OUTPUT,
@@ -10,7 +10,7 @@ CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_R46_CheckTicketCount]
 AS
 /*
 	Created: 20220823@Sol
-	Task: Data consistency
+	Task: Data consistency - rule 46
 	DB: DBSIG-bodb02
 
 	Revisions: 
@@ -28,6 +28,7 @@ BEGIN
 		,@transferKey VARCHAR(50) = 'SiteDB_CheckConsistency_Transfer_LastTransId'
 		,@transferCollKey VARCHAR(50) = 'SiteDB_CheckConsistency_TransferColl_LastTransId'
 		,@minTransID BIGINT = 0 --- for the first time run sp, 
+		,@minCollTransID BIGINT = 0 --- for the first time run sp, 
 
 	--check if the setting exists or not, if exists, get the value, if not, select min transid and insert the setting
 	--this is for the first time that sp run, next time will get the last transid
@@ -43,8 +44,9 @@ BEGIN
 
 			---insert to table setting
 			INSERT INTO bodb02.dbo.SystemSettings (VName,VValue)
-			VALUES (@transferKey,CAST(@minTransID AS VARCHAR(200))
-				)
+			VALUES (@transferKey,CAST(@minTransID AS VARCHAR(200)))
+
+			SELECT @transferLastTransId = @minTransID
 		END
 		ELSE --get value from system setting
 		BEGIN
@@ -60,13 +62,14 @@ BEGIN
 				WHERE s.VName = @transferCollKey
 				)
 		BEGIN
-			SELECT @minTransID = MIN(t.TransId)
+			SELECT @minCollTransID = MIN(t.TransId)
 			FROM Transfer_Coll t WITH (NOLOCK)
 
 			---insert to table setting
 			INSERT INTO bodb02.dbo.SystemSettings (VName,VValue)
-			VALUES (@transferCollKey,CAST(@minTransID AS VARCHAR(200))
-				)
+			VALUES (@transferCollKey,CAST(@minCollTransID AS VARCHAR(200)))
+
+			SELECT @transferCollLastTransId = @minCollTransID
 		END
 		ELSE --get value from system setting
 		BEGIN
