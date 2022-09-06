@@ -37,6 +37,7 @@ AS
 		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
 		- 20220721@Evan: Integrate new transid [Redmine: #175640]
+		- 20220906@Sol: Improve performance - using index hint: index=IX_SequenceID - [Redmine: #175640]
 
 */
 
@@ -65,7 +66,7 @@ BEGIN
 
 	INSERT INTO @temptrans (TransId, TransDate, CustId, Recommend, SRecommend)
 	SELECT transid, transdate, custid, recommend, srecommend
-	FROM dbo.bettrans WITH(NOLOCK)
+	FROM dbo.bettrans WITH(NOLOCK, index=IX_SequenceID)
 	WHERE SequenceID BETWEEN @smallID AND @maxtransID
 		AND (bettype < 31
 				OR (bettype BETWEEN 121 AND 999)
