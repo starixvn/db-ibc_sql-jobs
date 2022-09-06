@@ -103,6 +103,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 		FROM dbo.Transfer t WITH (NOLOCK)
 		WHERE t.TransId > @transferLastTransId
+			AND t.Bettype NOT IN (19999, 20000)
 		GROUP BY Recommend 
 			
 		UNION ALL
@@ -126,7 +127,8 @@ BEGIN
 			tc.Recommend, 
 			COUNT(1) AS TicketCount
 		FROM dbo.Transfer_Coll tc WITH (NOLOCK)
-		WHERE	tc.TransId > @transferCollLastTransId
+		WHERE tc.TransId > @transferCollLastTransId
+			AND tc.Bettype NOT IN (19999, 20000)
 		GROUP BY tc.Recommend 
 
 	END

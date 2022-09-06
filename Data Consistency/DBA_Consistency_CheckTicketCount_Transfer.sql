@@ -37,6 +37,7 @@ BEGIN
 			ON s.site = c.site
 	WHERE t.TransId > @transferLastTransId
 		AND s.SiteDBGroupID = @SiteDBGroupID
+		AND t.Bettype NOT IN (19999, 20000)
 	GROUP BY t.Recommend 
 			
 	UNION ALL
@@ -69,8 +70,9 @@ BEGIN
 			ON tc.CustId = c.custid
 		INNER JOIN bodb02.dbo.Site s WITH(NOLOCK)
 			ON s.site = c.site
-	WHERE	tc.TransId > @transferCollLastTransId
+	WHERE tc.TransId > @transferCollLastTransId
 		AND s.SiteDBGroupID = @SiteDBGroupID
+		AND tc.Bettype NOT IN (19999, 20000)
 	GROUP BY tc.Recommend 
 
 END

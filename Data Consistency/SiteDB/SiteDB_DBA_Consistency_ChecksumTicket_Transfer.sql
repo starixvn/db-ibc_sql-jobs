@@ -61,6 +61,7 @@ BEGIN
 				) AS Total_CheckSum_Agg
 		FROM dbo.Transfer t WITH (NOLOCK)
 		WHERE t.TransId > @TransferLastTransId
+			AND t.Bettype NOT IN (19999, 20000)
 		GROUP BY Recommend 
 			
 		UNION ALL
@@ -94,7 +95,8 @@ BEGIN
 						)
 				) AS Total_CheckSum_Agg
 		FROM dbo.Transfer_Coll tc WITH (NOLOCK)
-		WHERE	tc.TransId > @TransferCollLastTransId
+		WHERE tc.TransId > @TransferCollLastTransId
+			AND tc.Bettype NOT IN (19999, 20000)
 		GROUP BY tc.Recommend 
 
 	END

@@ -43,6 +43,7 @@ BEGIN
 			ON s.site = c.site
 	WHERE t.TransId > @transferLastTransId
 		AND s.SiteDBGroupID = @SiteDBGroupID
+		AND t.Bettype NOT IN (19999, 20000)
 	GROUP BY t.Recommend 
 			
 	UNION ALL
@@ -87,6 +88,7 @@ BEGIN
 			ON s.site = c.site
 	WHERE tc.TransId > @transferCollLastTransId
 		AND s.SiteDBGroupID = @SiteDBGroupID
+		AND tc.Bettype NOT IN (19999, 20000)
 	GROUP BY tc.Recommend 
 
 END
