@@ -51,6 +51,7 @@ BEGIN
 	-- Invalid in case of checking mismatch sitedbgroupid between server config & table site 
 	UPDATE	ttrans
 	SET		ttrans.IsInvalid = 1
+			,ttrans.SiteDBGroupIDConfigured = @SiteDBGroupID
 	FROM	#tmp_TransId ttrans
 	WHERE	ttrans.SiteDBGroupID <> @SiteDBGroupID
 
