@@ -190,7 +190,7 @@ BEGIN
 	
 	SELECT TableName, SiteDBGroupID, Recommend, Status, TicketCount
 	FROM #tmp_betticketcheckcount
-	--ORDER BY TableName, SiteDBGroupID, Recommend,  Status
+	ORDER BY TableName, SiteDBGroupID, Recommend,  Status
 
 	DROP TABLE #tmp_betticketcheckcount
 END
