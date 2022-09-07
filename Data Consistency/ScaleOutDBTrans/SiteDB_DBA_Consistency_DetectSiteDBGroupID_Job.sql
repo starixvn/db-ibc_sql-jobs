@@ -44,7 +44,7 @@ BEGIN
 	BEGIN
 		UPDATE c 
 		SET c.ConfigValue = @maxTransId_bettrans
-		FROM dbo.SiteDB_MaxTrans_Config c WITH (ROWLOCK, UPDLOCK)
+		FROM dbo.SiteDB_DataConsistencyCheck_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'bettrans'
 	END
 	-----------------------------------------------
@@ -59,7 +59,7 @@ BEGIN
 	BEGIN
 		UPDATE c 
 		SET c.ConfigValue = @maxTransId_bettransLC
-		FROM dbo.SiteDB_MaxTrans_Config c WITH (ROWLOCK, UPDLOCK)
+		FROM dbo.SiteDB_DataConsistencyCheck_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'bettransLC'
 	END
 		
@@ -73,7 +73,7 @@ BEGIN
 	BEGIN
 		UPDATE c 
 		SET c.ConfigValue = @maxTransId_bettransG
-		FROM dbo.SiteDB_MaxTrans_Config c WITH (ROWLOCK, UPDLOCK)
+		FROM dbo.SiteDB_DataConsistencyCheck_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'bettransG'
 	END
 	
@@ -87,7 +87,7 @@ BEGIN
 	BEGIN
 		UPDATE c 
 		SET c.ConfigValue = @maxTransId_bettransRnG
-		FROM dbo.SiteDB_MaxTrans_Config c WITH (ROWLOCK, UPDLOCK)
+		FROM dbo.SiteDB_DataConsistencyCheck_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'bettransRNG'
 	END
 
@@ -101,7 +101,7 @@ BEGIN
 	BEGIN
 		UPDATE c 
 		SET c.ConfigValue = @maxTransId_translog
-		FROM dbo.SiteDB_MaxTrans_Config c WITH (ROWLOCK, UPDLOCK)
+		FROM dbo.SiteDB_DataConsistencyCheck_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'translog'
 	END
 
@@ -116,7 +116,7 @@ BEGIN
 	BEGIN
 		UPDATE c 
 		SET c.ConfigValue = @maxTransId_Transfer
-		FROM dbo.SiteDB_MaxTrans_Config c WITH (ROWLOCK, UPDLOCK)
+		FROM dbo.SiteDB_DataConsistencyCheck_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'Transfer'
 	END
 

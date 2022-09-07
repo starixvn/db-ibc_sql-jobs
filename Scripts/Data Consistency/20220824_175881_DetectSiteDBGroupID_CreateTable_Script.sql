@@ -11,10 +11,10 @@
 USE [bodb02]
 GO
 
-CREATE TABLE [dbo].[SiteDB_MaxTrans_Config](
+CREATE TABLE [dbo].[SiteDB_DataConsistencyCheck_Config](
 	[ConfigName]	[varchar](100) NOT NULL,
 	[ConfigValue]	[varchar](100) NOT NULL,
- CONSTRAINT [PK_SiteDB_MaxTrans_Config] PRIMARY KEY CLUSTERED 
+ CONSTRAINT [PK_SiteDB_DataConsistencyCheck_Config] PRIMARY KEY CLUSTERED 
 (
 	[ConfigName] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [DATA]

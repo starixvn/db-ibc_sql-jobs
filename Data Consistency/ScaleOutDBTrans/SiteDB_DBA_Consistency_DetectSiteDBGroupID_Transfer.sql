@@ -33,7 +33,7 @@ BEGIN
 	DECLARE @maxTransId_setting BIGINT
 	
 	SELECT @maxTransId_setting = CONVERT(BIGINT, c.ConfigValue)
-	FROM dbo.SiteDB_MaxTrans_Config c WITH (NOLOCK)
+	FROM dbo.SiteDB_DataConsistencyCheck_Config c WITH (NOLOCK)
 	WHERE c.ConfigName = 'Transfer'
 
 	INSERT INTO #tmp_TransId (TransId, CustId, SiteDBGroupID)
