@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="1" isNested=""></info>*/
+/*<info serverAlias="DBTXN-bodb02,DBTP-bodb02" executers="" viewers="" isFunction="1" isNested=""></info>*/
 
 ALTER FUNCTION [dbo].[f_dba_transid_revert] 
 (	
