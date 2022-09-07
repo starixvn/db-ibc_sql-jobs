@@ -97,6 +97,7 @@ Revisions:
 	- 20220720@Patrick: Support new transid [Redmine: #175666]
 	- 20220831@Bobby: Remove translog.custid=0 [Redmine: #176685]
 	- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
+	- 20220908@Patrick: Support scale-out for deposit site - Fix issue Redmine: [#175602]
 */
 
 SET NOCOUNT ON
@@ -123,10 +124,6 @@ BEGIN
 	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - end updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	--//
-	SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('BeforeMB')
-	WAITFOR DELAY @__delayTimeValue --waitfor all settle running commands can be done to start MB
-
 	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - start turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
@@ -142,6 +139,10 @@ BEGIN
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - end turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	
+	--//
+	SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('BeforeMB')
+	WAITFOR DELAY @__delayTimeValue --waitfor all settle running commands can be done to start MB
 
 	-- update ticket (if any) which winlostdate is not synced with eventdate 
 	DECLARE @transTable TABLE (transid BIGINT PRIMARY KEY, winlostdate SMALLDATETIME)
