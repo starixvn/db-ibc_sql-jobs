@@ -21,6 +21,7 @@ AS
 		20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
 		20220715@Patrick: Use insert into instead of select into Redmine: [#175440]
+		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 		
 	Param use:
 
@@ -33,7 +34,7 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	Declare @RC int, @RD int, @msg varchar(200)
+	Declare @RC int, @RD int, @msg varchar(200), @__siteDBGroupId SMALLINT = 0
 	SET @msg = ''
 	SET @RD = 0
 
@@ -62,6 +63,8 @@ BEGIN
 		AND c.custid NOT IN (SELECT ce.custid FROM dbo.Task_Cust_CheckBalance_Exception ce WITH (NOLOCK))
 	GROUP BY c.custid
 
+	SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
+
 	IF NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1)
 	BEGIN
 		IF OBJECT_ID('tempdb.dbo.#tmpCal') IS NOT NULL
@@ -74,18 +77,19 @@ BEGIN
 			SELECT tl.custid, SUM(actual_stake) AS Outstanding
 			FROM dbo.translog tl with (nolock)
 			WHERE tl.statusID IN (0,1) --summary running tickets only
+				AND ISNULL(tl.SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY tl.custid
 		),
 		q3 AS (
-			SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
+			SELECT custid, SUM(CASE WHEN statusid = 0 THEN -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
 			FROM dbo.bettransRNG WITH(NOLOCK)
-			WHERE IsSum = 0
+			WHERE IsSum = 0 AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY custid
 		),
 		q4 AS (
 			SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalLC
 			FROM dbo.bettransLC WITH(NOLOCK)
-			WHERE IsSum = 0
+			WHERE IsSum = 0 AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY custid
 		), 
 		t AS (
@@ -122,14 +126,17 @@ BEGIN
 			WHERE 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
+				AND ISNULL(b.SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY b.custid
 		),
 		ct AS (
-			SELECT custid, SUM(winlost-actual_stake+playercomm) AS Balance
-			FROM dbo.Transfer WITH(NOLOCK)
+			SELECT t.custid, SUM(winlost-actual_stake+playercomm) AS Balance
+			FROM dbo.Transfer t WITH(NOLOCK)
+				LEFT JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK) ON t.SRecommend = s.custid
 			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 					 ELSE 1 END
-			GROUP BY custid
+				AND ISNULL(s.SiteDBGroupID, 0) = @__siteDBGroupId
+			GROUP BY t.custid
 		)
 		INSERT INTO #QuestionLists(custid, balance, RowVersion, Outstanding, BalRNG, BalLC, FromBalanceTable, adjustWinlostAmt)
 		SELECT cb.custid, cb.balance, cb.RowVersion, ISNULL(qq.Outstanding,0) Outstanding, ISNULL(qq.BalRNG, 0) BalRNG, ISNULL(qq.BalLC, 0) BalLC, 
@@ -193,34 +200,37 @@ BEGIN
 			WHERE 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
+				AND ISNULL(b.SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY b.custid
 		),
 		ct AS (
 			SELECT t.custid, SUM(winlost-actual_stake+playercomm) Balance
 			FROM dbo.Transfer t with (nolock)
 				INNER JOIN #QuestionLists q ON t.custid = q.custid
+				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 					 ELSE 1 END
+				AND ISNULL(c.SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY t.custid
 		),
 		q2 AS (
 			-- translog
 			SELECT tl.custid, SUM(actual_stake) AS Outstanding
 			FROM dbo.translog tl with (nolock)
-				--INNER JOIN CustDB.dbo.custinfo c with (nolock) ON tl.custid = c.custid AND c.roleid = 1 and
 			WHERE tl.statusID IN (0,1) --summary running tickets only
+				AND ISNULL(tl.SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY tl.custid
 		),
 		q3 AS (
 			SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
 			FROM dbo.bettransRNG WITH(NOLOCK)
-			WHERE IsSum = 0
+			WHERE IsSum = 0 AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY custid
 		),
 		q4 AS (
 			SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalLC
 			FROM dbo.bettransLC WITH(NOLOCK)
-			WHERE IsSum = 0
+			WHERE IsSum = 0 AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY custid
 		),
 		t AS (

@@ -12,6 +12,7 @@ AS
 		- 20131108@Elodie:	Splitting bodb02 into CustDB (call exchange by link database)	
 							Use DBPRO instead of DB02
 		- 20180128@Lukas:	update virtualrate = actualrate, when move winlostdate 
+		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 */
 BEGIN;
 	SET NOCOUNT ON
@@ -32,10 +33,15 @@ BEGIN;
 
 	IF @@ROWCOUNT = 0 RETURN
 			
-	UPDATE O
-	SET eventdate = @winlostdate, changeTime = CURRENT_TIMESTAMP
-	FROM DBPRO.bodb02.dbo.outright O WITH (UPDLOCK, ROWLOCK)
-	WHERE orid IN (SELECT orid FROM @outright)
+	DECLARE @__aliasServer VARCHAR(128)
+	EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
+	IF @__aliasServer = 'DBCTG' --only run that command at central server
+	BEGIN
+		UPDATE O
+		SET eventdate = @winlostdate, changeTime = CURRENT_TIMESTAMP
+		FROM DBPRO.bodb02.dbo.outright O WITH (UPDLOCK, ROWLOCK)
+		WHERE orid IN (SELECT orid FROM @outright)
+	END
 
 	UPDATE b
 	SET winlostdate = @winlostdate

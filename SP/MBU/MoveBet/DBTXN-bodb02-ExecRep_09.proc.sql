@@ -44,6 +44,7 @@ AS
 		- 20200916@Brice:	Change serverName DB06 to DB06C2\DB06 [Redmine: #140355]
 		- 20210126@Patrick: Migrate DB Server DB054 to cluster [Redmine: #149273]
 		- 202010316@Patrick: Revise Movebet flow to support transfer 247 Redmine: [#149927]
+		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 
  */
 BEGIN
@@ -131,7 +132,7 @@ BEGIN
 
 				IF @__allowOn = 1
 				BEGIN
-					EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '1'
+					EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '1', @IsOverride = 0
 				END
 				
 			END
@@ -146,7 +147,7 @@ BEGIN
 
 				IF @__allowOff = 1
 				BEGIN
-					EXEC DBTXN.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '-1'
+					EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'MB_ReadyUpdMBDate', @VValue = '-1', @IsOverride = 0
 				END
 				
 			END

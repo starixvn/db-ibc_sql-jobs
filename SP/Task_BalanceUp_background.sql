@@ -36,6 +36,7 @@ Revisions:
 	- 20220307@Bobby: Re-commit (Comment code delete for livescore [Redmine:#169201])
 	- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 	- 20220727@Patrick: Support new transid [Redmine: #175666]
+	- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 
 Param's Explanation: 
 
@@ -81,9 +82,20 @@ END
 SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2))
 EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
 
+DECLARE @__aliasServer VARCHAR(128) = ''
+
 -- ================== STEP : 1 
 IF @step = 1
 BEGIN
+	SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', start turn on flag 20k'
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+
+	--turn on copy 20k flag
+	EXEC dbo.Transfer_ExecRep_02 @Mode = 7
+
+	SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', end turn on flag 20k'
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+
 -- ================== DATA VERIFY
 
 	--- DATA VERIFY
@@ -179,10 +191,11 @@ BEGIN
 	-- SET VValue = '1'
 	-- WHERE VName = 'isArchivingBet' 
 	EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
-	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
+	
+	--//TODO: check then remove that command
+	--EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isArchivingBet'
 
 	--//turn on isArchivingBet_Local flag
-	--EXEC dbo.Bet_ExecRep_09 @mode = 5
 	EXEC dbo.Transfer_ExecRep_02 @Mode = 5
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 5, @tableName = 'SystemSettings'
 
@@ -193,15 +206,26 @@ BEGIN
 	truncate table dbo.balanceTable;
 	truncate table dbo.balanceTable_tmp
 
+	EXEC dbo.balancecheck @fdate, 11
+	EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
+	
+	--//only central server can run backup DBCUST.custdb
+	IF @__aliasServer = 'DBCTG' --only run that command at central server
+	BEGIN
+		EXEC DBCUST.msdb.dbo.sp_start_job N'BalanceUPBackground_BackupFull_Cust'
+	END
 
-		EXEC dbo.balancecheck @fdate, 11
 	-- doing backup
 	Declare @suffix varchar(10)
 	SET @suffix = 'bbu' + RIGHT(CONVERT(varchar(10), @fdate,120),5)
-	EXEC DBCUST.msdb.dbo.sp_start_job N'BalanceUPBackground_BackupFull_Cust'
+	--//backup bodb02@dbtrans
 	EXEC dbo.Task_BackupFULL @suffix
-	EXEC DB02.bodb02.dbo.Task_BackupFULL @suffix
-	--EXEC DBCUST.custDB.dbo.Task_BackupFull_Cust @suffix = 'FULL' -- Viet: add full backup for custdb also
+	
+	--//only central server can run backup DB02.bodb02
+	IF @__aliasServer = 'DBCTG' --only run that command at central server
+	BEGIN
+		EXEC DB02.bodb02.dbo.Task_BackupFULL @suffix
+	END
 	-- doing backup : end
 
 -- ================== END STEP : 2
@@ -539,8 +563,12 @@ BEGIN
 
 		-----> Put this code into [Acc_Apl_ExecRep_03]
 
+	EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
+	--//only central server can run backup DBCUST.custdb
+	IF @__aliasServer = 'DBCTG' --only run that command at central server
+	BEGIN
 		EXEC Acc_Apl_ExecRep_03 @fdate 
-
+	END
 		--EXEC DB02.bodb02.dbo.Task_BalanceUp_DB02 @fdate
 
 	EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 1
@@ -561,12 +589,39 @@ END
 -- ================== STEP : 4
 IF @step = 4
 BEGIN
+	SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', start turn off flag 20k'
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+	
+	--turn off copy 20k flag
+	EXEC dbo.Transfer_ExecRep_02 @Mode = 8
+
+	SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', end turn off flag 20k'
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+
+	--check BU done step 3 or not
+	DECLARE @__start DATETIME
+	SET @__start = GETDATE()
+	WHILE EXISTS (
+		SELECT TOP 1 1 FROM DBCTG.bodb02.dbo.SystemSettings WHERE VName = 'BU_ReadyUpdBUDate' AND VValue <> '0'
+	)
+	BEGIN
+		WAITFOR DELAY '00:00:30:000' --waitfor BU done step 3...
+		IF DATEDIFF(MINUTE, @__start, GETDATE()) > 90
+		BEGIN
+			--Send notification to dba
+			SET @Doing = CONCAT(@@SERVERNAME, ' | Urgently!!! BU - hey guys, BalanceUp run long time at step 4. Please check!!!')
+			EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
+				@SubjectName = 'Urgently!!! BalanceUp - Notification',
+				@MessageName = @Doing
+
+		END
+	END
+
 
 	SET DEADLOCK_PRIORITY HIGH
 
 	--insert processing list
 	EXEC dbo.Task_Core_ProcessingCustListIns @CustIds = '3'
-	WAITFOR DELAY '00:00:03:000'
 
 	--handle case duplicated PK
 	DECLARE @__tryCnt INT = 0, @__errorCode INT, @__errorMessage varchar(200) = ''
@@ -592,7 +647,7 @@ BEGIN
 			END
 
 			--write logs:
-			SET @Doing = 'Task_BalanceUp_background: duplicated transid (1). Err: ' + @__errorMessage
+			SET @Doing = CONCAT(@@SERVERNAME, ' | Task_BalanceUp_background: duplicated transid (1). Err: ', @__errorMessage)
 			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 			IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
@@ -605,7 +660,7 @@ BEGIN
 				END
 
 				--Send notification to dba
-				EXEC [dbo].[DBA_Task_Send_SimpleNotifyMessageToDBA] 
+				EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
 					@SubjectName = 'Urgently!!! BU - Notification',
 					@MessageName = @Doing
 
@@ -620,9 +675,11 @@ BEGIN
 
 		END CATCH
 	END
-
+	
 	--delete processing list
 	EXEC dbo.Task_Core_ProcessingCustListDel @CustIds = '3'
+
+	WAITFOR DELAY '00:00:03:000'
 
 -- ================== BalanceUp Agent
 	SET NOCOUNT ON
@@ -686,10 +743,11 @@ BEGIN
 	-- SET VValue = '0'
 	-- WHERE VName = 'isArchivingBet' 
 	EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
-	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
+
+	--//TODO: check then remove that command
+	--EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isArchivingBet'
 
 	--//turn off isArchivingBet_Local flag
-	--EXEC dbo.Bet_ExecRep_09 @mode = 6
 	EXEC dbo.Transfer_ExecRep_02 @Mode = 6
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 6, @tableName = 'SystemSettings'
 

@@ -96,6 +96,7 @@ Revisions:
 	- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 	- 20220720@Patrick: Support new transid [Redmine: #175666]
 	- 20220831@Bobby: Remove translog.custid=0 [Redmine: #176685]
+	- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 */
 
 SET NOCOUNT ON
@@ -106,6 +107,7 @@ DECLARE @Doing NVARCHAR(300) = ''
 	, @__recommend INT
 	, @__delayTimeValue VARCHAR(20) = '00:00:00:020'
 	, @__rowAffected INT = 0
+	, @__aliasServer VARCHAR(128) = ''
 
 SET @Doing = 'Task_DailySummary : MoveBet step ' + CAST(@step AS VARCHAR(20)) + ' start, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
@@ -124,6 +126,22 @@ BEGIN
 	--//
 	SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('BeforeMB')
 	WAITFOR DELAY @__delayTimeValue --waitfor all settle running commands can be done to start MB
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - start turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
+	--**turn on flag for starting copy to [14]
+	--pub SP ExcepRep
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @parlay = 7, @tableName = 'SystemSettings'
+	--pub bet
+	--EXEC dbo.Bet_ExecRep_09	@mode = 7
+	EXEC dbo.Transfer_ExecRep_02 @Mode = 3
+
+	--pub bet14
+	EXEC dbo.Bet_ExecRep14_01 @Mode = 1, @TableName = 'SystemSettings'
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - end turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 	-- update ticket (if any) which winlostdate is not synced with eventdate 
 	DECLARE @transTable TABLE (transid BIGINT PRIMARY KEY, winlostdate SMALLDATETIME)
@@ -313,11 +331,15 @@ BEGIN
 		WHERE bettype = 10 
 			AND statusID = 0 
 			AND winlostdate <= @winlostdate
-
-		UPDATE O
-		SET eventdate = DATEADD(DAY, 1, @winlostdate), changeTime = GETDATE()
-		FROM DBPRO.bodb02.dbo.outright O WITH (UPDLOCK, ROWLOCK)
-		WHERE orid IN (SELECT orid FROM @outright)
+		
+		EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
+		IF @__aliasServer = 'DBCTG' --only run that command at central server
+		BEGIN
+			UPDATE O
+			SET eventdate = DATEADD(DAY, 1, @winlostdate), changeTime = GETDATE()
+			FROM DBPRO.bodb02.dbo.outright O WITH (UPDLOCK, ROWLOCK)
+			WHERE orid IN (SELECT orid FROM @outright)
+		END
 
 		UPDATE bettrans WITH (UPDLOCK, ROWLOCK) 
 		SET winlostdate = DATEADD(DAY, 1, @winlostdate)
@@ -580,31 +602,19 @@ END
 
 IF @step = 4 --copy event | bet data to [14]
 BEGIN
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - start turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
-
-	--**turn on flag for starting copy to [14]
-	--pub SP ExcepRep
-	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @parlay = 7, @tableName = 'SystemSettings'
-	--pub bet
-	--EXEC dbo.Bet_ExecRep_09	@mode = 7
-	EXEC dbo.Transfer_ExecRep_02 @Mode = 3
-
-	--pub bet14
-	EXEC dbo.Bet_ExecRep14_01 @Mode = 1, @TableName = 'SystemSettings'
-
-	SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - end turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 	
 	-- viet ----
 	EXEC dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
 
-	--
-	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
+	--TODO: check to remove this statement
+	--EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '1', @VName = 'isMovingBet'
 
-	--copy event to [14]
-	EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Copy @winlostdate
-
+	EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
+	IF @__aliasServer = 'DBCTG' --only run that command at central server
+	BEGIN
+		--copy event to [14]
+		EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Copy @winlostdate
+	END
 	-- Copy bettransm/bettransg -> bettransm14/bettransg14 for whole day of @winlostdate
 	EXEC dbo.ExecRep_08 @recommend = 0, @winlostdate = @winlostdate, @parlay = 1
 
@@ -752,6 +762,7 @@ BEGIN
 		BEGIN TRY
 
 			--//transid value will fill out by default constraint via CLR function
+			--==RepUpdateTime value MUST HAVE NULL value to prevent Inhouse replicator sync to central
 			BEGIN TRANSACTION
 				INSERT INTO dbo.Transfer(custid, transdate, winlostdate, bettype, stake, actual_stake, winlost, awinlost, mwinlost, swinlost
 					,PlayerComm, Comm, AComm, SComm, StatusId, RefNo, Recommend, MRecommend, SRecommend
@@ -759,7 +770,7 @@ BEGIN
 				)
 				SELECT b.custid, b.winlostdate AS transdate, b.winlostdate AS winlostdate, 19999 AS bettype, b.stake, b.actual_stake, b.winlost, b.awinlost, b.mwinlost, b.swinlost
 					,b.playercomm, b.comm, b.acomm, b.scomm, 142 AS StatusId, b.refno, b.recommend, b.mrecommend, b.srecommend
-					,b.username, b.currency, b.CurrencyName, b.actualrate, 8 AS Creator, GETDATE() AS CheckTime, SYSDATETIME() AS RepUpdateTime
+					,b.username, b.currency, b.CurrencyName, b.actualrate, 8 AS Creator, GETDATE() AS CheckTime, NULL AS RepUpdateTime
 				FROM dbo.bettranssum b
 				WHERE EXISTS (	SELECT TOP 1 1
 								FROM @__runningCust t
@@ -829,25 +840,25 @@ BEGIN
 	DECLARE @__start DATETIME
 	SET @__start = GETDATE()
 	WHILE EXISTS (
-		SELECT TOP 1 1 FROM dbo.SystemSettings WHERE VName = 'MB_ReadyUpdMBDate' AND VValue <> '0'
+		SELECT TOP 1 1 
+		FROM DBCTG.bodb02.dbo.SystemSettings 
+		WHERE VName = 'MB_ReadyUpdMBDate' AND VValue <> '0'
+	) OR EXISTS (
+		SELECT TOP 1 1 
+		FROM DBCTG.bodb02.dbo.SystemSettings 
+		WHERE VName = 'BeingMovebetDate'
+			AND VValue <> (SELECT VValue FROM dbo.SystemSettings WHERE VName = 'BeingMovebetDate')
 	)
 	BEGIN
 		WAITFOR DELAY '00:00:30:000' --waitfor MB done...
-		IF DATEDIFF(MINUTE, @__start, GETDATE()) > 30
+		IF DATEDIFF(MINUTE, @__start, GETDATE()) > 90
 		BEGIN
 			--send out message for DBA to check...
-			PRINT 'hey guys, please check...'
-			EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = N'PONTUS', 
-				@JobId = NULL, @JobName = N'Custom Message', 
-				@Message = 'Urgently!!! Movebet - hey guys, Movebet run long time at step 7. Please check!!!', @CaseId = 1;
-
-			EXECUTE msdb.dbo.sp_send_dbmail @profile_name	= DEFAULT
-			   , @recipients			 = 'pontus@starixvn.com' --will replace email address later
-			   , @copy_recipients		 = ''
-			   , @blind_copy_recipients	 = ''
-			   , @subject				 = 'Urgently!!! Movebet - Notification'
-			   , @body					 = 'Please call DBA to check since Movebet run long time at step 7.'
-			   , @body_format			 = 'HTML';
+			DECLARE @__notifyMessage VARCHAR(300)
+			SET @__notifyMessage = CONCAT(@@SERVERNAME, ' | Urgently!!! Movebet - hey guys, Movebet run long time at step 7. Please check!!!')
+			EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
+				@SubjectName = 'Urgently!!! Movebet - Notification',
+				@MessageName = @__notifyMessage
 
 		END
 	END
@@ -870,8 +881,12 @@ BEGIN
 	DELETE FROM dbo.outright_log
 	WHERE orid IN (SELECT orid FROM dbo.outright WHERE eventdate = @winlostdate AND oddsstatus = 'Completed')
 
-	--remove event
-	EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Delete @winlostdate
+	EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
+	IF @__aliasServer = 'DBCTG' --only run that command at central server
+	BEGIN
+		--remove event
+		EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Delete @winlostdate
+	END
 
 	SET DEADLOCK_PRIORITY HIGH
 
@@ -973,7 +988,9 @@ BEGIN
 
 	-- viet ----
 	EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
-	EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
+
+	--//TODO: check then remove this command
+	--EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 9.30 - start off BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
