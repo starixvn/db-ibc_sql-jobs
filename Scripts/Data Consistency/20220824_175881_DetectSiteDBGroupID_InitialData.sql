@@ -37,14 +37,14 @@ SELECT	@maxTransId_Transfer = MAX(TransId)
 FROM	dbo.Transfer WITH (NOLOCK)
 
 INSERT INTO dbo.SiteDB_DataConsistencyCheck_Config (ConfigName, ConfigValue)
-SELECT 'bettrans', @maxTransId_bettrans
+SELECT 'bettrans', ISNULL(@maxTransId_bettrans,0)
 UNION
-SELECT 'bettransLC', @maxTransId_bettransLC
+SELECT 'bettransLC', ISNULL(@maxTransId_bettransLC,0)
 UNION
-SELECT 'bettransG', @maxTransId_bettransG
+SELECT 'bettransG', ISNULL(@maxTransId_bettransG,0)
 UNION
-SELECT 'bettransRnG', @maxTransId_bettransRnG
+SELECT 'bettransRnG', ISNULL(@maxTransId_bettransRnG,0)
 UNION
-SELECT 'translog', @maxTransId_translog
+SELECT 'translog', ISNULL(@maxTransId_translog,0)
 UNION
-SELECT 'Transfer', @maxTransId_Transfer
+SELECT 'Transfer', ISNULL(@maxTransId_Transfer,0)
