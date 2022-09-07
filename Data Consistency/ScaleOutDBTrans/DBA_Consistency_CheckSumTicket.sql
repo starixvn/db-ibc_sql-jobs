@@ -16,6 +16,21 @@ BEGIN
 	DECLARE @yesterday SMALLDATETIME
 	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
 
+	CREATE TABLE #tmp_betticketchecksum
+	(
+		TableName VARCHAR(50),
+		SiteDBGroupID SMALLINT,
+		Recommend INT,
+		TotalCheckSumAgg BIGINT
+	)
+
+	INSERT INTO #tmp_betticketchecksum
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			TotalCheckSumAgg
+	)
 	SELECT	'bettrans' AS TableName,
 			[SiteDBGroupID], 
 			[Recommend], 
@@ -30,7 +45,14 @@ BEGIN
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
-	UNION ALL 
+
+	INSERT INTO #tmp_betticketchecksum
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			TotalCheckSumAgg
+	)
 	SELECT	'bettransRnG' AS TableName,
 			[SiteDBGroupID], 
 			[Recommend],  
@@ -44,7 +66,14 @@ BEGIN
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketchecksum
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			TotalCheckSumAgg
+	)
 	SELECT	'bettransLC' AS TableName,
 			[SiteDBGroupID], 
 			[Recommend],   
@@ -58,7 +87,14 @@ BEGIN
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketchecksum
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			TotalCheckSumAgg
+	)
 	SELECT	'bettransG' AS TableName,
 			g.[SiteDBGroupID], 
 			c.[Recommend], 
@@ -72,7 +108,14 @@ BEGIN
 		AND g.[SiteDBGroupID] > 0
 	GROUP BY	g.[SiteDBGroupID], 
 				c.[recommend]
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketchecksum
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			TotalCheckSumAgg
+	)
 	SELECT	'translog' AS TableName,
 			[SiteDBGroupID], 
 			[Recommend],  
@@ -86,7 +129,14 @@ BEGIN
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketchecksum
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			TotalCheckSumAgg
+	)
 	SELECT	'bettransm' AS TableName,
 			bm.[SiteDBGroupID],
 			c.[Recommend], 
@@ -102,6 +152,11 @@ BEGIN
 		AND bm.[SiteDBGroupID] > 0
 	GROUP BY	bm.[SiteDBGroupID], 
 				c.[recommend]
+
+	SELECT TableName, SiteDBGroupID, Recommend, TotalCheckSumAgg
+	FROM #tmp_betticketchecksum
 	ORDER BY TableName, SiteDBGroupID, Recommend
+
+	DROP TABLE #tmp_betticketchecksum
 END
 

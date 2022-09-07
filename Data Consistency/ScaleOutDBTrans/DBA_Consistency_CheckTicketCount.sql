@@ -15,6 +15,23 @@ BEGIN
 	DECLARE @yesterday SMALLDATETIME
 	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
 
+	CREATE TABLE #tmp_betticketcheckcount
+	(
+		TableName VARCHAR(50),
+		SiteDBGroupID SMALLINT,
+		Recommend INT,
+		Status NVARCHAR(10),
+		TicketCount INT
+	)
+
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'bettrans' AS TableName,
 			SiteDBGroupID, 
 			Recommend, 
@@ -26,7 +43,15 @@ BEGIN
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'bettransRnG' AS TableName,
 			SiteDBGroupID, 
 			Recommend, 
@@ -38,7 +63,15 @@ BEGIN
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'bettransLC' AS TableName,
 			SiteDBGroupID, 
 			Recommend, 
@@ -50,7 +83,15 @@ BEGIN
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
-	UNION ALL
+
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'bettransG' AS TableName,
 			b.SiteDBGroupID, 
 			c.Recommend, 
@@ -63,7 +104,15 @@ BEGIN
 	GROUP BY	b.SiteDBGroupID, 
 				c.Recommend, 
 				b.Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'translog' AS TableName,
 			SiteDBGroupID, 
 			Recommend, 
@@ -75,7 +124,15 @@ BEGIN
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'bettransm' AS TableName,
 			bm.SiteDBGroupID, 
 			c.Recommend, 
@@ -88,7 +145,15 @@ BEGIN
 	GROUP BY	bm.SiteDBGroupID, 
 				c.Recommend, 
 				bm.Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'zzzbettrans' AS TableName,
 			z.SiteDBGroupID,
 			c.Recommend, 
@@ -101,7 +166,15 @@ BEGIN
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
 				z.Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'zzzbettransm' AS TableName,
 			z.SiteDBGroupID, 
 			c.Recommend, 
@@ -114,6 +187,11 @@ BEGIN
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
 				z.Status
-	ORDER BY TableName, SiteDBGroupID, Recommend,  Status
+	
+	SELECT TableName, SiteDBGroupID, Recommend, Status, TicketCount
+	FROM #tmp_betticketcheckcount
+	--ORDER BY TableName, SiteDBGroupID, Recommend,  Status
+
+	DROP TABLE #tmp_betticketcheckcount
 END
 

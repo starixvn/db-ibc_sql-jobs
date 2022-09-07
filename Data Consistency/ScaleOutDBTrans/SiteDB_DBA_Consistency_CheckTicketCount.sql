@@ -6,7 +6,7 @@ Created by: 20220819@Victoria
 Task: Check ticket count by Status - SiteDB
 DB: DBSIG-bodb02
 Revisions:
-	- 20220819@Victoria: Rule #48 - Check ticket count by Status - DBCONSISTENCY [Redmine:#175881]
+	- 20220819@Victoria: Rule #48 - Check ticket count by Status - SiteDB [Redmine:#175881]
 	
 */
 BEGIN
@@ -15,6 +15,23 @@ BEGIN
 	DECLARE @yesterday SMALLDATETIME
 	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
 	
+	CREATE TABLE #tmp_betticketcheckcount
+	(
+		TableName VARCHAR(50),
+		SiteDBGroupID SMALLINT,
+		Recommend INT,
+		Status NVARCHAR(10),
+		TicketCount INT
+	)
+
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'bettrans' AS TableName,
 			SiteDBGroupID, 
 			Recommend, 
@@ -22,11 +39,18 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.bettrans WITH (NOLOCK)
 	WHERE	winlostdate = @yesterday
-		AND SiteDBGroupID > 0
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'bettransRnG' AS TableName,
 			SiteDBGroupID, 
 			Recommend, 
@@ -34,11 +58,18 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.bettransRnG WITH (NOLOCK)
 	WHERE	winlostdate = @yesterday
-		AND SiteDBGroupID > 0
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'bettransLC' AS TableName,
 			SiteDBGroupID, 
 			Recommend, 
@@ -46,11 +77,18 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.bettransLC WITH (NOLOCK)
 	WHERE	winlostdate = @yesterday
-		AND SiteDBGroupID > 0
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'bettransG' AS TableName,
 			b.SiteDBGroupID, 
 			c.Recommend, 
@@ -59,11 +97,18 @@ BEGIN
 	FROM	dbo.bettransG b WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = b.custid
 	WHERE	winlostdate = @yesterday
-		AND SiteDBGroupID > 0
 	GROUP BY	b.SiteDBGroupID, 
 				c.Recommend, 
 				b.Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'translog' AS TableName,
 			SiteDBGroupID, 
 			Recommend, 
@@ -71,11 +116,18 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.translog WITH (NOLOCK)
 	WHERE	winlostdate = @yesterday
-		AND SiteDBGroupID > 0
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'bettransm' AS TableName,
 			bm.SiteDBGroupID, 				
 			c.Recommend, 
@@ -84,11 +136,18 @@ BEGIN
 	FROM	dbo.bettransm bm WITH (NOLOCK) 
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = bm.custid
 	WHERE	bm.winlostdate = @yesterday
-		AND bm.SiteDBGroupID > 0
 	GROUP BY	bm.SiteDBGroupID, 
 				c.Recommend, 
 				bm.Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'zzzbettrans' AS TableName,
 			z.SiteDBGroupID, 
 			c.Recommend, 
@@ -97,11 +156,18 @@ BEGIN
 	FROM	dbo.zzzbettrans z WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
 	WHERE	z.winlostdate = @yesterday
-		AND z.SiteDBGroupID > 0
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
 				z.Status
-	UNION ALL
+	
+	INSERT INTO #tmp_betticketcheckcount
+	(
+			TableName,
+			SiteDBGroupID, 
+			Recommend,
+			Status,
+			TicketCount
+	)
 	SELECT	'zzzbettransm' AS TableName,
 			z.SiteDBGroupID,  
 			c.Recommend, 
@@ -110,10 +176,13 @@ BEGIN
 	FROM	dbo.zzzbettransm z WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
 	WHERE	z.winlostdate = @yesterday
-		AND z.SiteDBGroupID > 0
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
 				z.Status
-	ORDER BY TableName, SiteDBGroupID, Recommend,  Status
-END
 
+	SELECT TableName, SiteDBGroupID, Recommend, Status, TicketCount
+	FROM #tmp_betticketcheckcount
+	ORDER BY TableName, SiteDBGroupID, Recommend, Status
+
+	DROP TABLE #tmp_betticketcheckcount
+END
