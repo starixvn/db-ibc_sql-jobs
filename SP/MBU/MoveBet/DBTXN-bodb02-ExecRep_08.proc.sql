@@ -46,6 +46,7 @@ AS
 		- 20210126@Patrick: Migrate DB Server DB054 to cluster [Redmine: #149273]
 		- 20210519@Patrick: Support SIT environment [Redmine: #149927]
 		- 20220727@Patrick: Add column ThirdTransID into bettransInfo/14 [Redmine: #175666]
+		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 	 */
 	 
 DECLARE @__winlostdate SMALLDATETIME, @__recommend INT
@@ -83,7 +84,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime, epositiontaking, ReasonID, sort
+		,	RefCode, SettlementTime, epositiontaking, ReasonID, sort, SiteDBGroupId
 		)
 	OUTPUT	Inserted.transid
 	INTO	@__tmpTransId (id)
@@ -94,7 +95,7 @@ BEGIN
 		,	ruben, betid, statuswinlost, modds, bettype, betdaqid, actual_stake, currency, ip, transdesc
 		,	sdiscount, scomm, spositiontaking, swinlost, srecommend, virtualrate, Username, CurrencyName
 		,	oddstype, statusID, currency2, balance, SecAcceptFlag, transid2, ExtraInfo, WalletType, BonusID
-		,	RefCode, SettlementTime, epositiontaking, ReasonID, sort
+		,	RefCode, SettlementTime, epositiontaking, ReasonID, sort, SiteDBGroupId
 	FROM	dbo.bettrans WITH (NOLOCK)
 	WHERE	recommend = @__recommend
 		AND	winlostdate = @__winlostdate
@@ -113,13 +114,13 @@ BEGIN
 		translogid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking,
         playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake,
         currency, CurrencyName, recommend, mrecommend, srecommend,ip, statusID, balance, Username, transdesc,
-        productID, gameID, eventID, vendorID, GameId3rd, TranId3rd
+        productID, gameID, eventID, vendorID, GameId3rd, TranId3rd, SiteDBGroupId
 		)
 	select 
 		translogid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking,
         playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake,
         currency, CurrencyName, recommend, mrecommend, srecommend,ip, statusID, balance, Username, transdesc,
-        productID, gameID, eventID, vendorID, GameId3rd, TranId3rd
+        productID, gameID, eventID, vendorID, GameId3rd, TranId3rd, SiteDBGroupId
 	from translog with (nolock)
 	where recommend = @__recommend AND winlostdate=@__winlostdate
 
@@ -129,13 +130,13 @@ BEGIN
 		,	playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake
 		,	currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID
 		,	vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm
-		,	Transdate3rd, NetStake, epositiontaking,siteID
+		,	Transdate3rd, NetStake, epositiontaking,siteID, SiteDBGroupId
 		)
 	SELECT	transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking
 		,	playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake
 		,	currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID
 		,	vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm
-		,	Transdate3rd, NetStake, epositiontaking,siteID
+		,	Transdate3rd, NetStake, epositiontaking,siteID, SiteDBGroupId
 	FROM	dbo.bettransLC WITH (NOLOCK)
 	WHERE	recommend = @__recommend
 		AND	winlostdate = @__winlostdate;
@@ -146,13 +147,13 @@ BEGIN
 		,	playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake
 		,	currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID
 		,	vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd
-		,	Additional, SiteID, JackpotInfo, RefNo2, ContributionRate, BetStake, ContributionStake3rd, epositiontaking
+		,	Additional, SiteID, JackpotInfo, RefNo2, ContributionRate, BetStake, ContributionStake3rd, epositiontaking, SiteDBGroupId
 		)
 	SELECT	transid, custid, transdate, odds, stake, status, apositiontaking, mpositiontaking, tpositiontaking, spositiontaking
 		,	playerdiscount, discount, adiscount, sdiscount, creator, winlostdate, betfrom, virtualrate, actualrate, actual_stake
 		,	currency, CurrencyName, recommend, mrecommend, srecommend, ip, statusID, balance, Username, transdesc, productID, gameID
 		,	vendorID, GameId3rd, TranId3rd, RefNo, IsSum, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, Transdate3rd
-		,	Additional, SiteID, JackpotInfo, RefNo2, ContributionRate, BetStake, ContributionStake3rd, epositiontaking
+		,	Additional, SiteID, JackpotInfo, RefNo2, ContributionRate, BetStake, ContributionStake3rd, epositiontaking, SiteDBGroupId
 	FROM	dbo.bettransRnG WITH (NOLOCK)
 	WHERE	recommend = @__recommend
 		AND	winlostdate=@__winlostdate;
@@ -223,14 +224,14 @@ BEGIN
 			,	checktime, oddsspread, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost
 			,	playerdiscount, discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate
 			,	finalodds, isfinish, statuswinlost, ruben, bettype, spositiontaking, swinlost, sdiscount, scomm
-			,	statusID, transdesc, SecAcceptFlag, SecAcceptTime, LiveBetAcceptTime,reasonIDm
+			,	statusID, transdesc, SecAcceptFlag, SecAcceptTime, LiveBetAcceptTime,reasonIDm, SiteDBGroupId
 			)
 		SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, [status], winlost, livehomescore
 			,	liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck
 			,	checktime, oddsspread, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost
 			,	playerdiscount, discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate
 			,	finalodds, isfinish, statuswinlost, ruben, bettype, spositiontaking, swinlost, sdiscount, scomm
-			,	statusID, transdesc, SecAcceptFlag, SecAcceptTime, LiveBetAcceptTime,reasonIDm
+			,	statusID, transdesc, SecAcceptFlag, SecAcceptTime, LiveBetAcceptTime,reasonIDm, SiteDBGroupId
 		FROM	dbo.bettransm AS b WITH (NOLOCK)
 		WHERE	winlostdate = @__winlostdate;
 
@@ -240,13 +241,13 @@ BEGIN
 			,	betfrom, checktime, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount
 			,	discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, statuswinlost, ruben, bettype
 			,	spositiontaking, swinlost, sdiscount, scomm, statusID, virtualrate, SiteID, transdesc, BetID3rd
-			,	epositiontaking, actual_stake, netstake
+			,	epositiontaking, actual_stake, netstake, SiteDBGroupId
 			)
 		SELECT	transid, custid, transdate, oddsid, odds, stake, status, winlost, betteam, creator, refno, winlostdate
 			,	betfrom, checktime, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount
 			,	discount, adiscount, playercomm, comm, acomm, actualrate, matchid, matchdate, statuswinlost, ruben, bettype
 			,	spositiontaking, swinlost, sdiscount, scomm, statusID, virtualrate, SiteID, transdesc, BetID3rd
-			,	epositiontaking, actual_stake, netstake
+			,	epositiontaking, actual_stake, netstake, SiteDBGroupId
 		FROM	dbo.bettransG AS b WITH (NOLOCK)
 		WHERE	winlostdate = @__winlostdate;
 	END
