@@ -11,6 +11,9 @@
 USE [bodb02]
 GO
 
+DROP TABLE IF EXISTS dbo.SiteDB_MaxTrans_Config
+GO
+
 CREATE TABLE [dbo].[SiteDB_DataConsistencyCheck_Config](
 	[ConfigName]	[varchar](100) NOT NULL,
 	[ConfigValue]	[varchar](100) NOT NULL,
