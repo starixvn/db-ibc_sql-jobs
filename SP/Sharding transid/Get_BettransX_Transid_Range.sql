@@ -1,9 +1,9 @@
 /*<info serverAlias="DBTXN-bodb02" executers="Dot_Member,Dot_Intg,Dot_Bonus,bodbAdminNet,bodbDownlineNet" isFunction="0" isNested="0"></info>*/
 
-CREATE PROCEDURE [dbo].[Get_BettransX_Transid_Range]
+ALTER PROCEDURE [dbo].[Get_BettransX_Transid_Range]
 (
 	@total_transid int,
-	@sourceID bigint = NULL
+	@sourceID BIGINT = NULL
 )
 AS
 /*
@@ -13,6 +13,7 @@ AS
 
 	Revisions:
 		- 20220726@Lukas: Create [RedmineID: #158293]
+		- 20220829@Tina: Using same sequence object with SP Get_Bettrans_Transid
 */
 BEGIN
 	 
@@ -30,16 +31,16 @@ BEGIN
  
 	SELECT	@transid = DATEDIFF_BIG(SECOND, '2022-07-01 00:00:00', GETUTCDATE()) 
 	
-	     IF @transid % 10 = 0 		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_betX00', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
-	ELSE IF @transid % 10 = 1		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_betX01', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
-	ELSE IF @transid % 10 = 2		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_betX02', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
-	ELSE IF @transid % 10 = 3		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_betX03', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
-	ELSE IF @transid % 10 = 4		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_betX04', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
-	ELSE IF @transid % 10 = 5		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_betX05', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
-	ELSE IF @transid % 10 = 6		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_betX06', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
-	ELSE IF @transid % 10 = 7		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_betX07', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
-	ELSE IF @transid % 10 = 8		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_betX08', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
-	ELSE IF @transid % 10 = 9		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_betX09', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
+	     IF @transid % 10 = 0 		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_bet00', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
+	ELSE IF @transid % 10 = 1		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_bet01', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
+	ELSE IF @transid % 10 = 2		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_bet02', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
+	ELSE IF @transid % 10 = 3		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_bet03', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
+	ELSE IF @transid % 10 = 4		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_bet04', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
+	ELSE IF @transid % 10 = 5		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_bet05', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
+	ELSE IF @transid % 10 = 6		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_bet06', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
+	ELSE IF @transid % 10 = 7		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_bet07', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
+	ELSE IF @transid % 10 = 8		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_bet08', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
+	ELSE IF @transid % 10 = 9		EXEC sys.sp_sequence_get_range @sequence_name = N'seq_bet09', @range_size = @total_transid, @range_first_value = @first_seq OUTPUT
 
 	SET @nextseq = CONVERT(bigint, @first_seq)
 	
