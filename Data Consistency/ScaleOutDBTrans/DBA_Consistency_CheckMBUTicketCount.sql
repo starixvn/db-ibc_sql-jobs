@@ -21,14 +21,19 @@ BEGIN
 		EXEC DBCTG.bodb02.dbo.Task_MoveBetsDayByScheduleSel
 
 		IF @@ROWCOUNT = 0
+		BEGIN
+			SELECT 0 AS SiteDBGroupID, RunningDay AS WinlostDate, 0 AS TotalCount
+			FROM @Days
+		
 			RETURN
+		END
 
 		SELECT  s.SiteDBGroupID, b.winlostdate AS WinlostDate, COUNT(1) AS TotalCount
 		FROM	bodb02.dbo.Transfer b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.CustId
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON s.site = c.site
 		WHERE	b.bettype = @Bettype 
-			AND b.winlostdate IN (SELECT runningDay FROM @Days)
+			AND b.winlostdate IN (SELECT RunningDay FROM @Days)
 		GROUP BY s.SiteDBGroupID, b.winlostdate
 
 	END
@@ -46,8 +51,6 @@ BEGIN
 		WHERE	b.bettype = @Bettype AND b.winlostdate = @WinlostDate
 		GROUP BY s.SiteDBGroupID, b.winlostdate
 	END
-	ELSE
-		RETURN
 	
 END
 GO

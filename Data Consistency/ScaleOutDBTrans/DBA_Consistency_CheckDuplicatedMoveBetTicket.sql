@@ -18,12 +18,17 @@ BEGIN
 	EXEC DBCTG.bodb02.dbo.Task_MoveBetsDayByScheduleSel
 
 	IF @@ROWCOUNT = 0
+	BEGIN
+		SELECT 0 AS Custid, RunningDay AS WinlostDate, 0 AS TotalCount
+		FROM @Days
+		
 		RETURN
+	END
 
 	SELECT  custid AS Custid, winlostdate AS WinlostDate, COUNT(1) AS TotalCount
 	FROM	bodb02.dbo.Transfer WITH (NOLOCK) 
 	WHERE	bettype = 19999 
-		AND winlostdate IN (SELECT runningDay FROM @Days)
+		AND winlostdate IN (SELECT RunningDay FROM @Days)
 	GROUP BY custid, winlostdate
 	HAVING COUNT(1) > 1
 
