@@ -1,9 +1,8 @@
 /*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_SystemSetting_Update]
 (
-	@SiteDBGroupID SMALLINT,
+	@CheckConsistencyKeyName VARCHAR(50),
 	@NewTransferLastTransId BIGINT = 0,
-	@NewTransferCollLastTransId BIGINT = 0,
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg VARCHAR(MAX) = '' OUTPUT 
 )
@@ -24,21 +23,18 @@ BEGIN
 
 	--parameters
 	DECLARE 
-		@transferKey VARCHAR(50) = 'SiteDB_CheckConsistency_Transfer_LastTransId'
-		,@transferCollKey VARCHAR(50) = 'SiteDB_CheckConsistency_TransferColl_LastTransId'
+		@checkCountKey VARCHAR(50) = 'SiteDB_CheckCons_Transfer_Count_LastTransId'
+		,@checkDiffSiteGroupIdKey VARCHAR(50) = 'SiteDB_CheckCons_Transfer_DiffSGId_LastTransId'
 		,@internalSiteDBGroupID SMALLINT
 
-	---get site group id
-	SELECT @internalSiteDBGroupID = dbo.f_Get_SiteDBGroupID()
-
 	---validate data
-	IF (@SiteDBGroupID <> @internalSiteDBGroupID) -- invalid site group id, return error
+	IF (@CheckConsistencyKeyName <> @checkCountKey OR @CheckConsistencyKeyName <> @checkDiffSiteGroupIdKey)
 	BEGIN
-		SELECT @ErrCode = 100, @ErrMsg = 'Invalid SiteDBGroupID!'
+		SELECT @ErrCode = 101, @ErrMsg = 'Invalid consistency key name!'
 		RETURN
 	END
 
-	IF (ISNULL(@NewTransferLastTransId, 0) = 0 OR ISNULL(@NewTransferCollLastTransId, 0) = 0)
+	IF (ISNULL(@NewTransferLastTransId, 0) = 0)
 	BEGIN
 		SELECT @ErrCode = 101, @ErrMsg = 'Invalid LastTransID!'
 		RETURN
@@ -49,11 +45,14 @@ BEGIN
 		
 		UPDATE bodb02.dbo.SystemSettings
 			SET VValue = @NewTransferLastTransId
-		WHERE VName = @transferKey
-			
-		UPDATE bodb02.dbo.SystemSettings
-			SET VValue = @NewTransferCollLastTransId
-		WHERE VName = @transferCollKey
+		WHERE VName = @CheckConsistencyKeyName
+
+	END
+
+	IF (@@ROWCOUNT = 0)
+	BEGIN
+		SELECT @ErrCode = 100, @ErrMsg = 'No row was updated!'
+		RETURN
 	END
 	
 END
