@@ -21,7 +21,7 @@ BEGIN
 		RETURN
 
 	SELECT  custid AS Custid, WinlostDate, COUNT(1) AS TotalCount
-	FROM	bodb02.dbo.Transfer WITH (NOLOCK, INDEX=IX_WinlostDate) 
+	FROM	bodb02.dbo.Transfer WITH (NOLOCK) 
 	WHERE	bettype = 19999 
 		AND WinlostDate IN (SELECT runningDay FROM @Days)
 	GROUP BY custid, WinlostDate

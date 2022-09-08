@@ -24,7 +24,7 @@ BEGIN
 			RETURN
 
 		SELECT  s.SiteDBGroupID, b.winlostdate, COUNT(1) AS TotalCount
-		FROM	bodb02.dbo.Transfer b WITH (NOLOCK, INDEX=IX_WinlostDate) 
+		FROM	bodb02.dbo.Transfer b WITH (NOLOCK) 
 			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = b.CustId
 			INNER JOIN CustDB.dbo.Site s WITH (NOLOCK) ON s.site = c.site
 		WHERE	b.bettype = @Bettype 
@@ -40,7 +40,7 @@ BEGIN
 							WHERE	bettype = 20000 AND custid = 3)
 
 		SELECT  s.SiteDBGroupID, b.winlostdate, COUNT(1) AS TotalCount
-		FROM	bodb02.dbo.Transfer b WITH (NOLOCK, INDEX=IX_WinlostDate) 
+		FROM	bodb02.dbo.Transfer b WITH (NOLOCK) 
 			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = b.CustId
 			INNER JOIN CustDB.dbo.Site s WITH (NOLOCK) ON s.site = c.site
 		WHERE	b.bettype = @Bettype AND b.winlostdate = @WinlostDate

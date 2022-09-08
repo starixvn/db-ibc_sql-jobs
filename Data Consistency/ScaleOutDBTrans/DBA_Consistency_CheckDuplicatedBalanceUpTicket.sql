@@ -19,7 +19,7 @@ BEGIN
 						WHERE	bettype = 20000 AND custid = 3)
 
 	SELECT  custid AS Custid, WinlostDate, COUNT(1) AS TotalCount
-	FROM	bodb02.dbo.Transfer WITH (NOLOCK, INDEX=IX_WinlostDate) 
+	FROM	bodb02.dbo.Transfer WITH (NOLOCK) 
 	WHERE	bettype = 20000 AND winlostdate = @WinlostDate
 	GROUP BY custid, winlostdate
 	HAVING COUNT(1) > 1
