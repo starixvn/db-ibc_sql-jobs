@@ -23,12 +23,12 @@ BEGIN
 		IF @@ROWCOUNT = 0
 			RETURN
 
-		SELECT  s.SiteDBGroupID, b.winlostdate, COUNT(1) AS TotalCount
+		SELECT  s.SiteDBGroupID, b.winlostdate AS WinlostDate, COUNT(1) AS TotalCount
 		FROM	bodb02.dbo.Transfer b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.CustId
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON s.site = c.site
 		WHERE	b.bettype = @Bettype 
-			AND WinlostDate IN (SELECT runningDay FROM @Days)
+			AND b.winlostdate IN (SELECT runningDay FROM @Days)
 		GROUP BY s.SiteDBGroupID, b.winlostdate
 
 	END
@@ -39,7 +39,7 @@ BEGIN
 							FROM	bodb02.dbo.Transfer t WITH(NOLOCK)
 							WHERE	bettype = 20000 AND custid = 3)
 
-		SELECT  s.SiteDBGroupID, b.winlostdate, COUNT(1) AS TotalCount
+		SELECT  s.SiteDBGroupID, b.winlostdate AS WinlostDate, COUNT(1) AS TotalCount
 		FROM	bodb02.dbo.Transfer b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.CustId
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON s.site = c.site

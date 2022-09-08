@@ -20,11 +20,11 @@ BEGIN
 	IF @@ROWCOUNT = 0
 		RETURN
 
-	SELECT  custid AS Custid, WinlostDate, COUNT(1) AS TotalCount
+	SELECT  custid AS Custid, winlostdate AS WinlostDate, COUNT(1) AS TotalCount
 	FROM	bodb02.dbo.Transfer WITH (NOLOCK) 
 	WHERE	bettype = 19999 
-		AND WinlostDate IN (SELECT runningDay FROM @Days)
-	GROUP BY custid, WinlostDate
+		AND winlostdate IN (SELECT runningDay FROM @Days)
+	GROUP BY custid, winlostdate
 	HAVING COUNT(1) > 1
 
 END
