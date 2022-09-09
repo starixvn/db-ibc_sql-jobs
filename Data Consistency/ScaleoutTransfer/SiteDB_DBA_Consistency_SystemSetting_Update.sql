@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_SystemSetting_Update]
+ALTER PROCEDURE [dbo].[SiteDB_DBA_Consistency_SystemSetting_Update]
 (
 	@CheckConsistencyKeyName VARCHAR(50),
 	@NewTransferLastTransId BIGINT = 0,
@@ -28,7 +28,7 @@ BEGIN
 		,@internalSiteDBGroupID SMALLINT
 
 	---validate data
-	IF (@CheckConsistencyKeyName <> @checkCountKey OR @CheckConsistencyKeyName <> @checkDiffSiteGroupIdKey)
+	IF (@CheckConsistencyKeyName NOT IN(@checkCountKey,@checkDiffSiteGroupIdKey))
 	BEGIN
 		SELECT @ErrCode = 101, @ErrMsg = 'Invalid consistency key name!'
 		RETURN

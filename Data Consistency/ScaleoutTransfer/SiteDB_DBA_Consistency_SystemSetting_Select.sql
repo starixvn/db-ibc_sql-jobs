@@ -1,7 +1,8 @@
 /*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].SiteDB_DBA_Consistency_SystemSetting_Select
+ALTER PROCEDURE [dbo].SiteDB_DBA_Consistency_SystemSetting_Select
 (
 	@CheckConsistencyKeyName VARCHAR(50),
+	@SiteDBGroupID SMALLINT OUTPUT,
 	@TransferLastTransId BIGINT OUTPUT,
 	@NewTransferLastTransId BIGINT OUTPUT,
 	@ErrCode INT = 0 OUTPUT,
@@ -30,7 +31,7 @@ BEGIN
 		,@currTime DATETIME
 
 	---validate
-	IF (@CheckConsistencyKeyName <> @checkCountKey OR @CheckConsistencyKeyName <> @checkDiffSiteGroupIdKey)
+	IF (@CheckConsistencyKeyName NOT IN (@checkCountKey, @checkDiffSiteGroupIdKey))
 	BEGIN
 		SELECT @ErrCode = 100, @ErrMsg = 'Invalid consistency key name!'
 		RETURN
@@ -65,13 +66,21 @@ BEGIN
 	---assign current time - 2 mins to @currTime
 	SELECT @currTime =  DATEADD(MINUTE, -2, GETDATE())
 
+	---get site group id
+	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
+
 	---get last transid
 	BEGIN
 		SELECT @NewTransferLastTransId = MAX(t.TransId)
 		FROM dbo.Transfer t WITH (NOLOCK)
 		WHERE t.TransId > @transferLastTransId
 			AND t.TransDate < @currTime
-	END
 
+		---incase cannot get latest transid due to no new transid with transdate < getdate() - 2 minutes, keep the value setting unchanged
+		IF (ISNULL(@NewTransferLastTransId, 0) = 0)
+		BEGIN
+			SELECT @NewTransferLastTransId = @TransferLastTransId
+		END
+	END
 END
 GO

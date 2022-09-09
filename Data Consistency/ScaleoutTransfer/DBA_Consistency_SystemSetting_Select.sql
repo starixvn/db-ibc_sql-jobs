@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].DBA_Consistency_SystemSetting_Select
+ALTER PROCEDURE [dbo].DBA_Consistency_SystemSetting_Select
 (
 	@CheckConsistencyKeyName VARCHAR(50),
 	@TransferLastTransId BIGINT OUTPUT,
@@ -80,6 +80,12 @@ BEGIN
 		WHERE t.TransId > @transferLastTransId
 			AND t.TransDate < @currTime
 			AND s.SiteDBGroupID = 0
+
+		---incase cannot get latest transid due to no new transid with transdate < getdate() - 2 minutes, keep the value setting unchanged
+		IF (ISNULL(@NewTransferLastTransId, 0) = 0)
+		BEGIN
+			SELECT @NewTransferLastTransId = @TransferLastTransId
+		END
 	END
 
 END

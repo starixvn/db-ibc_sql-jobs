@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_CheckTicketCountAndChecksum_Transfer]
+ALTER PROCEDURE [dbo].[SiteDB_DBA_Consistency_CheckTicketCountAndChecksum_Transfer]
 (
 	@SiteDBGroupID SMALLINT OUTPUT,
 	@TransferLastTransId BIGINT OUTPUT,
@@ -29,6 +29,7 @@ BEGIN
 	---get last transid
 	EXEC [dbo].SiteDB_DBA_Consistency_SystemSetting_Select
 		@CheckConsistencyKeyName = @transferKey,
+		@SiteDBGroupID = @SiteDBGroupID OUTPUT,
 		@TransferLastTransId = @TransferLastTransId OUTPUT,
 		@NewTransferLastTransId = @NewTransferLastTransId OUTPUT,
 		@ErrCode = @ErrCode OUTPUT,
