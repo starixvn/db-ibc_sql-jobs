@@ -111,7 +111,7 @@ BEGIN
 				AND ps.BetType=ref.BetTypeRefBetSetting
 	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0 AND ps.SettingStatus=0
 
-	--NG, HP5, Keno:
+	--NG, Keno:
 	UPDATE cl 
 	SET cl.SportTypeRef=cl.SportType
 	, cl.BetTypeRef=cl.BetType
@@ -201,12 +201,12 @@ BEGIN
 					WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=0
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
-					UNION	--NumberGame, HP5
+					UNION	--NumberGame
 					SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, cbs.MaxBet, cbs.MaxPerMatch
 					FROM #ListTmp cl
 						INNER JOIN CustBetSetting_Member cbs WITH (NOLOCK) ON cbs.CustID=cl.custid
-																		AND cbs.SportType=cl.SportType
-																		AND cbs.BetType=cl.BetType
+																		AND cbs.SportType=cl.SportTypeRef
+																		AND cbs.BetType=cl.BetTypeRef
 					WHERE cl.SportType IN (161,164,168) AND cl.isLicensee=0
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
@@ -252,8 +252,8 @@ BEGIN
 						INNER JOIN Dep_custsettingmode mode WITH (NOLOCK) ON mode.CustID=cl.custid
 						LEFT JOIN Dep_CustBetSettingGameGroup_Member gg WITH (NOLOCK) ON gg.AgentID=cl.recommend
 						LEFT JOIN Dep_CustBetSettingGame_Member dcbs WITH (NOLOCK) ON dcbs.CustID=cl.custid
-																	AND dcbs.SportType=cl.SportType
-																	AND dcbs.BetType=cl.BetType
+																	AND dcbs.SportType=cl.SportTypeRef
+																	AND dcbs.BetType=cl.BetTypeRef
 					WHERE cl.SportType IN (161,164,168) AND cl.isLicensee=1
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
