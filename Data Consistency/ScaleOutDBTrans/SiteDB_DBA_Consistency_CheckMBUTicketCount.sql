@@ -34,6 +34,7 @@ BEGIN
 			INNER JOIN CustDB.dbo.Site s WITH (NOLOCK) ON s.site = c.site
 		WHERE	b.bettype = @Bettype 
 			AND b.winlostdate IN (SELECT RunningDay FROM @Days)
+			AND s.SiteDBGroupID > 0
 		GROUP BY s.SiteDBGroupID, b.winlostdate
 
 	END
@@ -48,7 +49,9 @@ BEGIN
 		FROM	bodb02.dbo.Transfer b WITH (NOLOCK) 
 			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = b.CustId
 			INNER JOIN CustDB.dbo.Site s WITH (NOLOCK) ON s.site = c.site
-		WHERE	b.bettype = @Bettype AND b.winlostdate = @WinlostDate
+		WHERE	b.bettype = @Bettype 
+			AND b.winlostdate = @WinlostDate
+			AND s.SiteDBGroupID > 0
 		GROUP BY s.SiteDBGroupID, b.winlostdate
 	END
 	
