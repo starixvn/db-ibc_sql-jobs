@@ -46,10 +46,8 @@ BEGIN
 			BEGIN
 				SELECT @minTransID = MAX(t.TransId)
 				FROM bodb02.dbo.Transfer t WITH (NOLOCK)
-					INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK)
-						ON t.CustId = c.custid
-					INNER JOIN bodb02.dbo.Site s WITH (NOLOCK)
-						ON s.site = c.site
+					INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK)
+						ON t.SRecommend = s.custid
 				WHERE s.SiteDBGroupID = 0
 
 				---insert to table setting
@@ -73,10 +71,8 @@ BEGIN
 	BEGIN
 		SELECT @NewTransferLastTransId = MAX(t.TransId)
 		FROM bodb02.dbo.Transfer t WITH (NOLOCK)
-			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK)
-				ON t.CustId = c.custid
-			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK)
-				ON s.site = c.site
+			INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK)
+				ON t.SRecommend = s.custid
 		WHERE t.TransId > @transferLastTransId
 			AND t.TransDate < @currTime
 			AND s.SiteDBGroupID = 0
