@@ -19,6 +19,7 @@ AS
 		20210514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
 		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
+		20220912@Patrick: Support scale-out for deposit site - fix issue Redmine: [#177641]
 
 	Param use:
 
@@ -132,35 +133,35 @@ BEGIN
 
 		--check have more than groupid on custid
 		IF EXISTS (
-			SELECT custid
+			SELECT TOP 1 'translog' tableName
 			FROM dbo.translog WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY custid HAVING COUNT(DISTINCT ISNULL(SiteDBGroupID, 0)) > 1
+				AND ISNULL(SiteDBGroupID, 0) <> @__siteDBGroupId
 			
 			UNION ALL
-			SELECT custid
+			SELECT TOP 1 'bettransLC' tableName
 			FROM dbo.bettransLC WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY custid HAVING COUNT(DISTINCT ISNULL(SiteDBGroupID, 0)) > 1
+				AND ISNULL(SiteDBGroupID, 0) <> @__siteDBGroupId
 			
 			UNION ALL
-			SELECT custid
+			SELECT TOP 1 'bettransRnG' tableName
 			FROM dbo.bettransRnG WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY custid HAVING COUNT(DISTINCT ISNULL(SiteDBGroupID, 0)) > 1
+				AND ISNULL(SiteDBGroupID, 0) <> @__siteDBGroupId
 			
 			UNION ALL
-			SELECT custid
+			SELECT TOP 1 'bettrans' tableName
 			FROM dbo.bettrans WITH(NOLOCK) 
 			WHERE custid = @custid
-			GROUP BY custid HAVING COUNT(DISTINCT ISNULL(SiteDBGroupID, 0)) > 1
+				AND ISNULL(SiteDBGroupID, 0) <> @__siteDBGroupId
 			
 			UNION ALL
-			SELECT t.custid
+			SELECT TOP 1 'Transfer' tableName
 			FROM dbo.Transfer t WITH(NOLOCK) 
 				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE t.custid = @custid
-			GROUP BY t.custid HAVING COUNT(DISTINCT ISNULL(SiteDBGroupID, 0)) > 1
+				AND ISNULL(SiteDBGroupID, 0) <> @__siteDBGroupId
 		)
 		BEGIN
 			SET @result = 333 -->>wrong SiteDBGroupId setting

@@ -8,19 +8,31 @@ AS
 	DB: DBTXN/bodb02
 	Revisions:   
 		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
+		- 20220912@Patrick: Support scale-out for deposit site - fix issue Redmine: [#177641]
 */
 BEGIN
 	SET NOCOUNT ON;
+	Declare @wldate smalldatetime, @__aliasServer VARCHAR(128)
+	DECLARE @__startStep VARCHAR(50) = CONVERT(VARCHAR(10), GETDATE(), 121)
+
+	EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
+
+	--//this block code can remove when releasing feature #176449
+	IF @__aliasServer = 'DBSite' --only run that command at DBSite server
+	BEGIN
+		DELETE FROM dbo.task_archivedate
+
+		INSERT INTO dbo.task_archivedate(winlostdate)
+		SELECT winlostdate
+		FROM DBCTG.bodb02.dbo.task_archivedate
+	END
+
 	DECLARE @archiveDate TABLE (rid int PRIMARY KEY IDENTITY(1,1), winlostdate smalldatetime)
 	INSERT INTO @archiveDate (winlostdate)
 	SELECT winlostdate FROM dbo.task_archivedate
 	ORDER BY 1
-
-	Declare @wldate smalldatetime, @__aliasServer VARCHAR(128)
-	DECLARE @__startStep VARCHAR(50) = CONVERT(VARCHAR(10), GETDATE(), 121)
-
+	
 	--turn on flag wait for delete event
-	EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
 	IF @__aliasServer = 'DBSite' --only run that command at DBSite server
 	BEGIN
 		EXEC DBCTG.bodb02.dbo.Task_UpdSystemSetting @VName = 'Fri-routine-s', @VValue = @__startStep
