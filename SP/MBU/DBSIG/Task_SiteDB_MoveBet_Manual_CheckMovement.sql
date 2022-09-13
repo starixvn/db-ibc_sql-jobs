@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSIG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE dbo.Task_SiteDB_MoveBet_Manual_CheckMovement (
+CREATE PROCEDURE [dbo].[Task_SiteDB_MoveBet_Manual_CheckMovement] (
     @checkAction BIT = 0
     , @winlostdate SMALLDATETIME
 )
@@ -27,8 +27,10 @@ BEGIN
     CREATE TABLE #tmp_cust(custid INT PRIMARY KEY)
     INSERT INTO #tmp_cust (custid)
     SELECT DISTINCT custid
-    FROM CustDB.dbo.Customer WITH (NOLOCK)
-    WHERE site IN ('Athena000','SampleSite');
+    FROM CustDB.dbo.Customer c WITH (NOLOCK)
+	INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+    WHERE s.[SiteDBGroupID] = @siteDBGroupId;
+    --WHERE site IN ('Athena000','SampleSite');
 
     DROP TABLE IF EXISTS #tempTransIds;
     CREATE TABLE #tempTransIds(transid BIGINT PRIMARY KEY,[RepUpdateTime] DATETIME2,[RepDstUpdateTime] DATETIME2);
@@ -48,8 +50,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                ''SELECT @@SERVERNAME AS ServerName, t.TransID
                     FROM bodb02.dbo.bettrans t WITH (nolock)
-	                INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                    WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                    INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                    WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					    AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             INSERT INTO #sourceBet(ServerName, TableName, TransID)
@@ -57,7 +61,7 @@ BEGIN
             FROM cte_source;\
         ';
 
-        PRINT @sqlCMD;
+        --PRINT @sqlCMD;
         EXEC sp_executesql @sqlCMD, N'@tableName VARCHAR(100)',@tableName=@tableName;
 
         WITH cte_target AS (
@@ -120,8 +124,10 @@ BEGIN
 	        FROM OPENQUERY(DBCTG,
 	            ''SELECT @@SERVERNAME AS ServerName, t.TransID
                 FROM bodb02.dbo.bettransLC t WITH (nolock)
-	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
             ) AS t
         )
         INSERT INTO #sourceBet(ServerName, TableName, TransID)
@@ -129,7 +135,7 @@ BEGIN
         FROM cte_source;\
         ';
 
-        PRINT @sqlCMD;
+        --PRINT @sqlCMD;
         EXEC sp_executesql @sqlCMD, N'@tableName VARCHAR(100)',@tableName=@tableName;
 
         WITH cte_target AS (
@@ -192,8 +198,10 @@ BEGIN
 	        FROM OPENQUERY(DBCTG,
 	            ''SELECT @@SERVERNAME AS ServerName, t.TransID
                 FROM bodb02.dbo.bettransRNG t WITH (nolock)
-	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'',''''SampleSite'''')
-                WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
             ) AS t
         )
         INSERT INTO #sourceBet(ServerName, TableName, TransID)
@@ -201,7 +209,7 @@ BEGIN
         FROM cte_source;\
         ';
 
-        PRINT @sqlCMD;
+        --PRINT @sqlCMD;
         EXEC sp_executesql @sqlCMD, N'@tableName VARCHAR(100)',@tableName=@tableName;
 
         WITH cte_target AS (
@@ -264,8 +272,10 @@ BEGIN
 	        FROM OPENQUERY(DBCTG,
 	            ''SELECT @@SERVERNAME AS ServerName, t.TransID
                 FROM bodb02.dbo.bettransG t WITH (nolock)
-	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
             ) AS t
         )
         INSERT INTO #sourceBet(ServerName, TableName, TransID)
@@ -273,7 +283,7 @@ BEGIN
         FROM cte_source;\
         ';
 
-        PRINT @sqlCMD;
+        --PRINT @sqlCMD;
         EXEC sp_executesql @sqlCMD, N'@tableName VARCHAR(100)',@tableName=@tableName;
 
         WITH cte_target AS (
@@ -336,8 +346,10 @@ BEGIN
 	        FROM OPENQUERY(DBCTG,
 	            ''SELECT @@SERVERNAME AS ServerName, t.TransID
                 FROM bodb02.dbo.bettransM t WITH (nolock)
-	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
             ) AS t
         )
         INSERT INTO #sourceBet(ServerName, TableName, TransID)
@@ -345,7 +357,7 @@ BEGIN
         FROM cte_source;\
         ';
 
-        PRINT @sqlCMD;
+        --PRINT @sqlCMD;
         EXEC sp_executesql @sqlCMD, N'@tableName VARCHAR(100)',@tableName=@tableName;
 
         WITH cte_target AS (
@@ -407,8 +419,10 @@ BEGIN
 	        FROM OPENQUERY(DBCTG,
 	            ''SELECT @@SERVERNAME AS ServerName, t.translogid AS TransID
                 FROM bodb02.dbo.translog t WITH (nolock)
-	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+                    AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
             ) AS t
         )
         INSERT INTO #sourceBet(ServerName, TableName, TransID)
@@ -416,7 +430,7 @@ BEGIN
         FROM cte_source;\
         ;';
 
-        PRINT @sqlCMD;
+        --PRINT @sqlCMD;
         EXEC sp_executesql @sqlCMD, N'@tableName VARCHAR(100)',@tableName=@tableName;
 
         WITH cte_target AS (

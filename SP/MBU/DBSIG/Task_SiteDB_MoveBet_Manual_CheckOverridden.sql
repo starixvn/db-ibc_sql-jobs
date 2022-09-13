@@ -27,8 +27,10 @@ BEGIN
     CREATE TABLE #tmp_cust(custid INT PRIMARY KEY)
     INSERT INTO #tmp_cust (custid)
     SELECT DISTINCT custid
-    FROM CustDB.dbo.Customer WITH (NOLOCK)
-    WHERE site IN ('Athena000','SampleSite');
+    FROM CustDB.dbo.Customer c WITH (NOLOCK)
+	INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+    WHERE s.[SiteDBGroupID] = @siteDBGroupId;
+    --WHERE site IN ('Athena000','SampleSite');
 
     DROP TABLE IF EXISTS #tempTransIds;
     CREATE TABLE #tempTransIds(transid BIGINT PRIMARY KEY,[RepUpdateTime] DATETIME2,[RepDstUpdateTime] DATETIME2);
@@ -47,8 +49,10 @@ BEGIN
 	        FROM OPENQUERY(DBCTG,
 	            ''SELECT @@SERVERNAME AS ServerName, t.*
                 FROM bodb02.dbo.bettrans t WITH (nolock)
-	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
             ) AS t
         ),
         source_CheckSum AS (
@@ -99,8 +103,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.bettrans t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             UPDATE t WITH(ROWLOCK,UPDLOCK)
@@ -138,8 +144,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.bettrans t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             INSERT INTO bodb02.dbo.bettrans([transid],[custid],[transdate],[oddsid],[hdp1],[hdp2],[odds],[stake],[status],[winlost],[awinlost],[mwinlost],[playercomm]
@@ -176,8 +184,10 @@ BEGIN
 	        FROM OPENQUERY(DBCTG,
 	            ''SELECT @@SERVERNAME AS ServerName, t.*
                 FROM bodb02.dbo.bettransLC t WITH (nolock)
-	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
             ) AS t
         ), source_CheckSum AS (
             SELECT ServerName, transid, binary_checksum(convert(varchar(50), TransDate, 121),convert(varchar(50), WinlostDate, 121),gameID,Stake,Actual_Stake,Winlost,AWinlost,MWinlost,SWinlost,PlayerComm,Comm,AComm,SComm,StatusId,TransDesc,Recommend,MRecommend,SRecommend,Username,Currency,CurrencyName,ActualRate) AS chkSum
@@ -225,8 +235,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.bettransLC t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             UPDATE t WITH(ROWLOCK,UPDLOCK)
@@ -265,8 +277,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.bettransLC t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             INSERT INTO bodb02.dbo.bettransLC([transid], [custid], [transdate], [odds], [stake], [status], [apositiontaking], [mpositiontaking], [tpositiontaking], [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [creator], [winlostdate], [betfrom], [virtualrate], [actualrate], [actual_stake], [currency], [CurrencyName], [recommend], [mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], [gameID], [vendorID], [GameId3rd], [TranId3rd], [RefNo], [IsSum], [winlost], [awinlost], [mwinlost], [swinlost], [playercomm], [comm], [acomm], [scomm], [Transdate3rd], [NetStake], [SiteID], [epositiontaking], [RepUpdateTime], [SiteDBGroupID])
@@ -291,8 +305,10 @@ BEGIN
 	        FROM OPENQUERY(DBCTG,
 	            ''SELECT @@SERVERNAME AS ServerName, t.*
                 FROM bodb02.dbo.bettransRNG t WITH (nolock)
-	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
             ) AS t
         ), source_CheckSum AS (
             SELECT ServerName, transid, binary_checksum(convert(varchar(50), TransDate, 121),convert(varchar(50), WinlostDate, 121),gameID,Stake,Actual_Stake,Winlost,AWinlost,MWinlost,SWinlost,PlayerComm,Comm,AComm,SComm,StatusId,TransDesc,Recommend,MRecommend,SRecommend,Username,Currency,CurrencyName,ActualRate) AS chkSum
@@ -340,8 +356,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.bettransRNG t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             UPDATE t WITH(ROWLOCK,UPDLOCK)
@@ -380,8 +398,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.bettransRNG t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             INSERT INTO bodb02.dbo.bettransRNG([transid], [custid], [transdate], [odds], [stake], [status], [apositiontaking], [mpositiontaking], [tpositiontaking], [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [creator], [winlostdate], [betfrom], [virtualrate], [actualrate], [actual_stake], [currency], [CurrencyName], [recommend], [mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], [gameID], [vendorID], [GameId3rd], [TranId3rd], [RefNo], [IsSum], [winlost], [awinlost], [mwinlost], [swinlost], [playercomm], [comm], [acomm], [scomm], [Transdate3rd], [SiteID], [Additional], [JackpotInfo], [RefNo2], [ContributionRate], [BetStake], [ContributionStake3rd], [epositiontaking], [RepUpdateTime], [SiteDBGroupID])
@@ -406,8 +426,10 @@ BEGIN
 	        FROM OPENQUERY(DBCTG,
 	            ''SELECT @@SERVERNAME AS ServerName, t.*
                 FROM bodb02.dbo.bettransG t WITH (nolock)
-	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+                INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
             ) AS t
         ),
         source_CheckSum AS (
@@ -456,8 +478,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.bettransG t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             UPDATE t WITH(ROWLOCK,UPDLOCK)
@@ -496,8 +520,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.bettransG t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             INSERT INTO bodb02.dbo.bettransG([transid], [custid], [transdate], [oddsid], [odds], [stake], [status], [winlost], [betteam], [creator], [refno], [winlostdate], [betfrom], [checktime], [apositiontaking], [mpositiontaking], [tpositiontaking], [awinlost], [mwinlost], [playerdiscount], [discount], [adiscount], [playercomm], [comm], [acomm], [actualrate], [matchid], [matchdate], [statuswinlost], [ruben], [bettype], [spositiontaking], [swinlost], [sdiscount], [scomm], [statusID], [virtualrate], [SiteID], [transdesc], [BetID3rd], [epositiontaking], [actual_stake], [netstake], [RepUpdateTime], [SiteDBGroupID])
@@ -522,8 +548,10 @@ BEGIN
 	        FROM OPENQUERY(DBCTG,
 	            ''SELECT @@SERVERNAME AS ServerName, t.*
                 FROM bodb02.dbo.bettransM t WITH (nolock)
-	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
             ) AS t
         ),
 	    source_CheckSum AS (
@@ -572,8 +600,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.bettransM t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             UPDATE t WITH(ROWLOCK,UPDLOCK)
@@ -611,8 +641,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.bettransM t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             INSERT INTO bodb02.dbo.bettransM([transid], [custid], [transdate], [oddsid], [hdp1], [hdp2], [odds], [stake], [status], [winlost], [livehomescore], [liveawayscore], [liveindicator], [betteam], [creator], [refno], [comstatus], [winlostdate], [betfrom], [betcheck], [checktime], [oddsspread], [apositiontaking], [mpositiontaking], [tpositiontaking], [awinlost], [mwinlost], [playerdiscount], [discount], [adiscount], [playercomm], [comm], [acomm], [actualrate], [matchid], [matchdate], [finalodds], [isfinish], [statuswinlost], [ruben], [bettype], [spositiontaking], [swinlost], [sdiscount], [scomm], [statusID], [recommdate], [transdesc], [SecAcceptFlag], [SecAcceptTime], [LiveBetAcceptTime], [ReasonIDm], [RepUpdateTime], [SiteDBGroupID])
@@ -637,8 +669,10 @@ BEGIN
 	        FROM OPENQUERY(DBCTG,
 	            ''SELECT @@SERVERNAME AS ServerName, t.*
                 FROM bodb02.dbo.translog t WITH (nolock)
-	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	            INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
             ) AS t
         ),
         source_CheckSum AS (
@@ -687,8 +721,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.translog t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             UPDATE t WITH(ROWLOCK,UPDLOCK)
@@ -718,8 +754,10 @@ BEGIN
 	            FROM OPENQUERY(DBCTG,
 	                    ''SELECT t.* 
                         FROM bodb02.dbo.translog t WITH (nolock)
-	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid AND c.site IN (''''Athena000'''',''''SampleSite'''')
-                        WHERE t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
+	                    INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = t.custid
+                        INNER JOIN CustDB.dbo.site s WITH (NOLOCK) ON s.site = c.site
+                        WHERE s.[SiteDBGroupID] = '+ CONVERT(VARCHAR(10), @siteDBGroupId)+'\
+					        AND t.winlostdate = '''''+CONVERT(VARCHAR(20),@winlostdate,120)+'''''''
                 ) AS t
             )
             INSERT INTO bodb02.dbo.translog([translogid], [custid], [transdate], [odds], [stake], [status], [apositiontaking], [mpositiontaking], [tpositiontaking], [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [creator], [winlostdate], [betfrom], [virtualrate], [actualrate], [actual_stake], [currency], [CurrencyName], [recommend], [mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], [gameID], [eventID], [vendorID], [GameId3rd], [TranId3rd], [custom1], [custom2], [custom3], [LiveIndicator], [checkCount], [SiteId], [epositiontaking], [LicenseeTransId], [RepUpdateTime], [SiteDBGroupID])
