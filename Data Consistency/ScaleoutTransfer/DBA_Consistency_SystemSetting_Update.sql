@@ -23,7 +23,7 @@ BEGIN
 
 	--parameters
 	DECLARE 
-		@checkDiffSiteGroupIdKey VARCHAR(50) = 'CheckCons_Transfer_DiffSGId_LastTransId'
+		@checkDiffSiteGroupIdKey VARCHAR(50) = 'DiffSGId_LastTransId'
 
 	---validate data
 	IF (@CheckConsistencyKeyName <> @checkDiffSiteGroupIdKey)
