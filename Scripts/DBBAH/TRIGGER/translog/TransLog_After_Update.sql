@@ -9,6 +9,7 @@ AS
 	Task: 
 	Revision:
 		- 20210309@Kathy: Allow null for bettype,actual_stake, winlost, playercomm [Redmine:#138552]
+		- 20220912@Helen: scaleout project, exclude 'sitedb' data since it has been processed in sitedb already [176932]
 */
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -74,6 +75,7 @@ BEGIN
 		d.custid <> d.recommend AND
 		d.custid <> d.mrecommend AND
 		d.custid <> d.srecommend
+		AND i.SiteDBGroupID = 0
 		-- Joe@20120705 : eliminate row which data is not change 
 		AND (
 			ISNULL(i.actual_stake,0) <> ISNULL(d.actual_stake,0)

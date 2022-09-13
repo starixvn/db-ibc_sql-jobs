@@ -9,6 +9,7 @@ AS
 	Task: 
 	Revision:
 		- 20210309@Kathy: Allow null for bettype,actual_stake, winlost, playercomm [Redmine:#138552]
+		- 20220912@Helen: scaleout project, exclude 'sitedb' data since it has been processed in sitedb already [176932]
 */
 BEGIN
 	-- DB05BK1 : not get balance from DBTrans
@@ -40,6 +41,7 @@ BEGIN
 		i.custid <> recommend AND
 		i.custid <> mrecommend AND
 		i.custid <> srecommend
+		AND i.SiteDBGroupID = 0
 		--AND custid = 2211693
 		--AND currency IN (3, 5, 20)
 	ORDER BY

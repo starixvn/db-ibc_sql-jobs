@@ -10,6 +10,7 @@ AS
 	Revision:
 		- 20210309@Kathy: Allow null for bettype,actual_stake, winlost, playercomm [Redmine:#138552]
 		- 20220629@Helen: BalanceRecord -> wrong capture balance change and new balance when resettle tickets AE-Sexy product [Redmine:#173971]
+		- 20220912@Helen: scaleout project, exclude 'sitedb' data since it has been processed in sitedb already [176932]
 
 */
 BEGIN
@@ -67,6 +68,7 @@ BEGIN
 		d.custid <> d.recommend AND
 		d.custid <> d.mrecommend AND
 		d.custid <> d.srecommend
+		AND i.SiteDBGroupID = 0
 		-- Joe@20120705 : eliminate row which data is not change 
 		AND (
 			ISNULL(i.actual_stake,0) <> ISNULL(d.actual_stake,0) OR ISNULL(i.winlost,0) <> ISNULL(d.winlost,0) OR ISNULL(i.playercomm,0) <> ISNULL(d.playercomm,0)
