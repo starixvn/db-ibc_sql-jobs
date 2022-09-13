@@ -26,8 +26,10 @@ BEGIN
 		,@SiteDBGroupID AS CustomerSiteGroupId
 		,r.SiteDBGroupID AS TicketSiteGroupId
 	FROM bodb02.dbo.Transfer t WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK)
-			ON t.SRecommend = s.custid
+		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK)
+			ON t.CustId = c.custid
+		INNER JOIN bodb02.dbo.Site s WITH (NOLOCK)
+			ON s.site = c.site
 		CROSS APPLY 
 		(
 			SELECT f.SiteDBGroupID

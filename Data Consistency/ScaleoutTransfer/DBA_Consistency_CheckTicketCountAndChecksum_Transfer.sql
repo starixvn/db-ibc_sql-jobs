@@ -34,8 +34,10 @@ BEGIN
 						)
 				) AS TotalCheckSum
 	FROM bodb02.dbo.Transfer t WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK)
-			ON t.SRecommend = s.custid
+		INNER JOIN bodb02.dbo.Customer c WITH(NOLOCK)
+			ON t.CustId = c.custid
+		INNER JOIN bodb02.dbo.Site s WITH(NOLOCK)
+			ON s.site = c.site
 	WHERE t.TransId > @TransferLastTransId
 		AND t.TransId <= @NewTransferLastTransId
 		AND s.SiteDBGroupID = @SiteDBGroupID
@@ -58,8 +60,10 @@ BEGIN
 	FROM bodb02.dbo.TransferInfo ti WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Transfer t WITH(NOLOCK)
 			ON ti.TransId = t.TransId
-		INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK)
-			ON t.SRecommend = s.custid
+		INNER JOIN bodb02.dbo.Customer c WITH(NOLOCK)
+			ON t.CustId = c.custid
+		INNER JOIN bodb02.dbo.Site s WITH(NOLOCK)
+			ON s.site = c.site
 	WHERE ti.TransId > @TransferLastTransId
 		AND ti.TransId <= @NewTransferLastTransId
 		AND s.SiteDBGroupID = @SiteDBGroupID
@@ -79,8 +83,10 @@ BEGIN
 						)
 				) AS TotalCheckSum
 	FROM bodb02.dbo.Transfer_Coll tc WITH (NOLOCK)
-		INNER JOIN bodb02.dbo.Dep_CustSuper s WITH(NOLOCK)
-			ON tc.SRecommend = s.custid
+		INNER JOIN bodb02.dbo.Customer c WITH(NOLOCK)
+			ON tc.CustId = c.custid
+		INNER JOIN bodb02.dbo.Site s WITH(NOLOCK)
+			ON s.site = c.site
 	WHERE tc.TransId > @TransferLastTransId
 		AND tc.TransID <= @NewTransferLastTransId
 		AND s.SiteDBGroupID = @SiteDBGroupID
