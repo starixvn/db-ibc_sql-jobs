@@ -25,28 +25,31 @@ BEGIN
 
 	WHILE (1=1)
 	BEGIN
-		
-		-- CHECK flag for SP deployment
-		WHILE (1=1)
+		IF DATEDIFF(SECOND, @interval, GETDATE() ) >=  60
 		BEGIN
-			EXEC dbo.Acc_JobDeploymentInfo
-				@JobName = @Jobname
-				,@WaitingTime = @WaitingTime OUTPUT
-				,@IsWaiting	= @IsWaiting	 OUTPUT
-		
-			IF @IsWaiting = 1
+			-- CHECK flag for SP deployment
+			WHILE (1=1)
 			BEGIN
-				UPDATE SystemSettings WITH(ROWLOCK)
-					SET VValue = @Jobname + '-' + CONVERT(VARCHAR(50),GETDATE())
-				WHERE VName = 'JobDeploymentDate'
+				EXEC dbo.Acc_JobDeploymentInfo
+					@JobName = @Jobname
+					,@WaitingTime = @WaitingTime OUTPUT
+					,@IsWaiting	= @IsWaiting	 OUTPUT
+		
+				IF @IsWaiting = 1
+				BEGIN
+					UPDATE SystemSettings WITH(ROWLOCK)
+						SET VValue = @Jobname + '-' + CONVERT(VARCHAR(50),GETDATE())
+					WHERE VName = 'JobDeploymentDate'
 			
-				WAITFOR DELAY @WaitingTime
+					WAITFOR DELAY @WaitingTime
 			
+				END
+				ELSE
+				BREAK
 			END
-			ELSE
-			BREAK
+			SET @interval  =  GETDATE()
 		END
-	
+
 		IF(@Jobname = 'bodb02 : Task_SiteDB_BalanceTrigger_Sync')
 			EXEC Task_BalanceRecord_SiteDBBalanceTrigger_Insert
 
