@@ -15,6 +15,7 @@ AS
 	- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 	- 20210426@Sol: Alpha/NAP - Migrate from DBACC to DBCust - [Redmine: #154041]
 	- 20210521@Sol: Alpha/NAP - synced list email from prod to git-master - [Redmine: #154041]
+	- 20220307@Victor: change email recipients
 	- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 */
 BEGIN
