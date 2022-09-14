@@ -11,6 +11,7 @@ AS
 	
 	Revisions:
 		- 20220217@Kathy: Set waiting time for deployment [Redmine:#167296]
+		- 20220912@Helen: scaleout project [176932]
 
 */
 BEGIN
@@ -24,6 +25,8 @@ BEGIN
 	---1.
 	INSERT INTO @tmpJobInfo (JobName, WaitingTime, IsWaiting)
 	SELECT 'bodb02 : Task_BalanceRecord_Insert'		, '00:00:05', 0
+	UNION ALL
+	SELECT 'bodb02 : Task_SiteDB_BalanceTrigger_Sync', '00:00:05', 0
 
 	SELECT @WaitingTime = WaitingTime
 			,@IsWaiting = IsWaiting
