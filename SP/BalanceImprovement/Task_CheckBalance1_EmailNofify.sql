@@ -53,7 +53,7 @@ BEGIN
 		RETURN
 
 	DECLARE @mailList NVARCHAR(1024)
-	SET @mailList = N'dbaadmin@starixvn.com;dbatw@onelab.tw;eric.fu@onelab.tw;fanny.chen@onelab.tw;yolanda.wu@onelab.tw;sobi.chen@onelab.tw;'
+	SET @mailList = N'dbaadmin@starixvn.com;dbatw@onelab.tw;eric.fu@onelab.tw;chloe.lee@onelab.tw;eason.chou@onelab.tw;sobi.chen@onelab.tw;'
 
 	IF @@SERVERNAME <> 'DBTRANS' AND @@SERVERNAME NOT LIKE 'DBGRP0%'
 	BEGIN
