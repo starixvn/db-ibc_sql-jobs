@@ -66,8 +66,19 @@ BEGIN
 	IF (@totalSuper <> @totalTransferTicket)
 	BEGIN
 		SELECT	 @ErrCode = 100
-				,@ErrMsg = 'Compare number of transfer tickets (from Super to Licensee Code) equal to number of Supers is incorrect'
+				,@ErrMsg = 'Automate transfer from Super Balance to Licensee Code: Verify number of transfer tickets match with number of Supers, who make the transfer.'
 				,@SampleData =  'Number of transfer tickets: ' + CAST(@totalTransferTicket AS VARCHAR(20)) + ' <> ' + 'Number of Supers: ' + CAST(@totalSuper AS VARCHAR(20))
+
+		SELECT 'NumberOfTransferTickets' = @totalTransferTicket, 'NumberOfSupers' = @totalSuper
+	END
+	ELSE
+	BEGIN
+		SELECT 'NumberOfTransferTickets' = t.TempC1, 'NumberOfSupers' = t.TempC2
+		FROM
+			(
+				VALUES (NULL, NULL)
+			) AS t(TempC1, TempC2)
+		WHERE t.TempC1 IS NOT NULL
 	END
 
 END

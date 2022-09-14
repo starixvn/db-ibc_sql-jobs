@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[DBA_Consistency_AutoTransfer_Check_TotalTicketCorrect]
+ALTER PROCEDURE [dbo].[DBA_Consistency_AutoTransfer_Check_TotalTicketCorrect]
 (
 	@ScheduledDate DATE = NULL
 	,@ErrCode		INT				= 0		OUTPUT
@@ -87,8 +87,19 @@ BEGIN
 	IF (@totalEstimatedTicket <> @totalTransferTicket)
 	BEGIN
 		SELECT	 @ErrCode = 100
-				,@ErrMsg = 'Compare estimated number of transfer tickets (from Super to Licensee Code) equal to actual number of transfer tickets is incorrect'
+				,@ErrMsg = 'Automate transfer from Super Balance to Licensee Code: Compare estimated number of transfer tickets (from Super to Licensee Code) equal to actual number of transfer tickets.'
 				,@SampleData =  'Number of estimated transfer tickets: ' + CAST(@totalEstimatedTicket AS VARCHAR(20)) + ' <> ' + 'Number of actual transfer tickets: ' + CAST(@totalTransferTicket AS VARCHAR(20))
+
+		SELECT 'EstimatedTransferTickets' = @totalEstimatedTicket, 'ActualTransferTickets' = @totalTransferTicket
+	END
+	ELSE 
+	BEGIN
+		SELECT 'EstimatedTransferTickets' = t.TempC1, 'ActualTransferTickets' = t.TempC2
+		FROM
+			(
+				VALUES (NULL, NULL)
+			) AS t(TempC1, TempC2)
+		WHERE t.TempC1 IS NOT NULL
 	END
 
 END
