@@ -10,6 +10,8 @@ AS
 		
 */
 BEGIN
+	
+	SET NOCOUNT ON
 
 	DECLARE @sqlCMD NVARCHAR(MAX), @maxRowID BIGINT, @siteDBAlias VARCHAR(100)='SITEDB01', @batchSize INT = 5000;
 

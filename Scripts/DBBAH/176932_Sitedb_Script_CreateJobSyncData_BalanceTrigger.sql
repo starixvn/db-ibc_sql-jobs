@@ -45,7 +45,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Call SP 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.NAP_Admin_Control_Job @Jobname = ''bodb02 : Task_SiteDB_BalanceTrigger_Sync'' , @Waitfordelay = ''00:00:05.000''', 
+		@command=N'EXEC dbo.NAP_Admin_Control_Job @Jobname = ''bodb02 : Task_SiteDB_BalanceTrigger_Sync'' , @Waitfordelay = ''00:00:00.050''', 
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -60,7 +60,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'WAITFOR 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'WAITFOR DELAY ''00:00:05.000''', 
+		@command=N'WAITFOR DELAY ''00:00:01.000''', 
 		@database_name=N'bodb02', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
