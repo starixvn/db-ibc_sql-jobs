@@ -16,6 +16,10 @@ alter table [dbo].[Task_DBA_AG_Jobs_List] add  constraint [PK_Task_DBA_AG_Jobs_L
 insert into Task_DBA_AG_Jobs_List(JobName, PriorityLevel, Ignore)
 select name, 99, 0 from msdb.dbo.sysjobs
 
+--for new 2 jobs
+insert into Task_DBA_AG_Jobs_List(JobName, PriorityLevel, Ignore)
+values('DBA_AG_Switch_Jobs_Monitor', 99, 1), ('DBA_AG_Switch_Jobs', 99, 1)
+
 --for reset sequence
 update Task_DBA_AG_Jobs_List
 set PriorityLevel = 1
