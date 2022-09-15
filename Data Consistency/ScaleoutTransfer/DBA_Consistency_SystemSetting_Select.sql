@@ -44,19 +44,8 @@ BEGIN
 					WHERE s.VName = @CheckConsistencyKeyName
 					)
 			BEGIN
-				SELECT @minTransID = MAX(t.TransId)
-				FROM bodb02.dbo.Transfer t WITH (NOLOCK)
-					INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK)
-						ON t.CustId = c.custid
-					INNER JOIN bodb02.dbo.Site s WITH (NOLOCK)
-						ON s.site = c.site
-				WHERE s.SiteDBGroupID = 0
-
-				---insert to table setting
-				INSERT INTO bodb02.dbo.SystemSettings (VName,VValue)
-				VALUES (@CheckConsistencyKeyName,CAST(@minTransID AS VARCHAR(200)))
-
-				SELECT @TransferLastTransId = @minTransID
+				SELECT @ErrCode = 100, @ErrMsg = 'Consistency key is not exist!'
+				RETURN
 			END
 			ELSE --get value from system setting
 			BEGIN
