@@ -10,4 +10,4 @@
 USE bodb02
 GO
 INSERT INTO SystemSettings (VName, VValue)
-SELECT 'BalanceRecord_SiteDB_Sync', '0'
+SELECT 'BT_SiteDB01_Sync', '0'

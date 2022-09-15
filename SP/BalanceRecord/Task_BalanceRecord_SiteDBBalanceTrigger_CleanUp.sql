@@ -13,9 +13,9 @@ AS
 BEGIN
 	
 	SET NOCOUNT ON
-
+	
 	DECLARE @MaxID BIGINT = 0
-	SET @MaxID = (SELECT CONVERT(BIGINT,VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'BalanceRecord_SiteDB_Sync')
+	SET @MaxID = (SELECT CONVERT(BIGINT,VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'BT_SiteDB01_Sync')
 
 	--Keep 10000 very first rows in the table
 	IF @MaxID - 10000 <= 0

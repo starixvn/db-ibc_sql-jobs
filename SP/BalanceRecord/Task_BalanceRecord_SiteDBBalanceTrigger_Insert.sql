@@ -41,7 +41,7 @@ BEGIN
 		[modds] [smallmoney] NULL
 	)
 
-	SET @maxRowID = (SELECT CONVERT(BIGINT,VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'BalanceRecord_SiteDB_Sync')
+	SET @maxRowID = (SELECT CONVERT(BIGINT,VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'BT_SiteDB01_Sync')
 	
 	SET @sqlCMD = N'\
 	SELECT rowID, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds 
@@ -70,7 +70,7 @@ BEGIN
 	UPDATE s
 		SET VValue = CONVERT(VARCHAR(20),@maxRowID)
 	FROM bodb02.dbo.SystemSettings s WITH (ROWLOCK,UPDLOCK)
-	WHERE VName = 'BalanceRecord_SiteDB_Sync'
+	WHERE VName = 'BT_SiteDB01_Sync'
 
 	DROP TABLE #tmpBalanceTrigger
 
