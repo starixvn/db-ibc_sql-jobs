@@ -1,5 +1,4 @@
-drop table Task_DBA_AG_Jobs_List
-
+/*<info serverAlias="DBSIG-bodb02"></info>*/
 use bodb02
 go
 create table dbo.Task_DBA_AG_Jobs_List

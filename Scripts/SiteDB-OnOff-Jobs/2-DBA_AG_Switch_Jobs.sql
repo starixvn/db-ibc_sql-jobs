@@ -1,3 +1,4 @@
+/*<info serverAlias="DBSIG-msdb"></info>*/
 USE [msdb]
 GO
 
