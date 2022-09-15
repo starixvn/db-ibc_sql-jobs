@@ -1,0 +1,42 @@
+drop table Task_DBA_AG_Jobs_List
+
+use bodb02
+go
+create table dbo.Task_DBA_AG_Jobs_List
+(
+	JobName varchar(128) not null,
+	PriorityLevel smallint,
+	Ignore BIT DEFAULT(0)
+)
+alter table [dbo].[Task_DBA_AG_Jobs_List] add  constraint [PK_Task_DBA_AG_Jobs_List] primary key nonclustered 
+(
+	[JobName] ASC
+)
+
+
+insert into Task_DBA_AG_Jobs_List(JobName, PriorityLevel, Ignore)
+select name, 99, 0 from msdb.dbo.sysjobs
+
+--for reset sequence
+update Task_DBA_AG_Jobs_List
+set PriorityLevel = 1
+where JobName in ('DBA_Reset_Bet_Sequence', 'DBA_Reset_BetX_Sequence', 'DBA_Reset_Refno_Sequence')
+
+--for update balance
+update Task_DBA_AG_Jobs_List
+set PriorityLevel = 2
+where JobName like 'bodb02 : Task_BalanceUpd%'
+	or JobName = 'bodb02 : Game : Task_BalanceUpd'
+
+--for update settlement
+update Task_DBA_AG_Jobs_List
+set PriorityLevel = 3
+where JobName like 'bodb02 : NAP %'
+
+--ignore it if got disabled
+update l set Ignore = 1
+from Task_DBA_AG_Jobs_List l
+	inner join msdb.dbo.sysjobs j on l.JobName = j.name
+where j.enabled = 0
+
+select * from Task_DBA_AG_Jobs_List order by PriorityLevel
