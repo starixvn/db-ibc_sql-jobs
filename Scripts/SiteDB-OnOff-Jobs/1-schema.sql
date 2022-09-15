@@ -38,4 +38,20 @@ from Task_DBA_AG_Jobs_List l
 	inner join msdb.dbo.sysjobs j on l.JobName = j.name
 where j.enabled = 0
 
+--special cases
+update l set Ignore = 1
+from Task_DBA_AG_Jobs_List l
+where JobName IN ('syspolicy_purge_history'
+	, 'DBA : Send SQL Service Restart Alert Mail'
+	, 'DBA_Script_Instance_Object'
+	, 'DBA_Full_Backup'
+	, 'DBA : MonDB Get DB Info'
+	, 'DBA_Txn_Backup'
+	, 'DBA_Switch_Errorlog'
+	, 'DBA_Deadlock_Monitor'
+	, 'DBA_Diff_Backup'
+	, 'DBA_AG_Switch_Jobs'
+	, 'DBA_AG_Switch_Jobs_Monitor'
+)
+
 select * from Task_DBA_AG_Jobs_List order by PriorityLevel
