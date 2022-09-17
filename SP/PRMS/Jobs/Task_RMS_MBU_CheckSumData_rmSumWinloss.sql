@@ -16,6 +16,7 @@ AS
 		- 20200203@Danny: Prepare Separate Data GOF for deposit [RedmineID: #149966]
 		- 20200203@Danny: Separate Data GOF for deposit [RedmineID: #149966]
 		- 20220519@Danny: add column LiveIndicator [RedmineID: #172691]
+		- 20220917@Sophia: Fix Divide by Zero [Redmine: #177934]
 */
 
 BEGIN
@@ -96,7 +97,7 @@ BEGIN
 				WHEN b.bettype = 376 THEN 5
 				ELSE 0 END AS ParlayType
 			,SUM(b.scomm) AS scomm
-			,SUM(b.scomm * CONVERT(DECIMAL(9,8), b.epositiontaking) / (1 - b.tpositiontaking)) AS Extra_comm
+			,SUM(CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm * CONVERT(DECIMAL(9,8), b.epositiontaking) / (1 - b.tpositiontaking) END) AS Extra_comm
 			,SUM(b.stake * CONVERT(DECIMAL(9,8), b.epositiontaking)) AS Extra_stake
 			,SUM(-(b.winlost - b.stake) * CONVERT(DECIMAL(9,8), b.epositiontaking)) AS Extra_winlost,
 			b.mrecommend,
