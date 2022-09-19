@@ -13,22 +13,9 @@ BEGIN
 	SET NOCOUNT ON
 	--hardcode for bodb02
 	DECLARE @__currentValue BIT = 0
-		, @__lastValue BIT = 0
 		, @__dbName VARCHAR(128) = 'bodb02'
-	WHILE 1 = 1
-	BEGIN
-		SET @__currentValue = sys.fn_hadr_is_primary_replica(@__dbName)
-		SET @__lastValue = @__currentValue
 
-		WAITFOR DELAY '00:00:01:000'
-		
-		SET @__currentValue = sys.fn_hadr_is_primary_replica(@__dbName)
-		IF @__currentValue <> @__lastValue
-		BEGIN
-			BREAK -->> start doing
-		END
-
-	END
+	SET @__currentValue = sys.fn_hadr_is_primary_replica(@__dbName)
 
 	--//start check and enable/disable jobs
 	--get list jobs
