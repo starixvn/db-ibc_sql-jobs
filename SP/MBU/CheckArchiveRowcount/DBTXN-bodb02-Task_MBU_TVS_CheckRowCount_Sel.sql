@@ -163,6 +163,7 @@ BEGIN
 			) r
 			WHERE	t1.VoidingHistoryId IS NOT NULL
 				AND r.RequestId IS NOT NULL
+		
 		--2.3 TicketVoiding_OperatorInfo_bk	
 		INSERT INTO @__tempCount(rowcnt, tableName)
 		SELECT	COUNT(1), 'TicketVoiding_OperatorInfo'	
@@ -172,7 +173,7 @@ BEGIN
 					FROM	#tmpRequest t
 					WHERE t.RequestId = t1.RequestId
 			) r
-		
+
 		-- 2.5 TicketVoiding_VoidingHistory
 		INSERT INTO @__tempCount(rowcnt, tableName)
 		SELECT	COUNT(1), 'TicketVoiding_VoidingHistory'

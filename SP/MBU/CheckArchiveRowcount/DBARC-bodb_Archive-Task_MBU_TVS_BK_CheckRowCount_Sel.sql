@@ -191,6 +191,7 @@ BEGIN
 						FROM	#tmpRequest t
 						WHERE t.RequestId = t1.RequestId
 				) r
+		
 		-- 2.7 TicketVoiding_RequestDetailTicket_SubParlay
 		INSERT INTO @__tempCount(rowcnt, tableName)
 		SELECT	COUNT(1), 'TicketVoiding_RequestDetailTicket_SubParlay'
@@ -211,7 +212,6 @@ BEGIN
 					FROM	#tmpRequest t
 					WHERE t.RequestId = v.RequestId
 			) r
-		
 	END
 	ELSE IF @tablename = 'TicketVoiding_AutoUnmarkSetting'
 	BEGIN
