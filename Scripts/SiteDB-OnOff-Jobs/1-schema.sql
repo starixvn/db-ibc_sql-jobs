@@ -5,12 +5,15 @@ create table dbo.Task_DBA_AG_Jobs_List
 (
 	JobName varchar(128) not null,
 	PriorityLevel smallint,
-	Ignore BIT DEFAULT(0)
+	Ignore bit
 )
 alter table [dbo].[Task_DBA_AG_Jobs_List] add  constraint [PK_Task_DBA_AG_Jobs_List] primary key clustered 
 (
 	[JobName] ASC
 )
+
+alter table [dbo].[Task_DBA_AG_Jobs_List] add  constraint [DF_Task_DBA_AG_Jobs_List_Ignore]  default ((0)) for [Ignore]
+GO
 
 
 insert into Task_DBA_AG_Jobs_List(JobName, PriorityLevel, Ignore)
