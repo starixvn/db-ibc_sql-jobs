@@ -40,7 +40,7 @@ BEGIN
 	BEGIN
 		IF NOT EXISTS (
 					SELECT 1
-					FROM bodb02.dbo.SystemSettings s WITH (NOLOCK)
+					FROM dbo.DBA_SystemSettings s WITH (NOLOCK)
 					WHERE s.VName = @CheckConsistencyKeyName
 					)
 			BEGIN
@@ -50,7 +50,7 @@ BEGIN
 			ELSE --get value from system setting
 			BEGIN
 				SELECT @TransferLastTransId = CAST(VValue AS BIGINT)
-				FROM bodb02.dbo.SystemSettings s WITH (NOLOCK)
+				FROM dbo.DBA_SystemSettings s WITH (NOLOCK)
 				WHERE VName = @CheckConsistencyKeyName
 			END
 	END

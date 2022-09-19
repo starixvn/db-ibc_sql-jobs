@@ -41,7 +41,7 @@ BEGIN
 	--update setting
 	BEGIN
 		
-		UPDATE bodb02.dbo.SystemSettings
+		UPDATE dbo.DBA_SystemSettings
 			SET VValue = @NewTransferLastTransId
 		WHERE VName = @CheckConsistencyKeyName
 
