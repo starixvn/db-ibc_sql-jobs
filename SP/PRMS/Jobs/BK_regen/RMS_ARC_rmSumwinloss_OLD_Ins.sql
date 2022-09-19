@@ -9,6 +9,7 @@ AS
 	-- INsert data rmSumwinloss_OLD by Winlostdate into staging table
 	Revisions:
 	- 20210115@Danny: Regen data rmSumwinloss_OLD by Winlostdate  [RedmineID: #145926]
+	- 20220917@Sophia: Fix Divide by Zero [Redmine: #177934]
 */
 BEGIN
 	CREATE TABLE #rmBettrans_Old
@@ -291,7 +292,7 @@ BEGIN
 				WHEN b.bettype = 376 THEN 5
 				ELSE 0 END AS ParlayType
 			,SUM(b.scomm) AS scomm
-			,SUM(b.scomm * CONVERT(DECIMAL(9,8), b.epositiontaking) / (1 - b.tpositiontaking)) AS Extra_comm
+			,SUM(CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.scomm * CONVERT(DECIMAL(9,8), b.epositiontaking) / (1 - b.tpositiontaking) END) AS Extra_comm
 			,SUM(b.stake * CONVERT(DECIMAL(9,8), b.epositiontaking)) AS Extra_stake
 			,SUM(-(b.winlost - b.stake) * CONVERT(DECIMAL(9,8), b.epositiontaking)) AS Extra_winlost,
 			b.mrecommend,
