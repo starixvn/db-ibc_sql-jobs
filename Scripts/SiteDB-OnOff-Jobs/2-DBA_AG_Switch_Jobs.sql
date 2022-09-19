@@ -2,11 +2,14 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [DBA_AG_Switch_Jobs]    Script Date: 9/15/2022 1:39:11 PM ******/
+USE [msdb]
+GO
+
+/****** Object:  Job [DBA_AG_Switch_Jobs]    Script Date: 9/19/2022 8:17:23 AM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 9/15/2022 1:39:11 PM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 9/19/2022 8:17:23 AM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -26,19 +29,34 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'DBA_AG_Switch_Jobs',
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [doing]    Script Date: 9/15/2022 1:39:12 PM ******/
+/****** Object:  Step [doing]    Script Date: 9/19/2022 8:17:23 AM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'doing', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
-		@on_success_action=1, 
-		@on_success_step_id=0, 
+		@on_success_action=4, 
+		@on_success_step_id=2, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'exec Task_SiteDB_AG_Switch_Jobs', 
+		@command=N'exec dbo.Task_SiteDB_AG_Switch_Jobs_Control', 
 		@database_name=N'bodb02', 
+		@flags=0
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [loop]    Script Date: 9/19/2022 8:17:23 AM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'loop', 
+		@step_id=2, 
+		@cmdexec_success_code=0, 
+		@on_success_action=4, 
+		@on_success_step_id=1, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'declare @i int', 
+		@database_name=N'master', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
@@ -48,12 +66,12 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'sch_00003
 		@freq_type=4, 
 		@freq_interval=1, 
 		@freq_subday_type=2, 
-		@freq_subday_interval=30, 
+		@freq_subday_interval=10, 
 		@freq_relative_interval=0, 
 		@freq_recurrence_factor=0, 
 		@active_start_date=20220915, 
 		@active_end_date=99991231, 
-		@active_start_time=0, 
+		@active_start_time=1, 
 		@active_end_time=235959, 
 		@schedule_uid=N'cab4558b-2e28-4a63-b527-10e8d60d6664'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
