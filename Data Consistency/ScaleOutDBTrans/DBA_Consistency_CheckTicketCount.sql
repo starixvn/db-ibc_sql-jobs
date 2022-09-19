@@ -12,8 +12,9 @@ Revisions:
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @yesterday SMALLDATETIME
-	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
+	DECLARE @before_yesterday SMALLDATETIME, @today SMALLDATETIME
+	SELECT  @before_yesterday = CONVERT(DATE, DATEADD(DAY, -2, GETDATE()))
+	SELECT  @today = CONVERT(DATE,GETDATE())
 
 	CREATE TABLE #tmp_betticketcheckcount
 	(
@@ -38,7 +39,7 @@ BEGIN
 			Status, 
 			COUNT(1) AS TicketCount
 	FROM	bodb02.dbo.bettrans WITH (NOLOCK)
-	WHERE	winlostdate = @yesterday
+	WHERE	winlostdate >= @before_yesterday AND winlostdate < @today
 		AND SiteDBGroupID > 0
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
@@ -58,7 +59,7 @@ BEGIN
 			Status, 
 			COUNT(1) AS TicketCount
 	FROM bodb02.dbo.bettransRnG WITH (NOLOCK)
-	WHERE	winlostdate = @yesterday
+	WHERE	winlostdate >= @before_yesterday AND winlostdate < @today
 		AND SiteDBGroupID > 0
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
@@ -78,7 +79,7 @@ BEGIN
 			Status, 
 			COUNT(1) AS TicketCount
 	FROM bodb02.dbo.bettransLC WITH (NOLOCK)
-	WHERE	winlostdate = @yesterday
+	WHERE	winlostdate >= @before_yesterday AND winlostdate < @today
 		AND SiteDBGroupID > 0
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
@@ -99,7 +100,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM bodb02.dbo.bettransG b WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.custid
-	WHERE	winlostdate = @yesterday
+	WHERE	b.winlostdate >= @before_yesterday AND b.winlostdate < @today
 		AND SiteDBGroupID > 0
 	GROUP BY	b.SiteDBGroupID, 
 				c.Recommend, 
@@ -119,7 +120,7 @@ BEGIN
 			Status, 
 			COUNT(1) AS TicketCount
 	FROM bodb02.dbo.translog WITH (NOLOCK)
-	WHERE	winlostdate = @yesterday
+	WHERE	winlostdate >= @before_yesterday AND winlostdate < @today
 		AND SiteDBGroupID > 0
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
@@ -140,7 +141,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM bodb02.dbo.bettransm bm WITH (NOLOCK) 
 		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = bm.custid
-	WHERE	bm.winlostdate = @yesterday
+	WHERE	bm.winlostdate >= @before_yesterday AND bm.winlostdate < @today
 		AND bm.SiteDBGroupID > 0
 	GROUP BY	bm.SiteDBGroupID, 
 				c.Recommend, 
@@ -161,7 +162,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM bodb02.dbo.zzzbettrans z WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
-	WHERE	z.winlostdate = @yesterday
+	WHERE	z.winlostdate >= @before_yesterday AND z.winlostdate < @today
 		AND z.SiteDBGroupID > 0
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
@@ -182,7 +183,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM bodb02.dbo.zzzbettransm z WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
-	WHERE	z.winlostdate = @yesterday
+	WHERE	z.winlostdate >= @before_yesterday AND z.winlostdate < @today
 		AND z.SiteDBGroupID > 0
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
