@@ -7,7 +7,7 @@ create table dbo.Task_DBA_AG_Jobs_List
 	PriorityLevel smallint,
 	Ignore BIT DEFAULT(0)
 )
-alter table [dbo].[Task_DBA_AG_Jobs_List] add  constraint [PK_Task_DBA_AG_Jobs_List] primary key nonclustered 
+alter table [dbo].[Task_DBA_AG_Jobs_List] add  constraint [PK_Task_DBA_AG_Jobs_List] primary key clustered 
 (
 	[JobName] ASC
 )
