@@ -47,7 +47,7 @@ BEGIN
 	SELECT rowID, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds 
 	FROM OPENQUERY('+@siteDBAlias+', ''\
 	SELECT TOP('+CONVERT(VARCHAR(10), @batchSize)+') rowid, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds 
-	FROM [bodb02].[dbo].[BalanceTrigger] WITH(NOLOCK) WHERE RowID > '+CONVERT(VARCHAR(10), @maxRowID)+'\
+	FROM [bodb02].[dbo].[BalanceTrigger] WITH(NOLOCK) WHERE RowID > '+CONVERT(VARCHAR(20), @maxRowID)+'\
 	'')';
 
 	--debug
