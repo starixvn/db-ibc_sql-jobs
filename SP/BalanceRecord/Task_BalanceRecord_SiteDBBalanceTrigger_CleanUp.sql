@@ -26,7 +26,7 @@ BEGIN
 	DECLARE @MaxID BIGINT = 0 
 	SET @MaxID = (SELECT CONVERT(BIGINT,VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'BT_SiteDB01_Sync')
 
-	DECLARE @sqlCMD NVARCHAR(MAX), @siteDBAlias VARCHAR(100)='DB05', @MaxID_DB05 BIGINT 
+	DECLARE @sqlCMD NVARCHAR(MAX), @siteDBAlias VARCHAR(100)='DBSIG01', @MaxID_DB05 BIGINT 
 
 	SET @sqlCMD = N'\
 	SELECT @MaxID_DB05 = CONVERT(BIGINT,VValue)
@@ -69,7 +69,7 @@ BEGIN
 	SELECT  @query = N''		
 	SELECT	@query = @query + N'EXEC SiteDB_Task_BalanceRecord_SiteDBBalanceTrigger_CleanUp @MaxID'
 	
-	SELECT	@ExecuteSQL = N'EXECUTE SITEDB01.bodb02.dbo.sp_executesql @query, N''@MaxID BIGINT'',@MaxID'
+	SELECT	@ExecuteSQL = N'EXECUTE DBSIG01.bodb02.dbo.sp_executesql @query, N''@MaxID BIGINT'',@MaxID'
 	
 	PRINT @ExecuteSQL
 	EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX), @MaxID BIGINT', @query, @MaxID

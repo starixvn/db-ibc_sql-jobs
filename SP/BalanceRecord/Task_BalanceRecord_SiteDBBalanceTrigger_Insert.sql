@@ -13,7 +13,7 @@ BEGIN
 	
 	SET NOCOUNT ON
 
-	DECLARE @sqlCMD NVARCHAR(MAX), @maxRowID BIGINT, @siteDBAlias VARCHAR(100)='SITEDB01', @batchSize INT = 5000;
+	DECLARE @sqlCMD NVARCHAR(MAX), @maxRowID BIGINT, @siteDBAlias VARCHAR(100)='DBSIG01', @batchSize INT = 5000;
 
 	CREATE TABLE #tmpBalanceTrigger(
 		[RowID] [bigint] NOT NULL,

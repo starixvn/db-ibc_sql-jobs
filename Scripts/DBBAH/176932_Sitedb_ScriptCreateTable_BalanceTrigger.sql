@@ -31,8 +31,8 @@ CREATE TABLE [dbo].[BalanceTrigger](
 	[comm] [money] NULL,
 	[acomm] [money] NULL,
 	[scomm] [money] NULL,
-	[modds] [smallmoney] NULL,
-	[RepUpdateTime] [datetime2](7) NULL CONSTRAINT [DF_BalanceTrigger_RepUpdateTime]  DEFAULT (SYSDATETIME()),
+	[modds] [smallmoney] NULL
+	--[RepUpdateTime] [datetime2](7) NULL CONSTRAINT [DF_BalanceTrigger_RepUpdateTime]  DEFAULT (SYSDATETIME()),
  CONSTRAINT [PK_BalanceTrigger] PRIMARY KEY CLUSTERED 
 (
 	[RowID] ASC
@@ -41,8 +41,8 @@ CREATE TABLE [dbo].[BalanceTrigger](
 
 GO
 
-CREATE NONCLUSTERED INDEX [IX_RepUpdateTime] ON [dbo].[BalanceTrigger]
-(
-	[RepUpdateTime] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [BALANCE]
-GO
+--CREATE NONCLUSTERED INDEX [IX_RepUpdateTime] ON [dbo].[BalanceTrigger]
+--(
+--	[RepUpdateTime] ASC
+--)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 90, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [BALANCE]
+--GO
