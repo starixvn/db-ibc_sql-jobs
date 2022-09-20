@@ -71,7 +71,7 @@ BEGIN
 	
 	SELECT	@ExecuteSQL = N'EXECUTE DBSIG01.bodb02.dbo.sp_executesql @query, N''@MaxID BIGINT'',@MaxID'
 	
-	PRINT @ExecuteSQL
+	--PRINT @ExecuteSQL
 	EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX), @MaxID BIGINT', @query, @MaxID
 
 END
