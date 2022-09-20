@@ -38,6 +38,7 @@ BEGIN
 	WHERE 
 		t.TransId > @TransferLastTransId 
 		AND t.TransId <= @NewTransferLastTransId 
+		AND t.Bettype NOT IN (19999, 20000)
 		AND s.SiteDBGroupID = @SiteDBGroupID 
 		AND 1 = CASE WHEN r.SiteDBGroupID <> @SiteDBGroupID THEN 1 ELSE 0 END
 	ORDER BY t.TransId

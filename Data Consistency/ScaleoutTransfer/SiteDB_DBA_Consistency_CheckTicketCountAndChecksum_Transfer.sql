@@ -75,10 +75,11 @@ BEGIN
 						)
 				) AS TotalCheckSum
 		FROM dbo.TransferInfo ti WITH (NOLOCK)
-			inner join Transfer t with(nolock)
+			INNER JOIN Transfer t with(nolock)
 				on ti.TransId = t.TransId
 		WHERE ti.TransId > @transferLastTransId
 			AND ti.TransId <= @NewTransferLastTransId
+			AND t.Bettype NOT IN (19999, 20000)
 		GROUP BY t.Recommend 
 
 		UNION ALL

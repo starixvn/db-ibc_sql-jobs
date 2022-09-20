@@ -67,6 +67,7 @@ BEGIN
 	WHERE ti.TransId > @TransferLastTransId
 		AND ti.TransId <= @NewTransferLastTransId
 		AND s.SiteDBGroupID = @SiteDBGroupID
+		AND t.Bettype NOT IN (19999, 20000)
 	GROUP BY t.Recommend 
 
 	UNION ALL
