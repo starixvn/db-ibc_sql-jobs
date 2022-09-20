@@ -10,6 +10,7 @@ AS
 	Revision:
 		- 20190611@Patrick: CN88 integration
 		- 20210309@Kathy: Allow null for bettype,actual_stake, winlost, playercomm [Redmine:#138552]
+		- 20220912@Helen: scaleout project, exclude 'sitedb' data since it has been processed in sitedb already [176932]
 */
 BEGIN
 	--if this record belong to CN88 member then skip get data from v_BalanceTable.
@@ -54,6 +55,7 @@ BEGIN
 			i.custid <> recommend AND
 			i.custid <> mrecommend AND
 			i.custid <> srecommend
+			AND i.SiteDBGroupID = 0
 			--AND custid = 2211693
 			--AND currency IN (3, 5, 20)
 		ORDER BY
@@ -86,6 +88,7 @@ BEGIN
 			i.custid <> recommend AND
 			i.custid <> mrecommend AND
 			i.custid <> srecommend
+			AND i.SiteDBGroupID = 0
 			--AND custid = 2211693
 			--AND currency IN (3, 5, 20)
 		ORDER BY
