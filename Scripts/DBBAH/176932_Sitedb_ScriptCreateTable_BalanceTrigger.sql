@@ -31,7 +31,7 @@ CREATE TABLE [dbo].[BalanceTrigger](
 	[comm] [money] NULL,
 	[acomm] [money] NULL,
 	[scomm] [money] NULL,
-	[modds] [smallmoney] NULL
+	[modds] [smallmoney] NULL,
 	--[RepUpdateTime] [datetime2](7) NULL CONSTRAINT [DF_BalanceTrigger_RepUpdateTime]  DEFAULT (SYSDATETIME()),
  CONSTRAINT [PK_BalanceTrigger] PRIMARY KEY CLUSTERED 
 (
