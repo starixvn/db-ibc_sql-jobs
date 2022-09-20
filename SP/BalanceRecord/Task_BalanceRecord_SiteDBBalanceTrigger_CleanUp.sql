@@ -14,6 +14,15 @@ BEGIN
 	
 	SET NOCOUNT ON
 	
+	IF @@SERVERNAME NOT IN ('TESTDB053','DB05BK1','SITDB05')
+	BEGIN
+			RAISERROR ('EXEC dbo.Task_BalanceRecord_SiteDBBalanceTrigger_CleanUp failed due to wrong server!', -- Message text.
+                        16, -- Severity.
+                        1 -- State.
+                        );
+			RETURN
+	END
+
 	DECLARE @MaxID BIGINT = 0 
 	SET @MaxID = (SELECT CONVERT(BIGINT,VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = 'BT_SiteDB01_Sync')
 
