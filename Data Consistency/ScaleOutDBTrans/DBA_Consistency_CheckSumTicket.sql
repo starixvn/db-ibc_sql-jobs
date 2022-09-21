@@ -13,7 +13,8 @@ Revisions:
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @yesterday SMALLDATETIME
+	DECLARE @before_yesterday SMALLDATETIME, @yesterday SMALLDATETIME
+	SELECT  @before_yesterday = CONVERT(DATE, DATEADD(DAY, -2, GETDATE()))
 	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
 
 	CREATE TABLE #tmp_betticketchecksum
@@ -41,7 +42,7 @@ BEGIN
 									[sdiscount], [scomm], [spositiontaking], [swinlost], [srecommend], [Username], [CurrencyName], [virtualrate], [oddstype], [statusID], [currency2], 
 									[balance], [transid2], [WalletType], [BonusID], [RefCode])) AS TotalCheckSumAgg
 	FROM	bodb02.dbo.bettrans WITH (NOLOCK)
-	WHERE	[winlostdate] = @yesterday
+	WHERE	[winlostdate] IN (@before_yesterday,@yesterday)
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
@@ -62,7 +63,7 @@ BEGIN
 									[TranId3rd], [RefNo], [IsSum], [winlost], [awinlost], [mwinlost], [swinlost], [playercomm], [comm], [acomm], [scomm], [Transdate3rd], 
 									[SiteID], [Additional], [JackpotInfo], [RefNo2], [ContributionRate], [BetStake], [ContributionStake3rd])) AS TotalCheckSumAgg
 	FROM	bodb02.dbo.bettransRnG WITH (NOLOCK)
-	WHERE	[winlostdate] = @yesterday
+	WHERE	[winlostdate] IN (@before_yesterday,@yesterday)
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
@@ -83,7 +84,7 @@ BEGIN
 									[TranId3rd], [RefNo], [IsSum], [winlost], [awinlost], [mwinlost], [swinlost], [playercomm], [comm], [acomm], [scomm], [Transdate3rd], [NetStake], 
 									[SiteID])) AS TotalCheckSumAgg
 	FROM	bodb02.dbo.bettransLC WITH (NOLOCK)
-	WHERE	[winlostdate] = @yesterday
+	WHERE	[winlostdate] IN (@before_yesterday,@yesterday)
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
@@ -104,7 +105,7 @@ BEGIN
 									[virtualrate], g.[SiteID], g.[TransDesc], g.[BetID3rd], g.[actual_stake], g.[netstake])) AS TotalCheckSumAgg
 	FROM	bodb02.dbo.bettransG g WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = g.custid
-	WHERE	[winlostdate] = @yesterday
+	WHERE	g.[winlostdate] IN (@before_yesterday,@yesterday)
 		AND g.[SiteDBGroupID] > 0
 	GROUP BY	g.[SiteDBGroupID], 
 				c.[recommend]
@@ -125,7 +126,7 @@ BEGIN
 									[gameID], [eventID], [vendorID], [Gameid3rd], [Tranid3rd], [custom1], [liveindicator], [custom2], [custom3], [SiteId], 
 									[checkCount])) AS TotalCheckSumAgg
 	FROM	bodb02.dbo.translog WITH (NOLOCK)
-	WHERE	[winlostdate] = @yesterday
+	WHERE	[winlostdate] IN (@before_yesterday,@yesterday)
 		AND [SiteDBGroupID] > 0
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
@@ -148,7 +149,7 @@ BEGIN
 									bm.[sdiscount], bm.[scomm], bm.[statusID], bm.[transdesc], bm.[SecAcceptFlag], bm.[SecAcceptTime], bm.[LiveBetAcceptTime])) AS TotalCheckSumAgg
 	FROM	bodb02.dbo.bettransm bm WITH (NOLOCK) 
 		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = bm.custid
-	WHERE	bm.[winlostdate] = @yesterday
+	WHERE	bm.[winlostdate] IN (@before_yesterday,@yesterday)
 		AND bm.[SiteDBGroupID] > 0
 	GROUP BY	bm.[SiteDBGroupID], 
 				c.[recommend]

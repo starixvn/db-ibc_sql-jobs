@@ -12,7 +12,8 @@ Revisions:
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @yesterday SMALLDATETIME
+	DECLARE @before_yesterday SMALLDATETIME, @yesterday SMALLDATETIME
+	SELECT  @before_yesterday = CONVERT(DATE, DATEADD(DAY, -2, GETDATE()))
 	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
 	
 	CREATE TABLE #tmp_betticketcheckcount
@@ -38,7 +39,7 @@ BEGIN
 			Status, 
 			COUNT(1) AS TicketCount
 	FROM	dbo.bettrans WITH (NOLOCK)
-	WHERE	winlostdate = @yesterday
+	WHERE	winlostdate IN (@before_yesterday,@yesterday)
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
@@ -57,7 +58,7 @@ BEGIN
 			Status, 
 			COUNT(1) AS TicketCount
 	FROM	dbo.bettransRnG WITH (NOLOCK)
-	WHERE	winlostdate = @yesterday
+	WHERE	winlostdate IN (@before_yesterday,@yesterday)
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
@@ -76,7 +77,7 @@ BEGIN
 			Status, 
 			COUNT(1) AS TicketCount
 	FROM	dbo.bettransLC WITH (NOLOCK)
-	WHERE	winlostdate = @yesterday
+	WHERE	winlostdate IN (@before_yesterday,@yesterday)
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
@@ -96,7 +97,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.bettransG b WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = b.custid
-	WHERE	winlostdate = @yesterday
+	WHERE	b.winlostdate IN (@before_yesterday,@yesterday)
 	GROUP BY	b.SiteDBGroupID, 
 				c.Recommend, 
 				b.Status
@@ -115,7 +116,7 @@ BEGIN
 			Status, 
 			COUNT(1) AS TicketCount
 	FROM	dbo.translog WITH (NOLOCK)
-	WHERE	winlostdate = @yesterday
+	WHERE	winlostdate IN (@before_yesterday,@yesterday)
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
@@ -135,7 +136,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.bettransm bm WITH (NOLOCK) 
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = bm.custid
-	WHERE	bm.winlostdate = @yesterday
+	WHERE	bm.winlostdate IN (@before_yesterday,@yesterday)
 	GROUP BY	bm.SiteDBGroupID, 
 				c.Recommend, 
 				bm.Status
@@ -155,7 +156,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.zzzbettrans z WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
-	WHERE	z.winlostdate = @yesterday
+	WHERE	z.winlostdate IN (@before_yesterday,@yesterday)
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
 				z.Status
@@ -175,7 +176,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.zzzbettransm z WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
-	WHERE	z.winlostdate = @yesterday
+	WHERE	z.winlostdate IN (@before_yesterday,@yesterday)
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
 				z.Status
