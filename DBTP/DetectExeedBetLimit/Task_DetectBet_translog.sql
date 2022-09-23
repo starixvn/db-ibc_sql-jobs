@@ -13,6 +13,7 @@ AS
 	Revisions: 
 		- 20220525@Max: Create SP [Redmine: #170739]
 		- 20220728@July: Scale out DBTRANS - Change maxTransIdSetting to SequenceIdSetting [Redmine: #175965]
+		- 20220923@Max: Tuning [Redmine: #178156]
 	
 	Param's explanation:		
 */
@@ -55,7 +56,7 @@ BEGIN
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
 		AND b.productID IN (220,222,223,231,169)
-	ORDER BY  b.translogid ASC
+	ORDER BY  b.sequenceid ASC
 	-------------------
 
 	--For products which bet limit is min/max per game Round (Virtual Games,..)
@@ -66,7 +67,7 @@ BEGIN
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
 		AND b.productID IN (245)
-	ORDER BY  b.translogid ASC
+	ORDER BY  b.sequenceid ASC
 
 	UPDATE c SET c.stake = t.stake
 	FROM #tmp_TransId c

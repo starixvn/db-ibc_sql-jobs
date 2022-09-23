@@ -13,6 +13,7 @@ AS
 	Revisions: 
 		- 20220525@Max: Create SP [Redmine: #170739]
 		- 20220728@July: Scale out DBTRANS - Change maxTransIdSetting to SequenceIdSetting [Redmine: #175965]
+		- 20220923@Max: Tuning [Redmine: #178156]
 
 	Param's explanation:		
 */
@@ -55,7 +56,7 @@ BEGIN
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
 		AND b.matchid IN (244)
-	ORDER BY b.transid ASC
+	ORDER BY b.sequenceid ASC
 
 	SET @maxSequenceId = (SELECT MAX(SequenceId) FROM #tmp_TransId)
 
