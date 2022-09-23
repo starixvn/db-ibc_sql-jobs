@@ -29,11 +29,13 @@ BEGIN
 			, @maxTransId_bettransRnG BIGINT
 			, @maxTransId_translog BIGINT
 			, @maxTransId_Transfer BIGINT 
+			, @maxTransId_bettransm BIGINT 
 			, @batchCount INT = 4000
 			, @SiteDBGroupID SMALLINT
 
 	SET @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
 
+	
 	--1. bettrans
 	EXEC dbo.SiteDB_DBA_Consistency_DetectSiteDBGroupID_bettrans @batchCount = @batchCount
 											, @SiteDBGroupID = @SiteDBGroupID
@@ -119,8 +121,22 @@ BEGIN
 		FROM dbo.SiteDB_DataConsistencyCheck_Config c WITH (ROWLOCK, UPDLOCK)
 		WHERE c.ConfigName = 'Transfer'
 	END
-
-	--7. Send Mail
+	
+	----7. bettransm
+	EXEC dbo.SiteDB_DBA_Consistency_DetectSiteDBGroupID_bettransm @batchCount = @batchCount
+											, @SiteDBGroupID = @SiteDBGroupID
+											, @maxTransId = @maxTransId_bettransm OUTPUT
+	
+	--Update Setting
+	IF @maxTransId_bettransm IS NOT NULL
+	BEGIN
+		UPDATE c 
+		SET c.ConfigValue = @maxTransId_bettransm
+		FROM dbo.SiteDB_DataConsistencyCheck_Config c WITH (ROWLOCK, UPDLOCK)
+		WHERE c.ConfigName = 'bettransm'
+	END
+	
+	--8. Send Mail
 	--Invalid in case of checking mismatch sitedbgroupid between server config and ticket
 	--OR Invalid in case of checking mismatch sitedbgroupid between ticket & table site 
 	SELECT TableName, TransID, CustID, SiteDBGroupID, SiteDBGroupIDConfigured 
