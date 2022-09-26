@@ -1,0 +1,80 @@
+/*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].SiteDB_DBA_Consistency_SystemSetting_Select
+(
+	@CheckConsistencyKeyName VARCHAR(50),
+	@SiteDBGroupID SMALLINT OUTPUT,
+	@TransferLastTransId BIGINT OUTPUT,
+	@NewTransferLastTransId BIGINT OUTPUT,
+	@ErrCode INT = 0 OUTPUT,
+	@ErrMsg VARCHAR(MAX)= '' OUTPUT 
+)
+AS
+/*
+	Created: 20220823@Sol
+	Task: Data consistency - get last trans id and new last transid 
+	DB: DBSIG-bodb02
+
+	Revisions: 
+		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
+						- Get last transid and new last transid - [Redmine:#175881]
+
+	Param's Expanation:
+*/
+BEGIN
+	SET NOCOUNT ON
+
+	--parameters
+	DECLARE 
+		@checkCountKey VARCHAR(50) = 'SiteDB_CheckCons_Transfer_Count_LastTransId'
+		,@checkDiffSiteGroupIdKey VARCHAR(50) = 'SiteDB_CheckCons_Transfer_DiffSGId_LastTransId'
+		,@minTransID BIGINT = 0 --- for the first time run sp, 
+		,@currTime DATETIME
+
+	---validate
+	IF (@CheckConsistencyKeyName NOT IN (@checkCountKey, @checkDiffSiteGroupIdKey))
+	BEGIN
+		SELECT @ErrCode = 100, @ErrMsg = 'Invalid consistency key name!'
+		RETURN
+	END
+	
+	--check if the setting exists or not, if exists, get the value, if not, select min transid and insert the setting
+	--this is for the first time that sp run, next time will get the last transid
+	BEGIN
+		IF NOT EXISTS (
+				SELECT 1
+				FROM bodb02.dbo.SystemSettings s WITH (NOLOCK)
+				WHERE s.VName = @CheckConsistencyKeyName
+				)
+		BEGIN
+			SELECT @ErrCode = 100, @ErrMsg = 'Consistency key is not exist!'
+			RETURN
+		END
+		ELSE --get value from system setting
+		BEGIN
+			SELECT @TransferLastTransId = CAST(VValue AS BIGINT)
+			FROM bodb02.dbo.SystemSettings s WITH (NOLOCK)
+			WHERE VName = @CheckConsistencyKeyName
+		END
+	END
+
+	---assign current time - 2 mins to @currTime
+	SELECT @currTime =  DATEADD(MINUTE, -2, GETDATE())
+
+	---get site group id
+	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
+
+	---get last transid
+	BEGIN
+		SELECT @NewTransferLastTransId = MAX(t.TransId)
+		FROM dbo.Transfer t WITH (NOLOCK)
+		WHERE t.TransId > @transferLastTransId
+			AND t.TransDate < @currTime
+
+		---incase cannot get latest transid due to no new transid with transdate < getdate() - 2 minutes, keep the value setting unchanged
+		IF (ISNULL(@NewTransferLastTransId, 0) = 0)
+		BEGIN
+			SELECT @NewTransferLastTransId = @TransferLastTransId
+		END
+	END
+END
+GO
