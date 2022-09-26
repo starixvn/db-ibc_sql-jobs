@@ -15,20 +15,21 @@ AS
 		- 20220726@Lukas: Create [RedmineID: #158293]
 		- 20220829@Tina: Using same sequence object with SP Get_Bettrans_Transid
 		- 20220912@Tina: add more sitedb2 [RedmineID: #158293]
+		- 20220926@Tina: re-set value for param @sourceID [RedmineID: #158293]
 */
 BEGIN
 	 
 	DECLARE @nextseq BIGINT
 
-	IF @sourceID IS NULL
-	BEGIN
+	--IF @sourceID IS NULL -> Please help double check with Lukas or Vivi if you want to uncomment
+	--BEGIN
 		SELECT @sourceID =  
 			CASE	
 				WHEN @@SERVERNAME in ('DBTRANS','SITDBTRANS','TESTDBTRANS','db-60\devdbtrans') THEN 0
 				WHEN @@SERVERNAME IN ('DBGRP01N1','DBGRP01N2','SITDBGRP01N1','SITDBGRP01N2','db62\DEVSITEDB','testdb053\TESTSITEDB') THEN 1
 				WHEN @@SERVERNAME IN ('DBGRP02N1','DBGRP02N2','SITDBGRP02N1','SITDBGRP02N2') THEN 2
 			ELSE 1023 END
-	END 
+	--END 
  
 	SELECT	@transid = DATEDIFF_BIG(SECOND, '2022-07-01 00:00:00', GETUTCDATE())
 
