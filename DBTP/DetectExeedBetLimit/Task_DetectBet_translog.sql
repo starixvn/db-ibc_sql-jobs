@@ -14,7 +14,8 @@ AS
 		- 20220525@Max: Create SP [Redmine: #170739]
 		- 20220728@July: Scale out DBTRANS - Change maxTransIdSetting to SequenceIdSetting [Redmine: #175965]
 		- 20220923@Max: Tuning [Redmine: #178156]
-	
+		- 20220831@July: Include product NG(Happy 5 Linked Game), RNG Keno [Redmine: #170739]
+
 	Param's explanation:		
 */
 BEGIN
@@ -50,12 +51,12 @@ BEGIN
 
 	--For normal products
 	INSERT INTO #tmp_TransId (TransId, CustId, sporttype, bettype, stake, srecommend, recommend, isLive, transdate, SequenceId)
-	SELECT TOP(@batchCount) b.translogid, b.custid, b.productID, b.gameID, b.stake, b.srecommend, b.recommend, 0, b.transdate, b.sequenceid
+	SELECT TOP(@batchCount) b.translogid, b.custid, b.productID, b.gameID, b.stake, b.srecommend, b.recommend, CASE WHEN b.productID = 168 THEN b.liveindicator ELSE 0 END, b.transdate, b.sequenceid
 	FROM dbo.translog b WITH (NOLOCK)
 	WHERE b.SequenceID > @maxSequenceId_setting
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
-		AND b.productID IN (220,222,223,231,169)
+		AND b.productID IN (220,222,223,231,169,168,202)
 	ORDER BY  b.sequenceid ASC
 	-------------------
 
@@ -85,8 +86,8 @@ BEGIN
 	--Process detect invalid
 	EXEC dbo.Task_DetectBet_CustMaxBetSettingSel
 	
-	INSERT INTO dbo.CustMaxBet_Invalid (TransID, CustID, SportType, BetType, MaxBet, Stake)
-	SELECT t1.TransId, t1.CustId, t1.sporttype, t1.bettype, t1.MaxBet, t1.stake
+	INSERT INTO dbo.CustMaxBet_Invalid (TransID, CustID, SportType, BetType, MaxBet, Stake, Remark)
+	SELECT t1.TransId, t1.CustId, t1.sporttype, t1.bettype, t1.MaxBet, t1.stake, t1.Gameid3rd
 	FROM #tmp_TransId t1
 	WHERE t1.IsInvalid = 1
 
