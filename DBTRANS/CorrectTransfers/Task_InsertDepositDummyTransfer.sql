@@ -14,6 +14,7 @@ CREATE PROCEDURE [dbo].[Task_InsertDepositDummyTransfer]
 		- @CustID		: CustID of transaction to correct
 		- @Bal_CustID	: CustID of pairing dummy account
 		- @Refno		: Transaction refno to be corrected
+	Note: @CustID & @Bal_CustID is the same SitegroupDB and exec sp on the right server (central & sitedb)
 */	
 AS
 BEGIN	
@@ -22,7 +23,7 @@ BEGIN
    /*
 		Checking valid account / transaction
    */ 
-
+	
    	IF (SELECT COUNT(*) FROM dbo.Transfer WITH(NOLOCK) WHERE Refno = @Refno AND CustID = @CustID) = 0
 		BEGIN
 			PRINT 'There is no transaction.'
@@ -52,7 +53,29 @@ BEGIN
 			PRINT 'Invalid Refno number.'
 			RETURN
 		END
-	 
+
+	DECLARE @Cust_SiteDBGroupID SMALLINT, @Server_SiteDBGroupID SMALLINT;
+	DECLARE @SiteGroupInfo TABLE
+	(	
+		CustID INT,
+		SiteDBGroupID SMALLINT,
+		LinkedServerName  VARCHAR(512),
+		ClientAccessName VARCHAR(512),
+		AGIP VARCHAR (50)
+	)
+	INSERT INTO @SiteGroupInfo (SiteDBGroupID, LinkedServerName, ClientAccessName, AGIP)
+	EXEC CustDB.dbo.Acc_SiteDBConfigSel @CustID = @CustID
+
+	SELECT @Cust_SiteDBGroupID = SiteDBGroupID FROM @SiteGroupInfo
+	SELECT @Server_SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
+
+	--Check the SiteDBGroupID of CustID and Server is match
+	IF ISNULL(@Cust_SiteDBGroupID,-1) <> @Server_SiteDBGroupID
+	BEGIN
+		PRINT 'Executing on invalid server. Please check SiteDBGroupID information.'
+		RETURN		
+	END 
+
    /*** INSERT TRANSACTION ***/
     DECLARE @Transdate          DATETIME
             ,@WinlostDate       DATETIME
