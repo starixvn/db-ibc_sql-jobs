@@ -7,6 +7,7 @@ CREATE PROCEDURE [dbo].[Task_InsertDepositDummyTransfer]
 	)
 /*
 	DB: DBTXN.BODB02
+	Original: DBA_InsertDepositDummyTransfer
 	Revision:
 		- 20220927@Evan: Create new [Redmine: #178188]
 	Param explaination:
@@ -54,6 +55,7 @@ BEGIN
 	 
    /*** INSERT TRANSACTION ***/
     DECLARE @Transdate          DATETIME
+            ,@WinlostDate       DATETIME
             ,@Transdesc         NVARCHAR(300)
             ,@Bettype           SMALLINT
             ,@Actual_Stake      MONEY
@@ -68,18 +70,19 @@ BEGIN
             ,@Bal_currency          TINYINT
             ,@Bal_actualrate        FLOAT
             ,@Bal_currencyname      NVARCHAR(50)
-			,@Bal_TransID				BIGINT
+			,@Bal_TransID			BIGINT
 			,@TransID				BIGINT
      
     SELECT
         @Transdate          = transdate
+        ,@WinlostDate       = WinlostDate
         ,@Transdesc         = transdesc
         ,@Bettype           = bettype
         ,@Actual_Stake      = actual_stake
         ,@Winlost           = winlost
         ,@IP                = ip
         ,@Bal_actualrate    = actualrate
-        ,@Bal_TransID		= TransId
+        ,@TransID		= TransId
     FROM dbo.Transfer WITH(NOLOCK)
     WHERE custid = @CustID AND refno = @Refno  
      
@@ -88,46 +91,29 @@ BEGIN
         ,@Bal_mrecommend = c.mrecommend, @Bal_recommend = c.recommend, @Bal_srecommend = c.srecommend
         ,@Bal_currency = c.currency, @Bal_currencyname = e.currency
     FROM CustDB.dbo.Customer c WITH(NOLOCK)
-            INNER JOIN CustDB.dbo.Exchange e WITH(NOLOCK) ON c.currency = e.exchangeid
+        INNER JOIN CustDB.dbo.Exchange e WITH(NOLOCK) ON c.currency = e.exchangeid
     WHERE c.custid = @Bal_CustID
     
 	-----------------------
     --Get new transid 
 
-	EXEC Get_Bettrans_TransID @TransID = @TransID OUTPUT
+	EXEC Get_Bettrans_TransID @TransID = @Bal_TransID OUTPUT
 
     INSERT INTO dbo.Transfer (
         TransId, CustId, Username, RefNo, TransDate, Bettype, TransDesc, Winlost, Actual_Stake, WinlostDate, 
         Creator, Recommend, MRecommend, SRecommend, Currency, ActualRate, CurrencyName, StatusId, IP, RepUpdateTime
         )
         VALUES (
-            @TransID, @Bal_CustID, @Bal_username, @Refno, @Transdate, @Bettype, @Transdesc, @Actual_Stake, @Winlost, CONVERT(NVARCHAR(10), @Transdate, 120), 
+            @Bal_TransID, @Bal_CustID, @Bal_username, @Refno, @Transdate, @Bettype, @Transdesc, @Actual_Stake, @Winlost, @WinlostDate, 
             @CustID, @Bal_recommend, @Bal_mrecommend, @Bal_srecommend, @Bal_currency, @Bal_actualrate, @Bal_currencyname, 131, @IP, SYSDATETIME()
             )
 	
-	IF EXISTS(SELECT 1 FROM TransferInfo WITH (NOLOCK) WHERE TransId = @Bal_TransID)
+	IF EXISTS(SELECT 1 FROM TransferInfo WITH (NOLOCK) WHERE TransId = @TransID)
 	BEGIN
-		INSERT INTO TransferInfo (TransId,APositiontaking,MPositiontaking,SPositiontaking,EPositiontaking,PlayerDiscount,Discount,ADiscount,SDiscount,WalletType,BonusID,Amount,CheckerId,CheckerName,IsCollection,IsDel,RepUpdateTime)
-		SELECT @TransID,APositiontaking,MPositiontaking,SPositiontaking,EPositiontaking,PlayerDiscount,Discount,ADiscount,SDiscount,WalletType,BonusID,Amount,CheckerId,CheckerName,IsCollection,IsDel,SYSDATETIME()
+		INSERT INTO TransferInfo (TransId,WalletType,BonusID,Amount,IsDel,RepUpdateTime)
+		SELECT @Bal_TransID,WalletType,BonusID,Amount,IsDel,SYSDATETIME()
 		FROM TransferInfo WITH (NOLOCK) 
-		WHERE TransId = @Bal_TransID
-	END
-
-	-----------------------
-	
-	DECLARE @Cust_balance MONEY,
-			@Cust_balance_ABS MONEY;
-
-	SELECT @Cust_balance = @winlost - @actual_stake
-	SELECT @Cust_balance_ABS = ABS(@Cust_balance)
-
-	IF @Cust_balance < 0
-	BEGIN
-		EXEC Dot_BalanceDebitUpd @CustID = @CustID, @balance = @Cust_balance_ABS, @type = 2
-	END
-	ELSE
-	BEGIN
-		EXEC Dot_BalanceCreditUpd @CustID = @CustID, @balance = @Cust_balance, @type = 2
+		WHERE TransId = @TransID
 	END
 
 END
