@@ -15,7 +15,11 @@ AS
 		- 20220726@Lukas: Create [RedmineID: #158293]
 		- 20220829@Tina: Using same sequence object with SP Get_Bettrans_Transid
 		- 20220912@Tina: add more sitedb2 [RedmineID: #158293]
-		- 20220926@Tina: re-set value for param @sourceID [RedmineID: #158293]
+		- 20220926@Tina: re-set value for param @sourceID [RedmineID: #178213]
+						As the beginning, we use @SourceID as input parameter, but after releasing scaleout for phase 1 
+						we got some issue related to pass wrong value for this @SourceID. 
+						This SP is using for many functions on member site, it's quite risk if we remove this param. 
+						So, we keep param as it is and reset this param basing on server name.
 */
 BEGIN
 	 
