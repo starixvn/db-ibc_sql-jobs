@@ -450,6 +450,7 @@ BEGIN
 				 WHEN bettypePT BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
 				 WHEN bettypePT BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product
 				 WHEN bettypePT BETWEEN 8201 AND 8299 THEN 176 -- FGG Product
+				 WHEN bettypePT BETWEEN 8900 AND 8999 THEN 156 -- SEAL Entertainment
 				 WHEN bettypePT BETWEEN 8400 AND 8699 THEN 155 -- Microgaming
 				 ELSE 0 END AS SporttypeRef
 		FROM #__SuperExtraPT WHERE RefTable IN (1, 2)
