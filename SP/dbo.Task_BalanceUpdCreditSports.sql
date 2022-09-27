@@ -135,7 +135,7 @@ CreateSUM:
 		INSERT INTO dbo.BalCreditSportsPending_Staging (custid, balance)
 		SELECT custid, SUM(balance)
 		FROM dbo.BalCreditSportsPending with (ROWLOCK)
-		WHERE rn <= @maxrn
+		WHERE rn >= @minrn AND rn <= @maxrn
 		GROUP BY custid
 		ORDER BY MIN(rn)
 
