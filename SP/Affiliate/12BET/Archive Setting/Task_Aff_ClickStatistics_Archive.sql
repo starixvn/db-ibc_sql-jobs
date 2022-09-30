@@ -49,6 +49,7 @@ BEGIN
 		(
 			AffId,
 			TrackingId,
+			CountryCode,
 			Date,
 			TotalClick,
 			UniqueClick,
@@ -57,6 +58,7 @@ BEGIN
 		SELECT
 			t.AffId,
 			c.TrackingId,
+			c.CountryCode,
 			c.Date,
 			c.TotalClick,
 			c.UniqueClick,
@@ -65,13 +67,15 @@ BEGIN
 		(
 			SELECT
 				TrackingId,
+				CountryCode,
 				Date,
-				COUNT(1) AS TotalClick,
-				COUNT(DISTINCT IP) AS UniqueClick
+				COUNT(1) 			AS TotalClick,
+				COUNT(DISTINCT IP)  AS UniqueClick
 			FROM dbo.ClickStatistics WITH (NOLOCK)
 			WHERE Date BETWEEN @FirstDayOfMonth AND @LastDayOfMonth
 			GROUP BY
 				TrackingId,
+				CountryCode,
 				Date
 		) AS c
 			INNER JOIN dbo.TrackingCode t WITH (NOLOCK) ON c.TrackingId = t.TrackingId
@@ -85,7 +89,8 @@ BEGIN
 			LanguageCode,
 			TotalClick,
 			UniqueClick,
-			DeviceType
+			DeviceType,
+			CountryCode
 		)
 		SELECT
 			AffId,
@@ -95,7 +100,8 @@ BEGIN
 			LanguageCode,
 			COUNT(1) AS TotalClick,
 			COUNT (DISTINCT IP) AS UniqueClick,
-			DeviceType
+			DeviceType,
+			Country
 		FROM dbo.ClickStatistics1 WITH (NOLOCK)
 		WHERE Date BETWEEN @FirstDayOfMonth AND @LastDayOfMonth
 		GROUP BY
@@ -104,7 +110,8 @@ BEGIN
 			Date,
 			SportCode,
 			LanguageCode,
-			DeviceType
+			DeviceType,
+			Country
 
 		INSERT INTO dbo.BannerStatisticsSum 
 		(
@@ -127,6 +134,7 @@ BEGIN
 		(
 			AffId,
 			TrackingId,
+			CountryCode,
 			Date,
 			TotalClick,
 			UniqueClick,
@@ -135,20 +143,29 @@ BEGIN
 		SELECT
 			t.AffId,
 			c.TrackingId,
+			c.CountryCode,
 			@FirstDayOfMonth AS Date,
 			c.TotalClick,
 			c.UniqueClick,
 			1 AS IsForMonth
 		FROM
 		(
-			SELECT
-				TrackingId,
-				COUNT(1) AS TotalClick,
-				COUNT(DISTINCT IP) AS UniqueClick
-			FROM dbo.ClickStatistics WITH (NOLOCK)
-			WHERE Date BETWEEN @FirstDayOfMonth AND @LastDayOfMonth
-			GROUP BY
-				TrackingId
+			SELECT n.TrackingId, n.CountryCode, SUM(n.TotalClick) AS TotalClick, SUM(n.UniqueClick) AS UniqueClick
+			FROM
+			(
+				SELECT
+					TrackingId,
+					CountryCode,
+					COUNT(1) AS TotalClick,
+					COUNT(DISTINCT IP) AS UniqueClick
+				FROM dbo.ClickStatistics WITH (NOLOCK)
+				WHERE Date BETWEEN @FirstDayOfMonth AND @LastDayOfMonth
+				GROUP BY
+					TrackingId,
+					CountryCode,
+					Date
+			) AS n
+			GROUP BY TrackingId, CountryCode
 		) AS c
 			INNER JOIN dbo.TrackingCode t WITH (NOLOCK) ON c.TrackingId = t.TrackingId
 	END
@@ -169,7 +186,8 @@ BEGIN
 					DELETED.IP,
 					DELETED.Date,
 					DELETED.Browser,
-					DELETED.URLReferrer
+					DELETED.URLReferrer,
+					DELETED.CountryCode
 				INTO dbo.ClickStatistics_bk
 				(
 					TrackingID,
@@ -177,7 +195,8 @@ BEGIN
 					IP,
 					Date,
 					Browser,
-					URLReferrer
+					URLReferrer,
+					CountryCode
 				)
 				WHERE Date = @winlostdate
 
