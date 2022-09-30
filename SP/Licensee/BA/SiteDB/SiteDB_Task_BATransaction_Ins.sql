@@ -1,6 +1,6 @@
 ﻿/*<info serverAlias="DBSID-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 
-CREATE PROCEDURE [dbo].[SiteDB_Task_BATransaction_Ins]
+ALTER PROCEDURE [dbo].[SiteDB_Task_BATransaction_Ins]
 AS
 
 /*
@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20220724@Evan: Add SP for SiteDB  [Redmine: #175297]
 		- 20220929@Evan: Add missing bettype  [Redmine: #175297]
+		- 20220930@Danny: Add hint to enahance performance [Redmine: #178442]
 
 */
 
@@ -40,7 +41,7 @@ BEGIN
 
 	INSERT INTO @temptrans (TransId, TransDate, CustId, Recommend, SRecommend)
 	SELECT transid, transdate, custid, recommend, srecommend
-	FROM dbo.bettrans WITH(NOLOCK)
+	FROM dbo.bettrans WITH(NOLOCK, INDEX = PK_bettrans)
 	WHERE TransId BETWEEN @smallID AND @maxtransID
 		AND (bettype < 31
 				OR (bettype BETWEEN 121 AND 999)
@@ -56,7 +57,6 @@ BEGIN
 		AND (bettype < 911 OR bettype > 914)
 		AND bettype <> 999  --Exclude: Licensee Spread Setting
 	
-
 	IF @@ROWCOUNT <> 0
 	BEGIN
 		DELETE @temptrans
