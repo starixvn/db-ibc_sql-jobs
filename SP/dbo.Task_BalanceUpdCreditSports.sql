@@ -50,7 +50,9 @@ BEGIN
 			,@secDelete			SMALLMONEY = 0
 			,@Top				INT
 			,@ErrMsg			VARCHAR(300)
-		
+	
+	DECLARE @del_StartRow INT = 1, @del_StopRow INT 
+
 	SELECT	@Version = 3.1
 			,@StartSP = SYSDATETIME()
 			,@BatchNoUpd = 100
@@ -68,6 +70,7 @@ BEGIN
 		SELECT @minrn = VValue FROM dbo.BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_rnMIN'
 		SELECT @maxrn = VValue FROM dbo.BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_rnMAX'
 		SELECT @MinPendingTime = VValue FROM dbo.BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_tstamp'
+		SELECT @totalCustID = VValue FROM dbo.BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_TotalCust'
 
 		GOTO DeleteSection
 	END
@@ -121,6 +124,7 @@ BEGIN
 			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = @maxrn WHERE VName = 'PendingCS_rnMAX'
 			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = CONVERT(varchar(50), @MinPendingTime, 120) WHERE VName = 'PendingCS_tstamp'
 			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = 1 WHERE VName = 'PendingCS_State'
+			
 		COMMIT TRANSACTION
 
 		WAITFOR DELAY '00:00:00.020'
@@ -146,6 +150,7 @@ CreateSUM:
 		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = 0 WHERE VName = 'PendingCS_updID'
 		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = @totalCustID WHERE VName = 'PendingCS_TotalCust'
 		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = 2 WHERE VName = 'PendingCS_State'
+		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue =CONVERT(VARCHAR(50), GETDATE(),121) WHERE VName = 'PendingCS_CreatedDate'
 
 	COMMIT TRANSACTION
 
@@ -197,29 +202,38 @@ UpdateSection:
 
 DeleteSection:
 	SET @StartProcess = SYSDATETIME()
+
+	-- SET param for the first batch of deleting
+	SET @del_StartRow = @minrn 
+	SET @del_StopRow = @minrn + @BatchNoDel 
+
+	IF @del_StopRow > @maxrn
+		SET @del_StopRow = @maxrn
+	
 	-- remove data which already updated.
-	SET @i = 1
-	WHILE @i > 0
+	WHILE (1=1)
 	BEGIN
 		BEGIN TRY
 			
-			IF @minrn + @BatchNoDel > @maxrn 
-				SET @minrn = @maxrn - @BatchNoDel
-			
 			DELETE 
 			FROM	dbo.BalCreditSportsPending
-			WHERE	rn BETWEEN @minrn AND @minrn + @BatchNoDel
+			WHERE	rn BETWEEN @del_StartRow AND @del_StopRow
 
-			SET @i = @@ROWCOUNT
+			IF @del_StopRow = @maxrn BREAK
 
-			SET @minrn = @minrn + @BatchNoDel + 1
+			SET @del_StartRow = @del_StopRow + 1
+			SET @del_StopRow = @del_StopRow + @BatchNoDel
+			
+			IF @del_StopRow > @maxrn
+				SET @del_StopRow = @maxrn
+			
 		END TRY
 		BEGIN CATCH
 			SET @i = 1
 			SET @TotalRetryDel = @TotalRetryDel + 1
 		END CATCH
 	END
-	
+
 	UPDATE dbo.BalanceUpdateSetting SET VValue = 0 WHERE VName = 'PendingCS_State'
 	
 	SET @secDelete = DATEDIFF(ms, @StartProcess, SYSDATETIME())/1000.00

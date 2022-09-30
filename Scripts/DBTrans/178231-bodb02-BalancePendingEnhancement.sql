@@ -9,10 +9,16 @@
 */
 USE bodb02
 GO
-CREATE TABLE [dbo].[BalCreditSportsPending_Staging](
-	[ID] [bigint] IDENTITY(1,1) PRIMARY KEY,
+
+CREATE TABLE [dbo].[BalCreditSportsPending_Staging]
+(
+	[ID] [bigint] IDENTITY(1,1),
 	[custid] [int] NULL,
-	[balance] [money] NULL
+	[balance] [money] NULL,
+	CONSTRAINT [PK_BalCreditSportsPending_Staging] PRIMARY KEY CLUSTERED 
+	(
+		[ID] ASC
+	)
 ) 
 
 GO
@@ -32,6 +38,7 @@ INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_rnMAX',0
 INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_tstamp',0)
 INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_updID',0)
 INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_TotalCust',0)
+INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_CreatedDate',0)
 
 GO
 
