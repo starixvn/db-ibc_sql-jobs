@@ -17,12 +17,12 @@ GO
 
 -- Grant permisison Profiler for login
 
-IF @@SERVERNAME NOT IN ('DB215','TESTDB053')
-BEGIN
-	SELECT 'Must be run on DB215' AS 'Error'
+--IF @@SERVERNAME NOT IN ('DB215','TESTDB053')
+--BEGIN
+--	SELECT 'Must be run on DB215' AS 'Error'
 
-	RETURN
-END
+--	RETURN
+--END
 
 DECLARE @strUser VARCHAR(MAX) = ''
 

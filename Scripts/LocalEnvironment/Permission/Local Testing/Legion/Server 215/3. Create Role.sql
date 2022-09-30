@@ -20,7 +20,7 @@ DECLARE @RoleName VARCHAR(50) = 'db_Legion'
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-		VALUES ('Affiliate_N88')
+		VALUES ('Affiliate_N88'), ('bodb_LicenseeReport')
 
 SELECT @strRole = @strRole + ' '
 					 + 'USE ' + DBName + ';'
@@ -50,7 +50,7 @@ DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('Affiliate_N88')
+	VALUES ('Affiliate_N88'), ('bodb_LicenseeReport')
 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')

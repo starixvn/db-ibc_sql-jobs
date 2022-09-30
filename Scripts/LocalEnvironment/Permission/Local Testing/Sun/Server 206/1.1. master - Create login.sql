@@ -1,9 +1,9 @@
 USE [master]
 GO
 -- Create Login
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'TESTDB053\TESTSITEDB', 'DB-60\DEVDBTRANS', 'DB62\DEVSiteDB'  )
 BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
+	SELECT 'Wrong server!'
 
 	RETURN
 END
@@ -13,13 +13,11 @@ DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('SPVN\william.nguyen'),
-	('SPVN\maia.le'),
 	('SPVN\selina.dinh'),
 	('SPVN\lionel.nguyen'),
 	('SPVN\Winston.chau'),
 	('SPVN\ruby.nguyen'),
 	('SPVN\corbin.hoang'),
-	--('spvn\kaylin.truong'),
 	('SPVN\jenny.phan'),
 	('SPVN\harmony.huynh'),
 	('SPVN\laura.nguyen'),

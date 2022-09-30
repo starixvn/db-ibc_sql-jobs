@@ -30,6 +30,8 @@ INSERT INTO @tmpAffectedDB (DBName)
 				,('bodb_PlaytechCS')
 				, ('ON_USER')
 				,('bodb_Maintenance')
+				,('bodb_Chatbot')
+
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
@@ -114,6 +116,8 @@ INSERT INTO @tmpAffectedDB (DBName)
 				,('bodb_PlaytechCS')
 				, ('ON_USER')
 				,('bodb_Maintenance')
+				,('bodb_Chatbot')
+
 
 INSERT INTO @tmpMember (Name) 
 	VALUES   ('SPVN\jerry.tran')
@@ -150,6 +154,10 @@ FROM	@tmpAffectedDB d
 		SELECT Name, RoleName
 		FROM @tmpMember 
 	)t
+WHERE 1 = CASE WHEN t.Name = 'SPVN\bill.nguyen' AND d.DBName = 'bodb_Chatbot' THEN 1
+				WHEN d.DBName  <> 'bodb_Chatbot' THEN 1
+				ELSE 0
+				END
 
 EXEC (@strUser)
 

@@ -4,9 +4,9 @@ GO
 
 -- Grant permisison Profiler for login
 
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'TESTDB053\TESTSITEDB', 'DB-60\DEVDBTRANS', 'DB62\DEVSiteDB'  )
 BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
+	SELECT 'Wrong server!'
 
 	RETURN
 END
@@ -23,7 +23,6 @@ INSERT INTO @tmpMember (Name)
 	('SPVN\Winston.chau'),
 	('SPVN\ruby.nguyen'),
 	('SPVN\corbin.hoang'),
-	--('spvn\kaylin.truong'),
 	('SPVN\jenny.phan'),
 	('SPVN\harmony.huynh'),
 	('SPVN\laura.nguyen'),

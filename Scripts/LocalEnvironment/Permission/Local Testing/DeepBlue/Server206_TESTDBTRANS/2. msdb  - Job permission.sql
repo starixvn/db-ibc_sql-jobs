@@ -15,12 +15,7 @@ GO
 		spvn\bobby.nguyen
 */
 
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
-
-	RETURN
-END
+ 
 
 DECLARE @strUser VARCHAR(MAX) = ''
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
@@ -37,6 +32,8 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\malcolm.huynh')
 		,('spvn\louisa.vo')
 		,('spvn\max.tran')
+		,('SPVN\Victoria.le')
+		,('SPVN\Eddie.nguyen')
 
 SELECT	@strUser = @strUser 
 			+ 'CREATE USER ' + '[' + t.Name + ']' + ' FOR LOGIN ' + '[' + t.Name + ']' + ' WITH DEFAULT_SCHEMA=[dbo]; '
@@ -55,14 +52,7 @@ GO
 -- Add Role
 USE [msdb]
 GO
-
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
-
-	RETURN
-END
-
+ 
 DECLARE @strUser VARCHAR(MAX) = ''
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
@@ -78,6 +68,8 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\malcolm.huynh')
 		,('spvn\louisa.vo')
 		,('spvn\max.tran')
+		,('SPVN\Victoria.le')
+		,('SPVN\Eddie.nguyen')
 
 SELECT	@strUser = @strUser + 'EXEC sp_AddRoleMember ''SQLAgentOperatorRole''' + ', ''' + t.Name + '''' 
 		+ CHAR(13)

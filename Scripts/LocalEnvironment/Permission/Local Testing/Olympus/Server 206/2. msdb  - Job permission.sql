@@ -24,10 +24,11 @@ DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('SPVN\jacob.phan'), ('SPVN\robert.tran'), ('SPVN\kaden.trinh')
-		,('SPVN\leo.vo'), ('SPVN\franklin.nguyen')
+		, ('SPVN\franklin.nguyen')
 		--, ('SPVN\alan.nguyen')
 		, ('SPVN\charles.nguyen'), ('SPVN\raymond.le')
 		,('SPVN\zane.trinh')
+		,('SPVN\luca.duong')
 
 SELECT	@strUser = @strUser 
 			+ 'CREATE USER ' + '[' + t.Name + ']' + ' FOR LOGIN ' + '[' + t.Name + ']' + ' WITH DEFAULT_SCHEMA=[dbo]; '
@@ -59,7 +60,7 @@ DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('SPVN\jacob.phan'), ('SPVN\robert.tran'), ('SPVN\kaden.trinh')
-		,('SPVN\leo.vo'), ('SPVN\franklin.nguyen')
+		, ('SPVN\franklin.nguyen')
 		--, ('SPVN\alan.nguyen')
 		, ('SPVN\charles.nguyen'), ('SPVN\raymond.le')
 		,('SPVN\zane.trinh')

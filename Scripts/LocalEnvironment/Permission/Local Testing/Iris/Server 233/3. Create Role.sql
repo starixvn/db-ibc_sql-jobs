@@ -64,5 +64,7 @@ FROM	@tmpAffectedDB d
 		SELECT PermissionName
 		FROM	@tmpPermission
 	) p
-EXEC (@strPermission)
+--EXEC (@strPermission)
+
+select @strPermission
 

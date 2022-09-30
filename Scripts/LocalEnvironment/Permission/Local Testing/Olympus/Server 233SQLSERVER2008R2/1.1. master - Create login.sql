@@ -21,9 +21,10 @@ DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('SPVN\jacob.phan'), ('SPVN\robert.tran'), ('SPVN\kaden.trinh')
-		,('SPVN\leo.vo'), ('SPVN\franklin.nguyen')--, ('SPVN\alan.nguyen')
+		, ('SPVN\franklin.nguyen')
 		,('SPVN\zane.trinh')
--- CREATE LOGIN [SPVN\nickname] FROM WINDOWS;  
+		,('SPVN\luca.duong')
+
 SELECT @strLoginName = @strLoginName 
 			+  'CREATE LOGIN [' + t.Name + '] FROM WINDOWS; ' 
 			+ CHAR(13)

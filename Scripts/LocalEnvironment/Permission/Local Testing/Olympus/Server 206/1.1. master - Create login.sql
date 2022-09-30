@@ -27,15 +27,14 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\franklin.nguyen')	
 			,('SPVN\charles.nguyen')	
 			,('SPVN\raymond.le')	
-			,('SPVN\zane.trinh')	
-			,('SPVN\tyler.dang')	
+			,('SPVN\zane.trinh') 	
 			,('SPVN\carlos.nguyen')	
 			,('SPVN\mira.nguyen')	
 			,('SPVN\liam.pham')	
 			,('SPVN\johnny.thai')	
 			,('SPVN\luca.duong')
 			,('SPVN\levi.vu')
-			,('SPVN\ryan.ngo')
+			,('SPVN\luca.duong')
 
 -- CREATE LOGIN [SPVN\nickname] FROM WINDOWS;  
 SELECT @strLoginName = @strLoginName 

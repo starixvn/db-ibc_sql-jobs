@@ -1,31 +1,28 @@
-/*
-	For Olympus team:
-	Affected DB:
-		CustDB
-		bodb02
-		CasinoAdmin
-		LiveCasino
-		LiveCasinoAdmin
-		bodb_CustomerLog
+ 
 
-	Windows domain account:
-		
-*/
--- Create User
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'TESTDB053\TESTSITEDB' )
 BEGIN
-	SELECT 'Must be run on DB206 or TESTDBTRANS' AS 'Error'
-
+	SELECT 'Wrong Server' AS 'Error'
 	RETURN
 END
 
+-- Create User
 DECLARE @strUser	VARCHAR(MAX) = ''
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('CustDB'),('bodb02'),('CasinoAdmin'),('LiveCasino'),('LiveCasinoAdmin'),('bodb_CustomerLog')
+SELECT name FROM master.sys.sysdatabases 
+WHERE name IN (
+		'CustDB'
+		,'bodb02'
+		,'bodb_CustomerLog'
+		,'LogDB'
+		,'CasinoAdmin'
+		,'LiveCasino'
+		,'LiveCasinoAdmin'
+		)
 
-DECLARE @tmpMember TABLE (Name VARCHAR(50))
+DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('spvn\kaka.huynh')
@@ -34,8 +31,7 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\tommy.nguyen')
 		, ('spvn\Neil.dao')
 		, ('spvn\jane.dinh')
-		, ('spvn\harley.nguyen')
-		, ('spvn\dory.vu')
+		, ('spvn\harley.nguyen') 
 		, ('spvn\Mike.vu')
 		, ('spvn\Kenny.ho')
 		,('spvn\ariana.nguyen')
@@ -66,52 +62,17 @@ FROM	@tmpAffectedDB d
 	) t
 
 EXEC (@strUser)
-GO
-
--------------------------------------------
--------------------------------------------
+WAITFOR DELAY '00:00:01'
+ 
 -- Add Role for member
-
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206 or TESTDBTRANS' AS 'Error'
-
-	RETURN
-END
-DECLARE @strUser VARCHAR(MAX) = ''
-		,@RoleName VARCHAR(50) = 'db_Iris'
+ 
+DECLARE @RoleName VARCHAR(50) = 'db_Iris'
 		,@LeaderRoleName VARCHAR(50) = 'db_owner'
 		,@Leader VARCHAR(50) = 'spvn\kaka.huynh'
-
-DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('CustDB'),('bodb02'),('CasinoAdmin'),('LiveCasino'),('LiveCasinoAdmin'),('bodb_CustomerLog')
-
-INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\kaka.huynh')
-		, ('spvn\dora.le')
-		, ('spvn\megan.dinh')
-		, ('spvn\tommy.nguyen')
-		, ('spvn\Neil.dao')
-		, ('spvn\jane.dinh')
-		, ('spvn\harley.nguyen')
-		, ('spvn\dory.vu')
-		, ('spvn\Mike.vu')
-		, ('spvn\Kenny.ho')
-		,('spvn\ariana.nguyen')
-		,('spvn\benjamin.nguyen')
-
-		
+ 
 UPDATE @tmpMember
 	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
-/*
-	USE DBName
-	GO
-	EXEC sp_AddRoleMember 'db_xxx', 'vnxxx'
-	GO
-*/
+ 
 SELECT	@strUser = @strUser
 					+ 'USE ' + d.DBName + ';'
 					+ CHAR(13)

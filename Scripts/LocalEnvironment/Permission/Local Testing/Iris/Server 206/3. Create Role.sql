@@ -1,18 +1,8 @@
-/*
-	For Rome team:
-	Affected DB:
-		CustDB
-		bodb02
-		CasinoAdmin
-		LiveCasino
-		LiveCasinoAdmin
-		bodb_CustomerLog
-*/
+ 
 -- Create Role
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'TESTDB053\TESTSITEDB' )
 BEGIN
-	SELECT 'Must be run on DB206 or TESTDBTRANS' AS 'Error'
-
+	SELECT 'Wrong Server' AS 'Error'
 	RETURN
 END
 
@@ -22,7 +12,16 @@ DECLARE @RoleName VARCHAR(50) = 'db_Iris'
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-		VALUES ('CustDB'),('bodb02'),('CasinoAdmin'),('LiveCasino'),('LiveCasinoAdmin'),('bodb_CustomerLog')
+SELECT name FROM master.sys.sysdatabases 
+WHERE name IN (
+		'CustDB'
+		,'bodb02'
+		,'bodb_CustomerLog'
+		,'LogDB'
+		,'CasinoAdmin'
+		,'LiveCasino'
+		,'LiveCasinoAdmin'
+		)
 
 SELECT @strRole = @strRole + ' '
 					 + 'USE ' + DBName + ';'
@@ -33,26 +32,12 @@ SELECT @strRole = @strRole + ' '
 FROM	@tmpAffectedDB
 
 EXEC (@strRole)
-GO
--------------------------------------------
--------------------------------------------
 
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206 or TESTDBTRANS' AS 'Error'
-
-	RETURN
-END
+WAITFOR DELAY '00:00:01'
 
 -- Grant permission to new role
-DECLARE @RoleName VARCHAR(50) = 'db_Iris'
-		,@strPermission	VARCHAR(MAX) = ''
-
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+DECLARE @strPermission	VARCHAR(MAX) = ''	 
 DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('CustDB'),('bodb02'),('CasinoAdmin'),('LiveCasino'),('LiveCasinoAdmin'),('bodb_CustomerLog')
 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')

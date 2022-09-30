@@ -20,7 +20,6 @@ INSERT INTO @tmpMember (Name)
 	('spvn\Winston.chau'),
 	('spvn\ruby.nguyen'),
 	('spvn\corbin.hoang'),
-	--('spvn\kaylin.truong'),
 	('spvn\jenny.phan'),
 	('spvn\harmony.huynh'),
 	('spvn\laura.nguyen'),

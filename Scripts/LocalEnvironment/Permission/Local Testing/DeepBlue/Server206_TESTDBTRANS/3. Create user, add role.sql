@@ -17,12 +17,7 @@
 		spvn\bobby.nguyen
 */
 -- Create User
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
-
-	RETURN
-END
+ 
 
 DECLARE @strUser	VARCHAR(MAX) = ''
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
@@ -87,12 +82,7 @@ GO
 -------------------------------------------
 -- Add Role for member
 
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
-
-	RETURN
-END
+ 
 
 DECLARE @strUser VARCHAR(MAX) = ''
 		,@RoleName VARCHAR(50) = 'db_owner'

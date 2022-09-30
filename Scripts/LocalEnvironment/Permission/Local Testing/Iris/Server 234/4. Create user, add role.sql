@@ -23,7 +23,7 @@ DECLARE @strUser	VARCHAR(MAX) = ''
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb02'),('bodb_ACC'),('bodb_Report'),('bodb_Archive'),('bodb_Message'),('bodb_licensee')
+	VALUES ('bodb02'),('bodb_ACC'),('bodb_Report'),('bodb_Archive'),('bodb_Message'),('bodb_licensee'), ('bodb_OWP')
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
@@ -87,7 +87,7 @@ DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb02'),('bodb_ACC'),('bodb_Report'),('bodb_Archive'),('bodb_Message'),('bodb_licensee')
+	VALUES ('bodb02'),('bodb_ACC'),('bodb_Report'),('bodb_Archive'),('bodb_Message'),('bodb_licensee'), ('bodb_OWP')
 INSERT INTO @tmpMember (Name) 
 	VALUES ('spvn\kaka.huynh')
 		, ('spvn\dora.le')

@@ -31,6 +31,8 @@ INSERT INTO @tmpMember (Name)
 		,('spvn\tacy.nguyen'), ('spvn\elodie.ho'), ('spvn\kathy.nguyen')
 		,('spvn\winfred.pham'), ('spvn\helen.do'), ('spvn\percy.nguyen')
 		, ('spvn\sol.le'), ('spvn\eden.dang'), ('spvn\bobby.nguyen'), ('spvn\tina.vo')
+		,('SPVN\Victoria.le')
+		,('SPVN\Eddie.nguyen')
 
 SELECT	@strUser = @strUser 
 			+ 'CREATE USER ' + '[' + t.Name + ']' + ' FOR LOGIN ' + '[' + t.Name + ']' + ' WITH DEFAULT_SCHEMA=[dbo]; '
@@ -65,6 +67,8 @@ INSERT INTO @tmpMember (Name)
 		,('spvn\tacy.nguyen'), ('spvn\elodie.ho'), ('spvn\kathy.nguyen')
 		,('spvn\winfred.pham'), ('spvn\helen.do'), ('spvn\percy.nguyen')
 		, ('spvn\sol.le'), ('spvn\eden.dang'), ('spvn\bobby.nguyen'), ('spvn\tina.vo')
+		,('SPVN\Victoria.le')
+		,('SPVN\Eddie.nguyen')
 
 SELECT	@strUser = @strUser + 'EXEC sp_AddRoleMember ''SQLAgentOperatorRole''' + ', ''' + t.Name + '''' 
 		+ CHAR(13)

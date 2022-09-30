@@ -30,10 +30,15 @@ INSERT INTO @tmpAffectedDB (DBName)
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
-	VALUES ('SPVN\jacob.phan'), ('SPVN\robert.tran'), ('SPVN\kaden.trinh')
-		,('SPVN\leo.vo'), ('SPVN\franklin.nguyen'), ('SPVN\alan.nguyen')
-		, ('SPVN\charles.nguyen'), ('SPVN\raymond.le')
-		,('SPVN\zane.trinh')
+	VALUES ('SPVN\jacob.phan')	
+			,('SPVN\robert.tran')	
+			,('SPVN\kaden.trinh')	
+			,('SPVN\franklin.nguyen')	
+			,('SPVN\charles.nguyen')	
+			,('SPVN\raymond.le')	
+			,('SPVN\zane.trinh')  
+			,('SPVN\levi.vu')
+			,('SPVN\ryan.ngo')
 
 /*
 	USE DBName
@@ -81,10 +86,15 @@ INSERT INTO @tmpAffectedDB (DBName)
 	VALUES ('bodb02'), ('CustDB'), ('bodb_CustomerLog')
 
 INSERT INTO @tmpMember (Name) 
-	VALUES ('SPVN\jacob.phan'), ('SPVN\robert.tran'), ('SPVN\kaden.trinh')
-		,('SPVN\leo.vo'), ('SPVN\franklin.nguyen'), ('SPVN\alan.nguyen')
-		, ('SPVN\charles.nguyen'), ('SPVN\raymond.le')
-		,('SPVN\zane.trinh')
+	VALUES ('SPVN\jacob.phan')	
+			,('SPVN\robert.tran')	
+			,('SPVN\kaden.trinh')	
+			,('SPVN\franklin.nguyen')	
+			,('SPVN\charles.nguyen')	
+			,('SPVN\raymond.le')	
+			,('SPVN\zane.trinh')  
+			,('SPVN\levi.vu')
+			,('SPVN\ryan.ngo')
 
 UPDATE @tmpMember
 	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END

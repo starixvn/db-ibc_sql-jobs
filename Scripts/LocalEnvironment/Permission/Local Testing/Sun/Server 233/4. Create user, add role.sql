@@ -14,7 +14,8 @@ INSERT INTO @tmpAffectedDB (DBName)
 	VALUES ('bodb_CustomerLog'),
 			('bodb_Licensee'),
 			('CustDB'),
-			('NAP_UserControl')
+			('NAP_UserControl'),
+			('N88_UserControl')
 			--('SiteConfig')
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
@@ -27,7 +28,6 @@ INSERT INTO @tmpMember (Name)
 	('spvn\Winston.chau'),
 	('spvn\ruby.nguyen'),
 	('spvn\corbin.hoang'),
-	--('spvn\kaylin.truong'),
 	('spvn\jenny.phan'),
 	('spvn\harmony.huynh'),
 	('spvn\laura.nguyen'),
@@ -58,6 +58,9 @@ FROM	@tmpAffectedDB d
 		SELECT	t.Name
 		FROM	@tmpMember t
 	) t
+WHERE 1 =  CASE WHEN t.Name = 'SPVN\victor.nguyen' AND d.DBName = 'N88_UserControl' THEN 0
+			ELSE 1
+			END
 
 EXEC (@strUser)
 GO
@@ -84,7 +87,8 @@ INSERT INTO @tmpAffectedDB (DBName)
 	VALUES ('bodb_CustomerLog'),
 			('bodb_Licensee'),
 			('CustDB'),
-			('NAP_UserControl')
+			('NAP_UserControl'),
+			('N88_UserControl')
 			--('SiteConfig')
 
 INSERT INTO @tmpMember (Name) 
@@ -95,7 +99,6 @@ INSERT INTO @tmpMember (Name)
 	('spvn\Winston.chau'),
 	('spvn\ruby.nguyen'),
 	('spvn\corbin.hoang'),
-	--('spvn\kaylin.truong'),
 	('spvn\jenny.phan'),
 	('spvn\harmony.huynh'),
 	('spvn\laura.nguyen'),

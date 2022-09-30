@@ -2,9 +2,9 @@
 USE [msdb]
 GO
  
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' , 'TESTDB053\TESTSITEDB', 'DB-60\DEVDBTRANS', 'DB62\DEVSiteDB' )
 BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
+	SELECT 'Wrong server'
 
 	RETURN
 END
@@ -20,7 +20,6 @@ INSERT INTO @tmpMember (Name)
 	('spvn\Winston.chau'),
 	('spvn\ruby.nguyen'),
 	('spvn\corbin.hoang'),
-	--('spvn\kaylin.truong'),
 	('spvn\jenny.phan'),
 	('spvn\harmony.huynh'),
 	('spvn\laura.nguyen'),
@@ -46,9 +45,9 @@ GO
 USE [msdb]
 GO
 
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'TESTDB053\TESTSITEDB', 'DB-60\DEVDBTRANS', 'DB62\DEVSiteDB'  )
 BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
+	SELECT 'Wrong server'
 
 	RETURN
 END
@@ -64,7 +63,6 @@ INSERT INTO @tmpMember (Name)
 	('spvn\Winston.chau'),
 	('spvn\ruby.nguyen'),
 	('spvn\corbin.hoang'),
-	--('spvn\kaylin.truong'),
 	('spvn\jenny.phan'),
 	('spvn\harmony.huynh'),
 	('spvn\laura.nguyen'),

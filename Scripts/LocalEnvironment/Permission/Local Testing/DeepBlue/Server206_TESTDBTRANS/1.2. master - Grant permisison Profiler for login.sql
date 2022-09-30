@@ -16,12 +16,7 @@ GO
 
 -- Grant permisison Profiler for login
 
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
-
-	RETURN
-END
+ 
 
 EXECUTE AS LOGIN = 'sa'
 
@@ -41,6 +36,8 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\malcolm.huynh')
 		,('spvn\louisa.vo')
 		,('spvn\max.tran')
+		,('SPVN\Victoria.le')
+		,('SPVN\Eddie.nguyen')
 
 SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
 FROM	@tmpMember
@@ -54,6 +51,4 @@ FROM	@tmpMember
 
 EXEC (@strLoginName)
 
-REVERT
-GO
-
+ 

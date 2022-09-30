@@ -15,12 +15,7 @@ GO
 		spvn\bobby.nguyen
 		spvn\winfred.pham
 */
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
-
-	RETURN
-END
+ 
 
 DECLARE @strLoginName 	VARCHAR(MAX) = ''
 

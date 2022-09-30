@@ -32,7 +32,7 @@ VALUES		('SPVN\jacob.phan')
 			,('SPVN\raymond.le')	
 			,('SPVN\zane.trinh')  
 			,('SPVN\levi.vu')
-			,('SPVN\ryan.ngo')
+			,('SPVN\luca.duong')
 
 SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
 FROM	@tmpMember

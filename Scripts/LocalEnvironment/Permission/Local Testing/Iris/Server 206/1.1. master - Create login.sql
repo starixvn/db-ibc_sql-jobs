@@ -4,25 +4,20 @@ GO
 /*	Windows domain account:
 
 */
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206 or TESTDBTRANS' AS 'Error'
-
-	RETURN
-END
+ 
 DECLARE @strLoginName 	VARCHAR(MAX) = ''
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\kaka.huynh')
+	VALUES
+		('spvn\kaka.huynh')
 		, ('spvn\dora.le')
 		, ('spvn\megan.dinh')
 		, ('spvn\tommy.nguyen')
 		, ('spvn\Neil.dao')
 		, ('spvn\jane.dinh')
 		, ('spvn\harley.nguyen')
-		, ('spvn\dory.vu')
 		, ('spvn\Mike.vu')
 		, ('spvn\Kenny.ho')
 		,('spvn\ariana.nguyen')

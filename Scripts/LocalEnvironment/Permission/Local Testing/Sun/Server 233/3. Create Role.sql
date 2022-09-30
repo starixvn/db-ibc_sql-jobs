@@ -1,11 +1,4 @@
-/*
-	For Rome team:
-	Affected DB:
-		CustDB
-		IPDB
-		NAP_UserControl
-		bodb_CustomerLog
-*/
+
 -- Create Role
 IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
 BEGIN
@@ -23,7 +16,8 @@ INSERT INTO @tmpAffectedDB (DBName)
 		VALUES ('bodb_CustomerLog'),
 			('bodb_Licensee'),
 			('CustDB'),
-			('NAP_UserControl')
+			('NAP_UserControl'),
+			('N88_UserControl')
 			--('SiteConfig')
 
 SELECT @strRole = @strRole + ' '
@@ -57,7 +51,8 @@ INSERT INTO @tmpAffectedDB (DBName)
 	VALUES ('bodb_CustomerLog'),
 		('bodb_Licensee'),
 		('CustDB'),
-		('NAP_UserControl')
+		('NAP_UserControl'),
+		('N88_UserControl')
 		--('SiteConfig')
 
 INSERT INTO @tmpPermission (PermissionName)

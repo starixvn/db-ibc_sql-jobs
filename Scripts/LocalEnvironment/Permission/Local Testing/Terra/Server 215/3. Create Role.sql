@@ -32,6 +32,7 @@ INSERT INTO @tmpAffectedDB (DBName)
 				,('bodb_PlaytechCS')
 				, ('ON_USER')
 				,('bodb_Maintenance')
+				,('bodb_Chatbot')
 
 SELECT @strRole = @strRole + ' '
 					 + 'USE ' + DBName + ';'
@@ -79,6 +80,8 @@ INSERT INTO @tmpAffectedDB (DBName)
 				,('bodb_PlaytechCS')
 				, ('ON_USER')
 				,('bodb_Maintenance')
+				,('bodb_Chatbot')
+
 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')
