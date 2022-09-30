@@ -11,6 +11,7 @@ AS
 
 	Revisions:
 		- 20220724@Evan: Add SP for SiteDB  [Redmine: #175297]
+		- 20220929@Evan: Add missing bettype  [Redmine: #175297]
 
 */
 
@@ -46,6 +47,7 @@ BEGIN
 				OR (bettype BETWEEN 1301 AND 1399)
 				OR (bettype BETWEEN 9001 AND 9399)
 				OR (bettype BETWEEN 9400 AND 9998)
+				OR (bettype BETWEEN 3900 and 3999)
 				OR (bettype = 38) -- BetBuilder
 			)
 		AND statusID <> 121 --DONE
