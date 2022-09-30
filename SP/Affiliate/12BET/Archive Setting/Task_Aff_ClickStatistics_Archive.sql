@@ -15,6 +15,7 @@ AS
 		- 20180601@Percy: Initialize SP [RedmineID: #87923]
 		- 20190808@Percy: Loop archive data + delete 3000 rows per batch to prevent lock tables [RedmineID: #115959]
 		- 20220609@Malcolm: Sum and backup data in BannerStatistics table [RedmineID: #173433]
+		- 20220929@Eddie: Add Country info [RedmineID: #176390]
 */
 
 BEGIN
@@ -44,42 +45,6 @@ BEGIN
 
 	-- Sum data
 	BEGIN
-			-- For Daily
-		INSERT INTO dbo.ClickStatisticsSum
-		(
-			AffId,
-			TrackingId,
-			CountryCode,
-			Date,
-			TotalClick,
-			UniqueClick,
-			IsForMonth
-		)
-		SELECT
-			t.AffId,
-			c.TrackingId,
-			c.CountryCode,
-			c.Date,
-			c.TotalClick,
-			c.UniqueClick,
-			0 AS IsForMonth
-		FROM
-		(
-			SELECT
-				TrackingId,
-				CountryCode,
-				Date,
-				COUNT(1) 			AS TotalClick,
-				COUNT(DISTINCT IP)  AS UniqueClick
-			FROM dbo.ClickStatistics WITH (NOLOCK)
-			WHERE Date BETWEEN @FirstDayOfMonth AND @LastDayOfMonth
-			GROUP BY
-				TrackingId,
-				CountryCode,
-				Date
-		) AS c
-			INNER JOIN dbo.TrackingCode t WITH (NOLOCK) ON c.TrackingId = t.TrackingId
-
 		INSERT INTO dbo.ClickStatistics1Sum
 		(
 			AffID,
@@ -129,45 +94,6 @@ BEGIN
 			bs.BannerId
 			,CONVERT(DATE, bs.CopyDate) 
 
-			-- For Monthly
-		INSERT INTO dbo.ClickStatisticsSum
-		(
-			AffId,
-			TrackingId,
-			CountryCode,
-			Date,
-			TotalClick,
-			UniqueClick,
-			IsForMonth
-		)
-		SELECT
-			t.AffId,
-			c.TrackingId,
-			c.CountryCode,
-			@FirstDayOfMonth AS Date,
-			c.TotalClick,
-			c.UniqueClick,
-			1 AS IsForMonth
-		FROM
-		(
-			SELECT n.TrackingId, n.CountryCode, SUM(n.TotalClick) AS TotalClick, SUM(n.UniqueClick) AS UniqueClick
-			FROM
-			(
-				SELECT
-					TrackingId,
-					CountryCode,
-					COUNT(1) AS TotalClick,
-					COUNT(DISTINCT IP) AS UniqueClick
-				FROM dbo.ClickStatistics WITH (NOLOCK)
-				WHERE Date BETWEEN @FirstDayOfMonth AND @LastDayOfMonth
-				GROUP BY
-					TrackingId,
-					CountryCode,
-					Date
-			) AS n
-			GROUP BY TrackingId, CountryCode
-		) AS c
-			INNER JOIN dbo.TrackingCode t WITH (NOLOCK) ON c.TrackingId = t.TrackingId
 	END
 
 	-- Archive data
@@ -177,35 +103,6 @@ BEGIN
 
 		WHILE @winlostdate <= @LastDayOfMonth
 		BEGIN
-			WHILE 1 = 1
-			BEGIN
-				DELETE TOP (3000) dbo.ClickStatistics WITH (ROWLOCK, UPDLOCK)
-				OUTPUT
-					DELETED.TrackingId,
-					DELETED.UpdatedTime,
-					DELETED.IP,
-					DELETED.Date,
-					DELETED.Browser,
-					DELETED.URLReferrer,
-					DELETED.CountryCode
-				INTO dbo.ClickStatistics_bk
-				(
-					TrackingID,
-					UpdatedTime,
-					IP,
-					Date,
-					Browser,
-					URLReferrer,
-					CountryCode
-				)
-				WHERE Date = @winlostdate
-
-				IF @@ROWCOUNT < 3000
-					BREAK
-
-				WAITFOR DELAY '00:00:00.280'
-			END
-
 			WHILE 1 = 1
 			BEGIN
 				DELETE TOP (3000) dbo.ClickStatistics1 WITH (ROWLOCK, UPDLOCK)
