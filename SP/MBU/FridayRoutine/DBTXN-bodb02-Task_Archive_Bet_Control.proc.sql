@@ -13,6 +13,7 @@ AS
 		- 20200729@Brice:	Initialize [Redmine: #111093]
 		- 20210225@Max: [TVS] Remove archived data [Redmine: #150524]
 		- 20220121@Max: MBU - Clean up Cash Out Selling [Redmine: #167802]
+		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -67,7 +68,6 @@ BEGIN;
 	INSERT INTO	@ArchiveTable
 			(tablename)
 	VALUES	('TicketVoiding_Request')
-		,	('TicketVoiding_AutoVoidRequest_Queue')
 		,	('TicketVoiding_AutoUnmarkSetting')	
 		,	('TicketVoiding_RequestDetail')
 		;

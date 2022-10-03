@@ -8,6 +8,7 @@ AS
 		
 	Revisions:
 		- 20220429@Bobby:	Initial - [Redmine: #000000]
+		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -135,7 +136,6 @@ BEGIN;
 			(tablename)
 	VALUES	('TicketVoiding_RequestDetail')
 		,	('TicketVoiding_Request')
-		,	('TicketVoiding_AutoVoidRequest_Queue')
 		,	('TicketVoiding_AutoUnmarkSetting')	
 
 	INSERT INTO	@ArchiveTable_oneDay

@@ -24,6 +24,7 @@ AS
 		- 20210727@Patrick: Update Job to Support Parlay Range up to 3 Weeks [Redmine: #156498]
 		- 20220113@Max: [TVS] Cannot execute auto void queue for test match [Redmine: #166895]
 		- 20220121@Max: MBU - Clean up Cash Out Selling [Redmine: #167802]
+		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -428,15 +429,6 @@ BEGIN
 
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_OperatorInfo'
 
-			-----TicketVoiding_Queue----
-			TRUNCATE TABLE #DeletedList
-			INSERT INTO #DeletedList (id,IsDone)
-			SELECT t1.QueueId, 0 
-			FROM dbo.TicketVoiding_Queue t1 WITH (NOLOCK)
-				INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
-
-			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_Queue'
-
 			-----TicketVoiding_Reason----
 			TRUNCATE TABLE #DeletedList
 			INSERT INTO #DeletedList (id,IsDone)
@@ -474,15 +466,6 @@ BEGIN
 
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_RequestDetailTicket_SubParlay'
 
-			-----TicketVoiding_AutoVoidRequest_Queue----
-			TRUNCATE TABLE #DeletedList
-			INSERT INTO #DeletedList (id,IsDone)
-			SELECT QueueId,0 
-			FROM dbo.TicketVoiding_AutoVoidRequest_Queue AS t1 WITH (NOLOCK)
-				INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId;
-			
-			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
-
 			RETURN
 		END
 
@@ -495,19 +478,6 @@ BEGIN
 			WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate);
 			
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_AutoUnmarkSetting'
-			RETURN
-		END
-
-		ELSE IF @DeletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
-		BEGIN			
-			TRUNCATE TABLE #DeletedList
-			INSERT INTO #DeletedList (id,IsDone)
-			SELECT QueueId,0 
-			FROM dbo.TicketVoiding_AutoVoidRequest_Queue AS t1 WITH (NOLOCK)
-			WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate)
-				AND t1.RequestId = 0;
-			
-			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
 			RETURN
 		END
 		/*--------------*/
