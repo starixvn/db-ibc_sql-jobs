@@ -17,6 +17,7 @@ AS
 		-20200909@Winfred: check Non offered stakelevel [redmine:#141236]
 		- 20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20221003@Elodie: Only check setting for product already released production [Redmine: #178617]
 
 	Parameter's Explanations:
 */
@@ -68,7 +69,7 @@ BEGIN
 	FROM CheckCustDB.[dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 		INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
 	WHERE op.IsHidden = 0 AND ps.SettingType IN (7,8,17) 
-	
+		AND ps.SettingStatus = 0
 	-- non offer stakelevel on site and currency
 	DELETE sb		
 	FROM @sportBettypeFilter sb

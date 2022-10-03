@@ -24,7 +24,8 @@ AS
 		- 20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
-		
+		- 20221003@Elodie: Only check setting for product already released production [Redmine: #178617]
+
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
 	 @RuleId IN (1->29)  
@@ -353,6 +354,7 @@ BEGIN
 	FROM CheckCustDB.[dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 		INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
 	WHERE op.IsHidden = 0 AND SettingType IN (1 ,18)
+		AND ps.SettingStatus = 0
 	-- End of DATA PREPARATION				
 	
 	-- Starting check PT Rule
