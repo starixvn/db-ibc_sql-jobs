@@ -178,7 +178,7 @@ UpdateSection:
 							ON b.custid = t.custId	
 					WHERE Id BETWEEN @i AND @i + @BatchNoUpd - 1
 
-					UPDATE dbo.BalanceUpdateSetting SET VValue = @i + @BatchNoUpd - 1 WHERE VName = 'PendingCS_updID'
+					UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = @i + @BatchNoUpd - 1 WHERE VName = 'PendingCS_updID'
 
 				COMMIT TRANSACTION
 				
@@ -196,7 +196,7 @@ UpdateSection:
 		
 	END
 
-	UPDATE dbo.BalanceUpdateSetting SET VValue = 3 WHERE VName = 'PendingCS_State'
+	UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = 3 WHERE VName = 'PendingCS_State'
 	
 	SET @secUpdate = DATEDIFF(ms, @StartProcess, SYSDATETIME())/1000.00
 
@@ -234,7 +234,7 @@ DeleteSection:
 		END CATCH
 	END
 
-	UPDATE dbo.BalanceUpdateSetting SET VValue = 0 WHERE VName = 'PendingCS_State'
+	UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = 0 WHERE VName = 'PendingCS_State'
 	
 	SET @secDelete = DATEDIFF(ms, @StartProcess, SYSDATETIME())/1000.00
 	
