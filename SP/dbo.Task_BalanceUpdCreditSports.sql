@@ -34,7 +34,7 @@ BEGIN
 	DECLARE @Version			SMALLMONEY 
 			,@StartSP			DATETIME2
 			,@StartProcess		DATETIME2
-			,@MinPendingTime	DATETIME2
+			,@MinPendingTime	DATETIME2 (4)
 			,@totalCustID		INT
 			,@loopCnt			INT
 			,@i					INT
@@ -120,10 +120,10 @@ BEGIN
 		FROM	ctePending
 
 		BEGIN TRANSACTION
-			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = @minrn WHERE VName = 'PendingCS_rnMIN'
-			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = @maxrn WHERE VName = 'PendingCS_rnMAX'
-			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = CONVERT(VARCHAR(50), @MinPendingTime, 121) WHERE VName = 'PendingCS_tstamp'
-			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = 1 WHERE VName = 'PendingCS_State'
+			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = @minrn WHERE VName = 'PendingCS_rnMIN'
+			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = @maxrn WHERE VName = 'PendingCS_rnMAX'
+			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = CONVERT(VARCHAR(50), @MinPendingTime) WHERE VName = 'PendingCS_tstamp'
+			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 1 WHERE VName = 'PendingCS_State'
 			
 		COMMIT TRANSACTION
 
@@ -138,7 +138,7 @@ CreateSUM:
 
 		INSERT INTO dbo.BalCreditSportsPending_Staging (custid, balance)
 		SELECT custid, SUM(balance)
-		FROM dbo.BalCreditSportsPending with (ROWLOCK)
+		FROM dbo.BalCreditSportsPending WITH (ROWLOCK)
 		WHERE rn >= @minrn AND rn <= @maxrn
 		GROUP BY custid
 		ORDER BY MIN(rn)
@@ -147,10 +147,10 @@ CreateSUM:
 		SET @i = 1
 		SET @loopCnt = @totalCustID
 
-		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = 0 WHERE VName = 'PendingCS_updID'
-		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = @totalCustID WHERE VName = 'PendingCS_TotalCust'
-		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = 2 WHERE VName = 'PendingCS_State'
-		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue =CONVERT(VARCHAR(50), GETDATE(),121) WHERE VName = 'PendingCS_CreatedDate'
+		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 0 WHERE VName = 'PendingCS_updID'
+		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = @totalCustID WHERE VName = 'PendingCS_TotalCust'
+		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 2 WHERE VName = 'PendingCS_State'
+		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue =CONVERT(VARCHAR(50), GETDATE(),121) WHERE VName = 'PendingCS_CreatedDate'
 
 	COMMIT TRANSACTION
 
@@ -174,11 +174,11 @@ UpdateSection:
 					UPDATE b
 						SET Balance = b.Balance + t.balance
 					FROM	dbo.BalCreditSports b WITH (ROWLOCK, UPDLOCK)
-						INNER JOIN dbo.BalCreditSportsPending_Staging t (NOLOCK)
+						INNER JOIN dbo.BalCreditSportsPending_Staging t WITH (NOLOCK)
 							ON b.custid = t.custId	
 					WHERE Id BETWEEN @i AND @i + @BatchNoUpd - 1
 
-					UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = @i + @BatchNoUpd - 1 WHERE VName = 'PendingCS_updID'
+					UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = @i + @BatchNoUpd - 1 WHERE VName = 'PendingCS_updID'
 
 				COMMIT TRANSACTION
 				
@@ -196,7 +196,7 @@ UpdateSection:
 		
 	END
 
-	UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = 3 WHERE VName = 'PendingCS_State'
+	UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 3 WHERE VName = 'PendingCS_State'
 	
 	SET @secUpdate = DATEDIFF(ms, @StartProcess, SYSDATETIME())/1000.00
 
@@ -234,7 +234,7 @@ DeleteSection:
 		END CATCH
 	END
 
-	UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = 0 WHERE VName = 'PendingCS_State'
+	UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 0 WHERE VName = 'PendingCS_State'
 	
 	SET @secDelete = DATEDIFF(ms, @StartProcess, SYSDATETIME())/1000.00
 	
