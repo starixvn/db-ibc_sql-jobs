@@ -122,7 +122,7 @@ BEGIN
 		BEGIN TRANSACTION
 			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = @minrn WHERE VName = 'PendingCS_rnMIN'
 			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = @maxrn WHERE VName = 'PendingCS_rnMAX'
-			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = CONVERT(varchar(50), @MinPendingTime, 120) WHERE VName = 'PendingCS_tstamp'
+			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = CONVERT(VARCHAR(50), @MinPendingTime, 121) WHERE VName = 'PendingCS_tstamp'
 			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK) SET VValue = 1 WHERE VName = 'PendingCS_State'
 			
 		COMMIT TRANSACTION
