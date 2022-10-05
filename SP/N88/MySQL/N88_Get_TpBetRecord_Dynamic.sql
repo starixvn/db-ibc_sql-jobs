@@ -1,3 +1,4 @@
+/*<info serverAlias="DBB2C" databaseType="2" executers="affiliate_api" isFunction="0" isNested="0"></info>*/
 USE Siebog;
 
 DROP PROCEDURE IF EXISTS `N88_Get_TpBetRecord_Dynamic`;
@@ -91,4 +92,4 @@ END
 //
 DELIMITER ;
 
-GRANT EXECUTE ON PROCEDURE `N88_Get_TpBetRecord_Dynamic` TO 'affiliate_api'@'%';
+--GRANT EXECUTE ON PROCEDURE `N88_Get_TpBetRecord_Dynamic` TO 'affiliate_api'@'%';
