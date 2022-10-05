@@ -5,8 +5,7 @@ DROP PROCEDURE IF EXISTS `N88_Get_TpBetRecord_Dynamic`;
 
 DELIMITER //
 
-CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `N88_Get_TpBetRecord_Dynamic`
-(
+CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `N88_Get_TpBetRecord_Dynamic`(
   IN fromDate DATETIME,
   IN toDate DATETIME,
   IN pageIndex INT,
@@ -37,6 +36,7 @@ BEGIN
     SET @state_AndOperator = " AND ";
     SET @state_Semicolon = ";";
     SET @state_UnionAll = " UNION All ";
+    SET @isHasSelect = 0;
     
     -- variable
     SET @date14 = CAST(TIMESTAMPADD(DAY, -14, CURRENT_DATE) AS DATE);
@@ -50,6 +50,7 @@ BEGIN
 	IF (fromdate >= @date14) THEN
 		BEGIN -- only get data from current TpBetRecord
 			SET @cmd = CONCAT_WS('\n',@cmd,@state_select,@state_from,@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"),@state_Semicolon);
+            SET @isHasSelect = 1;
 			-- select @cmd;
 		END;
 	ELSE -- data from multiple table
@@ -58,6 +59,7 @@ BEGIN
 				BEGIN
 					-- get from main table - #1
 					SET @cmd = CONCAT_WS('\n',@cmd,@state_select,@state_from,@state_where,CONCAT("'",@date14, "'"),@state_AndOperator,CONCAT("'",todate, "'"));
+                    SET @isHasSelect = 1;
 				END;
 			END IF;
             
@@ -69,17 +71,16 @@ BEGIN
 			IF (@monthFromDate = @monthToDate) THEN
 				BEGIN
 					-- get from archive tables - #2
-					SET @cmd = CONCAT_WS('\n',@cmd,@state_UnionAll,@state_select,CONCAT(@state_from,"_",@monthFromDate),@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"),@state_Semicolon);
+					SET @cmd = CONCAT_WS('\n',@cmd,IF(@isHasSelect = 1, @state_UnionAll, ""),@state_select,CONCAT(@state_from,"_",@monthFromDate),@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"),@state_Semicolon);
 				END;
 			ELSE
 				BEGIN
 					-- get from archive tables - #3
-					SET @cmd = CONCAT_WS('\n',@cmd,@state_UnionAll,@state_select,CONCAT(@state_from,"_",@monthFromDate),@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"));
+					SET @cmd = CONCAT_WS('\n',@cmd,IF(@isHasSelect = 1, @state_UnionAll, ""),@state_select,CONCAT(@state_from,"_",@monthFromDate),@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"));
 					SET @cmd = CONCAT_WS('\n',@cmd,@state_UnionAll,@state_select,CONCAT(@state_from,"_",@monthToDate),@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"),@state_Semicolon);
 				END;
 			END IF;
 			
-			-- select @cmd;
 		END;
 	END IF;
     
