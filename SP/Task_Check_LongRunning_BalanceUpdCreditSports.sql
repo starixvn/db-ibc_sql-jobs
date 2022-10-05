@@ -26,9 +26,9 @@ SET NOCOUNT ON
 			,@Subject		VARCHAR(300)
 				/*  
 					LOCAL: 'dba_local@starixvn.com,qa@starixvn.com'
-					PRODUCTION: ?
+					PRODUCTION: 'dbaadmin@onelab.tw'
 				*/
-			,@recipients VARCHAR(500) = 'louisa.vo@starixvn.com;dora.le@starixvn.com'
+			,@recipients VARCHAR(500) = 'louisa.vo@starixvn.com;dora.le@starixvn.com;kaka.huynh@starixvn.com'
 	
 	SET @interval = 60
 	SET @FromDate = DATEADD(SECOND, -@interval, GETDATE())
