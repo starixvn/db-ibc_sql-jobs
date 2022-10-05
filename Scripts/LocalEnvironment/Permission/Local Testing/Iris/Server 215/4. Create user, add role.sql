@@ -34,7 +34,7 @@ INSERT INTO @tmpAffectedDB (DBName)
 			,('bodb_N88')
 			,('bodb_Summary')
 			,('bodb_ODS')
-			--,('bodb_Age')
+			,('bodb_Age')
 			,('bodb_OLAP')
 			,('bodb_CRM')
 			,('bodb_adhoc')
@@ -43,7 +43,7 @@ DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('spvn\kaka.huynh'),
-		--('spvn\dora.le'),
+		('spvn\dora.le'),
 		('spvn\jane.dinh'),
 		('spvn\megan.dinh'),
 		('spvn\tommy.nguyen'),
@@ -123,14 +123,14 @@ INSERT INTO @tmpAffectedDB (DBName)
 			,('bodb_N88')
 			,('bodb_Summary')
 			,('bodb_ODS')
-		--	,('bodb_Age')
+		 	,('bodb_Age')
 			,('bodb_OLAP')
 			,('bodb_CRM')
 			,('bodb_adhoc')
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('spvn\kaka.huynh'),
-		--('spvn\dora.le'),
+		 ('spvn\dora.le'),
 		('spvn\jane.dinh'),
 		('spvn\megan.dinh'),
 		('spvn\tommy.nguyen'),
