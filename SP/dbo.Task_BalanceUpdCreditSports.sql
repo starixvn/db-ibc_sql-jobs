@@ -194,7 +194,7 @@ DeleteSection:
 
 	-- SET param for the first batch of deleting
 	SET @del_StartRow = @minrn 
-	SET @del_StopRow = @minrn + @BatchNoDel 
+	SET @del_StopRow = @minrn + @BatchNoDel - 1
 
 	IF @del_StopRow > @maxrn
 		SET @del_StopRow = @maxrn
