@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
-CREATE OR ALTER PROCEDURE Task_Check_LongRunning_BalanceUpdCreditSports
+ALTER PROCEDURE Task_Check_LongRunning_BalanceUpdCreditSports
 AS
 /*
    Created:20221003@Louisa
