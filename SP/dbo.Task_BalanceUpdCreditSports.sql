@@ -30,7 +30,8 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	
+	SET XACT_ABORT ON
+
 	DECLARE @Version			SMALLMONEY 
 			,@StartSP			DATETIME2
 			,@StartProcess		DATETIME2
@@ -42,14 +43,12 @@ BEGIN
 			,@BatchNoDel		INT
 			,@minrn				BIGINT
 			,@maxrn				BIGINT			
-			,@Retry				INT
 			,@TotalRetryUpd		INT
 			,@TotalRetryDel		INT
-			,@Success			BIT			
 			,@secUpdate			SMALLMONEY = 0
 			,@secDelete			SMALLMONEY = 0
 			,@Top				INT
-			,@ErrMsg			VARCHAR(300)
+			
 	
 	DECLARE @del_StartRow INT = 1, @del_StopRow INT 
 
@@ -159,39 +158,29 @@ UpdateSection:
 	-- SELECT @i as i, @loopCnt as loopCnt
 	WHILE @i <= @loopCnt
 	BEGIN
-		SET @Retry = 0
-		SET @Success = 0
-
 		-- perform update
-		WHILE @Success = 0
-		BEGIN
-			BEGIN TRY
-				SET @Success = 1
-				SET @ErrMsg = ''
+		BEGIN TRY
+			BEGIN TRANSACTION	
+				--PRINT 'updating'
+				UPDATE b
+					SET Balance = b.Balance + t.balance
+				FROM	dbo.BalCreditSports b WITH (ROWLOCK, UPDLOCK)
+					INNER JOIN dbo.BalCreditSportsPending_Staging t WITH (NOLOCK)
+						ON b.custid = t.custId	
+				WHERE Id BETWEEN @i AND @i + @BatchNoUpd - 1
 
-				BEGIN TRANSACTION	
-					--PRINT 'updating'
-					UPDATE b
-						SET Balance = b.Balance + t.balance
-					FROM	dbo.BalCreditSports b WITH (ROWLOCK, UPDLOCK)
-						INNER JOIN dbo.BalCreditSportsPending_Staging t WITH (NOLOCK)
-							ON b.custid = t.custId	
-					WHERE Id BETWEEN @i AND @i + @BatchNoUpd - 1
+				UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = @i + @BatchNoUpd - 1 WHERE VName = 'PendingCS_updID'
 
-					UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = @i + @BatchNoUpd - 1 WHERE VName = 'PendingCS_updID'
-
-				COMMIT TRANSACTION
+			COMMIT TRANSACTION
 				
-			END TRY
-			BEGIN CATCH
-				SET @Retry = @Retry + 1
-				SET @Success = 0
-				SET @ErrMsg = ERROR_MESSAGE()
-				ROLLBACK TRANSACTION
+		END TRY
+		BEGIN CATCH
+			--PRINT 'in catch'
+			ROLLBACK TRANSACTION
+			RETURN
 
-				WAITFOR DELAY '00:00:00:010'
-			END CATCH
-		END
+		END CATCH
+		
 		SET @i = @i + @BatchNoUpd
 		
 	END
@@ -229,8 +218,7 @@ DeleteSection:
 			
 		END TRY
 		BEGIN CATCH
-			SET @i = 1
-			SET @TotalRetryDel = @TotalRetryDel + 1
+			RETURN
 		END CATCH
 	END
 
