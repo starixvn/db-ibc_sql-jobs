@@ -16,6 +16,7 @@ AS
 	Revisions: 
 		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
 						- Get last transid and new last transid - [Redmine:#175881]
+		- 20221007@Evan: Remove 2 bet types 19999 & 20000 - rule #46 - [Redmine:#175881]
 
 	Param's Expanation:
 */
@@ -67,6 +68,7 @@ BEGIN
 					INNER JOIN bodb02.dbo.Site s WITH (NOLOCK)
 						ON s.site = c.site
 		WHERE t.TransId > @transferLastTransId
+			AND t.Bettype NOT IN (19999, 20000)
 			AND t.TransDate < @currTime
 			AND s.SiteDBGroupID = 0
 

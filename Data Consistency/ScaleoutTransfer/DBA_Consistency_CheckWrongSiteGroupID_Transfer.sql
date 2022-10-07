@@ -8,7 +8,7 @@ CREATE PROCEDURE [dbo].[DBA_Consistency_CheckWrongSiteGroupID_Transfer]
 AS
 /*
 	Created: 20220823@Sol
-	Task: Data consistency - check insert wrong server
+	Task: Data consistency - check insert wrong server - Rule 47
 	DB: DBCONSISTENCY-bodb_Consistency
 
 	Revisions: 

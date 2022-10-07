@@ -16,8 +16,10 @@ AS
 
 	Revisions: 
 		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
+		
 						- Get last transid and new last transid - [Redmine:#175881]
-
+		- 20221007@Evan: Remove 2 bet types 19999 & 20000 - rule #46 - [Redmine:#175881]
+		
 	Param's Expanation:
 */
 BEGIN
@@ -68,6 +70,7 @@ BEGIN
 		SELECT @NewTransferLastTransId = MAX(t.TransId)
 		FROM dbo.Transfer t WITH (NOLOCK)
 		WHERE t.TransId > @transferLastTransId
+			AND t.Bettype NOT IN (19999, 20000)
 			AND t.TransDate < @currTime
 
 		---incase cannot get latest transid due to no new transid with transdate < getdate() - 2 minutes, keep the value setting unchanged
