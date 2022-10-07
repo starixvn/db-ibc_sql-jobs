@@ -29,52 +29,95 @@ BEGIN TRANSACTION
 		
 		IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
 			GOTO QuitWithRollback
+
 	END
 
 	DECLARE @jobId BINARY(16)
-	EXEC @ReturnCode =  msdb.dbo.sp_add_job 
-			@job_name=N'vndba:Check slowly BalanceUpdCreditSports process', 
-			@enabled=1, 
-			--@notify_level_email=2,
-			@description=N'', 
-			@category_name=N'[Uncategorized (Local)]', 
-			@owner_login_name=N'sa', 
-			--@notify_email_operator_name=N'DBAAdmin',
-			@job_id = @jobId OUTPUT
-	
-	IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
-		GOTO QuitWithRollback
 
-	EXEC @ReturnCode = msdb.dbo.sp_add_jobstep 
-			@job_id=@jobId, 
-			@step_name=N'Check slowly BalanceUpdCreditSports process', 
-			@step_id=1, 
-			@cmdexec_success_code=0, 
-			@on_success_action=1, 
-			@on_success_step_id=0, 
-			@on_fail_action=2, 
-			@on_fail_step_id=0, 
-			@retry_attempts=0, 
-			@retry_interval=0, 
-			@os_run_priority=0, @subsystem=N'TSQL', 
-			@command=N'EXEC dbo.Task_Check_LongRunning_BalanceUpdCreditSports', 
-			@database_name=N'bodb02', 
-			@flags=0
+	IF NOT EXISTS ( SELECT TOP 1 1 FROM sysjobs j WHERE  j.name = N'vndba:Check slowly BalanceUpdCreditSports process' )
+	BEGIN
+		EXEC @ReturnCode =  msdb.dbo.sp_add_job 
+				@job_name=N'vndba:Check slowly BalanceUpdCreditSports process', 
+				@enabled=1, 
+				@description=N'', 
+				@category_name=N'[Uncategorized (Local)]', 
+				@owner_login_name=N'sa',
+				@job_id = @jobId OUTPUT
 	
-	IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
-		GOTO QuitWithRollback
+		IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
+			GOTO QuitWithRollback
+				
+		EXEC @ReturnCode = msdb.dbo.sp_add_jobserver 
+			@job_id = @jobId, 
+			@server_name = N'(local)'
+
+		IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
+			GOTO QuitWithRollback
+	END
+	ELSE 
+	BEGIN
+		SELECT @jobId  = j.job_id FROM sysjobs j WHERE j.name = N'vndba:Check slowly BalanceUpdCreditSports process'
+	END
+
+	IF NOT EXISTS ( SELECT TOP 1 1 FROM sysjobsteps js
+					INNER JOIN sysjobs j
+					ON j.job_id = js.job_id
+					WHERE j.name = N'vndba:Check slowly BalanceUpdCreditSports process'
+						AND js.step_name = N'Check slowly BalanceUpdCreditSports process'
+					)
+	BEGIN
+		EXEC @ReturnCode = msdb.dbo.sp_add_jobstep 
+				@job_id=@jobId, 
+				@step_name=N'Check slowly BalanceUpdCreditSports process', 
+				@step_id=1, 
+				@cmdexec_success_code=0, 
+				@on_success_action=4, --go to next step
+				@on_success_step_id=2,
+				@on_fail_action=2, --quit job
+				@on_fail_step_id=0, 
+				@retry_attempts=0, 
+				@retry_interval=0, 
+				@os_run_priority=0, @subsystem=N'TSQL', 
+				@command=N'EXEC dbo.Task_Check_LongRunning_BalanceUpdCreditSports', 
+				@database_name=N'bodb02', 
+				@flags=0
+	
+		IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
+			GOTO QuitWithRollback
+		
+	END
+
+	IF NOT EXISTS ( SELECT TOP 1 1 FROM sysjobsteps js
+					INNER JOIN sysjobs j
+					ON j.job_id = js.job_id
+					WHERE j.name = N'vndba:Check slowly BalanceUpdCreditSports process'
+						AND js.step_name = N'Waitfor delay 180ms'
+					)
+	BEGIN
+		EXEC @ReturnCode = msdb.dbo.sp_add_jobstep 
+				@job_id=@jobId, 
+				@step_name=N'Waitfor delay 180ms', 
+				@step_id=2, 
+				@cmdexec_success_code=0, 
+				@on_success_action=4, --go to next step
+				@on_success_step_id=1, --go back to step 1
+				@on_fail_action=2,  --quit job
+				@on_fail_step_id=0, 
+				@retry_attempts=0, 
+				@retry_interval=0, 
+				@os_run_priority=0, @subsystem=N'TSQL', 
+				@command=N'WAITFOR DELAY ''00:00:00.180''', 
+				@database_name=N'bodb02', 
+				@flags=0
+	
+		IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
+			GOTO QuitWithRollback
+	END
 
 	EXEC @ReturnCode = msdb.dbo.sp_update_job 
 		@job_id = @jobId, 
 		@start_step_id = 1
 	
-	IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
-		GOTO QuitWithRollback
-
-	EXEC @ReturnCode = msdb.dbo.sp_add_jobserver 
-		@job_id = @jobId, 
-		@server_name = N'(local)'
-
 	IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
 		GOTO QuitWithRollback
 

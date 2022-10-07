@@ -20,44 +20,68 @@ SET NOCOUNT ON
 	DECLARE @PendingCS_State		VARCHAR(1)
 			,@PendingCS_CreatedDate VARCHAR(200)
 			
-			,@FromDate		DATETIME
+			,@StartTime		DATETIME
+			,@CheckTime		DATETIME
 			,@interval		INT
 			,@errorMessage	VARCHAR(4000)
 			,@Subject		VARCHAR(300)
-				/*  
-					LOCAL: 'dba_local@starixvn.com,qa@starixvn.com'
-					PRODUCTION: 'dbaadmin@onelab.tw'
-				*/
-			,@recipients VARCHAR(500) = 'louisa.vo@starixvn.com;dora.le@starixvn.com;kaka.huynh@starixvn.com'
+			,@recipients	VARCHAR(500)
 	
 	SET @interval = 60
-	SET @FromDate = DATEADD(SECOND, -@interval, GETDATE())
+	SET @StartTime = GETDATE()
+	SET @CheckTime = @StartTime
 
-	SELECT	@PendingCS_State		= [PendingCS_State]
-			,@PendingCS_CreatedDate = [PendingCS_CreatedDate]
-	FROM dbo.BalanceUpdateSetting b WITH(NOLOCK)
-	PIVOT ( MAX(vvalue) FOR vname in ([PendingCS_State],[PendingCS_CreatedDate]) ) pv
+	IF @@SERVERNAME  = 'DBTrans' OR @@SERVERNAME LIKE 'DBGRP%'
+		SET @recipients = 'dbaadmin@onelab.tw'
+	ELSE
+		SET @recipients = 'dba_local@starixvn.com,qa@starixvn.com'
+			
+	WHILE ( 1 = 1)
+	BEGIN	
 
-	IF @PendingCS_State = 0 OR CAST( @PendingCS_CreatedDate AS datetime) > @fromdate
-	RETURN
+		WHILE ( DATEDIFF(SECOND, @StartTime, GETDATE() ) >= 600 )
+		BEGIN
+			SELECT	@PendingCS_State		= [PendingCS_State]
+					,@PendingCS_CreatedDate = [PendingCS_CreatedDate]
+			FROM dbo.BalanceUpdateSetting b WITH(NOLOCK)
+			PIVOT ( MAX(vvalue) FOR vname in ([PendingCS_State],[PendingCS_CreatedDate]) ) pv
 
-	SET @Subject	= N'Balance Pending process - Notification at ' + @@servername
-	SET @errorMessage = N'<p>Hey guys, Balance Pending process is running at [' + @@servername + '] over [' + cast(@interval as varchar(20)) + '] seconds still not complete. 
-	</br>Please check data at <b>bodb02.dbo.BalanceUpdateSetting</b> and <b>bodb02.dbo.BalCreditSportsPending_Staging</b></p>' ;
+			IF @PendingCS_State = 0 OR DATEDIFF(SECOND, @PendingCS_CreatedDate, @CheckTime) < @interval
+			BEGIN
+				BREAK
+			END
+			ELSE
+			BEGIN
+				SET @Subject	= N'Balance Pending process - Notification at ' + @@servername
+				SET @errorMessage = N'<p>Hey guys, Balance Pending process is running at [' + @@servername + '] over [' + cast(@interval as varchar(20)) + '] seconds still not complete. 
+				</br>Please check data at <b>bodb02.dbo.BalanceUpdateSetting</b> and <b>bodb02.dbo.BalCreditSportsPending_Staging</b></p>' ;
  
-	EXECUTE msdb.dbo.sp_send_dbmail 
-		@profile_name	= DEFAULT
-		, @recipients	= @recipients	
-		, @copy_recipients		 = ''
-		, @blind_copy_recipients = ''
-		, @subject				 = @subject
-		, @body					 = @errorMessage
-		, @body_format			 = 'HTML';
+				EXECUTE msdb.dbo.sp_send_dbmail 
+					@profile_name	= DEFAULT
+					, @recipients	= @recipients	
+					, @copy_recipients		 = ''
+					, @blind_copy_recipients = ''
+					, @subject				 = @subject
+					, @body					 = @errorMessage
+					, @body_format			 = 'HTML';
 
-	--EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = @@ServerName
-	--	, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
-	--	, @Message = @errorMessage
-	--	, @CaseId = 1;
+				EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = @@ServerName
+					, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
+					, @Message = @errorMessage
+					, @CaseId = 1;
+
+				WAITFOR DELAY '00:01:00'
+				SET @CheckTime = GETDATE()
+
+			END
+		END
+
+		IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= 600 -- loop within 10 minutes
+		BREAK
+
+		WAITFOR DELAY '00:01:00'
+		SET @CheckTime = GETDATE()
+	END
 
 
 END
