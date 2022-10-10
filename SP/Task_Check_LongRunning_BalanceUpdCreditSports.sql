@@ -65,10 +65,10 @@ SET NOCOUNT ON
 					, @body					 = @errorMessage
 					, @body_format			 = 'HTML';
 
-				--EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = @@ServerName
-				--	, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
-				--	, @Message = @errorMessage
-				--	, @CaseId = 1;
+				EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = @@ServerName
+					, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
+					, @Message = @errorMessage
+					, @CaseId = 1;
 				
 				IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= 600 -- loop within 10 minutes
 				BREAK
