@@ -34,19 +34,19 @@ SET NOCOUNT ON
 	IF @@SERVERNAME  = 'DBTrans' OR @@SERVERNAME LIKE 'DBGRP%'
 		SET @recipients = 'dbaadmin@onelab.tw'
 	ELSE
-		SET @recipients = 'dba_local@starixvn.com,qa@starixvn.com'
+		SET @recipients = 'dba_local@starixvn.com;qa@starixvn.com'
 			
 	WHILE ( 1 = 1)
 	BEGIN	
 
-		WHILE ( 1 = 1 )
+		WHILE ( 1 = 1)
 		BEGIN
 			SELECT	@PendingCS_State		= [PendingCS_State]
 					,@PendingCS_CreatedDate = CAST([PendingCS_CreatedDate] AS DATETIME)
 			FROM dbo.BalanceUpdateSetting b WITH(NOLOCK)
 			PIVOT ( MAX(vvalue) FOR vname in ([PendingCS_State],[PendingCS_CreatedDate]) ) pv
 
-			IF @PendingCS_State = 0 OR DATEDIFF(SECOND, @PendingCS_CreatedDate, @CheckTime) < @interval
+			IF @PendingCS_State = '0' OR DATEDIFF(SECOND, @PendingCS_CreatedDate, @CheckTime) < @interval
 			BEGIN
 				BREAK
 			END
@@ -65,12 +65,12 @@ SET NOCOUNT ON
 					, @body					 = @errorMessage
 					, @body_format			 = 'HTML';
 
-				EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = @@ServerName
-					, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
-					, @Message = @errorMessage
-					, @CaseId = 1;
+				--EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = @@ServerName
+				--	, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
+				--	, @Message = @errorMessage
+				--	, @CaseId = 1;
 				
-				IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= 20 -- loop within 10 minutes
+				IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= 600 -- loop within 10 minutes
 				BREAK
 
 				WAITFOR DELAY '00:01:00'
