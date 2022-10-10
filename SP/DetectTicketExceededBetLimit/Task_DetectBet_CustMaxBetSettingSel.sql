@@ -251,6 +251,8 @@ BEGIN
 					FROM #ListTmp cl
 						INNER JOIN Dep_custsettingmode mode WITH (NOLOCK) ON mode.CustID=cl.custid
 						LEFT JOIN Dep_CustBetSettingGameGroup_Member gg WITH (NOLOCK) ON gg.AgentID=cl.recommend
+																					AND gg.SportType=cl.SportTypeRef
+																					AND gg.BetType=cl.BetTypeRef
 						LEFT JOIN Dep_CustBetSettingGame_Member dcbs WITH (NOLOCK) ON dcbs.CustID=cl.custid
 																	AND dcbs.SportType=cl.SportTypeRef
 																	AND dcbs.BetType=cl.BetTypeRef
