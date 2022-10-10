@@ -49,7 +49,7 @@ BEGIN
     
 	IF (fromdate >= @date14) THEN
 		BEGIN -- only get data from current TpBetRecord
-			SET @cmd = CONCAT_WS('\n',@cmd,@state_select,@state_from,@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"),@state_Semicolon);
+			SET @cmd = CONCAT_WS('\n',@cmd,@state_select,@state_from,@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"));
             SET @isHasSelect = 1;
 			-- select @cmd;
 		END;
@@ -71,18 +71,20 @@ BEGIN
 			IF (@monthFromDate = @monthToDate) THEN
 				BEGIN
 					-- get from archive tables - #2
-					SET @cmd = CONCAT_WS('\n',@cmd,IF(@isHasSelect = 1, @state_UnionAll, ""),@state_select,CONCAT(@state_from,"_",@monthFromDate),@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"),@state_Semicolon);
+					SET @cmd = CONCAT_WS('\n',@cmd,IF(@isHasSelect = 1, @state_UnionAll, ""),@state_select,CONCAT(@state_from,"_",@monthFromDate),@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"));
 				END;
 			ELSE
 				BEGIN
 					-- get from archive tables - #3
 					SET @cmd = CONCAT_WS('\n',@cmd,IF(@isHasSelect = 1, @state_UnionAll, ""),@state_select,CONCAT(@state_from,"_",@monthFromDate),@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"));
-					SET @cmd = CONCAT_WS('\n',@cmd,@state_UnionAll,@state_select,CONCAT(@state_from,"_",@monthToDate),@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"),@state_Semicolon);
+					SET @cmd = CONCAT_WS('\n',@cmd,@state_UnionAll,@state_select,CONCAT(@state_from,"_",@monthToDate),@state_where,CONCAT("'",fromdate, "'"),@state_AndOperator,CONCAT("'",todate, "'"));
 				END;
 			END IF;
 			
 		END;
 	END IF;
+    
+	SET @cmd = CONCAT_WS('\n', @cmd, 'ORDER BY TpID, TransId, GameType  LIMIT', _offSet, ',',pageSize, @state_Semicolon);
     
     -- return result to caller
 	PREPARE stmt FROM @cmd;
@@ -93,4 +95,4 @@ END
 //
 DELIMITER ;
 
---GRANT EXECUTE ON PROCEDURE `N88_Get_TpBetRecord_Dynamic` TO 'affiliate_api'@'%';
+-- GRANT EXECUTE ON PROCEDURE `N88_Get_TpBetRecord_Dynamic` TO 'affiliate_api'@'%';
