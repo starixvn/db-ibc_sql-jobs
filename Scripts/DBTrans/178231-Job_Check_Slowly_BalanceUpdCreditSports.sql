@@ -29,35 +29,36 @@ BEGIN TRANSACTION
 		
 		IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
 			GOTO QuitWithRollback
+	END
 
+
+	IF EXISTS ( SELECT TOP 1 1 FROM sysjobs j WHERE  j.name = N'vndba:Check slowly BalanceUpdCreditSports process' )
+	BEGIN
+		EXEC @ReturnCode =  msdb.dbo.sp_delete_job  @job_name = N'vndba:Check slowly BalanceUpdCreditSports process'
+		
+		IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
+			GOTO QuitWithRollback
 	END
 
 	DECLARE @jobId BINARY(16)
-
-	IF NOT EXISTS ( SELECT TOP 1 1 FROM sysjobs j WHERE  j.name = N'vndba:Check slowly BalanceUpdCreditSports process' )
-	BEGIN
-		EXEC @ReturnCode =  msdb.dbo.sp_add_job 
-				@job_name=N'vndba:Check slowly BalanceUpdCreditSports process', 
-				@enabled=1, 
-				@description=N'', 
-				@category_name=N'[Uncategorized (Local)]', 
-				@owner_login_name=N'sa',
-				@job_id = @jobId OUTPUT
+	EXEC @ReturnCode =  msdb.dbo.sp_add_job 
+			@job_name=N'vndba:Check slowly BalanceUpdCreditSports process', 
+			@enabled=0, 
+			@description=N'', 
+			@category_name=N'[Uncategorized (Local)]', 
+			@owner_login_name=N'sa',
+			@job_id = @jobId OUTPUT
 	
-		IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
-			GOTO QuitWithRollback
-				
-		EXEC @ReturnCode = msdb.dbo.sp_add_jobserver 
-			@job_id = @jobId, 
-			@server_name = N'(local)'
+	IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
+		GOTO QuitWithRollback
+		
+	EXEC @ReturnCode = msdb.dbo.sp_add_jobserver 
+		@job_id = @jobId, 
+		@server_name = N'(local)'
 
-		IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
-			GOTO QuitWithRollback
-	END
-	ELSE 
-	BEGIN
-		SELECT @jobId  = j.job_id FROM sysjobs j WHERE j.name = N'vndba:Check slowly BalanceUpdCreditSports process'
-	END
+	IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
+		GOTO QuitWithRollback
+
 
 	IF NOT EXISTS ( SELECT TOP 1 1 FROM sysjobsteps js
 					INNER JOIN sysjobs j

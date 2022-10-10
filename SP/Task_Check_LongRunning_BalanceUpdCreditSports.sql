@@ -18,7 +18,7 @@ BEGIN
 SET NOCOUNT ON
 
 	DECLARE @PendingCS_State		VARCHAR(1)
-			,@PendingCS_CreatedDate VARCHAR(200)
+			,@PendingCS_CreatedDate DATETIME
 			
 			,@StartTime		DATETIME
 			,@CheckTime		DATETIME
@@ -39,10 +39,10 @@ SET NOCOUNT ON
 	WHILE ( 1 = 1)
 	BEGIN	
 
-		WHILE ( DATEDIFF(SECOND, @StartTime, GETDATE() ) >= 600 )
+		WHILE ( 1 = 1 )
 		BEGIN
 			SELECT	@PendingCS_State		= [PendingCS_State]
-					,@PendingCS_CreatedDate = [PendingCS_CreatedDate]
+					,@PendingCS_CreatedDate = CAST([PendingCS_CreatedDate] AS DATETIME)
 			FROM dbo.BalanceUpdateSetting b WITH(NOLOCK)
 			PIVOT ( MAX(vvalue) FOR vname in ([PendingCS_State],[PendingCS_CreatedDate]) ) pv
 
@@ -69,6 +69,9 @@ SET NOCOUNT ON
 					, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
 					, @Message = @errorMessage
 					, @CaseId = 1;
+				
+				IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= 20 -- loop within 10 minutes
+				BREAK
 
 				WAITFOR DELAY '00:01:00'
 				SET @CheckTime = GETDATE()
