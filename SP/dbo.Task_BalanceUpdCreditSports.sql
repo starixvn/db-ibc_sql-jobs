@@ -150,7 +150,6 @@ CreateSUM:
 		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 0 WHERE VName = 'PendingCS_updID'
 		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = @totalCustID WHERE VName = 'PendingCS_TotalCust'
 		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 2 WHERE VName = 'PendingCS_State'
-		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue =CONVERT(VARCHAR(50), GETDATE(),121) WHERE VName = 'PendingCS_CreatedDate'
 
 	COMMIT TRANSACTION
 
