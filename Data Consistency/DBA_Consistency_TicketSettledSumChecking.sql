@@ -12,9 +12,10 @@ AS
 
 	Revisions: 
 		- 20210324@July: Check tickets in bettransRNG/BettransLC are sum to bettrans [Redmine:#151680]
-	
+		- 20221010@July: Remove check duration every 1 hour for today [Redmine:#178916]
+
 	Param's Expanation:
-		@Duration = 'hour', 'lastday'
+		@Duration = 'lastday'
 */
 BEGIN
 	DECLARE @transId		VARCHAR(MAX) =''
@@ -26,11 +27,6 @@ BEGIN
 
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATETIME)
-
-	IF @Duration = 'hour'
-	BEGIN
-		SELECT @Winlostdate = CONVERT (DATE, GETDATE())  
-	END
 
 	IF @Duration = 'lastday'
 	BEGIN
