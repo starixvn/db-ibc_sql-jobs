@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02,DBTP-bodb02" executers="" viewers="" isFunction="1" isNested=""></info>*/
+/*<info serverAlias="DBTXN-bodb02,DBTP-bodb02,DBACC-bodb02,DBAGE-bodb02" executers="" viewers="" isFunction="1" isNested=""></info>*/
 
 ALTER FUNCTION [dbo].[f_dba_transid_revert] 
 (	
@@ -14,6 +14,7 @@ AS
 
 	Revisions:
 		- 20220824@Lukas: Create [RedmineID: #158293]
+		- 20221011@Tina: Add more info for these servers DBACC, DBAGE on metadata [RedmineID: #178943]
 */
 RETURN 
 (
