@@ -1,20 +1,7 @@
 -- Create User
 USE [msdb]
 GO
-/*	Windows domain account:
-		spvn\johnson.nguyen
-		spvn\sophia.nguyen
-		spvn\tacy.nguyen
-		spvn\elodie.ho
-		spvn\kathy.nguyen
-		spvn\tina.vo
-		spvn\helen.do
-		spvn\percy.nguyen
-		spvn\sol.le
-		spvn\eden.dang
-		spvn\bobby.nguyen
-		spvn\winfred.pham
-*/
+ 
 
 IF @@SERVERNAME NOT IN ( 'DB233' , 'TESTDBCUST')
 BEGIN

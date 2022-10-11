@@ -1,22 +1,6 @@
 USE [master]
 GO
-/*	Windows domain account:
-		spvn\johnson.nguyen
-		spvn\sophia.nguyen
-		spvn\tacy.nguyen
-		spvn\elodie.ho
-		spvn\kathy.nguyen
-		spvn\winnie.vu
-		spvn\helen.do
-		spvn\percy.nguyen
-		spvn\sol.le
-		spvn\eden.dang
-		spvn\bobby.nguyen
-		spvn\winfred.pham
-		spvn\tina.vo
-*/
-
--- Grant permisison Profiler for login
+ 
 
 IF @@SERVERNAME NOT IN ( 'DB233' , 'TESTDBCUST')
 BEGIN
@@ -45,6 +29,7 @@ INSERT INTO @tmpMember (Name)
 		,('SPVN\Victoria.le')
 		,('SPVN\Eddie.nguyen')
 		,('spvn\Victoria.le')
+		,('spvn\eddie.nguyen' )
 
 SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
 FROM	@tmpMember

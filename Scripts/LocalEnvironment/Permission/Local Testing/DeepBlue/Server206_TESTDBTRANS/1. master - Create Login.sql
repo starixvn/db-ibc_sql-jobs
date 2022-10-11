@@ -1,20 +1,5 @@
 USE [master]
 GO
--- Create Login
-/*	Windows domain account:
-		spvn\johnson.nguyen
-		spvn\sophia.nguyen
-		spvn\tacy.nguyen
-		spvn\elodie.ho
-		spvn\kathy.nguyen
-		spvn\tina.vo
-		spvn\helen.do
-		spvn\percy.nguyen
-		spvn\sol.le
-		spvn\eden.dang
-		spvn\bobby.nguyen
-		spvn\winfred.pham
-*/
  
 
 DECLARE @strLoginName 	VARCHAR(MAX) = ''
@@ -33,6 +18,7 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\malcolm.huynh')
 		,('spvn\louisa.vo')
 		,('spvn\max.tran')
+		,('spvn\eddie.nguyen' )
 
 -- CREATE LOGIN [spvn\nickname] FROM WINDOWS;  
 SELECT @strLoginName = @strLoginName 

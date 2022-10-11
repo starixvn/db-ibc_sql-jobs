@@ -1,22 +1,4 @@
-/*
-	For Olympus team:
-	Affected DB:
-		All except system DBs and some special DBs
-
-	Windows domain account:
-		spvn\johnson.nguyen
-		spvn\sophia.nguyen
-		spvn\tacy.nguyen
-		spvn\elodie.ho
-		spvn\kathy.nguyen
-		spvn\winfred.pham
-		spvn\helen.do
-		spvn\percy.nguyen
-		spvn\sol.le
-		spvn\eden.dang
-		spvn\bobby.nguyen
-*/
--- Create User
+ 
  
 
 DECLARE @strUser	VARCHAR(MAX) = ''
@@ -25,7 +7,7 @@ DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 INSERT INTO @tmpAffectedDB (DBName)
 SELECT name
 FROM   sys.databases
-WHERE  CAST(CASE WHEN name IN ('master', 'model', 'msdb', 'tempdb', 'MonDB', 'LocalMonitorDB') THEN 1 
+WHERE  CAST(CASE WHEN name IN ('master', 'model', 'msdb', 'tempdb', 'MonDB', 'LocalMonitorDB' ) THEN 1 
 				WHEN name LIKE 'ReportServer%' THEN 1
 				WHEN is_read_only = 1 THEN 1
 				WHEN state <> 0 THEN 1
@@ -47,7 +29,7 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\malcolm.huynh')
 		,('spvn\louisa.vo')
 		,('spvn\max.tran')
-
+		,('spvn\eddie.nguyen' )
 
 /*
 	USE DBName
@@ -93,7 +75,7 @@ DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 INSERT INTO @tmpAffectedDB (DBName)
 SELECT name
 FROM   sys.databases
-WHERE  CAST(CASE WHEN name IN ('master', 'model', 'msdb', 'tempdb', 'MonDB', 'LocalMonitorDB') THEN 1 
+WHERE  CAST(CASE WHEN name IN ('master', 'model', 'msdb', 'tempdb', 'MonDB', 'LocalMonitorDB' ) THEN 1 
 				WHEN name LIKE 'ReportServer%' THEN 1
 				WHEN is_read_only = 1 THEN 1
 				WHEN state <> 0 THEN 1
@@ -112,7 +94,7 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\malcolm.huynh')
 		,('spvn\louisa.vo')
 		,('spvn\max.tran')
-
+		,('spvn\eddie.nguyen' )
 /*
 	USE DBName
 	GO
