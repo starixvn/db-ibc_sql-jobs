@@ -31,8 +31,8 @@ SET NOCOUNT ON
 	SET @StartTime = GETDATE()
 	SET @CheckTime = @StartTime
 
-	IF @@SERVERNAME  = 'DBTrans' OR @@SERVERNAME LIKE 'DBGRP%'
-		SET @recipients = 'dbaadmin@onelab.tw'
+	IF @@SERVERNAME  = 'DBTrans' OR @@SERVERNAME LIKE 'DBGRP%' OR @@SERVERNAME LIKE 'SIT%'
+		SET @recipients = 'dbaadmin@onelab.tw;dbaadmin@starixvn.com'
 	ELSE
 		SET @recipients = 'dba_local@starixvn.com;qa@starixvn.com'
 			
