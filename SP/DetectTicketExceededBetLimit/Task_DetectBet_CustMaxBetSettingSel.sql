@@ -93,13 +93,13 @@ BEGIN
 		LEFT JOIN Dep_CustSuper dep WITH (NOLOCK) ON dep.custid=tc.srecommend
 
 	--Get: SportTypeBetSetting, BetTypeBetSetting, SettingType, GameTypeId
-	--Credit
+	--CREDIT
 	UPDATE cl 
-	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
-	, cl.BetTypeRef=ref.BetTypeRefBetSetting
-	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame
-					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
-	, cl.SettingType=ps.SettingType
+	SET	  cl.SportTypeRef=ref.SportTypeRefBetSetting
+		, cl.BetTypeRef=ref.BetTypeRefBetSetting
+		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame
+						THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
+		, cl.SettingType=ps.SettingType
 	FROM #ListTmp cl
 		INNER JOIN SportBettypeSettingMatrix ref WITH (NOLOCK)
 				ON	ref.Sporttype	= cl.sporttype 
@@ -111,10 +111,10 @@ BEGIN
 				AND ps.BetType=ref.BetTypeRefBetSetting
 	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0 AND ps.SettingStatus=0
 
-	--NG, Keno:
+		--NG, Keno:
 	UPDATE cl 
-	SET cl.SportTypeRef=cl.SportType
-	, cl.BetTypeRef=cl.BetType
+	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
+	, cl.BetTypeRef=ref.BetTypeRefBetSetting
 	FROM #ListTmp cl
 		INNER JOIN SportBettypeSettingMatrix ref WITH (NOLOCK)
 				ON	ref.Sporttype	= cl.sporttype 
@@ -123,14 +123,14 @@ BEGIN
 				AND ref.isLive		= cl.isLive
 	WHERE cl.SportType IN (161,164,168,202) AND cl.isLicensee=0
 
-	--Keno: GameTypeId
+		--Keno: GameTypeId
 	UPDATE cl 
 	SET cl.GameTypeId=gt.GameTypeID
 	FROM #ListTmp cl
 		INNER JOIN @tmp_GameType gt ON gt.IBCBettypeID=cl.BetType
 	WHERE SportType=202 AND cl.isLicensee=0
 
-	--Deposit
+	--DEPOSIT
 	UPDATE cl 
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
