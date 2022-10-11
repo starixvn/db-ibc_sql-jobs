@@ -69,21 +69,22 @@ SET NOCOUNT ON
 					, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
 					, @Message = @errorMessage
 					, @CaseId = 1;
-				
-				IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= 600 -- loop within 10 minutes
-				BREAK
 
 				WAITFOR DELAY '00:01:00'
 				SET @CheckTime = GETDATE()
 
+				IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= 600 -- loop within 10 minutes
+				BREAK
+
 			END
 		END
+
+		WAITFOR DELAY '00:01:00'
+		SET @CheckTime = GETDATE()
 
 		IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= 600 -- loop within 10 minutes
 		BREAK
 
-		WAITFOR DELAY '00:01:00'
-		SET @CheckTime = GETDATE()
 	END
 
 
