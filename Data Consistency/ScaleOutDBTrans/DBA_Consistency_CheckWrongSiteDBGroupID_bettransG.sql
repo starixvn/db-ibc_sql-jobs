@@ -10,7 +10,8 @@ Task: Detect SiteDBGroupID - bettransG
 DB: DBCONSISTENCY-bodb_Consistency
 Revisions:
 	- 20220930@Victoria: Rule #55 - Check if bet tickets are inserted into the correct SiteDBGroupID by reverting the transID in bettransGXXX tables [Redmine:#178445]
-	
+	- 20221007@Victoria: Modify to add FromSequenceID and ToSequenceID in ResultSet
+							AND get top 5000 to limit the page split issue [Redmine: #178864]
 Param's Expanation:
 	
 */
@@ -38,6 +39,7 @@ BEGIN
 	)
 	
 	DECLARE @maxSequenceId_setting BIGINT,
+			@fromSequenceId BIGINT,
 			@currentTime DATETIME
 
 	SET @currentTime = DATEADD(MINUTE, -2, GETDATE())
@@ -47,7 +49,7 @@ BEGIN
 	WHERE c.VName = 'DiffSGId_LastSeqId_bettransG'
 
 	INSERT INTO #tmp_TransId (TransId, Sequenceid, CustId, SourceSiteDBGroupID)
-	SELECT b.transid, b.sequenceid, b.custid, r.SiteDBGroupID
+	SELECT TOP 5000 b.transid, b.sequenceid, b.custid, r.SiteDBGroupID
 	FROM bodb02.dbo.bettransG b WITH (NOLOCK)
 	CROSS APPLY 
 	(
@@ -58,7 +60,7 @@ BEGIN
 		AND b.transdate < @currentTime
 	ORDER BY  b.sequenceid ASC 
 
-	SET @maxSequenceId = (SELECT MAX(Sequenceid) FROM #tmp_TransId)
+	SELECT @fromSequenceId =  MIN(Sequenceid), @maxSequenceId = MAX(Sequenceid) FROM #tmp_TransId
 	---------------------------------------
 
 	INSERT INTO #tmp_Cust (CustId, site, SiteDBGroupID)
@@ -78,8 +80,8 @@ BEGIN
 		AND ttrans.IsInvalid = 0
 
 	---------------------------------------
-	INSERT INTO #CustSiteDBGroupID_Invalid (TableName, TransID, CustID, SourceSiteDBGroupID, CustomerSiteDBGroupID)
-	SELECT 'bettransG' AS TableName, ttrans.TransId, ttrans.CustId, ttrans.SourceSiteDBGroupID, ttrans.CustomerSiteDBGroupID
+	INSERT INTO #CustSiteDBGroupID_Invalid (TableName, TransID, CustID, SourceSiteDBGroupID, CustomerSiteDBGroupID, FromSequenceID, ToSequenceID)
+	SELECT 'bettransG' AS TableName, ttrans.TransId, ttrans.CustId, ttrans.SourceSiteDBGroupID, ttrans.CustomerSiteDBGroupID, @fromSequenceId, @maxSequenceId
 	FROM #tmp_TransId ttrans
 	WHERE ttrans.IsInvalid = 1
 

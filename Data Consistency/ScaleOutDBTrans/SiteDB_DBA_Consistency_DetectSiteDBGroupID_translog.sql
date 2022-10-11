@@ -38,7 +38,8 @@ BEGIN
 		, SiteDBGroupID SMALLINT
 	)
 	
-	DECLARE @maxTransId_setting BIGINT
+	DECLARE @maxTransId_setting BIGINT,
+			@fromtransid BIGINT
 	
 	SELECT @maxTransId_setting = CONVERT(BIGINT, c.ConfigValue)
 	FROM dbo.SiteDB_DataConsistencyCheck_Config c WITH (NOLOCK)
@@ -50,7 +51,7 @@ BEGIN
 	WHERE b.translogid > @maxTransId_setting
 	ORDER BY  b.translogid ASC
 
-	SET @maxTransId = (SELECT MAX(TransId) FROM #tmp_TransId)
+	SELECT @fromtransid =  MIN(TransId), @maxTransId = MAX(TransId) FROM #tmp_TransId
 	---------------------------------------
 
 	INSERT INTO #tmp_Cust (CustId, site, SiteDBGroupID)
@@ -76,8 +77,8 @@ BEGIN
 	AND ttrans.IsInvalid = 0
 
 	---------------------------------------
-	INSERT INTO #CustSiteDBGroupID_Invalid (TableName, TransID, CustID, SiteDBGroupID, SiteDBGroupIDConfigured)
-	SELECT 'translog' AS TableName, ttrans.TransId, ttrans.CustId, ttrans.SiteDBGroupID, ttrans.SiteDBGroupIDConfigured
+	INSERT INTO #CustSiteDBGroupID_Invalid (TableName, TransID, CustID, SiteDBGroupID, SiteDBGroupIDConfigured, FromTransID, ToTransID)
+	SELECT 'translog' AS TableName, ttrans.TransId, ttrans.CustId, ttrans.SiteDBGroupID, ttrans.SiteDBGroupIDConfigured, @fromtransid, @maxTransId
 	FROM #tmp_TransId ttrans
 	WHERE ttrans.IsInvalid = 1
 
