@@ -11,6 +11,7 @@ AS
     DB: DBBAH/bodb02
     Revisions:
 		- 20220928@July: scaleout project - Balance record [176932]
+		- 20221010@July: Dynamic - Order by RowID & waitfor delay [176932]
 		
 */
 BEGIN
@@ -50,8 +51,12 @@ BEGIN
 	SET @sqlCMD = N'\
 	SELECT rowID, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds 
 	FROM OPENQUERY('+@SiteDBAlias+', ''\
+	DECLARE @maxID_tmp BIGINT
+	SET @maxID_tmp = (SELECT MAX(RowID) FROM [bodb02].[dbo].[BalanceTrigger] WITH(NOLOCK)) 
+	WAITFOR DELAY ''''00:00:00.020''''
 	SELECT TOP('+CONVERT(VARCHAR(10), @batchSize)+') rowid, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds 
-	FROM [bodb02].[dbo].[BalanceTrigger] WITH(NOLOCK) WHERE RowID > '+CONVERT(VARCHAR(20), @maxRowID)+'\
+	FROM [bodb02].[dbo].[BalanceTrigger] WITH(NOLOCK) WHERE RowID <= @maxID_tmp AND RowID > '+CONVERT(VARCHAR(20), @maxRowID)+'\
+	ORDER BY RowID ASC
 	'')';
 
 	--debug
@@ -68,7 +73,7 @@ BEGIN
 	INSERT INTO [bodb02].[dbo].[BalanceTrigger] (custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds)
 	SELECT custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds
 	FROM #tmpBalanceTrigger
-	ORDER BY RowID
+	ORDER BY RowID ASC
 
 	-- get maxRowID
 	UPDATE s
