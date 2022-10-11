@@ -122,6 +122,24 @@ BEGIN TRANSACTION
 	IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
 		GOTO QuitWithRollback
 
+	EXEC msdb.dbo.sp_add_jobschedule
+		@job_name='vndba:Check slowly BalanceUpdCreditSports process',
+		@name=N'Schedule_CheckSowlyBalanceUpdCreditSports',
+		@enabled=1, 
+		@freq_type=4, 
+		@freq_interval=1, 
+		@freq_subday_type=4, 
+		@freq_subday_interval=1, 
+		@freq_relative_interval=0, 
+		@freq_recurrence_factor=0, 
+		@active_start_date=20221010, 
+		@active_end_date=99991231,  --no end date
+		@active_start_time=0,  --00:00:00
+		@active_end_time=235959 --23:59:59
+
+	IF (@@ERROR <> 0 OR @ReturnCode <> 0) 
+		GOTO QuitWithRollback
+
 COMMIT TRANSACTION
 GOTO EndSave
 
