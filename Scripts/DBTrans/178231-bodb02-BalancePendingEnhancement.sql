@@ -35,10 +35,10 @@ GO
 INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_State',0)
 INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_rnMIN',0)
 INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_rnMAX',0)
-INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_tstamp',0)
+INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_tstamp',CONVERT(VARCHAR(50), sysdatetime()) )
 INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_updID',0)
 INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_TotalCust',0)
-INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_CreatedDate',0)
+INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingCS_CreatedDate',CONVERT(VARCHAR(50), GETDATE(),121))
 
 GO
 
