@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20220523@Tacy: Initial SP [RedmineID: #170739]
 		- 20220810@Elodie: Change name of temp table
+		- 20220811@Tacy: Detect maxbet for Keno, Number Game product [RedmineID: #170739]
 
 	Param's Explanation:
 */
@@ -55,6 +56,21 @@ BEGIN
 		,	MaxPerMatch		MONEY
 		,	PRIMARY KEY CLUSTERED (transid)
 	)
+
+	DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
+
+	BEGIN TRY		
+		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
+		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID 
+		FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK)
+		WHERE IBCBetTypeID BETWEEN 1501 AND 1599	--Keno
+	END TRY
+	BEGIN CATCH		
+		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
+		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID 
+		FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK)
+		WHERE IBCBetTypeID BETWEEN 1501 AND 1599	--Keno
+	END CATCH
 	
 	--nonClustered
 	CREATE NONCLUSTERED INDEX IX_tmpCustList ON #ListTmp(custid,SportTypeRef,BetTypeRef)
@@ -77,15 +93,15 @@ BEGIN
 		LEFT JOIN Dep_CustSuper dep WITH (NOLOCK) ON dep.custid=tc.srecommend
 
 	--Get: SportTypeBetSetting, BetTypeBetSetting, SettingType, GameTypeId
-	--Credit
+	--CREDIT
 	UPDATE cl 
-	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
-	, cl.BetTypeRef=ref.BetTypeRefBetSetting
-	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame
-					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
-	, cl.SettingType=ps.SettingType
+	SET	  cl.SportTypeRef=ref.SportTypeRefBetSetting
+		, cl.BetTypeRef=ref.BetTypeRefBetSetting
+		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame
+						THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
+		, cl.SettingType=ps.SettingType
 	FROM #ListTmp cl
-		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
+		INNER JOIN SportBettypeSettingMatrix ref WITH (NOLOCK)
 				ON	ref.Sporttype	= cl.sporttype 
 				AND ref.Bettype		= cl.bettype
 				AND ref.isLicensee	= cl.isLicensee
@@ -95,7 +111,26 @@ BEGIN
 				AND ps.BetType=ref.BetTypeRefBetSetting
 	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0 AND ps.SettingStatus=0
 
-	--Deposit
+		--NG, Keno:
+	UPDATE cl 
+	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
+	, cl.BetTypeRef=ref.BetTypeRefBetSetting
+	FROM #ListTmp cl
+		INNER JOIN SportBettypeSettingMatrix ref WITH (NOLOCK)
+				ON	ref.Sporttype	= cl.sporttype 
+				AND ref.Bettype		= cl.bettype
+				AND ref.isLicensee	= cl.isLicensee
+				AND ref.isLive		= cl.isLive
+	WHERE cl.SportType IN (161,164,168,202) AND cl.isLicensee=0
+
+		--Keno: GameTypeId
+	UPDATE cl 
+	SET cl.GameTypeId=gt.GameTypeID
+	FROM #ListTmp cl
+		INNER JOIN @tmp_GameType gt ON gt.IBCBettypeID=cl.BetType
+	WHERE SportType=202 AND cl.isLicensee=0
+
+	--DEPOSIT
 	UPDATE cl 
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
@@ -103,7 +138,7 @@ BEGIN
 					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
 	, cl.SettingType=ps.SettingType
 	FROM #ListTmp cl
-		INNER JOIN Sport_Bettype_Reference_Setting ref WITH (NOLOCK)
+		INNER JOIN SportBettypeSettingMatrix ref WITH (NOLOCK)
 				ON	ref.Sporttype	= cl.sporttype 
 				AND ref.Bettype		= cl.bettype
 				AND ref.isLicensee	= cl.isLicensee
@@ -116,7 +151,7 @@ BEGIN
 	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1 AND psd.SettingStatus=0
 
 	-- @sporttype: not support StakeLevel
-	IF EXISTS (SELECT 1 FROM #ListTmp WHERE SettingType NOT IN (7,8,17))
+	IF EXISTS (SELECT 1 FROM #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202))
 	BEGIN
 		INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
 		SELECT cl.custid, cl.transid, cl.SportType, cl.BetType
@@ -126,19 +161,21 @@ BEGIN
 			, CASE WHEN (cl.isLicensee=0 AND ch.custid IS NOT NULL) THEN ch.OldMaxPerMatch
 					WHEN (cl.isLicensee=1 AND dch.custid IS NOT NULL) THEN dch.OldMaxPerMatch END MaxPerMatch
 		FROM #ListTmp cl
+		--CREDIT
 			OUTER APPLY (SELECT TOP (1) ch. custid, OldMaxBet, OldMaxPerMatch, UpdateTime 
 						 FROM CustMaxBetSetting_History ch WITH (NOLOCK)
 						 WHERE  ch.custid=cl.custid AND ch.SportType=cl.SportTypeRef
 							AND ch.BetType=cl.BetTypeRef AND ch.UpdateTime>cl.transdate 
 						 ORDER BY UpdateTime
 						 ) ch
+		--DEPOSIT
 			OUTER APPLY (SELECT TOP (1) dch.custid, OldMaxBet, OldMaxPerMatch, UpdateTime 
 						 FROM Dep_CustMaxBetSetting_History dch WITH (NOLOCK)
 						 WHERE dch.custid=cl.custid AND dch.SportType=cl.SportTypeRef
 							AND dch.BetType=cl.BetTypeRef AND dch.UpdateTime>cl.transdate  
 						 ORDER BY UpdateTime
 						 ) dch
-		WHERE cl.SettingType NOT IN (7,8,17) AND
+		WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202)) AND
 			(
 			  (cl.isLicensee=0 AND ch.custid IS NOT NULL)
 			OR 
@@ -146,42 +183,86 @@ BEGIN
 			)
 
 		--Current Maxbet
-		--Credit
+		--CREDIT
 		IF EXISTS (	SELECT 1 FROM #ListTmp cl
+					WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202)) 
+						AND cl.isLicensee=0
+						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
+										WHERE re.transid=cl.transid)
+					)
+		BEGIN
+			INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
+			SELECT a.custid, a.transid, a.SportType, a.BetType, a.MaxBet, a.MaxPerMatch
+			FROM (	SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, cbs.MaxBet, cbs.MaxPerMatch
+					FROM #ListTmp cl
+						INNER JOIN CustBetSetting3rd_Member cbs WITH (NOLOCK) ON cbs.CustID=cl.custid
+																			AND cbs.SportType=cl.SportTypeRef
+																			AND cbs.BetType=cl.BetTypeRef
 					WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=0
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
-					)
-		BEGIN
-			INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
-			SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, cbs.MaxBet, cbs.MaxPerMatch
-			FROM #ListTmp cl
-				INNER JOIN CustBetSetting3rd_Member cbs WITH (NOLOCK) ON cbs.CustID=cl.custid
-																	AND cbs.SportType=cl.SportTypeRef
-																	AND cbs.BetType=cl.BetTypeRef
-			WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=0
-				AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
-								WHERE re.transid=cl.transid)
+					UNION	--NumberGame
+					SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, cbs.MaxBet, cbs.MaxPerMatch
+					FROM #ListTmp cl
+						INNER JOIN CustBetSetting_Member cbs WITH (NOLOCK) ON cbs.CustID=cl.custid
+																		AND cbs.SportType=cl.SportTypeRef
+																		AND cbs.BetType=cl.BetTypeRef
+					WHERE cl.SportType IN (161,164,168) AND cl.isLicensee=0
+						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
+										WHERE re.transid=cl.transid)
+					UNION	--Keno
+					SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, cgt.MaxBet, cgt.MaxPerGameType
+					FROM #ListTmp cl
+						INNER JOIN CustGameType cgt WITH (NOLOCK) ON cl.custid=cgt.CustID
+																AND cl.GameTypeId=cgt.GameTypeID
+																AND cgt.IsDisabled=0
+					WHERE cl.SportType=202 AND cl.isLicensee=0
+						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
+										WHERE re.transid=cl.transid)
+				) a
 		END
-		--deposit
+
+		--DEPOSIT
 		IF EXISTS (	SELECT 1 FROM #ListTmp cl
-					WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=1
+					WHERE (cl.SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202)) 
+						AND cl.isLicensee=1
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
 					)
 		BEGIN
 			INSERT INTO #returnTbl(custid, transid, SportType, BetType, MaxBet, MaxPerMatch)
-			SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, dcbs.MaxBet, dcbs.MaxPerMatch
-			FROM #ListTmp cl
-				INNER JOIN Dep_CustBetSetting_Member dcbs WITH (NOLOCK) ON dcbs.CustID=cl.custid
-																		AND dcbs.SportType=cl.SportTypeRef
-																		AND dcbs.BetType=cl.BetTypeRef
-			WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=1
-				AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
-								WHERE re.transid=cl.transid)
+			SELECT a.custid, a.transid, a.SportType, a.BetType, a.MaxBet, a.MaxPerMatch
+			FROM (	SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, dcbs.MaxBet, dcbs.MaxPerMatch
+					FROM #ListTmp cl
+					INNER JOIN Dep_CustBetSetting_Member dcbs WITH (NOLOCK) ON dcbs.CustID=cl.custid
+																			AND dcbs.SportType=cl.SportTypeRef
+																			AND dcbs.BetType=cl.BetTypeRef
+					WHERE cl.SettingType NOT IN (7,8,17) AND cl.isLicensee=1
+						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
+										WHERE re.transid=cl.transid)
+					UNION --NumberGame
+					SELECT	cl.custid, cl.transid, cl.SportType, cl.BetType, 
+							CASE WHEN mode.IsGroupedBetLimit=0 THEN dcbs.MaxBet		 
+								 WHEN mode.IsGroupedBetLimit=1 THEN gg.MaxBet		 
+							END MaxBet,
+							CASE WHEN mode.IsGroupedBetLimit=0 THEN dcbs.MaxPerMatch 
+								 WHEN mode.IsGroupedBetLimit=1 THEN gg.MaxPerMatch 
+							END MaxPerMatch
+					FROM #ListTmp cl
+						INNER JOIN Dep_custsettingmode mode WITH (NOLOCK) ON mode.CustID=cl.custid
+						LEFT JOIN Dep_CustBetSettingGameGroup_Member gg WITH (NOLOCK) ON gg.AgentID=cl.recommend
+																					AND gg.SportType=cl.SportTypeRef
+																					AND gg.BetType=cl.BetTypeRef
+						LEFT JOIN Dep_CustBetSettingGame_Member dcbs WITH (NOLOCK) ON dcbs.CustID=cl.custid
+																	AND dcbs.SportType=cl.SportTypeRef
+																	AND dcbs.BetType=cl.BetTypeRef
+					WHERE cl.SportType IN (161,164,168) AND cl.isLicensee=1
+						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
+										WHERE re.transid=cl.transid)
+				) a
 		END
 
-		DELETE #ListTmp WHERE SettingType NOT IN (7,8,17)
+		DELETE #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202)
 	END
 
 	-- @sporttype: support StakeLevel - SettingType IN (7,17)
