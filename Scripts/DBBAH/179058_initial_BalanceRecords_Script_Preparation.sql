@@ -14,7 +14,7 @@ GO
 
 CREATE TABLE #temp (custid INT, sitedbgroupid SMALLINT)
 INSERT INTO #temp (custid, sitedbgroupid)
-SELECT DISTINCT s.sitedbgroupid, custid
+SELECT DISTINCT bk.custid,s.sitedbgroupid
 FROM balancerecord.dbo.BalanceRecord_bk bk with(nolock)
 INNER JOIN bodb02.dbo.vw_customer ci with(nolock) on ci.custid = bk.custid
 INNER JOIN bodb02.dbo.site s with (nolock) on s.site = ci.site
