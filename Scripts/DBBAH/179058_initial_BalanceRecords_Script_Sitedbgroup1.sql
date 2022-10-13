@@ -13,7 +13,7 @@ DECLARE @maxcustid INT = 0
 SELECT @maxcustid = MAX(custid) 
 FROM customer ci WITH (NOLOCK)
 	INNER JOIN site s WITH (NOLOCK) ON ci.site = s.site
-WHERE s.SiteDBGroupID IN (1,2)
+WHERE s.SiteDBGroupID = 1
 
 SELECT @maxcustid AS [@maxcustid]
 

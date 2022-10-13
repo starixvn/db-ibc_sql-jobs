@@ -7,6 +7,15 @@
 */
 USE bodb02
 GO
+---------------------------------------------------------------------------------
+DECLARE @maxcustid INT = 0
+
+SELECT @maxcustid = MAX(custid) 
+FROM customer ci WITH (NOLOCK)
+	INNER JOIN site s WITH (NOLOCK) ON ci.site = s.site
+WHERE s.SiteDBGroupID = 2
+
+SELECT @maxcustid AS [@maxcustid]
 
 --------------DECLARE temporary tables ------------------
 CREATE TABLE #temp_MemberInput(
