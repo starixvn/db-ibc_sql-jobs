@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_BalanceUpdDebitGame]
 AS
@@ -16,6 +16,8 @@ AS
 			- 20200806@Elodie: Do not count ticket PP Jackpot Prize (4298) into SMA Win Limit. [Redmine: #138481]
 			- 20210610@Tina: Do not count ticket Lucky Draw (3150) into SMA Win Limit. [Redmine: #154296]
 			- 20220304@Elodie: Do not count ticket Promotion (2499) into SMA Win Limit. [Redmine: #166981]
+			- 20220929@Tacy: Do not count ticket MG-RNG Tournament (8695) into SMA Win Limit. [Redmine: #178335]
+
 		Parameters Explanation:	
 */
 	
@@ -39,7 +41,7 @@ INSERT INTO #Balance
 SELECT custid, winlostdate, bettype, SUM(balance)
 FROM dbo.BalancePendingDebitGame --with (rowlock)
 WHERE rn <= @rn
-    AND GameTypeid NOT IN (2199,2399,2499,2999,4298,3150) --do not count ticket Progressive Jackpot, PP Jackpot Prize, Promotion and Lucky Draw into SMA Win Limit
+    AND GameTypeid NOT IN (2199,2399,2499,2999,4298,3150,8695) --do not count ticket Progressive Jackpot, PP Jackpot Prize, Promotion and Lucky Draw, MG-RNG Tournament into SMA Win Limit
 GROUP BY custid, winlostdate, bettype
 
 
