@@ -19,7 +19,7 @@ FROM balancerecord.dbo.BalanceRecord_bk bk with(nolock)
 INNER JOIN bodb02.dbo.vw_customer ci with(nolock) on ci.custid = bk.custid
 INNER JOIN bodb02.dbo.site s with (nolock) on s.site = ci.site
 WHERE ActionDate >= '2022-09-20 02:16:17.030'
-	AND s.SiteDBGroupID = 1 -- IN (1,2) 
+	AND s.SiteDBGroupID IN (1,2) 
 	AND action like 'RNG (IsSUM :%' 
 	AND rowid >= 60813434030
 	--60813434030
