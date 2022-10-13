@@ -10,7 +10,8 @@ Task: CheckSum ticket
 DB: DBCONSISTENCY-bodb_Consistency
 Revisions:
 	- 20220819@Victoria: Rule #49 - CheckSum ticket [Redmine:#175881]
-	
+	- 20221012@Victoria: Modify to show FromDate and ToDate
+							AND replication latency with ticket odds adjustment [Redmine:#178864]
 */
 
 BEGIN

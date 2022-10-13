@@ -10,7 +10,8 @@ Task: Check ticket count by Status - SiteDB
 DB: DBSIG-bodb02
 Revisions:
 	- 20220819@Victoria: Rule #48 - Check ticket count by Status - SiteDB [Redmine:#175881]
-	
+	- 20221012@Victoria: Modify to show FromDate and ToDate
+							AND replication latency with ticket odds adjustment [Redmine:#178864]	
 */
 BEGIN
 	SET NOCOUNT ON
