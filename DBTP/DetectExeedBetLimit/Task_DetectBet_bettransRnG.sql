@@ -16,6 +16,7 @@ AS
 		- 20220728@July: Scale out DBTRANS - Change maxTransIdSetting to SequenceIdSetting [Redmine: #175965]
 		- 20220923@Max: Tuning [Redmine: #178156]
 		- 20220830@July: Include product SEAL Entertainment [Redmine: #177003]
+		- 20220923@July: Include product MG-RNG (Microgaming) [Redmine: #177583]
 
 	Param's explanation:		
 */
@@ -59,7 +60,7 @@ BEGIN
 	WHERE b.SequenceID > @maxSequenceId_setting
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
-		AND b.productID IN (208,209,212,248,165,247,232,234,237,238,167,172,174,150,200,224,171,173,156)
+		AND b.productID IN (208,209,212,248,165,247,232,234,237,238,167,172,174,150,200,224,171,173,156,155)
 	ORDER BY  b.sequenceid ASC
 
 	SET @maxSequenceId = (SELECT MAX(SequenceId) FROM #tmp_TransId)
