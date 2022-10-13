@@ -72,6 +72,10 @@ DECLARE  @ExecuteSQL NVARCHAR(MAX) = ''
 SET @rid_loop = ((SELECT MAX(ID) FROM #temp_MemberInput)/@batch) + 1
 SET @StopRow = @batch
 
+SELECT  @query = N''		
+SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
+SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
+	
 WHILE (@loop_cnt <= @rid_loop)
 BEGIN
 	
@@ -88,7 +92,13 @@ BEGIN
 
 	IF @@ROWCOUNT = 0
 		BREAK
-
+	
+	SET @CustidList = ''
+	SET @CustidList = STUFF((SELECT ',' + CONVERT(VARCHAR(20), custid)
+				 FROM #tempMember 
+				 FOR XML PATH ('')
+					),1,1,'')
+	
 	--- step 2 insert balance record to re-init
 	INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
 	SELECT	m.custid, 0, 0, 0, 0, 0, 0, bal.Balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
@@ -99,26 +109,12 @@ BEGIN
 			WHERE b.custid = m.custid
 		) AS bal
 
-	SET @rowCount += @@ROWCOUNT
-	
-	SET @CustidList = ''
-	SET @CustidList = STUFF((SELECT ',' + CONVERT(VARCHAR(20), custid)
-				 FROM #tempMember 
-				 FOR XML PATH ('')
-					),1,1,'')
-
 	-- step 3: delete balance trigger if exists
 	WHILE (@isSuccess = 0)
 	BEGIN
 		BEGIN TRY
 
-			SELECT  @query = N''		
-			SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
-	
-			SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
-	
 			EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX), @CustidList VARCHAR(MAX)', @query, @CustidList
-
 			SET @isSuccess = 1
 
 		END TRY
@@ -138,7 +134,7 @@ BEGIN
 
 END
 
-SELECT @rowCount
+--SELECT @rowCount
 
 DROP TABLE #temp_MemberInput
 DROP TABLE #tempMember
