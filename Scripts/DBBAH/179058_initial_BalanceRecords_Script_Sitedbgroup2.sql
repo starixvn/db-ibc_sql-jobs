@@ -95,7 +95,7 @@ BEGIN
 	FROM #tempMember m
 		CROSS APPLY (
 			SELECT TOP 1 Balance 
-			FROM DBTRANS.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
+			FROM DBSIG02.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
 			WHERE b.custid = m.custid
 		) AS bal
 
