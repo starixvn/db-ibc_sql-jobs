@@ -65,8 +65,9 @@ DECLARE @StartRow INT = 1
 		, @retrycnt INT = 0 
 		, @isSuccess BIT = 0
 DECLARE  @ExecuteSQL NVARCHAR(MAX) = ''
-			, @query NVARCHAR(MAX) = ''
-			, @SiteDBAlias VARCHAR(200) ='DBSIG02'
+		, @query NVARCHAR(MAX) = ''
+		, @SiteDBAlias VARCHAR(200) ='DBSIG02'
+		, @CustidList VARCHAR(MAX) = ''
 
 SET @rid_loop = ((SELECT MAX(ID) FROM #temp_MemberInput)/@batch) + 1
 SET @StopRow = @batch
@@ -100,6 +101,12 @@ BEGIN
 
 	SET @rowCount += @@ROWCOUNT
 	
+	SET @CustidList = ''
+	SET @CustidList = STUFF((SELECT ',' + CONVERT(VARCHAR(20), custid)
+				 FROM #tempMember 
+				 FOR XML PATH ('')
+					),1,1,'')
+
 	-- step 3: delete balance trigger if exists
 	WHILE (@isSuccess = 0)
 	BEGIN
