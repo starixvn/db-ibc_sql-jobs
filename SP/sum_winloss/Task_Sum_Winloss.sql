@@ -40,6 +40,7 @@ AS
 		- 20220328@Evan: Expand bettype of Macau Games - [Redmine: #170383]
 		- 20221002@Danny: Add New LeagueGroupID and TicketType columns [Redmine: #167177]	
 		- 20220825@Eddie: Add SEAL Entertainment  [RedmineID: #176078]
+		- 20220907@Eddie: Add Microgaming  [RedmineID: #175850]	
 */
 BEGIN
 
@@ -238,6 +239,7 @@ BEGIN
 			WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin Product
 			WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG Product
 			WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEAL Entertainment
+			WHEN bettype BETWEEN 8400 AND 8699 THEN 155 -- Microgaming
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -393,6 +395,7 @@ BEGIN
 				 WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin Product
 				 WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG Product
 				 WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEAL Entertainment
+				 WHEN bettype BETWEEN 8400 AND 8699 THEN 155 -- Microgaming
 				 ELSE 0
 			 END
 			,CASE
@@ -447,7 +450,8 @@ BEGIN
 				 WHEN bettypePT BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
 				 WHEN bettypePT BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product
 				 WHEN bettypePT BETWEEN 8201 AND 8299 THEN 176 -- FGG Product
-				 WHEN bettypePT BETWEEN 8900 AND 8999 THEN 156 -- SEAL Entertainment				 
+				 WHEN bettypePT BETWEEN 8900 AND 8999 THEN 156 -- SEAL Entertainment
+				 WHEN bettypePT BETWEEN 8400 AND 8699 THEN 155 -- Microgaming
 				 ELSE 0 END AS SporttypeRef
 		FROM #__SuperExtraPT WHERE RefTable IN (1, 2)
 
