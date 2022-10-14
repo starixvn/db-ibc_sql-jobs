@@ -4,6 +4,7 @@
 	Task: init data for sitedb1,2 due to trigger insert on bettransRnG not captured data[Redmine:#179058]
 	DB:DBBAH/bodb02
 
+	Notes: run on db05bk1 only
 */
 USE bodb02
 GO
@@ -27,7 +28,7 @@ CREATE TABLE #tempMember (custid INT PRIMARY KEY)
 --------------GET members needs to process ------------------
 INSERT INTO #temp_MemberInput (custid)
 SELECT custid
-from dbo.BalanceRecord_SiteDB2_tmp WITH (NOLOCK)
+from BalanceRecord_SiteDB2_tmp WITH (NOLOCK)
 
 SELECT @@ROWCOUNT AS [custid_Count]
 
@@ -59,15 +60,20 @@ outer apply (
 DECLARE @debug_message VARCHAR(MAX) = ''
 
 --------------LOOP BY batch 500 of customers ------------------
-DECLARE @rid_loop INT, @rowCount int  =0, @batch int = 500, @loop_cnt int = 1
+DECLARE @rid_loop INT, @rowCount int  =0, @batch int = 50, @loop_cnt int = 1
 DECLARE @StartRow INT = 1
 		, @StopRow INT 
 		, @retrycnt INT = 0 
 		, @isSuccess BIT = 0
 DECLARE  @ExecuteSQL NVARCHAR(MAX) = ''
 		, @query NVARCHAR(MAX) = ''
+		, @ExecuteSQL_balance NVARCHAR(MAX) = ''
+		, @query_balance NVARCHAR(MAX) = ''
 		, @SiteDBAlias VARCHAR(200) ='DBSIG02'
 		, @CustidList VARCHAR(MAX) = ''
+
+DECLARE @CustidBalanceList VARCHAR(MAX) = ''
+DECLARE @xml XML = NULL
 
 SET @rid_loop = ((SELECT MAX(ID) FROM #temp_MemberInput)/@batch) + 1
 SET @StopRow = @batch
@@ -75,7 +81,12 @@ SET @StopRow = @batch
 SELECT  @query = N''		
 SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
 SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
-	
+
+-- SET param to insert balance in db05
+SELECT  @query_balance = N'', @SiteDBAlias = 'DB05'		
+SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
+SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
+
 WHILE (@loop_cnt <= @rid_loop)
 BEGIN
 	
@@ -92,22 +103,31 @@ BEGIN
 
 	IF @@ROWCOUNT = 0
 		BREAK
-	
+
 	SET @CustidList = ''
 	SET @CustidList = STUFF((SELECT ',' + CONVERT(VARCHAR(20), custid)
 				 FROM #tempMember 
 				 FOR XML PATH ('')
-					),1,1,'')
-	
+					),1,1,'')	
+					
 	--- step 2 insert balance record to re-init
+	SELECT @CustidBalanceList = (SELECT  m.custid AS '@c'
+										,bal.Balance AS '@b'
+								FROM #tempMember m
+									CROSS APPLY (
+												SELECT TOP 1 Balance 
+												FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
+												WHERE b.custid = m.custid) AS bal
+								FOR XML PATH('r'), ROOT('root')
+								)
+	-- insert db05bk1 first
 	INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
-	SELECT	m.custid, 0, 0, 0, 0, 0, 0, bal.Balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
-	FROM #tempMember m
-		CROSS APPLY (
-			SELECT TOP 1 Balance 
-			FROM DBSIG02.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
-			WHERE b.custid = m.custid
-		) AS bal
+	SELECT	t.c.value('@c','int') AS custid, 0, 0, 0, 0, 0, 0, t.c.value('@b','MONEY') AS balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
+	FROM @xml.nodes('root/r') t(c)
+	OPTION (OPTIMIZE FOR (@xml = NULL))	
+
+	-- insert db05
+	EXECUTE	sys.sp_executesql @ExecuteSQL_balance, N'@query_balance NVARCHAR(MAX), @CustidBalanceList VARCHAR(MAX)', @query_balance, @CustidBalanceList
 
 	-- step 3: delete balance trigger if exists
 	WHILE (@isSuccess = 0)
