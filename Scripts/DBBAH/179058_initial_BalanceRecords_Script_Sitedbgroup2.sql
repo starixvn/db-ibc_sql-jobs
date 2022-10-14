@@ -32,6 +32,9 @@ from BalanceRecord_SiteDB2_tmp WITH (NOLOCK)
 
 SELECT @@ROWCOUNT AS [custid_Count]
 
+SELECT TOP 1 1
+FROM BalanceTrigger_ProcessData b WITH (NOLOCK)
+	INNER JOIN #temp_MemberInput m ON b.custid = m.custid
 
 ----------- get maxtransid: Run on DBTRans/bodb02----------------
 select * from OPENQUERY(DBSIG02, '

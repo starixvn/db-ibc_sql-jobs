@@ -33,8 +33,8 @@ from BalanceRecord_SiteDB1_tmp WITH (NOLOCK)
 SELECT @@ROWCOUNT AS [custid_Count]
 
 -- delete data [dbo].[BalanceTrigger_ProcessData] for customers will process to insert balancerecord for credit
-DELETE b
-FROM BalanceTrigger_ProcessData b
+SELECT TOP 1 1
+FROM BalanceTrigger_ProcessData b WITH (NOLOCK)
 	INNER JOIN #temp_MemberInput m ON b.custid = m.custid
 
 ----------- get maxtransid: Run on DBTRans/bodb02----------------
