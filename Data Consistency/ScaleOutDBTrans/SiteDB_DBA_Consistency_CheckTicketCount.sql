@@ -1,5 +1,8 @@
 /*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_CheckTicketCount]
+(
+	@CurrentTime DATETIME
+)
 AS 
 /*
 Created by: 20220819@Victoria
@@ -7,7 +10,8 @@ Task: Check ticket count by Status - SiteDB
 DB: DBSIG-bodb02
 Revisions:
 	- 20220819@Victoria: Rule #48 - Check ticket count by Status - SiteDB [Redmine:#175881]
-	
+	- 20221012@Victoria: Modify to show FromDate and ToDate
+							AND replication latency with ticket odds adjustment [Redmine:#178864]	
 */
 BEGIN
 	SET NOCOUNT ON
@@ -15,6 +19,7 @@ BEGIN
 	DECLARE @before_yesterday SMALLDATETIME, @yesterday SMALLDATETIME
 	SELECT  @before_yesterday = CONVERT(DATE, DATEADD(DAY, -2, GETDATE()))
 	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
+	
 	
 	CREATE TABLE #tmp_betticketcheckcount
 	(
@@ -40,6 +45,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.bettrans WITH (NOLOCK)
 	WHERE	winlostdate IN (@before_yesterday,@yesterday)
+		AND transdate < @CurrentTime
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
@@ -59,6 +65,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.bettransRnG WITH (NOLOCK)
 	WHERE	winlostdate IN (@before_yesterday,@yesterday)
+		AND transdate < @CurrentTime
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
@@ -78,6 +85,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.bettransLC WITH (NOLOCK)
 	WHERE	winlostdate IN (@before_yesterday,@yesterday)
+		AND transdate < @CurrentTime
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
@@ -98,6 +106,7 @@ BEGIN
 	FROM	dbo.bettransG b WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = b.custid
 	WHERE	b.winlostdate IN (@before_yesterday,@yesterday)
+		AND transdate < @CurrentTime
 	GROUP BY	b.SiteDBGroupID, 
 				c.Recommend, 
 				b.Status
@@ -117,6 +126,7 @@ BEGIN
 			COUNT(1) AS TicketCount
 	FROM	dbo.translog WITH (NOLOCK)
 	WHERE	winlostdate IN (@before_yesterday,@yesterday)
+		AND transdate < @CurrentTime
 	GROUP BY	SiteDBGroupID, 
 				Recommend, 
 				Status
@@ -137,6 +147,7 @@ BEGIN
 	FROM	dbo.bettransm bm WITH (NOLOCK) 
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = bm.custid
 	WHERE	bm.winlostdate IN (@before_yesterday,@yesterday)
+		AND bm.transdate < @CurrentTime
 	GROUP BY	bm.SiteDBGroupID, 
 				c.Recommend, 
 				bm.Status
@@ -157,6 +168,7 @@ BEGIN
 	FROM	dbo.zzzbettrans z WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
 	WHERE	z.winlostdate IN (@before_yesterday,@yesterday)
+		AND z.transdate < @CurrentTime
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
 				z.Status
@@ -177,6 +189,7 @@ BEGIN
 	FROM	dbo.zzzbettransm z WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
 	WHERE	z.winlostdate IN (@before_yesterday,@yesterday)
+		AND z.transdate < @CurrentTime
 	GROUP BY	z.SiteDBGroupID, 
 				c.Recommend, 
 				z.Status
@@ -184,6 +197,8 @@ BEGIN
 	SELECT TableName, SiteDBGroupID, Recommend, Status, TicketCount
 	FROM #tmp_betticketcheckcount
 	ORDER BY TableName, SiteDBGroupID, Recommend, Status
+
+	SELECT @before_yesterday AS FromDate, @yesterday AS ToDate
 
 	DROP TABLE #tmp_betticketcheckcount
 END

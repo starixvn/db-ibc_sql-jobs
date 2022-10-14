@@ -1,5 +1,8 @@
 /*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_CheckSumTicket]
+(
+	@CurrentTime DATETIME
+)
 AS 
 /*
 Created by: 20220819@Victoria
@@ -7,7 +10,8 @@ Task: CheckSum ticket - SiteDB
 DB: DBSIG-bodb02
 Revisions:
 	- 20220819@Victoria: Rule #49 - CheckSum ticket - SiteDB [Redmine:#175881]
-	
+	- 20221012@Victoria: Modify to show FromDate and ToDate
+							AND replication latency with ticket odds adjustment [Redmine:#178864]	
 */
 
 BEGIN
@@ -43,6 +47,7 @@ BEGIN
 									[balance], [transid2], [WalletType], [BonusID], [RefCode])) AS TotalCheckSumAgg
 	FROM	dbo.bettrans WITH (NOLOCK)
 	WHERE	[winlostdate] IN (@before_yesterday,@yesterday)
+		AND [transdate] < @CurrentTime
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
 	
@@ -63,6 +68,7 @@ BEGIN
 									[SiteID], [Additional], [JackpotInfo], [RefNo2], [ContributionRate], [BetStake], [ContributionStake3rd])) AS TotalCheckSumAgg
 	FROM	dbo.bettransRnG WITH (NOLOCK)
 	WHERE	[winlostdate] IN (@before_yesterday,@yesterday)
+		AND [transdate] < @CurrentTime
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
 	
@@ -83,6 +89,7 @@ BEGIN
 									[SiteID])) AS TotalCheckSumAgg
 	FROM	dbo.bettransLC WITH (NOLOCK)
 	WHERE	[winlostdate] IN (@before_yesterday,@yesterday)
+		AND [transdate] < @CurrentTime
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
 	
@@ -103,6 +110,7 @@ BEGIN
 	FROM	dbo.bettransG g WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = g.custid
 	WHERE	g.[winlostdate] IN (@before_yesterday,@yesterday)
+		AND g.[transdate] < @CurrentTime
 	GROUP BY	g.[SiteDBGroupID], 
 				c.[recommend]
 	
@@ -123,6 +131,7 @@ BEGIN
 									[checkCount])) AS TotalCheckSumAgg
 	FROM	dbo.translog WITH (NOLOCK)
 	WHERE	[winlostdate] IN (@before_yesterday,@yesterday)
+		AND [transdate] < @CurrentTime
 	GROUP BY	[SiteDBGroupID], 
 				[recommend]
 	
@@ -145,12 +154,15 @@ BEGIN
 	FROM	dbo.bettransm bm WITH (NOLOCK) 
 		INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = bm.custid
 	WHERE	bm.[winlostdate] IN (@before_yesterday,@yesterday)
+		AND bm.[transdate] < @CurrentTime
 	GROUP BY	bm.[SiteDBGroupID], 
 				c.[recommend]
 	
 	SELECT TableName, SiteDBGroupID, Recommend, TotalCheckSumAgg
 	FROM #tmp_betticketchecksum
 	ORDER BY TableName, SiteDBGroupID, Recommend
+
+	SELECT @before_yesterday AS FromDate, @yesterday AS ToDate
 
 	DROP TABLE #tmp_betticketchecksum
 END
