@@ -120,6 +120,8 @@ BEGIN
 												WHERE b.custid = m.custid) AS bal
 								FOR XML PATH('r'), ROOT('root')
 								)
+	
+	SET @xml = CONVERT(XML, @CustidBalanceList)
 	-- insert db05bk1 first
 	INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
 	SELECT	t.c.value('@c','int') AS custid, 0, 0, 0, 0, 0, 0, t.c.value('@b','MONEY') AS balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
