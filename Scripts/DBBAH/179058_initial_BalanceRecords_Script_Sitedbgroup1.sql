@@ -38,7 +38,7 @@ FROM BalanceTrigger_ProcessData b
 	INNER JOIN #temp_MemberInput m ON b.custid = m.custid
 
 ----------- get maxtransid: Run on DBTRans/bodb02----------------
-select * from OPENQUERY(DBTXN, '
+select * from OPENQUERY(DBSIG01, '
 select *
 from (
 	select MAX(transid) from bodb02.dbo.bettrans with(nolock)
