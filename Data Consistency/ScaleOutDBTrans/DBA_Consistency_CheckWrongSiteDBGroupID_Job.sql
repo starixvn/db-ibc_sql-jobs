@@ -7,17 +7,19 @@ Task: Detect SiteDBGroupID
 DB: DBCONSISTENCY-bodb_Consistency
 Revisions:
 	- 20220930@Victoria: Rule #55 - Check if bet tickets are inserted into the correct SiteDBGroupID by reverting the transID in bettransXXX tables [Redmine:#178445]
-	
+	- 20221007@Victoria: Modify to add FromSequenceID and ToSequenceID in ResultSet [Redmine: #178864]
 Param's Expanation:
 */
 BEGIN
 	CREATE TABLE #CustSiteDBGroupID_Invalid
 	(
 		[TableName] [VARCHAR](50) NOT NULL,
-		[TransID] [bigint] NOT NULL,
-		[CustID] [int] NULL,
+		[TransID] [BIGINT] NOT NULL,
+		[CustID] [INT] NULL,
 		[SourceSiteDBGroupID] [SMALLINT] NULL,
-		[CustomerSiteDBGroupID] [SMALLINT] NULL
+		[CustomerSiteDBGroupID] [SMALLINT] NULL,
+		[FromSequenceID] [BIGINT] NULL,
+		[ToSequenceID] [BIGINT] NULL
 	)
 	
 	DECLARE @maxSequenceId_bettrans BIGINT
@@ -89,7 +91,10 @@ BEGIN
 	--Final: Send mail
 	--Invalid in case of checking mismatch sitedbgroupid between ticket and function revert
 	--OR Invalid in case of checking mismatch sitedbgroupid between ticket & table site 
-	SELECT TableName, TransID, CustID, SourceSiteDBGroupID, CustomerSiteDBGroupID 
+	SELECT TableName, TransID, CustID, SourceSiteDBGroupID, CustomerSiteDBGroupID
+	FROM #CustSiteDBGroupID_Invalid
+
+	SELECT DISTINCT TableName, FromSequenceID, ToSequenceID
 	FROM #CustSiteDBGroupID_Invalid
 
 	DROP TABLE #CustSiteDBGroupID_Invalid

@@ -8,7 +8,7 @@ DB: DBSIG-bodb02
 Revisions:
 	- 20220824@Victoria: Rule #53 - Detect tickets contain value different from SiteDBGroupID of the site setting configuration
 							and SiteGroupDBID on tickets contain value different from site of customer [Redmine:#175881]
-	
+	- 20221007@Victoria: Modify to add FromTransID and ToTransID in ResultSet [Redmine: #178864]
 Param's Expanation:
 */
 BEGIN
@@ -17,10 +17,12 @@ BEGIN
 	CREATE TABLE #CustSiteDBGroupID_Invalid
 	(
 		[TableName] [VARCHAR](50) NOT NULL,
-		[TransID] [bigint] NOT NULL,
-		[CustID] [int] NULL,
+		[TransID] [BIGINT] NOT NULL,
+		[CustID] [INT] NULL,
 		[SiteDBGroupID] [SMALLINT] NULL,
-		[SiteDBGroupIDConfigured] [SMALLINT] NULL
+		[SiteDBGroupIDConfigured] [SMALLINT] NULL,
+		[FromTransID] [BIGINT] NULL,
+		[ToTransID] [BIGINT] NULL
 	)
 	
 	DECLARE @maxTransId_bettrans BIGINT
@@ -139,9 +141,12 @@ BEGIN
 	--8. Send Mail
 	--Invalid in case of checking mismatch sitedbgroupid between server config and ticket
 	--OR Invalid in case of checking mismatch sitedbgroupid between ticket & table site 
-	SELECT TableName, TransID, CustID, SiteDBGroupID, SiteDBGroupIDConfigured 
+	SELECT TableName, TransID, CustID, SiteDBGroupID, SiteDBGroupIDConfigured
 	FROM #CustSiteDBGroupID_Invalid
 	--WHERE CustID = 23963984
+
+	SELECT DISTINCT TableName, FromTransID, ToTransID
+	FROM #CustSiteDBGroupID_Invalid
 
 	DROP TABLE #CustSiteDBGroupID_Invalid
 END
