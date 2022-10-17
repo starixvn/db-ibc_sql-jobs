@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20130831@Bobby: Init
 		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
+		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -29,7 +30,7 @@ AS
 
     SELECT	transid, custid, transdate, oddsid, hdp1, hdp2, odds, stake, status, winlost, livehomescore, liveawayscore, liveindicator, betteam, creator, refno, comstatus, winlostdate, betfrom, betcheck, checktime, matchid, bettype, keyid, t1.VoidingHistoryId
 	FROM	dbo.zzzbettransM AS t1 WITH (NOLOCK)
-		INNER JOIN dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
+		INNER JOIN DBCTG.bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
 		CROSS APPLY (
 					SELECT	value AS RequestId
 					FROM	STRING_SPLIT(@RequestIds, ',')

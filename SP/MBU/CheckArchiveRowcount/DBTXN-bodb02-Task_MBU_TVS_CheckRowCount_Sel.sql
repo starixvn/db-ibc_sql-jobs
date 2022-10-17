@@ -143,7 +143,7 @@ BEGIN
 		INSERT INTO @__tempCount(rowcnt, tableName)
 		SELECT	COUNT(1), 'zzzbettransM'
 		FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
-			INNER JOIN bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
+			INNER JOIN DBCTG.bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
 			CROSS APPLY (
 					SELECT	RequestId
 					FROM	#tmpRequest t
@@ -155,7 +155,7 @@ BEGIN
 		INSERT INTO @__tempCount(rowcnt, tableName)
 		SELECT	COUNT(1), 'zzzbettrans'	
 		FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
-			INNER JOIN bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
+			INNER JOIN DBCTG.bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
 			CROSS APPLY (
 					SELECT	RequestId
 					FROM	#tmpRequest t
