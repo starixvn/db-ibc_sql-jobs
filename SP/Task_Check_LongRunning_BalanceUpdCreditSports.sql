@@ -9,6 +9,7 @@ AS
  	
 	Revisions:
 		- 20221003@Louisa: SP check Balance Pending process is slowly [Redmine:#178231]
+		- 20221017@Louisa: check Balance Pending process is slowly for Other Sports and Casino [Redmine:#178231]
  	
 	Param's Explanation: 
  
@@ -19,14 +20,27 @@ SET NOCOUNT ON
 
 	DECLARE @PendingCS_State		VARCHAR(1)
 			,@PendingCS_CreatedDate DATETIME
-			
+
+			,@PendingOS_State		VARCHAR(1)
+			,@PendingOS_CreatedDate DATETIME
+
+			,@PendingLiveCS_State	VARCHAR(1)
+			,@PendingLiveCS_CreatedDate DATETIME
+
 			,@StartTime		DATETIME
 			,@CheckTime		DATETIME
 			,@interval		INT
 			,@errorMessage	VARCHAR(4000)
 			,@Subject		VARCHAR(300)
 			,@recipients	VARCHAR(500)
+			,@Type			TINYINT = 0 --1: Credit, 2: Other, 4: Casino
 	
+	DECLARE @tmpbalanceType TABLE ( Value TINYINT, Name VARCHAR(100) )
+	INSERT INTO @tmpbalanceType ( Value, Name)
+	VALUES (1, 'bodb02.dbo.BalCreditSportsPending_Staging')
+		 , (2, 'bodb02.dbo.BalCreditOthersPending_Staging')
+		 , (4, 'bodb02.dbo.BalCreditCasinoPending_Staging')
+
 	SET @interval = 60
 	SET @StartTime = GETDATE()
 	SET @CheckTime = @StartTime
@@ -34,7 +48,8 @@ SET NOCOUNT ON
 	IF @@SERVERNAME  = 'DBTrans' OR @@SERVERNAME LIKE 'DBGRP%' OR @@SERVERNAME LIKE 'SIT%'
 		SET @recipients = 'dbaadmin@onelab.tw;dbaadmin@starixvn.com'
 	ELSE
-		SET @recipients = 'dba_local@starixvn.com;qa@starixvn.com'
+		--SET @recipients = 'dba_local@starixvn.com;qa@starixvn.com'
+		SET @recipients = 'louisa.vo@starixvn.com;qa@starixvn.com'
 			
 	WHILE ( 1 = 1)
 	BEGIN	
@@ -43,10 +58,28 @@ SET NOCOUNT ON
 		BEGIN
 			SELECT	@PendingCS_State		= [PendingCS_State]
 					,@PendingCS_CreatedDate = CAST([PendingCS_CreatedDate] AS DATETIME)
-			FROM dbo.BalanceUpdateSetting b WITH(NOLOCK)
-			PIVOT ( MAX(vvalue) FOR vname in ([PendingCS_State],[PendingCS_CreatedDate]) ) pv
 
-			IF @PendingCS_State = '0' OR DATEDIFF(SECOND, @PendingCS_CreatedDate, @CheckTime) < @interval
+					,@PendingOS_State		= [PendingOS_State]
+					,@PendingOS_CreatedDate	= CAST([PendingOS_CreatedDate] AS DATETIME)
+
+					,@PendingLiveCS_State	= [PendingLiveCS_State]
+					,@PendingLiveCS_CreatedDate = CAST([PendingLiveCS_CreatedDate] AS DATETIME)
+
+			FROM dbo.BalanceUpdateSetting b WITH(NOLOCK)
+			PIVOT ( 
+					MAX(vvalue) FOR vname in ([PendingCS_State],[PendingCS_CreatedDate],[PendingOS_State],[PendingOS_CreatedDate],[PendingLiveCS_State],[PendingLiveCS_CreatedDate] )
+				  ) pv
+
+			IF  @PendingCS_State = '0' OR DATEDIFF(SECOND, @PendingCS_CreatedDate, @CheckTime) < @interval
+				SET @Type = 1
+			
+			IF @PendingOS_State = '0' OR DATEDIFF(SECOND, @PendingOS_CreatedDate, @CheckTime) < @interval
+				SET @Type = @Type | 2
+				
+			IF @PendingLiveCS_State = '0' OR DATEDIFF(SECOND, @PendingLiveCS_CreatedDate, @CheckTime) < @interval
+				SET @Type = @Type | 4
+
+			IF @Type = 0
 			BEGIN
 				BREAK
 			END
@@ -54,7 +87,16 @@ SET NOCOUNT ON
 			BEGIN
 				SET @Subject	= N'Balance Pending process - Notification at ' + @@servername
 				SET @errorMessage = N'<p>Hey guys, Balance Pending process is running at [' + @@servername + '] over [' + cast(@interval as varchar(20)) + '] seconds still not complete. 
-				</br>Please check data at <b>bodb02.dbo.BalanceUpdateSetting</b> and <b>bodb02.dbo.BalCreditSportsPending_Staging</b></p>' ;
+				</br>Please check data at <b>bodb02.dbo.BalanceUpdateSetting</b> and <b>'
+				+ STUFF ( 
+							(	select	',' + t.name
+								from @tmpbalanceType t
+								where value & @type > 0 
+								 FOR XML PATH ('')
+							)
+						 , 1, 1, ''
+						 )
+				+'</b></p>' ;
  
 				EXECUTE msdb.dbo.sp_send_dbmail 
 					@profile_name	= DEFAULT
@@ -65,10 +107,10 @@ SET NOCOUNT ON
 					, @body					 = @errorMessage
 					, @body_format			 = 'HTML';
 
-				EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = @@ServerName
-					, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
-					, @Message = @errorMessage
-					, @CaseId = 1;
+				--EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = @@ServerName
+				--	, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
+				--	, @Message = @errorMessage
+				--	, @CaseId = 1;
 
 				WAITFOR DELAY '00:01:00'
 				SET @CheckTime = GETDATE()
