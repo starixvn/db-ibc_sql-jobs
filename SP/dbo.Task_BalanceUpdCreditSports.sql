@@ -50,7 +50,7 @@ BEGIN
 			,@Top				INT
 			
 	
-	DECLARE @del_StartRow INT = 1, @del_StopRow INT 
+	DECLARE @del_StartRow BIGINT = 1, @del_StopRow BIGINT 
 
 	SELECT	@Version = 3.1
 			,@StartSP = SYSDATETIME()
