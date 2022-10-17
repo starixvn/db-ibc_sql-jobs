@@ -33,6 +33,7 @@ AS
 		- 20210225@Max: [TVS] Remove archived data [Redmine: #150524]
 		- 20220121@Max: MBU - Clean up Cash Out Selling [Redmine: #167802]
 		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
+		- 20221017@Patrick: Revise to check exist system object to prevent deadlock issue [Redmine:#179140]
 */
 -- =======================
 -- Parameter check\control
@@ -229,7 +230,7 @@ BEGIN
 
 		IF	@deletedTarget = 'Transfer_Coll' --- delete Transfer_Coll
 		BEGIN
-			IF EXISTS (SELECT 1 FROM sys.objects WHERE Object_Name(Object_ID) = 'Transfer_Coll')
+			IF OBJECT_ID('Transfer_Coll') IS NOT NULL
 			BEGIN;
 				SELECT	@rowcount = 0;
 
