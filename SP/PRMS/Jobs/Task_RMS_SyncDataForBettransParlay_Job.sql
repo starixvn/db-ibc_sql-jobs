@@ -27,6 +27,7 @@ AS
 		- 20211001@Danny: Change dataType to support IPv6 [RedmineID: #162348]
 		- 20211001@Danny: Force index to avoid scan  [RedmineID: #162348]
 		- 20220802@Danny: Add retry step to avoid dirty read  [RedmineID: #176329]
+		- 20221018@Danny: Extend Min max range to avoid latency bettransm data [RedmineID: #179193]
 */
 
 BEGIN
