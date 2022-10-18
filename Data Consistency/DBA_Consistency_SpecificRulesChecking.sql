@@ -41,6 +41,7 @@ AS
 		- 20220616@July: Check tickets before yesterday in dbo.bettrans - [Redmine:#173956]
 		- 20220620@July: Check tickets before yesterday in bettrans/bettransLC/bettransRNG & Remove code for Poker Games(163), GoldDeluxe(255) product - [Redmine:#174264]
 		- 20221005@July: MG-RNG - Add rule check if no discount, no comm [Redmine:#178718]
+		- 20221013@July: Add rule - Ensure each translog ticket only has one bettrans ticket [Redmine:#179020]
 
 		Param's Expanation:
 */
@@ -59,24 +60,12 @@ BEGIN
 
 	CREATE TABLE #tmpBettrans (		
 		transId				BIGINT
-		,betid				BIGINT
-		,oddsspread			MONEY
-		,tpositiontaking	SMALLMONEY
-		,spositiontaking	SMALLMONEY
-		,mpositiontaking	SMALLMONEY
-		,apositiontaking	SMALLMONEY
-		,swinlost			MONEY
-		,mwinlost			MONEY
-		,awinlost			MONEY
 		,scomm				MONEY
 		,acomm				MONEY
 		,comm				MONEY
 		,playercomm			MONEY
-		,modds				SMALLMONEY
 		,bettype			SMALLINT
 		,statusId			TINYINT
-		,transid2			BIGINT
-		,hdp2				SMALLMONEY
 		,stake				MONEY
 		,winlost			MONEY
 		,custid				INT
@@ -84,10 +73,10 @@ BEGIN
 		,winlostdate		SMALLDATETIME
 		,currency			TINYINT
 		,refno				BIGINT
-		,sdiscount			DECIMAL(9,5)
-		,adiscount			DECIMAL(9,5)
-		,discount			DECIMAL(9,5)
-		,playerdiscount		DECIMAL(9,5)
+		,sdiscount			DECIMAL(9,8)
+		,adiscount			DECIMAL(9,8)
+		,discount			DECIMAL(9,8)
+		,playerdiscount		DECIMAL(9,8)
 		,actual_stake		MONEY
 	)
 
@@ -109,21 +98,16 @@ BEGIN
 		,stake		MONEY
 		,winlost	MONEY
 	)
-
 	
 	SET @transId = ''
 	SET @translogid = ''
 	
-	INSERT INTO #tmpBettrans(transId, betid, oddsspread, tpositiontaking, spositiontaking, mpositiontaking, apositiontaking
-		,swinlost, mwinlost, awinlost
-		,scomm, acomm, comm, playercomm
-		,modds, bettype, statusId, transid2, hdp2, stake,winlost, custid,srecommend,winlostdate,currency
-		,refno,playerdiscount,discount,sdiscount,adiscount,actual_stake)
-	SELECT	transId, betid, oddsspread, tpositiontaking, spositiontaking, mpositiontaking, apositiontaking
-		,swinlost, mwinlost, awinlost
-		,scomm, acomm, comm, playercomm
-		,modds, bettype, statusId, transid2, hdp2, stake,winlost,custid,srecommend,winlostdate,currency
-		,refno,playerdiscount,discount,sdiscount,adiscount,actual_stake
+	INSERT INTO #tmpBettrans(transId, scomm, acomm, comm, playercomm
+		, bettype, statusId, stake,winlost, custid, srecommend, winlostdate, currency
+		, refno, playerdiscount, discount, sdiscount, adiscount, actual_stake)
+	SELECT	transId, scomm, acomm, comm, playercomm
+		, bettype, statusId, stake, winlost, custid, srecommend, winlostdate, currency
+		, refno, playerdiscount, discount, sdiscount, adiscount, actual_stake
 	FROM	bodb02.dbo.bettrans WITH (NOLOCK)
 	WHERE 1 = CASE WHEN matchid = @ProductId THEN 1 
 				   WHEN winlostdate <= @yesterday AND (@tablename = 'bettransLC' OR @tablename = 'bettransRNG') THEN 1
@@ -500,6 +484,29 @@ BEGIN
 						,@ErrMsg = 'Wrong stake value between bettrans and bettransRNG '
 						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
 
+				RETURN
+			END
+		END
+	END
+
+	--Rule #56: Check if tickets in translog are settled to bettrans correspondently
+	IF @tablename = 'translog'
+	BEGIN
+		IF @Rule = 'compare_ticket'
+		BEGIN
+			SELECT TOP (@maxError) @translogid = @translogid + ',' + CAST(t.translogid AS VARCHAR)
+			FROM bodb02.dbo.translog t WITH(NOLOCK) 
+				INNER HASH JOIN bodb02.dbo.bettrans bt WITH(NOLOCK) ON bt.refno = t.translogid
+			WHERE t.statusId IN (111,112,113) AND t.winlostdate = @yesterday
+			GROUP BY t.translogid
+			HAVING COUNT(t.translogid) >= 2
+							 
+			IF @translogid <> ''
+			BEGIN
+				SELECT	@translogid = SUBSTRING(@translogid, 2, LEN(@translogid) - 1)
+						,@ErrCode = 100
+						,@ErrMsg = 'Settled tickets in translog but having more than one ticket in bettrans'
+						,@SampleData = 'translog.translogId in (' + @translogid + ')'
 				RETURN
 			END
 		END
