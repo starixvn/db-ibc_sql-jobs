@@ -7,15 +7,35 @@ AS
     DB: DBTXN/bodb02
     Revisions:
 		- 20210810@Kathy: support update balance for multiple cust  [Redmine:#159486]
-		
+		- 20220927@Helen: Enhancement - avoid wrong balance value due to DBTrans got issue [Redmine:#178231]
+	
+	Notes:	
+		capture info
+		update info
+		update state = 1   (lock rmax: next is create SUM)
+
+		calculate SUM
+		update ID = 0
+		update state = 2   (done create SUM: next is update)
+
+		loop
+		update to Balance
+		update ID = <max of that round>
+		update state = 3  (done update: next is delete)
+
+		loop
+		delete pending
+		update state = 0   (done delete: finished)
+	
 */
 BEGIN
 	SET NOCOUNT ON
+	SET XACT_ABORT ON
 
 	DECLARE @Version			SMALLMONEY 
 			,@StartSP			DATETIME2
 			,@StartProcess		DATETIME2
-			,@MinPendingTime	DATETIME2
+			,@MinPendingTime	DATETIME2 (4)
 			,@totalCustID		INT
 			,@loopCnt			INT
 			,@i					INT
@@ -23,21 +43,16 @@ BEGIN
 			,@BatchNoDel		INT
 			,@minrn				BIGINT
 			,@maxrn				BIGINT			
-			,@Retry				INT
 			,@TotalRetryUpd		INT
 			,@TotalRetryDel		INT
-			,@Success			BIT			
-			,@secUpdate			SMALLMONEY
-			,@secDelete			SMALLMONEY
+			,@secUpdate			SMALLMONEY = 0
+			,@secDelete			SMALLMONEY = 0
 			,@Top				INT
-			,@ErrMsg			VARCHAR(300)
+			
+	
+	DECLARE @del_StartRow BIGINT = 1, @del_StopRow BIGINT 
 
-	CREATE TABLE #tmpBatchCustId (CustId INT PRIMARY KEY, Balance MONEY)
-
-	CREATE TABLE #tmpBalance (Id INT IDENTITY(1,1) PRIMARY KEY, custid INT, balance MONEY)
-	CREATE TABLE #tmpFailedBalance (custid INT, balance MONEY)
-
-	SELECT	@Version = 3.0
+	SELECT	@Version = 3.1
 			,@StartSP = SYSDATETIME()
 			,@BatchNoUpd = 100
 			,@BatchNoDel = 3000
@@ -45,144 +60,173 @@ BEGIN
 			,@TotalRetryDel = 0
 			,@Top = 100000
 
-	IF NOT EXISTS (SELECT 1 FROM dbo.BalCreditSportsPending)
-	BEGIN
-		WAITFOR DELAY '000:00:01.000'
+	Declare @Process_State BIGINT
+	SELECT @Process_State = VValue FROM dbo.BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_State'
 
-		RETURN -- no data to be update.
+-- Job resume : begin
+	IF @Process_State = 3
+	BEGIN
+		SELECT @minrn = VValue FROM dbo.BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_rnMIN'
+		SELECT @maxrn = VValue FROM dbo.BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_rnMAX'
+		SELECT @MinPendingTime = VValue FROM dbo.BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_tstamp'
+		SELECT @totalCustID = VValue FROM dbo.BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_TotalCust'
+
+		GOTO DeleteSection
 	END
 
-	;WITH ctePending
-	AS(
-		SELECT	TOP (@Top) rn, tstamp
-		FROM	dbo.BalCreditSportsPending WITH(NOLOCK)
-		ORDER BY rn
-	)
-	SELECT TOP (@Top)
-			@minrn = MIN(rn)	
-			,@maxrn = MAX(rn)
-			,@MinPendingTime = MIN(tstamp)
-	FROM	ctePending
-
-	WAITFOR DELAY '00:00:00.020'
-
-	SET @StartProcess = SYSDATETIME()
-
-	-- collect balance value.
-	INSERT INTO #tmpBalance (custid, balance)
-	SELECT custid, SUM(balance)
-	FROM dbo.BalCreditSportsPending with (ROWLOCK)
-	WHERE rn <= @maxrn
-	GROUP BY custid
-	ORDER BY MIN(rn)
-
-	SET @totalCustID = @@ROWCOUNT
-	SET @loopCnt = @totalCustID
-
-	TryAgain:
-
-	SET @i = 1
-
-	WHILE @i <= @loopCnt
+	IF @Process_State = 2
 	BEGIN
-		SET @Retry = 0
-		SET @Success = 0
+		SELECT @totalCustID = VValue FROM dbo.BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_TotalCust'
+		SELECT @i = VValue FROM dbo.BalanceUpdateSetting  WITH (NOLOCK) WHERE VName = 'PendingCS_updID'
+		SELECT @MinPendingTime = VValue FROM dbo.BalanceUpdateSetting  WITH (NOLOCK) WHERE VName = 'PendingCS_tstamp'
+		SELECT @maxrn = VValue FROM BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_rnMAX'
+		SELECT @minrn = VValue FROM BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_rnMIN'
 
-		TRUNCATE TABLE #tmpBatchCustId
+		SET @loopCnt = @totalCustID 
+		SET @i = @i + 1
 
-		DELETE TOP (@BatchNoUpd)
-		FROM #tmpBalance
-		OUTPUT deleted.custid, deleted.balance INTO #tmpBatchCustId(CustId, Balance)
-		WHERE Id BETWEEN @i AND @i + @BatchNoUpd - 1
-		
-		-- perform update, retry 3 times for batch account.
-		WHILE @Retry < 3 AND @Success = 0
+		GOTO UpdateSection
+	END
+
+	IF @Process_State = 1
+	BEGIN
+		--print 'prepare to go CreateSum'
+		SELECT @MinPendingTime = VValue FROM dbo.BalanceUpdateSetting  WITH (NOLOCK) WHERE VName = 'PendingCS_tstamp'
+		SELECT @maxrn = VValue FROM BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_rnMAX'
+		SELECT @minrn = VValue FROM BalanceUpdateSetting WITH (NOLOCK) WHERE VName = 'PendingCS_rnMIN'
+		GOTO CreateSum
+	END
+
+-- Job resume : end
+	IF @Process_State = 0 -- capture rn min/max
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM dbo.BalCreditSportsPending)
 		BEGIN
-			BEGIN TRY
-				SET @Success = 1
-				SET @ErrMsg = ''
-
-				BEGIN TRANSACTION			
-					UPDATE b
-						SET Balance = b.Balance + t.balance
-					FROM	dbo.BalCreditSports b WITH (ROWLOCK, UPDLOCK)
-						INNER JOIN #tmpBatchCustId t
-							ON b.custid = t.custId	
-				COMMIT TRANSACTION
-			END TRY
-			BEGIN CATCH
-				SET @Retry = @Retry + 1
-				SET @Success = 0
-				SET @ErrMsg = ERROR_MESSAGE()
-				ROLLBACK TRANSACTION
-
-				WAITFOR DELAY '00:00:00:010'
-			END CATCH
+			WAITFOR DELAY '000:00:01.000'
+			RETURN -- no data to be update.
 		END
 
-		-- save failed attempt for next round.
-		IF @Success = 0 
-			INSERT INTO #tmpFailedBalance (custid, balance) 
-			SELECT	t.custId, t.balance
-			FROM	#tmpBatchCustId t
+		;WITH ctePending
+		AS(
+			SELECT	TOP (@Top) rn, tstamp
+			FROM	dbo.BalCreditSportsPending WITH(NOLOCK)
+			ORDER BY rn
+		)
+		SELECT TOP (@Top)
+				@minrn = MIN(rn)	
+				,@maxrn = MAX(rn)
+				,@MinPendingTime = MIN(tstamp)
+		FROM	ctePending
 
-		SET @i = @i + @BatchNoUpd
+		BEGIN TRANSACTION
+			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = @minrn WHERE VName = 'PendingCS_rnMIN'
+			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = @maxrn WHERE VName = 'PendingCS_rnMAX'
+			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = CONVERT(VARCHAR(50), @MinPendingTime) WHERE VName = 'PendingCS_tstamp'
+			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 1 WHERE VName = 'PendingCS_State'
+			UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue =CONVERT(VARCHAR(50), GETDATE(),121) WHERE VName = 'PendingCS_CreatedDate'
+			
+		COMMIT TRANSACTION
+
+		WAITFOR DELAY '00:00:00.020'
 	END
 
-	--- need to perform any action when got error
-	IF @TotalRetryUpd = 3 AND EXISTS (SELECT TOP 1 1 FROM #tmpFailedBalance)
-	BEGIN
-		-- notify to dba
-		INSERT INTO dbo.BalanceErr(CustId, BalanceGroup, BalanceAmt, LogDate, ExecutedSP, ErrMsg)
-		SELECT custid, 1, balance, GETDATE(), OBJECT_NAME(@@procid), 'Failed to update table BalCreditSports: ' + @ErrMsg
-		FROM #tmpFailedBalance
+CreateSUM:
+	TRUNCATE TABLE BalCreditSportsPending_Staging
 
-		DELETE FROM #tmpFailedBalance
-	END
+	--PRINT 'CreateSum'
+	BEGIN TRANSACTION
 
-	-- check for retry if got some account failed in previous loop
-	IF EXISTS (SELECT 1 FROM #tmpFailedBalance)
-	BEGIN
-		TRUNCATE TABLE #tmpBalance
-		
-		SET @TotalRetryUpd = @TotalRetryUpd + 1
-	
-		INSERT INTO #tmpBalance (custid, balance) 
-		SELECT	custid, balance 
-		FROM	#tmpFailedBalance
+		INSERT INTO dbo.BalCreditSportsPending_Staging (custid, balance)
+		SELECT custid, SUM(balance)
+		FROM dbo.BalCreditSportsPending WITH (ROWLOCK)
+		WHERE rn >= @minrn AND rn <= @maxrn
+		GROUP BY custid
+		ORDER BY MIN(rn)
 
-		SET @loopCnt = @@ROWCOUNT
-	
-		DELETE FROM #tmpFailedBalance
-		GOTO TryAgain
-	END
+		SET @totalCustID = @@ROWCOUNT
+		SET @i = 1
+		SET @loopCnt = @totalCustID
 
-	SET @secUpdate = DATEDIFF(ms, @StartProcess, SYSDATETIME())/1000.00
+		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 0 WHERE VName = 'PendingCS_updID'
+		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = @totalCustID WHERE VName = 'PendingCS_TotalCust'
+		UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 2 WHERE VName = 'PendingCS_State'
+
+	COMMIT TRANSACTION
+
+UpdateSection:
 	SET @StartProcess = SYSDATETIME()
-
-	-- remove data which already updated.
-	SET @i = 1
-	WHILE @i > 0
+	-- SELECT @i as i, @loopCnt as loopCnt
+	WHILE @i <= @loopCnt
 	BEGIN
+		-- perform update
 		BEGIN TRY
-			IF @minrn + @BatchNoDel > @maxrn 
-				SET @minrn = @maxrn - @BatchNoDel
+			BEGIN TRANSACTION	
+				--PRINT 'updating'
+				UPDATE b
+					SET Balance = b.Balance + t.balance
+				FROM	dbo.BalCreditSports b WITH (ROWLOCK, UPDLOCK)
+					INNER JOIN dbo.BalCreditSportsPending_Staging t WITH (NOLOCK)
+						ON b.custid = t.custId	
+				WHERE Id BETWEEN @i AND @i + @BatchNoUpd - 1
 
-			DELETE 
-			FROM	dbo.BalCreditSportsPending
-			WHERE	rn BETWEEN @minrn AND @minrn + @BatchNoDel
+				UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = @i + @BatchNoUpd - 1 WHERE VName = 'PendingCS_updID'
 
-			SET @i = @@ROWCOUNT
-
-			SET @minrn = @minrn + @BatchNoDel + 1
+			COMMIT TRANSACTION
+				
 		END TRY
 		BEGIN CATCH
-			SET @i = 1
-			SET @TotalRetryDel = @TotalRetryDel + 1
+			--PRINT 'in catch'
+			ROLLBACK TRANSACTION
+			RETURN
+
+		END CATCH
+		
+		SET @i = @i + @BatchNoUpd
+		
+	END
+
+	UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 3 WHERE VName = 'PendingCS_State'
+	
+	SET @secUpdate = DATEDIFF(ms, @StartProcess, SYSDATETIME())/1000.00
+
+DeleteSection:
+	SET @StartProcess = SYSDATETIME()
+
+	-- SET param for the first batch of deleting
+	SET @del_StartRow = @minrn 
+	SET @del_StopRow = @minrn + @BatchNoDel - 1
+
+	IF @del_StopRow > @maxrn
+		SET @del_StopRow = @maxrn
+	
+	-- remove data which already updated.
+	WHILE (1=1)
+	BEGIN
+		BEGIN TRY
+			
+			DELETE 
+			FROM	dbo.BalCreditSportsPending
+			WHERE	rn BETWEEN @del_StartRow AND @del_StopRow
+
+			IF @del_StopRow = @maxrn BREAK
+
+			SET @del_StartRow = @del_StopRow + 1
+			SET @del_StopRow = @del_StopRow + @BatchNoDel
+			
+			IF @del_StopRow > @maxrn
+				SET @del_StopRow = @maxrn
+			
+		END TRY
+		BEGIN CATCH
+			RETURN
 		END CATCH
 	END
 
+	UPDATE dbo.BalanceUpdateSetting WITH (ROWLOCK, UPDLOCK) SET VValue = 0 WHERE VName = 'PendingCS_State'
+	
 	SET @secDelete = DATEDIFF(ms, @StartProcess, SYSDATETIME())/1000.00
+	
+LogProcess:
 	-- log process
 	INSERT INTO dbo.BalancePendingProcessed (byVersion, secPending, totalCustID
 		, retryCnt, retryDelCnt, secUpdate, secDelete, secProcess, Operation, tableSet)
@@ -193,9 +237,5 @@ BEGIN
 		,@secUpdate
 		,@secDelete
 		,DATEDIFF(ms, @StartSP, SYSDATETIME())/1000.00, 'C', 1
-
-
-	DROP TABLE #tmpBalance
-	DROP TABLE #tmpFailedBalance
-
 END
+GO
