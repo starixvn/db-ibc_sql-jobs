@@ -12,6 +12,7 @@ Revisions:
 	- 20220819@Victoria: Rule #49 - CheckSum ticket [Redmine:#175881]
 	- 20221012@Victoria: Modify to show FromDate and ToDate
 							AND replication latency with ticket odds adjustment [Redmine:#178864]
+	- 20221019@Victoria: Remove VirtualRate inside of CheckSum Function [Redmine:#178864]
 */
 
 BEGIN
@@ -43,7 +44,7 @@ BEGIN
 									[apositiontaking], [mpositiontaking], [tpositiontaking], [playerdiscount], [discount], [adiscount], [livehomescore], [liveawayscore], 
 									[liveindicator], [betteam], [creator], [refno], [comstatus], [betfrom], [betcheck], [checktime], [oddsspread], [actualrate], [matchid], 
 									[Recommend], [mrecommend], [ruben], [betid], [statuswinlost], [modds], [bettype], [betdaqid], [actual_stake], [currency], [ip], [transdesc], 
-									[sdiscount], [scomm], [spositiontaking], [swinlost], [srecommend], [Username], [CurrencyName], [virtualrate], [oddstype], [statusID], [currency2], 
+									[sdiscount], [scomm], [spositiontaking], [swinlost], [srecommend], [Username], [CurrencyName], [oddstype], [statusID], [currency2], 
 									[balance], [transid2], [WalletType], [BonusID], [RefCode])) AS TotalCheckSumAgg
 	FROM	bodb02.dbo.bettrans WITH (NOLOCK)
 	WHERE	[winlostdate] IN (@before_yesterday,@yesterday)
@@ -63,7 +64,7 @@ BEGIN
 			[SiteDBGroupID], 
 			[Recommend],  
 			CHECKSUM_AGG(CHECKSUM(	[custid], [odds], [stake], [status], [apositiontaking], [mpositiontaking], [tpositiontaking], [spositiontaking], [playerdiscount], [discount], 
-									[adiscount], [sdiscount], [creator], [betfrom], [virtualrate], [actualrate], [actual_stake], [currency], [CurrencyName], [Recommend], 
+									[adiscount], [sdiscount], [creator], [betfrom], [actualrate], [actual_stake], [currency], [CurrencyName], [Recommend], 
 									[mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], [gameID], [vendorID], [GameId3rd], 
 									[TranId3rd], [RefNo], [IsSum], [winlost], [awinlost], [mwinlost], [swinlost], [playercomm], [comm], [acomm], [scomm], [Transdate3rd], 
 									[SiteID], [Additional], [JackpotInfo], [RefNo2], [ContributionRate], [BetStake], [ContributionStake3rd])) AS TotalCheckSumAgg
@@ -85,7 +86,7 @@ BEGIN
 			[SiteDBGroupID], 
 			[Recommend],   
 			CHECKSUM_AGG(CHECKSUM(	[custid], [odds], [stake], [status], [apositiontaking], [mpositiontaking], [tpositiontaking], [spositiontaking], [playerdiscount], 
-									[discount], [adiscount], [sdiscount], [creator], [betfrom], [virtualrate], [actualrate], [actual_stake], [currency], [CurrencyName], 
+									[discount], [adiscount], [sdiscount], [creator], [betfrom], [actualrate], [actual_stake], [currency], [CurrencyName], 
 									[Recommend], [mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], [gameID], [vendorID], [GameId3rd], 
 									[TranId3rd], [RefNo], [IsSum], [winlost], [awinlost], [mwinlost], [swinlost], [playercomm], [comm], [acomm], [scomm], [Transdate3rd], [NetStake], 
 									[SiteID])) AS TotalCheckSumAgg
@@ -107,9 +108,9 @@ BEGIN
 			g.[SiteDBGroupID], 
 			c.[Recommend], 
 			CHECKSUM_AGG(CHECKSUM(	g.[custid], g.[oddsid], g.[odds], g.[stake], g.[status], g.[winlost], g.[betteam], g.[creator], g.[refno], g.[betfrom], g.[checktime], 
-									[apositiontaking], g.[mpositiontaking], g.[tpositiontaking], g.[awinlost], g.[mwinlost], g.[playerdiscount], g.[discount], g.[adiscount], g.[playercomm], g.[comm], 
-									[acomm], g.[actualrate], g.[matchid], g.[matchdate], g.[statuswinlost], g.[ruben], g.[bettype], g.[spositiontaking], g.[swinlost], g.[sdiscount], g.[scomm], g.[statusID], 
-									[virtualrate], g.[SiteID], g.[TransDesc], g.[BetID3rd], g.[actual_stake], g.[netstake])) AS TotalCheckSumAgg
+									g.[apositiontaking], g.[mpositiontaking], g.[tpositiontaking], g.[awinlost], g.[mwinlost], g.[playerdiscount], g.[discount], g.[adiscount], g.[playercomm], g.[comm], 
+									g.[acomm], g.[actualrate], g.[matchid], g.[matchdate], g.[statuswinlost], g.[ruben], g.[bettype], g.[spositiontaking], g.[swinlost], g.[sdiscount], g.[scomm], g.[statusID], 
+									g.[SiteID], g.[TransDesc], g.[BetID3rd], g.[actual_stake], g.[netstake])) AS TotalCheckSumAgg
 	FROM	bodb02.dbo.bettransG g WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = g.custid
 	WHERE	g.[winlostdate] IN (@before_yesterday,@yesterday)
@@ -129,7 +130,7 @@ BEGIN
 			[SiteDBGroupID], 
 			[Recommend],  
 			CHECKSUM_AGG(CHECKSUM(	[custid], [odds], [stake], [status], [apositiontaking], [mpositiontaking], [tpositiontaking], [spositiontaking], 
-									[playerdiscount], [discount], [adiscount], [sdiscount], [creator], [betfrom], [virtualrate], [actualrate], [actual_stake], 
+									[playerdiscount], [discount], [adiscount], [sdiscount], [creator], [betfrom], [actualrate], [actual_stake], 
 									[currency], [CurrencyName], [Recommend], [mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], 
 									[gameID], [eventID], [vendorID], [Gameid3rd], [Tranid3rd], [custom1], [liveindicator], [custom2], [custom3], [SiteId], 
 									[checkCount])) AS TotalCheckSumAgg
