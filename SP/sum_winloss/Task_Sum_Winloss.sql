@@ -40,7 +40,8 @@ AS
 		- 20220328@Evan: Expand bettype of Macau Games - [Redmine: #170383]
 		- 20221002@Danny: Add New LeagueGroupID and TicketType columns [Redmine: #167177]	
 		- 20220825@Eddie: Add SEAL Entertainment  [RedmineID: #176078]
-		- 20220907@Eddie: Add Microgaming  [RedmineID: #175850]	
+		- 20220907@Eddie: Add Microgaming  [RedmineID: #175850]
+		- 20221004@Eddie: Add Bettype Tournament Prize [RedmineID: #178335]
 */
 BEGIN
 
@@ -243,7 +244,7 @@ BEGIN
 			ELSE 0
 		END sporttype
 	   ,CASE
-			WHEN bettype IN (71, 72, 3150, 4297, 4298, 4599, 4600, 2499) THEN bettype
+			WHEN bettype IN (71, 72, 3150, 4297, 4298, 4599, 4600, 2499, 8695) THEN bettype
 			ELSE 0
 		END bettype
 	   ,0 AS netTurnover
@@ -399,7 +400,7 @@ BEGIN
 				 ELSE 0
 			 END
 			,CASE
-				WHEN bettype IN (71, 72, 3150, 4297, 4298, 4599, 4600, 2499) THEN bettype
+				WHEN bettype IN (71, 72, 3150, 4297, 4298, 4599, 4600, 2499, 8695) THEN bettype
 				 ELSE 0
 			 END,
 			  CASE WHEN ( 

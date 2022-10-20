@@ -1,2 +1,3 @@
-
-SP\CustSetting Job Admin\Task_CustSetting_JobManagement.sql
+SP\sum_winloss\Task_sum_winloss_14.sql
+SP\sum_winloss\Task_Sum_Winloss_Old.sql
+SP\MBU\MoveBet\DBTXN-bodb02-Task_DailySummary.proc.sql
