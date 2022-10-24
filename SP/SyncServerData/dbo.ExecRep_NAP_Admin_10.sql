@@ -4,8 +4,9 @@ ALTER PROCEDURE [dbo].ExecRep_NAP_Admin_10
 	@ServerName VARCHAR(200) = '',
 	@AliasName VARCHAR(200) = '',
 	@SqlCommand VARCHAR(MAX) = '',
+	@Params VARCHAR(MAX) = '',
 	@DoNotRunInServer VARCHAR(500),
-	@PriorityOrder TINYINT = 2, --default for daily
+	@PriorityOrder TINYINT = 2, --default for order by queueID
 	@Remark VARCHAR(8000) = '',
 	@RunningMode TINYINT = 1
 )
@@ -23,9 +24,9 @@ AS
 		- @AliasName: destination alias name
 		- @SqlCommand: command to exec
 		- @DoNotRunInServer: server that the execRep will do nothing
-		- @PriorityOrder: 1 for run immediately, 2 for daily run
+		- @PriorityOrder: 1 for run immediately, 2 for order by queueID
 		- @Remark: note here
-		- @RunningMode: 1 for insert cmd to table queue, otherwise will be defined later
+		- @RunningMode: 1 for insert cmd to table queue, 2 will exec the cmd immediated
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -44,8 +45,8 @@ BEGIN
 			BEGIN TRY
 				IF EXISTS (SELECT 1 FROM dbo.f_Get_ServerName_By_Alias(@AliasName) f WHERE f.Alias = @AliasName AND f.ServerName = @CurrServerName)
 				BEGIN
-        			INSERT INTO JobExecutionQueue (ServerName, AliasName, SqlCommand, ExecStatus, PriorityOrder, CreatedDate, CompletedDate, ModifiedDate, Remark)
-					VALUES (@ServerName, @AliasName, @SqlCommand, 'Waiting', @PriorityOrder, GETDATE(), NULL, NULL, @Remark);
+        			INSERT INTO JobExecutionQueue (ServerName, AliasName, SqlCommand, Params, ExecStatus, PriorityOrder, CreatedDate, CompletedDate, ModifiedDate, Remark)
+					VALUES (@ServerName, @AliasName, @SqlCommand, @Params, 'Waiting', @PriorityOrder, GETDATE(), NULL, NULL, @Remark);
 				END
         		
 			END TRY

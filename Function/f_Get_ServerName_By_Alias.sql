@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02,DBSUM-bodb02,DBACC-bodb02,DBRPT-bodb02,DBLIC-bodb02,DBFS-bodb02,DBTGRS-bodb02" isFunction="1" isNested="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02,DBAGE-bodb02,DBACC-bodb02" isFunction="1" isNested="0"></info>*/
 ALTER FUNCTION dbo.f_Get_ServerName_By_Alias
 (
 	@Alias VARCHAR(50)  = ''
@@ -8,7 +8,7 @@ AS
 /*
 	Created: 20220603@Sol
 	Task: Database - Sync-up Standby Server data - [Redmine:167261]
-	Database: DBTXN-bodb02,DBSUM-bodb02,DBACC-bodb02,DBRPT-bodb02,DBLIC-bodb02,DBFS-bodb02,DBTGRS-bodb02
+	Database: DBTXN-bodb02,DBAGE-bodb02,DBACC-bodb02
 	
 	Revision:
 		- 20220603@Sol: Database - Sync-up Standby Server data - [Redmine:167261]

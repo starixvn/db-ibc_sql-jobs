@@ -72,14 +72,14 @@ BEGIN
 				@alias = 'DBSUM', 
 				@SqlCommand = CONCAT('EXEC bodb_summary.dbo.Task_CS_SumWinloss_14 ', ' @WinlostDate = ''',@winlostdate,''' ,@CustIds = ''',@CustIds,'''')
 
-			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 1, @RunningMode = 1
+			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 2, @RunningMode = 1
 
 			SET @errmsg = 'step 2.2'
 
 			SELECT 
 				@alias = 'DBSUM', 
 				@SqlCommand = CONCAT('EXEC bodb_summary.dbo.Task_CS_SumCancelled_14 ', ' @WinlostDate = ''',@winlostdate,''' ,@CustIds = ''',@CustIds,'''')
-			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 1, @RunningMode = 1
+			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 2, @RunningMode = 1
 		END
 		IF @stepNo = 3
 		BEGIN
@@ -90,7 +90,7 @@ BEGIN
 			SELECT 
 				@alias = 'DBACC', 
 				@SqlCommand = CONCAT('EXEC bodb02.dbo.Task_CS_HeadlineBalance14 ', ' @WinlostDate = ''',@winlostdate,''' ,@CustIds = ''',@CustIds,'''')
-			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 1, @RunningMode = 1
+			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 2, @RunningMode = 1
 		END
 		IF @stepNo = 4
 		BEGIN
@@ -101,7 +101,7 @@ BEGIN
 			SELECT 
 				@alias = 'DBRPT', 
 				@SqlCommand = CONCAT('EXEC bodb_report.dbo.Task_rptStatement_14 ', ' @WinlostDate = ''',@winlostdate,''' ,@CustIds = ''',@CustIds,'''')
-			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 1, @RunningMode = 1
+			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 2, @RunningMode = 1
 		END
 		IF @stepNo = 5
 		BEGIN
@@ -141,12 +141,17 @@ BEGIN
 			BEGIN TRY			 
 				
 				SET @ErrMsg = 'step 6.02'
-				
+				;WITH rs AS 
+				(
+					SELECT (SELECT * FROM (VALUES (@WinlostDate)) t(wld) for XML RAW('root') ) AS cxml
+				)
+				SELECT @params = cxml FROM rs
+
 				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptBetting_CheckData ', ' @WinlostDate = ''',@winlostdate,'''')
-				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 2, @RunningMode = 1
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 2, @RunningMode = 1, @Params = @params
 
 			END TRY
 			BEGIN CATCH
@@ -173,12 +178,18 @@ BEGIN
 			BEGIN TRY
 				
 				SET @ErrMsg  = 'step 6.06'
+
+				;WITH rs AS 
+				(
+					SELECT (SELECT * FROM (VALUES (@WinlostDate)) t(wld) for XML RAW('root') ) AS cxml
+				)
+				SELECT @params = cxml FROM rs
 			
 				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptBettingBySport_CheckData ', ' @WinlostDate = ''',@winlostdate,'''')
-				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 2, @RunningMode = 1
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @PriorityOrder = 2, @RunningMode = 1, @Params = @params
 
 			END TRY
 			BEGIN CATCH
