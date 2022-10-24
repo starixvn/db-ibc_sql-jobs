@@ -13,17 +13,20 @@ USE bodb02;
 
 GO
 
-CREATE TABLE JobExecutionQueue
-(
-	QueueId INT IDENTITY PRIMARY KEY,
-	SpName VARCHAR(200),
-	Params VARCHAR(MAX),
-	ExecStatus VARCHAR(50),
-	PriorityOrder TINYINT,
-	CreatedDate DATETIME,
-	CompletedDate DATETIME,
-	ModifiedDate DATETIME,
-	Remark VARCHAR(4000)
+CREATE TABLE [dbo].[JobExecutionQueue](
+	[QueueId] [int] IDENTITY(1,1) NOT NULL,
+	[ServerName] [varchar](200) NULL,
+	[AliasName] [varchar](200) NULL,
+	[SqlCommand] [varchar](max) NULL,
+	[ExecStatus] [varchar](50) NULL,
+	[PriorityOrder] [tinyint] NULL,
+	[CreatedDate] [datetime] NULL,
+	[CompletedDate] [datetime] NULL,
+	[ModifiedDate] [datetime] NULL,
+	[Remark] [varchar](4000) NULL,
+	CONSTRAINT [PK_JobExecutionQueue_QueueId] PRIMARY KEY CLUSTERED 
+	(
+		[QueueId] ASC
+	)
 )
-
 GO

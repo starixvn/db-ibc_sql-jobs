@@ -1,10 +1,10 @@
-/*<info serverAlias="DBTXN-bodb02" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02,DBRPT-bodb02,DBTGRS-bodb02" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].Task_Executor_DB061
 AS
 /*
 	Created: 20220603@Sol
 	Task: Database - Sync-up Standby Server data - [Redmine:167261]
-	Database: DBTXN-bodb02
+	Database: DBACC-bodb02,DBRPT-bodb02,DBTGRS-bodb02
 	
 	Revision:
 		- 20220603@Sol: Database - Sync-up Standby Server data - [Redmine:167261]

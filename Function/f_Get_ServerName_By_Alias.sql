@@ -1,8 +1,7 @@
 /*<info serverAlias="DBTXN-bodb02,DBSUM-bodb02,DBACC-bodb02,DBRPT-bodb02,DBLIC-bodb02,DBFS-bodb02,DBTGRS-bodb02" isFunction="1" isNested="0"></info>*/
 ALTER FUNCTION dbo.f_Get_ServerName_By_Alias
 (
-	@Alias VARCHAR(50)  = '',
-	@Environment VARCHAR(20) = 'LocalDev'
+	@Alias VARCHAR(50)  = ''
 )
 RETURNS TABLE
 AS
@@ -64,6 +63,10 @@ RETURN
 			('SIT','DBTGRS', 'SITDB06'),
 			('SIT','DBTXN', 'SITDBTRANS')
 	) tbl(Environment, Alias, ServerName)
-	WHERE tbl.Alias = @Alias AND tbl.Environment = @Environment
+	CROSS APPLY 
+	(
+		SELECT @@SERVERNAME as ServerName
+	) t
+	WHERE tbl.Alias = @Alias AND tbl.ServerName = t.ServerName
 )
 GO
