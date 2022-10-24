@@ -70,13 +70,13 @@ SET NOCOUNT ON
 					MAX(vvalue) FOR vname in ([PendingCS_State],[PendingCS_CreatedDate],[PendingOS_State],[PendingOS_CreatedDate],[PendingLiveCS_State],[PendingLiveCS_CreatedDate] )
 				  ) pv
 
-			IF  @PendingCS_State = '0' OR DATEDIFF(SECOND, @PendingCS_CreatedDate, @CheckTime) < @interval
+			IF  @PendingCS_State <> '0' AND DATEDIFF(SECOND, @PendingCS_CreatedDate, @CheckTime) >= @interval
 				SET @Type = 1
 			
-			IF @PendingOS_State = '0' OR DATEDIFF(SECOND, @PendingOS_CreatedDate, @CheckTime) < @interval
+			IF @PendingOS_State <> '0' AND DATEDIFF(SECOND, @PendingOS_CreatedDate, @CheckTime) >= @interval
 				SET @Type = @Type | 2
 				
-			IF @PendingLiveCS_State = '0' OR DATEDIFF(SECOND, @PendingLiveCS_CreatedDate, @CheckTime) < @interval
+			IF @PendingLiveCS_State <> '0' AND DATEDIFF(SECOND, @PendingLiveCS_CreatedDate, @CheckTime) >= @interval
 				SET @Type = @Type | 4
 
 			IF @Type = 0
