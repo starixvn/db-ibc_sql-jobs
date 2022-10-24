@@ -14,7 +14,7 @@ DECLARE @maxcustid INT = 0
 SELECT @maxcustid = MAX(custid) 
 FROM customer ci WITH (NOLOCK)
 	INNER JOIN site s WITH (NOLOCK) ON ci.site = s.site
-WHERE s.SiteDBGroupID = 1
+WHERE s.SiteDBGroupID = 2
 
 SELECT @maxcustid AS [@maxcustid]
 
@@ -42,10 +42,12 @@ FROM [bodb02].[dbo].BalanceRecord b WITH(NOLOCK)
 	INNER JOIN  [bodb02].[dbo].site s WITH(NOLOCK) ON c.site = s.site								
 	INNER JOIN [bodb02].[dbo].Dep_CustSuper cs WITH(NOLOCK) ON cs.custid = c.srecommend	
 	INNER JOIN @tmp_preCust t ON t.Site = s.site
+	LEFT JOIN BalanceRecord_SiteDB2_tmp tmp WITH (NOLOCK) ON tmp.CustId = b.CustId
 WHERE															
 	c.creatdate <= '2022-07-05'								
 	AND s.sitedbgroupid = 2
-	AND t.Priority = 1 		
+	AND t.Priority = 1 	
+	AND tmp.Custid IS NULL
 
 SELECT @@ROWCOUNT AS [custid_Count]
 
