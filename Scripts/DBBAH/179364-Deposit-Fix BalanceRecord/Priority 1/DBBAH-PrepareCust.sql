@@ -7,7 +7,7 @@
 */
 USE BODB02
 GO
-CREATE TABLE BalanceRecord_SiteDB2_Round1_20221027_tmp (custid INT)
+CREATE TABLE BalanceRecord_SiteDB2_Round1_tmp (custid INT)
 
 GO
 
@@ -21,7 +21,7 @@ VALUES ('OneSports',306467,1,2)
 ,('9Club',7807,1,2)
 ,('golden88',32,1,2)
 
-INSERT INTO BalanceRecord_SiteDB2_Round1_20221027_tmp (custid)
+INSERT INTO BalanceRecord_SiteDB2_Round1_tmp (custid)
 SELECT b.custid						
 FROM [bodb02].[dbo].BalanceRecord b WITH(NOLOCK)									
 	INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) ON c.custid = b.custid								

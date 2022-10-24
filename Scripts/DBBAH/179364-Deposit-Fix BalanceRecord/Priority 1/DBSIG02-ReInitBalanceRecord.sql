@@ -28,7 +28,7 @@ CREATE TABLE #tempMember (custid INT PRIMARY KEY)
 --------------GET members needs to process ------------------
 INSERT INTO #temp_MemberInput (custid)
 SELECT CustId
-FROM BalanceRecord_SiteDB2_Round1_20221027_tmp WITH (NOLOCK)
+FROM BalanceRecord_SiteDB2_Round1_tmp WITH (NOLOCK)
 
 SELECT @@ROWCOUNT AS [custid_Count]
 
