@@ -4,7 +4,7 @@ ALTER PROCEDURE [dbo].[Task_Execute_TicketVoiding_RoutineTasks]
 	 @stepNo		TINYINT,
 	 @custIDs		VARCHAR(MAX) = '', 
 	 @winlostdate	DATETIME,
-	 @RequestID INT = 0,
+	 @RequestID		VARCHAR(4000) = '',
 	 @errmsg		VARCHAR(1000) = '' OUTPUT
 )
 AS
@@ -38,6 +38,8 @@ BEGIN
 	DECLARE @SiteDBGroupID SMALLINT = 0 
 	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
 
+	SELECT IIF(@RequestID LIKE '%,', LEFT(@RequestID, LEN(@RequestID) - 1), @RequestID)
+
 	IF (@SiteDBGroupID <> 0) ---run at SiteDB -> only need exec step 1 at sitedb because it update bettrans14
 	BEGIN
 		IF @stepNo = 1
@@ -67,7 +69,7 @@ BEGIN
 		IF @stepNo = 2
 		BEGIN
 			SET @errmsg = 'step 2.1'
-			SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+			EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 	
 			SELECT 
 				@alias = 'DBSUM', 
@@ -86,7 +88,7 @@ BEGIN
 		BEGIN
 			
 			SET @errmsg = 'step 3'
-			SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+			EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT 
 	
 			SELECT 
 				@alias = 'DBACC', 
@@ -97,7 +99,7 @@ BEGIN
 		BEGIN
 			
 			SET @errmsg = 'step 4'
-			SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+			EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 	
 			SELECT 
 				@alias = 'DBRPT', 
@@ -129,7 +131,7 @@ BEGIN
 			BEGIN TRY
 				SET @errmsg = 'step 6.01'
 				
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT 
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_PrepareStaging ', ' @datefrom = ''',@winlostdate,''' ,@dateto = ''',@winlostdate,'''')
@@ -150,7 +152,7 @@ BEGIN
 				)
 				SELECT @params = cxml FROM rs
 
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptBetting_CheckData ', ' @WinlostDate = ''',@winlostdate,'''')
@@ -166,7 +168,7 @@ BEGIN
 				
 				SELECT @params = '', @ErrMsg = 'step 6.05'
 				
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = 'EXEC bodb_LicenseeReport.dbo.Task_PostStaging '
@@ -188,7 +190,7 @@ BEGIN
 				)
 				SELECT @params = cxml FROM rs
 			
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptBettingBySport_CheckData ', ' @WinlostDate = ''',@winlostdate,'''')
@@ -204,7 +206,7 @@ BEGIN
 				
 				SET @ErrMsg  = 'step 6.08'
 				
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_DailyRptLicWinloss2 ', ' @WinlostDate = ''',@winlostdate,'''')
@@ -220,7 +222,7 @@ BEGIN
 				
 				SET @ErrMsg  = 'step 6.09'
 
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptCustomerTurnOver_Bettrans14 ', ' @Date = ''',@winlostdate,'''')
@@ -236,7 +238,7 @@ BEGIN
 				
 				SET @ErrMsg  = 'step 6.10'
 			
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptWinlostbyleague_Bettrans14 ', ' @Date = ''',@winlostdate,'''')
@@ -252,7 +254,7 @@ BEGIN
 				
 				SET @ErrMsg  = 'step 6.11'
 				
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptCustomerMatch_Bettrans14 ', ' @Date = ''',@winlostdate,'''')
@@ -268,7 +270,7 @@ BEGIN
 				
 				SET @ErrMsg  = 'step 6.12'
 				
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.GEN_rptBetting_Parlay14 ', ' @datefrom = ''',@winlostdate,''' ,@dateto = ''',@winlostdate,'''')
@@ -284,7 +286,7 @@ BEGIN
 				
 				SET @ErrMsg  = 'step 6.13'
 								
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_DailyRptLicWinlossGMT_Bettrans14 ', ' @FromDate = ''',@winlostdate,'''')
@@ -300,7 +302,7 @@ BEGIN
 				
 				SET @ErrMsg  = 'step 6.14'
 				
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14 ', ' @PromoDate = ''',@winlostdate,''', @IsCheckDataOnly = 0')
@@ -316,7 +318,7 @@ BEGIN
 			
 				SET @ErrMsg  = 'step 6.15'
 				
-				SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14 ', ' @Fromdate = ''',@winlostdate,''', @Todate = ''', @winlostdate, '''')
@@ -334,7 +336,7 @@ BEGIN
 			
 			SET @ErrMsg  = 'step 7'
 			
-			SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+			EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 			SELECT 
 				@alias = 'DBFS', 
 				@SqlCommand = CONCAT('EXEC bodb_FraudSensor.dbo.FS_Task_MatchDailyDataCapture ', ' @GenerateFromDate = ''',@winlostdate,''', @GenerateToDate = ''', @winlostdate, '''')
@@ -346,7 +348,7 @@ BEGIN
 			
 			SET @ErrMsg  = 'step 8'
 			
-			SELECT TOP 1 @doNotRunInServer = ServerName FROM dbo.f_Get_ServerName_By_Alias('DBTXN') 
+			EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 			SELECT 
 				@alias = 'DBTGRS', 
 				@SqlCommand = CONCAT('EXEC bodb_TGRS.dbo.Task_RegenerateTGRSData ', ' @FromDate = ''',@winlostdate,''', @ToDate = ''', @winlostdate, ''', @Flagged = 0')

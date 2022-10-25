@@ -1,7 +1,7 @@
 /*<info serverAlias="DBTXN-bodb02" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].ExecRep_NAP_Admin_10 
 (
-	@RequestID INT = 0,
+	@RequestID VARCHAR(4000) = '',
 	@ServerName VARCHAR(200) = '',
 	@AliasName VARCHAR(200) = '',
 	@SqlCommand VARCHAR(MAX) = '',
@@ -32,7 +32,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	DECLARE @CurrServerName VARCHAR(200) = @@SERVERNAME
+	DECLARE @CurrServerName VARCHAR(200) = @@SERVERNAME, @ServerNameByAlias VARCHAR(200)
 
 	IF (@RunningMode = 1) --insert to table queue
 	BEGIN
@@ -44,7 +44,8 @@ BEGIN
 		ELSE -- this block code is used when this sp is executed at replication server  
 		BEGIN
 			BEGIN TRY
-				IF EXISTS (SELECT 1 FROM dbo.f_Get_ServerName_By_Alias(@AliasName) f WHERE f.Alias = @AliasName AND f.ServerName = @CurrServerName)
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = @AliasName, @ServerName = @ServerNameByAlias OUTPUT
+				IF (@ServerNameByAlias = @CurrServerName)
 				BEGIN
         			INSERT INTO JobExecutionQueue (RequestID, ServerName, AliasName, SqlCommand, Params, ExecStatus, PriorityOrder, CreatedDate, CompletedDate, ModifiedDate, Remark)
 					VALUES (@RequestID, @ServerName, @AliasName, @SqlCommand, @Params, 'Waiting', @PriorityOrder, GETDATE(), NULL, NULL, @Remark);
@@ -71,7 +72,8 @@ BEGIN
 	END
 	ELSE IF (@RunningMode = 2) --run immediated
 	BEGIN
-		IF EXISTS (SELECT 1 FROM dbo.f_Get_ServerName_By_Alias(@AliasName) f WHERE f.Alias = @AliasName AND f.ServerName = @CurrServerName)
+		EXEC dbo.Get_ServerName_By_Alias @Alias  = @AliasName, @ServerName = @ServerName OUTPUT
+		IF (@ServerName = @CurrServerName)
 		BEGIN
 			EXEC sys.sp_executesql @SqlCommand
 		END

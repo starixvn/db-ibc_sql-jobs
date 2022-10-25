@@ -4,7 +4,7 @@ ALTER PROCEDURE [dbo].[Task_ReadyToGo_TicketVoiding_RoutineTasks]
 	 @stepNo		TINYINT, 
 	 @AffectedList	VARCHAR(MAX) = NULL,
 	 @ExecuteType	TINYINT,
-	 @RequestID INT = 0,
+	 @RequestID		VARCHAR(4000) = '',
 	 @errmsg		VARCHAR(1000) = '' OUTPUT 
 )
 AS

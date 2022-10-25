@@ -85,19 +85,20 @@ BEGIN
 			AND NOT EXISTS (SELECT TOP 1 1 FROM TicketVoiding_RoutineTasks WITH(NOLOCK) WHERE Status IN (1,3) AND ExecuteType = 2 )
 		BEGIN
 			--- run by group together
-			SELECT TOP(1) @stepNo = StepNo, @ExecuteType = ExecuteType, @RequestID = RequestID	
+			SELECT TOP(1) @stepNo = StepNo, @ExecuteType = ExecuteType
 			FROM TicketVoiding_RoutineTasks t WITH(NOLOCK)
 			WHERE ExecuteType = 2 
 				AND Status = 0
 				AND CreatedDate < CONVERT(VARCHAR, GETDATE(), 23)
-			GROUP BY StepNo,ExecuteType, RequestID
+			GROUP BY StepNo,ExecuteType
 			ORDER BY StepNo
 			IF @@ROWCOUNT = 0
 				BREAK;
 
 			--- prepare for runing
 			UPDATE TicketVoiding_RoutineTasks
-			SET Status = 1,
+			SET @RequestID = @RequestID + CAST(RequestID AS VARCHAR(20)) + ',',
+				Status = 1,
 				ExecutedDate = GETDATE()
 			WHERE ExecuteType = 2 AND StepNo = @stepNo
 				AND CreatedDate < CONVERT(VARCHAR, GETDATE(), 23)
