@@ -4,6 +4,7 @@ ALTER PROCEDURE [dbo].[Task_ReadyToGo_TicketVoiding_RoutineTasks]
 	 @stepNo		TINYINT, 
 	 @AffectedList	VARCHAR(MAX) = NULL,
 	 @ExecuteType	TINYINT,
+	 @RequestID INT = 0,
 	 @errmsg		VARCHAR(1000) = '' OUTPUT 
 )
 AS
@@ -15,6 +16,7 @@ AS
 	Revisions:
 		- 20190906@Lukas: Initialize SP [RedmineID: #115377]
 		- 20220413@Sol: add order by winlostdate - [RedmineID: #171429]
+		- 20221025@Sol: Database - Sync-up Standby Server data - [RedmineID: #167261]
 */
 BEGIN
 	DECLARE @inputList TABLE (custid INT, winlostdate DATETIME, isDone BIT)
@@ -69,7 +71,7 @@ BEGIN
 			GROUP BY winlostdate
 			ORDER BY t.winlostdate
 
-			EXECUTE Task_Execute_TicketVoiding_RoutineTasks @stepNo = @stepNo, @winlostdate = @winlostdate, @custIDs = @custIDs, @errmsg = @errmsg OUTPUT
+			EXECUTE Task_Execute_TicketVoiding_RoutineTasks @stepNo = @stepNo, @winlostdate = @winlostdate, @custIDs = @custIDs, @RequestID = @RequestID, @errmsg = @errmsg OUTPUT
 
 			UPDATE @inputList
 			SET isDone = 1
@@ -87,7 +89,7 @@ BEGIN
 			GROUP BY winlostdate 
 			ORDER BY winlostdate
 
-			EXECUTE Task_Execute_TicketVoiding_RoutineTasks @stepNo = @stepNo, @winlostdate = @winlostdate, @errmsg = @errmsg OUTPUT
+			EXECUTE Task_Execute_TicketVoiding_RoutineTasks @stepNo = @stepNo, @winlostdate = @winlostdate, @RequestID = @RequestID, @errmsg = @errmsg OUTPUT
 
 			UPDATE @inputList
 			SET isDone = 1

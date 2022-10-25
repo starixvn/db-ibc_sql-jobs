@@ -1,6 +1,7 @@
 /*<info serverAlias="DBTXN-bodb02" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].ExecRep_NAP_Admin_10 
 (
+	@RequestID INT = 0,
 	@ServerName VARCHAR(200) = '',
 	@AliasName VARCHAR(200) = '',
 	@SqlCommand VARCHAR(MAX) = '',
@@ -45,8 +46,8 @@ BEGIN
 			BEGIN TRY
 				IF EXISTS (SELECT 1 FROM dbo.f_Get_ServerName_By_Alias(@AliasName) f WHERE f.Alias = @AliasName AND f.ServerName = @CurrServerName)
 				BEGIN
-        			INSERT INTO JobExecutionQueue (ServerName, AliasName, SqlCommand, Params, ExecStatus, PriorityOrder, CreatedDate, CompletedDate, ModifiedDate, Remark)
-					VALUES (@ServerName, @AliasName, @SqlCommand, @Params, 'Waiting', @PriorityOrder, GETDATE(), NULL, NULL, @Remark);
+        			INSERT INTO JobExecutionQueue (RequestID, ServerName, AliasName, SqlCommand, Params, ExecStatus, PriorityOrder, CreatedDate, CompletedDate, ModifiedDate, Remark)
+					VALUES (@RequestID, @ServerName, @AliasName, @SqlCommand, @Params, 'Waiting', @PriorityOrder, GETDATE(), NULL, NULL, @Remark);
 				END
         		
 			END TRY

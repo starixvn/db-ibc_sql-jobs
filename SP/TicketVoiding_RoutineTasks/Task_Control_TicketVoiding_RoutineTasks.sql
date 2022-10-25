@@ -11,6 +11,7 @@ AS
 
 	Revisions:
 		- 20190906@Lukas: Initialize SP [RedmineID: #115377]
+		- 20221025@Sol: Database - Sync-up Standby Server data - [RedmineID: #167261]
 */
 BEGIN
 	-- check if have failed or uncompleted running steps
@@ -56,7 +57,7 @@ BEGIN
 			BEGIN
 				SELECT @result = 2, @log = '', @errmsg = '' --- default is successfully
 				BEGIN TRY
-					EXECUTE Task_ReadyToGo_TicketVoiding_RoutineTasks @stepNo = @stepNo, @AffectedList = @AffectedList, @ExecuteType = @ExecuteType, @errmsg = @errmsg OUTPUT
+					EXECUTE Task_ReadyToGo_TicketVoiding_RoutineTasks @stepNo = @stepNo, @AffectedList = @AffectedList, @ExecuteType = @ExecuteType, @RequestID = @RequestID, @errmsg = @errmsg OUTPUT
 				END TRY
 				BEGIN CATCH
 					SELECT @log = @errmsg + '--' + ERROR_MESSAGE(), @result = 3
@@ -84,12 +85,12 @@ BEGIN
 			AND NOT EXISTS (SELECT TOP 1 1 FROM TicketVoiding_RoutineTasks WITH(NOLOCK) WHERE Status IN (1,3) AND ExecuteType = 2 )
 		BEGIN
 			--- run by group together
-			SELECT TOP(1) @stepNo = StepNo, @ExecuteType = ExecuteType 	
+			SELECT TOP(1) @stepNo = StepNo, @ExecuteType = ExecuteType, @RequestID = RequestID	
 			FROM TicketVoiding_RoutineTasks t WITH(NOLOCK)
 			WHERE ExecuteType = 2 
 				AND Status = 0
 				AND CreatedDate < CONVERT(VARCHAR, GETDATE(), 23)
-			GROUP BY StepNo,ExecuteType
+			GROUP BY StepNo,ExecuteType, RequestID
 			ORDER BY StepNo
 			IF @@ROWCOUNT = 0
 				BREAK;
@@ -105,7 +106,7 @@ BEGIN
 			BEGIN
 				SELECT @result = 2,@log = '', @errmsg = '' --- default is successfully
 				BEGIN TRY
-					EXECUTE Task_ReadyToGo_TicketVoiding_RoutineTasks @stepNo = @stepNo, @ExecuteType = @ExecuteType, @errmsg = @errmsg OUTPUT
+					EXECUTE Task_ReadyToGo_TicketVoiding_RoutineTasks @stepNo = @stepNo, @ExecuteType = @ExecuteType, @RequestID = @RequestID, @errmsg = @errmsg OUTPUT
 				END TRY
 				BEGIN CATCH
 					SELECT @log = @errmsg + '--' + ERROR_MESSAGE(), @result = 3
