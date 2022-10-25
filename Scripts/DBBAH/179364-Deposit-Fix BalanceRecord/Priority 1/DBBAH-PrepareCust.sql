@@ -7,7 +7,7 @@
 */
 USE BODB02
 GO
-CREATE TABLE BalanceRecord_SiteDB2_Round1_tmp (custid INT)
+CREATE TABLE BalanceRecord_SiteDB2_Round1_tmp (ID INT IDENTITY (1,1) PRIMARY KEY, custid INT)
 
 GO
 
