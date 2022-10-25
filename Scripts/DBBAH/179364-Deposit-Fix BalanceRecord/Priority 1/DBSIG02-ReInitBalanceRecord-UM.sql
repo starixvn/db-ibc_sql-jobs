@@ -70,7 +70,7 @@ outer apply (
 DECLARE @debug_message VARCHAR(MAX) = ''
 
 --------------LOOP BY batch 500 of customers ------------------
-DECLARE @rid_loop INT, @rowCount int  =0, @batch int = 50, @loop_cnt int = 1
+DECLARE @rid_loop INT, @rowCount int  =0, @batch int = 25, @loop_cnt int = 1
 DECLARE @StartRow INT = 1
 		, @StopRow INT 
 		, @retrycnt INT = 0 
