@@ -33,6 +33,7 @@ DECLARE @StartRow INT = 1
 
 SET @MaxRow = (SELECT MAX(ID) FROM BalanceRecord_SiteDB2_Round1_tmp m WITH (NOLOCK))
 
+DECLARE @debug_message VARCHAR(500)
 IF @Threshold >= @MaxRow
 	SET @Threshold = @MaxRow
 
@@ -54,6 +55,9 @@ BEGIN
 			order by rowid desc) as b2
 	WHERE b1.Balance <>  b2.balance
 		AND m.Id BETWEEN @StartRow AND @StopRow
+	
+	SET @debug_message = CONVERT(VARCHAR(50), GETDATE(), 121)			
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
 	IF @StopRow = @MaxRow BREAK
 
