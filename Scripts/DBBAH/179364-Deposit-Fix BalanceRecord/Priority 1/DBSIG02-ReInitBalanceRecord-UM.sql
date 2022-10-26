@@ -26,19 +26,42 @@ CREATE TABLE #temp_MemberInput(
 
 CREATE TABLE #tempMember (custid INT PRIMARY KEY)
 --------------GET members needs to process ------------------
-INSERT INTO #temp_MemberInput (custid)
-SELECT m.CustId
-FROM BalanceRecord_SiteDB2_Round1_tmp m WITH (NOLOCK)
-  CROSS APPLY (
-        SELECT TOP 1 Balance 
-        FROM DBSIG02.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
-        WHERE b.custid = m.custid) as b1
-  CROSS APPLY (
-        SELECT TOP 1 newbalance as balance
-        FROM bodb02.dbo.balancerecord b WITH(NOLOCK) 
-        WHERE b.custid = m.custid
-        order by rowid desc) as b2
-WHERE b1.Balance <>  b2.balance
+DECLARE @StartRow INT = 1
+		, @StopRow INT 
+		, @MaxRow INT = 1 -- Keep the total row of your data
+		, @Threshold INT = 2000 -- the number of each batch
+
+SET @MaxRow = (SELECT MAX(ID) FROM BalanceRecord_SiteDB2_Round1_tmp m WITH (NOLOCK))
+
+IF @Threshold >= @MaxRow
+	SET @Threshold = @MaxRow
+
+-- SET for first batch
+SET @StopRow = @Threshold
+WHILE (1=1)
+BEGIN
+	INSERT INTO #temp_MemberInput (custid)
+	SELECT m.CustId
+	FROM BalanceRecord_SiteDB2_Round1_tmp m WITH (NOLOCK)
+	  CROSS APPLY (
+			SELECT TOP 1 Balance 
+			FROM DBSIG02.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
+			WHERE b.custid = m.custid) as b1
+	  CROSS APPLY (
+			SELECT TOP 1 newbalance as balance
+			FROM bodb02.dbo.balancerecord b WITH(NOLOCK) 
+			WHERE b.custid = m.custid
+			order by rowid desc) as b2
+	WHERE b1.Balance <>  b2.balance
+		AND m.Id BETWEEN @StartRow AND @StopRow
+
+	IF @StopRow = @MaxRow BREAK
+
+	SET @StartRow = @StopRow + 1
+	SET @StopRow = @StopRow + @Threshold
+	IF @StopRow >= @MaxRow
+		SET @StopRow = @MaxRow
+END
 
 SELECT @@ROWCOUNT AS [custid_Count]
 
