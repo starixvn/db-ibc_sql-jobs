@@ -1,5 +1,5 @@
 /*<info serverAlias="DBACC-bodb02" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].Task_Executor_DB061
+ALTER PROCEDURE [dbo].Task_Executor_DB061
 AS
 /*
 	Created: 20220603@Sol
@@ -37,10 +37,10 @@ BEGIN
 	DECLARE @queueId INT,
 			@serverName VARCHAR(200),
 			@aliasName VARCHAR(200),	
-			@sqlCommand VARCHAR(MAX),
+			@sqlCommand NVARCHAR(MAX),
 			@params VARCHAR(MAX),
 			@xml XML,
-			@errMsg VARCHAR(1000)
+			@errMsg VARCHAR(1000) = ''
 
 	DECLARE @GenerateData TINYINT = 0
 
@@ -80,19 +80,21 @@ BEGIN
 			BEGIN CATCH
             	UPDATE JobExecutionQueue
 				SET ExecStatus = 'Failed',
-					ModifiedDate = GETDATE(),
 					CompletedDate = GETDATE(),
-					Remark = Remark + ' - ' + @errmsg + ' - ' + ERROR_MESSAGE()
+					Remark = ISNULL(Remark, '') + ' - ' + @errmsg + ' - ' + ERROR_MESSAGE()
 				WHERE QueueId = @queueId
+
+				--error and stop process
+				BREAK;
+
             END CATCH
 		END
 
 		--- set this stepno is done with success 
 		UPDATE JobExecutionQueue
 		SET ExecStatus = 'Completed',
-			ModifiedDate = GETDATE(),
 			CompletedDate = GETDATE(),
-			Remark = Remark + ' - ' + 'DONE'
+			Remark = ISNULL(Remark, '') + ' - ' + 'DONE'
 		WHERE QueueId = @queueId
 			
 	END

@@ -37,12 +37,12 @@ BEGIN
 	DECLARE @queueId INT,
 			@serverName VARCHAR(200),
 			@aliasName VARCHAR(200),	
-			@sqlCommand VARCHAR(MAX),
+			@sqlCommand NVARCHAR(MAX),
 			@params VARCHAR(MAX),
 			@xml XML,
-			@errMsg VARCHAR(1000)
+			@errMsg VARCHAR(1000) = ''
 
-	DECLARE @GenerateData TINYINT = 0
+	DECLARE @GenerateData TINYINT = 0, @BetTypes VARCHAR(MAX) = '', @IsParlay VARCHAR(20) = ''
 
 	---variables for specific sp
 	DECLARE @tblParams TABLE (Winlostdate DATETIME)
@@ -75,10 +75,10 @@ BEGIN
 			BEGIN TRY
 				IF (@sqlCommand LIKE '%bodb_LicenseeReport.dbo.Task_rptBetting_CheckData%')
 				BEGIN
-					SET @GenerateData = 0
-					SET @sqlCommand = @sqlCommand + ',@HasDataMismatch = @GenerateData OUTPUT'
+					SELECT @GenerateData = 0, @BetTypes = '', @IsParlay = ''
+					SET @sqlCommand = @sqlCommand + ',@HasDataMismatch = @GenerateData OUTPUT, @BetTypes = @BetTypes OUTPUT'
 
-					EXEC sys.sp_executesql @sqlCommand, N'@GenerateData TINYINT OUTPUT', @GenerateData = @GenerateData OUTPUT
+					EXEC sys.sp_executesql @sqlCommand, N'@GenerateData TINYINT OUTPUT, @BetTypes VARCHAR(MAX) OUTPUT', @GenerateData = @GenerateData OUTPUT,  @BetTypes = @BetTypes OUTPUT
 
 					IF (@generateData <> 0)
 					BEGIN
@@ -108,10 +108,10 @@ BEGIN
 				END
 				ELSE IF (@sqlCommand LIKE '%bodb_LicenseeReport.dbo.Task_rptBettingBySport_CheckData%')
 				BEGIN
-					SET @GenerateData = 0
-					SET @sqlCommand = @sqlCommand + ',@HasDataMismatch = @GenerateData OUTPUT'
+					SELECT @GenerateData = 0, @BetTypes = '', @IsParlay = ''
+					SET @sqlCommand = @sqlCommand + ',@HasDataMismatch = @GenerateData OUTPUT, @IsParlay = @IsParlay OUTPUT'
 
-					EXEC sys.sp_executesql @sqlCommand, N'@GenerateData TINYINT OUTPUT', @GenerateData = @GenerateData OUTPUT
+					EXEC sys.sp_executesql @sqlCommand, N'@GenerateData TINYINT OUTPUT, @IsParlay VARCHAR(20) OUTPUT', @GenerateData = @GenerateData OUTPUT, @IsParlay = @IsParlay OUTPUT
 
 					IF (@generateData <> 0)
 					BEGIN
@@ -141,19 +141,21 @@ BEGIN
 			BEGIN CATCH
             	UPDATE JobExecutionQueue
 				SET ExecStatus = 'Failed',
-					ModifiedDate = GETDATE(),
 					CompletedDate = GETDATE(),
-					Remark = Remark + ' - ' + @errmsg + ' - ' + ERROR_MESSAGE()
+					Remark = ISNULL(Remark, '') + ' - ' + @errmsg + ' - ' + ERROR_MESSAGE()
 				WHERE QueueId = @queueId
+
+				--error and stop process
+				BREAK;
+
             END CATCH
 		END
 
 		--- set this stepno is done with success 
 		UPDATE JobExecutionQueue
 		SET ExecStatus = 'Completed',
-			ModifiedDate = GETDATE(),
 			CompletedDate = GETDATE(),
-			Remark = Remark + ' - ' + 'DONE'
+			Remark = ISNULL(Remark, '') + ' - ' + 'DONE'
 		WHERE QueueId = @queueId
 			
 	END

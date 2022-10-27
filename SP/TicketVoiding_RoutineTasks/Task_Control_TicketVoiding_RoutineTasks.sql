@@ -32,7 +32,8 @@ BEGIN
 			@AffectedList VARCHAR(MAX),
 			@errmsg VARCHAR(1000) = '',
 			@result TINYINT = 0,
-			@log VARCHAR(1000) = ''
+			@log VARCHAR(1000) = '',
+			@RequestIdRemark VARCHAR(4000) = ''
 
 	IF @ExecutedType = 1
 	BEGIN
@@ -96,8 +97,10 @@ BEGIN
 				BREAK;
 
 			--- prepare for runing
+			SET @RequestIdRemark = ''
+
 			UPDATE TicketVoiding_RoutineTasks
-			SET @RequestID = @RequestID + CAST(RequestID AS VARCHAR(20)) + ',',
+			SET @RequestIdRemark = @RequestIdRemark + CAST(RequestID AS VARCHAR(20)) + ',',
 				Status = 1,
 				ExecutedDate = GETDATE()
 			WHERE ExecuteType = 2 AND StepNo = @stepNo
@@ -107,7 +110,7 @@ BEGIN
 			BEGIN
 				SELECT @result = 2,@log = '', @errmsg = '' --- default is successfully
 				BEGIN TRY
-					EXECUTE Task_ReadyToGo_TicketVoiding_RoutineTasks @stepNo = @stepNo, @ExecuteType = @ExecuteType, @RequestID = @RequestID, @errmsg = @errmsg OUTPUT
+					EXECUTE Task_ReadyToGo_TicketVoiding_RoutineTasks @stepNo = @stepNo, @ExecuteType = @ExecuteType, @RequestID = @RequestIdRemark, @errmsg = @errmsg OUTPUT
 				END TRY
 				BEGIN CATCH
 					SELECT @log = @errmsg + '--' + ERROR_MESSAGE(), @result = 3

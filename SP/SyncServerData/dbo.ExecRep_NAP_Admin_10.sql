@@ -8,8 +8,7 @@ ALTER PROCEDURE [dbo].ExecRep_NAP_Admin_10
 	@Params VARCHAR(MAX) = '',
 	@DoNotRunInServer VARCHAR(500),
 	@PriorityOrder TINYINT = 2, --default for order by queueID
-	@Remark VARCHAR(8000) = '',
-	@RunningMode TINYINT = 1
+	@Remark VARCHAR(8000) = ''
 )
 AS
 /*
@@ -27,14 +26,12 @@ AS
 		- @DoNotRunInServer: server that the execRep will do nothing
 		- @PriorityOrder: 1 for run immediately, 2 for order by queueID
 		- @Remark: note here
-		- @RunningMode: 1 for insert cmd to table queue, 2 will exec the cmd immediated
 */
 BEGIN
 	SET NOCOUNT ON;
 
 	DECLARE @CurrServerName VARCHAR(200) = @@SERVERNAME, @ServerNameByAlias VARCHAR(200)
-
-	IF (@RunningMode = 1) --insert to table queue
+	
 	BEGIN
 		--check if this sp is called in dbtrans than do nothing  
 		IF @CurrServerName = @doNotRunInServer --'DB-60\DEVDBTRANS' for example
@@ -43,39 +40,12 @@ BEGIN
 		END
 		ELSE -- this block code is used when this sp is executed at replication server  
 		BEGIN
-			BEGIN TRY
-				EXEC dbo.Get_ServerName_By_Alias @Alias  = @AliasName, @ServerName = @ServerNameByAlias OUTPUT
-				IF (@ServerNameByAlias = @CurrServerName)
-				BEGIN
-        			INSERT INTO JobExecutionQueue (RequestID, ServerName, AliasName, SqlCommand, Params, ExecStatus, PriorityOrder, CreatedDate, CompletedDate, ModifiedDate, Remark)
-					VALUES (@RequestID, @ServerName, @AliasName, @SqlCommand, @Params, 'Waiting', @PriorityOrder, GETDATE(), NULL, NULL, @Remark);
-				END
-        		
-			END TRY
-			BEGIN CATCH
-				DECLARE @ErrorMessage NVARCHAR(4000);
-				DECLARE @ErrorSeverity INT;
-				DECLARE @ErrorState INT;
-
-				SELECT
-					@ErrorMessage = ERROR_MESSAGE(),
-					@ErrorSeverity = ERROR_SEVERITY(),
-					@ErrorState = ERROR_STATE();
-			
-				RAISERROR (
-							@ErrorMessage, -- Message text.
-							@ErrorSeverity, -- Severity.
-							@ErrorState -- State.
-						   );
-			END CATCH
-		END
-	END
-	ELSE IF (@RunningMode = 2) --run immediated
-	BEGIN
-		EXEC dbo.Get_ServerName_By_Alias @Alias  = @AliasName, @ServerName = @ServerName OUTPUT
-		IF (@ServerName = @CurrServerName)
-		BEGIN
-			EXEC sys.sp_executesql @SqlCommand
+			EXEC dbo.Get_ServerName_By_Alias @Alias  = @AliasName, @ServerName = @ServerNameByAlias OUTPUT
+			IF (@ServerNameByAlias = @CurrServerName)
+			BEGIN
+        		INSERT INTO JobExecutionQueue (RequestID, ServerName, AliasName, SqlCommand, Params, ExecStatus, PriorityOrder, CreatedDate, CompletedDate, ModifiedDate, Remark)
+				VALUES (@RequestID, @ServerName, @AliasName, @SqlCommand, @Params, 'Waiting', @PriorityOrder, GETDATE(), NULL, NULL, @Remark);
+			END
 		END
 	END
 
