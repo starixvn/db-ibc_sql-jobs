@@ -64,6 +64,7 @@ SET NOCOUNT ON
 
 					,@PendingLiveCS_State	= [PendingLiveCS_State]
 					,@PendingLiveCS_CreatedDate = CAST([PendingLiveCS_CreatedDate] AS DATETIME)
+					,@Type					= 0
 
 			FROM dbo.BalanceUpdateSetting b WITH(NOLOCK)
 			PIVOT ( 
