@@ -1,18 +1,8 @@
 -- Create User
 USE [msdb]
 GO
-/*
-	Windows domain account:
-	SPVN\jacob.phan
-	SPVN\robert.tran
-	SPVN\kaden.trinh
-	SPVN\leo.vo
-	SPVN\franklin.nguyen
-	SPVN\alan.nguyen
-	SPVN\charles.nguyen
-*/
-
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+ 
+IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'DB62\DEVSITEDB','DB-60\DEVDBTRANS' )
 BEGIN
 	SELECT 'Must be run on DB206' AS 'Error'
 
@@ -24,8 +14,7 @@ DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('SPVN\jacob.phan'), ('SPVN\robert.tran'), ('SPVN\kaden.trinh')
-		, ('SPVN\franklin.nguyen')
-		--, ('SPVN\alan.nguyen')
+		, ('SPVN\franklin.nguyen') 
 		, ('SPVN\charles.nguyen'), ('SPVN\raymond.le')
 		,('SPVN\zane.trinh')
 		,('SPVN\luca.duong')
@@ -48,7 +37,7 @@ GO
 USE [msdb]
 GO
 
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'DB62\DEVSITEDB','DB-60\DEVDBTRANS' )
 BEGIN
 	SELECT 'Must be run on DB206' AS 'Error'
 
@@ -60,10 +49,10 @@ DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('SPVN\jacob.phan'), ('SPVN\robert.tran'), ('SPVN\kaden.trinh')
-		, ('SPVN\franklin.nguyen')
-		--, ('SPVN\alan.nguyen')
+		, ('SPVN\franklin.nguyen') 
 		, ('SPVN\charles.nguyen'), ('SPVN\raymond.le')
 		,('SPVN\zane.trinh')
+		,('SPVN\luca.duong')
 
 SELECT	@strUser = @strUser + 'EXEC sp_AddRoleMember ''SQLAgentReaderRole''' + ', ''' + t.Name + '''' 
 		+ CHAR(13)

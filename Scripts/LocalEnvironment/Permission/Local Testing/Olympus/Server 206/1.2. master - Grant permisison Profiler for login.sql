@@ -1,18 +1,9 @@
 USE [master]
 GO
-/*	Windows domain account:
-	SPVN\jacob.phan
-	SPVN\robert.tran
-	SPVN\kaden.trinh
-	SPVN\leo.vo
-	SPVN\franklin.nguyen
-	SPVN\alan.nguyen
-	SPVN\charles.nguyen
-*/
-
+ 
 -- Grant permisison Profiler for login
 
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'DB62\DEVSITEDB','DB-60\DEVDBTRANS' )
 BEGIN
 	SELECT 'Must be run on DB206' AS 'Error'
 

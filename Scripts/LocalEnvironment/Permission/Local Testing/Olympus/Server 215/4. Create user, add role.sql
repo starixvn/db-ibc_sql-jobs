@@ -26,7 +26,7 @@
 		SPVN\charles.nguyen
 */
 -- Create User
-IF @@SERVERNAME NOT in ('DB215','TESTDB053')
+IF @@SERVERNAME NOT in ('DB215','TESTDB053','DB-61\DevDB053')
 BEGIN
 	SELECT 'Must be run on DB215' AS 'Error'
 
@@ -46,6 +46,8 @@ INSERT INTO @tmpMember (Name)
 	VALUES ('SPVN\jacob.phan'), ('SPVN\robert.tran'), ('SPVN\kaden.trinh')
 		,('SPVN\leo.vo'), ('SPVN\franklin.nguyen'), ('SPVN\alan.nguyen'), ('SPVN\raymond.le'), ('SPVN\charles.nguyen')
 		,('SPVN\zane.trinh')
+		,('SPVN\levi.vu')
+		,('SPVN\luca.duong')
 
 /*
 	USE DBName
@@ -83,7 +85,7 @@ GO
 -------------------------------------------
 -- Add Role for member
 
-IF @@SERVERNAME NOT in ('DB215','TESTDB053')
+IF @@SERVERNAME NOT in ('DB215','TESTDB053','DB-61\DevDB053')
 BEGIN
 	SELECT 'Must be run on DB215' AS 'Error'
 
@@ -105,7 +107,8 @@ INSERT INTO @tmpMember (Name)
 	VALUES ('SPVN\jacob.phan'), ('SPVN\robert.tran'), ('SPVN\kaden.trinh')
 		,('SPVN\leo.vo'), ('SPVN\franklin.nguyen'), ('SPVN\alan.nguyen'), ('SPVN\raymond.le'), ('SPVN\charles.nguyen')
 		,('SPVN\zane.trinh')
-
+		,('SPVN\levi.vu')
+		,('SPVN\luca.duong')
 UPDATE @tmpMember
 	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
 /*

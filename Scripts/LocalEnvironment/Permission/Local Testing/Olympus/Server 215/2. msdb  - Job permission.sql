@@ -13,7 +13,7 @@ GO
 	spvn\charles.nguyen
 */
 
-IF @@SERVERNAME NOT in ('DB215','TESTDB053')
+IF @@SERVERNAME NOT in ('DB215','TESTDB053','DB-61\DevDB053')
 BEGIN
 	SELECT 'Must be run on DB215' AS 'Error'
 
@@ -25,10 +25,11 @@ DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('spvn\jacob.phan'), ('spvn\robert.tran'), ('spvn\kaden.trinh')
-		,('spvn\leo.vo'), ('spvn\franklin.nguyen')
-		--, ('spvn\alan.nguyen')
+		,('spvn\leo.vo'), ('spvn\franklin.nguyen') 
 		, ('spvn\raymond.le'), ('spvn\charles.nguyen')
 		,('SPVN\zane.trinh')
+		,('SPVN\luca.duong')
+		,('SPVN\levi.vu')
 
 SELECT	@strUser = @strUser 
 			+ 'CREATE USER ' + '[' + t.Name + ']' + ' FOR LOGIN ' + '[' + t.Name + ']' + ' WITH DEFAULT_SCHEMA=[dbo]; '
@@ -48,7 +49,7 @@ GO
 USE [msdb]
 GO
 
-IF @@SERVERNAME NOT in ('DB215','TESTDB053')
+IF @@SERVERNAME NOT in ('DB215','TESTDB053','DB-61\DevDB053')
 BEGIN
 	SELECT 'Must be run on DB215' AS 'Error'
 
@@ -60,10 +61,11 @@ DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('spvn\jacob.phan'), ('spvn\robert.tran'), ('spvn\kaden.trinh')
-		,('spvn\leo.vo'), ('spvn\franklin.nguyen')
-		--, ('spvn\alan.nguyen')
+		,('spvn\leo.vo'), ('spvn\franklin.nguyen') 
 		, ('spvn\raymond.le'), ('spvn\charles.nguyen')
 		,('SPVN\zane.trinh')
+		,('SPVN\levi.vu')
+		,('SPVN\luca.duong')
 
 SELECT	@strUser = @strUser + 'EXEC sp_AddRoleMember ''SQLAgentReaderRole''' + ', ''' + t.Name + '''' 
 		+ CHAR(13)

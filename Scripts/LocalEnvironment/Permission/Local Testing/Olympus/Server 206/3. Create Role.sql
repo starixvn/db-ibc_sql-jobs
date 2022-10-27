@@ -6,7 +6,7 @@
 
 */
 -- Create Role
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'DB62\DEVSITEDB','DB-60\DEVDBTRANS' )
 BEGIN
 	SELECT 'Must be run on DB206' AS 'Error'
 
@@ -34,7 +34,7 @@ GO
 -------------------------------------------
 -------------------------------------------
 
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'DB62\DEVSITEDB','DB-60\DEVDBTRANS' )
 BEGIN
 	SELECT 'Must be run on DB206' AS 'Error'
 

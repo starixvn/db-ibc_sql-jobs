@@ -13,7 +13,7 @@ GO
 
 -- Grant permisison Profiler for login
 
-IF @@SERVERNAME NOT in ('DB215','TESTDB053')
+IF @@SERVERNAME NOT in ('DB215','TESTDB053','DB-61\DevDB053')
 BEGIN
 	SELECT 'Must be run on DB215' AS 'Error'
 
@@ -35,7 +35,7 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\johnny.thai')	
 			,('SPVN\luca.duong')		
 			,('SPVN\levi.vu')
-			,('SPVN\ryan.ngo')
+			,('SPVN\luca.duong')
 
 SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
 FROM	@tmpMember
