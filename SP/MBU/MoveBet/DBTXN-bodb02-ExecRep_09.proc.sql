@@ -45,6 +45,7 @@ AS
 		- 20210126@Patrick: Migrate DB Server DB054 to cluster [Redmine: #149273]
 		- 202010316@Patrick: Revise Movebet flow to support transfer 247 Redmine: [#149927]
 		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
+		- 20221028@Brice: loop delete top 2000 for last round [RedmineID: #179596]
 
  */
 BEGIN
