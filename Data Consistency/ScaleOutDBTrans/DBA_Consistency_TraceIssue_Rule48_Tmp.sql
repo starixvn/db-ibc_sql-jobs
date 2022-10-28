@@ -11,7 +11,7 @@ Created by: 20221028@Victoria
 Task: Data Consistency - Trace issue unmatch number of tickets between DBTP and SiteDB with rule #48
 DB: DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02
 Revisions:
-	- 20221028: Initial Writing [Redmine:#178864]
+	- 20221028@Victoria: Initial Writing [Redmine:#178864]
 */
 BEGIN
 	SET NOCOUNT ON
