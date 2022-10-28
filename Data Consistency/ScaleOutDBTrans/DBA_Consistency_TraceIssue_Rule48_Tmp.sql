@@ -26,5 +26,5 @@ BEGIN
 		AND status = @Status
 		AND winlostdate IN (@before_yesterday,@yesterday)
 		AND transdate < @CurrentTime
-
+		AND SiteDBGroupID > 0
 END
