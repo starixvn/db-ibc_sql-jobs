@@ -359,7 +359,13 @@ BEGIN
 
 	IF @parlay = 2
 	BEGIN
-		DELETE FROM bettransG WITH(ROWLOCK) WHERE winlostdate = @winlostdate
+		WHILE 1 = 1
+		BEGIN
+			DELETE TOP(2000) FROM bettransG WITH(ROWLOCK) WHERE winlostdate = @winlostdate
+			
+			IF @@ROWCOUNT < 2000
+				BREAK
+		END
 	END
 END
 GO
