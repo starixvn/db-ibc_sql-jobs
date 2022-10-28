@@ -13,6 +13,7 @@ Revisions:
 	- 20221012@Victoria: Modify to show FromDate and ToDate
 							AND replication latency with ticket odds adjustment [Redmine:#178864]	
 	- 20221019@Victoria: Remove VirtualRate inside of CheckSum Function [Redmine:#178864]
+	- 20221028@Victoria: Remove checktime inside of CheckSum Function [Redmine:#178864]
 */
 
 BEGIN
@@ -42,7 +43,7 @@ BEGIN
 			[Recommend], 
 			CHECKSUM_AGG(CHECKSUM(	[custid], [oddsid], [hdp1], [hdp2], [odds], [stake], [status], [winlost], [awinlost], [mwinlost], [playercomm], [comm], [acomm], 
 									[apositiontaking], [mpositiontaking], [tpositiontaking], [playerdiscount], [discount], [adiscount], [livehomescore], [liveawayscore], 
-									[liveindicator], [betteam], [creator], [refno], [comstatus], [betfrom], [betcheck], [checktime], [oddsspread], [actualrate], [matchid], 
+									[liveindicator], [betteam], [creator], [refno], [comstatus], [betfrom], [betcheck], [oddsspread], [actualrate], [matchid], 
 									[Recommend], [mrecommend], [ruben], [betid], [statuswinlost], [modds], [bettype], [betdaqid], [actual_stake], [currency], [ip], [transdesc], 
 									[sdiscount], [scomm], [spositiontaking], [swinlost], [srecommend], [Username], [CurrencyName], [oddstype], [statusID], [currency2], 
 									[balance], [transid2], [WalletType], [BonusID], [RefCode])) AS TotalCheckSumAgg
@@ -104,7 +105,7 @@ BEGIN
 	SELECT	'bettransG' AS TableName,
 			g.[SiteDBGroupID],  
 			c.[Recommend], 
-			CHECKSUM_AGG(CHECKSUM(	g.[custid], g.[oddsid], g.[odds], g.[stake], g.[status], g.[winlost], g.[betteam], g.[creator], g.[refno], g.[betfrom], g.[checktime], 
+			CHECKSUM_AGG(CHECKSUM(	g.[custid], g.[oddsid], g.[odds], g.[stake], g.[status], g.[winlost], g.[betteam], g.[creator], g.[refno], g.[betfrom],
 									g.[apositiontaking], g.[mpositiontaking], g.[tpositiontaking], g.[awinlost], g.[mwinlost], g.[playerdiscount], g.[discount], g.[adiscount], g.[playercomm], g.[comm], 
 									g.[acomm], g.[actualrate], g.[matchid], g.[matchdate], g.[statuswinlost], g.[ruben], g.[bettype], g.[spositiontaking], g.[swinlost], g.[sdiscount], g.[scomm], g.[statusID], 
 									g.[SiteID], g.[TransDesc], g.[BetID3rd], g.[actual_stake], g.[netstake])) AS TotalCheckSumAgg
@@ -148,7 +149,7 @@ BEGIN
 			c.[Recommend], 
 			CHECKSUM_AGG(CHECKSUM(	bm.[custid], bm.[oddsid], bm.[hdp1], bm.[hdp2], bm.[odds], bm.[stake], bm.[status], bm.[winlost], bm.[livehomescore], 
 									bm.[liveawayscore], bm.[liveindicator], bm.[betteam], bm.[creator], bm.[refno], bm.[comstatus], bm.[betfrom], 
-									bm.[betcheck], bm.[checktime], bm.[oddsspread], bm.[apositiontaking], bm.[mpositiontaking], bm.[tpositiontaking], bm.[awinlost], 
+									bm.[betcheck], bm.[oddsspread], bm.[apositiontaking], bm.[mpositiontaking], bm.[tpositiontaking], bm.[awinlost], 
 									bm.[mwinlost], bm.[playerdiscount], bm.[discount], bm.[adiscount], bm.[playercomm], bm.[comm], bm.[acomm], bm.[actualrate], bm.[matchid], 
 									bm.[matchdate], bm.[finalodds], bm.[isfinish], bm.[statuswinlost], bm.[ruben], bm.[bettype], bm.[spositiontaking], bm.[swinlost], 
 									bm.[sdiscount], bm.[scomm], bm.[statusID], bm.[transdesc], bm.[SecAcceptFlag], bm.[SecAcceptTime], bm.[LiveBetAcceptTime])) AS TotalCheckSumAgg
