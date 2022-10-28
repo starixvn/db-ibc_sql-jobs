@@ -345,8 +345,14 @@ BEGIN
 		END
 		ELSE IF @tableName = 'bettransM' AND @matchId = -1 -- last round
 		BEGIN
-			DELETE FROM bettransm WITH(ROWLOCK)
-			WHERE winlostdate = @winlostdate
+			WHILE 1 = 1
+			BEGIN
+				DELETE TOP(2000) FROM bettransm WITH(ROWLOCK)
+				WHERE winlostdate = @winlostdate
+
+				IF @@ROWCOUNT < 2000
+					BREAK
+			END
 		END
 	END
 
