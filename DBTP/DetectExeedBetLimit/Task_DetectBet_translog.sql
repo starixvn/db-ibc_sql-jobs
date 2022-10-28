@@ -15,6 +15,7 @@ AS
 		- 20220728@July: Scale out DBTRANS - Change maxTransIdSetting to SequenceIdSetting [Redmine: #175965]
 		- 20220923@Max: Tuning [Redmine: #178156]
 		- 20220831@July: Include product NG(Happy 5 Linked Game), RNG Keno [Redmine: #170739]
+		- 20221028@Max: Detect player exceeded the bet limit of the Agent's setting - Update rule 10 for 2 special bet choices of RNG Keno [Redmine: #179115]
 
 	Param's explanation:		
 */
@@ -51,7 +52,12 @@ BEGIN
 
 	--For normal products
 	INSERT INTO #tmp_TransId (TransId, CustId, sporttype, bettype, stake, srecommend, recommend, isLive, transdate, SequenceId)
-	SELECT TOP(@batchCount) b.translogid, b.custid, b.productID, b.gameID, b.stake, b.srecommend, b.recommend, CASE WHEN b.productID = 168 THEN b.liveindicator ELSE 0 END, b.transdate, b.sequenceid
+	SELECT TOP(@batchCount) b.translogid, b.custid, b.productID, b.gameID
+		, CASE WHEN b.productID = 202 AND (b.transdesc like '%,33' OR b.transdesc like '%,34') --Special Game of RNG Keno which ChoiceID = 33, 34 (Index Big, Index Small)
+			THEN (b.stake / b.custom2)
+			ELSE b.stake
+		END AS Stake
+		, b.srecommend, b.recommend, CASE WHEN b.productID = 168 THEN b.liveindicator ELSE 0 END, b.transdate, b.sequenceid
 	FROM dbo.translog b WITH (NOLOCK)
 	WHERE b.SequenceID > @maxSequenceId_setting
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
