@@ -1,6 +1,6 @@
 USE [bodb02]
 GO
-ALTER FUNCTION [dbo].[f_dbaGetbalance_p_xtest] (@custid INT, @movebetDate SMALLDATETIME, @siteDBGroupId SMALLINT)
+ALTER FUNCTION [dbo].[f_dbaGetbalance_By_CustId] (@custid INT, @movebetDate SMALLDATETIME, @siteDBGroupId SMALLINT)
 RETURNS TABLE
 AS
 RETURN (
