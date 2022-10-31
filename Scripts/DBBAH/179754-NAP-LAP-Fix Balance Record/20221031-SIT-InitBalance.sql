@@ -14,7 +14,7 @@ DECLARE @maxcustid INT = 0
 SELECT @maxcustid = MAX(custid) 
 FROM customer ci WITH (NOLOCK)
 	INNER JOIN site s WITH (NOLOCK) ON ci.site = s.site
-WHERE s.SiteDBGroupID = 2
+WHERE s.SiteDBGroupID = 1
 
 SELECT @maxcustid AS [@maxcustid]
 
@@ -37,7 +37,7 @@ FROM BalanceTrigger_ProcessData b WITH (NOLOCK)
 	INNER JOIN #temp_MemberInput m ON b.custid = m.custid
 
 ----------- get maxtransid: Run on DBTRans/bodb02----------------
-select * from OPENQUERY(DBSIG02, '
+select * from OPENQUERY(DBSIG01, '
 select *
 from (
 	select MAX(transid) from bodb02.dbo.bettrans with(nolock)
@@ -68,7 +68,7 @@ DECLARE  @ExecuteSQL NVARCHAR(MAX) = ''
 		, @query NVARCHAR(MAX) = ''
 		, @ExecuteSQL_balance NVARCHAR(MAX) = ''
 		, @query_balance NVARCHAR(MAX) = ''
-		, @SiteDBAlias VARCHAR(200) ='DBSIG02'
+		, @SiteDBAlias VARCHAR(200) ='DBSIG01'
 		, @CustidList VARCHAR(MAX) = ''
 
 DECLARE @CustidBalanceList VARCHAR(MAX) = ''
@@ -115,7 +115,7 @@ BEGIN
 								FROM #tempMember m
 									CROSS APPLY (
 												SELECT TOP 1 Balance 
-												FROM DBSIG02.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
+												FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
 												WHERE b.custid = m.custid) AS bal
 								FOR XML PATH('r'), ROOT('root')
 								)
