@@ -50,7 +50,7 @@ BEGIN
 				AND matchid IN (SELECT KeyValue FROM dbo.TempVariableNumber WITH(NOLOCK) WHERE KeyID IN (1,2,3,4)))
 		BEGIN
 
-			SET @__infoMessage = 'custid: ' + CAST(@__custid AS INT) + ' is under settlement. Wait 500 ms then continue check.'
+			SET @__infoMessage = 'custid: ' + CAST(@__custid AS VARCHAR) + ' is under settlement. Wait 500 ms then continue check.'
 			RAISERROR(@__infoMessage, 0, 1) WITH NOWAIT
 
 			WAITFOR DELAY '00:00:00:500' --waitfor settlement completed
@@ -65,7 +65,7 @@ BEGIN
 			EXISTS (SELECT 1 FROM dbo.BalDebitCasinoPending  WITH(NOLOCK) WHERE custid = @__custid) OR
 			EXISTS (SELECT 1 FROM dbo.BalDebitOthersPending  WITH(NOLOCK) WHERE custid = @__custid)		
 		BEGIN
-			SET @__infoMessage = 'custid: ' + CAST(@__custid AS INT) + ' is having pending data. Wait 100 ms then continue check.'
+			SET @__infoMessage = 'custid: ' + CAST(@__custid AS VARCHAR) + ' is having pending data. Wait 100 ms then continue check.'
 			RAISERROR(@__infoMessage, 0, 1) WITH NOWAIT
 
 			WAITFOR DELAY '00:00:00:100' --waitfor pending completed
