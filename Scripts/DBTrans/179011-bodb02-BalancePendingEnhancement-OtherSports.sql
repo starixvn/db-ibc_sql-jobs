@@ -19,6 +19,8 @@ CREATE TABLE [dbo].[BalCreditOthersPending_Staging]
 		[ID] ASC
 	)
 ) 
+ON [balance_group]
+
 GO
 CREATE TABLE [dbo].[BalCreditCasinoPending_Staging]
 (
@@ -30,6 +32,7 @@ CREATE TABLE [dbo].[BalCreditCasinoPending_Staging]
 		[ID] ASC
 	)
 ) 
+ON [balance_group]
 
 GO
 INSERT INTO dbo.BalanceUpdateSetting (VName, VValue) VALUES ('PendingOS_State',0)
