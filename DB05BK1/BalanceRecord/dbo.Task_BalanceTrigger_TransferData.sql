@@ -14,6 +14,7 @@ AS
 		- 20220217@Kathy: Alpha - Avoid confusion when event date is moved [Redmine:#167296]
 		- 20220511@Kathy: Remove text 'Move WLD...' when undo ticket [Redmine:#167296]
 		- 20220531@Kathy: wrongly updating action [Redmine:#167296]
+		- 20221101@Max: NAP/LAP - Wrong balance value shown for functions using BalanceRecord table [Redmine: #179754]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -21,6 +22,7 @@ BEGIN
 	DECLARE @Jobname VARCHAR(100)
 			,@WaitingTime	VARCHAR(10)
 			,@IsWaiting		BIT
+			,@Delay VARCHAR(100) = ''
 
 	SET @Jobname = 'bodb02 : Task_BalanceRecord_Insert'
 
@@ -49,6 +51,9 @@ BEGIN
 	Declare @RowID bigint, @cRowID bigint
 
 	SELECT @cRowID = MIN(RowID), @RowID = MAX(RowID) FROM dbo.BalanceTrigger WITH (NOLOCK)
+
+	SET @Delay = dbo.f_Job_SetWaitforDelay ('Key6') 
+	WAITFOR DELAY @Delay
 
 	IF (@RowID - @cRowID) > (@Size - 1) SET @RowID = (@cRowID + @Size - 1)
 
@@ -134,10 +139,11 @@ BEGIN
 					MatchId, StatusId, SettlementType, swinlost, mwinlost, awinlost, scomm, acomm, comm, modds)
 				SELECT
 					 RowID, D.custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, [Action],
-					 v.Balance AS BTBalance,
+					 --v.Balance AS BTBalance,
+					 NULL AS BTBalance,
 					 D.MatchId, D.StatusId, D.SettlementType, D.swinlost, D.mwinlost, D.awinlost, D.scomm, D.acomm, D.comm, d.modds
 				FROM dbo.BalanceTrigger D WITH (ROWLOCK)
-					INNER JOIN DBTRANS.bodb02.dbo.v_BalanceTable v ON D.custid = v.custid
+					--INNER JOIN DBTRANS.bodb02.dbo.v_BalanceTable v ON D.custid = v.custid
 				WHERE RowID = @cRowID
 			ELSE
 				INSERT INTO dbo.BalanceTrigger_ProcessData
