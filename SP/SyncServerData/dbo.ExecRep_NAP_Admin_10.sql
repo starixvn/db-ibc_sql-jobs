@@ -1,13 +1,11 @@
 /*<info serverAlias="DBTXN-bodb02" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].ExecRep_NAP_Admin_10 
 (
-	@RequestID VARCHAR(4000) = '',
 	@ServerName VARCHAR(200) = '',
 	@AliasName VARCHAR(200) = '',
 	@SqlCommand VARCHAR(MAX) = '',
 	@Params VARCHAR(MAX) = '',
 	@DoNotRunInServer VARCHAR(500),
-	@PriorityOrder TINYINT = 2, --default for order by queueID
 	@Remark VARCHAR(8000) = ''
 )
 AS
@@ -24,7 +22,6 @@ AS
 		- @AliasName: destination alias name
 		- @SqlCommand: command to exec
 		- @DoNotRunInServer: server that the execRep will do nothing
-		- @PriorityOrder: 1 for run immediately, 2 for order by queueID
 		- @Remark: note here
 */
 BEGIN
@@ -43,8 +40,8 @@ BEGIN
 			EXEC dbo.Get_ServerName_By_Alias @Alias  = @AliasName, @ServerName = @ServerNameByAlias OUTPUT
 			IF (@ServerNameByAlias = @CurrServerName)
 			BEGIN
-        		INSERT INTO JobExecutionQueue (RequestID, ServerName, AliasName, SqlCommand, Params, ExecStatus, PriorityOrder, CreatedDate, CompletedDate, ModifiedDate, Remark)
-				VALUES (@RequestID, @ServerName, @AliasName, @SqlCommand, @Params, 'Waiting', @PriorityOrder, GETDATE(), NULL, NULL, @Remark);
+        		INSERT INTO JobExecutionQueue (ServerName, AliasName, SqlCommand, Params, ExecStatus, CreatedDate, CompletedDate, ModifiedDate, Remark)
+				VALUES (@ServerName, @AliasName, @SqlCommand, @Params, 'Waiting', GETDATE(), NULL, NULL, @Remark);
 			END
 		END
 	END

@@ -15,13 +15,11 @@ GO
 
 CREATE TABLE [dbo].[JobExecutionQueue](
 	[QueueId] [int] IDENTITY(1,1) NOT NULL,
-	[RequestID] [VARCHAR](4000) NOT NULL,
 	[ServerName] [varchar](200) NULL,
 	[AliasName] [varchar](200) NOT NULL,
 	[SqlCommand] [varchar](max) NOT NULL,
 	[Params] [varchar](max) NULL,
 	[ExecStatus] [varchar](50) NOT NULL,
-	[PriorityOrder] [tinyint] NULL,
 	[CreatedDate] [datetime] NULL,
 	[CompletedDate] [datetime] NULL,
 	[ModifiedDate] [datetime] NULL,

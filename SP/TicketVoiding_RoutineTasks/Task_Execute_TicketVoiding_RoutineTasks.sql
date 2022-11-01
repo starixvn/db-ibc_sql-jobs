@@ -4,7 +4,6 @@ ALTER PROCEDURE [dbo].[Task_Execute_TicketVoiding_RoutineTasks]
 	 @stepNo		TINYINT,
 	 @custIDs		VARCHAR(MAX) = '', 
 	 @winlostdate	DATETIME,
-	 @RequestID		VARCHAR(4000) = '',
 	 @errmsg		VARCHAR(1000) = '' OUTPUT
 )
 AS
@@ -37,8 +36,6 @@ BEGIN
 	
 	DECLARE @SiteDBGroupID SMALLINT = 0 
 	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
-
-	SELECT @RequestID = IIF(@RequestID LIKE '%,', LEFT(@RequestID, LEN(@RequestID) - 1), @RequestID)
 
 	IF (@SiteDBGroupID <> 0) ---run at SiteDB -> only need exec step 1 at sitedb because it update bettrans14
 	BEGIN
@@ -75,14 +72,14 @@ BEGIN
 				@alias = 'DBSUM', 
 				@SqlCommand = CONCAT('EXEC bodb_summary.dbo.Task_CS_SumWinloss_14 ', ' @WinlostDate = ''',@winlostdate,''' ,@CustIds = ''',@CustIds,'''')
 
-			EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			SET @errmsg = 'step 2.2'
 
 			SELECT 
 				@alias = 'DBSUM', 
 				@SqlCommand = CONCAT('EXEC bodb_summary.dbo.Task_CS_SumCancelled_14 ', ' @WinlostDate = ''',@winlostdate,''' ,@CustIds = ''',@CustIds,'''')
-			EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 		END
 		IF @stepNo = 3
 		BEGIN
@@ -93,7 +90,7 @@ BEGIN
 			SELECT 
 				@alias = 'DBACC', 
 				@SqlCommand = CONCAT('EXEC bodb02.dbo.Task_CS_HeadlineBalance14 ', ' @WinlostDate = ''',@winlostdate,''' ,@CustIds = ''',@CustIds,'''')
-			EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 		END
 		IF @stepNo = 4
 		BEGIN
@@ -104,7 +101,7 @@ BEGIN
 			SELECT 
 				@alias = 'DBRPT', 
 				@SqlCommand = CONCAT('EXEC bodb_report.dbo.Task_rptStatement_14 ', ' @WinlostDate = ''',@winlostdate,''' ,@CustIds = ''',@CustIds,'''')
-			EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 		END
 		IF @stepNo = 5
 		BEGIN
@@ -113,8 +110,7 @@ BEGIN
 			---keep call sp by linked server to DBACC
 			EXEC DBACC.bodb02.dbo.Acc_ResetWinning_SelByDate14
 				   @Winlostdate = @Winlostdate,
-				   @Mode = 1,
-				   @RequestID = @RequestID
+				   @Mode = 1
 
 			-------------------------
 			SET @errmsg = 'step 5.2'
@@ -122,8 +118,7 @@ BEGIN
 			EXEC DBACC.bodb02.dbo.Task_ResetWinning_ExtraPT14
 				  @FromDate= @WinlostDate,
 				  @ToDate = @WinlostDate,
-				  @Mode = 1,
-				  @RequestID = @RequestID
+				  @Mode = 1
 		END
 		IF @stepNo = 6
 		BEGIN
@@ -135,7 +130,7 @@ BEGIN
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_PrepareStaging ', ' @datefrom = ''',@winlostdate,''' ,@dateto = ''',@winlostdate,'''')
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			END TRY
 			BEGIN CATCH
@@ -155,8 +150,8 @@ BEGIN
 				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
-					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptBetting_CheckData ', ' @WinlostDate = ''',@winlostdate,'''')
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @Params = @params
+					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptBetting_CheckData ', ' @WinlostDate = ''',@winlostdate,'''',',@HasDataMismatch = @GenerateData OUTPUT, @BetTypes = @BetTypes OUTPUT')
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @Params = @params
 
 			END TRY
 			BEGIN CATCH
@@ -172,7 +167,7 @@ BEGIN
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = 'EXEC bodb_LicenseeReport.dbo.Task_PostStaging '
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			END TRY
 			BEGIN CATCH
@@ -193,8 +188,8 @@ BEGIN
 				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
-					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptBettingBySport_CheckData ', ' @WinlostDate = ''',@winlostdate,'''')
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @Params = @params
+					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptBettingBySport_CheckData ', ' @WinlostDate = ''',@winlostdate,'''',',@HasDataMismatch = @GenerateData OUTPUT, @IsParlay = @IsParlay OUTPUT')
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg, @Params = @params
 
 			END TRY
 			BEGIN CATCH
@@ -210,7 +205,7 @@ BEGIN
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_DailyRptLicWinloss2 ', ' @WinlostDate = ''',@winlostdate,'''')
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			END TRY
 			BEGIN CATCH
@@ -226,7 +221,7 @@ BEGIN
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptCustomerTurnOver_Bettrans14 ', ' @Date = ''',@winlostdate,'''')
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			END TRY
 			BEGIN CATCH
@@ -242,7 +237,7 @@ BEGIN
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptWinlostbyleague_Bettrans14 ', ' @Date = ''',@winlostdate,'''')
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			END TRY
 			BEGIN CATCH
@@ -258,7 +253,7 @@ BEGIN
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptCustomerMatch_Bettrans14 ', ' @Date = ''',@winlostdate,'''')
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			END TRY
 			BEGIN CATCH
@@ -274,7 +269,7 @@ BEGIN
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.GEN_rptBetting_Parlay14 ', ' @datefrom = ''',@winlostdate,''' ,@dateto = ''',@winlostdate,'''')
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			END TRY
 			BEGIN CATCH
@@ -290,7 +285,7 @@ BEGIN
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_DailyRptLicWinlossGMT_Bettrans14 ', ' @FromDate = ''',@winlostdate,'''')
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			END TRY
 			BEGIN CATCH
@@ -306,7 +301,7 @@ BEGIN
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14 ', ' @PromoDate = ''',@winlostdate,''', @IsCheckDataOnly = 0')
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			END TRY
 			BEGIN CATCH
@@ -322,7 +317,7 @@ BEGIN
 				SELECT 
 					@alias = 'DBLIC', 
 					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14 ', ' @Fromdate = ''',@winlostdate,''', @Todate = ''', @winlostdate, '''')
-				EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+				EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			END TRY
 			BEGIN CATCH
@@ -340,7 +335,7 @@ BEGIN
 			SELECT 
 				@alias = 'DBFS', 
 				@SqlCommand = CONCAT('EXEC bodb_FraudSensor.dbo.FS_Task_MatchDailyDataCapture ', ' @GenerateFromDate = ''',@winlostdate,''', @GenerateToDate = ''', @winlostdate, '''')
-			EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 		END
 		IF @stepNo = 8
@@ -352,7 +347,7 @@ BEGIN
 			SELECT 
 				@alias = 'DBTGRS', 
 				@SqlCommand = CONCAT('EXEC bodb_TGRS.dbo.Task_RegenerateTGRSData ', ' @FromDate = ''',@winlostdate,''', @ToDate = ''', @winlostdate, ''', @Flagged = 0')
-			EXEC ExecRep_NAP_Admin_10 @RequestID= @RequestID, @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+			EXEC ExecRep_NAP_Admin_10 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 		END 
 	END
