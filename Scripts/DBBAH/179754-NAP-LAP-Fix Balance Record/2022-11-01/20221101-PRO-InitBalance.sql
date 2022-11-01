@@ -27,7 +27,7 @@ CREATE TABLE #temp_MemberInput(
 CREATE TABLE #tempMember (custid INT PRIMARY KEY)
 --------------GET members needs to process ------------------
 INSERT INTO #temp_MemberInput (custid)
-SELECT b.custid					
+SELECT DISTINCT b.custid					
 FROM [bodb02].[dbo].BalanceRecord b WITH(NOLOCK)									
 	INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) ON c.custid = b.custid								
 	INNER JOIN  [bodb02].[dbo].site s WITH(NOLOCK) ON c.site = s.site								
