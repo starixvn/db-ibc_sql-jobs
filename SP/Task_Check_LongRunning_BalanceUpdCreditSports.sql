@@ -48,8 +48,8 @@ SET NOCOUNT ON
 	IF @@SERVERNAME  = 'DBTrans' OR @@SERVERNAME LIKE 'DBGRP%' OR @@SERVERNAME LIKE 'SIT%'
 		SET @recipients = 'dbaadmin@onelab.tw;dbaadmin@starixvn.com'
 	ELSE
-		--SET @recipients = 'dba_local@starixvn.com;qa@starixvn.com'
-		SET @recipients = 'louisa.vo@starixvn.com;qa@starixvn.com'
+		SET @recipients = 'dba_local@starixvn.com;qa@starixvn.com'
+		--SET @recipients = 'louisa.vo@starixvn.com;qa@starixvn.com'
 			
 	WHILE ( 1 = 1)
 	BEGIN	
@@ -108,10 +108,10 @@ SET NOCOUNT ON
 					, @body					 = @errorMessage
 					, @body_format			 = 'HTML';
 
-				--EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = @@ServerName
-				--	, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
-				--	, @Message = @errorMessage
-				--	, @CaseId = 1;
+				EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage @ServerName = @@ServerName
+					, @JobId = NULL, @JobName = N'vndba:Check slowly BalanceUpdCreditSports processes'
+					, @Message = @errorMessage
+					, @CaseId = 1;
 
 				WAITFOR DELAY '00:01:00'
 				SET @CheckTime = GETDATE()
