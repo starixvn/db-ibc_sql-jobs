@@ -104,13 +104,13 @@ outer apply (
 ) as b5(bettransRnG_transid)');
 
 ------ info for deployer 
-DECLARE @debug_message VARCHAR(MAX) = ''
+SET @debug_message = ''
+SET @StartRow = 1
+SET @StopRow = 0 
 
 --------------LOOP BY batch 500 of customers ------------------
 DECLARE @rid_loop INT, @rowCount int  =0, @batch int = 25, @loop_cnt int = 1
-DECLARE @StartRow INT = 1
-		, @StopRow INT 
-		, @retrycnt INT = 0 
+DECLARE @retrycnt INT = 0 
 		, @isSuccess BIT = 0
 DECLARE  @ExecuteSQL NVARCHAR(MAX) = ''
 		, @query NVARCHAR(MAX) = ''
@@ -131,7 +131,7 @@ SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @quer
 
 -- SET param to insert balance in db05
 SELECT  @query_balance = N'', @SiteDBAlias = 'DB05'		
-SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
+SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_UAT @CustidBalanceList'
 SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
 
 WHILE (@loop_cnt <= @rid_loop)
