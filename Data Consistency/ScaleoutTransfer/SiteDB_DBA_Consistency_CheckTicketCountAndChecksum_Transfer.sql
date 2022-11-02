@@ -16,7 +16,8 @@ AS
 	Revisions: 
 		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
 						- Check total ticket and checksum between SiteDB and central DB - [Redmine:#175881]
-
+		- 20221102@Evan: Enhancement convert data type float to decimal - [Redmine:#178864] 
+	
 	Param's Expanation:
 */
 BEGIN
@@ -52,7 +53,7 @@ BEGIN
 					CHECKSUM(
 						CustId,TransDate,WinlostDate,Bettype,Stake,Actual_Stake,Winlost,AWinlost,MWinlost,SWinlost,PlayerComm
 						,Comm,AComm,SComm,StatusId,RefNo,TransDesc,Recommend,MRecommend,SRecommend,Username,Currency,CurrencyName
-						,ActualRate,Creator,Balance,[IP],CheckTime,SerialNo,TransId
+						,CAST(ActualRate AS DECIMAL(19,8)),Creator,Balance,[IP],CheckTime,SerialNo,TransId
 						)
 				) AS TotalCheckSum
 		FROM dbo.Transfer t WITH (NOLOCK)
@@ -91,7 +92,7 @@ BEGIN
 			COUNT(1) AS TicketCount,
 			CHECKSUM_AGG(
 					CHECKSUM(
-						CustId,WinlostDate,TransDate,Bettype,Debit,Credit,Currency,ActualRate,TransID,RefNo,Username
+						CustId,WinlostDate,TransDate,Bettype,Debit,Credit,Currency,CAST(ActualRate AS DECIMAL(19,8)),TransID,RefNo,Username
 						,Recommend,MRecommend,SRecommend,Creator,TransDesc,[IP]
 						)
 				) AS TotalCheckSum
