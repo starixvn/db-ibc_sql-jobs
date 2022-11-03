@@ -12,7 +12,9 @@ AS
 	
 	Revisions: 
 		- 20220525@Max: Create SP [Redmine: #170739]
-	
+		- 20220919@Tacy: HotFix [Redmine: #177701]
+		- 20221024@July: Modify job DetectBet [Redmine: #177701]
+
 	Param's explanation:		
 */
 /*
@@ -20,23 +22,51 @@ AS
 */
 BEGIN
 	DECLARE  @startDate		DATETIME
+			,@interval		DATETIME
+			,@WaitingTime	VARCHAR(10)
+			,@IsWaiting		BIT
+
 	SET  @startDate  = GETDATE()
+	SET  @interval  = @startDate
 
 	WHILE (1=1)
 	BEGIN
-	
+		IF DATEDIFF(SECOND, @interval, GETDATE() ) >=  60
+		BEGIN
+			-- CHECK flag for SP deployment
+			WHILE (1=1)
+			BEGIN
+				EXEC dbo.Acc_JobDeploymentInfo
+					@JobName = @Jobname
+					,@WaitingTime = @WaitingTime OUTPUT
+					,@IsWaiting	= @IsWaiting	 OUTPUT
+		
+				IF @IsWaiting = 1
+				BEGIN
+					UPDATE SystemSettings WITH(ROWLOCK)
+						SET VValue = @Jobname + '-' + CONVERT(VARCHAR(50),GETDATE())
+					WHERE VName = 'JobDeploymentDate'
+			
+					WAITFOR DELAY @WaitingTime
+			
+				END
+				ELSE
+				BREAK
+			END
+			SET @interval  =  GETDATE()
+		END
+
 		IF(@Jobname = 'DBA: Task_DetectBet_TicketExceededBetLimit')
+		BEGIN
+			EXEC dbo.Task_DetectBet_SyncBetSettingHistory
 			EXEC dbo.Task_DetectBet_TicketExceededBetLimit_Job
+		END
 
 		IF DATEDIFF(SECOND, @startDate, GETDATE() ) >= 600 -- loop within 10 minutes
 			BREAK
-
-		IF @Waitfordelay IS NULL 
-		BEGIN
-			SET @Waitfordelay = dbo.f_Job_SetWaitforDelay() 
-		END
-
-		WAITFOR DELAY @Waitfordelay -- [Task_DetectBet_TicketExceededBetLimit] waitfor
+		
+		IF @Waitfordelay IS NOT NULL 
+			WAITFOR DELAY @Waitfordelay -- [Task_DetectBet_TicketExceededBetLimit] waitfor
 
 	END
 END
