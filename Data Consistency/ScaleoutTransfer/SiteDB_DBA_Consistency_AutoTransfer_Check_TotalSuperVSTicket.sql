@@ -15,6 +15,7 @@ AS
 	Revisions: 
 		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
 						- Compare total transfer ticket with total super - [Redmine:#175881]
+		- 20221107@Evan: Count total super on each SiteGroupid [Redmine:#178864]
 
 	Param's Expanation:
 */
@@ -28,7 +29,10 @@ BEGIN
 		,@endOfPreviousMonth DATE
 		,@currentDate DATETIME
 		,@listCustSuper VARCHAR(MAX) = ''
+		,@SiteDBGroupID SMALLINT
 
+	---get site group id
+	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
 	--set value for para
 	SELECT @currentDate = GETDATE(), @endOfPreviousMonth = EOMONTH(DATEADD(MONTH, - 1, @currentDate))
 
@@ -43,7 +47,7 @@ BEGIN
 	FROM DBCTG.bodb02.dbo.LicenseeTransferPool p WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK)
 			ON p.FromCustId = s.custid
-	WHERE s.SiteDBGroupID > 0 
+	WHERE s.SiteDBGroupID = @SiteDBGroupID
 		AND MonthDate = @endOfPreviousMonth
 
 	--get list custId
@@ -52,7 +56,7 @@ BEGIN
 	FROM DBCTG.bodb02.dbo.LicenseeTransferPool p WITH (NOLOCK)
 		INNER JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK)
 			ON p.FromCustId = s.custid
-	WHERE s.SiteDBGroupID > 0 
+	WHERE s.SiteDBGroupID = @SiteDBGroupID
 		AND MonthDate = @endOfPreviousMonth
 
 	--get total ticket from transfer table in siteDB
