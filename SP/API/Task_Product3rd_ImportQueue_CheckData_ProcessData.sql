@@ -17,6 +17,7 @@ AS
 	Revisions:
 		- 20190401@Percy: Initialize SP [RedmineID: #110692]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20221104@Sol: Deposit - AWS - Modify jobs of separated wallet - Move columns setting to new table - [RedmineID: #176479]
 
 	Param's Explanation:
 		@QueueID: manually import
@@ -24,6 +25,9 @@ AS
 
 BEGIN
 	SET NOCOUNT ON
+
+	---list queueid
+	DECLARE @ListQueueID TABLE(QueueID BIGINT)
 
 	IF @QueueIDInput <> 0
 	BEGIN
@@ -36,8 +40,17 @@ BEGIN
 	END
 	ELSE IF @QueueIDInput = 0
 	BEGIN
-		DELETE bodb_PlaytechCS.dbo.Product3rd_ImportQueue_CheckData WITH (ROWLOCK, UPDLOCK)
-		WHERE ProductID = @ProductID AND FinishedTime IS NOT NULL
+		DELETE q WITH (ROWLOCK, UPDLOCK)
+		OUTPUT deleted.QueueID INTO @ListQueueID(QueueID)
+		FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue_CheckData q
+			INNER JOIN bodb_LicenseeReport.dbo.Product3rd_ImportQueue_CheckData_Tracking qt WITH(NOLOCK)
+				ON q.QueueID = qt.QueueID
+		WHERE q.ProductID = @ProductID AND qt.FinishedTime IS NOT NULL
+
+		---delete from tracking
+		DELETE FROM bodb_LicenseeReport.dbo.Product3rd_ImportQueue_CheckData_Tracking (ROWLOCK, UPDLOCK)
+		WHERE QueueID IN (SELECT QueueID FROM @ListQueueID)
+		---END
 	END
 
 	DECLARE @QueueID BIGINT = NULL, @XmlData XML, @LogDesc VARCHAR(2000) = NULL, @numOftry TINYINT
@@ -70,7 +83,12 @@ BEGIN
 	WHILE
 	(
 		@QueueIDInput <> 0
-		OR EXISTS (SELECT TOP 1 1 FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue_CheckData WITH (NOLOCK) WHERE FinishedTime IS NULL AND ProductID = @ProductID)
+		OR EXISTS (
+					SELECT TOP 1 1 
+					FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue_CheckData q WITH (NOLOCK) 
+						INNER JOIN bodb_LicenseeReport.dbo.Product3rd_ImportQueue_CheckData_Tracking qt WITH(NOLOCK)
+							ON q.QueueID = qt.QueueID
+					WHERE qt.FinishedTime IS NULL AND q.ProductID = @ProductID)
 	)
 	BEGIN
 		-- Get XmlData
@@ -79,10 +97,12 @@ BEGIN
 			FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue_CheckData WITH (NOLOCK)
 			WHERE QueueID = @QueueIDInput AND ProductID = @ProductID
 		ELSE
-			SELECT TOP 1 @QueueID = QueueID, @XmlData = XmlData
-			FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue_CheckData WITH (NOLOCK)
-			WHERE FinishedTime IS NULL AND ProductID = @ProductID
-			ORDER BY QueueID ASC
+			SELECT TOP 1 @QueueID = q.QueueID, @XmlData = XmlData
+			FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue_CheckData q WITH (NOLOCK)
+				INNER JOIN bodb_LicenseeReport.dbo.Product3rd_ImportQueue_CheckData_Tracking qt WITH(NOLOCK)
+					ON q.QueueID = qt.QueueID
+			WHERE qt.FinishedTime IS NULL AND q.ProductID = @ProductID
+			ORDER BY q.QueueID ASC
 
 		-- Parse XmlData and Import data into DB
 		-- try 3 times
@@ -234,9 +254,14 @@ BEGIN
 		IF @ErrCode = 0
 		BEGIN
 			UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue_CheckData WITH (ROWLOCK, UPDLOCK)
-			SET FinishedTime = CASE WHEN FinishedTime IS NULL THEN CURRENT_TIMESTAMP ELSE FinishedTime END,
-				LogDesc = 'Msg="Successfull"'
+			SET LogDesc = 'Msg="Successfull"'
 			WHERE QueueID = @QueueID
+
+			---update tracking table
+			UPDATE bodb_LicenseeReport.dbo.Product3rd_ImportQueue_CheckData_Tracking WITH (ROWLOCK, UPDLOCK)
+				SET FinishedTime = CASE WHEN FinishedTime IS NULL THEN CURRENT_TIMESTAMP ELSE FinishedTime END
+			WHERE QueueID = @QueueID
+			---END
 		END
 		ELSE
 		BEGIN

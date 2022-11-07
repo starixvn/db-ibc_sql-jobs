@@ -18,6 +18,8 @@ AS
 		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
 		- 20200818@Percy: Change EventType's data type from smallint to int [RedmineID: #138524]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20221104@Sol: Deposit - AWS - Modify jobs of separated wallet - Move columns setting to new table - [RedmineID: #176479]
+
 	Param's Explanation:
 		- @winlostdate: The date need to summary
 		- @IsManual: task run manual or auto
@@ -81,7 +83,9 @@ BEGIN TRY
 	INSERT INTO @ResettledDateList ( ID, WinlostDate )
 	SELECT h.ID, h.WinlostDate
 	FROM dbo.Product3rd_SummarizedDateHistory h WITH (NOLOCK)
-	WHERE h.ProductID = @ProductId AND h.SumToThirdPartyDate IS NULL
+		INNER JOIN bodb_LicenseeReport.dbo.Product3rd_SummarizedDateHistory_Tracking st WITH(NOLOCK)
+			ON h.ID = st.ID
+	WHERE h.ProductID = @ProductId AND st.SumToThirdPartyDate IS NULL
 
 	INSERT INTO @WLDateList
 	SELECT DISTINCT (t.winlostdate)
@@ -264,14 +268,18 @@ BEGIN TRY
 
 				--- Update info for summarize
 				UPDATE h
-				SET SumToThirdPartyDate = GETDATE()				
-				FROM dbo.Product3rd_SummarizedDateHistory h
-				WHERE h.WinlostDate = @WLDate
-					AND EXISTS (	
-									SELECT 1 
-									FROM @ResettledDateList d 
-									WHERE h.ID = d.ID
-								)
+					SET SumToThirdPartyDate = GETDATE()				
+				FROM bodb_LicenseeReport.dbo.Product3rd_SummarizedDateHistory_Tracking h
+				WHERE h.ID IN (
+								SELECT ID 
+								FROM dbo.Product3rd_SummarizedDateHistory h
+								WHERE h.WinlostDate = @WLDate
+									AND EXISTS (	
+													SELECT 1 
+													FROM @ResettledDateList d 
+													WHERE h.ID = d.ID
+												)
+							)
 						
 				---- Update Sports_ThirdParty
 								

@@ -17,19 +17,27 @@ AS
 	Revisions:
 		- 20190401@Percy: Initialize SP [RedmineID: #110692]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20221104@Sol: Deposit - AWS - Modify jobs of separated wallet - Move columns setting to new table - [RedmineID: #176479]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @Xml XML
+	DECLARE @ListQueueID TABLE(QueueID BIGINT)
 
 	BEGIN TRY
 		SELECT @XmlData = REPLACE(REPLACE (@XmlData, CHAR(10), ''), CHAR(13), '')
 		SELECT @Xml = CONVERT (XML, @XmlData)
 
 		INSERT INTO dbo.Product3rd_ImportQueue_CheckData (CheckInTime, ProductID, XmlData)
+		OUTPUT inserted.QueueID INTO @ListQueueID(QueueID)
 		SELECT CURRENT_TIMESTAMP, @ProductId, @Xml
+
+		---insert into table tracking
+		INSERT INTO bodb_LicenseeReport.dbo.Product3rd_ImportQueue_CheckData_Tracking(QueueID)
+		SELECT QueueID FROM @ListQueueID
+		---end
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = ERROR_NUMBER(), @ErrMsg = ERROR_MESSAGE()

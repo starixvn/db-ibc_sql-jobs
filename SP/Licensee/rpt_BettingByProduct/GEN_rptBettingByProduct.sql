@@ -329,11 +329,13 @@ BEGIN
 			DECLARE @WLDateList AS TABLE (ID SMALLINT IDENTITY (1,1), Winlostdate DATE)
 
 			INSERT INTO @ResettledDateList (ID, SettledDate)
-			SELECT ID, WinlostDate
-			FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory WITH (NOLOCK)
+			SELECT s.ID, WinlostDate
+			FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory s WITH (NOLOCK)
+				INNER JOIN bodb_LicenseeReport.dbo.Product3rd_SummarizedDateHistory_Tracking st WITH(NOLOCK)
+					ON s.ID = st.ID
 			WHERE ProductID = 31
-				AND SumToThirdPartyDate IS NOT NULL
-				AND SumToBettingProductDate IS NULL
+				AND st.SumToThirdPartyDate IS NOT NULL
+				AND st.SumToBettingProductDate IS NULL
 				AND WinlostDate < @date2
 
 			;WITH WLDate AS (	SELECT @date AS [Date]
@@ -385,11 +387,14 @@ BEGIN
 				AND EXISTS (SELECT 1 FROM @WLDateList l WHERE p.Winlostdate = l.Winlostdate)
 				AND p.Currency <> 20
 			
-			UPDATE h
-			SET h.SumToBettingProductDate = GETDATE()
-			FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory h WITH (ROWLOCK)
-			WHERE EXISTS (SELECT 1 FROM @WLDateList d WHERE h.WinlostDate = d.Winlostdate)
-				AND EXISTS (SELECT 1 FROM @ResettledDateList r WHERE h.ID = r.ID)
+			UPDATE bodb_LicenseeReport.dbo.Product3rd_SummarizedDateHistory_Tracking
+				SET SumToBettingProductDate = GETDATE()
+			WHERE ID IN (
+							SELECT ID
+							FROM bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory h WITH (ROWLOCK)
+							WHERE EXISTS (SELECT 1 FROM @WLDateList d WHERE h.WinlostDate = d.Winlostdate)
+								AND EXISTS (SELECT 1 FROM @ResettledDateList r WHERE h.ID = r.ID)
+						)
 		END
 		-- End Exchange product
 

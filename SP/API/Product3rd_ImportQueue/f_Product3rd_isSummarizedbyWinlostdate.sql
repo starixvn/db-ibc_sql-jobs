@@ -19,6 +19,7 @@ AS
 	Revisions:
 		- 20180105@Percy: Initialize function [RedmineID: #87526]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20221104@Sol: Deposit - AWS - Modify jobs of separated wallet - Move columns setting to new table - [RedmineID: #176479]
 
 	Param's Explanation:
 		@RefTable:
@@ -30,13 +31,15 @@ AS
 
 RETURN
 	SELECT CASE WHEN COUNT(1) = 0 THEN 0 ELSE 1 END AS IsExists
-	FROM dbo.Product3rd_SummarizedDateHistory WITH (NOLOCK)
-	WHERE WinlostDate = @Winlostdate
+	FROM dbo.Product3rd_SummarizedDateHistory s WITH (NOLOCK)
+		INNER JOIN bodb_LicenseeReport.dbo.Product3rd_SummarizedDateHistory_Tracking st WITH(NOLOCK)
+			ON s.ID = st.ID
+	WHERE s.WinlostDate = @Winlostdate
 		AND
 		(
-			(@RefTable = 0 AND SumToThirdPartyDate IS NULL AND SumToBettingProductDate IS NULL AND SumToBettransDate IS NULL)
-			OR (@RefTable = 1 AND SumToThirdPartyDate IS NULL)
-			OR (@RefTable = 2 AND SumToBettingProductDate IS NULL)
-			OR (@RefTable = 3 AND SumToBettransDate IS NULL)
+			(@RefTable = 0 AND st.SumToThirdPartyDate IS NULL AND st.SumToBettingProductDate IS NULL AND st.SumToBettransDate IS NULL)
+			OR (@RefTable = 1 AND st.SumToThirdPartyDate IS NULL)
+			OR (@RefTable = 2 AND st.SumToBettingProductDate IS NULL)
+			OR (@RefTable = 3 AND st.SumToBettransDate IS NULL)
 		)
 GO

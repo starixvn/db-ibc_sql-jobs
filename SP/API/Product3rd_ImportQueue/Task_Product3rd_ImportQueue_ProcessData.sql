@@ -19,6 +19,7 @@ AS
 		- 20200818@Percy: Integrate Fancy Bet [RedmineID: #138524]
 		- 20211004@Sol: LAP - Support IPv6 - [RedmineID: #162342]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20221104@Sol: Deposit - AWS - Modify jobs of separated wallet - Move columns setting to new table - [RedmineID: #176479]
 
 	Param's Explanation:
 		@QueueID: manually import
@@ -140,7 +141,12 @@ BEGIN
 	WHILE
 	(
 		@QueueIDInput <> 0
-		OR EXISTS (SELECT TOP 1 1 FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK) WHERE FinishedTime IS NULL AND ProductID = @ProductID)
+		OR EXISTS (
+					SELECT TOP 1 1 
+					FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue q WITH (NOLOCK)	
+						INNER JOIN bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking qt WITH(NOLOCK)
+							ON q.QueueID = qt.QueueID
+					WHERE qt.FinishedTime IS NULL AND q.ProductID = @ProductID)
 	)
 	BEGIN
 		-- Get XmlData
@@ -149,10 +155,12 @@ BEGIN
 			FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
 			WHERE QueueID = @QueueIDInput AND ProductID = @ProductID
 		ELSE
-			SELECT TOP 1 @QueueID = QueueID, @XmlData = XmlData, @JobType = JobType, @startDate = StartDate, @endDate = endDate, @IsForceUpdate = IsForceUpdate
-			FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
-			WHERE FinishedTime IS NULL AND ProductID = @ProductID
-			ORDER BY QueueID ASC
+			SELECT TOP 1 @QueueID = q.QueueID, @XmlData = XmlData, @JobType = JobType, @startDate = StartDate, @endDate = endDate, @IsForceUpdate = IsForceUpdate
+			FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue q WITH (NOLOCK)	
+					INNER JOIN bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking qt WITH(NOLOCK)
+						ON q.QueueID = qt.QueueID
+			WHERE qt.FinishedTime IS NULL AND q.ProductID = @ProductID
+			ORDER BY q.QueueID ASC
 
 		-- Parse XmlData and Import data into DB
 		-- try 3 times
@@ -653,9 +661,14 @@ BEGIN
 		IF @ErrCode = 0
 		BEGIN
 			UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (ROWLOCK, UPDLOCK)
-			SET FinishedTime = CASE WHEN FinishedTime IS NULL THEN CURRENT_TIMESTAMP ELSE FinishedTime END,
-				LogDesc = 'StartDate="' + CONVERT(VARCHAR(20), @startDate, 120) + '",EndDate="' + CONVERT(VARCHAR(20), @endDate, 120) + '",Msg="Successfull"'
+			SET LogDesc = 'StartDate="' + CONVERT(VARCHAR(20), @startDate, 120) + '",EndDate="' + CONVERT(VARCHAR(20), @endDate, 120) + '",Msg="Successfull"'
 			WHERE QueueID = @QueueID
+
+			---update tracking table
+			UPDATE bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking WITH (ROWLOCK, UPDLOCK)
+				SET FinishedTime = CASE WHEN FinishedTime IS NULL THEN CURRENT_TIMESTAMP ELSE FinishedTime END
+			WHERE QueueID = @QueueID
+			---END
 		END
 		ELSE
 		BEGIN

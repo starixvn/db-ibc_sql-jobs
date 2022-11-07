@@ -15,6 +15,7 @@ AS
 		- 20190808@Percy: Add Exchange [RedmineID: #106504]
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 		- 20220704@Sol : remove email account - [RedmineId: #175043]
+		- 20221104@Sol: Deposit - AWS - Modify jobs of separated wallet - Move columns setting to new table - [RedmineID: #176479]
 */
 
 BEGIN
@@ -82,8 +83,11 @@ BEGIN
 				)
 				,CTE_QueueId AS
 				(
-					SELECT MAX(QueueId) AS QueueId FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
-					WHERE ProductId = 31 AND FinishedTime IS NOT NULL
+					SELECT MAX(q.QueueId) AS QueueId 
+					FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue q WITH (NOLOCK)
+						INNER JOIN bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking qt WITH(NOLOCK)
+							ON q.QueueID = qt.QueueID
+					WHERE q.ProductId = 31 AND qt.FinishedTime IS NOT NULL
 				)
 				INSERT INTO @tblWinlostDate (WinlostDate, MaxQueueId)
 				SELECT WinlostDate, QueueId

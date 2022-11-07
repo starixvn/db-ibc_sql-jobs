@@ -12,6 +12,7 @@ AS
 		- 20181102@Daniel: Copy SP to DB052 for sync data from DB053, update server info, change linked server DBPTCS/DBLIC to DB053
 		- 20190401@Percy: Add more tables: Product3rd_ImportQueue and LicSystemSetting [RedmineID: #110692]
 		- 20190912@Percy: Dynamic query for adapt code between DB052 and DB053 [RedmineID: #120125]
+		- 20221104@Sol: Deposit - AWS - Modify jobs of separated wallet - Move columns setting to new table - [RedmineID: #176479]
 */
 
 BEGIN
@@ -48,6 +49,7 @@ BEGIN
 	DECLARE @MaxQueueID BIGINT
 
 	-- Product3rd_ImportQueue
+	DECLARE @ListQueueID TABLE(QueueID BIGINT)
 	BEGIN
 		SELECT @MaxQueueID = MAX(QueueID) FROM dbo.Product3rd_ImportQueue WITH(NOLOCK)
 		
@@ -57,7 +59,7 @@ BEGIN
 		SET @SqlQuery = ''
 		
 		SET @SqlQuery = 'SELECT *
-						FROM OPENQUERY(' + @ServRemote + ', ''SELECT TOP (128) QueueID, CheckInTime, LicenseeName, ProductID, CONVERT(NVARCHAR(MAX), XmlData), StartDate, EndDate, JobType
+						FROM OPENQUERY(' + @ServRemote + ', ''SELECT TOP (128) QueueID, CheckInTime, LicenseeName, ProductID, CONVERT(NVARCHAR(MAX), XmlData), StartDate, EndDate, JobType, IsForceUpdate
 						FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
 						WHERE QueueID > ''''' + CAST(@MaxQueueID AS VARCHAR(50)) + '''''
 						ORDER BY QueueID
@@ -69,10 +71,17 @@ BEGIN
 		BEGIN
 			SET IDENTITY_INSERT dbo.Product3rd_ImportQueue ON
 
-			INSERT INTO dbo.Product3rd_ImportQueue(QueueID, CheckInTime, LicenseeName, ProductID, XmlData, StartDate, EndDate, JobType)
+			INSERT INTO dbo.Product3rd_ImportQueue(QueueID, CheckInTime, LicenseeName, ProductID, XmlData, StartDate, EndDate, JobType, IsForceUpdate)
+			OUTPUT inserted.QueueID INTO @ListQueueID(QueueID)
 			EXEC sp_executesql @SqlQuery
 			
 			SET IDENTITY_INSERT dbo.Product3rd_ImportQueue OFF
+
+			---insert into table tracking
+			INSERT INTO bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking(QueueID)
+			SELECT QueueID 
+			FROM @ListQueueID
+			---END
 		END
 	END
 
@@ -97,12 +106,23 @@ BEGIN
 			PRINT @SqlQuery
 		ELSE
 		BEGIN
+			---reset temp table
+			DELETE FROM @ListQueueID
+
 			SET IDENTITY_INSERT dbo.Product3rd_ImportQueue_CheckData ON
 
 			INSERT INTO dbo.Product3rd_ImportQueue_CheckData (QueueID, CheckInTime, LicenseeName, ProductID, XmlData)
+			OUTPUT inserted.QueueID INTO @ListQueueID(QueueID)
 			EXEC sp_executesql @SqlQuery
 			
 			SET IDENTITY_INSERT dbo.Product3rd_ImportQueue_CheckData OFF
+
+			---insert into table tracking
+			INSERT INTO bodb_LicenseeReport.dbo.Product3rd_ImportQueue_CheckData_Tracking(QueueID)
+			SELECT QueueID 
+			FROM @ListQueueID
+			---END
+
 		END
 	END
 

@@ -20,6 +20,7 @@ AS
 		- 20181113@Bruce: New Games Sicbo & Bidme - Service to pull deposit data for Bidme Tips [#102624]
 		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20221104@Sol: Deposit - AWS - Modify jobs of separated wallet - Move columns setting to new table - [RedmineID: #176479]
 
 	Param's Explanation:
 		- @winlostdate: The date need to summary
@@ -73,11 +74,13 @@ BEGIN TRY
 	FROM
 		(SELECT CAST(@winlostdate AS DATE) AS Winlostdate
 		 UNION ALL
-		 SELECT DISTINCT Winlostdate AS Winlostdate
-		 FROM dbo.Product3rd_ImportQueue WITH (NOLOCK)
-		 WHERE FinishedTime IS NOT NULL 
-			   AND isSummarized = 0 --Winlostdate that has been finished to generate into raw data table bust has not been summarized to sum table
-			   AND ProductID = @ProductId) t --GD
+		 SELECT DISTINCT q.Winlostdate AS Winlostdate
+		 FROM dbo.Product3rd_ImportQueue q WITH (NOLOCK)
+			INNER JOIN bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking qt WITH(NOLOCK)
+				ON q.QueueID = qt.QueueID
+		 WHERE qt.FinishedTime IS NOT NULL 
+			   AND qt.isSummarized = 0 --Winlostdate that has been finished to generate into raw data table bust has not been summarized to sum table
+			   AND q.ProductID = @ProductId) t --GD
 	
 	CREATE TABLE #TicketData (
 		custid			INT,
@@ -150,10 +153,13 @@ BEGIN TRY
 				FROM #TicketData
 					
 				---Update flag isSummarized to queue  
-				UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
-				SET isSummarized = 1
-				WHERE Winlostdate = @winlostdate AND isSummarized = 0
-					AND ProductID = @ProductId
+				UPDATE qt WITH (UPDLOCK, ROWLOCK)
+					SET qt.isSummarized = 1
+				FROM bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking qt
+					INNER JOIN Product3rd_ImportQueue q WITH(NOLOCK)
+						ON qt.QueueID = q.QueueID
+				WHERE q.Winlostdate = @winlostdate AND qt.isSummarized = 0
+					AND q.ProductID = @ProductId
 			END
 			ELSE
 			BEGIN

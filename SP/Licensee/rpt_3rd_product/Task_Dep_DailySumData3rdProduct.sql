@@ -18,6 +18,7 @@ AS
 		- 20210219@Percy: Change code get MBBU date [RedmineID: #150327]
 		- 20220721@Evan: Integrate new transid [Redmine: #175640]
 		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - classify data between SiteDB & CentralDB [Redmine: #175297]
+		- 20221104@Sol: Deposit - AWS - Modify jobs of separated wallet - Move columns setting to new table - [RedmineID: #176479]
 
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
@@ -514,9 +515,13 @@ BEGIN
 	
 	----Update flag to indicate we have just done data for Exchange product:
 	IF EXISTS (SELECT 1 FROM dbo.Bettrans WITH (NOLOCK) WHERE Bettype = 8000 and Winlostdate = @WinlostDate)
-		UPDATE DBLIC.bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory
-		SET    SumToBettransDate = GETDATE()
-		WHERE  ProductID = 31 AND Winlostdate = @WinlostDate
+		UPDATE DBLIC.bodb_LicenseeReport.dbo.Product3rd_SummarizedDateHistory_Tracking
+			SET SumToBettransDate = GETDATE()
+		WHERE ID IN (
+						SELECT ID 
+						FROM DBLIC.bodb_3rdProduct.dbo.Product3rd_SummarizedDateHistory
+						WHERE ProductID = 31 AND Winlostdate = @WinlostDate
+					)
 				
 	DROP TABLE #LicenseeProductTable
 	DROP TABLE #3rdData

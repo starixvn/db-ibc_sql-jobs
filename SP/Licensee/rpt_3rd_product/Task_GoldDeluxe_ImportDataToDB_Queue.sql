@@ -20,6 +20,7 @@ AS
 		- 20171218@Percy: Add ErrCode, ErrMsg replace RAISERROR [RedmineID: #88325]
 		- 20181003@Percy: Using colum JobType to apply Tip [RedmineID: #70177]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20221104@Sol: Deposit - AWS - Modify jobs of separated wallet - Move columns setting to new table - [RedmineID: #176479]
 
 	Param explanation:
 		. JobType:
@@ -73,17 +74,31 @@ BEGIN
 		AnchorId		INT
 	)
 
-	WHILE (@QueueIDInput <> 0 OR EXISTS (SELECT 1 FROM dbo.Product3rd_ImportQueue WITH (NOLOCK) WHERE FinishedTime IS NULL AND ProductID = 11 AND ISNULL(JobType, 0) = @JobType))
+	---queueid list is used for tracking
+	DECLARE @ListQueueID TABLE(QueueID BIGINT)
+
+	WHILE (@QueueIDInput <> 0 
+			OR EXISTS 
+				(
+					SELECT 1 
+					FROM dbo.Product3rd_ImportQueue q WITH (NOLOCK) 
+						INNER JOIN bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking qt WITH(NOLOCK)
+							ON q.QueueID = qt.QueueID
+					WHERE qt.FinishedTime IS NULL AND q.ProductID = 11 AND ISNULL(q.JobType, 0) = @JobType
+				)
+			)
 	BEGIN
 		IF @QueueIDInput <> 0
 			SELECT @QueueID = QueueID, @XmlData = XmlData, @LicenseeName = LicenseeName
 			FROM dbo.Product3rd_ImportQueue WITH (NOLOCK)
 			WHERE QueueID = @QueueIDInput
 		ELSE
-			SELECT TOP 1 @QueueID = QueueID, @XmlData = XmlData, @LicenseeName = LicenseeName
-			FROM dbo.Product3rd_ImportQueue WITH (NOLOCK)
-			WHERE FinishedTime IS NULL AND ProductID = 11 AND ISNULL(JobType, 0) = @JobType
-			ORDER BY QueueID ASC
+			SELECT TOP 1 @QueueID = q.QueueID, @XmlData = XmlData, @LicenseeName = LicenseeName
+			FROM dbo.Product3rd_ImportQueue q WITH (NOLOCK)
+				INNER JOIN bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking qt WITH(NOLOCK)
+					ON q.QueueID = qt.QueueID
+			WHERE qt.FinishedTime IS NULL AND q.ProductID = 11 AND ISNULL(q.JobType, 0) = @JobType
+			ORDER BY q.QueueID ASC
 		
 		-- Parse XmlData
 		BEGIN TRY
@@ -290,17 +305,34 @@ BEGIN
 
 			-- Delete old data that has been finished
 			IF (@QueueID >= 2000 AND @QueueID % 1000 = 0)
-				DELETE dbo.Product3rd_ImportQueue WITH (ROWLOCK, UPDLOCK)
-				WHERE FinishedTime IS NOT NULL
-					AND isSummarized = 1
-					AND QueueID < (@QueueID - 5000)
+			BEGIN
+				DELETE q WITH (ROWLOCK, UPDLOCK)
+				OUTPUT deleted.QueueID INTO @ListQueueID(QueueID)
+				FROM dbo.Product3rd_ImportQueue q
+					INNER JOIN bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking qt WITH(NOLOCK)
+						ON q.QueueID = qt.QueueID
+				WHERE qt.FinishedTime IS NOT NULL
+					AND qt.isSummarized = 1
+					AND q.QueueID < (@QueueID - 5000)
+
+				---delete in tracking table too
+				DELETE 
+				FROM bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking
+				WHERE QueueID IN (SELECT QueueID FROM @ListQueueID)
+				---END
+			END
 
 			--Update QueueID set FinishedTime and additional Log Info
 			UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
-			SET FinishedTime	= CASE WHEN FinishedTime IS NULL THEN CURRENT_TIMESTAMP ELSE FinishedTime END,
-				WinlostDate		= @Winlostdate,
+			SET WinlostDate		= @Winlostdate,
 				LogDesc			= @LogDesc
 			WHERE QueueID		= @QueueID
+
+			---update tracking table
+			UPDATE bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking WITH (UPDLOCK, ROWLOCK)
+				SET FinishedTime = CASE WHEN FinishedTime IS NULL THEN CURRENT_TIMESTAMP ELSE FinishedTime END
+			WHERE QueueID = @QueueID
+			---END
 		END TRY
 		BEGIN CATCH
 			SELECT	@ErrCode = 101,
@@ -309,8 +341,14 @@ BEGIN
 			SELECT  @LogDesc = 'MsgError: ' + @ErrMsg
 	
 			UPDATE dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
-			SET FinishedTime = NULL, LogDesc = @LogDesc
+				SET LogDesc = @LogDesc
 			WHERE QueueID = @QueueID
+
+			---update tracking table
+			UPDATE bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking WITH (UPDLOCK, ROWLOCK)
+				SET FinishedTime = NULL
+			WHERE QueueID = @QueueID
+			---end
 
 			SELECT @ErrMsg = 'QueueID = ' + CONVERT(VARCHAR(20), @QueueID) + ', ProductID = 11, MsgError = ' + @ErrMsg
 

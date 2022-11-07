@@ -69,10 +69,12 @@ BEGIN TRY
 		(SELECT CAST(@winlostdate AS DATE) AS Winlostdate
 		 UNION ALL
 		 SELECT DISTINCT Winlostdate AS Winlostdate
-		 FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
-		 WHERE FinishedTime IS NOT NULL 
-			   AND isSummarized = 0 
-			   AND ProductID = 10
+		 FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue q WITH (NOLOCK)
+			INNER JOIN bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking qt WITH(NOLOCK)
+				ON q.QueueID = qt.QueueID
+		 WHERE qt.FinishedTime IS NOT NULL 
+			   AND qt.isSummarized = 0 
+			   AND q.ProductID = 10
 		) t  
 	
 	CREATE TABLE #TicketData (	custid			INT,
@@ -97,6 +99,9 @@ BEGIN TRY
 								,[BetCount] INT
 								,[DrawBetCount] INT
 								,[IsVIPGame] BIT)
+
+	---queueid list is used for tracking
+	DECLARE @ListQueueID TABLE(QueueID BIGINT)
 
 	WHILE EXISTS (SELECT TOP 1 1 FROM @WLDateTab WHERE ID = @i)
 	BEGIN
@@ -160,12 +165,16 @@ BEGIN TRY
 					winlost, playercomm, BetCount, drawBetCount, IsVIPGame
 				FROM #TicketData					
 		
-				UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
-				SET isSummarized = 1
-				WHERE Winlostdate = @winlostdate 
-					AND isSummarized = 0
-					AND ProductID = 10
-				
+				---changed to table tracking 
+				UPDATE qt WITH (UPDLOCK, ROWLOCK)
+					SET qt.isSummarized = 1
+				FROM bodb_LicenseeReport.dbo.Product3rd_ImportQueue_Tracking qt
+					INNER JOIN bodb_PlaytechCS.dbo.Product3rd_ImportQueue q WITH(NOLOCK)
+						ON qt.QueueID = q.QueueID
+				WHERE q.Winlostdate = @winlostdate 
+					AND qt.isSummarized = 0
+					AND q.ProductID = 10
+
 			END
 			ELSE
 			BEGIN
