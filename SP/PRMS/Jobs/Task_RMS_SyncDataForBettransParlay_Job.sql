@@ -27,6 +27,7 @@ AS
 		- 20211001@Danny: Change dataType to support IPv6 [RedmineID: #162348]
 		- 20211001@Danny: Force index to avoid scan  [RedmineID: #162348]
 		- 20220802@Danny: Add retry step to avoid dirty read  [RedmineID: #176329]
+		- 20221018@Danny: Add retry step to avoid latency bettransm data [RedmineID: #179193]
 */
 
 BEGIN
@@ -39,7 +40,7 @@ BEGIN
 	FROM dbo.rmSettings WITH (ROWLOCK)
 	WHERE VName = 'rmBettrans'
 
-	DECLARE @retry_cnt TINYINT = 5, @err_message VARCHAR(4000)
+	DECLARE @retry_cnt TINYINT = 5, @err_message VARCHAR(4000), @retrySelection_cnt TINYINT = 5, @refno BIGINT
 
 	SELECT  @max_tstamp = MAX(tstamp) FROM bodb02.dbo.bettrans WITH (NOLOCK)
 	SELECT  @max_tstamp = ISNULL(@max_tstamp, @min_tstamp)
@@ -56,152 +57,6 @@ BEGIN
 	CREATE TABLE #sporttype (refno BIGINT, sporttype INT, Saba INT ,odds smallmoney, stake money, matchid INT)
 	CREATE CLUSTERED INDEX CIX_refno ON #sporttype (refno)
 
-	IF @min_tstamp = 0x0000000000000001 -- renew all data
-	BEGIN
-		TRUNCATE TABLE dbo.rmBettrans
-
-		INSERT INTO dbo.rmBettrans
-		(
-			transid,custid,transdate,oddsid,hdp1,hdp2,odds,stake,status,winlost,awinlost,mwinlost,playercomm,comm,acomm
-			,apositiontaking,mpositiontaking,tpositiontaking,playerdiscount,discount,adiscount,livehomescore,liveawayscore
-			,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
-			,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
-			,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-			,balance,SecAcceptFlag,epositiontaking,transid2,combo,odds2,TotalBet
-		)
-		SELECT
-			transid,custid,transdate,oddsid,hdp1,hdp2,odds,stake,status,winlost,awinlost,mwinlost,playercomm,comm,acomm
-			,apositiontaking,mpositiontaking,tpositiontaking,playerdiscount,discount,adiscount,livehomescore,CASE WHEN bettype IN (38, 376) THEN 1 ELSE liveawayscore END
-			,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
-			,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
-			,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-			,balance,SecAcceptFlag,epositiontaking,1,hdp2,odds,1
-		FROM bodb02.dbo.bettrans WITH (NOLOCK)
-		WHERE bettype IN (29, 38, 376)
-
-	
-		-- Update some columns for bettype = 38
-		IF EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE bettype = 38)
-		BEGIN
-			-- transid2 (sporttype)
-			UPDATE b WITH (ROWLOCK)
-			SET b.transid2 = m.sporttype
-			FROM dbo.rmBettrans b
-			INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON b.matchid = m.matchid
-			WHERE b.bettype =38
-		END
-
-
-		-- Update some columns for bettype = 29
-		IF EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE bettype = 29)
-		BEGIN
-
-			-- bettransm
-			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
-			FROM dbo.rmBettrans b WITH (NOLOCK)
-				INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
-				INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
-				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-			WHERE b.bettype = 29  AND (bm.winlostdate > @MoveBetsDay or bm.winlostdate IS NULL)
-			
-			-- bettransm14
-			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
-			FROM dbo.rmBettrans b WITH (NOLOCK)
-				INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
-				INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
-				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay 
-
-			-- bettrans_bk
-			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
-			FROM dbo.rmBettrans b WITH (NOLOCK)
-				INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
-				INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
-				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN DATEADD(DAY, -20, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
-
-
-			-- transid2 (sporttype)
-			UPDATE b WITH (ROWLOCK)
-			SET b.transid2 = s.sporttype
-			FROM dbo.rmBettrans b
-			CROSS APPLY (
-					SELECT CASE
-								-------------------------------
-								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) NOT IN (1,2) THEN MIN(st.sporttype)
-								------------------------------- 
-								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) = 0 THEN -3 
-								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) > 0 THEN -4
-								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 1 AND SUM(DISTINCT st.Saba) < 0 THEN  1
-								------------------------------
-								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) = 0 THEN -1
-								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) > 0 THEN -5
-								WHEN COUNT(DISTINCT st.sporttype) = 1 AND MIN(st.sporttype) = 2 AND SUM(DISTINCT st.Saba) < 0 THEN  2
-								------------------------------
-								WHEN COUNT(DISTINCT st.sporttype) <> 1 AND MIN(st.sporttype) = 1 THEN -3
-								ELSE -1 END AS sporttype 
-					FROM #sporttype st
-					WHERE st.refno = b.refno
-				) s
-			WHERE b.bettype = 29
-
-			-- TotalBet
-			UPDATE b WITH (ROWLOCK)
-			SET b.TotalBet = t.TotalBet
-			FROM dbo.rmBettrans b
-				CROSS APPLY (
-					SELECT SUM(rcs.cnt) AS TotalBet
-					FROM bodb02.dbo.RefCombinationSet rcs WITH (NOLOCK)
-					WHERE rcs.N = b.hdp2
-						AND (b.betteam & rcs.bitmapR) > 0
-				) t
-			WHERE b.bettype = 29
-
-			-- odds2
-			CREATE TABLE #tmp (transid BIGINT, stake MONEY, N TINYINT, bitmapR INT, odds SMALLMONEY, SetStake MONEY, RN TINYINT)
-			CREATE CLUSTERED INDEX CIX_transid ON #tmp (transid)
-
-			INSERT INTO #tmp (transid, stake, N, bitmapR, odds, SetStake, RN)
-			SELECT b.transid, b.stake, b.hdp2, b.betteam, bm.odds, bm.stake AS SetStake
-				,ROW_NUMBER() OVER(PARTITION BY b.transid ORDER BY bm.matchid) AS RN
-			FROM dbo.rmBettrans b WITH (NOLOCK)
-				CROSS APPLY (
-					SELECT bm.odds, bm.stake, bm.matchid
-					FROM #sporttype bm WITH (NOLOCK)
-					WHERE bm.refno = b.refno
-				) bm
-			WHERE b.bettype = 29
-
-			;WITH CTE_ParlayStake AS
-			(
-				SELECT transid, RN, SetStake FROM #tmp
-			)
-			,CTE_odds AS
-			(
-				SELECT transid, CASE WHEN stake = 0 THEN 0 ELSE SUM(odds * SetStake) / stake END AS odds2
-				FROM (
-					SELECT t.transid, t.stake, ps.SetStake, EXP(SUM(LOG(t.odds))) AS odds
-					FROM #tmp t
-						INNER JOIN bodb02.dbo.RefCombinationSet rcs WITH (NOLOCK) ON t.N = rcs.N AND (t.bitmapR & rcs.bitmapR) > 0
-						INNER JOIN bodb02.dbo.RefCombination rc WITH (NOLOCK) ON rcs.N = rc.N AND rcs.R = rc.R AND t.RN = rc.Seq
-						INNER JOIN CTE_ParlayStake ps ON t.transid = ps.transid AND rc.R = ps.RN
-					GROUP BY t.transid, t.stake, ps.SetStake, rc.Serial
-				) r
-				GROUP BY transid, stake
-			)
-			UPDATE b WITH (ROWLOCK)
-			SET b.odds2 = o.odds2
-			FROM dbo.rmBettrans b
-				INNER JOIN CTE_odds o ON b.transid = o.transid
-			WHERE b.bettype = 29
-		END
-		
-		DROP TABLE #tmp
-	END
-	ELSE
 	BEGIN
 		CREATE TABLE #rmBettrans
 		(
@@ -310,8 +165,6 @@ BEGIN
 
 		END CATCH
 
-	
-			
 		-- Update some columns for bettype = 38
 		IF EXISTS (SELECT 1 FROM #rmBettrans WHERE bettype = 38)
 		BEGIN
@@ -328,6 +181,12 @@ BEGIN
 		BEGIN
 			CREATE NONCLUSTERED INDEX IX_bettype ON #rmBettrans (bettype, hdp2)
 
+			START_GETSELECTION:
+
+			TRUNCATE TABLE #sporttype
+
+			SELECT @refno = NULL
+
 			-- bettransm
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
 			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
@@ -337,17 +196,15 @@ BEGIN
 				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
 			WHERE b.bettype = 29  AND (bm.winlostdate > @MoveBetsDay or bm.winlostdate IS NULL)
 			
-			-- bettransm14
+			-- bettransm14 & bettransm_bk
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
 			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
 			FROM #rmBettrans b 
 				INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay 
-
-			-- bettrans_bk
-			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
+			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN DATEADD(DAY, -8,@BalanceUpDay) AND @MoveBetsDay 
+			UNION
 			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
 			FROM #rmBettrans b 
 				INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
@@ -355,7 +212,32 @@ BEGIN
 				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
 			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN DATEADD(DAY, -20, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
 
+			;WITH t AS 
+			(
+				SELECT refno, count(1) TotalSelection
+				FROM #sporttype
+				GROUP BY refno
+			)SELECT TOP 1 @refno  = rm.refno
+			FROM #rmBettrans rm
+			LEFT JOIN t ON rm.refno = t.refno
+			WHERE rm.hdp2 <> ISNULL(t.TotalSelection,0) and rm.bettype = 29 and  rm.refno not in( 102333557102) AND rm.currency <> 20 AND rm.statusID <> 102
 
+			IF @refno IS NOT NULL
+			BEGIN
+				IF @retrySelection_cnt > 0
+				BEGIN
+					SELECT @retrySelection_cnt = @retrySelection_cnt - 1
+					WAITFOR DELAY '00:01:00'
+					GOTO START_GETSELECTION
+				END
+				ELSE
+				BEGIN
+					SELECT @err_message = 'WARNING: Missing data on bettransm table- refno: ' + CAST(@refno AS VARCHAR(50)) + '. Data will be regenerated in the following schedule.'
+					RAISERROR (@err_message,16,1)
+					RETURN
+				END
+			END
+			
 			-- transid2 (sporttype)
 			UPDATE b
 			SET b.transid2 = s.sporttype
