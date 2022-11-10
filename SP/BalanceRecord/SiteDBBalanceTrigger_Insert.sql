@@ -13,6 +13,7 @@ AS
 		- 20220928@July: scaleout project - Balance record [176932]
 		- 20221010@July: Dynamic - Order by RowID & waitfor delay [176932]
 		- 20221031@July: BatchSize = 2000 & waitfordelay 3s [176932]
+		- 20221110@July: waitfordelay down 500ms [180331]
 */
 BEGIN
 	
@@ -53,7 +54,7 @@ BEGIN
 	FROM OPENQUERY('+@SiteDBAlias+', ''\
 	DECLARE @maxID_tmp BIGINT
 	SET @maxID_tmp = (SELECT MAX(RowID) FROM [bodb02].[dbo].[BalanceTrigger] WITH(NOLOCK)) 
-	WAITFOR DELAY ''''00:00:03.000''''
+	WAITFOR DELAY ''''00:00:00.500''''
 	SELECT TOP('+CONVERT(VARCHAR(10), @batchSize)+') rowid, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds 
 	FROM [bodb02].[dbo].[BalanceTrigger] WITH(NOLOCK) WHERE RowID <= @maxID_tmp AND RowID > '+CONVERT(VARCHAR(20), @maxRowID)+'\
 	ORDER BY RowID ASC
