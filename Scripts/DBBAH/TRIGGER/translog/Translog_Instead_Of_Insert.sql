@@ -62,7 +62,8 @@ BEGIN
            ,[epositiontaking]
            ,[LicenseeTransId]
            ,[RepUpdateTime]
-           ,[SiteDBGroupID])
+           ,[SiteDBGroupID]
+		   ,[SequenceID])
 	SELECT 
 			[translogid]
            ,[custid]
@@ -110,6 +111,7 @@ BEGIN
            ,[LicenseeTransId]
            ,[RepUpdateTime]
            ,[SiteDBGroupID]
+		   ,[SequenceID]
 	FROM INSERTED AS i
 	WHERE i.SiteDBGroupID = 0
 	

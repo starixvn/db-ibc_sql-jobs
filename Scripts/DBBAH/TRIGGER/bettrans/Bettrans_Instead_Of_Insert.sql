@@ -91,6 +91,7 @@ BEGIN
            ,[RepUpdateTime]
            ,[RepDstUpdateTime]
            ,[SiteDBGroupID]
+		   ,[SequenceID]
            ,[FcUpdateTime])
 	SELECT 
 			[transid]
@@ -167,6 +168,7 @@ BEGIN
            ,[RepUpdateTime]
            ,[RepDstUpdateTime]
            ,[SiteDBGroupID]
+		   ,[SequenceID]
            ,[FcUpdateTime]
 	FROM INSERTED AS i
 	WHERE i.SiteDBGroupID = 0

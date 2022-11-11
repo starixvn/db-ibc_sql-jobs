@@ -72,7 +72,8 @@ BEGIN
            ,[ContributionStake3rd]
            ,[epositiontaking]
            ,[RepUpdateTime]
-           ,[SiteDBGroupID])
+           ,[SiteDBGroupID]
+		   ,[SequenceID])
 	SELECT 
 			[transid]
            ,[custid]
@@ -130,6 +131,7 @@ BEGIN
            ,[epositiontaking]
            ,[RepUpdateTime]
            ,[SiteDBGroupID]
+		   ,[SequenceID]
 	FROM INSERTED AS i
 	WHERE i.SiteDBGroupID = 0
 	
