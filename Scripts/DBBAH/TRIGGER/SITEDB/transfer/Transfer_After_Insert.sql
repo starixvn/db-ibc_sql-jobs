@@ -36,9 +36,9 @@ BEGIN
 			ELSE 0 END,
 
 			CASE
-			WHEN bettype = 19999 THEN 'SUM ' + CONVERT(varchar(10), i.winlostdate, 120)
-			WHEN bettype = 20000 THEN 'BAL ' + CONVERT(varchar(10), i.winlostdate, 120)
-			WHEN bettype > 20000 THEN 'Transfer'
+				--WHEN bettype = 19999 THEN 'SUM ' + CONVERT(varchar(10), i.winlostdate, 120)
+				--WHEN bettype = 20000 THEN 'BAL ' + CONVERT(varchar(10), i.winlostdate, 120)
+				WHEN bettype > 20000 THEN 'Transfer'
 			END + ' inserted' + ' (' + CAST(refno AS varchar(50)) + ')'
 			,
 
@@ -64,6 +64,7 @@ BEGIN
 			i.custid <> recommend AND
 			i.custid <> mrecommend AND
 			i.custid <> srecommend
+			AND i.Bettype NOT IN (19999, 20000)
 		ORDER BY
 			i.transid
 

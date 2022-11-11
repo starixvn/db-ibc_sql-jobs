@@ -64,7 +64,7 @@ BEGIN
 		,isnull(i.awinlost,0) as awinlost
 		,isnull(i.scomm,0) as scomm
 		,isnull(i.acomm,0) as acomm
-		,isnull(i.comm,0) as acomm
+		,isnull(i.comm,0) as comm
 		,0 --i.modds
 	FROM
 		inserted i 
