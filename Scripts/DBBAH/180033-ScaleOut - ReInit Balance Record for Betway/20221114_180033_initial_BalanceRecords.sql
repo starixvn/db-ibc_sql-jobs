@@ -19,7 +19,7 @@ INSERT INTO #temp_MemberInput (custid)
 SELECT DISTINCT b.custid
 FROM [bodb02].[dbo].BalanceRecord b WITH(NOLOCK)
 	INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) ON c.custid = b.custid
-WHERE c.site = ''
+WHERE c.site = 'Betway'
 
 SELECT @@ROWCOUNT AS [custid_Count]
 
