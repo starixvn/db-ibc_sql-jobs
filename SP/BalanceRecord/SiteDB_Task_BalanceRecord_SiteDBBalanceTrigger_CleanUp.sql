@@ -24,16 +24,17 @@ BEGIN
 
 	SELECT @MaxID_DBSIG = MAX(RowId)
 	FROM dbo.BalanceTrigger WITH (NOLOCK) 
-	WHERE ActionDate <= @Today
+	WHERE ActionDate <= @Today AND RowId < @MaxID
 
-	IF @MaxID > @MaxID_DBSIG
-		SET @MaxID = @MaxID_DBSIG
-
-	WHILE EXISTS (SELECT 1 FROM dbo.BalanceTrigger WITH (NOLOCK) WHERE rowid < @MaxID) --To avoid TABLOCK escalation
+	IF @MaxID_DBSIG IS NOT NULL
 	BEGIN
-		DELETE TOP (4500)
-		FROM dbo.BalanceTrigger WITH (UPDLOCK, ROWLOCK)
-		WHERE rowid < @MaxID
-	END		
+		WHILE EXISTS (SELECT 1 FROM dbo.BalanceTrigger WITH (NOLOCK) WHERE rowid < @MaxID_DBSIG) --To avoid TABLOCK escalation
+		BEGIN
+			DELETE TOP (4500)
+			FROM dbo.BalanceTrigger WITH (UPDLOCK, ROWLOCK)
+			WHERE rowid < @MaxID_DBSIG
+		END		
+	END
+
 END
 
