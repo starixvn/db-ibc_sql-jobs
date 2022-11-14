@@ -12,6 +12,7 @@ AS
     DB: DBBAH/bodb02
     Revisions:
 		- 20220928@July: scaleout project - Balance record [176932]
+		- 20221110@July: Scale out DBTrans - Enhance Job clean BalanceTrigger [180331]
 		
 */
 BEGIN
@@ -60,12 +61,6 @@ BEGIN
                         );
 			RETURN
 	END CATCH
-
-	--Keep 10000 very first rows in the table
-	IF @MaxID - 10000 <= 0
-		RETURN
-	
-	SET @MaxID = @MaxID - 10000
 
 	DECLARE  @ExecuteSQL NVARCHAR(MAX) = ''
 			, @query NVARCHAR(MAX) = ''
