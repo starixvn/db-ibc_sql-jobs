@@ -10,6 +10,7 @@ AS
 	Revision:
 		- 20210309@Kathy: Allow null for bettype,actual_stake, winlost, playercomm [Redmine:#138552]
 		- 20220912@Helen: scaleout project, exclude 'sitedb' data since it has been processed in sitedb already [176932]
+		- 20221108@Victoria: Migration Data From SiteDB to CentralDB - Change to not capture when update sitedbgroupid = 0 [Redmine:#180033]
 */
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -75,7 +76,7 @@ BEGIN
 		d.custid <> d.recommend AND
 		d.custid <> d.mrecommend AND
 		d.custid <> d.srecommend
-		AND i.SiteDBGroupID = 0
+		AND d.SiteDBGroupID = 0
 		-- Joe@20120705 : eliminate row which data is not change 
 		AND (
 			ISNULL(i.actual_stake,0) <> ISNULL(d.actual_stake,0)

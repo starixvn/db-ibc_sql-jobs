@@ -20,6 +20,7 @@ AS
 		- 20220526@Louisa: Do not capture when ticket change status from Running to Settled [Redmine:#167296]
 		- 20220629@Helen: BalanceRecord -> wrong capture balance change and new balance when resettle tickets AE-Sexy product [Redmine:#173971]
 		- 20220912@Helen: scaleout project, exclude 'sitedb' data since it has been processed in sitedb already [176932]
+		- 20221108@Victoria: Migration Data From SiteDB to CentralDB - Change to not capture when update sitedbgroupid = 0 [Redmine:#180033]
 
 */
 
@@ -158,7 +159,7 @@ BEGIN
 		d.custid <> d.recommend AND
 		d.custid <> d.mrecommend AND
 		d.custid <> d.srecommend		
-		AND i.SiteDBGroupID = 0
+		AND d.SiteDBGroupID = 0
 END
 
 
