@@ -34,6 +34,7 @@ BEGIN
 	IF @Action = 'delete'
 	BEGIN
 		CREATE TABLE #DeletedList (id BIGINT PRIMARY KEY CLUSTERED, IsDone BIT)
+		DECLARE @tmp_VoidingHistory AS TABLE (VoidingHistoryId INT)
 
 		IF @DeletedTarget = 'betParlayDetail'
 		BEGIN
@@ -243,6 +244,17 @@ BEGIN
 		ELSE IF @DeletedTarget = 'zzzbettrans'
 		BEGIN			
 			TRUNCATE TABLE #DeletedList
+			DELETE @tmp_VoidingHistory
+
+			INSERT INTO @tmp_VoidingHistory (VoidingHistoryId)
+			SELECT f.VoidingHistoryId
+			FROM DBCTG.bodb02.dbo.Task_Archive_TVS t WITH (NOLOCK)
+				CROSS APPLY (
+						SELECT DISTINCT value AS VoidingHistoryId
+						FROM string_split (t.VoidingHistoryIds, ',')
+					) f
+			WHERE t.Winlostdate= @StartDate
+
 			INSERT INTO #DeletedList (id,IsDone)
 			SELECT	t1.keyid,0
 			FROM	dbo.zzzbettrans AS t1 WITH (NOLOCK)
@@ -259,8 +271,7 @@ BEGIN
 			UNION --refer requestid data from Task_Archive_TVS
 			SELECT t1.keyid, 0 
 			FROM dbo.zzzbettrans t1 WITH (NOLOCK)
-				INNER JOIN DBCTG.bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
-				INNER JOIN dbo.Task_Archive_TVS r WITH (NOLOCK) ON r.RequestId = v.RequestId
+				INNER JOIN @tmp_VoidingHistory v ON v.VoidingHistoryId = t1.VoidingHistoryId
 			WHERE t1.VoidingHistoryId IS NOT NULL
 
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettrans'	
@@ -270,6 +281,17 @@ BEGIN
 		ELSE IF @DeletedTarget = 'zzzbettransM'
 		BEGIN			
 			TRUNCATE TABLE #DeletedList
+			DELETE @tmp_VoidingHistory
+
+			INSERT INTO @tmp_VoidingHistory (VoidingHistoryId)
+			SELECT f.VoidingHistoryId
+			FROM DBCTG.bodb02.dbo.Task_Archive_TVS t WITH (NOLOCK)
+				CROSS APPLY (
+						SELECT DISTINCT value AS VoidingHistoryId
+						FROM string_split (t.VoidingHistoryIds, ',')
+					) f
+			WHERE t.Winlostdate= @StartDate
+
 			INSERT INTO #DeletedList (id,IsDone)
 			SELECT keyid,0 FROM dbo.zzzbettransM AS t1 WITH (NOLOCK)
 				WHERE	EXISTS (SELECT 1 FROM dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 AND t1.matchid=t2.matchid AND t2.winlostdate = @StartDate)
@@ -278,8 +300,7 @@ BEGIN
 			UNION --refer requestid data from Task_Archive_TVS
 			SELECT t1.keyid, 0 
 			FROM dbo.zzzbettransm t1 WITH (NOLOCK)
-				INNER JOIN dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
-				INNER JOIN dbo.Task_Archive_TVS r WITH (NOLOCK) ON r.RequestId = v.RequestId
+				INNER JOIN @tmp_VoidingHistory v ON v.VoidingHistoryId = t1.VoidingHistoryId
 			WHERE t1.VoidingHistoryId IS NOT NULL
 			
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettransM'	
