@@ -9,12 +9,12 @@
 USE bodb02
 GO
 
-DECLARE @MinTransId BIGINT = XXX --OUTPUT OF STEP 3 ON DPLOYMENT STEPS [Redmine: #180523]
+DECLARE @MinTransId BIGINT = XXX --OUTPUT OF STEP 3 ON DEPLOYMENT STEPS [Redmine: #180523]
 
 SELECT b.transid, actionid, action, balancechanged INTO #tmp
 FROM dbo.BalanceTrigger b WITH (NOLOCK)
 WHERE b.Action LIKE 'Transfer%'
-	AND b.transid > @MinTransId
+	AND b.transid >= @MinTransId
 GROUP BY b.transid, actionid, action, balancechanged
 HAVING COUNT(1) > 1
 
