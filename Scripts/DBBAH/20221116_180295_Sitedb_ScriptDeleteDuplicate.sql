@@ -10,16 +10,24 @@ USE bodb02
 GO
 
 DECLARE @MinTransId BIGINT = XXX --OUTPUT OF STEP 3 ON DPLOYMENT STEPS [Redmine: #180523]
- 
 
-;WITH CTE(
-	TransId, 
-	DuplicateCount)
-AS (SELECT b.transid, 
-           ROW_NUMBER() OVER(PARTITION BY b.transid
-           ORDER BY transid) AS DuplicateCount
-    FROM dbo.BalanceTrigger b WITH (NOLOCK)
-	WHERE b.Action LIKE 'Transfer%'
-		AND b.transid > @MinTransId)
-DELETE FROM CTE
-WHERE DuplicateCount > 1;
+SELECT b.transid, actionid, action, balancechanged INTO #tmp
+FROM dbo.BalanceTrigger b WITH (NOLOCK)
+WHERE b.Action LIKE 'Transfer%'
+	AND b.transid > @MinTransId
+GROUP BY b.transid, actionid, action, balancechanged
+HAVING COUNT(1) > 1
+
+SELECT b.transid, b.ActionID, b.Action, b.BalanceChanged, MIN(b.RowID) AS min_row  INTO #tmp_1
+FROM #tmp t 
+	INNER JOIN dbo.BalanceTrigger b WITH (NOLOCK) ON b.transid = t.transid AND b.ActionID = t.ActionID AND b.Action = t.Action AND b.BalanceChanged = t.BalanceChanged
+GROUP BY b.transid, b.ActionID, b.Action, b.BalanceChanged
+
+SELECT b.custid, b.RowID into #row_delete
+FROM dbo.BalanceTrigger b WITH (NOLOCK)
+	INNER JOIN #tmp_1 t ON b.transid = t.transid AND b.ActionID = t.ActionID AND b.Action = t.Action AND b.BalanceChanged = t.BalanceChanged AND b.RowID > t.min_row
+
+DELETE b
+FROM dbo.BalanceTrigger b 
+INNER JOIN #row_delete d on d.RowID = b.RowID
+
