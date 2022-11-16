@@ -23,7 +23,7 @@ FROM #tmp t
 	INNER JOIN dbo.BalanceTrigger b WITH (NOLOCK) ON b.transid = t.transid AND b.ActionID = t.ActionID AND b.Action = t.Action AND b.BalanceChanged = t.BalanceChanged
 GROUP BY b.transid, b.ActionID, b.Action, b.BalanceChanged
 
-SELECT b.custid, b.RowID into #row_delete
+SELECT b.RowID into #row_delete
 FROM dbo.BalanceTrigger b WITH (NOLOCK)
 	INNER JOIN #tmp_1 t ON b.transid = t.transid AND b.ActionID = t.ActionID AND b.Action = t.Action AND b.BalanceChanged = t.BalanceChanged AND b.RowID > t.min_row
 
