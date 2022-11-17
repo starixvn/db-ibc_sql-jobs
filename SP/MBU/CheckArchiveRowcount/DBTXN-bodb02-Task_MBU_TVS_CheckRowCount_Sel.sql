@@ -1,6 +1,6 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 GO
-CREATE PROCEDURE [dbo].[Task_MBU_TVS_CheckRowCount_Sel]
+ALTER PROCEDURE [dbo].[Task_MBU_TVS_CheckRowCount_Sel]
 	@StartDate		SMALLDATETIME	= NULL
 	,@EndDate		SMALLDATETIME = NULL 
 	,@tablename		VARCHAR(50) = NULL
@@ -29,6 +29,7 @@ BEGIN
 			,@EndDate_tmp	SMALLDATETIME = @EndDate 
 	
 	CREATE TABLE #tmpRequest (RequestID INT)
+	DECLARE @tmp_VoidingHistory AS TABLE (VoidingHistoryId INT, RequestID INT)
 	-------------------Part 1: for table only based on checking by range from startdate to enddate ------------------------
 	--//1 - TicketVoiding_RequestDetail
 	IF @tablename = 'TicketVoiding_RequestDetail'
@@ -139,11 +140,19 @@ BEGIN
 		FROM #tmpRequest
 		
 		--//-- Tables archived basing on requestid of TicketVoiding_Request (TVS)
+		INSERT INTO @tmp_VoidingHistory (VoidingHistoryId, RequestID)
+		SELECT f.VoidingHistoryId, t.RequestID
+		FROM DBCTG.bodb02.dbo.Task_Archive_TVS t WITH (NOLOCK)
+			CROSS APPLY (
+					SELECT DISTINCT value AS VoidingHistoryId
+					FROM string_split (t.VoidingHistoryIds, ',')
+				) f
+		WHERE  t.Winlostdate BETWEEN @StartDate AND @EndDate
 		--2.1 zzzbettransM
 		INSERT INTO @__tempCount(rowcnt, tableName)
 		SELECT	COUNT(1), 'zzzbettransM'
 		FROM	bodb02.dbo.zzzbettransM AS t1 WITH (NOLOCK)
-			INNER JOIN DBCTG.bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
+			INNER JOIN @tmp_VoidingHistory v ON v.VoidingHistoryId = t1.VoidingHistoryId
 			CROSS APPLY (
 					SELECT	RequestId
 					FROM	#tmpRequest t
@@ -155,7 +164,7 @@ BEGIN
 		INSERT INTO @__tempCount(rowcnt, tableName)
 		SELECT	COUNT(1), 'zzzbettrans'	
 		FROM	bodb02.dbo.zzzbettrans AS t1 WITH (NOLOCK)
-			INNER JOIN DBCTG.bodb02.dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
+			INNER JOIN @tmp_VoidingHistory v ON v.VoidingHistoryId = t1.VoidingHistoryId
 			CROSS APPLY (
 					SELECT	RequestId
 					FROM	#tmpRequest t
