@@ -3,7 +3,9 @@ USE [Affiliate_12BET]
 GO
 
 ALTER PROCEDURE [dbo].[Task_APIProduct_CallTimeIns]
-	@ProductId	INT,
+	@ProductId	INT = -1,
+	@TpType		INT = -1,
+	@SubItem	VARCHAR(200) = '',
 	@Currency	INT = NULL,
     @CallTime   DATETIME,
 	@ErrCode	INT = 0 OUTPUT,
@@ -16,12 +18,15 @@ AS
 
 	Revisions:
 		- Created: 20190114@Walter: Initialize SP [RedmineID: #107594]
+		- 20221117@Malcolm: Add TpType, SubItem [RedmineID: #180311]
 */
 BEGIN
     SET NOCOUNT ON
 
-    INSERT INTO dbo.APIProduct_TimeTracker (ProductId, Currency, CallTime)
-    VALUES (@ProductId, @Currency, @CallTime)
+	SELECT @ProductId = ISNULL(@ProductId, -1), @TpType = ISNULL(@TpType, -1), @SubItem = ISNULL(@SubItem, '')
+
+    INSERT INTO dbo.APIProduct_TimeTracker (ProductId, TpType, SubItem, Currency, CallTime)
+    VALUES (@ProductId, @TpType, @SubItem, @Currency, @CallTime)
 
     IF @@ERROR <> 0
 	BEGIN
