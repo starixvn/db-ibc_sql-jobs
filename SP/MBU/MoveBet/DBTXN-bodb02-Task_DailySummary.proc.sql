@@ -98,6 +98,7 @@ Revisions:
 	- 20220831@Bobby: Remove translog.custid=0 [Redmine: #176685]
 	- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 	- 20220908@Patrick: Support scale-out for deposit site - Fix issue Redmine: [#175602]
+	-- 20221117@Patrick: MB - Remove table out proccess: ProviderExternalResultDetailES | ProviderExternalResultDetailOS [Redmine: #180613]
 */
 
 SET NOCOUNT ON
@@ -109,6 +110,7 @@ DECLARE @Doing NVARCHAR(300) = ''
 	, @__delayTimeValue VARCHAR(20) = '00:00:00:020'
 	, @__rowAffected INT = 0
 	, @__aliasServer VARCHAR(128) = ''
+	, @__groupId INT = 0
 
 SET @Doing = 'Task_DailySummary : MoveBet step ' + CAST(@step AS VARCHAR(20)) + ' start, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
@@ -614,7 +616,17 @@ BEGIN
 	IF @__aliasServer = 'DBCTG' --only run that command at central server
 	BEGIN
 		--copy event to [14]
-		EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Copy @winlostdate
+		SET @__groupId = 1
+		WHILE @__groupId <= 6
+		BEGIN
+			SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - start copy event for groupid: '+CAST(@__groupId AS VARCHAR(10))+', on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+			EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Copy @winlostdate = @winlostdate, @groupId = @__groupId
+			WAITFOR DELAY '00:00:01:000'
+
+			SET @__groupId += 1
+		END
+
 	END
 	-- Copy bettransm/bettransg -> bettransm14/bettransg14 for whole day of @winlostdate
 	EXEC dbo.ExecRep_08 @recommend = 0, @winlostdate = @winlostdate, @parlay = 1
@@ -886,14 +898,28 @@ BEGIN
 	IF @__aliasServer = 'DBCTG' --only run that command at central server
 	BEGIN
 		--remove event
-		EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Delete @winlostdate
+		SET @__groupId = 1
+		WHILE @__groupId <= 9
+		BEGIN
+			SET @Doing = 'Task_DailySummary : MoveBet step 8.02 - start delete event for groupid: '+CAST(@__groupId AS VARCHAR(10))+', on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+			EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Delete @winlostdate = @winlostdate, @groupId = @__groupId
+			WAITFOR DELAY '00:00:01:000'
+
+			SET @__groupId += 1
+		END
+		
 	END
 
 	SET DEADLOCK_PRIORITY HIGH
 
+	SET @Doing = 'Task_DailySummary : MoveBet step 8.03 - start delete bettransm, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 	--remove ticket on bettransM for whole day of winlostdate
 	EXEC dbo.Task_DailySummary_Delete_Bet @winlostdate = @winlostdate, @tableName = 'bettransm'
 
+	SET @Doing = 'Task_DailySummary : MoveBet step 8.04 - start delete bettransG, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 	-- Delete bettransG for whole day of @winlostdate
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 2
 
