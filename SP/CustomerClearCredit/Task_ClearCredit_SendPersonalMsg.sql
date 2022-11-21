@@ -9,6 +9,7 @@ AS
 
 	Revisions:    
 		- 20190509@Elodie: Initial SP [Redmine:#112458]
+		- 20221121@Tacy: adjust [Dot_Msg_SetUsrMessage] --> [Age_Msg_SetUsrMessage] [RedmineID: #180704]
 
 	Param's Explanation:
 		
@@ -117,7 +118,7 @@ BEGIN
 			INNER JOIN dbo.Customer c WITH (NOLOCK) ON t.CustId = c.custid
 		WHERE ID = @i
 
-		EXEC DBMSG.bodb_Message.dbo.Dot_Msg_SetUsrMessage
+		EXEC DBMSG.bodb_Message.dbo.Age_Msg_SetUsrMessage
 		@MessageId	= @MessageId,
 		@TargetId	= @CustID,
 		@TargetName = @UserName,
