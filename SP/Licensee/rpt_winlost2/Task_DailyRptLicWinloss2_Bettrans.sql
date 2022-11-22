@@ -244,7 +244,8 @@ BEGIN
 			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4599, 4600, 2499)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
-				OR (b.bettype BETWEEN 17000 AND 17030) THEN b.bettype
+				OR (b.bettype BETWEEN 17000 AND 17030)  
+				OR (b.bettype BETWEEN 8700 AND 8709) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END bettype
@@ -375,7 +376,8 @@ BEGIN
 			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4599, 4600, 2499)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
-				OR (b.bettype BETWEEN 17000 AND 17030) THEN b.bettype
+				OR (b.bettype BETWEEN 17000 AND 17030)  
+				OR (b.bettype BETWEEN 8700 AND 8709) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END
