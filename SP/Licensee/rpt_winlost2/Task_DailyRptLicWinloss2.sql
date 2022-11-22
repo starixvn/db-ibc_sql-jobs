@@ -115,6 +115,7 @@ AS
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 		- 20220708@Hogan: Support add new betfrom '}' [RedmineID: #174895]
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
+		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -243,6 +244,7 @@ BEGIN
 			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid <> 173) THEN 171 -- VGA
 			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN 173 -- VGA FreeBets
 			WHEN b.bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
+			WHEN b.bettype BETWEEN 8700 AND 8709 THEN 157 -- Player Tips
 			WHEN b.bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			WHEN b.bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 			WHEN b.bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
@@ -374,6 +376,7 @@ BEGIN
 			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid <> 173) THEN 171 -- VGA
 			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN 173 -- VGA FreeBets
 			WHEN b.bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
+			WHEN b.bettype BETWEEN 8700 AND 8709 THEN 157 -- Player Tips
 			WHEN b.bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			WHEN b.bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 			WHEN b.bettype BETWEEN 7701 AND 7799 THEN 172 -- AP

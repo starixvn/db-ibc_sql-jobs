@@ -71,6 +71,7 @@ AS
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
+		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -328,6 +329,7 @@ BEGIN
 				WHEN (bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173 -- VGA FreeBets
 				WHEN (bettype BETWEEN 3898 AND 3899 AND b.matchid <> 173) THEN -171 -- VGA Prize
 				WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
+				WHEN bettype BETWEEN 8700 AND 8709 THEN 157 -- Player Tips
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
@@ -432,6 +434,7 @@ BEGIN
 				WHEN (bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173 -- VGA FreeBets
 				WHEN (bettype BETWEEN 3898 AND 3899 AND b.matchid <> 173) THEN -171 -- VGA Prize
 				WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
+				WHEN bettype BETWEEN 8700 AND 8709 THEN 157 -- Player Tips
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
