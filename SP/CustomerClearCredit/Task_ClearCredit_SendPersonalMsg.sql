@@ -9,7 +9,7 @@ AS
 
 	Revisions:    
 		- 20190509@Elodie: Initial SP [Redmine:#112458]
-		- 20221121@Tacy: adjust [Dot_Msg_SetUsrMessage] --> [Age_Msg_SetUsrMessage] [RedmineID: #180704]
+		- 20221121@Tacy: adjust [Dot_Msg_xxx] --> [Age_Msg_xxx] [RedmineID: #180704]
 
 	Param's Explanation:
 		
@@ -40,7 +40,7 @@ BEGIN
 	SET @Content_th = N'เรียน ลูกค้าที่เคารพ เนื่องจากบางบัญชีของมาสเตอร์ ที่สร้างขึ้นใหม่และไม่ได้ลงชื่อเข้าใช้เว็ปไซต์ตัวแทนภายใน7วันนับจากวันสร้างบัญชี ระบบจะล้างวงเงินเครดิตทั้งหมดออกจากบัญชี เพื่อความปลอดภัยและป้องกันบัญชีของดาวน์ไลน์ถูกใช้โดยบุคคลที่สาม ขอบพระคุณ'	
 
 	-- Insert message
-	EXEC DBMSG.bodb_Message.dbo.Dot_Msg_SetMessage2 
+	EXEC DBMSG.bodb_Message.dbo.Age_Msg_SetMessage2 
 		@MessageId	= @MessageID1 OUTPUT,
 		@Content_en = @Content_en,
 		@Content_ch = @Content_ch,
@@ -82,7 +82,7 @@ BEGIN
 	SET @Content_th = N'เรียน ลูกค้าที่เคารพ เนื่องจากบางบัญชีของเอเย่นต์ ที่สร้างขึ้นใหม่และไม่ได้ลงชื่อเข้าใช้เว็ปไซต์ตัวแทนภายใน7วันนับจากวันสร้างบัญชี ระบบจะล้างวงเงินเครดิตทั้งหมดออกจากบัญชี เพื่อความปลอดภัยและป้องกันบัญชีของดาวน์ไลน์ถูกใช้โดยบุคคลที่สาม ขอบพระคุณ'
 
 	-- Insert message
-	EXEC DBMSG.bodb_Message.dbo.Dot_Msg_SetMessage2 
+	EXEC DBMSG.bodb_Message.dbo.Age_Msg_SetMessage2 
 		@MessageId	= @MessageID2 OUTPUT,
 		@Content_en = @Content_en,
 		@Content_ch = @Content_ch,
