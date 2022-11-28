@@ -9,11 +9,11 @@ CREATE PROCEDURE [dbo].[CheckSumTicket_ByRecommendList]
 )
 AS 
 /*
-Created by: 20221124@July
-Task: CheckSum ticket
-DB: DBCONSISTENCY-bodb_Consistency, DBSIG-bodb02
-Revisions:
-	- 20221124@July: Clone SP - Support filter recommend list [Redmine:#178864]
+	Created by: 20221124@July
+	Task: CheckSum ticket
+	DB: DBCONSISTENCY-bodb_Consistency, DBSIG-bodb02
+	Revisions:
+		- 20221124@July: Clone SP - Support filter recommend list [Redmine:#178864]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -48,29 +48,9 @@ BEGIN
 		RETURN;
 	END
 
-	ELSE IF @TableName = 'bettransG'
-	BEGIN
-		EXEC dbo.CheckSumTicket_ByRecommendList_bettransG
-				@CurrentTime = @CurrentTime
-			  , @RecommendList = @RecommendList
-			  , @before_yesterday = @before_yesterday
-			  , @yesterday = @yesterday 
-		RETURN;
-	END
-
 	ELSE IF @TableName = 'translog'
 	BEGIN
 		EXEC dbo.CheckSumTicket_ByRecommendList_translog
-				@CurrentTime = @CurrentTime
-			  , @RecommendList = @RecommendList
-			  , @before_yesterday = @before_yesterday
-			  , @yesterday = @yesterday 
-		RETURN;
-	END
-	
-	ELSE IF @TableName = 'bettransm'
-	BEGIN
-		EXEC dbo.CheckSumTicket_ByRecommendList_bettransm
 				@CurrentTime = @CurrentTime
 			  , @RecommendList = @RecommendList
 			  , @before_yesterday = @before_yesterday

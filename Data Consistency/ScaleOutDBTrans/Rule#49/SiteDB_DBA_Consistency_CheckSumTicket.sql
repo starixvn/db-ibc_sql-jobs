@@ -29,13 +29,34 @@ BEGIN
 
 	IF @RecommendList IS NOT NULL
 	BEGIN
-		EXEC dbo.CheckSumTicket_ByRecommendList 
-				@CurrentTime = @CurrentTime
-			  , @RecommendList = @RecommendList
-			  , @TableName = @TableName
-			  , @before_yesterday = @before_yesterday
-			  , @yesterday = @yesterday
-		RETURN;
+		IF @TableName IN ('bettrans', 'bettransRnG', 'bettranLC','translog')
+		BEGIN
+			EXEC dbo.CheckSumTicket_ByRecommendList 
+					@CurrentTime = @CurrentTime
+				  , @RecommendList = @RecommendList
+				  , @TableName = @TableName 
+				  , @before_yesterday = @before_yesterday
+				  , @yesterday = @yesterday
+			RETURN;
+		END
+		ELSE IF @TableName = 'bettransG'
+		BEGIN
+			EXEC dbo.CheckSumTicket_ByRecommendList_bettransG_SiteDB 
+					@CurrentTime = @CurrentTime
+				  , @RecommendList = @RecommendList
+				  , @before_yesterday = @before_yesterday
+				  , @yesterday = @yesterday
+			RETURN;
+		END
+		ELSE IF @TableName = 'bettransm'
+		BEGIN
+			EXEC dbo.CheckSumTicket_ByRecommendList_bettransm_SiteDB 
+					@CurrentTime = @CurrentTime
+				  , @RecommendList = @RecommendList
+				  , @before_yesterday = @before_yesterday
+				  , @yesterday = @yesterday
+			RETURN;
+		END
 	END
 
 	CREATE TABLE #tmp_betticketchecksum
