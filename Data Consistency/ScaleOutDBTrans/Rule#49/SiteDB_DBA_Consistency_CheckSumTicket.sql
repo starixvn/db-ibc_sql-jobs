@@ -1,7 +1,9 @@
 /*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_CheckSumTicket]
 (
-	@CurrentTime DATETIME
+	@CurrentTime	DATETIME
+   ,@RecommendList	VARCHAR(MAX) = NULL
+   ,@TableName		VARCHAR(50) = NULL
 )
 AS 
 /*
@@ -15,6 +17,7 @@ Revisions:
 	- 20221019@Victoria: Remove VirtualRate inside of CheckSum Function [Redmine:#178864]
 	- 20221028@Victoria: Remove checktime inside of CheckSum Function [Redmine:#178864]
 	- 20221102@Victoria: Convert ActualRate with a Float data type to a DECIMAL [Redmine:#178864]  
+	- 20221123@July: Support filter recommend list [Redmine:#178864]
 */
 
 BEGIN
@@ -23,6 +26,17 @@ BEGIN
 	DECLARE @before_yesterday SMALLDATETIME, @yesterday SMALLDATETIME
 	SELECT  @before_yesterday = CONVERT(DATE, DATEADD(DAY, -2, GETDATE()))
 	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
+
+	IF @RecommendList IS NOT NULL
+	BEGIN
+		EXEC dbo.CheckSumTicket_ByRecommendList 
+				@CurrentTime = @CurrentTime
+			  , @RecommendList = @RecommendList
+			  , @TableName = @TableName
+			  , @before_yesterday = @before_yesterday
+			  , @yesterday = @yesterday
+		RETURN;
+	END
 
 	CREATE TABLE #tmp_betticketchecksum
 	(
