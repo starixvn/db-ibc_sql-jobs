@@ -69,7 +69,7 @@ BEGIN
 				bm.[mwinlost], bm.[playerdiscount], bm.[discount], bm.[adiscount], bm.[playercomm], bm.[comm], bm.[acomm], bm.[actualrate], bm.[matchid], 
 				bm.[matchdate], bm.[finalodds], bm.[isfinish], bm.[statuswinlost], bm.[ruben], bm.[bettype], bm.[spositiontaking], bm.[swinlost], 
 				bm.[sdiscount], bm.[scomm], bm.[statusID], bm.[transdesc], bm.[SecAcceptFlag], bm.[SecAcceptTime], bm.[LiveBetAcceptTime]
-		FROM	bodb02.dbo.bettransm bm WITH (NOLOCK) 
+		FROM	bodb02.dbo.bettransm bm WITH (NOLOCK, INDEX = [IX_winlostdate]) 
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = bm.custid
 		WHERE	bm.[winlostdate] IN (@before_yesterday,@yesterday)
 			AND bm.[transdate] < @CurrentTime

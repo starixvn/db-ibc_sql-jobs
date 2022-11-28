@@ -63,7 +63,7 @@ BEGIN
 				g.[apositiontaking], g.[mpositiontaking], g.[tpositiontaking], g.[awinlost], g.[mwinlost], g.[playerdiscount], g.[discount], g.[adiscount], g.[playercomm], g.[comm], 
 				g.[acomm], g.[actualrate], g.[matchid], g.[matchdate], g.[statuswinlost], g.[ruben], g.[bettype], g.[spositiontaking], g.[swinlost], g.[sdiscount], g.[scomm], g.[statusID], 
 				g.[SiteID], g.[TransDesc], g.[BetID3rd], g.[actual_stake], g.[netstake]
-		FROM	bodb02.dbo.bettransG g WITH (NOLOCK)
+		FROM	bodb02.dbo.bettransG g WITH (NOLOCK, INDEX = [IX_winlostdate])
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = g.custid
 		WHERE	g.winlostdate IN (@before_yesterday,@yesterday)
 			AND g.transdate < @CurrentTime

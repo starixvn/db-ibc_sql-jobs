@@ -69,7 +69,7 @@ BEGIN
 				[Recommend], [mrecommend], [ruben], [betid], [statuswinlost], [modds], [bettype], [betdaqid], [actual_stake], [currency], [ip], [transdesc], 
 				[sdiscount], [scomm], [spositiontaking], [swinlost], [srecommend], [Username], [CurrencyName], [oddstype], [statusID], [currency2], 
 				[balance], [transid2], [WalletType], [BonusID], [RefCode]
-		FROM	bodb02.dbo.bettrans WITH (NOLOCK)
+		FROM	bodb02.dbo.bettrans WITH (NOLOCK, INDEX = [IX_recommend])
 		WHERE winlostdate IN (@before_yesterday,@yesterday)
 			AND transdate < @CurrentTime
 			AND recommend = @recommend

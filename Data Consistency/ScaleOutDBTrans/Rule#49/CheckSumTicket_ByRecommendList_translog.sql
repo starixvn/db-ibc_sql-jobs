@@ -62,7 +62,7 @@ BEGIN
 				[playerdiscount], [discount], [adiscount], [sdiscount], [creator], [betfrom], [actualrate], [actual_stake], 
 				[currency], [CurrencyName], [Recommend], [mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], 
 				[gameID], [eventID], [vendorID], [Gameid3rd], [Tranid3rd], [custom1], [liveindicator], [custom2], [custom3], [SiteId], [checkCount]
-		FROM	bodb02.dbo.translog WITH (NOLOCK)
+		FROM	bodb02.dbo.translog WITH (NOLOCK, INDEX = [IX_recommend])
 		WHERE	winlostdate IN (@before_yesterday,@yesterday)
 			AND transdate < @CurrentTime
 			AND recommend = @recommend

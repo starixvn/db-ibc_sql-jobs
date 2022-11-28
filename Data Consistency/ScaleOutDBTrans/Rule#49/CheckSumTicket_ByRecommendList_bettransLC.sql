@@ -63,7 +63,7 @@ DECLARE @recommend INT;
 				[discount], [adiscount], [sdiscount], [creator], [betfrom], CONVERT(DECIMAL(19,8), [actualrate]), [actual_stake], [currency], [CurrencyName], 
 				[Recommend], [mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], [gameID], [vendorID], [GameId3rd], 
 				[TranId3rd], [RefNo], [IsSum], [winlost], [awinlost], [mwinlost], [swinlost], [playercomm], [comm], [acomm], [scomm], [Transdate3rd], [NetStake], [SiteID]
-		FROM	bodb02.dbo.bettransLC WITH (NOLOCK)
+		FROM	bodb02.dbo.bettransLC WITH (NOLOCK, INDEX = [IX_recommend])
 		WHERE	winlostdate IN (@before_yesterday,@yesterday)
 			AND transdate < @CurrentTime
 			AND recommend = @recommend

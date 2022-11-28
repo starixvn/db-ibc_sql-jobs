@@ -57,7 +57,7 @@ BEGIN
 				TransId, SiteDBGroupID, Recommend, Transdate, Status
 			)
 		SELECT	TransId, SiteDBGroupID, Recommend, Transdate, Status
-		FROM	bodb02.dbo.bettransLC WITH (NOLOCK)
+		FROM	bodb02.dbo.bettransLC WITH (NOLOCK, INDEX = [IX_recommend])
 		WHERE	winlostdate IN (@before_yesterday,@yesterday)
 			AND transdate < @CurrentTime
 			AND recommend = @recommend

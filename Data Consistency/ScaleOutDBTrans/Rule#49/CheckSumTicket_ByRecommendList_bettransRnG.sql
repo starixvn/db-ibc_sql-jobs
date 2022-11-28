@@ -66,7 +66,7 @@ BEGIN
 				[mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], [gameID], [vendorID], [GameId3rd], 
 				[TranId3rd], [RefNo], [IsSum], [winlost], [awinlost], [mwinlost], [swinlost], [playercomm], [comm], [acomm], [scomm], [Transdate3rd], 
 				[SiteID], [Additional], [JackpotInfo], [RefNo2], [ContributionRate], [BetStake], [ContributionStake3rd]
-		FROM	bodb02.dbo.bettransRnG WITH (NOLOCK)
+		FROM	bodb02.dbo.bettransRnG WITH (NOLOCK, INDEX = [IX_recommend])
 		WHERE	[winlostdate] IN (@before_yesterday,@yesterday)
 			AND [transdate] < @CurrentTime
 			AND recommend = @recommend
