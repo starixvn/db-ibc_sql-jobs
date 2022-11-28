@@ -26,13 +26,52 @@ BEGIN
 
 	IF @RecommendList IS NOT NULL
 	BEGIN
-		EXEC dbo.CheckTicketCount_ByRecommendList 
-				@CurrentTime = @CurrentTime
-			  , @RecommendList = @RecommendList
-			  , @TableName = @TableName 
-			  , @before_yesterday = @before_yesterday
-			  , @yesterday = @yesterday
-		RETURN;
+		IF @TableName IN ('bettrans', 'bettransRnG', 'bettranLC','translog')
+		BEGIN
+			EXEC dbo.CheckTicketCount_ByRecommendList 
+					@CurrentTime = @CurrentTime
+				  , @RecommendList = @RecommendList
+				  , @TableName = @TableName 
+				  , @before_yesterday = @before_yesterday
+				  , @yesterday = @yesterday
+			RETURN;
+		END
+		ELSE IF @TableName = 'bettransG'
+		BEGIN
+			EXEC dbo.CheckTicketCount_ByRecommendList_bettransG 
+					@CurrentTime = @CurrentTime
+				  , @RecommendList = @RecommendList
+				  , @before_yesterday = @before_yesterday
+				  , @yesterday = @yesterday
+			RETURN;
+		END
+		ELSE IF @TableName = 'bettransm'
+		BEGIN
+			EXEC dbo.CheckTicketCount_ByRecommendList_bettransm
+					@CurrentTime = @CurrentTime
+				  , @RecommendList = @RecommendList
+				  , @before_yesterday = @before_yesterday
+				  , @yesterday = @yesterday
+			RETURN;
+		END
+		ELSE IF @TableName = 'zzzbettrans'
+		BEGIN
+			EXEC dbo.CheckTicketCount_ByRecommendList_zzzbettrans
+					@CurrentTime = @CurrentTime
+				  , @RecommendList = @RecommendList
+				  , @before_yesterday = @before_yesterday
+				  , @yesterday = @yesterday
+			RETURN;
+		END
+		ELSE IF @TableName = 'zzzbettransm'
+		BEGIN
+			EXEC dbo.CheckTicketCount_ByRecommendList_zzzbettransm
+					@CurrentTime = @CurrentTime
+				  , @RecommendList = @RecommendList
+				  , @before_yesterday = @before_yesterday
+				  , @yesterday = @yesterday
+			RETURN;
+		END
 	END
 
 	CREATE TABLE #tmp_betticketcheckcount

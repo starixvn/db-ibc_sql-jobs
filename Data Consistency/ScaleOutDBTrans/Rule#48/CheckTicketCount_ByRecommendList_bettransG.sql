@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency, DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[CheckTicketCount_ByRecommendList_bettransG]
 (
 	@CurrentTime		DATETIME
@@ -10,7 +10,7 @@ AS
 /*
 	Created by: 20221124@July
 	Task: Check ticket count by Status
-	DB: DBCONSISTENCY-bodb_Consistency, DBSIG-bodb02
+	DB: DBCONSISTENCY-bodb_Consistency
 	Revisions:
 		- 20221124@July: Clone SP - Support filter recommend list [Redmine:#178864]
 */
@@ -58,7 +58,7 @@ BEGIN
 			)
 		SELECT	b.TransId, b.SiteDBGroupID, c.Recommend, b.transdate, b.Status
 		FROM bodb02.dbo.bettransG b WITH (NOLOCK, INDEX = [IX_winlostdate])
-		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.custid
+			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.custid
 		WHERE	b.winlostdate IN (@before_yesterday,@yesterday)
 			AND b.transdate < @CurrentTime
 			AND c.recommend = @recommend
