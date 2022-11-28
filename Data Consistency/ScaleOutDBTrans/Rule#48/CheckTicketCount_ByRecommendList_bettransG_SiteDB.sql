@@ -57,7 +57,7 @@ BEGIN
 				TransId, SiteDBGroupID, Recommend, transdate, Status
 			)
 		SELECT	b.TransId, b.SiteDBGroupID, c.Recommend, b.transdate, b.Status
-		FROM bodb02.dbo.bettransG b WITH (NOLOCK, INDEX = [IX_winlostdate])
+		FROM dbo.bettransG b WITH (NOLOCK, INDEX = [IX_winlostdate])
 			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = b.custid
 		WHERE	b.winlostdate IN (@before_yesterday,@yesterday)
 			AND b.transdate < @CurrentTime

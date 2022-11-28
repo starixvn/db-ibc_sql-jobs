@@ -7,14 +7,14 @@ ALTER PROCEDURE [dbo].[DBA_Consistency_CheckTicketCount]
 )
 AS 
 /*
-Created by: 20220819@Victoria
-Task: Check ticket count by Status - DBCONSISTENCY
-DB: DBCONSISTENCY-bodb_Consistency
-Revisions:
-	- 20220819@Victoria: Rule #48 - Check ticket count by Status - DBCONSISTENCY [Redmine:#175881]
-	- 20221012@Victoria: Modify to show FromDate and ToDate
-							AND replication latency with ticket odds adjustment [Redmine:#178864]
-	- 20221123@July: Support filter recommend list [Redmine:#178864]
+	Created by: 20220819@Victoria
+	Task: Check ticket count by Status - DBCONSISTENCY
+	DB: DBCONSISTENCY-bodb_Consistency
+	Revisions:
+		- 20220819@Victoria: Rule #48 - Check ticket count by Status - DBCONSISTENCY [Redmine:#175881]
+		- 20221012@Victoria: Modify to show FromDate and ToDate
+								AND replication latency with ticket odds adjustment [Redmine:#178864]
+		- 20221123@July: Support filter recommend list [Redmine:#178864]
 	
 */
 BEGIN

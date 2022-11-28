@@ -57,11 +57,10 @@ BEGIN
 				TransId, SiteDBGroupID, Recommend, Transdate, Status
 			)
 		SELECT	bm.TransId, bm.SiteDBGroupID, c.Recommend, bm.Transdate, bm.Status
-		FROM bodb02.dbo.bettransm bm WITH (NOLOCK, INDEX = [IX_winlostdate]) 
+		FROM dbo.bettransm bm WITH (NOLOCK, INDEX = [IX_winlostdate]) 
 			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = bm.custid
 		WHERE	bm.winlostdate IN (@before_yesterday,@yesterday)
 			AND bm.transdate < @CurrentTime
-			AND bm.SiteDBGroupID > 0
 			AND c.recommend = @recommend
 		
 		-- Remove duplicate transid if page split occurs

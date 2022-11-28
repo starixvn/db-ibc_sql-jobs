@@ -61,7 +61,7 @@ BEGIN
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
 		WHERE	z.winlostdate IN (@before_yesterday,@yesterday)
 			AND z.transdate < @CurrentTime
-			AND z.SiteDBGroupID > 0
+			AND c.Recommend = @recommend
 		
 		-- Remove duplicate transid if page split occurs
 		;WITH cteDuplicateTransId

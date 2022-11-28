@@ -7,17 +7,17 @@ ALTER PROCEDURE [dbo].[DBA_Consistency_CheckSumTicket]
 )
 AS 
 /*
-Created by: 20220819@Victoria
-Task: CheckSum ticket
-DB: DBCONSISTENCY-bodb_Consistency
-Revisions:
-	- 20220819@Victoria: Rule #49 - CheckSum ticket [Redmine:#175881]
-	- 20221012@Victoria: Modify to show FromDate and ToDate
-							AND replication latency with ticket odds adjustment [Redmine:#178864]
-	- 20221019@Victoria: Remove VirtualRate inside of CheckSum Function [Redmine:#178864]
-	- 20221028@Victoria: Remove checktime inside of CheckSum Function [Redmine:#178864]
-	- 20221102@Victoria: Convert ActualRate with a Float data type to a DECIMAL [Redmine:#178864]  
-	- 20221123@July: Support filter recommend list [Redmine:#178864]
+	Created by: 20220819@Victoria
+	Task: CheckSum ticket
+	DB: DBCONSISTENCY-bodb_Consistency
+	Revisions:
+		- 20220819@Victoria: Rule #49 - CheckSum ticket [Redmine:#175881]
+		- 20221012@Victoria: Modify to show FromDate and ToDate
+								AND replication latency with ticket odds adjustment [Redmine:#178864]
+		- 20221019@Victoria: Remove VirtualRate inside of CheckSum Function [Redmine:#178864]
+		- 20221028@Victoria: Remove checktime inside of CheckSum Function [Redmine:#178864]
+		- 20221102@Victoria: Convert ActualRate with a Float data type to a DECIMAL [Redmine:#178864]  
+		- 20221123@July: Support filter recommend list [Redmine:#178864]
 */
 
 BEGIN

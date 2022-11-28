@@ -57,12 +57,12 @@ BEGIN
 				TransId, SiteDBGroupID, Recommend, Transdate, Status
 			)
 		SELECT	z.TransId, z.SiteDBGroupID, c.Recommend, z.Transdate, z.Status
-		FROM bodb02.dbo.zzzbettransm z WITH (NOLOCK)
+		FROM dbo.zzzbettransm z WITH (NOLOCK)
 			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
 		WHERE	z.winlostdate IN (@before_yesterday,@yesterday)
 			AND z.transdate < @CurrentTime
-			AND z.SiteDBGroupID > 0
-		
+			AND c.Recommend = @recommend
+
 		-- Remove duplicate transid if page split occurs
 		;WITH cteDuplicateTransId
 		AS(
