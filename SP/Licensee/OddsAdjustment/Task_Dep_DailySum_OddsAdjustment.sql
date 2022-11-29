@@ -17,6 +17,7 @@ AS
 		- 20220714@Evan: Modify sp to avoid dump (remove code select into) - [Redmine: #175450]
 		- 20220721@Evan: Integrate new transid - [Redmine: #175640]
 		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - classify data between SiteDB & CentralDB [Redmine: #175297]
+		- 20221128@Evan: Fix tickets not replicated from SiteDB to CentralDB [Redmine: #180937]
 */
 BEGIN
 	
@@ -289,7 +290,8 @@ BEGIN
 
 	----- update existing ones
 	UPDATE b WITH(ROWLOCK)
-		SET b.awinlost = t.awinlost
+		SET b.awinlost = t.awinlost,
+			b.RepUpdateTime = SYSDATETIME()
 	FROM bettrans b
 		INNER JOIN #__tblSumOddsAdjustment soa
 			ON b.transid = soa.TransactionId
