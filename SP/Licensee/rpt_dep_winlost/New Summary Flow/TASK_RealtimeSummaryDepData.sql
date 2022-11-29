@@ -70,6 +70,7 @@ AS
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
+		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -311,6 +312,7 @@ BEGIN
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)
+							AND (b.bettype NOT BETWEEN 8700 AND 8709)
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END),--Winloss
@@ -328,6 +330,7 @@ BEGIN
 							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 							OR (b.bettype BETWEEN 17000 AND 17030)
+							OR (b.bettype BETWEEN 8700 AND 8709)
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END) -- Promotion
@@ -460,7 +463,8 @@ BEGIN
 							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
-							AND (b.bettype NOT BETWEEN 17000 AND 17030) THEN b.winlost - b.actual_stake
+							AND (b.bettype NOT BETWEEN 17000 AND 17030)  
+							AND (b.bettype NOT BETWEEN 8700 AND 8709) THEN b.winlost - b.actual_stake
 						ELSE 0
 					END),--Winloss
 				0,--Transfer3rd
@@ -477,7 +481,8 @@ BEGIN
 							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
 								OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 								OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
-								OR (b.bettype BETWEEN 17000 AND 17030))
+								OR (b.bettype BETWEEN 17000 AND 17030)
+								OR (b.bettype BETWEEN 8700 AND 8709))
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END) -- Promotion
@@ -762,6 +767,7 @@ BEGIN
 				WHEN bettype = -173 THEN 173 -- VGA Free Bets
 				WHEN bettype BETWEEN 3898 AND 3899 THEN -171 -- VGA Prize
 				WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
+				WHEN bettype BETWEEN 8700 AND 8709 THEN 157 -- Player Tips
 				WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
@@ -775,7 +781,8 @@ BEGIN
 			SUM(DrawGame),--Draw game TO
 			SUM(CASE
 					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4599, 4600, 2499)
-						OR (bettype BETWEEN 17000 AND 17030) THEN Promotion
+						OR (bettype BETWEEN 17000 AND 17030) 
+						OR (bettype BETWEEN 8700 AND 8709) THEN Promotion
 					ELSE Winloss
 				END),--Winloss
 			SUM(playercomm),--Playercomm
@@ -843,6 +850,7 @@ BEGIN
 				WHEN bettype = -173 THEN 173 -- VGA Free Bets
 				WHEN bettype BETWEEN 3898 AND 3899 THEN -171 -- VGA Prize
 				WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
+				WHEN bettype BETWEEN 8700 AND 8709 THEN 157 -- Player Tips
 				WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP

@@ -71,6 +71,7 @@ AS
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
+		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -328,6 +329,7 @@ BEGIN
 				WHEN (bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173 -- VGA FreeBets
 				WHEN (bettype BETWEEN 3898 AND 3899 AND b.matchid <> 173) THEN -171 -- VGA Prize
 				WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
+				WHEN bettype BETWEEN 8700 AND 8709 THEN 157 -- Player Tips
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
@@ -344,6 +346,7 @@ BEGIN
 						AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 						AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 						AND (b.bettype NOT BETWEEN 17000 AND 17030)
+						AND (b.bettype NOT BETWEEN 8700 AND 8709)
 						THEN b.winlost - b.actual_stake
 					ELSE 0
 				END),--Winloss
@@ -357,6 +360,7 @@ BEGIN
 						OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 						OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 						OR (b.bettype BETWEEN 17000 AND 17030)
+						OR (b.bettype BETWEEN 8700 AND 8709)
 						THEN b.winlost - b.actual_stake
 					ELSE 0
 				END) -- Promotion
@@ -432,6 +436,7 @@ BEGIN
 				WHEN (bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN -173 -- VGA FreeBets
 				WHEN (bettype BETWEEN 3898 AND 3899 AND b.matchid <> 173) THEN -171 -- VGA Prize
 				WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
+				WHEN bettype BETWEEN 8700 AND 8709 THEN 157 -- Player Tips
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
@@ -472,7 +477,7 @@ BEGIN
 			SUM(Adjustment),--Adjustment
 			SUM(Turnover),--Turnover
 			SUM(Outstanding),--Outstanding
-			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211) THEN Winloss ELSE 0 END),--Winloss
+			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211 ,157) THEN Winloss ELSE 0 END),--Winloss
 			SUM(Transfer3rd),--Transfer3rd
 			SUM(DrawGame),--DrawGame
 			SUM(Playercomm),--Playercomm
@@ -648,7 +653,7 @@ BEGIN
 			-1,
 			TurnOver,
 			DrawGame,
-			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211) THEN Promotion ELSE Winloss END AS Winloss,
+			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211, 157) THEN Promotion ELSE Winloss END AS Winloss,
 			playercomm,
 			BetCount,
 			OutStanding

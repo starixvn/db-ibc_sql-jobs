@@ -115,6 +115,7 @@ AS
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 		- 20220708@Hogan: Support add new betfrom '}' [RedmineID: #174895]
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
+		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -184,7 +185,8 @@ BEGIN
 			WHEN b.statusID IN (112, 113) THEN SUM(CASE
 														WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150, 3898, 3899, 4599, 4600, 2499)
 															OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
-															OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)) THEN 0
+															OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
+															OR (b.bettype BETWEEN 8700 AND 8709 AND b.matchid = 157)) THEN 0
 														ELSE ABS(b.winlost - b.actual_stake)
 													END)  -- exclude PP Prize, SAG Tip ticket from BetEffective
 			ELSE 0
@@ -243,6 +245,7 @@ BEGIN
 			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid <> 173) THEN 171 -- VGA
 			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN 173 -- VGA FreeBets
 			WHEN b.bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
+			WHEN b.bettype BETWEEN 8700 AND 8709 THEN 157 -- Player Tips
 			WHEN b.bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			WHEN b.bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 			WHEN b.bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
@@ -258,7 +261,8 @@ BEGIN
 			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4599, 4600, 2499)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND matchid = 173)
-				OR (b.bettype BETWEEN 17000 AND 17030) THEN b.bettype
+				OR (b.bettype BETWEEN 17000 AND 17030)  
+				OR (b.bettype BETWEEN 8700 AND 8709) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END bettype
@@ -374,6 +378,7 @@ BEGIN
 			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid <> 173) THEN 171 -- VGA
 			WHEN (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173) THEN 173 -- VGA FreeBets
 			WHEN b.bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba Promotion
+			WHEN b.bettype BETWEEN 8700 AND 8709 THEN 157 -- Player Tips
 			WHEN b.bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 			WHEN b.bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 			WHEN b.bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
@@ -388,7 +393,8 @@ BEGIN
 			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4599, 4600, 2499)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND matchid = 173)
-				OR (b.bettype BETWEEN 17000 AND 17030) THEN b.bettype
+				OR (b.bettype BETWEEN 17000 AND 17030)  
+				OR (b.bettype BETWEEN 8700 AND 8709) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END
