@@ -47,36 +47,36 @@ BEGIN
 	BEGIN
 		INSERT INTO dbo.ClickStatistics1Sum
 		(
-			AffID,
-			DomainReferrer,
-			Date,
-			SportCode,
-			LanguageCode,
-			TotalClick,
-			UniqueClick,
-			DeviceType,
-			CountryCode
+			AffID
+			,DomainReferrer
+			,Date
+			,SportCode
+			,LanguageCode
+			,TotalClick
+			,UniqueClick
+			,DeviceType
+			,CountryCode
 		)
 		SELECT
-			AffId,
-			DomainReferrer,
-			Date,
-			SportCode,
-			LanguageCode,
-			COUNT(1) AS TotalClick,
-			COUNT (DISTINCT IP) AS UniqueClick,
-			DeviceType,
-			Country
+			AffId
+			,DomainReferrer
+			,Date
+			,SportCode
+			,LanguageCode
+			,COUNT(1) AS TotalClick
+			,COUNT (DISTINCT IP) AS UniqueClick
+			,DeviceType
+			,Country
 		FROM dbo.ClickStatistics1 WITH (NOLOCK)
 		WHERE Date BETWEEN @FirstDayOfMonth AND @LastDayOfMonth
 		GROUP BY
-			AffId,
-			DomainReferrer,
-			Date,
-			SportCode,
-			LanguageCode,
-			DeviceType,
-			Country
+			AffId
+			,DomainReferrer
+			,Date
+			,SportCode
+			,LanguageCode
+			,DeviceType
+			,Country
 
 		INSERT INTO dbo.BannerStatisticsSum 
 		(
