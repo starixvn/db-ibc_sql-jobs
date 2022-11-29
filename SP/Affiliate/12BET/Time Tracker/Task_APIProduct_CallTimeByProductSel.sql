@@ -22,9 +22,20 @@ BEGIN
 
 	SELECT @ProductId = ISNULL(@ProductId, -1), @TpType = ISNULL(@TpType, -1), @SubItem = ISNULL(@SubItem, '')
 
-    SELECT TOP 1 CallTime
-    FROM dbo.APIProduct_TimeTracker WITH (NOLOCK)
-    WHERE (ProductId = @ProductId OR (TpType = @TpType AND SubItem = @SubItem)) AND (Currency IS NULL OR Currency = @Currency) 
-    ORDER BY Id DESC
+	IF @ProductId = -1
+	BEGIN
+		 SELECT TOP 1 CallTime
+		 FROM dbo.APIProduct_TimeTracker WITH (NOLOCK)
+		 WHERE (TpType = @TpType AND SubItem = @SubItem) AND (@Currency IS NULL OR Currency = @Currency) 
+		 ORDER BY Id DESC
+	END
+	ELSE
+	BEGIN
+		 SELECT TOP 1 CallTime
+		 FROM dbo.APIProduct_TimeTracker WITH (NOLOCK)
+		 WHERE (ProductId = @ProductId) AND (@Currency IS NULL OR Currency = @Currency) 
+		 ORDER BY Id DESC
+	END
+ 
 END
 GO

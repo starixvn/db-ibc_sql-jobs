@@ -3,11 +3,9 @@ USE [Affiliate_12BET]
 GO
 
 ALTER PROCEDURE [dbo].[Task_APIProduct_ImportQueue]
-	@ProductId	INT = -1,
+	@ProductId	INT,
 	@XmlData	NVARCHAR(MAX),
 	@JobType	TINYINT = 0,
-	@TpType 	INT = -1,
-	@SubItem	VARCHAR(200) = '',
 	@ErrCode	INT = 0 OUTPUT,
 	@ErrMsg		NVARCHAR(4000) = '' OUTPUT
 AS
@@ -19,7 +17,6 @@ AS
 
 	Revisions:
 		- 20181001@Percy: Initialize SP [RedmineID: #102322]
-		- 20221118@Malcolm: Initialize SP [RedmineID: #180311]
 
 	Param's Explanation:
 		- JobType:
@@ -35,8 +32,8 @@ BEGIN
 	BEGIN TRY
 		SELECT @Xml = CONVERT(XML, @XmlData)
 
-		INSERT INTO dbo.APIProduct_ImportQueue (ProductId, XmlData, JobType, TpType, SubItem, CheckInTime)
-		VALUES (@ProductId, @Xml, @JobType, @TpType, @SubItem, GETDATE())
+		INSERT INTO dbo.APIProduct_ImportQueue (ProductId, XmlData, JobType, CheckInTime)
+		VALUES (@ProductId, @Xml, @JobType, GETDATE())
 
 		SELECT @ErrCode = 0, @ErrMsg = ''
 	END TRY
