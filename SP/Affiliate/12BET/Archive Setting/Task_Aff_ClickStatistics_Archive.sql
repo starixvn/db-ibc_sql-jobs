@@ -35,8 +35,7 @@ BEGIN
 	END
 
 	-- Check job run already
-	IF EXISTS (SELECT 1 FROM dbo.ClickStatisticsSum WITH (NOLOCK) WHERE IsForMonth = 1 AND Date = @FirstDayOfMonth)
-		AND EXISTS (SELECT 1 FROM dbo.ClickStatistics1Sum WITH (NOLOCK) WHERE Date = @FirstDayOfMonth)
+	IF EXISTS (SELECT 1 FROM dbo.ClickStatistics1Sum WITH (NOLOCK) WHERE Date = @FirstDayOfMonth)
 		AND EXISTS (SELECT 1 FROM dbo.BannerStatisticsSum WITH(NOLOCK) WHERE CopyDate = @FirstDayOfMonth)
 	BEGIN
 		SELECT 'Data is already done for this month!'
