@@ -26,9 +26,11 @@ BEGIN
 		Winloss		MONEY
 	)
 
-	DECLARE @TpType INT = -1, @SubItem VARCHAR(200) = ''
+	DECLARE @TpType INT = -1, @SubItem VARCHAR(200) = '', @ExcludeTicketStatus VARCHAR(200) = ''
 
-	SELECT @TpType = TpType, @SubItem = SubItem FROM dbo.APIProductMappingSettings WITH(NOLOCK) WHERE ProductId = @ProductId
+	SELECT @ExcludeTicketStatus = SettingValue FROM dbo.APIProductSettings WITH(NOLOCK) WHERE ProductId = @ProductId AND SettingName = 'ExcludeTicketStatus'
+
+	SELECT @TpType = TpType, @SubItem = SubItem FROM dbo.APIProductMappingSettings WITH(NOLOCK) WHERE ProductId = @ProductId  
 
 	IF ISNULL(@TpType, -1) = -1
 		RETURN
@@ -48,15 +50,15 @@ BEGIN
 			mi.IBCCustId,
 			mi.currency,
 			SUM(ISNULL(b.ValidBet, 0)) AS Turnover,
-			SUM(b.Win) AS Winloss
+			SUM(ISNULL(b.Win, 0) - ISNULL(b.ValidBet, 0)) AS Winloss
 		FROM dbo.bettrans_APIProducts b WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON b.IBCCustId = mi.IBCCustId
 		WHERE b.WinlostDate = @WinlostDate AND b.TpType = @TpType AND b.SubItem = @SubItem
 			AND NOT EXISTS (
 				SELECT 1 FROM dbo.MemberRemoval mr WITH (NOLOCK)
-				WHERE mr.RemovedDate <= DATEADD(DAY, 1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
+				WHERE mr.RemovedDate <= DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate) + 1, 0))
 					AND mi.IBCCustId = mr.IBCCustId
-			)
+			) AND (@ExcludeTicketStatus = '' OR ',' + @ExcludeTicketStatus + ',' NOT LIKE '%,' + b.BetStatus + ',%')
 		GROUP BY
 			mi.AffId,
 			mi.IBCCustId,

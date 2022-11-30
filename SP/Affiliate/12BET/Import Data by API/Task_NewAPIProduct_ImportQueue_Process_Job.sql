@@ -5,7 +5,7 @@ AS
 /*
 	Created: 20221118@Malcolm
 	DB: DBAFF12BET.Affiliate_12BET
-	Task: Import Data Job - Parse xml data from Queue
+	Task: Import Data Job - Parse Json data from Queue
 
 	Revisions:
 		- 20221118@Malcolm: Initialize SP [RedmineID: #180311]
@@ -15,44 +15,24 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @Products TABLE (Id INT IDENTITY(1,1), ProductId INT)
+	DECLARE @Products TABLE (Id INT IDENTITY(1,1), ProductId INT, TpType INT, SubItem VARCHAR(200))
 	
-	INSERT INTO @Products (ProductId)
-	SELECT ProductId FROM dbo.APIProductMappingSettings WITH (NOLOCK) 
+	INSERT INTO @Products (ProductId, TpType, SubItem)
+	SELECT ProductId, TpType, SubItem FROM dbo.APIProductMappingSettings WITH (NOLOCK) 
 
 	DECLARE @ErrCode INT, @ErrMsg NVARCHAR(4000)
 	DECLARE @ErrTable TABLE (ProductId INT, ErrMsg NVARCHAR(4000))
 
-	DECLARE @Id INT = 1, @ProductId INT = NULL
-	SELECT  @ProductId = ProductId FROM @Products WHERE Id = @Id
+	DECLARE @Id INT = 1, @ProductId INT = NULL, @TpType INT = NULL, @SubItem VARCHAR(200) = NULL
+	SELECT  @ProductId = ProductId, @TpType = TpType, @SubItem = SubItem FROM @Products WHERE Id = @Id
 
 	WHILE @ProductId IS NOT NULL
 	BEGIN
-		-- Clean old data (keep 1 month)
-		IF EXISTS (
-			SELECT 1 FROM dbo.APIProduct_ImportQueue WITH (NOLOCK)
-			WHERE ProductId = @ProductId AND WinlostDate < DATEADD(MONTH, -1, GETDATE())
-				AND FinishedTime IS NOT NULL
-		)
-		BEGIN
-			WHILE 1 = 1
-			BEGIN
-				DELETE TOP (2000) FROM dbo.APIProduct_ImportQueue WITH (ROWLOCK, UPDLOCK)
-				WHERE ProductId = @ProductId AND WinlostDate < DATEADD(MONTH, -1, GETDATE())
-					AND FinishedTime IS NOT NULL
-
-				IF @@ROWCOUNT < 2000
-					BREAK
-
-				WAITFOR DELAY '00:00:00.280'
-			END
-		END
-
 		-- Parse data
 		SELECT @ErrCode = 0, @ErrMsg = ''
 		
 		BEGIN TRY
-			EXEC dbo.Task_NewAPIProduct_ImportQueue_Process @ProductId = @ProductId, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+			EXEC dbo.Task_NewAPIProduct_ImportQueue_Process @TpType = @TpType, @SubItem = @SubItem, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
 			IF @ErrCode <> 0
 				INSERT INTO @ErrTable (ProductId, ErrMsg)
@@ -64,8 +44,8 @@ BEGIN
 		END CATCH
 
 		SELECT @Id = @Id + 1
-		SELECT @ProductId = NULL
-		SELECT @ProductId = ProductId FROM @Products WHERE Id = @Id
+		SELECT @ProductId = NULL, @TpType = NULL, @SubItem = NULL
+		SELECT @ProductId = ProductId, @TpType = TpType, @SubItem = SubItem FROM @Products WHERE Id = @Id
 	END
 
 	-- Send mail if have error
