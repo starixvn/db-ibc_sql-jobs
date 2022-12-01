@@ -43,6 +43,8 @@ BEGIN
 
 	WHILE (1=1)
 	BEGIN
+		TRUNCATE TABLE #tmp_betticketchecksum_detail;
+		
 		UPDATE TOP (1) t
 		SET IsFinish = 1, @recommend = t.recommend
 		FROM #tmp_recommendlist t
@@ -50,7 +52,7 @@ BEGIN
 
 		IF @@ROWCOUNT = 0 BREAK
 
-		INSERT INTO #tmp_betticketchecksum_Detail(
+		INSERT INTO #tmp_betticketchecksum_detail(
 				Translogid, SiteDBGroupID, Transdate,
 				[custid], [odds], [stake], [status], [apositiontaking], [mpositiontaking], [tpositiontaking], [spositiontaking], 
 				[playerdiscount], [discount], [adiscount], [sdiscount], [creator], [betfrom], [actualrate], [actual_stake], 
@@ -72,7 +74,7 @@ BEGIN
 		AS(
 			SELECT	Translogid
 					,ROW_NUMBER() OVER(PARTITION BY Translogid, Transdate ORDER BY Translogid) as rn 
-			FROM	#tmp_betticketchecksum_Detail
+			FROM	#tmp_betticketchecksum_detail
 		)
 		DELETE 
 		FROM	cteDuplicateTransId
@@ -93,7 +95,7 @@ BEGIN
 										[currency], [CurrencyName], [Recommend], [mrecommend], [srecommend], [ip], [statusID], [balance], [Username], [transdesc], [productID], 
 										[gameID], [eventID], [vendorID], [Gameid3rd], [Tranid3rd], [custom1], [liveindicator], [custom2], [custom3], [SiteId], [checkCount]
 								)) AS TotalCheckSumAgg
-		FROM	#tmp_betticketchecksum_Detail
+		FROM	#tmp_betticketchecksum_detail
 		GROUP BY	SiteDBGroupID, 
 					recommend
 

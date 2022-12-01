@@ -29,7 +29,7 @@ BEGIN
 
 	IF @RecommendList IS NOT NULL
 	BEGIN
-		IF @TableName IN ('bettrans', 'bettransRnG', 'bettranLC','translog')
+		IF @TableName IN ('bettrans', 'bettransRnG', 'bettransLC','translog')
 		BEGIN
 			EXEC dbo.CheckSumTicket_ByRecommendList 
 					@CurrentTime = @CurrentTime

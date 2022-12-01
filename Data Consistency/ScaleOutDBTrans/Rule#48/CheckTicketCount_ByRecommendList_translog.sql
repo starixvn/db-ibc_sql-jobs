@@ -46,6 +46,8 @@ BEGIN
 
 	WHILE (1=1)
 	BEGIN
+		TRUNCATE TABLE #tmp_betticketcheckcount_detail;
+
 		UPDATE TOP (1) t
 		SET IsFinish = 1, @recommend = t.recommend
 		FROM #tmp_recommendlist t
