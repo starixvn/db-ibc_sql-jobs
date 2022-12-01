@@ -69,7 +69,7 @@ BEGIN
 		;WITH cteDuplicateTransId
 		AS(
 			SELECT	TransId
-					,ROW_NUMBER() OVER(PARTITION BY TransId, Transdate ORDER BY TransId) as rn 
+					,ROW_NUMBER() OVER(PARTITION BY TransId ORDER BY TransId) as rn 
 			FROM	#tmp_betticketcheckcount_detail
 		)
 		DELETE 
