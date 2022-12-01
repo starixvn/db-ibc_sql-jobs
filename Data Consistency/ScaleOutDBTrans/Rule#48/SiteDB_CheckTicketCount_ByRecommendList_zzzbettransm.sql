@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[CheckTicketCount_ByRecommendList_zzzbettransm_SiteDB]
+CREATE PROCEDURE [dbo].[SiteDB_CheckTicketCount_ByRecommendList_zzzbettransm]
 (
 	@CurrentTime		DATETIME
    ,@RecommendList		VARCHAR(MAX) 

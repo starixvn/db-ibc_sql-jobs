@@ -38,7 +38,7 @@ BEGIN
 		END
 		ELSE IF @TableName = 'bettransG'
 		BEGIN
-			EXEC dbo.CheckTicketCount_ByRecommendList_bettransG_SiteDB
+			EXEC dbo.SiteDB_CheckTicketCount_ByRecommendList_bettransG
 					@CurrentTime = @CurrentTime
 				  , @RecommendList = @RecommendList
 				  , @before_yesterday = @before_yesterday
@@ -47,7 +47,7 @@ BEGIN
 		END
 		ELSE IF @TableName = 'bettransm'
 		BEGIN
-			EXEC dbo.CheckTicketCount_ByRecommendList_bettransm_SiteDB
+			EXEC dbo.SiteDB_CheckTicketCount_ByRecommendList_bettransm
 					@CurrentTime = @CurrentTime
 				  , @RecommendList = @RecommendList
 				  , @before_yesterday = @before_yesterday
@@ -56,7 +56,7 @@ BEGIN
 		END
 		ELSE IF @TableName = 'zzzbettrans'
 		BEGIN
-			EXEC dbo.CheckTicketCount_ByRecommendList_zzzbettrans_SiteDB
+			EXEC dbo.SiteDB_CheckTicketCount_ByRecommendList_zzzbettrans
 					@CurrentTime = @CurrentTime
 				  , @RecommendList = @RecommendList
 				  , @before_yesterday = @before_yesterday
@@ -65,7 +65,7 @@ BEGIN
 		END
 		ELSE IF @TableName = 'zzzbettransm'
 		BEGIN
-			EXEC dbo.CheckTicketCount_ByRecommendList_zzzbettransm_SiteDB
+			EXEC dbo.SiteDB_CheckTicketCount_ByRecommendList_zzzbettransm
 					@CurrentTime = @CurrentTime
 				  , @RecommendList = @RecommendList
 				  , @before_yesterday = @before_yesterday

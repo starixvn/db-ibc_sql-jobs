@@ -41,7 +41,7 @@ BEGIN
 		END
 		ELSE IF @TableName = 'bettransG'
 		BEGIN
-			EXEC dbo.CheckSumTicket_ByRecommendList_bettransG_SiteDB 
+			EXEC dbo.SiteDB_CheckSumTicket_ByRecommendList_bettransG
 					@CurrentTime = @CurrentTime
 				  , @RecommendList = @RecommendList
 				  , @before_yesterday = @before_yesterday
@@ -50,7 +50,7 @@ BEGIN
 		END
 		ELSE IF @TableName = 'bettransm'
 		BEGIN
-			EXEC dbo.CheckSumTicket_ByRecommendList_bettransm_SiteDB 
+			EXEC dbo.SiteDB_CheckSumTicket_ByRecommendList_bettransm
 					@CurrentTime = @CurrentTime
 				  , @RecommendList = @RecommendList
 				  , @before_yesterday = @before_yesterday

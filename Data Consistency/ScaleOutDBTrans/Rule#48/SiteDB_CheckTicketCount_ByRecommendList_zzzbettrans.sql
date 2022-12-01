@@ -1,5 +1,5 @@
 /*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[CheckTicketCount_ByRecommendList_bettransG_SiteDB]
+CREATE PROCEDURE [dbo].[SiteDB_CheckTicketCount_ByRecommendList_zzzbettrans]
 (
 	@CurrentTime		DATETIME
    ,@RecommendList		VARCHAR(MAX) 
@@ -35,7 +35,7 @@ BEGIN
 		TransId BIGINT, 
 		SiteDBGroupID SMALLINT,
 		Recommend INT,
-		transdate DATETIME,
+		Transdate DATETIME,
 		Status NVARCHAR(10)
 	)
 
@@ -54,20 +54,20 @@ BEGIN
 		IF @@ROWCOUNT = 0 BREAK
 
 		INSERT INTO #tmp_betticketcheckcount_detail(
-				TransId, SiteDBGroupID, Recommend, transdate, Status
+				TransId, SiteDBGroupID, Recommend, Transdate, Status
 			)
-		SELECT	b.TransId, b.SiteDBGroupID, c.Recommend, b.transdate, b.Status
-		FROM dbo.bettransG b WITH (NOLOCK, INDEX = [IX_winlostdate])
-			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = b.custid
-		WHERE	b.winlostdate IN (@before_yesterday,@yesterday)
-			AND b.transdate < @CurrentTime
-			AND c.recommend = @recommend
+		SELECT	z.TransId, z.SiteDBGroupID, c.Recommend, z.Transdate, z.Status
+		FROM dbo.zzzbettrans z WITH (NOLOCK)
+			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = z.custid
+		WHERE	z.winlostdate IN (@before_yesterday,@yesterday)
+			AND z.transdate < @CurrentTime
+			AND c.Recommend = @recommend
 		
 		-- Remove duplicate transid if page split occurs
 		;WITH cteDuplicateTransId
 		AS(
 			SELECT	TransId
-					,ROW_NUMBER() OVER(PARTITION BY TransId, transdate ORDER BY TransId) as rn 
+					,ROW_NUMBER() OVER(PARTITION BY TransId, Transdate ORDER BY TransId) as rn 
 			FROM	#tmp_betticketcheckcount_detail
 		)
 		DELETE 
@@ -82,7 +82,7 @@ BEGIN
 				Status,
 				TicketCount
 		)
-		SELECT	'bettransG' AS TableName,
+		SELECT	'zzzbettrans' AS TableName,
 				SiteDBGroupID, 
 				Recommend, 
 				Status, 
