@@ -25,6 +25,7 @@ AS
 		- 20220606@Percy: Check if apt = 1 then charge rate is null or 0 [RedmineID: #153195]
 		- 20220818@Malcolm: Get PT for SB, Number Games, keno On new tables [RedmineID: #153195]
 		- 20221031@Danny: Exclude CandyA18, HX9Candy (Crypto Licensees) [RedmineID: #177718]
+		- 20221205@Danny Remove Hx9candy From Crypto Licensee List [RedmineID: #181279]
 	
 	Param's Explanation:
 		@RuleId
@@ -247,9 +248,9 @@ BEGIN
 		)
 		AND c.Currency IS NOT NULL
 
-	DELETE #__bettrans WHERE LicenseeName IN ('Spondemo', 'Athena000', 'CandyA18','HX9Candy')
-	DELETE #Licensees WHERE LicenseeName IN ('Spondemo', 'Athena000','CandyA18','HX9Candy')
-	DELETE #PT WHERE LicenseeName IN ('Spondemo', 'Athena000','CandyA18','HX9Candy')
+	DELETE #__bettrans WHERE LicenseeName IN ('Spondemo', 'Athena000', 'CandyA18')
+	DELETE #Licensees WHERE LicenseeName IN ('Spondemo', 'Athena000','CandyA18')
+	DELETE #PT WHERE LicenseeName IN ('Spondemo', 'Athena000','CandyA18')
 
 	-- Check data Consistency between setting and ticket
 	DECLARE @Result TABLE (RuleId TINYINT, LicenseeName VARCHAR(50), TransId VARCHAR(20), Product3rdId INT, ProductName VARCHAR(100), Currency INT, CurrencyCode VARCHAR(10))
