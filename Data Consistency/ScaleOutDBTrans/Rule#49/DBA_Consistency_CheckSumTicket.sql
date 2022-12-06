@@ -1,20 +1,23 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[DBA_Consistency_CheckSumTicket]
+ALTER PROCEDURE [dbo].[DBA_Consistency_CheckSumTicket]
 (
-	@CurrentTime DATETIME
+	@CurrentTime	DATETIME
+   ,@RecommendList	VARCHAR(MAX) = NULL
+   ,@TableName		VARCHAR(50) = NULL 
 )
 AS 
 /*
-Created by: 20220819@Victoria
-Task: CheckSum ticket
-DB: DBCONSISTENCY-bodb_Consistency
-Revisions:
-	- 20220819@Victoria: Rule #49 - CheckSum ticket [Redmine:#175881]
-	- 20221012@Victoria: Modify to show FromDate and ToDate
-							AND replication latency with ticket odds adjustment [Redmine:#178864]
-	- 20221019@Victoria: Remove VirtualRate inside of CheckSum Function [Redmine:#178864]
-	- 20221028@Victoria: Remove checktime inside of CheckSum Function [Redmine:#178864]
-	- 20221102@Victoria: Convert ActualRate with a Float data type to a DECIMAL [Redmine:#178864]  
+	Created by: 20220819@Victoria
+	Task: CheckSum ticket
+	DB: DBCONSISTENCY-bodb_Consistency
+	Revisions:
+		- 20220819@Victoria: Rule #49 - CheckSum ticket [Redmine:#175881]
+		- 20221012@Victoria: Modify to show FromDate and ToDate
+								AND replication latency with ticket odds adjustment [Redmine:#178864]
+		- 20221019@Victoria: Remove VirtualRate inside of CheckSum Function [Redmine:#178864]
+		- 20221028@Victoria: Remove checktime inside of CheckSum Function [Redmine:#178864]
+		- 20221102@Victoria: Convert ActualRate with a Float data type to a DECIMAL [Redmine:#178864]  
+		- 20221123@July: Support filter recommend list [Redmine:#178864]
 */
 
 BEGIN
@@ -23,6 +26,38 @@ BEGIN
 	DECLARE @before_yesterday SMALLDATETIME, @yesterday SMALLDATETIME
 	SELECT  @before_yesterday = CONVERT(DATE, DATEADD(DAY, -2, GETDATE()))
 	SELECT  @yesterday = CONVERT(DATE, DATEADD(DAY, -1, GETDATE()))
+
+	IF @RecommendList IS NOT NULL
+	BEGIN
+		IF @TableName IN ('bettrans', 'bettransRnG', 'bettransLC','translog')
+		BEGIN
+			EXEC dbo.CheckSumTicket_ByRecommendList 
+					@CurrentTime = @CurrentTime
+				  , @RecommendList = @RecommendList
+				  , @TableName = @TableName 
+				  , @before_yesterday = @before_yesterday
+				  , @yesterday = @yesterday
+			RETURN;
+		END
+		ELSE IF @TableName = 'bettransG'
+		BEGIN
+			EXEC dbo.CheckSumTicket_ByRecommendList_bettransG 
+					@CurrentTime = @CurrentTime
+				  , @RecommendList = @RecommendList
+				  , @before_yesterday = @before_yesterday
+				  , @yesterday = @yesterday
+			RETURN;
+		END
+		ELSE IF @TableName = 'bettransm'
+		BEGIN
+			EXEC dbo.CheckSumTicket_ByRecommendList_bettransm 
+					@CurrentTime = @CurrentTime
+				  , @RecommendList = @RecommendList
+				  , @before_yesterday = @before_yesterday
+				  , @yesterday = @yesterday
+			RETURN;
+		END
+	END
 
 	CREATE TABLE #tmp_betticketchecksum
 	(
