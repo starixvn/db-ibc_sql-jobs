@@ -28,6 +28,7 @@ AS
 		- 20211001@Danny: Force index to avoid scan  [RedmineID: #162348]
 		- 20220802@Danny: Add retry step to avoid dirty read  [RedmineID: #176329]
 		- 20221018@Danny: Add retry step to avoid latency bettransm data [RedmineID: #179193]
+		- 20221123@Danny: Get bettransm_bk info by using Open_query instead [RedmineID: #180707]
 */
 
 BEGIN
@@ -40,7 +41,7 @@ BEGIN
 	FROM dbo.rmSettings WITH (ROWLOCK)
 	WHERE VName = 'rmBettrans'
 
-	DECLARE @retry_cnt TINYINT = 5, @err_message VARCHAR(4000), @retrySelection_cnt TINYINT = 5, @refno BIGINT
+	DECLARE @retry_cnt TINYINT = 5, @err_message VARCHAR(4000), @retrySelection_cnt TINYINT = 5, @refno BIGINT, @i INT = 0, @str_refno VARCHAR(MAX), @sql_bettransmBK VARCHAR(MAX)
 
 	SELECT  @max_tstamp = MAX(tstamp) FROM bodb02.dbo.bettrans WITH (NOLOCK)
 	SELECT  @max_tstamp = ISNULL(@max_tstamp, @min_tstamp)
@@ -125,6 +126,7 @@ BEGIN
 			,odds2				money
 			,TotalBet			int
 			,epositiontaking	smallmoney
+			,ID INT identity(1,1)
 		)
 		
 		START_GETDATA:
@@ -185,7 +187,7 @@ BEGIN
 
 			TRUNCATE TABLE #sporttype
 
-			SELECT @refno = NULL
+			SELECT @refno = NULL, @i = 0
 
 			-- bettransm
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
@@ -203,14 +205,32 @@ BEGIN
 				INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 				INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN DATEADD(DAY, -8,@BalanceUpDay) AND @MoveBetsDay 
-			UNION
-			SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END
-			FROM #rmBettrans b 
-				INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
-				INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
-				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
-			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN DATEADD(DAY, -20, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
+			WHERE b.bettype = 29 AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay 
+
+			WHILE EXISTS (SELECT TOP 1 1 FROM #rmBettrans WHERE ID > @i AND ID <= @i + 200)
+			BEGIN
+				SELECT @str_refno = STRING_AGG (CAST(refno AS VARCHAR(MAX)), ',')
+				FROM #rmBettrans
+				WHERE ID > @i AND ID <= @i + 200 
+				
+				SELECT @sql_bettransmBK = '
+					SELECT refno,  sporttype, Saba ,odds, stake, matchid
+					FROM OPENQUERY(DBARC,'' 
+						SELECT bm.refno, m.sporttype, CASE WHEN  l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba, bm.odds, bm.stake, CASE WHEN m.ChildMatchType = 200 THEN m.ParentID ELSE bm.matchid END matchid
+						FROM  bodb_archive.dbo.bettransm bm WITH (NOLOCK)
+							INNER JOIN bodb_archive.dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
+							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
+						WHERE  bm.refno IN (SELECT value FROM STRING_SPLIT('''''+@str_refno+''''','''',''''))
+							AND bm.winlostdate BETWEEN DATEADD(DAY, -20, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''') AND DATEADD(DAY, -1, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''')
+						''
+						)
+				'
+
+				INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
+				EXEC(@sql_bettransmBK)
+
+				SELECT @i = @i + 200
+			END
 
 			;WITH t AS 
 			(
