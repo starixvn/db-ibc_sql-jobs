@@ -16,6 +16,7 @@ AS
 		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
 						- Compare total transfer ticket with total super - [Redmine:#175881]
 		- 20221107@Evan: Count total super on each SiteGroupid [Redmine:#178864]
+		- 20221206@Danny: Skip check transfer Info - crypto Licensee [Redmine: #181343]
 
 	Param's Expanation:
 */
@@ -57,7 +58,7 @@ BEGIN
 		INNER JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK)
 			ON p.FromCustId = s.custid
 	WHERE s.SiteDBGroupID = @SiteDBGroupID
-		AND MonthDate = @endOfPreviousMonth
+		AND MonthDate = @endOfPreviousMonth AND p.Status <> 'Skipped'
 
 	--get total ticket from transfer table in siteDB
 	SELECT @totalTransferTicket = Count(1)
