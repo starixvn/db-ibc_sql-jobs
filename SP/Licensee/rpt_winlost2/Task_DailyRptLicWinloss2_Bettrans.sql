@@ -100,6 +100,7 @@ AS
 		- 20220708@Hogan: Support add new betfrom '}' [RedmineID: #174895]
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
 		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
+		- 20221206@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -238,6 +239,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
+			WHEN b.bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -371,6 +373,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
+			WHEN b.bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 			ELSE 0
 		END
 		,CASE

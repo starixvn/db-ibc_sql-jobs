@@ -71,6 +71,7 @@ AS
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
+		- 20221206@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -776,6 +777,7 @@ BEGIN
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
+				WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
@@ -859,6 +861,7 @@ BEGIN
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
+				WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 				ELSE 0
 			END
 
