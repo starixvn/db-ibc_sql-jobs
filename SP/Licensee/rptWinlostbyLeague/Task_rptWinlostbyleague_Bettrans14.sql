@@ -25,6 +25,7 @@ AS
 		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
+		- 20221214@Evan: Separate cashout by new column TicketType [RedmineID: #179083]
 */
 
 BEGIN
@@ -44,6 +45,11 @@ BEGIN
 	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 69)
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01'	-- half won/ half lose cut date
+
+	DECLARE @CashOut_CutoffDate SMALLDATETIME;
+	SELECT @CashOut_CutoffDate = CutoffDate
+	FROM dbo.Lrf_f_GetCutoffDate()
+	WHERE TypeName = 'CashOut'
 
 	;WITH cte_bettrans AS (
 		SELECT
@@ -86,6 +92,9 @@ BEGIN
 			END AS isBA
 			,a.currency
 			,a.liveindicator
+			,CASE
+				WHEN @Date >= @CashOut_CutoffDate AND s.ProductId = 1 AND s.EventType = 1 AND a.betdaqid = -2 THEN 1
+			END AS TicketType 
 		FROM bodb02.dbo.bettrans14 AS a WITH (NOLOCK)
 			INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(0) AS LC ON a.recommend = lc.custid AND a.currency = lc.currency
 			INNER JOIN @SportBettype AS s ON s.BetType = a.bettype
@@ -125,6 +134,9 @@ BEGIN
 			END
 			,a.currency
 			,a.liveindicator
+			,CASE
+				WHEN @Date >= @CashOut_CutoffDate AND s.ProductId = 1 AND s.EventType = 1 AND a.betdaqid = -2 THEN 1
+			END 
 		)
 		,cte_raceinfo AS (
 			SELECT o.Orid
@@ -151,7 +163,8 @@ BEGIN
 		,betcount
 		,isba
 		,currency
-		,LiveIndicator)
+		,LiveIndicator
+		,TicketType)
 	SELECT a.winlostdate
 		,a.matchid
 		,a.oddsid
@@ -178,6 +191,7 @@ BEGIN
 		,a.isBA
 		,a.currency
 		,a.liveindicator
+		,a.TicketType
 	FROM cte_bettrans AS a
 		LEFT JOIN bodb02.dbo.match14 AS b WITH (NOLOCK) ON b.matchid = a.matchid
 		LEFT JOIN cte_raceinfo AS r ON r.Orid = a.oddsid
@@ -203,5 +217,6 @@ BEGIN
 		,a.isBA
 		,a.currency
 		,a.liveindicator
+		,a.TicketType
 END
 GO
