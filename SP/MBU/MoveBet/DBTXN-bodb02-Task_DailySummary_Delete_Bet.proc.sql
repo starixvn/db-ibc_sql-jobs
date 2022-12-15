@@ -12,7 +12,7 @@ AS
 	Revisions:
 		- 20190131@Patrick: Deleting data in bettransm batch by batch [RedmineID: #108581]
 		- 20210816@Patrick: Use match14 instead of match table [RedmineID: #160198]
-
+		- 20221028@Brice: union match and match14 [RedmineID: #179596]
 */
 BEGIN
 	IF @tableName = 'bettransm'
@@ -21,7 +21,12 @@ BEGIN
 		CREATE TABLE #m (rn int PRIMARY KEY IDENTITY(1,1), matchid INT)
 
 		INSERT INTO #m (matchid)
-		SELECT DISTINCT m.matchid
+		SELECT m.matchid
+		FROM dbo.bettransm b WITH (NOLOCK)
+			INNER JOIN dbo.match m WITH (NOLOCK) ON b.matchid = m.matchid
+		WHERE winlostdate = @winlostdate
+		union
+		SELECT m.matchid
 		FROM dbo.bettransm b WITH (NOLOCK)
 			INNER JOIN dbo.match14 m WITH (NOLOCK) ON b.matchid = m.matchid
 		WHERE winlostdate = @winlostdate
