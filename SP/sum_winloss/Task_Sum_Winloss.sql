@@ -42,6 +42,7 @@ AS
 		- 20220825@Eddie: Add SEAL Entertainment  [RedmineID: #176078]
 		- 20220907@Eddie: Add Microgaming  [RedmineID: #175850]
 		- 20221004@Eddie: Add Bettype Tournament Prize [RedmineID: #178335]
+		- 20221208@Eddie: Add New SABA ESports PinGoal [RedmineID: #181383]
 */
 BEGIN
 
@@ -185,6 +186,7 @@ BEGIN
 					(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
 						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 				 ) AND betdaqid <> -2   AND winlostdate >= @SabaInfo_CutOffDate THEN m.sporttype
 			WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
 				bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
@@ -317,6 +319,7 @@ BEGIN
 						(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
 						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 					) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN l.LeagueGroupID ELSE 0 END AS LeagueGroupID,
 		  CASE WHEN bettrans.betdaqid = -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN 1 ELSE 0 END ticketType
 	FROM dbo.bettrans14 bettrans WITH (NOLOCK)
@@ -326,7 +329,7 @@ BEGIN
 	LEFT JOIN dbo.match14 m WITH(NOLOCK) ON bettrans.matchid = m.matchid
 	LEFT JOIN (
 				SELECT LeagueGroupID, leagueid
-				FROM dbo.League l WITH(NOLOCK) WHERE l.LeagueGroupID IN (42,74,108,113,122)
+				FROM dbo.League l WITH(NOLOCK) WHERE l.LeagueGroupID IN (42,74,108,113,122,151)
 			  )l  ON m.leagueid = l.leagueid
 	WHERE 
 		bettrans.winlostdate = @winlostdate
@@ -341,6 +344,7 @@ BEGIN
 					(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
 						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 				 ) AND betdaqid <> -2   AND winlostdate >= @SabaInfo_CutOffDate THEN m.sporttype
 				 WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
 					bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
@@ -407,6 +411,7 @@ BEGIN
 						(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
 						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 					) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN l.LeagueGroupID ELSE 0 END,
 			 CASE WHEN bettrans.betdaqid = -2 AND winlostdate >= @SabaInfo_CutOffDate THEN 1 ELSE 0 END 
 	OPTION (optimize for (@winlostdate UNKNOWN))
