@@ -13,6 +13,7 @@ AS
 		- 20211223@July: SQL Server Upgrade 2019- Phase 3 [Redmine: #166039] 
 		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 		- 20221007@Patrick: Support scale-out for deposit site - SiteBD2 Redmine: [#178835]
+		- 20221216@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
 */
 BEGIN
 	SET NOCOUNT ON;
