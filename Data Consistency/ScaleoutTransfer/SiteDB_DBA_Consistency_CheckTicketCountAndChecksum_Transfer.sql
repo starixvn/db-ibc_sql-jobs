@@ -17,6 +17,7 @@ AS
 		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
 						- Check total ticket and checksum between SiteDB and central DB - [Redmine:#175881]
 		- 20221102@Evan: Enhancement convert data type float to decimal - [Redmine:#178864] 
+		- 20221220@Evan: Check Data Consistency - Exclude custid = 0 - [Redmine:#181848] 
 	
 	Param's Expanation:
 */
@@ -60,6 +61,7 @@ BEGIN
 		WHERE t.TransId > @transferLastTransId
 			AND t.TransId <= @NewTransferLastTransId
 			AND t.Bettype NOT IN (19999, 20000)
+			AND t.CustId <> 0
 		GROUP BY Recommend 
 			
 		UNION ALL
@@ -81,6 +83,7 @@ BEGIN
 		WHERE ti.TransId > @transferLastTransId
 			AND ti.TransId <= @NewTransferLastTransId
 			AND t.Bettype NOT IN (19999, 20000)
+			AND t.CustId <> 0
 		GROUP BY t.Recommend 
 
 		UNION ALL
@@ -100,6 +103,7 @@ BEGIN
 		WHERE tc.TransId > @transferLastTransId
 			AND tc.TransId <= @NewTransferLastTransId
 			AND tc.Bettype NOT IN (19999, 20000)
+			AND tc.CustId <> 0
 		GROUP BY tc.Recommend 
 
 	END
