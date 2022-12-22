@@ -23,7 +23,7 @@ BEGIN
 	BEGIN
 		--get BU's duration from config
 		SELECT @Duration = CAST(ISNULL(VValue, '240') AS INT)
-		FROM dbo.SystemSettings WITH(NOLOCK)
+		FROM dbo.MBUSettings WITH(NOLOCK)
 		WHERE VName = 'schMovingArchivingBetDuration'
 
 		--set default value if null

@@ -1,8 +1,7 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_BalanceUp_background]
 	@fdate SMALLDATETIME = NULL,
-	@step TINYINT = 1,
-	@errCode INT = 0
+	@step TINYINT = 1
 AS
 /*
 Created: 
@@ -47,8 +46,14 @@ BEGIN
 
 	IF @fdate IS NULL
 	BEGIN
-		SELECT @errCode = 1000
-			, @__errorMessage = 'ERROR: Please check a balance-up date value. @fdate = null, @step: ' + CAST(@step AS VARCHAR(10))
+		SELECT @fdate = CONVERT(VARCHAR(10), VValue, 121)
+		FROM dbo.MBUSettings
+		WHERE VName = 'BeingBalanceUpDate'
+	END
+
+	IF @fdate IS NULL
+	BEGIN
+		SELECT @__errorMessage = 'ERROR: Please check a balance-up date value. @fdate = null, @step: ' + CAST(@step AS VARCHAR(10))
 		RAISERROR (@__errorMessage, 16, 1);
 		RETURN
 	END
@@ -56,18 +61,9 @@ BEGIN
 	SET @Doing = 'Task_BalanceUp_background: Starting step: ' + CAST(@step AS VARCHAR(10))
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-	IF @step = 1 -- update being balance-up date
+	IF @step = 1 -- Turn on copy20k flag
 	BEGIN
-		--turn on starting BU process
-		SET @Doing = 'Task_BalanceUp_background: BU step 1.01 - Starting update BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
-
-		--**update being balanceUp date flag ==> the purpose for which process need to check balanceUp processing
-		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 11, @tableName = 'MBUSettings'
-
-		SET @Doing = 'Task_BalanceUp_background: BU step 1.01 - Ending update BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
-
+		
 		SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', start turn on flag 20k'
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
 
@@ -99,7 +95,6 @@ BEGIN
 				AND roleid IN (2,1)
 		)
 		BEGIN
-			SELECT @errCode = 221
 			RAISERROR ('Some Customer/Agent records have NULL AgentID', 16, 1)
 			RETURN
 		END
@@ -111,7 +106,6 @@ BEGIN
 				AND roleid = 3
 		)
 		BEGIN
-			SELECT @errCode = 222
 			RAISERROR ('Some Master records have NULL AgentID', 16, 1)
 			RETURN
 		END
@@ -123,7 +117,6 @@ BEGIN
 				AND roleid = 4
 		)
 		BEGIN
-			SELECT @errCode = 223
 			RAISERROR ('Some SuperAgent records have NULL AgentID', 16, 1)
 			RETURN
 		END
@@ -138,7 +131,6 @@ BEGIN
 					OR ((scomm <> acomm OR swinlost <> 0) AND srecommend <= 100))
 		)
 		BEGIN
-			SELECT @errCode = 224
 			RAISERROR ('Some records in Transfer have NULL AgentID/NULL winlost/NULL commission/incorrect Company SuperAgent setting', 16, 1)
 			RETURN
 		END
@@ -201,7 +193,7 @@ BEGIN
 		
 		RETURN
 	END
-	ELSE IF @step = 4
+	ELSE IF @step = 4 --Calculate new BU record
 	BEGIN
 		-- =====================
 		--   CALCULATE BALANCE
@@ -388,7 +380,6 @@ BEGIN
 		BEGIN
 			BEGIN TRY
 				
-				__retry_when_duplicated_pk:
 				--//insert new 20k
 				DELETE TOP(1000) bal FROM dbo.balanceTable_tmp bal
 
@@ -422,18 +413,15 @@ BEGIN
 							@SubjectName = 'Urgently!!! BU - Notification',
 							@MessageName = @Doing
 
-						SELECT @errCode = 551
 						--duplicated PK reach to limitation then throw error and quit job
 						RAISERROR(@__errorMessage, 16, 1)
 						RETURN
 					END
 
 					WAITFOR DELAY '00:00:01:333' -- Task_BalanceUp_background: duplicated transid then waitfor to retry
-					GOTO __retry_when_duplicated_pk
 				END
 				ELSE
 				BEGIN
-					SELECT @errCode = 552
 					--other exception then throw error and quit job
 					RAISERROR(@__errorMessage, 16, 1)
 					RETURN
@@ -485,7 +473,7 @@ BEGIN
 		SET @Doing = 'Task_BalanceUp_background BU step 6.02 - Starting update BalanceUpDate flag ' + CAST(@step AS VARCHAR(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-		--//**update BalanceUpDate value
+		--//***update BalanceUpDate value
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 12, @tableName = 'MBUSettings'
 
 		SET @Doing = 'Task_BalanceUp_background BU step 6.02 - Ending update BalanceUpDate flag' + CAST(@step AS VARCHAR(10))
@@ -576,7 +564,7 @@ BEGIN
 		RETURN
 
 	END
-	ELSE IF @step = 8 --turn off trigger | flag and completed balanceUP
+	ELSE IF @step = 8 --turn off trigger | flag
 	BEGIN
 		SET @Doing = 'Task_BalanceUp_background : Starting step: ' + CAST(@step AS VARCHAR(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
@@ -585,7 +573,7 @@ BEGIN
 
 		EXEC dbo.balancecheck @fdate, 21
 
-		EXEC dbo.Task_MBUSettingsUpd @VValue = '0', @VName = 'isArchivingBet', @Mode = 0
+		EXEC dbo.Task_MBUSettingsUpd @VValue = '0', @VName = 'isArchivingBet'
 
 		--reset being balanceup date
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @keyFlag = 11, @tableName = 'MBUSettings'
@@ -597,9 +585,7 @@ BEGIN
 		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-		SET @Doing = 'Task_BalanceUp_background : Done'
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
-
+		
 		RETURN
 	END
 END
