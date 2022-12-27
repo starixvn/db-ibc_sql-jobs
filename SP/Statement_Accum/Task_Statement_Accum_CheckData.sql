@@ -1,7 +1,7 @@
 /*<info serverAlias="DBRPT-bodb_report" executers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[Task_Statement_Accum_CheckData]
-    @FromDate   SMALLDATETIME
-    ,@ToDate    SMALLDATETIME
+    @FromDate   SMALLDATETIME = NULL
+    ,@ToDate    SMALLDATETIME = NULL
 	,@IsManual	BIT = 0 
 AS
 /*
@@ -24,6 +24,11 @@ BEGIN
             @max_winlostdate SMALLDATETIME
 
     DECLARE @MBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+
+	DROP TABLE IF EXISTS #__bettrans
+    DROP TABLE IF EXISTS #__transfer
+	DROP TABLE IF EXISTS #__Statement_Accum
+	DROP TABLE IF EXISTS #__custChanged
 
 	CREATE TABLE #__bettrans 
 	(
@@ -54,7 +59,7 @@ BEGIN
 	);
     
     INSERT INTO @MBU (BalanceUpDay, MoveBetsDay)
-    EXEC dbo.Age_SelBalanceUpDay
+    EXEC bodb02.dbo.Age_SelBalanceUpDay
 
     SELECT @BalanceUpDay = BalanceUpDay FROM @MBU
 
@@ -70,91 +75,25 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			IF ( DATEDIFF(DAY,@ToDate,@FromDate) <> 6 
+			IF ( DATEDIFF(DAY,@FromDate, @ToDate) <> 6 
 					OR DATEPART(WEEKDAY, @FromDate) <> 6 
 					OR DATEPART(WEEKDAY, @ToDate) <> 5 
 				)
 				RETURN
 		END
 
-		SELECT @fdate = @FromDate, @tdate = DATEADD(DAY, 1, @ToDate), @accdate = DATEADD(DAY, 1, @ToDate)
-
-		-- Get data from bettrans
-		INSERT INTO #__bettrans (custid, recommend, mrecommend, srecommend, actual_stake, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm)
-		SELECT custid, recommend, mrecommend, srecommend, SUM(actual_stake), SUM(winlost), SUM(awinlost), SUM(mwinlost), SUM(swinlost), SUM(playercomm), SUM(comm), SUM(acomm), SUM(scomm)
-		FROM bodb_Archive.dbo.bettrans_bk WITH (NOLOCK)
-		WHERE winlostdate BETWEEN @FromDate AND @ToDate
-		GROUP BY custid, recommend, mrecommend, srecommend
-
-		-- Get data from transfer
-		SET @tmp_winlostdate = DATEADD(DAY, -14, @FromDate)
-    
-		WHILE @tmp_winlostdate <= @ToDate
-		BEGIN
-			IF @tmp_winlostdate >= @BalanceUpDay
-				INSERT INTO #__transfer (custid, amount)
-				SELECT custid, SUM(Winlost - Actual_Stake) AS amount
-				FROM bodb02.dbo.Transfer WITH (NOLOCK)
-				WHERE TransDate >= @fdate AND TransDate < @tdate AND bettype > 20000
-					AND winlostdate = @tmp_winlostdate
-				GROUP BY custid
-			ELSE
-				INSERT INTO #__transfer (custid, amount)
-				SELECT custid, SUM(Credit - Debit) AS amount
-				FROM bodb_Archive.dbo.Transfer_bk WITH (NOLOCK)
-				WHERE TransDate >= @fdate AND TransDate < @tdate AND bettype > 20000
-					AND winlostdate = @tmp_winlostdate
-				GROUP BY custid
-
-			SELECT @tmp_winlostdate = DATEADD(DAY, 1, @tmp_winlostdate)
-		END
-
-		INSERT INTO #__Statement_Accum(CustId,AccDate,TotalAmt)
-		SELECT CustId, @accdate AS AccDate, SUM(totalamt) AS TotalAmt
-		FROM (
-			-- Opening Accumulated Amount
-			SELECT custid, totalamt
-			FROM dbo.Statement_Accum WITH (NOLOCK)
-			WHERE accdate = @fromdate
-
-			-- Transfer tickets
-			UNION ALL
-			SELECT custid, SUM(amount) AS totalamt
-			FROM #__transfer
-			GROUP BY custid
-
-			-- Prize tickets
-			UNION ALL
-			SELECT custid, SUM(WinAmount) AS totalamt
-			FROM bodb02.dbo.PayoutTrans WITH (NOLOCK)
-			WHERE winlostdate BETWEEN @FromDate AND @ToDate
-				AND PayoutStatusId IN (4, 5) -- 'Completed', 'Expired'      
-			GROUP BY custid
-
-			-- Bet tickets
-			UNION ALL
-			SELECT t.custid, SUM(t.totalamt) AS totalamt
-			FROM #__bettrans b
-				CROSS APPLY (
-					SELECT b.custid, b.winlost - b.actual_stake + b.playercomm AS totalamt
-					UNION ALL SELECT b.recommend, b.awinlost + b.comm - b.playercomm
-					UNION ALL SELECT b.mrecommend, b.mwinlost + b.acomm - b.comm
-					UNION ALL SELECT b.srecommend, b.swinlost + b.scomm - b.acomm
-				) t
-			GROUP BY t.custid
-		) b
-		GROUP BY custid
-		HAVING SUM(totalamt) <> 0
-
 		DECLARE	@subject	NVARCHAR(MAX)
 				,@bodymsg	NVARCHAR(MAX)
 				,@recipients NVARCHAR(500)
 				,@server_name SYSNAME
+				,@hasDiff	BIT
 			
 		SELECT @server_name = @@SERVERNAME
 			   ,@recipients	= CASE WHEN @server_name IN ('TESTDB061') THEN 'dba_local@starixvn.com' ELSE 'dbaadmin@starixvn.com' END
 
 		SELECT	@subject	= N'Job - Statement Accum - Check Balance diff(s) found ' + @@SERVERNAME;
+		SELECT @fdate = @FromDate, @tdate = DATEADD(DAY, 1, @ToDate), @accdate = DATEADD(DAY, 1, @ToDate)
+
 		IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.Statement_Accum WITH(NOLOCK) WHERE AccDate = @accdate)
 		BEGIN
 			SELECT	@bodymsg	= N'\
@@ -177,6 +116,73 @@ BEGIN
 		END
 		ELSE
 		BEGIN
+			-- Get data from bettrans
+			INSERT INTO #__bettrans (custid, recommend, mrecommend, srecommend, actual_stake, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm)
+			SELECT custid, recommend, mrecommend, srecommend, SUM(actual_stake), SUM(winlost), SUM(awinlost), SUM(mwinlost), SUM(swinlost), SUM(playercomm), SUM(comm), SUM(acomm), SUM(scomm)
+			FROM bodb_Archive.dbo.bettrans_bk WITH (NOLOCK)
+			WHERE winlostdate BETWEEN @FromDate AND @ToDate
+			GROUP BY custid, recommend, mrecommend, srecommend
+
+			-- Get data from transfer
+			SET @tmp_winlostdate = DATEADD(DAY, -14, @FromDate)
+    
+			WHILE @tmp_winlostdate <= @ToDate
+			BEGIN
+				IF @tmp_winlostdate >= @BalanceUpDay
+					INSERT INTO #__transfer (custid, amount)
+					SELECT custid, SUM(Winlost - Actual_Stake) AS amount
+					FROM bodb02.dbo.Transfer WITH (NOLOCK)
+					WHERE TransDate >= @fdate AND TransDate < @tdate AND bettype > 20000
+						AND winlostdate = @tmp_winlostdate
+					GROUP BY custid
+				ELSE
+					INSERT INTO #__transfer (custid, amount)
+					SELECT custid, SUM(Credit - Debit) AS amount
+					FROM bodb_Archive.dbo.Transfer_bk WITH (NOLOCK)
+					WHERE TransDate >= @fdate AND TransDate < @tdate AND bettype > 20000
+						AND winlostdate = @tmp_winlostdate
+					GROUP BY custid
+
+				SELECT @tmp_winlostdate = DATEADD(DAY, 1, @tmp_winlostdate)
+			END
+
+			INSERT INTO #__Statement_Accum(CustId,AccDate,TotalAmt)
+			SELECT CustId, @accdate AS AccDate, SUM(totalamt) AS TotalAmt
+			FROM (
+				-- Opening Accumulated Amount
+				SELECT custid, totalamt
+				FROM dbo.Statement_Accum WITH (NOLOCK)
+				WHERE accdate = @fromdate
+
+				-- Transfer tickets
+				UNION ALL
+				SELECT custid, SUM(amount) AS totalamt
+				FROM #__transfer
+				GROUP BY custid
+
+				-- Prize tickets
+				UNION ALL
+				SELECT custid, SUM(WinAmount) AS totalamt
+				FROM bodb02.dbo.PayoutTrans WITH (NOLOCK)
+				WHERE winlostdate BETWEEN @FromDate AND @ToDate
+					AND PayoutStatusId IN (4, 5) -- 'Completed', 'Expired'      
+				GROUP BY custid
+
+				-- Bet tickets
+				UNION ALL
+				SELECT t.custid, SUM(t.totalamt) AS totalamt
+				FROM #__bettrans b
+					CROSS APPLY (
+						SELECT b.custid, b.winlost - b.actual_stake + b.playercomm AS totalamt
+						UNION ALL SELECT b.recommend, b.awinlost + b.comm - b.playercomm
+						UNION ALL SELECT b.mrecommend, b.mwinlost + b.acomm - b.comm
+						UNION ALL SELECT b.srecommend, b.swinlost + b.scomm - b.acomm
+					) t
+				GROUP BY t.custid
+			) b
+			GROUP BY custid
+			HAVING SUM(totalamt) <> 0
+		
 			INSERT INTO #__custChanged (custid,AccDate ,TotalAmt_Old ,TotalAmt_New, Action)
 			SELECT TOP(50) 
 					ISNULL(s.CustId,t.CustId) CustId, 
@@ -184,15 +190,33 @@ BEGIN
 					t.TotalAmt, 
 					s.TotalAmt,
 					CASE WHEN	t.TotalAmt IS NULL THEN 'Insert'
-						 WHEN	s.TotalAmt IS NULL THEN 'Delete'
-						 WHEN	t.TotalAmt <> s.TotalAmt THEN 'Update'
+							WHEN	s.TotalAmt IS NULL THEN 'Delete'
+							WHEN	t.TotalAmt <> s.TotalAmt THEN 'Update'
 					END
 			FROM #__Statement_Accum s
 			FULL JOIN dbo.Statement_Accum t WITH(NOLOCK) ON s.CustId = t.CustId AND s.AccDate = t.AccDate 
-			WHERE t.TotalAmt IS NULL OR s.TotalAmt IS NULL OR t.TotalAmt <> s.TotalAmt
+			WHERE t.AccDate = @accdate
+				AND (t.TotalAmt IS NULL 
+					OR s.TotalAmt IS NULL 
+					OR t.TotalAmt <> s.TotalAmt)
+
+			SELECT @hasDiff = IIF(@@ROWCOUNT > 0, 1, 0);
+			IF @hasDiff = 1
+			BEGIN
+				
+				-- TODO: MERGE changes
+				MERGE dbo.Statement_Accum AS t
+				USING #__Statement_Accum AS u ON t.AccDate = u.AccDate AND t.CustId = u.CustId
+				WHEN MATCHED THEN UPDATE
+					SET TotalAmt = u.totalAmt
+				WHEN NOT MATCHED THEN
+					INSERT(CustID, AccDate, TotalAmt)
+					VALUES(u.CustId, u.AccDate, u.TotalAmt)
+				WHEN NOT MATCHED BY SOURCE AND t.AccDate = @accdate THEN DELETE;
 
 
-			SELECT	@bodymsg	= N'\
+				-- TODO: Send email
+				SELECT	@bodymsg	= N'\
 								Dear All,</br>
 								An different has been found while checking old balance and new balance in the Statement_Accum.</br>
 								Please take a look on the table below:</br> '
@@ -210,21 +234,17 @@ BEGIN
 								+ 'Best regards, </br> 
 								This is an auto-mail from the Internal System. Please do not reply.';
 
+				EXECUTE	msdb.dbo.sp_send_dbmail
+						@recipients				= @recipients
+					,	@copy_recipients		= ''
+					,	@blind_copy_recipients	= ''
+					,	@subject				= @subject
+					,	@body					= @bodymsg
+					,	@body_format			= 'HTML'
+					;
+
+			END
 		END
-
-		MERGE dbo.Statement_Accum AS t
-		USING #__Statement_Accum AS u ON t.AccDate = u.AccDate AND t.CustId = u.CustId
-		WHEN MATCHED THEN UPDATE
-			SET TotalAmt = u.totalAmt
-		WHEN NOT MATCHED THEN
-			INSERT(CustID, AccDate, TotalAmt)
-			VALUES(u.CustId, u.AccDate, u.TotalAmt)
-		WHEN NOT MATCHED BY SOURCE AND t.AccDate = @accdate THEN DELETE;
 	END
-
-    DROP TABLE #__bettrans
-    DROP TABLE #__transfer
-	DROP TABLE #__Statement_Accum
-	DROP TABLE #__custChanged
 END
 

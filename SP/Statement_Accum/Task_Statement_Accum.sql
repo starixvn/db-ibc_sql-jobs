@@ -1,5 +1,5 @@
 /*<info serverAlias="DBRPT-bodb_report" executers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE dbo.Task_Statement_Accum
+CREATE PROCEDURE dbo.Task_Statement_Accum
 AS
 /*
     Created:    20221108@Danny
@@ -41,6 +41,9 @@ BEGIN
 	IF (@NewBalanceUpDay > @BalanceUpDay)
 	BEGIN
 		SELECT @fromdate = @min_winlostdate, @todate = DATEADD(DAY, 1, @max_winlostdate), @accdate = DATEADD(DAY, 1, @max_winlostdate)
+
+		DROP TABLE IF EXISTS #__bettrans;
+		DROP TABLE IF EXISTS #__transfer;
 
 		-- Get data from bettrans
 		CREATE TABLE #__bettrans 
@@ -118,7 +121,6 @@ BEGIN
 		GROUP BY custid
 		HAVING SUM(totalamt) <> 0
 	END
-    DROP TABLE #__bettrans
-    DROP TABLE #__transfer
+
 END
 
