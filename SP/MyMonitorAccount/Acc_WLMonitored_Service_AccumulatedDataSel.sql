@@ -2,6 +2,7 @@
 ALTER PROCEDURE [dbo].[Acc_WLMonitored_Service_AccumulatedDataSel]
 	@CustIds VARCHAR(MAX) = NULL
 	,@Recommends VARCHAR(MAX) = NULL
+	,@SMAIds VARCHAR(MAX) = NULL
 	,@CurrentDate DATE
 AS
 /*	Creator: 20220617@Kathy
@@ -10,6 +11,7 @@ AS
 	
 	Revisions:	
 		- 20220617@Kathy: get data by cust [Redmine:#170467]
+		- 20221228@Kathy: Monitor SMA WinLoss [Redmine:#179067]
 
 	Param's Explanation:
 		 
@@ -48,6 +50,21 @@ BEGIN
 				ON ci.recommend = r.recommend
 		WHERE	ci.roleid = 1
 	END
+
+	IF ISNULL(@SMAIds,'') <> ''
+	BEGIN
+		;WITH cteSMAIds
+		AS (
+			SELECT	DISTINCT CAST([value] AS INT) AS CustId
+			FROM	STRING_SPLIT(@SMAIds, ',')
+		)
+		INSERT INTO #tmpCustId(CustId, Recommend)
+		SELECT	ci.custid, 0
+		FROM	cteSMAIds c
+			INNER JOIN dbo.custInfo ci WITH(NOLOCK)
+				ON c.CustId = ci.custid
+		WHERE	ci.roleid > 1
+	END		
 
 	;WITH cteDuplicateCustId
 	AS (
