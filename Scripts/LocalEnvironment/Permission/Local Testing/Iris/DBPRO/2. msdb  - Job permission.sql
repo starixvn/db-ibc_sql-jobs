@@ -5,10 +5,9 @@ GO
 	
 */
 
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT IN ( 'TESTDBPRO', 'DEVDB061\DEVDBPRO' )
 BEGIN
-	SELECT 'Must be run on DB206 or TESTDBTRANS' AS 'Error'
-
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
 
@@ -40,37 +39,10 @@ FROM	@tmpMember t
 WHERE	s.name IS NULL
 
 EXEC (@strUser)
-GO
 
-
--- Add Role
-USE [msdb]
-GO
-
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206 or TESTDBTRANS' AS 'Error'
-
-	RETURN
-END
-
-DECLARE @strUser VARCHAR(MAX) = ''
-DECLARE @tmpMember TABLE (Name VARCHAR(50))
-
-INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\kaka.huynh')
-		, ('spvn\dora.le')
-		, ('spvn\megan.dinh')
-		, ('spvn\tommy.nguyen')
-		, ('spvn\Neil.dao')
-		, ('spvn\jane.dinh')
-		, ('spvn\harley.nguyen')
-		, ('spvn\dory.vu')
-		, ('spvn\Mike.vu')
-		, ('spvn\Kenny.ho')
-		,('spvn\ariana.nguyen')
-		,('spvn\benjamin.nguyen')
-
+WAITFOR DELAY '00:00:01'
+  
+SET @strUser = ''
 SELECT	@strUser = @strUser + 'EXEC sp_AddRoleMember ''SQLAgentReaderRole''' + ', ''' + t.Name + '''' 
 		+ CHAR(13)
 FROM	@tmpMember t

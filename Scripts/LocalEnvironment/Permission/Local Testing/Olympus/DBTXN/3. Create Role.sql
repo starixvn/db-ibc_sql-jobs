@@ -1,22 +1,17 @@
-/*
-	For Olympus team:
-	Affected DB:
-		bodb02
-		CustDB
-
-*/
--- Create Role
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'DB62\DEVSITEDB','DB-60\DEVDBTRANS' )
+ 
+IF @@SERVERNAME NOT LIKE '%DBTRANS' AND @@SERVERNAME NOT LIKE  '%SiteDB%'
 BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
-
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
 
 DECLARE @RoleName VARCHAR(50) = 'db_Olympus'
 		,@strRole	VARCHAR(MAX) = ''
+		,@strPermission	VARCHAR(MAX) = ''
 
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+
+DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
 		VALUES ('bodb02'), ('CustDB'), ('bodb_CustomerLog')
@@ -30,26 +25,10 @@ SELECT @strRole = @strRole + ' '
 FROM	@tmpAffectedDB
 
 EXEC (@strRole)
-GO
--------------------------------------------
--------------------------------------------
 
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'DB62\DEVSITEDB','DB-60\DEVDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
+WAITFOR DELAY '00:00:01'
 
-	RETURN
-END
-
--- Grant permission to new role
-DECLARE @RoleName VARCHAR(50) = 'db_Olympus'
-		,@strPermission	VARCHAR(MAX) = ''
-
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
-DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb02'), ('CustDB'), ('bodb_CustomerLog')
+-- Grant permission to new role  
 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')

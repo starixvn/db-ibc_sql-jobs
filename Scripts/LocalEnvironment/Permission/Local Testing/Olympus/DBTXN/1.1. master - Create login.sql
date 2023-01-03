@@ -1,14 +1,13 @@
 USE [master]
 GO
  --	select @@servername
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'DB62\DEVSITEDB','DB-60\DEVDBTRANS' )
+IF @@SERVERNAME NOT LIKE '%DBTRANS' AND @@SERVERNAME NOT LIKE  '%SiteDB%'
 BEGIN
 	SELECT 'Wrong server' AS 'Error'
-
 	RETURN
 END
-DECLARE @strLoginName 	VARCHAR(MAX) = ''
 
+DECLARE @strLoginName 	VARCHAR(MAX) = ''
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
@@ -25,9 +24,7 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\johnny.thai')	
 			,('SPVN\luca.duong')
 			,('SPVN\levi.vu')
-			,('SPVN\luca.duong')
 
--- CREATE LOGIN [SPVN\nickname] FROM WINDOWS;  
 SELECT @strLoginName = @strLoginName 
 			+  'CREATE LOGIN [' + t.Name + '] FROM WINDOWS; ' 
 			+ CHAR(13)

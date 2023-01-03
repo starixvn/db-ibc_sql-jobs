@@ -1,27 +1,20 @@
- 
 -- Create Role
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'TESTDB053\TESTSITEDB' )
+ 
+IF @@SERVERNAME NOT IN ( 'TESTDBPRO', 'DEVDB061\DEVDBPRO' )
 BEGIN
-	SELECT 'Wrong Server' AS 'Error'
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
 
-DECLARE @RoleName VARCHAR(50) = 'db_Iris'
+DECLARE @RoleName VARCHAR(50) = 'db_Olympus'
 		,@strRole	VARCHAR(MAX) = ''
+		,@strPermission	VARCHAR(MAX) = ''
 
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-SELECT name FROM master.sys.sysdatabases 
-WHERE name IN (
-		'CustDB'
-		,'bodb02'
-		,'bodb_CustomerLog'
-		,'LogDB'
-		,'CasinoAdmin'
-		,'LiveCasino'
-		,'LiveCasinoAdmin'
-		)
+		VALUES ('bodb02')
 
 SELECT @strRole = @strRole + ' '
 					 + 'USE ' + DBName + ';'
@@ -31,17 +24,15 @@ SELECT @strRole = @strRole + ' '
 					+ CHAR(13)
 FROM	@tmpAffectedDB
 
-EXEC (@strRole)
 
 WAITFOR DELAY '00:00:01'
-
+-------------------------------------------
+ 
 -- Grant permission to new role
-DECLARE @strPermission	VARCHAR(MAX) = ''	 
-DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
-
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')
 
+SET @strPermission = ''
 SELECT @strPermission = @strPermission + ' '
 					 + 'USE ' + d.DBName + ' ' + ';'
 					 + CHAR(13)
