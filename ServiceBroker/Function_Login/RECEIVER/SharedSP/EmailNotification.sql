@@ -49,7 +49,7 @@ BEGIN
 	IF @@SERVERNAME IN ('DB215','DB231','TESTDB055')
 	BEGIN
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients=N'elodie.ho@starixvn.com',
+			@recipients=N'dba_local@starixvn.com',
 			@body=@body,
 			@sensitivity ='Personal',
 			@importance ='High',
