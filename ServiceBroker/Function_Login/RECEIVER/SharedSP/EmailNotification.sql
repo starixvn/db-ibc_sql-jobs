@@ -46,7 +46,7 @@ BEGIN
 					SELECT TOP(5) * FROM sb.FailedMessageMonitoring WITH(NOLOCK) ORDER BY CreatedDate DESC 
 				*/
 			'
-	IF @@SERVERNAME IN ('DB215','DB231')
+	IF @@SERVERNAME IN ('DB215','DB231','TESTDB055')
 	BEGIN
 		EXEC msdb.dbo.sp_send_dbmail
 			@recipients=N'elodie.ho@starixvn.com',
