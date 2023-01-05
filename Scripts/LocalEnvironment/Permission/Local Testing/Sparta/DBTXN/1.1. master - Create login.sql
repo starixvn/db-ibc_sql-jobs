@@ -1,22 +1,12 @@
 USE [master]
 GO
 -- Create Login
-/*
-	spvn\alex.nguyen
-	spvn\joseph.pham
-	spvn\bruce.bui
-	spvn\walter.tran
-	spvn\scofield.huynh
-	spvn\amanda.luong
-	spvn\parsons.nguyen
-	spvn\mason.nguyen
-*/
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT LIKE '%DBTRANS' AND @@SERVERNAME NOT LIKE  '%SiteDB%'
 BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
-
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
+
 DECLARE @strLoginName 	VARCHAR(MAX) = ''
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))

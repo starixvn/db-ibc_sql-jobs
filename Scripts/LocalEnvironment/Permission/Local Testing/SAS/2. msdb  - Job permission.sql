@@ -4,14 +4,7 @@ GO
 /*	Windows domain account:
 	
 */
-
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206 or TESTDBTRANS' AS 'Error'
-
-	RETURN
-END
-
+ 
 DECLARE @strUser VARCHAR(MAX) = ''
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
@@ -34,31 +27,9 @@ FROM	@tmpMember t
 WHERE	s.name IS NULL
 
 EXEC (@strUser)
-GO
-
-
--- Add Role
-USE [msdb]
-GO
-
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206 or TESTDBTRANS' AS 'Error'
-
-	RETURN
-END
-
-DECLARE @strUser VARCHAR(MAX) = ''
-DECLARE @tmpMember TABLE (Name VARCHAR(50))
-
-INSERT INTO @tmpMember (Name) 
-	VALUES ('SPVN\gary.vu')
-			,('SPVN\chris.lu')
-			,('SPVN\aaron.dinh')
-			,('SPVN\harry.vu')
-			,('SPVN\liz.nguyen')
-			,('SPVN\paladin.dao')
-
+waitfor delay '00:00:01'
+ 
+SET @strUser = ''
 SELECT	@strUser = @strUser + 'EXEC sp_AddRoleMember ''SQLAgentReaderRole''' + ', ''' + t.Name + '''' 
 		+ CHAR(13)
 FROM	@tmpMember t

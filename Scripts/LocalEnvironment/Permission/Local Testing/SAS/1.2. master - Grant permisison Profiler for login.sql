@@ -5,13 +5,7 @@ GO
 */
 
 -- Grant permisison Profiler for login
-
-IF @@SERVERNAME NOT IN ( 'DB215' , 'TESTDB053' )
-BEGIN
-	SELECT 'Must be run on DB215 or TESTDB053' AS 'Error'
-
-	RETURN
-END
+ 
 
 DECLARE @strLoginName VARCHAR(MAX) = ''
 
@@ -24,7 +18,6 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\harry.vu')
 			,('SPVN\liz.nguyen')
 			,('SPVN\paladin.dao')
-
 
 SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
 FROM	@tmpMember

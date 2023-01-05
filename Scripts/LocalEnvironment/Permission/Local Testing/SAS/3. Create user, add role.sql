@@ -1,11 +1,7 @@
- 
--- Create User
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
-BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
 
-	RETURN
-END
+
+-- Create User
+ 
 
 DECLARE @strUser	VARCHAR(MAX) = ''
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
@@ -24,16 +20,7 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\harry.vu')
 			,('SPVN\liz.nguyen')
 			,('SPVN\paladin.dao')
-
-
-/*
-	USE DBName
-	GO 
-	CREATE USER vnXXX FOR LOGIN vnXXX WITH DEFAULT_SCHEMA=[dbo] 
-	GO
-
-	-- Delete user: EXEC sp_dropuser 'spvn\xxx.xxx';
-*/
+ 
 
 SELECT	@strUser = @strUser 
 					+ 'USE ' + d.DBName + ';'
@@ -51,23 +38,12 @@ FROM	@tmpAffectedDB d
 	) t
 
 EXEC (@strUser)
-GO
-
+waitfor delay '00:00:01'
+ 
 -------------------------------------------
 -- Add Role for member
-
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
-BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
-
-	RETURN
-END
-
-DECLARE @strUser VARCHAR(MAX) = ''
-		,@RoleName VARCHAR(50) = 'db_SAS'
-
-DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+ 
+DECLARE  @RoleName VARCHAR(50) = 'db_owner' 
 
 INSERT INTO @tmpAffectedDB (DBName)
 SELECT db.name FROM master.sys.databases db
@@ -82,20 +58,16 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\liz.nguyen')
 			,('SPVN\paladin.dao')
 
-/*
-	USE DBName
-	GO
-	EXEC sp_AddRoleMember 'db_xxx', 'vnxxx'
-	GO
-*/
+SET @strUser = ''
 SELECT	@strUser = @strUser
 					+ 'USE ' + d.DBName + ';'
 					+ CHAR(13)
-					+ 'EXEC sp_AddRoleMember ''' + t.RoleName + ''',''' + t.Name + ''' ' + ';'
+					--+ 'EXEC sp_AddRoleMember ''' + t.RoleName + ''',''' + t.Name + ''' ' + ';'
+					+ 'EXEC sp_AddRoleMember ''' + @RoleName + ''',''' + t.Name + ''' ' + ';'
 					+ CHAR(13)
 FROM	@tmpAffectedDB d
 	CROSS APPLY (
-		SELECT Name, RoleName
+		SELECT Name 
 		FROM @tmpMember 
 	)t
 

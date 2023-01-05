@@ -1,12 +1,9 @@
 USE [master]
 GO
 -- Create Login
-
-
-IF @@SERVERNAME <>  'TESTDBTRANS' 
+IF @@SERVERNAME NOT IN ( 'TESTDBPRO', 'DEVDB061\DEVDBPRO' )
 BEGIN
-	SELECT 'Must be run on TESTDBTRANS' AS 'Error'
-
+	SELECT 'Wrong server!'
 	RETURN
 END
 
@@ -15,12 +12,9 @@ DECLARE @strLoginName 	VARCHAR(MAX) = ''
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
-	VALUES ('SPVN\gary.vu')
-			,('SPVN\chris.lu')
-			,('SPVN\aaron.dinh')
-			,('SPVN\harry.vu')
-			,('SPVN\liz.nguyen')
-			,('SPVN\paladin.dao')
+	VALUES ('spvn\alex.nguyen'), ('spvn\joseph.pham'), ('spvn\bruce.bui')
+		,('spvn\walter.tran'), ('spvn\scofield.huynh'), ('spvn\amanda.luong'), ('spvn\parsons.nguyen')
+		, ('spvn\mason.nguyen'), ('spvn\howard.nguyen')
 
 -- CREATE LOGIN [spvn\nickname] FROM WINDOWS;  
 SELECT @strLoginName = @strLoginName 
@@ -34,4 +28,3 @@ WHERE	s.name IS NULL
 
 EXEC (@strLoginName)
 GO
-

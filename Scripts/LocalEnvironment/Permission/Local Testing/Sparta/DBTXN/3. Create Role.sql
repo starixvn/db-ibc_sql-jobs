@@ -1,23 +1,8 @@
-/*
-	For Sparta team:
-		spvn\alex.nguyen
-		spvn\joseph.pham
-		spvn\bruce.bui
-		spvn\walter.tran
-		spvn\scofield.huynh
-		spvn\amanda.luong
-		spvn\parsons.nguyen
 
-	Affected DB:
-		bodb02
-		CustDB
 
-*/
--- Create Role
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
+IF @@SERVERNAME NOT LIKE '%DBTRANS' AND @@SERVERNAME NOT LIKE  '%SiteDB%'
 BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
-
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
 
@@ -27,7 +12,8 @@ DECLARE @RoleName VARCHAR(50) = 'db_Sparta'
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb02'), ('CustDB')
+SELECT db.name from master.dbo.sysdatabases db
+WHERE db.name IN  ('bodb02' ,  'CustDB')
 
 SELECT @strRole = @strRole + ' '
 					 + 'USE ' + DBName + ';'
@@ -38,26 +24,14 @@ SELECT @strRole = @strRole + ' '
 FROM	@tmpAffectedDB
 
 EXEC (@strRole)
-GO
+waitfor delay '00:00:01' 
 -------------------------------------------
--------------------------------------------
-
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS' )
-BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
-
-	RETURN
-END
+ 
 -- Grant permission to new role
-DECLARE @RoleName VARCHAR(50) = 'db_Sparta'
-		,@strPermission	VARCHAR(MAX) = ''
-
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+DECLARE @strPermission	VARCHAR(MAX) = ''
+ 
 DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb02'), ('CustDB')
-
+ 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')
 
@@ -72,20 +46,14 @@ FROM	@tmpAffectedDB d
 		FROM	@tmpPermission
 	) p
 EXEC (@strPermission)
-GO
-
-DECLARE @RoleName VARCHAR(50) = 'db_Sparta'
-		,@strPermission	VARCHAR(MAX) = ''
-
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+waitfor delay '00:00:01'
+  
 DECLARE @tmpDBPermission TABLE (PermissionName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb02'), ('CustDB')
 
 INSERT INTO @tmpDBPermission (PermissionName)
 	VALUES ('SHOWPLAN')
- 
+
+SET @strPermission = ''
 SELECT @strPermission = @strPermission + ' '
 					 + 'USE ' + d.DBName + ' ' + ';'
 					 + CHAR(13)

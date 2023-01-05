@@ -1,15 +1,7 @@
 USE [master]
 GO
 -- Create Login
-/*	Windows domain account:
-
-*/
-IF @@SERVERNAME NOT IN ( 'DB234' , 'TESTDB061' )
-BEGIN
-	SELECT 'Must be run on DB234' AS 'Error'
-
-	RETURN
-END
+ 
 DECLARE @strLoginName 	VARCHAR(MAX) = ''
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
