@@ -17,6 +17,7 @@ AS
 						- Compare total transfer ticket with total super - [Redmine:#175881]
 		- 20221107@Evan: Count total super on each SiteGroupid [Redmine:#178864]
 		- 20221206@Danny: Skip check transfer Info - crypto Licensee [Redmine: #181343]
+		- 20230105@Danny: Skip check transfer Info - crypto Licensee [Redmine: #181343]
 
 	Param's Expanation:
 */
@@ -50,6 +51,7 @@ BEGIN
 			ON p.FromCustId = s.custid
 	WHERE s.SiteDBGroupID = @SiteDBGroupID
 		AND MonthDate = @endOfPreviousMonth
+		AND p.Status <> 'Skipped'
 
 	--get list custId
 	SELECT 
