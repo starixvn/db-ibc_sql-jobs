@@ -1,22 +1,11 @@
 USE [master]
 GO
-/*	Windows domain account:
-	spvn\ethan.nguyen
-	spvn\andy.nguyen
-	spvn\david.tran
-	spvn\phillip.truong
-	spvn\louis.nguyen
-	spvn\kan.nguyen
-	spvn\razor.nguyen
-	spvn\alvin.nguyen
-*/
-
+ 
 -- Grant permisison Profiler for login
 
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
+IF @@SERVERNAME NOT IN ( 'db-60\devdbcust', 'TESTDBCUST' )
 BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
-
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
 

@@ -1,21 +1,11 @@
 -- Create User
 USE [msdb]
 GO
-/*	Windows domain account:
-	spvn\ethan.nguyen
-	spvn\andy.nguyen
-	spvn\david.tran
-	spvn\phillip.truong
-	spvn\louis.nguyen
-	spvn\kan.nguyen
-	spvn\razor.nguyen
-	spvn\alvin.nguyen
-*/
+ 
 
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
+IF @@SERVERNAME NOT IN ( 'db-60\devdbcust', 'TESTDBCUST' )
 BEGIN
-	SELECT 'Must be run on DB233or TESTDBCUST' AS 'Error'
-
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
 
@@ -39,29 +29,12 @@ FROM	@tmpMember t
 WHERE	s.name IS NULL
 
 EXEC (@strUser)
-GO
+
+waitfor delay '00:00:01'
 
 
--- Add Role
-USE [msdb]
-GO
 
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
-BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
-
-	RETURN
-END
-
-DECLARE @strUser VARCHAR(MAX) = ''
-DECLARE @tmpMember TABLE (Name VARCHAR(50))
-
-INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\ethan.nguyen'), ('spvn\andy.nguyen'), ('spvn\david.tran')
-		,('spvn\phillip.truong'), ('spvn\louis.nguyen'), ('spvn\kan.nguyen')
-		,('spvn\razor.nguyen'), ('spvn\alvin.nguyen')
-		,('spvn\jack.nguyen'), ('spvn\issac.le')
-
+SET @strUser = ''
 SELECT	@strUser = @strUser + 'EXEC sp_AddRoleMember ''SQLAgentReaderRole''' + ', ''' + t.Name + '''' 
 		+ CHAR(13)
 FROM	@tmpMember t

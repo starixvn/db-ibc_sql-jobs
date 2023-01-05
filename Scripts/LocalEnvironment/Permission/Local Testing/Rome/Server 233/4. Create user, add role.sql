@@ -1,36 +1,23 @@
-/*
-	For Olympus team:
-	Affected DB:
-		CustDB
-		IPDB
-		NAP_UserControl
-		bodb_CustomerLog
 
-	Windows domain account:
-		spvn\ethan.nguyen
-		spvn\andy.nguyen
-		spvn\david.tran
-		spvn\phillip.truong
-		spvn\louis.nguyen
-		spvn\kan.nguyen
-		spvn\razor.nguyen
-		spvn\alvin.nguyen
-*/
--- Create User
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
+ use master 
+IF @@SERVERNAME NOT IN ( 'db-60\devdbcust', 'TESTDBCUST' )
 BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
-
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
 
+
 DECLARE @strUser	VARCHAR(MAX) = ''
+		,@RoleName VARCHAR(50) = 'db_Rome'
+		,@LeaderRoleName VARCHAR(50) = 'db_owner'
+		,@Leader VARCHAR(50) = 'spvn\ethan.nguyen'
+
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('CustDB'),('IPDB'),('NAP_UserControl'),('bodb_CustomerLog')
+	VALUES ('CustDB'),('IPDB'),('NAP_UserControl'),('bodb_CustomerLog'), ('SiteConfig')
 
-DECLARE @tmpMember TABLE (Name VARCHAR(50))
+DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('spvn\ethan.nguyen'), ('spvn\andy.nguyen'), ('spvn\david.tran')
@@ -38,14 +25,8 @@ INSERT INTO @tmpMember (Name)
 		,('spvn\razor.nguyen'), ('spvn\alvin.nguyen')
 		,('spvn\jack.nguyen'), ('spvn\issac.le')
 
-/*
-	USE DBName
-	GO 
-	CREATE USER vnXXX FOR LOGIN vnXXX WITH DEFAULT_SCHEMA=[dbo] 
-	GO
-
-	-- Delete user: EXEC sp_dropuser 'spvn\xxx.xxx';
-*/
+UPDATE @tmpMember
+	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END 
 
 SELECT	@strUser = @strUser 
 					+ 'USE ' + d.DBName + ';'
@@ -63,43 +44,13 @@ FROM	@tmpAffectedDB d
 	) t
 
 EXEC (@strUser)
-GO
 
--------------------------------------------
--------------------------------------------
+waitfor delay '00:00:01'
+
+ -------------------------------------------
 -- Add Role for member
 
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
-BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
-
-	RETURN
-END
-DECLARE @strUser VARCHAR(MAX) = ''
-		,@RoleName VARCHAR(50) = 'db_Rome'
-		,@LeaderRoleName VARCHAR(50) = 'db_owner'
-		,@Leader VARCHAR(50) = 'spvn\ethan.nguyen'
-
-DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('CustDB'),('IPDB'),('NAP_UserControl'),('bodb_CustomerLog')
-
-INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\ethan.nguyen'), ('spvn\andy.nguyen'), ('spvn\david.tran')
-		,('spvn\phillip.truong'), ('spvn\louis.nguyen'), ('spvn\kan.nguyen')
-		,('spvn\razor.nguyen'), ('spvn\alvin.nguyen')
-		,('spvn\jack.nguyen'), ('spvn\issac.le')
-
-UPDATE @tmpMember
-	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
-/*
-	USE DBName
-	GO
-	EXEC sp_AddRoleMember 'db_xxx', 'vnxxx'
-	GO
-*/
+SET @strUser  = ''
 SELECT	@strUser = @strUser
 					+ 'USE ' + d.DBName + ';'
 					+ CHAR(13)

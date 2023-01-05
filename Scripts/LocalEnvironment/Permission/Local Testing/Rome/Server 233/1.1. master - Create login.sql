@@ -1,22 +1,12 @@
 USE [master]
 GO
--- Create Login
-/*	Windows domain account:
-	spvn\ethan.nguyen
-	spvn\andy.nguyen
-	spvn\david.tran
-	spvn\phillip.truong
-	spvn\louis.nguyen
-	spvn\kan.nguyen
-	spvn\razor.nguyen
-	spvn\alvin.nguyen
-*/
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
-BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
 
+IF @@SERVERNAME NOT IN ( 'db-60\devdbcust', 'TESTDBCUST' )
+BEGIN
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
+
 DECLARE @strLoginName 	VARCHAR(MAX) = ''
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
