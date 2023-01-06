@@ -139,7 +139,7 @@ BEGIN
 					CONTINUE
 			END
 
-			RAISERROR (@errmsg, 16, 1)
+			RAISERROR (@__errmsg, 16, 1)
 
 		END CATCH
 	END
