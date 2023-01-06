@@ -2,6 +2,18 @@
 ALTER PROCEDURE [dbo].[Task_AWS_CheckBalance_Verify_One]
 	@custid int
 AS
+/*
+	Created: unknow
+	Task : Verify data for balance check @aws
+	DB: DBTP.bodb02
+	Original:
+
+	Revisions:
+		- 20230106@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
+		
+		
+	Param's Explanation:
+*/
 SET NOCOUNT ON
 Declare @FromBettrans money, @FromTransLog money
 	, @FromBettransRNG money, @FromBettransLC money
