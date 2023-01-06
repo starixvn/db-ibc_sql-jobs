@@ -8,6 +8,7 @@ AS
 	Location: DBTP.bodb02
 	Revision:
 		- 20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
+		- 20230104@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -31,17 +32,50 @@ BEGIN
 		RETURN
 	END
 
+	--flags for new source
+	IF EXISTS (
+		SELECT TOP 1 1
+		FROM dbo.MBUSettings WHERE VName IN ('isMovingBet_Local', 'isArchivingBet_Local') AND VValue = '1'
+	)
+	BEGIN
+		PRINT 'MBU is running @DBTP so skip check balance....'
+		RETURN
+	END
+
+	IF EXISTS (
+		SELECT TOP 1 1
+		FROM DBAWS.bodb02.dbo.MBUSettings WHERE VName IN ('isMovingBet_Local', 'isArchivingBet_Local') AND VValue = '1'
+	)
+	BEGIN
+		PRINT 'MBU is running @AWS so skip check balance....'
+		RETURN
+	END
+
 	DECLARE @__movebetDateTP SMALLDATETIME, @__movebetDateAWS SMALLDATETIME
 	EXEC [dbo].[NAP_Admin_GetMovebetDate] @MovebetDate = @__movebetDateTP OUTPUT
 
 	EXEC DBAWS.bodb02.[dbo].[NAP_Admin_GetMovebetDate] @MovebetDate = @__movebetDateAWS OUTPUT
-
+	DECLARE @__message VARCHAR(500)
 	IF @__movebetDateAWS <> @__movebetDateTP
 	BEGIN
-		DECLARE @__message VARCHAR(500)
+		
 		SET @__message = 'DBTP: ' + CONVERT(varchar(10), @__movebetDateTP, 121) + ' / ' + 'DBAWS: ' + CONVERT(varchar(10), @__movebetDateAWS, 121)
 		PRINT @__message
-		WAITFOR DELAY '00:00:30:000'
+		WAITFOR DELAY '00:00:30:000'--wait for MB done....
+		GOTO replication_latency
+	END
+
+	--check BUdate
+	DECLARE @__balanceUpDateTP SMALLDATETIME, @__balanceUpDateAWS SMALLDATETIME
+	EXEC [dbo].[NAP_Admin_GetBalanceUpDate] @BalanceUpDate = @__balanceUpDateTP OUTPUT
+
+	EXEC DBAWS.bodb02.[dbo].[NAP_Admin_GetBalanceUpDate] @BalanceUpDate = @__balanceUpDateAWS OUTPUT
+
+	IF @__balanceUpDateTP <> @__balanceUpDateAWS
+	BEGIN
+		SET @__message = 'DBTP: ' + CONVERT(varchar(10), @__balanceUpDateTP, 121) + ' / ' + 'DBAWS: ' + CONVERT(varchar(10), @__balanceUpDateAWS, 121)
+		PRINT @__message
+		WAITFOR DELAY '00:00:30:000' --wait for BU done....
 		GOTO replication_latency
 	END
 
@@ -71,29 +105,24 @@ BEGIN
 		SELECT Id, tableName 
 		FROM dbo.Task_AWS_Balance_Check_MaxIdList
 
-		--check bet
-		DECLARE @__maxtransId BIGINT, @__maxawstransId BIGINT
-		SELECT @__maxtransId = MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'bettrans'
-		SELECT @__maxawstransId = MAX(transid) FROM DBAWS.bodb02.dbo.bettrans WITH(NOLOCK)
+		DECLARE @__maxtransId BIGINT, @__cntaws int
+		SELECT @__maxtransId = MAX(transid), @__cntaws = 0 FROM DBAWS.bodb02.dbo.bettrans WITH(NOLOCK)
+		SELECT @__cntaws = COUNT(1) FROM dbo.bettrans WITH(NOLOCK, INDEX=PK_bettrans) WHERE transid > @__maxtransId
 
-		IF @__maxtransId - @__maxawstransId > 5000
+		IF @__cntaws > 5000
 		BEGIN
-			WAITFOR DELAY '00:01:00:000' --replication latency on dbbal
+			WAITFOR DELAY '00:00:05:000' --replication@bettrans latency on dbbal
 			GOTO replication_latency
 		END
 
-		--check transfer
-		DECLARE @__maxTransferTransId BIGINT, @__maxawsTransferTransId BIGINT
-		SELECT @__maxTransferTransId = MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'bettrans'
-		SELECT @__maxawsTransferTransId = MAX(transid) FROM DBAWS.bodb02.dbo.transfer WITH(NOLOCK)
+		SELECT @__maxtransId = MAX(transid), @__cntaws = 0 FROM DBAWS.bodb02.dbo.transfer WITH(NOLOCK)
+		SELECT @__cntaws = COUNT(1) FROM dbo.transfer WITH(NOLOCK, INDEX=PK_Transfer) WHERE transid > @__maxtransId
 
-		IF @__maxTransferTransId - @__maxawsTransferTransId > 5000
+		IF @__cntaws > 5000
 		BEGIN
-			WAITFOR DELAY '00:01:00:000' --replication latency on dbbal
+			WAITFOR DELAY '00:00:05:000' --replication@transfer latency on dbbal
 			GOTO replication_latency
 		END
-
-		WAITFOR DELAY '00:00:03:000'
 
 		--scan all for weekly
 		DECLARE @today DATETIME = GETDATE()
@@ -111,10 +140,10 @@ BEGIN
 
 				TRUNCATE TABLE dbo.Task_AWS_Balance_All_Cust_Check
 				INSERT INTO dbo.Task_AWS_Balance_All_Cust_Check(custid)
-				SELECT custid FROM dbo.bettrans WITH(NOLOCK) WHERE transid <= @__maxtransId
+				SELECT custid FROM dbo.bettrans WITH(NOLOCK) WHERE transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE TableName = 'bettrans')
 				GROUP BY custid
 				UNION
-				SELECT custid FROM dbo.Transfer WITH(NOLOCK) WHERE transid <= @__maxTransferTransId
+				SELECT custid FROM dbo.Transfer WITH(NOLOCK) WHERE transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE TableName = 'transfer')
 				GROUP BY custid
 			END
 		END
@@ -135,14 +164,14 @@ BEGIN
 			SELECT DISTINCT custid
 			FROM (
 				SELECT TOP (@top) custid, transid
-				FROM dbo.bettrans WITH(NOLOCK) WHERE transid <= @__maxtransId
+				FROM dbo.bettrans WITH(NOLOCK) WHERE transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE TableName = 'bettrans')
 				ORDER BY transdate DESC
 			)t 
 			UNION
 			SELECT DISTINCT custid
 			FROM (
 				SELECT TOP (@top) custid, transid
-				FROM dbo.Transfer WITH(NOLOCK) WHERE transid <= @__maxTransferTransId
+				FROM dbo.Transfer WITH(NOLOCK) WHERE transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE TableName = 'transfer')
 				ORDER BY transid DESC
 			)t 
 		END

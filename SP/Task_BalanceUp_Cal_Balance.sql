@@ -8,14 +8,16 @@ AS
 	Revision:
 		- 202010514@Patrick: Revise Movebet flow to support transfer 247 - Redmine: [#149927]
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
+		- 20230104@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
 */
 SET NOCOUNT ON
-Declare @fdate datetime
+DECLARE @fdate SMALLDATETIME
 
-SELECT TOP(1) @fdate = DATEADD(day, 7, winlostdate)
-FROM dbo.Transfer with (nolock)
-WHERE bettype = 20000
-ORDER BY transid
+--get current balanceup date
+EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @fdate
+
+--next balanceup date
+SET @fdate = DATEADD(DAY, 7, @fdate)
 
 PRINT '@fdate = ' + CONVERT(varchar(10), @fdate, 120)
 

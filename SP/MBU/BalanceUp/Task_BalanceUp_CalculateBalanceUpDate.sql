@@ -62,13 +62,13 @@ BEGIN
 	END
 
 	--turn on starting BU process
-	SET @__doing = 'Task_BalanceUp_background: BU step 1.01 - Starting update BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @__fdate, 121)
+	SET @__doing = 'Task_BalanceUp_background: BU step 0.01 - Starting update BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @__fdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
 
 	--**update being balanceUp date flag ==> the purpose for which process need to check balanceUp processing
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @__fdate, @keyFlag = 11, @tableName = 'MBUSettings'
 
-	SET @__doing = 'Task_BalanceUp_background: BU step 1.01 - Ending update BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @__fdate, 121)
+	SET @__doing = 'Task_BalanceUp_background: BU step 0.01 - Ending update BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @__fdate, 121)
 	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
 
 END

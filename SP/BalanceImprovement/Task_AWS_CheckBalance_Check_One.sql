@@ -8,6 +8,7 @@ AS
 	Location: DBTP.bodb02 | DBBAL.bodb02
 	Revision:
 		- 20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
+		- 20230104@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -18,6 +19,9 @@ BEGIN
 
 	DECLARE @__movebetdate SMALLDATETIME
 	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
+
+	DECLARE @__balanceupdate SMALLDATETIME
+	EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @__balanceupdate OUTPUT
 
 	IF @@SERVERNAME IN ('DBBAL', 'SITDBBAL') --for hint index
 	BEGIN
@@ -42,6 +46,8 @@ BEGIN
 	FROM dbo.Transfer WITH (NOLOCK, INDEX=IX_custid) 
 	WHERE custid = @custid AND transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'transfer')
 		AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+					 WHEN bettype = 20000 AND winlostdate > @__balanceupdate THEN 0 --> new bal
+					 WHEN winlostdate < @__balanceupdate THEN 0 --> old data
 					 ELSE 1 END
 		
 	SELECT @FromAdjustmentTransfer = SUM(Amount)

@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]		
 		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
+		- 20230106@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
 		
 		
 	Param's Explanation:
@@ -104,7 +105,7 @@ BEGIN
 	END
 
  	
-	Declare @rn int, @rx int
+	Declare @rn int, @rx int, @__errcode int, @__errmsg varchar(200), @__tryCount int = 0
 	SET @rn = 0
 	SET @rx = 2000
 
@@ -115,22 +116,31 @@ BEGIN
 			DELETE t WITH (ROWLOCK)
 			FROM #ticketList tl
 				INNER LOOP JOIN dbo.Transfer t ON t.transid = tl.transid
-			WHERE
-				tl.rn BETWEEN @rn AND @rx
+			WHERE tl.rn BETWEEN @rn AND @rx
 			OPTION(FORCE ORDER, MAXDOP 4)
 
 			DELETE ti WITH(ROWLOCK)
 			FROM #ticketList tl
 				INNER LOOP JOIN dbo.TransferInfo ti ON ti.TransId = tl.transid
-			WHERE	
-				tl.rn BETWEEN @rn AND @rx
+			WHERE tl.rn BETWEEN @rn AND @rx
 			OPTION(FORCE ORDER, MAXDOP 4)
 
 			SET @rn = @rn + 2000
 			SET @rx = @rx + 2000
 		END TRY
 		BEGIN CATCH
-			SET @r = 1
+			SELECT @__errcode = ERROR_NUMBER(), @__errmsg = ERROR_MESSAGE()
+			IF @__errcode = 1205 -- deadlock
+			BEGIN
+				SET @__tryCount = @__tryCount + 1
+				WAITFOR DELAY '00:00:00.100' -- BU - remove old data got deadlock then wait for 100 ms
+
+				IF @__tryCount < 3
+					CONTINUE
+			END
+
+			RAISERROR (@errmsg, 16, 1)
+
 		END CATCH
 	END
  

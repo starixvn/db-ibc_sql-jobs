@@ -147,7 +147,7 @@ BEGIN
 			, @CurrentDateTime = @CurrentDateTime
 			, @TotalMoveBetDays = NULL
 
-		EXEC dbo.Task_MBUSettingsUpd @VValue = '1', @VName = 'isArchivingBet', @Mode = 0
+		EXEC dbo.Task_MBUSettingsUpd @VValue = '1', @VName = 'isArchivingBet'
 
 		--//turn on isArchivingBet_Local flag
 		EXEC dbo.Transfer_ExecRep_02 @Mode = 5, @TableName = 'MBUSettings'
@@ -566,8 +566,6 @@ BEGIN
 	END
 	ELSE IF @step = 8 --turn off trigger | flag
 	BEGIN
-		SET @Doing = 'Task_BalanceUp_background : Starting step: ' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		EXEC dbo.Task_BalanceUp_TriggerControl @step = 2, @on = 0
 
