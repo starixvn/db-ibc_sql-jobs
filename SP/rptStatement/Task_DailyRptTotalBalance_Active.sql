@@ -15,6 +15,8 @@ AS
 		- 20201008@Percy: Get SMA from bettrans instead of custinfo table [RedmineID: #142953]
 		- 20210527@Danny: Enhance merge statement [RedmineID: #154536]
 		- 20211122@Danny: Split transfer tickets out of bettrans [Redmine: #164196]
+		- 20230106@Bobby: Enhance code [Redmine: #182553]
+		
  */
 
 BEGIN
@@ -68,7 +70,7 @@ BEGIN
 			FROM dbo.rptStatement rpt WITH (NOLOCK) 
 			WHERE  Winlostdate >= @Saturday
 		) AS rpt
-			LEFT JOIN bodb02.dbo.custInfo c WITH (NOLOCK) ON rpt.custid = c.custid
+			LEFT JOIN bodb02.dbo.custInfo c WITH (NOLOCK, INDEX=PK_custinfo) ON rpt.custid = c.custid
 		WHERE rpt.Num = 1;
 
 		IF EXISTS (SELECT 1 FROM #rptOpenningBalanceTable WHERE recommend IS NULL)
