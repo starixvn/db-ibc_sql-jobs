@@ -16,6 +16,7 @@ AS
 		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
 						- Check total ticket is correctly insert related to the number of super accounts - [Redmine:#175881]
 		- 20221206@Danny: Skip check transfer Info - crypto Licensee [Redmine: #181343]
+		- 20230105@Danny: Skip check transfer Info - crypto Licensee [Redmine: #181343]
 
 	Param's Expanation:
 */
@@ -58,7 +59,7 @@ BEGIN
 										ELSE 0 END
 								)
 	FROM DBCTG.bodb02.dbo.LicenseeTransferPool p WITH (NOLOCK)
-	WHERE MonthDate = @endOfPreviousMonth
+	WHERE MonthDate = @endOfPreviousMonth AND p.Status <> 'Skipped'
 
 	--get list custId
 	SELECT 
