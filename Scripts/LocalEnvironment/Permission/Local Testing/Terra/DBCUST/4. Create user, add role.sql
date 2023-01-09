@@ -7,12 +7,16 @@ BEGIN
 END
 
 DECLARE @strUser	VARCHAR(MAX) = ''
+		,@RoleName VARCHAR(50) = 'db_Terra'
+		,@LeaderRoleName VARCHAR(50) = 'db_owner'
+		,@Leader VARCHAR(50) = 'spvn\jerry.tran'
+
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
 	VALUES ('CustDB'),('IPDB'),('NAP_UserControl'),('bodb_CustomerLog'), ('bodb_Licensee')
 
-DECLARE @tmpMember TABLE (Name VARCHAR(50))
+DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
 	VALUES   ('SPVN\jerry.tran')
@@ -28,18 +32,11 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\lucy.ho')
 			,('SPVN\bill.nguyen')
 			,('SPVN\joyce.pham')
-			--,('SPVN\rita.bui')
-			--,('SPVN\bob.duong')
+			,('SPVN\duke.nguyen') 
 
-/*
-	USE DBName
-	GO 
-	CREATE USER vnXXX FOR LOGIN vnXXX WITH DEFAULT_SCHEMA=[dbo] 
-	GO
-
-	-- Delete user: EXEC sp_dropuser 'spvn\xxx.xxx';
-*/
-
+UPDATE @tmpMember
+	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
+ 
 SELECT	@strUser = @strUser 
 					+ 'USE ' + d.DBName + ';'
 					+ CHAR(13)
@@ -56,52 +53,12 @@ FROM	@tmpAffectedDB d
 	) t
 
 EXEC (@strUser)
-GO
+waitfor delay '00:00:01'
 
 --------------------------------------------------------------------------------------
 -- Add Role for member
-IF @@SERVERNAME NOT IN ( 'DB-60\DevDBcust', 'TESTDBCUST' )
-BEGIN
-	SELECT 'Must be run on DevDBcust or TESTDBCUST' AS 'Error'
-	RETURN
-END
+set @strUser = ''
 
-DECLARE @strUser VARCHAR(MAX) = ''
-		,@RoleName VARCHAR(50) = 'db_Terra'
-		,@LeaderRoleName VARCHAR(50) = 'db_owner'
-		,@Leader VARCHAR(50) = 'spvn\jerry.tran'
-
-DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('CustDB'),('IPDB'),('NAP_UserControl'),('bodb_CustomerLog'), ('bodb_Licensee')
-
-INSERT INTO @tmpMember (Name) 
-	VALUES   ('SPVN\jerry.tran')
-			,('SPVN\andrew.vu')
-			,('SPVN\susan.le')
-			,('SPVN\martin.tran')
-			,('SPVN\shane.nguyen')
-			,('SPVN\rocky.ping')
-			,('SPVN\felix.nguyen')
-			,('SPVN\lita.tang')
-			,('SPVN\benji.duong')
-			,('SPVN\henry.nguyen')
-			,('SPVN\lucy.ho')
-			,('SPVN\bill.nguyen')
-			,('SPVN\joyce.pham')
-			--,('SPVN\rita.bui')
-			--,('SPVN\bob.duong')
-
-UPDATE @tmpMember
-	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
-/*
-	USE DBName
-	GO
-	EXEC sp_AddRoleMember 'db_xxx', 'vnxxx'
-	GO
-*/
 SELECT	@strUser = @strUser
 					+ 'USE ' + d.DBName + ';'
 					+ CHAR(13)

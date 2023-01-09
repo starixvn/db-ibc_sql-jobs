@@ -1,10 +1,11 @@
 USE [master]
 GO
  
+
 -- Grant permisison Profiler for login
-IF @@SERVERNAME NOT IN ( 'DB-60\DevDBcust', 'TESTDBCUST' )
+IF @@SERVERNAME NOT IN ( 'DEVDB061' , 'TESTDB061' )
 BEGIN
-	SELECT 'Must be run on DevDBcust or TESTDBCUST' AS 'Error'
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
 
@@ -25,13 +26,11 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\henry.nguyen')
 			,('SPVN\lucy.ho')
 			,('SPVN\bill.nguyen')
-			,('SPVN\joyce.pham')
-			--,('SPVN\rita.bui')
-			--,('SPVN\bob.duong')
+			,('SPVN\joyce.pham') 
 
 SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
 FROM	@tmpMember
 
 EXEC (@strLoginName)
 GO
- 
+

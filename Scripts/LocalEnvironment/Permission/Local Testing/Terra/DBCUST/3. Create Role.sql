@@ -1,16 +1,8 @@
-/*
-	For Rome team:
-	Affected DB:
-		CustDB
-		IPDB
-		NAP_UserControl
-		bodb_CustomerLog
-*/
--- Create Role
-IF @@SERVERNAME NOT IN (  'DB-60\DevDBcust', 'TESTDBCUST' )
-BEGIN
-	SELECT 'Must be run on  DevDBcust or TESTDBCUST' AS 'Error'
 
+
+IF @@SERVERNAME NOT IN ( 'DB-60\DevDBcust', 'TESTDBCUST' )
+BEGIN
+	SELECT 'Must be run on DevDBcust or TESTDBCUST' AS 'Error'
 	RETURN
 END
 
@@ -31,27 +23,15 @@ SELECT @strRole = @strRole + ' '
 FROM	@tmpAffectedDB
 
 EXEC (@strRole)
-GO
---------------------------------------------------------------------------------------
-
-IF @@SERVERNAME NOT IN (  'DB-60\DevDBcust', 'TESTDBCUST' )
-BEGIN
-	SELECT 'Must be run on DevDBcust or TESTDBCUST' AS 'Error'
-
-	RETURN
-END
+waitfor delay '00:00:01'
+ 
 
 -- Grant permission to new role
-DECLARE @RoleName VARCHAR(50) = 'db_Terra'
-		,@strPermission	VARCHAR(MAX) = ''
+DECLARE	@strPermission	VARCHAR(MAX) = ''
 		,@strAlterSP	VARCHAR(MAX) = ''
 
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
 DECLARE @tmpSPName TABLE (SPName VARCHAR(200), DBName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('CustDB'),('IPDB'),('NAP_UserControl'),('bodb_CustomerLog'), ('bodb_Licensee')
 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE'), ('ALTER')
@@ -78,14 +58,6 @@ SELECT @strAlterSP = @strAlterSP + ' '
 					 + CHAR(13)
 FROM	@tmpSPName s
 	
-SELECT @strAlterSP
---EXEC (@strAlterSP)
+EXEC (@strAlterSP)
 
-USE CustDB
-GRANT ALTER ON Acc_DynamicCustSetting3rd_09 TO db_Terra
 GO
-
- USE CustDB ;
-GRANT ALTER ON Acc_DynamicCustSetting3rd_09 TO db_Terra ;
- USE CustDB ;
-GRANT ALTER ON Acc_DynamicCustomerInfo_09 TO db_Terra ;

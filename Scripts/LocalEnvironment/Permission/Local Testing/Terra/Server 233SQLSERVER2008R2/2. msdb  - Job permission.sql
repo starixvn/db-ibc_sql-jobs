@@ -26,8 +26,7 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\lucy.ho')
 			,('SPVN\bill.nguyen')
 			,('SPVN\joyce.pham')
-			--,('SPVN\rita.bui')
-			--,('SPVN\bob.duong')
+			,('SPVN\May.ha')
 
 SELECT	@strUser = @strUser 
 			+ 'CREATE USER ' + '[' + t.Name + ']' + ' FOR LOGIN ' + '[' + t.Name + ']' + ' WITH DEFAULT_SCHEMA=[dbo]; '
@@ -70,8 +69,7 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\lucy.ho')
 			,('SPVN\bill.nguyen')
 			,('SPVN\joyce.pham')
-			--,('SPVN\rita.bui')
-			--,('SPVN\bob.duong')
+			,('SPVN\May.ha')
 
 
 SELECT	@strUser = @strUser + 'EXEC sp_AddRoleMember ''SQLAgentReaderRole''' + ', ''' + t.Name + '''' 

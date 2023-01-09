@@ -2,9 +2,9 @@ USE [master]
 GO
 -- Create Login
  
-IF @@SERVERNAME NOT IN ( 'DB232', 'DB234' , 'TESTDB061' )
+IF @@SERVERNAME NOT IN ( 'DEVDB061' , 'TESTDB061' )
 BEGIN
-	SELECT 'Must be run on DB232 or TESTDB061' AS 'Error'
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
 
@@ -27,9 +27,7 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\lucy.ho')
 			,('SPVN\bill.nguyen')
 			,('SPVN\joyce.pham')
-
-			--,('SPVN\rita.bui')
-			--,('SPVN\bob.duong')
+			 
 
 -- CREATE LOGIN [spvn\nickname] FROM WINDOWS;  
 SELECT @strLoginName = @strLoginName 

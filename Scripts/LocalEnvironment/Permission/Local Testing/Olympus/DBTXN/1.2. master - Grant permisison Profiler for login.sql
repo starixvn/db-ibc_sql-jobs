@@ -2,11 +2,9 @@ USE [master]
 GO
  
 -- Grant permisison Profiler for login
-
-IF @@SERVERNAME NOT IN ( 'DB206' , 'TESTDBTRANS', 'DB62\DEVSITEDB','DB-60\DEVDBTRANS' )
+IF @@SERVERNAME NOT LIKE '%DBTRANS' AND @@SERVERNAME NOT LIKE  '%SiteDB%'
 BEGIN
-	SELECT 'Must be run on DB206' AS 'Error'
-
+	SELECT 'Wrong server' AS 'Error'
 	RETURN
 END
 
@@ -24,6 +22,7 @@ VALUES		('SPVN\jacob.phan')
 			,('SPVN\zane.trinh')  
 			,('SPVN\levi.vu')
 			,('SPVN\luca.duong')
+			,('SPVN\agnes.tran')
 
 SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
 FROM	@tmpMember

@@ -29,8 +29,7 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\lucy.ho')
 			,('SPVN\bill.nguyen')
 			,('SPVN\joyce.pham')
-			--,('SPVN\rita.bui')
-			--,('SPVN\bob.duong')
+			,('SPVN\May.ha')
 
 /*
 	USE DBName
@@ -93,8 +92,7 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\lucy.ho')
 			,('SPVN\bill.nguyen')
 			,('SPVN\joyce.pham')
-			--,('SPVN\rita.bui')
-			--,('SPVN\bob.duong')
+			,('SPVN\May.ha')
 
 UPDATE @tmpMember
 	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
