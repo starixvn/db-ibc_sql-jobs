@@ -21,7 +21,7 @@ AS
 	Param's Explanation:
 */
 BEGIN
-
+	SET NOCOUNT ON
 	CREATE TABLE #ticketList (rn int PRIMARY KEY IDENTITY(0,1), transid bigint)   
 	DECLARE @tc int -- ticket count
 	DECLARE @r int

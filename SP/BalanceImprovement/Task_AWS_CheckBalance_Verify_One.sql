@@ -9,7 +9,7 @@ AS
 	Original:
 
 	Revisions:
-		- 20230106@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
+		- 20230106@Patrick: Balance-Up support transfer 247 [RedmineID: #182882]
 		
 		
 	Param's Explanation:

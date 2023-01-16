@@ -22,7 +22,7 @@ AS
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
 		20220715@Patrick: Use insert into instead of select into Redmine: [#175440]
 		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
-		20221227@Patrick: Support BU 247 Redmine: [#173554]
+		20221227@Patrick: Support BU 247 Redmine: [#182882]
 		
 	Param use:
 

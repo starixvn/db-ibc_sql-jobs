@@ -20,7 +20,7 @@ AS
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
 		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 		20220912@Patrick: Support scale-out for deposit site - fix issue Redmine: [#177641]
-		20221227@Patrick: Support BU 247 Redmine: [#173554]
+		20221227@Patrick: Support BU 247 Redmine: [#182882]
 
 	Param use:
 

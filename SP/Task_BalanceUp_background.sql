@@ -455,8 +455,8 @@ BEGIN
 			SELECT TOP 1 1 FROM dbo.MBUSettings WHERE VName = 'BU_ReadyUpdBUDate' AND VValue <> '0'
 		)
 		BEGIN
-			WAITFOR DELAY '00:01:00:000' --waitfor BU_ReadyUpdBUDate done...
-			IF DATEDIFF(MINUTE, @__start, GETDATE()) > 120
+			WAITFOR DELAY '00:00:10:000' --waitfor BU_ReadyUpdBUDate done...
+			IF DATEDIFF(MINUTE, @__start, GETDATE()) > 180 --> 3hours
 			BEGIN
 				--Send notification to dba
 				SET @Doing = 'Urgently!!! BalanceUp - hey guys, BalanceUp background run long time at step 6 (1). Please check!!!'
@@ -492,7 +492,7 @@ BEGIN
 			IF DATEDIFF(MINUTE, @__start, GETDATE()) > 30
 			BEGIN
 				--Send notification to dba
-				SET @Doing = 'Urgently!!! BalanceUp - hey guys, BalanceUp background run long time at step 6 (1). Please check!!!'
+				SET @Doing = 'Urgently!!! BalanceUp - hey guys, BalanceUp background run long time at step 6 (2). Please check!!!'
 				EXEC dbo.DBA_Task_Send_SimpleNotifyMessageToDBA
 					@SubjectName = 'Urgently!!! BalanceUp - Notification',
 					@MessageName = @Doing

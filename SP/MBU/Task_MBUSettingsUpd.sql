@@ -12,9 +12,6 @@ AS
 		- 20220706@Patrick: init [Redmine:#173554]
 		
 	Params:
-		+ @Mode: 
-			0: @VValue value is free text & set override VValue
-			9999: @VValue value must be integer & not set override VValue.
 */
 BEGIN
 	SET NOCOUNT ON

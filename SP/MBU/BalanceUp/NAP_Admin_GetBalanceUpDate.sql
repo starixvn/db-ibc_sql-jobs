@@ -20,9 +20,8 @@ BEGIN
 
 	IF @BalanceUpDate IS NULL
 	BEGIN
-		SELECT TOP(1) @BalanceUpDate = winlostdate
-		FROM dbo.Transfer t WITH(NOLOCK)
-		WHERE bettype = 20000 AND custid = 3
-		ORDER BY TransId
+		--throw exception to let APP have a error 
+		RAISERROR('BalanceUpDate value is null. Please contact DBA for support.', 16, 1)
+		RETURN
 	END
 END

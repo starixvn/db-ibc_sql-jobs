@@ -6,7 +6,7 @@ AS
 	Location: DBTP.bodb02
 	Revision:
 		- 20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
-		- 20230104@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
+		- 20230104@Patrick: Balance-Up support transfer 247 [RedmineID: #182882]
 */
 BEGIN
 	SET NOCOUNT ON
