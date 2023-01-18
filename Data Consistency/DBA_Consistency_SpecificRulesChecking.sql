@@ -42,6 +42,7 @@ AS
 		- 20220620@July: Check tickets before yesterday in bettrans/bettransLC/bettransRNG & Remove code for Poker Games(163), GoldDeluxe(255) product - [Redmine:#174264]
 		- 20221005@July: MG-RNG - Add rule check if no discount, no comm [Redmine:#178718]
 		- 20221013@July: Add rule - Ensure each translog ticket only has one bettrans ticket [Redmine:#179020]
+		- 20230118@July: Jili - Add rule check if no discount, no comm [Redmine:#182955]
 
 		Param's Expanation:
 */
@@ -311,9 +312,9 @@ BEGIN
 	END
 
 	/* Rule #3: Check if no discount, no comm (apply to product non-offer comm)
-			for Virtual Games, Table Games, Sports Lottery, Saba.club, Saba.club Free Bets, VGaming, VGaming Free Bets, FGG, Keno, Lottery, Funky Games, Macau Games, PP, PG Soft, SG, Arcadia Gaming, Joker, MaxGame, Habanero, CG, AdvantPlay, AdvantPlay Mini, Virtual Sports, Virtual Sports 2, Virtual Sports 3, MG-RNG
+			for Virtual Games, Table Games, Sports Lottery, Saba.club, Saba.club Free Bets, VGaming, VGaming Free Bets, FGG, Keno, Lottery, Funky Games, Macau Games, PP, PG Soft, SG, Arcadia Gaming, Joker, MaxGame, Habanero, CG, AdvantPlay, AdvantPlay Mini, Virtual Sports, Virtual Sports 2, Virtual Sports 3, MG-RNG, Jili
 	*/
-	IF @ProductId IN (245, 222, 169, 200, 150, 171, 173, 176, 202, 220, 224, 212, 248, 232, 247, 165, 234, 237, 238, 167, 172, 174, 180, 181, 182, 183, 184, 185, 186, 190, 191, 192, 193, 194, 195, 196, 197, 231, 155)
+	IF @ProductId IN (245, 222, 169, 200, 150, 171, 173, 176, 202, 220, 224, 212, 248, 232, 247, 165, 234, 237, 238, 167, 172, 174, 180, 181, 182, 183, 184, 185, 186, 190, 191, 192, 193, 194, 195, 196, 197, 231, 155, 158)
 	BEGIN
 		IF @Rule = 'no_discount_comm'
 		BEGIN
