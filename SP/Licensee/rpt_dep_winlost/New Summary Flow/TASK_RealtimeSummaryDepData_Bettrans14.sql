@@ -73,6 +73,7 @@ AS
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
 		- 20230208@Evan: Inteagrate SG promotion prize [RedmineID: #183497]
+		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -338,6 +339,7 @@ BEGIN
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
+				WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
@@ -445,6 +447,7 @@ BEGIN
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
+				WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 				ELSE 0
 			END--SportType
 		OPTION (RECOMPILE, MAXDOP 8)

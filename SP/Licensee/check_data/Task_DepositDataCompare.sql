@@ -40,6 +40,7 @@ AS
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
+		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -144,7 +145,8 @@ BEGIN
 		,VS3 BIGINT
 		,BTC BIGINT
 		,FGGL BIGINT
-		,MXG BIGINT)
+		,MXG BIGINT
+		,JIG BIGINT)
 
 	--exec
 	--rptLicWinloss2
@@ -196,7 +198,8 @@ BEGIN
 		,VS3
 		,BTC
 		,FGGL
-		,MXG)
+		,MXG
+		,JIG)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
@@ -365,7 +368,8 @@ BEGIN
 		,VS3
 		,BTC
 		,FGGL
-		,MXG)
+		,MXG
+		,JIG)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (
