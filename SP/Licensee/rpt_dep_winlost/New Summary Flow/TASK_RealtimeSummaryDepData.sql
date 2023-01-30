@@ -71,6 +71,7 @@ AS
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
+		- 20230208@Evan: Inteagrate SG promotion prize [RedmineID: #183497]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -308,6 +309,7 @@ BEGIN
 				SUM(CASE
 						WHEN b.bettype < 19999
 							AND b.ruben = 1
+							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
 							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
@@ -326,7 +328,7 @@ BEGIN
 				0, -- Bonus Wallet
 				0, -- AdjBonusWallet
 				SUM(CASE
-						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
+						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
 							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 							OR (b.bettype BETWEEN 17000 AND 17030)
@@ -460,7 +462,7 @@ BEGIN
 						WHEN b.winlostdate = @WinLostDate
 							AND b.bettype < 19999
 							AND b.ruben = 1
-							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
+							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)  
@@ -478,7 +480,7 @@ BEGIN
 				0, -- AdjBonusWallet
 				SUM(CASE
 						WHEN b.winlostdate = @Winlostdate 
-							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
+							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
 								OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 								OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 								OR (b.bettype BETWEEN 17000 AND 17030)
@@ -745,8 +747,8 @@ BEGIN
 				WHEN bettype BETWEEN 4297 AND 4300 THEN -248 -- PP Prize
 				WHEN (bettype BETWEEN 1901 AND 1999 AND bettype <> 1906) THEN 165 -- CC
 				WHEN bettype = 1906 THEN -165 -- Bonus
-				WHEN bettype BETWEEN 4301 AND 4598 THEN 247 -- SG
-				WHEN bettype BETWEEN 4599 AND 4600 THEN -247 -- SG Jackpot Contribution and Jackpot Prize
+				WHEN bettype BETWEEN 4301 AND 4597 THEN 247 -- SG
+				WHEN bettype BETWEEN 4598 AND 4600 THEN -247 -- SG Jackpot Contribution and Jackpot Prize and Promotion
 				WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
@@ -780,7 +782,7 @@ BEGIN
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
 			SUM(CASE
-					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4599, 4600, 2499)
+					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4598, 4599, 4600, 2499)
 						OR (bettype BETWEEN 17000 AND 17030) 
 						OR (bettype BETWEEN 8700 AND 8709) THEN Promotion
 					ELSE Winloss
@@ -828,8 +830,8 @@ BEGIN
 				WHEN bettype BETWEEN 4297 AND 4300 THEN -248 -- PP Prize
 				WHEN (bettype BETWEEN 1901 AND 1999 AND bettype <> 1906) THEN 165 -- CC
 				WHEN bettype = 1906 THEN -165 -- Bonus
-				WHEN bettype BETWEEN 4301 AND 4598 THEN 247 -- SG
-				WHEN bettype BETWEEN 4599 AND 4600 THEN -247 -- SG Jackpot Contribution and Jackpot Prize
+				WHEN bettype BETWEEN 4301 AND 4597 THEN 247 -- SG
+				WHEN bettype BETWEEN 4598 AND 4600 THEN -247 -- SG Jackpot Contribution and Jackpot Prize and Promotion
 				WHEN bettype BETWEEN 4601 AND 4900 THEN 245 -- VRG
 				WHEN bettype BETWEEN 4901 AND 5000 THEN 222 -- TG
 				WHEN bettype BETWEEN 5001 AND 5099 THEN 223 -- I4D
@@ -1012,5 +1014,5 @@ BEGIN
 	DROP TABLE #rptDepWinlostOutstanding
 	DROP TABLE #rptDepWinlostBonusWallet
 	DROP TABLE #transid
-END
+END 
 GO
