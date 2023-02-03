@@ -452,7 +452,7 @@ BEGIN
 		DECLARE @__start DATETIME
 		SET @__start = GETDATE()
 		WHILE EXISTS (
-			SELECT TOP 1 1 FROM dbo.MBUSettings WHERE VName = 'BU_ReadyUpdBUDate' AND VValue <> '0'
+			SELECT TOP 1 1 FROM DBCTG.bodb02.dbo.MBUSettings WHERE VName = 'BU_ReadyUpdBUDate' AND VValue <> '0'
 		)
 		BEGIN
 			WAITFOR DELAY '00:00:10:000' --waitfor BU_ReadyUpdBUDate done...
@@ -485,7 +485,7 @@ BEGIN
 		--//whether update balanceup date has done on replicated | sitedbs servers yet?
 		SET @__start = GETDATE()
 		WHILE EXISTS (
-			SELECT TOP 1 1 FROM dbo.MBUSettings WHERE VName = 'BU_ReadyToDelete' AND VValue <> '0'
+			SELECT TOP 1 1 FROM DBCTG.bodb02.dbo.MBUSettings WHERE VName = 'BU_ReadyToDelete' AND VValue <> '0'
 		)
 		BEGIN
 			WAITFOR DELAY '00:01:00:000' --waitfor BU_ReadyToDelete done...
