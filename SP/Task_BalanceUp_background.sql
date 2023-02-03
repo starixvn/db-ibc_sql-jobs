@@ -70,6 +70,9 @@ BEGIN
 		--**turn on copy 20k flag
 		EXEC dbo.Transfer_ExecRep_02 @Mode = 7, @TableName = 'MBUSettings'
 
+		--//*turn on BU_UpdBUDate_Local flag ==> to determine whater have go to delete or wait 
+		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 13, @tableName = 'MBUSettings'
+
 		SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', end turn on flag 20k'
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
 
@@ -466,9 +469,6 @@ BEGIN
 
 			END
 		END
-
-		--//turn on BU_UpdBUDate_Local flag ==> to determine a pub update data already throughput 
-		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 13, @tableName = 'MBUSettings'
 		
 		SET @Doing = 'Task_BalanceUp_background BU step 6.02 - Starting update BalanceUpDate flag ' + CAST(@step AS VARCHAR(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
@@ -479,7 +479,7 @@ BEGIN
 		SET @Doing = 'Task_BalanceUp_background BU step 6.02 - Ending update BalanceUpDate flag' + CAST(@step AS VARCHAR(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
-		--//turn off BU_UpdBalDate_Local flag
+		--//*turn off BU_UpdBalDate_Local flag
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 14, @tableName = 'MBUSettings'
 
 		--//whether update balanceup date has done on replicated | sitedbs servers yet?
