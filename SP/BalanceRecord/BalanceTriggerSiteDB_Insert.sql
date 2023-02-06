@@ -1,0 +1,153 @@
+/*<info serverAlias="DBBAH-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/  
+ALTER PROCEDURE [dbo].[BalanceTriggerSiteDB_Insert] 
+(
+	@SiteDBGroupID	SMALLINT
+	,@TransInfo		VARBINARY(MAX)
+	,@IsTest		BIT
+	,@ErrorMsg		VARCHAR(MAX) = ''
+)
+AS
+/*
+	Created: 20220130@Louisa
+    DB: DBBAH/bodb02
+   
+   Revisions:
+		- 20220130@Louisa: Phase 2 - use Web Service to pull ticket from SiteDB to DB05/DB05BK1 [176932]
+
+	Param's explaination:
+
+*/
+BEGIN
+	
+	SET XACT_ABORT ON
+	
+	IF ISNULL(@SiteDBGroupID,0) = 0
+	BEGIN
+		SELECT @ErrorMsg = 'Wrong SiteDBGroupID'
+		RETURN
+	END
+
+	DECLARE @MaxRowID		BIGINT
+			,@VNameStatus	VARCHAR(50)
+			,@VNameLastRow	VARCHAR(50)
+			,@Sufix			VARCHAR(2)
+	
+	DECLARE @tblSetting TABLE (LastRowInserted VARCHAR(100), StatusID  VARCHAR(100)) 
+
+	SET @Sufix = RIGHT ('0' + CAST(@SiteDBGroupID AS VARCHAR(2)),2)
+
+	SELECT @VNameLastRow = CASE @IsTest WHEN 0 THEN 'BT_SiteDB' + @Sufix + '_Sync'
+										ELSE 'BT_SiteDB' + @Sufix + '_Sync' + '_UAT'
+										END
+
+	SELECT @VNameStatus = CASE @IsTest WHEN 0 THEN 'BT_SiteDB' + @Sufix + '_InsStatus'
+											  ELSE 'BT_SiteDB' + @Sufix + '_InsStatus_UAT'
+											  END
+	CREATE TABLE #tmpBalanceTrigger
+			(
+				[RowID] [bigint] NOT NULL,
+				[custid] [int] NOT NULL,
+				[transid] [bigint] NOT NULL,
+				[bettype] [smallint] NOT NULL,
+				[actual_stake] [money] NOT NULL,
+				[winlost] [money] NOT NULL,
+				[playercomm] [money] NOT NULL,
+				[BalanceChanged] [money] NOT NULL,
+				[NewBalance] [money] NULL,
+				[ActionDate] [datetime] NOT NULL,
+				[ActionID] [tinyint] NULL,
+				[Action] [varchar](200) NOT NULL,
+				[BTBalance] [money] NULL,
+				[StatusId] [tinyint] NULL,
+				[MatchId] [int] NULL,
+				[SettlementType] [tinyint] NULL,
+				[awinlost] [money] NULL,
+				[mwinlost] [money] NULL,
+				[swinlost] [money] NULL,
+				[comm] [money] NULL,
+				[acomm] [money] NULL,
+				[scomm] [money] NULL,
+				[modds] [smallmoney] NULL
+			)
+
+	BEGIN TRY
+		BEGIN TRANSACTION
+			UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+			SET VValue = '1'
+			WHERE VName = @VNameStatus
+
+			INSERT INTO #tmpBalanceTrigger (rowID, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds)
+			select 
+				 r
+				,cid
+				,t
+				,bt
+				,astake
+				,wl
+				,pc
+				,bc
+				,newb
+				,ad
+				,aid
+				,a
+				,btb
+				,sid
+				,mid
+				,st
+				,aw
+				,mw
+				,sw
+				,c
+				,ac
+				,sc
+				, modds
+			FROM  OPENJSON (  CAST( DECOMPRESS(@TransInfo)   AS VARCHAR(MAX)) )
+			WITH (
+					r bigint
+					,cid int
+					,t bigint
+					,bt smallint
+					,astake money
+					,wl money
+					,pc  money
+					,bc money
+					,newb money
+					,ad datetime
+					,aid tinyint
+					,a varchar(50)
+					,btb money
+					,sid int
+					,mid int
+					,st tinyint
+					,aw money
+					,mw money
+					,sw money
+					,c money
+					,ac money
+					,sc money
+					, modds smallmoney
+				)
+
+			SET @MaxRowID = (SELECT MAX(rowID) FROM #tmpBalanceTrigger)
+
+			INSERT INTO [dbo].[BalanceTrigger] (custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds)
+			SELECT custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds
+			FROM #tmpBalanceTrigger
+			ORDER BY RowID ASC
+
+			UPDATE dbo.SystemSettings WITH (ROWLOCK,UPDLOCK)
+			SET VValue = CAST(@MaxRowID AS VARCHAR(100) )
+			WHERE VName = @VNameLastRow
+		
+		COMMIT TRANSACTION
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrorMsg = error_message()
+	END CATCH
+			
+	DROP TABLE #tmpBalanceTrigger
+
+END
+GO
+
+
