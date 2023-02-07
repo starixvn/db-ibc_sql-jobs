@@ -13,6 +13,7 @@ AS
   
 	Revisions:  
 	    - 20220523@Eden: LAP - Player Segmentation - Monitored Player [Redmine:#172605]
+		- 20221220@Eden: Alpha - Monitor SMA Win Loss [Redmine:#179067]
 
 	Param's Explanation:
 		@IsSub : Subsidiary Search
@@ -74,8 +75,16 @@ BEGIN
 	END
 
 	---------get setting Credit
+	--SMA
+	SELECT ci.custid, sma.InitSettingTime, CAST(0 AS BIT) AS IsDeposit, ci.srecommend, a.custid AS SettingCustID, a.roleid
+	FROM WLMonitored_SMA sma WITH(NOLOCK) 
+		INNER JOIN custInfo ci WITH(NOLOCK) ON sma.CustID IN(ci.recommend,ci.mrecommend,ci.srecommend) AND ci.roleid = 1 AND ci.Enabled = 1
+		INNER JOIN custInfo a WITH(NOLOCK) ON sma.CustID = a.custid AND a.roleid IN (2,3,4)
+		INNER JOIN #Cust_Tbl_Credit cr ON cr.CustID = ci.custid
+	WHERE sma.Sporttype = @Sporttype
+	UNION ALL
 	--Global
-	SELECT ci.custid, w.InitSettingTime, CAST(0 AS BIT) AS IsDeposit, ci.srecommend
+	SELECT ci.custid, w.InitSettingTime, CAST(0 AS BIT) AS IsDeposit, ci.srecommend, ci.custid AS SettingCustID, ci.roleid
 	FROM WLMonitored_Global w WITH(NOLOCK) 
 		INNER JOIN custInfo ci WITH(NOLOCK) ON w.agentid = ci.recommend AND ci.roleid = 1 AND ci.Enabled = 1
 		INNER JOIN #Cust_Tbl_Credit cr ON cr.CustID = ci.custid
@@ -84,7 +93,7 @@ BEGIN
 		AND w.Sporttype = @Sporttype
 	UNION ALL
 	--Personal
-	SELECT per.custid, per.InitSettingTime, CAST(0 AS BIT) AS IsDeposit, ci.srecommend
+	SELECT per.custid, per.InitSettingTime, CAST(0 AS BIT) AS IsDeposit, ci.srecommend, per.custid AS SettingCustID, ci.roleid
 	FROM WLMonitored_Player per WITH(NOLOCK) 
 		INNER JOIN custInfo ci WITH(NOLOCK) ON per.custid = ci.custid AND ci.roleid = 1 AND ci.Enabled = 1
 		INNER JOIN #Cust_Tbl_Credit cr ON cr.CustID = ci.custid
@@ -92,7 +101,7 @@ BEGIN
 		--AND NOT( per.WinningThreshold IS NULL AND per.LosingThreshold IS NULL) -- config unlimited --> still sum AccumWL
 	UNION ALL
 	---------get setting Deposit
-	SELECT per.custid, per.InitSettingTime , CAST(1 AS BIT) AS IsDeposit, ci.srecommend
+	SELECT per.custid, per.InitSettingTime , CAST(1 AS BIT) AS IsDeposit, ci.srecommend, per.custid AS SettingCustID, ci.roleid
 	FROM Dep_WLMonitored_Player per WITH(NOLOCK) 
 		INNER JOIN custInfo ci WITH(NOLOCK) ON per.custid = ci.custid AND ci.roleid = 1 AND ci.Enabled = 1
 		INNER JOIN #Cust_Tbl_Deposit cr ON cr.CustID = ci.custid
