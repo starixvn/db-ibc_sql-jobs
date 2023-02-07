@@ -4,7 +4,7 @@ ALTER PROCEDURE [dbo].[BalanceTriggerSiteDB_Insert]
 	@SiteDBGroupID	SMALLINT
 	,@TransInfo		VARBINARY(MAX)
 	,@IsTest		BIT
-	,@ErrorMsg		VARCHAR(MAX) = ''
+	,@ErrorMsg		VARCHAR(MAX) = '' OUTPUT
 )
 AS
 /*
@@ -82,11 +82,11 @@ BEGIN
 				,cid
 				,t
 				,bt
-				,astake
+				,act
 				,wl
 				,pc
 				,bc
-				,newb
+				,nb
 				,ad
 				,aid
 				,a
@@ -101,17 +101,17 @@ BEGIN
 				,ac
 				,sc
 				, modds
-			FROM  OPENJSON (  CAST( DECOMPRESS(@TransInfo)   AS VARCHAR(MAX)) )
+			FROM  OPENJSON (  CAST( DECOMPRESS(@TransInfo)   AS NVARCHAR(MAX)) )
 			WITH (
 					r bigint
 					,cid int
 					,t bigint
 					,bt smallint
-					,astake money
+					,act money
 					,wl money
 					,pc  money
 					,bc money
-					,newb money
+					,nb money
 					,ad datetime
 					,aid tinyint
 					,a varchar(50)
