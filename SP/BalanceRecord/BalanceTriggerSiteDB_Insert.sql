@@ -31,8 +31,6 @@ BEGIN
 			,@VNameStatus	VARCHAR(50)
 			,@VNameLastRow	VARCHAR(50)
 			,@Sufix			VARCHAR(2)
-	
-	DECLARE @tblSetting TABLE (LastRowInserted VARCHAR(100), StatusID  VARCHAR(100)) 
 
 	SET @Sufix = RIGHT ('0' + CAST(@SiteDBGroupID AS VARCHAR(2)),2)
 
@@ -69,12 +67,13 @@ BEGIN
 				[scomm] [money] NULL,
 				[modds] [smallmoney] NULL
 			)
+	
+	UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+	SET VValue = '1'
+	WHERE VName = @VNameStatus
 
 	BEGIN TRY
 		BEGIN TRANSACTION
-			UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
-			SET VValue = '1'
-			WHERE VName = @VNameStatus
 
 			INSERT INTO #tmpBalanceTrigger (rowID, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds)
 			select 
@@ -100,7 +99,7 @@ BEGIN
 				,c
 				,ac
 				,sc
-				, modds
+				, m
 			FROM  OPENJSON (  CAST( DECOMPRESS(@TransInfo)   AS NVARCHAR(MAX)) )
 			WITH (
 					r bigint
@@ -125,24 +124,39 @@ BEGIN
 					,c money
 					,ac money
 					,sc money
-					, modds smallmoney
+					, m smallmoney
 				)
 
 			SET @MaxRowID = (SELECT MAX(rowID) FROM #tmpBalanceTrigger)
 
-			INSERT INTO [dbo].[BalanceTrigger] (custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds)
-			SELECT custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds
-			FROM #tmpBalanceTrigger
-			ORDER BY RowID ASC
+			IF @IsTest = 0
+			BEGIN
+				INSERT INTO [dbo].[BalanceTrigger] (custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds)
+				SELECT custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds
+				FROM #tmpBalanceTrigger
+				ORDER BY RowID ASC
+			END
+			ELSE
+			BEGIN
+				INSERT INTO [dbo].[BalanceTrigger_UAT] (RowId, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds)
+				SELECT RowId, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds
+				FROM #tmpBalanceTrigger
+				ORDER BY RowID ASC
+			END
 
 			UPDATE dbo.SystemSettings WITH (ROWLOCK,UPDLOCK)
 			SET VValue = CAST(@MaxRowID AS VARCHAR(100) )
 			WHERE VName = @VNameLastRow
+
+			UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+			SET VValue = '2'
+			WHERE VName = @VNameStatus
 		
 		COMMIT TRANSACTION
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrorMsg = error_message()
+		ROLLBACK TRANSACTION
 	END CATCH
 			
 	DROP TABLE #tmpBalanceTrigger
