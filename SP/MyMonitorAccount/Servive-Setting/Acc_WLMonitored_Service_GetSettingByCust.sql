@@ -14,6 +14,7 @@ AS
   
 	Revisions:  
 	    - 20220523@Eden: LAP - Player Segmentation - Monitored Player [Redmine:#172605]
+		- 20221220@Eden: Alpha - Monitor SMA Win Loss [Redmine:#179067]
 
 	Param's Explanation:
 		@IsSub : Subsidiary Search
@@ -71,7 +72,7 @@ BEGIN
 			LEFT JOIN WLMonitored_Player per WITH(NOLOCK) ON per.custid = ci.custid AND w.Sporttype = per.Sporttype
 		WHERE per.CustID IS NULL
 			AND w.Sporttype = @Sporttype
-		UNION ALL
+		UNION ALL --Personal
 		SELECT per.custid, per.WinningThreshold, per.LosingThreshold
 			, per.WinningUpdateTime, per.LosingUpdateTime, 2 AS SettingType
 			, ci.srecommend
@@ -80,6 +81,14 @@ BEGIN
 			INNER JOIN #Cust_Tbl_Credit cr ON cr.CustID = ci.custid
 		WHERE NOT( per.WinningThreshold IS NULL AND per.LosingThreshold IS NULL) -- config unlimited
 			AND per.Sporttype = @Sporttype
+		UNION ALL --SMA config
+		SELECT sma.custid, sma.WinningThreshold, sma.LosingThreshold
+			, sma.WinningUpdateTime, sma.LosingUpdateTime, 3 AS SettingType
+			, ci.srecommend
+		FROM WLMonitored_SMA sma WITH(NOLOCK) 
+			INNER JOIN custInfo ci WITH(NOLOCK) ON sma.custid = ci.custid AND ci.roleid IN(2,3,4) AND ci.Enabled = 1
+			INNER JOIN #Cust_Tbl_Credit cr ON cr.CustID = ci.custid
+		WHERE sma.Sporttype = @Sporttype
 	END
 	ELSE
 	BEGIN

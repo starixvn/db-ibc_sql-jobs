@@ -14,6 +14,7 @@ AS
   
 	Revisions:  
 	    - 20220523@Eden: LAP - Player Segmentation - Monitored Player [Redmine:#172605]
+		- 20221220@Eden: Alpha - Monitor SMA Win Loss [Redmine:#179067]
 
 	Param's Explanation:
 		@IsSub : Subsidiary Search
@@ -81,6 +82,15 @@ BEGIN
 				AND (per.WinningUpdateTime >= @LastScanDate OR per.LosingUpdateTime >= @LastScanDate)
 				AND per.Sporttype = @Sporttype
 				AND ci.srecommend IN (SELECT custid FROM @SuperTbl)
+			UNION ALL --SMA changed
+			SELECT sma.custid, ci.roleid, sma.WinningThreshold,sma.LosingThreshold
+				, sma.WinningUpdateTime, sma.LosingUpdateTime, 3 AS SettingType
+				, ci.srecommend , CAST(0 AS BIT) AS IsExclude
+			FROM WLMonitored_SMA sma WITH(NOLOCK) 
+				INNER JOIN custInfo ci WITH(NOLOCK) ON sma.custid = ci.custid AND ci.Enabled = 1 AND ci.roleid IN(2,3,4)
+			WHERE (sma.WinningUpdateTime >= @LastScanDate OR sma.LosingUpdateTime >= @LastScanDate)
+				AND sma.Sporttype = @Sporttype
+				AND ci.srecommend IN (SELECT custid FROM @SuperTbl)
 		END
 		ELSE
 		BEGIN
@@ -120,6 +130,15 @@ BEGIN
 			WHERE NOT( per.WinningThreshold IS NULL AND per.LosingThreshold IS NULL) -- config unlimited
 				AND (per.WinningUpdateTime >= @LastScanDate OR per.LosingUpdateTime >= @LastScanDate)
 				AND per.Sporttype = @Sporttype
+				AND ci.srecommend NOT IN (SELECT custid FROM @SuperTbl)
+			UNION ALL --SMA changed
+			SELECT sma.custid, ci.roleid, sma.WinningThreshold,sma.LosingThreshold
+				, sma.WinningUpdateTime, sma.LosingUpdateTime, 3 AS SettingType
+				, ci.srecommend , CAST(0 AS BIT) AS IsExclude
+			FROM WLMonitored_SMA sma WITH(NOLOCK) 
+				INNER JOIN custInfo ci WITH(NOLOCK) ON sma.custid = ci.custid AND ci.Enabled = 1 AND ci.roleid IN(2,3,4)
+			WHERE (sma.WinningUpdateTime >= @LastScanDate OR sma.LosingUpdateTime >= @LastScanDate)
+				AND sma.Sporttype = @Sporttype
 				AND ci.srecommend NOT IN (SELECT custid FROM @SuperTbl)
 		END
 	END
