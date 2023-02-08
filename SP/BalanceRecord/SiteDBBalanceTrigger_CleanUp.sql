@@ -30,25 +30,25 @@ BEGIN
 	END
 
 	DECLARE @MaxID BIGINT = 0 
-			,@IsTestUAT SMALLINT
+			,@IsTestUAT VARCHAR(1)
 			,@sqlCMD NVARCHAR(MAX)
 			,@LinkedAlias VARCHAR(100)='DB05'
 			,@MaxID_DB05 BIGINT 
 
 	select @IsTestUAT =  (select vvalue from SystemSettings where VName = 'BT_SiteDB' + RIGHT(@SiteDBAlias, 2) +'_ServiceStatus_UAT')
 
-	SELECT @MaxID = MIN(CAST (VValue AS BIGINT ))
+	SELECT @MaxID = MIN( CAST (VValue AS BIGINT ) )
 					FROM bodb02.dbo.SystemSettings WITH (NOLOCK)
 					WHERE VName =  'BT_SiteDB' + RIGHT(@SiteDBAlias, 2) +'_Sync'
 						OR  (Vname = 'BT_SiteDB' + RIGHT(@SiteDBAlias, 2) +'_Sync_UAT' and @IsTestUAT   ='1')
 
 	SET @sqlCMD = '\
-	SELECT @MaxID_DB05 = MIN(CAST (VValue AS BIGINT ))
+	SELECT @MaxID_DB05 = MIN(CAST (VValue AS BIGINT ) )
 	FROM OPENQUERY('+@LinkedAlias+', ''\
 	SELECT VValue
 	FROM bodb02.dbo.SystemSettings WITH (NOLOCK)\
-	WHERE VName =  ''BT_SiteDB + RIGHT('+@SiteDBAlias+', 2) +''_Sync''\
-						OR  (Vname = ''BT_SiteDB'' + RIGHT('+@SiteDBAlias+', 2) +''_Sync_UAT'' and @IsTestUAT   =''1''\
+	WHERE VName =  ''''BT_SiteDB'''' + RIGHT('''''+@SiteDBAlias+''''', 2) +''''_Sync''''\
+						OR  (Vname = ''''BT_SiteDB'''' + RIGHT('''''+@SiteDBAlias+''''', 2) +''''_Sync_UAT'''' and ''''' +@IsTestUAT + '''''  =''''1'''')\
 	'')';
 	
 	BEGIN TRY
