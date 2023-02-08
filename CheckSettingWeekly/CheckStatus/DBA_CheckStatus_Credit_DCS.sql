@@ -16,6 +16,7 @@ Revisions:
 	- 20180201@Johnson: update rule check un-sync customer for GD,Casino,VB,AB [Redmine: #87745]
 	- 20190801@Johnson: exclude cn88 [redmine:#116551]
 	- 20210419@Winfred: exclude inActive currency [redmine:#153659]
+	- 20230208@Eden: Alpha - User can not see the new create agent's account in the Agent List [Redmine: #183486]
 Param's Explanation: 
 	@RuleId = 0 : 'all'
 	@RuleId IN (1->9)
@@ -25,11 +26,21 @@ Param's Explanation:
 BEGIN 
 
 	SET NOCOUNT ON 
-	
-	SELECT *
-	INTO #ProductStatusProfile
+
+	CREATE TABLE #ProductStatusProfile(Sporttype smallint,Bettype smallint,bitmapOrder tinyint)
+
+	INSERT INTO #ProductStatusProfile(Sporttype,Bettype,bitmapOrder)
+	SELECT psp.Sporttype,psp.Bettype,psp.bitmapOrder
 	FROM CheckCustDB.dbo.ProductStatusProfile PSP WITH (NOLOCK)
-	WHERE (@SportType = 0 OR PSP.Sporttype = @SportType) AND PSP.Sporttype <> 50
+		INNER JOIN CheckCustDB.dbo.ProductSettingDetail d WITH(NOLOCK) 
+			ON psp.Bettype = d.BetType 
+			AND psp.Sporttype = d.SportType
+		INNER JOIN CheckCustDB.dbo.ProductSettingType p  WITH(NOLOCK)
+			ON d.SettingType = p.SettingType
+	WHERE p.SettingName = 'Product Status'
+		AND d.SettingStatus = 0
+		AND PSP.Sporttype <> 50
+		AND (@SportType = 0 OR PSP.Sporttype = @SportType)
 	
 	--super list excluded	
 	DECLARE @tmpSuper TABLE(CustID INT)
