@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02,DBTXNIP-IPDB,DBCUST-IPDB,DBACC-bodb02" executers="" viewers="" isFunction="1" isNested=""></info>*/
+/*<info serverAlias="DBTXN-bodb02,DBTXNIP-IPDB,DBCUST-IPDB,DBACC-bodb02, DBAFF12BET-Affiliate_12BET" executers="" viewers="" isFunction="1" isNested="1"></info>*/
 CREATE FUNCTION [dbo].[f_IP_FullForm]
 (
 	@input VARCHAR(45)
@@ -12,6 +12,7 @@ AS
 	
 	Revision:
 		- 20211007@Helen: Support IPv6 Phase 1 - Support for 3rd party product bet tickets  [Redmine:160390]
+		- 20220929@Eddie: Add serverAlias DBAFF12BET-Affiliate_12BET and isNested="1" [RedmineID: #176390]
 		
 	Param's Explanation:
 */
