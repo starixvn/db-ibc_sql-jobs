@@ -2,27 +2,28 @@
 -- Create User
 IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
 BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
-
+	SELECT 'Wrong Server' AS 'Error'
 	RETURN
 END
 
-DECLARE @strUser	VARCHAR(MAX) = ''
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+DECLARE @strUser	VARCHAR(MAX) = ''		
+		,@RoleName VARCHAR(50) = 'db_Sun'
+		,@LeaderRoleName VARCHAR(50) = 'db_owner'
+		,@Leader VARCHAR(50) = 'spvn\william.nguyen'
 
+DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
+DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+ 
 INSERT INTO @tmpAffectedDB (DBName)
 	VALUES ('bodb_CustomerLog'),
 			('bodb_Licensee'),
 			('CustDB'),
 			('NAP_UserControl'),
-			('N88_UserControl')
-			--('SiteConfig')
-
-DECLARE @tmpMember TABLE (Name VARCHAR(50))
+			('N88_UserControl'),
+			('SiteConfig')
 
 INSERT INTO @tmpMember (Name) 
 	VALUES ('spvn\william.nguyen'),
-	('spvn\maia.le'),
 	('spvn\selina.dinh'),
 	('spvn\lionel.nguyen'),
 	('spvn\Winston.chau'),
@@ -32,8 +33,12 @@ INSERT INTO @tmpMember (Name)
 	('spvn\harmony.huynh'),
 	('spvn\laura.nguyen'),
 	('SPVN\nina.nguyen'),
-	('SPVN\roshan.nguyen'),
-	('SPVN\victor.nguyen')
+	('SPVN\victor.nguyen'),
+	('SPVN\Jasmine.le'),
+	('SPVN\carly.tran')
+
+UPDATE @tmpMember
+	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
 
 /*
 	USE DBName
@@ -63,51 +68,10 @@ WHERE 1 =  CASE WHEN t.Name = 'SPVN\victor.nguyen' AND d.DBName = 'N88_UserContr
 			END
 
 EXEC (@strUser)
-GO
+waitfor delay '00:00:01'
+ 
+SET @strUser  = ''
 
--------------------------------------------
--------------------------------------------
--- Add Role for member
-
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
-BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
-
-	RETURN
-END
-DECLARE @strUser VARCHAR(MAX) = ''
-		,@RoleName VARCHAR(50) = 'db_Sun'
-		,@LeaderRoleName VARCHAR(50) = 'db_owner'
-		,@Leader VARCHAR(50) = 'spvn\william.nguyen'
-
-DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb_CustomerLog'),
-			('bodb_Licensee'),
-			('CustDB'),
-			('NAP_UserControl'),
-			('N88_UserControl')
-			--('SiteConfig')
-
-INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\william.nguyen'),
-	('spvn\maia.le'),
-	('spvn\selina.dinh'),
-	('spvn\lionel.nguyen'),
-	('spvn\Winston.chau'),
-	('spvn\ruby.nguyen'),
-	('spvn\corbin.hoang'),
-	('spvn\jenny.phan'),
-	('spvn\harmony.huynh'),
-	('spvn\laura.nguyen'),
-	('SPVN\nina.nguyen'),
-	('SPVN\roshan.nguyen'),
-	('SPVN\victor.nguyen')
-
-UPDATE @tmpMember
-	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
 /*
 	USE DBName
 	GO

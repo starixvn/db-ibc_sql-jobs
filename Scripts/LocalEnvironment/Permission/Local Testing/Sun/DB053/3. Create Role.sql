@@ -2,13 +2,13 @@
 -- Create Role
 IF @@SERVERNAME NOT IN ( 'DB215' , 'DB-61\DevDB053' , 'TESTDB053' )
 BEGIN
-	SELECT 'Must be run on DB215 or DevDB053 or TESTDB053' AS 'Error'
-
+	SELECT 'Wrong Server' AS 'Error'
 	RETURN
 END
 
 DECLARE @RoleName VARCHAR(50) = 'db_Sun'
 		,@strRole	VARCHAR(MAX) = ''
+		,@strPermission	VARCHAR(MAX) = ''
 
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
@@ -42,46 +42,11 @@ SELECT @strRole = @strRole + ' '
 					+ CHAR(13)
 FROM	@tmpAffectedDB
 
-EXEC (@strRole)
-GO
--------------------------------------------
--------------------------------------------
 
-IF @@SERVERNAME NOT IN ( 'DB215' , 'DB-61\DevDB053' , 'TESTDB053' )
-BEGIN
-	SELECT 'Must be run on DB215 or DevDB053 or TESTDB053' AS 'Error'
-
-	RETURN
-END
-
--- Grant permission to new role
-DECLARE @RoleName VARCHAR(50) = 'db_Sun'
-		,@strPermission	VARCHAR(MAX) = ''
-
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+waitfor delay '00:00:01'
+ 
+-- Grant permission to new role 
 DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES  ('bodb_3rdProduct'),
-			('bodb_licensee'),
-			('Affiliate_12BET'),
-			('Affiliate_Athena000'),
-			--('bodb_CustomerLog'),
-			('bodb_oddsfeed'),
-			('Affiliate_Macaubet'),
-			('Affiliate_spondemo'),
-			('bodb_LicenseeReport'),
-			('bodb02'),
-			('bodb_OIC'),
-			('bodb_report'),
-			('bodb_PlaytechCS'),
-			('bodb_N88'),
-			('bodb_account'),
-			('Affiliate_N8G'),
-			('Affiliate_N8B'),
-			('Affiliate_N88'),
-			('bodb_N88_Archive'),
-			('bodb_CRM')
 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')

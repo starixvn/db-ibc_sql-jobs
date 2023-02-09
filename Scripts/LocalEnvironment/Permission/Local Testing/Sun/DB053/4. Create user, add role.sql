@@ -7,19 +7,24 @@
 -- Create User
 IF @@SERVERNAME NOT IN ( 'DB215' , 'DB-61\DevDB053' , 'TESTDB053' )
 BEGIN
-	SELECT 'Must be run on DB215 or DevDB053 or TESTDB053' AS 'Error'
+	SELECT 'Wrong Server' AS 'Error'
 	RETURN
 END
 
-DECLARE @strUser	VARCHAR(MAX) = ''
+DECLARE @strUser	VARCHAR(MAX) = '' 
+		,@RoleName VARCHAR(50) = 'db_Sun'
+		,@LeaderRoleName VARCHAR(50) = 'db_owner'
+		,@Leader VARCHAR(50) = 'spvn\william.nguyen'
+
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+
+DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50)) 
 
 INSERT INTO @tmpAffectedDB (DBName)
 	VALUES  ('bodb_3rdProduct'),
 			('bodb_licensee'),
 			('Affiliate_12BET'),
 			('Affiliate_Athena000'),
-			--('bodb_CustomerLog'), /*	Note: DB215.bodb_CustomerLog is located on TESTDB055.bodb_CustomerLog	*/
 			('bodb_oddsfeed'),
 			('Affiliate_Macaubet'),
 			('Affiliate_spondemo'),
@@ -36,23 +41,24 @@ INSERT INTO @tmpAffectedDB (DBName)
 			('bodb_N88_Archive'),
 			('bodb_CRM')
 
-DECLARE @tmpMember TABLE (Name VARCHAR(50))
-
 INSERT INTO @tmpMember (Name) 
 	VALUES ('spvn\william.nguyen'),
-	('spvn\maia.le'),
 	('spvn\selina.dinh'),
 	('spvn\lionel.nguyen'),
 	('spvn\Winston.chau'),
 	('spvn\ruby.nguyen'),
 	('spvn\corbin.hoang'),
-	--('spvn\kaylin.truong'),
 	('spvn\jenny.phan'),
 	('spvn\harmony.huynh'),
 	('spvn\laura.nguyen'),
 	('SPVN\nina.nguyen'),
-	('SPVN\roshan.nguyen'),
-	('SPVN\victor.nguyen')
+	('SPVN\victor.nguyen'),
+	('SPVN\Jasmine.le'),
+	('SPVN\carly.tran')
+
+	
+UPDATE @tmpMember
+	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
 
 /*
 	USE DBName
@@ -79,65 +85,11 @@ FROM	@tmpAffectedDB d
 	) t
 
 EXEC (@strUser)
-GO
 
--------------------------------------------
--------------------------------------------
+waitfor delay '00:00:01'
+ 
 -- Add Role for member
-
-IF @@SERVERNAME NOT IN ( 'DB215' , 'DB-61\DevDB053' , 'TESTDB053' )
-BEGIN
-	SELECT 'Must be run on DB215 or DevDB053 or TESTDB053' AS 'Error'
-	RETURN
-END
-DECLARE @strUser VARCHAR(MAX) = ''
-		,@RoleName VARCHAR(50) = 'db_Sun'
-		,@LeaderRoleName VARCHAR(50) = 'db_owner'
-		,@Leader VARCHAR(50) = 'spvn\william.nguyen'
-
-DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES  ('bodb_3rdProduct'),
-			('bodb_licensee'),
-			('Affiliate_12BET'),
-			('Affiliate_Athena000'),
-			--('bodb_CustomerLog'),/*	Note: DB215.bodb_CustomerLog is located on TESTDB055.bodb_CustomerLog	*/
-			('bodb_oddsfeed'),
-			('Affiliate_Macaubet'),
-			('Affiliate_spondemo'),
-			('bodb_LicenseeReport'),
-			('bodb02'),
-			('bodb_OIC'),
-			('bodb_report'),
-			('bodb_PlaytechCS'),
-			('bodb_N88'),
-			('bodb_account'),
-			('Affiliate_N8G'),
-			('Affiliate_N8B'),
-			('Affiliate_N88'),
-			('bodb_N88_Archive'),
-			('bodb_CRM')
-
-INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\william.nguyen'),
-	('spvn\maia.le'),
-	('spvn\selina.dinh'),
-	('spvn\lionel.nguyen'),
-	('spvn\Winston.chau'),
-	('spvn\ruby.nguyen'),
-	('spvn\corbin.hoang'),
-	--('spvn\kaylin.truong'),
-	('spvn\jenny.phan'),
-	('spvn\harmony.huynh'),
-	('spvn\laura.nguyen'),
-	('SPVN\nina.nguyen'),
-	('SPVN\roshan.nguyen'),
-	('SPVN\victor.nguyen')
-
-UPDATE @tmpMember
-	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
+ 
 /*
 	USE DBName
 	GO

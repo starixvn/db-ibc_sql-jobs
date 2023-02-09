@@ -37,8 +37,9 @@ INSERT INTO @tmpMember (Name)
 	('spvn\harmony.huynh'),
 	('spvn\laura.nguyen'),
 	('spvn\nina.nguyen'),
-	('spvn\roshan.nguyen'),
-	('SPVN\victor.nguyen')
+	('SPVN\victor.nguyen'),
+	('SPVN\Jasmine.le'),
+	('SPVN\carly.tran')
 	
 UPDATE @tmpMember
 	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END

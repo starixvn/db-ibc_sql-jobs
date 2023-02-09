@@ -14,8 +14,7 @@ DECLARE @strLoginName VARCHAR(MAX) = ''
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
-	VALUES ('SPVN\william.nguyen'),
-	('SPVN\maia.le'),
+	VALUES ('SPVN\william.nguyen'), 
 	('SPVN\selina.dinh'),
 	('SPVN\lionel.nguyen'),
 	('SPVN\Winston.chau'),
@@ -24,9 +23,10 @@ INSERT INTO @tmpMember (Name)
 	('SPVN\jenny.phan'),
 	('SPVN\harmony.huynh'),
 	('SPVN\laura.nguyen'),
-	('SPVN\nina.nguyen'),
-	('SPVN\roshan.nguyen'),
-	('SPVN\victor.nguyen')
+	('SPVN\nina.nguyen'), 
+	('SPVN\victor.nguyen'),
+	('SPVN\Jasmine.le'),
+	('SPVN\carly.tran')
 
 SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
 FROM	@tmpMember

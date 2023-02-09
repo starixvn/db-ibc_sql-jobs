@@ -1,20 +1,22 @@
 USE [master]
 GO
--- Create Login
  
+
+-- Grant permisison Profiler for login
+
 IF @@SERVERNAME NOT IN ( 'DB233\SQLSERVER2008R2' ,'TESTDB055' )
 BEGIN
 	SELECT 'Must be run on DB233\SQLSERVER2008R2' AS 'Error'
 
 	RETURN
 END
-DECLARE @strLoginName 	VARCHAR(MAX) = ''
+
+DECLARE @strLoginName VARCHAR(MAX) = ''
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\william.nguyen'),
-	('spvn\maia.le'),
+	VALUES ('spvn\william.nguyen'), 
 	('spvn\selina.dinh'),
 	('spvn\lionel.nguyen'),
 	('spvn\Winston.chau'),
@@ -24,19 +26,13 @@ INSERT INTO @tmpMember (Name)
 	('spvn\jenny.phan'),
 	('spvn\harmony.huynh'),
 	('spvn\laura.nguyen'),
-	('SPVN\nina.nguyen'),
-	('SPVN\roshan.nguyen'),
-	('SPVN\victor.nguyen')
+	('SPVN\nina.nguyen'), 
+	('SPVN\victor.nguyen'),
+	('SPVN\Jasmine.le'),
+	('SPVN\carly.tran')
 
--- CREATE LOGIN [spvn\nickname] FROM WINDOWS;  
-SELECT @strLoginName = @strLoginName 
-			+  'CREATE LOGIN [' + t.Name + '] FROM WINDOWS; ' 
-			+ CHAR(13)
-FROM @tmpMember t
-	LEFT JOIN sys.server_principals s
-		ON s.name = t.Name
-WHERE	s.name IS NULL	
-
+SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
+FROM	@tmpMember
 
 EXEC (@strLoginName)
 GO

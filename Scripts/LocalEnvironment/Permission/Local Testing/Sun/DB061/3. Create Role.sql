@@ -3,13 +3,13 @@
 -- Create Role
 IF @@SERVERNAME NOT IN ( 'DB234' , 'TESTDB061' )
 BEGIN
-	SELECT 'Must be run on DB234' AS 'Error'
-
+	SELECT 'Wrong Server' AS 'Error'
 	RETURN
 END
 
 DECLARE @RoleName VARCHAR(50) = 'db_Sun'
 		,@strRole	VARCHAR(MAX) = ''
+		,@strPermission	VARCHAR(MAX) = ''
 
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
@@ -31,33 +31,13 @@ SELECT @strRole = @strRole + ' '
 FROM	@tmpAffectedDB
 
 EXEC (@strRole)
-GO
--------------------------------------------
--------------------------------------------
 
-IF @@SERVERNAME NOT IN ( 'DB234' , 'TESTDB061' )
-BEGIN
-	SELECT 'Must be run on DB234' AS 'Error'
-
-	RETURN
-END
+waitfor delay '00:00:01'
 
 -- Grant permission to new role
-DECLARE @RoleName VARCHAR(50) = 'db_Sun'
-		,@strPermission	VARCHAR(MAX) = ''
-
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+ 
 DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb_ACC'),
-			--('bodb_CustomerLog'),
-			('bodb02'),
-			('bodb_Message'),
-			('bodb_Archive'),
-			('bodb_licensee'),
-			('bodb_Report')
-
+ 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')
 

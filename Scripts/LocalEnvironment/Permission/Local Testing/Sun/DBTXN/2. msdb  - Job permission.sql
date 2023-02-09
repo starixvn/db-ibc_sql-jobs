@@ -12,8 +12,7 @@ DECLARE @strUser VARCHAR(MAX) = ''
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\william.nguyen'),
-	('spvn\maia.le'),
+	VALUES ('spvn\william.nguyen'), 
 	('spvn\selina.dinh'),
 	('spvn\lionel.nguyen'),
 	('spvn\Winston.chau'),
@@ -22,9 +21,10 @@ INSERT INTO @tmpMember (Name)
 	('spvn\jenny.phan'),
 	('spvn\harmony.huynh'),
 	('spvn\laura.nguyen'),
-	('spvn\nina.nguyen'),
-	('spvn\roshan.nguyen'),
-	('SPVN\victor.nguyen')
+	('spvn\nina.nguyen'), 
+	('SPVN\victor.nguyen'),
+	('SPVN\Jasmine.le'),
+	('SPVN\carly.tran')
 
 SELECT	@strUser = @strUser 
 			+ 'CREATE USER ' + '[' + t.Name + ']' + ' FOR LOGIN ' + '[' + t.Name + ']' + ' WITH DEFAULT_SCHEMA=[dbo]; '

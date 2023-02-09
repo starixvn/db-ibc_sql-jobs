@@ -2,13 +2,13 @@
 -- Create Role
 IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
 BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
-
+	SELECT 'Wrong Server' AS 'Error'
 	RETURN
 END
 
 DECLARE @RoleName VARCHAR(50) = 'db_Sun'
 		,@strRole	VARCHAR(MAX) = ''
+		,@strPermission	VARCHAR(MAX) = ''
 
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
@@ -17,8 +17,8 @@ INSERT INTO @tmpAffectedDB (DBName)
 			('bodb_Licensee'),
 			('CustDB'),
 			('NAP_UserControl'),
-			('N88_UserControl')
-			--('SiteConfig')
+			('N88_UserControl'),
+			('SiteConfig')
 
 SELECT @strRole = @strRole + ' '
 					 + 'USE ' + DBName + ';'
@@ -29,32 +29,10 @@ SELECT @strRole = @strRole + ' '
 FROM	@tmpAffectedDB
 
 EXEC (@strRole)
-GO
--------------------------------------------
--------------------------------------------
-
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
-BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
-
-	RETURN
-END
-
--- Grant permission to new role
-DECLARE @RoleName VARCHAR(50) = 'db_Sun'
-		,@strPermission	VARCHAR(MAX) = ''
-
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+waitfor delay '00:00:01'
+   
 DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb_CustomerLog'),
-		('bodb_Licensee'),
-		('CustDB'),
-		('NAP_UserControl'),
-		('N88_UserControl')
-		--('SiteConfig')
-
+ 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')
 
