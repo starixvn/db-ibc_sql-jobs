@@ -93,9 +93,9 @@ BEGIN
 					,nb money
 					,ad datetime
 					,aid tinyint
-					,a varchar(50)
+					,a varchar(200)
 					,btb money
-					,sid int
+					,sid tinyint
 					,mid int
 					,st tinyint
 					,aw money
@@ -148,9 +148,9 @@ BEGIN
 					,nb money
 					,ad datetime
 					,aid tinyint
-					,a varchar(50)
+					,a varchar(200)
 					,btb money
-					,sid int
+					,sid tinyint
 					,mid int
 					,st tinyint
 					,aw money
