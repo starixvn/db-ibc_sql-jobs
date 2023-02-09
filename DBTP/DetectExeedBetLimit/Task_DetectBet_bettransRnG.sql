@@ -73,11 +73,11 @@ BEGIN
 	WHERE b.sporttype IN (247) --SG
 		AND b.bettype IN (4326, 4385, 4386, 4397)
 
-	--Remove unsupport bettype of SABA.games, Vgaming, Saba Casino, Macau Games
+	--Remove unsupport bettype of SABA.games, Vgaming, Saba Casino, Macau Games, Jili
 	DELETE b
 	FROM #tmp_TransId b
-	WHERE b.sporttype IN (208,209,212,150,200,171,173)
-		AND b.bettype IN (1650,1652,3836,3837,2105,2120,2104,4004)
+	WHERE b.sporttype IN (208,209,212,150,200,171,173,158)
+		AND b.bettype IN (1650,1652,3836,3837,2105,2120,2104,4004,5103,5121)
 
 	--Process detect invalid
 	EXEC dbo.Task_DetectBet_CustMaxBetSettingSel
