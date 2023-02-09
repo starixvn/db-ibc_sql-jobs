@@ -4,8 +4,7 @@ ALTER PROCEDURE [dbo].[SiteDB_BalanceTrigger_Select]
 	 @LastRowInserted	BIGINT
 	,@Batch				INT = 2000
 	,@IsTest			BIT
-	,@TransInfo			VARBINARY(MAX) OUTPUT
-	--,@MaxRowId			BIGINT OUTPUT
+	,@TransInfo			VARBINARY(MAX) OUTPUT 
 )
 AS
 /*
