@@ -17,7 +17,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	SELECT s.VValue
+	SELECT @VValue = s.VValue
 	FROM bodb02.dbo.SystemSettings s WITH(NOLOCK)
 	WHERE s.VName = @VName
 
