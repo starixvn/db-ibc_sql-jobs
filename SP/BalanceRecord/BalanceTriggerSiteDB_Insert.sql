@@ -47,12 +47,11 @@ BEGIN
 	IF ISNULL(@MaxRowID,0) = 0 
 	RETURN
 
-	UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
-	SET VValue = '1'
-	WHERE VName = @VNameStatus
-
 	BEGIN TRY
 		BEGIN TRANSACTION
+			UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
+			SET VValue = '1'
+			WHERE VName = @VNameStatus
 			
 			IF @IsTest = 0
 			BEGIN
