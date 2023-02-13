@@ -166,15 +166,17 @@ BEGIN
 		EXEC dbo.balancecheck @fdate, 11
 		EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
 		
-		SET @Doing = 'Task_BalanceUp_background: BU step 3.03 - backup database: custdb, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		
 		--//only central server can run backup DBCUST.custdb
 		IF @__aliasServer = 'DBCTG' --only run that command at central server
 		BEGIN
+			SET @Doing = 'Task_BalanceUp_background: BU step 3.01 - backup database: custdb, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
 			EXEC DBCUST.msdb.dbo.sp_start_job N'BalanceUPBackground_BackupFull_Cust'
 		END
 
-		SET @Doing = 'Task_BalanceUp_background: BU step 3.04 - backup database: bodb02 @dbtrans | grpX, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+		SET @Doing = 'Task_BalanceUp_background: BU step 3.02 - backup database: bodb02 @dbtrans | grpX, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 		-- doing backup
 		Declare @suffix varchar(10)
@@ -182,12 +184,12 @@ BEGIN
 		--//backup bodb02@dbtrans
 		EXEC dbo.Task_BackupFULL @suffix
 	
-		SET @Doing = 'Task_BalanceUp_background: BU step 3.05 - backup database: bodb02 @prod, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
-		
 		--//only central server can run backup DB02.bodb02
 		IF @__aliasServer = 'DBCTG' --only run that command at central server
 		BEGIN
+			SET @Doing = 'Task_BalanceUp_background: BU step 3.03 - backup database: bodb02 @prod, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
+			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+
 			EXEC DB02.bodb02.dbo.Task_BackupFULL @suffix
 		END
 
