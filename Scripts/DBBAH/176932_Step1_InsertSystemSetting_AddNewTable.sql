@@ -61,11 +61,13 @@ BEGIN
 			,acomm			money			NULL
 			,scomm			money			NULL
 			,modds			smallmoney		NULL
+			,SiteDBGroupId	smallint
 			CONSTRAINT [PK_BalanceTrigger_UAT] PRIMARY KEY CLUSTERED 
-			( [RowID] ASC) 
+			( SiteDBGroupId,RowID ASC) 
 			WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [BALANCE]
 		) ON [BALANCE]
 	END
 
 END
 GO
+ 
