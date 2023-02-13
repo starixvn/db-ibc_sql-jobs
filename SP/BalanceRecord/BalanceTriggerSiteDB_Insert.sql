@@ -109,7 +109,7 @@ BEGIN
 			END
 			ELSE
 			BEGIN
-				INSERT INTO [dbo].[BalanceTrigger_UAT] (RowId, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds)
+				INSERT INTO [dbo].[BalanceTrigger_UAT] (RowId, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds, SiteDBGroupId)
 				SELECT 
 				r
 				,cid
@@ -134,6 +134,7 @@ BEGIN
 				,ac
 				,sc
 				, m
+				, @SiteDBGroupID
 			FROM  OPENJSON (  CAST( DECOMPRESS(@TransInfo)   AS NVARCHAR(MAX)) )
 			WITH (
 					r bigint
