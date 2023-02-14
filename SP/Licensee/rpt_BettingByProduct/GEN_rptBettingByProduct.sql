@@ -98,6 +98,7 @@ AS
 		- 20220222@Danny: Allbet - Promotion integration [#167510]
 		- 20221018@Danny: Integrate MG-RNG (ProductID = 73) [#176986]
 		- 20231027@Danny: Change LicenseeID detection formulary of deposit licensee [#183209]
+		- 20230214@Danny: SG - Promotion prize integration [#183739]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -107,6 +108,7 @@ BEGIN
 
 	CREATE TABLE #BettypeProductMapping (Bettype INT, ProductID INT)
 	CREATE TABLE #BettypeProductMappingBA (Bettype INT, ProductID INT)
+	CREATE TABLE #BettypeExtraAmount (Bettype INT)
 
 	DECLARE @ProductIdList AS TABLE(ProductId INT)
 
@@ -187,6 +189,24 @@ BEGIN
 		WHERE @ProductCodes = ''
 			OR ProductID IN (SELECT ProductID FROM @ProductIdList)
 
+		INSERT INTO #BettypeExtraAmount (Bettype)
+		SELECT DISTINCT Bettype
+		FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+		WHERE SubProduct IN (
+			'Bonus'
+			,'Jackpot Contribution'
+			,'Jackpot Prize'
+			,'Lucky Draw'
+			,'Prize'
+			,'Promotion'
+			,'Odds Spread Adjustment'
+			,'Tips'
+			,'Licensee Promotion'
+		) AND ProductID NOT IN (25,59,24,12,33,13,17,26,30,15,2,4,7,9,19,10,14) -- End Of Support 
+
+		-- Promotion for Licensee 
+		INSERT INTO #BettypeExtraAmount(Bettype) SELECT 17005 AS Bettype
+
 		-- Import data from rpt_Betting / rpt_Betting_BA
 		INSERT INTO [dbo].[rpt_BettingByProduct]
 			([rptDate]
@@ -213,23 +233,8 @@ BEGIN
 			b.rptDate
 			,b.SiteID
 			,bt.ProductID
-			,CASE
-				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 17005, 4599, 4600, 2499, 8695) 
-						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
-						   , SAG_Tips (3007)
-						   , CC-Bonus(1906)
-						   , SB-Adjusted Odds(999)
-						   , Saba.club Contribution(1698), Saba.club Jackpot Prize(1699)
-						   , AE Casino Lucky Draw (3150)
-						   , Vgaming Contribution(3898), Vgaming Jackpot Prize(3899)
-						   , Saba Promotion (17005) - Promotion for Licensee 
-						   , SG Contribution(4599), SG Jackpot Prize(4600)
-						   , Allbet Promotion (2499)
-						   , MG-RNG Tournament Prize (8695)
-						*/
-					THEN b.Bettype
-				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
+			,CASE WHEN be.Bettype IS NOT NULL THEN b.Bettype
+					WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1
 			END AS Bettype
 			,b.CurrencyID
@@ -249,31 +254,17 @@ BEGIN
 			,TicketType
 		FROM dbo.rpt_Betting b WITH (NOLOCK)
 			INNER JOIN #BettypeProductMapping bt ON b.Bettype = bt.Bettype
+			LEFT JOIN #BettypeExtraAmount be ON b.Bettype = be.Bettype
 		WHERE b.rptDate >= @fromDate AND b.rptDate < @toDate
 			AND b.Status IN (111,112,113,114,115,101,102,103)
 			AND b.CurrencyID <> 20
 		GROUP BY b.rptDate
 			,b.SiteID
 			,bt.ProductID
-			,CASE 
-				WHEN bt.ProductID IN (1,13,15,25) 
-						OR b.Bettype IN (1499, 4300, 4299, 4297, 4298, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 17005, 4599, 4600, 2499, 8695) 
-						/* PP Prize (4300,4299), PP-Jackpot-Contribution(4297), PP-Jackpot-Prize(4298)
-						   , SAG_Tips (3007)
-						   , CC-Bonus(1906)
-						   , SB-Adjusted Odds(999)
-						   , Saba.club Contribution(1698), Saba.club Jackpot Prize(1699)
-						   , AE Casino Lucky Draw (3150)
-						   , Vgaming Contribution(3898), Vgaming Jackpot Prize(3899)
-						   , Saba Promotion (17005) - Promotion for Licensee 
-						   , SG Contribution(4599), SG Jackpot Prize(4600)
-						   , Allbet Promotion (2499)
-						   , MG-RNG Tournament Prize (8695)
-						*/
-					THEN b.Bettype
-				WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
+			,CASE WHEN be.Bettype IS NOT NULL THEN b.Bettype
+					WHEN b.Bettype BETWEEN 8101 AND 8120 THEN 8101
 				ELSE -1
-			END
+			END 
 			,b.CurrencyID
 			,b.Status
 			,ISNULL(b.CustomerCategory,-1)
@@ -557,5 +548,6 @@ BEGIN
 	DROP TABLE #tmpData
 	DROP TABLE #BettypeProductMapping
 	DROP TABLE #BettypeProductMappingBA
+	DROP TABLE #BettypeExtraAmount
 END
 GO

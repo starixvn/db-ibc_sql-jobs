@@ -41,6 +41,7 @@ AS
 		20210514@Danny: Integrate Vgaming [#154080] 
 		20210816@Sophia: add DBBAL [Redmine: #154300]
 		20220110@Danny: SG - Jackpot prize integration [#167089]
+		20230223@Danny: SG - Promotion prize integration [#183739]
 
 	Param's Explanation:
 
@@ -59,6 +60,14 @@ BEGIN
 
 	DECLARE @tmpDate DATETIME
 	SELECT	@tmpDate = @date
+
+	CREATE TABLE #BettypeExtraAmount (Bettype INT, SubProduct VARCHAR(500))
+
+	INSERT INTO #BettypeExtraAmount (Bettype,SubProduct)
+		SELECT DISTINCT Bettype, SubProduct
+		FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+		WHERE SubProduct IN ('Jackpot Contribution','Jackpot Prize')
+
 
 	WHILE @tmpDate <= @date2
 	BEGIN
@@ -95,9 +104,9 @@ BEGIN
 				,SUM(-
 					CASE
 						-- Jackpot
-						WHEN b.bettype IN (2198, 2398, 2998, 4297, 1698, 3898, 4599) THEN
+						WHEN b.bettype IN (2198, 2398, 2998) OR be.SubProduct = 'Jackpot Contribution' THEN
 							CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
-						WHEN b.bettype IN (2199, 2399, 2999, 4298, 1699, 3899, 4600) THEN 0
+						WHEN b.bettype IN (2199, 2399, 2999) OR be.SubProduct = 'Jackpot Prize' THEN 0
 						ELSE CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END
 					END * ISNULL(b.epositiontaking, 0)) AS WinLossE
 				,SUM(playercomm)			AS commissionP
@@ -106,7 +115,7 @@ BEGIN
 				,SUM(scomm)					AS commissionS
 				,SUM(-
 					CASE 
-						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298, 1698, 1699, 3898, 3899, 4599, 4600) THEN 0
+						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999) OR be.SubProduct IN ('Jackpot Contribution','Jackpot Prize') THEN 0
 						ELSE 
 							CASE 
 								WHEN b.tpositiontaking = 1 THEN 0 
@@ -136,8 +145,9 @@ BEGIN
 				LEFT JOIN dbo.outright o WITH (NOLOCK) ON b.matchid = o.matchid
 				LEFT JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK) ON b.matchid = r.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
 				LEFT JOIN bodb02.dbo.VSRaceInfo14 r14 WITH (NOLOCK) ON b.matchid = r14.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
+				LEFT JOIN #BettypeExtraAmount be ON b.bettype = be.Bettype
 			WHERE b.winlostdate = @tmpDate
-				AND isBA = 0
+				AND b.isBA = 0
 			GROUP BY
 				b.winlostdate
 				,ISNULL(s.SiteID, -1)
@@ -187,9 +197,9 @@ BEGIN
 				,SUM(-
 					CASE
 						-- Jackpot
-						WHEN b.bettype IN (2198, 2398, 2998, 4297, 1698, 3898, 4599) THEN
+						WHEN b.bettype IN (2198, 2398, 2998) OR be.SubProduct = 'Jackpot Contribution' THEN
 							CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0) END
-						WHEN b.bettype IN (2199, 2399, 2999, 4298, 1699, 3899, 4600) THEN 0
+						WHEN b.bettype IN (2199, 2399, 2999) OR be.SubProduct = 'Jackpot Prize' THEN 0
 						ELSE CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END
 					END * ISNULL(b.epositiontaking, 0))	AS WinLossE
 				,SUM(playercomm)			AS commissionP
@@ -198,7 +208,7 @@ BEGIN
 				,SUM(scomm)					AS commissionS
 				,SUM(-
 					CASE 
-						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999, 4297, 4298, 1698, 1699, 3898, 3899, 4599, 4600) THEN 0
+						WHEN b.bettype IN (2198, 2398, 2998, 2199, 2399, 2999) OR be.SubProduct IN ('Jackpot Contribution','Jackpot Prize') THEN 0
 						ELSE 
 							CASE 
 								WHEN b.tpositiontaking = 1 THEN 0 
@@ -228,9 +238,10 @@ BEGIN
 				LEFT JOIN dbo.outright o WITH (NOLOCK) ON b.matchid = o.matchid
 				LEFT JOIN bodb02.dbo.VSRaceInfo r WITH (NOLOCK) ON b.matchid = r.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
 				LEFT JOIN bodb02.dbo.VSRaceInfo14 r14 WITH (NOLOCK) ON b.matchid = r14.EventID AND b.bettype IN(1231,1232,1233,1237,1238)
+				LEFT JOIN #BettypeExtraAmount be ON b.bettype = be.Bettype
 			WHERE b.winlostdate = @tmpDate
-				AND isBA = 0
-				AND bettype IN (SELECT bettype FROM @BettypeProductMapping)
+				AND b.isBA = 0
+				AND b.bettype IN (SELECT bettype FROM @BettypeProductMapping)
 			GROUP BY
 				b.winlostdate
 				,ISNULL(s.SiteID, -1)
@@ -250,5 +261,7 @@ BEGIN
 
 		SELECT @tmpDate = DATEADD(DAY, 1, @tmpDate)
 	END
+
+	DROP TABLE #BettypeExtraAmount
 END
 GO
