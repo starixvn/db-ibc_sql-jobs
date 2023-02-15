@@ -37,7 +37,7 @@ AS
 		- 20220926@July: Vgaming - Exclude bettype 3854 (Way to Goal) - [Redmine: #178056]
 		- 20221219@July: Saba.games - Exclude bettype 1669 (Fortune Cat) - [Redmine: #181057]		
 		- 20221220@July: Vgaming - Exclude bettype 3861 (Fortune Cat) - [Redmine: #181014]   
-		- 20230118@July: Jili - Exclude bettype 5125 (Medusa) & 5149 (War Of Dragons) - [Redmine: #182955]   
+		- 20230118@July: Jili - Exclude bettypes 5125(Medusa), 5149(War Of Dragons), 5103(Crazy Hunter) & 5121(Crazy Pusher) - [Redmine: #182955]   
 
 	Param's Expanation:
 
@@ -120,7 +120,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (5125, 5149)
+					AND b.gameID NOT IN (5125, 5149, 5103, 5121)
 		END
 		ELSE 
 		BEGIN
