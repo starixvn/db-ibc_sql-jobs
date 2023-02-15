@@ -1,17 +1,16 @@
  
- 
+-- Create User
 
 DECLARE @strUser	VARCHAR(MAX) = ''
-		, @RoleName VARCHAR(50) = 'db_owner'
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-SELECT name 
+SELECT name
 FROM   sys.databases
-WHERE  CAST(CASE WHEN name IN ('master', 'model', 'msdb', 'tempdb', 'MonDB', 'LocalMonitorDB' ) THEN 1 
+WHERE  CAST(CASE WHEN name IN ('master', 'model', 'msdb', 'tempdb', 'MonDB', 'LocalMonitorDB'  ) THEN 1 
 				WHEN name LIKE 'ReportServer%' THEN 1
 				WHEN is_read_only = 1 THEN 1
-		 		WHEN state <> 0 THEN 1
+				WHEN state <> 0 THEN 1
 				ELSE is_distributor 
 			END AS BIT) = 0
 
@@ -19,7 +18,7 @@ WHERE  CAST(CASE WHEN name IN ('master', 'model', 'msdb', 'tempdb', 'MonDB', 'Lo
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\elodie.ho' )
+	VALUES  ('spvn\elodie.ho' )
 		, ('spvn\johnson.nguyen' )
 		, ('spvn\eden.dang' )
 		, ('spvn\winfred.pham' )
@@ -41,7 +40,12 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\tina.vo' )
 		, ('spvn\july.nguyen' )
 		, ('spvn\aries.nguyen' )
- 
+/*
+	USE DBName
+	GO 
+	CREATE USER vnXXX FOR LOGIN vnXXX WITH DEFAULT_SCHEMA=[dbo] 
+	GO
+*/
 SELECT	@strUser = @strUser 
 					+ 'USE ' + d.DBName + ';'
 					+ CHAR(13)
@@ -63,9 +67,58 @@ FROM	@tmpAffectedDB d
 	) t
 
 EXEC (@strUser)
-waitfor delay '00:00:01'
+GO
+
+-------------------------------------------
+-------------------------------------------
+-- Add Role for member
  
-SET @strUser = ''
+
+DECLARE @strUser VARCHAR(MAX) = ''
+		,@RoleName VARCHAR(50) = 'db_owner'
+
+DECLARE @tmpMember TABLE (Name VARCHAR(50))
+DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+
+INSERT INTO @tmpAffectedDB (DBName)
+SELECT name
+FROM   sys.databases
+WHERE  CAST(CASE WHEN name IN ('master', 'model', 'msdb', 'tempdb', 'MonDB', 'LocalMonitorDB' ) THEN 1 
+				WHEN name LIKE 'ReportServer%' THEN 1
+				WHEN is_read_only = 1 THEN 1
+				WHEN state <> 0 THEN 1
+				ELSE is_distributor 
+			END AS BIT) = 0
+
+INSERT INTO @tmpMember (Name) 
+	VALUES  ('spvn\elodie.ho' )
+		, ('spvn\johnson.nguyen' )
+		, ('spvn\eden.dang' )
+		, ('spvn\winfred.pham' )
+		, ('spvn\tacy.nguyen' )
+		, ('spvn\helios.huynh'  )
+
+		, ('spvn\sophia.nguyen' )
+		, ('spvn\bobby.nguyen' )
+		, ('spvn\sol.le' )
+		, ('spvn\malcolm.huynh' )
+		, ('spvn\evan.trinh' )
+		, ('spvn\danny.nguyen' )
+		, ('spvn\eddie.nguyen' )
+
+		, ('spvn\kathy.nguyen' )
+		, ('spvn\helen.do' )
+		, ('spvn\louisa.vo' )
+		, ('spvn\max.tran' )	
+		, ('spvn\tina.vo' )
+		, ('spvn\july.nguyen' )
+		, ('spvn\aries.nguyen' )
+/*
+	USE DBName
+	GO
+	EXEC sp_AddRoleMember 'db_xxx', 'vnxxx'
+	GO
+*/
 SELECT	@strUser = @strUser
 					+ 'USE ' + d.DBName + ';'
 					+ CHAR(13)

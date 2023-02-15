@@ -1,6 +1,8 @@
 USE [master]
 GO
- 
+-- Create Login
+
+  
 
 DECLARE @strLoginName 	VARCHAR(MAX) = ''
 
