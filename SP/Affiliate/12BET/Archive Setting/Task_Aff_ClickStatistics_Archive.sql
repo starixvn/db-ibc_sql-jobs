@@ -76,8 +76,8 @@ BEGIN
 			,LanguageCode
 			,DeviceType
 			
-	-- CSSumByCountryCode
-		INSERT INTO dbo.CSSumByCountryCode
+	-- ClickStatisticsSum_Country_Domain
+		INSERT INTO dbo.ClickStatisticsSum_Country_Domain
 		(
 			AffID
 			,Date
@@ -104,8 +104,8 @@ BEGIN
 			,DomainReferrer
 			,Country
 			
-	-- CSSumByCountryCodeandSportCode
-		INSERT INTO dbo.CSSumByCountryCodeandSportCode
+	-- ClickStatisticsSum_Country_Sport
+		INSERT INTO dbo.ClickStatisticsSum_Country_Sport
 		(
 			AffID
 			,Date
@@ -132,8 +132,8 @@ BEGIN
 			,Country
 			,SportCode
 			
-	-- CSSumBySportCodeandLanguageCode
-		INSERT INTO dbo.CSSumBySportCodeandLanguageCode
+	-- ClickStatisticsSum_Sport_Language
+		INSERT INTO dbo.ClickStatisticsSum_Sport_Language
 		(
 			AffID
 			,Date
