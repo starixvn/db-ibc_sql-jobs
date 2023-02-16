@@ -15,6 +15,7 @@ AS
 		- 20210801@Patrick:	Update Job to Support Parlay Range up to 3 Weeks [Redmine: #156498]
 		- 20220309@Max: MBU - Copy data of Cash Out Selling to bk table [Redmine: #169593]
 		- 20220505@Bobby: MBU - Add Task_MBU_CheckRowCount_Logs [Redmine: #172335]
+		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
 */
 BEGIN;
 	SET NOCOUNT ON;
@@ -280,7 +281,6 @@ BEGIN;
 			(tablename)
 	VALUES	('TicketVoiding_RequestDetail')
 		,	('TicketVoiding_Request')
-		,	('TicketVoiding_AutoVoidRequest_Queue')
 		,	('TicketVoiding_AutoUnmarkSetting')	
 
 	INSERT INTO	@ArchiveTable_oneDay

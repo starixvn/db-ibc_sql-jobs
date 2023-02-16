@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCTG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[SSIS_Archive_TVS_PreInit]
 	@StartDate smalldatetime=null,
 	@EndDate smalldatetime=null
@@ -9,13 +9,14 @@ AS
 	Database:	DBTXN.bodb02
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
 */
 BEGIN
 	SET NOCOUNT ON;
 	DELETE tvs FROM dbo.Task_Archive_TVS tvs;
 
-	INSERT INTO dbo.Task_Archive_TVS(Winlostdate, RequestId)
-	SELECT	t.Max_EventDate AS Winlostdate, t1.RequestId
+	INSERT INTO dbo.Task_Archive_TVS(Winlostdate, RequestId, VoidingHistoryIds)
+	SELECT	t.Max_EventDate AS Winlostdate, t1.RequestId, vh.VoidingHistoryIds
 	FROM	dbo.TicketVoiding_Request AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 		SELECT MAX(m.eventdate) AS Max_EventDate
@@ -71,7 +72,13 @@ BEGIN
 					)bt
 			)m
 		WHERE  rd.RequestId = t1.RequestId
-	)t	
+	)t
+	OUTER APPLY (
+		SELECT STUFF((SELECT ',' + CAST(v.VoidingHistoryId AS VARCHAR(50))
+		FROM dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK)
+		WHERE v.RequestId = t1.RequestId
+		FOR XML PATH('')),1,1,'') AS VoidingHistoryIds
+	)vh
 	WHERE  1=1
 		and t.Max_EventDate BETWEEN @StartDate AND @EndDate
 

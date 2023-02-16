@@ -33,6 +33,7 @@ AS
 		- 20210225@Max: [TVS] Remove archived data [Redmine: #150524]
 		- 20220121@Max: MBU - Clean up Cash Out Selling [Redmine: #167802]
 		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
+		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
 		- 20221017@Patrick: Revise to check exist system object to prevent deadlock issue [Redmine:#179140]
 */
 -- =======================
@@ -358,26 +359,6 @@ BEGIN
 				COMMIT TRANSACTION;
 			END
 			RETURN
-		END	
-		
-		IF	@deletedTarget = 'TicketVoiding_Queue'
-		BEGIN
-			IF	OBJECT_ID('TicketVoiding_Queue') IS NOT NULL
-			BEGIN;
-				SELECT	@rowcount = 0;
-
-				BEGIN TRANSACTION;
-
-				DELETE	tbl WITH (ROWLOCK)
-				FROM		dbo.TicketVoiding_Queue AS tbl WITH (ROWLOCK)
-				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
-						ON	tbl.QueueId = CONVERT(INT, s.value);
-
-				SELECT	@rowcount = @@ROWCOUNT;
-
-				COMMIT TRANSACTION;
-			END
-			RETURN
 		END		
 
 		IF	@deletedTarget = 'TicketVoiding_OperatorInfo'
@@ -432,26 +413,6 @@ BEGIN
 				FROM		dbo.TicketVoiding_AutoUnmarkSetting AS tbl WITH (ROWLOCK)
 				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
 						ON	tbl.id = CONVERT(INT, s.value);
-
-				SELECT	@rowcount = @@ROWCOUNT;
-
-				COMMIT TRANSACTION;
-			END
-			RETURN
-		END	
-		
-		IF	@deletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
-		BEGIN
-			IF	OBJECT_ID('TicketVoiding_AutoVoidRequest_Queue') IS NOT NULL
-			BEGIN;
-				SELECT	@rowcount = 0;
-
-				BEGIN TRANSACTION;
-
-				DELETE	tbl WITH (ROWLOCK)
-				FROM		dbo.TicketVoiding_AutoVoidRequest_Queue AS tbl WITH (ROWLOCK)
-				INNER JOIN	STRING_SPLIT (@transIds, ',') AS s
-						ON	tbl.QueueId = CONVERT(INT, s.value);
 
 				SELECT	@rowcount = @@ROWCOUNT;
 

@@ -24,6 +24,7 @@ AS
 		- 20210727@Patrick: Update Job to Support Parlay Range up to 3 Weeks [Redmine: #156498]
 		- 20220113@Max: [TVS] Cannot execute auto void queue for test match [Redmine: #166895]
 		- 20220121@Max: MBU - Clean up Cash Out Selling [Redmine: #167802]
+		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -33,6 +34,7 @@ BEGIN
 	IF @Action = 'delete'
 	BEGIN
 		CREATE TABLE #DeletedList (id BIGINT PRIMARY KEY CLUSTERED, IsDone BIT)
+		DECLARE @tmp_VoidingHistory AS TABLE (VoidingHistoryId INT)
 
 		IF @DeletedTarget = 'betParlayDetail'
 		BEGIN
@@ -242,6 +244,17 @@ BEGIN
 		ELSE IF @DeletedTarget = 'zzzbettrans'
 		BEGIN			
 			TRUNCATE TABLE #DeletedList
+			DELETE @tmp_VoidingHistory
+
+			INSERT INTO @tmp_VoidingHistory (VoidingHistoryId)
+			SELECT f.VoidingHistoryId
+			FROM DBCTG.bodb02.dbo.Task_Archive_TVS t WITH (NOLOCK)
+				CROSS APPLY (
+						SELECT DISTINCT value AS VoidingHistoryId
+						FROM string_split (t.VoidingHistoryIds, ',')
+					) f
+			WHERE t.Winlostdate= @StartDate
+
 			INSERT INTO #DeletedList (id,IsDone)
 			SELECT	t1.keyid,0
 			FROM	dbo.zzzbettrans AS t1 WITH (NOLOCK)
@@ -255,6 +268,12 @@ BEGIN
 				INNER JOIN dbo.bettransm14 t2 WITH (NOLOCK) ON t1.transid = t2.transid AND t2.statusID=102 and t1.matchid=t2.matchid AND t2.winlostdate = @StartDate
 			WHERE	t1.VoidingHistoryId IS NULL	
 
+			UNION --refer requestid data from Task_Archive_TVS
+			SELECT t1.keyid, 0 
+			FROM dbo.zzzbettrans t1 WITH (NOLOCK)
+				INNER JOIN @tmp_VoidingHistory v ON v.VoidingHistoryId = t1.VoidingHistoryId
+			WHERE t1.VoidingHistoryId IS NOT NULL
+
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettrans'	
 			RETURN
 		END
@@ -262,10 +281,27 @@ BEGIN
 		ELSE IF @DeletedTarget = 'zzzbettransM'
 		BEGIN			
 			TRUNCATE TABLE #DeletedList
+			DELETE @tmp_VoidingHistory
+
+			INSERT INTO @tmp_VoidingHistory (VoidingHistoryId)
+			SELECT f.VoidingHistoryId
+			FROM DBCTG.bodb02.dbo.Task_Archive_TVS t WITH (NOLOCK)
+				CROSS APPLY (
+						SELECT DISTINCT value AS VoidingHistoryId
+						FROM string_split (t.VoidingHistoryIds, ',')
+					) f
+			WHERE t.Winlostdate= @StartDate
+
 			INSERT INTO #DeletedList (id,IsDone)
 			SELECT keyid,0 FROM dbo.zzzbettransM AS t1 WITH (NOLOCK)
 				WHERE	EXISTS (SELECT 1 FROM dbo.bettransm14 AS t2 WITH (NOLOCK) WHERE t1.transid = t2.transid AND t2.statusID=102 AND t1.matchid=t2.matchid AND t2.winlostdate = @StartDate)
-					AND t1.VoidingHistoryId IS NULL;
+					AND t1.VoidingHistoryId IS NULL
+
+			UNION --refer requestid data from Task_Archive_TVS
+			SELECT t1.keyid, 0 
+			FROM dbo.zzzbettransm t1 WITH (NOLOCK)
+				INNER JOIN @tmp_VoidingHistory v ON v.VoidingHistoryId = t1.VoidingHistoryId
+			WHERE t1.VoidingHistoryId IS NOT NULL
 			
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettransM'	
 			RETURN
@@ -397,28 +433,6 @@ BEGIN
 
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_RequestDetail'
 
-			-----zzzbettransm----
-			TRUNCATE TABLE #DeletedList
-			INSERT INTO #DeletedList (id,IsDone)
-			SELECT t1.keyid, 0 
-			FROM dbo.zzzbettransm t1 WITH (NOLOCK)
-				INNER JOIN dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
-				INNER JOIN #tmpRequest r ON r.RequestId = v.RequestId
-			WHERE t1.VoidingHistoryId IS NOT NULL
-
-			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettransm'
-
-			-----zzzbettrans----
-			TRUNCATE TABLE #DeletedList
-			INSERT INTO #DeletedList (id,IsDone)
-			SELECT t1.keyid, 0 
-			FROM dbo.zzzbettrans t1 WITH (NOLOCK)
-				INNER JOIN dbo.TicketVoiding_VoidingHistory v WITH (NOLOCK) ON v.VoidingHistoryId = t1.VoidingHistoryId
-				INNER JOIN #tmpRequest r ON r.RequestId = v.RequestId
-			WHERE t1.VoidingHistoryId IS NOT NULL
-
-			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'zzzbettrans'
-
 			-----TicketVoiding_OperatorInfo----
 			TRUNCATE TABLE #DeletedList
 			INSERT INTO #DeletedList (id,IsDone)
@@ -427,15 +441,6 @@ BEGIN
 				INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
 
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_OperatorInfo'
-
-			-----TicketVoiding_Queue----
-			TRUNCATE TABLE #DeletedList
-			INSERT INTO #DeletedList (id,IsDone)
-			SELECT t1.QueueId, 0 
-			FROM dbo.TicketVoiding_Queue t1 WITH (NOLOCK)
-				INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId
-
-			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_Queue'
 
 			-----TicketVoiding_Reason----
 			TRUNCATE TABLE #DeletedList
@@ -474,15 +479,6 @@ BEGIN
 
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_RequestDetailTicket_SubParlay'
 
-			-----TicketVoiding_AutoVoidRequest_Queue----
-			TRUNCATE TABLE #DeletedList
-			INSERT INTO #DeletedList (id,IsDone)
-			SELECT QueueId,0 
-			FROM dbo.TicketVoiding_AutoVoidRequest_Queue AS t1 WITH (NOLOCK)
-				INNER JOIN #tmpRequest r ON r.RequestId = t1.RequestId;
-			
-			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
-
 			RETURN
 		END
 
@@ -495,19 +491,6 @@ BEGIN
 			WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate);
 			
 			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_AutoUnmarkSetting'
-			RETURN
-		END
-
-		ELSE IF @DeletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
-		BEGIN			
-			TRUNCATE TABLE #DeletedList
-			INSERT INTO #DeletedList (id,IsDone)
-			SELECT QueueId,0 
-			FROM dbo.TicketVoiding_AutoVoidRequest_Queue AS t1 WITH (NOLOCK)
-			WHERE	EXISTS (SELECT 1 FROM bodb02.dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate BETWEEN @StartDate AND @EndDate)
-				AND t1.RequestId = 0;
-			
-			EXEC [dbo].[Task_Archive_Bet] @Action = 'subtask', @DeletedTarget = 'TicketVoiding_AutoVoidRequest_Queue'
 			RETURN
 		END
 		/*--------------*/
