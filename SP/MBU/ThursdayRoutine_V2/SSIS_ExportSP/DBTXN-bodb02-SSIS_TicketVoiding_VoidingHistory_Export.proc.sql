@@ -12,6 +12,7 @@ AS
 		- 20130831@Bobby: Init
 		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
 		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
+		- 20230216@Max: Correct column name - [Redmine: #178234]
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -28,7 +29,7 @@ AS
 
 	SET @RequestIds = STUFF((SELECT ',' + CAST(RequestId AS VARCHAR(50)) FROM @tmpRequest FOR XML PATH('')),1,1,'')
 
-    SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,CONVERT(NVARCHAR(MAX),VoidData) AS VoidData, MinWinlostdate, MaxWinlostdate, BroadcastSessionId, SiteDBGroupID
+    SELECT	VoidingHistoryId, t1.RequestId, MessageId, StatusId, ReasonId, UserId, CreatedDate, ModifiedDate, TransIds,CONVERT(NVARCHAR(MAX),VoidData) AS VoidData, MinWinlostDate, MaxWinlostDate, BroadcastSessionID, SiteDBGroupID
 	FROM	dbo.TicketVoiding_VoidingHistory AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 		SELECT	value AS RequestId
