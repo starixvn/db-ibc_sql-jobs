@@ -436,13 +436,13 @@ BEGIN
 
 		SET DEADLOCK_PRIORITY NORMAL
 		
-		SET @Doing = 'Task_BalanceUp_background BU step 6.01 - Starting turn off BU_DoneSum20k flag ' + CAST(@step AS VARCHAR(10))
+		SET @Doing = 'Task_BalanceUp_background BU step 5.01 - Starting turn off BU_DoneSum20k flag ' + CAST(@step AS VARCHAR(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		--//turn off BU_DoneSum20k flag
 		EXEC dbo.Transfer_ExecRep_02 @Mode = 8, @TableName = 'MBUSettings'
 
-		SET @Doing = 'Task_BalanceUp_background BU step 6.01 - Ending turn off BU_DoneSum20k flag ' + CAST(@step AS VARCHAR(10))
+		SET @Doing = 'Task_BalanceUp_background BU step 5.01 - Ending turn off BU_DoneSum20k flag ' + CAST(@step AS VARCHAR(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
@@ -472,13 +472,13 @@ BEGIN
 			END
 		END
 		
-		SET @Doing = 'Task_BalanceUp_background BU step 6.02 - Starting update BalanceUpDate flag ' + CAST(@step AS VARCHAR(10))
+		SET @Doing = 'Task_BalanceUp_background BU step 6.01 - Starting update BalanceUpDate flag ' + CAST(@step AS VARCHAR(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		--//***update BalanceUpDate value
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 12, @tableName = 'MBUSettings'
 
-		SET @Doing = 'Task_BalanceUp_background BU step 6.02 - Ending update BalanceUpDate flag' + CAST(@step AS VARCHAR(10))
+		SET @Doing = 'Task_BalanceUp_background BU step 6.01 - Ending update BalanceUpDate flag' + CAST(@step AS VARCHAR(10))
 		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
 
 		--//*turn off BU_UpdBalDate_Local flag
