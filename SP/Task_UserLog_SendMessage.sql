@@ -12,7 +12,7 @@ ALTER PROCEDURE dbo.Task_UserLog_SendMessage
 	Para's explaination
 	
 	Revision:
-		- 20230317@Patrick: Init [redmine: #139238]
+		- 20230317@Patrick: Init [redmine: #173554]
 		
 */
 AS

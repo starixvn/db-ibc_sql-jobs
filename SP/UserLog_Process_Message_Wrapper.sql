@@ -1,5 +1,5 @@
 /*<info serverAlias="DBLOG-bodb_CustomerLog" executers="" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[UserLog_Process_Message_Wrapper]
+ALTER PROCEDURE [dbo].[UserLog_Process_Message_Wrapper]
 	@MessageBody XML
 AS
 /*  
@@ -10,7 +10,7 @@ AS
 	Para's explaination
 	
 	Revision:
-		- 20230317@Patrick: Init [redmine: #139238]
+		- 20230317@Patrick: Init [redmine: #173554]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -20,7 +20,7 @@ BEGIN
 	SELECT @__tableName = CAST(c.query('local-name(/*[1])') AS VARCHAR(128))
 	FROM @MessageBody.nodes('.') t(c)
 
-	IF @__tableName = 'UserLog'
+	IF @__tableName = 'Task_UserLog'
 	BEGIN
 		EXEC dbo.Task_UserLog_WriteLog @MessageBody = @MessageBody
 	END

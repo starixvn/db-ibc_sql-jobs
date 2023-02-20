@@ -10,7 +10,7 @@ AS
 	Para's explaination
 	
 	Revision:
-		- 20230317@Patrick: Init [redmine: #139238]
+		- 20230317@Patrick: Init [redmine: #173554]
 */
 BEGIN
 	SET NOCOUNT ON
