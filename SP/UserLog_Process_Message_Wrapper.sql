@@ -1,3 +1,4 @@
+/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[UserLog_Process_Message_Wrapper]
 	@MessageBody XML
 AS
