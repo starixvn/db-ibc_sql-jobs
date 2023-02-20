@@ -1,6 +1,19 @@
 /*<info serverAlias="DBTXN-bodb_CustomerLog"></info>*/
 USE bodb_CustomerLog
 GO
+select * from sb.ConfigurationReference
+
+select * from sb.ConfigurationReferenceDetail
+
+select * from sb.ConversationCount
+
+select * from sb.ConversationManagement
+
+insert into sb.ConfigurationReference(FunctionName, MaxReceiveMsg, MaxReceiveTimeOut)
+values('UserLog', 100, 100)
+
+insert into sb.ConfigurationReferenceDetail(FunctionName, ContractName, MessageType, MinConversation, MaxConversation)
+values('UserLog', 'Contract_UserLog', 'MessageType_UserLog', 0, 5)
 
 EXEC sb.DBA_ConversationManagement 
 	  @functionName = 'UserLog'
@@ -11,3 +24,4 @@ EXEC sb.DBA_ConversationManagement
 	, @Mode = 'Reset'
 
 GO
+

@@ -13,3 +13,6 @@ GO
 --need to update ADDRESS info on each environment
 CREATE ROUTE [Route_UserLog_DBLOG]   WITH  SERVICE_NAME  = N'Service_UserLog_DBLOG',  ADDRESS  = N'TCP://10.18.200.61:4742' 
 GO
+
+GRANT SEND ON SERVICE::[Service_UserLog_DBTXN] TO [public] AS [dbo]
+GO

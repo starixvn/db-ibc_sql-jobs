@@ -36,13 +36,13 @@ BEGIN
 			, @doing AS '@doing'
 			, @logdate AS '@logdate'
 			, @servername AS '@servername'
-		FOR XML PATH('r'), ROOT('WriteLog')
+		FOR XML PATH('r'), ROOT('Task_UserLog')
 	)
 
 	--send data to ssb
 	BEGIN TRY
 		EXEC sb.CustomerLog_SendMessage @xml = @__xmlData
-			, @functionName = 'WriteLog'
+			, @functionName = 'UserLog'
 			, @MessageType = 'MessageType_UserLog'
 			, @SB_error = @__error OUTPUT
 			
