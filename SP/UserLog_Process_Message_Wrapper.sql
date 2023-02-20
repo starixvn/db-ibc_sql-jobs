@@ -1,5 +1,5 @@
 /*<info serverAlias="DBLOG-bodb_CustomerLog" executers="" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[UserLog_Process_Message_Wrapper]
+CREATE PROCEDURE [dbo].[UserLog_Process_Message_Wrapper]
 	@MessageBody XML
 AS
 /*  
@@ -17,7 +17,7 @@ BEGIN
 	DECLARE @__tableName varchar(200)
 
 	--get root node value
-	SELECT @__tableName = c.query('local-name(/*[1])')
+	SELECT @__tableName = CAST(c.query('local-name(/*[1])') AS VARCHAR(128))
 	FROM @MessageBody.nodes('.') t(c)
 
 	IF @__tableName = 'UserLog'

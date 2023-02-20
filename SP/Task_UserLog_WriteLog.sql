@@ -14,7 +14,7 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @__errorMessage VARCHAR(2000)
+	DECLARE @__errorMessage VARCHAR(2000), @__messageBody NVARCHAR(MAX)
 
 	BEGIN TRY
 		
@@ -28,10 +28,10 @@ BEGIN
 
 	END TRY
 	BEGIN CATCH
-		SELECT @__errorMessage = ERROR_MESSAGE()
+		SELECT @__errorMessage = ERROR_MESSAGE(), @__messageBody = CAST(@MessageBody AS NVARCHAR(MAX))
 			
 		INSERT INTO sb.FailedMessageMonitoring(FunctionName, Message, ErrorMessage, TableName, MessageType, CreatedDate, IsResolved)
-		VALUES ('UserLog', CAST(@MessageBody AS NVARCHAR(MAX)), @__errorMessage, 'Task_UserLog','MessageType_UserLog', GETDATE(), 0)
+		VALUES ('UserLog', @__messageBody, @__errorMessage, 'Task_UserLog','MessageType_UserLog', GETDATE(), 0)
 			
 		--send email / notofication ==> let another job handle
 	END CATCH
