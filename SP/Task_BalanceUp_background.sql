@@ -59,13 +59,13 @@ BEGIN
 	END
 
 	SET @Doing = 'Task_BalanceUp_background: Starting step: ' + CAST(@step AS VARCHAR(10))
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 	IF @step = 1 -- Turn on copy20k flag
 	BEGIN
 		
 		SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', start turn on flag 20k'
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing  
 
 		--**turn on copy 20k flag
 		EXEC dbo.Transfer_ExecRep_02 @Mode = 7, @TableName = 'MBUSettings'
@@ -74,21 +74,21 @@ BEGIN
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 13, @tableName = 'MBUSettings'
 
 		SET @Doing = 'call Task_BalanceUp_background @fdate = ' + CONVERT(nvarchar(10), @fdate, 120) + ', @step = ' + CAST(@step as nvarchar(2)) + ', end turn on flag 20k'
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing  
 
 		--//
 		SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('BeforeBU')
 		WAITFOR DELAY @__delayTimeValue --waitfor a seconds to start balanceUp process
 
 		SET @Doing = 'Task_BalanceUp_background: Ending step: ' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		RETURN
 	END
 	ELSE IF @step = 2 --data verify
 	BEGIN
 		SET @Doing = 'Task_BalanceUp_background: BU step 2.00 - Verify data, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		--- DATA VERIFY
 		IF EXISTS (
@@ -139,7 +139,7 @@ BEGIN
 		END
 
 		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 	END
 	ELSE IF @step = 3 -- backup dbs
 	BEGIN
@@ -171,13 +171,13 @@ BEGIN
 		IF @__aliasServer = 'DBCTG' --only run that command at central server
 		BEGIN
 			SET @Doing = 'Task_BalanceUp_background: BU step 3.01 - backup database: custdb, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+			EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 			EXEC DBCUST.msdb.dbo.sp_start_job N'BalanceUPBackground_BackupFull_Cust'
 		END
 
 		SET @Doing = 'Task_BalanceUp_background: BU step 3.02 - backup database: bodb02 @dbtrans | grpX, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 		-- doing backup
 		Declare @suffix varchar(10)
 		SET @suffix = 'bbu' + RIGHT(CONVERT(varchar(10), @fdate,120),5)
@@ -188,13 +188,13 @@ BEGIN
 		IF @__aliasServer = 'DBCTG' --only run that command at central server
 		BEGIN
 			SET @Doing = 'Task_BalanceUp_background: BU step 3.03 - backup database: bodb02 @prod, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+			EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 			EXEC DB02.bodb02.dbo.Task_BackupFULL @suffix
 		END
 
 		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 		
 		RETURN
 	END
@@ -209,7 +209,7 @@ BEGIN
 		for custid which data is not valid, then we calculate again using lockhint ROWLOCK
 		*/
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.01 - Starting insert data into BalanceTable_tmp_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		INSERT INTO dbo.BalanceTable_tmp_cal
 		SELECT
@@ -233,7 +233,7 @@ BEGIN
 		GROUP BY custid, recommend, mrecommend, srecommend
 
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.02 - Starting insert data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		CREATE TABLE #balance_cal (roleid tinyint, 
 			custid int, recommend int, mrecommend int, srecommend int, 
@@ -263,7 +263,7 @@ BEGIN
 		FROM q_distinct INNER JOIN q_tcnt f ON q_distinct.custid = f.fcustid
 
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.03 - Starting adjust data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		-- required to have at least 4 rows of matching data to consider valid	
 		INSERT INTO #filtered
@@ -297,10 +297,10 @@ BEGIN
 		
 		SET @__rowcount = @@ROWCOUNT
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.03 - Ending adjust data into #balance_cal, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121) + ', @__rowcount: ' + CAST(@__rowcount AS VARCHAR(20))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.04 - Starting insert data into BalanceTable, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT custid, amt1, tcnt1, 0			   FROM #balance_cal WHERE roleid = 1
 		INSERT INTO dbo.BalanceTable (custid, amount, TicketCount, balTicketCount) SELECT recommend , SUM(amt2), SUM(tcnt2), 0 FROM #balance_cal GROUP BY recommend
@@ -314,7 +314,7 @@ BEGIN
 		WHERE custid = 0
 
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.05 - Starting update sma | actualrate data on BalanceTable (1), @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		UPDATE b
 		SET roleid = c.roleid,
@@ -331,7 +331,7 @@ BEGIN
 			LEFT OUTER JOIN CustDB.dbo.ExchangeDailyOanda ed ON c.currency = ed.ExchangeId AND ed.ExchangeDate = DATEADD(day, -1, @fdate)
 
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.06 - Starting update sma | actualrate data on BalanceTable (2), @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		UPDATE b
 		SET roleid = 1,
@@ -349,7 +349,7 @@ BEGIN
 			LEFT OUTER JOIN CustDB.dbo.ExchangeDailyOanda ed ON ag.currency = ed.ExchangeId AND ed.ExchangeDate = DATEADD(day, -1, @fdate)
 
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.07 - Starting insert data into balancetable_tmp, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121)
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		-- copy data, ready for insertion
 		INSERT INTO dbo.balancetable_tmp
@@ -357,7 +357,7 @@ BEGIN
 		
 		SET @__rowcount = @@ROWCOUNT
 		SET @Doing = 'Task_BalanceUp_background: BU step 4.07 - Ending insert data into balancetable_tmp, @fdate: ' + CONVERT(VARCHAR(10), @fdate, 121) + ', @__rowcount: ' + CAST(@__rowcount AS VARCHAR(20))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
 		--//only central server can run backup DBCUST.custdb
@@ -372,7 +372,7 @@ BEGIN
 		DELETE FROM dbo.ProcessingCustList WITH(ROWLOCK)
 
 		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		RETURN
 	END
@@ -407,7 +407,7 @@ BEGIN
 
 				--write logs:
 				SET @Doing = CONCAT(@@SERVERNAME, ' | Task_BalanceUp_background: duplicated transid (1). Err: ', @__errorMessage)
-				EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+				EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 				IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
 				BEGIN
@@ -437,16 +437,16 @@ BEGIN
 		SET DEADLOCK_PRIORITY NORMAL
 		
 		SET @Doing = 'Task_BalanceUp_background BU step 5.01 - Starting turn off BU_DoneSum20k flag ' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		--//turn off BU_DoneSum20k flag
 		EXEC dbo.Transfer_ExecRep_02 @Mode = 8, @TableName = 'MBUSettings'
 
 		SET @Doing = 'Task_BalanceUp_background BU step 5.01 - Ending turn off BU_DoneSum20k flag ' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		RETURN
 
@@ -473,13 +473,13 @@ BEGIN
 		END
 		
 		SET @Doing = 'Task_BalanceUp_background BU step 6.01 - Starting update BalanceUpDate flag ' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		--//***update BalanceUpDate value
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 12, @tableName = 'MBUSettings'
 
 		SET @Doing = 'Task_BalanceUp_background BU step 6.01 - Ending update BalanceUpDate flag' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		--//*turn off BU_UpdBalDate_Local flag
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 14, @tableName = 'MBUSettings'
@@ -507,7 +507,7 @@ BEGIN
 		WAITFOR DELAY @__delayTimeValue --Task_BalanceUp_background: waitfor go to delete step...
 		
 		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		RETURN
 
@@ -560,7 +560,7 @@ BEGIN
 		END
 
 		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10)) + ', @__rowcount: ' + CAST(@__rowcount AS VARCHAR(20))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		SET DEADLOCK_PRIORITY NORMAL
 		RETURN
@@ -583,7 +583,7 @@ BEGIN
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @keyFlag = 6, @tableName = 'MBUSettings'
 
 		SET @Doing = 'Task_BalanceUp_background : Ending step: ' + CAST(@step AS VARCHAR(10))
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing
 
 		
 		RETURN
