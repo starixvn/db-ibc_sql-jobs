@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb_CustomerLog"></info>*/
+/*<info serverAlias="DBTrans-bodb_CustomerLog"></info>*/
 USE bodb_CustomerLog
 GO
 select * from sb.ConfigurationReference
@@ -24,4 +24,3 @@ EXEC sb.DBA_ConversationManagement
 	, @Mode = 'Reset'
 
 GO
-

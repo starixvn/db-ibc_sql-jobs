@@ -13,9 +13,9 @@ GO
 --need to update ADDRESS info on each environment
 CREATE ROUTE [Route_UserLog_DBTXN]   WITH  SERVICE_NAME  = N'Service_UserLog_DBTXN',  ADDRESS  = N'TCP://DB231:4741' 
 GO
-CREATE ROUTE [Route_UserLog_DBGRP01L]   WITH  SERVICE_NAME  = N'Service_UserLog_DBGRP01L',  ADDRESS  = N'TCP://DB231:4741' 
+CREATE ROUTE [Route_UserLog_DBGRP01L]   WITH  SERVICE_NAME  = N'Service_UserLog_DBTXN',  ADDRESS  = N'TCP://DB231:4741' 
 GO
-CREATE ROUTE [Route_UserLog_DBGRP02L]   WITH  SERVICE_NAME  = N'Service_UserLog_DBGRP02L',  ADDRESS  = N'TCP://DB231:4741' 
+CREATE ROUTE [Route_UserLog_DBGRP02L]   WITH  SERVICE_NAME  = N'Service_UserLog_DBTXN',  ADDRESS  = N'TCP://DB231:4741' 
 GO
 
 GRANT SEND ON SERVICE::[Service_UserLog_DBTXN] TO [public] AS [dbo]
