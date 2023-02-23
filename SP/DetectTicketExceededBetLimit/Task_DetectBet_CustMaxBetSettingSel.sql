@@ -12,7 +12,7 @@ AS
 		- 20220523@Tacy: Initial SP [RedmineID: #170739]
 		- 20220810@Elodie: Change name of temp table
 		- 20220811@Tacy: Detect maxbet for Keno, Number Game product [RedmineID: #170739]
-
+		- 20230203@Tacy: change SettingStatus=0 -> SettingStatus<>2 [RedmineID: #170739]
 	Param's Explanation:
 */
 BEGIN
@@ -109,7 +109,7 @@ BEGIN
 		INNER JOIN ProductSettingDetail ps WITH (NOLOCK)
 				ON ps.SportType=ref.SportTypeRefBetSetting
 				AND ps.BetType=ref.BetTypeRefBetSetting
-	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0 AND ps.SettingStatus=0
+	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0 AND ps.SettingStatus<>2
 
 		--NG, Keno:
 	UPDATE cl 
@@ -148,7 +148,7 @@ BEGIN
 				AND psd.BetType=ref.BetTypeRefBetSetting
 		INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) 
 				ON ps.ProductSettingID=psd.ProductSettingID
-	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1 AND psd.SettingStatus=0
+	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1 AND psd.SettingStatus<>2
 
 	-- @sporttype: not support StakeLevel
 	IF EXISTS (SELECT 1 FROM #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202))
