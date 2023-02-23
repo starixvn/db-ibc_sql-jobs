@@ -17,6 +17,7 @@ AS
 		- 20220923@Max: Tuning [Redmine: #178156]
 		- 20220830@July: Include product SEAL Entertainment [Redmine: #177003]
 		- 20220923@July: Include product MG-RNG (Microgaming) [Redmine: #177583]
+		- 20230117@July: Jili - Incorporate new product [Redmine: #181791]
 
 	Param's explanation:		
 */
@@ -60,7 +61,7 @@ BEGIN
 	WHERE b.SequenceID > @maxSequenceId_setting
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
-		AND b.productID IN (208,209,212,248,165,247,232,234,237,238,167,172,174,150,200,224,171,173,156,155)
+		AND b.productID IN (208,209,212,248,165,247,232,234,237,238,167,172,174,150,200,224,171,173,156,155,158)
 	ORDER BY  b.sequenceid ASC
 
 	SET @maxSequenceId = (SELECT MAX(SequenceId) FROM #tmp_TransId)
@@ -70,13 +71,13 @@ BEGIN
 	FROM #tmp_TransId b
 		INNER JOIN Dep_CustSuper s WITH (NOLOCK) ON s.custid = b.srecommend
 	WHERE b.sporttype IN (247) --SG
-		AND b.bettype IN (4326, 4385, 4386)
+		AND b.bettype IN (4326, 4385, 4386, 4397)
 
-	--Remove unsupport bettype of SABA.games, Vgaming, Saba Casino, Macau Games
+	--Remove unsupport bettype of SABA.games, Vgaming, Saba Casino, Macau Games, Jili
 	DELETE b
 	FROM #tmp_TransId b
-	WHERE b.sporttype IN (208,209,212,150,200,171,173)
-		AND b.bettype IN (1650,1652,3836,3837,2105,2120,2104,4004)
+	WHERE b.sporttype IN (208,209,212,150,200,171,173,158)
+		AND b.bettype IN (1650,1652,3836,3837,2105,2120,2104,4004,5103,5121)
 
 	--Process detect invalid
 	EXEC dbo.Task_DetectBet_CustMaxBetSettingSel
