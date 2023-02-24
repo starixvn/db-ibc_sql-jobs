@@ -12,7 +12,7 @@
 USE [msdb]
 GO
 DECLARE @jobId BINARY(16)
-EXEC  msdb.dbo.sp_add_job @job_name=N'bodb02: Task Executor DB052', 
+EXEC  msdb.dbo.sp_add_job @job_name=N'bodb02: Task Executor', 
 		@enabled=1, 
 		@notify_level_eventlog=0, 
 		@notify_level_email=2, 
@@ -22,11 +22,11 @@ EXEC  msdb.dbo.sp_add_job @job_name=N'bodb02: Task Executor DB052',
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 select @jobId
 GO
-EXEC msdb.dbo.sp_add_jobserver @job_name=N'bodb02: Task Executor DB052', @server_name = N'DB-61\DEVDB053'
+EXEC msdb.dbo.sp_add_jobserver @job_name=N'bodb02: Task Executor', @server_name = N'TESTDB061'
 GO
 USE [msdb]
 GO
-EXEC msdb.dbo.sp_add_jobstep @job_name=N'bodb02: Task Executor DB052', @step_name=N'Execute SP from table', 
+EXEC msdb.dbo.sp_add_jobstep @job_name=N'bodb02: Task Executor', @step_name=N'Execute SP from table', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
 		@on_success_action=1, 
@@ -34,13 +34,13 @@ EXEC msdb.dbo.sp_add_jobstep @job_name=N'bodb02: Task Executor DB052', @step_nam
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.Task_Executor_DB052', 
+		@command=N'EXEC dbo.Task_Executor', 
 		@database_name=N'bodb02', 
 		@flags=0
 GO
 USE [msdb]
 GO
-EXEC msdb.dbo.sp_update_job @job_name=N'bodb02: Task Executor DB052', 
+EXEC msdb.dbo.sp_update_job @job_name=N'bodb02: Task Executor', 
 		@enabled=1, 
 		@start_step_id=1, 
 		@notify_level_eventlog=0, 
@@ -56,7 +56,7 @@ GO
 USE [msdb]
 GO
 DECLARE @schedule_id int
-EXEC msdb.dbo.sp_add_jobschedule @job_name=N'bodb02: Task Executor DB052', @name=N'bodb02: Task Executor DB052', 
+EXEC msdb.dbo.sp_add_jobschedule @job_name=N'bodb02: Task Executor', @name=N'bodb02: Task Executor', 
 		@enabled=1, 
 		@freq_type=4, 
 		@freq_interval=1, 
