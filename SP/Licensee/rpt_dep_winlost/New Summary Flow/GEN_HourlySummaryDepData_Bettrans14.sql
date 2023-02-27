@@ -15,6 +15,7 @@ AS
 			- 20191025@Bobby: Add column promotion [RedmineID: #120333]
 			- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
 			- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
+			- 20230227@Evan: Ensure correct balance calculation when allow to transfer 247 (BU) [Redmine: #173554]
 
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -286,7 +287,10 @@ BEGIN
 				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
 			WHERE b.winlostdate <= @Winlostdate
 					AND c.roleid = 1
-					AND (bettype = 19999 AND winlostdate <= @MoveBetsDay OR b.Bettype > 19999)
+					AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @MoveBetsDay THEN 0 --> new sum
+				            WHEN bettype = 20000 AND winlostdate > @BalanceUpDay THEN 0 --> new bal
+				            WHEN winlostdate < @BalanceUpDay THEN 0 --> old data
+				            ELSE 1 END
 			GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, 
 					CASE 
 						WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
