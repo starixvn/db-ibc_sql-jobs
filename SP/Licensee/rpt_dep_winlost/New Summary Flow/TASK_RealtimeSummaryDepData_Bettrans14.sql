@@ -695,7 +695,31 @@ BEGIN
 		MERGE bodb_Report.dbo.rptDepWinlost_Trans AS TARGET
 		USING #rptDepWinlost_Trans AS SOURCE
 		ON TARGET.Winlostdate = SOURCE.Winlostdate AND TARGET.CustID = SOURCE.CustID AND TARGET.SportType = SOURCE.SportType AND TARGET.PartnerID = SOURCE.PartnerID 
-		WHEN MATCHED THEN 
+		WHEN MATCHED AND 
+				(TARGET.Deposit <> SOURCE.Deposit OR
+				TARGET.Withdrawal <> SOURCE.Withdrawal OR
+				TARGET.Aff2MemTransfer <> SOURCE.Aff2MemTransfer OR
+				TARGET.Bonus <> SOURCE.Bonus OR
+				TARGET.Adjustment <> SOURCE.Adjustment OR
+				TARGET.Turnover <> SOURCE.Turnover OR
+				TARGET.Outstanding <> SOURCE.Outstanding OR
+				TARGET.Winloss <> SOURCE.Winloss OR
+				TARGET.Transfer3rd <> SOURCE.Transfer3rd OR
+				TARGET.DrawGame <> SOURCE.DrawGame OR
+				TARGET.Turnover_BA <> SOURCE.Turnover_BA OR
+				TARGET.Comm_BA <> SOURCE.Comm_BA OR
+				TARGET.AmountDueTo_BA <> SOURCE.AmountDueTo_BA OR
+				TARGET.playercomm <> SOURCE.playercomm OR
+				TARGET.Transfer3rdOthers <> SOURCE.Transfer3rdOthers OR
+				TARGET.Comm_BetTrade <> SOURCE.Comm_BetTrade OR
+				TARGET.Comm_BetTrade_Full <> SOURCE.Comm_BetTrade_Full OR
+				TARGET.AmountDueTo_BetTrade <> SOURCE.AmountDueTo_BetTrade OR
+				TARGET.Promotion <> SOURCE.Promotion OR
+				TARGET.BetCount <> SOURCE.BetCount OR
+				TARGET.TransferAmount <> SOURCE.TransferAmount OR
+				TARGET.TransferIn <> SOURCE.TransferIn OR
+				TARGET.TransferOut <> SOURCE.TransferOut ) 
+		THEN
 		UPDATE SET 
 				TARGET.Deposit = SOURCE.Deposit,
 				TARGET.Withdrawal = SOURCE.Withdrawal,
@@ -743,7 +767,13 @@ BEGIN
 		MERGE bodb_Report.dbo.rptDepWinlost_BonusWallet AS TARGET
 		USING #rptDepWinlostBonusWallet AS SOURCE
 		ON TARGET.Winlostdate = @Winlostdate AND TARGET.CustID = SOURCE.CustID
-		WHEN MATCHED THEN 
+		WHEN MATCHED AND 
+			(
+				TARGET.BonusType <> SOURCE.BonusType OR
+				TARGET.Bonus <> SOURCE.Bonus OR
+				TARGET.Adjustment <> SOURCE.Adjustment
+			)
+		THEN 
 		UPDATE SET 
 				TARGET.BonusType = SOURCE.BonusType,
 				TARGET.Bonus = SOURCE.Bonus,
