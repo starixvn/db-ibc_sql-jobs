@@ -12,6 +12,7 @@ AS
 
 	Revisions: 
 		- 20220127@July: Data Consistency - Check ticket transfer is not in bettrans [Redmine:#167974]
+		- 20230228@Sophia: Ignore CustID = 0 [RedmineId: 184425]
 	
 	Param's Expanation:
 */
@@ -23,6 +24,7 @@ BEGIN
 	FROM bodb02.dbo.bettrans WITH(NOLOCK) 
 	WHERE bettype >= 19999
 		AND transid > @MaxTransID
+		AND CustID <> 0
 
 	IF @transId <> ''
 	BEGIN
