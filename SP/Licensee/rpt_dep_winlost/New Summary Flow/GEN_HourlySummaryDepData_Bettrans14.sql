@@ -261,7 +261,7 @@ BEGIN
 			WHERE b.winlostdate <= @Winlostdate
 					AND b.matchid >= 0
 					AND c.roleid = 1
-					AND	bettype < 19999 AND winlostdate > @MoveBetsDay
+					AND winlostdate > @MoveBetsDay
 			GROUP BY b.custid, b.srecommend, b.mrecommend, b.recommend, 
 					CASE 
 						WHEN b.recommend IN (14373731, 14373733) AND @Winlostdate < '20141128' THEN 13
