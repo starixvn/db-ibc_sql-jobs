@@ -16,6 +16,7 @@ AS
 		- 20190808@Percy: Loop archive data + delete 3000 rows per batch to prevent lock tables [RedmineID: #115959]
 		- 20220609@Malcolm: Sum and backup data in BannerStatistics table [RedmineID: #173433]
 		- 20220929@Eddie: Add Country info [RedmineID: #176390]
+		- 20230215@Eddie: New sum tables [RedmineID: #177639]
 */
 
 BEGIN
@@ -44,6 +45,7 @@ BEGIN
 
 	-- Sum data
 	BEGIN
+	-- ClickStatistics1Sum
 		INSERT INTO dbo.ClickStatistics1Sum
 		(
 			AffID
@@ -54,7 +56,6 @@ BEGIN
 			,TotalClick
 			,UniqueClick
 			,DeviceType
-			,CountryCode
 		)
 		SELECT
 			AffId
@@ -65,7 +66,6 @@ BEGIN
 			,COUNT(1) AS TotalClick
 			,COUNT (DISTINCT IP) AS UniqueClick
 			,DeviceType
-			,Country
 		FROM dbo.ClickStatistics1 WITH (NOLOCK)
 		WHERE Date BETWEEN @FirstDayOfMonth AND @LastDayOfMonth
 		GROUP BY
@@ -75,7 +75,90 @@ BEGIN
 			,SportCode
 			,LanguageCode
 			,DeviceType
+			
+	-- ClickStatisticsSum_Country_Domain
+		INSERT INTO dbo.ClickStatisticsSum_Country_Domain
+		(
+			AffID
+			,Date
+			,TotalClick
+			,UniqueClick
+			,DeviceType
+			,DomainReferrer
+			,CountryCode
+		)
+		SELECT
+			AffId
+			,Date
+			,COUNT(1) AS TotalClick
+			,COUNT (DISTINCT IP) AS UniqueClick
+			,DeviceType
+			,DomainReferrer
 			,Country
+		FROM dbo.ClickStatistics1 WITH (NOLOCK)
+		WHERE Date BETWEEN @FirstDayOfMonth AND @LastDayOfMonth
+		GROUP BY
+			AffId
+			,Date
+			,DeviceType
+			,DomainReferrer
+			,Country
+			
+	-- ClickStatisticsSum_Country_Sport
+		INSERT INTO dbo.ClickStatisticsSum_Country_Sport
+		(
+			AffID
+			,Date
+			,TotalClick
+			,UniqueClick
+			,DeviceType
+			,CountryCode
+			,SportCode
+		)
+		SELECT
+			AffId
+			,Date
+			,COUNT(1) AS TotalClick
+			,COUNT (DISTINCT IP) AS UniqueClick
+			,DeviceType
+			,Country
+			,SportCode
+		FROM dbo.ClickStatistics1 WITH (NOLOCK)
+		WHERE Date BETWEEN @FirstDayOfMonth AND @LastDayOfMonth
+		GROUP BY
+			AffId
+			,Date
+			,DeviceType
+			,Country
+			,SportCode
+			
+	-- ClickStatisticsSum_Sport_Language
+		INSERT INTO dbo.ClickStatisticsSum_Sport_Language
+		(
+			AffID
+			,Date
+			,TotalClick
+			,UniqueClick
+			,DeviceType
+			,SportCode
+			,LanguageCode
+		)
+		SELECT
+			AffId
+			,Date
+			,COUNT(1) AS TotalClick
+			,COUNT (DISTINCT IP) AS UniqueClick
+			,DeviceType
+			,SportCode
+			,LanguageCode
+		FROM dbo.ClickStatistics1 WITH (NOLOCK)
+		WHERE Date BETWEEN @FirstDayOfMonth AND @LastDayOfMonth
+		GROUP BY
+			AffId
+			,Date
+			,DeviceType
+			,SportCode
+			,LanguageCode
 
 		INSERT INTO dbo.BannerStatisticsSum 
 		(
