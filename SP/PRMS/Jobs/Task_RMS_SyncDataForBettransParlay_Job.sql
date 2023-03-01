@@ -29,6 +29,7 @@ AS
 		- 20220802@Danny: Add retry step to avoid dirty read  [RedmineID: #176329]
 		- 20221018@Danny: Add retry step to avoid latency bettransm data [RedmineID: #179193]
 		- 20221123@Danny: Get bettransm_bk info by using Open_query instead [RedmineID: #180707]
+		- 20230118@Danny: extend bettransm_bk range [RedmineID: #182724]
 */
 
 BEGIN
@@ -221,7 +222,7 @@ BEGIN
 							INNER JOIN bodb_archive.dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
 						WHERE  bm.refno IN (SELECT value FROM STRING_SPLIT('''''+@str_refno+''''','''',''''))
-							AND bm.winlostdate BETWEEN DATEADD(DAY, -20, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''') AND DATEADD(DAY, -1, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''')
+							AND bm.winlostdate BETWEEN DATEADD(DAY, -30, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''') AND DATEADD(DAY, -1, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''')
 						''
 						)
 				'
