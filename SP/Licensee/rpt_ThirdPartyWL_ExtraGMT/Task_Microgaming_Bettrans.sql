@@ -32,6 +32,7 @@ AS
 		- 20220110@Danny: SG - Jackpot prize integration [#167089]
 		- 20220329@Danny: Intergrate Guaranteed Gaming [#167626]
 		- 20221018@Danny: Integrate MG-RNG (ProductID = 73) [#176986]
+		- 20230214@Danny: Integrate Jili (ProductID = 75) [#183766]
 	 Param's Explanation:
 */
 
@@ -47,7 +48,7 @@ BEGIN
 	DECLARE @RnGBettypeList TABLE(Bettype INT)
 	INSERT INTO @RnGBettypeList(Bettype)
 	SELECT	DISTINCT bettype
-	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'FW,PP,CC,SG,JK,CG,MGRNG') la		
+	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'FW,PP,CC,SG,JK,CG,MGRNG,JIG') la		
 
 	DECLARE @LCBettypeList TABLE(Bettype INT)
 	INSERT INTO @LCBettypeList(Bettype)
