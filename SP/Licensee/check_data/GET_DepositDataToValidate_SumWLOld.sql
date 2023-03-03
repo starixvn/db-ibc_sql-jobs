@@ -1,6 +1,4 @@
 ﻿/*<info serverAlias="DBLIC-bodb_Licensee" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
-USE bodb_Licensee
-GO
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_SumWLOld] 
     @Date smalldatetime
 	,@DrawFilter tinyint = 1
@@ -19,6 +17,7 @@ Revisions:
 - 20170822@Harper: Add missing products CB, AB, NG2, FW, CO, VS2, LT into data validation email [RedmineID: #81708]
 - 20180418@Joseph: Integrate new product PP [Redmine: #92318]
 - 20190710@Amanda: Integrate Card Club [RedmineID: #115449]
+- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424]  
 
 Param's Explanation:
     @DrawFilter Only support 1:Normal 
@@ -36,14 +35,14 @@ BEGIN
 	IF @DrawFilter <> 1
 	BEGIN
 	
-		SELECT 1 AS Id, CONVERT(MONEY, 0) AS Sb, CONVERT(MONEY, 0) AS Rb, CONVERT(MONEY, 0) AS Ng , CONVERT(MONEY, 0)  AS BA,CONVERT(MONEY, 0) AS CS,  CONVERT(MONEY, 0) AS BT,CONVERT(MONEY, 0) AS LC, CONVERT(MONEY, 0) AS AG ,CONVERT(MONEY, 0) AS GD,CONVERT(MONEY, 0) AS KN ,CONVERT(MONEY, 0) AS VG,CONVERT(MONEY, 0) AS VB,CONVERT(MONEY, 0) AS MGCLC,CONVERT(MONEY, 0) AS MGCRNG, CONVERT(MONEY, 0) AS VS
-						, CONVERT(MONEY, 0) AS CB, CONVERT(MONEY, 0) AS AB, CONVERT(MONEY, 0) AS NG2, CONVERT(MONEY, 0) AS FW, CONVERT(MONEY, 0) AS CO, CONVERT(MONEY, 0) AS VS2, CONVERT(MONEY, 0) AS LT, CONVERT(MONEY, 0) AS PP, CONVERT(MONEY, 0) AS CC
+		SELECT 1 AS Id, CONVERT(MONEY, 0) AS Sb, CONVERT(MONEY, 0) AS Rb, CONVERT(MONEY, 0) AS Ng , CONVERT(MONEY, 0)  AS BA,CONVERT(MONEY, 0) AS CS,  CONVERT(MONEY, 0) AS BT,CONVERT(MONEY, 0) AS LC, CONVERT(MONEY, 0) AS AG ,CONVERT(MONEY, 0) AS KN ,CONVERT(MONEY, 0) AS VG,CONVERT(MONEY, 0) AS VB,CONVERT(MONEY, 0) AS MGCLC,CONVERT(MONEY, 0) AS MGCRNG, CONVERT(MONEY, 0) AS VS
+						, CONVERT(MONEY, 0) AS AB, CONVERT(MONEY, 0) AS NG2, CONVERT(MONEY, 0) AS CO, CONVERT(MONEY, 0) AS VS2, CONVERT(MONEY, 0) AS LT, CONVERT(MONEY, 0) AS PP, CONVERT(MONEY, 0) AS CC
 		UNION
 		SELECT 2, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0),  CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0) ,CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0)
-					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0)
+					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0) 
 		UNION
 		SELECT 3, CONVERT(MONEY, 0)t, CONVERT(MONEY, 0), CONVERT(MONEY, 0),   CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0) ,CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0),CONVERT(MONEY, 0)
-					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0)
+					, CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0), CONVERT(MONEY, 0)
 	
 		RETURN; 
 	END
@@ -69,10 +68,6 @@ BEGIN
 		,@LCTurnover MONEY
 		,@LCCustomerWl MONEY
 		,@LCBetCount MONEY
-		--GD
-		,@GDTurnover MONEY
-		,@GDCustomerWl MONEY
-		,@GDBetCount MONEY
 		--KN
 		,@KNTurnover MONEY
 		,@KNCustomerWl MONEY
@@ -105,10 +100,6 @@ BEGIN
 		,@MGCRNGTurnover MONEY
 		,@MGCRNGCustomerWl MONEY
 		,@MGCRNGBetCount MONEY
-		----CB
-		,@CBTurnover MONEY
-		,@CBCustomerWl MONEY
-		,@CBBetCount MONEY
 		----AB
 		,@ABTurnover MONEY
 		,@ABCustomerWl MONEY
@@ -117,10 +108,6 @@ BEGIN
 		,@NG2Turnover MONEY
 		,@NG2CustomerWl MONEY
 		,@NG2BetCount MONEY
-		----FW
-		,@FWTurnover MONEY
-		,@FWCustomerWl MONEY
-		,@FWBetCount MONEY
 		----CO
 		,@COTurnover MONEY
 		,@COCustomerWl MONEY
@@ -149,7 +136,7 @@ BEGIN
 	SELECT DISTINCT ProductPrefix,s.Sporttype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 'LT','PP','CC')
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'CO', 'VS2', 'LT','PP','CC')
 
 	INSERT INTO @tblSport(ProductPrefix,Sporttype)
 	SELECT 'SB',0
@@ -237,17 +224,6 @@ BEGIN
 		   @CsCustomerWl = ISNULL (@CsCustomerWl, 0),
 		   @CsBetCount = ISNULL (@CsBetCount, 0)
  
-	-- GD
-	SELECT @GDTurnover=SUM(b.Turnover)
-		  ,@GDCustomerWl=SUM(b.Winlost) 
-		  ,@GDBetCount=SUM(b.BetCount) 
-	FROM @tblData b 
-	WHERE ProductPrefix ='GD'
-
-	SELECT  @GDTurnover =ISNULL (@GDTurnover, 0)
-		   ,@GDCustomerWl = ISNULL (@GDCustomerWl, 0)
-		   ,@GDBetCount = ISNULL (@GDBetCount, 0)
-
 	--- Keno
 	SELECT @KNTurnover=SUM(b.Turnover)
 		  ,@KNCustomerWl=SUM(b.Winlost) 
@@ -322,17 +298,6 @@ BEGIN
 			,@MGCRNGCustomerWl  = ISNULL(@MGCRNGCustomerWl,0)
 			,@MGCRNGBetCount    = ISNULL(@MGCRNGBetCount,0)		   
 	
-	----CB
-	 SELECT  @CBTurnover = SUM( b.Turnover)
-			,@CBCustomerWl = SUM(b.winlost)
-			,@CBBetCount = SUM( b.BetCount)
-	FROM @tblData b
-	WHERE ProductPrefix = 'CB'
-
-	SELECT @CBTurnover 		= ISNULL(@CBTurnover,0)
-		   ,@CBCustomerWl	= ISNULL(@CBCustomerWl,0)
-		   ,@CBBetCount 	= ISNULL(@CBBetCount,0)
-	
 	----AB
 	 SELECT  @ABTurnover = SUM( b.Turnover)
 			,@ABCustomerWl = SUM(b.winlost)
@@ -354,18 +319,6 @@ BEGIN
 	SELECT @NG2Turnover 	= ISNULL(@NG2Turnover,0)
 		   ,@NG2CustomerWl	= ISNULL(@NG2CustomerWl,0)
 		   ,@NG2BetCount 	= ISNULL(@NG2BetCount,0)
-
-	----FW
-	 SELECT  @FWTurnover = SUM( b.Turnover)
-			,@FWCustomerWl = SUM(b.winlost)
-			,@FWBetCount = SUM( b.BetCount) 
-	FROM @tblData b
-	WHERE ProductPrefix = 'FW'
-
-	SELECT @FWTurnover 		= ISNULL(@FWTurnover,0)
-		   ,@FWCustomerWl	= ISNULL(@FWCustomerWl,0)
-		   ,@FWBetCount 	= ISNULL(@FWBetCount,0)
-	
 	-- CO
 	SELECT  @COTurnover = SUM( b.Turnover)
 			,@COCustomerWl = SUM(b.winlost)
@@ -430,17 +383,14 @@ BEGIN
 				  , @BTTurnover AS BT
 				  , @LcTurnover AS LC
 				  , @AGTurnover as AG
-				  , @GDTurnover AS GD
 				  , @KNTurnover AS KN
 				  , @VGTurnover AS VG
 				  , @VBTurnover AS VB 
 				  , @MGCLCTurnover  AS MGCLC 
 				  , @MGCRNGTurnover AS  MGCRNG
 				  , @VsTurnover  AS VS
-				  , @CBTurnover  AS CB
 				  , @ABTurnover  AS AB
 				  , @NG2Turnover AS NG2
-				  , @FWTurnover  AS FW
 				  , @COTurnover  AS CO
 				  , @VS2Turnover AS VS2
 				  , @LTTurnover  AS LT
@@ -456,17 +406,14 @@ BEGIN
 			, @BTCustomerWl
 			, @LcCustomerWl
 			, @AGCustomerWl
-			, @GDCustomerWl 
 			, @KNCustomerWl
 			, @VGCustomerWl
 			, @VBCustomerWl
 			, @MGCLCCustomerWl
 			, @MGCRNGCustomerWl
 			, @VsCustomerWl
-			, @CBCustomerWl
 			, @ABCustomerWl
 			, @NG2CustomerWl
-			, @FWCustomerWl
 			, @COCustomerWl
 			, @VS2CustomerWl
 			, @LTCustomerWl
@@ -481,17 +428,14 @@ BEGIN
 			, @BTBetCount
 			, @LcBetCount
 			, @AGBetCount
-			, @GDBetCount
 			, @KNBetCount
 			, @VGBetCount
 			, @VBBetCount
 			, @MGCLCBetCount
 			, @MGCRNGBetCount
 			, @VsBetCount	
-			, @CBBetCount
 			, @ABBetCount
 			, @NG2BetCount
-			, @FWBetCount
 			, @COBetCount
 			, @VS2BetCount
 			, @LTBetCount

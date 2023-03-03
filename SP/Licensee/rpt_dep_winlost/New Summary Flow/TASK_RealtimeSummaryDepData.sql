@@ -73,6 +73,7 @@ AS
 		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
 		- 20230208@Evan: Inteagrate SG promotion prize [RedmineID: #183497]
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
+ 		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 		- 20230215@Evan: Enhance Job bodb02 Deposit Report Summary [RedmineID: #182153]
 
 	Input Params:
@@ -722,7 +723,6 @@ BEGIN
 				WHEN bettype = 1000 THEN 253--games
 				WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 				WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
-				WHEN bettype BETWEEN 18000 AND 18006 THEN 204 --Colossus Bet
 				WHEN bettype BETWEEN 4001 AND 4100 OR bettype BETWEEN 5800 AND 5999 THEN 212--Voidbridge
 				WHEN bettype = 901 THEN -2--BetTrade - Sold
 				WHEN bettype = 902 THEN -3--BetTrade - Bought.
@@ -733,14 +733,12 @@ BEGIN
 				WHEN bettype = 913 THEN -8--Cash Out - Commission
 				WHEN bettype = 914 THEN -9--Cash Out - Winloss
 				WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
-				WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
 				WHEN bettype = 1900 THEN 249 -- VG
 				WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 				WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 				WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
 				WHEN bettype BETWEEN 2401 AND 2498 THEN 211
 				WHEN bettype = 2499 THEN -211	-- Allbet Promotion
-				WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 				WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				WHEN bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 				WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
@@ -763,7 +761,6 @@ BEGIN
 				WHEN bettype = 3007 THEN -244 -- SAG Tip ticket
 				WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 				WHEN (bettype BETWEEN 3001 AND 3099 AND bettype <> 3007) THEN 244 -- SAG
-				WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 				WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
@@ -806,7 +803,6 @@ BEGIN
 				WHEN bettype = 1000 THEN 253--games
 				WHEN bettype BETWEEN 1201 AND 1299 THEN 180--Virtual Sport
 				WHEN bettype BETWEEN 1501 AND 1599 THEN 202--Keno
-				WHEN bettype BETWEEN 18000 AND 18006 THEN 204 -- Colossus Bet
 				WHEN bettype BETWEEN 4001 AND 4100 OR bettype BETWEEN 5800 AND 5999 THEN 212--Voidbridge
 				WHEN bettype = 901 THEN -2--BetTrade - Sold
 				WHEN bettype = 902 THEN -3--BetTrade - Bought
@@ -817,14 +813,12 @@ BEGIN
 				WHEN bettype = 913 THEN -8--Cash Out - Commission
 				WHEN bettype = 914 THEN -9--Cash Out - Winloss
 				WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
-				WHEN bettype BETWEEN 1700 AND 1799 THEN 255 -- GD
 				WHEN bettype = 1900 THEN 249 -- VG
 				WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 				WHEN bettype BETWEEN 2201 AND 2299 THEN 209
 				WHEN (bettype BETWEEN 2301 AND 2399 OR bettype BETWEEN 2901 AND 2999) THEN 210
 				WHEN bettype BETWEEN 2401 AND 2498 THEN 211
 				WHEN bettype = 2499 THEN -211	-- Allbet Promotion
-				WHEN bettype BETWEEN 1011 AND 1020 THEN 219
 				WHEN bettype BETWEEN 2701 AND 2799 THEN 190 -- Betradar VS
 				WHEN bettype BETWEEN 2800 AND 2829 THEN 193 -- Betradar VS: Virtual Basketball
 				WHEN bettype BETWEEN 1021 AND 1099 THEN 220 -- Lottery
@@ -847,7 +841,6 @@ BEGIN
 				WHEN bettype = 3007 THEN -244 -- SAG Tip ticket
 				WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
 				WHEN (bettype BETWEEN 3001 AND 3099 AND bettype <> 3007) THEN 244 -- SAG
-				WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
 				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
 				WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
