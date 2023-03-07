@@ -11,6 +11,7 @@ AS
 		- 20200221@Johnson: adjust VR setting = 0 for Basketball [Redmine:#128966]
 		- 20200617@Eden: Virtual Rate for Basketball [Redmine: #134978] 
 		- 20210510@Eden: Enhancement for not relying on DB On_User [redmine: #154507]
+		- 20230307@Johnson: Return Basketball VR to its original state [redmine:#184339]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -50,7 +51,7 @@ BEGIN
 					)
 	SELECT	sporttype,bettype,islive, 1 
 	from ProfileVirtualSetting 		
-	WHERE sporttype NOT IN (1,43,2)
+	WHERE sporttype NOT IN (1,43)
 
 	DECLARE	@virtualXML			TABLE (
 										seqNo		TINYINT PRIMARY KEY
@@ -116,50 +117,10 @@ BEGIN
 		WAITFOR DELAY '0:0:0.28'
 		
 	END	
-
-
-	-- Update for BasketBall
-	DECLARE @CustID INT
-		, @VirtualMultiplier VARCHAR(MAX) = ''
-
-	SELECT @VirtualMultiplier = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
-														FROM VRSettingHierarchy b WITH(NOLOCK) 
-															CROSS APPLY VRValueMapping vr (NOLOCK)
-														WHERE b.SportType = 2 
-															AND b.VRLeagueGroupID = -1 
-															AND b.BetType = -1 
-															AND vr.Value = 1
-														FOR XML RAW('Row'), ROOT ('Root'))
-										)
-
-
-	WHILE(1=1)	
-	BEGIN
-		UPDATE TOP (1) c		
-		SET c.isFinished = 1,
-			@custid = c.CustID
-		FROM #tblCust c
-		WHERE isBA = 0 
-			AND isFinished = 0
-		
-		IF @@ROWCOUNT = 0 BREAK;
-
-		EXEC [Acc_CustVirtualMultiplier_Upd]
-			  @CustID = @CustID
-			, @SportType = 2
-			, @VirtualMultiplier = @VirtualMultiplier
-			, @UserID  = 862400--Starix2
-			, @IP  = ''
-			, @ErrCode = 0 
-			, @ErrMsg = '' 
-			, @IsManualUpdate = 1
-		
-		WAITFOR DELAY '0:0:0.002'
-		
-	END	
 	
 	--LOGGING
-	DECLARE @LogSPData VARCHAR(MAX) = ''
+	DECLARE @LogSPData VARCHAR(MAX) = '',
+			@custid INT
 	
 	SELECT @LogSPData =
 		(
