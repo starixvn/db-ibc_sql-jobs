@@ -20,11 +20,10 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\rocky.ping')
 			,('SPVN\felix.nguyen')
 			,('SPVN\lita.tang')
-			,('SPVN\benji.duong')
-			,('SPVN\henry.nguyen')
+			,('SPVN\benji.duong') 
 			,('SPVN\lucy.ho')
 			,('SPVN\bill.nguyen')
-			,('SPVN\joyce.pham') 
+			,('spvn\may.ha')
 
 SELECT	@strUser = @strUser 
 			+ 'CREATE USER ' + '[' + t.Name + ']' + ' FOR LOGIN ' + '[' + t.Name + ']' + ' WITH DEFAULT_SCHEMA=[dbo]; '

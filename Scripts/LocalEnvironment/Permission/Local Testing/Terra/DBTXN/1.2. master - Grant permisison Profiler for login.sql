@@ -22,11 +22,10 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\rocky.ping')
 			,('SPVN\felix.nguyen')
 			,('SPVN\lita.tang')
-			,('SPVN\benji.duong')
-			,('SPVN\henry.nguyen')
+			,('SPVN\benji.duong') 
 			,('SPVN\lucy.ho')
 			,('SPVN\bill.nguyen')
-			,('SPVN\joyce.pham') 
+			,('spvn\may.ha')
 
 SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
 FROM	@tmpMember

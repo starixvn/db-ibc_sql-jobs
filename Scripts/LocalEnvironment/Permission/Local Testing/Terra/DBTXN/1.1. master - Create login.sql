@@ -22,10 +22,9 @@ INSERT INTO @tmpMember (Name)
 			,('SPVN\felix.nguyen')
 			,('SPVN\lita.tang')
 			,('SPVN\benji.duong')
-			,('SPVN\henry.nguyen')
 			,('SPVN\lucy.ho')
 			,('SPVN\bill.nguyen')
-			,('SPVN\joyce.pham') 
+			,('spvn\may.ha')
 		
 -- CREATE LOGIN [SPVN\nickname] FROM WINDOWS;  
 SELECT @strLoginName = @strLoginName 
