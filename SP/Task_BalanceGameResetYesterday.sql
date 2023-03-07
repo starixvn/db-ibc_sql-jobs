@@ -18,11 +18,25 @@ AS
 			- 20160718@Elodie: Reset data from yesterday backward [Redmine: #60993]
 			- 20191216@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 
 		Parameters Explanation:	
 */
 SET NOCOUNT ON	
 CREATE TABLE #WeeklyResetCustomer(custid INT, srecommend INT)
+
+DECLARE @SporttypeRefWinlossLimit SMALLINT
+	, @BettypeRefWinlossLimit SMALLINT
+
+SELECT @SporttypeRefWinlossLimit = SporttypeRefWinlossLimit, 
+		@BettypeRefWinlossLimit = BettypeRefWinlossLimit
+FROM DBCUST.CustDB.dbo.SportBettypeSettingMatrix st WITH(NOLOCK) 
+WHERE st.SportType = @SportType
+	AND st.bettype = @BetType
+	AND st.isLicensee = 0 AND st.Site = 'ALL'
+
+SELECT @SporttypeRefWinlossLimit = ISNULL(@SporttypeRefWinlossLimit,@SportType), 
+		@BettypeRefWinlossLimit = ISNULL(@BettypeRefWinlossLimit,@BetType)
 
 IF @bettype = 1101 --LiveCS
 BEGIN
@@ -33,7 +47,10 @@ BEGIN
 	INSERT INTO #WeeklyResetCustomer(custid, srecommend)
 	SELECT c.custid, srecommend
 	FROM CustDB.dbo.custinfo c WITH (NOLOCK)
-		INNER JOIN DBCUST.CustDB.dbo.CustWinLossLimit_Member cwl WITH (NOLOCK) ON cwl.CustId = c.custid AND cwl.sporttype = @sporttype AND cwl.bettype = @bettype
+		INNER JOIN DBCUST.CustDB.dbo.CustWinLossLimit_Member cwl WITH (NOLOCK) 
+			ON cwl.CustId = c.custid 
+			AND cwl.sporttype = @SporttypeRefWinlossLimit 
+			AND cwl.bettype = @BettypeRefWinlossLimit
 	WHERE c.roleid = 1 AND IsAutoReset = 0
 	
 END
