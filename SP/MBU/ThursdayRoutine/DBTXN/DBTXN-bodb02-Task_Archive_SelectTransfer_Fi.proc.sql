@@ -10,6 +10,7 @@ AS
 	Revisions:
 	    - 20190117@Sophia : Initial SP [redmine: 105415]
 		- 20211214@Kathy:	Separate Transfer Tickets[Redmine:#164197]
+		- 20230227@Evan:	Balance-Up support transfer 247 [Redmine: #173554]
 	
  */
 BEGIN
@@ -17,10 +18,10 @@ BEGIN
 
 	DECLARE @Refno_temp AS TABLE ( refno BIGINT, winlostdate SMALLDATETIME) 
 
-	DECLARE @BalanceUpDay SMALLDATETIME
-	SELECT TOP 1 @BalanceUpDay = winlostdate + 7
-	FROM dbo.Transfer WITH(NOLOCK)
-	WHERE bettype = 20000 AND custid = 3
+	DECLARE @BalanceUpDay SMALLDATETIME -- Next BalanceUp Date  
+
+	SELECT @BalanceUpDay = DATEADD(DAY, 1, MAX(winlostdate))
+	FROM dbo.Task_ArchiveDate
 
 	DECLARE @InternalAccList AS TABLE (CustID INT, RoleID TINYINT)
 	INSERT INTO @InternalAccList (CustID, RoleID)

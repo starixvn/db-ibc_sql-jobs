@@ -21,6 +21,7 @@ Revisions:
 	- 20210625@Percy: Enhance code to reduce high used tempdb [RedmineID: #154536]
 	- 20210505@Sol: NAP - Alpha - Allow more time for transfer - [Redmine: #149927]
 	- 20211122@Danny: Split transfer tickets out of bettrans [Redmine: #164196]
+	- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554] 
  */
 BEGIN
 
@@ -179,7 +180,10 @@ BEGIN
 		b.winlostdate = @_Winlostdate
 		AND b.statusID NOT IN (0,1) -- 'running','waiting'
 		AND bet.transIndicator > 0
-		AND ((bettype = 19999 AND winlostdate <= @CurrentMB_Date) OR (bettype > 19999))
+		AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @CurrentMB_Date THEN 0 --> new sum
+					WHEN bettype = 20000 AND winlostdate > @CurrentBU_Date THEN 0 --> new bal
+					WHEN winlostdate < @CurrentBU_Date THEN 0 --> old data
+				ELSE 1 END
 	GROUP BY b.custid
 		,b.recommend,b.mrecommend,b.srecommend
 		,bet.transIndicator
