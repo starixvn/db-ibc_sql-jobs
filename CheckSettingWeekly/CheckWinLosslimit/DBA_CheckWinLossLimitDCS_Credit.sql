@@ -13,6 +13,7 @@ AS
 		- 20200526@Tiara: Check offered products only [Redmine: #134813]
 		- 20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -34,6 +35,7 @@ BEGIN
 		[BetType] [smallint] NOT NULL,
 		[IsHidden] [BIT] NOT NULL
 	)
+
 	SELECT @Site = Site, @Currency = currency FROM CheckCustDB.dbo.Customer WITH(NOLOCK) WHERE CustID = @srecommend
 	SELECT @SiteID = siteid FROM CheckCustDB.dbo.Site WITH(NOLOCK) WHERE site = @Site
 
@@ -67,6 +69,21 @@ BEGIN
 	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH(NOLOCK) 
 		INNER JOIN #OfferedProductList op ON ps.Sporttype = op.SportType AND ps.Bettype = OP.BetType
 	WHERE ps.SettingType in (6,12)
+		AND ps.SettingStatus = 0
+		AND op.IsHidden = 0
+		AND ps.sporttype = CASE WHEN @sporttype = 0 THEN ps.sporttype ELSE @sporttype END
+		AND ps.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSettingDCS')) 
+
+	INSERT INTO @SportBettype (productID,sporttype,bettype,WinLimit)
+	SELECT DISTINCT ps.productID,ps.sporttype,ps.bettype, 1
+	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH(NOLOCK) 
+		INNER JOIN CheckCustDB.dbo.SportBettypeSettingMatrix m WITH (NOLOCK)
+			ON ps.Sporttype = m.SporttypeRefWinlossLimit AND ps.Bettype = m.BettypeRefWinlossLimit
+			AND m.isLicensee = 0 AND m.Site = 'ALL'
+		INNER JOIN #OfferedProductList op 
+			ON  op.SportType = m.SportType
+			AND CASE WHEN op.BetType = 1024 THEN 1021 ELSE op.BetType END = m.BetType
+	WHERE ps.SettingType in (22)
 		AND ps.SettingStatus = 0
 		AND op.IsHidden = 0
 		AND ps.sporttype = CASE WHEN @sporttype = 0 THEN ps.sporttype ELSE @sporttype END
