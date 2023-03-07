@@ -73,8 +73,8 @@ AS
 		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
 		- 20230208@Evan: Inteagrate SG promotion prize [RedmineID: #183497]
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
- 		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 		- 20230215@Evan: Enhance Job bodb02 Deposit Report Summary [RedmineID: #182153]
+ 		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized

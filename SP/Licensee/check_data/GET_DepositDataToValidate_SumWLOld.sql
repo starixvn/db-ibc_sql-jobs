@@ -136,7 +136,7 @@ BEGIN
 	SELECT DISTINCT ProductPrefix,s.Sporttype
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'CO', 'VS2', 'LT','PP','CC')
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','MGCRNG','MGCLC','VG','VB', 'AB', 'NG2', 'CO', 'VS2', 'LT','PP','CC')
 
 	INSERT INTO @tblSport(ProductPrefix,Sporttype)
 	SELECT 'SB',0
