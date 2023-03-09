@@ -44,7 +44,7 @@ AS
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
-
+		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
 
 	Param's Explanation:
 		@DrawFilter
@@ -249,6 +249,10 @@ BEGIN
 		,@MXGTurnover MONEY
 		,@MXGCustomerWl MONEY
 		,@MXGBetCount MONEY
+		----JIG
+		,@JIGTurnover MONEY
+		,@JIGCustomerWl MONEY
+		,@JIGBetCount MONEY
 
 	DECLARE @tblBettype TABLE (ProductPrefix VARCHAR(10), Bettype INT)
 
@@ -262,7 +266,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB','CB', 'AB', 'NG2', 'FW', 'CO', 'VS2', 
 			'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3',
-			'BTC', 'FGGL', 'MXG')
+			'BTC', 'FGGL', 'MXG', 'JIG')
 
 	-- Data Source
 	DECLARE @tblData AS TABLE (
@@ -1070,6 +1074,25 @@ BEGIN
 	FROM @tblData
 	WHERE ProductPrefix = 'MXG'
 
+	-- JIG
+	SELECT
+		@JIGTurnover = SUM(CASE
+						WHEN @DrawFilter IN (2, 3) THEN
+							CASE
+								WHEN Status = 111 THEN 0
+								WHEN Status IN (114, 115) THEN 0.5
+								ELSE 1
+							END
+						ELSE 1
+					END * Turnover),
+		@JIGCustomerWl = SUM(WinLoss),
+		@JIGBetCount = SUM(CASE
+								WHEN @DrawFilter = 2 AND Status = 111 THEN 0
+								ELSE BetCount
+							END)
+	FROM @tblData
+	WHERE ProductPrefix = 'JIG'
+
 	-- Result
 	SELECT
 		1 AS Id,
@@ -1120,6 +1143,7 @@ BEGIN
 		, ISNULL(@BTCTurnover, 0) AS BTC
 		, ISNULL(@FGGLTurnover, 0) AS FGGL
 		, ISNULL(@MXGTurnover, 0) AS MXG
+		, ISNULL(@JIGTurnover, 0) AS JIG
 
 	UNION
 	SELECT
@@ -1171,6 +1195,7 @@ BEGIN
 		, ISNULL(@BTCCustomerWl, 0)
 		, ISNULL(@FGGLCustomerWl, 0)
 		, ISNULL(@MXGCustomerWl, 0)
+		, ISNULL(@JIGCustomerWl, 0)
 	UNION
 	SELECT
 		3
@@ -1221,6 +1246,7 @@ BEGIN
 		, ISNULL(@BTCBetCount, 0)
 		, ISNULL(@FGGLBetCount, 0)
 		, ISNULL(@MXGBetCount, 0)
+		, ISNULL(@JIGBetCount, 0)
 
 	SET NOCOUNT OFF
 END

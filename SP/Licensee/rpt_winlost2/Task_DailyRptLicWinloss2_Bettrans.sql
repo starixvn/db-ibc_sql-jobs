@@ -101,6 +101,7 @@ AS
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
 		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
 		- 20230208@Evan: Inteagrate SG promotion prize [RedmineID: #183497]
+		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -239,6 +240,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
+			WHEN b.bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -372,6 +374,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
+			WHEN b.bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 			ELSE 0
 		END
 		,CASE
