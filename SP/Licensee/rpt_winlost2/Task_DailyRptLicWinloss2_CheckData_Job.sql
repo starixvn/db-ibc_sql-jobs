@@ -20,6 +20,7 @@ AS
 			. Add @tablename param to break step of job: process insert sum step by step
 		- 20201020@Hogan: Add step Check & correct data to rptCasinoTurnover [RedmineID: #128493]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20230209@Bobby: Add rptLicenseeWinloss [RedmineID: #172604]
 */
 
 BEGIN
@@ -92,6 +93,10 @@ BEGIN
 		ELSE IF @TableName = 'rptCasinoTurnover'
 		BEGIN
 			EXEC dbo.Task_DailyRptCasinoTurnover_CheckData @winlostdate = @WinlostDate
+		END
+		ELSE IF @TableName = 'rptLicenseeWinloss'
+		BEGIN
+			EXEC [dbo].[Task_rptLicenseeWinloss_Bettrans14] @winlostdate = @winlostdate, @isCheckDataOnly=0
 		END
 	END
 END

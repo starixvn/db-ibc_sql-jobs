@@ -2,21 +2,19 @@
 USE [bodb_LicenseeReport]
 GO
 
-CREATE OR ALTER PROCEDURE [dbo].[Task_GEN_LicWinlossAnalysis_Bettrans14_CheckAndCorrect]
+CREATE OR ALTER PROCEDURE [dbo].[Task_rptLicenseeWinloss_Bettrans14]
 	@winlostdate DATE,
-	@IsCheckOnly BIT = 1
+	@IsCheckDataOnly BIT = 1
 AS
- 
 /*
 	Created: 20230209@Bobby
-	Task: LAP - Winloss Analysis - GEN Bettrans
+	Task: 172604 - LAP - Winloss Analysis - GEN Bettrans
 	DB: DBEXT.bodb02
 
 	Revisions:
-		- 20230209@Bobby: Created [RedmineID: #153563]
+		- 20230209@Bobby: Created [RedmineID: #172604]
 		
 */
- 
 BEGIN  
 	SET NOCOUNT ON;
 
@@ -36,7 +34,6 @@ BEGIN
 	   ,[LeagueGroupId]		SMALLINT
 	   ,[TicketType]		TINYINT
 	   ,[Betfrom]			NVARCHAR(3)
-	   ,[IsBA]				BIT
 	   ,[APositiontaking]	MONEY
 	   ,[BetCount]			INT
 	   ,[Turnover]			MONEY
@@ -56,13 +53,13 @@ BEGIN
 	);
 	
 	DROP TABLE IF EXISTS #tmpAgency 
-	CREATE TABLE #tmpAgency(recommend INT, Currency INT);
+	CREATE TABLE #tmpAgency(recommend INT PRIMARY KEY, Currency INT);
 	
 	INSERT INTO #tmpAgency
 	SELECT b.recommend, cs.Currency
-	FROM [bodb02].[dbo].[bettrans] b WITH(NOLOCK)
+	FROM [bodb02].[dbo].[bettrans14] b WITH(NOLOCK)
 	INNER JOIN bodb02.dbo.Dep_CustSuper cs WITH(NOLOCK) on cs.custid = b.srecommend
-	WHERE  b.winlostdate BETWEEN @FromDate AND @ToDate
+	WHERE  b.winlostdate = @winlostdate
 		AND b.statusID IN (111,112,113)
 	GROUP BY b.recommend, cs.Currency;
 		
@@ -70,7 +67,7 @@ BEGIN
 		SELECT TOP 1 1
 		FROM bodb_LicenseeReport.[dbo].[rptLicenseeWinloss] rpt WITH(NOLOCK)
 		INNER JOIN #tmpAgency a ON a.recommend = rpt.recommend
-		WHERE rpt.winlostdate BETWEEN @FromDate AND @ToDate
+		WHERE rpt.winlostdate = @winlostdate
 	)
 	BEGIN
 		PRINT 'DATA has NOT been ready on that day ' + FORMAT(@winlostdate, 'yyyy-MM-dd');
@@ -88,10 +85,7 @@ BEGIN
 			FROM bodb_licensee.dbo.Product3rd p3 WITH(NOLOCK)
 			WHERE p3.Enabled = 1
 	)
-	SELECT tbl.ProductId, tbl.Bettype, tbl.RefTable, tbl.EventType,
-		CASE WHEN tbl.RefTable IN (1,2) OR tbl.ProductID = 47 THEN 1 ELSE 0 END IsUsingOddsSpread,
-		CASE WHEN cont.Bettype IS NOT NULL THEN 1 ELSE 0 END AS IsContributionBettype,
-		tbl.Product3rdId
+	SELECT tbl.ProductId, tbl.Bettype, tbl.RefTable, tbl.EventType,tbl.Product3rdId
 	INTO #tmpBettype
 	FROM (
 		SELECT DISTINCT p.ProductID, 
@@ -102,32 +96,10 @@ BEGIN
 		FROM CTE_Product p3 WITH(NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductPrefix = p3.ProductCode
 		INNER JOIN bodb02.dbo.SportBettypeMatrix m WITH(NOLOCK) ON m.ProductID = p.ProductID
-	) AS tbl
-	OUTER APPLY 
-	(
-		SELECT f.Bettype
-		FROM bodb02.dbo.f_BettypePrizeGroup() f
-		WHERE f.BettypeGroup = 'Contribution'
-			AND f.Bettype = tbl.bettype
-	) AS cont;
+	) AS tbl;
 	
 	
-	SELECT 'bettrans';
-
-	;WITH CTE_SabaSporttypeRef AS (
-		SELECT t.SportType AS SabaSportType, t.SportType, t.LeagueGroupID
-		FROM bodb02.[dbo].[LAP_f_WinlossAnalysis_SabaSportSel] () AS saba
-		CROSS APPLY
-		(
-			SELECT Sporttype, LeagueGroupID
-			FROM OPENJSON(saba.SporttypeRef)
-			WITH (Sporttype INT '$.Sporttype',
-				LeagueGroupIDs NVARCHAR(MAX) '$.LeagueGroupID' AS JSON
-			)
-			CROSS APPLY OPENJSON(LeagueGroupIDs) WITH (LeagueGroupID VARCHAR(20) '$')
-		) AS t
-		WHERE saba.SporttypeRef IS NOT NULL
-	)
+	PRINT 'GEN >> bettrans14';
 	INSERT INTO #tmpRptData
 	SELECT 
 		b.Recommend,
@@ -145,7 +117,6 @@ BEGIN
 		ck.LeagueGroupId,
 		ck.TicketType,
 		b.Betfrom,
-		ba.IsBA,
 		b.APositiontaking
 		----------------------
 		,SUM(1) AS BetCount
@@ -161,6 +132,7 @@ BEGIN
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		INNER JOIN #tmpBettype s ON s.BetType = b.bettype AND s.RefTable NOT IN (1,2)
 		LEFT JOIN [bodb02].dbo.match14 m WITH(NOLOCK) ON b.matchid = m.matchid
+		LEFT JOIN [bodb02].[dbo].[Match3rd14] m3rd WITH(NOLOCK) ON m3rd.Match3rdId = b.matchid
 		LEFT JOIN [bodb02].dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid AND l.LeagueGroupID IN (42,74,108,113,122,151)
 		LEFT JOIN [bodb02].dbo.outright14 o WITH(NOLOCK) ON b.matchid = o.orid
 		LEFT JOIN [bodb02].dbo.League lo WITH (NOLOCK) ON lo.leagueid = o.leagueid
@@ -170,11 +142,6 @@ BEGIN
 			SELECT 
 				IIF(lba.TransID IS NOT NULL, 1, 0) AS IsBA
 		) AS ba
-		OUTER APPLY ( 
-			SELECT TOP 1 SabaSportType 
-			FROM CTE_SabaSporttypeRef ref 
-			WHERE s.ProductId = 1 AND ref.Sporttype = m.Sporttype AND ref.LeagueGroupID = l.LeagueGroupID
-		) AS saba
 		OUTER APPLY (
 			SELECT 
 				ABS(b.[stake]) AS Turnover,
@@ -182,7 +149,6 @@ BEGIN
 					WHEN s.RefTable IN (1,2) THEN 0 -- Gaming IN bettransRnG/bettransLC
 					WHEN s.ProductID = 1 AND b.statusID IN (111) THEN 0
 					WHEN s.ProductID = 1 AND b.statusID IN (112, 113) AND ABS(b.modds) = 0.25 THEN ABS(stake) / 2
-					WHEN s.IsUsingOddsSpread = 1 THEN b.oddsspread -- BBIN
 					ELSE ABS(b.stake)
 				END AS NetTurnover,
 				-(CASE
@@ -190,17 +156,16 @@ BEGIN
 					ELSE 0
 				END) AS AmtDueToBA,
 				CASE 
-					WHEN s.EventType = 1 THEN 
+					WHEN s.EventType = 0 THEN
 						CASE 
-							WHEN s.ProductId = 1 AND s.EventType = 1 AND b.betdaqid = -2 THEN -2 --> Castout Sport 
-							ELSE CAST(ISNULL(saba.SabaSportType, ISNULL(m.sporttype,-9999)) AS INT)
+							WHEN b.matchid = 29 THEN -1 --Parlay Sport
+							WHEN b.matchid = 2799 THEN b.oddsid 
+							ELSE b.matchid
 						END
+					WHEN s.EventType = 1 THEN ISNULL(m.sporttype,-9999)
 					WHEN s.EventType = 2 THEN CAST(lo.sporttype AS INT)
 					WHEN s.EventType = 3 THEN CAST(vs.SportType AS INT)
-					WHEN s.EventType = 0 THEN
-						CASE WHEN b.matchid = 29 THEN -1 --Parlay Sport
-						ELSE b.matchid
-						END
+					WHEN s.EventType = 5 THEN m3rd.Sporttype
 					ELSE 0
 				END AS SportType,
 				CASE 
@@ -229,7 +194,6 @@ BEGIN
 						AND b.bettype NOT BETWEEN 81 AND 120
 						THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
 					WHEN 
-						--b.winlostdate < HWHLCutDate AND 
 						b.statusID IN (112, 113)
 						AND b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 						AND ABS(b.modds) = 0.25
@@ -239,7 +203,7 @@ BEGIN
 				ISNULL(CASE WHEN b.bettype IN(9,29) THEN b.livehomescore ELSE b.liveindicator END, 0) AS liveindicator
 		) AS ck
 		
-	WHERE b.winlostdate BETWEEN @FromDate AND @ToDate
+	WHERE b.winlostdate = @winlostdate
 		AND b.statusID IN (111,112,113)
 	GROUP BY 
 		b.Recommend,
@@ -257,13 +221,11 @@ BEGIN
 		ck.LeagueGroupId,
 		ck.TicketType,
 		b.Betfrom,
-		ba.IsBA,
 		b.APositiontaking
 	ORDER BY b.winlostdate
 
 
-	SELECT 'bettransRnG';
-
+	PRINT 'GEN >> bettransRnG14';
 	INSERT INTO #tmpRptData
 	SELECT 
 		b.Recommend,
@@ -277,7 +239,6 @@ BEGIN
 		0 AS LeagueGroupId,
 		0 AS TicketType,
 		b.Betfrom,
-		0 AS IsBA,
 		b.APositiontaking
 		----------------------
 		,COUNT(1) AS [BetCount]
@@ -292,7 +253,7 @@ BEGIN
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		INNER JOIN #tmpBettype s ON s.BetType = b.gameID AND s.RefTable IN (1,2)
-	WHERE b.winlostdate BETWEEN @FromDate AND @ToDate
+	WHERE b.winlostdate = @winlostdate
 		AND b.statusID IN (111,112,113)
 	GROUP BY
 		b.Recommend,
@@ -306,7 +267,7 @@ BEGIN
 		b.APositiontaking
 	
 	
-	SELECT 'bettransLC';
+	PRINT 'GEN >> bettransLC14';
 	INSERT INTO #tmpRptData
 	SELECT 
 		b.Recommend,
@@ -320,7 +281,6 @@ BEGIN
 		0 AS LeagueGroupId,
 		0 AS TicketType,
 		b.Betfrom,
-		0 AS IsBA,
 		b.APositiontaking
 		----------------------
 		,COUNT(1) AS [BetCount]
@@ -336,7 +296,7 @@ BEGIN
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		INNER JOIN #tmpBettype s ON s.BetType = b.gameID AND s.RefTable IN (1,2)
 
-	WHERE b.winlostdate BETWEEN @FromDate AND @ToDate
+	WHERE b.winlostdate = @winlostdate
 		AND b.statusID IN (111,112,113)
 	GROUP BY
 		b.Recommend,
@@ -350,48 +310,39 @@ BEGIN
 		b.APositiontaking;
 		
 	DECLARE @HasDiff BIT;
-		
+	
 	--TODO: CHECK 
 	DROP TABLE IF EXISTS #tmpDiffAgency;
+	CREATE TABLE #tmpDiffAgency(recommend INT, CustId INT PRIMARY KEY, DiffFlag BIT /*1: Source, 0: Target*/);
+	
 	;WITH CTE_RptDataSource AS (
 		SELECT b.[Recommend]
-	           ,[WinlostDate]
-	           ,[Product3rdId]
-	           ,[Sporttype]
-	           ,[Bettype]
 	           ,[CustId]
-	           ,[StatusId]
-	           ,[LiveIndicator]
-	           ,[LeagueGroupId]
-	           ,[TicketType]
-	           ,[Betfrom]
-	           ,[IsBA]
-	           ,[APositiontaking]
-			   , CHECKSUM([BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm],[BetEffective]) AS CheckSumData
+			   ,CHECKSUM_AGG(CHECKSUM([APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm],[BetEffective])) AS CheckSumData
 		FROM [dbo].[rptLicenseeWinloss] b WITH(NOLOCK)
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
-		WHERE b.winlostdate BETWEEN @FromDate AND @ToDate
+		WHERE b.winlostdate = @winlostdate
+		GROUP BY b.[Recommend]
+	           ,[CustId]
 	)
+	INSERT INTO #tmpDiffAgency (Recommend, CustId, DiffFlag)
 	SELECT DISTINCT ISNULL(b14.Recommend, s.Recommend) AS Recommend
-	INTO #tmpDiffAgency
-	FROM #tmpRptData AS b14
+		,ISNULL(b14.CustId, s.CustId) AS CustId
+		,IIF(b14.CustId > 0, 1, 0) AS DiffFlag
+	FROM (
+		SELECT [Recommend]
+	           ,[CustId]
+			   ,CHECKSUM_AGG(CHECKSUM([APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm],[BetEffective])) AS CheckSumData
+		FROM #tmpRptData
+			GROUP BY 
+				[Recommend]
+	           ,[CustId]
+	) AS b14
 	FULL OUTER JOIN CTE_RptDataSource AS s ON
-			s.[Recommend] 			= b14.Recommend
-		   AND s.[WinlostDate]		= b14.WinlostDate
-		   AND s.[Product3rdId]		= b14.Product3rdId
-		   AND s.[Sporttype]		= b14.Sporttype
-		   AND s.[Bettype]			= b14.Bettype
-		   AND s.[CustId]			= b14.CustId
-		   AND s.[StatusId]			= b14.StatusId
-		   AND s.[LiveIndicator]	= b14.LiveIndicator
-		   AND s.[LeagueGroupId]	= b14.LeagueGroupId
-		   AND s.[TicketType]		= b14.TicketType
-		   AND s.[Betfrom]			= b14.Betfrom
-		   AND s.[IsBA]				= b14.IsBA
-		   AND s.[APositiontaking]	= b14.APositiontaking
-	WHERE s.[Recommend]  		IS NULL
-		OR s.[Recommend]  	IS NULL
-		OR s.CheckSumData <> 	CHECKSUM(b14.[BetCount],b14.[Turnover],b14.[NetTurnover],b14.[Winlost],b14.[AWinlost],b14.[PComm],b14.[AComm],b14.[BetEffective])
+			s.[Recommend] = b14.Recommend AND s.[CustId]= b14.CustId
+	WHERE s.[CustId]  	IS NULL
+		OR b14.[CustId]  IS NULL
+		OR s.CheckSumData 	<> 	b14.CheckSumData
 	
 	SET @HasDiff = IIF(@@ROWCOUNT > 0, 1, 0);
 
@@ -403,21 +354,48 @@ BEGIN
 	ELSE
 	BEGIN
 		PRINT 'LAP - WinlossAnalysis - bettrans14 - CheckAndCorrect: Diff DATA found on that day ' + FORMAT(@winlostdate, 'yyyy-MM-dd');
-		IF @IsCheckOnly = 0
+		IF @IsCheckDataOnly = 1
 		BEGIN
 			SELECT * FROM #tmpDiffAgency;
 		END
 	END
 		
-	IF @HasDiff = 1 AND @IsCheckOnly = 0
+	IF @HasDiff = 1 AND @IsCheckDataOnly = 0
 	BEGIN
-		PRINT 'GEN-DATA-bettrans14 has been running on that day ' + FORMAT(@winlostdate, 'yyyy-MM-dd');
+		PRINT 'CheckAndCorrect on bettrans14 has been running on that day ' + FORMAT(@winlostdate, 'yyyy-MM-dd');
+
+		-- TODO: DataCheckingLog
+		-- Save CustID into BetTypeId for quick checking
+		INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, BetTypeId, IsSource, ExtraInfo)
+		SELECT @winlostdate AS WinlostDate, 
+			OBJECT_NAME(@@PROCID)  AS SPName, 
+			'rptLicenseeWinloss' AS TableName, 
+			tmp.CustId,
+			DiffFlag,
+			CONCAT('{"bet":', ISNULL(bet.jsonVal, '[]'),',"bet14":',ISNULL(bet14.jsonVal,'[]'),'}') AS ExtraInfo
+		FROM #tmpDiffAgency tmp
+		OUTER APPLY (
+			SELECT jsonVal = (
+				SELECT [APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm],[BetEffective]
+				FROM dbo.rptLicenseeWinloss rpt WITH(NOLOCK) WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
+				FOR JSON PATH
+			)
+		) AS bet
+		OUTER APPLY (
+			SELECT jsonVal = (
+				SELECT [APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm],[BetEffective]
+				FROM #tmpRptData rpt WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
+				FOR JSON PATH
+			)
+		) AS bet14
 		
-		DELETE rpt
+		-- TODO: DELETE the DIFF rows
+		DELETE rpt WITH(ROWLOCK)
 		FROM [dbo].[rptLicenseeWinloss] rpt
-		INNER JOIN #tmpDiffAgency a ON a.Recommend = rpt.Recommend
-		WHERE rpt.WinlostDate BETWEEN @FromDate AND @ToDate
+		INNER JOIN #tmpDiffAgency a ON a.Recommend = rpt.Recommend AND a.CustId = rpt.CustId
+		WHERE rpt.WinlostDate = @winlostdate
 		
+		-- TODO: INSERT the NEW rows
 		INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
 	           ([Recommend]
 	           ,[WinlostDate]
@@ -430,7 +408,6 @@ BEGIN
 	           ,[LeagueGroupId]
 	           ,[TicketType]
 	           ,[Betfrom]
-	           ,[IsBA]
 	           ,[APositiontaking]
 	           ,[BetCount]
 	           ,[Turnover]
@@ -446,13 +423,12 @@ BEGIN
 	           ,[Product3rdId]
 	           ,[Sporttype]
 	           ,[Bettype]
-	           ,[CustId]
+	           ,b.[CustId]
 	           ,[StatusId]
 	           ,[LiveIndicator]
 	           ,[LeagueGroupId]
 	           ,[TicketType]
 	           ,[Betfrom]
-	           ,[IsBA]
 	           ,[APositiontaking]
 	           ,[BetCount]
 	           ,[Turnover]
@@ -463,11 +439,8 @@ BEGIN
 	           ,[AComm]
 	           ,[BetEffective]
 		FROM #tmpRptData b
-		INNER JOIN #tmpDiffAgency a ON a.Recommend = b.Recommend;
+		INNER JOIN #tmpDiffAgency a ON a.Recommend = b.Recommend
+		WHERE a.DiffFlag = 1;
 	END
 END
 GO
-exec [dbo].[Task_GEN_LicWinlossAnalysis_Bettrans14_CheckAndCorrect] '2023-01-02';
-GO
-
-SELECT * FROM bodb_LicenseeReport.[dbo].[rptLicenseeWinloss] rpt WITH(NOLOCK) where WinlostDate='2023-02-01'

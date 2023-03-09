@@ -2,9 +2,8 @@
 USE [bodb_LicenseeReport]
 GO
 
-CREATE OR ALTER PROCEDURE [dbo].[Task_GEN_LicWinlossAnalysis_Bettrans]
-	@winlostdate DATE,
-	@IsReGEN BIT = 1
+CREATE OR ALTER PROCEDURE [dbo].[Task_rptLicenseeWinloss_Bettrans]
+	@winlostdate DATE
 AS
 /*
 	Created: 20230209@Bobby
@@ -19,47 +18,21 @@ AS
 BEGIN  
 	SET NOCOUNT ON;
 
-	DECLARE @FromDate	SMALLDATETIME = @winlostdate,
-		@ToDate			SMALLDATETIME = @winlostdate;
-	
 	DROP TABLE IF EXISTS #tmpAgency 
-	
-	CREATE TABLE #tmpAgency(recommend INT, Currency INT);
+	CREATE TABLE #tmpAgency(recommend INT PRIMARY KEY, Currency INT);
 	
 	INSERT INTO #tmpAgency
 	SELECT b.recommend, cs.Currency
 	FROM [bodb02].[dbo].[bettrans] b WITH(NOLOCK)
 	INNER JOIN bodb02.dbo.Dep_CustSuper cs WITH(NOLOCK) on cs.custid = b.srecommend
-	WHERE  b.winlostdate BETWEEN @FromDate AND @ToDate
+	WHERE  b.winlostdate = @winlostdate
 		AND b.statusID IN (111,112,113)
 	GROUP BY b.recommend, cs.Currency;
 		
-	IF EXISTS (
-		SELECT TOP 1 1
-		FROM bodb_LicenseeReport.[dbo].[rptLicenseeWinloss] rpt WITH(NOLOCK)
-		INNER JOIN #tmpAgency a ON a.recommend = rpt.recommend
-		WHERE rpt.winlostdate BETWEEN @FromDate AND @ToDate
-	)
-	BEGIN
-		PRINT 'DATA has been ready on that day ' + FORMAT(@winlostdate, 'yyyy-MM-dd');
-		IF @IsReGEN = 0
-			RETURN;
-
-		------ Clean Old Data then Re-GEN 
-		WHILE EXISTS (
-			SELECT TOP 1 1 
-			FROM bodb_LicenseeReport.[dbo].[rptLicenseeWinloss] rpt WITH(NOLOCK)
-			INNER JOIN #tmpAgency a ON a.recommend = rpt.recommend
-			WHERE rpt.winlostdate BETWEEN @FromDate AND @ToDate)
-		BEGIN
-			DELETE TOP(10000) rpt
-			FROM bodb_LicenseeReport.[dbo].[rptLicenseeWinloss] rpt
-			INNER JOIN #tmpAgency a ON a.recommend = rpt.recommend
-			WHERE rpt.winlostdate BETWEEN @FromDate AND @ToDate;
-		END
-
-		PRINT 'GEN-DATA-bettrans has been running on that day ' + FORMAT(@winlostdate, 'yyyy-MM-dd');
-	END
+	DELETE rpt WITH(ROWLOCK)
+	FROM bodb_LicenseeReport.[dbo].[rptLicenseeWinloss] rpt
+	INNER JOIN #tmpAgency a ON a.recommend = rpt.recommend
+	WHERE rpt.winlostdate = @winlostdate;
 		
 	DROP TABLE IF EXISTS #tmpBettype;
 
@@ -72,10 +45,7 @@ BEGIN
 			FROM bodb_licensee.dbo.Product3rd p3 WITH(NOLOCK)
 			WHERE p3.Enabled = 1
 	)
-	SELECT tbl.ProductId, tbl.Bettype, tbl.RefTable, tbl.EventType,
-		CASE WHEN tbl.RefTable IN (1,2) OR tbl.ProductID = 47 THEN 1 ELSE 0 END IsUsingOddsSpread,
-		CASE WHEN cont.Bettype IS NOT NULL THEN 1 ELSE 0 END AS IsContributionBettype,
-		tbl.Product3rdId
+	SELECT tbl.ProductId, tbl.Bettype, tbl.RefTable, tbl.EventType,tbl.Product3rdId
 	INTO #tmpBettype
 	FROM (
 		SELECT DISTINCT p.ProductID, 
@@ -86,32 +56,10 @@ BEGIN
 		FROM CTE_Product p3 WITH(NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductPrefix = p3.ProductCode
 		INNER JOIN bodb02.dbo.SportBettypeMatrix m WITH(NOLOCK) ON m.ProductID = p.ProductID
-	) AS tbl
-	OUTER APPLY 
-	(
-		SELECT f.Bettype
-		FROM bodb02.dbo.f_BettypePrizeGroup() f
-		WHERE f.BettypeGroup = 'Contribution'
-			AND f.Bettype = tbl.bettype
-	) AS cont;
+	) AS tbl;
 	
 	
-	SELECT 'bettrans';
-
-	;WITH CTE_SabaSporttypeRef AS (
-		SELECT t.SportType AS SabaSportType, t.SportType, t.LeagueGroupID
-		FROM bodb02.[dbo].[LAP_f_WinlossAnalysis_SabaSportSel] () AS saba
-		CROSS APPLY
-		(
-			SELECT Sporttype, LeagueGroupID
-			FROM OPENJSON(saba.SporttypeRef)
-			WITH (Sporttype INT '$.Sporttype',
-				LeagueGroupIDs NVARCHAR(MAX) '$.LeagueGroupID' AS JSON
-			)
-			CROSS APPLY OPENJSON(LeagueGroupIDs) WITH (LeagueGroupID VARCHAR(20) '$')
-		) AS t
-		WHERE saba.SporttypeRef IS NOT NULL
-	)
+	PRINT 'GEN >> bettrans';
 	INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
 	           ([Recommend]
 	           ,[WinlostDate]
@@ -124,7 +72,6 @@ BEGIN
 	           ,[LeagueGroupId]
 	           ,[TicketType]
 	           ,[Betfrom]
-	           ,[IsBA]
 	           ,[APositiontaking]
 	           ,[BetCount]
 	           ,[Turnover]
@@ -151,7 +98,6 @@ BEGIN
 		ck.LeagueGroupId,
 		ck.TicketType,
 		b.Betfrom,
-		ba.IsBA,
 		b.APositiontaking
 		----------------------
 		,SUM(1) AS BetCount
@@ -167,20 +113,16 @@ BEGIN
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		INNER JOIN #tmpBettype s ON s.BetType = b.bettype AND s.RefTable NOT IN (1,2)
 		LEFT JOIN [bodb02].dbo.match m WITH(NOLOCK) ON b.matchid = m.matchid
+		LEFT JOIN [bodb02].[dbo].[Match3rd] m3rd WITH(NOLOCK) ON m3rd.Match3rdId = b.matchid
 		LEFT JOIN [bodb02].dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid AND l.LeagueGroupID IN (42,74,108,113,122,151)
 		LEFT JOIN [bodb02].dbo.outright o WITH(NOLOCK) ON b.matchid = o.orid
 		LEFT JOIN [bodb02].dbo.League lo WITH (NOLOCK) ON lo.leagueid = o.leagueid
 		LEFT JOIN [bodb02].dbo.VSRaceInfo vs WITH(NOLOCK) ON b.matchid = vs.EventID
-		LEFT JOIN [bodb_licensee].dbo.LicenseeBATransaction AS lba WITH (NOLOCK) ON b.transid = lba.transid
+		LEFT JOIN [bodb_licensee].dbo.LicenseeBATransaction_active AS lba WITH (NOLOCK) ON b.transid = lba.transid
 		OUTER APPLY (
 			SELECT 
 				IIF(lba.TransID IS NOT NULL, 1, 0) AS IsBA
 		) AS ba
-		OUTER APPLY ( 
-			SELECT TOP 1 SabaSportType 
-			FROM CTE_SabaSporttypeRef ref 
-			WHERE s.ProductId = 1 AND ref.Sporttype = m.Sporttype AND ref.LeagueGroupID = l.LeagueGroupID
-		) AS saba
 		OUTER APPLY (
 			SELECT 
 				ABS(b.[stake]) AS Turnover,
@@ -188,7 +130,6 @@ BEGIN
 					WHEN s.RefTable IN (1,2) THEN 0 -- Gaming IN bettransRnG/bettransLC
 					WHEN s.ProductID = 1 AND b.statusID IN (111) THEN 0
 					WHEN s.ProductID = 1 AND b.statusID IN (112, 113) AND ABS(b.modds) = 0.25 THEN ABS(stake) / 2
-					WHEN s.IsUsingOddsSpread = 1 THEN b.oddsspread -- BBIN
 					ELSE ABS(b.stake)
 				END AS NetTurnover,
 				-(CASE
@@ -196,17 +137,16 @@ BEGIN
 					ELSE 0
 				END) AS AmtDueToBA,
 				CASE 
-					WHEN s.EventType = 1 THEN 
+					WHEN s.EventType = 0 THEN
 						CASE 
-							WHEN s.ProductId = 1 AND s.EventType = 1 AND b.betdaqid = -2 THEN -2 --> Castout Sport 
-							ELSE CAST(ISNULL(saba.SabaSportType, ISNULL(m.sporttype,-9999)) AS INT)
+							WHEN b.matchid = 29 THEN -1 --Parlay Sport
+							WHEN b.matchid = 2799 THEN b.oddsid 
+							ELSE b.matchid
 						END
+					WHEN s.EventType = 1 THEN ISNULL(m.sporttype,-9999)
 					WHEN s.EventType = 2 THEN CAST(lo.sporttype AS INT)
 					WHEN s.EventType = 3 THEN CAST(vs.SportType AS INT)
-					WHEN s.EventType = 0 THEN
-						CASE WHEN b.matchid = 29 THEN -1 --Parlay Sport
-						ELSE b.matchid
-						END
+					WHEN s.EventType = 5 THEN m3rd.Sporttype
 					ELSE 0
 				END AS SportType,
 				CASE 
@@ -235,7 +175,6 @@ BEGIN
 						AND b.bettype NOT BETWEEN 81 AND 120
 						THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
 					WHEN 
-						--b.winlostdate < HWHLCutDate AND 
 						b.statusID IN (112, 113)
 						AND b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
 						AND ABS(b.modds) = 0.25
@@ -245,7 +184,7 @@ BEGIN
 				ISNULL(CASE WHEN b.bettype IN(9,29) THEN b.livehomescore ELSE b.liveindicator END, 0) AS liveindicator
 		) AS ck
 		
-	WHERE b.winlostdate BETWEEN @FromDate AND @ToDate
+	WHERE b.winlostdate = @winlostdate
 		AND b.statusID IN (111,112,113)
 	GROUP BY 
 		b.Recommend,
@@ -263,12 +202,11 @@ BEGIN
 		ck.LeagueGroupId,
 		ck.TicketType,
 		b.Betfrom,
-		ba.IsBA,
 		b.APositiontaking
 	ORDER BY b.winlostdate
 
 
-	SELECT 'bettransRnG';
+	PRINT 'GEN >> bettransRnG';
 
 	INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
 	           ([Recommend]
@@ -282,7 +220,6 @@ BEGIN
 	           ,[LeagueGroupId]
 	           ,[TicketType]
 	           ,[Betfrom]
-	           ,[IsBA]
 	           ,[APositiontaking]
 	           ,[BetCount]
 	           ,[Turnover]
@@ -305,7 +242,6 @@ BEGIN
 		0 AS LeagueGroupId,
 		0 AS TicketType,
 		b.Betfrom,
-		0 AS IsBA,
 		b.APositiontaking
 		----------------------
 		,COUNT(1) AS [BetCount]
@@ -320,7 +256,7 @@ BEGIN
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		INNER JOIN #tmpBettype s ON s.BetType = b.gameID AND s.RefTable IN (1,2)
-	WHERE b.winlostdate BETWEEN @FromDate AND @ToDate
+	WHERE b.winlostdate = @winlostdate
 		AND b.statusID IN (111,112,113)
 	GROUP BY
 		b.Recommend,
@@ -334,7 +270,7 @@ BEGIN
 		b.APositiontaking
 	
 	
-	SELECT 'bettransLC';
+	PRINT 'GEN >> bettransLC';
 	INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
 	           ([Recommend]
 	           ,[WinlostDate]
@@ -347,7 +283,6 @@ BEGIN
 	           ,[LeagueGroupId]
 	           ,[TicketType]
 	           ,[Betfrom]
-	           ,[IsBA]
 	           ,[APositiontaking]
 	           ,[BetCount]
 	           ,[Turnover]
@@ -370,7 +305,6 @@ BEGIN
 		0 AS LeagueGroupId,
 		0 AS TicketType,
 		b.Betfrom,
-		0 AS IsBA,
 		b.APositiontaking
 		----------------------
 		,COUNT(1) AS [BetCount]
@@ -386,7 +320,7 @@ BEGIN
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		INNER JOIN #tmpBettype s ON s.BetType = b.gameID AND s.RefTable IN (1,2)
 
-	WHERE b.winlostdate BETWEEN @FromDate AND @ToDate
+	WHERE b.winlostdate = @winlostdate
 		AND b.statusID IN (111,112,113)
 	GROUP BY
 		b.Recommend,
@@ -400,7 +334,3 @@ BEGIN
 		b.APositiontaking
 END
 GO
-exec [dbo].[Task_GEN_LicWinlossAnalysis_Bettrans] '2023-02-01';
-GO
-
-SELECT * FROM bodb_LicenseeReport.[dbo].[rptLicenseeWinloss] rpt WITH(NOLOCK) where WinlostDate='2023-02-01'
