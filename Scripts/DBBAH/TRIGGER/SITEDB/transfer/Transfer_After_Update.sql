@@ -9,6 +9,7 @@ AS
 	Task: [LAP] Detail transaction_Display Different Balance Amount of Deposit & Withdrawal [Redmine: #180295]
 	Revision:
 		- 20221110@Max: clone trigger from db05 to sitedb [Redmine:#180295]
+		- 20230309@Aries: Enhance trigger on table transfer of SiteDB [Redmine:#184782]
 */
 
 BEGIN
@@ -71,7 +72,8 @@ BEGIN
 	WHERE
 		d.custid <> d.recommend AND
 		d.custid <> d.mrecommend AND
-		d.custid <> d.srecommend		
+		d.custid <> d.srecommend AND 
+		i.Bettype NOT IN (19999, 20000)		
 END
 
 
