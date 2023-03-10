@@ -38,7 +38,9 @@ AS
 		- 20221219@July: Saba.games - Exclude bettype 1669 (Fortune Cat) - [Redmine: #181057]		
 		- 20221220@July: Vgaming - Exclude bettype 3861 (Fortune Cat) - [Redmine: #181014]   
 		- 20230118@July: Jili - Exclude bettypes 5125(Medusa), 5149(War Of Dragons), 5103(Crazy Hunter) & 5121(Crazy Pusher) - [Redmine: #182955]   
-
+		- 20230310@July: SABA.games - Exclude bettypes 1670(Happy Ocean) & 1671(Magic Forest) - [Redmine: #184794]   
+		- 20230310@July: VGaming - Exclude bettypes 3862(Happy Ocean) & 3863(Magic Forest) - [Redmine: #184786]   
+	
 	Param's Expanation:
 
 */
@@ -93,7 +95,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653, 1654, 1656, 1669)
+					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653, 1654, 1656, 1669, 1670, 1671)
 		END
 		ELSE IF @ProductId = 171 -- Vgaming
 		BEGIN
@@ -102,7 +104,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (3829, 3898, 3899, 3835, 3845, 3846, 3854, 3861) 
+					AND b.gameID NOT IN (3829, 3898, 3899, 3835, 3845, 3846, 3854, 3861, 3862, 3863) 
 		END
 		ELSE IF @ProductId = 247 -- Spadegaming
 		BEGIN
