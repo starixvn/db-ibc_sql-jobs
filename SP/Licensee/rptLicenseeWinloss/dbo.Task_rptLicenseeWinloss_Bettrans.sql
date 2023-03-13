@@ -255,7 +255,7 @@ BEGIN
 	FROM [bodb02].[dbo].[bettransRnG] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
-		INNER JOIN #tmpBettype s ON s.BetType = b.gameID AND s.RefTable IN (1,2)
+		INNER JOIN #tmpBettype s ON s.BetType = b.gameID AND s.RefTable = 1
 	WHERE b.winlostdate = @winlostdate
 		AND b.statusID IN (111,112,113)
 	GROUP BY
@@ -318,7 +318,7 @@ BEGIN
 	FROM [bodb02].[dbo].[bettransLC] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
-		INNER JOIN #tmpBettype s ON s.BetType = b.gameID AND s.RefTable IN (1,2)
+		INNER JOIN #tmpBettype s ON s.BetType = b.gameID AND s.RefTable = 2
 
 	WHERE b.winlostdate = @winlostdate
 		AND b.statusID IN (111,112,113)
