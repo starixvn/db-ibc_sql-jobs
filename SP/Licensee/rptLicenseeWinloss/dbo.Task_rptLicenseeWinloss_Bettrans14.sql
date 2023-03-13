@@ -126,7 +126,7 @@ BEGIN
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.awinlost) AS AWinlost
 		,SUM(b.comm) AS [AComm]
-		,SUM(IIF(ba.IsBA = 1, 0, ABS(b.winlost))) AS BetEffective
+		,SUM(IIF(ba.IsBA = 1, 0, ABS(winlost-actual_stake))) AS BetEffective
 	FROM [bodb02].[dbo].[bettrans14] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
