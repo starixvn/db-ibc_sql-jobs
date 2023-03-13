@@ -97,6 +97,7 @@ AS
 		- 20220110@Danny: SG - Jackpot prize integration [#167089]
 		- 20220222@Danny: Allbet - Promotion integration [#167510]
 		- 20221018@Danny: Integrate MG-RNG (ProductID = 73) [#176986]
+		- 20231027@Danny: Change LicenseeID detection formulary of deposit licensee [#183209]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -152,7 +153,7 @@ BEGIN
 		DELETE p
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @fromDate AND p.rptDate < @toDate
-			AND NOT (p.ProductID IN (10,11,31) AND p.SiteID <= 1000) ---- Exclude Separate Wallet of GD and AGC and Exchange
+			AND NOT (p.ProductID IN (10,11,31) AND (p.SiteID <= 1000 OR p.SiteID >= 50000)) ---- Exclude Separate Wallet of GD and AGC and Exchange
 			AND (@ProductCodes = '' OR ProductID IN (SELECT ProductID FROM @ProductIdList))
 
 		DECLARE @tmp_ProductCodes VARCHAR(MAX)
@@ -354,7 +355,7 @@ BEGIN
 			-- Delete data for exchange product
 			DELETE p
 			FROM dbo.rpt_BettingByProduct p
-			WHERE (p.ProductID = 31 AND p.SiteID <= 1000) 
+			WHERE (p.ProductID = 31 AND (p.SiteID <= 1000 OR p.SiteID >= 50000)) 
 				AND EXISTS (SELECT 1 FROM @WLDateList WHERE Winlostdate = p.rptDate)
 		
 			INSERT INTO #tmpData (
@@ -398,7 +399,7 @@ BEGIN
 		DELETE p 
 		FROM dbo.rpt_BettingByProduct p
 		WHERE p.rptDate >= @date AND p.rptDate < @date2
-			AND (p.ProductID IN (10, 11) AND p.SiteID <= 1000) 
+			AND (p.ProductID IN (10, 11) AND (p.SiteID <= 1000 OR p.SiteID >= 50000)) 
 			AND ( p.ProductID = @SeparatedProductID OR @SeparatedProductID = 0)
 			AND (@ProductCodes = '' OR ProductID IN (SELECT pList.ProductID FROM @ProductIdList pList))
 
