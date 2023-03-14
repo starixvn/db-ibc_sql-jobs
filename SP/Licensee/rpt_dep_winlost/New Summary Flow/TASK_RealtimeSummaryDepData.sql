@@ -73,6 +73,7 @@ AS
 		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
 		- 20230208@Evan: Inteagrate SG promotion prize [RedmineID: #183497]
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
+		- 20230215@Evan: Enhance Job bodb02 Deposit Report Summary [RedmineID: #182153]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -700,7 +701,7 @@ BEGIN
 			VALUES (SOURCE.CustID, SOURCE.TurnOver, SOURCE.OutStanding);
 		--End update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
 		/*--END PREPARE DATA FOR rptDepWinlost--*/
-
+		
 		/*--PREPARE DATA FOR rptDepWinlostByProduct--*/
 		INSERT INTO #rptDepWinlostByProduct (
 			CustID,
@@ -950,16 +951,41 @@ BEGIN
 
 		/*--END PREPARE DATA FOR rptDepWinlostBonusWallet--*/
 
-		--4.Delete/Reinsert data of the input @Winlostdate
-		DELETE FROM bodb_Report.dbo.rptDepWinlost_Trans WITH (ROWLOCK, UPDLOCK) WHERE Winlostdate = @Winlostdate
-		DELETE FROM bodb_Report.dbo.rptDepWinlost_BonusWallet WITH (ROWLOCK, UPDLOCK) WHERE Winlostdate = @Winlostdate
+		CREATE TABLE #rptDepWinlost_Trans (
+			Winlostdate SMALLDATETIME,
+			CustID INT,
+			SportType SMALLINT,
+			PartnerID INT,
+			Deposit MONEY,
+			Withdrawal MONEY,
+			Aff2MemTransfer MONEY,
+			Bonus MONEY,
+			Adjustment MONEY,
+			Turnover MONEY,
+			Outstanding MONEY,
+			Winloss MONEY,
+			Transfer3rd MONEY,
+			DrawGame MONEY,
+			Turnover_BA MONEY,
+			Comm_BA MONEY,
+			AmountDueTo_BA MONEY,
+			playercomm MONEY,
+			Transfer3rdOthers MONEY,
+			Comm_BetTrade MONEY,
+			Comm_Bettrade_Full MONEY,
+			AmountDueTo_BetTrade MONEY,
+			BetCount INT,
+			TransferAmount MONEY,
+			TransferIn MONEY,
+			TransferOut MONEY,
+			Promotion MONEY DEFAULT ((0))
+		)  
+		CREATE CLUSTERED INDEX CIX_rptDepWinlost_Trans ON #rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID)
 
-		--For rptDepWinlost
-		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover
+		INSERT INTO #rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover
 			, Outstanding, Winloss, Transfer3rd, DrawGame, Turnover_BA, Comm_BA, AmountDueTo_BA, playercomm, Transfer3rdOthers, Comm_BetTrade, Comm_BetTrade_Full
 			, AmountDueTo_BetTrade
-			, Promotion
-			)
+			, Promotion)
 		SELECT @Winlostdate, CustID, -1, -1, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver
 		, OutStanding, Winloss, Transfer3rd, DrawGame, Turnover_BA, Comm_BA, AmountDueTo_BA, playercomm, Transfer3rdOthers, Comm_BetTrade, Comm_BetTrade_Full
 		, AmountDueTo_BetTrade
@@ -968,20 +994,115 @@ BEGIN
 
 		SELECT @NumberofCus = @@ROWCOUNT
 
-		--For rptDepWinlostByProduct
-		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, Turnover, DrawGame, Winloss, playercomm, BetCount, Outstanding)
+		INSERT INTO #rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, Turnover, DrawGame, Winloss, playercomm, BetCount, Outstanding)
 		SELECT @Winlostdate, CustID, SportType, -1, turnover, drawTO, Winlost, playercomm, BetCount, OutStanding
 		FROM #rptDepWinlostByProduct
-
-		--For rptDepWinlost_Transfer3rdOthers
-		INSERT INTO bodb_Report.dbo.rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, TransferAmount, TransferIn, TransferOut)
+		
+		INSERT INTO #rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, TransferAmount, TransferIn, TransferOut)
 		SELECT @Winlostdate, CustID, -1, PartnerID, TransferAmount, TransferIn, TransferOut
 		FROM #rptDepWinlostTransfer3rdOthers
 
+		--For rptDepWinlost, rptDepWinlostByProduct, rptDepWinlost_Transfer3rdOthers
+		MERGE bodb_Report.dbo.rptDepWinlost_Trans AS TARGET
+		USING #rptDepWinlost_Trans AS SOURCE
+		ON TARGET.Winlostdate = SOURCE.Winlostdate AND TARGET.CustID = SOURCE.CustID AND TARGET.SportType = SOURCE.SportType AND TARGET.PartnerID = SOURCE.PartnerID 
+		WHEN MATCHED AND 
+				(TARGET.Deposit <> SOURCE.Deposit OR
+				TARGET.Withdrawal <> SOURCE.Withdrawal OR
+				TARGET.Aff2MemTransfer <> SOURCE.Aff2MemTransfer OR
+				TARGET.Bonus <> SOURCE.Bonus OR
+				TARGET.Adjustment <> SOURCE.Adjustment OR
+				TARGET.Turnover <> SOURCE.Turnover OR
+				TARGET.Outstanding <> SOURCE.Outstanding OR
+				TARGET.Winloss <> SOURCE.Winloss OR
+				TARGET.Transfer3rd <> SOURCE.Transfer3rd OR
+				TARGET.DrawGame <> SOURCE.DrawGame OR
+				TARGET.Turnover_BA <> SOURCE.Turnover_BA OR
+				TARGET.Comm_BA <> SOURCE.Comm_BA OR
+				TARGET.AmountDueTo_BA <> SOURCE.AmountDueTo_BA OR
+				TARGET.playercomm <> SOURCE.playercomm OR
+				TARGET.Transfer3rdOthers <> SOURCE.Transfer3rdOthers OR
+				TARGET.Comm_BetTrade <> SOURCE.Comm_BetTrade OR
+				TARGET.Comm_BetTrade_Full <> SOURCE.Comm_BetTrade_Full OR
+				TARGET.AmountDueTo_BetTrade <> SOURCE.AmountDueTo_BetTrade OR
+				TARGET.Promotion <> SOURCE.Promotion OR
+				TARGET.BetCount <> SOURCE.BetCount OR
+				TARGET.TransferAmount <> SOURCE.TransferAmount OR
+				TARGET.TransferIn <> SOURCE.TransferIn OR
+				TARGET.TransferOut <> SOURCE.TransferOut )
+		THEN  
+		UPDATE SET 
+				TARGET.Deposit = SOURCE.Deposit,
+				TARGET.Withdrawal = SOURCE.Withdrawal,
+				TARGET.Aff2MemTransfer = SOURCE.Aff2MemTransfer,
+				TARGET.Bonus = SOURCE.Bonus,
+				TARGET.Adjustment = SOURCE.Adjustment,
+				TARGET.Turnover = SOURCE.Turnover,
+				TARGET.Outstanding = SOURCE.Outstanding,
+				TARGET.Winloss = SOURCE.Winloss,
+				TARGET.Transfer3rd = SOURCE.Transfer3rd,
+				TARGET.DrawGame = SOURCE.DrawGame,
+				TARGET.Turnover_BA = SOURCE.Turnover_BA,
+				TARGET.Comm_BA = SOURCE.Comm_BA,
+				TARGET.AmountDueTo_BA = SOURCE.AmountDueTo_BA,
+				TARGET.playercomm = SOURCE.playercomm,
+				TARGET.Transfer3rdOthers = SOURCE.Transfer3rdOthers,
+				TARGET.Comm_BetTrade = SOURCE.Comm_BetTrade,
+				TARGET.Comm_BetTrade_Full = SOURCE.Comm_BetTrade_Full,
+				TARGET.AmountDueTo_BetTrade = SOURCE.AmountDueTo_BetTrade,
+				TARGET.Promotion = SOURCE.Promotion,
+				TARGET.BetCount = SOURCE.BetCount,
+				TARGET.TransferAmount = SOURCE.TransferAmount,
+				TARGET.TransferIn = SOURCE.TransferIn,
+				TARGET.TransferOut = SOURCE.TransferOut
+		WHEN NOT MATCHED BY TARGET THEN
+		INSERT
+		(
+			Winlostdate, CustID, SportType, PartnerID, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover
+			, Outstanding, Winloss, Transfer3rd, DrawGame, Turnover_BA, Comm_BA, AmountDueTo_BA, playercomm, Transfer3rdOthers, Comm_BetTrade, Comm_BetTrade_Full
+			, AmountDueTo_BetTrade, Promotion
+			, BetCount, TransferAmount, TransferIn, TransferOut
+		)
+		VALUES
+		(
+			SOURCE.Winlostdate, SOURCE.CustID, SOURCE.SportType, SOURCE.PartnerID, SOURCE.Deposit, SOURCE.Withdrawal, SOURCE.Aff2MemTransfer, SOURCE.Bonus, SOURCE.Adjustment, SOURCE.Turnover, SOURCE.Outstanding, SOURCE.Winloss, SOURCE.Transfer3rd, SOURCE.DrawGame, SOURCE.Turnover_BA, SOURCE.Comm_BA, SOURCE.AmountDueTo_BA, SOURCE.playercomm, SOURCE.Transfer3rdOthers, SOURCE.Comm_BetTrade, SOURCE.Comm_BetTrade_Full, SOURCE.AmountDueTo_BetTrade, SOURCE.Promotion, 
+			SOURCE.BetCount, SOURCE.TransferAmount, SOURCE.TransferIn, SOURCE.TransferOut
+		);
+		
+		DELETE TARGET
+		FROM bodb_Report.dbo.rptDepWinlost_Trans AS TARGET LEFT JOIN #rptDepWinlost_Trans AS SOURCE 
+		ON TARGET.Winlostdate = SOURCE.Winlostdate AND TARGET.CustID = SOURCE.CustID AND TARGET.SportType = SOURCE.SportType AND TARGET.PartnerID = SOURCE.PartnerID 
+		WHERE TARGET.Winlostdate = @WinLostDate AND SOURCE.Winlostdate IS NULL
+
 		--For rptDepWinlost_BonusWallet
-		INSERT INTO bodb_Report.dbo.rptDepWinlost_BonusWallet(Winlostdate, CustID, BonusType, Bonus, Adjustment)
-		SELECT @Winlostdate, CustID, BonusType, Bonus, Adjustment
-		FROM #rptDepWinlostBonusWallet
+		MERGE bodb_Report.dbo.rptDepWinlost_BonusWallet AS TARGET
+		USING #rptDepWinlostBonusWallet AS SOURCE
+		ON TARGET.Winlostdate = @Winlostdate AND TARGET.CustID = SOURCE.CustID
+		WHEN MATCHED AND 
+			(
+				TARGET.BonusType <> SOURCE.BonusType OR
+				TARGET.Bonus <> SOURCE.Bonus OR
+				TARGET.Adjustment <> SOURCE.Adjustment
+			)
+		THEN 
+		UPDATE SET 
+				TARGET.BonusType = SOURCE.BonusType,
+				TARGET.Bonus = SOURCE.Bonus,
+				TARGET.Adjustment = SOURCE.Adjustment
+		WHEN NOT MATCHED BY TARGET THEN
+		INSERT
+		(
+			Winlostdate,CustID,BonusType,Bonus,Adjustment
+		)
+		VALUES
+		(
+			@Winlostdate,SOURCE.CustID,SOURCE.BonusType,SOURCE.Bonus,SOURCE.Adjustment
+		);
+
+		DELETE TARGET
+		FROM bodb_Report.dbo.rptDepWinlost_BonusWallet AS TARGET LEFT JOIN #rptDepWinlostBonusWallet AS SOURCE 
+		ON TARGET.Winlostdate = @Winlostdate AND TARGET.CustID = SOURCE.CustID 
+		WHERE TARGET.Winlostdate = @WinLostDate AND SOURCE.CustID IS NULL
 
 		SELECT @isSuccessful = 1, @ErrMsg = ''
 
@@ -1017,5 +1138,6 @@ BEGIN
 	DROP TABLE #rptDepWinlostOutstanding
 	DROP TABLE #rptDepWinlostBonusWallet
 	DROP TABLE #transid
+	DROP TABLE #rptDepWinlost_Trans
 END 
 GO
