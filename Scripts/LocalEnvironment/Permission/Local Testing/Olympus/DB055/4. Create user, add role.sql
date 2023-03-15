@@ -1,9 +1,9 @@
 
 
 -- Create User
-IF @@SERVERNAME <> 'TESTDB055'
+IF @@SERVERNAME NOT IN ( 'DB-61\DEVDB055' ,'TESTDB055' )
 BEGIN
-	SELECT 'Must be run on TESTDB055' AS 'Error'
+	SELECT 'Wrong Server' AS 'Error'
 
 	RETURN
 END
@@ -12,7 +12,8 @@ DECLARE @strUser	VARCHAR(MAX) = ''
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb_CustomerLog')
+		VALUES ( 'bodb_CustomerLog')
+			 , ('bodb_CustomerLog_archive' )
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
@@ -21,14 +22,7 @@ INSERT INTO @tmpMember (Name)
 		,('SPVN\leo.vo'), ('SPVN\franklin.nguyen'), ('SPVN\raymond.le'), ('SPVN\charles.nguyen')
 		,('SPVN\zane.trinh') , ('SPVN\levi.vu'), ('SPVN\ryan.ngo')
 
-/*
-	USE DBName
-	GO 
-	CREATE USER vnXXX FOR LOGIN vnXXX WITH DEFAULT_SCHEMA=[dbo] 
-	GO
-
-	-- Delete user: EXEC sp_dropuser 'SPVN\xxx.xxx';
-*/
+ 
 
 SELECT	@strUser = @strUser 
 					+ 'USE ' + d.DBName + ';'
@@ -51,7 +45,7 @@ FROM	@tmpAffectedDB d
 	
 
 EXEC (@strUser)
-GO
+waitfor delay '00:00:01'
 
 -------------------------------------------
 -------------------------------------------
