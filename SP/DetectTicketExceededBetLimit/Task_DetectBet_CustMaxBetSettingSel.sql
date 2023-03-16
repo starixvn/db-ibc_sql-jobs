@@ -98,8 +98,10 @@ BEGIN
 	UPDATE cl 
 	SET	  cl.SportTypeRef=ref.SportTypeRefBetSetting
 		, cl.BetTypeRef=ref.BetTypeRefBetSetting
-		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame
-						THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
+		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame, PP
+								THEN ref.BetTypeRefBetSetting 
+							WHEN cl.SportType=248 THEN 7000
+							ELSE cl.BetType END
 		, cl.SettingType=ps.SettingType
 	FROM #ListTmp cl
 		INNER JOIN SportBettypeSettingMatrix ref WITH (NOLOCK)
@@ -112,20 +114,17 @@ BEGIN
 				AND ps.BetType=ref.BetTypeRefBetSetting
 	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0 AND ps.SettingStatus<>2
 
-		--NG, Keno, PP:
+		--NG, Keno:
 	UPDATE cl 
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
-	, cl.GameTypeId=CASE WHEN cl.SportType=248 THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
-	, cl.SettingType=CASE WHEN cl.SportType=248 THEN 8 ELSE cl.SettingType END
 	FROM #ListTmp cl
 		INNER JOIN SportBettypeSettingMatrix ref WITH (NOLOCK)
 				ON	ref.Sporttype	= cl.sporttype 
 				AND ref.Bettype		= cl.bettype
 				AND ref.isLicensee	= cl.isLicensee
 				AND ref.isLive		= cl.isLive
-	WHERE (cl.SportType IN (161,164,168,202) AND cl.isLicensee=0)
-		OR cl.SportType=248
+	WHERE cl.SportType IN (161,164,168,202) AND cl.isLicensee=0
 
 		--Keno: GameTypeId
 	UPDATE cl 
