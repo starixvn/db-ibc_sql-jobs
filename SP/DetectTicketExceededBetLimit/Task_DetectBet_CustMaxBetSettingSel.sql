@@ -98,10 +98,10 @@ BEGIN
 	UPDATE cl 
 	SET	  cl.SportTypeRef=ref.SportTypeRefBetSetting
 		, cl.BetTypeRef=ref.BetTypeRefBetSetting
-		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame, PP
+		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame
 								THEN ref.BetTypeRefBetSetting 
-							WHEN cl.SportType=248 THEN 7000
-							ELSE cl.BetType END
+							 WHEN cl.SportType=248 THEN 7000	--PP
+							 ELSE cl.BetType END
 		, cl.SettingType=ps.SettingType
 	FROM #ListTmp cl
 		INNER JOIN SportBettypeSettingMatrix ref WITH (NOLOCK)
@@ -138,7 +138,9 @@ BEGIN
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
 	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237) --VGaming, SABA.Games, MaxGame
-					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
+							THEN ref.BetTypeRefBetSetting 
+						 WHEN cl.SportType=248 THEN 7000	--PP
+						 ELSE cl.BetType END
 	, cl.SettingType=ps.SettingType
 	FROM #ListTmp cl
 		INNER JOIN SportBettypeSettingMatrix ref WITH (NOLOCK)
