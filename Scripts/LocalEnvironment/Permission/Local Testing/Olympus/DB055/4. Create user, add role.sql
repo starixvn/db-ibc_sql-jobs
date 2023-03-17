@@ -9,19 +9,31 @@ BEGIN
 END
 
 DECLARE @strUser	VARCHAR(MAX) = ''
+		,@RoleName VARCHAR(50) = 'db_Olympus'
+		,@LeaderRoleName VARCHAR(50) = 'db_owner'
+		,@Leader VARCHAR(50) = 'SPVN\jacob.phan'
+
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
 		VALUES ( 'bodb_CustomerLog')
 			 , ('bodb_CustomerLog_archive' )
+			 , ('LogTDB' )
 
-DECLARE @tmpMember TABLE (Name VARCHAR(50))
+
+DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
-	VALUES ('SPVN\jacob.phan'), ('SPVN\robert.tran'), ('SPVN\kaden.trinh')
-		,('SPVN\leo.vo'), ('SPVN\franklin.nguyen'), ('SPVN\raymond.le'), ('SPVN\charles.nguyen')
-		,('SPVN\zane.trinh') , ('SPVN\levi.vu'), ('SPVN\ryan.ngo')
-
+	VALUES ('SPVN\jacob.phan')
+		, ('SPVN\robert.tran')
+		, ('SPVN\kaden.trinh')
+		, ('SPVN\franklin.nguyen')
+		, ('SPVN\zane.trinh')
+		, ('SPVN\luca.duong')
+		, ('SPVN\Raymond.Le')
+		, ('SPVN\Charles.Nguyen')
+		, ('SPVN\Levi.Vu')
+		, ('SPVN\Agnes.Tran')
  
 
 SELECT	@strUser = @strUser 
@@ -50,29 +62,9 @@ waitfor delay '00:00:01'
 -------------------------------------------
 -------------------------------------------
 -- Add Role for member
-
-IF @@SERVERNAME <> 'TESTDB055'
-BEGIN
-	SELECT 'Must be run on TESTDB055' AS 'Error'
-
-	RETURN
-END
-DECLARE @strUser VARCHAR(MAX) = ''
-		,@RoleName VARCHAR(50) = 'db_Olympus'
-		,@LeaderRoleName VARCHAR(50) = 'db_owner'
-		,@Leader VARCHAR(50) = 'SPVN\jacob.phan'
-
-DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb_CustomerLog')
-
-INSERT INTO @tmpMember (Name) 
-	VALUES ('SPVN\jacob.phan'), ('SPVN\robert.tran'), ('SPVN\kaden.trinh')
-		,('SPVN\leo.vo'), ('SPVN\franklin.nguyen'), ('SPVN\alan.nguyen'), ('SPVN\raymond.le'), ('SPVN\charles.nguyen')
-		,('SPVN\zane.trinh'), ('SPVN\levi.vu'), ('SPVN\ryan.ngo')
-
+ 
+SET @strUser  = ''
+ 
 UPDATE @tmpMember
 	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
 /*
