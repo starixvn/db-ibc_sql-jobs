@@ -29,7 +29,7 @@ BEGIN
 		AND b.statusID IN (111,112,113)
 	GROUP BY b.recommend, cs.Currency;
 		
-	DELETE rpt WITH(ROWLOCK)
+	DELETE rpt
 	FROM bodb_LicenseeReport.[dbo].[rptLicenseeWinloss] rpt
 	INNER JOIN #tmpAgency a ON a.recommend = rpt.recommend
 	WHERE rpt.winlostdate = @winlostdate;
@@ -61,27 +61,26 @@ BEGIN
 	
 	PRINT 'GEN >> bettrans';
 	INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
-	           ([Recommend]
-	           ,[WinlostDate]
-	           ,[Product3rdId]
-	           ,[Sporttype]
-	           ,[Bettype]
-	           ,[CustId]
-	           ,[StatusId]
-	           ,[LiveIndicator]
-	           ,[LeagueGroupId]
-	           ,[TicketType]
-	           ,[Betfrom]
-	           ,[APositiontaking]
-	           ,[BetCount]
-	           ,[Turnover]
-	           ,[NetTurnover]
-	           ,[Winlost]
-	           ,[AWinlost]
-	           ,[PComm]
-	           ,[AComm]
-	           ,[BetEffective]
-			  )
+	    ([Recommend]
+	    ,[WinlostDate]
+	    ,[Product3rdId]
+	    ,[Sporttype]
+	    ,[Bettype]
+	    ,[CustId]
+	    ,[StatusId]
+	    ,[LiveIndicator]
+	    ,[LeagueGroupId]
+	    ,[TicketType]
+	    ,[Betfrom]
+	    ,[APositiontaking]
+	    ,[BetCount]
+	    ,[Turnover]
+	    ,[NetTurnover]
+	    ,[Winlost]
+	    ,[AWinlost]
+	    ,[PComm]
+	    ,[AComm]
+	)
 	SELECT 
 		b.Recommend,
 		b.WinlostDate,
@@ -107,7 +106,6 @@ BEGIN
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.awinlost) AS AWinlost
 		,SUM(b.comm) AS [AComm]
-		,SUM(IIF(ba.IsBA = 1, 0, ABS(b.winlost-b.actual_stake))) AS BetEffective
 	FROM [bodb02].[dbo].[bettrans] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
@@ -209,27 +207,26 @@ BEGIN
 	PRINT 'GEN >> bettransRnG';
 
 	INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
-	           ([Recommend]
-	           ,[WinlostDate]
-	           ,[Product3rdId]
-	           ,[Sporttype]
-	           ,[Bettype]
-	           ,[CustId]
-	           ,[StatusId]
-	           ,[LiveIndicator]
-	           ,[LeagueGroupId]
-	           ,[TicketType]
-	           ,[Betfrom]
-	           ,[APositiontaking]
-	           ,[BetCount]
-	           ,[Turnover]
-	           ,[NetTurnover]
-	           ,[Winlost]
-	           ,[AWinlost]
-	           ,[PComm]
-	           ,[AComm]
-	           ,[BetEffective]
-			  )
+	   ([Recommend]
+	   ,[WinlostDate]
+	   ,[Product3rdId]
+	   ,[Sporttype]
+	   ,[Bettype]
+	   ,[CustId]
+	   ,[StatusId]
+	   ,[LiveIndicator]
+	   ,[LeagueGroupId]
+	   ,[TicketType]
+	   ,[Betfrom]
+	   ,[APositiontaking]
+	   ,[BetCount]
+	   ,[Turnover]
+	   ,[NetTurnover]
+	   ,[Winlost]
+	   ,[AWinlost]
+	   ,[PComm]
+	   ,[AComm]
+	  )
 	SELECT 
 		b.Recommend,
 		b.WinlostDate,
@@ -251,7 +248,6 @@ BEGIN
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.awinlost) AS AWinlost
 		,SUM(b.comm) AS [AComm]
-		,SUM(ABS(b.winlost-b.actual_stake)) AS BetEffective
 	FROM [bodb02].[dbo].[bettransRnG] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
@@ -272,27 +268,26 @@ BEGIN
 	
 	PRINT 'GEN >> bettransLC';
 	INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
-	           ([Recommend]
-	           ,[WinlostDate]
-	           ,[Product3rdId]
-	           ,[Sporttype]
-	           ,[Bettype]
-	           ,[CustId]
-	           ,[StatusId]
-	           ,[LiveIndicator]
-	           ,[LeagueGroupId]
-	           ,[TicketType]
-	           ,[Betfrom]
-	           ,[APositiontaking]
-	           ,[BetCount]
-	           ,[Turnover]
-	           ,[NetTurnover]
-	           ,[Winlost]
-	           ,[AWinlost]
-	           ,[PComm]
-	           ,[AComm]
-	           ,[BetEffective]
-			  )
+	   ([Recommend]
+	   ,[WinlostDate]
+	   ,[Product3rdId]
+	   ,[Sporttype]
+	   ,[Bettype]
+	   ,[CustId]
+	   ,[StatusId]
+	   ,[LiveIndicator]
+	   ,[LeagueGroupId]
+	   ,[TicketType]
+	   ,[Betfrom]
+	   ,[APositiontaking]
+	   ,[BetCount]
+	   ,[Turnover]
+	   ,[NetTurnover]
+	   ,[Winlost]
+	   ,[AWinlost]
+	   ,[PComm]
+	   ,[AComm]
+	  )
 	SELECT 
 		b.Recommend,
 		b.WinlostDate,
@@ -314,7 +309,6 @@ BEGIN
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.awinlost) AS AWinlost
 		,SUM(b.comm) AS [AComm]
-		,SUM(ABS(b.winlost-b.actual_stake)) AS BetEffective
 	FROM [bodb02].[dbo].[bettransLC] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend

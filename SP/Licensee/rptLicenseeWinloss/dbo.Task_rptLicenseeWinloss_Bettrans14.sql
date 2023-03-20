@@ -42,7 +42,6 @@ BEGIN
 	   ,[AWinlost]			MONEY
 	   ,[PComm]				MONEY
 	   ,[AComm]				MONEY
-	   ,[BetEffective]		MONEY
 	);
 	CREATE CLUSTERED INDEX CIX_tmpRptData ON #tmpRptData(
 		[Recommend] 		
@@ -126,7 +125,6 @@ BEGIN
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.awinlost) AS AWinlost
 		,SUM(b.comm) AS [AComm]
-		,SUM(IIF(ba.IsBA = 1, 0, ABS(winlost-actual_stake))) AS BetEffective
 	FROM [bodb02].[dbo].[bettrans14] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
@@ -248,7 +246,6 @@ BEGIN
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.awinlost) AS AWinlost
 		,SUM(b.comm) AS [AComm]
-		,SUM(ABS(b.winlost-b.actual_stake)) AS BetEffective
 	FROM [bodb02].[dbo].[bettransRnG14] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
@@ -290,7 +287,6 @@ BEGIN
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.awinlost) AS AWinlost
 		,SUM(b.comm) AS [AComm]
-		,SUM(ABS(b.winlost-b.actual_stake)) AS BetEffective
 	FROM [bodb02].[dbo].[bettransLC14] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
@@ -318,7 +314,7 @@ BEGIN
 	;WITH CTE_RptDataSource AS (
 		SELECT b.[Recommend]
 	           ,[CustId]
-			   ,CHECKSUM_AGG(CHECKSUM([APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm],[BetEffective])) AS CheckSumData
+			   ,CHECKSUM_AGG(CHECKSUM([APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm])) AS CheckSumData
 		FROM [dbo].[rptLicenseeWinloss] b WITH(NOLOCK)
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		WHERE b.winlostdate = @winlostdate
@@ -332,7 +328,7 @@ BEGIN
 	FROM (
 		SELECT [Recommend]
 	           ,[CustId]
-			   ,CHECKSUM_AGG(CHECKSUM([APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm],[BetEffective])) AS CheckSumData
+			   ,CHECKSUM_AGG(CHECKSUM([APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm])) AS CheckSumData
 		FROM #tmpRptData
 			GROUP BY 
 				[Recommend]
@@ -376,21 +372,21 @@ BEGIN
 		FROM #tmpDiffAgency tmp
 		OUTER APPLY (
 			SELECT jsonVal = (
-				SELECT [APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm],[BetEffective]
+				SELECT [APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm]
 				FROM dbo.rptLicenseeWinloss rpt WITH(NOLOCK) WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
 				FOR JSON PATH
 			)
 		) AS bet
 		OUTER APPLY (
 			SELECT jsonVal = (
-				SELECT [APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm],[BetEffective]
+				SELECT [APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm]
 				FROM #tmpRptData rpt WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
 				FOR JSON PATH
 			)
 		) AS bet14
 		
 		-- TODO: DELETE the DIFF rows
-		DELETE rpt WITH(ROWLOCK)
+		DELETE rpt
 		FROM [dbo].[rptLicenseeWinloss] rpt
 		INNER JOIN #tmpDiffAgency a ON a.Recommend = rpt.Recommend AND a.CustId = rpt.CustId
 		WHERE rpt.WinlostDate = @winlostdate
@@ -416,7 +412,6 @@ BEGIN
 	           ,[AWinlost]
 	           ,[PComm]
 	           ,[AComm]
-	           ,[BetEffective]
 			  )
 		SELECT b.[Recommend]
 	           ,[WinlostDate]
@@ -437,7 +432,6 @@ BEGIN
 	           ,[AWinlost]
 	           ,[PComm]
 	           ,[AComm]
-	           ,[BetEffective]
 		FROM #tmpRptData b
 		INNER JOIN #tmpDiffAgency a ON a.Recommend = b.Recommend
 		WHERE a.DiffFlag = 1;
