@@ -91,7 +91,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Check an
 		@retry_attempts=3, 
 		@retry_interval=5, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.Task_DailyRptLicWinloss2_CheckData_Job @TableName = ''rptLicenseeWinloss''', 
+		@command=N'EXEC dbo.Task_DailyRptLicWinloss2_CheckData_Job_xtest @TableName = ''rptLicenseeWinloss''', 
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -155,7 +155,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Gen Data
 		@retry_attempts=3, 
 		@retry_interval=5, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC dbo.Task_DailyRptLicWinloss2_Job @TableName = ''rptLicenseeWinloss''', 
+		@command=N'EXEC dbo.Task_DailyRptLicWinloss2_Job_xtest @TableName = ''rptLicenseeWinloss''', 
 		@database_name=N'bodb_LicenseeReport', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
