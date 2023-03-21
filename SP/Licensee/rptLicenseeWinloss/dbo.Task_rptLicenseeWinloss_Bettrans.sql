@@ -1,8 +1,5 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-USE [bodb_LicenseeReport]
-GO
-
-CREATE OR ALTER PROCEDURE [dbo].[Task_rptLicenseeWinloss_Bettrans]
+CREATE PROCEDURE [dbo].[Task_rptLicenseeWinloss_Bettrans]
 	@winlostdate DATE
 AS
 /*
