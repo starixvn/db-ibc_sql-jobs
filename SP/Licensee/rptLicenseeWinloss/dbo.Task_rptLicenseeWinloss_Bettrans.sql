@@ -15,6 +15,7 @@ AS
 BEGIN  
 	SET NOCOUNT ON;
 
+	DECLARE @NASportType SMALLINT = 0;
 	DROP TABLE IF EXISTS #tmpAgency 
 	CREATE TABLE #tmpAgency(recommend INT PRIMARY KEY, Currency INT);
 	
@@ -135,17 +136,17 @@ BEGIN
 					WHEN s.EventType = 0 THEN
 						CASE 
 							WHEN b.matchid = 29 THEN -1		--Parlay Sport
-							WHEN b.matchid = 2799 THEN b.oddsid 
-							WHEN b.matchid = 999 THEN 99	-- Odds Spread Adjustment
+							WHEN b.matchid = 2799 THEN ISNULL(b.oddsid, @NASportType)
+							WHEN b.matchid = 999 THEN @NASportType	-- Odds Spread Adjustment
 							WHEN b.matchid = 0 AND b.bettype = 1800 THEN 250	-- AG Casino 
 							WHEN b.matchid = 0 AND b.bettype = 8000 THEN 221	-- Exchange
-							ELSE b.matchid
+							ELSE ISNULL(b.matchid, @NASportType)
 						END
-					WHEN s.EventType = 1 THEN ISNULL(m.sporttype,-9999)
-					WHEN s.EventType = 2 THEN CAST(lo.sporttype AS INT)
-					WHEN s.EventType = 3 THEN CAST(vs.SportType AS INT)
-					WHEN s.EventType = 5 THEN m3rd.Sporttype
-					ELSE 0
+					WHEN s.EventType = 1 THEN ISNULL(m.sporttype, @NASportType)
+					WHEN s.EventType = 2 THEN ISNULL(lo.sporttype, @NASportType)
+					WHEN s.EventType = 3 THEN ISNULL(vs.SportType, @NASportType)
+					WHEN s.EventType = 5 THEN ISNULL(m3rd.Sporttype, @NASportType)
+					ELSE @NASportType
 				END AS SportType,
 				CASE 
 					WHEN ((l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
@@ -201,8 +202,6 @@ BEGIN
 		ck.TicketType,
 		b.Betfrom,
 		b.APositiontaking
-	ORDER BY b.winlostdate
-
 
 	PRINT 'GEN >> bettransRnG';
 

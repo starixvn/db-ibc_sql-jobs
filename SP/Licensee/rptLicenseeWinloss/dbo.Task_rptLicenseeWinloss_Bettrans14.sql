@@ -15,8 +15,7 @@ AS
 BEGIN  
 	SET NOCOUNT ON;
 
-	DECLARE @FromDate	SMALLDATETIME = @winlostdate,
-		@ToDate			SMALLDATETIME = @winlostdate;
+	DECLARE @NASportType SMALLINT = 0;
 		
 	DROP TABLE IF EXISTS #rptData;
 	CREATE TABLE #tmpRptData (
@@ -153,18 +152,18 @@ BEGIN
 				CASE 
 					WHEN s.EventType = 0 THEN
 						CASE 
-							WHEN b.matchid = 29 THEN -1 --Parlay Sport
-							WHEN b.matchid = 2799 THEN b.oddsid
-							WHEN b.matchid = 999 THEN 99	-- Odds Spread Adjustment
+							WHEN b.matchid = 29 THEN -1		--Parlay Sport
+							WHEN b.matchid = 2799 THEN ISNULL(b.oddsid, @NASportType)
+							WHEN b.matchid = 999 THEN @NASportType	-- Odds Spread Adjustment
 							WHEN b.matchid = 0 AND b.bettype = 1800 THEN 250	-- AG Casino 
 							WHEN b.matchid = 0 AND b.bettype = 8000 THEN 221	-- Exchange
-							ELSE b.matchid
+							ELSE ISNULL(b.matchid, @NASportType)
 						END
-					WHEN s.EventType = 1 THEN ISNULL(m.sporttype,-9999)
-					WHEN s.EventType = 2 THEN CAST(lo.sporttype AS INT)
-					WHEN s.EventType = 3 THEN CAST(vs.SportType AS INT)
-					WHEN s.EventType = 5 THEN m3rd.Sporttype
-					ELSE 0
+					WHEN s.EventType = 1 THEN ISNULL(m.sporttype, @NASportType)
+					WHEN s.EventType = 2 THEN ISNULL(lo.sporttype, @NASportType)
+					WHEN s.EventType = 3 THEN ISNULL(vs.SportType, @NASportType)
+					WHEN s.EventType = 5 THEN ISNULL(m3rd.Sporttype, @NASportType)
+					ELSE @NASportType
 				END AS SportType,
 				CASE 
 					WHEN ((l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
@@ -314,7 +313,7 @@ BEGIN
 	;WITH CTE_RptDataSource AS (
 		SELECT b.[Recommend]
 	           ,[CustId]
-			   ,CHECKSUM_AGG(CHECKSUM([APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm])) AS CheckSumData
+			   ,CHECKSUM_AGG(CHECKSUM([SportType],[APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm])) AS CheckSumData
 		FROM [dbo].[rptLicenseeWinloss] b WITH(NOLOCK)
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		WHERE b.winlostdate = @winlostdate
@@ -328,7 +327,7 @@ BEGIN
 	FROM (
 		SELECT [Recommend]
 	           ,[CustId]
-			   ,CHECKSUM_AGG(CHECKSUM([APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm])) AS CheckSumData
+			   ,CHECKSUM_AGG(CHECKSUM([SportType],[APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm])) AS CheckSumData
 		FROM #tmpRptData
 			GROUP BY 
 				[Recommend]
@@ -372,14 +371,14 @@ BEGIN
 		FROM #tmpDiffAgency tmp
 		OUTER APPLY (
 			SELECT jsonVal = (
-				SELECT [APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm]
+				SELECT [SportType],[APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm]
 				FROM dbo.rptLicenseeWinloss rpt WITH(NOLOCK) WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
 				FOR JSON PATH
 			)
 		) AS bet
 		OUTER APPLY (
 			SELECT jsonVal = (
-				SELECT [APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm]
+				SELECT [SportType],[APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm]
 				FROM #tmpRptData rpt WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
 				FOR JSON PATH
 			)
