@@ -145,10 +145,6 @@ BEGIN
 					WHEN s.ProductID = 1 AND b.statusID IN (112, 113) AND ABS(b.modds) = 0.25 THEN ABS(stake) / 2
 					ELSE ABS(b.stake)
 				END AS NetTurnover,
-				-(CASE
-					WHEN ba.IsBA = 1 THEN (b.winlost + b.awinlost + b.comm) --COUNT for BA's tickets
-					ELSE 0
-				END) AS AmtDueToBA,
 				CASE 
 					WHEN s.EventType = 0 THEN
 						CASE 
@@ -219,8 +215,6 @@ BEGIN
 		ck.TicketType,
 		b.Betfrom,
 		b.APositiontaking
-	ORDER BY b.winlostdate
-
 
 	PRINT 'GEN >> bettransRnG14';
 	INSERT INTO #tmpRptData
@@ -432,7 +426,7 @@ BEGIN
 	           ,[PComm]
 	           ,[AComm]
 		FROM #tmpRptData b
-		INNER JOIN #tmpDiffAgency a ON a.Recommend = b.Recommend
+		INNER JOIN #tmpDiffAgency a ON a.Recommend = b.Recommend AND a.CustId = rpt.CustId
 		WHERE a.DiffFlag = 1;
 	END
 END
