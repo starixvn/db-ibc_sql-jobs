@@ -1,5 +1,5 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_rptLicenseeWinloss_Bettrans14]
+ALTER PROCEDURE [dbo].[Task_rptLicenseeWinloss_Bettrans14]
 	@winlostdate DATE,
 	@IsCheckDataOnly BIT = 1
 AS
@@ -132,7 +132,7 @@ BEGIN
 		LEFT JOIN [bodb02].dbo.outright14 o WITH(NOLOCK) ON b.matchid = o.orid
 		LEFT JOIN [bodb02].dbo.League lo WITH (NOLOCK) ON lo.leagueid = o.leagueid
 		LEFT JOIN [bodb02].dbo.VSRaceInfo14 vs WITH(NOLOCK) ON b.matchid = vs.EventID
-		LEFT JOIN [bodb_licensee].dbo.LicenseeBATransaction AS lba WITH (NOLOCK) ON b.transid = lba.transid
+		LEFT JOIN [bodb_licensee].dbo.LicenseeBATransaction_bk AS lba WITH (NOLOCK) ON b.transid = lba.transid
 		OUTER APPLY (
 			SELECT 
 				IIF(lba.TransID IS NOT NULL, 1, 0) AS IsBA
@@ -154,7 +154,10 @@ BEGIN
 					WHEN s.EventType = 0 THEN
 						CASE 
 							WHEN b.matchid = 29 THEN -1 --Parlay Sport
-							WHEN b.matchid = 2799 THEN b.oddsid 
+							WHEN b.matchid = 2799 THEN b.oddsid
+							WHEN b.matchid = 999 THEN 99	-- Odds Spread Adjustment
+							WHEN b.matchid = 0 AND b.bettype = 1800 THEN 250	-- AG Casino 
+							WHEN b.matchid = 0 AND b.bettype = 8000 THEN 221	-- Exchange
 							ELSE b.matchid
 						END
 					WHEN s.EventType = 1 THEN ISNULL(m.sporttype,-9999)

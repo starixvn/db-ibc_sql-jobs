@@ -1,5 +1,5 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_rptLicenseeWinloss_Bettrans]
+ALTER PROCEDURE [dbo].[Task_rptLicenseeWinloss_Bettrans]
 	@winlostdate DATE
 AS
 /*
@@ -134,8 +134,11 @@ BEGIN
 				CASE 
 					WHEN s.EventType = 0 THEN
 						CASE 
-							WHEN b.matchid = 29 THEN -1 --Parlay Sport
+							WHEN b.matchid = 29 THEN -1		--Parlay Sport
 							WHEN b.matchid = 2799 THEN b.oddsid 
+							WHEN b.matchid = 999 THEN 99	-- Odds Spread Adjustment
+							WHEN b.matchid = 0 AND b.bettype = 1800 THEN 250	-- AG Casino 
+							WHEN b.matchid = 0 AND b.bettype = 8000 THEN 221	-- Exchange
 							ELSE b.matchid
 						END
 					WHEN s.EventType = 1 THEN ISNULL(m.sporttype,-9999)
