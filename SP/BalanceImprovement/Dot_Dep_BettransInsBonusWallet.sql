@@ -29,6 +29,7 @@ Revisions:
 	- 20190731@Bobby: 1stDeposit - Bonus - Update changes on @oddsspread to log a locked amount [Redmine:#117923]
 	- 20211112@Sol: Support IPv6 - Phase 2 - [Redmine: #163963]
 	- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
+	- 20230322@Evan: Change code write log into bodb_customerlog.UserLog_Transfer [Redmine: #185507]
 
 Param's Explanation:
 	- @custid: player account who joined bonus program
@@ -422,20 +423,34 @@ BEGIN
 	END CATCH
 	
 	-----------------Write Log Bonus Wallet----------------------
-	BEGIN TRY
-		DECLARE @LogData VARCHAR(300)
+	DECLARE @LogData VARCHAR(1000)
 
-		SELECT @LogData = 
-				'Insert bonus transfer custid = ' + CONVERT(VARCHAR(20), @custid) 
-				+ ', bettype = ' + CONVERT(VARCHAR(20), @bettype) 
-				+ ', bonusid = ' + CONVERT(VARCHAR(20), @bonusId) 
-				+ ', amount = ' + CONVERT(VARCHAR(20), @amount)
-				+ ', lockedAmount = ' + CONVERT(VARCHAR(20), @lockedAmount)
-	
-		EXEC dbo.WriteLog_UserLog @UserID = @custid, @Doing = @LogData
+	SELECT @LogData = 
+		'Insert bonus transfer custid = ' + CONVERT(VARCHAR(20), @custid) 
+		+ ', bettype = ' + CONVERT(VARCHAR(20), @bettype) 
+		+ ', bonusid = ' + CONVERT(VARCHAR(20), @bonusId) 
+		+ ', amount = ' + CONVERT(VARCHAR(20), @amount)
+		+ ', lockedAmount = ' + CONVERT(VARCHAR(20), @lockedAmount)
+
+	BEGIN TRY
+
+		EXEC DBLOG.bodb_customerlog.dbo.WriteLog_UserLog_Transfer 
+							@UserID		= @custid, 
+							@FromCustID = @custid, 
+							@ToCustID	= @bal_custid, 
+							@IP			= @IP, 
+							@Doing		= @LogData
 	END TRY
 	BEGIN CATCH
 		-- IF write log error: not RETURN error code
+		SELECT @LogData = @LogData + ' ErrMsg: ' + ERROR_MESSAGE()
+			
+		EXEC bodb_customerlog.dbo.WriteLog_UserLog_Transfer 
+							@UserID		= @custid, 
+							@FromCustID = @custid, 
+							@ToCustID	= @bal_custid, 
+							@IP			= @IP, 
+							@Doing		= @LogData
 	END CATCH
 END
 GO
