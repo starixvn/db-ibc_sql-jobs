@@ -1,3 +1,4 @@
+
 /*<info serverAlias="DBLIC-bodb_LicenseeReport"></info>*/
 /*
 	Created: 20230209@Bobby
@@ -379,7 +380,7 @@ CREATE TABLE [dbo].[rptLicenseeWinloss](
 	[Bettype] [smallint] NOT NULL,
 	[CustId] [int] NOT NULL,
 	[StatusId] [smallint] NOT NULL,
-	[LiveIndicator] [bit] NOT NULL,
+	[LiveIndicator] [tinyint] NOT NULL,
 	[LeagueGroupId] [smallint] NOT NULL,
 	[TicketType] [tinyint] NOT NULL,
 	[Betfrom] [nvarchar](1) NOT NULL,
