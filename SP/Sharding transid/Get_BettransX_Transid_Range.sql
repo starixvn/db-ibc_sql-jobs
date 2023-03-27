@@ -20,6 +20,7 @@ AS
 						we got some issue related to pass wrong value for this @SourceID. 
 						This SP is using for many functions on member site, it's quite risk if we remove this param. 
 						So, we keep param as it is and reset this param basing on server name.
+		- 20230327@Tina: built up the AlwaysOn Availability Group (AG) feature for sitedb1 (DB66 and DB67)
 */
 BEGIN
 	 
@@ -31,7 +32,7 @@ BEGIN
 		SELECT @sourceID =  
 			CASE	
 				WHEN @@SERVERNAME in ('DBTRANS','SITDBTRANS','TESTDBTRANS','db-60\devdbtrans') THEN 0
-				WHEN @@SERVERNAME IN ('DBGRP01N1','DBGRP01N2','SITDBGRP01N1','SITDBGRP01N2','db62\DEVSITEDB','testdb053\TESTSITEDB') THEN 1
+				WHEN @@SERVERNAME IN ('DBGRP01N1','DBGRP01N2','SITDBGRP01N1','SITDBGRP01N2','db62\DEVSITEDB','testdb053\TESTSITEDB','DB66','DB67') THEN 1
 				WHEN @@SERVERNAME IN ('DBGRP02N1','DBGRP02N2','SITDBGRP02N1','SITDBGRP02N2') THEN 2
 			ELSE 1023 END
 	--END 
