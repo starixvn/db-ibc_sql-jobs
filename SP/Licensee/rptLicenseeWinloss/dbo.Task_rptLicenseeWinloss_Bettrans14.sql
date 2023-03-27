@@ -1,6 +1,6 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptLicenseeWinloss_Bettrans14]
-	@winlostdate DATE,
+	@winlostdate SMALLDATETIME,
 	@IsCheckDataOnly BIT = 1
 AS
 /*
@@ -17,31 +17,30 @@ BEGIN
 
 	DECLARE @NASportType SMALLINT = 0;
 		
-	DROP TABLE IF EXISTS #rptData;
+	DROP TABLE IF EXISTS #tmpRptData;
 	CREATE TABLE #tmpRptData (
 		[Recommend] 		INT
-	   ,[WinlostDate]		SMALLDATETIME
-	   ,[Product3rdId]		INT
-	   ,[Sporttype]			INT
-	   ,[Bettype]			INT
-	   ,[CustId]			INT
-	   ,[StatusId]			TINYINT
-	   ,[LiveIndicator]		TINYINT
-	   ,[LeagueGroupId]		SMALLINT
-	   ,[TicketType]		TINYINT
-	   ,[Betfrom]			NVARCHAR(3)
-	   ,[APositiontaking]	MONEY
-	   ,[BetCount]			INT
-	   ,[Turnover]			MONEY
-	   ,[NetTurnover]		MONEY
-	   ,[Winlost]			MONEY
-	   ,[AWinlost]			MONEY
-	   ,[PComm]				MONEY
-	   ,[AComm]				MONEY
+		,[WinlostDate]		SMALLDATETIME
+		,[Product3rdId]		TINYINT
+		,[Sporttype]		SMALLINT
+		,[Bettype]			SMALLINT
+		,[CustId]			INT
+		,[StatusId]			SMALLINT
+		,[LiveIndicator]	TINYINT
+		,[LeagueGroupId]	SMALLINT
+		,[TicketType]		TINYINT
+		,[Betfrom]			VARCHAR(4)
+		,[APositiontaking]	SMALLMONEY
+		,[BetCount]			INT
+		,[Turnover]			MONEY
+		,[NetTurnover]		MONEY
+		,[Winlost]			MONEY
+		,[AWinlost]			MONEY
+		,[PComm]			MONEY
+		,[AComm]			MONEY
 	);
 	CREATE CLUSTERED INDEX CIX_tmpRptData ON #tmpRptData(
-		[Recommend] 		
-	   ,[WinlostDate]		
+		[CustId] 		
 	   ,[Product3rdId]		
 	   ,[Sporttype]			
 	   ,[Bettype]
@@ -70,6 +69,7 @@ BEGIN
 	END
 		
 	DROP TABLE IF EXISTS #tmpBettype;
+	CREATE TABLE #tmpBettype(ProductId TINYINT, Bettype SMALLINT PRIMARY KEY, RefTable TINYINT, EventType TINYINT, Product3rdId TINYINT);
 
 	WITH CTE_Product AS (
 			SELECT 0 AS ProductID, p.ProductName, p.ProductPrefix AS ProductCode
@@ -80,8 +80,8 @@ BEGIN
 			FROM bodb_licensee.dbo.Product3rd p3 WITH(NOLOCK)
 			WHERE p3.Enabled = 1
 	)
-	SELECT tbl.ProductId, tbl.Bettype, tbl.RefTable, tbl.EventType,tbl.Product3rdId
-	INTO #tmpBettype
+	INSERT INTO #tmpBettype
+	SELECT tbl.ProductId, tbl.Bettype, tbl.RefTable, tbl.EventType, tbl.Product3rdId
 	FROM (
 		SELECT DISTINCT p.ProductID, 
 			p3.ProductID AS Product3rdID,
@@ -307,7 +307,22 @@ BEGIN
 	;WITH CTE_RptDataSource AS (
 		SELECT b.[Recommend]
 	           ,[CustId]
-			   ,CHECKSUM_AGG(CHECKSUM([SportType],[APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm])) AS CheckSumData
+			   ,CHECKSUM_AGG(CHECKSUM([Product3rdId]
+				   ,[Sporttype]
+				   ,[Bettype]
+				   ,[StatusId]
+				   ,[LiveIndicator]
+				   ,[LeagueGroupId]
+				   ,[TicketType]
+				   ,[Betfrom]
+				   ,[APositiontaking]
+				   ,[BetCount]
+				   ,[Turnover]
+				   ,[NetTurnover]
+				   ,[Winlost]
+				   ,[AWinlost]
+				   ,[PComm]
+				   ,[AComm])) AS CheckSumData
 		FROM [dbo].[rptLicenseeWinloss] b WITH(NOLOCK)
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		WHERE b.winlostdate = @winlostdate
@@ -321,7 +336,22 @@ BEGIN
 	FROM (
 		SELECT [Recommend]
 	           ,[CustId]
-			   ,CHECKSUM_AGG(CHECKSUM([SportType],[APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm])) AS CheckSumData
+			   ,CHECKSUM_AGG(CHECKSUM([Product3rdId]
+				   ,[Sporttype]
+				   ,[Bettype]
+				   ,[StatusId]
+				   ,[LiveIndicator]
+				   ,[LeagueGroupId]
+				   ,[TicketType]
+				   ,[Betfrom]
+				   ,[APositiontaking]
+				   ,[BetCount]
+				   ,[Turnover]
+				   ,[NetTurnover]
+				   ,[Winlost]
+				   ,[AWinlost]
+				   ,[PComm]
+				   ,[AComm])) AS CheckSumData
 		FROM #tmpRptData
 			GROUP BY 
 				[Recommend]
@@ -365,15 +395,47 @@ BEGIN
 		FROM #tmpDiffAgency tmp
 		OUTER APPLY (
 			SELECT jsonVal = (
-				SELECT [SportType],[APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm]
-				FROM dbo.rptLicenseeWinloss rpt WITH(NOLOCK) WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
+				SELECT [Product3rdId]
+				   ,[Sporttype]
+				   ,[Bettype]
+				   ,[StatusId]
+				   ,[LiveIndicator]
+				   ,[LeagueGroupId]
+				   ,[TicketType]
+				   ,[Betfrom]
+				   ,[APositiontaking]
+				   ,[BetCount]
+				   ,[Turnover]
+				   ,[NetTurnover]
+				   ,[Winlost]
+				   ,[AWinlost]
+				   ,[PComm]
+				   ,[AComm]
+				FROM dbo.rptLicenseeWinloss rpt WITH(NOLOCK) 
+				WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
 				FOR JSON PATH
 			)
 		) AS bet
 		OUTER APPLY (
 			SELECT jsonVal = (
-				SELECT [SportType],[APositiontaking],[BetCount],[Turnover],[NetTurnover],[Winlost],[AWinlost],[PComm],[AComm]
-				FROM #tmpRptData rpt WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
+				SELECT [Product3rdId]
+				   ,[Sporttype]
+				   ,[Bettype]
+				   ,[StatusId]
+				   ,[LiveIndicator]
+				   ,[LeagueGroupId]
+				   ,[TicketType]
+				   ,[Betfrom]
+				   ,[APositiontaking]
+				   ,[BetCount]
+				   ,[Turnover]
+				   ,[NetTurnover]
+				   ,[Winlost]
+				   ,[AWinlost]
+				   ,[PComm]
+				   ,[AComm]
+				FROM #tmpRptData rpt 
+				WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
 				FOR JSON PATH
 			)
 		) AS bet14
@@ -406,12 +468,12 @@ BEGIN
 	           ,[PComm]
 	           ,[AComm]
 			  )
-		SELECT b.[Recommend]
+		SELECT rpt.[Recommend]
 	           ,[WinlostDate]
 	           ,[Product3rdId]
 	           ,[Sporttype]
 	           ,[Bettype]
-	           ,b.[CustId]
+	           ,rpt.[CustId]
 	           ,[StatusId]
 	           ,[LiveIndicator]
 	           ,[LeagueGroupId]
@@ -425,8 +487,8 @@ BEGIN
 	           ,[AWinlost]
 	           ,[PComm]
 	           ,[AComm]
-		FROM #tmpRptData b
-		INNER JOIN #tmpDiffAgency a ON a.Recommend = b.Recommend AND a.CustId = rpt.CustId
+		FROM #tmpRptData rpt
+		INNER JOIN #tmpDiffAgency a ON a.Recommend = rpt.Recommend AND a.CustId = rpt.CustId
 		WHERE a.DiffFlag = 1;
 	END
 END
