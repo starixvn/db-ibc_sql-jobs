@@ -1,3 +1,4 @@
+/*<info serverAlias="DBGRP01L-bodb02, DBGRP01L-bodb_customerLog" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 /*
     Created: 20230324@Louisa
 	Task: Scaleout Credit - cleanup unuse objects related to LASDB [Redmine: #182677]
