@@ -1,31 +1,29 @@
 USE [master]
 GO
 -- Create Login
-/*	Windows domain account:
-		spvn\kos.nguyen
-		spvn\ricky.nguyen
-		spvn\jason.ly
-		spvn\james.nguyen
-*/
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
+
+----DBCUST, DBPOL, DBN88POL
+IF @@SERVERNAME NOT IN ( 'DB-60\devdbcust', 'TESTDBCUST' )
 BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
+	SELECT 'Wrong Server' AS 'Error'
 
 	RETURN
 END
+
 DECLARE @strLoginName 	VARCHAR(MAX) = ''
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
-	VALUES   ('spvn\hubert.duong')	
-			,('spvn\mason.nguyen')		
-			,('spvn\howard.nguyen')		
+	VALUES   ('spvn\kos.nguyen')
+			,('spvn\parsons.nguyen')
+			,('spvn\hubert.duong')	 	
 			,('spvn\hogan.pham')	 
 			,('spvn\steve.nguyen')		
-			,('spvn\happy.duong')		
-			,('spvn\alex.do')		
+			,('spvn\happy.duong') 	
 			,('spvn\kai.le')
+			,('spvn\walter.nguyen')
+			,('spvn\cody.nguyen')
 
 -- CREATE LOGIN [spvn\nickname] FROM WINDOWS;  
 SELECT @strLoginName = @strLoginName 

@@ -1,25 +1,7 @@
 USE [master]
 GO
-/*	Windows domain account:
-		spvn\johnson.nguyen
-		spvn\sophia.nguyen
-		spvn\jamie.dao
-		spvn\elodie.ho
-		spvn\kathy.nguyen
-		spvn\winnie.vu
-		spvn\helen.do
-		spvn\percy.nguyen
-		spvn\sol.le
-		spvn\eden.dang
-		spvn\bobby.nguyen
-		spvn\winfred.pham
-		spvn\tina.vo
-		spvn\tacy.nguyen
-*/
-
--- Grant permisison Profiler for login
  
-
+-- Grant permisison Profiler for login
 DECLARE @strUser VARCHAR(MAX) = ''
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50), IsSysadmin BIT)
@@ -47,6 +29,7 @@ INSERT INTO @tmpMember (Name, IsSysadmin)
 		, ('spvn\tina.vo'			,0)
 		, ('spvn\july.nguyen'		,0)
 		, ('spvn\aries.nguyen'		,0)
+		, ('spvn\luke.nguyen'		,0)
 
 SELECT	@strUser = @strUser + 'EXEC sp_addsrvrolemember @rolename = N''sysadmin''' + ', @loginame = N''' + t.Name + '''' 
 		+ CHAR(13)

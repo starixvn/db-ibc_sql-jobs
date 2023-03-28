@@ -1,18 +1,22 @@
 
+use master
+GO
 
--- Create Role
+ ---DBLOG, DB042, 	DBOST, DBBOF, 	DBUserLog
 
-IF @@SERVERNAME <> 'TESTDB055'
+IF @@SERVERNAME NOT IN ( 'DB-61\DEVDB055' ,'TESTDB055' )
 BEGIN
-	SELECT 'Must be run on TESTDB055' AS 'Error'
+	SELECT 'Wrong Server' AS 'Error'
 
 	RETURN
 END
 
 DECLARE @RoleName VARCHAR(50) = 'db_Legion'
-		,@strRole	VARCHAR(MAX) = ''
+		,@strRole	VARCHAR(MAX) = '' 
+		,@strPermission	VARCHAR(MAX) = ''
 
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
 		VALUES ('bodb_CustomerLog')
@@ -26,27 +30,9 @@ SELECT @strRole = @strRole + ' '
 FROM	@tmpAffectedDB
 
 EXEC (@strRole)
-GO
+waitfor delay '00:00:01'
 -------------------------------------------
-
-
-IF @@SERVERNAME <> 'TESTDB055'
-BEGIN
-	SELECT 'Must be run on TESTDB055' AS 'Error'
-
-	RETURN
-END
-
--- Grant permission to new role
-DECLARE @RoleName VARCHAR(50) = 'db_Legion'
-		,@strPermission	VARCHAR(MAX) = ''
-
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
-DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb_CustomerLog')
-
+ 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('EXECUTE')
 

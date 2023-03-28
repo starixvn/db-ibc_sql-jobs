@@ -1,22 +1,18 @@
-/*
-	For RnD team:
-	Affected DB:
-		CustDB
-		IPDB
-		NAP_UserControl
-*/
--- Create Role
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
+
+----DBCUST, DBPOL, DBN88POL
+IF @@SERVERNAME NOT IN ( 'DB-60\devdbcust', 'TESTDBCUST' )
 BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
+	SELECT 'Wrong Server' AS 'Error'
 
 	RETURN
 END
 
 DECLARE @RoleName VARCHAR(50) = 'db_Legion'
 		,@strRole	VARCHAR(MAX) = ''
+		,@strPermission	VARCHAR(MAX) = ''
 
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
+DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
 		VALUES ('bodb_Licensee')
@@ -30,26 +26,9 @@ SELECT @strRole = @strRole + ' '
 FROM	@tmpAffectedDB
 
 EXEC (@strRole)
-GO
--------------------------------------------
--------------------------------------------
-
-IF @@SERVERNAME NOT IN ( 'DB233', 'TESTDBCUST' )
-BEGIN
-	SELECT 'Must be run on DB233 or TESTDBCUST' AS 'Error'
-
-	RETURN
-END
+waitfor delay '00:00:01'
 
 -- Grant permission to new role
-DECLARE @RoleName VARCHAR(50) = 'db_Legion'
-		,@strPermission	VARCHAR(MAX) = ''
-
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
-DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb_Licensee')
 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')
