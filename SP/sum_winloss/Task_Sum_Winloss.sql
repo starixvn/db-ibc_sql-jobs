@@ -43,6 +43,7 @@ AS
 		- 20220907@Eddie: Add Microgaming  [RedmineID: #175850]
 		- 20221004@Eddie: Add Bettype Tournament Prize [RedmineID: #178335]
 		- 20221208@Eddie: Add New SABA ESports PinGoal [RedmineID: #181383]
+		- 20230206@Eddie: Add Jili product [RedmineID: #182860]
 */
 BEGIN
 
@@ -243,6 +244,7 @@ BEGIN
 			WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG Product
 			WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEAL Entertainment
 			WHEN bettype BETWEEN 8400 AND 8699 THEN 155 -- Microgaming
+			WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -401,6 +403,7 @@ BEGIN
 				 WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG Product
 				 WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEAL Entertainment
 				 WHEN bettype BETWEEN 8400 AND 8699 THEN 155 -- Microgaming
+				 WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 				 ELSE 0
 			 END
 			,CASE
@@ -458,6 +461,7 @@ BEGIN
 				 WHEN bettypePT BETWEEN 8201 AND 8299 THEN 176 -- FGG Product
 				 WHEN bettypePT BETWEEN 8900 AND 8999 THEN 156 -- SEAL Entertainment
 				 WHEN bettypePT BETWEEN 8400 AND 8699 THEN 155 -- Microgaming
+				 WHEN bettypePT BETWEEN 5100 AND 5299 THEN 158 -- Jili
 				 ELSE 0 END AS SporttypeRef
 		FROM #__SuperExtraPT WHERE RefTable IN (1, 2)
 
