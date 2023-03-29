@@ -13,6 +13,7 @@ AS
 		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
 		- 20220603@July: Get column CustId from active table [Redmine:#172634]
 		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
+		- 20230329@Max: [TVS] Cancel Cash-Out if action CO in danger time range [Redmine: #176998]
 		
  */
  BEGIN
@@ -31,7 +32,7 @@ AS
 	SET @RequestIds = STUFF((SELECT ',' + CAST(RequestId AS VARCHAR(50)) FROM @tmpRequest FOR XML PATH('')),1,1,'')
 
 	SELECT	t1.Id, t1.RequestId, t1.IssueTypeId, t1.SubIssueTypeId,t1.TransId, t1.MatchId,t1.RequestDetailId
-		,t1.Bettype, t1.BetId, t1.CustId, t1.SiteDBGroupID, t1.IsProcessed
+		,t1.Bettype, t1.BetId, t1.CustId, t1.SiteDBGroupID, t1.IsProcessed, t1.IsCancelCO
 	FROM	dbo.TicketVoiding_RequestDetailTicket_Single AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 		SELECT	cast(value as int) AS RequestId
