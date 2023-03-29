@@ -19,6 +19,7 @@ AS
 		- 20200818@Percy: Change EventType's data type from smallint to int [RedmineID: #138524]
 		- 20210805@Sophia: Fix false alarm [Redmine: #159700]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
 
 	DECLARE @HasDataMismatch	TINYINT, @ProductID VARCHAR(MAX)
 	EXEC Task_rptDepWinlost_ThirdParty_CheckData @WinlostDate = '2018-04-09', @HasDataMismatch = @HasDataMismatch OUTPUT, @ProductIDs = @ProductID OUTPUT
@@ -215,33 +216,6 @@ BEGIN
 	GROUP BY b.CustID, b.CurrencyID
 	
 	SET @S_Count = @@ROWCOUNT;
-	
-	-- For GoldDeluxe
-	INSERT INTO #Source(TableName, custid, currency, turnover, winlost, drawTO, drawBetCount, betCount, ProductID, Bettype)
-	SELECT	'bettrans_GoldDeluxe',
-			b.CustID, 		
-			b.currency,				
-			ISNULL(SUM(b.Stake),0) AS Turnover,			
-			ISNULL(SUM(b.Winlost - b.Stake),0) AS Winlost,	
-			ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN b.Stake ELSE 0 END),0) AS DrawTO,	
-			ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount,	
-			ISNULL(COUNT(b.TicketId),0) AS Betcount,
-			11 AS ProductID,
-			-1 AS Bettype
-	FROM bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b WITH (ROWLOCK)
-	WHERE Winlostdate = @winlostdate
-		AND StatusId IN (111,112,113)
-	GROUP BY b.CustID, b.currency;
-
-	SET @S_Count = @S_Count + @@ROWCOUNT;
-	
-	INSERT INTO #Source(TableName, custid, currency, turnover, winlost, drawTO, drawBetCount, betCount, ProductID, Bettype)
-	SELECT	'GoldDeluxe_Tip',IBCCustId, Currency, 0, SUM(-Amount), 0, 0, COUNT(TipId), 11, 1706
-	FROM bodb_PlaytechCS.dbo.GoldDeluxe_Tip WITH(NOLOCK)
-	WHERE Winlostdate = @winlostdate 
-	GROUP BY IBCCustId, currency
-
-	SET @S_Count = @S_Count + @@ROWCOUNT;
 	
 	INSERT INTO #Target
 	        ( Custid ,

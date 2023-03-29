@@ -29,6 +29,7 @@ AS
 		- 20201012@Malcolm: Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 		- 20210805@Sophia: Add more email dbaadmin@starixvn.com [Redmine: #159700]
 		- 20210816@Sophia: add DBBAL & Exclude GEN_rptBettingBySport14 at DBBAL [Redmine: #154300]
+		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
 
 	EXEC Task_rptBetting_CheckData_Job @FromDate = '2018-04-01', @ToDate = '2018-04-10', @Step = 0,  @AllowCorrect = 1
     
@@ -306,11 +307,6 @@ BEGIN
 					EXEC DBACC.bodb02.dbo.Task_DOT_AGCasino_DailySummary @winlostdate = @winlostdate
 				END 
 				
-				IF @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 11,%' --- GD   
-				BEGIN 
-					EXEC bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
-				END
-
 				IF @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 31,%' --- Exchange   
 				BEGIN
 					EXEC bodb_3rdProduct.dbo.Task_DOT_Exchange_DailySummary @winlostdate = @WinlostDate					
@@ -320,14 +316,9 @@ BEGIN
 				IF @GenAGC <> 0 OR @Gen3rdParty <> 0
 				BEGIN
 					
-					IF (@Gen3rdParty <> 0 AND @GenAGC <> 0) OR (@Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 11,%' AND ', ' + @3rdProducts + ',' LIKE '%, 31,%')
+					IF (@Gen3rdParty <> 0 AND @GenAGC <> 0) OR (@Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 31,%')
 					BEGIN
 						EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 0 -- run for all separate product  
-					END
-					
-					ELSE IF @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 11,%'
-					BEGIN
-						EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 11 
 					END
 					
 					ELSE IF @GenAGC <> 0 
@@ -390,11 +381,6 @@ BEGIN
 					EXEC DBACC.bodb02.dbo.Task_DOT_AGCasino_DailySummary @winlostdate = @winlostdate
 				END 
 				
-				IF @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 11,%' --- GD   
-				BEGIN 
-					EXEC bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
-				END
-
 				IF @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 31,%' --- Exchange   
 				BEGIN
 					EXEC bodb_3rdProduct.dbo.Task_DOT_Exchange_DailySummary @winlostdate = @WinlostDate					
@@ -404,14 +390,9 @@ BEGIN
 				IF @GenAGC <> 0 OR @Gen3rdParty <> 0
 				BEGIN
 					
-					IF (@Gen3rdParty <> 0 AND @GenAGC <> 0) OR (@Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 11,%' AND ', ' + @3rdProducts + ',' LIKE '%, 31,%')
+					IF (@Gen3rdParty <> 0 AND @GenAGC <> 0) OR (@Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 31,%')
 					BEGIN
 						EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 0 -- run for all separate product  
-					END
-					
-					ELSE IF @Gen3rdParty <> 0 AND ', ' + @3rdProducts + ',' LIKE '%, 11,%'
-					BEGIN
-						EXEC dbo.GEN_rptBettingByProduct @date = @WinlostDate, @date2 = @WinlostDate, @DataSource = 'SeparatedProduct' , @SeparatedProductID = 11 
 					END
 					
 					ELSE IF @GenAGC <> 0 

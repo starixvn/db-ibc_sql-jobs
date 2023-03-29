@@ -18,7 +18,7 @@ AS
 		- 20210219@Percy: Change code get MBBU date [RedmineID: #150327]
 		- 20220721@Evan: Integrate new transid [Redmine: #175640]
 		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - classify data between SiteDB & CentralDB [Redmine: #175297]
-
+		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -125,9 +125,6 @@ BEGIN
 	IF CHARINDEX('10', @ProductIds, 0) > 0 --AG Casino
 		SELECT @ProductCodeList = COALESCE(@ProductCodeList + ',AGC', 'AGC')
 
-	IF CHARINDEX('11', @ProductIds, 0) > 0 --Gold Deluxe
-		SELECT @ProductCodeList = COALESCE(@ProductCodeList + ',GD', 'GD')
-
 	IF CHARINDEX('31', @ProductIds, 0) > 0 --Exchange
 		SELECT @ProductCodeList = COALESCE(@ProductCodeList + ',BX', 'BX')
 
@@ -223,42 +220,6 @@ BEGIN
 			EXEC (@SqlQueryFor3rd)
 		END
 		
-		IF CHARINDEX('11', @ProductIds, 0) > 0 --Gold Deluxe
-		BEGIN
-			--print ('Gold Deluxe')
-			
-			-- bettrans_GoldDeluxe
-			SELECT @SqlQueryFor3rd = ''
-			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 1700 AS Bettype, Stake, Actual_stake, Winlost
-				FROM OPENQUERY(DBLIC, ''SELECT WinlostDate, b.Currency, SUM(ABS(Stake)) AS Stake, SUM(ABS(Stake)) AS Actual_stake, SUM(ABS(Winlost)) AS Winlost
-				FROM bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b WITH (NOLOCK)
-					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON b.recommend = f.custid AND b.currency = f.currency 
-				WHERE 1 = 1'
-					+ ' AND WinlostDate BETWEEN ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''''
-					+ ' AND b.Currency = ' + CAST(@CurrencyId AS VARCHAR)
-					+ ' AND StatusId IN (112,113,111)'
-				+ ' GROUP BY WinlostDate, b.Currency'
-				+ ''' )'
-			
-			INSERT INTO #3rdData(WinlostDate, CurrencyId, Bettype, Stake, Actual_stake, Winlost)
-			EXEC (@SqlQueryFor3rd)
-
-			-- GoldDeluxe_Tip
-			SELECT @SqlQueryFor3rd = ''
-			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 1706 AS Bettype, Stake, Actual_stake, Winlost
-				FROM OPENQUERY(DBLIC, ''SELECT b.WinlostDate, b.Currency, 0 AS Stake, SUM(ABS(b.Amount)) AS Actual_stake, 0 AS Winlost
-				FROM bodb_PlaytechCS.dbo.GoldDeluxe_Tip b WITH (NOLOCK)
-					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON b.recommend = f.custid AND b.currency = f.currency 
-				WHERE 1 = 1'
-					+ ' AND b.WinlostDate BETWEEN ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''''
-					+ ' AND b.Currency = ' + CAST(@CurrencyId AS VARCHAR)
-				+ ' GROUP BY b.WinlostDate, b.Currency'
-				+ ''' )'
-			
-			INSERT INTO #3rdData(WinlostDate, CurrencyId, Bettype, Stake, Actual_stake, Winlost)
-			EXEC (@SqlQueryFor3rd)
-		END
-
 		IF CHARINDEX('31', @ProductIds, 0) > 0 --Exchange
 		BEGIN
 			--print ('Exchange')
@@ -336,7 +297,6 @@ BEGIN
 		--AGC Adjustment - Date: 2015-05-26
 		UPDATE tmp
 		SET TransDesc = CASE WHEN tmp.Bettype = 1800 THEN 'AGC' 
-							 WHEN tmp.Bettype IN (1700, 1706) THEN 'GD' 
 							 WHEN tmp.Bettype = 8000 THEN 'BX' 
 							 END + @BettingIndicator + 'Transfer back to Sportsbook'
 			, awinlost = -(Winlost - Actual_stake) * (1 - ISNULL(rc.Rate, r.Rate))
@@ -359,7 +319,6 @@ BEGIN
 			INNER JOIN (
 				SELECT ChargeId, FromDate, ToDate, Rate
 					, CASE WHEN ProductId = 10 THEN 1800
-						WHEN ProductId = 11 THEN CASE WHEN ChargeType = 1 THEN 1700 WHEN ChargeType = 12 THEN 1706 END
 						WHEN ProductId = 31 THEN 8000 
 						END Bettype
 				FROM #ChargeRate WHERE LicenseeId = @LicenseeId
@@ -368,7 +327,6 @@ BEGIN
 			INNER JOIN CustDB.dbo.Customer c WITH(NOLOCK) ON tmp.CustId = c.custid AND c.roleid = 1
 			INNER JOIN CustDB.dbo.exchange ex WITH(NOLOCK) ON tmp.CurrencyId = ex.exchangeid
 		
-		--select * from @FinalData
 		--delete data when charge rate did not config & avoid error a while insert into @bettrans
 		DELETE @FinalData 
 		WHERE awinlost IS NULL

@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20200407@Percy: Initialize SP [RedmineID: #131885]
 		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
+ 		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
 */
 
 BEGIN
@@ -28,17 +29,16 @@ BEGIN
 
 	-- All Separated Wallet 3rd Products
 	INSERT INTO @Products (ProductId)
-	VALUES (10), (11), (31)
+	VALUES (10), (31)
 
 	INSERT INTO @ImportedProducts (ProductId)
 	SELECT DISTINCT
 		CASE
 			WHEN bettype = 1800			THEN 10 -- AG Casino
-			WHEN bettype IN (1700,1706) THEN 11 -- Gold Deluxe
 			WHEN bettype = 8000			THEN 31 -- Exchange
 			END AS ProductId
 	FROM dbo.bettrans WITH (NOLOCK)
-	WHERE bettype IN (1800,1700,1706,8000)
+	WHERE bettype IN (1800,8000)
 		AND winlostdate = @WinlostDate
 
 	DELETE @Products WHERE ProductId IN (SELECT ProductId FROM @ImportedProducts)
