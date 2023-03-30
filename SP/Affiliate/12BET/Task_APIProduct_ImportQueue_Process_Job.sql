@@ -13,6 +13,7 @@ AS
 		- 20191206@Percy: Update send mail part [RedmineID: #117197]
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 		- 20220704@Sol : remove email account - [RedmineId: #175043]
+		- 20221118@Malcolm: remove clean data [RedmineID: #180311]
 */
 
 BEGIN
@@ -32,26 +33,6 @@ BEGIN
 
 	WHILE @ProductId IS NOT NULL
 	BEGIN
-		-- Clean old data (keep 1 month)
-		IF EXISTS (
-			SELECT 1 FROM dbo.APIProduct_ImportQueue WITH (NOLOCK)
-			WHERE ProductId = @ProductId AND WinlostDate < DATEADD(MONTH, -1, GETDATE())
-				AND FinishedTime IS NOT NULL
-		)
-		BEGIN
-			WHILE 1 = 1
-			BEGIN
-				DELETE TOP (2000) FROM dbo.APIProduct_ImportQueue WITH (ROWLOCK, UPDLOCK)
-				WHERE ProductId = @ProductId AND WinlostDate < DATEADD(MONTH, -1, GETDATE())
-					AND FinishedTime IS NOT NULL
-
-				IF @@ROWCOUNT < 2000
-					BREAK
-
-				WAITFOR DELAY '00:00:00.280'
-			END
-		END
-
 		-- Parse data
 		SELECT @ErrCode = 0, @ErrMsg = ''
 		

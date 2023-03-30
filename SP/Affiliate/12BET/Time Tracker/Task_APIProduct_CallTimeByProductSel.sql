@@ -3,7 +3,9 @@ USE [Affiliate_12BET]
 GO
 
 ALTER PROCEDURE [dbo].[Task_APIProduct_CallTimeByProductSel]
-	@ProductId	INT,
+	@ProductId	INT = -1,
+	@TpType		INT = -1,
+	@SubItem	VARCHAR(200) = '',
 	@Currency	INT = NULL
 AS
 /*
@@ -13,13 +15,27 @@ AS
 
 	Revisions:
 		- Created: 20190114@Walter: Initialize SP [RedmineID: #107594]
+		- 20221117@Malcolm: Add TpType, SubItem [RedmineID: #180311]
 */
 BEGIN
     SET NOCOUNT ON
 
-    SELECT TOP 1 CallTime
-    FROM dbo.APIProduct_TimeTracker WITH (NOLOCK)
-    WHERE ProductId = @ProductId AND (Currency IS NULL OR Currency = @Currency)
-    ORDER BY Id DESC
+	SELECT @ProductId = ISNULL(@ProductId, -1), @TpType = ISNULL(@TpType, -1), @SubItem = ISNULL(@SubItem, '')
+
+	IF @ProductId = -1
+	BEGIN
+		 SELECT TOP 1 CallTime
+		 FROM dbo.APIProduct_TimeTracker WITH (NOLOCK)
+		 WHERE (TpType = @TpType AND SubItem = @SubItem) AND (@Currency IS NULL OR Currency = @Currency) 
+		 ORDER BY Id DESC
+	END
+	ELSE
+	BEGIN
+		 SELECT TOP 1 CallTime
+		 FROM dbo.APIProduct_TimeTracker WITH (NOLOCK)
+		 WHERE (ProductId = @ProductId) AND (@Currency IS NULL OR Currency = @Currency) 
+		 ORDER BY Id DESC
+	END
+ 
 END
 GO

@@ -28,15 +28,24 @@ AS
 		- 20210823@Malcolm: Integrate new product: Skywind [RedmineID: #159566]
 		- 20220506@Malcolm: Integrate new product: Jasper (N2), Sunstone (EA) [RedmineID: #172068]
 		- 20220711@Malcolm: Integrate new product:  Zircon (BG) [RedmineID: #173800]
+		- 20221117@Malcolm: Remove the product that got the data from the new API  [RedmineID: #180311]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @QueueId BIGINT, @XmlData XML, @WinlostDate SMALLDATETIME, @LastQueueId BIGINT, @MaxWinlostDate SMALLDATETIME, @SuccessfullMsg NVARCHAR(200) = 'Successfully',  @StatusOfAPI VARCHAR(50) = ''
+	DECLARE @QueueId BIGINT, @XmlData XML, @WinlostDate SMALLDATETIME, @LastQueueId BIGINT, @MaxWinlostDate SMALLDATETIME, @SuccessfullMsg NVARCHAR(200) = 'Successfully'
+			, @StatusOfAPI VARCHAR(50) = '', @GroupProductId INT = NULL
 
 	DECLARE @Exchange TABLE (ExchangeDate SMALLDATETIME, ExchangeId INT, Currency NVARCHAR(50), ExRate FLOAT, AffExRate FLOAT)
 	DECLARE @tmpWinlostDate TABLE (winlostdate SMALLDATETIME)
+
+	SELECT @GroupProductId = g.GroupProductId FROM Aff_f_GroupProduct() g WHERE g.ProductId = @ProductId
+
+	IF EXISTS (SELECT 1 FROM dbo.APIProductMappingSettings s WITH(NOLOCK) WHERE s.ProductId IN (@GroupProductId, @ProductId))
+	BEGIN
+		RETURN
+	END
 
 	-- Manually import
 	IF @QueueIdInput <> 0
