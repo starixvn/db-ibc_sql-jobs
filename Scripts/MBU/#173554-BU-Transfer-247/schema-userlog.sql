@@ -15,7 +15,8 @@ CREATE TABLE [dbo].[Task_UserLog](
 	[servername] varchar(128) NOT NULL,
 	[userid] [int] NULL,
 	[doing] [nvarchar](512) NULL,
-	[logdate] [datetime] NULL
+	[logdate] [datetime] NULL,
+	[functype] [tinyint] NULL
 ) ON [Task_UserLog]
 GO
 
@@ -26,4 +27,12 @@ CREATE NONCLUSTERED INDEX IX_logid ON [dbo].[Task_UserLog](logid) ON [Task_UserL
 GO
 
 ALTER TABLE [dbo].[Task_UserLog] ADD  CONSTRAINT [DF_Task_UserLog_logdate]  DEFAULT (getdate()) FOR [logdate]
+GO
+
+CREATE TABLE [dbo].[Task_FuncType](
+	[Id] [tinyint] NOT NULL,
+	[Name] varchar(512) NOT NULL
+) ON [Task_UserLog]
+GO
+CREATE CLUSTERED INDEX CIX_Task_FuncType ON [dbo].[Task_FuncType](Id) ON [Task_UserLog]
 GO

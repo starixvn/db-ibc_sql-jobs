@@ -18,11 +18,12 @@ BEGIN
 
 	BEGIN TRY
 		
-		INSERT INTO dbo.Task_UserLog(userid, doing, logdate, servername)
+		INSERT INTO dbo.Task_UserLog(userid, doing, logdate, servername, functype)
 		SELECT t.c.value('@userId','int') AS userId
 			,t.c.value('@doing','nvarchar(512)') AS doing
 			,t.c.value('@logdate','datetime') AS logdate
 			,t.c.value('@servername','varchar(128)') AS servername
+			,t.c.value('@functype','tinyint') AS functype
 		FROM @MessageBody.nodes('Task_UserLog/r') t(c)
 		OPTION (OPTIMIZE FOR (@MessageBody = NULL))
 

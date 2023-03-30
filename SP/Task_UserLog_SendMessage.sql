@@ -3,7 +3,8 @@ ALTER PROCEDURE dbo.Task_UserLog_SendMessage
 	@userId INT,
 	@doing nvarchar(512),
 	@logdate datetime = null,
-	@servername varchar(128) = null
+	@servername varchar(128) = null,
+	@functype tinyint = 0
 /*
 	Create: Patrick@20230317
 	Task: Write logs UserLog data via ssb service
@@ -36,6 +37,7 @@ BEGIN
 			, @doing AS '@doing'
 			, @logdate AS '@logdate'
 			, @servername AS '@servername'
+			, @functype as '@functype'
 		FOR XML PATH('r'), ROOT('Task_UserLog')
 	)
 
@@ -48,13 +50,13 @@ BEGIN
 			
 		IF @__error <> 0
 		BEGIN
-			INSERT INTO dbo.Task_UserLog(userid, doing, logdate, servername)
-			VALUES(@userId, @doing, @logdate, @servername)
+			INSERT INTO dbo.Task_UserLog(userid, doing, logdate, servername, functype)
+			VALUES(@userId, @doing, @logdate, @servername, @functype)
 		END
 	END TRY
 	BEGIN CATCH
-			INSERT INTO dbo.Task_UserLog(userid, doing, logdate, servername)
-			VALUES(@userId, @doing, @logdate, @servername)
+			INSERT INTO dbo.Task_UserLog(userid, doing, logdate, servername, functype)
+			VALUES(@userId, @doing, @logdate, @servername, @functype)
 	END CATCH
 
 END

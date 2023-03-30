@@ -18,7 +18,7 @@ BEGIN
 		, @__movebetdate SMALLDATETIME
 
 	SET @__doing = 'Task_BalanceUp_CalculateBalanceUpDate: Starting'
-	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 1
 
 	IF EXISTS (
 		SELECT TOP 1 1
@@ -40,7 +40,7 @@ BEGIN
 	END
 
 	SET @__doing = 'Task_BalanceUp_CalculateBalanceUpDate: done calculating being balance up date, @__currBalanceUpDate: '+ CONVERT(VARCHAR(10), @__currBalanceUpDate, 121) +', @__fdate: ' + CONVERT(VARCHAR(10), @__fdate, 121)
-	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 1
 
 	--verify with old way
 	DECLARE @__verifyDate SMALLDATETIME
@@ -66,15 +66,15 @@ BEGIN
 
 	--turn on starting BU process
 	SET @__doing = 'Task_BalanceUp_CalculateBalanceUpDate: Starting update BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @__fdate, 121)
-	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 1
 
 	--**update being balanceUp date flag ==> the purpose for which process need to check balanceUp processing
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @__fdate, @keyFlag = 11, @tableName = 'MBUSettings'
 
 	SET @__doing = 'Task_BalanceUp_CalculateBalanceUpDate: Ending update BeingBalanceUpDate flag, @fdate: ' + CONVERT(VARCHAR(10), @__fdate, 121)
-	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 1
 
 	SET @__doing = 'Task_BalanceUp_CalculateBalanceUpDate: Ending'
-	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 1
 END
 GO
