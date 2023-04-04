@@ -19,7 +19,7 @@ INSERT INTO @tmpAffectedDB (DBName)
 		VALUES ( 'bodb_CustomerLog')
 			 , ('bodb_CustomerLog_archive' )
 			 , ('LogTDB' )
-
+			  , ('bodb02')
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
 

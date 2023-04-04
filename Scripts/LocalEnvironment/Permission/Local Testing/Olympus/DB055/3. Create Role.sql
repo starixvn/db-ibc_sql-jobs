@@ -18,6 +18,7 @@ INSERT INTO @tmpAffectedDB (DBName)
 		VALUES ( 'bodb_CustomerLog')
 			 , ('bodb_CustomerLog_archive' )
 			 , ('LogTDB' )
+			 , ('bodb02')
 
 SELECT @strRole = @strRole + ' '
 					 + 'USE ' + DBName + ';'
