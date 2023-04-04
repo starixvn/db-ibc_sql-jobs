@@ -8,6 +8,8 @@
 USE bodb02
 GO
 
----trigger
 DROP TRIGGER bettrans_after_insert4LAS_deleted		 
+GO
 
+DROP PROCEDURE LAS_bettransUpdLiveTickets_deleted
+GO

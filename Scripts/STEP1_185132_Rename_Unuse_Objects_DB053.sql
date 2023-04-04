@@ -8,7 +8,10 @@
 USE bodb02
 GO
 
-EXEC sp_rename 'LAS_bettransUpdLiveTickets','LAS_bettransUpdLiveTickets_deleted' 
-
 ---trigger
 EXEC sp_rename 'bettrans_after_insert4LAS',  'bettrans_after_insert4LAS_deleted' 
+GO
+
+----Procedure
+EXEC sp_rename 'LAS_bettransUpdLiveTickets','LAS_bettransUpdLiveTickets_deleted' 
+GO
