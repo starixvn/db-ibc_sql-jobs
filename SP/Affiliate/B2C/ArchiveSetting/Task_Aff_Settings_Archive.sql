@@ -12,6 +12,7 @@ AS
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
 		- 20210714@Percy: Add table StraightSettingHistory [RedmineID: #157958]
 		- 20220307@Malcolm: Revenue Share Calculation Enhancement [RedmineId: #167335]
+		- 20230404@Malcolm: Archive CommGroup [RedmineID: #185481]
 */
 
 BEGIN
@@ -33,6 +34,7 @@ BEGIN
 		DELETE dbo.AffGroupHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
 		DELETE dbo.DeductionSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
 		DELETE dbo.StraightSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
+		DELETE dbo.CommGroupHistory WITH(ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
 	END
 
 	-- Archive settings
@@ -70,6 +72,17 @@ BEGIN
 		INSERT INTO dbo.StraightSettingHistory (GroupId,MonthDate,ProductId,GroupProductId,DeductedPercentage,Commission)
 		SELECT GroupId,@NextMonthDate,ProductId,GroupProductId,DeductedPercentage,Commission
 		FROM dbo.StraightSetting ss WITH (NOLOCK)
+
+		;WITH CTE_MonthDate AS
+		(
+			SELECT @MonthDate AS MonthDate
+			UNION ALL
+			SELECT @NextMonthDate
+		)
+		INSERT INTO dbo.CommGroupHistory (GroupId, MonthDate, SubCommRate)
+		SELECT GroupId, e.MonthDate, SubCommRate
+		FROM dbo.CommGroup WITH(NOLOCK)
+			CROSS JOIN CTE_MonthDate e 
 	END
 END
 GO
