@@ -15,6 +15,7 @@ AS
 		- 220203205@Danny: Incorporate BetBuilder - Basketball  [RedmineID: #150652]
 		- 20210604@Danny: Add New League Group for Saba Sports [RedmineID: #156453]
 		- 20211001@Danny: Change dataType to support IPv6 [RedmineID: #162348]
+		- 20230328@Cherry: Change Betfrom Data Length (#185896)
 
 */
 
@@ -103,7 +104,7 @@ BEGIN
 			,refno				bigint
 			,comstatus			nvarchar(20)
 			,winlostdate		smalldatetime
-			,betfrom			nvarchar(1)
+			,betfrom			nvarchar(4)
 			,betcheck			nvarchar(50)
 			,checktime			datetime
 			,oddsspread			smallmoney

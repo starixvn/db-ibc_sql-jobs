@@ -30,6 +30,7 @@ AS
 		- 20221018@Danny: Add retry step to avoid latency bettransm data [RedmineID: #179193]
 		- 20221123@Danny: Get bettransm_bk info by using Open_query instead [RedmineID: #180707]
 		- 20230118@Danny: extend bettransm_bk range [RedmineID: #182724]
+		- 20230328@Cherry: Change Betfrom Data Length (#185896)
 */
 
 BEGIN
@@ -91,7 +92,7 @@ BEGIN
 			,refno				bigint
 			,comstatus			nvarchar(20)
 			,winlostdate		smalldatetime
-			,betfrom			nvarchar(1)
+			,betfrom			nvarchar(4)
 			,betcheck			nvarchar(50)
 			,checktime			datetime
 			,oddsspread			smallmoney
