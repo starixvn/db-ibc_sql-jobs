@@ -40,6 +40,7 @@ AS
 		- 20230118@July: Jili - Exclude bettypes 5125(Medusa), 5149(War Of Dragons), 5103(Crazy Hunter) & 5121(Crazy Pusher) - [Redmine: #182955]   
 		- 20230310@July: SABA.games - Exclude bettypes 1670(Happy Ocean) & 1671(Magic Forest) - [Redmine: #184794]   
 		- 20230310@July: VGaming - Exclude bettypes 3862(Happy Ocean) & 3863(Magic Forest) - [Redmine: #184786]   
+		- 20230410@July: Spadegaming - Exclude bettype 4598 (Promotion Prize) - [Redmine: #186688]
 	
 	Param's Expanation:
 
@@ -113,7 +114,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (4599, 4600)
+					AND b.gameID NOT IN (4599, 4600, 4598)
 		END
 		ELSE IF @ProductId = 158 -- Jili
 		BEGIN
