@@ -23,6 +23,7 @@ AS
 		- 20220421@July: Allbet - Exclude bettype 2499 (promotion) [Redmine: #171770]
 		- 20220811@July: PP Tournament - Exclude bettype 4299 (Tournament Prize) - [Redmine: #175448]
 		- 20221005@July: MG-RNG - Exclude bettype 8695 (Tournament Prize) - [Redmine: #178718]
+		- 20230410@Evan: Exclude checking for 1 Super Athena000SuperUUS - [Redmine: #178718]
 
 	Param's Expanation:
 		@Duration = 'hour', 'lastday'
@@ -57,7 +58,11 @@ BEGIN
 
 	DELETE #SportBettype WHERE ProductId NOT IN (SELECT DISTINCT ProductID FROM bodb02.dbo.Acc_GroupExtraPTSetting WITH(NOLOCK))	
 	
- 	CREATE TABLE #T (epositiontaking smallmoney , ExtraPT [decimal](9, 8), transID BIGINT, Reftable Smallint, RuleID Smallint)
+	DECLARE @ExcludeSuperIds TABLE (SuperId INT)
+	INSERT INTO @ExcludeSuperIds 
+	VALUES (10063437) --Athena000SuperUUS
+ 	
+	CREATE TABLE #T (epositiontaking smallmoney , ExtraPT [decimal](9, 8), transID BIGINT, Reftable Smallint, RuleID Smallint)
  
 	---------------------------------Select data -------------------------
 	IF @CheckMode = 1 
@@ -81,7 +86,7 @@ BEGIN
 				ON m.matchid = b.matchid AND m.eventdate = b.winlostdate AND m.sporttype = 44 -- MuayThai
 			LEFT JOIN  (
 						SELECT s.SuperId, s.Fromdate, s.Todate, s.ProductId, s.SubProduct, s.Sporttype, SUM (s.ExtraPT) AS ExtraPT
-						FROM bodb02.dbo.Acc_GroupExtraPTSetting s WITH (NOLOCK)			
+						FROM bodb02.dbo.Acc_GroupExtraPTSetting s WITH (NOLOCK)	
 						GROUP BY s.SuperId, s.ProductId, s.SubProduct, s.Sporttype, s.Fromdate, s.Todate
 						) pt
 				ON	CAST(b.TransDate AS DATE) BETWEEN pt.FromDate AND pt.ToDate	
@@ -94,6 +99,7 @@ BEGIN
 				AND b.Epositiontaking <> ISNULL(pt.ExtraPT,0)	
 				AND b.custid <> 0
 				AND b.statusID NOT IN (101, 102, 103) 
+				AND NOT EXISTS (SELECT 1 FROM @ExcludeSuperIds ex WHERE b.srecommend = ex.SuperId AND b.bettype = 999)
 
 			------I.I.b. translog 
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)		
@@ -118,7 +124,6 @@ BEGIN
 						AND b.custid <> 0
 						AND b.statusID NOT IN (101, 102, 103)
 						AND b.gameID NOT IN (SELECT u.bettype FROM @ExcludeBettype u WHERE u.Reftable = 3)	
-						
 			
 			------I.I.c. bettransRNG 
 			INSERT INTO #T (epositiontaking, ExtraPT, TransID, Reftable, RuleID)
