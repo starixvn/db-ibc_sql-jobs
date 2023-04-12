@@ -41,6 +41,7 @@ AS
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
+ 		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -107,17 +108,14 @@ BEGIN
 		,BT BIGINT
 		,LC BIGINT
 		,AG BIGINT
-		,GD BIGINT
 		,KN BIGINT
 		,VG BIGINT
 		,VB BIGINT
 		,MGCLC BIGINT
 		,MGCRNG BIGINT
 		,VS BIGINT
-		,CB BIGINT
 		,AB BIGINT
 		,NG2 BIGINT
-		,FW BIGINT
 		,CO BIGINT
 		,VS2 BIGINT
 		,LT BIGINT
@@ -133,7 +131,6 @@ BEGIN
 		,JK BIGINT
 		,SAG BIGINT
 		,PGS BIGINT
-		,GDG BIGINT
 		,SLT BIGINT
 		,HB BIGINT
 		,WM BIGINT
@@ -160,17 +157,14 @@ BEGIN
 		,BT
 		,LC
 		,AG
-		,GD
 		,KN
 		,VG
 		,VB
 		,MGCLC
 		,MGCRNG
 		,VS
-		,CB
 		,AB
 		,NG2
-		,FW
 		,CO
 		,VS2
 		,LT
@@ -186,7 +180,6 @@ BEGIN
 		,JK
 		,SAG
 		,PGS
-		,GDG
 		,SLT
 		,HB
 		,WM
@@ -330,17 +323,14 @@ BEGIN
 		,BT
 		,LC
 		,AG
-		,GD
 		,KN
 		,VG
 		,VB
 		,MGCLC
 		,MGCRNG
 		,VS
-		,CB
 		,AB
 		,NG2
-		,FW
 		,CO
 		,VS2
 		,LT
@@ -356,7 +346,6 @@ BEGIN
 		,JK
 		,SAG
 		,PGS
-		,GDG
 		,SLT
 		,HB
 		,WM

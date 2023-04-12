@@ -43,6 +43,7 @@ AS
 		- 20220601@Hogan: Integrate FGG Guaranteed Gaming [RedmineID: #167897]
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
+	    - 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424]  
 
 	Param's Explanation:
 		@DrawFilter
@@ -87,10 +88,6 @@ BEGIN
 		,@AGTurnover MONEY
 		,@AGCustomerWl MONEY
 		,@AGBetCount MONEY
-		--GD
-		,@GDTurnover MONEY
-		,@GDCustomerWl MONEY
-		,@GDBetCount MONEY
 		--KN
 		,@KNTurnover MONEY
 		,@KNCustomerWl MONEY
@@ -119,10 +116,6 @@ BEGIN
 		,@VsTurnover MONEY
 		,@VsCustomerWl MONEY
 		,@VsBetCount MONEY
-		----CB
-		,@CBTurnover MONEY
-		,@CBCustomerWl MONEY
-		,@CBBetCount MONEY
 		----AB
 		,@ABTurnover MONEY
 		,@ABCustomerWl MONEY
@@ -131,10 +124,6 @@ BEGIN
 		,@NG2Turnover MONEY
 		,@NG2CustomerWl MONEY
 		,@NG2BetCount MONEY
-		----FW
-		,@FWTurnover MONEY
-		,@FWCustomerWl MONEY
-		,@FWBetCount MONEY
 		----CO
 		,@COTurnover MONEY
 		,@COCustomerWl MONEY
@@ -195,10 +184,6 @@ BEGIN
 		,@PGSTurnover MONEY
 		,@PGSCustomerWl MONEY
 		,@PGSBetCount MONEY
-		----GDG
-		,@GDGTurnover MONEY
-		,@GDGCustomerWl MONEY
-		,@GDGBetCount MONEY
 		----SLT
 		,@SLTTurnover MONEY
 		,@SLTCustomerWl MONEY
@@ -262,8 +247,8 @@ BEGIN
 		s.SportType
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
-	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','GD','MGCRNG','MGCLC','VG','VB', 'CB', 'AB', 'NG2', 'FW', 'CO', 'VS2',
-		'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS', 'GDG', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3',
+	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','MGCRNG','MGCLC','VG','VB', 'AB', 'NG2', 'CO', 'VS2',
+		'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3',
 		'BTC', 'FGGL', 'MXG', 'JIG')
 
 	INSERT INTO @tblSporttype
@@ -405,17 +390,6 @@ BEGIN
 		,@AGCustomerWl = ISNULL(@AGCustomerWl,0)
 		,@AGBetCount = ISNULL(@AGBetCount,0)
 
-	-- Gold Deluxe
-	SELECT @GDTurnover=SUM(CASE WHEN @DrawFilter IN (2, 3) AND b.StatusID = 111 THEN 0 ELSE b.Turnover END)
-			,@GDCustomerWl=SUM(b.winlost)
-			,@GDBetCount=SUM(CASE WHEN @DrawFilter = 2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
-	FROM @tblData b
-	WHERE ProductPrefix = 'GD'
-
-	SELECT @GDTurnover = ISNULL(@GDTurnover,0)
-		,@GDCustomerWl = ISNULL(@GDCustomerWl,0)
-		,@GDBetCount = ISNULL(@GDBetCount,0)
-
 	---KN
 	SELECT @KNTurnover=SUM(CASE
 						WHEN @DrawFilter IN (2, 3) THEN
@@ -517,21 +491,6 @@ BEGIN
 		,@VsCustomerWl = ISNULL(@VsCustomerWl,0)
 		,@VsBetCount = ISNULL(@VsBetCount,0)
 
-	----CB
-	 SELECT @CBTurnover = SUM(CASE
-								WHEN @DrawFilter IN (2, 3) THEN
-								CASE WHEN b.StatusID = 111 THEN 0 WHEN b.StatusID IN (114, 115) THEN 0.5 ELSE 1 END
-							ELSE 1
-							END * b.Turnover)
-		,@CBCustomerWl = SUM(b.winlost)
-		,@CBBetCount = SUM(CASE WHEN @DrawFilter = 2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
-	FROM @tblData b
-	WHERE ProductPrefix = 'CB'
-
-	SELECT @CBTurnover = ISNULL(@CBTurnover,0)
-		,@CBCustomerWl = ISNULL(@CBCustomerWl,0)
-		,@CBBetCount = ISNULL(@CBBetCount,0)
-
 	----AB
 	 SELECT @ABTurnover = SUM(CASE
 								WHEN @DrawFilter IN (2, 3) THEN
@@ -561,21 +520,6 @@ BEGIN
 	SELECT @NG2Turnover 	= ISNULL(@NG2Turnover,0)
 		,@NG2CustomerWl	= ISNULL(@NG2CustomerWl,0)
 		,@NG2BetCount 	= ISNULL(@NG2BetCount,0)
-
-	----FW
-	 SELECT @FWTurnover = SUM(CASE
-									WHEN @DrawFilter IN (2, 3) THEN
-									CASE WHEN b.StatusID = 111 THEN 0 WHEN b.StatusID IN (114, 115) THEN 0.5 ELSE 1 END
-								ELSE 1
-								END * b.Turnover)
-		,@FWCustomerWl = SUM(b.winlost)
-		,@FWBetCount = SUM(CASE WHEN @DrawFilter = 2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
-	FROM @tblData b
-	WHERE ProductPrefix = 'FW'
-
-	SELECT @FWTurnover = ISNULL(@FWTurnover,0)
-		,@FWCustomerWl = ISNULL(@FWCustomerWl,0)
-		,@FWBetCount = ISNULL(@FWBetCount,0)
 
 	-- CO
 	SELECT @COTurnover = SUM(CASE
@@ -815,22 +759,6 @@ BEGIN
 	FROM @tblData b
 	WHERE ProductPrefix = 'PGS'
 
-	----GDG
-	SELECT
-		@GDGTurnover=SUM(CASE
-							WHEN @DrawFilter IN (2,3) THEN
-								CASE
-									WHEN b.StatusID = 111 THEN 0
-									WHEN b.StatusID IN (114,115) THEN 0.5
-									ELSE 1
-								END
-							ELSE 1
-						END * b.Turnover)
-		,@GDGCustomerWl=SUM(b.winlost)
-		,@GDGBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
-	FROM @tblData b
-	WHERE ProductPrefix = 'GDG'
-
 	----SLT
 	SELECT
 		@SLTTurnover=SUM(CASE
@@ -1050,17 +978,14 @@ BEGIN
 		, @BTTurnover AS BT
 		, @LcTurnover AS LC
 		, @AGTurnover AS AG
-		, @GDTurnover AS GD
 		, @KNTurnover AS KN
 		, @VGTurnover AS VG
 		, @VBTurnover AS VB
 		, @MGCLCTurnover AS MGCLC
 		, @MGCRNGTurnover AS MGCRNG
 		, @VsTurnover AS VS
-		, @CBTurnover AS CB
 		, @ABTurnover AS AB
 		, @NG2Turnover AS NG2
-		, @FWTurnover AS FW
 		, @COTurnover AS CO
 		, @VS2Turnover AS VS2
 		, @LTTurnover AS LT
@@ -1076,7 +1001,6 @@ BEGIN
 		, ISNULL(@JKTurnover,0) AS JK
 		, ISNULL(@SAGTurnover,0) AS SAG
 		, ISNULL(@PGSTurnover,0) AS PGS
-		, ISNULL(@GDGTurnover,0) AS GDG
 		, ISNULL(@SLTTurnover,0) AS SLT
 		, ISNULL(@HBTurnover, 0) AS HB
 		, ISNULL(@WMTurnover,0) AS WM
@@ -1101,17 +1025,14 @@ BEGIN
 		, @BTCustomerWl
 		, @LcCustomerWl
 		, @AGCustomerWl
-		, @GDCustomerWl
 		, @KNCustomerWl
 		, @VGCustomerWl
 		, @VBCustomerWl
 		, @MGCLCCustomerWl
 		, @MGCRNGCustomerWl
 		, @VsCustomerWl
-		, @CBCustomerWl
 		, @ABCustomerWl
 		, @NG2CustomerWl
-		, @FWCustomerWl
 		, @COCustomerWl
 		, @VS2CustomerWl
 		, @LTCustomerWl
@@ -1127,7 +1048,6 @@ BEGIN
 		, ISNULL(@JKCustomerWl,0)
 		, ISNULL(@SAGCustomerWl,0)
 		, ISNULL(@PGSCustomerWl,0)
-		, ISNULL(@GDGCustomerWl,0)
 		, ISNULL(@SLTCustomerWl,0)
 		, ISNULL(@HBCustomerWl, 0)
 		, ISNULL(@WMCustomerWl,0)
@@ -1152,17 +1072,14 @@ BEGIN
 		, @BTBetCount
 		, @LcBetCount
 		, @AGBetCount
-		, @GDBetCount
 		, @KNBetCount
 		, @VGBetCount
 		, @VBBetCount
 		, @MGCLCBetCount
 		, @MGCRNGBetCount
 		, @VsBetCount
-		, @CBBetCount
 		, @ABBetCount
 		, @NG2BetCount
-		, @FWBetCount
 		, @COBetCount
 		, @VS2BetCount
 		, @LTBetCount
@@ -1178,7 +1095,6 @@ BEGIN
 		, ISNULL(@JKBetCount,0)
 		, ISNULL(@SAGBetCount,0)
 		, ISNULL(@PGSBetCount,0)
-		, ISNULL(@GDGBetCount,0)
 		, ISNULL(@SLTBetCount,0)
 		, ISNULL(@HBBetCount, 0)
 		, ISNULL(@WMBetCount,0)
