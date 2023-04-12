@@ -19,15 +19,15 @@ BEGIN
 
 	DECLARE @ErrTable TABLE (DataSource VARCHAR(200), ErrCode INT, ErrMsg NVARCHAR(2000))
 
-	-- TpBetRecordTest
+	-- DepositInfo
 	BEGIN
 		SELECT @ErrCode = 0, @ErrMsg = ''
-		EXEC dbo.Task_API_Queue_TpBetRecordTest @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+		EXEC dbo.Task_API_Queue_DepositInfoTest @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
 		IF @ErrCode <> 0
 		BEGIN
 			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
-			VALUES ('TpBetRecordTest', @ErrCode, @ErrMsg)
+			VALUES ('DepositInfoTest', @ErrCode, @ErrMsg)
 		END
 	END
 
