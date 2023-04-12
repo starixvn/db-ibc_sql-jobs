@@ -11,6 +11,7 @@ AS
 
 	Revisions:
 		- 20220412@Percy: Initialize SP [RedmineID: #171245]
+		- 20230301@Malcolm: Add new type: ReferralLog [RedmineID: #183930]
 */
 
 BEGIN
@@ -115,7 +116,18 @@ BEGIN
 				,DATEADD(HOUR, DATEPART(HOUR, CreateTime), CONVERT(VARCHAR(10), CreateTime, 120)) AS BonusTime -- date & hour
 				,SUM(ReferralAmount / CASE WHEN CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS BonusAmount
 			FROM dbo.ReferralMLog WITH (NOLOCK)
-			WHERE WinlostDate = @WinlostDate
+			WHERE WinlostDate = @WinlostDate 
+			GROUP BY CustId, CurrencyId, SiteId
+				,DATEADD(HOUR, DATEPART(HOUR, CreateTime), CONVERT(VARCHAR(10), CreateTime, 120)) -- date & hour
+
+		-- ReferralLog
+		IF @DataSources = 'all' OR ',' + @DataSources + ',' LIKE '%,ReferralLog,%'
+			INSERT INTO #__CustBonusSummary (CustId, CurrencyId, SiteId, DataSource, BonusTime, BonusAmount)
+			SELECT CustId, CurrencyId, SiteId, 'ReferralLog' AS DataSource
+				,DATEADD(HOUR, DATEPART(HOUR, CreateTime), CONVERT(VARCHAR(10), CreateTime, 120)) AS BonusTime -- date & hour
+				,SUM(ReferralFreeCredit / CASE WHEN CurrencyId IN (15, 51) THEN 1000.0 ELSE 1.0 END) AS BonusAmount
+			FROM dbo.ReferralLog WITH (NOLOCK)
+			WHERE WinlostDate = @WinlostDate AND RewardStatus = 1
 			GROUP BY CustId, CurrencyId, SiteId
 				,DATEADD(HOUR, DATEPART(HOUR, CreateTime), CONVERT(VARCHAR(10), CreateTime, 120)) -- date & hour
 	END

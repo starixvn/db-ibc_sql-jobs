@@ -20,6 +20,7 @@ AS
 		- 20220412@Percy: Add table: ReferralMLog [RedmineID: #171245]
 		- 20220518@Percy: Add 2 tables: TpReport9W & TpWager9W [RedmineID: #172917]
 		- 20220704@Sol : remove email account - [RedmineId: #175043]
+		- 20230309@Malcolm: Add table: ReferralLog [RedmineID: #183930]
 		
 */
 
@@ -305,6 +306,19 @@ BEGIN
 			VALUES ('TpWager9W', @ErrCode, @ErrMsg)
 		END
 	END
+	
+	-- ReferralLog
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_ReferralLog @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('ReferralLog', @ErrCode, @ErrMsg)
+		END
+	END
+	
 
 	DECLARE @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX), @recipients VARCHAR(MAX)
 
