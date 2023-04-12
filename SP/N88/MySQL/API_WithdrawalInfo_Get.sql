@@ -5,8 +5,8 @@ DROP PROCEDURE IF EXISTS `API_WithdrawalInfo_Get`;
 DELIMITER //
 
 CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `API_WithdrawalInfo_Get`(
-  IN Id INT,
-  IN batchCount SMALLINT
+  IN UpdateTime DATETIME,
+  IN BatchCount SMALLINT
   /*
     Created: 20200714@Percy
     DB: Slave DB/Siebog
@@ -14,19 +14,21 @@ CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `API_WithdrawalInfo_Get`(
     
     Revisions:
       - 20200714@Percy: Initialize SP
+      - 20230412@Evan: Pull by updatetime [RedmineID: #186791]
 
   */
 )
 BEGIN
-	SET batchCount = IF(batchCount > 2000, 2000, batchCount);
+	SET BatchCount = IF(BatchCount > 2000, 2000, BatchCount);
 
 	SELECT 
 		*
 	FROM
 		WithdrawalInfo
 	WHERE
-		WithdrawalInfo.WithdrawalId > Id
-	LIMIT batchCount;
+		WithdrawalInfo.UpdateTime >= UpdateTime
+	ORDER BY WithdrawalInfo.UpdateTime
+	LIMIT BatchCount;
 END
 
 //
