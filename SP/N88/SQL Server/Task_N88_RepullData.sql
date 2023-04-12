@@ -22,6 +22,7 @@ AS
 		- 20211118@Percy: Add LogAdminAdjustWallet [RedmineID: #161048]
 		- 20220412@Percy: Add ReferralMLog [RedmineID: #171245]
 		- 20220606@Percy: Fix Re-pull data every 6 hours [RedmineID: #172501]
+		- 20230206@Malolm: Increase the KeyValue length to 200, change keyvalue of DepositInfo [RedmineID: #183319]
 */
 
 BEGIN
@@ -45,12 +46,13 @@ BEGIN
 	ELSE
 		SELECT @WinlostDate = DATEADD(MONTH, DATEDIFF(MONTH, 0, @WinlostDate), 0) -- first day of month
 
-	DECLARE @Id TINYINT, @KeyValue VARCHAR(50)
+	DECLARE @Id TINYINT, @KeyValue VARCHAR(200)
 	DECLARE @tblDataSource TABLE (Id TINYINT, DataSource VARCHAR(200), KeyValue VARCHAR(50))
 
 	-- DepositInfo
 	INSERT INTO @tblDataSource (DataSource, KeyValue)
-	SELECT 'DepositInfo', CONVERT(VARCHAR(50), MIN(DepositId)) FROM dbo.DepositInfo WITH (NOLOCK) WHERE WinlostDate >= @WinlostDate
+	SELECT 'DepositInfo', '{"Id":' + CONVERT(VARCHAR(50), MIN(DepositId)) + ',"UpdateTime":"' + CONVERT(VARCHAR(20),MIN(UpdateTime), 120) + '"}' 
+	FROM dbo.DepositInfo WITH (NOLOCK) WHERE WinlostDate >= @WinlostDate
 
 	-- WithdrawalInfo
 	INSERT INTO @tblDataSource (DataSource, KeyValue)

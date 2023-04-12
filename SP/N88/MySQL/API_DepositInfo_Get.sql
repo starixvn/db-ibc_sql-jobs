@@ -6,6 +6,7 @@ DELIMITER //
 
 CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `API_DepositInfo_Get`(
   IN Id INT,
+  IN UpdatedTime DATETIME,
   IN batchCount INT
   /*
     Created: 20200714@Percy
@@ -15,14 +16,21 @@ CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `API_DepositInfo_Get`(
     Revisions:
       - 20200714@Percy: Initialize SP
 	  - 20200818@Percy: Get all columns
+	  - 20230203@Malcolm: Get data by updatetime and DepositId [RedmineId: #183319]
 
   */
 )
 BEGIN
-  SELECT *
-    FROM `DepositInfo`
-    WHERE DepositId > Id
+	
+	DECLARE CurrentTime DATETIME;
+	SELECT DATE_ADD(UTC_TIMESTAMP(), INTERVAL -1 MINUTE) INTO CurrentTime;
+	
+	SELECT d.*
+    FROM `DepositInfo` d
+    WHERE ((d.UpdateTime = UpdatedTime AND d.DepositId > Id) OR d.UpdateTime > UpdatedTime) AND (d.UpdateTime < CurrentTime)
+	ORDER BY d.UpdateTime ASC, d.DepositId ASC
     LIMIT batchCount;
+	
 END
 
 //
