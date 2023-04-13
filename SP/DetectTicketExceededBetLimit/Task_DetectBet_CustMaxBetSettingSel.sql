@@ -13,6 +13,7 @@ AS
 		- 20220810@Elodie: Change name of temp table
 		- 20220811@Tacy: Detect maxbet for Keno, Number Game product [RedmineID: #170739]
 		- 20230203@Tacy: change SettingStatus=0 -> SettingStatus<>2 [RedmineID: #170739]
+		- 20230302@Tacy: Pragmatic - Change the bet limit setting [RedmineID: #181686]
 		- 20230317@Tacy: Jili - Change the bet limit setting [RedmineID: #182869]
 	Param's Explanation:
 */
@@ -98,7 +99,7 @@ BEGIN
 	UPDATE cl 
 	SET	  cl.SportTypeRef=ref.SportTypeRefBetSetting
 		, cl.BetTypeRef=ref.BetTypeRefBetSetting
-		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237,158) --VGaming, SABA.Games, MaxGame, Jili
+		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237,158,248) --VGaming, SABA.Games, MaxGame, Jili, PP
 						THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
 		, cl.SettingType=ps.SettingType
 	FROM #ListTmp cl
@@ -135,7 +136,7 @@ BEGIN
 	UPDATE cl 
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
-	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237,158) --VGaming, SABA.Games, MaxGame, Jili
+	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237,158,248) --VGaming, SABA.Games, MaxGame, Jili, PP
 					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
 	, cl.SettingType=ps.SettingType
 	FROM #ListTmp cl
