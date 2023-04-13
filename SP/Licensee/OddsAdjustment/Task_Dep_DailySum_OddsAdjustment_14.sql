@@ -17,6 +17,7 @@ AS
 		- 20220222@Sol: Support - using ExchangeDailyOanda to get actualRate of @winlostdate - [RedmineID: #168815]
 		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
 		- 20220714@Evan: Modify sp to avoid dump (remove code select into) - [Redmine: #175450]
+		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
 
 */
 BEGIN
@@ -47,7 +48,7 @@ BEGIN
 		CustId INT, transdate DATETIME, oddsid INT, hdp1 SMALLMONEY, hdp2 SMALLMONEY, odds SMALLMONEY, stake MONEY, Status NVARCHAR(10), winlost MONEY,
 		awinlost MONEY, mwinlost MONEY, playercomm MONEY, comm MONEY, acomm MONEY, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, tpositiontaking SMALLMONEY,
 		playerdiscount DECIMAL(9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), livehomescore SMALLINT, liveawayscore SMALLINT, liveindicator BIT, betteam NVARCHAR(10),
-		creator INT, refno BIGINT, comstatus NVARCHAR(20), winlostdate SMALLDATETIME, betfrom NVARCHAR(1), betcheck NVARCHAR(50), checktime DATETIME, oddsspread MONEY,
+		creator INT, refno BIGINT, comstatus NVARCHAR(20), winlostdate SMALLDATETIME, betfrom NVARCHAR(4), betcheck NVARCHAR(50), checktime DATETIME, oddsspread MONEY,
 		actualrate FLOAT, matchid INT, recommend INT, mrecommend INT, ruben TINYINT, betid BIGINT, statuswinlost TINYINT, modds SMALLMONEY, bettype SMALLINT,
 		betdaqid BIGINT, actual_stake MONEY, currency TINYINT, ip VARCHAR(45), transdesc NVARCHAR(1000), sdiscount DECIMAL(9,8), scomm MONEY, spositiontaking SMALLMONEY,
 		swinlost MONEY, srecommend INT, Username NVARCHAR(50), CurrencyName NVARCHAR(50), virtualrate FLOAT, oddstype TINYINT, statusID TINYINT, currency2 TINYINT,
