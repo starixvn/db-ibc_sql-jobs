@@ -15,6 +15,7 @@ CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `API_CustVerificationReward_Get`(
     
     Revisions:
       - 20220325@Percy: Initialize SP
+	  - 20230413@Malcolm: Get rows with PhoneRewardTime = lastRewardTime
 
   */
 )
@@ -25,14 +26,14 @@ BEGIN
 		SELECT
 			*
 		FROM CustVerificationReward
-        WHERE CustVerificationReward.PhoneRewardTime > lastRewardTime
+        WHERE CustVerificationReward.PhoneRewardTime >= lastRewardTime
         ORDER BY CustVerificationReward.PhoneRewardTime
         LIMIT batchCount;
 	ELSEIF conditionField = 'EmailRewardTime' THEN
 		SELECT
 			*
 		FROM CustVerificationReward
-        WHERE CustVerificationReward.EmailRewardTime > lastRewardTime
+        WHERE CustVerificationReward.EmailRewardTime >= lastRewardTime
         ORDER BY CustVerificationReward.EmailRewardTime
         LIMIT batchCount;
 	END IF;
