@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20220325@Percy: Initialize SP [RedmineID: #170390]
 		- 20220412@Percy: Import SUM data [RedmineID: #171245]
+		- 20230405@Malcolm: Only take the changed rows for processing [RedmineID: #183319]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -172,6 +173,7 @@ BEGIN
 						SELECT c.CustId, c.SiteId, c.CurrencyId, c.RewardType, c.RewardAmount, c.RewardTime
 						FROM #tmpCustVerificationReward t
 							INNER JOIN dbo.CustVerificationRewardDetail c WITH (ROWLOCK) ON t.CustId = c.CustId
+						WHERE t.DataType IS NOT NULL
 					), CTE_Source AS (
 						SELECT t.CustId, t.SiteId, t.CurrencyId, c.RewardType, c.RewardAmount, c.RewardTime
 						FROM #tmpCustVerificationReward t
