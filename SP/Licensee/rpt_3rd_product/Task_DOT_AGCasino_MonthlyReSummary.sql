@@ -9,6 +9,8 @@ Original:
 Revisions:	
 - 20151001@Winnie: Add Gold deluxe
 - 20210816@Sophia: add DBBAL [Redmine: #154300]
+- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
+
 Param's Explanation:
 */ 
 BEGIN 
@@ -23,7 +25,7 @@ BEGIN TRY
 	WHILE(@DayOfMonth<getdate())
 	BEGIN
 	EXEC dbo.Task_DOT_AGCasino_DailySummary @winlostdate = @DayOfMonth
-	EXEC DBPTCS.bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @DayOfMonth
+	--EXEC DBPTCS.bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @DayOfMonth
 	print 'exec'
 	print @DayOfMonth
 	SET @DayOfMonth=DATEADD(day,1,@DayOfMonth)
