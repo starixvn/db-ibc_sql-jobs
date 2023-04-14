@@ -13,6 +13,8 @@ AS
 		- 20210617@Sol: get cutoff date of net turn over - [RedmineId : #156653]
 		- 20211122@Percy: Add cutoff date of gross comm [RedmineID: #164479]
 		- 20221002@Danny: Add cutoff date of SabaSport Info [Redmine: #167177]	
+		- 20230414@Evan: Update formula agentCommission for new commercial terms [Redmine: #186609]
+
 */
 
 RETURN
@@ -22,6 +24,7 @@ RETURN
 		VALUES ('2021-08-05', 'NetTO')
 			,('2021-12-11', 'GrossComm')
 			,('2022-05-24', 'SabaSport')
+			,('2023-05-01', 'NewChangeRateExchange')
 	) AS t (CutoffDate, TypeName)
 	
 GO

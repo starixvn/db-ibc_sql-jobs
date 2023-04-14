@@ -19,6 +19,7 @@ AS
 		- 20200818@Percy: Integrate Fancy Bet [RedmineID: #138524]
 		- 20211004@Sol: LAP - Support IPv6 - [RedmineID: #162342]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20230414@Evan: Update formula agentCommission for new commercial terms [Redmine: #186609]
 
 	Param's Explanation:
 		@QueueID: manually import
@@ -310,7 +311,7 @@ BEGIN
 										t.profitLoss,
 										t.marketTotal,
 										t.commission,
-										t.agentCommission,
+										0.875 * t.commission * -1,
 										t.stakeTotal,
 										t.resettledDate,
 										c.CustID,
