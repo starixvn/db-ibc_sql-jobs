@@ -32,6 +32,7 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\july.nguyen' )
 		, ('spvn\aries.nguyen' )
 		, ('spvn\luke.nguyen')
+		, ('spvn\sally.ton')
 
 -- CREATE LOGIN [spvn\nickname] FROM WINDOWS;  
 SELECT @strLoginName = @strLoginName 

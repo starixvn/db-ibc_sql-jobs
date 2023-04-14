@@ -41,7 +41,7 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\july.nguyen' )
 		, ('spvn\aries.nguyen' )
 		, ('spvn\luke.nguyen')
-
+		, ('spvn\sally.ton')
 /*
 	USE DBName
 	GO 
@@ -116,7 +116,7 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\july.nguyen' )
 		, ('spvn\aries.nguyen' )
 		, ('spvn\luke.nguyen')
-
+		, ('spvn\sally.ton')
 /*
 	USE DBName
 	GO
