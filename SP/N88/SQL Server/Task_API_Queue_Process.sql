@@ -21,6 +21,7 @@ AS
 		- 20220518@Percy: Add 2 tables: TpReport9W & TpWager9W [RedmineID: #172917]
 		- 20220704@Sol : remove email account - [RedmineId: #175043]
 		- 20230309@Malcolm: Add table: ReferralLog [RedmineID: #183930]
+		- 20230321@Malcolm: Repull Weekly for BonusInfo [RedmineID: #185510]
 		
 */
 
@@ -316,6 +317,18 @@ BEGIN
 		BEGIN
 			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
 			VALUES ('ReferralLog', @ErrCode, @ErrMsg)
+		END
+	END
+	
+	-- WeeklyBonusInfo
+	BEGIN
+		SELECT @ErrCode = 0, @ErrMsg = ''
+		EXEC dbo.Task_API_Queue_WeeklyBonusInfo @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+
+		IF @ErrCode <> 0
+		BEGIN
+			INSERT INTO @ErrTable (DataSource, ErrCode, ErrMsg)
+			VALUES ('WeeklyBonusInfo', @ErrCode, @ErrMsg)
 		END
 	END
 	
