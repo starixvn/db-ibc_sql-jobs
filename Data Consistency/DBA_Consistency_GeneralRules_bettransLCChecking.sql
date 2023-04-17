@@ -16,6 +16,8 @@ AS
 	@CheckMode:
 		+ 1: Check ticket details between bettrans and bettransLC
 		+ 2: Check wrong status of tickets in bettransLC
+		+ 3: Settled ticket in bettransLC are not yet summed to bettrans
+
 */
 BEGIN
 	DECLARE @transId		VARCHAR(MAX)
@@ -27,6 +29,11 @@ BEGIN
 	SET @Today = CAST(GETDATE() AS DATE)
 	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
 	
+	
+	)
+	)
+	)
+	)
 	IF @CheckMode = 1
 	BEGIN
 		DECLARE @Retry INT = 1
@@ -95,5 +102,25 @@ BEGIN
 		RETURN;
 		
 	END
+
+	IF @CheckMode = 3
+	BEGIN
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	#tempdata b WITH (NOLOCK)
+		WHERE	b.IsSum = 0
+			  AND DATEDIFF(MINUTE,b.transdate,@Today) > 15
+			  AND b.statusID IN (111,112,113) --Draw,won,lose
+			  AND b.winlostdate = @yesterday
+	
+		IF @transId <> ''
+		BEGIN
+			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+					,@ErrCode = 100
+					,@ErrMsg = 'Settled ticket in bettransLC are not yet summed to bettrans '
+					,@SampleData = 'bettransLC.TransId in (' + @transId + ')'
+		END
+	
+	END
+
 END
 GO

@@ -108,7 +108,45 @@ WHERE TaskId = @taskId
 
 DELETE FROM DBA_Rules WHERE RuleId IN (13,14)
 
---------Update change rule 
+--------Update change rule #15 chung SP rule #58
 UPDATE dbo.DBA_Tasks
 SET command = N'EXEC dbo.DBA_Consistency_GeneralRules_bettransRNGChecking @CheckMode = 3, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
+  , @taskId = taskId
+  , @ruleId = RuleId
+WHERE command like '%DBA_Consistency_TicketSettledSumChecking%' 
+
+UPDATE DBA_Schedules --1 rows
+SET Name = 'Settled ticket in bettransRNG are not yet summed to bettrans'
+WHERE TaskId = @taskId
+
+
+INSERT [dbo].[DBA_Tasks] ([RuleId], [command]) 
+VALUES (@ruleId, N'EXEC dbo.DBA_Consistency_GeneralRules_bettransLCChecking @CheckMode = 3, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT')
+
+SET @taskId = SCOPE_IDENTITY()
+
+--------- SCHEDULE ---------------
+EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Settled ticket in bettransLC are not yet summed to bettrans'
+ ,@TaskId = @taskId
+ ,@IsEnable  = 1
+ ,@FrequenceType = 4 -- daily = 4, weekly = 8
+ ,@FrequenceInterval = 1 -- every xx days
+ ,@FrequenceSubDayType = 1 -- specified time: 1, second: 2, min: 4, hour: 8
+ ,@FrequenceSubDayInterval = 0 -- specified time: 0; <> 0: every FrequenceSubDayType
+ ,@ActiveStartDate = @Today 
+ ,@ActiveEndDate = NULL
+ ,@ActiveStartTime  = '01:30'
+ ,@ActiveEndTime = NULL
+ ,@NotifyLevelEmail = 2
+ --,@Emails = 'dba_local@starixvn.com'
+ ,@Emails = 'dbaadmin@starixvn.com'
+ ,@ErrCode  = @ErrCode OUTPUT
+ ,@ErrMsg = @ErrMsg OUTPUT
+
+SELECT 'Settled ticket in bettransLC are not yet summed to bettrans' AS RuleChecking, @ErrCode, @ErrMsg
+
+--------Update change rule #43 vào chung SP #58
+UPDATE dbo.DBA_Tasks
+SET command = N'EXEC dbo.DBA_Consistency_GeneralRules_bettransRNGChecking @CheckMode = 4, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
 WHERE command like '%DBA_Consistency_DetectNetstakeforRNGChecking%' 
+

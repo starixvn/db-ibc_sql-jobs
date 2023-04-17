@@ -16,7 +16,8 @@ AS
 	@CheckMode:
 		+ 1: Check ticket details between bettrans and bettransRNG
 		+ 2: Check wrong status of tickets in bettransRNG
-		+ 3: Detect netstake <> 0 for RNG products (void/reject/refund)
+		+ 3: Settled ticket in bettransRNG are not yet summed to bettrans
+		+ 4: Detect netstake <> 0 for RNG products (void/reject/refund)
 */
 BEGIN
 	DECLARE @transId		VARCHAR(MAX)
@@ -99,7 +100,26 @@ BEGIN
 	IF @CheckMode = 3
 	BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-		FROM	bodb02.dbo.bettransRNG b WITH (NOLOCK)
+		FROM	#tempdata b WITH (NOLOCK)
+		WHERE	b.IsSum = 0
+			  AND DATEDIFF(MINUTE,b.transdate,@Today) > 15
+			  AND b.statusID IN (111,112,113) --Draw,won,lose
+			  AND b.winlostdate = @yesterday
+	
+		IF @transId <> ''
+		BEGIN
+			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+					,@ErrCode = 100
+					,@ErrMsg = 'Settled ticket in bettransRNG are not yet summed to bettrans '
+					,@SampleData = 'bettransRNG.TransId in (' + @transId + ')'
+		END
+	
+	END
+	
+	IF @CheckMode = 4
+	BEGIN
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	#tempdata b WITH (NOLOCK)
 		WHERE	b.BetStake <> 0 
 				AND b.statusID IN (101,102,103) --Reject/Void/Refund 
 				AND b.GameID NOT IN (2198, 2398, 2998, 4297, 1698, 3898, 4599)
