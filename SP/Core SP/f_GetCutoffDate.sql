@@ -24,7 +24,7 @@ RETURN
 		VALUES ('2021-08-05', 'NetTO')
 			,('2021-12-11', 'GrossComm')
 			,('2022-05-24', 'SabaSport')
-			,('2023-05-01', 'NewChangeRateExchange')
+			,('2023-05-01', 'NewCharged')
 	) AS t (CutoffDate, TypeName)
 	
 GO

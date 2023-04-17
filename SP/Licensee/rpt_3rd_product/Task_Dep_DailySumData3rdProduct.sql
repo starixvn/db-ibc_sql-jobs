@@ -334,17 +334,8 @@ BEGIN
 			OR ISNULL(TransDesc, '') = ''
 			OR ISNULL(RefNo, 0) = 0
 		
-		--set matchid
-		DECLARE @CutoffDate SMALLDATETIME, @Matchid INT;
-
-		SELECT @CutoffDate = CutoffDate
-		FROM dbo.f_GetCutOffDate()
-		WHERE TypeName = 'NewChangeRateExchange'
-
-		SET @Matchid = CASE
-							WHEN @WinlostDate > @CutoffDate THEN 221
-							ELSE 0
-						END
+		DECLARE @CutoffDate SMALLDATETIME
+		SET @CutoffDate = '2023-05-01' 
 
 		INSERT INTO dbo.bettrans(TransId
 			, custid
@@ -445,7 +436,11 @@ BEGIN
 			, NULL checktime
 			, NULL oddsspread
 			, actualrate
-			, CASE WHEN Bettype = 8000 THEN @Matchid ELSE 0 END
+			, CASE WHEN @WinlostDate >= @CutoffDate 
+				THEN CASE Bettype 
+					WHEN 8000 THEN 221
+					WHEN 1800 THEN 250 END
+				ELSE 0 END
 			, recommend
 			, mrecommend
 			, 1 ruben

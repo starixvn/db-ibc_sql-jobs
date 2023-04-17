@@ -22,6 +22,8 @@ AS
 		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - classify data between SiteDB & CentralDB [Redmine: #175297]
 		- 20220724@Evan: Fix bug @transid null when existed refno  [Redmine: #175640]
  		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
+		- 20230414@Evan: Update formula agentCommission for new commercial terms [Redmine: #186609]
+
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -431,6 +433,9 @@ BEGIN
 		WHERE awinlost IS NULL
 			OR ISNULL(TransDesc, '') = ''
 			OR ISNULL(RefNo, 0) = 0
+			
+		DECLARE @CutoffDate SMALLDATETIME
+		SET @CutoffDate = '2023-05-01' 
 
 		INSERT INTO dbo.bettrans(TransId
 			, custid
@@ -531,7 +536,11 @@ BEGIN
 			, NULL checktime
 			, NULL oddsspread
 			, @ExchangeRate
-			, 0 matchid
+			, CASE WHEN @WinlostDate >= @CutoffDate 
+				THEN CASE Bettype 
+					WHEN 8000 THEN 221
+					WHEN 1800 THEN 250 END
+				ELSE 0 END 
 			, recommend
 			, mrecommend
 			, 1 ruben
