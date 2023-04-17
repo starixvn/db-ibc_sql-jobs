@@ -15,6 +15,7 @@ AS
 		- 20200303@Elodie: Apply new structure for MBC's log [Redmine: #127446]
 		- 20201002@Helen: Apply new structure for userlog_runsp log [Redmine: #139238]
 		- 20210623@Elodie: Apply VRCustLog table [Redmine: #157434]
+		- 20230417@Aries: Support OST Team Query Resettlement Log [Redmine: #185964]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -179,5 +180,12 @@ BEGIN
 		SELECT LogId, SportType, CustID, ActionID, TrackingValue1, TrackingValue2, UserID, LogTime, Duration, IP
 		FROM dbo.VRCustLog l WITH(NOLOCK)
 		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.LogTime AND l.custid = deleted.custid)
+	END
+	ELSE IF @tableName = 'SettlementLog'
+	BEGIN
+		INSERT INTO bodb_CustomerLog_Archive.dbo.SettlementLog(LogID,LogDate,MatchID,SportType,ActionID,UserID,ResourceID,HomeValue,AwayValue,OtherInfo)
+		SELECT LogID,LogDate,MatchID,SportType,ActionID,UserID,ResourceID,HomeValue,AwayValue,OtherInfo
+		FROM dbo.SettlementLog l WITH(NOLOCK)
+		WHERE EXISTS (SELECT TOP 1 1 FROM deleted WHERE deleted.LogId = l.logid AND deleted.LogDate = l.logdate)
 	END
 END

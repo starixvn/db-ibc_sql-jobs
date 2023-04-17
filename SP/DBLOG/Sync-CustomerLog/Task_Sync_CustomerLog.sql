@@ -15,6 +15,7 @@ AS
 	- 201903-07@Patick: Add back syn data for UserLog_Credit [Redmine: #113381]
 	- 20190709@Patrick: Add more table UserLog_ExternalAPI
 	- 20201002@Patrick: Add CreatedDate to UserLog_RunSP
+	- 20230417@Aries: Support OST Team Query Resettlement Log [Redmine: #185964]
 */  
 
 BEGIN
@@ -765,6 +766,67 @@ BEGIN
 
 				END CATCH
 				SET IDENTITY_INSERT dbo.UserLog_Settle OFF
+			END
+		END
+	END
+
+	BEGIN --SettlementLog
+		SELECT @SqlQuery = '', @MaxCurrLogId = 0, @MaxCurrLogDate = NULL, @ToLogDate = @CurrentDate
+		SELECT @MaxCurrLogId = MAX(LogID), @MaxCurrLogDate = MAX(LogDate)
+		FROM dbo.SettlementLog WITH (NOLOCK)
+		WHERE LogDate > @LastWeek
+
+		IF @MaxCurrLogId = 0 OR @MaxCurrLogDate IS NULL
+		BEGIN
+			PRINT 'Some things wrong for [SettlementLog]. Please check!!!'
+			SELECT @MaxCurrLogId = 0, @MaxCurrLogDate = @LastWeek
+		END
+		ELSE IF @MaxCurrLogDate > @ToLogDate
+		BEGIN
+			PRINT '@MaxCurrLogDate > @ToLogDate for [SettlementLog]. Please check!!!'
+		END
+		ELSE
+		BEGIN
+			SettlementLog_Settle_OneMore:
+			IF @MaxCurrLogDate < DATEADD(HOUR, -3, @CurrentDate)
+				SET @ToLogDate = DATEADD(HOUR, 3, @MaxCurrLogDate)
+			ELSE
+				SET @ToLogDate = @CurrentDate
+
+			SET @SqlQuery = 'SELECT *
+							FROM OPENQUERY(DBLOG, ''SELECT LogID,LogDate,MatchID,SportType,ActionID,UserID,ResourceID,HomeValue,AwayValue,OtherInfo
+							FROM bodb_CustomerLog.dbo.SettlementLog WITH (NOLOCK)
+							WHERE LogID > ''''' + CAST(@MaxCurrLogId AS VARCHAR(50)) + ''''' AND LogDate >= ''''' + CONVERT(VARCHAR(50), @MaxCurrLogDate, 121) + '''''
+								AND LogDate < ''''' + CONVERT(VARCHAR(50), @ToLogDate, 121) + '''''
+							OPTION (MAXDOP 8)'')'
+
+			IF @IsDebug = 1
+				PRINT @SqlQuery
+			ELSE
+			BEGIN
+				SET IDENTITY_INSERT dbo.SettlementLog ON
+				BEGIN TRY
+					INSERT INTO dbo.SettlementLog(LogID,LogDate,MatchID,SportType,ActionID,UserID,ResourceID,HomeValue,AwayValue,OtherInfo)
+					EXEC sp_executesql @SqlQuery
+
+					IF @@ROWCOUNT = 0 AND @ToLogDate < @CurrentDate
+					BEGIN
+						SET @MaxCurrLogDate = DATEADD(HOUR, 3, @MaxCurrLogDate)
+						GOTO SettlementLog_Settle_OneMore
+					END
+
+				END TRY
+				BEGIN CATCH
+					--manual rollback
+					DELETE dbo.SettlementLog WITH(ROWLOCK)
+					WHERE LogID > @MaxCurrLogId AND LogDate >= @MaxCurrLogDate
+				
+					--retry
+					INSERT INTO dbo.SettlementLog(LogID,LogDate,MatchID,SportType,ActionID,UserID,ResourceID,HomeValue,AwayValue,OtherInfo)
+					EXEC sp_executesql @SqlQuery
+
+				END CATCH
+				SET IDENTITY_INSERT dbo.SettlementLog OFF
 			END
 		END
 	END
