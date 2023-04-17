@@ -108,5 +108,7 @@ WHERE TaskId = @taskId
 
 DELETE FROM DBA_Rules WHERE RuleId IN (13,14)
 
-
-
+--------Update change rule 
+UPDATE dbo.DBA_Tasks
+SET command = N'EXEC dbo.DBA_Consistency_GeneralRules_bettransRNGChecking @CheckMode = 3, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
+WHERE command like '%DBA_Consistency_DetectNetstakeforRNGChecking%' 

@@ -16,7 +16,7 @@ AS
 	@CheckMode:
 		+ 1: Check ticket details between bettrans and bettransRNG
 		+ 2: Check wrong status of tickets in bettransRNG
-
+		+ 3: Detect netstake <> 0 for RNG products (void/reject/refund)
 */
 BEGIN
 	DECLARE @transId		VARCHAR(MAX)
@@ -94,6 +94,25 @@ BEGIN
 		END
 		RETURN;
 		
+	END
+
+	IF @CheckMode = 3
+	BEGIN
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	bodb02.dbo.bettransRNG b WITH (NOLOCK)
+		WHERE	b.BetStake <> 0 
+				AND b.statusID IN (101,102,103) --Reject/Void/Refund 
+				AND b.GameID NOT IN (2198, 2398, 2998, 4297, 1698, 3898, 4599)
+				AND b.winlostdate = @yesterday
+	
+		IF @transId <> ''
+		BEGIN
+			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+					,@ErrCode = 100
+					,@ErrMsg = 'Detect Netstake <> 0 for RNG products'
+					,@SampleData = 'bettransRNG.TransId in (' + @transId + ')'
+		END
+	
 	END
 END
 GO
