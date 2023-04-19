@@ -1,6 +1,7 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_DiscountChecking]
 	@ProductId		INT		
+	,@tablename		VARCHAR(50)		= NULL	
 	,@Bettype		SMALLINT		= NULL
 	,@ErrCode		INT				= 0		OUTPUT
 	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
@@ -16,6 +17,7 @@ AS
 		- 20181219@Vicky: Happy 5- Check Data Consistency [Redmine:#106481]
 		- 20190715@Kathy: check discount rule for BetBuilder [Redmine:#116529]
 		- 20200624@Max: Update Rule for Saba.Club, Modify Rule check Discount [Redmine: #136362]
+		- 20230419@July: Mofidy rule for bettransRNG/bettransLC/translog table [Redmine: #136362]
 	
 	Param's Expanation:
 */
@@ -30,6 +32,32 @@ BEGIN
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
 
+	IF @ProductId IN (211) OR @tablename = 'bettransLC'
+	BEGIN	
+		SET @tablename = 'bettransLC'
+
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	bodb02.dbo.bettransLC b WITH (NOLOCK)
+		WHERE	b.ProductID = @ProductId
+				AND (b.sdiscount < b.adiscount
+					OR b.adiscount < b.discount
+					OR b.discount < b.playerdiscount
+				)
+
+	END
+	IF @ProductId IN (211) OR @tablename = 'bettransRNG'
+	BEGIN	
+		SET @tablename = 'bettransRNG'
+
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	bodb02.dbo.bettransRNG b WITH (NOLOCK)
+		WHERE	b.ProductID = @ProductId
+				AND (b.sdiscount < b.adiscount
+					OR b.adiscount < b.discount
+					OR b.discount < b.playerdiscount
+				)
+
+	END
 	IF @ProductId = 1
 	BEGIN
 		INSERT INTO @tmpMatchIds (MatchId)
