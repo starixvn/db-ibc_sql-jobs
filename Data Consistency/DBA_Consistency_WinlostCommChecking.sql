@@ -18,7 +18,6 @@ AS
 		Notes: For SAGaming(244), BBIN(241) check data in bettransG
 		@CheckMode =  1: Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table bettransRNG/bettransLC/bettransG
 		                 Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans
-				
 */
 BEGIN
 	SET NOCOUNT ON
@@ -118,6 +117,39 @@ BEGIN
 					,@ErrMsg = CASE WHEN @tablename = 'bettrans' THEN 'Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans'
 																 ELSE 'Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table ' + @tablename END
 					,@SampleData =  @tablename + '.TransId in (' + @transId + ')'
+		END
+		RETURN;
+	END
+	IF @CheckMode = 2
+	BEGIN
+		IF @tablename = 'bettrans'
+		BEGIN
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM bodb02.dbo.bettrans WITH(NOLOCK) 
+			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
+				AND (actual_stake IS NULL OR winlost IS NULL OR playercomm IS NULL)
+		END
+		ELSE IF @tablename = 'bettransRNG'
+		BEGIN
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM bodb02.dbo.bettransRNG WITH(NOLOCK) 
+			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
+				AND (actual_stake IS NULL OR winlost IS NULL OR playercomm IS NULL)
+		END
+		ELSE IF @tablename = 'bettransLC'
+		BEGIN
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM bodb02.dbo.bettransLC WITH(NOLOCK) 
+			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
+				AND (actual_stake IS NULL OR winlost IS NULL OR playercomm IS NULL)
+		END
+	
+		IF @transId <> ''
+		BEGIN
+			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+					,@ErrCode = 100
+					,@ErrMsg = 'Check actual_stake, winlost, playercomm NULL on table ' + @tablename
+					,@SampleData = @tablename + '.TransId in (' + @transId + ')'
 		END
 		RETURN;
 	END

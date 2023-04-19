@@ -150,3 +150,18 @@ UPDATE dbo.DBA_Tasks
 SET command = N'EXEC dbo.DBA_Consistency_GeneralRules_bettransRNGChecking @CheckMode = 4, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
 WHERE command like '%DBA_Consistency_DetectNetstakeforRNGChecking%' 
 
+--------Update change rule #7 chung SP rule ##41
+
+SET @ruleId = (SELECT RuleId FROM dbo.DBA_Rules WHERE Name LIKE '%Check rule actual_stake, winlost, playercomm%')
+
+UPDATE dbo.DBA_Tasks
+SET command = N'EXEC dbo.DBA_Consistency_WinlostCommChecking @CheckMode = 2, @tablename = ''bettrans'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
+WHERE RuleId = @ruleId AND command like '%bettrans%' 
+
+UPDATE dbo.DBA_Tasks
+SET command = N'EXEC dbo.DBA_Consistency_WinlostCommChecking @CheckMode = 2, @tablename = ''bettransRNG'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
+WHERE RuleId = @ruleId AND command like '%bettransRNG%' 
+
+UPDATE dbo.DBA_Tasks
+SET command = N'EXEC dbo.DBA_Consistency_WinlostCommChecking @CheckMode = 2, @tablename = ''bettransLC'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
+WHERE RuleId = @ruleId AND command like '%bettransLC%' 
