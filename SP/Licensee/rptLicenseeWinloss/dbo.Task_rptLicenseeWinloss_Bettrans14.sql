@@ -118,8 +118,8 @@ BEGIN
 		,SUM(ABS(ck.Turnover)) AS Turnover
 		,SUM(ck.NetTurnover) AS NetTurnover
 		,SUM(winlost-actual_stake) AS Winlost
-		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.awinlost) AS AWinlost
+		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.comm) AS [AComm]
 	FROM [bodb02].[dbo].[bettrans14] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
@@ -236,8 +236,8 @@ BEGIN
 		,SUM(ABS(b.stake)) AS Turnover
 		,SUM(b.BetStake) AS NetTurnover
 		,SUM(b.winlost-b.actual_stake) AS Winlost
-		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.awinlost) AS AWinlost
+		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.comm) AS [AComm]
 	FROM [bodb02].[dbo].[bettransRnG14] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
@@ -277,8 +277,8 @@ BEGIN
 		,SUM(ABS(b.stake)) AS Turnover
 		,SUM(b.NetStake) AS NetTurnover
 		,SUM(b.winlost-b.actual_stake) AS Winlost
-		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.awinlost) AS AWinlost
+		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.comm) AS [AComm]
 	FROM [bodb02].[dbo].[bettransLC14] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
