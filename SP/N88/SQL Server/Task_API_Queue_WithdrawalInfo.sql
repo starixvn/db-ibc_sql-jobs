@@ -3,6 +3,7 @@ USE bodb_N88
 GO
 ALTER PROCEDURE [dbo].[Task_API_Queue_WithdrawalInfo]
 	@QueueIDInput	BIGINT = 0
+	,@IsRePull		BIT = 0
 	,@ErrCode		INT = 0 OUTPUT
 	,@ErrMsg		NVARCHAR(2000) = '' OUTPUT
 AS
@@ -15,6 +16,7 @@ AS
 	Revisions:
 		- 20200818@Percy: Initialize SP [RedmineID: #137395]
 		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
+		- 20230418@Evan: Enhance DB job which sync [RedmineID: #183319]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -23,9 +25,16 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
+	DECLARE @DataSource VARCHAR(200) = 'WithdrawalInfo';
+
+	IF @IsRePull = 1
+	BEGIN
+		SET @DataSource = 'CorrectWithdrawalInfo'
+	END
+
 	IF @QueueIDInput <> 0
 	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM dbo.API_Queue WITH (NOLOCK) WHERE QueueID = @QueueIDInput AND DataSource = 'WithdrawalInfo')
+		IF NOT EXISTS (SELECT 1 FROM dbo.API_Queue WITH (NOLOCK) WHERE QueueID = @QueueIDInput AND DataSource = @DataSource)
 		BEGIN
 			SELECT	@ErrCode = 100,
 					@ErrMsg = 'Input QueueID is not compitable with table, please check again!'
@@ -65,18 +74,18 @@ BEGIN
 	WHILE
 	(
 		@QueueIDInput <> 0
-		OR EXISTS (SELECT 1 FROM dbo.API_Queue WITH (NOLOCK) WHERE IsFinished = 0 AND DataSource = 'WithdrawalInfo')
+		OR EXISTS (SELECT 1 FROM dbo.API_Queue WITH (NOLOCK) WHERE IsFinished = 0 AND DataSource = @DataSource)
 	)
 	BEGIN
 		-- Get XML Data
 		IF @QueueIDInput <> 0
 			SELECT @QueueID = QueueID, @XmlData = XmlData
 			FROM dbo.API_Queue WITH (NOLOCK)
-			WHERE QueueID = @QueueIDInput AND DataSource = 'WithdrawalInfo'
+			WHERE QueueID = @QueueIDInput AND DataSource = @DataSource
 		ELSE
 			SELECT TOP 1 @QueueID = QueueID, @XmlData = XmlData
 			FROM dbo.API_Queue WITH (NOLOCK)
-			WHERE IsFinished = 0 AND DataSource = 'WithdrawalInfo'
+			WHERE IsFinished = 0 AND DataSource = @DataSource
 			ORDER BY QueueID ASC
 
 		-- Parse XML Data, if failed --> try 3 times
@@ -275,11 +284,14 @@ BEGIN
 			RETURN
 	END
 
-	-- Remove old data
-	DELETE dbo.API_Queue WITH (ROWLOCK, UPDLOCK)
-	WHERE DataSource = 'WithdrawalInfo'
-		AND IsFinished = 1
-		AND FinishedTime < DATEADD(DAY, -7, GETDATE())
+	IF @IsRePull = 0
+	BEGIN
+		-- Remove old data
+		DELETE dbo.API_Queue WITH (ROWLOCK, UPDLOCK)
+		WHERE DataSource = @DataSource
+			AND IsFinished = 1
+			AND FinishedTime < DATEADD(DAY, -7, GETDATE())
+	END
 
 	DROP TABLE #tmpWithdrawalInfo
 END

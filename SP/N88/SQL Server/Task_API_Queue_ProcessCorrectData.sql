@@ -35,7 +35,8 @@ BEGIN
 		FROM @QueueTable  
 		WHERE DataSource = 'DepositInfo'
 
-		EXEC dbo.Task_API_Queue_Correct_DepositInfo @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+		-- EXEC dbo.Task_API_Queue_Correct_DepositInfo @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+		EXEC dbo.Task_API_Queue_DepositInfo @IsRePull = 1, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
 		IF @ErrCode <> 0
 		BEGIN
@@ -58,7 +59,8 @@ BEGIN
 		FROM @QueueTable  
 		WHERE DataSource = 'WithdrawalInfo'
 
-		EXEC dbo.Task_API_Queue_Correct_WithdrawalInfo @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+		-- EXEC dbo.Task_API_Queue_Correct_WithdrawalInfo @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+		EXEC dbo.Task_API_Queue_WithdrawalInfo @IsRePull = 1, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
 
 		IF @ErrCode <> 0
 		BEGIN
