@@ -137,7 +137,6 @@ BEGIN
 
 
 	CREATE TABLE #LicenseeProductTable (LicenseeId INT, LicenseeName VARCHAR(50), CustID INT, CurrencyId INT)
-	DECLARE @LicenseeTable TABLE (RowId INT IDENTITY(1,1), LicenseeId INT, LicenseeName VARCHAR(50), CurrencyId TINYINT)
 
 	INSERT INTO #LicenseeProductTable(LicenseeId, LicenseeName, CustID, CurrencyId)
 	SELECT l.LicenseeId, l.LicenseeName,c.CustID, c.Currency
@@ -146,15 +145,6 @@ BEGIN
 		INNER JOIN 	bodb_licensee.dbo.LicenseeProduct3rd p WITH(NOLOCK) ON c.LicenseeId = p.LicenseeId
 	WHERE	p.ProductId = 31
 	
-	INSERT INTO @LicenseeTable(LicenseeId, LicenseeName, CurrencyId)
-	SELECT l.LicenseeId, l.LicenseeName, c.Currency
-	FROM bodb_licensee.dbo.LicenseeCust c WITH(NOLOCK)
-		INNER JOIN	bodb_licensee.dbo.Licensees l WITH(NOLOCK) ON c.LicenseeId = l.LicenseeId
-		INNER JOIN 	bodb_licensee.dbo.LicenseeProduct3rd p WITH(NOLOCK) ON c.LicenseeId = p.LicenseeId
-	WHERE	p.ProductId = 31
-	GROUP BY l.LicenseeId, l.LicenseeName, c.Currency
-	
-
 	DECLARE @Party TABLE (PartyId INT)
 	DECLARE @PartyList VARCHAR(4000)
 	
@@ -163,11 +153,6 @@ BEGIN
 		INNER JOIN DBCUST.CUSTDB.dbo.site s WITH (NOLOCK) ON l.LicenseeName = s.Site 
 	WHERE s.SiteDBGroupID <> 0
 
-	DELETE l 
-	FROM @LicenseeTable l
-		INNER JOIN DBCUST.CUSTDB.dbo.site s WITH (NOLOCK) ON l.LicenseeName = s.Site 
-	WHERE s.SiteDBGroupID <> 0
-	
 	INSERT INTO @Party(PartyId)
 	SELECT DISTINCT FromParty
 	FROM bodb_licensee.dbo.OAS_ChargeInfo WITH (NOLOCK)
@@ -362,72 +347,72 @@ BEGIN
 								)  ci 
 								LEFT JOIN bodb_Licensee.dbo.LA_ChargeRateByCurrency cc ON cc.ChargeId = ci.ChargeId AND cc.CurrencyID = c.Currency
 
-								MERGE dbo.Sum_winloss_Exchange AS s
-								USING
-									(
-										SELECT
-											t.userId,
-											t.agentId,
-											t.eventTypeName,
-											t.eventName,
-											t.eventId,
-											t.marketName,
-											t.marketId,
-											t.startTime,
-											t.settledDate,
-											t.profitLoss,
-											t.marketTotal,
-											t.commission,
-											t.agentCommission,
-											t.stakeTotal,
-											t.resettledDate,
-											t.CustID,
-											c.Currency,
-											e.ExVirtualRate
-										FROM #tmpSum_winloss_Exchange t
-											INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
-											INNER JOIN bodb02.dbo.Exchange e WITH (NOLOCK) ON c.currency = e.exchangeid
-									)
-								AS src 
-									( 
-										userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
-										startTime,settledDate,profitLoss,marketTotal,commission,agentCommission,stakeTotal,
-										resettledDate,CustID,Currency,ExVirtualRate
-									)
-									ON s.userId = src.userId AND s.eventID = src.eventId AND s.marketID = src.marketId AND s.settledDate = src.settledDate
-								WHEN MATCHED AND ISNULL(s.resettledDate, @statisDate) <= ISNULL(src.resettledDate, @statisDate) THEN
-									UPDATE SET
-										s.agentId = src.agentId,
-										s.eventTypeName = src.eventTypeName,
-										s.eventName = src.eventName,
-										s.marketName = src.marketName,
-										s.startTime = src.startTime,
-										s.profitLoss = src.profitLoss,
-										s.marketTotal = src.marketTotal,
-										s.commission = src.commission,
-										s.agentCommission = src.agentCommission,
-										s.stakeTotal = src.stakeTotal,
-										s.resettledDate = src.resettledDate,
-										s.CustID = src.CustID,
-										s.Currency = src.Currency,
-										s.ExVirtualRate = src.ExVirtualRate
-								WHEN NOT MATCHED THEN
-									INSERT
-									(
-										userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
-										startTime,settledDate,profitLoss,marketTotal,commission,agentCommission,stakeTotal,
-										resettledDate,CustID,Currency,ExVirtualRate
-									)
-									VALUES
-									(
-										src.userId,src.agentId,src.eventTypeName,src.eventName,src.eventId,src.marketName,src.marketId,
-										src.startTime,src.settledDate,src.profitLoss,src.marketTotal,src.commission,src.agentCommission,src.stakeTotal,
-										src.resettledDate,src.CustID,src.Currency,src.ExVirtualRate
-									)
-								OUTPUT INSERTED.userId, INSERTED.eventID, INSERTED.marketID, INSERTED.settledDate, INSERTED.stakeTotal, INSERTED.marketTotal
-									INTO @updated_userId (userId, eventId, marketId, SettledDate, stakeTotal, MarketTotal);
+							MERGE dbo.Sum_winloss_Exchange AS s
+							USING
+								(
+									SELECT
+										t.userId,
+										t.agentId,
+										t.eventTypeName,
+										t.eventName,
+										t.eventId,
+										t.marketName,
+										t.marketId,
+										t.startTime,
+										t.settledDate,
+										t.profitLoss,
+										t.marketTotal,
+										t.commission,
+										t.agentCommission,
+										t.stakeTotal,
+										t.resettledDate,
+										t.CustID,
+										c.Currency,
+										e.ExVirtualRate
+									FROM #tmpSum_winloss_Exchange t
+										INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
+										INNER JOIN bodb02.dbo.Exchange e WITH (NOLOCK) ON c.currency = e.exchangeid
+								)
+							AS src 
+								( 
+									userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
+									startTime,settledDate,profitLoss,marketTotal,commission,agentCommission,stakeTotal,
+									resettledDate,CustID,Currency,ExVirtualRate
+								)
+								ON s.userId = src.userId AND s.eventID = src.eventId AND s.marketID = src.marketId AND s.settledDate = src.settledDate
+							WHEN MATCHED AND ISNULL(s.resettledDate, @statisDate) <= ISNULL(src.resettledDate, @statisDate) THEN
+								UPDATE SET
+									s.agentId = src.agentId,
+									s.eventTypeName = src.eventTypeName,
+									s.eventName = src.eventName,
+									s.marketName = src.marketName,
+									s.startTime = src.startTime,
+									s.profitLoss = src.profitLoss,
+									s.marketTotal = src.marketTotal,
+									s.commission = src.commission,
+									s.agentCommission = src.agentCommission,
+									s.stakeTotal = src.stakeTotal,
+									s.resettledDate = src.resettledDate,
+									s.CustID = src.CustID,
+									s.Currency = src.Currency,
+									s.ExVirtualRate = src.ExVirtualRate
+							WHEN NOT MATCHED THEN
+								INSERT
+								(
+									userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
+									startTime,settledDate,profitLoss,marketTotal,commission,agentCommission,stakeTotal,
+									resettledDate,CustID,Currency,ExVirtualRate
+								)
+								VALUES
+								(
+									src.userId,src.agentId,src.eventTypeName,src.eventName,src.eventId,src.marketName,src.marketId,
+									src.startTime,src.settledDate,src.profitLoss,src.marketTotal,src.commission,src.agentCommission,src.stakeTotal,
+									src.resettledDate,src.CustID,src.Currency,src.ExVirtualRate
+								)
+							OUTPUT INSERTED.userId, INSERTED.eventID, INSERTED.marketID, INSERTED.settledDate, INSERTED.stakeTotal, INSERTED.marketTotal
+								INTO @updated_userId (userId, eventId, marketId, SettledDate, stakeTotal, MarketTotal);
 
-							END
+						END
 							
 						END
 
