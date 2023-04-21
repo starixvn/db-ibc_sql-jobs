@@ -26,7 +26,8 @@ AS
 		- 20220222@July: Saba.games - Exclude bettype Hi-Lo(1651) - [Redmine:#168804]
 		- 20220408@July: Saba.games - Exclude bettype Texas Hold'em Poker(1652) - [Redmine:#171263]
 		- 20220413@July: Vgaming - Exclude bettype Hi-Lo(3844) - [Redmine:#171349]
-		- 20220510@July: Remove code only support BetBuilder - [Redmine:#172310]
+		- 20220510@July: Remove code only support Sportbook - BetBuilder - [Redmine:#172310]
+		- 20230421@July: Support product Happy 5, NumberGame - [Redmine:#186736]
 
 	Param's Expanation:
 */
@@ -56,13 +57,28 @@ BEGIN
 				AND b.statusID = 0
 				AND b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
 	END
-
+	IF @ProductId IN (161,164)
+	BEGIN
+		INSERT INTO @tmpMatchIds (MatchId)
+		SELECT m.matchid
+		FROM bodb02.dbo.match m WITH(NOLOCK)
+		WHERE m.sporttype = @ProductId
+	
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+		WHERE	b.bettype < 20000
+				AND b.winlostdate = @yesterday
+				AND b.statusID = 0
+				AND b.matchid IN (SELECT matchid FROM @tmpMatchIds)
+	END
+	
 	IF @transId <> ''
 	BEGIN
 		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 				,@ErrCode = 100
 				,@ErrMsg = 'All yesterday tickets must be settled on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = 'bettrans.TransId = ' + @transId
+				,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+		
 	END
 END
 GO

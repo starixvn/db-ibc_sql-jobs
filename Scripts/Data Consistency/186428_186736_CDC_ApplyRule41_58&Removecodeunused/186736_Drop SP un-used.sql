@@ -23,7 +23,9 @@ GO
 IF OBJECT_ID('DBA_Consistency_LaunchedSiteChecking', 'P') IS NOT NULL
 	DROP PROCEDURE DBA_Consistency_LaunchedSiteChecking;
 GO
-
+IF OBJECT_ID('DBA_Consistency_StatusChecking_NotDelegateMatchId', 'P') IS NOT NULL
+	DROP PROCEDURE DBA_Consistency_StatusChecking_NotDelegateMatchId;
+GO
 
 
 

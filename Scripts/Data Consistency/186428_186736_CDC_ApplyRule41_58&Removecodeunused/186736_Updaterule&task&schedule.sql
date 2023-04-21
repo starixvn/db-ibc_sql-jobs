@@ -118,3 +118,15 @@ WHERE RuleId = @ruleId AND command like '%bettransRNG%'
 UPDATE dbo.DBA_Tasks
 SET command = N'EXEC dbo.DBA_Consistency_WinlostCommChecking @CheckMode = 2, @tablename = ''bettransLC'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
 WHERE RuleId = @ruleId AND command like '%bettransLC%' 
+
+
+--------Update change rule #9 Gộp chung SP check Happy5,NumberGame => SP check Sportbook - BetBuilder
+SET @ruleId = (SELECT RuleId FROM dbo.DBA_Rules WHERE Name LIKE '%Check all yesterday tickets must be settled%')
+
+UPDATE dbo.DBA_Tasks
+SET command = N'EXEC dbo.DBA_Consistency_StatusChecking @ProductId = 161, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
+WHERE RuleId = @ruleId AND command like '%161%' 
+
+UPDATE dbo.DBA_Tasks
+SET command = N'EXEC dbo.DBA_Consistency_StatusChecking @ProductId = 164, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
+WHERE RuleId = @ruleId AND command like '%164%' 

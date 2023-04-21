@@ -43,6 +43,7 @@ BEGIN
 					OR b.adiscount < b.discount
 					OR b.discount < b.playerdiscount
 				)
+				AND b.winlostdate = @Today
 	
 	END
 	ELSE IF @ProductId IN (165,200,247,234,237,238,167,172,174,248) OR @tablename = 'bettransRNG'
@@ -56,7 +57,7 @@ BEGIN
 					OR b.adiscount < b.discount
 					OR b.discount < b.playerdiscount
 				)
-	
+				AND b.winlostdate = @Today
 	END
 	ELSE 
 	BEGIN
@@ -81,7 +82,7 @@ BEGIN
 					AND b.winlostdate = @Today
 					AND b.srecommend NOT IN (SELECT custid FROM bodb02.dbo.Dep_CustSuper WITH (NOLOCK))
 		END
-		ELSE --Virtual Games(245),Table Games(222),Sports Lottery(169)
+		ELSE /*translog same bettrans*/ --Virtual Games(245),Table Games(222),Sports Lottery(169)
 		BEGIN
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
@@ -91,6 +92,7 @@ BEGIN
 						OR b.discount < b.playerdiscount
 					)
 					AND b.matchid = @ProductId
+					AND b.winlostdate = @Today
 					AND b.srecommend NOT IN (SELECT custid FROM bodb02.dbo.Dep_CustSuper WITH (NOLOCK))
 		END
 	END
