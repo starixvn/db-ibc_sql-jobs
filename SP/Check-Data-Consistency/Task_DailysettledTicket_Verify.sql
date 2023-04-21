@@ -14,6 +14,8 @@ AS
 	- 201701124@Patrick: Remove block code check running ticket for patlay because parlay movement task will handle it
 	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	- 2020203@Patrick: Add more rule check running parlay tickets [RedmineId: #127651]
+	- 20230425@July: Remove unnecessary rules [Redmine: #186736]
+
  */
 BEGIN
 	SET NOCOUNT ON
@@ -104,67 +106,6 @@ BEGIN
 		RAISERROR ('FAILED: bettransm have running tickets (not calculated yet).', 16, 1)
 		RETURN
 	END
-	
-	--FAILED: Invalid Comm Setting - bettrans
-	IF EXISTS (  
-		SELECT TOP(1) transid  
-		FROM dbo.bettrans bt WITH (NOLOCK)  
-			LEFT JOIN dbo.Dep_CustSuper ds WITH( NOLOCK) ON bt.srecommend = ds.custid
-		WHERE ds.custid IS NULL
-			AND (sdiscount < adiscount OR adiscount < discount OR discount < playerdiscount)
-			AND bettype <= 19000  
-			AND winlostdate <= @winlostdate
-	)  
-	BEGIN  
-		RAISERROR ('FAILED: Invalid Comm Setting - bettrans', 16, 1)
-		RETURN
-	END
-
-	--FAILED: Invalid Comm Setting - translog
-	IF EXISTS (  
-		SELECT TOP(1) translogid  
-		FROM dbo.translog tl WITH (NOLOCK)  
-			LEFT JOIN dbo.Dep_CustSuper ds WITH( NOLOCK) ON tl.srecommend = ds.custid
-		WHERE ds.custid IS NULL
-			AND (sdiscount < adiscount OR adiscount < discount OR discount < playerdiscount)
-			--AND gameID <= 19000  
-			AND winlostdate <= @winlostdate
-	)  
-	BEGIN  
-		RAISERROR ('FAILED: Invalid Comm Setting - translog', 16, 1)
-		RETURN
-	END
-	
-	--FAILED: Invalid Comm Setting - bettransRnG
-	IF EXISTS (  
-		SELECT TOP(1) transid  
-		FROM dbo.bettransRnG bt WITH (NOLOCK)  
-			LEFT JOIN dbo.Dep_CustSuper ds WITH( NOLOCK) ON bt.srecommend = ds.custid
-		WHERE ds.custid IS NULL
-			AND (sdiscount < adiscount OR adiscount < discount OR discount < playerdiscount)
-			--AND gameID <= 19000  
-			AND winlostdate <= @winlostdate
-	)  
-	BEGIN  
-		RAISERROR ('FAILED: Invalid Comm Setting - bettransRnG', 16, 1)
-		RETURN
-	END
-	
-	--FAILED: Invalid Comm Setting - bettransLC
-	IF EXISTS (  
-		SELECT transid  
-		FROM dbo.bettransLC bt WITH (NOLOCK)  
-			LEFT JOIN dbo.Dep_CustSuper ds WITH( NOLOCK) ON bt.srecommend = ds.custid
-		WHERE ds.custid IS NULL
-			AND (sdiscount < adiscount OR adiscount < discount OR discount < playerdiscount)
-			--AND gameID <= 19000  
-			AND winlostdate <= @winlostdate
-	)  
-	BEGIN  
-		RAISERROR ('FAILED: Invalid Comm Setting - bettransLC', 16, 1)
-		RETURN
-	END
-		
 	-- ====================  
 	IF EXISTS (
 			SELECT transid
