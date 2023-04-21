@@ -41,6 +41,7 @@ AS
 		- 20230310@July: SABA.games - Exclude bettypes 1670(Happy Ocean) & 1671(Magic Forest) - [Redmine: #184794]   
 		- 20230310@July: VGaming - Exclude bettypes 3862(Happy Ocean) & 3863(Magic Forest) - [Redmine: #184786]   
 		- 20230410@July: Spadegaming - Exclude bettype 4598 (Promotion Prize) - [Redmine: #186688]
+		- 20230421@July: BBIN - Check stake in bettransG - [Redmine: #186736]
 	
 	Param's Expanation:
 
@@ -134,6 +135,14 @@ BEGIN
 					AND b.status <> 'Completed'
 		END	
 	END
+	ELSE IF @ProductId IN(241) OR @tablename = 'bettransG'
+	BEGIN
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	bodb02.dbo.bettransG b WITH (NOLOCK)
+		WHERE	b.matchid = @ProductId
+				AND b.stake <= 0
+				AND b.status NOT IN ('running')
+	END
 	ELSE
 	BEGIN
 		SET @tablename = 'bettrans'
@@ -153,15 +162,6 @@ BEGIN
 					AND b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
 					AND b.winlostdate = @Today
 					AND b.status <> 'Completed'
-		END
-		ELSE IF @ProductId = 241 --BBIN
-		BEGIN
-			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-			WHERE	b.bettype < 20000
-					AND b.stake <= 0
-					AND b.matchid = @ProductId
-					AND b.status NOT IN ('running','Completed')
 		END
 		ELSE
 		BEGIN
