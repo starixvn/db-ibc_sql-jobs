@@ -32,7 +32,7 @@ BEGIN
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
 
-	IF @ProductId IN (211) OR @tablename = 'bettransLC'
+	IF @ProductId IN (211,244,243,236,239,170,176,225) OR @tablename = 'bettransLC'
 	BEGIN	
 		SET @tablename = 'bettransLC'
 
@@ -43,9 +43,9 @@ BEGIN
 					OR b.adiscount < b.discount
 					OR b.discount < b.playerdiscount
 				)
-
+	
 	END
-	IF @ProductId IN (211) OR @tablename = 'bettransRNG'
+	ELSE IF @ProductId IN (165,200,247,234,237,238,167,172,174,248) OR @tablename = 'bettransRNG'
 	BEGIN	
 		SET @tablename = 'bettransRNG'
 
@@ -56,46 +56,52 @@ BEGIN
 					OR b.adiscount < b.discount
 					OR b.discount < b.playerdiscount
 				)
-
+	
 	END
-	IF @ProductId = 1
+	ELSE 
 	BEGIN
-		INSERT INTO @tmpMatchIds (MatchId)
-		SELECT	m.matchid
-		FROM	bodb02.dbo.match m WITH(NOLOCK)
-		WHERE	m.sporttype = 1
-				AND m.eventdate = @Today
+		SET @tablename = 'bettrans'
+
+		IF @ProductId = 1
+		BEGIN
+			INSERT INTO @tmpMatchIds (MatchId)
+			SELECT	m.matchid
+			FROM	bodb02.dbo.match m WITH(NOLOCK)
+			WHERE	m.sporttype = 1
+					AND m.eventdate = @Today
 			
-		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		WHERE	b.bettype = ISNULL(@Bettype, b.bettype)
-				AND (b.sdiscount < b.adiscount
-					OR b.adiscount < b.discount
-					OR b.discount < b.playerdiscount
-				)
-				AND b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
-				AND b.winlostdate = @Today
-				AND b.srecommend NOT IN (SELECT custid FROM bodb02.dbo.Dep_CustSuper WITH (NOLOCK))
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+			WHERE	b.bettype = ISNULL(@Bettype, b.bettype)
+					AND (b.sdiscount < b.adiscount
+						OR b.adiscount < b.discount
+						OR b.discount < b.playerdiscount
+					)
+					AND b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
+					AND b.winlostdate = @Today
+					AND b.srecommend NOT IN (SELECT custid FROM bodb02.dbo.Dep_CustSuper WITH (NOLOCK))
+		END
+		ELSE --Virtual Games(245),Table Games(222),Sports Lottery(169)
+		BEGIN
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+			WHERE	b.bettype < 20000
+					AND (b.sdiscount < b.adiscount
+						OR b.adiscount < b.discount
+						OR b.discount < b.playerdiscount
+					)
+					AND b.matchid = @ProductId
+					AND b.srecommend NOT IN (SELECT custid FROM bodb02.dbo.Dep_CustSuper WITH (NOLOCK))
+		END
 	END
-	ELSE
-	BEGIN
-		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		WHERE	b.bettype < 20000
-				AND (b.sdiscount < b.adiscount
-					OR b.adiscount < b.discount
-					OR b.discount < b.playerdiscount
-				)
-				AND b.matchid = @ProductId
-				AND b.srecommend NOT IN (SELECT custid FROM bodb02.dbo.Dep_CustSuper WITH (NOLOCK))
-	END
-
+	
 	IF @transId <> ''
 	BEGIN
 		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 				,@ErrCode = 100
 				,@ErrMsg = 'sdiscount < adiscount or adiscount < discount or discount < playerdiscount on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+				,@SampleData = @tablename + '.TransId in (' + @transId + ')'
+
 	END
 
 END

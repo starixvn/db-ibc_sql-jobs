@@ -17,8 +17,12 @@ GO
 IF OBJECT_ID('DBA_Consistency_CheckWinlost3rd', 'P') IS NOT NULL
 	DROP PROCEDURE DBA_Consistency_CheckWinlost3rd;
 GO
-
-
+IF OBJECT_ID('DBA_Consistency_ActualstakeWinlostPlayercommChecking', 'P') IS NOT NULL
+	DROP PROCEDURE DBA_Consistency_ActualstakeWinlostPlayercommChecking;
+GO
+IF OBJECT_ID('DBA_Consistency_LaunchedSiteChecking', 'P') IS NOT NULL
+	DROP PROCEDURE DBA_Consistency_LaunchedSiteChecking;
+GO
 
 
 
