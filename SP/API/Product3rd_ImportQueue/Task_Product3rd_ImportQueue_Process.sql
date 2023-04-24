@@ -16,6 +16,7 @@ AS
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20220222@Percy: Remove Novacash's products [RedmineID: #167823]
 		- 20220704@Sol : remove email account - [RedmineId: #175043]
+		- 20230414@Evan: Update formula agentCommission for new commercial terms + Remove product Gold Deluxe [Redmine: #186609]
 */
 
 BEGIN
@@ -24,29 +25,6 @@ BEGIN
 	DECLARE @ErrCode INT, @ErrMsg NVARCHAR(2000)
 
 	DECLARE @ErrTable TABLE (ProductId INT, ErrCode INT, ErrMsg NVARCHAR(2000))
-
-	-- Gold Deluxe
-	BEGIN
-		-- 1. bettrans_GoldDeluxe -- Jobtype = 0
-		SELECT @ErrCode = 0, @ErrMsg = ''
-		EXEC dbo.Task_GoldDeluxe_ImportDataToDB_Queue @JobType = 0, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-
-		IF @ErrCode <> 0
-		BEGIN
-			INSERT INTO @ErrTable (ProductId, ErrCode, ErrMsg)
-			VALUES (11, @ErrCode, @ErrMsg)
-		END
-
-		-- 2. GoldDeluxe_Tip -- Jobtype = 1
-		SELECT @ErrCode = 0, @ErrMsg = ''
-		EXEC dbo.Task_GoldDeluxe_ImportDataToDB_Queue @JobType = 1, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-
-		IF @ErrCode <> 0
-		BEGIN
-			INSERT INTO @ErrTable (ProductId, ErrCode, ErrMsg)
-			VALUES (11, @ErrCode, @ErrMsg)
-		END
-	END
 
 	-- AG Casino
 	BEGIN

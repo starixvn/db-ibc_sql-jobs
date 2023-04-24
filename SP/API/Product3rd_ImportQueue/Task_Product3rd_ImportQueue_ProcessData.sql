@@ -148,11 +148,6 @@ BEGIN
 	DECLARE @Party TABLE (PartyId INT)
 	DECLARE @PartyList VARCHAR(4000)
 	
-	DELETE l 
-	FROM #LicenseeProductTable l
-		INNER JOIN DBCUST.CUSTDB.dbo.site s WITH (NOLOCK) ON l.LicenseeName = s.Site 
-	WHERE s.SiteDBGroupID <> 0
-
 	INSERT INTO @Party(PartyId)
 	SELECT DISTINCT FromParty
 	FROM bodb_licensee.dbo.OAS_ChargeInfo WITH (NOLOCK)
@@ -336,12 +331,12 @@ BEGIN
 									(
 										SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate
 										FROM bodb_licensee.dbo.LA_f_ChargeInfo
-										(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
+										(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , t.settledDate, 'BX', 'OA', 1) ch  
 										WHERE  t.settledDate BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12)
 										UNION ALL
 										SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate 
 										FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime
-										(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
+										(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , t.settledDate, 'BX', 'OA', 1) ch  
 										WHERE  t.settledDate BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12) 
 									) AS x
 								)  ci 
