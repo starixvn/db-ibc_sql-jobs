@@ -12,7 +12,7 @@ DECLARE @RoleName VARCHAR(50) = 'db_Terra'
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-		VALUES ('bodb02'),('bodb_Licensee'), ('bodb_customerLog')
+		VALUES ('bodb02'),('bodb_Licensee'), ('bodb_customerLog'),('bodb_CustomerLog_archive')
 
 SELECT @strRole = @strRole + ' '
 					 + 'USE ' + DBName + ';'
@@ -41,7 +41,7 @@ DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb02'),('bodb_Licensee'), ('bodb_customerlog')
+	VALUES ('bodb02'),('bodb_Licensee'), ('bodb_customerlog'),('bodb_CustomerLog_archive')
 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')

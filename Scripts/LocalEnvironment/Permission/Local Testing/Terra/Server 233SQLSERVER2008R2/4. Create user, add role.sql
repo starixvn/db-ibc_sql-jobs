@@ -11,7 +11,7 @@ DECLARE @strUser	VARCHAR(MAX) = ''
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb02'),('bodb_Licensee'),('bodb_CustomerLog')
+	VALUES ('bodb02'),('bodb_Licensee'),('bodb_CustomerLog'),('bodb_CustomerLog_archive')
 
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
@@ -76,7 +76,7 @@ DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb02'),('bodb_Licensee'),('bodb_CustomerLog')
+	VALUES ('bodb02'),('bodb_Licensee'),('bodb_CustomerLog'),('bodb_CustomerLog_archive')
 
 INSERT INTO @tmpMember (Name) 
 	VALUES   ('SPVN\jerry.tran')
