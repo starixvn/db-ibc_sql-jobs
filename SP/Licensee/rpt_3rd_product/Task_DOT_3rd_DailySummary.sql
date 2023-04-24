@@ -15,17 +15,18 @@ AS
 	- 20180102@Harper: Add separate product Exchange_DailySummary [RedmineID: #86640]
 	- 20181129@Percy: Remove linked-server DBPTCS [RedmineID: #105520]
 	- 20210816@Sophia: add DBBAL [Redmine: #154300]
+	- 20230303@Evan: Remove inactive products GD,VoidBridge [Redmine: 181424] 
 */
 BEGIN
 	SET NOCOUNT ON	
-
+	
 	-- Execute SP to insert data for GD
-	EXEC bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
+	-- EXEC bodb_PlaytechCS.dbo.Task_DOT_GoldDeluxe_DailySummary @winlostdate = @winlostdate
 
-	IF @@ServerName <> 'DBBAL'
-	BEGIN 
-		EXEC bodb_3rdproduct.dbo.Task_DOT_VoidBridge_DailySummary @winlostdate = @winlostdate
-	END 
+	-- IF @@ServerName <> 'DBBAL'
+	-- BEGIN 
+	-- 	EXEC bodb_3rdproduct.dbo.Task_DOT_VoidBridge_DailySummary @winlostdate = @winlostdate
+	-- END 
 	
 	EXEC bodb_3rdproduct.dbo.Task_DOT_Exchange_DailySummary @winlostdate = @winlostdate
 

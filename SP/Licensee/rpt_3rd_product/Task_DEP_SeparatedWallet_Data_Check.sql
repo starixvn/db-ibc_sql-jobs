@@ -16,7 +16,8 @@ AS
 		-20170104@Sophia: Integrate Exchange Products [Redmine: #86640]
 		-20180130@Sophia: remove the block code of Exchange for UAT Testing, will add later when releasing Exchange [redmine: #90213]
 		-20180302@Sophia: Add the code check for Exchange because of release product [Redmine: #90214]
-		- 20200407@Percy: Revise SP to check separately data of @ProductIds [RedmineID: #131885]
+		-20200407@Percy: Revise SP to check separately data of @ProductIds [RedmineID: #131885]
+ 		-20230303@Evan: Remove inactive products GD [Redmine: 181424] 
 
 	Param's Explanation:
 		- @WinlostDate: winlostdate need to check
@@ -50,13 +51,13 @@ BEGIN
 	END
 
 	-- Check products ready from DBLIC
-	IF EXISTS (SELECT 1 FROM @Products WHERE ProductId IN (10, 11))
+	IF EXISTS (SELECT 1 FROM @Products WHERE ProductId = 10)
 	BEGIN
 		-- Products are not ready
 		INSERT INTO @NotReadyProducts (ProductId)
 		SELECT ProductId
 		FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
-		WHERE ProductId IN (10, 11)
+		WHERE ProductId = 10
 			AND (
 				Winlostdate IS NULL
 				OR (Winlostdate = @WinlostDate AND FinishedTime IS NULL)
@@ -67,7 +68,7 @@ BEGIN
 		INSERT INTO @ReadyProducts (ProductId)
 		SELECT ProductId
 		FROM bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (NOLOCK)
-		WHERE ProductId IN (10, 11)
+		WHERE ProductId = 10
 			AND Winlostdate = @WinlostDate
 		GROUP BY ProductId
 	END
