@@ -35,7 +35,7 @@ BEGIN
 			,@LinkedAlias VARCHAR(100)='DB05'
 			,@MaxID_DB05 BIGINT 
 
-	select @IsTestUAT =  (select vvalue from SystemSettings where VName = 'BT_SiteDB' + RIGHT(@SiteDBAlias, 2) +'_ServiceStatus_UAT')
+	SELECT @IsTestUAT =  (SELECT vvalue FROM SystemSettings WITH(NOLOCK) WHERE VName = 'BT_SiteDB' + RIGHT(@SiteDBAlias, 2) +'_ServiceStatus_UAT')
 
 	SELECT @MaxID = MIN( CAST (VValue AS BIGINT ) )
 					FROM bodb02.dbo.SystemSettings WITH (NOLOCK)
