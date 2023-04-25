@@ -34,6 +34,7 @@ INSERT INTO @tmpMember (Name)
 		, ('spvn\aries.nguyen' )
 		, ('spvn\luke.nguyen')
 		, ('spvn\sally.ton')
+		, ('spvn\lewis.cao')
 
 SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
 FROM	@tmpMember
