@@ -2,7 +2,6 @@
 ALTER PROCEDURE [dbo].[SiteDBBalanceTrigger_CleanUp]
 (
 	 @SiteDBAlias VARCHAR(100) = NULL
-	,@VName VARCHAR(100) = NULL
 )
 
 AS
