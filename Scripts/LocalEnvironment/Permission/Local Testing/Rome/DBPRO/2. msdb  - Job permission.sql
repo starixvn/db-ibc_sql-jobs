@@ -15,8 +15,8 @@ INSERT INTO @tmpMember (Name)
 	VALUES ('spvn\ethan.nguyen'), ('spvn\andy.nguyen'), ('spvn\david.tran')
 		,('spvn\phillip.truong'), ('spvn\louis.nguyen'), ('spvn\kan.nguyen')
 		,('spvn\razor.nguyen'), ('spvn\alvin.nguyen')
-		,('spvn\jack.nguyen'), ('spvn\issac.le'),('spvn\aiden.nguyen')
-
+		,('spvn\jack.nguyen'), ('spvn\issac.le') 
+		,('spvn\lucian.vo')
 SELECT	@strUser = @strUser 
 			+ 'CREATE USER ' + '[' + t.Name + ']' + ' FOR LOGIN ' + '[' + t.Name + ']' + ' WITH DEFAULT_SCHEMA=[dbo]; '
 			+ CHAR(13)

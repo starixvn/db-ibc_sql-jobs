@@ -2,11 +2,7 @@ USE [master]
 GO
 -- Create Login
  
-IF @@SERVERNAME NOT LIKE '%DBTRANS' AND @@SERVERNAME NOT LIKE  '%SiteDB%'
-BEGIN
-	SELECT 'Wrong server' AS 'Error'
-	RETURN
-END
+ 
 
 DECLARE @strLoginName 	VARCHAR(MAX) = ''
 
@@ -17,7 +13,7 @@ INSERT INTO @tmpMember (Name)
 		,('spvn\phillip.truong'), ('spvn\louis.nguyen'), ('spvn\kan.nguyen')
 		,('spvn\razor.nguyen'), ('spvn\alvin.nguyen')
 		,('spvn\jack.nguyen'), ('spvn\issac.le')
-		,('spvn\aiden.nguyen')
+		,('spvn\lucian.vo')
 
 
 -- CREATE LOGIN [spvn\nickname] FROM WINDOWS;  

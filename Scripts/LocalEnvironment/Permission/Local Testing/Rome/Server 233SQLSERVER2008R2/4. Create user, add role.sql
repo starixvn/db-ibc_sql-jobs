@@ -27,7 +27,7 @@ INSERT INTO @tmpMember (Name)
 	VALUES ('spvn\ethan.nguyen'), ('spvn\andy.nguyen'), ('spvn\david.tran')
 		,('spvn\phillip.truong'), ('spvn\kan.nguyen')
 		,('spvn\razor.nguyen'), ('spvn\alvin.nguyen')
-		,('spvn\jack.nguyen'), ('spvn\issac.le'),('spvn\aiden.nguyen')
+		,('spvn\jack.nguyen'), ('spvn\issac.le'),('spvn\lucian.vo')
 
 /*
 	USE DBName
@@ -81,7 +81,7 @@ INSERT INTO @tmpMember (Name)
 	VALUES ('spvn\ethan.nguyen'), ('spvn\andy.nguyen'), ('spvn\david.tran')
 		,('spvn\phillip.truong'), ('spvn\kan.nguyen')
 		,('spvn\razor.nguyen'), ('spvn\alvin.nguyen')
-		,('spvn\jack.nguyen'), ('spvn\issac.le'),('spvn\aiden.nguyen')
+		,('spvn\jack.nguyen'), ('spvn\issac.le'),('spvn\lucian.vo')
 
 UPDATE @tmpMember
 	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
