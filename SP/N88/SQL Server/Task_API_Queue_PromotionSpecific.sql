@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20210112@Percy: Initialize SP [RedmineID: #146759]
 		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
+		- 20230425@Malcolm: Fix missing data [RedmineID: #186979]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -150,7 +151,7 @@ BEGIN
 									ELSE 0 END -- update
 				FROM #tmpPromotionSpecific t
 					LEFT JOIN dbo.PromotionSpecific b WITH (NOLOCK)
-						ON		t.BonusCode		= t.BonusCode
+						ON		t.BonusCode		= b.BonusCode
 							AND t.CurrencyId	= b.CurrencyId
 							AND t.SiteId		= b.SiteId
 				WHERE b.BonusCode IS NULL
@@ -201,7 +202,7 @@ BEGIN
 							,b.VN_AffCodes = t.VN_AffCodes
 						FROM dbo.PromotionSpecific b
 							INNER JOIN #tmpPromotionSpecific t
-								ON		t.BonusCode		= t.BonusCode
+								ON		t.BonusCode		= b.BonusCode
 									AND t.CurrencyId	= b.CurrencyId
 									AND t.SiteId		= b.SiteId
 						WHERE t.DataType = 0
