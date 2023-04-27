@@ -19,6 +19,7 @@ AS
 		- 20200818@Percy: Integrate Fancy Bet [RedmineID: #138524]
 		- 20211004@Sol: LAP - Support IPv6 - [RedmineID: #162342]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20230414@Evan: Update formula agentCommission for new commercial terms [Redmine: #186609]
 
 	Param's Explanation:
 		@QueueID: manually import
@@ -134,9 +135,33 @@ BEGIN
 
 	CREATE TABLE #tempId (Id BIGINT)
 
+
+	CREATE TABLE #LicenseeProductTable (LicenseeId INT, LicenseeName VARCHAR(50), CustID INT, CurrencyId INT)
+
+	INSERT INTO #LicenseeProductTable(LicenseeId, LicenseeName, CustID, CurrencyId)
+	SELECT l.LicenseeId, l.LicenseeName,c.CustID, c.Currency
+	FROM bodb_licensee.dbo.LicenseeCust c WITH(NOLOCK)
+		INNER JOIN	bodb_licensee.dbo.Licensees l WITH(NOLOCK) ON c.LicenseeId = l.LicenseeId
+		INNER JOIN 	bodb_licensee.dbo.LicenseeProduct3rd p WITH(NOLOCK) ON c.LicenseeId = p.LicenseeId
+	WHERE	p.ProductId = 31
+	
+	DECLARE @Party TABLE (PartyId INT)
+	DECLARE @PartyList VARCHAR(4000)
+	
+	INSERT INTO @Party(PartyId)
+	SELECT DISTINCT FromParty
+	FROM bodb_licensee.dbo.OAS_ChargeInfo WITH (NOLOCK)
+	WHERE ProductId = 31
+
+	SELECT @PartyList = COALESCE(@PartyList + ',' + CAST(PartyId AS VARCHAR), CAST(PartyId AS VARCHAR))
+	FROM @Party
+	
+	DECLARE @CutoffDate SMALLDATETIME
+	SET @CutoffDate = '2023-05-01'
+
 	DECLARE @currentTime DATETIME, @statisDate DATETIME, @isInvalidUserId BIT, @isDuplicatedBetId BIT, @winlostdatelist NVARCHAR(MAX)
 	SELECT  @statisDate = '1970-01-01', @isInvalidUserId = 0, @isDuplicatedBetId = 0
-
+	
 	WHILE
 	(
 		@QueueIDInput <> 0
@@ -294,6 +319,29 @@ BEGIN
 						-- Import data
 						IF @JobType IN (1,3)
 						BEGIN
+
+							UPDATE t
+							SET t.agentCommission =CASE WHEN t.settledDate >= @CutoffDate THEN (1 - ISNULL(cc.Rate, ci.DI_Rate)) * t.commission * -1 ELSE t.agentCommission END
+							FROM  #tmpSum_winloss_Exchange t
+								INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
+								INNER JOIN #LicenseeProductTable l ON c.recommend = l.custid AND c.currency = l.currencyid
+								CROSS APPLY(
+									SELECT TOP 1 ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate
+									FROM 
+									(
+										SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate
+										FROM bodb_licensee.dbo.LA_f_ChargeInfo
+										(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
+										WHERE  CONVERT(VARCHAR(10), t.settledDate, 112) BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12)
+										UNION ALL
+										SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate 
+										FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime
+										(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
+										WHERE  CONVERT(VARCHAR(10), t.settledDate, 112) BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12) 
+									) AS x
+								)  ci 
+								LEFT JOIN bodb_Licensee.dbo.LA_ChargeRateByCurrency cc ON cc.ChargeId = ci.ChargeId AND cc.CurrencyID = c.Currency
+
 							MERGE dbo.Sum_winloss_Exchange AS s
 							USING
 								(
@@ -313,15 +361,15 @@ BEGIN
 										t.agentCommission,
 										t.stakeTotal,
 										t.resettledDate,
-										c.CustID,
+										t.CustID,
 										c.Currency,
 										e.ExVirtualRate
 									FROM #tmpSum_winloss_Exchange t
 										INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
 										INNER JOIN bodb02.dbo.Exchange e WITH (NOLOCK) ON c.currency = e.exchangeid
 								)
-							AS src
-								(
+							AS src 
+								( 
 									userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
 									startTime,settledDate,profitLoss,marketTotal,commission,agentCommission,stakeTotal,
 									resettledDate,CustID,Currency,ExVirtualRate
@@ -358,6 +406,9 @@ BEGIN
 								)
 							OUTPUT INSERTED.userId, INSERTED.eventID, INSERTED.marketID, INSERTED.settledDate, INSERTED.stakeTotal, INSERTED.marketTotal
 								INTO @updated_userId (userId, eventId, marketId, SettledDate, stakeTotal, MarketTotal);
+
+						END
+							
 						END
 
 						IF @JobType = 3
@@ -405,7 +456,7 @@ BEGIN
 							WHERE ABS(ISNULL(u.MarketTotal, 0) - ISNULL(b.ProfitLoss, 0)) > 0.01
 								OR ABS(ISNULL(u.stakeTotal, 0) - ISNULL(b.matchStake, 0)) > 0.01
 						END
-					END
+					
 					/* Bettrans_Exchange, BettransM_Exchange */
 					ELSE IF @JobType IN (2)
 					BEGIN

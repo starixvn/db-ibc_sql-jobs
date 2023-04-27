@@ -17,6 +17,7 @@ AS
 	Revisions:
 		- 20190401@Percy: Initialize SP [RedmineID: #110692]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20230414@Evan: Update formula agentCommission for new commercial terms [Redmine: #186609]
 
 	Param's Explanation:
 		@QueueID: manually import
@@ -66,6 +67,34 @@ BEGIN
 
 	DECLARE @currentTime DATETIME, @statisDate DATETIME, @isInvalidUserId BIT
 	SELECT  @statisDate = '1970-01-01', @isInvalidUserId = 0
+
+	CREATE TABLE #LicenseeProductTable (LicenseeId INT, LicenseeName VARCHAR(50), CustID INT, CurrencyId INT)
+
+	INSERT INTO #LicenseeProductTable(LicenseeId, LicenseeName, CustID, CurrencyId)
+	SELECT l.LicenseeId, l.LicenseeName,c.CustID, c.Currency
+	FROM bodb_licensee.dbo.LicenseeCust c WITH(NOLOCK)
+		INNER JOIN	bodb_licensee.dbo.Licensees l WITH(NOLOCK) ON c.LicenseeId = l.LicenseeId
+		INNER JOIN 	bodb_licensee.dbo.LicenseeProduct3rd p WITH(NOLOCK) ON c.LicenseeId = p.LicenseeId
+	WHERE	p.ProductId = 31
+	
+	DECLARE @Party TABLE (PartyId INT)
+	DECLARE @PartyList VARCHAR(4000)
+	
+	DELETE l 
+	FROM #LicenseeProductTable l
+		INNER JOIN DBCUST.CUSTDB.dbo.site s WITH (NOLOCK) ON l.LicenseeName = s.Site 
+	WHERE s.SiteDBGroupID <> 0
+
+	INSERT INTO @Party(PartyId)
+	SELECT DISTINCT FromParty
+	FROM bodb_licensee.dbo.OAS_ChargeInfo WITH (NOLOCK)
+	WHERE ProductId = 31
+
+	SELECT @PartyList = COALESCE(@PartyList + ',' + CAST(PartyId AS VARCHAR), CAST(PartyId AS VARCHAR))
+	FROM @Party
+	
+	DECLARE @CutoffDate SMALLDATETIME
+	SET @CutoffDate = '2023-05-01'
 
 	WHILE
 	(
@@ -149,6 +178,28 @@ BEGIN
 									@ErrMsg = CASE WHEN @isInvalidUserId = 1 THEN 'Wrong format userId' ELSE '' END
 							BREAK
 						END
+
+						UPDATE t
+						SET t.agentCommission =CASE WHEN t.settledDate >= @CutoffDate THEN (1 - ISNULL(cc.Rate, ci.DI_Rate)) * t.commission * -1 ELSE t.agentCommission END
+						FROM  #tmpSum_winloss_Exchange t
+							INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
+							INNER JOIN #LicenseeProductTable l ON c.recommend = l.custid AND c.currency = l.currencyid
+							CROSS APPLY(
+								SELECT TOP 1 ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate
+								FROM 
+								(
+									SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate
+									FROM bodb_licensee.dbo.LA_f_ChargeInfo
+									(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
+									WHERE  t.settledDate BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12)
+									UNION ALL
+									SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate 
+									FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime
+									(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
+									WHERE  t.settledDate BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12) 
+								) AS x
+							)  ci 
+							LEFT JOIN bodb_Licensee.dbo.LA_ChargeRateByCurrency cc ON cc.ChargeId = ci.ChargeId AND cc.CurrencyID = c.Currency
 
 						-- Import data
 						MERGE dbo.Sum_winloss_Exchange_CheckData AS s
