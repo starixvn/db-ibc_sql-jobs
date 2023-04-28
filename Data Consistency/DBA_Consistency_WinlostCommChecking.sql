@@ -94,8 +94,9 @@ BEGIN
 			DECLARE @tmBettypes TABLE (Bettype SMALLINT)
 			INSERT INTO @tmBettypes (Bettype)
 			SELECT	DISTINCT BetType
-			FROM	bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
-			WHERE	ProductID IN (1,3,8,28,40,50,63,38,5,27) --Sportsbook, Number Game, RNG Keno, Lottery, Table Game, Funky Games, Sports Lottery, Virtual Games, Virtual Sports, Virtual Sports 2
+			FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+			WHERE RefTable IN (0,3) --0: bettrans, 3 translog
+				AND IsTest = 0 AND Enabled = 1
 		
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM bodb02.dbo.bettrans b WITH(NOLOCK) 
@@ -105,9 +106,9 @@ BEGIN
 				AND (winlostdate = @Today OR winlostdate = @yesterday)
 				AND 1 = CASE WHEN b.bettype NOT IN (9,29,2799) --Single
 								AND
-									(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.0002 
-									OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.0002
-									OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.0002
+									(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.001 
+									OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.001
+									OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.001
 									) THEN 1
 							WHEN b.bettype IN (9,29,2799) --Parlay
 								AND
@@ -121,7 +122,7 @@ BEGIN
 		BEGIN
 			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 					,@ErrCode = 100
-					,@ErrMsg = CASE WHEN @tablename = 'bettrans' THEN 'Checking data of swinlost, mwinlost, awinlost in settled tickets on table ' + @tablename
+					,@ErrMsg = CASE WHEN @tablename = 'bettrans' THEN 'Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans'
 																 ELSE 'Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table ' + @tablename END
 					,@SampleData =  @tablename + '.TransId in (' + @transId + ')'
 		END
