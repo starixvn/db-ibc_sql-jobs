@@ -60,7 +60,7 @@ VALUES (@ruleId_s41, N'EXEC dbo.DBA_Consistency_WinlostCommChecking @CheckMode =
 SET @taskId_s41 = SCOPE_IDENTITY()
 
 --------- SCHEDULE ---------------
-EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table bettrans'
+EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans'
  ,@TaskId = @taskId_s41
  ,@IsEnable  = 1
  ,@FrequenceType = 4 -- daily = 4, weekly = 8
@@ -77,6 +77,6 @@ EXEC dbo.DBA_Consistency_ScheduleIns @Name = 'Checking data of swinlost, mwinlos
  ,@ErrCode  = @ErrCode OUTPUT
  ,@ErrMsg = @ErrMsg OUTPUT
 
-SELECT 'Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table bettrans' AS RuleChecking, @ErrCode, @ErrMsg
+SELECT 'Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans' AS RuleChecking, @ErrCode, @ErrMsg
 
 

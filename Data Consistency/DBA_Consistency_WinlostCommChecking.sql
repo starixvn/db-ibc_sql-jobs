@@ -16,7 +16,8 @@ AS
 
 	Param's Expanation:
 		Notes: For SAGaming(244), BBIN(241) check data in bettransG
-		@CheckMode =  1: Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table bettransRNG/bettransLC/bettransG/bettrans
+		@CheckMode =  1: Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table bettransRNG/bettransLC/bettransG
+		                 Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans
 				
 */
 BEGIN
@@ -94,7 +95,7 @@ BEGIN
 			INSERT INTO @tmBettypes (Bettype)
 			SELECT	DISTINCT BetType
 			FROM	bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
-			WHERE	ProductID IN (1,3,8) --Sportsbook, Numer Game, Keno
+			WHERE	ProductID IN (1,3,8,28,40,50,63,38,5,27) --Sportsbook, Number Game, RNG Keno, Lottery, Table Game, Funky Games, Sports Lottery, Virtual Games, Virtual Sports, Virtual Sports 2
 		
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM bodb02.dbo.bettrans b WITH(NOLOCK) 
@@ -102,23 +103,17 @@ BEGIN
 			WHERE  b.bettype NOT IN (999) --No ticket bet
 				AND statusid IN (111, 112, 113) --Draw/Won/Lose
 				AND (winlostdate = @Today OR winlostdate = @yesterday)
-				AND 1 = CASE WHEN b.bettype NOT IN (9,29) --Single
+				AND 1 = CASE WHEN b.bettype NOT IN (9,29,2799) --Single
 								AND
 									(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.0002 
 									OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.0002
 									OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.0002
 									) THEN 1
-							WHEN b.bettype IN (9,29) --Parlay
+							WHEN b.bettype IN (9,29,2799) --Parlay
 								AND
 									(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.01 
 									OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.01
 									OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.01
-									) THEN 1
-							WHEN   (
-										statusid IN (112,113) AND (CAST(stake * playerdiscount AS money) <> playercomm)) 
-									OR (statusid IN (112,113) AND (CAST(stake * discount * (1 - apositiontaking) AS money) <> comm)) 
-									OR (statusid IN (112,113) AND (CAST(stake * adiscount * (1 - (mpositiontaking + apositiontaking)) AS money) <> acomm)) 
-									OR (statusid IN (112,113) AND (CAST(stake * sdiscount * (1 - (spositiontaking + mpositiontaking + apositiontaking)) AS money) <> scomm)
 									) THEN 1
 							ELSE 0 END
 		END
@@ -126,7 +121,8 @@ BEGIN
 		BEGIN
 			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 					,@ErrCode = 100
-					,@ErrMsg = 'Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table ' + @tablename
+					,@ErrMsg = CASE WHEN @tablename = 'bettrans' THEN 'Checking data of swinlost, mwinlost, awinlost in settled tickets on table ' + @tablename
+																 ELSE 'Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table ' + @tablename END
 					,@SampleData =  @tablename + '.TransId in (' + @transId + ')'
 		END
 		RETURN;
