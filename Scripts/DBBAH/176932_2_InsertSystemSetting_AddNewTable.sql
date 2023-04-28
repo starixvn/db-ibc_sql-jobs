@@ -21,14 +21,14 @@ BEGIN
 		 , ('BT_SiteDB02_Sync_UAT', '0' )
 		 , ('BT_SiteDB01_InsStatus_UAT', '2' )
 		 , ('BT_SiteDB02_InsStatus_UAT', '2' )
-		 , ('BT_SiteDB01_ServiceStatus_UAT', '0' )
-		 , ('BT_SiteDB02_ServiceStatus_UAT', '0' )
+		 , ('BT_SiteDB01_ServiceStatus_UAT', '1' )
+		 , ('BT_SiteDB02_ServiceStatus_UAT', '1' )
 
 		 , ('BT_SiteDB01_InsStatus', '2' )
 		 , ('BT_SiteDB02_InsStatus', '2' )
 
-		 , ('BT_SiteDB01_ServiceStatus', '1' )
-		 , ('BT_SiteDB02_ServiceStatus', '1' )
+		 , ('BT_SiteDB01_ServiceStatus', '0' )
+		 , ('BT_SiteDB02_ServiceStatus', '0' )
 END
 GO
 
