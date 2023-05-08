@@ -9,7 +9,8 @@ AS
 
 	Revisions:
 		- 20220110@Malcolm: Initialize SP [RedmineID: #182738]
-
+		- 20230505@Evan: Fix get correct CustId with new format [RedmineID: #187829]
+		
 	Param's Explanation:
 	
 */
@@ -44,7 +45,7 @@ BEGIN
 			BREAK
 
 		INSERT INTO #Result (TpSystemUsername, CustId)
-		SELECT Username, CONVERT(INT, REPLACE(username2, @LicenseeName + '$' + @SiteName + '_', ''))
+		SELECT Username, CONVERT(INT, REPLACE(username2,LEFT(username2,LEN(username2) - CHARINDEX('_',REVERSE(username2)) + 1),''))
 		FROM bodb02.dbo.Customer WITH(NOLOCK, INDEX = IX_username2) 
 		WHERE username2 LIKE @LicenseeName + '$' + @SiteName + '[_]%' AND creatdate >= DATEADD(DAY, -2, @CurrentDate)
 
