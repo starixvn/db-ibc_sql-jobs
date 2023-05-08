@@ -21,31 +21,30 @@ BEGIN
 	DECLARE @transId		VARCHAR(MAX)
 			,@Today			SMALLDATETIME
 			,@yesterday		SMALLDATETIME 
-			,@ProductIds	VARCHAR(MAX) =''
 
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
 	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
 
-	CREATE TABLE #tempdata(custid INT, username VARCHAR(50), transid BIGINT, ProductID INT, gameid smallint
+	CREATE TABLE #tempdata(custid INT, username VARCHAR(50), transid BIGINT, ProductID INT, gameid SMALLINT
 		, stake MONEY, actual_stake MONEY
 		, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, spositiontaking SMALLMONEY, tpositiontaking SMALLMONEY
 		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8)
 		, winlost MONEY, awinlost MONEY, mwinlost MONEY, swinlost MONEY, netstake MONEY
 		, playercomm MONEY, comm MONEY, acomm MONEY, scomm MONEY
-		, winlostdate SMALLDATETIME, status VARCHAR(10), issum bit, StatusID tinyint)
+		, winlostdate SMALLDATETIME, status VARCHAR(10), issum BIT, StatusID TINYINT)
 	
 	DECLARE @sourcedata TABLE (custid INT, username VARCHAR(50), matchid INT
-		, bettype smallint, winlostdate SMALLDATETIME, status VARCHAR(10)
+		, bettype SMALLINT, winlostdate SMALLDATETIME, status VARCHAR(10)
 		, turnover MONEY, winlost MONEY, awinlost MONEY, mwinlost MONEY, swinlost MONEY, netstake MONEY
 		, scomm MONEY, acomm MONEY, comm MONEY, playercomm MONEY
 		, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, spositiontaking SMALLMONEY, tpositiontaking SMALLMONEY
 		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8))
 	
-	DECLARE @tmpProductId TABLE (ProductId INT)
+	DECLARE @tmpProductId TABLE (ProductId INT, custid INT, bettype SMALLINT, winlostdate SMALLDATETIME)
 
 	DECLARE @targetdata TABLE (custid INT, username VARCHAR(50), matchid INT
-		, bettype smallint, winlostdate SMALLDATETIME, status VARCHAR(10)
+		, bettype SMALLINT, winlostdate SMALLDATETIME, status VARCHAR(10)
 		, turnover MONEY, winlost MONEY, awinlost MONEY, mwinlost MONEY, swinlost MONEY, netstake MONEY
 		, scomm MONEY, acomm MONEY, comm MONEY, playercomm MONEY
 		, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, spositiontaking SMALLMONEY, tpositiontaking SMALLMONEY
@@ -112,13 +111,14 @@ BEGIN
 	BEGIN
 		DELETE FROM @tmpProductId
 		
-		INSERT INTO @tmpProductId(ProductId)
-		SELECT DISTINCT s.matchid
+		INSERT INTO @tmpProductId(ProductId, custid, bettype, winlostdate)
+		SELECT DISTINCT s.matchid, s.custid, s.bettype,s.winlostdate
 		FROM @sourcedata s
 			FULL OUTER JOIN @targetdata t 
 				ON s.custid = t.custid 
 					AND s.bettype = t.bettype 
 					AND s.winlostdate = t.winlostdate
+					AND s.matchid = t.matchid
 		WHERE ISNULL(s.turnover, 0) <> ISNULL(t.turnover, 0)
 			OR ISNULL(s.winlost, 0) <> ISNULL(t.winlost, 0)
 			OR ISNULL(s.swinlost, 0) <> ISNULL(t.swinlost, 0) 
@@ -143,19 +143,22 @@ BEGIN
 
 			OR ISNULL(s.status, 0) <> ISNULL(t.status, 0)
 
-		SELECT TOP (100) @ProductIds = @ProductIds + ',' + CAST(ProductId AS VARCHAR(50))
-		FROM	@tmpProductId
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM #tempdata tmp
+			INNER JOIN @tmpProductId p ON tmp.ProductID = p.ProductId AND tmp.custid = p.custid AND tmp.winlostdate = p.winlostdate AND tmp.gameid = p.bettype
+		WHERE tmp.issum = 1 
 
-		IF @ProductIds <> ''
+		IF @transId <> ''
 		BEGIN
-			SELECT	 @ProductIds = SUBSTRING(@ProductIds, 2, LEN(@ProductIds) - 1)
+			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 					,@ErrCode = 100
 					,@ErrMsg = 'Check ticket details between bettrans and bettransLC '
-					,@SampleData = 'bettransLC.ProductId in (' + @ProductIds + ')'
+					,@SampleData = 'bettransLC.TransId in (' + @transId + ')'
 		END
 		RETURN;
 		
 	END
+	
 	IF @CheckMode = 2
 	BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
