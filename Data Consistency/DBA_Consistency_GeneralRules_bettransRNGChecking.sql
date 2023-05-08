@@ -71,7 +71,7 @@ BEGIN
 		, playercomm, comm, acomm, scomm
 		, winlostdate, status, issum, StatusID
 		, transdate
-	FROM dbo.bettransRnG WITH (NOLOCK)
+	FROM bodb02.dbo.bettransRnG WITH (NOLOCK)
 	WHERE (winlostdate = @Today OR winlostdate = @yesterday)
 		AND custid <> 0 --exlude orphan ticket
 
@@ -107,7 +107,7 @@ BEGIN
 		, SUM(scomm) AS scomm, SUM(acomm) AS acomm, SUM(comm) AS comm, SUM(playercomm) AS playercomm
 		, AVG(apositiontaking) AS apositiontaking, AVG(mpositiontaking) AS mpositiontaking, AVG(spositiontaking) AS spositiontaking, AVG(tpositiontaking) AS tpositiontaking
 		, AVG(playerdiscount) AS playerdiscount, AVG(discount) AS discount, AVG(adiscount) AS adiscount, AVG(sdiscount) AS sdiscount
-	FROM dbo.bettrans WITH(NOLOCK)
+	FROM bodb02.dbo.bettrans WITH(NOLOCK)
 	WHERE (winlostdate = @Today OR winlostdate = @yesterday)
 		AND statusid NOT IN (0, 1, 131)
 		AND matchid IN ( SELECT ProductId FROM @tmpProductId)
