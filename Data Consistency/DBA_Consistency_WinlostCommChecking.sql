@@ -104,19 +104,12 @@ BEGIN
 			WHERE  b.bettype NOT IN (999) --No ticket bet
 				AND statusid IN (111, 112, 113) --Draw/Won/Lose
 				AND (winlostdate = @Today OR winlostdate = @yesterday)
-				AND 1 = CASE WHEN b.bettype NOT IN (9,29,2799) --Single
-								AND
-									(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.001 
-									OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.001
-									OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.001
-									) THEN 1
-							WHEN b.bettype IN (9,29,2799) --Parlay
-								AND
-									(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.01 
-									OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.01
-									OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.01
-									) THEN 1
-							ELSE 0 END
+				AND
+				(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.01 
+				OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.01
+				OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.01
+				) 
+				
 		END
 		IF @transId <> ''
 		BEGIN
