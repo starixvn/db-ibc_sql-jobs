@@ -16,9 +16,18 @@ GO
 BEGIN
 	SET NOCOUNT ON
 
+
+	----init configuration with Enable UAT and disable PROD, LastRow inserted UAT = lastrow insert PROD
+
+	DECLARE @LastRow_PROD_Site1 VARCHAR(200)
+			,@LastRow_PROD_Site2 VARCHAR(200)
+
+	SELECT @LastRow_PROD_Site1 = VValue FROM dbo.SystemSettings WITH(NOLOCK) WHERE VName = 'BT_SiteDB01_Sync'
+	SELECT @LastRow_PROD_Site2 = VValue FROM dbo.SystemSettings WITH(NOLOCK) WHERE VName = 'BT_SiteDB02_Sync'
+	
 	INSERT INTO bodb02.dbo.SystemSettings ( VName, VValue )
-	VALUES ('BT_SiteDB01_Sync_UAT', '0' )
-		 , ('BT_SiteDB02_Sync_UAT', '0' )
+	VALUES ( @LastRow_PROD_Site1, '0' )
+		 , ( @LastRow_PROD_Site2, '0' )
 		 , ('BT_SiteDB01_InsStatus_UAT', '2' )
 		 , ('BT_SiteDB02_InsStatus_UAT', '2' )
 		 , ('BT_SiteDB01_ServiceStatus_UAT', '1' )
@@ -29,6 +38,8 @@ BEGIN
 
 		 , ('BT_SiteDB01_ServiceStatus', '0' )
 		 , ('BT_SiteDB02_ServiceStatus', '0' )
+	
+
 END
 GO
 
