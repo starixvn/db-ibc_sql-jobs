@@ -26,8 +26,8 @@ BEGIN
 	SELECT @LastRow_PROD_Site2 = VValue FROM dbo.SystemSettings WITH(NOLOCK) WHERE VName = 'BT_SiteDB02_Sync'
 	
 	INSERT INTO bodb02.dbo.SystemSettings ( VName, VValue )
-	VALUES ( @LastRow_PROD_Site1, '0' )
-		 , ( @LastRow_PROD_Site2, '0' )
+	VALUES ('BT_SiteDB01_Sync_UAT', @LastRow_PROD_Site1 )
+		 , ('BT_SiteDB02_Sync_UAT', @LastRow_PROD_Site2 )
 		 , ('BT_SiteDB01_InsStatus_UAT', '2' )
 		 , ('BT_SiteDB02_InsStatus_UAT', '2' )
 		 , ('BT_SiteDB01_ServiceStatus_UAT', '1' )
