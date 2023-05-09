@@ -12,7 +12,8 @@ Revisions:
 	-20180802@Johnson: update ruleid [redmine: #73556]
 	-20201118@Eden: Insert New SettingType = 20, new rules [Redmine: #131370]
 	-20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
-	- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+	-20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
+	-20230306@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 
 Param's Explanation: 
 
@@ -73,7 +74,7 @@ BEGIN
 							AND ps2.BetType = ps.BetType
 							AND ps2.IsHidden = 0 
 					) ProductStatus
-	WHERE SettingType in (2,9,16,20)
+	WHERE SettingType in (2,9,16,20,23)
 		AND SettingStatus = 0
 		AND sportType NOT IN (SELECT sportType FROM dbo.f_GetSportNotOffer(NULL))
 		AND sportType = CASE WHEN @sportType = 0 THEN sportType ELSE @sportType END
@@ -86,11 +87,12 @@ BEGIN
 						WHERE ps2.RealProductId = ps.RealProductId 
 							AND ps2.IsHidden = 0
 					) ProductStatus
-	WHERE SettingType in (2,9,16,20)
+	WHERE SettingType in (2,9,16,20,23)
 		AND SettingStatus = 0
 		AND sportType NOT IN (SELECT sportType FROM dbo.f_GetSportNotOffer(NULL))
 		AND sportType = CASE WHEN @sportType = 0 THEN sportType ELSE @sportType END
-		AND ProductID <> 16
+		AND ProductID <> 16 
+		AND RealProductId <> 3-- Not check for NG, Happy5 (check on other sp)
 	
 	SELECT @Rowcount = count(1)
 	FROM @SportBettypeFilter
