@@ -22,152 +22,61 @@ BEGIN
 	DECLARE @transId		VARCHAR(MAX)
 			,@Today			SMALLDATETIME
 			,@yesterday		SMALLDATETIME 
+			,@ErrorTransIds VARCHAR(MAX) =''
 
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
 	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
 
-	CREATE TABLE #tempdata(custid INT, username VARCHAR(50), transid BIGINT, ProductID INT, gameid SMALLINT
-		, stake MONEY, actual_stake MONEY
-		, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, spositiontaking SMALLMONEY, tpositiontaking SMALLMONEY
-		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8)
-		, winlost MONEY, awinlost MONEY, mwinlost MONEY, swinlost MONEY
-		, playercomm MONEY, comm MONEY, acomm MONEY, scomm MONEY
-		, winlostdate SMALLDATETIME, status VARCHAR(10), issum BIT, StatusID TINYINT
-		, transdate DATETIME
-	)
-	
-	DECLARE @sourcedata TABLE (custid INT, username VARCHAR(50), matchid INT
-		, bettype SMALLINT, winlostdate SMALLDATETIME, status VARCHAR(10)
-		, turnover MONEY, winlost MONEY, awinlost MONEY, mwinlost MONEY, swinlost MONEY
-		, scomm MONEY, acomm MONEY, comm MONEY, playercomm MONEY
-		, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, spositiontaking SMALLMONEY, tpositiontaking SMALLMONEY
-		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8)
-		)
-
-	DECLARE @targetdata TABLE (custid INT, username VARCHAR(50), matchid INT
-		, bettype SMALLINT, winlostdate SMALLDATETIME, status VARCHAR(10)
-		, turnover MONEY, winlost MONEY, awinlost MONEY, mwinlost MONEY, swinlost MONEY
-		, scomm MONEY, acomm MONEY, comm MONEY, playercomm MONEY
-		, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, spositiontaking SMALLMONEY, tpositiontaking SMALLMONEY
-		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8))
-
-	DECLARE @tmpProductId TABLE (ProductId INT, custid INT, bettype SMALLINT, winlostdate SMALLDATETIME)
-
-	INSERT INTO #tempdata (custid, username, transid, ProductID, gameid
-		, stake, actual_stake
-		, apositiontaking, mpositiontaking, spositiontaking, tpositiontaking
-		, playerdiscount, discount, adiscount, sdiscount
-		, winlost, awinlost, mwinlost, swinlost
-		, playercomm, comm, acomm, scomm
-		, winlostdate, status, issum, StatusID
-		, transdate
-	)
-	SELECT custid, username, transid, ProductID, gameid
-		, stake, actual_stake
-		, apositiontaking, mpositiontaking, spositiontaking, tpositiontaking
-		, playerdiscount, discount, adiscount, sdiscount
-		, winlost, awinlost, mwinlost, swinlost
-		, playercomm, comm, acomm, scomm
-		, winlostdate, status, issum, StatusID
-		, transdate
-	FROM bodb02.dbo.bettransRnG WITH (NOLOCK)
-	WHERE (winlostdate = @Today OR winlostdate = @yesterday)
-		AND custid <> 0 --exlude orphan ticket
-
-	INSERT INTO @sourcedata(custid, username, matchid, bettype, winlostdate, status
-		, turnover, winlost, awinlost, swinlost, mwinlost, scomm, acomm, comm, playercomm
-		, apositiontaking, mpositiontaking, spositiontaking, tpositiontaking
-		, playerdiscount, discount, adiscount, sdiscount)
-	SELECT custid, username, productid, gameID, winlostdate
-		, CASE WHEN SUM(winlost-actual_stake) > 0 THEN 'WON'
-			WHEN SUM(winlost-actual_stake) < 0 THEN 'LOSE'
-		 ELSE 'DRAW' END AS STATUS
-		, SUM(stake) AS stake, SUM(winlost - actual_stake) AS winlost, SUM(awinlost) AS awinlost
-		, SUM(swinlost) AS swinlost, SUM(mwinlost) AS mwinlost
-		, SUM(scomm) AS scomm, SUM(acomm) AS acomm, SUM(comm) AS comm, SUM(playercomm) AS playercomm
-		, AVG(apositiontaking) AS apositiontaking, AVG(mpositiontaking) AS mpositiontaking
-		, AVG(spositiontaking) AS spositiontaking, AVG(tpositiontaking) AS tpositiontaking
-		, AVG(playerdiscount) AS playerdiscount, AVG(discount) AS discount, AVG(adiscount) AS adiscount, AVG(sdiscount) AS sdiscount
-	FROM #tempdata
-	WHERE issum = 1
-	GROUP BY custid, username, productid, gameid, winlostdate
-
-	INSERT INTO @tmpProductId (ProductId) 
-	SELECT DISTINCT matchid AS ProductId
-	FROM @sourcedata
-
-	INSERT INTO @targetdata(custid, username, matchid, bettype, winlostdate, status
-		, turnover, winlost, awinlost, swinlost, mwinlost, scomm, acomm, comm, playercomm
-		, apositiontaking, mpositiontaking, spositiontaking, tpositiontaking
-		, playerdiscount, discount, adiscount, sdiscount)
-	SELECT custid, username, matchid, bettype, winlostdate, status
-		, SUM(stake) AS stake, SUM(winlost-actual_stake) AS winlost
-		, SUM(awinlost) AS awinlost, SUM(swinlost) AS swinlost, SUM(mwinlost) AS mwinlost
-		, SUM(scomm) AS scomm, SUM(acomm) AS acomm, SUM(comm) AS comm, SUM(playercomm) AS playercomm
-		, AVG(apositiontaking) AS apositiontaking, AVG(mpositiontaking) AS mpositiontaking, AVG(spositiontaking) AS spositiontaking, AVG(tpositiontaking) AS tpositiontaking
-		, AVG(playerdiscount) AS playerdiscount, AVG(discount) AS discount, AVG(adiscount) AS adiscount, AVG(sdiscount) AS sdiscount
-	FROM bodb02.dbo.bettrans WITH(NOLOCK)
-	WHERE (winlostdate = @Today OR winlostdate = @yesterday)
-		AND statusid NOT IN (0, 1, 131)
-		AND matchid IN ( SELECT ProductId FROM @tmpProductId)
-	GROUP BY custid, username, matchid, bettype, winlostdate, status
-	
 	IF @CheckMode = 1
 	BEGIN
-		DELETE FROM @tmpProductId
+		DECLARE @Retry INT = 1
+		EXEC DBA_Consistency_GeneralRules_TicketDetailChecking
+				 @TableName	    = 'bettransRNG' 
+				,@Today         = @Today
+				,@yesterday     = @yesterday
+				,@ErrorTransIds = @ErrorTransIds OUTPUT
 		
-		INSERT INTO @tmpProductId (ProductId, custid, bettype, winlostdate)
-		SELECT DISTINCT s.matchid, s.custid, s.bettype,s.winlostdate
-		FROM @sourcedata s
-			FULL OUTER JOIN @targetdata t 
-				ON s.custid = t.custid 
-					AND s.bettype = t.bettype 
-					AND s.winlostdate = t.winlostdate
-					AND s.matchid = t.matchid
-		WHERE ISNULL(s.turnover, 0) <> ISNULL(t.turnover, 0)
-			OR ISNULL(s.winlost, 0) <> ISNULL(t.winlost, 0)
-			OR ISNULL(s.swinlost, 0) <> ISNULL(t.swinlost, 0) 
-			OR ISNULL(s.mwinlost, 0) <> ISNULL(t.mwinlost, 0) 
-			OR ISNULL(s.awinlost, 0) <> ISNULL(t.awinlost, 0)
-	
-			OR ISNULL(s.scomm, 0) <> ISNULL(t.scomm, 0) 
-			OR ISNULL(s.acomm, 0) <> ISNULL(t.acomm, 0) 
-			OR ISNULL(s.comm, 0) <> ISNULL(t.comm, 0) 
-			OR ISNULL(s.playercomm, 0) <> ISNULL(t.playercomm, 0)
-
-			OR ISNULL(s.apositiontaking, 0) <> ISNULL(t.apositiontaking, 0)
-			OR ISNULL(s.mpositiontaking, 0) <> ISNULL(t.mpositiontaking, 0)
-			OR ISNULL(s.spositiontaking, 0) <> ISNULL(t.spositiontaking, 0)
-			OR ISNULL(s.tpositiontaking, 0) <> ISNULL(t.tpositiontaking, 0)
-
-			OR ISNULL(s.playerdiscount, 0) <> ISNULL(t.playerdiscount, 0)
-			OR ISNULL(s.discount, 0) <> ISNULL(t.discount, 0)
-			OR ISNULL(s.adiscount, 0) <> ISNULL(t.adiscount, 0)
-			OR ISNULL(s.sdiscount, 0) <> ISNULL(t.sdiscount, 0)
-			OR ISNULL(s.status, 0) <> ISNULL(t.status, 0)
-
-		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-		FROM #tempdata tmp
-			INNER JOIN @tmpProductId p ON tmp.ProductID = p.ProductId AND tmp.custid = p.custid AND tmp.winlostdate = p.winlostdate AND tmp.gameid = p.bettype
-		WHERE tmp.issum = 1 
-
-		IF @transId <> ''
+		IF ISNULL(@ErrorTransIds,'') <> ''
 		BEGIN
-			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-					,@ErrCode = 100
-					,@ErrMsg = 'Check ticket details between bettrans and bettransRNG '
-					,@SampleData = 'bettransRNG.TransId in (' + @transId + ')'
+			SET @transId = @ErrorTransIds
+			SET @ErrorTransIds = ''
+
+			WHILE (1=1)
+			BEGIN
+				Mode1_bettransRNG:
+				EXEC DBA_Consistency_GeneralRules_TicketDetailChecking
+							@TableName	    = 'bettransRNG'
+							,@Today         = @Today
+							,@yesterday     = @yesterday
+							,@transId       = @transId 
+							,@ErrorTransIds = @ErrorTransIds OUTPUT
+			
+				IF ISNULL(@ErrorTransIds, '') <> ''
+				BEGIN
+					IF @Retry < 3
+					BEGIN
+						WAITFOR DELAY '00:02:00:000' --retry after 2 minutes
+						SET @Retry = @Retry + 1
+						GOTO Mode1_bettransRNG;
+					END
+
+					SELECT	 @transId = SUBSTRING(@ErrorTransIds, 2, LEN(@ErrorTransIds) - 1)
+							,@ErrCode = 100
+							,@ErrMsg = 'Check ticket details between bettrans and bettransRNG '
+							,@SampleData = 'bettransRNG.TransId in (' + @transId + ')'
+					RETURN;
+				END
+			END
 		END
-		RETURN;
-		
 	END
 	
 	IF @CheckMode = 2
 	BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-		FROM #tempdata
-		WHERE StatusId NOT IN (0,1)
+		FROM bodb02.dbo.bettransRNG WITH (NOLOCK)
+		WHERE (winlostdate = @Today OR winlostdate = @yesterday)
+			AND StatusId NOT IN (0,1)
 			AND (
 					(winlost > actual_stake AND status <> 'WON')										--Case 2: if winlost - actual_stake > 0 -> status=WON
 				OR	(winlost = actual_stake AND status  NOT IN ('DRAW', 'REFUND', 'VOID', 'REJECT'))	--Case 3: if winlost - actual_stake = 0 -> status=DRAW
