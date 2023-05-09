@@ -13,6 +13,7 @@ AS
 		- 20210419@Winfred: Remove check Gold Deluxe [redmine:#153659]
 		- 20210727@Tina: remove check suspend status [RedmineID: #148600]
 		- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
+		- 20230306@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Developer's Notes:
 		- @Example:			NULL		- Explaination [DEFAULT]
 		
@@ -21,19 +22,6 @@ BEGIN
 	SET NOCOUNT ON;
 
 	EXECUTE dbo.DBA_CheckStatus_Credit @sportType=1, @bettype = 801, @DisableTable = 'CustInfo', @DisableColumnName = 'DisableSuperLive', @HiddenTable='', @HiddenColumnName = '',@SynTable='',@SynColumnName = '';
-	
-	EXECUTE dbo.DBA_CheckStatus_Keno_Credit @Sporttype = 202,@Bettype = 1, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Credit @Sporttype = 202,@Bettype = 3, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Credit @Sporttype = 202,@Bettype = 4, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Credit @Sporttype = 202,@Bettype = 5, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Credit @Sporttype = 202,@Bettype = 8, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Credit @Sporttype = 202,@Bettype = 11, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Credit @Sporttype = 202,@Bettype = 13, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Credit @Sporttype = 202,@Bettype = 14, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Credit @Sporttype = 202,@Bettype = 15, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
-	EXECUTE dbo.DBA_CheckStatus_Keno_Credit @Sporttype = 202,@Bettype = 16, @DisableTable = 'CustGameType', @DisableColumnName = 'IsDisabled';
 
-	EXECUTE dbo.DBA_CheckStatus_Credit @sportType=202, @bettype = 1501, @DisableTable = '', @DisableColumnName = '', @HiddenTable='CustInfo', @HiddenColumnName = 'HideKeno',@SynTable='',@SynColumnName = '';
-	
 END;
 GO
