@@ -1,5 +1,4 @@
 /*<info serverAlias="DBTP-bodb02" executers="" isFunction="0" isNested="1"></info>*/
-
 ALTER PROCEDURE [dbo].[Task_DetectBet_CustMaxBetSettingSel] 
 AS
 /*
@@ -15,6 +14,7 @@ AS
 		- 20230203@Tacy: change SettingStatus=0 -> SettingStatus<>2 [RedmineID: #170739]
 		- 20230302@Tacy: Pragmatic - Change the bet limit setting [RedmineID: #181686]
 		- 20230317@Tacy: Jili - Change the bet limit setting [RedmineID: #182869]
+		- 20230323@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	Param's Explanation:
 */
 BEGIN
@@ -58,6 +58,16 @@ BEGIN
 		,	MaxPerMatch		MONEY
 		,	PRIMARY KEY CLUSTERED (transid)
 	)
+	CREATE TABLE #ProductSettingType(
+		SettingType	tinyint,
+		SettingName	varchar(30)
+	)
+
+	INSERT INTO #ProductSettingType(SettingType,SettingName)
+	SELECT SettingType,SettingName 
+	FROM DBCUST.CUSTDB.dbo.ProductSettingType WITH(NOLOCK) 
+	WHERE SettingName IN('Bet Setting','Stake Level')
+
 
 	DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
 
@@ -111,7 +121,8 @@ BEGIN
 		INNER JOIN ProductSettingDetail ps WITH (NOLOCK)
 				ON ps.SportType=ref.SportTypeRefBetSetting
 				AND ps.BetType=ref.BetTypeRefBetSetting
-	WHERE ps.SettingType IN (2,7,8,9,16,17,20) AND cl.isLicensee=0 AND ps.SettingStatus<>2
+		INNER JOIN #ProductSettingType t ON t.SettingType = ps.SettingType
+	WHERE cl.isLicensee=0 AND ps.SettingStatus<>2
 
 		--NG, Keno:
 	UPDATE cl 
@@ -210,15 +221,6 @@ BEGIN
 																		AND cbs.SportType=cl.SportTypeRef
 																		AND cbs.BetType=cl.BetTypeRef
 					WHERE cl.SportType IN (161,164,168) AND cl.isLicensee=0
-						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
-										WHERE re.transid=cl.transid)
-					UNION	--Keno
-					SELECT cl.custid, cl.transid, cl.SportType, cl.BetType, cgt.MaxBet, cgt.MaxPerGameType
-					FROM #ListTmp cl
-						INNER JOIN CustGameType cgt WITH (NOLOCK) ON cl.custid=cgt.CustID
-																AND cl.GameTypeId=cgt.GameTypeID
-																AND cgt.IsDisabled=0
-					WHERE cl.SportType=202 AND cl.isLicensee=0
 						AND NOT EXISTS (SELECT 1 FROM #returnTbl re 
 										WHERE re.transid=cl.transid)
 				) a
@@ -535,5 +537,6 @@ BEGIN
 	DROP TABLE #ListTmp
 	DROP TABLE #CustList_ChangedSMA
 	DROP TABLE #returnTbl
+	DROP TABLE #ProductSettingType
 END
 GO
