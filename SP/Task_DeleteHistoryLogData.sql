@@ -13,6 +13,8 @@ AS
 		- 20170913@Lukas: extend retention from 300 days to 24 months
 		- 20191002@Elodie: Add more tables of DCS and CN88 that need to delete old data 
 		                   Remove P2PGameSetting_history, P2PGroupComm_history table
+		- 20191219@Lukas: add new table customer_history
+		- 20221123@Elodie: Migrate NG and Keno to DCS structure [Redmine: #179711]
 */
 BEGIN
 	DECLARE @LastKeepDate datetime
@@ -30,31 +32,10 @@ BEGIN
 
 		WAITFOR DELAY '000:00:00.200'
 	END
-
-	WHILE 1=1
-	BEGIN
-		DELETE TOP(1000) FROM dbo.custSetting3rd_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
-	      
-		IF @@ROWCOUNT < 1000
-			BREAK
-
-		WAITFOR DELAY '000:00:00.200'
-	END
-
 	-------------------custOverride_history-------------------
 	WHILE 1=1
 	BEGIN
 		DELETE TOP(1000) FROM dbo.custOverride_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
-	      
-		IF @@ROWCOUNT < 1000
-			BREAK
-
-		WAITFOR DELAY '000:00:00.200'
-	END
-
-	WHILE 1=1
-	BEGIN
-		DELETE TOP(1000) FROM dbo.custOverride3rd_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
 	      
 		IF @@ROWCOUNT < 1000
 			BREAK
@@ -76,6 +57,26 @@ BEGIN
 	WHILE 1=1
 	BEGIN
 		DELETE TOP(1000) FROM dbo.CustBetSetting3rd_Member_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
+	      
+		IF @@ROWCOUNT < 1000
+			BREAK
+
+		WAITFOR DELAY '000:00:00.200'
+	END
+
+	WHILE 1=1
+	BEGIN
+		DELETE TOP(1000) FROM dbo.CustBetSetting_Agent_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
+	      
+		IF @@ROWCOUNT < 1000
+			BREAK
+
+		WAITFOR DELAY '000:00:00.200'
+	END
+
+	WHILE 1=1
+	BEGIN
+		DELETE TOP(1000) FROM dbo.CustBetSetting_Member_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
 	      
 		IF @@ROWCOUNT < 1000
 			BREAK
@@ -207,6 +208,36 @@ BEGIN
 	WHILE 1=1
 	BEGIN
 		DELETE TOP(1000) FROM dbo.Dep_CustBetSetting_Member_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
+	      
+		IF @@ROWCOUNT < 1000
+			BREAK
+
+		WAITFOR DELAY '000:00:00.200'
+	END
+
+	WHILE 1=1
+	BEGIN
+		DELETE TOP(1000) FROM dbo.Dep_CustBetSettingGame_Member_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
+	      
+		IF @@ROWCOUNT < 1000
+			BREAK
+
+		WAITFOR DELAY '000:00:00.200'
+	END
+
+	WHILE 1=1
+	BEGIN
+		DELETE TOP(1000) FROM dbo.Dep_CustBetSettingGame_Agent_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
+	      
+		IF @@ROWCOUNT < 1000
+			BREAK
+
+		WAITFOR DELAY '000:00:00.200'
+	END
+
+	WHILE 1=1
+	BEGIN
+		DELETE TOP(1000) FROM dbo.Dep_CustBetSettingGameGroup_Member_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
 	      
 		IF @@ROWCOUNT < 1000
 			BREAK
@@ -414,48 +445,8 @@ BEGIN
 
 		WAITFOR DELAY '000:00:00.200'
 	END
-
-	-------------------Live Casino setting history-------------------
-	WHILE 1=1
-	BEGIN
-		DELETE TOP(1000) FROM dbo.custsettingGame_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
-	      
-		IF @@ROWCOUNT < 1000
-			BREAK
-
-		WAITFOR DELAY '000:00:00.200'
-	END
-
-	WHILE 1=1
-	BEGIN
-		DELETE TOP(1000) FROM dbo.custoverrideGame_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
-	      
-		IF @@ROWCOUNT < 1000
-			BREAK
-
-		WAITFOR DELAY '000:00:00.200'
-	END
 	
 	-------------------deposit customer setting history-------------------
-	WHILE 1=1
-	BEGIN
-		DELETE TOP(1000) FROM dbo.Dep_custsetting_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
-	      
-		IF @@ROWCOUNT < 1000
-			BREAK
-
-		WAITFOR DELAY '000:00:00.200'
-	END
-
-	WHILE 1=1
-	BEGIN
-		DELETE TOP(1000) FROM dbo.Dep_custsetting3rd_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
-	      
-		IF @@ROWCOUNT < 1000
-			BREAK
-
-		WAITFOR DELAY '000:00:00.200'
-	END
 	WHILE 1=1
 	BEGIN
 		DELETE TOP(1000) FROM dbo.Dep_CustSettingGame_History WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
@@ -465,24 +456,7 @@ BEGIN
 
 		WAITFOR DELAY '000:00:00.200'
 	END
-	WHILE 1=1
-	BEGIN
-		DELETE TOP(1000) FROM dbo.CustGameType_History WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
-	      
-		IF @@ROWCOUNT < 1000
-			BREAK
 
-		WAITFOR DELAY '000:00:00.200'
-	END
-	WHILE 1=1
-	BEGIN
-		DELETE TOP(1000) FROM dbo.CustWinLimit_History WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
-	      
-		IF @@ROWCOUNT < 1000
-			BREAK
-
-		WAITFOR DELAY '000:00:00.200'
-	END
 	WHILE 1=1
 	BEGIN
 		DELETE TOP(1000) FROM dbo.CustVirtualSetting_History WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
@@ -492,6 +466,17 @@ BEGIN
 
 		WAITFOR DELAY '000:00:00.200'
 	END
+	  
+	WHILE 1=1
+    BEGIN
+        DELETE TOP(1000) FROM dbo.customer_history WITH(ROWLOCK,UPDLOCK) where updateTime < @LastKeepDate
+          
+        IF @@ROWCOUNT < 1000
+            BREAK
+
+        WAITFOR DELAY '000:00:00.200'
+    END
+
 	SET NOCOUNT OFF
 
 END
