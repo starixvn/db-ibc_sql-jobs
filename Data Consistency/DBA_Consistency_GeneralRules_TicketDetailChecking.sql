@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_GeneralRules_TicketDetailChecking] 
 	 @TableName		VARCHAR(50) = NULL 
 	,@Today         SMALLDATETIME
@@ -40,12 +40,12 @@ BEGIN
 		, turnover MONEY, winlost MONEY, awinlost MONEY, mwinlost MONEY, swinlost MONEY, netstake MONEY
 		, scomm MONEY, acomm MONEY, comm MONEY, playercomm MONEY
 		, apositiontaking SMALLMONEY, mpositiontaking SMALLMONEY, spositiontaking SMALLMONEY, tpositiontaking SMALLMONEY
-		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8), transId BIGINT
+		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8), transid BIGINT
 	)
  
-	DECLARE @tmpProductId TABLE (ProductId INT, custid INT, bettype SMALLINT, winlostdate SMALLDATETIME, transId BIGINT)
-	
+	DECLARE @tmpProductId TABLE (ProductId INT)
 	CREATE TABLE #tmp_transid (transid BIGINT)
+
 	INSERT INTO #tmp_transid (transid)
 	SELECT DISTINCT value AS transid
 	FROM STRING_SPLIT(@transId, ',')
@@ -72,7 +72,7 @@ BEGIN
 		WHERE (winlostdate = @Today OR winlostdate = @yesterday)
 			AND custid <> 0 --exlude orphan ticket
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
-						 WHEN @transId IS NOT NULL AND transid IN (SELECT TransId FROM #tmp_transid) THEN 1
+						 WHEN @transId IS NOT NULL AND RefNo IN (SELECT transid FROM #tmp_transid) THEN 1
 						 ELSE 0 END
 
 		INSERT INTO @sourcedata(custid, username, matchid, bettype, winlostdate, status
@@ -82,8 +82,8 @@ BEGIN
 		)
 		SELECT custid, username, productid, gameID, winlostdate
 			, CASE WHEN SUM(winlost-actual_stake) > 0 THEN 'WON'
-				WHEN SUM(winlost-actual_stake) < 0 THEN 'LOSE'
-			 ELSE 'DRAW' END AS STATUS
+				   WHEN SUM(winlost-actual_stake) < 0 THEN 'LOSE'
+			       ELSE 'DRAW' END AS STATUS
 			, SUM(stake) AS stake, SUM(winlost - actual_stake) AS winlost, SUM(awinlost) AS awinlost
 			, SUM(swinlost) AS swinlost, SUM(mwinlost) AS mwinlost, SUM(netstake) AS netstake
 			, SUM(scomm) AS scomm, SUM(acomm) AS acomm, SUM(comm) AS comm, SUM(playercomm) AS playercomm
@@ -103,7 +103,7 @@ BEGIN
 			, turnover, winlost, awinlost, swinlost, mwinlost, netstake
 			, scomm, acomm, comm, playercomm
 			, apositiontaking, mpositiontaking, spositiontaking, tpositiontaking
-			, playerdiscount, discount, adiscount, sdiscount, transId
+			, playerdiscount, discount, adiscount, sdiscount, transid
 		)
 		SELECT custid, username, matchid, bettype, winlostdate, status
 			, SUM(stake) AS stake, SUM(winlost-actual_stake) AS winlost
@@ -117,16 +117,16 @@ BEGIN
 			AND statusid NOT IN (0, 1, 131)
 			AND matchid IN ( SELECT ProductId FROM @tmpProductId)
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
-						 WHEN @transId IS NOT NULL AND transid IN (SELECT TransId FROM #tmp_transid) THEN 1
+						 WHEN @transId IS NOT NULL AND transid IN (SELECT transid FROM #tmp_transid) THEN 1
 						 ELSE 0 END
 		GROUP BY custid, username, matchid, bettype, winlostdate, status, transid
 	
-		DELETE FROM @tmpProductId
+		TRUNCATE TABLE #tmp_transid
 		
-		INSERT INTO @tmpProductId(ProductId, custid, bettype, winlostdate, transId)
-		SELECT DISTINCT s.matchid, s.custid, s.bettype, s.winlostdate, s.RefNo
+		INSERT INTO #tmp_transid(transid)
+		SELECT s.RefNo AS transid
 		FROM @sourcedata s
-			FULL OUTER JOIN @targetdata t ON s.RefNo = t.transId
+			FULL OUTER JOIN @targetdata t ON s.RefNo = t.transid
 		WHERE ISNULL(s.turnover, 0) <> ISNULL(t.turnover, 0)
 			OR ISNULL(s.winlost, 0) <> ISNULL(t.winlost, 0)
 			OR ISNULL(s.swinlost, 0) <> ISNULL(t.swinlost, 0) 
@@ -151,11 +151,8 @@ BEGIN
 
 			OR ISNULL(s.status, 0) <> ISNULL(t.status, 0)
 
-			SELECT TOP (100) @ErrorTransIds = @ErrorTransIds + ',' + CAST(tmp.transId AS VARCHAR)
-			FROM #tempdata tmp
-				INNER JOIN @tmpProductId p ON tmp.ProductID = p.ProductId AND tmp.custid = p.custid AND tmp.winlostdate = p.winlostdate AND tmp.gameid = p.bettype AND tmp.transid = p.transId
-			WHERE tmp.issum = 1 
-			
+			SELECT TOP (100) @ErrorTransIds = @ErrorTransIds + ',' + CAST(transid AS VARCHAR)
+			FROM #tmp_transid
 	END
 
 	IF @TableName = 'bettransRNG'
@@ -166,7 +163,7 @@ BEGIN
 		, playerdiscount, discount, adiscount, sdiscount
 		, winlost, awinlost, mwinlost, swinlost
 		, playercomm, comm, acomm, scomm
-		, winlostdate, status, issum, StatusID
+		, winlostdate, status, issum, StatusID, RefNo
 		)
 		SELECT custid, username, transid, ProductID, gameid
 			, stake, actual_stake
@@ -174,18 +171,19 @@ BEGIN
 			, playerdiscount, discount, adiscount, sdiscount
 			, winlost, awinlost, mwinlost, swinlost
 			, playercomm, comm, acomm, scomm
-			, winlostdate, status, issum, StatusID
+			, winlostdate, status, issum, StatusID, RefNo
 		FROM bodb02.dbo.bettransRNG WITH (NOLOCK)
 		WHERE (winlostdate = @Today OR winlostdate = @yesterday)
 			AND custid <> 0 --exlude orphan ticket
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
-						 WHEN @transId IS NOT NULL AND transid IN (SELECT TransId FROM #tmp_transid) THEN 1
+						 WHEN @transId IS NOT NULL AND RefNo IN (SELECT transid FROM #tmp_transid) THEN 1
 						 ELSE 0 END
 
 		INSERT INTO @sourcedata(custid, username, matchid, bettype, winlostdate, status
 			, turnover, winlost, awinlost, swinlost, mwinlost, scomm, acomm, comm, playercomm
 			, apositiontaking, mpositiontaking, spositiontaking, tpositiontaking
-			, playerdiscount, discount, adiscount, sdiscount)
+			, playerdiscount, discount, adiscount, sdiscount, RefNo
+		)
 		SELECT custid, username, productid, gameID, winlostdate
 			, CASE WHEN SUM(winlost-actual_stake) > 0 THEN 'WON'
 				WHEN SUM(winlost-actual_stake) < 0 THEN 'LOSE'
@@ -196,43 +194,43 @@ BEGIN
 			, AVG(apositiontaking) AS apositiontaking, AVG(mpositiontaking) AS mpositiontaking
 			, AVG(spositiontaking) AS spositiontaking, AVG(tpositiontaking) AS tpositiontaking
 			, AVG(playerdiscount) AS playerdiscount, AVG(discount) AS discount, AVG(adiscount) AS adiscount, AVG(sdiscount) AS sdiscount
+			, RefNo
 		FROM #tempdata
 		WHERE issum = 1
-		GROUP BY custid, username, productid, gameid, winlostdate
+		GROUP BY custid, username, productid, gameid, winlostdate, RefNo
 
 		INSERT INTO @tmpProductId (ProductId) 
 		SELECT DISTINCT matchid AS ProductId
 		FROM @sourcedata
 
 		INSERT INTO @targetdata(custid, username, matchid, bettype, winlostdate, status
-			, turnover, winlost, awinlost, swinlost, mwinlost, scomm, acomm, comm, playercomm
+			, turnover, winlost, awinlost, swinlost, mwinlost
+			, scomm, acomm, comm, playercomm
 			, apositiontaking, mpositiontaking, spositiontaking, tpositiontaking
-			, playerdiscount, discount, adiscount, sdiscount)
+			, playerdiscount, discount, adiscount, sdiscount, transid
+		)
 		SELECT custid, username, matchid, bettype, winlostdate, status
 			, SUM(stake) AS stake, SUM(winlost-actual_stake) AS winlost
 			, SUM(awinlost) AS awinlost, SUM(swinlost) AS swinlost, SUM(mwinlost) AS mwinlost
 			, SUM(scomm) AS scomm, SUM(acomm) AS acomm, SUM(comm) AS comm, SUM(playercomm) AS playercomm
 			, AVG(apositiontaking) AS apositiontaking, AVG(mpositiontaking) AS mpositiontaking, AVG(spositiontaking) AS spositiontaking, AVG(tpositiontaking) AS tpositiontaking
 			, AVG(playerdiscount) AS playerdiscount, AVG(discount) AS discount, AVG(adiscount) AS adiscount, AVG(sdiscount) AS sdiscount
+			, transid
 		FROM bodb02.dbo.bettrans WITH(NOLOCK)
 		WHERE (winlostdate = @Today OR winlostdate = @yesterday)
 			AND statusid NOT IN (0, 1, 131)
 			AND matchid IN ( SELECT ProductId FROM @tmpProductId)
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
-						 WHEN @transId IS NOT NULL AND transid IN (SELECT TransId FROM #tmp_transid) THEN 1
+						 WHEN @transId IS NOT NULL AND transid IN (SELECT transid FROM #tmp_transid) THEN 1
 						 ELSE 0 END
-		GROUP BY custid, username, matchid, bettype, winlostdate, status
+		GROUP BY custid, username, matchid, bettype, winlostdate, status, transid
 	
-		DELETE FROM @tmpProductId
+		TRUNCATE TABLE #tmp_transid
 		
-		INSERT INTO @tmpProductId (ProductId, custid, bettype, winlostdate)
-		SELECT DISTINCT s.matchid, s.custid, s.bettype,s.winlostdate
+		INSERT INTO #tmp_transid(transid)
+		SELECT s.RefNo AS transid
 		FROM @sourcedata s
-			FULL OUTER JOIN @targetdata t 
-				ON s.custid = t.custid 
-					AND s.bettype = t.bettype 
-					AND s.winlostdate = t.winlostdate
-					AND s.matchid = t.matchid
+			FULL OUTER JOIN @targetdata t ON s.RefNo = t.transid
 		WHERE ISNULL(s.turnover, 0) <> ISNULL(t.turnover, 0)
 			OR ISNULL(s.winlost, 0) <> ISNULL(t.winlost, 0)
 			OR ISNULL(s.swinlost, 0) <> ISNULL(t.swinlost, 0) 
@@ -255,10 +253,8 @@ BEGIN
 			OR ISNULL(s.sdiscount, 0) <> ISNULL(t.sdiscount, 0)
 			OR ISNULL(s.status, 0) <> ISNULL(t.status, 0)
 
-		SELECT TOP (100) @ErrorTransIds = @ErrorTransIds + ',' + CAST(tmp.transId AS VARCHAR)
-		FROM #tempdata tmp
-			INNER JOIN @tmpProductId p ON tmp.ProductID = p.ProductId AND tmp.custid = p.custid AND tmp.winlostdate = p.winlostdate AND tmp.gameid = p.bettype
-		WHERE tmp.issum = 1 
+		SELECT TOP (100) @ErrorTransIds = @ErrorTransIds + ',' + CAST(transid AS VARCHAR)
+		FROM #tmp_transid
 
 	END
 	
