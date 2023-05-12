@@ -1,15 +1,4 @@
-/*
-	For Nexus team:
-	Affected DB:
-		bodb02
-		bodb_CRM
-		bodb_oddsfeed
-
-	Windows domain account:
-		spvn\quinn.vo
-		spvn\tim.trinh
-		spvn\scofield.huynh
-*/
+ 
 -- Create User
 IF @@SERVERNAME NOT IN ( 'DB215' , 'DB-61\DevDB053' , 'TESTDB053' )
 BEGIN
@@ -19,24 +8,34 @@ BEGIN
 END
 
 DECLARE @strUser	VARCHAR(MAX) = ''
+
+DECLARE @RoleName VARCHAR(50) = 'db_Legion'
+		,@LeaderRoleName VARCHAR(50) = 'db_owner'
+		,@Leader VARCHAR(50) = 'spvn\kos.nguyen'
+
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
 	VALUES ('Affiliate_N88')
 
-DECLARE @tmpMember TABLE (Name VARCHAR(50))
+
+DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\hubert.duong'), ('spvn\steve.nguyen')
-
-/*
-	USE DBName
-	GO 
-	CREATE USER vnXXX FOR LOGIN vnXXX WITH DEFAULT_SCHEMA=[dbo] 
-	GO
-
-	-- Delete user: EXEC sp_dropuser 'spvn\xxx.xxx';
-*/
+	VALUES   ('spvn\kos.nguyen')
+			,('spvn\parsons.nguyen')
+			,('spvn\hubert.duong')		
+			,('spvn\howard.nguyen')		
+			,('spvn\hogan.pham')	 
+			,('spvn\steve.nguyen')		
+			,('spvn\happy.duong')		
+			,('spvn\kai.le')
+			,('spvn\walter.nguyen')
+			,('spvn\cody.nguyen')
+			,('spvn\loki.nguyen')
+    
+UPDATE @tmpMember
+	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
 
 SELECT	@strUser = @strUser 
 					+ 'USE ' + d.DBName + ';'
@@ -59,40 +58,14 @@ FROM	@tmpAffectedDB d
 	
 
 EXEC (@strUser)
-GO
+waitfor delay '00:00:01'
 
 -------------------------------------------
 -------------------------------------------
 -- Add Role for member
+ SET  @strUser   = ''
 
-IF @@SERVERNAME NOT IN ( 'DB215' , 'DB-61\DevDB053' , 'TESTDB053' )
-BEGIN
-	SELECT 'Must be run on DB215' AS 'Error'
-
-	RETURN
-END
-DECLARE @strUser VARCHAR(MAX) = ''
-		,@RoleName VARCHAR(50) = 'db_Legion'
-		,@LeaderRoleName VARCHAR(50) = 'db_owner'
-		,@Leader VARCHAR(50) = 'spvn\quinn.vo'
-
-DECLARE @tmpMember TABLE (Name VARCHAR(50), RoleName VARCHAR(50))
-DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
-
-INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('Affiliate_N88')
-
-INSERT INTO @tmpMember (Name) 
-	VALUES ('spvn\hubert.duong'), ('spvn\steve.nguyen')
-
-UPDATE @tmpMember
-	SET RoleName = CASE WHEN Name = @Leader THEN @LeaderRoleName ELSE @RoleName	END
-/*
-	USE DBName
-	GO
-	EXEC sp_AddRoleMember 'db_xxx', 'vnxxx'
-	GO
-*/
+ 
 SELECT	@strUser = @strUser
 					+ 'USE ' + d.DBName + ';'
 					+ CHAR(13)

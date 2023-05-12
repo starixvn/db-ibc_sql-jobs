@@ -1,11 +1,6 @@
 USE [master]
 GO
-/*	Windows domain account:
-	spvn\quinn.vo
-	spvn\tim.trinh
-	spvn\scofield.huynh
-*/
-
+ 
 -- Grant permisison Profiler for login
 
 IF @@SERVERNAME NOT in ('DB215','TESTDB053')
@@ -20,14 +15,17 @@ DECLARE @strLoginName VARCHAR(MAX) = ''
 DECLARE @tmpMember TABLE (Name VARCHAR(50))
 
 INSERT INTO @tmpMember (Name) 
-	VALUES    ('spvn\kos.nguyen')
+	VALUES   ('spvn\kos.nguyen')
 			,('spvn\parsons.nguyen')
 			,('spvn\hubert.duong')		
 			,('spvn\howard.nguyen')		
 			,('spvn\hogan.pham')	 
 			,('spvn\steve.nguyen')		
-			,('spvn\happy.duong')	
+			,('spvn\happy.duong')		
 			,('spvn\kai.le')
+			,('spvn\walter.nguyen')
+			,('spvn\cody.nguyen')
+			,('spvn\loki.nguyen')
 
 SELECT @strLoginName = @strLoginName + 'GRANT ALTER TRACE TO ' + '[' + Name + ']' + CHAR(13)
 FROM	@tmpMember

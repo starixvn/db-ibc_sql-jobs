@@ -1,11 +1,4 @@
-/*
-	For Nexus team:
-	Affected DB:
-		bodb02
-		bodb_CRM
-		bodb_oddsfeed
-
-*/
+ 
 -- Create Role
 IF @@SERVERNAME NOT IN ( 'DB215' , 'DB-61\DevDB053' , 'TESTDB053' )
 BEGIN
@@ -20,7 +13,24 @@ DECLARE @RoleName VARCHAR(50) = 'db_Legion'
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-		VALUES ('Affiliate_N88'), ('bodb_LicenseeReport')
+		VALUES ('Affiliate_N88')
+		,('bodb_LicenseeReport')
+		,('bodb_OIC')
+		,('Affiliate_MacauBet')
+		,('Affiliate_Athena000')
+		,('Affiliate_12BET')
+		,('bodbo2')
+		,('bodb_CRM')
+		,('bodb_Account')
+		,('bodb_3rdProduct')
+		,('bodb_LicenseeReport')
+		,('bodb_LicenseeReportArchive')
+		,('bodb_NAPLOG')
+		,('bodb_oddsfeed')
+		,('bodb_PlaytechCS')
+		,('Affiliate_Spondemo')
+		,('bodb_N88Log') 
+		,('bodb_N88') 
 
 SELECT @strRole = @strRole + ' '
 					 + 'USE ' + DBName + ';'
@@ -50,7 +60,24 @@ DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('Affiliate_N88'), ('bodb_LicenseeReport')
+	VALUES  ('Affiliate_N88')
+		,('bodb_LicenseeReport')
+		,('bodb_OIC')
+		,('Affiliate_MacauBet')
+		,('Affiliate_Athena000')
+		,('Affiliate_12BET')
+		,('bodbo2')
+		,('bodb_CRM')
+		,('bodb_Account')
+		,('bodb_3rdProduct')
+		,('bodb_LicenseeReport')
+		,('bodb_LicenseeReportArchive')
+		,('bodb_NAPLOG')
+		,('bodb_oddsfeed')
+		,('bodb_PlaytechCS')
+		,('Affiliate_Spondemo')
+		,('bodb_N88Log') 
+		,('bodb_N88') 
 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')
