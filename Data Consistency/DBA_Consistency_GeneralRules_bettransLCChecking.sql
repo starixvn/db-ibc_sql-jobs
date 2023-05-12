@@ -64,7 +64,7 @@ BEGIN
 					SELECT	 @transId = SUBSTRING(@ErrorTransIds, 2, LEN(@ErrorTransIds) - 1)
 							,@ErrCode = 100
 							,@ErrMsg = 'Check ticket details between bettrans and bettransLC '
-							,@SampleData = 'bettransLC.TransId in (' + @transId + ')'
+							,@SampleData = 'bettransLC.Refno in (' + @transId + ')'
 					RETURN;
 				END
 			END
@@ -76,7 +76,8 @@ BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 		FROM bodb02.dbo.bettransLC WITH (NOLOCK)
 		WHERE (winlostdate = @Today OR winlostdate = @yesterday)
-		AND StatusId NOT IN (0,1)
+			AND StatusId NOT IN (0,1)
+			AND custid <> 0
 			AND (
 					(winlost > actual_stake AND status <> 'WON')										--Case 2: if winlost - actual_stake > 0 -> Issue: Status should be WON
 				OR	(winlost = actual_stake AND status  NOT IN ('DRAW', 'REFUND', 'VOID', 'REJECT'))	--Case 3: if winlost - actual_stake = 0 -> Issue: Status should be DRAW/REFUND/VOID/REJECT
