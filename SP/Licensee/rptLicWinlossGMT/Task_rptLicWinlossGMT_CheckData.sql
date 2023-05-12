@@ -38,6 +38,7 @@ AS
 		- 20220211@Kos: Integrate Cricket phase 2 [RedmineID: #168034]
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220708@Hogan: Support add new betfrom '}' [RedmineID: #174895]
+		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
 
 	EXEC Task_rptLicWinlossGMT_CheckData '2017-11-30'
 */
@@ -77,7 +78,7 @@ BEGIN
 		StatusID SMALLINT,
 		IsBA BIT,
 		IsMobile BIT,
-		Betfrom NVARCHAR(1) 
+		Betfrom NVARCHAR(4) 
 	);
 
 	CREATE TABLE #Target
@@ -104,7 +105,7 @@ BEGIN
 		StatusID SMALLINT,
 		IsBA BIT,
 		IsMobile BIT,
-		Betfrom NVARCHAR(1) 
+		Betfrom NVARCHAR(4) 
 	);
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date

@@ -20,6 +20,7 @@ AS
 		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - classify data between SiteDB & CentralDB [Redmine: #175297]
 		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
 		- 20230414@Evan: Update formula agentCommission for new commercial terms [Redmine: #186609]
+		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -175,7 +176,7 @@ BEGIN
 	DECLARE @FinalData TABLE (TransId BIGINT, CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
 			, StatusId TINYINT, Status VARCHAR(10), apositiontaking MONEY, awinlost MONEY, RefNo BIGINT, actualrate FLOAT
 			, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50)
-			, PlayerComm MONEY, Comm MONEY, betfrom NVARCHAR(1))
+			, PlayerComm MONEY, Comm MONEY, betfrom NVARCHAR(4))
 
 	WHILE EXISTS (SELECT 1 FROM @LicenseeTable WHERE RowId = @RowId)
 	BEGIN

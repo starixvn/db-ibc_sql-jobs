@@ -13,6 +13,7 @@ AS
 	Revisions: 
 		- 20171213@Sophia: Integrate CitiBet Exchange Products [Redmine: #86640]
 		- 20180223@Sophia: Change betform = 'd' for Exchange [Redmine: #91014]
+		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -110,7 +111,7 @@ BEGIN
 
 	DECLARE @FinalData TABLE (CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
 		, StatusId TINYINT, Status VARCHAR(10), apositiontaking MONEY, awinlost MONEY, RefNo BIGINT, actualrate FLOAT
-		, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50), PlayerComm MONEY, Comm MONEY, Betfrom NVARCHAR(1))
+		, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50), PlayerComm MONEY, Comm MONEY, Betfrom NVARCHAR(4))
 
 	WHILE EXISTS (SELECT 1 FROM @LicenseeTable WHERE RowId = @RowId)
 	BEGIN
