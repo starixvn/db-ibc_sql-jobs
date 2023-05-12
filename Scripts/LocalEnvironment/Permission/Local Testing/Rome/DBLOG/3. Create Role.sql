@@ -17,7 +17,7 @@ DECLARE @RoleName VARCHAR(50) = 'db_Rome'
 DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-		VALUES ('bodb02'), ('bodb_CustomerLog')
+		VALUES ('bodb02'), ('bodb_CustomerLog'),('bodb_CustomerLog_archive')
 
 SELECT @strRole = @strRole + ' '
 					 + 'USE ' + DBName + ';'
@@ -47,7 +47,7 @@ DECLARE @tmpAffectedDB TABLE (DBName VARCHAR(50))
 DECLARE @tmpPermission TABLE (PermissionName VARCHAR(50))
 
 INSERT INTO @tmpAffectedDB (DBName)
-	VALUES ('bodb02'),('bodb_CustomerLog')
+	VALUES ('bodb02'),('bodb_CustomerLog'),('bodb_CustomerLog_archive')
 
 INSERT INTO @tmpPermission (PermissionName)
 	VALUES ('VIEW DEFINITION'),('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('EXECUTE')
