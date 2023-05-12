@@ -25,6 +25,7 @@ AS
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221003@Elodie: Only check setting for product already released production [Redmine: #178617]
+		- 20230511@Eden: Ignore check missing sport setting if hidden [Redmine: #179711]
 
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
@@ -310,7 +311,8 @@ BEGIN
 	CREATE TABLE #ProductSetting(
 		[SportType] [smallint] NOT NULL,
 		[BetType] [smallint] NOT NULL,
-		[IsLive] [bit] NOT NULL
+		[IsLive] [bit] NOT NULL,
+		[BitmapOrder] [TINYINT] 
 	)
 	CREATE TABLE #OfferedProductList(
 		[ProductID] [tinyint] NOT NULL,
@@ -355,7 +357,15 @@ BEGIN
 		INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
 	WHERE op.IsHidden = 0 AND SettingType IN (1 ,18)
 		AND ps.SettingStatus = 0
-	-- End of DATA PREPARATION				
+	-- End of DATA PREPARATION			
+	
+	UPDATE t
+	SET t.BitmapOrder = pl.bitmapOrder
+	FROM #ProductSetting t
+		INNER JOIN CheckCustDB.dbo.ProductStatusProfile pl WITH(NOLOCK) 
+			ON pl.sporttype = t.sporttype 
+			AND pl.bettype = t.bettype
+
 	
 	-- Starting check PT Rule
 	---- Count PT setting rows
@@ -450,30 +460,38 @@ BEGIN
 	INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
 	SELECT	42 AS ruleid, ds.bettype, ds.sporttype, cs.CustID, cs.CustID, 0, 0, 0
 	FROM	#MemberMissSetting cs
-		CROSS APPLY (SELECT sporttype, bettype, IsLive FROM #ProductSetting) ds
+		CROSS APPLY (SELECT sporttype, bettype, IsLive,BitmapOrder FROM #ProductSetting) ds
+		INNER JOIN CheckCustDB.dbo.CustProductStatus cps WITH(NOLOCK) ON cs.custid = cps.CustID 
 	WHERE NOT EXISTS (SELECT 1 FROM #MemberPT WHERE CustID = cs.CustID AND sporttype = ds.sporttype AND bettype = ds.bettype)
 		AND NOT EXISTS (SELECT 1 FROM #MemberPT_NotSynced WHERE CustID = cs.CustID AND sporttype = ds.sporttype AND bettype = ds.bettype)
+		AND CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsHidden,ds.bitmapOrder) = 0 
 
 	INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
 	SELECT	42 AS ruleid, ds.bettype, ds.sporttype, cs.CustID, cs.CustID, 0, 0, 0
 	FROM	#AgentMissSetting cs
-		CROSS APPLY (SELECT sporttype, bettype, IsLive FROM #ProductSetting) ds
+		CROSS APPLY (SELECT sporttype, bettype, IsLive,BitmapOrder FROM #ProductSetting) ds
+		INNER JOIN CheckCustDB.dbo.CustProductStatus cps WITH(NOLOCK) ON cs.custid = cps.CustID  
 	WHERE NOT EXISTS (SELECT 1 FROM #AgentPT WHERE CustID = cs.CustID AND sporttype = ds.sporttype AND bettype = ds.bettype)
 		AND NOT EXISTS (SELECT 1 FROM #AgentPT_NotSynced WHERE CustID = cs.CustID AND sporttype = ds.sporttype AND bettype = ds.bettype)
+		AND CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsHidden,ds.bitmapOrder) = 0 
 
 	INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
 	SELECT	42 AS ruleid, ds.bettype, ds.sporttype, cs.CustID, cs.CustID, 0, 0, 0
 	FROM	#MasterMissSetting cs
-		CROSS APPLY (SELECT sporttype, bettype, IsLive FROM #ProductSetting) ds
+		CROSS APPLY (SELECT sporttype, bettype, IsLive,BitmapOrder FROM #ProductSetting) ds
+		INNER JOIN CheckCustDB.dbo.CustProductStatus cps WITH(NOLOCK) ON cs.custid = cps.CustID  
 	WHERE NOT EXISTS (SELECT 1 FROM #MasterPT WHERE CustID = cs.CustID AND sporttype = ds.sporttype AND bettype = ds.bettype)
 		AND NOT EXISTS (SELECT 1 FROM #MasterPT_NotSynced WHERE CustID = cs.CustID AND sporttype = ds.sporttype AND bettype = ds.bettype)
+		AND CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsHidden,ds.bitmapOrder) = 0 
 
 	INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive) 
 	SELECT	42 AS ruleid, ds.bettype, ds.sporttype, cs.CustID, cs.CustID, 0, 0, 0
 	FROM	#SuperMissSetting cs
-		CROSS APPLY (SELECT sporttype, bettype, IsLive FROM #ProductSetting) ds
+		CROSS APPLY (SELECT sporttype, bettype, IsLive,BitmapOrder FROM #ProductSetting) ds
+		INNER JOIN CheckCustDB.dbo.CustProductStatus cps WITH(NOLOCK) ON cs.custid = cps.CustID 
 	WHERE NOT EXISTS (SELECT 1 FROM #SuperPT WHERE CustID = cs.CustID AND sporttype = ds.sporttype AND bettype = ds.bettype)
 		AND NOT EXISTS (SELECT 1 FROM #SuperPT_NotSynced WHERE CustID = cs.CustID AND sporttype = ds.sporttype AND bettype = ds.bettype)
+		AND CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsHidden,ds.bitmapOrder) = 0 
 
 	---- 1. S1 < 0 OR M1 < 0 OR A1 < 0  
 	IF @RuleId IN (0,1)  

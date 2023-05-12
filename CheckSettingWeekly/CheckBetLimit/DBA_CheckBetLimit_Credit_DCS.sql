@@ -14,6 +14,7 @@ Revisions:
 	-20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
 	-20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	-20230306@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
+	-20230511@Eden: Ignore check missing sport setting if hidden [Redmine: #179711]
 
 Param's Explanation: 
 
@@ -31,7 +32,7 @@ BEGIN
 	CREATE TABLE #OfferedProductList(ProductID [tinyint],[SportType] [smallint] ,[BetType] [smallint], IsHidden BIT,RealProductID TINYINT)
 	CREATE TABLE #GlobalSetting([SportType] [smallint] ,[BetType] [smallint], Maxbet [MONEY], Minbet [MONEY])
 	
-	DECLARE @SportBettypeFilter TABLE(SportType INT, Bettype INT, SettingType SMALLINT)
+	DECLARE @SportBettypeFilter TABLE(SportType INT, Bettype INT, SettingType SMALLINT, BitmapOrder TINYINT)
 	DECLARE @currency INT,@Site VARCHAR(10), @SiteID INT, @Rowcount INT
 	DECLARE @GlobalMaxBet money
 	
@@ -93,6 +94,14 @@ BEGIN
 		AND sportType = CASE WHEN @sportType = 0 THEN sportType ELSE @sportType END
 		AND ProductID <> 16 
 		AND RealProductId <> 3-- Not check for NG, Happy5 (check on other sp)
+
+	UPDATE t
+	SET t.BitmapOrder = pl.bitmapOrder
+	FROM @SportBettypeFilter t
+		INNER JOIN CheckCustDB.dbo.ProductStatusProfile pl WITH(NOLOCK) 
+			ON pl.sporttype = t.sporttype 
+			AND pl.bettype = t.bettype
+
 	
 	SELECT @Rowcount = count(1)
 	FROM @SportBettypeFilter
@@ -161,6 +170,7 @@ BEGIN
 		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
 			INNER JOIN CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS JOIN @SportBettypeFilter AS T3
+			INNER JOIN CheckCustDB.dbo.CustProductStatus cps WITH(NOLOCK) ON ci.custid = cps.CustID
 		WHERE CI.custid NOT IN (SELECT custID FROM #DCS_Super T5 WHERE T5.SportType = T3.SportType AND T5.BetType = T3.BetType)
 			AND NOT EXISTS (SELECT 1 FROM CheckCustDB.dbo.CustBetSetting3rd_Agent T4 WITH (NOLOCK) WHERE T4.custid = CI.CustID AND T4.SportType = T3.SportType AND T4.BetType = T3.BetType)
 			AND CI.roleid = 4
@@ -168,6 +178,7 @@ BEGIN
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)
+			AND CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsHidden,T3.bitmapOrder) = 0 
 				
 		UNION ALL	
 		
@@ -175,6 +186,7 @@ BEGIN
 		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
 			INNER JOIN CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS JOIN @SportBettypeFilter AS T3
+			INNER JOIN CheckCustDB.dbo.CustProductStatus cps WITH(NOLOCK) ON ci.custid = cps.CustID
 		WHERE CI.custid NOT IN (SELECT custID FROM #DCS_Master T5 WHERE T5.SportType = T3.SportType AND T5.BetType = T3.BetType)
 			AND NOT EXISTS (SELECT 1 FROM CheckCustDB.dbo.CustBetSetting3rd_Agent T4 WITH (NOLOCK) WHERE T4.custid = CI.CustID AND T4.SportType = T3.SportType AND T4.BetType = T3.BetType)		
 			AND CI.roleid = 3
@@ -182,6 +194,7 @@ BEGIN
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)
+			AND CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsHidden,T3.bitmapOrder) = 0 
 		
 		UNION ALL	
 		
@@ -189,6 +202,7 @@ BEGIN
 		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
 			INNER JOIN CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS JOIN @SportBettypeFilter AS T3
+			INNER JOIN CheckCustDB.dbo.CustProductStatus cps WITH(NOLOCK) ON ci.custid = cps.CustID
 		WHERE CI.custid NOT IN (SELECT custID FROM #DCS_Agent T5 WHERE T5.SportType = T3.SportType AND T5.BetType = T3.BetType)
 			AND NOT EXISTS (SELECT 1 FROM CheckCustDB.dbo.CustBetSetting3rd_Agent T4 WITH (NOLOCK) WHERE T4.custid = CI.CustID AND T4.SportType = T3.SportType AND T4.BetType = T3.BetType)		
 			AND CI.roleid = 2
@@ -196,6 +210,7 @@ BEGIN
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)
+			AND CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsHidden,T3.bitmapOrder) = 0 
 		
 		UNION ALL	
 		
@@ -203,12 +218,14 @@ BEGIN
 		FROM CheckCustDB.dbo.custInfo CI WITH (NOLOCK)
 			INNER JOIN CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 			CROSS JOIN @SportBettypeFilter AS T3
+			INNER JOIN CheckCustDB.dbo.CustProductStatus cps WITH(NOLOCK) ON ci.custid = cps.CustID
 		WHERE NOT EXISTS (SELECT 1 FROM CheckCustDB.dbo.CustBetSetting3rd_Member T4 WITH (NOLOCK) WHERE T4.custid = CI.CustID AND T4.SportType = T3.SportType AND T4.BetType = T3.BetType)		
 			AND CI.roleid = 1
 			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
 			AND ci.srecommend = @srecommend
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)
+			AND CheckCustDB.dbo.f_GetProductStatus (cps.bitmapIsHidden,T3.bitmapOrder) = 0 
 		
 							
 	END
