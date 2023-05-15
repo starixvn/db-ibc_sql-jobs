@@ -12,17 +12,10 @@
 USE bodb02
 GO
 
----- for release Production
 BEGIN
 	SET NOCOUNT ON
 
-	----1. Turn off UAT flag
-
-	UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
-	SET VValue = '0'
-	WHERE VName  IN ('BT_SiteDB01_ServiceStatus_UAT', 'BT_SiteDB02_ServiceStatus_UAT') 
-
-	----2. Turn on PRO flag
+	----Turn on PRO flag
 
 	UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
 	SET VValue = '1'
