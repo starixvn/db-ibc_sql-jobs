@@ -28,12 +28,7 @@ BEGIN
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
 	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
-	
-	
-	)
-	)
-	)
-	)
+
 	IF @CheckMode = 1
 	BEGIN
 		DECLARE @Retry INT = 1
@@ -106,8 +101,8 @@ BEGIN
 	IF @CheckMode = 3
 	BEGIN
 		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-		FROM	#tempdata b WITH (NOLOCK)
-		WHERE	b.IsSum = 0
+		FROM	bodb02.dbo.bettransLC b WITH (NOLOCK)
+		WHERE	b.IsSum = 0 AND b.custid <> 0
 			  AND DATEDIFF(MINUTE,b.transdate,@Today) > 15
 			  AND b.statusID IN (111,112,113) --Draw,won,lose
 			  AND b.winlostdate = @yesterday

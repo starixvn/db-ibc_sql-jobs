@@ -18,6 +18,7 @@ AS
 		Notes: For SAGaming(244), BBIN(241) check data in bettransG
 		@CheckMode =  1: Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table bettransRNG/bettransLC/bettransG
 		                 Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans
+				   =  2: Check actual_stake, winlost, playercomm NULL on table bettrans/bettransRNG/bettransLC
 */
 BEGIN
 	SET NOCOUNT ON
