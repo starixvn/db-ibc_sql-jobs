@@ -96,7 +96,10 @@ BEGIN
 		END
 		ELSE IF @TableName = 'rptLicenseeWinloss'
 		BEGIN
-			EXEC [dbo].[Task_rptLicenseeWinloss_Bettrans14] @winlostdate = @winlostdate, @isCheckDataOnly=0
+			EXEC [dbo].[Task_rptLicenseeWinloss_Bettrans14] @winlostdate = @winlostdate, @isCheckDataOnly=0;
+			
+			---REORGANIZE if ANY
+			EXEC [dbo].[Task_Maintainance_LicenseeReport_Update] @TableName = @TableName
 		END
 	END
 END

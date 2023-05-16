@@ -31,8 +31,8 @@ BEGIN
 		INNER JOIN sys.column_store_row_groups rg ON rg.object_id = p.object_id AND rg.index_id = p.index_id AND rg.partition_number = p.partition_number
 	WHERE (@TableName IS NULL OR OBJECT_NAME(i.object_id) = @TableName)
 		AND 1 = CASE 
-					WHEN @Action='REORGANIZE' AND rg.delta_store_hobt_id > 0 THEN 1
-					WHEN @Action='REBUILD' AND rg.deleted_rows > 0 THEN 1
+					WHEN @Action='REORGANIZE' AND (rg.delta_store_hobt_id > 0 OR rg.deleted_rows > 0) THEN 1
+					WHEN @Action='REBUILD' THEN 1
 					ELSE 0
 				END
 
@@ -54,7 +54,7 @@ BEGIN
 
 		SELECT @cmdRun = t.Command
 		FROM (
-			SELECT 'REBUILD', CONCAT('ALTER INDEX ', @index_name, ' ON ',SCHEMA_NAME(@schema_id),'.', @table_name, ' REBUILD PARTITION=', @partition_number, ' WITH(ONLINE = ON);')
+			SELECT 'REBUILD', CONCAT('ALTER INDEX ', @index_name, ' ON ',SCHEMA_NAME(@schema_id),'.', @table_name, ' REBUILD PARTITION=', @partition_number-1, ' WITH(ONLINE = ON);')
 			UNION ALL
 			SELECT 'REORGANIZE', CONCAT('ALTER INDEX ', @index_name, ' ON ',SCHEMA_NAME(@schema_id),'.', @table_name, ' REORGANIZE PARTITION=', @partition_number, ' WITH(COMPRESS_ALL_ROW_GROUPS = ON);')
 		) AS t (ActionRun, Command)
