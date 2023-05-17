@@ -40,7 +40,7 @@ BEGIN
 											  END
 	SET @Sql = '
 	select '+@VNameLastRow + ',  '+ @VNameStatus +'
-	from ( select VName, VValue FROM bodb02.dbo.SystemSettings WITH (NOLOCK) ) s
+	from ( select VName, VValue FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName LIKE ''%BT_Site%'' ) s
 	PIVOT (
 			MAX(vvalue) FOR vname in ([' + @VNameLastRow +'],[' + @VNameStatus +'])
 		  ) pv'
