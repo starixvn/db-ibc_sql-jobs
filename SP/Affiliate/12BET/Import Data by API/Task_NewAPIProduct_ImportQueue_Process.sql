@@ -14,6 +14,7 @@ AS
 
 	Revisions:
 		- 20221117@Malcolm: Initialize SP [RedmineID: #180311]
+		- 20230510@Eddie: Change datatype of 'TransactionId' and change 'TransactionId' to lowercase of products different from 'skywind'   [RedmineID: #180311]
 */
 
 BEGIN
@@ -70,7 +71,7 @@ BEGIN
 				,IsHedgebet				BIT
 				,ThirdPartyId			INT
 				,TransactionbDatetime	DATETIME
-				,TransactionId			VARCHAR(50)
+				,TransactionId			VARCHAR(50) COLLATE SQL_Latin1_General_CP1_CS_AS
 				,Username				VARCHAR(50)
 				,ValidBet				MONEY
 				,Win					MONEY
@@ -100,7 +101,7 @@ BEGIN
 					,d.IsHedgebet
 					,d.ThirdPartyId
 					,d.TransactionbDatetime
-					,d.TransactionId
+					,CASE WHEN @TpType = 17 THEN d.TransactionId ELSE LOWER(d.TransactionId) END AS TransactionId -- @TpType = 17: 12Sapphire Skywind
 					,d.Username
 					,d.ValidBet
 					,d.Win
