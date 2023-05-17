@@ -9,15 +9,15 @@ AS
     Revisions:
 		- 20220912@Helen: scaleout project [176932]
 		- 20220928@July: scaleout project - Balance record [176932]
-
+		- 20220130@Louisa: Remove @VName [Redmine:#176932]
 */
 BEGIN
 	
 	SET NOCOUNT ON
 	
-	EXEC dbo.SiteDBBalanceTrigger_CleanUp @SiteDBAlias ='DBSIG01', @VName = 'BT_SiteDB01_Sync'
+	EXEC dbo.SiteDBBalanceTrigger_CleanUp @SiteDBAlias ='DBSIG01'
 
-	EXEC dbo.SiteDBBalanceTrigger_CleanUp @SiteDBAlias ='DBSIG02', @VName = 'BT_SiteDB02_Sync'
+	EXEC dbo.SiteDBBalanceTrigger_CleanUp @SiteDBAlias ='DBSIG02'
 
 END
 

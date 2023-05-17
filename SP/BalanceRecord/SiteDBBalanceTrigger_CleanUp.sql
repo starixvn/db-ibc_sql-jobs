@@ -2,7 +2,6 @@
 ALTER PROCEDURE [dbo].[SiteDBBalanceTrigger_CleanUp]
 (
 	 @SiteDBAlias VARCHAR(100) = NULL
-	,@VName VARCHAR(100) = NULL
 )
 
 AS
@@ -13,6 +12,7 @@ AS
     Revisions:
 		- 20220928@July: scaleout project - Balance record [176932]
 		- 20221110@July: Scale out DBTrans - Enhance Job clean BalanceTrigger [180331]
+		- 20220130@Louisa: Phase 2 - use Web Service to pull ticket from SiteDB to DB05/DB05BK1 [Redmine:#176932]
 		
 */
 BEGIN
@@ -29,15 +29,25 @@ BEGIN
 	END
 
 	DECLARE @MaxID BIGINT = 0 
-	SET @MaxID = (SELECT CONVERT(BIGINT,VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = @VName/*'BT_SiteDB01_Sync'*/)
+			,@IsTestUAT VARCHAR(1)
+			,@sqlCMD NVARCHAR(MAX)
+			,@LinkedAlias VARCHAR(100)='DB05'
+			,@MaxID_DB05 BIGINT 
 
-	DECLARE @sqlCMD NVARCHAR(MAX), @LinkedAlias VARCHAR(100)='DB05', @MaxID_DB05 BIGINT 
+	SELECT @IsTestUAT =  (SELECT vvalue FROM SystemSettings WITH(NOLOCK) WHERE VName = 'BT_SiteDB' + RIGHT(@SiteDBAlias, 2) +'_ServiceStatus_UAT')
 
-	SET @sqlCMD = N'\
-	SELECT @MaxID_DB05 = CONVERT(BIGINT,VValue)
+	SELECT @MaxID = MIN( CAST (VValue AS BIGINT ) )
+					FROM bodb02.dbo.SystemSettings WITH (NOLOCK)
+					WHERE VName =  'BT_SiteDB' + RIGHT(@SiteDBAlias, 2) +'_Sync'
+						OR  (Vname = 'BT_SiteDB' + RIGHT(@SiteDBAlias, 2) +'_Sync_UAT' and @IsTestUAT   ='1')
+
+	SET @sqlCMD = '\
+	SELECT @MaxID_DB05 = MIN(CAST (VValue AS BIGINT ) )
 	FROM OPENQUERY('+@LinkedAlias+', ''\
 	SELECT VValue
-	FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = '''''+@VName+ '''''\
+	FROM bodb02.dbo.SystemSettings WITH (NOLOCK)\
+	WHERE VName =  ''''BT_SiteDB'''' + RIGHT('''''+@SiteDBAlias+''''', 2) +''''_Sync''''\
+						OR  (Vname = ''''BT_SiteDB'''' + RIGHT('''''+@SiteDBAlias+''''', 2) +''''_Sync_UAT'''' and ''''' +@IsTestUAT + '''''  =''''1'''')\
 	'')';
 	
 	BEGIN TRY
