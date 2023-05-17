@@ -5,7 +5,7 @@
     DB: DBBAH/bodb02
    
     Revisions:
-		- 20220130@Louisa: Turn on UAT flag [Redmine:#176932]
+		- 20220130@Louisa: Turn off flag [Redmine:#176932]
 
 */
 
@@ -15,10 +15,12 @@ GO
 BEGIN
 	SET NOCOUNT ON
 
-	----1. Turn on UAT flag
-
 	UPDATE dbo.SystemSettings WITH(ROWLOCK, UPDLOCK)
-	SET VValue = '1'
-	WHERE VName  IN ('BT_SiteDB01_ServiceStatus_UAT', 'BT_SiteDB02_ServiceStatus_UAT')  
+	SET VValue = '0'
+	WHERE VName  IN (	 'BT_SiteDB01_ServiceStatus_UAT'
+						,'BT_SiteDB02_ServiceStatus_UAT'
+						,'BT_SiteDB01_ServiceStatus'
+						,'BT_SiteDB02_ServiceStatus'
+					)  
 
 END
