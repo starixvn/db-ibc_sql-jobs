@@ -16,6 +16,7 @@ AS
 		- 20230317@Tacy: Jili - Change the bet limit setting [RedmineID: #182869]
 		- 20230323@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 		- 20230405@Tacy: MG-RNG - Change the bet limit setting [RedmineID: #186033]
+		- 20230419@Tacy: SEAL - Change the bet limit setting [RedmineID: #186524]
 
 	Param's Explanation:
 */
@@ -111,7 +112,7 @@ BEGIN
 	UPDATE cl 
 	SET	  cl.SportTypeRef=ref.SportTypeRefBetSetting
 		, cl.BetTypeRef=ref.BetTypeRefBetSetting
-		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237,158,248,155) --VGaming, SABA.Games, MaxGame, Jili, PP, MG-RnG
+		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237,158,248,155,156) --VGaming, SABA.Games, MaxGame, Jili, PP, MG-RnG,SEAL
 						THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
 		, cl.SettingType=ps.SettingType
 	FROM #ListTmp cl
