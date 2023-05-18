@@ -32,6 +32,7 @@ AS
 	 - 20220329@Danny: Intergrate Guaranteed Gaming [#167626]
 	 - 20221018@Danny: Integrate MG-RNG (ProductID = 73) [#176986]
 	 - 20230214@Danny: Integrate Jili (ProductID = 75) [#183766]
+	 - 20230518@Danny: Integrate YeeBet (ProductID = 76) [#187948]
 	 Param's Explanation:
 */
 
@@ -54,7 +55,7 @@ BEGIN
 	DECLARE @LCBettypeList TABLE(Bettype INT)
 	INSERT INTO @LCBettypeList(Bettype)
 	SELECT	DISTINCT bettype
-	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'AB,SXG,SAG,WM,PPL,FGGL') la
+	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'AB,SXG,SAG,WM,PPL,FGGL,YB') la
 
 	WHILE (@Winlostdate <= @Todate)
 	BEGIN
