@@ -49,8 +49,8 @@ BEGIN
 
 	SELECT @StatusID			= 1
 		, @IsArchivingBetName	= 'isArchivingBet_Local'
-		, @StartMovingName		= 'StartMoving_Local'
-		, @EndMovingName		= 'EndMoving_Local'
+		, @StartMovingName		= 'StartBalanceUp_Local'
+		, @EndMovingName		= 'EndBalanceUp_Local'
 		, @CheckTime			= GETDATE()
 		, @CheckDate			= CAST(@CheckTime AS DATE)
 		, @NextBUDate			= DATEADD(DD, 7, @OldBUDate)
@@ -58,18 +58,20 @@ BEGIN
 		, @WeekdayRunBU			= DATEPART(WEEKDAY, @BUDate) - 1 -- current is 5-Thurday
 		, @diffDayWithBUDate	= DATEDIFF(DD, @BUDate, @CheckDate)
 	
-	SELECT @StartMovingTime		= CASE 
+	SELECT @IsArchivingBetValue	=  CASE 
+								WHEN VName = @IsArchivingBetName THEN CAST(VValue AS INT) ELSE @IsArchivingBetValue END
+		, @StartMovingTime		= CASE 
 								WHEN VName = @StartMovingName THEN CAST(VValue AS DATETIME) ELSE @StartMovingTime END
 		, @EndMovingTime		= CASE 
 								WHEN VName = @EndMovingName THEN CAST(VValue AS DATETIME) ELSE @EndMovingTime END
-	FROM dbo.SystemSettings WITH (NOLOCK)
-	WHERE VName IN (@StartMovingName, @EndMovingName)
+	FROM dbo.MBUSettings WITH (NOLOCK)
+	WHERE VName IN (@StartMovingName, @EndMovingName, @IsArchivingBetName)
 	
 	SELECT @IsArchivingBetValue = CAST(VValue AS INT) FROM dbo.MBUSettings WITH (NOLOCK) WHERE VName = @IsArchivingBetName
 
 	--- SET BU status
 	
-SELECT @StatusID = CASE 
+	SELECT @StatusID = CASE 
 					WHEN @CheckWeekday <> @WeekdayRunBU THEN  -- NOT BU day
 						CASE 
 							WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @BUDate THEN 1 -- BU is running after @WeekdayRunBU
