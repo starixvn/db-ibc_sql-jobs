@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20200512@Percy: Initialize SP [RedmineID: #130275]
 		- 20201214@Danny: Separate Data of Virtual Soccer & Virtual Basketball [RedmineID: #145926]
+		- 20230530@Cherry: Void tickets in bettrans14 (#188647)
 */
 
 BEGIN
@@ -22,6 +23,16 @@ BEGIN
 	DECLARE @MBSchedule TABLE (Id TINYINT, winlostdate SMALLDATETIME)
 	INSERT INTO @MBSchedule (Id, winlostdate)
 	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+
+	DECLARE @tmpDate SMALLDATETIME, @MinDate SMALLDATETIME
+	SELECT @MinDate = MIN(winlostdate) FROM @MBSchedule
+	SELECT @tmpDate = DATEADD(DAY, -1, @MinDate)
+
+	WHILE @tmpDate >= DATEADD(DAY, -5, @MinDate)
+	BEGIN
+		INSERT INTO @MBSchedule (winlostdate) SELECT @tmpDate
+		SELECT @tmpDate = DATEADD(DAY, -1, @tmpDate)
+	END
 
 	-- rmBettrans_Old
 	BEGIN
