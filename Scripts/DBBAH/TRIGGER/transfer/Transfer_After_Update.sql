@@ -10,6 +10,8 @@ AS
 	Revision:
 		- 20220104@Kathy: init SP [Redmine:#162264]
 		- 20221110@Max: [LAP] Detail transaction_Display Different Balance Amount of Deposit & Withdrawal [Redmine: #180295]
+		- 20230517@July: Support void tickets 14 - If bettype 19999 update BalanceChanged = 0 [Redmine: #188152]
+		
 */
 
 BEGIN
@@ -54,8 +56,10 @@ BEGIN
 			ELSE ' Updated, ' + CAST(d.[StatusId] AS varchar(50)) + ' to ' + CAST(i.[StatusId] AS varchar(50))
 		END
 		--[Action]--^^^	
- 		, (isnull(i.winlost,0) - ISNULL(i.actual_stake, 0) + ISNULL(i.playercomm,0))
-			- (ISNULL(d.winlost,0) - ISNULL(d.actual_stake, 0) + ISNULL(d.playercomm,0))
+ 		, CASE WHEN i.bettype = 19999 THEN 0
+			   ELSE (isnull(i.winlost,0) - ISNULL(i.actual_stake, 0) + ISNULL(i.playercomm,0))
+				- (ISNULL(d.winlost,0) - ISNULL(d.actual_stake, 0) + ISNULL(d.playercomm,0))
+			END
 		,0 --i.matchid
 		,isnull(i.statusID,0)
 		,0 -- SettlementType
