@@ -27,7 +27,7 @@ FROM BalanceRecord_diff_SiteDB2_tmp WITH (NOLOCK)
 
 SELECT @@ROWCOUNT AS [custid_Count]
 
--- delete data [dbo].[BalanceTrigger_ProcessData] for customers will process to insert balancerecord for credit
+-- check data [dbo].[BalanceTrigger_ProcessData] until it's no data
 SELECT TOP 1 1
 FROM BalanceTrigger_ProcessData b WITH (NOLOCK)
 	INNER JOIN #temp_MemberInput m ON b.custid = m.custid
@@ -99,7 +99,10 @@ BEGIN
 	SET @xml = CONVERT(XML, @CustidBalanceList)
 	
 	-- insert db05bk1 first
-	EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList @CustidBalanceList	
+	INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
+	SELECT	t.c.value('@c','int') AS custid, 0, 0, 0, 0, 0, 0, t.c.value('@b','MONEY') AS balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
+	FROM @xml.nodes('root/r') t(c)
+	OPTION (OPTIMIZE FOR (@xml = NULL))	
 
 	-- insert db05
 	EXECUTE	sys.sp_executesql @ExecuteSQL_balance, N'@query_balance NVARCHAR(MAX), @CustidBalanceList VARCHAR(MAX)', @query_balance, @CustidBalanceList
