@@ -24,13 +24,22 @@ BEGIN
 	INSERT INTO @MBSchedule (Id, winlostdate)
 	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
 
-	DECLARE @tmpDate SMALLDATETIME, @MinDate SMALLDATETIME
-	SELECT @MinDate = MIN(winlostdate) FROM @MBSchedule
-	SELECT @tmpDate = DATEADD(DAY, -1, @MinDate)
+	DECLARE @info table (BU SMALLDATETIME, MB SMALLDATETIME)
+    INSERT INTO @info (BU, MB)
+	EXEC DBACC.bodb02.dbo.Age_SelBalanceUpDay
 
-	WHILE @tmpDate >= DATEADD(DAY, -5, @MinDate)
+    DECLARE @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME
+    SELECT @MoveBetsDay = MB, @BalanceUpDay = BU			
+	FROM @info
+
+	DECLARE @tmpDate SMALLDATETIME
+	SELECT @tmpDate = DATEADD(DAY, -1, @MoveBetsDay)
+
+	WHILE @tmpDate >= DATEADD(DAY, -5, @MoveBetsDay) AND @tmpDate > @BalanceUpDay
 	BEGIN
-		INSERT INTO @MBSchedule (winlostdate) SELECT @tmpDate
+		INSERT INTO @MBSchedule (winlostdate) 
+		SELECT @tmpDate WHERE @tmpDate NOT IN (SELECT winlostdate FROM @MBSchedule)
+
 		SELECT @tmpDate = DATEADD(DAY, -1, @tmpDate)
 	END
 

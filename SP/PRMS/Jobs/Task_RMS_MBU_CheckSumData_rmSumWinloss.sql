@@ -17,6 +17,7 @@ AS
 		- 20200203@Danny: Separate Data GOF for deposit [RedmineID: #149966]
 		- 20220519@Danny: add column LiveIndicator [RedmineID: #172691]
 		- 20220917@Sophia: Fix Divide by Zero [Redmine: #177934]
+		- 20230530@Cherry: Void tickets in bettrans14 (#188647)
 */
 
 BEGIN
@@ -112,7 +113,6 @@ BEGIN
 			CASE WHEN b.bettype = 29 THEN b.livehomescore ELSE b.liveindicator END liveindicator
 		FROM dbo.rmBettrans_old b WITH (NOLOCK)
 		WHERE b.winlostdate = @winlostdate
-			AND b.statusID IN (111, 112, 113)
 		GROUP BY
 			b.winlostdate
 			,b.custid

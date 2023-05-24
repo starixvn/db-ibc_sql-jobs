@@ -9,6 +9,7 @@ AS
 	Revisions:   
 		- 20201221@danny: create SP  [RedmineID: #145926]
 		- 20210604@Danny: Add New League Group for Saba Sports [RedmineID: #156453]
+		- 20230530@Cherry: Void tickets in bettrans14 (#188647)
 		
 */
 
@@ -21,7 +22,6 @@ SELECT refNo
 FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)
 WHERE b.winlostdate = @__winlostdate
 	AND b.bettype = 29
-	AND b.statusID IN (111, 112, 113)
 
 SELECT bm.refno, m.sporttype
 	, CASE WHEN l.LeagueGroupID IN (42, 74, 108) THEN 1 ELSE -1 END Saba

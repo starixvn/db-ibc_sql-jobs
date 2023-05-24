@@ -16,6 +16,7 @@ AS
 		- 20210604@Danny: Add New League Group for Saba Sports [RedmineID: #156453]
 		- 20211001@Danny: Change dataType to support IPv6 [RedmineID: #162348]
 		- 20230328@Cherry: Change Betfrom Data Length (#185896)
+		- 20230530@Cherry: Void tickets in bettrans14 (#188647)
 
 */
 
@@ -46,7 +47,6 @@ BEGIN
 				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
 			WHERE b.winlostdate = @winlostdate
 				AND b.bettype = 29
-				AND b.statusID IN (111, 112, 113)
 
 			-- bettransm14
 			INSERT INTO #sporttype (refno, sporttype, Saba, odds, stake, matchid)
@@ -57,7 +57,6 @@ BEGIN
 				INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
 			WHERE b.winlostdate = @winlostdate
 				AND b.bettype = 29
-				AND b.statusID IN (111, 112, 113)
 
 			-- bettransm bk
 
@@ -161,7 +160,6 @@ BEGIN
 		FROM bodb02.dbo.bettrans14 WITH (NOLOCK)
 		WHERE winlostdate = @winlostdate
 				AND bettype IN (29, 38, 376)
-				AND statusID IN (111, 112, 113)
 		
 		-- Update some columns for bettype = 38
 		IF EXISTS (SELECT 1 FROM dbo.rmBettrans WITH (NOLOCK) WHERE bettype = 38)
