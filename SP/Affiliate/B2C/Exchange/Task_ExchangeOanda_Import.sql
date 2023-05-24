@@ -11,6 +11,7 @@ AS
 		- 20200220@Percy: Initialize SP [RedmineID: #128775]
 		- 20210317@Percy: Keep Exchange data last day of month [RedmineID: #151391]
 		- 20220110@Percy: Get current date by timezone [RedmineID: #167244]
+		- 20230522@Sally: Import TpExchange data from bodb_N88.dbo.TpExchange [RedmineID: #188429]
 */
 
 BEGIN
@@ -21,48 +22,83 @@ BEGIN
 
 	IF DATEDIFF(HOUR, @LastImportedTime, GETDATE()) < 6
 		RETURN
+	------1. Get ExchangeOanda from bodb02.dbo.ExchangeDailyOanda
+	BEGIN
+		DECLARE @TimeZone INT
+		SELECT  @TimeZone = CONVERT(INT, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
 
-	DECLARE @TimeZone INT
-	SELECT  @TimeZone = CONVERT(INT, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
-
-	DECLARE @CurrentDate SMALLDATETIME = CONVERT(DATE, DATEADD(HOUR, 4 + @TimeZone, GETDATE()))
-	DECLARE @CurrentMonth SMALLDATETIME = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @CurrentDate) + 1, 0))
-	DECLARE @FromMonth SMALLDATETIME
+		DECLARE @CurrentDate SMALLDATETIME = CONVERT(DATE, DATEADD(HOUR, 4 + @TimeZone, GETDATE()))
+		DECLARE @CurrentMonth SMALLDATETIME = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @CurrentDate) + 1, 0))
+		DECLARE @FromMonth SMALLDATETIME
 	
-	IF DAY(@LastImportedTime) < 5
-		SELECT @FromMonth = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @LastImportedTime), 0))
-	ELSE
-		SELECT @FromMonth = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @LastImportedTime) + 1, 0))
+		IF DAY(@LastImportedTime) < 5
+			SELECT @FromMonth = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @LastImportedTime), 0))
+		ELSE
+			SELECT @FromMonth = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @LastImportedTime) + 1, 0))
 	
-	DECLARE @tblExchange TABLE (ExchangeDate SMALLDATETIME, ExchangeId INT, Code VARCHAR(5), ActualRate FLOAT, VND FLOAT, EUR FLOAT, USD FLOAT, CNY FLOAT, MYR FLOAT, THB FLOAT, IDR FLOAT)
-	;WITH CTE_MonthDate AS
-	(
-		SELECT @FromMonth AS MonthDate
-		UNION ALL
-		SELECT DATEADD(DAY, -1, DATEADD(MONTH, 1, DATEADD(DAY, 1, MonthDate)))
-		FROM CTE_MonthDate
-		WHERE MonthDate < @CurrentMonth
-	)
-	INSERT INTO @tblExchange (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
-	SELECT e.ExchangeDate, e.ExchangeId, e.Code, e.ActualRate, e.VND, e.EUR, e.USD, e.CNY, e.MYR, e.THB, e.IDR
-	FROM bodb02.dbo.ExchangeDailyOanda e WITH (NOLOCK)
-		INNER JOIN CTE_MonthDate m ON e.ExchangeDate = m.MonthDate
-
-	IF NOT EXISTS (SELECT 1 FROM @tblExchange WHERE ExchangeDate = @CurrentMonth)
+		DECLARE @tblExchange TABLE (ExchangeDate SMALLDATETIME, ExchangeId INT, Code VARCHAR(5), ActualRate FLOAT, VND FLOAT, EUR FLOAT, USD FLOAT, CNY FLOAT, MYR FLOAT, THB FLOAT, IDR FLOAT)
+		;WITH CTE_MonthDate AS
+		(
+			SELECT @FromMonth AS MonthDate
+			UNION ALL
+			SELECT DATEADD(DAY, -1, DATEADD(MONTH, 1, DATEADD(DAY, 1, MonthDate)))
+			FROM CTE_MonthDate
+			WHERE MonthDate < @CurrentMonth
+		)
 		INSERT INTO @tblExchange (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
-		SELECT @CurrentMonth, e.ExchangeId, e.Code, e.ActualRate, e.VND, e.EUR, e.USD, e.CNY, e.MYR, e.THB, e.IDR
+		SELECT e.ExchangeDate, e.ExchangeId, e.Code, e.ActualRate, e.VND, e.EUR, e.USD, e.CNY, e.MYR, e.THB, e.IDR
 		FROM bodb02.dbo.ExchangeDailyOanda e WITH (NOLOCK)
-		WHERE e.ExchangeDate = @CurrentDate
+			INNER JOIN CTE_MonthDate m ON e.ExchangeDate = m.MonthDate
 
-	DELETE dbo.ExchangeOanda WITH (ROWLOCK, UPDLOCK)
-	WHERE ExchangeDate >= @FromMonth
+		IF NOT EXISTS (SELECT 1 FROM @tblExchange WHERE ExchangeDate = @CurrentMonth)
+			INSERT INTO @tblExchange (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
+			SELECT @CurrentMonth, e.ExchangeId, e.Code, e.ActualRate, e.VND, e.EUR, e.USD, e.CNY, e.MYR, e.THB, e.IDR
+			FROM bodb02.dbo.ExchangeDailyOanda e WITH (NOLOCK)
+			WHERE e.ExchangeDate = @CurrentDate
 
-	INSERT INTO dbo.ExchangeOanda (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
-	SELECT ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR FROM @tblExchange
+		DELETE dbo.ExchangeOanda WITH (ROWLOCK, UPDLOCK)
+		WHERE ExchangeDate >= @FromMonth
 
-	-- Update SystemSettings
-	UPDATE dbo.SystemSettings WITH (ROWLOCK)
-	SET SValue = CONVERT(VARCHAR(20), GETDATE(), 120)
-	WHERE SName = 'LastImportedTime_ExchangeOanda'
+		INSERT INTO dbo.ExchangeOanda (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
+		SELECT ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR FROM @tblExchange
+
+		-- Update SystemSettings
+		UPDATE dbo.SystemSettings WITH (ROWLOCK)
+		SET SValue = CONVERT(VARCHAR(20), GETDATE(), 120)
+		WHERE SName = 'LastImportedTime_ExchangeOanda'
+	END 
+	------2. Get TpExchange from bodb_N88.dbo.TpExchange
+	BEGIN
+		DECLARE @tbTpExchange TABLE (TpExchangeId INT, ExchangeId INT, ModifiedType TINYINT )
+		INSERT INTO @tbTpExchange(TpExchangeId,ExchangeId,ModifiedType )
+		SELECT e.TpExchangeId
+			,e.ExchangeId
+			,CASE WHEN e.TpExchangeId IS NULL THEN -1 -- delete
+				  WHEN t.TpExchangeId IS NULL THEN 1 -- insert
+			 END AS ModifiedType 
+		FROM bodb_N88.dbo.TpExchange e WITH (NOLOCK)
+			FULL OUTER JOIN dbo.TpExchange t WITH (NOLOCK) ON e.ExchangeId = t.ExchangeId 
+															AND e.TpExchangeId = t.TpExchangeId
+		--Delete
+		IF EXISTS (SELECT 1 FROM @tbTpExchange WHERE ModifiedType = -1)
+		BEGIN
+			DELETE t WITH (ROWLOCK, UPDLOCK)
+			FROM dbo.TpExchange t
+				INNER JOIN @tbTpExchange e ON e.ExchangeId = t.ExchangeId 
+											AND e.TpExchangeId = t.TpExchangeId
+			WHERE e.ModifiedType = -1
+
+			DELETE @tbTpExchange WHERE ModifiedType = -1
+
+		END
+		--Insert
+		IF EXISTS (SELECT 1 FROM @tbTpExchange WHERE ModifiedType = 1)
+		BEGIN
+			DELETE @tbTpExchange
+			OUTPUT  deleted.TpExchangeId,deleted.ExchangeId
+			INTO dbo.TpExchange(TpExchangeId,ExchangeId)
+			WHERE ModifiedType = 1
+		END 
+	END
 END
 GO
