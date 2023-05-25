@@ -9,6 +9,9 @@ AS
 	Task: init data for sitedb1,2 due to trigger insert on bettransRnG not captured data[Redmine:#179058]
 	DB:DBBAH/bodb02
 
+	Revisions:
+		20230522@Louisa: get code from 179058 [Redmine: #188569]
+
 */
 BEGIN
 	
