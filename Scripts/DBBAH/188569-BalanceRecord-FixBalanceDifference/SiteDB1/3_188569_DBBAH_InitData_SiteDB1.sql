@@ -182,11 +182,6 @@ GO
 			END CATCH
 		END
 
-		WAITFOR DELAY '00:00:00.020' --optional
-
-		SET @StartRow = @StopRow + 1
-		SET @StopRow = @StopRow + @batch
-
 		IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= @DuringTime
 		BEGIN
 			INSERT INTO BalanceRecord_Config_tmp  (SiteDBGroupID , OrderNo, LastID, StartRow, EndRow)
@@ -195,6 +190,9 @@ GO
 
 			BREAK
 		END
+
+		SET @StartRow = @StopRow + 1
+		SET @StopRow = @StopRow + @batch
 
 		SELECT  @loop_cnt += 1
 
