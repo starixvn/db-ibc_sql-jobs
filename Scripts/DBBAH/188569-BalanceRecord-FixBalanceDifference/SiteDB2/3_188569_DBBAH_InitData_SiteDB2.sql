@@ -39,24 +39,24 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order1 WITH (NOLOCK)
-		WHERE CustId > @LastCustId
-			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(@strCustList, ','))
+		WHERE CustId > ISNULL(@LastCustId,0)
+			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 	END
 	IF @Order = 5
 	BEGIN
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order5 WITH (NOLOCK)
-		WHERE CustId > @LastCustId
-			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(@strCustList, ','))
+		WHERE CustId > ISNULL(@LastCustId,0)
+			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 	END
 	IF @Order = 6
 	BEGIN
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order6 WITH (NOLOCK)
-		WHERE CustId > @LastCustId
-			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(@strCustList, ','))
+		WHERE CustId > ISNULL(@LastCustId,0)
+			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 	END
 
 	SELECT count(1) AS [custid_Count] FROM #temp_MemberInput
