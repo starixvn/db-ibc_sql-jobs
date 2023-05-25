@@ -4,7 +4,6 @@
 	Task: Detail Transaction - Re-init balance for the rest of licensees [Redmine: #188569]
 	DB:DBBAH/bodb02
 
-	Run DB05BK1 ONLY
 */
 
 USE bodb02
@@ -19,11 +18,15 @@ GO
 
 		CREATE CLUSTERED INDEX [IX_BalanceRecord_SiteName_tmp_Site] ON [dbo].[BalanceRecord_SiteName_tmp]
 		(
-			Site ASC
+			Site
 		)
 
 	END
 
+	IF NOT EXISTS ( select top 1 1 from sys.objects where name = 'BalanceRecord_Config_tmp' )
+	BEGIN
+		CREATE TABLE BalanceRecord_Config_tmp  (SiteDBGroupID SMALLINT , OrderNo TINYINT, LastID INT, StartRow INT, EndRow INT)
+	END
 
 	INSERT INTO BalanceRecord_SiteName_tmp (Site , SiteDBGroupID , OrderNo)
 	VALUES	 ('Pay4d'		,1 , 2 )

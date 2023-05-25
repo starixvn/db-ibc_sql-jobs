@@ -26,34 +26,34 @@ GO
 
 	--------------DECLARE temporary tables ------------------
 	CREATE TABLE #temp_MemberInput(
-		ID INT IDENTITY (1,1) PRIMARY KEY,
+		ID INT PRIMARY KEY,
 		custid INT
 	)
 
-	CREATE TABLE #tempMember (custid INT PRIMARY KEY)
+	CREATE TABLE #tempMember (ID INT, custid INT PRIMARY KEY)
 
 
 	-------------- GET members needs to process ------------------
 	IF @Order = 1
 	BEGIN
-		INSERT INTO #temp_MemberInput (custid)
-		SELECT CustId
+		INSERT INTO #temp_MemberInput (ID, custid)
+		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order1 WITH (NOLOCK)
 		WHERE CustId > @LastCustId
 			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(@strCustList, ','))
 	END
 	IF @Order = 5
 	BEGIN
-		INSERT INTO #temp_MemberInput (custid)
-		SELECT CustId
+		INSERT INTO #temp_MemberInput (ID, custid)
+		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order5 WITH (NOLOCK)
 		WHERE CustId > @LastCustId
 			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(@strCustList, ','))
 	END
 	IF @Order = 6
 	BEGIN
-		INSERT INTO #temp_MemberInput (custid)
-		SELECT CustId
+		INSERT INTO #temp_MemberInput (ID, custid)
+		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order6 WITH (NOLOCK)
 		WHERE CustId > @LastCustId
 			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(@strCustList, ','))
@@ -62,13 +62,15 @@ GO
 	SELECT count(1) AS [custid_Count] FROM #temp_MemberInput
 
 ------- 2. Check data [dbo].[BalanceTrigger_ProcessData] on DB05/DB05BK1 until it's no data
+	--DB05BK1:
 	SELECT TOP 1 1
 	FROM BalanceTrigger_ProcessData b WITH (NOLOCK)
 		INNER JOIN #temp_MemberInput m ON b.custid = m.custid
 
-	SELECT TOP 1 1
-	FROM DB05.bodb02.dbo.BalanceTrigger_ProcessData b WITH (NOLOCK)
-		INNER JOIN #temp_MemberInput m ON b.custid = m.custid
+	---DB05:
+	--SELECT TOP 1 1
+	--FROM bodb02.dbo.BalanceTrigger_ProcessData b WITH (NOLOCK)
+	--	INNER JOIN BalanceRecordDiff_SiteDBX_OrderX m ON b.custid = m.custid
 
 ------- 3. Insert BalanceRecord and Delete Balance Trigger
 
@@ -113,8 +115,8 @@ GO
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for round:',  @loop_cnt, '/', @rid_loop)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
-		INSERT INTO #tempMember(custid)
-		SELECT custid
+		INSERT INTO #tempMember(ID, custid)
+		SELECT ID, custid
 		FROM #temp_MemberInput 
 		WHERE ID BETWEEN @StartRow AND @StopRow
 
@@ -171,7 +173,10 @@ GO
 
 		IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= @DuringTime
 		BEGIN
-			SELECT MAX(m.custid) AS LastCustID FROM #tempMember m  ---deployer keep this value for next time run
+			INSERT INTO BalanceRecord_Config_tmp  (SiteDBGroupID , OrderNo, LastID, StartRow, EndRow)
+			SELECT 2 AS SiteDBGroupID, @Order ,MAX(m.ID) AS LastID, @StartRow AS StartRow, @StopRow AS EndRow 
+			FROM #tempMember m  ---keep this value for next time run
+
 			BREAK
 		END
 
