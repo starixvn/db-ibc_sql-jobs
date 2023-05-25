@@ -19,7 +19,7 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	CREATE TABLE #tmp1 (transid BIGINT PRIMARY KEY, IP VARCHAR(45))
+	CREATE TABLE #__batching (batchNo INT, mintransId BIGINT, maxtransId BIGINT)
 	CREATE TABLE #tmp2 (rowId INT IDENTITY(1,1) PRIMARY KEY, IP VARCHAR(45)
 		, IPvX    TINYINT DEFAULT 0, IPArchive VARCHAR(45)
 		, v4IPKey TINYINT DEFAULT 0, v4IPLong BIGINT DEFAULT 0
@@ -34,12 +34,13 @@ BEGIN
 
 	DECLARE @ipKey TINYINT, @KeyValue BINARY(2)
 	DECLARE @IPFull VARCHAR(45), @IPvX TINYINT, @IPArchive VARCHAR(16)
-	DECLARE @__skip INT = 0, @__fetch INT = 500000, @__rowId INT = 1
+	DECLARE @__totalTransId INT = 0, @__fetch INT = 500000, @__rowId INT = 1
 		, @__messageInfo VARCHAR(200), @__totalIp INT = 0
+		, @__batchNo INT = 1, @__mintransId BIGINT, @__maxtransId BIGINT
 
 	CREATE TABLE #tmpIds (IP VARCHAR(45), transId BIGINT)
 
-	SELECT @__skip = 0, @__rowId = 1
+	SELECT @__rowId = 1, @__batchNo = 1
 	--remove old data if exists
 	WHILE 1 = 1
 	BEGIN
@@ -51,31 +52,69 @@ BEGIN
 
 	END
 
-	--get all ip by @winlostdate
+	IF @isdebug = 1
+	BEGIN
+		SET @__messageInfo = '#01: curdt: ' + convert(varchar(50), getdate(), 121) 
+		RAISERROR(@__messageInfo, 0, 1) with nowait
+	END
+
+	--batching data
+	INSERT INTO #__batching(batchNo, mintransId, maxtransId)
+	SELECT	BatchNo
+		,MAX(CASE WHEN TransIdAsc = 1 THEN transId ELSE 0 END ) AS MinTransId	
+		,MAX(CASE WHEN TransIdDesc = 1 THEN transId ELSE 0 END ) AS MaxTransId			
+	FROM (
+		SELECT	n.BatchNo
+				,b.transid
+				,ROW_NUMBER() OVER (PARTITION BY n.BatchNo ORDER BY transid DESC) TransIdDesc
+				,ROW_NUMBER() OVER (PARTITION BY n.BatchNo ORDER BY transid) TransIdAsc
+		FROM	(
+			SELECT	transid
+					,ROW_NUMBER() OVER (ORDER BY transid) AS rn
+			FROM	dbo.bettransRnG14 WITH(NOLOCK)
+			WHERE	winlostdate = @winlostdate
+				
+		)b
+		CROSS APPLY (	
+			SELECT	((b.rn - 1) /@__fetch) + 1 AS BatchNo
+		)n
+	)b
+	GROUP BY BatchNo
+
+	TRUNCATE TABLE dbo.Task_DailySummary_IP2Country_Staging
 	WHILE 1 = 1
 	BEGIN
-
-		INSERT INTO #tmp1 (transid, IP)
-		SELECT transid, ISNULL(IP, '') AS IP
-		FROM dbo.bettransRnG14 WITH (NOLOCK)
-		WHERE winlostdate = @winlostdate
-		ORDER BY transid
-		OFFSET @__skip ROWS FETCH NEXT @__fetch ROWS ONLY
-
+		
+		SELECT @__mintransId = mintransId, @__maxtransId = maxtransId
+		FROM #__batching WHERE batchNo = @__batchNo
+		
 		IF @@ROWCOUNT = 0
 			BREAK
 
-		SET @__skip += @__fetch
+		INSERT INTO Task_DailySummary_IP2Country_Staging (transid, IP)
+		SELECT transid, ISNULL(IP, '') AS IP
+		FROM dbo.bettransRnG14 WITH (NOLOCK)
+		WHERE winlostdate = @winlostdate
+			AND transid BETWEEN @__mintransId AND @__maxtransId
+
+		SELECT @__totalTransId += @@ROWCOUNT, @__batchNo += 1
 
 		IF @isdebug = 1
 		BEGIN
-			SET @__messageInfo = '#01: curdt: ' + convert(varchar(50), getdate(), 121) + ' - @__skip: ' + cast(@__skip as varchar(50))
+			SET @__messageInfo = '#011: curdt: ' + convert(varchar(50), getdate(), 121)
 			RAISERROR(@__messageInfo, 0, 1) with nowait
 		END
+
+	END
+
+	IF @isdebug = 1
+	BEGIN
+		SET @__messageInfo = '#0111: curdt: ' + convert(varchar(50), getdate(), 121) + ' - @__totalTransId: ' + cast(@__totalTransId as varchar(50))
+		RAISERROR(@__messageInfo, 0, 1) with nowait
 	END
 
 	INSERT INTO #tmp2 (IP)
-	SELECT DISTINCT IP FROM #tmp1
+	SELECT DISTINCT IP FROM Task_DailySummary_IP2Country_Staging
 
 	SET @__totalIp = @@ROWCOUNT
 
@@ -107,11 +146,12 @@ BEGIN
 
 		SET @__rowId += 1
 
-		IF @isdebug = 1
-		BEGIN
-			SET @__messageInfo = '#03: curdt: ' + convert(varchar(50), getdate(), 121) + ' - @__rowId: ' + cast(@__rowId as varchar(50))
-			RAISERROR(@__messageInfo, 0, 1) with nowait
-		END
+	END
+
+	IF @isdebug = 1
+	BEGIN
+		SET @__messageInfo = '#03: curdt: ' + convert(varchar(50), getdate(), 121)
+		RAISERROR(@__messageInfo, 0, 1) with nowait
 	END
 
 	INSERT INTO #tmp4
@@ -151,7 +191,7 @@ BEGIN
 	BEGIN
 		TRUNCATE TABLE #tmpIds
 
-		DELETE TOP(@__fetch) FROM #tmp1 OUTPUT deleted.IP, deleted.transid
+		DELETE TOP(@__fetch) FROM Task_DailySummary_IP2Country_Staging OUTPUT deleted.IP, deleted.transid
 		INTO #tmpIds(IP, transId)
 
 		IF @@ROWCOUNT = 0
@@ -169,7 +209,6 @@ BEGIN
 		END
 	END
 
-	DROP TABLE #tmp1
 	DROP TABLE #tmp2
 	DROP TABLE #tmp4
 	DROP TABLE #tmp6
