@@ -16,7 +16,14 @@ GO
 	IF NOT EXISTS ( select top 1 1 from sys.objects where name = 'BalanceRecord_SiteName_tmp' )
 	BEGIN
 		CREATE TABLE BalanceRecord_SiteName_tmp  (Site NVARCHAR(100), SiteDBGroupID SMALLINT , OrderNo TINYINT)
+
+		CREATE CLUSTERED INDEX [IX_BalanceRecord_SiteName_tmp_Site] ON [dbo].[BalanceRecord_SiteName_tmp]
+		(
+			Site ASC
+		)
+
 	END
+
 
 	INSERT INTO BalanceRecord_SiteName_tmp (Site , SiteDBGroupID , OrderNo)
 	VALUES	 ('Pay4d'		,1 , 2 )
