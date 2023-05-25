@@ -39,7 +39,7 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order1 WITH (NOLOCK)
-		WHERE CustId > ISNULL(@LastCustId,0)
+		WHERE ( @LastCustId IS NOT NULL AND CustId > @LastCustId)
 			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 	END
 	IF @Order = 5
@@ -47,7 +47,7 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order5 WITH (NOLOCK)
-		WHERE CustId > ISNULL(@LastCustId,0)
+		WHERE ( @LastCustId IS NOT NULL AND CustId > @LastCustId)
 			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 	END
 	IF @Order = 6
@@ -55,7 +55,7 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order6 WITH (NOLOCK)
-		WHERE CustId > ISNULL(@LastCustId,0)
+		WHERE ( @LastCustId IS NOT NULL AND CustId > @LastCustId)
 			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 	END
 
