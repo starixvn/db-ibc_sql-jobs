@@ -11,6 +11,7 @@ AS
 	DB: DBTXN/BODB02
 
 	Revisions:
+		- 20230523@Kathy: remove old balance table [Redmine:#188452]
 
 	Parameters Explanation:		
 	
@@ -44,21 +45,5 @@ BEGIN
 		IF @Success = 0 AND @Retry < 3 GOTO TryAgain
 
 		IF @Success = 0 SET @errCode = 100
-	END
-
-	IF @BalanceMode IN (0, 2) 
-	BEGIN
-		EXEC Dot_BalanceDelDebit @custid = @custid
-	END
-
-	IF @BalanceMode = 2 -- if mode = 'both' and action on new balance unsuccessfully, then write log only, don't return errcode
-	BEGIN
-		IF @errCode <> 0
-		BEGIN
-			INSERT INTO BalanceErr ( Custid, BalanceGroup, BalanceAmt, ExecutedSP, ErrMsg )
-			VALUES ( @custid, 0, 0,'Dot_BalanceDebitRemove','Remove data in new Debit Balance table unsuccessfully. ErrCode:' + CAST(@errCode AS VARCHAR(5)))
-
-			SELECT @errCode = 0
-		END
 	END
 END
