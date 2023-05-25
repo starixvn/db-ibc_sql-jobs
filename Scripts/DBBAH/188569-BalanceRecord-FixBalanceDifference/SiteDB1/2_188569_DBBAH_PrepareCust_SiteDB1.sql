@@ -28,7 +28,7 @@ GO
 	IF @Order = 2
 	BEGIN
 		INSERT INTO BalanceRecordDiff_SiteDB1_Order2 (custid)
-		SELECT b.custid						
+		SELECT DISTINCT b.custid						
 		FROM [bodb02].[dbo].BalanceRecord b WITH(NOLOCK)									
 			INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) ON c.custid = b.custid								
 			INNER JOIN  [bodb02].[dbo].site s WITH(NOLOCK) ON c.site = s.site								
@@ -43,7 +43,7 @@ GO
 	IF @Order = 3
 	BEGIN
 		INSERT INTO BalanceRecordDiff_SiteDB1_Order3 (custid)
-		SELECT b.custid						
+		SELECT DISTINCT b.custid						
 		FROM [bodb02].[dbo].BalanceRecord b WITH(NOLOCK)									
 			INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) ON c.custid = b.custid								
 			INNER JOIN  [bodb02].[dbo].site s WITH(NOLOCK) ON c.site = s.site								
@@ -58,7 +58,7 @@ GO
 	IF @Order = 4
 	BEGIN
 		INSERT INTO BalanceRecordDiff_SiteDB1_Order4 (custid)
-		SELECT b.custid						
+		SELECT DISTINCT b.custid						
 		FROM [bodb02].[dbo].BalanceRecord b WITH(NOLOCK)									
 			INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) ON c.custid = b.custid								
 			INNER JOIN  [bodb02].[dbo].site s WITH(NOLOCK) ON c.site = s.site								
@@ -73,7 +73,7 @@ GO
 	IF @Order = 5
 	BEGIN
 		INSERT INTO BalanceRecordDiff_SiteDB1_Order5 (custid)
-		SELECT b.custid						
+		SELECT DISTINCT b.custid						
 		FROM [bodb02].[dbo].BalanceRecord b WITH(NOLOCK)									
 			INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) ON c.custid = b.custid								
 			INNER JOIN  [bodb02].[dbo].site s WITH(NOLOCK) ON c.site = s.site								
@@ -88,7 +88,7 @@ GO
 	IF @Order = 6
 	BEGIN
 		INSERT INTO BalanceRecordDiff_SiteDB1_Order6 (custid)
-		SELECT b.custid						
+		SELECT DISTINCT b.custid						
 		FROM [bodb02].[dbo].BalanceRecord b WITH(NOLOCK)									
 			INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) ON c.custid = b.custid								
 			INNER JOIN  [bodb02].[dbo].site s WITH(NOLOCK) ON c.site = s.site								

@@ -76,7 +76,10 @@ GO
 
 	------ info for deployer 
 	DECLARE @debug_message VARCHAR(MAX) = ''
+				,@OrderNo INT ----Input Order
 
+	IF @OrderNo IS NULL
+	RETURN
 	--------------LOOP BY batch 250 of customers ------------------
 	DECLARE @rid_loop INT, @rowCount int  = 0, @batch int = 250, @loop_cnt int = 1
 	DECLARE @StartRow INT = 1
@@ -169,7 +172,7 @@ GO
 		IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= @DuringTime
 		BEGIN
 			INSERT INTO BalanceRecord_Config_tmp  (SiteDBGroupID , OrderNo, LastID, StartRow, EndRow)
-			SELECT 2 AS SiteDBGroupID, @Order ,MAX(m.ID) AS LastID, @StartRow AS StartRow, @StopRow AS EndRow 
+			SELECT 2 AS SiteDBGroupID, @OrderNo ,MAX(m.ID) AS LastID, @StartRow AS StartRow, @StopRow AS EndRow 
 			FROM #tempMember m  ---keep this value for next time run
 
 			BREAK
