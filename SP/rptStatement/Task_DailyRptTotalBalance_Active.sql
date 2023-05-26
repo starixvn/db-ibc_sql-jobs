@@ -15,6 +15,7 @@ AS
 		- 20201008@Percy: Get SMA from bettrans instead of custinfo table [RedmineID: #142953]
 		- 20210527@Danny: Enhance merge statement [RedmineID: #154536]
 		- 20211122@Danny: Split transfer tickets out of bettrans [Redmine: #164196]
+		- 20230516@Danny: Remove orphan ticket [Redmine: #188341]
  */
 
 BEGIN
@@ -204,6 +205,7 @@ BEGIN
 				AND bettype < 19999 --> bet tickets
 				AND ruben = 1
 				AND statusID NOT IN (0, 1)
+				AND custID > 0
 			GROUP BY custid, recommend, mrecommend, srecommend
 	
 			UNION ALL
@@ -216,6 +218,7 @@ BEGIN
 			WHERE winlostdate = @TheDayBefore
 				AND bettype > 19999 --> transfer tickets
 				AND statusID NOT IN (0, 1)
+				AND custID > 0
 			GROUP BY custid, recommend, mrecommend, srecommend
 		) AS rpt
 		GROUP BY custid
