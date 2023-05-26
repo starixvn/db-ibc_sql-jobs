@@ -60,26 +60,21 @@ BEGIN
 
 	--batching data
 	INSERT INTO #__batching(batchNo, mintransId, maxtransId)
-	SELECT	BatchNo
-		,MAX(CASE WHEN TransIdAsc = 1 THEN transId ELSE 0 END ) AS MinTransId	
-		,MAX(CASE WHEN TransIdDesc = 1 THEN transId ELSE 0 END ) AS MaxTransId			
+	SELECT batchNo
+		, MIN(transId) AS mintransId	
+		, MAX(transId) AS maxtransId			
 	FROM (
-		SELECT	n.BatchNo
-				,b.transid
-				,ROW_NUMBER() OVER (PARTITION BY n.BatchNo ORDER BY transid DESC) TransIdDesc
-				,ROW_NUMBER() OVER (PARTITION BY n.BatchNo ORDER BY transid) TransIdAsc
-		FROM	(
-			SELECT	transid
-					,ROW_NUMBER() OVER (ORDER BY transid) AS rn
-			FROM	dbo.bettransRnG14 WITH(NOLOCK)
-			WHERE	winlostdate = @winlostdate
-				
+		SELECT n.batchNo, b.transid
+		FROM (
+			SELECT transid, ROW_NUMBER() OVER (ORDER BY transid) AS rn
+			FROM dbo.bettransRnG14 WITH(NOLOCK)
+			WHERE winlostdate = @winlostdate
 		)b
 		CROSS APPLY (	
-			SELECT	((b.rn - 1) /@__fetch) + 1 AS BatchNo
+			SELECT ((b.rn - 1) /@__fetch) + 1 AS batchNo
 		)n
 	)b
-	GROUP BY BatchNo
+	GROUP BY batchNo
 
 	TRUNCATE TABLE dbo.Task_DailySummary_IP2Country_Staging
 	WHILE 1 = 1
