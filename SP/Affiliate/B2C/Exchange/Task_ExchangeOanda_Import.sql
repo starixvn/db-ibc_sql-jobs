@@ -15,6 +15,41 @@ AS
 */
 
 BEGIN
+	------1. Get TpExchange from bodb_N88.dbo.TpExchange
+	BEGIN
+		DECLARE @tbTpExchange TABLE (TpExchangeId INT, ExchangeId INT, ModifiedType INT)
+		INSERT INTO @tbTpExchange(TpExchangeId,ExchangeId,ModifiedType )
+		SELECT e.TpExchangeId
+			,e.ExchangeId
+			,CASE WHEN e.TpExchangeId IS NULL THEN -1 -- delete
+				  WHEN t.TpExchangeId IS NULL THEN 1 -- insert
+			 END AS ModifiedType 
+		FROM bodb_N88.dbo.TpExchange e WITH (NOLOCK)
+			FULL OUTER JOIN dbo.TpExchange t WITH (NOLOCK) ON e.ExchangeId = t.ExchangeId 
+															AND e.TpExchangeId = t.TpExchangeId
+		--Delete
+		IF EXISTS (SELECT 1 FROM @tbTpExchange WHERE ModifiedType = -1)
+		BEGIN
+			DELETE t WITH (ROWLOCK, UPDLOCK)
+			FROM dbo.TpExchange t
+				INNER JOIN @tbTpExchange e ON e.ExchangeId = t.ExchangeId 
+											AND e.TpExchangeId = t.TpExchangeId
+			WHERE e.ModifiedType = -1
+
+			DELETE @tbTpExchange WHERE ModifiedType = -1
+
+		END
+		--Insert
+		IF EXISTS (SELECT 1 FROM @tbTpExchange WHERE ModifiedType = 1)
+		BEGIN
+			DELETE @tbTpExchange
+			OUTPUT  deleted.TpExchangeId,deleted.ExchangeId
+			INTO dbo.TpExchange(TpExchangeId,ExchangeId)
+			WHERE ModifiedType = 1
+		END 
+	END
+
+	------2. Get ExchangeOanda from bodb02.dbo.ExchangeDailyOanda
 	DECLARE @LastImportedTime DATETIME
 	SELECT  @LastImportedTime = CONVERT(DATETIME, SValue)
 	FROM dbo.SystemSettings WITH (NOLOCK)
@@ -22,7 +57,7 @@ BEGIN
 
 	IF DATEDIFF(HOUR, @LastImportedTime, GETDATE()) < 6
 		RETURN
-	------1. Get ExchangeOanda from bodb02.dbo.ExchangeDailyOanda
+		
 	BEGIN
 		DECLARE @TimeZone INT
 		SELECT  @TimeZone = CONVERT(INT, SValue) FROM dbo.SystemSettings WITH (NOLOCK) WHERE SName = 'TimeZone'
@@ -67,38 +102,6 @@ BEGIN
 		SET SValue = CONVERT(VARCHAR(20), GETDATE(), 120)
 		WHERE SName = 'LastImportedTime_ExchangeOanda'
 	END 
-	------2. Get TpExchange from bodb_N88.dbo.TpExchange
-	BEGIN
-		DECLARE @tbTpExchange TABLE (TpExchangeId INT, ExchangeId INT, ModifiedType TINYINT )
-		INSERT INTO @tbTpExchange(TpExchangeId,ExchangeId,ModifiedType )
-		SELECT e.TpExchangeId
-			,e.ExchangeId
-			,CASE WHEN e.TpExchangeId IS NULL THEN -1 -- delete
-				  WHEN t.TpExchangeId IS NULL THEN 1 -- insert
-			 END AS ModifiedType 
-		FROM bodb_N88.dbo.TpExchange e WITH (NOLOCK)
-			FULL OUTER JOIN dbo.TpExchange t WITH (NOLOCK) ON e.ExchangeId = t.ExchangeId 
-															AND e.TpExchangeId = t.TpExchangeId
-		--Delete
-		IF EXISTS (SELECT 1 FROM @tbTpExchange WHERE ModifiedType = -1)
-		BEGIN
-			DELETE t WITH (ROWLOCK, UPDLOCK)
-			FROM dbo.TpExchange t
-				INNER JOIN @tbTpExchange e ON e.ExchangeId = t.ExchangeId 
-											AND e.TpExchangeId = t.TpExchangeId
-			WHERE e.ModifiedType = -1
 
-			DELETE @tbTpExchange WHERE ModifiedType = -1
-
-		END
-		--Insert
-		IF EXISTS (SELECT 1 FROM @tbTpExchange WHERE ModifiedType = 1)
-		BEGIN
-			DELETE @tbTpExchange
-			OUTPUT  deleted.TpExchangeId,deleted.ExchangeId
-			INTO dbo.TpExchange(TpExchangeId,ExchangeId)
-			WHERE ModifiedType = 1
-		END 
-	END
 END
 GO

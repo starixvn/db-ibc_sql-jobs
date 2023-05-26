@@ -16,6 +16,7 @@ AS
 		- 20210805@Percy: Include free spin into P2P Products [RedmineID: #157958]
 		- 20210916@Percy: Add ProgressiveBet, ProgressiveWin [RedmineID: #161540]
 		- 20220222@Percy: Use sum table instead of detail [RedmineID: #167823]
+		- 20230523@Sally: Support Currency BDT, USD 72 [RedmineID: #188429]
 */
 
 BEGIN 
@@ -160,7 +161,8 @@ BEGIN
 		FROM bodb_N88.dbo.N88_SumWinloss s WITH (NOLOCK)
 			INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON s.CustId = mi.CustId
 			INNER JOIN @Products p ON s.GameType = p.RefProductId
-			CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, mi.currency, 0) e
+			LEFT JOIN dbo.TpExchange t WITH (NOLOCK) ON t.TpExchangeId = mi.Currency
+			CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, ISNULL(t.ExchangeId,mi.Currency), 0) e
 		WHERE s.SettledTime >= @FromDateGMT0 AND s.SettledTime < @ToDateGMT0
 			AND s.StatusId IN (1, 2, 4, 6) -- Won/Lose/Draw/Free Spin
 		GROUP BY
@@ -206,7 +208,8 @@ BEGIN
 				,e.Rate
 			FROM bodb_N88.dbo.DepositInfo d WITH (NOLOCK)
 				INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON d.CustId = mi.CustId
-				CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, mi.currency, 0) e
+				LEFT JOIN dbo.TpExchange t WITH (NOLOCK) ON mi.Currency = t.TpExchangeId
+				CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, ISNULL(t.ExchangeId, mi.currency), 0) e
 			WHERE d.WinlostDate BETWEEN DATEADD(DAY, -1, @WinlostDate) AND DATEADD(DAY, 1, @WinlostDate)
 				AND d.Status = 3 -- Approved
 				AND CONVERT(DATE, DATEADD(HOUR, @TimeZone, d.CreateTime)) = @WinlostDate
@@ -228,7 +231,8 @@ BEGIN
 				,e.Rate
 			FROM bodb_N88.dbo.WithdrawalInfo d WITH (NOLOCK)
 				INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON d.CustId = mi.CustId
-				CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, mi.currency, 0) e
+				LEFT JOIN dbo.TpExchange t WITH (NOLOCK) ON mi.Currency = t.TpExchangeId
+				CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, ISNULL(t.ExchangeId, mi.currency), 0) e
 			WHERE d.WinlostDate BETWEEN DATEADD(DAY, -1, @WinlostDate) AND DATEADD(DAY, 1, @WinlostDate)
 				AND d.Status = 6 -- Approved
 				AND CONVERT(DATE, DATEADD(HOUR, @TimeZone, d.CreateTime)) = @WinlostDate
@@ -250,7 +254,8 @@ BEGIN
 				,e.Rate
 			FROM bodb_N88.dbo.BonusInfo d WITH (NOLOCK)
 				INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON d.CustId = mi.CustId
-				CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, mi.currency, 0) e
+				LEFT JOIN dbo.TpExchange t WITH (NOLOCK) ON mi.Currency = t.TpExchangeId
+				CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, ISNULL(t.ExchangeId, mi.currency), 0) e
 			WHERE d.WinlostDate BETWEEN DATEADD(DAY, -1, @WinlostDate) AND DATEADD(DAY, 1, @WinlostDate)
 				AND CONVERT(DATE, DATEADD(HOUR, @TimeZone, d.CreateTime)) = @WinlostDate
 			GROUP BY
@@ -271,7 +276,8 @@ BEGIN
 				,e.Rate
 			FROM bodb_N88.dbo.RebateMLog d WITH (NOLOCK)
 				INNER JOIN dbo.MemberInfo mi WITH (NOLOCK) ON d.CustId = mi.CustId
-				CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, mi.currency, 0) e
+				LEFT JOIN dbo.TpExchange t WITH (NOLOCK) ON mi.Currency = t.TpExchangeId
+				CROSS APPLY dbo.Aff_f_ExchangeRate_Sel(@WinlostDate, ISNULL(t.ExchangeId, mi.currency), 0) e
 			WHERE d.WinlostDate BETWEEN DATEADD(DAY, -1, @WinlostDate) AND DATEADD(DAY, 1, @WinlostDate)
 				AND CONVERT(DATE, DATEADD(HOUR, @TimeZone, d.CreateTime)) = @WinlostDate
 			GROUP BY
