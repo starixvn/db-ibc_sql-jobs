@@ -33,9 +33,9 @@ BEGIN
 	FROM @info
 
 	DECLARE @tmpDate SMALLDATETIME
-	SELECT @tmpDate = DATEADD(DAY, -1, @MoveBetsDay)
+	SELECT @tmpDate = @MoveBetsDay
 
-	WHILE @tmpDate >= DATEADD(DAY, -5, @MoveBetsDay) AND @tmpDate > @BalanceUpDay
+	WHILE @tmpDate >= DATEADD(DAY, -4, @MoveBetsDay) AND @tmpDate >= @BalanceUpDay
 	BEGIN
 		INSERT INTO @MBSchedule (winlostdate) 
 		SELECT @tmpDate WHERE @tmpDate NOT IN (SELECT winlostdate FROM @MBSchedule)
