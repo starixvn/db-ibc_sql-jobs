@@ -216,6 +216,7 @@ BEGIN
 				, 0 AS swinlost
 			FROM bodb02.dbo.transfer WITH (NOLOCK)
 			WHERE winlostdate = @TheDayBefore
+				AND bettype > 19999 --> transfer tickets
 				AND 1 = CASE WHEN bettype = 20000 AND winlostdate > @balanceUpDay THEN 0 --> new bal
 							WHEN winlostdate < @balanceUpDay THEN 0 --> old data
 						ELSE 1 END
