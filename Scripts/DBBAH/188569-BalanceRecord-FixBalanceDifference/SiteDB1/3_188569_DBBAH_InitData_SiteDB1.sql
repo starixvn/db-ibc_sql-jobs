@@ -30,7 +30,7 @@ GO
 		custid INT
 	)
 
-	CREATE TABLE #tempMember (ID INT, custid INT PRIMARY KEY)
+	CREATE TABLE #tempMember (custid INT)
 
 
 	-------------- GET members needs to process ------------------
@@ -41,6 +41,7 @@ GO
 		FROM BalanceRecordDiff_SiteDB1_Order2 WITH (NOLOCK)
 		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
 			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		ORDER BY ID
 	END
 	IF @Order = 3
 	BEGIN
@@ -49,6 +50,7 @@ GO
 		FROM BalanceRecordDiff_SiteDB1_Order3 WITH (NOLOCK)
 		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
 			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		ORDER BY ID
 	END
 	IF @Order = 4
 	BEGIN
@@ -57,6 +59,7 @@ GO
 		FROM BalanceRecordDiff_SiteDB1_Order4 WITH (NOLOCK)
 		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
 			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		ORDER BY ID
 	END
 	IF @Order = 5
 	BEGIN
@@ -65,6 +68,7 @@ GO
 		FROM BalanceRecordDiff_SiteDB1_Order5 WITH (NOLOCK)
 		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
 			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		ORDER BY ID
 	END
 	IF @Order = 6
 	BEGIN
@@ -73,6 +77,7 @@ GO
 		FROM BalanceRecordDiff_SiteDB1_Order6 WITH (NOLOCK)
 		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
 			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		ORDER BY ID
 	END
 
 	SELECT count(1) AS [custid_Count] FROM #temp_MemberInput
@@ -134,8 +139,8 @@ GO
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for round:',  @loop_cnt, '/', @rid_loop)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
-		INSERT INTO #tempMember(ID, custid)
-		SELECT ID, custid
+		INSERT INTO #tempMember(custid)
+		SELECT custid
 		FROM #temp_MemberInput 
 		WHERE ID BETWEEN @StartRow AND @StopRow
 
@@ -187,8 +192,8 @@ GO
 
 		IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= @DuringTime
 		BEGIN
-			INSERT INTO BalanceRecord_Config_tmp  (SiteDBGroupID , OrderNo, LastID, StartRow, EndRow)
-			SELECT 1 AS SiteDBGroupID, @OrderNo ,MAX(m.ID) AS LastID, @StartRow AS StartRow, @StopRow AS EndRow 
+			INSERT INTO BalanceRecord_Config_tmp  (SiteDBGroupID , OrderNo, StartRow, EndRow)
+			SELECT 1 AS SiteDBGroupID, @OrderNo, @StartRow AS StartRow, @StopRow AS EndRow 
 			FROM #tempMember m  ---keep this value for next time run
 
 			BREAK
