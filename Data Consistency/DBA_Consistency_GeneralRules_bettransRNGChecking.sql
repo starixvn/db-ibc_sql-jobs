@@ -23,51 +23,75 @@ BEGIN
 	DECLARE @transId		VARCHAR(MAX)
 			,@Today			SMALLDATETIME
 			,@yesterday		SMALLDATETIME 
+			,@CheckDate		SMALLDATETIME
 			,@ErrorTransIds VARCHAR(MAX) =''
+			,@ProductId		INT
 
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
 	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
+	
+	SET @CheckDate = @yesterday
+	DECLARE @tmpProductId TABLE (ProductId INT, IsFinish BIT)
+
+	INSERT INTO @tmpProductId (ProductId) 
+	SELECT DISTINCT SportType AS ProductId
+	FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+	WHERE RefTable = 1 AND Enabled = 1 AND IsTest = 0
 
 	IF @CheckMode = 1
 	BEGIN
 		DECLARE @Retry INT = 1
-		EXEC DBA_Consistency_GeneralRules_TicketDetailChecking
-				 @TableName	    = 'bettransRNG' 
-				,@Today         = @Today
-				,@yesterday     = @yesterday
-				,@ErrorTransIds = @ErrorTransIds OUTPUT
 		
-		IF ISNULL(@ErrorTransIds,'') <> ''
+		WHILE (1=1)
 		BEGIN
-			SET @transId = @ErrorTransIds
-			SET @ErrorTransIds = ''
+			UPDATE TOP(1) t  
+			SET  IsFinish = 1, @ProductId = ProductId
+			FROM @tmpProductId t
+			WHERE IsFinish IS NULL
 
-			WHILE (1=1)
+			IF @@ROWCOUNT = 0 BREAK	
+
+			WHILE @CheckDate <= @Today
 			BEGIN
-				Mode1_bettransRNG:
 				EXEC DBA_Consistency_GeneralRules_TicketDetailChecking
-							@TableName	    = 'bettransRNG'
-							,@Today         = @Today
-							,@yesterday     = @yesterday
-							,@transId       = @transId 
-							,@ErrorTransIds = @ErrorTransIds OUTPUT
-			
-				IF ISNULL(@ErrorTransIds, '') <> ''
+						 @TableName	    = 'bettransRNG' 
+						,@ProductId		= @ProductId
+						,@CheckDate     = @CheckDate
+						,@ErrorTransIds = @ErrorTransIds OUTPUT
+		
+				IF ISNULL(@ErrorTransIds,'') <> ''
 				BEGIN
-					IF @Retry < 3
-					BEGIN
-						WAITFOR DELAY '00:02:00:000' --retry after 2 minutes
-						SET @Retry = @Retry + 1
-						GOTO Mode1_bettransRNG;
-					END
+					SET @transId = @ErrorTransIds
+					SET @ErrorTransIds = ''
 
-					SELECT	 @transId = SUBSTRING(@ErrorTransIds, 2, LEN(@ErrorTransIds) - 1)
-							,@ErrCode = 100
-							,@ErrMsg = 'Check ticket details between bettrans and bettransRNG '
-							,@SampleData = 'bettransRNG.Refno in (' + @transId + ')'
-					RETURN;
+					WHILE (1=1)
+					BEGIN
+						Mode1_bettransRNG:
+						EXEC DBA_Consistency_GeneralRules_TicketDetailChecking
+									@TableName	    = 'bettransRNG'
+									,@ProductId		= @ProductId
+									,@CheckDate     = @CheckDate
+									,@ErrorTransIds = @ErrorTransIds OUTPUT
+			
+						IF ISNULL(@ErrorTransIds, '') <> ''
+						BEGIN
+							IF @Retry < 3
+							BEGIN
+								WAITFOR DELAY '00:02:00:000' --retry after 2 minutes
+								SET @Retry = @Retry + 1
+								GOTO Mode1_bettransRNG;
+							END
+
+							SELECT	 @transId = SUBSTRING(@ErrorTransIds, 2, LEN(@ErrorTransIds) - 1)
+									,@ErrCode = 100
+									,@ErrMsg = 'Check ticket details between bettrans and bettransRNG '
+									,@SampleData = 'bettransRNG.Refno in (' + @transId + ')'
+							RETURN;
+						END
+					END
 				END
+				SET @CheckDate =  DATEADD(DAY, 1, @CheckDate)
 			END
 		END
 	END
