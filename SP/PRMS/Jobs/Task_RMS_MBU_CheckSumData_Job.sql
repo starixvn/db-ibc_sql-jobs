@@ -26,7 +26,7 @@ BEGIN
 
 	DECLARE @info table (BU SMALLDATETIME, MB SMALLDATETIME)
     INSERT INTO @info (BU, MB)
-	EXEC DBACC.bodb02.dbo.Age_SelBalanceUpDay
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
 
     DECLARE @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME
     SELECT @MoveBetsDay = MB, @BalanceUpDay = BU			
