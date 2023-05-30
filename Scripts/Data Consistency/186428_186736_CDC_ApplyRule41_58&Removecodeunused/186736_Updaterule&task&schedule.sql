@@ -103,22 +103,40 @@ UPDATE dbo.DBA_Tasks
 SET command = N'EXEC dbo.DBA_Consistency_GeneralRules_bettransRNGChecking @CheckMode = 4, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
 WHERE command like '%DBA_Consistency_DetectNetstakeforRNGChecking%' 
 
---------Update change rule #7 chung SP rule ##41
+--------Update change rule #7 chung SP rule ##41 (Rename description)
 
-SET @ruleId = (SELECT RuleId FROM dbo.DBA_Rules WHERE Name LIKE '%Check rule actual_stake, winlost, playercomm%')
+UPDATE dbo.DBA_Rules
+SET Name = N'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL'
+  ,Description = N'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL'
+  , @ruleId = RuleId
+WHERE Name LIKE '%Check rule actual_stake, winlost, playercomm%'
 
 UPDATE dbo.DBA_Tasks
 SET command = N'EXEC dbo.DBA_Consistency_WinlostCommChecking @CheckMode = 2, @tablename = ''bettrans'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
-WHERE RuleId = @ruleId AND command like '%bettrans%' 
+	, @taskId = taskId
+WHERE RuleId = @ruleId AND command like '% @tablename = ''bettrans''%' 
+
+UPDATE dbo.DBA_Schedules
+SET Name = N'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL on bettrans'
+WHERE taskId = @taskId
 
 UPDATE dbo.DBA_Tasks
 SET command = N'EXEC dbo.DBA_Consistency_WinlostCommChecking @CheckMode = 2, @tablename = ''bettransRNG'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
-WHERE RuleId = @ruleId AND command like '%bettransRNG%' 
+, @taskId = taskId
+WHERE RuleId = @ruleId AND command like '% @tablename = ''bettransRNG''%' 
+
+UPDATE dbo.DBA_Schedules
+SET Name = N'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL on bettransRNG'
+WHERE taskId = @taskId
 
 UPDATE dbo.DBA_Tasks
 SET command = N'EXEC dbo.DBA_Consistency_WinlostCommChecking @CheckMode = 2, @tablename = ''bettransLC'', @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
-WHERE RuleId = @ruleId AND command like '%bettransLC%' 
+, @taskId = taskId
+WHERE RuleId = @ruleId AND command like '% @tablename = ''bettransLC''%' 
 
+UPDATE dbo.DBA_Schedules
+SET Name = N'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL on bettransLC'
+WHERE taskId = @taskId
 
 --------Update change rule #9 Gộp chung SP check Happy5,NumberGame => SP check Sportbook - BetBuilder
 SET @ruleId = (SELECT RuleId FROM dbo.DBA_Rules WHERE Name LIKE '%Check all yesterday tickets must be settled%')

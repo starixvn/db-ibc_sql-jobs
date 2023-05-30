@@ -128,28 +128,38 @@ BEGIN
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM bodb02.dbo.bettrans WITH(NOLOCK) 
 			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
-				AND (actual_stake IS NULL OR winlost IS NULL OR playercomm IS NULL)
+				AND bettype <= 19000
+				AND (actual_stake IS NULL 
+					OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL
+					OR scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL
+				)
 		END
 		ELSE IF @tablename = 'bettransRNG'
 		BEGIN
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM bodb02.dbo.bettransRNG WITH(NOLOCK) 
 			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
-				AND (actual_stake IS NULL OR winlost IS NULL OR playercomm IS NULL)
+				AND (actual_stake IS NULL 
+					OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL
+					OR scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL
+				)
 		END
 		ELSE IF @tablename = 'bettransLC'
 		BEGIN
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM bodb02.dbo.bettransLC WITH(NOLOCK) 
 			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
-				AND (actual_stake IS NULL OR winlost IS NULL OR playercomm IS NULL)
+				AND (actual_stake IS NULL 
+					OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL
+					OR scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL
+				)
 		END
 	
 		IF @transId <> ''
 		BEGIN
 			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 					,@ErrCode = 100
-					,@ErrMsg = 'Check actual_stake, winlost, playercomm NULL on table ' + @tablename
+					,@ErrMsg = 'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL on table ' + @tablename
 					,@SampleData = @tablename + '.TransId in (' + @transId + ')'
 		END
 		RETURN;
