@@ -12,16 +12,14 @@ GO
 
 --- proccess data for SiteDBGroupID = 2
 
-------- 1. Inputparam and init data:  Required input @Order and @LastID OR @strCustList
+------- 1. Inputparam and init data:  Required input @Order and @LastID
 		---- @LastID = 0: The first time run
-		---- @strCustList: list custid need to correct data again after execute
 
 	DECLARE @LastID INT   
-			,@strCustList VARCHAR(MAX) 
 			,@Order TINYINT
 
 
-	IF @Order IS NULL OR (@LastID IS NULL AND @strCustList IS NULL) OR (@LastID IS NOT NULL AND @strCustList IS NOT NULL)
+	IF @Order IS NULL OR @LastID IS NULL
 	RETURN
 
 	--------------DECLARE temporary tables ------------------
@@ -39,8 +37,7 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order1 WITH (NOLOCK)
-		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
-			OR CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		WHERE ID > @LastID
 		ORDER BY ID
 	END
 	IF @Order = 5
@@ -48,8 +45,7 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order5 WITH (NOLOCK)
-		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
-			OR CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		WHERE ID > @LastID
 		ORDER BY ID
 	END
 	IF @Order = 6
@@ -57,8 +53,7 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order6 WITH (NOLOCK)
-		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
-			OR CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		WHERE ID > @LastID
 		ORDER BY ID
 	END
 

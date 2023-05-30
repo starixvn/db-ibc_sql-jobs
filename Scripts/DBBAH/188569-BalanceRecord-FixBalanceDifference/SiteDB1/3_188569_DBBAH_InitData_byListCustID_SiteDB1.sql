@@ -12,16 +12,14 @@ GO
 
 --- proccess data for SiteDBGroupID = 1
 
-------- 1. Inputparam and init data:  Required input @Order and @LastID OR @strCustList
-		---- @LastID = 0: The first time run
+------- 1. Inputparam and init data:  Required input @Order and @strCustList
 		---- @strCustList: list custid need to correct data again after execute
 
-	DECLARE @LastID INT   
-			,@strCustList VARCHAR(MAX) 
+	DECLARE @strCustList VARCHAR(MAX) 
 			,@Order TINYINT
 
 
-	IF @Order IS NULL OR (@LastID IS NULL AND @strCustList IS NULL) OR (@LastID IS NOT NULL AND @strCustList IS NOT NULL)
+	IF @Order IS NULL OR @strCustList IS NULL
 	RETURN
 
 	--------------DECLARE temporary tables ------------------
@@ -39,8 +37,7 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB1_Order2 WITH (NOLOCK)
-		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
-			OR CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		WHERE CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 		ORDER BY ID
 	END
 	IF @Order = 3
@@ -48,8 +45,7 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB1_Order3 WITH (NOLOCK)
-		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
-			OR CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		WHERE CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 		ORDER BY ID
 	END
 	IF @Order = 4
@@ -57,8 +53,7 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB1_Order4 WITH (NOLOCK)
-		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
-			OR CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		WHERE CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 		ORDER BY ID
 	END
 	IF @Order = 5
@@ -66,8 +61,7 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB1_Order5 WITH (NOLOCK)
-		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
-			OR CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		WHERE CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 		ORDER BY ID
 	END
 	IF @Order = 6
@@ -75,8 +69,7 @@ GO
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB1_Order6 WITH (NOLOCK)
-		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
-			OR CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+		WHERE CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 		ORDER BY ID
 	END
 
