@@ -24,7 +24,7 @@ GO
 
 	--------------DECLARE temporary tables ------------------
 	CREATE TABLE #temp_MemberInput(
-		ID INT PRIMARY KEY,
+		ID INT IDENTITY PRIMARY KEY,
 		custid INT
 	)
 
@@ -34,24 +34,24 @@ GO
 	-------------- GET members needs to process ------------------
 	IF @Order = 1
 	BEGIN
-		INSERT INTO #temp_MemberInput (ID, custid)
-		SELECT ID, CustId
+		INSERT INTO #temp_MemberInput (custid)
+		SELECT CustId
 		FROM BalanceRecordDiff_SiteDB2_Order1 WITH (NOLOCK)
 		WHERE CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 		ORDER BY ID
 	END
 	IF @Order = 5
 	BEGIN
-		INSERT INTO #temp_MemberInput (ID, custid)
-		SELECT ID, CustId
+		INSERT INTO #temp_MemberInput (custid)
+		SELECT CustId
 		FROM BalanceRecordDiff_SiteDB2_Order5 WITH (NOLOCK)
 		WHERE CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 		ORDER BY ID
 	END
 	IF @Order = 6
 	BEGIN
-		INSERT INTO #temp_MemberInput (ID, custid)
-		SELECT ID, CustId
+		INSERT INTO #temp_MemberInput (custid)
+		SELECT CustId
 		FROM BalanceRecordDiff_SiteDB2_Order6 WITH (NOLOCK)
 		WHERE CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 		ORDER BY ID
