@@ -40,7 +40,7 @@ GO
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order1 WITH (NOLOCK)
 		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
-			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+			OR CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 		ORDER BY ID
 	END
 	IF @Order = 5
@@ -49,7 +49,7 @@ GO
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order5 WITH (NOLOCK)
 		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
-			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+			OR CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 		ORDER BY ID
 	END
 	IF @Order = 6
@@ -58,7 +58,7 @@ GO
 		SELECT ID, CustId
 		FROM BalanceRecordDiff_SiteDB2_Order6 WITH (NOLOCK)
 		WHERE ( @LastID IS NOT NULL AND ID > @LastID)
-			OR CustId IN ( SELECT CAST([value] AS TINYINT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
+			OR CustId IN ( SELECT CAST([value] AS INT) FROM STRING_SPLIT(ISNULL(@strCustList,''), ','))
 		ORDER BY ID
 	END
 
