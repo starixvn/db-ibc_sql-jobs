@@ -17,7 +17,7 @@ AS
 		- 20181219@Vicky: Happy 5- Check Data Consistency [Redmine:#106481]
 		- 20190715@Kathy: check discount rule for BetBuilder [Redmine:#116529]
 		- 20200624@Max: Update Rule for Saba.Club, Modify Rule check Discount [Redmine: #136362]
-		- 20230419@July: Mofidy rule for bettransRNG/bettransLC/translog table [Redmine: #136362]
+		- 20230531@July: Mofidy rule for bettransRNG/bettransLC/translog table [Redmine: #186736]
 	
 	Param's Expanation:
 */

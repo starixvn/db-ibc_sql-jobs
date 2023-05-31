@@ -12,7 +12,7 @@ AS
 
 	Revisions: 
 		- 20191025@Helen: Detect Yesterday pending  matches for Virtual sports, Virtual sports 2 [Redmine:#122716]
-		- 20230414@July: Remove checking VSRaceInfo because this game is not offered anymore [Redmine:#186736]
+		- 20230531@July: Remove checking VSRaceInfo because this game is not offered anymore [Redmine:#186736]
 	
 	Param's Expanation:
 */

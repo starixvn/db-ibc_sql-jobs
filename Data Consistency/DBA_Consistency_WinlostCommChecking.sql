@@ -13,12 +13,13 @@ AS
 
 	Revisions: 
 		- 20230414@July: Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets in bettrans, bettransLC, bettransRNG, bettransG - [Redmine:#186426]
+		- 20230531@July: Check ticket data consistency [Redmine: #186736]
 
 	Param's Expanation:
 		Notes: For SAGaming(244), BBIN(241) check data in bettransG
 		@CheckMode =  1: Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table bettransRNG/bettransLC/bettransG
 		                 Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans
-				   =  2: Check actual_stake, winlost, playercomm NULL on table bettrans/bettransRNG/bettransLC
+				   =  2: Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL on table bettrans/bettransRNG/bettransLC
 */
 BEGIN
 	SET NOCOUNT ON

@@ -14,7 +14,7 @@ AS
 	- 201701124@Patrick: Remove block code check running ticket for patlay because parlay movement task will handle it
 	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	- 2020203@Patrick: Add more rule check running parlay tickets [RedmineId: #127651]
-	- 20230425@July: Remove unnecessary rules [Redmine: #186736]
+	- 20230531@July: Remove unnecessary rules [Redmine: #186736]
 
  */
 BEGIN
@@ -120,29 +120,6 @@ BEGIN
 			)
 	BEGIN
 		RAISERROR ('FAILED: Incorrect Company SuperAgent setting', 16, 1)
-
-		RETURN
-	END
-
-	-- ====================  
-	IF EXISTS (
-			SELECT transid
-			FROM bettrans WITH (NOLOCK)
-			WHERE (
-					scomm IS NULL
-					OR acomm IS NULL
-					OR comm IS NULL
-					OR playercomm IS NULL
-					OR swinlost IS NULL
-					OR mwinlost IS NULL
-					OR awinlost IS NULL
-					OR winlost IS NULL
-					)
-				AND bettype <= 19000
-				AND winlostdate = @winlostdate
-			)
-	BEGIN
-		RAISERROR ('FAILED: Null Commission/WinLost', 16, 1)
 
 		RETURN
 	END

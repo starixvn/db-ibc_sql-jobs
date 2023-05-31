@@ -27,7 +27,7 @@ AS
 		- 20220408@July: Saba.games - Exclude bettype Texas Hold'em Poker(1652) - [Redmine:#171263]
 		- 20220413@July: Vgaming - Exclude bettype Hi-Lo(3844) - [Redmine:#171349]
 		- 20220510@July: Remove code only support Sportbook - BetBuilder - [Redmine:#172310]
-		- 20230421@July: Support product Happy 5, NumberGame - [Redmine:#186736]
+		- 20230531@July: Support product Happy 5, NumberGame - [Redmine:#186736]
 
 	Param's Expanation:
 */

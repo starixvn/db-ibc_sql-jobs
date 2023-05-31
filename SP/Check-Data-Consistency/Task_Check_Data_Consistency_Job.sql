@@ -15,7 +15,7 @@ AS
 		- 20180518@Kathy: Add code for Bullfighting [Redmine:#95199]
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 		- 20220221@July: Add code for Spadegaming [Redmine: #168750]
-		- 20230425@July: Remove unnecessary rules [Redmine: #186736]
+		- 20230531@July: Remove unnecessary rules [Redmine: #186736]
 
 */
 BEGIN
@@ -42,7 +42,7 @@ BEGIN
 	SET @ErrorTmp = ''
 	IF DATEPART(HOUR, @CurrentDate) = 7 OR DATEPART(HOUR, GETDATE()) = 7 OR @Mode = 'UAT' --run at 7AM
 	BEGIN
-		EXEC dbo.Task_DailysettledTicket_Verify @mode = 1, @ErrMessage = @ErrorTmp OUTPUT
+		EXEC dbo.Task_DailysettledTicket_Verify @ErrMessage = @ErrorTmp OUTPUT
 		IF ISNULL(@ErrorTmp, '') <> ''
 		BEGIN
 			SET @HasError = 1

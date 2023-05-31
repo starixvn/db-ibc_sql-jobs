@@ -43,7 +43,7 @@ AS
 		- 20221005@July: MG-RNG - Add rule check if no discount, no comm [Redmine:#178718]
 		- 20221013@July: Add rule - Ensure each translog ticket only has one bettrans ticket [Redmine:#179020]
 		- 20230118@July: Jili - Add rule check if no discount, no comm [Redmine:#182955]
-		- 20230425@July: Remove unnecessary rules [Redmine:#186736]
+		- 20230531@July: Remove unnecessary rules [Redmine:#186736]
 
 		Param's Expanation:
 */

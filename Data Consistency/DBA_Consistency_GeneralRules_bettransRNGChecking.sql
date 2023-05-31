@@ -11,6 +11,7 @@ AS
 	DB: DBCONSISTENCY-bodb_Consistency
 	Revision:
 		- 20230420@July: Check data between bettrans & bettransRNG [Redmine: #186426]
+		- 20230531@July: Check ticket data consistency [Redmine: #186736]
 	
 	Param's Expanation:
 	@CheckMode:
