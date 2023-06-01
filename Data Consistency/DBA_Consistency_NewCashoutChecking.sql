@@ -13,6 +13,7 @@ AS
 	Revisions: 
 		- 20220112@July: Detect Cashout ticket with WinLoseDate > today [Redmine:#167311]
 		- 20220328@July: Update WinloseDate > current date+ 1 [Redmine:#170612]
+		- 20230601@July: Exclude ticket currency UUS [Redmine:#186736]
 
 	Param's Expanation:
 		+ @ProductId = 1 (Offer to Cashout of sportbook product)
@@ -32,13 +33,14 @@ BEGIN
 		FROM bodb02.dbo.bettrans WITH(NOLOCK) 
 		WHERE ISNULL(betdaqid,0) = -2 
 			AND winlostdate > @Today
+			AND ISNULL(CurrencyName,'') <> 'UUS'
 	END
 
 	IF @transId <> ''
 	BEGIN
 		SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
 				,@ErrCode = 100
-				,@ErrMsg = 'Detect Cashout ticket (with Betdaqid = -2) and WinloseDate > current day on product' + CAST(@ProductId AS VARCHAR)
+				,@ErrMsg = 'Detect Cashout ticket (with Betdaqid = -2) and WinloseDate > current date + 1 on product ' + CAST(@ProductId AS VARCHAR)
 				,@SampleData = 'bettrans.TransId in (' + @transId + ')'
 	END
 
