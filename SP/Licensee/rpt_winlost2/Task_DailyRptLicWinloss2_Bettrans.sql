@@ -104,6 +104,7 @@ AS
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 		- 20230602@Evan: Support add new betfrom '#'&'A000' [Redmine: #188811]
+		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -239,6 +240,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 			WHEN b.bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
+			WHEN b.bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -366,6 +368,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 			WHEN b.bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
+			WHEN b.bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 			ELSE 0
 		END
 		,CASE

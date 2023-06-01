@@ -46,6 +46,7 @@ AS
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
 		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424]  
+		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 
 	Param's Explanation:
 		@DrawFilter
@@ -238,6 +239,10 @@ BEGIN
 		,@JIGTurnover MONEY
 		,@JIGCustomerWl MONEY
 		,@JIGBetCount MONEY
+		----YB
+		,@YBTurnover MONEY
+		,@YBCustomerWl MONEY
+		,@YBBetCount MONEY
 
 	DECLARE @tblBettype TABLE (ProductPrefix VARCHAR(10), Bettype INT)
 
@@ -251,7 +256,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','MGCRNG','MGCLC','VG','VB', 'AB', 'NG2', 'CO', 'VS2', 
 			'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3',
-			'BTC', 'FGGL', 'MXG', 'JIG')
+			'BTC', 'FGGL', 'MXG', 'JIG', 'YB')
 
 	-- Data Source
 	DECLARE @tblData AS TABLE (
@@ -1018,6 +1023,25 @@ BEGIN
 	FROM @tblData
 	WHERE ProductPrefix = 'JIG'
 
+	-- YB
+	SELECT
+		@YBTurnover = SUM(CASE
+						WHEN @DrawFilter IN (2, 3) THEN
+							CASE
+								WHEN Status = 111 THEN 0
+								WHEN Status IN (114, 115) THEN 0.5
+								ELSE 1
+							END
+						ELSE 1
+					END * Turnover),
+		@YBCustomerWl = SUM(WinLoss),
+		@YBBetCount = SUM(CASE
+								WHEN @DrawFilter = 2 AND Status = 111 THEN 0
+								ELSE BetCount
+							END)
+	FROM @tblData
+	WHERE ProductPrefix = 'YB'
+
 	-- Result
 	SELECT
 		1 AS Id,
@@ -1065,6 +1089,7 @@ BEGIN
 		, ISNULL(@FGGLTurnover, 0) AS FGGL
 		, ISNULL(@MXGTurnover, 0) AS MXG
 		, ISNULL(@JIGTurnover, 0) AS JIG
+		, ISNULL(@YBTurnover, 0) AS YB
 
 	UNION
 	SELECT
@@ -1113,6 +1138,7 @@ BEGIN
 		, ISNULL(@FGGLCustomerWl, 0)
 		, ISNULL(@MXGCustomerWl, 0)
 		, ISNULL(@JIGCustomerWl, 0)
+		, ISNULL(@YBCustomerWl, 0)
 	UNION
 	SELECT
 		3
@@ -1160,6 +1186,7 @@ BEGIN
 		, ISNULL(@FGGLBetCount, 0)
 		, ISNULL(@MXGBetCount, 0)
 		, ISNULL(@JIGBetCount, 0)
+		, ISNULL(@YBBetCount, 0)
 
 	SET NOCOUNT OFF
 END

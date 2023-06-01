@@ -75,6 +75,7 @@ AS
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
 		- 20230215@Evan: Enhance Job bodb02 Deposit Report Summary [RedmineID: #182153]
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
+		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -778,6 +779,7 @@ BEGIN
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 				WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
+				WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
@@ -858,6 +860,7 @@ BEGIN
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 				WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
+				WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 				ELSE 0
 			END
 
