@@ -81,7 +81,7 @@ BEGIN
 			--//on for MB
 			IF @parlay = 3
 			BEGIN
-				UPDATE dbo.SystemSettings WITH (ROWLOCK)
+				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
 				SET VValue = CONVERT(VARCHAR(200), CONVERT(SMALLINT, VValue) + 1)
 				OUTPUT DELETED.VValue INTO @updatedFlag (VValue)
 				WHERE VName = 'isMovingBet_Local'
@@ -95,14 +95,14 @@ BEGIN
 			END
 			ELSE IF @parlay = 4
 			BEGIN
-				UPDATE dbo.SystemSettings WITH (ROWLOCK)
+				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
 				SET VValue = CONVERT(VARCHAR(200), CONVERT(SMALLINT, VValue) - 1)
 				OUTPUT INSERTED.VValue INTO @updatedFlag (VValue)
 				WHERE VName = 'isMovingBet_Local'
 
 				IF EXISTS (SELECT 1 FROM @updatedFlag WHERE VValue = '0')
 				BEGIN
-					UPDATE dbo.SystemSettings WITH (ROWLOCK)
+					UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
 					SET VValue = CONVERT(VARCHAR(200), GETDATE(), 121)
 					WHERE VName = 'EndMoving_Local'
 				END
@@ -131,7 +131,7 @@ BEGIN
 			END
 			ELSE IF @parlay = 8 -- end copying data to [14]
 			BEGIN
-				UPDATE dbo.SystemSettings WITH (ROWLOCK)
+				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
 				SET VValue = '0'
 				WHERE VName = 'MB_DoneCopy_Local'
 
@@ -155,7 +155,7 @@ BEGIN
 				END
 
 				--==being move bet
-				UPDATE dbo.SystemSettings WITH (ROWLOCK)
+				UPDATE dbo.SystemSettings WITH (ROWLOCK, UPDLOCK)
 				SET VValue = CONVERT(VARCHAR(10), @winlostdate, 121)
 				WHERE VName = 'BeingMovebetDate'
 				
@@ -185,7 +185,7 @@ BEGIN
 
 			IF @keyFlag = 5
 			BEGIN
-				UPDATE dbo.MBUSettings WITH (ROWLOCK)
+				UPDATE dbo.MBUSettings WITH (ROWLOCK, UPDLOCK)
 				SET VValue = CONVERT(VARCHAR(200), CONVERT(SMALLINT, VValue) + 1)
 				OUTPUT DELETED.VValue INTO @updatedFlag4MBU (VValue)
 				WHERE VName = 'isArchivingBet_Local'
@@ -199,14 +199,14 @@ BEGIN
 			END
 			ELSE IF @keyFlag = 6
 			BEGIN
-				UPDATE dbo.MBUSettings WITH (ROWLOCK)
+				UPDATE dbo.MBUSettings WITH (ROWLOCK, UPDLOCK)
 				SET VValue = CONVERT(VARCHAR(200), CONVERT(SMALLINT, VValue) - 1)
 				OUTPUT INSERTED.VValue INTO @updatedFlag4MBU (VValue)
 				WHERE VName = 'isArchivingBet_Local'
 
 				IF EXISTS (SELECT 1 FROM @updatedFlag4MBU WHERE VValue = '0')
 				BEGIN
-					UPDATE dbo.MBUSettings WITH (ROWLOCK)
+					UPDATE dbo.MBUSettings WITH (ROWLOCK, UPDLOCK)
 					SET VValue = CONVERT(VARCHAR(200), GETDATE(), 121)
 					WHERE VName = 'EndBalanceUp_Local'
 				END
@@ -214,7 +214,7 @@ BEGIN
 			ELSE IF @keyFlag = 11 --prepare balanceup process
 			BEGIN
 				--==being balance-up
-				UPDATE dbo.MBUSettings WITH (ROWLOCK)
+				UPDATE dbo.MBUSettings WITH (ROWLOCK, UPDLOCK)
 				SET VValue = CONVERT(VARCHAR(10), @winlostdate, 121)
 				WHERE VName = 'BeingBalanceUpDate'
 				
@@ -229,7 +229,7 @@ BEGIN
 			END
 			ELSE IF @keyFlag = 13 -- start turn on update balanceup date
 			BEGIN
-				UPDATE dbo.MBUSettings WITH (ROWLOCK)
+				UPDATE dbo.MBUSettings WITH (ROWLOCK, UPDLOCK)
 				SET VValue = '1'
 				WHERE VName = 'BU_UpdBUDate_Local'
 
@@ -244,7 +244,7 @@ BEGIN
 			END
 			ELSE IF @keyFlag = 14 -- start turn off update balanceup date
 			BEGIN
-				UPDATE dbo.MBUSettings WITH (ROWLOCK)
+				UPDATE dbo.MBUSettings WITH (ROWLOCK, UPDLOCK)
 				SET VValue = '0'
 				WHERE VName = 'BU_UpdBUDate_Local'
 

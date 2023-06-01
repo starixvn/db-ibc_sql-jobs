@@ -461,7 +461,7 @@ BEGIN
 		)
 		BEGIN
 			WAITFOR DELAY '00:00:10:000' --waitfor BU_ReadyUpdBUDate done...
-			IF DATEDIFF(MINUTE, @__start, GETDATE()) > 180 --> 3hours
+			IF DATEDIFF(MINUTE, @__start, GETDATE()) > 300 --> 5hours
 			BEGIN
 				--Send notification to dba
 				SET @Doing = 'Urgently!!! BalanceUp - hey guys, BalanceUp background run long time at step 6 (1). Please check!!!'
@@ -484,7 +484,7 @@ BEGIN
 		--//*turn off BU_UpdBalDate_Local flag
 		EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @fdate, @keyFlag = 14, @tableName = 'MBUSettings'
 
-		--//whether update balanceup date has done on replicated | sitedbs servers yet?
+		--//whether update balanceup date already changed at replicated | sitedbs servers yet?
 		SET @__start = GETDATE()
 		WHILE EXISTS (
 			SELECT TOP 1 1 FROM DBCTG.bodb02.dbo.MBUSettings WHERE VName = 'BU_ReadyToDelete' AND VValue <> '0'
