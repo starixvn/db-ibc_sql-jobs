@@ -73,6 +73,7 @@ BEGIN
 									@TableName	    = 'bettransRNG'
 									,@ProductId		= @ProductId
 									,@CheckDate     = @CheckDate
+									,@transId       = @transId
 									,@ErrorTransIds = @ErrorTransIds OUTPUT
 			
 						IF ISNULL(@ErrorTransIds, '') <> ''
@@ -86,7 +87,7 @@ BEGIN
 
 							SELECT	 @transId = SUBSTRING(@ErrorTransIds, 2, LEN(@ErrorTransIds) - 1)
 									,@ErrCode = 100
-									,@ErrMsg = 'Check ticket details between bettrans and bettransRNG '
+									,@ErrMsg = 'Check ticket details between bettrans and bettransRNG on product ' + CAST(@ProductId AS VARCHAR)
 									,@SampleData = 'bettransRNG.Refno in (' + @transId + ')'
 							RETURN;
 						END

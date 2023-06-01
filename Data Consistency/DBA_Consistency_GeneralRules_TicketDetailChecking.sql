@@ -113,7 +113,6 @@ BEGIN
 		WHERE matchid = @ProductId
 			AND winlostdate = @CheckDate
 			AND statusid NOT IN (0, 1, 131)
-			 
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
 						 WHEN @transId IS NOT NULL AND transid IN (SELECT transid FROM #tmp_transid) THEN 1
 						 ELSE 0 END

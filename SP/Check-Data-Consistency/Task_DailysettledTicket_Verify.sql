@@ -1,6 +1,6 @@
 /*<info serverAlias="DBTP-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_DailysettledTicket_Verify] @mode TINYINT = 1
-	, @ErrMessage VARCHAR(512) = '' OUTPUT
+ALTER PROCEDURE [dbo].[Task_DailysettledTicket_Verify] 
+	@ErrMessage VARCHAR(512) = '' OUTPUT
 AS
 /*  
  Created by:20141015@Lukas  
