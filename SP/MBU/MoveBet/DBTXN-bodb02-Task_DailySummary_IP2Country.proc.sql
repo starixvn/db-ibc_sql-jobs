@@ -2,7 +2,6 @@
 ALTER PROCEDURE [dbo].[Task_DailySummary_IP2Country]
 (
 	@winlostdate SMALLDATETIME,
-	@target VARCHAR(20) = 'all',
 	@isdebug BIT = 0
 )
 AS
