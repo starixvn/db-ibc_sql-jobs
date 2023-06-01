@@ -3,6 +3,16 @@ GO
 ALTER FUNCTION dbo.f_dbaGetbalance_By_CustId (@custid INT)
 RETURNS TABLE
 AS
+/*
+	Created: 20220602@Patrick
+	Task: get balance of this member
+	DB: DBTXN-bodb02
+	Params:
+		@custid: custid want to check balance
+		
+	Revisions:   
+		- 20220602@Patrick: Initial [Redmine: #173554]
+*/
 RETURN (
 
 	WITH __cte_BetX AS (
