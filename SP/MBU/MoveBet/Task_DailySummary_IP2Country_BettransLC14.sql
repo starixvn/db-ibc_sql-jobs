@@ -52,9 +52,11 @@ BEGIN
 
 	END
 
-	SET @__messageInfo = '#01: curdt: ' + convert(varchar(50), getdate(), 121)
-	RAISERROR(@__messageInfo, 0, 1) with nowait
-
+	IF @isdebug = 1
+	BEGIN
+		SET @__messageInfo = '#01: curdt: ' + convert(varchar(50), getdate(), 121)
+		RAISERROR(@__messageInfo, 0, 1) with nowait
+	END
 	--batching data
 	INSERT INTO #__batching(batchNo, mintransId, maxtransId)
 	SELECT batchNo
