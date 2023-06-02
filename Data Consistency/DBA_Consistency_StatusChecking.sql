@@ -1,10 +1,10 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_StatusChecking]
 	@ProductId		INT	
-	,@Bettype		SMALLINT		= NULL	
-	,@ErrCode		INT				= 0		OUTPUT
-	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
-	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
+  , @Bettype		SMALLINT		= NULL	
+  , @ErrCode		INT				= 0		OUTPUT
+  , @ErrMsg			VARCHAR(MAX)	= ''	OUTPUT 
+  , @SampleData		VARCHAR(MAX)	= ''	OUTPUT
 AS
 /*
 	Created: 20180808@Kathy
@@ -35,7 +35,7 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @transId VARCHAR(MAX)
-			,@yesterday DATETIME
+		  , @yesterday DATETIME
 
 	DECLARE @tmpMatchIds TABLE (MatchId INT)
 
@@ -75,9 +75,9 @@ BEGIN
 	IF @transId <> ''
 	BEGIN
 		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-				,@ErrCode = 100
-				,@ErrMsg = 'All yesterday tickets must be settled on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+			  , @ErrCode = 100
+			  , @ErrMsg = 'All yesterday tickets must be settled on product ' + CAST(@ProductId AS VARCHAR)
+			  , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 		
 	END
 END

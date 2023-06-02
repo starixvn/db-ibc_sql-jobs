@@ -1,10 +1,10 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_GeneralRules_TicketDetailChecking] 
 	 @TableName		VARCHAR(50) = NULL 
-	,@ProductId		INT
-	,@CheckDate     SMALLDATETIME
-	,@transId       VARCHAR(MAX) = NULL 
-	,@ErrorTransIds VARCHAR(MAX) = NULL OUTPUT
+   , @ProductId		INT
+   , @CheckDate     SMALLDATETIME
+   , @transId       VARCHAR(MAX) = NULL 
+   , @ErrorTransIds VARCHAR(MAX) = NULL OUTPUT
 AS	
 /*
 	Created: 20230420@July

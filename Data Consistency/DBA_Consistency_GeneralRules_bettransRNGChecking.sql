@@ -1,9 +1,9 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_GeneralRules_bettransRNGChecking] 
 	 @CheckMode		INT
-	,@ErrCode		INT				= 0		OUTPUT
-	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
-	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
+   , @ErrCode		INT				= 0		OUTPUT
+   , @ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
+   , @SampleData	VARCHAR(MAX)	= ''	OUTPUT
 AS
 /*
 	Created: 20230420@July
@@ -22,11 +22,11 @@ AS
 */
 BEGIN
 	DECLARE @transId		VARCHAR(MAX)
-			,@Today			SMALLDATETIME
-			,@yesterday		SMALLDATETIME 
-			,@CheckDate		SMALLDATETIME
-			,@ErrorTransIds VARCHAR(MAX) =''
-			,@ProductId		INT
+		  , @Today			SMALLDATETIME
+		  , @yesterday		SMALLDATETIME 
+		  , @CheckDate		SMALLDATETIME
+		  , @ErrorTransIds  VARCHAR(MAX) =''
+		  , @ProductId		INT
 
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
@@ -57,9 +57,9 @@ BEGIN
 			BEGIN
 				EXEC DBA_Consistency_GeneralRules_TicketDetailChecking
 						 @TableName	    = 'bettransRNG' 
-						,@ProductId		= @ProductId
-						,@CheckDate     = @CheckDate
-						,@ErrorTransIds = @ErrorTransIds OUTPUT
+					   , @ProductId		= @ProductId
+					   , @CheckDate     = @CheckDate
+					   , @ErrorTransIds = @ErrorTransIds OUTPUT
 		
 				IF ISNULL(@ErrorTransIds,'') <> ''
 				BEGIN
@@ -71,10 +71,10 @@ BEGIN
 						Mode1_bettransRNG:
 						EXEC DBA_Consistency_GeneralRules_TicketDetailChecking
 									@TableName	    = 'bettransRNG'
-									,@ProductId		= @ProductId
-									,@CheckDate     = @CheckDate
-									,@transId       = @transId
-									,@ErrorTransIds = @ErrorTransIds OUTPUT
+								  , @ProductId		= @ProductId
+								  , @CheckDate      = @CheckDate
+								  , @transId        = @transId
+								  , @ErrorTransIds  = @ErrorTransIds OUTPUT
 			
 						IF ISNULL(@ErrorTransIds, '') <> ''
 						BEGIN
@@ -86,9 +86,9 @@ BEGIN
 							END
 
 							SELECT	 @transId = SUBSTRING(@ErrorTransIds, 2, LEN(@ErrorTransIds) - 1)
-									,@ErrCode = 100
-									,@ErrMsg = 'Check ticket details between bettrans and bettransRNG on product ' + CAST(@ProductId AS VARCHAR)
-									,@SampleData = 'bettransRNG.Refno in (' + @transId + ')'
+								   , @ErrCode = 100
+								   , @ErrMsg = 'Check ticket details between bettrans and bettransRNG on product ' + CAST(@ProductId AS VARCHAR)
+								   , @SampleData = 'bettransRNG.Refno in (' + @transId + ')'
 							RETURN;
 						END
 					END
@@ -115,9 +115,9 @@ BEGIN
 		IF @transId <> ''
 		BEGIN
 			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-					,@ErrCode = 100
-					,@ErrMsg = 'Check wrong status of tickets in bettransRNG'
-					,@SampleData = 'bettransRNG.TransId in (' + @transId + ')'
+				   , @ErrCode = 100
+				   , @ErrMsg = 'Check wrong status of tickets in bettransRNG'
+				   , @SampleData = 'bettransRNG.TransId in (' + @transId + ')'
 		END
 		RETURN;
 		

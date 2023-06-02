@@ -1,10 +1,10 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_WinlostCommChecking]
 	 @CheckMode		INT			   		
-	,@tablename		VARCHAR(50)		= NULL
-	,@ErrCode		INT				= 0		OUTPUT
-	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
-	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
+   , @tablename		VARCHAR(50)		= NULL
+   , @ErrCode		INT				= 0		OUTPUT
+   , @ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
+   , @SampleData	VARCHAR(MAX)	= ''	OUTPUT
 AS
 /*
 	Created: 20230414@July
@@ -25,8 +25,8 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @transId VARCHAR(MAX)
-			,@Today SMALLDATETIME
-			,@yesterday SMALLDATETIME 
+		  , @Today SMALLDATETIME
+		  , @yesterday SMALLDATETIME 
 
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
@@ -114,11 +114,11 @@ BEGIN
 		END
 		IF @transId <> ''
 		BEGIN
-			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-					,@ErrCode = 100
-					,@ErrMsg = CASE WHEN @tablename = 'bettrans' THEN 'Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans'
+			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+				  , @ErrCode = 100
+				  , @ErrMsg = CASE WHEN @tablename = 'bettrans' THEN 'Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans'
 																 ELSE 'Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table ' + @tablename END
-					,@SampleData =  @tablename + '.TransId in (' + @transId + ')'
+				  , @SampleData =  @tablename + '.TransId in (' + @transId + ')'
 		END
 		RETURN;
 	END
@@ -159,9 +159,9 @@ BEGIN
 		IF @transId <> ''
 		BEGIN
 			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-					,@ErrCode = 100
-					,@ErrMsg = 'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL on table ' + @tablename
-					,@SampleData = @tablename + '.TransId in (' + @transId + ')'
+				   , @ErrCode = 100
+				   , @ErrMsg = 'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL on table ' + @tablename
+				   , @SampleData = @tablename + '.TransId in (' + @transId + ')'
 		END
 		RETURN;
 	END

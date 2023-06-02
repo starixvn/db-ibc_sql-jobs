@@ -1,11 +1,11 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_StakeChecking]
 	@ProductId		INT	
-	,@tablename		VARCHAR(50)		= NULL	
-	,@Bettype		SMALLINT		= NULL
-	,@ErrCode		INT				= 0		OUTPUT
-	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
-	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
+  , @tablename		VARCHAR(50)		= NULL	
+  , @Bettype		SMALLINT		= NULL
+  , @ErrCode		INT				= 0		OUTPUT
+  , @ErrMsg			VARCHAR(MAX)	= ''	OUTPUT 
+  , @SampleData		VARCHAR(MAX)	= ''	OUTPUT
 AS
 /*
 	Created: 20180808@Kathy
@@ -49,8 +49,8 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @transId VARCHAR(MAX)
-			,@Today DATETIME 
+	DECLARE @transId	VARCHAR(MAX)
+		  , @Today		DATETIME 
 
 	DECLARE @tmpMatchIds TABLE (MatchId INT)
 
@@ -177,9 +177,9 @@ BEGIN
 	IF @transId <> ''
 	BEGIN
 		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-				,@ErrCode = 100
-				,@ErrMsg = 'Stake must be larger than 0 on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = @tablename + '.TransId in (' + @transId + ')'
+			  , @ErrCode = 100
+			  , @ErrMsg = 'Stake must be larger than 0 on product ' + CAST(@ProductId AS VARCHAR)
+			  , @SampleData = @tablename + '.TransId in (' + @transId + ')'
 	END		
 
 END

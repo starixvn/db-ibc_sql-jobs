@@ -1,9 +1,9 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_OtherSportsPendingMatchChecking]
 	@ProductId		INT = 0		
-	,@ErrCode		INT				= 0		OUTPUT
-	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT
-	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
+  , @ErrCode		INT				= 0		OUTPUT
+  , @ErrMsg			VARCHAR(MAX)	= ''	OUTPUT
+  , @SampleData		VARCHAR(MAX)	= ''	OUTPUT
 AS
 /*
 	Created: 20191025@Helen
@@ -20,7 +20,7 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @matchid VARCHAR(MAX) = ''
-	       ,@yesterday DATETIME 
+	      , @yesterday DATETIME 
 
 	DECLARE @tblMatch TABLE (matchid INT)
 	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
@@ -38,9 +38,9 @@ BEGIN
 	IF @matchid <> ''
 	BEGIN
 		SELECT	@matchid = SUBSTRING(@matchid, 2, LEN(@matchid) - 1)
-				,@ErrCode = 100
-				,@ErrMsg = 'Detect yesterday pending matches for Virtual Sports not completed yet'
-				,@SampleData = 'Match.matchid in (' + @matchid + ')'
+			  , @ErrCode = 100
+			  , @ErrMsg = 'Detect yesterday pending matches for Virtual Sports not completed yet'
+			  , @SampleData = 'Match.matchid in (' + @matchid + ')'
 	END
 
 END

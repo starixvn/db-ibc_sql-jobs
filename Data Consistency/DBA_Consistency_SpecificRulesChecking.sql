@@ -2,11 +2,11 @@
 ALTER PROCEDURE [dbo].[DBA_Consistency_SpecificRulesChecking]
 (
 	@ProductId		INT			    = NULL		
-	,@tablename		VARCHAR(50)		= NULL
-	,@Rule			VARCHAR(50)
-	,@ErrCode		INT				= 0		OUTPUT
-	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
-	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
+  , @tablename		VARCHAR(50)		= NULL
+  , @Rule			VARCHAR(50)
+  , @ErrCode		INT				= 0		OUTPUT
+  , @ErrMsg			VARCHAR(MAX)	= ''	OUTPUT 
+  , @SampleData		VARCHAR(MAX)	= ''	OUTPUT
 )
 AS
 /*
@@ -51,11 +51,10 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @transId VARCHAR(MAX)
-			,@maxError INT = 100
-			,@translogid VARCHAR(MAX)
-			
-	DECLARE @yesterday SMALLDATETIME
-			,@Today SMALLDATETIME
+		  , @maxError INT = 100
+		  , @translogid VARCHAR(MAX)
+		  , @yesterday SMALLDATETIME
+		  , @Today SMALLDATETIME
 	
 	SET @Today = CAST(GETDATE() AS DATE)
 	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
@@ -166,9 +165,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong ticket bettype 2402 Vip baccarat in bettrans on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Wrong ticket bettype 2402 Vip baccarat in bettrans on product ' + CAST(@ProductId AS VARCHAR)
+					  , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 				
 				RETURN
 			END
@@ -193,9 +192,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong actual_stake ticket in bettransLC on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettransLC.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Wrong actual_stake ticket in bettransLC on product ' + CAST(@ProductId AS VARCHAR)
+					  , @SampleData = 'bettransLC.TransId in (' + @transId + ')'
 				
 				RETURN
 			END
@@ -218,9 +217,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Tickets bet after 3 minutes still running on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettransRNG.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Tickets bet after 3 minutes still running on product ' + CAST(@ProductId AS VARCHAR)
+					  , @SampleData = 'bettransRNG.TransId in (' + @transId + ')'
 
 				RETURN
 			END
@@ -250,9 +249,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong discount or comm value on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Wrong discount or comm value on product ' + CAST(@ProductId AS VARCHAR)
+					  , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 
 				RETURN
 			END
@@ -279,9 +278,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong winlost value between bettrans and bettransG on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Wrong winlost value between bettrans and bettransG on product ' + CAST(@ProductId AS VARCHAR)
+					  , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 
 				RETURN
 			END
@@ -299,9 +298,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong winlost value between bettrans and bettransG and bettransLC on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Wrong winlost value between bettrans and bettransG and bettransLC on product ' + CAST(@ProductId AS VARCHAR)
+					  , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 
 				RETURN
 			END
@@ -317,9 +316,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong winlost value between bettrans and bettransLC '
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Wrong winlost value between bettrans and bettransLC '
+					  , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 
 				RETURN
 			END
@@ -335,9 +334,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong winlost value between bettrans and bettransRNG '
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Wrong winlost value between bettrans and bettransRNG '
+					  , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 
 				RETURN
 			END
@@ -363,9 +362,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong stake value between bettrans and bettransG on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Wrong stake value between bettrans and bettransG on product ' + CAST(@ProductId AS VARCHAR)
+					  , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 
 				RETURN
 			END
@@ -383,9 +382,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong stake value between bettrans and bettransG and bettransLC on product ' + CAST(@ProductId AS VARCHAR)
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Wrong stake value between bettrans and bettransG and bettransLC on product ' + CAST(@ProductId AS VARCHAR)
+					  , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 
 				RETURN
 			END
@@ -400,9 +399,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong stake value between bettrans and bettransLC '
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Wrong stake value between bettrans and bettransLC '
+					  , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 
 				RETURN
 			END
@@ -417,9 +416,9 @@ BEGIN
 			IF @transId <> ''
 			BEGIN
 				SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Wrong stake value between bettrans and bettransRNG '
-						,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Wrong stake value between bettrans and bettransRNG '
+					  , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 
 				RETURN
 			END
@@ -456,15 +455,13 @@ BEGIN
 			IF @translogid <> ''
 			BEGIN
 				SELECT	@translogid = SUBSTRING(@translogid, 2, LEN(@translogid) - 1)
-						,@ErrCode = 100
-						,@ErrMsg = 'Settled tickets in translog but not OR having more than one ticket in bettrans'
-						,@SampleData = 'translog.translogId in (' + @translogid + ')'
+					  , @ErrCode = 100
+					  , @ErrMsg = 'Settled tickets in translog but not OR having more than one ticket in bettrans'
+					  , @SampleData = 'translog.translogId in (' + @translogid + ')'
 				RETURN
 			END
 		END
 	END
-
-
 
 	DROP TABLE #tmpBettrans
 	DROP TABLE #tmpBettransG

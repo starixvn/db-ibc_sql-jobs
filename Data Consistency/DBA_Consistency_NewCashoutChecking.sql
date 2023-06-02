@@ -1,9 +1,9 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_NewCashoutChecking]
 	@ProductId		INT		
-	,@ErrCode		INT			 = 0	OUTPUT
-	,@ErrMsg		VARCHAR(MAX) = ''	OUTPUT 
-	,@SampleData	VARCHAR(MAX) = ''	OUTPUT
+  , @ErrCode		INT			 = 0	OUTPUT
+  , @ErrMsg			VARCHAR(MAX) = ''	OUTPUT 
+  , @SampleData		VARCHAR(MAX) = ''	OUTPUT
 AS
 /*
 	Created: 20220112@July
@@ -22,7 +22,7 @@ BEGIN
 	SET NOCOUNT ON
 
 	DECLARE @transId		VARCHAR(MAX)
-			,@Today			SMALLDATETIME
+		  , @Today			SMALLDATETIME
 
 	SET @transId = ''
 	SET @Today = DATEADD(DAY,1,CAST(GETDATE() AS DATE))
@@ -39,9 +39,9 @@ BEGIN
 	IF @transId <> ''
 	BEGIN
 		SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-				,@ErrCode = 100
-				,@ErrMsg = 'Detect Cashout ticket (with Betdaqid = -2) and WinloseDate > current date + 1 on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = 'bettrans.TransId in (' + @transId + ')'
+			   , @ErrCode = 100
+			   , @ErrMsg = 'Detect Cashout ticket (with Betdaqid = -2) and WinloseDate > current date + 1 on product ' + CAST(@ProductId AS VARCHAR)
+			   , @SampleData = 'bettrans.TransId in (' + @transId + ')'
 	END
 
 END
