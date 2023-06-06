@@ -19,7 +19,7 @@ GO
 			,@Order TINYINT
 
 
-	IF @Order IS NULL OR @strCustList
+	IF @Order IS NULL OR @strCustList IS NULL
 	RETURN
 
 	--------------DECLARE temporary tables ------------------
