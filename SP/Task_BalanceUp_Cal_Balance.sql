@@ -14,7 +14,7 @@ SET NOCOUNT ON
 DECLARE @fdate SMALLDATETIME
 
 --get current balanceup date
-EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @fdate
+EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @fdate OUTPUT
 
 --next balanceup date
 SET @fdate = DATEADD(DAY, 7, @fdate)
