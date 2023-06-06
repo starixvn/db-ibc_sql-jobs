@@ -20,6 +20,7 @@ AS
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
 		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 		20220912@Patrick: Support scale-out for deposit site - fix issue Redmine: [#177641]
+		20221227@Patrick: Support BU 247 Redmine: [#182882]
 
 	Param use:
 
@@ -65,7 +66,9 @@ BEGIN
 		-- Get/Compare Balance
 		--
 		DECLARE @__movebetdate SMALLDATETIME, @__siteDBGroupId SMALLINT = 0
+			, @__balanceupdate SMALLDATETIME
 		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
+		EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @__balanceupdate OUTPUT
 
 		SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
 
@@ -83,15 +86,27 @@ BEGIN
 			LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 		WHERE t.custid = @custid
 			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+						 WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
+					     WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 				 ELSE 1 END
 			AND ISNULL(c.SiteDBGroupID, 0) = @__siteDBGroupId
 
+		--//get MovebetDate again if it was changed
 		DECLARE @__movebetdateF SMALLDATETIME
 		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdateF OUTPUT
 
 		IF @__movebetdate <> @__movebetdateF
 		BEGIN
 			SET @__movebetdate = @__movebetdateF
+			GOTO __tryagain
+		END
+
+		--//get BalanceUpDate again if it was changed
+		DECLARE @__balanceupdateF SMALLDATETIME
+		EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @__balanceupdateF OUTPUT
+		IF @__balanceupdate <> @__balanceupdateF
+		BEGIN
+			SET @__balanceupdate = @__balanceupdateF
 			GOTO __tryagain
 		END
 

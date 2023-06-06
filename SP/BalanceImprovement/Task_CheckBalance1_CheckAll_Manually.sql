@@ -22,9 +22,9 @@ AS
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
 		20220715@Patrick: Use insert into instead of select into Redmine: [#175440]
 		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
+		20221227@Patrick: Support BU 247 Redmine: [#182882]
 
 	Param use:
-
 
 	Logic & Process:
 		update Exception table
@@ -113,6 +113,9 @@ BEGIN
 		DECLARE @__movebetdate SMALLDATETIME
 		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
 
+		DECLARE @__balanceupdate SMALLDATETIME
+		EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @__balanceupdate OUTPUT
+
 		__tryagain:
 		IF OBJECT_ID('tempdb.dbo.#QuestionLists') IS NOT NULL
 			DROP TABLE #QuestionLists
@@ -123,7 +126,7 @@ BEGIN
 		;WITH
 		cb AS (
 			SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance
-			FROM dbo.bettrans b with (nolock)
+			FROM dbo.bettrans b WITH (NOLOCK)
 			WHERE 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 						   WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
@@ -135,6 +138,8 @@ BEGIN
 			FROM dbo.Transfer t WITH(NOLOCK)
 				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+						   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
+						   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 					  ELSE 1 END
 				AND ISNULL(c.SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY t.custid
@@ -173,6 +178,15 @@ BEGIN
 			GOTO __tryagain
 		END
 
+		--//get BalanceUpDate again if it was changed
+		DECLARE @__balanceupdateF SMALLDATETIME
+		EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @__balanceupdateF OUTPUT
+		IF @__balanceupdate <> @__balanceupdateF
+		BEGIN
+			SET @__balanceupdate = @__balanceupdateF
+			GOTO __tryagain
+		END
+
 		-- remove settlement involvement
 		IF  EXISTS (SELECT 1 FROM #QuestionLists)
 			AND
@@ -190,7 +204,7 @@ BEGIN
 			SET @RD = @RD + @@ROWCOUNT
 		END
 
-		SET @__movebetdate = @__movebetdateF
+		SELECT @__movebetdate = @__movebetdateF, @__balanceupdate = @__balanceupdateF
 		-- check one more time (with less accounts)
 		;WITH
 		cb AS (
@@ -209,6 +223,8 @@ BEGIN
 				INNER JOIN #QuestionLists q ON t.custid = q.custid
 				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
+						   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
+						   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 					 ELSE 1 END
 				AND ISNULL(c.SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY t.custid

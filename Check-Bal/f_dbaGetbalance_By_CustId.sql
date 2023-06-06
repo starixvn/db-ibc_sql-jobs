@@ -1,27 +1,54 @@
-USE [bodb02]
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="1" isNested="0"></info>*/
 GO
-ALTER FUNCTION [dbo].[f_dbaGetbalance_By_CustId] (@custid INT, @movebetDate SMALLDATETIME, @siteDBGroupId SMALLINT)
+ALTER FUNCTION dbo.f_dbaGetbalance_By_CustId (@custid INT)
 RETURNS TABLE
 AS
+/*
+	Created: 20220602@Patrick
+	Task: get balance of this member
+	DB: DBTXN-bodb02
+	Params:
+		@custid: custid want to check balance
+		
+	Revisions:   
+		- 20220602@Patrick: Initial [Redmine: #173554]
+*/
 RETURN (
 
 	WITH __cte_BetX AS (
-		SELECT @custid AS custid, SUM(winlost-actual_stake+playercomm)	bal
+		SELECT @custid AS custid, SUM(winlost-actual_stake+playercomm) bal
 		FROM dbo.bettrans WITH (NOLOCK) 
 		WHERE custid = @custid
 			AND 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
-						WHEN bettype < 19999 AND winlostdate <= @movebetDate THEN 0 --> old bet
+						WHEN bettype < 19999 
+								AND winlostdate <= (SELECT TOP 1 CONVERT(SMALLDATETIME, VValue) 
+													FROM dbo.SystemSettings WITH(NOLOCK) 
+													WHERE VName = 'MovebetDate') 
+							THEN 0 --> old bet
 						ELSE 1 END
-			AND ISNULL(SiteDBGroupID, 0) = @siteDBGroupId
+			AND ISNULL(SiteDBGroupID, 0) = (SELECT dbo.f_Get_SiteDBGroupID())
 
 		UNION ALL
 		SELECT @custid AS custid, SUM(winlost-actual_stake+playercomm)	
 		FROM dbo.Transfer t WITH (NOLOCK) 
 			LEFT JOIN custdb.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 		WHERE t.custid = @custid
-			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @movebetDate THEN 0 --> new sum
-						ELSE 1 END
-			AND ISNULL(c.SiteDBGroupID, 0) = @siteDBGroupId
+			AND 1 = CASE WHEN bettype = 19999 
+								AND winlostdate > (SELECT TOP 1 CONVERT(SMALLDATETIME, VValue) 
+													FROM dbo.SystemSettings WITH(NOLOCK) 
+													WHERE VName = 'MovebetDate') 
+							THEN 0 --> new sum
+						WHEN bettype = 20000 
+								AND WinlostDate > (SELECT TOP 1 CONVERT(SMALLDATETIME, VValue) 
+													FROM dbo.MBUSettings WITH(NOLOCK) 
+													WHERE VName = 'BalanceUpDate') 
+							THEN 0 --> new balanceup record
+						WHEN WinlostDate < (SELECT TOP 1 CONVERT(SMALLDATETIME, VValue) 
+											FROM dbo.MBUSettings WITH(NOLOCK) 
+											WHERE VName = 'BalanceUpDate') 
+							THEN 0 --> old data
+					 ELSE 1 END
+			AND ISNULL(c.SiteDBGroupID, 0) = (SELECT dbo.f_Get_SiteDBGroupID())
 
 		UNION ALL
 		SELECT @custid AS custid, SUM(Amount)
@@ -31,17 +58,17 @@ RETURN (
 		UNION ALL
 		SELECT @custid AS custid, SUM(actual_stake) 
 		FROM dbo.translog WITH (NOLOCK) 
-		WHERE custid = @custid and statusID IN (0,1) AND ISNULL(SiteDBGroupID, 0) = @siteDBGroupId
+		WHERE custid = @custid and statusID IN (0,1) AND ISNULL(SiteDBGroupID, 0) = (SELECT dbo.f_Get_SiteDBGroupID())
 
 		UNION ALL
 		SELECT @custid AS custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) 
 		FROM dbo.bettransRNG WITH(NOLOCK)
-		WHERE IsSum = 0 AND custid = @custid AND ISNULL(SiteDBGroupID, 0) = @siteDBGroupId
+		WHERE IsSum = 0 AND custid = @custid AND ISNULL(SiteDBGroupID, 0) = (SELECT dbo.f_Get_SiteDBGroupID())
 
 		UNION ALL
 		SELECT @custid AS custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) 
 		FROM dbo.bettransLC WITH(NOLOCK)
-		WHERE IsSum = 0 AND custid = @custid AND ISNULL(SiteDBGroupID, 0) = @siteDBGroupId
+		WHERE IsSum = 0 AND custid = @custid AND ISNULL(SiteDBGroupID, 0) = (SELECT dbo.f_Get_SiteDBGroupID())
 	), __cte_Bal_Table AS (
 		SELECT @custid AS custid, (cd1.Balance + cd2.Balance + cd3.Balance + cd4.Balance - db1.Balance - db2.Balance - db3.Balance - db4.Balance) bal
 		FROM dbo.BalCreditTransfer cd1 WITH (NOLOCK)

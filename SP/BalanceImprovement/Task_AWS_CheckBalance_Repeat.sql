@@ -6,6 +6,7 @@ AS
 	Location: DBTP.bodb02
 	Revision:
 		- 20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
+		- 20230104@Patrick: Balance-Up support transfer 247 [RedmineID: #182882]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -31,14 +32,43 @@ BEGIN
 		RETURN
 	END
 
-	DECLARE @__maxtransId BIGINT, @__maxawstransId BIGINT
-	SELECT @__maxtransId = MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'bettrans'
-	SELECT @__maxawstransId = MAX(transid) FROM DBAWS.bodb02.dbo.bettrans WITH(NOLOCK)
-
-	IF @__maxtransId - @__maxawstransId > 5000
+	--flags for new source
+	IF EXISTS (
+		SELECT TOP 1 1
+		FROM dbo.MBUSettings WHERE VName IN ('isMovingBet_Local', 'isArchivingBet_Local') AND VValue = '1'
+	)
 	BEGIN
-		PRINT 'Replication latency on dbbal....'
-		WAITFOR DELAY '00:00:15:000' --replication latency on dbbal
+		PRINT 'MBU is running @DBTP so skip check balance....'
+		RETURN
+	END
+
+	IF EXISTS (
+		SELECT TOP 1 1
+		FROM DBAWS.bodb02.dbo.MBUSettings WHERE VName IN ('isMovingBet_Local', 'isArchivingBet_Local') AND VValue = '1'
+	)
+	BEGIN
+		PRINT 'MBU is running @AWS so skip check balance....'
+		RETURN
+	END
+
+	DECLARE @__maxtransId BIGINT, @__cntaws int
+	SELECT @__maxtransId = MAX(transid), @__cntaws = 0 FROM DBAWS.bodb02.dbo.bettrans WITH(NOLOCK)
+	SELECT @__cntaws = COUNT(1) FROM dbo.bettrans WITH(NOLOCK, INDEX=PK_bettrans) WHERE transid > @__maxtransId
+
+	IF @__cntaws > 5000
+	BEGIN
+		PRINT 'Replication@bettrans latency on dbbal....'
+		WAITFOR DELAY '00:00:05:000' --replication@bettrans latency on dbbal
+		RETURN
+	END
+
+	SELECT @__maxtransId = MAX(transid), @__cntaws = 0 FROM DBAWS.bodb02.dbo.transfer WITH(NOLOCK)
+	SELECT @__cntaws = COUNT(1) FROM dbo.transfer WITH(NOLOCK, INDEX=PK_Transfer) WHERE transid > @__maxtransId
+
+	IF @__cntaws > 5000
+	BEGIN
+		PRINT 'Replication@transfer latency on dbbal....'
+		WAITFOR DELAY '00:00:05:000' --replication@transfer latency on dbbal
 		RETURN
 	END
 

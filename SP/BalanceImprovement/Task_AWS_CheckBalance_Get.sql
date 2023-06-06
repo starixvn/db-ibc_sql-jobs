@@ -6,6 +6,7 @@ AS
 	Location: DBTP.bodb02 | DBBAL.bodb02
 	Revision:
 		- 20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
+		- 20230104@Patrick: Balance-Up support transfer 247 [RedmineID: #182882]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -63,31 +64,51 @@ BEGIN
 	DECLARE @__movebetdate SMALLDATETIME
 	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
 
-	;WITH
-	cb AS (
+	DECLARE @__balanceupdate SMALLDATETIME
+	EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @__balanceupdate OUTPUT
+
+	CREATE TABLE #__bet (custid INT, balance MONEY)
+	IF @@SERVERNAME = 'DBBAL'
+	BEGIN
+		INSERT INTO #__bet(custid, balance)
 		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance
-		FROM dbo.bettrans b with (nolock)
+		FROM dbo.bettrans b with (nolock, index=IX_customerinfo)
 			INNER JOIN dbo.Task_AWS_Balance_Check t ON b.custid = t.custid
 		WHERE b.transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'bettrans')
 			AND 1 =  CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
-					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
-					 ELSE 1 END
+						WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
+						ELSE 1 END
 		GROUP BY b.custid
-	),
-	ct AS (
+	END
+	ELSE
+	BEGIN
+		INSERT INTO #__bet(custid, balance)
+		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance
+		FROM dbo.bettrans b with (nolock, index=IX_custid)
+			INNER JOIN dbo.Task_AWS_Balance_Check t ON b.custid = t.custid
+		WHERE b.transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'bettrans')
+			AND 1 =  CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
+						WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
+						ELSE 1 END
+		GROUP BY b.custid
+	END
+
+	;WITH ct AS (
 		SELECT b.custid, SUM(winlost-actual_stake+playercomm) Balance
 		FROM dbo.Transfer b with (nolock)
 			INNER JOIN dbo.Task_AWS_Balance_Check t ON b.custid = t.custid
 		WHERE b.transid <= (SELECT MAX(Id) FROM dbo.Task_AWS_Balance_Check_MaxIdList WHERE tableName = 'transfer')
 			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
-					 ELSE 1 END
+							WHEN bettype = 20000 AND winlostdate > @__balanceupdate THEN 0 --> new bal
+							WHEN winlostdate < @__balanceupdate THEN 0 --> old data
+						ELSE 1 END
 		GROUP BY b.custid
 	)
 
 	SELECT cb.custid, cb.Balance - ISNULL(qq.Outstanding,0) + ISNULL(qq.BalRNG, 0) + ISNULL(qq.BalLC, 0) - ISNULL(adjustWinlostAmt, 0)  + ISNULL(balNetPosition, 0) as balance
 	FROM (
 		SELECT ISNULL(cb.custid, ct.CustId) custid, SUM(ISNULL(cb.balance, 0) + ISNULL(ct.balance, 0)) balance
-		FROM cb FULL OUTER JOIN ct ON cb.custid = ct.CustId
+		FROM #__bet cb FULL OUTER JOIN ct ON cb.custid = ct.CustId
 		GROUP BY ISNULL(cb.custid, ct.CustId)
 	)cb	
 		LEFT OUTER JOIN #tmpCal qq ON cb.custid = qq.custid

@@ -11,6 +11,7 @@ CREATE FUNCTION [dbo].[f_BU_GetDelayTime]
 	DB: DBTXN/BODB02
 	Revisions:
 		- 20190131@Patrick: Add more key [RedmineID: #108581]
+		- 20221215@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
 
 */
 RETURNS VARCHAR(50)
@@ -31,6 +32,9 @@ BEGIN
 						WHEN @KeyId = 'FriRoutine' THEN '00:00:00.180'
 						WHEN @KeyId = 'BeforeMB' THEN '00:05:00:000'
 						WHEN @KeyId = 'AfterUpdMBD' THEN '00:05:00:000'
+						WHEN @KeyId = 'BeforeBU' THEN '00:05:00:000'
+						WHEN @KeyId = 'AfterUpdBUD' THEN '00:05:00:000'
+						WHEN @KeyId = 'DeleteBU' THEN '00:00:00:280'
 						ELSE '00:00:00:280' END)
 END
 GO

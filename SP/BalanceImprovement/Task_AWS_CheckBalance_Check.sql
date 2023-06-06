@@ -6,6 +6,7 @@ AS
 	Location: DBTP.bodb02
 	Revision:
 		- 20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
+		- 20230104@Patrick: Balance-Up support transfer 247 [RedmineID: #182882]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -13,6 +14,16 @@ BEGIN
 	IF EXISTS (
 		SELECT TOP 1 1
 		FROM dbo.SystemSettings WHERE VName IN ('isMovingBet_Local', 'isArchivingBet_Local') AND VValue = '1'
+	)
+	BEGIN
+		PRINT 'MBU is running so skip check balance....'
+		--DELETE FROM dbo.Task_AWS_Balance_Check_Verify
+		RETURN
+	END
+
+	IF EXISTS (
+		SELECT TOP 1 1
+		FROM dbo.MBUSettings WHERE VName IN ('isMovingBet_Local', 'isArchivingBet_Local') AND VValue = '1'
 	)
 	BEGIN
 		PRINT 'MBU is running so skip check balance....'
