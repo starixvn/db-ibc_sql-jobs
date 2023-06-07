@@ -21,6 +21,7 @@ AS
 		- 20220321@Percy: Enhance code check Opening Balance [RedmineID: #170118]
 		- 20220620@Sol: Enhance code to prevent arithmetic overflow [RedmineID: #174296]
 		- 20220620@Sol: LAP - Enhance database jobs - ignore bettype 23203 for archived member - [RedmineID: #171747]
+		- 20230227@Evan: Ensure correct balance calculation when allow to transfer 247 (BU) [Redmine: #173554]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -41,8 +42,8 @@ BEGIN
 	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
 	EXEC bodb02.dbo.Age_SelBalanceUpDay
 	
-	DECLARE @MoveBetsDay SMALLDATETIME
-	SELECT  @MoveBetsDay = MoveBetsDay FROM @MBBU
+	DECLARE @MoveBetsDay SMALLDATETIME, @BalanceUpDate SMALLDATETIME
+	SELECT  @MoveBetsDay = MoveBetsDay, @BalanceUpDate = BalanceUpDay FROM @MBBU
 
 	DECLARE @ErrMsgTab AS TABLE (NoID SMALLINT IDENTITY (1,1), JobType VARCHAR(50), ErrMsg VARCHAR(MAX))
 	
@@ -175,6 +176,9 @@ BEGIN
 			FROM bodb02.dbo.Transfer b WITH (NOLOCK)
 			WHERE bettype >= 20000
 				AND b.WinlostDate <= @CurrentDate
+				AND 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
+						WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
+						ELSE 1 END
 				AND NOT EXISTS (SELECT TOP 1 1 FROM bodb02.dbo.Dep_Customer_Archived da WITH(NOLOCK) WHERE b.CustID = da.CustID)
 				AND 1 = CASE 
 							WHEN b.Bettype = 23203 AND b.WinlostDate <= @CurrentDate THEN 1 

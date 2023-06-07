@@ -76,6 +76,7 @@ AS
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
 		- 20230215@Evan: Enhance Job bodb02 Deposit Report Summary [RedmineID: #182153]
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
+		- 20230227@Evan: Ensure correct balance calculation when allow to transfer 247 (BU) [Redmine: #173554]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -100,11 +101,12 @@ BEGIN
 			@LogID BIGINT,
 			@NumberofCus INT= 0,
 			@MoveBetsDay SMALLDATETIME,
+			@BalanceUpDate SMALLDATETIME,
 			@ErrMsg VARCHAR(1000) = ''
 
 	SELECT @CurrentDate = CONVERT(DATE, CURRENT_TIMESTAMP, 112)
 	SELECT @CurrentHour = DATEPART(HOUR, CURRENT_TIMESTAMP)
-	SELECT @MoveBetsDay = MoveBetsDay FROM @MBBU
+	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDate = BalanceUpDay FROM @MBBU
 
 	IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans14 WITH (NOLOCK)
 					WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype <> 18000)
@@ -219,7 +221,10 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END) -- AdjBonusWallet
 		FROM dbo.Transfer b WITH (NOLOCK)
 		WHERE b.winlostdate = @Winlostdate
-			AND (b.Bettype > 19999 OR (b.bettype = 19999 AND winlostdate <= @MoveBetsDay)) -- keep get data of bettype 19999 to get custid
+			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @MoveBetsDay THEN 0 --> new sum
+		            WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
+		            WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
+		            ELSE 1 END
 		GROUP BY b.custid, b.bettype
 
 		DELETE r

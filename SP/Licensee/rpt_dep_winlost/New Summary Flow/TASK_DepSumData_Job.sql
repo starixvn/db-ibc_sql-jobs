@@ -13,6 +13,8 @@ AS
 		- 20180618@Sophia: Change the flag of Movebet and Balanceup  [redmine: #97071]
 		- 20200417@Percy: Remove code gen data for MemberDailyIA [RedmineID: #132740]
 		- 20220422@Sol: LAP - Enhance database jobs - [RedmineID: #171747]
+		- 20230227@Evan: Balance-Up support transfer 247 [RedmineID: #173554]
+
 		
 	Input Params:	
 	- @IdlingHour: The time when the system is more idle
@@ -29,10 +31,9 @@ BEGIN
 	SELECT  @Earlyday		= DATEADD(DAY, -2, @CurrentDate)
 	SELECT  @CurrentHour	= DATEPART(HOUR, CURRENT_TIMESTAMP)
 
-	-- Check system movebet and balanceup
-	IF EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isArchivingBet_Local','isArchivingDEPdata','isSummaryingDEPdata') AND VValue <> '0')
+	IF EXISTS (SELECT 1 FROM dbo.SystemSettings WITH (NOLOCK) WHERE VName IN ('isArchivingDEPdata','isSummaryingDEPdata') AND VValue <> '0')
 	BEGIN
-		PRINT 'EXEC TASK_DepSumDataJob: MoveBet/BalanceUp/ArchivingDEPdata/SummaryingDEPdata is performing ==> RETURN'
+		PRINT 'EXEC TASK_DepSumDataJob: ArchivingDEPdata/SummaryingDEPdata is performing ==> RETURN'
 		RETURN
 	END
 
