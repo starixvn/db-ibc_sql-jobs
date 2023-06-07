@@ -11,6 +11,7 @@ AS
 		- 20201111@Percy: Initialize SP [RedmineID: #145020]
 		- 20210323@Percy: Convert timezone [RedmineID: #151391]
 		- 20210819@Percy: Get System Name [RedmineID: #160414]
+		- 20230523@Sally: Support Currency BDT, USD 72 [RedmineID: #188429]
 */
 
 BEGIN
@@ -49,7 +50,8 @@ BEGIN
 			,m.FirstDepositAmount = c.FirstDepositAmount * 1.0 / CASE WHEN e.Code IN ('VND', 'IDR') THEN 1000.0 ELSE 1.0 END
 		FROM dbo.MemberInfo m
 			INNER JOIN #Customer c ON m.CustId = c.CustId
-			INNER JOIN dbo.Exchange e WITH (NOLOCK) ON m.Currency = e.ExchangeId
+			LEFT JOIN dbo.TpExchange t WITH (NOLOCK) ON t.TpExchangeId = m.Currency
+			INNER JOIN dbo.Exchange e WITH (NOLOCK) ON ISNULL(t.ExchangeId, m.Currency) = e.ExchangeId
 
 		SELECT @LastUpdatedTime = MAX(UpdatedTime) FROM #Customer
 
