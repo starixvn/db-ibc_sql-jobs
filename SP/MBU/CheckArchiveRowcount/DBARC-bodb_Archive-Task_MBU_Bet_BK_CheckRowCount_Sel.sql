@@ -13,6 +13,7 @@ AS
 		- 20191030@Billy:	Remove table [BetLucky3Result] - [Redmine: #122987]
 		- 20200728@Brice:	Add 13 tables - [Redmine: #111093]
 		- 20210628@Helen:	Move checking for TVS tables to another SP Task_MBU_TVS_BK_CheckRowCount_Sel [RedmineId: #157539]
+		- 20230607@Brice: remove bettrans_Staging_bk với SettlementNG2_Message_bk [Redmine:#186722]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -50,7 +51,7 @@ BEGIN
 	SELECT COUNT(1), 'bettransm' 
 	FROM dbo.bettransm WITH(NOLOCK)
 	WHERE winlostdate = @__winlostdate
-
+/*
 	--//SettlementNG2_Message
 	INSERT INTO @__tempCount(rowcnt, tableName)
 	SELECT COUNT(1), 'SettlementNG2_Message' 
@@ -63,7 +64,7 @@ BEGIN
 	FROM dbo.bettrans_Staging_bk b WITH(NOLOCK) 
 		INNER JOIN dbo.SettlementNG2_Message_bk m WITH(NOLOCK) ON b.SeqId = m.SeqID
 	WHERE m.EventDate = @__winlostdate
-
+*/
 	--//bettrans
 	INSERT INTO @__tempCount(rowcnt, tableName)
 	SELECT COUNT(1), 'bettrans' 

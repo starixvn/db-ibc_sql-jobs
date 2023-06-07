@@ -16,6 +16,7 @@ AS
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 		- 20220317@Helen: Missing bettype when checking transfer data [Redmine:#164197]
 		- 20220324@Kathy: Add index hint to get rowcount of transfer [Redmine:#170113]
+		- 20230607@Brice: remove bettrans_Staging_bk với SettlementNG2_Message_bk [Redmine:#186722]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -50,7 +51,7 @@ BEGIN
 	SELECT COUNT(1), 'bettransm' 
 	FROM dbo.bettransm14 WITH(NOLOCK)
 	WHERE winlostdate = @DateCheck
-
+/*
 	--//SettlementNG2_Message
 	INSERT INTO @__tempCount(rowcnt, tableName)
 	SELECT COUNT(1), 'SettlementNG2_Message' 
@@ -63,7 +64,7 @@ BEGIN
 	FROM dbo.bettrans_Staging b WITH(NOLOCK) 
 		INNER JOIN dbo.SettlementNG2_Message m WITH(NOLOCK) ON b.SeqId = m.SeqID
 	WHERE m.EventDate = @DateCheck
-
+*/
 	--//bettrans
 	INSERT INTO @__tempCount(rowcnt, tableName)
 	SELECT COUNT(1), 'bettrans' 
