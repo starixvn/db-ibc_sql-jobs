@@ -21,7 +21,7 @@ BEGIN
 			,	b.playerdiscount, b.discount, b.adiscount, b.sdiscount, b.livehomescore, b.liveawayscore, b.liveindicator
 			,	[betteam] = CONVERT(VARCHAR(10), b.betteam)
 			,	b.creator, b.refno, b.winlostdate
-			,	[betfrom] = CONVERT(VARCHAR(1), b.betfrom)
+			,	[betfrom] = CONVERT(VARCHAR(4), b.betfrom)
 			,	[betcheck] = CONVERT(VARCHAR(50), b.betcheck)
 			,	b.checktime, b.oddsspread, b.actualrate, b.matchid, b.recommend, b.mrecommend, b.srecommend
 			,	b.ruben, b.betid, b.statuswinlost, b.modds, b.betdaqid, b.tstamp, b.currency

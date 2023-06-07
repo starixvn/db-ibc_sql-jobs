@@ -22,7 +22,7 @@ AS
 
 	-- to DB06.bodb_Archive.dbo.bettransm
 	SELECT	[betcheck]	= CONVERT(VARCHAR(50), betcheck)
-		,	[betfrom]	= CONVERT(VARCHAR(1),  betfrom)
+		,	[betfrom]	= CONVERT(VARCHAR(4),  betfrom)
 		,	[betteam]	= CONVERT(VARCHAR(10), betteam)
 		,	[comstatus]	= CONVERT(VARCHAR(20), comstatus)
 		,	[status]	= CONVERT(VARCHAR(10), status)
