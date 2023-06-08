@@ -27,7 +27,8 @@ AS
 		- 20220110@Danny: SG - Jackpot prize integration [#167089]
 		- 20220329@Danny: Intergrate Guaranteed Gaming [#167626]
 		- 20221018@Danny: Integrate MG-RNG (ProductID = 73) [#176986]
-		 - 20230214@Danny: Integrate Jili (ProductID = 75) [#183766]
+		- 20230214@Danny: Integrate Jili (ProductID = 75) [#183766]
+		- 20230518@Danny: Integrate YeeBet (ProductID = 76) [#187948]
 */
 
 BEGIN
@@ -83,7 +84,7 @@ BEGIN
 	DECLARE @LCBettypeList TABLE(Bettype INT)
 	INSERT INTO @LCBettypeList(Bettype)
 	SELECT	DISTINCT bettype
-	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'AB,SXG,SAG,WM,PPL,FGGL') la
+	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'AB,SXG,SAG,WM,PPL,FGGL,YB') la
 
 	INSERT INTO #Source(TableName, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, AWinloss, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
 	(
