@@ -7,11 +7,12 @@ AS
 	Created by: 20191111@Bobby
     Task: BU has done yet?
     DB: DBEXT-bodb02,DBAGE-bodb02,DBACC-bodb02
-
+	
 	Revisions:
 		- 20191111@Bobby: Initialize SP [RedmineID: #83787]
 		- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
-	
+		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554] 
+
 	Parameters Explanations:
 		@StatusID = 0 --> BU has commpleted
 		@StatusID = 1 --> BU has not commpleted yet (is running)
@@ -38,15 +39,18 @@ BEGIN
 		, @CheckTime			DATETIME
 		
 	-- the BU date - 6-Friday
-	SELECT @BUDate				= MAX(winlostdate)
-		,@OldBUDate				= MIN(winlostdate)
+	SELECT @OldBUDate				= MIN(winlostdate)
 	FROM dbo.Transfer WITH(NOLOCK)
 	WHERE bettype = 20000
-	
+
+	SELECT @BUDate = CONVERT(SMALLDATETIME, VValue)
+	FROM bodb02.dbo.MBUSettings
+	WHERE VName = 'BalanceUpDate'
+
 	SELECT @StatusID			= 1
 		, @IsArchivingBetName	= 'isArchivingBet_Local'
-		, @StartMovingName		= 'StartMoving_Local'
-		, @EndMovingName		= 'EndMoving_Local'
+		, @StartMovingName		= 'StartBalanceUp_Local'
+		, @EndMovingName		= 'EndBalanceUp_Local'
 		, @CheckTime			= GETDATE()
 		, @CheckDate			= CAST(@CheckTime AS DATE)
 		, @NextBUDate			= DATEADD(DD, 7, @OldBUDate)
@@ -60,28 +64,31 @@ BEGIN
 								WHEN VName = @StartMovingName THEN CAST(VValue AS DATETIME) ELSE @StartMovingTime END
 		, @EndMovingTime		= CASE 
 								WHEN VName = @EndMovingName THEN CAST(VValue AS DATETIME) ELSE @EndMovingTime END
-	FROM dbo.SystemSettings WITH (NOLOCK)
+	FROM dbo.MBUSettings WITH (NOLOCK)
 	WHERE VName IN (@StartMovingName, @EndMovingName, @IsArchivingBetName)
+	
+	SELECT @IsArchivingBetValue = CAST(VValue AS INT) FROM dbo.MBUSettings WITH (NOLOCK) WHERE VName = @IsArchivingBetName
 
 	--- SET BU status
-	SELECT @StatusID			= CASE 
-									WHEN @CheckWeekday <> @WeekdayRunBU THEN  -- NOT BU day
-										CASE 
-											WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @BUDate THEN 1 -- BU is running after @WeekdayRunBU
-											ELSE 0 
-										END
-									WHEN @CheckWeekday = @WeekdayRunBU THEN -- is BU Day
-										CASE 
-											WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @BUDate THEN 1 -- BU is running
-											WHEN @IsArchivingBetValue = 0 AND @diffDayWithBUDate > 10 AND @NextBUDate <> @BUDate THEN 2 -- BU has not started YET
-											WHEN @IsArchivingBetValue = 0 
-													AND @diffDayWithBUDate < 10
-													AND @OldBUDate = @BUDate
-													AND @CheckTime >= @StartMovingTime AND @StartMovingTime <= @EndMovingTime 
-												THEN 0 -- BU has completed
-											ELSE 99 -- BU unknown - DELAY
-										END
-									ELSE 99 -- BU unknown - DELAY
-								END 
+	
+	SELECT @StatusID = CASE 
+					WHEN @CheckWeekday <> @WeekdayRunBU THEN  -- NOT BU day
+						CASE 
+							WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @BUDate THEN 1 -- BU is running after @WeekdayRunBU
+							ELSE 0 
+						END
+					WHEN @CheckWeekday = @WeekdayRunBU THEN -- is BU Day
+						CASE 
+							WHEN @IsArchivingBetValue <> 0 OR @OldBUDate <> @BUDate THEN 1 -- BU is running
+							WHEN @IsArchivingBetValue = 0 AND @diffDayWithBUDate > 10 AND @NextBUDate <> @BUDate THEN 2 -- BU has not started YET
+							WHEN @IsArchivingBetValue = 0 
+									AND @diffDayWithBUDate < 10
+									AND @OldBUDate = @BUDate
+									AND @CheckTime >= @StartMovingTime AND @StartMovingTime <= @EndMovingTime 
+								THEN 0 -- BU has completed
+							ELSE 99 -- BU unknown - DELAY
+						END
+					ELSE 99 -- BU unknown - DELAY
+				END 
 END
 GO

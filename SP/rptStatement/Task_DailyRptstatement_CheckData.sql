@@ -28,6 +28,7 @@ AS
 		- 20201008@Percy: Get SMA from bettrans instead of custinfo table [RedmineID: #142953]
 		- 20210625@Percy: Enhance code to reduce high used tempdb [RedmineID: #154536]
 		- 20211122@Danny: Split transfer tickets out of bettrans [Redmine: #164196]
+		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554] 
 */
 BEGIN
 
@@ -163,6 +164,7 @@ BEGIN
 		FROM bodb02.dbo.transfer WITH (NOLOCK)
 		WHERE bettype > 20000
 			AND winlostdate = @_Winlostdate
+			AND winlostdate >= @CurrentBU_Date
 		GROUP BY custid
 	)
 	MERGE #rptStatementTable AS TGR

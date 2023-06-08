@@ -16,6 +16,7 @@ AS
 		- 20210527@Danny: Enhance merge statement [RedmineID: #154536]
 		- 20211122@Danny: Split transfer tickets out of bettrans [Redmine: #164196]
 		- 20230516@Danny: Remove orphan ticket [Redmine: #188341]
+		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
  */
 
 BEGIN
@@ -202,7 +203,6 @@ BEGIN
 				, SUM(swinlost + scomm - acomm) AS swinlost
 			FROM bodb02.dbo.bettrans WITH (NOLOCK)
 			WHERE winlostdate = @TheDayBefore
-				AND bettype < 19999 --> bet tickets
 				AND ruben = 1
 				AND statusID NOT IN (0, 1)
 				AND custID > 0
@@ -217,6 +217,9 @@ BEGIN
 			FROM bodb02.dbo.transfer WITH (NOLOCK)
 			WHERE winlostdate = @TheDayBefore
 				AND bettype > 19999 --> transfer tickets
+				AND 1 = CASE WHEN bettype = 20000 AND winlostdate > @balanceUpDay THEN 0 --> new bal
+							WHEN winlostdate < @balanceUpDay THEN 0 --> old data
+						ELSE 1 END
 				AND statusID NOT IN (0, 1)
 				AND custID > 0
 			GROUP BY custid, recommend, mrecommend, srecommend

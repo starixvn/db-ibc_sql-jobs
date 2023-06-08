@@ -14,6 +14,7 @@ AS
 		- 20210802@Sophia: Fix count VoidCount Instead of Betcount only [Redmine: #159511]
 		- 20210505@Sol: NAP - Alpha - Allow more time for transfer - [Redmine: #149927]
 		- 20211122@Danny: Split transfer tickets out of bettrans [Redmine: #164196]
+		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554] 
 */
 
 BEGIN
@@ -44,6 +45,19 @@ BEGIN
 			) AS tmp
 	END
 	/* ===== End Get Customer Info ===== */
+
+	-- OpeningTotalBalance
+	DECLARE @MoveBetsDay SMALLDATETIME, @BalanceUpDay SMALLDATETIME, @tmpWinlostDate DATE
+	SELECT  @tmpWinlostDate = @WinlostDate
+
+	-- get move bet date
+	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+
+	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+	
+	-- GET the current MB, BU date
+	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDay = BalanceUpDay FROM @tblMoveBetBalanceUp
 
 	/* ===== Get Temp Data ===== */
 	BEGIN
@@ -209,6 +223,7 @@ BEGIN
 				) AS tmp
 		WHERE b.winlostdate = @WinlostDate
 			AND b.bettype > 20000
+			AND b.winlostdate >= @BalanceUpDay
 		GROUP BY
 			b.custid
 
@@ -228,6 +243,7 @@ BEGIN
 					SELECT c.CustId FROM @CustInfo c WHERE b.custid = c.CustId
 				) AS tmp
 			WHERE  b.bettype = 20000
+				AND b.winlostdate = @BalanceUpDay
 				--AND b.winlostdate = @WinlostDate
 			GROUP BY b.custid
 		END
@@ -253,6 +269,9 @@ BEGIN
 					SELECT c.CustId FROM @CustInfo c WHERE b.custid = c.CustId
 				) AS tmp
 			WHERE b.bettype >= 19999
+				AND 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDay THEN 0 --> new bal
+							WHEN winlostdate < @BalanceUpDay THEN 0 --> old data
+						ELSE 1 END
 				AND b.winlostdate < @WinlostDate
 			GROUP BY b.custid
 				,b.recommend
@@ -476,19 +495,6 @@ BEGIN
 	/* ===== End Compare and Correct Data ===== */
 
 	DROP TABLE #rptStatement
-
-	-- OpeningTotalBalance
-	DECLARE @MoveBetsDay SMALLDATETIME, @tmpWinlostDate DATE
-	SELECT  @tmpWinlostDate = @WinlostDate
-
-	-- get move bet date
-	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
-
-	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
-	EXEC bodb02.dbo.Age_SelBalanceUpDay
-	
-	-- GET the current MB date
-	SELECT @MoveBetsDay = MoveBetsDay FROM @tblMoveBetBalanceUp
 
 	WHILE @tmpWinlostDate <= @MoveBetsDay
 	BEGIN

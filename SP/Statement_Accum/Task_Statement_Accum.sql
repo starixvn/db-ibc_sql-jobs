@@ -8,6 +8,7 @@ AS
 
     Revisions:
         - 20221108@Danny: Initialize SP [RedmineID: #169560]
+		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554] 
  */
 BEGIN
     SET NOCOUNT ON
@@ -70,7 +71,9 @@ BEGIN
 				INSERT INTO #__transfer (custid, amount)
 				SELECT custid, SUM(Winlost - Actual_Stake) AS amount
 				FROM bodb02.dbo.Transfer WITH (NOLOCK)
-				WHERE TransDate >= @fromdate AND TransDate < @todate AND bettype > 20000
+				WHERE TransDate >= @fromdate AND TransDate < @todate 
+					AND bettype > 20000
+					AND winlostdate >= @BalanceUpDay
 					AND winlostdate = @tmp_winlostdate
 				GROUP BY custid
 			ELSE
