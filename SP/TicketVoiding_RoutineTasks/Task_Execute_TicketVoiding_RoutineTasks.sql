@@ -20,6 +20,7 @@ AS
 		- 20200106@Sol: Recover/Void - add missing sub-steps to step 6 - [RedmineID: #148325]
 		- 20220422@Sol: LAP - Enhance database jobs - [RedmineID: #171747]
 		- 20220805@Sol: LAP - Scale out DBTrans phase 1 - Check siteDB or central to run specific code - [RedmineID: #175297]
+		- 20230522@Lewis: Database - Abnormal Account - call sum Sps on other servers - [RedmineID: #188463]
 		- 20220603@Sol: Database - Sync-up Standby Server data - [RedmineID: #167261]
 */
 BEGIN
