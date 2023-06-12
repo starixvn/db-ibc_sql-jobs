@@ -21,6 +21,7 @@ AS
 		- 20220422@Sol: LAP - Enhance database jobs - [RedmineID: #171747]
 		- 20220805@Sol: LAP - Scale out DBTrans phase 1 - Check siteDB or central to run specific code - [RedmineID: #175297]
 		- 20230522@Lewis: Database - Abnormal Account - call sum Sps on other servers - [RedmineID: #188463]
+		- 20230612@Evan: remove code related to Saba Promotion report - [RedmineID: #189234]
 */
 BEGIN
 	DECLARE @GenerateData TINYINT,
@@ -240,21 +241,13 @@ BEGIN
 				END CATCH
 
 				BEGIN TRY
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14 @PromoDate = @winlostdate, @IsCheckDataOnly = 0
+					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14 @Fromdate= @winlostdate, @Todate= @winlostdate
 				END TRY
 				BEGIN CATCH
 					SET @errmsg = 'step 6.14' + '--' + ERROR_MESSAGE()			
 					RAISERROR(@errmsg,16,1)
 				END CATCH
-
-				BEGIN TRY
-					EXEC DBLIC.bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14 @Fromdate= @winlostdate, @Todate= @winlostdate
-				END TRY
-				BEGIN CATCH
-					SET @errmsg = 'step 6.15' + '--' + ERROR_MESSAGE()			
-					RAISERROR(@errmsg,16,1)
-				END CATCH
--- clone step 6 --
+			-- clone step 6 --
 			IF @@SERVERNAME = 'DBTRANS'
 			BEGIN
 				BEGIN TRY
@@ -399,20 +392,12 @@ BEGIN
 				END CATCH
 
 				BEGIN TRY
-					EXEC DB053.bodb_LicenseeReport.dbo.Task_DailySummaryLicPromotion_Bettrans14 @PromoDate = @winlostdate, @IsCheckDataOnly = 0
+					EXEC DB053.bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14 @Fromdate= @winlostdate, @Todate= @winlostdate
 				END TRY
 				BEGIN CATCH
 					SET @errmsg = 'step 6.14' + '--' + ERROR_MESSAGE()			
 					RAISERROR(@errmsg,16,1)
 				END CATCH
-
-				BEGIN TRY
-				EXEC DB053.bodb_LicenseeReport.dbo.Task_Microgaming_Bettrans14 @Fromdate= @winlostdate, @Todate= @winlostdate
-			END TRY
-			BEGIN CATCH
-				SET @errmsg = 'step 6.15' + '--' + ERROR_MESSAGE()			
-				RAISERROR(@errmsg,16,1)
-			END CATCH
 
 			END
 		END
