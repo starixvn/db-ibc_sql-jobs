@@ -39,6 +39,7 @@ AS
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220708@Hogan: Support add new betfrom '}' [RedmineID: #174895]
 		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
+		- 20230602@Evan: Support add new betfrom '#'&'A000' [Redmine: #188811]
 
 	EXEC Task_rptLicWinlossGMT_CheckData '2017-11-30'
 */
@@ -180,13 +181,10 @@ BEGIN
 				WHEN BA.transid IS NOT NULL THEN 1
 			END AS isBA
 			,CASE
-				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']','}') THEN 1
+				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']','}','#') THEN 1
 				ELSE 0
 			END AS isMobile
-			,CASE
-				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','.','$','[',']','}') THEN b.betfrom
-				ELSE ''
-			END AS betfrom
+			,b.betfrom
 		FROM bodb02.dbo.bettrans14 AS b WITH (NOLOCK)
 			INNER JOIN @SportBettype AS sbt ON sbt.BetType = b.bettype
 			LEFT JOIN bodb02.dbo.match14 AS m WITH (NOLOCK) ON m.matchid = b.MatchId
@@ -226,13 +224,10 @@ BEGIN
 				WHEN BA.transid IS NOT NULL THEN 1
 			END
 			,CASE
-				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']','}') THEN 1
+				WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']','}','#') THEN 1
 				ELSE 0
 			END
-			,CASE
-				WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z', 'o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','.','$','[',']','}') THEN b.betfrom
-				ELSE ''
-			END;
+			,b.betfrom;
 
 		SET @S_Count = @S_Count + @@ROWCOUNT;
 

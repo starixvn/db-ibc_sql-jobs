@@ -103,6 +103,7 @@ AS
 		- 20230208@Evan: Inteagrate SG promotion prize [RedmineID: #183497]
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
+		- 20230602@Evan: Support add new betfrom '#'&'A000' [Redmine: #188811]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -275,13 +276,10 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END AS isBA
 		,CASE
-			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']','}') THEN 1
+			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']','}','#') THEN 1
 			ELSE 0
 		END AS isMobile
-		,CASE
-			WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','.','$','[',']','}') THEN b.betfrom
-			ELSE ''
-		END AS betfrom
+		,b.betfrom
 		,SUM(CASE
 				WHEN (b.bettype IN (902, 912)
 						OR (b.bettype = 29 AND b.oddsspread = 1))
@@ -403,13 +401,10 @@ BEGIN
 			WHEN BA.transid IS NOT NULL THEN 1
 		END
 		,CASE
-			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']','}') THEN 1
+			WHEN b.betfrom IN ('s','m','l','r','o','c','2','5','_','@','%','7','8','~','.','$',']','}','#') THEN 1
 			ELSE 0
 		END
-		,CASE
-			WHEN b.betfrom IN ('a','d','e','u','s','m','l','g','r','x','y','z','o','c','t','v','0','1','2','3','4','5','6','7','_','@','%','8','9','>','~','^','.','$','[',']','}') THEN b.betfrom
-			ELSE ''
-		END
+		,b.betfrom
 		,b.apositiontaking
 		,CASE
 			WHEN sbt.ProductId = 1 AND sbt.EventType = 1 AND b.betdaqid = -2 THEN 1
