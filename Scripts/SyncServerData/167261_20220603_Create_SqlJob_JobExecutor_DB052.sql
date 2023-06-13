@@ -1,8 +1,8 @@
-/*<info serverAlias="DBSUM-bodb02" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBAGE-bodb02,DBACC-bodb02" isFunction="0" isNested="0"></info>*/
 /*
 	Created: 20220603@Sol
 	Task: Database - Sync-up Standby Server data - [Redmine:167261]
-	Database: DBSUM-bodb02
+	Database: DBAGE-bodb02,DBACC-bodb02
 	
 	Revision:
 		- 20220603@Sol: Database - Sync-up Standby Server data - Create tabe - [Redmine:167261]
@@ -13,7 +13,7 @@ USE [msdb]
 GO
 DECLARE @jobId BINARY(16)
 EXEC  msdb.dbo.sp_add_job @job_name=N'bodb02: Task Executor', 
-		@enabled=1, 
+		@enabled=0, 
 		@notify_level_eventlog=0, 
 		@notify_level_email=2, 
 		@notify_level_page=2, 

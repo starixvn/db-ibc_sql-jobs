@@ -26,6 +26,6 @@ AS
 */
 BEGIN
 	
-	EXEC bodb02.dbo.ExecRep_NAP_Admin_10 @ServerName = @ServerName, @AliasName = @AliasName, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @Remark, @Params = @Params
+	EXEC bodb02.dbo.ExecRep_NAP_Admin_05 @ServerName = @ServerName, @AliasName = @AliasName, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @Remark, @Params = @Params
 
 END
