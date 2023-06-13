@@ -11,6 +11,7 @@ AS
 
 	Revisions:
 		- 20170220@Patrick: Exclude UUS account
+		- 20230613@Patrick: Write log to DBLog instead of LogDB [Redmine: #189441]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -52,7 +53,7 @@ BEGIN
 			BEGIN
 				SET @Doing = SUBSTRING(@Doing, 1, DATALENGTH(@Doing) - 1)
 				--print @Doing
-				EXEC dbo.WriteLog_UserLog @UserID = 862400, @Doing = @Doing
+				EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 862400, @Doing = @Doing, @functype = 2
 				SET @Doing = ''
 			END
 		END
@@ -60,7 +61,7 @@ BEGIN
 		BEGIN
 			SET @Doing = SUBSTRING(@Doing, 1, DATALENGTH(@Doing) - 1)
 			--print @Doing
-			EXEC dbo.WriteLog_UserLog @UserID = 862400, @Doing = @Doing
+			EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 862400, @Doing = @Doing, @functype = 2
 		END
 	END
 	DROP TABLE #TransIds

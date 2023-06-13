@@ -11,10 +11,11 @@ AS
 
 	Revisions:
 		- 20140418@Victor:	Initialize - [Redmine: #000000]
+		- 20220822@Victor: new transid change to max char of bigint
+		- 20230613@Patrick: Write log to DBLog instead of LogDB [Redmine: #189441]
 */
 BEGIN;
 	SET NOCOUNT ON
-
 	DECLARE @winlostdate DATETIME
 	SELECT @winlostdate = DATEADD(dd, DATEDIFF(dd, 0, CURRENT_TIMESTAMP), 0)
 
@@ -43,12 +44,12 @@ BEGIN;
 	DECLARE @Doing varchar(4000)
 	SET @Doing = '[Task_RNGCasinoMovement] - updating winlostdate for RNG Casino pending tickets: ' + 
 	STUFF((
-		SELECT ',' + cast(transid as varchar(12)) 
+		SELECT ',' + cast(transid as varchar(19)) 
 		FROM @pendingticket 
 		FOR XML PATH('')
 	), 1,1,'')
 	
-	EXEC dbo.WriteLog_UserLog @UserID = 862400, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 862400, @Doing = @Doing, @functype = 2
 END;
 GO
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/

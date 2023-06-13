@@ -99,6 +99,7 @@ Revisions:
 	- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 	- 20220908@Patrick: Support scale-out for deposit site - Fix issue Redmine: [#175602]
 	-- 20221117@Patrick: MB - Remove table out proccess: ProviderExternalResultDetailES | ProviderExternalResultDetailOS [Redmine: #180613]
+	- 20230613@Patrick: Write log to DBLog instead of LogDB [Redmine: #189441]
 */
 
 SET NOCOUNT ON
@@ -113,21 +114,21 @@ DECLARE @Doing NVARCHAR(300) = ''
 	, @__groupId INT = 0
 
 SET @Doing = 'Task_DailySummary : MoveBet step ' + CAST(@step AS VARCHAR(20)) + ' start, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 IF @step = 1--update ticket (if any) which winlostdate is not synced with eventdate 
 BEGIN
 	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - start updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	--**update being movebet date flag ==> the purpose of this step is that does not allow for settle tickets which has winlostdate smaller than beingMovebet date
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 9, @tableName = 'SystemSettings'
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - end updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - start turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	--**turn on flag for starting copy to [14]
 	--pub SP ExcepRep
@@ -140,7 +141,7 @@ BEGIN
 	EXEC dbo.Bet_ExecRep14_01 @Mode = 1, @TableName = 'SystemSettings'
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - end turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 	
 	--//
 	SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('BeforeMB')
@@ -186,7 +187,7 @@ BEGIN
 			INNER JOIN CustDB.dbo.ExchangeDailyOanda ex WITH(NOLOCK) ON b.currency = ex.exchangeid AND ex.exchangeDate = t.winlostdate 
 	
 		SET @Doing = 'DONE : update winlostdate -vs- eventdate'
-		EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing  
+		EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 	END
 
 	RETURN
@@ -620,7 +621,7 @@ BEGIN
 		WHILE @__groupId <= 6
 		BEGIN
 			SET @Doing = 'Task_DailySummary : MoveBet step 4.02 - start copy event for groupid: '+CAST(@__groupId AS VARCHAR(10))+', on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+			EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 			EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Copy @winlostdate = @winlostdate, @groupId = @__groupId
 			WAITFOR DELAY '00:00:01:000'
 
@@ -643,7 +644,7 @@ BEGIN
 	FROM dbo.translog WITH(NOLOCK) WHERE winlostdate = @winlostdate
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 4.20 - start copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121) + ', total recommend: ' + CAST(@@ROWCOUNT AS varchar(10))
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	SELECT @__index = 1, @__recommend = NULL, @__rowAffected = 0
 	WHILE EXISTS (
@@ -679,16 +680,16 @@ BEGIN
 	END
 	
 	SET @Doing = 'Task_DailySummary : MoveBet step 4.20 - end copy bettrans | bettransLC | bettransRnG | translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 - start turn off MB_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	--==turn off flag MB_DoneCopy_Local
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = null, @parlay = 8, @tableName = 'SystemSettings'
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 4.30 - end turn off MB_DoneCopy_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	RETURN
 
@@ -730,13 +731,13 @@ BEGIN
 	
 	
 	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - start turn off MB_SWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	--==turn off flag MB_SWinloss_Local
 	EXEC dbo.Bet_ExecRep14_01 @Mode = 2, @tableName = 'SystemSettings'
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 5.30 - end turn off MB_SWinloss_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	RETURN
 END
@@ -799,7 +800,7 @@ BEGIN
 
 			--write logs:
 			SET @Doing = 'Task_DailySummary: duplicated transid (1). Err: ' + @__errorMessage
-			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+			EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 			IF @__errorCode = 2627 --Violation of PRIMARY KEY constraint
 			BEGIN
@@ -836,14 +837,14 @@ BEGIN
 	SET DEADLOCK_PRIORITY NORMAL
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - start turn off MB_Sum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	--==turn off flag MB_SWinloss_Local
 	--EXEC dbo.Bet_ExecRep_09 @Mode = 8
 	EXEC dbo.Transfer_ExecRep_02 @Mode = 4
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 6.30 - done turn off MB_Sum19999_Local flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	RETURN
 END
@@ -864,7 +865,7 @@ BEGIN
 	)
 	BEGIN
 		WAITFOR DELAY '00:00:30:000' --waitfor MB done...
-		IF DATEDIFF(MINUTE, @__start, GETDATE()) > 90
+		IF DATEDIFF(MINUTE, @__start, GETDATE()) > 180
 		BEGIN
 			--send out message for DBA to check...
 			DECLARE @__notifyMessage VARCHAR(300)
@@ -902,7 +903,7 @@ BEGIN
 		WHILE @__groupId <= 9
 		BEGIN
 			SET @Doing = 'Task_DailySummary : MoveBet step 8.02 - start delete event for groupid: '+CAST(@__groupId AS VARCHAR(10))+', on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-			EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+			EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 			EXEC DBPRO.bodb02.dbo.Task_DailySummary_DB02_Delete @winlostdate = @winlostdate, @groupId = @__groupId
 			WAITFOR DELAY '00:00:01:000'
 
@@ -914,12 +915,12 @@ BEGIN
 	SET DEADLOCK_PRIORITY HIGH
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 8.03 - start delete bettransm, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 	--remove ticket on bettransM for whole day of winlostdate
 	EXEC dbo.Task_DailySummary_Delete_Bet @winlostdate = @winlostdate, @tableName = 'bettransm'
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 8.04 - start delete bettransG, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 	-- Delete bettransG for whole day of @winlostdate
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 2
 
@@ -1011,7 +1012,7 @@ END
 IF @step = 9 -- movebet done
 BEGIN
 	SET @Doing = 'Task_DailySummary : MoveBet done'
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	-- viet ----
 	EXEC dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
@@ -1020,13 +1021,13 @@ BEGIN
 	--EXEC DBACC.bodb02.dbo.Task_UpdSystemSetting @VValue = '0', @VName = 'isMovingBet'
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 9.30 - start off BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	--reset being move bet date
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = NULL, @parlay = 9, @tableName = 'SystemSettings'
 
 	SET @Doing = 'Task_DailySummary : MoveBet step 9.30 - end off BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
  
 	-- =====================
 	EXEC Task_BalanceCheck @winlostdate, 3
@@ -1035,7 +1036,7 @@ BEGIN
 	--//can add more check here...
 
 	SET @Doing = 'Task_DailySummary : End (with Finish)'
-	EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	PRINT CONVERT(VARCHAR(10), @winlostdate, 120)
 	

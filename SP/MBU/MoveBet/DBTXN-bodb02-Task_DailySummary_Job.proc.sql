@@ -26,6 +26,7 @@ AS
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 		- 20220720@Patrick: Support new transid [Redmine: #175666]
 		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
+		- 20230613@Patrick: Write log to DBLog instead of LogDB [Redmine: #189441]
  */
 BEGIN 
 	CHECKPOINT
@@ -79,7 +80,7 @@ BEGIN
 				BEGIN CATCH
 					SET @__errorMessage = ERROR_MESSAGE()
 					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(1 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
-					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+					EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 2
 		
 					--throw exception and terminated process
 					RAISERROR (@__errorMessage, 16, 1)
@@ -95,7 +96,7 @@ BEGIN
 				BEGIN CATCH
 					SET @__errorMessage = ERROR_MESSAGE()
 					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(2 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
-					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+					EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 2
 		
 					--throw exception and terminated process
 					RAISERROR (@__errorMessage, 16, 1)
@@ -111,7 +112,7 @@ BEGIN
 				BEGIN CATCH
 					SET @__errorMessage = ERROR_MESSAGE()
 					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(3 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
-					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+					EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 2
 		
 					--throw exception and terminated process
 					RAISERROR (@__errorMessage, 16, 1)
@@ -127,7 +128,7 @@ BEGIN
 				BEGIN CATCH
 					SET @__errorMessage = ERROR_MESSAGE()
 					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(4 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
-					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+					EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 2
 		
 					--throw exception and terminated process
 					RAISERROR (@__errorMessage, 16, 1)
@@ -143,7 +144,7 @@ BEGIN
 				BEGIN CATCH
 					SET @__errorMessage = ERROR_MESSAGE()
 					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(5 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
-					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+					EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 2
 		
 					--throw exception and terminated process
 					RAISERROR (@__errorMessage, 16, 1)
@@ -159,7 +160,7 @@ BEGIN
 				BEGIN CATCH
 					SET @__errorMessage = ERROR_MESSAGE()
 					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(6 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
-					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+					EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 2
 		
 					--throw exception and terminated process
 					RAISERROR (@__errorMessage, 16, 1)
@@ -175,7 +176,7 @@ BEGIN
 				BEGIN CATCH
 					SET @__errorMessage = ERROR_MESSAGE()
 					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(7 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
-					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+					EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 2
 		
 					--throw exception and terminated process
 					RAISERROR (@__errorMessage, 16, 1)
@@ -191,7 +192,7 @@ BEGIN
 				BEGIN CATCH
 					SET @__errorMessage = ERROR_MESSAGE()
 					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(8 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
-					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+					EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 2
 		
 					--throw exception and terminated process
 					RAISERROR (@__errorMessage, 16, 1)
@@ -207,7 +208,7 @@ BEGIN
 				BEGIN CATCH
 					SET @__errorMessage = ERROR_MESSAGE()
 					SET @__doing = 'DailySummary JOB Failed at step: ' + CAST(9 AS VARCHAR(10)) + ', errMsg: ' + @__errorMessage
-					EXEC dbo.WriteLog_UserLog @UserID = 25520, @Doing = @__doing
+					EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @__doing, @functype = 2
 		
 					--throw exception and terminated process
 					RAISERROR (@__errorMessage, 16, 1)

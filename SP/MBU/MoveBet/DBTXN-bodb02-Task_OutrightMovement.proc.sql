@@ -13,6 +13,7 @@ AS
 							Use DBPRO instead of DB02
 		- 20180128@Lukas:	update virtualrate = actualrate, when move winlostdate 
 		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
+		- 20230613@Patrick: Write log to DBLog instead of LogDB [Redmine: #189441]
 */
 BEGIN;
 	SET NOCOUNT ON
@@ -59,7 +60,7 @@ BEGIN;
 		FOR XML PATH('')
 	), 1,1,'')
 
-	EXEC dbo.WriteLog_UserLog @UserID = 862400, @Doing = @Doing
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 862400, @Doing = @Doing, @functype = 2
 END;
 GO
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
