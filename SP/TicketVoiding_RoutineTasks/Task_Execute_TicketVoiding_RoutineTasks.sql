@@ -24,21 +24,71 @@ AS
 		- 20230612@Evan: remove code related to Saba Promotion report - [RedmineID: #189234]
 		- 20220603@Sol: Database - Sync-up Standby Server data - [RedmineID: #167261]
 		- 20230629@Sol: Database - Sync-up Standby Server data - exclude step 7/8 (logshipping synced) - [RedmineID: #190438]
+		- 20220614@Danny: Database - scale out credit [RedmineID: #181595]
 */
 BEGIN
 	DECLARE @GenerateData TINYINT,
 			--@localErrmsg VARCHAR(100),
 			@result VARCHAR(20),
 			@BetTypes VARCHAR(8000)
+	
+	DECLARE @Subject VARCHAR(1000) = '', @body VARCHAR(MAX) = '', 
+			@ProductList VARCHAR(1000)  , @ProductVariance VARCHAR(1000),
+			@recipients VARCHAR(MAX), @copy_recipients VARCHAR(MAX), @blind_copy_recipients VARCHAR(MAX)
 
 	DECLARE 
 		@alias VARCHAR(100), 
 		@sqlCommand VARCHAR(MAX),
 		@params VARCHAR(MAX),
 		@doNotRunInServer VARCHAR(1000)
+
+	DECLARE @Acc_ResetWinning_SelByDate14 TABLE 
+	(
+		seq			INT primary key Identity (1,1),
+		Winlostdate SMALLDATETIME,
+		custid		INT,
+		amount		MONEY,
+		transdesc	NVARCHAR(1000),
+		creator		INT,
+		ip			VARCHAR(45),
+		WinlostAfterExtraPT MONEY,
+		reset       		MONEY,
+		product     		VARCHAR(250)
+	)
+
+	DECLARE	@WLdate SMALLDATETIME,
+			@custid		INT,
+			@amount		MONEY,
+			@transdesc	NVARCHAR(1000),
+			@creator	INT,
+			@ip			VARCHAR(45),
+			@seq		INT = 1
+
+	DECLARE @ResetWinning_ExtraPT14 TABLE 
+	(
+		seq			INT primary key Identity (1,1),
+		WLDate		SMALLDATETIME,
+		custID		INT,
+		amount		MONEY,
+		transdesc	NVARCHAR(1000),
+		creator		INT,
+		ip			VARCHAR(45)
+
+	)
+	DECLARE	@WLdate_ExtraPT SMALLDATETIME,
+		@custid_ExtraPT		INT,
+		@amount_ExtraPT		MONEY,
+		@transdesc_ExtraPT	NVARCHAR(1000),
+		@creator_ExtraPT	INT,
+		@ip_ExtraPT		VARCHAR(45),
+		@seq_ExtraPT		INT = 1
 	
 	DECLARE @SiteDBGroupID SMALLINT = 0 
 	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
+	DECLARE @isTest BIT = 0
+
+	DECLARE @SQL NVARCHAR(100) = ISNULL(OBJECT_NAME(@@PROCID),'')
+	SELECT @Istest = CASE WHEN @SQL like '%_xtest%' THEN 1 ELSE 0 END
 
 	IF (@SiteDBGroupID <> 0) ---run at SiteDB -> only need exec step 1 at sitedb because it update bettrans14
 	BEGIN
@@ -48,6 +98,182 @@ BEGIN
 			EXEC bodb02.dbo.Task_Dep_DailySum_OddsAdjustment_14 
 				@WinlostDate = @winlostdate,
 				@CustIds = @custIDs
+		END
+
+		IF @stepNo = 5
+		BEGIN
+			SET @errmsg = 'step 5.1'
+			---keep call sp by linked server to DBACC
+			IF (	
+					@isTest = 0 AND 
+					(
+						EXISTS (
+							SELECT TOP 1 1 
+							FROM  DBCUST.CustDB.dbo.Acc_DWLList ad WITH (NOLOCK)  
+							INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK)  ON ad.CustID = c.CustID
+							INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+							WHERE ad.IsDeleted = 0   AND s.SiteDBGroupID = @SiteDBGroupID 
+							)
+						OR 
+						EXISTS (
+							SELECT TOP 1 1 
+							FROM  DBCUST.CustDB.dbo.Acc_DWLList_ExtraPT ad WITH (NOLOCK)  
+							INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK)  ON ad.CustID = c.CustID
+							INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+							WHERE s.SiteDBGroupID = @SiteDBGroupID 
+							)
+				
+					)
+				)
+				OR 
+				(
+					@isTest = 1 AND 
+					(
+						EXISTS (
+							SELECT TOP 1 1 
+							FROM  DBCUST.CustDB.dbo.Acc_DWLList_xtest ad WITH (NOLOCK)  
+							INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK)  ON ad.CustID = c.CustID
+							INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+							WHERE ad.IsDeleted = 0   AND s.SiteDBGroupID = @SiteDBGroupID 
+							)
+						OR 
+						EXISTS (
+							SELECT TOP 1 1 
+							FROM  DBCUST.CustDB.dbo.Acc_DWLList_ExtraPT_xtest ad WITH (NOLOCK)  
+							INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK)  ON ad.CustID = c.CustID
+							INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+							WHERE s.SiteDBGroupID = @SiteDBGroupID 
+							)
+				
+					)
+				)
+			BEGIN
+				INSERT INTO @Acc_ResetWinning_SelByDate14 (Winlostdate, custid, amount, transdesc, creator, ip, WinlostAfterExtraPT, reset, product)
+				EXEC DBACC.bodb02.dbo.Acc_ResetWinning_SelByDate14
+					   @Winlostdate = @Winlostdate,
+					   @Mode = 1,
+					   @SiteDBGroupID = @SiteDBGroupID
+			
+				WHILE EXISTS (SELECT TOP 1 1 FROM @Acc_ResetWinning_SelByDate14 WHERE seq = @seq)
+				BEGIN
+					SELECT  @WLdate		= Winlostdate,
+							@custid		= custid,
+							@amount		= amount,
+							@transdesc	= transdesc,
+							@creator	= creator,
+							@ip			= ip
+					FROM @Acc_ResetWinning_SelByDate14 WHERE seq = @seq
+
+					EXEC dbo.Task_ResetWinning_Non3rdParty_Add
+							@Winlostdate = @WLdate,
+							@custid = @custid,
+							@amount = @amount,
+							@transdesc = @transDesc,
+							@creator = @creator,
+							@ip			= @ip
+
+					SELECT @seq = @seq + 1
+				
+				END
+
+				-- Send email
+				IF EXISTS (SELECT TOP 1 1 FROM @Acc_ResetWinning_SelByDate14)
+				BEGIN
+					SELECT @ProductList = COALESCE(@ProductList + ', ', '') + Product,
+						   @ProductVariance = COALESCE(@ProductVariance + ', ', '') + Product +' : '
+											+  CONVERT(VARCHAR(100),	ISNULL( (-(ISNULL(r.WinlostAfterExtraPT, 0)) - ISNULL(r.reset, 0)),0) )
+											+ ' RM'
+					FROM  @Acc_ResetWinning_SelByDate14 r
+					WHERE ISNULL( (-(ISNULL(r.WinlostAfterExtraPT, 0)) - ISNULL(r.reset, 0)),0) <> 0
+				 					 
+					SELECT @Subject = 'Reset Winning report changed on ' + CONVERT(VARCHAR(20),@Winlostdate, 107)
+					
+					SELECT @body = 'Dear Ah Wan, </br> 
+									Kindly be informed that the Reset Winning report has been changed on '+ CONVERT(VARCHAR(20),@Winlostdate, 107) + '</br>
+									Time of Reset Winning: '+ CONVERT(VARCHAR(20),Getdate(),109) +' (GMT-4) </br></br> 
+
+									Product: '+ @ProductList + ' </br> </br> 
+
+									Reason: void/recovered tickets </br> 
+									Variance: '+ @ProductVariance + '</br> 
+									Performed by IT. </br></br>  
+
+									Best regards, </br> 
+									This is an auto-mail from ONEworks Report System. Please do not reply.'									 
+										
+					IF @Istest = 0 AND @@SERVERNAME IN ('DBGRP01N1','DBGRP01N2','DBGRP02N1','DBGRP02N2','DBGRP03N1','DBGRP03N2','DBTRANS')
+						SELECT	@recipients = 'kudanaga@enpine.com'
+								,@copy_recipients = 'jetyee88@enpine.com;kwongyong@enpine.com;seanlau@enpine.com;foo.mv@enpine.com;tp@enpine.com;it@starixvn.com;jackyting@enpine.com;vh@enpine.com'
+								,@blind_copy_recipients = 'automail@enpine.com'
+					ELSE
+						SELECT  @recipients = 'dba_local@starixvn.com'
+								,@copy_recipients = ''
+								,@blind_copy_recipients = ''
+					
+					EXEC msdb.dbo.sp_send_dbmail
+						@recipients = @recipients
+						, @copy_recipients = @copy_recipients
+						, @blind_copy_recipients = @blind_copy_recipients
+						, @subject = @subject
+						, @body = @body
+						, @body_format = 'HTML' 
+				END
+			END
+
+			-------------------------
+			SET @errmsg = 'step 5.2'
+			---keep call sp by linked server to DBACC
+			IF (
+					@isTest = 0 
+					AND EXISTS (
+						SELECT TOP 1 1 
+						FROM  DBCUST.CustDB.dbo.Acc_DWLList_ExtraPT e WITH (NOLOCK)
+						INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON e.CustID = c.CustID
+						INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+						WHERE e.IsDisabled = 0   AND s.SiteDBGroupID = @SiteDBGroupID
+						)
+				)
+				OR
+				(
+					@isTest = 1
+					AND EXISTS (
+						SELECT TOP 1 1 
+						FROM  DBCUST.CustDB.dbo.Acc_DWLList_ExtraPT_xtest e WITH (NOLOCK)
+						INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON e.CustID = c.CustID
+						INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+						WHERE e.IsDisabled = 0   AND s.SiteDBGroupID = @SiteDBGroupID
+						)
+				)
+			BEGIN
+				INSERT INTO @ResetWinning_ExtraPT14 (WLDate, custID, amount, transdesc, creator, ip)
+				EXEC DBACC.bodb02.dbo.Task_ResetWinning_ExtraPT14
+				  @FromDate= @WinlostDate,
+				  @ToDate = @WinlostDate,
+				  @Mode = 1	,
+				  @SiteDBGroupID = @SiteDBGroupID
+
+				WHILE EXISTS (SELECT TOP 1 1 FROM @ResetWinning_ExtraPT14 WHERE seq = @seq_ExtraPT)
+				BEGIN
+					SELECT @WLdate_ExtraPT		= WLDate,
+							@custid_ExtraPT		= custID,
+							@amount_ExtraPT		= amount,
+							@transdesc_ExtraPT	= transdesc,
+							@creator_ExtraPT	= creator,
+							@ip_ExtraPT			= ip
+					FROM @ResetWinning_ExtraPT14 WHERE seq = @seq_ExtraPT
+					
+				   EXEC bodb02.dbo.Task_ResetWinning_Non3rdParty_Add
+							@winlostdate = @WLdate_ExtraPT,
+							@custid = @custid_ExtraPT,
+							@amount = @amount_ExtraPT,
+							@transdesc = @transdesc_ExtraPT,
+							@creator = @creator_ExtraPT,
+							@ip = @ip_ExtraPT,
+							@isExtraPT = 1
+
+					SELECT @seq_ExtraPT = @seq_ExtraPT + 1
+				END
+			END
 		END
 	END
 	ELSE --- run at central DB
@@ -111,17 +337,174 @@ BEGIN
 		
 			SET @errmsg = 'step 5.1'
 			---keep call sp by linked server to DBACC
-			EXEC DBACC.bodb02.dbo.Acc_ResetWinning_SelByDate14
-				   @Winlostdate = @Winlostdate,
-				   @Mode = 1
+			IF (	
+					@isTest = 0 AND 
+					(
+						EXISTS (
+							SELECT TOP 1 1 
+							FROM  DBCUST.CustDB.dbo.Acc_DWLList ad WITH (NOLOCK)  
+							INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK)  ON ad.CustID = c.CustID
+							INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+							WHERE ad.IsDeleted = 0   AND s.SiteDBGroupID = @SiteDBGroupID 
+							)
+						OR 
+						EXISTS (
+							SELECT TOP 1 1 
+							FROM  DBCUST.CustDB.dbo.Acc_DWLList_ExtraPT ad WITH (NOLOCK)  
+							INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK)  ON ad.CustID = c.CustID
+							INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+							WHERE s.SiteDBGroupID = @SiteDBGroupID 
+							)
+				
+					)
+				)
+				OR 
+				(
+					@isTest = 1 AND 
+					(
+						EXISTS (
+							SELECT TOP 1 1 
+							FROM  DBCUST.CustDB.dbo.Acc_DWLList_xtest ad WITH (NOLOCK)  
+							INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK)  ON ad.CustID = c.CustID
+							INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+							WHERE ad.IsDeleted = 0   AND s.SiteDBGroupID = @SiteDBGroupID 
+							)
+						OR 
+						EXISTS (
+							SELECT TOP 1 1 
+							FROM  DBCUST.CustDB.dbo.Acc_DWLList_ExtraPT_xtest ad WITH (NOLOCK)  
+							INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK)  ON ad.CustID = c.CustID
+							INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+							WHERE s.SiteDBGroupID = @SiteDBGroupID 
+							)
+				
+					)
+				)
+			BEGIN
+				INSERT INTO @Acc_ResetWinning_SelByDate14 (Winlostdate, custid, amount, transdesc, creator, ip, WinlostAfterExtraPT, reset, product)
+				EXEC DBACC.bodb02.dbo.Acc_ResetWinning_SelByDate14
+					   @Winlostdate = @Winlostdate,
+					   @Mode = 1,
+					   @SiteDBGroupID = @SiteDBGroupID
+			
+				WHILE EXISTS (SELECT TOP 1 1 FROM @Acc_ResetWinning_SelByDate14 WHERE seq = @seq)
+				BEGIN
+					SELECT  @WLdate		= Winlostdate,
+							@custid		= custid,
+							@amount		= amount,
+							@transdesc	= transdesc,
+							@creator	= creator,
+							@ip			= ip
+					FROM @Acc_ResetWinning_SelByDate14 WHERE seq = @seq
 
+					EXEC dbo.Task_ResetWinning_Non3rdParty_Add
+							@Winlostdate = @WLdate,
+							@custid = @custid,
+							@amount = @amount,
+							@transdesc = @transDesc,
+							@creator = @creator,
+							@ip			= @ip
+
+					SELECT @seq = @seq + 1
+				
+				END
+
+				-- Send email
+				IF EXISTS (SELECT TOP 1 1 FROM @Acc_ResetWinning_SelByDate14)
+				BEGIN
+					SELECT @ProductList = COALESCE(@ProductList + ', ', '') + Product,
+						   @ProductVariance = COALESCE(@ProductVariance + ', ', '') + Product +' : '
+											+  CONVERT(VARCHAR(100),	ISNULL( (-(ISNULL(r.WinlostAfterExtraPT, 0)) - ISNULL(r.reset, 0)),0) )
+											+ ' RM'
+					FROM  @Acc_ResetWinning_SelByDate14 r
+					WHERE ISNULL( (-(ISNULL(r.WinlostAfterExtraPT, 0)) - ISNULL(r.reset, 0)),0) <> 0
+				 					 
+					SELECT @Subject = 'Reset Winning report changed on ' + CONVERT(VARCHAR(20),@Winlostdate, 107)
+					
+					SELECT @body = 'Dear Ah Wan, </br> 
+									Kindly be informed that the Reset Winning report has been changed on '+ CONVERT(VARCHAR(20),@Winlostdate, 107) + '</br>
+									Time of Reset Winning: '+ CONVERT(VARCHAR(20),Getdate(),109) +' (GMT-4) </br></br> 
+
+									Product: '+ @ProductList + ' </br> </br> 
+
+									Reason: void/recovered tickets </br> 
+									Variance: '+ @ProductVariance + '</br> 
+									Performed by IT. </br></br>  
+
+									Best regards, </br> 
+									This is an auto-mail from ONEworks Report System. Please do not reply.'									 
+										
+					IF @Istest = 0 AND @@SERVERNAME IN ('DBGRP01N1','DBGRP01N2','DBGRP02N1','DBGRP02N2','DBGRP03N1','DBGRP03N2','DBTRANS')
+						SELECT	@recipients = 'kudanaga@enpine.com'
+								,@copy_recipients = 'jetyee88@enpine.com;kwongyong@enpine.com;seanlau@enpine.com;foo.mv@enpine.com;tp@enpine.com;it@starixvn.com;jackyting@enpine.com;vh@enpine.com'
+								,@blind_copy_recipients = 'automail@enpine.com'
+					ELSE
+						SELECT  @recipients = 'dba_local@starixvn.com'
+								,@copy_recipients = ''
+								,@blind_copy_recipients = ''
+					
+					EXEC msdb.dbo.sp_send_dbmail
+						@recipients = @recipients
+						, @copy_recipients = @copy_recipients
+						, @blind_copy_recipients = @blind_copy_recipients
+						, @subject = @subject
+						, @body = @body
+						, @body_format = 'HTML' 
+				END
+			END
 			-------------------------
 			SET @errmsg = 'step 5.2'
 			---keep call sp by linked server to DBACC
-			EXEC DBACC.bodb02.dbo.Task_ResetWinning_ExtraPT14
+			IF (
+					@isTest = 0 
+					AND EXISTS (
+						SELECT TOP 1 1 
+						FROM  DBCUST.CustDB.dbo.Acc_DWLList_ExtraPT e WITH (NOLOCK)
+						INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON e.CustID = c.CustID
+						INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+						WHERE e.IsDisabled = 0   AND s.SiteDBGroupID = @SiteDBGroupID
+						)
+				)
+				OR
+				(
+					@isTest = 1
+					AND EXISTS (
+						SELECT TOP 1 1 
+						FROM  DBCUST.CustDB.dbo.Acc_DWLList_ExtraPT_xtest e WITH (NOLOCK)
+						INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON e.CustID = c.CustID
+						INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+						WHERE e.IsDisabled = 0   AND s.SiteDBGroupID = @SiteDBGroupID
+						)
+				)
+			BEGIN
+				INSERT INTO @ResetWinning_ExtraPT14 (WLDate, amount, transdesc, creator, ip)
+				EXEC DBACC.bodb02.dbo.Task_ResetWinning_ExtraPT14
 				  @FromDate= @WinlostDate,
 				  @ToDate = @WinlostDate,
-				  @Mode = 1
+				  @Mode = 1	,
+				  @SiteDBGroupID = @SiteDBGroupID
+
+				WHILE EXISTS (SELECT TOP 1 1 FROM @ResetWinning_ExtraPT14 WHERE seq = @seq_ExtraPT)
+				BEGIN
+					SELECT @WLdate_ExtraPT		= WLDate,
+							@amount_ExtraPT		= amount,
+							@transdesc_ExtraPT	= transdesc,
+							@creator_ExtraPT	= creator,
+							@ip_ExtraPT			= ip
+					FROM @ResetWinning_ExtraPT14 WHERE seq = @seq_ExtraPT
+					
+				   EXEC bodb02.dbo.Task_ResetWinning_Non3rdParty_Add
+							@winlostdate = @WLdate_ExtraPT,
+							@custid = @custid_ExtraPT,
+							@amount = @amount_ExtraPT,
+							@transdesc = @transdesc_ExtraPT,
+							@creator = @creator_ExtraPT,
+							@ip = @ip_ExtraPT,
+							@isExtraPT = 1
+
+					SELECT @seq_ExtraPT = @seq_ExtraPT + 1
+				END
+			END
 		END
 		IF @stepNo = 6
 		BEGIN
