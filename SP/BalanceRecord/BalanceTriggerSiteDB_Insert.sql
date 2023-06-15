@@ -13,6 +13,7 @@ AS
    
    Revisions:
 		- 20220130@Louisa: Phase 2 - use Web Service to pull ticket from SiteDB to DB05/DB05BK1 [176932]
+		- 20230615@Kathy: add new column winlostdate,refno [Redmine:#181595]
 
 	Param's explaination:
 
@@ -55,7 +56,8 @@ BEGIN
 			
 			IF @IsTest = 0
 			BEGIN
-				INSERT INTO [dbo].[BalanceTrigger] (custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds)
+				INSERT INTO [dbo].[BalanceTrigger] (custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType
+					, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds, winlostdate,refno)
 				SELECT 
 				cid
 				,t
@@ -79,6 +81,8 @@ BEGIN
 				,ac
 				,sc
 				, m
+				,wld
+				,ref
 			FROM  OPENJSON (  CAST( DECOMPRESS(@TransInfo)   AS NVARCHAR(MAX)) )
 			WITH (
 					r bigint
@@ -104,12 +108,15 @@ BEGIN
 					,ac money
 					,sc money
 					, m smallmoney
+					,wld smalldatetime
+					,ref bigint
 				)
 				ORDER BY r ASC
 			END
 			ELSE
 			BEGIN
-				INSERT INTO [dbo].[BalanceTrigger_UAT] (RowId, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds, SiteDBGroupId)
+				INSERT INTO [dbo].[BalanceTrigger_UAT] (RowId, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType
+					, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds, SiteDBGroupId, winlostdate, refno)
 				SELECT 
 				r
 				,cid
@@ -135,6 +142,8 @@ BEGIN
 				,sc
 				, m
 				, @SiteDBGroupID
+				,wld
+				,ref
 			FROM  OPENJSON (  CAST( DECOMPRESS(@TransInfo)   AS NVARCHAR(MAX)) )
 			WITH (
 					r bigint
@@ -160,6 +169,8 @@ BEGIN
 					,ac money
 					,sc money
 					, m smallmoney
+					,wld smalldatetime
+					,ref bigint
 				)
 				ORDER BY r ASC
 			END

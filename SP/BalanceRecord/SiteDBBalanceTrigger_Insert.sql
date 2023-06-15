@@ -14,6 +14,7 @@ AS
 		- 20221010@July: Dynamic - Order by RowID & waitfor delay [176932]
 		- 20221031@July: BatchSize = 2000 & waitfordelay 3s [176932]
 		- 20221110@July: waitfordelay down 500ms [180331]
+		- 20230615@Kathy: add new column winlostdate,refno [Redmine:#181595]
 */
 BEGIN
 	
@@ -44,18 +45,20 @@ BEGIN
 		[comm] [money] NULL,
 		[acomm] [money] NULL,
 		[scomm] [money] NULL,
-		[modds] [smallmoney] NULL
+		[modds] [smallmoney] NULL,
+		[winlostdate] [smalldatetime] NULL,
+		[refno] [bigint] NULL,
 	)
 
 	SET @maxRowID = (SELECT CONVERT(BIGINT,VValue) FROM bodb02.dbo.SystemSettings WITH (NOLOCK) WHERE VName = @VName /*'BT_SiteDB01_Sync'*/)
 	
 	SET @sqlCMD = N'\
-	SELECT rowID, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds 
+	SELECT rowID, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds, winlostdate, refno
 	FROM OPENQUERY('+@SiteDBAlias+', ''\
 	DECLARE @maxID_tmp BIGINT
 	SET @maxID_tmp = (SELECT MAX(RowID) FROM [bodb02].[dbo].[BalanceTrigger] WITH(NOLOCK)) 
 	WAITFOR DELAY ''''00:00:00.500''''
-	SELECT TOP('+CONVERT(VARCHAR(10), @batchSize)+') rowid, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds 
+	SELECT TOP('+CONVERT(VARCHAR(10), @batchSize)+') rowid, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds, winlostdate, refno
 	FROM [bodb02].[dbo].[BalanceTrigger] WITH(NOLOCK) WHERE RowID <= @maxID_tmp AND RowID > '+CONVERT(VARCHAR(20), @maxRowID)+'\
 	ORDER BY RowID ASC
 	'')';
@@ -63,7 +66,7 @@ BEGIN
 	--debug
 	--PRINT @sqlCMD
 	
-	INSERT INTO #tmpBalanceTrigger (rowID, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds)
+	INSERT INTO #tmpBalanceTrigger (rowID, custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds, winlostdate, refno)
 	EXEC sp_executesql @sqlCMD
 
 	SET @maxRowID = (SELECT MAX(rowID) FROM #tmpBalanceTrigger)
@@ -71,8 +74,8 @@ BEGIN
 	IF @maxRowID IS NULL
 		RETURN
 
-	INSERT INTO [bodb02].[dbo].[BalanceTrigger] (custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds)
-	SELECT custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds
+	INSERT INTO [bodb02].[dbo].[BalanceTrigger] (custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds, winlostdate, refno)
+	SELECT custid, transid, bettype, actual_stake, winlost, playercomm, BalanceChanged, NewBalance, ActionDate, ActionID, Action, BTBalance, StatusId, MatchId, SettlementType, awinlost, mwinlost, swinlost, comm, acomm, scomm, modds, winlostdate, refno
 	FROM #tmpBalanceTrigger
 	ORDER BY RowID ASC
 
