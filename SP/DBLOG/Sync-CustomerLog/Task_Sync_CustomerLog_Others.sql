@@ -1956,5 +1956,68 @@ BEGIN
 		END
 	END
 
+	BEGIN --Task_UserLog
+
+		SELECT @SqlQuery = '', @MaxCurrLogId = 0, @MaxCurrLogDate = NULL, @ToLogDate = @CurrentDate
+
+		SELECT @MaxCurrLogId = MAX(LogId), @MaxCurrLogDate = MAX(LogDate)
+		FROM dbo.Task_UserLog t WITH (NOLOCK)
+		WHERE LogDate > @3MonthsAgo
+		
+		IF @MaxCurrLogId = 0
+		BEGIN
+			PRINT 'Some things wrong for [Task_UserLog]. Please check!!!'
+		END
+		ELSE IF @MaxCurrLogDate > @ToLogDate
+		BEGIN
+			PRINT '@MaxCurrLogDate > @ToLogDate for [Task_UserLog]. Please check!!!'
+		END
+		ELSE
+		BEGIN
+			
+			Task_UserLog_OneMore:
+			IF @MaxCurrLogDate < DATEADD(HOUR, -3, @CurrentDate)
+				SET @ToLogDate = DATEADD(HOUR, 3, @MaxCurrLogDate)
+			ELSE
+				SET @ToLogDate = @CurrentDate
+
+			SET @SqlQuery = 'SELECT *
+							FROM OPENQUERY(DBLOG, ''SELECT [logid], [servername], [userid], [doing], [logdate], [functype]
+							FROM bodb_CustomerLog.dbo.Task_UserLog WITH (NOLOCK)
+							WHERE LogId > ''''' + CAST(@MaxCurrLogId AS VARCHAR(50)) + ''''' AND LogDate >= ''''' + CONVERT(VARCHAR(50), @MaxCurrLogDate, 121) + '''''
+								AND LogDate < ''''' + CONVERT(VARCHAR(50), @ToLogDate, 121) + '''''
+							ORDER BY LogId
+							OPTION (MAXDOP 8)'')'
+
+			IF @IsDebug = 1
+				PRINT @SqlQuery
+			ELSE
+			BEGIN
+				SET IDENTITY_INSERT dbo.Task_UserLog ON
+				BEGIN TRY
+					INSERT INTO dbo.Task_UserLog([logid], [servername], [userid], [doing], [logdate], [functype])
+					EXEC sp_executesql @SqlQuery
+
+					IF @@ROWCOUNT = 0 AND @ToLogDate < @CurrentDate
+					BEGIN
+						SET @MaxCurrLogDate = DATEADD(HOUR, 3, @MaxCurrLogDate)
+						GOTO Task_UserLog_OneMore
+					END
+
+				END TRY
+				BEGIN CATCH
+					--manual rollback
+					DELETE dbo.Task_UserLog WITH(ROWLOCK)
+					WHERE LogID > @MaxCurrLogId AND LogDate >= @MaxCurrLogDate
+				
+					--retry
+					INSERT INTO dbo.Task_UserLog ([logid], [servername], [userid], [doing], [logdate], [functype])
+					EXEC sp_executesql @SqlQuery
+
+				END CATCH
+				SET IDENTITY_INSERT dbo.Task_UserLog OFF
+			END
+		END
+	END
 END
 
