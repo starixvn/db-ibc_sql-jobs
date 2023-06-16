@@ -41,7 +41,7 @@ GO
 USE [msdb]
 GO
 EXEC msdb.dbo.sp_update_job @job_name=N'bodb02: Task Executor', 
-		@enabled=1, 
+		@enabled=0, 
 		@start_step_id=1, 
 		@notify_level_eventlog=0, 
 		@notify_level_email=2, 
@@ -57,7 +57,7 @@ USE [msdb]
 GO
 DECLARE @schedule_id int
 EXEC msdb.dbo.sp_add_jobschedule @job_name=N'bodb02: Task Executor', @name=N'bodb02: Task Executor', 
-		@enabled=1, 
+		@enabled=0, 
 		@freq_type=4, 
 		@freq_interval=1, 
 		@freq_subday_type=2, 

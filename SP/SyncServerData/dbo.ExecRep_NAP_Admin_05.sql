@@ -31,7 +31,8 @@ BEGIN
 	
 	BEGIN
 		--check if this sp is called in dbtrans than do nothing  
-		IF @CurrServerName = @doNotRunInServer --'DB-60\DEVDBTRANS' for example
+		IF (@CurrServerName = @doNotRunInServer) --'DB-60\DEVDBTRANS' for example
+			OR (OBJECT_ID (N'JobExecutionQueue', N'U') IS NULL)
 		BEGIN
 			RETURN
 		END
@@ -41,7 +42,7 @@ BEGIN
 			IF (@ServerNameByAlias = @CurrServerName)
 			BEGIN
         		INSERT INTO JobExecutionQueue (ServerName, AliasName, SqlCommand, Params, ExecStatus, CreatedDate, CompletedDate, ModifiedDate, Remark)
-				VALUES (@ServerName, @AliasName, @SqlCommand, @Params, 'Waiting', GETDATE(), NULL, NULL, @Remark);
+				VALUES (@ServerNameByAlias, @AliasName, @SqlCommand, @Params, 'Waiting', GETDATE(), NULL, NULL, @Remark);
 			END
 		END
 	END

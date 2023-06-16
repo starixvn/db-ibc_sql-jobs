@@ -59,7 +59,7 @@ BEGIN
 			('SIT','DBACC', 'SITDB06'),
 			('SIT','DBRPT', 'SITDB06'),
 			('SIT','DBLIC', 'SITDB052'),
-			('SIT','DBFS', ''),
+			('SIT','DBFS', 'SITDB052'),
 			('SIT','DBTGRS', 'SITDB06'),
 			('SIT','DBTXN', 'SITDBTRANS')
 	) tbl(Environment, Alias, ServerName)
