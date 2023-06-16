@@ -8,7 +8,7 @@ AS
  DB: DB054.bodb_customerLog
  Revisions:   
 	- 20190624@Patrick: Add more table TicketVoiding_Log
-	
+	- 20230612@Brice: Brice alter remove doing column and add column IP in table LA_UserLog_RunSP
 */  
 
 BEGIN
@@ -1214,7 +1214,7 @@ BEGIN
 				SET @ToLogDate = @CurrentDate
 
 			SET @SqlQuery = 'SELECT *
-							FROM OPENQUERY(DBLOG, ''SELECT [LogID], [UserID], [SPName], [Doing], [LogDate], [CustID], [ActionID], [TrackingValue], [Duration], [TrackingValue2]
+							FROM OPENQUERY(DBLOG, ''SELECT [LogID], [UserID], [SPName], [LogDate], [CustID], [ActionID], [TrackingValue], [Duration], [TrackingValue2],[IP]
 							FROM bodb_CustomerLog.dbo.LA_UserLog_RunSP WITH (NOLOCK)
 							WHERE LogId > ''''' + CAST(@MaxCurrLogId AS VARCHAR(50)) + ''''' AND LogDate >= ''''' + CONVERT(VARCHAR(50), @MaxCurrLogDate, 121) + '''''
 								AND LogDate < ''''' + CONVERT(VARCHAR(50), @ToLogDate, 121) + '''''
@@ -1227,7 +1227,7 @@ BEGIN
 			BEGIN
 				SET IDENTITY_INSERT dbo.LA_UserLog_RunSP ON
 				BEGIN TRY
-					INSERT INTO dbo.LA_UserLog_RunSP([LogID], [UserID], [SPName], [Doing], [LogDate], [CustID], [ActionID], [TrackingValue], [Duration], [TrackingValue2])
+					INSERT INTO dbo.LA_UserLog_RunSP([LogID], [UserID], [SPName], [LogDate], [CustID], [ActionID], [TrackingValue], [Duration], [TrackingValue2],[IP])
 					EXEC sp_executesql @SqlQuery
 
 					IF @@ROWCOUNT = 0 AND @ToLogDate < @CurrentDate
@@ -1243,7 +1243,7 @@ BEGIN
 					WHERE LogID > @MaxCurrLogId AND LogDate >= @MaxCurrLogDate
 				
 					--retry
-					INSERT INTO dbo.LA_UserLog_RunSP ([LogID], [UserID], [SPName], [Doing], [LogDate], [CustID], [ActionID], [TrackingValue], [Duration], [TrackingValue2])
+					INSERT INTO dbo.LA_UserLog_RunSP ([LogID], [UserID], [SPName], [LogDate], [CustID], [ActionID], [TrackingValue], [Duration], [TrackingValue2],[IP])
 					EXEC sp_executesql @SqlQuery
 
 				END CATCH
