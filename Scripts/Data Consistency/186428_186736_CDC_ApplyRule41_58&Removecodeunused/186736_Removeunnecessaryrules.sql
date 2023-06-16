@@ -24,9 +24,13 @@ WHERE RuleId = @ruleId
 
 DELETE FROM dbo.DBA_Schedules WHERE taskId IN( SELECT taskId FROM #tmpTaskId) --2 rows
 DELETE FROM dbo.DBA_Tasks WHERE taskId IN( SELECT taskId FROM #tmpTaskId) --2 rows
+DELETE FROM dbo.DBA_Rules WHERE RuleId = @ruleId --1 rows
 
 -----------Remove rule #37 and related to ProductId = 223 Indo 4D(Togel 4D)
 TRUNCATE TABLE #tmpTaskId
+
+SET @ruleId = (SELECT RuleId FROM dbo.DBA_Rules WHERE Name LIKE '%Member Actual Stake greater than Member Original Stake%')
+DELETE FROM dbo.DBA_Rules WHERE RuleId = @ruleId --1 rows
 
 INSERT INTO #tmpTaskId (taskId)
 SELECT taskId 
@@ -72,7 +76,5 @@ WHERE RuleId = @ruleId
 DELETE FROM dbo.DBA_Schedules WHERE taskId IN( SELECT taskId FROM #tmpTaskId) --6 rows
 DELETE FROM dbo.DBA_Tasks WHERE taskId IN( SELECT taskId FROM #tmpTaskId) --6 rows
 DELETE FROM dbo.DBA_Rules WHERE RuleId = @ruleId --1 rows
-
-
 
 DROP TABLE #tmpTaskId;
