@@ -9,6 +9,7 @@ AS
  Revisions:   
 	- 20190624@Patrick: Add more table TicketVoiding_Log
 	- 20230612@Brice: Brice alter remove doing column and add column IP in table LA_UserLog_RunSP
+	- 20230616@Patrick: add more table Task_UserLog [Redmine: #173554]
 */  
 
 BEGIN
