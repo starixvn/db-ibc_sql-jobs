@@ -118,8 +118,8 @@ BEGIN
 				   , @ErrCode = 100
 				   , @ErrMsg = 'Check wrong status of tickets in bettransLC'
 				   , @SampleData = 'bettransLC.TransId in (' + @transId + ')'
+			RETURN;
 		END
-		RETURN;
 	END
 
 	IF @CheckMode = 3
@@ -137,8 +137,8 @@ BEGIN
 				  , @ErrCode = 100
 				  , @ErrMsg = 'Settled ticket in bettransLC are not yet summed to bettrans '
 				  , @SampleData = 'bettransLC.TransId in (' + @transId + ')'
+			RETURN;
 		END
-	
 	END
 
 END

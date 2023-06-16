@@ -118,9 +118,8 @@ BEGIN
 				   , @ErrCode = 100
 				   , @ErrMsg = 'Check wrong status of tickets in bettransRNG'
 				   , @SampleData = 'bettransRNG.TransId in (' + @transId + ')'
+			RETURN;
 		END
-		RETURN;
-		
 	END
 
 	IF @CheckMode = 3
@@ -138,8 +137,8 @@ BEGIN
 					,@ErrCode = 100
 					,@ErrMsg = 'Settled ticket in bettransRNG are not yet summed to bettrans '
 					,@SampleData = 'bettransRNG.TransId in (' + @transId + ')'
+			RETURN;
 		END
-	
 	END
 	
 	IF @CheckMode = 4
@@ -157,8 +156,8 @@ BEGIN
 					,@ErrCode = 100
 					,@ErrMsg = 'Detect Netstake <> 0 for RNG products'
 					,@SampleData = 'bettransRNG.TransId in (' + @transId + ')'
+			RETURN;
 		END
-	
 	END
 END
 GO
