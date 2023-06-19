@@ -32,7 +32,7 @@ BEGIN
 	SELECT @RowId = 1
 
 	INSERT INTO @MoveBetSchedule(ScheduleId, MoveBetDay)
-	EXEC DBTXN.bodb02.dbo.Task_MoveBetsDayByScheduleSel
+	EXEC DBCTG.bodb02.dbo.Task_MoveBetsDayByScheduleSel
 
 	IF NOT EXISTS (SELECT TOP 1 1 FROM @MoveBetSchedule)
 	BEGIN
@@ -99,7 +99,7 @@ BEGIN
 			EXEC [dbo].[Task_rptLicenseeWinloss_Bettrans14] @winlostdate = @winlostdate, @isCheckDataOnly=0;
 			
 			---REORGANIZE if ANY
-			EXEC [dbo].[Task_Maintainance_LicenseeReport_Update] @TableName = @TableName
+			EXEC [dbo].[Task_Maintainance_ReIndex] @TableName = @TableName
 		END
 	END
 END

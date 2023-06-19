@@ -1,7 +1,7 @@
 /*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptLicenseeWinloss_Bettrans14]
 	@winlostdate SMALLDATETIME,
-	@IsCheckDataOnly BIT = 1
+	@IsCheckDataOnly BIT = 0
 AS
 /*
 	Created: 20230209@Bobby
