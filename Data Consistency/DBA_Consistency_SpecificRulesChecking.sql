@@ -106,16 +106,23 @@ BEGIN
 	SET @transId = ''
 	SET @translogid = ''
 	
+	DECLARE @tmpSporttype_TransLog TABLE (SportType SMALLINT)
+	INSERT INTO @tmpSporttype_TransLog (SportType)
+	SELECT	DISTINCT SportType 
+	FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+	WHERE RefTable IN (3) AND IsTest = 0 AND Enabled = 1
+
 	INSERT INTO #tmpBettrans(transId, scomm, acomm, comm, playercomm
 		, bettype, statusId, stake,winlost, custid, srecommend, winlostdate, currency
 		, refno, playerdiscount, discount, sdiscount, adiscount, actual_stake)
 	SELECT	transId, scomm, acomm, comm, playercomm
 		, bettype, statusId, stake, winlost, custid, srecommend, winlostdate, currency
 		, refno, playerdiscount, discount, sdiscount, adiscount, actual_stake
-	FROM	bodb02.dbo.bettrans WITH (NOLOCK)
+	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+		LEFT JOIN @tmpSporttype_TransLog t ON b.matchid = t.SportType
 	WHERE 1 = CASE WHEN matchid = @ProductId THEN 1 
 				   WHEN winlostdate <= @yesterday AND (@tablename = 'bettransLC' OR @tablename = 'bettransRNG') THEN 1
-				   WHEN @tablename = 'translog' THEN 1
+				   WHEN @tablename = 'translog' AND t.SportType IS NOT NULL THEN 1
 				   ELSE 0 END
 
 	IF @ProductId IN (244, 241)
@@ -429,9 +436,10 @@ BEGIN
 	IF @tablename = 'translog'
 	BEGIN
 		INSERT INTO #tmpTransLog (translogid)
-		SELECT translogid
-		FROM bodb02.dbo.translog WITH (NOLOCK)
-		WHERE statusId IN (111,112,113) AND winlostdate = @yesterday
+		SELECT t.translogid
+		FROM bodb02.dbo.translog t WITH (NOLOCK)
+			INNER JOIN @tmpSporttype_TransLog s ON t.productID = s.SportType
+		WHERE t.statusId IN (111,112,113) AND t.winlostdate = @yesterday
 
 		IF @Rule = 'compare_ticket'
 		BEGIN
