@@ -9,6 +9,22 @@
 use msdb;
 GO
 
+-- RUN on DB053
+----------------------------------
+-- TODO: Drop UAT test Jobs
+
+/****** Object:  Job [bodb_LicenseeReport: rptLicenseeWinloss - Check and Correct Data Test]    Script Date: 6/19/2023 2:33:31 AM ******/
+EXEC msdb.dbo.sp_delete_job @job_id=N'8778a6d0-a046-4d3f-9352-1a2c28049e46', @delete_unused_schedule=1
+GO
+
+
+/****** Object:  Job [bodb_LicenseeReport: rptLicenseeWinloss - Daily Summary Test]    Script Date: 6/19/2023 2:33:46 AM ******/
+EXEC msdb.dbo.sp_delete_job @job_id=N'2d6761fd-8c54-411c-a078-9ad05b9f4d67', @delete_unused_schedule=1
+GO
+
+-- RUN on both DB052 and DB053
+----------------------------------
+-- TODO: Add step to current Jobs;
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT, @job_name nvarchar(128);
 
@@ -53,7 +69,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_name=@job_name,
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_update_jobstep @job_name=@job_name,
-		@step_id=12, 
+		@step_id=13, 
 		@on_success_action=3
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 
