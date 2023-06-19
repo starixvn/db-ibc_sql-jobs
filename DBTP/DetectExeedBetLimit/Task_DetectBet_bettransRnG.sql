@@ -18,6 +18,7 @@ AS
 		- 20220830@July: Include product SEAL Entertainment [Redmine: #177003]
 		- 20220923@July: Include product MG-RNG (Microgaming) [Redmine: #177583]
 		- 20230117@July: Jili - Incorporate new product [Redmine: #181791]
+		- 20230619@Max: Remove duplicate transid in case issue with page split sql [Redmine: #00000]
 
 	Param's explanation:		
 */
@@ -78,6 +79,19 @@ BEGIN
 	FROM #tmp_TransId b
 	WHERE b.sporttype IN (208,209,212,150,200,171,173,158)
 		AND b.bettype IN (1650,1652,3836,3837,2105,2120,2104,4004,5103,5121)
+
+	--Remove duplicate in case issue with page split
+	;WITH CTE
+	(
+		TransId, 
+		DuplicateCount
+	)
+	AS (SELECT TransId, 
+			   ROW_NUMBER() OVER(PARTITION BY TransId
+			   ORDER BY TransId) AS DuplicateCount
+		FROM #tmp_TransId)
+	DELETE FROM CTE
+	WHERE DuplicateCount > 1;
 
 	--Process detect invalid
 	EXEC dbo.Task_DetectBet_CustMaxBetSettingSel

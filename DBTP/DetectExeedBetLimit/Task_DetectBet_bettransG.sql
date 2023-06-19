@@ -14,6 +14,7 @@ AS
 		- 20220525@Max: Create SP [Redmine: #170739]
 		- 20220728@July: Scale out DBTRANS - Change maxTransIdSetting to SequenceIdSetting [Redmine: #175965]
 		- 20220923@Max: Tuning [Redmine: #178156]
+		- 20230619@Max: Remove duplicate transid in case issue with page split sql [Redmine: #00000]
 
 	Param's explanation:		
 */
@@ -57,6 +58,19 @@ BEGIN
 		AND b.statusID NOT IN (101, 102, 103)
 		AND b.matchid IN (244)
 	ORDER BY b.sequenceid ASC
+
+	--Remove duplicate in case issue with page split
+	;WITH CTE
+	(
+		TransId, 
+		DuplicateCount
+	)
+	AS (SELECT TransId, 
+			   ROW_NUMBER() OVER(PARTITION BY TransId
+			   ORDER BY TransId) AS DuplicateCount
+		FROM #tmp_TransId)
+	DELETE FROM CTE
+	WHERE DuplicateCount > 1;
 
 	SET @maxSequenceId = (SELECT MAX(SequenceId) FROM #tmp_TransId)
 

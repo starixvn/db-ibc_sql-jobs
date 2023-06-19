@@ -16,6 +16,7 @@ AS
 		- 20220728@July: Scale out DBTRANS - Change maxTransIdSetting to SequenceIdSetting [Redmine: #175965]
 		- 20220923@Max: Tuning [Redmine: #178156]
 		- 20220831@July: Include product NG(NG, Happy 5) [Redmine: #170739]
+		- 20230619@Max: Remove duplicate transid in case issue with page split sql [Redmine: #00000]
 
 	Param's explanation:		
 */
@@ -82,6 +83,19 @@ BEGIN
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
 	ORDER BY  b.sequenceid ASC 
+
+	--Remove duplicate in case issue with page split
+	;WITH CTE
+	(
+		TransId, 
+		DuplicateCount
+	)
+	AS (SELECT TransId, 
+			   ROW_NUMBER() OVER(PARTITION BY TransId
+			   ORDER BY TransId) AS DuplicateCount
+		FROM #tmp_TransId)
+	DELETE FROM CTE
+	WHERE DuplicateCount > 1;
 
 	SET @maxSequenceId = (SELECT MAX(SequenceId) FROM #tmp_TransId)
 

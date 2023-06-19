@@ -16,6 +16,7 @@ AS
 		- 20220923@Max: Tuning [Redmine: #178156]
 		- 20220831@July: Include product NG(Happy 5 Linked Game), RNG Keno [Redmine: #170739]
 		- 20221028@Max: Detect player exceeded the bet limit of the Agent's setting - Update rule 10 for 2 special bet choices of RNG Keno [Redmine: #179115]
+		- 20230619@Max: Remove duplicate transid in case issue with page split sql [Redmine: #00000]
 
 	Param's explanation:		
 */
@@ -86,6 +87,18 @@ BEGIN
 		)t
 	WHERE c.sporttype IN (245)
 	---------------------
+	--Remove duplicate in case issue with page split
+	;WITH CTE
+	(
+		TransId, 
+		DuplicateCount
+	)
+	AS (SELECT TransId, 
+			   ROW_NUMBER() OVER(PARTITION BY TransId
+			   ORDER BY TransId) AS DuplicateCount
+		FROM #tmp_TransId)
+	DELETE FROM CTE
+	WHERE DuplicateCount > 1;
 
 	SET @maxSequenceId = (SELECT MAX(SequenceId) FROM #tmp_TransId)
 
