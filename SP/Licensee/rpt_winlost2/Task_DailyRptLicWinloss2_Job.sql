@@ -22,7 +22,8 @@ AS
 		- 20171130@Sophia: Add step gen data to rptLicWinlossGMT [Redmine: #84932]
 		- 20180424@Percy: Add @tablename param to break step of job: process insert sum step by step [RedmineID: #94129]
 		- 20181129@Joseph: Add step to generate data to [bodb_LicenseeReport.rptCasinoTurnover]   [RedmineID: #95178]
-		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20210816@Sophia: add DBBAL [Redmine: #154300
+		- 20230209@Bobby: Add rptLicenseeWinloss [RedmineID: #172604]
 */
  
 BEGIN  
@@ -77,6 +78,10 @@ BEGIN
 		ELSE IF @TableName = 'rptCasinoTurnover'
 		BEGIN
 			EXEC dbo.Task_DailyRptCasinoTurnover_Bettrans @winlostdate = @WinlostDate
+		END
+		ELSE IF @TableName = 'rptLicenseeWinloss'
+		BEGIN
+			EXEC dbo.Task_rptLicenseeWinloss_Bettrans @winlostdate = @WinlostDate
 		END
 	END
 END
