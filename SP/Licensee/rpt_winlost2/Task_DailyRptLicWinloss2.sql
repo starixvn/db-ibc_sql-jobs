@@ -121,6 +121,7 @@ AS
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 		- 20230602@Evan: Support add new betfrom '#'&'A000' [Redmine: #188811]
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
+		- 20230605@Evan: Inteagrate PG Soft promotion games [RedmineID: #189091]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -188,7 +189,7 @@ BEGIN
 		,SUM(b.winlost - b.actual_stake) AS WinLost
 		,CASE
 			WHEN b.statusID IN (112, 113) THEN SUM(CASE
-														WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499)
+														WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 6300)
 															OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 															OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 															OR (b.bettype BETWEEN 8700 AND 8709 AND b.matchid = 157)) THEN 0
@@ -261,7 +262,7 @@ BEGIN
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499)
+			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 6300)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND matchid = 173)
 				OR (b.bettype BETWEEN 17000 AND 17030)  
@@ -388,7 +389,7 @@ BEGIN
 			ELSE 0
 		END
 		,CASE
-			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499)
+			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 6300)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND matchid = 173)
 				OR (b.bettype BETWEEN 17000 AND 17030)  

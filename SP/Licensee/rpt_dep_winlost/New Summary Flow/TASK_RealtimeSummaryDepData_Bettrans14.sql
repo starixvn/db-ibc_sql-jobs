@@ -78,6 +78,7 @@ AS
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 		- 20230227@Evan: Ensure correct balance calculation when allow to transfer 247 (BU) [Redmine: #173554]
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
+		- 20230605@Evan: Inteagrate PG Soft promotion games [RedmineID: #189091]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -325,7 +326,8 @@ BEGIN
 				WHEN (b.bettype BETWEEN 1698 AND 1699 AND b.matchid <> 150) THEN -200 -- SBC Prize
 				WHEN b.bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 				WHEN b.bettype = 3007 THEN -244 -- SAG Tip ticket
-				WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
+				WHEN b.bettype BETWEEN 6001 AND 6299 THEN 232 -- PGS
+				WHEN b.bettype = 6300 THEN -232 -- PGS promotion
 				WHEN b.bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 				WHEN (b.bettype BETWEEN 3001 AND 3099 AND b.bettype <> 3007) THEN 244 -- SAG
 				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
@@ -350,7 +352,7 @@ BEGIN
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 			SUM(CASE
 					WHEN b.ruben = 1
-						AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
+						AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 6300)
 						AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 						AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 						AND (b.bettype NOT BETWEEN 17000 AND 17030)
@@ -364,7 +366,7 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 			SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
 			SUM(CASE
-					WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
+					WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 6300)
 						OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 						OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 						OR (b.bettype BETWEEN 17000 AND 17030)
@@ -430,7 +432,8 @@ BEGIN
 				WHEN (b.bettype BETWEEN 1698 AND 1699 AND b.matchid <> 150) THEN -200 -- SBC Prize
 				WHEN b.bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 				WHEN b.bettype = 3007 THEN -244 -- SAG Tip ticket
-				WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
+				WHEN b.bettype BETWEEN 6001 AND 6299 THEN 232 -- PGS
+				WHEN b.bettype = 6300 THEN -232 -- PGS promotion
 				WHEN b.bettype BETWEEN 3501 AND 3599 THEN 239 -- BGG
 				WHEN (b.bettype BETWEEN 3001 AND 3099 AND b.bettype <> 3007) THEN 244 -- SAG
 				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
@@ -483,7 +486,7 @@ BEGIN
 			SUM(Adjustment),--Adjustment
 			SUM(Turnover),--Turnover
 			SUM(Outstanding),--Outstanding
-			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211 ,157) THEN Winloss ELSE 0 END),--Winloss
+			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211 , 157 , -232) THEN Winloss ELSE 0 END),--Winloss
 			SUM(Transfer3rd),--Transfer3rd
 			SUM(DrawGame),--DrawGame
 			SUM(Playercomm),--Playercomm
@@ -673,7 +676,7 @@ BEGIN
 			-1,
 			TurnOver,
 			DrawGame,
-			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211, 157) THEN Promotion ELSE Winloss END AS Winloss,
+			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211, 157, -232) THEN Promotion ELSE Winloss END AS Winloss,
 			playercomm,
 			BetCount,
 			OutStanding

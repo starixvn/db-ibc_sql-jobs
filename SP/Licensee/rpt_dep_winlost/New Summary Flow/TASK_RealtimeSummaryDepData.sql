@@ -76,6 +76,7 @@ AS
 		- 20230215@Evan: Enhance Job bodb02 Deposit Report Summary [RedmineID: #182153]
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
+		- 20230605@Evan: Inteagrate PG Soft promotion games [RedmineID: #189091]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -313,8 +314,7 @@ BEGIN
 				SUM(CASE
 						WHEN b.bettype < 19999
 							AND b.ruben = 1
-							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
-							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
+							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 6300)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)
@@ -332,7 +332,7 @@ BEGIN
 				0, -- Bonus Wallet
 				0, -- AdjBonusWallet
 				SUM(CASE
-						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
+						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 6300)
 							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 							OR (b.bettype BETWEEN 17000 AND 17030)
@@ -466,7 +466,7 @@ BEGIN
 						WHEN b.winlostdate = @WinLostDate
 							AND b.bettype < 19999
 							AND b.ruben = 1
-							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
+							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 6300)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)  
@@ -484,7 +484,7 @@ BEGIN
 				0, -- AdjBonusWallet
 				SUM(CASE
 						WHEN b.winlostdate = @Winlostdate 
-							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
+							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 6300)
 								OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 								OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 								OR (b.bettype BETWEEN 17000 AND 17030)
@@ -760,7 +760,8 @@ BEGIN
 				WHEN bettype BETWEEN 1698 AND 1699 THEN -200 -- SBC Prize
 				WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 				WHEN bettype = 3007 THEN -244 -- SAG Tip ticket
-				WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
+				WHEN bettype BETWEEN 6001 AND 6299 THEN 232 -- PGS
+				WHEN bettype = 6300 THEN -232 -- PGS promotion
 				WHEN (bettype BETWEEN 3001 AND 3099 AND bettype <> 3007) THEN 244 -- SAG
 				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
@@ -784,7 +785,7 @@ BEGIN
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
 			SUM(CASE
-					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4598, 4599, 4600, 2499)
+					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4598, 4599, 4600, 2499, 6300)
 						OR (bettype BETWEEN 17000 AND 17030) 
 						OR (bettype BETWEEN 8700 AND 8709) THEN Promotion
 					ELSE Winloss
@@ -841,7 +842,8 @@ BEGIN
 				WHEN bettype BETWEEN 1698 AND 1699 THEN -200 -- SBC Prize
 				WHEN bettype BETWEEN 6401 AND 6700 THEN 234 -- JK
 				WHEN bettype = 3007 THEN -244 -- SAG Tip ticket
-				WHEN bettype BETWEEN 6001 AND 6300 THEN 232 -- PGS
+				WHEN bettype BETWEEN 6001 AND 6299 THEN 232 -- PGS
+				WHEN bettype = 6300 THEN -232 -- PGS promotion
 				WHEN (bettype BETWEEN 3001 AND 3099 AND bettype <> 3007) THEN 244 -- SAG
 				WHEN bettype BETWEEN 3611 AND 3620 THEN 169 -- SLT
 				WHEN bettype BETWEEN 7001 AND 7300 THEN 238 -- HB
