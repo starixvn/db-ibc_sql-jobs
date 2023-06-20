@@ -24,6 +24,7 @@ AS
 		- 20181129@Joseph: Add step to generate data to [bodb_LicenseeReport.rptCasinoTurnover]   [RedmineID: #95178]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300
 		- 20230209@Bobby: Add rptLicenseeWinloss [RedmineID: #172604]
+		- 20230620@Evan: Deposit remove Colossus Bets [Redmine: #188096]
 */
  
 BEGIN  
@@ -66,10 +67,6 @@ BEGIN
 		ELSE IF @TableName = 'rpt_BettingParlay'
 		BEGIN
 			EXEC dbo.GEN_rptBetting_Parlay @date = @WinlostDate, @date2 = @WinlostDate
-		END
-		ELSE IF @TableName = 'rpt_BettingColossusBets'
-		BEGIN
-			EXEC dbo.GEN_rptBetting_ColossusBets @date = @WinlostDate, @date2 = @WinlostDate
 		END
 		ELSE IF @TableName = 'rptLicWinlossGMT'
 		BEGIN
