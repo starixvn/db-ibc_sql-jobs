@@ -64,6 +64,7 @@ WHERE TaskId = @taskId
 
 
 DELETE FROM DBA_Rules WHERE RuleId IN (13,14)
+DELETE FROM DBA_Tasks WHERE TaskId IN (103,104) --Remove duplicate
 
 --------Update change rule #15 chung SP rule #58
 SELECT @ruleId = 0, @taskId = 0
@@ -107,9 +108,24 @@ UPDATE dbo.DBA_Tasks
 SET command = N'EXEC dbo.DBA_Consistency_GeneralRules_bettransRNGChecking @CheckMode = 4, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
 WHERE command like '%DBA_Consistency_DetectNetstakeforRNGChecking%' 
 
---------Update change rule #7 chung SP rule ##41 (Rename description)
+--------Update change rule #9 Gộp chung SP check Happy5,NumberGame => SP check Sportbook - BetBuilder
 SELECT @ruleId = 0, @taskId = 0
+SET @ruleId = (SELECT RuleId FROM dbo.DBA_Rules WHERE Name LIKE '%Check all yesterday tickets must be settled%')
 
+UPDATE dbo.DBA_Tasks
+SET command = N'EXEC dbo.DBA_Consistency_StatusChecking @ProductId = 161, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
+WHERE RuleId = @ruleId AND command like '%161%' 
+
+UPDATE dbo.DBA_Tasks
+SET command = N'EXEC dbo.DBA_Consistency_StatusChecking @ProductId = 164, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
+WHERE RuleId = @ruleId AND command like '%164%' 
+
+
+--------Update change rule #7 chung SP rule ##41 (Rename description)
+DELETE FROM DBA_Rules WHERE RuleId IN (46) --Remove duplicate rule #7
+DELETE FROM DBA_Tasks WHERE TaskId IN (101,208) --Remove duplicate 
+
+SELECT @ruleId = 0, @taskId = 0
 UPDATE dbo.DBA_Rules
 SET Name = N'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL'
   ,Description = N'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL'
@@ -143,14 +159,6 @@ UPDATE dbo.DBA_Schedules
 SET Name = N'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL on bettransLC'
 WHERE taskId = @taskId
 
---------Update change rule #9 Gộp chung SP check Happy5,NumberGame => SP check Sportbook - BetBuilder
-SELECT @ruleId = 0, @taskId = 0
-SET @ruleId = (SELECT RuleId FROM dbo.DBA_Rules WHERE Name LIKE '%Check all yesterday tickets must be settled%')
-
-UPDATE dbo.DBA_Tasks
-SET command = N'EXEC dbo.DBA_Consistency_StatusChecking @ProductId = 161, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
-WHERE RuleId = @ruleId AND command like '%161%' 
-
-UPDATE dbo.DBA_Tasks
-SET command = N'EXEC dbo.DBA_Consistency_StatusChecking @ProductId = 164, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT, @SampleData = @SampleData OUTPUT'
-WHERE RuleId = @ruleId AND command like '%164%' 
+--------REMOVE RULE/TASK DUPLICATE ON PROD
+DELETE FROM DBA_Rules WHERE RuleId IN (26)
+DELETE FROM DBA_Tasks WHERE TaskId IN (60) 

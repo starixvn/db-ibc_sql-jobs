@@ -432,7 +432,7 @@ BEGIN
 		END
 	END
 
-	--Rule #18: Check if tickets in translog are settled to bettrans correspondently
+	--Rule #56: Check if tickets in translog are settled to bettrans correspondently
 	IF @tablename = 'translog'
 	BEGIN
 		INSERT INTO #tmpTransLog (translogid)
