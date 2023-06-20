@@ -42,6 +42,7 @@ AS
 		- 20220601@Hogan: Integrate MaxGame [RedmineID: #172919]
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
+		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -143,7 +144,8 @@ BEGIN
 		,BTC BIGINT
 		,FGGL BIGINT
 		,MXG BIGINT
-		,JIG BIGINT)
+		,JIG BIGINT
+		,YB BIGINT)
 
 	--exec
 	--rptLicWinloss2
@@ -192,7 +194,8 @@ BEGIN
 		,BTC
 		,FGGL
 		,MXG
-		,JIG)
+		,JIG
+		,YB)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
@@ -358,7 +361,8 @@ BEGIN
 		,BTC
 		,FGGL
 		,MXG
-		,JIG)
+		,JIG
+		,YB)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (

@@ -77,6 +77,7 @@ AS
 		- 20230215@Evan: Enhance Job bodb02 Deposit Report Summary [RedmineID: #182153]
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 		- 20230227@Evan: Ensure correct balance calculation when allow to transfer 247 (BU) [Redmine: #173554]
+		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -343,6 +344,7 @@ BEGIN
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 				WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
+				WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
@@ -447,6 +449,7 @@ BEGIN
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 				WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
+				WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 				ELSE 0
 			END--SportType
 		OPTION (RECOMPILE, MAXDOP 8)
