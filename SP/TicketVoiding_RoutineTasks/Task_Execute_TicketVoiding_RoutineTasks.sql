@@ -311,6 +311,22 @@ BEGIN
 				RAISERROR(@errmsg,16,1)
 			END CATCH
 
+			BEGIN TRY
+			
+				SET @ErrMsg  = 'step 6.15'
+				
+				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
+				SELECT 
+					@alias = 'DBLIC', 
+					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_rptLicenseeWinloss_Bettrans14 ', ' @winlostdate = ''', CONVERT(VARCHAR(50), @winlostdate, 121), '''')
+				EXEC ExecRep_NAP_Admin_05 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
+
+			END TRY
+			BEGIN CATCH
+				SET @errmsg = 'step 6.15' + '--' + ERROR_MESSAGE()			
+				RAISERROR(@errmsg,16,1)
+			END CATCH
+
 		END
 		IF @stepNo = 7
 		BEGIN
