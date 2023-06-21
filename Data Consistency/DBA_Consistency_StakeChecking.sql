@@ -1,11 +1,11 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_StakeChecking]
 	@ProductId		INT	
-	,@tablename		VARCHAR(50)		= NULL	
-	,@Bettype		SMALLINT		= NULL
-	,@ErrCode		INT				= 0		OUTPUT
-	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
-	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
+  , @tablename		VARCHAR(50)		= NULL	
+  , @Bettype		SMALLINT		= NULL
+  , @ErrCode		INT				= 0		OUTPUT
+  , @ErrMsg			VARCHAR(MAX)	= ''	OUTPUT 
+  , @SampleData		VARCHAR(MAX)	= ''	OUTPUT
 AS
 /*
 	Created: 20180808@Kathy
@@ -41,6 +41,7 @@ AS
 		- 20230310@July: SABA.games - Exclude bettypes 1670(Happy Ocean) & 1671(Magic Forest) - [Redmine: #184794]   
 		- 20230310@July: VGaming - Exclude bettypes 3862(Happy Ocean) & 3863(Magic Forest) - [Redmine: #184786]   
 		- 20230410@July: Spadegaming - Exclude bettype 4598 (Promotion Prize) - [Redmine: #186688]
+		- 20230421@July: BBIN - Check stake in bettransG - [Redmine: #186736]
 	
 	Param's Expanation:
 
@@ -48,8 +49,8 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @transId VARCHAR(MAX)
-			,@Today DATETIME 
+	DECLARE @transId	VARCHAR(MAX)
+		  , @Today		DATETIME 
 
 	DECLARE @tmpMatchIds TABLE (MatchId INT)
 
@@ -134,6 +135,14 @@ BEGIN
 					AND b.status <> 'Completed'
 		END	
 	END
+	ELSE IF @ProductId IN(241) OR @tablename = 'bettransG'
+	BEGIN
+		SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+		FROM	bodb02.dbo.bettransG b WITH (NOLOCK)
+		WHERE	b.matchid = @ProductId
+				AND b.stake <= 0
+				AND b.status NOT IN ('running')
+	END
 	ELSE
 	BEGIN
 		SET @tablename = 'bettrans'
@@ -154,15 +163,6 @@ BEGIN
 					AND b.winlostdate = @Today
 					AND b.status <> 'Completed'
 		END
-		ELSE IF @ProductId = 241 --BBIN
-		BEGIN
-			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-			FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-			WHERE	b.bettype < 20000
-					AND b.stake <= 0
-					AND b.matchid = @ProductId
-					AND b.status NOT IN ('running','Completed')
-		END
 		ELSE
 		BEGIN
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
@@ -177,9 +177,9 @@ BEGIN
 	IF @transId <> ''
 	BEGIN
 		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-				,@ErrCode = 100
-				,@ErrMsg = 'Stake must be larger than 0 on product ' + CAST(@ProductId AS VARCHAR)
-				,@SampleData = @tablename + '.TransId in (' + @transId + ')'
+			  , @ErrCode = 100
+			  , @ErrMsg = 'Stake must be larger than 0 on product ' + CAST(@ProductId AS VARCHAR)
+			  , @SampleData = @tablename + '.TransId in (' + @transId + ')'
 	END		
 
 END

@@ -1,10 +1,10 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_WinlostCommChecking]
 	 @CheckMode		INT			   		
-	,@tablename		VARCHAR(50)		= NULL
-	,@ErrCode		INT				= 0		OUTPUT
-	,@ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
-	,@SampleData	VARCHAR(MAX)	= ''	OUTPUT
+   , @tablename		VARCHAR(50)		= NULL
+   , @ErrCode		INT				= 0		OUTPUT
+   , @ErrMsg		VARCHAR(MAX)	= ''	OUTPUT 
+   , @SampleData	VARCHAR(MAX)	= ''	OUTPUT
 AS
 /*
 	Created: 20230414@July
@@ -13,19 +13,20 @@ AS
 
 	Revisions: 
 		- 20230414@July: Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets in bettrans, bettransLC, bettransRNG, bettransG - [Redmine:#186426]
+		- 20230531@July: Check ticket data consistency [Redmine: #186736]
 
 	Param's Expanation:
 		Notes: For SAGaming(244), BBIN(241) check data in bettransG
 		@CheckMode =  1: Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table bettransRNG/bettransLC/bettransG
 		                 Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans
-				
+				   =  2: Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL on table bettrans/bettransRNG/bettransLC
 */
 BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @transId VARCHAR(MAX)
-			,@Today SMALLDATETIME
-			,@yesterday SMALLDATETIME 
+		  , @Today SMALLDATETIME
+		  , @yesterday SMALLDATETIME 
 
 	SET @transId = ''
 	SET @Today = CAST(GETDATE() AS DATE)
@@ -113,11 +114,54 @@ BEGIN
 		END
 		IF @transId <> ''
 		BEGIN
-			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
-					,@ErrCode = 100
-					,@ErrMsg = CASE WHEN @tablename = 'bettrans' THEN 'Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans'
+			SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+				  , @ErrCode = 100
+				  , @ErrMsg = CASE WHEN @tablename = 'bettrans' THEN 'Checking data of swinlost, mwinlost, awinlost in settled tickets on table bettrans'
 																 ELSE 'Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets on table ' + @tablename END
-					,@SampleData =  @tablename + '.TransId in (' + @transId + ')'
+				  , @SampleData =  @tablename + '.TransId in (' + @transId + ')'
+		END
+		RETURN;
+	END
+	IF @CheckMode = 2
+	BEGIN
+		IF @tablename = 'bettrans'
+		BEGIN
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM bodb02.dbo.bettrans WITH(NOLOCK) 
+			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
+				AND bettype <= 19000
+				AND (actual_stake IS NULL 
+					OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL
+					OR scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL
+				)
+		END
+		ELSE IF @tablename = 'bettransRNG'
+		BEGIN
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM bodb02.dbo.bettransRNG WITH(NOLOCK) 
+			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
+				AND (actual_stake IS NULL 
+					OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL
+					OR scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL
+				)
+		END
+		ELSE IF @tablename = 'bettransLC'
+		BEGIN
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM bodb02.dbo.bettransLC WITH(NOLOCK) 
+			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
+				AND (actual_stake IS NULL 
+					OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL
+					OR scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL
+				)
+		END
+	
+		IF @transId <> ''
+		BEGIN
+			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+				   , @ErrCode = 100
+				   , @ErrMsg = 'Check actual_stake, swinlost/mwinlost/awinlost/winlost, scomm/acomm/comm/playercomm NULL on table ' + @tablename
+				   , @SampleData = @tablename + '.TransId in (' + @transId + ')'
 		END
 		RETURN;
 	END

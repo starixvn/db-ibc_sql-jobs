@@ -1,10 +1,10 @@
 /*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_GeneralRules_TicketDetailChecking] 
 	 @TableName		VARCHAR(50) = NULL 
-	,@Today         SMALLDATETIME
-	,@yesterday     SMALLDATETIME
-	,@transId       VARCHAR(MAX) = NULL 
-	,@ErrorTransIds VARCHAR(MAX) = NULL OUTPUT
+   , @ProductId		INT
+   , @CheckDate     SMALLDATETIME
+   , @transId       VARCHAR(MAX) = NULL 
+   , @ErrorTransIds VARCHAR(MAX) = NULL OUTPUT
 AS	
 /*
 	Created: 20230420@July
@@ -12,6 +12,7 @@ AS
 	DB: DBCONSISTENCY-bodb_Consistency
 	Revision:
 		- 20230420@July: Check data between bettrans & bettransLC/bettransRNG [Redmine: #186426]
+		- 20230531@July: Check ticket data consistency [Redmine: #186736]
 	
 	Param's Expanation:
 */
@@ -43,7 +44,6 @@ BEGIN
 		, playerdiscount DECIMAL (9,8), discount DECIMAL(9,8), adiscount DECIMAL(9,8), sdiscount DECIMAL(9,8), transid BIGINT
 	)
  
-	DECLARE @tmpProductId TABLE (ProductId INT)
 	CREATE TABLE #tmp_transid (transid BIGINT)
 
 	INSERT INTO #tmp_transid (transid)
@@ -69,7 +69,8 @@ BEGIN
 			, playercomm, comm, acomm, scomm
 			, winlostdate, status, issum, StatusID, RefNo
 		FROM bodb02.dbo.bettransLC WITH (NOLOCK)
-		WHERE (winlostdate = @Today OR winlostdate = @yesterday)
+		WHERE  productID = @ProductId
+			AND winlostdate = @CheckDate
 			AND custid <> 0 --exlude orphan ticket
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
 						 WHEN @transId IS NOT NULL AND RefNo IN (SELECT transid FROM #tmp_transid) THEN 1
@@ -95,10 +96,6 @@ BEGIN
 		WHERE issum = 1
 		GROUP BY custid, username, productid, gameid, winlostdate, RefNo
 
-		INSERT INTO @tmpProductId (ProductId) 
-		SELECT DISTINCT matchid AS ProductId
-		FROM @sourcedata
-
 		INSERT INTO @targetdata(custid, username, matchid, bettype, winlostdate, status
 			, turnover, winlost, awinlost, swinlost, mwinlost, netstake
 			, scomm, acomm, comm, playercomm
@@ -113,9 +110,9 @@ BEGIN
 			, AVG(playerdiscount) AS playerdiscount, AVG(discount) AS discount, AVG(adiscount) AS adiscount, AVG(sdiscount) AS sdiscount
 			, transid
 		FROM bodb02.dbo.bettrans WITH(NOLOCK)
-		WHERE (winlostdate = @Today OR winlostdate = @yesterday)
+		WHERE matchid = @ProductId
+			AND winlostdate = @CheckDate
 			AND statusid NOT IN (0, 1, 131)
-			AND matchid IN ( SELECT ProductId FROM @tmpProductId)
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
 						 WHEN @transId IS NOT NULL AND transid IN (SELECT transid FROM #tmp_transid) THEN 1
 						 ELSE 0 END
@@ -151,7 +148,7 @@ BEGIN
 
 			OR ISNULL(s.status, 0) <> ISNULL(t.status, 0)
 
-			SELECT TOP (100) @ErrorTransIds = @ErrorTransIds + ',' + CAST(transid AS VARCHAR)
+			SELECT @ErrorTransIds = @ErrorTransIds + ',' + CAST(transid AS VARCHAR)
 			FROM #tmp_transid
 	END
 
@@ -173,7 +170,8 @@ BEGIN
 			, playercomm, comm, acomm, scomm
 			, winlostdate, status, issum, StatusID, RefNo
 		FROM bodb02.dbo.bettransRNG WITH (NOLOCK)
-		WHERE (winlostdate = @Today OR winlostdate = @yesterday)
+		WHERE productID = @ProductId
+			AND winlostdate = @CheckDate
 			AND custid <> 0 --exlude orphan ticket
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
 						 WHEN @transId IS NOT NULL AND RefNo IN (SELECT transid FROM #tmp_transid) THEN 1
@@ -199,10 +197,6 @@ BEGIN
 		WHERE issum = 1
 		GROUP BY custid, username, productid, gameid, winlostdate, RefNo
 
-		INSERT INTO @tmpProductId (ProductId) 
-		SELECT DISTINCT matchid AS ProductId
-		FROM @sourcedata
-
 		INSERT INTO @targetdata(custid, username, matchid, bettype, winlostdate, status
 			, turnover, winlost, awinlost, swinlost, mwinlost
 			, scomm, acomm, comm, playercomm
@@ -217,9 +211,9 @@ BEGIN
 			, AVG(playerdiscount) AS playerdiscount, AVG(discount) AS discount, AVG(adiscount) AS adiscount, AVG(sdiscount) AS sdiscount
 			, transid
 		FROM bodb02.dbo.bettrans WITH(NOLOCK)
-		WHERE (winlostdate = @Today OR winlostdate = @yesterday)
+		WHERE matchid = @ProductId
+			AND winlostdate = @CheckDate
 			AND statusid NOT IN (0, 1, 131)
-			AND matchid IN ( SELECT ProductId FROM @tmpProductId)
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
 						 WHEN @transId IS NOT NULL AND transid IN (SELECT transid FROM #tmp_transid) THEN 1
 						 ELSE 0 END
@@ -253,7 +247,7 @@ BEGIN
 			OR ISNULL(s.sdiscount, 0) <> ISNULL(t.sdiscount, 0)
 			OR ISNULL(s.status, 0) <> ISNULL(t.status, 0)
 
-		SELECT TOP (100) @ErrorTransIds = @ErrorTransIds + ',' + CAST(transid AS VARCHAR)
+		SELECT @ErrorTransIds = @ErrorTransIds + ',' + CAST(transid AS VARCHAR)
 		FROM #tmp_transid
 
 	END
