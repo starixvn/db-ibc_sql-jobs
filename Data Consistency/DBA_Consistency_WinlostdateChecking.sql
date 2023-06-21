@@ -1,4 +1,4 @@
-/*<info serverAlias="DBBAH-bodb02" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBBAH-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_WinlostdateChecking]
 AS
 /*
@@ -13,33 +13,26 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @yesterday	SMALLDATETIME 
-		  , @today		SMALLDATETIME
-		  , @checkdate	SMALLDATETIME
+	DECLARE @Yesterday	SMALLDATETIME 
+		  , @Today		SMALLDATETIME
+		  , @Checkdate	SMALLDATETIME
 		
-	SET @yesterday = DATEADD(DAY,-1,CAST(GETDATE() AS DATE))
-	SET @today = CAST(GETDATE() AS DATE)
-	SET @checkdate = CONVERT(DATE, DATEADD(DAY, -7, GETDATE()))
+	SET @Yesterday = DATEADD(DAY, -1, CAST(GETDATE() AS DATE))
+	SET @Today = CAST(GETDATE() AS DATE)
+	SET @Checkdate = DATEADD(DAY, -7, CAST(GETDATE() AS DATE))
 	
-	DECLARE @tmBettypes TABLE (Bettype SMALLINT)
-	INSERT INTO @tmBettypes (Bettype)
-	SELECT	DISTINCT BetType
-	FROM dbo.SportBettypeMatrix WITH(NOLOCK)
-	WHERE ProductID = 1 --Sportbook
-		AND BetType NOT IN (10, 9, 29) -- outright, parlay
-
 	CREATE TABLE #tmpTicket (TransId BIGINT)
 	INSERT INTO #tmpTicket (TransId)
 	SELECT DISTINCT s.TransId
 	FROM dbo.StatementMovementHistory s WITH(NOLOCK)
-		INNER JOIN @tmBettypes m ON s.Bettype = m.BetType
-	WHERE s.LogDate >= @yesterday AND s.LogDate < @today
+	WHERE s.LogDate >= @Yesterday AND s.LogDate < @Today
+		AND s.BetType NOT IN (10, 9, 29, 2799) -- outright, parlay
 
 	--Return table
 	SELECT TOP (100) s.TransId
 	FROM dbo.StatementMovementHistory s WITH(NOLOCK) 
 		INNER JOIN #tmpTicket t ON s.TransId = t.TransId
-	WHERE s.LogDate >= @checkdate
+	WHERE s.LogDate >= @Checkdate
 	GROUP BY s.TransId
 	HAVING COUNT(s.TransId) >=2
 	
