@@ -85,13 +85,14 @@ BEGIN
 								SET @Retry = @Retry + 1
 								GOTO Mode1_bettransRNG;
 							END
-
+							
+							DELETE FROM @tmpErrorTransIds
 							INSERT INTO @tmpErrorTransIds (TransId)
-							SELECT value
+							SELECT TOP (100) value
 							FROM STRING_SPLIT(@ErrorTransIds,',')
 							WHERE value <> ''
 							
-							SET @transId = STUFF((SELECT  TOP (100)',' + CAST(TransId AS VARCHAR)
+							SET @transId = STUFF((SELECT ',' + CAST(TransId AS VARCHAR)
 												FROM @tmpErrorTransIds
 												FOR XML PATH ('')),1,1,'')
 
