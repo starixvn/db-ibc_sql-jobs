@@ -2,7 +2,7 @@
 ALTER PROCEDURE [dbo].[Task_DOT_Exchange_DailySummary]
 	@winlostdate	DATETIME	
 	,@IsManual		BIT = 0
-	,@GenForDataWarehouse BIT = 0 
+	,@GenForDataWarehouse INT = 0 
 AS
 /*   
 	Created: 20171220@Harper
@@ -18,6 +18,8 @@ AS
 		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
 		- 20200818@Percy: Change EventType's data type from smallint to int [RedmineID: #138524]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
+		- 20230619@Malcolm: Get Event and Event Type [Redmine: #189536]
+
 	Param's Explanation:
 		- @winlostdate: The date need to summary
 		- @IsManual: task run manual or auto
@@ -27,25 +29,6 @@ AS
 SET NOCOUNT ON
 
 BEGIN TRY
-
-	--Used as metadata for SSIS in DataWarahouse
-	IF 1 = 2
-	BEGIN
-		SELECT CAST(NULL AS DATE) [Winlostdate]
-			,CAST(NULL AS INT) [Custid]
-			,CAST(NULL AS INT) [Currency]
-			,CAST(NULL AS INT) [ProductId]
-			,CAST(NULL AS MONEY) [Turnover]
-			,CAST(NULL AS MONEY) [Winlost]
-			,CAST(NULL AS MONEY) [WinLostA]
-			,CAST(NULL AS MONEY) [DrawTO]
-			,CAST(NULL AS INT) [DrawBetCount]
-			,CAST(NULL AS INT) [BetCount]
-			,CAST(NULL AS MONEY) [CommissionP]
-			,CAST(NULL AS MONEY) [CommissionA]
-			,CAST(NULL AS MONEY) [ValidBetAmount]
-			,CAST(NULL AS SMALLINT) [Bettype]
-	END
 	
 	DECLARE @ProductId INT, @PartyList VARCHAR(4000), @i SMALLINT = 1, @WLDate DATE
 
@@ -149,7 +132,7 @@ BEGIN TRY
 								BetCount		INT,
 								Lay				MONEY,
 								Back			MONEY,
-								EventTypeName   Nvarchar(50),
+								EventTypeName   NVARCHAR(50),
 								EventType 		INT
 							)
 	
@@ -168,6 +151,10 @@ BEGIN TRY
 								,[CommissionA] MONEY
 								,[ValidBetAmount] MONEY	
 								,[Bettype] SMALLINT
+								,EventId INT
+								,EventName NVARCHAR(500)
+								,EVentType INT
+								,EventTypeName NVARCHAR(50)
 							)	
 
 	WHILE EXISTS (SELECT TOP 1 1 FROM @WLDateList WHERE ID = @i)
@@ -289,15 +276,23 @@ BEGIN TRY
 			END
 			ELSE
 			BEGIN
+				WITH CTE_EventName AS (
+					SELECT b.eventID, MAX(b.EventName) AS EventName
+					FROM dbo.Sum_winloss_Exchange b WITH (NOLOCK)
+					WHERE b.settledDate >= @WLDate AND  b.settledDate < DATEADD(DAY, 1, @WLDate)
+					GROUP BY  b.eventID
+				)
 				INSERT INTO #TicketDataForDataWarehouse ([Winlostdate],[Custid],[Currency],[ProductId],[Turnover],[Winlost],[WinLostA],[DrawTO]
-																,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount],[Bettype])
+																,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount],[Bettype],[EventID],[EventName],[EventType],[EventTypeName])
 				SELECT @WLDate [Winlostdate], custid [Custid], CurrencyID [Currency], @ProductId [ProductId]
 					, SUM(ISNULL(turnover, 0)) [Turnover], SUM(ISNULL(Winlost, 0)) [Winlost], SUM(ISNULL(WinLostA, 0)) [WinLostA]
 					, SUM(ISNULL(DrawTO, 0)) [DrawTO], SUM(ISNULL(DrawBetCount, 0)) [DrawBetCount], SUM(ISNULL(BetCount, 0)) [BetCount]
 					, SUM(ISNULL(CommissionP, 0)) [CommissionP], SUM(ISNULL(CommissionA, 0)) [CommissionA], SUM(ISNULL(ValidBetAmount, 0)) [ValidBetAmount]	
 					, -1 [Bettype]-- bettype
-				FROM #TicketData					
-				GROUP BY Custid, CurrencyID
+					, t.[EventID], MAX(ev.[EventName]), t.[EventType], MAX(t.[EventTypeName]) EventTypeName
+				FROM #TicketData t
+					LEFT JOIN CTE_EventName ev ON T.EventID = ev.eventID
+				GROUP BY t.Custid, t.CurrencyID, t.EventID, t.EventType
 			END 
 		END 
 				
@@ -309,7 +304,16 @@ BEGIN TRY
 	BEGIN
 		SELECT [Winlostdate],[Custid],[Currency],[ProductId],[Turnover],[Winlost],[WinLostA],[DrawTO]
 							,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount],[Bettype]
-			FROM #TicketDataForDataWarehouse
+		FROM #TicketDataForDataWarehouse
+	END
+	ELSE IF @GenForDataWarehouse = 2
+	BEGIN
+		SELECT [Winlostdate],[Custid],[Currency],[Turnover],[Winlost],[WinLostA],[DrawTO]
+							,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount]
+							,[EventID],[EventName],[EventType],[EventTypeName]
+		FROM #TicketDataForDataWarehouse
+		WHERE Winlostdate = @winlostdate
+
 	END
 	
 	DROP TABLE #TicketDataForDataWarehouse
