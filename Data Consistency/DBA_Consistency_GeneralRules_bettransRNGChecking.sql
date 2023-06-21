@@ -34,6 +34,7 @@ BEGIN
 	
 	SET @CheckDate = @yesterday
 	DECLARE @tmpProductId TABLE (ProductId INT, IsFinish BIT)
+	DECLARE @tmpErrorTransIds TABLE (TransId BIGINT)
 
 	INSERT INTO @tmpProductId (ProductId) 
 	SELECT DISTINCT SportType AS ProductId
@@ -85,7 +86,16 @@ BEGIN
 								GOTO Mode1_bettransRNG;
 							END
 
-							SELECT	 @transId = SUBSTRING(@ErrorTransIds, 2, LEN(@ErrorTransIds) - 1)
+							INSERT INTO @tmpErrorTransIds (TransId)
+							SELECT value
+							FROM STRING_SPLIT(@ErrorTransIds,',')
+							WHERE value <> ''
+							
+							SET @transId = STUFF((SELECT  TOP (100)',' + CAST(TransId AS VARCHAR)
+												FROM @tmpErrorTransIds
+												FOR XML PATH ('')),1,1,'')
+
+							SELECT	 @transId = @transId
 								   , @ErrCode = 100
 								   , @ErrMsg = 'Check ticket details between bettrans and bettransRNG on product ' + CAST(@ProductId AS VARCHAR)
 								   , @SampleData = 'bettransRNG.Refno in (' + @transId + ')'

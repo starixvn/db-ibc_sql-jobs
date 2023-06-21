@@ -148,7 +148,7 @@ BEGIN
 
 			OR ISNULL(s.status, 0) <> ISNULL(t.status, 0)
 
-			SELECT TOP (100) @ErrorTransIds = @ErrorTransIds + ',' + CAST(transid AS VARCHAR)
+			SELECT @ErrorTransIds = @ErrorTransIds + ',' + CAST(transid AS VARCHAR)
 			FROM #tmp_transid
 	END
 
@@ -247,7 +247,7 @@ BEGIN
 			OR ISNULL(s.sdiscount, 0) <> ISNULL(t.sdiscount, 0)
 			OR ISNULL(s.status, 0) <> ISNULL(t.status, 0)
 
-		SELECT TOP (100) @ErrorTransIds = @ErrorTransIds + ',' + CAST(transid AS VARCHAR)
+		SELECT @ErrorTransIds = @ErrorTransIds + ',' + CAST(transid AS VARCHAR)
 		FROM #tmp_transid
 
 	END
