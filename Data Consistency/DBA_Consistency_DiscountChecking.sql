@@ -18,6 +18,7 @@ AS
 		- 20190715@Kathy: check discount rule for BetBuilder [Redmine:#116529]
 		- 20200624@Max: Update Rule for Saba.Club, Modify Rule check Discount [Redmine: #136362]
 		- 20230531@July: Mofidy rule for bettransRNG/bettransLC/translog table [Redmine: #186736]
+		- 20230621@July: Add condition (status <> 'Completed') to exclude orphan ticket [Redmine: #186736]
 	
 	Param's Expanation:
 */
@@ -45,7 +46,7 @@ BEGIN
 				)
 				AND b.winlostdate = @Today
 				AND b.srecommend NOT IN (SELECT custid FROM bodb02.dbo.Dep_CustSuper WITH (NOLOCK))
-	
+				AND b.status <> 'Completed'
 	END
 	ELSE IF @ProductId IN (165,200,247,234,237,238,167,172,174,248) OR @tablename = 'bettransRNG'
 	BEGIN	
@@ -60,7 +61,7 @@ BEGIN
 				)
 				AND b.winlostdate = @Today
 				AND b.srecommend NOT IN (SELECT custid FROM bodb02.dbo.Dep_CustSuper WITH (NOLOCK))
-				
+				AND b.status <> 'Completed'
 	END
 	ELSE 
 	BEGIN
@@ -84,6 +85,7 @@ BEGIN
 					AND b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
 					AND b.winlostdate = @Today
 					AND b.srecommend NOT IN (SELECT custid FROM bodb02.dbo.Dep_CustSuper WITH (NOLOCK))
+					AND b.status <> 'Completed'
 		END
 		ELSE /*translog same bettrans*/ --Virtual Games(245),Table Games(222),Sports Lottery(169)
 		BEGIN
@@ -97,6 +99,7 @@ BEGIN
 					AND b.matchid = @ProductId
 					AND b.winlostdate = @Today
 					AND b.srecommend NOT IN (SELECT custid FROM bodb02.dbo.Dep_CustSuper WITH (NOLOCK))
+					AND b.status <> 'Completed'
 		END
 	END
 	
