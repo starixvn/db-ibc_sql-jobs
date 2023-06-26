@@ -42,6 +42,7 @@ AS
 		- 20230310@July: VGaming - Exclude bettypes 3862(Happy Ocean) & 3863(Magic Forest) - [Redmine: #184786]   
 		- 20230410@July: Spadegaming - Exclude bettype 4598 (Promotion Prize) - [Redmine: #186688]
 		- 20230421@July: BBIN - Check stake in bettransG - [Redmine: #186736]
+		- 20230628@July: SABA.games - Exclude bettypes 1672(DJ Club) & VGaming - Exclude bettypes 3864(DJ Club) - [Redmine: #190199]
 	
 	Param's Expanation:
 
@@ -97,7 +98,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653, 1654, 1656, 1669, 1670, 1671)
+					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653, 1654, 1656, 1669, 1670, 1671, 1672)
 		END
 		ELSE IF @ProductId = 171 -- Vgaming
 		BEGIN
@@ -106,7 +107,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (3829, 3898, 3899, 3835, 3845, 3846, 3854, 3861, 3862, 3863) 
+					AND b.gameID NOT IN (3829, 3898, 3899, 3835, 3845, 3846, 3854, 3861, 3862, 3863, 3864) 
 		END
 		ELSE IF @ProductId = 247 -- Spadegaming
 		BEGIN
@@ -141,7 +142,7 @@ BEGIN
 		FROM	bodb02.dbo.bettransG b WITH (NOLOCK)
 		WHERE	b.matchid = @ProductId
 				AND b.stake <= 0
-				AND b.status NOT IN ('running')
+				AND b.status NOT IN ('running', 'Completed')
 	END
 	ELSE
 	BEGIN
