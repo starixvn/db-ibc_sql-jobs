@@ -109,6 +109,7 @@ BEGIN TRY
 								ExVirtualRate	FLOAT,
 								UserID			VARCHAR(20),
 								EventID			INT,
+								EventName		NVARCHAR(500),
 								MarketID		VARCHAR(50),							
 								Turnover		MONEY,							
 								Winlost			MONEY,	
@@ -167,9 +168,9 @@ BEGIN TRY
 		BEGIN 
 			TRUNCATE TABLE #TicketData
 			
-			INSERT INTO #TicketData (custid, SiteID, CurrencyID, ExVirtualRate, UserID, EventID, MarketID
+			INSERT INTO #TicketData (custid, SiteID, CurrencyID, ExVirtualRate, UserID, EventID, EventName, MarketID
 									, Turnover, Winlost, CommissionP, CommissionA)
-			SELECT b.CustID, ISNULL(site.SiteID,-1) as SiteId, b.Currency, b.ExVirtualRate, b.userId, b.eventID, b.marketID
+			SELECT b.CustID, ISNULL(site.SiteID,-1) as SiteId, b.Currency, b.ExVirtualRate, b.userId, b.eventID, b.eventName, b.marketID
 				, SUM(ISNULL(b.stakeTotal,0) * 1/b.ExVirtualRate), SUM(ISNULL(b.marketTotal,0) * 1/b.ExVirtualRate)
 				, SUM(ISNULL(b.commission,0) * 1/b.ExVirtualRate), SUM(ISNULL(b.agentCommission,0) * 1/b.ExVirtualRate)				
 			FROM dbo.Sum_winloss_Exchange b WITH (NOLOCK)
@@ -178,7 +179,7 @@ BEGIN TRY
 				LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON ag.site=ibcsite.site
 				LEFT JOIN bodb_licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
 			WHERE CONVERT(DATE, b.settledDate) = @WLDate
-			GROUP BY b.CustID, ISNULL(site.SiteID,-1), b.currency, b.ExVirtualRate, b.userId, b.eventID, b.marketID
+			GROUP BY b.CustID, ISNULL(site.SiteID,-1), b.currency, b.ExVirtualRate, b.userId, b.eventID, b.eventName, b.marketID
 
 			INSERT INTO #DetailData( UserID ,EventID ,MarketID ,BetCount  ,DrawBetCount ,DrawTO ,Lay ,Back, eventType, EventTypeName )			
 			SELECT d.userId, d.eventID, d.marketID
@@ -276,12 +277,6 @@ BEGIN TRY
 			END
 			ELSE
 			BEGIN
-				WITH CTE_EventName AS (
-					SELECT b.eventID, MAX(b.EventName) AS EventName
-					FROM dbo.Sum_winloss_Exchange b WITH (NOLOCK)
-					WHERE b.settledDate >= @WLDate AND  b.settledDate < DATEADD(DAY, 1, @WLDate)
-					GROUP BY  b.eventID
-				)
 				INSERT INTO #TicketDataForDataWarehouse ([Winlostdate],[Custid],[Currency],[ProductId],[Turnover],[Winlost],[WinLostA],[DrawTO]
 																,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount],[Bettype],[EventID],[EventName],[EventType],[EventTypeName])
 				SELECT @WLDate [Winlostdate], custid [Custid], CurrencyID [Currency], @ProductId [ProductId]
@@ -289,10 +284,9 @@ BEGIN TRY
 					, SUM(ISNULL(DrawTO, 0)) [DrawTO], SUM(ISNULL(DrawBetCount, 0)) [DrawBetCount], SUM(ISNULL(BetCount, 0)) [BetCount]
 					, SUM(ISNULL(CommissionP, 0)) [CommissionP], SUM(ISNULL(CommissionA, 0)) [CommissionA], SUM(ISNULL(ValidBetAmount, 0)) [ValidBetAmount]	
 					, -1 [Bettype]-- bettype
-					, t.[EventID], MAX(ev.[EventName]), t.[EventType], MAX(t.[EventTypeName]) EventTypeName
+					, t.[EventID], t.EventName, t.[EventType], MAX(t.[EventTypeName]) EventTypeName
 				FROM #TicketData t
-					LEFT JOIN CTE_EventName ev ON T.EventID = ev.eventID
-				GROUP BY t.Custid, t.CurrencyID, t.EventID, t.EventType
+				GROUP BY t.Custid, t.CurrencyID, t.EventID, t.EventType, T.EventName
 			END 
 		END 
 				
