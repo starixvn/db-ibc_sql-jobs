@@ -21,6 +21,7 @@ AS
 		- 20201020@Hogan: Add step Check & correct data to rptCasinoTurnover [RedmineID: #128493]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20230209@Bobby: Add rptLicenseeWinloss [RedmineID: #172604]
+		- 20230620@Evan: Deposit remove Colossus Bets [Redmine: #188096]
 */
 
 BEGIN
@@ -81,10 +82,6 @@ BEGIN
 		ELSE IF @TableName = 'rpt_BettingParlay'
 		BEGIN
 			EXEC dbo.Task_rptBettingParlay_CheckData @winlostdate = @WinlostDate
-		END
-		ELSE IF @TableName = 'rpt_BettingColossusBets'
-		BEGIN
-			EXEC dbo.Task_rptBettingColossusBets_CheckData @winlostdate = @WinlostDate
 		END
 		ELSE IF @TableName = 'rptLicWinlossGMT'
 		BEGIN
