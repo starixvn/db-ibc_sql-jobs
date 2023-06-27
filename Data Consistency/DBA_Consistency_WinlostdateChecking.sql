@@ -28,16 +28,8 @@ BEGIN
 	WHERE s.LogDate >= @Yesterday AND s.LogDate < @Today
 		AND s.BetType NOT IN (10, 9, 29, 2799) -- outright, parlay
 
-	--Remove ticket Cashout & currency (20, 72)
-	DELETE t
-	FROM #tmpTicket t
-		INNER JOIN dbo.bettrans b WITH (NOLOCK) ON t.TransId = b.TransId
-	WHERE 1 = CASE WHEN b.statusID IN (111, 112, 113) AND b.betdaqid = -2 THEN 1
-			       WHEN b.currency IN (20,72) THEN 1 
-				   ELSE 0 END
-
 	--Return table
-	SELECT TOP (100) s.TransId
+	SELECT s.TransId
 	FROM dbo.StatementMovementHistory s WITH(NOLOCK) 
 		INNER JOIN #tmpTicket t ON s.TransId = t.TransId
 	WHERE s.LogDate >= @Checkdate
