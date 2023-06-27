@@ -76,6 +76,7 @@ AS
 		- 20230215@Evan: Enhance Job bodb02 Deposit Report Summary [RedmineID: #182153]
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
+		- 20230626@Evan: Integrate MG-RNG (Normal+Promotion Game) [RedmineID: #189988]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -313,8 +314,7 @@ BEGIN
 				SUM(CASE
 						WHEN b.bettype < 19999
 							AND b.ruben = 1
-							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
-							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4599, 4600, 2499)
+							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)
@@ -332,7 +332,7 @@ BEGIN
 				0, -- Bonus Wallet
 				0, -- AdjBonusWallet
 				SUM(CASE
-						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
+						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
 							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 							OR (b.bettype BETWEEN 17000 AND 17030)
@@ -466,7 +466,7 @@ BEGIN
 						WHEN b.winlostdate = @WinLostDate
 							AND b.bettype < 19999
 							AND b.ruben = 1
-							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
+							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)  
@@ -484,7 +484,7 @@ BEGIN
 				0, -- AdjBonusWallet
 				SUM(CASE
 						WHEN b.winlostdate = @Winlostdate 
-							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
+							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
 								OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 								OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 								OR (b.bettype BETWEEN 17000 AND 17030)
@@ -780,11 +780,13 @@ BEGIN
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 				WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 				WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
+				WHEN (bettype BETWEEN 8400 AND 8699 AND bettype <> 8695) THEN 155 -- MG-RNG
+				WHEN bettype = 8695 THEN -155 -- MG-RNG Promotion Prize
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
 			SUM(CASE
-					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4598, 4599, 4600, 2499)
+					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4598, 4599, 4600, 2499, 8695)
 						OR (bettype BETWEEN 17000 AND 17030) 
 						OR (bettype BETWEEN 8700 AND 8709) THEN Promotion
 					ELSE Winloss
@@ -861,6 +863,8 @@ BEGIN
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 				WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 				WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
+				WHEN (bettype BETWEEN 8400 AND 8699 AND bettype <> 8695) THEN 155 -- MG-RNG
+				WHEN bettype = 8695 THEN -155 -- MG-RNG Promotion Prize
 				ELSE 0
 			END
 
