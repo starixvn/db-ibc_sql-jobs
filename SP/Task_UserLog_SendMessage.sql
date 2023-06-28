@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb_CustomerLog" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBTXN-bodb_CustomerLog" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE dbo.Task_UserLog_SendMessage
 	@userId INT,
 	@doing nvarchar(512),
