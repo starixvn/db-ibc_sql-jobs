@@ -23,6 +23,7 @@ AS
 		- 20230522@Lewis: Database - Abnormal Account - call sum Sps on other servers - [RedmineID: #188463]
 		- 20230612@Evan: remove code related to Saba Promotion report - [RedmineID: #189234]
 		- 20220603@Sol: Database - Sync-up Standby Server data - [RedmineID: #167261]
+		- 20230629@Sol: Database - Sync-up Standby Server data - exclude step 7/8 (logshipping synced) - [RedmineID: #190438]
 */
 BEGIN
 	DECLARE @GenerateData TINYINT,
@@ -328,30 +329,15 @@ BEGIN
 			END CATCH
 
 		END
+
 		IF @stepNo = 7
 		BEGIN
-			
-			SET @ErrMsg  = 'step 7'
-			
-			EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
-			SELECT 
-				@alias = 'DBFS', 
-				@SqlCommand = CONCAT('EXEC bodb_FraudSensor.dbo.FS_Task_MatchDailyDataCapture ', ' @GenerateFromDate = ''',CONVERT(VARCHAR(50), @winlostdate, 121),''', @GenerateToDate = ''', CONVERT(VARCHAR(50), @winlostdate, 121), '''')
-			EXEC ExecRep_NAP_Admin_05 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
-
+			EXECUTE DBFS.bodb_FraudSensor.dbo.FS_Task_MatchDailyDataCapture @GenerateFromDate = @winlostdate, @GenerateToDate = @winlostdate
 		END
 		IF @stepNo = 8
 		BEGIN
-			
-			SET @ErrMsg  = 'step 8'
-			
-			EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
-			SELECT 
-				@alias = 'DBTGRS', 
-				@SqlCommand = CONCAT('EXEC bodb_TGRS.dbo.Task_RegenerateTGRSData ', ' @FromDate = ''',CONVERT(VARCHAR(50), @winlostdate, 121),''', @ToDate = ''', CONVERT(VARCHAR(50), @winlostdate, 121), ''', @Flagged = 0')
-			EXEC ExecRep_NAP_Admin_05 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
-
-		END 
+			EXECUTE DBTGRS.bodb_TGRS.dbo.Task_RegenerateTGRSData @FromDate = @winlostdate, @ToDate = @winlostdate, @Flagged = 0
+		END
 	END
 END
 GO
