@@ -19,6 +19,7 @@ AS
 		
 						- Get last transid and new last transid - [Redmine:#175881]
 		- 20221007@Evan: Remove 2 bet types 19999 & 20000 - rule #46 - [Redmine:#175881]
+		- 20230706@Danny: deploy SP to SiteDB03 [Redmine: #181595]
 		
 	Param's Expanation:
 */

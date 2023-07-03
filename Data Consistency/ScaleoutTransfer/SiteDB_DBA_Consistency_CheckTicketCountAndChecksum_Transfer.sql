@@ -18,6 +18,7 @@ AS
 						- Check total ticket and checksum between SiteDB and central DB - [Redmine:#175881]
 		- 20221102@Evan: Enhancement convert data type float to decimal - [Redmine:#178864] 
 		- 20221220@Evan: Check Data Consistency - Exclude custid = 0 - [Redmine:#181848] 
+		- 20230706@Danny: deploy SP to SiteDB03 [Redmine: #181595]
 	
 	Param's Expanation:
 */
