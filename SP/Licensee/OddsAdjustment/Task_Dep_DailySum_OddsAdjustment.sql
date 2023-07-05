@@ -19,6 +19,7 @@ AS
 		- 20220724@Evan: LAP - Scale out DBTrans phase 1 - classify data between SiteDB & CentralDB [Redmine: #175297]
 		- 20221128@Evan: Fix tickets not replicated from SiteDB to CentralDB [Redmine: #180937]
 		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
+		- 20230705@Evan: Add Servername SiteDB [RedmineID: #190906]
 */
 BEGIN
 	
@@ -305,7 +306,7 @@ BEGIN
 
 		SELECT @Subject = 'Missing dummy account notification'
 			, @bodymsg = ''
-			, @recipients = CASE WHEN @isTest = 0 AND @@SERVERNAME = 'DBTRANS' THEN 'it@starixvn.com;ben.nguyen@starixvn.com' ELSE 'dba_local@starixvn.com' END
+			, @recipients = CASE WHEN @isTest = 0 AND @@SERVERNAME IN ('DBTRANS','DBGRP01N1','DBGRP02N1','DBGRP01N2','DBGRP02N2')  THEN 'it@starixvn.com;ben.nguyen@starixvn.com' ELSE 'dba_local@starixvn.com' END
 		
 		CREATE TABLE #__tblRealLicensee
 		(

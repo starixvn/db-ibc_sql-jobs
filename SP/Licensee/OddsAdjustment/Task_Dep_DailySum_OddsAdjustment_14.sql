@@ -18,6 +18,7 @@ AS
 		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
 		- 20220714@Evan: Modify sp to avoid dump (remove code select into) - [Redmine: #175450]
 		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
+		- 20230705@Evan: Add Servername SiteDB [RedmineID: #190906]
 
 */
 BEGIN
@@ -270,7 +271,7 @@ BEGIN
 
 		SELECT @Subject = 'Missing dummy account notification'
 			, @bodymsg = ''
-			, @recipients = CASE WHEN @isTest = 0 AND @@SERVERNAME = 'DBTRANS' THEN 'it@starixvn.com;ben.nguyen@starixvn.com' ELSE 'dba_local@starixvn.com' END
+			, @recipients = CASE WHEN @isTest = 0 AND @@SERVERNAME IN ('DBTRANS','DBGRP01N1','DBGRP02N1','DBGRP01N2','DBGRP02N2') THEN 'it@starixvn.com;ben.nguyen@starixvn.com' ELSE 'dba_local@starixvn.com' END
 			
 		CREATE TABLE #__tblRealLicensee
 		(
