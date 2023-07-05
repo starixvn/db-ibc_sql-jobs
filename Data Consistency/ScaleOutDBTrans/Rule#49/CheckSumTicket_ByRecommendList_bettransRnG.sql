@@ -33,7 +33,7 @@ BEGIN
 	(
 		TransId BIGINT, SiteDBGroupID SMALLINT, Transdate DATETIME,
 		[custid] INT, [odds] SMALLMONEY, [stake] MONEY, [status] NVARCHAR(10), [apositiontaking] SMALLMONEY, [mpositiontaking] SMALLMONEY, [tpositiontaking] SMALLMONEY, [spositiontaking] SMALLMONEY, [playerdiscount] DECIMAL(9,8), [discount] DECIMAL(9,8),
-		[adiscount] DECIMAL(9,8), [sdiscount] DECIMAL(9,8), [creator] INT, [betfrom] VARCHAR(3), [actualrate] FLOAT, [actual_stake] MONEY, [currency] TINYINT, [CurrencyName] NVARCHAR(50), [Recommend] INT, 
+		[adiscount] DECIMAL(9,8), [sdiscount] DECIMAL(9,8), [creator] INT, [betfrom] VARCHAR(4), [actualrate] FLOAT, [actual_stake] MONEY, [currency] TINYINT, [CurrencyName] NVARCHAR(50), [Recommend] INT, 
 		[mrecommend] INT, [srecommend] INT, [ip] VARCHAR(45), [statusID] TINYINT, [balance] MONEY, [Username] NVARCHAR(50), [transdesc] NVARCHAR(1000), [productID] SMALLINT, [gameID] SMALLINT, [vendorID] INT, [GameId3rd] VARCHAR(100), 
 		[TranId3rd] VARCHAR(100), [RefNo] BIGINT, [IsSum] BIT, [winlost] MONEY, [awinlost] MONEY, [mwinlost] MONEY, [swinlost] MONEY, [playercomm] MONEY, [comm] MONEY, [acomm] MONEY, [scomm] MONEY, [Transdate3rd] DATETIME, 
 		[SiteID] VARCHAR(7), [Additional] VARCHAR(1000), [JackpotInfo] VARCHAR(50), [RefNo2] BIGINT, [ContributionRate] DECIMAL(9,8), [BetStake] MONEY, [ContributionStake3rd] DECIMAL(19,8)
