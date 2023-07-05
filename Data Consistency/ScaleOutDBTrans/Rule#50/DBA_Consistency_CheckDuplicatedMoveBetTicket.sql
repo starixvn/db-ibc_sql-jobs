@@ -8,7 +8,7 @@ DB: DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02
 Revisions:
 	- 20220819@Victoria: Rule #50 - Check MoveBet Ticket,
 									Alert if exist more than 1 row with group by custid and winlostdate [Redmine:#175881]
-	
+	- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 */
 BEGIN
 	SET NOCOUNT ON

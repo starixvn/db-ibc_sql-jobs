@@ -15,7 +15,7 @@ AS
 		- 20221012@Victoria: Modify to show FromDate and ToDate
 								AND replication latency with ticket odds adjustment [Redmine:#178864]	
 		- 20221123@July: Support filter recommend list [Redmine:#178864]
-	
+		- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 */
 BEGIN
 	SET NOCOUNT ON

@@ -8,7 +8,7 @@ Task: Check MoveBet/BalanceUp Ticket Count
 DB: DBSIG-bodb02
 Revisions:
 	- 20220907@Victoria: Rule #50 - Check ticket count of 19999/20000 with group by SiteDBGroupID, winlostdate [Redmine:#175881]
-	
+	- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 */
 BEGIN
 	SET NOCOUNT ON
