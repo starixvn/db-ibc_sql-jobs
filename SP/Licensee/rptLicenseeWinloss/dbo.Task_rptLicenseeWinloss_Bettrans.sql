@@ -71,6 +71,7 @@ BEGIN
 			  )
 			  OUTER APPLY OPENJSON(LeagueGroupIDs) WITH (LeagueGroupID INT '$')
 			) AS t
+		WHERE @winlostdate >= ISNULL(saba.CutOffDate ,@winlostdate)
 		  )
 	INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
 	    ([Recommend]
