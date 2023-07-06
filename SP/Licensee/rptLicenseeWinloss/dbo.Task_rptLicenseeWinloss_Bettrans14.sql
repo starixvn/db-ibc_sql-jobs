@@ -10,7 +10,7 @@ AS
 
 	Revisions:
 		- 20230209@Bobby: Created [RedmineID: #172604]
-		
+		- 20230702@Evan: Support Saba Virtual Tennis [RedmineID: #190465]
 */
 BEGIN  
 	SET NOCOUNT ON;
@@ -166,6 +166,7 @@ BEGIN
 							OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
 							OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
 							OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
+							OR (l.LeagueGroupID = 42 AND m.sporttype = 5)
 						) AND b.betdaqid <> -2 
 						THEN l.LeagueGroupID 
 					ELSE 0
