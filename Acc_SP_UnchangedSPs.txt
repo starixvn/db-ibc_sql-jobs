@@ -1,2 +1,1 @@
-SP\TicketVoiding_RoutineTasks\Task_Control_TicketVoiding_RoutineTasks.sql
-SP\TicketVoiding_RoutineTasks\Task_ReadyToGo_TicketVoiding_RoutineTasks.sql
+SP/Task_ClearBalanceAllDownlines.sql
