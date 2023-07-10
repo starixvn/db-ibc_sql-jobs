@@ -1,8 +1,8 @@
-/*<info serverAlias="DBSIG-bodb02" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBSIC-bodb02" executers="" viewers="" isFunction="0"></info>*/
 /*
     Created by: 20230705@July
 	Task: Check ticket data consistency - Add SPs for SiteDB3
-	DB: DBSIG-bodb02
+	DB: DBSIC-bodb02
 	Revisions:
 		- 20230705@July:  Inital Writing [Redmine:#190601]
 */
