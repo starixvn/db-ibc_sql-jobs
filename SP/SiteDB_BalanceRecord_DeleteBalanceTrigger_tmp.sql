@@ -10,7 +10,8 @@ AS
 	DB:DBSIG/bodb02
 
 	Revisions:
-		20230522@Louisa: get code from 179058 [Redmine: #188569]
+		- 20230522@Louisa: get code from 179058 [Redmine: #188569]
+		- 20220130@Louisa: get code from SiteDB1 to SiteDB3 [Redmineid:#181595]
 
 */
 BEGIN
