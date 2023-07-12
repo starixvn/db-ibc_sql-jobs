@@ -25,6 +25,7 @@ AS
 		- 20220106@Evan: Add SG Jackpot - [Redmine: #166685]	
 		- 20221002@Danny: Add New LeagueGroupID and TicketType columns [Redmine: #167177]	
 		- 20221208@Eddie: Add New SABA ESports PinGoal [RedmineID: #181383]
+		- 20230630@Lewis: Add Saba Tennis [RedmineID: #190459]
 */
 
 BEGIN
@@ -297,12 +298,14 @@ BEGIN
 								(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
 								OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
 								OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+								OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 								OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 							  ) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN l.LeagueGroupID ELSE 0 END AS LeagueGroupID,
 					CASE WHEN ( 
 								(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
 								OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
 								OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+								OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 								OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 							 ) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN m.sporttype ELSE 0 END AS sporttype
 				FROM bodb_Archive.dbo.bettrans_bk b WITH (NOLOCK)

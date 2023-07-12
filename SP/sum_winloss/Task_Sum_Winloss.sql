@@ -45,6 +45,7 @@ AS
 		- 20221208@Eddie: Add New SABA ESports PinGoal [RedmineID: #181383]
 		- 20230206@Eddie: Add Jili product [RedmineID: #182860]
 		- 20230511@Eddie: Add YeeBet product [RedmineID: #186480]
+		- 20230630@Lewis: Add Saba Tennis [RedmineID: #190459]
 */
 BEGIN
 
@@ -188,6 +189,7 @@ BEGIN
 					(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
 						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 				 ) AND betdaqid <> -2   AND winlostdate >= @SabaInfo_CutOffDate THEN m.sporttype
 			WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
@@ -323,6 +325,7 @@ BEGIN
 						(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
 						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 					) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN l.LeagueGroupID ELSE 0 END AS LeagueGroupID,
 		  CASE WHEN bettrans.betdaqid = -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN 1 ELSE 0 END ticketType
@@ -348,6 +351,7 @@ BEGIN
 					(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
 						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 				 ) AND betdaqid <> -2   AND winlostdate >= @SabaInfo_CutOffDate THEN m.sporttype
 				 WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
@@ -417,6 +421,7 @@ BEGIN
 						(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
 						OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 					) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN l.LeagueGroupID ELSE 0 END,
 			 CASE WHEN bettrans.betdaqid = -2 AND winlostdate >= @SabaInfo_CutOffDate THEN 1 ELSE 0 END 
