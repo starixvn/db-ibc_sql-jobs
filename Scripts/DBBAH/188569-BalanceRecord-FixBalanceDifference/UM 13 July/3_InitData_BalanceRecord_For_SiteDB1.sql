@@ -6,7 +6,7 @@
 
 */
 
-----Notes: run on db05bk1 
+----Notes: run on db05bk1
 
 USE bodb02
 GO
@@ -38,8 +38,16 @@ GO
 	DECLARE @CustidBalanceList VARCHAR(MAX) = ''
 	DECLARE @xml XML = NULL
 
+	SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
+	SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
+	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
+	SELECT	@ExecuteSQL_balance = N'EXECUTE DB05.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
+
+
 ----1. Check and correct for BalanceRecordDiff_SiteDB1_Order2--------------------------------------------
 	SET @StartRowInsert = 1
+	SET @StartRowCorrect = 1
+
 	WHILE (1=1)
 	BEGIN
 		INSERT INTO #temp_MemberInput (ID, custid)
@@ -58,7 +66,7 @@ GO
 				) as b2		
 		WHERE m.ID  >= @StartRowInsert AND m.ID  < @StartRowInsert + @batchInsert 
 			and b2.balance  <> b1.balance
-		ORDER BY ID
+		ORDER BY m.ID
 
 		IF @@ROWCOUNT < @batchInsert
 		BREAK
@@ -66,19 +74,9 @@ GO
 		SET @StartRowInsert = @StartRowInsert + @batchInsert
 
 	END
-
-	SELECT  @query = N''		
-	SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
-	SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
-
-	-- RESET param to insert balance in db05
-	SELECT  @query_balance = N'', @SiteDBAlias = 'DB05'		
-	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
-	SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
-
+ 
 	WHILE (1=1)
-	BEGIN
-	
+	BEGIN	
 		TRUNCATE TABLE #tempMember
 
 		INSERT INTO #tempMember(custid)
@@ -128,7 +126,7 @@ GO
 			END CATCH
 		END
 
-		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for StartRow: ',  '/EndRow: ', @StartRowCorrect  + @batchInsert)
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for SiteDB1_Order2 StartRow: ', @StartRowCorrect,  ' EndRow: ', @StartRowCorrect  + @batchInsert)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
 		IF DATEDIFF(MINUTE, @StartTime, GETDATE() ) >= @DuringTime
@@ -150,6 +148,7 @@ GO
 ----2. Check and correct for BalanceRecordDiff_SiteDB1_Order3--------------------------------------------
 	TRUNCATE TABLE #temp_MemberInput
 	SET @StartRowInsert = 1
+	SET @StartRowCorrect = 1
 
 	WHILE (1=1)
 	BEGIN
@@ -177,19 +176,9 @@ GO
 		SET @StartRowInsert = @StartRowInsert + @batchInsert
 
 	END
-
-	SELECT  @query = N''		
-	SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
-	SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
-
-	-- RESET param to insert balance in db05
-	SELECT  @query_balance = N'', @SiteDBAlias = 'DB05'		
-	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
-	SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
-
+ 
 	WHILE (1=1)
-	BEGIN
-	
+	BEGIN	
 		TRUNCATE TABLE #tempMember
 
 		INSERT INTO #tempMember(custid)
@@ -239,7 +228,7 @@ GO
 			END CATCH
 		END
 
-		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for StartRow: ',  '/EndRow: ', @StartRowCorrect  + @batchInsert)
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for SiteDB1_Order3 StartRow: ', @StartRowCorrect,  ' EndRow: ', @StartRowCorrect  + @batchInsert)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
 		IF DATEDIFF(MINUTE, @StartTime, GETDATE() ) >= @DuringTime
@@ -261,14 +250,15 @@ GO
 ----3. Check and correct for BalanceRecordDiff_SiteDB1_Order4--------------------------------------------
 	TRUNCATE TABLE #temp_MemberInput
 	SET @StartRowInsert = 1
+	SET @StartRowCorrect = 1
 
 	WHILE (1=1)
 	BEGIN
 		INSERT INTO #temp_MemberInput (ID, custid)
-		SELECT ID, CustId
+		SELECT m.ID, m.CustId
 		FROM BalanceRecordDiff_SiteDB1_Order4 m WITH(NOLOCK)
 			INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) 
-				ON c.custid = o.custid
+				ON c.custid = m.custid
 			CROSS APPLY (		
 						SELECT TOP 1 Balance		
 						FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables		
@@ -292,18 +282,8 @@ GO
 
 	END
 
-	SELECT  @query = N''		
-	SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
-	SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
-
-	-- RESET param to insert balance in db05
-	SELECT  @query_balance = N'', @SiteDBAlias = 'DB05'		
-	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
-	SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
-
 	WHILE (1=1)
 	BEGIN
-	
 		TRUNCATE TABLE #tempMember
 
 		INSERT INTO #tempMember(custid)
@@ -353,7 +333,7 @@ GO
 			END CATCH
 		END
 
-		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for StartRow: ',  '/EndRow: ', @StartRowCorrect  + @batchInsert)
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for SiteDB1_Order4 StartRow: ', @StartRowCorrect,  ' EndRow: ', @StartRowCorrect  + @batchInsert)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
 		IF DATEDIFF(MINUTE, @StartTime, GETDATE() ) >= @DuringTime
@@ -376,6 +356,7 @@ GO
 ----5. Check and correct for BalanceRecordDiff_SiteDB1_Order5--------------------------------------------
 	TRUNCATE TABLE #temp_MemberInput
 	SET @StartRowInsert = 1
+	SET @StartRowCorrect = 1
 
 	WHILE (1=1)
 	BEGIN
@@ -404,18 +385,8 @@ GO
 
 	END
 
-	SELECT  @query = N''		
-	SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
-	SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
-
-	-- RESET param to insert balance in db05
-	SELECT  @query_balance = N'', @SiteDBAlias = 'DB05'		
-	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
-	SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
-
 	WHILE (1=1)
-	BEGIN
-	
+	BEGIN	
 		TRUNCATE TABLE #tempMember
 
 		INSERT INTO #tempMember(custid)
@@ -465,7 +436,7 @@ GO
 			END CATCH
 		END
 
-		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for StartRow: ',  '/EndRow: ', @StartRowCorrect  + @batchInsert)
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for SiteDB1_Order5 StartRow: ', @StartRowCorrect,  ' EndRow: ', @StartRowCorrect  + @batchInsert)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
 		IF DATEDIFF(MINUTE, @StartTime, GETDATE() ) >= @DuringTime
@@ -488,6 +459,7 @@ GO
 ----5. Check and correct for BalanceRecordDiff_SiteDB1_Order6--------------------------------------------
 	TRUNCATE TABLE #temp_MemberInput
 	SET @StartRowInsert = 1
+	SET @StartRowCorrect = 1
 
 	WHILE (1=1)
 	BEGIN
@@ -516,18 +488,8 @@ GO
 
 	END
 
-	SELECT  @query = N''		
-	SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
-	SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
-
-	-- RESET param to insert balance in db05
-	SELECT  @query_balance = N'', @SiteDBAlias = 'DB05'		
-	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
-	SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
-
 	WHILE (1=1)
-	BEGIN
-	
+	BEGIN	
 		TRUNCATE TABLE #tempMember
 
 		INSERT INTO #tempMember(custid)
@@ -577,7 +539,7 @@ GO
 			END CATCH
 		END
 
-		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for StartRow: ',  '/EndRow: ', @StartRowCorrect  + @batchInsert)
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for SiteDB1_Order6 StartRow: ', @StartRowCorrect,  ' EndRow: ', @StartRowCorrect  + @batchInsert)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
 		IF DATEDIFF(MINUTE, @StartTime, GETDATE() ) >= @DuringTime
@@ -595,3 +557,7 @@ GO
 		SET @StartRowCorrect = @StartRowCorrect + @batchInsert
 
 	END
+
+
+	DROP TABLE #temp_MemberInput
+	DROP TABLE #tempMember
