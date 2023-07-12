@@ -1,17 +1,16 @@
 /*<info serverAlias="DBBAH-bodb02" executers="" isFunction="0"></info>*/
 /*
     Created: 20230629@Louisa
-	Task: Correct balance again - after correct on July 2023 [Redmine: #188569]
+	Task: Correct balance for SITEDB1 again - after correct on June 2023 [Redmine: #188569]
 	DB:DBBAH/bodb02
 
-	Notes: run on db05bk1 only
 */
+
+----Notes: run on db05bk1 
 
 USE bodb02
 GO
- 
 
-	--------------DECLARE temporary tables ------------------
 	CREATE TABLE #temp_MemberInput(
 		ID INT PRIMARY KEY,
 		custid INT
@@ -19,41 +18,16 @@ GO
 
 	CREATE TABLE #tempMember (custid INT)
 
-
-------- 1. GET members needs to process ------------------
-	INSERT INTO #temp_MemberInput (ID, custid)
-	SELECT ID, CustId
-	FROM BalanceRecord_Diff_20230713_tmp WITH (NOLOCK)
-	WHERE  SiteDBGroupID = 1
-	ORDER BY ID 
-
-	SELECT count(1) AS [custid_Count] FROM #temp_MemberInput
-
-------- 2. Check data [dbo].[BalanceTrigger_ProcessData] on DB05/DB05BK1 until it's no data
-	--DB05BK1:
-	SELECT TOP 1 1
-	FROM BalanceTrigger_ProcessData b WITH (NOLOCK)
-		INNER JOIN #temp_MemberInput m ON b.custid = m.custid
-
-	---DB05:
-	--SELECT TOP 1 1
-	--FROM bodb02.dbo.BalanceTrigger_ProcessData b WITH (NOLOCK)
-	--	INNER JOIN BalanceRecordDiff_SiteDBX_OrderX m ON b.custid = m.custid
-
-------- 3. Insert BalanceRecord and Delete Balance Trigger
-
-	------ info for deployer 
-	DECLARE @debug_message VARCHAR(MAX) = ''
-			,@OrderNo INT ----Input Order
- 
-	--------------LOOP BY batch 250 of customers ------------------
-	DECLARE @rid_loop INT, @rowCount int  = 0, @batch int = 250, @loop_cnt int = 1
-	DECLARE @StartRow INT = 1
-			, @StopRow INT 
+	DECLARE @batchInsert int = 100000  
+			, @StartRowInsert INT = 1 
+			, @StartRowCorrect INT = 1
+			, @batchCorrect int = 250
 			, @retrycnt INT = 0 
 			, @isSuccess BIT = 0
 			, @StartTime DATETIME  =  GETDATE()
-			, @DuringTime INT = 420 ---- process data during 420 second (7 mins) then break out loop
+			, @DuringTime INT = 30 ---- process data over 30 mins then break out loop
+			, @debug_message VARCHAR(MAX) = ''
+
 	DECLARE  @ExecuteSQL NVARCHAR(MAX) = ''
 			, @query NVARCHAR(MAX) = ''
 			, @ExecuteSQL_balance NVARCHAR(MAX) = ''
@@ -64,8 +38,34 @@ GO
 	DECLARE @CustidBalanceList VARCHAR(MAX) = ''
 	DECLARE @xml XML = NULL
 
-	SET @rid_loop = ((SELECT MAX(ID) FROM #temp_MemberInput)/@batch) + 1
-	SET @StopRow = @batch
+----1. Check and correct for BalanceRecordDiff_SiteDB1_Order2--------------------------------------------
+	SET @StartRowInsert = 1
+	WHILE (1=1)
+	BEGIN
+		INSERT INTO #temp_MemberInput (ID, custid)
+		SELECT ID, CustId
+		FROM BalanceRecordDiff_SiteDB1_Order2 m WITH(NOLOCK)
+			CROSS APPLY (		
+						SELECT TOP 1 Balance		
+						FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables		
+						WHERE b.custid = m.custid
+				) AS b1		
+				CROSS APPLY (		
+						SELECT TOP 1 newbalance AS balance		
+						FROM bodb02.dbo.balancerecord b WITH(NOLOCK) 	
+						WHERE b.custid = m.custid		
+						ORDER BY rowid DESC
+				) as b2		
+		WHERE m.ID  >= @StartRowInsert AND m.ID  < @StartRowInsert + @batchInsert 
+			and b2.balance  <> b1.balance
+		ORDER BY ID
+
+		IF @@ROWCOUNT < @batchInsert
+		BREAK
+	
+		SET @StartRowInsert = @StartRowInsert + @batchInsert
+
+	END
 
 	SELECT  @query = N''		
 	SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
@@ -76,21 +76,15 @@ GO
 	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
 	SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
 
-	WHILE (@loop_cnt <= @rid_loop)
+	WHILE (1=1)
 	BEGIN
 	
 		TRUNCATE TABLE #tempMember
 
-		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for round:',  @loop_cnt, '/', @rid_loop)
-		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
-
 		INSERT INTO #tempMember(custid)
 		SELECT custid
 		FROM #temp_MemberInput 
-		WHERE ID BETWEEN @StartRow AND @StopRow
-
-		IF @@ROWCOUNT = 0
-			BREAK
+		WHERE ID >= @StartRowCorrect AND ID  < @StartRowCorrect + @batchCorrect
 
 		SET @CustidList = ''
 		SET @CustidList = STUFF((SELECT ',' + CONVERT(VARCHAR(20), custid)
@@ -98,7 +92,6 @@ GO
 					 FOR XML PATH ('')
 						),1,1,'')	
 					
-		--- step 2 insert balance record to re-init
 		SELECT @CustidBalanceList = (SELECT  m.custid AS '@c'
 											,bal.Balance AS '@b'
 									FROM #tempMember m
@@ -110,13 +103,13 @@ GO
 									)
 		SET @xml = CONVERT(XML, @CustidBalanceList)
 	
-		-- insert db05bk1 first
+		-- insert balancerecord db05bk1
 		INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
 		SELECT	t.c.value('@c','int') AS custid, 0, 0, 0, 0, 0, 0, t.c.value('@b','MONEY') AS balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
 		FROM @xml.nodes('root/r') t(c)
 		OPTION (OPTIMIZE FOR (@xml = NULL))	
 
-		-- insert db05
+		-- insert balancerecord db05
 		EXECUTE	sys.sp_executesql @ExecuteSQL_balance, N'@query_balance NVARCHAR(MAX), @CustidBalanceList VARCHAR(MAX)', @query_balance, @CustidBalanceList
 
 		-- step 3: delete balance trigger if exists
@@ -135,23 +128,470 @@ GO
 			END CATCH
 		END
 
-		IF DATEDIFF(SECOND, @StartTime, GETDATE() ) >= @DuringTime
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for StartRow: ',  '/EndRow: ', @StartRowCorrect  + @batchInsert)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+
+		IF DATEDIFF(MINUTE, @StartTime, GETDATE() ) >= @DuringTime
 		BEGIN
 			INSERT INTO BalanceRecord_Config_tmp  (SiteDBGroupID , OrderNo, StartRow, EndRow)
-			SELECT 1 AS SiteDBGroupID, @OrderNo, @StartRow AS StartRow, @StopRow AS EndRow 
+			SELECT 1 AS SiteDBGroupID, 2 AS OrderNo, @StartRowCorrect AS StartRow, @StartRowCorrect + @batchCorrect AS EndRow ----SiteDB1_Order2
 			FROM #tempMember m  ---keep this value for next time run
 
 			BREAK
 		END
 
-		SET @StartRow = @StopRow + 1
-		SET @StopRow = @StopRow + @batch
+		IF @@ROWCOUNT < @batchCorrect
+		BREAK
 
-		SELECT  @loop_cnt += 1
+		SET @StartRowCorrect = @StartRowCorrect + @batchInsert
 
 	END
 
-	--SELECT @rowCount
+----2. Check and correct for BalanceRecordDiff_SiteDB1_Order3--------------------------------------------
+	TRUNCATE TABLE #temp_MemberInput
+	SET @StartRowInsert = 1
 
-	DROP TABLE #temp_MemberInput
-	DROP TABLE #tempMember
+	WHILE (1=1)
+	BEGIN
+		INSERT INTO #temp_MemberInput (ID, custid)
+		SELECT ID, CustId
+		FROM BalanceRecordDiff_SiteDB1_Order3 m WITH(NOLOCK)
+			CROSS APPLY (		
+						SELECT TOP 1 Balance		
+						FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables		
+						WHERE b.custid = m.custid
+				) AS b1		
+				CROSS APPLY (		
+						SELECT TOP 1 newbalance AS balance		
+						FROM bodb02.dbo.balancerecord b WITH(NOLOCK) 	
+						WHERE b.custid = m.custid		
+						ORDER BY rowid DESC
+				) as b2		
+		WHERE m.ID  >= @StartRowInsert AND m.ID  < @StartRowInsert + @batchInsert 
+			and b2.balance  <> b1.balance
+		ORDER BY ID
+
+		IF @@ROWCOUNT < @batchInsert
+		BREAK
+	
+		SET @StartRowInsert = @StartRowInsert + @batchInsert
+
+	END
+
+	SELECT  @query = N''		
+	SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
+	SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
+
+	-- RESET param to insert balance in db05
+	SELECT  @query_balance = N'', @SiteDBAlias = 'DB05'		
+	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
+	SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
+
+	WHILE (1=1)
+	BEGIN
+	
+		TRUNCATE TABLE #tempMember
+
+		INSERT INTO #tempMember(custid)
+		SELECT custid
+		FROM #temp_MemberInput 
+		WHERE ID >= @StartRowCorrect AND ID  < @StartRowCorrect + @batchCorrect
+
+		SET @CustidList = ''
+		SET @CustidList = STUFF((SELECT ',' + CONVERT(VARCHAR(20), custid)
+					 FROM #tempMember 
+					 FOR XML PATH ('')
+						),1,1,'')	
+					
+		SELECT @CustidBalanceList = (SELECT  m.custid AS '@c'
+											,bal.Balance AS '@b'
+									FROM #tempMember m
+										CROSS APPLY (
+													SELECT TOP 1 Balance 
+													FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
+													WHERE b.custid = m.custid) AS bal
+									FOR XML PATH('r'), ROOT('root')
+									)
+		SET @xml = CONVERT(XML, @CustidBalanceList)
+	
+		-- insert balancerecord db05bk1
+		INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
+		SELECT	t.c.value('@c','int') AS custid, 0, 0, 0, 0, 0, 0, t.c.value('@b','MONEY') AS balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
+		FROM @xml.nodes('root/r') t(c)
+		OPTION (OPTIMIZE FOR (@xml = NULL))	
+
+		-- insert balancerecord db05
+		EXECUTE	sys.sp_executesql @ExecuteSQL_balance, N'@query_balance NVARCHAR(MAX), @CustidBalanceList VARCHAR(MAX)', @query_balance, @CustidBalanceList
+
+		-- step 3: delete balance trigger if exists
+		WHILE (@isSuccess = 0)
+		BEGIN
+			BEGIN TRY
+
+				EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX), @CustidList VARCHAR(MAX)', @query, @CustidList
+				SET @isSuccess = 1
+
+			END TRY
+			BEGIN CATCH
+				SET @retrycnt = @retrycnt + 1
+				PRINT @retrycnt
+
+			END CATCH
+		END
+
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for StartRow: ',  '/EndRow: ', @StartRowCorrect  + @batchInsert)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+
+		IF DATEDIFF(MINUTE, @StartTime, GETDATE() ) >= @DuringTime
+		BEGIN
+			INSERT INTO BalanceRecord_Config_tmp  (SiteDBGroupID , OrderNo, StartRow, EndRow)
+			SELECT 1 AS SiteDBGroupID, 3 AS OrderNo, @StartRowCorrect AS StartRow, @StartRowCorrect + @batchCorrect AS EndRow ----SiteDB1_Order2
+			FROM #tempMember m  ---keep this value for next time run
+
+			BREAK
+		END
+
+		IF @@ROWCOUNT < @batchCorrect
+		BREAK
+
+		SET @StartRowCorrect = @StartRowCorrect + @batchInsert
+
+	END
+
+----3. Check and correct for BalanceRecordDiff_SiteDB1_Order4--------------------------------------------
+	TRUNCATE TABLE #temp_MemberInput
+	SET @StartRowInsert = 1
+
+	WHILE (1=1)
+	BEGIN
+		INSERT INTO #temp_MemberInput (ID, custid)
+		SELECT ID, CustId
+		FROM BalanceRecordDiff_SiteDB1_Order4 m WITH(NOLOCK)
+			INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) 
+				ON c.custid = o.custid
+			CROSS APPLY (		
+						SELECT TOP 1 Balance		
+						FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables		
+						WHERE b.custid = m.custid
+				) AS b1		
+				CROSS APPLY (		
+						SELECT TOP 1 newbalance AS balance		
+						FROM bodb02.dbo.balancerecord b WITH(NOLOCK) 	
+						WHERE b.custid = m.custid		
+						ORDER BY rowid DESC
+				) as b2		
+		WHERE c.site <> 'JJBGAMECV'
+			AND m.ID  >= @StartRowInsert AND m.ID  < @StartRowInsert + @batchInsert 
+			AND b2.balance  <> b1.balance
+		ORDER BY ID
+
+		IF @@ROWCOUNT < @batchInsert
+		BREAK
+	
+		SET @StartRowInsert = @StartRowInsert + @batchInsert
+
+	END
+
+	SELECT  @query = N''		
+	SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
+	SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
+
+	-- RESET param to insert balance in db05
+	SELECT  @query_balance = N'', @SiteDBAlias = 'DB05'		
+	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
+	SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
+
+	WHILE (1=1)
+	BEGIN
+	
+		TRUNCATE TABLE #tempMember
+
+		INSERT INTO #tempMember(custid)
+		SELECT custid
+		FROM #temp_MemberInput 
+		WHERE ID >= @StartRowCorrect AND ID  < @StartRowCorrect + @batchCorrect
+
+		SET @CustidList = ''
+		SET @CustidList = STUFF((SELECT ',' + CONVERT(VARCHAR(20), custid)
+					 FROM #tempMember 
+					 FOR XML PATH ('')
+						),1,1,'')	
+					
+		SELECT @CustidBalanceList = (SELECT  m.custid AS '@c'
+											,bal.Balance AS '@b'
+									FROM #tempMember m
+										CROSS APPLY (
+													SELECT TOP 1 Balance 
+													FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
+													WHERE b.custid = m.custid) AS bal
+									FOR XML PATH('r'), ROOT('root')
+									)
+		SET @xml = CONVERT(XML, @CustidBalanceList)
+	
+		-- insert balancerecord db05bk1
+		INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
+		SELECT	t.c.value('@c','int') AS custid, 0, 0, 0, 0, 0, 0, t.c.value('@b','MONEY') AS balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
+		FROM @xml.nodes('root/r') t(c)
+		OPTION (OPTIMIZE FOR (@xml = NULL))	
+
+		-- insert balancerecord db05
+		EXECUTE	sys.sp_executesql @ExecuteSQL_balance, N'@query_balance NVARCHAR(MAX), @CustidBalanceList VARCHAR(MAX)', @query_balance, @CustidBalanceList
+
+		-- step 3: delete balance trigger if exists
+		WHILE (@isSuccess = 0)
+		BEGIN
+			BEGIN TRY
+
+				EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX), @CustidList VARCHAR(MAX)', @query, @CustidList
+				SET @isSuccess = 1
+
+			END TRY
+			BEGIN CATCH
+				SET @retrycnt = @retrycnt + 1
+				PRINT @retrycnt
+
+			END CATCH
+		END
+
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for StartRow: ',  '/EndRow: ', @StartRowCorrect  + @batchInsert)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+
+		IF DATEDIFF(MINUTE, @StartTime, GETDATE() ) >= @DuringTime
+		BEGIN
+			INSERT INTO BalanceRecord_Config_tmp  (SiteDBGroupID , OrderNo, StartRow, EndRow)
+			SELECT 1 AS SiteDBGroupID, 4 AS OrderNo, @StartRowCorrect AS StartRow, @StartRowCorrect + @batchCorrect AS EndRow ----SiteDB1_Order2
+			FROM #tempMember m  ---keep this value for next time run
+
+			BREAK
+		END
+
+		IF @@ROWCOUNT < @batchCorrect
+		BREAK
+
+		SET @StartRowCorrect = @StartRowCorrect + @batchInsert
+
+	END
+
+
+----5. Check and correct for BalanceRecordDiff_SiteDB1_Order5--------------------------------------------
+	TRUNCATE TABLE #temp_MemberInput
+	SET @StartRowInsert = 1
+
+	WHILE (1=1)
+	BEGIN
+		INSERT INTO #temp_MemberInput (ID, custid)
+		SELECT ID, CustId
+		FROM BalanceRecordDiff_SiteDB1_Order5 m WITH(NOLOCK)
+			CROSS APPLY (		
+						SELECT TOP 1 Balance		
+						FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables		
+						WHERE b.custid = m.custid
+				) AS b1		
+				CROSS APPLY (		
+						SELECT TOP 1 newbalance AS balance		
+						FROM bodb02.dbo.balancerecord b WITH(NOLOCK) 	
+						WHERE b.custid = m.custid		
+						ORDER BY rowid DESC
+				) as b2		
+		WHERE m.ID  >= @StartRowInsert AND m.ID  < @StartRowInsert + @batchInsert 
+			and b2.balance  <> b1.balance
+		ORDER BY ID
+
+		IF @@ROWCOUNT < @batchInsert
+		BREAK
+	
+		SET @StartRowInsert = @StartRowInsert + @batchInsert
+
+	END
+
+	SELECT  @query = N''		
+	SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
+	SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
+
+	-- RESET param to insert balance in db05
+	SELECT  @query_balance = N'', @SiteDBAlias = 'DB05'		
+	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
+	SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
+
+	WHILE (1=1)
+	BEGIN
+	
+		TRUNCATE TABLE #tempMember
+
+		INSERT INTO #tempMember(custid)
+		SELECT custid
+		FROM #temp_MemberInput 
+		WHERE ID >= @StartRowCorrect AND ID  < @StartRowCorrect + @batchCorrect
+
+		SET @CustidList = ''
+		SET @CustidList = STUFF((SELECT ',' + CONVERT(VARCHAR(20), custid)
+					 FROM #tempMember 
+					 FOR XML PATH ('')
+						),1,1,'')	
+					
+		SELECT @CustidBalanceList = (SELECT  m.custid AS '@c'
+											,bal.Balance AS '@b'
+									FROM #tempMember m
+										CROSS APPLY (
+													SELECT TOP 1 Balance 
+													FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
+													WHERE b.custid = m.custid) AS bal
+									FOR XML PATH('r'), ROOT('root')
+									)
+		SET @xml = CONVERT(XML, @CustidBalanceList)
+	
+		-- insert balancerecord db05bk1
+		INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
+		SELECT	t.c.value('@c','int') AS custid, 0, 0, 0, 0, 0, 0, t.c.value('@b','MONEY') AS balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
+		FROM @xml.nodes('root/r') t(c)
+		OPTION (OPTIMIZE FOR (@xml = NULL))	
+
+		-- insert balancerecord db05
+		EXECUTE	sys.sp_executesql @ExecuteSQL_balance, N'@query_balance NVARCHAR(MAX), @CustidBalanceList VARCHAR(MAX)', @query_balance, @CustidBalanceList
+
+		-- step 3: delete balance trigger if exists
+		WHILE (@isSuccess = 0)
+		BEGIN
+			BEGIN TRY
+
+				EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX), @CustidList VARCHAR(MAX)', @query, @CustidList
+				SET @isSuccess = 1
+
+			END TRY
+			BEGIN CATCH
+				SET @retrycnt = @retrycnt + 1
+				PRINT @retrycnt
+
+			END CATCH
+		END
+
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for StartRow: ',  '/EndRow: ', @StartRowCorrect  + @batchInsert)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+
+		IF DATEDIFF(MINUTE, @StartTime, GETDATE() ) >= @DuringTime
+		BEGIN
+			INSERT INTO BalanceRecord_Config_tmp  (SiteDBGroupID , OrderNo, StartRow, EndRow)
+			SELECT 1 AS SiteDBGroupID, 5 AS OrderNo, @StartRowCorrect AS StartRow, @StartRowCorrect + @batchCorrect AS EndRow ----SiteDB1_Order2
+			FROM #tempMember m  ---keep this value for next time run
+
+			BREAK
+		END
+
+		IF @@ROWCOUNT < @batchCorrect
+		BREAK
+
+		SET @StartRowCorrect = @StartRowCorrect + @batchInsert
+
+	END
+
+
+----5. Check and correct for BalanceRecordDiff_SiteDB1_Order6--------------------------------------------
+	TRUNCATE TABLE #temp_MemberInput
+	SET @StartRowInsert = 1
+
+	WHILE (1=1)
+	BEGIN
+		INSERT INTO #temp_MemberInput (ID, custid)
+		SELECT ID, CustId
+		FROM BalanceRecordDiff_SiteDB1_Order6 m WITH(NOLOCK)
+			CROSS APPLY (		
+						SELECT TOP 1 Balance		
+						FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables		
+						WHERE b.custid = m.custid
+				) AS b1		
+				CROSS APPLY (		
+						SELECT TOP 1 newbalance AS balance		
+						FROM bodb02.dbo.balancerecord b WITH(NOLOCK) 	
+						WHERE b.custid = m.custid		
+						ORDER BY rowid DESC
+				) as b2		
+		WHERE m.ID  >= @StartRowInsert AND m.ID  < @StartRowInsert + @batchInsert 
+			and b2.balance  <> b1.balance
+		ORDER BY ID
+
+		IF @@ROWCOUNT < @batchInsert
+		BREAK
+	
+		SET @StartRowInsert = @StartRowInsert + @batchInsert
+
+	END
+
+	SELECT  @query = N''		
+	SELECT	@query = @query + N'EXEC SiteDB_BalanceRecord_DeleteBalanceTrigger_tmp @CustidList'
+	SELECT	@ExecuteSQL = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query, N''@CustidList VARCHAR(MAX)'',@CustidList'
+
+	-- RESET param to insert balance in db05
+	SELECT  @query_balance = N'', @SiteDBAlias = 'DB05'		
+	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
+	SELECT	@ExecuteSQL_balance = N'EXECUTE '+ @SiteDBAlias +'.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
+
+	WHILE (1=1)
+	BEGIN
+	
+		TRUNCATE TABLE #tempMember
+
+		INSERT INTO #tempMember(custid)
+		SELECT custid
+		FROM #temp_MemberInput 
+		WHERE ID >= @StartRowCorrect AND ID  < @StartRowCorrect + @batchCorrect
+
+		SET @CustidList = ''
+		SET @CustidList = STUFF((SELECT ',' + CONVERT(VARCHAR(20), custid)
+					 FROM #tempMember 
+					 FOR XML PATH ('')
+						),1,1,'')	
+					
+		SELECT @CustidBalanceList = (SELECT  m.custid AS '@c'
+											,bal.Balance AS '@b'
+									FROM #tempMember m
+										CROSS APPLY (
+													SELECT TOP 1 Balance 
+													FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
+													WHERE b.custid = m.custid) AS bal
+									FOR XML PATH('r'), ROOT('root')
+									)
+		SET @xml = CONVERT(XML, @CustidBalanceList)
+	
+		-- insert balancerecord db05bk1
+		INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
+		SELECT	t.c.value('@c','int') AS custid, 0, 0, 0, 0, 0, 0, t.c.value('@b','MONEY') AS balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
+		FROM @xml.nodes('root/r') t(c)
+		OPTION (OPTIMIZE FOR (@xml = NULL))	
+
+		-- insert balancerecord db05
+		EXECUTE	sys.sp_executesql @ExecuteSQL_balance, N'@query_balance NVARCHAR(MAX), @CustidBalanceList VARCHAR(MAX)', @query_balance, @CustidBalanceList
+
+		-- step 3: delete balance trigger if exists
+		WHILE (@isSuccess = 0)
+		BEGIN
+			BEGIN TRY
+
+				EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX), @CustidList VARCHAR(MAX)', @query, @CustidList
+				SET @isSuccess = 1
+
+			END TRY
+			BEGIN CATCH
+				SET @retrycnt = @retrycnt + 1
+				PRINT @retrycnt
+
+			END CATCH
+		END
+
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for StartRow: ',  '/EndRow: ', @StartRowCorrect  + @batchInsert)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+
+		IF DATEDIFF(MINUTE, @StartTime, GETDATE() ) >= @DuringTime
+		BEGIN
+			INSERT INTO BalanceRecord_Config_tmp  (SiteDBGroupID , OrderNo, StartRow, EndRow)
+			SELECT 1 AS SiteDBGroupID, 6 AS OrderNo, @StartRowCorrect AS StartRow, @StartRowCorrect + @batchCorrect AS EndRow ----SiteDB1_Order2
+			FROM #tempMember m  ---keep this value for next time run
+
+			BREAK
+		END
+
+		IF @@ROWCOUNT < @batchCorrect
+		BREAK
+
+		SET @StartRowCorrect = @StartRowCorrect + @batchInsert
+
+	END
