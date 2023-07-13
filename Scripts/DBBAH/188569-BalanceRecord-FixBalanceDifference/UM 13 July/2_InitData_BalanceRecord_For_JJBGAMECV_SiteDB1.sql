@@ -14,15 +14,15 @@ GO
 
 	--------------DECLARE temporary tables ------------------
 	CREATE TABLE #temp_MemberInput(
-		ID INT PRIMARY KEY,
+		ID INT IDENTITY(1,1) PRIMARY KEY,
 		custid INT
 	)
 
 	-------------- GET members needs to process ------------------
 	CREATE TABLE #tempMember (custid INT)
 
-	INSERT INTO #temp_MemberInput (ID, custid)
-	SELECT ID, o.CustId
+	INSERT INTO #temp_MemberInput (custid)
+	SELECT o.CustId
 	FROM BalanceRecordDiff_SiteDB1_Order4 o WITH (NOLOCK)
 		INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) ON c.custid = o.custid	
 	WHERE  c.site = 'JJBGAMECV'

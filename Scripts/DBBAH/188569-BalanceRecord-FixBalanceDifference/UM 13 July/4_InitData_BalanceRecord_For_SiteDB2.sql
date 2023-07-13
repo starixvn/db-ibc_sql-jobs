@@ -43,12 +43,23 @@ GO
 	SELECT	@query_balance = @query_balance + N'EXEC SiteDB_BalanceRecord_InsertBalanceRecord_tmp @CustidBalanceList'
 	SELECT	@ExecuteSQL_balance = N'EXECUTE DB05.bodb02.dbo.sp_executesql @query_balance, N''@CustidBalanceList VARCHAR(MAX)'',@CustidBalanceList'
 
+	DECLARE @StartRow INT 
+		, @StopRow INT 
+		, @MaxRow INT  -- Keep the total row of your data
+		, @Threshold INT  -- the number of each batch
 
 ----1. Check and correct for BalanceRecordDiff_SiteDB2_Order1--------------------------------------------
-	SET @StartRowInsert = 1
-	SET @StartRowCorrect = 1
+	SET @MaxRow = (SELECT MAX(ID) FROM BalanceRecordDiff_SiteDB2_Order1 with (nolock))
+	SET @Threshold = 100000
 
-	WHILE (1=1)
+	IF @Threshold >= @MaxRow
+		SET @Threshold = @MaxRow
+
+	-- SET for first batch
+	SELECT @StartRow = 1, @StopRow = @Threshold
+	TRUNCATE TABLE #temp_MemberInput
+		
+	WHILE (@MaxRow IS NOT NULL)
 	BEGIN
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
@@ -64,14 +75,18 @@ GO
 						WHERE b.custid = m.custid		
 						ORDER BY rowid DESC
 				) as b2		
-		WHERE m.ID  >= @StartRowInsert AND m.ID  < @StartRowInsert + @batchInsert 
+		WHERE ID BETWEEN @StartRow AND @StopRow
 			and b2.balance  <> b1.balance
 		ORDER BY ID
 
-		IF @@ROWCOUNT < @batchInsert
+		IF @StopRow = @MaxRow 
 		BREAK
-	
-		SET @StartRowInsert = @StartRowInsert + @batchInsert
+
+		SET @StartRow = @StopRow + 1
+		SET @StopRow = @StopRow + @Threshold
+
+		IF @StopRow >= @MaxRow
+			SET @StopRow = @MaxRow
 
 	END
 
