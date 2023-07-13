@@ -26,6 +26,7 @@ AS
 		- 20220223@Kos: Integrate Allbet Promotion [RedmineID: #167524]
 		- 20221122@Evan: Integrate Player Tips [RedmineID: #180590]
 		- 20230208@Evan: Inteagrate SG promotion prize [RedmineID: #183497]
+		- 20230626@Evan: Integrate MG-RNG (Promotion Game) [RedmineID: #189988]
 */
 
 BEGIN
@@ -44,7 +45,7 @@ BEGIN
 		, @S_Comm = SUM(b.comm)
 		, @S_BetEffective = SUM(CASE
 									WHEN b.statusID IN (112,113)
-										AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
+										AND (b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
 										AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 										AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173) -- exclude PP Prize from BetEffective
 										AND (b.bettype NOT BETWEEN 8700 AND 8709 OR b.matchid <> 157)) 

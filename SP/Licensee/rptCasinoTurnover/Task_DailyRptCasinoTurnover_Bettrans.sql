@@ -27,6 +27,7 @@ AS
 		- 20211105@Hogan: Integrate AdvantPlay RNG & Mini [RedmineID: #158186]
 		- 20220315@Kos: Revise net turnover [RedmineID: #169843]
 		- 20230208@Evan: Inteagrate SG promotion prize [RedmineID: #183497]
+		- 20230626@Evan: Integrate MG-RNG (Promotion Game) [RedmineID: #189988]
 */
 
 BEGIN
@@ -72,7 +73,7 @@ BEGIN
 			CASE
 				WHEN b.productId = 150 AND sbt.ProductID = 42 THEN 1	-- Saba.club Free Bets
 				WHEN b.productId = 173 AND sbt.ProductID = 66 THEN 1	-- Vgaming Free Bets
-				WHEN sbt.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150, 3898, 3899, 1906, 4598, 4599, 4600) THEN 1
+				WHEN sbt.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150, 3898, 3899, 1906, 4598, 4599, 4600, 8695) THEN 1
 				ELSE 0
 			END AS TicketType
 		FROM
@@ -93,7 +94,7 @@ BEGIN
 			CASE
 				WHEN b.productId = 150 AND sbt.ProductID = 42 THEN 1	-- Saba.club Free Bets
 				WHEN b.productId = 173 AND sbt.ProductID = 66 THEN 1	-- Vgaming Free Bets
-				WHEN sbt.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150, 3898, 3899, 1906, 4598, 4599, 4600) THEN 1
+				WHEN sbt.bettype IN (4300, 4299, 4298, 4297, 1698, 1699, 3150, 3898, 3899, 1906, 4598, 4599, 4600, 8695) THEN 1
 				ELSE 0
 			END
 

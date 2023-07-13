@@ -78,6 +78,7 @@ AS
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 		- 20230227@Evan: Ensure correct balance calculation when allow to transfer 247 (BU) [Redmine: #173554]
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
+		- 20230626@Evan: Integrate MG-RNG (Normal+Promotion Game) [RedmineID: #189988]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -345,12 +346,14 @@ BEGIN
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 				WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 				WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
+				WHEN (bettype BETWEEN 8400 AND 8699 AND bettype <> 8695) THEN 155 -- MG-RNG
+				WHEN bettype = 8695 THEN -155 -- MG-RNG Promotion Prize
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 			SUM(CASE
 					WHEN b.ruben = 1
-						AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
+						AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
 						AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 						AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 						AND (b.bettype NOT BETWEEN 17000 AND 17030)
@@ -364,7 +367,7 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
 			SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
 			SUM(CASE
-					WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499)
+					WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
 						OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 						OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 						OR (b.bettype BETWEEN 17000 AND 17030)
@@ -450,6 +453,8 @@ BEGIN
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
 				WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 				WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
+				WHEN (bettype BETWEEN 8400 AND 8699 AND bettype <> 8695) THEN 155 -- MG-RNG
+				WHEN bettype = 8695 THEN -155 -- MG-RNG Promotion Prize
 				ELSE 0
 			END--SportType
 		OPTION (RECOMPILE, MAXDOP 8)
@@ -483,7 +488,7 @@ BEGIN
 			SUM(Adjustment),--Adjustment
 			SUM(Turnover),--Turnover
 			SUM(Outstanding),--Outstanding
-			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211 ,157) THEN Winloss ELSE 0 END),--Winloss
+			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211 , 157, -155) THEN Winloss ELSE 0 END),--Winloss
 			SUM(Transfer3rd),--Transfer3rd
 			SUM(DrawGame),--DrawGame
 			SUM(Playercomm),--Playercomm
@@ -673,7 +678,7 @@ BEGIN
 			-1,
 			TurnOver,
 			DrawGame,
-			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211, 157) THEN Promotion ELSE Winloss END AS Winloss,
+			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211, 157, -155) THEN Promotion ELSE Winloss END AS Winloss,
 			playercomm,
 			BetCount,
 			OutStanding

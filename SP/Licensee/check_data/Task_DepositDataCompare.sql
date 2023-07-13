@@ -43,6 +43,7 @@ AS
 		- 20230130@Evan: Integrate Jili [RedmineID: #182914]
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
+		- 20230626@Evan: Integrate MG-RNG [RedmineID: #189988]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -145,7 +146,8 @@ BEGIN
 		,FGGL BIGINT
 		,MXG BIGINT
 		,JIG BIGINT
-		,YB BIGINT)
+		,YB BIGINT
+		,MGRNG BIGINT)
 
 	--exec
 	--rptLicWinloss2
@@ -195,7 +197,8 @@ BEGIN
 		,FGGL
 		,MXG
 		,JIG
-		,YB)
+		,YB
+		,MGRNG)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
@@ -362,7 +365,8 @@ BEGIN
 		,FGGL
 		,MXG
 		,JIG
-		,YB)
+		,YB
+		,MGRNG)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (
