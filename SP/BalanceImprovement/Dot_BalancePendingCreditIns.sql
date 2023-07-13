@@ -13,6 +13,7 @@ AS
 		
 	Revisions:
 		- 20190312@Kathy: Exclude updating balance for CN88 user [Redmine:#109882]
+		- 20230523@Kathy: remove old balance table [Redmine:#188452]
 
 	Params explanation
 		type = 1 - Sports
@@ -70,23 +71,5 @@ BEGIN
 		INSERT INTO BalanceErr ( Custid, BalanceGroup, BalanceAmt, ExecutedSP, ErrMsg )
 		VALUES ( 0, @Type, 0,'Dot_BalancePendingCreditIns',LEFT(ERROR_MESSAGE(),500)  )
 	END CATCH 
-
-	IF @BalanceMode IN (0, 2)
-	BEGIN
-		INSERT INTO dbo.BalancePendingCredit(custid, Balance)
-		SELECT custID, balance
-		FROM @tmpCreditPending
-	END
-
-	IF @BalanceMode = 2 -- if mode = 'both' and action on new balance unsuccessfully, then write log only, don't return errcode
-	BEGIN
-		IF @errCode <> 0
-		BEGIN
-			INSERT INTO BalanceErr ( Custid, BalanceGroup, BalanceAmt, ExecutedSP, ErrMsg )
-			VALUES ( 0, @Type, 0,'Dot_BalancePendingCreditIns','Insert data in new CreditPending Balance table unsuccessfully. ErrCode:' + CAST(@errCode AS VARCHAR(5)))
-
-			SELECT @errCode = 0
-		END
-	END
 END
 GO
