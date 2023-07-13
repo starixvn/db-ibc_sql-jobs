@@ -11,6 +11,7 @@ AS
 	
 	Revision:
 		- 20230317@Patrick: Init [redmine: #173554]
+		- 20230214@Aries: Use Service Broker to Write Log to DB Log [Redmine: #187252]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -23,6 +24,10 @@ BEGIN
 	IF @__tableName = 'Task_UserLog'
 	BEGIN
 		EXEC dbo.Task_UserLog_WriteLog @MessageBody = @MessageBody
+	END
+	ELSE IF @__tableName = 'UserLog_Settle'
+	BEGIN
+		EXEC dbo.Task_UserLog_Settle_WriteLog @MessageBody = @MessageBody
 	END
 	--add more table here...
 END
