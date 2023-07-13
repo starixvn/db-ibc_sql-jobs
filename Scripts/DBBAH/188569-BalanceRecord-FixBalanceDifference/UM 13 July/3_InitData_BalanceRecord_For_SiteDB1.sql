@@ -12,7 +12,7 @@ USE bodb02
 GO
 
 	CREATE TABLE #temp_MemberInput(
-		ID INT PRIMARY KEY,
+		ID INT IDENTITY (1, 1) PRIMARY KEY,
 		custid INT
 	)
 
@@ -65,8 +65,8 @@ GO
 	BEGIN
 	
 			-- YOUR CODE PROCESS FOR DATA FROM @StartRow & @StopRow
-			INSERT INTO #temp_MemberInput (ID, custid)
-			SELECT ID, CustId
+			INSERT INTO #temp_MemberInput ( custid)
+			SELECT  CustId
 			FROM BalanceRecordDiff_SiteDB1_Order2 m WITH(NOLOCK)
 				CROSS APPLY (		
 							SELECT TOP 1 Balance		
@@ -182,8 +182,8 @@ GO
 
 	WHILE (@MaxRow IS NOT NULL)
 	BEGIN
-		INSERT INTO #temp_MemberInput (ID, custid)
-		SELECT ID, CustId
+		INSERT INTO #temp_MemberInput ( custid)
+		SELECT CustId
 		FROM BalanceRecordDiff_SiteDB1_Order3 m WITH(NOLOCK)
 			CROSS APPLY (		
 						SELECT TOP 1 Balance		
@@ -295,8 +295,8 @@ GO
 		
 	WHILE (@MaxRow IS NOT NULL)
 	BEGIN
-		INSERT INTO #temp_MemberInput (ID, custid)
-		SELECT m.ID, m.CustId
+		INSERT INTO #temp_MemberInput ( custid)
+		SELECT  m.CustId
 		FROM BalanceRecordDiff_SiteDB1_Order4 m WITH(NOLOCK)
 			INNER JOIN  [bodb02].[dbo].Customer c WITH(NOLOCK) 
 				ON c.custid = m.custid
@@ -413,8 +413,8 @@ GO
 		
 	WHILE (@MaxRow IS NOT NULL)
 	BEGIN
-		INSERT INTO #temp_MemberInput (ID, custid)
-		SELECT ID, CustId
+		INSERT INTO #temp_MemberInput ( custid)
+		SELECT  CustId
 		FROM BalanceRecordDiff_SiteDB1_Order5 m WITH(NOLOCK)
 			CROSS APPLY (		
 						SELECT TOP 1 Balance		
@@ -527,8 +527,8 @@ GO
 		
 	WHILE (@MaxRow IS NOT NULL)
 	BEGIN
-		INSERT INTO #temp_MemberInput (ID, custid)
-		SELECT ID, CustId
+		INSERT INTO #temp_MemberInput ( custid)
+		SELECT   CustId
 		FROM BalanceRecordDiff_SiteDB1_Order6 m WITH(NOLOCK)
 			CROSS APPLY (		
 						SELECT TOP 1 Balance		

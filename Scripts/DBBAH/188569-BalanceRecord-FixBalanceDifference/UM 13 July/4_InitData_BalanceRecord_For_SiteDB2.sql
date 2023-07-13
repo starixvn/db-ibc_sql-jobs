@@ -12,7 +12,7 @@ USE bodb02
 GO
 
 	CREATE TABLE #temp_MemberInput(
-		ID INT PRIMARY KEY,
+		ID INT IDENTITY (1, 1) PRIMARY KEY,
 		custid INT
 	)
 
@@ -90,7 +90,7 @@ GO
 
 	END
 
-
+	SET @StartRowCorrect = 1
 	WHILE (1=1)
 	BEGIN	
 		TRUNCATE TABLE #tempMember
@@ -99,6 +99,9 @@ GO
 		SELECT custid
 		FROM #temp_MemberInput 
 		WHERE ID >= @StartRowCorrect AND ID  < @StartRowCorrect + @batchCorrect
+
+		IF @@ROWCOUNT = 0
+		BREAK
 
 		SET @CustidList = ''
 		SET @CustidList = STUFF((SELECT ',' + CONVERT(VARCHAR(20), custid)
@@ -154,19 +157,22 @@ GO
 			BREAK
 		END
 
-		IF @@ROWCOUNT < @batchCorrect
-		BREAK
-
 		SET @StartRowCorrect = @StartRowCorrect + @batchInsert
 
 	END
 
 ----2. Check and correct for BalanceRecordDiff_SiteDB2_Order5--------------------------------------------
-	TRUNCATE TABLE #temp_MemberInput
-	SET @StartRowInsert = 1
-	SET @StartRowCorrect = 1
+	SET @MaxRow = (SELECT MAX(ID) FROM BalanceRecordDiff_SiteDB2_Order5 with (nolock))
+	SET @Threshold = 100000
 
-	WHILE (1=1)
+	IF @Threshold >= @MaxRow
+		SET @Threshold = @MaxRow
+
+	-- SET for first batch
+	SELECT @StartRow = 1, @StopRow = @Threshold
+	TRUNCATE TABLE #temp_MemberInput
+		
+	WHILE (@MaxRow IS NOT NULL)
 	BEGIN
 		INSERT INTO #temp_MemberInput (ID, custid)
 		SELECT ID, CustId
@@ -182,7 +188,7 @@ GO
 						WHERE b.custid = m.custid		
 						ORDER BY rowid DESC
 				) as b2		
-		WHERE m.ID  >= @StartRowInsert AND m.ID  < @StartRowInsert + @batchInsert 
+		WHERE  ID BETWEEN @StartRow AND @StopRow
 			and b2.balance  <> b1.balance
 		ORDER BY ID
 
