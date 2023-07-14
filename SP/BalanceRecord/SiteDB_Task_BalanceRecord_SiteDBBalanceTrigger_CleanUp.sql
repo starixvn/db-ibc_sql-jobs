@@ -11,6 +11,7 @@ AS
     Revisions:
 		- 20220912@Helen: scaleout project [176932]
 		- 20221110@July: Scale out DBTrans - Enhance Job clean BalanceTrigger [180331]
+		- 20220130@Louisa: get code from SiteDB1 to SiteDB3 [Redmineid:#181595]
 		
 	Notes: Keep data within 15 minus in the table
 */
