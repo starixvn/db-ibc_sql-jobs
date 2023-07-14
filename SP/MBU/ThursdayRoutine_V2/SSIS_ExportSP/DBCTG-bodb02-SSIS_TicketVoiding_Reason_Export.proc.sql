@@ -1,11 +1,11 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCTG-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[SSIS_TicketVoiding_Reason_Export]
 	@winlostdate smalldatetime=null
 AS
 /*
 	Created by:	20130831@Bobby
 	Task:		Revise SSIS Archiving Data Project [Redmine: #166146]	
-	Database: DBTXN.bodb02
+	Database: DBCTG.bodb02
 	Original: DB06x.bodb_archive.Task_Archive_Copy 
 	
 	Revisions:
