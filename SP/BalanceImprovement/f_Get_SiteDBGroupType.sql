@@ -29,5 +29,3 @@ BEGIN
 	 when 3 then 2
   ELSE 1023 END 
 END
-GO
-select dbo.[f_Get_SiteDBGroupType]()
