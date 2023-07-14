@@ -19,6 +19,7 @@ AS
 		20211231@Patrick: Split bettype >= 19999 out bettrans Redmine: [#164197]
 		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 		20221227@Patrick: Support BU 247 Redmine: [#182882]
+		- 20230707@Brice: Support scale-out for credit site [RedmineID: #191003]
 	   
 	Param use:
 
@@ -33,10 +34,12 @@ BEGIN
 
 	DECLARE @__movebetdate SMALLDATETIME, @__siteDBGroupId SMALLINT = 0
 		, @__balanceupdate SMALLDATETIME
+		, @__siteDBGroupType SMALLINT = 0
 	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
 	EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @__balanceupdate OUTPUT
 
 	SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
+	SELECT @__siteDBGroupType = dbo.f_Get_SiteDBGroupType()
 
 	__tryagain:
 	IF OBJECT_ID('tempdb.dbo.#QuestionLists') IS NOT NULL
@@ -64,7 +67,7 @@ BEGIN
 					   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 					   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 					 ELSE 1 END
-			AND ISNULL(c.SiteDBGroupID, 0) = @__siteDBGroupId
+			AND iif(c.SiteDBGroupID is null, 2,1) = @__siteDBGroupType
 		GROUP BY t.custid
 	),
 	q2 AS (

@@ -23,6 +23,7 @@ AS
 		20220715@Patrick: Use insert into instead of select into Redmine: [#175440]
 		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 		20221227@Patrick: Support BU 247 Redmine: [#182882]
+		- 20230707@Brice: Support scale-out for credit site [RedmineID: #191003]
 		
 	Param use:
 
@@ -36,6 +37,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	Declare @RC int, @RD int, @msg varchar(200), @__siteDBGroupId SMALLINT = 0
+			, @__siteDBGroupType SMALLINT = 0
 	SET @msg = ''
 	SET @RD = 0
 
@@ -65,6 +67,8 @@ BEGIN
 	GROUP BY c.custid
 
 	SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
+	SELECT @__siteDBGroupType = dbo.f_Get_SiteDBGroupType()
+
 
 	IF NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1)
 	BEGIN
@@ -141,7 +145,7 @@ BEGIN
 						   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 						   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 					 ELSE 1 END
-				AND ISNULL(s.SiteDBGroupID, 0) = @__siteDBGroupId
+				AND iif(c.SiteDBGroupID is null, 2,1) = @__siteDBGroupType
 			GROUP BY t.custid
 		)
 		INSERT INTO #QuestionLists(custid, balance, RowVersion, Outstanding, BalRNG, BalLC, FromBalanceTable, adjustWinlostAmt)
@@ -227,7 +231,7 @@ BEGIN
 						   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 						   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 					 ELSE 1 END
-				AND ISNULL(c.SiteDBGroupID, 0) = @__siteDBGroupId
+				AND iif(c.SiteDBGroupID is null, 2,1) = @__siteDBGroupType
 			GROUP BY t.custid
 		),
 		q2 AS (

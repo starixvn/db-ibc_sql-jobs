@@ -21,6 +21,7 @@ AS
 		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 		20220912@Patrick: Support scale-out for deposit site - fix issue Redmine: [#177641]
 		20221227@Patrick: Support BU 247 Redmine: [#182882]
+		- 20230707@Brice: Support scale-out for credit site [RedmineID: #191003]
 
 	Param use:
 
@@ -67,10 +68,12 @@ BEGIN
 		--
 		DECLARE @__movebetdate SMALLDATETIME, @__siteDBGroupId SMALLINT = 0
 			, @__balanceupdate SMALLDATETIME
+			, @__siteDBGroupType SMALLINT = 0
 		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
 		EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @__balanceupdate OUTPUT
 
 		SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
+		SELECT @__siteDBGroupType = dbo.f_Get_SiteDBGroupType()
 
 		__tryagain:
 		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	
@@ -89,7 +92,7 @@ BEGIN
 						 WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 					     WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 				 ELSE 1 END
-			AND ISNULL(c.SiteDBGroupID, 0) = @__siteDBGroupId
+			AND iif(c.SiteDBGroupID is null, 2,1) = @__siteDBGroupType
 
 		--//get MovebetDate again if it was changed
 		DECLARE @__movebetdateF SMALLDATETIME
@@ -176,7 +179,7 @@ BEGIN
 			FROM dbo.Transfer t WITH(NOLOCK) 
 				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE t.custid = @custid
-				AND ISNULL(SiteDBGroupID, 0) <> @__siteDBGroupId
+				AND iif(c.SiteDBGroupID is null, 2,1) = @__siteDBGroupType
 		)
 		BEGIN
 			SET @result = 333 -->>wrong SiteDBGroupId setting
