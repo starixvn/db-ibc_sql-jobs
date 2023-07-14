@@ -18,6 +18,7 @@ AS
 		- 20221028@Victoria: Remove checktime inside of CheckSum Function [Redmine:#178864]
 		- 20221102@Victoria: Convert ActualRate with a Float data type to a DECIMAL [Redmine:#178864]  
 		- 20221123@July: Support filter recommend list [Redmine:#178864]
+		- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 */
 
 BEGIN

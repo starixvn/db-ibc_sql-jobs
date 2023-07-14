@@ -12,6 +12,7 @@ Task: Data Consistency - Trace issue unmatch number of tickets between DBTP and 
 DB: DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02
 Revisions:
 	- 20221028@Victoria: Initial Writing [Redmine:#178864]
+	- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 */
 BEGIN
 	SET NOCOUNT ON

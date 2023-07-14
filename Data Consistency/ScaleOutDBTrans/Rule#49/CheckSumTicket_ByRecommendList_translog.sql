@@ -13,6 +13,7 @@ AS
 	DB: DBCONSISTENCY-bodb_Consistency, DBSIG-bodb02
 	Revisions:
 		- 20221124@July: Clone SP - Support filter recommend list [Redmine:#178864]
+		- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -31,7 +32,7 @@ BEGIN
 	(
 		Translogid BIGINT, SiteDBGroupID SMALLINT, Transdate DATETIME,
 		[custid] INT, [odds] SMALLMONEY, [stake] MONEY, [status] NVARCHAR(10), [apositiontaking] SMALLMONEY, [mpositiontaking] SMALLMONEY, [tpositiontaking] SMALLMONEY, [spositiontaking] SMALLMONEY, 
-		[playerdiscount] DECIMAL(9,8), [discount] DECIMAL(9,8), [adiscount] DECIMAL(9,8), [sdiscount] DECIMAL(9,8), [creator] INT, [betfrom] VARCHAR(3), [actualrate] FLOAT, [actual_stake] MONEY, 
+		[playerdiscount] DECIMAL(9,8), [discount] DECIMAL(9,8), [adiscount] DECIMAL(9,8), [sdiscount] DECIMAL(9,8), [creator] INT, [betfrom] NVARCHAR(4), [actualrate] FLOAT, [actual_stake] MONEY, 
 		[currency] TINYINT, [CurrencyName] NVARCHAR(50), [Recommend] INT, [mrecommend] INT, [srecommend] INT, [ip] VARCHAR(45), [statusID] TINYINT, [balance] MONEY, [Username] NVARCHAR(50), [transdesc] NVARCHAR(1000), [productID] SMALLINT, 
 		[gameID] INT, [eventID] INT, [vendorID] INT, [Gameid3rd] NVARCHAR(50), [Tranid3rd] NVARCHAR(64), [custom1] VARCHAR(50), [liveindicator] BIT, [custom2] VARCHAR(50), [custom3] VARCHAR(50), [SiteId] VARCHAR(7), [checkCount] TINYINT
 	)

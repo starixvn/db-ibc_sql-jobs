@@ -14,6 +14,7 @@ AS
 	DB: DBCONSISTENCY-bodb_Consistency, DBSIG-bodb02
 	Revisions:
 		- 20221124@July: Clone SP - Support filter recommend list [Redmine:#178864]
+		- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 */
 BEGIN
 	SET NOCOUNT ON

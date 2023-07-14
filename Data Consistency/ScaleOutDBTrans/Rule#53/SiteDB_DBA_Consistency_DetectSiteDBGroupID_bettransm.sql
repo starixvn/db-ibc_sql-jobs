@@ -13,7 +13,7 @@ DB: DBSIG-bodb02
 Revisions:
 	- 20220922@Victoria: Rule #53 - Detect tickets contain value different from SiteDBGroupID of the site setting configuration
 							and SiteGroupDBID on tickets contain value different from site of customer [Redmine:#175881]
-	
+	- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 */
 BEGIN
 	SET NOCOUNT ON

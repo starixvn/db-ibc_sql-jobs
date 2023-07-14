@@ -12,6 +12,7 @@ Task: Detect SiteDBGroupID - Transfer
 DB: DBSIG-bodb02
 Revisions:
 	- 20220824@Victoria: Rule #53 - Detect SiteGroupDBID on tickets contain value different from site of customer [Redmine:#175881]
+	- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 	
 */
 BEGIN

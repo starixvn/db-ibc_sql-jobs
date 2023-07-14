@@ -13,6 +13,7 @@ AS
 	DB: DBCONSISTENCY-bodb_Consistency, DBSIG-bodb02
 	Revisions:
 		- 20221124@July: Clone SP - Support filter recommend list [Redmine:#178864]
+		- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -33,7 +34,7 @@ BEGIN
 		TransId BIGINT, SiteDBGroupID SMALLINT, Transdate DATETIME, 
 		[custid] INT, [oddsid] INT, [hdp1] SMALLMONEY, [hdp2] SMALLMONEY, [odds] SMALLMONEY, [stake] MONEY, [status] NVARCHAR(10), [winlost] MONEY, [awinlost] MONEY, [mwinlost] MONEY, [playercomm] MONEY, [comm] MONEY, [acomm] MONEY, 
 		[apositiontaking] SMALLMONEY, [mpositiontaking] SMALLMONEY, [tpositiontaking] SMALLMONEY, [playerdiscount] DECIMAL(9,8), [discount] DECIMAL(9,8), [adiscount] DECIMAL(9,8), [livehomescore] SMALLINT, [liveawayscore] SMALLINT, 
-		[liveindicator] BIT, [betteam] NVARCHAR(10), [creator] INT, [refno] BIGINT, [comstatus] NVARCHAR(20), [betfrom] NVARCHAR(3), [betcheck] NVARCHAR(50), [oddsspread] MONEY,  [actualrate] FLOAT, [matchid] INT, 
+		[liveindicator] BIT, [betteam] NVARCHAR(10), [creator] INT, [refno] BIGINT, [comstatus] NVARCHAR(20), [betfrom] NVARCHAR(4), [betcheck] NVARCHAR(50), [oddsspread] MONEY,  [actualrate] FLOAT, [matchid] INT, 
 		[Recommend] INT, [mrecommend] INT, [ruben] TINYINT, [betid] BIGINT, [statuswinlost] TINYINT, [modds] SMALLMONEY, [bettype] SMALLINT, [betdaqid] BIGINT, [actual_stake] MONEY, [currency] TINYINT, [ip] VARCHAR(45), [transdesc] NVARCHAR(1000), 
 		[sdiscount] DECIMAL(9,8), [scomm] MONEY, [spositiontaking] SMALLMONEY, [swinlost] MONEY, [srecommend] INT, [Username] NVARCHAR(50), [CurrencyName] NVARCHAR(50), [oddstype] TINYINT, [statusID] TINYINT, [currency2] TINYINT, 
 		[balance] MONEY, [transid2] BIGINT, [WalletType] TINYINT, [BonusID] INT, [RefCode] BIGINT
