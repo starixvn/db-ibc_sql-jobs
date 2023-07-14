@@ -31,7 +31,7 @@ AS
 	SET @RequestIds = STUFF((SELECT ',' + CAST(RequestId AS VARCHAR(50)) FROM @tmpRequest FOR XML PATH('')),1,1,'')
 
 	SELECT	t1.Id, t1.RequestId, t1.IssueTypeId, t1.SubIssueTypeId,t1.TransId, t1.MatchId,t1.RequestDetailId
-		,t1.Bettype, t1.BetId, t1.CustId, t1.SiteDBGroupID, t1.IsProcessed
+		,t1.Bettype, t1.BetId, t1.CustId, t1.SiteDBGroupID, t1.IsProcessed, t1.IsCancelCO
 	FROM	dbo.TicketVoiding_RequestDetailTicket_Single AS t1 WITH (NOLOCK)
 	CROSS APPLY (
 		SELECT	cast(value as int) AS RequestId
