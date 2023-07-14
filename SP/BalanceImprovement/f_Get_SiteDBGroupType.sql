@@ -7,7 +7,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-create FUNCTION [dbo].[f_Get_SiteDBGroupType]()
+ALTER FUNCTION [dbo].[f_Get_SiteDBGroupType]()
 RETURNS SMALLINT
 AS
 /*
