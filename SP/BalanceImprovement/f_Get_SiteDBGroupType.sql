@@ -1,3 +1,4 @@
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
 USE [bodb02]
 GO
 /****** Object:  UserDefinedFunction [dbo].[f_Get_SiteDBGroupID]    Script Date: 7/7/2023 6:08:42 AM ******/
