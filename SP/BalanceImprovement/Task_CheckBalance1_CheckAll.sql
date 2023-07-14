@@ -140,7 +140,7 @@ BEGIN
 		ct AS (
 			SELECT t.custid, SUM(winlost-actual_stake+playercomm) AS Balance
 			FROM dbo.Transfer t WITH(NOLOCK)
-				LEFT JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK) ON t.SRecommend = s.custid
+				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 						   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 						   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
