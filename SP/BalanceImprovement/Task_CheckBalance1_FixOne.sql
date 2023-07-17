@@ -68,12 +68,17 @@ BEGIN
 		--
 		DECLARE @__movebetdate SMALLDATETIME, @__siteDBGroupId SMALLINT = 0
 			, @__balanceupdate SMALLDATETIME
-			, @__siteDBGroupType SMALLINT = 0
+		drop table if exists #tmp_custsuper
+
+		create table #tmp_custsuper (custid int,SiteDBGroupID tinyint)
+		insert into #tmp_custsuper
+		select isnull(d.custid,c.custid),isnull(d.SiteDBGroupID,c.SiteDBGroupID) as SiteDBGroupID
+		from dep_custsuper d (nolock)
+					full outer join custsuper c (nolock) on d.custid=c.custid
 		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
 		EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @__balanceupdate OUTPUT
 
 		SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
-		SELECT @__siteDBGroupType = dbo.f_Get_SiteDBGroupType()
 
 		__tryagain:
 		SELECT @FromBettrans = SUM(winlost-actual_stake+playercomm)	
@@ -86,13 +91,13 @@ BEGIN
 
 		SELECT @FromTransfer = SUM(winlost-actual_stake+playercomm)	
 		FROM dbo.Transfer t WITH (ROWLOCK) 
-			LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
+			INNER JOIN #tmp_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 		WHERE t.custid = @custid
 			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 						 WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 					     WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 				 ELSE 1 END
-			AND iif(c.SiteDBGroupID is null, 2,1) = @__siteDBGroupType
+			AND ISNULL(c.SiteDBGroupID, 0)= @__siteDBGroupId
 
 		--//get MovebetDate again if it was changed
 		DECLARE @__movebetdateF SMALLDATETIME
@@ -177,9 +182,9 @@ BEGIN
 			UNION ALL
 			SELECT TOP 1 'Transfer' tableName
 			FROM dbo.Transfer t WITH(NOLOCK) 
-				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
+				INNER JOIN #tmp_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE t.custid = @custid
-				AND iif(c.SiteDBGroupID is null, 2,1) = @__siteDBGroupType
+				AND ISNULL(c.SiteDBGroupID, 0) <> @__siteDBGroupId
 		)
 		BEGIN
 			SET @result = 333 -->>wrong SiteDBGroupId setting

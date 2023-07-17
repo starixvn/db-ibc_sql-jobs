@@ -1,6 +1,8 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="1" isNested="0"></info>*/
+USE [bodb02]
 GO
-ALTER FUNCTION dbo.f_dbaGetbalance_By_CustId (@custid INT)
+
+CREATE FUNCTION [dbo].[f_dbaGetbalance_By_CustId] (@custid INT)
 RETURNS TABLE
 AS
 /*
@@ -12,10 +14,15 @@ AS
 		
 	Revisions:   
 		- 20220602@Patrick: Initial [Redmine: #173554]
+		- 20230717@Patrick: Add siteDB03 [Redmine: #191003]
 */
 RETURN (
-
-	WITH __cte_BetX AS (
+	
+	WITH __cte_credit_super AS (
+		SELECT custid, SiteDBGroupId
+		FROM DBCUST.custdb.dbo.CustSuper WITH(NOLOCK)
+		WHERE SiteDBGroupId = (SELECT dbo.f_Get_SiteDBGroupID())
+	) , __cte_BetX AS (
 		SELECT @custid AS custid, SUM(winlost-actual_stake+playercomm) bal
 		FROM dbo.bettrans WITH (NOLOCK) 
 		WHERE custid = @custid
@@ -32,6 +39,7 @@ RETURN (
 		SELECT @custid AS custid, SUM(winlost-actual_stake+playercomm)	
 		FROM dbo.Transfer t WITH (NOLOCK) 
 			LEFT JOIN custdb.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
+			LEFT JOIN __cte_credit_super cc WITH(NOLOCK) ON t.SRecommend = cc.custid
 		WHERE t.custid = @custid
 			AND 1 = CASE WHEN bettype = 19999 
 								AND winlostdate > (SELECT TOP 1 CONVERT(SMALLDATETIME, VValue) 
@@ -48,7 +56,7 @@ RETURN (
 											WHERE VName = 'BalanceUpDate') 
 							THEN 0 --> old data
 					 ELSE 1 END
-			AND ISNULL(c.SiteDBGroupID, 0) = (SELECT dbo.f_Get_SiteDBGroupID())
+			AND ISNULL(c.SiteDBGroupID, ISNULL(cc.SiteDBGroupID, 0)) = (SELECT dbo.f_Get_SiteDBGroupID())
 
 		UNION ALL
 		SELECT @custid AS custid, SUM(Amount)
@@ -89,3 +97,5 @@ RETURN (
 	) b LEFT JOIN __cte_Bal_Table t ON b.custid = t.custid
 )
 GO
+
+

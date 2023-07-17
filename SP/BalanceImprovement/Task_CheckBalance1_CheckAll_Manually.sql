@@ -35,9 +35,17 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
-	Declare @RC int, @RD int, @msg varchar(200), @__siteDBGroupId SMALLINT = 0, @__siteDBGroupType SMALLINT = 0
+	Declare @RC int, @RD int, @msg varchar(200), @__siteDBGroupId SMALLINT = 0
 	SET @msg = ''
 	SET @RD = 0
+
+	drop table if exists #tmp_custsuper
+
+	create table #tmp_custsuper (custid int,SiteDBGroupID tinyint)
+	insert into #tmp_custsuper
+	select isnull(d.custid,c.custid),isnull(d.SiteDBGroupID,c.SiteDBGroupID) as SiteDBGroupID
+	from dep_custsuper d (nolock)
+				full outer join custsuper c (nolock) on d.custid=c.custid
 
 	-- automatic update exception list list
 	INSERT INTO Task_Cust_CheckBalance_Exception
@@ -65,7 +73,6 @@ BEGIN
 	GROUP BY c.custid
 
 	SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
-	SELECT @__siteDBGroupType = dbo.f_Get_SiteDBGroupType()
 
 	IF NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1_Manually)
 	BEGIN
@@ -138,12 +145,12 @@ BEGIN
 		ct AS (
 			SELECT t.custid, SUM(winlost-actual_stake+playercomm) AS Balance
 			FROM dbo.Transfer t WITH(NOLOCK)
-				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
+				INNER JOIN #tmp_custsuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 						   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 						   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 					  ELSE 1 END
-				AND iif(c.SiteDBGroupID is null, 2,1) = @__siteDBGroupType
+				AND ISNULL(c.SiteDBGroupID, 0)= @__siteDBGroupId
 			GROUP BY t.custid
 		)
 		INSERT INTO #QuestionLists(custid, balance, RowVersion, Outstanding, BalRNG, BalLC, FromBalanceTable, adjustWinlostAmt)
@@ -223,12 +230,12 @@ BEGIN
 			SELECT t.custid, SUM(winlost-actual_stake+playercomm) Balance
 			FROM dbo.Transfer t with (nolock)
 				INNER JOIN #QuestionLists q ON t.custid = q.custid
-				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
+				INNER JOIN #tmp_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 						   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 						   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 					 ELSE 1 END
-				AND iif(c.SiteDBGroupID is null, 2,1) = @__siteDBGroupType
+				AND ISNULL(c.SiteDBGroupID, 0)= @__siteDBGroupId
 			GROUP BY t.custid
 		),
 		q2 AS (
