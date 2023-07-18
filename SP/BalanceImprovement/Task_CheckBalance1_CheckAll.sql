@@ -39,11 +39,12 @@ BEGIN
 	Declare @RC int, @RD int, @msg varchar(200), @__siteDBGroupId SMALLINT = 0
 	drop table if exists #tmp_custsuper
 
-	create table #tmp_custsuper (custid int,SiteDBGroupID tinyint)
+	create table #tmp_custsuper (custid int,SiteDBGroupID SMALLINT)
 	insert into #tmp_custsuper
 	select isnull(d.custid,c.custid),isnull(d.SiteDBGroupID,c.SiteDBGroupID) as SiteDBGroupID
-	from CustDB.dbo.dep_custsuper d (nolock)
-				full outer join DBCUST.CustDB.dbo.custsuper c (nolock) on d.custid=c.custid
+	from CustDB.dbo.dep_custsuper d with(nolock)
+				full outer join DBCUST.CustDB.dbo.custsuper c with(nolock) on d.custid=c.custid
+				
 	SET @msg = ''
 	SET @RD = 0
 
