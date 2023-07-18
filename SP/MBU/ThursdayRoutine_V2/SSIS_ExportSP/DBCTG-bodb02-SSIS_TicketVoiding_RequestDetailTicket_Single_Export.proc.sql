@@ -13,7 +13,7 @@ AS
 		- 20220315@Kathy: Change to use STRING_SPLIT [Redmine:#166457]
 		- 20220603@July: Get column CustId from active table [Redmine:#172634]
 		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
-		
+		- 20230329@Max: [TVS] Cancel Cash-Out if action CO in danger time range [Redmine: #176998]
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
