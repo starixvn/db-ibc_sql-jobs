@@ -17,6 +17,7 @@ AS
 	- 20210521@Sol: Alpha/NAP - synced list email from prod to git-master - [Redmine: #154041]
 	- 20220307@Victor: change email recipients
 	- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
+	- 20230718@Patrick: Support adding new account to alert list [Redmine: #191382]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -54,11 +55,11 @@ BEGIN
 		RETURN
 
 	DECLARE @mailList NVARCHAR(1024)
-	SET @mailList = N'dbaadmin@starixvn.com;dbatw@onelab.tw;eric.fu@onelab.tw;chloe.lee@onelab.tw;eason.chou@onelab.tw;sobi.chen@onelab.tw;'
+	SET @mailList = N'dbaadmin@starixsoft.com;dbatw@onelab.tw;eric.fu@onelab.tw;chloe.lee@onelab.tw;eason.chou@onelab.tw;sobi.chen@onelab.tw;infinity_service@onelab.tw;'
 
 	IF @@SERVERNAME <> 'DBTRANS' AND @@SERVERNAME NOT LIKE 'DBGRP0%'
 	BEGIN
-		SET @mailList = 'pontus@starixvn.com;'
+		SET @mailList = 'pontus@starixsoft.com;'
 	END
 				
 	EXEC msdb.dbo.sp_send_dbmail
@@ -67,7 +68,7 @@ BEGIN
 		@body_format = 'HTML',
 		@sensitivity = 'Personal',
 		@importance = 'Normal',				
-		@copy_recipients = 'daniel.truong@starixvn.com',
+		@copy_recipients = 'daniel.truong@starixsoft.com',
 		@subject = 'Balance Correction (New Balance Tables) - Top 1000 members',
 		@profile_name = @profile_name
 
