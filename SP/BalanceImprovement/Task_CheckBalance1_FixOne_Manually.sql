@@ -74,7 +74,7 @@ BEGIN
 			, @__balanceupdate SMALLDATETIME
 			, @__SRecommend int
 		
-		select @__SRecommend = SRecommend from transfer with (nolock) WHERE t.custid = @custid
+		select @__SRecommend = SRecommend from transfer t with (nolock) WHERE t.custid = @custid
 		drop table if exists #tmp_custsuper
 
 		create table #tmp_custsuper (custid int,SiteDBGroupID SMALLINT)
