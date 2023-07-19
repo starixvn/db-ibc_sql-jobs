@@ -19,6 +19,7 @@ AS
 		- 20200818@Percy: Change EventType's data type from smallint to int [RedmineID: #138524]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20230619@Malcolm: Get Event and Event Type [Redmine: #189536]
+		- 20230710@Malcolm: Sum data for @GenForDataWarehouse = 1 [Redmine: #189536]
 
 	Param's Explanation:
 		- @winlostdate: The date need to summary
@@ -296,9 +297,11 @@ BEGIN TRY
 	-- Output Data For DataWarehouse	  
 	IF @GenForDataWarehouse = 1
 	BEGIN
-		SELECT [Winlostdate],[Custid],[Currency],[ProductId],[Turnover],[Winlost],[WinLostA],[DrawTO]
-							,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount],[Bettype]
+		SELECT [Winlostdate],[Custid],[Currency],[ProductId],SUM([Turnover]) AS [Turnover], SUM([Winlost]) AS [Winlost], SUM([WinLostA]) AS [WinLostA], SUM([DrawTO]) AS [DrawTO]
+			  ,SUM([DrawBetCount]) AS [DrawBetCount],SUM([BetCount]) AS [BetCount],SUM([CommissionP]) AS [CommissionP],SUM([CommissionA]) AS [CommissionA]
+			  ,SUM([ValidBetAmount]) AS [ValidBetAmount],[Bettype]
 		FROM #TicketDataForDataWarehouse
+		GROUP BY [Winlostdate],[Custid],[Currency],[ProductId],[Bettype]
 	END
 	ELSE IF @GenForDataWarehouse = 2
 	BEGIN
