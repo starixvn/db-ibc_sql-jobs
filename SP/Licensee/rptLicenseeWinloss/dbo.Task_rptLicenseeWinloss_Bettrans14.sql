@@ -10,6 +10,7 @@ AS
 
 	Revisions:
 		- 20230209@Bobby: Created [RedmineID: #172604]
+		- 20230702@Evan: Support Saba Virtual Tennis [RedmineID: #190465]
 		
 */
 BEGIN  
@@ -95,6 +96,20 @@ BEGIN
 	
 	
 	PRINT 'GEN >> bettrans14';
+	WITH CTE_SabaSportRef AS (
+	    SELECT t.SportType, t.LeagueGroupID
+	    FROM bodb02.[dbo].[LAP_f_WinlossAnalysis_SabaSportSel] () AS saba
+			OUTER APPLY
+			(
+			  SELECT Sporttype, LeagueGroupID
+			  FROM OPENJSON(saba.SporttypeRef)
+			  WITH (Sporttype INT '$.Sporttype', 
+				LeagueGroupIDs NVARCHAR(MAX) '$.LeagueGroupID' AS JSON
+			  )
+			  OUTER APPLY OPENJSON(LeagueGroupIDs) WITH (LeagueGroupID INT '$')
+			) AS t
+		WHERE @winlostdate >= ISNULL(saba.CutOffDate ,@winlostdate)
+		  )
 	INSERT INTO #tmpRptData
 	SELECT 
 		b.Recommend,
@@ -127,7 +142,8 @@ BEGIN
 		INNER JOIN #tmpBettype s ON s.BetType = b.bettype AND s.RefTable NOT IN (1,2)
 		LEFT JOIN [bodb02].dbo.match14 m WITH(NOLOCK) ON b.matchid = m.matchid
 		LEFT JOIN [bodb02].[dbo].[Match3rd14] m3rd WITH(NOLOCK) ON m3rd.Match3rdId = b.matchid
-		LEFT JOIN [bodb02].dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid AND l.LeagueGroupID IN (42,74,108,113,122,151)
+		LEFT JOIN [bodb02].dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid 
+		LEFT JOIN CTE_SabaSportRef sbf ON sbf.SportType = l.sporttype AND sbf.LeagueGroupID = l.LeagueGroupID
 		LEFT JOIN [bodb02].dbo.outright14 o WITH(NOLOCK) ON b.matchid = o.orid
 		LEFT JOIN [bodb02].dbo.League lo WITH (NOLOCK) ON lo.leagueid = o.leagueid
 		LEFT JOIN [bodb02].dbo.VSRaceInfo14 vs WITH(NOLOCK) ON b.matchid = vs.EventID
@@ -161,15 +177,7 @@ BEGIN
 					WHEN s.EventType = 5 THEN ISNULL(m3rd.Sporttype, @NASportType)
 					ELSE @NASportType
 				END AS SportType,
-				CASE 
-					WHEN ((l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
-							OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
-							OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
-							OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
-						) AND b.betdaqid <> -2 
-						THEN l.LeagueGroupID 
-					ELSE 0
-				END AS LeagueGroupID, -- Saba Sports
+				IIF(b.betdaqid <> -2, ISNULL(sbf.LeagueGroupID, 0), 0) AS LeagueGroupID, -- Saba Sports
 				CASE
 					WHEN s.ProductId = 1 AND s.EventType = 1 AND b.betdaqid = -2 THEN 1 -- Castout
 					ELSE 0
