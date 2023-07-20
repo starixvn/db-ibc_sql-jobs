@@ -6,7 +6,7 @@ AS
 /*
 	Created by:	20130831@Bobby
 	Task:		Revise SSIS Archiving Data Project [Redmine: #166146]				
-	Database:	DBTXN.bodb02
+	Database:	DBCTG.bodb02
 	Revisions:
 		- 20130831@Bobby: Init
 		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
