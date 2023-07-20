@@ -72,9 +72,9 @@ BEGIN
 		--
 		DECLARE @__movebetdate SMALLDATETIME, @__siteDBGroupId SMALLINT = 0
 			, @__balanceupdate SMALLDATETIME
-			, @__SRecommend int
+			, @__SRecommend int = null
 		
-		select @__SRecommend = SRecommend from transfer t with (nolock) WHERE t.custid = @custid
+		select @__SRecommend = SRecommend from CustDB.dbo.Customer c with (nolock) WHERE c.custid = @custid
 		drop table if exists #tmp_custsuper
 
 		create table #tmp_custsuper (custid int,SiteDBGroupID SMALLINT)
