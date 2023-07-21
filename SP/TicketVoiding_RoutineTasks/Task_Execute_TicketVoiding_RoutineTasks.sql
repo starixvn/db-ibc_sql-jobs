@@ -62,7 +62,14 @@ BEGIN
 			@transdesc	NVARCHAR(1000),
 			@creator	INT,
 			@ip			VARCHAR(45),
-			@seq		INT = 1
+			@seq		INT = 1,
+			@resetData	VARCHAR(MAX) = '',
+			@resetData_XML XML = NULL,
+			@resetData1		VARCHAR(8000) = '' ,
+			@resetData2		VARCHAR(8000) = '' ,
+			@resetData3		VARCHAR(8000) = '' ,
+			@resetData4		VARCHAR(8000) = '' ,
+			@resetData5		VARCHAR(8000) = '' 
 
 	DECLARE @ResetWinning_ExtraPT14 TABLE 
 	(
@@ -81,7 +88,14 @@ BEGIN
 		@transdesc_ExtraPT	NVARCHAR(1000),
 		@creator_ExtraPT	INT,
 		@ip_ExtraPT		VARCHAR(45),
-		@seq_ExtraPT		INT = 1
+		@seq_ExtraPT		INT = 1,
+		@resetData_ExtraPT	VARCHAR(MAX) = '',
+		@resetData_ExtraPT_XML XML = NULL,
+		@resetData1_ExtraPT		VARCHAR(8000) = '' ,
+		@resetData2_ExtraPT		VARCHAR(8000) = '' ,
+		@resetData3_ExtraPT		VARCHAR(8000) = '' ,
+		@resetData4_ExtraPT		VARCHAR(8000) = '' ,
+		@resetData5_ExtraPT		VARCHAR(8000) = '' 
 	
 	DECLARE @SiteDBGroupID SMALLINT = 0 
 	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
@@ -144,16 +158,36 @@ BEGIN
 							INNER JOIN CustDb.dbo.Site s WITH (NOLOCK) ON c.site = s.site
 							WHERE s.SiteDBGroupID = @SiteDBGroupID 
 							)
-				
 					)
 				)
 			BEGIN
-				INSERT INTO @Acc_ResetWinning_SelByDate14 (Winlostdate, custid, amount, transdesc, creator, ip, WinlostAfterExtraPT, reset, product)
 				EXEC DBACC.bodb02.dbo.Acc_ResetWinning_SelByDate14
 					   @Winlostdate = @Winlostdate,
 					   @Mode = 1,
-					   @SiteDBGroupID = @SiteDBGroupID
-			
+					   @SiteDBGroupID = @SiteDBGroupID,
+					   @resetData1 = @resetData1 OUTPUT,
+					   @resetData2 = @resetData2 OUTPUT,
+					   @resetData3 = @resetData3 OUTPUT,
+					   @resetData4 = @resetData4 OUTPUT,
+					   @resetData5 = @resetData5 OUTPUT
+
+				SELECT @resetData = @resetData1 + @resetData2 + @resetData3 + @resetData4 + @resetData5
+				SELECT @resetData_XML = CAST(@resetData AS XML)
+				
+				INSERT INTO @Acc_ResetWinning_SelByDate14 (Winlostdate, custid, amount, transdesc, creator, ip, WinlostAfterExtraPT, reset, product)
+				SELECT 
+					t.c.value('@Winlostdate', 'SMALLDATETIME')	AS Winlostdate
+					,t.c.value('@custid', 'INT')	AS custid
+					,t.c.value('@amount', 'MONEY')	AS amount
+					,t.c.value('@transdesc', 'NVARCHAR(1000)')	AS transdesc
+					,t.c.value('@creator', 'INT')	AS creator
+					,t.c.value('@ip', 'VARCHAR(45)')	AS ip
+					,t.c.value('@WinlostAfterExtraPT', 'MONEY')	AS WinlostAfterExtraPT
+					,t.c.value('@reset', 'MONEY')	AS reset
+					,t.c.value('@product', 'VARCHAR(250)')	AS product
+				FROM @resetData_XML.nodes('/ROOT/z') t(c)
+				OPTION (OPTIMIZE FOR (@resetData_XML = NULL))
+
 				WHILE EXISTS (SELECT TOP 1 1 FROM @Acc_ResetWinning_SelByDate14 WHERE seq = @seq)
 				BEGIN
 					SELECT  @WLdate		= Winlostdate,
@@ -245,12 +279,32 @@ BEGIN
 						)
 				)
 			BEGIN
-				INSERT INTO @ResetWinning_ExtraPT14 (WLDate, custID, amount, transdesc, creator, ip)
+				
 				EXEC DBACC.bodb02.dbo.Task_ResetWinning_ExtraPT14
 				  @FromDate= @WinlostDate,
 				  @ToDate = @WinlostDate,
 				  @Mode = 1	,
-				  @SiteDBGroupID = @SiteDBGroupID
+				  @SiteDBGroupID = @SiteDBGroupID,
+				  @resetData1 = @resetData1_ExtraPT OUTPUT,
+				  @resetData2 = @resetData2_ExtraPT OUTPUT,
+				  @resetData3 = @resetData3_ExtraPT OUTPUT,
+				  @resetData4 = @resetData4_ExtraPT OUTPUT,
+				  @resetData5 = @resetData5_ExtraPT OUTPUT
+
+				SELECT @resetData_ExtraPT = @resetData1_ExtraPT + @resetData2_ExtraPT + @resetData3_ExtraPT + @resetData4_ExtraPT + @resetData5_ExtraPT
+
+				SELECT @resetData_ExtraPT_XML = CAST(@resetData_ExtraPT AS XML)
+
+				INSERT INTO @ResetWinning_ExtraPT14 (WLDate, custID, amount, transdesc, creator, ip)
+				SELECT 
+					t.c.value('@WLDate', 'SMALLDATETIME')	AS WLDate
+					,t.c.value('@CustID', 'INT')	AS custid
+					,t.c.value('@amount', 'MONEY')	AS amount
+					,t.c.value('@transdesc', 'NVARCHAR(1000)')	AS transdesc
+					,t.c.value('@creator', 'INT')	AS creator
+					,t.c.value('@ip', 'VARCHAR(45)')	AS ip
+				FROM @resetData_ExtraPT_XML.nodes('/ROOT/z') t(c)
+				OPTION (OPTIMIZE FOR (@resetData_ExtraPT_XML = NULL))
 
 				WHILE EXISTS (SELECT TOP 1 1 FROM @ResetWinning_ExtraPT14 WHERE seq = @seq_ExtraPT)
 				BEGIN
@@ -381,11 +435,33 @@ BEGIN
 					)
 				)
 			BEGIN
-				INSERT INTO @Acc_ResetWinning_SelByDate14 (Winlostdate, custid, amount, transdesc, creator, ip, WinlostAfterExtraPT, reset, product)
 				EXEC DBACC.bodb02.dbo.Acc_ResetWinning_SelByDate14
 					   @Winlostdate = @Winlostdate,
 					   @Mode = 1,
-					   @SiteDBGroupID = @SiteDBGroupID
+					   @SiteDBGroupID = @SiteDBGroupID,
+					   @resetData1 = @resetData1 OUTPUT,
+					   @resetData2 = @resetData2 OUTPUT,
+					   @resetData3 = @resetData3 OUTPUT,
+					   @resetData4 = @resetData4 OUTPUT,
+					   @resetData5 = @resetData5 OUTPUT
+
+				SELECT @resetData = @resetData1 + @resetData2 + @resetData3 + @resetData4 + @resetData5
+
+				SELECT @resetData_XML = CAST(@resetData AS XML)
+
+				INSERT INTO @Acc_ResetWinning_SelByDate14 (Winlostdate, custid, amount, transdesc, creator, ip, WinlostAfterExtraPT, reset, product)
+				SELECT 
+					t.c.value('@Winlostdate', 'SMALLDATETIME')	AS Winlostdate
+					,t.c.value('@custid', 'INT')	AS custid
+					,t.c.value('@amount', 'MONEY')	AS amount
+					,t.c.value('@transdesc', 'NVARCHAR(1000)')	AS transdesc
+					,t.c.value('@creator', 'INT')	AS creator
+					,t.c.value('@ip', 'VARCHAR(45)')	AS ip
+					,t.c.value('@WinlostAfterExtraPT', 'MONEY')	AS WinlostAfterExtraPT
+					,t.c.value('@reset', 'MONEY')	AS reset
+					,t.c.value('@product', 'VARCHAR(250)')	AS product
+				FROM @resetData_XML.nodes('/ROOT/z') t(c)
+				OPTION (OPTIMIZE FOR (@resetData_XML = NULL))
 			
 				WHILE EXISTS (SELECT TOP 1 1 FROM @Acc_ResetWinning_SelByDate14 WHERE seq = @seq)
 				BEGIN
@@ -477,16 +553,35 @@ BEGIN
 						)
 				)
 			BEGIN
-				INSERT INTO @ResetWinning_ExtraPT14 (WLDate, amount, transdesc, creator, ip)
 				EXEC DBACC.bodb02.dbo.Task_ResetWinning_ExtraPT14
 				  @FromDate= @WinlostDate,
 				  @ToDate = @WinlostDate,
 				  @Mode = 1	,
-				  @SiteDBGroupID = @SiteDBGroupID
+				  @SiteDBGroupID = @SiteDBGroupID,
+				  @resetData1 = @resetData1_ExtraPT OUTPUT,
+				  @resetData2 = @resetData2_ExtraPT OUTPUT,
+				  @resetData3 = @resetData3_ExtraPT OUTPUT,
+				  @resetData4 = @resetData4_ExtraPT OUTPUT,
+				  @resetData5 = @resetData5_ExtraPT OUTPUT
+
+				SELECT @resetData_ExtraPT = @resetData1_ExtraPT + @resetData2_ExtraPT + @resetData3_ExtraPT + @resetData4_ExtraPT + @resetData5_ExtraPT
+				SELECT @resetData_ExtraPT_XML = CAST(@resetData_ExtraPT AS XML)
+
+				INSERT INTO @ResetWinning_ExtraPT14 (WLDate, custID, amount, transdesc, creator, ip)
+				SELECT 
+					t.c.value('@WLDate', 'SMALLDATETIME')	AS WLDate
+					,t.c.value('@CustID', 'INT')	AS custID
+					,t.c.value('@amount', 'MONEY')	AS amount
+					,t.c.value('@transdesc', 'NVARCHAR(1000)')	AS transdesc
+					,t.c.value('@creator', 'INT')	AS creator
+					,t.c.value('@ip', 'VARCHAR(45)')	AS ip
+				FROM @resetData_ExtraPT_XML.nodes('/ROOT/z') t(c)
+				OPTION (OPTIMIZE FOR (@resetData_ExtraPT_XML = NULL))
 
 				WHILE EXISTS (SELECT TOP 1 1 FROM @ResetWinning_ExtraPT14 WHERE seq = @seq_ExtraPT)
 				BEGIN
 					SELECT @WLdate_ExtraPT		= WLDate,
+							@custid_ExtraPT		= custID,
 							@amount_ExtraPT		= amount,
 							@transdesc_ExtraPT	= transdesc,
 							@creator_ExtraPT	= creator,
