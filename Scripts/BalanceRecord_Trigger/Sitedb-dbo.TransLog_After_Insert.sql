@@ -3,7 +3,12 @@
    Created:Kathy@20230621  
    DB: DBSIG-bodb02
 */
-    
+ USE bodb02
+GO
+SET LOCK_TIMEOUT 1024
+SET DEADLOCK_PRIORITY LOW
+GO
+   
 ALTER TRIGGER [dbo].[TransLog_After_Insert]
 ON [dbo].[translog]
 FOR INSERT

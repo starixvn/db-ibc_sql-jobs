@@ -3,6 +3,12 @@
    Created:Kathy@20230621  
    DB: DBBAH-bodb02
 */
+USE bodb02
+GO
+SET LOCK_TIMEOUT 1024
+SET DEADLOCK_PRIORITY LOW
+GO
+
 ALTER TRIGGER [dbo].[TG_BalanceTrigger_ProcessData_20180630]
    ON  [dbo].[BalanceTrigger_ProcessData]
    AFTER DELETE
