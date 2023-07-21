@@ -78,7 +78,7 @@ BEGIN
 		select isnull(d.custid,c.custid),isnull(d.SiteDBGroupID,c.SiteDBGroupID) as SiteDBGroupID
 		from CustDB.dbo.dep_custsuper d with(nolock)
 					full outer join DBCUST.CustDB.dbo.custsuper c with(nolock) on d.custid=c.custid 
-		where isnull(c.custid,d.custid)= @__SRecommend
+		where isnull(d.custid,c.custid)= @__SRecommend
 		
 		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
 		EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @__balanceupdate OUTPUT
