@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20230209@Bobby: Created [RedmineID: #172604]
 		- 20230702@Evan: Support Saba Virtual Tennis [RedmineID: #190465]
+		- 20230724@Evan: Enhance using HASHBYTES to detect diff data [RedmineID: #191669]
 		
 */
 BEGIN  
@@ -315,58 +316,45 @@ BEGIN
 	;WITH CTE_RptDataSource AS (
 		SELECT b.[Recommend]
 	           ,[CustId]
-			   ,CHECKSUM_AGG(CHECKSUM([Product3rdId]
-				   ,[Sporttype]
-				   ,[Bettype]
-				   ,[StatusId]
-				   ,[LiveIndicator]
-				   ,[LeagueGroupId]
-				   ,[TicketType]
-				   ,[Betfrom]
-				   ,[APositiontaking]
-				   ,[BetCount]
-				   ,[Turnover]
-				   ,[NetTurnover]
-				   ,[Winlost]
-				   ,[AWinlost]
-				   ,[PComm]
-				   ,[AComm])) AS CheckSumData
+			   ,HASHBYTES('MD5', (SELECT [Sporttype], [Bettype],
+                              [StatusId], [LiveIndicator], [LeagueGroupId],
+                              [TicketType], [Betfrom], [APositiontaking],
+                              [BetCount], [Turnover], [NetTurnover], [Winlost],
+                              [AWinlost], [PComm], [AComm] FOR XML RAW)) AS CheckSumData
 		FROM [dbo].[rptLicenseeWinloss] b WITH(NOLOCK)
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		WHERE b.winlostdate = @winlostdate
-		GROUP BY b.[Recommend]
-	           ,[CustId]
+	),
+	CTE_RptDataDestination AS (
+		SELECT [Recommend]
+				,[CustId]
+				,HASHBYTES('MD5', (SELECT [Sporttype], [Bettype],
+							  [StatusId], [LiveIndicator], [LeagueGroupId],
+                              [TicketType], [Betfrom], [APositiontaking],
+                              [BetCount], [Turnover], [NetTurnover], [Winlost],
+                              [AWinlost], [PComm], [AComm] FOR XML RAW)) AS CheckSumData
+		FROM #tmpRptData
 	)
 	INSERT INTO #tmpDiffAgency (Recommend, CustId, DiffFlag)
-	SELECT DISTINCT ISNULL(b14.Recommend, s.Recommend) AS Recommend
+	SELECT 
+		DISTINCT ISNULL(b14.Recommend, s.Recommend) AS Recommend
 		,ISNULL(b14.CustId, s.CustId) AS CustId
 		,IIF(b14.CustId > 0, 1, 0) AS DiffFlag
 	FROM (
-		SELECT [Recommend]
-	           ,[CustId]
-			   ,CHECKSUM_AGG(CHECKSUM([Product3rdId]
-				   ,[Sporttype]
-				   ,[Bettype]
-				   ,[StatusId]
-				   ,[LiveIndicator]
-				   ,[LeagueGroupId]
-				   ,[TicketType]
-				   ,[Betfrom]
-				   ,[APositiontaking]
-				   ,[BetCount]
-				   ,[Turnover]
-				   ,[NetTurnover]
-				   ,[Winlost]
-				   ,[AWinlost]
-				   ,[PComm]
-				   ,[AComm])) AS CheckSumData
-		FROM #tmpRptData
-			GROUP BY 
-				[Recommend]
-	           ,[CustId]
-	) AS b14
-	FULL OUTER JOIN CTE_RptDataSource AS s ON
-			s.[Recommend] = b14.Recommend AND s.[CustId]= b14.CustId
+			SELECT [Recommend]
+					,[CustId]
+					,CHECKSUM_AGG(CHECKSUM(CheckSumData)) AS CheckSumData
+			FROM CTE_RptDataDestination
+			GROUP BY [Recommend],[CustId] 
+		) AS b14
+		FULL OUTER JOIN
+		(	SELECT [Recommend]
+					,[CustId]
+					,CHECKSUM_AGG(CHECKSUM(CheckSumData)) AS CheckSumData
+			FROM CTE_RptDataSource
+			GROUP BY [Recommend],[CustId] 
+		) AS s 
+		ON s.[Recommend] = b14.Recommend AND s.[CustId]= b14.CustId
 	WHERE s.[CustId]  	IS NULL
 		OR b14.[CustId]  IS NULL
 		OR s.CheckSumData 	<> 	b14.CheckSumData
