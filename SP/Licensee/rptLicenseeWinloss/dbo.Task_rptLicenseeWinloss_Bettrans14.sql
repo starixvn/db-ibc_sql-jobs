@@ -315,25 +315,16 @@ BEGIN
 	
 	;WITH CTE_RptDataSource AS (
 		SELECT b.[Recommend]
-	           ,[CustId]
-			   ,HASHBYTES('MD5', (SELECT [Sporttype], [Bettype],
-                              [StatusId], [LiveIndicator], [LeagueGroupId],
-                              [TicketType], [Betfrom], [APositiontaking],
-                              [BetCount], [Turnover], [NetTurnover], [Winlost],
-                              [AWinlost], [PComm], [AComm] FOR XML RAW)) AS CheckSumData
+	           ,b.[CustId]
+			   ,CHECKSUM_AGG(CHECKSUM(HASHBYTES('SHA2_256', CONCAT_WS('|',[Sporttype],
+							[Bettype], [StatusId], [LiveIndicator], [LeagueGroupId],
+                            [TicketType], [Betfrom], [APositiontaking],
+							[BetCount], [Turnover], [NetTurnover], [Winlost],
+                            [AWinlost], [PComm], [AComm])))) AS CheckSumData
 		FROM [dbo].[rptLicenseeWinloss] b WITH(NOLOCK)
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		WHERE b.winlostdate = @winlostdate
-	),
-	CTE_RptDataDestination AS (
-		SELECT [Recommend]
-				,[CustId]
-				,HASHBYTES('MD5', (SELECT [Sporttype], [Bettype],
-							  [StatusId], [LiveIndicator], [LeagueGroupId],
-                              [TicketType], [Betfrom], [APositiontaking],
-                              [BetCount], [Turnover], [NetTurnover], [Winlost],
-                              [AWinlost], [PComm], [AComm] FOR XML RAW)) AS CheckSumData
-		FROM #tmpRptData
+		GROUP BY b.[Recommend],b.[CustId] 
 	)
 	INSERT INTO #tmpDiffAgency (Recommend, CustId, DiffFlag)
 	SELECT 
@@ -342,19 +333,17 @@ BEGIN
 		,IIF(b14.CustId > 0, 1, 0) AS DiffFlag
 	FROM (
 			SELECT [Recommend]
-					,[CustId]
-					,CHECKSUM_AGG(CHECKSUM(CheckSumData)) AS CheckSumData
-			FROM CTE_RptDataDestination
-			GROUP BY [Recommend],[CustId] 
+	           ,[CustId]
+			   ,CHECKSUM_AGG(CHECKSUM(HASHBYTES('SHA2_256', CONCAT_WS('|',[Sporttype],
+							[Bettype], [StatusId], [LiveIndicator], [LeagueGroupId],
+                            [TicketType], [Betfrom], [APositiontaking],
+							[BetCount], [Turnover], [NetTurnover], [Winlost],
+                            [AWinlost], [PComm], [AComm])))) AS CheckSumData
+			FROM #tmpRptData
+			GROUP BY [Recommend], [CustId]
 		) AS b14
-		FULL OUTER JOIN
-		(	SELECT [Recommend]
-					,[CustId]
-					,CHECKSUM_AGG(CHECKSUM(CheckSumData)) AS CheckSumData
-			FROM CTE_RptDataSource
-			GROUP BY [Recommend],[CustId] 
-		) AS s 
-		ON s.[Recommend] = b14.Recommend AND s.[CustId]= b14.CustId
+		FULL OUTER JOIN CTE_RptDataSource AS s ON
+			s.[Recommend] = b14.Recommend AND s.[CustId]= b14.CustId
 	WHERE s.[CustId]  	IS NULL
 		OR b14.[CustId]  IS NULL
 		OR s.CheckSumData 	<> 	b14.CheckSumData
