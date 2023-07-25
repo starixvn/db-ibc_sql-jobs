@@ -5,7 +5,7 @@
     DB: DBBAH/bodb02
    
     Revisions:
-		- 20220130@Louisa: Phase 2 - use Web Service to pull ticket from DBSIG to DB05/DB05BK1 [Redmine:#176932]
+		- 20220130@Louisa: Phase 2 - use Web Service to pull ticket from DBSIG to DB05/DB05BK1 [Redmine:#176932]     
 
 */
 

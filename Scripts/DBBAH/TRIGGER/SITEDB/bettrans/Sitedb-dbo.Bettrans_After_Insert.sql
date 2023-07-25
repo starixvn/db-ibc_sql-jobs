@@ -1,12 +1,46 @@
-/*<info serverAlias="DBBAH-bodb02" executers="" viewers="" isFunction="0"></info>*/
+
+  
+/*<info serverAlias="DBSIG-bodb02" executers="" viewers="" isFunction="0"></info>*/ 
+
 /*
    Created:Kathy@20230621  
-   DB: DBBAH-bodb02
+   DB: DBSIG-bodb02
 */
 USE bodb02
 GO
+--A): alter trigger case:
+
+	--1)check long running
+	--2)set lock timeout
+	--3)set deadlock priority low
+	--4)GO
+	--5)alter trigger
+
+--B): alter table case:
+
+	--1)check long running
+	--2)set lock timeout
+	--3)set deadlock priority low
+	--4)alter command
+
+--#1)
+DECLARE @__messageInfo VARCHAR(200)
+__tryAgain:
+IF (dbo.f_dba_check_long_holding_locks ('bettrans' /*tableName*/, getdate() /*current time*/, 1000 /*long query exceeded 1s*/, 1 /*retry in 1 min*/)) = 1
+BEGIN
+	SELECT @__messageInfo = 'curdt: ' + convert(varchar(50), getdate(), 121) + ' | Too many long running operations on the table. Retry attempt again ...'
+	RAISERROR(@__messageInfo, 0, 1) WITH NOWAIT
+	WAITFOR DELAY '00:00:00:333' --wait for alter schema
+	GOTO __tryAgain
+END
+
+
+--doing.... 
+--#2 #3)
 SET LOCK_TIMEOUT 1024
 SET DEADLOCK_PRIORITY LOW
+
+--#4
 GO
 
 ALTER TRIGGER [dbo].[Bettrans_After_Insert]
@@ -24,8 +58,8 @@ AS
         - 20201119@Kathy: Add column modds [Redmine:#142346]
         - 20210309@Kathy: Allow null for bettype,actual_stake, winlost, playercomm [Redmine:#138552]
         - 20220629@Helen: BalanceRecord -> wrong capture balance change and new balance when resettle tickets AE-Sexy product [Redmine:#173971]
-        - 20220912@Helen: scaleout project, exclude 'sitedb' data since it has been processed in sitedb already [176932]
-		- 20230614@Kathy: Use new actionid when settle ticket, add new column winlostdate,refno [Redmine:#189598]
+        - 20220912@Helen: clone trigger from db05 to sitedb for scaleout project [176932]
+		- 20230614@Kathy: Use new actionid when settle ticket, add new column winlostdate, refno [Redmine:#189598]
 */
 
 BEGIN
@@ -128,7 +162,6 @@ BEGIN
             i.custid <> recommend AND
             i.custid <> mrecommend AND
             i.custid <> srecommend
-            AND i.SiteDBGroupID = 0
         ORDER BY
             i.transid
 
