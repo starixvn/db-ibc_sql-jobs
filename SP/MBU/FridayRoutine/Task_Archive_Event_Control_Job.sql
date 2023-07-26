@@ -8,6 +8,8 @@ AS
 	DB: DBTXN/bodb02
 	Revisions:   
 		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
+		- 20230725@Brice: remove NG2 [RedmineID: #186722]
+		
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -137,20 +139,6 @@ BEGIN
 	EXECUTE dbo.Task_Archive_Bet @winlostdate = @wldate, @DeletedTarget = 'Task_bettransLC14_IP2Country'
 	WAITFOR DELAY '00:00:30';
 
-	--- delete old data for NG2
-	SELECT @wldate = MAX(winlostdate)
-	FROM @archiveDate 
-
-	DELETE b 
-	FROM dbo.bettrans_Staging b 
-		INNER JOIN SettlementNG2_Message m WITH(NOLOCK) ON b.SeqId = m.SeqID
-	WHERE
-		m.EventDate <= @wldate
-	WAITFOR DELAY '00:01:20'
-
-	DELETE FROM SettlementNG2_Message
-	WHERE EventDate <= @wldate
-
-	WAITFOR DELAY '00:01:30'
+	
 END
 GO

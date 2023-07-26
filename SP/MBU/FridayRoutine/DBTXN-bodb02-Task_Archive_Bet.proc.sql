@@ -25,6 +25,7 @@ AS
 		- 20220113@Max: [TVS] Cannot execute auto void queue for test match [Redmine: #166895]
 		- 20220121@Max: MBU - Clean up Cash Out Selling [Redmine: #167802]
 		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
+		- 20230725@Brice: Support scale-out for credit site [RedmineID: #191003]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -36,7 +37,7 @@ BEGIN
 		CREATE TABLE #DeletedList (id BIGINT PRIMARY KEY CLUSTERED, IsDone BIT)
 		DECLARE @tmp_VoidingHistory AS TABLE (VoidingHistoryId INT)
 
-		IF @DeletedTarget = 'betParlayDetail'
+		IF @DeletedTarget = 'betParlayDetail' AND OBJECT_ID('betParlayDetail') IS NOT NULL
 		BEGIN
 
 			CREATE TABLE #__refno_parlaydetail (refno BIGINT, cnt INT)
@@ -101,13 +102,13 @@ BEGIN
 			DROP TABLE #__refno_parlaydetail
 			RETURN
 		END 
-		ELSE IF @DeletedTarget = 'betParlayResult'
+		ELSE IF @DeletedTarget = 'betParlayResult' AND OBJECT_ID('betParlayResult') IS NOT NULL
 		BEGIN
 			-- call execRep SP
 			EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 29, @tableName = 'betParlayResult'
 		END
 
-		ELSE IF	@DeletedTarget = 'Task_bettrans14_IP2Country'
+		ELSE IF	@DeletedTarget = 'Task_bettrans14_IP2Country' AND OBJECT_ID('Task_bettrans14_IP2Country') IS NOT NULL
 		BEGIN;
 			WHILE 0 = 0
 			BEGIN;
@@ -126,7 +127,7 @@ BEGIN
 			RETURN;
 		END;
 
-		ELSE IF	@DeletedTarget = 'Task_bettransRNG14_IP2Country'
+		ELSE IF	@DeletedTarget = 'Task_bettransRNG14_IP2Country' AND OBJECT_ID('Task_bettransRNG14_IP2Country') IS NOT NULL
 		BEGIN;
 			WHILE 0 = 0
 			BEGIN;
@@ -145,7 +146,7 @@ BEGIN
 			RETURN;
 		END;
 
-		ELSE IF	@DeletedTarget = 'Task_bettransLC14_IP2Country'
+		ELSE IF	@DeletedTarget = 'Task_bettransLC14_IP2Country' AND OBJECT_ID('Task_bettransLC14_IP2Country') IS NOT NULL
 		BEGIN;
 			WHILE 0 = 0
 			BEGIN;
@@ -164,7 +165,7 @@ BEGIN
 			RETURN;
 		END;
 
-		ELSE IF	@DeletedTarget = 'MarkedTransaction'
+		ELSE IF	@DeletedTarget = 'MarkedTransaction' AND OBJECT_ID('MarkedTransaction') IS NOT NULL
 		BEGIN;
 			DECLARE	@transList AS TABLE (
 						TransId		BIGINT,
@@ -213,7 +214,7 @@ BEGIN
 		END;
 		
 		/*-----TVS------*/
-		ELSE IF @DeletedTarget = 'TicketVoiding_VoidedTransaction'
+		ELSE IF @DeletedTarget = 'TicketVoiding_VoidedTransaction' AND OBJECT_ID('TicketVoiding_VoidedTransaction') IS NOT NULL
 		BEGIN
 			TRUNCATE TABLE #DeletedList
 			
@@ -241,7 +242,7 @@ BEGIN
 			RETURN
 		END
 
-		ELSE IF @DeletedTarget = 'zzzbettrans'
+		ELSE IF @DeletedTarget = 'zzzbettrans' AND OBJECT_ID('zzzbettrans') IS NOT NULL
 		BEGIN			
 			TRUNCATE TABLE #DeletedList
 			DELETE @tmp_VoidingHistory
@@ -278,7 +279,7 @@ BEGIN
 			RETURN
 		END
 
-		ELSE IF @DeletedTarget = 'zzzbettransM'
+		ELSE IF @DeletedTarget = 'zzzbettransM' AND OBJECT_ID('zzzbettransM') IS NOT NULL
 		BEGIN			
 			TRUNCATE TABLE #DeletedList
 			DELETE @tmp_VoidingHistory
@@ -307,7 +308,7 @@ BEGIN
 			RETURN
 		END
 
-		ELSE IF @DeletedTarget = 'TicketVoiding_RequestDetail'
+		ELSE IF @DeletedTarget = 'TicketVoiding_RequestDetail' AND OBJECT_ID('TicketVoiding_RequestDetail') IS NOT NULL
 		BEGIN			
 			TRUNCATE TABLE #DeletedList
 			-------Match-----------
@@ -340,7 +341,7 @@ BEGIN
 			RETURN
 		END
 
-		ELSE IF @DeletedTarget = 'TicketVoiding_Request'
+		ELSE IF @DeletedTarget = 'TicketVoiding_Request' AND OBJECT_ID('TicketVoiding_Request') IS NOT NULL
 		BEGIN
 			CREATE TABLE #tmpRequest(RequestId INT)
 
@@ -482,7 +483,7 @@ BEGIN
 			RETURN
 		END
 
-		ELSE IF @DeletedTarget = 'TicketVoiding_AutoUnmarkSetting'
+		ELSE IF @DeletedTarget = 'TicketVoiding_AutoUnmarkSetting' AND OBJECT_ID('TicketVoiding_AutoUnmarkSetting') IS NOT NULL
 		BEGIN			
 			TRUNCATE TABLE #DeletedList
 			INSERT INTO #DeletedList (id,IsDone)
@@ -496,7 +497,7 @@ BEGIN
 		/*--------------*/
 
 		/*------CashOutSelling--------*/
-		ELSE IF @DeletedTarget = 'CashOutSelling'
+		ELSE IF @DeletedTarget = 'CashOutSelling' AND OBJECT_ID('CashOutSelling') IS NOT NULL
 		BEGIN			
 			TRUNCATE TABLE #DeletedList
 			INSERT INTO #DeletedList (id,IsDone)
