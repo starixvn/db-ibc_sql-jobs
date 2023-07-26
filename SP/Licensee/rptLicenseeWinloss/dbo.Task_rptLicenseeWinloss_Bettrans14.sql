@@ -11,7 +11,7 @@ AS
 	Revisions:
 		- 20230209@Bobby: Created [RedmineID: #172604]
 		- 20230702@Evan: Support Saba Virtual Tennis [RedmineID: #190465]
-		- 20230724@Evan: Enhance using HASHBYTES to detect diff data [RedmineID: #191669]
+		- 20230724@Evan: Enhance SP - Troubleshoot CHECKSUM_AGG [RedmineID: #191669]
 		
 */
 BEGIN  
@@ -316,11 +316,11 @@ BEGIN
 	;WITH CTE_RptDataSource AS (
 		SELECT b.[Recommend]
 	           ,b.[CustId]
-			   ,CHECKSUM_AGG(CHECKSUM(HASHBYTES('SHA2_256', CONCAT_WS('|',[Sporttype],
+			   ,CHECKSUM_AGG(CHECKSUM(CONCAT_WS('|',[Product3rdId],[Sporttype], 
 							[Bettype], [StatusId], [LiveIndicator], [LeagueGroupId],
                             [TicketType], [Betfrom], [APositiontaking],
-							[BetCount], [Turnover], [NetTurnover], [Winlost],
-                            [AWinlost], [PComm], [AComm])))) AS CheckSumData
+                            [BetCount], [Turnover], [NetTurnover], [Winlost],
+                            [AWinlost], [PComm], [AComm]))) AS CheckSumData
 		FROM [dbo].[rptLicenseeWinloss] b WITH(NOLOCK)
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		WHERE b.winlostdate = @winlostdate
@@ -334,11 +334,11 @@ BEGIN
 	FROM (
 			SELECT [Recommend]
 	           ,[CustId]
-			   ,CHECKSUM_AGG(CHECKSUM(HASHBYTES('SHA2_256', CONCAT_WS('|',[Sporttype],
+			   ,CHECKSUM_AGG(CHECKSUM(CONCAT_WS('|',[Product3rdId],[Sporttype], 
 							[Bettype], [StatusId], [LiveIndicator], [LeagueGroupId],
                             [TicketType], [Betfrom], [APositiontaking],
-							[BetCount], [Turnover], [NetTurnover], [Winlost],
-                            [AWinlost], [PComm], [AComm])))) AS CheckSumData
+                            [BetCount], [Turnover], [NetTurnover], [Winlost],
+                            [AWinlost], [PComm], [AComm]))) AS CheckSumData
 			FROM #tmpRptData
 			GROUP BY [Recommend], [CustId]
 		) AS b14
