@@ -5,7 +5,8 @@ DROP PROCEDURE IF EXISTS `N88_Get_Customer`;
 DELIMITER //
 
 CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `N88_Get_Customer`(
-  IN fromDate DATETIME
+  IN fromDate DATETIME,
+  IN batchCount INT
   /*
     Created: 20200520@Percy
     DB: Slave DB/Siebog
@@ -13,19 +14,35 @@ CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `N88_Get_Customer`(
     
     Revisions:
       - 20200520@Percy: Initialize SP
+	  - 20230704@Sally: Get data column MemberType [RedmineId: #189299]
 
   */
 )
 BEGIN
-  SELECT c.CustId, c.SiteId, c.UserName, c.CurrencyId, c.UserLang, c.ActStatus, c.AgentId, c.AllAgentId, c.UserLevel, c.RegTime, c.IsTest, c.Status
-    FROM `Customer` c
-    WHERE c.RegTime >= fromDate
-	
-	UNION
-  SELECT c.CustId, c.SiteId, c.UserName, c.CurrencyId, c.UserLang, c.ActStatus, c.AgentId, c.AllAgentId, c.UserLevel, c.RegTime, c.IsTest, c.Status
-    FROM `Customer` c
-      INNER JOIN `CustWallet` cw
-    WHERE cw.FirstDepositTime >= fromDate;
+	SET batchCount = IF(batchCount > 2000, 2000, batchCount);
+    
+	WITH CTE_Customer AS (
+		(
+			SELECT c.CustId
+			FROM `Customer` c
+			WHERE c.RegTime >= fromDate	
+			ORDER BY c.RegTime
+			LIMIT batchCount
+		)
+		UNION (
+			SELECT cw.CustId
+			FROM `CustWallet` cw
+			WHERE cw.FirstDepositTime >= fromDate
+			ORDER BY cw.FirstDepositTime
+			LIMIT batchCount
+		)
+	)
+	SELECT t.CustId, t.SiteId, t.UserName, t.CurrencyId, t.UserLang, t.ActStatus, t.AgentId, t.AllAgentId, t.UserLevel, t.RegTime, t.IsTest, t.Status, t.MemberType
+	FROM CTE_Customer c
+		INNER JOIN  `Customer` t on c.CustId = t.CustId
+	ORDER BY t.RegTime
+	LIMIT batchCount;
+
 END
 
 //

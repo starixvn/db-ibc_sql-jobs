@@ -19,6 +19,7 @@ AS
 		- 20210824@Percy: Change way to get TpUserName [RedmineID: #160657]
 		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
 		- 20211022@Percy: Update FirstDeposit info [RedmineID: #159910]
+		- 20230704@Sally: Get info MemberType [RedmineId: #189299]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -65,6 +66,7 @@ BEGIN
 		,TpSystemUserName	VARCHAR(50)
 		,FirstDepositDate	DATETIME
 		,FirstDepositAmount	MONEY
+		,MemberType			INT 
 		,DataType			TINYINT -- 0: update, 1: insert
 		,PRIMARY KEY (CustId)
 	)
@@ -109,6 +111,7 @@ BEGIN
 					,RegTime
 					,IsTest
 					,Status
+					,MemberType
 				)
 				SELECT
 					t.c.value('@custid', 'INT')
@@ -123,6 +126,7 @@ BEGIN
 					,t.c.value('@regtime', 'DATETIME')
 					,t.c.value('@istest', 'BIT')
 					,t.c.value('@status', 'TINYINT')
+					,t.c.value('@membertype', 'INT')
 				FROM @XmlData.nodes('root/row') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
@@ -173,6 +177,7 @@ BEGIN
 					OR ISNULL(t.TpSystemUserName, '') <> ISNULL(b.TpSystemUserName, '')
 					OR ISNULL(t.FirstDepositDate, '') <> ISNULL(b.FirstDepositDate, '')
 					OR ISNULL(t.FirstDepositAmount, 0) <> ISNULL(b.FirstDepositAmount, 0)
+					OR ISNULL(t.MemberType, 0) <> ISNULL(b.MemberType, 0)
 
 				-- Update Deposit
 				
@@ -198,6 +203,7 @@ BEGIN
 							,b.FirstDepositDate = t.FirstDepositDate
 							,b.FirstDepositAmount = t.FirstDepositAmount
 							,b.UpdatedTime = @CurrentDate
+							,b.MemberType = t.MemberType
 						FROM dbo.Customer b
 							INNER JOIN #tmpCustomer t ON b.CustId = t.CustId
 						WHERE t.DataType = 0
@@ -224,6 +230,7 @@ BEGIN
 							,TpSystemUserName
 							,FirstDepositDate
 							,FirstDepositAmount
+							,MemberType
 						)
 						SELECT
 							CustId
@@ -242,6 +249,7 @@ BEGIN
 							,TpSystemUserName
 							,FirstDepositDate
 							,FirstDepositAmount
+							,MemberType
 						FROM #tmpCustomer
 						WHERE DataType = 1
 					END
