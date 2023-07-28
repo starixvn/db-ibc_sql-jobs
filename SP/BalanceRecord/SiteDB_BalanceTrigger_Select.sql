@@ -13,6 +13,7 @@ AS
    
    Revisions:
 		- 20220130@Louisa: Phase 2 - use Web Service to pull ticket from SiteDB to DB05/DB05BK1 [176932]
+		- 20230615@Kathy: add new column winlostdate, refno [Redmine:#181595]
 
 	Param's explaination:
 		@LastRowInserted: The last row which was inserted to DBBAH/bod02
@@ -51,6 +52,8 @@ BEGIN
 									, acomm			AS 'ac'
 									, scomm			AS 'sc'
 									, modds			AS 'm'
+									, winlostdate	AS 'wld'
+									, refno			AS 'ref'
 								FROM [bodb02].[dbo].[BalanceTrigger] WITH(NOLOCK) 
 								WHERE RowID <= @maxValue AND RowID > @LastRowInserted
 								ORDER BY RowID ASC

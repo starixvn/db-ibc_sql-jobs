@@ -1,0 +1,139 @@
+/*<info serverAlias="DBSIG-bodb02" executers="" viewers="" isFunction="0"></info>*/    
+/*
+   Created:Kathy@20230621  
+   DB: DBSIG-bodb02
+*/
+ USE bodb02
+GO
+--A): alter trigger case:
+
+	--1)check long running
+	--2)set lock timeout
+	--3)set deadlock priority low
+	--4)GO
+	--5)alter trigger
+
+--B): alter table case:
+
+	--1)check long running
+	--2)set lock timeout
+	--3)set deadlock priority low
+	--4)alter command
+
+--#1)
+DECLARE @__messageInfo VARCHAR(200)
+__tryAgain:
+IF (dbo.f_dba_check_long_holding_locks ('translog' /*tableName*/, getdate() /*current time*/, 1000 /*long query exceeded 1s*/, 1 /*retry in 1 min*/)) = 1
+BEGIN
+	SELECT @__messageInfo = 'curdt: ' + convert(varchar(50), getdate(), 121) + ' | Too many long running operations on the table. Retry attempt again ...'
+	RAISERROR(@__messageInfo, 0, 1) WITH NOWAIT
+	WAITFOR DELAY '00:00:00:333' --wait for alter schema
+	GOTO __tryAgain
+END
+
+
+--doing.... 
+--#2 #3)
+SET LOCK_TIMEOUT 1024
+SET DEADLOCK_PRIORITY LOW
+
+--#4
+GO
+   
+ALTER TRIGGER [dbo].[TransLog_After_Insert]
+ON [dbo].[translog]
+FOR INSERT
+AS
+/*
+    Created: Joe@
+    DB: DB05.BODB02
+    Task: 
+    Revision:
+        - 20190611@Patrick: CN88 integration
+        - 20210309@Kathy: Allow null for bettype,actual_stake, winlost, playercomm [Redmine:#138552]
+        - 20220912@Helen: clone trigger from db05 to sitedb for scaleout project [176932]
+		- 20230615@Kathy: add new column winlostdate [Redmine:#181595]
+*/
+BEGIN
+    --if this record belong to CN88 member then skip get data from v_BalanceTable.
+    DECLARE @__IsCN88 BIT
+    IF EXISTS (SELECT TOP 1 1 FROM inserted d 
+                WHERE EXISTS (
+                    SELECT TOP 1 1 FROM dbo.CS_CustSuper c WITH(NOLOCK) 
+                    WHERE d.srecommend =  c.CustId))
+    BEGIN
+        SET @__IsCN88 = 1
+    END
+    ELSE
+    BEGIN
+        SET @__IsCN88 = 0
+    END
+
+    IF @__IsCN88 = 0
+    BEGIN
+        --PRINT GETDATE()
+        INSERT INTO BalanceTrigger (
+            custid, transid, bettype, 
+            actual_stake, winlost, playercomm,
+            BalanceChanged,
+            ActionDate, ActionID, [Action],
+            BTBalance, winlostdate)
+        SELECT
+            i.custid, translogid, gameID, ISNULL(actual_stake,0), 0, 0,
+            CASE statusID
+            WHEN 0 THEN -ISNULL(actual_stake,0)
+            ELSE 0 END,
+            current_timestamp,
+            011, -- TransLog insert
+            --'Insert ' + CASE WHEN bettype < 19001 then 'Bet' ELSE 'Transfer' END + ', status ' + [status]
+            -- my suggested pattern (Joe)
+            'TransLog inserted as ' + [status],
+            NULL Balance,
+			i.winlostdate
+            --v.Balance
+        FROM
+            inserted i
+            --INNER JOIN DBTRANS.bodb02.dbo.v_BalanceTable v ON i.custid = v.custid
+        WHERE
+            i.custid <> recommend AND
+            i.custid <> mrecommend AND
+            i.custid <> srecommend
+            --AND custid = 2211693
+            --AND currency IN (3, 5, 20)
+        ORDER BY
+            i.translogid
+    END
+    ELSE
+    BEGIN
+        INSERT INTO BalanceTrigger (
+            custid, transid, bettype, 
+            actual_stake, winlost, playercomm,
+            BalanceChanged,
+            ActionDate, ActionID, [Action],
+            BTBalance, winlostdate)
+        SELECT
+            i.custid, translogid, gameID, ISNULL(actual_stake,0), 0, 0,
+            CASE statusID
+            WHEN 0 THEN -ISNULL(actual_stake,0)
+            ELSE 0 END,
+            current_timestamp,
+            011, -- TransLog insert
+            --'Insert ' + CASE WHEN bettype < 19001 then 'Bet' ELSE 'Transfer' END + ', status ' + [status]
+            -- my suggested pattern (Joe)
+            'TransLog inserted as ' + [status],
+            --0 Balance
+            NULL AS Balance,
+			i.winlostdate
+        FROM
+            inserted i
+            --INNER JOIN DBTRANS.bodb02.dbo.v_BalanceTable v ON i.custid = v.custid
+        WHERE
+            i.custid <> recommend AND
+            i.custid <> mrecommend AND
+            i.custid <> srecommend
+            --AND custid = 2211693
+            --AND currency IN (3, 5, 20)
+        ORDER BY
+            i.translogid
+    END
+END

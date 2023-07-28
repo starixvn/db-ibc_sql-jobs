@@ -1,0 +1,118 @@
+/*<info serverAlias="DBBAH-bodb02" executers="" viewers="" isFunction="0"></info>*/
+/*
+   Created:Kathy@20230621  
+   DB: DBBAH-bodb02
+*/ 
+USE bodb02
+GO
+--A): alter trigger case:
+
+	--1)check long running
+	--2)set lock timeout
+	--3)set deadlock priority low
+	--4)GO
+	--5)alter trigger
+
+--B): alter table case:
+
+	--1)check long running
+	--2)set lock timeout
+	--3)set deadlock priority low
+	--4)alter command
+
+--#1)
+DECLARE @__messageInfo VARCHAR(200)
+__tryAgain:
+IF (dbo.f_dba_check_long_holding_locks ('Transfer' /*tableName*/, getdate() /*current time*/, 1000 /*long query exceeded 1s*/, 1 /*retry in 1 min*/)) = 1
+BEGIN
+	SELECT @__messageInfo = 'curdt: ' + convert(varchar(50), getdate(), 121) + ' | Too many long running operations on the table. Retry attempt again ...'
+	RAISERROR(@__messageInfo, 0, 1) WITH NOWAIT
+	WAITFOR DELAY '00:00:00:333' --wait for alter schema
+	GOTO __tryAgain
+END
+
+
+--doing.... 
+--#2 #3)
+SET LOCK_TIMEOUT 1024
+SET DEADLOCK_PRIORITY LOW
+
+--#4
+GO
+
+ALTER TRIGGER [dbo].[Transfer_After_Insert]
+ON [dbo].[Transfer]
+FOR INSERT
+AS
+/*
+    Created: Joe@
+    DB: DBBAH.BODB02
+    Task: 
+    Revision:
+        - 20220104@Kathy: init SP [Redmine:#162264]
+        - 20221110@Max: [LAP] Detail transaction_Display Different Balance Amount of Deposit & Withdrawal [Redmine: #180295]
+		- 20230615@Kathy: add new column winlostdate [Redmine:#181595]
+*/
+
+BEGIN
+
+        INSERT INTO BalanceTrigger (
+            custid, transid, bettype, 
+            actual_stake, winlost, playercomm,
+            BalanceChanged,
+            ActionDate, ActionID, [Action],
+            BTBalance,
+            MatchId, StatusId, SettlementType,
+            swinlost, mwinlost, awinlost,
+            scomm, acomm, comm, modds, winlostdate)
+        SELECT
+            i.custid, transid, bettype, isnull(actual_stake,0), isnull(winlost,0), playercomm,
+            CASE bettype 
+            WHEN 19999 THEN 0
+            WHEN 20000 THEN 0
+            ELSE isnull(winlost,0) - ISNULL(actual_stake, 0) + ISNULL(playercomm,0) END,
+            current_timestamp,
+            CASE
+            WHEN bettype > 20000 THEN 110 -- transfer insert
+            WHEN bettype = 19999 THEN 100 -- SUM insert
+            WHEN bettype = 20000 THEN 255 -- Balance insert
+            ELSE 0 END,
+
+            CASE
+            WHEN bettype = 19999 THEN 'SUM ' + CONVERT(varchar(10), i.winlostdate, 120)
+            WHEN bettype = 20000 THEN 'BAL ' + CONVERT(varchar(10), i.winlostdate, 120)
+            WHEN bettype > 20000 THEN 'Transfer'
+            END + ' inserted' + ' (' + CAST(refno AS varchar(50)) + ')'
+            ,
+
+            -- Joe@2021-11-23
+            -- will see later if have value for Balance in this Transfer table
+            -- may start to record the number rather than NULL                      
+            --CASE
+            --WHEN bettype < 19001 THEN ISNULL(i.Balance,0) - isnull(actual_stake,0) + isnull(winlost,0) + playercomm
+            --ELSE NULL END
+            NULL
+            AS BTBalance,
+
+
+            0 --i.matchid
+            ,i.statusID
+            ,0 -- SettlementType
+            ,i.swinlost, i.mwinlost, i.awinlost
+            ,i.scomm, i.acomm, i.comm, 0 --i.modds
+			,i.winlostdate
+        FROM
+            inserted i with (nolock)
+            --INNER JOIN DBTRANS.bodb02.dbo.v_BalanceTable v ON i.custid = v.custid
+            CROSS APPLY (SELECT TOP 1 1 as valid 
+                        FROM dbo.f_dba_transid_revert(i.TransId,0)
+                        WHERE SiteDBGroupID = 0
+                        ) AS t
+        WHERE
+            i.custid <> recommend AND
+            i.custid <> mrecommend AND
+            i.custid <> srecommend
+        ORDER BY
+            i.transid
+
+END
