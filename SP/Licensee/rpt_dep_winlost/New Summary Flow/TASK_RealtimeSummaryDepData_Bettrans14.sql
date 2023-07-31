@@ -79,6 +79,7 @@ AS
 		- 20230227@Evan: Ensure correct balance calculation when allow to transfer 247 (BU) [Redmine: #173554]
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 		- 20230626@Evan: Integrate MG-RNG (Normal+Promotion Game) [RedmineID: #189988]
+		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #189988]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -340,7 +341,8 @@ BEGIN
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
-				WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
+				WHEN bettype = 5301  THEN 231 -- VS3 (old)
+				WHEN bettype BETWEEN 5302 AND 5399 THEN 178 -- VS3
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
@@ -447,7 +449,8 @@ BEGIN
 				WHEN bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 				WHEN bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
-				WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
+				WHEN bettype = 5301  THEN 231 -- VS3 (old)
+				WHEN bettype BETWEEN 5302 AND 5399 THEN 178 -- VS3
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG

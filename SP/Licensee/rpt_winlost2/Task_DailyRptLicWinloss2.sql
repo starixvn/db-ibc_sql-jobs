@@ -122,6 +122,7 @@ AS
 		- 20230602@Evan: Support add new betfrom '#'&'A000' [Redmine: #188811]
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 		- 20230626@Evan: Integrate MG-RNG (Normal+Promotion Game) [RedmineID: #189988]
+		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -252,7 +253,8 @@ BEGIN
 			WHEN b.bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 			WHEN b.bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 			WHEN b.bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
-			WHEN b.bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
+			WHEN b.bettype = 5301 THEN 231 -- VS3 (old)
+			WHEN b.bettype BETWEEN 5302 AND 5399 THEN 178 -- LG (VS3)
 			WHEN b.bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
@@ -381,7 +383,8 @@ BEGIN
 			WHEN b.bettype BETWEEN 7301 AND 7600 THEN 167 -- CG
 			WHEN b.bettype BETWEEN 7701 AND 7799 THEN 172 -- AP
 			WHEN b.bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
-			WHEN b.bettype BETWEEN 5301 AND 5399 THEN 231 -- VS3
+			WHEN b.bettype = 5301 THEN 231 -- VS3 (old)
+			WHEN b.bettype BETWEEN 5302 AND 5399 THEN 178 -- LG (VS3)
 			WHEN b.bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
