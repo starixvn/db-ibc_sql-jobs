@@ -20,6 +20,7 @@ AS
 	- 20201007@Sophia: Hot fix - account keep waiting [Redmine: #143099]
 	- 20210729@Sol: Hot fix - change table which is used in order by - [Redmine: #159245]
 	- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
+	- 20230614@Danny: scale out credit [Redmine: #181595]
 */
 BEGIN
 
@@ -30,6 +31,9 @@ BEGIN
 	DECLARE @CustIdList  VARCHAR(MAX), @ID INT, @t INT
 	CREATE TABLE #Cust (ID INT IDENTITY (1,1), Custid INT, Status VARCHAR(20) ,TransferType TINYINT, LastTransfer DATETIME, IsTransferring BIT)
 
+	DECLARE @Server_SiteDBGroupID SMALLINT
+	SELECT @Server_SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
+
 	SET @today = CURRENT_TIMESTAMP
 	
 	-- prepare for running
@@ -39,9 +43,10 @@ BEGIN
 		INSERT INTO #Cust (Custid, Status, TransferType, LastTransfer, IsTransferring)
 		SELECT a.custid, a.Status, a.TransferType, a.LastTransfer, a.IsTransferring 
 		FROM DBCUST.custdb.dbo.Acc_ClearBalanceList a WITH(NOLOCK)
-			INNER JOIN DBCUST.custdb.dbo.CustProductStatus c WITH(NOLOCK)
-				ON c.CustID = a.CustID
-		WHERE a.[Status] = 'waiting'
+		INNER JOIN DBCUST.custdb.dbo.CustProductStatus c WITH(NOLOCK) 	ON c.CustID = a.CustID
+		INNER JOIN CustDB.dbo.Customer ct  WITH(NOLOCK) ON ct.custid = a.CustID
+		INNER JOIN  CustDB.dbo.site s WITH (NOLOCK) ON ct.site = s.site
+		WHERE s.SiteDBGroupID = @Server_SiteDBGroupID AND  a.[Status] = 'waiting'
 		ORDER BY c.SuspendInfo, c.CloseInfo
 		
 		------------------------------------------------------------------------
