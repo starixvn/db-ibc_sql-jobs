@@ -29,6 +29,7 @@ AS
 		-20210416@Winfred: remove the check PT rule for Sportsbook [RedmineID:#153633]
 		-20210614@Winfred: remove check PT value rule all product [RedmineID:#156790]
 		-20220830@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		-20230717@Winfred: Deposit - Detect players who has redundant individual settings[redmine:#191057]
 		
 	Param's Explanation:
 */
@@ -238,6 +239,22 @@ BEGIN
 					AND c.mrecommend NOT IN(SELECT custid FROM #Dummy)	
 					AND c.roleid =1 AND s.CustID IS NULL
 					AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)		
+		END
+	END
+	IF @RuleId IN (0,33)
+	BEGIN	
+		IF EXISTS(SELECT 1 FROm #tmpProfile)
+		BEGIN
+			INSERT INTO [dbo].CheckPTResult_Deposit(RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsLive])
+			SELECT 33,NULL,NULL,c.custid,NULL,NULL,NULL,GETDATE(),NULL
+			FROM CheckCustDB.dbo.CustInfo c WITH(NOLOCK)
+			WHERE c.srecommend=@srecommend 
+					AND c.custid NOT IN(SELECT custid FROM #Trade)		
+					AND c.mrecommend NOT IN(SELECT custid FROM #Dummy)	
+					AND c.roleid =1 
+					AND c.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)		
+					AND EXISTS (SELECT 1 FROM CheckCustDB.dbo.Dep_CustSettingMode csm WITH (NOLOCK) WHERE csm.CustID = c.CustID AND csm.IsGroupedPT = 1)
+					AND EXISTS (SELECT 1 FROM CheckCustDB.dbo.Dep_CustPTSetting_Member csm WITH (NOLOCK) WHERE csm.CustID = c.CustID )
 		END
 	END
 	

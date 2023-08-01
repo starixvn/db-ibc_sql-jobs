@@ -21,6 +21,7 @@ AS
 		- 20201211@Winfred: Remove OddAdj Acc[redmine:#147005]
 		- 20220407@Winfred: LG Virtual Sports - Add rule for new product for setting type 11 [redmine:#170454]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20230717@Winfred: Deposit - Detect players who has redundant individual settings[redmine:#191057]
 		
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
@@ -609,6 +610,18 @@ BEGIN
 			AND cs.MaxPermatch> cs.MaxPayoutPerMatch			
 	END
 
+	IF @RuleId IN (0,345) --Bet limit setting of member exists in both Individual and group			
+	BEGIN
+		INSERT INTO [dbo].[CheckBetLimitResult](RuleID,[SportType],[BetType],[CustIdA],[CustIdB],[ValueA],[ValueB],[CreatedDate],[IsDeposit])
+		SELECT 345,NULL,NULL,ci.CustID,NULL,NULL,NULL,GETDATE(),1
+		FROM CheckCustDB.dbo.custinfo ci WITH(NOLOCK)					
+		WHERE ci.srecommend = @srecommend
+			AND ci.roleid = 1
+			AND ci.custid NOT IN(SELECT custid FROM #ExcludeMember)	
+			AND ci.custid NOT IN (SELECT custid FROM #tblCustClosed WHERE roleid = 1)
+			AND EXISTS (SELECT 1 FROM CheckCustDB.dbo.Dep_CustSettingMode csm WITH (NOLOCK) WHERE csm.CustID = ci.CustID AND csm.IsGroupedBetLimit = 1)	
+			AND EXISTS (SELECT 1 FROM CheckCustDB.dbo.Dep_CustBetSettingGame_Member csm WITH (NOLOCK) WHERE csm.CustID = ci.CustID)	
+	END
 	
 	TRUNCATE TABLE #Dep_CustSetting_Super
 	TRUNCATE TABLE #Dep_CustSetting_Master
