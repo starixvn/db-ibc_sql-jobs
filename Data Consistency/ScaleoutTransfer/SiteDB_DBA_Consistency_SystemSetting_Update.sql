@@ -15,6 +15,7 @@ AS
 	Revisions: 
 		- 20220823@Sol: Scale out DBTrans - Detect data consistency SiteDB and CentralDB 
 						- update last transid into system setting - [Redmine:#175881]
+		- 20230706@Danny: deploy SP to SiteDB03 [Redmine: #181595]
 
 	Param's Expanation:
 */

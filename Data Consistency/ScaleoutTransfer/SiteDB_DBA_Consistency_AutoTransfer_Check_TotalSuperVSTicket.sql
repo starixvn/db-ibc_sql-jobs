@@ -18,6 +18,7 @@ AS
 		- 20221107@Evan: Count total super on each SiteGroupid [Redmine:#178864]
 		- 20221206@Danny: Skip check transfer Info - crypto Licensee [Redmine: #181343]
 		- 20230105@Danny: Skip check transfer Info - crypto Licensee [Redmine: #181343]
+		- 20230706@Danny: deploy SP to SiteDB03 [Redmine: #181595]
 
 	Param's Expanation:
 */
