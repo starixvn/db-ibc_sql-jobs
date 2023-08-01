@@ -63,6 +63,7 @@ AS
         - 20220912@Helen: scaleout project, exclude 'sitedb' data since it has been processed in sitedb already [176932]
         - 20221108@Victoria: Migration Data From SiteDB to CentralDB - Change to not capture when update sitedbgroupid = 0 [Redmine:#180033]
 		- 20230615@Kathy: check ticket was moved winlostdate, add new column winlostdate, refno [Redmine:#181595]
+		- 20230731@Kathy: exclude ticket <> sitedbgroupid = 0 [Redmine:#181595]
 */
 
 BEGIN
@@ -224,4 +225,5 @@ BEGIN
         d.custid <> d.mrecommend AND
         d.custid <> d.srecommend        
         AND d.SiteDBGroupID = 0
+		AND i.SiteDBGroupId = 0
 END
