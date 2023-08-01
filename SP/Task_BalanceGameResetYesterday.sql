@@ -19,6 +19,7 @@ AS
 			- 20191216@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+			- 20230414@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
 
 		Parameters Explanation:	
 */
@@ -27,6 +28,9 @@ CREATE TABLE #WeeklyResetCustomer(custid INT, srecommend INT)
 
 DECLARE @SporttypeRefWinlossLimit SMALLINT
 	, @BettypeRefWinlossLimit SMALLINT
+
+DECLARE @SiteDBGroupID smallint
+SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
 
 SELECT @SporttypeRefWinlossLimit = SporttypeRefWinlossLimit, 
 		@BettypeRefWinlossLimit = BettypeRefWinlossLimit
@@ -46,13 +50,16 @@ ELSE --others DCS products
 BEGIN
 	INSERT INTO #WeeklyResetCustomer(custid, srecommend)
 	SELECT c.custid, srecommend
-	FROM CustDB.dbo.custinfo c WITH (NOLOCK)
+	FROM CustDB.dbo.customer c WITH (NOLOCK)
+		INNER JOIN CustDB.dbo.Site s WITH(NOLOCK) 
+			ON c.site = s.Site
 		INNER JOIN DBCUST.CustDB.dbo.CustWinLossLimit_Member cwl WITH (NOLOCK) 
 			ON cwl.CustId = c.custid 
 			AND cwl.sporttype = @SporttypeRefWinlossLimit 
 			AND cwl.bettype = @BettypeRefWinlossLimit
-	WHERE c.roleid = 1 AND IsAutoReset = 0
-	
+	WHERE c.roleid = 1 
+		AND IsAutoReset = 0
+		AND s.SiteDBGroupID = @SiteDBGroupID
 END
 
 DECLARE @Yesterday SMALLDATETIME
