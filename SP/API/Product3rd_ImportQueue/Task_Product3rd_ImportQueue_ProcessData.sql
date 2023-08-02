@@ -287,14 +287,14 @@ BEGIN
 						DELETE #tmpSum_winloss_Exchange
 						WHERE ISNUMERIC(custId + '.e0') = 0
 
-						IF @@ROWCOUNT <> 0
-							SELECT @isInvalidUserId = 1
+						-- IF @@ROWCOUNT <> 0
+						-- 	SELECT @isInvalidUserId = 1
 
 						DELETE #tmpSum_winloss_Exchange_Detail
 						WHERE ISNUMERIC(custId + '.e0') = 0
 
-						IF @@ROWCOUNT <> 0
-							SELECT @isInvalidUserId = 1
+						-- IF @@ROWCOUNT <> 0
+						-- 	SELECT @isInvalidUserId = 1
 						
 						-- Detect duplicate betId per userId
 						DELETE t
@@ -543,8 +543,8 @@ BEGIN
 						DELETE #tmpBettrans_Exchange
 						WHERE ISNUMERIC(custId + '.e0') = 0
 
-						IF @@ROWCOUNT <> 0
-							SELECT @isInvalidUserId = 1
+						-- IF @@ROWCOUNT <> 0
+						-- 	SELECT @isInvalidUserId = 1
 
 						-- Detect duplicate betId per userId
 						DELETE t
@@ -554,8 +554,8 @@ BEGIN
 						) AS t
 						WHERE r > 1
 
-						IF @@ROWCOUNT <> 0
-							SELECT @isDuplicatedBetId = 1
+						-- IF @@ROWCOUNT <> 0
+						-- 	SELECT @isDuplicatedBetId = 1
 						
 						IF @isInvalidUserId = 1 OR @isDuplicatedBetId = 1
 						BEGIN

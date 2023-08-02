@@ -53,26 +53,26 @@ BEGIN
 	DECLARE @Subject VARCHAR(1000) = '', @Msg NVARCHAR(MAX) 
 
 	-- In case having error
-	IF EXISTS (SELECT 1 FROM @ErrTable)
-	BEGIN
-		SELECT @Subject = 'SQL Server Job System: ''Import data from API'' failed on ' + @@SERVERNAME
+	-- IF EXISTS (SELECT 1 FROM @ErrTable)
+	-- BEGIN
+	-- 	SELECT @Subject = 'SQL Server Job System: ''Import data from API'' failed on ' + @@SERVERNAME
 
-		SELECT @Msg = '<H3>List products have wrong data</H3>'
-						+ '<table border="1"> '
-						+ '<tr><th>No.</th><th>Product</th><th>Error Message</th></tr>'
-						+ CAST(( SELECT    td = ROW_NUMBER() OVER(ORDER BY (SELECT NULL)), '',
-													td = CASE WHEN e.ProductId = 0 THEN 'Novacash' ELSE p.ProductName END, '',
-													td = e.ErrMsg, ''
-										FROM @ErrTable e
-											LEFT JOIN bodb_licensee.dbo.Product3rd p WITH (NOLOCK) ON e.ProductId = p.ProductID
-										FOR XML PATH('tr'), TYPE 
-									) AS NVARCHAR(MAX) ) + N'</table>'
+	-- 	SELECT @Msg = '<H3>List products have wrong data</H3>'
+	-- 					+ '<table border="1"> '
+	-- 					+ '<tr><th>No.</th><th>Product</th><th>Error Message</th></tr>'
+	-- 					+ CAST(( SELECT    td = ROW_NUMBER() OVER(ORDER BY (SELECT NULL)), '',
+	-- 												td = CASE WHEN e.ProductId = 0 THEN 'Novacash' ELSE p.ProductName END, '',
+	-- 												td = e.ErrMsg, ''
+	-- 									FROM @ErrTable e
+	-- 										LEFT JOIN bodb_licensee.dbo.Product3rd p WITH (NOLOCK) ON e.ProductId = p.ProductID
+	-- 									FOR XML PATH('tr'), TYPE 
+	-- 								) AS NVARCHAR(MAX) ) + N'</table>'
 			
-		EXEC msdb.dbo.sp_send_dbmail
-			@recipients		= 'sophia.nguyen@starixvn.com;pontus@starixvn.com',
-			@subject		= @subject,
-			@body			= @Msg,
-			@body_format	= 'HTML'
-	END
+	-- 	EXEC msdb.dbo.sp_send_dbmail
+	-- 		@recipients		= 'sophia.nguyen@starixvn.com;pontus@starixvn.com',
+	-- 		@subject		= @subject,
+	-- 		@body			= @Msg,
+	-- 		@body_format	= 'HTML'
+	-- END
 END
 GO
