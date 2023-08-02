@@ -102,6 +102,7 @@ BEGIN
 	CREATE TABLE #tmpTransLog (		
 		translogid	BIGINT
 	)
+	DECLARE @tmpProductId TABLE (ProductId INT)
 
 	SET @transId = ''
 	SET @translogid = ''
@@ -119,14 +120,6 @@ BEGIN
 		WHERE matchid = @ProductId 
 	END
 
-	IF @tablename = 'bettransLC' OR @tablename = 'bettransRNG'
-	BEGIN
-		INSERT INTO #tmpBettrans(transId, stake, winlost)
-		SELECT	transId, stake, winlost
-		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-		WHERE winlostdate <= @yesterday
-	END
-
 	IF @ProductId IN (244, 241)
 	BEGIN
 		INSERT INTO #tmpBettransG(custid,refno, stake, winlost)
@@ -138,6 +131,20 @@ BEGIN
 
 	IF @ProductId IN (244) OR @tablename = 'bettransLC'
 	BEGIN
+		IF @tablename = 'bettransLC'
+		BEGIN
+			INSERT INTO @tmpProductId (ProductId) 
+			SELECT DISTINCT SportType AS ProductId
+			FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+			WHERE RefTable = 2 AND Enabled = 1 AND IsTest = 0
+			
+			INSERT INTO #tmpBettrans(transId, stake, winlost, statusId)
+			SELECT	transId, stake, winlost, statusId
+			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+				INNER JOIN @tmpProductId p ON b.matchid = p.ProductId
+			WHERE winlostdate <= @yesterday
+		END
+		
 		INSERT INTO #tmpBettransLC(custid,refno, stake, winlost)
 		SELECT custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
 		FROM bodb02.dbo.bettransLC WITH (NOLOCK)
@@ -150,6 +157,17 @@ BEGIN
 
 	IF @tablename = 'bettransRNG'
 	BEGIN
+		INSERT INTO @tmpProductId (ProductId) 
+		SELECT DISTINCT SportType AS ProductId
+		FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+		WHERE RefTable = 1 AND Enabled = 1 AND IsTest = 0
+			
+		INSERT INTO #tmpBettrans(transId, stake, winlost, statusId)
+		SELECT	transId, stake, winlost, statusId
+		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+			INNER JOIN @tmpProductId p ON b.matchid = p.ProductId
+		WHERE winlostdate <= @yesterday
+		
 		INSERT INTO #tmpBettransRNG(custid,refno, stake, winlost)
 		SELECT custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
 		FROM bodb02.dbo.bettransRNG WITH (NOLOCK)
@@ -437,18 +455,17 @@ BEGIN
 	--Rule #56: Check if tickets in translog are settled to bettrans correspondently
 	IF @tablename = 'translog'
 	BEGIN
-		DECLARE @tmpSporttype_TransLog TABLE (SportType SMALLINT)
 		DECLARE @tbltranslogid TABLE (translogid BIGINT)
 
-		INSERT INTO @tmpSporttype_TransLog (SportType)
-		SELECT	DISTINCT SportType 
+		INSERT INTO @tmpProductId (ProductId)
+		SELECT	DISTINCT SportType AS ProductId
 		FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
 		WHERE RefTable IN (3) AND IsTest = 0 AND Enabled = 1
 
 		INSERT INTO #tmpBettrans(refno)
-		SELECT refno
+		SELECT b.refno
 		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
-			INNER JOIN @tmpSporttype_TransLog t ON b.matchid = t.SportType
+			INNER JOIN @tmpProductId p ON b.matchid = p.ProductId
 
 		INSERT INTO #tmpTransLog (translogid)
 		SELECT t.translogid
