@@ -7,11 +7,12 @@ AS
 	Revision:
 		- 20131108@Elodie: Splitting bodb02 into CustDB (Call CustInfo, Exchange by link database)
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
+		- 20230803@Brice: scaleout site 3 - fix null value of totalamt if no transaction [Redmine:#191003]
 */
 
 INSERT INTO dbo.Task_BalanceRecord (step, winlostdate, SPCode, TotalAmt, TotalSum)
 --exec companybalance2
-SELECT @InitStepNo, @winlostdate, 0, sum(totalamt) as totalamt, sum(totalSum) As totalSUM
+SELECT @InitStepNo, @winlostdate, 0, IsNull(sum(totalamt),0) as totalamt, IsNull(sum(totalSum),0) As totalSUM
 FROM 
 (
 SELECT
@@ -31,8 +32,8 @@ where winlostdate <= @winlostdate
 INSERT INTO dbo.Task_BalanceRecord (step, winlostdate, SPCode, TotalAmt, TotalSum)
 --exec admin_rpt_sabalance
 SELECT @InitStepNo + 1, @winlostdate, 1,
-	SUM(e.actualrate * IsNull(bal,0)) bal,
-	SUM( IsNull(bal,0)) bal2
+	IsNull(SUM(e.actualrate * IsNull(bal,0)),0) bal,
+	IsNull(SUM( IsNull(bal,0)),0) bal2
 FROM CustDB.dbo.custinfo c (nolock)
 LEFT OUTER JOIN (
 SELECT b.srecommend, SUM(b.Bal) Bal

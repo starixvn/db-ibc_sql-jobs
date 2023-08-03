@@ -8,11 +8,12 @@ AS
 		-- 20131108@Elodie: Splitting bodb02 into CustDB (call custinfo, Exchange by link database)
 		- 20211214@Kathy: Separate Transfer Tickets[Redmine:#164197]
 		- 20220317@Kathy: Dont get data from bettrans [Redmine:#170113]
+		- 20230803@Brice: scaleout site 3 - fix null value of totalamt if no transaction [Redmine:#191003]
 */
 IF @winlostdate IS NULL
 BEGIN
-	select 0, SUM(totalamt) AS totalamt
-		,sum(totalSum) AS totalSum
+	select 0, IsNull(SUM(totalamt),0) AS totalamt
+		,IsNull(sum(totalSum),0) AS totalSum
 	FROM(
 	SELECT 
 		sum((winlost-actual_stake+awinlost+mwinlost+swinlost +scomm)*e.actualrate) totalamt,
@@ -27,8 +28,8 @@ BEGIN
 	) b
 
 	SELECT 1,
-		SUM(e.actualrate * IsNull(bal,0)) bal,
-		SUM( IsNull(bal,0)) bal2
+		IsNull(SUM(e.actualrate * IsNull(bal,0)),0) bal,
+		IsNull(SUM( IsNull(bal,0)),0) bal2
 	FROM CustDB.dbo.custinfo c (nolock)
 	LEFT OUTER JOIN (
 		SELECT bal.srecommend, SUM(bal.Bal) AS Bal
@@ -59,8 +60,8 @@ BEGIN
 	SELECT @step,
 		@winlostdate,
 		0,
-		sum((winlost-actual_stake+awinlost+mwinlost+swinlost +scomm)*e.actualrate) totalamt,
-		sum((winlost-actual_stake+awinlost+mwinlost+swinlost +scomm)) TotalSUM
+		IsNull(sum((winlost-actual_stake+awinlost+mwinlost+swinlost +scomm)*e.actualrate),0) totalamt,
+		IsNull(sum((winlost-actual_stake+awinlost+mwinlost+swinlost +scomm)),0) TotalSUM
 	from dbo.transfer t with (rowlock) 
 		inner join CustDB.dbo.exchange e with (nolock) 
 			ON t.currency=e.exchangeid
@@ -69,8 +70,8 @@ BEGIN
 	INSERT INTO dbo.Task_BalanceRecord (step, winlostdate, SPCode, TotalAmt, TotalSum)
 	--exec admin_rpt_sabalance
 	SELECT @step+1, @winlostdate, 1,
-		SUM(e.actualrate * IsNull(bal,0)) bal,
-		SUM( IsNull(bal,0)) bal2
+		IsNull(SUM(e.actualrate * IsNull(bal,0)),0) bal,
+		IsNull(SUM( IsNull(bal,0)),0) bal2
 	FROM CustDB.dbo.custinfo c (nolock)
 	LEFT OUTER JOIN (
 		SELECT srecommend, SUM(Bal) AS Bal
