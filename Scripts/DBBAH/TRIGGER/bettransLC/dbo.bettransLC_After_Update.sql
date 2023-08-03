@@ -54,6 +54,7 @@ AS
         - 20220912@Helen: scaleout project, exclude 'sitedb' data since it has been processed in sitedb already [176932]
         - 20221108@Victoria: Migration Data From SiteDB to CentralDB - Change to not capture when update sitedbgroupid = 0 [Redmine:#180033]
 		- 20230614@Kathy: add new column winlostdate [Redmine:#189598]
+		- 20230731@Kathy: exclude ticket <> sitedbgroupid = 0 [Redmine:#181595]
 */
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
@@ -112,6 +113,7 @@ BEGIN
         d.custid <> d.mrecommend AND
         d.custid <> d.srecommend
         AND d.SiteDBGroupID = 0
+		AND i.SiteDBGroupID = 0
         -- Joe@20120705 : eliminate row which data is not change 
         AND (
             ISNULL(i.actual_stake,0) <> ISNULL(d.actual_stake,0) OR ISNULL(i.winlost,0) <> ISNULL(d.winlost,0) OR ISNULL(i.playercomm,0) <> ISNULL(d.playercomm,0)
