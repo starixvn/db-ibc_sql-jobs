@@ -118,6 +118,7 @@ BEGIN
 			, refno, playerdiscount, discount, sdiscount, adiscount
 		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
 		WHERE matchid = @ProductId 
+			AND winlostdate <= @yesterday
 	END
 
 	IF @ProductId IN (244, 241)
