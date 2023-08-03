@@ -44,6 +44,7 @@ AS
 		- 20221013@July: Add rule - Ensure each translog ticket only has one bettrans ticket [Redmine:#179020]
 		- 20230118@July: Jili - Add rule check if no discount, no comm [Redmine:#182955]
 		- 20230531@July: Remove unnecessary rules [Redmine:#186736]
+		- 20230727@July: Modify SP to utilize index properly [Redmine:#191812]
 
 		Param's Expanation:
 */
@@ -78,7 +79,6 @@ BEGIN
 		,adiscount			DECIMAL(9,8)
 		,discount			DECIMAL(9,8)
 		,playerdiscount		DECIMAL(9,8)
-		,actual_stake		MONEY
 	)
 
 	CREATE TABLE #tmpBettransG (		
@@ -102,28 +102,24 @@ BEGIN
 	CREATE TABLE #tmpTransLog (		
 		translogid	BIGINT
 	)
+	DECLARE @tmpProductId TABLE (ProductId INT)
 
 	SET @transId = ''
 	SET @translogid = ''
 	
-	DECLARE @tmpSporttype_TransLog TABLE (SportType SMALLINT)
-	INSERT INTO @tmpSporttype_TransLog (SportType)
-	SELECT	DISTINCT SportType 
-	FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
-	WHERE RefTable IN (3) AND IsTest = 0 AND Enabled = 1
 
-	INSERT INTO #tmpBettrans(transId, scomm, acomm, comm, playercomm
-		, bettype, statusId, stake,winlost, custid, srecommend, winlostdate, currency
-		, refno, playerdiscount, discount, sdiscount, adiscount, actual_stake)
-	SELECT	transId, scomm, acomm, comm, playercomm
+	IF @ProductId IS NOT NULL
+	BEGIN
+		INSERT INTO #tmpBettrans(transId, scomm, acomm, comm, playercomm
 		, bettype, statusId, stake, winlost, custid, srecommend, winlostdate, currency
-		, refno, playerdiscount, discount, sdiscount, adiscount, actual_stake
-	FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		LEFT JOIN @tmpSporttype_TransLog t ON b.matchid = t.SportType
-	WHERE 1 = CASE WHEN matchid = @ProductId THEN 1 
-				   WHEN winlostdate <= @yesterday AND (@tablename = 'bettransLC' OR @tablename = 'bettransRNG') THEN 1
-				   WHEN @tablename = 'translog' AND t.SportType IS NOT NULL THEN 1
-				   ELSE 0 END
+		, refno, playerdiscount, discount, sdiscount, adiscount)
+		SELECT	transId, scomm, acomm, comm, playercomm
+			, bettype, statusId, stake, winlost, custid, srecommend, winlostdate, currency
+			, refno, playerdiscount, discount, sdiscount, adiscount
+		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+		WHERE matchid = @ProductId 
+			AND winlostdate <= @yesterday
+	END
 
 	IF @ProductId IN (244, 241)
 	BEGIN
@@ -136,6 +132,20 @@ BEGIN
 
 	IF @ProductId IN (244) OR @tablename = 'bettransLC'
 	BEGIN
+		IF @tablename = 'bettransLC'
+		BEGIN
+			INSERT INTO @tmpProductId (ProductId) 
+			SELECT DISTINCT SportType AS ProductId
+			FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+			WHERE RefTable = 2 AND Enabled = 1 AND IsTest = 0
+			
+			INSERT INTO #tmpBettrans(transId, stake, winlost, statusId)
+			SELECT	transId, stake, winlost, statusId
+			FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+				INNER JOIN @tmpProductId p ON b.matchid = p.ProductId
+			WHERE winlostdate <= @yesterday
+		END
+		
 		INSERT INTO #tmpBettransLC(custid,refno, stake, winlost)
 		SELECT custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
 		FROM bodb02.dbo.bettransLC WITH (NOLOCK)
@@ -148,6 +158,17 @@ BEGIN
 
 	IF @tablename = 'bettransRNG'
 	BEGIN
+		INSERT INTO @tmpProductId (ProductId) 
+		SELECT DISTINCT SportType AS ProductId
+		FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+		WHERE RefTable = 1 AND Enabled = 1 AND IsTest = 0
+			
+		INSERT INTO #tmpBettrans(transId, stake, winlost, statusId)
+		SELECT	transId, stake, winlost, statusId
+		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+			INNER JOIN @tmpProductId p ON b.matchid = p.ProductId
+		WHERE winlostdate <= @yesterday
+		
 		INSERT INTO #tmpBettransRNG(custid,refno, stake, winlost)
 		SELECT custid, refno, sum(stake) AS stake, sum(winlost) AS winlost
 		FROM bodb02.dbo.bettransRNG WITH (NOLOCK)
@@ -435,15 +456,25 @@ BEGIN
 	--Rule #56: Check if tickets in translog are settled to bettrans correspondently
 	IF @tablename = 'translog'
 	BEGIN
+		DECLARE @tbltranslogid TABLE (translogid BIGINT)
+
+		INSERT INTO @tmpProductId (ProductId)
+		SELECT	DISTINCT SportType AS ProductId
+		FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+		WHERE RefTable IN (3) AND IsTest = 0 AND Enabled = 1
+
+		INSERT INTO #tmpBettrans(refno)
+		SELECT b.refno
+		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+			INNER JOIN @tmpProductId p ON b.matchid = p.ProductId
+
 		INSERT INTO #tmpTransLog (translogid)
 		SELECT t.translogid
 		FROM bodb02.dbo.translog t WITH (NOLOCK)
-			INNER JOIN @tmpSporttype_TransLog s ON t.productID = s.SportType
 		WHERE t.statusId IN (111,112,113) AND t.winlostdate = @yesterday
 
 		IF @Rule = 'compare_ticket'
 		BEGIN
-			DECLARE @tbltranslogid TABLE (translogid BIGINT)
 
 			INSERT INTO @tbltranslogid (translogid)
 			SELECT translogid
