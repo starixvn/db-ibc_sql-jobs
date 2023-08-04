@@ -14,6 +14,7 @@ AS
 	Revisions: 
 		- 20230414@July: Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets in bettrans, bettransLC, bettransRNG, bettransG - [Redmine:#186426]
 		- 20230531@July: Check ticket data consistency [Redmine: #186736]
+		- 20230804@July: @CheckMode =  1 (bettrans) - Exclude ticket of product Saba promotion [Redmine: #192294]
 
 	Param's Expanation:
 		Notes: For SAGaming(244), BBIN(241) check data in bettransG
@@ -98,7 +99,8 @@ BEGIN
 			FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
 			WHERE RefTable IN (0,3) --0: bettrans, 3 translog
 				AND IsTest = 0 AND Enabled = 1
-		
+				AND ProductID NOT IN (37) -- Exclude product Saba promotion
+
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM bodb02.dbo.bettrans b WITH(NOLOCK) 
 				INNER JOIN @tmBettypes s ON b.bettype =  s.Bettype
