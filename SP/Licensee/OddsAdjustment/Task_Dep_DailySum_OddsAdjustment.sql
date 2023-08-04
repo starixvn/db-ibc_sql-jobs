@@ -20,6 +20,7 @@ AS
 		- 20221128@Evan: Fix tickets not replicated from SiteDB to CentralDB [Redmine: #180937]
 		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
 		- 20230705@Evan: Add Servername SiteDB [RedmineID: #190906]
+		- 20230712@Evan: Exclude ticket with Myanmar Odds [RedmineID: #188705]
 */
 BEGIN
 	
@@ -216,7 +217,7 @@ BEGIN
 		b.winlostdate = @WLDate
 		AND b.statusID IN (101, 102, 103, 111, 112, 113) -- reject, void, refund, draw, won, lose
 		AND bi.OriginalOdds IS NOT NULL
-	
+		AND b.OddsType <> 6 -- Exclude Myanmar Odds
 	GROUP BY b.winlostdate
 			,t.SuperId
 			,t.CurrencyId

@@ -19,6 +19,7 @@ AS
 		- 20220714@Evan: Modify sp to avoid dump (remove code select into) - [Redmine: #175450]
 		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
 		- 20230705@Evan: Add Servername SiteDB [RedmineID: #190906]
+		- 20230712@Evan: Exclude ticket with Myanmar Odds [RedmineID: #188705]
 
 */
 BEGIN
@@ -226,6 +227,7 @@ BEGIN
 		b.winlostdate = @WLDate
 		AND bi.OriginalOdds IS NOT NULL
 		AND b.statusID IN (101, 102, 103, 111, 112, 113) -- reject, void, refund, draw, won, lose
+		AND b.OddsType <> 6 -- Exclude Myanmar Odds
 	
 	GROUP BY b.winlostdate
 			,t.SuperId
