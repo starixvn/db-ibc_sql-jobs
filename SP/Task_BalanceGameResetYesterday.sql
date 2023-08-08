@@ -2,6 +2,7 @@
 ALTER PROCEDURE [dbo].[Task_BalanceGameResetYesterday] 
 	@sporttype SMALLINT = -1
 	, @bettype SMALLINT = 1101
+	, @SettingStatus TINYINT = 0
 AS
 /*
 		Created: Dan	
@@ -20,6 +21,7 @@ AS
 			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 			- 20230414@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
+			- 20230804@Eden: Win loss limit - Change SP to allow dynamic seting [RedmineID: #180640]
 
 		Parameters Explanation:	
 */
@@ -35,9 +37,12 @@ SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
 SELECT @SporttypeRefWinlossLimit = SporttypeRefWinlossLimit, 
 		@BettypeRefWinlossLimit = BettypeRefWinlossLimit
 FROM DBCUST.CustDB.dbo.SportBettypeSettingMatrix st WITH(NOLOCK) 
+	INNER JOIN CustDB.dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 22, @SettingStatus) AS s
+			ON st.SporttypeRefWinlossLimit = s.SportType 
+			AND st.BettypeRefWinlossLimit = s.Bettype
+			AND st.isLicensee = 0 AND st.Site = 'ALL'
 WHERE st.SportType = @SportType
 	AND st.bettype = @BetType
-	AND st.isLicensee = 0 AND st.Site = 'ALL'
 
 SELECT @SporttypeRefWinlossLimit = ISNULL(@SporttypeRefWinlossLimit,@SportType), 
 		@BettypeRefWinlossLimit = ISNULL(@BettypeRefWinlossLimit,@BetType)
