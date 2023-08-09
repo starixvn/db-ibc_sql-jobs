@@ -64,6 +64,8 @@ AS
         - 20221108@Victoria: Migration Data From SiteDB to CentralDB - Change to not capture when update sitedbgroupid = 0 [Redmine:#180033]
 		- 20230615@Kathy: check ticket was moved winlostdate, add new column winlostdate, refno [Redmine:#181595]
 		- 20230731@Kathy: exclude ticket <> sitedbgroupid = 0 [Redmine:#181595]
+		- 20230808@Kathy: Filter out Recover Bets [Redmine:#191844]
+
 */
 
 BEGIN
@@ -194,16 +196,18 @@ BEGIN
             - (ISNULL(d.winlost,0) - ISNULL(d.actual_stake, 0) + ISNULL(d.playercomm,0))
         ,i.matchid
         ,isnull(i.statusID,0)
-        ,CASE 
-            WHEN (isnull(i.statusID,0) BETWEEN 111 AND 113 OR isnull(i.statusID,0) = 103) 
+        ,CASE
+			WHEN ISNULL(d.statusid,0) = 102 AND ISNULL(i.statusid,0) = 0 THEN 10 -- change from void to running
+			WHEN ISNULL(d.statusid,0) = 112 AND ISNULL(i.statusid,0) = 102 THEN 11 -- change from won to void
+            WHEN (ISNULL(i.statusID,0) BETWEEN 111 AND 113 OR ISNULL(i.statusID,0) = 103) 
                 THEN CASE 
                         WHEN d.SettlementTime IS NULL THEN 1 -- first settled
                         WHEN i.SettlementTime <> d.SettlementTime 
                             THEN CASE
-                                    WHEN isnull(d.statusID,0) = 0 THEN 2 -- change from running to settle 
+                                    WHEN ISNULL(d.statusID,0) = 0 THEN 2 -- change from running to settle 
                                     ELSE 3 
                                 END -- re-settled: change from settle to settle
-                        WHEN isnull(d.statusID,0) BETWEEN 111 AND 113 THEN 4 -- settle to settle, no change winlost
+                        WHEN ISNULL(d.statusID,0) BETWEEN 111 AND 113 THEN 4 -- settle to settle, no change winlost
                         ELSE 0 
                     END
             ELSE 0
