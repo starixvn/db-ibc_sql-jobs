@@ -1,10 +1,10 @@
 /*<info serverAlias="DBAFF12BET-Affiliate_12BET" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_NewAPIProduct_ImportQueue_Process]
-	@TpType			INT,
-	@SubItem		VARCHAR(200),
-	@QueueIdInput	INT = 0, -- manually import
-	@ErrCode		INT = 0 OUTPUT,
-	@ErrMsg			NVARCHAR(4000) = '' OUTPUT
+	@TpType			INT
+	,@SubItem		VARCHAR(200)
+	,@QueueIdInput	INT = 0 -- manually import
+	,@ErrCode		INT = 0 OUTPUT
+	,@ErrMsg		NVARCHAR(4000) = '' OUTPUT
 AS
 
 /*
@@ -14,21 +14,23 @@ AS
 
 	Revisions:
 		- 20221117@Malcolm: Initialize SP [RedmineID: #180311]
-		- 20230510@Eddie: Change datatype of 'TransactionId' and change 'TransactionId' to lowercase of products different from 'skywind'   [RedmineID: #180311]
+		- 20230510@Eddie: Change datatype of 'TransactionId', change 'TransactionId' to lowercase of products different from 'skywind' and fix to get queueid for product "12Crystal GPI" [RedmineID: #180311]
 */
 
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @QueueId BIGINT, @WinlostDate SMALLDATETIME, @LastQueueId BIGINT, @MaxWinlostDate SMALLDATETIME, @SuccessfullMsg NVARCHAR(200) = 'Successfully'
-		   ,@ProductId INT = -1, @TimeZone FLOAT, @GMTData INT = 8, @JsonData NVARCHAR(MAX)
+	DECLARE @QueueId BIGINT, @WinlostDate SMALLDATETIME, @LastQueueId BIGINT, @MaxWinlostDate SMALLDATETIME, @SuccessfullMsg NVARCHAR(200) = 'Successfully', @ProductId INT = -1, @TimeZone FLOAT, @GMTData INT = 8, @JsonData NVARCHAR(MAX)
 
-	DECLARE @Exchange TABLE (ExchangeDate SMALLDATETIME, ExchangeId INT, Currency NVARCHAR(50), ExRate FLOAT, AffExRate FLOAT)
 	DECLARE @tmpWinlostDate TABLE (winlostdate SMALLDATETIME)
 
-	SELECT @ProductId = ProductId FROM dbo.APIProductMappingSettings s WITH(NOLOCK) WHERE s.TpType = @TpType AND s.SubItem = @SubItem
+	SELECT @ProductId = ProductId
+	FROM dbo.APIProductMappingSettings s WITH (NOLOCK)
+	WHERE s.TpType = @TpType AND s.SubItem = @SubItem
 
-	SELECT @TimeZone = CONVERT(FLOAT, SettingValue) FROM dbo.APIProductSettings WITH(NOLOCK) WHERE ProductId = @ProductId AND SettingName = 'TimeZone' 
+	SELECT @TimeZone = CONVERT(FLOAT, SettingValue)
+	FROM dbo.APIProductSettings WITH (NOLOCK)
+	WHERE ProductId = @ProductId AND SettingName = 'TimeZone' 
 
 	IF ISNULL(@ProductId, -1) = -1
 		RETURN
@@ -52,10 +54,29 @@ BEGIN
 		FROM dbo.APIProductSettings WITH (NOLOCK)
 		WHERE ProductId = @ProductId AND SettingName = 'LastQueueId'
 
-		SELECT TOP 1 @QueueId = QueueId, @JsonData = JsonData
-		FROM dbo.APIProduct_ImportQueue WITH (NOLOCK)
-		WHERE tpType = @tpType AND SubItem = @SubItem AND QueueId >= @LastQueueId AND JobType = 0 AND FinishedTime IS NULL
-		ORDER BY QueueId
+        IF EXISTS (SELECT 1 FROM dbo.APIProductMappingSettings WITH (NOLOCK)
+                            WHERE ProductId = @ProductId
+                            GROUP BY TpType
+                            HAVING COUNT(SubItem) > 1)
+        BEGIN
+            SELECT TOP 1 @QueueId = it.QueueId, @JsonData = it.JsonData  
+            FROM dbo.APIProduct_ImportQueue it WITH (NOLOCK)
+				INNER JOIN dbo.APIProductMappingSettings mt WITH (NOLOCK) ON mt.tpType = it.tpType AND mt.SubItem = it.SubItem
+            WHERE it.tpType = @tpType AND it.QueueId >= @LastQueueId AND it.JobType = 0 AND it.FinishedTime IS NULL
+            ORDER BY it.QueueId
+            
+            SELECT @SubItem = SubItem
+            FROM dbo.APIProduct_ImportQueue WITH (NOLOCK)
+            WHERE QueueId = @QueueId
+        END
+        ELSE
+        BEGIN
+            SELECT TOP 1 @QueueId = QueueId, @JsonData = JsonData
+            FROM dbo.APIProduct_ImportQueue WITH (NOLOCK)
+            WHERE tpType = @tpType AND SubItem = @SubItem AND QueueId >= @LastQueueId AND JobType = 0 AND FinishedTime IS NULL
+            ORDER BY QueueId
+        END
+
 	END
 
 	DECLARE @IsErr BIT = 1
@@ -144,8 +165,8 @@ BEGIN
 					,IBCCustId
 				)
 				SELECT 
-					@TpType   AS TpType
-					,@SubItem  AS SubItem
+					@TpType   	AS TpType
+					,@SubItem	AS SubItem
 					,k.Bet
 					,k.BetStatus
 					,k.GamePlatform
@@ -190,10 +211,31 @@ BEGIN
 			SELECT @QueueId = NULL, @JsonData = NULL
 
 			IF @QueueIdInput = 0
-				SELECT TOP 1 @QueueId = QueueId, @JsonData = JsonData
-				FROM dbo.APIProduct_ImportQueue WITH (NOLOCK)
-				WHERE tpType = @tpType AND SubItem = @SubItem AND QueueId >= @LastQueueId AND JobType = 0 AND FinishedTime IS NULL
-				ORDER BY QueueId
+			BEGIN
+                IF EXISTS (SELECT 1 FROM dbo.APIProductMappingSettings WITH (NOLOCK)
+                                    WHERE ProductId = @ProductId
+                                    GROUP BY TpType
+                                    HAVING COUNT(SubItem) > 1)
+                BEGIN
+                
+                    SELECT TOP 1 @QueueId = it.QueueId, @JsonData = it.JsonData  
+                    FROM dbo.APIProduct_ImportQueue it WITH (NOLOCK)
+                    INNER JOIN dbo.APIProductMappingSettings mt WITH (NOLOCK) ON mt.tpType = it.tpType AND mt.SubItem = it.SubItem
+                    WHERE it.tpType = @tpType AND it.QueueId >= @LastQueueId AND it.JobType = 0 AND it.FinishedTime IS NULL
+                    ORDER BY it.QueueId
+
+                    SELECT @SubItem = SubItem
+                    FROM dbo.APIProduct_ImportQueue WITH (NOLOCK)
+                    WHERE QueueId = @QueueId
+                END
+                ELSE
+                BEGIN
+                    SELECT TOP 1 @QueueId = QueueId, @JsonData = JsonData
+                    FROM dbo.APIProduct_ImportQueue WITH (NOLOCK)
+                    WHERE tpType = @tpType AND SubItem = @SubItem AND QueueId >= @LastQueueId AND JobType = 0 AND FinishedTime IS NULL
+                    ORDER BY QueueId                    
+                END			
+			END
 		END
 	END
 
