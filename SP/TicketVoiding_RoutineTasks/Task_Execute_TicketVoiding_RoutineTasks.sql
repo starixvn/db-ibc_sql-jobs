@@ -25,6 +25,7 @@ AS
 		- 20220603@Sol: Database - Sync-up Standby Server data - [RedmineID: #167261]
 		- 20230629@Sol: Database - Sync-up Standby Server data - exclude step 7/8 (logshipping synced) - [RedmineID: #190438]
 		- 20220614@Danny: Database - scale out credit [RedmineID: #181595]
+		- 20230808@Lewis: Change redundant recipient in Reset Winning - notification email [RedmineID: #192448]
 */
 BEGIN
 	DECLARE @GenerateData TINYINT,
@@ -237,10 +238,10 @@ BEGIN
 										
 					IF @Istest = 0 AND @@SERVERNAME IN ('DBGRP01N1','DBGRP01N2','DBGRP02N1','DBGRP02N2','DBGRP03N1','DBGRP03N2','DBTRANS')
 						SELECT	@recipients = 'kudanaga@enpine.com'
-								,@copy_recipients = 'jetyee88@enpine.com;kwongyong@enpine.com;seanlau@enpine.com;foo.mv@enpine.com;tp@enpine.com;it@starixvn.com;jackyting@enpine.com;vh@enpine.com'
+								,@copy_recipients = 'jetyee88@enpine.com;kwongyong@enpine.com;seanlau@enpine.com;tp@enpine.com;it@starixsoft.com;jackyting@enpine.com;vh@enpine.com'
 								,@blind_copy_recipients = 'automail@enpine.com'
 					ELSE
-						SELECT  @recipients = 'dba_local@starixvn.com'
+						SELECT  @recipients = 'dba_local@starixsoft.com'
 								,@copy_recipients = ''
 								,@blind_copy_recipients = ''
 					
@@ -512,10 +513,10 @@ BEGIN
 										
 					IF @Istest = 0 AND @@SERVERNAME IN ('DBGRP01N1','DBGRP01N2','DBGRP02N1','DBGRP02N2','DBGRP03N1','DBGRP03N2','DBTRANS')
 						SELECT	@recipients = 'kudanaga@enpine.com'
-								,@copy_recipients = 'jetyee88@enpine.com;kwongyong@enpine.com;seanlau@enpine.com;foo.mv@enpine.com;tp@enpine.com;it@starixvn.com;jackyting@enpine.com;vh@enpine.com'
+								,@copy_recipients = 'jetyee88@enpine.com;kwongyong@enpine.com;seanlau@enpine.com;tp@enpine.com;it@starixsoft.com;jackyting@enpine.com;vh@enpine.com'
 								,@blind_copy_recipients = 'automail@enpine.com'
 					ELSE
-						SELECT  @recipients = 'dba_local@starixvn.com'
+						SELECT  @recipients = 'dba_local@starixsoft.com'
 								,@copy_recipients = ''
 								,@blind_copy_recipients = ''
 					
