@@ -26,6 +26,7 @@ AS
 		- 20220818@Malcolm: Get PT for SB, Number Games, keno On new tables [RedmineID: #153195]
 		- 20221031@Danny: Exclude CandyA18, HX9Candy (Crypto Licensees) [RedmineID: #177718]
 		- 20221205@Danny Remove Hx9candy From Crypto Licensee List [RedmineID: #181279]
+		- 20230822@Danny Add Crypto88 To Crypto Licensee List [RedmineID: #192378]
 	
 	Param's Explanation:
 		@RuleId
@@ -46,6 +47,10 @@ BEGIN
 	SELECT  @MoveBetsDay = MoveBetsDay FROM @MBBU
 
 	DECLARE @CurrentDate SMALLDATETIME = CONVERT(DATE, GETDATE())
+
+	DECLARE @CryptoPartyListSel TABLE (PartyName VARCHAR(50))
+	INSERT INTO @CryptoPartyListSel (PartyName)
+	SELECT PartyName FROM OPENQUERY (DBLIC, 'SELECT PartyName FROM bodb_licensee.dbo.LA_f_CryptoPartyListSel()')
 
 	-- Get Product - Bettype
 	CREATE TABLE #SportBettypeMatrix (ProductId INT, Product3rdId INT, Bettype SMALLINT)
@@ -248,9 +253,9 @@ BEGIN
 		)
 		AND c.Currency IS NOT NULL
 
-	DELETE #__bettrans WHERE LicenseeName IN ('Spondemo', 'Athena000', 'CandyA18')
-	DELETE #Licensees WHERE LicenseeName IN ('Spondemo', 'Athena000','CandyA18')
-	DELETE #PT WHERE LicenseeName IN ('Spondemo', 'Athena000','CandyA18')
+	DELETE #__bettrans WHERE LicenseeName IN ('Spondemo', 'Athena000') OR LicenseeName IN (SELECT z.PartyName FROM @CryptoPartyListSel z)
+	DELETE #Licensees WHERE LicenseeName IN ('Spondemo', 'Athena000') OR LicenseeName IN (SELECT z.PartyName FROM @CryptoPartyListSel z)
+	DELETE #PT WHERE LicenseeName IN ('Spondemo', 'Athena000') OR LicenseeName IN (SELECT z.PartyName FROM @CryptoPartyListSel z)
 
 	-- Check data Consistency between setting and ticket
 	DECLARE @Result TABLE (RuleId TINYINT, LicenseeName VARCHAR(50), TransId VARCHAR(20), Product3rdId INT, ProductName VARCHAR(100), Currency INT, CurrencyCode VARCHAR(10))
