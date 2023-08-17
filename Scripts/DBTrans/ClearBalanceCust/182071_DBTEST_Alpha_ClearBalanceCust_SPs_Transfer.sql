@@ -8,7 +8,7 @@
 USE [bodb02]
 GO
 
-ALTER PROCEDURE  [dbo].[Age_Transfer_Ins_MAg_xtest]
+CREATE OR ALTER PROCEDURE  [dbo].[Age_Transfer_Ins_MAg_xtest]
 	@MasterID int,
 	@ToCustIDs varchar(4000),
 	@SuperIDsTransferTotal VARCHAR(50)='', 
@@ -2337,7 +2337,7 @@ GO
 
 USE CustDB;
 GO
-CREATE FUNCTION [dbo].[f_Age_ClearBalanceCust_Snapshot_xtest](@SiteDBGroupID SMALLINT) 
+CREATE OR ALTER FUNCTION [dbo].[f_Age_ClearBalanceCust_Snapshot_xtest](@SiteDBGroupID SMALLINT) 
 RETURNS TABLE
 RETURN
 /*
@@ -2404,3 +2404,190 @@ FROM CTE_SMASetting s
 --			ELSE 0 
 --		END
 GO
+CREATE OR ALTER PROCEDURE [dbo].[Age_Transfer_CheckTransferOption]
+	@CustID				INT,
+	@Language			VARCHAR(2) = 'E',
+	@ErrCode			INT = 0 OUTPUT,
+	@ErrMsg				NVARCHAR(400) = '' OUTPUT,
+	@strTransferOption	VARCHAR(8) = NULL OUTPUT
+AS
+
+/*
+	Created by: []
+	DB: DBCUST.CustDB
+	Task:
+	
+	Revisions:
+		- 20100413@Kiwi: Get transferoption from CustSuper/CustMaster/CustAgent
+		- 20121128@Elodie: Get an error message from f_Get_MsgNameByMsgID function by language
+		- 20180801@Percy: Output @strTransferOption param [RedmineID: #92142]
+		- 20190131@Elodie: Change time GMT-4 [RedmineID: #127649]
+
+	----------------------------------------------------------------------
+	--	Check Transfer Condition (for master and agent)
+		1		2		3		4		5		6		7		8
+		isSun	isMon	isTue	isWed	isThurs	isFri	isSat	isWeekly
+		0		1		0		0		1		0		1		1
+	----------------------------------------------------------------------
+
+*/
+BEGIN
+	SELECT @ErrCode = 0, @ErrMsg = ''
+
+	--20230817@Bobby: Comment on DBTEST
+	---- Skip checking for direct master
+	--IF EXISTS (SELECT 1 FROM dbo.customer WITH (NOLOCK) WHERE custid = @custid AND roleid = 3 AND srecommEND < 100)
+	--	RETURN
+
+	--DECLARE @RoleID TINYINT
+	--SELECT @RoleID = RoleID FROM custinfo WITH (NOLOCK) WHERE custid = @CustId
+
+	--IF (@RoleID = 4)
+	--BEGIN 
+	--	SELECT @strTransferOption = dbo.F_Decimal_Binary(ISNULL(TransferOption,0))
+	--	FROM dbo.CustSuper WITH (NOLOCK) 
+	--	WHERE custid = @CustId
+	--END
+	--ELSE IF (@RoleID = 3)
+	--BEGIN 
+	--	SELECT @strTransferOption = dbo.F_Decimal_Binary(ISNULL(TransferOption,0))
+	--	FROM dbo.CustMaster WITH (NOLOCK) 
+	--	WHERE custid = @CustId
+	--END
+	--ELSE IF (@RoleID = 2)
+	--BEGIN 
+	--	SELECT @strTransferOption = dbo.F_Decimal_Binary(ISNULL(TransferOption,0))
+	--	FROM dbo.CustAgent WITH (NOLOCK) 
+	--	WHERE custid = @CustId
+	--END
+
+	--IF SUBSTRING(@strTransferOption, 8, 1) = 1 --isWeekly = 1
+	--	AND SUBSTRING(@strTransferOption, DATEPART(WEEKDAY, CURRENT_TIMESTAMP), 1) = 0
+	--BEGIN	
+	--	SELECT @ErrMsg = CASE @Language 
+	--						WHEN 'E' THEN 'Sorry, you can only transfer on: ' +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 2, 1) = 1 THEN 'Monday - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 3, 1) = 1 THEN 'Tuesday - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 4, 1) = 1 THEN 'Wednesday - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 5, 1) = 1 THEN 'Thursday - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 6, 1) = 1 THEN 'Friday - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 7, 1) = 1 THEN 'Saturday - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 1, 1) = 1 THEN 'Sunday - ' ELSE '' END						
+	--						ELSE [dbo].[f_Get_MsgNamebyMsgID](50007,@Language) + ' ' +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 2, 1) = 1 THEN [dbo].[f_Get_MsgNamebyMsgID](90002,@Language) + ' - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 3, 1) = 1 THEN [dbo].[f_Get_MsgNamebyMsgID](90003,@Language) + ' - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 4, 1) = 1 THEN [dbo].[f_Get_MsgNamebyMsgID](90004,@Language) + ' - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 5, 1) = 1 THEN [dbo].[f_Get_MsgNamebyMsgID](90005,@Language) + ' - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 6, 1) = 1 THEN [dbo].[f_Get_MsgNamebyMsgID](90006,@Language) + ' - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 7, 1) = 1 THEN [dbo].[f_Get_MsgNamebyMsgID](90007,@Language) + ' - ' ELSE '' END +
+	--							CASE WHEN SUBSTRING(@strTransferOption, 1, 1) = 1 THEN [dbo].[f_Get_MsgNamebyMsgID](90008,@Language) + ' - ' ELSE '' END
+	--					END, @ErrCode = 201
+	--	SELECT @ErrMsg = LEFT(@ErrMsg, LEN(@ErrMsg)-2)
+	--END
+END
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[Acc_Transfer_CheckUM_xtest] 
+	@CustID INT,
+	@Language VARCHAR(2) = 'E',
+	@ErrCode INT = 0 OUTPUT,
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT,
+	@ToTimeConfig DATETIME = NULL OUTPUT
+AS
+/*
+Created: 20200729@Sophia
+Task:  Get UM Transfer Function
+DB: DBCUST.CUSTDB
+Revisions:	
+	- 20200729@Sophia: Get UM Transfer Function [Redmine: #136992]
+	- 20201005@Danny: Remove UMConfig_UAT table  [Redmine: #142511]
+	- 20230530@Bobby: Auto Clear Balance/ Multiple Transfer	 [RedmineID: #182071]
+
+Param's Explanation:
+	@CustID: all roleID
+Examples :
+	 DECLARE @ErrCode INT, @ErrMsg NVARCHAR(MAX)
+	 EXEC [Acc_Transfer_CheckUM_xtest] @CustID = 16631688, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+	 SELECT @ErrCode,  @ErrMsg 
+*/
+BEGIN 
+	
+	DECLARE @ErrorTemplate NVARCHAR(4000)
+	DECLARE @FromTime VARCHAR(30), @ToTime VARCHAR(30) 
+	SELECT @ErrMsg = '', @ErrCode = 0, @ToTimeConfig = NULL
+
+	--20230817@Bobby: Comment on DBTEST
+	--SELECT  @FromTime = CONVERT(VARCHAR,DATEADD(HOUR, 12, MIN(c.BeginTime)),103) + ' ' + LTRIM(RIGHT(CONVERT(VARCHAR,DATEADD(HOUR, 12, MIN(c.BeginTime)),22),12)),
+	--		@ToTime = CONVERT(VARCHAR,DATEADD(HOUR, 12, MAX(c.EndTime)),103) + ' ' + LTRIM(RIGHT(CONVERT(VARCHAR,DATEADD(HOUR, 12, MAX(c.EndTime)),22),12)),
+	--		@ToTimeConfig = MAX(c.EndTime)
+	--FROM CUSTDB.dbo.customer cu WITH(NOLOCK)
+	--	INNER JOIN CUSTDB.dbo.customer su WITH(NOLOCK) ON cu.srecommend = su.custid
+	--	LEFT JOIN CUSTDB.dbo.customer ag WITH(NOLOCK) ON cu.recommend = ag.custid
+	--	LEFT JOIN CUSTDB.dbo.site s WITH(NOLOCK) ON s.site = cu.site
+	--	LEFT JOIN CUSTDB.dbo.site ags WITH(NOLOCK) ON ag.site = ags.site
+	--	INNER JOIN CUSTDB.dbo.UMConfig c WITH(NOLOCK) ON c.SuperID IN (su.custid,0)
+	--WHERE CONVERT(SMALLDATETIME,GETDATE()) BETWEEN c.BeginTime AND c.EndTime
+	--	AND c.FunctionType = 101 --- transfer Func 
+	--	AND c.SiteID IN (ISNULL(s.siteid,ags.siteid),0)
+	--	AND c.Currency IN (cu.currency,0)
+	--	AND cu.custid = @CustID
+	
+	
+	--IF @FromTime IS NOT NULL OR @ToTime IS NOT NULL
+	--BEGIN
+	--	SELECT @ErrCode = 90015
+	--	SELECT @ErrorTemplate = CUSTDB.dbo.f_Get_MsgNamebyMsgID_xtest (90015,@Language)
+	--	SELECT @ErrMsg =   REPLACE(REPLACE(@ErrorTemplate,'<FromTime>',@FromTime),'<ToTime>',@ToTime)
+	--END
+
+END 
+GO
+CREATE OR ALTER PROCEDURE [dbo].[Acc_Transfer_CheckRunningByCust] 
+	@CustID INT,
+	@Language VARCHAR(2) = 'E',
+	@ErrCode INT = 0 OUTPUT,
+	@ErrMsg NVARCHAR(MAX) = '' OUTPUT
+AS
+/*
+Created: 20200731@Sophia
+Task:  Check Transfer Func is running by Job 
+DB: DBCUST.CUSTDB
+Revisions:	
+	- 20200731@Sophia: initial SPs [Redmine: #137141]
+
+Param's Explanation:
+	@CustID: all roleID
+Examples :
+	 DECLARE @ErrCode INT, @ErrMsg NVARCHAR(MAX)
+	 EXEC [Acc_Transfer_CheckRunningByCust] @CustID = 16631688, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+	 SELECT @ErrCode,  @ErrMsg 
+*/
+BEGIN 
+ 
+	DECLARE @Recommend INT, @MRecommend INT, @SRecommend INT, @RoleId INT
+	SELECT @ErrMsg = '', @ErrCode = 0 
+
+	--20230817@Bobby: Comment on DBTEST
+	--SELECT 	@CustID = CustID, @Recommend = Recommend, @MRecommend = MRecommend, @SRecommend = SRecommend, @RoleId = RoleId
+	--FROM 	CUSTDB.dbo.customer c WITH(NOLOCK)
+	--WHERE 	CustID = @CustID
+	
+	--IF EXISTS (
+	--			SELECT 	TOP 1 1  
+	--			FROM 	CUSTDB.dbo.Acc_ClearBalanceList s WITH(NOLOCK)
+	--			WHERE 	--- check upline is transferring or not
+	--					(
+	--						(s.CustID IN (@CustID, @Recommend, @MRecommend, @SRecommend ) AND @RoleID = 1)
+	--						OR (s.CustID IN (@Recommend, @MRecommend, @SRecommend) AND @RoleID = 2)
+	--						OR (s.CustID IN (@MRecommend, @SRecommend) AND @RoleID = 3) 
+	--						OR (s.CustID = @CustID AND @RoleID = 4)
+	--					)
+	--					AND isTransferring = 1	  				
+	--			)
+	--BEGIN
+	--	SELECT @ErrCode = 50015
+	--	SELECT @ErrMsg = CUSTDB.dbo.f_Get_MsgNamebyMsgID (50015,@Language)
+		 
+	--END
+
+END 
