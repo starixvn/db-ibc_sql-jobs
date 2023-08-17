@@ -15,6 +15,7 @@ CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `N88_Get_Customer`(
     Revisions:
       - 20200520@Percy: Initialize SP
 	  - 20230704@Sally: Get data column MemberType [RedmineId: #189299]
+	  - 20230817@Sally: Repull data customer with a new updated MemberType [RedmineId: #192859]
 
   */
 )
@@ -34,6 +35,14 @@ BEGIN
 			FROM `CustWallet` cw
 			WHERE cw.FirstDepositTime >= fromDate
 			ORDER BY cw.FirstDepositTime
+			LIMIT batchCount
+		)
+        UNION (
+			SELECT cw.CustId
+			FROM `CustTaskTime` ct
+			WHERE ct.TaskTime >= fromDate
+				AND TaskId IN (2, 5)
+			ORDER BY ct.TaskTime
 			LIMIT batchCount
 		)
 	)
