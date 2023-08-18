@@ -26,6 +26,7 @@ AS
 		- 20221002@Danny: Add New LeagueGroupID and TicketType columns [Redmine: #167177]	
 		- 20221208@Eddie: Add New SABA ESports PinGoal [RedmineID: #181383]
 		- 20230630@Lewis: Add Saba Tennis [RedmineID: #190459]
+		- 20230818@Lewis: Hotfix Dup Data - bettype = 8695 [RedmineID: #192923]
 */
 
 BEGIN
@@ -55,7 +56,7 @@ BEGIN
 			SELECT DISTINCT s.RefTable, s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
 			WHERE f.ProductID = s.ProductID
 				AND (f.ProductID <> 6 OR f.SportType = s.SportType)
-				AND (f.BetType NOT IN (3150, 4297, 4298, 4599, 4600) AND s.BetType NOT IN (3150, 4297, 4298, 4599, 4600) OR f.BetType = s.BetType)
+				AND (f.BetType NOT IN (3150, 4297, 4298, 4599, 4600, 8695) AND s.BetType NOT IN (3150, 4297, 4298, 4599, 4600, 8695) OR f.BetType = s.BetType)
 		) AS s
 		OUTER APPLY 
 		(
