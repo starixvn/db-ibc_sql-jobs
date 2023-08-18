@@ -1,2 +1,2 @@
-SP/MBU/MoveBet/DBTXN-bodb02-Task_DailySummary.proc.sql
 SP/TicketVoiding_RoutineTasks/Task_Execute_TicketVoiding_RoutineTasks.sql
+SP/MBU/MoveBet/DBTXN-bodb02-Task_DailySummary.proc.sql
