@@ -46,6 +46,7 @@ AS
 		- 20230206@Eddie: Add Jili product [RedmineID: #182860]
 		- 20230511@Eddie: Add YeeBet product [RedmineID: #186480]
 		- 20230630@Lewis: Add Saba Tennis [RedmineID: #190459]
+		- 20230818@Lewis: Hotfix Dup Data - bettype = 8695,2499 [RedmineID: #192923]
 */
 BEGIN
 
