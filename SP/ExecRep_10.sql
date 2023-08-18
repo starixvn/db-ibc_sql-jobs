@@ -13,6 +13,7 @@ AS
 		- 20211223@July: SQL Server Upgrade 2019- Phase 3 [Redmine: #166039] 
 		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 		- 20221007@Patrick: Support scale-out for deposit site - SiteBD2 Redmine: [#178835]
+		- 20230718@Brice: Support scale-out for credit site - SiteBD3 Redmine: [#191003]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -32,7 +33,9 @@ BEGIN
 	SELECT 'DBSite', 'DBGRP01N1', 'Main' UNION ALL
 	SELECT 'DBSite', 'DBGRP01N2', 'Main' UNION ALL
 	SELECT 'DBSite', 'DBGRP02N1', 'Main' UNION ALL
-	SELECT 'DBSite', 'DBGRP02N2', 'Main'
+	SELECT 'DBSite', 'DBGRP02N2', 'Main' UNION ALL
+	SELECT 'DBSite', 'DBGRP03N1', 'Main' UNION ALL
+	SELECT 'DBSite', 'DBGRP03N2', 'Main'
 
 	--SIT
 	UNION ALL
@@ -43,7 +46,9 @@ BEGIN
 	SELECT 'DBSite', 'SITDBGRP01N1', 'Main' UNION ALL
 	SELECT 'DBSite', 'SITDBGRP01N2', 'Main' UNION ALL
 	SELECT 'DBSite', 'SITDBGRP02N1', 'Main' UNION ALL
-	SELECT 'DBSite', 'SITDBGRP02N2', 'Main'
+	SELECT 'DBSite', 'SITDBGRP02N2', 'Main' UNION ALL
+	SELECT 'DBSite', 'SITDBGRP03N1', 'Main' UNION ALL
+	SELECT 'DBSite', 'SITDBGRP03N2', 'Main'
 
 	--Local Dev
 	UNION ALL

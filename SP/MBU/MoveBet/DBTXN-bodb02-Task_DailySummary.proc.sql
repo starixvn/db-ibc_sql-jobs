@@ -100,6 +100,7 @@ Revisions:
 	- 20220908@Patrick: Support scale-out for deposit site - Fix issue Redmine: [#175602]
 	-- 20221117@Patrick: MB - Remove table out proccess: ProviderExternalResultDetailES | ProviderExternalResultDetailOS [Redmine: #180613]
 	- 20230613@Patrick: Write log to DBLog instead of LogDB [Redmine: #189441]
+	- 20230718@Brice: Support scale-out for credit site - SiteBD3 Redmine: [#191003]
 */
 
 SET NOCOUNT ON
@@ -697,8 +698,6 @@ END
 
 IF @step = 5 --insert data for sum_winloss
 BEGIN
-	--//create a sum record for Bonus
-	EXEC dbo.Task_Bonus_DailySummary @WinlostDate = @WinlostDate
 	-- Insert data of SMA, member to sum_winloss_tmp
 	EXEC dbo.Task_Sum_Winloss @winlostdate
 
@@ -889,11 +888,6 @@ END
 
 IF @step = 8 -- remove bet tickets
 BEGIN
-	DELETE dbo.Match_Log 
-	WHERE matchID IN (SELECT matchID FROM dbo.match WITH (NOLOCK) WHERE eventdate = @winlostdate)
-
-	DELETE FROM dbo.outright_log
-	WHERE orid IN (SELECT orid FROM dbo.outright WHERE eventdate = @winlostdate AND oddsstatus = 'Completed')
 
 	EXEC dbo.ExecRep_10 @FunctionName = 'ScaleOut', @AliasServer = @__aliasServer OUTPUT
 	IF @__aliasServer = 'DBCTG' --only run that command at central server
