@@ -433,7 +433,7 @@ BEGIN
 		INSERT INTO #__Bettype (Bettype, RefTable, IsContributionBettype, BettypeRef, SporttypeRef)
 		SELECT DISTINCT bettypePT, RefTable, IsContributionBettype
 			-- bettransRnG/bettransLC
-			,CASE WHEN bettypePT IN (3150, 4297, 4298, 4599, 4600) THEN bettypePT ELSE 0 END AS BettypeRef
+			,CASE WHEN bettypePT IN (3150, 4297, 4298, 4599, 4600, 2499, 8695) THEN bettypePT ELSE 0 END AS BettypeRef
 			,CASE
 				 WHEN bettypePT BETWEEN 1800 AND 1899 THEN 250 -- AG Casino
 				 WHEN bettypePT BETWEEN 2101 AND 2199 THEN 208 -- RNG Casino
