@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-custdb" executers="repl_ap" viewers="" isFunction="0" isNested="0"></info>*/
 
-CREATE PROCEDURE [dbo].[Repl_GetSportBettypeSettingMatrix]
+ALTER PROCEDURE [dbo].[Repl_GetSportBettypeSettingMatrix]
 	@start DATETIME2,
 	@count INT,
 	@back_fix INT = 0
@@ -23,7 +23,7 @@ BEGIN
 	WITH CTE_Timestamp ([RepUpdateTime]) AS (
 		SELECT TOP (@count) [RepUpdateTime]
 		FROM [dbo].[SportBettypeSettingMatrix] WITH (NOLOCK, INDEX = IX_SportBettypeSettingMatrix_RepUpdateTime)
-		WHERE [RepUpdateTime] > @__time_start AND [RepUpdateTime] < @__time_upperbound
+		WHERE [RepUpdateTime] > @start AND [RepUpdateTime] < @__time_upperbound
 		ORDER BY [RepUpdateTime]
 	)
 	SELECT @__time_end = ISNULL(MAX([RepUpdateTime]), @start) FROM CTE_Timestamp;
