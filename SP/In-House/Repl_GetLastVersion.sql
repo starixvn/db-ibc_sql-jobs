@@ -1,0 +1,13 @@
+/*<info serverAlias="DBTXN-custdb" executers="repl_ap" viewers="" isFunction="0" isNested="0"></info>*/
+
+ALTER PROCEDURE [dbo].[Repl_GetLastVersion]
+	@group int,
+	@name varchar(100)
+AS
+-- 20230817@Patrick: Add more dbtxn.custdb [Redmine:#189389]
+
+BEGIN
+	SET NOCOUNT ON;
+	SELECT [last_datetime], [last_timestamp]
+		FROM [dbo].[RepInfo] WHERE [group] = @group AND [name] = @name;
+END
