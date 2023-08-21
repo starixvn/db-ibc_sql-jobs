@@ -1,4 +1,4 @@
-/*<info serverAlias="DBAGE-bodb02, DBBOF-bodb02, DBTXN-custdb" executers="repl_ap" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBAGE-bodb02, DBBOF-bodb02, DBTXN-custdb,DBACC-bodb02,DBTP-bodb02" executers="repl_ap" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[Repl_PutSportBettypeSettingMatrix]
 	@tvp_param TVP_RepSportBettypeSettingMatrix READONLY
 AS

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-custdb" executers="repl_ap" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBTXN-custdb,DBBOF-bodb02,DBACC-bodb02,DBTP-bodb02" executers="repl_ap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Repl_GetLastVersion]
 	@group int,
