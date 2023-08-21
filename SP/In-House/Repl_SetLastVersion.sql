@@ -6,8 +6,11 @@ ALTER PROCEDURE [dbo].[Repl_SetLastVersion]
 	@last_datetime datetime2 = '2000-1-1 00:00:00',
 	@last_timestamp bigint = 0
 AS
--- 20230817@Patrick: Add more dbtxn.custdb [Redmine:#189389]
-
+/*
+	Task: In-House
+	Revision:
+		-- 20230817@Patrick: Add more dbtxn.custdb [Redmine:#189389]
+*/
 BEGIN
 	SET NOCOUNT ON;
 	UPDATE [dbo].[RepInfo] SET

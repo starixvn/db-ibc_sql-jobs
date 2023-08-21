@@ -5,9 +5,10 @@ CREATE PROCEDURE [dbo].[Repl_GetSportBettypeSettingMatrix]
 	@count INT,
 	@back_fix INT = 0
 AS
-
 /*
--- 20230817@Patrick: create SP for in-house replication use [Redmine:#189389]
+	Task: In-House
+	Revision:
+		-- 20230817@Patrick: create SP for in-house replication use [Redmine:#189389]
 */
 
 BEGIN

@@ -6,8 +6,11 @@ ALTER PROCEDURE [dbo].[Repl_TryLockWorker]
 	@worker varchar(100),
 	@duration int = 30000	-- in millision
 AS
--- 20230817@Patrick: Add more dbtxn.custdb [Redmine:#189389]
-
+/*
+	Task: In-House
+	Revision:
+		-- 20230817@Patrick: Add more dbtxn.custdb [Redmine:#189389]
+*/
 BEGIN
 	SET NOCOUNT ON;
 

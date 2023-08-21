@@ -4,8 +4,11 @@ ALTER PROCEDURE [dbo].[Repl_GetLastVersion]
 	@group int,
 	@name varchar(100)
 AS
--- 20230817@Patrick: Add more dbtxn.custdb [Redmine:#189389]
-
+/*
+	Task: In-House
+	Revision:
+		-- 20230817@Patrick: Add more dbtxn.custdb [Redmine:#189389]
+*/
 BEGIN
 	SET NOCOUNT ON;
 	SELECT [last_datetime], [last_timestamp]

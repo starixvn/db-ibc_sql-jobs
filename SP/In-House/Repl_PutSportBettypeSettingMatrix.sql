@@ -4,7 +4,9 @@ CREATE PROCEDURE [dbo].[Repl_PutSportBettypeSettingMatrix]
 AS
 
 /*
--- 20230817@Patrick: create SP for in-house replication use [Redmine:#189389]
+	Task: In-House
+	Revision:
+		-- 20230817@Patrick: create SP for in-house replication use [Redmine:#189389]
 */
 BEGIN
 
