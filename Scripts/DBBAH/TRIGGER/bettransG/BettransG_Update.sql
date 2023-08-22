@@ -37,7 +37,7 @@ SET DEADLOCK_PRIORITY LOW
 GO
 
 
-CREATE TRIGGER [dbo].[bettransG_After_Update]
+ALTER TRIGGER [dbo].[bettransG_After_Update]
    ON [dbo].[bettransG]
    AFTER UPDATE
 AS 
@@ -77,7 +77,7 @@ BEGIN
         WHEN d.statusid > 0 THEN CASE i.statusid WHEN 0 THEN 032 ELSE 031 END -- resettle or unsettle
         ELSE 0 END,
         
-        --'LC' +
+        'Bet' +
         ISNULL(
         CASE
             WHEN i.custid = 0 THEN ' cancelled, ' + d.[status] + ' to ' + i.[status]

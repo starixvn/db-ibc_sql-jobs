@@ -53,6 +53,7 @@ AS
         - 20220912@Helen: clone trigger from db05 to sitedb for scaleout project [176932]
         - 20221031@July: Change column BalanceChanged [176932]
 		- 20230615@Kathy: add new column winlostdate [Redmine:#181595]
+		- 20230818@Helen: NAP - SA Gaming - can not use betlist to search the refno which showed on bet credit history [Redmine:#179580]
 */
 BEGIN
 
@@ -87,8 +88,7 @@ BEGIN
         i.custid <> recommend AND
         i.custid <> mrecommend AND
         i.custid <> srecommend
-        --AND custid = 2211693
-        --AND currency IN (3, 5, 20)
+		AND i.productID NOT IN (244) -- process trigger for SA Gaming only on bettransG
     ORDER BY
         i.transid
 END

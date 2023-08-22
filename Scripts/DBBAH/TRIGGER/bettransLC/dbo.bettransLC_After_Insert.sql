@@ -53,7 +53,7 @@ AS
         - 20220912@Helen: scaleout project, exclude 'sitedb' data since it has been processed in sitedb already [176932]
         - 20221031@July: Change column BalanceChanged [176932]
 		- 20230614@Kathy: add new column winlostdate [Redmine:#189598]
-		 - 20230818@Helen: NAP - SA Gaming - can not use betlist to search the refno which showed on bet credit history [Redmine:#179580]
+		- 20230818@Helen: NAP - SA Gaming - can not use betlist to search the refno which showed on bet credit history [Redmine:#179580]
 */
 BEGIN
 

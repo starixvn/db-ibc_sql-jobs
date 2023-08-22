@@ -37,7 +37,7 @@ SET DEADLOCK_PRIORITY LOW
 GO
 
 
-CREATE TRIGGER [dbo].[bettransG_After_Insert]
+ALTER TRIGGER [dbo].[bettransG_After_Insert]
 ON [dbo].[bettransG]
 FOR INSERT
 AS
@@ -61,8 +61,8 @@ BEGIN
        
         ISNULL(winlost,0) - ISNULL(actual_stake,0) + ISNULL(playercomm,0),
         current_timestamp,
-        10, -- ticket insert
-        'inserted as ' + [status],
+        12, -- ticket insert
+        'Bet inserted as ' + [status],
         NULL Balance,
 		i.winlostdate
         --v.Balance
