@@ -123,6 +123,7 @@ AS
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 		- 20230626@Evan: Integrate MG-RNG (Normal+Promotion Game) [RedmineID: #189988]
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
+		- 20230822@Evan: Integrate Parlay Boost - [RedmineID: #192238]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -194,6 +195,7 @@ BEGIN
 															OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 															OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 															OR (b.bettype BETWEEN 8700 AND 8709 AND b.matchid = 157)) THEN 0
+														WHEN b.bettype = 29 AND b.oddsspread = 2 AND b.statusID = 112 THEN ISNULL(TRY_CAST(CAST(ExtraInfo AS XML).value('(/p1/@bba)[1]', 'VARCHAR(50)') AS MONEY),0)
 														ELSE ABS(b.winlost - b.actual_stake)
 													END)  -- exclude PP Prize, SAG Tip ticket from BetEffective
 			ELSE 0
@@ -271,6 +273,7 @@ BEGIN
 				OR (b.bettype BETWEEN 17000 AND 17030)  
 				OR (b.bettype BETWEEN 8700 AND 8709) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
+			WHEN b.bettype = 29 AND b.oddsspread = 2 AND b.statusID = 112 THEN -1		-- Parlay Boost
 			ELSE 0
 		END bettype
 		--114: half win, 115: half lose
@@ -307,6 +310,7 @@ BEGIN
 						OR (b.bettype = 29 AND b.oddsspread = 1))
 					AND BA.transid IS NULL THEN b.actual_stake
 				WHEN b.bettype IN (4297, 1698, 3898, 4599) THEN b.oddsspread
+				WHEN b.bettype = 29 AND b.oddsspread = 2 AND b.statusID = 112 THEN ISNULL(TRY_CAST(CAST(ExtraInfo AS XML).value('(/p1/@bba)[1]', 'VARCHAR(50)') AS MONEY),0) * ISNULL(TRY_CAST(CAST(ExtraInfo AS XML).value('(/p1/@lbbs)[1]', 'VARCHAR(50)') AS MONEY),0)
 				ELSE 0
 			END) AS BuyBackAmt
 		,SUM(CASE
@@ -394,7 +398,7 @@ BEGIN
 			ELSE 0
 		END
 		,CASE
-			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
+			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 998, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND matchid = 173)
 				OR (b.bettype BETWEEN 17000 AND 17030)  

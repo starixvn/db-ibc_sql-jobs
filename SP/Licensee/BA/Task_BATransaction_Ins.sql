@@ -38,7 +38,7 @@ AS
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
 		- 20220721@Evan: Integrate new transid [Redmine: #175640]
 		- 20220906@Sol: Improve performance - using index hint: index=IX_SequenceID - [Redmine: #175640]
-
+		- 20230822@Evan: Integrate Parlay Boost - [RedmineID: #192238]
 */
 
 BEGIN
@@ -80,7 +80,7 @@ BEGIN
 		AND tpositiontaking = 0
 		AND (bettype < 901 OR bettype > 904)
 		AND (bettype < 911 OR bettype > 914)
-		AND bettype <> 999  --Exclude: Licensee Spread Setting
+		AND bettype NOT IN (999,998)  --Exclude: Licensee Spread Setting, Parlay Boost Adjustment
 	
 
 	IF @@ROWCOUNT <> 0

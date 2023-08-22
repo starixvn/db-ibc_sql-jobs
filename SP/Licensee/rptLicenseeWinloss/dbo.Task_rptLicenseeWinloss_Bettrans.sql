@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20230209@Bobby: Created [RedmineID: #172604]
 		- 20230702@Evan: Support Saba Virtual Tennis [RedmineID: #190465]
+		- 20230822@Evan: Integrate Parlay Boost - [RedmineID: #192238]
 		
 */
  
@@ -73,6 +74,7 @@ BEGIN
 			) AS t
 		WHERE @winlostdate >= ISNULL(saba.CutOffDate ,@winlostdate)
 		  )
+
 	INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
 	    ([Recommend]
 	    ,[WinlostDate]
@@ -120,7 +122,6 @@ BEGIN
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.comm) AS [AComm]
 	FROM [bodb02].[dbo].[bettrans] b WITH(NOLOCK)
-		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		INNER JOIN #tmpBettype s ON s.BetType = b.bettype AND s.RefTable NOT IN (1,2)
 		LEFT JOIN [bodb02].dbo.match m WITH(NOLOCK) ON b.matchid = m.matchid
@@ -149,9 +150,8 @@ BEGIN
 						CASE 
 							WHEN b.matchid = 29 THEN -1		--Parlay Sport
 							WHEN b.matchid = 2799 THEN ISNULL(b.oddsid, @NASportType)
-							WHEN b.matchid = 999 THEN @NASportType	-- Odds Spread Adjustment
-							WHEN b.matchid = 0 AND b.bettype = 1800 THEN 250	-- AG Casino 
-							WHEN b.matchid = 0 AND b.bettype = 8000 THEN 221	-- Exchange
+							WHEN b.matchid = 999 THEN @NASportType						-- Odds Spread Adjustment
+							WHEN b.matchid = 99 AND b.bettype = 998 THEN @NASportType	-- Parlay Boost Adjustment
 							ELSE ISNULL(b.matchid, @NASportType)
 						END
 					WHEN s.EventType = 1 THEN ISNULL(m.sporttype, @NASportType)
@@ -206,9 +206,77 @@ BEGIN
 		ck.TicketType,
 		b.Betfrom,
 		b.APositiontaking
+	
+	;WITH cte_ParlayBoost AS 
+	(
+		SELECT b.Recommend
+			 , b.WinlostDate
+			 , b.CustId
+			 , b.livehomescore
+			 , b.Betfrom
+			 , b.APositiontaking
+			 , b.[stake]
+			 , ISNULL(TRY_CAST(CAST(ExtraInfo AS XML).value('(/p1/@bba)[1]', 'VARCHAR(50)') AS MONEY),0) bba
+			 , ISNULL(TRY_CAST(CAST(ExtraInfo AS XML).value('(/p1/@lbbs)[1]', 'VARCHAR(50)') AS MONEY),0) lbbs
+		FROM bodb02.dbo.bettrans b WITH (NOLOCK)
+			INNER JOIN #tmpAgency pl WITH (NOLOCK) ON pl.recommend = b.recommend
+		WHERE b.WinlostDate = @winlostdate
+			AND b.StatusId = 112 	-- Ticket Won
+			AND b.Bettype = 29 		-- Parlay
+			AND b.oddsspread = 2 	-- Flag detect ticket offer Boos Bonus
+	)
+	INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
+	    ([Recommend]
+	    ,[WinlostDate]
+	    ,[Product3rdId]
+	    ,[Sporttype]
+	    ,[Bettype]
+	    ,[CustId]
+	    ,[StatusId]
+	    ,[LiveIndicator]
+	    ,[LeagueGroupId]
+	    ,[TicketType]
+	    ,[Betfrom]
+	    ,[APositiontaking]
+	    ,[BetCount]
+	    ,[Turnover]
+	    ,[NetTurnover]
+	    ,[Winlost]
+	    ,[AWinlost]
+	    ,[PComm]
+	    ,[AComm]
+	)
+	SELECT 
+		b.Recommend,
+		b.WinlostDate,
+		0 AS Product3rdId,
+		-1 AS Sporttype,
+		-1 AS Bettype,
+		b.CustId,
+		112 AS StatusId,
+		b.livehomescore,
+		0 AS LeagueGroupId,
+		0 AS TicketType,
+		b.Betfrom,
+		b.APositiontaking
+		----------------------
+		,SUM(1) AS BetCount
+		,SUM(ABS(b.[stake])) AS Turnover
+		,SUM(b.[stake]) AS NetTurnover
+		,SUM(bba) AS Winlost
+		,SUM(bba*lbbs) AS AWinlost 
+		,0 AS [PComm]
+		,0 AS [AComm] 
+	FROM cte_ParlayBoost b 
+	GROUP BY 
+		b.Recommend,
+		b.WinlostDate,
+		b.CustId,
+		b.livehomescore,
+		b.Betfrom,
+		b.APositiontaking
 
 	PRINT 'GEN >> bettransRnG';
-
 	INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
 	   ([Recommend]
 	   ,[WinlostDate]
@@ -252,7 +320,6 @@ BEGIN
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.comm) AS [AComm]
 	FROM [bodb02].[dbo].[bettransRnG] b WITH(NOLOCK)
-		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		INNER JOIN #tmpBettype s ON s.BetType = b.gameID AND s.RefTable = 1
 	WHERE b.winlostdate = @winlostdate
@@ -267,7 +334,6 @@ BEGIN
 		b.StatusId,
 		b.Betfrom,
 		b.APositiontaking
-	
 	
 	PRINT 'GEN >> bettransLC';
 	INSERT INTO bodb_LicenseeReport.[dbo].[rptLicenseeWinloss]
@@ -313,10 +379,9 @@ BEGIN
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.comm) AS [AComm]
 	FROM [bodb02].[dbo].[bettransLC] b WITH(NOLOCK)
-		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		INNER JOIN #tmpBettype s ON s.BetType = b.gameID AND s.RefTable = 2
-
+		
 	WHERE b.winlostdate = @winlostdate
 		AND b.statusID IN (111,112,113)
 	GROUP BY

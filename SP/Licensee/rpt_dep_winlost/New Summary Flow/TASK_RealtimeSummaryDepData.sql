@@ -78,6 +78,7 @@ AS
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 		- 20230626@Evan: Integrate MG-RNG (Normal+Promotion Game) [RedmineID: #189988]
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
+		- 20230822@Evan: Integrate Parlay Boost - [RedmineID: #192238]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -347,7 +348,7 @@ BEGIN
 			WHERE b.winlostdate = @Winlostdate
 				AND b.matchid >= 0
 				AND c.roleid = 1
-				AND b.betType <> 999 --Licensee Spread Setting
+				AND b.betType NOT IN (999,998) --Licensee Spread Setting, Parlay Boost Adjustment
 				AND	bettype < 19999 AND winlostdate > @MoveBetsDay
 			GROUP BY b.custid,
 				CASE
@@ -499,7 +500,7 @@ BEGIN
 			WHERE b.winlostdate >= @Winlostdate
 				AND b.matchid >= 0
 				AND c.roleid = 1
-				AND b.betType <> 999 --Licensee Spread Setting
+				AND b.betType NOT IN (999,998) --Licensee Spread Setting, Parlay Boost Adjustment
 				AND	bettype < 19999 AND winlostdate > @MoveBetsDay
 			GROUP BY b.custid,
 				CASE

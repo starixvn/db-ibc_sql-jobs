@@ -26,6 +26,8 @@ AS
 		- 20230629@Sol: Database - Sync-up Standby Server data - exclude step 7/8 (logshipping synced) - [RedmineID: #190438]
 		- 20220614@Danny: Database - scale out credit [RedmineID: #181595]
 		- 20230808@Lewis: Change redundant recipient in Reset Winning - notification email [RedmineID: #192448]
+		- 20230822@Evan: Integrate Parlay Boost - [RedmineID: #192238]
+
 */
 BEGIN
 	DECLARE @GenerateData TINYINT,
@@ -111,6 +113,10 @@ BEGIN
 		BEGIN
 			SET @errmsg = 'step 1.1'
 			EXEC bodb02.dbo.Task_Dep_DailySum_OddsAdjustment_14 
+				@WinlostDate = @winlostdate,
+				@CustIds = @custIDs
+
+			EXEC bodb02.dbo.Task_Dep_DailySum_ParlayBoostAdjust_14 
 				@WinlostDate = @winlostdate,
 				@CustIds = @custIDs
 		END
@@ -340,8 +346,13 @@ BEGIN
 			EXEC bodb02.dbo.Task_Dep_DailySum_OddsAdjustment_14
 					@WinlostDate = @winlostdate,
 					@CustIds = @custIDs
-
+			
 			SET @errmsg = 'step 1.2'
+			EXEC bodb02.dbo.Task_Dep_DailySum_ParlayBoostAdjust_14 
+				@WinlostDate = @winlostdate,
+				@CustIds = @custIDs
+
+			SET @errmsg = 'step 1.3'
 			EXEC bodb02.dbo.Task_sum_winloss_14
 					@WinlostDate = @WinlostDate,
 					@CustIds = @CustIds 
