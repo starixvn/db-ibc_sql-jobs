@@ -47,6 +47,7 @@ AS
 		- 20230511@Eddie: Add YeeBet product [RedmineID: #186480]
 		- 20230630@Lewis: Add Saba Tennis [RedmineID: #190459]
 		- 20230818@Lewis: Hotfix Dup Data - bettype = 8695,2499 [RedmineID: #192923]
+		- 20230713@Lewis: Add VS3-LeapGamng VS (New) [RedmineID: #189207]
 */
 BEGIN
 
@@ -233,7 +234,7 @@ BEGIN
 			WHEN bettype BETWEEN 6401 AND 6700 THEN 234-- Joker
 			WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 			WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
-			WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
+			WHEN bettype = 5301 THEN 231 -- Virtual Sports 3
 			WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 			WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 			WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
@@ -250,6 +251,7 @@ BEGIN
 			WHEN bettype BETWEEN 8400 AND 8699 THEN 155 -- Microgaming
 			WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 			WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
+			WHEN bettype BETWEEN 5302 AND 5399 THEN 178 -- VS3-LeapGaming(New)
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -395,7 +397,7 @@ BEGIN
 				 WHEN bettype BETWEEN 6401 AND 6700 THEN 234-- Joker
 				 WHEN bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
 				 WHEN bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
-				 WHEN bettype BETWEEN 5301 AND 5399 THEN 231 -- Virtual Sports 3
+				 WHEN bettype = 5301 THEN 231 -- Virtual Sports 3
 				 WHEN bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
 				 WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
 				 WHEN bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
@@ -412,6 +414,7 @@ BEGIN
 				 WHEN bettype BETWEEN 8400 AND 8699 THEN 155 -- Microgaming
 				 WHEN bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 				 WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
+				 WHEN bettype BETWEEN 5302 AND 5399 THEN 178 -- VS3-LeapGaming(New)
 				 ELSE 0
 			 END
 			,CASE
