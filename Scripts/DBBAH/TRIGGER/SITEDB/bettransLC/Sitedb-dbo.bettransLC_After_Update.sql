@@ -54,6 +54,7 @@ AS
         - 20220629@Helen: BalanceRecord -> wrong capture balance change and new balance when resettle tickets AE-Sexy product [Redmine:#173971]
         - 20220912@Helen: clone trigger from db05 to sitedb for scaleout project [176932]
 		- 20230615@Kathy: add new column winlostdate [Redmine:#181595]
+		- 20230818@Helen: NAP - SA Gaming - can not use betlist to search the refno which showed on bet credit history [Redmine:#179580]
 
 */
 BEGIN
@@ -61,6 +62,11 @@ BEGIN
     -- interfering with SELECT statements.
     SET NOCOUNT ON;
 
+	DECLARE @IsSAGaming BIT = 0
+	SET @IsSAGaming = ISNULL((SELECT TOP (1) 1 FROM inserted WHERE productid = 244),0) -- process trigger for SA Gaming only on bettransG
+
+	IF @IsSAGaming = 1 
+		RETURN
     -- Insert statements for trigger here
     INSERT INTO dbo.BalanceTrigger (custid, transid, bettype, actual_stake, winlost, playercomm, ActionDate, 
         ActionID, [Action],
@@ -119,5 +125,6 @@ BEGIN
             OR i.custid <> d.custid
             OR i.IsSum <> d.IsSum
         )
+
         
 END

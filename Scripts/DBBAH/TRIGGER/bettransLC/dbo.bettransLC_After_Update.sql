@@ -55,11 +55,18 @@ AS
         - 20221108@Victoria: Migration Data From SiteDB to CentralDB - Change to not capture when update sitedbgroupid = 0 [Redmine:#180033]
 		- 20230614@Kathy: add new column winlostdate [Redmine:#189598]
 		- 20230731@Kathy: exclude ticket <> sitedbgroupid = 0 [Redmine:#181595]
+		- 20230818@Helen: NAP - SA Gaming - can not use betlist to search the refno which showed on bet credit history [Redmine:#179580]
 */
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
     -- interfering with SELECT statements.
     SET NOCOUNT ON;
+
+	DECLARE @IsSAGaming BIT = 0
+	SET @IsSAGaming = ISNULL((SELECT TOP (1) 1 FROM inserted WHERE productid = 244),0) -- process trigger for SA Gaming only on bettransG
+
+	IF @IsSAGaming = 1 
+		RETURN
 
     -- Insert statements for trigger here
     INSERT INTO dbo.BalanceTrigger (custid, transid, bettype, actual_stake, winlost, playercomm, ActionDate, 
