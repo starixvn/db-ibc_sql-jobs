@@ -31,6 +31,7 @@ AS
 		- 20210816@Sophia: add DBBAL & Exclude GEN_rptBettingBySport14 at DBBAL [Redmine: #154300]
 		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
 		- 20231205@Evan: Change the domain of email from @starixvn.com to @starixsoft.com [RedmineID: #195197]
+		- 20231215@Danny: enhance processing data [Redmine: #190123]
 
 	EXEC Task_rptBetting_CheckData_Job @FromDate = '2018-04-01', @ToDate = '2018-04-10', @Step = 0,  @AllowCorrect = 1
     
@@ -258,7 +259,7 @@ BEGIN
 			END
 			
 			-----2.4. Clean up staging bettrans
-			EXEC dbo.Task_PostStaging 	
+			EXEC dbo.Task_PostStaging 	@DateFrom = @WinlostDate, @DateTo = @WinlostDate
 
 			---- 2.5. Get Msg
 			IF @GenRptBetting <> 0

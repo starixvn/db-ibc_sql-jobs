@@ -26,6 +26,7 @@ AS
 		- 20230629@Sol: Database - Sync-up Standby Server data - exclude step 7/8 (logshipping synced) - [RedmineID: #190438]
 		- 20220614@Danny: Database - scale out credit [RedmineID: #181595]
 		- 20230808@Lewis: Change redundant recipient in Reset Winning - notification email [RedmineID: #192448]
+		- 20231215@Danny: enhance processing data of rpt_betting table [Redmine: #190123]
 */
 BEGIN
 	DECLARE @GenerateData TINYINT,
@@ -648,7 +649,7 @@ BEGIN
 				EXEC dbo.Get_ServerName_By_Alias @Alias  = 'DBTXN', @ServerName = @doNotRunInServer OUTPUT
 				SELECT 
 					@alias = 'DBLIC', 
-					@SqlCommand = 'EXEC bodb_LicenseeReport.dbo.Task_PostStaging '
+					@SqlCommand = CONCAT('EXEC bodb_LicenseeReport.dbo.Task_PostStaging ', ' @DateFrom = ''',CONVERT(VARCHAR(50), @winlostdate, 121),'''', ' ,@DateTo = ''',CONVERT(VARCHAR(50), @winlostdate, 121),'''')
 				EXEC ExecRep_NAP_Admin_05 @ServerName = '', @AliasName = @alias, @SqlCommand = @SqlCommand, @doNotRunInServer = @doNotRunInServer, @Remark = @errmsg
 
 			END TRY

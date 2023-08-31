@@ -39,6 +39,7 @@ Revisions:
 	- 20190923@Amanda: Change the way to handle Half Won/ Half Lose bet types [RedmineID: #119879]
 	- 20191205@Percy: Enhance performance [RedmineID: #125028]
 	- 20210816@Sophia: add DBBAL [Redmine: #154300]
+	- 20230831@Danny: enhance processing data and performance [Redmine: #190123]
 
 Param's Explanation:
 	EXEC Task_PrepareStaging '2018-02-01', '2018-02-28'
@@ -68,19 +69,23 @@ BEGIN
 		SELECT @ToDate = CONVERT(VARCHAR(10), DATEADD(DAY, -1, GETDATE()), 120), @FromDate = DATEADD(DAY, -2, @ToDate)
 
 	-- outright --
-	TRUNCATE TABLE dbo.outright
+	--TRUNCATE TABLE dbo.outright
+
+	DELETE FROM dbo.outright WITH(ROWLOCK, UPDLOCK) WHERE eventdate BETWEEN @FromDate AND @ToDate
 	
-    INSERT INTO dbo.outright(matchid, leagueid)
-	SELECT orid AS matchid, leagueid
+    INSERT INTO dbo.outright(matchid, leagueid, eventdate)
+	SELECT orid AS matchid, leagueid, eventdate
     FROM bodb02.dbo.outright WITH (NOLOCK)
     WHERE eventdate BETWEEN @FromDate AND @ToDate
     UNION ALL
-    SELECT orid AS matchid, leagueid
+    SELECT orid AS matchid, leagueid, eventdate
     FROM bodb02.dbo.outright14 WITH (NOLOCK)
     WHERE eventdate BETWEEN @FromDate AND @ToDate
 
 	-- match --
-	TRUNCATE TABLE dbo.match
+	--TRUNCATE TABLE dbo.match
+
+	DELETE FROM dbo.match WITH(ROWLOCK, UPDLOCK) WHERE eventdate BETWEEN @FromDate AND @ToDate
 	
     INSERT INTO dbo.match(matchid, leagueid, sporttype, eventdate)
 	SELECT matchid, leagueid, sporttype, eventdate
@@ -92,7 +97,7 @@ BEGIN
     WHERE eventdate BETWEEN @FromDate AND @ToDate
 	  
 	-- bettrans --
-	TRUNCATE TABLE dbo.bettrans
+	--TRUNCATE TABLE dbo.bettrans
 
 	DECLARE @WinlostDate SMALLDATETIME
 	SELECT  @WinlostDate = @ToDate
@@ -107,6 +112,7 @@ BEGIN
 		WHILE @NumberTryCount < @MaxTryCount
 		BEGIN
 			BEGIN TRY
+				DELETE FROM dbo.bettrans WITH(ROWLOCK, UPDLOCK) WHERE winlostdate = @WinlostDate
 				EXEC dbo.Task_PrepareStaging_Bettrans @WinlostDate = @WinlostDate, @ErrorMsg = @ErrorMsg OUTPUT, @ProductCodes = @ProductCodes
 
 				SET @IsErr = 0
@@ -115,7 +121,7 @@ BEGIN
 			BEGIN CATCH
 				IF ERROR_NUMBER() = 2627  -- Violates Primary Key
 				BEGIN
-					DELETE dbo.bettrans WHERE winlostdate = @WinlostDate
+					DELETE dbo.bettrans WITH(ROWLOCK, UPDLOCK) WHERE winlostdate = @WinlostDate
 					
 					SET @NumberTryCount = @NumberTryCount + 1
 					SET @IsErr = 1
