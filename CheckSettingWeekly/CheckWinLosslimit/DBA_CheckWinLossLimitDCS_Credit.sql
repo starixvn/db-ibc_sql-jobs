@@ -14,6 +14,7 @@ AS
 		- 20220407@Winfred: Exclude Inactive Site MA and Member [redmine:#171114]
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
 	Parameter's Explanations:
 */
 BEGIN 
@@ -68,7 +69,7 @@ BEGIN
 	SELECT ps.productID,ps.sporttype,ps.bettype, CASE WHEN SettingType = 12 THEN 0 ELSE 1 END
 	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH(NOLOCK) 
 		INNER JOIN #OfferedProductList op ON ps.Sporttype = op.SportType AND ps.Bettype = OP.BetType
-	WHERE ps.SettingType in (6,12)
+	WHERE ps.SettingType in (6,12,22)
 		AND ps.SettingStatus = 0
 		AND op.IsHidden = 0
 		AND ps.sporttype = CASE WHEN @sporttype = 0 THEN ps.sporttype ELSE @sporttype END

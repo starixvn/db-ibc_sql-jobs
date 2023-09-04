@@ -26,6 +26,7 @@ AS
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221003@Elodie: Only check setting for product already released production [Redmine: #178617]
 		- 20230511@Eden: Ignore check missing sport setting if hidden [Redmine: #179711]
+		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
 
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
@@ -99,7 +100,9 @@ BEGIN
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Member cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend  
 			AND ci.mrecommend = CASE WHEN @mrecommend = 0 THEN ci.mrecommend ELSE @mrecommend END
 			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
@@ -123,7 +126,9 @@ BEGIN
 		INNER JOIN CheckCustDB.dbo.CustSettingMode3rd csm WITH (NOLOCK) ON ci.custid = csm.CustID AND csm.IsGrouped = 1
 		INNER JOIN CheckCustDB.dbo.CustPTGroupSetting3rd_Member cs WITH (NOLOCK) ON cs.AgentID = ci.recommend  
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend  
 			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
 			AND ci.mrecommend = CASE WHEN @mrecommend = 0 THEN ci.mrecommend ELSE @mrecommend END
@@ -146,7 +151,9 @@ BEGIN
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend 
 			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
 			AND ci.mrecommend = CASE WHEN @mrecommend = 0 THEN ci.mrecommend ELSE @mrecommend END
@@ -168,7 +175,9 @@ BEGIN
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend 
 			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site) 
 			AND ci.mrecommend = CASE WHEN @mrecommend = 0 THEN ci.mrecommend ELSE @mrecommend END
@@ -189,7 +198,9 @@ BEGIN
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend  
 			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site) 
 			AND ci.roleid = 4  
@@ -209,7 +220,9 @@ BEGIN
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Member cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend  
 			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site) 
 			AND ci.mrecommend = CASE WHEN @mrecommend = 0 THEN ci.mrecommend ELSE @mrecommend END
@@ -230,7 +243,9 @@ BEGIN
 		INNER JOIN CheckCustDB.dbo.CustSettingMode3rd csm WITH (NOLOCK) ON ci.custid = csm.CustID AND csm.IsGrouped = 1
 		INNER JOIN CheckCustDB.dbo.CustPTGroupSetting3rd_Member cs WITH (NOLOCK) ON cs.AgentID = ci.recommend  
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend 
 			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)  
 			AND ci.mrecommend = CASE WHEN @mrecommend = 0 THEN ci.mrecommend ELSE @mrecommend END
@@ -250,7 +265,9 @@ BEGIN
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend 
 			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)
 			AND ci.mrecommend = CASE WHEN @mrecommend = 0 THEN ci.mrecommend ELSE @mrecommend END
@@ -269,7 +286,9 @@ BEGIN
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK)
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend 
 			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site) 
 			AND ci.mrecommend = CASE WHEN @mrecommend = 0 THEN ci.mrecommend ELSE @mrecommend END
@@ -287,7 +306,9 @@ BEGIN
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend 
 			AND	NOT EXISTS (SELECT 1 FROM dbo.f_GetSiteNotOffer() AS nos WHERE nos.site = c.site)  
 			AND ci.roleid = 4  
@@ -358,13 +379,13 @@ BEGIN
 	WHERE op.IsHidden = 0 AND SettingType IN (1 ,18)
 		AND ps.SettingStatus = 0
 	-- End of DATA PREPARATION			
-	
-	UPDATE t
-	SET t.BitmapOrder = pl.bitmapOrder
-	FROM #ProductSetting t
-		INNER JOIN CheckCustDB.dbo.ProductStatusProfile pl WITH(NOLOCK) 
-			ON pl.sporttype = t.sporttype 
-			AND pl.bettype = t.bettype
+
+	UPDATE cs
+	SET cs.BitmapOrder = prf.bitmapOrder
+	FROM #ProductSetting cs
+		INNER JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 
 	
 	-- Starting check PT Rule
