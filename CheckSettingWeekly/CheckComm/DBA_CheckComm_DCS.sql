@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCHECK-CheckResultDB" executers="" viewers="" isFunction="0"></info>*/
-USE CheckResultDB
-GO
-
 ALTER PROCEDURE [dbo].[DBA_CheckComm_DCS]  
 (	@srecommend INT   
 	,@SportType SMALLINT = 0  
@@ -17,6 +14,7 @@ AS
 	Revisions:  :
 		- 20171003@Johnson: Add rule 107,108,109 check comm of SMA on member [Redmine: #73556]
 		- 20180807@Elodie: Apply f_GetSportNotOffer function
+		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
 
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
@@ -46,7 +44,9 @@ BEGIN
 	FROM CheckCustDB.dbo.CustInfo ci
 		INNER JOIN CheckCustDB.dbo.CustDiscount3rd_Member cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend  
 			AND ci.roleid = 1  
 			AND ci.Enabled = 1      
@@ -64,7 +64,9 @@ BEGIN
 	FROM CheckCustDB.dbo.CustInfo ci
 		INNER JOIN CheckCustDB.dbo.CustDiscount3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend  
 			AND ci.roleid = 2  
 			AND ci.Enabled = 1      
@@ -82,7 +84,9 @@ BEGIN
 	FROM CheckCustDB.dbo.CustInfo ci
 		INNER JOIN CheckCustDB.dbo.CustDiscount3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend  
 			AND ci.roleid = 3  
 			AND ci.Enabled = 1      
@@ -100,7 +104,9 @@ BEGIN
 	FROM CheckCustDB.dbo.CustInfo ci
 		INNER JOIN CheckCustDB.dbo.CustDiscount3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
-		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) ON prf.Sporttype = cs.sporttype AND prf.bettype = cs.bettype
+		LEFT JOIN CheckCustDB.dbo.ProductStatusProfile prf WITH(NOLOCK) 
+			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END
+			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 	WHERE ci.srecommend = @srecommend  
 			AND ci.roleid = 4  
 			AND ci.Enabled = 1      
