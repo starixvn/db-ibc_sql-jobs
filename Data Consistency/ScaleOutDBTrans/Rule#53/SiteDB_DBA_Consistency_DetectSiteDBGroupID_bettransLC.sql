@@ -14,6 +14,8 @@ Revisions:
 	- 20220824@Victoria: Rule #53 - Detect tickets contain value different from SiteDBGroupID of the site setting configuration
 							and SiteGroupDBID on tickets contain value different from site of customer [Redmine:#175881]
 	- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
+	- 20230905@July: Fix issue Message: Cannot insert duplicate key in table temp [Redmine:#193609]
+	
 */
 BEGIN
 	SET NOCOUNT ON
@@ -25,7 +27,7 @@ BEGIN
 
 	
 	CREATE TABLE #tmp_TransId (
-		TransId BIGINT PRIMARY KEY
+		TransId BIGINT
 		, CustId INT
 		, IsInvalid BIT DEFAULT(0)
 		, SiteDBGroupID SMALLINT
@@ -78,7 +80,7 @@ BEGIN
 
 	---------------------------------------
 	INSERT INTO #CustSiteDBGroupID_Invalid (TableName, TransID, CustID, SiteDBGroupID, SiteDBGroupIDConfigured, FromTransID, ToTransID)
-	SELECT 'bettransLC' AS TableName, ttrans.TransId, ttrans.CustId, ttrans.SiteDBGroupID, ttrans.SiteDBGroupIDConfigured, @fromtransid, @maxTransId
+	SELECT DISTINCT 'bettransLC' AS TableName, ttrans.TransId, ttrans.CustId, ttrans.SiteDBGroupID, ttrans.SiteDBGroupIDConfigured, @fromtransid, @maxTransId
 	FROM #tmp_TransId ttrans
 	WHERE ttrans.IsInvalid = 1
 
