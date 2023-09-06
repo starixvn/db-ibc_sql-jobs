@@ -379,6 +379,17 @@ BEGIN
 	WHERE op.IsHidden = 0 AND SettingType IN (1 ,18)
 		AND ps.SettingStatus = 0
 	-- End of DATA PREPARATION			
+	
+	--Delete sport non offer
+	DELETE sb		
+	FROM #ProductSetting sb
+		INNER JOIN CheckCustDB.[dbo].[SportNonOfferedSiteCurrency] stt WITH(NOLOCK) ON sb.SportType = stt.SportType AND sb.Bettype = stt.Bettype
+	WHERE stt.Currency = @_Currency AND (stt.SiteID = @_SiteID OR stt.SiteID = 0)	
+	
+	DELETE sb		
+	FROM #ProductSetting sb
+		INNER JOIN CheckCustDB.[dbo].[SportNonOfferedSiteCurrency] stt WITH(NOLOCK) ON sb.SportType = stt.SportType AND sb.Bettype = stt.Bettype
+	WHERE (stt.Currency = @_Currency OR stt.Currency = 0 ) AND stt.SiteID = @_SiteID
 
 	UPDATE cs
 	SET cs.BitmapOrder = prf.bitmapOrder
