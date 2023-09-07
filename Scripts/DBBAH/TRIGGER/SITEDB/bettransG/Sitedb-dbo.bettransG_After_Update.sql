@@ -47,6 +47,7 @@ AS
     Task: 
     Revision:
         - 20230818@Helen: NAP - SA Gaming - can not use betlist to search the refno which showed on bet credit history [Redmine:#179580]
+		- 20230906@Louisa: Capture ActionId 020 for bet Rejects [Redmine:#179580]
 */
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
@@ -72,8 +73,11 @@ BEGIN
         CASE
         WHEN i.custid = 0 THEN 130 -- cancel transfer (custid set to zero)
         WHEN i.statusid = 102 THEN 050 -- Void Bet
-        WHEN d.statusid = 0 AND i.statusid > 0 THEN 030 -- Settled : running -> Won/Lose/Draw/Refund
-        WHEN d.statusid = 102 AND i.statusid = 0 THEN 055 -- unvoid/recover : void -> running
+        WHEN d.statusid = 0 THEN CASE WHEN i.statusid = 101 THEN 020 -- running -> Reject
+									  WHEN i.statusid > 0 THEN 030 -- Settled : running -> Won/Lose/Draw/Refund
+									  END
+		WHEN d.statusid = 1 AND i.statusID = 101 THEN 020 -- waiting --> reject
+		WHEN d.statusid = 102 AND i.statusid = 0 THEN 055 -- unvoid/recover : void -> running
         WHEN d.statusid > 0 THEN CASE i.statusid WHEN 0 THEN 032 ELSE 031 END -- resettle or unsettle
         ELSE 0 END,
         
@@ -83,9 +87,11 @@ BEGIN
             WHEN i.custid = 0 THEN ' cancelled, ' + d.[status] + ' to ' + i.[status]
             WHEN d.statusid = 0 THEN
                 CASE i.statusid
+				WHEN 101 THEN ' rejected'
                 WHEN 102 THEN ' voided'
                 ELSE ' settled, ' + d.[status] + ' to ' + i.[status]
                 END
+			WHEN d.statusid = 1 AND i.statusID = 101 THEN ' rejected'
             WHEN i.statusID = d.statusID THEN ' updated'
             ELSE ' updated, ' + d.[status] + ' to ' + i.[status]
         END,' NULL ')
