@@ -101,6 +101,7 @@ Revisions:
 	-- 20221117@Patrick: MB - Remove table out proccess: ProviderExternalResultDetailES | ProviderExternalResultDetailOS [Redmine: #180613]
 	- 20230613@Patrick: Write log to DBLog instead of LogDB [Redmine: #189441]
 	- 20230718@Brice: Support scale-out for credit site - SiteBD3 Redmine: [#191003]
+	- 202300908@Patrick: Fix issue Movebet flag [Redmine: #193720]
 */
 
 SET NOCOUNT ON
