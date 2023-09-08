@@ -21,6 +21,7 @@ AS
 		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 		20220912@Patrick: Support scale-out for deposit site - fix issue Redmine: [#177641]
 		20221227@Patrick: Support BU 247 Redmine: [#182882]
+		- 20230707@Brice: Support scale-out for credit site [RedmineID: #191003]
 
 	Param use:
 
@@ -67,6 +68,18 @@ BEGIN
 		--
 		DECLARE @__movebetdate SMALLDATETIME, @__siteDBGroupId SMALLINT = 0
 			, @__balanceupdate SMALLDATETIME
+			, @__SRecommend int
+		
+		select @__SRecommend = SRecommend from CustDB.dbo.Customer c with (nolock) WHERE c.custid = @custid
+		drop table if exists #tmp_custsuper
+
+		create table #tmp_custsuper (custid int,SiteDBGroupID SMALLINT)
+		insert into #tmp_custsuper
+		select isnull(d.custid,c.custid),isnull(d.SiteDBGroupID,c.SiteDBGroupID) as SiteDBGroupID
+		from CustDB.dbo.dep_custsuper d with(nolock)
+					full outer join DBCUST.CustDB.dbo.custsuper c with(nolock) on d.custid=c.custid 
+		where isnull(d.custid,c.custid)= @__SRecommend
+		
 		EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @__movebetdate OUTPUT
 		EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @__balanceupdate OUTPUT
 
@@ -83,13 +96,13 @@ BEGIN
 
 		SELECT @FromTransfer = SUM(winlost-actual_stake+playercomm)	
 		FROM dbo.Transfer t WITH (ROWLOCK) 
-			LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
+			INNER JOIN #tmp_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 		WHERE t.custid = @custid
 			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 						 WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 					     WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 				 ELSE 1 END
-			AND ISNULL(c.SiteDBGroupID, 0) = @__siteDBGroupId
+			AND ISNULL(c.SiteDBGroupID, 0)= @__siteDBGroupId
 
 		--//get MovebetDate again if it was changed
 		DECLARE @__movebetdateF SMALLDATETIME
@@ -174,9 +187,9 @@ BEGIN
 			UNION ALL
 			SELECT TOP 1 'Transfer' tableName
 			FROM dbo.Transfer t WITH(NOLOCK) 
-				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
+				INNER JOIN #tmp_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE t.custid = @custid
-				AND ISNULL(SiteDBGroupID, 0) <> @__siteDBGroupId
+				AND ISNULL(c.SiteDBGroupID, 0) <> @__siteDBGroupId
 		)
 		BEGIN
 			SET @result = 333 -->>wrong SiteDBGroupId setting

@@ -23,6 +23,7 @@ AS
 		20220715@Patrick: Use insert into instead of select into Redmine: [#175440]
 		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 		20221227@Patrick: Support BU 247 Redmine: [#182882]
+		- 20230707@Brice: Support scale-out for credit site [RedmineID: #191003]
 		
 	Param use:
 
@@ -36,6 +37,14 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	Declare @RC int, @RD int, @msg varchar(200), @__siteDBGroupId SMALLINT = 0
+	drop table if exists #tmp_custsuper
+
+	create table #tmp_custsuper (custid int,SiteDBGroupID SMALLINT)
+	insert into #tmp_custsuper
+	select isnull(d.custid,c.custid),isnull(d.SiteDBGroupID,c.SiteDBGroupID) as SiteDBGroupID
+	from CustDB.dbo.dep_custsuper d with(nolock)
+				full outer join DBCUST.CustDB.dbo.custsuper c with(nolock) on d.custid=c.custid
+				
 	SET @msg = ''
 	SET @RD = 0
 
@@ -65,6 +74,7 @@ BEGIN
 	GROUP BY c.custid
 
 	SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
+
 
 	IF NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1)
 	BEGIN
@@ -136,12 +146,12 @@ BEGIN
 		ct AS (
 			SELECT t.custid, SUM(winlost-actual_stake+playercomm) AS Balance
 			FROM dbo.Transfer t WITH(NOLOCK)
-				LEFT JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK) ON t.SRecommend = s.custid
+				INNER JOIN #tmp_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 						   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 						   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 					 ELSE 1 END
-				AND ISNULL(s.SiteDBGroupID, 0) = @__siteDBGroupId
+				AND ISNULL(c.SiteDBGroupID, 0)= @__siteDBGroupId
 			GROUP BY t.custid
 		)
 		INSERT INTO #QuestionLists(custid, balance, RowVersion, Outstanding, BalRNG, BalLC, FromBalanceTable, adjustWinlostAmt)
@@ -222,12 +232,12 @@ BEGIN
 			SELECT t.custid, SUM(winlost-actual_stake+playercomm) Balance
 			FROM dbo.Transfer t WITH (NOLOCK)
 				INNER JOIN #QuestionLists q ON t.custid = q.custid
-				LEFT JOIN CustDB.dbo.Dep_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
+				INNER JOIN #tmp_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 						   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 						   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 					 ELSE 1 END
-				AND ISNULL(c.SiteDBGroupID, 0) = @__siteDBGroupId
+				AND ISNULL(c.SiteDBGroupID, 0)= @__siteDBGroupId
 			GROUP BY t.custid
 		),
 		q2 AS (
