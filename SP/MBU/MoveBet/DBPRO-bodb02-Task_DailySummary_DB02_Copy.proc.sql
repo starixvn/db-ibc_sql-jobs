@@ -57,6 +57,7 @@ AS
 		-- 20210914@Patrick: Support bitcoin project: Odds3rd & ResultDetail3rd [Redmine: #159842]
 		-- 20220504@Max: MBU - Add column isTestMatch in the match and match14 table [Redmine: #172162]
 		-- 20221117@Patrick: MB - Remove table out proccess: ProviderExternalResultDetailES | ProviderExternalResultDetailOS | ProviderExternalResultDetail [Redmine: #180613]
+		-- 20230908@Brice:	Add column [oddsSource] of [oddsES] - [Redmine: #193080]
 */
 
 BEGIN
@@ -409,7 +410,7 @@ SET NOCOUNT ON
 		INSERT INTO	dbo.oddsES14
 			(	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk, stakerange
 				, newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category, IncreaseMaxbet
-				, odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId
+				, odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId,oddsSource 
 				, [cs00], [cs01], [cs10],[cs11], [cs02], [cs12], [cs22], [cs21], [cs20], [cs30], [cs31], [cs32], [cs33], [cs23]
 				, [cs13], [cs03], [cs43], [cs42], [cs41], [cs40], [cs44], [cs14], [cs24], [cs04], [cs34],[cs50], [cs05], [cs51]
 				, [cs52], [cs53], [cs54], [cs15], [cs25], [cs35], [cs45], [cs09], [cs90], [cs99], [bal00], [bal10], [bal11], [bal01]
@@ -419,7 +420,7 @@ SET NOCOUNT ON
 			)
 		SELECT	oddsid, matchid, bettype, switch, hdp1, hdp2, odds1a, odds2a, oddsspreada, autobookie, gapodds1, gapodds2, diffbalance, maxodds, minodds, oddsstatus, liveindicator, changetime, risk, stakerange
 			, newoffersetup, livehomescore, liveawayscore, creator, com1, com2, csstatus, maxbet, autosuspend, stakerange2, risk2, site3, sporttype, HasBeenLinked, Resourceid, Category, IncreaseMaxbet
-			, odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId
+			, odds1aH, odds2aH, IsCopyDeadball, GoalLineDiff, IsStatusIndep, ParentOddsId, RefOddsSP, RefOddsH, RefOddsA, RefTrueOdds, CurrentTrueOdds, EnableVirtualRate, TraderId,oddsSource 
 			, [cs00], [cs01], [cs10],[cs11], [cs02], [cs12], [cs22], [cs21], [cs20], [cs30], [cs31], [cs32], [cs33], [cs23]
 			, [cs13], [cs03], [cs43], [cs42], [cs41], [cs40], [cs44], [cs14], [cs24], [cs04], [cs34],[cs50], [cs05], [cs51]
 			, [cs52], [cs53], [cs54], [cs15], [cs25], [cs35], [cs45], [cs09], [cs90], [cs99], [bal00], [bal10], [bal11], [bal01]
