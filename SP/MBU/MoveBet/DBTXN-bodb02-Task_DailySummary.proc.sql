@@ -101,6 +101,7 @@ Revisions:
 	-- 20221117@Patrick: MB - Remove table out proccess: ProviderExternalResultDetailES | ProviderExternalResultDetailOS [Redmine: #180613]
 	- 20230613@Patrick: Write log to DBLog instead of LogDB [Redmine: #189441]
 	- 20230718@Brice: Support scale-out for credit site - SiteBD3 Redmine: [#191003]
+	- 202300908@Patrick: Fix issue Movebet flag [Redmine: #193720]
 */
 
 SET NOCOUNT ON
@@ -119,16 +120,8 @@ EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Do
 
 IF @step = 1--update ticket (if any) which winlostdate is not synced with eventdate 
 BEGIN
-	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - start updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
-
-	--**update being movebet date flag ==> the purpose of this step is that does not allow for settle tickets which has winlostdate smaller than beingMovebet date
-	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 9, @tableName = 'SystemSettings'
-
-	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - end updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
-	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
-
-	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - start turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - start turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	--**turn on flag for starting copy to [14]
@@ -141,9 +134,18 @@ BEGIN
 	--pub bet14
 	EXEC dbo.Bet_ExecRep14_01 @Mode = 1, @TableName = 'SystemSettings'
 
-	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - end turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.01 - end turn on MB_DoneCopy_Local | MB_SWinloss_Local | MB_Sum19999_Local flags, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
 	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 	
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - start updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
+
+	--**update being movebet date flag ==> the purpose of this step is that does not allow for settle tickets which has winlostdate smaller than beingMovebet date
+	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 9, @tableName = 'SystemSettings'
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 1.02 - end updating BeingMovebetDate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
+
 	--//
 	SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('BeforeMB')
 	WAITFOR DELAY @__delayTimeValue --waitfor all settle running commands can be done to start MB
@@ -630,8 +632,15 @@ BEGIN
 		END
 
 	END
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.03 - Start copy bettransm14/bettransg14, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
+
 	-- Copy bettransm/bettransg -> bettransm14/bettransg14 for whole day of @winlostdate
 	EXEC dbo.ExecRep_08 @recommend = 0, @winlostdate = @winlostdate, @parlay = 1
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 4.03 - End copy bettransm14/bettransg14, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	--reset before start
 	TRUNCATE TABLE dbo.Task_Movebet_RecommendList
@@ -860,7 +869,7 @@ BEGIN
 		SELECT TOP 1 1 
 		FROM DBCTG.bodb02.dbo.SystemSettings 
 		WHERE VName = 'BeingMovebetDate'
-			AND VValue <> (SELECT VValue FROM dbo.SystemSettings WHERE VName = 'BeingMovebetDate')
+			AND ISNULL(VValue, '') <> (SELECT ISNULL(VValue, '') FROM dbo.SystemSettings WHERE VName = 'BeingMovebetDate')
 	)
 	BEGIN
 		WAITFOR DELAY '00:00:30:000' --waitfor MB done...
@@ -876,8 +885,14 @@ BEGIN
 		END
 	END
 
-	--update Movebetdate flag
+	SET @Doing = 'Task_DailySummary : MoveBet step 7.01 - Start update Movebetdate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
+
+	--***update Movebetdate flag
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 10, @tableName = 'SystemSettings'
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 7.01 - End update Movebetdate flag, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	--//
 	SELECT @__delayTimeValue = dbo.f_BU_GetDelayTime('AfterUpdMBD')
@@ -917,6 +932,9 @@ BEGIN
 	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 	-- Delete bettransG for whole day of @winlostdate
 	EXEC dbo.ExecRep_09 @recommend = 0, @winlostdate = @winlostdate, @parlay = 2
+
+	SET @Doing = 'Task_DailySummary : MoveBet step 8.20 - start delete bettrans|bettransLC|bettransRnG|translog, on wld: ' + CONVERT(VARCHAR(10), @winlostdate, 121)
+	EXEC bodb_CustomerLog.dbo.Task_UserLog_SendMessage @UserID = 25520, @Doing = @Doing, @functype = 2
 
 	DECLARE @__rowDeleted INT
 	SELECT @__index = 1, @__recommend = NULL, @__rowDeleted = 1, @__rowAffected = 0
