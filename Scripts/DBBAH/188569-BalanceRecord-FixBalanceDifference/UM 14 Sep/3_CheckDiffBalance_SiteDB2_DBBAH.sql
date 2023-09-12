@@ -18,7 +18,7 @@ GO
 	 
 	IF NOT EXISTS ( select top 1 1 from sys.objects where name = 'BalanceRecord_Diff_20230914_tmp' )
 	BEGIN
-		CREATE TABLE BalanceRecord_Diff_20230914_tmp (ID INT IDENTITY(1,1) PRIMARY KEY , custid INT , SiteDBGroupID SMALLINT )
+		CREATE TABLE BalanceRecord_Diff_20230914_tmp (ID INT IDENTITY(1,1) PRIMARY KEY , custid INT , SiteDBGroupID SMALLINT, OrderNo SMALLINT )
 	END
 	
 	DECLARE @batch int = 100000 
@@ -28,8 +28,8 @@ GO
 	SET @StartRow = 1
 	WHILE (1=1)
 	BEGIN
-		INSERT INTO BalanceRecord_Diff_20230914_tmp (custid, SiteDBGroupID)
-		SELECT  m.custid, 2
+		INSERT INTO BalanceRecord_Diff_20230914_tmp (custid, SiteDBGroupID, OrderNo)
+		SELECT  m.custid, 2, 1
 		FROM  BalanceRecordDiff_SiteDB2_Order1 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
@@ -56,8 +56,8 @@ GO
 	SET @StartRow = 1
 	WHILE (1=1)
 	BEGIN
-		INSERT INTO BalanceRecord_Diff_20230914_tmp (custid, SiteDBGroupID)
-		SELECT  m.custid, 2
+		INSERT INTO BalanceRecord_Diff_20230914_tmp (custid, SiteDBGroupID, OrderNo)
+		SELECT  m.custid, 2, 5
 		FROM  BalanceRecordDiff_SiteDB2_Order5 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
@@ -84,8 +84,8 @@ GO
 	SET @StartRow = 1
 	WHILE (1=1)
 	BEGIN
-		INSERT INTO BalanceRecord_Diff_20230914_tmp (custid, SiteDBGroupID)
-		SELECT  m.custid, 2
+		INSERT INTO BalanceRecord_Diff_20230914_tmp (custid, SiteDBGroupID, OrderNo)
+		SELECT  m.custid, 2, 6
 		FROM  BalanceRecordDiff_SiteDB2_Order6 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
