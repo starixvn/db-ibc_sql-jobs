@@ -4,13 +4,26 @@
 	Task: Reinit balance - SiteDB2 [Redmine: #181595]
 	DB:DBBAH/bodb02
 
-	Notes: Run on db05bk1 only
 */
+
+----Run on DB05BK1 only
+
 USE bodb02
 GO
 
 --------------DECLARE temporary tables ------------------
-CREATE TABLE #temp_MemberInput(
+IF OBJECT_ID('tempdb..#temp_Cust_DBBAH') IS NOT NULL
+	DROP TABLE #temp_Cust_DBBAH
+
+IF OBJECT_ID('tempdb..#temp_Cust') IS NOT NULL
+	DROP TABLE #temp_Cust
+
+IF OBJECT_ID('tempdb..#tempMember') IS NOT NULL
+	DROP TABLE #tempMember
+
+CREATE TABLE #temp_Cust_DBBAH (CustId INT)
+
+CREATE TABLE #temp_Cust(
 	ID INT IDENTITY (1,1) PRIMARY KEY,
 	custid INT
 )
@@ -18,17 +31,22 @@ CREATE TABLE #temp_MemberInput(
 CREATE TABLE #tempMember (custid INT PRIMARY KEY)
 
 --------------GET members needs to process ------------------
-INSERT INTO #temp_MemberInput (custid)
-SELECT DISTINCT custid
-FROM BalanceRecord_Diff_20230914_tmp WITH (NOLOCK)
-WHERE SiteDBGroupID = 2
+INSERT INTO #temp_Cust_DBBAH (CustID)
+SELECT CustID FROM BalanceRecord_Diff_Site2_20230914_tmp WITH (NOLOCK)
 
-SELECT count(1) AS [custid_Count_diff] FROM #temp_MemberInput 
+INSERT INTO #temp_Cust_DBBAH (CustID)
+SELECT CustID FROM DB05.bodb02.dbo.BalanceRecord_Diff_Site2_20230914_tmp WITH (NOLOCK)
+
+INSERT INTO #temp_Cust (custid)
+SELECT DISTINCT custid
+FROM #temp_Cust_DBBAH
+
+SELECT count(1) AS [custid_Count_diff] FROM #temp_Cust 
 
 -- Check data [dbo].[BalanceTrigger_ProcessData] on DB05/DB05BK1 until it's no data
 SELECT TOP 1 1
 FROM BalanceTrigger_ProcessData b WITH (NOLOCK)
-	INNER JOIN #temp_MemberInput m ON b.custid = m.custid
+	INNER JOIN #temp_Cust m ON b.custid = m.custid
 
 ------ info for deployer 
 DECLARE @debug_message VARCHAR(MAX) = ''
@@ -49,7 +67,7 @@ DECLARE  @ExecuteSQL NVARCHAR(MAX) = ''
 DECLARE @CustidBalanceList VARCHAR(MAX) = ''
 DECLARE @xml XML = NULL
 
-SET @rid_loop = ((SELECT MAX(ID) FROM #temp_MemberInput)/@batch) + 1
+SET @rid_loop = ((SELECT MAX(ID) FROM #temp_Cust)/@batch) + 1
 SET @StopRow = @batch
 
 -- SET param to insert balance in db05
@@ -68,7 +86,7 @@ BEGIN
 	-- process by recommend, 2000 customers per batch
 	INSERT INTO #tempMember(custid)
 	SELECT custid
-	FROM #temp_MemberInput 
+	FROM #temp_Cust 
 	WHERE ID BETWEEN @StartRow AND @StopRow
 
 	IF @@ROWCOUNT = 0
@@ -108,11 +126,5 @@ BEGIN
 	SELECT  @loop_cnt += 1
 
 END
-
---SELECT @rowCount
-
-DROP TABLE #temp_MemberInput
-DROP TABLE #tempMember
-
 
 

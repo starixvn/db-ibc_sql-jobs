@@ -6,6 +6,9 @@
 
 */
 
+
+----Run on DB05 AND DB05BK1
+
 USE bodb02
 GO
 
@@ -13,26 +16,32 @@ GO
 	--select count(1) as cnt_CustId from BalanceRecordDiff_SiteDB1_Order4 with(nolock) --709258
 	--select count(1) as cnt_CustId from BalanceRecordDiff_SiteDB1_Order5 with(nolock) --29581
 	--select count(1) as cnt_CustId from BalanceRecordDiff_SiteDB1_Order6 with(nolock) --409097
-	--truncate table BalanceRecord_Diff_20230914_tmp
-	 
-	IF NOT EXISTS ( select top 1 1 from sys.objects where name = 'BalanceRecord_Diff_20230914_tmp' )
-	BEGIN
-		CREATE TABLE BalanceRecord_Diff_20230914_tmp (ID INT IDENTITY(1,1) PRIMARY KEY , custid INT , SiteDBGroupID SMALLINT, OrderNo SMALLINT )
-	END
 	
-	DECLARE @batch int = 100000 
+	IF EXISTS ( SELECT TOP 1 1 from sys.objects WHERE name = 'BalanceRecord_Diff_Site1_20230914_tmp' )
+	BEGIN
+		DROP TABLE BalanceRecord_Diff_Site1_20230914_tmp
+	END
+
+	CREATE TABLE BalanceRecord_Diff_Site1_20230914_tmp (ID INT IDENTITY(1,1) PRIMARY KEY , custid INT , OrderNo SMALLINT )
+	
+	DECLARE @batch INT = 100000 
 	DECLARE @StartRow INT = 1 
+	DECLARE @debug_message VARCHAR(MAX) = ''
+			,@loop_cnt INT = 1
 
 	----BalanceRecordDiff_SiteDB1_Order4
 	SET @StartRow = 1
 	WHILE (1=1)
 	BEGIN
-		INSERT INTO BalanceRecord_Diff_20230914_tmp (custid, SiteDBGroupID, OrderNo)
-		SELECT  m.custid, 1, 4
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB1_Order4, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+
+		INSERT INTO BalanceRecord_Diff_Site1_20230914_tmp (custid, OrderNo)
+		SELECT  m.custid, 4
 		FROM  BalanceRecordDiff_SiteDB1_Order4 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
-					FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables		
+					FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- data from 8 balance tables		
 					WHERE b.custid = m.custid
 			) AS b1		
 			CROSS APPLY (		
@@ -48,19 +57,24 @@ GO
 		BREAK
 	
 		SET @StartRow = @StartRow + @batch
+		SELECT  @loop_cnt += 1
 
 	END
 
 	---- BalanceRecordDiff_SiteDB1_Order5
 	SET @StartRow = 1
+	SET @loop_cnt = 1
 	WHILE (1=1)
 	BEGIN
-		INSERT INTO BalanceRecord_Diff_20230914_tmp (custid, SiteDBGroupID, OrderNo)
-		SELECT  m.custid, 1, 5
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB1_Order5, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+
+		INSERT INTO BalanceRecord_Diff_Site1_20230914_tmp (custid, OrderNo)
+		SELECT  m.custid, 5
 		FROM  BalanceRecordDiff_SiteDB1_Order5 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
-					FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables		
+					FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- data from 8 balance tables		
 					WHERE b.custid = m.custid
 			) AS b1		
 			CROSS APPLY (		
@@ -76,19 +90,23 @@ GO
 		BREAK
 	
 		SET @StartRow = @StartRow + @batch
+		SELECT  @loop_cnt += 1
 
 	END
 
 	---- BalanceRecordDiff_SiteDB1_Order6
 	SET @StartRow = 1
+	SET @loop_cnt = 1
 	WHILE (1=1)
 	BEGIN
-		INSERT INTO BalanceRecord_Diff_20230914_tmp (custid, SiteDBGroupID, OrderNo)
-		SELECT  m.custid, 1, 6
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB1_Order6, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+		INSERT INTO BalanceRecord_Diff_Site1_20230914_tmp (custid, OrderNo)
+		SELECT  m.custid, 6
 		FROM  BalanceRecordDiff_SiteDB1_Order6 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
-					FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables		
+					FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- data from 8 balance tables		
 					WHERE b.custid = m.custid
 			) AS b1		
 			CROSS APPLY (		
@@ -104,6 +122,7 @@ GO
 		BREAK
 	
 		SET @StartRow = @StartRow + @batch
+		SELECT  @loop_cnt += 1
 
 	END
 

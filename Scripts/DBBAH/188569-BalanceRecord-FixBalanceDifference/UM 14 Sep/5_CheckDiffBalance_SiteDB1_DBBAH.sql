@@ -6,25 +6,31 @@
 
 */
 
+----Run on DB05 AND DB05BK1
+
 USE bodb02
 GO
 
-	--truncate table BalanceRecord_Diff_20230914_tmp
 	 
-	IF NOT EXISTS ( select top 1 1 from sys.objects where name = 'BalanceRecord_Diff_20230914_tmp' )
+	IF NOT EXISTS ( select top 1 1 from sys.objects where name = 'BalanceRecord_Diff_Site1_20230914_tmp' )
 	BEGIN
-		CREATE TABLE BalanceRecord_Diff_20230914_tmp (ID INT IDENTITY(1,1) PRIMARY KEY , custid INT , SiteDBGroupID SMALLINT, OrderNo SMALLINT )
+		CREATE TABLE BalanceRecord_Diff_Site1_20230914_tmp (ID INT IDENTITY(1,1) PRIMARY KEY , custid INT , OrderNo SMALLINT )
 	END
 	
 	DECLARE @batch int = 100000 
 	DECLARE @StartRow INT = 1 
+	DECLARE @debug_message VARCHAR(MAX) = ''
+			,@loop_cnt INT = 1
 
 	----BalanceRecordDiff_SiteDB1_Order2
 	SET @StartRow = 1
 	WHILE (1=1)
 	BEGIN
-		INSERT INTO BalanceRecord_Diff_20230914_tmp (custid, SiteDBGroupID, OrderNo)
-		SELECT  m.custid, 1, 2
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB1_Order2, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+		
+		INSERT INTO BalanceRecord_Diff_Site1_20230914_tmp (custid, OrderNo)
+		SELECT  m.custid, 2
 		FROM  BalanceRecordDiff_SiteDB1_Order2 m WITH(NOLOCK)
 			CROSS APPLY (	SELECT c.custid FROM vw_Customer c WITH(NOLOCK)
 							WHERE c.custid = m.custid
@@ -32,7 +38,7 @@ GO
 						) c
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
-					FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables		
+					FROM DBSIG01.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- data from 8 balance tables		
 					WHERE b.custid = m.custid
 			) AS b1		
 			CROSS APPLY (		
@@ -48,15 +54,20 @@ GO
 		BREAK
 	
 		SET @StartRow = @StartRow + @batch
+		SELECT @loop_cnt += 1
 
 	END
 
 	---- BalanceRecordDiff_SiteDB1_Order3
 	SET @StartRow = 1
+	SET @loop_cnt = 1
 	WHILE (1=1)
 	BEGIN
-		INSERT INTO BalanceRecord_Diff_20230914_tmp (custid, SiteDBGroupID, OrderNo)
-		SELECT  m.custid, 1, 3
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB1_Order3, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+		
+		INSERT INTO BalanceRecord_Diff_Site1_20230914_tmp (custid, OrderNo)
+		SELECT  m.custid, 3
 		FROM  BalanceRecordDiff_SiteDB1_Order3 m WITH(NOLOCK)
 			CROSS APPLY (	SELECT c.custid FROM vw_Customer c WITH(NOLOCK)
 							WHERE c.custid = m.custid
@@ -80,6 +91,7 @@ GO
 		BREAK
 	
 		SET @StartRow = @StartRow + @batch
+		SELECT @loop_cnt += 1
 
 	END
 
