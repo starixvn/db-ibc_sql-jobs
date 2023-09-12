@@ -1,7 +1,7 @@
 /*<info serverAlias="DBBAH-bodb02" executers="" isFunction="0"></info>*/
 /*
     Created: 20230905@Louisa
-	Task: Check diff balance SiteDB2 [Redmine: #188569]
+	Task: Check diff and init balance SiteDB2 [Redmine: #188569]
 	DB:DBBAH/bodb02
 
 */
@@ -14,13 +14,15 @@ GO
 	--select count(1) as cnt_CustId from BalanceRecordDiff_SiteDB2_Order1 with(nolock) --1118495
 	--select count(1) as cnt_CustId from BalanceRecordDiff_SiteDB2_Order5 with(nolock) --622843
 	--select count(1) as cnt_CustId from BalanceRecordDiff_SiteDB2_Order6 with(nolock) --90061
-	
+
+----- 1. CHECK DIFF BALANCE
+
 	IF EXISTS ( SELECT TOP 1 1 FROM sys.objects WHERE name = 'BalanceRecord_Diff_Site2_20230914_tmp' )
 	BEGIN
 		DROP TABLE BalanceRecord_Diff_Site2_20230914_tmp
 	END
 
-	CREATE TABLE BalanceRecord_Diff_Site2_20230914_tmp (ID INT IDENTITY(1,1) PRIMARY KEY , custid INT, OrderNo SMALLINT )
+	CREATE TABLE BalanceRecord_Diff_Site2_20230914_tmp (ID INT IDENTITY(1,1) PRIMARY KEY , custid INT)
 	
 	DECLARE @batch int = 100000 
 	DECLARE @StartRow INT = 1 
@@ -34,8 +36,8 @@ GO
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB2_Order1, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
-		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid, OrderNo)
-		SELECT  m.custid, 1
+		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid)
+		SELECT  m.custid
 		FROM  BalanceRecordDiff_SiteDB2_Order1 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
@@ -67,8 +69,8 @@ GO
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB2_Order5, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 		
-		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid, OrderNo)
-		SELECT  m.custid, 5
+		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid)
+		SELECT  m.custid
 		FROM  BalanceRecordDiff_SiteDB2_Order5 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
@@ -100,8 +102,8 @@ GO
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB2_Order6, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 		
-		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid, OrderNo)
-		SELECT  m.custid, 6
+		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid)
+		SELECT  m.custid
 		FROM  BalanceRecordDiff_SiteDB2_Order6 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
@@ -125,7 +127,63 @@ GO
 
 	END
 
+----- 2. INIT BALANCE SITEDB2 ON DBBAH
+	SELECT count(1) AS [custid_Count_diff] FROM BalanceRecord_Diff_Site2_20230914_tmp
 
+	IF OBJECT_ID('tempdb..#tempMember') IS NOT NULL
+	DROP TABLE #tempMember
+
+	CREATE TABLE #tempMember (custid INT PRIMARY KEY)
+
+	-- Check data [dbo].[BalanceTrigger_ProcessData] until it's no data
+	SELECT TOP 1 1
+	FROM BalanceTrigger_ProcessData b WITH (NOLOCK)
+		INNER JOIN BalanceRecord_Diff_Site2_20230914_tmp m ON b.custid = m.custid
+
+	--------------LOOP BY batch 500 of customers ------------------
+	DECLARE @rid_loop INT
+			, @rowCount int  =0
+			, @StopRow INT
+
+	SET @batch	= 500
+	SET @StopRow = @batch
+	SET @loop_cnt = 1
+	SET @StartRow = 1
+	SET @rid_loop = ((SELECT MAX(ID) FROM BalanceRecord_Diff_Site2_20230914_tmp)/@batch) + 1	
+	SET @debug_message = ''
+
+	WHILE (@loop_cnt <= @rid_loop)
+	BEGIN
+	
+		TRUNCATE TABLE #tempMember
+
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for round:',  @loop_cnt, '/', @rid_loop)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
+
+		INSERT INTO #tempMember(custid)
+		SELECT custid
+		FROM BalanceRecord_Diff_Site2_20230914_tmp
+		WHERE ID BETWEEN @StartRow AND @StopRow
+
+		IF @@ROWCOUNT = 0
+			BREAK	
+					
+		INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
+		SELECT	m.custid AS custid, 0, 0, 0, 0, 0, 0, bal.Balance AS balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
+		FROM #tempMember m
+			CROSS APPLY (
+						SELECT TOP 1 Balance 
+						FROM DBSIG02.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
+						WHERE b.custid = m.custid) AS bal
+
+		WAITFOR DELAY '00:00:00.020' --optional
+
+		SET @StartRow = @StopRow + 1
+		SET @StopRow = @StopRow + @batch
+
+		SELECT  @loop_cnt += 1
+
+	END
 
 
 	  
