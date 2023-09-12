@@ -58,6 +58,7 @@ AS
 		-- 20220504@Max: MBU - Add column isTestMatch in the match and match14 table [Redmine: #172162]
 		-- 20221117@Patrick: MB - Remove table out proccess: ProviderExternalResultDetailES | ProviderExternalResultDetailOS | ProviderExternalResultDetail [Redmine: #180613]
 		-- 20230908@Brice:	Add column [oddsSource] of [oddsES] - [Redmine: #193080]
+		-- 20230912@Brice:	Add column [OfferBoost] of [match] - [Redmine: #193892]
 */
 
 BEGIN
@@ -167,11 +168,11 @@ SET NOCOUNT ON
 			INSERT INTO	dbo.match14 (
 					matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore, finalhomescore, finalawayscore, creator, matchcode
 				,	kickofftime, closedtime, showtime, hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, tstamp, homeid2, awayid2, DisplayMode
-				,	LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime, ParentID, IsAutoPayout, AutoSetting, ShowTimeDT, ChildMatchType, IsTestMatch
+				,	LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime, ParentID, IsAutoPayout, AutoSetting, ShowTimeDT, ChildMatchType, IsTestMatch, OfferBoost
 				)
 			SELECT	matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore, finalhomescore, finalawayscore, creator, matchcode
 				,	kickofftime, closedtime, showtime, hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, tstamp, homeid2, awayid2, DisplayMode
-				,	LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime, ParentID, IsAutoPayout, AutoSetting, ShowTimeDT, ChildMatchType, IsTestMatch
+				,	LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral, GoalRecord, settletime, GlobalShowTime, ParentID, IsAutoPayout, AutoSetting, ShowTimeDT, ChildMatchType, IsTestMatch, OfferBoost
 			FROM	dbo.match WITH (NOLOCK)
 			WHERE	matchid IN (SELECT id FROM #__tempData);
 
