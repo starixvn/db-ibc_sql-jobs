@@ -22,7 +22,7 @@ GO
 		DROP TABLE BalanceRecord_Diff_Site2_20230914_tmp
 	END
 
-	CREATE TABLE BalanceRecord_Diff_Site2_20230914_tmp (ID INT IDENTITY(1,1) PRIMARY KEY , custid INT)
+	CREATE TABLE BalanceRecord_Diff_Site2_20230914_tmp (ID INT IDENTITY(1,1) PRIMARY KEY , custid INT, Balance MONEY)
 	
 	DECLARE @batch int = 100000 
 	DECLARE @StartRow INT = 1 
@@ -36,8 +36,8 @@ GO
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB2_Order1, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
-		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid)
-		SELECT  m.custid
+		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid, Balance)
+		SELECT  m.custid, b1.Balance
 		FROM  BalanceRecordDiff_SiteDB2_Order1 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
@@ -69,8 +69,8 @@ GO
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB2_Order5, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 		
-		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid)
-		SELECT  m.custid
+		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid, Balance)
+		SELECT  m.custid, b1.Balance
 		FROM  BalanceRecordDiff_SiteDB2_Order5 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
@@ -102,8 +102,8 @@ GO
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB2_Order6, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 		
-		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid)
-		SELECT  m.custid
+		INSERT INTO BalanceRecord_Diff_Site2_20230914_tmp (custid, Balance)
+		SELECT  m.custid, b1.Balance
 		FROM  BalanceRecordDiff_SiteDB2_Order6 m WITH(NOLOCK)
 			CROSS APPLY (		
 					SELECT TOP 1 Balance		
@@ -133,7 +133,7 @@ GO
 	IF OBJECT_ID('tempdb..#tempMember') IS NOT NULL
 	DROP TABLE #tempMember
 
-	CREATE TABLE #tempMember (custid INT PRIMARY KEY)
+	CREATE TABLE #tempMember (custid INT PRIMARY KEY, Balance MONEY)
 
 	-- Check data [dbo].[BalanceTrigger_ProcessData] until it's no data
 	SELECT TOP 1 1
@@ -160,8 +160,8 @@ GO
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for round:',  @loop_cnt, '/', @rid_loop)
 		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
 
-		INSERT INTO #tempMember(custid)
-		SELECT custid
+		INSERT INTO #tempMember(custid, Balance)
+		SELECT custid, Balance
 		FROM BalanceRecord_Diff_Site2_20230914_tmp
 		WHERE ID BETWEEN @StartRow AND @StopRow
 
@@ -169,12 +169,8 @@ GO
 			BREAK	
 					
 		INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
-		SELECT	m.custid AS custid, 0, 0, 0, 0, 0, 0, bal.Balance AS balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
+		SELECT	custid, 0, 0, 0, 0, 0, 0, Balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
 		FROM #tempMember m
-			CROSS APPLY (
-						SELECT TOP 1 Balance 
-						FROM DBSIG02.bodb02.dbo.v_BalanceTable b WITH(NOLOCK) -- v_BalanceTable: this is a view, get data from 8 balance tables
-						WHERE b.custid = m.custid) AS bal
 
 		WAITFOR DELAY '00:00:00.020' --optional
 
