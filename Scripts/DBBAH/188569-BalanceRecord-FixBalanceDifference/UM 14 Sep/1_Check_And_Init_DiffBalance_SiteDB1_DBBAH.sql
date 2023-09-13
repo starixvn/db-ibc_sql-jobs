@@ -16,7 +16,7 @@ GO
 	--select count(1) as cnt_CustId from BalanceRecordDiff_SiteDB1_Order5 with(nolock) --29581
 	--select count(1) as cnt_CustId from BalanceRecordDiff_SiteDB1_Order6 with(nolock) --409097
 
------ 1. CHECK DIFF BALANCE
+
 
 	IF EXISTS ( SELECT TOP 1 1 from sys.objects WHERE name = 'BalanceRecord_Diff_Site1_20230914_tmp' )
 	BEGIN
@@ -24,14 +24,15 @@ GO
 	END
 
 	CREATE TABLE BalanceRecord_Diff_Site1_20230914_tmp (ID INT IDENTITY(1,1) PRIMARY KEY , custid INT, Balance MONEY )
-	
-	DECLARE @batch INT = 100000 
-	DECLARE @StartRow INT = 1 
-	DECLARE @debug_message VARCHAR(MAX) = ''
-			,@loop_cnt INT = 1
 
-	----BalanceRecordDiff_SiteDB1_Order4
-	SET @StartRow = 1
+
+----1. CHECK DIFF BALANCE SiteDB1_Order4--------------------------------------------------------------	
+BEGIN
+	DECLARE @batch		INT = 100000 
+			,@StartRow	INT = 1 
+			,@loop_cnt	INT = 1
+			,@debug_message VARCHAR(MAX) = ''
+
 	WHILE (1=1)
 	BEGIN
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB1_Order4, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
@@ -61,10 +62,16 @@ GO
 		SELECT  @loop_cnt += 1
 
 	END
+END
+GO
 
-	---- BalanceRecordDiff_SiteDB1_Order5
-	SET @StartRow = 1
-	SET @loop_cnt = 1
+----2. CHECK DIFF BALANCE SiteDB1_Order5--------------------------------------------------------------	
+BEGIN
+	DECLARE @batch		INT = 100000 
+			,@StartRow	INT = 1 
+			,@loop_cnt	INT = 1
+			,@debug_message VARCHAR(MAX) = ''
+
 	WHILE (1=1)
 	BEGIN
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB1_Order5, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
@@ -94,10 +101,16 @@ GO
 		SELECT  @loop_cnt += 1
 
 	END
+END
+GO
 
-	---- BalanceRecordDiff_SiteDB1_Order6
-	SET @StartRow = 1
-	SET @loop_cnt = 1
+----3. CHECK DIFF BALANCE SiteDB1_Order6--------------------------------------------------------------	
+BEGIN
+	DECLARE @batch		INT = 100000 
+			,@StartRow	INT = 1 
+			,@loop_cnt	INT = 1
+			,@debug_message VARCHAR(MAX) = ''		
+
 	WHILE (1=1)
 	BEGIN
 		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', Start processing for SiteDB1_Order6, round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:',@StartRow+@batch-1)
@@ -126,9 +139,11 @@ GO
 		SELECT  @loop_cnt += 1
 
 	END
+END
+GO
 
-
------ 2. INIT BALANCE SITEDB1 ON DBBAH
+----- 4. INIT BALANCE SITEDB1 ON DBBAH----------------------
+BEGIN
 	SELECT count(1) AS [custid_Count_diff] FROM BalanceRecord_Diff_Site1_20230914_tmp
 
 	-- Check data [dbo].[BalanceTrigger_ProcessData] until it's no data
@@ -137,16 +152,16 @@ GO
 		INNER JOIN BalanceRecord_Diff_Site1_20230914_tmp m ON b.custid = m.custid
 
 	--------------LOOP BY batch 2000 of customers ------------------
-	DECLARE @rid_loop INT
-			, @rowCount INT  =0
-			, @StopRow INT
+	DECLARE @rid_loop	INT
+			,@rowCount	INT  =0
+			,@batch		INT = 2000
+			,@StartRow	INT = 1 		
+			,@StopRow	INT
+			,@loop_cnt	INT = 1
+			,@debug_message VARCHAR(MAX) = ''
 
-	SET @batch	= 2000
-	SET @StopRow = @batch
-	SET @loop_cnt = 1
-	SET @StartRow = 1
+	SET @StopRow = @batch  
 	SET @rid_loop = ((SELECT MAX(ID) FROM BalanceRecord_Diff_Site1_20230914_tmp)/@batch) + 1	
-	SET @debug_message = ''
 
 	WHILE (@loop_cnt <= @rid_loop)
 	BEGIN
@@ -170,3 +185,5 @@ GO
 		SELECT  @loop_cnt += 1
 
 	END
+END
+GO
