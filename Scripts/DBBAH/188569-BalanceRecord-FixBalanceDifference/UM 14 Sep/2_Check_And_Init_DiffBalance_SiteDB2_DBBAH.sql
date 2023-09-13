@@ -130,22 +130,17 @@ GO
 ----- 2. INIT BALANCE SITEDB2 ON DBBAH
 	SELECT count(1) AS [custid_Count_diff] FROM BalanceRecord_Diff_Site2_20230914_tmp
 
-	IF OBJECT_ID('tempdb..#tempMember') IS NOT NULL
-	DROP TABLE #tempMember
-
-	CREATE TABLE #tempMember (custid INT PRIMARY KEY, Balance MONEY)
-
 	-- Check data [dbo].[BalanceTrigger_ProcessData] until it's no data
 	SELECT TOP 1 1
 	FROM BalanceTrigger_ProcessData b WITH (NOLOCK)
 		INNER JOIN BalanceRecord_Diff_Site2_20230914_tmp m ON b.custid = m.custid
 
-	--------------LOOP BY batch 500 of customers ------------------
+	--------------LOOP BY batch 2000 of customers ------------------
 	DECLARE @rid_loop INT
-			, @rowCount int  =0
+			, @rowCount INT  =0
 			, @StopRow INT
 
-	SET @batch	= 500
+	SET @batch	= 2000
 	SET @StopRow = @batch
 	SET @loop_cnt = 1
 	SET @StartRow = 1
@@ -155,24 +150,18 @@ GO
 	WHILE (@loop_cnt <= @rid_loop)
 	BEGIN
 	
-		TRUNCATE TABLE #tempMember
-
-		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for round:',  @loop_cnt, '/', @rid_loop)
-		RAISERROR (@debug_message, 0, 1) WITH NOWAIT
-
-		INSERT INTO #tempMember(custid, Balance)
-		SELECT custid, Balance
-		FROM BalanceRecord_Diff_Site2_20230914_tmp
-		WHERE ID BETWEEN @StartRow AND @StopRow
-
-		IF @@ROWCOUNT = 0
-			BREAK	
+		SET @debug_message = CONCAT(CONVERT(VARCHAR(50), GETDATE(), 121), ', processing for round:',  @loop_cnt, ' ,StartRow:', @StartRow, ' ,StopRow:', @StopRow)
+		RAISERROR (@debug_message, 0, 1) WITH NOWAIT	
 					
 		INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
 		SELECT	custid, 0, 0, 0, 0, 0, 0, Balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
-		FROM #tempMember m
+		FROM BalanceRecord_Diff_Site1_20230914_tmp WITH(NOLOCK)
+		WHERE ID BETWEEN @StartRow AND @StopRow
 
-		WAITFOR DELAY '00:00:00.020' --optional
+		IF @@ROWCOUNT = 0
+			BREAK
+
+		WAITFOR DELAY '00:00:00.020' 
 
 		SET @StartRow = @StopRow + 1
 		SET @StopRow = @StopRow + @batch
