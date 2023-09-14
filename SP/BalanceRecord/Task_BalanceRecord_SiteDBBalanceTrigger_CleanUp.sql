@@ -10,6 +10,7 @@ AS
 		- 20220912@Helen: scaleout project [176932]
 		- 20220928@July: scaleout project - Balance record [176932]
 		- 20220130@Louisa: Remove @VName [Redmine:#176932]
+		- 20220130@Louisa: Migration SiteDB3 [Redmineid:#181595]
 */
 BEGIN
 	
@@ -18,6 +19,8 @@ BEGIN
 	EXEC dbo.SiteDBBalanceTrigger_CleanUp @SiteDBAlias ='DBSIG01'
 
 	EXEC dbo.SiteDBBalanceTrigger_CleanUp @SiteDBAlias ='DBSIG02'
+
+	EXEC dbo.SiteDBBalanceTrigger_CleanUp @SiteDBAlias ='DBSIG03'
 
 END
 
