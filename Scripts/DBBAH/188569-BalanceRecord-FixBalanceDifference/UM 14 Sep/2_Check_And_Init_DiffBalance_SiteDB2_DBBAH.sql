@@ -169,7 +169,7 @@ BEGIN
 					
 		INSERT INTO BalanceRecord (custid, transid, bettype, actual_stake, winlost, playercomm, balancechanged, newbalance, actionDate, actionID, [action])
 		SELECT	custid, 0, 0, 0, 0, 0, 0, Balance,CURRENT_TIMESTAMP, 255, 'Balance : Re-Init'
-		FROM BalanceRecord_Diff_Site1_20230914_tmp WITH(NOLOCK)
+		FROM BalanceRecord_Diff_Site2_20230914_tmp WITH(NOLOCK)
 		WHERE ID BETWEEN @StartRow AND @StopRow
 
 		IF @@ROWCOUNT = 0
