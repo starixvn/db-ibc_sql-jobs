@@ -9,18 +9,17 @@ Revisions:
 	- 20220819@Victoria: Rule #50 - Check BalanceUp Ticket.
 									Alert if exist more than 1 row of custid with group by custid and winlostdate [Redmine:#175881]
 	- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
+	- 20230915@July: Detect data consistency SiteDB and DBTP - Enhancement for rules #50 [Redmine:#194038]
 */
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @WinlostDate SMALLDATETIME = NULL
-	SET @WinlostDate = (SELECT	TOP 1  winlostdate
-						FROM	bodb02.dbo.Transfer t WITH(NOLOCK)
-						WHERE	bettype = 20000 AND custid = 3)
+	DECLARE @BalanceUpDate SMALLDATETIME = NULL
+	EXEC bodb02.dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @BalanceUpDate OUTPUT
 
 	SELECT  custid AS Custid, winlostdate AS WinlostDate, COUNT(1) AS TotalCount
 	FROM	bodb02.dbo.Transfer WITH (NOLOCK) 
-	WHERE	bettype = 20000 AND winlostdate = @WinlostDate
+	WHERE	bettype = 20000 AND winlostdate = @BalanceUpDate
 	GROUP BY custid, winlostdate
 	HAVING COUNT(1) > 1
 
