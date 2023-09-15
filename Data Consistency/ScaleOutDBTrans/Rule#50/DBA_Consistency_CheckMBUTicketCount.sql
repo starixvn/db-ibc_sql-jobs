@@ -8,7 +8,7 @@ Task: Check MoveBet/BalanceUp Ticket Count
 DB: DBCONSISTENCY-bodb_Consistency
 Revisions:
 	- 20220907@Victoria: Rule #50 - Check ticket count of 19999/20000 with group by SiteDBGroupID, winlostdate [Redmine:#175881]
-	
+	- 20230915@July: Detect data consistency SiteDB and DBTP - Enhancement for rules #50 [Redmine:#194038]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -40,17 +40,15 @@ BEGIN
 	END
 	ELSE IF @Bettype = 20000
 	BEGIN
-		DECLARE @WinlostDate SMALLDATETIME = NULL
-		SET @WinlostDate = (SELECT	TOP 1  winlostdate
-							FROM	bodb02.dbo.Transfer t WITH(NOLOCK)
-							WHERE	bettype = 20000 AND custid = 3)
+		DECLARE @BalanceUpDate SMALLDATETIME = NULL
+		EXEC bodb02.dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @BalanceUpDate OUTPUT
 
 		SELECT  s.SiteDBGroupID, b.winlostdate AS WinlostDate, COUNT(1) AS TotalCount
 		FROM	bodb02.dbo.Transfer b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.CustId
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON s.site = c.site
 		WHERE	b.bettype = @Bettype 
-			AND b.winlostdate = @WinlostDate
+			AND b.winlostdate = @BalanceUpDate
 			AND s.SiteDBGroupID > 0
 		GROUP BY s.SiteDBGroupID, b.winlostdate
 	END
