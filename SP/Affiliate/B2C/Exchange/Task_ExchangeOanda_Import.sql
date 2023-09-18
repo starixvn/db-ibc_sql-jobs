@@ -12,6 +12,8 @@ AS
 		- 20210317@Percy: Keep Exchange data last day of month [RedmineID: #151391]
 		- 20220110@Percy: Get current date by timezone [RedmineID: #167244]
 		- 20230522@Sally: Import TpExchange data from bodb_N88.dbo.TpExchange [RedmineID: #188429]
+		- 20230829@Sally: Support Base Currency INH, BDT, INR [RedmineID: #193235]
+
 */
 
 BEGIN
@@ -71,7 +73,7 @@ BEGIN
 		ELSE
 			SELECT @FromMonth = DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @LastImportedTime) + 1, 0))
 	
-		DECLARE @tblExchange TABLE (ExchangeDate SMALLDATETIME, ExchangeId INT, Code VARCHAR(5), ActualRate FLOAT, VND FLOAT, EUR FLOAT, USD FLOAT, CNY FLOAT, MYR FLOAT, THB FLOAT, IDR FLOAT)
+		DECLARE @tblExchange TABLE (ExchangeDate SMALLDATETIME, ExchangeId INT, Code VARCHAR(5), ActualRate FLOAT, VND FLOAT, EUR FLOAT, USD FLOAT, CNY FLOAT, MYR FLOAT, THB FLOAT, IDR FLOAT, BDT FLOAT, INR FLOAT)
 		;WITH CTE_MonthDate AS
 		(
 			SELECT @FromMonth AS MonthDate
@@ -80,22 +82,22 @@ BEGIN
 			FROM CTE_MonthDate
 			WHERE MonthDate < @CurrentMonth
 		)
-		INSERT INTO @tblExchange (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
-		SELECT e.ExchangeDate, e.ExchangeId, e.Code, e.ActualRate, e.VND, e.EUR, e.USD, e.CNY, e.MYR, e.THB, e.IDR
+		INSERT INTO @tblExchange (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR, BDT, INR)
+		SELECT e.ExchangeDate, e.ExchangeId, e.Code, e.ActualRate, e.VND, e.EUR, e.USD, e.CNY, e.MYR, e.THB, e.IDR, e.BDT, e.INR
 		FROM bodb02.dbo.ExchangeDailyOanda e WITH (NOLOCK)
 			INNER JOIN CTE_MonthDate m ON e.ExchangeDate = m.MonthDate
 
 		IF NOT EXISTS (SELECT 1 FROM @tblExchange WHERE ExchangeDate = @CurrentMonth)
-			INSERT INTO @tblExchange (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
-			SELECT @CurrentMonth, e.ExchangeId, e.Code, e.ActualRate, e.VND, e.EUR, e.USD, e.CNY, e.MYR, e.THB, e.IDR
+			INSERT INTO @tblExchange (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR, BDT, INR)
+			SELECT @CurrentMonth, e.ExchangeId, e.Code, e.ActualRate, e.VND, e.EUR, e.USD, e.CNY, e.MYR, e.THB, e.IDR, e.BDT, e.INR
 			FROM bodb02.dbo.ExchangeDailyOanda e WITH (NOLOCK)
 			WHERE e.ExchangeDate = @CurrentDate
 
 		DELETE dbo.ExchangeOanda WITH (ROWLOCK, UPDLOCK)
 		WHERE ExchangeDate >= @FromMonth
 
-		INSERT INTO dbo.ExchangeOanda (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR)
-		SELECT ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR FROM @tblExchange
+		INSERT INTO dbo.ExchangeOanda (ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR, BDT, INR)
+		SELECT ExchangeDate, ExchangeId, Code, ActualRate, VND, EUR, USD, CNY, MYR, THB, IDR, BDT, INR FROM @tblExchange
 
 		-- Update SystemSettings
 		UPDATE dbo.SystemSettings WITH (ROWLOCK)
