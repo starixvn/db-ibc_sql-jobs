@@ -10,6 +10,7 @@ AS
 	
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20230908@Brice:	Add column [DeviceType],[ExtraInfo] of [bettransX] - [Redmine: #193080]
  */
  BEGIN 
 	SET NOCOUNT ON
@@ -25,7 +26,7 @@ AS
 		, CurrencyName, recommend, mrecommend, srecommend
 		, CONVERT(VARCHAR(45),CASE WHEN ISNULL(B.ip,'') <> '' THEN cip.IP ELSE B.ip END) AS ip
 		, statusID, balance, Username, transdesc, productID, gameID, eventID, vendorID
-		, GameId3rd, TranId3rd, custom1, custom2, custom3, LiveIndicator		 
+		, GameId3rd, TranId3rd, custom1, custom2, custom3, LiveIndicator, b.DeviceType, b.ExtraInfo 
 	FROM dbo.translog14 B   WITH(NOLOCK)
 		CROSS APPLY (SELECT IP from [dbo].f_IP_Compress (B.ip)) cip 
 	WHERE

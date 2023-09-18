@@ -11,13 +11,14 @@ AS
 	Revisions:
 		- 20130831@Bobby: Init
 		- 20220419@Bobby: remove tstamp column [Redmine: #166146]
+		- 20230912@Brice:	Add column [OfferBoost] of [match] - [Redmine: #193892]
  */
  BEGIN
 	SET NOCOUNT ON;
 	
 	SELECT	matchid, leagueid, homeid, awayid, eventdate, eventstatus, betstatus, livehomescore, liveawayscore, finalhomescore, finalawayscore, creator, matchcode, kickofftime, closedtime, showtime
 		,	hthomescore, htawayscore, ruben, multiple, yenbet, exrisk, sporttype, homeid2, awayid2, DisplayMode, LeaguePatternID, HomeDisplayPatternID, AwayDisplayPatternID, IsNeutral
-		,	GoalRecord, GlobalShowTime, ParentID, ShowTimeDT,ChildMatchType
+		,	GoalRecord, GlobalShowTime, ParentID, ShowTimeDT,ChildMatchType,OfferBoost
 	FROM	dbo.match14 AS t1 WITH (NOLOCK)
 	WHERE	t1.eventdate = @winlostdate;
 END

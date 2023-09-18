@@ -10,6 +10,7 @@ AS
 	
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20230908@Brice:	Add column [DeviceType],[ExtraInfo] of [bettransX] - [Redmine: #193080]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -29,7 +30,7 @@ BEGIN
 			,	b.transdesc, b.virtualrate, b.oddstype, b.statusID
 			,	b.currency2, b.transid, b.bettype, b.balance, b.transid2, b.SecAcceptFlag, b.comstatus
 			,	[CountryCode] = ip.countryShort
-			,	b.ExtraInfo, b.WalletType, b.BonusID, b.RefCode, b.SettlementTime, b.epositiontaking, b.ReasonID, b.sort
+			,	b.ExtraInfo, b.WalletType, b.BonusID, b.RefCode, b.SettlementTime, b.epositiontaking, b.ReasonID, b.sort, b.DeviceType 
 		FROM		dbo.bettrans14 AS b WITH (NOLOCK)
 		INNER JOIN	dbo.Task_bettrans14_IP2Country AS ip WITH (NOLOCK)
 				ON	b.transid = ip.transid

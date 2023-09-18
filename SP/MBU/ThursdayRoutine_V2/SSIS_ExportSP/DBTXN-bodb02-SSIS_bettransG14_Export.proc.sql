@@ -10,6 +10,7 @@ AS
 	
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20230908@Brice:	Add column [DeviceType],[ExtraInfo] of [bettransX] - [Redmine: #193080]
  */
 BEGIN
 	SET NOCOUNT ON;
@@ -24,8 +25,8 @@ BEGIN
 	SELECT	transid, custid, transdate, oddsid, odds, stake, status, winlost, betteam, creator, refno, winlostdate, betfrom
 		,	checktime, apositiontaking, mpositiontaking, tpositiontaking, awinlost, mwinlost, playerdiscount, discount, adiscount
 		,	playercomm, comm, acomm, actualrate, matchid, matchdate, statuswinlost, ruben, bettype, spositiontaking, swinlost
-		,	sdiscount, scomm, statusID, virtualrate, SiteID, transdesc, BetID3rd, epositiontaking, actual_stake, netstake
-	FROM	dbo.bettransG14 WITH (NOLOCK)
+		,	sdiscount, scomm, statusID, virtualrate, SiteID, transdesc, BetID3rd, epositiontaking, actual_stake, netstake, b.DeviceType, b.ExtraInfo
+	FROM	dbo.bettransG14 as b WITH (NOLOCK)
 	--WHERE	winlostdate <= @max_winlostdate;
 	WHERE	winlostdate = @winlostdate;
 END
