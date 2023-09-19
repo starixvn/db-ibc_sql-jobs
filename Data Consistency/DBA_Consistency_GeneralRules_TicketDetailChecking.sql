@@ -13,6 +13,7 @@ AS
 	Revision:
 		- 20230420@July: Check data between bettrans & bettransLC/bettransRNG [Redmine: #186426]
 		- 20230531@July: Check ticket data consistency [Redmine: #186736]
+		- 20230918@July: Exclude ticket currency UUS [Redmine: #194056]
 	
 	Param's Expanation:
 */
@@ -72,6 +73,7 @@ BEGIN
 		WHERE  productID = @ProductId
 			AND winlostdate = @CheckDate
 			AND custid <> 0 --exlude orphan ticket
+			AND currency NOT IN (20,72)
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
 						 WHEN @transId IS NOT NULL AND RefNo IN (SELECT transid FROM #tmp_transid) THEN 1
 						 ELSE 0 END
@@ -113,6 +115,7 @@ BEGIN
 		WHERE matchid = @ProductId
 			AND winlostdate = @CheckDate
 			AND statusid NOT IN (0, 1, 131)
+			AND currency NOT IN (20,72)
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
 						 WHEN @transId IS NOT NULL AND transid IN (SELECT transid FROM #tmp_transid) THEN 1
 						 ELSE 0 END
@@ -173,6 +176,7 @@ BEGIN
 		WHERE productID = @ProductId
 			AND winlostdate = @CheckDate
 			AND custid <> 0 --exlude orphan ticket
+			AND currency NOT IN (20,72)
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
 						 WHEN @transId IS NOT NULL AND RefNo IN (SELECT transid FROM #tmp_transid) THEN 1
 						 ELSE 0 END
@@ -214,6 +218,7 @@ BEGIN
 		WHERE matchid = @ProductId
 			AND winlostdate = @CheckDate
 			AND statusid NOT IN (0, 1, 131)
+			AND currency NOT IN (20,72)
 			AND 1 = CASE WHEN @transId IS NULL THEN 1
 						 WHEN @transId IS NOT NULL AND transid IN (SELECT transid FROM #tmp_transid) THEN 1
 						 ELSE 0 END

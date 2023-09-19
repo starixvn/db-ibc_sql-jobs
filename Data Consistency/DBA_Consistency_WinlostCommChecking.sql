@@ -15,6 +15,7 @@ AS
 		- 20230414@July: Checking data of swinlost, mwinlost, awinlost, playercomm, comm, acomm, scomm in settled tickets in bettrans, bettransLC, bettransRNG, bettransG - [Redmine:#186426]
 		- 20230531@July: Check ticket data consistency [Redmine: #186736]
 		- 20230804@July: @CheckMode =  1 (bettrans) - Exclude ticket of product Saba promotion [Redmine: #192294]
+		- 20230918@July: Exclude ticket currency UUS [Redmine: #194056]
 
 	Param's Expanation:
 		Notes: For SAGaming(244), BBIN(241) check data in bettransG
@@ -42,6 +43,7 @@ BEGIN
 			WHERE statusid IN (111, 112, 113) --Draw/Won/Lose
 				AND (winlostdate = @Today OR winlostdate = @yesterday) 
 				AND gameID NOT IN (2198, 2398, 2998, 1698, 3898, 4297, 4599)
+				AND currency NOT IN (20,72)
 				AND
 				(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.0002 
 				OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.0002
@@ -61,6 +63,7 @@ BEGIN
 			WHERE statusid IN (111, 112, 113) --Draw/Won/Lose
 				AND (winlostdate = @Today OR winlostdate = @yesterday)
 				AND productID NOT IN (244)
+				AND currency NOT IN (20,72)
 				AND
 				(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.0002 
 				OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.0002
@@ -107,6 +110,7 @@ BEGIN
 			WHERE  b.bettype NOT IN (999) --No ticket bet
 				AND statusid IN (111, 112, 113) --Draw/Won/Lose
 				AND (winlostdate = @Today OR winlostdate = @yesterday)
+				AND currency NOT IN (20,72)
 				AND
 				(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.01 
 				OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.01
@@ -132,6 +136,7 @@ BEGIN
 			FROM bodb02.dbo.bettrans WITH(NOLOCK) 
 			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
 				AND bettype <= 19000
+				AND currency NOT IN (20,72)
 				AND (actual_stake IS NULL 
 					OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL
 					OR scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL
@@ -142,6 +147,7 @@ BEGIN
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM bodb02.dbo.bettransRNG WITH(NOLOCK) 
 			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
+				AND currency NOT IN (20,72)
 				AND (actual_stake IS NULL 
 					OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL
 					OR scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL
@@ -152,6 +158,7 @@ BEGIN
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM bodb02.dbo.bettransLC WITH(NOLOCK) 
 			WHERE (winlostdate = @Today OR winlostdate = @yesterday) 
+				AND currency NOT IN (20,72)
 				AND (actual_stake IS NULL 
 					OR swinlost IS NULL OR mwinlost IS NULL OR awinlost IS NULL OR winlost IS NULL
 					OR scomm IS NULL OR acomm IS NULL OR comm IS NULL OR playercomm IS NULL

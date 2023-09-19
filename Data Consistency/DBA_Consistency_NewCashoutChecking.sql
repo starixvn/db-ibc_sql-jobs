@@ -33,7 +33,7 @@ BEGIN
 		FROM bodb02.dbo.bettrans WITH(NOLOCK) 
 		WHERE ISNULL(betdaqid,0) = -2 
 			AND winlostdate > @Today
-			AND ISNULL(CurrencyName,'') <> 'UUS'
+			AND currency NOT IN (20,72)
 	END
 
 	IF @transId <> ''

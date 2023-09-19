@@ -12,7 +12,8 @@ AS
 	Revision:
 		- 20230420@July: Check data between bettrans & bettransRNG [Redmine: #186426]
 		- 20230531@July: Check ticket data consistency [Redmine: #186736]
-	
+		- 20230918@July: Exclude ticket currency UUS [Redmine: #194056]
+		
 	Param's Expanation:
 	@CheckMode:
 		+ 1: Check ticket details between bettrans and bettransRNG
@@ -122,7 +123,8 @@ BEGIN
 				OR	(winlost < actual_stake AND status <> 'LOSE')										--Case 4: if winlost - actual_stake < 0 -> status=LOSE
 				)
 			AND gameID NOT IN (2198, 2398, 2998, 1698, 3898, 4297, 4599)
-	
+			AND currency NOT IN (20,72)
+
 		IF @transId <> ''
 		BEGIN
 			SELECT	 @transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
@@ -141,6 +143,7 @@ BEGIN
 			  AND DATEDIFF(MINUTE,b.transdate,@Today) > 15
 			  AND b.statusID IN (111,112,113) --Draw,won,lose
 			  AND b.winlostdate = @yesterday
+			  AND b.currency NOT IN (20,72)
 	
 		IF @transId <> ''
 		BEGIN
@@ -160,6 +163,7 @@ BEGIN
 				AND b.statusID IN (101,102,103) --Reject/Void/Refund 
 				AND b.GameID NOT IN (2198, 2398, 2998, 4297, 1698, 3898, 4599)
 				AND b.winlostdate = @yesterday
+				AND b.currency NOT IN (20,72)
 	
 		IF @transId <> ''
 		BEGIN
