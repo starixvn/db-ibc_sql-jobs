@@ -34,7 +34,7 @@ BEGIN
 
 	--3.dbcust - Winlimit Game - Task_block_member
 	UNION ALL
-	SELECT 'dbcust - Winlimit Game - Task_block_member', '00:01:00', 0
+	SELECT 'dbcust - Winlimit Game - Task_block_member', '00:01:00', 1
 
 	--4.dbcust - Winlimit Game - Task_block_member
 	UNION ALL
