@@ -17,6 +17,7 @@ AS
 		- 20210301@Percy: Do not calculate commission when affiliate is closed [RedmineID: #149213]
 		- 20210317@Percy: Update affiliate status history [RedmineID: #149213]
 		- 20211207@Percy: Apply core function Group Product [RedmineID: #165777]
+		- 20230208@Bobby: Implement Bonus & FDM Setting [RedmineId : #191139]
 */
 
 BEGIN
@@ -79,6 +80,7 @@ BEGIN
 
 		-- Get Data
 	BEGIN
+		DROP TABLE IF EXISTS #TempCommission;
 		CREATE TABLE #TempCommission
 		(
 			MonthDate				SMALLDATETIME,
@@ -105,7 +107,13 @@ BEGIN
 			QualifiedMember			INT,
 			QMTurnover				MONEY,
 			CommissionRate			FLOAT,
-			Commission				MONEY
+			Commission				MONEY,
+			-----FDM & Bonus
+			IsApplyBonus			BIT,
+			FDMCount				INT,
+			FDMDeposit				MONEY,
+			FDMCommissionRate		DECIMAL(9, 8),
+			FDMCommission			MONEY
 		)
 
 		-- Uncalculated Months
@@ -133,7 +141,13 @@ BEGIN
 			QualifiedMember,
 			QMTurnOver,
 			CommissionRate,
-			Commission
+			Commission,
+			-----FDM & Bonus
+			IsApplyBonus,
+			FDMCount,			
+			FDMDeposit,			
+			FDMCommissionRate,	
+			FDMCommission
 		)
 		EXEC dbo.Aff_Commission_UnCalc
 			@AffIds				= 'all',
@@ -183,7 +197,13 @@ BEGIN
 		QMTurnover,
 		ActivePlayer,
 		QualifiedMember,
-		CommissionRate
+		CommissionRate,
+		-----FDM & Bonus
+		IsApplyBonus,
+		FDMCount,			
+		FDMDeposit,			
+		FDMCommissionRate,	
+		FDMCommission
 	)
 	SELECT
 		MonthDate,
@@ -203,7 +223,12 @@ BEGIN
 		QMTurnover,
 		ActivePlayer,
 		QualifiedMember,
-		CommissionRate
+		CommissionRate,
+		IsApplyBonus,
+		FDMCount,			
+		FDMDeposit,			
+		FDMCommissionRate,	
+		FDMCommission
 	FROM #TempCommission
 
 	INSERT INTO dbo.rptAffDeduction
@@ -247,11 +272,23 @@ BEGIN
 		AffID,
 		MonthDate AS TransDate,
 		GETDATE() AS CompletedDate,
-		ISNULL((NetWinloss - Bonus) * CommissionRate, 0) AS Amount,
+		Commission AS Amount,
 		'Approved' AS Status,
 		'Monthly Earning' AS Description,
 		148 AS Creator,
 		201 AS TransType
+	FROM #TempCommission
+	WHERE ProductId = 0
+	UNION ALL -----FDM & Bonus
+	SELECT
+		AffID,
+		MonthDate AS TransDate,
+		GETDATE() AS CompletedDate,
+		FDMCommission AS Amount,
+		'Approved' AS Status,
+		'New FDM Commission Bonus' AS Description,
+		148 AS Creator,
+		205 AS TransType
 	FROM #TempCommission
 	WHERE ProductId = 0
 
