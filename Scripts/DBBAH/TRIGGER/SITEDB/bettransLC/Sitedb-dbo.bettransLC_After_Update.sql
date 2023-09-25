@@ -1,5 +1,4 @@
-
- /*<info serverAlias="DBSIG-bodb02" executers="" viewers="" isFunction="0"></info>*/    
+/*<info serverAlias="DBSIG-bodb02" executers="" viewers="" isFunction="0"></info>*/    
 /*
    Created:Kathy@20230621  
    DB: DBSIG-bodb02
@@ -55,7 +54,7 @@ AS
         - 20220912@Helen: clone trigger from db05 to sitedb for scaleout project [176932]
 		- 20230615@Kathy: add new column winlostdate [Redmine:#181595]
 		- 20230818@Helen: NAP - SA Gaming - can not use betlist to search the refno which showed on bet credit history [Redmine:#179580]
-
+		- 20230912@Louisa: Capture Bet Rejected [Redmine:#193830]
 */
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
@@ -81,30 +80,36 @@ BEGIN
         WHEN i.custid = 0 THEN 130 -- cancel transfer (custid set to zero)
         WHEN i.IsSum = 1 AND d.IsSum = 0 THEN 33 -- Record SUM
         WHEN i.statusid = 102 THEN 050 -- Void Bet
-        WHEN d.statusid = 0 AND i.statusid > 0 THEN 030 -- Settled : running -> Won/Lose/Draw/Refund
+		WHEN d.statusid = 0 THEN CASE WHEN i.statusID = 101 THEN 020 -- running to reject
+									  WHEN i.statusid > 0 THEN 030 -- Settled : running -> Won/Lose/Draw/Refund
+								END
         WHEN d.statusid = 102 AND i.statusid = 0 THEN 055 -- unvoid/recover : void -> running
-        WHEN d.statusid > 0 THEN CASE i.statusid WHEN 0 THEN 032 ELSE 031 END -- resettle or unsettle
+        WHEN d.statusid = 1 AND i.statusID = 101 THEN 020 -- waiting --> reject
+		WHEN d.statusid > 0 THEN CASE i.statusid WHEN 0 THEN 032 ELSE 031 END -- resettle or unsettle
         ELSE 0 END,
         
         --CASE WHEN i.custid =0 THEN 'Delete ' ELSE 'Update ' END
         --  + CASE WHEN i.bettype < 19001 then 'Bet' ELSE 'Transfer' END + 
         --CASE WHEN i.custid <> 0 THEN ', from '+ d.[status] + ' to ' + i.[status] ELSE '' END
         --[Action]--vvv
-        'LC' +
-        ISNULL(CASE
-            WHEN i.IsSum = d.IsSum THEN ' (IsSUM : ' + CAST(d.IsSUM AS varchar(50)) + ')'
-            ELSE ' (IsSUM : ' + CAST(d.IsSUM AS varchar(50)) + ' to ' + CAST(i.IsSUM AS varchar(50)) + ') ' + CAST(ISNULL(i.RefNo,0) AS VARCHAR(50))
-        END +
-        CASE
-            WHEN i.custid = 0 THEN ' cancelled, ' + d.[status] + ' to ' + i.[status]
-            WHEN d.statusid = 0 THEN
-                CASE i.statusid
-                WHEN 102 THEN ' voided'
-                ELSE ' settled, ' + d.[status] + ' to ' + i.[status]
-                END
-            WHEN i.statusID = d.statusID THEN ' updated'
-            ELSE ' updated, ' + d.[status] + ' to ' + i.[status]
-        END,' NULL ')
+        
+		CASE WHEN (d.statusid = 0 AND i.statusid = 101) OR (d.statusid = 1 AND i.statusID = 101) THEN ' Bet rejected'
+			 ELSE 'LC' +
+					ISNULL(CASE
+						WHEN i.IsSum = d.IsSum THEN ' (IsSUM : ' + CAST(d.IsSUM AS varchar(50)) + ')'
+						ELSE ' (IsSUM : ' + CAST(d.IsSUM AS varchar(50)) + ' to ' + CAST(i.IsSUM AS varchar(50)) + ') ' + CAST(ISNULL(i.RefNo,0) AS VARCHAR(50))
+					END +
+					CASE
+						WHEN i.custid = 0 THEN ' cancelled, ' + d.[status] + ' to ' + i.[status]
+						WHEN d.statusid = 0 THEN
+							CASE i.statusid
+							WHEN 102 THEN ' voided'
+							ELSE ' settled, ' + d.[status] + ' to ' + i.[status]
+							END
+						WHEN i.statusID = d.statusID THEN ' updated'
+						ELSE ' updated, ' + d.[status] + ' to ' + i.[status]
+					END,' NULL ')
+		END
         --[Action]--^^^ 
         , 
         CASE  WHEN (ISNULL(i.winlost,0)- ISNULL(i.actual_stake,0) + ISNULL(i.playercomm,0)) <> (ISNULL(d.winlost,0) - ISNULL(d.actual_stake,0) + ISNULL(d.playercomm,0)) 
