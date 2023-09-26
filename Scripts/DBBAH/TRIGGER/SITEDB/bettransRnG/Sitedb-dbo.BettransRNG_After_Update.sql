@@ -46,7 +46,7 @@ ALTER TRIGGER [dbo].[BettransRNG_After_Update]
 AS 
 /*
     Created: Joe@
-    DB: DBBAH.bodb02
+    DB: DBSIG.bodb02
     Task: 
     Revision:
         - 20210309@Kathy: Allow null for bettype,actual_stake, winlost, playercomm [Redmine:#138552]
