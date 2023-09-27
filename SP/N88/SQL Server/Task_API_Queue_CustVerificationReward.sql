@@ -16,6 +16,7 @@ AS
 		- 20220325@Percy: Initialize SP [RedmineID: #170390]
 		- 20220412@Percy: Import SUM data [RedmineID: #171245]
 		- 20230405@Malcolm: Only take the changed rows for processing [RedmineID: #183319]
+		- 20230911@Sally: Enhance get data CustVerificationReward [RedmineID: #186979]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -89,26 +90,16 @@ BEGIN
 					,PhoneRewardTime
 					,EmailReward
 					,EmailRewardTime
-				)
+				)		
 				SELECT
-					t.CustId
-					,t.SiteId
-					,c.CurrencyId
-					,t.PhoneReward
-					,t.PhoneRewardTime
-					,t.EmailReward
-					,t.EmailRewardTime
-				FROM (
-					SELECT
-						t.c.value('@custid', 'INT') AS CustId
-						,t.c.value('@siteid', 'INT') AS SiteId
-						,NULLIF(t.c.value('@phonereward', 'VARCHAR(25)'), '') AS PhoneReward
-						,NULLIF(t.c.value('@phonerewardtime', 'DATETIME'), '') AS PhoneRewardTime
-						,NULLIF(t.c.value('@emailreward', 'VARCHAR(25)'), '') AS EmailReward
-						,NULLIF(t.c.value('@emailrewardtime', 'DATETIME'), '') AS EmailRewardTime
-					FROM @XmlData.nodes('root/row') t(c)
-				) t
-					INNER JOIN dbo.Customer c WITH (NOLOCK) ON t.CustId = c.CustId
+					t.c.value('@custid', 'INT') AS CustId
+					,t.c.value('@siteid', 'INT') AS SiteId
+					,t.c.value('@currencyid', 'INT') AS CurrencyId
+					,NULLIF(t.c.value('@phonereward', 'VARCHAR(25)'), '') AS PhoneReward
+					,NULLIF(t.c.value('@phonerewardtime', 'DATETIME'), '') AS PhoneRewardTime
+					,NULLIF(t.c.value('@emailreward', 'VARCHAR(25)'), '') AS EmailReward
+					,NULLIF(t.c.value('@emailrewardtime', 'DATETIME'), '') AS EmailRewardTime
+				FROM @XmlData.nodes('root/row') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
 				-- Update DataType

@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20211118@Percy: Initialize SP [RedmineID: #161048]
 		- 20220412@Percy: Import SUM data [RedmineID: #171245]
+		- 20230911@Sally: Enhance get data LogAdminAdjustWallet [RedmineID: #186979]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -106,40 +107,23 @@ BEGIN
 					,Remarks
 				)
 				SELECT
-					t.TransferId
-					,t.TransId
-					,t.ThirdId
-					,t.TpId
-					,t.CustId
-					,t.UserName
-					,t.SiteId
-					,c.CurrencyId
-					,t.Direction
-					,t.Amount
-					,t.Memo
-					,t.Status
-					,t.CreateTime
-					,t.Operator
-					,t.Remarks
-				FROM (
-					SELECT
-						t.c.value('@transferid', 'INT') AS TransferId
-						,t.c.value('@transid', 'VARCHAR(30)') AS TransId
-						,t.c.value('@thirdid', 'VARCHAR(50)') AS ThirdId
-						,t.c.value('@tpid', 'INT') AS TpId
-						,t.c.value('@custid', 'INT') AS CustId
-						,t.c.value('@username', 'VARCHAR(30)') AS UserName
-						,t.c.value('@siteid', 'INT') AS SiteId
-						,t.c.value('@direction', 'TINYINT') AS Direction
-						,t.c.value('@amount', 'DECIMAL(20,4)') AS Amount
-						,t.c.value('@memo', 'VARCHAR(200)') AS Memo
-						,t.c.value('@status', 'TINYINT') AS Status
-						,NULLIF(t.c.value('@createtime', 'DATETIME'), '') AS CreateTime
-						,t.c.value('@operator', 'VARCHAR(30)') AS Operator
-						,t.c.value('@remarks', 'VARCHAR(100)') AS Remarks
-					FROM @XmlData.nodes('root/row') t(c)
-				) t
-					INNER JOIN dbo.Customer c WITH (NOLOCK) ON t.CustId = c.CustId
+					t.c.value('@transferid', 'INT') AS TransferId
+					,t.c.value('@transid', 'VARCHAR(30)') AS TransId
+					,t.c.value('@thirdid', 'VARCHAR(50)') AS ThirdId
+					,t.c.value('@tpid', 'INT') AS TpId
+					,t.c.value('@custid', 'INT') AS CustId
+					,t.c.value('@username', 'VARCHAR(30)') AS UserName
+					,t.c.value('@siteid', 'INT') AS SiteId
+					,t.c.value('@currencyid', 'INT') AS CurrencyId
+					,t.c.value('@direction', 'TINYINT') AS Direction
+					,t.c.value('@amount', 'DECIMAL(20,4)') AS Amount
+					,t.c.value('@memo', 'VARCHAR(200)') AS Memo
+					,t.c.value('@status', 'TINYINT') AS Status
+					,NULLIF(t.c.value('@createtime', 'DATETIME'), '') AS CreateTime
+					,t.c.value('@operator', 'VARCHAR(30)') AS Operator
+					,t.c.value('@remarks', 'VARCHAR(100)') AS Remarks
+
+				FROM @XmlData.nodes('root/row') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
 				-- Update DataType

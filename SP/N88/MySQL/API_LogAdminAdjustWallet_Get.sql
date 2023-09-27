@@ -14,18 +14,31 @@ CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `API_LogAdminAdjustWallet_Get`(
     
     Revisions:
       - 20211118@Percy: Initialize SP
+      - 20230911@Sally: Enhance get data LogAdminAdjustWallet [RedmineID: #186979]
 
   */
 )
 BEGIN
 	SET batchCount = IF(batchCount > 2000, 2000, batchCount);
     
-	SELECT 
-		* 
-	FROM
-		LogAdminAdjustWallet
-	WHERE
-		LogAdminAdjustWallet.TransferId BETWEEN Id + 1 AND Id + batchCount;
+	SELECT l.TransferId
+		,l.TransId
+        ,l.ThirdId
+        ,l.TpId
+        ,l.CustID
+        ,l.UserName
+        ,l.SiteId
+        ,l.Direction
+        ,l.Amount
+        ,l.Memo
+        ,l.Status
+        ,l.CreateTime
+        ,l.Operator
+        ,l.Remarks
+        ,c.CurrencyId
+	FROM LogAdminAdjustWallet l
+		INNER JOIN Customer c ON l.CustId = c.CustId
+	WHERE l.TransferId BETWEEN Id + 1 AND Id + batchCount;
 END
 
 //
