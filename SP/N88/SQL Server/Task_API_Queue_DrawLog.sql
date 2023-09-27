@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20211028@Percy: Initialize SP [RedmineID: #161048]
 		- 20220412@Percy: Import SUM data [RedmineID: #171245]
+		- 20230911@Sally: Enhance get data DrawLog [RedmineID: #186979]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -96,29 +97,17 @@ BEGIN
 					,DrawTime
 				)
 				SELECT
-					t.Id
-					,t.EventId
-					,t.PrizeId
-					,t.PrizeName
-					,t.CustId
-					,c.SiteId
-					,c.CurrencyId
-					,t.Amount
-					,t.DrawEventDate
-					,t.DrawTime
-				FROM (
-					SELECT
-						t.c.value('@id', 'BIGINT') AS Id
-						,t.c.value('@eventid', 'INT') AS EventId
-						,t.c.value('@prizeid', 'INT') AS PrizeId
-						,t.c.value('@prizename', 'VARCHAR(100)') AS PrizeName
-						,t.c.value('@custid', 'INT') AS CustId
-						,t.c.value('@amount', 'DECIMAL(20, 4)') AS Amount
-						,NULLIF(t.c.value('@draweventdate', 'DATETIME'), '') AS DrawEventDate
-						,NULLIF(t.c.value('@drawtime', 'DATETIME'), '') AS DrawTime
-					FROM @XmlData.nodes('root/row') t(c)
-				) t
-					INNER JOIN dbo.Customer c WITH (NOLOCK) ON t.CustId = c.CustId
+					t.c.value('@id', 'BIGINT') AS Id
+					,t.c.value('@eventid', 'INT') AS EventId
+					,t.c.value('@prizeid', 'INT') AS PrizeId
+					,t.c.value('@prizename', 'VARCHAR(100)') AS PrizeName
+					,t.c.value('@custid', 'INT') AS CustId
+					,t.c.value('@siteid', 'INT') AS SiteId
+					,t.c.value('@currencyid', 'INT') AS CurrencyId
+					,t.c.value('@amount', 'DECIMAL(20, 4)') AS Amount
+					,NULLIF(t.c.value('@draweventdate', 'DATETIME'), '') AS DrawEventDate
+					,NULLIF(t.c.value('@drawtime', 'DATETIME'), '') AS DrawTime					
+				FROM @XmlData.nodes('root/row') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
 				-- Update DataType
