@@ -21,7 +21,7 @@ Revisions:
 	- 20180807@Elodie: Apply f_GetSportNotOffer function
 	- 20190610@Johnson: add rule 36,37 for dummy super [redmine: #114675]
 	- 20200422@Elodie: Apply rule 72 S4 = M4 = A4 = 0 [Redmine: #132604]
-
+	- 20230921@Johnson: extend MaxPT = 0.93 [redmine:194132]
 Param's Explanation: 
 	@RuleId = 0 : 'all'
 	@RuleId IN (1->29)
@@ -236,33 +236,33 @@ Param's Explanation:
 			AND CASE WHEN @SportType IN (0,1) THEN cs.SportType ELSE 0 END = 1
 	END
 	
-	----2. S4 > 0.9 OR M4 > 0.9 OR A4 > 0.9 
+	----2. S4 > 0.93 OR M4 > 0.93 OR A4 > 0.93 
 	IF @RuleId IN (0,2)
 	BEGIN
 		INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)
 		SELECT	2 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId,
-				CASE WHEN cs.spositiontaking > 0.9 THEN cs.spositiontaking 
-						WHEN cs.mpositiontaking > 0.9 THEN cs.mpositiontaking 
-						WHEN cs.apositiontaking > 0.9 THEN cs.apositiontaking	
-				ELSE 0.9	
+				CASE WHEN cs.spositiontaking > 0.93 THEN cs.spositiontaking 
+						WHEN cs.mpositiontaking > 0.93 THEN cs.mpositiontaking 
+						WHEN cs.apositiontaking > 0.93 THEN cs.apositiontaking	
+				ELSE 0.93	
 				END,
-				0.9,
+				0.93,
 				0
 		FROM	#SuperPT cs
-		WHERE	(cs.spositiontaking > 0.9 OR cs.mpositiontaking > 0.9 OR cs.apositiontaking > 0.9)
+		WHERE	(cs.spositiontaking > 0.93 OR cs.mpositiontaking > 0.93 OR cs.apositiontaking > 0.93)
 			
 		INSERT INTO CheckPTResult_Credit (RuleId, BetType, SportType, CustIdA, CustIdB, ValueA, ValueB, IsLive)
 		SELECT	2 as RuleId, cs.BetType, cs.SportType, cs.CustId, cs.CustId,
-				CASE WHEN cs.slivepositiontaking > 0.9 THEN cs.slivepositiontaking 
-						WHEN cs.mlivepositiontaking > 0.9 THEN cs.mlivepositiontaking 
-						WHEN cs.alivepositiontaking > 0.9 THEN cs.alivepositiontaking	
-				ELSE 0.9	
+				CASE WHEN cs.slivepositiontaking > 0.93 THEN cs.slivepositiontaking 
+						WHEN cs.mlivepositiontaking > 0.93 THEN cs.mlivepositiontaking 
+						WHEN cs.alivepositiontaking > 0.93 THEN cs.alivepositiontaking	
+				ELSE 0.93	
 				END,
-				0.9,
+				0.93,
 				1
 		FROM	#SuperPT cs
 		WHERE	cs.Bettype IN (1,3,7,8)
-			AND (cs.slivepositiontaking > 0.9 OR cs.mlivepositiontaking > 0.9 OR cs.alivepositiontaking > 0.9)
+			AND (cs.slivepositiontaking > 0.93 OR cs.mlivepositiontaking > 0.93 OR cs.alivepositiontaking > 0.93)
 			AND CASE WHEN @SportType IN (0,1) THEN cs.SportType ELSE 0 END = 1
 	END
 
