@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20210112@Percy: Initialize SP [RedmineID: #146759]
 		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
+		- 20230928@Sally: Fix inconsistency data table CustBonusRollover [RedmineID: #194596]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -45,8 +46,8 @@ BEGIN
 		,TpId				INT
 		,CustId				INT
 		,SiteId				INT
-		,Rollover			DECIMAL
-		,Turnover			DECIMAL
+		,Rollover			DECIMAL (18,4)
+		,Turnover			DECIMAL (18,4)
 		,Status				SMALLINT
 		,CreateTime			DATETIME
 		,UpdateTime			DATETIME
@@ -99,8 +100,8 @@ BEGIN
 					,t.c.value('@tpid', 'INT')
 					,t.c.value('@custid', 'INT')
 					,t.c.value('@siteid', 'INT')
-					,t.c.value('@rollover', 'DECIMAL')
-					,t.c.value('@turnover', 'DECIMAL')
+					,t.c.value('@rollover', 'DECIMAL (18,4)')
+					,t.c.value('@turnover', 'DECIMAL (18,4)')
 					,t.c.value('@status', 'SMALLINT')
 					,NULLIF(t.c.value('@createtime', 'DATETIME'), '')
 					,NULLIF(t.c.value('@updatetime', 'DATETIME'), '')
@@ -116,15 +117,15 @@ BEGIN
 					LEFT JOIN dbo.CustBonusRollover b WITH (NOLOCK) ON t.BonusId = b.BonusId
 				WHERE b.BonusId IS NULL
 					OR ISNULL(t.BonusId, 0) <> ISNULL(b.BonusId, 0)
-				OR ISNULL(t.PromoCategoryId, 0) <> ISNULL(b.PromoCategoryId, 0)
-				OR ISNULL(t.TpId, 0) <> ISNULL(b.TpId, 0)
-				OR ISNULL(t.CustId, 0) <> ISNULL(b.CustId, 0)
-				OR ISNULL(t.SiteId, 0) <> ISNULL(b.SiteId, 0)
-				OR ISNULL(t.Rollover, 0) <> ISNULL(b.Rollover, 0)
-				OR ISNULL(t.Turnover, 0) <> ISNULL(b.Turnover, 0)
-				OR ISNULL(t.Status, 0) <> ISNULL(b.Status, 0)
-				OR ISNULL(t.CreateTime, '') <> ISNULL(b.CreateTime, '')
-				OR ISNULL(t.UpdateTime, '') <> ISNULL(b.UpdateTime, '')
+					OR ISNULL(t.PromoCategoryId, 0) <> ISNULL(b.PromoCategoryId, 0)
+					OR ISNULL(t.TpId, 0) <> ISNULL(b.TpId, 0)
+					OR ISNULL(t.CustId, 0) <> ISNULL(b.CustId, 0)
+					OR ISNULL(t.SiteId, 0) <> ISNULL(b.SiteId, 0)
+					OR ISNULL(t.Rollover, 0) <> ISNULL(b.Rollover, 0)
+					OR ISNULL(t.Turnover, 0) <> ISNULL(b.Turnover, 0)
+					OR ISNULL(t.Status, 0) <> ISNULL(b.Status, 0)
+					OR ISNULL(t.CreateTime, '') <> ISNULL(b.CreateTime, '')
+					OR ISNULL(t.UpdateTime, '') <> ISNULL(b.UpdateTime, '')
 				
 				IF @@ROWCOUNT <> 0
 				BEGIN
