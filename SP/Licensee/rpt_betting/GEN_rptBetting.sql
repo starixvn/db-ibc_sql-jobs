@@ -42,6 +42,7 @@ AS
 		20210816@Sophia: add DBBAL [Redmine: #154300]
 		20220110@Danny: SG - Jackpot prize integration [#167089]
 		20230223@Danny: SG - Promotion prize integration [#183739]
+		20230928@Danny: Integrate Parlay boost bonus [#191662]
 
 	Param's Explanation:
 
@@ -137,6 +138,7 @@ BEGIN
 						WHEN b.bettype = 18000 OR b.bettype BETWEEN 1401 AND 1499 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0))
 						WHEN b.bettype BETWEEN 81 AND 120 OR b.bettype BETWEEN 8101 AND 8120 THEN b.stake * (1 - b.tpositiontaking) -- House Turnover In NG WL
 						WHEN b.bettype BETWEEN 5001 AND 5099 THEN b.actual_stake -- Net Turnover In Indo 4D
+						WHEN b.bettype = 998 THEN ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0)
 						ELSE 0 END)				AS ExtraAmount
 			FROM dbo.bettrans b WITH (NOLOCK)
 				LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2
@@ -230,6 +232,7 @@ BEGIN
 						WHEN b.bettype = 18000 OR b.bettype BETWEEN 1401 AND 1499 THEN CONVERT(MONEY, ISNULL(b.ExtraInfo, 0))
 						WHEN b.bettype BETWEEN 81 AND 120 OR b.bettype BETWEEN 8101 AND 8120 THEN b.stake * (1 - b.tpositiontaking) -- House Turnover In NG WL
 						WHEN b.bettype BETWEEN 5001 AND 5099 THEN b.actual_stake -- Net Turnover In Indo 4D
+						WHEN b.bettype = 998 THEN ISNULL(b.betid/CONVERT(DECIMAL(19,8), 100000000), 0)
 						ELSE 0 END)				AS ExtraAmount
 			FROM dbo.bettrans b WITH (NOLOCK)
 				LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON b.recommend = ag.custid AND ag.roleid = 2

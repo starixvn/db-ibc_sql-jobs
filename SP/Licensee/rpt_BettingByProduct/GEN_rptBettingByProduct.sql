@@ -101,6 +101,7 @@ AS
 		- 20230214@Danny: SG - Promotion prize integration [#183739]
 		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
 		- 20231025@Danny: Promotion for Slot Games [Redmine: 194808] 
+		- 20230928@Danny: Integrate Parlay boost bonus [#191662]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -205,6 +206,7 @@ BEGIN
 			,'Tips'
 			,'Licensee Promotion'
 			,'Casino Promotion'
+			,'Parlay Boost Adjustment'
 		) AND ProductID NOT IN (25,59,24,12,33,13,17,26,30,15,2,4,7,9,19,10,14) -- End Of Support 
 
 		-- Promotion for Licensee 
