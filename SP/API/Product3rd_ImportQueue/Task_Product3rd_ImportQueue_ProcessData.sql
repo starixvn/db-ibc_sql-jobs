@@ -158,8 +158,16 @@ BEGIN
 	SELECT @PartyList = COALESCE(@PartyList + ',' + CAST(PartyId AS VARCHAR), CAST(PartyId AS VARCHAR))
 	FROM @Party
 	
-	DECLARE @CutoffDate SMALLDATETIME
-	SET @CutoffDate = '2023-05-01'
+	-- CutoffDate apply new term, Change AmountDueTo formula 
+	DECLARE @COD_NewTerm SMALLDATETIME
+	-- CutoffDate apply view resettled ticket data
+	DECLARE @COD_ViewResettled SMALLDATETIME
+
+	SELECT @COD_NewTerm = CASE WHEN TypeName = 'ExchangeWL_NewTerm' THEN CutoffDate ELSE @COD_NewTerm END 
+	 	 , @COD_ViewResettled = CASE WHEN TypeName = 'ExchangeWL_ViewResettled' THEN CutoffDate  ELSE @COD_ViewResettled END 
+	FROM bodb_LicenseeReport.dbo.Lrf_f_GetCutOffDate()
+	WHERE TypeName IN ('ExchangeWL_ViewResettled','ExchangeWL_NewTerm')
+
 
 	DECLARE @currentTime DATETIME, @statisDate DATETIME, @isInvalidUserId BIT, @isDuplicatedBetId BIT, @winlostdatelist NVARCHAR(MAX)
 	SELECT  @statisDate = '1970-01-01', @isInvalidUserId = 0, @isDuplicatedBetId = 0
@@ -243,13 +251,19 @@ BEGIN
 							t.c.value('@stakeTotal', 'MONEY') AS stakeTotal,
 							NULLIF(t.c.value('@resettledDate', 'DATETIME'), '') AS resettledDate,
 							REPLACE(REPLACE(REPLACE(t.c.value('@userId', 'VARCHAR(16)'), 'poc', ''), 'sit', ''), 'uat', '') AS custID,
-							CASE WHEN @JobType = 3 THEN 1 ELSE 0 END AS IsResettled
+							0 AS IsResettled
 						FROM @XmlData.nodes('TransList/Transaction') t (c)
 						OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
 						-- Resettled Summary (JobType = 3)
 						IF @JobType = 3
 						BEGIN
+
+							UPDATE t 
+							SET IsResettled = 1
+							FROM #tmpSum_winloss_Exchange t
+							WHERE t.resettledDate >= @COD_ViewResettled
+
 							INSERT INTO #tmpSum_winloss_Exchange_Detail
 							(
 								userId,
@@ -323,7 +337,7 @@ BEGIN
 						-- Import data
 
 						UPDATE t
-						SET t.agentCommission =CASE WHEN t.settledDate >= @CutoffDate THEN (1 - ISNULL(cc.Rate, ci.DI_Rate)) * t.commission * -1 ELSE t.agentCommission END
+						SET t.agentCommission =CASE WHEN t.settledDate >= @COD_NewTerm THEN (1 - ISNULL(cc.Rate, ci.DI_Rate)) * t.commission * -1 ELSE t.agentCommission END
 						FROM  #tmpSum_winloss_Exchange t
 							INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
 							INNER JOIN #LicenseeProductTable l ON c.recommend = l.custid AND c.currency = l.currencyid
