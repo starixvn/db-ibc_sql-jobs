@@ -14,6 +14,7 @@ AS
 		- 20220617@Elodie: Manage job on DBCUST
 		- 20221013@Tacy: add delay time 3mins for Task_BalanceUpd [RedmineID: #178335]
 		- 20221121@Eden: Enhance run time of trigger to capture data for Pending table [#180716]
+		- 20231004@Luke: Resume job after deployment [Redmine: #195051]
 */
 BEGIN
 	SET NOCOUNT ON
