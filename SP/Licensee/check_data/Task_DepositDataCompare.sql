@@ -44,6 +44,7 @@ AS
  		- 20230303@Evan: Remove inactive products CB, FW, GD, GDG [Redmine: 181424] 
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 		- 20230626@Evan: Integrate MG-RNG [RedmineID: #189988]
+		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -147,7 +148,9 @@ BEGIN
 		,MXG BIGINT
 		,JIG BIGINT
 		,YB BIGINT
-		,MGRNG BIGINT)
+		,MGRNG BIGINT
+		,LG BIGINT
+		)
 
 	--exec
 	--rptLicWinloss2
@@ -198,7 +201,9 @@ BEGIN
 		,MXG
 		,JIG
 		,YB
-		,MGRNG)
+		,MGRNG
+		,LG
+		)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
 	INSERT INTO #TempData (
@@ -366,7 +371,9 @@ BEGIN
 		,MXG
 		,JIG
 		,YB
-		,MGRNG)
+		,MGRNG
+		,LG
+		)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
 	INSERT INTO #TempData (
