@@ -45,6 +45,7 @@ AS
 		- 20230118@July: Jili - Add rule check if no discount, no comm [Redmine:#182955]
 		- 20230531@July: Remove unnecessary rules [Redmine:#186736]
 		- 20230727@July: Modify SP to utilize index properly [Redmine:#191812]
+		- 20231003@July: Rule #38 - SABA.games/Vgaming - Exclude new card game Pontoon(1679,3871) [Redmine:#194936]
 
 		Param's Expanation:
 */
@@ -229,7 +230,7 @@ BEGIN
 		END
 	END
 
-	--Rule #30 for Saba.club Free Bets, Saba.club, VGaming, VGaming Free Bets
+	--Rule #38 for Saba.club Free Bets, Saba.club, VGaming, VGaming Free Bets
 	IF @ProductId  IN (150, 200, 171, 173)
 	BEGIN
 		IF @Rule = '3min'
@@ -240,7 +241,9 @@ BEGIN
 			WHERE b.productID = @ProductId
 				AND b.statusID IN (0,1)
 				AND b.transdate < DATEADD(MINUTE, -3, GETDATE())
-				AND b.gameID NOT IN (1622, 1634, 3820, 3836, 3837, 1650, 3842, 1651, 1652, 3844) --Exclude Saba.club(1622-Keno Pro Viet, 1634-Blackjack, 1650-Casino Hold'em Poker, 1651-Hi-Lo, 1652-Texas Hold'em Poker) + VGaming(3820-Blackjack, 3836-Casino Hold'em Poker, 3837-Texas Hold'em Poker, 3842-Pai Gow Poker, 3844-Hi-Lo)
+				AND 1 = CASE WHEN @ProductId IN (150, 200) AND b.gameID NOT IN (1622, 1634, 1650, 1651, 1652, 1679) THEN 1 --Exclude Saba.club(1622-Keno Pro Viet, 1634-Blackjack, 1650-Casino Hold'em Poker, 1651-Hi-Lo, 1652-Texas Hold'em Poker,1679-Pontoon) 
+				             WHEN @ProductId IN (171, 173) AND b.gameID NOT IN (3820, 3836, 3837, 3842, 3844, 3871) THEN 1 --Exclude VGaming(3820-Blackjack, 3836-Casino Hold'em Poker, 3837-Texas Hold'em Poker, 3842-Pai Gow Poker, 3844-Hi-Lo,3871-Pontoon)
+							 ELSE 0 END
 							 
 			IF @transId <> ''
 			BEGIN
