@@ -15,6 +15,7 @@ AS
 	Revisions:
 		- 20210524@Percy: Initialize SP [RedmineID: #155334]
 		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
+		- 20230929@Sally: Fix inconsistency data table CustClosingBalance [RedmineID: #194596]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -87,7 +88,7 @@ BEGIN
 					NULLIF(t.c.value('@time', 'DATETIME'), '')
 					,t.c.value('@custid', 'INT')
 					,t.c.value('@siteid', 'INT')
-					,t.c.value('@balance', 'DECIMAL')
+					,t.c.value('@balance', 'DECIMAL (20, 4)')
 					,NULLIF(t.c.value('@createtime', 'DATETIME'), '')
 				FROM @XmlData.nodes('root/row') t(c)
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
