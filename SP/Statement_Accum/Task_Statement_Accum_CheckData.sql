@@ -12,6 +12,7 @@ AS
     Revisions:
         - 20221108@Danny: Initialize SP [RedmineID: #169560]
 		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554] 
+		- 20230822@Evan: update email starixvn.com to starixsoft.com [RedmineId : #192238]
  */
 BEGIN
     SET NOCOUNT ON
@@ -90,7 +91,7 @@ BEGIN
 				,@hasDiff	BIT
 			
 		SELECT @server_name = @@SERVERNAME
-			   ,@recipients	= CASE WHEN @server_name IN ('TESTDB061') THEN 'dba_local@starixvn.com' ELSE 'dbaadmin@starixvn.com' END
+			   ,@recipients	= CASE WHEN @server_name IN ('TESTDB061') THEN 'dba_local@starixsoft.com' ELSE 'dbaadmin@starixsoft.com' END
 
 		SELECT	@subject	= N'Job - Statement Accum - Check Balance diff(s) found ' + @@SERVERNAME;
 		SELECT @fdate = @FromDate, @tdate = DATEADD(DAY, 1, @ToDate), @accdate = DATEADD(DAY, 1, @ToDate)

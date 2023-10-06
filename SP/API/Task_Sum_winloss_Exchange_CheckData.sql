@@ -16,6 +16,7 @@ AS
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20220518@Percy: Remove unused mail [RedmineID: #172918]
 		- 20220704@Sol : remove email account - [RedmineId: #175043]
+		- 20230822@Evan: update email starixvn.com to starixsoft.com [RedmineId : #192238]
 */
 
 BEGIN
@@ -28,9 +29,9 @@ BEGIN
 	SELECT  @Subject = 'SQL Server Job System: ''bodb_3rdProduct: Check Exchange data monthly'' on ' + @@SERVERNAME
 
 	IF @@SERVERNAME IN ('DB052', 'DB053', 'DBBAL')
-		SELECT @recipients = 'sophia.nguyen@starixvn.com;pontus@starixvn.com'
+		SELECT @recipients = 'sophia.nguyen@starixsoft.com;pontus@starixvn.com'
 	ELSE
-		SELECT @recipients = 'dba_local@starixvn.com'
+		SELECT @recipients = 'dba_local@starixsoft.com'
 
 	IF @FromDate IS NULL OR @ToDate IS NULL -- for job
 	BEGIN

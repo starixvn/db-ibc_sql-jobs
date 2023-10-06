@@ -20,6 +20,7 @@ AS
 		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
 		- 20230705@Evan: Add Servername SiteDB [RedmineID: #190906]
 		- 20230712@Evan: Exclude ticket with Myanmar Odds [RedmineID: #188705]
+		- 20230822@Evan: update email starixvn.com to starixsoft.com [RedmineId : #192238]
 
 */
 BEGIN
@@ -273,7 +274,7 @@ BEGIN
 
 		SELECT @Subject = 'Missing dummy account notification'
 			, @bodymsg = ''
-			, @recipients = CASE WHEN @isTest = 0 AND @@SERVERNAME IN ('DBTRANS','DBGRP01N1','DBGRP02N1','DBGRP01N2','DBGRP02N2') THEN 'it@starixvn.com;ben.nguyen@starixvn.com' ELSE 'dba_local@starixvn.com' END
+			, @recipients = CASE WHEN @isTest = 0 AND @@SERVERNAME IN ('DBTRANS','DBGRP01N1','DBGRP02N1','DBGRP01N2','DBGRP02N2') THEN 'it@starixsoft.com;ben.nguyen@starixsoft.com' ELSE 'dba_local@starixsoft.com' END
 			
 		CREATE TABLE #__tblRealLicensee
 		(
