@@ -20,6 +20,7 @@ AS
 		- 20211004@Sol: LAP - Support IPv6 - [RedmineID: #162342]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20230414@Evan: Update formula agentCommission for new commercial terms [Redmine: #186609]
+		- 20230925@Evan: LAP - Enhance Exchange reports (View Resettled Ticket Data) [Redmine: #193954]
 
 	Param's Explanation:
 		@QueueID: manually import
@@ -100,6 +101,7 @@ BEGIN
 		agentCommission MONEY NULL,
 		stakeTotal		MONEY NULL,
 		resettledDate	DATETIME NULL,
+		IsResettled		BIT NULL,
 		-- for checking existing custid
 		custId			VARCHAR(16) NULL
 	)
@@ -156,8 +158,16 @@ BEGIN
 	SELECT @PartyList = COALESCE(@PartyList + ',' + CAST(PartyId AS VARCHAR), CAST(PartyId AS VARCHAR))
 	FROM @Party
 	
-	DECLARE @CutoffDate SMALLDATETIME
-	SET @CutoffDate = '2023-05-01'
+	-- CutoffDate apply new term, Change AmountDueTo formula 
+	DECLARE @COD_NewTerm SMALLDATETIME
+	-- CutoffDate apply view resettled ticket data
+	DECLARE @COD_ViewResettled SMALLDATETIME
+
+	SELECT @COD_NewTerm = CASE WHEN TypeName = 'ExchangeWL_NewTerm' THEN CutoffDate ELSE @COD_NewTerm END 
+	 	 , @COD_ViewResettled = CASE WHEN TypeName = 'ExchangeWL_ViewResettled' THEN CutoffDate  ELSE @COD_ViewResettled END 
+	FROM bodb_LicenseeReport.dbo.Lrf_f_GetCutOffDate()
+	WHERE TypeName IN ('ExchangeWL_ViewResettled','ExchangeWL_NewTerm')
+
 
 	DECLARE @currentTime DATETIME, @statisDate DATETIME, @isInvalidUserId BIT, @isDuplicatedBetId BIT, @winlostdatelist NVARCHAR(MAX)
 	SELECT  @statisDate = '1970-01-01', @isInvalidUserId = 0, @isDuplicatedBetId = 0
@@ -221,7 +231,8 @@ BEGIN
 							agentCommission,
 							stakeTotal,
 							resettledDate,
-							custId
+							custId,
+							IsResettled
 						)
 						SELECT
 							t.c.value('@userId', 'VARCHAR(16)') AS userId,
@@ -239,13 +250,20 @@ BEGIN
 							t.c.value('@agentCommission', 'MONEY') AS agentCommission,
 							t.c.value('@stakeTotal', 'MONEY') AS stakeTotal,
 							NULLIF(t.c.value('@resettledDate', 'DATETIME'), '') AS resettledDate,
-							REPLACE(REPLACE(REPLACE(t.c.value('@userId', 'VARCHAR(16)'), 'poc', ''), 'sit', ''), 'uat', '') AS custID
+							REPLACE(REPLACE(REPLACE(t.c.value('@userId', 'VARCHAR(16)'), 'poc', ''), 'sit', ''), 'uat', '') AS custID,
+							0 AS IsResettled
 						FROM @XmlData.nodes('TransList/Transaction') t (c)
 						OPTION (OPTIMIZE FOR (@XmlData = NULL))
 
 						-- Resettled Summary (JobType = 3)
 						IF @JobType = 3
 						BEGIN
+
+							UPDATE t 
+							SET IsResettled = 1
+							FROM #tmpSum_winloss_Exchange t
+							WHERE t.resettledDate >= @COD_ViewResettled
+
 							INSERT INTO #tmpSum_winloss_Exchange_Detail
 							(
 								userId,
@@ -287,13 +305,13 @@ BEGIN
 						DELETE #tmpSum_winloss_Exchange
 						WHERE ISNUMERIC(custId + '.e0') = 0
 
-						IF @@ROWCOUNT <> 0
+						IF @@ROWCOUNT <> 0 AND @@SERVERNAME <> 'SITDB052'
 							SELECT @isInvalidUserId = 1
 
 						DELETE #tmpSum_winloss_Exchange_Detail
 						WHERE ISNUMERIC(custId + '.e0') = 0
 
-						IF @@ROWCOUNT <> 0
+						IF @@ROWCOUNT <> 0 AND @@SERVERNAME <> 'SITDB052'
 							SELECT @isInvalidUserId = 1
 						
 						-- Detect duplicate betId per userId
@@ -317,145 +335,144 @@ BEGIN
 						END
 
 						-- Import data
-						IF @JobType IN (1,3)
-						BEGIN
 
-							UPDATE t
-							SET t.agentCommission =CASE WHEN t.settledDate >= @CutoffDate THEN (1 - ISNULL(cc.Rate, ci.DI_Rate)) * t.commission * -1 ELSE t.agentCommission END
-							FROM  #tmpSum_winloss_Exchange t
-								INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
-								INNER JOIN #LicenseeProductTable l ON c.recommend = l.custid AND c.currency = l.currencyid
-								CROSS APPLY(
-									SELECT TOP 1 ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate
-									FROM 
-									(
-										SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate
-										FROM bodb_licensee.dbo.LA_f_ChargeInfo
-										(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
-										WHERE  CONVERT(VARCHAR(10), t.settledDate, 112) BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12)
-										UNION ALL
-										SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate 
-										FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime
-										(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
-										WHERE  CONVERT(VARCHAR(10), t.settledDate, 112) BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12) 
-									) AS x
-								)  ci 
-								LEFT JOIN bodb_Licensee.dbo.LA_ChargeRateByCurrency cc ON cc.ChargeId = ci.ChargeId AND cc.CurrencyID = c.Currency
+						UPDATE t
+						SET t.agentCommission =CASE WHEN t.settledDate >= @COD_NewTerm THEN (1 - ISNULL(cc.Rate, ci.DI_Rate)) * t.commission * -1 ELSE t.agentCommission END
+						FROM  #tmpSum_winloss_Exchange t
+							INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
+							INNER JOIN #LicenseeProductTable l ON c.recommend = l.custid AND c.currency = l.currencyid
+							CROSS APPLY(
+								SELECT TOP 1 ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate
+								FROM 
+								(
+									SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate
+									FROM bodb_licensee.dbo.LA_f_ChargeInfo
+									(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
+									WHERE  CONVERT(VARCHAR(10), t.settledDate, 112) BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12)
+									UNION ALL
+									SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate 
+									FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime
+									(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
+									WHERE  CONVERT(VARCHAR(10), t.settledDate, 112) BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12) 
+								) AS x
+							)  ci 
+							LEFT JOIN bodb_Licensee.dbo.LA_ChargeRateByCurrency cc ON cc.ChargeId = ci.ChargeId AND cc.CurrencyID = c.Currency
 
-							MERGE dbo.Sum_winloss_Exchange AS s
-							USING
-								(
-									SELECT
-										t.userId,
-										t.agentId,
-										t.eventTypeName,
-										t.eventName,
-										t.eventId,
-										t.marketName,
-										t.marketId,
-										t.startTime,
-										t.settledDate,
-										t.profitLoss,
-										t.marketTotal,
-										t.commission,
-										t.agentCommission,
-										t.stakeTotal,
-										t.resettledDate,
-										t.CustID,
-										c.Currency,
-										e.ExVirtualRate
-									FROM #tmpSum_winloss_Exchange t
-										INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
-										INNER JOIN bodb02.dbo.Exchange e WITH (NOLOCK) ON c.currency = e.exchangeid
-								)
-							AS src 
-								( 
-									userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
-									startTime,settledDate,profitLoss,marketTotal,commission,agentCommission,stakeTotal,
-									resettledDate,CustID,Currency,ExVirtualRate
-								)
-								ON s.userId = src.userId AND s.eventID = src.eventId AND s.marketID = src.marketId AND s.settledDate = src.settledDate
-							WHEN MATCHED AND ISNULL(s.resettledDate, @statisDate) <= ISNULL(src.resettledDate, @statisDate) THEN
-								UPDATE SET
-									s.agentId = src.agentId,
-									s.eventTypeName = src.eventTypeName,
-									s.eventName = src.eventName,
-									s.marketName = src.marketName,
-									s.startTime = src.startTime,
-									s.profitLoss = src.profitLoss,
-									s.marketTotal = src.marketTotal,
-									s.commission = src.commission,
-									s.agentCommission = src.agentCommission,
-									s.stakeTotal = src.stakeTotal,
-									s.resettledDate = src.resettledDate,
-									s.CustID = src.CustID,
-									s.Currency = src.Currency,
-									s.ExVirtualRate = src.ExVirtualRate
-							WHEN NOT MATCHED THEN
-								INSERT
-								(
-									userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
-									startTime,settledDate,profitLoss,marketTotal,commission,agentCommission,stakeTotal,
-									resettledDate,CustID,Currency,ExVirtualRate
-								)
-								VALUES
-								(
-									src.userId,src.agentId,src.eventTypeName,src.eventName,src.eventId,src.marketName,src.marketId,
-									src.startTime,src.settledDate,src.profitLoss,src.marketTotal,src.commission,src.agentCommission,src.stakeTotal,
-									src.resettledDate,src.CustID,src.Currency,src.ExVirtualRate
-								)
-							OUTPUT INSERTED.userId, INSERTED.eventID, INSERTED.marketID, INSERTED.settledDate, INSERTED.stakeTotal, INSERTED.marketTotal
-								INTO @updated_userId (userId, eventId, marketId, SettledDate, stakeTotal, MarketTotal);
-
-						END
+						MERGE dbo.Sum_winloss_Exchange AS s
+						USING
+							(
+								SELECT
+									t.userId,
+									t.agentId,
+									t.eventTypeName,
+									t.eventName,
+									t.eventId,
+									t.marketName,
+									t.marketId,
+									t.startTime,
+									t.settledDate,
+									t.profitLoss,
+									t.marketTotal,
+									t.commission,
+									t.agentCommission,
+									t.stakeTotal,
+									t.resettledDate,
+									t.CustID,
+									c.Currency,
+									e.ExVirtualRate,
+									t.IsResettled
+								FROM #tmpSum_winloss_Exchange t
+									INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
+									INNER JOIN bodb02.dbo.Exchange e WITH (NOLOCK) ON c.currency = e.exchangeid
+							)
+						AS src 
+							( 
+								userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
+								startTime,settledDate,profitLoss,marketTotal,commission,agentCommission,stakeTotal,
+								resettledDate,CustID,Currency,ExVirtualRate,IsResettled
+							)
+							ON s.userId = src.userId AND s.eventID = src.eventId AND s.marketID = src.marketId AND s.settledDate = src.settledDate
+						WHEN MATCHED AND ISNULL(s.resettledDate, @statisDate) <= ISNULL(src.resettledDate, @statisDate) THEN
+							UPDATE SET
+								s.agentId = src.agentId,
+								s.eventTypeName = src.eventTypeName,
+								s.eventName = src.eventName,
+								s.marketName = src.marketName,
+								s.startTime = src.startTime,
+								s.profitLoss = src.profitLoss,
+								s.marketTotal = src.marketTotal,
+								s.commission = src.commission,
+								s.agentCommission = src.agentCommission,
+								s.stakeTotal = src.stakeTotal,
+								s.resettledDate = src.resettledDate,
+								s.CustID = src.CustID,
+								s.Currency = src.Currency,
+								s.ExVirtualRate = src.ExVirtualRate,
+								s.IsResettled = IIF(s.IsResettled = 0,src.IsResettled,s.IsResettled)
+						WHEN NOT MATCHED THEN
+							INSERT
+							(
+								userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
+								startTime,settledDate,profitLoss,marketTotal,commission,agentCommission,stakeTotal,
+								resettledDate,CustID,Currency,ExVirtualRate,IsResettled
+							)
+							VALUES
+							(
+								src.userId,src.agentId,src.eventTypeName,src.eventName,src.eventId,src.marketName,src.marketId,
+								src.startTime,src.settledDate,src.profitLoss,src.marketTotal,src.commission,src.agentCommission,src.stakeTotal,
+								src.resettledDate,src.CustID,src.Currency,src.ExVirtualRate,src.IsResettled
+							)
+						OUTPUT INSERTED.userId, INSERTED.eventID, INSERTED.marketID, INSERTED.settledDate, INSERTED.stakeTotal, INSERTED.marketTotal
+							INTO @updated_userId (userId, eventId, marketId, SettledDate, stakeTotal, MarketTotal);
+						--END
 							
-						END
+					END
 
-						IF @JobType = 3
-						BEGIN
-							MERGE dbo.Bettrans_Exchange AS s
-							USING
-								(
-									SELECT d.betId, d.userId, d.eventId, d.marketId,
-										SUM(d.txStake) AS txStake,
-										SUM(d.profitLoss) AS profitLoss
-									FROM #tmpSum_winloss_Exchange_Detail d
-										INNER JOIN @updated_userId u ON d.userId = u.userId AND d.eventId = u.eventId AND d.marketId = u.marketId
-									GROUP BY d.betId, d.userId, d.eventId, d.marketId
-								)
-							AS src
-								(
-									betId,userId,eventId,marketId,txStake,profitLoss
-								)
-								ON s.betId = src.betId
-							WHEN MATCHED THEN
-								UPDATE SET
-									s.matchStake = src.txStake,
-									s.profitLoss = src.profitLoss
-							WHEN NOT MATCHED THEN
-								INSERT
-								(
-									userId,eventID,marketID,betId,profitLoss
-								)
-								VALUES
-								(
-									src.userId,src.eventID,src.marketID,src.betId,src.profitLoss
-								);
+					IF @JobType = 3
+					BEGIN
+						MERGE dbo.Bettrans_Exchange AS s
+						USING
+							(
+								SELECT d.betId, d.userId, d.eventId, d.marketId,
+									SUM(d.txStake) AS txStake,
+									SUM(d.profitLoss) AS profitLoss
+								FROM #tmpSum_winloss_Exchange_Detail d
+									INNER JOIN @updated_userId u ON d.userId = u.userId AND d.eventId = u.eventId AND d.marketId = u.marketId
+								GROUP BY d.betId, d.userId, d.eventId, d.marketId
+							)
+						AS src
+							(
+								betId,userId,eventId,marketId,txStake,profitLoss
+							)
+							ON s.betId = src.betId
+						WHEN MATCHED THEN
+							UPDATE SET
+								s.matchStake = src.txStake,
+								s.profitLoss = src.profitLoss
+						WHEN NOT MATCHED THEN
+							INSERT
+							(
+								userId,eventID,marketID,betId,profitLoss
+							)
+							VALUES
+							(
+								src.userId,src.eventID,src.marketID,src.betId,src.profitLoss
+							);
 
-							SELECT @currentTime = GETDATE()
+						SELECT @currentTime = GETDATE()
 							
-							INSERT INTO bodb_PlaytechCS.dbo.Product3rd_ResettledBetHistory (SettledDate, UserId, EventId, marketID, ProductId, CheckInTime, Status)
-							SELECT u.SettledDate, u.userId, u.eventId, u.marketId, 31, @currentTime, 'waiting'
-							FROM @updated_userId u
-								LEFT JOIN (
-									SELECT userId, eventID, marketID, SUM(ISNULL(profitLoss, 0)) AS profitLoss, SUM(ISNULL(matchStake, 0)) AS matchStake
-									FROM dbo.Bettrans_Exchange WITH (NOLOCK)
-									WHERE betstatus = 'Settled'
-									GROUP BY userId, eventID, marketID
-								) AS b ON u.userId = b.userId AND u.eventId = b.eventID AND u.marketId = b.marketID
-							WHERE ABS(ISNULL(u.MarketTotal, 0) - ISNULL(b.ProfitLoss, 0)) > 0.01
-								OR ABS(ISNULL(u.stakeTotal, 0) - ISNULL(b.matchStake, 0)) > 0.01
-						END
+						INSERT INTO bodb_PlaytechCS.dbo.Product3rd_ResettledBetHistory (SettledDate, UserId, EventId, marketID, ProductId, CheckInTime, Status)
+						SELECT u.SettledDate, u.userId, u.eventId, u.marketId, 31, @currentTime, 'waiting'
+						FROM @updated_userId u
+							LEFT JOIN (
+								SELECT userId, eventID, marketID, SUM(ISNULL(profitLoss, 0)) AS profitLoss, SUM(ISNULL(matchStake, 0)) AS matchStake
+								FROM dbo.Bettrans_Exchange WITH (NOLOCK)
+								WHERE betstatus = 'Settled'
+								GROUP BY userId, eventID, marketID
+							) AS b ON u.userId = b.userId AND u.eventId = b.eventID AND u.marketId = b.marketID
+						WHERE ABS(ISNULL(u.MarketTotal, 0) - ISNULL(b.ProfitLoss, 0)) > 0.01
+							OR ABS(ISNULL(u.stakeTotal, 0) - ISNULL(b.matchStake, 0)) > 0.01
+					END
 					
 					/* Bettrans_Exchange, BettransM_Exchange */
 					ELSE IF @JobType IN (2)
@@ -543,7 +560,7 @@ BEGIN
 						DELETE #tmpBettrans_Exchange
 						WHERE ISNUMERIC(custId + '.e0') = 0
 
-						IF @@ROWCOUNT <> 0
+						IF @@ROWCOUNT <> 0 AND @@SERVERNAME <> 'SITDB052'
 							SELECT @isInvalidUserId = 1
 
 						-- Detect duplicate betId per userId
@@ -753,5 +770,6 @@ BEGIN
 	DROP TABLE #tmpBettrans_Exchange
 	DROP TABLE #tmpSum_winloss_Exchange
 	DROP TABLE #tmpSum_winloss_Exchange_Detail
+	DROP TABLE #LicenseeProductTable
 END
 GO
