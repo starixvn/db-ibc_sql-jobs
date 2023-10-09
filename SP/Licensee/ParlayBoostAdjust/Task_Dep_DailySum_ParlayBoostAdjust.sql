@@ -418,7 +418,7 @@ BEGIN
 							CASE
 								WHEN @isTest = 0 AND
 									@@servername IN ('DBTRANS', 'DBGRP01N1', 'DBGRP02N1', 'DBGRP01N2', 'DBGRP02N2') THEN 'it@starixsoft.com;ben.nguyen@starixsoft.com'
-								ELSE 'harmony.huynh@starixsoft.com,evan.trinh@starixsoft.com,evan.trinh@nexcel.com'
+								ELSE 'harmony.huynh@starixsoft.com,evan.trinh@starixsoft.com'
 							END
 		;
 		WITH rs AS

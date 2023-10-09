@@ -49,7 +49,8 @@ BEGIN
 	);
 	 
 	CREATE TABLE #tmp_TransInsertUpdate (
-		  awinlost MONEY
+		  Custid INT
+		, awinlost MONEY
 		, betid BIGINT
 		, srecommend INT
 		, oddsspread MONEY
@@ -132,10 +133,11 @@ BEGIN
 		AND EXISTS (
 			SELECT TOP 1 1
 			FROM DBCUST.bodb_licensee.dbo.LicenseeCust lc WITH (NOLOCK)
-			WHERE lc.LicenseeID = t.SiteID
+			WHERE lc.LicenseeID = t.LicenseeID
 				AND lc.CustID = c.recommend
 		);
 	
+	-- get ticket offer Boost Bonus on bettrans14
 	INSERT INTO #tmp_BoostParlayTrans (Recommend, Apositiontaking, lbbs, bba)
 	SELECT b.recommend
 		 , Apositiontaking
@@ -147,7 +149,6 @@ BEGIN
 		AND b.bettype = 29 		-- Parlay
 		AND b.oddsspread = 2; 	-- Flag detect ticket offer Boost Bonus
 		
-	-- generate new tranid for member dummy
 	INSERT INTO #tmp_TransInsertUpdate (srecommend, awinlost, oddsspread, betid)
 	SELECT t.SuperId srecommend
 		 , SUM((b.apositiontaking - ISNULL(lbbs, 0)) * ISNULL(bba, 0)) -- awinlost
@@ -179,7 +180,7 @@ BEGIN
 	FROM bettrans14 b
 		INNER JOIN #tmp_ParlayBoostAdjust soa ON b.transid = soa.TransactionId
 		INNER JOIN #tmp_TransInsertUpdate t ON b.srecommend = t.srecommend
-			AND b.CustID = t.MemberId;
+			AND b.CustID = t.Custid;
 
 	--- get licensees that support odds adjustment but do not have dummy member account and send email notification
 	IF EXISTS (
@@ -196,7 +197,7 @@ BEGIN
 							CASE
 								WHEN @isTest = 0 AND
 									@@servername IN ('DBTRANS', 'DBGRP01N1', 'DBGRP02N1', 'DBGRP01N2', 'DBGRP02N2') THEN 'it@starixsoft.com;ben.nguyen@starixsoft.com'
-								ELSE 'harmony.huynh@starixsoft.com,evan.trinh@nexcel.com'
+								ELSE 'harmony.huynh@starixsoft.com,evan.trinh@starixsoft.com'
 							END
 		;
 		WITH rs AS

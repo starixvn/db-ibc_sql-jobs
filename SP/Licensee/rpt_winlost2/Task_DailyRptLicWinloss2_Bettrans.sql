@@ -179,7 +179,8 @@ BEGIN
 															OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 															OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 															OR (b.bettype BETWEEN 8700 AND 8709 AND b.matchid = 157)) THEN 0
-														WHEN b.bettype = 998 THEN b.oddsspread
+														WHEN b.bettype = 29 AND b.oddsspread = 2 AND b.statusID = 112 THEN 
+															ISNULL(TRY_CAST(CAST(ExtraInfo AS XML).value('(/p1/@bba)[1]', 'VARCHAR(50)') AS MONEY),0)
 														ELSE ABS(b.winlost - b.actual_stake)
 													END) -- exclude Promotion Prize, Tip ticket from BetEffective
 			ELSE 0
@@ -257,6 +258,7 @@ BEGIN
 				OR (b.bettype BETWEEN 17000 AND 17030)  
 				OR (b.bettype BETWEEN 8700 AND 8709) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29							-- God Of Fortune
+			WHEN b.bettype = 29 AND b.oddsspread = 2 AND b.statusID = 112 THEN -1		-- Parlay Boost
 			ELSE 0
 		END bettype
 		 --114: half win, 115: half lose
@@ -293,6 +295,9 @@ BEGIN
 						OR (b.bettype = 29 AND b.oddsspread = 1))
 					AND BA.transid IS NULL THEN b.actual_stake
 				WHEN b.bettype IN (4297, 1698, 3898, 4599) THEN b.oddsspread
+				WHEN b.bettype = 29 AND b.oddsspread = 2 AND b.statusID = 112 THEN 
+					ISNULL(TRY_CAST(CAST(ExtraInfo AS XML).value('(/p1/@bba)[1]', 'VARCHAR(50)') AS MONEY),0) * 
+					ISNULL(TRY_CAST(CAST(ExtraInfo AS XML).value('(/p1/@lbbs)[1]', 'VARCHAR(50)') AS MONEY),0)
 				ELSE 0
 			END) AS BuyBackAmt
 		,SUM(CASE
@@ -385,14 +390,15 @@ BEGIN
 				OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 				OR (b.bettype BETWEEN 17000 AND 17030)  
 				OR (b.bettype BETWEEN 8700 AND 8709) THEN b.bettype
-			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29							-- God Of Fortune
+			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29						-- God Of Fortune
+			WHEN b.bettype = 29 AND b.oddsspread = 2 AND b.statusID = 112 THEN -1	-- Parlay Boost
 			ELSE 0
 		END
 		,CASE
 			WHEN b.winlostdate >= @HWHLCutDate
 				AND b.statusID IN (112, 113)
 				AND b.modds IN (-0.25, 0.25)
-				AND (b.bettype < 999						-- Sportsbook
+				AND (b.bettype < 999					-- Sportsbook
 					OR b.bettype BETWEEN 1301 AND 1399
 					OR b.bettype BETWEEN 9001 AND 9399
 					OR b.bettype BETWEEN 9400 AND 9998
@@ -695,5 +701,8 @@ BEGIN
 		,b.betfrom
 		,b.apositiontaking
 		,b.TicketType
+	
+	DROP TABLE #SportBettype
+
 END
 GO

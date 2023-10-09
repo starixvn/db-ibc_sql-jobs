@@ -116,6 +116,7 @@ BEGIN
 				@WinlostDate = @winlostdate,
 				@CustIds = @custIDs
 
+			SET @errmsg = 'step 1.2'
 			EXEC bodb02.dbo.Task_Dep_DailySum_ParlayBoostAdjust_14 
 				@WinlostDate = @winlostdate,
 				@CustIds = @custIDs
