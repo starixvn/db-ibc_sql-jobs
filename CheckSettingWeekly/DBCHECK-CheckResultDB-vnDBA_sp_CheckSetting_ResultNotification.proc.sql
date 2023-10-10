@@ -6,7 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 ALTER PROCEDURE	[dbo].[vnDBA_sp_CheckSetting_ResultNotification]
-					@to					VARCHAR(MAX)	= 'pontus@starixvn.com'
+					@to					VARCHAR(MAX)	= 'pontus@starixsoft.com'
 				,	@cc					VARCHAR(MAX)	= ''
 				,	@bcc				VARCHAR(MAX)	= ''
 				,	@mode				INT				= 3
@@ -34,6 +34,7 @@ AS
 		- 20200804@Daniel:	Exclude ignored cust from bet limit result based on destination CustB - [Redmine: #138389]
 		- 20200821@Daniel:	Fix stake level list incompartible data type Value A,B in #CheckResultStakeLevel
 		- 20201106@Brice:	change starixsoft to starixvn - [Redmine: #143607]
+		- 20231010@Elodie:	change starixvn to starixsoft
 
 	Test command:
 	EXECUTE dbo.vnDBA_sp_CheckSetting_ResultNotification_xtest
@@ -852,12 +853,12 @@ FROM	bodb02.dbo.Sports WITH (NOLOCK);
 	IF	@mode & 1 <> 0
 	BEGIN
 		SELECT	@subject	= N'Auto Restore DB CheckCustDB'
-			,	@to			= CASE	WHEN	@to LIKE '%dbaadmin@starixvn.com%'
+			,	@to			= CASE	WHEN	@to LIKE '%dbaadmin@starixsoft.com%'
 										OR	@to LIKE '%DBAAdmin@onelab.tw%'
-										OR	@to LIKE '%billy.bui@starixvn.com%'
-										OR	@to LIKE '%pontus@starixvn.com%'
+										OR	@to LIKE '%billy.bui@starixsoft.com%'
+										OR	@to LIKE '%pontus@starixsoft.com%'
 										THEN ''
-									ELSE 'daniel.truong@starixvn.com;'
+									ELSE 'daniel.truong@starixsoft.com;'
 							  END
 							+ ISNULL(@to, '')
 			;
