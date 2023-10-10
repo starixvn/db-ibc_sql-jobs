@@ -16,6 +16,7 @@ CREATE proc [dbo].[Task_DBA_WritingLog_Monitor_ServiceBroker] @IsDebug bit = 0
 	Revision:
 		- 20190524@Billy:	Change Letstalk linked server - [Redmine: #113125]
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
+		- 20231010@Patrick: Support change email to @starixsoft.com [Redmine: #195294]
 
 */
 as
@@ -212,7 +213,7 @@ begin
 	if @IsDebug = 0 and @hasError = 1
 	begin
 		execute msdb.dbo.sp_send_dbmail @profile_name	= DEFAULT
-			, @recipients			 = 'pontus@starixvn.com'
+			, @recipients			 = 'pontus@starixsoft.com'
 			, @copy_recipients		 = ''
 			, @blind_copy_recipients = ''
 			, @subject				 = @subject
