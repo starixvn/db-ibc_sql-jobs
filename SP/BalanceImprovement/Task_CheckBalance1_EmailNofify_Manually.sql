@@ -14,6 +14,7 @@ AS
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 		- 20210426@Sol: Alpha/NAP - Migrate from DBACC to DBCust - [Redmine: #154041]
 		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
+		- 20231010@Patrick: Support change email to @starixsoft.com [Redmine: #195294]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -53,7 +54,7 @@ BEGIN
 	DECLARE @subject VARCHAR(200)
 	SET @subject = 'Balance Correction - Manually - (New Balance Tables) - Top 1000 members @' + @@Servername		
 	EXEC msdb.dbo.sp_send_dbmail
-	@recipients=N'pontus@starixvn.com;', 
+	@recipients=N'pontus@starixsoft.com;', 
 														--20150820 add TWDBA
 														--20151225 add jackal
 														--20160823 add allen.wu & brian.yan
