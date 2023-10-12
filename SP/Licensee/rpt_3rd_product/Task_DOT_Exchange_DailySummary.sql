@@ -20,6 +20,7 @@ AS
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20230619@Malcolm: Get Event and Event Type [Redmine: #189536]
 		- 20230710@Malcolm: Sum data for @GenForDataWarehouse = 1 [Redmine: #189536]
+		- 20231106@Malcolm: Add Market Name [Redmine: #195271]
 
 	Param's Explanation:
 		- @winlostdate: The date need to summary
@@ -121,8 +122,9 @@ BEGIN TRY
 								ValidBetAmount	MONEY,
 								CommissionP		MONEY,
 								CommissionA		MONEY,
-								EventTypeName   Nvarchar(50), 
-								EventType 		INT
+								EventTypeName   NVARCHAR(50), 
+								EventType 		INT,
+								MarketName	    VARCHAR(500)
 							)
 							
 	CREATE TABLE #DetailData (	
@@ -135,7 +137,8 @@ BEGIN TRY
 								Lay				MONEY,
 								Back			MONEY,
 								EventTypeName   NVARCHAR(50),
-								EventType 		INT
+								EventType 		INT,
+								MarketName	    VARCHAR(500)
 							)
 	
 	CREATE TABLE #TicketDataForDataWarehouse (
@@ -157,6 +160,7 @@ BEGIN TRY
 								,EventName NVARCHAR(500)
 								,EVentType INT
 								,EventTypeName NVARCHAR(50)
+								,MarketName	VARCHAR(500)
 							)	
 
 	WHILE EXISTS (SELECT TOP 1 1 FROM @WLDateList WHERE ID = @i)
@@ -182,14 +186,14 @@ BEGIN TRY
 			WHERE CONVERT(DATE, b.settledDate) = @WLDate
 			GROUP BY b.CustID, ISNULL(site.SiteID,-1), b.currency, b.ExVirtualRate, b.userId, b.eventID, b.eventName, b.marketID
 
-			INSERT INTO #DetailData( UserID ,EventID ,MarketID ,BetCount  ,DrawBetCount ,DrawTO ,Lay ,Back, eventType, EventTypeName )			
+			INSERT INTO #DetailData( UserID ,EventID ,MarketID ,BetCount  ,DrawBetCount ,DrawTO ,Lay ,Back, eventType, EventTypeName, MarketName)			
 			SELECT d.userId, d.eventID, d.marketID
 				, COUNT(*) AS Betcount
 				, SUM(CASE WHEN d.profitLoss = 0 THEN 1 ELSE 0 END) AS DrawBetCount
 				, SUM(CASE WHEN d.profitLoss = 0 THEN (d.matchStake * 1/b.ExVirtualRate) ELSE 0 END) AS DrawTO
 				, SUM(CASE WHEN d.matchType = 'Lay' THEN (d.matchStake * 1/b.ExVirtualRate) ELSE 0 END) AS Lay
 				, SUM(CASE WHEN d.matchType = 'Back' THEN (d.matchStake * 1/b.ExVirtualRate) ELSE 0 END) AS Back
-				, d.eventType, d.EventTypeName
+				, d.eventType, d.EventTypeName, MAX(d.MarketName) AS MarketName
 			FROM dbo.Bettrans_Exchange d WITH (NOLOCK)
 				INNER JOIN #TicketData b ON d.userId = b.userId AND d.eventID = b.eventID AND d.marketID = b.marketID
 			WHERE d.betstatus = 'Settled'				
@@ -201,7 +205,8 @@ BEGIN TRY
 				b.DrawTO = ISNULL(d.DrawTO, 0),
 				b.ValidBetAmount = ABS(ISNULL(d.Lay, 0) - ISNULL(d.Back, 0)),
 				b.eventType = ISNULL(d.eventType,-1),
-				b.EventTypeName = ISNULL(d.EventTypeName, 'Invalid')
+				b.EventTypeName = ISNULL(d.EventTypeName, 'Invalid'),
+				b.MarketName = ISNULL(d.MarketName, '')
 			FROM #TicketData b
 				LEFT JOIN #DetailData d ON d.userId = b.userId AND d.eventID = b.eventID AND d.marketID = b.marketID
 				
@@ -279,15 +284,15 @@ BEGIN TRY
 			ELSE
 			BEGIN
 				INSERT INTO #TicketDataForDataWarehouse ([Winlostdate],[Custid],[Currency],[ProductId],[Turnover],[Winlost],[WinLostA],[DrawTO]
-																,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount],[Bettype],[EventID],[EventName],[EventType],[EventTypeName])
+																,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount],[Bettype],[EventID],[EventName],[EventType],[EventTypeName],[MarketName])
 				SELECT @WLDate [Winlostdate], custid [Custid], CurrencyID [Currency], @ProductId [ProductId]
 					, SUM(ISNULL(turnover, 0)) [Turnover], SUM(ISNULL(Winlost, 0)) [Winlost], SUM(ISNULL(WinLostA, 0)) [WinLostA]
 					, SUM(ISNULL(DrawTO, 0)) [DrawTO], SUM(ISNULL(DrawBetCount, 0)) [DrawBetCount], SUM(ISNULL(BetCount, 0)) [BetCount]
 					, SUM(ISNULL(CommissionP, 0)) [CommissionP], SUM(ISNULL(CommissionA, 0)) [CommissionA], SUM(ISNULL(ValidBetAmount, 0)) [ValidBetAmount]	
 					, -1 [Bettype]-- bettype
-					, t.[EventID], t.EventName, t.[EventType], MAX(t.[EventTypeName]) EventTypeName
+					, t.[EventID], t.EventName, t.[EventType], MAX(t.[EventTypeName]) EventTypeName, t.MarketName
 				FROM #TicketData t
-				GROUP BY t.Custid, t.CurrencyID, t.EventID, t.EventType, T.EventName
+				GROUP BY t.Custid, t.CurrencyID, t.EventID, t.EventType, t.EventName, t.MarketName
 			END 
 		END 
 				
@@ -307,7 +312,7 @@ BEGIN TRY
 	BEGIN
 		SELECT [Winlostdate],[Custid],[Currency],[Turnover],[Winlost],[WinLostA],[DrawTO]
 							,[DrawBetCount],[BetCount],[CommissionP],[CommissionA],[ValidBetAmount]
-							,[EventID],[EventName],[EventType],[EventTypeName]
+							,[EventID],[EventName],[EventType],[EventTypeName], [MarketName]
 		FROM #TicketDataForDataWarehouse
 		WHERE Winlostdate = @winlostdate
 
