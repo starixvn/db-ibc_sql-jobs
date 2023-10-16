@@ -14,6 +14,7 @@ AS
 		- 20190918@Percy: Remove Racing [RedmineID: #118699]
 		- 20201022@Patrick: Change email to starixvn [Redmine: #143607]
 		- 20210816@Sol: fix nested insert exec - [Redmine: #160212]
+		- 20231016@Patrick: Change email to starixsoft - [Redmine: #195197]
 */
 BEGIN
     SET NOCOUNT ON
@@ -152,7 +153,7 @@ BEGIN
     SELECT @subject	= N'Reset Winning Check - KBT@' + @@SERVERNAME
 					
     EXECUTE msdb.dbo.sp_send_dbmail @profile_name	= DEFAULT
-	   ,	@recipients			 = 'dbaadmin@starixvn.com'
+	   ,	@recipients			 = 'dbaadmin@starixsoft.com'
 	   ,	@copy_recipients		 = ''
 	   ,	@blind_copy_recipients	 = ''
 	   ,	@subject				 = @subject
