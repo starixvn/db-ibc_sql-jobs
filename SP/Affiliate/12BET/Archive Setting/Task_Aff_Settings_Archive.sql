@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20180601@Percy: Initialize SP [RedmineID: #87923]
 		- 20201112@Percy: Add Setting for Exchange WL & Comm [RedmineID: #145297]
+		- 20231005@Bobby: Implement Bonus & FDM Setting [RedmineId : #191139]
 */
 
 BEGIN
@@ -24,40 +25,30 @@ BEGIN
 	-- Current month
 	BEGIN
 		IF (
-			EXISTS (SELECT 1 FROM dbo.CommGroupHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
-			OR EXISTS (SELECT 1 FROM dbo.TierSettingHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
-			OR EXISTS (SELECT 1 FROM dbo.AffGroupHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
-			OR EXISTS (SELECT 1 FROM dbo.DeductionSettingHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
+			EXISTS (SELECT 1 FROM dbo.CommGroupHistory WITH (NOLOCK) WHERE MonthDate IN (@NextMonthDate))
+			OR EXISTS (SELECT 1 FROM dbo.TierSettingHistory WITH (NOLOCK) WHERE MonthDate IN (@NextMonthDate))
+			OR EXISTS (SELECT 1 FROM dbo.AffGroupHistory WITH (NOLOCK) WHERE MonthDate IN (@NextMonthDate))
+			OR EXISTS (SELECT 1 FROM dbo.DeductionSettingHistory WITH (NOLOCK) WHERE MonthDate IN (@NextMonthDate))
+			OR EXISTS (SELECT 1 FROM dbo.FDMTierSettingHistory WITH (NOLOCK) WHERE MonthDate IN (@NextMonthDate))
 		)
 		BEGIN
-			DELETE dbo.CommGroupHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
-			DELETE dbo.TierSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
-			DELETE dbo.AffGroupHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
-			DELETE dbo.DeductionSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
+			DELETE dbo.CommGroupHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@NextMonthDate)
+			DELETE dbo.TierSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@NextMonthDate)
+			DELETE dbo.AffGroupHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@NextMonthDate)
+			DELETE dbo.DeductionSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@NextMonthDate)
+			DELETE dbo.FDMTierSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@NextMonthDate)
 		END
 
 		-- Archive settings
 		BEGIN
-			INSERT INTO dbo.CommGroupHistory (GroupID,MonthDate,GroupName,CreatedDate,Creator,IsDeleted,Description,QMTurnover)
-			SELECT GroupID,@MonthDate,GroupName,CreatedDate,Creator,IsDeleted,Description,QMTurnover
-			FROM dbo.CommGroup WITH (NOLOCK)
 
-			INSERT INTO dbo.CommGroupHistory (GroupID,MonthDate,GroupName,CreatedDate,Creator,IsDeleted,Description,QMTurnover)
-			SELECT GroupID,@NextMonthDate,GroupName,CreatedDate,Creator,IsDeleted,Description,QMTurnover
+			INSERT INTO dbo.CommGroupHistory (GroupID,MonthDate,GroupName,CreatedDate,Creator,IsDeleted,Description,QMTurnover,IsApplyBonus)
+			SELECT GroupID,@NextMonthDate,GroupName,CreatedDate,Creator,IsDeleted,Description,QMTurnover,IsApplyBonus
 			FROM dbo.CommGroup WITH (NOLOCK)
-
-			INSERT INTO dbo.TierSettingHistory (GroupID,TierID,MonthDate,MinAmount,MaxAmount,MinQM,MaxQM,Commission)
-			SELECT GroupID,TierID,@MonthDate,MinAmount,MaxAmount,MinQM,MaxQM,Commission
-			FROM dbo.TierSetting WITH (NOLOCK)
 
 			INSERT INTO dbo.TierSettingHistory (GroupID,TierID,MonthDate,MinAmount,MaxAmount,MinQM,MaxQM,Commission)
 			SELECT GroupID,TierID,@NextMonthDate,MinAmount,MaxAmount,MinQM,MaxQM,Commission
 			FROM dbo.TierSetting WITH (NOLOCK)
-
-			INSERT INTO dbo.AffGroupHistory (AffID,MonthDate,GroupID)
-			SELECT AffID,@MonthDate,GroupID
-			FROM dbo.AffInfo WITH (NOLOCK)
-			WHERE ISNULL(GroupID, 0) > 0
 
 			INSERT INTO dbo.AffGroupHistory (AffID,MonthDate,GroupID)
 			SELECT AffID,@NextMonthDate,GroupID
@@ -65,12 +56,13 @@ BEGIN
 			WHERE ISNULL(GroupID, 0) > 0
 
 			INSERT INTO dbo.DeductionSettingHistory (GroupID,MonthDate,DeductionID,DeductedPercentage,ProductId,GroupProductId)
-			SELECT GroupID,@MonthDate,DeductionID,DeductedPercentage,ProductId,GroupProductId
-			FROM dbo.DeductionSetting ds WITH (NOLOCK)
-
-			INSERT INTO dbo.DeductionSettingHistory (GroupID,MonthDate,DeductionID,DeductedPercentage,ProductId,GroupProductId)
 			SELECT GroupID,@NextMonthDate,DeductionID,NextDeductedPercentage,ProductId,NextGroupProductId
 			FROM dbo.DeductionSetting ds WITH (NOLOCK)
+
+			-- FDM Bonus Setting
+			INSERT INTO dbo.FDMTierSettingHistory (GroupID,TierID,MonthDate,MinAmount,MaxAmount,MinFDM,MaxFDM,Commission,LimitAmount)
+			SELECT GroupID,TierID,@NextMonthDate,MinAmount,MaxAmount,MinFDM,MaxFDM,Commission,LimitAmount
+			FROM dbo.FDMTierSetting WITH (NOLOCK)
 
 			-- Apply next value
 			BEGIN
