@@ -10,6 +10,7 @@ AS
 	
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20231017@Brice: Add ExtraValue of BetParlayResult into MBU Process [194691]
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -24,7 +25,7 @@ AS
 
 	SELECT
 		rID, b.RefNo, Serial, transid, winlostdate, statusid, stake, Odds, mOdds,
-		winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm
+		winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, ExtraValue
 	FROM
 		dbo.BetParlayResult b WITH (NOLOCK)
 		INNER JOIN @refNos r ON b.refno = r.refno
