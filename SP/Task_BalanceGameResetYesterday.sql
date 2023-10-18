@@ -22,6 +22,7 @@ AS
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 			- 20230414@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
 			- 20230804@Eden: Win loss limit - Change SP to allow dynamic seting [RedmineID: #180640]
+			- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
 
 		Parameters Explanation:	
 */
@@ -43,6 +44,7 @@ FROM DBCUST.CustDB.dbo.SportBettypeSettingMatrix st WITH(NOLOCK)
 			AND st.isLicensee = 0 AND st.Site = 'ALL'
 WHERE st.SportType = @SportType
 	AND st.bettype = @BetType
+	AND st.isDeleted = 0
 
 SELECT @SporttypeRefWinlossLimit = ISNULL(@SporttypeRefWinlossLimit,@SportType), 
 		@BettypeRefWinlossLimit = ISNULL(@BettypeRefWinlossLimit,@BetType)
