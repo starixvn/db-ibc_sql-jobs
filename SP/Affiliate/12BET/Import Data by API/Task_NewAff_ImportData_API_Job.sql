@@ -9,6 +9,7 @@ AS
 
 	Revisions:
 		- 20221130@Malcolm: Initialize SP [RedmineID: #180311]
+		- 20231018@Eddie: Change the domain of email from @starixvn.com to @starixsoft.com [RedmineID: #195672]
 
 */
 
@@ -88,7 +89,7 @@ BEGIN
 								) AS NVARCHAR(MAX)) + N'</table>'
 			
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients		= 'sophia.nguyen@starixvn.com;pontus@starixvn.com',
+			@recipients		= 'sophia.nguyen@starixsoft.com;pontus@starixsoft.com',
 			@subject		= @subject,
 			@body			= @Msg,
 			@body_format	= 'HTML'

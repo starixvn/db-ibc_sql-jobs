@@ -9,6 +9,7 @@ AS
 
 	Revisions:
 		- 20221118@Malcolm: Initialize SP [RedmineID: #180311]
+		- 20231018@Eddie: Change the domain of email from @starixvn.com to @starixsoft.com [RedmineID: #195672]
 
 */
 
@@ -55,10 +56,10 @@ BEGIN
 	BEGIN
 		SELECT @Subject = 'SQL Server Job System: ''Affiliate_12BET: Generate Queue Data'' failed on ' + @@SERVERNAME
 
-		SELECT @recipients = 'dba_local@starixvn.com'
+		SELECT @recipients = 'dba_local@starixsoft.com'
 		
 		IF @@SERVERNAME IN ('DB052', 'DB053')
-			SELECT @recipients = 'sophia.nguyen@starixvn.com;pontus@starixvn.com'
+			SELECT @recipients = 'sophia.nguyen@starixsoft.com;pontus@starixsoft.com'
 
 		SELECT @Msg = '<H3>List of products have wrong data</H3>'
 						+ '<table border="1"> '
