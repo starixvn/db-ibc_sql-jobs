@@ -15,6 +15,7 @@ AS
 		- 20190808@Percy: Add Exchange [RedmineID: #106504]
 		- 20201012@Malcolm :  Change email Starixsoft.com to starixvn.com [RedmineId : #143312]
 		- 20220704@Sol : remove email account - [RedmineId: #175043]
+		- 20231018@Eddie: Change the domain of email from @starixvn.com to @starixsoft.com [RedmineID: #195672]
 */
 
 BEGIN
@@ -196,7 +197,7 @@ BEGIN
 								) AS NVARCHAR(MAX)) + N'</table>'
 			
 		EXEC msdb.dbo.sp_send_dbmail
-			@recipients		= 'sophia.nguyen@starixvn.com;pontus@starixvn.com',
+			@recipients		= 'sophia.nguyen@starixsoft.com;pontus@starixsoft.com',
 			@subject		= @subject,
 			@body			= @Msg,
 			@body_format	= 'HTML'
