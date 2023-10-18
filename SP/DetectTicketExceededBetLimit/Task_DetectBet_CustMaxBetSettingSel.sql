@@ -18,6 +18,8 @@ AS
 		- 20230405@Tacy: MG-RNG - Change the bet limit setting [RedmineID: #186033]
 		- 20230419@Tacy: SEAL - Change the bet limit setting [RedmineID: #186524]
 		- 20230720@Tacy: MG-RNG - Integrate the product for deposit sites [RedmineID: #189971]
+		- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
+
 	Param's Explanation:
 */
 BEGIN
@@ -125,7 +127,7 @@ BEGIN
 				ON ps.SportType=ref.SportTypeRefBetSetting
 				AND ps.BetType=ref.BetTypeRefBetSetting
 		INNER JOIN #ProductSettingType t ON t.SettingType = ps.SettingType
-	WHERE cl.isLicensee=0 AND ps.SettingStatus<>2
+	WHERE cl.isLicensee=0 AND ps.SettingStatus<>2 AND ref.isDeleted = 0
 
 		--NG, Keno:
 	UPDATE cl 
@@ -137,7 +139,7 @@ BEGIN
 				AND ref.Bettype		= cl.bettype
 				AND ref.isLicensee	= cl.isLicensee
 				AND ref.isLive		= cl.isLive
-	WHERE cl.SportType IN (161,164,168,202) AND cl.isLicensee=0
+	WHERE cl.SportType IN (161,164,168,202) AND cl.isLicensee=0 AND ref.isDeleted = 0
 
 		--Keno: GameTypeId
 	UPDATE cl 
@@ -164,7 +166,7 @@ BEGIN
 				AND psd.BetType=ref.BetTypeRefBetSetting
 		INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) 
 				ON ps.ProductSettingID=psd.ProductSettingID
-	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1 AND psd.SettingStatus<>2
+	WHERE ps.SettingType IN (2,7,8,10,11,12) AND cl.isLicensee=1 AND psd.SettingStatus<>2 AND ref.isDeleted = 0
 
 	-- @sporttype: not support StakeLevel
 	IF EXISTS (SELECT 1 FROM #ListTmp WHERE SettingType NOT IN (7,8,17) OR SportType IN (161,164,168,202))

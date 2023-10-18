@@ -11,6 +11,7 @@ AS
 			- 20220110@Eden: Saba Casino use DCS Setting [RedmineID: #164280]
 			- 20220714@Johnson: Declare structure for temp table [RedmineID: #174035]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
+			- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
 
 		Parameters Explanation:	
 */
@@ -43,7 +44,7 @@ FROM OPENQUERY (DBCUST, 'SELECT SportType,bettype
 								ON t.SportType = mt.SporttypeRefWinlossLimit
 								AND t.BetType = mt.BettypeRefWinlossLimit
 								AND mt.isLicensee = 0 AND mt.Site = ''ALL''
-						WHERE t.SettingType IN (22) AND SettingStatus <> 2
+						WHERE t.SettingType IN (22) AND SettingStatus <> 2 AND mt.isDeleted = 0
 						UNION 
 						SELECT mt.SportType,mt.bettype 
 						FROM CUSTDB.dbo.ProductSettingDetail_UAT t WITH(NOLOCK) 
@@ -51,7 +52,7 @@ FROM OPENQUERY (DBCUST, 'SELECT SportType,bettype
 								ON t.SportType = mt.SporttypeRefWinlossLimit
 								AND t.BetType = mt.BettypeRefWinlossLimit
 								AND mt.isLicensee = 0 AND mt.Site = ''ALL''
-						WHERE t.SettingType IN (22) AND SettingStatus <> 2 '
+						WHERE t.SettingType IN (22) AND SettingStatus <> 2 AND mt.isDeleted = 0'
 				)
 
 

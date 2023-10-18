@@ -15,6 +15,8 @@ AS
 		- 20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
+		- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
+
 	Parameter's Explanations:
 */
 BEGIN 
@@ -80,7 +82,7 @@ BEGIN
 	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH(NOLOCK) 
 		INNER JOIN CheckCustDB.dbo.SportBettypeSettingMatrix m WITH (NOLOCK)
 			ON ps.Sporttype = m.SporttypeRefWinlossLimit AND ps.Bettype = m.BettypeRefWinlossLimit
-			AND m.isLicensee = 0 AND m.Site = 'ALL'
+			AND m.isLicensee = 0 AND m.Site = 'ALL' AND m.isDeleted = 0
 		INNER JOIN #OfferedProductList op 
 			ON  op.SportType = m.SportType
 			AND CASE WHEN op.BetType = 1024 THEN 1021 ELSE op.BetType END = m.BetType
