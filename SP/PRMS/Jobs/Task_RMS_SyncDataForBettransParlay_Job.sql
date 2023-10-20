@@ -31,6 +31,8 @@ AS
 		- 20221123@Danny: Get bettransm_bk info by using Open_query instead [RedmineID: #180707]
 		- 20230118@Danny: extend bettransm_bk range [RedmineID: #182724]
 		- 20230328@Cherry: Change Betfrom Data Length (#185896)
+		- 20230822@Cherry: Parlay Boost Bonus (#192681)
+		- 20231020@Cherry: Parlay Generator (#195498)
 */
 
 BEGIN
@@ -128,7 +130,8 @@ BEGIN
 			,odds2				money
 			,TotalBet			int
 			,epositiontaking	smallmoney
-			,ID INT identity(1,1)
+			,ID					INT identity(1,1)
+			,ExtraInfo			varchar(1000)
 		)
 		
 		START_GETDATA:
@@ -140,7 +143,7 @@ BEGIN
 			,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
 			,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 			,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-			,balance,SecAcceptFlag,epositiontaking,transid2,combo,odds2,TotalBet
+			,balance,SecAcceptFlag,epositiontaking,transid2,combo,odds2,TotalBet,ExtraInfo
 		)
 		SELECT
 			transid,custid,transdate,oddsid,hdp1,hdp2,odds,stake,status,winlost,awinlost,mwinlost,playercomm,comm,acomm
@@ -148,7 +151,7 @@ BEGIN
 			,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
 			,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 			,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-			,balance,SecAcceptFlag,epositiontaking,1,hdp2,odds,1
+			,balance,SecAcceptFlag,epositiontaking,1,hdp2,odds,1,ExtraInfo
 		FROM bodb02.dbo.bettrans WITH (NOLOCK, INDEX = IX_tstamp_transid)
 		WHERE tstamp BETWEEN @min_tstamp AND @max_tstamp
 			AND bettype IN (29, 38, 376)
@@ -335,6 +338,35 @@ BEGIN
 			WHERE b.bettype = 29
 
 			DROP TABLE #tmp2
+
+			CREATE TABLE #tmpBoost (transid BIGINT, bbp DECIMAL(19,6))
+			CREATE CLUSTERED INDEX CX_transid ON #tmpBoost (transid)
+
+			INSERT INTO #tmpBoost(transid, bbp)
+			SELECT transid, TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bbp)[1]', 'VARCHAR(50)') AS DECIMAL(19,6)) bbp
+			FROM #rmBettrans
+			WHERE bettype = 29 and betteam = '1' and oddsspread = 2
+
+			UPDATE b
+			SET b.odds2 = b.odds2 + (b.odds2 - 1) * ISNULL(t.bbp,0)
+			FROM #rmBettrans b
+				INNER JOIN #tmpBoost t ON b.transid = t.transid
+
+			-- Update oddsspread = -100 if Parlay Generator
+			CREATE TABLE #tmpParlayGenerator (transid BIGINT)
+			INSERT INTO #tmpParlayGenerator (transid)
+			SELECT transid
+			FROM #rmBettrans
+			WHERE bettype = 29 and betteam = '1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
+
+			UPDATE b
+			SET b.oddsspread = -100
+			FROM #rmBettrans b
+				INNER JOIN #tmpParlayGenerator t ON b.transid = t.transid
+			
+			DROP TABLE #tmpBoost
+			DROP TABLE #tmpParlayGenerator
+
 		END
 
 		;MERGE dbo.rmBettrans AS t

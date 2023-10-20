@@ -10,6 +10,8 @@ AS
 	Revisions:
 	- 20210115@Danny: Regen data rmSumwinloss_OLD by Winlostdate  [RedmineID: #145926]
 	- 20220917@Sophia: Fix Divide by Zero [Redmine: #177934]
+	- 20230822@Cherry: Parlay Boost Bonus (#192681)
+	- 20231020@Cherry: Parlay Generator (#195498)
 */
 BEGIN
 	CREATE TABLE #rmBettrans_Old
@@ -79,6 +81,7 @@ BEGIN
 			,odds2				money
 			,TotalBet			int
 			,epositiontaking	smallmoney
+			,ExtraInfo			varchar(1000)
 	)
 	INSERT INTO #rmBettrans_Old
 	(
@@ -87,7 +90,7 @@ BEGIN
 		,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
 		,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 		,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-		,balance,SecAcceptFlag,epositiontaking,transid2,combo,odds2,TotalBet
+		,balance,SecAcceptFlag,epositiontaking,transid2,combo,odds2,TotalBet,ExtraInfo
 	)
 	SELECT
 		transid,custid,transdate,oddsid,hdp1,hdp2,odds,stake,status,winlost,awinlost,mwinlost,playercomm,comm,acomm
@@ -95,7 +98,7 @@ BEGIN
 		,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
 		,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 		,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-		,balance,SecAcceptFlag,epositiontaking,CASE WHEN bettype IN (38, 376) THEN 1 ELSE 0 END,hdp2,odds,1
+		,balance,SecAcceptFlag,epositiontaking,CASE WHEN bettype IN (38, 376) THEN 1 ELSE 0 END,hdp2,odds,1,ExtraInfo
 	FROM dbo.bettrans_bk b WITH (NOLOCK)
 	CROSS APPLY (
 		SELECT TOP 1 c.username, e.currency AS CurrencyName
@@ -229,6 +232,33 @@ BEGIN
 
 	DROP TABLE #tmp
 
+	CREATE TABLE #tmpBoost (transid BIGINT, bbp DECIMAL(19,6))
+	CREATE CLUSTERED INDEX CX_transid ON #tmpBoost (transid)
+
+	INSERT INTO #tmpBoost(transid, bbp)
+	SELECT transid, TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bbp)[1]', 'VARCHAR(50)') AS DECIMAL(19,6)) bbp
+	FROM #rmBettrans_Old
+	WHERE bettype = 29 and betteam = N'1' and oddsspread = 2
+
+	UPDATE b
+	SET b.odds2 = b.odds2 + (b.odds2 - 1) * ISNULL(t.bbp,0)
+	FROM #rmBettrans_Old b
+		INNER JOIN #tmpBoost t ON b.transid = t.transid
+
+	-- Update oddsspread = -100 if Parlay Generator
+	CREATE TABLE #tmpParlayGenerator (transid BIGINT)
+	INSERT INTO #tmpParlayGenerator (transid)
+	SELECT transid
+	FROM #rmBettrans
+	WHERE bettype = 29 and betteam = '1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
+
+	UPDATE b
+	SET b.oddsspread = -100
+	FROM #rmBettrans b
+		INNER JOIN #tmpParlayGenerator t ON b.transid = t.transid
+			
+	DROP TABLE #tmpBoost
+	DROP TABLE #tmpParlayGenerator
 
 	CREATE TABLE #rmSumWinloss(
 				[winlostdate] [smalldatetime] NOT NULL,
@@ -286,6 +316,7 @@ BEGIN
 			,COUNT(1) AS betcount
 			,b.recommend
 			,CASE
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = -100 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
 				WHEN b.bettype = 38 THEN 4
@@ -316,6 +347,7 @@ BEGIN
 			,b.actualrate
 			,b.recommend
 			,CASE
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = -100 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
 				WHEN b.bettype = 38 THEN 4
