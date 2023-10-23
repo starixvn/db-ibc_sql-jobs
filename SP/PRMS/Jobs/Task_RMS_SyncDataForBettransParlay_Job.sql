@@ -345,7 +345,7 @@ BEGIN
 			INSERT INTO #tmpBoost(transid, bbp)
 			SELECT transid, TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bbp)[1]', 'VARCHAR(50)') AS DECIMAL(19,6)) bbp
 			FROM #rmBettrans
-			WHERE bettype = 29 and betteam = '1' and oddsspread = 2
+			WHERE bettype = 29 and betteam = N'1' and oddsspread = 2
 
 			UPDATE b
 			SET b.odds2 = b.odds2 + (b.odds2 - 1) * ISNULL(t.bbp,0)
@@ -357,7 +357,7 @@ BEGIN
 			INSERT INTO #tmpParlayGenerator (transid)
 			SELECT transid
 			FROM #rmBettrans
-			WHERE bettype = 29 and betteam = '1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
+			WHERE bettype = 29 and betteam = N'1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
 
 			UPDATE b
 			SET b.oddsspread = -100
