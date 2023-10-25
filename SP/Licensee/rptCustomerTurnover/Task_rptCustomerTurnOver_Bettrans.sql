@@ -50,7 +50,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT BetType, ProductPrefix, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 49, 69)
+	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 49, 69, 77)
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
 
