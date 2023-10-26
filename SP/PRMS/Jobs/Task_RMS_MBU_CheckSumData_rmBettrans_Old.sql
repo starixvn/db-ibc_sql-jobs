@@ -17,6 +17,7 @@ AS
 		- 20211001@Danny: Change dataType to support IPv6 [RedmineID: #162348]
 		- 20230328@Cherry: Change Betfrom Data Length (#185896)
 		- 20230530@Cherry: Void tickets in bettrans14 (#188647)
+		- 20230822@Cherry: Parlay Boost Bonus (#192681)
 
 */
 
@@ -139,6 +140,7 @@ BEGIN
 			,odds2				money
 			,TotalBet			int
 			,epositiontaking	smallmoney
+			,ExtraInfo			varchar(1000)
 		)
 		
 		INSERT INTO #rmBettrans
@@ -148,7 +150,7 @@ BEGIN
 			,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
 			,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 			,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-			,balance,SecAcceptFlag,epositiontaking,transid2,combo,odds2,TotalBet
+			,balance,SecAcceptFlag,epositiontaking,transid2,combo,odds2,TotalBet,ExtraInfo
 		)
 		SELECT
 			transid,custid,transdate,oddsid,hdp1,hdp2,odds,stake,status,winlost,awinlost,mwinlost,playercomm,comm,acomm
@@ -156,7 +158,7 @@ BEGIN
 			,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
 			,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 			,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-			,balance,SecAcceptFlag,epositiontaking,1,hdp2,odds,1
+			,balance,SecAcceptFlag,epositiontaking,1,hdp2,odds,1,ExtraInfo
 		FROM bodb02.dbo.bettrans14 WITH (NOLOCK)
 		WHERE winlostdate = @winlostdate
 				AND bettype IN (29, 38, 376)
@@ -252,6 +254,21 @@ BEGIN
 			WHERE b.bettype = 29
 
 			DROP TABLE #tmp2
+
+			CREATE TABLE #tmpBoost (transid BIGINT, bbp DECIMAL(19,6))
+			CREATE CLUSTERED INDEX CX_transid ON #tmpBoost (transid)
+
+			INSERT INTO #tmpBoost(transid, bbp)
+			SELECT transid, TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bbp)[1]', 'VARCHAR(50)') AS DECIMAL(19,6)) bbp
+			FROM #rmBettrans
+			WHERE bettype = 29 and betteam = N'1' and oddsspread = 2
+
+			UPDATE b
+			SET b.odds2 = b.odds2 + (b.odds2 - 1) * ISNULL(t.bbp,0)
+			FROM #rmBettrans b
+				INNER JOIN #tmpBoost t ON b.transid = t.transid
+			
+			DROP TABLE #tmpBoost
 		END
 
 		;MERGE dbo.rmBettrans_old AS t
