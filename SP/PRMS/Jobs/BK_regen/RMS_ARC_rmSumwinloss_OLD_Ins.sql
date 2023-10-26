@@ -11,6 +11,7 @@ AS
 	- 20210115@Danny: Regen data rmSumwinloss_OLD by Winlostdate  [RedmineID: #145926]
 	- 20220917@Sophia: Fix Divide by Zero [Redmine: #177934]
 	- 20230822@Cherry: Parlay Boost Bonus (#192681)
+	- 20231020@Cherry: Parlay Generator (#195498)
 */
 BEGIN
 	CREATE TABLE #rmBettrans_Old
@@ -244,7 +245,20 @@ BEGIN
 	FROM #rmBettrans_Old b
 		INNER JOIN #tmpBoost t ON b.transid = t.transid
 
+	-- Update oddsspread = -100 if Parlay Generator
+	CREATE TABLE #tmpParlayGenerator (transid BIGINT)
+	INSERT INTO #tmpParlayGenerator (transid)
+	SELECT transid
+	FROM #rmBettrans
+	WHERE bettype = 29 and betteam = '1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
+
+	UPDATE b
+	SET b.oddsspread = -100
+	FROM #rmBettrans b
+		INNER JOIN #tmpParlayGenerator t ON b.transid = t.transid
+			
 	DROP TABLE #tmpBoost
+	DROP TABLE #tmpParlayGenerator
 
 	CREATE TABLE #rmSumWinloss(
 				[winlostdate] [smalldatetime] NOT NULL,
@@ -302,6 +316,7 @@ BEGIN
 			,COUNT(1) AS betcount
 			,b.recommend
 			,CASE
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = -100 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
 				WHEN b.bettype = 38 THEN 4
@@ -332,6 +347,7 @@ BEGIN
 			,b.actualrate
 			,b.recommend
 			,CASE
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = -100 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
 				WHEN b.bettype = 38 THEN 4

@@ -17,6 +17,7 @@ AS
 		- 20200203@Danny: Separate Data GOF for deposit [RedmineID: #149966]
 		- 20220519@Danny: add column LiveIndicator [RedmineID: #172691]
 		- 20220917@Sophia: Fix Divide by Zero [Redmine: #177934]
+		- 20231020@Cherry: Parlay Generator (#195498)
 */
 
 BEGIN
@@ -85,6 +86,7 @@ BEGIN
 			,COUNT(1) AS betcount
 			,b.recommend
 			,CASE
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = -100 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
@@ -119,6 +121,7 @@ BEGIN
 			,b.actualrate
 			,b.recommend
 			,CASE
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = -100 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3

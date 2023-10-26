@@ -32,6 +32,7 @@ AS
 		- 20230118@Danny: extend bettransm_bk range [RedmineID: #182724]
 		- 20230328@Cherry: Change Betfrom Data Length (#185896)
 		- 20230822@Cherry: Parlay Boost Bonus (#192681)
+		- 20231020@Cherry: Parlay Generator (#195498)
 */
 
 BEGIN
@@ -350,8 +351,21 @@ BEGIN
 			SET b.odds2 = b.odds2 + (b.odds2 - 1) * ISNULL(t.bbp,0)
 			FROM #rmBettrans b
 				INNER JOIN #tmpBoost t ON b.transid = t.transid
+
+			-- Update oddsspread = -100 if Parlay Generator
+			CREATE TABLE #tmpParlayGenerator (transid BIGINT)
+			INSERT INTO #tmpParlayGenerator (transid)
+			SELECT transid
+			FROM #rmBettrans
+			WHERE bettype = 29 and betteam = N'1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
+
+			UPDATE b
+			SET b.oddsspread = -100
+			FROM #rmBettrans b
+				INNER JOIN #tmpParlayGenerator t ON b.transid = t.transid
 			
 			DROP TABLE #tmpBoost
+			DROP TABLE #tmpParlayGenerator
 
 		END
 
