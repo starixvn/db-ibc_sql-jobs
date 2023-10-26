@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20221003@Louisa: SP check Balance Pending process is slowly [Redmine:#178231]
 		- 20221017@Louisa: check Balance Pending process is slowly for Other Sports and Casino [Redmine:#178231]
+		- 20231026@Louisa: Update email domain from starixvn to starixsoft [Redmine:#195197]
  	
 	Param's Explanation: 
  
@@ -46,10 +47,10 @@ SET NOCOUNT ON
 	SET @CheckTime = @StartTime
 
 	IF @@SERVERNAME  = 'DBTrans' OR @@SERVERNAME LIKE 'DBGRP%' OR @@SERVERNAME LIKE 'SIT%'
-		SET @recipients = 'dbaadmin@onelab.tw;dbaadmin@starixvn.com'
+		SET @recipients = 'dbaadmin@onelab.tw;dbaadmin@starixsoft.com'
 	ELSE
-		SET @recipients = 'dba_local@starixvn.com;qa@starixvn.com'
-		--SET @recipients = 'louisa.vo@starixvn.com;qa@starixvn.com'
+		SET @recipients = 'dba_local@starixsoft.com;qa@starixsoft.com'
+		--SET @recipients = 'louisa.vo@starixsoft.com;qa@starixsoft.com'
 			
 	WHILE ( 1 = 1)
 	BEGIN	
