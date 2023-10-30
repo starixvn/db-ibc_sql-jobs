@@ -352,20 +352,20 @@ BEGIN
 			FROM #rmBettrans b
 				INNER JOIN #tmpBoost t ON b.transid = t.transid
 
-			-- Update oddsspread = -100 if Parlay Generator
-			CREATE TABLE #tmpParlayGenerator (transid BIGINT)
-			INSERT INTO #tmpParlayGenerator (transid)
-			SELECT transid
-			FROM #rmBettrans
-			WHERE bettype = 29 and betteam = N'1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
+			---- Update oddsspread = -100 if Parlay Generator
+			--CREATE TABLE #tmpParlayGenerator (transid BIGINT)
+			--INSERT INTO #tmpParlayGenerator (transid)
+			--SELECT transid
+			--FROM #rmBettrans
+			--WHERE bettype = 29 and betteam = N'1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
 
-			UPDATE b
-			SET b.oddsspread = -100
-			FROM #rmBettrans b
-				INNER JOIN #tmpParlayGenerator t ON b.transid = t.transid
+			--UPDATE b
+			--SET b.oddsspread = -100
+			--FROM #rmBettrans b
+			--	INNER JOIN #tmpParlayGenerator t ON b.transid = t.transid
 			
 			DROP TABLE #tmpBoost
-			DROP TABLE #tmpParlayGenerator
+			--DROP TABLE #tmpParlayGenerator
 
 		END
 
@@ -436,6 +436,7 @@ BEGIN
 				,combo = s.combo
 				,odds2 = s.odds2
 				,TotalBet = s.TotalBet
+				,ExtraInfo = s.ExtraInfo
 		WHEN NOT MATCHED THEN
 			INSERT
 			(
@@ -444,7 +445,7 @@ BEGIN
 				,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
 				,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 				,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-				,balance,SecAcceptFlag,epositiontaking,transid2,combo,odds2,TotalBet
+				,balance,SecAcceptFlag,epositiontaking,transid2,combo,odds2,TotalBet,ExtraInfo
 			)
 			VALUES
 			(
@@ -453,7 +454,7 @@ BEGIN
 				,s.liveindicator,s.betteam,s.creator,s.refno,s.comstatus,s.winlostdate,s.betfrom,s.betcheck,s.checktime,s.oddsspread,s.actualrate,s.matchid
 				,s.recommend,s.mrecommend,s.ruben,s.betid,s.statuswinlost,s.modds,s.bettype,s.betdaqid,s.actual_stake,s.currency,s.ip,s.transdesc
 				,s.sdiscount,s.scomm,s.spositiontaking,s.swinlost,s.srecommend,s.Username,s.CurrencyName,s.virtualrate,s.oddstype,s.statusID,s.currency2
-				,s.balance,s.SecAcceptFlag,s.epositiontaking,s.transid2,s.combo,s.odds2,s.TotalBet
+				,s.balance,s.SecAcceptFlag,s.epositiontaking,s.transid2,s.combo,s.odds2,s.TotalBet,s.ExtraInfo
 			);
 
 		DROP TABLE #rmBettrans
