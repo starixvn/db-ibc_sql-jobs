@@ -28,6 +28,41 @@ BEGIN
 
 	-- Gen data
 	BEGIN TRY
+		CREATE TABLE #rmBettrans(
+				[winlostdate] [smalldatetime] NOT NULL,
+				[custid] [int] NOT NULL,
+				[transid2] [bigint] NULL,
+				[statusid] [tinyint] NOT NULL,
+				[modds] [smallmoney] NULL,
+				[bettype] [smallint] NULL,
+				[betcheck] [nvarchar](50) NULL,
+				[oddsspread] [smallmoney] NULL,
+				[betteam] [nvarchar](10) NULL,
+				[hdp2] [smallmoney] NULL,
+				[username] [varchar](30) NOT NULL,
+				[currency] [tinyint] NULL,
+				[stake] [money] NULL,
+				[winlost] [money] NULL,
+				[tpositiontaking] [smallmoney] NULL,
+				[actualrate] [float] NULL,
+				[odds] [smallmoney] NULL,
+				[recommend] [int] NULL,
+				[bact] [int] NULL,
+				[scomm] [money] NULL,
+				[epositiontaking] [smallmoney] NULL,
+				[mrecommend] [int] NULL,
+				[srecommend] [int] NULL,
+				[awinlost] [money] NULL,
+				[mwinlost] [money] NULL,
+				[swinlost] [money] NULL,
+				[actual_stake] [money] NULL,
+				[playercomm] [money] NULL,
+				[comm] [money] NULL,
+				[acomm] [money] NULL,
+				[livehomescore] [smallint] NULL,
+				[liveindicator] [bit] NULL
+			)
+
 		CREATE TABLE #rmSumWinloss(
 				[winlostdate] [smalldatetime] NOT NULL,
 				[custid] [int] NOT NULL,
@@ -61,6 +96,76 @@ BEGIN
 				[LiveIndicator] [smallint] NULL
 			)
 
+		 INSERT INTO #rmBettrans(
+				[winlostdate],
+				[custid],
+				[transid2],
+				[statusid],
+				[modds],
+				[bettype],
+				[betcheck],
+				[oddsspread],
+				[betteam],
+				[hdp2],
+				[username],
+				[currency],
+				[stake],
+				[winlost],
+				[tpositiontaking],
+				[actualrate],
+				[odds],
+				[recommend],
+				[bact],
+				[scomm],
+				[epositiontaking],
+				[mrecommend],
+				[srecommend],
+				[awinlost],
+				[mwinlost],
+				[swinlost],
+				[actual_stake],
+				[playercomm],
+				[comm] ,
+				[acomm],
+				[livehomescore],
+				[liveindicator]
+			)
+		SELECT
+				[winlostdate],
+				[custid],
+				[transid2],
+				[statusid],
+				[modds],
+				[bettype],
+				[betcheck],
+				[oddsspread],
+				[betteam],
+				[hdp2],
+				[username],
+				[currency],
+				[stake],
+				[winlost],
+				[tpositiontaking],
+				[actualrate],
+				[odds],
+				[recommend],
+				TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),
+				[scomm],
+				[epositiontaking],
+				[mrecommend],
+				[srecommend],
+				[awinlost],
+				[mwinlost],
+				[swinlost],
+				[actual_stake],
+				[playercomm],
+				[comm] ,
+				[acomm],
+				[livehomescore],
+				[liveindicator]
+		FROM dbo.rmBettrans  WITH (NOLOCK)
+		WHERE winlostdate = @winlostdate
+			AND statusID IN (111, 112, 113)
 
 		INSERT INTO #rmSumWinloss
 		(
@@ -86,7 +191,7 @@ BEGIN
 			,COUNT(1) AS betcount
 			,b.recommend
 			,CASE
-				WHEN b.bettype = 29 AND b.betteam = N'1' AND TRY_CAST(TRY_CAST(b.ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT) = 5 THEN 7 --Parlay Generator
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bact = 5 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
@@ -107,7 +212,7 @@ BEGIN
 			SUM(comm) as comm,
 			SUM(acomm) as acomm,
 			CASE WHEN b.bettype = 29 THEN b.livehomescore ELSE b.liveindicator END liveindicator
-		FROM dbo.rmBettrans b WITH (NOLOCK)
+		FROM #rmBettrans b
 		WHERE b.winlostdate = @winlostdate
 			AND b.statusID IN (111, 112, 113)
 		GROUP BY
@@ -121,7 +226,7 @@ BEGIN
 			,b.actualrate
 			,b.recommend
 			,CASE
-				WHEN b.bettype = 29 AND b.betteam = N'1' AND TRY_CAST(TRY_CAST(b.ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT) = 5 THEN 7 --Parlay Generator
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bact = 5 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
