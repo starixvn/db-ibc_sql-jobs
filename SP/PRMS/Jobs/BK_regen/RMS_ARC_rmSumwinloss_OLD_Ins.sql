@@ -250,7 +250,7 @@ BEGIN
 	INSERT INTO #tmpParlayGenerator (transid)
 	SELECT transid
 	FROM #rmBettrans
-	WHERE bettype = 29 and betteam = '1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
+	WHERE bettype = 29 and betteam = N'1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
 
 	UPDATE b
 	SET b.oddsspread = -100
@@ -317,7 +317,8 @@ BEGIN
 			,b.recommend
 			,CASE
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = -100 THEN 7 --Parlay Generator
-				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread NOT IN (-100, 1) THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
 				WHEN b.bettype = 38 THEN 4
 				WHEN b.bettype = 376 THEN 5
@@ -348,7 +349,8 @@ BEGIN
 			,b.recommend
 			,CASE
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = -100 THEN 7 --Parlay Generator
-				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread NOT IN (-100, 1) THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
 				WHEN b.bettype = 38 THEN 4
 				WHEN b.bettype = 376 THEN 5
