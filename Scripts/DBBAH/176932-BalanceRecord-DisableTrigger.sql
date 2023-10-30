@@ -4,8 +4,9 @@ go
 /*
    Created:Thomas@20231030  
    DB: DBBAH-bodb02
+   Task: Disable trigger [RedmineID: #176932]
 */
-DISABLE TRIGGER dbo.Bettrans_Instead_Of_Insert ON dbo.bettrans
+DISABLE TRIGGER dbo.Bettrans_After_Insert ON dbo.bettrans
 go
 DISABLE TRIGGER dbo.Bettrans_After_Update ON dbo.bettrans
 go

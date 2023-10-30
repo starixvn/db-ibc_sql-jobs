@@ -4,8 +4,9 @@ go
 /*
    Created:Thomas@20231030  
    DB: DBBAH-bodb02
+   Task: Delete trigger [RedmineID: #176932]
 */
-DROP TRIGGER IF EXISTS dbo.Bettrans_Instead_Of_Insert
+DROP TRIGGER IF EXISTS dbo.Bettrans_After_Insert
 go
 DROP TRIGGER IF EXISTS dbo.Bettrans_After_Update
 go
