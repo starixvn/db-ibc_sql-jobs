@@ -123,7 +123,7 @@ BEGIN
 			,CASE
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND TRY_CAST(TRY_CAST(b.ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT) = 5 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
-				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread NOT IN (-100, 1) THEN 2
+				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
 				WHEN b.bettype = 38 THEN 4
 				WHEN b.bettype = 376 THEN 5
