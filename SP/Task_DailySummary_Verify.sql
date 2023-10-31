@@ -22,6 +22,7 @@ AS
 		- 20190305@Patrick: Remove statement check rowcount for check running/waiting ticket at translog statement [RedmineID: #109805]
 		- 2020203@Patrick: Add more rule check running parlay tickets [RedmineId: #127651]
 		- 20211012@July: Remove check IP rule [RedmineId: #162763]
+		- 20231031@Patrick: Enhance IP rule check [RedmineId: #196244]
 */
 
 SET NOCOUNT ON
@@ -197,6 +198,43 @@ BEGIN
 
 	RETURN
 END
+
+--//check IP@bettrans
+IF EXISTS (
+	SELECT TOP 10 ip, transid, b.Username, b.custid, b.currency, b.winlostdate					
+	FROM dbo.bettrans b WITH(NOLOCK)					
+	wHERE ISNUMERIC(REPLACE(ip, '.', '')) <> 1 and ip not like '%:%' and ip <> ''				
+		AND winlostdate = @winlostdate
+)
+BEGIN
+	RAISERROR ('FAILED: IP value of bettrans is wrongly', 16, 1)
+	RETURN
+END
+
+--//check IP@bettransLC
+IF EXISTS (
+	SELECT TOP 10 ip, transid, b.Username, b.custid, b.currency, b.winlostdate					
+	FROM dbo.bettransLC b WITH(NOLOCK)					
+	wHERE ISNUMERIC(REPLACE(ip, '.', '')) <> 1 and ip not like '%:%' and ip <> ''				
+		AND winlostdate = @winlostdate
+)
+BEGIN
+	RAISERROR ('FAILED: IP value of bettransLC is wrongly', 16, 1)
+	RETURN
+END
+
+--//check IP@bettransLC
+IF EXISTS (
+	SELECT TOP 10 ip, transid, b.Username, b.custid, b.currency, b.winlostdate					
+	FROM dbo.bettransRnG b WITH(NOLOCK)					
+	wHERE ISNUMERIC(REPLACE(ip, '.', '')) <> 1 and ip not like '%:%' and ip <> ''				
+		AND winlostdate = @winlostdate
+)
+BEGIN
+	RAISERROR ('FAILED: IP value of bettransRnG is wrongly', 16, 1)
+	RETURN
+END
+
 
 IF @TestMode = 1
 BEGIN
