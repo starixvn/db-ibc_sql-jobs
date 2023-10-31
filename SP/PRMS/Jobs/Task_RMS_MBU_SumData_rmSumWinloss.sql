@@ -29,6 +29,7 @@ BEGIN
 	-- Gen data
 	BEGIN TRY
 		CREATE TABLE #rmBettrans(
+				[transid] [bigint] NOT NULL,
 				[winlostdate] [smalldatetime] NOT NULL,
 				[custid] [int] NOT NULL,
 				[transid2] [bigint] NULL,
@@ -97,6 +98,7 @@ BEGIN
 			)
 
 		 INSERT INTO #rmBettrans(
+				transid,
 				[winlostdate],
 				[custid],
 				[transid2],
@@ -131,6 +133,7 @@ BEGIN
 				[liveindicator]
 			)
 		SELECT
+				transid,
 				[winlostdate],
 				[custid],
 				[transid2],
