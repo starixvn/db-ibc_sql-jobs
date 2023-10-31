@@ -203,7 +203,7 @@ END
 IF EXISTS (
 	SELECT TOP 10 ip, transid, b.Username, b.custid, b.currency, b.winlostdate					
 	FROM dbo.bettrans b WITH(NOLOCK)					
-	wHERE ISNUMERIC(REPLACE(ip, '.', '')) <> 1 and ip not like '%:%' and ip <> ''				
+	wHERE ISNUMERIC(REPLACE(ip, '.', '')) <> 1 AND ip NOT LIKE '%:%' AND ISNULL(ip, '') <> ''						
 		AND winlostdate = @winlostdate
 )
 BEGIN
@@ -215,7 +215,7 @@ END
 IF EXISTS (
 	SELECT TOP 10 ip, transid, b.Username, b.custid, b.currency, b.winlostdate					
 	FROM dbo.bettransLC b WITH(NOLOCK)					
-	wHERE ISNUMERIC(REPLACE(ip, '.', '')) <> 1 and ip not like '%:%' and ip <> ''				
+	wHERE ISNUMERIC(REPLACE(ip, '.', '')) <> 1 AND ip NOT LIKE '%:%' AND ISNULL(ip, '') <> ''					
 		AND winlostdate = @winlostdate
 )
 BEGIN
@@ -223,15 +223,27 @@ BEGIN
 	RETURN
 END
 
---//check IP@bettransLC
+--//check IP@bettransRnG
 IF EXISTS (
 	SELECT TOP 10 ip, transid, b.Username, b.custid, b.currency, b.winlostdate					
 	FROM dbo.bettransRnG b WITH(NOLOCK)					
-	wHERE ISNUMERIC(REPLACE(ip, '.', '')) <> 1 and ip not like '%:%' and ip <> ''				
+	wHERE ISNUMERIC(REPLACE(ip, '.', '')) <> 1 AND ip NOT LIKE '%:%' AND ISNULL(ip, '') <> ''					
 		AND winlostdate = @winlostdate
 )
 BEGIN
 	RAISERROR ('FAILED: IP value of bettransRnG is wrongly', 16, 1)
+	RETURN
+END
+
+--//check IP@translog
+IF EXISTS (
+	SELECT TOP 10 ip, translogid, b.Username, b.custid, b.currency, b.winlostdate					
+	FROM dbo.translog b WITH(NOLOCK)					
+	wHERE ISNUMERIC(REPLACE(ip, '.', '')) <> 1 AND ip NOT LIKE '%:%' AND ISNULL(ip, '') <> ''				
+		AND winlostdate = @winlostdate
+)
+BEGIN
+	RAISERROR ('FAILED: IP value of translog is wrongly', 16, 1)
 	RETURN
 END
 
