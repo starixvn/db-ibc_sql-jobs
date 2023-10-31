@@ -226,7 +226,7 @@ BEGIN
 							INNER JOIN bodb_archive.dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
 						WHERE  bm.refno IN (SELECT value FROM STRING_SPLIT('''''+@str_refno+''''','''',''''))
-							AND bm.winlostdate BETWEEN DATEADD(DAY, -30, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''') AND DATEADD(DAY, -1, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''')
+							AND bm.winlostdate BETWEEN DATEADD(DAY, -45, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''') AND DATEADD(DAY, -1, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''')
 						''
 						)
 				'
@@ -351,21 +351,8 @@ BEGIN
 			SET b.odds2 = b.odds2 + (b.odds2 - 1) * ISNULL(t.bbp,0)
 			FROM #rmBettrans b
 				INNER JOIN #tmpBoost t ON b.transid = t.transid
-
-			---- Update oddsspread = -100 if Parlay Generator
-			--CREATE TABLE #tmpParlayGenerator (transid BIGINT)
-			--INSERT INTO #tmpParlayGenerator (transid)
-			--SELECT transid
-			--FROM #rmBettrans
-			--WHERE bettype = 29 and betteam = N'1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
-
-			--UPDATE b
-			--SET b.oddsspread = -100
-			--FROM #rmBettrans b
-			--	INNER JOIN #tmpParlayGenerator t ON b.transid = t.transid
 			
 			DROP TABLE #tmpBoost
-			--DROP TABLE #tmpParlayGenerator
 
 		END
 
