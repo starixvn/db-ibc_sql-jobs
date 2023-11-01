@@ -32,6 +32,7 @@ AS
 		- 20230118@Danny: extend bettransm_bk range [RedmineID: #182724]
 		- 20230328@Cherry: Change Betfrom Data Length (#185896)
 		- 20230822@Cherry: Parlay Boost Bonus (#192681)
+		- 20231020@Cherry: Parlay Generator (#195498)
 */
 
 BEGIN
@@ -225,7 +226,7 @@ BEGIN
 							INNER JOIN bodb_archive.dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
 						WHERE  bm.refno IN (SELECT value FROM STRING_SPLIT('''''+@str_refno+''''','''',''''))
-							AND bm.winlostdate BETWEEN DATEADD(DAY, -30, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''') AND DATEADD(DAY, -1, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''')
+							AND bm.winlostdate BETWEEN DATEADD(DAY, -45, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''') AND DATEADD(DAY, -1, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''')
 						''
 						)
 				'
@@ -422,6 +423,7 @@ BEGIN
 				,combo = s.combo
 				,odds2 = s.odds2
 				,TotalBet = s.TotalBet
+				,ExtraInfo = s.ExtraInfo
 		WHEN NOT MATCHED THEN
 			INSERT
 			(
@@ -430,7 +432,7 @@ BEGIN
 				,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
 				,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 				,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-				,balance,SecAcceptFlag,epositiontaking,transid2,combo,odds2,TotalBet
+				,balance,SecAcceptFlag,epositiontaking,transid2,combo,odds2,TotalBet,ExtraInfo
 			)
 			VALUES
 			(
@@ -439,7 +441,7 @@ BEGIN
 				,s.liveindicator,s.betteam,s.creator,s.refno,s.comstatus,s.winlostdate,s.betfrom,s.betcheck,s.checktime,s.oddsspread,s.actualrate,s.matchid
 				,s.recommend,s.mrecommend,s.ruben,s.betid,s.statuswinlost,s.modds,s.bettype,s.betdaqid,s.actual_stake,s.currency,s.ip,s.transdesc
 				,s.sdiscount,s.scomm,s.spositiontaking,s.swinlost,s.srecommend,s.Username,s.CurrencyName,s.virtualrate,s.oddstype,s.statusID,s.currency2
-				,s.balance,s.SecAcceptFlag,s.epositiontaking,s.transid2,s.combo,s.odds2,s.TotalBet
+				,s.balance,s.SecAcceptFlag,s.epositiontaking,s.transid2,s.combo,s.odds2,s.TotalBet,s.ExtraInfo
 			);
 
 		DROP TABLE #rmBettrans

@@ -13,6 +13,7 @@ AS
 	Revisions:
 		- 20200512@Percy: Initialize SP [RedmineID: #130275]
 		- 20201214@Danny: Separate Data of Virtual Soccer & Virtual Basketball [RedmineID: #145926]
+		- 20231020@Cherry: Parlay Generator (#195498)
 */
 
 BEGIN
@@ -40,7 +41,7 @@ BEGIN
 			,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
 			,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 			,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-			,balance,SecAcceptFlag,transid2,combo,odds2,TotalBet,epositiontaking
+			,balance,SecAcceptFlag,transid2,combo,odds2,TotalBet,epositiontaking,ExtraInfo
 		)
 		SELECT
 			transid,custid,transdate,oddsid,hdp1,hdp2,odds,stake,status,winlost,awinlost,mwinlost,playercomm,comm,acomm
@@ -48,7 +49,7 @@ BEGIN
 			,liveindicator,betteam,creator,refno,comstatus,winlostdate,betfrom,betcheck,checktime,oddsspread,actualrate,matchid
 			,recommend,mrecommend,ruben,betid,statuswinlost,modds,bettype,betdaqid,actual_stake,currency,ip,transdesc
 			,sdiscount,scomm,spositiontaking,swinlost,srecommend,Username,CurrencyName,virtualrate,oddstype,statusID,currency2
-			,balance,SecAcceptFlag,transid2,combo,odds2,TotalBet,epositiontaking
+			,balance,SecAcceptFlag,transid2,combo,odds2,TotalBet,epositiontaking,ExtraInfo
 		FROM dbo.rmBettrans r WITH (NOLOCK)
 		WHERE EXISTS (SELECT 1 FROM #TransId t WHERE r.transid = t.transid)
 	END TRY
