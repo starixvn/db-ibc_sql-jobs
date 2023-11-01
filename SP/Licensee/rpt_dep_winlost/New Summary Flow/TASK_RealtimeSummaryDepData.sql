@@ -116,7 +116,7 @@ BEGIN
 	SELECT @MoveBetsDay = MoveBetsDay FROM @MBBU
 
 	IF NOT EXISTS (SELECT TOP(1) 1 FROM dbo.bettrans WITH (NOLOCK)
-					WHERE winlostdate = @Winlostdate AND bettype <> 18000)
+					WHERE winlostdate = @Winlostdate)
 		OR @WinlostDate > @CurrentDate
 	BEGIN
 		PRINT 'EXEC TASK_RealtimeSummaryDepData: There is no data in bettrans to summarize or input @Winlostdate is greater than current day ==> RETURN'
@@ -247,39 +247,45 @@ BEGIN
 		UNIQUE CLUSTERED (CustID, BonusType)
 	)
 
+	CREATE TABLE #transid (transid BIGINT PRIMARY KEY)
+	CREATE TABLE #RefNo (RefNo BIGINT PRIMARY KEY)
+
 	DECLARE @recommend TABLE (recommend INT PRIMARY KEY)
-
-	CREATE TABLE #bettransRnG (transid BIGINT PRIMARY KEY, RefNo BIGINT)
-	CREATE TABLE #bettransLC (RefNo BIGINT)
-
 	--Get agent list in deposit system
 	INSERT INTO @recommend (recommend)
 	SELECT c.custid
 	FROM dbo.Customer c WITH(NOLOCK)
 		INNER JOIN dbo.Dep_CustSuper cs WITH(NOLOCK) ON c.srecommend = cs.custid
 	WHERE c.roleid = 2
-
+	
 	BEGIN TRY
 		--3.Prepare staging data for table rptDepWinlost_Trans
 		--Insert Details for rptDepWinlost/rptDepWinlostByProduct/rptDepWinlostTransfer3rdOthers
 		IF @Winlostdate < @CurrentDate
 		BEGIN
+
 			--Filter tickets in bettransRnG
-			INSERT INTO #bettransRnG(transid, RefNo)
-			SELECT b.transid, b.RefNo
+			INSERT INTO #transid(transid)
+			SELECT b.transid
 			FROM dbo.bettransRnG b WITH(NOLOCK)
 				JOIN (SELECT TOP(@i) recommend FROM @recommend) r ON b.recommend = r.recommend
 			WHERE b.winlostdate = @Winlostdate
 			OPTION(OPTIMIZE FOR (@i = 1)) --Make it use nested loops
 			
-			--Filter tickets in bettransLC
-			INSERT INTO #bettransLC(RefNo)
-			SELECT DISTINCT b.RefNo
+			--Get refno of ticket from bettransLC,bettransRnG to compute raw data
+			INSERT INTO #RefNo(RefNo)
+			SELECT b.RefNo
 			FROM dbo.bettransLC b WITH(NOLOCK)
-				JOIN (SELECT TOP(@i) recommend FROM @recommend) r ON b.recommend = r.recommend
+				INNER JOIN (SELECT TOP(@i) recommend FROM @recommend) r ON b.recommend = r.recommend
 			WHERE b.winlostdate = @Winlostdate
-			OPTION(OPTIMIZE FOR (@i = 1))
-
+			GROUP BY b.RefNo
+			UNION ALL
+			SELECT b.RefNo
+			FROM dbo.bettransRnG b WITH(NOLOCK)
+				INNER JOIN #transid r ON b.transid = r.transid
+			GROUP BY b.RefNo
+			OPTION(OPTIMIZE FOR (@i = 1)) --Make it use nested loops
+			
 			---get data from table transfer
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 				, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion)
@@ -304,17 +310,14 @@ BEGIN
 				SUM(CASE WHEN t.bettype = 22201 THEN t.winlost - t.actual_stake ELSE 0 END), -- AdjBonusWallet
 				0 -- Promotion
 			FROM dbo.Transfer t WITH (NOLOCK)
-			WHERE t.winlostdate = @Winlostdate
+				INNER JOIN dbo.custInfo c WITH (NOLOCK) ON t.CustID = c.custid AND c.roleid = 1
+				INNER JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
+			WHERE t.winlostdate = @WinLostDate
 				AND t.Bettype > 20000
 			GROUP BY t.custid, t.bettype
 			
-			DELETE r
-			FROM #rptDepWinlostDetails r
-				LEFT JOIN dbo.custInfo c WITH (NOLOCK) ON r.CustID = c.custid AND c.roleid = 1
-				LEFT JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
-			WHERE s.custid IS NULL
-			 
 			---get data from table bettrans
+			--Tickets from bettransLC, bettransRNG will not be counted from the bettrans table, They will be counted directly on bettransLC and bettransRNG in the next steps
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 				, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion, RawTurnover,RawDrawGame)
 			SELECT b.custid,
@@ -358,13 +361,12 @@ BEGIN
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END), -- Promotion
-				SUM(CASE WHEN b.StatusID NOT IN (101, 102, 103) AND t.RefNo IS NULL AND t1.RefNo IS NULL THEN b.stake ELSE 0 END),--RawTurnover
-				SUM(CASE WHEN b.statusID = 111 AND t.RefNo IS NULL  AND t1.RefNo IS NULL THEN b.stake ELSE 0 END)--RawDrawGame
+				SUM(CASE WHEN b.StatusID NOT IN (101, 102, 103) AND r.RefNo IS NULL THEN b.stake ELSE 0 END),--RawTurnover
+				SUM(CASE WHEN b.statusID = 111 AND r.RefNo IS NULL THEN b.stake ELSE 0 END)--RawDrawGame
 			FROM dbo.bettrans b WITH (NOLOCK)
 				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
 				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
-				LEFT JOIN (SELECT DISTINCT RefNo FROM #bettransRnG) t ON t.RefNo = b.TransId
-				LEFT JOIN (SELECT RefNo FROM #bettransLC l) t1 ON t1.RefNo = b.TransId
+				LEFT JOIN #RefNo r ON r.RefNo = b.TransId
 			WHERE b.winlostdate = @Winlostdate
 				AND b.matchid >= 0
 				AND c.roleid = 1
@@ -377,9 +379,9 @@ BEGIN
 					ELSE b.bettype
 				END
 			OPTION (RECOMPILE, MAXDOP 8)
-
+			
 			---end
-		 
+		 	-- Get data TurnOver,Running, and raw data from translog,bettransLC,bettransRnG
 			INSERT INTO #rptDepWinlostOutstanding (
 				CustID,
 				SportType,
@@ -418,7 +420,7 @@ BEGIN
 					,SUM(CASE WHEN g.statusID = 111 THEN g.stake ELSE 0 END) AS RawDrawGame
 					,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) THEN 1 ELSE 0 END) AS BetCount
 				FROM dbo.bettransRnG g WITH (ROWLOCK)
-					INNER JOIN (SELECT TOP(@i) transid FROM #bettransRnG) t ON g.transid = t.transid
+					INNER JOIN (SELECT TOP(@i) transid FROM #transid) t ON g.transid = t.transid
 				GROUP BY g.custid, g.productID
 				UNION ALL -- AG Casino, Allbet
 				SELECT l.custid
@@ -435,29 +437,27 @@ BEGIN
 			) t
 			GROUP BY t.custid, t.SportType
 			OPTION(RECOMPILE, OPTIMIZE FOR (@i = 1))
-			 
+
 		END
 		ELSE --@Winlostdate = @CurrentDate
 		BEGIN
-			--Filter tickets in bettransRnG
-			INSERT INTO #bettransRnG(transid, RefNo)
-			SELECT b.transid, b.RefNo
-			FROM dbo.bettransRnG b WITH(NOLOCK)
-				JOIN (SELECT TOP(@i) recommend FROM @recommend) r ON b.recommend = r.recommend
+			
+			INSERT INTO #RefNo(RefNo)
+			SELECT b.RefNo
+			FROM dbo.bettransLC b WITH(NOLOCK)
+				INNER JOIN (SELECT TOP(@i) recommend FROM @recommend) r ON b.recommend = r.recommend
 			WHERE b.winlostdate >= @Winlostdate
+			GROUP BY b.RefNo
+			UNION ALL
+			SELECT b.RefNo
+			FROM dbo.bettransRnG b WITH(NOLOCK)
+				INNER JOIN (SELECT TOP(@i) recommend FROM @recommend) r ON b.recommend = r.recommend
+			WHERE b.winlostdate >= @WinLostDate
+			GROUP BY b.RefNo
 			OPTION(OPTIMIZE FOR (@i = 1)) --Make it use nested loops
 
-			--Filter tickets in bettransLC
-			INSERT INTO #bettransLC(RefNo)
-			SELECT DISTINCT b.RefNo
-			FROM dbo.bettransLC b WITH(NOLOCK)
-				JOIN (SELECT TOP(@i) recommend FROM @recommend) r ON b.recommend = r.recommend
-			WHERE b.winlostdate = @Winlostdate
-			OPTION(OPTIMIZE FOR (@i = 1))
-
 			---get data from table transfer
-			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
-												, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion)
+			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion)
 			SELECT t.custid,
 				t.bettype,
 				SUM(CASE WHEN t.winlostdate = @Winlostdate AND t.bettype = 22001 THEN t.winlost - t.actual_stake ELSE 0 END), --Deposit
@@ -479,15 +479,11 @@ BEGIN
 				SUM(CASE WHEN t.winlostdate = @Winlostdate AND t.bettype = 22201 THEN t.winlost - t.actual_stake ELSE 0 END), -- AdjBonusWallet
 				0 -- Promotion
 			FROM dbo.Transfer t WITH (NOLOCK)
-			WHERE t.winlostdate >= @Winlostdate
+				INNER JOIN dbo.custInfo c WITH (NOLOCK) ON t.CustID = c.custid AND c.roleid = 1
+				INNER JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
+			WHERE t.winlostdate >= @WinLostDate
 				AND t.Bettype > 20000
 			GROUP BY t.custid, t.bettype
-
-			DELETE r
-			FROM #rptDepWinlostDetails r
-				LEFT JOIN dbo.custInfo c WITH (NOLOCK) ON r.CustID = c.custid AND c.roleid = 1
-				LEFT JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
-			WHERE s.custid IS NULL
 
 			INSERT INTO #rptDepWinlostDetails (CustID, BetType, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver, OutStanding, Winloss, Transfer3rd
 				, DrawGame, playercomm, Comm_BetTrade, Comm_BetTrade_Full, WLBoughtTicket_BetTrade, BetCount, BonusWallet, AdjBonusWallet, Promotion, RawTurnover,RawDrawGame)
@@ -533,13 +529,12 @@ BEGIN
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END), -- Promotion
-				SUM(CASE WHEN  b.winlostdate = @Winlostdate AND  b.StatusID NOT IN (101, 102, 103) AND t.RefNo IS NULL AND t1.RefNo IS NULL THEN b.stake ELSE 0 END),--RawTurnover
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.statusID = 111 AND t.RefNo IS NULL AND t1.RefNo IS NULL THEN b.stake ELSE 0 END)--RawDrawGame
+				SUM(CASE WHEN  b.winlostdate = @Winlostdate AND  b.StatusID NOT IN (101, 102, 103) AND r.RefNo IS NULL THEN b.stake ELSE 0 END),--RawTurnover
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.statusID = 111 AND r.RefNo IS NULL THEN b.stake ELSE 0 END)--RawDrawGame
 			FROM dbo.bettrans AS b WITH (NOLOCK)
 				INNER JOIN dbo.Dep_CustSuper AS d WITH (NOLOCK) ON b.srecommend = d.custid
 				INNER JOIN dbo.CustInfo AS c WITH (NOLOCK) ON b.custid = c.custid
-				LEFT JOIN (SELECT DISTINCT RefNo FROM #bettransRnG) t ON t.RefNo = b.TransId
-				LEFT JOIN (SELECT RefNo FROM #bettransLC l) t1 ON t1.RefNo = b.TransId
+ 				LEFT JOIN #RefNo r ON r.RefNo = b.TransId
 			WHERE b.winlostdate >= @Winlostdate
 				AND b.matchid >= 0
 				AND c.roleid = 1
@@ -592,7 +587,7 @@ BEGIN
 					,SUM(CASE WHEN g.statusID = 111 THEN g.stake ELSE 0 END) AS RawDrawGame
 					,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) THEN 1 ELSE 0 END) AS BetCount
 				FROM dbo.bettransRnG g WITH (ROWLOCK)
-					INNER JOIN (SELECT TOP(@i) transid FROM #bettransRnG) t ON g.transid = t.transid
+					INNER JOIN (SELECT TOP(@i) transid FROM #transid) t ON g.transid = t.transid
 				GROUP BY g.custid, g.productID
 				UNION ALL -- AG Casino, Allbet
 				SELECT l.custid
@@ -610,6 +605,8 @@ BEGIN
 			GROUP BY t.custid, t.SportType
 			OPTION(RECOMPILE, OPTIMIZE FOR (@i = 1))
 		END
+		
+		-------------------------------------------------------------------------
 
 		--Update Transfer3rdOthers attributes
 		UPDATE #rptDepWinlostDetails
@@ -668,7 +665,7 @@ BEGIN
 			SUM(Outstanding),--Outstanding
 			SUM(Winloss),--Winloss
 			SUM(Transfer3rd),--Transfer3rd
-			SUM(DrawGame),--
+			SUM(DrawGame),--DrawGame
 			SUM(Playercomm),--Playercomm
 			SUM(Transfer3rdOthers),--Transfer3rdOthers
 			SUM(Comm_BetTrade),--Comm_BetTrade
@@ -751,7 +748,8 @@ BEGIN
 			AND BetCount = 0
 			AND RawTurnover = 0
 			AND RawDrawGame = 0
-		--Start update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
+
+		--Start update TurnOver and Outstanding, RawDrawGame, RawTurnover
 		MERGE #rptDepWinlost AS TARGET
 		USING (SELECT CustID, SUM(TurnOver), SUM(OutStanding), SUM(RawTurnover), SUM(RawDrawGame) FROM #rptDepWinlostOutstanding GROUP BY CustID)
 			AS SOURCE (CustID, TurnOver, OutStanding, RawTurnover, RawDrawGame)
@@ -764,9 +762,10 @@ BEGIN
 		WHEN NOT MATCHED THEN
 			INSERT (CustID, TurnOver, OutStanding, RawTurnover, RawDrawGame)
 			VALUES (SOURCE.CustID, SOURCE.TurnOver, SOURCE.OutStanding, SOURCE.RawTurnover, SOURCE.RawDrawGame);
-		--End update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
+		--End update TurnOver and Outstanding, RawDrawGame, RawTurnover
 
 		/*--END PREPARE DATA FOR rptDepWinlost--*/
+
 		/*--PREPARE DATA FOR rptDepWinlostByProduct--*/
 		INSERT INTO #rptDepWinlostByProduct (
 			CustID,
@@ -936,7 +935,7 @@ BEGIN
 				ELSE 0
 			END
 
-		--Start update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
+		--Start update TurnOver and Outstanding, RawDrawGame, RawTurnover
 		MERGE #rptDepWinlostByProduct AS TARGET
 		USING (SELECT CustID, SportType, TurnOver, OutStanding, RawTurnover, RawDrawGame, BetCount FROM #rptDepWinlostOutstanding)
 			AS SOURCE (CustID, SportType, TurnOver, OutStanding, RawTurnover, RawDrawGame, BetCount)
@@ -950,8 +949,8 @@ BEGIN
 		WHEN NOT MATCHED THEN
 			INSERT (CustID, SportType, TurnOver, OutStanding, RawTurnover, RawDrawGame, BetCount)
 			VALUES (SOURCE.CustID, SOURCE.SportType, SOURCE.TurnOver, SOURCE.OutStanding, SOURCE.RawTurnover, SOURCE.RawDrawGame, SOURCE.BetCount);
-
-		--End update TurnOver and Outstanding for Keno, MicroGamingRNG, OneRNG, VoidBridge, AGCasino
+			
+		--End update TurnOver and Outstanding, RawDrawGame, RawTurnover
 		/*--END PREPARE DATA FOR rptDepWinlostByProduct--*/
 
 		/*--PREPARE DATA FOR rptDepWinlostTransfer3rdOthers--*/
@@ -1075,7 +1074,8 @@ BEGIN
 		SELECT @Winlostdate, CustID, -1, PartnerID, TransferAmount, TransferIn, TransferOut
 		FROM #rptDepWinlostTransfer3rdOthers
 		
-		--For rptDepWinlost, rptDepWinlostByProduct, rptDepWinlost_Transfer3rdOthers
+		--4. Insert data For rptDepWinlost, rptDepWinlostByProduct, rptDepWinlost_Transfer3rdOthers
+
 		MERGE bodb_Report.dbo.rptDepWinlost_Trans AS TARGET
 		USING #rptDepWinlost_Trans AS SOURCE
 		ON TARGET.Winlostdate = SOURCE.Winlostdate AND TARGET.CustID = SOURCE.CustID AND TARGET.SportType = SOURCE.SportType AND TARGET.PartnerID = SOURCE.PartnerID 
@@ -1215,8 +1215,8 @@ BEGIN
 	DROP TABLE #rptDepWinlostTransfer3rdOthers
 	DROP TABLE #rptDepWinlostOutstanding
 	DROP TABLE #rptDepWinlostBonusWallet
-	DROP TABLE #bettransRnG
-	DROP TABLE #bettransLC
+	DROP TABLE #RefNo
+	DROP TABLE #transid
 	DROP TABLE #rptDepWinlost_Trans
 END 
 GO

@@ -113,7 +113,7 @@ BEGIN
 	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDate = BalanceUpDay FROM @MBBU
 
 	IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans14 WITH (NOLOCK)
-					WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype <> 18000)
+					WHERE winlostdate = @Winlostdate)
 		OR @WinlostDate > @MoveBetsDay
 	BEGIN
 		PRINT 'EXEC TASK_RealtimeSummaryDepData_Bettrans14: There is no data in bettrans14 to summarize or input @Winlostdate is greater than MoveBet day ==> RETURN'
@@ -230,18 +230,14 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
 			SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END) -- AdjBonusWallet
 		FROM dbo.Transfer b WITH (NOLOCK)
+			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON b.CustID = c.custid AND c.roleid = 1
+			INNER JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
 		WHERE b.winlostdate = @Winlostdate
 			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @MoveBetsDay THEN 0 --> new sum
 		            WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
 		            WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
 		            ELSE 1 END
 		GROUP BY b.custid, b.bettype
-
-		DELETE r
-		FROM #rptDepWinlostDetails r
-			LEFT JOIN dbo.custInfo c WITH (NOLOCK) ON r.CustID = c.custid AND c.roleid = 1
-			LEFT JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
-		WHERE s.custid IS NULL
 
 		INSERT INTO #DepCustID (CustID)
 		SELECT CustID
@@ -273,7 +269,7 @@ BEGIN
 			) AS t
 		WHERE #rptDepWinlostDetails.CustID = t.custid AND #rptDepWinlostDetails.Bettype = t.bettype
 
-		--Filter tickets in bettransRnG
+		--Get refno and RawTurnover, RawDrawGame ticket from bettransLC,bettransRnG
 		INSERT INTO #BettransLC_RNG (RefNo, RawTurnover, RawDrawGame)
 		SELECT b.RefNo,
 		SUM(CASE WHEN b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),
@@ -282,9 +278,7 @@ BEGIN
 			INNER JOIN #DepCustID d ON b.custid = d.CustID
 		WHERE b.winlostdate = @Winlostdate
 		GROUP BY b.RefNo
-
-		--Filter tickets in bettransLC
-		INSERT INTO #BettransLC_RNG (RefNo, RawTurnover, RawDrawGame)
+		UNION ALL
 		SELECT b.RefNo,
 		SUM(CASE WHEN b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),
 		SUM(CASE WHEN b.StatusID = 111 THEN b.stake ELSE 0 END)
@@ -295,6 +289,7 @@ BEGIN
 
 		/*--Force seek predicate on custid for bettrans14 part
 		DECLARE @n INT = 2147483647
+		  --Tickets from bettransLC, bettransRNG will be counted directly on bettransLC and bettransRNG via #BettransLC_RNG
 		*/
 		INSERT INTO #rptDepWinlostDetails (
 			CustID,
