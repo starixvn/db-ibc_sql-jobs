@@ -15,6 +15,7 @@ AS
 	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	- 2020203@Patrick: Add more rule check running parlay tickets [RedmineId: #127651]
 	- 20230531@July: Remove unnecessary rules [Redmine: #186736]
+	- 20231106@Patrick: Ignore custid = 0 [Redmine: #196519]
 
  */
 BEGIN
@@ -117,6 +118,7 @@ BEGIN
 					)
 				AND bettype <= 19000
 				AND winlostdate = @winlostdate
+				AND custid <> 0
 			)
 	BEGIN
 		RAISERROR ('FAILED: Incorrect Company SuperAgent setting', 16, 1)
