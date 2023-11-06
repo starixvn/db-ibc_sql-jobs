@@ -79,8 +79,9 @@ AS
 		- 20230227@Evan: Ensure correct balance calculation when allow to transfer 247 (BU) [Redmine: #173554]
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 		- 20230626@Evan: Integrate MG-RNG (Normal+Promotion Game) [RedmineID: #189988]
-		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #189988]
+		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
+		- 20231026@Evan: Support 12bet team get TO without Void/reject/refund [RedmineID: #195784]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -113,7 +114,7 @@ BEGIN
 	SELECT @MoveBetsDay = MoveBetsDay, @BalanceUpDate = BalanceUpDay FROM @MBBU
 
 	IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.bettrans14 WITH (NOLOCK)
-					WHERE winlostdate = @Winlostdate AND bettype < 19999 AND bettype <> 18000)
+					WHERE winlostdate = @Winlostdate)
 		OR @WinlostDate > @MoveBetsDay
 	BEGIN
 		PRINT 'EXEC TASK_RealtimeSummaryDepData_Bettrans14: There is no data in bettrans14 to summarize or input @Winlostdate is greater than MoveBet day ==> RETURN'
@@ -159,6 +160,9 @@ BEGIN
 	INSERT INTO @BonusList (BonusType, BonusBettype, AdjustmentBettype)
 	VALUES( 1, 22200, 22201) -- Bonus Wallet
 
+	--Ticket from bettransxx sum to bettrans already included refund/void/reject (Value Turnover, DrawGame)
+	--Value of RawTurnover, RawDrawGame will exclude ticket refund/void/reject from bettransxx
+	
 	CREATE TABLE #rptDepWinlostDetails (CustID INT, PartnerID INT DEFAULT(-1), Bettype INT, Deposit MONEY DEFAULT(0), Withdrawal MONEY DEFAULT(0)
 		, Aff2MemTransfer MONEY DEFAULT(0), Bonus MONEY DEFAULT(0), Adjustment MONEY DEFAULT(0), TurnOver MONEY DEFAULT(0), OutStanding MONEY DEFAULT(0)
 		, Winloss MONEY DEFAULT(0), Transfer3rd MONEY DEFAULT(0), DrawGame MONEY DEFAULT(0), Turnover_BA MONEY DEFAULT(0), Comm_BA MONEY DEFAULT(0)
@@ -166,6 +170,7 @@ BEGIN
 		, Transfer3rdOthers_Out MONEY DEFAULT(0), Comm_BetTrade MONEY DEFAULT(0), Comm_BetTrade_Full MONEY DEFAULT(0)
 		, WLBoughtTicket_BetTrade MONEY DEFAULT(0), AmountDueTo_BetTrade MONEY DEFAULT(0), BetCount INT DEFAULT(0)
 		, BonusWallet MONEY DEFAULT(0), AdjBonusWallet MONEY DEFAULT(0), Promotion MONEY DEFAULT(0)
+		, RawTurnover MONEY DEFAULT(0), RawDrawGame MONEY DEFAULT(0)
 		UNIQUE CLUSTERED (CustID, PartnerID, Bettype)
 	)
 
@@ -174,7 +179,17 @@ BEGIN
 		, DrawGame MONEY DEFAULT(0), Turnover_BA MONEY DEFAULT(0), Comm_BA MONEY DEFAULT(0), AmountDueTo_BA MONEY DEFAULT(0), playercomm MONEY DEFAULT(0)
 		, Transfer3rdOthers MONEY DEFAULT(0), Comm_BetTrade MONEY DEFAULT(0), WLBoughtTicket_BetTrade MONEY DEFAULT(0), AmountDueTo_BetTrade MONEY DEFAULT(0)
 		, BonusWallet MONEY DEFAULT(0), AdjBonusWallet MONEY DEFAULT(0), Promotion MONEY DEFAULT(0)
+		, RawTurnover MONEY DEFAULT(0), RawDrawGame MONEY DEFAULT(0)
 		UNIQUE CLUSTERED (CustID)
+	)
+
+	--Get data from bettransxx, update RawTurnover, RawDrawGame ( ticket exclude Refund/Void/Reject from bettransLC,bettransRnG )
+	CREATE TABLE #rptDepWinlostRaw (
+		CustID INT,
+		SportType SMALLINT DEFAULT(-1),
+		RawTurnover MONEY DEFAULT(0),
+		RawDrawGame MONEY DEFAULT(0)
+		UNIQUE CLUSTERED (CustID, SportType)
 	)
 
 	CREATE TABLE #BATrans(TransID BIGINT UNIQUE CLUSTERED (TransID))
@@ -224,18 +239,14 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
 			SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END) -- AdjBonusWallet
 		FROM dbo.Transfer b WITH (NOLOCK)
+			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON b.CustID = c.custid AND c.roleid = 1
+			INNER JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
 		WHERE b.winlostdate = @Winlostdate
 			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @MoveBetsDay THEN 0 --> new sum
 		            WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
 		            WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
 		            ELSE 1 END
 		GROUP BY b.custid, b.bettype
-
-		DELETE r
-		FROM #rptDepWinlostDetails r
-			LEFT JOIN dbo.custInfo c WITH (NOLOCK) ON r.CustID = c.custid AND c.roleid = 1
-			LEFT JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
-		WHERE s.custid IS NULL
 
 		INSERT INTO #DepCustID (CustID)
 		SELECT CustID
@@ -281,7 +292,9 @@ BEGIN
 			Comm_BetTrade,
 			WLBoughtTicket_BetTrade,
 			BetCount,
-			Promotion)
+			Promotion,
+			RawTurnover,
+			RawDrawGame)
 		SELECT
 			b.custid,
 			CASE
@@ -357,7 +370,7 @@ BEGIN
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 			SUM(CASE
 					WHEN b.ruben = 1
-						AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
+						AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 3150)
 						AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 						AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 						AND (b.bettype NOT BETWEEN 17000 AND 17030)
@@ -369,16 +382,18 @@ BEGIN
 			SUM(CASE WHEN b.ruben = 1 THEN b.playercomm ELSE 0 END),--Playercomm
 			SUM(CASE WHEN b.bettype = 903 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.awinlost ELSE 0 END),--Comm_BetTrade
 			SUM(CASE WHEN b.bettype = 902 AND b.ruben = 1 AND b.statusID NOT IN (101, 102, 103) THEN b.winlost - b.actual_stake ELSE 0 END),--WLBoughtTicket_BetTrade
-			SUM(CASE WHEN b.bettype < 19999 AND b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
+			SUM(CASE WHEN b.StatusID NOT IN (101, 102, 103) THEN 1 ELSE 0 END), --BetCount
 			SUM(CASE
-					WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
+					WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 3150)
 						OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 						OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 						OR (b.bettype BETWEEN 17000 AND 17030)
 						OR (b.bettype BETWEEN 8700 AND 8709)
 						THEN b.winlost - b.actual_stake
 					ELSE 0
-				END) -- Promotion
+				END), -- Promotion
+			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END), -- RawTurnover
+			SUM(CASE WHEN b.statusID = 111 THEN b.stake ELSE 0 END)  -- RawDrawGame
 		FROM dbo.bettrans14 b WITH (NOLOCK)
 			INNER JOIN #DepCustID d on b.custid = d.CustID
 		/*
@@ -389,7 +404,6 @@ BEGIN
 			OPTION(OPTIMIZE FOR (@n = 1)) --Trick SQL optimizer to use nested loop
 		*/
 		WHERE b.winlostdate = @WinLostDate
-			AND b.bettype < 19999
 			AND b.bettype <> 999
 		GROUP BY
 			b.custid,
@@ -465,6 +479,80 @@ BEGIN
 			END--SportType
 		OPTION (RECOMPILE, MAXDOP 8)
 
+
+		--get Turnover, DrawGame exclude Refund/Void/Reject from bettransLC14,bettransRnG14
+		INSERT INTO #rptDepWinlostRaw (
+				CustID,
+				SportType,
+				RawTurnover,
+				RawDrawGame)
+			SELECT
+				t.custid,
+				t.SportType,
+				SUM(t.RawTurnover),
+				SUM(t.RawDrawGame)
+			FROM (
+				SELECT g.custid
+					,CASE 
+						WHEN g.gameID = 8695 THEN -155
+						WHEN g.gameID = 1906 THEN -165
+						WHEN g.gameID BETWEEN 1698 AND 1699 AND g.productID = 200 THEN -200
+						WHEN g.gameID BETWEEN 3898 AND 3899  AND g.productID = 171 THEN -171
+						WHEN g.gameID BETWEEN 4598 AND 4600 THEN -247
+						WHEN g.gameID BETWEEN 4297 AND 4300 THEN -248
+					ELSE g.productID END AS SportType
+					,SUM(CASE WHEN g.statusID IN (111, 112, 113) THEN g.stake ELSE 0 END) AS RawTurnover -- exclude  /103:Refund/102:Void/101:Reject
+					,SUM(CASE WHEN g.statusID = 111 THEN g.stake ELSE 0 END) AS RawDrawGame
+				FROM dbo.bettransRnG14 g WITH (NOLOCK)
+					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = g.srecommend
+				WHERE g.winlostdate = @Winlostdate
+				GROUP BY g.custid, 
+					CASE 
+						WHEN g.gameID = 8695 THEN -155
+						WHEN g.gameID = 1906 THEN -165
+						WHEN g.gameID BETWEEN 1698 AND 1699 AND g.productID = 200 THEN -200
+						WHEN g.gameID BETWEEN 3898 AND 3899  AND g.productID = 171 THEN -171
+						WHEN g.gameID BETWEEN 4598 AND 4600 THEN -247
+						WHEN g.gameID BETWEEN 4297 AND 4300 THEN -248
+					ELSE g.productID END
+				UNION ALL -- AG Casino, Allbet
+				SELECT l.custid
+					,CASE 
+						WHEN l.gameID = 2499 THEN -211
+						WHEN l.gameID = 3150 THEN -243
+						WHEN l.gameID = 3007 THEN -244
+					ELSE l.productID END AS SportType
+					,SUM(CASE WHEN l.statusID IN (111, 112, 113) THEN l.stake ELSE 0 END) AS RawTurnover -- exclude  /103:Refund/102:Void/101:Reject
+					,SUM(CASE WHEN l.statusID = 111 THEN l.stake ELSE 0 END) AS RawDrawGame
+				FROM dbo.bettransLC14 l WITH (NOLOCK)
+					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = l.srecommend
+				WHERE l.winlostdate = @Winlostdate
+				GROUP BY l.custid, 
+						CASE 
+							WHEN l.gameID = 2499 THEN -211
+							WHEN l.gameID = 3150 THEN -243
+							WHEN l.gameID = 3007 THEN -244
+						ELSE l.productID END
+			) t
+			GROUP BY t.custid, t.SportType
+
+		DELETE FROM #rptDepWinlostRaw
+		WHERE RawTurnover = 0
+			AND RawDrawGame = 0
+		
+		MERGE #rptDepWinlostDetails AS TARGET
+		USING (SELECT CustID, SportType, SUM(RawTurnover), SUM(RawDrawGame) 
+				FROM #rptDepWinlostRaw GROUP BY CustID, SportType)
+				AS SOURCE (CustID, SportType, RawTurnover, RawDrawGame)
+				ON (TARGET.CustID = SOURCE.CustID AND TARGET.Bettype = SOURCE.SportType)
+		WHEN MATCHED THEN
+			UPDATE SET  TARGET.RawTurnover = SOURCE.RawTurnover,
+						TARGET.RawDrawGame = SOURCE.RawDrawGame
+		WHEN NOT MATCHED THEN
+			INSERT (CustID, Bettype, RawTurnover, RawDrawGame)
+			VALUES (SOURCE.CustID, SOURCE.SportType, SOURCE.RawTurnover, SOURCE.RawDrawGame);
+
+			--------------
 		/*--PREPARE DATA FOR rptDepWinlost--*/
 		INSERT INTO #rptDepWinlost (
 			CustID,
@@ -484,7 +572,9 @@ BEGIN
 			WLBoughtTicket_BetTrade,
 			BonusWallet,
 			AdjBonusWallet,
-			Promotion)
+			Promotion,
+			RawTurnover,
+			RawDrawGame)
 		SELECT
 			custid,
 			SUM(Deposit), --Deposit
@@ -503,7 +593,9 @@ BEGIN
 			SUM(WLBoughtTicket_BetTrade),--WLBoughtTicket_BetTrade
 			SUM(BonusWallet), -- Bonus Wallet
 			SUM(AdjBonusWallet), -- Adjustment Bonus Wallet
-			SUM(Promotion) -- Promotion
+			SUM(Promotion), -- Promotion
+			SUM(RawTurnover), -- RawTurnover
+			SUM(RawDrawGame) -- RawDrawGame
 		FROM #rptDepWinlostDetails
 		WHERE Bettype NOT IN (-8, -9)
 		GROUP BY custid
@@ -567,6 +659,8 @@ BEGIN
 			AND BonusWallet = 0
 			AND AdjBonusWallet = 0
 			AND Promotion = 0
+			AND RawTurnover = 0
+			AND RawDrawGame = 0
 		/*--END PREPARE DATA FOR rptDepWinlost--*/
 
 		/*--PREPARE DATA FOR rptDepWinlostTransfer3rdOthers--*/
@@ -660,23 +754,25 @@ BEGIN
 			TransferAmount MONEY,
 			TransferIn MONEY,
 			TransferOut MONEY,
-			Promotion MONEY DEFAULT ((0))
+			Promotion MONEY DEFAULT ((0)),
+			RawTurnover MONEY DEFAULT ((0)),
+			RawDrawGame MONEY DEFAULT ((0))
 		)  
 		CREATE CLUSTERED INDEX CIX_rptDepWinlost_Trans ON #rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID)
 
 		INSERT INTO #rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover
 			, Outstanding, Winloss, Transfer3rd, DrawGame, Turnover_BA, Comm_BA, AmountDueTo_BA, playercomm, Transfer3rdOthers, Comm_BetTrade, Comm_BetTrade_Full
 			, AmountDueTo_BetTrade
-			, Promotion)
+			, Promotion,RawTurnover, RawDrawGame)
 		SELECT @Winlostdate, CustID, -1, -1, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, TurnOver
 		, OutStanding, Winloss, Transfer3rd, DrawGame, Turnover_BA, Comm_BA, AmountDueTo_BA, playercomm, Transfer3rdOthers, Comm_BetTrade, 0
 		, AmountDueTo_BetTrade
-		, Promotion
+		, Promotion, RawTurnover, RawDrawGame
 		FROM #rptDepWinlost
 
 		SELECT @NumberofCus = @@ROWCOUNT
 
-		INSERT INTO #rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, Turnover, DrawGame, Winloss, playercomm, BetCount, Outstanding)
+		INSERT INTO #rptDepWinlost_Trans(Winlostdate, CustID, SportType, PartnerID, Turnover, DrawGame, Winloss, playercomm, BetCount, Outstanding, RawTurnover, RawDrawGame)
 		SELECT
 			@Winlostdate,
 			CustID,
@@ -687,7 +783,9 @@ BEGIN
 			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211, 157, -155) THEN Promotion ELSE Winloss END AS Winloss,
 			playercomm,
 			BetCount,
-			OutStanding
+			OutStanding,
+			RawTurnover,
+			RawDrawGame
 		FROM #rptDepWinlostDetails
 		WHERE Bettype < 19999 --Only get SportType of bet ticket
 			AND PartnerID = -1
@@ -730,7 +828,9 @@ BEGIN
 				TARGET.BetCount <> SOURCE.BetCount OR
 				TARGET.TransferAmount <> SOURCE.TransferAmount OR
 				TARGET.TransferIn <> SOURCE.TransferIn OR
-				TARGET.TransferOut <> SOURCE.TransferOut ) 
+				TARGET.TransferOut <> SOURCE.TransferOut OR
+				ISNULL(TARGET.RawTurnover,0) <> SOURCE.RawTurnover OR
+				ISNULL(TARGET.RawDrawGame,0) <> SOURCE.RawDrawGame ) 
 		THEN
 		UPDATE SET 
 				TARGET.Deposit = SOURCE.Deposit,
@@ -755,19 +855,21 @@ BEGIN
 				TARGET.BetCount = SOURCE.BetCount,
 				TARGET.TransferAmount = SOURCE.TransferAmount,
 				TARGET.TransferIn = SOURCE.TransferIn,
-				TARGET.TransferOut = SOURCE.TransferOut
+				TARGET.TransferOut = SOURCE.TransferOut,
+				TARGET.RawDrawGame = SOURCE.RawDrawGame,
+				TARGET.RawTurnover = SOURCE.RawTurnover
 		WHEN NOT MATCHED BY TARGET THEN
 		INSERT
 		(
 			Winlostdate, CustID, SportType, PartnerID, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover
 			, Outstanding, Winloss, Transfer3rd, DrawGame, Turnover_BA, Comm_BA, AmountDueTo_BA, playercomm, Transfer3rdOthers, Comm_BetTrade, Comm_BetTrade_Full
 			, AmountDueTo_BetTrade, Promotion
-			, BetCount, TransferAmount, TransferIn, TransferOut
+			, BetCount, TransferAmount, TransferIn, TransferOut, RawTurnover, RawDrawGame
 		)
 		VALUES
 		(
 			SOURCE.Winlostdate, SOURCE.CustID, SOURCE.SportType, SOURCE.PartnerID, SOURCE.Deposit, SOURCE.Withdrawal, SOURCE.Aff2MemTransfer, SOURCE.Bonus, SOURCE.Adjustment, SOURCE.Turnover, SOURCE.Outstanding, SOURCE.Winloss, SOURCE.Transfer3rd, SOURCE.DrawGame, SOURCE.Turnover_BA, SOURCE.Comm_BA, SOURCE.AmountDueTo_BA, SOURCE.playercomm, SOURCE.Transfer3rdOthers, SOURCE.Comm_BetTrade, SOURCE.Comm_BetTrade_Full, SOURCE.AmountDueTo_BetTrade, SOURCE.Promotion, 
-			SOURCE.BetCount, SOURCE.TransferAmount, SOURCE.TransferIn, SOURCE.TransferOut
+			SOURCE.BetCount, SOURCE.TransferAmount, SOURCE.TransferIn, SOURCE.TransferOut, SOURCE.RawTurnover, SOURCE.RawDrawGame
 		);
 		
 		DELETE TARGET
@@ -838,5 +940,6 @@ BEGIN
 	DROP TABLE #BATrans
 	DROP TABLE #DepCustID
 	DROP TABLE #rptDepWinlost_Trans
+	DROP TABLE #rptDepWinlostRaw
 END
 GO

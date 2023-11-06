@@ -10,6 +10,7 @@ AS
   - 20130628@Don: Adding one column to rptDepWinlost_SUM (Transfer3rdOthers)
   - 20141120@Don: Adjustment to serve to change KeenOcean's currency RMB to HK$
   - 20191025@Bobby: Add column promotion [RedmineID: #120333]
+  - 20231026@Evan: Support 12bet team get TO without Void/reject/refund [RedmineID: #195784] 
                  
  Param's Explanation:  
  • @winlostdate: The date need to summary  
@@ -33,6 +34,8 @@ SET NOCOUNT ON
 		,playercomm
 		,BetCount
 		,Outstanding
+		,RawDrawGame
+		,RawTurnover
 	)
 	SELECT 
 		p.winlostdate
@@ -45,6 +48,8 @@ SET NOCOUNT ON
 		,sum(isnull(p.playercomm,0))-- as playercomm
 		,sum(isnull(p.BetCount,0))-- as betcount
 		,sum(isnull(p.Outstanding,0))-- as outstanding
+		,sum(isnull(p.RawDrawGame,0))-- as RawDrawGame
+		,sum(isnull(p.RawTurnover,0))-- as RawTurnover
 	FROM dbo.rptdepwinlost d with(nolock)
 		INNER JOIN (
 			SELECT
@@ -57,6 +62,8 @@ SET NOCOUNT ON
 				,sum(isnull(playercomm,0)) as playercomm
 				,sum(isnull(BetCount,0)) as betcount
 				,sum(isnull(Outstanding,0)) as outstanding
+				,sum(isnull(RawDrawGame,0)) as RawDrawGame
+				,sum(isnull(RawTurnover,0)) as RawTurnover
 			FROM dbo.rptdepwinlostbyproduct WITH(nolock)
 			WHERE winlostdate = @date
 			GROUP BY winlostdate, custid, sporttype
@@ -89,6 +96,8 @@ SET NOCOUNT ON
 		,playercomm
 		,Transfer3rdOthers
 		,Promotion
+		,RawDrawGame
+		,RawTurnover
 	)
 	SELECT
 		winlostdate
@@ -115,6 +124,8 @@ SET NOCOUNT ON
 		,SUM(ISNULL(playercomm,0))
 		,SUM(ISNULL(Transfer3rdOthers,0))
 		,SUM(ISNULL(Promotion,0))
+		,SUM(ISNULL(RawDrawGame,0))
+		,SUM(ISNULL(RawTurnover,0))
 	FROM dbo.rptdepwinlost WITH(nolock)
 	WHERE winlostdate = @date
 	GROUP BY winlostdate, recommend, currency, srecommend
