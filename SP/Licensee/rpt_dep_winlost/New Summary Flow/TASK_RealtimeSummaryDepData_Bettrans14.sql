@@ -80,6 +80,7 @@ AS
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 		- 20230626@Evan: Integrate MG-RNG (Normal+Promotion Game) [RedmineID: #189988]
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #189988]
+		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -350,6 +351,7 @@ BEGIN
 				WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 				WHEN (bettype BETWEEN 8400 AND 8699 AND bettype <> 8695) THEN 155 -- MG-RNG
 				WHEN bettype = 8695 THEN -155 -- MG-RNG Promotion Prize
+				WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
@@ -458,6 +460,7 @@ BEGIN
 				WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 				WHEN (bettype BETWEEN 8400 AND 8699 AND bettype <> 8695) THEN 155 -- MG-RNG
 				WHEN bettype = 8695 THEN -155 -- MG-RNG Promotion Prize
+				WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 				ELSE 0
 			END--SportType
 		OPTION (RECOMPILE, MAXDOP 8)

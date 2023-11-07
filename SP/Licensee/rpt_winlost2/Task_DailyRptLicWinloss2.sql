@@ -123,6 +123,7 @@ AS
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 		- 20230626@Evan: Integrate MG-RNG (Normal+Promotion Game) [RedmineID: #189988]
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
+		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -261,6 +262,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 			WHEN b.bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 			WHEN b.bettype BETWEEN 8400 AND 8699 THEN 155 -- MG-RNG
+			WHEN b.bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -391,6 +393,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 			WHEN b.bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 			WHEN b.bettype BETWEEN 8400 AND 8699 THEN 155 -- MG-RNG
+			WHEN b.bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 			ELSE 0
 		END
 		,CASE
