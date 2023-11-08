@@ -10,6 +10,7 @@ Revisions:
 	- 20220907@Victoria: Rule #50 - Check ticket count of 19999/20000 with group by SiteDBGroupID, winlostdate [Redmine:#175881]
 	- 20230915@July: Detect data consistency SiteDB and DBTP - Enhancement for rules #50 [Redmine:#194038]
 	- 20231109@July: Data consistency - Add config DBAGE & DBACC [Redmine:#196690]
+	- 20231114@July: Data Consistency - Update Rule #50 - Check data details [Redmine:#196572]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -30,6 +31,9 @@ BEGIN
 		END
 
 		SELECT  s.SiteDBGroupID, b.winlostdate AS WinlostDate, COUNT(1) AS TotalCount
+			    ,CHECKSUM_AGG(CHECKSUM(b.custid, b.winlostdate, b.stake, b.actual_stake
+									 , b.Winlost, b.aWinlost, b.mWinlost, b.sWinlost
+									 , b.playerComm, b.Comm, b.aComm, b.sComm )) AS TotalCheckSumAgg
 		FROM	bodb02.dbo.Transfer b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.CustId
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON s.site = c.site
@@ -45,6 +49,9 @@ BEGIN
 		EXEC bodb02.dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @BalanceUpDate OUTPUT
 
 		SELECT  s.SiteDBGroupID, b.winlostdate AS WinlostDate, COUNT(1) AS TotalCount
+			    ,CHECKSUM_AGG(CHECKSUM(b.custid, b.winlostdate, b.stake, b.actual_stake
+									 , b.Winlost, b.aWinlost, b.mWinlost, b.sWinlost
+									 , b.playerComm, b.Comm, b.aComm, b.sComm )) AS TotalCheckSumAgg
 		FROM	bodb02.dbo.Transfer b WITH (NOLOCK) 
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.custid = b.CustId
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON s.site = c.site
