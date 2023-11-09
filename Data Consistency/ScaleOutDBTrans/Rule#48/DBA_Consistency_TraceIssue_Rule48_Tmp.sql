@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency, DBSIG-bodb02, DBAGE-bodb02, DBACC-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_TraceIssue_Rule48_Tmp]
 (
 	@Recommend INT,
@@ -9,10 +9,11 @@ AS
 /*
 Created by: 20221028@Victoria
 Task: Data Consistency - Trace issue unmatch number of tickets between DBTP and SiteDB with rule #48
-DB: DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02
+DB: DBCONSISTENCY-bodb_Consistency, DBSIG-bodb02, DBAGE-bodb02, DBACC-bodb02
 Revisions:
 	- 20221028@Victoria: Initial Writing [Redmine:#178864]
 	- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
+	- 20231109@July: Data consistency - Add config DBAGE & DBACC [Redmine:#196690]
 */
 BEGIN
 	SET NOCOUNT ON
