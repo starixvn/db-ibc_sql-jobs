@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency, DBAGE-bodb02, DBACC-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_CheckSumTicket]
 (
 	@CurrentTime	DATETIME
@@ -9,7 +9,7 @@ AS
 /*
 	Created by: 20220819@Victoria
 	Task: CheckSum ticket
-	DB: DBCONSISTENCY-bodb_Consistency
+	DB: DBCONSISTENCY-bodb_Consistency, DBAGE-bodb02, DBACC-bodb02
 	Revisions:
 		- 20220819@Victoria: Rule #49 - CheckSum ticket [Redmine:#175881]
 		- 20221012@Victoria: Modify to show FromDate and ToDate
@@ -18,6 +18,7 @@ AS
 		- 20221028@Victoria: Remove checktime inside of CheckSum Function [Redmine:#178864]
 		- 20221102@Victoria: Convert ActualRate with a Float data type to a DECIMAL [Redmine:#178864]  
 		- 20221123@July: Support filter recommend list [Redmine:#178864]
+		- 20231109@July: Data consistency - Add config DBAGE & DBACC [Redmine:#196690]
 */
 
 BEGIN

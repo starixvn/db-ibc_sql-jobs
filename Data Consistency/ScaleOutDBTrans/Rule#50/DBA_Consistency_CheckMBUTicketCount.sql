@@ -1,14 +1,15 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency, DBAGE-bodb02, DBACC-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_CheckMBUTicketCount]
 	@Bettype SMALLINT = 0
 AS 
 /*
 Created by: 20220819@Victoria
 Task: Check MoveBet/BalanceUp Ticket Count
-DB: DBCONSISTENCY-bodb_Consistency
+DB: DBCONSISTENCY-bodb_Consistency, DBAGE-bodb02, DBACC-bodb02
 Revisions:
 	- 20220907@Victoria: Rule #50 - Check ticket count of 19999/20000 with group by SiteDBGroupID, winlostdate [Redmine:#175881]
 	- 20230915@July: Detect data consistency SiteDB and DBTP - Enhancement for rules #50 [Redmine:#194038]
+	- 20231109@July: Data consistency - Add config DBAGE & DBACC [Redmine:#196690]
 */
 BEGIN
 	SET NOCOUNT ON

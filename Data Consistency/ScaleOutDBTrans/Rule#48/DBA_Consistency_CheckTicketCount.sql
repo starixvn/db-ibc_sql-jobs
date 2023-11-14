@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency, DBAGE-bodb02, DBACC-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_CheckTicketCount]
 (
 	@CurrentTime	DATETIME
@@ -9,13 +9,13 @@ AS
 /*
 	Created by: 20220819@Victoria
 	Task: Check ticket count by Status - DBCONSISTENCY
-	DB: DBCONSISTENCY-bodb_Consistency
+	DB: DBCONSISTENCY-bodb_Consistency, DBAGE-bodb02, DBACC-bodb02
 	Revisions:
 		- 20220819@Victoria: Rule #48 - Check ticket count by Status - DBCONSISTENCY [Redmine:#175881]
 		- 20221012@Victoria: Modify to show FromDate and ToDate
 								AND replication latency with ticket odds adjustment [Redmine:#178864]
 		- 20221123@July: Support filter recommend list [Redmine:#178864]
-	
+		- 20231109@July: Data consistency - Add config DBAGE & DBACC [Redmine:#196690]	
 */
 BEGIN
 	SET NOCOUNT ON

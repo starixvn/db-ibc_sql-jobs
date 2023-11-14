@@ -1,14 +1,15 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency, DBSIG-bodb02, DBAGE-bodb02, DBACC-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_CheckDuplicatedMoveBetTicket]
 AS 
 /*
 Created by: 20220819@Victoria
 Task: Check MoveBet Ticket Duplicated
-DB: DBCONSISTENCY-bodb_Consistency,DBSIG-bodb02
+DB: DBCONSISTENCY-bodb_Consistency, DBSIG-bodb02, DBAGE-bodb02, DBACC-bodb02
 Revisions:
 	- 20220819@Victoria: Rule #50 - Check MoveBet Ticket,
 									Alert if exist more than 1 row with group by custid and winlostdate [Redmine:#175881]
 	- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
+	- 20231109@July: Data consistency - Add config DBAGE & DBACC [Redmine:#196690]
 */
 BEGIN
 	SET NOCOUNT ON
