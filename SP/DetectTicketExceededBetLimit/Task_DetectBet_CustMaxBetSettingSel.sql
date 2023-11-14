@@ -19,6 +19,7 @@ AS
 		- 20230419@Tacy: SEAL - Change the bet limit setting [RedmineID: #186524]
 		- 20230720@Tacy: MG-RNG - Integrate the product for deposit sites [RedmineID: #189971]
 		- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
+		- 20231107@Tacy: Remove Bet Limit setting of RNG Slot [Redmine: #194331]
 
 	Param's Explanation:
 */
@@ -68,11 +69,24 @@ BEGIN
 		SettingName	varchar(30)
 	)
 
+	CREATE TABLE #SportRNG (SportType SMALLINT)
+	
+	;WITH tmpProducts AS (
+		SELECT ProductID
+		FROM Products WITH (NOLOCK)
+		WHERE CasinoType=1 AND Enabled=1 AND GroupType=0
+	)
+	INSERT INTO #SportRNG (SportType)
+	SELECT sm.SportType
+	FROM tmpProducts p
+	CROSS APPLY (SELECT TOP 1 sm.SportType
+					FROM SportBettypeSettingMatrix sm WITH (NOLOCK)
+					WHERE sm.RealProductId=p.ProductID AND sm.isDeleted=0 AND sm.ProductID=18) sm
+
 	INSERT INTO #ProductSettingType(SettingType,SettingName)
 	SELECT SettingType,SettingName 
 	FROM DBCUST.CUSTDB.dbo.ProductSettingType WITH(NOLOCK) 
 	WHERE SettingName IN('Bet Setting','Stake Level')
-
 
 	DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
 
@@ -114,7 +128,7 @@ BEGIN
 	UPDATE cl 
 	SET	  cl.SportTypeRef=ref.SportTypeRefBetSetting
 		, cl.BetTypeRef=ref.BetTypeRefBetSetting
-		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237,158,248,155,156) --VGaming, SABA.Games, MaxGame, Jili, PP, MG-RnG,SEAL
+		, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games
 						THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
 		, cl.SettingType=ps.SettingType
 	FROM #ListTmp cl
@@ -152,7 +166,7 @@ BEGIN
 	UPDATE cl 
 	SET cl.SportTypeRef=ref.SportTypeRefBetSetting
 	, cl.BetTypeRef=ref.BetTypeRefBetSetting
-	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200,237,158,248,155) --VGaming, SABA.Games, MaxGame, Jili, PP, MG-RnG
+	, cl.GameTypeId=CASE WHEN cl.SportType IN (171,150,200) --VGaming, SABA.Games
 					THEN ref.BetTypeRefBetSetting ELSE cl.BetType END
 	, cl.SettingType=ps.SettingType
 	FROM #ListTmp cl
@@ -529,7 +543,7 @@ BEGIN
 	END
 
 	UPDATE t1 
-	SET IsInvalid = 1, 
+	SET IsInvalid = CASE WHEN s.SportType IS NOT NULL THEN 0 ELSE 1 END, 
 		t1.MaxBet = t2.MaxBet
 	FROM #tmp_TransId t1
 		OUTER APPLY(
@@ -537,6 +551,7 @@ BEGIN
 			FROM #returnTbl t2 
 			WHERE t2.TransId = t1.TransId
 		)t2
+		LEFT JOIN #SportRNG s ON s.SportType=t1.SportType
 	WHERE t1.stake > ISNULL(t2.MaxBet,0)
 
 	DROP TABLE #ListTmp
