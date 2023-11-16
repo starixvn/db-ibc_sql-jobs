@@ -247,7 +247,7 @@ BEGIN
 				c.Recommend, 
 				z.Status
 
-	SELECT TableName, SiteDBGroupID, Recommend, Status, TicketCount
+	SELECT TableName, SiteDBGroupID, Recommend, LOWER(Status) AS Status, TicketCount
 	FROM #tmp_betticketcheckcount
 	ORDER BY TableName, SiteDBGroupID, Recommend, Status
 
