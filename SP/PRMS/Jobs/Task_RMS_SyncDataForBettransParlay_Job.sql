@@ -33,6 +33,7 @@ AS
 		- 20230328@Cherry: Change Betfrom Data Length (#185896)
 		- 20230822@Cherry: Parlay Boost Bonus (#192681)
 		- 20231020@Cherry: Parlay Generator (#195498)
+		- 20231116@Cherry: Extend Date Range of bettransm
 */
 
 BEGIN
@@ -226,7 +227,7 @@ BEGIN
 							INNER JOIN bodb_archive.dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
 						WHERE  bm.refno IN (SELECT value FROM STRING_SPLIT('''''+@str_refno+''''','''',''''))
-							AND bm.winlostdate BETWEEN DATEADD(DAY, -45, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''') AND DATEADD(DAY, -1, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''')
+							AND bm.winlostdate BETWEEN DATEADD(DAY, -60, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''') AND DATEADD(DAY, -1, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''')
 						''
 						)
 				'
