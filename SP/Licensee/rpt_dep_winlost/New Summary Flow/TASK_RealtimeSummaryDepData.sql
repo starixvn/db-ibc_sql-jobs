@@ -80,6 +80,7 @@ AS
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 		- 20231026@Evan: Support 12bet team get TO without Void/reject/refund [RedmineID: #195784]
+		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -894,6 +895,7 @@ BEGIN
 				WHEN (bettype BETWEEN 8400 AND 8699 AND bettype <> 8695) THEN 155 -- MG-RNG
 				WHEN bettype = 8695 THEN -155 -- MG-RNG Promotion Prize
 				WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
+				WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
@@ -981,6 +983,7 @@ BEGIN
 				WHEN (bettype BETWEEN 8400 AND 8699 AND bettype <> 8695) THEN 155 -- MG-RNG
 				WHEN bettype = 8695 THEN -155 -- MG-RNG Promotion Prize
 				WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
+				WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
 				ELSE 0
 			END
 
