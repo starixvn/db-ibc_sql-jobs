@@ -21,6 +21,7 @@ AS
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20230414@Evan: Update formula agentCommission for new commercial terms [Redmine: #186609]
 		- 20230925@Evan: LAP - Enhance Exchange reports (View Resettled Ticket Data) [Redmine: #193954]
+		- 20231117@Evan: Handle ExVirtualRate for other licensees [Redmine: #196913]
 
 	Param's Explanation:
 		@QueueID: manually import
@@ -379,12 +380,12 @@ BEGIN
 									t.resettledDate,
 									t.CustID,
 									c.Currency,
-									e.ExVirtualRate,
+									IIF(c.site = '12Bet',e.ExVirtualRate,1) AS ExVirtualRate,
 									t.IsResettled
 								FROM #tmpSum_winloss_Exchange t
 									INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
 									INNER JOIN bodb02.dbo.Exchange e WITH (NOLOCK) ON c.currency = e.exchangeid
-							)
+ 							)
 						AS src 
 							( 
 								userId,agentId,eventTypeName,eventName,eventId,marketName,marketId,
