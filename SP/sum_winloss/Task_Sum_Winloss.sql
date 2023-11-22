@@ -49,7 +49,9 @@ AS
 		- 20230818@Lewis: Hotfix Dup Data - bettype = 8695,2499 [RedmineID: #192923]
 		- 20230713@Lewis: Add VS3-LeapGamng VS (New) [RedmineID: #189207]
 		- 20231211@Lewis: Add Live22 [RedmineID: #194529]
+		- 20230713@Lewis: Add WE Live Casino [RedmineID: #195885]
 */
+
 BEGIN
 
 	SET NOCOUNT ON
@@ -254,6 +256,7 @@ BEGIN
 			WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 			WHEN bettype BETWEEN 5302 AND 5399 THEN 178 -- VS3-LeapGaming(New)
 			WHEN bettype BETWEEN 7601 AND 7700 THEN 227 -- Live22
+			WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -418,6 +421,7 @@ BEGIN
 				 WHEN bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 				 WHEN bettype BETWEEN 5302 AND 5399 THEN 178 -- VS3-LeapGaming(New)
 				 WHEN bettype BETWEEN 7601 AND 7700 THEN 227 -- Live22
+				 WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
 				 ELSE 0
 			 END
 			,CASE
@@ -479,6 +483,7 @@ BEGIN
 				 WHEN bettypePT BETWEEN 5100 AND 5299 THEN 158 -- Jili
 				 WHEN bettypePT BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 				 WHEN bettypePT BETWEEN 7601 AND 7700 THEN 227 -- Live22
+				 WHEN bettypePT BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
 				 ELSE 0 END AS SporttypeRef
 		FROM #__SuperExtraPT WHERE RefTable IN (1, 2)
 
