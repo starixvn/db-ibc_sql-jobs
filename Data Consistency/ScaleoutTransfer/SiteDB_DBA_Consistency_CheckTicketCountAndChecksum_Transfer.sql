@@ -19,6 +19,7 @@ AS
 		- 20221102@Evan: Enhancement convert data type float to decimal - [Redmine:#178864] 
 		- 20221220@Evan: Check Data Consistency - Exclude custid = 0 - [Redmine:#181848] 
 		- 20230706@Danny: deploy SP to SiteDB03 [Redmine: #181595]
+		- 20231122@Evan: Check ignore archive account - [Redmine:#196690] 
 	
 	Param's Expanation:
 */
@@ -49,21 +50,22 @@ BEGIN
 		SELECT
 			'Transfer' AS TableName,
 			@SiteDBGroupID AS SiteDBGroupID, 
-			Recommend,
+			t.Recommend,
 			COUNT(1) AS TicketCount,
 			CHECKSUM_AGG(
 					CHECKSUM(
-						CustId,TransDate,WinlostDate,Bettype,Stake,Actual_Stake,Winlost,AWinlost,MWinlost,SWinlost,PlayerComm
-						,Comm,AComm,SComm,StatusId,RefNo,TransDesc,Recommend,MRecommend,SRecommend,Username,Currency,CurrencyName
-						,CAST(ActualRate AS DECIMAL(19,8)),Creator,Balance,[IP],CheckTime,SerialNo,TransId
+						t.CustId,t.TransDate,t.WinlostDate,t.Bettype,t.Stake,t.Actual_Stake,t.Winlost,t.AWinlost,t.MWinlost,t.SWinlost,t.PlayerComm
+						,t.Comm,t.AComm,t.SComm,t.StatusId,t.RefNo,t.TransDesc,t.Recommend,t.MRecommend,t.SRecommend,t.Username,t.Currency,t.CurrencyName
+						,CAST(t.ActualRate AS DECIMAL(19,8)),t.Creator,t.Balance,t.[IP],t.CheckTime,t.SerialNo,t.TransId
 						)
 				) AS TotalCheckSum
 		FROM dbo.Transfer t WITH (NOLOCK)
+			INNER JOIN custdb.dbo.Customer c WITH(NOLOCK) ON t.CustId = c.custid
 		WHERE t.TransId > @transferLastTransId
 			AND t.TransId <= @NewTransferLastTransId
 			AND t.Bettype NOT IN (19999, 20000)
 			AND t.CustId <> 0
-		GROUP BY Recommend 
+		GROUP BY t.Recommend 
 			
 		UNION ALL
 
@@ -74,13 +76,15 @@ BEGIN
 			COUNT(1) AS TicketCount,
 			CHECKSUM_AGG(
 					CHECKSUM(
-						ti.TransId,APositiontaking,MPositiontaking,SPositiontaking,EPositiontaking,PlayerDiscount,Discount
-						,ADiscount,SDiscount,WalletType,BonusID,Amount,CheckerId,CheckerName,IsCollection,IsDel
+						ti.TransId,ti.APositiontaking,ti.MPositiontaking,ti.SPositiontaking,ti.EPositiontaking,ti.PlayerDiscount,ti.Discount
+						,ti.ADiscount,ti.SDiscount,ti.WalletType,ti.BonusID,ti.Amount,ti.CheckerId,ti.CheckerName,ti.IsCollection,ti.IsDel
 						)
 				) AS TotalCheckSum
 		FROM dbo.TransferInfo ti WITH (NOLOCK)
 			INNER JOIN Transfer t with(nolock)
-				on ti.TransId = t.TransId
+				ON ti.TransId = t.TransId
+			INNER JOIN custdb.dbo.Customer c WITH(NOLOCK) 
+				ON t.CustId = c.custid
 		WHERE ti.TransId > @transferLastTransId
 			AND ti.TransId <= @NewTransferLastTransId
 			AND t.Bettype NOT IN (19999, 20000)
@@ -96,11 +100,13 @@ BEGIN
 			COUNT(1) AS TicketCount,
 			CHECKSUM_AGG(
 					CHECKSUM(
-						CustId,WinlostDate,TransDate,Bettype,Debit,Credit,Currency,CAST(ActualRate AS DECIMAL(19,8)),TransID,RefNo,Username
-						,Recommend,MRecommend,SRecommend,Creator,TransDesc,[IP]
+						tc.CustId,tc.WinlostDate,tc.TransDate,tc.Bettype,tc.Debit,tc.Credit,tc.Currency,CAST(tc.ActualRate AS DECIMAL(19,8)),tc.TransID,tc.RefNo,tc.Username
+						,tc.Recommend,tc.MRecommend,tc.SRecommend,tc.Creator,tc.TransDesc,tc.[IP]
 						)
 				) AS TotalCheckSum
 		FROM dbo.Transfer_Coll tc WITH (NOLOCK)
+			INNER JOIN custdb.dbo.Customer c WITH(NOLOCK) 
+				ON tc.CustId = c.custid
 		WHERE tc.TransId > @transferLastTransId
 			AND tc.TransId <= @NewTransferLastTransId
 			AND tc.Bettype NOT IN (19999, 20000)
