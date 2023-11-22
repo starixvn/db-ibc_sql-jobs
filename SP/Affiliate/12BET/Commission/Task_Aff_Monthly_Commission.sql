@@ -18,6 +18,7 @@ AS
 		- 20210317@Percy: Update affiliate status history [RedmineID: #149213]
 		- 20211207@Percy: Apply core function Group Product [RedmineID: #165777]
 		- 20230208@Bobby: Implement Bonus & FDM Setting [RedmineId : #191139]
+		- 20230804@Eddie: 'ExchangeWinlossShare' and 'ExchangeCommShare' out of use [RedmineID: #189569]
 */
 
 BEGIN
@@ -83,80 +84,76 @@ BEGIN
 		DROP TABLE IF EXISTS #TempCommission;
 		CREATE TABLE #TempCommission
 		(
-			MonthDate				SMALLDATETIME,
-			AffId					INT,
-			GroupId					INT,
-			ProductId				INT,
-			Deposit					MONEY,
-			Withdrawal				MONEY,
-			Bonus					MONEY,
-			Turnover				MONEY,
-			Winloss					MONEY,
-			AWinloss				MONEY,
-			AComm					MONEY,
+			MonthDate				SMALLDATETIME
+			,AffId					INT
+			,GroupId				INT
+			,ProductId				INT
+			,Deposit				MONEY
+			,Withdrawal				MONEY
+			,Bonus					MONEY
+			,Turnover				MONEY
+			,Winloss				MONEY
+			,AWinloss				MONEY
+			,AComm					MONEY
 			-- Fees
-			PlatFormFee				MONEY,
-			OperationalFee			MONEY,
-			BankingFee				MONEY,
-			ExchangeWinlossShare	MONEY,
-			ExchangeCommShare		MONEY,
+			,PlatFormFee			MONEY
+			,OperationalFee			MONEY
+			,BankingFee				MONEY
 			-- Calculation
-			GrossWinloss			MONEY,
-			NetWinloss				MONEY,
-			ActivePlayer			INT,
-			QualifiedMember			INT,
-			QMTurnover				MONEY,
-			CommissionRate			FLOAT,
-			Commission				MONEY,
+			,GrossWinloss			MONEY
+			,NetWinloss				MONEY
+			,ActivePlayer			INT
+			,QualifiedMember		INT
+			,QMTurnover				MONEY
+			,CommissionRate			FLOAT
+			,Commission				MONEY
 			-----FDM & Bonus
-			IsApplyBonus			BIT,
-			FDMCount				INT,
-			FDMDeposit				MONEY,
-			FDMCommissionRate		DECIMAL(9, 8),
-			FDMCommission			MONEY
+			,IsApplyBonus			BIT
+			,FDMCount				INT
+			,FDMDeposit				MONEY
+			,FDMCommissionRate		DECIMAL(9, 8)
+			,FDMCommission			MONEY
 		)
 
 		-- Uncalculated Months
 		INSERT INTO #TempCommission
 		(
-			MonthDate,
-			AffId,
-			GroupId,
-			ProductId,
-			Deposit,
-			Withdrawal,
-			Bonus,
-			Turnover,
-			Winloss,
-			AWinloss,
-			AComm,
-			PlatFormFee,
-			OperationalFee,
-			BankingFee,
-			ExchangeWinlossShare,
-			ExchangeCommShare,
-			GrossWinloss,
-			NetWinloss,
-			ActivePlayer,
-			QualifiedMember,
-			QMTurnOver,
-			CommissionRate,
-			Commission,
+			MonthDate
+			,AffId
+			,GroupId
+			,ProductId
+			,Deposit
+			,Withdrawal
+			,Bonus
+			,Turnover
+			,Winloss
+			,AWinloss
+			,AComm
+			,PlatFormFee
+			,OperationalFee
+			,BankingFee
+			,GrossWinloss
+			,NetWinloss
+			,ActivePlayer
+			,QualifiedMember
+			,QMTurnOver
+			,CommissionRate
+			,Commission
 			-----FDM & Bonus
-			IsApplyBonus,
-			FDMCount,			
-			FDMDeposit,			
-			FDMCommissionRate,	
-			FDMCommission
+			,IsApplyBonus
+			,FDMCount
+			,FDMDeposit
+			,FDMCommissionRate
+			,FDMCommission
 		)
 		EXEC dbo.Aff_Commission_UnCalc
-			@AffIds				= 'all',
-			@FromMonthDate		= @FirstDayOfMonth,
-			@ToMonthDate		= @LastDayOfMonth,
-			@ProductIds			= '0',
-			@IsSumAll			= 0,
-			@GetRowTotalOnly	= 0,
-			@IsGroupProduct		= 0
+			@AffIds				= 'all'
+			,@FromMonthDate		= @FirstDayOfMonth
+			,@ToMonthDate		= @LastDayOfMonth
+			,@ProductIds		= '0'
+			,@IsSumAll			= 0
+			,@GetRowTotalOnly	= 0
+			,@IsGroupProduct	= 0
 	END
 
 		-- Remove invalid data
@@ -180,115 +177,113 @@ BEGIN
 
 	INSERT INTO dbo.rptAffCommission
 	(
-		MonthDate,
-		AffId,
-		GroupId,
-		ProductId,
-		Deposit,
-		Withdrawal,
-		Bonus,
-		Adjustment,
-		Turnover,
-		Winloss,
-		AWinloss,
-		AComm,
-		GrossWinloss,
-		NetWinloss,
-		QMTurnover,
-		ActivePlayer,
-		QualifiedMember,
-		CommissionRate,
+		MonthDate
+		,AffId
+		,GroupId
+		,ProductId
+		,Deposit
+		,Withdrawal
+		,Bonus
+		,Adjustment
+		,Turnover
+		,Winloss
+		,AWinloss
+		,AComm
+		,GrossWinloss
+		,NetWinloss
+		,QMTurnover
+		,ActivePlayer
+		,QualifiedMember
+		,CommissionRate
 		-----FDM & Bonus
-		IsApplyBonus,
-		FDMCount,			
-		FDMDeposit,			
-		FDMCommissionRate,	
-		FDMCommission
+		,IsApplyBonus
+		,FDMCount
+		,FDMDeposit
+		,FDMCommissionRate
+		,FDMCommission
 	)
 	SELECT
-		MonthDate,
-		AffId,
-		GroupId,
-		ProductId,
-		Deposit,
-		Withdrawal,
-		Bonus,
-		0 AS Adjustment,
-		Turnover,
-		Winloss,
-		AWinloss,
-		AComm,
-		GrossWinloss,
-		NetWinloss,
-		QMTurnover,
-		ActivePlayer,
-		QualifiedMember,
-		CommissionRate,
-		IsApplyBonus,
-		FDMCount,			
-		FDMDeposit,			
-		FDMCommissionRate,	
-		FDMCommission
+		MonthDate
+		,AffId
+		,GroupId
+		,ProductId
+		,Deposit
+		,Withdrawal
+		,Bonus
+		,0 AS Adjustment
+		,Turnover
+		,Winloss
+		,AWinloss
+		,AComm
+		,GrossWinloss
+		,NetWinloss
+		,QMTurnover
+		,ActivePlayer
+		,QualifiedMember
+		,CommissionRate
+		,IsApplyBonus
+		,FDMCount
+		,FDMDeposit
+		,FDMCommissionRate
+		,FDMCommission
 	FROM #TempCommission
 
 	INSERT INTO dbo.rptAffDeduction
 	(
-		MonthDate,
-		AffId,
-		GroupId,
-		ProductId,
-		GroupProductId,
-		DeductionId,
-		Amount
+		MonthDate
+		,AffId
+		,GroupId
+		,ProductId
+		,GroupProductId
+		,DeductionId
+		,Amount
 	)
 	SELECT
-		tc.MonthDate,
-		tc.AffId,
-		tc.GroupId,
-		tc.ProductId,
-		dsh.GroupProductId,
-		dsh.DeductionId,
-		CASE dsh.DeductionId	WHEN 10 THEN tc.PlatFormFee
+		tc.MonthDate
+		,tc.AffId
+		,tc.GroupId
+		,tc.ProductId
+		,dsh.GroupProductId
+		,dsh.DeductionId
+		,CASE dsh.DeductionId	WHEN 10 THEN tc.PlatFormFee
 								WHEN 11 THEN tc.OperationalFee
 								WHEN 12 THEN tc.BankingFee
-								WHEN 13 THEN tc.ExchangeWinlossShare
-								WHEN 14 THEN tc.ExchangeCommShare
 								END AS Amount
 	FROM #TempCommission tc
 		INNER JOIN dbo.DeductionSettingHistory dsh WITH (NOLOCK) ON tc.MonthDate = dsh.MonthDate AND tc.GroupId = dsh.GroupId AND tc.ProductId = dsh.ProductId
 
 	INSERT INTO dbo.AffTrans
 	(
-		AffID,
-		TransDate,
-		CompletedDate,
-		Amount,
-		Status,
-		Description,
-		Creator,
-		TransType
+		AffID
+		,TransDate
+		,CompletedDate
+		,Amount
+		,Status
+		,Description
+		,Creator
+		,TransType
 	)
 	SELECT
-		AffID,
-		MonthDate AS TransDate,
-		GETDATE() AS CompletedDate,
-		Commission AS Amount,
-		'Approved' AS Status,
-		'Monthly Earning' AS Description,
-		148 AS Creator,
-		201 AS TransType
+		AffID
+		,MonthDate 			AS TransDate
+		,GETDATE() 			AS CompletedDate
+		,Commission 		AS Amount
+		,'Approved' 		AS Status
+		,'Monthly Earning' 	AS Description
+		,148 				AS Creator
+		,201 				AS TransType
 	FROM #TempCommission
 	WHERE ProductId = 0
 	UNION ALL -----FDM & Bonus
 	SELECT
-		AffID,
-		MonthDate AS TransDate,
-		GETDATE() AS CompletedDate,
-		FDMCommission AS Amount,
-		'Approved' AS Status,
-		'New FDM Commission Bonus' AS Description,
-		148 AS Creator,
-		205 AS TransType
+		AffID
+		,MonthDate 					AS TransDate
+		,GETDATE() 					AS CompletedDate
+		,FDMCommission 				AS Amount
+		,'Approved' 				AS Status
+		,'New FDM Commission Bonus' AS Description
+		,148 						AS Creator
+		,205 						AS TransType
 	FROM #TempCommission
 	WHERE ProductId = 0
 
