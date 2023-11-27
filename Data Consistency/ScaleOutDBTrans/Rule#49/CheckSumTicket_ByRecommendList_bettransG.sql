@@ -32,7 +32,7 @@ BEGIN
 	CREATE TABLE #tmp_betticketchecksum_detail
 	(
 		TransId BIGINT, SiteDBGroupID SMALLINT, Recommend INT, Transdate DATETIME,
-		[custid] INT, [oddsid] INT, [odds] SMALLMONEY, [stake] MONEY, [status] NVARCHAR(10), [winlost] MONEY, [betteam] NVARCHAR(10), [creator] INT, [refno] BIGINT, [betfrom] NVARCHAR(4),
+		[custid] INT, [oddsid] INT, [odds] SMALLMONEY, [stake] MONEY, [status] NVARCHAR(10), [winlost] MONEY, [betteam] NVARCHAR(50), [creator] INT, [refno] BIGINT, [betfrom] NVARCHAR(4),
 		[apositiontaking] SMALLMONEY, [mpositiontaking] SMALLMONEY, [tpositiontaking] SMALLMONEY, [awinlost] MONEY, [mwinlost] MONEY, [playerdiscount] DECIMAL(9,8), [discount] DECIMAL(9,8), [adiscount] DECIMAL(9,8), [playercomm] MONEY, [comm] MONEY, 
 		[acomm] MONEY,  [actualrate] FLOAT, [matchid] INT, matchdate SMALLDATETIME, [statuswinlost] TINYINT, [ruben] TINYINT, [bettype] SMALLINT, [spositiontaking] SMALLMONEY, [swinlost] MONEY, [sdiscount] DECIMAL(9,8), [scomm] MONEY, [statusID] TINYINT,
 		[SiteID] VARCHAR(7), [TransDesc] NVARCHAR(2000), [BetID3rd] NVARCHAR(50), [actual_stake] MONEY, [netstake] MONEY
