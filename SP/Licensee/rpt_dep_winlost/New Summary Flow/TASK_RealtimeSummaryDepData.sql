@@ -585,7 +585,7 @@ BEGIN
 				FROM dbo.translog tl WITH (ROWLOCK)
 					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = tl.srecommend
 				WHERE tl.winlostdate >= @Winlostdate
-					AND tl.productID = 202
+					AND tl.productID IN (202,204)
 				GROUP BY tl.custid, tl.productID
 				UNION ALL -- OneRnG & Voidbridge
 				SELECT g.custid
@@ -899,7 +899,8 @@ BEGIN
 			SUM(RawTurnover),--RawTurnover
 			SUM(RawDrawGame)--RawDrawGame 
 		FROM #rptDepWinlostDetails
-		WHERE PartnerID = -1
+		WHERE Bettype < 19999
+			AND PartnerID = -1
 		GROUP BY
 			CustID,
 			CASE
