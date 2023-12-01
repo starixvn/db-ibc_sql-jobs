@@ -12,6 +12,7 @@ AS
 	- 20220917@Sophia: Fix Divide by Zero [Redmine: #177934]
 	- 20230822@Cherry: Parlay Boost Bonus (#192681)
 	- 20231020@Cherry: Parlay Generator (#195498)
+	- 20231201@Cherry: Parlay Type for Parlay Boost (#197680)
 */
 BEGIN
 	CREATE TABLE #rmBettrans_Old
@@ -245,20 +246,11 @@ BEGIN
 	FROM #rmBettrans_Old b
 		INNER JOIN #tmpBoost t ON b.transid = t.transid
 
-	-- Update oddsspread = -100 if Parlay Generator
-	CREATE TABLE #tmpParlayGenerator (transid BIGINT)
-	INSERT INTO #tmpParlayGenerator (transid)
-	SELECT transid
-	FROM #rmBettrans
-	WHERE bettype = 29 and betteam = N'1' and ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),0) = 5
-
-	UPDATE b
-	SET b.oddsspread = -100
-	FROM #rmBettrans b
-		INNER JOIN #tmpParlayGenerator t ON b.transid = t.transid
-			
-	DROP TABLE #tmpBoost
-	DROP TABLE #tmpParlayGenerator
+	CREATE TABLE #tmpParlayGenerator (transid BIGINT, bact INT)
+	INSERT INTO #tmpParlayGenerator (transid, bact)
+	SELECT transid, TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT)
+	FROM #rmBettrans_Old
+	WHERE bettype = 29 and betteam = N'1' 		
 
 	CREATE TABLE #rmSumWinloss(
 				[winlostdate] [smalldatetime] NOT NULL,
@@ -316,9 +308,11 @@ BEGIN
 			,COUNT(1) AS betcount
 			,b.recommend
 			,CASE
-				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = -100 THEN 7 --Parlay Generator
+				WHEN p.transid IS NOT NULL AND t.transid IS NOT NULL THEN 78 --Parlay Generator & Boost
+				WHEN t.transid IS NOT NULL THEN 8 --Parlay Boost
+				WHEN p.transid IS NOT NULL THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
-				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread NOT IN (-100, 1) THEN 2
+				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
 				WHEN b.bettype = 38 THEN 4
 				WHEN b.bettype = 376 THEN 5
@@ -337,6 +331,8 @@ BEGIN
 			SUM(comm) comm,
 			SUM(acomm) acomm
 		FROM #rmBettrans_old b WITH (NOLOCK)
+			LEFT JOIN #tmpParlayGenerator p ON b.transid = p.transid AND p.bact = 5
+			LEFT JOIN #tmpBoost t ON b.transid = t.transid
 		GROUP BY
 			b.winlostdate
 			,b.custid
@@ -348,7 +344,9 @@ BEGIN
 			,b.actualrate
 			,b.recommend
 			,CASE
-				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = -100 THEN 7 --Parlay Generator
+				WHEN p.transid IS NOT NULL AND t.transid IS NOT NULL THEN 78 --Parlay Generator & Boost
+				WHEN t.transid IS NOT NULL THEN 8 --Parlay Boost
+				WHEN p.transid IS NOT NULL THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread NOT IN (-100, 1) THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
@@ -464,4 +462,6 @@ BEGIN
 	DROP TABLE #bettransm_BK_saba
 	DROP TABLE #bettransm_BK
 	DROP TABLE #rmBettrans_Old
+	DROP TABLE #tmpBoost
+	DROP TABLE #tmpParlayGenerator
 END
