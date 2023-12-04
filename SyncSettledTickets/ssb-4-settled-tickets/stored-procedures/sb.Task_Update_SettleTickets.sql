@@ -9,6 +9,7 @@ AS
 	- Revisions:
 		-20191127@Patrick: Setup sync status ticket on DB052 -> DB054 - [Redmine: #124482]
 		-20210816@Helen: Apply Uncalculate Flow on DB054 for Both Single & Parlay Tickets [Redmine: #157381]
+		-20231204@Kathy: Update winlostdate for void ticket outright [Redmine:#197266]
 		
 	Para's explaination
 */
@@ -56,6 +57,7 @@ BEGIN
 	WHERE 1 = CASE 
 					WHEN t.statusID IS NULL AND b.statusID < 2 THEN 1 -- cal single or parlay -> update settle status
 					WHEN t.statusID = 0 AND b.matchid = 29 THEN 1 -- undo parlay
+					WHEN (b.bettype = 10 OR b.matchid = 29) AND t.winlostdate IS NOT NULL THEN 1 
 					ELSE 0
 				END	
 	
@@ -66,7 +68,7 @@ BEGIN
 	UPDATE b
 		SET ruben = CASE WHEN t.statusid IS NULL THEN 1 ELSE 0 END -- cal single or parlay -> update settle status
 			, statusID = CASE WHEN t.statusid IS NULL THEN 88 ELSE 0 END -- -- cal single or parlay -> update settle status: no_more_running ticket
-			, winlostdate = CASE WHEN b.matchid = 29 AND b.winlostdate <> t.winlostdate THEN t.winlostdate ELSE b.winlostdate END
+			, winlostdate = CASE WHEN (b.matchid = 29 OR b.bettype = 10) AND b.winlostdate <> t.winlostdate THEN t.winlostdate ELSE b.winlostdate END
 	FROM dbo.bettrans b WITH(ROWLOCK, UPDLOCK)
 		INNER JOIN @__TransIds2 t ON b.transid = t.transid
 
