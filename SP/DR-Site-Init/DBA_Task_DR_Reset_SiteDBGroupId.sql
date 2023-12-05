@@ -1,6 +1,6 @@
 create proc DBA_Task_DR_Reset_SiteDBGroupId @NewSiteDBGroupId smallint = 0
 	, @TableName varchar(200)
-	, @Debug bit = 0
+	, @Debug bit = 1
 as
 /*
 	Task: Reset sitedbgroupid at DR site
@@ -138,7 +138,6 @@ begin
 				, @SiteDBGroupID = @NewSiteDBGroupId
 				, @tablename = @TableName
 				
-			raiserror(@__rowId, 0, 1) with nowait
 			select @__rowId += 2000
 			
 		end
