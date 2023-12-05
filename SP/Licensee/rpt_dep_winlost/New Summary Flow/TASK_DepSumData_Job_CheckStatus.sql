@@ -22,6 +22,7 @@ AS
 		- 20220620@Sol: Enhance code to prevent arithmetic overflow [RedmineID: #174296]
 		- 20220620@Sol: LAP - Enhance database jobs - ignore bettype 23203 for archived member - [RedmineID: #171747]
 		- 20230227@Evan: Ensure correct balance calculation when allow to transfer 247 (BU) [Redmine: #173554]
+		- 20231205@Evan: Change the domain of email from @starixvn.com to @starixsoft.com [RedmineID: #195197]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -278,7 +279,7 @@ BEGIN
 										FOR XML PATH('tr'), TYPE 
 									) AS NVARCHAR(MAX) ) + N'</table>'
 		
-		EXEC msdb.dbo.sp_send_dbmail @recipients = 'dbaadmin@starixvn.com'
+		EXEC msdb.dbo.sp_send_dbmail @recipients = 'dbaadmin@starixsoft.com'
 					, @subject = @subject
 					, @body = @ErrorMessage
 					, @body_format = 'HTML'

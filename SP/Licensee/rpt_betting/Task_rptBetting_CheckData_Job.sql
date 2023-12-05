@@ -30,6 +30,7 @@ AS
 		- 20210805@Sophia: Add more email dbaadmin@starixvn.com [Redmine: #159700]
 		- 20210816@Sophia: add DBBAL & Exclude GEN_rptBettingBySport14 at DBBAL [Redmine: #154300]
 		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
+		- 20231205@Evan: Change the domain of email from @starixvn.com to @starixsoft.com [RedmineID: #195197]
 
 	EXEC Task_rptBetting_CheckData_Job @FromDate = '2018-04-01', @ToDate = '2018-04-10', @Step = 0,  @AllowCorrect = 1
     
@@ -449,7 +450,7 @@ BEGIN
 										FOR XML PATH('tr'), TYPE 
 									) AS NVARCHAR(MAX) ) + N'</table>'
 			
-		EXEC msdb.dbo.sp_send_dbmail @recipients = 'Sophia.nguyen@starixvn.com;Patrick.pham@starixvn.com;dbaadmin@starixvn.com;Candy.le@starixvn.com'
+		EXEC msdb.dbo.sp_send_dbmail @recipients = 'Sophia.nguyen@starixsoft.com;Patrick.pham@starixsoft.com;dbaadmin@starixsoft.com;Candy.le@starixsoft.com'
 					, @subject = @subject
 					, @body = @ErrorMessage
 					, @body_format = 'HTML'
