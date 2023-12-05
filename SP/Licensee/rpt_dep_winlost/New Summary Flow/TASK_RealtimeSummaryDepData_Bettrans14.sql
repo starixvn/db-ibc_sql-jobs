@@ -504,7 +504,7 @@ BEGIN
 					,SUM(CASE WHEN g.statusID IN (111, 112, 113) THEN g.stake ELSE 0 END) AS RawTurnover -- exclude  /103:Refund/102:Void/101:Reject
 					,SUM(CASE WHEN g.statusID = 111 THEN g.stake ELSE 0 END) AS RawDrawGame
 				FROM dbo.bettransRnG14 g WITH (NOLOCK)
-					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = g.srecommend
+					INNER JOIN #DepCustID d ON g.custid = d.CustID
 				WHERE g.winlostdate = @Winlostdate
 				GROUP BY g.custid, 
 					CASE 
@@ -525,7 +525,7 @@ BEGIN
 					,SUM(CASE WHEN l.statusID IN (111, 112, 113) THEN l.stake ELSE 0 END) AS RawTurnover -- exclude  /103:Refund/102:Void/101:Reject
 					,SUM(CASE WHEN l.statusID = 111 THEN l.stake ELSE 0 END) AS RawDrawGame
 				FROM dbo.bettransLC14 l WITH (NOLOCK)
-					INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = l.srecommend
+					INNER JOIN #DepCustID d ON l.custid = d.CustID
 				WHERE l.winlostdate = @Winlostdate
 				GROUP BY l.custid, 
 						CASE 

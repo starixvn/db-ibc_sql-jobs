@@ -54,7 +54,7 @@ BEGIN
 						AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade,Promotion,RawDrawGame,RawTurnover)
 					SELECT winlostdate, custid, currency, OpeningBalance, Deposit, Withdrawal, Aff2MemTransfer, Bonus, Adjustment, Turnover, Outstanding, Winloss, 
 							ClosingBalance, recommend, mrecommend, srecommend, actualrate, Transfer3rd, DrawGame, NULL, Turnover_BA, Comm_BA, 
-							AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade,Promotion,RawDrawGame,RawTurnover
+							AmountDueTo_BA, playercomm, Transfer3rdOthers, comm_bettrade, amountdueto_bettrade,Promotion,ISNULL(RawDrawGame,0),ISNULL(RawTurnover,0)
 					FROM dbo.rptDepWinlost WITH (NOLOCK)
 					WHERE winlostdate = @MinSumDate
 							
@@ -62,7 +62,7 @@ BEGIN
 				IF NOT EXISTS (SELECT TOP 1 1 FROM rptDepWinlostByProduct_bk WITH (NOLOCK) WHERE winlostdate = @MinSumDate)
 					INSERT INTO dbo.rptDepWinlostByProduct_bk (
 						winlostdate, custid, sporttype, currency, turnover, drawTO, winlost, playercomm, BetCount, outstanding, RawDrawGame, RawTurnover)
-					SELECT winlostdate, custid, sporttype, currency, turnover, drawTO, winlost, playercomm, BetCount, outstanding, RawDrawGame, RawTurnover
+					SELECT winlostdate, custid, sporttype, currency, turnover, drawTO, winlost, playercomm, BetCount, outstanding, ISNULL(RawDrawGame,0),ISNULL(RawTurnover,0)
 					FROM dbo.rptDepWinlostByProduct WITH (NOLOCK) 
 					WHERE winlostdate = @MinSumDate 
 					
