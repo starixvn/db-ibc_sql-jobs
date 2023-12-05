@@ -1,5 +1,6 @@
 create proc DBA_Task_DR_Reset_SiteDBGroupId @NewSiteDBGroupId smallint = 0
 	, @TableName varchar(200)
+	, @Debug bit = 0
 as
 /*
 	Task: Reset sitedbgroupid at DR site
@@ -128,7 +129,7 @@ begin
 				for xml raw ('r'), root ('root')
 			)
 
-			if @@rowcount = 0
+			if isnull(@__strTransIds, '') = ''
 				break
 
 			--call sp except here
@@ -137,8 +138,16 @@ begin
 				, @SiteDBGroupID = @NewSiteDBGroupId
 				, @tablename = @TableName
 				
-			select @__rowId += 2000, @__message = 'table: ' + @TableName + 'dt: ' + convert(varchar(50), getdate(), 121)
-			raiserror(@__message, 1, 0) with nowait
+			raiserror(@__rowId, 0, 1) with nowait
+			select @__rowId += 2000
+			
 		end
+		select @__message = 'table: ' + @TableName + ' - dt: ' + convert(varchar(50), getdate(), 121)
+		if @Debug = 1
+		begin
+			raiserror(@__message, 0, 1) with nowait
+		end
+		waitfor delay '00:00:00:020' --waitfor update bet sitedb groupid
+
 	end
 end
