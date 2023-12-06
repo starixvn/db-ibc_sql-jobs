@@ -264,6 +264,14 @@ BEGIN
 		INNER JOIN dbo.Dep_CustSuper cs WITH(NOLOCK) ON c.srecommend = cs.custid
 	WHERE c.roleid = 2
 
+	--Get bettype Sportsbook
+	CREATE TABLE #tmpBettype (BetType SMALLINT)
+
+	INSERT INTO #tmpBettype
+	SELECT DISTINCT BetType
+	FROM dbo.f_SportBettypeMatrix_Sel(0, 0, 0, 2, '', '', 0)
+	WHERE RefTable NOT IN (1,2)
+
 	BEGIN TRY
 		--3.Prepare staging data for table rptDepWinlost_Trans
 		--Insert Details for rptDepWinlost/rptDepWinlostByProduct/rptDepWinlostTransfer3rdOthers
@@ -352,11 +360,12 @@ BEGIN
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END), -- Promotion
-				SUM(CASE WHEN b.statusID = 111 THEN b.stake ELSE 0 END), -- RawDrawGame
-				SUM(CASE WHEN b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END)  -- RawTurnover
+				SUM(CASE WHEN b.statusID = 111 AND bt.BetType IS NOT NULL THEN b.stake  ELSE 0 END), -- RawDrawGame
+				SUM(CASE WHEN b.StatusID NOT IN (101, 102, 103) AND bt.BetType IS NOT NULL THEN b.stake ELSE 0 END)  -- RawTurnover
 			FROM dbo.bettrans b WITH (NOLOCK)
 				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
 				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
+				LEFT JOIN #tmpBettype bt ON b.bettype = bt.BetType
 			WHERE b.winlostdate = @Winlostdate
 				AND b.matchid >= 0
 				AND c.roleid = 1
@@ -539,11 +548,12 @@ BEGIN
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END), -- Promotion
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.statusID = 111 THEN b.stake ELSE 0 END),--RawDrawGame
-				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.StatusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END) --RawTurnover
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.statusID = 111 AND bt.BetType IS NOT NULL THEN b.stake ELSE 0 END),--RawDrawGame
+				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.StatusID NOT IN (101, 102, 103) AND bt.BetType IS NOT NULL THEN b.stake ELSE 0 END) --RawTurnover
 			FROM dbo.bettrans AS b WITH (NOLOCK)
 				INNER JOIN dbo.Dep_CustSuper AS d WITH (NOLOCK) ON b.srecommend = d.custid
 				INNER JOIN dbo.CustInfo AS c WITH (NOLOCK) ON b.custid = c.custid
+				LEFT JOIN #tmpBettype bt ON b.bettype = bt.BetType
 			WHERE b.winlostdate >= @Winlostdate
 				AND b.matchid >= 0
 				AND c.roleid = 1
@@ -793,8 +803,8 @@ BEGIN
 		WHEN MATCHED THEN
 			UPDATE SET TARGET.TurnOver = TARGET.TurnOver + SOURCE.TurnOver,
 						TARGET.Outstanding = TARGET.Outstanding + SOURCE.Outstanding,
-						TARGET.RawTurnover = SOURCE.RawTurnover,
-						TARGET.RawDrawGame = SOURCE.RawDrawGame
+						TARGET.RawTurnover = TARGET.RawTurnover + SOURCE.RawTurnover,
+						TARGET.RawDrawGame = TARGET.RawDrawGame + SOURCE.RawDrawGame
 		WHEN NOT MATCHED THEN
 			INSERT (CustID, TurnOver, OutStanding, RawTurnover, RawDrawGame)
 			VALUES (SOURCE.CustID, SOURCE.TurnOver, SOURCE.OutStanding, SOURCE.RawTurnover, SOURCE.RawDrawGame);
@@ -1261,5 +1271,6 @@ BEGIN
 	DROP TABLE #rptDepWinlostBonusWallet
 	DROP TABLE #transid
 	DROP TABLE #rptDepWinlost_Trans
+	DROP TABLE #tmpBettype
 END 
 GO
