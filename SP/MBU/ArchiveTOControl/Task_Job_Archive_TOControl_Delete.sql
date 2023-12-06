@@ -12,6 +12,7 @@ CREATE PROCEDURE dbo.Task_Job_Archive_TOControl_Delete
 	Revisions:
 		- 20191126@Helen: Archive TO Control - delete [Redimine:98467]
 		- 20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
+		- 20231204@Max: Clean up data new table TOControl_TransitionProcessedLog  [Redimine: #197464]
 */
 AS
 BEGIN
@@ -61,6 +62,13 @@ BEGIN
 			WAITFOR DELAY '00:00:00.280'
 					
 		END	
+
+		--Delete data table Task_TOControl_TransitionProcessedLog_Delete
+		SELECT  @query = N''		
+		SELECT	@query = @query + N'EXEC Task_TOControl_TransitionProcessedLog_Delete'
+		SELECT	@ExecuteSQL = N'EXECUTE DBCUST.CUSTDB.dbo.sp_executesql @query'
+		EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX)', @query
+
 		DROP TABLE #archiveDate
 	END
 END
