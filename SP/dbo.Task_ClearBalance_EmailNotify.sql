@@ -10,6 +10,7 @@ AS
 	Revisions: 
 	- 20201028@Malcolm: Send email after automating transfer [RedmineId : #143217]
 	- 20230614@Danny: scale out credit [Redmine: #181595]
+	- 20231205@Evan: Change the domain of email from @starixvn.com to @starixsoft.com [RedmineID: #195197]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -39,11 +40,11 @@ BEGIN
 
 	IF @isTest = 0 AND @@SERVERNAME = 'DBCUST'
 	BEGIN
-		SELECT @Recipients = 'dbaadmin@starixvn.com'
+		SELECT @Recipients = 'dbaadmin@starixsoft.com'
 	END
 	ELSE
 	BEGIN
-		SELECT @Recipients = 'dba_local@starixvn.com'
+		SELECT @Recipients = 'dba_local@starixsoft.com'
 	END
 
 	SELECT @Subject = 'SiteDBGroupID: ' + CONVERT(VARCHAR(10),@SiteDBGroupID) +' - ' + '[Automate Transfer All] - Incomletely transferred SMA on ' + CONVERT(VARCHAR(10), GETDATE(), 101)
