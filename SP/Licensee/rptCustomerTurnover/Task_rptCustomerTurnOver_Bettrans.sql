@@ -33,6 +33,7 @@ AS
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
+		- 20231206@Evan: Integrate VS3 Sport 179 [RedmineID: #190908]
  
 */
 
@@ -191,7 +192,6 @@ BEGIN
 					END -- Betradar VS: Virtual Basketball
 			WHEN a.ProductCode = 'SLT' THEN a.matchid
 			WHEN a.bettype = 5301 THEN 231 -- Virtual Sport 3 (old)
-			WHEN a.bettype BETWEEN 5302 AND 5399 THEN 178 -- LG (Virtual Sport 3)
 			WHEN a.bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin
 			ELSE ISNULL(b.sporttype, 0)
 		END AS SportType
@@ -245,7 +245,6 @@ BEGIN
 				END -- Betradar VS: Virtual Basketball
 			WHEN a.ProductCode = 'SLT' THEN a.matchid
 			WHEN a.bettype = 5301 THEN 231 -- Virtual Sport 3 (old)
-			WHEN a.bettype BETWEEN 5302 AND 5399 THEN 178 -- LG (Virtual Sport 3)
 			WHEN a.bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin
 			ELSE ISNULL(b.sporttype, 0)
 		END
