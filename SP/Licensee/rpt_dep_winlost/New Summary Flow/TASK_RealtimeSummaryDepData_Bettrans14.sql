@@ -536,10 +536,6 @@ BEGIN
 			) t
 			GROUP BY t.custid, t.SportType
 
-		DELETE FROM #rptDepWinlostRaw
-		WHERE RawTurnover = 0
-			AND RawDrawGame = 0
-		
 		MERGE #rptDepWinlostDetails AS TARGET
 		USING (SELECT CustID, SportType, SUM(RawTurnover), SUM(RawDrawGame) 
 				FROM #rptDepWinlostRaw GROUP BY CustID, SportType)
