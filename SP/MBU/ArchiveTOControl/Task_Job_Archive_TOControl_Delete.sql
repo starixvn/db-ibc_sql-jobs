@@ -67,6 +67,7 @@ BEGIN
 		SELECT  @query = N''		
 		SELECT	@query = @query + N'EXEC Task_TOControl_TransitionProcessedLog_Delete'
 		SELECT	@ExecuteSQL = N'EXECUTE DBCUST.CUSTDB.dbo.sp_executesql @query'
+		EXECUTE	sys.sp_executesql @ExecuteSQL, N'@query NVARCHAR(MAX)', @query
 
 		DROP TABLE #archiveDate
 	END
