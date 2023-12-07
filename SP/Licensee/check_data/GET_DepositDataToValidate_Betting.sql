@@ -49,6 +49,7 @@ AS
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 		- 20230626@Evan: Integrate MG-RNG [RedmineID: #189988]
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
+		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 
 	Param's Explanation:
 		@DrawFilter
@@ -253,6 +254,10 @@ BEGIN
 		,@LGTurnover MONEY
 		,@LGCustomerWl MONEY
 		,@LGBetCount MONEY
+		----SEA
+		,@SEATurnover MONEY
+		,@SEACustomerWl MONEY
+		,@SEABetCount MONEY
 
 	DECLARE @tblBettype TABLE (ProductPrefix VARCHAR(10), Bettype INT)
 
@@ -266,7 +271,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','MGCRNG','MGCLC','VG','VB', 'AB', 'NG2', 'CO', 'VS2', 
 			'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3',
-			'BTC', 'FGGL', 'MXG', 'JIG', 'YB', 'MGRNG', 'LG')
+			'BTC', 'FGGL', 'MXG', 'JIG', 'YB', 'MGRNG', 'LG', 'SEA')
 
 	-- Data Source
 	DECLARE @tblData AS TABLE (
@@ -1090,6 +1095,25 @@ BEGIN
 	FROM @tblData
 	WHERE ProductPrefix = 'LG'
 
+	-- SEA
+	SELECT
+		@SEATurnover = SUM(CASE
+						WHEN @DrawFilter IN (2, 3) THEN
+							CASE
+								WHEN Status = 111 THEN 0
+								WHEN Status IN (114, 115) THEN 0.5
+								ELSE 1
+							END
+						ELSE 1
+					END * Turnover),
+		@SEACustomerWl = SUM(WinLoss),
+		@SEABetCount = SUM(CASE
+								WHEN @DrawFilter = 2 AND Status = 111 THEN 0
+								ELSE BetCount
+							END)
+	FROM @tblData
+	WHERE ProductPrefix = 'SEA'
+
 	-- Result
 	SELECT
 		1 AS Id,
@@ -1140,6 +1164,7 @@ BEGIN
 		, ISNULL(@YBTurnover, 0) AS YB
 		, ISNULL(@MGRNGTurnover, 0) AS MGRNG
 		, ISNULL(@LGTurnover, 0) AS LG
+		, ISNULL(@SEATurnover, 0) AS SEA
 
 	UNION
 	SELECT
@@ -1191,6 +1216,7 @@ BEGIN
 		, ISNULL(@YBCustomerWl, 0)
 		, ISNULL(@MGRNGCustomerWl, 0)
 		, ISNULL(@LGCustomerWl, 0)
+		, ISNULL(@SEACustomerWl, 0)
 	UNION
 	SELECT
 		3
@@ -1241,6 +1267,7 @@ BEGIN
 		, ISNULL(@YBBetCount, 0)
 		, ISNULL(@MGRNGBetCount, 0)
 		, ISNULL(@LGBetCount, 0)
+		, ISNULL(@SEABetCount, 0)
 
 	SET NOCOUNT OFF
 END
