@@ -139,6 +139,12 @@ GO
 
 CREATE UNIQUE CLUSTERED INDEX [cix_cdc_bettrans] ON [dbo].[cdc_bettrans]
 (
+	[rowId] ASC
+) ON [cdc_bettrans_data]
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX [ix_cdc_bettrans_start_lsn] ON [dbo].[cdc_bettrans]
+(
 	[__$start_lsn] ASC,
 	[__$command_id] ASC,
 	[__$seqval] ASC,
