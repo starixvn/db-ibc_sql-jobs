@@ -45,6 +45,7 @@ AS
 		- 20230523@Evan: Integrate YeeBet LC [RedmineID: #187947]
 		- 20230626@Evan: Integrate MG-RNG [RedmineID: #189988]
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
+		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -150,6 +151,7 @@ BEGIN
 		,YB BIGINT
 		,MGRNG BIGINT
 		,LG BIGINT
+		,SEA BIGINT
 		)
 
 	--exec
@@ -203,6 +205,7 @@ BEGIN
 		,YB
 		,MGRNG
 		,LG
+		,SEA
 		)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
@@ -373,6 +376,7 @@ BEGIN
 		,YB
 		,MGRNG
 		,LG
+		,SEA
 		)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
