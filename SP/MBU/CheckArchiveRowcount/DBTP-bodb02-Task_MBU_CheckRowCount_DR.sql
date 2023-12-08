@@ -25,6 +25,8 @@ BEGIN;
 		,	@DRCompleted	BIT
 		;
 
+	DECLARE @ArchiveRange_TVS VARCHAR(50)
+
 	DECLARE	@email_body		NVARCHAR(MAX)
 		,	@subject		NVARCHAR(200)
 		;
@@ -104,7 +106,7 @@ BEGIN;
 				SET	@hasDiff = 0;
 			END;
 
-			DECLARE @ArchiveRange_TVS VARCHAR(50)
+			
 			SET @ArchiveRange_TVS = CONVERT(VARCHAR(12),@startdate, 23) + ' -> ' + CONVERT(VARCHAR(12),@EndDate,23)
 		
 			-- Build html
@@ -255,7 +257,6 @@ BEGIN;
 				SET	@hasDiff = 0;
 			END;
 
-			DECLARE @ArchiveRange_TVS VARCHAR(50)
 			SET @ArchiveRange_TVS = CONVERT(VARCHAR(12),@startdate, 23) + ' -> ' + CONVERT(VARCHAR(12),@EndDate,23)
 		
 			-- Build html
