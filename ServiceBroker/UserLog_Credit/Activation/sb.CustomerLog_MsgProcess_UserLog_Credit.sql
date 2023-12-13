@@ -16,6 +16,7 @@ ALTER PROCEDURE [sb].[CustomerLog_MsgProcess_UserLog_Credit]
 		- 20181101@Johnson: create sp [redmine: #105319]
 		- 20190530@Paul: Correct param name [Redmine: #113198]
 		- 20231110@Johnson: HF - Missing credit log [Redmine: #196720]
+		- 20231208@Johnson: Enhance log credit get Actualrate from DBCUST [redmine: #196720]
 */
 AS
 BEGIN
@@ -66,7 +67,7 @@ BEGIN
 								ActionID,
 								ActualRate,
 								LogDate)
-			SELECT UserID, CustID, Doing, OldValue, NewValue, IP, ActionID, 0 as ActualRate, LogDate	
+			SELECT UserID, CustID, Doing, OldValue, NewValue, IP, ActionID, ISNULL(ActualRate,0), LogDate	
 			FROM OPENXML(@handle,'/Root/Row',1) 
 					WITH (UserID  int,  
 						  CustID int,
@@ -75,18 +76,12 @@ BEGIN
 						  NewValue money,
 						  IP VARCHAR(15),
 						  ActionID int,
+						  ActualRate FLOAT,
 						  LogDate DATETIME
 						  ); 
 			
 			EXEC sp_xml_removedocument @handle; 
 			
-			UPDATE t
-			SET t.ActualRate = e.ActualRate
-			FROM bodb02.dbo.Customer c WITH (NOLOCK)
-				INNER JOIN @tmpLog t ON c.custid = t.custid
-				INNER JOIN bodb02.dbo.ExchangeDailyOanda e WITH (NOLOCK) ON c.Currency = e.ExchangeId
-			WHERE ExchangeDate = @Date
-						
 			INSERT INTO UserLog_Credit (UserID, 
 									CustID,							
 									Doing, 
@@ -150,7 +145,7 @@ BEGIN
 			VALUES ('UserLog_Others', @message_body, @error_Message,'UserLog_Credit','MessageType_CustomerLog_UserLog_Credit_BK',GETDATE(),0)
 			
 			-- Send Email to Production team for notification
-			EXEC sb.EmailNotification @QueueName = 'Queue_Others',@message_body = @message_body,@error_message = @error_Message, @functionName = 'Userlog_Others'
+			--EXEC sb.EmailNotification @QueueName = 'Queue_Others',@message_body = @message_body,@error_message = @error_Message, @functionName = 'Userlog_Others'
 				
 		END CATCH
 	END	

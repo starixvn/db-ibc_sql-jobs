@@ -10,7 +10,7 @@ AS
 	Revisions:    
 		- 20190509@Elodie: Initial SP [Redmine:#112458]
 		- 20220505@Eden: Exclude internal usage account from Archiving credit accounts process [#RM:172372]
-
+		- 20231212@Johnson: Enhance log credit get Actualrate from DBCUST [redmine: #196720]
 	Param's Explanation:
 		
 */
@@ -142,7 +142,10 @@ BEGIN
 	DECLARE @tmpCust TABLE (custid INT PRIMARY KEY, Credit MONEY, srecommend INT, mrecommend INT)
 	DECLARE @Log XML = '', @SB_Error BIT = 0, @LogData VARCHAR(1000), @ActionId INT = 1221
 	DECLARE @UserId INT = 10278938, @ITName VARCHAR(50) = 'starixIT'
-
+	DECLARE @Date DATE
+					
+	SELECT @Date = CURRENT_TIMESTAMP
+		
 	SELECT @LogData = 'Removed the unused account''s given credit by System'
 
 	--Clear credit for master
@@ -162,8 +165,11 @@ BEGIN
 			INNER JOIN @tmpCust c ON c.custid = ci.custid		
 		
 		SELECT @log = (
-							SELECT @UserID as UserID, t.CustID, t.credit as OldValue, 0 as NewValue, '' as IP, @LogData as Doing, @ActionId as ActionID, GETDATE() as LogDate
+							SELECT @UserID as UserID, t.CustID, t.credit as OldValue, 0 as NewValue, '' as IP, @LogData as Doing, @ActionId as ActionID, ISNULL(e.Actualrate,0) as Actualrate, GETDATE() as LogDate
 							FROM @tmpCust t
+								INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
+								LEFT JOIN ExchangeDailyOanda e WITH (NOLOCK) ON ci.currency = e.ExchangeID
+							WHERE ExchangeDate = @Date								
 							FOR XML RAW('Row')
 						)
 
@@ -217,8 +223,11 @@ BEGIN
 			INNER JOIN @tmpCust c ON c.custid = ci.custid		
 		
 		SELECT @log = (
-							SELECT @UserID as UserID, t.CustID, t.credit as OldValue, 0 as NewValue, '' as IP, @LogData as Doing, @ActionId as ActionID, getdate() as LogDate
+							SELECT @UserID as UserID, t.CustID, t.credit as OldValue, 0 as NewValue, '' as IP, @LogData as Doing, @ActionId as ActionID, ISNULL(e.Actualrate,0) as Actualrate, getdate() as LogDate
 							FROM @tmpCust t
+								INNER JOIN custinfo ci WITH(NOLOCK) ON t.custid = ci.custid
+								LEFT JOIN ExchangeDailyOanda e WITH (NOLOCK) ON ci.currency = e.ExchangeID
+							WHERE ExchangeDate = @Date
 							FOR XML RAW('Row')
 						)
 
