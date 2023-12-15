@@ -9,6 +9,7 @@ AS
 
 	Revisions:
 		- 20221011@Malcolm: Initialize SP [RedmineID: #177893]
+		- 20231205@Evan: Change the domain of email from @starixvn.com to @starixsoft.com [RedmineID: #195197]
 		
 */
 
@@ -37,9 +38,9 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM @ErrTable)
 	BEGIN
 		IF @@SERVERNAME IN ('DB052', 'DB053')
-			SELECT @recipients = 'sophia.nguyen@starixvn.com;pontus@starixvn.com'
+			SELECT @recipients = 'sophia.nguyen@starixsoft.com;pontus@starixsoft.com'
 		ELSE
-			SELECT @recipients = 'sophia.nguyen@starixvn.com'
+			SELECT @recipients = 'sophia.nguyen@starixsoft.com'
 
 		SELECT @Subject = 'SQL Server Job System: ''Import data from API_QueueTest'' failed on ' + @@SERVERNAME
 

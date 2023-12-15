@@ -22,6 +22,7 @@ AS
 		- 20220704@Sol : remove email account - [RedmineId: #175043]
 		- 20230309@Malcolm: Add table: ReferralLog [RedmineID: #183930]
 		- 20230321@Malcolm: Repull Weekly for BonusInfo [RedmineID: #185510]
+		- 20231205@Evan: Change the domain of email from @starixvn.com to @starixsoft.com [RedmineID: #195197]
 		
 */
 
@@ -339,9 +340,9 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM @ErrTable)
 	BEGIN
 		IF @@SERVERNAME IN ('DB052', 'DB053')
-			SELECT @recipients = 'sophia.nguyen@starixvn.com;pontus@starixvn.com'
+			SELECT @recipients = 'sophia.nguyen@starixsoft.com;pontus@starixsoft.com'
 		ELSE
-			SELECT @recipients = 'sophia.nguyen@starixvn.com'
+			SELECT @recipients = 'sophia.nguyen@starixsoft.com'
 
 		SELECT @Subject = 'SQL Server Job System: ''Import data from API_Queue'' failed on ' + @@SERVERNAME
 
