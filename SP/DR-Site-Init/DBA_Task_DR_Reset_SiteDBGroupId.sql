@@ -17,7 +17,7 @@ begin
 	begin
 		truncate table #__transIds
 
-		if @TableName = 'bettrans'
+		if @TableName = 'bettrans' and object_id('bettrans') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
@@ -25,7 +25,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'bettransm'
+		else if @TableName = 'bettransm' and object_id('bettransm') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
@@ -33,7 +33,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'bettransG'
+		else if @TableName = 'bettransG' and object_id('bettransG') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
@@ -41,7 +41,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'bettransLC'
+		else if @TableName = 'bettransLC' and object_id('bettransLC') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
@@ -49,7 +49,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'bettransRnG'
+		else if @TableName = 'bettransRnG' and object_id('bettransRnG') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
@@ -57,7 +57,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'translog'
+		else if @TableName = 'translog' and object_id('translog') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) translogid 
@@ -65,7 +65,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'bettrans14'
+		else if @TableName = 'bettrans14' and object_id('bettrans14') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
@@ -73,7 +73,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'bettransm14'
+		else if @TableName = 'bettransm14' and object_id('bettransm14') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
@@ -81,7 +81,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'bettransG14'
+		else if @TableName = 'bettransG14' and object_id('bettransG14') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
@@ -89,7 +89,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'bettransLC14'
+		else if @TableName = 'bettransLC14' and object_id('bettransLC14') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
@@ -97,7 +97,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'bettransRnG14'
+		else if @TableName = 'bettransRnG14' and object_id('bettransRnG14') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
@@ -105,7 +105,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'translog14'
+		else if @TableName = 'translog14' and object_id('translog14') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) translogid 
@@ -113,7 +113,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'zzzbettrans'
+		else if @TableName = 'zzzbettrans' and object_id('zzzbettrans') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
@@ -122,7 +122,7 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'zzzbettransm'
+		else if @TableName = 'zzzbettransm' and object_id('zzzbettransm') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
