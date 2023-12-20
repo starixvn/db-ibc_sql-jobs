@@ -113,6 +113,38 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
+		else if @TableName = 'zzbettrans'
+		begin
+			insert into #__transIds(transid)
+			select top(@__readBatch) transid 
+			from dbo.zzbettrans with(nolock) where SiteDBGroupID <> @NewSiteDBGroupId
+
+			set @__rowcount = @@rowcount
+		end
+		else if @TableName = 'zzzbettransm'
+		begin
+			insert into #__transIds(transid)
+			select top(@__readBatch) transid 
+			from dbo.zzzbettransm with(nolock) where SiteDBGroupID <> @NewSiteDBGroupId
+
+			set @__rowcount = @@rowcount
+		end
+		else if @TableName = 'TicketVoiding_RequestDetailTicket_Single'
+		begin
+			insert into #__transIds(transid)
+			select top(@__readBatch) transid 
+			from dbo.TicketVoiding_RequestDetailTicket_Single with(nolock) where SiteDBGroupID <> @NewSiteDBGroupId
+
+			set @__rowcount = @@rowcount
+		end
+		else if @TableName = 'TicketVoiding_RequestDetailTicket_SubParlay'
+		begin
+			insert into #__transIds(transid)
+			select top(@__readBatch) transid 
+			from dbo.TicketVoiding_RequestDetailTicket_SubParlay with(nolock) where SiteDBGroupID <> @NewSiteDBGroupId
+
+			set @__rowcount = @@rowcount
+		end
 
 		if @__rowcount = 0
 			return
@@ -134,10 +166,18 @@ begin
 
 			--call sp except here
 			--todo: please double check content of SP before run
-			exec dbo.ExecRep_NAP_Admin_09 @transIds = @__strTransIds
-				, @SiteDBGroupID = @NewSiteDBGroupId
-				, @tablename = @TableName
-				
+			if @TableName in ('bettrans', 'bettransLC', 'bettransRnG', 'bettransM', 'bettransG', 'translog')
+			begin
+				exec dbo.ExecRep_NAP_Admin_09 @transIds = @__strTransIds
+					, @SiteDBGroupID = @NewSiteDBGroupId
+					, @tablename = @TableName
+			end
+			else
+			begin
+				exec dbo.Bet_ExecRep14_00 @transIds = @__strTransIds
+					, @SiteDBGroupID = @NewSiteDBGroupId
+					, @tablename = @TableName
+			end
 			select @__rowId += 2000
 			
 		end
