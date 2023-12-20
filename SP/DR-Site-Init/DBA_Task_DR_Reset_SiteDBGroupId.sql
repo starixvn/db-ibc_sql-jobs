@@ -11,7 +11,7 @@ begin
 
 	create table #__transIds(transid bigint, rowId int identity(1,1) primary key)
 	declare @__rowId int, @__strTransIds varchar(max), @__message varchar(300)
-		, @__rowcount int = 0, @__readBatch int = 500000
+		, @__rowcount int = 0, @__readBatch int = 1000000
 
 	while 1 = 1
 	begin
