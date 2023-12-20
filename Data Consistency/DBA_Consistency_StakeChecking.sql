@@ -46,6 +46,8 @@ AS
 		- 20230720@July: SABA.games - Exclude bettypes 1673(Mission:Impossible)+1674(BLACKPINK) & VGaming - Exclude bettypes 3865(Mission:Impossible)+3866(BLACKPINK) - [Redmine: #191406]
 		- 20230720@July: SABA.games - Exclude bettype 1675(Candy Land) - [Redmine: #191810] & VGaming - Exclude bettype 3867(Candy Land) - [Redmine: #191579]
 		- 20230911@July: SABA.games - Exclude bettype 1677(Transformers) & VGaming - Exclude bettype 3869(Transformers) - [Redmine: #193766]
+		- 20231219@July: Live22 - Exclude bettype 7698(Promotion Prize) - [Redmine: #198518]
+		- 20231219@July: SABA.games - Exclude bettype 1682(One Piece) & VGaming - Exclude bettype 3874(One Piece) - [Redmine: #198502]
 	
 	Param's Expanation:
 
@@ -101,7 +103,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653, 1654, 1656, 1669, 1670, 1671, 1672, 1673, 1674, 1675, 1677)
+					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653, 1654, 1656, 1669, 1670, 1671, 1672, 1673, 1674, 1675, 1677, 1682)
 		END
 		ELSE IF @ProductId = 171 -- Vgaming
 		BEGIN
@@ -110,7 +112,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (3829, 3898, 3899, 3835, 3845, 3846, 3854, 3861, 3862, 3863, 3864, 3865, 3866, 3867, 3869) 
+					AND b.gameID NOT IN (3829, 3898, 3899, 3835, 3845, 3846, 3854, 3861, 3862, 3863, 3864, 3865, 3866, 3867, 3869, 3874) 
 		END
 		ELSE IF @ProductId = 247 -- Spadegaming
 		BEGIN
@@ -129,6 +131,15 @@ BEGIN
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
 					AND b.gameID NOT IN (5125, 5149, 5103, 5121)
+		END
+		ELSE IF @ProductId = 227 -- Live22 
+		BEGIN
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM	bodb02.dbo.bettransRNG b WITH (NOLOCK)
+			WHERE	ProductID = @ProductId
+					AND b.stake <= 0
+					AND b.status <> 'Completed'
+					AND b.gameID NOT IN (7698)
 		END
 		ELSE 
 		BEGIN
