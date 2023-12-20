@@ -174,7 +174,7 @@ begin
 
 			--call sp except here
 			--todo: please double check content of SP before run
-			if @TableName in ('bettrans', 'bettransLC', 'bettransRnG', 'bettransM', 'bettransG', 'translog')
+			if @TableName in ('bettrans', 'bettrans14', 'bettransG14', 'translog14', 'translog', 'bettransG')
 			begin
 				exec dbo.ExecRep_NAP_Admin_09 @transIds = @__strTransIds
 					, @SiteDBGroupID = @NewSiteDBGroupId
