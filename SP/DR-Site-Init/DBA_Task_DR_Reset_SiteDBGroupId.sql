@@ -113,11 +113,12 @@ begin
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'zzbettrans'
+		else if @TableName = 'zzzbettrans'
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
-			from dbo.zzbettrans with(nolock) where SiteDBGroupID <> @NewSiteDBGroupId
+			from dbo.zzzbettrans with(nolock) where SiteDBGroupID <> @NewSiteDBGroupId
+			group by transid
 
 			set @__rowcount = @@rowcount
 		end
@@ -126,24 +127,31 @@ begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
 			from dbo.zzzbettransm with(nolock) where SiteDBGroupID <> @NewSiteDBGroupId
+			group by transid
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'TicketVoiding_RequestDetailTicket_Single'
+		else if @TableName = 'TicketVoiding_RequestDetailTicket_Single' and object_id('TicketVoiding_RequestDetailTicket_Single') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
 			from dbo.TicketVoiding_RequestDetailTicket_Single with(nolock) where SiteDBGroupID <> @NewSiteDBGroupId
+			group by TransId
 
 			set @__rowcount = @@rowcount
 		end
-		else if @TableName = 'TicketVoiding_RequestDetailTicket_SubParlay'
+		else if @TableName = 'TicketVoiding_RequestDetailTicket_SubParlay' and object_id('TicketVoiding_RequestDetailTicket_SubParlay') is not null
 		begin
 			insert into #__transIds(transid)
 			select top(@__readBatch) transid 
 			from dbo.TicketVoiding_RequestDetailTicket_SubParlay with(nolock) where SiteDBGroupID <> @NewSiteDBGroupId
+			group by TransId
 
 			set @__rowcount = @@rowcount
+		end
+		else
+		begin
+			select 'this table ['+@TableName+'] does not exist.!' as 'MessageInfo'
 		end
 
 		if @__rowcount = 0
