@@ -12,6 +12,7 @@ AS
 
 	Revisions:
 		- 20230321@Malcolm: Initialize SP [RedmineID: #185510]
+		- 20231220@Sally: Mapping data type between both sides [RedmineID: #198668]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -47,8 +48,8 @@ BEGIN
 		,UserName		VARCHAR(30)
 		,CurrencyId		TINYINT
 		,SiteId			INT
-		,LockedAmount	DECIMAL(18,2)
-		,BonusAmount	DECIMAL(18,2)
+		,LockedAmount	DECIMAL(18,4)
+		,BonusAmount	DECIMAL(18,4)
 		,ExpiryTime		DATETIME
 		,BonusInfo		NVARCHAR(MAX)
 		,Memo			VARCHAR(100)
@@ -111,8 +112,8 @@ BEGIN
 					,t.c.value('@username', 'VARCHAR(30)')
 					,t.c.value('@currencyid', 'TINYINT')
 					,t.c.value('@siteid', 'INT')
-					,t.c.value('@lockedamount', 'DECIMAL(18, 2)')
-					,t.c.value('@bonusamount', 'DECIMAL(18, 2)')
+					,t.c.value('@lockedamount', 'DECIMAL(18, 4)')
+					,t.c.value('@bonusamount', 'DECIMAL(18, 4)')
 					,NULLIF(t.c.value('@expirytime', 'DATETIME'), '')
 					,t.c.value('@bonusinfo', 'NVARCHAR(MAX)')
 					,t.c.value('@memo', 'VARCHAR(100)')

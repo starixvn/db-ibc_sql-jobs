@@ -23,6 +23,7 @@ AS
 		- 20211018@Percy: Keep API's data within 7 days [RedmineID: #163336]
 		- 20220120@Percy: Keep raw data within 1 year [RedmineID: #167823]
 		- 20220222@Percy: Add TpBetRecord_bk table [RedmineID: #167823]
+		- 20231220@Sally: Mapping data type between both sides [RedmineID: #198668]
 
 	Param's Explanation:
 		@QueueIDInput: manually import
@@ -51,7 +52,7 @@ BEGIN
 	CREATE TABLE #tmpTpBetRecord
 	(
 		TpId			INT
-		,TransId		VARCHAR(50)
+		,TransId		VARCHAR(100)
 		,GameType		INT
 		,CustId			VARCHAR(45)
 		,UserName		VARCHAR(30)
@@ -60,12 +61,12 @@ BEGIN
 		,TpUserName		VARCHAR(50)
 		,TransTime		DATETIME
 		,SettledTime	DATETIME
-		,Stake			DECIMAL(20,4)
-		,ValidBet		DECIMAL(20,4)
-		,WinlostAmount	DECIMAL(20,4)
-		,Revenue		DECIMAL(20,4)
-		,ProgressiveBet	DECIMAL(20,4)
-		,ProgressiveWin	DECIMAL(20,4)
+		,Stake			DECIMAL(20,6)
+		,ValidBet		DECIMAL(20,6)
+		,WinlostAmount	DECIMAL(20,6)
+		,Revenue		DECIMAL(20,6)
+		,ProgressiveBet	DECIMAL(20,6)
+		,ProgressiveWin	DECIMAL(20,6)
 		,SettlementType	TINYINT
 		,TicketStatus	TINYINT
 		,OriginalState	VARCHAR(10)
@@ -156,7 +157,7 @@ BEGIN
 				FROM (
 					SELECT
 						t.c.value('@tpid', 'INT') AS TpId
-						,t.c.value('@transid', 'VARCHAR(50)') AS TransId
+						,t.c.value('@transid', 'VARCHAR(100)') AS TransId
 						,t.c.value('@gametype', 'INT') AS GameType
 						,t.c.value('@custid', 'VARCHAR(45)') AS CustId
 						,t.c.value('@username', 'VARCHAR(30)') AS UserName
@@ -165,12 +166,12 @@ BEGIN
 						,t.c.value('@tpusername', 'VARCHAR(50)') AS TpUserName
 						,t.c.value('@transtime', 'DATETIME') AS TransTime
 						,t.c.value('@settledtime', 'DATETIME') AS SettledTime
-						,t.c.value('@stake', 'DECIMAL(20,4)') AS Stake
-						,CAST(NULLIF(t.c.value('@validbet', 'varchar(30)'), '') AS DECIMAL(20,4)) AS ValidBet
-						,t.c.value('@winlostamount', 'DECIMAL(20,4)') AS WinlostAmount
-						,CAST(NULLIF(t.c.value('@revenue', 'varchar(30)'), '') AS DECIMAL(20,4)) AS Revenue
-						,CAST(NULLIF(t.c.value('@progressivebet', 'varchar(30)'), '') AS DECIMAL(20,4)) AS ProgressiveBet
-						,CAST(NULLIF(t.c.value('@progressivewin', 'varchar(30)'), '') AS DECIMAL(20,4)) AS ProgressiveWin
+						,t.c.value('@stake', 'DECIMAL(20,6)') AS Stake
+						,CAST(NULLIF(t.c.value('@validbet', 'varchar(30)'), '') AS DECIMAL(20,6)) AS ValidBet
+						,t.c.value('@winlostamount', 'DECIMAL(20,6)') AS WinlostAmount
+						,CAST(NULLIF(t.c.value('@revenue', 'varchar(30)'), '') AS DECIMAL(20,6)) AS Revenue
+						,CAST(NULLIF(t.c.value('@progressivebet', 'varchar(30)'), '') AS DECIMAL(20,6)) AS ProgressiveBet
+						,CAST(NULLIF(t.c.value('@progressivewin', 'varchar(30)'), '') AS DECIMAL(20,6)) AS ProgressiveWin
 						,t.c.value('@settlementtype', 'TINYINT') AS SettlementType
 						,t.c.value('@ticketstatus', 'TINYINT') AS TicketStatus
 						,t.c.value('@originalstate', 'VARCHAR(10)') AS OriginalState
