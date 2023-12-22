@@ -25,7 +25,8 @@ AS
 		- 20220603@Sol: Database - Sync-up Standby Server data - [RedmineID: #167261]
 		- 20230629@Sol: Database - Sync-up Standby Server data - exclude step 7/8 (logshipping synced) - [RedmineID: #190438]
 		- 20220614@Danny: Database - scale out credit [RedmineID: #181595]
-		- 20230808@Lewis: Change redundant recipient in Reset Winning - notification email [RedmineID: #192448]
+		- 20230808@Lewis: Change redundant recipient in Reset Winning - notification email [RedmineID: #192448]	
+		- 20231221@Lewis: Change domain @starixsoft.com [RedmineID: #180592]	
 */
 BEGIN
 	DECLARE @GenerateData TINYINT,
@@ -237,9 +238,9 @@ BEGIN
 									This is an auto-mail from ONEworks Report System. Please do not reply.'									 
 										
 					IF @Istest = 0 AND @@SERVERNAME IN ('DBGRP01N1','DBGRP01N2','DBGRP02N1','DBGRP02N2','DBGRP03N1','DBGRP03N2','DBTRANS')
-						SELECT	@recipients = 'kudanaga@enpine.com'
-								,@copy_recipients = 'jetyee88@enpine.com;kwongyong@enpine.com;seanlau@enpine.com;tp@enpine.com;it@starixsoft.com;jackyting@enpine.com;vh@enpine.com'
-								,@blind_copy_recipients = 'automail@enpine.com'
+						SELECT	@recipients = 'it@starixsoft.com'
+								,@copy_recipients = 'it@starixsoft.com'
+								,@blind_copy_recipients = 'it@starixsoft.com'
 					ELSE
 						SELECT  @recipients = 'dba_local@starixsoft.com'
 								,@copy_recipients = ''
@@ -512,9 +513,9 @@ BEGIN
 									This is an auto-mail from ONEworks Report System. Please do not reply.'									 
 										
 					IF @Istest = 0 AND @@SERVERNAME IN ('DBGRP01N1','DBGRP01N2','DBGRP02N1','DBGRP02N2','DBGRP03N1','DBGRP03N2','DBTRANS')
-						SELECT	@recipients = 'kudanaga@enpine.com'
-								,@copy_recipients = 'jetyee88@enpine.com;kwongyong@enpine.com;seanlau@enpine.com;tp@enpine.com;it@starixsoft.com;jackyting@enpine.com;vh@enpine.com'
-								,@blind_copy_recipients = 'automail@enpine.com'
+						SELECT	@recipients = 'it@starixsoft.com'
+								,@copy_recipients = 'it@starixsoft.com'
+								,@blind_copy_recipients = 'it@starixsoft.com'
 					ELSE
 						SELECT  @recipients = 'dba_local@starixsoft.com'
 								,@copy_recipients = ''
