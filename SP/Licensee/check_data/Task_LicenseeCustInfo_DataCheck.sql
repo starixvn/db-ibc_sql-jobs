@@ -10,6 +10,7 @@ ALTER PROCEDURE [dbo].[Task_LicenseeCustInfo_DataCheck]
 	Revisions: 
 	- 20170208@Fracis: Add @CheckType param to separate LicenseeCustInfo and LicenseeCust 
 	- 20180809@Sophia: HA - remove LicenseeCustInfo table [Redmine: #99464]
+	- 20231222@Johnson: Disable currency PE for Goldenfph, BODemoJS [redmine: #198398]
 	Param's Explanation:
 */
 AS 
@@ -45,7 +46,12 @@ BEGIN
 			AND ag.Username NOT LIKE '%Cas' + e.currency + '%' 
 			AND ag.Username NOT LIKE '%Bank' + e.currency + '%' 
 			--Hard code to remove KeenOcenan rule-broken usernames
-			AND d.DummyAgentId NOT IN (14373733)
+			AND d.DummyAgentId NOT IN (14373733,
+				--Goldenfph
+				95542303,95542313,95542314,95542315,95542316,95542317,95542318,95542319,95542320,95542321,95542322,
+				--BODemoJS
+				104428365,104428477,104428479,104428481,104428483,104428485,104428487,104428489,104428491,104428493,104428495
+				)
 		SET @RowCount = @@ROWCOUNT
 		DROP TABLE #Dummy
 
