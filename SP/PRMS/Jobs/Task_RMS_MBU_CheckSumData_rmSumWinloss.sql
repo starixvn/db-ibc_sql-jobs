@@ -19,6 +19,7 @@ AS
 		- 20220917@Sophia: Fix Divide by Zero [Redmine: #177934]
 		- 20230530@Cherry: Void tickets in bettrans14 (#188647)
 		- 20231020@Cherry: Parlay Generator (#195498)
+		- 20231201@Cherry: Parlay Type for Parlay Boost (#197680)
 */
 
 BEGIN
@@ -201,6 +202,8 @@ BEGIN
 			,COUNT(1) AS betcount
 			,b.recommend
 			,CASE
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bact = 5 AND b.oddsspread = 2 THEN 78 --Parlay Generator & Boost
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 2 THEN 8 --Parlay Boost
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bact = 5 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
@@ -235,6 +238,8 @@ BEGIN
 			,b.actualrate
 			,b.recommend
 			,CASE
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bact = 5 AND b.oddsspread = 2 THEN 78 --Parlay Generator & Boost
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 2 THEN 8 --Parlay Boost
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bact = 5 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2

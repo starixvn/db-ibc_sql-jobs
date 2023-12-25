@@ -226,7 +226,7 @@ BEGIN
 							INNER JOIN bodb_archive.dbo.match_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 							INNER JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid
 						WHERE  bm.refno IN (SELECT value FROM STRING_SPLIT('''''+@str_refno+''''','''',''''))
-							AND bm.winlostdate BETWEEN DATEADD(DAY, -45, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''') AND DATEADD(DAY, -1, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''')
+							AND bm.winlostdate BETWEEN DATEADD(DAY, -60, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''') AND DATEADD(DAY, -1, '''''+CONVERT(VARCHAR(10), @BalanceUpDay, 120)+''''')
 						''
 						)
 				'
