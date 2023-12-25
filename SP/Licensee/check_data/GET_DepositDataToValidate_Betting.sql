@@ -50,7 +50,8 @@ AS
 		- 20230626@Evan: Integrate MG-RNG [RedmineID: #189988]
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
-
+		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
+ 
 	Param's Explanation:
 		@DrawFilter
 			- 1: Normal
@@ -258,6 +259,10 @@ BEGIN
 		,@SEATurnover MONEY
 		,@SEACustomerWl MONEY
 		,@SEABetCount MONEY
+		----WE
+		,@WETurnover MONEY
+		,@WECustomerWl MONEY
+		,@WEBetCount MONEY
 
 	DECLARE @tblBettype TABLE (ProductPrefix VARCHAR(10), Bettype INT)
 
@@ -271,7 +276,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','MGCRNG','MGCLC','VG','VB', 'AB', 'NG2', 'CO', 'VS2', 
 			'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3',
-			'BTC', 'FGGL', 'MXG', 'JIG', 'YB', 'MGRNG', 'LG', 'SEA')
+			'BTC', 'FGGL', 'MXG', 'JIG', 'YB', 'MGRNG', 'LG', 'SEA', 'WE')
 
 	-- Data Source
 	DECLARE @tblData AS TABLE (
@@ -1113,6 +1118,25 @@ BEGIN
 							END)
 	FROM @tblData
 	WHERE ProductPrefix = 'SEA'
+	
+	-- WE
+	SELECT
+		@WETurnover = SUM(CASE
+						WHEN @DrawFilter IN (2, 3) THEN
+							CASE
+								WHEN Status = 111 THEN 0
+								WHEN Status IN (114, 115) THEN 0.5
+								ELSE 1
+							END
+						ELSE 1
+					END * Turnover),
+		@WECustomerWl = SUM(WinLoss),
+		@WEBetCount = SUM(CASE
+								WHEN @DrawFilter = 2 AND Status = 111 THEN 0
+								ELSE BetCount
+							END)
+	FROM @tblData
+	WHERE ProductPrefix = 'WE'
 
 	-- Result
 	SELECT
@@ -1165,6 +1189,7 @@ BEGIN
 		, ISNULL(@MGRNGTurnover, 0) AS MGRNG
 		, ISNULL(@LGTurnover, 0) AS LG
 		, ISNULL(@SEATurnover, 0) AS SEA
+		, ISNULL(@WETurnover, 0) AS WE
 
 	UNION
 	SELECT
@@ -1217,6 +1242,7 @@ BEGIN
 		, ISNULL(@MGRNGCustomerWl, 0)
 		, ISNULL(@LGCustomerWl, 0)
 		, ISNULL(@SEACustomerWl, 0)
+		, ISNULL(@WECustomerWl, 0)
 	UNION
 	SELECT
 		3
@@ -1268,6 +1294,7 @@ BEGIN
 		, ISNULL(@MGRNGBetCount, 0)
 		, ISNULL(@LGBetCount, 0)
 		, ISNULL(@SEABetCount, 0)
+		, ISNULL(@WEBetCount, 0)
 
 	SET NOCOUNT OFF
 END
