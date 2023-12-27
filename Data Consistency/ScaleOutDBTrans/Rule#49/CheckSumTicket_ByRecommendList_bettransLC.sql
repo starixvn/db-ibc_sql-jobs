@@ -15,6 +15,8 @@ AS
 		- 20221124@July: Clone SP - Support filter recommend list [Redmine:#178864]
 		- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 		- 20231109@July: Data consistency - Add config DBAGE & DBACC [Redmine:#196690]
+		- 20240102@July: Extend data type for some columns in translog, bettransG, bettransLC, bettransRNG [Redmine:#198966]
+
 */
 BEGIN
 	SET NOCOUNT ON
@@ -36,7 +38,7 @@ DECLARE @recommend INT;
 		[custid] INT, [odds] SMALLMONEY, [stake] MONEY, [status] NVARCHAR(10), [apositiontaking] SMALLMONEY, [mpositiontaking] SMALLMONEY, [tpositiontaking] SMALLMONEY, [spositiontaking] SMALLMONEY, [playerdiscount] DECIMAL(9,8), 
 		[discount] DECIMAL(9,8),[adiscount] DECIMAL(9,8), [sdiscount] DECIMAL(9,8), [creator] INT, [betfrom] VARCHAR(4), [actualrate] FLOAT, [actual_stake] MONEY, [currency] TINYINT, [CurrencyName] NVARCHAR(50), 
 		[Recommend] INT, [mrecommend] INT, [srecommend] INT, [ip] VARCHAR(45), [statusID] TINYINT, [balance] MONEY, [Username] NVARCHAR(50), [transdesc] NVARCHAR(1000), [productID] SMALLINT, [gameID] SMALLINT, [vendorID] INT, [GameId3rd] VARCHAR(100), 
-		[TranId3rd] VARCHAR(100), [RefNo] BIGINT, [IsSum] BIT, [winlost] MONEY, [awinlost] MONEY, [mwinlost] MONEY, [swinlost] MONEY, [playercomm] MONEY, [comm] MONEY, [acomm] MONEY, [scomm] MONEY, [Transdate3rd] DATETIME, [NetStake] MONEY, [SiteID] VARCHAR(7)
+		[TranId3rd] VARCHAR(200), [RefNo] BIGINT, [IsSum] BIT, [winlost] MONEY, [awinlost] MONEY, [mwinlost] MONEY, [swinlost] MONEY, [playercomm] MONEY, [comm] MONEY, [acomm] MONEY, [scomm] MONEY, [Transdate3rd] DATETIME, [NetStake] MONEY, [SiteID] VARCHAR(7)
 	)
 	
 	INSERT INTO #tmp_recommendlist (recommend)

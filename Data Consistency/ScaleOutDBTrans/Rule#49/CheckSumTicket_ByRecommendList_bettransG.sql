@@ -14,6 +14,8 @@ AS
 	Revisions:
 		- 20221124@July: Clone SP - Support filter recommend list [Redmine:#178864]
 		- 20231109@July: Data consistency - Add config DBAGE & DBACC [Redmine:#196690]
+		- 20240102@July: Extend data type for some columns in translog, bettransG, bettransLC, bettransRNG [Redmine:#198966]
+
 */
 BEGIN
 	SET NOCOUNT ON
@@ -35,7 +37,7 @@ BEGIN
 		[custid] INT, [oddsid] INT, [odds] SMALLMONEY, [stake] MONEY, [status] NVARCHAR(10), [winlost] MONEY, [betteam] NVARCHAR(50), [creator] INT, [refno] BIGINT, [betfrom] NVARCHAR(4),
 		[apositiontaking] SMALLMONEY, [mpositiontaking] SMALLMONEY, [tpositiontaking] SMALLMONEY, [awinlost] MONEY, [mwinlost] MONEY, [playerdiscount] DECIMAL(9,8), [discount] DECIMAL(9,8), [adiscount] DECIMAL(9,8), [playercomm] MONEY, [comm] MONEY, 
 		[acomm] MONEY,  [actualrate] FLOAT, [matchid] INT, matchdate SMALLDATETIME, [statuswinlost] TINYINT, [ruben] TINYINT, [bettype] SMALLINT, [spositiontaking] SMALLMONEY, [swinlost] MONEY, [sdiscount] DECIMAL(9,8), [scomm] MONEY, [statusID] TINYINT,
-		[SiteID] VARCHAR(7), [TransDesc] NVARCHAR(2000), [BetID3rd] NVARCHAR(50), [actual_stake] MONEY, [netstake] MONEY
+		[SiteID] VARCHAR(7), [TransDesc] NVARCHAR(2000), [BetID3rd] NVARCHAR(200), [actual_stake] MONEY, [netstake] MONEY
 	)
 	
 	INSERT INTO #tmp_recommendlist (recommend)
