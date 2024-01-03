@@ -46,7 +46,7 @@ BEGIN
 			SET @interval  =  GETDATE()
 		END
 	
-		IF(@Jobname = 'bodb_cdc : pull data 4 bettrans')
+		IF(@Jobname = 'bodb_age : pull data 4 bettrans')
 			EXEC dbo.cdc_pull_data_bettrans
 
 		
