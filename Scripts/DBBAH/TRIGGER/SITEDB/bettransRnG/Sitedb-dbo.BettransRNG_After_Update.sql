@@ -54,6 +54,7 @@ AS
         - 20220912@Helen: clone trigger from db05 to sitedb for scaleout project [176932]
 		- 20230615@Kathy: add new column winlostdate [Redmine:#181595]
 		- 20230912@Louisa: Capture Bet Rejected [Redmine:#193830]
+		- 20240102@Kathy: Trigger hasn't been covered in case placing bet many choices for a game of MaxGame and FGG [Redmine:#197575]
 */
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
@@ -74,10 +75,10 @@ BEGIN
         WHEN i.custid = 0 THEN 130 -- cancel transfer (custid set to zero)
         WHEN i.IsSum = 1 AND d.IsSum = 0 THEN 33 -- Record SUM
         WHEN i.statusid = 102 THEN 050 -- Void Bet
-        WHEN d.statusid = 0 THEN CASE WHEN i.statusID = 101 THEN 020 -- running to reject
-									  WHEN i.statusid > 0 THEN 030 -- Settled : running -> Won/Lose/Draw/Refund
-									  END
-        WHEN d.statusid = 102 AND i.statusid = 0 THEN 055 -- unvoid/recover : void -> running
+        WHEN d.statusid = 0 AND i.statusID = 101 THEN 020 -- running to reject
+		WHEN d.statusid = 0 AND	i.statusID = 0 AND (i.actual_stake <> d.actual_stake) THEN 12 -- place bet more: running to running
+		WHEN d.statusid = 0 AND (i.statusid BETWEEN 111 AND 113 OR i.statusid = 103) THEN 030 -- Settled : running -> Won/Lose/Draw/Refund
+		WHEN d.statusid = 102 AND i.statusid = 0 THEN 055 -- unvoid/recover : void -> running
 		WHEN d.statusid = 1 AND i.statusID = 101 THEN 020 -- waiting --> reject
         WHEN d.statusid > 0 THEN CASE i.statusid WHEN 0 THEN 032 ELSE 031 END -- resettle or unsettle
         ELSE 0 END,
@@ -94,12 +95,9 @@ BEGIN
 					END +
 					CASE
 						WHEN i.custid = 0 THEN ' cancelled, ' + d.[status] + ' to ' + i.[status]
-						WHEN d.statusid = 0 THEN
-							CASE i.statusid
-							WHEN 102 THEN ' voided'
-							ELSE ' settled, ' + d.[status] + ' to ' + i.[status]
-							END
-						WHEN i.statusID = d.statusID THEN ' updated'
+						WHEN d.statusid = 0 AND i.statusID = 102 THEN ' voided'
+						WHEN d.statusID = 0 AND i.statusID = 0 AND (i.actual_stake <> d.actual_stake) THEN ' inserted as ' + i.[status]
+						WHEN d.statusid = 0 AND (i.statusID BETWEEN 111 AND 113 OR i.statusID = 103) THEN ' settled, ' + d.[status] + ' to ' + i.[status]
 						ELSE ' updated, ' + d.[status] + ' to ' + i.[status]
 					END
 		END
