@@ -1,12 +1,12 @@
-/*<info serverAlias="DBAGE-bodb02" isNested="0"></info>*/
+/*<info serverAlias="DBAGE-bodb_AGE" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_CDC_Process_Bettrans_compact]
 AS
 /*
 	Created by: 20231201@Bobby
 	Task: 153357 - Alpha - CDC bettrans_compact
-	DB: DBAGE.bodb02
+	DB: DBAGE.bodb_AGE
 	Revisions:
-		
+		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
 */
 
 BEGIN
@@ -15,7 +15,7 @@ BEGIN
 
 	DECLARE @lastRowId	BIGINT = 0 --515426
 		, @maxRowId		bigint = 0 --1070646
-		, @batchSize	INT = 500
+		, @batchSize	INT = 50000
 		, @batchCount	INT
 		, @sysVName		VARCHAR(200) = 'Age_cdc_bettrans_compact'
 		, @sysVValue	VARCHAR(200) = '';
@@ -30,11 +30,15 @@ BEGIN
 
 	SELECT @lastRowId = CAST(JSON_VALUE(@sysVValue, '$.lastRowId') AS BIGINT)
 
+	--TODO: Capture maxRowId
 	SELECT @maxRowId		= MAX(rowid)
-		, @minActiondate	= MIN(Actiondate)
 		, @maxActiondate	= MAX(Actiondate)
 	FROM dbo.cdc_bettrans WITH(ROWLOCK)
 	WHERE rowid > @lastRowId;
+
+	SELECT TOP(1) @maxRowId = IIF([__$operation] = 3, @maxRowId - 1, @maxRowId)
+	FROM dbo.cdc_bettrans WITH(NOLOCK)
+	WHERE rowid = @maxRowId
 
 	DROP TABLE IF EXISTS #bettrans_compact_tmp;
 	CREATE TABLE #bettrans_compact_tmp(
@@ -83,16 +87,65 @@ BEGIN
         ,[ticketType] TINYINT
 	);
 
-	SET @startTime = CURRENT_TIMESTAMP;
 
-	WHILE (@lastRowId <= @maxRowId)
+	DROP TABLE IF EXISTS #cdc_bettrans_batch;
+	CREATE TABLE #cdc_bettrans_batch(
+		[rowId] [bigint] NOT NULL,
+		[cmdType] [int] NOT NULL,
+		[cmdId] [int] NULL,
+		[cmdTxn] [binary](10) NOT NULL,
+		[transid] [bigint] NULL,
+		[custid] [int] NULL,
+		[recommend] [int] NULL,
+		[mrecommend] [int] NULL,
+		[srecommend] [int] NULL,
+		[odds] [smallmoney] NULL,
+		[winlostdate] [smalldatetime] NULL,
+		[bettype] [smallint] NULL,
+		[stake] [money] NULL,
+		[actual_stake] [money] NULL,
+		[winlost] [money] NULL,
+		[awinlost] [money] NULL,
+		[mwinlost] [money] NULL,
+		[swinlost] [money] NULL,
+		[playercomm] [money] NULL,
+		[comm] [money] NULL,
+		[acomm] [money] NULL,
+		[scomm] [money] NULL,
+		[apositiontaking] [smallmoney] NULL,
+		[mpositiontaking] [smallmoney] NULL,
+		[spositiontaking] [smallmoney] NULL,
+		[tpositiontaking] [smallmoney] NULL,
+		[epositiontaking] [smallmoney] NULL,
+		[statusID] [tinyint] NULL,
+		[modds] [smallmoney] NULL,
+		[oddsspread] [money] NULL,
+		[betid] [bigint] NULL,
+		[betdaqid] [bigint] NULL,
+		[matchid] [int] NULL,
+		[actiondate] [datetime] NULL
+	);
+	CREATE CLUSTERED INDEX [CIX_#cdc_bettrans_batch] ON #cdc_bettrans_batch
+	(
+		[srecommend] ASC,
+		[winlostdate] ASC,
+		[bettype] ASC
+	);
+
+	SET @startTime = CURRENT_TIMESTAMP;
+	DECLARE @batchTime DATETIME;
+
+	WHILE (@lastRowId < @maxRowId)
 	BEGIN
 		
-		DELETE dbo.cdc_bettrans_batch;
-		DELETE #merge_update_tmp;
-		DELETE #bettrans_compact_tmp;
+		TRUNCATE TABLE #cdc_bettrans_batch;
+		TRUNCATE TABLE #merge_update_tmp;
+		TRUNCATE TABLE #bettrans_compact_tmp;
+
+		--- Batch time duration
+		SET @batchTime = CURRENT_TIMESTAMP;
 		
-		INSERT INTO dbo.cdc_bettrans_batch
+		INSERT INTO #cdc_bettrans_batch
 		SELECT TOP (@batchSize)
 		--SELECT
 			[rowId]
@@ -100,7 +153,7 @@ BEGIN
 			,[__$command_id] AS cmdId
 			,[__$start_lsn] AS cmdTxn
 			,[transid]
-			,[custid],[recommend],[mrecommend],[srecommend]
+			,b.[custid],b.[recommend],b.[mrecommend],b.[srecommend]
 			,[odds]
 			,[winlostdate]
 			,[bettype]
@@ -126,19 +179,19 @@ BEGIN
 			,[betdaqid]
 			,[matchid]
 			,[actiondate]
-		FROM [dbo].[cdc_bettrans] WITH(NOLOCK)
-		WHERE rowId > @lastRowId AND rowId <= @maxRowId
-		ORDER BY rowId ASC;
+		FROM [dbo].[cdc_bettrans] b WITH(NOLOCK)
+			LEFT JOIN bodb02.dbo.Dep_CustSuper cs WITH(NOLOCK) ON cs.custid = b.srecommend
+		WHERE b.rowId > @lastRowId AND b.rowId <= @maxRowId
+			AND cs.custid IS NULL
+		ORDER BY b.rowId ASC;
 
 		SET @batchCount = @@ROWCOUNT;
-		IF (@batchCount = 0) GOTO END_PROCESS;
+		IF (@batchCount = 0) BREAK;
 
 		;WITH refSuper AS 
 		(
 			SELECT DISTINCT b.srecommend, b.winlostdate, b.bettype
-			FROM dbo.cdc_bettrans_batch b WITH(NOLOCK)
-			LEFT JOIN bodb02.dbo.Dep_CustSuper cs WITH(NOLOCK) ON cs.custid = b.srecommend
-			WHERE cs.custid IS NULL
+			FROM #cdc_bettrans_batch b WITH(NOLOCK)
 		)
 		,SuperExtraPT AS (
 			SELECT tbl.ProductID, b.bettype, b.srecommend, b.winlostdate, T.ExtraPT, tbl.RefTable
@@ -177,8 +230,8 @@ BEGIN
 			   ,tbl.productId
 			   ,ck.sporttype
 			   ,b.bettype
-			   ,CASE WHEN betdaqid <> -2 THEN ISNULL(l.LeagueGroupID,0) ELSE 0 END AS LeagueGroupID
-			   ,CASE WHEN b.betdaqid = -2 THEN 1 ELSE 0 END ticketType
+			   ,ck.LeagueGroupID
+			   ,ck.ticketType
 			   ,b.cmdType, b.cmdId, b.cmdTxn
 			   ,b.statusID
 			   ,ABS(stake) Turnover
@@ -269,84 +322,20 @@ BEGIN
 								END * IIF(tbl.ExtraPT IS NOT NULL, tbl.ExtraPT, ISNULL(b.epositiontaking, 0)) 
 						END
 					) AS ExtraComm
-		  
-			FROM dbo.cdc_bettrans_batch b WITH(ROWLOCK)
+				,CHECKSUM(CONCAT_WS('|',b.custid,b.recommend,b.mrecommend,b.srecommend,b.winlostdate,tbl.productId,ck.sporttype,b.bettype,ck.LeagueGroupID,ck.ticketType)) AS ckKey
+			FROM #cdc_bettrans_batch b WITH(ROWLOCK)
 			INNER JOIN SuperExtraPT tbl ON b.srecommend = tbl.srecommend AND b.bettype = tbl.bettype and b.winlostdate = tbl.winlostdate
-			LEFT JOIN bodb02.dbo.match m WITH(NOLOCK) ON b.matchid = m.matchid
+			LEFT JOIN bodb02.dbo.match m WITH(NOLOCK) ON b.matchid = m.matchid AND m.sporttype IN (1, 2, 5, 43, 50)
 			LEFT JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid=l.leagueid AND l.LeagueGroupID IN (42,74,108,113,122,151)
 			CROSS APPLY (
 				SELECT 
-					CASE WHEN ( 
-						(l.LeagueGroupID IN (42,74,108,113) AND m.sporttype = 1 ) 
-							OR (l.LeagueGroupID IN (122, 42) AND m.sporttype = 2 )
-							OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
-							OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
-							OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
-						) AND betdaqid <> -2 THEN m.sporttype
-					WHEN b.bettype BETWEEN 81 AND 120 OR -- Number Game 
-						b.bettype BETWEEN 8101 AND 8120 OR -- Happy 5 
-						b.bettype BETWEEN 3601 AND 3610 THEN 161 -- Happy 5 Linked Games
-					WHEN b.bettype BETWEEN 1201 AND 1299 THEN 180 -- Virtual Sport
-					WHEN b.bettype BETWEEN 2700 AND 2899 THEN 190 -- Betradar Virtual Sport
-					WHEN b.bettype IN (71, 72) THEN 251
-					WHEN b.bettype BETWEEN 1501 AND 1599 THEN 202 -- Keno
-					WHEN b.bettype BETWEEN 1021 AND 1099 THEN 220 -- Keno Lottery
-					WHEN b.bettype BETWEEN 1700 AND 1799 THEN 255 -- Gold Deluxe
-					WHEN b.bettype BETWEEN 1800 AND 1899 THEN 250 --- AG Casino 
-					WHEN b.bettype = 1900 THEN 249 --- Vegas Games 
-					WHEN b.bettype BETWEEN 18000 AND 18099 THEN 204 --- Colossus Bets
-					WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
-					WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
-					WHEN b.bettype BETWEEN 2301 AND 2399 OR
-						b.bettype BETWEEN 2901 AND 2999 THEN 210
-					WHEN b.bettype BETWEEN 2401 AND 2499 THEN 211 --- Allbet
-					WHEN b.bettype BETWEEN 4001 AND 4100 OR 
-						b.bettype BETWEEN 5800 AND 5999 THEN 212 -- Voidbridge
-					WHEN b.bettype BETWEEN 4101 AND 4300 OR 
-						b.bettype BETWEEN 6701 AND 7000 THEN 248 -- Pragmatic
-					WHEN b.bettype BETWEEN 2501 AND 2699 THEN 213 --NG2 -
-					WHEN b.bettype BETWEEN 1011 AND 1020 THEN 219 --Fishing World -
-					WHEN b.bettype BETWEEN 8000 AND 8099 THEN 221 -- Exchange
-					WHEN b.bettype BETWEEN 1901 AND 1999 THEN 165 -- Card Club
-					WHEN b.bettype BETWEEN 4301 AND 4600 THEN 247 -- Spadegaming
-					WHEN b.bettype BETWEEN 4601 AND 4900 THEN 245 -- Virtual Games
-					WHEN b.bettype BETWEEN 1611 AND 1699 THEN 200 -- Saba.Club
-					WHEN b.bettype BETWEEN 3001 AND 3099 THEN 244 -- SA Gaming
-					WHEN b.bettype BETWEEN 3101 AND 3150 THEN 243 -- AE Casino
-					WHEN b.bettype BETWEEN 5001 AND 5099 THEN 223 -- Indo 4D
-					WHEN b.bettype BETWEEN 4901 AND 5000 THEN 222 -- Table Games	
-					WHEN b.bettype BETWEEN 3300 AND 3399 THEN 241 -- BBIN	
-					WHEN b.bettype BETWEEN 3201 AND 3299 THEN 242 -- IBCBet Live Casino		
-					WHEN b.bettype BETWEEN 5601 AND 5699 THEN 225 -- ION					
-					WHEN b.bettype BETWEEN 5500 AND 5599 THEN 224 -- RNG War		
-					WHEN b.bettype BETWEEN 6001 AND 6300 THEN 232 -- PG Soft
-					WHEN b.bettype BETWEEN 6401 AND 6700 THEN 234-- Joker
-					WHEN b.bettype BETWEEN 3401 AND 3499 THEN 233 -- WM
-					WHEN b.bettype BETWEEN 5701 AND 5799 THEN 236 -- GDG
-					WHEN b.bettype = 5301 THEN 231 -- Virtual Sports 3
-					WHEN b.bettype BETWEEN 3501 AND 3599 THEN 239 -- BG
-					WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MaxGame
-					WHEN b.bettype BETWEEN 17000 AND 17030 THEN 246 -- Saba promotion
-					WHEN b.bettype BETWEEN 3611 AND 3620 THEN 169 -- Sports Lottery
-					WHEN b.bettype BETWEEN 3701 AND 3799 THEN 170 -- PP Live Casino
-					WHEN b.bettype BETWEEN 7001 AND 7300 THEN 238 -- Habanero
-					WHEN b.bettype BETWEEN 7301 AND 7600 THEN 167 -- Creative Gaming
-					WHEN b.bettype BETWEEN 3801 AND 3899 THEN 171 -- VGaming 
-					WHEN b.bettype BETWEEN 7801 AND 7899 THEN 174 -- AdvantPlay Mini
-					WHEN b.bettype BETWEEN 7701 AND 7799 THEN 172 -- AdvantPlay Product
-					WHEN b.bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin Product
-					WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG Product
-					WHEN b.bettype BETWEEN 8900 AND 8999 THEN 156 -- SEAL Entertainment
-					WHEN b.bettype BETWEEN 8400 AND 8699 THEN 155 -- Microgaming
-					WHEN b.bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
-					WHEN b.bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
-					WHEN b.bettype BETWEEN 5302 AND 5399 THEN 178 -- VS3-LeapGaming(New)
-					ELSE 0
-				END AS sporttype
+					CASE WHEN  b.betdaqid <> -2 AND l.LeagueGroupID > 0 THEN ISNULL(m.sporttype, 0) ELSE 0 END AS sporttype
+					,CASE WHEN b.betdaqid <> -2 AND m.sporttype > 0 THEN ISNULL(l.LeagueGroupID,0) ELSE 0 END AS LeagueGroupID
+					,CASE WHEN b.betdaqid = -2 THEN 1 ELSE 0 END ticketType
 			) AS ck
 		)
 		INSERT INTO #bettrans_compact_tmp
-		SELECT cal.custid, pre.winlostdate, tmp.productId, tmp.sporttype, tmp.bettype, tmp.leagueGroupID, tmp.ticketType
+		SELECT cal.custid, pre.winlostdate, pre.productId, pre.sporttype, pre.bettype, pre.leagueGroupID, pre.ticketType
 			,SUM(cal.betcount) AS betcount
 			,SUM(cal.turnover) AS turnover
 			,SUM(cal.netTurnover) AS netTurnover
@@ -365,14 +354,18 @@ BEGIN
 		FROM sum_winloss_tmp AS tmp
 		LEFT JOIN sum_winloss_tmp AS old ON old.transid = tmp.transid and old.cmdId = tmp.cmdId and old.rowId < tmp.rowId AND old.cmdType IN (3) and old.cmdTxn =  tmp.cmdTxn
 		CROSS APPLY (
-			SELECT tmp.winlostdate, tmp.BetCount, tmp.turnover, tmp.netTurnover, tmp.anetTurnover, tmp.mnetTurnover, tmp.snetTurnover, tmp.TurnoverNoDraw, tmp.winlost, tmp.awinlost, tmp.mwinlost, tmp.swinlost
+			SELECT tmp.custid, tmp.recommend, tmp.mrecommend, tmp.srecommend
+				, tmp.winlostdate, tmp.productId, tmp.sporttype, tmp.bettype, tmp.leagueGroupID, tmp.ticketType
+				, tmp.BetCount, tmp.turnover, tmp.netTurnover, tmp.anetTurnover, tmp.mnetTurnover, tmp.snetTurnover, tmp.TurnoverNoDraw, tmp.winlost, tmp.awinlost, tmp.mwinlost, tmp.swinlost
 				, tmp.playercomm, tmp.comm, tmp.acomm, tmp.scomm, tmp.grosscomm, tmp.agrosscomm, tmp.mgrosscomm, tmp.sgrosscomm, tmp.ExtraWinloss, tmp.ExtraComm
-				, CASE WHEN old.transid > 0 AND old.winlostdate <> tmp.winlostdate THEN 2 ELSE tmp.cmdType END AS cmdType, tmp.statusID
+				, CASE WHEN old.transid > 0 AND old.ckKey <> tmp.ckKey THEN 2 ELSE tmp.cmdType END AS cmdType, tmp.statusID
 			UNION ALL
-			SELECT old.winlostdate, old.BetCount, old.turnover, old.netTurnover, old.anetTurnover, old.mnetTurnover, old.snetTurnover, old.TurnoverNoDraw, old.winlost, old.awinlost, old.mwinlost, old.swinlost
+			SELECT old.custid, old.recommend, old.mrecommend, old.srecommend
+				, old.winlostdate, old.productId, old.sporttype, old.bettype, old.leagueGroupID, old.ticketType
+				, old.BetCount, old.turnover, old.netTurnover, old.anetTurnover, old.mnetTurnover, old.snetTurnover, old.TurnoverNoDraw, old.winlost, old.awinlost, old.mwinlost, old.swinlost
 				, old.playercomm, old.comm, old.acomm, old.scomm, old.grosscomm, old.agrosscomm, old.mgrosscomm, old.sgrosscomm, old.ExtraWinloss, old.ExtraComm
 				, 1 AS cmdType, old.statusID
-			WHERE old.transid > 0 AND old.winlostdate <> tmp.winlostdate
+			WHERE old.transid > 0 AND old.ckKey <> tmp.ckKey
 		) AS pre
 		CROSS APPLY (
 			SELECT 
@@ -387,7 +380,7 @@ BEGIN
 				end as preCal
 		) AS ck
 		CROSS APPLY (
-			SELECT tmp.custid, 1, pre.BetCount*ck.preCal
+			SELECT pre.custid, 1, pre.BetCount*ck.preCal
 				, (pre.turnover*ck.preCal)
 				, (pre.netTurnover*ck.preCal)
 				, IIF(pre.cmdType IN(1,2), pre.TurnoverNoDraw*ck.preCal,(pre.TurnoverNoDraw-ISNULL(old.TurnoverNoDraw,0)))
@@ -403,7 +396,7 @@ BEGIN
 				, IIF(pre.cmdType IN(1,2), pre.ExtraWinloss*ck.preCal,(pre.ExtraWinloss-ISNULL(old.ExtraWinloss,0)))
 				, IIF(pre.cmdType IN(1,2), pre.ExtraComm*ck.preCal,(pre.ExtraComm-ISNULL(old.ExtraComm,0)))
 			UNION ALL
-			SELECT tmp.recommend, 2, pre.BetCount*ck.preCal
+			SELECT pre.recommend, 2, pre.BetCount*ck.preCal
 				, (pre.turnover*ck.preCal)
 				, (pre.anetTurnover*ck.preCal)
 				, IIF(pre.cmdType IN(1,2), pre.TurnoverNoDraw*ck.preCal,(pre.TurnoverNoDraw-ISNULL(old.TurnoverNoDraw,0)))
@@ -419,7 +412,7 @@ BEGIN
 				, IIF(pre.cmdType IN(1,2), pre.ExtraWinloss*ck.preCal,(pre.ExtraWinloss-ISNULL(old.ExtraWinloss,0)))
 				, IIF(pre.cmdType IN(1,2), pre.ExtraComm*ck.preCal,(pre.ExtraComm-ISNULL(old.ExtraComm,0)))
 			UNION ALL
-			SELECT tmp.mrecommend, 3, pre.BetCount*ck.preCal
+			SELECT pre.mrecommend, 3, pre.BetCount*ck.preCal
 				, (pre.turnover*ck.preCal)
 				, (pre.mnetTurnover*ck.preCal)
 				, IIF(pre.cmdType IN(1,2), pre.TurnoverNoDraw*ck.preCal,(pre.TurnoverNoDraw-ISNULL(old.TurnoverNoDraw,0)))
@@ -435,7 +428,7 @@ BEGIN
 				, IIF(pre.cmdType IN(1,2), pre.ExtraWinloss*ck.preCal,(pre.ExtraWinloss-ISNULL(old.ExtraWinloss,0)))
 				, IIF(pre.cmdType IN(1,2), pre.ExtraComm*ck.preCal,(pre.ExtraComm-ISNULL(old.ExtraComm,0)))
 			UNION ALL
-			SELECT tmp.srecommend, 4, pre.BetCount*ck.preCal
+			SELECT pre.srecommend, 4, pre.BetCount*ck.preCal
 				, (pre.turnover*ck.preCal)
 				, (pre.snetTurnover*ck.preCal)
 				, IIF(pre.cmdType IN(1,2), pre.TurnoverNoDraw*ck.preCal,(pre.TurnoverNoDraw-ISNULL(old.TurnoverNoDraw,0)))
@@ -456,11 +449,13 @@ BEGIN
 		WHERE tmp.cmdType IN (1,2,4)
 		GROUP BY cal.custid
 			,pre.winlostdate
-			,tmp.productId
-			,tmp.sporttype
-			,tmp.bettype
-			,tmp.leagueGroupID
-			,tmp.ticketType
+			,pre.productId
+			,pre.sporttype
+			,pre.bettype
+			,pre.leagueGroupID
+			,pre.ticketType;
+
+		IF (@@ROWCOUNT = 0) BREAK;
 
 		--TODO: Accum #bettrans_compact_tmp
 		UPDATE up
@@ -559,24 +554,23 @@ BEGIN
            AND up.[leagueGroupID] = tmp.[leagueGroupID]
            AND up.[ticketType] = tmp.[ticketType]
 		WHERE up.custid IS NULL
-
+			AND tmp.[betcount] > 0
+		;
 
 		-- RESET: @lastRowId
 		SELECT @lastRowId = MAX(rowId)
 			, @minActiondate = MAX(Actiondate)
-		FROM dbo.cdc_bettrans_batch WITH(NOLOCK)
+		FROM #cdc_bettrans_batch WITH(NOLOCK)
 		WHERE cmdType in (1,2,4);
 
 		UPDATE s
-		SET s.VValue = CONCAT('{"lastRowId":', @lastRowId, ',"delayTime":', DATEDIFF(SECOND, @minActiondate, @maxActiondate), '}')
+		SET s.VValue = CONCAT('{"lastRowId":', @lastRowId, ',"delayTime":', DATEDIFF(SECOND, ISNULL(@minActiondate, @maxActiondate), @maxActiondate), '}')
 		FROM dbo.SystemSettings s WITH(ROWLOCK)
 		WHERE VName = @sysVName;
 
-		set @message = concat('Age_cdc_bettrans_lastRowId: ', @lastRowId, ', loop count: ', @loopCnt);
+		SET @message = concat('Age_cdc_bettrans_lastRowId: ', @lastRowId, ', loop count: ', @loopCnt, ', batch duration: ', DATEDIFF(MILLISECOND, @batchTime, CURRENT_TIMESTAMP));
 		RAISERROR (@message, 0, 1) WITH NOWAIT;
 
-		--GOTO END_PROCESS;
-		--RETURN;
 		SET @loopCnt += 1;
 		
 	END
