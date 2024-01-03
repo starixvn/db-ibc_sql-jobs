@@ -1,8 +1,13 @@
-
+/*<info serverAlias="DBAGE-bodb_age" executers="" isFunction="0" isNested="0"></info>*/
 create proc [dbo].[cdc_pull_data_bettrans]
 as
 /*
-	task: pull cdc data to another place
+	Created: 20231215@Patrick
+	DB: DBAGE-bodb_age
+	Task: implement cdc for sum winloss
+
+	Revisions:
+		- 20231215@Patrick: Initialize SP [RemineID: #195357]
 */
 begin
 	set nocount on

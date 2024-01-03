@@ -1,11 +1,9 @@
-USE bodb_cdc
-GO
-
+/*<info serverAlias="DBAGE-bodb_age" executers="" isFunction="0" isNested="0"></info>*/
 alter proc [dbo].[cdc_pull_data_cleanup]
 as
 /*
 	Task: implement cdc for sum winloss
-	DB: DBCT-bodb_cdc
+	DB: DBAGE-bodb_age
 	Revision:
 		20231201@Patrick: implement cdc for sum winloss [Redmine: #195357]
 */

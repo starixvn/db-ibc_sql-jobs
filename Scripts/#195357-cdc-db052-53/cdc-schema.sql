@@ -1,13 +1,23 @@
+/*<info serverAlias="DBAGE-bodb_age" executers="" isFunction="0" isNested="0"></info>*/
 
-use bodb_cdc
+use bodb_age
 go
-ALTER DATABASE bodb_cdc ADD FILEGROUP [cdc_bettrans_data];
+ALTER DATABASE bodb_age ADD FILEGROUP [cdc_bettrans_data];
 GO  
 
-ALTER DATABASE bodb_cdc    
+ALTER DATABASE bodb_age    
 ADD FILE   
-( NAME = N'cdc_bettrans_data', FILENAME = N'G:\SQLSERVER2019_DEVDB053\IBC_DB\bodb_cdc\cdc_bettrans_data.ndf' , SIZE = 32768KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB ) -- Edit path file by environment deployed
+( NAME = N'cdc_bettrans_data', FILENAME = N'H:\\USER_DB\bodb_age\cdc_bettrans_data.ndf' , SIZE = 32768KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB ) -- Edit path file by environment deployed
 TO FILEGROUP [cdc_bettrans_data];  
+GO
+
+ALTER DATABASE bodb_age ADD FILEGROUP [age_data_01];
+GO  
+
+ALTER DATABASE bodb_age    
+ADD FILE   
+( NAME = N'age_data_01', FILENAME = N'H:\\USER_DB\bodb_age\age_data_01.ndf' , SIZE = 32768KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB ) -- Edit path file by environment deployed
+TO FILEGROUP [age_data_01];  
 GO
 
 use bodb02
@@ -17,13 +27,13 @@ GO
 
 ALTER DATABASE bodb02    
 ADD FILE   
-( NAME = N'cdc_bettrans_data', FILENAME = N'G:\SQLSERVER2019_DEVDB053\IBC_DB\bodb02\cdc_bettrans_data.ndf' , SIZE = 32768KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB ) -- Edit path file by environment deployed
+( NAME = N'cdc_bettrans_data', FILENAME = N'H:\\USER_DB\bodb02\cdc_bettrans_data.ndf' , SIZE = 32768KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB ) -- Edit path file by environment deployed
 TO FILEGROUP [cdc_bettrans_data];  
 GO
 
 go
 
-use bodb_cdc
+use bodb_age
 go
 
 
@@ -34,14 +44,14 @@ CREATE TABLE [dbo].[cdc_pull_data_batching](
 	[loop] [bit] NULL,
 	[pageIndex] [int] NULL,
 	[totalRows] [bigint] NULL
-) ON [PRIMARY]
+) ON [age_data_01]
 GO
 
 
 CREATE UNIQUE CLUSTERED INDEX [cix_cdc_pull_data_batching] ON [dbo].[cdc_pull_data_batching]
 (
 	[tableName] ASC
-) ON [PRIMARY]
+) ON [age_data_01]
 GO
 
 
@@ -53,19 +63,19 @@ CREATE TABLE [dbo].[cdc_pull_data_batching_history](
 	[pageIndex] [int] NULL,
 	[totalRows] [bigint] NULL,
 	[logdate] [datetime2](7) NULL
-) ON [PRIMARY]
+) ON [age_data_01]
 GO
 
 CREATE CLUSTERED INDEX [cix_cdc_pull_data_batching_history] ON [dbo].[cdc_pull_data_batching_history]
 (
 	[logdate] ASC
-) ON [PRIMARY]
+) ON [age_data_01]
 GO
 
 CREATE NONCLUSTERED INDEX [ix_cdc_pull_data_batching_history_tableName] ON [dbo].[cdc_pull_data_batching_history]
 (
 	[tableName] ASC
-) ON [PRIMARY]
+) ON [age_data_01]
 GO
 
 ALTER TABLE [dbo].[cdc_pull_data_batching_history] ADD  DEFAULT (sysdatetime()) FOR [logdate]

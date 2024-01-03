@@ -1,5 +1,4 @@
-USE bodb_cdc
-GO
+/*<info serverAlias="DBAGE-bodb_age" executers="" isFunction="0" isNested="0"></info>*/
 CREATE PROC dbo.dba_cdc_task_job
 (
 	 @Jobname VARCHAR(100)
@@ -7,14 +6,11 @@ CREATE PROC dbo.dba_cdc_task_job
 	
 )
 AS
-/* 
-	Created
-    Task: 
-    DB: DBCT/bodb_cdc
-
+/*
+	Task: implement cdc for sum winloss
+	DB: DBAGE-bodb_age
 	Revision:
-		- 20231201@Patrick: init [Redmine: #]
-
+		20231201@Patrick: implement cdc for sum winloss [Redmine: #195357]
 */
 BEGIN
 	SET NOCOUNT ON

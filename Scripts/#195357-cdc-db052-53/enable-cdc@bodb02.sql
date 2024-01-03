@@ -1,3 +1,4 @@
+/*<info serverAlias="DBAGE-bodb02" executers="" isFunction="0" isNested="0"></info>*/
 use bodb02
 go  
 
