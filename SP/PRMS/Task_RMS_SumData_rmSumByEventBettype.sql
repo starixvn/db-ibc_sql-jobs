@@ -154,61 +154,6 @@ BEGIN
 			,t.LeagueId
 			,t.matchid
 			,t.betteam
-
-		-- Total
-		INSERT INTO #rmSumByEventBettype (bettype, ParlayType, LeagueId, MatchId, Betteam, IsDeposit, BetCount, WonCount, LoseCount, DrawCount, MainBetCount, MainWonCount, MainLoseCount, MainDrawCount, MainStake, MainTurnover, MainTurnoverNoDraw, MainMemberWinloss, MainMemberComm, MainHouseWinloss)
-		SELECT
-			t.bettype
-			,b.ParlayType
-			,0  -- soccer only
-			,t.matchid
-			,t.betteam
-			,b.IsDeposit			
-			,BetCount			= SUM(1)
-			,WonCount			= SUM(CASE WHEN t.statusID = 112 THEN 1 ELSE 0 END)
-			,LoseCount			= SUM(CASE WHEN t.statusID = 113 THEN 1 ELSE 0 END)
-			,DrawCount			= SUM(CASE WHEN t.statusID = 111 THEN 1 ELSE 0 END)
-			,MainBetCount		= SUM(CASE WHEN t.rn = 1 THEN 1 ELSE 0 END)
-			,MainWonCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 112 THEN 1 ELSE 0 END)
-			,MainLoseCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 113 THEN 1 ELSE 0 END)
-			,MainDrawCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 111 THEN 1 ELSE 0 END)
-			,MainStake			= SUM(CASE WHEN t.rn = 1 THEN b.stake ELSE 0 END)
-			,MainTurnover		= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (111, 112, 113) THEN b.stake ELSE 0 END)
-			,MainTurnoverNoDraw	= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (112, 113) THEN b.stake ELSE 0 END)
-			,MainWinloss		= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END)
-			,MainComm			= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
-			,MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.HouseWinloss ELSE 0 END)
-		FROM @bettrans b
-			CROSS APPLY (
-				SELECT bettype, statusID, matchId, betteam, ROW_NUMBER() OVER(PARTITION BY bettype, matchId, betteam ORDER BY (SELECT NULL)) AS rn
-				FROM (
-					SELECT bm.bettype, bm.statusID, bm.matchId, bm.betteam
-					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
-						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
-					WHERE b.refno = bm.refno
-						AND m.sporttype = 1 AND bm.winlostdate > @MoveBetsDay
-
-					UNION ALL
-					SELECT bm.bettype, bm.statusID, bm.matchId, bm.betteam
-					FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
-						INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
-					WHERE b.refno = bm.refno
-						AND m.sporttype = 1 AND bm.winlostdate BETWEEN @BalanceUpDay AND  @MoveBetsDay
-
-					UNION ALL
-					SELECT bm.bettype, bm.statusID, bm.matchId, bm.betteam
-					FROM dbo.rmBettransm_bk bm WITH (NOLOCK)
-						INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
-					WHERE b.refno = bm.refno
-						AND m.sporttype = 1  AND bm.winlostdate < @BalanceUpDay
-				) bm
-			) t
-		GROUP BY
-			t.bettype
-			,b.ParlayType
-			,b.IsDeposit
-			,t.matchid
-			,t.betteam
 	END
 
 	BEGIN TRY
