@@ -1,4 +1,4 @@
-/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" executers="" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS,DBBAL-bodb_PlaytechCS" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_AGCasino_ImportDataToDB]
 	@XmlData NVARCHAR(MAX),
 	@LicenseeName VARCHAR(50),
@@ -30,7 +30,7 @@ BEGIN
 		SET @XmlData = REPLACE(REPLACE (@XmlData,CHAR(10),''),CHAR(13),'')
 		SELECT @XmlText = CONVERT (XML,@XmlData)
 		
-		INSERT INTO Product3rd_ImportQueue (CheckInTime, LicenseeName, ProductID, XmlData)
+		INSERT INTO Product3rd_ImportQueue_CheckData (CheckInTime, LicenseeName, ProductID, XmlData)
 			SELECT CURRENT_TIMESTAMP, @LicenseeName, 10, @XmlText
 	END TRY
 	BEGIN CATCH
