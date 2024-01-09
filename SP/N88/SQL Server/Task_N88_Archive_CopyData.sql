@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20220222@Percy: Initialize SP [RedmineID: #167823]
 		- 20220601@Percy: Handle duplicate primary key [RedmineID: #173790]
+		- 20231228@Sally: Mapping data type between both sides [RedmineID: #198668]
 */
 
 BEGIN
@@ -24,10 +25,10 @@ BEGIN
 	BEGIN
 		-- Get data from table TpBetRecord
 		CREATE TABLE #__TpBetRecord (
-			TpId INT, TransId VARCHAR(50), GameType INT, CustId VARCHAR(45), UserName VARCHAR(30), CurrencyId INT, SiteId INT, TpUserName VARCHAR(50)
-			,TransTime DATETIME, SettledTime DATETIME, Stake DECIMAL(20, 4), WinlostAmount DECIMAL(20, 4), SettlementType TINYINT, TicketStatus TINYINT
-			,OriginalState VARCHAR(10), TicketKey BIGINT, CreateTime DATETIME, WinlostDate SMALLDATETIME, ValidBet DECIMAL(20, 4), BonusId INT, Revenue DECIMAL(20, 4)
-			,ProgressiveBet DECIMAL(20, 4), ProgressiveWin DECIMAL(20, 4)
+			TpId INT, TransId VARCHAR(100), GameType INT, CustId VARCHAR(45), UserName VARCHAR(30), CurrencyId INT, SiteId INT, TpUserName VARCHAR(50)
+			,TransTime DATETIME, SettledTime DATETIME, Stake DECIMAL(20, 6), WinlostAmount DECIMAL(20, 6), SettlementType TINYINT, TicketStatus TINYINT
+			,OriginalState VARCHAR(10), TicketKey BIGINT, CreateTime DATETIME, WinlostDate SMALLDATETIME, ValidBet DECIMAL(20, 6), BonusId INT, Revenue DECIMAL(20, 6)
+			,ProgressiveBet DECIMAL(20, 6), ProgressiveWin DECIMAL(20, 6)
 			,PRIMARY KEY (TpId, TransId, GameType)
 		)
 
@@ -46,10 +47,10 @@ BEGIN
 
 		-- Start insert data into TpBetRecord_bk, every 5k rows
 		DECLARE @tmpTpBetRecord TABLE (
-			TpId INT, TransId VARCHAR(50), GameType INT, CustId VARCHAR(45), UserName VARCHAR(30), CurrencyId INT, SiteId INT, TpUserName VARCHAR(50)
-			,TransTime DATETIME, SettledTime DATETIME, Stake DECIMAL(20, 4), WinlostAmount DECIMAL(20, 4), SettlementType TINYINT, TicketStatus TINYINT
-			,OriginalState VARCHAR(10), TicketKey BIGINT, CreateTime DATETIME, WinlostDate SMALLDATETIME, ValidBet DECIMAL(20, 4), BonusId INT, Revenue DECIMAL(20, 4)
-			,ProgressiveBet DECIMAL(20, 4), ProgressiveWin DECIMAL(20, 4)
+			TpId INT, TransId VARCHAR(100), GameType INT, CustId VARCHAR(45), UserName VARCHAR(30), CurrencyId INT, SiteId INT, TpUserName VARCHAR(50)
+			,TransTime DATETIME, SettledTime DATETIME, Stake DECIMAL(20, 6), WinlostAmount DECIMAL(20, 6), SettlementType TINYINT, TicketStatus TINYINT
+			,OriginalState VARCHAR(10), TicketKey BIGINT, CreateTime DATETIME, WinlostDate SMALLDATETIME, ValidBet DECIMAL(20, 6), BonusId INT, Revenue DECIMAL(20, 6)
+			,ProgressiveBet DECIMAL(20, 6), ProgressiveWin DECIMAL(20, 6)
 			,IsUpdated BIT DEFAULT(0)
 			,PRIMARY KEY (TpId, TransId, GameType)
 		)
