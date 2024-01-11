@@ -15,6 +15,7 @@ AS
 		- 20200303@Elodie: Apply new structure for MBC's log [Redmine: #127446]
 		- 20210623@Elodie: Apply VRCustLog table [Redmine: #157434]
 		- 20230417@Aries: Support OST Team Query Resettlement Log [Redmine: #185964]
+		- 20230825@Tacy: Apply UserLog_UserControl table [Redmine: #192258]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -192,6 +193,15 @@ BEGIN
 	ELSE IF @tableName = 'SettlementLog'
 	BEGIN
 		EXEC dbo.Task_Archive_CustomerLog_SettlementLog
+				@FromDateTime = @__dateTimeFrom,
+				@ToDateTime = @__dateTimeTo,
+				@Mode = @Mode,
+				@RowInBatch = @RowInBatch,
+				@ErrorCode = @ErrorCode OUTPUT
+	END
+	ELSE IF @tableName = 'UserLog_UserControl'
+	BEGIN
+		EXEC dbo.Task_Archive_CustomerLog_UserLog_UserControl
 				@FromDateTime = @__dateTimeFrom,
 				@ToDateTime = @__dateTimeTo,
 				@Mode = @Mode,
