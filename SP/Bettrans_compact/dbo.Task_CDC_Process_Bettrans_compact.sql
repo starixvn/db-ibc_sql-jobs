@@ -234,7 +234,11 @@ BEGIN
 			   ,ck.ticketType
 			   ,b.cmdType, b.cmdId, b.cmdTxn
 			   ,b.statusID
-			   ,ABS(stake) Turnover
+			   ,CASE WHEN statusID IN (0,1,101,102,103) THEN 0 ELSE ABS(stake) END Turnover
+			   ,0 AS netTurnover
+			   ,CASE WHEN statusID IN (0,1,101,102,103) THEN 0 ELSE (ABS(stake) * apositiontaking) END AS anetTurnover
+			   ,CASE WHEN statusID IN (0,1,101,102,103) THEN 0 ELSE (ABS(stake) * mpositiontaking) END AS mnetTurnover
+			   ,CASE WHEN statusID IN (0,1,101,102,103) THEN 0 ELSE (ABS(stake) * spositiontaking) END AS snetTurnover
 			   ,IIF(b.statusId IN(0,1), 0, (winlost - actual_stake)) winlost
 			   ,IIF(b.statusId IN(0,1), 0, awinlost) awinlost
 			   ,IIF(b.statusId IN(0,1), 0, mwinlost) mwinlost
@@ -267,12 +271,7 @@ BEGIN
 					WHEN tbl.RefTable IN (1, 2) THEN 0
 					WHEN tpositiontaking = 1 THEN 0
 					ELSE scomm / (1 - tpositiontaking)
-				END) sgrosscomm
-	  
-			   ,0 AS netTurnover
-			   ,(ABS(stake) * apositiontaking) AS anetTurnover
-			   ,(ABS(stake) * mpositiontaking) AS mnetTurnover
-			   ,(ABS(stake) * spositiontaking) AS snetTurnover
+				END) sgrosscomm	   
 			   ,(CASE
 					when statusID in (0,1,101,102,103) then 0
 					WHEN statusID IN (112, 113) AND
@@ -381,8 +380,8 @@ BEGIN
 		) AS ck
 		CROSS APPLY (
 			SELECT pre.custid, 1, pre.BetCount*ck.preCal
-				, (pre.turnover*ck.preCal)
-				, (pre.netTurnover*ck.preCal)
+				, IIF(pre.cmdType IN(1,2), pre.turnover*ck.preCal, (pre.turnover-ISNULL(old.turnover,0)))
+				, IIF(pre.cmdType IN(1,2), pre.netTurnover*ck.preCal, (pre.netTurnover-ISNULL(old.netTurnover,0)))
 				, IIF(pre.cmdType IN(1,2), pre.TurnoverNoDraw*ck.preCal,(pre.TurnoverNoDraw-ISNULL(old.TurnoverNoDraw,0)))
 				, IIF(pre.cmdType IN(1,2), pre.winlost*ck.preCal,(pre.winlost-ISNULL(old.winlost,0)))
 				, IIF(pre.cmdType IN(1,2), pre.awinlost*ck.preCal,(pre.awinlost-ISNULL(old.awinlost,0)))
@@ -397,8 +396,8 @@ BEGIN
 				, IIF(pre.cmdType IN(1,2), pre.ExtraComm*ck.preCal,(pre.ExtraComm-ISNULL(old.ExtraComm,0)))
 			UNION ALL
 			SELECT pre.recommend, 2, pre.BetCount*ck.preCal
-				, (pre.turnover*ck.preCal)
-				, (pre.anetTurnover*ck.preCal)
+				, IIF(pre.cmdType IN(1,2), pre.turnover*ck.preCal, (pre.turnover-ISNULL(old.turnover,0)))
+				, IIF(pre.cmdType IN(1,2), pre.anetTurnover*ck.preCal, (pre.anetTurnover-ISNULL(old.anetTurnover,0)))
 				, IIF(pre.cmdType IN(1,2), pre.TurnoverNoDraw*ck.preCal,(pre.TurnoverNoDraw-ISNULL(old.TurnoverNoDraw,0)))
 				, IIF(pre.cmdType IN(1,2), pre.winlost*ck.preCal,(pre.winlost-ISNULL(old.winlost,0)))
 				, IIF(pre.cmdType IN(1,2), pre.awinlost*ck.preCal,(pre.awinlost-ISNULL(old.awinlost,0)))
@@ -413,8 +412,8 @@ BEGIN
 				, IIF(pre.cmdType IN(1,2), pre.ExtraComm*ck.preCal,(pre.ExtraComm-ISNULL(old.ExtraComm,0)))
 			UNION ALL
 			SELECT pre.mrecommend, 3, pre.BetCount*ck.preCal
-				, (pre.turnover*ck.preCal)
-				, (pre.mnetTurnover*ck.preCal)
+				, IIF(pre.cmdType IN(1,2), pre.turnover*ck.preCal, (pre.turnover-ISNULL(old.turnover,0)))
+				, IIF(pre.cmdType IN(1,2), pre.mnetTurnover*ck.preCal, (pre.mnetTurnover-ISNULL(old.mnetTurnover,0)))
 				, IIF(pre.cmdType IN(1,2), pre.TurnoverNoDraw*ck.preCal,(pre.TurnoverNoDraw-ISNULL(old.TurnoverNoDraw,0)))
 				, IIF(pre.cmdType IN(1,2), pre.winlost*ck.preCal,(pre.winlost-ISNULL(old.winlost,0)))
 				, IIF(pre.cmdType IN(1,2), pre.awinlost*ck.preCal,(pre.awinlost-ISNULL(old.awinlost,0)))
@@ -429,8 +428,8 @@ BEGIN
 				, IIF(pre.cmdType IN(1,2), pre.ExtraComm*ck.preCal,(pre.ExtraComm-ISNULL(old.ExtraComm,0)))
 			UNION ALL
 			SELECT pre.srecommend, 4, pre.BetCount*ck.preCal
-				, (pre.turnover*ck.preCal)
-				, (pre.snetTurnover*ck.preCal)
+				, IIF(pre.cmdType IN(1,2), pre.turnover*ck.preCal, (pre.turnover-ISNULL(old.turnover,0)))
+				, IIF(pre.cmdType IN(1,2), pre.snetTurnover*ck.preCal, (pre.snetTurnover-ISNULL(old.snetTurnover,0)))
 				, IIF(pre.cmdType IN(1,2), pre.TurnoverNoDraw*ck.preCal,(pre.TurnoverNoDraw-ISNULL(old.TurnoverNoDraw,0)))
 				, IIF(pre.cmdType IN(1,2), pre.winlost*ck.preCal,(pre.winlost-ISNULL(old.winlost,0)))
 				, IIF(pre.cmdType IN(1,2), pre.awinlost*ck.preCal,(pre.awinlost-ISNULL(old.awinlost,0)))

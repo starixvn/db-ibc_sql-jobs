@@ -82,6 +82,8 @@ BEGIN
 					WHEN b.bettype BETWEEN 5100 AND 5299 THEN 158 -- Jili
 					WHEN b.bettype BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 					WHEN b.bettype BETWEEN 5302 AND 5399 THEN 178 -- VS3-LeapGaming(New)
+					WHEN b.bettype BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
+					WHEN b.bettype BETWEEN 7601 AND 7700 THEN 227 -- Live22
 					ELSE 0
 				END AS sporttype
 		FROM (
