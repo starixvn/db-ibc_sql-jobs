@@ -20,6 +20,7 @@ AS
 		- 20230530@Cherry: Void tickets in bettrans14 (#188647)
 		- 20231020@Cherry: Parlay Generator (#195498)
 		- 20231201@Cherry: Parlay Type for Parlay Boost (#197680)
+		- 20240115@Cherry: Change attribute for Parlay Generator (#199766)
 */
 
 BEGIN
@@ -57,7 +58,7 @@ BEGIN
 				[actualrate] [float] NULL,
 				[odds] [smallmoney] NULL,
 				[recommend] [int] NULL,
-				[bact] [int] NULL,
+				[bac] [int] NULL,
 				[scomm] [money] NULL,
 				[epositiontaking] [smallmoney] NULL,
 				[mrecommend] [int] NULL,
@@ -126,7 +127,7 @@ BEGIN
 				[actualrate],
 				[odds],
 				[recommend],
-				[bact],
+				[bac],
 				[scomm],
 				[epositiontaking],
 				[mrecommend],
@@ -161,7 +162,7 @@ BEGIN
 				[actualrate],
 				[odds],
 				[recommend],
-				TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT),
+				ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bac)[1]', 'VARCHAR(50)') AS INT),0),
 				[scomm],
 				[epositiontaking],
 				[mrecommend],
@@ -202,9 +203,9 @@ BEGIN
 			,COUNT(1) AS betcount
 			,b.recommend
 			,CASE
-				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bact = 5 AND b.oddsspread = 2 THEN 78 --Parlay Generator & Boost
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bac <> 0 AND b.bac|16 = 16 AND b.oddsspread = 2 THEN 78 --Parlay Generator & Boost
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 2 THEN 8 --Parlay Boost
-				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bact = 5 THEN 7 --Parlay Generator
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bac <> 0 AND b.bac|16 = 16 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
@@ -238,9 +239,9 @@ BEGIN
 			,b.actualrate
 			,b.recommend
 			,CASE
-				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bact = 5 AND b.oddsspread = 2 THEN 78 --Parlay Generator & Boost
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bac <> 0 AND b.bac|16 = 16 AND b.oddsspread = 2 THEN 78 --Parlay Generator & Boost
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 2 THEN 8 --Parlay Boost
-				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bact = 5 THEN 7 --Parlay Generator
+				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.bac <> 0 AND b.bac|16 = 16 THEN 7 --Parlay Generator
 				WHEN b.bettype = 29 AND b.betteam = N'1' AND b.oddsspread = 1 THEN 6 --GOF
 				WHEN b.bettype = 29 AND b.betteam = N'1' THEN 2
 				WHEN b.bettype = 29 AND b.betteam <> N'1' THEN 3
