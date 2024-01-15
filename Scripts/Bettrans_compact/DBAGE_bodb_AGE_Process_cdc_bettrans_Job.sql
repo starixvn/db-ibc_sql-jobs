@@ -10,11 +10,18 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [bodb_Age: Age process bettrans_compact]    Script Date: 1/3/2024 1:19:07 PM ******/
+---TODO: Please Stop/Disable Job_Name=[bodb_Age: Age process bettrans_compact] before running this script
+
+
+/****** Object:  Job [bodb_Age: Age process bettrans_compact]    Script Date: 1/15/2024 3:26:57 PM ******/
+EXEC msdb.dbo.sp_delete_job @job_name=N'bodb_Age: Age process bettrans_compact'
+GO
+
+/****** Object:  Job [bodb_Age: Age process bettrans_compact]    Script Date: 1/15/2024 3:26:57 PM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 1/3/2024 1:19:07 PM ******/
+/****** Object:  JobCategory [[Uncategorized (Local)]]    Script Date: 1/15/2024 3:26:57 PM ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'[Uncategorized (Local)]' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'[Uncategorized (Local)]'
@@ -34,18 +41,34 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'bodb_Age: Age process bettra
 		@category_name=N'[Uncategorized (Local)]', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Step -1: Process cdc_bettrans]    Script Date: 1/3/2024 1:19:07 PM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Step -1: Process cdc_bettrans', 
+/****** Object:  Step [Step 1: Process cdc_bettrans]    Script Date: 1/15/2024 3:26:57 PM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Step 1: Process cdc_bettrans', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
-		@on_success_action=1, 
+		@on_success_action=3, 
 		@on_success_step_id=0, 
 		@on_fail_action=2, 
 		@on_fail_step_id=0, 
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'TSQL', 
-		@command=N'EXEC [dbo].[Task_CDC_Process_Bettrans_compact]', 
+		@command=N'EXEC dbo.dba_cdc_task_job
+	@Jobname = ''bodb_Age: Age process bettrans_compact''', 
+		@database_name=N'bodb_Age', 
+		@flags=0
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [Step 2: Wait for delay]    Script Date: 1/15/2024 3:26:57 PM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Step 2: Wait for delay', 
+		@step_id=2, 
+		@cmdexec_success_code=0, 
+		@on_success_action=4, 
+		@on_success_step_id=1, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'WAITFOR DELAY ''00:00:01.000''', 
 		@database_name=N'bodb_Age', 
 		@flags=0
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback

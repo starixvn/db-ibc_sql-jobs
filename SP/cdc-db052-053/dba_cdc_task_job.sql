@@ -47,8 +47,13 @@ BEGIN
 		END
 	
 		IF(@Jobname = 'bodb_age : pull data 4 bettrans')
+		BEGIN
 			EXEC dbo.cdc_pull_data_bettrans
-
+		END
+		ELSE IF(@Jobname = 'bodb_Age: Age process bettrans_compact')
+		BEGIN
+			EXEC [dbo].[Task_CDC_Process_Bettrans_compact]
+		END
 		
 		IF DATEDIFF(SECOND, @startDate, GETDATE() ) >= 600 -- loop within 10 minutes
 			BREAK
