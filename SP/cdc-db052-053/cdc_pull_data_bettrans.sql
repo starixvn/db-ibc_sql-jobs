@@ -74,7 +74,7 @@ begin
 			select n.batchNo, b.__$start_lsn
 			from (
 				select __$start_lsn, row_number() over (order by __$start_lsn, __$command_id, __$seqval, __$operation) as rn
-				from cdc.dbo_{{tabName}}_CT with(nolock)
+				from cdc.cdc_{{tabName}}_CT with(nolock)
 				where  __$start_lsn >= @__from_lsn
 					and __$start_lsn <= @__to_lsn
 			)b
