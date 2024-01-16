@@ -332,7 +332,7 @@ BEGIN
 			SUM(comm) comm,
 			SUM(acomm) acomm
 		FROM #rmBettrans_old b WITH (NOLOCK)
-			LEFT JOIN #tmpParlayGenerator p ON b.transid = p.transid AND p.bac <> 0 AND p.bac|16 = 16
+			LEFT JOIN #tmpParlayGenerator p ON b.transid = p.transid AND p.bac|16 = p.bac
 			LEFT JOIN #tmpBoost t ON b.transid = t.transid
 		GROUP BY
 			b.winlostdate
