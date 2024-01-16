@@ -85,6 +85,7 @@ BEGIN
         ,[bettype] INT
         ,[leagueGroupID] INT
         ,[ticketType] TINYINT
+		,[betcount] INT
 	);
 
 
@@ -456,8 +457,8 @@ BEGIN
 
 		IF (@@ROWCOUNT = 0) BREAK;
 
-		--TODO: Accum #bettrans_compact_tmp
-		UPDATE up
+		--TODO: SUM accumulation
+		UPDATE up WITH(ROWLOCK, UPDLOCK)
 		SET up.[betcount] += tmp.[betcount]
            ,up.[turnover] += tmp.[turnover]
            ,up.[netTurnover] += tmp.[netTurnover]
@@ -480,6 +481,7 @@ BEGIN
            ,inserted.[bettype]
            ,inserted.[leagueGroupID]
            ,inserted.[ticketType]
+		   ,inserted.betcount
 		INTO #merge_update_tmp (
 			[custid]
            ,[winlostdate]
@@ -488,6 +490,7 @@ BEGIN
            ,[bettype]
            ,[leagueGroupID]
            ,[ticketType]
+		   ,[betcount]
 		)
 		FROM [dbo].[bettrans_compact] up
 		INNER JOIN #bettrans_compact_tmp tmp ON up.[custid] = tmp.[custid]
@@ -545,16 +548,28 @@ BEGIN
            ,tmp.[extraWinloss]
            ,tmp.[extraComm]
 		FROM #bettrans_compact_tmp tmp
-		LEFT JOIN #merge_update_tmp up ON up.[custid] = tmp.[custid]
-           AND up.[winlostdate] = tmp.[winlostdate]
+		LEFT JOIN #merge_update_tmp up ON up.[winlostdate] = tmp.[winlostdate]
+           AND up.[custid] = tmp.[custid]
+		   AND up.[bettype] = tmp.[bettype]
            AND up.[productId] = tmp.[productId]
            AND up.[sporttype] = tmp.[sporttype]
-           AND up.[bettype] = tmp.[bettype]
            AND up.[leagueGroupID] = tmp.[leagueGroupID]
            AND up.[ticketType] = tmp.[ticketType]
 		WHERE up.custid IS NULL
 			AND tmp.[betcount] > 0
 		;
+
+		--TODO: DELETE zero rows
+		DELETE d WITH(ROWLOCK)
+		FROM [dbo].[bettrans_compact] d
+		INNER JOIN #merge_update_tmp up ON up.[winlostdate] = d.[winlostdate]
+           AND up.[custid] = d.[custid]
+		   AND up.[bettype] = d.[bettype]
+           AND up.[productId] = d.[productId]
+           AND up.[sporttype] = d.[sporttype]
+           AND up.[leagueGroupID] = d.[leagueGroupID]
+           AND up.[ticketType] = d.[ticketType]
+		WHERE up.betcount = 0
 
 		-- RESET: @lastRowId
 		SELECT @lastRowId = MAX(rowId)
@@ -562,21 +577,17 @@ BEGIN
 		FROM #cdc_bettrans_batch WITH(NOLOCK)
 		WHERE cmdType in (1,2,4);
 
-		UPDATE s
-		SET s.VValue = CONCAT('{"lastRowId":', @lastRowId, ',"delayTime":', DATEDIFF(SECOND, ISNULL(@minActiondate, @maxActiondate), @maxActiondate), '}')
-		FROM dbo.SystemSettings s WITH(ROWLOCK)
-		WHERE VName = @sysVName;
-
-		SET @message = concat('Age_cdc_bettrans_lastRowId: ', @lastRowId, ', loop count: ', @loopCnt, ', batch duration: ', DATEDIFF(MILLISECOND, @batchTime, CURRENT_TIMESTAMP));
+		SET @message = concat('lastRowId: ', @lastRowId, ', batch: ', @loopCnt,', count:', @batchCount ,', duration: ', DATEDIFF(MILLISECOND, @batchTime, CURRENT_TIMESTAMP));
 		RAISERROR (@message, 0, 1) WITH NOWAIT;
 
 		SET @loopCnt += 1;
 		
 	END
 
-	END_PROCESS:
-	SELECT DATEDIFF(MILLISECOND, @startTime, CURRENT_TIMESTAMP) AS duration
-		, @loopCnt AS totalBatch
-		, DATEDIFF(MILLISECOND, @startTime, CURRENT_TIMESTAMP) / @loopCnt AS durationBatch
+	--TODO: Update setting
+	UPDATE s
+	SET s.VValue = CONCAT('{"lastRowId":', @lastRowId, ',"delayTime":', DATEDIFF(SECOND, ISNULL(@minActiondate, @maxActiondate), @maxActiondate), ', "lastRun":"', FORMAT(GETDATE(), 'yyyy-MM-dd HH:mm:ss'),'"}')
+	FROM dbo.SystemSettings s WITH(ROWLOCK)
+	WHERE VName = @sysVName;
 END
 GO
