@@ -1,4 +1,4 @@
-/*<info serverAlias="DBYASHBET-bodb_YashBet" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBB2C-YashBet databaseType="2" executers="affiliate_api" isFunction="0" isNested="0" </info>*/
 USE BetDetail;
 DROP PROCEDURE IF EXISTS `API_TpReport9W_Get`;
 DELIMITER //

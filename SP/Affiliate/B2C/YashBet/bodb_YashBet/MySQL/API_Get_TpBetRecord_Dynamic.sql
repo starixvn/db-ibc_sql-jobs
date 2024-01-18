@@ -96,3 +96,5 @@ END
 DELIMITER ;
 
 GRANT EXECUTE ON PROCEDURE `API_Get_TpBetRecord_Dynamic` TO 'affiliate_api'@'%';
+
+GRANT EXECUTE ON PROCEDURE `API_Get_TpBetRecord_Dynamic` TO 'afc_api'@'%';
