@@ -13,7 +13,7 @@ begin
 
 	select @__logdate = dateadd(day, cast(isnull(VValue, '') as int) * -1, getdate())
 	from dbo.SystemSettings with(nolock)
-	where VValue = 'cdc-retention-value'
+	where VName = 'cdc-retention-value'
 
 	if @__logdate is null
 		set @__logdate = dateadd(day, -14, sysdatetime())
