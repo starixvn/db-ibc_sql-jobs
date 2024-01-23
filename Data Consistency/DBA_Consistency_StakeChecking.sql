@@ -48,6 +48,7 @@ AS
 		- 20230911@July: SABA.games - Exclude bettype 1677(Transformers) & VGaming - Exclude bettype 3869(Transformers) - [Redmine: #193766]
 		- 20231219@July: Live22 - Exclude bettype 7698(Promotion Prize) - [Redmine: #198518]
 		- 20231219@July: SABA.games - Exclude bettype 1682(One Piece) & VGaming - Exclude bettype 3874(One Piece) - [Redmine: #198502]
+		- 20240123@July: SABA.games/Vgaming - Exclude new card game Dragon Ball(1683,3875) - [Redmine:#199989] 
 	
 	Param's Expanation:
 
@@ -103,7 +104,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653, 1654, 1656, 1669, 1670, 1671, 1672, 1673, 1674, 1675, 1677, 1682)
+					AND b.gameID NOT IN (1640, 1698, 1699, 1644, 1653, 1654, 1656, 1669, 1670, 1671, 1672, 1673, 1674, 1675, 1677, 1682, 1683)
 		END
 		ELSE IF @ProductId = 171 -- Vgaming
 		BEGIN
@@ -112,7 +113,7 @@ BEGIN
 			WHERE	ProductID = @ProductId
 					AND b.stake <= 0
 					AND b.status <> 'Completed'
-					AND b.gameID NOT IN (3829, 3898, 3899, 3835, 3845, 3846, 3854, 3861, 3862, 3863, 3864, 3865, 3866, 3867, 3869, 3874) 
+					AND b.gameID NOT IN (3829, 3898, 3899, 3835, 3845, 3846, 3854, 3861, 3862, 3863, 3864, 3865, 3866, 3867, 3869, 3874, 3875) 
 		END
 		ELSE IF @ProductId = 247 -- Spadegaming
 		BEGIN
