@@ -1,5 +1,6 @@
 /*<info serverAlias="DBAGE-bodb_AGE" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_CDC_Process_Bettrans_compact]
+	@DebugMode TINYINT = 1
 AS
 /*
 	Created by: 20231201@Bobby
@@ -17,28 +18,26 @@ BEGIN
 		, @maxRowId		bigint = 0 --1070646
 		, @batchSize	INT = 50000
 		, @batchCount	INT
-		, @sysVName		VARCHAR(200) = 'Age_cdc_bettrans_compact'
-		, @sysVValue	VARCHAR(200) = '';
+		, @sysVName		VARCHAR(200) = 'Age_cdc_bettrans_compact';
 
 	DECLARE @startTime DATETIME, @loopCnt INT = 1, @message VARCHAR(500)
-		, @minActiondate DATETIME
-		, @maxActiondate DATETIME;
+		,@lastActiondate DATETIME;
 	
-	SELECT @sysVValue = VValue
-	FROM dbo.SystemSettings WITH(NOLOCK)
+	--TODO: get lastRowId
+	SELECT @lastRowId = CAST(JSON_VALUE(VValue, '$.lastRowId') AS BIGINT)
+	FROM dbo.SystemSettings WITH(ROWLOCK)
 	WHERE VName=@sysVName;
-
-	SELECT @lastRowId = CAST(JSON_VALUE(@sysVValue, '$.lastRowId') AS BIGINT)
 
 	--TODO: Capture maxRowId
 	SELECT @maxRowId		= MAX(rowid)
-		, @maxActiondate	= MAX(Actiondate)
 	FROM dbo.cdc_bettrans WITH(ROWLOCK)
 	WHERE rowid > @lastRowId;
 
 	SELECT TOP(1) @maxRowId = IIF([__$operation] = 3, @maxRowId - 1, @maxRowId)
 	FROM dbo.cdc_bettrans WITH(NOLOCK)
-	WHERE rowid = @maxRowId
+	WHERE rowid = @maxRowId;
+
+	
 
 	DROP TABLE IF EXISTS #bettrans_compact_tmp;
 	CREATE TABLE #bettrans_compact_tmp(
@@ -323,7 +322,7 @@ BEGIN
 						END
 					) AS ExtraComm
 				,CHECKSUM(CONCAT_WS('|',b.custid,b.recommend,b.mrecommend,b.srecommend,b.winlostdate,tbl.productId,ck.sporttype,b.bettype,ck.LeagueGroupID,ck.ticketType)) AS ckKey
-			FROM #cdc_bettrans_batch b WITH(ROWLOCK)
+			FROM #cdc_bettrans_batch b
 			INNER JOIN SuperExtraPT tbl ON b.srecommend = tbl.srecommend AND b.bettype = tbl.bettype and b.winlostdate = tbl.winlostdate
 			LEFT JOIN bodb02.dbo.match m WITH(NOLOCK) ON b.matchid = m.matchid AND m.sporttype IN (1, 2, 5, 43, 50)
 			LEFT JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid=l.leagueid AND l.LeagueGroupID IN (42,74,108,113,122,151)
@@ -569,25 +568,30 @@ BEGIN
            AND up.[sporttype] = d.[sporttype]
            AND up.[leagueGroupID] = d.[leagueGroupID]
            AND up.[ticketType] = d.[ticketType]
-		WHERE up.betcount = 0
+		WHERE up.betcount <= 0
 
 		-- RESET: @lastRowId
 		SELECT @lastRowId = MAX(rowId)
-			, @minActiondate = MAX(Actiondate)
-		FROM #cdc_bettrans_batch WITH(NOLOCK)
-		WHERE cmdType in (1,2,4);
+			, @lastActiondate = MAX(actiondate)
+		FROM #cdc_bettrans_batch;
 
-		SET @message = concat('lastRowId: ', @lastRowId, ', batch: ', @loopCnt,', count:', @batchCount ,', duration: ', DATEDIFF(MILLISECOND, @batchTime, CURRENT_TIMESTAMP));
-		RAISERROR (@message, 0, 1) WITH NOWAIT;
+		--SET @message = concat('lastRowId: ', @lastRowId, ', batch: ', @loopCnt,', count:', @batchCount ,', duration: ', DATEDIFF(MILLISECOND, @batchTime, CURRENT_TIMESTAMP));
+		--RAISERROR (@message, 0, 1) WITH NOWAIT;
 
 		SET @loopCnt += 1;
 		
 	END
 
 	--TODO: Update setting
-	UPDATE s
-	SET s.VValue = CONCAT('{"lastRowId":', @lastRowId, ',"delayTime":', DATEDIFF(SECOND, ISNULL(@minActiondate, @maxActiondate), @maxActiondate), ', "lastRun":"', FORMAT(GETDATE(), 'yyyy-MM-dd HH:mm:ss'),'"}')
-	FROM dbo.SystemSettings s WITH(ROWLOCK)
-	WHERE VName = @sysVName;
+	UPDATE TOP(1) s WITH(ROWLOCK, UPDLOCK)
+	SET s.VValue = CONCAT('{"lastRowId":', ISNULL(@maxRowId, @lastRowId), ',"delayTime":', DATEDIFF(SECOND, ISNULL(@lastActiondate, GETDATE()), GETDATE()), ', "lastRun":"', FORMAT(GETDATE(), 'yyyy-MM-dd HH:mm:ss'),'"}')
+	FROM dbo.SystemSettings s
+	WHERE s.VName = @sysVName;
+	
+	---CAPTURE: cdc_bettrans metric logs
+	IF (@DebugMode = 1)
+	BEGIN
+		EXEC [dbo].[Task_CDC_bettrans_Metric_Capture]
+	END
 END
 GO

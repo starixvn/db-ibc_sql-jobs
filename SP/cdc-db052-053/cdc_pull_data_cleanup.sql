@@ -54,4 +54,19 @@ begin
 
 	end
 
+
+	while 1 = 1 --cdc_bettrans_metric_counter
+	begin
+		delete top (3000)
+		from dbo.cdc_bettrans_metric_counter
+		where creation_time < @__logdate and is_avg = 1
+
+		if @@rowcount = 0
+			break
+
+		select @__delaytime = dbo.f_dba_GetDelayTime('removeold')
+		waitfor delay @__delaytime--cleanup@cdc_bettrans_metric_counter
+
+	end
+
 end
