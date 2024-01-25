@@ -9,6 +9,7 @@ AS
 	DB: DBAGE-bodb_age
 	Revision:
 		20231201@Patrick: implement cdc for sum winloss [Redmine: #195357]
+		20240125@Bobby: deploy check sum vs metric logs [Redmine: #200041]
 */
 BEGIN
 	SET NOCOUNT ON
