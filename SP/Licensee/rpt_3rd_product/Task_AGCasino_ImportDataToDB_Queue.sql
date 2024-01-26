@@ -18,6 +18,7 @@ AS
 		- 20211004@Sol: LAP - Support IPv6 - [RedmineID: #162342]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20211011@Danny: Import data based on settle status [RedmineID: #162947]
+		- 20240126@Evan: Get data for new column Gamecode and JPAmount [RedmineID: #200273]
 
 	Param explanation:
 	
@@ -47,7 +48,9 @@ BEGIN
 		PlayType	SMALLINT,
 		LoginIP		VARCHAR(45),
 		Currency	TINYINT,
-		Flag		SMALLINT
+		Flag		SMALLINT,
+		GameCode	VARCHAR(30),
+		JPAmount	MONEY
 	)
 
 	BEGIN TRY
@@ -71,7 +74,7 @@ BEGIN
 			
 			TRUNCATE TABLE #TmpData
 			
-			INSERT INTO #TmpData(BillNo, IBCCustID, BetTime, GameType, BetAmount, NetAmount, PlayType, LoginIP, Currency, Flag)
+			INSERT INTO #TmpData(BillNo, IBCCustID, BetTime, GameType, BetAmount, NetAmount, PlayType, LoginIP, Currency, Flag, GameCode, JPAmount)
 				SELECT 
 					x.v.value('(BILLNO/text())[1]', 'BIGINT') AS BillNo,
 					x.v.value('(IBCCUSTID/text())[1]', 'INT') AS IBCCustID,
@@ -82,8 +85,13 @@ BEGIN
 					x.v.value('(PLAYTYPE/text())[1]', 'SMALLINT') AS PlayType,
 					x.v.value('(LOGINIP/text())[1]', 'VARCHAR(45)') AS LoginIP,	
 					x.v.value('(CURRENCY/text())[1]', 'TINYINT') AS Currency,
-					x.v.value('(FLAG/text())[1]', 'SMALLINT') AS Flag
+					x.v.value('(FLAG/text())[1]', 'SMALLINT') AS Flag,
+		 			x.v.value('(GAMECODE/text())[1]', 'VARCHAR(30)') AS GameCode,
+		 			t.jp_invest AS JPAmount
 				FROM @XmlData.nodes('/TransList/TRANSACTION') x(v)
+					OUTER APPLY (	SELECT jp_invest  
+						FROM OPENJSON(x.v.value('(REMARK/text())[1]', 'NVARCHAR(MAX)'))WITH (jp_invest MONEY '$.jp_invest')
+						WHERE ISJSON(x.v.value('(REMARK/text())[1]', 'NVARCHAR(MAX)'))= 1) AS t
 				OPTION (OPTIMIZE FOR (@XmlData = NULL))
 			--
 			
@@ -129,11 +137,13 @@ BEGIN
 					c.username, -- Username
 					d.LoginIP, -- IP
 					c.recommend, c.mrecommend, c.srecommend, c.currency,
-					CASE WHEN GameType LIKE 'CBAC' THEN 1 ELSE 0 END -- IsVIPGame
+					CASE WHEN GameType LIKE 'CBAC' THEN 1 ELSE 0 END, -- IsVIPGame
+					d.GameCode,
+					d.JPAmount
 					FROM #TmpData d
 						INNER JOIN bodb02.dbo.Customer c WITH(NOLOCK) ON c.custid = d.IBCCustID)
 			AS src (BillNo, IBCCustID, Transdate, GameType, Stake, Actual_Stake, Winlost, [Status], StatusID, 
-					PlayType, Winlostdate, Username, LoginIP, recommend, mrecommend, srecommend, currency, IsVIPGame)
+					PlayType, Winlostdate, Username, LoginIP, recommend, mrecommend, srecommend, currency, IsVIPGame, GameCode, JPAmount)
 				ON (dest.TicketID = src.BillNo)
 			WHEN MATCHED THEN
 				UPDATE SET dest.CustID = src.IBCCustID
@@ -153,13 +163,15 @@ BEGIN
 						,dest.srecommend = src.srecommend
 						,dest.currency = src.currency
 						,dest.IsVIPGame = src.IsVIPGame
+						,dest.GameCode = src.GameCode
+						,dest.JPAmount = src.JPAmount
 			WHEN NOT MATCHED THEN
 				INSERT (TicketID, CustID, Transdate, GameType, Stake, Actual_Stake, Winlost, 
 						[Status], StatusID, PlayType, Winlostdate,  Username, IP, 
-						recommend, mrecommend, srecommend, Currency, IsVIPGame)
+						recommend, mrecommend, srecommend, Currency, IsVIPGame, GameCode, JPAmount)
 				VALUES (src.BillNo, src.IBCCustID, src.Transdate, src.GameType, src.Stake, src.Actual_Stake, src.Winlost, 
 						src.[Status], src.StatusID, src.PlayType, src.Winlostdate, src.Username, src.LoginIP, 
-						src.recommend, src.mrecommend, src.srecommend, src.currency, src.IsVIPGame);
+						src.recommend, src.mrecommend, src.srecommend, src.currency, src.IsVIPGame, src.GameCode, src.JPAmount);
 
 			/* Flag description
 				1 - settled
