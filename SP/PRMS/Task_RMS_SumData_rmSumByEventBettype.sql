@@ -108,7 +108,13 @@ BEGIN
 			t.matchid,
 			t.betteam,
 			b.IsDeposit,
-			t.TransList,
+			STUFF((SELECT  ',' + CAST(bt.transid AS VARCHAR(30))
+					FROM @bettrans bt
+					WHERE bt.ParlayType = b.ParlayType
+						AND bt.IsDeposit = b.IsDeposit
+					FOR XML PATH(''), TYPE
+					).value('.', 'NVARCHAR(MAX)')  
+					,1,1,'') TransList,
 			BetCount			= SUM(1),
 			WonCount			= SUM(CASE WHEN t.statusID = 112 THEN 1 ELSE 0 END),
 			LoseCount			= SUM(CASE WHEN t.statusID = 113 THEN 1 ELSE 0 END),
@@ -125,41 +131,28 @@ BEGIN
 			MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.HouseWinloss ELSE 0 END)
 		FROM @bettrans b
 			CROSS APPLY (
-				SELECT bettype, LeagueId, statusID, matchId, betteam, TransList,
+				SELECT bettype, LeagueId, statusID, matchId, betteam, 			
 					ROW_NUMBER() OVER(PARTITION BY bettype, LeagueId, matchId, betteam ORDER BY (SELECT NULL)) AS rn
 				FROM (
-					SELECT bm.bettype, m.leagueid, bm.statusID, bm.matchId, bm.betteam,
-						STUFF((SELECT  ',' + CAST(b.transid AS VARCHAR(30))
-						FOR XML PATH(''), TYPE
-						).value('.', 'NVARCHAR(MAX)')  
-						,1,1,'') TransList
+					SELECT bm.bettype, m.leagueid, bm.statusID, bm.matchId, bm.betteam				
 					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
 						AND m.sporttype IN (1,2) AND bm.winlostdate > @MoveBetsDay
 
 					UNION ALL
-					SELECT bm.bettype, m.leagueid, bm.statusID, bm.matchId, bm.betteam,
-						STUFF((SELECT  ',' + CAST(b.transid AS VARCHAR(30))
-						FOR XML PATH(''), TYPE
-						).value('.', 'NVARCHAR(MAX)')  
-						,1,1,'') TransList
+					SELECT bm.bettype, m.leagueid, bm.statusID, bm.matchId, bm.betteam	
 					FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
 						AND m.sporttype IN (1,2) AND bm.winlostdate BETWEEN @BalanceUpDay AND  @MoveBetsDay
 
 					UNION ALL
-					SELECT bm.bettype, m.leagueid, bm.statusID, bm.matchId, bm.betteam,
-						STUFF((SELECT  ',' + CAST(b.transid AS VARCHAR(30))
-						FOR XML PATH(''), TYPE
-						).value('.', 'NVARCHAR(MAX)')  
-						,1,1,'') TransList
+					SELECT bm.bettype, m.leagueid, bm.statusID, bm.matchId, bm.betteam				
 					FROM dbo.rmBettransm_bk bm WITH (NOLOCK)
 						INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
 						AND m.sporttype IN (1,2) AND bm.winlostdate < @BalanceUpDay
-
 				) bm
 			) t
 		GROUP BY
@@ -168,8 +161,7 @@ BEGIN
 			b.IsDeposit,
 			t.LeagueId,
 			t.matchid,
-			t.betteam,
-			t.TransList
+			t.betteam
 	END
 
 	BEGIN TRY
