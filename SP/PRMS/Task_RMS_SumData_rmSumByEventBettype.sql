@@ -64,8 +64,6 @@ BEGIN
 	CREATE TABLE #bettransmbk (refno BIGINT, bettype SMALLINT, statusID TINYINT, leagueid INT)
 	DECLARE @bettransmbkByBatch TABLE (refno BIGINT, bettype SMALLINT, statusID TINYINT, leagueid INT)
 	DECLARE @SQL VARCHAR(MAX)
-	
-	--DECLARE @bettype TABLE (bettype SMALLINT, ParlayType TINYINT, leagueid INT)
 
 	IF @winlostdate > @MoveBetsDay
 	BEGIN
@@ -112,6 +110,7 @@ BEGIN
 					FROM @bettrans bt
 					WHERE bt.ParlayType = b.ParlayType
 						AND bt.IsDeposit = b.IsDeposit
+						AND bt.statusID = 112
 					FOR XML PATH(''), TYPE
 					).value('.', 'NVARCHAR(MAX)')  
 					,1,1,'') TransList,
