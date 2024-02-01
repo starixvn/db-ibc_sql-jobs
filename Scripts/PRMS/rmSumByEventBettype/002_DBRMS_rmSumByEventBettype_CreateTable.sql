@@ -20,7 +20,7 @@ CREATE TABLE dbo.rmSumByEventBettype
 	,MatchId			INT
 	,Betteam			NVARCHAR(10)
 	,IsDeposit			BIT
-	,WonTrans			NVARCHAR(MAX)
+	,WonTransID			NVARCHAR(MAX)
 	,BetCount			INT
 	,WonCount			INT
 	,DrawCount			INT

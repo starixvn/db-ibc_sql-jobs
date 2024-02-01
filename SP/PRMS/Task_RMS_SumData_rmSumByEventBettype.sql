@@ -166,7 +166,7 @@ BEGIN
 	BEGIN TRY
 		DELETE dbo.rmSumByEventBettype WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @WLDate
 
-		INSERT INTO dbo.rmSumByEventBettype (winlostdate,bettype,ParlayType,leagueId,matchId,betteam,IsDeposit,TransList,BetCount,WonCount,DrawCount,LoseCount,MainBetCount,MainWonCount,MainLoseCount,MainDrawCount,MainStake,MainTurnover,MainTurnoverNoDraw,MainMemberWinloss,MainMemberComm,MainHouseWinloss)
+		INSERT INTO dbo.rmSumByEventBettype (winlostdate,bettype,ParlayType,leagueId,matchId,betteam,IsDeposit,WonTransID,BetCount,WonCount,DrawCount,LoseCount,MainBetCount,MainWonCount,MainLoseCount,MainDrawCount,MainStake,MainTurnover,MainTurnoverNoDraw,MainMemberWinloss,MainMemberComm,MainHouseWinloss)
 		SELECT @WLDate,bettype,ParlayType,leagueId,matchId,betteam,IsDeposit,TransList,SUM(BetCount),SUM(WonCount),SUM(DrawCount),SUM(LoseCount),SUM(MainBetCount),SUM(MainWonCount),SUM(MainLoseCount),SUM(MainDrawCount),SUM(MainStake),SUM(MainTurnover),SUM(MainTurnoverNoDraw),SUM(MainMemberWinloss),SUM(MainMemberComm),SUM(MainHouseWinloss)
 		FROM #rmSumByEventBettype
 		GROUP BY bettype,ParlayType,IsDeposit,leagueId,matchId,betteam,TransList
