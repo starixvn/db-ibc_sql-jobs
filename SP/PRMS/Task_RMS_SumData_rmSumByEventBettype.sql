@@ -110,7 +110,6 @@ BEGIN
 					FROM @bettrans bt
 					WHERE bt.ParlayType = b.ParlayType
 						AND bt.IsDeposit = b.IsDeposit
-						AND bt.statusID = 112
 					FOR XML PATH(''), TYPE
 					).value('.', 'NVARCHAR(MAX)')  
 					,1,1,'') TransList,
@@ -166,14 +165,27 @@ BEGIN
 	BEGIN TRY
 		DELETE dbo.rmSumByEventBettype WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @WLDate
 
-		INSERT INTO dbo.rmSumByEventBettype (winlostdate,bettype,ParlayType,leagueId,matchId,betteam,IsDeposit,WonTransID,BetCount,WonCount,DrawCount,LoseCount,MainBetCount,MainWonCount,MainLoseCount,MainDrawCount,MainStake,MainTurnover,MainTurnoverNoDraw,MainMemberWinloss,MainMemberComm,MainHouseWinloss)
-		SELECT @WLDate,bettype,ParlayType,leagueId,matchId,betteam,IsDeposit,TransList,SUM(BetCount),SUM(WonCount),SUM(DrawCount),SUM(LoseCount),SUM(MainBetCount),SUM(MainWonCount),SUM(MainLoseCount),SUM(MainDrawCount),SUM(MainStake),SUM(MainTurnover),SUM(MainTurnoverNoDraw),SUM(MainMemberWinloss),SUM(MainMemberComm),SUM(MainHouseWinloss)
-		FROM #rmSumByEventBettype
+		INSERT INTO dbo.rmSumByEventBettype (winlostdate,bettype,ParlayType,leagueId,matchId,betteam,IsDeposit,TransList,BetCount,WonCount,DrawCount,LoseCount,MainBetCount,MainWonCount,MainLoseCount,MainDrawCount,MainStake,MainTurnover,MainTurnoverNoDraw,MainMemberWinloss,MainMemberComm,MainHouseWinloss)
+		SELECT @WLDate,bettype,ParlayType,leagueId,matchId,betteam,IsDeposit,
+			COMPRESS((SELECT TransList AS 'tl'
+					FROM #rmSumByEventBettype bt
+					WHERE bt.ParlayType = b.ParlayType
+						AND bt.IsDeposit = b.IsDeposit
+						AND bt.bettype = b.bettype
+						AND bt.LeagueId = b.LeagueId
+						AND bt.MatchId = b.MatchId
+						AND bt.Betteam = b.Betteam
+					FOR JSON PATH
+					,INCLUDE_NULL_VALUES)) TransList,
+			SUM(BetCount),SUM(WonCount),SUM(DrawCount),SUM(LoseCount),
+			SUM(MainBetCount),SUM(MainWonCount),SUM(MainLoseCount),SUM(MainDrawCount),
+			SUM(MainStake),SUM(MainTurnover),SUM(MainTurnoverNoDraw),
+			SUM(MainMemberWinloss),SUM(MainMemberComm),SUM(MainHouseWinloss)
+		FROM #rmSumByEventBettype b
 		GROUP BY bettype,ParlayType,IsDeposit,leagueId,matchId,betteam,TransList
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = ERROR_NUMBER(), @ErrMsg = ERROR_MESSAGE()
-		--RETURN
 	END CATCH
 
 	DROP TABLE #bettransmbk
