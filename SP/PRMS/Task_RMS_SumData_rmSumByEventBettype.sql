@@ -110,6 +110,7 @@ BEGIN
 					FROM @bettrans bt
 					WHERE bt.ParlayType = b.ParlayType
 						AND bt.IsDeposit = b.IsDeposit
+						AND bt.statusID = 112
 					FOR XML PATH(''), TYPE
 					).value('.', 'NVARCHAR(MAX)')  
 					,1,1,'') TransList,
