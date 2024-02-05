@@ -6,7 +6,8 @@ ALTER PROCEDURE [dbo].SiteDB_DBA_Consistency_SystemSetting_Select
 	@TransferLastTransId BIGINT OUTPUT,
 	@NewTransferLastTransId BIGINT OUTPUT,
 	@ErrCode INT = 0 OUTPUT,
-	@ErrMsg VARCHAR(MAX)= '' OUTPUT 
+	@ErrMsg VARCHAR(MAX)= '' OUTPUT,
+	@CurrentTime DATETIME OUTPUT
 )
 AS
 /*
@@ -20,6 +21,7 @@ AS
 						- Get last transid and new last transid - [Redmine:#175881]
 		- 20221007@Evan: Remove 2 bet types 19999 & 20000 - rule #46 - [Redmine:#175881]
 		- 20230706@Danny: deploy SP to SiteDB03 [Redmine: #181595]
+		- 20240201@Lewis: Add @CurrentTime output [Redmine: #200766]
 		
 	Param's Expanation:
 */
@@ -62,7 +64,7 @@ BEGIN
 
 	---assign current time - 2 mins to @currTime
 	SELECT @currTime =  DATEADD(MINUTE, -2, GETDATE())
-
+	SELECT @CurrentTime = @currTime
 	---get site group id
 	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
 

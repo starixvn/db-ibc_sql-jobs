@@ -5,7 +5,8 @@ ALTER PROCEDURE [dbo].[SiteDB_DBA_Consistency_CheckTicketCountAndChecksum_Transf
 	@TransferLastTransId BIGINT OUTPUT,
 	@NewTransferLastTransId BIGINT OUTPUT,
 	@ErrCode INT = 0 OUTPUT,
-	@ErrMsg VARCHAR(MAX)= '' OUTPUT 
+	@ErrMsg VARCHAR(MAX)= '' OUTPUT,
+	@CurrentTime DATETIME OUTPUT
 )
 AS
 /*
@@ -20,6 +21,7 @@ AS
 		- 20221220@Evan: Check Data Consistency - Exclude custid = 0 - [Redmine:#181848] 
 		- 20230706@Danny: deploy SP to SiteDB03 [Redmine: #181595]
 		- 20231122@Evan: Check ignore archive account - [Redmine:#196690] 
+		- 20240201@Lewis: Add @CurrentTime output [Redmine: #200766]
 	
 	Param's Expanation:
 */
@@ -29,7 +31,7 @@ BEGIN
 	--parameters
 	DECLARE 
 		@transferKey VARCHAR(50) = 'SiteDB_CheckCons_Transfer_Count_LastTransId'
-
+		
 	---get last transid
 	EXEC [dbo].SiteDB_DBA_Consistency_SystemSetting_Select
 		@CheckConsistencyKeyName = @transferKey,
@@ -37,7 +39,8 @@ BEGIN
 		@TransferLastTransId = @TransferLastTransId OUTPUT,
 		@NewTransferLastTransId = @NewTransferLastTransId OUTPUT,
 		@ErrCode = @ErrCode OUTPUT,
-		@ErrMsg = @ErrMsg OUTPUT 
+		@ErrMsg = @ErrMsg OUTPUT,
+		@CurrentTime = @CurrentTime OUTPUT
 
 	IF (@ErrCode <> 0)
 	BEGIN
@@ -113,6 +116,7 @@ BEGIN
 			AND tc.CustId <> 0
 		GROUP BY tc.Recommend 
 
+		SELECT GETDATE() AS ExecutionTime
 	END
 END
 GO
