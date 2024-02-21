@@ -36,6 +36,14 @@ BEGIN
 			ORDER BY cw.FirstDepositTime
 			LIMIT batchCount
 		)
+        UNION (
+			SELECT ct.CustId
+			FROM `CustTaskTime` ct
+			WHERE ct.TaskTime >= fromDate
+				AND TaskId IN (2, 5)
+			ORDER BY ct.TaskTime
+			LIMIT batchCount
+		)
 	)
 	SELECT t.CustId, t.SiteId, t.UserName, t.CurrencyId, t.UserLang, t.ActStatus, t.AgentId, t.AllAgentId, t.UserLevel, t.RegTime, t.IsTest, t.Status, t.MemberType
 	FROM CTE_Customer c
