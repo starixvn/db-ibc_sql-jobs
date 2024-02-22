@@ -8,6 +8,7 @@ CREATE PROCEDURE Task_Sum_Winloss_CheckData
 
 	Revisions:
 		- 20231018@Lewis: Initialize SP [RedmineID: #193254]
+		- 20240219@Lewis: Add Live22 PromotionPrize - bettype = 7698 [RedmineID: #201011]	
 
 */
 AS
@@ -54,7 +55,7 @@ BEGIN
 			SELECT DISTINCT s.RefTable, s.BetType FROM dbo.SportBettypeMatrix s WITH (NOLOCK)
 			WHERE f.ProductID = s.ProductID
 				AND (f.ProductID <> 6 OR f.SportType = s.SportType)
-				AND (f.BetType NOT IN (3150, 4297, 4298, 4599, 4600, 8695, 2499) AND s.BetType NOT IN (3150, 4297, 4298, 4599, 4600, 8695, 2499) OR f.BetType = s.BetType)
+				AND (f.BetType NOT IN (3150, 4297, 4298, 4599, 4600, 8695, 2499, 7698) AND s.BetType NOT IN (3150, 4297, 4298, 4599, 4600, 8695, 2499, 7698) OR f.BetType = s.BetType)
 		) AS s
 
 	-- Get Data From bettrans14
