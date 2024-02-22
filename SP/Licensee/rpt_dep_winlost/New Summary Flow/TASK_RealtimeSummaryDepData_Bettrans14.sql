@@ -83,6 +83,7 @@ AS
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 		- 20231026@Evan: Support 12bet team get TO without Void/reject/refund [RedmineID: #195784]
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
+		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -315,7 +316,8 @@ BEGIN
 				WHEN b.bettype = 912 THEN -7--Cash Out - Bought.
 				WHEN b.bettype = 913 THEN -8--Cash Out - Commission
 				WHEN b.bettype = 914 THEN -9--Cash Out - Winloss
-				WHEN b.bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+				WHEN b.bettype = 1800 THEN 250 -- AGC
+				WHEN b.bettype BETWEEN 1801 AND 1803 THEN -250 -- AGC Jackpot Contribution and Jackpot Prize and Promotion
 				WHEN b.bettype = 1900 THEN 249 -- VG
 				WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
 				WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
@@ -377,6 +379,7 @@ BEGIN
 						AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 						AND (b.bettype NOT BETWEEN 17000 AND 17030)
 						AND (b.bettype NOT BETWEEN 8700 AND 8709)
+						AND (b.bettype NOT BETWEEN 1801 AND 1803)
 						THEN b.winlost - b.actual_stake
 					ELSE 0
 				END),--Winloss
@@ -391,6 +394,7 @@ BEGIN
 						OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 						OR (b.bettype BETWEEN 17000 AND 17030)
 						OR (b.bettype BETWEEN 8700 AND 8709)
+						OR (b.bettype BETWEEN 1801 AND 1803)
 						THEN b.winlost - b.actual_stake
 					ELSE 0
 				END), -- Promotion
@@ -426,7 +430,8 @@ BEGIN
 				WHEN b.bettype = 912 THEN -7--Cash Out - Bought.
 				WHEN b.bettype = 913 THEN -8--Cash Out - Commission
 				WHEN b.bettype = 914 THEN -9--Cash Out - Winloss
-				WHEN b.bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+				WHEN b.bettype = 1800 THEN 250 -- AGC
+				WHEN b.bettype BETWEEN 1801 AND 1803 THEN -250 -- AGC Jackpot Contribution and Jackpot Prize and Promotion
 				WHEN b.bettype = 1900 THEN 249 -- VG
 				WHEN b.bettype BETWEEN 2101 AND 2199 THEN 208
 				WHEN b.bettype BETWEEN 2201 AND 2299 THEN 209
@@ -583,7 +588,7 @@ BEGIN
 			SUM(Adjustment),--Adjustment
 			SUM(Turnover),--Turnover
 			SUM(Outstanding),--Outstanding
-			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211 , 157, -155) THEN Winloss ELSE 0 END),--Winloss
+			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211 , 157, -155, -250) THEN Winloss ELSE 0 END),--Winloss
 			SUM(Transfer3rd),--Transfer3rd
 			SUM(DrawGame),--DrawGame
 			SUM(Playercomm),--Playercomm
@@ -779,7 +784,7 @@ BEGIN
 			-1,
 			TurnOver,
 			DrawGame,
-			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211, 157, -155) THEN Promotion ELSE Winloss END AS Winloss,
+			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211, 157, -155, -250) THEN Promotion ELSE Winloss END AS Winloss,
 			playercomm,
 			BetCount,
 			OutStanding,
