@@ -22,7 +22,7 @@ BEGIN
 	DECLARE @tblErrMsg TABLE (TableName VARCHAR(300), ErrMsg VARCHAR(4000))
 	
 	-- Run every 30mins
-	-- rmSumByLeague/rmSumByBettype
+	-- rmSumByLeague/rmSumByBettype/rmSumByEventBettype
 	BEGIN
 		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
