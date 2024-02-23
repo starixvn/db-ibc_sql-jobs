@@ -21,7 +21,7 @@ BEGIN
 	DECLARE @winlostdate SMALLDATETIME, @ErrCode INT, @ErrMsg NVARCHAR(4000)
 	DECLARE @tblErrMsg TABLE (TableName VARCHAR(300), ErrMsg VARCHAR(4000))
 	
-	-- Run every 30s
+	-- Run every 30mins
 	-- rmSumByLeague/rmSumByBettype
 	BEGIN
 		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
