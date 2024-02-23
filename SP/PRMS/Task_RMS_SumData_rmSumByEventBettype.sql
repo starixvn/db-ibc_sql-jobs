@@ -57,17 +57,11 @@ BEGIN
 	)
 	CREATE CLUSTERED INDEX CIX_rmSumByEventBettype ON #rmSumByEventBettype (bettype, ParlayType, LeagueId, MatchId, Betteam)
 
-	DECLARE @bettrans TABLE (transid BIGINT, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
-	DECLARE @bettransByBatch TABLE (refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
-	DECLARE @batch INT = 300000, @isBreak BIT
-
-	CREATE TABLE #bettransmbk (refno BIGINT, bettype SMALLINT, statusID TINYINT, leagueid INT)
-	DECLARE @bettransmbkByBatch TABLE (refno BIGINT, bettype SMALLINT, statusID TINYINT, leagueid INT)
-	DECLARE @SQL VARCHAR(MAX)
+	CREATE TABLE #bettrans (transid BIGINT, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
 
 	IF @winlostdate > @MoveBetsDay
 	BEGIN
-		INSERT INTO @bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
+		INSERT INTO #bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
 		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, statusID, stake*actualrate,
 		(winlost-actual_stake)*actualrate, playercomm*actualrate, 
 		CASE WHEN tpositiontaking = 1 THEN 0 ELSE (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate END
@@ -82,7 +76,7 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		INSERT INTO @bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
+		INSERT INTO #bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
 		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, 
 		statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, 
 		CASE WHEN tpositiontaking = 1 THEN 0 ELSE (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate END
@@ -107,7 +101,7 @@ BEGIN
 			t.betteam,
 			b.IsDeposit,
 			STUFF((SELECT  ',' + CAST(bt.transid AS VARCHAR(30))
-					FROM @bettrans bt
+					FROM #bettrans bt
 					WHERE bt.ParlayType = b.ParlayType
 						AND bt.IsDeposit = b.IsDeposit
 						AND bt.statusID = 112
@@ -128,7 +122,7 @@ BEGIN
 			MainWinloss			= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END),
 			MainComm			= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END),
 			MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.HouseWinloss ELSE 0 END)
-		FROM @bettrans b
+		FROM #bettrans b
 			CROSS APPLY (
 				SELECT bettype, LeagueId, statusID, matchId, betteam, 			
 					ROW_NUMBER() OVER(PARTITION BY bettype, LeagueId, matchId, betteam ORDER BY (SELECT NULL)) AS rn
@@ -189,7 +183,7 @@ BEGIN
 		SELECT @ErrCode = ERROR_NUMBER(), @ErrMsg = ERROR_MESSAGE()
 	END CATCH
 
-	DROP TABLE #bettransmbk
 	DROP TABLE #rmSumByEventBettype
+	DROP TABLE #bettrans
 END
 GO
