@@ -21,6 +21,7 @@ AS
 		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
 		- 20230414@Evan: Update formula agentCommission for new commercial terms [Redmine: #186609]
 		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
+		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product into Bettrans [RedmineID: #200273]
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -36,12 +37,12 @@ BEGIN
 	END
 
 	CREATE TABLE #LicenseeProductTable (RowId INT IDENTITY(1,1), LicenseeId INT, LicenseeName VARCHAR(50), CurrencyId TINYINT, ProductId TINYINT)
-	CREATE TABLE #3rdData (WinlostDate SMALLDATETIME, Stake MONEY, Actual_Stake MONEY, Winlost MONEY, CurrencyId TINYINT, Bettype SMALLINT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0))
+	CREATE TABLE #3rdData (WinlostDate SMALLDATETIME, Stake MONEY, Actual_Stake MONEY, Winlost MONEY, CurrencyId TINYINT, Bettype INT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0), JpContribution MONEY DEFAULT (0), StakeContribution MONEY DEFAULT (0))
 	CREATE TABLE #ChargeRate (ChargeId INT, PartyId INT, LicenseeId INT, ProductId INT, ChargeType TINYINT, Rate MONEY, FromDate SMALLDATETIME, ToDate SMALLDATETIME)
 	CREATE TABLE #ChargeRateByCurrency (ChargeId INT, CurrencyId INT, Rate MONEY)
 
 	DECLARE @LicenseeTable TABLE (RowId INT IDENTITY(1,1), LicenseeId INT, LicenseeName VARCHAR(50), CurrencyId TINYINT)
-	DECLARE @DataTmp TABLE (RowId INT, CurrencyId TINYINT, Bettype SMALLINT)
+	DECLARE @DataTmp TABLE (RowId INT, CurrencyId TINYINT, Bettype INT)
 	DECLARE @BalanceUpTable TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
 	DECLARE @Party TABLE (PartyId INT)
 
@@ -175,9 +176,9 @@ BEGIN
 
 	DECLARE @FinalData TABLE (TransId BIGINT, CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, TransDesc VARCHAR(300)
 			, StatusId TINYINT, Status VARCHAR(10), apositiontaking MONEY, awinlost MONEY, RefNo BIGINT, actualrate FLOAT
-			, CurrencyId TINYINT, Bettype SMALLINT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50)
-			, PlayerComm MONEY, Comm MONEY, betfrom NVARCHAR(4))
-
+			, CurrencyId TINYINT, Bettype INT, CurrencyName VARCHAR(10), srecommend INT, mrecommend INT, recommend INT, UserName VARCHAR(50)
+			, PlayerComm MONEY, Comm MONEY, betfrom NVARCHAR(4), GroupBettype INT, oddsspread MONEY, betid BIGINT)
+			
 	WHILE EXISTS (SELECT 1 FROM @LicenseeTable WHERE RowId = @RowId)
 	BEGIN
 		--clean data
@@ -202,26 +203,57 @@ BEGIN
 		
 		IF ISNULL(@CustDummyId, 0) = 0 OR ISNULL(@ProductIds, '') = ''
 			CONTINUE
-		
+
 		IF CHARINDEX('10', @ProductIds, 0) > 0 --AG Casino
 		BEGIN
 			--print ('AG Casino')
 			SELECT @SqlQueryFor3rd = ''
-			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Currency, 1800 AS Bettype, Stake, Actual_stake, Winlost
-				FROM OPENQUERY(DBLIC, ''SELECT WinlostDate, b.Currency, SUM(ABS(Stake)) AS Stake, SUM(ABS(Actual_stake)) AS Actual_stake, SUM(ABS(Winlost)) AS Winlost
+			SELECT @SqlQueryFor3rd = 'SELECT WinlostDate, Bettype, Currency, Stake, Actual_stake, Winlost, JpContribution, StakeContribution FROM OPENQUERY(DBLIC, ''
+			;WITH cte_bettrans_AGCasino AS
+			(
+				SELECT Winlostdate
+						, CASE
+							WHEN b.PlayType IN (9000, 9001, 9002, 9003, 9004, 9005) THEN 1801
+							WHEN b.GameCode IN (''''GC0161811101Y'''', ''''RED_POCKET'''', ''''COMP_ENROLL'''', ''''COMP_PRIZE'''', ''''COMP_REFUND'''', ''''EVENT_PRIZE'''') THEN 1803
+							ELSE 1800
+						END AS bettype
+						, b.Currency
+						, SUM(ABS(Stake)) AS Stake
+						, SUM(ABS(Actual_stake)) AS Actual_stake
+						, SUM(ABS(Winlost)) AS Winlost
+						, SUM(ABS(JpContribution)) AS JpContribution
+						, SUM(CASE WHEN b.JpContribution > 0 THEN ABS(Stake) ELSE 0 END) AS StakeContribution
 				FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b WITH (NOLOCK)
-					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON b.recommend = f.custid AND b.currency = f.currency 
-				WHERE 1 = 1'
-					+ ' AND WinlostDate BETWEEN ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''''
-					+ ' AND b.Currency = ' + CAST(@CurrencyId AS VARCHAR)
-					+ ' AND StatusId IN (112,113,111)'
-				+ ' GROUP BY WinlostDate, b.Currency'
-				+ ''' )'
-			--select @SqlQueryFor3rd as '@SqlQueryFor3rd'
-			INSERT INTO #3rdData(WinlostDate, CurrencyId, Bettype, Stake, Actual_stake, Winlost)
+					INNER JOIN bodb_licensee.dbo.f_SelLicenseeCust(' + CAST(@LicenseeId AS VARCHAR) + ') f ON b.recommend = f.CustID
+						AND b.Currency = f.Currency
+				WHERE 1 = 1
+					AND Winlostdate BETWEEN ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''' AND ''''' + CONVERT(VARCHAR(10), @WinlostDate, 112) + ''''''+ '
+					AND b.Currency = ' + CAST(@CurrencyId AS VARCHAR)+ '	
+					AND StatusID IN (112, 113, 111)
+				GROUP BY Winlostdate
+						, b.Currency
+						, CASE
+								WHEN b.PlayType IN (9000, 9001, 9002, 9003, 9004, 9005) THEN 1801
+								WHEN b.GameCode IN (''''GC0161811101Y'''', ''''RED_POCKET'''', ''''COMP_ENROLL'''', ''''COMP_PRIZE'''', ''''COMP_REFUND'''', ''''EVENT_PRIZE'''') THEN 1803
+								ELSE 1800
+							END
+			)
+			SELECT b.Winlostdate,b.Currency,b.bettype,SUM(b.Stake) Stake,SUM(b.Actual_stake) Actual_stake,SUM(b.Winlost) Winlost,SUM(b.JpContribution) JpContribution,SUM(b.StakeContribution) StakeContribution
+			FROM cte_bettrans_AGCasino a
+			CROSS APPLY (
+				SELECT Winlostdate,bettype,Currency,Stake,Actual_stake,Winlost,0 AS JpContribution,0 AS StakeContribution
+				UNION ALL
+				SELECT Winlostdate,1802,Currency,0,0,0,JpContribution ,StakeContribution 
+				WHERE JpContribution > 0
+				) b
+			GROUP BY b.Winlostdate, b.Currency, b.bettype'
+			+ ''' )'
+
+			INSERT INTO #3rdData(WinlostDate, Bettype, CurrencyId, Stake, Actual_stake, Winlost, JpContribution, StakeContribution)
 			EXEC (@SqlQueryFor3rd)
+			
 		END
-		
+
 		IF CHARINDEX('31', @ProductIds, 0) > 0 --Exchange
 		BEGIN
 			--print ('Exchange')
@@ -240,14 +272,15 @@ BEGIN
 			
 			INSERT INTO #3rdData(WinlostDate, CurrencyId, Bettype, Stake, Actual_stake, Winlost, PlayerComm, Comm)
 			EXEC (@SqlQueryFor3rd)
+
 		END
-		
+
 		IF NOT EXISTS (SELECT TOP 1 1 FROM #3rdData)
 		BEGIN
 			--PRINT('No data on that day. - WinlostDate: ' + CONVERT(VARCHAR(10), @WinlostDate, 112))
 			CONTINUE
 		END
-
+		
 		--incase daily sum
 		INSERT @DataTmp(RowId, CurrencyId, Bettype)
 		SELECT ROW_NUMBER() OVER(ORDER BY CurrencyId) AS RowId, CurrencyId, Bettype
@@ -258,12 +291,13 @@ BEGIN
 			GROUP BY CurrencyId, Bettype
 		)tmp
 		
-		DECLARE @RowIdTmp INT, @CurrencyIdTmp TINYINT, @BettypeTmp SMALLINT
+		DECLARE @RowIdTmp INT, @CurrencyIdTmp TINYINT, @BettypeTmp INT, @GroupBettypeTmp INT
 		SELECT @RowIdTmp = 1
 		WHILE EXISTS (SELECT 1 FROM @DataTmp WHERE RowId = @RowIdTmp)
 		BEGIN
 			SELECT @CurrencyIdTmp = 0, @BettypeTmp = 0
 			SELECT @CurrencyIdTmp = CurrencyId, @BettypeTmp = Bettype
+				, @GroupBettypeTmp = CASE WHEN Bettype IN (1801,1802,1803) THEN 1800 ELSE Bettype END
 			FROM @DataTmp WHERE RowId = @RowIdTmp
 			
 			SET @RowIdTmp = @RowIdTmp + 1
@@ -278,7 +312,7 @@ BEGIN
 			SELECT @ExchangeRate = ActualRate
 			FROM CustDB.dbo.ExchangeDailyOanda WITH(NOLOCK)
 			WHERE ExchangeDate = @WinlostDate AND ExchangeId = @CurrencyIdTmp
-
+								
 			--data sum --> prevent case re-run
 			IF NOT EXISTS (SELECT TOP 1 1 
 							FROM #3rdData d
@@ -287,10 +321,16 @@ BEGIN
 							WHERE d.WinlostDate = @WinlostDate AND d.CurrencyId = @CurrencyIdTmp AND d.Bettype = @BettypeTmp
 								AND d.Stake = dd.Stake AND d.Actual_Stake = dd.Actual_stake AND d.Winlost = dd.Winlost)
 			BEGIN
-				INSERT INTO @FinalData(TransId, WinlostDate, CustId, Stake, Actual_Stake, Winlost, RefNo, actualrate, CurrencyId, Bettype, PlayerComm, Comm)
-				SELECT @TransId, WinlostDate, @CustDummyId, Stake, Actual_Stake, Winlost, @RefNo, @ExchangeRate, @CurrencyIdTmp, @BettypeTmp, PlayerComm, Comm
+				
+				INSERT INTO @FinalData(TransId, WinlostDate, CustId, Stake, Actual_Stake, Winlost, RefNo, actualrate, CurrencyId, Bettype, GroupBettype, PlayerComm, Comm, awinlost,apositiontaking, oddsspread, betid)
+				SELECT @TransId, WinlostDate, @CustDummyId, Stake, Actual_Stake, Winlost, @RefNo, @ExchangeRate, @CurrencyIdTmp, @BettypeTmp, @GroupBettypeTmp, PlayerComm, Comm, 
+					CASE WHEN tmp.Bettype = 1802 THEN -tmp.JpContribution ELSE 0 END AS awinlost,
+					CASE WHEN tmp.Bettype = 1802 THEN 1 ELSE 0 END AS apositiontaking,
+					tmp.StakeContribution AS oddsspread,
+					CASE WHEN tmp.Bettype = 1802 THEN tmp.JpContribution * 100000000 ELSE 0 END AS betid
 				FROM #3rdData tmp
 				WHERE WinlostDate = @WinlostDate AND tmp.CurrencyId = @CurrencyIdTmp AND tmp.Bettype = @BettypeTmp
+
 			END
 			
 		END
@@ -298,11 +338,11 @@ BEGIN
 		--update some info: transdesc, awinlost, apositiontaking, status, recommend, ...
 		--AGC Adjustment - Date: 2015-05-26
 		UPDATE tmp
-		SET TransDesc = CASE WHEN tmp.Bettype = 1800 THEN 'AGC' 
-							 WHEN tmp.Bettype = 8000 THEN 'BX' 
+		SET TransDesc = CASE WHEN tmp.GroupBettype = 1800 THEN 'AGC' 
+							 WHEN tmp.GroupBettype = 8000 THEN 'BX' 
 							 END + @BettingIndicator + 'Transfer back to Sportsbook'
-			, awinlost = -(Winlost - Actual_stake) * (1 - ISNULL(rc.Rate, r.Rate))
-			, apositiontaking = 1 - ISNULL(rc.Rate, r.Rate)
+			, awinlost = CASE WHEN tmp.Bettype IN (1801,1802,1803) THEN tmp.awinlost ELSE -(Winlost - Actual_stake) * (1 - ISNULL(rc.Rate, r.Rate)) END 
+			, apositiontaking = CASE WHEN tmp.Bettype IN (1801,1802,1803) THEN tmp.apositiontaking ELSE 1 - ISNULL(rc.Rate, r.Rate) END 
 			, Status = CASE WHEN Winlost - Actual_stake > 0 THEN 'WON'
 							WHEN Winlost - Actual_stake < 0 THEN 'LOSE'
 							ELSE 'DRAW' END
@@ -314,7 +354,7 @@ BEGIN
 			, recommend = c.recommend
 			, UserName = c.username
 			, CurrencyName = ex.currency
-			, Betfrom = CASE WHEN tmp.Bettype = 8000 THEN 'd' 
+			, Betfrom = CASE WHEN tmp.GroupBettype = 8000 THEN 'd' 
 							 ELSE 'i'
 						END
 		FROM @FinalData tmp
@@ -322,9 +362,9 @@ BEGIN
 				SELECT ChargeId, FromDate, ToDate, Rate
 					, CASE WHEN ProductId = 10 THEN 1800
 						WHEN ProductId = 31 THEN 8000 
-						END Bettype
+						END GroupBettype
 				FROM #ChargeRate WHERE LicenseeId = @LicenseeId
-			) r ON tmp.WinlostDate BETWEEN r.FromDate AND r.ToDate AND r.Bettype = tmp.Bettype
+			) r ON tmp.WinlostDate BETWEEN r.FromDate AND r.ToDate AND r.GroupBettype = tmp.GroupBettype
 			LEFT JOIN #ChargeRateByCurrency rc ON r.ChargeId = rc.ChargeId AND tmp.CurrencyId = rc.CurrencyId
 			INNER JOIN CustDB.dbo.Customer c WITH(NOLOCK) ON tmp.CustId = c.custid AND c.roleid = 1
 			INNER JOIN CustDB.dbo.exchange ex WITH(NOLOCK) ON tmp.CurrencyId = ex.exchangeid
@@ -337,7 +377,7 @@ BEGIN
 		
 		DECLARE @CutoffDate SMALLDATETIME
 		SET @CutoffDate = '2023-05-01' 
-
+		
 		INSERT INTO dbo.bettrans(TransId
 			, custid
 			, transdate
@@ -435,20 +475,20 @@ BEGIN
 			, betfrom
 			, 0 betcheck
 			, NULL checktime
-			, NULL oddsspread
+			, oddsspread
 			, actualrate
 			, CASE WHEN @WinlostDate >= @CutoffDate 
-				THEN CASE Bettype 
+				THEN CASE GroupBettype 
 					WHEN 8000 THEN 221
 					WHEN 1800 THEN 250 END
 				ELSE 0 END
 			, recommend
 			, mrecommend
 			, 1 ruben
-			, 0 betid
+			, betid
 			, NULL statuswinlost
 			, 1 modds --get default value
-			, bettype
+			, Bettype
 			, NULL betdaqid
 			--, tstamp --not insert
 			, actual_stake
