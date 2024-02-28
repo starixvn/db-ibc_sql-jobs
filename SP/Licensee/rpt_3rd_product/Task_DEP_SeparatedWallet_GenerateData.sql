@@ -12,6 +12,7 @@ AS
 		- 20200407@Percy: Initialize SP [RedmineID: #131885]
 		- 20220315@Evan: SQL Server Upgrade STRING_SPLIT [Redmine: #168783]
  		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
+		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product into Bettrans [RedmineID: #200273]
 */
 
 BEGIN
@@ -34,11 +35,11 @@ BEGIN
 	INSERT INTO @ImportedProducts (ProductId)
 	SELECT DISTINCT
 		CASE
-			WHEN bettype = 1800			THEN 10 -- AG Casino
-			WHEN bettype = 8000			THEN 31 -- Exchange
+			WHEN bettype IN (1800,1801,1802,1803)	THEN 10 -- AG Casino
+			WHEN bettype = 8000						THEN 31 -- Exchange
 			END AS ProductId
 	FROM dbo.bettrans WITH (NOLOCK)
-	WHERE bettype IN (1800,8000)
+	WHERE bettype IN (1800,1801,1802,1803,8000)
 		AND winlostdate = @WinlostDate
 
 	DELETE @Products WHERE ProductId IN (SELECT ProductId FROM @ImportedProducts)
