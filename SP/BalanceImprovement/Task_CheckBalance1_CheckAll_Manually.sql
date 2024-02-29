@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_CheckBalance1_CheckAll_Manually]
+ALTER PROCEDURE [dbo].[Task_CheckBalance1_CheckAll_Manually]
 AS
 
 /*
@@ -24,6 +24,7 @@ AS
 		20220804@Patrick: Support scale-out for deposit site Redmine: [#175602]
 		20221227@Patrick: Support BU 247 Redmine: [#182882]
 		- 20230707@Brice: Support scale-out for credit site [RedmineID: #191003]
+		- 20231228@Patrick: Ignore check for single wallet [RedmineID: #198951]
 
 	Param use:
 
@@ -39,17 +40,8 @@ BEGIN
 	SET @msg = ''
 	SET @RD = 0
 
-	drop table if exists #tmp_custsuper
-
-	create table #tmp_custsuper (custid int,SiteDBGroupID SMALLINT)
-	insert into #tmp_custsuper
-	select isnull(d.custid,c.custid),isnull(d.SiteDBGroupID,c.SiteDBGroupID) as SiteDBGroupID
-	from CustDB.dbo.dep_custsuper d with(nolock)
-				full outer join DBCUST.CustDB.dbo.custsuper c with(nolock) on d.custid=c.custid
-
-
 	-- automatic update exception list list
-	INSERT INTO Task_Cust_CheckBalance_Exception
+	INSERT INTO dbo.Task_Cust_CheckBalance_Exception
 	SELECT custid, 'DWLList'
 	FROM DBCUST.CustDB.dbo.Acc_DWLList dw with (nolock)
 	WHERE custid NOT IN (SELECT custid FROM dbo.Task_Cust_CheckBalance_Exception ce with (nolock))
@@ -75,6 +67,52 @@ BEGIN
 
 	SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
 
+	DROP TABLE IF EXISTS #tmp_custsuper
+	CREATE TABLE #tmp_custsuper (custid INT, SiteDBGroupID SMALLINT)
+
+	INSERT INTO #tmp_custsuper
+	SELECT ISNULL(d.custid, c.custid), ISNULL(d.SiteDBGroupID, c.SiteDBGroupID) SiteDBGroupID
+	FROM CustDB.dbo.dep_custsuper d WITH(NOLOCK)
+	FULL OUTER JOIN DBCUST.CustDB.dbo.custsuper c WITH(NOLOCK) ON d.custid = c.custid
+	WHERE ISNULL(d.SiteDBGroupID, c.SiteDBGroupID) = @__siteDBGroupId
+
+	DROP TABLE IF EXISTS #__sinlgeWallet_supperList
+	CREATE TABLE #__sinlgeWallet_supperList(custid INT)
+
+	DECLARE @__sqlCmd NVARCHAR(MAX)
+	SET @__sqlCmd = '
+		
+		WITH __dep_sites AS (
+			SELECT site
+			FROM CustDB.dbo.Site WITH(NOLOCK)
+			WHERE SiteDBGroupId = @__siteDBGroupId
+			GROUP BY site
+		), __single_wallet_sites AS (
+			SELECT s.[Site]
+			FROM __dep_sites s
+			CROSS APPLY (
+				SELECT TOP(1) vp.SiteID, KeyName, KeyValue
+				FROM SiteConfig.dbo.LicVendorProfile vp WITH(NOLOCK)
+					INNER JOIN SiteConfig.dbo.configMaster cm WITH(NOLOCK) ON vp.SiteId = cm.SiteId
+					INNER JOIN SiteConfig.dbo.configdetail cd WITH(NOLOCK) ON cm.ConfigId = cd.ConfigID
+				WHERE cd.KeyName = ''EnableSingleWallet''
+					AND cd.KeyValue = ''true''
+					AND vp.SiteName = s.site
+			) vp
+		)
+
+		SELECT DISTINCT custid
+		FROM __single_wallet_sites t
+		INNER JOIN CustDB.dbo.Dep_CustSuper s WITH(NOLOCK) ON t.site = s.site
+	'
+	INSERT INTO #__sinlgeWallet_supperList(custid)
+	EXECUTE DBCUST.CustDB.dbo.sp_executesql @__sqlCmd, N'@__siteDBGroupId SMALLINT', @__siteDBGroupId = @__siteDBGroupId
+
+	--remove data for single wallet
+	DELETE FROM s
+	FROM #tmp_custsuper s
+	WHERE s.custid IN (SELECT t.custid FROM #__sinlgeWallet_supperList t)
+
 	IF NOT EXISTS (SELECT 1 FROM dbo.Task_Cust_CheckBalanceVerify1_Manually)
 	BEGIN
 		
@@ -84,23 +122,24 @@ BEGIN
 		CREATE TABLE #tmpCal ( custid INT, Outstanding MONEY, BalRNG MONEY, BalLC MONEY, adjustWinlostAmt MONEY)
 
 		;WITH q2 AS (
-			-- translog
 			SELECT tl.custid, SUM(actual_stake) AS Outstanding
 			FROM dbo.translog tl with (nolock)
 			WHERE tl.statusID IN (0,1) --summary running tickets only
-				AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
+				AND srecommend IN (SELECT t.custid FROM #tmp_custsuper t)
 			GROUP BY tl.custid
 		),
 		q3 AS (
 			SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
 			FROM dbo.bettransRNG WITH(NOLOCK)
-			WHERE IsSum = 0 AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
+			WHERE IsSum = 0 
+				AND srecommend IN (SELECT t.custid FROM #tmp_custsuper t)
 			GROUP BY custid
 		),
 		q4 AS (
 			SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalLC
 			FROM dbo.bettransLC WITH(NOLOCK)
-			WHERE IsSum = 0 AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
+			WHERE IsSum = 0 
+				AND srecommend IN (SELECT t.custid FROM #tmp_custsuper t)
 			GROUP BY custid
 		), 
 		t AS (
@@ -140,7 +179,7 @@ BEGIN
 			WHERE 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 						   WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
-				AND ISNULL(b.SiteDBGroupID, 0) = @__siteDBGroupId
+				AND srecommend IN (SELECT t.custid FROM #tmp_custsuper t)
 			GROUP BY b.custid
 		),
 		ct AS (
@@ -151,7 +190,6 @@ BEGIN
 						   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 						   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 					  ELSE 1 END
-				AND ISNULL(c.SiteDBGroupID, 0)= @__siteDBGroupId
 			GROUP BY t.custid
 		)
 		INSERT INTO #QuestionLists(custid, balance, RowVersion, Outstanding, BalRNG, BalLC, FromBalanceTable, adjustWinlostAmt)
@@ -224,19 +262,16 @@ BEGIN
 			WHERE 1 = CASE WHEN bettype >= 19999 THEN 0 --> get from transfer table
 					 WHEN bettype < 19999 AND winlostdate <= @__movebetdate THEN 0 --> old bet
 					 ELSE 1 END
-				AND ISNULL(b.SiteDBGroupID, 0) = @__siteDBGroupId
 			GROUP BY b.custid
 		),
 		ct AS (
 			SELECT t.custid, SUM(winlost-actual_stake+playercomm) Balance
 			FROM dbo.Transfer t with (nolock)
 				INNER JOIN #QuestionLists q ON t.custid = q.custid
-				INNER JOIN #tmp_CustSuper c WITH(NOLOCK) ON t.SRecommend = c.custid
 			WHERE 1 = CASE WHEN bettype = 19999 AND winlostdate > @__movebetdate THEN 0 --> new sum
 						   WHEN bettype = 20000 AND WinlostDate > @__balanceupdate THEN 0 --> new balanceup record
 						   WHEN WinlostDate < @__balanceupdate THEN 0 --> old data
 					 ELSE 1 END
-				AND ISNULL(c.SiteDBGroupID, 0)= @__siteDBGroupId
 			GROUP BY t.custid
 		),
 		q2 AS (
@@ -244,19 +279,21 @@ BEGIN
 			SELECT tl.custid, SUM(actual_stake) AS Outstanding
 			FROM dbo.translog tl with (nolock)
 			WHERE tl.statusID IN (0,1) --summary running tickets only
-				AND ISNULL(tl.SiteDBGroupID, 0) = @__siteDBGroupId
+				AND srecommend IN (SELECT t.custid FROM #tmp_CustSuper t)
 			GROUP BY tl.custid
 		),
 		q3 AS (
 			SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalRNG
 			FROM dbo.bettransRNG WITH(NOLOCK)
-			WHERE IsSum = 0 AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
+			WHERE IsSum = 0 
+				AND srecommend IN (SELECT t.custid FROM #tmp_CustSuper t)
 			GROUP BY custid
 		),
 		q4 AS (
 			SELECT custid, SUM(CASE WHEN statusid = 0 then -actual_stake ELSE winlost-actual_stake+playercomm END) BalLC
 			FROM dbo.bettransLC WITH(NOLOCK)
-			WHERE IsSum = 0 AND ISNULL(SiteDBGroupID, 0) = @__siteDBGroupId
+			WHERE IsSum = 0 
+				AND srecommend IN (SELECT t.custid FROM #tmp_CustSuper t)
 			GROUP BY custid
 		),
 		t AS (
