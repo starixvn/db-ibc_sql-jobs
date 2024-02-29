@@ -13,7 +13,7 @@ GO
 
 CREATE TABLE dbo.rmSumByEventBettype
 (
-	winlostdate			DATE
+	Winlostdate			DATE
 	,Bettype			SMALLINT
 	,ParlayType			TINYINT
 	,LeagueId			INT
@@ -35,9 +35,9 @@ CREATE TABLE dbo.rmSumByEventBettype
 	,MainMemberWinloss	MONEY
 	,MainMemberComm		MONEY
 	,MainHouseWinloss	MONEY
-) ON PS_rmSumByEventBettype_Monthly (winlostdate)
+) ON PS_rmSumByEventBettype_Monthly (Winlostdate)
 GO
 
 CREATE CLUSTERED INDEX CIX_rmSumByEventBettype ON dbo.rmSumByEventBettype
-	(winlostdate, Bettype, ParlayType, LeagueId) ON PS_rmSumByEventBettype_Monthly (winlostdate)
+	(Winlostdate, Bettype, ParlayType, LeagueId, MatchId, Betteam, IsDeposit) ON PS_rmSumByEventBettype_Monthly (Winlostdate)
 GO
