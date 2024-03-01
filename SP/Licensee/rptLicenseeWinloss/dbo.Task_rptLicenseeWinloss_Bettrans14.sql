@@ -12,6 +12,7 @@ AS
 		- 20230209@Bobby: Created [RedmineID: #172604]
 		- 20230702@Evan: Support Saba Virtual Tennis [RedmineID: #190465]
 		- 20230724@Evan: Enhance SP - Troubleshoot CHECKSUM_AGG [RedmineID: #191669]
+		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
 		
 */
 BEGIN  
@@ -168,7 +169,7 @@ BEGIN
 							WHEN b.matchid = 29 THEN -1		--Parlay Sport
 							WHEN b.matchid = 2799 THEN ISNULL(b.oddsid, @NASportType)
 							WHEN b.matchid = 999 THEN @NASportType	-- Odds Spread Adjustment
-							WHEN b.matchid = 0 AND b.bettype = 1800 THEN 250	-- AG Casino 
+							WHEN b.matchid = 0 AND b.bettype IN (1800,1801,1802,1803)THEN 250	-- AG Casino 
 							WHEN b.matchid = 0 AND b.bettype = 8000 THEN 221	-- Exchange
 							ELSE ISNULL(b.matchid, @NASportType)
 						END
