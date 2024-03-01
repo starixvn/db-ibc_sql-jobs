@@ -19,7 +19,7 @@ AS
 								6th -> end of the month : Edit data of current month only
 		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
-		- 20240220@Evan: Add new column Bettype,JpContribution Sum data of Jackpot/Promotion/Contribution [Redmine: #200273]
+		- 20240220@Evan: Add new column Bettype,JpContribution Sum data of Jackpot/Promotion/Contribution [Redmine: #201067]
 	Param's Explanation:
 		- @winlostdate: The date need to summary
 		- @IsManual: task run manual or auto
