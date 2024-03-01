@@ -13,6 +13,7 @@ AS
 	- 20230822@Cherry: Parlay Boost Bonus (#192681)
 	- 20231020@Cherry: Parlay Generator (#195498)
 	- 20231201@Cherry: Parlay Type for Parlay Boost (#197680)
+	- 20240115@Cherry: Change attribute for Parlay Generator (#199766)
 */
 BEGIN
 	CREATE TABLE #rmBettrans_Old
@@ -246,9 +247,9 @@ BEGIN
 	FROM #rmBettrans_Old b
 		INNER JOIN #tmpBoost t ON b.transid = t.transid
 
-	CREATE TABLE #tmpParlayGenerator (transid BIGINT, bact INT)
-	INSERT INTO #tmpParlayGenerator (transid, bact)
-	SELECT transid, TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bact)[1]', 'VARCHAR(50)') AS INT)
+	CREATE TABLE #tmpParlayGenerator (transid BIGINT, bac INT)
+	INSERT INTO #tmpParlayGenerator (transid, bac)
+	SELECT transid, ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bac)[1]', 'VARCHAR(50)') AS INT),0)
 	FROM #rmBettrans_Old
 	WHERE bettype = 29 and betteam = N'1' 		
 
@@ -331,7 +332,7 @@ BEGIN
 			SUM(comm) comm,
 			SUM(acomm) acomm
 		FROM #rmBettrans_old b WITH (NOLOCK)
-			LEFT JOIN #tmpParlayGenerator p ON b.transid = p.transid AND p.bact = 5
+			LEFT JOIN #tmpParlayGenerator p ON b.transid = p.transid AND p.bac|16 = p.bac
 			LEFT JOIN #tmpBoost t ON b.transid = t.transid
 		GROUP BY
 			b.winlostdate
