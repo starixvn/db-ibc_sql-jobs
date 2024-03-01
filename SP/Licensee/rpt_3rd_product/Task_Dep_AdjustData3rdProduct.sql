@@ -49,7 +49,8 @@ BEGIN
 	END
 
 	CREATE TABLE #LicenseeProductTable (RowId INT IDENTITY(1,1), LicenseeId INT, LicenseeName VARCHAR(50), CurrencyId TINYINT, ProductId TINYINT)
-	CREATE TABLE #3rdData (WinlostDate SMALLDATETIME, Stake MONEY, Actual_Stake MONEY, Winlost MONEY, CurrencyId TINYINT, Bettype INT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0), JpContribution MONEY DEFAULT (0), StakeContribution MONEY DEFAULT (0))
+	CREATE TABLE #3rdData (WinlostDate SMALLDATETIME, Stake MONEY, Actual_Stake MONEY, Winlost MONEY, CurrencyId TINYINT, Bettype INT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0), JpContribution MONEY DEFAULT (0), StakeContribution MONEY DEFAULT (0)
+)
 	CREATE TABLE #3rdDummnyData (CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, aWinlost MONEY, TransDesc VARCHAR(300), RefNo BIGINT
 		, Apositiontaking SMALLMONEY, actualrate FLOAT, CurrencyId TINYINT, Bettype INT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0), oddsspread MONEY, betid BIGINT)
 	CREATE TABLE #ChargeRate (ChargeId INT, PartyId INT, LicenseeId INT, ProductId INT, ChargeType TINYINT, Rate MONEY, FromDate SMALLDATETIME, ToDate SMALLDATETIME)
@@ -348,22 +349,22 @@ BEGIN
 
 		--insert difference data
 		INSERT INTO @FinalData(WinlostDate, CustId, Stake, Actual_Stake, Winlost, RefNo, actualrate, CurrencyId, Bettype, GroupBettype, PlayerComm, Comm, awinlost, oddsspread, betid, apositiontaking )
-		SELECT tmp.WinlostDate
+		SELECT ISNULL(tmp.WinlostDate,tmp2.WinlostDate) WinlostDate
 			, @CustDummyId
-			, tmp.Stake - ISNULL(tmp2.Stake, 0) --Stake
-			, tmp.Actual_stake - ISNULL(tmp2.Actual_stake, 0) --Actual_Stake
-			, tmp.Winlost - ISNULL(tmp2.Winlost, 0) --Winlost
+			, ISNULL(tmp.Stake,0) - ISNULL(tmp2.Stake, 0) --Stake
+			, ISNULL(tmp.Actual_stake,0) - ISNULL(tmp2.Actual_stake, 0) --Actual_Stake
+			, ISNULL(tmp.Winlost,0) - ISNULL(tmp2.Winlost, 0) --Winlost
 			, (SELECT TOP 1 RefNo FROM #3rdDummnyData WHERE WinlostDate = tmp2.WinlostDate AND bettype = tmp2.bettype)
 			, (SELECT TOP 1 actualrate FROM #3rdDummnyData WHERE WinlostDate = tmp2.WinlostDate AND bettype = tmp2.bettype)
-			, tmp.CurrencyId
-			, tmp.Bettype
-			, CASE WHEN tmp.Bettype IN (1801,1802,1803) THEN 1800 ELSE tmp.Bettype END AS GroupBettype
-			, tmp.PlayerComm - ISNULL(tmp2.PlayerComm, 0) AS PlayerComm
-			, tmp.Comm - ISNULL(tmp2.Comm, 0) AS Comm
-			, tmp.awinlost
-			, tmp.oddsspread
-			, tmp.betid
-			, CASE WHEN tmp.Bettype = 1802 THEN 1 ELSE 0 END AS apositiontaking
+			, ISNULL(tmp.CurrencyId,tmp2.CurrencyId) CurrencyId
+			, ISNULL(tmp.Bettype,tmp2.Bettype) Bettype
+			, CASE WHEN ISNULL(tmp.Bettype,tmp2.Bettype) IN (1801,1802,1803) THEN 1800 ELSE ISNULL(tmp.Bettype,tmp2.Bettype) END AS GroupBettype
+			, ISNULL(tmp.PlayerComm, 0) - ISNULL(tmp2.PlayerComm, 0) AS PlayerComm
+			, ISNULL(tmp.Comm, 0) - ISNULL(tmp2.Comm, 0) AS Comm
+			, ISNULL(tmp.awinlost,0) - ISNULL(tmp2.awinlost,0)
+		    , ISNULL(tmp.oddsspread,0) - ISNULL(tmp2.oddsspread,0)
+			, ISNULL(tmp.betid,0) - ISNULL(tmp2.betid,0)
+			, CASE WHEN ISNULL(tmp.Bettype,tmp2.Bettype) = 1802 THEN 1 ELSE 0 END AS apositiontaking
 		FROM (
 			SELECT a.WinlostDate , a.Stake , a.Actual_Stake , a.Winlost , a.CurrencyId , a.Bettype , a.PlayerComm , a.Comm 
 				, CASE WHEN a.Bettype = 1802 THEN -a.JpContribution ELSE 0 END AS awinlost
@@ -372,21 +373,26 @@ BEGIN
 			FROM #3rdData a
 			WHERE a.WinlostDate <= @LastDateOfLastMonth
 		) tmp
-		LEFT JOIN (
+		FULL OUTER JOIN(
 			SELECT b.WinlostDate, b.CurrencyId, b.Bettype, SUM(b.Stake) AS Stake, SUM(b.Actual_stake) AS Actual_stake, SUM(b.Winlost) AS Winlost,  SUM (b.PlayerComm) AS PlayerComm, SUM (b.Comm) AS Comm
+				, SUM(CASE
+						WHEN b.Bettype = 1802 THEN -ISNULL(b.betid/CONVERT(MONEY, 100000000), 0)
+						ELSE 0
+					END) AS awinlost
 				, SUM (b.oddsspread) AS oddsspread
 				, SUM (b.betid) AS betid
 			FROM #3rdDummnyData b
+			WHERE b.WinlostDate <= @LastDateOfLastMonth
 			GROUP BY WinlostDate, CurrencyId, Bettype
 		) tmp2 ON tmp.WinlostDate = tmp2.WinlostDate AND tmp.CurrencyId = tmp2.CurrencyId AND tmp.Bettype = tmp2.Bettype
-		WHERE tmp.Stake <> ISNULL(tmp2.Stake, 0)
-			OR tmp.Actual_stake <> ISNULL(tmp2.Actual_stake, 0)
-			OR tmp.Winlost <> ISNULL(tmp2.Winlost, 0)
-			OR tmp.PlayerComm <> ISNULL(tmp2.PlayerComm, 0)
-			OR tmp.Comm <> ISNULL(tmp2.Comm, 0)
+		WHERE ISNULL(tmp.Stake, 0) <> ISNULL(tmp2.Stake, 0)
+			OR ISNULL(tmp.Actual_stake, 0) <> ISNULL(tmp2.Actual_stake, 0)
+			OR ISNULL(tmp.Winlost, 0) <> ISNULL(tmp2.Winlost, 0)
+			OR ISNULL(tmp.PlayerComm, 0) <> ISNULL(tmp2.PlayerComm, 0)
+			OR ISNULL(tmp.Comm, 0) <> ISNULL(tmp2.Comm, 0)
 			OR ISNULL(tmp.oddsspread, 0) <> ISNULL(tmp2.oddsspread, 0)
-			OR tmp.betid <> ISNULL(tmp2.betid, 0)
-			
+			OR ISNULL(tmp.betid, 0) <> ISNULL(tmp2.betid, 0)
+
 		IF NOT EXISTS (SELECT TOP 1 1 FROM @FinalData)
 		BEGIN
 			--PRINT('No data on that day. - WinlostDate: ' + CONVERT(VARCHAR(10), @WinlostDate, 112))
