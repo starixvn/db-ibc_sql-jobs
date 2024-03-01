@@ -81,6 +81,7 @@ AS
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 		- 20231026@Evan: Support 12bet team get TO without Void/reject/refund [RedmineID: #195784]
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
+		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #200273]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -124,6 +125,7 @@ BEGIN
 		PRINT 'EXEC TASK_RealtimeSummaryDepData: There is no data in bettrans to summarize or input @Winlostdate is greater than current day ==> RETURN'
 		RETURN
 	END
+	
 
 	--2.Insert Log
 	INSERT INTO bodb_Report.dbo.rptDepWinlost_Log(Logdate, LogHour, LogType, StartTime)
@@ -339,6 +341,7 @@ BEGIN
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)
 							AND (b.bettype NOT BETWEEN 8700 AND 8709)
+							AND (b.bettype NOT BETWEEN 1801 AND 1803)
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END),--Winloss
@@ -357,6 +360,7 @@ BEGIN
 							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 							OR (b.bettype BETWEEN 17000 AND 17030)
 							OR (b.bettype BETWEEN 8700 AND 8709)
+							OR (b.bettype BETWEEN 1801 AND 1803)
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END), -- Promotion
@@ -526,7 +530,9 @@ BEGIN
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)  
-							AND (b.bettype NOT BETWEEN 8700 AND 8709) THEN b.winlost - b.actual_stake
+							AND (b.bettype NOT BETWEEN 8700 AND 8709) 
+							AND (b.bettype NOT BETWEEN 1801 AND 1803) 
+							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END),--Winloss
 				0,--Transfer3rd
@@ -544,7 +550,8 @@ BEGIN
 								OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 								OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 								OR (b.bettype BETWEEN 17000 AND 17030)
-								OR (b.bettype BETWEEN 8700 AND 8709))
+								OR (b.bettype BETWEEN 8700 AND 8709)
+								OR (b.bettype BETWEEN 1801 AND 1803))
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END), -- Promotion
@@ -567,7 +574,7 @@ BEGIN
 				END
 			OPTION (RECOMPILE, MAXDOP 8)
 			---end
-
+			
 			-- Get data from on bettransxx
 			INSERT INTO #rptDepWinlostOutstanding (
 				CustID,
@@ -723,7 +730,7 @@ BEGIN
 		FROM #rptDepWinlostDetails
 		WHERE Bettype NOT IN (913, 914)
 		GROUP BY CustID
-
+		
  		--Update BA attributes
 		UPDATE #rptDepWinlost
 		SET Turnover_BA = ISNULL(t.turnover_ba,0),
@@ -844,7 +851,8 @@ BEGIN
 				WHEN bettype = 912 THEN -7--Cash Out - Bought.
 				WHEN bettype = 913 THEN -8--Cash Out - Commission
 				WHEN bettype = 914 THEN -9--Cash Out - Winloss
-				WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+				WHEN bettype = 1800 THEN 250 -- AGC
+				WHEN bettype BETWEEN 1801 AND 1803 THEN -250 -- AGC Jackpot Contribution and Jackpot Prize and Promotion
 				WHEN bettype = 1900 THEN 249 -- VG
 				WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 				WHEN bettype BETWEEN 2201 AND 2299 THEN 209
@@ -902,7 +910,8 @@ BEGIN
 			SUM(CASE
 					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4598, 4599, 4600, 2499, 8695, 3150)
 						OR (bettype BETWEEN 17000 AND 17030) 
-						OR (bettype BETWEEN 8700 AND 8709) THEN Promotion
+						OR (bettype BETWEEN 8700 AND 8709)
+						OR (bettype BETWEEN 1801 AND 1803) THEN Promotion
 					ELSE Winloss
 				END),--Winloss
 			SUM(playercomm),--Playercomm
@@ -932,7 +941,8 @@ BEGIN
 				WHEN bettype = 912 THEN -7--Cash Out - Bought.
 				WHEN bettype = 913 THEN -8--Cash Out - Commission
 				WHEN bettype = 914 THEN -9--Cash Out - Winloss
-				WHEN bettype BETWEEN 1800 AND 1899 THEN 250 -- AGC
+				WHEN bettype = 1800 THEN 250 -- AGC
+				WHEN bettype BETWEEN 1801 AND 1803 THEN -250 -- AGC Jackpot Contribution and Jackpot Prize and Promotion
 				WHEN bettype = 1900 THEN 249 -- VG
 				WHEN bettype BETWEEN 2101 AND 2199 THEN 208
 				WHEN bettype BETWEEN 2201 AND 2299 THEN 209
@@ -986,7 +996,7 @@ BEGIN
 				WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
 				ELSE 0
 			END
-
+			
 		--Start update TurnOver and Outstanding, RawDrawGame, RawTurnover
 		
 		MERGE #rptDepWinlostByProduct AS TARGET
