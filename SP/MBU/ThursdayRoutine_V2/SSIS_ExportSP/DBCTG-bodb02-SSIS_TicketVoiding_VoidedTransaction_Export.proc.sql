@@ -10,6 +10,8 @@ AS
 	
 	Revisions:
 		- 20130831@Bobby: Init
+		- 20240227@July: [TVS] Remove SABA text of league name in case void many matches and apply new way to remove SABA text - [Redmine: #196627]
+		
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -18,6 +20,7 @@ AS
 
 	--process for ticket single and main parlay and metrix gaming
 	SELECT	t1.TransId, t1.MessageId, t1.ReasonId,t1. MatchId, t1.CreatedDate, t1.Id, t1.IssueTypeID, t1.SubIssueTypeID, t1.CustID
+		  , t1.winlostdate, t1.status, t1.bettype, t1.stake, t1.winlost, t1.VoidingHistoryId, t1.SiteDBGroupID
 	FROM	dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
 		INNER JOIN dbo.bettrans14 AS t2 WITH (NOLOCK) ON t2.transid = t1.TransId and t2.winlostdate = @winlostdate
 	WHERE	EXISTS (SELECT 1 from dbo.SportBettypeMatrix t3 WITH (NOLOCK) where t2.bettype=t3.BetType
@@ -25,6 +28,7 @@ AS
 	UNION 
 
 	SELECT	t1.TransId, t1.MessageId, t1.ReasonId,t1. MatchId, t1.CreatedDate, t1.Id, t1.IssueTypeID, t1.SubIssueTypeID, t1.CustID
+		  , t1.winlostdate, t1.status, t1.bettype, t1.stake, t1.winlost, t1.VoidingHistoryId, t1.SiteDBGroupID
 	FROM	dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
 		INNER JOIN dbo.bettrans14 AS t2 WITH (NOLOCK) ON t2.refno = t1.TransId and t2.winlostdate = @winlostdate 
 	WHERE	EXISTS (SELECT 1 from dbo.SportBettypeMatrix t3 WITH (NOLOCK) WHERE t2.bettype=t3.BetType AND t3.bettype != 29 
@@ -33,6 +37,7 @@ AS
 	--process for ticket sub parlay (sportbook and virtual sport)
 	UNION --ALL
 	SELECT	TransId, MessageId, ReasonId, MatchId, CreatedDate, Id, IssueTypeID, SubIssueTypeID, CustID
+		  , t1.winlostdate, t1.status, t1.bettype, t1.stake, t1.winlost, t1.VoidingHistoryId, t1.SiteDBGroupID
 	FROM	dbo.TicketVoiding_VoidedTransaction AS t1 WITH (NOLOCK)
 	WHERE 	EXISTS (SELECT 1 FROM dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.MatchId != 0 AND  t1.matchid = t2.matchid AND t2.eventdate = @winlostdate);
 
