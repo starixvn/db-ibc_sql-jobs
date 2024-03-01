@@ -16,6 +16,7 @@ AS
 		- 20230531@July: Check ticket data consistency [Redmine: #186736]
 		- 20230804@July: @CheckMode =  1 (bettrans) - Exclude ticket of product Saba promotion [Redmine: #192294]
 		- 20230918@July: Exclude ticket currency UUS [Redmine: #194056]
+		- 20240301@July: Update rule - Difference awinlost of parlay ticket  [Redmine: #201721]
 
 	Param's Expanation:
 		Notes: For SAGaming(244), BBIN(241) check data in bettransG
@@ -112,9 +113,9 @@ BEGIN
 				AND (winlostdate = @Today OR winlostdate = @yesterday)
 				AND currency NOT IN (20,72)
 				AND
-				(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.01 
-				OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.01
-				OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.01
+				(  ABS(aWinLost -(-(winlost-actual_stake) * apositiontaking)) > 0.015 
+				OR ABS(mWinLost -(-(winlost-actual_stake) * mpositiontaking)) > 0.015
+				OR ABS(sWinLost -(-(winlost-actual_stake) * spositiontaking)) > 0.015
 				) 
 				
 		END
