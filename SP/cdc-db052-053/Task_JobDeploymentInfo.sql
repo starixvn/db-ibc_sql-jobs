@@ -20,7 +20,7 @@ BEGIN
 	;WITH __deployment_job AS (
 		SELECT 'bodb_age : pull data 4 bettrans' AS JobName, '00:01:00' AS WaitingTime, 0 AS IsWaiting   
 		UNION
-		SELECT 'bodb_Age: Age process bettrans_compact' AS JobName, '00:01:00' AS WaitingTime, 1 AS IsWaiting
+		SELECT 'bodb_Age: Age process bettrans_compact' AS JobName, '00:01:00' AS WaitingTime, 0 AS IsWaiting
 		--add more job here
 	)
 	SELECT @WaitingTime = WaitingTime, @IsWaiting = IsWaiting
