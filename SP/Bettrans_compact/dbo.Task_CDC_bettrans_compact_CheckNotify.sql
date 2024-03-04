@@ -13,7 +13,7 @@ BEGIN
 	SET NOCOUNT ON;
 
 	DECLARE @checkDate SMALLDATETIME, @toDay SMALLDATETIME, @lastJobRun DATETIME;
-	DECLARE @moveBetsDay SMALLDATETIME
+	DECLARE @moveBetsDay SMALLDATETIME, @notifyTime DATETIME
 	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
 
 	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
@@ -41,44 +41,68 @@ BEGIN
 	--TODO: Send notification IF any
 	IF EXISTS(SELECT TOP 1 1 FROM #tmpNotify)
 	BEGIN
-		DECLARE @subject VARCHAR(1000), @notify VARCHAR(4000), @recipients VARCHAR(1000);
-		SELECT @subject = CONCAT(@@SERVERNAME, '_', db_name(), '_bettrans_compact CHECK SUM diff data found')
-			, @recipients = 'bobby.nguyen@starixsoft.com';
-
-		WITH CTE_Notify AS (
-			SELECT winlostdate, MIN(FromTime) AS FromTime, MAX(ToTime) AS ToTime
-			FROM #tmpNotify
-			GROUP BY winlostdate
-		) 
-		SELECT @notify = STRING_AGG(notify, ',')
-		FROM (
-			SELECT '[SELECT * FROM dbo.bettrans_compact_checkSum WITH(NOLOCK)
-			WHERE winlostdate=''' + FORMAT(winlostdate, 'yyyy-MM-dd') + '''
-				AND createdTime BETWEEN ''' + FORMAT(FromTime, 'yyy-MM-dd HH:mm:00')  + ''' AND '''+ FORMAT(ToTime, 'yyy-MM-dd HH:mm:00') + '''
-				AND notifyStatus=1]'
-			FROM CTE_Notify
-		) AS t (notify)
-
-		--SELECT @notify
-		RAISERROR (@notify, 0, 1) WITH NOWAIT;
+		
+		SELECT @notifyTime = GETDATE();
 
 		-- Mark as notified
 		UPDATE ck
-		SET ck.notifyStatus = 1
+		SET ck.notifyStatus = 1, createdTime = @notifyTime
 		FROM dbo.bettrans_compact_checkSum ck WITH(ROWLOCK, UPDLOCK)
 		INNER JOIN #tmpNotify tmp ON tmp.custid = ck.custid
 			AND tmp.winlostdate = ck.winlostdate
 			AND tmp.checkSumKey = ck.checkSumKey;
 
-		--SEND mail
-		EXEC msdb.dbo.sp_send_dbmail @recipients = @recipients
-		, @body						= @notify
-		, @sensitivity				= 'Personal'
-		, @importance				= 'Normal'
-		, @copy_recipients			= ''
-		, @blind_copy_recipients	= ''
-		, @subject					= @subject
-		, @profile_name				= default
+
+		--TODO: correct data --> notifyStatus = 2 IF corrected
+		EXEC [dbo].[Task_CDC_bettrans_compact_CorrectData] @notifyTime = @notifyTime
+
+		--SEND mail IF any rows
+		IF EXISTS (
+			SELECT 1 FROM dbo.bettrans_compact_checkSum ck WITH(NOLOCK)
+			INNER JOIN #tmpNotify tmp ON tmp.custid = ck.custid
+				AND tmp.winlostdate = ck.winlostdate
+				AND tmp.checkSumKey = ck.checkSumKey
+			WHERE ck.notifyStatus = 1
+				AND ck.createdTime = @notifyTime
+		)
+		BEGIN
+
+			DECLARE @subject VARCHAR(1000), @notify VARCHAR(4000), @recipients VARCHAR(1000);
+			SELECT @subject = CONCAT(@@SERVERNAME, '_', db_name(), '_bettrans_compact CHECK SUM diff data found')
+				, @recipients = 'dbaadmin@starixsoft.com';
+
+			WITH CTE_Notify AS (
+				SELECT ck.winlostdate, MIN(ck.FromTime) AS FromTime, MAX(ck.ToTime) AS ToTime
+				FROM #tmpNotify tmp
+				INNER JOIN dbo.bettrans_compact_checkSum ck WITH(NOLOCK) ON tmp.custid = ck.custid
+					AND tmp.winlostdate = ck.winlostdate
+					AND tmp.checkSumKey = ck.checkSumKey
+				WHERE ck.notifyStatus = 1
+					AND ck.createdTime = @notifyTime
+				GROUP BY ck.winlostdate
+			) 
+			SELECT @notify = STRING_AGG(notify, ',')
+			FROM (
+				SELECT '[SELECT * FROM dbo.bettrans_compact_checkSum WITH(NOLOCK)
+				WHERE winlostdate=''' + FORMAT(winlostdate, 'yyyy-MM-dd') + '''
+					AND createdTime BETWEEN ''' + FORMAT(FromTime, 'yyy-MM-dd HH:mm:00')  + ''' AND '''+ FORMAT(ToTime, 'yyy-MM-dd HH:mm:00') + '''
+					AND notifyStatus=1]'
+				FROM CTE_Notify
+			) AS t (notify)
+
+			--SELECT @notify
+			RAISERROR (@notify, 0, 1) WITH NOWAIT;
+
+			EXEC msdb.dbo.sp_send_dbmail @recipients = @recipients
+			, @body						= @notify
+			, @sensitivity				= 'Personal'
+			, @importance				= 'Normal'
+			, @copy_recipients			= ''
+			, @blind_copy_recipients	= ''
+			, @subject					= @subject
+			, @profile_name				= default
+		END
+
 	END
 
 	--DELETE old rows

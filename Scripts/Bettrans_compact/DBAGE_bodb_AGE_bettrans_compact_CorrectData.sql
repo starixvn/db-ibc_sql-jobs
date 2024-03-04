@@ -15,6 +15,7 @@ BEGIN
 
 	DROP TABLE IF EXISTS #diffCustCheckSum;
 	DROP TABLE IF EXISTS #diffSuperWinlostdate;
+	DROP TABLE IF EXISTS #checkCorrectData;
 
 	CREATE TABLE #diffSuperWinlostdate (rIdx INT IDENTITY(1,1), Winlostdate SMALLDATETIME, SuperIds VARCHAR(4000));
 
@@ -284,13 +285,13 @@ BEGIN
 				, awinlost, mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm,ExtraComm, ExtraWinloss
 
 			FROM sum_winloss_CheckSum cal
-		),
-		check_CorrectData AS (
-			SELECT bt.*
-			FROM bt_checksum bt
-			INNER JOIN #diffCustCheckSum ck ON ck.custid = bt.custid AND ck.winlostdate = bt.winlostdate 
-				AND ck.checkSumKey = bt.checkSumKey AND ck.checkSumData = bt.checkSumData ---<< diff same key & data untill running this check & correct
 		)
+		SELECT bt.*
+		INTO #checkCorrectData
+		FROM bt_checksum bt
+		INNER JOIN #diffCustCheckSum ck ON ck.custid = bt.custid AND ck.winlostdate = bt.winlostdate 
+			AND ck.checkSumKey = bt.checkSumKey AND ck.checkSumData = bt.checkSumData ---<< diff same key & data untill running this check & correct
+
 		--select * from check_CorrectData
 		UPDATE up WITH(ROWLOCK, UPDLOCK)
 		SET up.[betcount]		= tmp.[betcount]
@@ -309,7 +310,7 @@ BEGIN
            ,up.[extraWinloss]	= tmp.[extraWinloss]
            ,up.[extraComm]		= tmp.[extraComm]
 		FROM dbo.bettrans_compact up
-		INNER JOIN check_CorrectData tmp
+		INNER JOIN #checkCorrectData tmp
 		ON up.[custid] = tmp.[custid]
            AND up.[winlostdate] = tmp.[winlostdate]
            AND up.[productId] = tmp.[productId]
@@ -318,6 +319,15 @@ BEGIN
            AND up.[leagueGroupID] = tmp.[leagueGroupID]
            AND up.[ticketType] = tmp.[ticketType]
 		;
+
+		--- TODO: fixed
+		UPDATE up WITH(ROWLOCK, UPDLOCK)
+		SET NotifyStatus = 2
+		FROM dbo.bettrans_compact_checkSum up
+		INNER JOIN #checkCorrectData ck ON ck.custid = up.custid 
+				AND ck.winlostdate = up.winlostdate 
+				AND ck.checkSumKey = up.checkSumKey 
+				AND ck.checkSumData = up.checkSumData;
 
 		SET @rCont += 1;
 
