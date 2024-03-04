@@ -173,7 +173,7 @@ BEGIN TRY
 				LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site=ibcsite.site
 				LEFT JOIN bodb_licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
 			WHERE CONVERT(DATE, b.settledDate) = @WLDate
-			GROUP BY b.CustID, ISNULL(site.SiteID,-1), b.currency, b.ExVirtualRate, b.userId, b.eventID, b.eventName, b.marketID
+			GROUP BY b.CustID, ISNULL(site.SiteID,-1), c.site, b.currency, b.ExVirtualRate, b.userId, b.eventID, b.eventName, b.marketID
 
 			INSERT INTO #DetailData( UserID ,EventID ,MarketID ,BetCount  ,DrawBetCount ,DrawTO ,Lay ,Back, eventType, EventTypeName, MarketName)			
 			SELECT d.userId, d.eventID, d.marketID

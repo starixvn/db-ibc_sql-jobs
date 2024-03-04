@@ -189,7 +189,7 @@ BEGIN
 	----****check existing setting****---- 
 	IF NOT EXISTS ( SELECT TOP 1 1 FROM #ChargeRate
 					UNION ALL 
-					SELECT TOP 1 1 FROM #LicenseeProductTable WHERE ProductId = 31 AND PT IS NOT NULL)
+					SELECT TOP 1 1 FROM #LicenseeProductTable WHERE ProductId = 31 AND PT IS NOT NULL
 					)
 	BEGIN
 		--PRINT('Charge rate does not exist')
