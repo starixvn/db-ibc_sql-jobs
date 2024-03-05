@@ -52,6 +52,7 @@ AS
 		- 20230713@Lewis: Add WE Live Casino [RedmineID: #195885]
 		- 20240119@Lewis: Add VS4 [RedmineID: #198621]
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
+		- 20240305@Lewis: Add UU Slot [RedmineID: #192595]
 */
 
 BEGIN
@@ -261,6 +262,7 @@ BEGIN
 			WHEN bettype BETWEEN 7601 AND 7700 THEN 227 -- Live22
 			WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
 			WHEN bettype BETWEEN 10400 AND 10449 THEN 188 -- VS4-Virtual Cock Fighting
+			WHEN bettype BETWEEN 10000 AND 10299 THEN 216 -- UU Slots
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -429,6 +431,7 @@ BEGIN
 				 WHEN bettype BETWEEN 7601 AND 7700 THEN 227 -- Live22
 				 WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
 				 WHEN bettype BETWEEN 10400 AND 10449 THEN 188 -- VS4-Virtual Cock Fighting
+				 WHEN bettype BETWEEN 10000 AND 10299 THEN 216 -- UU Slots
 				 ELSE 0
 			 END
 			,CASE
@@ -492,6 +495,7 @@ BEGIN
 				 WHEN bettypePT BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 				 WHEN bettypePT BETWEEN 7601 AND 7700 THEN 227 -- Live22
 				 WHEN bettypePT BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
+				 WHEN bettypePT BETWEEN 10000 AND 10299 THEN 216 -- UU Slots
 				 ELSE 0 END AS SporttypeRef
 		FROM #__SuperExtraPT WHERE RefTable IN (1, 2)
 
