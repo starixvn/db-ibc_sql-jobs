@@ -308,7 +308,7 @@ BEGIN
 			SELECT cal.custid, cal.winlostdate
 				, CHECKSUM(CONCAT_WS('|', cal.productid, cal.sporttype, cal.bettype, cal.LeagueGroupID, cal.ticketType)) AS checkSumKey
 				, (CHECKSUM(CONCAT_WS('|',betcount,	winlost, turnover,netTurnover
-					,awinlost, mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm,CONVERT(DECIMAL(38,6), ExtraComm),CONVERT(DECIMAL(38,6), ExtraWinloss)))) AS checkSumData
+					,awinlost, mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm))) AS checkSumData
 				, cal.productid, cal.sporttype, cal.bettype, cal.LeagueGroupID, cal.ticketType, betcount, winlost, turnover,netTurnover
 				, awinlost, mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm,ExtraComm,ExtraWinloss
 
