@@ -108,7 +108,7 @@ BEGIN
 	CREATE TABLE #LicenseeExchangePT (LicenseeName VARCHAR(50), CurrencyId INT, PT MONEY)
 
 	INSERT INTO #LicenseeExchangePT (LicenseeName, CurrencyId, PT)	 
-	SELECT 	c.site as LicenseeName, c.Currency as CurrencyId, s.PT
+	SELECT 	c.site as LicenseeName, c.Currency as CurrencyId, s.PT/CONVERT(SMALLMONEY,100) AS PT
 	FROM 	bodb02.dbo.Dep_ChargeInfoSetting s WITH (NOLOCK) 
 		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) 
 			ON c.CustId = s.CustId 

@@ -167,7 +167,7 @@ BEGIN
 		 SET 	L.PT = P.PT
 		 FROM 	#LicenseeProductTable L	 
 			INNER JOIN (
-						SELECT 	c.site as LicenseeName, c.Currency as CurrencyId, s.PT as PT
+						SELECT 	c.site as LicenseeName, c.Currency as CurrencyId, s.PT/CONVERT(SMALLMONEY,100) AS PT
 						FROM 	CUSTDB.dbo.Dep_ChargeInfoSetting s WITH (NOLOCK) 
 							INNER JOIN CUSTDB.dbo.Customer c WITH (NOLOCK) 
 								ON c.CustId = s.CustId 
@@ -410,7 +410,7 @@ BEGIN
 						FROM #LicenseeProductTable 
 						WHERE LicenseeId = @LicenseeId
 							AND ProductId = 31
-						) r ON c.site = r.LicenseeName AND c.CurrencyId = r.CurrencyId
+						) r ON c.site = r.LicenseeName AND c.currency = r.CurrencyId
 		WHERE tmp.GroupBettype = 8000
 		
 		

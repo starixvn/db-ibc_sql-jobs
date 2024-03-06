@@ -176,7 +176,7 @@ BEGIN
 		 SET 	L.PT = P.PT
 		 FROM 	#LicenseeProductTable L	 
 			INNER JOIN (
-						SELECT 	c.site as LicenseeName, c.Currency as CurrencyId, s.PT as PT
+						SELECT 	c.site as LicenseeName, c.Currency as CurrencyId, s.PT/CONVERT(SMALLMONEY,100) AS PT
 						FROM 	CUSTDB.dbo.Dep_ChargeInfoSetting s WITH (NOLOCK) 
 							INNER JOIN CUSTDB.dbo.Customer c WITH (NOLOCK) 
 								ON c.CustId = s.CustId --super level
@@ -376,13 +376,13 @@ BEGIN
 			, (SELECT TOP 1 actualrate FROM #3rdDummnyData WHERE WinlostDate = tmp2.WinlostDate AND bettype = tmp2.bettype)
 			, ISNULL(tmp.CurrencyId,tmp2.CurrencyId) CurrencyId
 			, ISNULL(tmp.Bettype,tmp2.Bettype) Bettype
-			, CASE WHEN tmp.Bettype IN (1801,1802,1803) THEN 1800 ELSE tmp.Bettype END AS GroupBettype
+			, CASE WHEN ISNULL(tmp.Bettype,tmp2.Bettype) IN (1801,1802,1803) THEN 1800 ELSE ISNULL(tmp.Bettype,tmp2.Bettype) END AS GroupBettype
 			, ISNULL(tmp.PlayerComm, 0) - ISNULL(tmp2.PlayerComm, 0) AS PlayerComm
 			, ISNULL(tmp.Comm, 0) - ISNULL(tmp2.Comm, 0) AS Comm
-			, tmp.awinlost - ISNULL(tmp2.awinlost,0)
-		    , tmp.oddsspread - ISNULL(tmp2.oddsspread,0)
-			, tmp.betid - ISNULL(tmp2.betid,0)
-			, CASE WHEN tmp.Bettype = 1802 THEN 1 ELSE 0 END AS apositiontaking
+			, ISNULL(tmp.awinlost,0) - ISNULL(tmp2.awinlost,0)
+		    , ISNULL(tmp.oddsspread,0) - ISNULL(tmp2.oddsspread,0)
+			, ISNULL(tmp.betid,0) - ISNULL(tmp2.betid,0)
+			, CASE WHEN ISNULL(tmp.Bettype,tmp2.Bettype) = 1802 THEN 1 ELSE 0 END AS apositiontaking
 		FROM (
 			SELECT a.WinlostDate , a.Stake , a.Actual_Stake , a.Winlost , a.CurrencyId , a.Bettype , a.PlayerComm , a.Comm 
 				, CASE WHEN a.Bettype = 1802 THEN -a.JpContribution ELSE 0 END AS awinlost
@@ -409,7 +409,7 @@ BEGIN
 			OR ISNULL(tmp.PlayerComm, 0) <> ISNULL(tmp2.PlayerComm, 0)
 			OR ISNULL(tmp.Comm, 0) <> ISNULL(tmp2.Comm, 0)
 			OR ISNULL(tmp.oddsspread, 0) <> ISNULL(tmp2.oddsspread, 0)
-			OR tmp.betid <> ISNULL(tmp2.betid, 0)
+			OR ISNULL(tmp.betid, 0) <> ISNULL(tmp2.betid, 0)
 			
 		IF NOT EXISTS (SELECT TOP 1 1 FROM @FinalData)
 		BEGIN
@@ -518,7 +518,7 @@ BEGIN
 						FROM #LicenseeProductTable 
 						WHERE LicenseeId = @LicenseeId
 							AND ProductId = 31
-						) r ON c.site = r.LicenseeName AND c.CurrencyId = r.CurrencyId
+						) r ON c.site = r.LicenseeName AND c.currency = r.CurrencyId
 		WHERE tmp.GroupBettype = 8000
 			
 		--get exchange rate:

@@ -177,11 +177,12 @@ BEGIN
 						FROM  #tmpSum_winloss_Exchange t
 							INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid -- member level
 							CROSS APPLY(
-									SELECT TOP 1 r.PT  
+									SELECT TOP 1 r.PT/CONVERT(SMALLMONEY,100) AS PT
 									FROM bodb02.dbo.Dep_ChargeInfoSetting r WITH (NOLOCK)	
 										INNER JOIN bodb02.dbo.Customer s WITH (NOLOCK) 
 												ON r.CustId = s.CustId --super level									
-									WHERE  CONVERT(VARCHAR(10), t.settledDate, 112) BETWEEN r.FromDate AND r.ToDate 
+									WHERE  r.Sporttype = 221
+											AND CONVERT(VARCHAR(10), t.settledDate, 112) BETWEEN r.FromDate AND r.ToDate 
 											AND c.site = s.site 
 											AND c.currency = s.currency							
 									)  ci 
