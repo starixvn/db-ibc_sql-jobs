@@ -125,6 +125,7 @@ AS
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
+		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -192,7 +193,7 @@ BEGIN
 		,SUM(b.winlost - b.actual_stake) AS WinLost
 		,CASE
 			WHEN b.statusID IN (112, 113) THEN SUM(CASE
-														WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
+														WHEN (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 7698)
 															OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 															OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 															OR (b.bettype BETWEEN 8700 AND 8709 AND b.matchid = 157)) THEN 0
@@ -265,11 +266,12 @@ BEGIN
 			WHEN b.bettype BETWEEN 8400 AND 8699 THEN 155 -- MG-RNG
 			WHEN b.bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 			WHEN b.bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
+			WHEN b.bettype BETWEEN 7601 AND 7700 THEN 227 -- L22
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
+			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 7698)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND matchid = 173)
 				OR (b.bettype BETWEEN 17000 AND 17030)  
@@ -397,10 +399,11 @@ BEGIN
 			WHEN b.bettype BETWEEN 8400 AND 8699 THEN 155 -- MG-RNG
 			WHEN b.bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 			WHEN b.bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
+			WHEN b.bettype BETWEEN 7601 AND 7700 THEN 227 -- L22
 			ELSE 0
 		END
 		,CASE
-			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 8695)
+			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 7698)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND matchid = 173)
 				OR (b.bettype BETWEEN 17000 AND 17030)  

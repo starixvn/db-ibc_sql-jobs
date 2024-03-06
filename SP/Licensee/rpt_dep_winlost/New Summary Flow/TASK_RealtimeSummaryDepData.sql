@@ -81,6 +81,7 @@ AS
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 		- 20231026@Evan: Support 12bet team get TO without Void/reject/refund [RedmineID: #195784]
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
+		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #200273]
 
 	Input Params:
@@ -336,7 +337,7 @@ BEGIN
 				SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
 				SUM(CASE
 						WHEN b.ruben = 1
-							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 3150)
+							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 3150, 7698)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)
@@ -355,7 +356,7 @@ BEGIN
 				0, -- Bonus Wallet
 				0, -- AdjBonusWallet 
 				SUM(CASE
-						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 3150)
+						WHEN b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 3150, 7698)
 							OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 							OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 							OR (b.bettype BETWEEN 17000 AND 17030)
@@ -424,6 +425,7 @@ BEGIN
 						WHEN g.gameID BETWEEN 3898 AND 3899  AND g.productID = 171 THEN -171
 						WHEN g.gameID BETWEEN 4598 AND 4600 THEN -247
 						WHEN g.gameID BETWEEN 4297 AND 4300 THEN -248
+						WHEN g.gameID = 7698 THEN -227
 					ELSE g.productID END AS SportType
 					,SUM(CASE WHEN g.statusID IN (0,1) THEN g.stake ELSE 0 END) AS TurnOver
 					,SUM(CASE WHEN g.statusID IN (0,1) THEN g.actual_stake ELSE 0 END) AS OutStanding
@@ -440,6 +442,7 @@ BEGIN
 						WHEN g.gameID BETWEEN 3898 AND 3899  AND g.productID = 171 THEN -171
 						WHEN g.gameID BETWEEN 4598 AND 4600 THEN -247
 						WHEN g.gameID BETWEEN 4297 AND 4300 THEN -248
+						WHEN g.gameID = 7698 THEN -227
 					ELSE g.productID END
 				UNION ALL -- AG Casino, Allbet
 				SELECT l.custid
@@ -526,7 +529,7 @@ BEGIN
 				SUM(CASE
 						WHEN b.winlostdate = @WinLostDate
 							AND b.ruben = 1
-							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 3150)
+							AND b.bettype NOT IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 3150, 7698)
 							AND (b.bettype NOT BETWEEN 1611 AND 1697 OR b.matchid <> 150)
 							AND (b.bettype NOT BETWEEN 3801 AND 3899 OR b.matchid <> 173)
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)  
@@ -546,7 +549,7 @@ BEGIN
 				0, -- AdjBonusWallet
 				SUM(CASE
 						WHEN b.winlostdate = @Winlostdate 
-							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 3150)
+							AND (b.bettype IN (4300, 4299, 4298, 4297, 3007, 1906, 1698, 1699, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 3150, 7698)
 								OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 								OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 								OR (b.bettype BETWEEN 17000 AND 17030)
@@ -614,6 +617,7 @@ BEGIN
 						WHEN g.gameID BETWEEN 3898 AND 3899  AND g.productID = 171 THEN -171
 						WHEN g.gameID BETWEEN 4598 AND 4600 THEN -247
 						WHEN g.gameID BETWEEN 4297 AND 4300 THEN -248
+						WHEN g.gameID = 7698 THEN -227
 					ELSE g.productID END AS SportType
 					,SUM(CASE WHEN g.winlostdate = @Winlostdate AND g.statusID IN (0,1) THEN g.stake ELSE 0 END) AS TurnOver
 					,SUM(CASE WHEN g.statusID IN (0,1) THEN g.actual_stake ELSE 0 END) AS OutStanding
@@ -630,6 +634,7 @@ BEGIN
 						WHEN g.gameID BETWEEN 3898 AND 3899  AND g.productID = 171 THEN -171
 						WHEN g.gameID BETWEEN 4598 AND 4600 THEN -247
 						WHEN g.gameID BETWEEN 4297 AND 4300 THEN -248
+						WHEN g.gameID = 7698 THEN -227
 					ELSE g.productID END
 				UNION ALL -- AG Casino, Allbet
 				SELECT l.custid
@@ -904,11 +909,13 @@ BEGIN
 				WHEN bettype = 8695 THEN -155 -- MG-RNG Promotion Prize
 				WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 				WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
+				WHEN (bettype BETWEEN 7601 AND 7700 AND bettype <> 7698) THEN 227 -- L22
+				WHEN bettype = 7698 THEN -227 -- L22 Promotion Prize
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
 			SUM(CASE
-					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4598, 4599, 4600, 2499, 8695, 3150)
+					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4598, 4599, 4600, 2499, 8695, 3150, 7698)
 						OR (bettype BETWEEN 17000 AND 17030) 
 						OR (bettype BETWEEN 8700 AND 8709)
 						OR (bettype BETWEEN 1801 AND 1803) THEN Promotion
@@ -994,6 +1001,8 @@ BEGIN
 				WHEN bettype = 8695 THEN -155 -- MG-RNG Promotion Prize
 				WHEN bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 				WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
+				WHEN (bettype BETWEEN 7601 AND 7700 AND bettype <> 7698) THEN 227 -- L22
+				WHEN bettype = 7698 THEN -227 -- L22 Promotion Prize
 				ELSE 0
 			END
 			

@@ -49,6 +49,7 @@ AS
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
+		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
  
 	Param's Explanation:
 		@DrawFilter
@@ -261,6 +262,10 @@ BEGIN
 		,@WETurnover MONEY
 		,@WECustomerWl MONEY
 		,@WEBetCount MONEY
+		----L22
+		,@L22Turnover MONEY
+		,@L22CustomerWl MONEY
+		,@L22BetCount MONEY
 
 	DECLARE @tblSporttype AS TABLE (ProductPrefix VARCHAR(10), Sporttype SMALLINT)
 
@@ -274,7 +279,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 	WHERE p.ProductPrefix IN ( 'RB','NG','LC','VS','CS','KN','AGC','MGCRNG','MGCLC','VG','VB', 'AB', 'NG2', 'CO', 'VS2',
 		'LT', 'PP', 'CC', 'SPR', 'SG', 'VRG', 'TG', 'I4D', 'SXG', 'SBC', 'JK', 'SAG', 'PGS', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3',
-		'BTC', 'FGGL', 'MXG', 'JIG', 'YB', 'MGRNG', 'LG', 'SEA', 'WE')
+		'BTC', 'FGGL', 'MXG', 'JIG', 'YB', 'MGRNG', 'LG', 'SEA', 'WE', 'L22')
 
 	INSERT INTO @tblSporttype
 	SELECT 'SB', 0
@@ -1071,6 +1076,22 @@ BEGIN
 		,@WEBetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
 	FROM @tblData b
 	WHERE ProductPrefix = 'WE'
+
+	----L22
+	SELECT
+		@L22Turnover=SUM(CASE
+							WHEN @DrawFilter IN (2,3) THEN
+								CASE
+									WHEN b.StatusID = 111 THEN 0
+									WHEN b.StatusID IN (114,115) THEN 0.5
+									ELSE 1
+								END
+							ELSE 1
+						END * b.Turnover)
+		,@L22CustomerWl=SUM(b.winlost)
+		,@L22BetCount=SUM(CASE WHEN @DrawFilter=2 AND b.StatusID = 111 THEN 0 ELSE b.BetCount END)
+	FROM @tblData b
+	WHERE ProductPrefix = 'L22'
 	
 	-- Result
 	SELECT
@@ -1124,6 +1145,7 @@ BEGIN
 		, ISNULL(@LGTurnover,0) AS LG
 		, ISNULL(@SEATurnover,0) AS SEA
 		, ISNULL(@WETurnover,0) AS WE
+		, ISNULL(@L22Turnover,0) AS L22
 	UNION
 	SELECT
 		2
@@ -1176,6 +1198,7 @@ BEGIN
 		, ISNULL(@LGCustomerWl,0)
 		, ISNULL(@SEACustomerWl,0)
 		, ISNULL(@WECustomerWl,0)
+		, ISNULL(@L22CustomerWl,0)
 	UNION
 	SELECT
 		3
@@ -1228,6 +1251,7 @@ BEGIN
 		, ISNULL(@LGBetCount,0)
 		, ISNULL(@SEABetCount,0)
 		, ISNULL(@WEBetCount,0)
+		, ISNULL(@L22BetCount,0)
 
 	SET NOCOUNT OFF
 END

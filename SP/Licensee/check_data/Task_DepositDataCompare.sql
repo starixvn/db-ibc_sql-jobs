@@ -47,6 +47,7 @@ AS
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
+		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
  
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -154,6 +155,7 @@ BEGIN
 		,LG BIGINT
 		,SEA BIGINT
 		,WE BIGINT
+		,L22 BIGINT
 		)
 
 	--exec
@@ -209,6 +211,7 @@ BEGIN
 		,LG
 		,SEA
 		,WE
+		,L22
 		)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
@@ -381,6 +384,7 @@ BEGIN
 		,LG
 		,SEA
 		,WE
+		,L22
 		)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
