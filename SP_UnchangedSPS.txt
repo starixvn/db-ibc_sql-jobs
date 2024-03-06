@@ -1,8 +1,4 @@
-SP/sum_winloss/Task_Sum_Winloss_CheckData_Job.sql
-SP/sum_winloss/Task_Sum_Winloss_Old.sql
-SP/sum_winloss/Task_sum_winloss_14.sql
-SP/sum_winloss/Task_Sum_Winloss_Old.sql
-SP/sum_winloss/Task_Sum_Winloss_Old_Manual_Gen.sql
-SP/sum_winloss/Task_sum_winloss_14.sql
 SP/TicketVoiding_RoutineTasks/Task_Execute_TicketVoiding_RoutineTasks.sql
 SP/MBU/MoveBet/DBTXN-bodb02-Task_DailySummary.proc.sql
+SP/sum_winloss/Task_Sum_Winloss_CheckData_Job.sql
+SP/Bettrans_compact/dbo.Task_CDC_bettrans_compact_CheckNotify.sql
