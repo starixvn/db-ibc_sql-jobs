@@ -17,6 +17,7 @@ AS
 		- 20230804@July: @CheckMode =  1 (bettrans) - Exclude ticket of product Saba promotion [Redmine: #192294]
 		- 20230918@July: Exclude ticket currency UUS [Redmine: #194056]
 		- 20240301@July: Update rule - Difference awinlost of parlay ticket  [Redmine: #201721]
+		- 20240307@July: Update rule - AG Casino - Support new bettypes  [Redmine: #201829]
 
 	Param's Expanation:
 		Notes: For SAGaming(244), BBIN(241) check data in bettransG
@@ -104,6 +105,7 @@ BEGIN
 			WHERE RefTable IN (0,3) --0: bettrans, 3 translog
 				AND IsTest = 0 AND Enabled = 1
 				AND ProductID NOT IN (37) -- Exclude product Saba promotion
+				AND bettype NOT IN (1802) -- Exclude AG Casino(1802)
 
 			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
 			FROM bodb02.dbo.bettrans b WITH(NOLOCK) 
