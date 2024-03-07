@@ -49,6 +49,7 @@ AS
 		- 20231219@July: Live22 - Exclude bettype 7698(Promotion Prize) - [Redmine: #198518]
 		- 20231219@July: SABA.games - Exclude bettype 1682(One Piece) & VGaming - Exclude bettype 3874(One Piece) - [Redmine: #198502]
 		- 20240123@July: SABA.games/Vgaming - Exclude new card game Dragon Ball(1683,3875) - [Redmine:#199989] 
+		- 20240307@July: AG Casino - Exclude new bettypes - [Redmine:#201829] 
 	
 	Param's Expanation:
 
@@ -178,6 +179,15 @@ BEGIN
 					AND b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
 					AND b.winlostdate = @Today
 					AND b.status <> 'Completed'
+		END
+		ELSE IF @ProductId = 250 -- AG Casino 
+		BEGIN
+			SELECT TOP (100) @transId = @transId + ',' + CAST(transId AS VARCHAR)
+			FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+			WHERE	b.stake <= 0
+					AND b.matchid = @ProductId
+					AND b.status <> 'Completed'
+					AND b.bettype NOT IN (1801,1802,1803)
 		END
 		ELSE
 		BEGIN
