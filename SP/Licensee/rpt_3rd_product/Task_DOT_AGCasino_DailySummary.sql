@@ -51,8 +51,11 @@ BEGIN TRY
 	DECLARE @WLDateTab AS TABLE (ID SMALLINT IDENTITY (1,1), winlostdate DATE)
 	DECLARE @i SMALLINT = 1, @SqlStr VARCHAR (1000) = ''
 	
-	DECLARE @Day TINYINT, @MinDate DATE 
+	DECLARE @Day TINYINT, @MinDate DATE, @CutOffDate DATETIME
+	 
+	SELECT @CutOffDate = '2024-03-01'
 	SELECT @Day = DAY(GETDATE())
+
 	IF @Day <= 5 --- 1st -> 5th of the month
 	BEGIN 
 		SELECT @MinDate = DATEADD(mm, DATEDIFF(mm, 0, GETDATE()) - 1, 0)  ----- FirstOfPreviousMonth 
@@ -180,21 +183,34 @@ BEGIN TRY
 
 				DELETE FROM bodb_report.dbo.rptDepWinlost_AGCasino WITH (ROWLOCK) WHERE Winlostdate = @winlostdate
 				
-				INSERT INTO bodb_report.dbo.rptDepWinlost_AGCasino (winlostdate, custid, sporttype, currency, turnover, drawTO, 
+				IF @winlostdate >= @CutOffDate
+				BEGIN
+					INSERT INTO bodb_report.dbo.rptDepWinlost_AGCasino (winlostdate, custid, sporttype, currency, turnover, drawTO, 
 																	winlost, playercomm, BetCount, drawBetCount, IsVIPGame, JpContribution, Bettype)
-				SELECT @winlostdate, b.custid, b.sporttype, b.currency, SUM(b.turnover), SUM(b.drawTO), 
-						SUM(b.winlost), SUM(b.playercomm), SUM(b.BetCount), SUM(b.drawBetCount), b.IsVIPGame, SUM(b.JpContribution), b.Bettype
-				FROM (
-					SELECT b.custid,b.sporttype,b.currency,b.turnover,b.drawTO,b.winlost,b.playercomm,b.BetCount,b.drawBetCount,b.IsVIPGame,b.JpContribution,b.Bettype
-					FROM #TicketData td
-					CROSS APPLY (
-						SELECT custid, sporttype, currency, turnover, drawTO, winlost, playercomm, BetCount, drawBetCount, IsVIPGame, 0 JpContribution, Bettype
-						UNION ALL
-						SELECT custid, sporttype, currency, 0 AS turnover, 0 AS drawTO, 0 AS winlost,0 AS playercomm, ContributionBetCount, 0 AS drawBetCount, IsVIPGame, JpContribution, 1802
-						WHERE JpContribution > 0
-						) b
-					)b
-				GROUP BY b.custid,b.sporttype,b.currency,b.Bettype,b.IsVIPGame
+					SELECT @winlostdate, b.custid, b.sporttype, b.currency, SUM(b.turnover), SUM(b.drawTO), 
+							SUM(b.winlost), SUM(b.playercomm), SUM(b.BetCount), SUM(b.drawBetCount), b.IsVIPGame, SUM(b.JpContribution), b.Bettype
+					FROM (
+						SELECT b.custid,b.sporttype,b.currency,b.turnover,b.drawTO,b.winlost,b.playercomm,b.BetCount,b.drawBetCount,b.IsVIPGame,b.JpContribution,b.Bettype
+						FROM #TicketData td
+						CROSS APPLY (
+							SELECT custid, sporttype, currency, turnover, drawTO, winlost, playercomm, BetCount, drawBetCount, IsVIPGame, 0 JpContribution, Bettype
+							UNION ALL
+							SELECT custid, sporttype, currency, 0 AS turnover, 0 AS drawTO, 0 AS winlost,0 AS playercomm, ContributionBetCount, 0 AS drawBetCount, IsVIPGame, JpContribution, 1802
+							WHERE JpContribution > 0
+							) b
+						)b
+					GROUP BY b.custid,b.sporttype,b.currency,b.Bettype,b.IsVIPGame	
+				END	
+				ELSE
+				BEGIN 
+					INSERT INTO bodb_report.dbo.rptDepWinlost_AGCasino (winlostdate, custid, sporttype, currency, turnover, drawTO, 
+																	winlost, playercomm, BetCount, drawBetCount, IsVIPGame, Bettype)
+					SELECT @winlostdate, b.custid, b.sporttype, b.currency, SUM(b.turnover), SUM(b.drawTO), 
+							SUM(b.winlost), SUM(b.playercomm), SUM(b.BetCount), SUM(b.drawBetCount), b.IsVIPGame, 1800
+					FROM #TicketData b
+					GROUP BY b.custid,b.sporttype,b.currency,b.IsVIPGame	
+
+				END
 		
 				SET @SqlStr = 'UPDATE bodb_PlaytechCS.dbo.Product3rd_ImportQueue WITH (UPDLOCK, ROWLOCK)
 				SET isSummarized = 1
