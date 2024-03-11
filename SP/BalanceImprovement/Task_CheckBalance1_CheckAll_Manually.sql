@@ -25,6 +25,7 @@ AS
 		20221227@Patrick: Support BU 247 Redmine: [#182882]
 		- 20230707@Brice: Support scale-out for credit site [RedmineID: #191003]
 		- 20231228@Patrick: Ignore check for single wallet [RedmineID: #198951]
+		- 20240311@Patirck: Igore check balance for special sites [RedmineID: #202035]
 
 	Param use:
 
@@ -66,6 +67,33 @@ BEGIN
 	GROUP BY c.custid
 
 	SELECT @__siteDBGroupId = dbo.f_Get_SiteDBGroupID()
+
+	IF EXISTS (
+		SELECT TOP 1 1
+		FROM CustDB.dbo.Site s WITH(NOLOCK)
+		WHERE s.site IN ('Hedging', 'Special')
+			AND s.SiteDBGroupID = @__siteDBGroupId
+	)
+	BEGIN
+		DROP TABLE IF EXISTS #__specialSupper
+		CREATE TABLE #__specialSupper (custid INT)
+
+		INSERT INTO #__specialSupper(custid)
+		SELECT custid 
+		FROM custdb.dbo.Customer c WITH(NOLOCK)
+			INNER JOIN CustDB.dbo.Site s WITH(NOLOCK) ON c.site = s.site
+		WHERE c.site in ('Hedging', 'Special') AND roleid = 4 AND s.SiteDBGroupID = @__siteDBGroupId
+
+		--//'Hedging', 'Special'
+		INSERT INTO dbo.Task_Cust_CheckBalance_Exception(custid, Remark)
+		SELECT c.custid, c.usermame
+		FROM CustDB.dbo.Customer c WITH(NOLOCK)
+		WHERE c.srecommend IN (SELECT s.custid FROM #__specialSupper s)
+			AND c.roleId = 1
+			AND c.custid NOT IN (SELECT ce.custid FROM dbo.Task_Cust_CheckBalance_Exception ce WITH (NOLOCK))
+		GROUP BY c.custid
+
+	END
 
 	DROP TABLE IF EXISTS #tmp_custsuper
 	CREATE TABLE #tmp_custsuper (custid INT, SiteDBGroupID SMALLINT)
