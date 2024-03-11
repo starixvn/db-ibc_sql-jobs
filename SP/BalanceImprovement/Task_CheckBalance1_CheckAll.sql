@@ -25,7 +25,7 @@ AS
 		20221227@Patrick: Support BU 247 Redmine: [#182882]
 		- 20230707@Brice: Support scale-out for credit site [RedmineID: #191003]
 		- 20231228@Patrick: Ignore check for single wallet [RedmineID: #198951]
-		- 20240311@Patrick: Igore check balance for special sites [RedmineID: #202035]
+		- 20240311@Patrick: Ignore check balance for special sites [RedmineID: #202035]
 		
 	Param use:
 
