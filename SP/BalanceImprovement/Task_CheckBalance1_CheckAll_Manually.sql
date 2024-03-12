@@ -86,7 +86,7 @@ BEGIN
 
 		--//'Hedging', 'Special'
 		INSERT INTO dbo.Task_Cust_CheckBalance_Exception(custid, Remark)
-		SELECT c.custid, c.usermame
+		SELECT c.custid, c.username
 		FROM CustDB.dbo.Customer c WITH(NOLOCK)
 		WHERE c.srecommend IN (SELECT s.custid FROM #__specialSupper s)
 			AND c.roleId = 1
