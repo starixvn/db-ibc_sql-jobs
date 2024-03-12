@@ -91,7 +91,7 @@ BEGIN
 		WHERE c.srecommend IN (SELECT s.custid FROM #__specialSupper s)
 			AND c.roleId = 1
 			AND c.custid NOT IN (SELECT ce.custid FROM dbo.Task_Cust_CheckBalance_Exception ce WITH (NOLOCK))
-		GROUP BY c.custid
+		GROUP BY c.custid, c.username
 
 	END
 
