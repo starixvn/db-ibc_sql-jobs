@@ -24,7 +24,7 @@ AS
  		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
 		- 20230414@Evan: Update formula agentCommission for new commercial terms [Redmine: #186609]
 		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
-		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product into Bettrans [RedmineID: #201067]
+		- 20240229@Evan: Sum data of Jackpot/Promotion/Contribution AG Product into Bettrans [RedmineID: #201067]
 		- 20240301@Sophia: Exchange product - Get PT from new table on NAP system [RedmineID: #201169]
 	
 	Format for transdesc: 
@@ -53,7 +53,6 @@ BEGIN
 	CREATE TABLE #3rdData (WinlostDate SMALLDATETIME, Stake MONEY, Actual_Stake MONEY, Winlost MONEY, CurrencyId INT, Bettype INT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0), JpContribution MONEY DEFAULT (0), StakeContribution MONEY DEFAULT (0))
 	CREATE TABLE #3rdDummnyData (CustId INT, WinlostDate SMALLDATETIME, Stake MONEY, Actual_stake MONEY, Winlost MONEY, aWinlost MONEY, TransDesc VARCHAR(300), RefNo BIGINT
 		, Apositiontaking SMALLMONEY, actualrate FLOAT, CurrencyId INT, Bettype INT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0), oddsspread MONEY, betid BIGINT)
-		, Apositiontaking SMALLMONEY, actualrate FLOAT, CurrencyId TINYINT, Bettype INT, PlayerComm MONEY DEFAULT (0), Comm MONEY DEFAULT (0), oddsspread MONEY, betid BIGINT)
 	CREATE TABLE #ChargeRate (ChargeId INT, PartyId INT, LicenseeId INT, ProductId INT, ChargeType TINYINT, Rate MONEY, FromDate SMALLDATETIME, ToDate SMALLDATETIME)
 	CREATE TABLE #ChargeRateByCurrency (ChargeId INT, CurrencyId INT, Rate MONEY)
 

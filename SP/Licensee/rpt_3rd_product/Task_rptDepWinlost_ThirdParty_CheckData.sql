@@ -105,10 +105,10 @@ BEGIN
 	DECLARE @S_Count INT, @T_Count INT, 
 			@i INT
 			
-	CREATE TABLE #LicenseeExchangePT (LicenseeName VARCHAR(50), CurrencyId INT, PT MONEY)
+	CREATE TABLE #LicenseeExchangePT (CustId INT, CurrencyId INT, PT MONEY)
 
-	INSERT INTO #LicenseeExchangePT (LicenseeName, CurrencyId, PT)	 
-	SELECT 	c.site as LicenseeName, c.Currency as CurrencyId, s.PT/CONVERT(SMALLMONEY,100) AS PT
+	INSERT INTO #LicenseeExchangePT (CustId, CurrencyId, PT)	 
+	SELECT 	s.CustID, c.Currency as CurrencyId, s.PT/CONVERT(SMALLMONEY,100) AS PT
 	FROM 	bodb02.dbo.Dep_ChargeInfoSetting s WITH (NOLOCK) 
 		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) 
 			ON c.CustId = s.CustId 
@@ -152,9 +152,10 @@ BEGIN
 				
 	UPDATE b
 	SET b.WinLostA = - (ISNULL(Winlost, 0)) * (r.PT)
-	FROM #TicketData b
+	FROM #TicketData b 
+		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.Custid = c.custid
 		INNER JOIN #LicenseeExchangePT r 
-			ON b.LicenseeName = r.LicenseeName AND b.CurrencyId = r.CurrencyId
+			ON c.srecommend = r.CustId AND c.currency = r.CurrencyId
 	
 	DELETE #TicketData 
 	WHERE ISNULL(Turnover,0) = 0 AND ISNULL(Winlost,0) = 0 AND ISNULL(WinLostA,0) = 0 AND ISNULL(CommissionP,0) = 0 AND ISNULL(CommissionA,0) = 0 
@@ -464,7 +465,6 @@ BEGIN
 	DROP TABLE #Target
 	DROP TABLE #DetailData
 	DROP TABLE #TicketData
-	DROP TABLE #ChargeRate
 
 	SET NOCOUNT OFF;
 END

@@ -83,7 +83,7 @@ BEGIN TRY
 	SELECT @fdate = MIN(Winlostdate) FROM @WLDateList
 	SELECT @tDate = MAX(Winlostdate) FROM @WLDateList
 	
-	CREATE TABLE #LicenseeExchangePT (LicenseeName VARCHAR(50), CurrencyId INT, PT MONEY, FromDate DATE, ToDate DATE)
+	CREATE TABLE #LicenseeExchangePT (LicenseeName VARCHAR(50), CurrencyId INT, PT MONEY)
 		
 	CREATE TABLE #TicketData (	Custid			INT,	
 								SiteID			INT,
