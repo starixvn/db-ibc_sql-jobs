@@ -1,5 +1,7 @@
-﻿/*<info serverAlias="DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBAH-bodb02,DBTP-bodb02,DBBAL-bodb02" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView" viewers="" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE  [dbo].[Age_SelBalanceUpDay]	
+﻿/*<info serverAlias="DBTXN-bodb02,DBACC-bodb02,DBAGE-bodb02,DBBAH-bodb02,DBTP-bodb02,DBBAL-bodb02" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbDownlineNetView,wsv_nap,wsv_xnap,wsv_alp,wsv_alpv" viewers="" isFunction="0" isNested="1"></info>*/
+ALTER PROCEDURE  [dbo].[Age_SelBalanceUpDay]
+	@BalanceUpDay	SMALLDATETIME	= NULL OUTPUT, 
+	@MoveBetsDay	SMALLDATETIME	 = NULL OUTPUT
 AS	
 /*
 Created: 
@@ -17,18 +19,16 @@ Revisions:
 	- 20210816@Sophia: add DBBAL [Redmine: #154300]
 	- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - and remove SP at DBBOF [RedmineID: #164301]
 	- 20221216@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
+	- 20240313@Bobby: EC enhancement - [RedmineID: #202276]
 
 Param's Explanation:
 */
-
-SET NOCOUNT ON
 BEGIN
-	DECLARE @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
-	
+	SET NOCOUNT ON;
+
 	EXEC dbo.NAP_Admin_GetMovebetDate @MovebetDate = @MoveBetsDay OUTPUT
 	EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @BalanceUpDay OUTPUT
 
 	SELECT @BalanceUpDay AS BalanceUpDay, @MoveBetsDay AS MoveBetsDay
 END
-
 GO
