@@ -1,4 +1,4 @@
-/*<info serverAlias="DBYASHBET-bodb_YashBet" executers="bodbLicenseeNet" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBYASHBET-bodb_YashBet" executers="wsv_lap" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_API_PushDataTracker_Sel]
 	@PushDataType SMALLINT
 	,@StatusId	TINYINT = 2

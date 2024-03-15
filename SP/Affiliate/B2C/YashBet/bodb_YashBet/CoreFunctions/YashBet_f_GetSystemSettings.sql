@@ -1,4 +1,4 @@
-/*<info serverAlias="DBYASHBET-bodb_YashBet" executers="bodbLicenseeNet" isFunction="1" isNested="1"></info>*/
+/*<info serverAlias="DBYASHBET-bodb_YashBet" executers="wsv_lap" isFunction="1" isNested="1"></info>*/
 USE bodb_YashBet
 GO
 
