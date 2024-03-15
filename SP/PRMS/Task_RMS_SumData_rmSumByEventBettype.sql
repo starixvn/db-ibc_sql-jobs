@@ -83,11 +83,13 @@ BEGIN
 		FROM dbo.rmBettrans_Old r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
 			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+			LEFT JOIN #bettrans b ON r.transid = b.transid
 		WHERE r.winlostdate = @winlostdate
 			AND r.bettype = 29
 			AND r.liveawayscore IN (1, 2, 3) -- soccer
 			AND r.statusID IN (111, 112, 113, 101, 102)
 			AND r.currency <> 20
+			AND b.transid IS NULL
 	END		
        
 	INSERT INTO #bettransm (refno, bettype, leagueid, matchid, betteam, statusID)
@@ -97,14 +99,14 @@ BEGIN
 	WHERE m.sporttype IN (1,2) AND bm.winlostdate > @MoveBetsDay
     AND bm.refno IN (SELECT refno FROM #bettrans)
 
-	UNION ALL
+	UNION 
 	SELECT bm.refno, bm.bettype, m.leagueid, bm.matchId,bm.betteam, bm.statusID 	
 	FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE m.sporttype IN (1,2) AND bm.winlostdate BETWEEN @BalanceUpDay AND  @MoveBetsDay
       AND bm.refno IN (SELECT refno FROM #bettrans)
 
-	UNION ALL
+	UNION 
 	SELECT bm.refno, bm.bettype, m.leagueid, bm.matchId,bm.betteam, bm.statusID 				
 	FROM dbo.rmBettransm_bk bm WITH (NOLOCK)
 		INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
