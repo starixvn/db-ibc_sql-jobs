@@ -15,6 +15,7 @@ AS
 		- 20220728@July: Scale out DBTRANS - Change maxTransIdSetting to SequenceIdSetting [Redmine: #175965]
 		- 20220923@Max: Tuning [Redmine: #178156]
 		- 20230811@Max: Yeebet - Detect player exceeded the bet limit setting [Redmine: #192560]
+		- 20240318@Max: WE Live Casino - - Detect player exceeded the bet limit setting [Redmine: #195884]
 
 	Param's explanation:		
 */
@@ -55,7 +56,7 @@ BEGIN
 	WHERE b.SequenceID > @maxSequenceId_setting
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
-		AND b.productID IN (211,243,242,233,225,239,170,176,159)
+		AND b.productID IN (211,243,242,233,225,239,170,176,159,228)
 	ORDER BY b.sequenceid ASC
 
 	SET @maxSequenceId = (SELECT MAX(SequenceId) FROM #tmp_TransId)
