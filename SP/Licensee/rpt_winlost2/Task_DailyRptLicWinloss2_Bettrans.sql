@@ -110,6 +110,7 @@ AS
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
+		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -259,7 +260,8 @@ BEGIN
 				OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 				OR (b.bettype BETWEEN 17000 AND 17030)  
-				OR (b.bettype BETWEEN 8700 AND 8709) THEN b.bettype
+				OR (b.bettype BETWEEN 8700 AND 8709) 
+				OR (b.bettype BETWEEN 1801 AND 1803) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END bettype
@@ -391,7 +393,8 @@ BEGIN
 				OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 				OR (b.bettype BETWEEN 17000 AND 17030)  
-				OR (b.bettype BETWEEN 8700 AND 8709) THEN b.bettype
+				OR (b.bettype BETWEEN 8700 AND 8709)
+				OR (b.bettype BETWEEN 1801 AND 1803) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END
