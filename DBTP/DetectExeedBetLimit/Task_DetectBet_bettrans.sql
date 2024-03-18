@@ -63,7 +63,7 @@ BEGIN
 						m.sporttype BETWEEN 180 AND 186
 						OR m.sporttype BETWEEN 190 AND 197
 						OR m.sporttype IN (199)
-						OR m.sporttype IN (161,164)
+						OR m.sporttype IN (161,164,178,188)
 					)
 
 			UNION ALL
