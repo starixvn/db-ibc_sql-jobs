@@ -13,6 +13,7 @@ RETURNS INT
 	DB: DBAGE.bodb_AGE
 	Revisions:
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
+		- 20240119@Lewis: Add VS4 [RedmineID: #198621]
 */
 BEGIN 
 	RETURN (
@@ -84,6 +85,7 @@ BEGIN
 					WHEN b.bettype BETWEEN 5302 AND 5399 THEN 178 -- VS3-LeapGaming(New)
 					WHEN b.bettype BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
 					WHEN b.bettype BETWEEN 7601 AND 7700 THEN 227 -- Live22
+					WHEN b.bettype BETWEEN 10400 AND 10449 THEN 188 -- VS4-Virtual Cock Fighting
 					ELSE 0
 				END AS sporttype
 		FROM (
