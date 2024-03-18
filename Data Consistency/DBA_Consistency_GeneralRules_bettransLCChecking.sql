@@ -13,6 +13,7 @@ AS
 		- 20230420@July: Check data between bettrans & bettransLC [Redmine: #186426]
 		- 20230531@July: Check ticket data consistency [Redmine: #186736]
 		- 20230918@July: Exclude ticket currency UUS [Redmine: #194056]
+		- 20240318@July: Update rule #58 - Fix endless loop when no error is returned [Redmine: #202524]
 	
 	Param's Expanation:
 	@CheckMode:
@@ -102,6 +103,10 @@ BEGIN
 								   , @ErrMsg = 'Check ticket details between bettrans and bettransLC on product ' + CAST(@ProductId AS VARCHAR)
 								   , @SampleData = 'bettransLC.Refno in (' + @transId + ')'
 							RETURN;
+						END
+						ELSE
+						BEGIN
+							BREAK;
 						END
 					END
 				END
