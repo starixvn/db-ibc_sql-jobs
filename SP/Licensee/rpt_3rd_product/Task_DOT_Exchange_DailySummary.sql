@@ -21,6 +21,7 @@ AS
 		- 20230619@Malcolm: Get Event and Event Type [Redmine: #189536]
 		- 20230710@Malcolm: Sum data for @GenForDataWarehouse = 1 [Redmine: #189536]
 		- 20231106@Malcolm: Add Market Name [Redmine: #195271]
+		- 20240301@Sophia: Exchange product - Get PT from new table on NAP system [RedmineID: #201169]
 
 	Param's Explanation:
 		- @winlostdate: The date need to summary
@@ -32,7 +33,7 @@ SET NOCOUNT ON
 
 BEGIN TRY
 	
-	DECLARE @ProductId INT, @PartyList VARCHAR(4000), @i SMALLINT = 1, @WLDate DATE
+	DECLARE @ProductId INT, @i SMALLINT = 1, @WLDate DATE
 
 	SELECT @ProductId = ProductId 
 	FROM bodb_Licensee.dbo.Product3rd WITH(NOLOCK) 
@@ -46,7 +47,6 @@ BEGIN TRY
 	
 	DECLARE @WLDateList AS TABLE (ID SMALLINT IDENTITY (1,1), Winlostdate DATE)
 	DECLARE @ResettledDateList AS TABLE (ID BIGINT, WinlostDate DATE)
-	CREATE TABLE #ChargeRate (PartyId INT, LicenseeId INT, ProductId INT, Rate MONEY, FromDate DATE, ToDate DATE)
 		
 	-- #Region: Get minimum date that can be regen data
 	DECLARE @Day TINYINT, @MinDate DATE, @Today DATE 
@@ -82,31 +82,12 @@ BEGIN TRY
 	DECLARE @fdate DATE, @tDate DATE
 	SELECT @fdate = MIN(Winlostdate) FROM @WLDateList
 	SELECT @tDate = MAX(Winlostdate) FROM @WLDateList
-
-	SELECT @PartyList = COALESCE(@PartyList + ',' + CAST(FromParty AS VARCHAR), CAST(FromParty AS VARCHAR))
-	FROM (
-		SELECT FromParty
-		FROM bodb_licensee.dbo.OAS_ChargeInfo WITH(NOLOCK)
-		WHERE ProductId = @ProductId
-		GROUP BY FromParty
-	)tmp
-
-	-- Get charge rate	
-	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
-	SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
-	FROM bodb_licensee.dbo.LA_f_ChargeInfo(@PartyList, @fdate, @tDate, 'BX', 'OA', 1)
-	WHERE DI_Rate > 0 AND ChargeType = 1
-
-	-- Get more charge rate for trial time
-	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
-	SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
-	FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime(@PartyList, @fdate, @tDate, 'BX', 'OA', 1)
-	WHERE DI_Rate > 0 AND ChargeType = 1
 	
-	-- #EndRegion: Get charge rate to caculate WinLostA
-	
+	CREATE TABLE #LicenseeExchangePT (LicenseeName VARCHAR(50), CurrencyId INT, PT MONEY)
+		
 	CREATE TABLE #TicketData (	Custid			INT,	
-								SiteID			INT,							
+								SiteID			INT,
+								LicenseeName	VARCHAR(50),							
 								CurrencyID		INT,
 								ExVirtualRate	FLOAT,
 								UserID			VARCHAR(20),
@@ -167,24 +148,32 @@ BEGIN TRY
 	BEGIN
 		SELECT @WLDate = winlostdate
 		FROM @WLDateList
-		WHERE ID = @i
+		WHERE ID = @i		
+		
+		TRUNCATE TABLE #LicenseeExchangePT 
+		
+		INSERT INTO #LicenseeExchangePT (LicenseeName, CurrencyId, PT)	 
+		SELECT 	c.site as LicenseeName, c.Currency as CurrencyId, s.PT/CONVERT(SMALLMONEY,100) AS PT
+		FROM 	bodb02.dbo.Dep_ChargeInfoSetting s WITH (NOLOCK) 
+			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) 
+				ON c.CustId = s.CustId 
+		WHERE s.Sporttype = 221 AND @WLDate BETWEEN s.FromDate AND s.ToDate
 	
 		IF @WLDate >= @MinDate OR @IsManual = 1
 		BEGIN 
 			TRUNCATE TABLE #TicketData
 			
-			INSERT INTO #TicketData (custid, SiteID, CurrencyID, ExVirtualRate, UserID, EventID, EventName, MarketID
+			INSERT INTO #TicketData (custid, SiteID, LicenseeName, CurrencyID, ExVirtualRate, UserID, EventID, EventName, MarketID
 									, Turnover, Winlost, CommissionP, CommissionA)
-			SELECT b.CustID, ISNULL(site.SiteID,-1) as SiteId, b.Currency, b.ExVirtualRate, b.userId, b.eventID, b.eventName, b.marketID
+			SELECT b.CustID, ISNULL(site.SiteID,-1) as SiteId, c.site as LicenseeName, b.Currency, b.ExVirtualRate, b.userId, b.eventID, b.eventName, b.marketID
 				, SUM(ISNULL(b.stakeTotal,0) * 1/b.ExVirtualRate), SUM(ISNULL(b.marketTotal,0) * 1/b.ExVirtualRate)
 				, SUM(ISNULL(b.commission,0) * 1/b.ExVirtualRate), SUM(ISNULL(b.agentCommission,0) * 1/b.ExVirtualRate)				
 			FROM dbo.Sum_winloss_Exchange b WITH (NOLOCK)
 				LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON c.Custid = b.CustID AND c.roleid = 1
-				LEFT JOIN bodb02.dbo.customer ag WITH (NOLOCK) ON c.recommend = ag.custid AND ag.roleid = 2
-				LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON ag.site=ibcsite.site
+				LEFT JOIN bodb02.dbo.Site ibcsite WITH (NOLOCK) ON c.site=ibcsite.site
 				LEFT JOIN bodb_licensee.dbo.view_site_list [site] WITH (NOLOCK) ON ibcsite.siteid=site.IbcSiteID
 			WHERE CONVERT(DATE, b.settledDate) = @WLDate
-			GROUP BY b.CustID, ISNULL(site.SiteID,-1), b.currency, b.ExVirtualRate, b.userId, b.eventID, b.eventName, b.marketID
+			GROUP BY b.CustID, ISNULL(site.SiteID,-1), c.site, b.currency, b.ExVirtualRate, b.userId, b.eventID, b.eventName, b.marketID
 
 			INSERT INTO #DetailData( UserID ,EventID ,MarketID ,BetCount  ,DrawBetCount ,DrawTO ,Lay ,Back, eventType, EventTypeName, MarketName)			
 			SELECT d.userId, d.eventID, d.marketID
@@ -211,10 +200,10 @@ BEGIN TRY
 				LEFT JOIN #DetailData d ON d.userId = b.userId AND d.eventID = b.eventID AND d.marketID = b.marketID
 				
 			UPDATE b
-			SET b.WinLostA = - (ISNULL(Winlost, 0)) * (1 - ISNULL(r.Rate, 0))
+			SET b.WinLostA = - (ISNULL(Winlost, 0)) * (r.PT)
 			FROM #TicketData b
-				INNER JOIN #ChargeRate r ON b.SiteID = r.LicenseeId
-			WHERE @WLDate BETWEEN r.FromDate AND r.ToDate
+				INNER JOIN #LicenseeExchangePT r 
+					ON b.LicenseeName = r.LicenseeName AND b.CurrencyId = r.CurrencyId 
 			
 			--- Delete unused data because of bettrans_exchange does not has data , but Sum_winloss_Exchange still has data with 0 ( case void or refund) 
 			DELETE #TicketData 
@@ -320,8 +309,7 @@ BEGIN TRY
 	
 	DROP TABLE #TicketDataForDataWarehouse
 	DROP TABLE #TicketData
-	DROP TABLE #DetailData
-	DROP TABLE #ChargeRate
+	DROP TABLE #DetailData 
 END TRY
 
 BEGIN CATCH

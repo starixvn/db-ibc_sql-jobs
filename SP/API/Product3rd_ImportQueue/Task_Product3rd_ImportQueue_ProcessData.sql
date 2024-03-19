@@ -22,7 +22,8 @@ AS
 		- 20230414@Evan: Update formula agentCommission for new commercial terms [Redmine: #186609]
 		- 20230925@Evan: LAP - Enhance Exchange reports (View Resettled Ticket Data) [Redmine: #193954]
 		- 20231117@Evan: Handle ExVirtualRate for other licensees [Redmine: #196913]
-
+		- 20240301@Sophia: Exchange product - Get PT from new table on NAP system [RedmineID: #201169]
+	
 	Param's Explanation:
 		@QueueID: manually import
 */
@@ -147,17 +148,7 @@ BEGIN
 		INNER JOIN	bodb_licensee.dbo.Licensees l WITH(NOLOCK) ON c.LicenseeId = l.LicenseeId
 		INNER JOIN 	bodb_licensee.dbo.LicenseeProduct3rd p WITH(NOLOCK) ON c.LicenseeId = p.LicenseeId
 	WHERE	p.ProductId = 31
-	
-	DECLARE @Party TABLE (PartyId INT)
-	DECLARE @PartyList VARCHAR(4000)
-	
-	INSERT INTO @Party(PartyId)
-	SELECT DISTINCT FromParty
-	FROM bodb_licensee.dbo.OAS_ChargeInfo WITH (NOLOCK)
-	WHERE ProductId = 31
-
-	SELECT @PartyList = COALESCE(@PartyList + ',' + CAST(PartyId AS VARCHAR), CAST(PartyId AS VARCHAR))
-	FROM @Party
+	 
 	
 	-- CutoffDate apply new term, Change AmountDueTo formula 
 	DECLARE @COD_NewTerm SMALLDATETIME
@@ -338,27 +329,21 @@ BEGIN
 						-- Import data
 
 						UPDATE t
-						SET t.agentCommission =CASE WHEN t.settledDate >= @COD_NewTerm THEN (1 - ISNULL(cc.Rate, ci.DI_Rate)) * t.commission * -1 ELSE t.agentCommission END
+						SET t.agentCommission = CASE WHEN t.settledDate >= @COD_NewTerm THEN (ci.PT) * t.commission * -1 ELSE t.agentCommission END
 						FROM  #tmpSum_winloss_Exchange t
-							INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid
-							INNER JOIN #LicenseeProductTable l ON c.recommend = l.custid AND c.currency = l.currencyid
+							INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON t.custId = c.custid -- member level
 							CROSS APPLY(
-								SELECT TOP 1 ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate
-								FROM 
-								(
-									SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate
-									FROM bodb_licensee.dbo.LA_f_ChargeInfo
-									(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
-									WHERE  CONVERT(VARCHAR(10), t.settledDate, 112) BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12)
-									UNION ALL
-									SELECT ChargeId, PartyId, LicenseeId, ChargeType, DI_Rate, FromDate, ToDate 
-									FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime
-									(@PartyList, CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0, t.settledDate) -1, 0), 112) , CONVERT(VARCHAR(10), t.settledDate, 112), 'BX', 'OA', 1) ch  
-									WHERE  CONVERT(VARCHAR(10), t.settledDate, 112) BETWEEN ch.FromDate AND ch.ToDate AND ch.ProductId = 31 AND LicenseeId = l.LicenseeID AND DI_Rate > 0 AND ChargeType IN (1,12) 
-								) AS x
-							)  ci 
-							LEFT JOIN bodb_Licensee.dbo.LA_ChargeRateByCurrency cc ON cc.ChargeId = ci.ChargeId AND cc.CurrencyID = c.Currency
-
+									SELECT TOP 1 r.PT/CONVERT(SMALLMONEY,100) AS PT
+									FROM bodb02.dbo.Dep_ChargeInfoSetting r WITH (NOLOCK)	
+										INNER JOIN bodb02.dbo.Customer s WITH (NOLOCK) 
+												ON r.CustId = s.CustId --super level									
+									WHERE  r.Sporttype = 221
+											AND CONVERT(VARCHAR(10), t.settledDate, 112) BETWEEN r.FromDate AND r.ToDate 
+											AND c.site = s.site 
+											AND c.currency = s.currency							
+									)  ci 
+		 
+		 
 						MERGE dbo.Sum_winloss_Exchange AS s
 						USING
 							(

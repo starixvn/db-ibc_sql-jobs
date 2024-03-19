@@ -20,6 +20,7 @@ AS
 		- 20210805@Sophia: Fix false alarm [Redmine: #159700]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
+		- 20240301@Sophia: Exchange product - Get PT from new table on NAP system [RedmineID: #201169]
 
 	DECLARE @HasDataMismatch	TINYINT, @ProductID VARCHAR(MAX)
 	EXEC Task_rptDepWinlost_ThirdParty_CheckData @WinlostDate = '2018-04-09', @HasDataMismatch = @HasDataMismatch OUTPUT, @ProductIDs = @ProductID OUTPUT
@@ -101,38 +102,18 @@ BEGIN
 		EventType		INT
 	)
 
-	CREATE TABLE #ChargeRate 
-	(
-		PartyId			INT, 
-		LicenseeId		INT, 
-		ProductId		INT, 
-		Rate			MONEY, 
-		FromDate		DATE, 
-		ToDate			DATE
-	)
-
 	DECLARE @S_Count INT, @T_Count INT, 
-			@i INT,
-			@PartyList VARCHAR(4000)
+			@i INT
+			
+	CREATE TABLE #LicenseeExchangePT (CustId INT, CurrencyId INT, PT MONEY)
 
-	SELECT @PartyList = COALESCE(@PartyList + ',' + CAST(FromParty AS VARCHAR), CAST(FromParty AS VARCHAR))
-	FROM (
-		SELECT FromParty
-		FROM bodb_licensee.dbo.OAS_ChargeInfo WITH(NOLOCK)
-		WHERE ProductId = 31
-		GROUP BY FromParty
-	)tmp
+	INSERT INTO #LicenseeExchangePT (CustId, CurrencyId, PT)	 
+	SELECT 	s.CustID, c.Currency as CurrencyId, s.PT/CONVERT(SMALLMONEY,100) AS PT
+	FROM 	bodb02.dbo.Dep_ChargeInfoSetting s WITH (NOLOCK) 
+		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) 
+			ON c.CustId = s.CustId 
+	WHERE s.Sporttype = 221 AND @WinlostDate BETWEEN s.FromDate AND s.ToDate
 	
-	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
-	SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
-	FROM bodb_licensee.dbo.LA_f_ChargeInfo(@PartyList, @WinlostDate, @WinlostDate, 'BX', 'OA', 1)
-	WHERE DI_Rate > 0 AND ChargeType = 1
-
-	-- Get more charge rate for trial time
-	INSERT INTO #ChargeRate(PartyId, LicenseeId, ProductId, Rate, FromDate, ToDate)
-	SELECT PartyId, LicenseeId, ProductId, DI_Rate, FromDate, ToDate
-	FROM bodb_licensee.dbo.LA_f_GetChargeInfoWithTrialTime(@PartyList, @WinlostDate, @WinlostDate, 'BX', 'OA', 1)
-	WHERE DI_Rate > 0 AND ChargeType = 1
 
 	INSERT INTO #TicketData (custid, SiteID, CurrencyID, ExVirtualRate, UserID, EventID, MarketID
 									, Turnover, Winlost, CommissionP, CommissionA )
@@ -170,10 +151,11 @@ BEGIN
 		LEFT JOIN #DetailData d ON d.userId = b.userId AND d.eventID = b.eventID AND d.marketID = b.marketID
 				
 	UPDATE b
-	SET b.WinLostA = - (ISNULL(Winlost, 0)) * (1 - ISNULL(r.Rate, 0))
-	FROM #TicketData b
-		INNER JOIN #ChargeRate r ON b.SiteID = r.LicenseeId
-	WHERE @WinlostDate BETWEEN r.FromDate AND r.ToDate
+	SET b.WinLostA = - (ISNULL(Winlost, 0)) * (r.PT)
+	FROM #TicketData b 
+		INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.Custid = c.custid
+		INNER JOIN #LicenseeExchangePT r 
+			ON c.srecommend = r.CustId AND c.currency = r.CurrencyId
 	
 	DELETE #TicketData 
 	WHERE ISNULL(Turnover,0) = 0 AND ISNULL(Winlost,0) = 0 AND ISNULL(WinLostA,0) = 0 AND ISNULL(CommissionP,0) = 0 AND ISNULL(CommissionA,0) = 0 
@@ -483,7 +465,6 @@ BEGIN
 	DROP TABLE #Target
 	DROP TABLE #DetailData
 	DROP TABLE #TicketData
-	DROP TABLE #ChargeRate
 
 	SET NOCOUNT OFF;
 END
