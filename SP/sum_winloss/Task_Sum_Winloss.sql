@@ -51,6 +51,7 @@ AS
 		- 20231211@Lewis: Add Live22 [RedmineID: #194529]
 		- 20230713@Lewis: Add WE Live Casino [RedmineID: #195885]
 		- 20240119@Lewis: Add VS4 [RedmineID: #198621]
+		- 20240319@Lewis: Add Yolo Play [RedmineID: #199190]
 */
 
 BEGIN
@@ -259,6 +260,7 @@ BEGIN
 			WHEN bettype BETWEEN 7601 AND 7700 THEN 227 -- Live22
 			WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
 			WHEN bettype BETWEEN 10400 AND 10449 THEN 188 -- VS4-Virtual Cock Fighting
+			WHEN bettype BETWEEN 3650 AND 3699 THEN 189 -- Yolo Play
 			ELSE 0
 		END sporttype
 	   ,CASE
@@ -425,6 +427,7 @@ BEGIN
 				 WHEN bettype BETWEEN 7601 AND 7700 THEN 227 -- Live22
 				 WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
 				 WHEN bettype BETWEEN 10400 AND 10449 THEN 188 -- VS4-Virtual Cock Fighting
+			WHEN bettype BETWEEN 3650 AND 3699 THEN 189 -- Yolo Play
 				 ELSE 0
 			 END
 			,CASE
@@ -487,6 +490,7 @@ BEGIN
 				 WHEN bettypePT BETWEEN 3151 AND 3200 THEN 159 -- YeeBet
 				 WHEN bettypePT BETWEEN 7601 AND 7700 THEN 227 -- Live22
 				 WHEN bettypePT BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
+				 WHEN bettype BETWEEN 3650 AND 3699 THEN 189 -- Yolo Play
 				 ELSE 0 END AS SporttypeRef
 		FROM #__SuperExtraPT WHERE RefTable IN (1, 2)
 
