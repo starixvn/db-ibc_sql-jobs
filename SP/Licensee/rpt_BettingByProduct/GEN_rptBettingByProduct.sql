@@ -101,6 +101,7 @@ AS
 		- 20230214@Danny: SG - Promotion prize integration [#183739]
 		- 20230303@Evan: Remove inactive products GD [Redmine: 181424] 
 		- 20231025@Danny: Promotion for Slot Games [Redmine: 194808] 
+		- 20240201@Danny: AGC - JP, Contribution, Promotion prize integration [#197268]
 
 	EXEC GEN_rptBettingByProduct '2018-02-01', '2018-02-28'
 */
@@ -410,26 +411,31 @@ BEGIN
 		BEGIN
 			INSERT INTO #tmpData (
 				rptDate,
+				bettype,
 				CustID,
 				ProductID,
 				CurrencyId,
 				Winlost,
 				Turnover,
 				BetCount,
-				PlayerComm)
+				PlayerComm,
+				GrossWL
+				)
 			SELECT
 				Winlostdate,
+				CASE WHEN bettype IN (1801,1803,1802) THEN bettype ELSE -1 END  bettype,
 				Custid,
 				10 AS ProductId,
 				Currency,
 				SUM(Winlost),
 				SUM(Turnover),
 				SUM(BetCount),
-				SUM(PlayerComm)
+				SUM(PlayerComm),
+				SUM(JpContribution)
 			FROM DBRPT.bodb_report.dbo.rptDepWinlost_AGCasino WITH (NOLOCK)
 			WHERE Winlostdate >= @date AND Winlostdate < @date2
 				AND [Currency] <> 20
-			GROUP BY Winlostdate, Custid, Currency
+			GROUP BY Winlostdate, Custid, Currency, CASE WHEN bettype IN (1801,1803,1802) THEN bettype ELSE -1 END
 		END
 
 		-- PTCS
@@ -471,7 +477,7 @@ BEGIN
 				ELSE 111
 			  END AS StatusId
 			, -1 AS CustomerCategory
-			, SUM(ISNULL(td.GrossWL,0)) AS GrossWL
+			, SUM(CASE WHEN td.Bettype = 1802 THEN ISNULL(-td.GrossWL,0) ELSE ISNULL(td.GrossWL,0) END) AS GrossWL
 			, SUM(ISNULL(td.Winlost,0)) AS MemberWL
 			, SUM(ISNULL(td.Turnover,0)) AS Turnover
 			, SUM(ISNULL(td.BetCount,0)) AS BetCount
@@ -480,7 +486,7 @@ BEGIN
 			, 0 AS BuyBackAmount
 			, 0 [WinPrizeAmount]
 			, 0 [CashOutAmount]
-			, 0 AS [ExtraAmount]
+			, SUM(ISNULL(td.GrossWL,0)) AS [ExtraAmount]
 			, 0 AS [TicketType]
 		FROM #tmpData td WITH (NOLOCK)
 			LEFT JOIN bodb02.dbo.Customer AS c WITH (NOLOCK) ON c.Custid = td.CustID AND c.roleid = 1
