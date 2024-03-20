@@ -13,6 +13,7 @@ AS
 		- 20181114@Johnson: create sp [redmine: #105319]
 		- 20190530@Paul: Add [CustomerLog_MsgProcess_CS_UserLog_Credit] [Redmine: #113198]
 		- 20200814@Helen: LAP - Offer commission to 3rd party products - Phase 2 - [Redmine: #139238]   
+		- 20240318@Johnson: Add new MsgType [MessageType_CustomerLog_UserLog_DepCustSetting] [Redmine:#199517]
 */
 BEGIN
 	DECLARE @log xml 
@@ -109,7 +110,7 @@ BEGIN
 														@IsExistingTarget= @IsExistingTarget
 	END
 	
-	IF @message_type_name = 'MessageType_CustomerLog_UserLog_RunSP'
+	IF @message_type_name IN ('MessageType_CustomerLog_UserLog_RunSP','MessageType_CustomerLog_UserLog_DepCustSetting')
 	BEGIN
 		SET @log = (SELECT message_body AS 'node()'
 				   FROM @Messages					
