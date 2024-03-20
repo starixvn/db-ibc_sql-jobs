@@ -56,14 +56,14 @@ BEGIN
 		,MainHouseWinloss	MONEY
 	)
 
-	CREATE TABLE #bettrans (transid BIGINT, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
+	CREATE TABLE #bettrans (transid BIGINT, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, TotalSelection SMALLMONEY, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
 	CREATE TABLE #bettransm (refno BIGINT, bettype SMALLINT, leagueid INT, matchid INT, betteam NVARCHAR(10), statusID TINYINT)
 
 	IF @winlostdate > @MoveBetsDay
 	BEGIN
-		INSERT INTO #bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
-		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, statusID, stake*actualrate,
-		(winlost-actual_stake)*actualrate, playercomm*actualrate, 
+		INSERT INTO #bettrans (transid, refno, ParlayType, IsDeposit, statusID, TotalSelection, stake, winloss, playercomm, HouseWinloss)
+		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, statusID, hdp2,
+			stake*actualrate,(winlost-actual_stake)*actualrate, playercomm*actualrate, 
 		CASE WHEN tpositiontaking = 1 THEN 0 ELSE (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate END
 		FROM dbo.rmBettrans r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
@@ -76,9 +76,9 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		INSERT INTO #bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
+		INSERT INTO #bettrans (transid, refno, ParlayType, IsDeposit, statusID, TotalSelection, stake, winloss, playercomm, HouseWinloss)
 		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, 
-		statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, 
+			statusID, hdp2, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, 
 		CASE WHEN tpositiontaking = 1 THEN 0 ELSE (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate END
 		FROM dbo.rmBettrans_Old r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
@@ -152,12 +152,12 @@ BEGIN
 			MainWonCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 112 THEN 1 ELSE 0 END),
 			MainLoseCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 113 THEN 1 ELSE 0 END),
 			MainDrawCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 111 THEN 1 ELSE 0 END),
-			MainStake			= SUM(CASE WHEN t.rn = 1 THEN b.stake ELSE 0 END),
-			MainTurnover		= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (111, 112, 113) THEN b.stake ELSE 0 END),
-			MainTurnoverNoDraw	= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (112, 113) THEN b.stake ELSE 0 END),
-			MainWinloss			= SUM(CASE WHEN t.rn = 1 THEN b.winloss ELSE 0 END),
+			MainStake			= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END ELSE 0 END),
+			MainTurnover		= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (111, 112, 113) THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END ELSE 0 END),
+			MainTurnoverNoDraw	= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (112, 113) THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END ELSE 0 END),
+			MainWinloss			= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END ELSE 0 END),
 			MainComm			= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END),
-			MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN b.HouseWinloss ELSE 0 END)
+			MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END ELSE 0 END)
 		FROM #bettrans b
 			CROSS APPLY (
 				SELECT bettype, LeagueId, matchId, betteam, statusID, 			
