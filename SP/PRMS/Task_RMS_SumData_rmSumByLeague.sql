@@ -15,6 +15,7 @@ AS
 		- 20210111@Danny: Enhance performance (get data from bettrans_bk) [RedmineID: #123157]
 		- 20210607@Danny: Move 'Saba789' to Credit Site  [RedmineID: #153874]
 		- 20220301@Danny: Support basketball Sport type data [RedmineID: #169072]
+		- 20240315@Cherry: Enhance League Bettype report (#197684)
 
 */
 
@@ -73,7 +74,7 @@ BEGIN
 	)
 	CREATE CLUSTERED INDEX CIX_rmSumByLeague ON #rmSumByLeague (leagueId, ParlayType)
 
-	DECLARE @bettrans TABLE (transid BIGINT, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
+	DECLARE @bettrans TABLE (transid BIGINT, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, TotalSelection SMALLMONEY, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
 
 	CREATE TABLE #bettransmbk (refno BIGINT, statusID TINYINT, leagueid INT)
 	
@@ -81,9 +82,9 @@ BEGIN
 
 	IF @winlostdate > @MoveBetsDay
 	BEGIN
-		INSERT INTO @bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
-		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, statusID, 
-		stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, 
+		INSERT INTO @bettrans (transid, refno, ParlayType, IsDeposit, statusID, TotalSelection, stake, winloss, playercomm, HouseWinloss)
+		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, statusID, hdp2,
+			stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, 
 		CASE WHEN tpositiontaking = 1 THEN 0 ELSE (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate END
 		FROM dbo.rmBettrans r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
@@ -96,9 +97,9 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		INSERT INTO @bettrans (transid, refno, ParlayType, IsDeposit, statusID, stake, winloss, playercomm, HouseWinloss)
+		INSERT INTO @bettrans (transid, refno, ParlayType, IsDeposit, statusID, TotalSelection, stake, winloss, playercomm, HouseWinloss)
 		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END,
-		statusID, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, 
+			statusID, hdp2, stake*actualrate, (winlost-actual_stake)*actualrate, playercomm*actualrate, 
 		CASE WHEN tpositiontaking = 1 THEN 0 ELSE (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate END
 		FROM dbo.rmBettrans_Old r WITH (NOLOCK)
 			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
@@ -136,10 +137,10 @@ BEGIN
 		b.transid, 
 		m.leagueid, 
 		b.statusID, 
-		MAX(b.stake), 
-		MAX(b.winloss),
+		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
+		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
 		MAX(b.playercomm), 
-		MAX(b.HouseWinloss), 
+		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 
 		b.ParlayType, 
 		b.IsDeposit, 
 		SUM(1), 
@@ -158,10 +159,10 @@ BEGIN
 		b.transid, 
 		m.leagueid, 
 		b.statusID, 
-		MAX(b.stake), 
-		MAX(b.winloss),
+		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
+		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
 		MAX(b.playercomm), 
-		MAX(b.HouseWinloss), 
+		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 
 		b.ParlayType, 
 		b.IsDeposit, 
 		SUM(1), 
