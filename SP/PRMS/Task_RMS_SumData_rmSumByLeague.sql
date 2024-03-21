@@ -130,6 +130,7 @@ BEGIN
 		INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE  m.sporttype IN (1,2) AND bm.winlostdate BETWEEN DATEADD(DAY, -21, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
+		AND bm.statusID IN (111, 112, 113, 101, 102)
 	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
 	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount )
@@ -151,6 +152,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE  m.sporttype IN (1,2) AND (bm.winlostdate > @MoveBetsDay OR bm.winlostdate IS NULL)
+		AND bm.statusID IN (111, 112, 113, 101, 102)
 	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
 
@@ -173,6 +175,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE m.sporttype IN (1,2)  AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay
+		AND bm.statusID IN (111, 112, 113, 101, 102)
 	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
 	CREATE NONCLUSTERED INDEX idx_#BettransmByLeague ON #BettransmByLeague(leagueid, ParlayType, IsDeposit) INCLUDE (BetCount,WonCount, DrawCount,LoseCount)
