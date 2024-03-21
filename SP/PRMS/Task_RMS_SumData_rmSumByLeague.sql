@@ -112,20 +112,20 @@ BEGIN
 	END
 
 	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount  )
-			SELECT
-				b.transid, 
-				m.leagueid, 
-				b.statusID, 
-				MAX(b.stake), 
-				MAX(b.winloss),
-				MAX(b.playercomm), 
-				MAX(b.HouseWinloss), 
-				b.ParlayType, 
-				b.IsDeposit, 
-				SUM(1), 
-				SUM(CASE WHEN bm.statusID = 112 THEN 1 ELSE 0 END),
-				SUM(CASE WHEN bm.statusID = 113 THEN 1 ELSE 0 END),
-				SUM(CASE WHEN bm.statusID = 111 THEN 1 ELSE 0 END)
+	SELECT
+		b.transid, 
+		m.leagueid, 
+		b.statusID, 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
+		MAX(b.playercomm), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 
+		b.ParlayType, 
+		b.IsDeposit, 
+		SUM(1), 
+		SUM(CASE WHEN bm.statusID = 112 THEN 1 ELSE 0 END),
+		SUM(CASE WHEN bm.statusID = 113 THEN 1 ELSE 0 END),
+		SUM(CASE WHEN bm.statusID = 111 THEN 1 ELSE 0 END)
 	FROM @bettrans b
 		INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
@@ -137,10 +137,10 @@ BEGIN
 		b.transid, 
 		m.leagueid, 
 		b.statusID, 
-		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
-		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
 		MAX(b.playercomm), 
-		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 
 		b.ParlayType, 
 		b.IsDeposit, 
 		SUM(1), 
@@ -159,10 +159,10 @@ BEGIN
 		b.transid, 
 		m.leagueid, 
 		b.statusID, 
-		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
-		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
 		MAX(b.playercomm), 
-		MAX(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 
 		b.ParlayType, 
 		b.IsDeposit, 
 		SUM(1), 
@@ -182,45 +182,45 @@ BEGIN
 	DELETE dbo.rmSumByLeague WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @WLDate
 
 	INSERT INTO dbo.rmSumByLeague (winlostdate,leagueId,ParlayType,IsDeposit,BetCount,WonCount,DrawCount,LoseCount,MainBetCount,MainWonCount,MainLoseCount,MainDrawCount,MainStake,MainTurnover,MainTurnoverNoDraw,MainMemberWinloss,MainMemberComm,MainHouseWinloss)
-		SELECT	@WLDate winlostdate
-			,b.leagueid
-			,b.ParlayType
-			,b.IsDeposit
-			,BetCount			= SUM(b.BetCount)
-			,WonCount			= SUM(WonCount)
-			,DrawCount			= SUM(DrawCount)
-			,LoseCount			= SUM(LoseCount)
-			,MainBetCount		= COUNT(1)
-			,MainWonCount		= SUM(CASE WHEN b.statusID = 112 THEN 1 ELSE 0 END)
-			,MainLoseCount		= SUM(CASE WHEN b.statusID = 113 THEN 1 ELSE 0 END)
-			,MainDrawCount		= SUM(CASE WHEN b.statusID = 111 THEN 1 ELSE 0 END)
-			,MainStake			= SUM(stake)
-			,MainTurnover		= SUM(CASE WHEN b.statusID IN (111, 112, 113) THEN b.stake ELSE 0 END)
-			,MainTurnoverNoDraw	= SUM(CASE WHEN b.statusID IN (112, 113) THEN b.stake ELSE 0 END)
-			,MainWinloss		= SUM(b.winloss)
-			,MainComm			= SUM(b.playercomm)
-			,MainHouseWinloss	= SUM(b.HouseWinloss)
-		FROM 
-		(
-			SELECT	b.leagueid
-					,b.ParlayType
-					,b.IsDeposit
-					,b.transid
-					,b.statusID
-					,BetCount			= SUM(BetCount)
-					,WonCount			= SUM(WonCount)
-					,DrawCount			= SUM(DrawCount)
-					,LoseCount			= SUM(LoseCount)
-					,stake = MAX(b.stake)
-					,winloss = MAX(b.winloss)
-					,playercomm = MAX(b.playercomm)
-					,HouseWinloss = MAX(b.HouseWinloss) 
-				
-			FROM #BettransmByLeague b
-			GROUP BY b.transid, b.leagueid, b.ParlayType, b.IsDeposit, b.statusID
-		) b
-		GROUP BY
-			b.leagueid, b.ParlayType, b.IsDeposit
+	SELECT	@WLDate winlostdate
+		,b.leagueid
+		,b.ParlayType
+		,b.IsDeposit
+		,BetCount			= SUM(b.BetCount)
+		,WonCount			= SUM(WonCount)
+		,DrawCount			= SUM(DrawCount)
+		,LoseCount			= SUM(LoseCount)
+		,MainBetCount		= COUNT(1)
+		,MainWonCount		= SUM(CASE WHEN b.statusID = 112 THEN 1 ELSE 0 END)
+		,MainLoseCount		= SUM(CASE WHEN b.statusID = 113 THEN 1 ELSE 0 END)
+		,MainDrawCount		= SUM(CASE WHEN b.statusID = 111 THEN 1 ELSE 0 END)
+		,MainStake			= SUM(stake)
+		,MainTurnover		= SUM(CASE WHEN b.statusID IN (111, 112, 113) THEN b.stake ELSE 0 END)
+		,MainTurnoverNoDraw	= SUM(CASE WHEN b.statusID IN (112, 113) THEN b.stake ELSE 0 END)
+		,MainWinloss		= SUM(b.winloss)
+		,MainComm			= SUM(b.playercomm)
+		,MainHouseWinloss	= SUM(b.HouseWinloss)
+	FROM 
+	(
+		SELECT	b.leagueid
+				,b.ParlayType
+				,b.IsDeposit
+				,b.transid
+				,b.statusID
+				,BetCount			= SUM(BetCount)
+				,WonCount			= SUM(WonCount)
+				,DrawCount			= SUM(DrawCount)
+				,LoseCount			= SUM(LoseCount)
+				,stake = MAX(b.stake)
+				,winloss = MAX(b.winloss)
+				,playercomm = MAX(b.playercomm)
+				,HouseWinloss = MAX(b.HouseWinloss) 
+			
+		FROM #BettransmByLeague b
+		GROUP BY b.transid, b.leagueid, b.ParlayType, b.IsDeposit, b.statusID
+	) b
+	GROUP BY
+		b.leagueid, b.ParlayType, b.IsDeposit
 
 	END TRY
 	BEGIN CATCH
