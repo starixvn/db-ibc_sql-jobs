@@ -14,6 +14,7 @@ RETURNS INT
 	Revisions:
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
 		- 20240119@Lewis: Add VS4 [RedmineID: #198621]
+		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
 */
 BEGIN 
 	RETURN (
@@ -23,6 +24,7 @@ BEGIN
 							OR (b.LeagueGroupID IN (122, 42) AND b.sporttype = 2 )
 							OR (b.LeagueGroupID = 42 AND b.sporttype = 50)
 							OR (b.LeagueGroupID = 42 AND b.sporttype = 5) --SabaTennis
+							OR (b.LeagueGroupID = 42 AND b.sporttype = 4) --Virtual Ice Hockey
 							OR (b.LeagueGroupID = 151 AND b.sporttype = 43)
 						) THEN b.sporttype
 					WHEN b.bettype BETWEEN 81 AND 120 OR -- Number Game 

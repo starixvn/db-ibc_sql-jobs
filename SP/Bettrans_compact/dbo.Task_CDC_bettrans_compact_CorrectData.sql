@@ -8,6 +8,7 @@ AS
 	DB: DBAGE.bodb_AGE
 	Revisions:
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
+		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
 */
 BEGIN
 
@@ -262,7 +263,7 @@ BEGIN
 						) AS ExtraComm
 				FROM bodb02.dbo.bettrans bettrans WITH (NOLOCK)
 					INNER JOIN #__SuperExtraPT tbl ON bettrans.srecommend = tbl.SuperId	AND bettrans.bettype = tbl.bettypePT
-					LEFT JOIN bodb02.dbo.[match] m WITH(NOLOCK) ON bettrans.matchid = m.matchid AND m.sporttype IN (1, 2, 5, 43, 50)
+					LEFT JOIN bodb02.dbo.[match] m WITH(NOLOCK) ON bettrans.matchid = m.matchid AND m.sporttype IN (1, 2, 5, 43, 50, 4)
 					LEFT JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid=l.leagueid AND l.LeagueGroupID IN (42,74,108,113,122,151)
 					CROSS APPLY (
 						SELECT 
