@@ -9,6 +9,7 @@ AS
 	Revisions:
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
+		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
 */
 BEGIN
 

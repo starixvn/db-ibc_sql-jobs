@@ -7,6 +7,7 @@ AS
 	DB: DBAGE.bodb_AGE
 	Revisions:
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
+		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
 */
 BEGIN
 
@@ -72,7 +73,7 @@ BEGIN
 				, @recipients = 'dbaadmin@starixsoft.com';
 
 			WITH CTE_Notify AS (
-				SELECT ck.winlostdate, MIN(ck.FromTime) AS FromTime, MAX(ck.ToTime) AS ToTime
+				SELECT ck.winlostdate, MIN(tmp.FromTime) AS FromTime, MAX(tmp.ToTime) AS ToTime
 				FROM #tmpNotify tmp
 				INNER JOIN dbo.bettrans_compact_checkSum ck WITH(NOLOCK) ON tmp.custid = ck.custid
 					AND tmp.winlostdate = ck.winlostdate
