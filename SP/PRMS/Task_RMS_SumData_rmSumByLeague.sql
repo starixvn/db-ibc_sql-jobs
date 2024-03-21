@@ -109,6 +109,7 @@ BEGIN
 			AND r.liveawayscore IN (1, 2, 3) -- soccer
 			AND r.statusID IN (111, 112, 113, 101, 102)
 			AND r.currency <> 20
+			AND r.transid NOT IN (SELECT transid FROM @bettrans)
 	END
 
 	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount  )
@@ -129,8 +130,7 @@ BEGIN
 	FROM @bettrans b
 		INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
-	WHERE  m.sporttype IN (1,2) AND bm.winlostdate BETWEEN DATEADD(DAY, -21, @BalanceUpDay) AND DATEADD(DAY, -1, @BalanceUpDay)
-		AND bm.statusID IN (111, 112, 113, 101, 102)
+	WHERE  m.sporttype IN (1,2) AND bm.winlostdate < @BalanceUpDay
 	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
 	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount )
@@ -152,7 +152,6 @@ BEGIN
 		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE  m.sporttype IN (1,2) AND (bm.winlostdate > @MoveBetsDay OR bm.winlostdate IS NULL)
-		AND bm.statusID IN (111, 112, 113, 101, 102)
 	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
 
@@ -175,7 +174,6 @@ BEGIN
 		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE m.sporttype IN (1,2)  AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay
-		AND bm.statusID IN (111, 112, 113, 101, 102)
 	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
 
 	CREATE NONCLUSTERED INDEX idx_#BettransmByLeague ON #BettransmByLeague(leagueid, ParlayType, IsDeposit) INCLUDE (BetCount,WonCount, DrawCount,LoseCount)
@@ -214,10 +212,10 @@ BEGIN
 				,WonCount			= SUM(WonCount)
 				,DrawCount			= SUM(DrawCount)
 				,LoseCount			= SUM(LoseCount)
-				,stake = MAX(b.stake)
-				,winloss = MAX(b.winloss)
+				,stake = SUM(b.stake)
+				,winloss = SUM(b.winloss)
 				,playercomm = MAX(b.playercomm)
-				,HouseWinloss = MAX(b.HouseWinloss) 
+				,HouseWinloss = SUM(b.HouseWinloss) 
 			
 		FROM #BettransmByLeague b
 		GROUP BY b.transid, b.leagueid, b.ParlayType, b.IsDeposit, b.statusID

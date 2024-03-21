@@ -129,7 +129,7 @@ BEGIN
 					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
-						AND m.sporttype IN (1,2) AND bm.winlostdate > @MoveBetsDay
+						AND m.sporttype IN (1,2) AND (bm.winlostdate > @MoveBetsDay OR bm.winlostdate IS NULL)
 
 					UNION ALL
 					SELECT bm.bettype, m.leagueid, bm.statusID

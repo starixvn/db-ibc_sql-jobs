@@ -96,17 +96,15 @@ BEGIN
     SELECT bm.refno, bm.bettype, m.leagueid,  bm.matchId, bm.betteam,bm.statusID				
 	FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
-	WHERE m.sporttype IN (1,2) AND bm.winlostdate > @MoveBetsDay
+	WHERE m.sporttype IN (1,2) AND (bm.winlostdate > @MoveBetsDay OR bm.winlostdate IS NULL)
 		AND bm.refno IN (SELECT refno FROM #bettrans)
-		AND bm.statusID IN (111, 112, 113, 101, 102)
 
 	UNION 
 	SELECT bm.refno, bm.bettype, m.leagueid, bm.matchId,bm.betteam, bm.statusID 	
 	FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
-	WHERE m.sporttype IN (1,2) AND bm.winlostdate BETWEEN @BalanceUpDay AND  @MoveBetsDay
+	WHERE m.sporttype IN (1,2) AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay
 		AND bm.refno IN (SELECT refno FROM #bettrans)
-		AND bm.statusID IN (111, 112, 113, 101, 102)
 
 	UNION 
 	SELECT bm.refno, bm.bettype, m.leagueid, bm.matchId,bm.betteam, bm.statusID 				
@@ -114,7 +112,6 @@ BEGIN
 		INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE m.sporttype IN (1,2) AND bm.winlostdate < @BalanceUpDay
 		AND bm.refno IN (SELECT refno FROM #bettrans)
-		AND bm.statusID IN (111, 112, 113, 101, 102)
       
     CREATE CLUSTERED INDEX CIX_bettrans_transid ON #bettrans (transid)
     CREATE NONCLUSTERED INDEX CIX_bettrans_refno ON #bettrans (refno)
