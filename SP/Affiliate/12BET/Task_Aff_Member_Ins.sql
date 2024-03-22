@@ -14,6 +14,7 @@ AS
 
 	Revisions:
 		- 20180601@Percy: Initiliaze SP [RedmineID: #87923]
+		- 20240322@Eddie: Change Link Server [RedmineID: #202712]
 */
 
 BEGIN
@@ -43,7 +44,7 @@ BEGIN
 			IBCCustId, CustId, AffiliateId, UserName, IBCUserName,
 			FirstName, LastName, Currency, IBCAgentID, Email,
 			creatdate, ClickId
-		FROM DBDeposit.Deposit_DB.dbo.Deposit_Customer WITH (NOLOCK)
+		FROM DBDEPOSIT2.Deposit_DB.dbo.v_Aff_DepCust WITH (NOLOCK)
 		WHERE creatdate >= @FromCreatedDate AND creatdate < @ToCreatedDate
 			AND AffiliateId > 0
 			AND ActStatus IN (2, 9)
@@ -61,7 +62,7 @@ BEGIN
 			IBCCustId, CustId, AffiliateId, UserName, IBCUserName,
 			FirstName, LastName, Currency, IBCAgentID, Email,
 			creatdate, ClickId
-		FROM DBDeposit.Deposit_DB.dbo.Deposit_Customer WITH (NOLOCK)
+		FROM DBDEPOSIT2.Deposit_DB.dbo.v_Aff_DepCust WITH (NOLOCK)
 		WHERE creatdate >= @FromCreatedDate AND creatdate < @ToCreatedDate
 			AND AffiliateId = @AffId
 			AND ActStatus IN (2, 9)
