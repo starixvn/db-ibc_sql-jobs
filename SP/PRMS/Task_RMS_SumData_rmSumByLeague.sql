@@ -39,13 +39,14 @@ BEGIN
 	(
 		transid				BIGINT 
 		,leagueId			INT
+		,matchid			INT
 		,statusID			TINYINT
+		,ParlayType			TINYINT
+		,IsDeposit			BIT
 		,stake				MONEY
 		,winloss			MONEY
 		,playercomm			MONEY
-		,HouseWinloss		MONEY
-		,ParlayType			TINYINT
-		,IsDeposit			BIT
+		,HouseWinloss		MONEY		
 		,BetCount			INT
 		,WonCount			INT
 		,LoseCount			INT
@@ -112,17 +113,18 @@ BEGIN
 			AND r.transid NOT IN (SELECT transid FROM @bettrans)
 	END
 
-	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount  )
+	INSERT INTO #BettransmByLeague (transid, leagueId, matchid, statusID, ParlayType, IsDeposit, stake, winloss, playercomm, HouseWinloss, BetCount, WonCount, LoseCount, DrawCount  )
 	SELECT
 		b.transid, 
 		m.leagueid, 
+		m.matchid,
 		b.statusID, 
-		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
-		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
-		MAX(b.playercomm), 
-		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 
 		b.ParlayType, 
 		b.IsDeposit, 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.playercomm/b.TotalSelection END), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 		
 		SUM(1), 
 		SUM(CASE WHEN bm.statusID = 112 THEN 1 ELSE 0 END),
 		SUM(CASE WHEN bm.statusID = 113 THEN 1 ELSE 0 END),
@@ -131,19 +133,20 @@ BEGIN
 		INNER JOIN dbo.rmBettransm_bk bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE  m.sporttype IN (1,2) AND bm.winlostdate < @BalanceUpDay
-	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
+	GROUP BY  b.transid, m.leagueid, m.matchid, b.ParlayType, b.IsDeposit, b.statusID
 
-	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount )
+	INSERT INTO #BettransmByLeague (transid, leagueId, matchid, statusID, ParlayType, IsDeposit, stake, winloss, playercomm, HouseWinloss, BetCount, WonCount, LoseCount, DrawCount )
 	SELECT
 		b.transid, 
 		m.leagueid, 
+		m.matchid,
 		b.statusID, 
-		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
-		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
-		MAX(b.playercomm), 
-		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 
 		b.ParlayType, 
 		b.IsDeposit, 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.playercomm/b.TotalSelection END), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 		
 		SUM(1), 
 		SUM(CASE WHEN bm.statusID = 112 THEN 1 ELSE 0 END),
 		SUM(CASE WHEN bm.statusID = 113 THEN 1 ELSE 0 END),
@@ -152,20 +155,21 @@ BEGIN
 		INNER JOIN bodb02.dbo.bettransm bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE  m.sporttype IN (1,2) AND (bm.winlostdate > @MoveBetsDay OR bm.winlostdate IS NULL)
-	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
+	GROUP BY  b.transid, m.leagueid, m.matchid, b.ParlayType, b.IsDeposit, b.statusID
 
 
-	INSERT INTO #BettransmByLeague (transid, leagueId, statusID, stake, winloss, playercomm, HouseWinloss, ParlayType, IsDeposit, BetCount, WonCount, LoseCount, DrawCount  )
+	INSERT INTO #BettransmByLeague (transid, leagueId, matchid, statusID, ParlayType, IsDeposit, stake, winloss, playercomm, HouseWinloss, BetCount, WonCount, LoseCount, DrawCount  )
 	SELECT
 		b.transid, 
 		m.leagueid, 
+		m.matchid,
 		b.statusID, 
-		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
-		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
-		MAX(b.playercomm), 
-		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 
 		b.ParlayType, 
 		b.IsDeposit, 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END),
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.playercomm/b.TotalSelection END), 
+		SUM(CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END), 	
 		SUM(1), 
 		SUM(CASE WHEN bm.statusID = 112 THEN 1 ELSE 0 END),
 		SUM(CASE WHEN bm.statusID = 113 THEN 1 ELSE 0 END),
@@ -174,7 +178,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.bettransm14 bm WITH (NOLOCK) ON b.refno = bm.refno
 		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 	WHERE m.sporttype IN (1,2)  AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay
-	GROUP BY  b.transid, m.leagueid, b.ParlayType, b.IsDeposit, b.statusID
+	GROUP BY  b.transid, m.leagueid, m.matchid, b.ParlayType, b.IsDeposit, b.statusID
 
 	CREATE NONCLUSTERED INDEX idx_#BettransmByLeague ON #BettransmByLeague(leagueid, ParlayType, IsDeposit) INCLUDE (BetCount,WonCount, DrawCount,LoseCount)
 
@@ -214,7 +218,7 @@ BEGIN
 				,LoseCount			= SUM(LoseCount)
 				,stake = SUM(b.stake)
 				,winloss = SUM(b.winloss)
-				,playercomm = MAX(b.playercomm)
+				,playercomm = SUM(b.playercomm)
 				,HouseWinloss = SUM(b.HouseWinloss) 
 			
 		FROM #BettransmByLeague b

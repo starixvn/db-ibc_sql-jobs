@@ -119,27 +119,27 @@ BEGIN
 			,MainTurnover		= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (111, 112, 113) THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END ELSE 0 END)
 			,MainTurnoverNoDraw	= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (112, 113) THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END ELSE 0 END)
 			,MainWinloss		= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END ELSE 0 END)
-			,MainComm			= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
+			,MainComm			= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.playercomm/b.TotalSelection END ELSE 0 END) 
 			,MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END ELSE 0 END)
 		FROM @bettrans b
 			CROSS APPLY (
-				SELECT bettype, LeagueId, statusID, ROW_NUMBER() OVER(PARTITION BY bettype, LeagueId ORDER BY (SELECT NULL)) AS rn
+				SELECT bettype, LeagueId, statusID, ROW_NUMBER() OVER(PARTITION BY bettype, LeagueId, matchid ORDER BY (SELECT NULL)) AS rn
 				FROM (
-					SELECT bm.bettype, m.leagueid, bm.statusID
+					SELECT bm.bettype, m.leagueid, m.matchid, bm.statusID
 					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
 						AND m.sporttype IN (1,2) AND (bm.winlostdate > @MoveBetsDay OR bm.winlostdate IS NULL)
 
 					UNION ALL
-					SELECT bm.bettype, m.leagueid, bm.statusID
+					SELECT bm.bettype, m.leagueid, m.matchid, bm.statusID
 					FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
 						AND m.sporttype IN (1,2) AND bm.winlostdate BETWEEN @BalanceUpDay AND  @MoveBetsDay
 
 					UNION ALL
-					SELECT bm.bettype, m.leagueid, bm.statusID
+					SELECT bm.bettype, m.leagueid, m.matchid, bm.statusID
 					FROM dbo.rmBettransm_bk bm WITH (NOLOCK)
 						INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
@@ -172,27 +172,27 @@ BEGIN
 			,MainTurnover		= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (111, 112, 113) THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END ELSE 0 END)
 			,MainTurnoverNoDraw	= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (112, 113) THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END ELSE 0 END)
 			,MainWinloss		= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END ELSE 0 END)
-			,MainComm			= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END)
+			,MainComm			= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.playercomm/b.TotalSelection END ELSE 0 END) 
 			,MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END ELSE 0 END)
 		FROM @bettrans b
 			CROSS APPLY (
-				SELECT bettype, statusID, ROW_NUMBER() OVER(PARTITION BY bettype ORDER BY (SELECT NULL)) AS rn
+				SELECT bettype, statusID, ROW_NUMBER() OVER(PARTITION BY bettype, matchid ORDER BY (SELECT NULL)) AS rn
 				FROM (
-					SELECT bm.bettype, bm.statusID
+					SELECT bm.bettype, bm.statusID, m.matchid
 					FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
 						AND m.sporttype = 1 AND bm.winlostdate > @MoveBetsDay
 
 					UNION ALL
-					SELECT bm.bettype, bm.statusID
+					SELECT bm.bettype, bm.statusID, m.matchid
 					FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
 						INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
 						AND m.sporttype = 1 AND bm.winlostdate BETWEEN @BalanceUpDay AND  @MoveBetsDay
 
 					UNION ALL
-					SELECT bm.bettype, bm.statusID
+					SELECT bm.bettype, bm.statusID, m.matchid
 					FROM dbo.rmBettransm_bk bm WITH (NOLOCK)
 						INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
 					WHERE b.refno = bm.refno
