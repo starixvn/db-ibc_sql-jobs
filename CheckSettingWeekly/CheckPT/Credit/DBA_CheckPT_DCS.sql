@@ -27,6 +27,7 @@ AS
 		- 20221003@Elodie: Only check setting for product already released production [Redmine: #178617]
 		- 20230511@Eden: Ignore check missing sport setting if hidden [Redmine: #179711]
 		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
+		- 20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 
 	Param's Explanation:   
 	 @RuleId = 0 : 'all'  
@@ -96,7 +97,7 @@ BEGIN
 		
 	INSERT INTO #MemberPT (CustID, recommend,mrecommend,srecommend,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,IsAutoMasterPT,AutoMasterPT,IsAutoSuperPT,AutoSuperPT,IsGroup)
 	SELECT cs.CustID,ci.recommend,ci.mrecommend,ci.srecommend, cs.SportType,cs.BetType,cs.IsLive,cs.SuperPT,cs.MasterPT,cs.AgentPT,cs.IsAutoMasterPT,cs.AutoMasterPT,cs.IsAutoSuperPT,cs.AutoSuperPT,0 IsGroup
-	FROM CheckCustDB.dbo.CustInfo ci
+	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK)
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Member cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
@@ -121,7 +122,7 @@ BEGIN
 	
 	INSERT INTO #MemberPT (CustID, recommend,mrecommend,srecommend,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,IsAutoMasterPT,AutoMasterPT,IsAutoSuperPT,AutoSuperPT,IsGroup)
 	SELECT ci.CustID,ci.recommend,ci.mrecommend,ci.srecommend, cs.SportType,cs.BetType,cs.IsLive,cs.SuperPT,cs.MasterPT,cs.AgentPT,cs.IsAutoMasterPT,cs.AutoMasterPT,cs.IsAutoSuperPT,cs.AutoSuperPT,1
-	FROM CheckCustDB.dbo.CustInfo ci
+	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK)
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustSettingMode3rd csm WITH (NOLOCK) ON ci.custid = csm.CustID AND csm.IsGrouped = 1
 		INNER JOIN CheckCustDB.dbo.CustPTGroupSetting3rd_Member cs WITH (NOLOCK) ON cs.AgentID = ci.recommend  
@@ -147,7 +148,7 @@ BEGIN
 	
 	INSERT INTO #AgentPT (CustID, recommend,mrecommend,srecommend,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,IsAutoMasterPT,AutoMasterPT,IsAutoSuperPT,AutoSuperPT, MinPT, MaxPT)			
 	SELECT cs.CustID,ci.recommend,ci.mrecommend,ci.srecommend, cs.SportType,cs.BetType,cs.IsLive,cs.SuperPT,cs.MasterPT,cs.AgentPT,cs.IsAutoMasterPT,cs.AutoMasterPT,cs.IsAutoSuperPT,cs.AutoSuperPT,cs.MinPT,cs.MaxPT
-	FROM CheckCustDB.dbo.CustInfo ci
+	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK)
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
@@ -171,7 +172,7 @@ BEGIN
 	
 	INSERT INTO #MasterPT (CustID, recommend,mrecommend,srecommend,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,IsAutoMasterPT,AutoMasterPT,IsAutoSuperPT,AutoSuperPT,MinPT,MaxPT)			
 	SELECT cs.CustID,ci.recommend,ci.mrecommend,ci.srecommend, cs.SportType,cs.BetType,cs.IsLive,cs.SuperPT,cs.MasterPT,cs.AgentPT,cs.IsAutoMasterPT,cs.AutoMasterPT,cs.IsAutoSuperPT,cs.AutoSuperPT,cs.MinPT,cs.MaxPT
-	FROM CheckCustDB.dbo.CustInfo ci
+	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK)
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
@@ -194,7 +195,7 @@ BEGIN
 	
 	INSERT INTO #SuperPT (CustID, SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,IsAutoMasterPT,AutoMasterPT,IsAutoSuperPT,AutoSuperPT,MinPT,MaxPT)			
 	SELECT cs.CustID, cs.SportType,cs.BetType,cs.IsLive,cs.SuperPT,cs.MasterPT,cs.AgentPT,cs.IsAutoMasterPT,cs.AutoMasterPT,cs.IsAutoSuperPT,cs.AutoSuperPT,cs.MinPT,cs.MaxPT
-	FROM CheckCustDB.dbo.CustInfo ci
+	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK)
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
@@ -216,7 +217,7 @@ BEGIN
 	
 	INSERT INTO #MemberPT_NotSynced (CustID, SportType,BetType,IsLive)
 	SELECT cs.CustID,cs.SportType,cs.BetType,cs.IsLive
-	FROM CheckCustDB.dbo.CustInfo ci
+	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK)
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Member cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
@@ -238,7 +239,7 @@ BEGIN
 	
 	INSERT INTO #MemberPT_NotSynced (CustID, SportType,BetType,IsLive)
 	SELECT ci.CustID,cs.SportType,cs.BetType,cs.IsLive
-	FROM CheckCustDB.dbo.CustInfo ci
+	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK)
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustSettingMode3rd csm WITH (NOLOCK) ON ci.custid = csm.CustID AND csm.IsGrouped = 1
 		INNER JOIN CheckCustDB.dbo.CustPTGroupSetting3rd_Member cs WITH (NOLOCK) ON cs.AgentID = ci.recommend  
@@ -261,7 +262,7 @@ BEGIN
 	
 	INSERT INTO #AgentPT_NotSynced (CustID, SportType,BetType,IsLive)			
 	SELECT cs.CustID,cs.SportType,cs.BetType,cs.IsLive
-	FROM CheckCustDB.dbo.CustInfo ci
+	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK)
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
@@ -282,7 +283,7 @@ BEGIN
 	
 	INSERT INTO #MasterPT_NotSynced (CustID, SportType,BetType,IsLive)			
 	SELECT cs.CustID,cs.SportType,cs.BetType,cs.IsLive
-	FROM CheckCustDB.dbo.CustInfo ci
+	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK)
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
@@ -302,7 +303,7 @@ BEGIN
 	
 	INSERT INTO #SuperPT_NotSynced (CustID, SportType,BetType,IsLive)			
 	SELECT cs.CustID, cs.SportType,cs.BetType,cs.IsLive
-	FROM CheckCustDB.dbo.CustInfo ci
+	FROM CheckCustDB.dbo.CustInfo ci WITH(NOLOCK)
 		INNER JOIN 	CheckCustDB.dbo.customer c 	 WITH (NOLOCK) ON ci.CustID = c.CustID
 		INNER JOIN CheckCustDB.dbo.CustPTSetting3rd_Agent cs WITH (NOLOCK) ON ci.CustID = cs.CustID
 		INNER JOIN CheckCustDB.dbo.CustProductStatus stt WITH (NOLOCK) ON ci.CustID = stt.CustID
@@ -333,7 +334,8 @@ BEGIN
 		[SportType] [smallint] NOT NULL,
 		[BetType] [smallint] NOT NULL,
 		[IsLive] [bit] NOT NULL,
-		[BitmapOrder] [TINYINT] 
+		[BitmapOrder] [TINYINT],
+		[MaxPT] smallmoney
 	)
 	CREATE TABLE #OfferedProductList(
 		[ProductID] [tinyint] NOT NULL,
@@ -370,10 +372,11 @@ BEGIN
 	FROM #OfferedProductList op
 	WHERE ProductID = 20
 
-	INSERT #ProductSetting(SportType,BetType,IsLive)
+	INSERT #ProductSetting(SportType,BetType,IsLive,MaxPT)
 	SELECT ps.SportType
 			,ps.BetType
-			,IsLive
+			,ps.IsLive
+			,ps.MaxPT
 	FROM CheckCustDB.[dbo].[ProductSettingDetail] ps WITH(NOLOCK)
 		INNER JOIN (SELECT DISTINCT ProductID, IsHidden FROM #OfferedProductList WITH (NOLOCK)) op ON ps.RealProductId = op.ProductID
 	WHERE op.IsHidden = 0 AND SettingType IN (1 ,18)
@@ -398,7 +401,17 @@ BEGIN
 			ON prf.Sporttype = CASE WHEN cs.sporttype IN (242) THEN 9911 ELSE cs.sporttype END -- IBCBet Live Casino use status of Live Casino (9911)
 			AND prf.bettype = CASE WHEN cs.sporttype IN (242) THEN 2400 ELSE cs.bettype END
 
-	
+	-- For Sportsbook
+	INSERT #ProductSetting(SportType,BetType,IsLive,BitmapOrder,MaxPT)
+	SELECT ps.SportType
+			,ps.BetType
+			,ps.IsLive
+			,0 AS BitmapOrder 
+			,ps.MaxPT
+	FROM CheckCustDB.[dbo].[ProductSettingDetail] ps WITH(NOLOCK)
+	WHERE SettingType IN (28)
+		AND ps.SettingStatus = 0
+
 	-- Starting check PT Rule
 	---- Count PT setting rows
 	DECLARE @RowCount TINYINT
@@ -559,7 +572,7 @@ BEGIN
 			 ps.MaxPT,  
 			 cs.Islive
 		FROM #SuperPT cs 
-			INNER JOIN CheckCustDB.dbo.ProductSettingDetail ps ON cs.SportType = ps.SportType AND cs.Bettype = ps.Bettype AND cs.IsLive = ps.IsLive AND ps.Settingtype IN (1,18)
+			INNER JOIN #ProductSetting ps ON cs.SportType = ps.SportType AND cs.Bettype = ps.Bettype AND cs.IsLive = ps.IsLive
 		WHERE cs.SuperPT > ps.MaxPT OR cs.MasterPT > ps.MaxPT OR cs.AgentPT > ps.MaxPT
 		
 	END  
@@ -1082,4 +1095,20 @@ BEGIN
 		 FROM #SuperPT 
 		 WHERE SuperPT = 0 AND MasterPT = 0 AND AgentPT = 0	   
 	END	 
+
+	DROP TABLE #AgentMissSetting
+	DROP TABLE #AgentPT
+	DROP TABLE #AgentPT_NotSynced
+	DROP TABLE #DirectMaster
+	DROP TABLE #MasterMissSetting
+	DROP TABLE #MasterPT
+	DROP TABLE #MasterPT_NotSynced
+	DROP TABLE #MemberMissSetting
+	DROP TABLE #MemberPT
+	DROP TABLE #MemberPT_NotSynced
+	DROP TABLE #OfferedProductList
+	DROP TABLE #ProductSetting
+	DROP TABLE #SuperMissSetting
+	DROP TABLE #SuperPT
+	DROP TABLE #SuperPT_NotSynced
 END

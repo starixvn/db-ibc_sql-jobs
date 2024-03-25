@@ -15,6 +15,7 @@ Revisions:
 	-20220627@Eden:  Implement the dependency between Macau Games Product Status and Jackpot Status [Redmine: #171715]
 	-20230306@Eden: Migrate NG and Keno to DCS structure [Redmine: #179711]
 	-20230511@Eden: Ignore check missing sport setting if hidden [Redmine: #179711]
+	-20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 
 Param's Explanation: 
 
@@ -70,21 +71,6 @@ BEGIN
 	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH(NOLOCK)
 		CROSS APPLY (	SELECT IsHidden
 						FROM #OfferedProductList ps2
-						WHERE ps2.ProductID = ps.ProductID 
-							AND ps2.SportType = ps.SportType 
-							AND ps2.BetType = ps.BetType
-							AND ps2.IsHidden = 0 
-					) ProductStatus
-	WHERE SettingType in (2,9,16,20,23)
-		AND SettingStatus = 0
-		AND sportType NOT IN (SELECT sportType FROM dbo.f_GetSportNotOffer(NULL))
-		AND sportType = CASE WHEN @sportType = 0 THEN sportType ELSE @sportType END
-		AND ProductID = 16
-	UNION ALL
-	SELECT ps.SportType,ps.BetType,ps.SettingType
-	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH(NOLOCK)
-		CROSS APPLY (	SELECT IsHidden
-						FROM #OfferedProductList ps2
 						WHERE ps2.RealProductId = ps.RealProductId 
 							AND ps2.IsHidden = 0
 					) ProductStatus
@@ -92,7 +78,6 @@ BEGIN
 		AND SettingStatus = 0
 		AND sportType NOT IN (SELECT sportType FROM dbo.f_GetSportNotOffer(NULL))
 		AND sportType = CASE WHEN @sportType = 0 THEN sportType ELSE @sportType END
-		AND ProductID <> 16 
 		AND RealProductId <> 3-- Not check for NG, Happy5 (check on other sp)
 
 	UPDATE t
@@ -394,6 +379,12 @@ BEGIN
 			AND CI.Enabled = 1
 			AND CI.Currency NOT IN (20,72,27,28)
 	END
+
+	DROP TABLE #DCS_Agent
+	DROP TABLE #DCS_Master
+	DROP TABLE #DCS_Super
+	DROP TABLE #GlobalSetting
+	DROP TABLE #OfferedProductList
 
 	SET NOCOUNT OFF	
 		

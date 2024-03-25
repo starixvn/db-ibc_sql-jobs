@@ -8,12 +8,13 @@ ALTER PROCEDURE [dbo].[DBA_CheckBetLimit_Credit]
 AS
 /*
 Created: 20170328@Helen
-Task: weekly check bet limit setting for credit/deposit customers - [Redmine:73556]
+Task: weekly check bet limit setting for credit customers - [Redmine:73556]
 DB: DBCHECK.CheckResultDB
 Revisions:
 	-20180802@Johnson: update ruleid [redmine: #73556]
 	-20210928@Eden: migrate SB and NG betsetting to new tables [redmine: #158073]
 	-20211109@Eden: Break setting for Saba Soccer/Basketball [redmine: #159626]
+	-20231010@Eden: DCS Sportsbook Credit[redmine: #193083]
 Param's Explanation: 
 	
 */
@@ -22,21 +23,14 @@ BEGIN
 	SET NOCOUNT ON 
 	-------------------PREPARATION: GET LIST SUPER/Master/Agent disabled FIRST----------------------------
 	CREATE TABLE #SportTypeCheck (SportType SMALLINT, BetType SMALLINT, PRIMARY KEY (BetType,SportType) )	
-	INSERT INTO #SportTypeCheck 
-	SELECT 1,1 UNION ALL
-	SELECT 1,9 UNION ALL
-	SELECT 2,1 UNION ALL
-	SELECT 3,1 UNION ALL
-	SELECT 5,1 UNION ALL
-	SELECT 8,1 UNION ALL
-	SELECT 10,1 UNION ALL
-	SELECT 11,1 UNION ALL
-	SELECT 99,1 UNION ALL
-	SELECT 99,9 UNION ALL
-	SELECT 161,81 UNION ALL
-	SELECT 164,8101 UNION ALL
-	SELECT 9901,1 UNION ALL --saba soccer
-	SELECT 9902,1 --saba basketball
+	INSERT INTO #SportTypeCheck (SportType,BetType)
+	SELECT ps.SportType,ps.BetType
+	FROM CheckCustDB.dbo.ProductSettingDetail ps WITH(NOLOCK)
+	WHERE SettingType in (26,23)
+		AND SettingStatus = 0
+		AND sportType NOT IN (SELECT sportType FROM dbo.f_GetSportNotOffer(NULL))
+		AND sportType = CASE WHEN @sportType = 0 THEN sportType ELSE @sportType END
+		AND RealProductId IN (1,3)-- SB + NG
 
 	CREATE TABLE #DCS_Super (custID INT,SportType SMALLINT, BetType SMALLINT, minbet MONEY, maxbet MONEY, maxpermatch MONEY
 							, MaxPerNumber money, MaxPayoutPerMatch money, PRIMARY KEY (custID,Bettype,SportType))
@@ -308,6 +302,11 @@ BEGIN
 			AND CI.Currency NOT IN (20,72,27,28)
 		
 	END
+
+	DROP TABLE #DCS_Agent
+	DROP TABLE #DCS_Master
+	DROP TABLE #DCS_Super
+	DROP TABLE #SportTypeCheck
 	SET NOCOUNT OFF	
 END
 GO
