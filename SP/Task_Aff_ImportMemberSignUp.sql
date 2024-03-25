@@ -1,15 +1,16 @@
+/*<info serverAlias="DBAFF12BET-Affiliate_12BET" executers="" isFunction="0" isNested="0"></info>*/
 USE [Affiliate_12bet]
 GO
 
 /****** Object:  StoredProcedure [dbo].[Task_Aff_ImportMemberSignUp]    Script Date: 01/19/2015 23:22:39 ******/
-SET ANSI_NULLS ON
-GO
+-- SET ANSI_NULLS ON
+-- GO
 
-SET QUOTED_IDENTIFIER ON
-GO
+-- SET QUOTED_IDENTIFIER ON
+-- GO
 
 /****** Object:  Stored Procedure dbo.Task_Aff_ImportMemberSignUp    Script Date: 8/6/2014 10:44:39 AM ******/
-CREATE PROCEDURE [dbo].[Task_Aff_ImportMemberSignUp]
+ALTER PROCEDURE [dbo].[Task_Aff_ImportMemberSignUp]
 AS
 /*
   Task: Import Member SignUp
@@ -18,6 +19,7 @@ AS
   DB: DB052.Affiliate_12BET
   Revisions:    
 	- 20140801@Bobby: Add SP
+	- 20240322@Eddie: Change Link Server [RedmineID: #202712]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -45,7 +47,7 @@ BEGIN
 			,c.RedirectURL AS URLRedirect
 			,c.URLReferrer
 			,c.DeviceType
-		FROM [DBDeposit].deposit_db.dbo.Deposit_Customer d WITH (NOLOCK) --For live code
+		FROM [DBDEPOSIT2].deposit_db.dbo.v_Aff_DepCust d WITH (NOLOCK) --For live code
 			INNER JOIN dbo.ClickStatistics1 c WITH(NOLOCK) 
 			ON d.AffiliateId = c.AffID	AND d.ClickId = c.ClickId
 			LEFT JOIN depCustByTime dep 
@@ -82,12 +84,6 @@ BEGIN
 		FROM MemberSingup s;
 			
 END
-GO
-
-GRANT EXECUTE ON [dbo].[Task_Aff_ImportMemberSignUp] TO [Dot_Member] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[Task_Aff_ImportMemberSignUp] TO [vnteam] AS [dbo]
 GO
 
 
