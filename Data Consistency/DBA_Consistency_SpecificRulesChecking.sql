@@ -47,6 +47,7 @@ AS
 		- 20230727@July: Modify SP to utilize index properly [Redmine:#191812]
 		- 20231003@July: Rule #38 - SABA.games/Vgaming - Exclude new card game Pontoon(1679,3871) [Redmine:#194936]
 		- 20240123@July: Rule #38 - SABA.games/Vgaming - Exclude new card game Chinese Blackjack(1684,3876) [Redmine:#199989]
+		- 20240328@July: Support Virtual Sport 4 - Rule #3 [Redmine:#202968]
 
 		Param's Expanation:
 */
@@ -109,18 +110,40 @@ BEGIN
 	SET @transId = ''
 	SET @translogid = ''
 	
+	DECLARE @tmpMatchIds TABLE (MatchId INT)
 
 	IF @ProductId IS NOT NULL
 	BEGIN
-		INSERT INTO #tmpBettrans(transId, scomm, acomm, comm, playercomm
-		, bettype, statusId, stake, winlost, custid, srecommend, winlostdate, currency
-		, refno, playerdiscount, discount, sdiscount, adiscount)
-		SELECT	transId, scomm, acomm, comm, playercomm
+		IF @ProductId IN (188) --VS4
+		BEGIN
+			INSERT INTO @tmpMatchIds (MatchId)
+			SELECT	m.matchid
+			FROM	bodb02.dbo.match m WITH(NOLOCK)
+			WHERE	m.sporttype = @ProductId
+				  
+			INSERT INTO #tmpBettrans(transId, scomm, acomm, comm, playercomm
 			, bettype, statusId, stake, winlost, custid, srecommend, winlostdate, currency
-			, refno, playerdiscount, discount, sdiscount, adiscount
-		FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
-		WHERE matchid = @ProductId 
-			AND winlostdate <= @yesterday
+			, refno, playerdiscount, discount, sdiscount, adiscount)
+			SELECT	transId, scomm, acomm, comm, playercomm
+				, bettype, statusId, stake, winlost, custid, srecommend, winlostdate, currency
+				, refno, playerdiscount, discount, sdiscount, adiscount
+			FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+			WHERE b.matchid IN (SELECT MatchId FROM @tmpMatchIds)
+				AND winlostdate <= @yesterday
+
+		END
+		ELSE
+		BEGIN
+			INSERT INTO #tmpBettrans(transId, scomm, acomm, comm, playercomm
+			, bettype, statusId, stake, winlost, custid, srecommend, winlostdate, currency
+			, refno, playerdiscount, discount, sdiscount, adiscount)
+			SELECT	transId, scomm, acomm, comm, playercomm
+				, bettype, statusId, stake, winlost, custid, srecommend, winlostdate, currency
+				, refno, playerdiscount, discount, sdiscount, adiscount
+			FROM	bodb02.dbo.bettrans b WITH (NOLOCK)
+			WHERE matchid = @ProductId 
+				AND winlostdate <= @yesterday
+		END
 	END
 
 	IF @ProductId IN (244, 241)
@@ -259,9 +282,9 @@ BEGIN
 	END
 
 	/* Rule #3: Check if no discount, no comm (apply to product non-offer comm)
-			for Virtual Games, Table Games, Sports Lottery, Saba.club, Saba.club Free Bets, VGaming, VGaming Free Bets, FGG, Keno, Lottery, Funky Games, Macau Games, PP, PG Soft, SG, Arcadia Gaming, Joker, MaxGame, Habanero, CG, AdvantPlay, AdvantPlay Mini, Virtual Sports, Virtual Sports 2, Virtual Sports 3, MG-RNG, Jili
+			for Virtual Games, Table Games, Sports Lottery, Saba.club, Saba.club Free Bets, VGaming, VGaming Free Bets, FGG, Keno, Lottery, Funky Games, Macau Games, PP, PG Soft, SG, Arcadia Gaming, Joker, MaxGame, Habanero, CG, AdvantPlay, AdvantPlay Mini, Virtual Sports, Virtual Sports 2, Virtual Sports 3, MG-RNG, Jili, Virtual Sports 4
 	*/
-	IF @ProductId IN (245, 222, 169, 200, 150, 171, 173, 176, 202, 220, 224, 212, 248, 232, 247, 165, 234, 237, 238, 167, 172, 174, 180, 181, 182, 183, 184, 185, 186, 190, 191, 192, 193, 194, 195, 196, 197, 231, 155, 158)
+	IF @ProductId IN (245, 222, 169, 200, 150, 171, 173, 176, 202, 220, 224, 212, 248, 232, 247, 165, 234, 237, 238, 167, 172, 174, 180, 181, 182, 183, 184, 185, 186, 190, 191, 192, 193, 194, 195, 196, 197, 231, 155, 158, 188)
 	BEGIN
 		IF @Rule = 'no_discount_comm'
 		BEGIN
