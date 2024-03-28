@@ -9,6 +9,7 @@ AS
 	Revisions:
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
+		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
 */
 BEGIN
 
@@ -308,7 +309,7 @@ BEGIN
 			SELECT cal.custid, cal.winlostdate
 				, CHECKSUM(CONCAT_WS('|', cal.productid, cal.sporttype, cal.bettype, cal.LeagueGroupID, cal.ticketType)) AS checkSumKey
 				, (CHECKSUM(CONCAT_WS('|',betcount,	winlost, turnover,netTurnover
-					,awinlost, mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm,CONVERT(DECIMAL(38,6), ExtraComm),CONVERT(DECIMAL(38,6), ExtraWinloss)))) AS checkSumData
+					,awinlost, mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm))) AS checkSumData
 				, cal.productid, cal.sporttype, cal.bettype, cal.LeagueGroupID, cal.ticketType, betcount, winlost, turnover,netTurnover
 				, awinlost, mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm,ExtraComm,ExtraWinloss
 
