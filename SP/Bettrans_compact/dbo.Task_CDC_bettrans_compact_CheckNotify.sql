@@ -8,6 +8,7 @@ AS
 	Revisions:
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
 		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
+		- 20240401@Bobby:  Fix bug checkNotify & Correct Redmine: [#202655]
 */
 BEGIN
 
@@ -15,13 +16,8 @@ BEGIN
 
 	DECLARE @checkDate SMALLDATETIME, @toDay SMALLDATETIME, @lastJobRun DATETIME;
 	DECLARE @moveBetsDay SMALLDATETIME, @notifyTime DATETIME
-	DECLARE @tblMoveBetBalanceUp AS TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
 
-	INSERT INTO @tblMoveBetBalanceUp(BalanceUpDay,MoveBetsDay)
-	EXEC bodb02.dbo.Age_SelBalanceUpDay
-	
-	SELECT @moveBetsDay = MoveBetsDay FROM @tblMoveBetBalanceUp
-
+	EXEC bodb02.dbo.NAP_Admin_GetMovebetDate @MovebetDate = @moveBetsDay OUTPUT
 	SELECT @checkDate	= DATEADD(DAY, 1, @moveBetsDay)
 		,@toDay			= CAST(GETDATE() AS DATE);
 
@@ -45,14 +41,14 @@ BEGIN
 		
 		SELECT @notifyTime = GETDATE();
 
-		-- Mark as notified
+		-- Mark @notifyTime
 		UPDATE ck
-		SET ck.notifyStatus = 1, createdTime = @notifyTime
+		SET createdTime = @notifyTime
 		FROM dbo.bettrans_compact_checkSum ck WITH(ROWLOCK, UPDLOCK)
 		INNER JOIN #tmpNotify tmp ON tmp.custid = ck.custid
 			AND tmp.winlostdate = ck.winlostdate
-			AND tmp.checkSumKey = ck.checkSumKey;
-
+			AND tmp.checkSumKey = ck.checkSumKey
+		WHERE ck.notifyStatus = 0;
 
 		--TODO: correct data --> notifyStatus = 2 IF corrected
 		EXEC [dbo].[Task_CDC_bettrans_compact_CorrectData] @notifyTime = @notifyTime
@@ -63,10 +59,20 @@ BEGIN
 			INNER JOIN #tmpNotify tmp ON tmp.custid = ck.custid
 				AND tmp.winlostdate = ck.winlostdate
 				AND tmp.checkSumKey = ck.checkSumKey
-			WHERE ck.notifyStatus = 1
+			WHERE ck.notifyStatus = 0
 				AND ck.createdTime = @notifyTime
 		)
 		BEGIN
+
+			-- Mark notifyStatus
+			UPDATE ck
+			SET ck.notifyStatus = 1
+			FROM dbo.bettrans_compact_checkSum ck WITH(ROWLOCK, UPDLOCK)
+			INNER JOIN #tmpNotify tmp ON tmp.custid = ck.custid
+				AND tmp.winlostdate = ck.winlostdate
+				AND tmp.checkSumKey = ck.checkSumKey
+			WHERE ck.notifyStatus = 0
+				AND ck.createdTime = @notifyTime;
 
 			DECLARE @subject VARCHAR(1000), @notify VARCHAR(4000), @recipients VARCHAR(1000);
 			SELECT @subject = CONCAT(@@SERVERNAME, '_', db_name(), '_bettrans_compact CHECK SUM diff data found')
