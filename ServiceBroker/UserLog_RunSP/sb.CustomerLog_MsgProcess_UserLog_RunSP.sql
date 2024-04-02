@@ -112,7 +112,9 @@ BEGIN
 							TrackingValue2,
 							Duration,
 							Language,
-							IP
+							IP,
+							LogDate,
+							CreatedDate
 							)
 			SELECT t.c.value('@UserID','int'),
 				t.c.value('@CustID','int'),
@@ -121,7 +123,9 @@ BEGIN
 				t.c.value('@TrackingValue2','VARCHAR(MAX)'),
 				t.c.value('@Duration','int'),
 				t.c.value('@Language','VARCHAR(2)'),
-				t.c.value('@IP','VARCHAR(15)')
+				t.c.value('@IP','VARCHAR(15)'),
+				t.c.value('@LogDate','DATETIME'),
+				GETDATE()
 			FROM @log.nodes('/Root/Row') t(c)
 							
 		END TRY
