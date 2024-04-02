@@ -1,9 +1,19 @@
 /*<info serverAlias="DBAFFYASHBET-Affiliate_YashBet"  isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_ReIndex]
 AS
--- Joe : reorganize all index with fragment > 30%
--- Dan: reorganize all index with fragment > 10 %, rebuild for fragment > 30 %
+/*
+	Created: 20240402@Sally
+	DB: DBAFFYASHBET-Affiliate_YashBet
+	Revisions:
+		- 20240402@Sally: Initialize SP [RedmineID: #198909]
+	Notes:
+		-- Joe : reorganize all index with fragment > 30%
+		-- Dan: reorganize all index with fragment > 10 %, rebuild for fragment > 30 %
+*/
+
 BEGIN
+
+
 	DECLARE @database_id INT
 	SELECT @database_id = db_id()
 
