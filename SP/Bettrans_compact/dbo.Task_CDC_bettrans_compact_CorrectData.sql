@@ -10,6 +10,7 @@ AS
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
 		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
+		- 20240401@Bobby:  Fix bug checkNotify & Correct Redmine: [#202655]
 */
 BEGIN
 
@@ -19,7 +20,7 @@ BEGIN
 	DROP TABLE IF EXISTS #diffSuperWinlostdate;
 	DROP TABLE IF EXISTS #checkCorrectData;
 
-	CREATE TABLE #diffSuperWinlostdate (rIdx INT IDENTITY(1,1), Winlostdate SMALLDATETIME, SuperIds VARCHAR(4000));
+	CREATE TABLE #diffSuperWinlostdate (rIdx INT IDENTITY(1,1), Winlostdate SMALLDATETIME, SuperIds VARCHAR(MAX));
 	CREATE TABLE #checkCorrectData(
 		[custid] [int] NOT NULL,
 		[winlostdate] [smalldatetime] NOT NULL,
@@ -52,16 +53,19 @@ BEGIN
 	FROM (
 		SELECT custid, winlostdate, checkSumKey, checkSumData, createdtime, ROW_NUMBER() OVER (PARTITION BY custid, winlostdate, checkSumKey ORDER BY createdtime DESC) AS rIdx
 		FROM dbo.bettrans_compact_checkSum WITH(NOLOCK)
-		WHERE notifyStatus = 1
+		WHERE notifyStatus = 0
 			AND createdTime = @notifyTime
 	) AS t 
 	WHERE t.rIdx = 1;
 
 	--TODO: filter by super
 	INSERT INTO #diffSuperWinlostdate(Winlostdate, SuperIds)
-	SELECT Winlostdate, STRING_AGG(c.custid, ',')
-	FROM #diffCustCheckSum ck
-	INNER JOIN bodb02.dbo.Customer c WITH(NOLOCK) ON c.custid = ck.custid AND c.roleid = 4 --> reCal for whole line
+	SELECT c.Winlostdate, STRING_AGG(CAST(c.srecommend AS VARCHAR(MAX)), ',')
+	FROM (
+		SELECT DISTINCT ck.Winlostdate, c.srecommend
+		FROM #diffCustCheckSum ck
+		INNER JOIN bodb02.dbo.Customer c WITH(NOLOCK) ON c.custid = ck.custid --> reCal for whole line
+	) AS c
 	GROUP BY Winlostdate
 	ORDER BY Winlostdate;
 
@@ -85,7 +89,7 @@ BEGIN
 	CREATE TABLE #__SuperProcess(srecommend INT PRIMARY KEY);
 
 	--TODO: process Correct data
-	DECLARE @rCont INT = 1, @superIds VARCHAR(4000);
+	DECLARE @rCont INT = 1, @superIds VARCHAR(MAX);
 	WHILE EXISTS (SELECT 1 FROM #diffSuperWinlostdate WHERE rIdx = @rCont)
 	BEGIN
 		TRUNCATE TABLE #__SuperExtraPT;
