@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_rptThirdPartyWL_ExtraGMT_CheckData]
 	@WinlostDate		SMALLDATETIME,
 	@HasDataMismatch	TINYINT OUTPUT, --0: No mismatch; 1: Has real currencies; 2: UUS only
@@ -31,6 +31,7 @@ AS
 		- 20230518@Danny: Integrate YeeBet (ProductID = 76) [#187948]
 		- 20231219@Danny: Integrate Live22 [RedmineID: #197267]
 	    - 20240401@Danny: Integrate UU Slots product[RedmineID: #192597]
+		- 20240409@Danny: Integrate Yolo product[RedmineID: #199200]
 */
 
 BEGIN
@@ -54,7 +55,14 @@ BEGIN
 		AWinloss				MONEY,
 		ProgressiveContribution	MONEY,
 		ProgressivePayout		MONEY,
-		ValidBetAmount			MONEY
+		ValidBetAmount			MONEY,
+		MWinloss				MONEY,
+		MComm					MONEY,
+		SWinloss				MONEY,
+		SComm					MONEY,
+		EWinloss				MONEY,
+		EComm					MONEY,
+		HouseTurnover			MONEY 
 	);
 
 	CREATE TABLE #Target
@@ -72,7 +80,14 @@ BEGIN
 		AWinloss				MONEY,
 		ProgressiveContribution	MONEY,
 		ProgressivePayout		MONEY,
-		ValidBetAmount			MONEY
+		ValidBetAmount			MONEY,
+		MWinloss				MONEY,
+		MComm					MONEY,
+		SWinloss				MONEY,
+		SComm					MONEY,
+		EWinloss				MONEY,
+		EComm					MONEY,
+		HouseTurnover			MONEY
 	);
 
 	DECLARE @S_Count INT, @T_Count INT,
@@ -81,14 +96,22 @@ BEGIN
 	DECLARE @RnGBettypeList TABLE(Bettype INT)
 	INSERT INTO @RnGBettypeList(Bettype)
 	SELECT	DISTINCT bettype
-	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'FW,PP,CC,SG,JK,CG,MGRNG,JIG,L22,UUSL') la		
+	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'FW,PP,CC,SG,JK,CG,MGRNG,JIG,L22,UUSL,YOL') la		
 
 	DECLARE @LCBettypeList TABLE(Bettype INT)
 	INSERT INTO @LCBettypeList(Bettype)
 	SELECT	DISTINCT bettype
 	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'AB,SXG,SAG,WM,PPL,FGGL,YB') la
 
-	INSERT INTO #Source(TableName, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, AWinloss, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
+	CREATE TABLE #BettypeExtraAmount (Bettype INT, SubProduct VARCHAR(500))
+
+	INSERT INTO #BettypeExtraAmount (Bettype,SubProduct)
+	SELECT DISTINCT Bettype, SubProduct
+	FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
+	WHERE SubProduct IN ('Jackpot Contribution','Jackpot Prize')
+
+	INSERT INTO #Source(TableName, RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, AWinloss, ProgressiveContribution, ProgressivePayout, ValidBetAmount
+	,MWinloss,MComm,SWinloss,SComm,EWinloss,EComm,HouseTurnover)
 	(
 		SELECT	'bettransRnG14',
 				CAST(b.Transdate3rd AS DATE)	AS RptDate3rd,
@@ -104,12 +127,35 @@ BEGIN
 				ISNULL(SUM(b.awinlost), 0) AS AWinloss,
 				ISNULL(SUM(CASE WHEN b.gameID IN (4297, 4599) THEN ContributionStake3rd ELSE 0 END), 0) AS ProgressiveContribution, -- Full Contribution(PP-4297)
 				ISNULL(SUM(ISNULL(p.WinAmount,0)), 0) AS ProgressivePayout,
-				0 AS ValidBetAmount
+				0 AS ValidBetAmount, 
+				SUM(b.mwinlost) MWinloss,
+				SUM(b.acomm) MComm,
+				SUM(b.swinlost) SWinloss,
+				SUM(b.scomm) SComm,
+				SUM(-
+						CASE
+							-- Jackpot
+							WHEN b.gameID IN (2198, 2398, 2998) OR be.SubProduct = 'Jackpot Contribution' THEN
+								CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE ISNULL(contributionstake3rd, 0) END
+							WHEN b.gameID IN (2199, 2399, 2999) OR be.SubProduct = 'Jackpot Prize' THEN 0
+							ELSE CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END
+						END * ISNULL(b.epositiontaking, 0)) AS EWinloss,
+				SUM(-
+						CASE 
+							WHEN b.gameID IN (2198, 2398, 2998, 2199, 2399, 2999) OR be.SubProduct IN ('Jackpot Contribution','Jackpot Prize') THEN 0
+							ELSE 
+								CASE 
+									WHEN b.tpositiontaking = 1 THEN 0 
+									ELSE b.scomm / (1 - b.tpositiontaking)
+								END
+						END * ISNULL(b.epositiontaking, 0))	AS ECommission,
+				SUM(b.stake * (1 - b.tpositiontaking)) HouseTurnover
 		FROM bodb02.dbo.bettransRnG14 b WITH (NOLOCK)
 			LEFT JOIN DBTXN.bodb02.dbo.PayoutTrans p ON b.transid = p.RefNo			
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
-			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID			
+			LEFT JOIN bodb_licensee.dbo.view_site_list [site] (NOLOCK) ON s.siteid = site.IbcSiteID
+			LEFT JOIN #BettypeExtraAmount be ON b.gameID = be.Bettype
 		WHERE b.winlostdate = @WinlostDate
 			AND b.statusID NOT IN (0, 1, 101, 102, 121)
 			AND b.gameID IN (SELECT x.Bettype FROM @RnGBettypeList x)
@@ -132,7 +178,16 @@ BEGIN
 				ISNULL(SUM(b.awinlost), 0) AS AWinloss,
 				0 AS ProgressiveContribution,
 				0 AS ProgressivePayout,
-				ISNULL(SUM(ISNULL(b.NetStake, 0)), 0) AS ValidBetAmount
+				ISNULL(SUM(ISNULL(b.NetStake, 0)), 0) AS ValidBetAmount,
+				SUM(b.mwinlost) MWinloss,
+				SUM(b.acomm) MComm,
+				SUM(b.swinlost) SWinloss,
+				SUM(b.scomm) SComm,
+				SUM(- CASE WHEN b.tpositiontaking = 1 THEN 0 ELSE b.winlost - b.actual_stake END
+					* ISNULL(b.epositiontaking, 0)) AS EWinloss,
+				SUM(- CASE WHEN b.tpositiontaking = 1 THEN 0  ELSE b.scomm / (1 - b.tpositiontaking) END
+					 * ISNULL(b.epositiontaking, 0))	AS ECommission,
+				SUM(b.stake * (1 - b.tpositiontaking)) HouseTurnover
 		FROM bodb02.dbo.bettransLC14 b WITH (NOLOCK)
 			LEFT JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON b.recommend = c.custid AND c.roleid = 2
 			LEFT JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
@@ -146,7 +201,8 @@ BEGIN
 
 	SET @S_Count = @@ROWCOUNT;
 	
-	INSERT INTO #Target(RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, AWinloss, ProgressiveContribution, ProgressivePayout, ValidBetAmount)
+	INSERT INTO #Target(RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId, BetCount, Turnover, Winloss, AComm, PComm, AWinloss, ProgressiveContribution, ProgressivePayout, ValidBetAmount
+		,MWinloss,MComm,SWinloss,SComm,EWinloss,EComm,HouseTurnover)
 	SELECT	RptDate3rd,
 			SiteId,
 			BetTypeId,
@@ -160,7 +216,14 @@ BEGIN
 			ISNULL(SUM(AWinloss), 0),
 			ISNULL(SUM(ProgressiveContribution), 0),
 			ISNULL(SUM(ProgressivePayout), 0),
-			ISNULL(SUM(ValidBetAmount), 0)
+			ISNULL(SUM(ValidBetAmount), 0),
+			ISNULL(SUM(MWinloss), 0),
+			ISNULL(SUM(MComm), 0),
+			ISNULL(SUM(SWinloss), 0),
+			ISNULL(SUM(SComm), 0),
+			ISNULL(SUM(EWinloss), 0),
+			ISNULL(SUM(EComm), 0),
+			ISNULL(SUM(HouseTurnover), 0)
 	FROM dbo.rpt_ThirdPartyWL_ExtraGMT WITH(NOLOCK)
 	WHERE RptDate = @WinlostDate
 	GROUP BY RptDate3rd, SiteId, BetTypeId, CurrencyId, StatusId;
@@ -178,7 +241,8 @@ BEGIN
 	SELECT	TableName, 1, BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss), SUM(BetCount),
 			(
 				SELECT	SUM(AComm) AS AComm, SUM(PComm) AS PComm, SUM(AWinloss) AS AWinloss, SUM(ProgressiveContribution) AS ProgContrib,
-						SUM(ProgressivePayout) AS ProgPayout, SUM(ValidBetAmount) AS ValidBetAmt
+						SUM(ProgressivePayout) AS ProgPayout, SUM(ValidBetAmount) AS ValidBetAmt,
+						SUM(MWinloss) MWinloss,SUM(MComm) MComm,SUM(SWinloss) SWinloss,SUM(SComm) SComm,SUM(EWinloss) EWinloss,SUM(EComm) EComm,SUM(HouseTurnover) HouseTurnover
 				FROM #Source s1
 				WHERE s1.TableName = s.TableName
 					AND s1.BetTypeId = s.BetTypeId
@@ -192,7 +256,9 @@ BEGIN
 		WHERE s.RptDate3rd = t.RptDate3rd AND s.SiteId = t.SiteId AND s.BetTypeId = t.BetTypeId AND s.CurrencyId = t.CurrencyId
 			AND s.StatusId = t.StatusId AND s.BetCount = t.BetCount AND s.Turnover = t.Turnover AND s.Winloss = t.Winloss
 			AND s.AComm = t.AComm AND s.PComm = t.PComm AND s.AWinloss = t.AWinloss AND s.ProgressiveContribution = t.ProgressiveContribution
-			AND s.ProgressivePayout = t.ProgressivePayout AND s.ValidBetAmount = t.ValidBetAmount)
+			AND s.ProgressivePayout = t.ProgressivePayout AND s.ValidBetAmount = t.ValidBetAmount
+			 AND s.MWinloss = t.MWinloss AND s.MComm = t.MComm AND s.SWinloss = t.SWinloss AND s.SComm = t.SComm AND s.EWinloss = t.EWinloss
+			 AND s.EComm = t.EComm AND s.HouseTurnover = t.HouseTurnover)
 	GROUP BY TableName, BetTypeId, CurrencyId
 			
 	UNION ALL
@@ -200,7 +266,8 @@ BEGIN
 	SELECT 'rpt_ThirdPartyWL_ExtraGMT', 0, BetTypeId, CurrencyId, SUM(Turnover), SUM(Winloss), SUM(BetCount),
 			(
 				SELECT	SUM(AComm) AS AComm, SUM(PComm) AS PComm, SUM(AWinloss) AS AWinloss, SUM(ProgressiveContribution) AS ProgContrib,
-						SUM(ProgressivePayout) AS ProgPayout, SUM(ValidBetAmount) AS ValidBetAmt
+						SUM(ProgressivePayout) AS ProgPayout, SUM(ValidBetAmount) AS ValidBetAmt,
+						SUM(MWinloss) MWinloss,SUM(MComm) MComm,SUM(SWinloss) SWinloss,SUM(SComm) SComm,SUM(EWinloss) EWinloss,SUM(EComm) EComm,SUM(HouseTurnover) HouseTurnover
 				FROM #Target t1
 				WHERE t1.BetTypeId = t.BetTypeId
 					AND t1.CurrencyId = t.CurrencyId
@@ -213,7 +280,9 @@ BEGIN
 		WHERE s.RptDate3rd = t.RptDate3rd AND s.SiteId = t.SiteId AND s.BetTypeId = t.BetTypeId AND s.CurrencyId = t.CurrencyId
 			AND s.StatusId = t.StatusId AND s.BetCount = t.BetCount AND s.Turnover = t.Turnover AND s.Winloss = t.Winloss
 			AND s.AComm = t.AComm AND s.PComm = t.PComm AND s.AWinloss = t.AWinloss AND s.ProgressiveContribution = t.ProgressiveContribution
-			AND s.ProgressivePayout = t.ProgressivePayout AND s.ValidBetAmount = t.ValidBetAmount)
+			AND s.ProgressivePayout = t.ProgressivePayout AND s.ValidBetAmount = t.ValidBetAmount
+			 AND s.MWinloss = t.MWinloss AND s.MComm = t.MComm AND s.SWinloss = t.SWinloss AND s.SComm = t.SComm AND s.EWinloss = t.EWinloss
+			 AND s.EComm = t.EComm AND s.HouseTurnover = t.HouseTurnover)
 	GROUP BY BetTypeId, CurrencyId;
 
 	SET @T_Count = @@ROWCOUNT;
