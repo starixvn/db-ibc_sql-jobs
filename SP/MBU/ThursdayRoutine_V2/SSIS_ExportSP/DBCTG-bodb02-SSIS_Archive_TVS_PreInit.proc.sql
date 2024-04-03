@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20130831@Bobby: Init
 		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
+		- 20240403@July: [TVS] SP tuning for EC2024 [Redmine: #200840]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -24,11 +25,11 @@ BEGIN
 			CROSS APPLY (
 				SELECT t2.eventdate AS eventdate
 				FROM	dbo.match14 AS t2 WITH (NOLOCK)
-				WHERE	rd.MatchId NOT IN (9,29,2799) AND rd.MatchId = t2.matchid AND rd.RequestId = t1.RequestId
+				WHERE	rd.MatchId NOT IN (9,29,2799,10449) AND rd.MatchId = t2.matchid AND rd.RequestId = t1.RequestId
 				UNION ALL
 				SELECT t2.eventdate AS eventdate
 				FROM	 dbo.match AS t2 WITH (NOLOCK)
-				WHERE	rd.MatchId NOT IN (9,29,2799) AND rd.MatchId = t2.matchid AND rd.RequestId = t1.RequestId
+				WHERE	rd.MatchId NOT IN (9,29,2799,10449) AND rd.MatchId = t2.matchid AND rd.RequestId = t1.RequestId
 
 				UNION ALL
 				SELECT t2.eventdate
@@ -63,12 +64,12 @@ BEGIN
 					CROSS APPLY (
 							SELECT  b.winlostdate as winlostdate
 							FROM	dbo.bettrans b WITH (NOLOCK) 
-							WHERE b.transid = s.TransId AND s.MatchId IN (9,29,2799) AND s.RequestId = t1.RequestId AND s.MatchId = rd.MatchId
+							WHERE b.transid = s.TransId AND s.MatchId IN (9,29,2799,10449) AND s.RequestId = t1.RequestId AND s.MatchId = rd.MatchId
 			
 							UNION ALL
 							SELECT b.winlostdate as winlostdate
 							FROM dbo.bettrans14 b WITH (NOLOCK) 
-							WHERE b.transid = s.TransId AND s.MatchId IN (9,29,2799) AND s.RequestId = t1.RequestId AND s.MatchId = rd.MatchId
+							WHERE b.transid = s.TransId AND s.MatchId IN (9,29,2799,10449) AND s.RequestId = t1.RequestId AND s.MatchId = rd.MatchId
 					)bt
 			)m
 		WHERE  rd.RequestId = t1.RequestId

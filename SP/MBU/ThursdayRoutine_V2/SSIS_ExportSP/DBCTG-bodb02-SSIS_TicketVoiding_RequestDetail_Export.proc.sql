@@ -11,6 +11,7 @@ AS
 	Revisions:
 		- 20130831@Bobby: Init
 		- 20221003@Max: [TVS] Enhance archive process of TVS data regarding the Scale Out DB project - [Redmine: #178234]
+		- 20240403@July: [TVS] SP tuning for EC2024 [Redmine: #200840]
  */
  BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -20,7 +21,7 @@ AS
     ---------match--------------------
 	SELECT	AwayId,FilterBy,FilterFromTransTime,FilterToTransTime,HomeId,Id,IssueDetail,KickOffTime,LeagueId,LiveAwayScore,LiveHomeScore,MainParlayCount,MatchId,RequestId,RequestType,SingleCount,TransIds,VoidFromTime,VoidToTime,Usernames,ProductIds,TicketStatusIds,FromWinlostDate,ToWinlostDate, SubIssueTypeId
 	FROM	dbo.TicketVoiding_RequestDetail AS t1 WITH (NOLOCK)
-	WHERE	t1.MatchId NOT IN (9,29,2799)
+	WHERE	t1.MatchId NOT IN (9,29,2799,10449)
 		AND EXISTS (SELECT 1 FROM dbo.match14 AS t2 WITH (NOLOCK) WHERE t1.matchid = t2.matchid AND t2.eventdate = @winlostdate)
 
 	---------- outright -----------
@@ -48,16 +49,16 @@ AS
 	CROSS APPLY (
 			SELECT max(b.winlostdate) as winlostdate
 			FROM dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
-				INNER JOIN dbo.bettrans b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
+				INNER JOIN dbo.bettrans b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799,10449)
 				WHERE s.RequestId = t1.RequestId
 			
 			UNION --ALL
 			SELECT max(b.winlostdate) as winlostdate
 			FROM dbo.TicketVoiding_RequestDetailTicket_Single s WITH (NOLOCK)
-				INNER JOIN dbo.bettrans14 b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799)
+				INNER JOIN dbo.bettrans14 b WITH (NOLOCK) ON b.transid = s.TransId AND s.MatchId IN (9,29,2799,10449)
 				WHERE s.RequestId = t1.RequestId
 		)t
-	WHERE t1.MatchId IN (9,29,2799)
+	WHERE t1.MatchId IN (9,29,2799,10449)
 		AND t.winlostdate = @winlostdate
 
 END
