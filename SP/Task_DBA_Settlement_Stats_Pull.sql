@@ -13,12 +13,18 @@ as
 */
 begin
 	set nocount on
-	declare @__lastValue datetime2, @__maxValue datetime2, @__interval int = 1
+	declare @__lastValue datetime2, @__maxValue datetime2, @__interval int = 1, @__siteDBGroupId smallint = 0
 	declare @__temp table (matchid int, eventTable tinyint, tableType tinyint
 		, logdate datetime2, matchCount int, affectedTicket int
 		, siteDBGroupId smallint, sportName varchar(200), groupName varchar(200))
 
-	loop_pick:
+	set @__siteDBGroupId = 0
+	if object_id('bodb02.dbo.f_Get_SiteDBGroupID') is not null
+	begin
+		select @__siteDBGroupId = bodb02.dbo.f_Get_SiteDBGroupID()
+	end
+
+	loop_pick_more:
 	select @__lastValue = max(LogDate), @__maxValue = dateadd(second, -1, sysdatetime())
 	from dbo.Mon_Settlement_Stats with(nolock)
 
@@ -36,18 +42,20 @@ begin
 		, max(StartTime) LogDate, count(distinct MatchId) MatchCount, sum(isnull(AffectedTicket, 0)) AffectedTicket
 	from bodb02.dbo.SSB_SettlementLogs l with(nolock)
 	where StartTime > @__lastValue and StartTime <= @__maxValue
+		and TableType in (1,2) --bettrans | bettransm
 	group by MatchId, EventTable, TableType, siteDBGroupId
 
 	if @@rowcount = 0 --no data in this interval
 	begin
 		insert into dbo.Mon_Settlement_Stats([CaptureDate], [LogDate], [SportName], [GroupName], [TableType], [SiteDBGroupId], [AffectedTicket], [MatchCount])
-		select getdate(), @__maxValue, null, null, null, null, 0, 0
-		goto loop_pick
+		select getdate(), @__maxValue, null, null, null, null, null, null
+		goto loop_pick_more
 	end
 
 	--match
 	update t set sportName = s.SportName
-		, groupName = iif(sm.productId = 1, 'Sports', 'NonSports')
+		, groupName = iif(sm.productId = 1, 'Sports', 'Non Sports')
+		, siteDBGroupId = iif(@__siteDBGroupId < 100, @__siteDBGroupId, siteDBGroupId)
 	from @__temp t 
 		inner join bodb02.dbo.match m with(nolock) on t.matchid = m.matchid
 		inner join bodb02.dbo.SportBettypeMatrix sm with(nolock) on m.sporttype = sm.SportType
@@ -57,6 +65,7 @@ begin
 	--match3rd
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'NonSports')
+		, siteDBGroupId = iif(@__siteDBGroupId < 100, @__siteDBGroupId, siteDBGroupId)
 	from @__temp t 
 		inner join bodb02.dbo.Match3rd m with(nolock) on t.matchid = m.Match3rdId
 		inner join bodb02.dbo.SportBettypeMatrix sm with(nolock) on m.sporttype = sm.SportType
@@ -66,6 +75,7 @@ begin
 	--outright
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'NonSports')
+		, siteDBGroupId = iif(@__siteDBGroupId < 100, @__siteDBGroupId, siteDBGroupId)
 	from @__temp t 
 		inner join bodb02.dbo.outright m with(nolock) on t.matchid = m.orid
 		inner join bodb02.dbo.League l with(nolock) on m.leagueid = l.leagueid
@@ -79,6 +89,6 @@ begin
 	group by sportName, groupName, tableType, siteDBGroupId
 
 	delete from @__temp
-	goto loop_pick
+	goto loop_pick_more
 end
 go
