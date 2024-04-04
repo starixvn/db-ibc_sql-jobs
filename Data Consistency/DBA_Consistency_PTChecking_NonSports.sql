@@ -101,18 +101,21 @@ BEGIN
 		CROSS APPLY bodb02.[dbo].[f_Dep_CustPTSetting_Select] (c.CustId, c.sporttype, c.bettype, c.isLive) f
 		WHERE  c.apositiontaking <> (f.AgentPT/100)
 	)
-	SELECT TOP (@batch) @transId = @transId + ',' + CAST(transId AS VARCHAR)
-	FROM CTE_WrongPTSetting c
+	SELECT @transId = STRING_AGG(CONVERT(VARCHAR(MAX),tmp.transId), ',') 
+	FROM (
+		SELECT TOP (@batch) t.TransId
+		FROM CTE_WrongPTSetting c
 		INNER JOIN #tmp_TransId t 
 			ON  c.CustId = t.CustId 
 			AND c.sporttype = t.sporttype 
 			AND c.bettype = t.bettype 
 			AND c.isLive = t.isLive
 			AND c.apositiontaking = t.apositiontaking
+		)tmp
 		
 	IF @transId <> ''
 	BEGIN
-		SELECT	@transId = SUBSTRING(@transId, 2, LEN(@transId) - 1)
+		SELECT	@transId = @transId
 				,@ErrCode = 100
 				,@ErrMsg = 'Wrong PT setting ticket vs PT setting of customer for 3rd products.' 
 				,@SampleData = @tablename + '.TransId in (' + @transId + ')'
