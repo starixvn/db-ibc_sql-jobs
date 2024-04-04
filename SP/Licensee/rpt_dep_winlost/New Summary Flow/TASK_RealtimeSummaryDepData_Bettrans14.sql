@@ -85,6 +85,7 @@ AS
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
+		- 20240404@Evan: Change code to avoid Page splits  [RedmineID: #195784]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -242,14 +243,18 @@ BEGIN
 			SUM(CASE WHEN b.bettype = 22200 THEN b.winlost-b.actual_stake ELSE 0 END), -- Bonus Wallet
 			SUM(CASE WHEN b.bettype = 22201 THEN b.winlost-b.actual_stake ELSE 0 END) -- AdjBonusWallet
 		FROM dbo.Transfer b WITH (NOLOCK)
-			INNER JOIN dbo.custInfo c WITH (NOLOCK) ON b.CustID = c.custid AND c.roleid = 1
-			INNER JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
 		WHERE b.winlostdate = @Winlostdate
 			AND 1 = CASE WHEN bettype = 19999 AND winlostdate > @MoveBetsDay THEN 0 --> new sum
 		            WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
 		            WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
 		            ELSE 1 END
 		GROUP BY b.custid, b.bettype
+
+		DELETE r
+		FROM #rptDepWinlostDetails r
+			LEFT JOIN dbo.Customer c WITH (NOLOCK) ON r.CustID = c.custid AND c.roleid = 1
+			LEFT JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
+		WHERE s.custid IS NULL
 
 		INSERT INTO #DepCustID (CustID)
 		SELECT CustID
