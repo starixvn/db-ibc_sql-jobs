@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBSIG-bodb02" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[SiteDB_DBA_Consistency_CheckMBUTicketCount]
 	@Bettype SMALLINT = 0
 AS 
@@ -11,6 +11,8 @@ Revisions:
 	- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 	- 20230915@July: Detect data consistency SiteDB and DBTP - Enhancement for rules #50 [Redmine:#194038]
 	- 20231108@July: Data Consistency - Update Rule #50 - Check data details [Redmine:#196572]
+	- 20240405@July: Change the way of getting data - remove duplicate if page split occurs [Redmine:#202585]
+	
 */
 BEGIN
 	SET NOCOUNT ON
@@ -18,6 +20,14 @@ BEGIN
 	DECLARE @SiteDBGroupID	SMALLINT
 	SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
 	
+	CREATE TABLE #tmp_betticketchecksum_detail
+	(
+		TransId BIGINT, SiteDBGroupID SMALLINT
+	  , custid INT, WinlostDate SMALLDATETIME, stake MONEY, actual_stake MONEY
+	  , winlost MONEY, awinlost MONEY, mwinlost MONEY, swinlost MONEY
+	  , playercomm MONEY, comm MONEY, acomm MONEY, scomm MONEY
+	)
+
 	IF @Bettype = 19999
 	BEGIN
 
@@ -33,17 +43,41 @@ BEGIN
 			RETURN
 		END
 
-		SELECT  s.SiteDBGroupID, b.winlostdate AS WinlostDate, COUNT(1) AS TotalCount
-				,CHECKSUM_AGG(CHECKSUM(b.custid, b.winlostdate, b.stake, b.actual_stake
-									 , b.Winlost, b.aWinlost, b.mWinlost, b.sWinlost
-									 , b.playerComm, b.Comm, b.aComm, b.sComm )) AS TotalCheckSumAgg
+		INSERT INTO #tmp_betticketchecksum_detail (
+		    TransId, SiteDBGroupID
+		  , custid, WinlostDate, stake, actual_stake
+		  , winlost, awinlost, mwinlost, swinlost
+		  , playercomm, comm, acomm, scomm
+		)
+		SELECT b.TransId, s.SiteDBGroupID
+			  , b.custid, b.WinlostDate, b.stake, b.actual_stake
+			  , b.Winlost, b.aWinlost, b.mWinlost, b.sWinlost
+			  , b.playerComm, b.Comm, b.aComm, b.sComm
 		FROM	bodb02.dbo.Transfer b WITH (NOLOCK) 
 			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = b.CustId
 			INNER JOIN CustDB.dbo.Site s WITH (NOLOCK) ON s.site = c.site
 		WHERE	b.bettype = @Bettype 
-			AND b.winlostdate IN (SELECT RunningDay FROM @Days)
+			AND b.WinlostDate IN (SELECT RunningDay FROM @Days)
 			AND s.SiteDBGroupID = @SiteDBGroupID
-		GROUP BY s.SiteDBGroupID, b.winlostdate
+
+		-- Remove duplicate transid if page split occurs
+		;WITH cteDuplicateTransId
+		AS(
+			SELECT	TransId
+					,ROW_NUMBER() OVER(PARTITION BY TransId ORDER BY TransId) as rn 
+			FROM	#tmp_betticketchecksum_detail
+		)
+		DELETE 
+		FROM	cteDuplicateTransId
+		WHERE	rn > 1
+
+		SELECT  SiteDBGroupID, WinlostDate, COUNT(1) AS TotalCount
+			    ,CHECKSUM_AGG(CHECKSUM( custid, WinlostDate, stake, actual_stake
+									  , Winlost, aWinlost, mWinlost, sWinlost
+									  , playerComm, Comm, aComm, sComm )) AS TotalCheckSumAgg
+		FROM #tmp_betticketchecksum_detail
+		GROUP BY SiteDBGroupID
+			   , WinlostDate
 
 	END
 	ELSE IF @Bettype = 20000
@@ -51,18 +85,44 @@ BEGIN
 		DECLARE @BalanceUpDate	SMALLDATETIME = NULL
 		EXEC dbo.NAP_Admin_GetBalanceUpDate @BalanceUpDate = @BalanceUpDate OUTPUT
 
-		SELECT  s.SiteDBGroupID, b.winlostdate AS WinlostDate, COUNT(1) AS TotalCount
-				,CHECKSUM_AGG(CHECKSUM(b.custid, b.winlostdate, b.stake, b.actual_stake
-									 , b.Winlost, b.aWinlost, b.mWinlost, b.sWinlost
-									 , b.playerComm, b.Comm, b.aComm, b.sComm )) AS TotalCheckSumAgg
+		INSERT INTO #tmp_betticketchecksum_detail (
+			TransId, SiteDBGroupID
+			, custid, WinlostDate, stake, actual_stake
+			, winlost, awinlost, mwinlost, swinlost
+			, playercomm, comm, acomm, scomm
+		)
+		SELECT b.TransId, s.SiteDBGroupID
+			  , b.custid, b.WinlostDate, b.stake, b.actual_stake
+			  , b.Winlost, b.aWinlost, b.mWinlost, b.sWinlost
+			  , b.playerComm, b.Comm, b.aComm, b.sComm
 		FROM	bodb02.dbo.Transfer b WITH (NOLOCK) 
 			INNER JOIN CustDB.dbo.Customer c WITH (NOLOCK) ON c.custid = b.CustId
 			INNER JOIN CustDB.dbo.Site s WITH (NOLOCK) ON s.site = c.site
 		WHERE	b.bettype = @Bettype 
-			AND b.winlostdate = @BalanceUpDate
+			AND b.WinlostDate = @BalanceUpDate
 			AND s.SiteDBGroupID = @SiteDBGroupID
-		GROUP BY s.SiteDBGroupID, b.winlostdate
+
+		-- Remove duplicate transid if page split occurs
+		;WITH cteDuplicateTransId
+		AS(
+			SELECT	TransId
+					,ROW_NUMBER() OVER(PARTITION BY TransId ORDER BY TransId) as rn 
+			FROM	#tmp_betticketchecksum_detail
+		)
+		DELETE 
+		FROM	cteDuplicateTransId
+		WHERE	rn > 1
+
+		SELECT  SiteDBGroupID, WinlostDate, COUNT(1) AS TotalCount
+			    ,CHECKSUM_AGG(CHECKSUM( custid, WinlostDate, stake, actual_stake
+									  , Winlost, aWinlost, mWinlost, sWinlost
+									  , playerComm, Comm, aComm, sComm )) AS TotalCheckSumAgg
+		FROM #tmp_betticketchecksum_detail
+		GROUP BY SiteDBGroupID
+			   , WinlostDate
+
 	END
 	
+	DROP TABLE #tmp_betticketchecksum_detail
 END
 GO
