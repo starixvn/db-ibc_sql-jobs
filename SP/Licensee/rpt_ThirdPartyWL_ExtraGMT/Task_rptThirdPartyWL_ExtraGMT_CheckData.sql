@@ -30,6 +30,7 @@ AS
 		- 20230214@Danny: Integrate Jili (ProductID = 75) [#183766]
 		- 20230518@Danny: Integrate YeeBet (ProductID = 76) [#187948]
 		- 20231219@Danny: Integrate Live22 [RedmineID: #197267]
+	    - 20240401@Danny: Integrate UU Slots product[RedmineID: #192597]
 */
 
 BEGIN
@@ -80,7 +81,7 @@ BEGIN
 	DECLARE @RnGBettypeList TABLE(Bettype INT)
 	INSERT INTO @RnGBettypeList(Bettype)
 	SELECT	DISTINCT bettype
-	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'FW,PP,CC,SG,JK,CG,MGRNG,JIG,L22') la		
+	FROM	bodb_licensee.dbo.LA_f_BettypeProductMapping(0,'FW,PP,CC,SG,JK,CG,MGRNG,JIG,L22,UUSL') la		
 
 	DECLARE @LCBettypeList TABLE(Bettype INT)
 	INSERT INTO @LCBettypeList(Bettype)
