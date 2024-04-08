@@ -51,11 +51,11 @@ begin
 		select getdate(), @__maxValue, null, null, null, null, null, null
 		goto loop_pick_more
 	end
-
+		
 	--match
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'Non Sports')
-		, siteDBGroupId = iif(@__siteDBGroupId < 100, @__siteDBGroupId, siteDBGroupId)
+		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
 	from @__temp t 
 		inner join dbo.match m with(nolock) on t.matchid = m.matchid
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
@@ -68,7 +68,7 @@ begin
 	--match3rd
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'NonSports')
-		, siteDBGroupId = iif(@__siteDBGroupId < 100, @__siteDBGroupId, siteDBGroupId)
+		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
 	from @__temp t 
 		inner join dbo.Match3rd m with(nolock) on t.matchid = m.Match3rdId
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
@@ -81,7 +81,7 @@ begin
 	--outright
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'NonSports')
-		, siteDBGroupId = iif(@__siteDBGroupId < 100, @__siteDBGroupId, siteDBGroupId)
+		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
 	from @__temp t 
 		inner join dbo.outright m with(nolock) on t.matchid = m.orid
 		inner join dbo.League l with(nolock) on m.leagueid = l.leagueid
