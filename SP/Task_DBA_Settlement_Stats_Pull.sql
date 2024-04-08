@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02,SBSETTLE-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
-create procedure [dbo].[Task_DBA_Settlement_Stats_Pull]
+alter procedure [dbo].[Task_DBA_Settlement_Stats_Pull]
 as
 /*
 	Created: Patrick@20240403	
@@ -58,8 +58,11 @@ begin
 		, siteDBGroupId = iif(@__siteDBGroupId < 100, @__siteDBGroupId, siteDBGroupId)
 	from @__temp t 
 		inner join dbo.match m with(nolock) on t.matchid = m.matchid
-		inner join dbo.SportBettypeMatrix sm with(nolock) on m.sporttype = sm.SportType
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
+		cross apply(
+			select top 1 productId
+			from dbo.SportBettypeMatrix sm with(nolock) where m.sporttype = sm.SportType
+		)sm
 	where t.eventTable = 1
 
 	--match3rd
@@ -68,8 +71,11 @@ begin
 		, siteDBGroupId = iif(@__siteDBGroupId < 100, @__siteDBGroupId, siteDBGroupId)
 	from @__temp t 
 		inner join dbo.Match3rd m with(nolock) on t.matchid = m.Match3rdId
-		inner join dbo.SportBettypeMatrix sm with(nolock) on m.sporttype = sm.SportType
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
+		cross apply(
+			select top 1 productId
+			from dbo.SportBettypeMatrix sm with(nolock) where m.sporttype = sm.SportType
+		)sm
 	where t.eventTable = 3
 
 	--outright
@@ -79,8 +85,11 @@ begin
 	from @__temp t 
 		inner join dbo.outright m with(nolock) on t.matchid = m.orid
 		inner join dbo.League l with(nolock) on m.leagueid = l.leagueid
-		inner join dbo.SportBettypeMatrix sm with(nolock) on l.sporttype = sm.SportType
 		inner join dbo.Sports s with(nolock) on l.sporttype = s.SportType
+		cross apply(
+			select top 1 productId
+			from dbo.SportBettypeMatrix sm with(nolock) where l.sporttype = sm.SportType
+		)sm
 	where t.eventTable = 2
 
 	insert into MonDB.dbo.Mon_Settlement_Stats([CaptureDate], [LogDate], [SportName], [GroupName], [TableType], [SiteDBGroupId], [AffectedTicket], [MatchCount])
