@@ -1,4 +1,4 @@
-/*<info serverAlias="DBRPT-bodb_report" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBRPT-bodb_report" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[TASK_DailyArchiveDepData]
 AS
 	/*
@@ -9,6 +9,7 @@ AS
 		Revisions:
 			- 20191025@Bobby: Add column promotion [RedmineID: #120333]
 			- 20231026@Evan: Support 12bet team get TO without Void/reject/refund [RedmineID: #195784]
+			- 20240315@Eddie: Change metadata with isNested = "1" [RedmineID: #201098]
 
 		Input Params:	
 	*/

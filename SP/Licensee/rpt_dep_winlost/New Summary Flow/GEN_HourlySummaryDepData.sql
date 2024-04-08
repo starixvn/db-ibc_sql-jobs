@@ -1,4 +1,4 @@
-/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[GEN_HourlySummaryDepData]
 	@Winlostdate DATE,
 	@NumberofCus INT = 0 OUTPUT,
@@ -13,6 +13,7 @@ AS
 			- 20180502@Joseph: Add <info> comment
 			- 20180412@Harper: Integrate Bonus wallet [RedmineID: 91740]
 			- 20191025@Bobby: Add column promotion [RedmineID: #120333]
+			- 20240315@Eddie: Change metadata with isNested = "1" [RedmineID: #201098]
 
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized

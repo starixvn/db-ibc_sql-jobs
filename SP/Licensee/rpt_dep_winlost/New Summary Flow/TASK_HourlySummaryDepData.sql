@@ -1,4 +1,4 @@
-/*<info serverAlias="DBRPT-bodb_Report" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBRPT-bodb_Report" isFunction="0" isNested="1"></info>*/
 USE [bodb_Report]
 GO
 
@@ -17,6 +17,7 @@ AS
 		- 20161004@Francis: Check movebet schedule to regen data for bettrans14
 		- 20210518@Percy: Change code to get MoveBetsDay [RedmineID: #154866]
 		- 20220422@Sol: LAP - Enhance database jobs - [RedmineID: #171747]
+		- 20240315@Eddie: Change metadata with isNested = "1" [RedmineID: #201098]
 
 	Input Params:	
 		- @isDailyArc:	-0: Called for data re-summary of hourly summary task (data will be re-summarize from the minimum day of early day and manually summarized day til today)

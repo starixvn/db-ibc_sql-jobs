@@ -85,6 +85,7 @@ AS
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
+		- 20240314@Eddie: Integrate UU Slots [RedmineID: #201098]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -372,6 +373,7 @@ BEGIN
 				WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
 				WHEN (bettype BETWEEN 7601 AND 7700 AND bettype <> 7698) THEN 227 -- L22
 				WHEN bettype = 7698 THEN -227 -- L22 Promotion Prize
+				WHEN bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
@@ -488,6 +490,7 @@ BEGIN
 				WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
 				WHEN (bettype BETWEEN 7601 AND 7700 AND bettype <> 7698) THEN 227 -- L22
 				WHEN bettype = 7698 THEN -227 -- L22 Promotion Prize
+				WHEN bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
 				ELSE 0
 			END--SportType
 		OPTION (RECOMPILE, MAXDOP 8)

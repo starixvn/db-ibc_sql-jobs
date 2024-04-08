@@ -1,4 +1,4 @@
-/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[GEN_HourlySummaryDepData_Bettrans14]
 	@Winlostdate SMALLDATETIME,
 	@NumberofCus INT = 0 OUTPUT,
@@ -16,6 +16,7 @@ AS
 			- 20210518@Percy: Change code to adapt new Move Bets flow [RedmineID: #154866]
 			- 20211111@Sol: Split Transfer out of bettrans/Support IPv6 - [RedmineID: #164301]
 			- 20230227@Evan: Ensure correct balance calculation when allow to transfer 247 (BU) [Redmine: #173554]
+			- 20240315@Eddie: Change metadata with isNested = "1" [RedmineID: #201098]
 
 		Input Params:	
 		- @Winlostdate: The input Winlostdate to be summarized
