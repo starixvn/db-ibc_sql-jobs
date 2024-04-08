@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptLicWinloss2_CheckData]
 	@WinLostDate SMALLDATETIME
@@ -28,6 +28,7 @@ AS
 		- 20230208@Evan: Inteagrate SG promotion prize [RedmineID: #183497]
 		- 20230626@Evan: Integrate MG-RNG (Promotion Game) [RedmineID: #189988]
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
+		- 20240315@Eddie: Change metadata with isNested = "1" [RedmineID: #201098]
 */
 
 BEGIN

@@ -83,6 +83,7 @@ AS
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #200273]
+		- 20240314@Eddie: Integrate UU Slots and enhance performance [RedmineID: #201098]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -263,7 +264,7 @@ BEGIN
 	--Get agent list in deposit system
 	INSERT INTO @recommend (recommend)
 	SELECT c.custid
-	FROM dbo.Customer c WITH(NOLOCK)
+	FROM dbo.Customer c WITH (NOLOCK)
 		INNER JOIN dbo.Dep_CustSuper cs WITH(NOLOCK) ON c.srecommend = cs.custid
 	WHERE c.roleid = 2
 
@@ -313,7 +314,7 @@ BEGIN
 				SUM(CASE WHEN t.bettype = 22201 THEN t.winlost - t.actual_stake ELSE 0 END), -- AdjBonusWallet
 				0 -- Promotion
 			FROM dbo.Transfer t WITH (NOLOCK)
-				INNER JOIN dbo.custInfo c WITH (NOLOCK) ON t.CustID = c.custid AND c.roleid = 1
+				INNER JOIN dbo.Customer c ON t.CustID = c.custid AND c.roleid = 1
 				INNER JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
 			WHERE t.winlostdate = @WinLostDate
 				AND t.Bettype > 20000
@@ -369,7 +370,7 @@ BEGIN
 				SUM(CASE WHEN b.StatusID NOT IN (101, 102, 103) AND bt.BetType IS NOT NULL THEN b.stake ELSE 0 END)  -- RawTurnover
 			FROM dbo.bettrans b WITH (NOLOCK)
 				INNER JOIN dbo.Dep_CustSuper d WITH (NOLOCK) ON b.srecommend = d.custid
-				INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
+				INNER JOIN dbo.Customer c WITH (NOLOCK) ON b.custid = c.custid
 				LEFT JOIN #tmpBettype bt ON b.bettype = bt.BetType
 			WHERE b.winlostdate = @Winlostdate
 				AND b.matchid >= 0
@@ -504,7 +505,7 @@ BEGIN
 				SUM(CASE WHEN t.winlostdate = @Winlostdate AND t.bettype = 22201 THEN t.winlost - t.actual_stake ELSE 0 END), -- AdjBonusWallet
 				0 -- Promotion
 			FROM dbo.Transfer t WITH (NOLOCK)
-				INNER JOIN dbo.custInfo c WITH (NOLOCK) ON t.CustID = c.custid AND c.roleid = 1
+				INNER JOIN dbo.Customer c ON t.CustID = c.custid AND c.roleid = 1
 				INNER JOIN dbo.Dep_CustSuper s WITH (NOLOCK) ON c.srecommend = s.custid
 			WHERE t.winlostdate >= @Winlostdate
 				AND t.Bettype > 20000
@@ -562,7 +563,7 @@ BEGIN
 				SUM(CASE WHEN b.winlostdate = @Winlostdate AND b.StatusID NOT IN (101, 102, 103) AND bt.BetType IS NOT NULL THEN b.stake ELSE 0 END) --RawTurnover
 			FROM dbo.bettrans AS b WITH (NOLOCK)
 				INNER JOIN dbo.Dep_CustSuper AS d WITH (NOLOCK) ON b.srecommend = d.custid
-				INNER JOIN dbo.CustInfo AS c WITH (NOLOCK) ON b.custid = c.custid
+				INNER JOIN dbo.Customer AS c WITH (NOLOCK) ON b.custid = c.custid
 				LEFT JOIN #tmpBettype bt ON b.bettype = bt.BetType
 			WHERE b.winlostdate >= @Winlostdate
 				AND b.matchid >= 0
@@ -911,6 +912,7 @@ BEGIN
 				WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
 				WHEN (bettype BETWEEN 7601 AND 7700 AND bettype <> 7698) THEN 227 -- L22
 				WHEN bettype = 7698 THEN -227 -- L22 Promotion Prize
+				WHEN bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
@@ -1003,6 +1005,7 @@ BEGIN
 				WHEN bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
 				WHEN (bettype BETWEEN 7601 AND 7700 AND bettype <> 7698) THEN 227 -- L22
 				WHEN bettype = 7698 THEN -227 -- L22 Promotion Prize
+				WHEN bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
 				ELSE 0
 			END
 			
@@ -1033,7 +1036,7 @@ BEGIN
 		SELECT b.refno
 		FROM dbo.Transfer b WITH (NOLOCK)
 			INNER JOIN @CasinoPartner p ON b.bettype = p.CancelTransferId
-			INNER JOIN dbo.CustInfo c WITH (NOLOCK) ON b.custid = c.custid
+			INNER JOIN dbo.Customer c WITH (NOLOCK) ON b.custid = c.custid
 			INNER JOIN dbo.Dep_CustSuper s WITH(NOLOCK) ON s.custid = c.srecommend
 		WHERE b.winlostdate = @Winlostdate
 			AND c.roleid = 1
@@ -1282,14 +1285,14 @@ BEGIN
 		PRINT 'EXEC TASK_RealtimeSummaryDepData, Winlostdate = ' + CONVERT(VARCHAR(20), @Winlostdate, 120) + ', ErrMsg: ' + ERROR_MESSAGE()
 	END CATCH
 
-	DROP TABLE #rptDepWinlostDetails
-	DROP TABLE #rptDepWinlost
-	DROP TABLE #rptDepWinlostByProduct
-	DROP TABLE #rptDepWinlostTransfer3rdOthers
-	DROP TABLE #rptDepWinlostOutstanding
-	DROP TABLE #rptDepWinlostBonusWallet
-	DROP TABLE #transid
-	DROP TABLE #rptDepWinlost_Trans
-	DROP TABLE #tmpBettype
+	DROP TABLE IF EXISTS #rptDepWinlostDetails
+	DROP TABLE IF EXISTS #rptDepWinlost
+	DROP TABLE IF EXISTS #rptDepWinlostByProduct
+	DROP TABLE IF EXISTS #rptDepWinlostTransfer3rdOthers
+	DROP TABLE IF EXISTS #rptDepWinlostOutstanding
+	DROP TABLE IF EXISTS #rptDepWinlostBonusWallet
+	DROP TABLE IF EXISTS #transid
+	DROP TABLE IF EXISTS #rptDepWinlost_Trans
+	DROP TABLE IF EXISTS #tmpBettype
 END 
 GO

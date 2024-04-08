@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="wsv_lap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[GET_DepositDataToValidate_Betting]
 	@Date		SMALLDATETIME	= NULL,
@@ -52,6 +52,7 @@ AS
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
+		- 20240314@Eddie: Integrate UU Slots and change 'bodbLicenseeNet' to 'wsv_lap' account [RedmineID: #201098]
  
 	Param's Explanation:
 		@DrawFilter
@@ -269,6 +270,10 @@ BEGIN
 		,@L22Turnover MONEY
 		,@L22CustomerWl MONEY
 		,@L22BetCount MONEY
+		--UUSL
+		,@UUSLTurnover 		MONEY
+		,@UUSLCustomerWl 	MONEY
+		,@UUSLBetCount 		MONEY
 
 	DECLARE @tblBettype TABLE (ProductPrefix VARCHAR(10), Bettype INT)
 
@@ -282,7 +287,7 @@ BEGIN
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','MGCRNG','MGCLC','VG','VB', 'AB', 'NG2', 'CO', 'VS2', 
 			'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3',
-			'BTC', 'FGGL', 'MXG', 'JIG', 'YB', 'MGRNG', 'LG', 'SEA', 'WE', 'L22')
+			'BTC', 'FGGL', 'MXG', 'JIG', 'YB', 'MGRNG', 'LG', 'SEA', 'WE', 'L22', 'UUSL')
 
 	-- Data Source
 	DECLARE @tblData AS TABLE (
@@ -1163,6 +1168,17 @@ BEGIN
 	FROM @tblData
 	WHERE ProductPrefix = 'L22'
 
+	-- UUSL
+	SELECT
+		@UUSLTurnover = SUM(CASE WHEN @DrawFilter IN (2, 3) THEN CASE WHEN Status = 111 THEN 0
+																	  WHEN Status IN (114, 115) THEN 0.5
+																 ELSE 1 END
+							ELSE 1 END * Turnover)
+		, @UUSLCustomerWl = SUM(WinLoss)
+		, @UUSLBetCount = SUM( CASE WHEN @DrawFilter = 2 AND Status = 111 THEN 0 ELSE BetCount END )
+	FROM @tblData
+	WHERE ProductPrefix = 'UUSL'
+
 	-- Result
 	SELECT
 		1 AS Id,
@@ -1216,6 +1232,7 @@ BEGIN
 		, ISNULL(@SEATurnover, 0) AS SEA
 		, ISNULL(@WETurnover, 0) AS WE
 		, ISNULL(@L22Turnover, 0) AS L22
+		, ISNULL(@UUSLTurnover, 0) AS UUSL
 
 	UNION
 	SELECT
@@ -1270,6 +1287,7 @@ BEGIN
 		, ISNULL(@SEACustomerWl, 0)
 		, ISNULL(@WECustomerWl, 0)
 		, ISNULL(@L22CustomerWl, 0)
+		, ISNULL(@UUSLCustomerWl, 0)
 	UNION
 	SELECT
 		3
@@ -1323,6 +1341,7 @@ BEGIN
 		, ISNULL(@SEABetCount, 0)
 		, ISNULL(@WEBetCount, 0)
 		, ISNULL(@L22BetCount, 0)
+		, ISNULL(@UUSLBetCount, 0)
 
 	SET NOCOUNT OFF
 END

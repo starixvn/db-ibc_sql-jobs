@@ -1,1 +1,3 @@
-SP\Licensee\rpt_3rd_product\Task_DEP_SeparatedWallet_GenerateData.sql
+SP\Licensee\rpt_winlost2\Task_DailyRptLicWinloss2_CheckData_Job.sql
+SP\Licensee\rpt_winlost2\Task_DailyRptLicWinloss2_Job.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\TASK_DepSumData_Job.sql

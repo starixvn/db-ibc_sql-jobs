@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
 	@WinLostDate SMALLDATETIME
@@ -127,6 +127,7 @@ AS
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
+		- 20240314@Eddie: Integrate UU Slots and change metadata with isNested = "1" [RedmineID: #201098]
 
 	EXEC Task_DailyRptLicWinloss2 '2017-04-07'
 */
@@ -268,6 +269,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 			WHEN b.bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
 			WHEN b.bettype BETWEEN 7601 AND 7700 THEN 227 -- L22
+			WHEN b.bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -402,6 +404,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 8900 AND 8999 THEN 156 -- SEA
 			WHEN b.bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
 			WHEN b.bettype BETWEEN 7601 AND 7700 THEN 227 -- L22
+			WHEN b.bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
 			ELSE 0
 		END
 		,CASE

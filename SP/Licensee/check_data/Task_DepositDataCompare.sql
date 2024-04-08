@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="bodbLicenseeNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="wsv_lap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DepositDataCompare]
 	@Date		SMALLDATETIME	= NULL,
@@ -48,6 +48,7 @@ AS
 		- 20231107@Evan: Integrate SEAL Entertainment [RedmineID: #180648]
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
+		- 20240314@Eddie: Integrate UU Slots and change 'bodbLicenseeNet' to 'wsv_lap' account [RedmineID: #201098]
  
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -156,6 +157,7 @@ BEGIN
 		,SEA BIGINT
 		,WE BIGINT
 		,L22 BIGINT
+		,UUSL BIGINT
 		)
 
 	--exec
@@ -212,6 +214,7 @@ BEGIN
 		,SEA
 		,WE
 		,L22
+		,UUSL
 		)
 	EXEC dbo.GET_DepositDataToValidate_LicenseeWL @Date = @Date
 
@@ -385,6 +388,7 @@ BEGIN
 		,SEA
 		,WE
 		,L22
+		,UUSL
 		)
 	EXEC dbo.GET_DepositDataToValidate_Betting @Date = @Date
 
