@@ -13,7 +13,7 @@ ALTER PROCEDURE [sb].[CustomerLog_MsgProcess_UserLog_RunSP]
 	
 	Revision:
 		- 20200903@Helen: process message for userlog_RunSP [redmine: #139238]
-		
+		- 20240318@Johnson: Add new MsgType [MessageType_CustomerLog_UserLog_DepCustSetting] [Redmine:#199517]
 */
 AS
 BEGIN
@@ -100,7 +100,47 @@ BEGIN
 			EXEC sb.EmailNotification @QueueName = 'Queue_Others',@message_body = @message_body,@error_message = @error_Message, @functionName = 'Userlog_Others'
 				
 		END CATCH
-	END	
+	END		
+	IF @MsgType = 'MessageType_CustomerLog_UserLog_DepCustSetting'
+	BEGIN
+		BEGIN TRY
+			INSERT INTO dbo.UserLog_Dep_CustSetting
+							(UserID, 
+							CustID, 							
+							ActionID, 
+							TrackingValue,
+							TrackingValue2,
+							Duration,
+							Language,
+							IP,
+							LogDate,
+							CreatedDate
+							)
+			SELECT t.c.value('@UserID','int'),
+				t.c.value('@CustID','int'),
+				t.c.value('@ActionID','int'),
+				t.c.value('@TrackingValue','VARCHAR(MAX)'),
+				t.c.value('@TrackingValue2','VARCHAR(MAX)'),
+				t.c.value('@Duration','int'),
+				t.c.value('@Language','VARCHAR(2)'),
+				t.c.value('@IP','VARCHAR(15)'),
+				t.c.value('@LogDate','DATETIME'),
+				GETDATE()
+			FROM @log.nodes('/Root/Row') t(c)
+							
+		END TRY
+		BEGIN CATCH 
+			SET @error_Message = ERROR_MESSAGE()
+			SET @message_body = CONVERT(VARCHAR(MAX),@log)
+			
+			INSERT INTO sb.FailedMessageMonitoring([FunctionName], [Message],[ErrorMessage],[TableName],[MessageType],[CreatedDate],[IsResolved])
+			VALUES ('UserLog_Others', @message_body, @error_Message,'UserLog_Dep_CustSetting','MessageType_CustomerLog_UserLog_DepCustSetting',GETDATE(),0)
+			
+			-- Send Email to Production team for notification
+			EXEC sb.EmailNotification @QueueName = 'Queue_Others',@message_body = @message_body,@error_message = @error_Message, @functionName = 'Userlog_Others'
+				
+		END CATCH
+	END
 	
 END
 
