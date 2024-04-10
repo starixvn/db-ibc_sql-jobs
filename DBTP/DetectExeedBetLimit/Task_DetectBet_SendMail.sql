@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb02" executers="bodbAdminNet" isFunction="0"></info>*/
+/*<info serverAlias="DBTP-bodb02" executers="wsv_nap" isFunction="0"></info>*/
 ALTER PROCEDURE	[dbo].[Task_DetectBet_SendMail]
 AS
 /*	
@@ -9,6 +9,7 @@ AS
 	
 	Revisions: 
 		- 20220525@Max: Create SP [Redmine: #170739]
+		- 20240410@Max: Correct email address [Redmine: #203720]
 	
 	Param's explanation:		
 */
@@ -50,8 +51,8 @@ BEGIN;
 	IF EXISTS (SELECT TOP(1) 1 FROM #tmp_TransId)
 	BEGIN
 		SELECT @subject	= N'Violate Max Bet Limit Setting'
-			, @recipients_TestGroup = 'qa@starixvn.com'
-			, @recipients_RealGroup = 'it@starixvn.com'
+			, @recipients_TestGroup = 'qa@starixsoft.com'
+			, @recipients_RealGroup = 'it@starixsoft.com'
 
 		IF @serverName NOT IN ('DBTP10C')
 		BEGIN
