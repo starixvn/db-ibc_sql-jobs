@@ -25,6 +25,7 @@ AS
 		- 20221005@July: MG-RNG - Exclude bettype 8695 (Tournament Prize) - [Redmine: #178718]
 		- 20230410@Evan: Exclude checking for 1 Super Athena000SuperUUS - [Redmine: #178718]
 		- 20231219@July: Live22 - Exclude bettype 7698 (Promotion Prize) - [Redmine: #198518]
+		- 20240411@Lewis: Exclude bettype IN (4297,4300,4599,4600,4598,3898,3899,1698,1699) - [Redmine: #203038]
 
 	Param's Expanation:
 		@Duration = 'hour', 'lastday'
@@ -73,7 +74,17 @@ BEGIN
 			INSERT INTO @ExcludeBettype (Bettype, Reftable)
 			SELECT DISTINCT Bettype, Reftable
 			FROM bodb02.dbo.SportBettypeMatrix WITH(NOLOCK)
-			WHERE BetType IN (2199, 2399, 2999, 4298, 17004, 3150, 2499, 4299, 8695, 7698)
+			WHERE BetType IN (2199, 2399, 2999 -- OneRNG
+							, 4297, 4298, 4299, 4300 -- PP
+							, 17004 -- Saba Promotion
+							, 3150 -- AE Sexy
+							, 2499 -- Allbet
+							, 8695 -- MG-RNG
+							, 7698 -- Live22
+							, 4598, 4599, 4600 -- SG
+							, 3898, 3899 -- Vgaming
+							, 1698, 1699 -- SABA.Games
+							)
 
 			--- I.I: Wrong Epositiontaking vs ExtraPT
 			------I.I.a. Bettrans
