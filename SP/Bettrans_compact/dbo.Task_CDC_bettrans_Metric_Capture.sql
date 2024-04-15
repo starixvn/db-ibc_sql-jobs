@@ -7,6 +7,7 @@ AS
 	DB: DBAGE.bodb_AGE
 	Revisions:
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
+		- 20240415@Bobby:  Enhance perf counter - Redmine: [#202655]
 */
 BEGIN
 
@@ -21,9 +22,15 @@ BEGIN
 	FROM bodb_AGE.dbo.SystemSettings WITH(NOLOCK)
 	WHERE VName='Age_cdc_bettrans_compact';
 
-	SELECT TOP(1) @rolloverRowId = rowid
+	DECLARE @poolMetric TABLE(rowId BIGINT, creation_time DATETIME);
+
+	INSERT INTO @poolMetric (rowId, creation_time)
+	SELECT TOP(@maxPoolRow) rowid, creation_time
 	FROM [dbo].[cdc_bettrans_metric_counter] WITH(NOLOCK)
-	WHERE rowid <= @maxPoolRow
+	WHERE rowid <= @maxPoolRow;
+
+	SELECT TOP(1) @rolloverRowId = rowid
+	FROM @poolMetric
 	ORDER BY creation_time ASC;
 
 	;WITH CTE_tmpLog AS (

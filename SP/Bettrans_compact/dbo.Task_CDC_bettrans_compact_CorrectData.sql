@@ -11,6 +11,7 @@ AS
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
 		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
 		- 20240401@Bobby:  Fix bug checkNotify & Correct Redmine: [#202655]
+		- 20240415@Bobby:  Enhance code - Redmine: [#202655]
 */
 BEGIN
 
@@ -94,6 +95,7 @@ BEGIN
 	BEGIN
 		TRUNCATE TABLE #__SuperExtraPT;
 		TRUNCATE TABLE #__SuperProcess;
+		TRUNCATE TABLE #checkCorrectData;
 
 		SELECT @winlostdate = Winlostdate 
 			,@superIds = SuperIds
