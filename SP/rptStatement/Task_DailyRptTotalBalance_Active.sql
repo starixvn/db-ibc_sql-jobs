@@ -17,6 +17,7 @@ AS
 		- 20211122@Danny: Split transfer tickets out of bettrans [Redmine: #164196]
 		- 20230516@Danny: Remove orphan ticket [Redmine: #188341]
 		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
+		- 20240415@Evan: Avoid duplicate custid sometime make the jobs failed [Redmine: #203880]
  */
 
 BEGIN
@@ -62,16 +63,21 @@ BEGIN
 	IF @Winlostdate = DATEADD(DD, 1, @MovebetDay)    ---> first day on bettrans.OpeningBalance = last day on rptStatement.ClosingBalance
 	BEGIN 
 		--> GET full cust back to the previous saturday
-		INSERT INTO #rptOpenningBalanceTable (custid, roleid, recommend, mrecommend, srecommend, winlost)
-		SELECT rpt.custid, CASE WHEN c.roleid = 0 THEN 1 ELSE c.roleid END AS roleid, c.recommend, c.mrecommend, c.srecommend, rpt.winlost
+		INSERT INTO #rptOpenningBalanceTable (custid, winlost)
+		SELECT rpt.custid, rpt.winlost
 		FROM (	
 			SELECT rpt.CustID, rpt.ClosingBalance AS winlost
 				, ROW_NUMBER() OVER (PARTITION BY rpt.CustID ORDER BY rpt.Winlostdate DESC) as Num
 			FROM dbo.rptStatement rpt WITH (NOLOCK) 
 			WHERE  Winlostdate >= @Saturday
 		) AS rpt
-			LEFT JOIN bodb02.dbo.custInfo c WITH (NOLOCK) ON rpt.custid = c.custid
 		WHERE rpt.Num = 1;
+
+		UPDATE t
+		SET t.recommend = c.recommend, t.mrecommend = c.mrecommend, t.srecommend = c.srecommend
+		,t.roleid = CASE WHEN c.roleid = 0 THEN 1 ELSE c.roleid END
+		FROM #rptOpenningBalanceTable t
+			INNER JOIN bodb02.dbo.custInfo c WITH (NOLOCK) ON t.custid = c.custid
 
 		IF EXISTS (SELECT 1 FROM #rptOpenningBalanceTable WHERE recommend IS NULL)
 			UPDATE t
