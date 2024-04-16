@@ -76,8 +76,8 @@ begin
 	from @__temp t 
 		inner join dbo.Match3rd m with(nolock) on t.matchid = m.Match3rdId
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
-		inner join dbo.Team3rd h with(nolock) on m.homeid = h.Team3rdId
-		inner join dbo.Team3rd a with(nolock) on m.homeid = a.Team3rdId
+		inner join dbo.Team3rd h with(nolock) on m.HomeId = h.Team3rdId
+		inner join dbo.Team3rd a with(nolock) on m.AwayId = a.Team3rdId
 		cross apply(
 			select top 1 productId
 			from dbo.SportBettypeMatrix sm with(nolock) where m.sporttype = sm.SportType
