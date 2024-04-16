@@ -86,6 +86,7 @@ AS
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
 		- 20240314@Eddie: Integrate UU Slots [RedmineID: #201098]
+		- 20240416@Evan: Integrate Saba Coins [RedmineID: #202281]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -374,6 +375,7 @@ BEGIN
 				WHEN (bettype BETWEEN 7601 AND 7700 AND bettype <> 7698) THEN 227 -- L22
 				WHEN bettype = 7698 THEN -227 -- L22 Promotion Prize
 				WHEN bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
+				WHEN bettype BETWEEN 11001 AND 11019 THEN 149 -- SABA Coins
 			ELSE 0 END,--SportType
 			SUM(CASE WHEN b.statusID NOT IN (101, 102, 103) THEN b.stake ELSE 0 END),--Turnover
 			SUM(CASE WHEN b.ruben = 0 THEN b.actual_stake ELSE 0 END),--Outstanding
@@ -385,6 +387,7 @@ BEGIN
 						AND (b.bettype NOT BETWEEN 17000 AND 17030)
 						AND (b.bettype NOT BETWEEN 8700 AND 8709)
 						AND (b.bettype NOT BETWEEN 1801 AND 1803)
+						AND (b.bettype NOT BETWEEN 11001 AND 11019)
 						THEN b.winlost - b.actual_stake
 					ELSE 0
 				END),--Winloss
@@ -400,6 +403,7 @@ BEGIN
 						OR (b.bettype BETWEEN 17000 AND 17030)
 						OR (b.bettype BETWEEN 8700 AND 8709)
 						OR (b.bettype BETWEEN 1801 AND 1803)
+						OR (b.bettype BETWEEN 11001 AND 11019)
 						THEN b.winlost - b.actual_stake
 					ELSE 0
 				END), -- Promotion
@@ -491,6 +495,7 @@ BEGIN
 				WHEN (bettype BETWEEN 7601 AND 7700 AND bettype <> 7698) THEN 227 -- L22
 				WHEN bettype = 7698 THEN -227 -- L22 Promotion Prize
 				WHEN bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
+				WHEN bettype BETWEEN 11001 AND 11019 THEN 149 -- SABA Coins
 				ELSE 0
 			END--SportType
 		OPTION (RECOMPILE, MAXDOP 8)
@@ -598,7 +603,7 @@ BEGIN
 			SUM(Adjustment),--Adjustment
 			SUM(Turnover),--Turnover
 			SUM(Outstanding),--Outstanding
-			SUM(CASE WHEN bettype NOT IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211, 157, -155, -227, -250) THEN Winloss ELSE 0 END),--Winloss
+			SUM(Winloss),--Winloss
 			SUM(Transfer3rd),--Transfer3rd
 			SUM(DrawGame),--DrawGame
 			SUM(Playercomm),--Playercomm
@@ -794,7 +799,7 @@ BEGIN
 			-1,
 			TurnOver,
 			DrawGame,
-			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211, 157, -155, -227, -250) THEN Promotion ELSE Winloss END AS Winloss,
+			CASE WHEN Bettype IN (246, -248, -244, -165, -150, -200, -243, -171, -173, -247, -211, 157, -155, -227, -250, 149) THEN Promotion ELSE Winloss END AS Winloss,
 			playercomm,
 			BetCount,
 			OutStanding,

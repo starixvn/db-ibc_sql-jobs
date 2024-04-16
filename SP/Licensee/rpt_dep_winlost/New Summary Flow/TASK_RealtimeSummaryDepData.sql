@@ -84,6 +84,7 @@ AS
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #200273]
 		- 20240314@Eddie: Integrate UU Slots and enhance performance [RedmineID: #201098]
+		- 20240416@Evan: Integrate Saba Coins [RedmineID: #202281]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -344,6 +345,7 @@ BEGIN
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)
 							AND (b.bettype NOT BETWEEN 8700 AND 8709)
 							AND (b.bettype NOT BETWEEN 1801 AND 1803)
+							AND (b.bettype NOT BETWEEN 11001 AND 11019)
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END),--Winloss
@@ -363,6 +365,7 @@ BEGIN
 							OR (b.bettype BETWEEN 17000 AND 17030)
 							OR (b.bettype BETWEEN 8700 AND 8709)
 							OR (b.bettype BETWEEN 1801 AND 1803)
+							OR (b.bettype BETWEEN 11001 AND 11019)
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END), -- Promotion
@@ -536,6 +539,7 @@ BEGIN
 							AND (b.bettype NOT BETWEEN 17000 AND 17030)  
 							AND (b.bettype NOT BETWEEN 8700 AND 8709) 
 							AND (b.bettype NOT BETWEEN 1801 AND 1803) 
+							AND (b.bettype NOT BETWEEN 11001 AND 11019) 
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END),--Winloss
@@ -555,7 +559,8 @@ BEGIN
 								OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 								OR (b.bettype BETWEEN 17000 AND 17030)
 								OR (b.bettype BETWEEN 8700 AND 8709)
-								OR (b.bettype BETWEEN 1801 AND 1803))
+								OR (b.bettype BETWEEN 1801 AND 1803)
+								OR (b.bettype BETWEEN 11001 AND 11019))
 							THEN b.winlost - b.actual_stake
 						ELSE 0
 					END), -- Promotion
@@ -913,6 +918,7 @@ BEGIN
 				WHEN (bettype BETWEEN 7601 AND 7700 AND bettype <> 7698) THEN 227 -- L22
 				WHEN bettype = 7698 THEN -227 -- L22 Promotion Prize
 				WHEN bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
+				WHEN bettype BETWEEN 11001 AND 11019 THEN 149 -- SABA Coins
 			ELSE 0 END,--SportType
 			SUM(TurnOver),--Turnover
 			SUM(DrawGame),--Draw game TO
@@ -920,7 +926,8 @@ BEGIN
 					WHEN bettype IN (4299, 4300, 4298, 4297, 3007, 1906, -150, 1698, 1699, 3898, 3899, -173, 4598, 4599, 4600, 2499, 8695, 3150, 7698)
 						OR (bettype BETWEEN 17000 AND 17030) 
 						OR (bettype BETWEEN 8700 AND 8709)
-						OR (bettype BETWEEN 1801 AND 1803) THEN Promotion
+						OR (bettype BETWEEN 1801 AND 1803)
+						OR (bettype BETWEEN 11001 AND 11019) THEN Promotion
 					ELSE Winloss
 				END),--Winloss
 			SUM(playercomm),--Playercomm
@@ -1006,6 +1013,7 @@ BEGIN
 				WHEN (bettype BETWEEN 7601 AND 7700 AND bettype <> 7698) THEN 227 -- L22
 				WHEN bettype = 7698 THEN -227 -- L22 Promotion Prize
 				WHEN bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
+				WHEN bettype BETWEEN 11001 AND 11019 THEN 149 -- SABA Coins
 				ELSE 0
 			END
 			
