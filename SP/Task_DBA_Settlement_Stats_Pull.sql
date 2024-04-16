@@ -100,10 +100,10 @@ begin
 		)sm
 	where t.eventTable = 2
 
-	insert into MonDB.dbo.Mon_Settlement_Stats([CaptureDate], [LogDate], [SportName], [GroupName], [TableType], [SiteDBGroupId], [AffectedTicket], [MatchCount], teamName)
-	select getdate(), max(logdate), sportName, groupName, tableType, siteDBGroupId, sum(affectedTicket), sum(matchCount), teamName
+	insert into MonDB.dbo.Mon_Settlement_Stats([CaptureDate], [LogDate], [SportName], [GroupName], [TableType], [SiteDBGroupId], [AffectedTicket], [MatchCount], teamName, matchid)
+	select getdate(), max(logdate), sportName, groupName, tableType, siteDBGroupId, sum(affectedTicket), sum(matchCount), teamName, matchid
 	from @__temp
-	group by sportName, groupName, tableType, siteDBGroupId, teamName
+	group by sportName, groupName, tableType, siteDBGroupId, teamName, matchid
 
 	delete from @__temp
 	goto loop_pick_more
