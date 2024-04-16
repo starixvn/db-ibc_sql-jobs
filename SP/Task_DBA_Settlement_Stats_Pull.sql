@@ -56,12 +56,13 @@ begin
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'Non Sports')
 		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
-		, teamName = isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '')
+		, teamName = case when h.teamname is null and a.teamname is null then l.leaguename else  isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '') end
 	from @__temp t 
 		inner join dbo.match m with(nolock) on t.matchid = m.matchid
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
-		inner join dbo.team h with(nolock) on m.homeid = h.teamid
-		inner join dbo.team a with(nolock) on m.homeid = a.teamid
+		inner join dbo.League l with(nolock) on m.leagueid = l.leagueid
+		left join dbo.team h with(nolock) on m.homeid = h.teamid
+		left join dbo.team a with(nolock) on m.homeid = a.teamid
 		cross apply(
 			select top 1 productId
 			from dbo.SportBettypeMatrix sm with(nolock) where m.sporttype = sm.SportType
