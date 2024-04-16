@@ -56,7 +56,7 @@ begin
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'Non Sports')
 		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
-		, teamName = case when h.teamname is null and a.teamname is null then null else  isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '') end
+		, teamName = case when h.teamname is null and a.teamname is null then '' else  isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '') end
 	from @__temp t 
 		inner join dbo.match m with(nolock) on t.matchid = m.matchid
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
@@ -72,7 +72,7 @@ begin
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'NonSports')
 		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
-		, teamName = case when h.teamname is null and a.teamname is null then null else  isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '') end
+		, teamName = case when h.teamname is null and a.teamname is null then '' else  isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '') end
 	from @__temp t 
 		inner join dbo.Match3rd m with(nolock) on t.matchid = m.Match3rdId
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
@@ -88,7 +88,7 @@ begin
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'NonSports')
 		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
-		, teamName = case when h.teamname is null then null else isnull(h.teamname, '') end
+		, teamName = case when h.teamname is null then '' else isnull(h.teamname, '') end
 	from @__temp t 
 		inner join dbo.outright m with(nolock) on t.matchid = m.orid
 		inner join dbo.League l with(nolock) on m.leagueid = l.leagueid
