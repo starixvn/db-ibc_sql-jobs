@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02,SBSETTLE-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
-alter procedure [dbo].[Task_DBA_Settlement_Stats_Pull]
+create procedure [dbo].[Task_DBA_Settlement_Stats_Pull]
 as
 /*
 	Created: Patrick@20240403	
@@ -56,11 +56,10 @@ begin
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'Non Sports')
 		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
-		, teamName = case when h.teamname is null and a.teamname is null then l.leaguename else  isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '') end
+		, teamName = case when h.teamname is null and a.teamname is null then null else  isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '') end
 	from @__temp t 
 		inner join dbo.match m with(nolock) on t.matchid = m.matchid
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
-		inner join dbo.League l with(nolock) on m.leagueid = l.leagueid
 		left join dbo.team h with(nolock) on m.homeid = h.teamid
 		left join dbo.team a with(nolock) on m.homeid = a.teamid
 		cross apply(
@@ -73,12 +72,12 @@ begin
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'NonSports')
 		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
-		, teamName = isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '')
+		, teamName = case when h.teamname is null and a.teamname is null then null else  isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '') end
 	from @__temp t 
 		inner join dbo.Match3rd m with(nolock) on t.matchid = m.Match3rdId
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
-		inner join dbo.Team3rd h with(nolock) on m.HomeId = h.Team3rdId
-		inner join dbo.Team3rd a with(nolock) on m.AwayId = a.Team3rdId
+		left join dbo.Team3rd h with(nolock) on m.HomeId = h.Team3rdId
+		left join dbo.Team3rd a with(nolock) on m.AwayId = a.Team3rdId
 		cross apply(
 			select top 1 productId
 			from dbo.SportBettypeMatrix sm with(nolock) where m.sporttype = sm.SportType
@@ -89,12 +88,12 @@ begin
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'NonSports')
 		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
-		, teamName = isnull(h.teamname, '')
+		, teamName = case when h.teamname is null then null else isnull(h.teamname, '') end
 	from @__temp t 
 		inner join dbo.outright m with(nolock) on t.matchid = m.orid
 		inner join dbo.League l with(nolock) on m.leagueid = l.leagueid
 		inner join dbo.Sports s with(nolock) on l.sporttype = s.SportType
-		inner join dbo.team h with(nolock) on m.teamid = h.teamid
+		left join dbo.team h with(nolock) on m.teamid = h.teamid
 		cross apply(
 			select top 1 productId
 			from dbo.SportBettypeMatrix sm with(nolock) where l.sporttype = sm.SportType
