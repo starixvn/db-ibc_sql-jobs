@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" isFunction="0" isNested="0"></info>*/
 USE [bodb_LicenseeReport]
 GO
 ALTER PROCEDURE [dbo].[GEN_rptBetting_Parlay] 
@@ -14,6 +14,7 @@ AS
 	- 20160726@Francis: Move SP to bodb_LicenseeReport - [Redmine: #60449]
     - 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	- 20210816@Sophia: add DBBAL [Redmine: #154300]
+	- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
 
 */
 BEGIN
@@ -87,7 +88,7 @@ BEGIN
 	FROM bodb02.dbo.bettrans b WITH (NOLOCK)
 		INNER JOIN bodb_Licensee.dbo.licenseecust lc WITH (NOLOCK)
 		ON b.Recommend = lc.CustID
-	WHERE b.bettype IN (9, 29, 2799)
+	WHERE b.bettype IN (9, 29, 2799, 10449)
 		AND b.MatchID > 0
 		AND b.custid > 0
 		AND b.statusid NOT IN (0, 101, 102, 121)

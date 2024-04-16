@@ -11,6 +11,7 @@ AS
 		- 20230209@Bobby: Created [RedmineID: #172604]
 		- 20230702@Evan: Support Saba Virtual Tennis [RedmineID: #190465]
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
+		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
 
 */
  
@@ -150,6 +151,7 @@ BEGIN
 						CASE 
 							WHEN b.matchid = 29 THEN -1		--Parlay Sport
 							WHEN b.matchid = 2799 THEN ISNULL(b.oddsid, @NASportType)
+							WHEN b.matchid = 10449 THEN 188 -- Parlay VS4
 							WHEN b.matchid = 999 THEN @NASportType	-- Odds Spread Adjustment
 							WHEN b.matchid = 0 AND b.bettype IN (1800,1801,1802,1803) THEN 250	-- AG Casino 
 							WHEN b.matchid = 0 AND b.bettype = 8000 THEN 221	-- Exchange
@@ -185,7 +187,7 @@ BEGIN
 						THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
 					ELSE b.statusID
 				END AS statusID,
-				ISNULL(CASE WHEN b.bettype IN(9,29) THEN b.livehomescore ELSE b.liveindicator END, 0) AS liveindicator
+				ISNULL(CASE WHEN b.bettype IN(9,29,2799,10449) THEN b.livehomescore ELSE b.liveindicator END, 0) AS liveindicator
 		) AS ck
 		
 	WHERE b.winlostdate = @winlostdate

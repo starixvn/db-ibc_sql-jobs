@@ -113,6 +113,7 @@ AS
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
 		- 20240314@Eddie: Integrate UU Slots and change metadata with isNested = "1" [RedmineID: #201098]
 		- 20240416@Evan: Integrate Saba Coins [RedmineID: #202281]
+		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -245,6 +246,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 			WHEN b.bettype = 5301 THEN 231 -- VS3 (old)
 			WHEN b.bettype BETWEEN 5302 AND 5399 THEN 178 -- LG (VS3)
+			WHEN b.bettype BETWEEN 10400 AND 10449 THEN 188 -- VS4
 			WHEN b.bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
@@ -382,6 +384,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 			WHEN b.bettype = 5301 THEN 231 -- VS3 (old)
 			WHEN b.bettype BETWEEN 5302 AND 5399 THEN 178 -- LG (VS3)
+			WHEN b.bettype BETWEEN 10400 AND 10449 THEN 188 -- VS4
 			WHEN b.bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 			WHEN b.bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 			WHEN b.bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG

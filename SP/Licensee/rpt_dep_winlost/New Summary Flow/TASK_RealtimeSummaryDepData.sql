@@ -85,6 +85,7 @@ AS
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #200273]
 		- 20240314@Eddie: Integrate UU Slots and enhance performance [RedmineID: #201098]
 		- 20240416@Evan: Integrate Saba Coins [RedmineID: #202281]
+		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
 
 	Input Params:
 		- @Winlostdate: The input Winlostdate to be summarized
@@ -906,6 +907,7 @@ BEGIN
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 				WHEN bettype = 5301  THEN 231 -- VS3 (old)
 				WHEN bettype BETWEEN 5302 AND 5399 THEN 178 -- LG (VS3)
+				WHEN bettype BETWEEN 10400 AND 10449 THEN 188 -- VS4
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG
@@ -1001,6 +1003,7 @@ BEGIN
 				WHEN bettype BETWEEN 7801 AND 7899 THEN 174 -- APM
 				WHEN bettype = 5301  THEN 231 -- VS3 (old)
 				WHEN bettype BETWEEN 5302 AND 5399 THEN 178 -- LG (VS3)
+				WHEN bettype BETWEEN 10400 AND 10449 THEN 188 -- VS4
 				WHEN bettype BETWEEN 7901 AND 7999 THEN 175 -- BTC
 				WHEN bettype BETWEEN 8201 AND 8299 THEN 176 -- FGG
 				WHEN bettype BETWEEN 5401 AND 5499 THEN 237 -- MXG

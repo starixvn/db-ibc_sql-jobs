@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptWinlostbyleague_Bettrans14]
 	@Date SMALLDATETIME
@@ -26,6 +26,7 @@ AS
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
 		- 20221214@Evan: Separate cashout by new column TicketType [RedmineID: #179083]
+		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
 */
 
 BEGIN
@@ -42,7 +43,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT ProductID, BetType, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 69)
+	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 69, 83)
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01'	-- half won/ half lose cut date
 
@@ -180,6 +181,7 @@ BEGIN
 		,CASE 
 			WHEN a.bettype IN (9, 29) THEN -9
 			WHEN a.bettype = 2799 THEN -2799
+			WHEN a.bettype = 10449 THEN -10449
 			WHEN a.bettype = 10 THEN ISNULL(ob.leagueid, -1)
 			WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238) THEN ISNULL(r.LeagueID, -1)
 			WHEN a.bettype BETWEEN 7901 AND 7999 THEN ISNULL(b3rd.league3rdId, -1)
@@ -206,6 +208,7 @@ BEGIN
 		,CASE 
 			WHEN a.bettype IN (9, 29) THEN -9
 			WHEN a.bettype = 2799 THEN -2799
+			WHEN a.bettype = 10449 THEN -10449
 			WHEN a.bettype = 10 THEN ISNULL(ob.leagueid, -1)
 			WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238) THEN ISNULL(r.LeagueID, -1)
 			WHEN a.bettype BETWEEN 7901 AND 7999 THEN ISNULL(b3rd.league3rdId, -1)
