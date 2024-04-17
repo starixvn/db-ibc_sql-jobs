@@ -61,7 +61,7 @@ begin
 		inner join dbo.match m with(nolock) on t.matchid = m.matchid
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
 		left join dbo.team h with(nolock) on m.homeid = h.teamid
-		left join dbo.team a with(nolock) on m.homeid = a.teamid
+		left join dbo.team a with(nolock) on m.awayid = a.teamid
 		cross apply(
 			select top 1 productId
 			from dbo.SportBettypeMatrix sm with(nolock) where m.sporttype = sm.SportType
