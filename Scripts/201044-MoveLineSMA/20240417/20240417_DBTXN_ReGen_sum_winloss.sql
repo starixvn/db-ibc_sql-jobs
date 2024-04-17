@@ -29,7 +29,7 @@ BEGIN
 	FROM (
 		SELECT DISTINCT c.custid
 		FROM CustDB.dbo.Customer c WITH(NOLOCK)
-		WHERE username IN ('6666AHK','SH-HK$', 'SH-RMB', 'MH-RMB', 'AH-RMB', '230RMB', '231RMB')
+		WHERE username IN ('SA-HK$', 'mhk', '6666AHK', 'SH-HK$', 'MH-HK$', 'SH-RMB', 'MH-RMB', 'AH-RMB', '230RMB', '231RMB', 'SS-RMB', 'MS-RMB', 'wsrmb')
 		) AS t;
 
 	SET @_Winlostdate = @CurrentBU_Date;
