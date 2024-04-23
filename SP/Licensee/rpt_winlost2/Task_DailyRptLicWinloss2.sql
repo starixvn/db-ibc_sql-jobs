@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="1"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2]
 	@WinLostDate SMALLDATETIME
@@ -729,5 +729,8 @@ BEGIN
 		,b.betfrom
 		,b.apositiontaking
 		,b.TicketType
+
+	DROP TABLE #SportBettype
+	
 END
 GO
