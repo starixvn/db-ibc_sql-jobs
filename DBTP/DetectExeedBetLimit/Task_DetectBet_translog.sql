@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb02" executers="bodbAdminNet" isFunction="0"></info>*/
+/*<info serverAlias="DBTP-bodb02" executers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DetectBet_translog]
 (	
 	@batchCount INT = 0
