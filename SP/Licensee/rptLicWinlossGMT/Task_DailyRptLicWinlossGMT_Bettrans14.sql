@@ -42,6 +42,7 @@ AS
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220708@Hogan: Support add new betfrom '}' [RedmineID: #174895]
 		- 20230602@Evan: Support add new betfrom '#'&'A000' [Redmine: #188811]
+		- 20230822@Evan: Integrate Parlay Boost - [RedmineID: #192238]
 */
 
 BEGIN
@@ -141,7 +142,7 @@ BEGIN
 				,c.mrecommend
 				,c.srecommend
 				,CASE 
-					WHEN b.betType = 999 THEN b.betType			--Licensee Spread Setting
+					WHEN b.betType IN (999, 998) THEN b.betType	--Licensee Spread Setting, Parlay Boost Adjustment
 					ELSE 0 
 				END BetType
 				,0 AS Sporttype
@@ -236,7 +237,7 @@ BEGIN
 				END
 				,b.betfrom
 				,CASE
-					WHEN b.betType = 999 THEN b.betType			--Licensee Spread Setting
+					WHEN b.betType IN (999, 998) THEN b.betType	--Licensee Spread Setting, Parlay Boost Adjustment
 					ELSE 0 
 				END 
 

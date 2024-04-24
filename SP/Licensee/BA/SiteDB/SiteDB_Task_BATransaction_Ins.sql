@@ -13,6 +13,7 @@ AS
 		- 20220724@Evan: Add SP for SiteDB  [Redmine: #175297]
 		- 20220929@Evan: Add missing bettype  [Redmine: #175297]
 		- 20220930@Danny: Add hint to enahance performance [Redmine: #178442]
+		- 20230822@Evan: Integrate Parlay Boost - [RedmineID: #192238]
 
 */
 
@@ -55,7 +56,7 @@ BEGIN
 		AND tpositiontaking = 0
 		AND (bettype < 901 OR bettype > 904)
 		AND (bettype < 911 OR bettype > 914)
-		AND bettype <> 999  --Exclude: Licensee Spread Setting
+		AND bettype NOT IN (999,998)  --Exclude: Licensee Spread Setting, Parlay Boost Adjustment
 	
 	IF @@ROWCOUNT <> 0
 	BEGIN

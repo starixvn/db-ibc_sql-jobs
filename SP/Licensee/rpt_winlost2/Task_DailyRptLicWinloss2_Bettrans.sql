@@ -113,6 +113,7 @@ AS
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
 		- 20240314@Eddie: Integrate UU Slots and change metadata with isNested = "1" [RedmineID: #201098]
 		- 20240416@Evan: Integrate Saba Coins [RedmineID: #202281]
+		- 20230822@Evan: Integrate Parlay Boost - [RedmineID: #192238]
 		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
@@ -185,6 +186,8 @@ BEGIN
 															OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 															OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 															OR (b.bettype BETWEEN 8700 AND 8709 AND b.matchid = 157)) THEN 0
+														WHEN b.bettype = 29 AND b.oddsspread = 2 AND b.statusID = 112 THEN 
+															ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bba)[1]', 'VARCHAR(50)') AS MONEY),0)
 														ELSE ABS(b.winlost - b.actual_stake)
 													END) -- exclude Promotion Prize, Tip ticket from BetEffective
 			ELSE 0
@@ -262,14 +265,15 @@ BEGIN
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
 		,CASE
-			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 7698)
+			WHEN b.bettype IN (71, 72, 1000, 901, 902, 903, 904, 911, 912, 913, 914, 1706, 4300, 4299, 4298, 4297, 3007, 1906, 999, 998, 1698, 1699, 3150, 3898, 3899, 4598, 4599, 4600, 2499, 8695, 7698)
 				OR (b.bettype BETWEEN 1611 AND 1697 AND b.matchid = 150)
 				OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 				OR (b.bettype BETWEEN 17000 AND 17030)  
-				OR (b.bettype BETWEEN 8700 AND 8709) 
+				OR (b.bettype BETWEEN 8700 AND 8709)
 				OR (b.bettype BETWEEN 1801 AND 1803)
 				OR (b.bettype BETWEEN 11001 AND 11019) THEN b.bettype
-			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
+			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29							-- God Of Fortune
+			WHEN b.bettype = 29 AND b.oddsspread = 2 AND b.statusID = 112 THEN -1		-- Parlay Boost
 			ELSE 0
 		END bettype
 		 --114: half win, 115: half lose
@@ -306,6 +310,9 @@ BEGIN
 						OR (b.bettype = 29 AND b.oddsspread = 1))
 					AND BA.transid IS NULL THEN b.actual_stake
 				WHEN b.bettype IN (4297, 1698, 3898, 4599) THEN b.oddsspread
+				WHEN b.bettype = 29 AND b.oddsspread = 2 AND b.statusID = 112 THEN 
+					ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bba)[1]', 'VARCHAR(50)') AS MONEY),0) * 
+					ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@lbbs)[1]', 'VARCHAR(50)') AS MONEY),0)
 				ELSE 0
 			END) AS BuyBackAmt
 		,SUM(CASE
@@ -406,14 +413,15 @@ BEGIN
 				OR (b.bettype BETWEEN 8700 AND 8709)
 				OR (b.bettype BETWEEN 1801 AND 1803)
 				OR (b.bettype BETWEEN 11001 AND 11019) THEN b.bettype
-			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
+			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29						-- God Of Fortune
+			WHEN b.bettype = 29 AND b.oddsspread = 2 AND b.statusID = 112 THEN -1	-- Parlay Boost
 			ELSE 0
 		END
 		,CASE
 			WHEN b.winlostdate >= @HWHLCutDate
 				AND b.statusID IN (112, 113)
 				AND b.modds IN (-0.25, 0.25)
-				AND (b.bettype < 999						-- Sportsbook
+				AND (b.bettype < 999					-- Sportsbook
 					OR b.bettype BETWEEN 1301 AND 1399
 					OR b.bettype BETWEEN 9001 AND 9399
 					OR b.bettype BETWEEN 9400 AND 9998

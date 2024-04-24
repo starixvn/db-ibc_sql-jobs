@@ -85,6 +85,7 @@ AS
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #200273]
 		- 20240314@Eddie: Integrate UU Slots and enhance performance [RedmineID: #201098]
 		- 20240416@Evan: Integrate Saba Coins [RedmineID: #202281]
+		- 20230822@Evan: Integrate Parlay Boost - [RedmineID: #192238]
 		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
 
 	Input Params:
@@ -266,7 +267,7 @@ BEGIN
 	--Get agent list in deposit system
 	INSERT INTO @recommend (recommend)
 	SELECT c.custid
-	FROM dbo.Customer c WITH (NOLOCK)
+	FROM dbo.Customer c WITH(NOLOCK)
 		INNER JOIN dbo.Dep_CustSuper cs WITH(NOLOCK) ON c.srecommend = cs.custid
 	WHERE c.roleid = 2
 
@@ -379,7 +380,7 @@ BEGIN
 			WHERE b.winlostdate = @Winlostdate
 				AND b.matchid >= 0
 				AND c.roleid = 1
-				AND b.betType <> 999 --Licensee Spread Setting
+				AND b.betType NOT IN (999,998) --Licensee Spread Setting, Parlay Boost Adjustment
 				AND	winlostdate > @MoveBetsDay
 			GROUP BY b.custid,
 				CASE
@@ -574,7 +575,7 @@ BEGIN
 			WHERE b.winlostdate >= @Winlostdate
 				AND b.matchid >= 0
 				AND c.roleid = 1
-				AND b.betType <> 999 --Licensee Spread Setting
+				AND b.betType NOT IN (999,998) --Licensee Spread Setting, Parlay Boost Adjustment
 				AND winlostdate > @MoveBetsDay
 			GROUP BY b.custid,
 				CASE

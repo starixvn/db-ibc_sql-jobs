@@ -84,6 +84,7 @@ AS
 		- 20231026@Evan: Support 12bet team get TO without Void/reject/refund [RedmineID: #195784]
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
+		- 20230822@Evan: Integrate Parlay Boost - [RedmineID: #192238]
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
 		- 20240314@Eddie: Integrate UU Slots [RedmineID: #201098]
 		- 20240416@Evan: Integrate Saba Coins [RedmineID: #202281]
@@ -421,7 +422,7 @@ BEGIN
 			OPTION(OPTIMIZE FOR (@n = 1)) --Trick SQL optimizer to use nested loop
 		*/
 		WHERE b.winlostdate = @WinLostDate
-			AND b.bettype <> 999
+			AND b.bettype NOT IN (999,998)
 		GROUP BY
 			b.custid,
 			CASE

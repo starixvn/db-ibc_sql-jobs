@@ -14,7 +14,8 @@ AS
 		- 20230724@Evan: Enhance SP - Troubleshoot CHECKSUM_AGG [RedmineID: #191669]
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
 		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
-		
+		- 20230822@Evan: Integrate Parlay Boost - [RedmineID: #192238]
+
 */
 BEGIN  
 	SET NOCOUNT ON;
@@ -42,6 +43,7 @@ BEGIN
 		,[AWinlost]			MONEY
 		,[PComm]			MONEY
 		,[AComm]			MONEY
+		,[ExtraInfo]		VARCHAR(4000)
 	);
 	CREATE CLUSTERED INDEX CIX_tmpRptData ON #tmpRptData(
 		[CustId] 		
@@ -113,120 +115,156 @@ BEGIN
 			) AS t
 		WHERE @winlostdate >= ISNULL(saba.CutOffDate ,@winlostdate)
 		  )
+	,  CTE_Data AS 
+	(
+		SELECT b.recommend
+			 , b.winlostdate
+			 , s.ProductID
+			 , ba.IsBA
+			 , ba.IsParlayBoost
+			 , s.Product3rdID
+			 , ck.Sporttype
+			 , s.BetType
+			 , b.custid
+			 , b.statusID
+			 , ck.LiveIndicator
+			 , ck.LeagueGroupId
+			 , ck.TicketType
+			 , b.betfrom
+			 , b.apositiontaking
+			 , b.actual_stake
+			 , b.Winlost
+			 , ck.Turnover
+			 , ck.NetTurnover
+			 , b.awinlost
+			 , b.playercomm 
+			 , b.comm
+			 , pb.bba
+			 , pb.lbbs
+		FROM [bodb02].[dbo].[bettrans14] b WITH(NOLOCK)
+				--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
+				INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
+				INNER JOIN #tmpBettype s ON s.BetType = b.bettype AND s.RefTable NOT IN (1,2)
+				LEFT JOIN [bodb02].dbo.match14 m WITH(NOLOCK) ON b.matchid = m.matchid
+				LEFT JOIN [bodb02].[dbo].[Match3rd14] m3rd WITH(NOLOCK) ON m3rd.Match3rdId = b.matchid
+				LEFT JOIN [bodb02].dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid 
+				LEFT JOIN CTE_SabaSportRef sbf ON sbf.SportType = l.sporttype AND sbf.LeagueGroupID = l.LeagueGroupID
+				LEFT JOIN [bodb02].dbo.outright14 o WITH(NOLOCK) ON b.matchid = o.orid
+				LEFT JOIN [bodb02].dbo.League lo WITH (NOLOCK) ON lo.leagueid = o.leagueid
+				LEFT JOIN [bodb02].dbo.VSRaceInfo14 vs WITH(NOLOCK) ON b.matchid = vs.EventID
+				LEFT JOIN [bodb_licensee].dbo.LicenseeBATransaction_bk AS lba WITH (NOLOCK) ON b.transid = lba.transid
+			OUTER APPLY (
+				SELECT 
+					IIF(lba.TransID IS NOT NULL, 1, 0) AS IsBA,
+					IIF(b.StatusId = 112 AND b.Bettype = 29 AND b.oddsspread = 2, 1, 0) AS IsParlayBoost
+			) AS ba
+			OUTER APPLY (
+				SELECT 
+					IIF(IsParlayBoost = 1, ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@bba)[1]', 'VARCHAR(50)') AS MONEY),0), 0) AS bba,
+					IIF(IsParlayBoost = 1, ISNULL(TRY_CAST(TRY_CAST(ExtraInfo AS XML).value('(/p1/@lbbs)[1]', 'VARCHAR(50)') AS MONEY),0), 0) AS lbbs
+			) AS pb
+			OUTER APPLY (
+				SELECT 
+					ABS(b.[stake]) AS Turnover,
+					CASE
+						WHEN s.RefTable IN (1,2) THEN 0 -- Gaming IN bettransRnG/bettransLC
+						WHEN s.ProductID = 1 AND b.statusID IN (111) THEN 0
+						WHEN s.ProductID = 1 AND b.statusID IN (112, 113) AND ABS(b.modds) = 0.25 THEN ABS(stake) / 2
+						ELSE ABS(b.stake)
+					END AS NetTurnover,
+					CASE 
+						WHEN s.EventType = 0 THEN
+							CASE 
+								WHEN b.matchid = 29 THEN -1		--Parlay Sport
+								WHEN b.matchid = 2799 THEN ISNULL(b.oddsid, @NASportType)
+							WHEN b.matchid = 10449 THEN 188 -- Parlay VS4
+								WHEN b.matchid = 0 AND b.bettype IN (1800,1801,1802,1803)THEN 250	-- AG Casino 
+								WHEN b.matchid = 0 AND b.bettype = 8000 THEN 221	-- Exchange
+								WHEN b.matchid IN (999,998) THEN @NASportType	-- Odds Spread Adjustment , Parlay Boost Adjustment
+								ELSE ISNULL(b.matchid, @NASportType)
+							END
+						WHEN s.EventType = 1 THEN ISNULL(m.sporttype, @NASportType)
+						WHEN s.EventType = 2 THEN ISNULL(lo.sporttype, @NASportType)
+						WHEN s.EventType = 3 THEN ISNULL(vs.SportType, @NASportType)
+						WHEN s.EventType = 5 THEN ISNULL(m3rd.Sporttype, @NASportType)
+						ELSE @NASportType
+					END AS SportType,
+					IIF(b.betdaqid <> -2, ISNULL(sbf.LeagueGroupID, 0), 0) AS LeagueGroupID, -- Saba Sports
+					CASE
+						WHEN s.ProductId = 1 AND s.EventType = 1 AND b.betdaqid = -2 THEN 1 -- Castout
+						ELSE 0
+					END AS TicketType,
+					CASE
+						WHEN 
+							b.statusID IN (112, 113)
+							AND ABS(b.modds) =0.25
+							AND (b.bettype < 999
+								OR b.bettype BETWEEN 1301 AND 1399
+								OR b.bettype BETWEEN 9001 AND 9399
+								OR b.bettype BETWEEN 9400 AND 9998
+								OR b.bettype BETWEEN 3900 AND 3999)	-- Sportsbook
+							AND b.bettype NOT IN (29, 38, 911, 912, 913, 914)  --- Parlay, betbuilder, Cashout
+							AND b.bettype NOT BETWEEN 81 AND 120
+							THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
+						WHEN 
+							b.statusID IN (112, 113)
+							AND b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
+							AND ABS(b.modds) = 0.25
+							THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
+						ELSE b.statusID
+					END AS statusID,
+				ISNULL(CASE WHEN b.bettype IN(9,29,2799,10449) THEN b.livehomescore ELSE b.liveindicator END, 0) AS liveindicator
+			) AS ck
+		
+		WHERE b.winlostdate = @winlostdate
+			AND b.statusID IN (111,112,113) 
+	)
 	INSERT INTO #tmpRptData
 	SELECT 
 		b.Recommend,
 		b.WinlostDate,
 		CASE 
-			WHEN s.ProductID = 1 AND ba.IsBA = 0 THEN 0
-			WHEN s.ProductID = 1 AND ba.IsBA = 1 THEN 3 
-			ELSE s.Product3rdID 
+			WHEN b.ProductID = 1 AND b.IsBA = 0 THEN 0
+			WHEN b.ProductID = 1 AND b.IsBA = 1 THEN 3 
+			ELSE b.Product3rdID 
 		END AS Product3rdId,
-		ck.Sporttype,
-		s.Bettype,
+		b.Sporttype,
+		b.Bettype,
 		b.CustId,
 		b.StatusId,
-		ck.LiveIndicator,
-		ck.LeagueGroupId,
-		ck.TicketType,
+		b.LiveIndicator,
+		b.LeagueGroupId,
+		b.TicketType,
 		b.Betfrom,
 		b.APositiontaking
 		----------------------
 		,SUM(1) AS BetCount
-		,SUM(ABS(ck.Turnover)) AS Turnover
-		,SUM(ck.NetTurnover) AS NetTurnover
-		,SUM(winlost-actual_stake) AS Winlost
+		,SUM(ABS(b.Turnover)) AS Turnover
+		,SUM(b.NetTurnover) AS NetTurnover
+		,SUM(b.winlost-b.actual_stake) AS Winlost
 		,SUM(b.awinlost) AS AWinlost
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.comm) AS [AComm]
-	FROM [bodb02].[dbo].[bettrans14] b WITH(NOLOCK)
-		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
-		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
-		INNER JOIN #tmpBettype s ON s.BetType = b.bettype AND s.RefTable NOT IN (1,2)
-		LEFT JOIN [bodb02].dbo.match14 m WITH(NOLOCK) ON b.matchid = m.matchid
-		LEFT JOIN [bodb02].[dbo].[Match3rd14] m3rd WITH(NOLOCK) ON m3rd.Match3rdId = b.matchid
-		LEFT JOIN [bodb02].dbo.League l WITH(NOLOCK) ON m.leagueid = l.leagueid 
-		LEFT JOIN CTE_SabaSportRef sbf ON sbf.SportType = l.sporttype AND sbf.LeagueGroupID = l.LeagueGroupID
-		LEFT JOIN [bodb02].dbo.outright14 o WITH(NOLOCK) ON b.matchid = o.orid
-		LEFT JOIN [bodb02].dbo.League lo WITH (NOLOCK) ON lo.leagueid = o.leagueid
-		LEFT JOIN [bodb02].dbo.VSRaceInfo14 vs WITH(NOLOCK) ON b.matchid = vs.EventID
-		LEFT JOIN [bodb_licensee].dbo.LicenseeBATransaction_bk AS lba WITH (NOLOCK) ON b.transid = lba.transid
-		OUTER APPLY (
-			SELECT 
-				IIF(lba.TransID IS NOT NULL, 1, 0) AS IsBA
-		) AS ba
-		OUTER APPLY (
-			SELECT 
-				ABS(b.[stake]) AS Turnover,
-				CASE
-					WHEN s.RefTable IN (1,2) THEN 0 -- Gaming IN bettransRnG/bettransLC
-					WHEN s.ProductID = 1 AND b.statusID IN (111) THEN 0
-					WHEN s.ProductID = 1 AND b.statusID IN (112, 113) AND ABS(b.modds) = 0.25 THEN ABS(stake) / 2
-					ELSE ABS(b.stake)
-				END AS NetTurnover,
-				CASE 
-					WHEN s.EventType = 0 THEN
-						CASE 
-							WHEN b.matchid = 29 THEN -1		--Parlay Sport
-							WHEN b.matchid = 2799 THEN ISNULL(b.oddsid, @NASportType)
-							WHEN b.matchid = 10449 THEN 188 -- Parlay VS4
-							WHEN b.matchid = 999 THEN @NASportType	-- Odds Spread Adjustment
-							WHEN b.matchid = 0 AND b.bettype IN (1800,1801,1802,1803)THEN 250	-- AG Casino 
-							WHEN b.matchid = 0 AND b.bettype = 8000 THEN 221	-- Exchange
-							ELSE ISNULL(b.matchid, @NASportType)
-						END
-					WHEN s.EventType = 1 THEN ISNULL(m.sporttype, @NASportType)
-					WHEN s.EventType = 2 THEN ISNULL(lo.sporttype, @NASportType)
-					WHEN s.EventType = 3 THEN ISNULL(vs.SportType, @NASportType)
-					WHEN s.EventType = 5 THEN ISNULL(m3rd.Sporttype, @NASportType)
-					ELSE @NASportType
-				END AS SportType,
-				IIF(b.betdaqid <> -2, ISNULL(sbf.LeagueGroupID, 0), 0) AS LeagueGroupID, -- Saba Sports
-				CASE
-					WHEN s.ProductId = 1 AND s.EventType = 1 AND b.betdaqid = -2 THEN 1 -- Castout
-					ELSE 0
-				END AS TicketType,
-				CASE
-					WHEN 
-						b.statusID IN (112, 113)
-						AND ABS(b.modds) =0.25
-						AND (b.bettype < 999
-							OR b.bettype BETWEEN 1301 AND 1399
-							OR b.bettype BETWEEN 9001 AND 9399
-							OR b.bettype BETWEEN 9400 AND 9998
-							OR b.bettype BETWEEN 3900 AND 3999)	-- Sportsbook
-						AND b.bettype NOT IN (29, 38, 911, 912, 913, 914)  --- Parlay, betbuilder, Cashout
-						AND b.bettype NOT BETWEEN 81 AND 120
-						THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
-					WHEN 
-						b.statusID IN (112, 113)
-						AND b.bettype IN (1, 3, 7, 8, 17, 18, 124, 125, 482, 483, 484, 485)
-						AND ABS(b.modds) = 0.25
-						THEN CASE WHEN b.statusID = 112 THEN 114 ELSE 115 END
-					ELSE b.statusID
-				END AS statusID,
-				ISNULL(CASE WHEN b.bettype IN(9,29,2799,10449) THEN b.livehomescore ELSE b.liveindicator END, 0) AS liveindicator
-		) AS ck
-		
-	WHERE b.winlostdate = @winlostdate
-		AND b.statusID IN (111,112,113)
+		,CASE WHEN b.IsParlayBoost = 1 AND SUM(bba) > 0 THEN (SELECT SUM(bba) bba, SUM(lbbs * bba) lsbb FOR JSON PATH, WITHOUT_ARRAY_WRAPPER) ELSE '' END AS ExtraInfo
+	FROM CTE_Data b 
 	GROUP BY 
 		b.Recommend,
 		b.WinlostDate,
 		CASE 
-			WHEN s.ProductID = 1 AND ba.IsBA = 0 THEN 0
-			WHEN s.ProductID = 1 AND ba.IsBA = 1 THEN 3 
-			ELSE s.Product3rdID 
+			WHEN b.ProductID = 1 AND b.IsBA = 0 THEN 0
+			WHEN b.ProductID = 1 AND b.IsBA = 1 THEN 3 
+			ELSE b.Product3rdID 
 		END,
-		ck.Sporttype,
-		s.Bettype,
+		b.Sporttype,
+		b.Bettype,
 		b.CustId,
 		b.StatusId,
-		ck.LiveIndicator,
-		ck.LeagueGroupId,
-		ck.TicketType,
+		b.LiveIndicator,
+		b.LeagueGroupId,
+		b.TicketType,
 		b.Betfrom,
-		b.APositiontaking
+		b.APositiontaking,
+		b.IsParlayBoost
 
 	PRINT 'GEN >> bettransRnG14';
 	INSERT INTO #tmpRptData
@@ -251,6 +289,7 @@ BEGIN
 		,SUM(b.awinlost) AS AWinlost
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.comm) AS [AComm]
+		,'' AS ExtraInfo
 	FROM [bodb02].[dbo].[bettransRnG14] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
@@ -292,6 +331,7 @@ BEGIN
 		,SUM(b.awinlost) AS AWinlost
 		,SUM(b.playercomm) AS [PComm]
 		,SUM(b.comm) AS [AComm]
+		,'' AS ExtraInfo
 	FROM [bodb02].[dbo].[bettransLC14] b WITH(NOLOCK)
 		--INNER JOIN bodb02.dbo.Dep_CustSuper pl WITH(NOLOCK) on pl.custid = b.srecommend
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
@@ -311,7 +351,7 @@ BEGIN
 		b.APositiontaking;
 		
 	DECLARE @HasDiff BIT;
-	
+
 	--TODO: CHECK 
 	DROP TABLE IF EXISTS #tmpDiffAgency;
 	CREATE TABLE #tmpDiffAgency(recommend INT, CustId INT PRIMARY KEY, DiffFlag BIT /*1: Source, 0: Target*/);
@@ -321,9 +361,11 @@ BEGIN
 	           ,b.[CustId]
 			   ,CHECKSUM_AGG(CHECKSUM(CONCAT_WS('|',[Product3rdId],[Sporttype], 
 							[Bettype], [StatusId], [LiveIndicator], [LeagueGroupId],
-                            [TicketType], [Betfrom], [APositiontaking],
-                            [BetCount], [Turnover], [NetTurnover], [Winlost],
-                            [AWinlost], [PComm], [AComm]))) AS CheckSumData
+                            [TicketType], [Betfrom], 
+							ISNULL([APositiontaking],0),ISNULL([BetCount],0),
+							ISNULL([Turnover],0),ISNULL([NetTurnover],0),
+							ISNULL([Winlost],0),ISNULL([AWinlost],0),
+							ISNULL([PComm],0),ISNULL([AComm],0),ISNULL(b.ExtraInfo,'')))) AS CheckSumData
 		FROM [dbo].[rptLicenseeWinloss] b WITH(NOLOCK)
 		INNER JOIN #tmpAgency pl WITH(NOLOCK) on pl.recommend = b.recommend
 		WHERE b.winlostdate = @winlostdate
@@ -339,9 +381,10 @@ BEGIN
 	           ,[CustId]
 			   ,CHECKSUM_AGG(CHECKSUM(CONCAT_WS('|',[Product3rdId],[Sporttype], 
 							[Bettype], [StatusId], [LiveIndicator], [LeagueGroupId],
-                            [TicketType], [Betfrom], [APositiontaking],
-                            [BetCount], [Turnover], [NetTurnover], [Winlost],
-                            [AWinlost], [PComm], [AComm]))) AS CheckSumData
+                            [TicketType], [Betfrom], ISNULL([APositiontaking],0),ISNULL([BetCount],0),
+							ISNULL([Turnover],0),ISNULL([NetTurnover],0),
+							ISNULL([Winlost],0),ISNULL([AWinlost],0),
+							ISNULL([PComm],0),ISNULL([AComm],0),ISNULL(ExtraInfo,'')))) AS CheckSumData
 			FROM #tmpRptData
 			GROUP BY [Recommend], [CustId]
 		) AS b14
@@ -370,7 +413,7 @@ BEGIN
 	IF @HasDiff = 1 AND @IsCheckDataOnly = 0
 	BEGIN
 		PRINT 'CheckAndCorrect on bettrans14 has been running on that day ' + FORMAT(@winlostdate, 'yyyy-MM-dd');
-
+		SELECT * FROM DataCheckingLog WHERE TableName='rptLicenseeWinloss'
 		-- TODO: DataCheckingLog
 		-- Save CustID into BetTypeId for quick checking
 		INSERT INTO dbo.DataCheckingLog(WinlostDate, SPName, TableName, BetTypeId, IsSource, ExtraInfo)
@@ -399,6 +442,7 @@ BEGIN
 				   ,[AWinlost]
 				   ,[PComm]
 				   ,[AComm]
+				   ,[ExtraInfo]
 				FROM dbo.rptLicenseeWinloss rpt WITH(NOLOCK) 
 				WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
 				FOR JSON PATH
@@ -422,6 +466,7 @@ BEGIN
 				   ,[AWinlost]
 				   ,[PComm]
 				   ,[AComm]
+				   ,[ExtraInfo]
 				FROM #tmpRptData rpt 
 				WHERE rpt.CustId = tmp.CustId AND rpt.WinlostDate = @winlostdate
 				FOR JSON PATH
@@ -455,6 +500,7 @@ BEGIN
 	           ,[AWinlost]
 	           ,[PComm]
 	           ,[AComm]
+	           ,[ExtraInfo]
 			  )
 		SELECT rpt.[Recommend]
 	           ,[WinlostDate]
@@ -475,6 +521,7 @@ BEGIN
 	           ,[AWinlost]
 	           ,[PComm]
 	           ,[AComm]
+	           ,[ExtraInfo]
 		FROM #tmpRptData rpt
 		INNER JOIN #tmpDiffAgency a ON a.Recommend = rpt.Recommend AND a.CustId = rpt.CustId
 		WHERE a.DiffFlag = 1;
