@@ -1,5 +1,5 @@
 /*<info serverAlias="DBRMS-bodb_RMS" isFunction="0" isNested="0"></info>*/
-CREATE PROCEDURE [dbo].[Task_RMS_MBU_SumData_Job]
+ALTER PROCEDURE [dbo].[Task_RMS_MBU_SumData_Job]
 AS
 
 /*
@@ -11,6 +11,7 @@ AS
 		- 20200512@Percy: Initialize SP [RedmineID: #130275]
 		- 20200601@Percy: Add rmSumByLeague & rmSumByBettype [RedmineID: #135326]
 		- 20201214@Danny: Separate Data of Virtual Soccer & Virtual Basketball [RedmineID: #145926]
+		- 20231228@Cherry: Add rmSumByEventBettype (#197684)
 */
 
 BEGIN
@@ -20,8 +21,8 @@ BEGIN
 	DECLARE @winlostdate SMALLDATETIME, @ErrCode INT, @ErrMsg NVARCHAR(4000)
 	DECLARE @tblErrMsg TABLE (TableName VARCHAR(300), ErrMsg VARCHAR(4000))
 	
-	-- Run every 30s
-	-- rmSumByLeague/rmSumByBettype
+	-- Run every 30mins
+	-- rmSumByLeague/rmSumByBettype/rmSumByEventBettype
 	BEGIN
 		SELECT @FromDate = NULL, @ToDate = NULL, @winlostdate = NULL, @ErrCode = 0, @ErrMsg = ''
 
@@ -73,6 +74,28 @@ BEGIN
 
 			SELECT @winlostdate = DATEADD(DAY, 1, @winlostdate)
 		END
+
+		-- rmSumByEventBettype
+		SELECT  @FromDate = @BalanceUpDay, @ToDate = CONVERT(DATE, GETDATE())
+
+		SELECT @winlostdate = @FromDate
+		WHILE  @winlostdate <= @ToDate
+		BEGIN
+			SELECT @ErrCode = 0, @ErrMsg = ''
+
+			EXEC dbo.Task_RMS_SumData_rmSumByEventBettype @winlostdate = @winlostdate, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
+			
+			IF @ErrCode > 0
+			BEGIN
+				INSERT INTO @tblErrMsg (TableName, ErrMsg)
+				SELECT 'rmSumByEventBettype', 'From winlostdate = ''''' + CONVERT(VARCHAR(10), @winlostdate, 120) + '''' + ' - ' + ISNULL(@ErrMsg , '')
+
+				BREAK
+			END
+
+			SELECT @winlostdate = DATEADD(DAY, 1, @winlostdate)
+		END
+
 	END
 
 	-- Run daily

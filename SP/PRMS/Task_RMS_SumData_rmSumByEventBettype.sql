@@ -1,0 +1,194 @@
+/*<info serverAlias="DBRMS-bodb_RMS" isFunction="0" isNested="1"></info>*/
+ALTER PROCEDURE [dbo].[Task_RMS_SumData_rmSumByEventBettype]
+	@winlostdate	SMALLDATETIME
+	,@ErrCode		INT = 0 OUTPUT
+	,@ErrMsg		VARCHAR(4000) = '' OUTPUT
+AS
+
+/*
+	Created: 20231228@Cherry
+	DB: DBRMS-bodb_RMS
+	Task: RMS - Sum data of rmSumByEventBettype
+
+	Revisions:
+		- 20231228@Cherry: Initialize SP [RedmineID: #197684]
+
+*/
+
+BEGIN
+	SET NOCOUNT ON
+
+	DECLARE @WLDate DATE
+	SELECT  @WLDate = @winlostdate
+
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC bodb02.dbo.Age_SelBalanceUpDay
+
+	DECLARE @BalanceUpDay SMALLDATETIME, @MoveBetsDay SMALLDATETIME
+	SELECT  @BalanceUpDay = BalanceUpDay, @MoveBetsDay = MoveBetsDay FROM @MBBU
+
+	IF @winlostdate < @BalanceUpDay
+		RETURN
+
+	CREATE TABLE #rmSumByEventBettype
+	(
+		bettype				SMALLINT
+		,ParlayType			TINYINT
+		,LeagueId			INT
+		,MatchId			INT
+		,Betteam			NVARCHAR(10)
+		,IsDeposit			BIT
+		,TransList			VARBINARY(MAX)
+		,BetCount			INT
+		,WonCount			INT
+		,LoseCount			INT
+		,DrawCount			INT
+		,MainBetCount		INT
+		,MainWonCount		INT
+		,MainLoseCount		INT
+		,MainDrawCount		INT
+		,MainStake			MONEY
+		,MainTurnover		MONEY
+		,MainTurnoverNoDraw	MONEY
+		,MainMemberWinloss	MONEY
+		,MainMemberComm		MONEY
+		,MainHouseWinloss	MONEY
+	)
+
+	CREATE TABLE #bettrans (transid BIGINT, refno BIGINT, ParlayType TINYINT, IsDeposit BIT, statusID TINYINT, TotalSelection SMALLMONEY, stake MONEY, winloss MONEY, playercomm MONEY, HouseWinloss MONEY)
+	CREATE TABLE #bettransm (refno BIGINT, bettype SMALLINT, leagueid INT, matchid INT, betteam NVARCHAR(10), statusID TINYINT)
+
+	IF @winlostdate > @MoveBetsDay
+	BEGIN
+		INSERT INTO #bettrans (transid, refno, ParlayType, IsDeposit, statusID, TotalSelection, stake, winloss, playercomm, HouseWinloss)
+		SELECT transid, refno, CASE WHEN betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, statusID, hdp2,
+			stake*actualrate,(winlost-actual_stake)*actualrate, playercomm*actualrate, 
+		CASE WHEN tpositiontaking = 1 THEN 0 ELSE (-(winlost-actual_stake)*(1-tpositiontaking-CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8)))-scomm+scomm*CAST(ISNULL(epositiontaking, 0) AS DECIMAL(9,8))/(1 - tpositiontaking))*actualrate END
+		FROM dbo.rmBettrans r WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
+			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+		WHERE r.winlostdate = @winlostdate
+			AND r.bettype = 29
+			AND r.liveawayscore IN (1,2, 3) -- soccer
+			AND r.statusID IN (111, 112, 113, 101, 102)
+			AND r.currency <> 20
+	END
+	ELSE
+	BEGIN
+		INSERT INTO #bettrans (transid, refno, ParlayType, IsDeposit, statusID, TotalSelection, stake, winloss, playercomm, HouseWinloss)
+		SELECT r.transid, r.refno, CASE WHEN r.betteam = N'1' THEN 2 ELSE 3 END, CASE WHEN s.Site = 'Saba789' THEN 0 ELSE s.isDeposit END, 
+			r.statusID, r.hdp2, r.stake*r.actualrate, (r.winlost-r.actual_stake)*r.actualrate, r.playercomm*r.actualrate, 
+		CASE WHEN r.tpositiontaking = 1 THEN 0 ELSE (-(r.winlost-r.actual_stake)*(1-r.tpositiontaking-CAST(ISNULL(r.epositiontaking, 0) AS DECIMAL(9,8)))-r.scomm+r.scomm*CAST(ISNULL(r.epositiontaking, 0) AS DECIMAL(9,8))/(1 - r.tpositiontaking))*r.actualrate END
+		FROM dbo.rmBettrans_Old r WITH (NOLOCK)
+			INNER JOIN bodb02.dbo.Customer c WITH (NOLOCK) ON r.recommend = c.custid
+			INNER JOIN bodb02.dbo.Site s WITH (NOLOCK) ON c.site = s.site
+			LEFT JOIN #bettrans b ON r.transid = b.transid
+		WHERE r.winlostdate = @winlostdate
+			AND r.bettype = 29
+			AND r.liveawayscore IN (1, 2, 3) -- soccer
+			AND r.statusID IN (111, 112, 113, 101, 102)
+			AND r.currency <> 20
+			AND b.transid IS NULL
+	END		
+       
+	INSERT INTO #bettransm (refno, bettype, leagueid, matchid, betteam, statusID)
+    SELECT bm.refno, bm.bettype, m.leagueid,  bm.matchId, bm.betteam,bm.statusID				
+	FROM bodb02.dbo.bettransm bm WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
+	WHERE m.sporttype IN (1,2) AND (bm.winlostdate > @MoveBetsDay OR bm.winlostdate IS NULL)
+		AND bm.refno IN (SELECT refno FROM #bettrans)
+
+	UNION 
+	SELECT bm.refno, bm.bettype, m.leagueid, bm.matchId,bm.betteam, bm.statusID 	
+	FROM bodb02.dbo.bettransm14 bm WITH (NOLOCK)
+		INNER JOIN bodb02.dbo.match14 m WITH (NOLOCK) ON bm.matchid = m.matchid
+	WHERE m.sporttype IN (1,2) AND bm.winlostdate BETWEEN @BalanceUpDay AND @MoveBetsDay
+		AND bm.refno IN (SELECT refno FROM #bettrans)
+
+	UNION 
+	SELECT bm.refno, bm.bettype, m.leagueid, bm.matchId,bm.betteam, bm.statusID 				
+	FROM dbo.rmBettransm_bk bm WITH (NOLOCK)
+		INNER JOIN dbo.rmMatch_bk m WITH (NOLOCK) ON bm.matchid = m.matchid
+	WHERE m.sporttype IN (1,2) AND bm.winlostdate < @BalanceUpDay
+		AND bm.refno IN (SELECT refno FROM #bettrans)
+      
+    CREATE CLUSTERED INDEX CIX_bettrans_transid ON #bettrans (transid)
+    CREATE NONCLUSTERED INDEX CIX_bettrans_refno ON #bettrans (refno)
+    CREATE CLUSTERED INDEX CIX_bettransm ON #bettransm (refno)
+
+	BEGIN
+		INSERT INTO #rmSumByEventBettype (bettype, ParlayType, LeagueId, MatchId, Betteam, IsDeposit, TransList, BetCount, WonCount, LoseCount, DrawCount, MainBetCount, MainWonCount, MainLoseCount, MainDrawCount, MainStake, MainTurnover, MainTurnoverNoDraw, MainMemberWinloss, MainMemberComm, MainHouseWinloss)
+		SELECT
+			t.bettype,
+			b.ParlayType,
+			t.LeagueId,
+			t.matchid,
+			t.betteam,
+			b.IsDeposit,
+            COMPRESS((SELECT STUFF((SELECT  ',' + CAST(bt.transid AS VARCHAR(20))
+						FROM #bettrans bt
+                          INNER JOIN #bettransm m ON bt.refno = m.refno
+						WHERE bt.ParlayType = b.ParlayType
+							AND bt.IsDeposit = b.IsDeposit
+							AND bt.statusID = 112
+                            AND m.bettype = t.bettype
+                            AND m.leagueid = t.leagueid
+                            AND m.matchid = t.matchid
+                            AND m.betteam = t.betteam                                    
+						FOR XML PATH(''), TYPE
+						).value('.', 'NVARCHAR(MAX)')  
+						,1,1,'') AS 'tl'
+							 FOR JSON PATH
+							,INCLUDE_NULL_VALUES))  TransList,
+			BetCount			= SUM(1),
+			WonCount			= SUM(CASE WHEN t.statusID = 112 THEN 1 ELSE 0 END),
+			LoseCount			= SUM(CASE WHEN t.statusID = 113 THEN 1 ELSE 0 END),
+			DrawCount			= SUM(CASE WHEN t.statusID = 111 THEN 1 ELSE 0 END),
+			MainBetCount		= SUM(CASE WHEN t.rn = 1 THEN 1 ELSE 0 END),
+			MainWonCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 112 THEN 1 ELSE 0 END),
+			MainLoseCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 113 THEN 1 ELSE 0 END),
+			MainDrawCount		= SUM(CASE WHEN t.rn = 1 AND b.statusID = 111 THEN 1 ELSE 0 END),
+			MainStake			= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END ELSE 0 END),
+			MainTurnover		= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (111, 112, 113) THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END ELSE 0 END),
+			MainTurnoverNoDraw	= SUM(CASE WHEN t.rn = 1 AND b.statusID IN (112, 113) THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.stake/b.TotalSelection END ELSE 0 END),
+			MainWinloss			= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.winloss/b.TotalSelection END ELSE 0 END),
+			MainComm			= SUM(CASE WHEN t.rn = 1 THEN b.playercomm ELSE 0 END),
+			MainHouseWinloss	= SUM(CASE WHEN t.rn = 1 THEN CASE WHEN ISNULL(b.TotalSelection,0) = 0 THEN 0 ELSE b.HouseWinloss/b.TotalSelection END ELSE 0 END)
+		FROM #bettrans b
+			CROSS APPLY (
+				SELECT bettype, LeagueId, matchId, betteam, statusID, 			
+					ROW_NUMBER() OVER(PARTITION BY bettype, LeagueId, matchId, betteam ORDER BY (SELECT NULL)) AS rn
+				FROM  #bettransm bm
+                WHERE b.refno = bm.refno
+			) t
+		GROUP BY
+			t.bettype,
+			b.ParlayType,
+			b.IsDeposit,
+			t.LeagueId,
+			t.matchid,
+			t.betteam
+	END
+
+	BEGIN TRY
+		DELETE dbo.rmSumByEventBettype WITH (ROWLOCK, UPDLOCK) WHERE winlostdate = @WLDate
+
+		INSERT INTO dbo.rmSumByEventBettype (winlostdate,bettype,ParlayType,leagueId,matchId,betteam,IsDeposit,TransList,BetCount,WonCount,DrawCount,LoseCount,MainBetCount,MainWonCount,MainLoseCount,MainDrawCount,MainStake,MainTurnover,MainTurnoverNoDraw,MainMemberWinloss,MainMemberComm,MainHouseWinloss)
+		SELECT @WLDate,bettype,ParlayType,leagueId,matchId,betteam,IsDeposit,TransList,
+			SUM(BetCount),SUM(WonCount),SUM(DrawCount),SUM(LoseCount),
+			SUM(MainBetCount),SUM(MainWonCount),SUM(MainLoseCount),SUM(MainDrawCount),
+			SUM(MainStake),SUM(MainTurnover),SUM(MainTurnoverNoDraw),
+			SUM(MainMemberWinloss),SUM(MainMemberComm),SUM(MainHouseWinloss)
+		FROM #rmSumByEventBettype b
+		GROUP BY bettype,ParlayType,leagueId,matchId,betteam,IsDeposit,TransList
+	END TRY
+	BEGIN CATCH
+		SELECT @ErrCode = ERROR_NUMBER(), @ErrMsg = ERROR_MESSAGE()
+	END CATCH
+
+	DROP TABLE #rmSumByEventBettype
+	DROP TABLE #bettrans
+	DROP TABLE #bettransm
+END
+GO
