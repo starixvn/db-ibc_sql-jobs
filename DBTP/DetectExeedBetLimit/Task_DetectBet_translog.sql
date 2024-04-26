@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb02" executers="bodbAdminNet" isFunction="0"></info>*/
+/*<info serverAlias="DBTP-bodb02" executers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DetectBet_translog]
 (	
 	@batchCount INT = 0
@@ -16,6 +16,7 @@ AS
 		- 20220923@Max: Tuning [Redmine: #178156]
 		- 20220831@July: Include product NG(Happy 5 Linked Game), RNG Keno [Redmine: #170739]
 		- 20221028@Max: Detect player exceeded the bet limit of the Agent's setting - Update rule 10 for 2 special bet choices of RNG Keno [Redmine: #179115]
+		- 20240415@Max: Detect player exceeded the bet limit - Move Virtual Games from rule #3 to rule #2 [Redmine: #203759]
 
 	Param's explanation:		
 */
@@ -62,30 +63,9 @@ BEGIN
 	WHERE b.SequenceID > @maxSequenceId_setting
 		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
 		AND b.statusID NOT IN (101, 102, 103)
-		AND b.productID IN (220,222,223,231,169,168,202)
+		AND b.productID IN (220,222,223,231,169,168,202,245)
 	ORDER BY  b.sequenceid ASC
 	-------------------
-
-	--For products which bet limit is min/max per game Round (Virtual Games,..)
-	INSERT INTO #tmp_TransId (TransId, CustId, sporttype, bettype, srecommend, recommend, isLive, transdate, Gameid3rd, SequenceId)
-	SELECT TOP(@batchCount) b.translogid, b.custid, b.productID, b.gameID, b.srecommend, b.recommend, 0, b.transdate, Gameid3rd, b.sequenceid
-	FROM dbo.translog b WITH (NOLOCK)
-	WHERE b.SequenceID > @maxSequenceId_setting
-		AND b.transdate <= DATEADD(MINUTE,-2,@SyncHistoryDataLastTime)
-		AND b.statusID NOT IN (101, 102, 103)
-		AND b.productID IN (245)
-	ORDER BY  b.sequenceid ASC
-
-	UPDATE c SET c.stake = t.stake
-	FROM #tmp_TransId c
-		CROSS APPLY (
-				SELECT SUM(b.stake) AS stake
-				FROM dbo.translog b WITH (NOLOCK)
-				WHERE b.Gameid3rd = c.Gameid3rd
-					AND b.custid = c.CustId
-		)t
-	WHERE c.sporttype IN (245)
-	---------------------
 
 	SET @maxSequenceId = (SELECT MAX(SequenceId) FROM #tmp_TransId)
 
