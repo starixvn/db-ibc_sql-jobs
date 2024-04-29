@@ -1,5 +1,5 @@
 /*<info serverAlias="DBTXN-bodb02,SBSETTLE-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
-alter procedure [dbo].[Task_DBA_Settlement_Stats_Pull]
+create procedure [dbo].[Task_DBA_Settlement_Stats_Pull]
 as
 /*
 	Created: Patrick@20240403	
@@ -16,7 +16,7 @@ begin
 	declare @__lastValue datetime2, @__maxValue datetime2, @__interval int = 1, @__siteDBGroupId smallint = 0
 	declare @__temp table (matchid int, eventTable tinyint, tableType tinyint
 		, logdate datetime2, matchCount int, affectedTicket int
-		, siteDBGroupId smallint, sportName varchar(200), groupName varchar(200))
+		, siteDBGroupId smallint, sportName varchar(200), groupName varchar(200), teamName nvarchar(512))
 
 	set @__siteDBGroupId = 0
 	if object_id('dbo.f_Get_SiteDBGroupID') is not null
@@ -25,7 +25,7 @@ begin
 	end
 
 	loop_pick_more:
-	select @__lastValue = max(LogDate), @__maxValue = dateadd(second, -1, sysdatetime())
+	select @__lastValue = max(LogDate), @__maxValue = dateadd(minute, -3, sysdatetime())
 	from MonDB.dbo.Mon_Settlement_Stats with(nolock)
 
 	if @__lastValue is null
@@ -56,9 +56,12 @@ begin
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'Non Sports')
 		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
+		, teamName = case when h.teamname is null and a.teamname is null then '' else  isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '') end
 	from @__temp t 
 		inner join dbo.match m with(nolock) on t.matchid = m.matchid
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
+		left join dbo.team h with(nolock) on m.homeid = h.teamid
+		left join dbo.team a with(nolock) on m.awayid = a.teamid
 		cross apply(
 			select top 1 productId
 			from dbo.SportBettypeMatrix sm with(nolock) where m.sporttype = sm.SportType
@@ -69,9 +72,12 @@ begin
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'NonSports')
 		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
+		, teamName = case when h.teamname is null and a.teamname is null then '' else  isnull(h.teamname, '') + ' vs ' + isnull(a.teamname, '') end
 	from @__temp t 
 		inner join dbo.Match3rd m with(nolock) on t.matchid = m.Match3rdId
 		inner join dbo.Sports s with(nolock) on m.sporttype = s.SportType
+		left join dbo.Team3rd h with(nolock) on m.HomeId = h.Team3rdId
+		left join dbo.Team3rd a with(nolock) on m.AwayId = a.Team3rdId
 		cross apply(
 			select top 1 productId
 			from dbo.SportBettypeMatrix sm with(nolock) where m.sporttype = sm.SportType
@@ -82,20 +88,22 @@ begin
 	update t set sportName = s.SportName
 		, groupName = iif(sm.productId = 1, 'Sports', 'NonSports')
 		, siteDBGroupId = iif(@__siteDBGroupId < 100 and @@servername != 'dbtrans', @__siteDBGroupId, siteDBGroupId)
+		, teamName = case when h.teamname is null then '' else isnull(h.teamname, '') end
 	from @__temp t 
 		inner join dbo.outright m with(nolock) on t.matchid = m.orid
 		inner join dbo.League l with(nolock) on m.leagueid = l.leagueid
 		inner join dbo.Sports s with(nolock) on l.sporttype = s.SportType
+		left join dbo.team h with(nolock) on m.teamid = h.teamid
 		cross apply(
 			select top 1 productId
 			from dbo.SportBettypeMatrix sm with(nolock) where l.sporttype = sm.SportType
 		)sm
 	where t.eventTable = 2
 
-	insert into MonDB.dbo.Mon_Settlement_Stats([CaptureDate], [LogDate], [SportName], [GroupName], [TableType], [SiteDBGroupId], [AffectedTicket], [MatchCount])
-	select getdate(), max(logdate), sportName, groupName, tableType, siteDBGroupId, sum(affectedTicket), sum(matchCount)
+	insert into MonDB.dbo.Mon_Settlement_Stats([CaptureDate], [LogDate], [SportName], [GroupName], [TableType], [SiteDBGroupId], [AffectedTicket], [MatchCount], teamName, matchid)
+	select getdate(), max(logdate), sportName, groupName, tableType, siteDBGroupId, sum(affectedTicket), sum(matchCount), teamName, matchid
 	from @__temp
-	group by sportName, groupName, tableType, siteDBGroupId
+	group by sportName, groupName, tableType, siteDBGroupId, teamName, matchid
 
 	delete from @__temp
 	goto loop_pick_more
