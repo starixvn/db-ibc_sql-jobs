@@ -25,7 +25,7 @@ begin
 	end
 
 	loop_pick_more:
-	select @__lastValue = max(LogDate), @__maxValue = dateadd(second, -1, sysdatetime())
+	select @__lastValue = max(LogDate), @__maxValue = dateadd(minute, -3, sysdatetime())
 	from MonDB.dbo.Mon_Settlement_Stats with(nolock)
 
 	if @__lastValue is null
