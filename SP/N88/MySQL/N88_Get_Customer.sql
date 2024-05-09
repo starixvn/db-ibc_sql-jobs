@@ -18,7 +18,6 @@ CREATE DEFINER=`affiliate_api`@`%` PROCEDURE `N88_Get_Customer`(
       - 20200520@Percy: Initialize SP
 	  - 20230704@Sally: Get data column MemberType [RedmineId: #189299]
 	  - 20230817@Sally: Repull data customer with a new updated MemberType [RedmineId: #192859]
-	  - 20230817@Sally: Repull data customer with a new updated MemberType [RedmineId: #192859]
 	  - 20240312@Sally: Enhance get data by range date and pageIndex [RedmineId: #202199]
 
   */
