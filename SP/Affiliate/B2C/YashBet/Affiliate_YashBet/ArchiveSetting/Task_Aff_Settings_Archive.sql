@@ -1,0 +1,86 @@
+/*<info serverAlias="DBAFFYASHBET-Affiliate_YashBet" isFunction="0" isNested="0"></info>*/
+ALTER PROCEDURE [dbo].[Task_Aff_Settings_Archive]
+	@MonthDate SMALLDATETIME
+AS
+
+/*
+	Created: 20240115@Sally
+	DB: DBAFFYASHBET-Affiliate_YashBet
+	Task: Job - Archive Setting
+
+	Revisions:
+		- 20240115@Sally: Initialize SP [RedmineID: #198909]
+
+*/
+
+BEGIN
+	SET NOCOUNT ON
+
+	DECLARE @NextMonthDate SMALLDATETIME
+
+	SELECT  @MonthDate		= DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @MonthDate) + 1, 0))
+	SELECT  @NextMonthDate	= DATEADD(DAY, -1, DATEADD(MONTH, DATEDIFF(MONTH, 0, @MonthDate) + 2, 0))
+
+	IF (
+		EXISTS (SELECT 1 FROM dbo.TierSettingHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
+		OR EXISTS (SELECT 1 FROM dbo.AffGroupHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
+		OR EXISTS (SELECT 1 FROM dbo.DeductionSettingHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
+		OR EXISTS (SELECT 1 FROM dbo.StraightSettingHistory WITH (NOLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate))
+	)
+	BEGIN
+		DELETE dbo.TierSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
+		DELETE dbo.AffGroupHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
+		DELETE dbo.DeductionSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
+		DELETE dbo.StraightSettingHistory WITH (ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
+		DELETE dbo.CommGroupHistory WITH(ROWLOCK, UPDLOCK) WHERE MonthDate IN (@MonthDate, @NextMonthDate)
+	END
+
+	-- Archive settings
+	BEGIN
+		INSERT INTO dbo.TierSettingHistory (GroupId, GroupProductId, TierId,MonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission,IsActivePlayerSum)
+		SELECT GroupId,GroupProductId,TierId,@MonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission,IsActivePlayerSum
+		FROM dbo.TierSetting t WITH (NOLOCK)
+
+		INSERT INTO dbo.TierSettingHistory (GroupId,GroupProductId,TierId,MonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission,IsActivePlayerSum)
+		SELECT GroupId,GroupProductId,TierId,@NextMonthDate,MinAmount,MaxAmount,MinAM,MaxAM,Commission,IsActivePlayerSum
+		FROM dbo.TierSetting WITH (NOLOCK)
+
+		INSERT INTO dbo.AffGroupHistory (AffId,MonthDate,GroupId,ParentAffId,AllParentAffId)
+		SELECT AffId,@MonthDate,GroupId,ParentAffId,AllParentAffId
+		FROM dbo.AffInfo WITH (NOLOCK)
+		WHERE ISNULL(GroupId, 0) > 0
+
+		INSERT INTO dbo.AffGroupHistory (AffId,MonthDate,GroupId,ParentAffId,AllParentAffId)
+		SELECT AffId,@NextMonthDate,GroupId,ParentAffId,AllParentAffId
+		FROM dbo.AffInfo WITH (NOLOCK)
+		WHERE ISNULL(GroupId, 0) > 0
+
+		INSERT INTO dbo.DeductionSettingHistory (GroupId,MonthDate,DeductionId,ProductId,GroupProductId,DeductedPercentage,DeductedAmount,IsDeductedPercent)
+		SELECT GroupId,@MonthDate,DeductionId,ProductId,GroupProductId,DeductedPercentage,DeductedAmount,IsDeductedPercent
+		FROM dbo.DeductionSetting ds WITH (NOLOCK)
+
+		INSERT INTO dbo.DeductionSettingHistory (GroupId,MonthDate,DeductionId,ProductId,GroupProductId,DeductedPercentage,DeductedAmount,IsDeductedPercent)
+		SELECT GroupId,@NextMonthDate,DeductionId,ProductId,GroupProductId,DeductedPercentage,DeductedAmount,IsDeductedPercent
+		FROM dbo.DeductionSetting ds WITH (NOLOCK)
+
+		INSERT INTO dbo.StraightSettingHistory (GroupId,MonthDate,ProductId,GroupProductId,DeductedPercentage,Commission)
+		SELECT GroupId,@MonthDate,ProductId,GroupProductId,DeductedPercentage,Commission
+		FROM dbo.StraightSetting ss WITH (NOLOCK)
+
+		INSERT INTO dbo.StraightSettingHistory (GroupId,MonthDate,ProductId,GroupProductId,DeductedPercentage,Commission)
+		SELECT GroupId,@NextMonthDate,ProductId,GroupProductId,DeductedPercentage,Commission
+		FROM dbo.StraightSetting ss WITH (NOLOCK)
+
+		;WITH CTE_MonthDate AS
+		(
+			SELECT @MonthDate AS MonthDate
+			UNION ALL
+			SELECT @NextMonthDate
+		)
+		INSERT INTO dbo.CommGroupHistory (GroupId, MonthDate, SubCommRate)
+		SELECT GroupId, e.MonthDate, SubCommRate
+		FROM dbo.CommGroup WITH(NOLOCK)
+			CROSS JOIN CTE_MonthDate e 
+	END
+END
+GO
