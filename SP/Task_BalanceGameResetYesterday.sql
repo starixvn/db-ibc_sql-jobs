@@ -23,7 +23,7 @@ AS
 			- 20230414@Eden: Scale out DBTRANS for Credit [Redmine: #181595]
 			- 20230804@Eden: Win loss limit - Change SP to allow dynamic seting [RedmineID: #180640]
 			- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
-
+			- 20240316@Eden: Unify Live RNG Casino [Redmine: #198960]
 		Parameters Explanation:	
 */
 SET NOCOUNT ON	
@@ -37,7 +37,7 @@ SELECT @SiteDBGroupID = dbo.f_Get_SiteDBGroupID()
 
 SELECT @SporttypeRefWinlossLimit = SporttypeRefWinlossLimit, 
 		@BettypeRefWinlossLimit = BettypeRefWinlossLimit
-FROM DBCUST.CustDB.dbo.SportBettypeSettingMatrix st WITH(NOLOCK) 
+FROM CustDB.dbo.f_CustSetting_SportBetTypeSettingMatrix (@SettingStatus) st
 	INNER JOIN CustDB.dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 22, @SettingStatus) AS s
 			ON st.SporttypeRefWinlossLimit = s.SportType 
 			AND st.BettypeRefWinlossLimit = s.Bettype
