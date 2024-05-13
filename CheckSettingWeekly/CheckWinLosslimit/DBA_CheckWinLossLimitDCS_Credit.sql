@@ -16,6 +16,7 @@ AS
 		- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 		- 20230728@Eden: Simplify Live Casino Customer Setting [RedmineID: #189389]
 		- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
+		- 20240506@Eden: Unify Live RNG Casino [Redmine: #198960] 
 
 	Parameter's Explanations:
 */
@@ -91,6 +92,12 @@ BEGIN
 		AND op.IsHidden = 0
 		AND ps.sporttype = CASE WHEN @sporttype = 0 THEN ps.sporttype ELSE @sporttype END
 		AND ps.SportType NOT IN (SELECT sporttype FROM f_GetSportNotOffer ('CustSettingDCS')) 
+		AND NOT EXISTS( SELECT 1 
+						FROM @SportBettype 
+						WHERE ps.productID = productID 
+							AND ps.sporttype = sporttype
+							AND ps.bettype = bettype
+						)
 
 	INSERT INTO #SuperWinLossLimit (custid, sporttype, bettype, MaxWinLimit, MaxLossLimit, IsAutoReset)
 	SELECT custid, cs.sporttype, cs.bettype, ISNULL(MaxWinLimit,0), ISNULL(MaxLossLimit,0), ISNULL(IsAutoReset,0)
