@@ -1,5 +1,6 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
-ALTER PROCEDURE [dbo].[Task_BalanceGameResetYesterday_All] 
+ALTER PROCEDURE [dbo].[Task_BalanceGameResetYesterday_All]
+  @SettingStatus TINYINT = 0
 AS
 /*
 		Created: 20200309@Eden	
@@ -12,6 +13,7 @@ AS
 			- 20220714@Johnson: Declare structure for temp table [RedmineID: #174035]
 			- 20221121@Eden: Unify RNG Lottery Customer Settings [RedmineID: #180640]
 			- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
+			- 20240316@Eden: Unify Live RNG Casino [Redmine: #198960]
 
 		Parameters Explanation:	
 */
@@ -30,31 +32,18 @@ CREATE TABLE #ProductSettingDetail(
 
 INSERT INTO #ProductSettingDetail(SportType,BetType)
 SELECT SportType,bettype 
-FROM OPENQUERY (DBCUST, 'SELECT SportType,bettype 
-						FROM CUSTDB.dbo.ProductSettingDetail WITH(NOLOCK) 
-						WHERE SettingType IN (6,12) AND SettingStatus <> 2
-						UNION 
-						SELECT SportType,bettype 
-						FROM CUSTDB.dbo.ProductSettingDetail_UAT WITH(NOLOCK) 
-						WHERE SettingType IN (6,12) AND SettingStatus <> 2
-						UNION 
-						SELECT mt.SportType,mt.bettype 
-						FROM CUSTDB.dbo.ProductSettingDetail t WITH(NOLOCK) 
-							INNER JOIN CUSTDB.dbo.SportBettypeSettingMatrix mt WITH(NOLOCK)  
-								ON t.SportType = mt.SporttypeRefWinlossLimit
-								AND t.BetType = mt.BettypeRefWinlossLimit
-								AND mt.isLicensee = 0 AND mt.Site = ''ALL''
-						WHERE t.SettingType IN (22) AND SettingStatus <> 2 AND mt.isDeleted = 0
-						UNION 
-						SELECT mt.SportType,mt.bettype 
-						FROM CUSTDB.dbo.ProductSettingDetail_UAT t WITH(NOLOCK) 
-							INNER JOIN CUSTDB.dbo.SportBettypeSettingMatrix mt WITH(NOLOCK)  
-								ON t.SportType = mt.SporttypeRefWinlossLimit
-								AND t.BetType = mt.BettypeRefWinlossLimit
-								AND mt.isLicensee = 0 AND mt.Site = ''ALL''
-						WHERE t.SettingType IN (22) AND SettingStatus <> 2 AND mt.isDeleted = 0'
-				)
-
+FROM CustDB.dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 6, @SettingStatus) t 
+UNION
+SELECT SportType,bettype 
+FROM CustDB.dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 12, @SettingStatus) t 
+UNION 
+SELECT mt.SportType,mt.bettype 
+FROM CustDB.dbo.f_CustSetting_SportBetTypeSettingSelect(NULL, 22, @SettingStatus) t 
+	INNER JOIN CUSTDB.dbo.f_CustSetting_SportBetTypeSettingMatrix(@SettingStatus) mt
+		ON t.SportType = mt.SporttypeRefWinlossLimit
+		AND t.BetType = mt.BettypeRefWinlossLimit
+		AND mt.isLicensee = 0 AND mt.Site = 'ALL'
+		AND mt.isDeleted = 0
 
 INSERT INTO #SportBettypeDCS(SportType,Bettype,IsProcessed)
 SELECT DISTINCT b.SportType,b.BetType,CAST(0 AS BIT) AS IsProcessed
@@ -74,6 +63,6 @@ BEGIN
 	IF @@ROWCOUNT = 0
 		BREAK;
 
-	EXEC dbo.Task_BalanceGameResetYesterday @sporttype = @SportType, @bettype = @Bettype
+	EXEC dbo.Task_BalanceGameResetYesterday @sporttype = @SportType, @bettype = @Bettype, @SettingStatus = @SettingStatus
 END
 GO
