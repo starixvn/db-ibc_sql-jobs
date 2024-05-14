@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTP-bodb02" executers="bodbAdminNet" isFunction="0"></info>*/
+/*<info serverAlias="DBTP-bodb02" executers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DetectBet_bettransRnG]
 (	
 	@batchCount INT = 0
@@ -18,6 +18,7 @@ AS
 		- 20220830@July: Include product SEAL Entertainment [Redmine: #177003]
 		- 20220923@July: Include product MG-RNG (Microgaming) [Redmine: #177583]
 		- 20230117@July: Jili - Incorporate new product [Redmine: #181791]
+		- 20240419@Max: Change for Unifying Live & RNG Casino feature [Redmine: #203759]
 
 	Param's explanation:		
 */
@@ -78,6 +79,14 @@ BEGIN
 	FROM #tmp_TransId b
 	WHERE b.sporttype IN (208,209,212,150,200,171,173,158)
 		AND b.bettype IN (1650,1652,3836,3837,2105,2120,2104,4004,5103,5121)
+
+	--Remove unsupport credit ticket for Funky Games, Gaming
+	DELETE b
+	FROM #tmp_TransId b
+		LEFT JOIN Dep_CustSuper s WITH (NOLOCK) ON s.custid = b.srecommend
+	WHERE b.sporttype IN (224,171,173)
+		AND s.custid IS NULL
+	---------------------
 
 	--Process detect invalid
 	EXEC dbo.Task_DetectBet_CustMaxBetSettingSel
