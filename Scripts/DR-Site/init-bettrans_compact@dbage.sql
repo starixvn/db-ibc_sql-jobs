@@ -11,6 +11,7 @@ BEGIN
 	SET NOCOUNT ON;
 
 	TRUNCATE TABLE dbo.bettrans_compact
+	TRUNCATE TABLE dbo.cdc_bettrans
 
 	DECLARE @NetTO_CutOffDate SMALLDATETIME
 		, @GrossComm_CutOffDate SMALLDATETIME
@@ -506,3 +507,8 @@ BEGIN
 	END
 END
 GO
+
+declare @__lastrun varchar(50)
+set @__lastrun = convert(varchar(50), getdate(), 121)
+update [SystemSettings] set VValue = '{"lastRowId":0,"delayTime":0, "lastRun":"'+@__lastrun+'"}'
+	where VName = 'Age_cdc_bettrans_compact'
