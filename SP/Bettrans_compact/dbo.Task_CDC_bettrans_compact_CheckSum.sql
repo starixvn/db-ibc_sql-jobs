@@ -9,6 +9,7 @@ AS
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
 		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
+		- 20240522@Bobby: Enhance checkSum process [RedmineID: #205378]
 */
 BEGIN
 
@@ -253,6 +254,7 @@ BEGIN
 		)
 		,bt_checksum AS (
 			SELECT cal.custid, cal.winlostdate
+				, (SELECT cal.custid, cal.winlostdate, cal.productId, cal.sporttype, cal.bettype, cal.LeagueGroupID, cal.ticketType FOR JSON PATH, WITHOUT_ARRAY_WRAPPER) AS KeyValue_BT
 				, CHECKSUM(CONCAT_WS('|', cal.productid, cal.sporttype, cal.bettype, cal.LeagueGroupID, cal.ticketType)) AS checkSumKey
 				, (CHECKSUM(CONCAT_WS('|',betcount,	winlost, turnover,netTurnover
 					,awinlost, mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm))) AS checkSumData
@@ -260,6 +262,7 @@ BEGIN
 			FROM sum_winloss_CheckSum cal 
 		), compact_checkSum AS (
 			SELECT b.custid, b.winlostdate
+				, (SELECT b.custid, b.winlostdate,b.productId, b.sporttype, b.bettype, b.LeagueGroupID, b.ticketType FOR JSON PATH, WITHOUT_ARRAY_WRAPPER) AS KeyValue_CP
 				, CHECKSUM(CONCAT_WS('|', b.productId, b.sporttype, bettype, LeagueGroupID, ticketType)) AS checkSumKey
 				, (CHECKSUM(CONCAT_WS('|',betcount,	winlost, turnover,netTurnover
 					, awinlost, mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm))) AS checkSumData 
@@ -267,13 +270,14 @@ BEGIN
 			FROM dbo.bettrans_compact b WITH(NOLOCK)
 			WHERE b.winlostdate = @winlostdate 
 		)
-		INSERT INTO dbo.bettrans_compact_checkSum(custid, winlostdate, checkSumKey, checkSumData, CreatedTime, notifyStatus)
+		INSERT INTO dbo.bettrans_compact_checkSum(custid, winlostdate, checkSumKey, checkSumData, CreatedTime, notifyStatus, KeyValue)
 		SELECT ISNULL(bt.custid, ck.custid) AS custid
 			, ISNULL(bt.winlostdate, ck.winlostdate) AS winlostdate
 			, ISNULL(bt.checkSumKey, ck.checkSumKey) AS checkSumKey
 			, ISNULL(bt.checkSumData, ck.checkSumData) AS checkSumData
 			, GETDATE() AS CreatedTime
 			, 0 AS notifyStatus
+			, IIF(bt.checkSumKey <> 0, bt.KeyValue_BT, ck.KeyValue_CP) AS KeyValue
 		FROM  bt_checksum bt
 		FULL JOIN compact_checkSum ck ON ck.custid = bt.custid
 			AND ck.winlostdate = bt.winlostdate
@@ -281,6 +285,7 @@ BEGIN
 		WHERE (bt.custid IS NULL OR ck.custid IS NULL OR ck.checkSumData <> bt.checkSumData)
 		;
 
+		PRINT CONCAT('-------> winlostdate: ', FORMAT(@winlostdate, 'YYYY-MM-dd'),', diff rowcount: ', @@ROWCOUNT);
 		--LOOP @winlostdate
 		SET @winlostdate =  DATEADD(DAY, 1, @winlostdate)
 	END

@@ -10,6 +10,7 @@ AS
 		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
 		- 20240401@Bobby:  Fix bug checkNotify & Correct Redmine: [#202655]
 		- 20240506@Bobby:  Enhance code to avoid deadlock Redmine: [#204799]
+		- 20240522@Bobby: Enhance checkSum process [RedmineID: #205378]
 */
 BEGIN
 
@@ -93,7 +94,7 @@ BEGIN
 			FROM (
 				SELECT '[SELECT * FROM dbo.bettrans_compact_checkSum WITH(NOLOCK)
 				WHERE winlostdate=''' + FORMAT(winlostdate, 'yyyy-MM-dd') + '''
-					AND createdTime BETWEEN ''' + FORMAT(FromTime, 'yyy-MM-dd HH:mm:00')  + ''' AND '''+ FORMAT(ToTime, 'yyy-MM-dd HH:mm:00') + '''
+					AND createdTime >= ''' + FORMAT(@notifyTime, 'yyy-MM-dd HH:mm:00')  + '''
 					AND notifyStatus=1]'
 				FROM CTE_Notify
 			) AS t (notify)
