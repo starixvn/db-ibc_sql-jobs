@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="1"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="1"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_DailyRptLicWinloss2_Bettrans]
 	@WinLostDate SMALLDATETIME
@@ -112,6 +112,7 @@ AS
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
 		- 20230330@Evan: Sum data of Jackpot/Promotion/Contribution AG Product [RedmineID: #201067]
 		- 20240314@Eddie: Integrate UU Slots and change metadata with isNested = "1" [RedmineID: #201098]
+		- 20240416@Evan: Integrate Saba Coins [RedmineID: #202281]
 
 	EXEC Task_DailyRptLicWinloss2_Bettrans '2017-04-07'
 */
@@ -254,6 +255,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
 			WHEN b.bettype BETWEEN 7601 AND 7700 THEN 227 -- L22
 			WHEN b.bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
+			WHEN b.bettype BETWEEN 11001 AND 11019 THEN 149 -- SABA Coins
 			ELSE 0
 		END AS sporttype
 		-- 1706: bidme tip, 4300 - PP Promotion Prize
@@ -263,7 +265,8 @@ BEGIN
 				OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 				OR (b.bettype BETWEEN 17000 AND 17030)  
 				OR (b.bettype BETWEEN 8700 AND 8709) 
-				OR (b.bettype BETWEEN 1801 AND 1803) THEN b.bettype
+				OR (b.bettype BETWEEN 1801 AND 1803)
+				OR (b.bettype BETWEEN 11001 AND 11019) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END bettype
@@ -389,6 +392,7 @@ BEGIN
 			WHEN b.bettype BETWEEN 10300 AND 10399 THEN 228 -- WE
 			WHEN b.bettype BETWEEN 7601 AND 7700 THEN 227 -- L22
 			WHEN b.bettype BETWEEN 10000 AND 10299 THEN 216 -- UUSL
+			WHEN b.bettype BETWEEN 11001 AND 11019 THEN 149 -- SABA Coins
 			ELSE 0
 		END
 		,CASE
@@ -397,7 +401,8 @@ BEGIN
 				OR (b.bettype BETWEEN 3801 AND 3899 AND b.matchid = 173)
 				OR (b.bettype BETWEEN 17000 AND 17030)  
 				OR (b.bettype BETWEEN 8700 AND 8709)
-				OR (b.bettype BETWEEN 1801 AND 1803) THEN b.bettype
+				OR (b.bettype BETWEEN 1801 AND 1803)
+				OR (b.bettype BETWEEN 11001 AND 11019) THEN b.bettype
 			WHEN b.bettype = 29 AND b.oddsspread = 1 THEN -29		-- God Of Fortune
 			ELSE 0
 		END
@@ -708,5 +713,8 @@ BEGIN
 		,b.betfrom
 		,b.apositiontaking
 		,b.TicketType
+		
+	DROP TABLE #SportBettype
+
 END
 GO

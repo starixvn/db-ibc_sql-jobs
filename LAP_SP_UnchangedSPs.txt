@@ -1,3 +1,5 @@
-SP\Licensee\rpt_winlost2\Task_DailyRptLicWinloss2_CheckData_Job.sql
-SP\Licensee\rpt_winlost2\Task_DailyRptLicWinloss2_Job.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\GEN_HourlySummaryDepData_Bettrans14.sql
 SP\Licensee\rpt_dep_winlost\New Summary Flow\TASK_DepSumData_Job.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\GEN_HourlySummaryDepData.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\TASK_DailyArchiveDepData.sql
+SP\Licensee\rpt_dep_winlost\New Summary Flow\TASK_HourlySummaryDepData.sql
