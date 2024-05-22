@@ -79,7 +79,7 @@ BEGIN
 				,LosingThreshold = NULL
 				,LosingUpdateTime = NULL
 				,InitSettingTime = NULL
-				,RepUpdateTime = NULL
+				,RepUpdateTime
 				,1 AS isDeleted
                 ,SYSDATETIME() AS [_FetchedTime]  
 		FROM [dbo].WLMonitored_SMA_Del del WITH (NOLOCK) 
