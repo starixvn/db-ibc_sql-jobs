@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02"></info>*/
+/*<info serverAlias="DBCTG-bodb02"></info>*/
 /*
 	Created: 20240525@Sol
 	Task: update actual rate - Redmine #205614
