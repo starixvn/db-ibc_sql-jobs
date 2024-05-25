@@ -38,15 +38,6 @@ EXEC [dbo].[ExecRep_00]
 
 GO
 
---CashOutSelling
-EXEC [dbo].[ExecRep_00] 
-	@Winlostdate = '20240524'
-	,@Target = 'DBTXN' -- DBTRANS/REPLICATED
-	,@TableName = 'CashOutSelling'
-	,@isSiteDB = 0
-
-GO
-
 --transfer
 EXEC [dbo].[ExecRep_00] 
 	@Winlostdate = '20240524'
@@ -82,15 +73,6 @@ EXEC [dbo].[ExecRep_00]
 	@Winlostdate = '20240524'
 	,@Target = 'REPLICATED' -- DBTRANS/REPLICATED
 	,@TableName = 'bettransRnG'
-	,@isSiteDB = 0
-
-GO
-
---CashOutSelling
-EXEC [dbo].[ExecRep_00] 
-	@Winlostdate = '20240524'
-	,@Target = 'REPLICATED' -- DBTRANS/REPLICATED
-	,@TableName = 'CashOutSelling'
 	,@isSiteDB = 0
 
 GO
