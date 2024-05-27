@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_CheckWrongSiteDBGroupID_translog]
 (	
 	@maxSequenceId BIGINT = NULL OUTPUT
@@ -12,6 +12,8 @@ Revisions:
 	- 20220930@Victoria: Rule #55 - Check if bet tickets are inserted into the correct SiteDBGroupID by reverting the transID in translogXXX tables [Redmine:#178445]
 	- 20221007@Victoria: Modify to add FromSequenceID and ToSequenceID in ResultSet
 							AND get top 5000 to limit the page split issue [Redmine: #178864]
+	- 20240524@July: Update rule #55 to exclude checking translog table with sourceid 1001 [Redmine:#205549]
+	
 Param's Expanation:
 	
 */
@@ -58,6 +60,7 @@ BEGIN
 	) r
 	WHERE b.sequenceid > @maxSequenceId_setting
 		AND b.transdate < @currentTime
+		AND r.SiteDBGroupID NOT IN (1001) --ignore dont check for sitedbgroup 1001 
 	ORDER BY  b.sequenceid ASC 
 
 	SELECT @fromSequenceId =  MIN(Sequenceid), @maxSequenceId = MAX(Sequenceid) FROM #tmp_TransId
