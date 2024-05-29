@@ -17,6 +17,8 @@ AS
 		- 20210916@Percy: Add ProgressiveBet, ProgressiveWin [RedmineID: #161540]
 		- 20220222@Percy: Use sum table instead of detail [RedmineID: #167823]
 		- 20230523@Sally: Support Currency BDT, USD 72 [RedmineID: #188429]
+		- 20240426@Sally: Calculate Revenue Share By Turnover [RedmineID: #203756]
+
 */
 
 BEGIN 
@@ -59,9 +61,9 @@ BEGIN
 				SELECT s.GroupId, s.DeductionId, p.ProductId, s.GroupProductId, s.DeductedPercentage, s.DeductedAmount, s.IsDeductedPercent
 				FROM (
 					SELECT GroupId, DeductionId, GroupProductId, DeductedPercentage, DeductedAmount, IsDeductedPercent
-						,ROW_NUMBER() OVER(PARTITION BY GroupId ORDER BY GroupProductId) AS RN
+						,ROW_NUMBER() OVER(PARTITION BY GroupId, DeductionId ORDER BY GroupProductId) AS RN
 					FROM dbo.DeductionSetting WITH (NOLOCK)
-					WHERE DeductionId = 10
+					WHERE DeductionId IN (10, 16)
 				) s
 					INNER JOIN @Products p ON s.GroupId = p.GroupId AND p.IsP2P = 0
 					LEFT JOIN dbo.DeductionSetting ds WITH (NOLOCK) ON s.GroupId = ds.GroupId AND s.DeductionId = ds.DeductionId AND p.ProductId = ds.ProductId
