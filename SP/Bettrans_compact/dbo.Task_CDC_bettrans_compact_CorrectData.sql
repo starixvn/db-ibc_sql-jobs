@@ -46,7 +46,7 @@ BEGIN
 		[extraWinloss] [decimal](38, 6) NULL,
 		[extraComm] [decimal](38, 6) NULL
 	);
-	CREATE TABLE #diffCustCheckSum (custid INT, winlostdate SMALLDATETIME, PRIMARY KEY(custid, winlostdate));
+	CREATE TABLE #diffCustCheckSum (custid INT, winlostdate SMALLDATETIME, PRIMARY KEY(winlostdate, custid));
 
 	-- TODO: get diff custid vs winlostdate
 	INSERT INTO #diffCustCheckSum
@@ -316,7 +316,7 @@ BEGIN
 			,bt.betcount,bt.winlost,bt.turnover,bt.netTurnover,bt.awinlost,bt.mwinlost,bt.swinlost,bt.playercomm,bt.comm,bt.acomm,bt.scomm,bt.TurnoverNoDraw,bt.grosscomm,bt.ExtraComm,bt.ExtraWinloss
 		FROM sum_winloss_CheckSum bt
 		INNER JOIN #diffCustCheckSum ck ON ck.custid = bt.custid AND ck.winlostdate = bt.winlostdate 
-
+		WHERE ck.winlostdate = @winlostdate
 
 		---MEGRE diff rows
 		MERGE dbo.bettrans_compact up
@@ -402,6 +402,7 @@ BEGIN
 			SELECT ck.[custid], ck.[winlostdate], ck.[productId], ck.[sporttype], ck.[bettype], ck.[leagueGroupID], ck.[ticketType]
 			FROM dbo.bettrans_compact ck (NOLOCK)
 			INNER JOIN #diffCustCheckSum diff ON diff.custid = ck.custid AND diff.winlostdate = ck.winlostdate
+			WHERE diff.winlostdate = @winlostdate
 		)
 		DELETE up
 		FROM dbo.bettrans_compact up
@@ -432,8 +433,9 @@ BEGIN
 		INNER JOIN #diffCustCheckSum ck ON ck.custid = up.custid 
 				AND ck.winlostdate = up.winlostdate
 		WHERE	
-			up.notifyStatus = 0
-			AND up.createdTime = @notifyTime
+			ck.winlostdate		= @winlostdate
+			AND up.notifyStatus = 0
+			AND up.createdTime	= @notifyTime
 
 		SET @rCont += 1;
 
