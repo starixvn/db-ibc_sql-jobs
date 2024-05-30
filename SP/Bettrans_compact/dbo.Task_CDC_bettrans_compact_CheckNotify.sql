@@ -9,6 +9,8 @@ AS
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
 		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
 		- 20240401@Bobby:  Fix bug checkNotify & Correct Redmine: [#202655]
+		- 20240506@Bobby:  Enhance code to avoid deadlock Redmine: [#204799]
+		- 20240522@Bobby: Enhance checkSum process [RedmineID: #205378]
 */
 BEGIN
 
@@ -92,7 +94,7 @@ BEGIN
 			FROM (
 				SELECT '[SELECT * FROM dbo.bettrans_compact_checkSum WITH(NOLOCK)
 				WHERE winlostdate=''' + FORMAT(winlostdate, 'yyyy-MM-dd') + '''
-					AND createdTime BETWEEN ''' + FORMAT(FromTime, 'yyy-MM-dd HH:mm:00')  + ''' AND '''+ FORMAT(ToTime, 'yyy-MM-dd HH:mm:00') + '''
+					AND createdTime >= ''' + FORMAT(@notifyTime, 'yyy-MM-dd HH:mm:00')  + '''
 					AND notifyStatus=1]'
 				FROM CTE_Notify
 			) AS t (notify)
@@ -120,14 +122,36 @@ BEGIN
 
 
 	--DELETE old rows bettrans_compact
-	WHILE(1=1)
-	BEGIN
-		DELETE TOP(3000) del
-		FROM dbo.bettrans_compact del
-		WHERE del.winlostdate <= @moveBetsDay
+	DECLARE @loopCount INT, @rTotal INT, @delCount INT, @delRows INT, @fromCount INT;
+	DROP TABLE IF EXISTS #tmpCust;
+	CREATE TABLE #tmpCust (rIdx INT IDENTITY(1, 1) PRIMARY KEY, custid INT, winlostdate SMALLDATETIME, rCount INT);
 
-		IF @@ROWCOUNT = 0
+	INSERT INTO #tmpCust(custid, winlostdate, rCount)
+	SELECT custid, winlostdate, COUNT(1) AS rCount
+	FROM dbo.bettrans_compact del WITH(NOLOCK)
+	WHERE del.winlostdate < @moveBetsDay
+	GROUP BY custid, winlostdate;
+	SET @rTotal = @@ROWCOUNT;
+
+	SELECT @loopCount = 100, @delCount = 3000;
+	
+	SET DEADLOCK_PRIORITY LOW;
+	WHILE(@loopCount <= @rTotal)
+	BEGIN
+		SET @fromCount = (@loopCount - 100)+1;
+
+		DELETE TOP(@delCount) del
+		FROM dbo.bettrans_compact del 
+		INNER JOIN #tmpCust tmp ON tmp.custid = del.custid AND tmp.winlostdate = del.winlostdate
+		WHERE tmp.rIdx BETWEEN @fromCount AND @loopCount;
+		SET @delRows = @@ROWCOUNT;
+
+		IF @delRows = 0 AND @loopCount >= @rTotal
 			BREAK;
+
+		--print concat('--> runnning ->> @loopCount: ', @loopCount, ' / ', @rTotal)
+		SET @loopCount += IIF(@delRows = 0, 100, 0)
+		SET @loopCount = IIF(@loopCount > @rTotal, @rTotal, @loopCount)
 	END
 END
 GO

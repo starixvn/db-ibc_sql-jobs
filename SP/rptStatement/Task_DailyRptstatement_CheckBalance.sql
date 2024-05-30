@@ -24,7 +24,7 @@ BEGIN
 		,closingbalance MONEY
 		,openingbalance MONEY
 		,is_updated BIT
-		,CONSTRAINT PK_custchanged_custid_date PRIMARY KEY (
+		,PRIMARY KEY (
 			custid
 			,closingdate
 			,openingdate

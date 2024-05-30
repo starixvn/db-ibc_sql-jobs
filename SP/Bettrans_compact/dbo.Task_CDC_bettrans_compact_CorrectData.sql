@@ -11,6 +11,7 @@ AS
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
 		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
 		- 20240401@Bobby:  Fix bug checkNotify & Correct Redmine: [#202655]
+		- 20240522@Bobby: Enhance checkSum process [RedmineID: #205378]
 */
 BEGIN
 
@@ -43,15 +44,15 @@ BEGIN
 		[scomm] [money] NULL,
 		[grosscomm] [money] NULL,
 		[extraWinloss] [decimal](38, 6) NULL,
-		[extraComm] [decimal](38, 6) NULL,
-		[checkSumKey] [int] NULL,
-		[checkSumData] [int] NULL
+		[extraComm] [decimal](38, 6) NULL
 	);
+	CREATE TABLE #diffCustCheckSum (custid INT, winlostdate SMALLDATETIME, PRIMARY KEY(winlostdate, custid));
 
-	SELECT custid, winlostdate,checkSumKey, checkSumData
-	INTO #diffCustCheckSum
+	-- TODO: get diff custid vs winlostdate
+	INSERT INTO #diffCustCheckSum
+	SELECT DISTINCT custid, winlostdate
 	FROM (
-		SELECT custid, winlostdate, checkSumKey, checkSumData, createdtime, ROW_NUMBER() OVER (PARTITION BY custid, winlostdate, checkSumKey ORDER BY createdtime DESC) AS rIdx
+		SELECT custid, winlostdate, ROW_NUMBER() OVER (PARTITION BY custid, winlostdate ORDER BY createdtime DESC) AS rIdx
 		FROM dbo.bettrans_compact_checkSum WITH(NOLOCK)
 		WHERE notifyStatus = 0
 			AND createdTime = @notifyTime
@@ -300,7 +301,6 @@ BEGIN
 					UNION ALL
 					SELECT srecommend, turnover, snetTurnover, TurnoverNoDraw, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, betcount, sgrosscomm, ExtraWinloss, ExtraComm
 			) AS cal (custid, turnover, netTurnover, TurnoverNoDraw, winlost, awinlost, mwinlost, swinlost, playercomm, comm, acomm, scomm, betcount, grosscomm, ExtraWinloss, ExtraComm)
-			WHERE EXISTS(SELECT 1 FROM #diffCustCheckSum diff WHERE diff.custid = cal.custid and diff.winlostdate = b.winlostdate)
 			GROUP BY b.winlostdate
 				, cal.custid
 				, b.productid
@@ -309,63 +309,133 @@ BEGIN
 				, b.leagueGroupID
 				, b.ticketType
 		)
-		,bt_checksum AS (
-			SELECT cal.custid, cal.winlostdate
-				, CHECKSUM(CONCAT_WS('|', cal.productid, cal.sporttype, cal.bettype, cal.LeagueGroupID, cal.ticketType)) AS checkSumKey
-				, (CHECKSUM(CONCAT_WS('|',betcount,	winlost, turnover,netTurnover
-					,awinlost, mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm))) AS checkSumData
-				, cal.productid, cal.sporttype, cal.bettype, cal.LeagueGroupID, cal.ticketType, betcount, winlost, turnover,netTurnover
-				, awinlost, mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm,ExtraComm,ExtraWinloss
-
-			FROM sum_winloss_CheckSum cal
-		)
 		INSERT INTO #checkCorrectData(custid,winlostdate,productid,sporttype,bettype,LeagueGroupID,ticketType
 			,betcount,winlost,turnover,netTurnover,awinlost,mwinlost,swinlost,playercomm,comm,acomm,scomm,TurnoverNoDraw,grosscomm,ExtraComm,ExtraWinloss
-			,checkSumKey,checkSumData
 		)
 		SELECT bt.custid,bt.winlostdate,bt.productid,bt. sporttype,bt.bettype,bt.LeagueGroupID,bt.ticketType
 			,bt.betcount,bt.winlost,bt.turnover,bt.netTurnover,bt.awinlost,bt.mwinlost,bt.swinlost,bt.playercomm,bt.comm,bt.acomm,bt.scomm,bt.TurnoverNoDraw,bt.grosscomm,bt.ExtraComm,bt.ExtraWinloss
-			,bt.checkSumKey,bt.checkSumData
-		FROM bt_checksum bt
+		FROM sum_winloss_CheckSum bt
 		INNER JOIN #diffCustCheckSum ck ON ck.custid = bt.custid AND ck.winlostdate = bt.winlostdate 
-			AND ck.checkSumKey = bt.checkSumKey AND ck.checkSumData = bt.checkSumData ---<< diff same key & data untill running this check & correct
+		WHERE ck.winlostdate = @winlostdate
 
-		--select * from check_CorrectData
-		UPDATE up WITH(ROWLOCK, UPDLOCK)
-		SET up.[betcount]		= tmp.[betcount]
-           ,up.[turnover]		= tmp.[turnover]
-           ,up.[netTurnover]	= tmp.[netTurnover]
-           ,up.[TurnoverNoDraw] = tmp.[TurnoverNoDraw]
-           ,up.[winlost]		= tmp.[winlost]
-           ,up.[awinlost]		= tmp.[awinlost]
-           ,up.[mwinlost]		= tmp.[mwinlost]
-           ,up.[swinlost]		= tmp.[swinlost]
-           ,up.[playercomm]		= tmp.[playercomm]
-           ,up.[comm]			= tmp.[comm]
-           ,up.[acomm]			= tmp.[acomm]
-           ,up.[scomm]			= tmp.[scomm]
-           ,up.[grosscomm]		= tmp.[grosscomm]
-           ,up.[extraWinloss]	= tmp.[extraWinloss]
-           ,up.[extraComm]		= tmp.[extraComm]
-		FROM dbo.bettrans_compact up
-		INNER JOIN #checkCorrectData tmp
-		ON up.[custid] = tmp.[custid]
-           AND up.[winlostdate] = tmp.[winlostdate]
-           AND up.[productId] = tmp.[productId]
-           AND up.[sporttype] = tmp.[sporttype]
-           AND up.[bettype] = tmp.[bettype]
-           AND up.[leagueGroupID] = tmp.[leagueGroupID]
-           AND up.[ticketType] = tmp.[ticketType]
+		---MEGRE diff rows
+		MERGE dbo.bettrans_compact up
+		USING #checkCorrectData tmp ON (
+			up.custid				= tmp.custid
+			AND up.[winlostdate]	= tmp.[winlostdate]
+			AND up.[productId]		= tmp.[productId]
+			AND up.[sporttype]		= tmp.[sporttype]
+			AND up.[bettype]		= tmp.[bettype]
+			AND up.[leagueGroupID]	= tmp.[leagueGroupID]
+			AND up.[ticketType]		= tmp.[ticketType]
+		)
+		WHEN MATCHED THEN 
+			UPDATE
+			SET up.[betcount]		= tmp.[betcount]
+			   ,up.[turnover]		= tmp.[turnover]
+			   ,up.[netTurnover]	= tmp.[netTurnover]
+			   ,up.[TurnoverNoDraw] = tmp.[TurnoverNoDraw]
+			   ,up.[winlost]		= tmp.[winlost]
+			   ,up.[awinlost]		= tmp.[awinlost]
+			   ,up.[mwinlost]		= tmp.[mwinlost]
+			   ,up.[swinlost]		= tmp.[swinlost]
+			   ,up.[playercomm]		= tmp.[playercomm]
+			   ,up.[comm]			= tmp.[comm]
+			   ,up.[acomm]			= tmp.[acomm]
+			   ,up.[scomm]			= tmp.[scomm]
+			   ,up.[grosscomm]		= tmp.[grosscomm]
+			   ,up.[extraWinloss]	= tmp.[extraWinloss]
+			   ,up.[extraComm]		= tmp.[extraComm]
+		WHEN NOT MATCHED BY TARGET THEN
+			INSERT (
+				[custid]
+			   ,[winlostdate]
+			   ,[productId]
+			   ,[sporttype]
+			   ,[bettype]
+			   ,[leagueGroupID]
+			   ,[ticketType]
+			   ,[betcount]
+			   ,[turnover]
+			   ,[netTurnover]
+			   ,[TurnoverNoDraw]
+			   ,[winlost]
+			   ,[awinlost]
+			   ,[mwinlost]
+			   ,[swinlost]
+			   ,[playercomm]
+			   ,[comm]
+			   ,[acomm]
+			   ,[scomm]
+			   ,[grosscomm]
+			   ,[extraWinloss]
+			   ,[extraComm]
+			)
+			VALUES(
+				tmp.[custid]
+			   ,tmp.[winlostdate]
+			   ,tmp.[productId]
+			   ,tmp.[sporttype]
+			   ,tmp.[bettype]
+			   ,tmp.[leagueGroupID]
+			   ,tmp.[ticketType]
+			   ,tmp.[betcount]
+			   ,tmp.[turnover]
+			   ,tmp.[netTurnover]
+			   ,tmp.[TurnoverNoDraw]
+			   ,tmp.[winlost]
+			   ,tmp.[awinlost]
+			   ,tmp.[mwinlost]
+			   ,tmp.[swinlost]
+			   ,tmp.[playercomm]
+			   ,tmp.[comm]
+			   ,tmp.[acomm]
+			   ,tmp.[scomm]
+			   ,tmp.[grosscomm]
+			   ,tmp.[extraWinloss]
+			   ,tmp.[extraComm]
+		   )
 		;
 
-		--- TODO: fixed
+		--DELETE bettrans_compact
+		;WITH CTE_CompactDiffCust AS (
+			SELECT ck.[custid], ck.[winlostdate], ck.[productId], ck.[sporttype], ck.[bettype], ck.[leagueGroupID], ck.[ticketType]
+			FROM dbo.bettrans_compact ck (NOLOCK)
+			INNER JOIN #diffCustCheckSum diff ON diff.custid = ck.custid AND diff.winlostdate = ck.winlostdate
+			WHERE diff.winlostdate = @winlostdate
+		)
+		DELETE up
+		FROM dbo.bettrans_compact up
+		INNER JOIN CTE_CompactDiffCust tmp ON (
+			up.custid				= tmp.custid
+			AND up.[winlostdate]	= tmp.[winlostdate]
+			AND up.[productId]		= tmp.[productId]
+			AND up.[sporttype]		= tmp.[sporttype]
+			AND up.[bettype]		= tmp.[bettype]
+			AND up.[leagueGroupID]	= tmp.[leagueGroupID]
+			AND up.[ticketType]		= tmp.[ticketType]
+		)
+		LEFT JOIN #checkCorrectData ck ON (
+			ck.custid				= tmp.custid
+			AND ck.[winlostdate]	= tmp.[winlostdate]
+			AND ck.[productId]		= tmp.[productId]
+			AND ck.[sporttype]		= tmp.[sporttype]
+			AND ck.[bettype]		= tmp.[bettype]
+			AND ck.[leagueGroupID]	= tmp.[leagueGroupID]
+			AND ck.[ticketType]		= tmp.[ticketType]
+		)
+		WHERE ck.custid IS NULL; -- NOT EXISTS in the SOURCE bettrans
+
+		--- TODO: mark as fixed
 		UPDATE up WITH(ROWLOCK, UPDLOCK)
 		SET NotifyStatus = 2
 		FROM dbo.bettrans_compact_checkSum up
-		INNER JOIN #checkCorrectData ck ON ck.custid = up.custid 
-				AND ck.winlostdate = up.winlostdate 
-				AND ck.checkSumKey = up.checkSumKey 
-				AND ck.checkSumData = up.checkSumData;
+		INNER JOIN #diffCustCheckSum ck ON ck.custid = up.custid 
+				AND ck.winlostdate = up.winlostdate
+		WHERE	
+			ck.winlostdate		= @winlostdate
+			AND up.notifyStatus = 0
+			AND up.createdTime	= @notifyTime
 
 		SET @rCont += 1;
 
