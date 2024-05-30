@@ -23,6 +23,7 @@ AS
 		- 20230330@Evan: LAP - Support betfrom up to nvarchar(4) [RedmineID: #178059]
 		- 20240229@Evan: Sum data of Jackpot/Promotion/Contribution AG Product into Bettrans [RedmineID: #200273]
 		- 20240301@Sophia: Exchange product - Get PT from new table on NAP system [RedmineID: #201169]
+		- 20240530@Kelvin: LA/LAP - Add more bettypes for Jackpot of AG [RedmineID: #205844]
 	Format for transdesc: 
 		--AGC Betting - Transfer back to Sportsbook
 		--AGC Adjustment - Date: 2015-05-26
@@ -231,7 +232,7 @@ BEGIN
 			(
 				SELECT Winlostdate
 						, CASE
-							WHEN b.PlayType IN (9000, 9001, 9002, 9003, 9004, 9005) THEN 1801
+							WHEN b.PlayType IN (9000, 9001, 9002, 9003, 9004, 9005, 9006, 9007, 9008, 9009) THEN 1801
 							WHEN b.GameCode IN (''''GC0161811101Y'''', ''''RED_POCKET'''', ''''COMP_ENROLL'''', ''''COMP_PRIZE'''', ''''COMP_REFUND'''', ''''EVENT_PRIZE'''') THEN 1803
 							ELSE 1800
 						END AS bettype
@@ -251,7 +252,7 @@ BEGIN
 				GROUP BY Winlostdate
 						, b.Currency
 						, CASE
-								WHEN b.PlayType IN (9000, 9001, 9002, 9003, 9004, 9005) THEN 1801
+								WHEN b.PlayType IN (9000, 9001, 9002, 9003, 9004, 9005, 9006, 9007, 9008, 9009) THEN 1801
 								WHEN b.GameCode IN (''''GC0161811101Y'''', ''''RED_POCKET'''', ''''COMP_ENROLL'''', ''''COMP_PRIZE'''', ''''COMP_REFUND'''', ''''EVENT_PRIZE'''') THEN 1803
 								ELSE 1800
 							END

@@ -20,6 +20,7 @@ AS
 		- 20190911@Kean: LAP Analytics Tool - Add new param to generate data for DataWarehouse [RedmineID: #117689]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20240220@Evan: Add new column Bettype,JpContribution Sum data of Jackpot/Promotion/Contribution [Redmine: #201067]
+		- 20240530@Kelvin: LA/LAP - Add more bettypes for Jackpot of AG [RedmineID: #205844]
 	Param's Explanation:
 		- @winlostdate: The date need to summary
 		- @IsManual: task run manual or auto
@@ -133,7 +134,7 @@ BEGIN TRY
 					ISNULL(COUNT(*),0) AS Betcount,
 					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount,
 					ISNULL(SUM(CASE WHEN ISNULL(b.JpContribution,0) > 0 THEN 1 ELSE 0 END),0) AS ContributionBetCount,
-					CASE WHEN b.PlayType IN (9000,9001,9002,9003,9004,9005) THEN 1801
+					CASE WHEN b.PlayType IN (9000,9001,9002,9003,9004,9005,9006,9007,9008,9009) THEN 1801
 						WHEN b.GameCode IN('GC0161811101Y','RED_POCKET','COMP_ENROLL','COMP_PRIZE','COMP_REFUND','EVENT_PRIZE') THEN 1803
 						ELSE 1800
 					END Bettype
@@ -141,7 +142,7 @@ BEGIN TRY
 				WHERE Winlostdate = @winlostdate
 					AND StatusId IN (111, 112, 113)
 				GROUP BY b.CustID, b.currency, isVIPGame,
-						CASE WHEN b.PlayType IN (9000,9001,9002,9003,9004,9005) THEN 1801
+						CASE WHEN b.PlayType IN (9000,9001,9002,9003,9004,9005,9006,9007,9008,9009) THEN 1801
 							WHEN b.GameCode IN('GC0161811101Y','RED_POCKET','COMP_ENROLL','COMP_PRIZE','COMP_REFUND','EVENT_PRIZE') THEN 1803
 							ELSE 1800
 						END
@@ -162,7 +163,7 @@ BEGIN TRY
 					ISNULL(SUM(CASE WHEN b.StatusID = 111 THEN 1 ELSE 0 END),0) AS DrawBetCount,
 					ISNULL(SUM(b.JpContribution),0) JpContribution,
 					ISNULL(SUM(CASE WHEN ISNULL(b.JpContribution,0) > 0 THEN 1 ELSE 0 END),0) AS ContributionBetCount,
-					CASE WHEN b.PlayType IN (9000,9001,9002,9003,9004,9005) THEN 1801
+					CASE WHEN b.PlayType IN (9000,9001,9002,9003,9004,9005,9006,9007,9008,9009) THEN 1801
 						WHEN b.GameCode IN('GC0161811101Y','RED_POCKET','COMP_ENROLL','COMP_PRIZE','COMP_REFUND','EVENT_PRIZE') THEN 1803
 						ELSE 1800
 					END Bettype
@@ -170,7 +171,7 @@ BEGIN TRY
 				WHERE Winlostdate = @winlostdate
 					AND StatusId IN (111, 112, 113)
 				GROUP BY b.CustID, b.currency, isVIPGame,
-						CASE WHEN b.PlayType IN (9000,9001,9002,9003,9004,9005) THEN 1801
+						CASE WHEN b.PlayType IN (9000,9001,9002,9003,9004,9005,9006,9007,9008,9009) THEN 1801
 							WHEN b.GameCode IN('GC0161811101Y','RED_POCKET','COMP_ENROLL','COMP_PRIZE','COMP_REFUND','EVENT_PRIZE') THEN 1803
 							ELSE 1800
 						END
