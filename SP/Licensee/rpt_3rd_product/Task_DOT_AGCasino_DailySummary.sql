@@ -1,4 +1,4 @@
-/*<info serverAlias="DBACC-bodb02,DBBAL-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_DOT_AGCasino_DailySummary]
 	 @winlostdate DATETIME
 	,@IsManual BIT = 0
