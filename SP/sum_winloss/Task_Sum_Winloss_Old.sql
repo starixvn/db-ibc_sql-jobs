@@ -29,6 +29,7 @@ AS
 		- 20230818@Lewis: Hotfix Dup Data - bettype = 8695,2499 [RedmineID: #192923]
 		- 20231211@Lewis: Add Live22 [RedmineID: #194529]
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
+		- 20240515@Lewis: Add SABA Kabaddi [RedmineID: #203763]
 */
 
 BEGIN
@@ -303,6 +304,7 @@ BEGIN
 								OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
 								OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 								OR (l.LeagueGroupID = 42 AND m.sporttype = 4) --Virtual Ice Hockey
+								OR (l.LeagueGroupID = 42 AND m.sporttype = 47) --SABA Kabaddi
 								OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 							  ) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN l.LeagueGroupID ELSE 0 END AS LeagueGroupID,
 					CASE WHEN ( 
@@ -311,6 +313,7 @@ BEGIN
 								OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
 								OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 								OR (l.LeagueGroupID = 42 AND m.sporttype = 4) --Virtual Ice Hockey
+								OR (l.LeagueGroupID = 42 AND m.sporttype = 47) --SABA Kabaddi
 								OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 							 ) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN m.sporttype ELSE 0 END AS sporttype
 				FROM bodb_Archive.dbo.bettrans_bk b WITH (NOLOCK)

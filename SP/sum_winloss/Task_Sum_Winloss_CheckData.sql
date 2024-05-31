@@ -10,6 +10,7 @@ CREATE PROCEDURE Task_Sum_Winloss_CheckData
 		- 20231018@Lewis: Initialize SP [RedmineID: #193254]
 		- 20240219@Lewis: Add Live22 PromotionPrize - bettype = 7698 [RedmineID: #201011]	
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
+		- 20240515@Lewis: Add SABA Kabaddi [RedmineID: #203763]
 
 */
 AS
@@ -109,6 +110,7 @@ BEGIN
 								OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
 								OR (l.LeagueGroupID = 42 AND m.sporttype = 5)
 								OR (l.LeagueGroupID = 42 AND m.sporttype = 4) --Virtual Ice Hockey
+								OR (l.LeagueGroupID = 42 AND m.sporttype = 47) --SABA Kabaddi
 								OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 							 ) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN m.sporttype ELSE 0 END AS sporttype
 				FROM dbo.bettrans14 b WITH (NOLOCK)
