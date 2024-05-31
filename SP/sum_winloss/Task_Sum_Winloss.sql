@@ -54,6 +54,7 @@ AS
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
 		- 20240305@Lewis: Add UU Slot [RedmineID: #192595]
 		- 20240408@Lewis: Add SABA xD [RedmineID: #202706]
+		- 20240515@Lewis: Add SABA Kabaddi [RedmineID: #203763]
 */
 
 BEGIN
@@ -200,6 +201,7 @@ BEGIN
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 4) --Virtual Ice Hockey
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 47) --SABA Kabaddi
 						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 				 ) AND betdaqid <> -2   AND winlostdate >= @SabaInfo_CutOffDate THEN m.sporttype
 			WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
@@ -343,6 +345,7 @@ BEGIN
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 4) --Virtual Ice Hockey
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 47) --SABA Kabaddi
 						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 					) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN l.LeagueGroupID ELSE 0 END AS LeagueGroupID,
 		  CASE WHEN bettrans.betdaqid = -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN 1 ELSE 0 END ticketType
@@ -370,6 +373,7 @@ BEGIN
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 4) --Virtual Ice Hockey
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 47) --SABA Kabaddi
 						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 				 ) AND betdaqid <> -2   AND winlostdate >= @SabaInfo_CutOffDate THEN m.sporttype
 				 WHEN bettype BETWEEN 81 AND 120 OR -- Number Game 
@@ -447,6 +451,7 @@ BEGIN
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 50)
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 5) --SabaTennis
 						OR (l.LeagueGroupID = 42 AND m.sporttype = 4) --Virtual Ice Hockey
+						OR (l.LeagueGroupID = 42 AND m.sporttype = 47) --SABA Kabaddi
 						OR (l.LeagueGroupID = 151 AND m.sporttype = 43)
 					) AND betdaqid <> -2 AND winlostdate >= @SabaInfo_CutOffDate  THEN l.LeagueGroupID ELSE 0 END,
 			 CASE WHEN bettrans.betdaqid = -2 AND winlostdate >= @SabaInfo_CutOffDate THEN 1 ELSE 0 END 

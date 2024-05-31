@@ -9,6 +9,7 @@ AS
 	Revisions:
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
+		- 20240515@Lewis: Add SABA Kabaddi [RedmineID: #203763]
 */
 
 BEGIN
@@ -325,7 +326,7 @@ BEGIN
 				,CHECKSUM(CONCAT_WS('|',b.custid,b.recommend,b.mrecommend,b.srecommend,b.winlostdate,tbl.productId,ck.sporttype,b.bettype,ck.LeagueGroupID,ck.ticketType)) AS ckKey
 			FROM #cdc_bettrans_batch b
 			INNER JOIN SuperExtraPT tbl ON b.srecommend = tbl.srecommend AND b.bettype = tbl.bettype and b.winlostdate = tbl.winlostdate
-			LEFT JOIN bodb02.dbo.match m WITH(NOLOCK) ON b.matchid = m.matchid AND m.sporttype IN (1, 2, 5, 43, 50, 4)
+			LEFT JOIN bodb02.dbo.match m WITH(NOLOCK) ON b.matchid = m.matchid AND m.sporttype IN (1, 2, 5, 43, 50, 4, 47)
 			LEFT JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid=l.leagueid AND l.LeagueGroupID IN (42,74,108,113,122,151)
 			CROSS APPLY (
 				SELECT 

@@ -15,6 +15,9 @@ RETURNS INT
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
 		- 20240119@Lewis: Add VS4 [RedmineID: #198621]
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
+		- 20240305@Lewis: Add UU Slot [RedmineID: #192595]
+		- 20240408@Lewis: Add SABA xD [RedmineID: #202706]
+		- 20240515@Lewis: Add SABA Kabaddi [RedmineID: #203763]
 */
 BEGIN 
 	RETURN (
@@ -25,6 +28,7 @@ BEGIN
 							OR (b.LeagueGroupID = 42 AND b.sporttype = 50)
 							OR (b.LeagueGroupID = 42 AND b.sporttype = 5) --SabaTennis
 							OR (b.LeagueGroupID = 42 AND b.sporttype = 4) --Virtual Ice Hockey
+							OR (b.LeagueGroupID = 42 AND b.sporttype = 47) --SABA Kabaddi
 							OR (b.LeagueGroupID = 151 AND b.sporttype = 43)
 						) THEN b.sporttype
 					WHEN b.bettype BETWEEN 81 AND 120 OR -- Number Game 
@@ -88,6 +92,8 @@ BEGIN
 					WHEN b.bettype BETWEEN 10300 AND 10399 THEN 228 -- WE Live Casino
 					WHEN b.bettype BETWEEN 7601 AND 7700 THEN 227 -- Live22
 					WHEN b.bettype BETWEEN 10400 AND 10449 THEN 188 -- VS4-Virtual Cock Fighting
+					WHEN b.bettype BETWEEN 10000 AND 10299 THEN 216 -- UU Slots
+					WHEN b.bettype BETWEEN 10801 AND 11000 THEN 240 -- SABAxD
 					ELSE 0
 				END AS sporttype
 		FROM (

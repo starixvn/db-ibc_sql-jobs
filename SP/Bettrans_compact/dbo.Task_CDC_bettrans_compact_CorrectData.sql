@@ -12,6 +12,7 @@ AS
 		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
 		- 20240401@Bobby:  Fix bug checkNotify & Correct Redmine: [#202655]
 		- 20240522@Bobby: Enhance checkSum process [RedmineID: #205378]
+		- 20240515@Lewis: Add SABA Kabaddi [RedmineID: #203763]
 */
 BEGIN
 
@@ -269,7 +270,7 @@ BEGIN
 						) AS ExtraComm
 				FROM bodb02.dbo.bettrans bettrans WITH (NOLOCK)
 					INNER JOIN #__SuperExtraPT tbl ON bettrans.srecommend = tbl.SuperId	AND bettrans.bettype = tbl.bettypePT
-					LEFT JOIN bodb02.dbo.[match] m WITH(NOLOCK) ON bettrans.matchid = m.matchid AND m.sporttype IN (1, 2, 5, 43, 50, 4)
+					LEFT JOIN bodb02.dbo.[match] m WITH(NOLOCK) ON bettrans.matchid = m.matchid AND m.sporttype IN (1, 2, 5, 43, 50, 4, 47)
 					LEFT JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid=l.leagueid AND l.LeagueGroupID IN (42,74,108,113,122,151)
 					CROSS APPLY (
 						SELECT 
