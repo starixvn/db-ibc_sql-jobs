@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCTG-bodb02,DBSID-bodb02" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE dbo.Task_Dep_DailySumData3rdProduct
 	@WinlostDate	SMALLDATETIME
 	,@ProductIds	VARCHAR(MAX)
