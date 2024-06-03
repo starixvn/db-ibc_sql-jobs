@@ -23,6 +23,7 @@ AS
 		- 20220620@Sol: LAP - Enhance database jobs - ignore bettype 23203 for archived member - [RedmineID: #171747]
 		- 20230227@Evan: Ensure correct balance calculation when allow to transfer 247 (BU) [Redmine: #173554]
 		- 20231205@Evan: Change the domain of email from @starixvn.com to @starixsoft.com [RedmineID: #195197]
+		
 */
 BEGIN
 	SET NOCOUNT ON
