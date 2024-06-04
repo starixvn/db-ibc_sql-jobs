@@ -10,6 +10,7 @@ AS
 		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
 		- 20240306@Lewis: Add Virtual Ice Hockey [RedmineID: #201129]
 		- 20240515@Lewis: Add SABA Kabaddi [RedmineID: #203763]
+		- 20240602@Bobby: Enhance check & correct process [RedmineID: #205973]
 */
 
 BEGIN
@@ -326,12 +327,13 @@ BEGIN
 				,CHECKSUM(CONCAT_WS('|',b.custid,b.recommend,b.mrecommend,b.srecommend,b.winlostdate,tbl.productId,ck.sporttype,b.bettype,ck.LeagueGroupID,ck.ticketType)) AS ckKey
 			FROM #cdc_bettrans_batch b
 			INNER JOIN SuperExtraPT tbl ON b.srecommend = tbl.srecommend AND b.bettype = tbl.bettype and b.winlostdate = tbl.winlostdate
-			LEFT JOIN bodb02.dbo.match m WITH(NOLOCK) ON b.matchid = m.matchid AND m.sporttype IN (1, 2, 5, 43, 50, 4, 47)
-			LEFT JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid=l.leagueid AND l.LeagueGroupID IN (42,74,108,113,122,151)
+			LEFT JOIN bodb02.dbo.match m WITH(NOLOCK) ON b.matchid = m.matchid
+			LEFT JOIN bodb02.dbo.League l WITH(NOLOCK) ON m.leagueid=l.leagueid
+			LEFT JOIN dbo.Age_f_SabaSportRef() AS saba ON saba.SportType = l.sporttype AND saba.LeagueGroupId = l.LeagueGroupID
 			CROSS APPLY (
 				SELECT 
-					CASE WHEN  b.betdaqid <> -2 AND l.LeagueGroupID > 0 THEN ISNULL(m.sporttype, 0) ELSE 0 END AS sporttype
-					,CASE WHEN b.betdaqid <> -2 AND m.sporttype > 0 THEN ISNULL(l.LeagueGroupID,0) ELSE 0 END AS LeagueGroupID
+					CASE WHEN  b.betdaqid <> -2 AND saba.LeagueGroupID > 0 THEN ISNULL(saba.sporttype, 0) ELSE 0 END AS sporttype
+					,CASE WHEN b.betdaqid <> -2 AND saba.sporttype > 0 THEN ISNULL(saba.LeagueGroupID, 0) ELSE 0 END AS LeagueGroupID
 					,CASE WHEN b.betdaqid = -2 THEN 1 ELSE 0 END ticketType
 			) AS ck
 		)

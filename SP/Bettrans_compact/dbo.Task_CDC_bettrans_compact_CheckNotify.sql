@@ -6,18 +6,19 @@ AS
 	Task: 153357 - Alpha - CDC bettrans_compact - check SUMDATA Notify
 	DB: DBAGE.bodb_AGE
 	Revisions:
-		- 20231201@Bobby:  Implement bettrans_compact Redmine: [#153357]
-		- 20240321@Bobby:  checkSum remove extraWinloss vs extraComm Redmine: [#200041]
-		- 20240401@Bobby:  Fix bug checkNotify & Correct Redmine: [#202655]
-		- 20240506@Bobby:  Enhance code to avoid deadlock Redmine: [#204799]
+		- 20231201@Bobby: Implement bettrans_compact Redmine: [#153357]
+		- 20240321@Bobby: checkSum remove extraWinloss vs extraComm Redmine: [#200041]
+		- 20240401@Bobby: Fix bug checkNotify & Correct Redmine: [#202655]
+		- 20240506@Bobby: Enhance code to avoid deadlock Redmine: [#204799]
 		- 20240522@Bobby: Enhance checkSum process [RedmineID: #205378]
+		- 20240602@Bobby: Enhance check & correct process [RedmineID: #205973]
 */
 BEGIN
 
 	SET NOCOUNT ON;
 
 	DECLARE @checkDate SMALLDATETIME, @toDay SMALLDATETIME, @lastJobRun DATETIME;
-	DECLARE @moveBetsDay SMALLDATETIME, @notifyTime DATETIME
+	DECLARE @moveBetsDay SMALLDATETIME, @checkTime DATETIME
 
 	EXEC bodb02.dbo.NAP_Admin_GetMovebetDate @MovebetDate = @moveBetsDay OUTPUT
 	SELECT @checkDate	= DATEADD(DAY, 1, @moveBetsDay)
@@ -29,31 +30,31 @@ BEGIN
 	;
 
 	DROP TABLE IF EXISTS #tmpNotify;
-	SELECT custid, winlostdate, checkSumKey, checkSumData, COUNT(1) AS diffCount, MIN(createdTime) AS FromTime, MAX(createdTime) AS ToTime
+	SELECT custid, winlostdate, checkSumKey, checkSumData, createdTime
 	INTO #tmpNotify
 	FROM dbo.bettrans_compact_checkSum WITH(NOLOCK)
-	WHERE winlostdate BETWEEN @checkDate AND @toDay AND notifyStatus = 0
+	WHERE winlostdate BETWEEN @checkDate AND @toDay 
+		AND notifyStatus = 0
 		AND DATEDIFF(SECOND, @lastJobRun, GETDATE()) < 60 -- 1 minute. Check the Job is running OR NOT.
-	GROUP BY custid, winlostdate, checkSumKey, checkSumData
-	HAVING COUNT(1) >= 2 -- exist diff value through 1 hour
 
 	--TODO: Send notification IF any
 	IF EXISTS(SELECT TOP 1 1 FROM #tmpNotify)
 	BEGIN
 		
-		SELECT @notifyTime = GETDATE();
+		SELECT @checkTime = GETDATE();
 
-		-- Mark @notifyTime
+		-- Mark @checkTime
 		UPDATE ck
-		SET createdTime = @notifyTime
+		SET createdTime = @checkTime
 		FROM dbo.bettrans_compact_checkSum ck WITH(ROWLOCK, UPDLOCK)
 		INNER JOIN #tmpNotify tmp ON tmp.custid = ck.custid
 			AND tmp.winlostdate = ck.winlostdate
 			AND tmp.checkSumKey = ck.checkSumKey
+			AND tmp.createdTime = ck.createdTime
 		WHERE ck.notifyStatus = 0;
 
 		--TODO: correct data --> notifyStatus = 2 IF corrected
-		EXEC [dbo].[Task_CDC_bettrans_compact_CorrectData] @notifyTime = @notifyTime
+		EXEC [dbo].[Task_CDC_bettrans_compact_CorrectData] @checkTime = @checkTime
 
 		--SEND mail IF any rows
 		IF EXISTS (
@@ -62,7 +63,7 @@ BEGIN
 				AND tmp.winlostdate = ck.winlostdate
 				AND tmp.checkSumKey = ck.checkSumKey
 			WHERE ck.notifyStatus = 0
-				AND ck.createdTime = @notifyTime
+				AND ck.createdTime = @checkTime
 		)
 		BEGIN
 
@@ -74,28 +75,25 @@ BEGIN
 				AND tmp.winlostdate = ck.winlostdate
 				AND tmp.checkSumKey = ck.checkSumKey
 			WHERE ck.notifyStatus = 0
-				AND ck.createdTime = @notifyTime;
+				AND ck.createdTime = @checkTime;
 
 			DECLARE @subject VARCHAR(1000), @notify VARCHAR(4000), @recipients VARCHAR(1000);
-			SELECT @subject = CONCAT(@@SERVERNAME, '_', db_name(), '_bettrans_compact CHECK SUM diff data found')
-				, @recipients = 'dbaadmin@starixsoft.com';
+			SELECT @subject		= CONCAT(@@SERVERNAME, '_', db_name(), '_bettrans_compact CHECK SUM diff data found')
+				, @recipients	= IIF(@@SERVERNAME='TESTDB053', 'bobby.nguyen@starixsoft.com', 'dbaadmin@starixsoft.com');
 
 			WITH CTE_Notify AS (
-				SELECT ck.winlostdate, MIN(tmp.FromTime) AS FromTime, MAX(tmp.ToTime) AS ToTime
+				SELECT TOP 1 ck.createdTime
 				FROM #tmpNotify tmp
 				INNER JOIN dbo.bettrans_compact_checkSum ck WITH(NOLOCK) ON tmp.custid = ck.custid
 					AND tmp.winlostdate = ck.winlostdate
 					AND tmp.checkSumKey = ck.checkSumKey
 				WHERE ck.notifyStatus = 1
-					AND ck.createdTime = @notifyTime
-				GROUP BY ck.winlostdate
+					AND ck.createdTime = @checkTime
 			) 
 			SELECT @notify = STRING_AGG(notify, ',')
 			FROM (
-				SELECT '[SELECT * FROM dbo.bettrans_compact_checkSum WITH(NOLOCK)
-				WHERE winlostdate=''' + FORMAT(winlostdate, 'yyyy-MM-dd') + '''
-					AND createdTime >= ''' + FORMAT(@notifyTime, 'yyy-MM-dd HH:mm:00')  + '''
-					AND notifyStatus=1]'
+				SELECT 'SELECT * FROM bodb_AGE.dbo.bettrans_compact_checkSum WITH(NOLOCK)
+				WHERE createdTime = ''' + FORMAT(createdTime, 'yyyy-MM-dd HH:mm:ss.fff')  + ''' AND notifyStatus=1;'
 				FROM CTE_Notify
 			) AS t (notify)
 
@@ -103,19 +101,32 @@ BEGIN
 			RAISERROR (@notify, 0, 1) WITH NOWAIT;
 
 			EXEC msdb.dbo.sp_send_dbmail @recipients = @recipients
-			, @body						= @notify
-			, @sensitivity				= 'Personal'
-			, @importance				= 'Normal'
-			, @copy_recipients			= ''
-			, @blind_copy_recipients	= ''
-			, @subject					= @subject
-			, @profile_name				= default
+				, @body						= @notify
+				, @sensitivity				= 'Personal'
+				, @importance				= 'Normal'
+				, @copy_recipients			= ''
+				, @blind_copy_recipients	= ''
+				, @subject					= @subject
+				, @profile_name				= default;
+
+			BEGIN TRY
+				DECLARE @MessageInfo NVARCHAR(MAX);
+				SELECT @MessageInfo = CONCAT(@subject, '. Please refer to the query [', @notify, ']')
+				EXECUTE	DBNOTI.NotificationDB.dbo.DBA_Letstalk_NewJobMessage 
+					@ServerName = N'DBJOBMonitor'
+					, @JobId	= NULL, @JobName = N'Custom Message'
+					, @Message	= @MessageInfo
+					, @CaseId	= 1;
+			END TRY
+			BEGIN CATCH 
+				--TODO: nothing
+			END CATCH
 		END
 
 	END
 
 	--DELETE old rows
-	DECLARE @checkTimeToDelete DATETIME = DATEADD(DAY, -1, GETDATE())
+	DECLARE @checkTimeToDelete DATETIME = DATEADD(DAY, -60, GETDATE())
 	DELETE ck
 	FROM dbo.bettrans_compact_checkSum ck WITH(ROWLOCK)
 	WHERE ck.createdTime < @checkTimeToDelete;
