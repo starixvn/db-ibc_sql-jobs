@@ -84,7 +84,7 @@ BEGIN
 				,LosingThreshold = NULL
 				,LosingUpdateTime = NULL
 				,InitSettingTime = NULL
-				,RepUpdateTime = NULL
+				,RepUpdateTime
 				,CreatedDate = NULL
 				,1 AS isDeleted
                 ,SYSDATETIME() AS [_FetchedTime]  
