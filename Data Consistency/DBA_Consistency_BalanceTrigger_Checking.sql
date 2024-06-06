@@ -2,6 +2,7 @@
 ALTER PROCEDURE DBA_Consistency_BalanceTrigger_Checking
 	@CheckingTime		INT		= 180
 	,@LastRowInserted	BIGINT  = NULL
+	,@TargetServer		VARCHAR(100) = ''
 	,@ErrCode			INT				= 0		OUTPUT
 	,@ErrMsg			VARCHAR(MAX)	= ''	OUTPUT
 	,@SampleData		VARCHAR(MAX)	= ''	OUTPUT
@@ -12,7 +13,8 @@ AS
     DB: DBSIG/bodb02
    
    Revisions:
-		- 20240527@Louisa: Data consistency rule #61 [#205573]
+		- 20240527@Louisa: Data consistency rule #61 [Redmine:#205573]
+		- 20240606@Louisa: Add @TargetServer [Redmine:#205573]
 
 	Param's explaination:
 		@CheckingTime: in second
@@ -38,7 +40,7 @@ BEGIN
 
 		IF @ActionDate IS NOT NULL AND DATEDIFF(SECOND, @ActionDate, @CurrentTime) >= @CheckingTime
 		BEGIN
-			SELECT @ErrMsg = '.bodb02.dbo.BalanceTrigger to DBBAH is slowly or pending over ' 
+			SELECT @ErrMsg = '.bodb02.dbo.BalanceTrigger to '+ ISNULL(@TargetServer,'DBBAH') +' is slowly or pending over ' 
 		END
 	END
 
