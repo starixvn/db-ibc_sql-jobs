@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptCustomerMatch_CheckData]
 	@WinLostDate SMALLDATETIME
@@ -16,6 +16,7 @@ AS
 		- 20210608@Kos: Support SB, NG, VS, CO only [RedmineID: #156599]
 		- 20210816@Sophia: add DBBAL [Redmine: #154300]
 		- 20210824@Hogan: Integrate BitCoin [RedmineID: #160160]
+		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
 */
 
 BEGIN
@@ -26,7 +27,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT ProductID, BetType, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 69)
+	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 69, 83)
 
 	DECLARE @B_WinLost MONEY, @R_WinLost MONEY
 		,@B_Stake MONEY, @R_Stake MONEY

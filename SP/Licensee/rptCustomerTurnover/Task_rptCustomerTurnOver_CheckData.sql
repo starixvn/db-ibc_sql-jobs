@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" executers="" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_CheckData]
 	@WinLostDate SMALLDATETIME
@@ -18,6 +18,7 @@ AS
 		- 20220311@Hogan: Integrate Virtual Sports 3 (Leap Gaming)[RedmineID: #145337]
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
+		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
 */
 
 BEGIN
@@ -28,7 +29,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT BetType, ProductPrefix, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 49, 69, 77)
+	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 49, 69, 77, 83)
 
 	DECLARE @S_Winlost MONEY, @T_Winlost MONEY, @S_Turnover MONEY, @T_Turnover MONEY, @S_BetCount INT, @T_BetCount INT,
 			@S_PlayerComm MONEY, @T_PlayerComm MONEY, @S_BetEffective MONEY, @T_BetEffective MONEY

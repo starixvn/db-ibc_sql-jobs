@@ -49,6 +49,7 @@ AS
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
 		- 20240314@Eddie: Integrate UU Slots and change 'bodbLicenseeNet' to 'wsv_lap' account [RedmineID: #201098]
+		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
  
 	Param's Explanation:
 		@DrawFilter, 1:Normal - 2:No Draws - 3:No Draws For Turnover Only
@@ -146,7 +147,7 @@ BEGIN
 		,CG BIGINT
 		,AP BIGINT
 		,APM BIGINT
-		,VS3 BIGINT
+		,VS4 BIGINT
 		,BTC BIGINT
 		,FGGL BIGINT
 		,MXG BIGINT
@@ -203,7 +204,7 @@ BEGIN
 		,CG
 		,AP
 		,APM
-		,VS3
+		,VS4
 		,BTC
 		,FGGL
 		,MXG
@@ -377,7 +378,7 @@ BEGIN
 		,CG
 		,AP
 		,APM
-		,VS3
+		,VS4
 		,BTC
 		,FGGL
 		,MXG

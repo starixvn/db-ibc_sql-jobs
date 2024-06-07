@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLIC-bodb_LicenseeReport,DBBAL-bodb_LicenseeReport" isNested="0"></info>*/
+/*<info serverAlias="DBLIC-bodb_LicenseeReport" isNested="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Task_rptCustomerTurnOver_Bettrans]
 	@Date SMALLDATETIME
@@ -34,6 +34,7 @@ AS
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
 		- 20230801@Evan: Integrate Virtual Sports 3 (Leap Gaming New) [RedmineID: #190908]
 		- 20231206@Evan: Integrate VS3 Sport 179 [RedmineID: #190908]
+		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
  
 */
 
@@ -51,7 +52,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT BetType, ProductPrefix, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 49, 69, 77)
+	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 49, 69, 77, 83)
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01' -- half won/ half lose cut date
 
@@ -63,10 +64,10 @@ BEGIN
 							INNER JOIN bodb02.dbo.match m WITH (NOLOCK) ON bm.matchid = m.matchid
 						WHERE b.refno = bm.refno AND b.custid = bm.custid
 					) AS s
-	WHERE b.bettype = 2799
+	WHERE b.bettype IN (2799,10449)
 		AND b.winlostdate = @Date
 		AND b.statusID IN (111, 112, 113)
-		AND b.matchid = 2799
+		AND b.matchid IN (2799,10449)
 
 	SELECT a.CustID
 		,a.currency
@@ -117,7 +118,6 @@ BEGIN
 		LEFT JOIN #__cte_parlayinfo AS p ON a.transid = p.transid
 	WHERE a.winlostdate = @Date
 		AND a.statusID IN (111, 112, 113)
-		AND a.bettype < 19999
 		AND a.matchid >= 0
 	GROUP BY a.matchid
 		,a.custid
@@ -190,6 +190,7 @@ BEGIN
 						WHEN b.sporttype IS NOT NULL THEN b.sporttype
 						ELSE 193 -- Betradar VS: Virtual Basketball
 					END -- Betradar VS: Virtual Basketball
+			WHEN a.bettype = 10449 THEN a.sporttype -- VS4
 			WHEN a.ProductCode = 'SLT' THEN a.matchid
 			WHEN a.bettype = 5301 THEN 231 -- Virtual Sport 3 (old)
 			WHEN a.bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin
@@ -206,6 +207,7 @@ BEGIN
 		,CASE 
 			WHEN a.bettype IN (9, 29) THEN - 9
 			WHEN a.bettype = 2799 THEN -2799
+			WHEN a.bettype = 10449 THEN -10449
 			WHEN a.bettype = 10 THEN ISNULL(ob.leagueid, - 1)
 			WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238) THEN ISNULL(result.LeagueID, - 1)
 			WHEN a.bettype BETWEEN 7901 AND 7999 THEN ISNULL(b3rd.league3rdId, -1)
@@ -243,6 +245,7 @@ BEGIN
 					WHEN b.sporttype IS NOT NULL THEN b.sporttype
 					ELSE 193 -- Betradar VS: Virtual Basketball
 				END -- Betradar VS: Virtual Basketball
+			WHEN a.bettype = 10449 THEN a.sporttype -- VS4
 			WHEN a.ProductCode = 'SLT' THEN a.matchid
 			WHEN a.bettype = 5301 THEN 231 -- Virtual Sport 3 (old)
 			WHEN a.bettype BETWEEN 7901 AND 7999 THEN 175 -- Bitcoin
@@ -256,6 +259,7 @@ BEGIN
 		,CASE 
 			WHEN a.bettype IN (9, 29) THEN -9
 			WHEN a.bettype = 2799 THEN -2799
+			WHEN a.bettype = 10449 THEN -10449
 			WHEN a.bettype = 10 THEN ISNULL(ob.leagueid, - 1)
 			WHEN a.bettype IN (1231, 1232, 1233, 1237, 1238) THEN ISNULL(result.LeagueID, - 1)
 			WHEN a.bettype BETWEEN 7901 AND 7999 THEN ISNULL(b3rd.league3rdId, -1)
@@ -263,5 +267,10 @@ BEGIN
 		END
 		,winlostdate
 		,a.isba
+
+	DROP TABLE #__cte_parlayinfo 
+	DROP TABLE #__cte_bettrans
+	DROP TABLE #__cte_raceinfo
+
 END
 GO

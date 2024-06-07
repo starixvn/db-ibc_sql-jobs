@@ -53,6 +53,7 @@ AS
 		- 20231117@Evan: Integrate WE Live Casino [RedmineID: #196573]
 		- 20231213@Evan: Integrate Live22 [RedmineID: #197702]
 		- 20240314@Eddie: Integrate UU Slots and change 'bodbLicenseeNet' to 'wsv_lap' account [RedmineID: #201098]
+		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
  
 	Param's Explanation:
 		@DrawFilter
@@ -225,10 +226,10 @@ BEGIN
 		,@APMTurnover MONEY
 		,@APMCustomerWl MONEY
 		,@APMBetCount MONEY
-		----VS3
-		,@VS3Turnover MONEY
-		,@VS3CustomerWl MONEY
-		,@VS3BetCount MONEY
+		----VS4
+		,@VS4Turnover MONEY
+		,@VS4CustomerWl MONEY
+		,@VS4BetCount MONEY
 		----BTC
 		,@BTCTurnover MONEY
 		,@BTCCustomerWl MONEY
@@ -286,7 +287,7 @@ BEGIN
 	FROM bodb02.dbo.SportBettypeMatrix s WITH (NOLOCK)
 		INNER JOIN bodb02.dbo.Products p WITH (NOLOCK) ON s.ProductId = p.ProductId
 		WHERE p.ProductPrefix IN ('SB','RB','NG','LC','VS','CS','KN','AGC','MGCRNG','MGCLC','VG','VB', 'AB', 'NG2', 'CO', 'VS2', 
-			'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS3',
+			'LT','PP','CC','SPR','SG','VRG','TG','I4D','SXG','SBC', 'JK', 'SAG', 'PGS', 'SLT', 'HB', 'WM', 'BGG', 'VGA', 'CG', 'AP', 'APM', 'VS4',
 			'BTC', 'FGGL', 'MXG', 'JIG', 'YB', 'MGRNG', 'LG', 'SEA', 'WE', 'L22', 'UUSL')
 
 	-- Data Source
@@ -959,9 +960,9 @@ BEGIN
 	FROM @tblData
 	WHERE ProductPrefix = 'APM'
 
-	-- VS3
+	-- VS4
 	SELECT
-		@VS3Turnover = SUM(CASE
+		@VS4Turnover = SUM(CASE
 						WHEN @DrawFilter IN (2, 3) THEN
 							CASE
 								WHEN Status = 111 THEN 0
@@ -970,13 +971,13 @@ BEGIN
 							END
 						ELSE 1
 					END * Turnover),
-		@VS3CustomerWl = SUM(WinLoss),
-		@VS3BetCount = SUM(CASE
+		@VS4CustomerWl = SUM(WinLoss),
+		@VS4BetCount = SUM(CASE
 								WHEN @DrawFilter = 2 AND Status = 111 THEN 0
 								ELSE BetCount
 							END)
 	FROM @tblData
-	WHERE ProductPrefix = 'VS3'
+	WHERE ProductPrefix = 'VS4'
 	
 	-- BTC
 	SELECT
@@ -1221,7 +1222,7 @@ BEGIN
 		, ISNULL(@CGTurnover, 0) AS CG
 		, ISNULL(@APTurnover, 0) AS AP
 		, ISNULL(@APMTurnover, 0) AS APM
-		, ISNULL(@VS3Turnover, 0) AS VS3
+		, ISNULL(@VS4Turnover, 0) AS VS4
 		, ISNULL(@BTCTurnover, 0) AS BTC
 		, ISNULL(@FGGLTurnover, 0) AS FGGL
 		, ISNULL(@MXGTurnover, 0) AS MXG
@@ -1276,7 +1277,7 @@ BEGIN
 		, ISNULL(@CGCustomerWl, 0)
 		, ISNULL(@APCustomerWl, 0)
 		, ISNULL(@APMCustomerWl, 0)
-		, ISNULL(@VS3CustomerWl, 0)
+		, ISNULL(@VS4CustomerWl, 0)
 		, ISNULL(@BTCCustomerWl, 0)
 		, ISNULL(@FGGLCustomerWl, 0)
 		, ISNULL(@MXGCustomerWl, 0)
@@ -1330,7 +1331,7 @@ BEGIN
 		, ISNULL(@CGBetCount, 0)
 		, ISNULL(@APBetCount, 0)
 		, ISNULL(@APMBetCount, 0)
-		, ISNULL(@VS3BetCount, 0)
+		, ISNULL(@VS4BetCount, 0)
 		, ISNULL(@BTCBetCount, 0)
 		, ISNULL(@FGGLBetCount, 0)
 		, ISNULL(@MXGBetCount, 0)
