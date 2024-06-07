@@ -26,7 +26,7 @@ AS
 		- 20220513@Hogan: Integrate BitCoin [RedmineID: #160160]
 		- 20220714@Hogan: Integrate Volleyball AIO [RedmineID: #175143]
 		- 20221214@Evan: Separate cashout by new column TicketType [RedmineID: #179083]
-		- 20240301@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
+		- 20240301@Evan: Integrate Virtual Sports 4 + Add VS3 [RedmineID: #199347]
 */
 
 BEGIN
@@ -43,7 +43,7 @@ BEGIN
 	INSERT INTO @SportBettype
 	SELECT ProductID, BetType, EventType
 	FROM bodb02.dbo.f_SportBettypeMatrix_Sel (0, 0, 0, 2, '', '', 1)
-	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 69, 83)
+	WHERE ProductID IN (1, 3, 5, 25, 27, 63, 69, 77, 83)
 
 	DECLARE @HWHLCutDate SMALLDATETIME = '2019-10-01'	-- half won/ half lose cut date
 
