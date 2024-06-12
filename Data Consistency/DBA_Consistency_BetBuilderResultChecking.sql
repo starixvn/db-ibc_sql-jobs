@@ -14,6 +14,7 @@ AS
 		- 20190514@Kathy: Check BetBuilder result [Redmine:#106903]
 		- 20200211@Helen: Change Notification Rule 19, 20, 22 for Bet Builder [Redmine:#128265]
 		- 20200211@Helen: Hot fix - missing bodb02 when checking SMP.Market [Redmine:#128265]
+		- 20240611@July: Rule #28 - Return column SelectionName [Redmine:#206126]
 	
 	Param's Expanation:
 */
@@ -41,15 +42,16 @@ BEGIN
 	
 	IF @Rule = 'SelectionResult'
 	BEGIN
-		SELECT TOP 100 @Results = @Results + 'MatchId: ' + CAST(t.MatchId AS VARCHAR) + ', ' + 'SelectionType: ' + CAST(t.SelectionType AS VARCHAR) + '; '
+		SELECT TOP 100 @Results = @Results + 'MatchId: ' + CAST(t.MatchId AS VARCHAR) + ', ' + 'SelectionType: ' + CAST(t.SelectionType AS VARCHAR) + ', ' + 'SelectionName: ' + t.SelectionName + '; '
 		FROM (
-			SELECT	ms.MatchId, ms.SelectionType, ms.Result
+			SELECT	ms.MatchId, ms.SelectionType, ms.Result, s.SelectionName
 			FROM	bodb02.dbo.SMP_MarketSelection ms WITH(NOLOCK)
 				INNER JOIN @temp_market mk ON mk.Matchid = ms.MatchId AND mk.MarketId = ms.MarketId
+				INNER JOIN bodb02.dbo.SMP_Selection s WITH(NOLOCK) ON ms.SelectionType = s.SelectionType
 			WHERE	ms.Result IS NOT NULL
-			GROUP BY ms.MatchId, ms.SelectionType, ms.Result
+			GROUP BY ms.MatchId, ms.SelectionType, ms.Result, s.SelectionName
 		) t
-		GROUP BY t.MatchId, t.SelectionType
+		GROUP BY t.MatchId, t.SelectionType, t.SelectionName
 		HAVING COUNT(1) > 1
 	
 		IF @Results <> ''
