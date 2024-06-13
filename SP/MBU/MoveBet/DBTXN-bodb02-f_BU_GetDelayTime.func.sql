@@ -35,7 +35,7 @@ BEGIN
 						WHEN @KeyId = 'AfterUpdMBD' THEN '00:05:00:000'
 						WHEN @KeyId = 'BeforeBU' THEN '00:05:00:000'
 						WHEN @KeyId = 'AfterUpdBUD' THEN '00:05:00:000'
-						WHEN @KeyId = 'DeleteBU' THEN '00:00:00:280'
+						WHEN @KeyId = 'DeleteBU' THEN '00:00:01:333'
 						ELSE '00:00:00:280' END)
 END
 GO
