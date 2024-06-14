@@ -12,6 +12,7 @@ AS
 	- 20170703@Paul: Check more columns - [Redmine: #79262]
 	- 20170712@Harper: Implement new Product Betradar VS [Redmine: #78241]
 	- 20210816@Sophia: add DBBAL [Redmine: #154300]
+	- 20240613@Evan: Integrate Virtual Sports 4 [RedmineID: #199347]
 */
 BEGIN
 	SET NOCOUNT ON
@@ -28,7 +29,7 @@ BEGIN
 		, @S_PlayerComm = SUM(playercomm)
 	FROM bodb02.dbo.bettrans14 b WITH (NOLOCK)  
 		INNER JOIN bodb_licensee.dbo.licenseecust lc WITH (NOLOCK) ON b.recommend = lc.CustID
-	WHERE b.bettype IN (9,29,2799)  
+	WHERE b.bettype IN (9,29,2799, 10449)  
 		AND b.custid > 0  
 		AND b.statusid NOT IN (0,101,102,121)
 		AND b.winlostdate = @winlostdate
