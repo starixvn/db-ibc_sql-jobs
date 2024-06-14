@@ -12,6 +12,7 @@ CREATE FUNCTION [dbo].[f_BU_GetDelayTime]
 	Revisions:
 		- 20190131@Patrick: Add more key [RedmineID: #108581]
 		- 20221215@Patrick: Balance-Up support transfer 247 [RedmineID: #173554]
+		- 20240613@Patrick: Increase waitfor delay value for Friday key [RedmineID: #206366]
 
 */
 RETURNS VARCHAR(50)
@@ -29,12 +30,12 @@ BEGIN
 						WHEN @KeyId = 'Key10' THEN '00:00:00:010'
 						WHEN @KeyId = 'Key11' THEN '00:00:00:800' --for pub bet in MB
 						WHEN @KeyId = 'IP2Country' THEN '00:00:00.030'
-						WHEN @KeyId = 'FriRoutine' THEN '00:00:00.180'
+						WHEN @KeyId = 'FriRoutine' THEN '00:00:00.280'
 						WHEN @KeyId = 'BeforeMB' THEN '00:05:00:000'
 						WHEN @KeyId = 'AfterUpdMBD' THEN '00:05:00:000'
 						WHEN @KeyId = 'BeforeBU' THEN '00:05:00:000'
 						WHEN @KeyId = 'AfterUpdBUD' THEN '00:05:00:000'
-						WHEN @KeyId = 'DeleteBU' THEN '00:00:00:280'
+						WHEN @KeyId = 'DeleteBU' THEN '00:00:01:333'
 						ELSE '00:00:00:280' END)
 END
 GO
