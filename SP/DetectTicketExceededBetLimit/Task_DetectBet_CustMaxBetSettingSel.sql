@@ -20,6 +20,7 @@ AS
 		- 20230720@Tacy: MG-RNG - Integrate the product for deposit sites [RedmineID: #189971]
 		- 20230928@Luke: Modify SPs to adapt in-house replication setup [Redmine: #194414]
 		- 20231107@Tacy: Remove Bet Limit setting of RNG Slot [Redmine: #194331]
+		- 20240614@Tacy: HF - Credit - Apply rule #6 for Saba Casino - blackjack games [Redmine: #206501]
 
 	Param's Explanation:
 */
@@ -541,6 +542,16 @@ BEGIN
 	
 		DELETE #ListTmp WHERE SettingType=8
 	END
+
+	-- Credit: Saba Casino - Blackjack games
+	UPDATE r
+	SET r.MaxBet=2.5*r.MaxBet
+	FROM #returnTbl r
+	INNER JOIN Customer c WITH (NOLOCK) ON c.custid=r.custid
+	LEFT JOIN Dep_CustSuper cs WITH (NOLOCK) ON cs.custid=c.srecommend
+	WHERE cs.custid IS NULL	--credit
+		AND r.SportType IN (208,209)
+		AND r.BetType IN (2103,2181,2203,2112,2121)
 
 	UPDATE t1 
 	SET IsInvalid = CASE WHEN s.SportType IS NOT NULL THEN 0 ELSE 1 END, 
