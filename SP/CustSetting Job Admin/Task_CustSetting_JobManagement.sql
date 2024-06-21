@@ -15,6 +15,8 @@ AS
 		- 20220617@Elodie: Manage job on DBCUST
 		- 20220816@Johnson: Scale out DBTXN [Redmine: #175278] 
 		- 20221121@Eden: Enhance run time of trigger to capture data for Pending table [#180716]
+		- 20240621@July: Adjust wait for delay 10s -> 1s - [Redmine:#206915]
+		
 */
 BEGIN
 
@@ -84,7 +86,7 @@ BEGIN
 			BEGIN
 				EXEC dbo.TASK_TOControl_MergeTransition	
 
-				WAITFOR DELAY '00:00:10'
+				WAITFOR DELAY '00:00:01'
 			END
 		END
 		ELSE IF @@SERVERNAME IN ('DB053','DB052','TESTDB053','SITDB052')
