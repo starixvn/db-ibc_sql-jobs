@@ -11,7 +11,7 @@ Revisions:
 	- 20230705@July: Check ticket data consistency - Add SPs for SiteDB3 [Redmine:#190601]
 	- 20230915@July: Detect data consistency SiteDB and DBTP - Enhancement for rules #50 [Redmine:#194038]
 	- 20231108@July: Data Consistency - Update Rule #50 - Check data details [Redmine:#196572]
-	- 20240405@July: Change the way of getting data - remove duplicate if page split occurs [Redmine:#202585]
+	- 20240405@July: Remove duplicate transid if page split occurs [Redmine:#202585]
 	
 */
 BEGIN

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[DBA_Consistency_CheckWrongSiteDBGroupID_bettransLC]
 (	
 	@maxSequenceId BIGINT = NULL OUTPUT

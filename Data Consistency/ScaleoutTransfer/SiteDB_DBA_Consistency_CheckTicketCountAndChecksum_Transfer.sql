@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBSIG-bodb02" executers="wsv_nap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[SiteDB_DBA_Consistency_CheckTicketCountAndChecksum_Transfer]
 (
 	@SiteDBGroupID SMALLINT OUTPUT,
