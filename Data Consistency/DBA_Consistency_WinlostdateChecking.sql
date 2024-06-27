@@ -1,4 +1,4 @@
-/*<info serverAlias="DBBAH-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBBAH-bodb02" executers="wsv_nap" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_WinlostdateChecking]
 AS
 /*

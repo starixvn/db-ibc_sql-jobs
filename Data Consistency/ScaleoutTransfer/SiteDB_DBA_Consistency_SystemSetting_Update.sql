@@ -1,4 +1,4 @@
-/*<info serverAlias="DBSIG-bodb02" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBSIG-bodb02" executers="wsv_nap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[SiteDB_DBA_Consistency_SystemSetting_Update]
 (
 	@CheckConsistencyKeyName VARCHAR(50),

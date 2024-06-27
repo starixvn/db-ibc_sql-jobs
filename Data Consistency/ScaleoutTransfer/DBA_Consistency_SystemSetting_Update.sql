@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency" executers="wsv_nap" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[DBA_Consistency_SystemSetting_Update]
 (
 	@CheckConsistencyKeyName VARCHAR(50),

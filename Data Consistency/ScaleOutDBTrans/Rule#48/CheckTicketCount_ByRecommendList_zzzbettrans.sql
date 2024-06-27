@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCONSISTENCY-bodb_Consistency, DBAGE-bodb02, DBACC-bodb02" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCONSISTENCY-bodb_Consistency, DBAGE-bodb02, DBACC-bodb02" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 CREATE PROCEDURE [dbo].[CheckTicketCount_ByRecommendList_zzzbettrans]
 (
 	@CurrentTime		DATETIME
