@@ -15,6 +15,7 @@ AS
 		- 20221013@Tacy: add delay time 3mins for Task_BalanceUpd [RedmineID: #178335]
 		- 20221121@Eden: Enhance run time of trigger to capture data for Pending table [#180716]
 		- 20231026@Tacy: add delay time 3mins for Task_block_member [RedmineID: #184911]
+		- 20240628@Tacy: IsWaiting=1 for deploy: Task_BalanceUpd [RedmineID: #205740]
 
 */
 BEGIN
@@ -31,7 +32,7 @@ BEGIN
 
 	--2.bodb02 : Game : Task_BalanceUpd
 	UNION ALL
-	SELECT 'bodb02 : Game : Task_BalanceUpd', '00:01:00', 0
+	SELECT 'bodb02 : Game : Task_BalanceUpd', '00:01:00', 1
 
 	--3.dbcust - Winlimit Game - Task_block_member
 	UNION ALL
