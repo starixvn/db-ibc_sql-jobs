@@ -18,6 +18,7 @@ AS
 			- 20220304@Elodie: Do not count ticket Promotion (2499) into SMA Win Limit. [Redmine: #166981]
 			- 20220929@Tacy: Do not count ticket MG-RNG Tournament (8695) into SMA Win Limit. [Redmine: #178335]
 			- 20231218@Tacy: Do not count ticket Live22 Promotion Prize (7698) into SMA Win Limit. [Redmine: #194529]
+			- 20240628@Tacy: Do not count ticket FastSpin Promotion Prize (11295) into SMA Win Limit. [Redmine: #205741]
 
 		Parameters Explanation:	
 */
@@ -42,8 +43,8 @@ INSERT INTO #Balance
 SELECT custid, winlostdate, bettype, SUM(balance)
 FROM dbo.BalancePendingDebitGame --with (rowlock)
 WHERE rn <= @rn
-	--do not count ticket Progressive Jackpot, PP Jackpot Prize, Promotion and Lucky Draw, MG-RNG Tournament, Live22 Promotion Prize into SMA Win Limit
-    AND GameTypeid NOT IN (2199,2399,2499,2999,4298,3150,8695,7698) 
+	--do not count ticket Progressive Jackpot, PP Jackpot Prize, Promotion and Lucky Draw, MG-RNG Tournament, Live22 Promotion Prize, FastSpin Promotion Prize into SMA Win Limit
+    AND GameTypeid NOT IN (2199,2399,2499,2999,4298,3150,8695,7698,11295) 
 GROUP BY custid, winlostdate, bettype
 
 
