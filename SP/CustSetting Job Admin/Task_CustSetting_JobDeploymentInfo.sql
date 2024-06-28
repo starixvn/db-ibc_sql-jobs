@@ -32,7 +32,7 @@ BEGIN
 
 	--2.bodb02 : Game : Task_BalanceUpd
 	UNION ALL
-	SELECT 'bodb02 : Game : Task_BalanceUpd', '00:01:00', 1
+	SELECT 'bodb02 : Game : Task_BalanceUpd', '00:01:00', 0
 
 	--3.dbcust - Winlimit Game - Task_block_member
 	UNION ALL
